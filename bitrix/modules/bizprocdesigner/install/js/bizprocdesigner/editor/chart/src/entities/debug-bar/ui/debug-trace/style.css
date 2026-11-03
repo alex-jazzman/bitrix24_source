@@ -1,5 +1,3 @@
-@import url('../debug-bar-variables.css');
-
 .debug-bar-trace {
 	display: flex;
 }

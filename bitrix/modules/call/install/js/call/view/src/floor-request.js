@@ -2,7 +2,7 @@ import { Dom, Event, Loc, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Utils } from 'im.v2.lib.utils';
 import { Util } from 'call.core';
-import { UserModelField } from './user-registry';
+import { UserModelField } from './user/user-registry';
 
 export class FloorRequest extends EventEmitter
 {

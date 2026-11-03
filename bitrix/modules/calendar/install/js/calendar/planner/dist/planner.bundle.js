@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, calendar_util, main_core_events, ui_infoHelper, calendar_ui_tools_draganddrop, main_popup, main_date, ui_avatar) {
+(function (exports, main_core, calendar_util, main_core_events, ui_infoHelper, main_date, calendar_ui_tools_draganddrop, main_popup, ui_avatar) {
 	'use strict';
 
 	class Selector extends main_core_events.EventEmitter {
@@ -11,6 +11,7 @@ this.BX = this.BX || {};
 		currentFullDay = false;
 		useAnimation = true;
 		beforeBeginChange = false;
+		destroyed = false;
 		constructor(params = {}) {
 			super();
 			this.setEventNamespace('BX.Calendar.Planner.Selector');
@@ -146,6 +147,9 @@ this.BX = this.BX || {};
 			}
 		}
 		show(from, to, params) {
+			if (this.destroyed) {
+				return;
+			}
 			const animation = params.animation && this.useAnimation !== false;
 			const focus = params.focus === true;
 			const alignCenter = params.alignCenter !== false;
@@ -402,6 +406,29 @@ this.BX = this.BX || {};
 			}
 			this.selectorIsResized = false;
 		}
+		destroy() {
+			this.destroyed = true;
+			document.removeEventListener('pointermove', this.preventDefault, {
+				passive: false
+			});
+			clearInterval(this.scrollInterval);
+			this.scrollInterval = false;
+			clearTimeout(this.transitTimeout);
+			this.transitTimeout = null;
+			clearTimeout(this.shakeTimeout);
+			this.shakeTimeout = null;
+			clearTimeout(this.focusTimeout);
+			this.focusTimeout = null;
+			clearTimeout(this.selectorHideTimeout);
+			this.selectorHideTimeout = null;
+			if (this.animation) {
+				this.animation.stop();
+				this.animation = null;
+			}
+			this.selectorIsDraged = false;
+			this.selectorIsResized = false;
+			main_core.Dom.removeClass(document.body, 'calendar-planner-unselectable');
+		}
 		preventDefault(e) {
 			e.preventDefault();
 		}
@@ -585,7 +612,8 @@ this.BX = this.BX || {};
 						if (focus) {
 							this.focus(true, 300);
 						}
-						setTimeout(() => {
+						clearTimeout(this.transitTimeout);
+						this.transitTimeout = setTimeout(() => {
 							this.show(this.currentDateFrom, this.currentDateTo, {
 								animation: false,
 								focus: focus,
@@ -614,9 +642,9 @@ this.BX = this.BX || {};
 			if (this.fullDayMode) {
 				toDate = new Date(toDate.getTime() - 5 * 60 * 1000);
 				if (toDate.getDate() === fromDate.getDate()) {
-					selectorTitle.innerHTML = BX.date.format('d F, D', fromDate.getTime() / 1000);
+					selectorTitle.innerHTML = main_date.DateTimeFormat.format('d F, D', fromDate.getTime() / 1000);
 				} else {
-					selectorTitle.innerHTML = BX.date.format('d F', fromDate.getTime() / 1000) + ' - ' + BX.date.format('d F', toDate.getTime() / 1000);
+					selectorTitle.innerHTML = main_date.DateTimeFormat.format('d F', fromDate.getTime() / 1000) + ' - ' + main_date.DateTimeFormat.format('d F', toDate.getTime() / 1000);
 				}
 			} else {
 				selectorTitle.removeAttribute('style');
@@ -795,11 +823,11 @@ this.BX = this.BX || {};
 		checkTimeCache = {};
 		entriesIndex = new Map();
 		solidStatus = false;
+		destroyed = false;
 		constructor(params = {}) {
 			super();
 			this.setEventNamespace('BX.Calendar.Planner');
 			this.config = params;
-			this.setEntriesCount(params.entriesCount ?? 0);
 			this.id = params.id;
 			this.userId = parseInt(params.userId || main_core.Loc.getMessage('USER_ID'));
 			this.DOM.wrap = params.wrap;
@@ -810,13 +838,34 @@ this.BX = this.BX || {};
 			this.expandTimelineDebounce = main_core.Runtime.debounce(this.expandTimeline, this.EXPAND_DELAY, this);
 			this.showMoreUsersBind = this.showMoreUsers.bind(this);
 			this.hideMoreUsersBind = this.hideMoreUsers.bind(this);
+			this.handleMousemoveBind = this.handleMousemove.bind(this);
+			this.handleMouseupBind = this.handleMouseup.bind(this);
 			this.setConfig(params);
 		}
-		static getMaxPlannerUsers() {
-			const settings = main_core.Extension.getSettings('calendar.planner');
-			return settings.maxPlannerUsers;
+		destroy() {
+			this.destroyed = true;
+			if (this.rebuildTimeout) {
+				clearTimeout(this.rebuildTimeout);
+				this.rebuildTimeout = null;
+			}
+			clearTimeout(this.selectorPopupTimeout);
+			this.selectorPopupTimeout = null;
+			if (this.hideAnimation) {
+				this.hideAnimation.stop();
+				this.hideAnimation = null;
+			}
+			if (this.showAnimation) {
+				this.showAnimation.stop();
+				this.showAnimation = null;
+			}
+			main_core.Event.unbind(document, 'mousemove', this.handleMousemoveBind);
+			main_core.Event.unbind(document, 'mouseup', this.handleMouseupBind);
+			this.selector?.destroy();
 		}
 		show() {
+			if (this.destroyed) {
+				return;
+			}
 			if (this.currentFromDate && this.currentToDate) {
 				const hourFrom = this.currentFromDate.getHours();
 				const hourTo = this.currentToDate.getHours() + Math.ceil(this.currentToDate.getMinutes() / 60);
@@ -866,12 +915,6 @@ this.BX = this.BX || {};
 				this.adjustHeight();
 			}
 			this.shown = true;
-		}
-		setEntriesCount(entriesCount) {
-			const maxPlannerUsers = Planner.getMaxPlannerUsers();
-			if (maxPlannerUsers > 0 && entriesCount > 0) {
-				this.setVisible(entriesCount <= maxPlannerUsers);
-			}
 		}
 		setVisible(isVisible) {
 			if (isVisible === this.isVisible) {
@@ -1319,6 +1362,9 @@ this.BX = this.BX || {};
 			node.hintPopup.remove();
 		}
 		buildTimeline(clearCache) {
+			if (this.destroyed || !main_core.Type.isDate(this.scaleDateFrom) || !main_core.Type.isDate(this.scaleDateTo)) {
+				return;
+			}
 			if (this.isBuilt() && (this.lastTimelineKey !== this.getTimelineShownKey() || clearCache === true)) {
 				main_core.Dom.clean(this.DOM.timelineScaleWrap);
 				this.scaleData = this.getScaleData();
@@ -1487,7 +1533,7 @@ this.BX = this.BX || {};
 			this.extendTimeline(extendedTimeFrom, extendedTimeTo, true);
 		}
 		extendTimeline(extendedTimeFrom, extendedTimeTo, isToRight = false) {
-			if (!this.DOM.timelineScaleWrap) {
+			if (this.destroyed || !this.DOM.timelineScaleWrap) {
 				return;
 			}
 			const isToLeft = !isToRight;
@@ -1519,7 +1565,7 @@ this.BX = this.BX || {};
 					}
 				}
 				for (let insertedTimestamp = fromTimestamp, i = 0; insertedTimestamp < toTimestamp; insertedTimestamp += this.scaleSize, i++) {
-					const title = BX.date.format('i', insertedTimestamp) === '00' ? BX.date.format(this.SCALE_TIME_FORMAT, insertedTimestamp) : '';
+					const title = main_date.DateTimeFormat.format('i', insertedTimestamp) === '00' ? main_date.DateTimeFormat.format(this.SCALE_TIME_FORMAT, insertedTimestamp) : '';
 					if (insertedTimestamp < this.currentFromDate.getTime() / 1000 - (isToLeft ? 3600 * 12 : 0)) {
 						cellsInsertedOnLeftCount++;
 					}
@@ -1593,6 +1639,9 @@ this.BX = this.BX || {};
 			}).animate();
 		}
 		updateTimelineAfterExtend() {
+			if (this.destroyed) {
+				return;
+			}
 			let mapDatePosRes = this.mapDatePos();
 			this.posDateMap = mapDatePosRes.posDateMap;
 			const timelineOffset = this.DOM.timelineScaleWrap.offsetWidth;
@@ -1607,6 +1656,9 @@ this.BX = this.BX || {};
 			this.buildTodayButtonWrap();
 		}
 		rebuild(params = {}) {
+			if (this.destroyed) {
+				return;
+			}
 			if (this.isBuilt()) {
 				this.buildTimeline(true);
 				this.update(this.entries, this.accessibility);
@@ -1623,6 +1675,9 @@ this.BX = this.BX || {};
 		getScaleData() {
 			this.scaleData = [];
 			this.scaleDayTitles = {};
+			if (!main_core.Type.isDate(this.scaleDateFrom) || !main_core.Type.isDate(this.scaleDateTo)) {
+				return this.scaleData;
+			}
 			let ts,
 				scaleFrom,
 				scaleTo,
@@ -1637,10 +1692,10 @@ this.BX = this.BX || {};
 			scaleFrom = this.scaleDateFrom.getTime();
 			scaleTo = this.scaleDateTo.getTime();
 			for (ts = scaleFrom; ts < scaleTo; ts += this.scaleSize * 1000) {
-				time = parseFloat(BX.date.format('H.i', ts / 1000));
-				if (this.isOneDayScale()) title = BX.date.format('d F, D', ts / 1000);else title = BX.date.format('i', ts / 1000) === '00' ? BX.date.format(this.SCALE_TIME_FORMAT, ts / 1000) : '';
+				time = parseFloat(main_date.DateTimeFormat.format('H.i', ts / 1000));
+				if (this.isOneDayScale()) title = main_date.DateTimeFormat.format('d F, D', ts / 1000);else title = main_date.DateTimeFormat.format('i', ts / 1000) === '00' ? main_date.DateTimeFormat.format(this.SCALE_TIME_FORMAT, ts / 1000) : '';
 				if (this.isOneDayScale() || time >= timeFrom && time < timeTo) {
-					dayStamp = BX.date.format('d.m.Y', ts / 1000);
+					dayStamp = main_date.DateTimeFormat.format('d.m.Y', ts / 1000);
 					this.scaleData.push({
 						daystamp: dayStamp,
 						timestamp: ts,
@@ -1998,8 +2053,8 @@ this.BX = this.BX || {};
 			main_core.Event.bind(this.DOM.wrap, 'click', this.handleClick.bind(this));
 			main_core.Event.bind(this.DOM.wrap, 'contextmenu', this.handleClick.bind(this));
 			main_core.Event.bind(this.DOM.wrap, 'mousedown', this.handleMousedown.bind(this));
-			main_core.Event.bind(document, 'mousemove', this.handleMousemove.bind(this));
-			main_core.Event.bind(document, 'mouseup', this.handleMouseup.bind(this));
+			main_core.Event.bind(document, 'mousemove', this.handleMousemoveBind);
+			main_core.Event.bind(document, 'mouseup', this.handleMouseupBind);
 			main_core.Event.bind(this.DOM.timelineFixedWrap, 'onwheel' in document ? 'wheel' : 'mousewheel', this.mouseWheelTimelineHandler.bind(this));
 		}
 		handleClick(e) {
@@ -2410,6 +2465,16 @@ this.BX = this.BX || {};
 			main_core.Dom.addClass(this.selector.DOM.moreButton, '--close');
 			main_core.Event.unbind(this.selector.DOM.moreButton, 'click', this.showMoreUsersBind);
 			main_core.Event.bind(this.selector.DOM.moreButton, 'click', this.hideMoreUsersBind);
+
+			// Additive signal: emitted only on an explicit user toggle of the attendees list,
+			// not on generic rebuilds (build, date/timezone change), so consumers can lazily
+			// load the accessibility of the previously hidden attendees.
+			this.emit('onToggleAttendeesList', new main_core_events.BaseEvent({
+				data: {
+					expanded: true,
+					usersCount: this.getUsersCount()
+				}
+			}));
 		}
 		hideMoreUsers() {
 			this.MIN_ENTRY_ROWS = this.initialMinEntryRows;
@@ -2419,6 +2484,22 @@ this.BX = this.BX || {};
 			main_core.Dom.removeClass(this.selector.DOM.moreButton, '--close');
 			main_core.Event.unbind(this.selector.DOM.moreButton, 'click', this.hideMoreUsersBind);
 			main_core.Event.bind(this.selector.DOM.moreButton, 'click', this.showMoreUsersBind);
+
+			// Additive signal (see showMoreUsers): the user collapsed the attendees list.
+			this.emit('onToggleAttendeesList', new main_core_events.BaseEvent({
+				data: {
+					expanded: false,
+					usersCount: this.getUsersCount()
+				}
+			}));
+		}
+		getUsersCount() {
+			if (!main_core.Type.isArray(this.entries)) {
+				return 0;
+			}
+
+			// Same source as the displayed users counter (see the display method): count entries of type 'user'.
+			return this.entries.filter(entry => entry.type === 'user').length;
 		}
 		adjustHeight() {
 			let newHeight = this.DOM.entrieListWrap.offsetHeight + this.DOM.entrieListWrap.offsetTop + 30,
@@ -2480,6 +2561,9 @@ this.BX = this.BX || {};
 			}
 		}
 		expandTimeline(scaleDateFrom, scaleDateTo) {
+			if (this.destroyed) {
+				return;
+			}
 			let loadedTimelineSize;
 			let scrollLeft;
 			const prevScaleDateFrom = this.scaleDateFrom;
@@ -2587,7 +2671,6 @@ this.BX = this.BX || {};
 			if (!main_core.Type.isArray(entries)) {
 				return;
 			}
-			this.setEntriesCount(entries.length);
 			if (this.entries?.length !== entries.length) {
 				this.doShowTimezoneNoticePopup = true;
 			}
@@ -2603,24 +2686,6 @@ this.BX = this.BX || {};
 				entry.timezoneOffset = calendar_util.Util.getTimeZoneOffset(entry.timezoneName, this.currentFromDate);
 				entry.timezoneNameFormatted = calendar_util.Util.getFormattedTimezone(entry.timezoneName);
 				entry.offset = currentOffset - entry.timezoneOffset;
-			});
-			const userId = parseInt(this.userId);
-
-			// sort entries list by amount of accessibility data
-			// Entries without accessibility data should be in the end of the array
-			// But first in the list will be meeting room
-			// And second (or first) will be owner-host of the event
-			entries.sort((a, b) => {
-				if (b.status === 'h' || parseInt(b.id) === userId && a.status !== 'h') {
-					return 1;
-				}
-				if (a.status === 'h' || parseInt(a.id) === userId && b.status !== 'h') {
-					return -1;
-				}
-				if (parseInt(a.id) < parseInt(b.id)) {
-					return -1;
-				}
-				return 1;
 			});
 			if (this.selectedEntriesWrap) {
 				main_core.Dom.clean(this.selectedEntriesWrap);
@@ -3328,5 +3393,5 @@ this.BX = this.BX || {};
 
 	exports.Planner = Planner;
 
-})(this.BX.Calendar = this.BX.Calendar || {}, BX, BX.Calendar, BX.Event, BX.UI, BX.Calendar.Ui.Tools, BX.Main, BX.Main, BX.UI);
+})(this.BX.Calendar = this.BX.Calendar || {}, BX, BX.Calendar, BX.Event, BX.UI, BX.Main, BX.Calendar.Ui.Tools, BX.Main, BX.UI);
 //# sourceMappingURL=planner.bundle.js.map

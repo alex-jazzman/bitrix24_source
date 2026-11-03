@@ -29,13 +29,33 @@ export const MediaGallery = {
 			type: Boolean,
 			default: false,
 		},
+		removeItemLabel: {
+			type: String,
+			default: '',
+		},
 		allowSorting: {
 			type: Boolean,
 			default: false,
 		},
+		// Opt-in ARIA grid roving (row/gridcell + focusable tiles) for consumers that drive it with a
+		// FocusZone. Off by default, so the feed and message builder galleries keep their plain markup.
+		gridNavigation: {
+			type: Boolean,
+			default: false,
+		},
+		// id of the hint about the Delete shortcut, kept by the consumer that drives the grid
+		describedById: {
+			type: String,
+			default: null,
+		},
 		handleLoading: {
 			type: Boolean,
 			default: false,
+		},
+		// an upload nobody may stop leaves the loader of an item telling the progress and nothing more
+		allowCancelItem: {
+			type: Boolean,
+			default: true,
 		},
 		width: {
 			type: Number,
@@ -98,13 +118,17 @@ export const MediaGallery = {
 		},
 	},
 	template: `
-		<div class="bx-im-elements-media-gallery">
+		<div class="bx-im-elements-media-gallery" :role="gridNavigation ? 'presentation' : null">
 			<MediaGalleryRow
 				v-for="(row) in rows"
 				:files="row"
 				:allowRemoveItem="allowRemoveItem"
+				:removeItemLabel="removeItemLabel"
 				:allowSorting="allowSorting"
+				:gridNavigation="gridNavigation"
+				:describedById="describedById"
 				:handleLoading="handleLoading"
+				:allowCancelItem="allowCancelItem"
 				:width="width"
 				:highlightDropzone="highlightDropzone"
 				@remove="onRemoveItem"

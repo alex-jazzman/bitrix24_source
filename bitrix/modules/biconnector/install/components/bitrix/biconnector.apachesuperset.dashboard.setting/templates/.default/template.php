@@ -38,6 +38,25 @@ if (!empty($arResult['ERROR_MESSAGES']))
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $APPLICATION->SetTitle($arResult['TITLE']);
 
+if (($arResult['SETTINGS_MODE'] ?? '') === \Bitrix\BIConnector\Internal\Services\DashboardSettings\DashboardSettingsMode::Reduced->value)
+{
+	\Bitrix\Main\UI\Extension::load(['biconnector.share-setting']);
+	$containerId = 'biconnector-dashboard-reduced-settings';
+	?>
+	<div id="<?= $containerId ?>"></div>
+	<script>
+		BX.ready(() => {
+			new BX.BIConnector.ShareSetting.ReducedSettings({
+				...<?= \Bitrix\Main\Web\Json::encode($arResult['REDUCED_SETTINGS']) ?>,
+				container: document.getElementById('<?= $containerId ?>'),
+			}).render();
+		});
+	</script>
+	<?php
+
+	return;
+}
+
 /** @var \Bitrix\BIConnector\Superset\UI\SettingsPanel\SettingsPanel $settingsPanel */
 $settingsPanel = $arResult['SETTINGS_PANEL'];
 $settingsPanel->show();

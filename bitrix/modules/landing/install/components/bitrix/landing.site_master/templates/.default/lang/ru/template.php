@@ -1,6 +1,6 @@
 <?php
 $MESS['LANDING_TPL_HEAD_TITLE'] = 'Ваш CRM + Интернет-магазин';
-$MESS['LANDING_TPL_WORKING_ALREADY'] = 'Почти готов, осталось совсем чуть-чуть ';
+$MESS['LANDING_TPL_WORKING_ALREADY'] = 'Почти готов, осталось совсем чуть-чуть';
 $MESS['LANDING_TPL_CURRENT_ADDRESS'] = 'Адрес вашего магазина';
 $MESS['LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG_TITLE'] = 'Так будет выглядеть карточка товара в вашем магазине';
 $MESS['LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG'] = 'Сейчас ваш магазин наполнен демо-товарами, они находятся в торговом каталоге Битрикс24.';

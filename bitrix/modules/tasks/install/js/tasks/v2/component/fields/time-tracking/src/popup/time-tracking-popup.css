@@ -1,5 +1,6 @@
 .tasks-time-tracking-popup {
 	padding: 0;
+	max-width: calc(100vw - var(--ui-space-inset-3xl));
 }
 
 .tasks-time-tracking-popup-header {
@@ -16,6 +17,7 @@
 
 .tasks-time-tracking-popup-content {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 10px;
 	padding: 24px;
 }
@@ -34,6 +36,12 @@
 	cursor: pointer;
 }
 
+.tasks-time-tracking-popup-content-switcher:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-time-tracking-popup-content-switcher a {
 	display: inline-flex;
 	align-items: center;
@@ -48,11 +56,29 @@
 	color: var(--ui-color-base-2);
 }
 
+/* button reset */
+.tasks-time-tracking-popup-content-more {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	text-align: inherit;
+}
+/* button reset end */
+
 .tasks-time-tracking-popup-content-more {
 	display: flex;
 	align-items: center;
 	justify-content: left;
 	cursor: pointer;
+}
+
+.tasks-time-tracking-popup-content-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-time-tracking-popup-content-more-icon {
@@ -94,11 +120,13 @@
 
 .tasks-time-tracking-popup-form-fields {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: left;
 	gap: 16px;
 	padding: 8px 0;
 }
 
 .tasks-time-tracking-popup-form-field {
-	width: 120px;
+	flex: 0 1 120px;
+	min-width: 0;
 }

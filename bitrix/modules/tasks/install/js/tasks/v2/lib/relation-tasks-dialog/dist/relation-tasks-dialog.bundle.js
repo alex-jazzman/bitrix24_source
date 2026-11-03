@@ -53,9 +53,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				width: 500,
 				entities: [{
 					id: this.#entityId,
-					options: {
-						withFooter: false
-					}
+					options: this.#entityOptions
 				}],
 				preselectedItems: this.#items,
 				events: {
@@ -177,6 +175,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		get #entityId() {
 			return this.#isTemplate ? tasks_v2_const.EntitySelectorEntity.Template : tasks_v2_const.EntitySelectorEntity.Task;
 		}
+		get #entityOptions() {
+			const options = {
+				withFooter: false
+			};
+			if (this.#meta.isSubTasks && !this.#isTemplate) {
+				options.editableOnly = true;
+				if (tasks_v2_lib_idUtils.idUtils.isReal(this.#taskId)) {
+					options.parentId = this.#taskId;
+					options.excludeIds = [this.#taskId];
+				}
+			}
+			return options;
+		}
 		get #isTemplate() {
 			return this.#meta.isTemplate && tasks_v2_lib_idUtils.idUtils.isTemplate(this.#taskId);
 		}
@@ -191,7 +202,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		relationToField: 'parentId',
 		footerText: main_core.Loc.getMessage('TASKS_V2_SUB_TASKS_CREATE'),
 		service: tasks_v2_provider_service_relationService.subTasksService,
-		isTemplate: true
+		isTemplate: true,
+		isSubTasks: true
 	});
 	const relatedTasksMeta = Object.freeze({
 		id: tasks_v2_const.TaskField.RelatedTasks,

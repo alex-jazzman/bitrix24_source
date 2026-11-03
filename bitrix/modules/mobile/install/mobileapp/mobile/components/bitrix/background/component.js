@@ -34,6 +34,18 @@
 	const { registerDeeplink } = require('in-app-url/deeplink');
 	registerDeeplink();
 
+	// the address with the intent code is spent by the native authentication and does not reach the
+	// routes, so the code of the section is taken from the native slot of the last notification
+	try
+	{
+		const { applyIntentFromBridge } = require('intent/entry');
+		applyIntentFromBridge();
+	}
+	catch (e)
+	{
+		console.error(e);
+	}
+
 	const { AppRatingBackgroundClient } = require('app-rating-background-client');
 	AppRatingBackgroundClient.subscribeToUserEvents();
 	AppRatingBackgroundClient.subscribeToAppPausedEvent();

@@ -1,0 +1,187 @@
+.bx-im-folder-tour__container {
+	position: relative;
+	display: flex;
+	align-items: stretch;
+}
+
+/* Own column of the card: the illustration hangs from the top edge and never stretches with the
+   text, so a longer step keeps it exactly where the shorter one had it. */
+.bx-im-folder-tour__image {
+	flex: 0 0 98px;
+	align-self: flex-start;
+	box-sizing: border-box;
+	height: 108px;
+	margin-top: var(--ui-space-stack-sm);
+	padding-left: var(--ui-space-inset-md2);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-origin: content-box;
+	background-size: contain;
+}
+
+.bx-im-folder-tour__image.--folder {
+	background-image: url('./images/folder.webp');
+}
+
+.bx-im-folder-tour__image.--tasks {
+	background-image: url('./images/tasks.webp');
+}
+
+.bx-im-folder-tour__image.--projects {
+	background-image: url('./images/projects.webp');
+}
+
+.bx-im-folder-tour__image.--settings {
+	background-image: url('./images/settings.webp');
+}
+
+.bx-im-folder-tour__content {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs2);
+	min-width: 0;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2) var(--ui-space-inset-md) var(--ui-space-inset-sm);
+}
+
+/* Live region of the step. The wrapper exists for the announcement only, so it repeats the gap of
+   the content block and leaves the layout as it was. */
+.bx-im-folder-tour__body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+}
+
+.bx-im-folder-tour__title {
+	padding-right: var(--ui-space-inline-xl);
+	color: var(--ui-color-design-filled-content);
+}
+
+/* The popup counts its position once, on mount, so a step of a different height would move it. The
+   text is what varies between the steps, and holding it at three lines keeps every step the same
+   height without padding the card out to the longest one. */
+.bx-im-folder-tour__text {
+	min-height: calc(var(--ui-text-sm-line-height) * 3);
+	color: var(--ui-color-design-filled-content);
+}
+
+.bx-im-folder-tour__footer {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	margin-top: auto;
+	padding-top: var(--ui-space-stack-2xs2);
+}
+
+/* Arrows flank the dots: the whole group reads as one control of the step. */
+.bx-im-folder-tour__pagination {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	min-width: 0;
+}
+
+.bx-im-folder-tour__arrow {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-design-filled-content-secondary);
+
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	appearance: none;
+}
+
+.bx-im-folder-tour__arrow:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bx-im-folder-tour__arrow:disabled {
+	--ui-icon-set__icon-color: var(--ui-color-design-filled-content-icon-secondary);
+
+	cursor: default;
+}
+
+.bx-im-folder-tour__steps {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+/* Every dot is a control of its own and keeps the tap area of the arrows next to it; the dot itself
+   is drawn inside, so the visible size stays 8px. */
+.bx-im-folder-tour__step {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-circle);
+	background: none;
+	cursor: pointer;
+	appearance: none;
+}
+
+.bx-im-folder-tour__step::before {
+	content: '';
+	width: 8px;
+	height: 8px;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: var(--ui-color-design-filled-content-icon-secondary);
+}
+
+.bx-im-folder-tour__step.--current {
+	background-color: var(--ui-color-design-selection-bg);
+}
+
+/* The typography component paints its own colour on the element, so the number takes the colour of
+   the step here rather than inheriting it from the dot. */
+.bx-im-folder-tour__step-number {
+	color: var(--ui-color-design-selection-content);
+}
+
+.bx-im-folder-tour__step.--current::before {
+	content: none;
+}
+
+.bx-im-folder-tour__step:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bx-im-folder-tour__action {
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+.bx-im-folder-tour__close {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-design-filled-content-icon);
+
+	position: absolute;
+	top: var(--ui-space-inset-xs);
+	right: var(--ui-space-inset-xs);
+	display: flex;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	appearance: none;
+}
+
+.bx-im-folder-tour__close:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}

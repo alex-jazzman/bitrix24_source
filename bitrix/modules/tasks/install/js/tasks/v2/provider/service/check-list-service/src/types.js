@@ -1,4 +1,4 @@
-import type { UserDto } from 'tasks.v2.provider.service.user-service';
+import { type UserDto } from 'tasks.v2.provider.service.user-service';
 
 export type CheckListDto = {
 	id: number | string,

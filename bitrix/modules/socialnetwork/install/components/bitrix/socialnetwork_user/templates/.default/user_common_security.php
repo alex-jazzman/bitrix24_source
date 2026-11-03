@@ -1,9 +1,14 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
+
+use Bitrix\Main\Web\Uri;
+
 $pageId = "user";
 
 $path = CComponentEngine::MakePathFromTemplate($arResult["PATH_TO_USER"], array("user_id" => $arResult["VARIABLES"]["user_id"]));
-$path = CHTTP::urlAddParams($path, array("otp" => "Y"));
+$path = (string)(new Uri($path))->addParams(["otp" => "Y"]);
 
 if (
 	\Bitrix\Main\Context::getCurrent()->getRequest()->get('IFRAME') === 'Y'

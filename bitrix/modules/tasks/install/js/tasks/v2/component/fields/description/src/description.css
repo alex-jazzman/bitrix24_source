@@ -29,8 +29,28 @@
 	flex-grow: 0;
 }
 
+/* mini-btn button reset */
+.tasks-card-change-description-mini-btn {
+	appearance: none;
+	display: block;
+	width: 100%;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+}
+/* mini-btn button reset end */
+
 .tasks-card-change-description-mini-btn {
 	cursor: text;
+}
+
+.tasks-card-change-description-mini-btn:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-card-change-description-mini-btn:hover .tasks-card-change-description,
@@ -94,6 +114,25 @@
 	opacity: 1;
 }
 
+/* close button reset */
+.tasks-card-description-header-close {
+	appearance: none;
+	display: inline-flex;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* close button reset end */
+
+.tasks-card-description-header-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-card-description-expand-icon.ui-icon-set {
 	margin-left: auto;
 	margin-right: 5px;
@@ -105,6 +144,12 @@
 	--scroll-width: 5px;
 }
 
+.tasks-card-description-editor-wrapper:focus-within {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 @supports (scrollbar-gutter: stable) {
 	.tasks-card-description-editor-wrapper {
 		scrollbar-gutter: stable;
@@ -113,13 +158,13 @@
 
 @supports not selector(::-webkit-scrollbar) {
 	.tasks-card-description-editor-wrapper {
-		scrollbar-color: rgba(0, 0, 0, 0.21) transparent;
+		scrollbar-color: color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 21%, transparent) transparent;
 		scrollbar-width: thin;
 	}
 }
 
 .tasks-card-description-editor-wrapper::-webkit-scrollbar {
-	background-color: rgba(0, 0, 0, 0);
+	background-color: transparent;
 	width: 5px;
 }
 
@@ -128,7 +173,7 @@
 }
 
 .tasks-card-description-editor-wrapper::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.21);
+	background: color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 21%, transparent);
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 	cursor: pointer;
@@ -163,6 +208,12 @@
 	transition: border-color 0.25s;
 }
 
+.tasks-card-description-inline:focus-within {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-card-description-inline.--top-shadow {
 	border-top-color: var(--ui-color-divider-default);
 }
@@ -181,7 +232,6 @@
 }
 
 .tasks-card-description-inline-preview {
-	max-height: 130px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	-webkit-line-clamp: 5;
@@ -307,7 +357,7 @@
 	width: 100%;
 	flex-shrink: 0;
 	opacity: 0.36;
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.00) 11.84%, rgba(255, 255, 255, 0.90) 79.41%);
+	background: linear-gradient(180deg, color-mix(in srgb, var(--ui-color-bg-content-primary) 0%, transparent) 11.84%, color-mix(in srgb, var(--ui-color-bg-content-primary) 90%, transparent) 79.41%);
 	position: absolute;
 	bottom: 0;
 }
@@ -319,7 +369,7 @@
 	clip: rect(-15px auto 6px 0);
 	flex-shrink: 0;
 	border-radius: 15px 15px 0 0;
-	background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.04) 100%);
+	background: linear-gradient(180deg, color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 0%, transparent) 0%, color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 4%, transparent) 100%);
 	position: absolute;
 }
 
@@ -339,6 +389,23 @@
 	margin-bottom: 0;
 }
 
+/* Blue accent for quotes in compact card inline description. SC-003 / AC-011. */
+.tasks-card-description-inline .ui-typography-quote {
+	background-color: var(--ui-color-accent-soft-blue-3);
+	border-color: var(--ui-color-accent-soft-blue-2);
+}
+
+/* Quote icon: recolor via mask + token color (base style uses a hex-baked SVG background). */
+.tasks-card-description-inline .ui-typography-quote:before {
+	--tasks-quote-icon-mask: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2214%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%2011.813C2.563%2010.6%203.844%209.171%203.844%207.531c-1.104-.121-2.01-.551-2.719-1.29C.417%205.5.063%204.646.063%203.675c0-1.033.348-1.903%201.046-2.612C1.807.354%202.677%200%203.72%200c1.146%200%202.146.46%203%201.382C7.573%202.303%208%203.422%208%204.738%208%208.685%205.74%2011.773%201.219%2014L0%2011.813z%22/%3E%3C/svg%3E');
+	background-image: none;
+	background-color: var(--ui-color-accent-soft-blue-1);
+	-webkit-mask-image: var(--tasks-quote-icon-mask);
+	-webkit-mask-repeat: no-repeat;
+	mask-image: var(--tasks-quote-icon-mask);
+	mask-repeat: no-repeat;
+}
+
 .tasks-full-card-field-container.--description-preview .tasks-card-description-footer {
 	padding-top: var(--ui-space-inset-2xs2);
 	padding-bottom: var(--ui-space-inset-xs);
@@ -350,6 +417,12 @@
 
 .tasks-card-description-field .tasks-full-card-field-container.--no-padding-bottom {
 	padding-bottom: 0;
+}
+
+.tasks-full-card-field-container.--description-preview .tasks-entity-text-area-wrapper:focus-within {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-card-description-field-icon {

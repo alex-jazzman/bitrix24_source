@@ -1,4 +1,4 @@
-import { Tag, Dom } from 'main.core';
+import { Tag, Dom, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { AvatarRound, AvatarRoundExtranet, AvatarRoundGuest, AvatarBase } from 'ui.avatar';
 import { WorkStatusControlPanel } from 'timeman.work-status-control-panel';
@@ -45,22 +45,43 @@ export class MainContent extends Content
 				}
 			};
 
+			const profileButton = this.#getProfileButton(onclick);
+
 			return Tag.render`
 				<div class="intranet-avatar-widget-item__wrapper" data-testid="bx-avatar-widget-content-main">
-					<div onclick="${onclick}" class="intranet-avatar-widget-item-main__wrapper-head">
-						<div class="intranet-avatar-widget-item__avatar">
-							${this.#getAvatar().getContainer()}
-						</div>
-						<div class="intranet-avatar-widget-item__info-wrapper">
-							${this.#getFullName()}
-							${this.#getWorkPosition()}
-						</div>
-					</div>
+					${profileButton}
 					${this.#getStatus()}
 					${this.#getWorkStatusBlock()}
 					${this.#getToolsContainer()}
 				</div>
 			`;
+		});
+	}
+
+	#getProfileButton(onclick: () => void): HTMLElement
+	{
+		return this.cache.remember('profileButton', () => Tag.render`
+			<button
+				type="button"
+				onclick="${onclick}"
+				class="intranet-avatar-widget-item-main__wrapper-head"
+				aria-label="${this.#getProfileButtonLabel()}"
+			>
+				<div class="intranet-avatar-widget-item__avatar">
+					${this.#getAvatar().getContainer()}
+				</div>
+				<div class="intranet-avatar-widget-item__info-wrapper">
+					${this.#getFullName()}
+					${this.#getWorkPosition()}
+				</div>
+			</button>
+		`);
+	}
+
+	#getProfileButtonLabel(): string
+	{
+		return Loc.getMessage('INTRANET_AVATAR_WIDGET_OPEN_USER_PROFILE', {
+			'#NAME#': this.getOptions().fullName,
 		});
 	}
 
@@ -70,7 +91,7 @@ export class MainContent extends Content
 			return Tag.render`
 				<span class="intranet-avatar-widget-item__title">
 					<span>${this.getOptions().fullName}</span>
-					<i class="ui-icon-set --chevron-right-s intranet-avatar-widget-item__chevron"/>
+					<i aria-hidden="true" class="ui-icon-set --chevron-right-s intranet-avatar-widget-item__chevron"/>
 				</span>
 			`;
 		});
@@ -256,6 +277,7 @@ export class MainContent extends Content
 			({ data: [{ fullName }] }) => {
 				this.getOptions().fullName = fullName;
 				this.#getFullName().querySelector('span').innerHTML = fullName;
+				Dom.attr(this.#getProfileButton(), 'aria-label', this.#getProfileButtonLabel());
 			},
 		);
 		EventEmitter.subscribe('BX.Intranet.AvatarWidget.Popup:enabledAutoHide', () => {

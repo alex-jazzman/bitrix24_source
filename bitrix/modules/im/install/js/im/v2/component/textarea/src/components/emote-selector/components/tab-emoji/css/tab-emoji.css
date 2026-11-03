@@ -8,7 +8,7 @@
 	box-sizing: border-box;
 	height: 440px;
 	overflow-y: auto;
-	padding: 10px;
+	padding: 10px 10px calc(10px + var(--im-emote-popup__footer_height));
 }
 
 .bx-im-emoji-content__box_category {
@@ -22,9 +22,18 @@
 	padding-left: 10px;
 }
 
+/*
+ * A content row of the grid: a flex row of eight cells. Each cell keeps its width and margin, so the
+ * eight of them fill the row exactly - the visual result is identical to the inline-block wrapping
+ * that laid them out before, only now each row is real role="row" markup the grid engine reads.
+ */
+.bx-im-emoji-content__box_category-row {
+	display: flex;
+}
+
 .bx-im-emoji-content__box_category-emoji {
+	border-radius: 4px;
 	cursor: pointer;
-	display: inline-block;
 	font-size: var(--im-emoji-content__size_emoji);
 	margin: 7px;
 	text-align: center;

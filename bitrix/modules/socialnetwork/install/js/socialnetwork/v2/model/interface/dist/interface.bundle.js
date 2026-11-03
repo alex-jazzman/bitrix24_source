@@ -20,6 +20,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			isOldPortal: false,
 			action: '',
 			isAccessRestricted: false,
+			accessRightsExpanded: false,
+			additionalSettingsExpanded: false,
 			loading: false,
 			scrollToStartupTool: false,
 			validation: {
@@ -58,6 +60,12 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					isAccessRestricted: params.isAccessRestricted,
 					scrollToStartupTool: params.scrollToStartupTool === true
 				});
+			},
+			markAccessRightsExpanded() {
+				this.accessRightsExpanded = true;
+			},
+			markAdditionalSettingsExpanded() {
+				this.additionalSettingsExpanded = true;
 			},
 			setValidation(field, props) {
 				if (!this.validation[field]) {

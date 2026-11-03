@@ -266,7 +266,7 @@ body.note-sidebar-resizing .note-page-brand::after {
 	}
 }
 
-/* [ALG-02] Overlay: the document keeps its width, so the placeholder must not reserve anything —
+/* Overlay: the document keeps its width, so the placeholder must not reserve anything —
    it slides over the page instead, on the layer the panel itself will use. */
 .note-page-ai-chat-pending.is-overlay {
 	position: absolute;

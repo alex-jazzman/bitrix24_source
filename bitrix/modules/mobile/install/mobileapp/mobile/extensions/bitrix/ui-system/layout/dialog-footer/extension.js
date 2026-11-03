@@ -20,28 +20,31 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 		{
 			super(props);
 
-			this.#initialKeyboardHandlers();
-
 			this.state = {
 				footerHeight: 0,
 				isKeyboardShown: props.isKeyboardShown ?? props.isShowKeyboard ?? false,
 			};
 		}
 
-		#initialKeyboardHandlers()
+		componentDidMount()
 		{
-			Keyboard.on(Keyboard.Event.WillHide, () => {
-				this.updateKeyboardState(false);
-			});
-
-			Keyboard.on(Keyboard.Event.WillShow, () => {
-				this.updateKeyboardState(true);
-			});
+			Keyboard.on(Keyboard.Event.WillHide, this.#handleKeyboardWillHide);
+			Keyboard.on(Keyboard.Event.WillShow, this.#handleKeyboardWillShow);
 		}
+
+		componentWillUnmount()
+		{
+			Keyboard.off(Keyboard.Event.WillHide, this.#handleKeyboardWillHide);
+			Keyboard.off(Keyboard.Event.WillShow, this.#handleKeyboardWillShow);
+		}
+
+		#handleKeyboardWillHide = () => this.updateKeyboardState(false);
+
+		#handleKeyboardWillShow = () => this.updateKeyboardState(true);
 
 		updateKeyboardState(isKeyboardShown)
 		{
-			const { isKeyboardShownCurrent } = this.state;
+			const { isKeyboardShown: isKeyboardShownCurrent } = this.state;
 
 			if (isKeyboardShownCurrent !== isKeyboardShown)
 			{

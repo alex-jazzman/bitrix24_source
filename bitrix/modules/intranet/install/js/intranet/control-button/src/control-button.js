@@ -349,10 +349,21 @@ export class ControlButton
 			analytics.c_sub_section = videoCallContext;
 		}
 
-		ajax.runAction('intranet.controlbutton.getVideoCallChat', this.getAjaxConfig(analytics)).then((response) => {
-			if (response.data)
+		const config = this.getAjaxConfig(analytics);
+
+		return ajax.runAction('intranet.controlbutton.getVideoCallStart', config).then((response) => {
+			const chatId = parseInt(response.data?.chatId, 10);
+			if (chatId > 0)
 			{
-				Messenger.startVideoCall(`chat${response.data}`, true);
+				const callOptions = response.data.callOptions;
+				if (Type.isPlainObject(callOptions) && Type.isNumber(callOptions.invitePeriod))
+				{
+					Messenger.startVideoCall(`chat${chatId}`, true, callOptions);
+				}
+				else
+				{
+					Messenger.startVideoCall(`chat${chatId}`, true);
+				}
 			}
 
 			this.chatLockCounter = 0;
@@ -361,13 +372,14 @@ export class ControlButton
 			if (response.errors[0].code === 'lock_error' && this.chatLockCounter < 4)
 			{
 				this.chatLockCounter++;
-				this.startVideoCall();
+
+				return this.startVideoCall();
 			}
-			else
-			{
-				this.showHintPopup(response.errors[0].message);
-				this.hideLoader();
-			}
+
+			this.showHintPopup(response.errors[0].message);
+			this.hideLoader();
+
+			return null;
 		});
 	}
 

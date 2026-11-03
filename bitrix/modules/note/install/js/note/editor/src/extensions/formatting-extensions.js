@@ -21,7 +21,6 @@ import { Link } from '@tiptap/extension-link';
 import { InputRule } from '@tiptap/core';
 import { sanitizeUrl } from '../utils/url';
 import { Lexer } from 'marked';
-import { escapeInlineText } from './shared-marked';
 
 // Single `[text](url)` markdown link, not the `[[image ...]]` asset syntax (double bracket) —
 // the lookbehind rejects a `[` immediately before ours without consuming it (range.from must stay
@@ -131,10 +130,6 @@ function ensureParagraphInlineTokens(tokens)
 }
 
 const SafeListItem = ListItem.extend({
-	renderMarkdown(node, h, ctx): string
-	{
-		return this.parent?.({ ...node, content: escapeInlineText(node.content) }, h, ctx) ?? '';
-	},
 	parseMarkdown: (token, helpers) => {
 		if (token.type !== 'list_item')
 		{
@@ -206,13 +201,6 @@ const SafeListItem = ListItem.extend({
 	},
 });
 
-const MarkdownBlockquote = Blockquote.extend({
-	renderMarkdown(node, h, ctx): string
-	{
-		return this.parent?.({ ...node, content: escapeInlineText(node.content) }, h, ctx) ?? '';
-	},
-});
-
 const CleanOrderedList = OrderedList.extend({
 	markdownTokenizer: null,
 	parseMarkdown: (token, helpers) => {
@@ -247,6 +235,201 @@ const CustomHorizontalRule = HorizontalRule.extend({
 	},
 });
 
+const COLOR_MARK_TOKEN = 'colorMark';
+const COLOR_OPEN = '{color:';
+const COLOR_CLOSE = '{/color}';
+
+/**
+ * Whitelists CSS color values so a `{color:VALUE}` markdown token can only ever become a safe inline
+ * `color:` style: hex (#rgb / #rgba / #rrggbb / #rrggbbaa), rgb()/rgba(), hsl()/hsla(), or a bare CSS
+ * named color. Anything else (url(), expression(), CSS keywords, over-long input) is rejected.
+ * Mirrors HtmlToMarkdown::normalizeColor() on the import side so both ends agree on what survives.
+ * Legibility is decided there, not here: the import converter drops white because the foreign markup
+ * rendered it against its own background, while a white the user picked in the editor round-trips -
+ * the document canvas follows the theme.
+ */
+function isSafeColor(value): boolean
+{
+	if (typeof value !== 'string')
+	{
+		return false;
+	}
+
+	const v = value.trim();
+	if (v === '' || v.length > 32)
+	{
+		return false;
+	}
+
+	if (/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v))
+	{
+		return true;
+	}
+
+	if (/^rgba?\(\s*[0-9.,%\s]+\)$/i.test(v) || /^hsla?\(\s*[0-9.,%\s]+\)$/i.test(v))
+	{
+		return true;
+	}
+
+	if (/^[a-z]{3,20}$/i.test(v))
+	{
+		const reserved = ['inherit', 'initial', 'unset', 'revert', 'currentcolor', 'transparent', 'none', 'auto'];
+
+		return !reserved.includes(v.toLowerCase());
+	}
+
+	return false;
+}
+
+/**
+ * Scans a `{color:VALUE}...{/color}` token at the start of `src`, matching the closing marker with
+ * nesting support (a colored run may contain another colored run). Returns the color value, the raw
+ * matched text and the inner markdown, or null when `src` does not start a balanced color token.
+ */
+function scanColorToken(src): ?Object
+{
+	if (!src.startsWith(COLOR_OPEN))
+	{
+		return null;
+	}
+
+	const closeBrace = src.indexOf('}', COLOR_OPEN.length);
+	if (closeBrace === -1)
+	{
+		return null;
+	}
+
+	const color = src.slice(COLOR_OPEN.length, closeBrace).trim();
+	if (color === '' || color.length > 32)
+	{
+		return null;
+	}
+
+	const innerStart = closeBrace + 1;
+	let depth = 1;
+	let i = innerStart;
+	while (i < src.length)
+	{
+		if (src.startsWith(COLOR_CLOSE, i))
+		{
+			depth -= 1;
+			if (depth === 0)
+			{
+				return {
+					color,
+					inner: src.slice(innerStart, i),
+					raw: src.slice(0, i + COLOR_CLOSE.length),
+				};
+			}
+			i += COLOR_CLOSE.length;
+			continue;
+		}
+
+		if (src.startsWith(COLOR_OPEN, i))
+		{
+			depth += 1;
+			i += COLOR_OPEN.length;
+			continue;
+		}
+
+		i += 1;
+	}
+
+	return null;
+}
+
+/**
+ * Adds a `textStyle` color mark to every text node that does not already carry one, recursing into
+ * child content. Used on parse so an outer `{color:...}` never overrides a nested inner color (inner
+ * wins), matching ProseMirror's single-textStyle-per-node model. Mutates and returns `nodes`.
+ */
+function applyColorToUnmarked(nodes, color)
+{
+	(nodes || []).forEach((node) => {
+		if (node.type === 'text')
+		{
+			const marks = node.marks || [];
+			if (!marks.some((mark) => mark.type === 'textStyle'))
+			{
+				node.marks = [...marks, { type: 'textStyle', attrs: { color } }];
+			}
+		}
+		else if (node.content)
+		{
+			applyColorToUnmarked(node.content, color);
+		}
+	});
+
+	return nodes;
+}
+
+/**
+ * Adds a markdown round-trip to the textStyle mark for the `{color:VALUE}...{/color}` token that
+ * HtmlToMarkdown emits (and the editor's own color picker sets). Without this the color attribute is
+ * silently dropped on serialise. The mark stays `textStyle` (so the Color extension's `color`
+ * attribute still applies); only the token type differs (`colorMark`).
+ */
+const ColorTextStyle = TextStyle.extend({
+	markdownTokenName: COLOR_MARK_TOKEN,
+
+	markdownTokenizer: {
+		name: COLOR_MARK_TOKEN,
+		level: 'inline',
+
+		start(src)
+		{
+			return src.indexOf(COLOR_OPEN);
+		},
+
+		tokenize(src, tokens, helpers)
+		{
+			const parsed = scanColorToken(src);
+			if (!parsed)
+			{
+				return null;
+			}
+
+			return {
+				type: COLOR_MARK_TOKEN,
+				raw: parsed.raw,
+				color: parsed.color,
+				tokens: helpers.inlineTokens(parsed.inner),
+			};
+		},
+
+		childTokens: [],
+	},
+
+	parseMarkdown(token, helpers)
+	{
+		const content = helpers.parseInline(token.tokens || []);
+		// An unsafe/unknown color is stripped to its inner text - never applied as a style attribute.
+		if (!isSafeColor(token.color))
+		{
+			return content;
+		}
+
+		// Apply this color only where a nested run has not already set one. ProseMirror allows a single
+		// textStyle mark per text node (the color picker's setColor replaces, never stacks), so on a
+		// nested `{color:A}...{color:B}x{/color}...{/color}` the inner color B must win for `x`. Returning
+		// the already-marked node array (not applyMark) avoids the manager stacking a second textStyle.
+		return applyColorToUnmarked(content, token.color);
+	},
+
+	renderMarkdown(node, helpers)
+	{
+		const inner = helpers.renderChildren(node.content ?? []);
+		const color = node?.attrs?.color;
+		// Only a safe color round-trips; any other textStyle attribute serialises to just its text.
+		if (!isSafeColor(color))
+		{
+			return inner;
+		}
+
+		return `${COLOR_OPEN}${color}}${inner}${COLOR_CLOSE}`;
+	},
+});
+
 export function createFormattingExtensions(): Object[]
 {
 	return [
@@ -261,7 +444,7 @@ export function createFormattingExtensions(): Object[]
 			excludes: 'code link',
 		}),
 		CodeBlock,
-		MarkdownBlockquote,
+		Blockquote,
 		Callout,
 		CalloutInputEnter,
 		BulletList,
@@ -270,7 +453,7 @@ export function createFormattingExtensions(): Object[]
 		TaskList,
 		TaskItem.configure({ nested: true }),
 		CustomHorizontalRule,
-		TextStyle,
+		ColorTextStyle,
 		Color.configure({ types: ['textStyle'] }),
 		Highlight.configure({ multicolor: true }),
 		Subscript,

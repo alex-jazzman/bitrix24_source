@@ -9,10 +9,12 @@ export class FastMobileAuthTool extends BaseSecondaryTool
 		return '--o-qr-code';
 	}
 
-	onClick(): void
+	onClick(event: MouseEvent): void
 	{
 		Analytics.send(Analytics.EVENT_CLICK_FAST_MOBILE_AUTH);
-		EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick');
+		EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', {
+			focusTarget: event.currentTarget,
+		});
 	}
 
 	getId(): string

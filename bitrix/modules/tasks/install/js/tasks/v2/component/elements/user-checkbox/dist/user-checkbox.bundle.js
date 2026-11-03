@@ -25,6 +25,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			checked: {
 				type: Boolean,
 				default: false
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
+			role: {
+				type: String,
+				default: 'switch'
 			}
 		},
 		emits: ['update:checked'],
@@ -47,10 +55,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		methods: {
 			toggleCheck() {
 				this.$emit('update:checked', !this.checked);
+			},
+			handleKeydown(event) {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					this.toggleCheck();
+				}
 			}
 		},
 		template: `
-		<div :class="containerClasses" @click="toggleCheck">
+		<div
+			:class="containerClasses"
+			:role="role"
+			:aria-checked="checked ? 'true' : 'false'"
+			:aria-label="ariaLabel || null"
+			tabindex="0"
+			@click="toggleCheck"
+			@keydown="handleKeydown"
+		>
 			<div class="b24-user-checkbox-avatar">
 				<UserAvatar
 					:key="user.id"

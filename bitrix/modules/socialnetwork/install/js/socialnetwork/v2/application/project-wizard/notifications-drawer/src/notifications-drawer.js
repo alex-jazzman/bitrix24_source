@@ -2,9 +2,10 @@ import { defineComponent } from 'ui.vue3';
 import { Loc } from 'main.core';
 import { HeadlineMd, HeadlineXs, TextLg, TextSm } from 'ui.system.typography.vue';
 import { Button as UiButton, ButtonSize, AirButtonStyle } from 'ui.vue3.components.button';
-import { Switcher as UiSwitcher } from 'ui.vue3.components.switcher';
 import { SwitcherSize, AirSwitcherStyle, type SwitcherOptions } from 'ui.switcher';
 import 'ui.icon-set.outline';
+
+import { AccessibleSwitcher } from 'socialnetwork.v2.components.elements.accessible-switcher';
 
 import './notifications-drawer.css';
 
@@ -16,7 +17,7 @@ export const NotificationsPanel = defineComponent({
 		TextLg,
 		TextSm,
 		UiButton,
-		UiSwitcher,
+		AccessibleSwitcher,
 	},
 	props: {
 		catalog: {
@@ -130,12 +131,12 @@ export const NotificationsPanel = defineComponent({
 							class="sonet--project-wizard--notifications-row"
 						>
 							<TextLg class="sonet--project-wizard--notifications-row-label">{{ type.label }}</TextLg>
-							<UiSwitcher
-								:isChecked="type.counterEnabled"
+							<AccessibleSwitcher
+								:modelValue="type.counterEnabled"
+								:ariaLabel="type.label"
 								:options="switcherOptions"
 								:data-testid="'project-notifications-toggle-' + type.id"
-								@check="setDraftCounter(type.id, true)"
-								@uncheck="setDraftCounter(type.id, false)"
+								@update:modelValue="setDraftCounter(type.id, $event)"
 							/>
 						</div>
 					</div>

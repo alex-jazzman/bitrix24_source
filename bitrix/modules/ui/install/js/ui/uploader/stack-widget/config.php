@@ -18,6 +18,7 @@ return [
 		'ui.uploader.tile-widget',
 		'ui.buttons',
 		'ui.progressround',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

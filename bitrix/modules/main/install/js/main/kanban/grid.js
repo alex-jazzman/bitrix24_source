@@ -2,6 +2,22 @@
 
 "use strict";
 
+/**
+ * Keyboard navigation and accessible names of the board (getBoardAriaLabel,
+ * withMatrix, moveEntryPoint, normalizeTabIndex, activate and the item hooks
+ * getFocusableNode, refreshAriaLabel, getItemAriaLabel) are covered by unit
+ * tests that live in another module: crm/install/js/crm/kanban/tests/unit/.
+ * This extension is legacy and has no bundle config of its own, so it cannot
+ * host a chef test suite; crm.kanban loads it as a dependency and takes the
+ * classes from the BX namespace exactly as the product does.
+ *
+ * Run them when changing this file:
+ *   chef test unit crm.kanban --project chromium
+ *
+ * The same code also backs the kanban boards of tasks, rpa and
+ * crm.sales.tunnels, which have no coverage of their own.
+ */
+
 BX.namespace("BX.Kanban");
 
 /**
@@ -76,6 +92,8 @@ BX.Kanban.Grid = function(options)
 	this.earTimer = null;
 	this.firstRenderComplete = null;
 	this.dragMode = BX.Kanban.DragMode.NONE;
+
+	this.keyboardNavigation = new BX.Kanban.KeyboardNavigation(this);
 
 	this.multiSelect = options.multiSelect;
 	this.ahaMode = null;
@@ -267,6 +285,8 @@ BX.Kanban.Grid.prototype =
 
 		BX.remove(column.getContainer());
 
+		column.destroy();
+
 		return true;
 	},
 
@@ -456,6 +476,9 @@ BX.Kanban.Grid.prototype =
 
 		item.setOptions(options);
 		item.render();
+		// The redraw goes through render(), not renderLayout(), so the accessible
+		// name is rewritten explicitly for the new data.
+		item.refreshAriaLabel();
 
 		return true;
 	},
@@ -803,6 +826,9 @@ BX.Kanban.Grid.prototype =
 		}
 
 		this.adjustEmptyStub();
+		this.adjustBoardAriaLabel();
+
+		this.keyboardNavigation.ensureEntryPoint();
 
 		BX.onCustomEvent(this, "Kanban.Grid:onRender", [this]);
 
@@ -824,15 +850,20 @@ BX.Kanban.Grid.prototype =
 		var innerContainer = this.getInnerContainer();
 		innerContainer.appendChild(this.getEmptyStub());
 		innerContainer.appendChild(this.getLeftEar());
-		innerContainer.appendChild(this.getRightEar());
 		innerContainer.appendChild(this.getDropZoneArea().getContainer());
 		innerContainer.appendChild(this.getLoader());
 		innerContainer.appendChild(this.getGridContainer());
+		// The right scroll ear follows the lane in the DOM so the Tab order matches
+		// the visual order (WCAG 2.4.3); both ears are positioned absolutely, so
+		// their place in the DOM does not affect the layout.
+		innerContainer.appendChild(this.getRightEar());
 
 		var outerContainer = this.getOuterContainer();
 		outerContainer.appendChild(innerContainer);
 
 		this.renderTo.appendChild(this.getOuterContainer());
+
+		this.keyboardNavigation.init();
 
 		BX.bind(window, "resize", this.adjustLayout.bind(this));
 		BX.bind(window, "scroll", this.adjustHeight.bind(this));
@@ -862,13 +893,18 @@ BX.Kanban.Grid.prototype =
 			return this.layout.earLeft;
 		}
 
-		this.layout.earLeft = BX.create("div", {
+		this.layout.earLeft = BX.create("button", {
 			attrs: {
-				className: "main-kanban-ear-left"
+				className: "main-kanban-ear-left",
+				type: "button",
+				disabled: "disabled",
+				"aria-label": this.getMessage("SCROLL_LEFT"),
+				"data-testid": "kanban-scroll-left-btn"
 			},
 			events: {
 				mouseenter: this.scrollToLeft.bind(this),
-				mouseleave: this.stopAutoScroll.bind(this)
+				mouseleave: this.stopAutoScroll.bind(this),
+				click: this.scrollPageLeft.bind(this)
 			}
 		});
 
@@ -886,13 +922,18 @@ BX.Kanban.Grid.prototype =
 			return this.layout.earRight;
 		}
 
-		this.layout.earRight = BX.create("div", {
+		this.layout.earRight = BX.create("button", {
 			attrs: {
-				className: "main-kanban-ear-right"
+				className: "main-kanban-ear-right",
+				type: "button",
+				disabled: "disabled",
+				"aria-label": this.getMessage("SCROLL_RIGHT"),
+				"data-testid": "kanban-scroll-right-btn"
 			},
 			events: {
 				mouseenter: this.scrollToRight.bind(this),
-				mouseleave: this.stopAutoScroll.bind(this)
+				mouseleave: this.stopAutoScroll.bind(this),
+				click: this.scrollPageRight.bind(this)
 			}
 		});
 
@@ -922,6 +963,11 @@ BX.Kanban.Grid.prototype =
 		this.layout.outerContainer = BX.create("div", {
 			props: {
 				className: this.columnsRevert ? "main-kanban --columns-revert" : "main-kanban"
+			},
+			attrs: {
+				role: "region",
+				"aria-label": this.getBoardAriaLabel(),
+				"data-testid": "kanban-board"
 			},
 			style: {
 				backgroundColor: this.getBgColorStyle()
@@ -994,9 +1040,18 @@ BX.Kanban.Grid.prototype =
 	{
 		if (!this.layout.gridContainer)
 		{
+			// The lane carries no list role: its children are stage groups, not list
+			// items, and a list without a single listitem is announced as an empty
+			// one. The cards are already a list inside every column.
+			// tabindex="-1" keeps the lane out of the Tab order while allowing it to
+			// take focus programmatically, see handOverEarFocus().
 			this.layout.gridContainer = BX.create("div", {
 				props: {
 					className: "main-kanban-grid"
+				},
+				attrs: {
+					tabindex: "-1",
+					"data-testid": "kanban-lane"
 				},
 				events: {
 					scroll: this.adjustEars.bind(this)
@@ -1091,6 +1146,9 @@ BX.Kanban.Grid.prototype =
 			props: {
 				className: "main-kanban-loader-container"
 			},
+			attrs: {
+				"aria-hidden": "true"
+			},
 			html:
 				'<svg class="main-kanban-loader-circular" viewBox="25 25 50 50">' +
 				'<circle class="main-kanban-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>' +
@@ -1098,6 +1156,16 @@ BX.Kanban.Grid.prototype =
 		});
 
 		return this.layout.loader;
+	},
+
+	/**
+	 * Refreshes the accessible name of the board. The outer container is created
+	 * once and reused, while the name it carries can change with the data (for
+	 * example when another funnel is opened), so it is recomputed on every draw.
+	 */
+	adjustBoardAriaLabel: function()
+	{
+		this.getOuterContainer().setAttribute("aria-label", this.getBoardAriaLabel());
 	},
 
 	adjustLayout: function()
@@ -1117,6 +1185,52 @@ BX.Kanban.Grid.prototype =
 
 		this.getOuterContainer().classList[isLeftVisible ? "add" : "remove"]("main-kanban-left-ear-shown");
 		this.getOuterContainer().classList[isRightVisible ? "add" : "remove"]("main-kanban-right-ear-shown");
+
+		this.adjustEarButton(this.getLeftEar(), isLeftVisible);
+		this.adjustEarButton(this.getRightEar(), isRightVisible);
+	},
+
+	/**
+	 * Keeps a scroll-ear button out of the Tab order while it is not actionable
+	 * (the ear is invisible and click-through in this state). The native disabled
+	 * state is used instead of hiding an interactive control from assistive
+	 * technology: the button stays in the accessibility tree, but is exposed as
+	 * unavailable and can neither be focused nor activated.
+	 *
+	 * @param {Element} earButton
+	 * @param {boolean} isVisible
+	 */
+	adjustEarButton: function(earButton, isVisible)
+	{
+		if (!isVisible && document.activeElement === earButton)
+		{
+			this.handOverEarFocus(earButton);
+		}
+
+		earButton.disabled = !isVisible;
+	},
+
+	/**
+	 * Hands focus over before a scroll ear is disabled under it. A disabled control
+	 * cannot keep focus, so the browser would drop it on <body>: a keyboard user who
+	 * paged the lane to its end would continue from the top of the document instead
+	 * of from the board (WCAG 2.4.3). Focus goes to the opposite ear while there is
+	 * still something to scroll, otherwise to the lane itself, from where Tab
+	 * continues into the board.
+	 *
+	 * @param {Element} earButton
+	 */
+	handOverEarFocus: function(earButton)
+	{
+		var oppositeEar = earButton === this.getLeftEar() ? this.getRightEar() : this.getLeftEar();
+		if (!oppositeEar.disabled && typeof oppositeEar.focus === "function")
+		{
+			oppositeEar.focus();
+
+			return;
+		}
+
+		this.getGridContainer().focus();
 	},
 
 	adjustWidth: function()
@@ -1357,6 +1471,21 @@ BX.Kanban.Grid.prototype =
 		jsDD.refreshDestArea();
 	},
 
+	getScrollPageStep: function()
+	{
+		return Math.max(Math.round(this.getGridContainer().clientWidth * 0.8), 100);
+	},
+
+	scrollPageRight: function()
+	{
+		this.getGridContainer().scrollLeft += this.getScrollPageStep();
+	},
+
+	scrollPageLeft: function()
+	{
+		this.getGridContainer().scrollLeft -= this.getScrollPageStep();
+	},
+
 	/**
 	 *
 	 * @returns {BX.Kanban.DragMode}
@@ -1498,11 +1627,25 @@ BX.Kanban.Grid.prototype =
 	fadeOut: function()
 	{
 		this.getOuterContainer().classList.add("main-kanban-faded");
+		this.getOuterContainer().setAttribute("aria-busy", "true");
 	},
 
 	fadeIn: function()
 	{
 		this.getOuterContainer().classList.remove("main-kanban-faded");
+		this.getOuterContainer().setAttribute("aria-busy", "false");
+	},
+
+	/**
+	 * Accessible name of the board (aria-label). Overridable name hook.
+	 * Base layer returns a neutral board name; domain wrappers provide the
+	 * meaningful one (e.g. funnel name).
+	 *
+	 * @returns {string}
+	 */
+	getBoardAriaLabel: function()
+	{
+		return this.getMessage("BOARD_ARIA_LABEL");
 	},
 
 	getMessage: function(messageId)
@@ -1598,6 +1741,536 @@ BX.Kanban.DragEvent.prototype =
 	getTargetColumn: function()
 	{
 		return this.targetColumn;
+	}
+};
+
+/**
+ * Every key handleKeydown acts on. Anything else (Tab, Esc, typing) is dropped
+ * before the board is walked, so an unrelated key costs nothing.
+ *
+ * @type {string[]}
+ */
+var NAVIGATION_KEYS = [
+	"Enter",
+	" ",
+	"Spacebar",
+	"ArrowRight",
+	"ArrowLeft",
+	"ArrowDown",
+	"ArrowUp"
+];
+
+/**
+ * Keyboard navigation for the board: roving tabindex over columns (groups) and
+ * cards (list items), arrow-key movement with scrollIntoView, and Enter/Space
+ * activation of the focused card (reusing the card's own open handler).
+ *
+ * Listeners are bound to the board container (not window), so existing window
+ * Esc/hotkeys and text input are left untouched.
+ *
+ * @param {BX.Kanban.Grid} grid
+ * @constructor
+ */
+BX.Kanban.KeyboardNavigation = function(grid)
+{
+	this.grid = grid;
+	this.initialized = false;
+	this.matrix = null;
+	this.matrixDepth = 0;
+	this.activeCell = null;
+	this.movingFocus = false;
+	this.boundHandleKeydown = this.handleKeydown.bind(this);
+	this.boundHandleFocusIn = this.handleFocusIn.bind(this);
+};
+
+BX.Kanban.KeyboardNavigation.prototype =
+{
+	init: function()
+	{
+		if (this.initialized)
+		{
+			return;
+		}
+
+		var container = this.grid.getGridContainer();
+		container.addEventListener("keydown", this.boundHandleKeydown);
+		container.addEventListener("focusin", this.boundHandleFocusIn);
+
+		this.initialized = true;
+	},
+
+	/**
+	 * Vertical list of focusable cells inside a column: the column group itself
+	 * followed by the focus node of each visible card.
+	 *
+	 * @param {BX.Kanban.Column} column
+	 * @returns {Element[]}
+	 */
+	getColumnCells: function(column)
+	{
+		var cells = [column.getContainer()];
+		column.getItems().forEach(function(item) {
+			if (item.isVisible())
+			{
+				cells.push(item.getFocusableNode());
+			}
+		});
+
+		return cells;
+	},
+
+	/**
+	 * 2D model of navigable cells: columns (outer) x cells (inner).
+	 *
+	 * @returns {Element[][]}
+	 */
+	getMatrix: function()
+	{
+		if (this.matrix !== null)
+		{
+			return this.matrix;
+		}
+
+		var matrix = this.grid.getColumns().map(function(column) {
+			return this.getColumnCells(column);
+		}, this);
+
+		if (this.matrixDepth > 0)
+		{
+			this.matrix = matrix;
+		}
+
+		return matrix;
+	},
+
+	/**
+	 * Runs the callback with the matrix built at most once. Normalizing the roving
+	 * tabindex reads the whole board twice -- once to find the entry point and once
+	 * to write every cell -- and a rebuild walks every column and every visible
+	 * card. Outside such a call the matrix is never kept: the board changes on
+	 * redraw, on a "show more" page, on pull, on drag and drop, on filtering and on
+	 * collapsing a column, and a stale matrix would hand focus to a card that is no
+	 * longer on the board. That is also why the keyboard path below does not use
+	 * the matrix at all: it reads the columns it needs at the moment of the press.
+	 *
+	 * @param {Function} callback
+	 * @returns {*}
+	 */
+	withMatrix: function(callback)
+	{
+		this.matrixDepth++;
+		try
+		{
+			return callback.call(this);
+		}
+		finally
+		{
+			this.matrixDepth--;
+			if (this.matrixDepth === 0)
+			{
+				this.matrix = null;
+			}
+		}
+	},
+
+	/**
+	 * @returns {Element[]}
+	 */
+	getAllNavigables: function()
+	{
+		var result = [];
+		this.getMatrix().forEach(function(cells) {
+			cells.forEach(function(cell) {
+				result.push(cell);
+			});
+		});
+
+		return result;
+	},
+
+	/**
+	 * Column of the board the node belongs to, with its position in the board.
+	 * Only the columns are walked, never their cards, and there are few columns
+	 * even on a wide board.
+	 *
+	 * @param {Element} node
+	 * @returns {?{column: BX.Kanban.Column, colIndex: number}}
+	 */
+	locateColumn: function(node)
+	{
+		if (!node)
+		{
+			return null;
+		}
+
+		var columns = this.grid.getColumns();
+		for (var colIndex = 0; colIndex < columns.length; colIndex++)
+		{
+			if (columns[colIndex].getContainer() === node)
+			{
+				return { column: columns[colIndex], colIndex: colIndex };
+			}
+		}
+
+		return null;
+	},
+
+	/**
+	 * Resolves the navigable cell (card or column group) that owns the event target
+	 * together with the column holding it, or null when the target is outside the
+	 * navigable structure.
+	 *
+	 * The column comes from the layout, so nothing here walks the cards: this runs
+	 * on every key press the board handles, key repeat included. A card being
+	 * dragged is moved out of the board container, where the listeners are, so
+	 * whatever reaches this point sits inside a column of this board.
+	 *
+	 * @param {Element} target
+	 * @returns {?{cell: Element, column: BX.Kanban.Column, colIndex: number}}
+	 */
+	resolveCell: function(target)
+	{
+		if (!target || typeof target.closest !== "function")
+		{
+			return null;
+		}
+
+		var place = this.locateColumn(target.closest(".main-kanban-column"));
+		if (!place)
+		{
+			return null;
+		}
+
+		var card = target.closest(".main-kanban-item");
+		if (card)
+		{
+			var item = this.grid.getItemByElement(card);
+			if (item && item.isVisible())
+			{
+				place.cell = item.getFocusableNode();
+
+				return place;
+			}
+		}
+
+		// Either the target is not on a card, or the card is not a cell of its own
+		// (a hidden item); the column group answers for it.
+		place.cell = place.column.getContainer();
+
+		return place;
+	},
+
+	/**
+	 * @param {Element} el
+	 * @param {boolean} focus
+	 */
+	setActive: function(el, focus)
+	{
+		this.moveEntryPoint(el);
+
+		if (focus)
+		{
+			// preventScroll: focus() would scroll the cell into view on its own, and
+			// the call below has to scroll anyway -- the focus node of a card can be a
+			// small element inside it, while it is the whole card that has to be
+			// brought into view. Two scroll calculations per arrow key press is what
+			// the flag saves.
+			this.focusCell(el, { preventScroll: true });
+
+			var scrollTarget = el.closest(".main-kanban-item") || el;
+			if (typeof scrollTarget.scrollIntoView === "function")
+			{
+				scrollTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+			}
+		}
+	},
+
+	/**
+	 * Moves the single tabindex="0" of the board onto the given cell. Only the
+	 * cell that carried it and the new one are written to: every other cell keeps
+	 * what the last full normalization left on it.
+	 *
+	 * @param {Element} el
+	 */
+	moveEntryPoint: function(el)
+	{
+		if (this.activeCell === null)
+		{
+			// Nothing is known yet about where the entry point sits, so the whole
+			// board is normalized once.
+			this.normalizeTabIndex(el);
+
+			return;
+		}
+
+		if (this.activeCell !== el)
+		{
+			this.activeCell.setAttribute("tabindex", "-1");
+		}
+
+		el.setAttribute("tabindex", "0");
+		this.activeCell = el;
+	},
+
+	/**
+	 * Writes the roving tabindex over every cell of the board: the entry point
+	 * gets "0", everything else "-1".
+	 *
+	 * @param {Element} active
+	 */
+	normalizeTabIndex: function(active)
+	{
+		this.getAllNavigables().forEach(function(node) {
+			node.setAttribute("tabindex", node === active ? "0" : "-1");
+		});
+
+		this.activeCell = active;
+	},
+
+	/**
+	 * Moves focus to a cell. focus() dispatches focusin synchronously, and the
+	 * focusin handler would then redo the work this call has just done, walking
+	 * the board a second time; the flag tells it the board is moving focus itself.
+	 *
+	 * @param {Element} el
+	 * @param {?Object} options
+	 */
+	focusCell: function(el, options)
+	{
+		this.movingFocus = true;
+		try
+		{
+			el.focus(options);
+		}
+		finally
+		{
+			this.movingFocus = false;
+		}
+	},
+
+	/**
+	 * Normalizes the roving tabindex: exactly one entry point (tabindex="0") so
+	 * Tab reaches the lane, and every other cell out of the Tab order. This is the
+	 * only pass that writes every cell, because a cell added since the last one
+	 * (a "show more" page, a card pushed by pull) can carry no tabindex at all and
+	 * would otherwise stay a native tab stop until focus enters the board again.
+	 */
+	ensureEntryPoint: function()
+	{
+		this.withMatrix(function() {
+			var navigables = this.getAllNavigables();
+			if (navigables.length === 0)
+			{
+				return;
+			}
+
+			// The known entry point is the usual case; the board is searched only
+			// when it is gone, for example after a redraw built new cells.
+			var active = this.activeCell;
+			if (active === null || navigables.indexOf(active) === -1)
+			{
+				active = null;
+				navigables.forEach(function(node) {
+					if (active === null && node.getAttribute("tabindex") === "0")
+					{
+						active = node;
+					}
+				});
+			}
+
+			this.normalizeTabIndex(active || navigables[0]);
+		});
+	},
+
+	handleFocusIn: function(event)
+	{
+		if (this.movingFocus)
+		{
+			return;
+		}
+
+		var place = this.resolveCell(event.target);
+		if (!place)
+		{
+			return;
+		}
+
+		this.setActive(place.cell, false);
+
+		// A card container can be focused from the outside (for example when focus is
+		// restored after a stage move). Hand focus over to the node that carries the
+		// card semantics, so what is focused is what gets announced.
+		// preventScroll: whoever focused the card container has already brought it
+		// into view, and a plain mouse click must not shift the board.
+		if (place.cell !== event.target && event.target.classList.contains("main-kanban-item"))
+		{
+			this.focusCell(place.cell, { preventScroll: true });
+		}
+	},
+
+	/**
+	 * @param {Element} target
+	 * @returns {boolean}
+	 */
+	isTextInput: function(target)
+	{
+		if (!target || !target.tagName)
+		{
+			return false;
+		}
+
+		var tag = target.tagName.toUpperCase();
+
+		return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable === true;
+	},
+
+	handleKeydown: function(event)
+	{
+		// A key this handler does nothing with must not reach the board at all.
+		if (this.isTextInput(event.target) || NAVIGATION_KEYS.indexOf(event.key) === -1)
+		{
+			return;
+		}
+
+		var place = this.resolveCell(event.target);
+		if (!place)
+		{
+			return;
+		}
+
+		// Activation asks nothing about the layout of the board: the card is the one
+		// the event comes from, so nothing is walked here.
+		if (event.key === "Enter" || event.key === " " || event.key === "Spacebar")
+		{
+			this.activateCard(place.cell, event);
+
+			return;
+		}
+
+		var target = this.getArrowTarget(place, event.key);
+		if (target && target !== place.cell)
+		{
+			event.preventDefault();
+			this.setActive(target, true);
+		}
+	},
+
+	/**
+	 * Cell an arrow key moves to, or null when the board ends there.
+	 *
+	 * Two columns at most are read: the one holding the focused cell and, for a
+	 * horizontal move, the neighbouring one. The rest of the board is not touched,
+	 * so the cost of a key press does not grow with the number of cards on it.
+	 *
+	 * @param {{cell: Element, column: BX.Kanban.Column, colIndex: number}} place
+	 * @param {string} key
+	 * @returns {Element|null}
+	 */
+	getArrowTarget: function(place, key)
+	{
+		var cells = this.getColumnCells(place.column);
+		var rowIndex = cells.indexOf(place.cell);
+		if (rowIndex === -1)
+		{
+			// The focused cell has left its column between the two events (a card
+			// hidden by a filter, a card removed), so there is no row to move from.
+			return null;
+		}
+
+		switch (key)
+		{
+			case "ArrowDown":
+				return this.getRowCell(cells, rowIndex + 1);
+			case "ArrowUp":
+				return this.getRowCell(cells, rowIndex - 1);
+			case "ArrowRight":
+				return this.getNeighbourCell(place.colIndex + 1, rowIndex);
+			case "ArrowLeft":
+				return this.getNeighbourCell(place.colIndex - 1, rowIndex);
+			default:
+				return null;
+		}
+	},
+
+	/**
+	 * Cell of the neighbouring column at the same row, or null beyond the first and
+	 * the last column.
+	 *
+	 * @param {number} colIndex
+	 * @param {number} rowIndex
+	 * @returns {Element|null}
+	 */
+	getNeighbourCell: function(colIndex, rowIndex)
+	{
+		var column = colIndex < 0 ? null : this.grid.getColumns()[colIndex];
+
+		return column ? this.getRowCell(this.getColumnCells(column), rowIndex) : null;
+	},
+
+	/**
+	 * Cell at the row, clamped to the column: a move into a shorter column stops on
+	 * its last card instead of leaving the board.
+	 *
+	 * @param {Element[]} cells
+	 * @param {number} rowIndex
+	 * @returns {Element|null}
+	 */
+	getRowCell: function(cells, rowIndex)
+	{
+		if (cells.length === 0)
+		{
+			return null;
+		}
+
+		return cells[Math.max(0, Math.min(rowIndex, cells.length - 1))];
+	},
+
+	/**
+	 * Opens the focused card on Enter and on Space.
+	 *
+	 * Space only gets here on a board without multiselect: where selection is
+	 * available the card handler takes Space for the selection and stops the
+	 * event, see BX.Kanban.Item.handleContainerKeydown.
+	 *
+	 * @param {Element} current
+	 * @param {KeyboardEvent} event
+	 */
+	activateCard: function(current, event)
+	{
+		if (event.target !== current)
+		{
+			return;
+		}
+
+		var card = current.closest(".main-kanban-item");
+		if (!card)
+		{
+			return;
+		}
+
+		// A native link or button is activated by the browser itself on Enter.
+		if (event.key === "Enter" && this.isNativeControl(current))
+		{
+			return;
+		}
+
+		var item = this.grid.getItemByElement(card);
+		if (item)
+		{
+			event.preventDefault();
+			item.activate();
+		}
+	},
+
+	/**
+	 * @param {Element} node
+	 * @returns {boolean}
+	 */
+	isNativeControl: function(node)
+	{
+		var tag = node.tagName ? node.tagName.toUpperCase() : "";
+
+		return tag === "BUTTON" || (tag === "A" && node.hasAttribute("href"));
 	}
 };
 

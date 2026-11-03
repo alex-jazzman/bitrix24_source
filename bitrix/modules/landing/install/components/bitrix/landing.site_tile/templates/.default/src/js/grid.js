@@ -9,8 +9,10 @@ import { LandingSitesAiSlider } from './slider';
 import { LandingSitesAiFirstVisitTooltip } from './ai-first-visit-tooltip';
 import '../css/landing.site.tile.css';
 import { Metrika } from 'landing.metrika';
+import { createEmptystateButton } from './button-emptystate';
+import { A11y } from './a11y';
 
-export { LandingSitesAiInput, LandingSitesAiSlider, LandingSitesAiFirstVisitTooltip };
+export { LandingSitesAiInput, LandingSitesAiSlider, LandingSitesAiFirstVisitTooltip, createEmptystateButton };
 
 export class SiteTile
 {
@@ -61,6 +63,10 @@ export class SiteTile
 		}
 		this.setData(this.items);
 		this.init();
+		if (options.announcement)
+		{
+			A11y.announce(options.announcement);
+		}
 	}
 
 	getItems()

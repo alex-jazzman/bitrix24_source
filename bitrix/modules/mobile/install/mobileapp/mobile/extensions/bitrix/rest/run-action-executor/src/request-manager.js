@@ -2,6 +2,8 @@
  * @module rest/run-action-executor/src/request-manager
  */
 jn.define('rest/run-action-executor/src/request-manager', (require, exports, module) => {
+	const { Type } = require('type');
+
 	const REQUEST_STORAGE_NAME = 'requestExecutorStore';
 	const isAndroid = Application.getPlatform() === 'android';
 
@@ -17,17 +19,19 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 	{
 		/**
 		 * @param {string} action
-		 * @param {Object} options
+		 * @param {Record<string, unknown>} options the payload of the action
 		 * @param {Logger} logger
-		 * @param {Object} [navigation={}]
-		 * @param {Object} [storage=null]
+		 * @param {TransportNavigation} [navigation={}]
+		 * @param {RequestStore} [storage=null]
 		 */
 		constructor(action, options, logger, navigation = {}, storage = null)
 		{
 			this.action = action;
 			this.options = options || {};
 			this.navigation = navigation || {};
-			this.requestKey = this.#getRequestKey();
+			this.cacheId = null;
+			this.baseRequestKey = this.#buildBaseRequestKey();
+			this.requestKey = this.#buildRequestKey();
 			this.pulseInterval = null;
 			this.logger = logger;
 			this.requestStore = storage || Application.sharedStorage(REQUEST_STORAGE_NAME);
@@ -40,7 +44,7 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 		};
 
 		/**
-		 * @returns {Promise<*|null>}
+		 * @returns {RequestRecord|null}
 		 */
 		getSameOngoingRequest()
 		{
@@ -55,8 +59,8 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 		}
 
 		/**
-		 * @param {string} [status=RequestManager.PROMISE_STATUS.PENDING]
-		 * @param {*} [result=null] - The result to set (can be any type except a function).
+		 * @param {RequestStatus} [status=RequestManager.PROMISE_STATUS.PENDING]
+		 * @param {unknown} [result=null] the answer of the request, or its error; never a function
 		 * @returns {void}
 		 */
 		setRequestStatus(status, result = null)
@@ -71,6 +75,10 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 			}
 		}
 
+		/**
+		 * @param {number} timestamp
+		 * @returns {void}
+		 */
 		#clearStorage(timestamp)
 		{
 			setTimeout(() => {
@@ -92,8 +100,16 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 			this.setRequestStatus(RequestManager.PROMISE_STATUS.PENDING);
 		}
 
+		/**
+		 * @returns {void}
+		 */
 		#startPulseMechanism()
 		{
+			// A manager that takes a request over may already be pulsing for its own: overwriting the
+			// timer id would strand the old timer, and nobody can clear it afterwards - it would keep
+			// reading the storage until the context dies, holding this manager with it.
+			this.#stopPulseMechanism();
+
 			this.pulseInterval = setInterval(() => {
 				const requestState = this.requestStore.get(this.requestKey);
 				if (requestState?.status === RequestManager.PROMISE_STATUS.PENDING)
@@ -107,11 +123,18 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 			}, PULSE_INTERVAL_MS);
 		}
 
+		/**
+		 * @param {RequestRecord} requestState
+		 * @returns {void}
+		 */
 		#updateOngoingRequestTimestamp(requestState)
 		{
 			this.setRequestStatus(RequestManager.PROMISE_STATUS.PENDING, requestState.result);
 		}
 
+		/**
+		 * @returns {void}
+		 */
 		#stopPulseMechanism()
 		{
 			if (this.pulseInterval)
@@ -122,9 +145,9 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 		}
 
 		/**
-		 * @param {Function} executeRequestCallback
-		 * @param {Function} internalHandlerCallback
-		 * @returns {Promise<*>}
+		 * @param {function(): Promise<ActionResponse>} executeRequestCallback
+		 * @param {function(ActionResponse): void} internalHandlerCallback
+		 * @returns {Promise<ActionResponse>} the answer of the request this duplicate waits for
 		 */
 		waitOngoingRequestResult(executeRequestCallback, internalHandlerCallback)
 		{
@@ -144,37 +167,62 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 					}
 					else
 					{
-						this.#tryAgain(request, executeRequestCallback, resolve, reject, interval);
+						this.#tryAgain(executeRequestCallback, resolve, reject, interval);
 					}
 				}, REQUEST_INTERVAL_MS);
 			});
 		}
 
 		/**
-		 * @param {Object} options
+		 * @param {Record<string, unknown>} options merged into the current payload
+		 * @returns {void}
 		 */
 		updateOptions(options)
 		{
-			if (options && typeof options === 'object')
+			if (Type.isObjectLike(options))
 			{
 				this.options = Object.assign(this.options, options);
-				this.requestKey = this.#getRequestKey();
+				this.baseRequestKey = this.#buildBaseRequestKey();
+				this.requestKey = this.#buildRequestKey();
 			}
 		}
 
-		#getRequestKey()
+		/**
+		 * @param {String|null} [cacheId]
+		 * @returns {void}
+		 */
+		updateCacheId(cacheId)
 		{
-			if (!this.requestKey)
-			{
-				const sortedOptions = this.#sortKeysRecursively(this.options);
-				const sortedNavigation = this.#sortKeysRecursively(this.navigation);
-
-				return `${JSON.stringify(sortedOptions)}/${JSON.stringify(sortedNavigation)}/${this.action}`;
-			}
-
-			return this.requestKey;
+			this.cacheId = cacheId;
+			this.requestKey = this.#buildRequestKey();
 		}
 
+		#buildRequestKey()
+		{
+			return this.cacheId === null || this.cacheId === undefined
+				? this.baseRequestKey
+				: `${this.baseRequestKey}/${this.cacheId}`;
+		}
+
+		#buildBaseRequestKey()
+		{
+			const sortedOptions = this.#sortKeysRecursively(this.options);
+			const sortedNavigation = this.#sortKeysRecursively(this.navigation);
+
+			return [
+				JSON.stringify(sortedOptions),
+				JSON.stringify(sortedNavigation),
+				this.action,
+			].join('/');
+		}
+
+		/**
+		 * The request key is a serialized value, so two equal payloads have to serialize identically
+		 * whatever order their keys were built in.
+		 *
+		 * @param {unknown} obj
+		 * @returns {unknown} the same value with the keys of every nested object sorted
+		 */
 		#sortKeysRecursively(obj)
 		{
 			if (typeof obj !== 'object' || obj === null)
@@ -196,12 +244,27 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 			return sortedObj;
 		}
 
+		/**
+		 * @param {RequestRecord|null} request
+		 * @returns {boolean}
+		 */
 		#isRequestCompleted(request)
 		{
-			return request.status === RequestManager.PROMISE_STATUS.FULFILLED
-				|| request.status === RequestManager.PROMISE_STATUS.REJECTED;
+			// A record cleared while this duplicate was waiting reads as unfinished on purpose:
+			// the liveness check below then finds nothing alive and the duplicate takes the
+			// request over. Dereferencing the missing record instead would throw inside the
+			// polling timer and leave the promise this method serves unsettled forever.
+			return request?.status === RequestManager.PROMISE_STATUS.FULFILLED
+				|| request?.status === RequestManager.PROMISE_STATUS.REJECTED;
 		}
 
+		/**
+		 * @param {RequestRecord} request
+		 * @param {function(*): void} resolve
+		 * @param {function(*): void} reject
+		 * @param {function(*): void} internalHandlerCallback
+		 * @returns {void}
+		 */
 		#resolveOngoingRequestResult(request, resolve, reject, internalHandlerCallback)
 		{
 			if (request.status === RequestManager.PROMISE_STATUS.FULFILLED)
@@ -214,42 +277,75 @@ jn.define('rest/run-action-executor/src/request-manager', (require, exports, mod
 			}
 		}
 
+		/**
+		 * @param {RequestRecord} request
+		 * @param {function(*): void} resolve
+		 * @param {function(*): void} internalHandlerCallback
+		 * @returns {void}
+		 */
 		#handleFulfilledRequest(request, resolve, internalHandlerCallback)
 		{
 			resolve(request.result);
 			internalHandlerCallback(request.result);
 		}
 
+		/**
+		 * @param {RequestRecord} request
+		 * @param {function(*): void} reject
+		 * @returns {void}
+		 */
 		#handleRejectedRequest(request, reject)
 		{
 			reject(request.result);
 		}
 
-		#tryAgain(request, executeRequestCallback, resolve, reject, interval)
+		/**
+		 * @param {function(): Promise<*>} executeRequestCallback
+		 * @param {function(*): void} resolve
+		 * @param {function(*): void} reject
+		 * @param {number} interval - the polling timer of the duplicate that is waiting
+		 * @returns {Promise<void>}
+		 */
+		async #tryAgain(executeRequestCallback, resolve, reject, interval)
 		{
 			const isAlive = this.#isRequestAlive();
 			if (!isAlive)
 			{
 				clearInterval(interval);
 
-				this.setRequestStatus(RequestManager.PROMISE_STATUS.PENDING);
+				// Taking the request over means owning its heartbeat too: a status alone stops being
+				// refreshed, and a request slower than the liveness window looks dead to the next
+				// duplicate, which then sends the very request this branch exists to avoid.
+				this.startRequest();
 
 				this.logger.warn(`Main request of ${this.action} is dead. A queued duplicate request is now being sent to the server`);
 
 				try
 				{
-					const result = executeRequestCallback();
-					this.setRequestStatus(RequestManager.PROMISE_STATUS.FULFILLED, result);
-					resolve(result);
+					// The callback is asynchronous: without awaiting it the promise itself would be
+					// stored as the result and the catch below could never fire.
+					resolve(await executeRequestCallback());
 				}
 				catch (error)
 				{
-					this.setRequestStatus(RequestManager.PROMISE_STATUS.REJECTED, error);
+					// The request path closes the record for everything it recognises as an answer,
+					// and only what it failed to close is left open here - the heartbeat and every
+					// duplicate keep waiting on it otherwise. A record already closed belongs to the
+					// server answer: overwriting it would hand the next duplicate the internal error
+					// of a screen it knows nothing about instead of that answer.
+					if (!this.#isRequestCompleted(this.requestStore.get(this.requestKey)))
+					{
+						this.setRequestStatus(RequestManager.PROMISE_STATUS.REJECTED, error);
+					}
+
 					reject(error);
 				}
 			}
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
 		#isRequestAlive()
 		{
 			const requestState = this.requestStore.get(this.requestKey);

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Mail\Helper\Config\Feature;
 use Bitrix\Mail\Message;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
@@ -32,6 +33,24 @@ if (IsModuleInstalled('disk'))
 /** @var string $componentPath */
 /** @var \CMailClientMessageViewComponent $component */
 /** @var array $message */
+/** @var bool $hasAccessToMessageDelete */
+
+$mailboxAvatar = (array)($arResult['MAILBOX_AVATAR'] ?? []);
+$mailboxAvatarUrl = (
+	(int)($mailboxAvatar['mailboxId'] ?? 0) === (int)($message['MAILBOX_ID'] ?? 0)
+	&& is_string($mailboxAvatar['url'] ?? null)
+	&& $mailboxAvatar['url'] !== ''
+)
+	? $mailboxAvatar['url']
+	: null
+;
+
+// An outgoing letter sent through a personal identity carries an address of its own, and the avatar of
+// the mailbox belongs to the mailbox address alone.
+$senderRepresentsMailbox = !empty($message['__is_outcome'])
+	&& (string)($message['SENDER_EMAIL'] ?? '') !== ''
+	&& strcasecmp((string)$message['SENDER_EMAIL'], (string)($message['__email'] ?? '')) === 0
+;
 
 $replyTo = array_merge($message['__to'], $message['__reply_to']);
 $replyTo = array_filter($replyTo, function($item) use ($message) {
@@ -68,20 +87,33 @@ $warningWaitElementId = "mail-msg-warning-top-wait-$messageId";
 $warningFailElementId = "mail-msg-warning-top-fail-$messageId";
 $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
+$senderAvatarParams = array_merge(
+	!empty($arResult['avatarParams'][$message['SENDER_EMAIL']])
+		? $arResult['avatarParams'][$message['SENDER_EMAIL']]
+		: [],
+	[
+		'avatarSize' => 40,
+		'imageUrl' => $senderRepresentsMailbox ? $mailboxAvatarUrl : null,
+	],
+);
+$senderAvatar = Feature::isSenderAvatarAvailable()
+	? (array)($senderAvatarParams['senderAvatarByMessageId'][$messageId] ?? [])
+	: []
+;
+if (empty($senderAvatarParams['imageUrl']) && !empty($senderAvatar['IMAGE_URL']))
+{
+	$senderAvatarParams['imageUrl'] = (string)$senderAvatar['IMAGE_URL'];
+}
+$senderAvatarParams['testId'] = 'mail-message-view-sender-avatar';
 
 ?>
 <div class="mail-msg-view-border-bottom">
 	<div class="mail-msg-view-header <? if ($arParams['LOADED_FROM_LOG'] == 'Y'): ?> mail-msg-view-header-clickable mail-msg-view-item-open<? endif ?>">
-		<span class="mail-msg-view-header-userpic">
+		<span class="mail-msg-view-header-userpic" aria-hidden="true">
 			<? $APPLICATION->includeComponent(
 				'bitrix:mail.contact.avatar',
 				'',
-				array_merge(
-					!empty($arResult['avatarParams'][$message['SENDER_EMAIL']]) ? $arResult['avatarParams'][$message['SENDER_EMAIL']] : array(),
-					array(
-						'avatarSize' => 40,
-					)
-				),
+				$senderAvatarParams,
 				null,
 				array(
 					'HIDE_ICONS' => 'Y',
@@ -127,7 +159,7 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 			<div class="mail-msg-view-rcpt-wrapper">
 				<?
 
-				$prepareRcpt = function($field) use (&$message, &$arResult)
+				$prepareRcpt = function($field) use (&$message, &$arResult, $mailboxAvatarUrl)
 				{
 					$result = array();
 
@@ -150,6 +182,14 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 								$name = !empty($avatarParams['name']) ? $avatarParams['name'] : $email;
 							}
 							$title = $name;
+							$representsMailbox = !$message['__is_outcome']
+								&& $email !== ''
+								&& strcasecmp($email, (string)($message['__email'] ?? '')) === 0
+							;
+							if ($representsMailbox && $mailboxAvatarUrl !== null)
+							{
+								$avatarParams['imageUrl'] = $mailboxAvatarUrl;
+							}
 						}
 						$result[] = array(
 							'URL' => $isAddressValid ? sprintf('mailto:%s', $email) : null,
@@ -248,8 +288,10 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 					<? if (!$message['__is_outcome'] && !$message['isSpam']): ?>
 						<button type="button" class="mail-msg-view-control mail-msg-view-control-spam js-msg-view-control-spam"><?=Loc::getMessage('MAIL_MESSAGE_BTN_SPAM') ?></button>
 					<? endif ?>
+					<? if ($hasAccessToMessageDelete): ?>
 					<button type="button" class="mail-msg-view-control mail-msg-view-control-delete js-msg-view-control-delete"
 						<? if ($message['isTrash']): ?> data-is-trash="true" <? endif; ?>><?=Loc::getMessage('MAIL_MESSAGE_BTN_DEL') ?></button>
+					<? endif ?>
 				<? endif ?>
 			</div>
 		</div>
@@ -404,6 +446,9 @@ $actionUrl = '/bitrix/services/main/ajax.php?c=bitrix%3Amail.client&action=sendM
 			'FIELDS' => array(
 				array(
 					'name'     => 'data[from]',
+					'senderIdName' => 'data[SENDER_ID]',
+					'mailboxIdName' => 'data[SENDER_MAILBOX_ID]',
+					'mailboxId' => (int)$message['MAILBOX_ID'],
 					'title'    => Loc::getMessage('MAIL_MESSAGE_NEW_FROM'),
 					'type'     => 'from',
 					'value'    => $message['__email'],
@@ -473,11 +518,13 @@ $actionUrl = '/bitrix/services/main/ajax.php?c=bitrix%3Amail.client&action=sendM
 
 <script>
 
-var mailto = function ()
+var mailto = function (event)
 {
+	var pathNew = '<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_MSG_NEW']) ?>'
+		|| BXMailMessageController.options.pathNew;
 	top.BX.SidePanel.Instance.open(
 		BX.util.add_url_param(
-			'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_MSG_NEW']) ?>',
+			pathNew,
 			{
 				id: <?=intval($message['MAILBOX_ID']) ?>,
 				email: this.email
@@ -490,7 +537,11 @@ var mailto = function ()
 ?>
 			width: <?=\Bitrix\Mail\Helper\Config\Feature::isComposeRedesignAvailable() ? 820 : 960 ?>,
 			cacheable: false,
+<?php if (\Bitrix\Mail\Helper\Config\Feature::isComposeRedesignAvailable()): ?>
+			skeleton: '/bitrix/js/mail/client/compose-form/src/skeleton.html?v=4'
+<?php else: ?>
 			loader: 'create-mail-loader'
+<?php endif ?>
 		}
 	);
 

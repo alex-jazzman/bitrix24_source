@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 	const { Theme } = require('im/lib/theme');
 	const {
+		Analytics,
 		SidebarActionType,
 		ErrorType,
 		DialogType,
@@ -672,7 +673,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						{
 							actionsItems.push({
 								id: SidebarActionType.channelRemoveManager,
-								title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_CHANNEL_REMOVE_MANAGER'),
+								title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_CHANNEL_REMOVE_MANAGER_MSGVER_1'),
 								callback: this.participantsService.onClickRemoveManager.bind(this, userId),
 								icon: Icon.CIRCLE_CROSS,
 								testId: 'SIDEBAR_USER_CONTEXT_MENU_CHANNEL_REMOVE_MANAGER',
@@ -682,7 +683,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						{
 							actionsItems.push({
 								id: SidebarActionType.channelAddManager,
-								title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_CHANNEL_ADD_MANAGER'),
+								title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_CHANNEL_ADD_MANAGER_MSGVER_1'),
 								callback: this.participantsService.onClickAddManager.bind(this, userId),
 								icon: Icon.CROWN,
 								testId: 'SIDEBAR_USER_CONTEXT_MENU_CHANNEL_ADD_MANAGER',
@@ -845,7 +846,10 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		sendAnalyticsAboutOpeningParticipantAddWidget()
 		{
-			AnalyticsService.getInstance().sendUserAddButtonClicked({ dialogId: this.props.dialogId });
+			AnalyticsService.getInstance().sendUserAddButtonClicked({
+				dialogId: this.props.dialogId,
+				section: Analytics.Section.chatSidebar,
+			});
 		}
 
 		androidOnLoadMore()

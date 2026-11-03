@@ -1,5 +1,6 @@
 import { useFeature, useLoc } from '../../../../shared/composables';
 import { FocusAnchor, setFocusAnchor } from '../../../../shared/utils/focus-rescue';
+import { CATALOG_WIDTH_COLLAPSED, CATALOG_WIDTH_EXPANDED } from '../../constants/index.ts';
 
 import './app-layout.css';
 
@@ -47,6 +48,10 @@ export const AppLayout = {
 			type: Boolean,
 			default: false,
 		},
+		isProcessDataPanelShown: {
+			type: Boolean,
+			default: false,
+		},
 		showPreviewPanel: {
 			type: Boolean,
 			default: false,
@@ -56,6 +61,10 @@ export const AppLayout = {
 			default: false,
 		},
 		catalogExpanded: {
+			type: Boolean,
+			default: true,
+		},
+		mountWorkspacePanels: {
 			type: Boolean,
 			default: true,
 		},
@@ -117,8 +126,6 @@ export const AppLayout = {
 		},
 		debugBarStyle(): { [string]: string }
 		{
-			const CATALOG_WIDTH_COLLAPSED = 54;
-			const CATALOG_WIDTH_EXPANDED = 330;
 			const SETTINGS_WIDTH = 470;
 			const SIDE_MARGINS = 40;
 			const SIDE_PADDINGS = 10;
@@ -163,6 +170,12 @@ export const AppLayout = {
 			<main class="editor-chart-app-layout__content">
 				<slot name="diagram"/>
 
+				<!-- After the diagram and never before it: the state of the canvas belongs to whoever asks
+					for it first, so a layer placed above would leave the canvas without its own blocks. -->
+				<section class="editor-chart-app-layout__notes-layer">
+					<slot name="notes-layer"/>
+				</section>
+
 				<section class="editor-chart-app-layout__catalog">
 					<slot name="catalog"/>
 				</section>
@@ -183,6 +196,7 @@ export const AppLayout = {
 					<slot name="top-middle-anchor"/>
 				</section>
 
+				<template v-if="mountWorkspacePanels">
 				<transition
 					name="fade-settings-panel"
 					enter-active-class="fade-settings-panel-enter-active"
@@ -232,9 +246,13 @@ export const AppLayout = {
 					</template>
 				</transition-group>
 
+				<!-- A window of its own, moved by its header and left open while the scheme is edited:
+					it holds no place in the layout and dims nothing behind it. -->
+				<slot v-if="isProcessDataPanelShown" name="settings-process-data"/>
+
 				<transition name="fade-preview-panel">
 					<section
-						v-show="showPreviewPanel"
+						v-if="showPreviewPanel"
 						class="editor-chart-app-layout__preview-panel"
 					>
 						<div class="editor-chart-app-layout__preview-panel-conatiner">
@@ -246,6 +264,7 @@ export const AppLayout = {
 						</div>
 					</section>
 				</transition>
+				</template>
 			</main>
 		</div>
 	`,

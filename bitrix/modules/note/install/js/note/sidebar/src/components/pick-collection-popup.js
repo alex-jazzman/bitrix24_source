@@ -1,5 +1,10 @@
 import { Loc, Type } from 'main.core';
+import { NoteAnalytics } from 'note.analytics';
 import { openCollectionPicker } from 'note.ui.collection-picker';
+
+// A collection born in the picker has no permission dialog behind it: the creator ends up its sole
+// moderator, so the composition is fixed and known before the request leaves.
+const PICKER_CREATE_STATS = { admin: 1, reductorsCount: 0, viewersCount: 0, customCount: 0 };
 
 export type PickCollectionPopupResult = {
 	collectionId: number,
@@ -37,6 +42,8 @@ export function openPickCollectionPopup(options: PickCollectionPopupOptions): Pr
 				const id = Number(created?.id);
 				if (!Number.isInteger(id) || id <= 0)
 				{
+					NoteAnalytics.collectionCreated(PICKER_CREATE_STATS, false);
+
 					return null;
 				}
 
@@ -56,10 +63,13 @@ export function openPickCollectionPopup(options: PickCollectionPopupOptions): Pr
 					});
 				}
 
+				NoteAnalytics.collectionCreated(PICKER_CREATE_STATS, true);
+
 				return { id, title: collectionName };
 			}
 			catch (error)
 			{
+				NoteAnalytics.collectionCreated(PICKER_CREATE_STATS, false);
 				onFail(error);
 
 				return null;

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, main_polyfill_intersectionobserver, ui_system_checkbox, ui_iconSet_outline, main_core, note_ui_loader, main_date, ui_hint, note_ui_avatarStack, ui_iconSet_api_vue, note_ui_themeContext, ui_vue3) {
+(function (exports, main_polyfill_intersectionobserver, ui_system_checkbox, ui_iconSet_outline, ui_iconSet_actions, main_core, note_ui_loader, main_date, ui_hint, note_ui_avatarStack, ui_iconSet_api_vue, note_ui_themeContext, ui_vue3) {
 	'use strict';
 
 	const DocumentListItem = {
@@ -232,9 +232,10 @@ this.BX.Note = this.BX.Note || {};
 				// Stateless component: emit the intended toggle relative to the current prop; the page owns selection
 				this.emitSelectToggle();
 
-				// Drop focus only for pointer input: otherwise a deselect that exits selection mode leaves
-				// the hover checkbox pinned open via :focus-within after the pointer moves away. Keyboard
-				// users must keep focus so multi-select stays operable (WCAG 2.4.3).
+				// Drop focus only for pointer input: a deselect that exits selection mode collapses the
+				// checkbox back to `width: 0` (see document-list.css), and a pointer click leaves no
+				// `:focus-visible` to hold it open, so the focus would sit on an invisible element.
+				// Keyboard users must keep focus so multi-select stays operable (WCAG 2.4.3).
 				const pointerDriven = this.pointerToggle;
 				this.pointerToggle = false;
 				if (!pointerDriven) {
@@ -291,9 +292,13 @@ this.BX.Note = this.BX.Note || {};
 				return main_date.DateTimeFormat.format(phpFormat, ts);
 			}
 		},
+		// The card root is out of the tab order but focusable: DocumentList parks the focus here when the
+		// paging retry unmounts the button it was pressed on, and a click on a child with nothing
+		// focusable of its own lands here too - which is why the hover-select rule asks for
+		// `:focus-visible` and not `:focus-within` (see document-list.css).
 		// language=Vue
 		template: `
-		<div :class="rootClass" @click="onCardClick">
+		<div :class="rootClass" tabindex="-1" @click="onCardClick">
 			<div class="note-document-card__header">
 				<label
 					v-if="showSelectBox"
@@ -439,9 +444,18 @@ this.BX.Note = this.BX.Note || {};
 			selectedIds: {
 				type: [Set, Array],
 				default: () => []
+			},
+			// The last "load more" came back with a failure. Automatic paging stops until the user asks
+			// again: the sentinel of a list that did not grow stays in view, and every re-render builds a
+			// new IntersectionObserver whose starting callback reports it as intersecting - left alone
+			// that walks the host into the same failing request over and over. Announcing the failure is
+			// the host's job (its live region outlives the list), so the block below keeps aria-live off.
+			loadMoreFailed: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['open', 'open-collection', 'load-more', 'select'],
+		emits: ['open', 'open-collection', 'load-more', 'retry-load-more', 'select'],
 		computed: {
 			selectedSet() {
 				return this.selectedIds instanceof Set ? this.selectedIds : new Set(this.selectedIds);
@@ -451,6 +465,12 @@ this.BX.Note = this.BX.Note || {};
 			},
 			emptyMessage() {
 				return main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_EMPTY') || '';
+			},
+			loadMoreErrorMessage() {
+				return main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_LOAD_MORE_ERROR') || '';
+			},
+			loadMoreRetryLabel() {
+				return main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_LOAD_MORE_RETRY') || '';
 			},
 			rootClass() {
 				return ['note-document-cards', this.mode === 'compact' ? 'note-document-cards--compact' : '',
@@ -479,6 +499,28 @@ this.BX.Note = this.BX.Note || {};
 			onSelect(payload) {
 				this.$emit('select', payload);
 			},
+			// A deliberate request for the page that failed. It travels as its own event so the host can
+			// keep refusing the automatic one while still serving this one.
+			// The button sits in the branch that the paging loader takes over as soon as the host starts
+			// the request, so the focus has to leave it first or it ends up in <body> (WCAG 2.4.3). It
+			// goes to the last card. The list root and the grid survive the swap just as well, but the
+			// root sends the next Tab back to the top of the list and drags the viewport there, while
+			// the card keeps the user where they were: tabbing on walks its own controls and then goes
+			// straight into whatever arrived, because new cards are appended right after it. The card
+			// also outlives the last page, which takes the sentinel away with hasMore.
+			// preventScroll, because a card is 100-200px tall and the button the user just pressed sits
+			// right below it: on a short window the default focus would scroll the card into view and
+			// take the answer the user is waiting for out of it. The card is where it is by being next
+			// to that button, and a Tab from it scrolls on its own if it did end up out of sight.
+			onRetryLoadMore() {
+				const lastCard = this.$refs.grid?.lastElementChild;
+				if (lastCard instanceof HTMLElement) {
+					lastCard.focus({
+						preventScroll: true
+					});
+				}
+				this.$emit('retry-load-more');
+			},
 			isSelected(id) {
 				return this.selectedSet.has(Number(id));
 			},
@@ -490,7 +532,7 @@ this.BX.Note = this.BX.Note || {};
 				}
 				this.observer = new IntersectionObserver(entries => {
 					const entry = entries[0];
-					if (entry?.isIntersecting && this.hasMore && !this.loading) {
+					if (entry?.isIntersecting && this.hasMore && !this.loading && !this.loadMoreFailed) {
 						this.$emit('load-more');
 					}
 				}, {
@@ -524,7 +566,7 @@ this.BX.Note = this.BX.Note || {};
 			</div>
 			<div v-else-if="isEmpty" class="note-document-cards__empty">{{ emptyMessage }}</div>
 			<template v-else>
-				<div class="note-document-cards__grid">
+				<div class="note-document-cards__grid" ref="grid">
 					<DocumentListItem
 						v-for="item in items"
 						:key="item.id"
@@ -546,6 +588,23 @@ this.BX.Note = this.BX.Note || {};
 				<div v-if="hasMore" ref="sentinel" class="note-document-cards__sentinel">
 					<div v-if="loading" class="note-document-cards__loader">
 						<Loader />
+					</div>
+					<div
+						v-else-if="loadMoreFailed"
+						class="note-document-cards__load-more-error"
+						role="status"
+						aria-live="off"
+						data-testid="note-document-list-load-more-error"
+					>
+						<span class="note-document-cards__load-more-error-text">{{ loadMoreErrorMessage }}</span>
+						<button
+							type="button"
+							class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps"
+							data-testid="note-document-list-load-more-retry"
+							@click="onRetryLoadMore"
+						>
+							{{ loadMoreRetryLabel }}
+						</button>
 					</div>
 				</div>
 			</template>
@@ -767,6 +826,80 @@ this.BX.Note = this.BX.Note || {};
 	`
 	};
 
+	// Presentational only: owns the collapsed flag and nothing else. The label, the content
+	// and the decision to render the section at all belong to the host.
+	const DocumentSection = {
+		name: 'NoteDocumentSection',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			label: {
+				type: String,
+				default: ''
+			},
+			testId: {
+				type: String,
+				default: ''
+			},
+			// Heading level of the label. The outline belongs to the page and the two hosts sit at
+			// different depths, so the level is theirs to name; 0 leaves the label a plain span.
+			headingLevel: {
+				type: Number,
+				default: 0
+			}
+		},
+		emits: ['toggle'],
+		data() {
+			return {
+				collapsed: false
+			};
+		},
+		computed: {
+			toggleIcon() {
+				return this.collapsed ? ui_iconSet_api_vue.Set.CHEVRON_DOWN : ui_iconSet_api_vue.Set.CHEVRON_UP;
+			},
+			// Derived from the host's id so an e2e locator for the section reads as its own family:
+			// note-workspace-about-documents / note-workspace-about-documents-toggle.
+			toggleTestId() {
+				return this.testId ? `${this.testId}-toggle` : null;
+			},
+			labelTag() {
+				const level = Math.trunc(this.headingLevel);
+				return level >= 1 && level <= 6 ? `h${level}` : 'span';
+			},
+			// Names the action and stays the same in both states: the state is what aria-expanded
+			// carries, and a name that flips with it would be announced twice.
+			toggleLabel() {
+				return main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_SECTION_TOGGLE_ARIA') || '';
+			}
+		},
+		methods: {
+			toggle() {
+				this.collapsed = !this.collapsed;
+				this.$emit('toggle', this.collapsed);
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="note-document-section" :data-testid="testId || null">
+			<div class="note-document-section__header" @click="toggle">
+				<component :is="labelTag" class="note-document-section__label">{{ label }}</component>
+				<button
+					class="note-document-section__toggle"
+					type="button"
+					:data-testid="toggleTestId"
+					:aria-label="toggleLabel"
+					:aria-expanded="!collapsed"
+				>
+					<BIcon :name="toggleIcon" :size="16" />
+				</button>
+			</div>
+			<slot v-if="!collapsed"/>
+		</div>
+	`
+	};
+
 	/**
 	 * Page-level multiple-selection state for the document list.
 	 *
@@ -802,7 +935,7 @@ this.BX.Note = this.BX.Note || {};
 			enter() {
 				this.mode = true;
 			},
-			// Leaving selection mode always drops the current selection (AC-003, ERR-010)
+			// Leaving selection mode always drops the current selection
 			exit() {
 				this.mode = false;
 				this.ids.clear();
@@ -813,7 +946,8 @@ this.BX.Note = this.BX.Note || {};
 	exports.BulkActionsBar = BulkActionsBar;
 	exports.DocumentList = DocumentList;
 	exports.DocumentListItem = DocumentListItem;
+	exports.DocumentSection = DocumentSection;
 	exports.createSelection = createSelection;
 
-})(this.BX.Note.Ui = this.BX.Note.Ui || {}, BX, BX.UI.System.Checkbox, window, BX, BX.Note.Ui, BX.Main, BX.UI, BX.Note.Ui, BX.UI.IconSet, BX.Note.Ui, BX.Vue3);
+})(this.BX.Note.Ui = this.BX.Note.Ui || {}, BX, BX.UI.System.Checkbox, window, window, BX, BX.Note.Ui, BX.Main, BX.UI, BX.Note.Ui, BX.UI.IconSet, BX.Note.Ui, BX.Vue3);
 //# sourceMappingURL=document-list.bundle.js.map

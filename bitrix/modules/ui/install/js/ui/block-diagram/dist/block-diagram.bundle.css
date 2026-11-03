@@ -4,6 +4,14 @@
 	cursor: default;
 }
 
+/* The canvas takes the focus itself, so it draws the ring of the design system like every other
+   control of the extension. The offset goes inward: a consumer that clips its overflow would cut an
+   outward ring off, and the canvas fills the space its consumer gives it. */
+.ui-block-diagram:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .ui-block-diagram.--grabbing {
 	cursor: grabbing !important;
 }
@@ -33,7 +41,10 @@
 	z-index: 1;
 	width: 100%;
 	height: 100%;
+	/* hidden crops but stays scrollable, so caret autoscroll of a nested editor drags
+	   the canvas away; clip crops without a scroll container. hidden is the fallback. */
 	overflow: hidden;
+	overflow: clip;
 }
 
 .ui-block-diagram-canvas-transform.--dragging {
@@ -99,6 +110,19 @@
 .ui-block-diagram-connection.--active,
 .ui-block-diagram-connection:hover {
 	z-index: 2;
+}
+
+/* The connection is led by a raised gesture, so it goes up by the same addition every raised
+   participant gets - on top of the two steps above. The canvas publishes that addition from
+   BLOCK_INDEXES, so the scale is stated in one place; mounted outside the canvas the connection
+   has no raise to add. */
+.ui-block-diagram-connection.--elevated {
+	z-index: var(--ui-block-diagram-elevation-offset, 0);
+}
+
+.ui-block-diagram-connection.--elevated.--active,
+.ui-block-diagram-connection.--elevated:hover {
+	z-index: calc(2 + var(--ui-block-diagram-elevation-offset, 0));
 }
 
 .ui-block-diagram-connection:hover .ui-block-diagram-connection__target {
@@ -200,8 +224,10 @@
 	overflow: visible;
 }
 
+/* Kept one step over the connection preview, as it was before the preview moved up: this layer sits
+   earlier in the markup, so an equal step would flip the two. */
 .ui-block-diagram-new-connection.--up {
-	z-index: 6;
+	z-index: 7;
 }
 
 .ui-block-diagram-new-connection__path {
@@ -242,11 +268,13 @@
 .ui-block-diagram-connections-queue-transition-leave-from {
 	opacity: 1;
 }
+/* Above every block step: BLOCK_INDEXES tops out at HOVERED (5) and blocks come later in the
+   markup, so an equal step would put the raised node over the preview markers it draws on it. */
 .ui-block-diagram-connection-preview {
 	position: absolute;
 	top: 0;
 	left: 0;
-	z-index: 5;
+	z-index: 6;
 	width: 100%;
 	height: 100%;
 	overflow: visible;
@@ -305,6 +333,80 @@
 .ui-block-diagram-moveable-block {
     position: absolute;
 }
+
+/* The answer of the no-overlap rule, worn by every wrapper the canvas positions - a node and a
+   backdrop alike, since the rule moves both. Outline, not border or transform: the wrapper's
+   transform belongs to the canvas camera, and an outline adds nothing to the layout box. The
+   wrapper has no look of its own, so the shape comes from a variable the consumer may set; the
+   duration comes from the canvas root, which publishes the timer that owns the state. */
+.ui-block-diagram-placement-feedback.--displaced,
+.ui-block-diagram-placement-feedback.--placement-refused {
+    border-radius: var(--ui-block-diagram-block-radius, var(--ui-border-radius-md));
+    outline: var(--ui-border-width-thick) solid var(--ui-block-diagram-placement-outline-color);
+    outline-offset: var(--ui-space-inset-2xs);
+}
+
+/* Position corrected: the block has already moved, so the outline only points at where it went. */
+.ui-block-diagram-placement-feedback.--displaced {
+    --ui-block-diagram-placement-outline-color: var(--ui-color-accent-main-warning);
+
+    animation: ui-block-diagram-placement-displaced
+        var(--ui-block-diagram-displaced-duration, 900ms) ease-out forwards;
+}
+
+/* No room found: the block stayed where it was. Told apart from a correction by more than the
+   colour - it blinks twice instead of fading once, so the two answers differ without relying on
+   colour alone. */
+.ui-block-diagram-placement-feedback.--placement-refused {
+    --ui-block-diagram-placement-outline-color: var(--ui-color-accent-main-alert);
+
+    animation: ui-block-diagram-placement-refused
+        var(--ui-block-diagram-displaced-duration, 900ms) ease-out forwards;
+}
+
+@keyframes ui-block-diagram-placement-displaced {
+    0% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    60% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    100% {
+        outline-color: transparent;
+    }
+}
+
+@keyframes ui-block-diagram-placement-refused {
+    0% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    30% {
+        outline-color: transparent;
+    }
+
+    45% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    75% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    100% {
+        outline-color: transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ui-block-diagram-placement-feedback.--displaced,
+    .ui-block-diagram-placement-feedback.--placement-refused {
+        animation: none;
+    }
+}
+
 .ui-block-diagram-block-content-stub {
     position: relative;
     display: flex;
@@ -614,6 +716,73 @@
 	font-size: 20px;
 }
 
+.ui-block-diagram-canvas-map-btn {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.ui-block-diagram-canvas-map-btn:disabled {
+	cursor: default;
+	opacity: var(--ui-opacity-50);
+}
+
+.ui-block-diagram-canvas-map-btn__icon {
+	stroke: none;
+}
+
+.ui-block-diagram-canvas-map-btn:not(:disabled) .ui-block-diagram-canvas-map-btn__icon:hover,
+.ui-block-diagram-canvas-map-btn:not(:disabled):focus-visible .ui-block-diagram-canvas-map-btn__icon {
+	fill: var(--ui-color-accent-main-primary);
+}
+
+.ui-block-diagram-canvas-map-btn:focus-visible {
+	outline: none;
+}
+
+/*
+ * When the map is open, the icon already sits at the accent color the hover/focus highlight also
+ * uses, so a keyboard user who tabs back to this button while the panel stays open would otherwise
+ * see no change at all between "focused" and "not focused, but open". Restoring a ring only for this
+ * one combination keeps it distinguishable without bringing back the box the base (closed) state used
+ * to draw on every focus.
+ */
+.ui-block-diagram-canvas-map-btn.--active:not(:disabled):focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/*
+ * Forced-colors mode (Windows High Contrast) replaces background-color/fill with the system palette,
+ * so an icon-only highlight disappears there entirely. A visible ring is restored using system colors
+ * so keyboard focus stays perceivable in the base (inactive) state too - the active state above
+ * already gets its own ring from the higher-specificity `.--active` rule.
+ */
+@media (forced-colors: active) {
+	.ui-block-diagram-canvas-map-btn:focus-visible {
+		outline: 2px solid CanvasText;
+	}
+}
+
+.ui-block-diagram-canvas-map__container:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.ui-block-diagram-canvas-map {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-color: transparent;
+}
+
 .ui-block-diagram-control-btn__btn {
     width: 22px;
     height: 22px;
@@ -698,62 +867,6 @@
 	letter-spacing: -0.05px;
 	vertical-align: middle;
 	color: var(--ui-color-palette-gray-50);
-}
-
-.ui-block-diagram-percent-menu {
-	transform: translate(15px, calc(-100% - 10px));
-}
-
-.ui-block-diagram-canvas-map__container:focus-visible {
-	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
-	outline-offset: var(--ui-focus-outline-offset);
-	border-radius: var(--ui-border-radius-2xs);
-}
-
-.ui-block-diagram-canvas-map {
-	width: 100%;
-	height: 100%;
-	background-color: transparent;
-}
-
-.ui-block-diagram-canvas-map__block {
-	stroke: none;
-}
-
-.ui-block-diagram-canvas-map__cursor {
-	fill: none;
-	stroke: var(--ui-color-tag-1);
-	stroke-width: 2;
-}
-
-.ui-block-diagram-canvas-map-btn {
-	display: flex;
-	justify-content: flex-start;
-	align-items: center;
-
-	padding: 0;
-	border: none;
-	background-color: transparent;
-	cursor: pointer;
-}
-
-.ui-block-diagram-canvas-map-btn:disabled {
-	cursor: default;
-	opacity: var(--ui-opacity-50);
-}
-
-.ui-block-diagram-canvas-map-btn__icon {
-	stroke: none;
-}
-
-.ui-block-diagram-canvas-map-btn:not(:disabled) .ui-block-diagram-canvas-map-btn__icon:hover {
-	fill: var(--ui-color-accent-main-primary);
-}
-
-.ui-block-diagram-canvas-map-btn:focus-visible {
-	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
-	outline-offset: var(--ui-focus-outline-offset);
-	border-radius: var(--ui-border-radius-2xs);
 }
 
 .ui-block-diagram-search-bar {
@@ -945,12 +1058,28 @@
 	cursor: pointer;
 }
 
+.ui-block-diagram-open-search-btn:focus-visible {
+	outline: none;
+}
+
 .ui-block-diagram-open-search-btn__icon {
 	background-color: var(--ui-color-gray-60);
 }
 
-.ui-block-diagram-open-search-btn__icon:hover {
+.ui-block-diagram-open-search-btn__icon:hover,
+.ui-block-diagram-open-search-btn:focus-visible .ui-block-diagram-open-search-btn__icon {
 	background-color: var(--ui-color-accent-main-primary);
+}
+
+/*
+ * Forced-colors mode (Windows High Contrast) replaces background-color with the system palette, so an
+ * icon-only highlight disappears there entirely. A visible ring is restored using system colors so
+ * keyboard focus stays perceivable.
+ */
+@media (forced-colors: active) {
+	.ui-block-diagram-open-search-btn:focus-visible {
+		outline: 2px solid CanvasText;
+	}
 }
 
 .ui-block-diagram-resizable-block {

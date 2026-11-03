@@ -1,35 +1,20 @@
 import { ContentFactory } from './content-factory';
 import { Base } from './content/base';
+import type { WidgetParams, WidgetTypeEnum } from './types';
 import 'ui.design-tokens';
 import 'ui.design-tokens.air';
 import './widget.css';
 
-export type WidgetTypeEnum = WidgetType.start | WidgetType.forceStart | WidgetType.statistics;
-
-export const PeriodType = Object.freeze({
-	day30: 0,
-	quarter: 1,
-	halfYear: 2,
-	year: 3,
-});
-
-export const WidgetType = Object.freeze({
-	start: 'start',
-	forceStart: 'forceStart',
-	statistics: 'statistics',
-});
-
-export type WidgetParams = {
-	showSettingsButton?: boolean,
-	isGlowingSettingsButton?: boolean,
-	showConfetti?: boolean,
-	isRepeatSaleGrid?: boolean,
-	periodTypeId?: PeriodType.day30 | PeriodType.quarter | PeriodType.halfYear | PeriodType.year,
-}
+export { PeriodType, WidgetType } from './types';
+export type { WidgetParams, WidgetTypeEnum } from './types';
 
 export class Widget
 {
 	static instance: Array = [];
+	#widgetType: WidgetTypeEnum;
+	#params: WidgetParams = {};
+	#bindElement: ?HTMLElement = null;
+	#contentPopupPromise: ?Promise<?Base> = null;
 	#contentPopupInstance: ?Base = null;
 
 	static execute(
@@ -45,40 +30,71 @@ export class Widget
 			this.instance[widgetType] = new Widget(widgetType, bindElement, params);
 		}
 
-		if (this.instance[widgetType].isShown())
-		{
-			this.instance[widgetType].close();
-		}
-		else
-		{
-			const forceShowConfetti = (event?.altKey && event?.ctrlKey) ?? false;
+		const widget = this.instance[widgetType];
 
-			this.instance[widgetType].show(forceShowConfetti, onCloseCallback);
+		if (widget.isShown())
+		{
+			widget.close();
+
+			return;
 		}
+
+		const forceShowConfetti = (event?.altKey && event?.ctrlKey) ?? false;
+
+		void widget.show(forceShowConfetti, onCloseCallback);
 	}
 
 	constructor(widgetType: WidgetTypeEnum, bindElement: ?HTMLElement = null, params: WidgetParams = {})
 	{
-		this.#contentPopupInstance = ContentFactory.getContentInstance(widgetType, params);
-
-		if (bindElement)
-		{
-			this.#contentPopupInstance.setBindElement(bindElement);
-		}
+		this.#widgetType = widgetType;
+		this.#params = params;
+		this.#bindElement = bindElement;
 	}
 
-	show(forceShowConfetti: boolean = false, onCloseCallback: ?Function = null): void
+	// The content of a widget type may live in an extension of its own (statistics), so it is built on
+	// the first opening rather than in the constructor. The promise is kept, so reopening the widget
+	// reuses the content instance instead of asking for the extension again.
+	#getContentPopup(): Promise<?Base>
 	{
-		this.#contentPopupInstance.show(forceShowConfetti, onCloseCallback);
+		if (this.#contentPopupPromise === null)
+		{
+			this.#contentPopupPromise = ContentFactory
+				.getContentInstance(this.#widgetType, this.#params)
+				.then((contentPopup: ?Base) => {
+					if (contentPopup !== null && this.#bindElement)
+					{
+						contentPopup.setBindElement(this.#bindElement);
+					}
+
+					this.#contentPopupInstance = contentPopup;
+
+					return contentPopup;
+				})
+			;
+		}
+
+		return this.#contentPopupPromise;
+	}
+
+	async show(forceShowConfetti: boolean = false, onCloseCallback: ?Function = null): Promise<void>
+	{
+		const contentPopup = await this.#getContentPopup();
+
+		void contentPopup?.show(forceShowConfetti, onCloseCallback);
 	}
 
 	isShown(): boolean
 	{
-		return this.#contentPopupInstance.isShown();
+		return this.#contentPopupInstance?.isShown() ?? false;
 	}
 
 	close(): void
 	{
-		this.#contentPopupInstance.close();
+		this.#contentPopupInstance?.close();
 	}
 }
+
+// Building blocks of the widget contents, published for the extensions that carry a content of their own
+// (crm.repeat-sale.widget.statistics).
+export { Base as WidgetContentBase };
+export { Footer as WidgetFooter } from './footer';

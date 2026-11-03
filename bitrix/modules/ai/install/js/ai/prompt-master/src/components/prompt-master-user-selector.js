@@ -1,11 +1,12 @@
 import { bind, Text } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { BaseEvent } from 'main.core.events';
-import { Dialog, Item } from 'ui.entity-selector';
-
-import '../css/prompt-master-user-selector.css';
+import { Dialog, type Item } from 'ui.entity-selector';
 
 import { clickableHint } from '../directives/prompt-master-hover-hint';
+import { syncPromptMasterOverlay } from '../helpers/prompt-master-overlay';
+
+import '../css/prompt-master-user-selector.css';
 
 type PromptMasterUserSelectorSelectedItemWithData = {
 	entityId: string;
@@ -138,6 +139,8 @@ export const PromptMasterUserSelector = {
 				preselectedItems: this.preselectedItems,
 				undeselectedItems: this.undeselectedItems,
 				events: {
+					onShow: this.handleUserSelectorDialogVisibilityChange,
+					onHide: this.handleUserSelectorDialogVisibilityChange,
 					'Item:onSelect': (event: BaseEvent) => {
 						this.selectItem(event.getData().item);
 					},
@@ -150,6 +153,10 @@ export const PromptMasterUserSelector = {
 					},
 				},
 			});
+		},
+		handleUserSelectorDialogVisibilityChange(): void
+		{
+			syncPromptMasterOverlay();
 		},
 		showUserSelector(): void {
 			const dialog = this.getUserSelectorDialog();

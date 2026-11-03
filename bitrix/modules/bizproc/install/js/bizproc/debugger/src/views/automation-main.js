@@ -15,6 +15,7 @@ import {
 import {BaseEvent, EventEmitter} from "main.core.events";
 import { Button, ButtonSize, ButtonColor, ButtonIcon} from 'ui.buttons';
 import 'ui.buttons.icons';
+import 'ui.icon-set.outline';
 import {EntitySelector} from "ui.entity-selector";
 import "bp_field_type";
 import 'ui.layout-form';
@@ -190,12 +191,17 @@ export default class AutomationMainView extends EventEmitter
 						class="bizproc-debugger-automation__titlebar--button-collapse" 
 						onclick="${this.#handleCollapse.bind(this)}"
 					></div>
-					<span 
-						class=" popup-window-close-icon 
-								popup-window-titlebar-close-icon 
+					<button
+						type="button"
+						aria-label="${Loc.getMessage('JS_CORE_WINDOW_CLOSE') ?? ''}"
+						class="popup-window-close-icon
+								popup-window-titlebar-close-icon
 								bizproc-debugger-automation__titlebar--button-close"
+						data-testid="bizproc-debugger-titlebar-close-btn"
 						onclick="${this.#handleClose.bind(this)}"
-					></span>
+					>
+						<span class="ui-icon-set --cross-l --hoverable-default"></span>
+					</button>
 				</div>
 			`
 		};

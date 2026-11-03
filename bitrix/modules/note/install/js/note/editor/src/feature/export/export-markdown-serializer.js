@@ -1,9 +1,21 @@
 // @flow
 
+import { Loc } from 'main.core';
 import { resolveFileNodes } from '../../utils/resolve-file-nodes';
-import { collectUnresolvedMentions, resolveMentionsBatch } from '../../utils/resolve-mentions';
+import { DiskAttachmentStore } from '../../services/disk-attachment-store';
+import { resolveDiskAttachmentNodes } from '../../utils/resolve-disk-attachment-nodes';
+import {
+	collectMentions,
+	createMentionSnapshot,
+	MENTION_BATCH_LIMIT,
+	resolveMentionsBatch,
+} from '../../utils/resolve-mentions';
+import { normalizeDateString } from '../../extensions/date/note-date-parser';
+import { formatDateCaption } from '../../extensions/date/note-date-node';
 
 const MENTION_NODE_TYPE = 'noteMention';
+const DATE_NODE_TYPE = 'noteDate';
+const MENTION_EXPORT_CONCURRENCY = 3;
 
 const ASSET_NODE_TYPES: Set<string> = new Set(['imageAttachment', 'fileAttachment', 'video']);
 
@@ -24,6 +36,14 @@ const MENTION_TOKEN_RE: RegExp = /@\{([a-z]+):(\d+)\}/g;
 // a global replace only needs to swap the token substring itself, leaving surrounding
 // whitespace/newlines in the source markdown untouched.
 const ASSET_TOKEN_RE: RegExp = /\[\[(image|file|video) fileId=(\d+)(?:[ \t]+[a-z]+=[^\s\]]+)*\]\]/g;
+
+// Same, for attachments living on Disk. They always export as a link, never as an archived file:
+// the file belongs to Disk, and packing its bytes would hand it to whoever opens the archive.
+const DISK_ASSET_TOKEN_RE: RegExp = /\[\[disk (image|file|video) objectId=(\d+)(?:[ \t]+[a-z]+=[^\s\]]+)*\]\]/g;
+
+// Mirrors DATE_TOKEN_PATTERN from note-date-parser.js, but global so a `.replace()` over the whole
+// markdown string catches every occurrence, not just one match at the string start.
+const DATE_TOKEN_RE: RegExp = /\[\[date (\d{4}-\d{2}-\d{2})]]/g;
 
 // Normative source for the zip entry naming contract: DocumentZipExportService::sanitizeFileName
 // (PHP) MUST fold identically. The client writes `attachments/{fileId}-{name}` links into the .md
@@ -62,68 +82,75 @@ function capEntryBaseName(name: string): string
 /**
  * Forces resolution of unresolved mention/file nodes before export.
  *
- * Export reads mention/asset attrs straight off the node — attrs that are normally filled in
- * asynchronously by the debounced background resolver (RESOLVE_DEBOUNCE_MS/RESOLVE_MAX_WAIT_MS).
- * Without this, exporting right after inserting a mention/file would carry empty label/url.
+ * Mention presentation is session-local and never written to the ProseMirror node. Export uses
+ * the current projection and resolves only keys that do not have a fresh server snapshot yet.
  *
  * One forced attempt per export call — no retry loop if resolveMentionsBatch reports a
- * transient failure (null); any mentions left unresolved stay in their current node state.
+ * transient failure (null); unresolved mentions are exported with a neutral unavailable label.
  *
  * @param {Object} editor - Tiptap editor instance.
  * @param {number} documentId - owning document id.
- * @returns {Promise<void>}
+ * @returns {Promise<Map<string, Object>>}
  */
-export async function ensureResolved(editor: Object, documentId: number): Promise<void>
+export async function ensureResolved(editor: Object, documentId: number): Promise<Map<string, Object>>
 {
 	await resolveFileNodes(editor, documentId);
+	// Disk attachments too: an export fired before the editor's own resolve pass has run would
+	// otherwise write out placeholders for files the reader can perfectly well see.
+	await resolveDiskAttachmentNodes(editor, documentId);
 
-	const items = collectUnresolvedMentions(editor.state.doc, new Set());
-	if (items.length === 0)
-	{
-		return;
-	}
-
-	const resolvedMap = await resolveMentionsBatch(items);
-	if (resolvedMap === null)
-	{
-		return;
-	}
-
-	const { tr, doc } = editor.state;
-	let changed = false;
-
-	doc.descendants((node, pos) => {
-		if (node.type.name !== MENTION_NODE_TYPE)
+	const projection = editor.storage?.noteMentionResolver ?? null;
+	const snapshots = new Map();
+	const items = collectMentions(editor.state.doc, new Set()).filter(({ type, id }) => {
+		const key = `${type}:${id}`;
+		const snapshot = projection?.getFresh?.(key) ?? null;
+		if (snapshot)
 		{
-			return;
+			snapshots.set(key, snapshot);
+
+			return false;
 		}
 
-		const { entityType, entityId, available } = node.attrs;
-		if (available !== null)
-		{
-			return; // already resolved
-		}
-
-		const mention = resolvedMap.get(`${entityType}:${entityId}`);
-
-		// Same attribute set as note-mention-resolver-extension.js:106-129 — a missing key means
-		// the backend reported the entity as gone/no-access, so it becomes unavailable:true.
-		tr.setNodeMarkup(pos, undefined, {
-			...node.attrs,
-			label: mention?.label ?? null,
-			avatar: mention?.avatar ?? null,
-			url: mention?.url ?? null,
-			available: Boolean(mention?.available),
-			isCurrentUser: Boolean(mention?.isCurrentUser),
-			unavailable: !mention?.available,
-		});
-		changed = true;
+		return true;
 	});
 
-	if (changed)
+	const batches = [];
+	for (let offset = 0; offset < items.length; offset += MENTION_BATCH_LIMIT)
 	{
-		editor.view.dispatch(tr);
+		batches.push(items.slice(offset, offset + MENTION_BATCH_LIMIT));
 	}
+
+	let nextBatchIndex = 0;
+	const resolveNext = async (): Promise<void> => {
+		while (nextBatchIndex < batches.length)
+		{
+			const batch = batches[nextBatchIndex];
+			nextBatchIndex += 1;
+			const resolvedMap = await resolveMentionsBatch(batch);
+			if (resolvedMap === null)
+			{
+				for (const { type, id } of batch)
+				{
+					snapshots.set(`${type}:${id}`, createMentionSnapshot());
+				}
+
+				continue;
+			}
+
+			for (const { type, id } of batch)
+			{
+				const key = `${type}:${id}`;
+				const resolvedMention = resolvedMap.get(key);
+				const snapshot = createMentionSnapshot(resolvedMention);
+				snapshots.set(key, snapshot);
+			}
+		}
+	};
+	await Promise.all(
+		Array.from({ length: Math.min(MENTION_EXPORT_CONCURRENCY, batches.length) }, () => resolveNext()),
+	);
+
+	return snapshots;
 }
 
 /**
@@ -169,7 +196,7 @@ function escapeLinkText(text: string): string
 	return String(text ?? '').replace(/[[\]\\]/g, (char) => `\\${char}`);
 }
 
-function buildMentionMap(doc: Object): Map<string, Object>
+function buildMentionMap(doc: Object, snapshots: Map<string, Object>): Map<string, Object>
 {
 	const mentionMap = new Map();
 
@@ -179,13 +206,18 @@ function buildMentionMap(doc: Object): Map<string, Object>
 			return;
 		}
 
-		const { entityType, entityId, label, url, available } = node.attrs;
+		const { entityType, entityId } = node.attrs;
 		if (!entityType || !Number.isInteger(entityId) || entityId <= 0)
 		{
 			return;
 		}
 
-		mentionMap.set(`${entityType}:${entityId}`, { label, url, available });
+		const key = `${entityType}:${entityId}`;
+		const snapshot = snapshots.get(key);
+		if (snapshot)
+		{
+			mentionMap.set(key, snapshot);
+		}
 	});
 
 	return mentionMap;
@@ -213,11 +245,65 @@ function buildAssetMap(doc: Object): Map<number, Object>
 	return assetMap;
 }
 
+// Disk attachments are described outside the document (DiskAttachmentStore): the node carries only
+// the object id, so what to write into the export is asked of the store, per document.
+function buildDiskAssetMap(doc: Object, documentId: number): Map<number, Object>
+{
+	const diskAssetMap = new Map();
+
+	doc.descendants((node) => {
+		if (!ASSET_NODE_TYPES.has(node.type.name))
+		{
+			return;
+		}
+
+		const { diskObjectId } = node.attrs;
+		if (!Number.isInteger(diskObjectId) || diskObjectId <= 0)
+		{
+			return;
+		}
+
+		const entry = DiskAttachmentStore.get(documentId, diskObjectId) ?? {};
+
+		diskAssetMap.set(diskObjectId, {
+			name: entry.name ?? '',
+			// The view link opens the file on Disk with its own permission check — the right thing for
+			// an exported document to point at. Absent for a file this reader may not see.
+			url: entry.showUrl ?? entry.downloadUrl ?? null,
+			assetType: ASSET_NODE_TYPE_TO_ASSET_TYPE[node.type.name],
+		});
+	});
+
+	return diskAssetMap;
+}
+
+// A value only counts once it round-trips through the same normalization the node itself trusts:
+// no partial trust for an attribute that reached the doc past the tokenizer.
+function collectDateValues(doc: Object): Set<string>
+{
+	const dateSet = new Set();
+
+	doc.descendants((node) => {
+		if (node.type.name !== DATE_NODE_TYPE)
+		{
+			return;
+		}
+
+		const value = normalizeDateString(node.attrs.value);
+		if (value !== null)
+		{
+			dateSet.add(value);
+		}
+	});
+
+	return dateSet;
+}
+
 /**
  * Canonical export algorithm (ALG-01): turns the live editor document into readable markdown
- * with mentions replaced by markdown links (or bare labels when unavailable) and attachment
+ * with mentions replaced by markdown links (or bare labels when unavailable), attachment
  * tokens replaced by absolute download links (`mode: 'links'`) or `attachments/...` zip paths
- * (`mode: 'zip'`).
+ * (`mode: 'zip'`), and date tokens replaced by a formatted caption in the portal's culture.
  *
  * A regex match that has no counterpart in the mention/asset map (e.g. hand-typed text that
  * happens to look like a token) is left untouched rather than replaced with an empty/undefined
@@ -230,10 +316,12 @@ function buildAssetMap(doc: Object): Map<number, Object>
  */
 export async function exportMarkdown(editor: Object, documentId: number, mode: 'links' | 'zip'): Promise<string>
 {
-	await ensureResolved(editor, documentId);
+	const mentionSnapshots = await ensureResolved(editor, documentId);
 
-	const mentionMap = buildMentionMap(editor.state.doc);
+	const mentionMap = buildMentionMap(editor.state.doc, mentionSnapshots);
 	const assetMap = buildAssetMap(editor.state.doc);
+	const diskAssetMap = buildDiskAssetMap(editor.state.doc, documentId);
+	const dateSet = collectDateValues(editor.state.doc);
 	const { origin } = window.location;
 
 	let markdown = editor.getMarkdown();
@@ -245,7 +333,10 @@ export async function exportMarkdown(editor: Object, documentId: number, mode: '
 			return raw;
 		}
 
-		const label = mention.label ?? '';
+		const label = mention.available === true
+			? (mention.label ?? '')
+			: Loc.getMessage('NOTE_MENTION_UNAVAILABLE')
+		;
 
 		return mention.available === true
 			? `[${escapeLinkText(label)}](${origin}${mention.url ?? ''})`
@@ -266,6 +357,38 @@ export async function exportMarkdown(editor: Object, documentId: number, mode: '
 		const text = escapeLinkText(name);
 
 		return asset.assetType === 'image' ? `![${text}](${target})` : `[${text}](${target})`;
+	});
+
+	// A Disk attachment becomes a plain link in both modes — including zip, where the attachments
+	// folder holds only files this module owns. An image is not embedded either: the link needs
+	// Disk's own permission check, and an `![...]` would render as a broken image to anyone without
+	// access to the file.
+	markdown = markdown.replace(DISK_ASSET_TOKEN_RE, (raw, type, idStr) => {
+		const asset = diskAssetMap.get(Number(idStr));
+		const name = asset?.name ?? '';
+		if (!asset?.url)
+		{
+			// No link means the reader could not see the file, so there is nothing to point at. The
+			// name (when known) goes in as plain text — the same way an unavailable mention degrades.
+			// What must not happen is the raw token leaking into a document meant for a human.
+			return escapeLinkText(name === '' ? Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE') : name);
+		}
+
+		// Disk hands back either an absolute link or a site-root path, depending on the file type.
+		const target = /^https?:\/\//.test(asset.url) ? asset.url : `${origin}${asset.url}`;
+
+		return `[${escapeLinkText(name)}](${target})`;
+	});
+
+	// The caption is built by the same code the node itself uses: a mismatch here
+	// would mean the exported date reads differently from the one shown in the editor.
+	markdown = markdown.replace(DATE_TOKEN_RE, (raw, value) => {
+		if (!dateSet.has(value))
+		{
+			return raw;
+		}
+
+		return formatDateCaption(value);
 	});
 
 	return markdown;

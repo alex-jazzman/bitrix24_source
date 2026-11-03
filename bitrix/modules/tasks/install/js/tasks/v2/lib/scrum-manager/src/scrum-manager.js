@@ -7,11 +7,17 @@ type Params = {
 	groupId: number,
 };
 
+type TaskStatusInstance = {
+	isParentScrumTask: (taskId: number) => Promise<boolean>,
+	showDod: (taskId: number) => Promise<void>,
+	update: () => Promise<void>,
+};
+
 export class ScrumManager
 {
 	#params: Params;
 
-	#taskStatus: TaskStatus;
+	#taskStatus: TaskStatusInstance;
 	#isParentScrumTask: boolean;
 
 	constructor(params: Params)
@@ -34,6 +40,7 @@ export class ScrumManager
 			taskId: this.#params.taskId,
 			action: 'complete',
 			performActionOnParentTask: true,
+			completeWithChecklist: true,
 		});
 
 		this.#isParentScrumTask ??= await this.#taskStatus.isParentScrumTask(this.#params.parentId);
@@ -64,6 +71,7 @@ export class ScrumManager
 			taskId: this.#params.taskId,
 			action: 'complete',
 			performActionOnParentTask: true,
+			completeWithChecklist: true,
 		});
 
 		this.#isParentScrumTask ??= await this.#taskStatus.isParentScrumTask(this.#params.parentId);

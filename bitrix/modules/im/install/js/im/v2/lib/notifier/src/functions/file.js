@@ -31,4 +31,13 @@ export const FileNotifier = {
 			showNotification(`${error.getMessage()}<br>${error.getDescription()}`);
 		}
 	},
+	showValidationError(text: string): void
+	{
+		if (!text)
+		{
+			return;
+		}
+
+		showNotification(text);
+	},
 };

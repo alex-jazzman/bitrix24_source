@@ -7,7 +7,7 @@ this.BX.Note = this.BX.Note || {};
 	/**
 	 * Visual presentation map: wire type -> { colorToken, icon, iconUrl, marker, avatarShape }.
 	 *
-	 * Keys match REG-01 wire values exactly (user/document/collection/task).
+	 * Keys match REG-01 wire values exactly (user/document/collection/task/diskfolder).
 	 * colorToken — CSS custom property from Air design tokens.
 	 * icon — icon name for BIcon (Outline set); null when iconUrl is used instead.
 	 * iconUrl — URL of a custom SVG mask-image glyph (collection); null for BIcon types.
@@ -47,6 +47,14 @@ this.BX.Note = this.BX.Note || {};
 			icon: ui_iconSet_api_vue.Outline.TASK,
 			iconUrl: null,
 			marker: 'T',
+			avatarShape: 'square'
+		}),
+		diskfolder: Object.freeze({
+			// o-folder: stock folder glyph from the shared set — no custom note asset for this type.
+			colorToken: '--ui-color-accent-main-primary',
+			icon: ui_iconSet_api_vue.Outline.FOLDER,
+			iconUrl: null,
+			marker: 'F',
 			avatarShape: 'square'
 		})
 	});
@@ -101,7 +109,7 @@ this.BX.Note = this.BX.Note || {};
 	 *   pending   — `available` is null (not yet resolved). Type-aware skeleton:
 	 *               color/icon from presentation map, shimmer label, neutral circle for user.
 	 *   resolved  — Air chip with label, icon or avatar (user).
-	 *   unavailable — neutral grey chip "unavailable" (Q-2: no reason differentiation).
+	 *   unavailable — neutral grey chip with a known document label or a localized fallback.
 	 *
 	 * Self-mention highlight removed (g-tint design); isCurrentUser prop kept for caller compatibility.
 	 *
@@ -143,8 +151,17 @@ this.BX.Note = this.BX.Note || {};
 			isEditable: {
 				type: Boolean,
 				default: false
+			},
+			allowUnavailableActivation: {
+				type: Boolean,
+				default: false
+			},
+			navigationPending: {
+				type: Boolean,
+				default: false
 			}
 		},
+		emits: ['click', 'auxclick'],
 		computed: {
 			presentation() {
 				return getPresentationByType(this.type);
@@ -155,15 +172,19 @@ this.BX.Note = this.BX.Note || {};
 			},
 			chipClass() {
 				const base = 'note-mention-chip';
+				const classes = [base];
 				if (this.unavailable) {
-					return `${base} ${base}--unavailable`;
+					classes.push(`${base}--unavailable`);
+				} else {
+					classes.push(`${base}--type-${this.type}`);
 				}
-				if (this.isPending) {
-					return `${base} ${base}--pending ${base}--type-${this.type}`;
+				if (this.isPending || this.navigationPending) {
+					classes.push(`${base}--pending`);
 				}
-
-				// WHY: --self highlight removed per g-tint design; isCurrentUser prop kept for caller compat.
-				return `${base} ${base}--type-${this.type}`;
+				if (this.unavailable && this.allowUnavailableActivation) {
+					classes.push(`${base}--activatable`);
+				}
+				return classes.join(' ');
 			},
 			chipStyle() {
 				if (this.unavailable || !this.presentation) {
@@ -200,7 +221,7 @@ this.BX.Note = this.BX.Note || {};
 			},
 			displayLabel() {
 				if (this.unavailable) {
-					return main_core.Loc.getMessage('NOTE_MENTION_UNAVAILABLE');
+					return this.type === 'document' && this.label ? this.label : main_core.Loc.getMessage('NOTE_MENTION_UNAVAILABLE');
 				}
 				return this.label ?? '';
 			},
@@ -209,7 +230,7 @@ this.BX.Note = this.BX.Note || {};
 			// "slider" navKind also opens a page/card → "link" is accurate.
 			// In edit mode the chip is a ProseMirror atom — no role override.
 			chipRole() {
-				if (this.isEditable || this.unavailable) {
+				if (this.isEditable || this.isPending || this.unavailable && !this.allowUnavailableActivation) {
 					return undefined;
 				}
 				return 'link';
@@ -217,12 +238,12 @@ this.BX.Note = this.BX.Note || {};
 			// tabindex is set only in view mode for available chips.
 			// In edit mode ProseMirror manages atom focus via arrow keys — do NOT interfere.
 			chipTabindex() {
-				if (this.isEditable) {
+				if (this.isEditable || this.isPending) {
 					return undefined;
 				}
 
 				// Unavailable chips must not be in the tab order as active controls.
-				if (this.unavailable) {
+				if (this.unavailable && !this.allowUnavailableActivation) {
 					return undefined;
 				}
 				return '0';
@@ -247,7 +268,7 @@ this.BX.Note = this.BX.Note || {};
 			// Space preventDefault prevents the page from scrolling.
 			// Not called in edit mode (tabindex is absent there).
 			handleKeydown(event) {
-				if (event.key === 'Enter' || event.key === ' ') {
+				if ((!this.unavailable || this.allowUnavailableActivation) && (event.key === 'Enter' || event.key === ' ')) {
 					if (event.key === ' ') {
 						event.preventDefault();
 					}
@@ -290,9 +311,11 @@ this.BX.Note = this.BX.Note || {};
 			:style="chipStyle"
 			:role="chipRole"
 			:tabindex="chipTabindex"
-			:aria-disabled="unavailable ? 'true' : undefined"
+			:aria-disabled="unavailable && !allowUnavailableActivation ? 'true' : undefined"
 			contenteditable="false"
+			@click="$emit('click', $event)"
 			@keydown="handleKeydown"
+			@auxclick="$emit('auxclick', $event)"
 		>
 			<span v-if="isPending && type === 'user'" aria-hidden="true" class="note-mention-chip__avatar-placeholder"></span>
 			<span v-else-if="isPending && presentation && presentation.iconUrl" aria-hidden="true" class="note-mention-chip__icon-wrap">

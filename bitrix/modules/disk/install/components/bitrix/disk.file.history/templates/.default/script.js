@@ -16,6 +16,7 @@
 	{
 		this.layout = {};
 		this.object = parameters.object;
+		this.isViewByUnifiedLink = parameters.isViewByUnifiedLink || false;
 		this.gridId = parameters.gridId;
 		this.grid = BX.Main.gridManager.getById(this.gridId);
 
@@ -54,12 +55,26 @@
 						click: function (e) {
 							this.addClassName('ui-btn-clock');
 
-							BX.ajax.runAction('disk.api.file.restoreFromVersion', {
+							let restoreAction = 'disk.api.file.restoreFromVersion';
+
+							let restoreData = {
+								fileId: objectId,
+								versionId: versionId,
+							};
+
+							if (self.isViewByUnifiedLink && BX.type.isStringFilled(self.object.uniqueCode))
+							{
+								restoreAction = 'disk.api.unifiedlinkactions.restoreFromVersion';
+
+								restoreData = {
+									uniqueCode: self.object.uniqueCode,
+									versionId: versionId,
+								};
+							}
+
+							BX.ajax.runAction(restoreAction, {
 								analyticsLabel: 'file.history',
-								data: {
-									fileId: objectId,
-									versionId: versionId
-								}
+								data: restoreData,
 							}).then(function (response) {
 								BX.PopupWindowManager.getCurrentPopup().close();
 
@@ -113,11 +128,23 @@
 						click: function (e) {
 							this.addClassName('ui-btn-clock');
 
-							BX.ajax.runAction('disk.api.version.delete', {
+							let deleteAction = 'disk.api.version.delete';
+							let deleteData = {
+								versionId: versionId,
+							};
+
+							if (self.isViewByUnifiedLink && BX.type.isStringFilled(self.object.uniqueCode))
+							{
+								deleteAction = 'disk.api.unifiedlinkactions.deleteVersion';
+								deleteData = {
+									uniqueCode: self.object.uniqueCode,
+									versionId: versionId,
+								};
+							}
+
+							BX.ajax.runAction(deleteAction, {
 								analyticsLabel: 'file.history',
-								data: {
-									versionId: versionId
-								}
+								data: deleteData,
 							}).then(function (response) {
 								BX.PopupWindowManager.getCurrentPopup().close();
 

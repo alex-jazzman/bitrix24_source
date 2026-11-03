@@ -2,6 +2,12 @@
 $MESS["DISK_EXT_LINK_ACTION_LOGIN"] = "Log in";
 $MESS["DISK_EXT_LINK_ACTION_SIGNUP"] = "Create account";
 $MESS["DISK_EXT_LINK_B24"] = "Bitrix<span>24</span>";
+$MESS["DISK_EXT_LINK_CAPTCHA_ARIA_LABEL"] = "Type the code in the image";
+$MESS["DISK_EXT_LINK_CAPTCHA_IMAGE_ALT"] = "Code image";
+$MESS["DISK_EXT_LINK_CAPTCHA_INVALID"] = "Your CAPTCHA entry is incorrect.";
+$MESS["DISK_EXT_LINK_CAPTCHA_LABEL"] = "Type the code in the image:";
+$MESS["DISK_EXT_LINK_CAPTCHA_PLACEHOLDER"] = "Your entry";
+$MESS["DISK_EXT_LINK_CAPTCHA_REQUIRED"] = "CAPTCHA entry is required.";
 $MESS["DISK_EXT_LINK_COPY_LINK"] = "Copy link";
 $MESS["DISK_EXT_LINK_FILE_COPY_LINK"] = "Share link";
 $MESS["DISK_EXT_LINK_FILE_DOWNLOAD"] = "Download";

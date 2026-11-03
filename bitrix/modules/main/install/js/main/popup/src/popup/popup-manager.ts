@@ -116,6 +116,19 @@ export class PopupManager
 		return false;
 	}
 
+	static isAnyPopupBlockingBackgroundEscShown(): boolean
+	{
+		for (let i = 0, length = this._popups.length; i < length; i++)
+		{
+			if (this._popups[i].isShown() && this._popups[i].shouldBlockBackgroundEsc())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	static getPopupById(id: string): Popup | null
 	{
 		for (let i = 0; i < this._popups.length; i++)

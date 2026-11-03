@@ -3,8 +3,9 @@
 return [
 	'extensions' => [
 		'loc',
+		'require-lazy',
 	],
 	'components' => [
-		'intranet:user.list',
+		'intranet:user.list', //@keep
 	],
 ];

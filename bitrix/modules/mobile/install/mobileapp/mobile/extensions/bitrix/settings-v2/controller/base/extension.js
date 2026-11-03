@@ -2,7 +2,10 @@
  * @module settings-v2/controller/base
  */
 jn.define('settings-v2/controller/base', (require, exports, module) => {
-	const { Alert, makeButton, makeCancelButton } = require('alert');
+	const { makeButton, makeCancelButton } = require('alert');
+	const {
+		SettingChangeConfirmNavigator,
+	} = require('settings-v2/controller/base/src/setting-change-confirm-navigator');
 	const { Loc } = require('loc');
 
 	class BaseSettingController
@@ -37,7 +40,8 @@ jn.define('settings-v2/controller/base', (require, exports, module) => {
 
 		/**
 		 * @abstract
-		 * @return Promise
+		 * @param {*} value
+		 * @return {Promise<*>}
 		 */
 		async set(value)
 		{
@@ -71,22 +75,27 @@ jn.define('settings-v2/controller/base', (require, exports, module) => {
 		/**
 		 * @public
 		 * @param {function} onConfirm
+		 * @param {?function} [onCancel]
 		 * @returns {BaseSettingController}
 		 */
-		showOnChangeAlert(onConfirm)
+		showOnChangeAlert(onConfirm, onCancel = null)
 		{
-			Alert.confirm(
-				this.onChangeAlertTitle,
-				this.onChangeAlertDescription,
-				[
+			const cancel = () => {
+				this.onCancel?.();
+				onCancel?.();
+			};
+
+			new SettingChangeConfirmNavigator({
+				title: this.onChangeAlertTitle,
+				description: this.onChangeAlertDescription,
+				buttons: [
 					makeButton(this.onChangeAlertOkButton, async () => {
 						onConfirm();
 					}),
-					makeCancelButton(() => {
-						this.onCancel?.();
-					}),
+					makeCancelButton(cancel),
 				],
-			);
+				onDismiss: cancel,
+			}).open();
 		}
 	}
 

@@ -4,7 +4,10 @@ type AssetType = 'image' | 'file' | 'video';
 
 type ParseResult = {
 	assetType: AssetType,
-	fileId: number,
+	// Exactly one of the two is set: fileId for a file owned by the knowledge base, diskObjectId for
+	// an attachment living on Disk. Which one it is decides how the node resolves and serializes.
+	fileId: number | null,
+	diskObjectId: number | null,
 	width: number | null,
 	align: string | null,
 	raw: string,
@@ -23,6 +26,13 @@ type AssetMatch = {
 // code block. Imports may emit a token under stray/structural whitespace.
 const NOTE_ASSET_GRAMMAR: string = String.raw`\[\[(image|file|video) fileId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\]`;
 const NOTE_ASSET_RE: RegExp = new RegExp(`^ {0,3}${NOTE_ASSET_GRAMMAR}[ \\t]*(?:\\n|$)`);
+
+// Attachment picked from Disk: [[disk <type> objectId=<digits> <opt-attrs>]]. Same shape as above,
+// deliberately — the block looks and behaves the same, only the source of the file differs.
+// The id addresses the Disk OBJECT, not a version of it: the document must follow the file as it
+// is edited on Disk, and name/size/mime are never written here — they come from the server, so a
+// rename on Disk cannot leave a stale name in the text.
+const NOTE_DISK_ASSET_RE: RegExp = /^ {0,3}\[\[disk (image|file|video) objectId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\][ \t]*(?:\n|$)/;
 
 // Optional attributes allowed after fileId. Unknown keys make the whole token non-canonical (rejected).
 const KNOWN_ASSET_ATTRS: Set<string> = new Set(['width', 'align']);
@@ -48,17 +58,11 @@ export const ASSET_TYPE_TO_NODE: { [AssetType]: string } = {
 	video: 'video',
 };
 
-function interpretAssetMatch(match: Object): ParseResult | null
+function parsePresentationAttrs(attrsRaw: string): { width: number | null, align: string | null } | null
 {
-	const fileId = Number(match[2]);
-	if (!Number.isInteger(fileId) || fileId <= 0)
-	{
-		return null;
-	}
-
 	let width = null;
 	let align = null;
-	const attrsRaw = match[3] || '';
+
 	if (attrsRaw)
 	{
 		const attrRe = /([a-z]+)=([^\s\]]+)/g;
@@ -94,11 +98,29 @@ function interpretAssetMatch(match: Object): ParseResult | null
 		}
 	}
 
+	return { width, align };
+}
+
+function interpretAssetMatch(match: Object, isDiskAsset: boolean): ParseResult | null
+{
+	const id = Number(match[2]);
+	if (!Number.isInteger(id) || id <= 0)
+	{
+		return null;
+	}
+
+	const presentation = parsePresentationAttrs(match[3] || '');
+	if (!presentation)
+	{
+		return null;
+	}
+
 	return {
 		assetType: ((match[1]: any): AssetType),
-		fileId,
-		width,
-		align,
+		fileId: isDiskAsset ? null : id,
+		diskObjectId: isDiskAsset ? id : null,
+		width: presentation.width,
+		align: presentation.align,
 		raw: match[0],
 	};
 }
@@ -111,9 +133,18 @@ export function parseNoteAssetSyntax(src: string, pos: number): ParseResult | nu
 	}
 
 	const slice = pos === 0 ? src : src.slice(pos);
+
+	// Disk first: its token starts with the same `[[` but carries an extra keyword, so trying the
+	// older pattern first would only ever fail on it — order is for clarity, not correctness.
+	const diskMatch = NOTE_DISK_ASSET_RE.exec(slice);
+	if (diskMatch)
+	{
+		return interpretAssetMatch(diskMatch, true);
+	}
+
 	const match = NOTE_ASSET_RE.exec(slice);
 
-	return match ? interpretAssetMatch(match) : null;
+	return match ? interpretAssetMatch(match, false) : null;
 }
 
 export function findNoteAssetMatches(src: string, includeEscaped = false): AssetMatch[]
@@ -126,7 +157,8 @@ export function findNoteAssetMatches(src: string, includeEscaped = false): Asset
 	{
 		if (includeEscaped || !isEscapedAt(src, match.index))
 		{
-			const interpreted = interpretAssetMatch(match);
+			// Грамматика поиска — без Диска, поэтому токены Диска здесь не находятся.
+			const interpreted = interpretAssetMatch(match, false);
 			if (interpreted)
 			{
 				matches.push({

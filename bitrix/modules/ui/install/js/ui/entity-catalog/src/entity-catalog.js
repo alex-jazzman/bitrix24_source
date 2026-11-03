@@ -93,7 +93,7 @@ export class EntityCatalog extends EventEmitter
 			multiple: boolean,
 		},
 		popupOptions?: PopupOptions,
-		customTitleBar?: string,
+		customTitleBar?: Element,
 		title?: string,
 		slots?: object,
 		events?: { [eventName: string]: (event: BaseEvent) => void },
@@ -588,6 +588,9 @@ export class EntityCatalog extends EventEmitter
 	{
 		return {
 			className: 'ui-catalog-popup ui-entity-catalog__scope',
+			ariaLabel: this.#popupTitle.trim().length > 0
+				? this.#popupTitle
+				: Loc.getMessage('UI_JS_ENTITY_CATALOG_DIALOG_ARIA'),
 			titleBar: this.#getPopupTitleBar(),
 			noAllPaddings: true,
 			closeByEsc: true,
@@ -619,6 +622,8 @@ export class EntityCatalog extends EventEmitter
 						<button
 							type="button"
 							class="ui-entity-catalog-popup-close-icon"
+							data-testid="entity-catalog-popup-close"
+							aria-label="${Loc.getMessage('UI_JS_ENTITY_CATALOG_CLOSE_ARIA')}"
 							onclick="${this.#handleClose.bind(this)}"
 							onmousedown="${this.#handleMouseDown.bind(this)}"
 						></button>

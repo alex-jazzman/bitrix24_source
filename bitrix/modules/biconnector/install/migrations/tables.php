@@ -75,6 +75,11 @@ $migration->table('b_biconnector_log')->create(function (\Bitrix\Main\UpdateSyst
 	$table->addColumn()->varchar('REQUEST_URI', 2000);
 	$table->addColumn()->int('ROW_NUM');
 	$table->addColumn()->int('DATA_SIZE');
+	// Rows and bytes the source actually scanned, as opposed to the rows handed to the client: with a
+	// delegated aggregation the two differ by orders of magnitude. NULL when the source reports no
+	// such statistics.
+	$table->addColumn()->bigInt('READ_ROWS');
+	$table->addColumn()->bigInt('READ_BYTES');
 	$table->addColumn()->double('REAL_TIME');
 	$table->addColumn()->char('IS_OVER_LIMIT', 1)->default('N');
 	$table->addColumn()->varchar('SOURCE', 255);
@@ -121,7 +126,11 @@ $migration->table('b_biconnector_superset_user')->create(function (\Bitrix\Main\
 	$table->addColumn()->varchar('CLIENT_ID', 32)->notNull();
 	$table->addColumn()->varchar('PERMISSION_HASH', 32);
 	$table->addColumn()->char('UPDATED', 1)->notNull()->default('Y');
+	$table->addColumn()->varchar('LOGIN', 64);
 	$table->addIndex('ix_b_biconnector_superset_user_user_id', ['USER_ID']);
+	// The full table name segment is mandatory: IndexNameProcessor checks it in the dev updater, and a
+	// shortened name in the style of the neighbouring tables fails there and leaves the column without an index.
+	$table->addIndex('IX_BICONNECTOR_SUPERSET_USER_LOGIN', ['LOGIN']);
 });
 
 $migration->table('b_biconnector_superset_tag')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -247,6 +256,10 @@ $migration->table('b_biconnector_external_dataset')->create(function (\Bitrix\Ma
 	$table->addColumn()->int('CREATED_BY_ID')->notNull();
 	$table->addColumn()->int('UPDATED_BY_ID');
 	$table->addColumn()->int('EXTERNAL_ID');
+	$table->addColumn()->varchar('CSV_DELIMITER', 10);
+	$table->addColumn()->varchar('CSV_ENCODING', 50);
+	$table->addColumn()->char('CSV_HAS_HEADERS', 1);
+	$table->addColumn()->varchar('VERBOSE_NAME', 255);
 	$table->addUniqueIndex('IX_BICONNECTOR_EXTERNAL_DATASET_NAME', ['NAME']);
 });
 
@@ -291,6 +304,8 @@ $migration->table('b_biconnector_external_source_rest_connector')->create(functi
 	$table->addColumn()->varchar('URL_TABLE_DESCRIPTION', 2048)->notNull();
 	$table->addColumn()->char('SUPPORT_MAPPING', 1)->notNull()->default('N');
 	$table->addColumn()->varchar('SOURCE_CODE', 64);
+	$table->addColumn()->varchar('URL_CAPABILITIES', 2048);
+	$table->addColumn()->varchar('URL_AGGREGATED_DATA', 2048);
 });
 
 $migration->table('b_biconnector_external_source_rest')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -314,8 +329,20 @@ $migration->table('b_biconnector_superset_dashboard_share')->create(function (\B
 	$table->addColumn()->text('URL_PARAMETER_VALUES');
 	$table->addColumn()->int('LOGIN_ATTEMPTS')->notNull()->default('0');
 	$table->addColumn()->datetime('LOGIN_LOCKED_TILL');
+	$table->addColumn()->int('DISABLED_BY_ID');
+	$table->addColumn()->datetime('DATE_DISABLED');
+	$table->addColumn()->datetime('DATE_LAST_OPENED');
 	$table->addUniqueIndex('IX_BICONNECTOR_SHARE_TOKEN', ['TOKEN']);
 	$table->addUniqueIndex('IX_BICONNECTOR_SHARE_DASHBOARD_CREATOR', ['DASHBOARD_ID', 'CREATED_BY_ID']);
+	$table->addIndex('IX_BICONNECTOR_SUPERSET_DASHBOARD_SHARE_ACTIVE_OPENED', ['ACTIVE', 'DATE_LAST_OPENED']);
+});
+
+$migration->table('b_biconnector_superset_dashboard_share_ban')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$table->addColumn()->int('DASHBOARD_ID')->notNull();
+	$table->addColumn()->int('CREATED_BY_ID')->notNull();
+	$table->addColumn()->datetime('DATE_CREATE')->notNull();
+	$table->addUniqueIndex('UX_BICONNECTOR_SUPERSET_DASHBOARD_SHARE_BAN_DASHBOARD', ['DASHBOARD_ID']);
 });
 
 $migration->table('b_biconnector_superset_dashboard_view')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -358,4 +385,36 @@ $migration->table('b_biconnector_superset_dashboard_chat')->create(function (\Bi
 	$table->addColumn()->datetime('DATE_CREATE')->notNull();
 	$table->addUniqueIndex('ix_b_biconnector_superset_dashboard_chat_dashboard_id', ['DASHBOARD_ID']);
 	$table->addUniqueIndex('ix_b_biconnector_superset_dashboard_chat_chat_id', ['CHAT_ID']);
+});
+
+$migration->table('b_biconnector_table_group')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$table->addColumn()->varchar('CODE', 50)->notNull();
+	$table->addColumn()->varchar('NAME', 512)->notNull();
+	$table->addColumn()->varchar('TYPE', 50)->notNull();
+	$table->addColumn()->int('SORT')->notNull()->default('100');
+	$table->addColumn()->datetime('DATE_CREATE')->notNull();
+	$table->addColumn()->datetime('DATE_MODIFY')->notNull();
+	// A system group is created by the installer and has no author at all.
+	$table->addColumn()->int('CREATED_BY_ID');
+	$table->addColumn()->int('UPDATED_BY_ID');
+	$table->addUniqueIndex('UX_BICONNECTOR_TABLE_GROUP_CODE', ['CODE']);
+});
+
+$migration->table('b_biconnector_table_group_binding')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$table->addColumn()->int('GROUP_ID')->notNull();
+	$table->addColumn()->varchar('TABLE_CODE', 250)->notNull();
+	$table->addUniqueIndex('UX_BICONNECTOR_TABLE_GROUP_BINDING_GROUP_TABLE', ['GROUP_ID', 'TABLE_CODE']);
+	$table->addIndex('IX_BICONNECTOR_TABLE_GROUP_BINDING_TABLE_CODE', ['TABLE_CODE']);
+});
+
+$migration->table('b_biconnector_rest_sqllab_rate')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$table->addColumn()->varchar('DIMENSION_KEY', 128)->notNull();
+	$table->addColumn()->datetime('WINDOW_START')->notNull();
+	$table->addColumn()->int('REQUEST_COUNT')->notNull()->default('0');
+	$table->addColumn()->datetime('UPDATED_AT')->notNull();
+	$table->addUniqueIndex('UX_BICONNECTOR_REST_SQLLAB_RATE_DIMENSION', ['DIMENSION_KEY']);
+	$table->addIndex('IX_BICONNECTOR_REST_SQLLAB_RATE_UPDATED', ['UPDATED_AT']);
 });

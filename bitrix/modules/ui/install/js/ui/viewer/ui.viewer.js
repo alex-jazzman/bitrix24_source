@@ -470,6 +470,11 @@
 			const item = this.getItemByIndex(index);
 			if (actionId === 'download')
 			{
+				if (item.isDownloadDisabled())
+				{
+					return;
+				}
+
 				// Compatibility: a download action doesn't exist anymore
 				window.open(item.getDownloadUrl(), this.isExternalLink(item.getDownloadUrl()) ? '_blank' : '_self');
 
@@ -1100,7 +1105,10 @@
 
 				if (action.id === 'download' && BX.Type.isStringFilled(action.href))
 				{
-					item.setDownloadUrl(action.href);
+					if (!item.isDownloadDisabled())
+					{
+						item.setDownloadUrl(action.href);
+					}
 
 					continue;
 				}
@@ -1229,6 +1237,9 @@
 					props: {
 						className: 'ui-viewer-close',
 					},
+					attrs: {
+						'data-testid': 'ui-viewer-close-btn',
+					},
 					html:
 						'<div class="ui-viewer-close-icon">'
 							+ '<div class="ui-icon-set --cross-40"></div>'
@@ -1289,6 +1300,7 @@
 				this.layout.downloadBtn = BX.Tag.render`
 					<a 
 						class="ui-viewer-download-btn" 
+						data-testid="ui-viewer-download-btn"
 						target="_blank" 
 						title="${BX.Text.encode(BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD'))}"
 						aria-label="${BX.Text.encode(BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD'))}"
@@ -1510,7 +1522,18 @@
 
 		updateActions(item)
 		{
-			this.getDownloadButton().setAttribute('href', item.getDownloadUrl());
+			const downloadButton = this.getDownloadButton();
+
+			if (item.isDownloadDisabled())
+			{
+				downloadButton.removeAttribute('href');
+				downloadButton.style.display = 'none';
+			}
+			else
+			{
+				downloadButton.setAttribute('href', item.getDownloadUrl());
+				downloadButton.style.display = '';
+			}
 
 			const hasMoreMenuItems = item.getActions().length > 0 || item.getMoreMenuItems().length > 0;
 
@@ -2084,6 +2107,9 @@
 					props: {
 						className: 'ui-viewer',
 						tabIndex: 22081990,
+					},
+					attrs: {
+						'data-testid': 'ui-viewer',
 					},
 					style: {
 						height: window.clientHeight + 'px'

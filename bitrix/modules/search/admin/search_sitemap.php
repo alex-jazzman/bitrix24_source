@@ -2,12 +2,12 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/prolog.php';
 IncludeModuleLangFile(__FILE__);
-/** @global CMain $APPLICATION */
+/** @var CMain $APPLICATION */
 global $APPLICATION;
-/** @var CAdminMessage $message */
+/** @var CAdminMessage|null $message */
 $searchDB = CDatabase::GetModuleConnection('search');
 
-$POST_RIGHT = $APPLICATION->GetGroupRight('search');
+$POST_RIGHT = CMain::GetGroupRight('search');
 if ($POST_RIGHT == 'D')
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Generate'] == 'Y')
 		$sm_max_execution_time = COption::GetOptionString('search', 'sm_max_execution_time');
 		$sm_record_limit = COption::GetOptionString('search', 'sm_record_limit');
 
-		$arSiteMap = $cSiteMap->Create($SM_SITE_ID, [$sm_max_execution_time, $sm_record_limit], $NS, $arOptions);
+		$arSiteMap = $cSiteMap->Create($_REQUEST['SM_SITE_ID'], [$sm_max_execution_time, $sm_record_limit], $NS, $arOptions);
 		if (is_array($arSiteMap)):
 			CAdminMessage::ShowMessage([
 				'TYPE' => 'PROGRESS',
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Generate'] == 'Y')
 			?>
 			<script>
 				CloseWaitWindow();
-				DoNext(<?php echo CUtil::PhpToJSObject(['NS' => $arSiteMap])?>);
+				DoNext(<?php echo \Bitrix\Main\Web\Json::encode(['NS' => $arSiteMap])?>);
 			</script>
 		<?php elseif ($arSiteMap === true):?>
 			<?php echo BeginNote()?>
@@ -223,7 +223,7 @@ function EndReindex()
 <div id="reindex_result_div">
 </div>
 
-<form method="POST" action="<?php echo $APPLICATION->GetCurPage()?>?lang=<?php echo htmlspecialcharsbx(LANG)?>" name="fs2">
+<form method="POST" action="<?php echo $APPLICATION->GetCurPage()?>?lang=<?php echo htmlspecialcharsbx(LANGUAGE_ID)?>" name="fs2">
 <?php
 
 $sm_max_execution_time = intval(COption::GetOptionInt('search', 'sm_max_execution_time'));

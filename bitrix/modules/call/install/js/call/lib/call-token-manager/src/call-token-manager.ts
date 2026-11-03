@@ -1,6 +1,6 @@
 import { Type, Loc, Extension } from 'main.core';
 
-const { callInstalled } = Extension.getSettings('call.core');
+const callInstalled = Extension.getSettings('call.core').get('callInstalled');
 
 type QueryParams = { call_auth_id?: string, videoconf_id?: string };
 

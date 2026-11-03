@@ -1,7 +1,8 @@
+import { Loc } from 'main.core';
 import { Outline } from 'ui.icon-set.api.vue';
-import { IconButton, textEditorServices } from '../../../../shared/ui';
-import { FRAME_TEXT_ALIGN_OPTIONS } from '../../../../entities/blocks';
-import { useBlockDiagram } from 'ui.block-diagram';
+
+import { IconButton } from '../../../../shared/ui';
+import { useEditFrameContent } from '../../composables/use-edit-frame-content';
 
 // @vue/component
 export const ChangeEditFrameContentTopBtn = {
@@ -14,61 +15,34 @@ export const ChangeEditFrameContentTopBtn = {
 			type: String,
 			required: true,
 		},
-		textAlign: {
-			type: String,
-			required: true,
-		},
 	},
-	setup(props): {...}
+	setup(): {...}
 	{
-		const { updateBlock, getBlockById } = useBlockDiagram();
+		const { editFrameContent } = useEditFrameContent();
 
 		return {
 			iconSet: Outline,
-			FRAME_TEXT_ALIGN_OPTIONS,
-			textEditorService: textEditorServices.get(props.blockId),
-			updateBlock,
-			getBlockById,
+			editFrameContent,
 		};
 	},
 	computed: {
-		isEditing(): boolean
+		// the button carries an icon only, so its name comes from the phrase
+		accessibleName(): string
 		{
-			return this.textEditorService.isEdit.value;
-		},
-		isTextAlignNone(): boolean
-		{
-			return this.textAlign === this.FRAME_TEXT_ALIGN_OPTIONS.NONE;
+			return Loc.getMessage('BIZPROCDESIGNER_EDITOR_FRAME_BLOCK_EDIT_CONTENT_ARIA_LABEL');
 		},
 	},
 	methods: {
 		onChangeEditFrameContent(): void
 		{
-			if (this.isEditing)
-			{
-				return;
-			}
-
-			if (this.isTextAlignNone)
-			{
-				const block = this.getBlockById(this.blockId);
-
-				this.updateBlock({
-					...block,
-					node: {
-						...block.node,
-						frameTextAlign: FRAME_TEXT_ALIGN_OPTIONS.LEFT,
-					},
-				});
-			}
-
-			this.textEditorService.onEdit();
+			this.editFrameContent(this.blockId);
 		},
 	},
 	template: `
 		<IconButton
 			:icon-name="iconSet.EDIT_L"
 			:color="'var(--ui-color-palette-gray-40)'"
+			:aria-label="accessibleName"
 			:data-test-id="$testId('blockFrameEdit', blockId)"
 			@click="onChangeEditFrameContent"
 			@mousedown.stop

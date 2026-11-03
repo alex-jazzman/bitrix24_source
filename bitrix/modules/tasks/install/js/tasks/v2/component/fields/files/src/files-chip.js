@@ -1,4 +1,6 @@
-import { FileStatus, UploaderFileInfo } from 'ui.uploader.core';
+import { Dom } from 'main.core';
+
+import { FileStatus, type UploaderFileInfo } from 'ui.uploader.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Animated, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.animated';
@@ -48,6 +50,7 @@ export const FilesChip = {
 			files: this.fileService.getFiles(),
 			isPopupShown: false,
 			isPopupShownWithFiles: false,
+			isMenuShown: false,
 		};
 	},
 	computed: {
@@ -114,9 +117,56 @@ export const FilesChip = {
 		{
 			return this.filesCount > 0 && this.isPopupShownWithFiles;
 		},
+		opensDialog(): boolean
+		{
+			return this.isAutonomous || !this.isSelected;
+		},
+		ariaLabel(): string
+		{
+			if (!this.isAutonomous || this.filesCount === 0)
+			{
+				return this.loc('TASKS_V2_FILES_ARIA_LABEL');
+			}
+
+			return this.loc('TASKS_V2_FILES_COUNT_ARIA_LABEL', {
+				'#COUNT#': this.filesCount,
+			});
+		},
+	},
+	watch: {
+		isPopupShown: {
+			handler(): void
+			{
+				this.syncAria();
+			},
+			flush: 'post',
+		},
+		opensDialog: {
+			handler(): void
+			{
+				this.syncAria();
+			},
+			flush: 'post',
+		},
+		filesCount: {
+			handler(): void
+			{
+				this.syncAria();
+			},
+			flush: 'post',
+		},
+		isMenuShown: {
+			handler(): void
+			{
+				this.syncAria();
+			},
+			flush: 'post',
+		},
 	},
 	mounted(): void
 	{
+		this.syncAria();
+
 		this.fileService.subscribe('onFileAdd', this.handleFileAdd);
 		this.fileService.subscribe('onFileAttach', this.handleFileAttach);
 	},
@@ -183,8 +233,15 @@ export const FilesChip = {
 		},
 		browseFiles(): void
 		{
+			const bindElement = this.getChipElement();
+			if (!bindElement)
+			{
+				return;
+			}
+
 			this.fileService.browse({
-				bindElement: this.$refs.chip.$el,
+				bindElement,
+				onShowCallback: this.onFileBrowserShow,
 				onHideCallback: this.onFileBrowserClose,
 				compact: this.cardType === CardType.Compact,
 			});
@@ -193,10 +250,53 @@ export const FilesChip = {
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(filesMeta.id);
 		},
+		onFileBrowserShow(): void
+		{
+			this.isMenuShown = true;
+		},
 		onFileBrowserClose(): void
 		{
+			this.isMenuShown = false;
 			this.$refs.chip?.$el.focus();
 			this.fileService.setFileBrowserClosed(true);
+		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
+		syncAria(): void
+		{
+			const el = this.getChipElement();
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-label', this.ariaLabel);
+
+			if (!this.opensDialog)
+			{
+				Dom.attr(el, 'aria-haspopup', null);
+				Dom.attr(el, 'aria-expanded', null);
+
+				return;
+			}
+
+			const opensMenu = this.filesCount === 0;
+
+			Dom.attr(el, 'aria-haspopup', opensMenu ? 'menu' : 'dialog');
+			Dom.attr(el, 'aria-expanded', String(opensMenu ? this.isMenuShown : this.isPopupShown));
+		},
+		getChipElement(): ?HTMLElement
+		{
+			return this.$refs.chip?.$el ?? null;
 		},
 	},
 	template: `
@@ -209,11 +309,12 @@ export const FilesChip = {
 			:data-task-chip-id="filesMeta.id"
 			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 		<FilesPopup
-			v-if="isPopupShown"
+			v-if="isPopupShown && getChipElement()"
 			:taskId
-			:getBindElement="() => $refs.chip.$el"
+			:getBindElement="getChipElement"
 			@upload="browseFiles"
 			@close="closePopup"
 		/>

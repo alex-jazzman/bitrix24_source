@@ -1,0 +1,16 @@
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar {
+	width: 6px;
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar-thumb {
+	background: rgb(82 92 105 / 20%);
+	border-radius: 32px;
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar-thumb:hover {
+	background: rgb(82 92 105 / 20%);
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar-thumb:active {
+	background: rgb(82 92 105 / 20%);
+}

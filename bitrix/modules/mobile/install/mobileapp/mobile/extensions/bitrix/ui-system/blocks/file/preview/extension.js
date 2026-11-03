@@ -6,31 +6,35 @@ jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 	const { DiskIcon, FileType } = require('assets/icons');
 	const { Color, Component } = require('tokens');
 	const { withCurrentDomain } = require('utils/url');
-	const { ShimmedSafeImage } = require('layout/ui/safe-image');
+	const { SafeImage } = require('layout/ui/safe-image');
 	const { transparent } = require('utils/color');
+	const { PropTypes } = require('utils/validation');
+	const { createTestIdGenerator } = require('utils/test');
 
 	/**
-	 * @typedef {Object} FilePreviewProps
-	 * @property {string} previewUrl
-	 * @property {number} size
-	 * @property {function} [onClick]
+	 * @param {FilePreviewProps} props
+	 * @return {View}
 	 */
 	function FilePreview(props)
 	{
+		PropTypes.validate(FilePreview.propTypes, props, 'FilePreview');
+
+		const getTestId = createTestIdGenerator({ context: { props } });
 		const size = props.size ?? 40;
 		const isVideo = props.type === FileType.VIDEO;
 		const onClick = props.onClick ?? null;
 
 		return View(
 			{
+				testId: getTestId(),
 				style: {
 					position: 'relative',
 					width: size,
 					height: size,
-					testId: props.testId,
 				},
 			},
-			ShimmedSafeImage({
+			SafeImage({
+				withShimmer: true,
 				style: {
 					width: size,
 					height: size,
@@ -58,6 +62,7 @@ jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 					onClick,
 				},
 				IconView({
+					testId: getTestId('video-icon'),
 					size: 8,
 					color: null,
 					icon: DiskIcon.PLAY_FILLED,
@@ -65,6 +70,14 @@ jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 			),
 		);
 	}
+
+	FilePreview.propTypes = {
+		testId: PropTypes.string.isRequired,
+		previewUrl: PropTypes.string.isRequired,
+		size: PropTypes.number,
+		type: PropTypes.number,
+		onClick: PropTypes.func,
+	};
 
 	module.exports = { FilePreview };
 });

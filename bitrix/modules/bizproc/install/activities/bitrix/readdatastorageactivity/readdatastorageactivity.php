@@ -703,6 +703,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 			],
 			'DynamicFilterFields' => [
 				'Name' => Loc::getMessage('BIZPROC_SRA_FILTER_FIELDS_PROPERTY'),
+				'ShowFieldLabel' => false,
 				'FieldName' => 'filter_fields',
 				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
 				'Required' => false,
@@ -750,6 +751,12 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 				'Hidden' => true,
 			],
 		];
+	}
+
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// Persisted but not typable via getPropertiesMap(): CUSTOM filter tree and the dynamic output field map.
+		return ['DynamicFilterFields', 'OutputFields'];
 	}
 
 	private function clearReturnFields(): void

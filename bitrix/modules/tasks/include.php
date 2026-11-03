@@ -14,7 +14,8 @@ require_once $moduleRoot . '/tools.php';
 CJSCore::RegisterExt('task-popups', [
 	'js' => '/bitrix/js/tasks/task-popups.js',
 	'css' => '/bitrix/js/tasks/css/task-popups.css',
-	'rel' => ['ui.design-tokens'],
+	'rel' => ['ui.design-tokens', 'popup', 'ui.a11y'],
+	'lang' => BX_ROOT . '/modules/tasks/lang/' . LANGUAGE_ID . '/task-popups.php',
 ]);
 
 require_once __DIR__ . '/include/internal_events.php';

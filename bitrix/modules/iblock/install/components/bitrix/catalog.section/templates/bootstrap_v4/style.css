@@ -1,0 +1,27 @@
+/* One band outside the box of the button, exactly as on the cards below it: the band the theme draws
+   lies inside, on the label, and its halo goes with it. The button carries no class of the template,
+   so the weight of 0,3,0 is taken from the block around it. */
+[data-entity^="lazy-"] .btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: none;
+}
+
+/* The theme animates everything its buttons own over a fifth of a second, the ring with it, and a
+   ring that fades in cannot be followed. Listed here is what the theme really changes. */
+[data-entity^="lazy-"] .btn {
+	transition: color 200ms, background-color 200ms, border-color 200ms, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* ui.bootstrap4, loaded by the search of the header, paints a button of its own blue on focus, and
+   the theme overrides every state of the button but that one. The theme colours are put back. */
+[data-entity^="lazy-"] .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+
+[data-entity^="lazy-"] .btn.btn-primary:focus:hover,
+[data-entity^="lazy-"] .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}

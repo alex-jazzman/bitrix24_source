@@ -1,0 +1,30 @@
+.disk-sharing-members-popup-members {
+	padding: 0 var(--ui-space-inset-md2);
+}
+
+/* an empty list takes no room of its own: the card ends with the padding of the adding block */
+.disk-sharing-members-popup-members.--filled {
+	padding-top: var(--ui-space-inset-xs2);
+	padding-bottom: var(--ui-space-inset-xs2);
+}
+
+/* a mode without the adding block leaves the list alone in the card */
+.disk-sharing-members-popup-members.--filled:first-child {
+	padding-top: var(--ui-space-inset-md2);
+}
+
+.disk-sharing-members-popup-columns {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.disk-sharing-members-popup-columns__title {
+	color: var(--ui-color-base-4);
+}
+
+.disk-sharing-members-popup-columns + .disk-sharing-members-popup__list {
+	margin-top: var(--ui-space-stack-xs2);
+}

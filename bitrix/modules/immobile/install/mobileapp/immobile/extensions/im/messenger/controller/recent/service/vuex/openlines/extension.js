@@ -124,6 +124,9 @@ jn.define('im/messenger/controller/recent/service/vuex/openlines', (require, exp
 			}
 
 			this.#updateItems(recentItems);
+			// the add mutation only fires for records new to the model, and the items are already
+			// filtered by the tab collection: a chat appeared in the tab set
+			this.recentLocator.get('render')?.markCompositionChanged();
 		};
 
 		/**

@@ -3,7 +3,7 @@ import { sendData } from 'ui.analytics';
 import { Core } from 'im.v2.application.core';
 
 import { AnalyticsEvent, AnalyticsTool, AnalyticsType } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -46,12 +46,14 @@ export class FormatToolbar
 
 		const chatType = getChatType(chat);
 
-		sendData({
+		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chatType),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.useFormatToolbar,
 			p1: `chatType_${chatType}`,
 			type,
-		});
+		};
+
+		sendData(params);
 	}
 }

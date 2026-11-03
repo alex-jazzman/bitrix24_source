@@ -610,6 +610,9 @@ if(
 		$arResult['APP_HOST'] = $p['host'];
 		$arResult['APP_PORT'] = $p['port'] ?? null;
 		$arResult['APP_PROTO'] = $p['scheme'];
+		$arResult['APP_HANDLER_SIGNATURE'] = (new \Bitrix\Rest\Infrastructure\Security\HandlerUrlSignature())
+			->sign((string)$arResult['APP_URL'])
+		;
 
 		if($arResult['APP_PORT'])
 		{

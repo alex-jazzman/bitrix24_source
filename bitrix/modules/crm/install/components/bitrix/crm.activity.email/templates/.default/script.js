@@ -36,6 +36,7 @@
 				top: '-2%'
 			}
 		});
+		this.templateLoader.layout.dataset.testid = 'crm-email-template-loader';
 
 		if ('edit' != this.options.type)
 		{
@@ -480,15 +481,16 @@
 		BX.addClass(details, 'crm-activity-email-close-animation');
 	};
 
-	BXCrmActivityEmailController.applyTemplate = function (id, ownerType, ownerId, callback)
+	BXCrmActivityEmailController.applyTemplate = function (id, ownerType, ownerId, onReady, onFailed)
 	{
 		var ctrl = this;
 
 		var key = id > 0 ? [id, ownerType, ownerId].join(':') : id;
+		var fail = BX.Type.isFunction(onFailed) ? onFailed : BX.DoNothing;
 
 		if (this.templates[key])
 		{
-			callback(this.templates[key]);
+			onReady(this.templates[key]);
 			return;
 		}
 
@@ -496,6 +498,7 @@
 			'url': '/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=prepare_mail_template&templateid='+id,
 			'method': 'POST',
 			'dataType': 'json',
+			'timeout': 30,
 			'data': {
 				sessid: BX.bitrix_sessid(),
 				ACTION: 'PREPARE_MAIL_TEMPLATE',
@@ -506,11 +509,19 @@
 			},
 			onsuccess: function(data)
 			{
-				if (data.DATA)
+				if (!data.DATA)
 				{
-					ctrl.templates[key] = data.DATA;
-					callback(data.DATA);
+					fail('no-data', data);
+
+					return;
 				}
+
+				ctrl.templates[key] = data.DATA;
+				onReady(data.DATA);
+			},
+			onfailure: function(reason, detail)
+			{
+				fail(reason, detail);
 			}
 		});
 	}
@@ -1010,7 +1021,7 @@
 			data.ERROR_HTML = !BX.type.isArray(data.ERROR_HTML)? [data.ERROR_HTML]  : data.ERROR_HTML;
 			for (var j = 0; j < data.ERROR_HTML.length; ++j)
 			{
-				errorNode.innerHTML += data.ERROR_HTML[i] + "<br>";
+				errorNode.innerHTML += data.ERROR_HTML[j] + "<br>";
 			}
 
 			form.showError(errorNode.innerHTML);
@@ -1275,74 +1286,388 @@
 	{
 		var mailForm = BXMainMailForm.getForm(formId);
 		var self = this;
-		self.ctrl.templateLoader.show();
-		self.ctrl.applyTemplate(item.__id, ownerType, ownerId, function (data)
-		{
-			self.hasTemplateSignature = false;
-			if (data.FROM && data.FROM.length > 0)
+		const automatic = item.auto === true;
+		const lastUsedTemplateIdNode = BX('crm_act_email_create_last_used_template_id');
+		// The title and the remembered template follow the click, before the outcome is known,
+		// so a refusal has to put both back.
+		const titleBeforeSelection = BX.Type.isString(item.text) ? selector?.innerHTML : null;
+		const lastUsedTemplateIdBeforeSelection = lastUsedTemplateIdNode ? lastUsedTemplateIdNode.value : null;
+		let finished = false;
+		const finishApply = (outcome, reason) => {
+			if (finished)
 			{
-				var fromField = mailForm.getField('DATA[from]');
-
-				fromField.setValue(data.FROM);
-				if (fromField.params.folded)
-					fromField.unfold();
+				return;
 			}
 
-			const htmlFields = self.htmlForm.elements;
-			const forwardedId = htmlFields['DATA[FORWARDED_ID]'] ? htmlFields['DATA[FORWARDED_ID]'].value : 0;
-			const repliedId = htmlFields['DATA[REPLIED_ID]'] ? htmlFields['DATA[REPLIED_ID]'].value : 0;
+			finished = true;
 
-			if (!(forwardedId > 0 || repliedId > 0))
+			// A newer selection already owns the loader, so a cancelled chain only stops itself.
+			if (outcome === 'cancelled')
 			{
-				const subjectField = mailForm.getField('DATA[subject]');
+				return;
+			}
 
+			// The completion runs inside the dispatch of a form event, where a throw would tear down
+			// the initialization of the mail form and its editor.
+			try
+			{
+				self.ctrl.templateLoader.hide();
+
+				if (outcome === 'applied')
+				{
+					removeTemplateApplyNotice(mailForm);
+
+					return;
+				}
+
+				if (outcome === 'destroyed')
+				{
+					forgetTemplateApplyNotice(mailForm);
+
+					return;
+				}
+
+				console.error('CRM mail template apply failed', outcome, reason);
+
+				if (BX.Type.isString(titleBeforeSelection))
+				{
+					BX.adjust(selector, {html: titleBeforeSelection});
+				}
+
+				if (lastUsedTemplateIdNode)
+				{
+					// A remembered template the server has no data for greets every next opening
+					// of the letter with the same refusal.
+					const forgetTemplate = automatic && outcome === 'no-data';
+					const restoredTemplateId = forgetTemplate ? 0 : lastUsedTemplateIdBeforeSelection;
+					BX.adjust(lastUsedTemplateIdNode, {props: {value: restoredTemplateId}});
+				}
+
+				showTemplateApplyError(mailForm);
+			}
+			catch (error)
+			{
+				console.error('CRM mail template apply completion failed', error);
+			}
+		};
+
+		self.ctrl.templateLoader.show();
+		BX.adjust(selector, {html: item.text});
+		if (lastUsedTemplateIdNode)
+		{
+			BX.adjust(lastUsedTemplateIdNode, {props: {value: item.__id}});
+		}
+
+		self.ctrl.applyTemplate(
+			item.__id,
+			ownerType,
+			ownerId,
+			function(data)
+			{
+				applyWhenReady(self, mailForm, data, finishApply);
+			},
+			finishApply,
+		);
+
+		if (item.menuWindow)
+		{
+			item.menuWindow.close();
+		}
+	};
+
+	// The editor is raised asynchronously and may never come up, and a wait without an end keeps the
+	// loader on the screen forever - the very symptom this apply chain exists to close.
+	const FORM_READY_TIMEOUT = 30000;
+
+	const pendingApply = Object.create(null);
+	const pendingErrorNotice = Object.create(null);
+
+	// showError() returns nothing and keeps a single notice in a container shared with the rest of the
+	// form errors, so the node it has put there is remembered to be taken back and only it.
+	const templateApplyNotice = Object.create(null);
+
+	// One-shot wait on a form: the first of the two events wins and both subscriptions are dropped.
+	const subscribeFormOnce = function(form, readyTarget, readyEvent, onReady, onDestroy)
+	{
+		const cleanup = () => {
+			BX.removeCustomEvent(readyTarget, readyEvent, readyHandler);
+			BX.removeCustomEvent(form, 'MailForm:destroy', destroyHandler);
+		};
+
+		const readyHandler = () => {
+			cleanup();
+			onReady();
+		};
+
+		const destroyHandler = () => {
+			cleanup();
+			onDestroy();
+		};
+
+		BX.addCustomEvent(readyTarget, readyEvent, readyHandler);
+		BX.addCustomEvent(form, 'MailForm:destroy', destroyHandler);
+
+		return cleanup;
+	};
+
+	const cancelPendingApply = function(form)
+	{
+		const pending = pendingApply[form.id];
+		if (!pending)
+		{
+			return;
+		}
+
+		pendingApply[form.id] = null;
+		pending.cancel();
+		pending.done('cancelled');
+	};
+
+	const cancelPendingErrorNotice = function(form)
+	{
+		if (pendingErrorNotice[form.id])
+		{
+			pendingErrorNotice[form.id]();
+			pendingErrorNotice[form.id] = null;
+		}
+	};
+
+	const forgetTemplateApplyNotice = function(form)
+	{
+		if (form)
+		{
+			templateApplyNotice[form.id] = null;
+		}
+	};
+
+	// A newer error of the form, and a notice closed by the user, leave our node detached, and
+	// BX.remove() leaves such a node alone - the shared container is never cleaned here.
+	const removeTemplateApplyNotice = function(form)
+	{
+		if (!form)
+		{
+			return;
+		}
+
+		BX.remove(templateApplyNotice[form.id]);
+		forgetTemplateApplyNotice(form);
+	};
+
+	const applyWhenReady = function(self, form, data, done)
+	{
+		cancelPendingApply(form);
+		cancelPendingErrorNotice(form);
+
+		if (form.editorInited)
+		{
+			runApply(self, form, data, done);
+
+			return;
+		}
+
+		let readyTimer = null;
+		const unsubscribe = subscribeFormOnce(
+			form,
+			form,
+			'MailForm::editor::init',
+			() => {
+				clearTimeout(readyTimer);
+				pendingApply[form.id] = null;
+				runApply(self, form, data, done);
+			},
+			() => {
+				clearTimeout(readyTimer);
+				pendingApply[form.id] = null;
+				done('destroyed');
+			},
+		);
+
+		readyTimer = setTimeout(() => {
+			pendingApply[form.id] = null;
+			unsubscribe();
+			done('form-not-ready');
+		}, FORM_READY_TIMEOUT);
+
+		pendingApply[form.id] = {
+			cancel: () => {
+				clearTimeout(readyTimer);
+				unsubscribe();
+			},
+			done,
+		};
+	};
+
+	const runApply = function(self, form, data, done)
+	{
+		try
+		{
+			applyTemplateToForm(self, form, data);
+		}
+		catch (error)
+		{
+			done('failed', error);
+
+			return;
+		}
+
+		done('applied');
+
+		// Placing the caret is a finishing touch on an applied template, not a part of the apply:
+		// a caret left where it was must not turn a written letter into a refusal.
+		try
+		{
+			placeCaretAtMessageStart(form);
+		}
+		catch (error)
+		{
+			console.error('CRM mail template caret is not placed', error);
+		}
+	};
+
+	// showError() renders into the form wrapper, and the form creates it only in mailForm.init(),
+	// so a refusal that arrived earlier waits for the form instead of being lost.
+	const showTemplateApplyError = function(form)
+	{
+		if (!form)
+		{
+			return;
+		}
+
+		cancelPendingErrorNotice(form);
+
+		if (form.formWrapper)
+		{
+			showFormError(form);
+
+			return;
+		}
+
+		pendingErrorNotice[form.id] = subscribeFormOnce(
+			form,
+			BXMainMailForm,
+			`MailForm:init:${form.id}`,
+			() => {
+				pendingErrorNotice[form.id] = null;
+				showFormError(form);
+			},
+			() => {
+				pendingErrorNotice[form.id] = null;
+			},
+		);
+	};
+
+	const showFormError = function(form)
+	{
+		form.showError(BX.message('CRM_ACT_EMAIL_TEMPLATE_APPLY_ERROR'));
+
+		const errorContainer = BX.findChildByClassName(form.formWrapper, 'main-mail-form-error', true);
+		templateApplyNotice[form.id] = errorContainer ? errorContainer.lastElementChild : null;
+	};
+
+	const applyTemplateToForm = function(self, form, data)
+	{
+		self.hasTemplateSignature = false;
+
+		if (data.FROM && data.FROM.length > 0)
+		{
+			const fromField = form.getFieldByName(['data[from]', 'DATA[from]']);
+			if (fromField)
+			{
+				fromField.setValue(data.FROM);
+				if (fromField.params.folded)
+				{
+					fromField.unfold();
+				}
+			}
+		}
+
+		if (!keepsOwnSubject(self))
+		{
+			const subjectField = form.getFieldByName(['data[subject]', 'DATA[subject]']);
+			if (subjectField)
+			{
 				subjectField.setValue(data.SUBJECT ?? '');
 				if (subjectField.params.folded)
 				{
 					subjectField.unfold();
 				}
 			}
-
-			const filesInfo = data.FILES_INFO && data.FILES_INFO.length > 0 ? data.FILES_INFO : [];
-			mailForm.getField('DATA[__diskfiles]').setValue(filesInfo);
-			let message = data.BODY && data.BODY.length > 0 ? `<div>${data.BODY}</div>` : '<br>';
-			message = updateSignatureNodeId(self, message, mailForm.formId, mailForm.signatureNodeId);
-			if (mailForm.sharingLinkNodeClass)
-			{
-				message = mailForm.updateSharingLinkNode(message, self.options.calendarLink);
-			}
-			mailForm.getField('DATA[message]').setValue(message, {quote: true, signature: !self.hasTemplateSignature, filesInfo: filesInfo});
-			self.ctrl.templateLoader.hide();
-
-			const range = mailForm.editor.selection.GetRange();
-			const firstNode = mailForm.editor.GetIframeDoc().body.firstChild;
-			const firstNodeTagName = firstNode.tagName;
-
-			if (firstNodeTagName === 'BR')
-			{
-				return;
-			}
-
-			if (firstNodeTagName === 'DIV' && firstNode.firstChild)
-			{
-				range.setStartBefore(firstNode.firstChild);
-				range.setStartBefore(firstNode.firstChild);
-				mailForm.editor.selection.SetSelection(range);
-
-				return;
-			}
-
-			range.setStartBefore(firstNode);
-			range.setStartBefore(firstNode);
-			mailForm.editor.selection.SetSelection(range);
-		});
-
-		BX.adjust(selector, {html: item.text});
-		if (item.menuWindow)
-		{
-			item.menuWindow.close();
 		}
 
+		const filesInfo = data.FILES_INFO && data.FILES_INFO.length > 0 ? data.FILES_INFO : [];
+		const filesField = form.getFieldByType('files');
+		if (!filesField)
+		{
+			if (filesInfo.length > 0)
+			{
+				throw new Error('Mail form has no files field, template attachments are not applied');
+			}
+		}
+		else
+		{
+			filesField.setValue(filesInfo);
+		}
+
+		const hasBody = Boolean(data.BODY && data.BODY.length > 0);
+		const messageField = form.getFieldByType('editor');
+		if (!messageField)
+		{
+			if (hasBody)
+			{
+				throw new Error('Mail form has no editor field, template body is not applied');
+			}
+
+			return;
+		}
+
+		let message = hasBody ? `<div>${data.BODY}</div>` : '<br>';
+		message = updateSignatureNodeId(self, message, form.formId, form.signatureNodeId);
+		if (form.sharingLinkNodeClass)
+		{
+			message = form.updateSharingLinkNode(message, self.options.calendarLink);
+		}
+
+		messageField.setValue(message, {quote: true, signature: !self.hasTemplateSignature, filesInfo: filesInfo});
+	};
+
+	// A reply and a forward carry their own subject, which the template must not overwrite.
+	const keepsOwnSubject = function(self)
+	{
+		const htmlFields = self.htmlForm.elements;
+		const forwardedId = htmlFields['DATA[FORWARDED_ID]'] ? htmlFields['DATA[FORWARDED_ID]'].value : 0;
+		const repliedId = htmlFields['DATA[REPLIED_ID]'] ? htmlFields['DATA[REPLIED_ID]'].value : 0;
+
+		return forwardedId > 0 || repliedId > 0;
+	};
+
+	const placeCaretAtMessageStart = function(form)
+	{
+		const range = form.editor.selection.GetRange();
+		const firstNode = form.editor.GetIframeDoc().body.firstChild;
+		if (!firstNode)
+		{
+			return;
+		}
+
+		const firstNodeTagName = firstNode.tagName;
+
+		if (firstNodeTagName === 'BR')
+		{
+			return;
+		}
+
+		if (firstNodeTagName === 'DIV' && firstNode.firstChild)
+		{
+			range.setStartBefore(firstNode.firstChild);
+			range.setStartBefore(firstNode.firstChild);
+			form.editor.selection.SetSelection(range);
+
+			return;
+		}
+
+		range.setStartBefore(firstNode);
+		range.setStartBefore(firstNode);
+		form.editor.selection.SetSelection(range);
 	};
 
 	const updateSignatureNodeId = function(self, template, formId, newSignatureNodeId)
@@ -1388,8 +1713,6 @@
 		this.classSubmenuItem = 'main-buttons-submenu-item';
 
 		const items = [];
-
-		const lastUsedTemplateIdNode = BX('crm_act_email_create_last_used_template_id');
 
 		if (this.ctrl.options.isEnabledSavingLastUsedTemplate === 'Y')
 		{
@@ -1444,6 +1767,8 @@
 										};
 										self.ctrl.options.templates = templates;
 										self.ctrl.templateLoader.hide();
+									}).catch(() => {
+										self.ctrl.templateLoader.hide();
 									});
 								}
 							}
@@ -1466,12 +1791,11 @@
 			__id: 0,
 			text: BX.message('CRM_ACT_EMAIL_CREATE_NOTEMPLATE'),
 			className: 'menu-popup-no-icon',
+			attrs: {
+				'data-testid': 'crm-email-template-item-none',
+			},
 			onclick: function (e, item) {
 				this.activateTemplate(null, item, self.options.formId, ownerType, ownerId, selector);
-				if (lastUsedTemplateIdNode)
-				{
-					BX.adjust(lastUsedTemplateIdNode, {props: {value: 0}});
-				}
 			}.bind(this)
 		});
 
@@ -1482,13 +1806,11 @@
 				text: BX.util.htmlspecialchars(templates[i].title),
 				title: BX.util.htmlspecialchars(templates[i].title),
 				className: 'menu-popup-no-icon',
+				attrs: {
+					'data-testid': 'crm-email-template-item-' + templates[i].id,
+				},
 				onclick: function (e, item) {
-					if (lastUsedTemplateIdNode)
-					{
-						BX.adjust(lastUsedTemplateIdNode, {props: {value: item.__id}})
-					}
 					this.activateTemplate(null, item, self.options.formId, ownerType, ownerId, selector);
-
 				}.bind(this)
 			});
 		}

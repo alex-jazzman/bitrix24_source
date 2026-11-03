@@ -1,8 +1,11 @@
 import { WidgetOptions } from './internal/types';
 import { Logger } from './logger';
+import { A11y } from 'landing.ui.a11y';
 import { Dom, Event, Loc, Text, Type, ajax as Ajax } from 'main.core';
 
 import './css/style.css';
+
+const DATA_ANNOUNCE_QUIET_PERIOD = 10000;
 
 export class WidgetVue
 {
@@ -11,6 +14,7 @@ export class WidgetVue
 	#rootNode: ?HTMLElement = null;
 	#template: string;
 	#style: ?string;
+	#frameTitle: string;
 	#lang: {[key: string]: string} = {};
 	#appId: number = 0;
 	#appAllowedByTariff: boolean = true;
@@ -28,6 +32,9 @@ export class WidgetVue
 	#demoData: ?{} = null;
 	#useDemoData: boolean = false;
 	#blockId: number = 0;
+	#renderError: ?string = null;
+	#errorAnnounced: boolean = false;
+	#dataAnnouncedAt: number = 0;
 
 	constructor(options: WidgetOptions): void
 	{
@@ -42,6 +49,13 @@ export class WidgetVue
 		this.#template = Type.isString(options.template) ? options.template : '';
 
 		this.#style = Type.isString(options.style) ? options.style : null;
+
+		// Until the extension is translated the phrase is missing in some languages, and the core
+		// answers a missing phrase with an empty string: such a frame is left nameless.
+		this.#frameTitle = Type.isStringFilled(options.frameTitle)
+			? options.frameTitle
+			: Loc.getMessage('LANDING_WIDGETVUE_FRAME_TITLE')
+		;
 
 		this.#demoData = Type.isObject(options.demoData) ? options.demoData : null;
 		this.#useDemoData = Type.isBoolean(options.useDemoData) ? options.useDemoData : false;
@@ -70,6 +84,8 @@ export class WidgetVue
 			.then((srcDoc) => {
 				this.#frame = document.createElement('iframe');
 				this.#frame.className = 'landing-widgetvue-iframe';
+				this.#frame.dataset.testid = 'mainpage-widget-app-frame';
+				this.#frame.title = this.#frameTitle;
 				this.#frame.sandbox = 'allow-scripts';
 				this.#frame.srcdoc = srcDoc;
 
@@ -90,6 +106,11 @@ export class WidgetVue
 					WidgetVue.runningAppNodes.add(this.#rootNode);
 
 					this.#bindEvents();
+
+					if (this.#renderError)
+					{
+						this.#announceError(this.#renderError);
+					}
 				}
 			})
 		;
@@ -177,7 +198,7 @@ export class WidgetVue
 				}
 				catch (error)
 				{
-					engineParams.error = error.message || 'error';
+					engineParams.error = this.#failureText(error);
 				}
 			}
 		}
@@ -185,6 +206,8 @@ export class WidgetVue
 		{
 			engineParams.error = Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT_MSGVER_1');
 		}
+
+		this.#renderError = engineParams.error ?? null;
 
 		return engineParams;
 	}
@@ -288,6 +311,103 @@ export class WidgetVue
 			});
 	}
 
+	/**
+	 * What a failure is shown and announced as. A rejection is not always an `Error` - a reason of
+	 * another shape carries no message of its own - and the phrase of the extension is what stands
+	 * in its place: an English word left over from a fallback is a word the reader is read out.
+	 */
+	#failureText(reason: mixed): string
+	{
+		return Type.isStringFilled(reason?.message)
+			? reason.message
+			: Loc.getMessage('LANDING_WIDGETVUE_ERROR_FETCH')
+		;
+	}
+
+	/**
+	 * The name of the frame opens what the reader hears and tells one widget of the page from
+	 * another. A frame left nameless, or a prefix phrase the language of the portal has no
+	 * translation of, leaves the text to stand on its own: a phrase opening with a colon names
+	 * nothing, and a phrase that is missing is an empty string and not a nil, so the fallback is
+	 * taken on a phrase that came back filled.
+	 *
+	 * @returns {boolean} whether the reader was told anything
+	 */
+	#announce(text: ?string, politeness: string): boolean
+	{
+		if (!Type.isStringFilled(text))
+		{
+			return false;
+		}
+
+		const named = Type.isStringFilled(this.#frameTitle)
+			? Loc.getMessage('LANDING_WIDGETVUE_ANNOUNCE_WITH_WIDGET_NAME', {
+				'#WIDGET#': this.#frameTitle,
+				'#TEXT#': text,
+			})
+			: null
+		;
+
+		A11y.announce(Type.isStringFilled(named) ? named : text, politeness);
+
+		return true;
+	}
+
+	/**
+	 * The reason is announced as the frame writes it: an expired subscription and a handler that is
+	 * down are two different things to do about.
+	 *
+	 * A handler that is down answers a polling frame the same way every time, and interrupting the
+	 * reader with a failure they have already heard makes the page unusable. Only the first one is
+	 * announced; a reply that carries data opens the announcement again.
+	 *
+	 * What closes the announcement is an announcement that was made: a failure carrying no text
+	 * reaches no reader, and the failure behind it is still news.
+	 */
+	#announceError(error: ?string): void
+	{
+		if (this.#errorAnnounced)
+		{
+			return;
+		}
+
+		this.#errorAnnounced = this.#announce(error, 'assertive');
+
+		if (this.#errorAnnounced)
+		{
+			// a failure the reader was told about ends the quiet period of the updates: the reader
+			// is left with the failure until the recovery is announced, and inside the quiet period
+			// it would not be
+			this.#dataAnnouncedAt = 0;
+		}
+	}
+
+	/**
+	 * An application asks for data whenever it likes, and one asking on a timer would turn every
+	 * reply into a phrase the reader has to sit through. The first update is announced, and the
+	 * replies that follow it inside the quiet period are not: the reader keeps the announcement of
+	 * a change and loses the drumming of a poll. A reply that carries data also ends the failure
+	 * the reader was told about, whether or not the update itself is announced.
+	 *
+	 * What closes the quiet period is an announcement that was made: an update carrying no text
+	 * reaches no reader, and the update behind it is still news.
+	 */
+	#announceDataUpdate(): void
+	{
+		this.#errorAnnounced = false;
+
+		const now = Date.now();
+		if (now - this.#dataAnnouncedAt < DATA_ANNOUNCE_QUIET_PERIOD)
+		{
+			return;
+		}
+
+		if (this.#announce(Loc.getMessage('LANDING_WIDGETVUE_ANNOUNCE_DATA_UPDATED'), 'polite'))
+		{
+			this.#dataAnnouncedAt = now;
+		}
+	}
+
 	#message(name: string, params: {} = {}, target: Window = window)
 	{
 		target.postMessage(
@@ -338,10 +458,12 @@ export class WidgetVue
 				this.#fetchData(event.data.params)
 					.then((data) => {
 						this.#message('setData', {data}, event.source);
+						this.#announceDataUpdate();
 					})
 
 					.catch((error) => {
 						this.#message('setError', {error}, event.source);
+						this.#announceError(this.#failureText(error));
 					})
 				;
 			}

@@ -398,3 +398,10 @@ endif;
 <?php endif;
 
 echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Deal, (int)($arResult['ENTITY_ID'] ?? 0));
+
+// Placed at the end on purpose: the editor is drawn by the component included above, and the tour
+// must register its BX.ready handler after it, or the step over the amount field finds nothing.
+echo \Bitrix\Crm\Tour\Onboarding\DealCard::getInstance()
+	->setEntityId($arResult['IS_EDIT_MODE'] && !$isRecurring ? (int)($arResult['ENTITY_ID'] ?? 0) : 0)
+	->build()
+;

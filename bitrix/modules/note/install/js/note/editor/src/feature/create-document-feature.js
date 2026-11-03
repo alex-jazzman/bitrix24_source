@@ -62,6 +62,7 @@ class DocumentFeatureController
 		onOpenHistory = null,
 		historyEnabled = false,
 		notificationsEnabled = false,
+		diskAttachmentsEnabled = false,
 		showActivityLine = true,
 	})
 	{
@@ -69,10 +70,15 @@ class DocumentFeatureController
 		this.getDocumentId = getDocumentId;
 		this.nextTick = nextTick;
 		this.messages = messages;
-		// [P8.T2/T3] Bootstrap-level UI flags. history_enabled gates the chip's history-open
-		// affordance; notifications_enabled gates the subscription bell. Default off.
+		// Bootstrap-level UI flags. history_enabled gates the chip's history-open affordance;
+		// notifications_enabled gates the subscription bell. Default off.
 		this.historyEnabled = Boolean(historyEnabled);
 		this.notificationsEnabled = Boolean(notificationsEnabled);
+		// Gates the Disk source of the file button. Travels as a prop through EditorMount for the same
+		// reason the two above do: the editor is its own Vue app, and note.app's provide() stops at
+		// its border — an inject there would silently read the default and the source would never
+		// appear.
+		this.diskAttachmentsEnabled = Boolean(diskAttachmentsEnabled);
 		// Embedded surfaces (the collection description) render the editor without the activity line.
 		this.showActivityLine = showActivityLine !== false;
 		this.onOpenInternalLink = typeof onOpenInternalLink === 'function' ? onOpenInternalLink : null;
@@ -81,7 +87,7 @@ class DocumentFeatureController
 		// Optional reporter of the editor's live emptiness so an embedding surface can react to
 		// content becoming (non-)empty -- including remote edits -- without a mode/save/ACL flip.
 		this.notifyContentEmpty = typeof onContentChange === 'function' ? onContentChange : null;
-		// [P1.T5 relocation] Activity line chip lives inside DocumentEditorComponent now
+		// Activity line chip lives inside DocumentEditorComponent now
 		// (own createApp() instance) — bridge its "open history" click back to the page
 		// component the same way onOpenInternalLink bridges mention clicks.
 		this.onOpenHistory = typeof onOpenHistory === 'function' ? onOpenHistory : null;
@@ -89,20 +95,30 @@ class DocumentFeatureController
 		// Handles internal-link mention clicks (document/collection) from NodeView dispatcher.
 		// NodeView dispatches by navKind: slider types open SidePanel directly;
 		// internal-link types call this callback so the feature can emit open-internal-link.
-		this.onMentionClick = ({ type, id, url }) => {
-			void type;
-			void id;
-
-			if (!url || !this.onOpenInternalLink)
+		this.onMentionClick = ({ type, id, url, origin = 'pointer' }) => {
+			if (!this.onOpenInternalLink)
 			{
-				return;
+				return null;
+			}
+
+			const entityId = Number(id);
+			if (type === 'document' && Number.isInteger(entityId) && entityId > 0)
+			{
+				return this.onOpenInternalLink({ type, id: entityId, hash: '', origin });
+			}
+
+			if (!url)
+			{
+				return null;
 			}
 
 			const parsed = parseInternalNoteLink(url);
 			if (parsed)
 			{
-				this.onOpenInternalLink(parsed);
+				return this.onOpenInternalLink({ ...parsed, origin });
 			}
+
+			return null;
 		};
 		this.capabilityRefreshTimer = null;
 		// Guards the overwrite handler against a parallel entry for the SAME document: the rebuild it
@@ -1049,21 +1065,21 @@ class DocumentFeatureController
 		this.state.content = this.resolveDocumentContent(documentData);
 		// [#6] Base snapshot for the views widget — null falls back to its own getViews call.
 		this.state.initialViews = Type.isPlainObject(documentData.views) ? documentData.views : null;
-		// [DTO-01] Backlinks counter for the chip of incoming links. A payload without the key (an
+		// Backlinks counter for the chip of incoming links. A payload without the key (an
 		// older answer, or the feature switched off) stays null — the widget then reads the count
 		// itself and gets a neutral zero, which renders no chip at all.
 		this.state.initialBacklinks = Type.isPlainObject(documentData.backlinks) ? documentData.backlinks : null;
 		// [#2] Bootstrap snapshot for the activity-line chip — already normalized upstream in
 		// note.app's route-document-resolver.js (or null if the backend has nothing to report yet).
 		this.state.lastChange = Type.isPlainObject(documentData.lastChange) ? documentData.lastChange : null;
-		// [P8.T5] ISO creation timestamp — spread from the resolver payload (route-document-resolver's
+		// ISO creation timestamp - spread from the resolver payload (route-document-resolver's
 		// ...row). Used for the chip's "Created …" fallback when there is no last-change info.
 		this.state.createdAt = typeof documentData.createdAt === 'string' && documentData.createdAt !== ''
 			? documentData.createdAt
 			: null;
 		// Bell state — null falls back to the bell's own getState call on mount.
 		this.state.initialSubscription = Type.isPlainObject(documentData.subscription) ? documentData.subscription : null;
-		// [TPL-01] Star state - bundled next to the bell. A payload without the key (an older answer)
+		// Star state - bundled next to the bell. A payload without the key (an older answer)
 		// stays null, which leaves the star exactly as it behaved before: sidebar store only.
 		this.state.initialFavorite = typeof documentData.isFavorite === 'boolean' ? documentData.isFavorite : null;
 		const collaborationContext = extractCollaborationContext(documentData);
@@ -2094,7 +2110,7 @@ class DocumentFeatureController
 		this.providerLifecycle.setMode(editable ? 'edit' : 'view');
 	}
 
-	// [P1.T5 restore flow, SDD 455-468] Exposes the periodic auto-compact path (see
+	// Exposes the periodic auto-compact path (see
 	// provider-lifecycle.js#startCompaction / compact-manager.js) for an on-demand call —
 	// the client always compacts the pending patch window right before a version restore.
 	async compactBeforeRestore(): Promise<void>
@@ -2252,6 +2268,7 @@ class DocumentFeatureController
 			initialFavorite: this.state.initialFavorite,
 			historyEnabled: this.historyEnabled,
 			notificationsEnabled: this.notificationsEnabled,
+			diskAttachmentsEnabled: this.diskAttachmentsEnabled,
 			showActivityLine: this.showActivityLine,
 			onRenameTitle: this.handleTitleRename,
 			onOpenInternalLink: this.onOpenInternalLink,

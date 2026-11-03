@@ -163,13 +163,36 @@ export const RightsSection = {
 	},
 	template: `
 		<CreateChatSection name="rights" :title="loc('IM_CREATE_CHAT_RIGHTS_SECTION')">
-			<UserSelector :title="loc('IM_CREATE_CHAT_SETTINGS_SECTION_OWNER')" :hintText="ownerHint">
-				<OwnerSelector :ownerId="ownerId" @ownerChange="onOwnerChange" />
+			<UserSelector
+				name="owner"
+				:title="loc('IM_CREATE_CHAT_SETTINGS_SECTION_OWNER')"
+				:hintText="ownerHint"
+				v-slot="{ controlId, labelId }"
+			>
+				<OwnerSelector
+					:id="controlId"
+					:aria-labelledby="labelId"
+					role="group"
+					:ownerId="ownerId"
+					@ownerChange="onOwnerChange"
+				/>
 			</UserSelector>
-			<UserSelector :title="loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGERS')" :hintText="managerHint">
-				<ManagersSelector :managerIds="managerIds" @managersChange="onManagersChange" />
+			<UserSelector
+				name="managers"
+				:title="loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGERS_MSGVER_1')"
+				:hintText="managerHint"
+				v-slot="{ controlId, labelId }"
+			>
+				<ManagersSelector
+					:id="controlId"
+					:aria-labelledby="labelId"
+					role="group"
+					:managerIds="managerIds"
+					@managersChange="onManagersChange"
+				/>
 			</UserSelector>
 			<RoleSelector
+				name="manage-users-add"
 				:title="canAddUsersCaption"
 				:hintText="addUsersHint"
 				:dropdownId="PopupType.createChatManageUsersAddMenu"
@@ -178,6 +201,7 @@ export const RightsSection = {
 			/>
 			<RoleSelector
 				v-if="showManageGuestInvitesBlock"
+				name="manage-guest-invites"
 				:title="loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_GUEST_INVITES')"
 				:hintText="loc('IM_CREATE_CHAT_MANAGE_GUEST_INVITES_HINT')"
 				:dropdownId="PopupType.createChatManageGuestInvitesMenu"
@@ -185,6 +209,7 @@ export const RightsSection = {
 				@itemChange="emitRight('manageGuestInvites', $event)"
 			/>
 			<RoleSelector
+				name="manage-users-delete"
 				:title="canKickUsersCaption"
 				:hintText="deleteUsersHint"
 				:dropdownId="PopupType.createChatManageUsersDeleteMenu"
@@ -193,6 +218,7 @@ export const RightsSection = {
 			/>
 			<RoleSelector
 				v-if="showManageUiBlock"
+				name="manage-ui"
 				:title="loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_UI_MSGVER_2')"
 				:hintText="manageUiHint"
 				:dropdownId="PopupType.createChatManageUiMenu"
@@ -200,6 +226,7 @@ export const RightsSection = {
 				@itemChange="emitRight('manageUi', $event)"
 			/>
 			<RoleSelector
+				name="manage-messages"
 				:title="canSendCaption"
 				:hintText="sendMessagesHint"
 				:dropdownId="PopupType.createChatManageMessagesMenu"

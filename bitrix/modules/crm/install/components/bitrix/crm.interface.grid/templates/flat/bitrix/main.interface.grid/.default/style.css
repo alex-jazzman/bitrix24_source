@@ -2,13 +2,13 @@ div.bx-crm-interface-list {font-family:var(--ui-font-family-primary, var(--ui-fo
 div.empty {height:0;}
 
 /* Drag-n-Drop*/
-div.bx-drag-object {height: 50px; padding: 0 10px; border:1px solid #CDCDCD; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D6F1FB; background-image:url(images/listhead.png); background-repeat:repeat-x; background-position:top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
+div.bx-drag-object {height: 50px; padding: 0 10px; border:1px solid #CDCDCD; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D6F1FB; background-image:url(images/listhead.webp); background-repeat:repeat-x; background-position:top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
 div.bx-drag-arrow {width:11px; height:6px; background-image:url(images/drag_arrow.gif); background-repeat:no-repeat; background-position:left top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
 
 /* Filter */
 div.bx-interface-filter {margin:16px 0px 16px 0px;}
 table.bx-interface-filter td {padding:0;}
-table.bx-interface-filter tr.bx-filter-header td {background-color:#A1A1A1; background-image:url(images/filter/bg.png); background-repeat:repeat-x; background-position:left 1px; border:1px solid #909090; border-top:1px solid #9A9A9A; border-bottom:1px solid #818181;}
+table.bx-interface-filter tr.bx-filter-header td {background-color:#A1A1A1; background-image:url(images/filter/bg.webp); background-repeat:repeat-x; background-position:left 1px; border:1px solid #909090; border-top:1px solid #9A9A9A; border-bottom:1px solid #818181;}
 table.bx-interface-filter tr.bx-filter-content td {border:1px solid #D6D6D6; border-top:none; padding:10px; padding-top:5px;}
 table.bx-interface-filter table.bx-filter-rows tr {background-image:url(images/filter/row_bg.gif); background-position:left bottom; background-repeat:repeat-x;}
 table.bx-interface-filter table.bx-filter-rows td {border:none; padding:5px;}
@@ -30,7 +30,7 @@ span.bx-filter-hellip { width:20px; display:inline-block; text-align:center;}
 
 /*Common actions icons */
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div {
-	background:url(images/popup/drop-menu-icons1.png) no-repeat;
+	background:url(images/popup/drop-menu-icons1.webp) no-repeat;
 	width: 24px;
 	height: 24px;
 }
@@ -40,7 +40,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.copy {background-posi
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.delete {background-position: -78px -116px;}
 
 
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.print {background:url(images/popup/print.png) no-repeat 0 0 !important;}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.print {background:url(images/popup/print.webp) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.checked {background:url(images/popup/checkbox.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.list {background:url(images/popup/list.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.add {background:url(images/popup/new.gif) no-repeat 0 0 !important;}
@@ -52,7 +52,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-sort-asc {backgr
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-sort-desc {background:url(images/icons/sort_desc.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-themes {background:url(images/icons/themes.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-views {background:url(images/icons/views.gif) no-repeat 0 0 !important;}
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background:url(images/icons/lock.png) no-repeat 0 1px !important;}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background:url(images/icons/lock.webp) no-repeat 0 1px !important;}
 
 
 
@@ -64,7 +64,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background
 	height:29px;
 	margin-right:10px;
 	vertical-align:middle;
-	background:url(images/icons-items.png) no-repeat;
+	background:url(images/icons-items.webp) no-repeat;
 	background-position:0 0 !important;
 }
 .bx-crm-folder-icon-container-small.bx-crm-item-icon,
@@ -74,7 +74,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background
 	height:36px;
 	margin-right:10px;
 	vertical-align:middle;
-	background:url(images/icons-items.png) no-repeat;
+	background:url(images/icons-items.webp) no-repeat;
 	background-position:left -576px !important;
 }
 .bx-crm-item-icon-container-small.bx-crm-item-icon.icon-img{
@@ -130,7 +130,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background
 	-o-transition:opacity .3s;
 	transition:opacity .3s;
 	opacity:0;
-	background:url(images/sprite.png) no-repeat !important;
+	background:url(images/sprite.webp) no-repeat !important;
 }
 .bx-crm.bx-crm-grid-head .bx-crm-sortable:hover .bx-crm-sort-sign,
 .bx-crm.bx-crm-grid-head .bx-crm-sortable.bx-crm-sorted .bx-crm-sort-sign{
@@ -154,7 +154,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background
 	-ms-transition:all .5s ease;
 	-o-transition:all .5s ease;
 	transition:all .5s ease;
-	background:url(images/sprite.png) no-repeat -16px -224px;
+	background:url(images/sprite.webp) no-repeat -16px -224px;
 }
 .bx-head-advanced-more:hover{
 	cursor:pointer;
@@ -252,7 +252,7 @@ input.bx-crm-folder-title{
 	-o-transition:opacity .3s;
 	transition:opacity .3s;
 	opacity:.2;
-	background:url(images/sprite.png) no-repeat;
+	background:url(images/sprite.webp) no-repeat;
 	background-position:-16px -191px;
 	vertical-align: middle;
 }
@@ -278,7 +278,7 @@ input.bx-crm-folder-title{
 	display:inline-block;
 	width:14px;
 	height:14px;
-	background:url(images/sprite.png) no-repeat -16px -256px;
+	background:url(images/sprite.webp) no-repeat -16px -256px;
 }
 
 /*-Footer (<tfoot>)-*/
@@ -405,7 +405,7 @@ input.bx-crm-folder-title{
 	margin-right:10px;
 	vertical-align:middle;
 	opacity:.7;
-	background:url(images/sprite.png) no-repeat -9px -969px;
+	background:url(images/sprite.webp) no-repeat -9px -969px;
 }
 
 /* not result */
@@ -452,7 +452,7 @@ td.bx-crm-not-result:hover{
 	-o-transition:opacity .2s;
 	transition:opacity .2s;
 	opacity:.7;
-	background:url(images/sprite.png) no-repeat 0 -160px;
+	background:url(images/sprite.webp) no-repeat 0 -160px;
 }
 .bx-crm-bd-icon-edit.active,
 .bx-crm-bd-icon-edit:hover{
@@ -469,7 +469,7 @@ td.bx-crm-not-result:hover{
 	-o-transition:opacity .2s;
 	transition:opacity .2s;
 	opacity:.7;
-	background:url(images/sprite.png) no-repeat -36px -158px;
+	background:url(images/sprite.webp) no-repeat -36px -158px;
 }
 .bx-crm-bd-icon-del.active,
 .bx-crm-bd-icon-del:hover{

@@ -9,7 +9,19 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 	$licenseType = CBitrix24::getLicenseType();
 }
 
-if (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'))
+if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime'))
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:intranet.settings.tool.stub',
+		'',
+		[
+			'LIMIT_CODE' => 'limit_office_worktime_off',
+			'MODULE' => 'timeman',
+			'SOURCE' => 'worktime_grid'
+		],
+	);
+}
+elseif (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'))
 {
 	$APPLICATION->includeComponent(
 		"bitrix:ui.sidepanel.wrapper",
@@ -22,21 +34,6 @@ if (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'
 			],
 			"USE_UI_TOOLBAR" => "Y"
 		]
-	);
-}
-elseif (
-	!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime')
-	&& (!\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Feature::isFeatureEnabled('timeman'))
-)
-{
-	$APPLICATION->IncludeComponent(
-		'bitrix:intranet.settings.tool.stub',
-		'',
-		[
-			'LIMIT_CODE' => 'limit_office_worktime_off',
-			'MODULE' => 'timeman',
-			'SOURCE' => 'worktime_grid'
-		],
 	);
 }
 elseif (!(!IsModuleInstalled("timeman") && in_array($licenseType, array("company", "edu", "nfr"))))

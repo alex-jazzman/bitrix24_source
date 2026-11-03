@@ -247,7 +247,7 @@ table.crm-items-table tr td.crm-item-tax-sum,
 }
 
 .crm-item-del {
-	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.png') no-repeat center -2872px;
+	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.webp') no-repeat center -2872px;
 	cursor: pointer;
 	display: inline-block;
 	height: 21px;
@@ -341,12 +341,12 @@ body table.bx-edit-table td.bx-field-value input.crm-item-name-inp[type="text"],
 
 .crm-item-inp-arrow {
 	display: block;
-	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.png') no-repeat center -2937px;
+	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.webp') no-repeat center -2937px;
 }
 
 .crm-item-inp-plus {
 	display: block;
-	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.png') no-repeat center -2906px;
+	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.webp') no-repeat center -2906px;
 }
 
 .crm-item-name {
@@ -563,7 +563,7 @@ body table.bx-edit-table td.bx-field-value .crm-item-sale input.crm-item-table-i
 }
 
 .crm-item-move-btn {
-	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.png') no-repeat center -2962px;
+	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-21.webp') no-repeat center -2962px;
 	cursor: n-resize;
 	display: inline-block;
 	height: 27px;

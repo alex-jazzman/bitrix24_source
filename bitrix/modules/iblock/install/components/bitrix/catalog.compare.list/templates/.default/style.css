@@ -41,6 +41,14 @@
 .bx_catalog-compare-list a:hover{
     text-decoration:none;
 }
+/* One band of the dark tone outside the box, as on the cards of the catalog: the theme of the landing
+ * store draws a white band inside the box, over the text, and a halo around it. 0,2,1 outruns
+ * `a:focus-visible` (0,1,1) of the theme. */
+.bx_catalog-compare-list a:focus-visible{
+    outline:var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+    outline-offset:var(--ui-focus-outline-offset, 2px);
+    box-shadow:none;
+}
 .bx_catalog_compare_count p{
     margin:0 0 10px 0;
 }
@@ -48,9 +56,15 @@
 	text-align: center;
 	font-weight: bold;
 }
-.bx_catalog-compare-list .compare-items td{
+/* The header of the column is a `th`, and every rule of this table was written on `td` alone. */
+.bx_catalog-compare-list .compare-items td,
+.bx_catalog-compare-list .compare-items th{
     font-size:12px;
     font-weight:bold;
     padding-bottom:10px;
 	vertical-align: top;
+}
+/* `align="center"` left with the `td`, and the site template lays a `th` out to the left. */
+.bx_catalog-compare-list .compare-items thead th{
+    text-align:center;
 }

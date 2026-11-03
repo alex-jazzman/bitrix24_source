@@ -84,6 +84,7 @@
 			this.__overlay = BX.create('div', { props: { className: 'main-grid-cell-overlay' } });
 			BX.append(this.__overlay, cell);
 			this.__resizeCell = cell.cellIndex;
+			this.resizeColumnName = cell.dataset.name;
 
 			cellsKeys.forEach((key) => {
 				if (!BX.hasClass(cells[key], 'main-grid-special-empty'))
@@ -129,29 +130,42 @@
 
 			if (x !== cpos.width)
 			{
-				const fixedCells = this.parent.getAllRows()[0]
-					.querySelectorAll('.main-grid-fixed-column').length;
-				let column = this.parent.getColumnByIndex(this.__resizeCell - fixedCells);
+				const headCells = this.parent.getAllRows()[0].children;
+
+				// A right-fixed column is matched by its distance from the end of the row:
+				// the leading service cells differ from row to row.
+				const column = cell.classList.contains('main-grid-fixed-column-right')
+					? this.parent.getColumnCellsByRightOffset(headCells.length - 1 - this.__resizeCell)
+					: this.parent.getColumnByIndex(this.__resizeCell);
 
 				// Resize current column
 				column.forEach((item) => {
 					item.style.width = `${x}px`;
 					item.style.minWidth = `${x}px`;
 					item.style.maxWidth = `${x}px`;
-					BX.Dom.style(item.firstElementChild, 'width', `${x}px`);
+
+					// A ROW_LAYOUT body cell holds the content container itself, which keeps
+					// its side margins within the cell only at its automatic width.
+					const isBodyContainer = BX.Dom.hasClass(item.parentElement, 'main-grid-row-body')
+						&& BX.Dom.hasClass(item.firstElementChild, this.parent.settings.get('classCellContainer'));
+					if (!isBodyContainer)
+					{
+						BX.Dom.style(item.firstElementChild, 'width', `${x}px`);
+					}
 				});
 
-				// Resize false columns
-				if (column[0].classList.contains('main-grid-fixed-column'))
-				{
-					column = this.parent.getColumnByIndex(this.__resizeCell - fixedCells + 1);
+				// A fixed column is taken out of the table layout, and its placeholder
+				// holds the width in place of it - left and right pinned alike.
+				column.forEach((item) => {
+					const placeholder = item.nextElementSibling;
 
-					column.forEach((item) => {
-						item.style.width = `${x}px`;
-						item.style.minWidth = `${x}px`;
-						item.style.maxWidth = `${x}px`;
-					});
-				}
+					if (placeholder && placeholder.classList.contains('main-grid-fixed-column-placeholder'))
+					{
+						placeholder.style.width = `${x}px`;
+						placeholder.style.minWidth = `${x}px`;
+						placeholder.style.maxWidth = `${x}px`;
+					}
+				});
 
 				this.parent.adjustFixedColumnsPosition();
 				this.parent.adjustFadePosition(this.parent.getFadeOffset());
@@ -201,7 +215,9 @@
 
 		saveSizes()
 		{
-			this.parent.getUserOptions().setColumnSizes(this.getColumnSizes(), 1);
+			const resized = BX.type.isNotEmptyString(this.resizeColumnName) ? [this.resizeColumnName] : [];
+
+			this.parent.getUserOptions().setColumnSizes(this.getColumnSizes(), 1, resized);
 		},
 	};
 })();

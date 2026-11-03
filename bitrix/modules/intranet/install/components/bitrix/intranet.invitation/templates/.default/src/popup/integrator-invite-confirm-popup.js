@@ -21,18 +21,26 @@ export class IntegratorInviteConfirmPopup
 
 	#getPopup(): Popup
 	{
-		this.#popup ??= new Popup({
-			id: 'integrator-confirm-invitation-popup',
-			content: this.#getPopupContent(),
-			closeByEsc: true,
-			closeIcon: true,
-			closeIconSize: CloseIconSize.LARGE,
-			autoHide: true,
-			padding: 0,
-			overlay: {
-				backgroundColor: 'rgba(0, 32, 78, 0.46)',
-			},
-		});
+		if (!this.#popup)
+		{
+			this.#popup = new Popup({
+				id: 'integrator-confirm-invitation-popup',
+				content: this.#getPopupContent(),
+				ariaLabel: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE'),
+				focusTrap: {
+					initialFocus: '[data-testid="invitation-integrator-confirm-popup-submit-button"]',
+				},
+				closeByEsc: true,
+				closeIcon: true,
+				closeIconSize: CloseIconSize.LARGE,
+				autoHide: true,
+				padding: 0,
+				overlay: {
+					backgroundColor: 'rgba(0, 32, 78, 0.46)',
+				},
+			});
+			this.#popup.getPopupContainer().dataset.testid = 'invitation-integrator-confirm-popup';
+		}
 
 		return this.#popup;
 	}
@@ -40,7 +48,10 @@ export class IntegratorInviteConfirmPopup
 	#getPopupContent(): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-invitation-popup">
+			<div
+				class="intranet-invitation-popup"
+				data-testid="invitation-integrator-confirm-popup-content"
+			>
 				<div class="intranet-invitation-popup__title">
 					<span class="ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE')}</span>
 				</div>
@@ -66,6 +77,9 @@ export class IntegratorInviteConfirmPopup
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES'),
 			useAirDesign: true,
 			style: AirButtonStyle.FILLED,
+			dataset: {
+				testid: 'invitation-integrator-confirm-popup-submit-button',
+			},
 			onclick: () => {
 				this.#onConfirm();
 				this.#getPopup().close();
@@ -80,6 +94,9 @@ export class IntegratorInviteConfirmPopup
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO'),
 			useAirDesign: true,
 			style: AirButtonStyle.OUTLINE,
+			dataset: {
+				testid: 'invitation-integrator-confirm-popup-cancel-button',
+			},
 			onclick: () => {
 				this.#onCancel();
 				this.#getPopup().close();

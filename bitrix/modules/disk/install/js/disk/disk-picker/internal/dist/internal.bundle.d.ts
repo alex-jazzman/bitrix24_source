@@ -47,6 +47,7 @@ type SessionCallbacks = {
 	}) => void;
 	emitSelection: (result: PickerSelectionResult) => void;
 	requestCancel: () => void;
+	setPreviewShown: (shown: boolean) => void;
 };
 
 type PickerSelectionResult = {

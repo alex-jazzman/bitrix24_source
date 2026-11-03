@@ -586,7 +586,11 @@ this.BX.UI = this.BX.UI || {};
 					offsetTop: 6,
 					minWidth: targetNodeWidth,
 					maxWidth: 500,
-					closeByEsc: true
+					closeByEsc: true,
+					// The error shows up on its own, so it must not take the focus: a popup with no
+					// focusable content inside would hold it on its container and Tab would go nowhere.
+					// The text of the error reaches a screen reader through aria-describedby of the tile.
+					focusTrap: false
 				};
 			},
 			clampedFileName() {
@@ -1114,6 +1118,15 @@ this.BX.UI = this.BX.UI || {};
 			forceDisableSelection: {
 				type: Boolean,
 				default: false
+			},
+			/**
+			 * The name of the list. Undefined keeps the default one; null drops the name altogether -
+			 * a list rendered inside an already named dialog would otherwise be announced right after
+			 * the name of that dialog, twice about the same thing.
+			 */
+			ariaLabel: {
+				type: String,
+				default: undefined
 			}
 		},
 		data: () => ({
@@ -1194,7 +1207,7 @@ this.BX.UI = this.BX.UI || {};
 				return main_core.Text.getRandom(16);
 			},
 			listLabel() {
-				return main_core.Loc.getMessage('TILE_UPLOADER_FILE_LIST_LABEL');
+				return this.ariaLabel === undefined ? main_core.Loc.getMessage('TILE_UPLOADER_FILE_LIST_LABEL') : this.ariaLabel;
 			}
 		},
 		methods: {

@@ -1,8 +1,11 @@
 import { Loc, Type } from 'main.core';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
+import { IconButton } from 'im.v2.component.elements.icon-button';
 import { Utils } from 'im.v2.lib.utils';
 import { Parser } from 'im.v2.lib.parser';
-import { FileType } from 'im.v2.const';
+import { Color, FileType, MessageComponent } from 'im.v2.const';
+import { AvatarSize, BaseUiAvatar } from 'im.v2.component.elements.avatar';
 
 import '../css/message-panel.css';
 
@@ -14,6 +17,7 @@ const GALLERY_STACK_MAX = 3;
 // @vue/component
 export const ReplyPanel = {
 	name: 'ReplyPanel',
+	components: { BaseUiAvatar, IconButton },
 	props:
 	{
 		messageId: {
@@ -24,6 +28,9 @@ export const ReplyPanel = {
 	emits: ['close'],
 	computed:
 	{
+		AvatarSize: () => AvatarSize,
+		OutlineIcons: () => OutlineIcons,
+		closeIconColor: () => Color.gray90,
 		message(): ImModelMessage
 		{
 			return this.$store.getters['messages/getById'](this.messageId);
@@ -43,7 +50,27 @@ export const ReplyPanel = {
 		},
 		messageFile(): ImModelFile
 		{
+			if (this.isContactMessage)
+			{
+				return this.messageFiles.find((file) => file.type === FileType.image);
+			}
+
 			return this.messageFiles[0];
+		},
+		contactAvatarTitle(): string
+		{
+			const params = this.message.componentParams ?? {};
+			const name = [params.lastName, params.firstName].filter(Boolean).join(' ').trim();
+			const phone = params.phones?.[0] ?? '';
+
+			return name || phone;
+		},
+		contactAvatarUrl(): string
+		{
+			return this.messageFile?.mediaUrl?.preview?.[250]
+				|| this.messageFile?.urlPreview
+				|| this.messageFile?.urlShow
+				|| '';
 		},
 		galleryCount(): number
 		{
@@ -68,7 +95,10 @@ export const ReplyPanel = {
 		},
 		isGallery(): boolean
 		{
-			return !this.isMessageDeleted && (this.isImage || this.isVideo) && this.galleryCount > 1;
+			return !this.isContactMessage
+				&& !this.isMessageDeleted
+				&& (this.isImage || this.isVideo)
+				&& this.galleryCount > 1;
 		},
 		mediaCountText(): string
 		{
@@ -98,12 +128,21 @@ export const ReplyPanel = {
 		{
 			return this.messageFile && this.messageFile.type === FileType.image;
 		},
+		isContactMessage(): boolean
+		{
+			return this.message.componentId === MessageComponent.contactMessage;
+		},
 		isAudio(): boolean
 		{
 			return this.messageFile && this.messageFile.type === FileType.audio;
 		},
 		showIcon(): boolean
 		{
+			if (this.isContactMessage)
+			{
+				return false;
+			}
+
 			return this.messageFile ? !this.messageFile.urlPreview : false;
 		},
 		truncatedFileName(): string
@@ -142,6 +181,11 @@ export const ReplyPanel = {
 		},
 		messageText(): string
 		{
+			if (this.isContactMessage)
+			{
+				return Parser.getContactPreviewText(this.message, true) ?? Parser.purify(this.message);
+			}
+
 			if (this.isGallery)
 			{
 				return `${this.loc('IM_PARSER_ICON_TYPE_GALLERY')}, ${this.mediaCountText}`;
@@ -193,9 +237,22 @@ export const ReplyPanel = {
 		},
 	},
 	template: `
-		<div class="bx-im-message-panel__container">
+		<div
+			class="bx-im-message-panel__container"
+			:class="{'--contact-message': isContactMessage}"
+			data-testid="im-textarea-reply-panel"
+		>
 			<div class="bx-im-message-panel__icon --quote"></div>
-			<div v-if="showIcon" class="bx-im-message-panel-file__icon">
+			<div v-if="isContactMessage" class="bx-im-message-panel__contact-avatar" data-testid="im-textarea-reply-contact-avatar">
+				<BaseUiAvatar
+					type="default"
+					:size="AvatarSize.L"
+					:url="contactAvatarUrl"
+					:title="contactAvatarTitle"
+					:withDefaultUserpic="false"
+				/>
+			</div>
+			<div v-else-if="showIcon" class="bx-im-message-panel-file__icon">
 				<div :class="iconClass" class="ui-icon"><i></i></div>
 			</div>
 			<div v-else-if="isGallery" class="bx-im-message-panel__gallery-stack" :class="galleryStackModifier" data-testid="im-textarea-reply-gallery-stack">
@@ -225,7 +282,11 @@ export const ReplyPanel = {
 					:alt="loc('IM_PARSER_ICON_TYPE_VIDEO_NOTE')"
 				>
 			</div>
-			<div v-else-if="isImage || isVideo" class="bx-im-message-panel__image">
+			<div
+				v-else-if="isImage || isVideo"
+				class="bx-im-message-panel__image"
+				:class="{'--contact-message': isContactMessage}"
+			>
 				<img
 					v-if="this.messageFile.urlPreview"
 					class="bx-im-message-panel__image_img"
@@ -242,9 +303,16 @@ export const ReplyPanel = {
 			</div>
 			<div class="bx-im-message-panel__content">
 				<div class="bx-im-message-panel__title">{{ replyTitle }}</div>
-				<div class="bx-im-message-panel__text" data-testid="im-textarea-reply-text">{{ messageText }}</div>
+				<div class="bx-im-message-panel__text" :class="{'--contact-message': isContactMessage}" data-testid="im-textarea-reply-text">{{ messageText }}</div>
 			</div>
-			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
+			<IconButton
+				class="bx-im-message-panel__close"
+				:iconName="OutlineIcons.CROSS_L"
+				:iconColor="closeIconColor"
+				:label="loc('IM_TEXTAREA_REPLY_PANEL_CLOSE_ARIA')"
+				data-testid="im-textarea-reply-panel-close-btn"
+				@click="$emit('close')"
+			/>
 		</div>
 	`,
 };

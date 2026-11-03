@@ -97,6 +97,7 @@ export const PublicAccessPassword = {
 					type="checkbox"
 					:checked="isPassword"
 					:disabled="isSaving"
+					data-testid="disk-sharing-access-public-password-toggle"
 					@change="onToggle"
 				>
 				<TextSm
@@ -126,10 +127,12 @@ export const PublicAccessPassword = {
 							:stretched="true"
 							:disabled="isSaving"
 							:placeholder="showPasswordStub ? '' : passwordPlaceholder"
+							data-testid="disk-sharing-access-public-password-input"
 						/>
 					</div>
 					<UiButton
 						text="${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_PASSWORD_SAVE_BUTTON')}"
+						:dataset="{ testid: 'disk-sharing-access-public-password-save' }"
 						:disabled="isSaveDisabled"
 						:loading="isSaving"
 						:size="ButtonSize.MEDIUM"

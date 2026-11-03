@@ -1,0 +1,54 @@
+/*
+ * The wrapper of the decoration draws no box: the control keeps the flex slot its own container
+ * gave it and the button stands beside it as one more child of that container. With a box of its
+ * own the wrapper would take that slot and collapse to the intrinsic width of the control, and
+ * every container would have to grow it back one by one - the compensation the consumer carries for
+ * the automation provider (`.bizproc-fields-box > .bizproc-automation-popup-select`).
+ */
+.bizprocdesigner-fields-selection {
+	display: contents;
+}
+
+/*
+ * The entry into the value constructor. Sized as the handle of a control rather than as a button
+ * beside one: the decoration hands the button the place of the control it decorates, so it stands
+ * inside the bordered box of a text field the way the automation handle does - the fallback button
+ * of the framework stood outside that box and was a size larger for it.
+ */
+.bizprocdesigner-fields-selection__insert {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	align-self: center;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	/* 24px: hit-target square that fits inside the 32px control box, as the chevron of the dropdown
+	   view of `select` does inside its own field (WCAG 2.5.8 target size minimum). */
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: none;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: color 150ms ease;
+}
+
+.bizprocdesigner-fields-selection__insert:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	color: var(--ui-color-base-2);
+}
+
+/* Keyboard focus ring: the icon button needs an indicator beyond the UA default (WCAG 2.4.7).
+   1px width / 2px offset are conventional sizes; DS has no outline token. */
+.bizprocdesigner-fields-selection__insert:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bizprocdesigner-fields-selection__insert .ui-icon-set {
+	/* 16px: DS icon glyph size inside the 24px button. */
+	--ui-icon-set__icon-size: 16px;
+}

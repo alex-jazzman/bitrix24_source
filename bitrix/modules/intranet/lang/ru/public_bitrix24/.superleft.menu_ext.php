@@ -62,3 +62,4 @@ $MESS["MENU_BI_CONSTRUCTOR"] = "BI Конструктор";
 $MESS["MENU_NOTE_BASE"] = "База знаний 2.0";
 $MESS["MENU_BOOKING"] = "Онлайн-запись";
 $MESS["MENU_SYNC"] = "Синк";
+$MESS["MENU_SYNC_CALLS"] = "Звонки";

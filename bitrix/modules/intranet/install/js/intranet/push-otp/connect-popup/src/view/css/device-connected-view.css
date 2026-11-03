@@ -1,0 +1,33 @@
+.intranet-push-otp-connect-popup__view-connect-logo-text {
+	text-align: center;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--device {
+	width: min(100%, 340px);
+	min-height: 358px;
+	margin: 0 auto;
+	padding: 32px 24px;
+	box-sizing: border-box;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--device .intranet-push-otp-connect-popup__view-connect-device {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 28px;
+	width: 100%;
+	height: 100%;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--device .intranet-push-otp-connect-popup__view-connect-logo {
+	width: 94px;
+	height: 95px;
+	margin: 0;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--device .intranet-push-otp-connect-popup__view-connect-logo-text {
+	max-width: 100%;
+	overflow-wrap: anywhere;
+	text-align: center;
+}

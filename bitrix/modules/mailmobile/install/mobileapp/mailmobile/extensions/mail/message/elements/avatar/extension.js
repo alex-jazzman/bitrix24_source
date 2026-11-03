@@ -2,7 +2,6 @@
  * @module mail/message/elements/avatar
  */
 jn.define('mail/message/elements/avatar', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Color } = require('tokens');
 
@@ -152,7 +151,7 @@ jn.define('mail/message/elements/avatar', (require, exports, module) => {
 				style: {
 					height: '100%',
 					width: '100%',
-					color: AppTheme.colors.baseWhiteFixed,
+					color: Color.baseWhiteFixed.toHex(),
 					fontSize: Math.round(size * 0.5),
 					textAlign: 'center',
 				},

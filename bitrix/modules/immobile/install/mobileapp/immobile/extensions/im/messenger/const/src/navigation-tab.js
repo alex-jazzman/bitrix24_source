@@ -3,12 +3,14 @@
  */
 jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 	const NavigationTabId = {
+		all: 'all',
 		chats: 'chats',
 		copilot: 'copilot',
 		channel: 'channel',
 		collab: 'collab',
 		openlines: 'openlines',
 		task: 'task',
+		vibecodeApp: 'vibecodeApp',
 		collabDefault: 'collabDefault',
 		collabChat: 'collabChat',
 		collabCopilot: 'collabCopilot',

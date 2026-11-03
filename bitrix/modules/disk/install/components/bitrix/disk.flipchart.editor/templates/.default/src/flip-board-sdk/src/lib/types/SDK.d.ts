@@ -1,10 +1,11 @@
 import { SDKAITextCancelData, SDKAITextErrorResult, SDKAITextRequestData, SDKAITextSuccessResult } from './aiText';
+import { SDKMentionMembersCancelData, SDKMentionMembersErrorResult, SDKMentionMembersRequestData, SDKMentionMembersSuccessResult } from './mentionMembers';
 import { ShareInBitrixData } from './shareInBitrix';
 export interface IBoard {
     tryToCloseBoard: () => Promise<void>;
     renameBoard: (name: string) => Promise<void>;
 }
-type ShareElementSocial = 'telegram' | 'vk' | 'whatsapp' | 'bitrix';
+export type ShareElementSocial = 'telegram' | 'vk' | 'whatsapp' | 'bitrix';
 export interface JWTParams {
     user_id: string;
     username: string;
@@ -41,6 +42,11 @@ export interface UIParams {
         shareInBitrix?: boolean;
         elementInfo?: boolean;
         duplicatingFlip?: boolean;
+        tags?: boolean;
+        comments?: boolean;
+        annotations?: boolean;
+        instantChat?: boolean;
+        mentions?: boolean;
     };
     shareElementInBitrix?: string[];
 }
@@ -85,6 +91,8 @@ export interface SDKParams {
         onShareElementWithBitrix?: (data: ShareInBitrixData) => void;
         onAITextRequest?: (data: SDKAITextRequestData) => Promise<SDKAITextSuccessResult | SDKAITextErrorResult>;
         onAITextCancel?: (data: SDKAITextCancelData) => void;
+        onMentionMembersRequest?: (data: SDKMentionMembersRequestData) => Promise<SDKMentionMembersSuccessResult | SDKMentionMembersErrorResult>;
+        onMentionMembersCancel?: (data: SDKMentionMembersCancelData) => void;
     };
 }
 export {};

@@ -174,7 +174,7 @@ body div.bx-clock-div div.bxc-controls-cont {
 }
 
 body div.bx-clock-div input[type="button"] {
-	background: url(images/buttons-sprite.png) repeat-x left -217px;
+	background: url(images/buttons-sprite.webp) repeat-x left -217px;
 	clear: both;
 	display: block;
 	height: 25px;
@@ -202,7 +202,7 @@ body div.bx-clock-div input[type="button"]:active {
 }
 
 body div.bx-clock-div img.bxc-close {
-	background: url(images/popup-window-close-icon-grey.png) no-repeat center center;
+	background: url(images/popup-window-close-icon-grey.webp) no-repeat center center;
 	bottom: auto;
 	cursor: pointer;
 	left: auto;
@@ -213,7 +213,7 @@ body div.bx-clock-div img.bxc-close {
 }
 
 body div.bx-clock-div img.bxc-close:hover {
-	background: url(images/popup-window-close-icon.png) no-repeat center center;
+	background: url(images/popup-window-close-icon.webp) no-repeat center center;
 }
 
 body div.bx-clock-div div.bxc-mouse-control-cont {
@@ -294,10 +294,6 @@ body div.bx-clock-div table.bxc-cus-sel-tbl tbody tr:first-child td.bxc-pointer 
 	top: 1px;
 }
 
-body div.bx-clock-div table.bxc-cus-sel-tbl tbody tr:first-child td.bxc-pointer img {
-	background: url(images/up.gif) no-repeat left top;
-}
-
 body div.bx-clock-div div.bxc-title {
 	display: none;
 }
@@ -327,11 +323,11 @@ body .tm-double-clock-table-second div.bx-clock-div div.bxc-arrows-cont {
 }
 
 body div.bx-clock-div div.bxc-iconkit-c {
-	background: url(images/clock-sprite.png?1) no-repeat 15px top;
+	background: url(images/clock-sprite.webp?1) no-repeat 15px top;
 }
 
 body div.bx-clock-div img.bxc-iconkit-a {
-	background-image: url(images/clock-sprite.png?1);
+	background-image: url(images/clock-sprite.webp?1);
 }
 
 /* minute arrow */

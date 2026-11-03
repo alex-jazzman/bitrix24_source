@@ -3,6 +3,23 @@ export type SettingPage = {
 	id: string;
 	items: Array<SettingItem>;
 	requestSettingsData?: () => Promise<unknown>;
+	onOpen?: () => void | Promise<void>;
+};
+
+export type SettingApplyStatus = 'success' | 'error' | 'cancelled';
+
+export type AppearanceBundlesAvailability = 'available' | 'unavailable';
+
+export type SettingApplyResult = {
+	status: SettingApplyStatus;
+	value: unknown;
+};
+
+export type NativeSetting = {
+	id: string;
+	value?: unknown;
+	reloadOnChanged?: boolean;
+	set: (value: unknown) => Promise<void>;
 };
 
 type SettingSectionType = 'section';
@@ -12,13 +29,16 @@ type SettingToggleType = 'toggle';
 type SettingButtonType = 'button';
 type SettingTextButtonType = 'text-button';
 type SettingThemeSwitchType = 'theme-switch';
+type SettingFontSizeSwitchType = 'font-size';
 type SettingVideoQualitySwitchType = 'video-quality-switch';
 type SettingVideoBannerType = 'video-banner';
 type SettingLocSelectorType = 'loc-selector';
+type SettingReactionSelectorType = 'reaction-selector';
 type SettingDescriptionType = 'description';
 type SettingBannerType = 'banner';
 type SettingImageType = 'image';
 type SettingStyleSwitchType = 'style-switch';
+type SettingAppearanceBundleSwitchType = 'appearance-bundle';
 type SettingCacheInfoButtonType = 'cache-info-button';
 type SettingLinkButtonType = 'link-button';
 type SettingCacheIntervalSelectorType = 'cache-interval-selector';
@@ -33,12 +53,15 @@ type SettingItemType =
 	| SettingButtonType
 	| SettingTextButtonType
 	| SettingThemeSwitchType
+	| SettingFontSizeSwitchType
 	| SettingVideoQualitySwitchType
 	| SettingLocSelectorType
+	| SettingReactionSelectorType
 	| SettingDescriptionType
 	| SettingCacheInfoType
 	| SettingBannerType
 	| SettingStyleSwitchType
+	| SettingAppearanceBundleSwitchType
 	| SettingCacheInfoButtonType
 	| SettingLinkButtonType
 	| SettingCacheIntervalSelectorType
@@ -51,7 +74,7 @@ interface BaseSettingController
 {
 	get(): Promise<any>;
 
-	set(value: unknown): Promise<void>;
+	set(value: unknown): Promise<unknown>;
 
 	setOnChange(callback: (value: unknown) => void): BaseSettingController;
 }
@@ -141,6 +164,18 @@ export interface SettingStyleSwitch extends SettingItem
 	controller: BaseSettingController;
 }
 
+export interface SettingAppearanceBundleSwitch extends SettingItem
+{
+	type: SettingAppearanceBundleSwitchType;
+	controller: BaseSettingController;
+}
+
+export interface SettingFontSizeSwitch extends SettingItem
+{
+	type: SettingFontSizeSwitchType;
+	controller: BaseSettingController;
+}
+
 export interface SettingVideoQualitySwitch extends SettingItem
 {
 	type: SettingVideoQualitySwitchType;
@@ -151,6 +186,13 @@ export interface SettingLocSelector extends SettingItem
 {
 	type: SettingLocSelectorType;
 	controller: BaseSettingController;
+}
+
+export interface SettingReactionSelector extends SettingItem
+{
+	type: SettingReactionSelectorType;
+	controller: BaseSettingController;
+	subtitle?: string;
 }
 
 export interface SettingCacheIntervalSelector extends SettingItem
@@ -191,7 +233,7 @@ export interface SettingVideoBanner extends SettingItem
 }
 
 export type ItemProps = SettingItem & {
-	onChange: (id: string, controller: BaseSettingController, value: unknown) => void;
+	onChange: (id: string, controller: BaseSettingController, value: unknown) => Promise<unknown>;
 	value?: unknown;
 };
 

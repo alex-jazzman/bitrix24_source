@@ -71,25 +71,29 @@
 .ui-notification-balloon-action {
 	color: #2fc6f6;
 	cursor: pointer;
+	overflow-wrap: anywhere;
 	text-decoration: none;
 	padding: 14px 9px;
 	position: relative;
 }
 
-.ui-notification-balloon-action:before {
-	content: "";
-	position: absolute;
-	left: 9px;
-	top: 30px;
-	width: calc(100% - 18px);
-	height: 1px;
-	background-color: #2fc6f6;
-	opacity: 0.4;
-	transition: opacity 180ms linear;
+/*
+ * The underline replaces the `:before` bar the action used to carry, and it is scoped to the
+ * markup the balloon renders itself — the content wrapper. A consumer that lays the balloon
+ * out on its own puts the actions elsewhere: intranet/push-invitations keeps its row outside
+ * the content wrapper and styles the actions as pills, which declare no `text-decoration` of
+ * their own and would inherit an underline nobody asked for. Everything a consumer does
+ * declare keeps winning: its rules carry at least this much weight and are loaded later.
+ */
+.ui-notification-balloon-content .ui-notification-balloon-action {
+	box-sizing: content-box;
+	text-decoration: underline;
+	text-decoration-color: rgba(47, 198, 246, 0.4);
+	text-underline-offset: 3px;
 }
 
-.ui-notification-balloon-action:hover:before {
-	opacity: 1;
+.ui-notification-balloon-content .ui-notification-balloon-action:hover {
+	text-decoration-color: #2fc6f6;
 }
 
 .ui-notification-balloon-close-btn {
@@ -131,4 +135,72 @@
 .ui-notification-balloon-close-btn:before {
 	width: 8px;
 	height: 2px;
+}
+
+/*
+ * The reset of the native button, kept to what a consumer cannot suffer from: everything
+ * here is either declared by the consumer itself — and its rules, loaded later and no
+ * weaker, win — or harmless where it is not. `box-sizing` is not: the pills of
+ * intranet/push-invitations are measured with `border-box` (84 x 27 with their own padding
+ * and border inside), so it belongs to our own layout and stays out of this reset.
+ */
+button.ui-notification-balloon-action {
+	appearance: none;
+	background: none;
+	border: none;
+	margin: 0;
+	font: inherit;
+	color: #2fc6f6;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+button.ui-notification-balloon-close-btn {
+	appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	box-sizing: content-box;
+	cursor: pointer;
+}
+
+/*
+ * `[data-a11y-autofocus]` marks the control the balloon moved the focus to by itself.
+ * A browser keeps `:focus-visible` off after a pointer interaction, so without this the
+ * notification would take the focus silently and the first ring would only show up one
+ * control further, on the next Tab. Balloon sets the attribute and removes it as soon as
+ * the focus leaves that control.
+ */
+.ui-notification-balloon-action:focus-visible,
+.ui-notification-balloon-action[data-a11y-autofocus]:focus,
+.ui-notification-balloon-close-btn:focus-visible,
+.ui-notification-balloon-close-btn[data-a11y-autofocus]:focus {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/*
+ * The close button is a 33x43 box pinned to the rounded top-right corner of the balloon
+ * (top: 0; right: 2px), so a ring flush with its own box would cross the corner arc. With
+ * the outline drawn outwards from the inset edge, the ring's outer rectangle sits at
+ * `offset - outline-width` from the button box, and its top-right point must stay inside
+ * the corner arc of radius R: (R - 2 - k)^2 + (R - k)^2 <= R^2, where k = |offset| - 2.
+ * Classic (R = 26) needs k >= 6.64, air (R = 18) only k >= 4.31, so -9px is the smallest
+ * inset that fits both — measured in the browser at 8.5px the corner still pokes out.
+ */
+.ui-notification-balloon-close-btn:focus-visible,
+.ui-notification-balloon-close-btn[data-a11y-autofocus]:focus {
+	outline-offset: -9px;
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ui-notification-balloon,
+	.ui-notification-balloon-action,
+	.ui-notification-balloon-close-btn {
+		transition-duration: 1ms;
+	}
 }

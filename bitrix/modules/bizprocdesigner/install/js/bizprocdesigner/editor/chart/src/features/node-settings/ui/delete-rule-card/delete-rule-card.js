@@ -18,6 +18,16 @@ export const DeleteRuleCard = {
 			type: Object,
 			required: true,
 		},
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the row this button belongs to. Named here, the store deletes from that very rule
+		 * instead of looking the owner of the card up across every rule of the node.
+		 */
+		rulePort:
+		{
+			type: [Object, null],
+			default: null,
+		},
 	},
 	setup(): { getMessage: GetMessage }
 	{
@@ -49,7 +59,7 @@ export const DeleteRuleCard = {
 			class="editor-chart-node-settings-delete-rule-card"
 			:data-test-id="$testId('complexNodeRuleSettingsDeleteRuleCard', ruleCard.id)"
 			:aria-label="ariaLabel"
-			@click="deleteRuleCard(ruleCard)"
+			@click="deleteRuleCard(ruleCard, rulePort)"
 		>
 			<BIcon
 				name="cross-m"

@@ -105,23 +105,29 @@ jn.define('intranet/simple-list/items/login/src/content-view', (require, exports
 						testId: this.getTestId(this.props.id),
 						style: {
 							marginHorizontal: Component.paddingLr.toNumber(),
-							paddingHorizontal: Indent.M.toNumber(),
-							backgroundColor: this.isCurrent ? Color.accentSoftBlue3.toHex() : null,
-							borderRadius: this.isCurrent ? Corner.M.toNumber() : null,
 						},
 					},
 					View(
 						{
 							style: {
-								flexDirection: 'row',
-								alignItems: 'center',
-								paddingVertical: Indent.XL2.toNumber(),
+								paddingHorizontal: Indent.M.toNumber(),
+								backgroundColor: this.isCurrent ? Color.accentSoftBlue3.toHex() : null,
+								borderRadius: this.isCurrent ? Corner.M.toNumber() : null,
 							},
 						},
-						this.renderImage(),
-						this.renderContent(),
+						View(
+							{
+								style: {
+									flexDirection: 'row',
+									alignItems: 'center',
+									paddingVertical: Indent.XL2.toNumber(),
+								},
+							},
+							this.renderImage(),
+							this.renderContent(),
+						),
+						this.renderSeparator(),
 					),
-					this.renderSeparator(),
 				),
 			);
 		}

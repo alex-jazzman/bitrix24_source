@@ -2,10 +2,33 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, ui_infoHelper, main_core_events, im_v2_const, im_v2_lib_analytics, im_v2_lib_feature, im_v2_lib_layout, im_v2_lib_phone, im_v2_lib_utils, im_v2_lib_market) {
+(function (exports, ui_infoHelper, main_core_events, im_v2_const, im_v2_lib_analytics, im_v2_lib_feature, im_v2_lib_folder, im_v2_lib_layout, im_v2_lib_phone, im_v2_lib_utils, im_v2_lib_market) {
 	'use strict';
 
+	const LayoutsWithOwnNavigationItem = Object.freeze({
+		[im_v2_const.Layout.notification]: im_v2_const.NavigationMenuItem.notification,
+		[im_v2_const.Layout.settings]: im_v2_const.NavigationMenuItem.settings,
+		[im_v2_const.Layout.market]: im_v2_const.NavigationMenuItem.market
+	});
+	const getNavigationItemId = layoutName => {
+		const ownItemId = LayoutsWithOwnNavigationItem[layoutName];
+		if (ownItemId) {
+			return ownItemId;
+		}
+
+		// With folders on, sections have no menu items of their own, so any other screen, known or
+		// unknown, falls back to the messenger item.
+		if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatFoldersWebAvailable)) {
+			return im_v2_const.NavigationMenuItem.messenger;
+		}
+
+		// Without folders every section keeps its own menu item, so an empty id means the screen has
+		// none (folder, conference, chat and folder forms) or is unknown: nothing to highlight.
+		return im_v2_const.NavigationMenuItem[layoutName] ?? '';
+	};
+
 	const customClickHandler = {
+		[im_v2_const.NavigationMenuItem.messenger]: onMessengerClick,
 		[im_v2_const.NavigationMenuItem.copilot]: onCopilotClick,
 		[im_v2_const.NavigationMenuItem.call]: onCallClick,
 		[im_v2_const.NavigationMenuItem.timemanager]: onTimeManagerClick,
@@ -33,8 +56,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} = payload;
 			const isMarketMenuItem = id === im_v2_const.NavigationMenuItem.market;
 			return isMarketMenuItem && Boolean(entityId);
+		},
+		getNavigationItemId(layoutName) {
+			return getNavigationItemId(layoutName);
 		}
 	};
+	function onMessengerClick() {
+		// The item has no screen of its own: it opens the same folder the messenger starts with.
+		const initialLayout = im_v2_lib_folder.FolderManager.getDefaultLayout() ?? {
+			name: im_v2_const.Layout.chat
+		};
+
+		// changeLayout() is bypassed on purpose: it forwards entityId only and would drop the
+		// starting folder kept in params.
+		main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeNestedList);
+		void im_v2_lib_layout.LayoutManager.getInstance().setLayout(initialLayout);
+	}
 	function onCopilotClick(payload) {
 		if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive)) {
 			const promoter = new ui_infoHelper.FeaturePromoter({
@@ -160,23 +197,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		layoutName,
 		layoutEntityId
 	}) {
+		// The only place where a navigation menu item becomes a layout name, so the menu item of the plain
+		// chats is sent to the section where those chats live now. Everything below keeps working on the
+		// resolved name: the validity check, the last opened chat and the nested list event.
+		const targetLayoutName = layoutName === im_v2_const.Layout.chat ? im_v2_lib_folder.FolderManager.getRegularChatsLayout().name : layoutName;
 		const layoutManager = im_v2_lib_layout.LayoutManager.getInstance();
-		if (!layoutManager.isValidLayout(layoutName)) {
+		if (!layoutManager.isValidLayout(targetLayoutName)) {
 			return;
 		}
-		let entityId = layoutEntityId;
-		const lastOpenedElement = layoutManager.getLastOpenedElement(layoutName);
-		if (!entityId && lastOpenedElement) {
-			entityId = lastOpenedElement;
-		}
-		main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeNestedList);
-		void layoutManager.setLayout({
-			name: layoutName,
-			entityId
+		const targetLayout = layoutManager.resolveLayoutEntityId({
+			name: targetLayoutName,
+			entityId: layoutEntityId
 		});
+		main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeNestedList);
+		void layoutManager.setLayout(targetLayout);
 	}
 
 	exports.NavigationManager = NavigationManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.UI, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.UI, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=navigation.bundle.js.map

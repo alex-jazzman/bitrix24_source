@@ -21,12 +21,18 @@
 	cursor: default;
 }
 
+.tasks-field-importance:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-field-importance__icon {
 	--ui-icon-set__icon-color: var(--color-icon);
 	--ui-icon-set__icon-size: var(--size-icon);
 }
 .tasks-field-importance.--active .tasks-field-importance__icon {
-	background: radial-gradient(circle at bottom, #FAA72C 0%, #FF5752 67%);
+	background: radial-gradient(circle at bottom, var(--ui-color-accent-main-warning) 0%, var(--ui-color-accent-main-alert) 67%);
 }
 .tasks-field-importance.--active:hover .tasks-field-importance__icon {
 	opacity: 0.8;

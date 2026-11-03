@@ -1,0 +1,92 @@
+.crm-settings-hub-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	max-width: 560px;
+	outline: none;
+}
+
+.crm-settings-hub-section__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+/* The heading stays in the DOM as the region label even when the section layout hides it. */
+.crm-settings-hub-section__title.--visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.crm-settings-hub-section:focus-visible {
+	box-shadow: 0 0 0 2px var(--ui-color-accent-main-primary);
+	border-radius: var(--ui-border-radius-md);
+}
+
+/* Default control layout - the shell's scalar/navigation controls share this stylesheet
+   because they always render inside a section (no per-control css by design). */
+.crm-settings-hub-toggle-control,
+.crm-settings-hub-navigation-control,
+.crm-settings-hub-field-control,
+.crm-settings-hub-text-control {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.crm-settings-hub-toggle-control__row,
+.crm-settings-hub-navigation-control__row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-sm);
+}
+
+.crm-settings-hub-toggle-control__switch {
+	position: relative;
+	display: inline-flex;
+	cursor: pointer;
+}
+
+.crm-settings-hub-toggle-control__switch:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-toggle-control__switch.--disabled {
+	cursor: not-allowed;
+}
+
+.crm-settings-hub-field-control__label {
+	color: var(--ui-color-base-2);
+}
+
+.crm-settings-hub-toggle-control__label,
+.crm-settings-hub-navigation-control__label,
+.crm-settings-hub-text-control__label {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-text-control__value {
+	color: var(--ui-color-base-2);
+}
+
+.crm-settings-hub-toggle-control__description,
+.crm-settings-hub-toggle-control__hint,
+.crm-settings-hub-navigation-control__hint,
+.crm-settings-hub-field-control__hint,
+.crm-settings-hub-text-control__hint {
+	color: var(--ui-color-base-3);
+}
+
+.crm-settings-hub-toggle-control.--disabled .crm-settings-hub-toggle-control__label,
+.crm-settings-hub-navigation-control.--disabled .crm-settings-hub-navigation-control__label,
+.crm-settings-hub-field-control.--disabled {
+	opacity: 0.6;
+}

@@ -41,16 +41,17 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 		createMoreMenu()
 		{
 			const {
-				hideCompleted,
 				menuMore: {
 					actions,
 					accessRestrictions,
 				},
 			} = this.props;
+			const { onlyMine = false, hideCompleted = false } = this.getFilter();
 
 			return new ChecklistMoreMenu(/** @type {ChecklistMoreMenuProps} */ ({
 				...actions,
 				accessRestrictions,
+				onlyMine,
 				hideCompleted,
 				onShowOnlyMine: this.onChangeFilter,
 				onHideCompleted: this.onHideCompleted,
@@ -59,11 +60,22 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 
 		/**
 		 * @private
+		 * @return {ChecklistConditions}
+		 */
+		getFilter()
+		{
+			const { checklist } = this.props;
+
+			return checklist.getFilter();
+		}
+
+		/**
+		 * @private
 		 * @return {Promise<ChecklistBaseLayout>}
 		 */
 		async initialOpenPageManager()
 		{
-			const { parentWidget, inLayout, hideCompleted, hideMoreMenu } = this.props;
+			const { parentWidget, inLayout, hideMoreMenu } = this.props;
 
 			const checklistComponent = this.getChecklistComponent();
 			const layoutType = inLayout ? PAGE_LAYOUT : BOTTOM_SHEET;
@@ -77,7 +89,7 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 				onClose: this.handleOnClose,
 				component: checklistComponent,
 				onShowMoreMenu: hideMoreMenu ? null : this.handleOnShowMoreMenu,
-				highlightMoreButton: hideCompleted,
+				highlightMoreButton: Object.values(this.getFilter()).some(Boolean),
 			});
 
 			const layoutWidget = await openManager.open();
@@ -112,8 +124,12 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 		 * @return {Promise<void>}
 		 */
 		onChangeFilter = async (params) => {
+			const { onFilterChanged } = this.props;
+
 			this.checklistComponent.reload(params);
 			const moreMenuParams = await this.menuMore.reload(params);
+
+			onFilterChanged?.(this.getFilter());
 
 			this.openManager.update({
 				highlightMoreButton: Object.values(moreMenuParams).some((value) => value),

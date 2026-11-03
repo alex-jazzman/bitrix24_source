@@ -107,6 +107,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 			return Promise.all(promises);
 		}
+		async getDefaultReaction() {
+			const settings = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsGeneralList, {
+				data: {
+					userId: im_v2_application_core.Core.getUserId()
+				}
+			});
+			if (typeof settings !== 'object' || settings === null || Array.isArray(settings)) {
+				throw new Error('SettingsService: invalid settings response');
+			}
+			const defaultReaction = settings[im_v2_const.Settings.message.defaultReaction];
+			if (typeof defaultReaction !== 'string') {
+				throw new Error('SettingsService: invalid settings response');
+			}
+			return defaultReaction;
+		}
+		async updateDefaultReaction(reaction) {
+			await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsGeneralUpdate, {
+				data: {
+					userId: im_v2_application_core.Core.getUserId(),
+					name: im_v2_const.Settings.message.defaultReaction,
+					value: reaction
+				}
+			});
+		}
 	}
 
 	exports.SettingsService = SettingsService;

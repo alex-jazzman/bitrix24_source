@@ -1,0 +1,403 @@
+/* The height of the header belongs to the header alone: the shells of the pages lay the editor
+   under it and take the value from here instead of repeating it. */
+:root {
+	--disk-document-header-height: 58px;
+}
+
+/* The place the header is mounted into: the styles of the extension reach the page before the
+   header does, so the place is held from the first paint. Only the height belongs here - the
+   background and the shadow come with the header, or an empty strip would show up before it. */
+.disk-document-header-container {
+	height: var(--disk-document-header-height);
+}
+
+.disk-document-header {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	height: var(--disk-document-header-height);
+	padding: 0 var(--ui-space-inset-lg) 0 var(--ui-space-inset-lg2);
+	background: var(--ui-color-bg-content-primary);
+	/* box-shadow-contrast-default of the design system: its blur token carries a filter function,
+	   so only the color of the shadow is taken from a token here */
+	box-shadow: 0 1px 2px 0 var(--ui-color-box-shadow-contrast-default-color, rgba(0, 0, 0, 0.1));
+	/* the header gives up information as it narrows and never grows a horizontal scrollbar */
+	overflow: hidden;
+}
+
+/* the words next to the icons are given up at this width, and the spacing around them with them:
+   every control has to fit into 320px, and what is left over goes to the name of the object */
+.disk-document-header.--compact {
+	gap: var(--ui-space-inline-2xs);
+	padding: 0 var(--ui-space-inset-sm);
+}
+
+.disk-document-header.--compact .disk-document-header__start {
+	gap: var(--ui-space-inline-2xs);
+}
+
+.disk-document-header.--compact .disk-document-header__end {
+	gap: var(--ui-space-inline-xs);
+}
+
+.disk-document-header__start {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	/* without it the name of the object refuses to shorten */
+	min-width: 0;
+}
+
+.disk-document-header__end {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+}
+
+.disk-document-header__logo {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 1px;
+	color: var(--ui-color-base-1);
+	text-decoration: none;
+}
+
+/* the typography of the design system carries a color of its own, and here it belongs to the mark */
+.disk-document-header__logo-name {
+	color: inherit;
+}
+
+/* The clock of the portal mark is a brand glyph and not a part of any icon set of the design
+   system, so it is drawn as a mask and takes the color of the mark itself. */
+.disk-document-header__logo-clock {
+	flex: 0 0 auto;
+	width: 10px;
+	height: 16px;
+	background: currentColor;
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' fill='none' viewBox='0 0 10 16'%3E%3Cpath fill='%23333' d='M4.998 6.002h2.5v-1h-1.5v-1.75h-1z'/%3E%3Cpath fill='%23333' fill-rule='evenodd' d='M5.5 1a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9m0 8a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7' clip-rule='evenodd'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' fill='none' viewBox='0 0 10 16'%3E%3Cpath fill='%23333' d='M4.998 6.002h2.5v-1h-1.5v-1.75h-1z'/%3E%3Cpath fill='%23333' fill-rule='evenodd' d='M5.5 1a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9m0 8a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7' clip-rule='evenodd'/%3E%3C/svg%3E");
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: 10px 16px;
+	mask-size: 10px 16px;
+}
+
+.disk-document-header__logo:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+.disk-document-header__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 22px;
+	background: var(--ui-color-divider-accent);
+}
+
+.disk-document-header-action-bar {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+}
+
+/* the buttons of the design system are inserted into the bar as its own children */
+.disk-document-header-action-bar > *:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* a waiting button is never disabled - it keeps the focus - so it takes the idle cursor on its own */
+.disk-document-header-action-bar > [aria-disabled="true"] {
+	cursor: default;
+}
+
+/* main.loader is centered over the button while its regular content keeps the button's dimensions. */
+.disk-document-header-action-bar > [aria-busy="true"] {
+	position: relative;
+}
+
+.disk-document-header-action-bar > [aria-busy="true"] > :not(.main-ui-loader) {
+	visibility: hidden;
+}
+
+/* The warning never gives up its place: it belongs to the name it stands next to, not to the row of
+   controls, and a header which ran out of room still has to carry it. */
+.disk-document-header-content-warning {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* Opened by keyboard as well, so the ring has to be visible on the icon itself. */
+.disk-document-header-content-warning:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* the button and the arrow of the menu read as one control, so nothing stands between them */
+.disk-document-header-edit-action {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+}
+
+/**
+ * The mockup carries the arrow not as a button of its own but as the narrow section of a single
+ * control: a square as wide as the control is tall, with the thin line of a split button and the
+ * arrow in the middle. A captionless button of the design system is that square only while nothing
+ * else on the page says otherwise - the legacy stylesheet of the icon buttons (ui.buttons.icons,
+ * loaded by the neighbours of the header on most portal pages) doubles it. The size of the section
+ * is therefore fixed here through the basis of the flex item, which no width of theirs overrides.
+ */
+.disk-document-header-edit-action .disk-document-header-edit-action__menu[data-header-action] {
+	position: relative;
+	flex: 0 0 var(--ui-btn-height);
+}
+
+/* the same node once drew the arrow of the older buttons, so what it was given for that is undone */
+.disk-document-header-edit-action .disk-document-header-edit-action__menu[data-header-action]::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	right: auto;
+	left: 0;
+	width: 1px;
+	height: var(--ui-btn-split-divider-height);
+	margin: 0;
+	background: var(--ui-btn-split-divider-color);
+	border: none;
+	transform: translateY(-50%);
+}
+
+/* the arrow of a button with a caption stands off its text, and alone in a section it stands centred */
+.disk-document-header-edit-action .disk-document-header-edit-action__menu[data-header-action]::after {
+	margin-left: 0;
+}
+
+.disk-document-header-object-name {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	/* the name zone of the mockup is 300px wide; below that the name shrinks with the container */
+	max-width: 300px;
+	overflow: hidden;
+}
+
+.disk-document-header-object-name.--editing {
+	position: relative;
+	flex: 0 1 auto;
+	gap: var(--ui-space-inline-2xs);
+	max-width: 100%;
+	overflow: visible;
+}
+
+.disk-document-header-object-name__trigger {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-2xs);
+	border-radius: var(--ui-border-radius-2xs);
+	color: var(--ui-color-base-2);
+	cursor: default;
+	transition: background-color 200ms ease;
+}
+
+.disk-document-header-object-name__trigger.--renamable {
+	cursor: pointer;
+}
+
+.disk-document-header-object-name__trigger.--renamable:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.disk-document-header-object-name__trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* the typography of the design system carries a color of its own, and here it belongs to the block */
+.disk-document-header-object-name__text {
+	min-width: 0;
+	max-width: 100%;
+	color: inherit;
+}
+
+.disk-document-header-object-name__pencil {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-6);
+}
+
+.disk-document-header-object-name__field {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: calc(100% - 32px - var(--ui-space-inline-2xs));
+}
+
+.disk-document-header-object-name__field .ui-system-input-container {
+	min-height: 32px;
+	border-width: 0 0 1px;
+	border-color: var(--ui-color-base-5);
+	border-radius: 0;
+}
+
+.disk-document-header-object-name__field.--error .ui-system-input-container {
+	border-color: var(--ui-color-accent-main-alert);
+}
+
+.disk-document-header-object-name__measure {
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+	font-family: inherit;
+	font-size: var(--ui-font-size-lg);
+	font-weight: inherit;
+	line-height: var(--ui-font-line-height-sm);
+	white-space: pre;
+}
+
+.disk-document-header-object-name__submit {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+	cursor: pointer;
+}
+
+.disk-document-header-object-name__submit:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.disk-document-header-object-name__submit:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* the checkmark is never disabled while it saves - it keeps the focus - so the wait is drawn by hand */
+.disk-document-header-object-name__submit[aria-disabled="true"] {
+	cursor: default;
+	opacity: var(--ui-opacity-50);
+}
+
+.disk-document-header-presence-stack {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+}
+
+/* the faces arrive with an extension of their own, and the row keeps their place unseen until they do */
+.disk-document-header-presence-stack--awaited {
+	visibility: hidden;
+}
+
+.disk-document-header-presence-stack--awaited .disk-document-header-presence-stack__avatar {
+	width: var(--disk-document-header-presence-stack-avatar-size, 28px);
+	height: var(--disk-document-header-presence-stack-avatar-size, 28px);
+}
+
+.disk-document-header-presence-stack__trigger {
+	display: flex;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	border-radius: var(--ui-border-radius-pill);
+	cursor: pointer;
+}
+
+.disk-document-header-presence-stack__trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* the avatars overlap, and the ring keeps the one below readable under the one above */
+.disk-document-header-presence-stack__avatar {
+	flex: 0 0 auto;
+	border-radius: var(--ui-border-radius-circle);
+	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
+}
+
+.disk-document-header-presence-stack__avatar + .disk-document-header-presence-stack__avatar {
+	margin-left: -8px;
+}
+
+.disk-document-header-presence-stack__counter {
+	display: flex;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	min-width: var(--disk-document-header-presence-stack-avatar-size, 28px);
+	height: var(--disk-document-header-presence-stack-avatar-size, 28px);
+	margin-left: -8px;
+	padding: 0 var(--ui-space-inset-2xs);
+	color: var(--ui-color-base-2);
+	background: var(--ui-color-base-7);
+	border-radius: var(--ui-border-radius-pill);
+	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
+}
+
+.disk-document-header-presence-list {
+	display: flex;
+	box-sizing: border-box;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	/* the roster reaches a hundred rows, and the bubble is the only thing that scrolls */
+	max-height: 320px;
+	padding: var(--ui-space-inset-sm);
+	overflow-y: auto;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: var(--ui-shadow-bottom-m);
+}
+
+.disk-document-header-presence-list__row {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.disk-document-header-presence-list__name {
+	color: var(--ui-color-base-1);
+}
+
+.disk-document-header-save-status {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	color: var(--ui-color-base-2);
+}
+
+.disk-document-header-save-status.--failed {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.disk-document-header-save-status__text {
+	color: inherit;
+	white-space: nowrap;
+}
+
+/* the spinner of the loader is drawn into this box and takes it whole */
+.disk-document-header-save-status__spinner {
+	display: flex;
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+}

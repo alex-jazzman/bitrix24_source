@@ -19,12 +19,15 @@ export const RelatedTasksChip = {
 		};
 	},
 	methods: {
-		handleAdd(targetNode: HTMLElement): void
+		handleAdd(targetNode: HTMLElement, onClose: Function): void
 		{
 			relatedTasksDialog.show({
 				targetNode,
 				taskId: this.taskId,
-				onClose: this.highlightField,
+				onClose: () => {
+					this.highlightField();
+					onClose?.();
+				},
 				analytics: this.analytics,
 			});
 		},

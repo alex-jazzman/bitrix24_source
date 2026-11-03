@@ -28,21 +28,22 @@ Extension::load([
 	'dd',
 	'ui.popup',
 	'crm.restriction.bitrix24',
+	'crm.stage.color',
 	'crm_common',
 ]);
 
 $component->addToolbar($this);
 
 ?>
-<div class="crm-st">
+<div class="crm-st" data-testid="crm-sales-tunnels-root">
 	<div class="crm-st-container">
-		<div class="crm-st-categories"> </div>
+		<div class="crm-st-categories" data-testid="crm-sales-tunnels-categories"> </div>
 		<svg class="crm-st-svg-root"> </svg>
 		<svg class="crm-st-svg-links-root"> </svg>
 	</div>
 	<div class="crm-st-footer">
 		<? if ($arResult['isCategoryCreatable']) : ?>
-			<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-add crm-st-add-category-btn"><?=Loc::getMessage('CRM_ST_ADD_NEW_CATEGORY_BUTTON_LABEL2')?></button>
+			<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-add crm-st-add-category-btn" data-testid="crm-sales-tunnels-add-category-btn"><?=Loc::getMessage('CRM_ST_ADD_NEW_CATEGORY_BUTTON_LABEL2')?></button>
 		<? endif; ?>
 	</div>
 </div>
@@ -82,8 +83,10 @@ $APPLICATION->includeComponent(
 		isStagesEnabled: <?=($arResult['isStagesEnabled'] ? 'true' : 'false')?>,
 		isCategoryEditable: <?=CUtil::phpToJsObject($arResult['isCategoryEditable'])?>,
 		isCategoryCreatable: <?=CUtil::phpToJsObject($arResult['isCategoryCreatable'])?>,
+		isCategoryAccessEditable: <?=CUtil::phpToJsObject($arResult['isCategoryAccessEditable'])?>,
 
 		areStagesEditable: <?=CUtil::phpToJsObject($arResult['areStagesEditable'])?>,
+		areTunnelsEditable: <?=CUtil::phpToJsObject($arResult['areTunnelsEditable'])?>,
 		isAvailableGenerator: <?=CUtil::phpToJsObject($arResult['isAvailableGenerator'])?>,
 
 		robotsUrl: '<?=$arResult['robotsUrl']?>',

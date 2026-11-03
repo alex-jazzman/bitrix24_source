@@ -51,9 +51,15 @@ export type AccessRightItem = {
 	setEmptyOnSetMinMaxValueInColumn?: boolean,
 
 	variables: VariableCollection, // options to choose from in variable-like controls
+	presets: PresetCollection,
 
 	// only for multivariable
 	allSelectedCode: ?string,
+	allSelectedTitle: ?string, // caption of the 'all selected' option, host-module wording
+	variablesSource: ?VariablesSource, // when set, the dialog loads variables from the server instead of `variables`
+	// caption of a value neither the source nor `variables` name, with UNLOADED_VARIABLE_VALUE_PLACEHOLDER
+	// standing for the value itself
+	unloadedVariableTitlePattern: ?string,
 	selectedVariablesAliases: Map<string, string>,
 	selectedVariablesAliasesSeparator: ?string,
 	enableSearch?: boolean,
@@ -70,7 +76,28 @@ export type AccessRightItem = {
 	isModified: boolean,
 };
 
+export type VariablesSource = {
+	entityId: string, // 'ui.entity-selector' entity the dialog is built from
+	dynamicLoad: boolean,
+	dynamicSearch: boolean,
+	dynamicSearchMatchMode: ?string,
+	providerOptions: Object,
+	fillRecentItems: boolean,
+	itemEntityId: string, // entityId of the items the entity returns
+};
+
 export type VariableCollection = Map<string, Variable>;
+
+export type PresetCollection = Map<string, Preset>;
+
+export type Preset = {
+	id: string,
+	title: string,
+	icon?: ?string,
+	description?: ?string,
+	showGroupHeadItems?: boolean,
+	variableIds: Array<string>,
+};
 
 export type Variable = {
 	id: string,
@@ -384,6 +411,38 @@ export class AccessRightsModel extends BuilderModel
 				store.commit('expandSection', { sectionCode });
 				store.commit('markRightAsModified', { sectionCode, rightId, isModified });
 			},
+			mergeRightVariables: (store, { sectionCode, rightId, variables }): void => {
+				if (!store.state.collection.has(sectionCode))
+				{
+					console.warn(
+						'ui.accessrights.v2: Merging variables into section that doesn`t exists',
+						{ sectionCode },
+					);
+
+					return;
+				}
+
+				const section: AccessRightSection = store.state.collection.get(sectionCode);
+				if (!section.rights.has(rightId))
+				{
+					console.warn('ui.accessrights.v2: Merging variables into right that doesn`t exists', { rightId });
+
+					return;
+				}
+
+				// a right that came without the `variables` option has no dictionary to merge into
+				if (section.rights.get(rightId).variables === null)
+				{
+					console.warn(
+						'ui.accessrights.v2: Merging variables into right without variables',
+						{ sectionCode, rightId },
+					);
+
+					return;
+				}
+
+				store.commit('mergeRightVariables', { sectionCode, rightId, variables });
+			},
 		};
 	}
 
@@ -442,6 +501,23 @@ export class AccessRightsModel extends BuilderModel
 		}
 	}
 
+	#createVariable(id: string, title: string, entityId: ?string): Variable
+	{
+		return {
+			id,
+			title,
+			entityId,
+			supertitle: null,
+			avatar: null,
+			avatarOptions: null,
+			conflictsWith: null,
+			requires: null,
+			dependant: null,
+			secondary: null,
+			hint: null,
+		};
+	}
+
 	// eslint-disable-next-line max-lines-per-function
 	getMutations(): MutationTree<AccessRightsState>
 	{
@@ -466,6 +542,31 @@ export class AccessRightsModel extends BuilderModel
 			markRightAsModified: (state, { sectionCode, rightId, isModified }): void => {
 				const section = state.collection.get(sectionCode);
 				section.rights.get(rightId).isModified = isModified;
+			},
+			mergeRightVariables: (state, { sectionCode, rightId, variables }): void => {
+				const right: AccessRightItem = state.collection.get(sectionCode).rights.get(rightId);
+				const entityId = right.variablesSource?.itemEntityId ?? null;
+
+				for (const item of variables)
+				{
+					const id = String(item.id);
+
+					// 'all' is a mode of the right, not one of its variables
+					if (id === right.allSelectedCode)
+					{
+						continue;
+					}
+
+					const knownVariable: ?Variable = right.variables.get(id);
+					if (knownVariable)
+					{
+						knownVariable.title = String(item.title);
+					}
+					else
+					{
+						right.variables.set(id, this.#createVariable(id, String(item.title), entityId));
+					}
+				}
 			},
 			toggleSection: (state, { sectionCode }): void => {
 				const section = state.collection.get(sectionCode);

@@ -18,6 +18,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	const { MessageMenuActionHelper } = require('im/messenger/controller/dialog/lib/message-menu/src/message-action-helper');
 	const { OneLevelMessageMenuManager } = require('im/messenger/controller/dialog/lib/message-menu/src/one-level/manager');
@@ -119,6 +120,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 				return;
 			}
 
+			if (this.isMenuBlockedByActiveGeneration(messageModel))
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
 			this.createMenuManager(messageModel);
 
 			await this.showMenu(message);
@@ -133,6 +141,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		 */
 		#interruptMessageAnimation(messageId)
 		{
+			const aiTaskIndicationManager = this.dialogLocator?.get?.('ai-task-indication-manager');
+			if (aiTaskIndicationManager?.isMessageOfOperation?.(messageId))
+			{
+				// Every message of a running operation is left alone, not the anchor alone: the indication
+				// frame lives in the very visualState the interruption overwrites, and an interrupted
+				// status makes the frame builder return null -- the glow would go dark until the next
+				// status arrives, and after the terminal frame it would not come back at all.
+				logger.log('MessageMenuController interruptMessageAnimation skipped: ai task message', messageId);
+
+				return;
+			}
+
 			const payloadParams = {
 				id: messageId,
 				fields: {
@@ -312,6 +332,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		 */
 		isMenuNotAvailableByComponentId(message)
 		{
+			if (MessageHelper.createByModel(message)?.isCopilotProcess)
+			{
+				return true;
+			}
+
 			const componentId = message.params?.componentId;
 			if (Type.isNil(componentId))
 			{
@@ -329,6 +354,21 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			}
 
 			return componentId?.includes('CreationMessage');
+		}
+
+		/**
+		 * @desc The backend places COPILOT_GENERATION_ACTIVE on the placeholder together with the
+		 * aiAssistantSearch block (see aiassistant PendingPlaceholderCreator), so the flag alone is
+		 * enough here. Unlike the web (im.v2.lib.copilot isCopilotGenerationActive) we deliberately
+		 * skip the transitional fallback over the search block: it only covered legacy pending
+		 * messages created before the flag existed, which do not survive in the mobile flow, and it
+		 * would add a block scan to the hot long-tap path.
+		 * @param {MessagesModelState} message
+		 * @return {Boolean}
+		 */
+		isMenuBlockedByActiveGeneration(message)
+		{
+			return message.params?.COMPONENT_PARAMS?.copilotGenerationActive === true;
 		}
 
 		/**

@@ -24,3 +24,7 @@
 .tasks-field-flow-chip.--readonly {
 	pointer-events: none;
 }
+
+.ui-chip[data-task-chip-id="flowId"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
+}

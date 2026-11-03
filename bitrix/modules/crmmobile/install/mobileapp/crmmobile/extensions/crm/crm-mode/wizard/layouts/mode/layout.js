@@ -2,6 +2,7 @@
  * @module crm/crm-mode/wizard/layouts/mode/layout
  */
 jn.define('crm/crm-mode/wizard/layouts/mode/layout', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
 	const { UIScrollView } = require('layout/ui/scroll-view');
@@ -106,12 +107,11 @@ jn.define('crm/crm-mode/wizard/layouts/mode/layout', (require, exports, module) 
 									borderRadius: 12,
 								},
 							},
-							Text(
+							Text3(
 								{
 									text: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER'),
 									style: {
 										color: AppTheme.colors.base1,
-										fontSize: 16,
 										marginBottom: 14,
 									},
 								},

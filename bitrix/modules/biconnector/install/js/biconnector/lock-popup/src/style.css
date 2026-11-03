@@ -55,7 +55,7 @@
 }
 
 .biconnector-lock-popup__icon {
-	background: url("../images/lock_orange.png") center/contain no-repeat;
+	background: url("../images/lock_orange.webp") center/contain no-repeat;
 	width: 108px;
 	height: 108px;
 }

@@ -1,0 +1,10 @@
+.sonet-elements-accessible-switcher {
+	display: inline-flex;
+	align-items: center;
+}
+
+.sonet-elements-accessible-switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
+}

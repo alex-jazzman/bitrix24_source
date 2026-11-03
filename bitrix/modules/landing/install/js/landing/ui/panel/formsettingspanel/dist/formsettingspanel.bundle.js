@@ -21,12 +21,22 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 		}
 		adjustActionsPanels = false;
 		#phoneDoesntVerifiedResponseCode = 'PHONE_NOT_VERIFIED';
+		#formSession = 0;
+		#formChangeQueue = Promise.resolve();
+		#latestPrepareByContent = new WeakMap();
+		#contentRequest = 0;
+		#latestNoticePreviewToken = null;
+		#noticePreviewSequence = 0;
+		#contentTimer = null;
+		#currentContent = null;
+		#previewTimer = null;
 		constructor() {
 			super();
 			this.setEventNamespace('BX.Landing.UI.Panel.FormSettingsPanel');
 			this.setTitle(landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_TITLE'));
 			this.lsCache = new main_core.Cache.LocalStorageCache();
 			main_core.Dom.addClass(this.layout, 'landing-ui-panel-form-settings');
+			main_core.Dom.attr(this.layout, 'data-testid', 'landing-formsettings-panel');
 			this.subscribe('onCancel', () => {
 				BX.onCustomEvent(this, 'BX.Landing.Block:onFormSettingsClose', [this.getCurrentBlock().id]);
 			});
@@ -38,7 +48,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 				const preparedSidebarButtons = dictionary.sidebarButtons.map(buttonOptions => {
 					return new landing_ui_button_sidebarbutton.SidebarButton({
 						...buttonOptions,
-						child: true
+						child: true,
+						attrs: {
+							...buttonOptions.attrs,
+							'data-testid': `landing-formsettings-section-${buttonOptions.id}`
+						}
 					});
 				});
 				this.setSidebarButtons(preparedSidebarButtons);
@@ -221,7 +235,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 				const preparedSidebarButtons = dictionary.sidebarButtons.map(buttonOptions => {
 					return new landing_ui_button_sidebarbutton.SidebarButton({
 						...buttonOptions,
-						child: true
+						child: true,
+						attrs: {
+							...buttonOptions.attrs,
+							'data-testid': `landing-formsettings-section-${buttonOptions.id}`
+						}
 					});
 				});
 				this.setSidebarButtons(preparedSidebarButtons);
@@ -243,6 +261,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 					currentOptions.data.agreements = [];
 				}
 				this.setFormOptions(currentOptions);
+				this.adjustCrmFormIdentification(currentOptions);
 				this.setFormDictionary(editorData.dictionary);
 				return Promise.resolve();
 			}
@@ -276,13 +295,18 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 					currentOptions.data.agreements = [];
 				}
 				this.setFormOptions(currentOptions);
+				this.adjustCrmFormIdentification(currentOptions);
 			});
 			const formDictionary = crm_form_client.FormClient.getInstance().getDictionary().then(dictionary => {
 				this.setFormDictionary(dictionary);
 				const preparedSidebarButtons = dictionary.sidebarButtons.map(buttonOptions => {
 					return new landing_ui_button_sidebarbutton.SidebarButton({
 						...buttonOptions,
-						child: true
+						child: true,
+						attrs: {
+							...buttonOptions.attrs,
+							'data-testid': `landing-formsettings-section-${buttonOptions.id}`
+						}
 					});
 				});
 				this.setSidebarButtons(preparedSidebarButtons);
@@ -324,6 +348,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 		show(options = {
 			formOptions: {}
 		}) {
+			this.#cancelPreview();
+			this.#formSession += 1;
+			this.#formChangeQueue = Promise.resolve();
+			main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 			if (!this.layout.parentNode) {
 				this.enableToggleMode();
 			}
@@ -515,6 +543,15 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 		getFormOptions() {
 			return main_core.Runtime.clone(this.cache.get('formOptions') || {});
 		}
+		adjustCrmFormIdentification(formOptions) {
+			const form = this.getCrmForm();
+			if (form && main_core.Type.isPlainObject(formOptions.identification)) {
+				form.adjust({
+					...main_core.Runtime.clone(formOptions.data),
+					identification: formOptions.identification
+				});
+			}
+		}
 		setFormDictionary(dictionary) {
 			this.cache.set('formDictionary', dictionary);
 		}
@@ -550,9 +587,29 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			return null;
 		}
 		onChange(event) {
+			const formSession = this.#formSession;
+			const contentRequest = this.#contentRequest;
 			const eventData = event.getData();
-			const eventTargetValue = event.getTarget().getValue();
-			Promise.resolve(eventTargetValue).then(value => {
+			const content = event.getTarget();
+			const capturedValue = content.getValue();
+			const noticePreviewToken = eventData.debouncePreview && eventData.skipPrepare ? {
+				formSession,
+				sequence: ++this.#noticePreviewSequence
+			} : null;
+			const eventTargetValue = noticePreviewToken ? Promise.resolve(capturedValue).then(value => {
+				if (main_core.Type.isPlainObject(value) && formSession === this.#formSession && (this.#latestNoticePreviewToken?.formSession !== formSession || this.#latestNoticePreviewToken.sequence < noticePreviewToken.sequence)) {
+					this.#latestNoticePreviewToken = noticePreviewToken;
+				}
+				return value;
+			}) : capturedValue;
+			const prepareToken = eventData.skipPrepare ? null : {};
+			if (prepareToken) {
+				this.#latestPrepareByContent.set(content, prepareToken);
+			}
+			const formChange = Promise.all([this.#formChangeQueue.catch(() => undefined), eventTargetValue]).then(([, value]) => {
+				if (formSession !== this.#formSession || prepareToken && this.#latestPrepareByContent.get(content) !== prepareToken) {
+					return;
+				}
 				if (eventData.skipPrepare) {
 					const formOptions = this.getFormOptions();
 					if (Reflect.has(value, 'presetFields') || Reflect.has(value, 'document') || Reflect.has(value, 'result')) {
@@ -655,8 +712,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 					};
 				}
 				return crm_form_client.FormClient.getInstance().prepareOptions(this.getFormOptions(), value).then(result => {
-					if (value.agreements) {
-						result.data = main_core.Runtime.merge(result.data, value);
+					if (main_core.Type.isArray(value.agreements)) {
+						result.data.agreements = value.agreements.map(agreement => result.data.agreements.find(item => {
+							return String(item.id) === String(agreement.id);
+						})).filter(Boolean);
 					}
 					if (value.integration) {
 						result.integration = value.integration;
@@ -669,10 +728,42 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 					return result;
 				});
 			}).then(result => {
-				BX.Landing.UI.Panel.Top.getInstance().setFormName(result.name);
+				if (!result || formSession !== this.#formSession) {
+					return;
+				}
 				this.setFormOptions(result);
-				this.getCrmForm().adjust(main_core.Runtime.clone(result.data));
+				if (eventData.debouncePreview) {
+					if (noticePreviewToken && noticePreviewToken !== this.#latestNoticePreviewToken) {
+						return;
+					}
+					if (contentRequest !== this.#contentRequest) {
+						this.#cancelPreview();
+						this.#updatePreview(result);
+						return;
+					}
+					this.#cancelPreview();
+					this.#previewTimer = setTimeout(() => this.#flushPreview(), 300);
+				} else {
+					this.#cancelPreview();
+					this.#updatePreview(result);
+				}
 			});
+			this.#formChangeQueue = formChange;
+			return formChange;
+		}
+		#updatePreview(options) {
+			BX.Landing.UI.Panel.Top.getInstance().setFormName(options.name);
+			this.getCrmForm().adjust(main_core.Runtime.clone(options.data));
+		}
+		#cancelPreview() {
+			clearTimeout(this.#previewTimer);
+			this.#previewTimer = null;
+		}
+		#flushPreview() {
+			if (this.#previewTimer !== null) {
+				this.#cancelPreview();
+				this.#updatePreview(this.getFormOptions());
+			}
 		}
 		static sanitize(value) {
 			if (main_core.Type.isStringFilled(value)) {
@@ -707,6 +798,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			});
 		}
 		getContent(id) {
+			const contentRequest = this.#contentRequest;
 			const currentButton = this.getSidebarButtons().find(button => {
 				return id === button.options.id;
 			});
@@ -716,10 +808,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			const contentExtension = this.cache.remember(extension, () => {
 				const rootWindow = landing_pageobject.PageObject.getRootWindow();
 				return rootWindow.BX.Runtime.loadExtension(extension).then(exports => {
-					return exports.default;
+					return exports.Content;
 				});
 			});
 			return contentExtension.then(ContentWrapperClass => {
+				if (contentRequest !== this.#contentRequest) {
+					return null;
+				}
 				if (main_core.Type.isFunction(ContentWrapperClass)) {
 					return new ContentWrapperClass({
 						formOptions: this.getFormOptions(),
@@ -958,7 +1053,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 				});
 			});
 		}
-		onSaveClick() {
+		async onSaveClick() {
+			const formSession = this.#formSession;
 			const dictionary = this.getFormDictionary();
 			BX.onCustomEvent(this, 'BX.Landing.Block:onFormSave', [this.getCurrentBlock().id]);
 			if (main_core.Type.isPlainObject(dictionary.permissions) && main_core.Type.isPlainObject(dictionary.permissions.tariff) && dictionary.permissions.tariff.restricted === true) {
@@ -976,6 +1072,22 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 				return;
 			}
 			main_core.Dom.addClass(this.getSaveButton().layout, 'ui-btn-wait');
+			try {
+				let formChanges;
+				do {
+					formChanges = this.#formChangeQueue;
+					await formChanges;
+				} while (formSession === this.#formSession && formChanges !== this.#formChangeQueue);
+			} catch (errors) {
+				if (formSession === this.#formSession) {
+					this.#onSaveError(errors);
+				}
+				return;
+			}
+			if (formSession !== this.#formSession) {
+				return;
+			}
+			this.#flushPreview();
 			this.getNotSynchronizedFields().then(result => {
 				if (main_core.Type.isPlainObject(result.sync)) {
 					if (main_core.Type.isArrayFilled(result.sync.errors)) {
@@ -991,6 +1103,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 				}
 				return true;
 			}).then(isConfirmed => {
+				if (formSession !== this.#formSession) {
+					return;
+				}
 				if (isConfirmed) {
 					const uri = new main_core.Uri(window.top.location.toString());
 					uri.removeQueryParam('formCreated');
@@ -1009,6 +1124,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 						BX.onCustomEvent(this, 'BX.Landing.Block:onAfterFormSave', [this.getCurrentBlock().id]);
 						this.setFormOptions(result);
 						this.setInitialFormOptions(result);
+						this.adjustCrmFormIdentification(result);
 						crm_form_client.FormClient.getInstance().resetCache(result.id);
 						main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 						const activeButton = this.getSidebarButtons().find(button => {
@@ -1022,29 +1138,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 							}
 							return result;
 						});
-					}).catch(errors => {
-						if (main_core.Type.isArrayFilled(errors)) {
-							if (this.#isPhoneValidationError(errors)) {
-								this.#showPhoneVerifySlider();
-							} else {
-								const errorMessage = errors.map(item => {
-									return main_core.Text.encode(item.message);
-								}).join('<br><br>');
-								const errorAlert = this.getErrorAlert();
-								errorAlert.setMessage(errorMessage);
-								errorAlert.show();
-							}
-						} else {
-							const rootWindow = landing_pageobject.PageObject.getRootWindow();
-							rootWindow.BX.UI.Dialogs.MessageBox.show({
-								message: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
-								title: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
-								buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
-								useAirDesign: true
-							});
-						}
-						main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
-					});
+					}).catch(errors => this.#onSaveError(errors));
 					if (this.useBlockDesign() && this.isCrmFormPage()) {
 						this.disableUseBlockDesign();
 					}
@@ -1052,6 +1146,29 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 					main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 				}
 			});
+		}
+		#onSaveError(errors) {
+			if (main_core.Type.isArrayFilled(errors)) {
+				if (this.#isPhoneValidationError(errors)) {
+					this.#showPhoneVerifySlider();
+				} else {
+					const errorMessage = errors.map(item => {
+						return main_core.Text.encode(item.message);
+					}).join('<br><br>');
+					const errorAlert = this.getErrorAlert();
+					errorAlert.setMessage(errorMessage);
+					errorAlert.show();
+				}
+			} else {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				rootWindow.BX.UI.Dialogs.MessageBox.show({
+					message: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
+					title: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+					useAirDesign: true
+				});
+			}
+			main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 		}
 		#isPhoneValidationError(errors) {
 			return errors.some(error => {
@@ -1091,12 +1208,18 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			});
 		}
 		onCancelClick() {
+			this.#cancelPreview();
 			const initialFormOptions = this.getInitialFormOptions();
 			this.getCrmForm().adjust(initialFormOptions.data);
 			BX.Landing.UI.Panel.Top.getInstance().setFormName(initialFormOptions.name);
 			void this.hide();
 		}
 		hide() {
+			this.#cancelPreview();
+			this.#formSession += 1;
+			this.#formChangeQueue = Promise.resolve();
+			main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
+			this.clearContent();
 			const editorWindow = landing_pageobject.PageObject.getEditorWindow();
 			main_core.Dom.removeClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
 			const rootWindow = landing_pageobject.PageObject.getRootWindow();
@@ -1106,11 +1229,47 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 		}
 		onSidebarButtonClick(event) {
 			const target = event.getTarget();
+			this.#flushPreview();
+			this.clearContent();
 			if (target.options.id === 'design') {
 				this.onFormDesignButtonClick();
 			} else {
-				super.onSidebarButtonClick(event);
+				const contentRequest = this.#contentRequest;
+				const activeButton = this.sidebarButtons.getActive();
+				if (activeButton) {
+					activeButton.deactivate();
+				}
+				target.activate();
+				main_core.Dom.addClass(this.content, 'landing-ui-panel-base-preset-fade');
+				this.showContentLoader();
+				void this.getContent(target.id).then(content => {
+					if (contentRequest !== this.#contentRequest) {
+						content?.destroy?.();
+						return;
+					}
+					this.#currentContent = content;
+					this.#contentTimer = setTimeout(() => {
+						main_core.Dom.removeClass(this.content, 'landing-ui-panel-base-preset-fade');
+						this.hideContentLoader();
+						if (content) {
+							content.subscribe('onChange', this.onChange);
+							main_core.Dom.append(content.getLayout(), this.content);
+						}
+					}, 300);
+				});
 			}
+		}
+		clearContent() {
+			this.#cancelPreview();
+			this.#contentRequest += 1;
+			clearTimeout(this.#contentTimer);
+			main_core.Dom.removeClass(this.content, 'landing-ui-panel-base-preset-fade');
+			if (this.#currentContent) {
+				this.#currentContent.unsubscribe('onChange', this.onChange);
+				this.#currentContent.destroy?.();
+				this.#currentContent = null;
+			}
+			super.clearContent();
 		}
 	}
 

@@ -1,0 +1,94 @@
+/**
+ * Step indicator of the wizard mode: the arrows, the steps of the row and the counter that stands in for them
+ * where the row grows too long. Kept apart from the stylesheet of the dialog on purpose: the block is
+ * self-contained, so lifting it into a design system component of its own is a move of two files and a rename
+ * of the block class.
+ *
+ * The indicator stands on one surface - the coloured card, inside the context of a dark edge - so the colours
+ * below are named once. The arrows are buttons of the design system and are not dressed here at all.
+ */
+
+.ui-system-whats-new-step-nav {
+	/* The step control and the decorative mark inside it, in the lengths of the mockup - both are steps of the
+	   size scale, so the scale is what they are taken from. */
+	--ui-system-whats-new-step-nav-step-size: var(--ui-size-lg);
+	--ui-system-whats-new-step-nav-dot-size: var(--ui-size-xs);
+
+	/* The colours of the parts. Only the resting colour of every part is named, and there is no colour of the
+	   pointer at all: the mockup draws the indicator without one, and a veil of the design system mixed into a
+	   mark that is almost white already shifted its alpha by two hundredths - a state in the stylesheet and
+	   nothing on the screen. The answer of a step is its focus ring and the mark moving onto it. */
+	--ui-system-whats-new-step-nav-dot-color: var(--ui-color-base-4);
+	--ui-system-whats-new-step-nav-counter-color: var(--ui-color-base-2);
+	--ui-system-whats-new-step-nav-active-bg: var(--ui-color-design-selection-bg);
+	--ui-system-whats-new-step-nav-active-content: var(--ui-color-design-selection-content);
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+.ui-system-whats-new-step-nav__steps {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+.ui-system-whats-new-step-nav__step {
+	--ui-color: var(--ui-system-whats-new-step-nav-dot-color);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-system-whats-new-step-nav-step-size);
+	height: var(--ui-system-whats-new-step-nav-step-size);
+	padding: var(--ui-space-inset-none);
+	border: none;
+	border-radius: var(--ui-border-radius-circle);
+	background: transparent;
+	cursor: pointer;
+}
+
+.ui-system-whats-new-step-nav__step:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The step the wizard stands on carries a fill of its own, and the fill is a colour of the surface like
+   every other one here: the tokens of a selected control on a plain card, and the divider of the filled
+   content on a backdrop, where a light selection would sit on the colour as a foreign patch. */
+.ui-system-whats-new-step-nav__step.--active {
+	background: var(--ui-system-whats-new-step-nav-active-bg);
+}
+
+.ui-system-whats-new-step-nav__step-mark {
+	width: var(--ui-system-whats-new-step-nav-dot-size);
+	height: var(--ui-system-whats-new-step-nav-dot-size);
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color);
+}
+
+/* The step the wizard stands on shows its number and every other one a dot. Both stand in the button, and the
+   mark of the position is what decides which of the two is drawn. */
+.ui-system-whats-new-step-nav__step-number {
+	display: none;
+}
+
+.ui-system-whats-new-step-nav__step.--active .ui-system-whats-new-step-nav__step-mark {
+	display: none;
+}
+
+.ui-system-whats-new-step-nav__step.--active .ui-system-whats-new-step-nav__step-number {
+	display: block;
+	color: var(--ui-system-whats-new-step-nav-active-content);
+}
+
+/* Typography carries no font rules here: the size and the weight of the line belong to
+   ui.system.typography, this block only says which colour it takes and how it stands in the row. */
+.ui-system-whats-new-step-nav__counter {
+	padding: var(--ui-space-inset-none) var(--ui-space-inset-2xs);
+	color: var(--ui-system-whats-new-step-nav-counter-color);
+	white-space: nowrap;
+}

@@ -2,6 +2,7 @@
  * @module crm/document/details/bottom-toolbar
  */
 jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { withPressed } = require('utils/color');
@@ -74,13 +75,12 @@ jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
 				marginRight: 8,
 			},
 		}),
-		Text({
+		Text3({
 			text,
 			numberOfLines: 1,
 			ellipsize: 'end',
 			style: {
 				color: AppTheme.colors.baseWhiteFixed,
-				fontSize: 16,
 			},
 		}),
 	);

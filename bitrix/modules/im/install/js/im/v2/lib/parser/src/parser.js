@@ -1,4 +1,4 @@
-import { Text, Loc } from 'main.core';
+import { Text, Loc, Type } from 'main.core';
 
 import { type ApplicationContext } from 'im.v2.const';
 import { type ImModelMessage } from 'im.v2.model';
@@ -15,11 +15,9 @@ import { ParserQuote } from './functions/quote';
 import { ParserUrl } from './functions/url';
 import { getCore, isMarkdownFeatureEnabled } from './utils/core-proxy';
 import { ParserUtils } from './utils/utils';
-import { ParserInlineSourceLink, type ParserInlineSourceLinkSegments } from './functions/inline-source-link.js';
+import { ParserInlineSourceLink } from './functions/inline-source-link.js';
 
 import './parser.css';
-
-export type { ParserInlineSourceLinkSegments } from './functions/inline-source-link.js';
 
 export const Parser = {
 	purify: (config) => Purifier.purify(config),
@@ -37,6 +35,35 @@ export const Parser = {
 	decodeHtml: (text) => Decoder.decodeHtml(text),
 	decodeSmile: (text, options) => Decoder.decodeSmile(text, options),
 	decodeSmileForLegacyCore: (text, options) => Decoder.decodeSmileForLegacyCore(text, options),
+
+	getContactPreviewText(message: ImModelMessage, includeCaption: boolean = false): string | null
+	{
+		const componentParams = message.componentParams;
+		if (!componentParams)
+		{
+			return null;
+		}
+
+		const firstName = Type.isStringFilled(componentParams.firstName) ? componentParams.firstName.trim() : '';
+		const lastName = Type.isStringFilled(componentParams.lastName) ? componentParams.lastName.trim() : '';
+		const phone = Type.isArrayFilled(componentParams.phones) && Type.isString(componentParams.phones[0])
+			? componentParams.phones[0].trim()
+			: '';
+		const name = [lastName, firstName].filter(Boolean).join(' ');
+		const previewText = [name, phone].filter(Boolean).join('\n');
+		if (!includeCaption || previewText === '')
+		{
+			return previewText;
+		}
+
+		const cardLine = name === '' ? phone : `${name}, ${phone}`;
+		const cardLineSuffix = `\n${cardLine}`;
+		const caption = message.text?.endsWith(cardLineSuffix)
+			? message.text.slice(0, -cardLineSuffix.length)
+			: '';
+
+		return [caption, previewText].filter(Boolean).join('\n');
+	},
 
 	prepareQuote(message: ImModelMessage, quoteText: string = ''): string
 	{
@@ -121,8 +148,17 @@ export const Parser = {
 		return ParserUtils.getFinalContextTag(forwardId);
 	},
 
-	getInlineSourceLinkSegments(text: string): ParserInlineSourceLinkSegments
+	/**
+	 * Decode [source=N]...[/source] tokens into inline source badges.
+	 * Input MUST already be encoded HTML (output of decodeText / decodeInlineText),
+	 * never raw user text: the result goes to v-html unescaped (XSS).
+	 * See ParserInlineSourceLink.decode.
+	 *
+	 * @param {string} text
+	 * @returns {string}
+	 */
+	decodeInlineSourceLinks(text: string): string
 	{
-		return ParserInlineSourceLink.getSegments(text);
+		return ParserInlineSourceLink.decode(text);
 	},
 };

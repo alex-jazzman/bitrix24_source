@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Web\Json;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
@@ -31,11 +32,14 @@ $component = $this->getComponent();
 				<input
 					<?= $component->getHtmlBuilder()->buildTagAttributes($item['attrList']) ?>
 				>
-				<span
-					placeholder="<?= $item['placeholder'] ?>"
-					id="<?= $item['attrList']['id'] ?>_container"
-				>
-					<?= ($item['value'] ?: $item['placeholder']) ?>
+				<span id="<?= $item['attrList']['id'] ?>_container">
+					<?php
+					// The container holds the formatted value only, exactly as the desktop template
+					// (@see .default.php) does: an empty field stays empty, a zero (including '0' at
+					// precision 0) is shown as a zero. The placeholder of an empty field is drawn by
+					// mobile.js after an inline edit and is read from the input above.
+					?>
+					<?= HtmlFilter::encode($item['value']) ?>
 				</span>
 			</span>
 			<?php

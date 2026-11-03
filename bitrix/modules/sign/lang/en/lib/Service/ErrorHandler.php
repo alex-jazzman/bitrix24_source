@@ -3,6 +3,7 @@ $MESS["SIGN_SERVICE_DEFAULT_ERROR"] = "Cannot complete action, please try again 
 $MESS["SIGN_SERVICE_DEFAULT_ERROR_WITH_CODE"] = "Cannot perform action. Please try again later (error code: #CODE#).";
 $MESS["SIGN_SERVICE_ERROR_BLANK_DELETE_FAILED"] = "Cannot delete template, please try again later.";
 $MESS["SIGN_SERVICE_ERROR_DELETE_DOCUMENTS_EXISTS"] = "Cannot delete this template because there are documents based on it.";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_RESEND_WINDOW_EXPIRED"] = "The period for sending a copy of the signed document has expired.";
 $MESS["SIGN_SERVICE_ERROR_DOCUMENT_SIGNING_EXPIRED"] = "Document signing deadline has expired.";
 $MESS["SIGN_SERVICE_ERROR_DOCUMENT_TO_MANY_MEMBERS"] = "Two signing parties are required.";
 $MESS["SIGN_SERVICE_ERROR_EMPTY_MEMBER_CHANNEL"] = "Specify phone number or e-mail for signing party.";

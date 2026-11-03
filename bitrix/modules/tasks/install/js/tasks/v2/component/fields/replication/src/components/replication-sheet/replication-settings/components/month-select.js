@@ -49,6 +49,7 @@ export const MonthSelect = {
 			:items
 			:disabled
 			:menuOptions
+			:ariaLabel="loc('TASKS_V2_REPLICATION_MONTH_SELECT_ARIA_LABEL')"
 			@update:item="$emit('update:modelValue', $event.id)"
 		/>
 	`,

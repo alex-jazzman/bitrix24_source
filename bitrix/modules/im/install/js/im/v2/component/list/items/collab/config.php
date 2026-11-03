@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'im.v2.application.core',
 		'im.v2.component.list.items.base',
+		'im.v2.component.list.items.elements.active-call-list',
 		'im.v2.component.list.items.elements.create-chat-status',
 		'im.v2.component.list.items.elements.empty-state',
 		'im.v2.const',
@@ -24,6 +25,7 @@ return [
 		'im.v2.provider.service.recent',
 		'main.core',
 		'main.core.events',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

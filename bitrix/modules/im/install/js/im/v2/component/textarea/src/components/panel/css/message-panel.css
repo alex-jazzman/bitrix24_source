@@ -13,6 +13,10 @@
 	padding: 11px 10px 0;
 }
 
+.bx-im-message-panel__container.--contact-message {
+	height: 63px;
+}
+
 .bx-im-message-panel__icon {
 	width: 28px;
 	height: 28px;
@@ -64,6 +68,10 @@
 	overflow: hidden;
 	white-space: nowrap;
 	max-width: 90%;
+}
+
+.bx-im-message-panel__text.--contact-message {
+	white-space: pre-line;
 }
 
 .bx-im-message-panel__bulk-forward-author {
@@ -128,6 +136,24 @@
 	right: 0;
 	top: 0;
 	object-fit: cover;
+}
+
+.bx-im-message-panel__image.--contact-message {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+}
+
+.bx-im-message-panel__contact-avatar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	margin-right: 8px;
+	overflow: hidden;
+	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 /* Video note: round poster thumbnail (no background — poster fills the circle). Fits the 47px panel row. */
@@ -249,11 +275,10 @@
 	right: 10px;
 	width: 24px;
 	height: 24px;
-	background-image: url('./images/close.svg');
 	opacity: 0.35;
-	cursor: pointer;
 }
 
-.bx-im-message-panel__close:hover {
+.bx-im-message-panel__close:hover,
+.bx-im-message-panel__close:focus-visible {
 	opacity: 0.7;
 }

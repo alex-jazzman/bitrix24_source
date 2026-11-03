@@ -15,10 +15,43 @@
 	margin-inline-start: calc(-1 * var(--ui-space-inset-xs));
 }
 
+/*
+ * The negative margin above aligns the label of a plain first button with the send button below.
+ * The BitrixGPT chip has a visible edge, so with it the row aligns by that edge instead.
+ */
+.mail-compose-action-bar.--with-copilot
+{
+	margin-inline-start: 0;
+}
+
+/*
+ * The resting state drops the tinted fill through the published button variable; hover and focus keep
+ * the gradient of the design because their own variables stay untouched.
+ */
+.mail-compose-form .mail-compose-action-bar .mail-compose-copilot-button
+{
+	--ui-btn-background-gradient: none;
+}
+
 .mail-compose-send-row
 {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--ui-space-inline-xs);
+	gap: var(--ui-space-inline-sm);
 	min-width: 0;
+}
+
+.mail-compose-save-template
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	margin-inline-start: auto;
+}
+
+.mail-compose-save-template__label
+{
+	cursor: pointer;
 }

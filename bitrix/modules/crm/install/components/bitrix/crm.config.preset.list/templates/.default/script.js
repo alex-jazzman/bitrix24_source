@@ -53,7 +53,9 @@ BX.Crm.PresetListManagerClass = (function ()
 					fixedPresetId: null,
 					name: null,
 					active: null,
-					sort: null
+					sort: null,
+					saveButton: null,
+					cancelButton: null
 				},
 				handlers: {
 					fixedPresetSelectChange: null
@@ -111,7 +113,7 @@ BX.Crm.PresetListManagerClass = (function ()
 					},
 					content: this._preparePresetEditDialogContent(),
 					"buttons": [
-						new BX.PopupWindowButton(
+						this.dlg.elements.saveButton = new BX.PopupWindowButton(
 							{
 								"text": (this.dlg.presetId === 0) ?
 									this.getMessage("addBtnText") : this.getMessage("editBtnText"),
@@ -122,7 +124,7 @@ BX.Crm.PresetListManagerClass = (function ()
 								}
 							}
 						),
-						new BX.PopupWindowButtonLink(
+						this.dlg.elements.cancelButton = new BX.PopupWindowButtonLink(
 							{
 								"text": this.getMessage("cancelBtnText"),
 								"className": "popup-window-button-link-cancel",
@@ -137,7 +139,29 @@ BX.Crm.PresetListManagerClass = (function ()
 			);
 
 			this.dlg.popup.show();
+			this._markDialogButtons();
 			BX.focus(this.dlg.elements.name);
+		},
+		/**
+		 * The buttons of the dialog are built by main.popup, which takes no attributes of its own, so they
+		 * are marked from here once the popup has rendered them.
+		 */
+		_markDialogButtons: function()
+		{
+			var buttons = {
+				"crm-config-preset-dialog-submit": this.dlg.elements.saveButton,
+				"crm-config-preset-dialog-cancel": this.dlg.elements.cancelButton
+			};
+
+			for (var testId in buttons)
+			{
+				if (!buttons.hasOwnProperty(testId) || !buttons[testId])
+					continue;
+
+				var node = buttons[testId].getContainer();
+				if (BX.type.isElementNode(node))
+					node.dataset.testid = testId;
+			}
 		},
 		_preparePresetEditDialogTitle: function()
 		{
@@ -178,7 +202,8 @@ BX.Crm.PresetListManagerClass = (function ()
 												"id": radioGroupId + "_1",
 												"type": "radio",
 												"name": radioGroupId,
-												"value": "Y"
+												"value": "Y",
+												"data-testid": "crm-config-preset-dialog-create-new"
 											},
 											"props": {"checked": true},
 											"events": {
@@ -196,7 +221,8 @@ BX.Crm.PresetListManagerClass = (function ()
 												"id": radioGroupId + "_2",
 												"type": "radio",
 												"name": radioGroupId,
-												"value": "N"
+												"value": "N",
+												"data-testid": "crm-config-preset-dialog-from-sample"
 											},
 											"events": {
 												"click": BX.delegate(this._hanleCreateNewFlagSwitch, this)
@@ -225,7 +251,10 @@ BX.Crm.PresetListManagerClass = (function ()
 								html: this.getMessage('fixedPresetFieldTitle') + ':'
 							}
 						)]}),
-						BX.create("TD", {"children": [this.dlg.elements.fixedPresetId = BX.create('SELECT')]})
+						BX.create("TD", {"children": [this.dlg.elements.fixedPresetId = BX.create(
+							'SELECT',
+							{"attrs": {"data-testid": "crm-config-preset-dialog-sample-select"}}
+						)]})
 					]
 				}));
 				BX.Crm.rebuildSelect(
@@ -249,7 +278,8 @@ BX.Crm.PresetListManagerClass = (function ()
 						'INPUT',
 						{
 							attrs: {
-								"class": "bx-crm-edit-input"
+								"class": "bx-crm-edit-input",
+								"data-testid": "crm-config-preset-dialog-name"
 							},
 							props:
 							{
@@ -272,6 +302,7 @@ BX.Crm.PresetListManagerClass = (function ()
 					BX.create("TD", {"children": [this.dlg.elements.active = BX.create(
 						'INPUT',
 						{
+							attrs: {"data-testid": "crm-config-preset-dialog-active"},
 							props:
 							{
 								type: "checkbox",
@@ -294,7 +325,8 @@ BX.Crm.PresetListManagerClass = (function ()
 						'INPUT',
 						{
 							attrs: {
-								"class": "bx-crm-edit-input"
+								"class": "bx-crm-edit-input",
+								"data-testid": "crm-config-preset-dialog-sort"
 							},
 							props:
 							{
@@ -620,7 +652,7 @@ BX.Crm.PresetListComponent.ChangeCurrentCountryManager.prototype = {
 			this._alert = new BX.UI.System.Alert.Alert({
 				design: BX.UI.System.Alert.AlertDesign.tinted,
 				hasCloseButton: true,
-				leftImage: "/bitrix/components/bitrix/crm.config.preset.list/templates/.default/images/documents.png",
+				leftImage: "/bitrix/components/bitrix/crm.config.preset.list/templates/.default/images/documents.webp",
 				content: content,
 				events: {
 					closeButtonClick: this._closeButtonHandler

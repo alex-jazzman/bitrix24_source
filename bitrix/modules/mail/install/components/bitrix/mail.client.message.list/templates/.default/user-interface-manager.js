@@ -4,7 +4,7 @@
 	BX.Mail.Client.Message.List.UserInterfaceManager = function (options)
 	{
 		this.gridId = options.gridId;
-		this.isDraftMode = options.isDraftMode === true;
+		this.isDraftMode = options.isDraftMode === true || options.isScheduledMode === true;
 		this.filterId = options.filterId || options.gridId;
 		this.spamDir = options.spamDir;
 		this.outcomeDir = options.outcomeDir;
@@ -25,13 +25,21 @@
 			this.setCurrentFolderFlags(this.getFilterInstance());
 		}
 		this.addEventHandlers();
-		if (!this.isDraftMode)
+		if (!this.isDraftMode && this.usesLegacyGrid())
 		{
 			this.setDefaultBtnTitles();
 		}
 	};
 
 	BX.Mail.Client.Message.List.UserInterfaceManager.prototype = {
+		/**
+		 * Under the option the list is drawn by `mail.client.message-grid`, and that grid owns the panel of
+		 * mass actions: leading the panel from here as well would give one rule two owners.
+		 */
+		usesLegacyGrid: function ()
+		{
+			return BX.message('MAIL_MESSAGE_GRID_VUE_ENABLED') !== 'Y';
+		},
 		addEventHandlers: function ()
 		{
 			if (this.settingsToggle)
@@ -45,7 +53,6 @@
 			}
 
 			BX.addCustomEvent('BX.Main.Filter:apply', this.onApplyFilter.bind(this));
-			BX.addCustomEvent('BX.UI.ActionPanel:hidePanel', this.setDefaultBtnTitles.bind(this));
 			BX.addCustomEvent('BX.UI.ActionPanel:showPanel', this.setDefaultBtnOnShow.bind(this));
 			BX.addCustomEvent('Grid::updated', function(){
 				if(this.getGridInstance().getRows().getSelectedIds().length > 0)
@@ -53,8 +60,14 @@
 					BX.onCustomEvent(window,'Grid::thereSelectedRows');
 				}
 			}.bind(this));
-			BX.addCustomEvent('Grid::thereSelectedRows', this.handleGridSelectItem.bind(this));
-			BX.addCustomEvent('Grid::allRowsSelected', this.handleGridSelectItem.bind(this));
+
+			// the new grid writes the pairs of buttons of the panel itself
+			if (this.usesLegacyGrid())
+			{
+				BX.addCustomEvent('BX.UI.ActionPanel:hidePanel', this.setDefaultBtnTitles.bind(this));
+				BX.addCustomEvent('Grid::thereSelectedRows', this.handleGridSelectItem.bind(this));
+				BX.addCustomEvent('Grid::allRowsSelected', this.handleGridSelectItem.bind(this));
+			}
 
 			BX.addCustomEvent('mail:openMessageForView',
 				function(event)
@@ -91,6 +104,12 @@
 				{
 					if (event.getEventId() === 'Mail.Client.MessageCreatedSuccess')
 					{
+						var data = event.getData();
+						if (data && data.undoSendProjection)
+						{
+							return;
+						}
+
 						if (this.isCurrentFolderOutcome)
 						{
 							BX.Mail.Home.Grid.reloadTable();
@@ -625,7 +644,31 @@
 				return;
 			}
 			this.setCurrentFolderFlags(filterInstance);
-			this.setDefaultBtnTitles();
+			if (this.usesLegacyGrid())
+			{
+				this.setDefaultBtnTitles();
+			}
+			this.announceDirectoryChange();
+		},
+		/**
+		 * The word about the folder and the fetch used to come from the block the component returns with every
+		 * ajax answer of its own (template.php:753). The new grid asks the component for nothing, so that block
+		 * never runs again; the old path still says the word from there, and saying it here too would fetch twice.
+		 */
+		announceDirectoryChange: function ()
+		{
+			if (this.usesLegacyGrid())
+			{
+				return;
+			}
+
+			if (this.getLastDir() === this.getCurrentFolder())
+			{
+				return;
+			}
+
+			this.setLastDir();
+			BXMailMailbox.sync(BX.Mail.Home.ProgressBar, this.filterId, true, true);
 		},
 		setCurrentFolderFlags: function (filterInstance)
 		{

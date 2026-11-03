@@ -18,6 +18,7 @@ jn.define('mail/statemanager/redux/slices/mailboxes/model/mailbox', (require, ex
 				email: sourceMailboxData.EMAIL,
 				counter: sourceMailboxData.COUNTER,
 				canEditSettings: Boolean(sourceMailboxData.CAN_EDIT_SETTINGS),
+				signaturesAvailable: Boolean(sourceMailboxData.SIGNATURES_AVAILABLE),
 			};
 		}
 	}

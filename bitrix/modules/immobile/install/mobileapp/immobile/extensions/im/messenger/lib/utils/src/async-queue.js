@@ -10,21 +10,35 @@ jn.define('im/messenger/lib/utils/src/async-queue', (require, exports, module) =
 	class AsyncQueue
 	{
 		#queue = Promise.resolve();
+		#generation = 0;
 
 		/**
-		 * @param {() => void | Promise} callback
-		 * @param {() => void | Promise} fallback
+		 * @param {() => (void | Promise<void>)} task
+		 * @param {(error: any) => (void | Promise<void>)} fallback
 		 * @return {Promise<void>}
 		 */
-		async enqueue(callback, fallback = () => {})
+		async enqueue(task, fallback = () => {})
 		{
 			const { resolve, promise } = createPromiseWithResolvers();
 
+			const myGeneration = this.#generation;
+
 			this.#queue = this.#queue
-				// eslint-disable-next-line promise/no-callback-in-promise
-				.then(() => callback())
+				.then(() => {
+					if (myGeneration !== this.#generation)
+					{
+						const error = new Error('AsyncQueue cleared');
+						error.name = 'AsyncQueueCleared';
+						throw error;
+					}
+
+					return task();
+				})
 				.catch((error) => {
-					console.error('AsyncQueue error in callback. Run fallback', error);
+					if (error?.name !== 'AsyncQueueCleared')
+					{
+						console.error('AsyncQueue error in callback. Run fallback', error);
+					}
 
 					return fallback(error);
 				})
@@ -35,6 +49,13 @@ jn.define('im/messenger/lib/utils/src/async-queue', (require, exports, module) =
 			;
 
 			await promise;
+		}
+
+		clear()
+		{
+			// Bumping the generation tells every task that has not started yet that the queue was cleared.
+			this.#generation += 1;
+			this.#queue = Promise.resolve();
 		}
 	}
 

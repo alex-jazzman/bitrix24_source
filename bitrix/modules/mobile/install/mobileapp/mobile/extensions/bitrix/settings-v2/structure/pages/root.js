@@ -5,7 +5,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { copyToClipboard } = require('utils/copy');
-	const { FeedbackForm } = require('layout/ui/feedback-form-opener');
+	const { FeedbackRouterOpener } = require('layout/ui/feedback-router/opener');
 	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
 	const { Feature } = require('feature');
 
@@ -44,6 +44,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 
 	const requestSettingsData = async () => {
 		preloadAssets();
+		FeedbackRouterOpener.prefetch();
 		const devMenuEnabled = await checkFeatureFlag(FeatureFlagType.DEVELOPER_MENU);
 
 		return {
@@ -119,10 +120,9 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_FEEDBACK'),
 						icon: Icon.CHEVRON_TO_THE_RIGHT,
 						onClick: () => {
-							(new FeedbackForm({
+							void FeedbackRouterOpener.open({
+								formTitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_FEEDBACK'),
 								senderPage: 'settings_v2',
-							})).open({
-								title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_FEEDBACK'),
 							});
 						},
 						prefilter: () => env.modulesData?.mobile?.isGuest !== true,

@@ -35,52 +35,18 @@ class iblock extends CModule
 
 	function InstallDB()
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 
-		if(!$DB->TableExists('b_iblock_type'))
+		$migrationResult = $this->installMigrations();
+		if(!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/iblock/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if($this->errors !== false)
-		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode("", $this->errors));
 			return false;
 		}
 
 		ModuleManager::registerModule("iblock");
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandlerCompatible("main", "OnGroupDelete", "iblock", "CIBlock", "OnGroupDelete");
-		$eventManager->registerEventHandlerCompatible("main", "OnBeforeLangDelete", "iblock", "CIBlock", "OnBeforeLangDelete");
-		$eventManager->registerEventHandlerCompatible("main", "OnLangDelete", "iblock", "CIBlock", "OnLangDelete");
-		$eventManager->registerEventHandlerCompatible("main", "OnUserTypeRightsCheck", "iblock", "CIBlockSection", "UserTypeRightsCheck");
-		$eventManager->registerEventHandlerCompatible("search", "OnReindex", "iblock", "CIBlock", "OnSearchReindex");
-		$eventManager->registerEventHandlerCompatible("search", "OnSearchGetURL", "iblock", "CIBlock", "OnSearchGetURL");
-		$eventManager->registerEventHandlerCompatible("main", "OnEventLogGetAuditTypes", "iblock", "CIBlock", "GetAuditTypes");
-		$eventManager->registerEventHandlerCompatible("main", "OnEventLogGetAuditHandlers", "iblock", "CEventIBlock", "MakeIBlockObject");
-		$eventManager->registerEventHandlerCompatible("main", "OnGetRatingContentOwner", "iblock", "CRatingsComponentsIBlock", "OnGetRatingContentOwner", 200);
-		$eventManager->registerEventHandlerCompatible("main", "OnTaskOperationsChanged", "iblock", "CIBlockRightsStorage", "OnTaskOperationsChanged");
-		$eventManager->registerEventHandlerCompatible("main", "OnGroupDelete", "iblock", "CIBlockRightsStorage", "OnGroupDelete");
-		$eventManager->registerEventHandlerCompatible("main", "OnUserDelete", "iblock", "CIBlockRightsStorage", "OnUserDelete");
-		$eventManager->registerEventHandlerCompatible("perfmon", "OnGetTableSchema", "iblock", "iblock", "OnGetTableSchema");
-		$eventManager->registerEventHandlerCompatible("sender", "OnConnectorList", "iblock", "\\Bitrix\\Iblock\\SenderEventHandler", "onConnectorListIblock");
-
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyDate", "GetUserTypeDescription", 10);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyDateTime", "GetUserTypeDescription", 20);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyXmlID", "GetUserTypeDescription", 30);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyFileMan", "GetUserTypeDescription", 40);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyHTML", "GetUserTypeDescription", 50);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyElementList", "GetUserTypeDescription", 60);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertySequence", "GetUserTypeDescription", 70);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyElementAutoComplete", "GetUserTypeDescription", 80);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertySKU", "GetUserTypeDescription", 90);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertySectionAutoComplete", "GetUserTypeDescription", 100);
-
-		$eventManager->registerEventHandler("main", "onVirtualClassBuildList", "iblock", \Bitrix\Iblock\IblockTable::class, "compileAllEntities");
-		//$eventManager->registerEventHandler("landing", "OnBuildSourceList", "iblock", "\\Bitrix\\Iblock\\LandingSource\\Element", "onBuildSourceListHandler");
-		unset($eventManager);
 
 		$this->InstallTasks();
 
@@ -90,7 +56,6 @@ class iblock extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 		$arSQLErrors = array();
 
@@ -99,9 +64,11 @@ class iblock extends CModule
 		if(!Loader::includeModule("iblock"))
 			return false;
 
-		$arSql = $arErr = array();
-		if(!array_key_exists("savedata", $arParams) || ($arParams["savedata"] != "Y"))
+		$needDropTables = (!array_key_exists("savedata", $arParams) || ($arParams["savedata"] != "Y"));
+
+		if($needDropTables)
 		{
+			$arSql = array();
 			$rsIBlock = CIBlock::GetList(array("ID"=>"ASC"), array(), false);
 			while ($arIBlock = $rsIBlock->Fetch())
 			{
@@ -124,13 +91,16 @@ class iblock extends CModule
 			while($arRes = $db_res->Fetch())
 				CFile::Delete($arRes["ID"]);
 
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/iblock/install/db/".$connection->getType()."/uninstall.sql");
-
 			$this->UnInstallTasks();
 		}
 
-		if(is_array($this->errors))
-			$arSQLErrors = array_merge($arSQLErrors, $this->errors);
+		// Strictly after the walk above: this call drops the live tables of the module, and the
+		// walk reads them to work out the derived tables and the files to delete.
+		// The subscriptions it takes down either way - events.php is read in reverse whether
+		// the data is kept or not, exactly as the manual unregistering used to do.
+		$migrationResult = $this->uninstallMigrations($needDropTables);
+		if(!$migrationResult->isSuccess())
+			$arSQLErrors = array_merge($arSQLErrors, $migrationResult->getErrorMessages());
 
 		if(!empty($arSQLErrors))
 		{
@@ -138,37 +108,6 @@ class iblock extends CModule
 			$APPLICATION->ThrowException(implode("", $arSQLErrors));
 			return false;
 		}
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler("main", "OnGroupDelete", "iblock", "CIBlock", "OnGroupDelete");
-		$eventManager->unRegisterEventHandler("main", "OnBeforeLangDelete", "iblock", "CIBlock", "OnBeforeLangDelete");
-		$eventManager->unRegisterEventHandler("main", "OnLangDelete", "iblock", "CIBlock", "OnLangDelete");
-		$eventManager->unRegisterEventHandler("main", "OnUserTypeRightsCheck", "iblock", "CIBlockSection", "UserTypeRightsCheck");
-		$eventManager->unRegisterEventHandler("search", "OnReindex", "iblock", "CIBlock", "OnSearchReindex");
-		$eventManager->unRegisterEventHandler("search", "OnSearchGetURL", "iblock", "CIBlock", "OnSearchGetURL");
-		$eventManager->unRegisterEventHandler("main", "OnEventLogGetAuditTypes", "iblock", "CIBlock", "GetAuditTypes");
-		$eventManager->unRegisterEventHandler("main", "OnEventLogGetAuditHandlers", "iblock", "CEventIBlock", "MakeIBlockObject");
-		$eventManager->unRegisterEventHandler("main", "OnGetRatingContentOwner", "iblock", "CRatingsComponentsIBlock", "OnGetRatingContentOwner");
-		$eventManager->unRegisterEventHandler("main", "OnTaskOperationsChanged", "iblock", "CIBlockRightsStorage", "OnTaskOperationsChanged");
-		$eventManager->unRegisterEventHandler("main", "OnGroupDelete", "iblock", "CIBlockRightsStorage", "OnGroupDelete");
-		$eventManager->unRegisterEventHandler("main", "OnUserDelete", "iblock", "CIBlockRightsStorage", "OnUserDelete");
-		$eventManager->unRegisterEventHandler("perfmon", "OnGetTableSchema", "iblock", "iblock", "OnGetTableSchema");
-		$eventManager->unRegisterEventHandler("sender", "OnConnectorList", "iblock", "\\Bitrix\\Iblock\\SenderEventHandler", "onConnectorListIblock");
-
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyDate", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyDateTime", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyXmlID", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyFileMan", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyHTML", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyElementList", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertySequence", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertyElementAutoComplete", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertySKU", "GetUserTypeDescription");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockPropertyBuildList", "iblock", "CIBlockPropertySectionAutoComplete", "GetUserTypeDescription");
-
-		$eventManager->unregisterEventHandler("main", "onVirtualClassBuildList", "iblock", \Bitrix\Iblock\IblockTable::class, "compileAllEntities");
-		//$eventManager->unRegisterEventHandler("landing", "OnBuildSourceList", "iblock", "\\Bitrix\\Iblock\\LandingSource\\Element", "onBuildSourceListHandler");
-		unset($eventManager);
 
 		ModuleManager::unRegisterModule("iblock");
 
@@ -190,8 +129,8 @@ class iblock extends CModule
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/iblock/install/admin', $_SERVER['DOCUMENT_ROOT']."/bitrix/admin");
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/iblock", true, true);
-		if(file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/public/rss.php"))
-			@copy($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/public/rss.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/rss.php");
+		if(file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/public/bitrix/rss.php"))
+			@copy($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/public/bitrix/rss.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/rss.php");
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", true, true);
@@ -204,7 +143,7 @@ class iblock extends CModule
 	{
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
 		DeleteDirFilesEx("/bitrix/images/iblock/");//images
-		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/public/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/");
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/public/bitrix/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/");
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");//css
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/panel/iblock/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/panel/iblock/");//css sku
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/install/tools/iblock/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools/iblock/");

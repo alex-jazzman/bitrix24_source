@@ -1,5 +1,7 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -15,6 +17,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\Helper\UI\Discussions\DiscussionsFilterOld;
 use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\LogViewTable;
+use Bitrix\Main\FinderDestTable;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -31,7 +36,7 @@ if ($isTasksV2Form && $expertMode === 'N')
 {
 	CUserOptions::setOption("socialnetwork", "~log_expertmode_popup_show", "Y");
 
-	\Bitrix\Socialnetwork\LogViewTable::set($USER->GetID(), 'tasks', 'N');
+	LogViewTable::set($USER->GetID(), 'tasks', 'N');
 }
 
 if (
@@ -52,8 +57,8 @@ $bizprocAvailable = (
 	)
 );
 
-$arResult["PostFormUrl"] = isset($arParams["POST_FORM_URI"]) ? $arParams["POST_FORM_URI"] : '';
-$arResult["ActionUrl"] = isset($arParams["ACTION_URI"]) ? $arParams["ACTION_URI"] : '';
+$arResult["PostFormUrl"] = $arParams["POST_FORM_URI"] ?? '';
+$arResult["ActionUrl"] = $arParams["ACTION_URI"] ?? '';
 if($arResult["ActionUrl"] === "")
 {
 	$arResult["AjaxURL"] = $APPLICATION->GetCurPageParam("SONET_FILTER_MODE=AJAX", array("SONET_FILTER_MODE"));
@@ -95,13 +100,10 @@ else
 		$ajaxUrlParams["flt_date_to"] = $_REQUEST["flt_date_to"];
 	}
 
-	$arResult["AjaxURL"] = CHTTP::urlAddParams(
-		CHTTP::urlDeleteParams(
-			$arResult["ActionUrl"],
-			array("SONET_FILTER_MODE", "flt_created_by_id", "flt_comments", "flt-date-datesel", "flt_date_days", "flt_date_from", "flt_date_to", "CREATED_BY_CODE", "TO_CODE")
-		),
-		$ajaxUrlParams
-	);
+	$arResult["AjaxURL"] = (string)(new Uri($arResult["ActionUrl"]))
+		->deleteParams(["SONET_FILTER_MODE", "flt_created_by_id", "flt_comments", "flt-date-datesel", "flt_date_days", "flt_date_from", "flt_date_to", "CREATED_BY_CODE", "TO_CODE"])
+		->addParams($ajaxUrlParams)
+	;
 }
 
 $arResult["MODE"] = (isset($_REQUEST["SONET_FILTER_MODE"]) && $_REQUEST["SONET_FILTER_MODE"] == "AJAX" ? "AJAX" : false);
@@ -110,7 +112,7 @@ if ($arResult["MODE"] != "AJAX") // old filter
 {
 	if (intval($arParams["CREATED_BY_ID"] ?? null) > 0)
 	{
-		\Bitrix\Main\FinderDestTable::merge(array(
+		FinderDestTable::merge(array(
 			"CONTEXT" => "FEED_FILTER_CREATED_BY",
 			"CODE" => 'U'.intval($arParams["CREATED_BY_ID"])
 		));
@@ -118,7 +120,7 @@ if ($arResult["MODE"] != "AJAX") // old filter
 
 	if (!empty($arParams["DESTINATION"]))
 	{
-		\Bitrix\Main\FinderDestTable::merge(array(
+		FinderDestTable::merge(array(
 			"CONTEXT" => "FEED_FILTER_TO",
 			"CODE" => $arParams["DESTINATION"]
 		));
@@ -158,7 +160,7 @@ if ($USER->IsAuthorized())
 
 	if (array_key_exists("set_follow_type", $_GET))
 	{
-		CSocNetLogFollow::Set($USER->GetID(), "**", $_GET["set_follow_type"] == "Y" ? "Y" : "N", false);
+		CSocNetLogFollow::Set($USER->GetID(), "**", $_GET["set_follow_type"] == "Y" ? "Y" : "N");
 		if ($_GET["set_follow_type"] != "Y")
 		{
 			$_SESSION["SL_SHOW_FOLLOW_HINT"] = "Y";
@@ -178,9 +180,9 @@ if ($USER->IsAuthorized())
 	{
 		$value = ($_GET['set_expert_mode'] === 'Y' ? 'N' : 'Y');
 
-		\Bitrix\Socialnetwork\LogViewTable::set($USER->GetID(), 'tasks', $value);
-		\Bitrix\Socialnetwork\LogViewTable::set($USER->GetID(), 'crm_activity_add', $value);
-		\Bitrix\Socialnetwork\LogViewTable::set($USER->GetID(), 'crm_activity_add_comment', $value);
+		LogViewTable::set($USER->GetID(), 'tasks', $value);
+		LogViewTable::set($USER->GetID(), 'crm_activity_add', $value);
+		LogViewTable::set($USER->GetID(), 'crm_activity_add_comment', $value);
 
 		if (isset($_GET['set_expert_mode']) && $_GET['set_expert_mode'] === 'Y')
 		{
@@ -201,7 +203,7 @@ if ($USER->IsAuthorized())
 		{
 			$arResult["EXPERT_MODE"] = "N";
 
-			$rs = \Bitrix\Socialnetwork\LogViewTable::getList(array(
+			$rs = LogViewTable::getList(array(
 				'order' => array(),
 				'filter' => array(
 					"USER_ID" => $USER->GetID(),
@@ -329,4 +331,3 @@ else
 }
 
 $this->IncludeComponentTemplate();
-?>

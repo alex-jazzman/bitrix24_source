@@ -8,7 +8,9 @@ jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 		FileType: FileIconType,
 	} = require('assets/icons');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	const MEGABYTE_SIZE = 1024 * 1024;
+	const UPLOAD_FILE_CHUNK_SIZE = 5 * MEGABYTE_SIZE;
 
 	function formatFileSize(fileSize)
 	{
@@ -68,6 +70,7 @@ jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 			case 'jpeg':
 			case 'gif':
 			case 'heic':
+			case 'heif':
 			case 'bmp':
 			case 'webp':
 				type = FileType.image;
@@ -234,16 +237,12 @@ jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 		return FileAudioType.mp3;
 	}
 
+	/**
+	 * @returns {number} chunk size in bytes
+	 */
 	function getUploadFileChunkSize()
 	{
-		const megabyte = 1024 * 1024;
-		const cloudChunkSize = 5 * megabyte;
-		const core = serviceLocator.get('core');
-
-		return core.isCloud() || core.hasActiveCloudStorageBucket()
-			? cloudChunkSize
-			: megabyte
-		;
+		return UPLOAD_FILE_CHUNK_SIZE;
 	}
 
 	module.exports = {

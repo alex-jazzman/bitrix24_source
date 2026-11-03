@@ -1,0 +1,1191 @@
+/* Only two sections are short enough not to scroll ("Товары и документы" and, while it still renders,
+   "Права доступа"). In the slider host the scrollbar is an overlay-less 14px, so switching to one of
+   them takes it away, the content box grows by those 14px and the whole page re-lays out — a visible
+   jolt on every switch. Reserving the gutter keeps the width constant. The standalone host already
+   reserves it, so there this is a no-op. @supports because Safari only learned it in 17. */
+@supports (scrollbar-gutter: stable) {
+	html {
+		scrollbar-gutter: stable;
+	}
+}
+
+/* The page surface belongs to the container, not to the layout inside it. Painted one level down, the
+   container's own 17px lead-in stays OUTSIDE the grey and shows through as a strip of the host's white
+   card — with its rounded corners, so it reads as a stray block above the content. Both hosts do it:
+   the slider's .ui-side-panel-wrap-workarea (white, r10) and the standalone .page__workarea-content
+   (white, r12, plus 15px of its own padding, dropped via BodyClass in template.php). Both clip with
+   overflow:hidden, so the grey inherits their rounded silhouette instead of squaring it off. */
+.crm-type-hub-container {
+	padding-top: 17px;
+	background: var(--ui-color-drawer-bg-default);
+}
+
+.crm-type-hub__errors {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* Error close is a real <button>: ui-alert-close-btn only draws the cross, the native chrome is reset here */
+.crm-type-hub__error-close {
+	appearance: none;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+.crm-type-hub__panel {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+}
+
+.crm-type-hub__panel > .crm-settings-hub-save-panel {
+	grid-column: 2;
+}
+
+.crm-type-hub__delete-action {
+	grid-column: 3;
+	justify-self: end;
+}
+
+.crm-type-hub .crm-settings-hub-shell.--panel-fixed .crm-settings-hub-shell__panel {
+	z-index: 99;
+}
+
+.crm-type-hidden {
+	display: none !important;
+}
+
+/* Relation control */
+.crm-type-hub-relation {
+	margin-bottom: var(--ui-space-stack-lg);
+}
+
+.crm-type-hub-relation__switch {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding-bottom: var(--ui-space-inset-md2);
+	margin-bottom: var(--ui-space-stack-lg);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.crm-type-hub-relation__items {
+	padding-left: var(--ui-space-inset-2xs);
+}
+
+.crm-type-hub-relation__children {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin: var(--ui-space-stack-sm) 0;
+	cursor: pointer;
+}
+
+.crm-type-hub-relation__selector,
+.crm-type-hub-relation__tabs-selector {
+	margin: var(--ui-space-stack-xs) 0;
+}
+
+/* Linked user fields control — unreachable from the designed layout (see
+   linked-user-fields-control.ts), kept only as a fallback/safety net, not deleted */
+.crm-type-hub-linked-user-fields {
+	margin-bottom: var(--ui-space-stack-lg);
+}
+
+.crm-type-hub-linked-user-fields__title {
+	display: block;
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
+.crm-type-hub-linked-user-fields__item {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-xs);
+	cursor: pointer;
+}
+
+.crm-type-hub-linked-user-fields__item-icon {
+	width: 24px;
+	height: 24px;
+	border-radius: var(--ui-border-radius-2xs);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.crm-type-hub-linked-user-fields.--disabled {
+	opacity: .5;
+	pointer-events: none;
+}
+
+/* Tool icons of the linked user fields, copied from the .default stylesheet (the hub loads its own) */
+.crm-type-field-icon-type2 {
+	background-image: url("data:image/svg+xml,%3Csvg width='31' height='31' viewBox='0 0 31 31' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10.334 10.7152H8.56147C6.63538 10.7152 5.07397 12.2766 5.07397 14.2027V22.473C5.07397 24.3991 6.63538 25.9605 8.56147 25.9605H22.4393C24.3654 25.9605 25.9268 24.3991 25.9268 22.473V14.2027C25.9268 12.2766 24.3654 10.7152 22.4393 10.7152H20.6673V12.5235H22.4393C23.3667 12.5235 24.1185 13.2753 24.1185 14.2027V22.473C24.1185 23.4004 23.3667 24.1522 22.4393 24.1522H8.56147C7.6341 24.1522 6.88231 23.4004 6.88231 22.473V14.2027C6.88231 13.2753 7.6341 12.5235 8.56147 12.5235H10.334V10.7152Z' fill='%23828B95'/%3E%3Cpath d='M10.6411 8.06748C10.288 8.42058 10.288 8.99306 10.6411 9.34616C10.9942 9.69926 11.5667 9.69926 11.9198 9.34616L14.5961 6.66981V16.9379C14.5961 17.4373 15.0009 17.8421 15.5003 17.8421C15.9996 17.8421 16.4044 17.4373 16.4044 16.9379L16.4044 6.66829L19.0823 9.34616C19.4354 9.69926 20.0079 9.69926 20.361 9.34616C20.7141 8.99306 20.7141 8.42058 20.361 8.06748L16.1404 3.84686C15.7873 3.49376 15.2148 3.49376 14.8617 3.84686L10.6411 8.06748Z' fill='%23828B95'/%3E%3C/svg%3E");
+}
+
+.crm-type-field-icon-type3 {
+	background-image: url("data:image/svg+xml,%3Csvg width='34' height='34' viewBox='0 0 34 34' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17.4153 14.0571C17.4153 13.5877 17.7959 13.2071 18.2653 13.2071H23.5972C24.0667 13.2071 24.4472 13.5877 24.4472 14.0571C24.4472 14.5266 24.0667 14.9071 23.5972 14.9071H18.2653C17.7959 14.9071 17.4153 14.5266 17.4153 14.0571Z' fill='%23828B95'/%3E%3Cpath d='M18.2653 16.9217C17.7959 16.9217 17.4153 17.3023 17.4153 17.7717C17.4153 18.2412 17.7959 18.6217 18.2653 18.6217H21.802C22.2714 18.6217 22.652 18.2412 22.652 17.7717C22.652 17.3023 22.2714 16.9217 21.802 16.9217H18.2653Z' fill='%23828B95'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9201 12.5953C12.1739 12.5112 12.4765 12.4462 12.7795 12.4462C13.7141 12.4462 14.4529 12.8476 14.9319 13.4749C15.3909 14.076 15.5754 14.8327 15.5584 15.5391C15.5415 16.2463 15.3213 16.9863 14.8668 17.5693C14.3969 18.1721 13.6829 18.5913 12.7794 18.5913C11.229 18.5913 10.3439 17.4202 10.0925 16.275C9.848 15.161 10.1185 13.7481 11.1932 12.9569C11.4057 12.8005 11.6691 12.6785 11.9201 12.5953ZM12.455 14.209C12.3194 14.2539 12.23 14.3046 12.201 14.3259C11.8216 14.6052 11.6063 15.2422 11.753 15.9105C11.8928 16.5477 12.276 16.8913 12.7794 16.8913C13.1089 16.8913 13.3462 16.7548 13.5261 16.5241C13.7212 16.2738 13.8492 15.9025 13.8589 15.4984C13.8686 15.0936 13.7581 14.7389 13.5807 14.5066C13.4233 14.3004 13.1842 14.1462 12.7795 14.1462C12.7057 14.1462 12.5879 14.1649 12.455 14.209Z' fill='%23828B95'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.5722 12.0193C5.5722 9.98502 7.22129 8.33594 9.25554 8.33594H24.7448C26.779 8.33594 28.4281 9.98502 28.4281 12.0193V21.9824C28.4281 24.0166 26.779 25.6657 24.7448 25.6657H9.25554C7.22129 25.6657 5.5722 24.0166 5.5722 21.9824V12.0193ZM9.25554 10.0359C8.16017 10.0359 7.2722 10.9239 7.2722 12.0193V21.9824C7.2722 22.2496 7.32505 22.5044 7.42085 22.7371C7.44805 22.5042 7.51724 22.2658 7.63609 22.0273C8.68331 19.9257 10.9929 19.4396 12.7832 19.4396C13.9148 19.4396 15.1963 19.6284 16.2675 20.2593C17.3822 20.9157 18.2029 22.0149 18.4035 23.6568C18.4165 23.7632 18.4184 23.8664 18.4102 23.9657H24.7448C25.8402 23.9657 26.7281 23.0777 26.7281 21.9824V12.0193C26.7281 10.9239 25.8402 10.0359 24.7448 10.0359H9.25554ZM9.15765 22.7855C9.75127 21.5942 11.1534 21.1396 12.7832 21.1396C13.7608 21.1396 14.6992 21.3086 15.4049 21.7241C16.0169 22.0846 16.5015 22.655 16.6788 23.6181H10.0903C9.73368 23.6181 9.41474 23.4598 9.24198 23.2658C9.09254 23.098 9.07514 22.9511 9.15765 22.7855Z' fill='%23828B95'/%3E%3C/svg%3E");
+}
+
+/* Custom section control */
+.crm-type-hub-custom-section {
+	margin-bottom: var(--ui-space-stack-lg);
+}
+
+.crm-type-hub-custom-section__switch {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+.crm-type-custom-section-container {
+	background-color: var(--ui-color-bg-content-secondary);
+	margin: var(--ui-space-stack-xs2) 0;
+	padding: 15px;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.crm-type-custom-sections-settings-container {
+	background-color: var(--ui-color-bg-content-secondary);
+	margin: var(--ui-space-stack-xs2) 0;
+	padding: 15px;
+}
+
+.crm-type-relation-subtitle {
+	margin-bottom: var(--ui-space-stack-xs2);
+	color: var(--ui-color-base-90, #333);
+}
+
+.crm-type-custom-sections-item {
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.crm-type-custom-section-add-item-container {
+	margin: var(--ui-space-stack-xs2) 0;
+}
+
+.crm-type-custom-sections-line {
+	border: none;
+	border-top: 1px solid var(--ui-color-divider-default);
+	margin: var(--ui-space-stack-sm) 0;
+}
+
+.crm-type-custom-sections-buttons-container {
+	display: flex;
+	gap: var(--ui-space-inline-xs2);
+}
+
+.crm-type-permissions-reset-alert {
+	margin-top: var(--ui-space-stack-sm);
+}
+
+/* "Main" section layout (Figma "Основное") */
+.crm-type-hub.--designed-section {
+	padding-bottom: var(--ui-space-inset-xl);
+}
+
+/* The designed cards are wider than the default 560px control column. Scoped to the designed-section
+   class rather than to one section id, so it follows DESIGNED_SECTION_IDS instead of drifting from it. */
+.crm-type-hub.--designed-section .crm-settings-hub-section {
+	max-width: 700px;
+}
+
+/* The passport belongs to the same column, and in the mockup it is exactly as wide as the cards
+   under it. It sits in a slot of the shell, not inside a section, so the rule above never reached
+   it and the header spanned the whole host while the cards stopped at 700. */
+.crm-type-hub.--designed-section .crm-settings-hub-shell__passport {
+	max-width: 700px;
+}
+
+/* The page title above the hub is not in the mockup — the wizard starts with the passport. Hidden
+   rather than not rendered: the toolbar is drawn by crm.toolbar from the shared component base, and
+   the scripts it carries (router bindings) must keep running. Scoped to a body class the template
+   adds only for the recomposed tree, so switching the option off brings the title back. */
+.page.crm-type-hub-no-toolbar .page__toolbar {
+	display: none;
+}
+
+/* The same title, hidden again for the OTHER host. The rule above was written for standalone and
+   never fired in the slider, where it matters most: there is no .page element there at all, and the
+   toolbar is hoisted out of the content into .ui-side-panel-header, which no selector rooted in the
+   page can reach. So "Настройки смарт-процесса …" and its "Помощь" button went on showing in the
+   prod path for two sessions after D-27 recorded them as removed.
+   Hidden, not removed, for the reason above. Anchored on the <html> marker, like the min-width fix
+   below, because the header is our ancestor. Measured: the content column starts 74px higher and the
+   menu does not move — the toolbar spans only the workarea, so the two columns end up 17px against
+   21px apart at the top, which is our own container padding (D-19) against the sidebar's. */
+.crm-type-hub-host .ui-side-panel-toolbar {
+	display: none;
+}
+
+/* The shell focuses the section on every switch so screen readers land inside it. The section carries
+   tabindex="-1" and the kit's focus ring, so after any keyboard interaction that programmatic focus
+   also PAINTS the ring — a blue rounded outline around the whole section, of which only the top arc
+   fits the viewport. The focus itself stays (it is the a11y affordance); only its ring is dropped,
+   and only inside this hub, so the kit's own consumers keep theirs. */
+.crm-type-hub .crm-settings-hub-section:focus-visible {
+	box-shadow: none;
+}
+
+.crm-type-hub-custom-section.--compact {
+	margin-bottom: 0;
+}
+
+/* height/overflow alone hide the host visually but leave its descendants (the TagSelector input
+   and buttons) in the tab order; visibility: hidden takes them out of it too. The dropdown itself
+   is a Popup (main.popup) appended to document.body, outside this subtree, so it is unaffected.
+   WCAG 2.4.3 / 2.4.7. */
+.crm-type-hub-custom-section__host {
+	height: 0;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	visibility: hidden;
+	background: none;
+}
+
+/* Days-before-close field of the dates feature: the bordered box is ours, the input is naked inside it. */
+/* The field draws itself now. It used to be a hand-built box — this div carried the border, the
+   background and the radius, and the input inside was Naked — because the unit had to sit next to
+   the number and BInput has no suffix slot. That framing is what made the component's own label
+   impossible: the label belongs to BInput, which lived INSIDE the frame, so a 60-character caption
+   collapsed into a 67px column. The unit moved into the label instead ("Срок выполнения, дней"),
+   which is the standard pattern and costs nothing — the number was never ambiguous. */
+/* The spinner is noise in a settings field and used to eat the 67px box outright. Dropped.
+   The value is left-aligned like any other field now: it used to be pushed right so it would sit
+   against the "дней" suffix, and that suffix is gone into the label. */
+.crm-type-hub-cards__days input[type="number"] {
+	appearance: textfield;
+}
+
+.crm-type-hub-cards__days input[type="number"]::-webkit-outer-spin-button,
+.crm-type-hub-cards__days input[type="number"]::-webkit-inner-spin-button {
+	margin: 0;
+	appearance: none;
+}
+
+
+/* "Permissions" section layout (Figma "Права доступа") */
+.crm-type-hub-permissions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.crm-type-hub-section-title {
+	display: block;
+	margin-bottom: 6px;
+	color: var(--ui-color-base-1);
+}
+
+.crm-type-hub-section-intro {
+	display: block;
+	max-width: 660px;
+	margin-bottom: var(--ui-space-stack-lg);
+	color: var(--ui-color-base-3);
+	line-height: 1.55;
+}
+
+/* "Products and documents" section layout (Figma "Товары и документы"): the feature-card trio in a
+   two-column grid, plus the grey block of secondary rows gated on their own capability. */
+.crm-type-hub-products {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/* Avatar of the passport is exported artwork, not a glyph of ui.icon-set: nothing in the set draws
+   it. Committed at 2x, cropped to the alpha bounds of the source frames — the CDN URL Figma serves
+   expires in about a week.
+   The tinted plate and the glyph under it are dropped: the artwork brings its own shape.
+
+   TWO layers, not one composite. The pair replaced the shield-with-gear sheet (PM), and keeping the
+   files apart is what lets either be re-exported or re-placed without redrawing the other; the badge
+   is the same bottom-right corner the previous composite drew, only now it is addressable.
+   Percentages are of the 78px tile and are what the assets were exported to match: 0.78 and 0.46 of
+   156px. Layer order is painting order — the badge is listed first because it sits ON TOP.
+
+   The main layer is `-main`, not the old `sp-passport.png`, and the rename is deliberate: the old
+   name held the shield composite, and browsers went on serving it from cache at the same URL — a
+   hard reload did not dislodge it, so the stand kept drawing the shield over the new badge. Anyone
+   pulling this branch would have hit the same ghost. A new name has no cache to inherit. */
+.crm-type-hub-passport .crm-settings-hub-passport-hero__avatar {
+	background:
+		url('images/sp-passport-badge.png') right bottom / 46% no-repeat,
+		url('images/sp-passport-main.png') left top / 78% no-repeat;
+	border-radius: 0;
+}
+
+.crm-type-hub-passport .crm-settings-hub-passport-hero__avatar-icon {
+	display: none;
+}
+
+/* The placement button reads "Расположен в: <workplace>" on both screens, and a workplace name can be
+   long. The AIR button cuts its own caption with an ellipsis (.ui-btn-text-inner) and is capped at
+   max-width: 100% — but of this wrapper, which as a flex item of the kit's column is as wide as its
+   nowrap content. Capping the wrapper at the column hands the button a real width to cut against; a
+   caption that fits is not affected. */
+.crm-type-hub-passport__placement-anchor {
+	max-width: 100%;
+}
+
+/* Cards of a section stand 20px apart, like everything else in the shell column (the mockup keeps
+   one rhythm for the header and the cards). The class had no rule at all, so the cards of the new
+   tree were touching. */
+.crm-type-hub-cards-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}
+
+/* The settings block of the wizard mockup: a tinted panel inside the section card holding one
+   full-width row per setting. The rows themselves are the same CrmHubFeatureCard in its --row form
+   (see feature-card.css) — this is only the panel around them. */
+.crm-type-hub-feature-rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg);
+	background: var(--ui-color-accent-soft-blue-3);
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+/* In a row the field is not squeezed into the tile's right column: it takes the width of the row,
+   as in the mockup. Nothing else is left to say here — the padding this rule used to add belonged to
+   the hand-built frame and would now double the input's own, and the sibling rule that sized the
+   inner .ui-system-input to 4ch addressed a descendant that no longer exists: the class sits on the
+   input itself. */
+.crm-type-hub-feature-rows .crm-type-hub-cards__days {
+	width: 100%;
+}
+
+/* Every collapsible card of this hub (Связи, Права) is built like "Связи с CRM": icon, heading, chevron. The kit draws
+   all of that from `title` + `icon` + `collapsible` — including a rule under the heading, which this
+   hub does not want (PM, D-22): the card already reads as one block without it. Only the rule is
+   dropped, the 12px under the heading stay, so the rhythm of all five sections is unchanged. What
+   follows is simply the first child of __content and picks up its 16px gap; the intro below pulls
+   itself 4px closer to the heading on its own. */
+.crm-type-hub .crm-settings-hub-card.--collapsible.--open .crm-settings-hub-card__header {
+	border-bottom: 0;
+}
+
+/* Карточки четырёх страниц cards-section («Карточка процесса», «Движение процесса», «Товары и
+   документы», «Автоматизация») не сворачиваются (правка PM 29.09): collapsible у них снят, шеврона и
+   клика по шапке нет. Без --open кит отдаёт шапке свои 20px снизу вместо 12 — возвращаем 12, чтобы
+   принятый ритм (шапка → вводная 8px, шапка → серый блок 12px) не сдвинулся. Связи и права
+   по-прежнему сворачиваются и живут по правилу выше. */
+.crm-type-hub-cards__card .crm-settings-hub-card__header {
+	padding-bottom: var(--ui-space-stack-sm);
+}
+
+/* Вводная темнее описаний строк: base-2 (#525C69) вместо base-3 (правка PM 25.09). */
+.crm-type-hub-card-intro {
+	display: block;
+	margin: 0;
+	color: var(--ui-color-base-2);
+	line-height: 1.5;
+}
+
+/* No margin-bottom here: both parents (.crm-type-hub-features/-products) are flex columns already
+   spacing their children with gap: var(--ui-space-stack-md), so a margin here on top of that gap
+   was doubling the rhythm under the grey block. */
+/* Вводная прижата к заголовку плотнее (правка PM 25.09): от шапки 8px вместо 12 — она продолжает
+   заголовок, а не открывает содержимое. Отрицательный отступ самой вводной, а не padding шапки
+   кита: так правило касается только карточек с вводной, без селектора по потомку. */
+.crm-type-hub-cards-intro {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+	margin: calc(-1 * var(--ui-space-stack-2xs)) 0 0;
+}
+
+.crm-type-hub-cards-intro .crm-type-hub-card-intro {
+	margin: 0;
+}
+
+/* "Relations" section layout, "Связи с CRM" card: sub-options of a relation row/of the "Client" row,
+   grouped under an eyebrow heading (process card vs. related entity card). */
+.crm-type-hub-relations {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/* The heading names the card its chips appear in ("В лиде"), so it reads as a sentence and not as a
+   section label: 13/16 in the body colour, the mockup's own Text 5. */
+.crm-type-hub-relation-option__group {
+	display: block;
+	padding: 0;
+	color: var(--ui-color-base-1);
+	font-size: 13px;
+	line-height: 16px;
+}
+
+.crm-type-hub-relation-option__item {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-xs2) 0;
+	color: var(--ui-color-base-1);
+}
+
+.crm-type-hub-relation-option__item label {
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* "Другие смарт-процессы" row: unlike the CRM rows above, this row has no switch (checked=null), so
+   its #details box — used here for the linked-process chips instead of a grouped-options panel — must
+   not carry the 43px indent option-row.css reserves for the switch column. Scoped by the switch-less
+   structural class, not the row's testid: a testid is a test hook, and renaming it would silently
+   bring the indent back. :not(.--interactive) alone is wider than "checked=null": the kit sets that
+   class as hasToggle && !disabled (crm/install/js/crm/settings-hub/src/component/option-row/option-row.ts),
+   so it also excludes a row with a DISABLED switch — :not(.--disabled) rules that case back in. No row
+   here passes `disabled` today (this is the only checked=null row in the section), so the two selectors
+   currently reach the same row; :not(.--disabled) is defensive against the day one does. No kit change
+   needed either way (crm.settings-hub's CrmHubOptionRow is shared platform-wide). */
+.crm-type-hub-relations .crm-settings-hub-option-row:not(.--interactive):not(.--disabled) .crm-settings-hub-option-row__details {
+	margin: var(--ui-space-stack-xs2) 0 0;
+	padding: 0;
+	border: none;
+}
+
+/* Anchor for the "Другие смарт-процессы" picker dialog (task-9a-brief.md / task-9b-brief.md): a
+   plain element wrapping <UiButton>, because the button's own $el can be a v-if placeholder comment
+   once ui.vue3.components.button finishes mounting (see popup-anchor.ts) and the entity-selector
+   Dialog binds its popup straight to whatever targetNode it is given. inline-flex keeps the
+   wrapper's rect equal to the button's own — a bare inline span would pick up extra line-height
+   around it. */
+.crm-type-hub-relation-sp-picker {
+	display: inline-flex;
+}
+
+/* Sub-options of a relation row: chips that carry their own state, under a heading naming the card
+   they appear in. */
+.crm-type-hub-relation-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs, 8px);
+}
+
+.crm-type-hub-relation-group .crm-type-hub-relation-option__group {
+	/* The group caption keeps a line of its own above the chips. */
+	flex-basis: 100%;
+	padding: 0;
+}
+
+.crm-type-hub-relation-option__chip {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+	font: inherit;
+}
+
+/* The slider lays its menu and its content out as one flex row, and both wrappers around our content
+   (.ui-side-panel-content, .ui-page-slider-workarea) are flex items with the default `min-width:
+   auto` — they refuse to shrink below the MIN-CONTENT width of whatever is inside them. That
+   min-content differs from section to section (a longer unbreakable phrase in one, a wider row in
+   another), and whatever is left over is what the shrink-to-fit menu gets. Measured on the stand at a
+   narrow slider: the menu went 203 → 211 → 200 → 215 → 200px as the tabs were switched, and the whole
+   content column slid right along with it — the jitter this rule exists to remove.
+
+   Zeroing the floor makes the menu a constant 240px, which is both the width it already has when the
+   slider is wide enough and the width the mockup draws. Nothing about our own column changes: it is
+   sized by the slider, not by its contents.
+
+   Scoped to the marker the app puts on <html> while it is mounted (app.ts), because these two
+   elements are our ANCESTORS — no selector from the hub's own root can reach them — and other
+   sliders on the portal must keep their own sizing. */
+.crm-type-hub-host .ui-side-panel-content,
+.crm-type-hub-host .ui-page-slider-workarea {
+	min-width: 0;
+}
+
+/* The action bar declares `position: sticky; bottom: 0` (hub-shell.css) and it never stuck: measured
+   on the stand at scrollY 0 the bar sat at y=962 with a 747px viewport, i.e. simply at the end of the
+   document. The cause is an ancestor, not the rule — `.ui-side-panel-wrap-workarea` carries
+   `overflow-y: hidden`, and an overflow box is a scroll container, so it becomes the sticky element's
+   scrollport. That box does not scroll (scrollHeight == clientHeight == 1045); the document does. A
+   sticky element whose scrollport never scrolls can never move, so it renders as if static.
+
+   Proven by experiment before writing this rule: with `overflow: visible` on that wrapper and the
+   document scrolled to the top, the bar landed at y=688 against a 747px viewport — 688 + 59 = 747,
+   pinned exactly to the bottom edge.
+
+   Scoped to the <html> marker for the same reason as the rule above: the wrapper is our ancestor, so
+   nothing from the hub's own root reaches it, and every other slider on the portal keeps its clipping. */
+.crm-type-hub-host .ui-side-panel-wrap-workarea {
+	overflow: visible;
+}
+
+/* Строка-конструктор: внутренность ВКЛЮЧЁННОЙ связи (D-61, прототип 2026-09-17). Схема сверху снята,
+   поэтому здесь нет ни дерева, ни оси, ни блоков-направлений — их работа переехала в эти три слоя:
+   предложение, выбор сценария, чипсы. */
+/* Контейнер для @container ниже. Раздел хаба живёт и в 700 px, и в 391 — решает ширина СТРОКИ,
+   а не вьюпорта, поэтому узкий режим ловится container-query, а не media. */
+.crm-type-hub-relation-row {
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+/* Предложение и польза — один блок ВНИЗУ строки, под миниатюрой (правка 25.09). Порядок в строке:
+   чипсы → мокап → предложение с «Это позволит…».
+
+   Сплошного синего у блока нет: над ним стоит цветная картинка, и синий текст под ней спорил бы
+   с ней и с выбранным местом внутри карточки. Фраза
+   держится чернилами, а синим подсвечены ровно те половины, которые меняет сценарий. */
+.crm-type-hub-relation-row__statement {
+	display: flex;
+	flex-direction: column;
+	/* Вдвое плотнее ритма строки (12 → 6px, правка 25.09): польза — продолжение предложения, а не
+	   отдельный слой. */
+	gap: var(--ui-space-stack-2xs2);
+	color: var(--ui-color-base-1);
+}
+
+/* Предложение — обычный текст, а НЕ кнопка: раскрывать больше нечего (D-69). Вместе с кнопкой
+   ушли шеврон, aria-expanded и своя обводка фокуса — фраза перестала быть табстопом, и ряд Tab
+   в разделе стал короче на одну остановку с каждой включённой строки.
+
+   Кегль поднят с 13 до 16 px: в вариаторе этот текст ведёт строку (система «ведёт предложение»,
+   17 px по его лестнице). Ближайшая ступень набора Битрикса — xl = 16; ступени 17 в нём нет, и
+   произвольный размер канон запрещает. */
+.crm-type-hub-relation-row__sentence {
+	margin: 0;
+	font-size: var(--ui-font-size-xl);
+	line-height: 22px;
+}
+
+/* Польза стоит ПОД миниатюрой и держится вторичными чернилами — base-2 (#525C69, 7.3:1 на белом),
+   а НЕ base-3 (#828B95): тот даёт 3.46:1 и не проходит 4.5:1. Замерено в круге 4. */
+.crm-type-hub-relation-row__consequence {
+	margin: 0;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+	line-height: 20px;
+}
+
+.crm-type-hub-relation-row__text {
+	min-width: 0;
+}
+
+/* Выделены ровно те половины предложения, которые меняет сценарий: «У одной СДЕЛКИ может быть
+   НЕСКОЛЬКО элементов…». Своей подложки у них больше нет — плашка в плашке на общем голубом фоне
+   читалась бы как заплатка, — и остаётся одно начертание. Смысл тот же: видно, на что смотреть при
+   нажатии переключателя. Рукой-указателем половина НЕ притворяется: сценарий меняют кнопками, и
+   вторая кликабельная точка на то же действие была бы обманом. */
+.crm-type-hub-relation-row__slot {
+	color: var(--ui-color-accent-main-primary);
+	font-weight: 600;
+}
+
+/* Переключатель сценария стоит ПОСЛЕДНИМ в блоке-заявлении: сначала человек читает, какая связь
+   получилась, и уже потом видит, чем её заменить. Сценариев у пары не больше трёх, ширину они берут
+   по тексту и переносятся на вторую строку, когда её не хватает: в 391 px три подписи в строку не
+   встают. Переключателя может не быть совсем — у контакта, компании и заказа сценарий один (D-58). */
+.crm-type-hub-relation-row__switcher {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+/* Вид рисует AIR-чипса (ui.system.chip), поэтому у кнопки своего вида нет — она осталась только
+   ради семантики: чипса сама по себе `div` с tabindex, без роли и без состояния, а здесь нужен
+   именно переключатель, который читалка объявит нажатым или ненажатым. Табстоп у чипсы погашен
+   снаружи (`tabindex="-1"`), иначе на каждый сценарий приходилось бы по две остановки Tab. */
+.crm-type-hub-relation-row__scenario {
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	cursor: pointer;
+}
+
+/* Оформление чипс — штатное: невыбранная `outline`, выбранная `filled`. Ни пунктира, ни своих
+   рамок с заливками здесь больше нет — их задаёт сама чипса своим design, а размер и шрифт берутся
+   у `m` набора без переопределений.
+
+   Своего осталось одно, и только у невыбранной: текст чёрный вместо приглушённого, чтобы ряд
+   читался раньше объяснения под ним. Выбранной ничего не задаём — у `filled` текст свой, светлый,
+   и чёрный бы его перекрыл. Начертание у выбранной насыщеннее: состояние не должно держаться на
+   одной заливке. */
+.crm-type-hub-relation-row__scenario[aria-pressed="false"] .ui-chip {
+	--text-color: var(--ui-color-base-1);
+}
+
+.crm-type-hub-relation-row__scenario[aria-pressed="true"] .ui-chip {
+	font-weight: 600;
+}
+
+.crm-type-hub-relation-row__scenario:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-md);
+}
+
+/* ── Миниатюра ПОРТАЛА: «что появится» показано, а не перечислено (D-63, круг 5) ────────────────
+   Приём взят из настроек портала: скелетон интерфейса, в котором человек узнаёт своё рабочее
+   место и видит МЕСТО, куда встанет опция. Поля с дропдаунами, стоявшие здесь до вечера 17.09,
+   отвечали на «что за галочка», но не на «где это появится» — а созвон спрашивал именно второе.
+
+   Круг 5 поднял кадр с карточки до ПОРТАЛА: обои, шапка с переключателем карточек, полоска меню
+   и белая рабочая область, и уже внутри неё — карточка. Переключатель карточек уехал в шапку
+   мокапа: там, в настоящем Битриксе, и живёт переход между разделами, и строка перестала тратить
+   на него свой ряд.
+
+   Кликабельны ровно четыре места на две карточки плюс два таба, и ничего больше: всё остальное —
+   чужой контент портала, он нужен только для узнавания.
+
+   Контекст токенов на корне — `--ui-context-edge-dark`: чернила там белые по альфе, и вся обвязка
+   (глифы, плашки, точки) красится одним `base-1`, не подбирая цвет под обои. Рабочая область
+   возвращает себе светлый контекст своим классом. */
+.crm-type-hub-relation-preview {
+	padding: var(--ui-space-inset-sm2);
+	border-radius: var(--ui-border-radius-lg);
+	/* Обои: один и тот же градиент положен ТРИЖДЫ. Все g-glass-*-bg-* полупрозрачны (альфа ~0.78),
+	   и один слой над плотной подложкой уводил тёплый конец в бурый; тройное наложение складывает
+	   альфу почти до единицы, а оттенок в каждой точке остаётся свой.
+	   Средний стоп — `copilot`: в наборе Битрикса фиолетовая группа называется так (в макете
+	   вариатора она же зовётся bitrix-gpt, и имя оттуда сюда не переносится). */
+	background:
+		linear-gradient(
+			115deg,
+			var(--ui-color-g-glass-blue-bg-1) 0%,
+			var(--ui-color-g-glass-copilot-bg-1) 52%,
+			var(--ui-color-g-glass-pink-bg-1) 100%
+		),
+		linear-gradient(
+			115deg,
+			var(--ui-color-g-glass-blue-bg-1) 0%,
+			var(--ui-color-g-glass-copilot-bg-1) 52%,
+			var(--ui-color-g-glass-pink-bg-1) 100%
+		),
+		linear-gradient(
+			115deg,
+			var(--ui-color-g-glass-blue-bg-1) 0%,
+			var(--ui-color-g-glass-copilot-bg-1) 52%,
+			var(--ui-color-g-glass-pink-bg-1) 100%
+		),
+		var(--ui-color-accent-main-primary);
+}
+
+/* Шапка портала — плавающая плашка на материале оболочки, а не полоса во всю ширину кадра: кадр
+   здесь «сцена» (рабочая область плавает, обои видны ободком), и шапка во всю ширину сделала бы
+   из него обычное окно. */
+.crm-type-hub-relation-preview__bar {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+	margin-bottom: var(--ui-space-stack-xs2);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	-webkit-backdrop-filter: var(--ui-bg-blur-accent);
+	        backdrop-filter: var(--ui-bg-blur-accent);
+}
+
+.crm-type-hub-relation-preview__stage {
+	display: flex;
+	align-items: stretch;
+	gap: var(--ui-space-inline-xs2);
+	min-width: 0;
+}
+
+/* Полоска меню слева — тем же материалом, что и шапка. Ширины хватает ровно на глиф: это
+   иллюстрация портала, а не его копия. */
+.crm-type-hub-relation-preview__menu {
+	display: flex;
+	flex: none;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs2);
+	width: 32px;
+	padding: var(--ui-space-inset-xs) 0;
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	-webkit-backdrop-filter: var(--ui-bg-blur-accent);
+	        backdrop-filter: var(--ui-bg-blur-accent);
+}
+
+/* Глифы и плашки обвязки — белые по альфе: в edge-dark `base-1` и есть белый, и подбирать цвет
+   под конкретные обои не приходится. Сами обои с 4.5:1 не спрашиваются — это иллюстрация, а не
+   текст; спрашиваются только имена карточек на табах и подписи мест, и они лежат на белом. */
+.crm-type-hub-relation-preview__glyph {
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+
+	flex: none;
+	opacity: 0.85;
+}
+
+.crm-type-hub-relation-preview__glyph.--dim {
+	opacity: 0.55;
+}
+
+.crm-type-hub-relation-preview__plate {
+	flex: none;
+	height: 7px;
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-base-1);
+	opacity: 0.28;
+}
+
+/* Имя портала на своём месте показано плашкой, а не текстом: настоящего имени у компонента нет,
+   а подставить выдуманное значило бы соврать про чужой интерфейс.
+
+   Сжимается она ПЕРВОЙ: это декорация, а имя карточки на табе — содержание. Вес сжатия у неё
+   двухсотый против единицы у ряда табов, поэтому она отдаёт свою ширину раньше, чем таб начнёт
+   резать имя. */
+.crm-type-hub-relation-preview__plate.--bar-name {
+	flex: 0 200 96px;
+	min-width: 0;
+	margin-left: auto;
+}
+
+
+.crm-type-hub-relation-preview__dot {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-base-1);
+	opacity: 0.3;
+}
+
+.crm-type-hub-relation-preview__dot.--lit {
+	opacity: 0.55;
+}
+
+/* Рабочая область возвращает себе СВЕТЛЫЙ контекст: внутри неё лежит карточка, и её скелетон,
+   рамки и разделители обязаны прийти обычными значениями, а не белыми по альфе из edge-dark. */
+.crm-type-hub-relation-preview__work {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	min-width: 0;
+	padding: var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.crm-type-hub-relation-preview__work-bar {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.crm-type-hub-relation-preview__work-rest {
+	display: flex;
+	gap: var(--ui-space-inline-2xs);
+	margin-left: auto;
+}
+
+/* Стопка карточек. Карточек всегда две — процесса и сущности CRM, — но содержимое показывает
+   только верхняя: две рядом в 391 px были бы двумя нечитаемыми. Нижняя торчит кромкой слева, и
+   этим видно, что карточек две; выводит её вперёд таб в шапке.
+
+   Кромка нарисована ПУСТОЙ плашкой, а не второй копией карточки: видно у неё только 14 px левого
+   края, то есть рамку и фон, — а вторая копия стоила бы дубля всего скелетона ради невидимого.
+
+   ⚠ Цена правки «убрать вертикальную подпись»: без корешка с именем кромка читается слабо —
+   белая карточка на светло-сером фоне. Замечено глазами при приёмке круга 5. Если этого мало,
+   вторую карточку надо обозначать чем-то, что переживает снятие подписи. */
+.crm-type-hub-relation-preview__stack {
+	position: relative;
+	padding-left: 14px;
+}
+
+.crm-type-hub-relation-preview__ghost {
+	position: absolute;
+	top: 0;
+	right: 14px;
+	bottom: 0;
+	left: 0;
+	border: 1px solid var(--ui-color-divider-accent);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	opacity: 0.55;
+}
+
+/* Табы в ШАПКЕ портала — единственный текст, лежащий на обоях, потому что шапка на них и лежит.
+   ⚠ ЧЁРНОЙ ПЛАСТИНЫ ПОД НЕВЫБРАННЫМ ТАБОМ ЗДЕСЬ НЕТ, И ЭТО ПРОВЕРЕНО ЗАМЕРОМ, А НЕ НА ГЛАЗ.
+   Белым по светлой оболочке писать нельзя — 3.13–4.17:1 при норме 4.5:1 (замер круга 3), поэтому
+   раньше невыбранный таб стоял на тёмной пластине меню. Настя попросила убрать чёрное; просто
+   снять пластину было нельзя — вместе с ней уехала бы читаемость.
+
+   Решение: ОБА таба на одном и том же белом стекле `g-content-glass-1` (#FFFFFFE6), различаются
+   БУКВОЙ — выбранный `g-content-blue-2` (#035FCF), невыбранный `g-content-grey-3` (#3C3C3C).
+   Стекло 90-процентное, поэтому худшая мыслимая подложка — стекло по чёрному, #E6E6E6: на ней
+   выбранный даёт 4.73:1, невыбранный 8.80:1. Темнее чёрного обои не бывают, значит пара держится
+   на любых обоях, и при смене палитры пересчитывать нечего.
+
+   Оба токена объявлены одинаково в `--ui-context-edge-dark` и `--ui-context-edge-light`, так что
+   на светлых обоях пара не переворачивается. */
+/* Ряд табов забирает свободную ширину шапки, а НЕ жмётся по содержимому. Иначе `max-width: 54%`
+   у таба считается от самого ряда, ужатого под текст, и получается самоссылка: имя процесса
+   режется многоточием даже там, где места в шапке вдоволь. Поймано на стенде — «Демо для хаба2»
+   (13 знаков) превращалось в «Демо для ...». */
+.crm-type-hub-relation-preview__tabs {
+	display: flex;
+	flex: 1 1 auto;
+	gap: var(--ui-space-inline-2xs2);
+	min-width: 0;
+}
+
+.crm-type-hub-relation-preview__tab {
+	display: inline-flex;
+	align-items: center;
+	/* Таб не отдаёт больше половины ширины даже под длинное имя процесса: второй таб обязан
+	   остаться видимым — он единственный вход на вторую карточку. */
+	max-width: 54%;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-xs);
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-g-content-glass-1);
+	color: var(--ui-color-g-content-grey-3);
+	font: inherit;
+	font-size: var(--ui-font-size-3xs);
+	font-weight: 600;
+	line-height: 16px;
+	cursor: pointer;
+}
+
+/* Невыбранный таб — прозрачное стекло с белым текстом (правка PM 25.09): так он читается как
+   соседний таб шапки портала, а не как вторая белая кнопка. Токены — filled-white дизайна AIR:
+   полупрозрачная белая заливка и такая же обводка поверх обоев. */
+.crm-type-hub-relation-preview__tab:not(.--on) {
+	border-color: var(--ui-color-design-filled-white-stroke);
+	background: var(--ui-color-design-filled-white-bg);
+	color: var(--ui-color-design-filled-white-content);
+}
+
+.crm-type-hub-relation-preview__tab.--on {
+	color: var(--ui-color-g-content-blue-2);
+}
+
+/* Обводка фокуса на табе — синими чернилами, а не акцентом контекста: акцент в edge-dark это
+   #1587FA, и на белом стекле он теряется. `g-content-blue-2` виден и на стекле, и на обоях.
+   Кадр НЕ режет её по overflow: у корня миниатюры своего overflow нет, а таб отстоит от края на
+   поля шапки. */
+.crm-type-hub-relation-preview__tab:focus-visible {
+	outline: 2px solid var(--ui-color-g-content-blue-2);
+	outline-offset: 2px;
+}
+
+.crm-type-hub-relation-preview__spot:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* Длинное имя режется многоточием, а не переносится: шапка обязана остаться одной строкой, иначе
+   миниатюра прыгает по высоте при переключении. Читалке имя достаётся целиком — оно собрано в
+   aria-label самого таба (cardTitle), а не читается с этого куска. */
+.crm-type-hub-relation-preview__tab-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Карточка. Левый верхний угол прямой — на нём стоит таб.
+
+   Курсор сброшен на обычный: строка кита кликабельна целиком и раздаёт руку всему, что внутри, —
+   и скелетон, который кликать нельзя, обещал бы клик. Замер стенда показал pointer на всех
+   двенадцати плашках. Кнопки-места свою руку задают сами. */
+.crm-type-hub-relation-preview__card {
+	position: relative;
+	padding: var(--ui-space-inset-xs2);
+	cursor: default;
+	border: 1px solid var(--ui-color-divider-accent);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	/* Тень попапа — карточка лежит поверх накрытой, как слайдер поверх раздела в продукте.
+	   Числа взяты из токенов набора (x 0, y 8, blur 17, spread 0); собрать box-shadow прямо из
+	   них нельзя — `--ui-box-shadow-popup-default-blur` объявлен как `blur(17px)`, то есть
+	   функция фильтра, а не длина. Цвет берётся токеном, с запасным значением: var() с мёртвым
+	   токеном роняет объявление целиком и молча. */
+	box-shadow: 0 8px 17px 0 var(--ui-box-shadow-popup-default-color, #00000036);
+}
+
+/* Шапка карточки — скелетон целиком: имя уже стоит на табе сверху, и второй раз оно ничего не
+   добавляет (решено при сборке прототипа). */
+.crm-type-hub-relation-preview__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding-bottom: var(--ui-space-stack-xs);
+}
+
+.crm-type-hub-relation-preview__head-rest {
+	display: flex;
+	gap: var(--ui-space-inline-2xs);
+	margin-left: auto;
+}
+
+/* Ряд табов самой карточки: здесь живёт место-вкладка. Линии сверху и снизу — то, чем этот ряд
+   отделён в настоящей карточке, и без них он читается как продолжение тела. */
+.crm-type-hub-relation-preview__tabs-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-2xs2) 0;
+	border-top: 1px solid var(--ui-color-divider-default);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+/* Тело в две колонки — так поля и стоят в карточке CRM. */
+.crm-type-hub-relation-preview__body {
+	display: grid;
+	gap: var(--ui-space-stack-2xs2) var(--ui-space-inline-sm);
+	grid-template-columns: 1fr 1fr;
+	padding-top: var(--ui-space-stack-xs);
+}
+
+/* Чужой контент рисует ui.system.skeleton (BLine), а не самодельные плашки из прототипа: у набора
+   уже есть «место, занятое чем-то». Размеры приходят его же переменными — они наследуются внутрь
+   компонента, поэтому BLine зовётся без пропсов, а ширины остаются здесь, рядом с раскладкой.
+
+   Бегущая подсветка погашена: скелетон тут не ждёт загрузки, а показывает карточку, и мерцающий
+   раздел настроек читался бы как «ещё грузится». Прототип, по которому миниатюру принимали, рисовал
+   плашки статичными. */
+.crm-type-hub-relation-preview__sk {
+	--height: 8px;
+	--radius: var(--ui-border-radius-2xs);
+
+	flex: none;
+}
+
+.crm-type-hub-relation-preview__sk .ui-skeleton::after {
+	content: none;
+}
+
+.crm-type-hub-relation-preview__sk.--glyph {
+	--height: 18px;
+	--radius: var(--ui-border-radius-xs);
+
+	width: 18px;
+}
+
+.crm-type-hub-relation-preview__sk.--tab {
+	--height: 12px;
+}
+
+.crm-type-hub-relation-preview__sk.--w1 { width: 34px; }
+.crm-type-hub-relation-preview__sk.--w2 { width: 46px; }
+.crm-type-hub-relation-preview__sk.--w3 { width: 28px; }
+.crm-type-hub-relation-preview__sk.--w4 { width: 60px; }
+.crm-type-hub-relation-preview__sk.--w5 { width: 80%; }
+.crm-type-hub-relation-preview__sk.--w6 { width: 60%; }
+
+/* Место — то, что миниатюра предлагает включить. Выключенное подписано, но обведено пунктиром:
+   видно и куда кликать, и что там появится. Недоступного места (контакт не бывает родителем
+   процесса, заказ — ребёнком, D-58) нет вовсе: на его месте обычный скелетон, потому что предлагать
+   невозможное нельзя — решено D-63.
+
+   Ряд табов карточки НЕ прячет вылезающее через overflow, а даёт месту сжаться: обводка фокуса
+   стоит с отступом наружу, и overflow срезал бы её. */
+.crm-type-hub-relation-preview__spot {
+	overflow: hidden;
+	min-width: 0;
+	max-width: 100%;
+	padding: var(--ui-space-inset-3xs) 7px;
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-xs);
+	background: none;
+	font: inherit;
+	font-size: 11px;
+	line-height: 14px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	justify-self: start;
+}
+
+.crm-type-hub-relation-preview__spot.--off {
+	border-color: var(--ui-color-base-5);
+	border-style: dashed;
+	color: var(--ui-color-base-3);
+}
+
+.crm-type-hub-relation-preview__spot.--off:hover {
+	border-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-accent-main-primary);
+}
+
+/* Включённое место держится не одним цветом — рамка, заливка и насыщенность вместе, по той же
+   причине, что и выбранный сценарий выше. */
+.crm-type-hub-relation-preview__spot.--on {
+	border-color: var(--ui-color-accent-main-primary);
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-main-primary);
+	font-weight: 600;
+}
+
+/* Место-вкладка стоит в ряду табов карточки и потому скруглено только сверху — как таб. */
+.crm-type-hub-relation-preview__spot.--tab {
+	border-radius: var(--ui-border-radius-xs) var(--ui-border-radius-xs) 0 0;
+}
+
+/* ── Узкая строка ───────────────────────────────────────────────────────────────────────────
+   Блок стоит В КОНЦЕ ФАЙЛА НАМЕРЕННО. Специфичность у правил внутри @container такая же, как у
+   базовых, а container-query приоритета не добавляет — выигрывает то, что ниже по файлу. Когда
+   этот блок стоял в середине, базовое `grid-template-columns: 1fr 1fr` его перебивало, и тело
+   карточки на 391 px оставалось в две колонки по 62 px. Пробы этого не видели: контейнерное
+   правило применялось (плашка имени портала и правда пропадала), а колонки — нет. */
+/* В УЗКОЙ строке правая группа шапки уходит совсем. Одного сжатия мало: замерено на стенде при
+   разделе 391 px — шапка там 235 px, и часы с аватаром съедали столько, что резалось даже имя
+   «Лид» в три буквы. Это декорация портала, а имя карточки — содержание, и спор между ними
+   решается в пользу содержания. Без правой группы ряд табов вырос со 135 до 189 px, «Лид» встал
+   целиком, режется только длинное имя процесса — как и в вариаторе.
+
+   Порог 460 px — ширина СТРОКИ, не окна. */
+@container (max-width: 460px) {
+	.crm-type-hub-relation-preview__plate.--bar-name,
+	.crm-type-hub-relation-preview__glyph.--dim,
+	.crm-type-hub-relation-preview__bar .crm-type-hub-relation-preview__dot {
+		display: none;
+	}
+
+	/* ⚠ ЗДЕСЬ МИНИАТЮРА ЧУТЬ НЕ ПЕРЕСТАЛА ОТВЕЧАТЬ НА СВОЙ ВОПРОС. Замерено на стенде при
+	   разделе 391 px: в ряду табов карточки скелетоны стоят `flex: none`, и всё сжатие
+	   доставалось единственному гибкому элементу — подписи места. «Вкладка с элементами „Лид“»
+	   ужималась до 22 px, то есть до буквы «В». Проба горизонтального скролла этого НЕ ловит:
+	   скролла и правда нет, просто содержание раздавлено.
+
+	   Лечение — дать ряду переноситься: подпись уезжает на свою строку и получает всю ширину
+	   карточки. Плата 74 px высоты (601 → 675) — подпись места того стоит: ради неё миниатюру
+	   и рисовали (D-63).
+
+	   Тело в одну колонку по той же причине: две по ~170 px режут «Поле с лидом». */
+	.crm-type-hub-relation-preview__tabs-row {
+		flex-wrap: wrap;
+	}
+
+	.crm-type-hub-relation-preview__body {
+		grid-template-columns: 1fr;
+	}
+}
+
+.crm-type-hub-relation-preview__plate.--menu-glyph {
+	width: 16px;
+	height: 16px;
+	border-radius: var(--ui-border-radius-2xs);
+	opacity: 0.6;
+}
+
+/* Заголовок меню слайдера → первый пункт: 24px (правка PM 28.09). У wrappermenu шапка держит
+   min-height: 50px, и заголовок в две строки («Настройки / смарт‑процесса» — узкая колонка) её
+   перерастал: пункт вставал в 3px под текстом. Отступ задан шапке, а min-height снят, чтобы 24px
+   были и при заголовке в одну строку. margin пункта (3px) схлопывается с этим отступом и его не
+   прибавляет. Селектор по ID, который хаб передаёт в wrappermenu: сайдбар рисуется вне
+   .crm-type-hub, а общий компонент другим слайдерам не трогаем. */
+#crm-type-hub-sidebar .ui-sidepanel-head {
+	min-height: 0;
+	margin-bottom: var(--ui-space-stack-xl);
+}
+
+/* Creation preview: the hub opened for a type that does not exist yet. The hero is the only live
+   block; every setting below it stays VISIBLE, defaults included — that is the whole reason the full
+   hub is opened on creation — and merely stops being operable.
+
+   The dimming hangs on the shell's own sections container, the single node whose reach is exactly
+   "every section and nothing else": the hero sits in a sibling slot (__passport) and the errors banner
+   is outside the shell altogether, so both keep full opacity and live pointers without one exception
+   rule. Selecting a class of the kit is deliberate, and the precedent is the panel z-index rule above:
+   the node is rendered by crm.settings-hub, no markup of ours reaches it, and the kit itself is not
+   touched by this.
+
+   opacity and pointer-events, and nothing else. filter, transform and contain would each make this
+   element the containing block of the position:fixed save panel (hub-shell.css) and re-pin that bar
+   from the slider to this column — the same trap the kit's own comment warns about. opacity does open
+   a stacking context, but the popups and hints of the kit are rendered into <body>, outside this
+   subtree, so none of them is caught by it.
+
+   The keyboard and the screen reader are stopped elsewhere: app.ts puts `inert` on the content of
+   every section slot. pointer-events here is not a duplicate of it but the guard for a browser that
+   does not know `inert` yet — the save payload is collected from the store whole, so one click landing
+   on a toggle there would travel to the server with everything else. */
+.crm-type-hub--creation-preview .crm-settings-hub-shell__sections {
+	opacity: .3;
+	pointer-events: none;
+}
+
+/* The hero's own Save and Cancel go into the kit's `action` slot, and the kit draws that slot inside its
+   tinted "location" row — together with a location icon and a caption this template never passes
+   (passport-hero.ts renders {{ loc(locationTitle) }} regardless). Left alone, the two buttons of the
+   creation screen would arrive sitting on a blue strip beside an icon and an empty caption. The kit is
+   not ours to change, so the strip is undone from here, and only in the mode that hands the slot over
+   at all — on the editing screen the row is not rendered in the first place. */
+.crm-type-hub--creation-preview .crm-type-hub-passport .crm-settings-hub-passport-hero__location {
+	padding: 0;
+	background: none;
+}
+
+.crm-type-hub--creation-preview .crm-type-hub-passport .crm-settings-hub-passport-hero__location-icon,
+.crm-type-hub--creation-preview .crm-type-hub-passport .crm-settings-hub-passport-hero__location-title {
+	display: none;
+}
+
+/* "Сохранить" and "Отменить" of the creation screen in one row from the left edge of the hero card,
+   with the gap the creation screen of a workplace puts between the same two buttons. */
+.crm-type-hub-passport__creation-actions {
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+}
+
+/* On the creation screen the description field stands 16px below the title row, as on the creation
+   screen of a workplace (D-19). The kit puts 8px between the rows of the content column; the rest is
+   added on the field itself, not on the description block. The block is a flex item, so the margin
+   does not collapse, and a BInput without a label starts its frame right at the top of its root. The
+   marker class keeps the editing screen out of it. */
+.crm-type-hub--creation-preview .crm-type-hub-passport .crm-settings-hub-passport-hero__description > .ui-system-input {
+	margin-top: calc(var(--ui-space-stack-md) - var(--ui-space-stack-xs)); /* 16 − 8 (gap of the kit's __content) */
+}
+
+/* The waiting button of the hero shows the loader glyph but never turns it. The glyph is not an image
+   here: ui.buttons paints .ui-btn-wait.--air::before with a flat background-color clipped by
+   `mask-image: var(--ui-btn-wait-loader)`, and the rotation the loader was drawn with
+   (`animation: waitLoader 1s infinite steps(12)`) lives INSIDE that svg. An svg used as a CSS mask is
+   rendered as a still picture in Chrome — its own animations do not run — so the spinner stands still.
+   Measured on the stand: three zoomed frames 0.5s apart were pixel-identical, and computed
+   `animation-name` of ::before was `none` while `mask-image` was the svg.
+
+   So the turning is done from our side, on the pseudo-element itself: the ::before box covers the
+   whole button (top/left 0, 100%x100%) and the mask sits at `center center`, so rotating the box about
+   its own centre rotates the glyph in place. Only the masked pixels are painted, so neither the
+   caption nor the background move with it — the text of a waiting AIR button is already at opacity 0,
+   and the fill comes from the button element, not from this layer. 1s, steps(12), infinite repeats the
+   original loader exactly: twelve rays, one position per step.
+
+   The scope is deliberately narrow. The stylesheet itself ships only with this template, and the
+   selector adds the marker class of the creation preview (creation-preview.ts puts it on the hub root)
+   and the hero's own class, so the rule reaches one button on one screen. Every other .ui-btn-wait on
+   the portal, the editing screen of a saved type included, keeps the stock rendering, and nothing of
+   ui/ or of the kit is edited to get this.
+
+   The `transform: none` that ui.buttons sets on the same pseudo-element is not an obstacle: a running
+   animation wins over a normal declaration in the cascade regardless of specificity, and this selector
+   is the more specific one anyway. */
+.crm-type-hub--creation-preview .crm-type-hub-passport .ui-btn-wait.--air::before {
+	animation: crm-type-hub-wait-spin 1s steps(12) infinite;
+}
+
+@keyframes crm-type-hub-wait-spin {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}

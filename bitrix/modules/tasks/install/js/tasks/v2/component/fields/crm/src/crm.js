@@ -175,6 +175,10 @@ export const Crm = {
 				:icon="Outline.PLUS_L"
 				:isVisible="isAddVisible"
 				:isLocked
+				:ariaLabel="loc('TASKS_V2_CRM_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isDialogShown"
+				data-testid="tasks-crm-add-hover-btn"
 				@click="handleClick"
 			/>
 			<div
@@ -187,6 +191,10 @@ export const Crm = {
 					v-if="isEmpty"
 					:icon="Outline.CRM"
 					:isLocked
+					:ariaLabel="loc('TASKS_V2_CRM_ADD_ARIA_LABEL')"
+					:ariaHaspopup="'dialog'"
+					:ariaExpanded="isDialogShown"
+					data-testid="tasks-crm-add-btn"
 					@click="showDialog"
 				/>
 				<div v-if="isLoading" class="tasks-field-crm-skeleton">
@@ -200,13 +208,16 @@ export const Crm = {
 				<template v-if="isExpanded" v-for="item in collapsedItems" :key="item.id">
 					<CrmItem :item @clear="handleClear"/>
 				</template>
-				<TextSm
+				<button
 					v-if="collapsedItems.length > 0"
-					class="tasks-field-crm-expand print-font-color-base-1"
+					type="button"
+					class="tasks-field-crm-expand"
+					:aria-expanded="isExpanded"
+					data-testid="tasks-crm-expand-btn"
 					@click.capture.stop="isExpanded = !isExpanded"
 				>
-					{{ expandButtonText }}
-				</TextSm>
+					<TextSm class="print-font-color-base-1">{{ expandButtonText }}</TextSm>
+				</button>
 			</div>
 			<div class="tasks-field-crm-anchor" ref="anchor"/>
 		</div>

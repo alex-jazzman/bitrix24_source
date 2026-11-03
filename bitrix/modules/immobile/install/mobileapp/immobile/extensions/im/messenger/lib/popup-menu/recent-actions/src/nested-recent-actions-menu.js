@@ -11,6 +11,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 	const { RecentFilterId, RecentMenuSection } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { readAllChatsByRecentTab } = require('im/messenger/lib/read-all-chats');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const logger = getLoggerWithContext('popup-menu--nested-recent-actions', 'NestedRecentActionsMenu');
@@ -327,7 +328,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 				}
 
 				case NestedActionId.readAll:
-					Notification.showComingSoon();
+					this.#handleReadAll();
 					break;
 
 				case NestedActionId.taskList:
@@ -359,6 +360,27 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 					}
 				}
 			}
+		}
+
+		#handleReadAll()
+		{
+			const recent = this.#getNestedRecent();
+			if (!recent)
+			{
+				logger.warn('handleReadAll: nested recent not found');
+
+				return;
+			}
+
+			const parentChatId = recent.getParentChatId();
+			if (!parentChatId)
+			{
+				logger.warn('handleReadAll: parentChatId is missing for nested recent', recent.id);
+
+				return;
+			}
+
+			void readAllChatsByRecentTab(recent.id, parentChatId);
 		}
 
 		#getProjectDialog()

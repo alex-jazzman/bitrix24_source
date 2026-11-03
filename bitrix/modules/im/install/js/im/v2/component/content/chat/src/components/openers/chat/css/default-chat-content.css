@@ -1,8 +1,44 @@
 .bx-im-content-default-chat__container {
+	position: relative;
 	width: 100%;
 	height: 100%;
 
 	transition: opacity 0.3s ease;
+}
+
+/* Copilot draft empty-state → chat swap: the leaving empty-state fades out over the opaque,
+   instantly-mounted chat. Enabled only via the :css binding in ChatOpener. */
+.im-content-opener-flip-leave-active {
+	transition: opacity 400ms linear, transform 400ms linear;
+}
+
+/* Overlay the leaving empty-state on the in-flow chat; the container scope outweighs its own
+   `position: relative`, so the chat is not pushed below the fold. */
+.bx-im-content-default-chat__container .im-content-opener-flip-leave-active {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+}
+
+.im-content-opener-flip-leave-to {
+	opacity: 0;
+	transform: translateY(150px);
+}
+
+/* Only the chat input container rises on enter, so the chat background stays opaque. */
+.im-content-opener-flip-enter-active .bx-im-content-chat__textarea_container {
+	transition: transform 400ms linear;
+}
+
+.im-content-opener-flip-enter-from .bx-im-content-chat__textarea_container {
+	transform: translateY(24px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.im-content-opener-flip-leave-active,
+	.im-content-opener-flip-enter-active .bx-im-content-chat__textarea_container {
+		transition: none;
+	}
 }
 
 .bx-im-content-default-chat__container.--comments-show-animation .bx-im-content-chat__content {

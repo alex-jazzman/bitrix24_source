@@ -14,6 +14,8 @@ export const Position = {
 
 export type PositionValue = typeof Position[keyof typeof Position];
 
+export const ACTION_MIN_AUTO_HIDE_DELAY = 20000;
+
 export const State = {
 	INIT: 0,
 	OPENING: 1,
@@ -30,6 +32,7 @@ export type ActionOptions = {
 	id?: string;
 	href?: string;
 	title?: string;
+	testId?: string;
 	events?: Record<string, (event: Event, balloon: Balloon, action: Action) => void>;
 };
 
@@ -44,12 +47,16 @@ export type BalloonOptions = {
 	autoHide?: boolean;
 	autoHideDelay?: number;
 	showOnTopWindow?: boolean;
+	announce?: string | false;
+	announcePoliteness?: 'polite' | 'assertive';
+	autofocus?: boolean;
 	closeButton?: boolean;
 	category?: string | null;
 	actions?: ActionOptions[] | null;
 	render?: BalloonRender;
 	width?: number | 'auto';
 	data?: Record<string, unknown>;
+	testId?: string;
 	events?: Record<string, BalloonEventHandler>;
 	useAirDesign?: boolean;
 };

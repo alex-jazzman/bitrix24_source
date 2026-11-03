@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'ui-system/typography/text',
 		'loc',
 		'haptics',
 		'apptheme',

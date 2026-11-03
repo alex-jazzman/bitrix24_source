@@ -32,6 +32,7 @@
 
 			BX.bind(this.getInput(), 'keydown', BX.delegate(this._onKeyDown, this));
 			BX.bind(this.getFindButton(), 'click', BX.delegate(this._onSearchClick, this));
+			BX.bind(this.getButtonsContainer(), 'mousedown', BX.delegate(this._onButtonsMouseDown, this));
 			BX.bind(this.getContainer(), 'click', BX.delegate(this._onSearchContainerClick, this));
 			this.removeAutofocus();
 			this.firstInit = true;
@@ -352,6 +353,11 @@
 		removeSquare: function(square)
 		{
 			!!square && BX.remove(square);
+		},
+
+		_onButtonsMouseDown: function(event)
+		{
+			event.preventDefault();
 		},
 
 		_onSearchContainerClick: function(event)
@@ -884,7 +890,7 @@
 			{
 				square = {
 					block: 'main-ui-search-square',
-					name: this.parent.getParam('MAIN_UI_FILTER__AND') + ' ' + this.parent.getParam('MAIN_UI_FILTER__MORE') + ' ' + moreSquares.moreSquares.length,
+					name: this.parent.getParam('MAIN_UI_FILTER__AND_MORE').replace('#N#', moreSquares.moreSquares.length),
 					item: moreSquares.moreSquares,
 					title: moreSquares.moreSquares
 						.map(

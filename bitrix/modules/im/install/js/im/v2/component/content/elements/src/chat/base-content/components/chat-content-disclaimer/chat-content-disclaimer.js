@@ -19,6 +19,10 @@ export const ChatContentDisclaimer = {
 			type: String,
 			default: '',
 		},
+		forceVisible: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed:
 	{
@@ -30,10 +34,16 @@ export const ChatContentDisclaimer = {
 		},
 		shouldShow(): boolean
 		{
-			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available)
+			const isCopilotReady = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available)
 				&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable)
-				&& FeatureManager.isFeatureAvailable(Feature.copilotActive)
-				&& this.$store.getters['copilot/chats/hasAiGeneratedContent'](this.dialogId);
+				&& FeatureManager.isFeatureAvailable(Feature.copilotActive);
+
+			if (!isCopilotReady)
+			{
+				return false;
+			}
+
+			return this.forceVisible || this.$store.getters['copilot/chats/hasAiGeneratedContent'](this.dialogId);
 		},
 	},
 	created()

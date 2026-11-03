@@ -1,20 +1,27 @@
 .bx-im-copilot-audio-input__container {
-	width: 24px;
-	height: 24px;
-	background-image: url('./images/mic.svg?v3');
-	background-size: cover;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+	/* native button, not IconButton: needs its own round shape so the focus outline follows it */
+	border-radius: var(--ui-border-radius-circle);
 	cursor: pointer;
 	flex-shrink: 0;
 }
 
-.bx-im-copilot-audio-input__container:hover {
-	background-image: url('./images/mic-hover.svg?v3');
-}
-
+/* a running dictation reads as a control switched on: the tinted plate carries the state, the glyph
+   inside it names what the click does. Hover is the icon veil of the design system (`hoverable`) */
 .bx-im-copilot-audio-input__container.--active {
-	background-image: url('./images/stop.svg?v3');
+	--ui-icon-set__icon-color: var(--ui-color-design-tinted-content-icon);
+
+	background-color: var(--ui-color-design-tinted-bg);
+	border-radius: var(--ui-border-radius-circle);
 }
 
-.bx-im-copilot-audio-input__container.--active:hover {
-	background-image: url('./images/stop-hover.svg?v3');
+.bx-im-copilot-audio-input__container.--disabled {
+	opacity: 0.5;
+	pointer-events: none;
 }

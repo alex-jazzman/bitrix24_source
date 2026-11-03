@@ -1,0 +1,12 @@
+<?php
+$MESS['MAIL_UNDO_SEND_NOTIFICATION_SENDING'] = 'Письмо отправляется. Отправку можно отменить';
+$MESS['MAIL_UNDO_SEND_NOTIFICATION_COUNTDOWN'] = 'Отправка через #SECONDS# с';
+$MESS['MAIL_UNDO_SEND_NOTIFICATION_CANCELLING'] = 'Отменяем отправку';
+$MESS['MAIL_UNDO_SEND_NOTIFICATION_CANCEL'] = 'Отменить';
+$MESS['MAIL_UNDO_SEND_PREFERENCE_MENU'] = 'Отмена отправки: #VALUE#';
+$MESS['MAIL_UNDO_SEND_PREFERENCE_DISABLED'] = 'Отключено';
+$MESS['MAIL_UNDO_SEND_PREFERENCE_SECONDS'] = '#SECONDS# секунд';
+$MESS['MAIL_UNDO_SEND_PREFERENCE_DISABLED_INLINE'] = 'отключено';
+$MESS['MAIL_UNDO_SEND_PREFERENCE_SECONDS_INLINE'] = '#SECONDS# секунд';
+$MESS['MAIL_UNDO_SEND_GUIDE_TEXT'] = 'Настройте время для отмены отправки письма';
+$MESS['MAIL_UNDO_SEND_GUIDE_TITLE'] = 'Отмена отправки писем';

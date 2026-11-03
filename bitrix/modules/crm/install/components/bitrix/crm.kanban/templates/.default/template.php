@@ -109,12 +109,19 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 	$showActivity = isset($arParams['SHOW_ACTIVITY']) && $arParams['SHOW_ACTIVITY'] === 'Y' ? 'true' : 'false';
 }
 
+$canAddColumn = $arResult['CONFIG_BY_VIEW_MODE']['canAddColumn'];
+
 $section = $arParams['EXTRA']['ANALYTICS']['c_section'] ?? null;
 $subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
 
 if ($entityTypeId === CCrmOwnerType::Lead || $entityTypeId === CCrmOwnerType::Deal)
 {
 	echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
+}
+
+if ($arResult['IS_STAGE_DESCRIPTION_SUPPORTED'] ?? false)
+{
+	echo Tour\StageDescription::getInstance()->build();
 }
 
 $clientFieldsTour = Tour\ClientFields\AbstractClientFieldsEntityList::getInstanceByEntityTypeId($entityTypeId);
@@ -202,7 +209,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 					columnType: "BX.CRM.Kanban.Column",
 					dropZoneType: "BX.CRM.Kanban.DropZone",
 					columnsRevert: <?= $arResult['CONFIG_BY_VIEW_MODE']['columnsRevert'] ?>,
-					canAddColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canAddColumn'] ?>,
+					canAddColumn: <?= $canAddColumn ?>,
 					canEditColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canEditColumn'] ?>,
 					canRemoveColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canRemoveColumn'] ?>,
 					canSortColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canSortColumn'] ?>,
@@ -245,10 +252,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 							isLockedEntity: <?= $arResult['IS_LOCKED_ENTITY'] ? 'true' : 'false' ?>,
 							lockedEntitySliderCode: 'limit_v2_crm_automated_solution_marketplace',
 							rights: {
-								canAddColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false' ?>,
-								canEditColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-								canRemoveColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-								canSortColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
+								areStagesEditable: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false' ?>,
 								canImport: <?= !$arResult['IS_LOCKED_ENTITY'] && isset($arResult['ACCESS_IMPORT']) && $arResult['ACCESS_IMPORT'] ? 'true' : 'false'?>,
 								canSortItem: <?= $arResult['IS_LOCKED_ENTITY'] ? 'true' : 'false' ?>,
 								canUseVisit: <?= !$arResult['IS_LOCKED_ENTITY'] && Visit::isAvailable() ? 'true' : 'false' ?>,

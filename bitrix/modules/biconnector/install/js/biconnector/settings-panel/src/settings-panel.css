@@ -3,3 +3,15 @@
 	flex-direction: column;
 	gap: var(--ui-space-stack-lg);
 }
+
+@media (max-width: 768px) {
+	.biconnector-settings-slider .ui-toolbar .ui-toolbar-title-box {
+		flex-basis: auto;
+	}
+
+	.biconnector-settings-slider .ui-toolbar-right-buttons {
+		flex-basis: auto;
+		margin-left: auto;
+		padding-left: 12px;
+	}
+}

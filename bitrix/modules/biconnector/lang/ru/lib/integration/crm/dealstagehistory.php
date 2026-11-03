@@ -21,4 +21,4 @@ $MESS['CRM_BIC_DSH_FIELD_STAGE_SEMANTIC'] = "Тип стадии";
 $MESS['CRM_BIC_DSH_FIELD_STAGE_ID'] = "Идентификатор стадии";
 $MESS['CRM_BIC_DSH_FIELD_STAGE_NAME'] = "Название стадии";
 $MESS['CRM_BIC_DSH_FIELD_STAGE'] = "Стадия";
-$MESS['CRM_BIC_DSH_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные из системных полей о движении сделок: дату, статус сделки, имена ответственных сотрудников и другие.";
+$MESS['CRM_BIC_DSH_TABLE_DESCRIPTION_FULL_MSGVER_1'] = "Данные об истории стадий сделок CRM: события изменения стадий, даты, ответственные, стадии и воронки.";

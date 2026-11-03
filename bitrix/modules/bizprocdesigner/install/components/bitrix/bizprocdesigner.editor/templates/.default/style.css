@@ -1,5 +1,9 @@
 body {
 	margin: 0;
+	/* The page wears the color of the canvas: the area a growing window opens up is painted by the document
+	   alone until the page repaints. The shorthand also drops the wallpaper of the theme, which the canvas
+	   hides here anyway; the literal holds the color should the token stop resolving. */
+	background: var(--ui-color-designer-bp-background, #ecf0f2);
 }
 
 .bizprocdesigner-editor-container-wrapper {

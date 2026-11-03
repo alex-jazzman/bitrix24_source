@@ -1,16 +1,30 @@
 /**
  * @module layout/ui/editable-text-block
  */
+/* global TextEditor */
 jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { TextEditor } = require('layout/ui/text-editor');
-	const { TextEditor: BBCodeTextEditor } = require('text-editor');
+	const { Feature } = require('feature');
+	const { TextEditor: SimpleTextEditor } = require('layout/ui/text-editor');
+	const { TextEditor: LegacyBBCodeTextEditor } = require('text-editor');
+	const { NativeTextEditor } = require('layout/ui/editable-text-block/src/native-text-editor');
+	const {
+		EditorType,
+		createEditorSessionGuard,
+		resolveEditorStrategy,
+	} = require('layout/ui/editable-text-block/src/editor-strategy');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
-	const { pen } = require('assets/common');
+	const { Color } = require('tokens');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { inAppUrl } = require('in-app-url');
 	const { isOffline } = require('device/connection');
 	const { Loc } = require('loc');
+
+	const EDIT_ICON_SIZE = 24;
+	// the registry icon is 24 px tall against the previous 15: lift it by half the difference
+	// so it keeps the optical center it had on the first line of text
+	const EDIT_ICON_TOP_CORRECTION = 4;
 
 	/**
 	 * @class EditableTextBlock
@@ -35,7 +49,9 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 		 * @param {string} [props.editorProps.readOnly]
 		 * @param {object} [props.editorProps.textAreaStyle]
 		 * @param {boolean} [props.editorProps.useBBCodeEditor]
+		 * @param {boolean} [props.editorProps.useNativeTextEditor]
 		 * @param {Object} [props.editorProps.bbCodeEditorParams]
+		 * @param {Object} [props.editorProps.nativeTextEditorParams]
 		 * @param {Function} [props.editorProps.onLinkClick]
 		 * @param {PageManager} [props.editorProps.parentWidget]
 		 */
@@ -44,6 +60,8 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 			super(props);
 
 			this.setTextEditorLayout(null);
+			this.editorSessionGuard = createEditorSessionGuard();
+			this.editorSession = null;
 		}
 
 		render()
@@ -120,25 +138,28 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 						right: 0,
 						top: 0,
 						paddingHorizontal: 11,
-						paddingTop: externalStyles.paddingTop ?? 14,
+						paddingTop: Math.max(0, (externalStyles.paddingTop ?? 14) - EDIT_ICON_TOP_CORRECTION),
 					},
 					testId: editIconTestId,
 					onClick: () => this.openEditor(),
 				},
-				Image({
-					svg: {
-						content: pen(),
-					},
-					style: {
-						height: 15,
-						width: 14,
-					},
+				IconView({
+					testId: `${editIconTestId}_icon`,
+					icon: Icon.EDIT,
+					size: EDIT_ICON_SIZE,
+					color: Color.base3,
 				}),
 			);
 		}
 
 		openEditor()
 		{
+			if (this.editorSession)
+			{
+				this.editorSessionGuard.close(this.editorSession);
+				this.editorSession = null;
+			}
+
 			const { value, editorProps } = this.props;
 			const {
 				title,
@@ -148,12 +169,63 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 				textAreaStyle,
 				useBBCodeEditor,
 				bbCodeEditorParams = {},
+				useNativeTextEditor = false,
+				nativeTextEditorParams = {},
 				parentWidget,
 			} = editorProps;
 
 			if (useBBCodeEditor)
 			{
 				const bbCodeReadOnly = readOnly ?? bbCodeEditorParams.readOnly;
+				const strategy = resolveEditorStrategy({
+					editorProps: {
+						...editorProps,
+						readOnly: bbCodeReadOnly,
+						useNativeTextEditor,
+					},
+					Feature,
+					TextEditor: typeof TextEditor === 'undefined' ? null : TextEditor,
+					isOffline,
+				});
+				const session = this.editorSessionGuard.start(strategy);
+				this.editorSession = session;
+
+				if (strategy.editorType === EditorType.NATIVE)
+				{
+					NativeTextEditor.edit({
+						...nativeTextEditorParams,
+						title,
+						value,
+						readOnly: strategy.readOnly,
+						parentWidget,
+						allowFiles: nativeTextEditorParams.allowFiles ?? bbCodeEditorParams.allowFiles,
+						closeOnSave: nativeTextEditorParams.closeOnSave ?? bbCodeEditorParams.closeOnSave,
+						fileField: nativeTextEditorParams.fileField ?? bbCodeEditorParams.fileField,
+						session,
+						sessionGuard: this.editorSessionGuard,
+						onSave: ({ bbcode, files }) => this.onNativeEditorSave(bbcode, files),
+						onClose: (layout) => {
+							if (this.textEditorLayout === layout)
+							{
+								this.setTextEditorLayout(null);
+							}
+						},
+					})
+						.then((layout) => {
+							if (this.editorSessionGuard.isCurrent(session))
+							{
+								this.setTextEditorLayout(layout);
+							}
+						})
+						.catch((error) => {
+							this.editorSessionGuard.close(session);
+							console.error(error);
+						})
+					;
+
+					return;
+				}
+
 				const editorParams = {
 					...bbCodeEditorParams,
 					title,
@@ -162,13 +234,21 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 						...bbCodeEditorParams.textInput,
 						placeholder,
 					},
-					readOnly: (!bbCodeReadOnly && isOffline() ? true : bbCodeReadOnly),
+					readOnly: strategy.readOnly,
 					onSave: ({ bbcode, files }) => this.onSave(bbcode, files),
 				};
 
-				BBCodeTextEditor.edit(editorParams)
-					.then((layout) => this.setTextEditorLayout(layout))
-					.catch(console.error)
+				LegacyBBCodeTextEditor.edit(editorParams)
+					.then((layout) => {
+						if (this.editorSessionGuard.isCurrent(session))
+						{
+							this.setTextEditorLayout(layout);
+						}
+					})
+					.catch((error) => {
+						this.editorSessionGuard.close(session);
+						console.error(error);
+					})
 				;
 
 				return;
@@ -179,7 +259,7 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 				return;
 			}
 
-			TextEditor.open({
+			SimpleTextEditor.open({
 				title,
 				placeholder,
 				required,
@@ -198,7 +278,13 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 		onSave(value, files = [])
 		{
 			this.setTextEditorLayout(null);
-			this.props.onSave?.(value.trim(), files);
+
+			return this.props.onSave?.(value.trim(), files);
+		}
+
+		onNativeEditorSave(value, files = [])
+		{
+			return this.props.onSave?.(value, files);
 		}
 
 		async onBeforeSave(editor)
@@ -253,13 +339,13 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 			readOnly: PropTypes.bool,
 			textAreaStyle: PropTypes.object,
 			useBBCodeEditor: PropTypes.bool,
+			useNativeTextEditor: PropTypes.bool,
 			bbCodeEditorParams: PropTypes.object,
+			nativeTextEditorParams: PropTypes.object,
 			onLinkClick: PropTypes.func,
 			parentWidget: PropTypes.object,
 		}),
 	};
 
-	module.exports = {
-		EditableTextBlock,
-	};
+	module.exports = { EditableTextBlock };
 });

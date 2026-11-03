@@ -346,15 +346,8 @@
 		{
 			params = params || {};
 			var
-				data = {
-					settingsData: this.getSettingsData() || null
-				},
+				data = {},
 				promise = new BX.Promise();
-
-			if (!this.userFieldParams)
-			{
-				data.fieldName = this.params.field.entity_field_name;
-			}
 
 			var
 				dateFrom = BX.type.isDate(params.from) ? params.from : new Date(),
@@ -372,6 +365,11 @@
 
 			data.from = BX.date.format(this.DATE_FORMAT, dateFrom);
 			data.to = BX.date.format(this.DATE_FORMAT, dateTo);
+
+			data.sourceType = this.params.sourceType || '';
+			data.formId = this.params.formId || 0;
+			data.sec = this.params.sec || '';
+			data.fieldCode = this.params.fieldCode || this.params.field.name;
 
 			this.setLoadedDataLimits(dateFrom, dateTo);
 

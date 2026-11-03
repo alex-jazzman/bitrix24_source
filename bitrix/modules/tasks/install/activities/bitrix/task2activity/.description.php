@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActionArea;
+use Bitrix\Bizproc\Activity\Enum\ActionGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -51,6 +53,21 @@ $arActivityDescription = (
 	])
 	->setExcluded(!Loader::includeModule('tasks'))
 ;
+
+if (
+	enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionGroup')
+	&& enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionArea')
+)
+{
+	$arActivityDescription->setNodeActionSettings([
+		'HANDLES_DOCUMENT' => false,
+		'ACTION_GROUP' => ActionGroup::CREATE->value,
+		'ACTION_AREA' => ActionArea::TASKS->value,
+		'ACTION_OBJECTS' => [
+			['id' => 'task', 'title' => Loc::getMessage('TASKS_ACTIVITY_OBJECT_TASK')],
+		],
+	]);
+}
 
 if (
 	isset($documentType)

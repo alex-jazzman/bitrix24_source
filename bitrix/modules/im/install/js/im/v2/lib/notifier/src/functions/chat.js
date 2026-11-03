@@ -1,4 +1,5 @@
 import { Loc } from 'main.core';
+import { LiveAnnouncer } from 'ui.a11y';
 
 import { ChatType, ErrorCode, type ChatTypeItem } from 'im.v2.const';
 import { type RunActionError } from 'im.v2.lib.rest';
@@ -36,6 +37,20 @@ export const ChatNotifier = {
 
 		const notificationText = NotificationTextByErrorCode[errorCode] ?? NotificationTextByErrorCode.default;
 		showNotification(notificationText);
+	},
+
+	handleJoinError(isChannel: boolean = false): void
+	{
+		const notificationText = isChannel
+			? Loc.getMessage('IM_NOTIFIER_CHANNEL_SUBSCRIBE_ERROR')
+			: Loc.getMessage('IM_NOTIFIER_CHAT_JOIN_ERROR')
+		;
+		showNotification(notificationText);
+	},
+
+	onChannelSubscribeComplete(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_CHANNEL_SUBSCRIBE_COMPLETE'));
 	},
 
 	handleUserKickError(error: RestError): void
@@ -87,9 +102,15 @@ export const ChatNotifier = {
 		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_DELETE_ERROR'));
 	},
 
+	// The editor is already closed by the time the server answers, so the failure has to reach both
+	// channels: the balloon and the screen reader, which the balloon never reaches - it is no live
+	// region. Nothing here touches the focus: the user has moved on, and the announcement follows them.
 	onRenameError(): void
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_RENAME_ERROR'));
+		const text = Loc.getMessage('IM_NOTIFIER_CHAT_RENAME_ERROR');
+
+		showNotification(text);
+		LiveAnnouncer.announce(text, 'assertive');
 	},
 
 	onMessagesPinLimitError(pinLimit: number): void
@@ -118,6 +139,35 @@ export const ChatNotifier = {
 		};
 
 		const notificationText = NotificationTextByChatType[chatType] ?? NotificationTextByChatType.default;
+		showNotification(notificationText);
+	},
+
+	handleSelectionAddError(usersError: RunActionError | null, nodesError: RunActionError | null): void
+	{
+		if (usersError && nodesError)
+		{
+			showNotification(Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_USERS_AND_NODES_ERROR'));
+
+			return;
+		}
+
+		if (usersError)
+		{
+			showNotification(Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_USERS_ERROR'));
+
+			return;
+		}
+
+		const NotificationTextByErrorCode = {
+			[ErrorCode.chat.accessDenied]: Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_ACCESS_ERROR'),
+			[ErrorCode.structureLink.chatTypeNotSupported]: Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_CHAT_TYPE_ERROR'),
+			[ErrorCode.structureLink.tooManyNodes]: Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_LIMIT_ERROR'),
+			[ErrorCode.structureLink.nodeNotAvailable]: Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_UNAVAILABLE_ERROR'),
+			[ErrorCode.structureLink.structureNotAvailable]: Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_STRUCTURE_UNAVAILABLE_ERROR'),
+			default: Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_ERROR'),
+		};
+
+		const notificationText = NotificationTextByErrorCode[nodesError.code] ?? NotificationTextByErrorCode.default;
 		showNotification(notificationText);
 	},
 

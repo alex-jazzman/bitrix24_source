@@ -75,6 +75,7 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setIcon(Outline::QR_CODE->name)
+	->set('NODE_DESCRIPTION', Loc::getMessage('CRMBPGQR_NODE_DESCRIPTION') ?? '')
 	->toArray()
 ;
 

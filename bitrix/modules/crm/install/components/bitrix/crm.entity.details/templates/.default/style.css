@@ -271,3 +271,1076 @@ input.pagetitle-item {
 .crm-entity-section-menu-wrap .crm-entity-section-tabs {
 	flex: 5;
 }
+
+/*region Reflow: single column at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The card's outer layout uses float + percentages (41.6% / 58.4%), summing to exactly 100%,
+	so the columns never wrap, they only shrink. Below the breakpoint we move them into the
+	normal flow at full width: the fields block on top, the stream below it (order comes from the markup).
+	The breakpoint is measured from the card area's width, so the rule also works inside
+	the side slider on a wide monitor.
+*/
+@media (max-width: 768px) {
+	.crm-entity-card-container,
+	.crm-entity-card-container-shadow,
+	.crm-entity-stream-container,
+	.crm-entity-stream-container-shadow {
+		float: none;
+		width: 100%;
+	}
+
+	.crm-entity-stream-container,
+	.crm-entity-stream-container-shadow {
+		padding-left: 0;
+	}
+}
+/*endregion*/
+
+/*region Keyboard-visible focus (WCAG 2.1 AA, 2.4.7 Focus Visible)*/
+/*
+	:focus-visible is not declared anywhere in the card's layers, and some controls explicitly
+	suppress the indicator — e.g. .crm-entity-stream-content-new-comment-textarea:focus { outline: none }
+	in the crm.timeline template. We bring the indicator back following the AIR pattern (see ui.air-buttons.css):
+	a 2px outline in --ui-color-accent-main-link (#0154C8, contrast against white ~7.5:1
+	versus the >= 3:1 requirement) with a 2px offset.
+
+	The selector deliberately spans three classes: the rules that suppress outline have
+	specificity (0,2,0), and a weaker selector would not override them.
+	Components that light up their own focus step aside — see the rule that follows.
+*/
+.crm-entity-wrap .crm-entity-card-container :focus-visible,
+.crm-entity-wrap .crm-entity-stream-container :focus-visible,
+.crm-entity-wrap .crm-entity-section-status-container :focus-visible {
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link, #0154C8);
+	outline-style: solid;
+}
+
+/*
+	Text-entry controls never take the ring (#255182).
+
+	:focus-visible cannot say how a text field was focused: the UA sets it on every focus, a plain
+	mouse click included, because it assumes the visitor is about to type. That is why the ring showed
+	up on click in the message editor and in the todo title, and .ui-text-editor-scroller
+	{ overflow: auto } clipped it down to its top edge once the text outgrew the field. The AIR
+	pattern's html[data-input-modality="pointer"] branch is no cure either: the attribute tracks the
+	last device used, so the first arrow key or Enter pressed while typing flips it to "keyboard" and
+	the ring comes back over a field opened with the mouse. Measured on the stand: a click leaves it
+	"pointer", typing letters leaves it "pointer", one arrow key turns it "keyboard".
+
+	input is excluded by what it is NOT, so date, time, number and the rest of the typing-capable
+	types are covered; checkboxes, radios and button-like inputs keep the ring.
+
+	Keyboard focus stays visible all the same: ui.text-editor colours its container border on
+	:focus-within (ui/install/js/ui/text-editor/src/css/layout.css), ui.forms colours .ui-ctl-element
+	on :focus (ui/install/js/ui/forms/ui.forms.css), the legacy editor fields colour theirs
+	(ui/install/js/ui/entity-editor/entity-editor.css), and the fields that ship no focus style at all
+	are given one further down.
+*/
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	:is(textarea, [contenteditable], input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="image"], [type="color"], [type="range"])):focus-visible {
+	outline: none;
+}
+
+/*
+	The menubar tabs are excluded for a different reason: they draw their focus as an overlay,
+	.main-buttons-item-link:focus-visible::before { inset: 6px -10px; border-radius: 8px;
+	border: var(--ui-color-focus-outline) solid 2px }, declared on the same :focus-visible, so the
+	blanket outline never merged with it but framed the tab a second time — a rounded ring inside a
+	square one, the square one clipped by the section. Ordinary AIR buttons need no entry:
+	:where(.ui-btn, …):focus-visible declares the very same outline (ui.buttons), so there the two
+	rings land exactly on top of each other.
+*/
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container) .main-buttons-item-link:focus-visible {
+	outline: none;
+}
+
+/*
+	The controls above lose the ring, so they are given a mark of their own — one rule for all of
+	them, deliberately not a list of classes. Enumerating the fields that ship no focus style does not
+	hold: the timeline's legacy textareas and the section title are declared with border: none, while
+	ui.forms groups :focus with the base state under every one of its modifiers (disabled, inactive,
+	success, warning, link, orange,
+	transp, white), the editor's error state holds its border with !important — and new components
+	keep arriving, .crm-timeline__card-note_text and the input of EditableText among them. Any list
+	would go stale; this one covers whatever the exclusion above touches.
+
+	An inset shadow, not a border colour: it is a property of its own, so it neither fights the
+	!important of an error state nor repeats what a modifier already paints, and it shifts no layout.
+
+	ui.text-editor is left out. It answers focus on its container (:focus-within) — the field the
+	ticket was about — and a shadow on the editable would ride inside .ui-text-editor-scroller
+	{ overflow: auto }, where the bottom edge scrolls out of sight as the text grows. That clipping is
+	exactly what made the ring look broken in #255182.
+*/
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	:is(textarea, [contenteditable], input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="image"], [type="color"], [type="range"])):not(.ui-text-editor *):focus {
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/*
+	And it steps back where the field already answers focus on its own, so the two do not add up into
+	one border of double thickness: ui.forms recolours .ui-ctl-element on :focus and the legacy editor
+	fields recolour theirs, both in the plain state only. A single-line string field is exactly that
+	case — EntityEditorText builds it as input.ui-ctl-element inside div.ui-ctl.ui-ctl-textbox. Client
+	inputs use the CRM editor's border colour, and multiline fields receive one below. Modern custom
+	string and number fields use stable outer wrappers because their server-provided inner HTML varies.
+
+	The exception is written as a list, unlike the rule above, and that is the point: a component
+	missing from this list keeps the shadow — visible focus, merely thicker than needed — whereas a
+	component missing from a list of who gets an indicator would have no focus at all. Four rounds of
+	review found five such gaps; this way the next one costs nothing.
+
+	State is what takes the recolour away: under any ui.forms modifier :focus sits in the same group
+	as the base state, and the editor's error wrapper holds its border with !important. Both are back
+	in the shadow's hands here.
+
+	The state is looked for among the ancestors, and .ui-ctl-element is taken on its own rather than
+	under a .ui-ctl parent: the card does not always wrap it in one. The deal title sits directly in
+	.ui-entity-editor-content-block and the amount in .ui-ctl-inline.ui-ctl-w75, neither of which
+	carries the base class — while ui.forms recolours .ui-ctl-element with no ancestor of its own.
+	The CRM error guard stays on the direct additions so existing field-item exceptions do not change.
+*/
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	:is(.ui-ctl-element,
+		.crm-entity-widget-content-input:not(.crm-entity-widget-content-error *),
+		.ui-entity-editor-field-textarea:not(.crm-entity-widget-content-error *),
+		:is(.ui-entity-editor-content-block-field-custom-text,
+			.ui-entity-editor-content-block-field-custom-number)
+			input[type="text"]:not(.crm-entity-widget-content-error *),
+		.field-item textarea:not(.ui-entity-editor-field-textarea), .field-item.string input, .field-item.double input,
+		.field-item.money input, .field-item.url input, .field-item.date input,
+		.field-item.datetime input):not(.ui-ctl-disabled *, .ui-ctl-inactive *, .ui-ctl-success *, .ui-ctl-warning *,
+		.ui-ctl-link *, .ui-ctl-orange *, .ui-ctl-transp *, .ui-ctl-white *,
+		.ui-entity-editor-field-error *):focus {
+	box-shadow: none;
+}
+
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	.ui-entity-editor-field-textarea:not(.ui-entity-editor-field-error *, .crm-entity-widget-content-error *):focus {
+	border-color: #64a6f3;
+}
+
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	:is(.ui-entity-editor-content-block-field-custom-text, .ui-entity-editor-content-block-field-custom-number)
+	input[type="text"]:not(.ui-entity-editor-field-error *, .crm-entity-widget-content-error *):focus {
+	border-color: #64a6f3;
+}
+
+/* Keep :focus-within owned by ui.text-editor; only align its colour in editable CRM card fields. */
+.crm-entity-wrap .crm-entity-card-container
+	.ui-entity-editor-content-block-field-html
+	.ui-text-editor.--editable:not(
+		.ui-entity-editor-field-error,
+		.ui-entity-editor-field-error *,
+		.ui-entity-editor-content-error,
+		.ui-entity-editor-content-error *,
+		.crm-entity-widget-content-error,
+		.crm-entity-widget-content-error *
+	) {
+	--ui-text-editor-border-color-focus: #64a6f3;
+}
+
+/*
+	The rule above cannot reach one control: .crm-entity-widget-content-block-locked-icon
+	suppresses the indicator with outline: none !important
+	(crm/install/js/crm/entity-editor/css/style.css:723), and !important in the author layer
+	wins over any specificity. It is a real <button> (entity-editor/js/recurring-v2.js:164,
+	crm.entity.editor/templates/.default/template_others.html.php:114), so it is reachable
+	by keyboard and must show focus (WCAG 2.4.7). It only renders where a feature is locked
+	by the plan, which is why it is absent from a stand with everything enabled.
+
+	Scoped to this single selector on purpose: adding !important to the shared rule above
+	would also override the deliberate focus rings declared by AIR buttons, ui.system inputs
+	and checkboxes - 81 :focus-visible declarations across crm/ui - and unify them by force.
+*/
+.crm-entity-wrap .crm-entity-card-container .crm-entity-widget-content-block-locked-icon:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8) !important;
+	outline-offset: 2px;
+}
+/*endregion*/
+/*region Focus: the amount and the "Accept payment" button are two separate targets (WCAG 2.1 AA, 2.4.7)*/
+/*
+	The money block carries tabindex=0 (added for 2.1.1 Keyboard) and holds two different things:
+	the amount, which the block itself opens for editing, and a real <button> that starts a payment.
+	The block's focus ring therefore drew a single frame around both, so from the keyboard one
+	highlight stood for two different actions - and the button, which has its own tab stop, looked
+	like it was already highlighted by the previous one. The ring now hugs the amount only; the
+	button keeps the focus ring it gets from AIR.
+
+	Scoped to the money field so that no other field type loses its ring. The wallet is rendered
+	only for an amount to display, so an empty block keeps the shared ring above - hence the :not().
+*/
+.crm-entity-wrap .crm-entity-card-container .crm-entity-widget-content-block-field-money:not(.ui-entity-editor-content-block-click-empty) .ui-entity-editor-content-block:focus-visible {
+	outline: none;
+}
+
+.crm-entity-wrap .crm-entity-card-container .crm-entity-widget-content-block-field-money .ui-entity-editor-content-block:focus-visible .ui-entity-editor-content-block-wallet {
+	border-radius: var(--ui-border-radius-2xs, 2px);
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+/*endregion*/
+
+/*region Focus: the section title is renamed in place, not framed (WCAG 2.1 AA, 2.4.7)*/
+/*
+	The section title ("ABOUT COMPANY") is a span swapped for an input.ui-entity-editor-header-title-text
+	on the pencil, and control.js focuses that input programmatically. The field is declared
+	border: none; padding: 0; background: transparent, so before the a11y wave it showed no focus
+	indicator at all - the shared outline never reached it either, since .ui-entity-editor-header-title
+	is overflow: hidden with a box that matches the input exactly. The inset shadow does land inside
+	that box, so the title suddenly gained a blue frame on an ordinary mouse click, which is the
+	complaint this ticket opened with. It is taken back off.
+
+	The indicator cannot be kept for the keyboard alone here: :focus-visible cannot tell how a text
+	field was focused (see the region above), and the focus is programmatic on top of that. The
+	keyboard is not left without a landmark, though - the pencil that opens the renaming is a tab
+	stop of its own now and draws its own ring, and the caret marks the open field.
+*/
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	.ui-entity-editor-section-header .ui-entity-editor-header-title input.ui-entity-editor-header-title-text:focus {
+	box-shadow: none;
+}
+
+/*
+	The pencil sits in that same overflow: hidden box, 17px tall inside 23px, so it has exactly 3px
+	of room above and below. The shared ring asks for 4px - outline-width 2 plus outline-offset 2 -
+	and measuring on the stand shows it short by 1px top and bottom: the ring would render with its
+	horizontal edges shaved off. Pulling the offset to 0 brings the requirement down to 2px and the
+	ring closes, with 1px to spare. The offset is what changes; width and colour stay shared.
+*/
+.crm-entity-wrap :is(.crm-entity-card-container, .crm-entity-stream-container, .crm-entity-section-status-container)
+	.ui-entity-editor-header-title-edit-icon:focus-visible {
+	outline-offset: 0;
+}
+/*endregion*/
+
+/*region Focus: the file upload button hides its own tab stop (WCAG 2.1 AA, 2.4.7)*/
+/*
+	The "Add image" control (main.file.input) is a styled <span> with a transparent
+	input[type=button] stretched over it: same box, position: absolute, inset 0, opacity: 0.
+	The input is a real tab stop and does take focus, but two things, either of them enough, made
+	the ring invisible, so from the keyboard the logo field read as skipped altogether.
+
+	First, opacity: 0 paints the outline as transparent along with the element. Second,
+	.webform-field-upload has overflow: hidden and the input fills it exactly (both 250x39 at the
+	same origin), so the shared rule's outline-offset: 2px lands entirely outside the clip box -
+	the same way the section title lost its ring. Fixing only the first would have changed
+	nothing, which is why the offset is pulled inside instead.
+
+	The ring is put on the input rather than on the visible span because CSS cannot reach
+	backwards from the input to its earlier sibling; :has() on the container would do it, but
+	Firefox got :has() in 121 and this project targets Firefox 115 (.browserslistrc), where the
+	rule would be dropped and the indicator would simply not exist. :focus-within needs no :has()
+	but answers a mouse click too, which is the very complaint this ticket started from.
+
+	Making the overlay opaque means its own button rendering has to be suppressed - appearance
+	and background come from the UA stylesheet, the transparent border already comes from
+	main.file.input. Scoped to the card so the widget is untouched everywhere else.
+*/
+.crm-entity-wrap .crm-entity-card-container .file-input .webform-field-upload input[type="button"]:focus-visible {
+	opacity: 1;
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	color: transparent;
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: -2px;
+}
+/*endregion*/
+
+/*region Reflow: the CRM binding puts its label and value on separate lines (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The binding is laid out as a table: the label cell ("Company:") and the value cell share one row.
+	Measured at a card width of 241px the label takes 101px of 155px and the value is left with 57px,
+	so a company name wraps into a four-line column of syllables. Below the breakpoint the table
+	stops being a table: the label takes its own line and the value goes under it at full width.
+	The cells are listed together with the table and the row - display: block on the table alone
+	leaves the anonymous row and cell boxes in place, and the layout does not change.
+*/
+@media (max-width: 768px) {
+	.crm-entity-wrap .crm-entity-card-container .field_crm,
+	.crm-entity-wrap .crm-entity-card-container .field_crm tbody,
+	.crm-entity-wrap .crm-entity-card-container .field_crm tr,
+	.crm-entity-wrap .crm-entity-card-container .field_crm td {
+		display: block;
+		width: auto;
+	}
+}
+
+/*
+ * Bizproc launcher "Workflows": at ~241px card width the 183px button overflows the card
+ * and is clipped to "Wo…". Below the breakpoint collapse it to its icon only. Scoped by #id so
+ * the product-wide .ui-btn is untouched. The accessible name and a native hover tooltip come
+ * from aria-label/title on the button (see template.php); the visible text is only hidden
+ * (font-size:0), not removed, and the icon lives on ::after (px-sized, unaffected by font-size).
+ */
+@media (max-width: 768px) {
+	#crm_entity_bp_starter {
+		width: 32px;
+		min-width: 32px;
+		padding: 0;
+		font-size: 0;
+	}
+
+	#crm_entity_bp_starter::after {
+		top: 50%;
+		left: 50%;
+		right: auto;
+		transform: translate(-50%, -50%);
+	}
+}
+/*endregion*/
+
+/*region Reflow: the file view selector collapses to icons inside the card (WCAG 2.1 AA, 1.4.10)*/
+/*
+	Three "text + icon" buttons (Tile / List / Adaptive) of the file field selector do not fit a
+	narrow card column and the last one is clipped off-screen. Below the breakpoint only the label
+	is hidden - the icon is drawn by .ui-btn-text::before and stays visible. The label is hidden
+	visually but kept in the accessibility tree, so the accessible name survives and no new phrases
+	are needed.
+
+	The rule lives here rather than in the widget itself (main.uf.file.uploader.selectable-view-widget)
+	on purpose: the breakpoint is measured against the viewport, which equals the card area only
+	inside the card - the widget is used far beyond CRM, where the two are unrelated. Scoping to
+	.crm-entity-card-container also wins over the widget's own declaration by specificity, so the
+	load order of the files does not matter.
+*/
+@media (max-width: 768px) {
+	.crm-entity-wrap .crm-entity-card-container .main-file-field-selectable-view__view-selector .ui-btn-text-inner {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+}
+/*endregion*/
+
+.crm-entity-section[data-tab-id^="tab_rest_"] > .app-frame-layout {
+	height: 300px;
+}
+
+.crm-entity-section[data-tab-id^="tab_rest_"] > .app-frame-layout > .app-frame {
+	min-height: 0;
+}
+
+/*region Column splitter (CRM Entity Card Split)*/
+/*
+	Draggable divider between the two card columns. Widths are driven by --crm-card-left
+	(default 41.6%, the current ratio) so the default view is unchanged, and everything here is
+	scoped to the main tab. Behaviour lives in script.js.
+
+	Three layout bands, and only the first two belong to this feature:
+
+	  >= 769px         two open columns, the boundary free to sit anywhere between the minimums.
+
+	  floor .. 768px   the split becomes a toggle: one column holds the whole card and the other
+	                   is collapsed to zero (v2.2). The a11y reflow region above is still in force
+	                   at these widths, so float and the stream's gutter have to be re-stated —
+	                   reflow zeroes them at (0,1,0) from a rule that comes after the base ones,
+	                   and equal specificity is decided by source order.
+
+	  below the floor  not ours. The reflow stacks the columns and the splitter stands down: down
+	                   there the return control costs more of the card than the content can spare.
+	                   Measured on the adjacent a11y project — at viewport 320 the card area is
+	                   241px and each stacked column gets 201px, against 147px for a split one,
+	                   which is below the 186px at which that project reproduced text collapsing
+	                   into a column of single letters.
+
+	The floor is a script.js constant rather than a media query. The narrow band is entered by the
+	--narrow class, which only script.js sets, so the width has one source instead of two that can
+	drift apart — and a card whose JS never ran keeps the plain reflow stacking instead of half a
+	split with no way to work it.
+*/
+.crm-entity-section-info[data-tab-id="main"] {
+	position: relative;
+	--crm-card-left: 41.6%;
+	/*
+		Mirrors .crm-entity-stream-container's padding-left above. The overlap rules freeze the
+		stream's content at "minimum minus gutter", so the two values have to stay in step.
+		The minimums themselves arrive from script.js as --crm-card-split-min-left/-min-right, which
+		keeps their single source in the behaviour file that clamps by them.
+	*/
+	--crm-card-split-gutter: 63px;
+	/*
+		How much of each end of the line is spent tapering into nothing. Both ends: the line starts at
+		the top corner of the first section card and stops at the bottom corner of the last one, and a
+		hard edge against either corner reads as a cut. Roughly twice the 12px corner radius of those
+		cards, so the taper and the corner are on the same scale.
+
+		This is a taper, not a gap — where the line ENDS is measured in script.js. A constant was tried
+		there and does not hold: the row of "Create section / Marketplace" links below the last card is
+		56px tall on a wide column and 61px once the links wrap onto two lines.
+	*/
+	--crm-card-split-line-fade: 24px;
+}
+
+/* JS injects the wrapper wherever the card renders; each band below decides whether it shows. */
+.crm-entity-card-split { display: none; }
+
+@media (min-width: 769px) {
+	.crm-entity-section-info[data-tab-id="main"] .crm-entity-card-container {
+		width: var(--crm-card-left);
+	}
+	.crm-entity-section-info[data-tab-id="main"] .crm-entity-stream-container {
+		width: calc(100% - var(--crm-card-left));
+	}
+	.crm-entity-card-split { display: block; }
+}
+
+/*
+	The narrow band. The same widths, but they arrive only with the class, plus the two properties
+	the reflow region takes away: float — without it the columns leave the float context and stack
+	regardless of any width — and the stream's gutter, without which its frozen content, sized as
+	"minimum minus gutter", hangs 63px away from the box it sits in.
+
+	Placed before the collapsed rules further down on purpose: those zero the padding of whichever
+	column is at width 0, they match this specificity, and they have to win.
+*/
+@media (max-width: 768px) {
+	.crm-entity-card-split--narrow .crm-entity-card-container {
+		float: left;
+		width: var(--crm-card-left);
+	}
+	.crm-entity-card-split--narrow .crm-entity-stream-container {
+		float: right;
+		width: calc(100% - var(--crm-card-left));
+		padding-left: var(--crm-card-split-gutter);
+	}
+	.crm-entity-card-split--narrow .crm-entity-card-split { display: block; }
+}
+
+/*
+	In the narrow band the stream's icon rail comes down, and the return control does not.
+
+	Why this order. Folded, the left gutter is 102px of a card that may be as little as 360 wide -
+	28 percent of it - and it is shared: 28..66 is the return control, 78..110 the stream's rail of
+	round type icons, and only at 122 does a card begin (measured at 600). The two are not worth the
+	same. The control is the ONLY way back from a folded column at these widths, and it is the only
+	way to the other side too, because in this band a click on it hands the card across rather than
+	reopening a column. The rail is a duplicate: the narrow layout of crm.timeline.item already puts
+	the type icon INSIDE the card beside the title (--in-circle), which is what it was moved there
+	for. So the duplicate goes and the control stays, all the way down to SPLIT_MIN_PX, where the
+	reflow stacks the columns and the splitter stands down on its own.
+
+	Scoped to --narrow on purpose. Above 768 with a column folded the stream keeps its rail, because
+	up there the timeline has not switched to the layout that carries the icon inside the card, and
+	hiding the rail would take the type away with nothing left to say it.
+
+	The rail is drawn by four things, all off the same two custom properties: the legacy section icon,
+	the icon container the crm.timeline.item extension positions in the same lane, the 12px stub that
+	joins an icon to its card (:before) and the 1px vertical line that threads them (:after). Missing
+	the second one leaves a lone coloured disc hanging in the reclaimed gutter - it is a separate
+	class on a separate element and the first three rules do not reach it.
+	Zeroing the properties was tried and dropped - the calc() they feed resolves to a
+	unitless zero the moment a minifier rewrites 0px to 0, which is the same trap that left
+	`--crm-timeline__icon-size: 0.00000000001px` in the item extension. Explicit rules instead.
+
+	The stub is zeroed rather than hidden because the date label reuses that same pseudo-element at
+	width: 100% as its full-width divider; the rule after it puts that back, and wins on source order
+	at equal specificity.
+*/
+.crm-entity-card-split--narrow .crm-entity-stream-section-icon,
+.crm-entity-card-split--narrow .crm-timeline__card_icon_container,
+.crm-entity-card-split--narrow .crm-entity-stream-section::after,
+.crm-entity-card-split--narrow .crm-entity-stream-section-fixed-anchor::after {
+	display: none;
+}
+.crm-entity-card-split--narrow .crm-entity-stream-section::before {
+	left: 0;
+	width: 0;
+}
+.crm-entity-card-split--narrow .crm-entity-stream-section-label::before {
+	width: 100%;
+}
+/*
+	With the rail gone the gutter only has to carry the control, so it drops to the same 54px the
+	other side already uses for it: 8px inset + 38px control + 8px. Folded the other way the stream
+	is the column that is away, so its rail is not on screen and nothing here applies.
+*/
+.crm-entity-card-split--narrow.crm-entity-card-split--collapsed-left .crm-entity-stream-container {
+	padding-left: 54px;
+}
+
+/*
+	Wrapper on the column boundary. It owns hover/focus-within for the grip below, it is what the
+	pointer and keyboard handlers bind to, and it carries the return control — a sibling of the
+	separator rather than its child, because a focusable separator is a widget with its own
+	aria-valuenow and nesting a focusable button inside it is semantically murky.
+*/
+.crm-entity-card-split {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: var(--crm-card-left);   /* column boundary; the 63px gutter is the stream's padding-left */
+	width: 11px;
+	margin-left: -5px;
+	z-index: 200;
+}
+
+/* The separator strip itself. */
+.crm-entity-card-split-handle {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	/*
+		ew-resize, not col-resize: the same cursor the tasks resizer shows (tasks.v2 component
+		elements/content-resizer), which is what this divider borrows its whole visual language from
+		(owner, round 3). col-resize is the table-column cursor and draws a different glyph.
+	*/
+	cursor: ew-resize;
+	touch-action: none;
+}
+/*
+	Full-height hairline so the resize boundary is visible at any scroll position (the card is very
+	tall). Transparent by default — the default view stays unchanged — and it reveals on hover/focus.
+	The line plus the grip are the focus indicator (WCAG 2.4.7), so the default ring is suppressed.
+	Kept to a soft 2px divider rather than a heavy accent bar: the grip carries the affordance, the
+	line only marks the boundary (visual language taken from the tasks resizer, tasks.v2 component
+	elements/content-resizer).
+*/
+.crm-entity-card-split-handle::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	/*
+		Length, not bottom: 0. The wrapper is as tall as the main tab, which is as tall as the LONGER
+		column, so a full-height line ran on past the end of the shorter one and stopped dead in the
+		empty strip beside the timeline — measured on a deal where the fields ended at 397 and the
+		line carried on to 794. It marks the boundary between two columns, so it is only as long as
+		the two of them overlap; script.js keeps --crm-card-split-line-h on that. The 100% fallback
+		is the old full-height behaviour, for the case where the behaviour file never runs.
+	*/
+	height: var(--crm-card-split-line-h, 100%);
+	left: 50%;
+	width: 2px;
+	border-radius: 1px;   /* half the width, so the upper end reads as finished rather than cut off */
+	transform: translateX(-50%);
+	/*
+		Tapered at both ends, so neither meets a card corner with a hard edge. Opacity carries the
+		hover, not the colour: a gradient is a background-image and background-image does not
+		interpolate, so the .15s would have snapped.
+
+		Colour is the owner's own value rather than --ui-color-divider-accent (round 3). The token
+		is a blue divider meant to be seen; this strip only marks a boundary, and at 22% of a cool
+		grey it reads as an edge instead of a rule.
+	*/
+	background-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		rgba(193, 197, 231, 0.22) var(--crm-card-split-line-fade, 24px),
+		rgba(193, 197, 231, 0.22) calc(100% - var(--crm-card-split-line-fade, 24px)),
+		transparent 100%
+	);
+	opacity: 0;
+	transition: opacity .15s ease;
+}
+.crm-entity-card-split:hover .crm-entity-card-split-handle::before,
+.crm-entity-card-split:focus-within .crm-entity-card-split-handle::before {
+	opacity: 1;
+}
+.crm-entity-card-split-handle:focus-visible { outline: none; }
+
+/*
+	Drag grip, the same artwork as the tasks resizer (images/crm-entity-card-split-grip.svg, copied
+	from tasks/install/js/tasks/v2/component/elements/content-resizer). v2 replaced it with a
+	capsule because a capsule can hold buttons; §10 takes the buttons away again, so the teardrop
+	comes back and the divider carries no controls at all while both columns are open.
+
+	Its vertical position comes from --crm-card-split-grip-y, which script.js keeps above the pointer
+	by GRIP_LIFT (and on the middle of the visible band when the strip is focused from the keyboard).
+	Neither obvious static option works on this host:
+	- top: 50% — the host is the whole main tab and runs ~3200px tall because of the timeline, so
+	  the grip lands ~1600px down, off screen.
+	- position: sticky — dead here: .ui-side-panel-wrap-workarea is overflow: hidden, so it becomes
+	  the sticky scrollport and never scrolls (measured: the box stays 922px above the viewport at
+	  scrollY 1400). Do not "clean this up" into sticky.
+	pointer-events stay off so the grip never swallows the drag.
+*/
+.crm-entity-card-split-handle::after {
+	content: "";
+	display: block;
+	position: absolute;
+	top: var(--crm-card-split-grip-y, 140px);
+	/*
+		The tab starts ON the boundary rather than straddling it: its flat edge sits against the
+		hairline and the teardrop bulges right into the gutter, so it never covers the fields.
+		The artwork carries 1px of empty padding before that flat edge (the path opens at x=1), and
+		the background is pulled left to crop it so the edge lands on the 50% line. -2px rather
+		than -1px since the artwork grew: the padding scaled with everything else, and this is the
+		offset the owner picked on screen.
+	*/
+	left: 50%;
+	/*
+		18x40 artwork drawn 15% larger (owner, round 3). The SVG carries the scale itself — its
+		width/height attributes grew while the viewBox stayed 0 0 18 40 — so body and dots grow
+		together and the box here only has to match the new intrinsic size. Fractional on purpose:
+		rounding to 21 would stretch the width by 16.7% against the height's 15%.
+	*/
+	width: 20.7px;
+	/* script.js places the grip against the pointer, so GRIP_H there has to carry this same number. */
+	height: 46px;
+	/*
+		?v= is not decoration. Nginx serves this directory with Cache-Control: max-age=2592000,
+		public — thirty days, and no revalidation — while the URL stays the same whatever the file
+		says. So an edit to the artwork is invisible to every browser that has opened a card in the
+		last month: recolouring the dots landed on disk and on the wire, and screens kept drawing the
+		previous version. The CSS around it updates fine, because Bitrix stamps the aggregated
+		bundle with its own version, which is exactly what this gives the image.
+		Bump it whenever crm-entity-card-split-grip.svg changes.
+	*/
+	background: url(images/crm-entity-card-split-grip.svg?v=3) no-repeat -2px center;
+	opacity: 0;
+	transition: opacity .2s ease;
+	pointer-events: none;
+}
+.crm-entity-card-split:hover .crm-entity-card-split-handle::after,
+.crm-entity-card-split:focus-within .crm-entity-card-split-handle::after {
+	opacity: 1;
+}
+/*
+	Off wherever the teardrop would leave the stretch the hairline covers - the overlap of the two
+	columns, which is the only place a boundary exists to grab. script.js (showGrip) owns the class.
+	visibility rather than opacity: opacity is spoken for by three rules of rising specificity in
+	this file, and it is on a transition, so the grip would fade out trailing the pointer instead of
+	stopping at the edge. Nothing else in here touches visibility, so this rule needs no weight.
+*/
+.crm-entity-card-split--grip-off .crm-entity-card-split-handle::after {
+	visibility: hidden;
+}
+
+/* ---- below the minimum: freeze the content, clip the overlap ---------------------------------
+	Past its minimum a column stops being laid out again: its content is pinned to the minimum
+	width and the growing neighbour covers it. Clip, not reflow — this is the PM's "do not adapt
+	any further, just overlap". Floats cannot overlap in layout, and an honest overlap would lose
+	anyway: the stream carries z-index: 110, so it would paint over the card column encroaching on
+	it. Clipping means the covered part is simply not painted, which is the same picture with none
+	of the stacking argument.
+
+	Both classes are on for the length of a gesture and its settle only, so overflow: hidden never
+	clips an editor popup at rest.
+--------------------------------------------------------------------------------------------- */
+.crm-entity-card-split--overlap-left .crm-entity-card-container {
+	overflow: hidden;
+}
+.crm-entity-card-split--overlap-left .crm-entity-card-container > * {
+	/*
+		border-box so the minimum means the same thing here as it does on the column, which is
+		border-box itself. Measured on the stand: content-box let a child that carries 15px of
+		side padding freeze at 370 instead of 340, so 30px of it popped under the clip at the very
+		moment the freeze engaged. Children are auto-width blocks, so this changes nothing else.
+	*/
+	box-sizing: border-box;
+	min-width: var(--crm-card-split-min-left, 340px);
+}
+/*
+	The stream shrinks from its left edge — float: right keeps the right edge put — so its content
+	has to stay pinned to that right edge instead of travelling with the box. direction: rtl does
+	exactly that: a block child wider than its container overflows towards the inline start, here
+	leftwards, straight into the part the card column is covering. Children get direction: ltr
+	back, so nothing inside them changes. The alternative, a negative margin-left computed in JS,
+	needs a second custom property and its own animation on the settle; this one follows the width
+	transition for free.
+*/
+.crm-entity-card-split--overlap-right .crm-entity-stream-container {
+	overflow: hidden;
+	direction: rtl;
+}
+.crm-entity-card-split--overlap-right .crm-entity-stream-container > * {
+	direction: ltr;
+	box-sizing: border-box;   /* see the note on the left column above */
+	/* The gutter is padding and stays put, so the first 63px of overlap eat empty space. */
+	min-width: calc(var(--crm-card-split-min-right, 460px) - var(--crm-card-split-gutter, 63px));
+}
+
+/* ---- the settle -----------------------------------------------------------------------------
+	The one animation in the feature: the glide after the mouse is let go — into 0, or back onto
+	the minimum. It is a state class rather than a standing transition because during the drag
+	itself the columns have to track the pointer with no easing whatsoever.
+--------------------------------------------------------------------------------------------- */
+.crm-entity-card-split--settling .crm-entity-card-container,
+.crm-entity-card-split--settling .crm-entity-stream-container,
+.crm-entity-card-split--settling .crm-entity-card-split {
+	transition: width .2s ease, left .2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+	.crm-entity-card-split--settling .crm-entity-card-container,
+	.crm-entity-card-split--settling .crm-entity-stream-container,
+	.crm-entity-card-split--settling .crm-entity-card-split {
+		transition: none;
+	}
+}
+
+/* ---- collapsed state ------------------------------------------------------------------------
+	The width itself (--crm-card-left: 0 / 100%) is set inline by script.js, not here: an inline
+	style beats a class rule, so leaving the two sources to fight would be a bug waiting to happen.
+
+	Content is hidden with display: none rather than inert. It leaves both the tab order and the
+	accessibility tree, and — the actual reason — being CSS it stops applying below 769px on its own,
+	where the stacking layout shows both columns again. An inert attribute would have to be removed
+	from JS on a matchMedia subscription, and a forgotten removal is exactly the bug "collapsed on a
+	wide window, narrowed it, the fields are gone". The clip of the overlap above cannot stand in for
+	it: clipped content is still read out and still takes tab stops.
+--------------------------------------------------------------------------------------------- */
+.crm-entity-card-split--collapsed-left .crm-entity-card-container,
+.crm-entity-card-split--collapsed-right .crm-entity-stream-container {
+	overflow: hidden;
+	padding-left: 0;
+	padding-right: 0;
+}
+.crm-entity-card-split--collapsed-left .crm-entity-card-container > *,
+.crm-entity-card-split--collapsed-right .crm-entity-stream-container > * {
+	display: none;
+}
+/*
+	Room for the return control on the side that survives — 54px clears the 38px AIR button and its
+	8px inset on both sides.
+
+	The card column has no padding of its own, so the mirrored case simply adds one. The stream is
+	the awkward side: its 63px gutter is not empty, it is the lane the timeline hangs its own entry
+	icons in (measured: they sit at 19..51, straight under a button at 8..46). So the gutter widens
+	instead, giving the control a lane of its own ahead of the timeline's — 102px puts the entry
+	icons at 58, clear of the button by 12. The timeline has just been handed the whole card here;
+	it can spare the 39px.
+*/
+.crm-entity-card-split--collapsed-right .crm-entity-card-container {
+	padding-right: 54px;
+}
+.crm-entity-card-split--collapsed-left .crm-entity-stream-container {
+	padding-left: 102px;
+}
+
+/*
+	v2 turned the wrapper itself into a 12px rail with a border. That is gone: on the stand it read
+	as a second thin vertical line right beside the timeline's own, and one line is all a collapsed
+	card should show at rest (criterion 7).
+
+	What stays is the strip itself — same invisible boundary, same col-resize. The
+	hairline stays too, on different terms from the open state — see the rules below. Collapsed, the boundary is
+	the card's own edge, so a strip centred on it
+	would hang half outside; it moves inward instead. 21.5px = 8px inset + 19px (half the 38px
+	control) − 5.5px (half the strip), which lands the control — centred on the strip, see below —
+	exactly 8px inside the edge.
+*/
+.crm-entity-card-split--collapsed-left .crm-entity-card-split { margin-left: 21.5px; }
+.crm-entity-card-split--collapsed-right .crm-entity-card-split { margin-left: -32.5px; }
+
+/*
+	Collapsed on the fields, the boundary the hand reaches for is not the strip.
+
+	With both columns open the column boundary and the right edge of the section cards are the same
+	line - measured on deal 12: the section ends at 627.6, the hairline runs at 628.1 - so "drag the
+	edge of the section" and "drag the strip" are one gesture. Fold the stream away and they part:
+	the column keeps a 54px lane for the return control, so the cards now end 54px inside the card,
+	while the strip has moved to 32.5px inside it. Measured: section edge 1426, strip 1447.5..1458.5.
+	The 21.5px between them did nothing, and the hand that had learnt the section's edge landed there
+	(PM on the stand, 2026-09-21: "in the normal state the split holds and works on the boundary of these
+	sections. in the collapsed state it does not work there ... it will be double. both the section
+	boundary and the strip will work").
+
+	So the wrapper grows a transparent lead-in to the left of the strip. It is the wrapper's own
+	pseudo-element, which is what makes this one rule and no JavaScript: every handler and the
+	hover that reveals the hairline and the grip are bound to the wrapper, and a pseudo-element
+	hit-tests as its originating element. The strip, the hairline, the grip and the return control
+	keep their boxes to the pixel - nothing that was accepted on 21.09 moves.
+
+	26.5px = 21.5 across the dead gap + the 5 the open-state strip reaches inside the section
+	(its own margin-left: -5px), so the edge is caught from either side exactly as it is when both
+	columns are open. Nothing in the fields column paints into that lane - measured: no focusable
+	or clickable node in the column reaches past 1420.5 - so the band covers no content.
+
+	Not mirrored onto --collapsed-left: there the fields column is display: none, so there is no
+	section edge to reach for, and the lane on that side is the timeline's own icon rail.
+*/
+.crm-entity-card-split--collapsed-right .crm-entity-card-split {
+	/*
+		On the wrapper rather than on ::before below: cursor inherits, so the band gets it either way,
+		and this does not rest on the resize cursor being resolved off a pseudo-element's own box.
+	*/
+	cursor: ew-resize;
+}
+.crm-entity-card-split--collapsed-right .crm-entity-card-split::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 100%;   /* flush against the left edge of the strip, so the two make one band */
+	width: 26.5px;
+}
+
+/*
+	And the teardrop marks whichever of the two boundaries the pointer is actually at (PM on the
+	stand, 2026-09-22: the drag worked from the section's edge, but the grip stayed on the strip and
+	nothing looked different).
+
+	One grip, never two: the mirrored pair was built on 21.09 and pulled on the owner's word. This
+	only moves the single grip - same artwork, same orientation, flat edge on the boundary and the
+	bulge into the empty lane, exactly as it sits on the strip. -27px is where the section's edge is
+	from the grip's resting x: the grip's flat edge sits on the hairline at 50% of the 11px strip,
+	and the section ends 21.5px left of the strip's own left edge.
+
+	The condition is the --at-edge mark, which script.js puts on the wrapper while the pointer is left
+	of the strip. It is not written here as ":hovered but not over the strip" - that was the first
+	shape and it was wrong: the return control lies across both zones, so its bottom border turned
+	into an invisible line the grip switched off at (measured at x 1440: off at y 213, on at y 218).
+	Which boundary the pointer chose is a question about x, CSS cannot ask it, and every proxy for it
+	that CSS can ask answers about the wrong thing.
+
+	Off on the strip while the STREAM is the folded one, which is the second rule's job (PM on the
+	stand, 2026-09-22: "keep the hairline, clicking it must work, hide only the teardrop"). The
+	strip keeps its hairline and stays the drag surface it always was - the grip is a picture with
+	pointer-events: none, so taking it away costs the strip nothing it does.
+
+	Only that state, which is why the rule names --collapsed-right rather than :is()-ing both. It was
+	written for the round that gave the stream's side a second boundary to mark; the fields' side has
+	none - no section edge, no lead-in band - so the strip is the only boundary there is, and it
+	answers the pointer exactly as it does with both columns open (PM on the stand, 2026-09-23:
+	"when the left column is collapsed, hovering the line must show the teardrop"). Keeping the
+	teardrop off the return control there is the clamp's job in script.js (gripToPointer), not the
+	cascade's - see the note further down.
+
+	Specificity: the off rule is (0,4,1) because the open-state reveal it has to beat is (0,3,1), and
+	the edge rule is (0,5,1) to beat the off rule in turn. Both stop matching the moment the state
+	class comes off.
+
+	No transition on the transform: the pointer crosses a threshold between two boundaries, and a
+	grip sliding the gap would read as chasing the pointer rather than marking a line - the same
+	reason opacity, not position, carries the reveal (see the note on the grip above).
+*/
+.crm-entity-card-split--collapsed-right
+.crm-entity-card-split:hover
+.crm-entity-card-split-handle::after {
+	opacity: 0;
+}
+.crm-entity-card-split--collapsed-right
+.crm-entity-card-split.crm-entity-card-split--at-edge:hover
+.crm-entity-card-split-handle::after {
+	opacity: 1;
+	transform: translateX(-27px);
+}
+
+/*
+	The second boundary's own hairline, on the wrapper's other pseudo-element.
+
+	The band above gave the section's edge the cursor and the drag, and that was not enough to read
+	as a boundary (PM on the stand, 2026-09-22: "the cursor changed, but there is no teardrop and no strip at the section. no
+	hover effect like it used to be"). So the edge gets the whole reveal the open state has: the hairline
+	fades in under the pointer and the grip moves onto it.
+
+	On hover only, unlike the strip's hairline, which stays lit while collapsed. Two permanently lit
+	lines on a card that is supposed to show one would be the thing criterion 7 §10.5 killed; a line
+	that appears where the hand is is the open state's own behaviour, which is what was asked for.
+
+	Geometry: 2px centred on the section's edge, which is 21.5px left of the strip's left edge, so
+	the element's right edge lands at 100% + 20.5px. Same length as the strip's line - both read
+	--crm-card-split-line-h, which script.js keeps on the painted end of the fields column - and the
+	same gradient, repeated rather than shared because the two live on different elements and CSS
+	has nowhere to put a common declaration that both can reach.
+*/
+.crm-entity-card-split--collapsed-right .crm-entity-card-split::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	height: var(--crm-card-split-line-h, 100%);
+	right: calc(100% + 20.5px);
+	width: 2px;
+	border-radius: 1px;
+	background-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		rgba(193, 197, 231, 0.22) var(--crm-card-split-line-fade, 24px),
+		rgba(193, 197, 231, 0.22) calc(100% - var(--crm-card-split-line-fade, 24px)),
+		transparent 100%
+	);
+	opacity: 0;
+	transition: opacity .15s ease;
+	pointer-events: none;
+}
+.crm-entity-card-split--collapsed-right
+.crm-entity-card-split.crm-entity-card-split--at-edge:hover::after {
+	opacity: 1;
+}
+
+
+/*
+	Collapsed, the two reveals part company.
+
+	The hairline stops being hover-driven and stays lit. Criterion 7 §10.5 asked for the opposite —
+	"one vertical line, the stream's own, and no return strip" — and the thing that criterion killed,
+	the 12px rail, is still gone; what stays lit is only the 2px hairline. PM overruled the criterion
+	on the stand on 2026-09-21, looking at the collapsed card: a boundary a click can bring back
+	should be visible without hunting for it. The reversal is written up in decisions.md.
+
+	It was taken away for one round on 2026-09-22, on "remove it from the strip", and put straight back on
+	"keep the hairline ... hide only the teardrop": what was to go from the strip was the teardrop, not
+	the line. Written down because the two rounds look like one undone decision in the log and are not.
+
+	With the fields folded, the grip answers the pointer here exactly as it does with both columns
+	open (PM on the stand, 2026-09-21: "on hover it must work the same as the state with 2
+	columns"; put back on 2026-09-23, the 22.09 round having switched it off on this side along
+	with the stream's). With the stream folded instead the teardrop belongs to the section's edge
+	and the strip carries none — the rule above.
+
+	It was silenced everywhere but the 11px strip for a while, because the return control is a CHILD
+	of the wrapper that owns the reveal, and reaching for the button lit a teardrop behind the button
+	itself — measured on a collapsed-left card: with the pointer on the button the grip sat at
+	x 47..65 inside the button's own 28..66, poking 3px out of the bottom.
+
+	Keeping the two apart is the clamp's job now, not the cascade's (script.js, gripToPointer): the
+	grip parks clear of the control's band, on whichever side of it has room. With the overlap ruled
+	out there, silencing bought nothing and cost the boundary its affordance over the whole height of
+	the button — which is exactly where the hand goes on a collapsed card.
+
+	:focus-within keeps a silencer, and only while the pointer is elsewhere. Collapsed, script.js holds
+	tabindex -1 on the strip, so the only thing in here that can take focus is the button — and a
+	teardrop answering the button's focus advertises a drag the keyboard is not being offered.
+	:not(:hover) so that a pointer arriving at an already focused boundary still gets its grip.
+
+	Specificity: (0,5,1) against the open-state reveal's (0,3,1), and it cannot match at all once the
+	state class is off.
+*/
+:is(.crm-entity-card-split--collapsed-left, .crm-entity-card-split--collapsed-right)
+.crm-entity-card-split-handle::before {
+	opacity: 1;
+}
+:is(.crm-entity-card-split--collapsed-left, .crm-entity-card-split--collapsed-right)
+.crm-entity-card-split:focus-within:not(:hover)
+.crm-entity-card-split-handle::after {
+	opacity: 0;
+}
+
+/*
+	The way back. The control itself is a stock AIR button, size L, built in script.js. This box
+	only puts it where it belongs; the one thing painted here is its hover, at the end of the region.
+
+	It parks beside the timeline's action row ("Activity / Comment / …") rather than in the middle
+	of the visible band: that is where the eye already is at the moment a column disappears. Once
+	the page scrolls far enough that the parking spot would leave the screen, it stops at the top
+	edge and rides along. script.js keeps --crm-card-split-restore-y on whichever of the two the
+	moment calls for — sticky is not available to do it: .ui-side-panel-wrap-workarea is
+	overflow: hidden and becomes a scrollport that never scrolls (see the note on the grip above).
+
+	A rail was tried in v2 and pulled: at 12px wide it read as a second thin vertical line right
+	next to the timeline's own, and one line is all a collapsed card should show.
+*/
+.crm-entity-card-split-restore {
+	display: none;
+	position: absolute;
+	top: var(--crm-card-split-restore-y, 3px);
+	/*
+		Centred on the strip, not pushed to one side of it: the invisible resize boundary then runs
+		straight through the middle of the control, exactly as it does between two open columns.
+		The grip that used to run through it as well is suppressed while collapsed, see above.
+		Absolutely positioned with width: auto, so the box
+		shrinks to the button and translateX(-50%) needs no hardcoded half-width.
+	*/
+	left: 50%;
+	transform: translateX(-50%);
+}
+.crm-entity-card-split--collapsed-left .crm-entity-card-split-restore,
+.crm-entity-card-split--collapsed-right .crm-entity-card-split-restore {
+	display: block;
+}
+
+/*
+	Hover, measured rather than assumed. AIR does ship one for this button - the stock rule mixes 3%
+	black into the fill - and it is not blocked here: it resolves and it fires. It is simply aimed at
+	a control standing on white. This one stands in the slider's grey gutter, measured at
+	rgb(238, 242, 244), where the fill is LIGHTER than its surroundings, so darkening walks the
+	control TOWARDS the background instead of away from it: separation from the page falls from
+	12/8/8 per channel to 5/1/1, contrast 1.081 -> 1.016. On the stand it reads as the button
+	dissolving at the moment it is reached for, which is worse than no hover at all.
+
+	So the fill goes the other way, to the extreme of the base ramp - the white the control is
+	already trying to be - and the glyph takes the accent. Two signals rather than one, because at
+	38x38 the fill alone stays quiet: white against that grey is still only 1.126.
+
+	The glyph does not follow `color`. The icon set reads --ui-icon-set__icon-color, which
+	ui.air-buttons wires to --ui-btn-color and NOT to --ui-btn-color-hover, so an accent put on the
+	hover token alone would recolour a caption this button does not have and leave the icon grey.
+	It has to land on --ui-btn-color itself; --ui-btn-color-hover is declared as var(--ui-btn-color)
+	in the same block, so the caption colour follows along on its own.
+
+	Both selectors carry .--air purely for specificity: the declarations they override sit on
+	.ui-btn.--air (0,2,0) and .ui-btn.--air.--style-filled-white (0,3,0), and equal specificity would
+	hand the decision to load order between two modules.
+
+	:focus-visible rides along with :hover exactly as it does in ui.air-buttons, so the keyboard gets
+	the same pair on top of the 2px ring the button already draws (measured: solid 2px rgb(1,84,200),
+	offset 2px - it was there all along, an earlier probe read it as none because it read a stale
+	computed style).
+
+	Measured in the light theme, which is what the stand runs. The dark theme was not checked: both
+	tokens are mode-aware, but which way they move against a dark gutter is unverified.
+*/
+.crm-entity-card-split-restore .ui-btn.--air {
+	/*
+		The owner's values from round 3 instead of the ramp tokens: at rest an almost white fill and a
+		grey glyph, on hover pure white and a blue glyph. The direction is the one worked out above (the
+		fill goes to white, the glyph takes the accent); only the colours themselves were chosen.
+	*/
+	--ui-btn-background: rgb(250, 250, 252);
+	--ui-btn-background-hover: rgb(255, 255, 255);
+	--ui-btn-color: rgb(82, 92, 105);
+}
+.crm-entity-card-split-restore .ui-btn.--air:hover,
+.crm-entity-card-split-restore .ui-btn.--air:focus-visible {
+	--ui-btn-color: rgb(0, 119, 255);
+}
+
+/*
+	The hint on the return control. Not inside the wrapper at all: ui.hint keeps one popup for the
+	whole page and drops the html show() is handed into its own .ui-hint-content, so these two
+	classes travel with the text and are the only hold style.css has on it.
+
+	Width. .ui-hint-content carries max-width: 400px and belongs to every hint in the product, so it
+	is left alone; the wrapper inside it takes half of that instead (owner, 2026-09-22 - "cut the
+	line width in half"), the text wraps against it, and the popup shrink-wraps to what is left.
+	display: block so the max-width applies at all - a span would ignore it.
+
+	The first line is the column's name and reads as a heading; it was rendering in the body's own
+	weight. Semi-bold and 4px of air, and it is what puts the body on its own line now that the <br>
+	is gone. Both hints are built from the same two wrappers in script.js, so this is one look for
+	the pair rather than a rule per side.
+*/
+.crm-entity-card-split-hint {
+	display: block;
+	max-width: 200px;
+}
+.crm-entity-card-split-hint-title {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+/*endregion*/
+/*region Query container for the timeline's narrow-column reflow*/
+/*
+	Declares the timeline column as a query container so the reflow rules in the crm.timeline.item
+	extension can react to ITS width rather than the window's. Their existing
+	@media (max-width: 768px) only sees the card area, so it stays silent whenever the column is
+	narrow while the card is not - inside a side slider, and later under the column splitter.
+
+	Desktop only, deliberately. Below the breakpoint the reflow above stacks the columns and the
+	stream spans the full card, so the container would start matching the same widths the @media
+	rules already handle and the two would fight over the same cards.
+
+	The element is already position: relative, so the containment this adds does not change the
+	position of any absolutely positioned descendant - verified on the stand by comparing every
+	such element's box before and after.
+*/
+@media (min-width: 769px) {
+	.crm-entity-stream-container {
+		container-type: inline-size;
+		container-name: crm-entity-stream;
+	}
+}
+/*endregion*/

@@ -294,6 +294,17 @@ else
 		$entityType = 'PRODUCT';
 		$stExportId = 'EXPORT_'.$entityType;
 		$componentName = 'bitrix:crm.product.list';
+		$componentParams = [
+			'CATALOG_ID' => $arParams['CATALOG_ID'],
+			'SECTION_ID' => $arParams['SECTION_ID'],
+			'PRODUCT_COUNT' => $arParams['PRODUCT_COUNT'],
+			'PATH_TO_INDEX' => $arParams['PATH_TO_INDEX'],
+			'PATH_TO_PRODUCT_LIST' => $arParams['PATH_TO_PRODUCT_LIST'],
+			'PATH_TO_PRODUCT_SHOW' => $arParams['PATH_TO_PRODUCT_SHOW'],
+			'PATH_TO_PRODUCT_EDIT' => $arParams['PATH_TO_PRODUCT_EDIT'],
+			'PATH_TO_PRODUCT_FILE' => $arParams['PATH_TO_PRODUCT_FILE'],
+			'PATH_TO_SECTION_LIST' => $arParams['PATH_TO_SECTION_LIST']
+		];
 
 		$arResult['EXPORT_CSV_PARAMS'] = [
 			'id' => $stExportId. '_CSV',
@@ -308,20 +319,9 @@ else
 				'ENTITY_TYPE' => $entityType,
 				'EXPORT_TYPE' => 'csv',
 				'COMPONENT_NAME' => $componentName,
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
-					$componentName,
-					array(
-						'CATALOG_ID' => $arParams['CATALOG_ID'],
-						'SECTION_ID' => $arParams['SECTION_ID'],
-						'PRODUCT_COUNT' => $arParams['PRODUCT_COUNT'],
-						'PATH_TO_INDEX' => $arParams['PATH_TO_INDEX'],
-						'PATH_TO_PRODUCT_LIST' => $arParams['PATH_TO_PRODUCT_LIST'],
-						'PATH_TO_PRODUCT_SHOW' => $arParams['PATH_TO_PRODUCT_SHOW'],
-						'PATH_TO_PRODUCT_EDIT' => $arParams['PATH_TO_PRODUCT_EDIT'],
-						'PATH_TO_PRODUCT_FILE' => $arParams['PATH_TO_PRODUCT_FILE'],
-						'PATH_TO_SECTION_LIST' => $arParams['PATH_TO_SECTION_LIST']
-					)
-				),
+				'signedParameters' => method_exists(\Bitrix\Crm\Controller\Export::class, 'signExportParameters')
+					? \Bitrix\Crm\Controller\Export::signExportParameters($componentName, $componentParams)
+					: \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			],
 			'optionsFields' => array(
 				'EXPORT_ALL_FIELDS' => array(

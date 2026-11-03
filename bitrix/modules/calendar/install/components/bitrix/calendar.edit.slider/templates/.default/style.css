@@ -1,0 +1,13 @@
+.calendar-event-location-layout {
+	flex-wrap: wrap;
+}
+
+.calendar-event-location-error {
+	flex: 0 0 100%;
+	min-width: 0;
+	padding: 5px 0 0 0;
+}
+
+.calendar-event-location-error .ui-alert {
+	margin-bottom: 0;
+}

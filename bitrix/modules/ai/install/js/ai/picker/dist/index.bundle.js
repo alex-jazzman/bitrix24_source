@@ -1333,10 +1333,19 @@ this.BX = this.BX || {};
 				if (this.#isAgreementError(firstError)) {
 					this.#handleAgreementError(firstError, prompt);
 				} else if (firstError?.code === 'LIMIT_IS_EXCEEDED_MONTHLY' || firstError?.code === 'LIMIT_IS_EXCEEDED_DAILY' || firstError?.code === 'LIMIT_IS_EXCEEDED_BAAS' || firstError?.code === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF' || firstError?.code === 'ERROR_CODE_FORCE') {
+					const technicalLimitMessage = ai_ajaxErrorHandler.AjaxErrorHandler.getVibePlusTechnicalLimitMessage(firstError?.customData);
+					if (technicalLimitMessage) {
+						this.handleGenerateFail({
+							...firstError,
+							message: technicalLimitMessage
+						});
+						return;
+					}
 					ai_ajaxErrorHandler.AjaxErrorHandler.handleImageGenerateError({
 						errorCode: firstError?.code,
 						showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 						sliderCode: firstError?.customData?.sliderCode,
+						vibePlusLimitState: firstError?.customData?.vibePlusLimitState,
 						baasOptions: {
 							bindElement: this.context.querySelector('.ai__picker_submit-btn'),
 							useSlider: firstError?.customData?.showSliderWithMsg ?? true,

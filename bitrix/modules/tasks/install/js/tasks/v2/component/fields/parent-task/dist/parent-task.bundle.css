@@ -3,7 +3,7 @@
 	flex-direction: column;
 	background: var(--ui-color-base-8);
 	border-radius: var(--ui-border-radius-md);
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 1px color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 4%, transparent);
 }
 
 .tasks-field-parent-task-title {
@@ -29,10 +29,22 @@
 }
 
 .tasks-field-parent-task-icon {
+	display: flex;
 	margin-left: auto;
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
+	background-color: transparent;
+	border: none;
+	padding: 0;
+	/* The card scrolls the control flush with its edge, where the ring would not fit. */
+	scroll-margin-block: 4px;
+}
+
+.tasks-field-parent-task-icon:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-parent-task-edit-container {

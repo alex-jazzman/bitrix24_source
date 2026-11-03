@@ -3,6 +3,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
+/** @var CBitrixComponent $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var string $componentName */
+/** @var string $componentPath */
+/** @var string $componentTemplate */
+/** @var string $parentComponentName */
+/** @var string $parentComponentPath */
+/** @var string $parentComponentTemplate */
 
 $isSearchInstalled = CModule::IncludeModule('search');
 
@@ -120,7 +132,7 @@ if (
 			$obTitle = new CSearchTitle;
 			$obTitle->setMinWordLength($_REQUEST['l']);
 			if ($obTitle->Search(
-				$arResult['alt_query'] ? $arResult['alt_query'] : $arResult['query']
+				$arResult['alt_query'] ?: $arResult['query']
 				,$arParams['TOP_COUNT']
 				,$exFILTER
 				,false
@@ -132,17 +144,16 @@ if (
 					$j++;
 					if ($j > $arParams['TOP_COUNT'])
 					{
-						$params = ['q' => $arResult['alt_query'] ? $arResult['alt_query'] : $arResult['query']];
+						$params = ['q' => $arResult['alt_query'] ?: $arResult['query']];
 
-						$url = CHTTP::urlAddParams(
-								str_replace('#SITE_DIR#', SITE_DIR, $arParams['PAGE'])
-								,$params
-								,['encode' => true]
-							) . CSearchTitle::MakeFilterUrl('f', $exFILTER);
+						$url = (new \Bitrix\Main\Web\Uri(str_replace('#SITE_DIR#', SITE_DIR, $arParams['PAGE'])))
+							->addParams($params)
+							->getUri()
+							. CSearchTitle::MakeFilterUrl('f', $exFILTER);
 
 						$arResult['CATEGORIES'][$i]['ITEMS'][] = [
 							'NAME' => GetMessage('CC_BST_MORE'),
-							'URL' => htmlspecialcharsex($url),
+							'URL' => htmlspecialcharsEx($url),
 							'TYPE' => 'all'
 						];
 						break;
@@ -166,27 +177,6 @@ if (
 				unset($arResult['CATEGORIES'][$i]);
 			}
 		}
-
-		/* This code adds not fixed keyboard link to the category
-		if($arResult["alt_query"] != "")
-		{
-			$params = array(
-				"q" => $arResult["query"],
-				"spell" => 1,
-			);
-
-			$url = CHTTP::urlAddParams(
-				str_replace("#SITE_DIR#", SITE_DIR, $arParams["PAGE"])
-				,$params
-				,array("encode"=>true)
-			).CSearchTitle::MakeFilterUrl("f", $exFILTER);
-
-			$arResult["CATEGORIES"][$i]["ITEMS"][] = array(
-				"NAME" => GetMessage("CC_BST_QUERY_PROMPT", array("#query#"=>$arResult["query"])),
-				"URL" => htmlspecialcharsex($url),
-			);
-		}
-		*/
 	}
 
 	if ($arParams['SHOW_OTHERS'] === 'Y' && $isSearchInstalled)
@@ -200,7 +190,7 @@ if (
 		$obTitle = new CSearchTitle;
 		$obTitle->setMinWordLength($_REQUEST['l']);
 		if ($obTitle->Search(
-			$arResult['alt_query'] ? $arResult['alt_query'] : $arResult['query']
+			$arResult['alt_query'] ?: $arResult['query']
 			,$arParams['TOP_COUNT']
 			,$arOthersFilter
 			,true
@@ -243,37 +233,16 @@ if (
 		];
 
 		$params = [
-			'q' => $arResult['alt_query'] ? $arResult['alt_query'] : $arResult['query'],
+			'q' => $arResult['alt_query'] ?: $arResult['query'],
 		];
-		$url = CHTTP::urlAddParams(
-			str_replace('#SITE_DIR#', SITE_DIR, $arParams['PAGE'])
-			,$params
-			,['encode' => true]
-		);
+		$url = (new \Bitrix\Main\Web\Uri(str_replace('#SITE_DIR#', SITE_DIR, $arParams['PAGE'])))
+			->addParams($params)
+			->getUri()
+		;
 		$arResult['CATEGORIES']['all']['ITEMS'][] = [
 			'NAME' => GetMessage('CC_BST_ALL_RESULTS'),
 			'URL' => $url,
 		];
-		/*
-		if($arResult["alt_query"] != "")
-		{
-			$params = array(
-				"q" => $arResult["query"],
-				"spell" => 1,
-			);
-
-			$url = CHTTP::urlAddParams(
-				str_replace("#SITE_DIR#", SITE_DIR, $arParams["PAGE"])
-				,$params
-				,array("encode"=>true)
-			);
-
-			$arResult["CATEGORIES"]["all"]["ITEMS"][] = array(
-				"NAME" => GetMessage("CC_BST_ALL_QUERY_PROMPT", array("#query#"=>$arResult["query"])),
-				"URL" => htmlspecialcharsex($url),
-			);
-		}
-		*/
 	}
 
 	$arResult['CATEGORIES_ITEMS_EXISTS'] = false;
@@ -302,14 +271,14 @@ if (
 
 	if (!empty($query))
 	{
-		$this->IncludeComponentTemplate('ajax');
+		$this->includeComponentTemplate('ajax');
 	}
 	CMain::FinalActions();
 	die();
 }
 else
 {
-	$APPLICATION->AddHeadScript($this->GetPath() . '/script.js');
-	CUtil::InitJSCore(['ajax']);
-	$this->IncludeComponentTemplate();
+	\Bitrix\Main\Page\Asset::getInstance()->addJs($this->getPath() . '/script.js');
+	CJSCore::Init(['ajax']);
+	$this->includeComponentTemplate();
 }

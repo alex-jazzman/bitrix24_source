@@ -4,11 +4,13 @@
 jn.define('layout/ui/fields/file', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const AppTheme = require('apptheme');
-	const { clip, pen } = require('assets/common');
+	const { clip } = require('assets/common');
 	const { Icon } = require('assets/icons');
+	const { IconView } = require('ui-system/blocks/icon');
 	const { Haptics } = require('haptics');
+	const { Loc } = require('loc');
 	const { BaseField } = require('layout/ui/fields/base');
-	const { filePreview } = require('layout/ui/fields/file/file-preview');
+	const { filePreview } = require('layout/ui/fields/file/src/file-preview');
 	const { FileAttachment } = require('layout/ui/file-attachment');
 	const { UploaderClient } = require('uploader/client');
 	const { Events } = require('uploader/const');
@@ -17,7 +19,10 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 	const { Circle } = require('utils/skeleton');
-	const { Indent } = require('tokens');
+	const { Color, Indent } = require('tokens');
+	const { Text2, Text3, Text4 } = require('ui-system/typography/text');
+
+	const EDIT_ICON_SIZE = 21;
 	const {
 		NativeViewerMediaTypes,
 		getNativeViewerMediaType,
@@ -168,7 +173,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 				if (!controller.endpoint)
 				{
-					console.warn('FileField: "entityId" or "endpoint" option must be defined in controller config.');
+					console.error('FileField: "entityId" or "endpoint" option must be defined in controller config.');
 				}
 			}
 
@@ -251,7 +256,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				const hasFileWithError = this.getValue().find((file) => file.hasError === true);
 				if (hasFileWithError)
 				{
-					error = BX.message('FIELDS_FILE_VALIDATION_ERROR');
+					error = Loc.getMessage('FIELDS_FILE_VALIDATION_ERROR');
 				}
 			}
 
@@ -322,17 +327,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 							this.onOpenAttachmentList();
 						},
 					},
-					Image(
-						{
-							style: {
-								width: 14,
-								height: 15,
-							},
-							svg: {
-								content: pen(),
-							},
-						},
-					),
+					IconView({
+						testId: 'FileFieldEdit_icon',
+						icon: Icon.EDIT,
+						size: EDIT_ICON_SIZE,
+						color: Color.base3,
+					}),
 				),
 			);
 		}
@@ -418,10 +418,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						},
 					},
 				),
-				Text(
+				Text3(
 					{
 						style: {
-							fontSize: 16,
 							color: emptyEditableButtonStyle.textColor,
 						},
 						clickable: false,
@@ -485,12 +484,27 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 							style: this.styles.filesListWrapper,
 						},
 						...Array.from({ length: 3 }).fill(
-							filePreview({ isShimmed: true }, 0, [], null, true),
+							filePreview({
+								file: { isShimmed: true },
+								index: 0,
+								files: [],
+								showName: true,
+							}),
 						),
 						this.renderHiddenFilesCounter(0),
 					),
 				),
 			);
+		}
+
+		/**
+		 * The tile is a bundle file of this extension, so themes reach it through the field itself.
+		 * @param {FileFieldPreviewProps} props
+		 * @return {View}
+		 */
+		renderFilePreview(props)
+		{
+			return filePreview(props);
 		}
 
 		getFilesView()
@@ -521,13 +535,13 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						{
 							style: this.styles.filesListWrapper,
 						},
-						...visibleFiles.map((file, index) => filePreview(
+						...visibleFiles.map((file, index) => this.renderFilePreview({
 							file,
 							index,
 							files,
-							(canDeleteFilesInPreview || file.token) && this.deleteFileHandler,
-							this.showFilesName(),
-						)),
+							onDeleteFile: (canDeleteFilesInPreview || file.token) && this.deleteFileHandler,
+							showName: this.showFilesName(),
+						})),
 						hiddenFilesCount && this.renderHiddenFilesCounter(hiddenFilesCount),
 					),
 				),
@@ -573,11 +587,10 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						},
 					),
 				),
-				Text(
+				Text4(
 					{
 						style: {
 							color: AppTheme.colors.base4,
-							fontSize: 15,
 						},
 						text: this.getAddButtonText(),
 					},
@@ -597,28 +610,28 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			{
 				if (mediaType === NativeViewerMediaTypes.IMAGE)
 				{
-					return BX.message('FIELDS_FILE_EDIT_IMAGE');
+					return Loc.getMessage('FIELDS_FILE_EDIT_IMAGE');
 				}
 
 				if (mediaType === NativeViewerMediaTypes.VIDEO)
 				{
-					return BX.message('FIELDS_FILE_EDIT_VIDEO');
+					return Loc.getMessage('FIELDS_FILE_EDIT_VIDEO');
 				}
 
-				return BX.message('FIELDS_FILE_EDIT_FILE');
+				return Loc.getMessage('FIELDS_FILE_EDIT_FILE');
 			}
 
 			if (mediaType === NativeViewerMediaTypes.IMAGE)
 			{
-				return BX.message('FIELDS_FILE_ADD_IMAGE');
+				return Loc.getMessage('FIELDS_FILE_ADD_IMAGE');
 			}
 
 			if (mediaType === NativeViewerMediaTypes.VIDEO)
 			{
-				return BX.message('FIELDS_FILE_ADD_VIDEO');
+				return Loc.getMessage('FIELDS_FILE_ADD_VIDEO');
 			}
 
-			return this.isMultiple() ? BX.message('FIELDS_FILE_ADD_FILES') : BX.message('FIELDS_FILE_ADD_FILE');
+			return this.isMultiple() ? Loc.getMessage('FIELDS_FILE_ADD_FILES') : Loc.getMessage('FIELDS_FILE_ADD_FILE');
 		}
 
 		/**
@@ -635,11 +648,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			const items = [
 				{
 					id: 'mediateka',
-					name: BX.message('FIELDS_FILE_MEDIATEKA'),
+					name: Loc.getMessage('FIELDS_FILE_MEDIATEKA'),
 				},
 				{
 					id: 'camera',
-					name: BX.message('FIELDS_FILE_CAMERA'),
+					name: Loc.getMessage('FIELDS_FILE_CAMERA'),
 				},
 			];
 
@@ -647,7 +660,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			{
 				items.push({
 					id: 'disk',
-					name: BX.message('FIELDS_FILE_B24_DISK_MSGVER_1'),
+					name: Loc.getMessage('FIELDS_FILE_B24_DISK_MSGVER_1'),
 					dataSource: {
 						multiple: this.isMultiple(),
 						url: this.getConfig().disk.fileAttachPath,
@@ -783,8 +796,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			if (addedFiles.length > addedFilesWithFilter.length)
 			{
 				Alert.alert(
-					BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_TITLE'),
-					BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_DESCR'),
+					Loc.getMessage('FIELDS_FILE_MEDIA_TYPE_ALERT_TITLE'),
+					Loc.getMessage('FIELDS_FILE_MEDIA_TYPE_ALERT_DESCR'),
 				);
 			}
 
@@ -799,6 +812,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			{
 				addedFilesWithFilter = this.prepareDiskFiles(addedFilesWithFilter);
 			}
+
+			addedFilesWithFilter = this.markFilesAsUploading(addedFilesWithFilter);
 			const fileUploadTasks = this.prepareFileUploadTasks(addedFilesWithFilter);
 			this.uploadFiles(fileUploadTasks);
 
@@ -850,7 +865,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					tintColor: AppTheme.colors.base6,
 					animating: true,
 					size: 'small',
-				}) : Text(
+				}) : Text2(
 					{
 						text,
 						style: this.styles.hiddenFilesCounterText,
@@ -866,7 +881,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					'layout',
 					{
 						titleParams: {
-							text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace(
+							text: Loc.getMessage('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace(
 								'#NUM#',
 								this.getFilesCount(),
 							),
@@ -896,39 +911,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 									attachments: this.getFilesInfo(this.getValue()),
 									layoutWidget,
 									onDeleteAttachmentItem: !this.isReadOnly() && this.onDeleteFile.bind(this),
-									styles: {
-										wrapper: {
-											marginBottom: 12,
-											marginHorizontal: 3,
-											paddingRight: 9,
-										},
-										imagePreview: {
-											width: imageSize,
-											height: imageSize,
-										},
-										imageOutline: (hasError) => ({
-											position: 'absolute',
-											top: 0,
-											left: 0,
-											right: 0,
-											bottom: 0,
-											borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base1,
-											backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
-											borderWidth: 1,
-											opacity: hasError ? 0.5 : 0.08,
-											borderRadius: 6,
-										}),
-										deleteButtonWrapper: this.isReadOnly() ? null : {
-											width: 18,
-											height: 18,
-											right: 0,
-										},
-										menuButtonWrapper: this.isReadOnly() ? null : {
-											width: 18,
-											height: 18,
-											right: 0,
-										},
-									},
+									previewSize: imageSize,
 									showName: this.showFilesName(),
 									showAddButton: !this.isReadOnly(),
 									addButtonText: this.getAddButtonText(),
@@ -977,7 +960,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		{
 			this.fileAttachmentWidget?.setTitle(
 				{
-					text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', this.getFilesCount()),
+					text: Loc.getMessage('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', this.getFilesCount()),
 				},
 				true,
 			);
@@ -1033,7 +1016,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					marginTop: 10,
 				},
 				hiddenFilesCounterText: {
-					fontSize: 17,
 					color: AppTheme.colors.base3,
 				},
 				emptyEditableButtonStyle: {
@@ -1102,6 +1084,26 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * A file bound for the uploader gets its task id up front: the value and the task then share one object,
+		 * and the upload events find the file in the value by that id.
+		 * @param {Array<FileFieldItem>} files
+		 * @return {Array<FileFieldItem|FileFieldUploadingItem>}
+		 */
+		markFilesAsUploading(files)
+		{
+			return files.map((file) => (file.isDiskFile ? file : {
+				...file,
+				id: FILE_TASK_ID_PREFIX + Uuid.getV4(),
+				uuid: this.uuid,
+				isUploading: true,
+			}));
+		}
+
+		/**
+		 * @param {Array<FileFieldItem|FileFieldUploadingItem>} files already marked by markFilesAsUploading
+		 * @return {Array<FileFieldUploadTask>}
+		 */
 		prepareFileUploadTasks(files)
 		{
 			if (!files || !Array.isArray(files))
@@ -1109,41 +1111,41 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				return [];
 			}
 
-			const { controller: controllerConfig } = this.getConfig();
-			const { endpoint: controller, options: controllerOptions } = controllerConfig;
-
 			return (
 				files
 					.filter((file) => !file.isDiskFile)
-					.map((file) => {
-						const uuid = Uuid.getV4();
-						const taskId = FILE_TASK_ID_PREFIX + uuid;
-						const extension = getExtension(file.name);
-
-						let fileName = file.name;
-						if (extension === 'heic')
-						{
-							fileName = `${fileName.slice(0, Math.max(0, fileName.length - extension.length))}jpg`;
-						}
-
-						file.id = taskId;
-						file.uuid = this.uuid;
-						file.isUploading = true;
-
-						return {
-							taskId,
-							controller,
-							controllerOptions,
-							params: file,
-							name: fileName,
-							type: file.type,
-							mimeType: getMimeType(file.type),
-							url: file.url,
-							resize: this.getResizeOptions(file.type),
-							onDestroyEventName: Events.FILE_CREATED,
-						};
-					})
+					.map((file) => this.createFileUploadTask(file))
 			);
+		}
+
+		/**
+		 * @param {FileFieldUploadingItem} file its id, set by markFilesAsUploading, becomes the task id
+		 * @return {FileFieldUploadTask}
+		 */
+		createFileUploadTask(file)
+		{
+			const { controller: controllerConfig } = this.getConfig();
+			const { endpoint: controller, options: controllerOptions } = controllerConfig;
+			const extension = getExtension(file.name);
+
+			let fileName = file.name;
+			if (extension === 'heic')
+			{
+				fileName = `${fileName.slice(0, Math.max(0, fileName.length - extension.length))}jpg`;
+			}
+
+			return {
+				taskId: file.id,
+				controller,
+				controllerOptions,
+				params: file,
+				name: fileName,
+				type: file.type,
+				mimeType: getMimeType(file.type),
+				url: file.url,
+				resize: this.getResizeOptions(file.type),
+				onDestroyEventName: Events.FILE_CREATED,
+			};
 		}
 
 		uploadFiles(tasks)
@@ -1271,12 +1273,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		showUploaderErrorAlert(result)
 		{
 			const firstNonSystemError = this.getFirstNonSystemError(result.errors);
-			const title = firstNonSystemError && firstNonSystemError.message || BX.message(
-				'FIELDS_FILE_UPLOAD_ALERT_TITLE',
-			);
-			const text = firstNonSystemError && firstNonSystemError.description || BX.message(
-				'FIELDS_FILE_UPLOAD_ALERT_DESCR',
-			);
+			const title = firstNonSystemError?.message || Loc.getMessage('FIELDS_FILE_UPLOAD_ALERT_TITLE');
+			const text = firstNonSystemError?.description || Loc.getMessage('FIELDS_FILE_UPLOAD_ALERT_DESCR');
 
 			const hash = title + text;
 
@@ -1291,7 +1289,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				title,
 				text,
 				() => this.displayedAlertsSet.delete(hash),
-				BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_CONFIRM'),
+				Loc.getMessage('FIELDS_FILE_MEDIA_TYPE_ALERT_CONFIRM'),
 			);
 
 			console.error(result);

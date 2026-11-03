@@ -1,2 +1,3 @@
 <?php
 $MESS["MOBILEAPP_CALL_LIST_EMPTY_NOT_FOUND"] = "Ничего не найдено";
+$MESS["MOBILEAPP_CALL_LIST_SEARCH_LOADING"] = "Поиск…";

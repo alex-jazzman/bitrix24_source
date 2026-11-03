@@ -123,9 +123,8 @@ if (!empty($_POST["save"]) && check_bitrix_sessid())
 	);
 	$currentRequest = \Bitrix\Bizproc\Automation\Helper::unConvertProperties($currentRequest, $documentType);
 
-	$res = CBPActivity::CallStaticMethod(
+	$res = CBPActivity::savePropertiesDialogValues(
 		$activityType,
-		"GetPropertiesDialogValues",
 		array(
 			$documentType,
 			$activityName,

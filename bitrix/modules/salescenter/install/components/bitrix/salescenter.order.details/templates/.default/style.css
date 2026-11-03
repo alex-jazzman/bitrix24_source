@@ -18,12 +18,14 @@
 	padding: 18px 15px;
 }
 
+/* lies on the page background outside the white card, as do .order-list-title and .order-total-result-*,
+   so all four stay white */
 .order-list-header-title {
 	font: 24px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
 	font-weight: bold;
-	color: #333;
+	color: var(--ui-color-base-white-fixed, #ffffff);
 }
 
 .bx-dark .order-list-header-title {
@@ -54,7 +56,7 @@
 .order-list-title {
 	text-align: center;
 	padding: 21px;
-	color: #333;
+	color: var(--ui-color-base-white-fixed, #ffffff);
 	font: 16px/19px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -97,7 +99,7 @@
 
 .order-item-type,
 .order-item-quantity {
-	color: #acacb4;
+	color: var(--ui-color-base-2);
 	font: 12px/14px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -118,7 +120,7 @@
 .order-item-property {
 	font-size: 14px;
 	line-height: 19px;
-	color: #9e9eae;
+	color: var(--ui-color-base-2);
 	text-overflow: ellipsis;
 }
 
@@ -158,7 +160,7 @@
 	padding: 0 0 15px 15px;
 	vertical-align: middle;
 	text-align: right;
-	color: #9e9eae;
+	color: var(--ui-color-base-2);
 	font: 14px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
@@ -174,7 +176,7 @@
 
 .order-total-value {
 	padding: 0 15px 18px;
-	color: #93939b;
+	color: var(--ui-color-base-2);
 	text-align: right;
 	font: 500 14px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
@@ -185,11 +187,13 @@
 	color: #fff
 }
 
-.order-total-price-row td {
+.order-total-price-row td,
+.order-total-price-row th {
 	padding-top: 18px;
 }
 
-.order-total-delivery-row td {
+.order-total-delivery-row td,
+.order-total-delivery-row th {
 	padding-top: 18px;
 }
 
@@ -202,11 +206,13 @@
 	text-align: left;
 }
 
-.order-total-delivery-row td {
+.order-total-delivery-row td,
+.order-total-delivery-row th {
 	border-bottom: 1px solid #e6e7eb;
 }
 
-.bx-dark .order-total-delivery-row td {
+.bx-dark .order-total-delivery-row td,
+.bx-dark .order-total-delivery-row th {
 	border-color: #333;
 }
 
@@ -231,8 +237,7 @@
 
 .order-item-price-old,
 .order-total-price-old {
-	opacity: .7;
-	color: #4e8b9e;
+	color: var(--ui-color-base-2);
 	text-decoration: line-through;
 	white-space: nowrap;
 	font: 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -249,8 +254,7 @@
 
 .bx-dark .order-item-price-old,
 .bx-dark .order-total-price-old {
-	color: #8cc8db;
-	opacity: .5;
+	color: var(--ui-color-base-3);
 }
 
 .order-total-sale-price,
@@ -290,7 +294,7 @@
 }
 
 .order-total-result-name {
-	color: #333;
+	color: var(--ui-color-base-white-fixed, #ffffff);
 	font: 500 20px/24px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
@@ -301,7 +305,7 @@
 }
 
 .order-total-result-value {
-	color: #333;
+	color: var(--ui-color-base-white-fixed, #ffffff);
 	font: 500 24px/29px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
@@ -322,6 +326,11 @@
 .alert.alert-danger {
 	background: rgba(255,87,82,.2);
 	border-color: transparent;
+	color: var(--ui-color-accent-soft-element-red);
+}
+
+/* no red of the set passes on the dark backdrop, so the value is kept until design picks one */
+.bx-dark .alert.alert-danger {
 	color: #cf2823;
 }
 
@@ -447,7 +456,8 @@
 	gap: 16px;
 }
 
-.order-document-actions-action a {
+.order-document-actions-action a,
+.order-document-actions-action button {
 	display: block;
 	cursor: pointer;
 	box-sizing: border-box;
@@ -461,9 +471,15 @@
 	border-radius: 18px;
 }
 
-.bx-dark .order-document-actions-action a {
+.bx-dark .order-document-actions-action a,
+.bx-dark .order-document-actions-action button {
 	color: #fff;
 	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.order-document-actions-action button {
+	background: none;
+	text-align: inherit;
 }
 
 
@@ -613,7 +629,7 @@
 
 .salescenter-order-details__product_additional {
 	font-size: 14px;
-	color: #a8adb4;
+	color: #DDDFE1;
 }
 
 .salescenter-order-details__product_additional span {
@@ -651,8 +667,7 @@
 	text-align: right;
 	letter-spacing: -0.2px;
 	text-decoration-line: line-through;
-	color: #ffa900;
-	opacity: .8;
+	color: #FFDA90;
 }
 
 .salescenter-order-details__order-info_details .salescenter-order-details__product_old-price {
@@ -665,7 +680,7 @@
 	line-height: 16px;
 	text-align: right;
 	letter-spacing: -0.2px;
-	color: #a8adb4;
+	color: #DDDFE1;
 }
 
 .salescenter-order-details__order-info {
@@ -746,10 +761,22 @@
 }
 
 .gray-theme .salescenter-order-details__item-button:hover {
-	background: #348856;
+	background: #2A6E46;
 }
 
-.gray-theme .salescenter-order-details__item-button a  {
+.gray-theme .salescenter-order-details__item-button button {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	text-align: inherit;
+}
+
+.gray-theme .salescenter-order-details__item-button a,
+.gray-theme .salescenter-order-details__item-button button {
 	color: rgba(255,255,255,.8);
 }
 

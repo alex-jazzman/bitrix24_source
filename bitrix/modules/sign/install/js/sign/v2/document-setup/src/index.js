@@ -354,7 +354,7 @@ export class DocumentSetup extends EventEmitter
 		isSelectBlank: boolean = true,
 	)
 	{
-		let interval = 0;
+		let pollTimeout = 0;
 		let isPagesReady = false;
 		const requestTime = 10 * 1000;
 		const { uid, blankId, isTemplate } = documentData;
@@ -378,21 +378,42 @@ export class DocumentSetup extends EventEmitter
 					},
 				});
 			}),
+			// The next poll is scheduled only after the previous answer: pages come from the signing
+			// service, and on a slow answer a fixed interval would stack requests that never finish,
+			// exhausting the php-fpm pool instead of waiting.
 			new Promise((resolve) => {
-				interval = setInterval(async () => {
+				const poll = async (): Promise<void> => {
 					if (isPagesReady)
 					{
-						clearInterval(interval);
+						return;
+					}
+
+					let urls = [];
+					try
+					{
+						urls = await this.#getPages(uid);
+					}
+					catch
+					{
+						// a failed poll must not stop the waiting: the next one is scheduled anyway
+					}
+
+					if (isPagesReady)
+					{
+						return;
+					}
+
+					if (urls.length > 0)
+					{
+						resolve(urls);
 
 						return;
 					}
 
-					const urls = await this.#getPages(uid);
-					if (urls.length > 0)
-					{
-						resolve(urls);
-					}
-				}, requestTime);
+					pollTimeout = setTimeout(poll, requestTime);
+				};
+
+				pollTimeout = setTimeout(poll, requestTime);
 			}),
 		];
 
@@ -427,8 +448,8 @@ export class DocumentSetup extends EventEmitter
 			this.setupData.blocks = blocks;
 		}
 
-		clearInterval(interval);
 		isPagesReady = true;
+		clearTimeout(pollTimeout);
 		await this.#processPages(urls, cb, blocks);
 	}
 

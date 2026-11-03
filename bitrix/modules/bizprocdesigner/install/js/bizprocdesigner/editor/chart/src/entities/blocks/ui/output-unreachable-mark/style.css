@@ -1,0 +1,6 @@
+.editor-chart-output-unreachable-mark {
+	display: flex;
+	align-items: center;
+	flex: none;
+	margin-right: var(--ui-space-inline-2xs);
+}

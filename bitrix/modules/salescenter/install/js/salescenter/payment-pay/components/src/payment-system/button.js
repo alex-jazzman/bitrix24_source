@@ -9,9 +9,18 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-button', 
 			default: false,
 			required: false,
 		},
+		paySystemName: {
+			type: String,
+			default: '',
+			required: false,
+		},
 	},
 	mixins: [MixinButton],
 	computed: {
+		localize()
+		{
+			return BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_');
+		},
 		classes()
 		{
 			return {
@@ -29,11 +38,30 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-button', 
 				'loading-button-text': this.loading,
 			};
 		},
+		// the caption repeats across the list, so the method name joins it; the reset panel has no method
+		accessibleName()
+		{
+			if (this.paySystemName === '')
+			{
+				return null;
+			}
+
+			return this.localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_PAY_BUTTON_NAME
+				.replace('#PAY_SYSTEM#', () => this.paySystemName)
+			;
+		},
 	},
 	// language=Vue
 	template: `
-		<div :class="classes" @click="onClick($event)">
+		<button
+			type="button"
+			:class="classes"
+			data-testid="salescenter-payment-pay-btn"
+			:aria-label="accessibleName"
+			:aria-busy="ariaBusy"
+			@click="onClick($event)"
+		>
 			<span :class="buttonClasses"><slot></slot></span>
-		</div>
+		</button>
 	`,
 });

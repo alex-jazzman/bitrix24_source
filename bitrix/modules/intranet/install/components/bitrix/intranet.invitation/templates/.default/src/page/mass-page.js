@@ -29,12 +29,23 @@ export class MassPage extends Page
 		}
 
 		this.#container = Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-mass-page-root"
+			>
 				<div class="intranet-invitation-block__department-control">
 					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
 				</div>
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE')}</span>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-mass-page-form"
+				>
+					<h2
+						class="intranet-invitation-status__title ui-headline --sm"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-mass-page-title"
+					>${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE')}</h2>
 					${this.#massInvitationField.render()}
 					<div class="intranet-invitation-block__footer">
 						${this.#getInviteButton().render()}
@@ -52,6 +63,9 @@ export class MassPage extends Page
 			useAirDesign: true,
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'),
 			style: AirButtonStyle.FILLED,
+			props: {
+				'data-testid': 'invitation-mass-page-submit-button',
+			},
 			onclick: () => {
 				if (inviteButton.getState() === ButtonState.WAITING)
 				{

@@ -233,6 +233,13 @@ this.BX.Mail = this.BX.Mail || {};
 					fileIdInput.value = String(fileId);
 					form.append(fileIdInput);
 				});
+				(contract.sourceFileIds ?? contract.fileIds).forEach(fileId => {
+					const sourceFileIdInput = document.createElement('input');
+					sourceFileIdInput.type = 'hidden';
+					sourceFileIdInput.name = `data[__largeAttachments][${index}][sourceFileIds][]`;
+					sourceFileIdInput.value = String(fileId);
+					form.append(sourceFileIdInput);
+				});
 			});
 			return true;
 		}
@@ -922,6 +929,7 @@ this.BX.Mail = this.BX.Mail || {};
 			return [...this.#convertedByToken.values()].map(result => ({
 				...result,
 				sourceFileIds: result.sourceFileIds ?? result.fileIds,
+				tokenFileIds: result.tokenFileIds ?? result.sourceFileIds ?? result.fileIds,
 				valid: true
 			}));
 		}
@@ -1137,7 +1145,8 @@ this.BX.Mail = this.BX.Mail || {};
 		#renderSendContract(results = [...this.#convertedByToken.values()]) {
 			return this.#formAdapter.serializeSendContracts(results.map(result => ({
 				token: result.token,
-				fileIds: [...result.fileIds]
+				fileIds: [...result.fileIds],
+				sourceFileIds: [...(result.tokenFileIds ?? result.sourceFileIds ?? result.fileIds)]
 			})));
 		}
 		#removePublicUrlFromEditor(publicUrl) {

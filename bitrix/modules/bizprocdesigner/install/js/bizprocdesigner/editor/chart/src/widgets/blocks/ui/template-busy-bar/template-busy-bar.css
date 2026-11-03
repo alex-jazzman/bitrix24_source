@@ -1,0 +1,83 @@
+.bizprocdesigner-editor-template-busy-overlay {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	min-height: 320px;
+	padding: var(--ui-space-inset-2xl);
+	box-sizing: border-box;
+	background: var(--ui-color-bg-content-primary);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 620px;
+	text-align: center;
+}
+
+.bizprocdesigner-editor-template-busy-overlay__title {
+	margin: 0;
+	color: var(--ui-color-text-primary);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__owner {
+	color: var(--ui-color-link-primary-base);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__description {
+	margin: var(--ui-space-stack-lg) 0 var(--ui-space-stack-xl);
+	color: var(--ui-color-text-secondary);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__legacy-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.bizprocdesigner-editor-template-busy-overlay__owner-avatar,
+.bizprocdesigner-editor-template-busy-overlay__owner-placeholder {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	vertical-align: middle;
+}
+
+.bizprocdesigner-editor-template-busy-overlay__owner-avatar {
+	margin-right: var(--ui-space-inline-xs);
+}
+
+/* The waiting itself is drawn by the design system; the cursor is the one thing it leaves to the
+   caller, and a pointer over an action already working promises a press that leads nowhere. */
+.bizprocdesigner-editor-template-busy-overlay__action[aria-busy="true"] {
+	cursor: default;
+}
+
+/* The waiting state of the design system drops the focus ring together with the pressed look, and
+   this action stays in the tab order while it waits on purpose. The ring is put back for that time,
+   with its own values: a person working from the keyboard must not lose the place they are standing
+   on. The waiting is told by the attribute of the action and not by the class of the design system:
+   both land on the same node, and only the attribute belongs to us. */
+.bizprocdesigner-editor-template-busy-overlay__action[aria-busy="true"]:focus-visible,
+html[data-input-modality="keyboard"] .bizprocdesigner-editor-template-busy-overlay__action[aria-busy="true"]:focus:not(:focus-visible) {
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link);
+	outline-style: solid;
+}

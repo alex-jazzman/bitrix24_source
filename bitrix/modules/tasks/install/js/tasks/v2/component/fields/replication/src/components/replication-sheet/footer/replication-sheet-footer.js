@@ -24,7 +24,7 @@ export const ReplicationSheetFooter = {
 			required: true,
 		},
 	},
-	emits: ['close', 'save'],
+	emits: ['cancel', 'save'],
 	setup(): { task: TaskModel }
 	{
 		return {
@@ -55,13 +55,13 @@ export const ReplicationSheetFooter = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-sheet-footer">
+		<div class="tasks-field-replication-sheet-footer" data-testid="tasks-replication-sheet-footer">
 			<UiButton
 				:text="loc('TASKS_V2_REPLICATION_CANCEL')"
 				:size="ButtonSize.MEDIUM"
 				:color="ButtonColor.LIGHT"
 				:style="AirButtonStyle.PLAIN"
-				@click="$emit('close')"
+				@click="$emit('cancel')"
 			/>
 			<UiButton
 				:text="loc('TASKS_V2_REPLICATION_SAVE')"

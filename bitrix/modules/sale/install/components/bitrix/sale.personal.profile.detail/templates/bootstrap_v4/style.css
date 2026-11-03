@@ -2,7 +2,19 @@
 
 .bx-slst .dropdown-block.bx-ui-slst-input-block { border: 1px solid #ccd5db; }
 
-.sale-personal-profile-detail-input-file { display: none !important; }
+/* Hidden from sight only: the field stays the one stop of the property, and its ring is drawn on the
+ * visible part of the label. The selector outweighs `.btn` of the theme, whose stylesheet comes later. */
+.sale-profile-detail-form input.sale-personal-profile-detail-input-file {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
 
 .sale-personal-profile-detail-load-file-info {
 	margin-left: 5px;
@@ -67,3 +79,80 @@
 	background: url(images/calendar.svg) no-repeat center;
 	background-size: 18px auto;
 }
+
+/*region Focus ring*/
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later. */
+.row > form.col.sale-profile-detail-form a:focus-visible,
+.row > form.col.sale-profile-detail-form .btn:focus-visible,
+.row > form.col.sale-profile-detail-form button:focus-visible,
+.row > form.col.sale-profile-detail-form input:focus-visible,
+.row > form.col.sale-profile-detail-form select:focus-visible,
+.row > form.col.sale-profile-detail-form textarea:focus-visible,
+.row > form.col.sale-profile-detail-form [tabindex]:not([tabindex="-1"]):focus-visible,
+.row > form.col.sale-profile-detail-form [role="button"]:focus-visible,
+.row > form.col.sale-profile-detail-form label:has(.sale-personal-profile-detail-input-file:focus-visible) > .btn,
+.row > form.col.sale-profile-detail-form .bx-ui-sls-input-block:has(.bx-ui-sls-fake:focus-visible) {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The location widget clips its search field to a container lower than the field, and the clip cuts any
+ * ring of the field: the ring is drawn on the visible box of the widget above. */
+.row > form.col.sale-profile-detail-form .bx-ui-sls-fake:focus-visible {
+	outline: 0;
+}
+
+/* The link back to the list of the profiles stands above the form and carries no class of its own. */
+.row.mb-3 > .col > a[href]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. */
+.row > form.col.sale-profile-detail-form .btn {
+	transition: all .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.row > form.col.sale-profile-detail-form .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.sale-profile-detail-form .dropdown-block.bx-ui-sls-input-block {
+	transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.sale-profile-detail-form .sale-personal-profile-detail-load-file-cancel {
+	transition: opacity .3s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button (0,2,0), and bootstrap underlines a focused `.btn-link`. The resting values are put back, and
+ * the hovered ones over a hovered or pressed focused button. */
+.row > form.col.sale-profile-detail-form .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.row > form.col.sale-profile-detail-form .btn.btn-primary:focus:hover,
+.row > form.col.sale-profile-detail-form .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+	color: #fff;
+}
+
+.row > form.col.sale-profile-detail-form .btn.btn-link:focus {
+	color: #007bff;
+	text-decoration: none;
+}
+
+.row > form.col.sale-profile-detail-form .btn.btn-link:focus:hover,
+.row > form.col.sale-profile-detail-form .btn.btn-link:focus:active {
+	color: #0056b3;
+	text-decoration: underline;
+}
+/*endregion*/

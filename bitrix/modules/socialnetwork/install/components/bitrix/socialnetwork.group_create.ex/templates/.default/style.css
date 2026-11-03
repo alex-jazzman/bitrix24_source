@@ -99,7 +99,15 @@ body:not(.workgroup-form-master) .socialnetwork-group-create-ex__scope {
 	left: 100px;
 	width: 889px;
 	height: calc(100vh - 590px);
-	background: url(images/socialnetwork-group-create-ex__background.png) left top no-repeat;
+	background: url(images/socialnetwork-group-create-ex__background.webp) left top no-repeat;
+	background: -webkit-image-set(
+		url(images/socialnetwork-group-create-ex__background.webp) 1x,
+		url(images/socialnetwork-group-create-ex__background@2x.webp) 2x
+	) left top no-repeat;
+	background: image-set(
+		url(images/socialnetwork-group-create-ex__background.webp) 1x,
+		url(images/socialnetwork-group-create-ex__background@2x.webp) 2x
+	) left top no-repeat;
 	background-size: 100%;
 	margin-top: -147px;
 	z-index: -9;

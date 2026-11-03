@@ -1,6 +1,7 @@
 import { Extension } from 'main.core';
 import { type SettingsCollection } from 'main.core.collections';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { nextTick } from 'ui.vue3';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, EventType, Layout, LocalStorageKey, ErrorCode, type ApplicationContext, type LayoutType, type ChatTypeItem } from 'im.v2.const';
@@ -13,6 +14,8 @@ import { FolderManager } from 'im.v2.lib.folder';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
+import { MessageService } from 'im.v2.provider.service.message';
 
 type EntityId = string;
 
@@ -79,7 +82,7 @@ export class LayoutManager
 
 	restoreOriginLayout(newEntityId?: string): Promise
 	{
-		let originLayout = this.#originLayout ?? { name: Layout.chat };
+		let originLayout = this.#originLayout ?? FolderManager.getDefaultLayout() ?? { name: Layout.chat };
 		if (newEntityId)
 		{
 			originLayout = { ...originLayout, entityId: newEntityId, contextId: 0 };
@@ -110,14 +113,14 @@ export class LayoutManager
 		const layoutConfig = LocalStorageManager.getInstance().get(LocalStorageKey.layoutConfig);
 		if (!layoutConfig)
 		{
-			return this.setLayout(FolderManager.getInitialLayout() ?? { name: Layout.chat });
+			return this.setLayout(FolderManager.getDefaultLayout() ?? { name: Layout.chat });
 		}
 
 		Logger.warn('LayoutManager: last layout was restored', layoutConfig);
 
 		LocalStorageManager.getInstance().remove(LocalStorageKey.layoutConfig);
 
-		return this.setLayout(layoutConfig);
+		return this.setLayout(this.#resolveSavedLayout(layoutConfig));
 	}
 
 	getLastOpenedElement(layoutName: LayoutType): ?string
@@ -135,11 +138,38 @@ export class LayoutManager
 		this.#lastOpenedElement[layoutName] = entityId;
 	}
 
+	// An empty cache leaves the layout untouched instead of writing the missing chat as it is: the
+	// cache answers with null, and the store keeps the entityId of a layout a string.
+	resolveLayoutEntityId(layout: ImModelLayout): ImModelLayout
+	{
+		if (layout.entityId)
+		{
+			return layout;
+		}
+
+		const lastOpenedElement = this.getLastOpenedElement(layout.name);
+
+		return lastOpenedElement ? { ...layout, entityId: lastOpenedElement } : layout;
+	}
+
 	clearCurrentLayoutEntityId(): void
 	{
-		const currentLayoutName = this.getLayout().name;
-		void this.setLayout({ name: currentLayoutName });
-		void this.deleteLastOpenedElement(currentLayoutName);
+		const { name, params } = this.getLayout();
+		void this.setLayout({ name, params });
+		void this.deleteLastOpenedElement(name);
+	}
+
+	clearCurrentChat(dialogId: string): void
+	{
+		const { name, entityId } = this.getLayout();
+		const isChatOpen = this.isChatLayout(name) && entityId === dialogId.toString();
+		if (!isChatOpen)
+		{
+			return;
+		}
+
+		this.clearCurrentLayoutEntityId();
+		this.deleteLastOpenedElementById(dialogId);
 	}
 
 	isChatContextAvailable(dialogId: string): boolean
@@ -207,7 +237,9 @@ export class LayoutManager
 			Layout.openlinesV2,
 			Layout.collab,
 			Layout.taskComments,
+			Layout.vibecodeApp,
 			Layout.folder,
+			Layout.folderAll,
 		]);
 
 		return chatLayouts.has(layoutName);
@@ -218,6 +250,7 @@ export class LayoutManager
 		const formLayouts = new Set([
 			Layout.createChat,
 			Layout.updateChat,
+			Layout.copyCollab,
 		]);
 
 		return formLayouts.has(layoutName);
@@ -228,6 +261,7 @@ export class LayoutManager
 		const formLayouts = new Set([
 			Layout.createFolder,
 			Layout.updateFolder,
+			Layout.folderAllSettings,
 		]);
 
 		return formLayouts.has(layoutName);
@@ -246,17 +280,100 @@ export class LayoutManager
 			return;
 		}
 
+		const sourceChat: ?ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		if (sourceChat)
+		{
+			this.#openMessageContext(dialogId, messageId, sourceChat.type);
+
+			return;
+		}
+
+		void this.#loadChatAndOpenMessageContext(dialogId, messageId);
+	}
+
+	async #loadChatAndOpenMessageContext(dialogId: string, messageId: number): Promise<void>
+	{
+		try
+		{
+			await new ChatService().loadChat(dialogId);
+		}
+		catch (error)
+		{
+			Logger.error('LayoutManager: source chat load for message context failed', dialogId, error);
+		}
+
 		const { type }: ImModelChat = this.#getChat(dialogId);
-		if (TypesWithoutContext.has(type))
+		this.#openMessageContext(dialogId, messageId, type);
+	}
+
+	#openMessageContext(dialogId: string, messageId: number, chatType: ChatTypeItem): void
+	{
+		if (chatType === ChatType.comment)
+		{
+			void this.#openCommentMessageContext(dialogId, messageId);
+
+			return;
+		}
+
+		const ContextLayoutByChatType: { [ChatTypeItem]: LayoutType } = {
+			[ChatType.taskComments]: Layout.taskComments,
+			[ChatType.lines]: FeatureManager.isFeatureAvailable(Feature.openLinesV2) ? Layout.openlinesV2 : Layout.openlines,
+		};
+
+		// A chat of a special type opens in its own section; everything else opens where regular chats
+		// live now - the All folder when folders are on, the chat layout otherwise. The regular layout
+		// is spread as a whole: the folder layout carries params besides the name.
+		const specialLayoutName = ContextLayoutByChatType[chatType];
+
+		void this.setLayout({
+			...(specialLayoutName ? { name: specialLayoutName } : FolderManager.getRegularChatsLayout()),
+			entityId: dialogId,
+			contextId: messageId,
+		});
+	}
+
+	async #openCommentMessageContext(dialogId: string, messageId: number): Promise<void>
+	{
+		const { chatId: commentChatId, parentChatId } = this.#getChat(dialogId);
+		const channelChat: ?ImModelChat = Core.getStore().getters['chats/getByChatId'](parentChatId);
+		if (!channelChat)
+		{
+			Logger.error('LayoutManager: no channel behind the comment message context', dialogId);
+
+			return;
+		}
+
+		const postMessageId = await this.#getCommentPostId(commentChatId, channelChat.chatId);
+		if (!postMessageId)
 		{
 			return;
 		}
 
-		void this.setLayout({
+		await this.setLayout({
 			name: Layout.chat,
-			entityId: dialogId,
-			contextId: messageId,
+			entityId: channelChat.dialogId,
+			contextId: postMessageId,
 		});
+		await nextTick();
+
+		this.#emitter.emit(EventType.dialog.openComments, { messageId: postMessageId, contextId: messageId });
+	}
+
+	async #getCommentPostId(commentChatId: number, channelChatId: number): Promise<number>
+	{
+		const knownPostId = Core.getStore().getters['messages/comments/getMessageIdByChatId'](commentChatId);
+		if (knownPostId)
+		{
+			return knownPostId;
+		}
+
+		return new MessageService({ chatId: channelChatId })
+			.loadContextByChatId(commentChatId)
+			.catch((error) => {
+				Logger.error('LayoutManager: comment message context load failed', commentChatId, error);
+
+				return 0;
+			});
 	}
 
 	#onDesktopReload()
@@ -264,8 +381,41 @@ export class LayoutManager
 		this.saveCurrentLayout();
 	}
 
+	// A saved chat layout would bring the user back to a section the default rule now hides, so the
+	// name of the saved config goes through that rule while its chat and params stay. Params are
+	// merged and not replaced: the default layout carries the id of the folder to open.
+	#resolveSavedLayout(layoutConfig: ImModelLayout): ImModelLayout
+	{
+		// The saved name comes from a session of an older version, and layout names do get renamed
+		// (taskChat -> taskComments). Nothing is known about the chat of a name the dictionary lost,
+		// so the default layout is opened alone.
+		if (!this.isValidLayout(layoutConfig.name))
+		{
+			return FolderManager.getDefaultLayout() ?? { name: Layout.chat };
+		}
+
+		if (layoutConfig.name !== Layout.chat)
+		{
+			return layoutConfig;
+		}
+
+		const defaultLayout = FolderManager.getDefaultLayout() ?? { name: Layout.chat };
+
+		return {
+			...defaultLayout,
+			entityId: layoutConfig.entityId,
+			params: { ...defaultLayout.params, ...layoutConfig.params },
+		};
+	}
+
 	#sendAnalytics(config: ImModelLayout)
 	{
+		// Forms open over the section the user is in and give it back on exit, so they are not tabs.
+		if (this.isFormLayout(config.name))
+		{
+			return;
+		}
+
 		const currentLayout = this.getLayout();
 		if (currentLayout.name === config.name)
 		{

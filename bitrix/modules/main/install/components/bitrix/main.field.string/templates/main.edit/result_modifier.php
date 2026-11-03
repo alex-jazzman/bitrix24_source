@@ -9,6 +9,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
  */
 
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\UserField\Types\StringType;
 
 $component = $this->getComponent();
 
@@ -24,19 +25,6 @@ if($arResult['userField']['SETTINGS']['MAX_LENGTH'] > 0)
 if($arResult['userField']['EDIT_IN_LIST'] !== 'Y')
 {
 	$attrList['disabled'] = 'disabled';
-}
-
-if($arResult['userField']['SETTINGS']['ROWS'] < 2)
-{
-	if($arResult['userField']['SETTINGS']['SIZE'] > 0)
-	{
-		$attrList['size'] = (int)$arResult['userField']['SETTINGS']['SIZE'];
-	}
-}
-else
-{
-	$attrList['cols'] = (int)$arResult['userField']['SETTINGS']['SIZE'];
-	$attrList['rows'] = (int)$arResult['userField']['SETTINGS']['ROWS'];
 }
 
 if(array_key_exists('attribute', $arResult['additionalParameters']))
@@ -57,37 +45,48 @@ $attrList['class'] = implode(' ', [
 $attrList['name'] = $arResult['fieldName'];
 $attrList['tabindex'] = '0';
 
-if($arResult['userField']['SETTINGS']['ROWS'] < 2)
-{
-	$attrList['type'] = 'text';
-	$tag = 'input';
-}
-else
-{
-	$tag = 'textarea';
-}
-
 $i = 0;
 
 foreach($arResult['value'] as $key => $value)
 {
-	$attrList['value'] = $value;
+	$valueAttrList = $attrList;
+	$isMultiline = (
+		$arResult['userField']['SETTINGS']['ROWS'] >= 2
+		|| StringType::isMultilineValue($value)
+	);
+	if ($isMultiline)
+	{
+		$tag = 'textarea';
+		$valueAttrList['cols'] = (int)$arResult['userField']['SETTINGS']['SIZE'];
+		$valueAttrList['rows'] = max(2, (int)$arResult['userField']['SETTINGS']['ROWS']);
+	}
+	else
+	{
+		$tag = 'input';
+		$valueAttrList['type'] = 'text';
+		if($arResult['userField']['SETTINGS']['SIZE'] > 0)
+		{
+			$valueAttrList['size'] = (int)$arResult['userField']['SETTINGS']['SIZE'];
+		}
+	}
+
+	$valueAttrList['value'] = $value;
 
 	$arResult['fieldValues'][$key] = [
-		'attrList' => $attrList,
+		'attrList' => $valueAttrList,
 		'tag' => $tag
 	];
 
 	if($component->isMobileMode())
 	{
-		$attrList['data-bx-type'] = 'text';
-		$attrList['placeholder'] = HtmlFilter::encode(
+		$valueAttrList['data-bx-type'] = 'text';
+		$valueAttrList['placeholder'] = HtmlFilter::encode(
 			$arParams['userField']['placeholder'] ?: $arParams['userField']['EDIT_FORM_LABEL']
 		);
-		$attrList['name'] = str_replace('[]', '[' . $key . ']', $arResult['fieldName']);
-		$attrList['id'] = $arParams['userField']['~id'] . '_' . $i++;
-		$attrList['size'] = (int)$arResult['userField']['SETTINGS']['SIZE'];
-		$attrList['value'] = $value;
-		$arResult['fieldValues'][$key]['attrList'] = $attrList;
+		$valueAttrList['name'] = str_replace('[]', '[' . $key . ']', $arResult['fieldName']);
+		$valueAttrList['id'] = $arParams['userField']['~id'] . '_' . $i++;
+		$valueAttrList['size'] = (int)$arResult['userField']['SETTINGS']['SIZE'];
+		$valueAttrList['value'] = $value;
+		$arResult['fieldValues'][$key]['attrList'] = $valueAttrList;
 	}
 }

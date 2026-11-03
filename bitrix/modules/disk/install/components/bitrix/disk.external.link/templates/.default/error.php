@@ -32,6 +32,7 @@ $illustration = $templateFolder . '/images/access-lock.png';
 $title = $component->getMessage('DISK_EXT_LINK_DENIED_TITLE');
 $description = ($arResult['ERROR_MESSAGE'] ?? '') ?: $component->getMessage('DISK_EXT_LINK_DENIED_DESCRIPTION');
 $mode = 'denied';
+$titleTag = 'h1';
 $slotHtml = '';
 $cardTestId = 'disk-ext-denied-card';
 ?>
@@ -53,9 +54,9 @@ $cardTestId = 'disk-ext-denied-card';
 		<?php if ($showExternalHeader): ?>
 			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-header.php'; ?>
 		<?php endif; ?>
-		<div class="<?= $cardLayoutClass ?>">
+		<main class="<?= $cardLayoutClass ?>" data-testid="disk-ext-denied-page">
 			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-card.php'; ?>
-		</div>
+		</main>
 	</div>
 </body>
 </html>

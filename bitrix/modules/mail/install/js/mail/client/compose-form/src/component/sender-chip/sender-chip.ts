@@ -10,7 +10,7 @@ import { defineComponent, nextTick } from 'ui.vue3';
 
 import { Phrase } from '../../const';
 import { loc } from '../../lib/loc/loc';
-import { getSelectedSender, useComposeState } from '../../model/compose/compose';
+import { getSelectedSender, selectSender, useComposeState } from '../../model/compose/compose';
 import { type SenderDto } from '../../model/compose/types';
 
 import './sender-chip.css';
@@ -68,6 +68,7 @@ export const SenderChip = defineComponent({
 	{
 		return {
 			isMenuShown: false,
+			failedAvatarUrls: new Set<string>(),
 		};
 	},
 
@@ -98,7 +99,7 @@ export const SenderChip = defineComponent({
 		{
 			const avatar = this.sender?.avatar;
 
-			return avatar ? { src: avatar, alt: '' } : null;
+			return avatar && !this.failedAvatarUrls.has(avatar) ? { src: avatar, alt: '' } : null;
 		},
 
 		menuItems(): SenderMenuItem[]
@@ -108,7 +109,7 @@ export const SenderChip = defineComponent({
 					sectionCode: SenderSectionCode,
 					title: senderTitle(sender),
 					subtitle: sender.email,
-					isSelected: sender.formated === this.state.selectedSender,
+					isSelected: sender === this.sender,
 					onClick: (): void => {
 						this.handleSelect(sender);
 					},
@@ -153,11 +154,21 @@ export const SenderChip = defineComponent({
 		/** Only a sender of the list reaches this: the menu is built from that list. */
 		handleSelect(sender: SenderDto): void
 		{
-			this.state.selectedSender = sender.formated;
+			selectSender(this.state, sender);
+
 			this.isMenuShown = false;
 			void nextTick((): void => {
 				(this.$el as HTMLElement | undefined)?.dispatchEvent(new window.Event('input', { bubbles: true }));
 			});
+		},
+
+		handleImageError(event: Event): void
+		{
+			const failedUrl = (event.target as HTMLImageElement | null)?.getAttribute('src');
+			if (failedUrl)
+			{
+				this.failedAvatarUrls.add(failedUrl);
+			}
 		},
 	},
 
@@ -168,7 +179,7 @@ export const SenderChip = defineComponent({
 	 * the chip would report an open menu for good.
 	 */
 	template: `
-		<div v-if="sender" class="mail-compose-sender-chip">
+		<div v-if="sender" class="mail-compose-sender-chip" @error.capture="handleImageError">
 			<TextSm class-name="mail-compose-sender-chip__label">{{ label }}:</TextSm>
 			<Chip
 				ref="chip"

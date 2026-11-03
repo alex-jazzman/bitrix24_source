@@ -14,15 +14,35 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 	const FIXED_WIDTH = 339;
 	const FIXED_IMAGE_WIDTH = 98;
 	const CLOSE_SIZE = 24;
+	const MAX_PROGRESS_DOTS = 10;
 
 	/**
+	 * Contract of the hint body, built by AhaMoment. Internal to the extension: consumers
+	 * configure it through the props of AhaMoment.show(), which carry the same names.
+	 *
+	 * Nothing is strictly required, but a hint without title and description renders empty,
+	 * and targetParams is what the ear offset is computed from — without it the offset is NaN.
+	 *
 	 * @typedef {object} HintProps
 	 * @property {string} [testId]
-	 * @property {object} [targetParams]
+	 * @property {object} [targetParams] measured target: {position, x, y, width, height};
+	 *   position picks the direction, the rest centers the ear on the target
 	 * @property {string} [title]
 	 * @property {string} [description]
-	 * @property {Function} [onClose]
+	 * @property {object} [image]
+	 * @property {boolean} [shouldShowImageBackgroundColor=true] applies only with image
+	 * @property {number} [fadeInDuration=10] entrance fade of the popup and the ear
+	 * @property {string} [buttonText] renders the action button; the three props below apply only with it
+	 * @property {Icon} [buttonIcon]
+	 * @property {boolean} [buttonStretched=true]
 	 * @property {Function} [onClick]
+	 * @property {boolean} [closeButton] renders the close button, which is what calls onClose
+	 * @property {Function} [onClose]
+	 *
+	 * The button props above are a closed set. Design, size and color stay owned by the
+	 * design system, and onClick stays owned by AhaMoment, so they are not exposed one by
+	 * one: a fourth button prop is the point to replace all of them with a single
+	 * buttonProps merged over the defaults, not to extend the list.
 	 *
 	 * @class Hint
 	 */
@@ -82,13 +102,26 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 			const { popupRect } = this.state;
 			const { x: popupX = 0 } = popupRect;
 			const { x: targetX = 0, width: targetWidth } = this.getTargetParams();
-			const horizontalValue = Math.round(targetX - popupX + targetWidth / 2 - this.svgSize.width / 2);
+			const centeredLeft = Math.round(targetX - popupX + targetWidth / 2 - this.svgSize.width / 2);
 			const position = this.direction.getPosition();
 
 			return {
-				left: horizontalValue,
+				left: this.#clampEarLeft(centeredLeft),
 				[position]: 1,
 			};
+		}
+
+		/**
+		 * The ear has to stand on the straight part of the popup edge: beyond the corner radius its
+		 * base lies on the rounding. Only a target close to the screen edge, where the popup itself
+		 * cannot move any further, gets clamped — for the rest the centered position already fits.
+		 */
+		#clampEarLeft(left)
+		{
+			const minLeft = Component.popupCorner.toNumber();
+			const maxLeft = FIXED_WIDTH - minLeft - this.svgSize.width;
+
+			return Math.min(Math.max(left, minLeft), maxLeft);
 		}
 
 		getDirection()
@@ -142,6 +175,70 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 				this.#renderTitle(),
 				this.#renderDescription(),
 				this.#renderButtons(),
+				this.#renderProgress(),
+			);
+		}
+
+		#renderProgress()
+		{
+			const { progress } = this.props;
+
+			if (!progress || progress.total <= 1)
+			{
+				return null;
+			}
+
+			const { current, total } = progress;
+
+			if (total > MAX_PROGRESS_DOTS)
+			{
+				return View(
+					{
+						style: {
+							alignSelf: 'center',
+							marginTop: Indent.XS.toNumber(),
+						},
+					},
+					Text4({
+						testId: this.#getTestId('progress'),
+						text: `${current}/${total}`,
+						color: Color.baseWhiteFixed,
+					}),
+				);
+			}
+
+			const DOT_SIZE = 8;
+			const DOT_SPACING = 4;
+
+			const dots = [];
+			for (let i = 1; i <= total; i++)
+			{
+				const isActive = i === current;
+				dots.push(
+					View({
+						style: {
+							width: DOT_SIZE,
+							height: DOT_SIZE,
+							borderRadius: DOT_SIZE / 2,
+							backgroundColor: isActive
+								? Color.baseWhiteFixed.toHex()
+								: Color.baseWhiteFixed.toHex(0.3),
+							marginRight: i < total ? DOT_SPACING : 0,
+						},
+					}),
+				);
+			}
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
+						alignSelf: 'center',
+						marginTop: Indent.XS.toNumber(),
+					},
+				},
+				...dots,
 			);
 		}
 
@@ -152,12 +249,12 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 				return null;
 			}
 
-			const { buttonText, onClick } = this.props;
+			const { buttonText, buttonIcon = null, buttonStretched = true, onClick } = this.props;
 
-			return Button({
+			const buttonProps = {
 				testId: this.#getTestId('action-button'),
 				text: buttonText,
-				stretched: true,
+				stretched: buttonStretched,
 				size: ButtonSize.S,
 				design: ButtonDesign.OUTLINE,
 				color: Color.baseWhiteFixed,
@@ -166,7 +263,15 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 				style: {
 					marginVertical: Indent.XS.toNumber(),
 				},
-			});
+			};
+
+			if (buttonIcon)
+			{
+				buttonProps.leftIcon = buttonIcon;
+				buttonProps.leftIconColor = Color.baseWhiteFixed;
+			}
+
+			return Button(buttonProps);
 		}
 
 		#renderDescription()

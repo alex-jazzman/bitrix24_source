@@ -6,11 +6,11 @@ return [
 		'intranet:user.list', //@keep
 	],
 	'extensions' => [
-		'assets/icons',
 		'feature',
+		'in-app-url/presentation',
+		'in-app-url/widget-presenter',
 		'loc',
 		'notify-manager',
-		'tokens',
 		'user-profile/const',
 		'user-profile/tabs-preparer',
 	],

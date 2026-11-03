@@ -34,13 +34,18 @@ jn.define('im/messenger/provider/services/analytics/collab-entities', (require, 
 
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(Analytics.Category.collab)
+				.setCategory(Analytics.Category.project)
 				.setEvent(EventToEventMap[entityType])
 				.setSection(Analytics.Section.chatSidebar)
 				.setP2(AnalyticsHelper.getP2ByUserType())
-				.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialogId))
 				.setP5(AnalyticsHelper.getFormattedChatId(dialogModel.chatId))
 			;
+
+			const projectId = AnalyticsHelper.getFormattedProjectId(dialogModel);
+			if (projectId)
+			{
+				analyticsEvent.setP4(projectId);
+			}
 
 			analyticsEvent.send();
 		}

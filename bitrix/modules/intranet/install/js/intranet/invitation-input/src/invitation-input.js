@@ -1,6 +1,6 @@
-import { Cache, Dom, Tag, Validation, Loc, Extension, Type } from 'main.core';
-import { MemoryCache } from 'main.core.cache';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Cache, Dom, Extension, Loc, Tag, Text, Type, Validation } from 'main.core';
+import type { MemoryCache } from 'main.core.cache';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 import 'phone_number';
 import './style.css';
@@ -224,16 +224,22 @@ export class InvitationInput extends EventEmitter
 					this.#setUnreadySaveState();
 					resolve(response);
 				}).catch((response) => {
+					const serverMessage = response?.errors?.[0]?.message;
+					const message = Type.isStringFilled(serverMessage) && serverMessage.trim().length > 0
+						? serverMessage
+						: Loc.getMessage('INTRANET_CONTROLLER_INVITE_ERROR_INVALID_RESPONSE')
+					;
+
 					if (this.#showErrorAfterSubmit)
 					{
-						this.#addErrorBlockByMessage(response.errors[0].message);
+						this.#addErrorBlockByMessage(message);
 					}
 					else
 					{
 						this.getTagSelector().removeTags();
 					}
 
-					reject(response.errors[0].message);
+					reject(message);
 				});
 			}
 		});
@@ -396,6 +402,7 @@ export class InvitationInput extends EventEmitter
 		if (tag.getEntityType() === 'error')
 		{
 			this.#setErrorStateForTag(tag);
+			this.#setTextBoxInvalidState();
 
 			if (this.#showErrorBeforeSubmit)
 			{
@@ -406,6 +413,11 @@ export class InvitationInput extends EventEmitter
 		if (tag.getEntityType() === 'phone')
 		{
 			this.#getPhoneParser().parse(tag.getTitle()).then((result) => {
+				if (!this.getTagSelector().getTags().includes(tag))
+				{
+					return;
+				}
+
 				if (result.valid)
 				{
 					tag.setTitle(result.rawNumber);
@@ -414,6 +426,7 @@ export class InvitationInput extends EventEmitter
 				{
 					this.#setErrorStateForTag(tag);
 					this.#invalidPhoneNumbersTagIds.push(tag.getId());
+					this.#setTextBoxInvalidState();
 					this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
 				}
 				tag.render();
@@ -531,6 +544,7 @@ export class InvitationInput extends EventEmitter
 
 		const errorBlock = this.#createErrorBlockByMessage(message);
 		this.getWrapper().append(errorBlock);
+		this.#setTextBoxInvalidState(errorBlock.id);
 		this.#setUnreadySaveState();
 
 		if (!Dom.hasClass(this.getTagSelector().getOuterContainer(), '--error'))
@@ -549,6 +563,13 @@ export class InvitationInput extends EventEmitter
 			errorBlock.remove();
 		}
 
+		const textBox = this.getTagSelector().getTextBox();
+		textBox.removeAttribute('aria-describedby');
+		if (this.#getErrorTags().length === 0)
+		{
+			textBox.removeAttribute('aria-invalid');
+		}
+
 		if (Dom.hasClass(this.getTagSelector().getOuterContainer(), '--error'))
 		{
 			Dom.removeClass(this.getTagSelector().getOuterContainer(), '--error');
@@ -558,9 +579,26 @@ export class InvitationInput extends EventEmitter
 	#createErrorBlockByMessage(message: string): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-invitation-input-error__wrapper">
-				<span class="intranet-invitation-input-error__text">${message}</span>
+			<div
+				id="${this.#id}-error"
+				class="intranet-invitation-input-error__wrapper"
+				role="alert"
+				aria-atomic="true"
+				data-testid="${this.#id}-error"
+			>
+				<span class="intranet-invitation-input-error__text">${Text.encode(message)}</span>
 			</div>
 		`;
+	}
+
+	#setTextBoxInvalidState(errorId: ?string = null): void
+	{
+		const textBox = this.getTagSelector().getTextBox();
+		textBox.setAttribute('aria-invalid', 'true');
+
+		if (Type.isStringFilled(errorId))
+		{
+			textBox.setAttribute('aria-describedby', errorId);
+		}
 	}
 }

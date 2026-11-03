@@ -38,7 +38,7 @@ return [
 		],
 	],
 	'assets' => [
-		'ext' => ['landing_header'],
+		'ext' => ['landing_header', 'ui.a11y', 'ui.design-tokens.air'],
 	],
 	'groups' => [
 		'phone' => Loc::getMessage('LNDBLCK_STOREMENUV3_3_PHONE'),

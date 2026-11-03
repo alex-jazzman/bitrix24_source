@@ -149,9 +149,9 @@ JCCalendarViewDay.prototype.__drawLayout = function()
 	this._parent.CONTROLS.DATEROW.innerHTML =
 	this._parent.CONTROLS.DATEROW.innerHTML =
 	'<table class="bx-calendar-day-control-table" align="center"><tr>'
-		+ '<td><a href="javascript:void(0)" class="bx-calendar-day-icon bx-calendar-day-back"></a></td>'
+		+ '<td><a href="javascript:void(0)" class="bx-calendar-day-icon bx-calendar-day-back" data-testid="intranet-absence-day-previous"></a></td>'
 		+ '<td>' + text + '</td>'
-		+ '<td><a href="javascript:void(0)" class="bx-calendar-day-icon bx-calendar-day-fwd"></a></td>'
+		+ '<td><a href="javascript:void(0)" class="bx-calendar-day-icon bx-calendar-day-fwd" data-testid="intranet-absence-day-next"></a></td>'
 		+ '</tr></table>';
 
 	//var arLinks = obRow.cells[0].getElementsByTagName('A');

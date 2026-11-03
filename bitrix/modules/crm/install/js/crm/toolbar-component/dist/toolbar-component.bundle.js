@@ -4,9 +4,9 @@ this.BX = this.BX || {};
 	'use strict';
 
 	function _classPrivateMethodInitSpec$3(e, a) { _checkPrivateRedeclaration$4(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$4(e, t), t.set(e, a); }
+	function _classPrivateFieldInitSpec$2(e, t, a) { _checkPrivateRedeclaration$4(e, t), t.set(e, a); }
 	function _checkPrivateRedeclaration$4(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$4(s, a)); }
+	function _classPrivateFieldGet$2(s, a) { return s.get(_assertClassBrand$4(s, a)); }
 	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$4(s, a), r), r; }
 	function _assertClassBrand$4(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	var _settings = /*#__PURE__*/new WeakMap();
@@ -35,19 +35,19 @@ this.BX = this.BX || {};
 			 * @protected
 			 */
 
-			_classPrivateFieldInitSpec$1(this, _settings, {});
-			_classPrivateFieldInitSpec$1(this, _button, void 0);
-			_classPrivateFieldInitSpec$1(this, _isMenuOpened, false);
-			_classPrivateFieldInitSpec$1(this, _menuPopup, void 0);
-			_classPrivateFieldInitSpec$1(this, _isEnabled, false);
-			_classPrivateFieldInitSpec$1(this, _clientSelector, void 0);
+			_classPrivateFieldInitSpec$2(this, _settings, {});
+			_classPrivateFieldInitSpec$2(this, _button, void 0);
+			_classPrivateFieldInitSpec$2(this, _isMenuOpened, false);
+			_classPrivateFieldInitSpec$2(this, _menuPopup, void 0);
+			_classPrivateFieldInitSpec$2(this, _isEnabled, false);
+			_classPrivateFieldInitSpec$2(this, _clientSelector, void 0);
 			_classPrivateFieldSet$1(_settings, this, settings || {});
-			_classPrivateFieldSet$1(_button, this, _classPrivateFieldGet$1(_settings, this).button);
-			_classPrivateFieldGet$1(_button, this).bindEvent('click', this.onButtonClick.bind(this));
-			this.ownerInfo = BX.prop.getObject(_classPrivateFieldGet$1(_settings, this), 'ownerInfo', {});
-			this.data = BX.prop.getObject(_classPrivateFieldGet$1(_settings, this), 'data', {});
+			_classPrivateFieldSet$1(_button, this, _classPrivateFieldGet$2(_settings, this).button);
+			_classPrivateFieldGet$2(_button, this).bindEvent('click', this.onButtonClick.bind(this));
+			this.ownerInfo = BX.prop.getObject(_classPrivateFieldGet$2(_settings, this), 'ownerInfo', {});
+			this.data = BX.prop.getObject(_classPrivateFieldGet$2(_settings, this), 'data', {});
 			_assertClassBrand$4(_CommunicationButton_brand, this, _enable).call(this, _assertClassBrand$4(_CommunicationButton_brand, this, _hasData).call(this));
-			this.useClientSelector = BX.prop.getBoolean(_classPrivateFieldGet$1(_settings, this), 'useClientSelector', false);
+			this.useClientSelector = BX.prop.getBoolean(_classPrivateFieldGet$2(_settings, this), 'useClientSelector', false);
 			main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', _assertClassBrand$4(_CommunicationButton_brand, this, _onReceiversChange).bind(this));
 		}
 		return babelHelpers.createClass(CommunicationButton, [{
@@ -72,7 +72,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "isEnabled",
 			value: function isEnabled() {
-				return _classPrivateFieldGet$1(_isEnabled, this);
+				return _classPrivateFieldGet$2(_isEnabled, this);
 			}
 		}, {
 			key: "getAddAddressSourceMessage",
@@ -92,7 +92,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "openMenu",
 			value: function openMenu() {
-				if (_classPrivateFieldGet$1(_isMenuOpened, this)) {
+				if (_classPrivateFieldGet$2(_isMenuOpened, this)) {
 					_assertClassBrand$4(_CommunicationButton_brand, this, _closeMenu).call(this);
 					return;
 				}
@@ -130,18 +130,18 @@ this.BX = this.BX || {};
 	}
 	function _enable(enabled) {
 		_classPrivateFieldSet$1(_isEnabled, this, Boolean(enabled));
-		_classPrivateFieldGet$1(_button, this).setDisabled(!_classPrivateFieldGet$1(_isEnabled, this));
-		if (!_classPrivateFieldGet$1(_isEnabled, this)) {
+		_classPrivateFieldGet$2(_button, this).setDisabled(!_classPrivateFieldGet$2(_isEnabled, this));
+		if (!_classPrivateFieldGet$2(_isEnabled, this)) {
 			const title = this.getAddAddressSourceMessage(_assertClassBrand$4(_CommunicationButton_brand, this, _getOwnerTypeName).call(this));
 			if (title) {
-				_classPrivateFieldGet$1(_button, this).getContainer().title = title;
+				_classPrivateFieldGet$2(_button, this).getContainer().title = title;
 			}
 		}
 	}
 	function _openClientSelector(menuItems) {
-		if (!_classPrivateFieldGet$1(_clientSelector, this)) {
+		if (!_classPrivateFieldGet$2(_clientSelector, this)) {
 			_classPrivateFieldSet$1(_clientSelector, this, BX.Crm.ClientSelector.createFromItems({
-				targetNode: _classPrivateFieldGet$1(_button, this).getContainer(),
+				targetNode: _classPrivateFieldGet$2(_button, this).getContainer(),
 				items: menuItems,
 				events: {
 					onSelect: this.onClientSelectorSelect.bind(this),
@@ -154,11 +154,11 @@ this.BX = this.BX || {};
 				}
 			}));
 		}
-		_classPrivateFieldGet$1(_clientSelector, this).show();
+		_classPrivateFieldGet$2(_clientSelector, this).show();
 	}
 	function _openPopupMenu(menuItems) {
 		_classPrivateFieldSet$1(_menuPopup, this, new main_popup.Menu({
-			bindElement: _classPrivateFieldGet$1(_button, this).getContainer(),
+			bindElement: _classPrivateFieldGet$2(_button, this).getContainer(),
 			offsetTop: 0,
 			offsetLeft: 0,
 			cacheable: false,
@@ -176,11 +176,11 @@ this.BX = this.BX || {};
 				}
 			}
 		}));
-		_classPrivateFieldGet$1(_menuPopup, this).show();
+		_classPrivateFieldGet$2(_menuPopup, this).show();
 	}
 	function _closeMenu() {
-		_classPrivateFieldGet$1(_menuPopup, this)?.close();
-		_classPrivateFieldGet$1(_clientSelector, this)?.hide();
+		_classPrivateFieldGet$2(_menuPopup, this)?.close();
+		_classPrivateFieldGet$2(_clientSelector, this)?.hide();
 	}
 	function _onReceiversChange(event) {
 		const {
@@ -510,9 +510,9 @@ this.BX = this.BX || {};
 
 	function _callSuper$1(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$1() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct$1() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$1 = function () { return !!t; })(); }
-	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
+	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
 	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand$1(s, a)); }
+	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$1(s, a)); }
 	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand$1(s, a), r), r; }
 	function _assertClassBrand$1(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	var _id = /*#__PURE__*/new WeakMap();
@@ -546,8 +546,8 @@ this.BX = this.BX || {};
 				target: BX(options.id),
 				items: options.items
 			}]);
-			_classPrivateFieldInitSpec(_this, _id, void 0);
-			_classPrivateFieldInitSpec(_this, _binding, void 0);
+			_classPrivateFieldInitSpec$1(_this, _id, void 0);
+			_classPrivateFieldInitSpec$1(_this, _binding, void 0);
 			_classPrivateFieldSet(_id, _this, options.id);
 			_classPrivateFieldSet(_binding, _this, options.binding);
 			return _this;
@@ -559,10 +559,10 @@ this.BX = this.BX || {};
 				if (!main_core.Type.isStringFilled(url)) {
 					return;
 				}
-				if (_classPrivateFieldGet(_binding, this) && main_core.Type.isPlainObject(_classPrivateFieldGet(_binding, this))) {
-					const category = main_core.Type.isStringFilled(_classPrivateFieldGet(_binding, this).category) ? _classPrivateFieldGet(_binding, this).category : '';
-					const name = main_core.Type.isStringFilled(_classPrivateFieldGet(_binding, this).name) ? _classPrivateFieldGet(_binding, this).name : '';
-					const key = main_core.Type.isStringFilled(_classPrivateFieldGet(_binding, this).key) ? _classPrivateFieldGet(_binding, this).key : '';
+				if (_classPrivateFieldGet$1(_binding, this) && main_core.Type.isPlainObject(_classPrivateFieldGet$1(_binding, this))) {
+					const category = main_core.Type.isStringFilled(_classPrivateFieldGet$1(_binding, this).category) ? _classPrivateFieldGet$1(_binding, this).category : '';
+					const name = main_core.Type.isStringFilled(_classPrivateFieldGet$1(_binding, this).name) ? _classPrivateFieldGet$1(_binding, this).name : '';
+					const key = main_core.Type.isStringFilled(_classPrivateFieldGet$1(_binding, this).key) ? _classPrivateFieldGet$1(_binding, this).key : '';
 					if (category !== '' && name !== '' && key !== '') {
 						const value = itemId + ":" + BX.formatDate(new Date(), 'YYYYMMDD');
 						BX.userOptions.save(category, name, key, value, false);
@@ -578,7 +578,9 @@ this.BX = this.BX || {};
 	function _callSuper(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function () { return !!t; })(); }
 	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
 	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
 	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	const MENU_ID_PREFIX = 'toolbar-category-';
 	let instance = null;
@@ -591,6 +593,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ToolbarEvents, "TYPE_UPDATED", 'TypeUpdated');
 	babelHelpers.defineProperty(ToolbarEvents, "CATEGORIES_UPDATED", 'CategoriesUpdated');
 	babelHelpers.defineProperty(ToolbarEvents, "AUTOMATED_SOLUTION_UPDATED", 'CategoriesUpdated');
+	var _categoryMenuStateByMenu = /*#__PURE__*/new WeakMap();
 	var _ToolbarComponent_brand = /*#__PURE__*/new WeakSet();
 	let ToolbarComponent = /*#__PURE__*/function (_EventEmitter) {
 		function ToolbarComponent() {
@@ -598,6 +601,7 @@ this.BX = this.BX || {};
 			babelHelpers.classCallCheck(this, ToolbarComponent);
 			_this = _callSuper(this, ToolbarComponent);
 			_classPrivateMethodInitSpec(_this, _ToolbarComponent_brand);
+			_classPrivateFieldInitSpec(_this, _categoryMenuStateByMenu, new WeakMap());
 			_this.initHints();
 			_this.setEventNamespace('BX.Crm.ToolbarComponent');
 			main_core.Event.ready(_this.bindEvents.bind(_this));
@@ -617,6 +621,10 @@ this.BX = this.BX || {};
 					const toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
 					const button = toolbar.getButton(main_core.Dom.attr(buttonNode, 'data-btn-uniqid'));
 					const entityTypeId = Number(buttonNode.dataset.entityTypeId);
+					const menu = button?.getMenuWindow();
+					if (menu) {
+						_assertClassBrand(_ToolbarComponent_brand, this, _attachCategoryMenuLifecycle).call(this, menu);
+					}
 					if (button.counterNode && button.counterNode.innerText > 99) {
 						button.counterNode.innerText = '99+';
 					}
@@ -739,15 +747,19 @@ this.BX = this.BX || {};
 		}
 	}
 	function _reloadCategoriesMenu(button, entityTypeId, categoryId) {
-		const menu = button.getMenuWindow();
-		if (!menu) {
+		if (!button.getMenuWindow()) {
 			return;
 		}
 		main_core.ajax.runAction('crm.controller.category.list', {
 			data: {
-				entityTypeId
+				entityTypeId,
+				isCategoryMenu: true
 			}
 		}).then(response => {
+			const menu = button.getMenuWindow();
+			if (!menu) {
+				return;
+			}
 			let startKey = 0;
 			const items = [];
 			const categories = response.data.categories;
@@ -759,27 +771,30 @@ this.BX = this.BX || {};
 					startKey = 1;
 				}
 			});
-			menu.destroy();
-			main_core.Event.unbindAll(button.getContainer(), 'click');
 			categories.forEach(category => {
 				const link = entityTypeId === BX.CrmEntityType.enumeration.deal ? crm_router.Router.Instance.getDealKanbanUrl(category.id)?.toString() : crm_router.Router.Instance.getItemListUrlInCurrentView(entityTypeId, category.id)?.toString();
-				items.splice(startKey, 0, {
-					id: `${MENU_ID_PREFIX}${category.id}`,
-					text: main_core.Text.encode(category.name),
-					href: link || null,
-					dataset: {
-						isDefault: category.isDefault || false,
-						categoryId: category.id
-					}
-				});
+				items.splice(startKey, 0, _assertClassBrand(_ToolbarComponent_brand, this, _formatCategoryMenuItem).call(this, category, link));
 				if (category.id >= 0 && categoryId >= 0 && Number(categoryId) === Number(category.id)) {
 					button.setText(category.name);
 				}
 				startKey++;
 			});
-			const options = menu.params;
-			options.items = items;
+			const menuState = _classPrivateFieldGet(_categoryMenuStateByMenu, this).get(menu);
+			const sourceBindOptions = menuState?.bindOptions ?? menu.getParams().bindOptions ?? {};
+			const bindOptions = {
+				...sourceBindOptions,
+				forceBindPosition: true
+			};
+			const options = {
+				...menu.getParams(),
+				items,
+				bindOptions
+			};
+			menu.destroy();
+			main_core.Event.unbindAll(button.getContainer(), 'click');
 			button.menuWindow = new main_popup.Menu(options);
+			_assertClassBrand(_ToolbarComponent_brand, this, _attachCategoryMenuLifecycle).call(this, button.menuWindow, true);
+			_assertClassBrand(_ToolbarComponent_brand, this, _setCategoryMenuMaxWidth).call(this, button.menuWindow);
 			main_core.Event.bind(button.getContainer(), 'click', button.menuWindow.show.bind(button.menuWindow));
 			if (entityTypeId === BX.CrmEntityType.enumeration.deal) {
 				_assertClassBrand(_ToolbarComponent_brand, this, _reloadAddButtonMenu).call(this, categories);
@@ -788,6 +803,112 @@ this.BX = this.BX || {};
 		}).catch(response => {
 			console.log('error trying reload categories', response.errors);
 		});
+	}
+	function _formatCategoryMenuItem(category, href) {
+		const content = main_core.Dom.create('span', {
+			props: {
+				className: 'crm-toolbar-category-menu-item-content'
+			},
+			children: [main_core.Dom.create('span', {
+				props: {
+					className: 'crm-toolbar-category-menu-item-name'
+				},
+				text: category.name
+			})]
+		});
+		if (category.counter > 0) {
+			main_core.Dom.append(main_core.Dom.create('span', {
+				props: {
+					className: 'crm-toolbar-category-menu-item-counter main-buttons-item-counter'
+				},
+				text: String(category.counter)
+			}), content);
+		}
+		return {
+			id: `${MENU_ID_PREFIX}${category.id}`,
+			html: content,
+			title: category.name,
+			className: 'menu-popup-no-icon crm-toolbar-category-menu-item',
+			href: href || null,
+			dataset: {
+				isDefault: category.isDefault === true || category.isDefault === 'Y',
+				categoryId: category.id
+			}
+		};
+	}
+	function _attachCategoryMenuLifecycle(menu, isBindStateInstalled = false) {
+		if (_classPrivateFieldGet(_categoryMenuStateByMenu, this).has(menu)) {
+			return;
+		}
+		const popup = menu.getPopupWindow();
+		const sourceBindOptions = menu.getParams().bindOptions ?? {};
+		const state = {
+			bindOptions: {
+				...sourceBindOptions,
+				forceBindPosition: true
+			},
+			isBindStateInstalled,
+			isResizeBound: false,
+			resizeHandler: null
+		};
+		state.resizeHandler = () => {
+			if (!popup.isShown()) {
+				return;
+			}
+			_assertClassBrand(_ToolbarComponent_brand, this, _setCategoryMenuMaxWidth).call(this, menu);
+			_assertClassBrand(_ToolbarComponent_brand, this, _adjustCategoryMenuPosition).call(this, menu);
+		};
+		_classPrivateFieldGet(_categoryMenuStateByMenu, this).set(menu, state);
+		popup.subscribe('onBeforeShow', () => {
+			_assertClassBrand(_ToolbarComponent_brand, this, _setCategoryMenuMaxWidth).call(this, menu);
+		});
+		popup.subscribe('onShow', () => {
+			if (!state.isResizeBound) {
+				main_core.Event.bind(window, 'resize', state.resizeHandler);
+				state.isResizeBound = true;
+			}
+			_assertClassBrand(_ToolbarComponent_brand, this, _adjustCategoryMenuPosition).call(this, menu);
+		});
+		popup.subscribe('onAfterClose', () => {
+			_assertClassBrand(_ToolbarComponent_brand, this, _unbindCategoryMenuResize).call(this, menu);
+		});
+		popup.subscribe('onDestroy', () => {
+			_assertClassBrand(_ToolbarComponent_brand, this, _unbindCategoryMenuResize).call(this, menu);
+			_classPrivateFieldGet(_categoryMenuStateByMenu, this).delete(menu);
+		});
+		popup.subscribe('onBeforeAdjustPosition', event => {
+			const viewportWidth = document.documentElement.clientWidth;
+			const scrollLeft = window.pageXOffset;
+			const popupWidth = popup.getPopupContainer().offsetWidth;
+			const minLeft = scrollLeft + 16;
+			const maxLeft = scrollLeft + viewportWidth - 16 - popupWidth;
+
+			// eslint-disable-next-line no-param-reassign
+			event.left = Math.min(Math.max(event.left, minLeft), maxLeft);
+		});
+	}
+	function _setCategoryMenuMaxWidth(menu) {
+		const viewportWidth = document.documentElement.clientWidth;
+		menu.getPopupWindow().setMaxWidth(Math.min(400, viewportWidth - 32));
+	}
+	function _adjustCategoryMenuPosition(menu) {
+		const state = _classPrivateFieldGet(_categoryMenuStateByMenu, this).get(menu);
+		if (!state) {
+			return;
+		}
+		if (!state.isBindStateInstalled) {
+			menu.getPopupWindow().adjustPosition(state.bindOptions);
+			state.isBindStateInstalled = true;
+			return;
+		}
+		menu.getPopupWindow().adjustPosition();
+	}
+	function _unbindCategoryMenuResize(menu) {
+		const state = _classPrivateFieldGet(_categoryMenuStateByMenu, this).get(menu);
+		if (state?.isResizeBound) {
+			main_core.Event.unbind(window, 'resize', state.resizeHandler);
+			state.isResizeBound = false;
+		}
 	}
 	function _reloadAddButtonMenu(categories) {
 		const addButtonNode = document.querySelector('.ui-btn-split.ui-btn-success');

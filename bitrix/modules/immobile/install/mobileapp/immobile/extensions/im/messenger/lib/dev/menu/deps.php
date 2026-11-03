@@ -18,7 +18,7 @@ return [
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/ui/selector',
-		'im:messenger/lib/ui/base/checkbox',
+		'ui-system/form/checkbox',
 		'im:messenger/provider/rest',
 
 	],

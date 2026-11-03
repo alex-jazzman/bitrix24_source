@@ -8,6 +8,7 @@
 	BX.Landing.Component.Filter.canCreateFolder = false;
 	BX.Landing.Component.Filter.createButton = null;
 	BX.Landing.Component.Filter.createFolderButton = null;
+	BX.Landing.Component.Filter.recycleBinButton = null;
 	BX.Landing.Component.Filter.settingsButtons = null;
 	BX.Landing.Component.Filter.ajaxPath = null;
 	BX.Landing.Component.Filter.ajaxSend = false;
@@ -30,11 +31,17 @@
 		if (toolbar && BX.Type.isString(params.landingCreateButtonId))
 		{
 			BX.Landing.Component.Filter.createButton = toolbar.getButton(params.landingCreateButtonId);
+			BX.Landing.Component.Filter.bindMenuExpandedState(BX.Landing.Component.Filter.createButton);
 		}
 
 		if (toolbar && BX.Type.isString(params.landingCreateFolderButtonId))
 		{
 			BX.Landing.Component.Filter.createFolderButton = toolbar.getButton(params.landingCreateFolderButtonId);
+		}
+
+		if (toolbar && BX.Type.isString(params.landingRecycleBinButtonId))
+		{
+			BX.Landing.Component.Filter.recycleBinButton = toolbar.getButton(params.landingRecycleBinButtonId);
 		}
 
 		if (params.landingSettingsButtons !== undefined)
@@ -67,6 +74,25 @@
 		}
 	};
 
+	// aria-expanded has to follow the real menu state, so it is driven by the menu popup itself;
+	// a button without a menu keeps no such attribute at all
+	BX.Landing.Component.Filter.bindMenuExpandedState = (button) =>
+	{
+		const menu = button && BX.Type.isFunction(button.getMenuWindow) ? button.getMenuWindow() : null;
+		if (!menu)
+		{
+			return;
+		}
+
+		const popup = menu.getPopupWindow();
+		popup.subscribe('onShow', () => {
+			button.setProps({'aria-expanded': 'true'});
+		});
+		popup.subscribe('onClose', () => {
+			button.setProps({'aria-expanded': 'false'});
+		});
+	};
+
 	BX.Landing.Component.Filter.onRecycleBinClick = () =>
 	{
 		if (BX.Landing.Component.Filter.filterId === null)
@@ -93,6 +119,16 @@
 	let announceTimerId = null;
 	let pendingAnnouncement = null;
 
+	BX.Landing.Component.Filter.announceNow = (message, politeness) =>
+	{
+		BX.Runtime.loadExtension('ui.a11y').then((exports) =>
+		{
+			exports.LiveAnnouncer.announce(message, politeness);
+		}).catch((error) => {
+			console.error('[Landing.Filter] announcement failed:', error);
+		});
+	};
+
 	// keeps only the last pending message so racing realtime refreshes don't queue stale announcements
 	BX.Landing.Component.Filter.announce = (message, politeness) =>
 	{
@@ -114,10 +150,7 @@
 				return;
 			}
 
-			BX.Runtime.loadExtension('ui.a11y').then((exports) =>
-			{
-				exports.LiveAnnouncer.announce(announcement.message, announcement.politeness);
-			});
+			BX.Landing.Component.Filter.announceNow(announcement.message, announcement.politeness);
 		}, 500);
 	};
 
@@ -222,6 +255,25 @@
 
 	BX.Landing.Component.Filter.onFilterCallback = (id, data, filter) =>
 	{
+		// the toolbar state follows the applied filter, so it is synced before any early return,
+		// but only for the own filter: BX.Landing.Filter:apply comes without arguments at all
+		if (filter && id === BX.Landing.Component.Filter.filterId)
+		{
+			const currValues = filter.getFilterFieldsValues();
+			if (currValues.DELETED === 'Y')
+			{
+				BX.Landing.Component.Filter.createButton?.setDisabled(true);
+				BX.Landing.Component.Filter.createFolderButton?.setDisabled(true);
+				BX.Landing.Component.Filter.recycleBinButton?.setProps({'aria-pressed': 'true'});
+			}
+			else
+			{
+				BX.Landing.Component.Filter.createButton?.setDisabled(false);
+				BX.Landing.Component.Filter.createFolderButton?.setDisabled(false);
+				BX.Landing.Component.Filter.recycleBinButton?.setProps({'aria-pressed': 'false'});
+			}
+		}
+
 		if (BX.Landing.Component.Filter.ajaxPath === null)
 		{
 			return;
@@ -232,21 +284,6 @@
 			return;
 		}
 		BX.Landing.Component.Filter.ajaxSend = true;
-
-		if (filter)
-		{
-			const currValues = filter.getFilterFieldsValues();
-			if (currValues.DELETED === 'Y')
-			{
-				BX.Landing.Component.Filter.createButton?.setDisabled(true);
-				BX.Landing.Component.Filter.createFolderButton?.setDisabled(true);
-			}
-			else
-			{
-				BX.Landing.Component.Filter.createButton?.setDisabled(false);
-				BX.Landing.Component.Filter.createFolderButton?.setDisabled(false);
-			}
-		}
 
 		const workArea = BX('workarea-content') || BX('air-workarea-content');
 		const sitesArea = BX('landing-sites');
@@ -374,6 +411,15 @@
 					angle: true,
 					closeByEsc: true,
 					items: landingSettingsButtons,
+					// the menu outlives a single click, so the trigger state is bound to the popup here
+					events: {
+						onPopupShow: () => {
+							button.setProps({'aria-expanded': 'true'});
+						},
+						onPopupClose: () => {
+							button.setProps({'aria-expanded': 'false'});
+						},
+					},
 				});
 			}
 			if (menu)
@@ -456,9 +502,20 @@
 		);
 	};
 
+	BX.Landing.Component.Filter.folderCreating = false;
+	BX.Landing.Component.Filter.folderErrorDialogOpen = false;
+	BX.Landing.Component.Filter.folderTrigger = null;
+
 	BX.Landing.Component.Filter.onFolderCreateClick = (button) =>
 	{
 		if (!BX.Landing.Component.Filter.canCreateFolder)
+		{
+			return;
+		}
+
+		// the flag belongs to submitFolder and its handlers: a click while the request is in flight
+		// must not release the protection against a second Site::addFolder
+		if (BX.Landing.Component.Filter.folderCreating)
 		{
 			return;
 		}
@@ -469,104 +526,178 @@
 			return;
 		}
 
+		BX.Landing.Component.Filter.folderTrigger = createFolderEl;
+
 		const folderCard = BX.Landing.Component.Filter.getFolderCard();
-		const createFolderText = BX.Landing.Component.Filter.getFolderText();
-
-		let folderCreating = false;
-
-		function ajaxAddFolder()
+		// the card is reattached on demand, so it stays detached only when the page has no
+		// placeholder at all: nothing opens then and nothing must be announced
+		if (!folderCard.isConnected)
 		{
-			if (folderCreating)
-			{
-				return;
-			}
-
-			folderCreating = true;
-
-			BX.ajax({
-				url: '/bitrix/tools/landing/ajax.php?' +
-					'action=Site::addFolder&' +
-					'type=' + BX.data(createFolderEl, 'type'),
-				method: 'POST',
-				data: {
-					data: {
-						siteId: BX.data(createFolderEl, 'siteId'),
-						fields: {
-							TITLE: createFolderText.value,
-							PARENT_ID: BX.data(createFolderEl, 'folderId'),
-						},
-					},
-					sessid: BX.message('bitrix_sessid'),
-				},
-				dataType: 'json',
-				onsuccess: function (data)
-				{
-					if (
-						typeof data.type !== 'undefined' &&
-						typeof data.result !== 'undefined'
-					)
-					{
-						if (data.type === 'error')
-						{
-							var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
-							msg.show({
-								content: data.result[0].error_description,
-								confirm: 'OK',
-								type: 'alert',
-							}).then(
-								function ()
-								{
-									folderCreating = false;
-
-									if (data.result[0].error === 'FOLDER_IS_NOT_UNIQUE')
-									{
-										createFolderText.value = '';
-										createFolderText.focus();
-									}
-									else
-									{
-										BX.fireEvent(createFolderEl, 'click');
-									}
-								},
-							);
-						}
-						else
-						{
-							window.location.reload();
-						}
-					}
-				},
-				onfailure: function (error)
-				{
-					folderCreating = false;
-				},
-			});
+			return;
 		}
 
-		createFolderText.addEventListener('keydown', function (event)
-		{
-			if (event.keyCode === 13)
-			{
-				ajaxAddFolder();
-			}
-		});
-
-		createFolderText.addEventListener('blur', function ()
-		{
-			if (createFolderText.value.length !== 0)
-			{
-				ajaxAddFolder();
-			}
-		});
-
 		BX.style(folderCard, 'display', 'block');
-		BX.focus(createFolderText);
+		BX.focus(BX.Landing.Component.Filter.getFolderText());
+		// announced past the debounced queue: it must not displace a pending list update message
+		BX.Landing.Component.Filter.announceNow(BX.message('LANDING_FILTER_FOLDER_NAME_INPUT_OPENED'), 'polite');
+	};
+
+	BX.Landing.Component.Filter.submitFolder = () =>
+	{
+		const createFolderEl = BX.Landing.Component.Filter.folderTrigger;
+		if (BX.Landing.Component.Filter.folderCreating || !createFolderEl)
+		{
+			return;
+		}
+
+		// the popup keeps no focus trap here, so the input stays alive under the error dialog:
+		// Enter is the natural way to dismiss the alert and must not send a second Site::addFolder
+		if (BX.Landing.Component.Filter.folderErrorDialogOpen)
+		{
+			return;
+		}
+
+		const createFolderText = BX.Landing.Component.Filter.getFolderText();
+		const title = createFolderText.value.trim();
+		if (title === '')
+		{
+			return;
+		}
+
+		BX.Landing.Component.Filter.folderCreating = true;
+
+		BX.ajax({
+			url: '/bitrix/tools/landing/ajax.php?' +
+				'action=Site::addFolder&' +
+				'type=' + BX.data(createFolderEl, 'type'),
+			method: 'POST',
+			data: {
+				data: {
+					siteId: BX.data(createFolderEl, 'siteId'),
+					fields: {
+						TITLE: title,
+						PARENT_ID: BX.data(createFolderEl, 'folderId'),
+					},
+				},
+				sessid: BX.message('bitrix_sessid'),
+			},
+			dataType: 'json',
+			onsuccess: function (data)
+			{
+				// the request is over whatever the response looks like, so the flag is released here only
+				BX.Landing.Component.Filter.folderCreating = false;
+
+				if (
+					typeof data.type !== 'undefined' &&
+					typeof data.result !== 'undefined'
+				)
+				{
+					if (data.type === 'error')
+					{
+						// read before any flag is raised: a malformed error response must not leave
+						// folderErrorDialogOpen set with no dialog to release it
+						const errorItem = data.result[0];
+						if (!errorItem)
+						{
+							return;
+						}
+
+						var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
+						// the input keeps the focus under the alert, so Enter and Escape still reach it:
+						// while the dialog is up they must neither resend the request nor cancel the card
+						BX.Landing.Component.Filter.folderErrorDialogOpen = true;
+						const promise = msg.show({
+							content: errorItem.error_description,
+							confirm: 'OK',
+							type: 'alert',
+						});
+						const popupWindow = msg.popup.getPopupWindow();
+						// the dialog promise settles on the confirm button only, and the popup is shared,
+						// so any way of closing it has to lead to the same state: flag released,
+						// duplicate name dropped, focus back in the input
+						let errorDialogReleased = false;
+						const releaseErrorDialog = function ()
+						{
+							if (errorDialogReleased)
+							{
+								return;
+							}
+							errorDialogReleased = true;
+
+							BX.removeCustomEvent(popupWindow, 'onPopupClose', releaseErrorDialog);
+							BX.Landing.Component.Filter.folderErrorDialogOpen = false;
+
+							if (errorItem.error === 'FOLDER_IS_NOT_UNIQUE')
+							{
+								createFolderText.value = '';
+							}
+
+							// the confirm button, the close cross or the user moved the focus out
+							// of the input, so it is returned there
+							BX.fireEvent(createFolderEl, 'click');
+						};
+						BX.addCustomEvent(popupWindow, 'onPopupClose', releaseErrorDialog);
+						promise.then(releaseErrorDialog, releaseErrorDialog);
+
+						// the dialog is a visual only alert: no role, no focus trap, the focus stays
+						// in the input, so the live region is the only way the error reaches a screen reader
+						BX.Landing.Component.Filter.announceNow(errorItem.error_description, 'assertive');
+					}
+					else
+					{
+						window.location.reload();
+					}
+				}
+			},
+			onfailure: function ()
+			{
+				BX.Landing.Component.Filter.folderCreating = false;
+			},
+		});
+	};
+
+	// returns true when the card was really closed, false when there was nothing to cancel
+	BX.Landing.Component.Filter.cancelFolder = (returnFocus) =>
+	{
+		// the card is frozen while the request is in flight and while the error dialog is open:
+		// in both cases the typed name has to survive
+		if (BX.Landing.Component.Filter.folderCreating || BX.Landing.Component.Filter.folderErrorDialogOpen)
+		{
+			return false;
+		}
+
+		const folderCard = BX.Landing.Component.Filter.getFolderCard();
+		if (folderCard.style.display !== 'block')
+		{
+			return false;
+		}
+
+		BX.Landing.Component.Filter.getFolderText().value = '';
+		BX.style(folderCard, 'display', 'none');
+
+		if (returnFocus)
+		{
+			BX.focus(BX.Landing.Component.Filter.folderTrigger);
+		}
+
+		return true;
 	};
 	BX.Landing.Component.Filter.folderCard = null;
+	// the placeholder lives inside the work area, so a list refresh discards it together with the
+	// inserted card: the cached card has to be attached to the current placeholder again
+	const attachFolderCard = (folderCard) =>
+	{
+		BX.insertAfter(folderCard, document.body.querySelector('.landing-folder-placeholder'));
+	};
 	BX.Landing.Component.Filter.getFolderCard = () =>
 	{
 		if (BX.Landing.Component.Filter.folderCard)
 		{
+			if (!BX.Landing.Component.Filter.folderCard.isConnected)
+			{
+				attachFolderCard(BX.Landing.Component.Filter.folderCard);
+			}
+
 			return BX.Landing.Component.Filter.folderCard;
 		}
 
@@ -575,6 +706,9 @@
 		const folderCard = BX.create('div', {
 			props: {
 				className: 'landing-item landing-item-folder',
+			},
+			attrs: {
+				'data-testid': 'landing-filter-folder-card',
 			},
 			children: [
 				BX.create('div', {
@@ -628,7 +762,7 @@
 
 		BX.style(folderCard, 'display', 'none');
 		BX.Landing.Component.Filter.folderCard = folderCard;
-		BX.insertAfter(folderCard, document.body.querySelector(".landing-folder-placeholder"));
+		attachFolderCard(folderCard);
 
 		return folderCard;
 	};
@@ -640,9 +774,41 @@
 			return BX.Landing.Component.Filter.folderText;
 		}
 
+		const inputAttrs = {
+			'data-testid': 'landing-filter-folder-name-input',
+		};
+		// a missing phrase would be written as the accessible name "null", which is worse than none
+		const inputLabel = BX.message('LANDING_TPL_FOLDER_NAME_INPUT_LABEL');
+		if (inputLabel)
+		{
+			inputAttrs['aria-label'] = inputLabel;
+		}
+
+		// the input is created once, so its listeners are bound once too
 		const createFolderText = BX.create('input', {
 			props: {
 				type: 'text',
+			},
+			attrs: inputAttrs,
+			events: {
+				keydown: (event) =>
+				{
+					if (event.key === 'Enter')
+					{
+						BX.Landing.Component.Filter.submitFolder();
+					}
+					else if (event.key === 'Escape')
+					{
+						// keep the page level layers from closing on the same Escape,
+						// but only when this Escape really closed the card
+						if (BX.Landing.Component.Filter.cancelFolder(true))
+						{
+							event.stopPropagation();
+						}
+					}
+				},
+				// losing focus is not a trigger of its own: the card stays open with the typed name,
+				// so the user can come back to the input and finish it
 			},
 		});
 

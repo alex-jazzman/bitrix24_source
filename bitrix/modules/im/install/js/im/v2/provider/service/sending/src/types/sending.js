@@ -33,13 +33,26 @@ export type FileMessageParams = BaseMessageParams & {
 	replyId?: number,
 };
 
+export type ForwardSource = {
+	chatType: string,
+	chatTitle: string | null,
+	parentChatId: number,
+	parentMessageId: number,
+	parentChatType: string | null,
+};
+
+export type ForwardBlock = ForwardSource & {
+	id: string,
+	userId: number,
+};
+
 export type PreparedMessage = {
 	temporaryId: string,
 	chatId: number,
 	dialogId: string,
 	authorId: number,
 	replyId: number,
-	forward: {userId: number, id: string},
+	forward: ForwardBlock,
 	forwardIds: {[string]: number},
 	text: string,
 	params: JsonObject,

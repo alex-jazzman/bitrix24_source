@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Landing\Sanitizer;
-use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.icon-set.main',
@@ -26,12 +25,13 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 <div
 	class="landing-widget-kb"
 	id="<?= $id ?>"
+	data-testid="mainpage-widget-kb-root"
 >
 	<div class="landing-widget-view-main">
-		<div class="landing-widget-kb-title">
+		<div class="landing-widget-kb-title" data-testid="mainpage-widget-kb-title">
 			<?= \htmlspecialcharsbx($arParams['TITLE']) ?>
 			<?php if ($useDemoData): ?>
-				<div class="landing-widget-kb-badge --yellow">
+				<div class="landing-widget-kb-badge --yellow" data-testid="mainpage-widget-kb-demo-badge">
 					<?= Loc::getMessage('LANDING_WIDGET_KB_DEMO_DATA') ?>
 				</div>
 			<?php endif; ?>
@@ -41,8 +41,12 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 			echo '<div class="landing-widget-kb-content-row landing-widget-content-grid">';
 			foreach ($arResult['KNOWLEDGE_BASES'] as $knowledgeBase)
 			{
+				$hasPublicUrl = array_key_exists('PUBLIC_URL', $knowledgeBase);
+				$publicUrl = Sanitizer::sanitizeHrefScheme($knowledgeBase['PUBLIC_URL'] ?? '');
 				echo '<div class="landing-widget-kb-content-row-item">';
-				echo '<a href="' . htmlspecialcharsbx(Sanitizer::sanitizeHrefScheme($knowledgeBase['PUBLIC_URL'] ?? '')) . '" target="_self" class="widget-kb-item-link">';
+				echo !$hasPublicUrl
+					? '<div class="widget-kb-item-link">'
+					: '<a href="' . htmlspecialcharsbx($publicUrl) . '" target="_self" class="widget-kb-item-link">';
 				echo '<img class="widget-kb-preview" src="' . htmlspecialcharsbx($knowledgeBase['PREVIEW'] ?? '') . '">';
 				echo '<div class="widget-kb-item-body">';
 				echo '<div class="widget-kb-item-body-head">';
@@ -53,7 +57,7 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 				echo '</div>';
 				echo '</div>';
 				echo '</div>';
-				echo '</a>';
+				echo !$hasPublicUrl ? '</div>' : '</a>';
 				echo '</div>';
 			}
 			echo '</div>';
@@ -72,10 +76,10 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 	</div>
 
 	<div class="landing-widget-view-sidebar">
-		<div class="landing-widget-kb-title">
+		<div class="landing-widget-kb-title" data-testid="mainpage-widget-kb-title">
 			<?= \htmlspecialcharsbx($arParams['TITLE']) ?>
 			<?php if ($useDemoData): ?>
-				<div class="landing-widget-kb-badge --yellow">
+				<div class="landing-widget-kb-badge --yellow" data-testid="mainpage-widget-kb-demo-badge">
 					<?= Loc::getMessage('LANDING_WIDGET_KB_DEMO_DATA') ?>
 				</div>
 			<?php endif; ?>
@@ -85,8 +89,12 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 			echo '<div class="landing-widget-kb-content-row landing-widget-content-grid">';
 			foreach ($sidebarKb as $knowledgeBase)
 			{
+				$hasPublicUrl = array_key_exists('PUBLIC_URL', $knowledgeBase);
+				$publicUrl = Sanitizer::sanitizeHrefScheme($knowledgeBase['PUBLIC_URL'] ?? '');
 				echo '<div class="landing-widget-kb-content-row-item">';
-				echo '<a href="' . htmlspecialcharsbx(Sanitizer::sanitizeHrefScheme($knowledgeBase['PUBLIC_URL'] ?? '')) . '" target="_self" class="widget-kb-item-link">';
+				echo !$hasPublicUrl
+					? '<div class="widget-kb-item-link">'
+					: '<a href="' . htmlspecialcharsbx($publicUrl) . '" target="_self" class="widget-kb-item-link">';
 				echo '<img class="widget-kb-preview" src="' . htmlspecialcharsbx($knowledgeBase['PREVIEW'] ?? '') . '">';
 				echo '<div class="widget-kb-item-views-box">';
 				echo '<div class="ui-icon-set --opened-eye">' . '</div>';
@@ -97,7 +105,7 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 				echo '<div class="widget-kb-item-title">' . \htmlspecialcharsbx($knowledgeBase['TITLE']) . '</div>';
 				echo '</div>';
 				echo '</div>';
-				echo '</a>';
+				echo !$hasPublicUrl ? '</div>' : '</a>';
 				echo '</div>';
 			}
 			echo '</div>';

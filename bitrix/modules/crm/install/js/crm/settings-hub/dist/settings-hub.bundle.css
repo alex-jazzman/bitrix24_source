@@ -1,0 +1,694 @@
+.crm-settings-hub-shell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+	max-width: 100%;
+
+	/* Height of one AIR button row (ButtonSize.MEDIUM), measured. It is not a free number: both hubs
+	   put MEDIUM buttons in the panel slot, so this is the contract the consumer already keeps. It
+	   lives here only because the reservation below has to know the height of a bar that no longer
+	   takes part in the layout. Change it if the panel ever holds a different button size. */
+	--crm-settings-hub-panel-row-height: 34px;
+}
+
+/* Room for the bar. It is out of flow (see below), so without this the last card slides under it and
+   the whole column jumps up by the bar's height the moment the form goes dirty. */
+.crm-settings-hub-shell.--panel-fixed {
+	padding-bottom: calc(
+		2 * var(--ui-space-inset-sm) + var(--crm-settings-hub-panel-row-height) + 1px
+	);
+}
+
+.crm-settings-hub-shell__sections {
+	display: flex;
+	flex-direction: column;
+}
+
+/* The action bar is the shell's own bottom edge, not a box floating in the column. The surface, the
+   divider and the padding live HERE and not on CrmHubSavePanel because the consumers put a second
+   button (Удалить) next to that component, as its sibling: with the surface on the inner component
+   the white area hugged save+cancel only, and the delete button sat outside it on the page ground.
+   While the form is clean the slot is an ordinary block child of the shell and spans the content
+   column (582px, measured against the column's own 582px); `sticky` keeps whatever the consumer put
+   there — the delete button — at the bottom edge of that column. The dirty state takes it out of the
+   column entirely, see the rule below. */
+.crm-settings-hub-shell__panel {
+	position: sticky;
+	bottom: 0;
+}
+
+/* The consumer enables the fixed state together with CrmHubSavePanel. A clean form keeps whatever
+   else the consumer put in the slot standing on the page ground, exactly as before the bar existed.
+   The bar spans the SLIDER, not the content column (PM). `fixed` rather than a negative-margin bleed
+   because the column is not centred — the slider puts a 240px menu on its left and only the
+   scrollbar gutter on its right, so the usual `margin-inline: calc(50% - 50vw)` misses BOTH edges
+   (measured: it would land on -34 and 989 inside an 876 viewport). `fixed` does not need to know the
+   column's geometry at all. Its containing block stays the frame viewport because nothing in the
+   ancestor chain establishes another one — checked for transform / filter / perspective /
+   will-change / contain before writing this, the way the sticky diagnosis was checked in the commit
+   that introduced the bar. Measured after: x 0, width 862 in an 876 viewport — the missing 14px are
+   exactly the gutter the slider reserves, so the bar stops short of it instead of sliding under a
+   scrollbar when one appears. */
+.crm-settings-hub-shell.--panel-fixed .crm-settings-hub-shell__panel {
+	position: fixed;
+	inset: auto 0 0;
+	z-index: 1;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	background: var(--ui-color-bg-content-primary);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.crm-settings-hub-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	max-width: 560px;
+	outline: none;
+}
+
+.crm-settings-hub-section__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+/* The heading stays in the DOM as the region label even when the section layout hides it. */
+.crm-settings-hub-section__title.--visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.crm-settings-hub-section:focus-visible {
+	box-shadow: 0 0 0 2px var(--ui-color-accent-main-primary);
+	border-radius: var(--ui-border-radius-md);
+}
+
+/* Default control layout - the shell's scalar/navigation controls share this stylesheet
+   because they always render inside a section (no per-control css by design). */
+.crm-settings-hub-toggle-control,
+.crm-settings-hub-navigation-control,
+.crm-settings-hub-field-control,
+.crm-settings-hub-text-control {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.crm-settings-hub-toggle-control__row,
+.crm-settings-hub-navigation-control__row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-sm);
+}
+
+.crm-settings-hub-toggle-control__switch {
+	position: relative;
+	display: inline-flex;
+	cursor: pointer;
+}
+
+.crm-settings-hub-toggle-control__switch:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-toggle-control__switch.--disabled {
+	cursor: not-allowed;
+}
+
+.crm-settings-hub-field-control__label {
+	color: var(--ui-color-base-2);
+}
+
+.crm-settings-hub-toggle-control__label,
+.crm-settings-hub-navigation-control__label,
+.crm-settings-hub-text-control__label {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-text-control__value {
+	color: var(--ui-color-base-2);
+}
+
+.crm-settings-hub-toggle-control__description,
+.crm-settings-hub-toggle-control__hint,
+.crm-settings-hub-navigation-control__hint,
+.crm-settings-hub-field-control__hint,
+.crm-settings-hub-text-control__hint {
+	color: var(--ui-color-base-3);
+}
+
+.crm-settings-hub-toggle-control.--disabled .crm-settings-hub-toggle-control__label,
+.crm-settings-hub-navigation-control.--disabled .crm-settings-hub-navigation-control__label,
+.crm-settings-hub-field-control.--disabled {
+	opacity: 0.6;
+}
+
+.crm-settings-hub-passport-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	background: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.crm-settings-hub-passport-card__title {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-passport-card__subtitle {
+	color: var(--ui-color-base-3);
+}
+
+.crm-settings-hub-passport-hero {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	/* Symmetric top and bottom. The card used to sit 24 over 20, which read as a tilt rather than as
+	   a rhythm — there is nothing above the avatar row that needs the extra four pixels. */
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+/* The avatar sits on the middle of the content column, not on its first line. Top-aligned it read as
+   an icon attached to the name; the column is a block of three things — name, description, placement
+   — and the tile belongs to the block.
+
+   It is held there by a TOP offset, not by centring, and that is what the margin on __avatar is for.
+   Centring is a function of the column's height, so every pixel the column gained in edit mode moved
+   the tile by half of it: measured on the stand (type 1032) the column grows 120 -> 150 and the
+   avatar slid 15px down the moment the pencil was pressed. Artwork drifting while the name is being
+   typed is what PM called "тянет". Any future row inside the mode would only widen that gap, which is
+   the second reason the tile is not tied to the column's height at all. */
+.crm-settings-hub-passport-hero__top {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inset-sm2);
+}
+
+/* Placeholder tile for the type avatar: the composed graphic of the layout is not exported yet.
+   The margin is the position centring produced in READ mode — (120 - 78) / 2 on the canonical
+   passport — frozen, so the tile stands still and edit mode cannot reach it. It is a constant on
+   purpose: the point is that this number does NOT follow the column any more. */
+.crm-settings-hub-passport-hero__avatar {
+	position: relative;
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 78px;
+	height: 78px;
+	margin-top: 21px;
+	background: var(--ui-color-design-tinted-bg);
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.crm-settings-hub-passport-hero__avatar-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.crm-settings-hub-passport-hero__badge {
+	position: absolute;
+	right: -4px;
+	bottom: -4px;
+}
+
+/* The column holds three different things — a 25px name, a line of prose and a control — and 6px
+   between them read as one clump: the description looked glued under the name and the placement
+   button glued under the description. 8px separates the name from its description; the placement
+   button then takes a step of its own below (see __placement) — it is a control, not another line of
+   text, and it earns the extra distance the prose does not. The same rhythm holds in edit mode, where
+   the description grows into a bordered field. */
+.crm-settings-hub-passport-hero__content {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	min-width: 0;
+}
+
+.crm-settings-hub-passport-hero__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	min-height: 33px;
+}
+
+/* The pencil belongs to the name, not beside it: light, tucked in close and sitting on the name's
+   bottom edge rather than floating at its optical centre, where it read as a second element of the
+   row. Size comes from the button (AIR ties --ui-btn-icon-size to the size class: xs is 14px, sm is
+   20px), so it is asked for with the prop rather than fought over in CSS.
+   The colour has no prop — AIR fixes it at --ui-color-design-plain-content, which is the same
+   #525C69 as the description and made the pencil read as text. Overridden through the button's own
+   variable, not the icon's: .ui-btn .ui-icon-set already maps one onto the other. The selector
+   carries AIR's own classes because AIR sets the variable at (0,3,0) and a single class would lose.
+   The token is the plain style's secondary icon colour, not a raw grey — it flips with the theme. */
+.ui-btn.--air.--style-plain.crm-settings-hub-passport-hero__edit {
+	--ui-btn-color: var(--ui-color-design-plain-content-icon-secondary);
+}
+
+.crm-settings-hub-passport-hero__edit {
+	align-self: flex-end;
+}
+
+.crm-settings-hub-passport-hero__title {
+	color: var(--ui-color-base-0);
+}
+
+/* Editing happens on this very element, so it must not gain a box, a background or an outline: the
+   caret is the whole affordance, and anything else would move the text the moment it is clicked.
+   Safe as an accessibility trade only because the element is a textbox — the caret IS its focus
+   indicator, the same bargain every in-place title editor makes. */
+.crm-settings-hub-passport-hero__title.--editable {
+	min-width: 1px;
+	outline: none;
+	cursor: text;
+}
+
+/* An emptied name would otherwise collapse to a caret on blank space with nothing to say what the
+   field is. Enter is intercepted and paste is flattened, so nothing leaves a stray <br> behind and
+   :empty stays honest. */
+.crm-settings-hub-passport-hero__title.--editable:empty::before {
+	content: attr(data-placeholder);
+	color: var(--ui-color-design-outline-content-secondary);
+}
+
+.crm-settings-hub-passport-hero__description {
+	color: var(--ui-color-design-outline-content);
+}
+
+/* Vertical breathing room inside the description field. BInput gives its textarea 2px top and
+   bottom, which is right for a form row and wrong here: the two rows of prose ended up touching the
+   box. Reaching into the input's internals is deliberate and kept to one property — the component
+   has no roomier size to ask for (it is already --l), and this is the only place where its textarea
+   is a paragraph rather than a field in a form. */
+.crm-settings-hub-passport-hero__description .ui-system-input-value.--multi {
+	padding-block: var(--ui-space-inset-xs);
+}
+
+.crm-settings-hub-passport-hero__description-text {
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+/* One step muted from the description itself, same semantic family — and it flips with the theme,
+   unlike a raw base token. */
+.crm-settings-hub-passport-hero__description-text.--empty {
+	color: var(--ui-color-design-outline-content-secondary);
+}
+
+.crm-settings-hub-passport-hero__description-text:disabled {
+	cursor: default;
+}
+
+.crm-settings-hub-passport-hero__description-text.--read-only {
+	cursor: default;
+}
+
+.crm-settings-hub-passport-hero__location {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm2) 11px var(--ui-space-inset-sm2) var(--ui-space-inset-sm);
+	background: var(--ui-color-design-outline-a2-focused-bg);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.crm-settings-hub-passport-hero__location-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+
+	flex: 0 0 auto;
+}
+
+.crm-settings-hub-passport-hero__location-title {
+	flex: 1 1 auto;
+	color: var(--ui-color-base-0);
+}
+
+.crm-settings-hub-passport-hero__location-action {
+	flex: 0 0 auto;
+}
+
+.crm-settings-hub-passport-hero__details {
+	min-width: 0;
+}
+
+.crm-settings-hub-passport-hero__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+/* Its own line in the content column, so the button never shares a row with the description and
+   keeps the column's own rhythm instead of bringing a margin of its own.
+   A column, not a row: the placement control puts its permission alert in the same slot, and inline
+   it would sit beside the button and squeeze it. */
+.crm-settings-hub-passport-hero__placement {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+.crm-settings-hub-card {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.crm-settings-hub-card__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+	padding-bottom: var(--ui-space-inset-lg);
+}
+
+.crm-settings-hub-card__icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
+}
+
+.crm-settings-hub-card__title {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-card__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.crm-settings-hub-card.--collapsible .crm-settings-hub-card__header {
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.crm-settings-hub-card.--collapsible .crm-settings-hub-card__header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-card.--collapsible.--open .crm-settings-hub-card__header {
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	padding-bottom: var(--ui-space-stack-sm);
+}
+
+/* A collapsed card ends at its header, so the header's own bottom padding is no longer a gap before
+   the content — it just doubles the card's inset (20px on top of 24px, a 92px card where 72px is the
+   whole of it). The gap belongs to the open state, which sets its own above. */
+.crm-settings-hub-card.--collapsible:not(.--open) .crm-settings-hub-card__header {
+	padding-bottom: 0;
+}
+
+.crm-settings-hub-card__chevron {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+/* The action takes the right edge instead of the chevron; a header without one keeps exactly the
+   layout it had. */
+.crm-settings-hub-card__action {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	margin-left: auto;
+}
+
+.crm-settings-hub-card__action ~ .crm-settings-hub-card__chevron {
+	margin-left: var(--ui-space-inset-2xs);
+}
+
+.crm-settings-hub-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm2);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-base-2);
+	line-height: 1.5;
+}
+
+.crm-settings-hub-banner.--warning {
+	background: var(--ui-color-accent-soft-orange-3);
+	border: 1px solid var(--ui-color-accent-soft-orange-1);
+}
+
+.crm-settings-hub-banner__icon {
+	flex-shrink: 0;
+	margin-top: var(--ui-space-inset-3xs);
+	color: var(--ui-color-accent-main-warning);
+}
+
+/* One setting of the hub: a full-width row on the tinted panel the section draws — the settings
+   block of the wizard mockup. The icon, the title and the switch line up on the first grid row; the
+   description, the note and the extra field span the full width underneath.
+   __body and __aside are `display: contents` so their children become grid items of the row itself:
+   the markup stays one flat structure instead of nested boxes that would each need their own
+   alignment. */
+.crm-settings-hub-feature-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--ui-space-stack-sm) var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg) var(--ui-space-inset-lg);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.crm-settings-hub-feature-card__body,
+.crm-settings-hub-feature-card__aside {
+	display: contents;
+}
+
+/* Only the first line is placed by hand: icon, title and switch. */
+.crm-settings-hub-feature-card__icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	grid-row: 1;
+	grid-column: 1;
+}
+
+.crm-settings-hub-feature-card__title {
+	grid-row: 1;
+	grid-column: 2;
+	color: var(--ui-color-base-0);
+}
+
+.crm-settings-hub-feature-card__switch {
+	position: relative;
+	display: inline-flex;
+	grid-row: 1;
+	grid-column: 3;
+	cursor: pointer;
+}
+
+.crm-settings-hub-feature-card__description,
+.crm-settings-hub-feature-card__note,
+.crm-settings-hub-feature-card__control,
+.crm-settings-hub-feature-card__hint,
+.crm-settings-hub-feature-card__action,
+.crm-settings-hub-feature-card__details {
+	grid-column: 1 / -1;
+}
+
+/* The sequence under the first line is declared here and does not follow the markup: the switch and
+   its field come first in the DOM so the switch's tab stop precedes the action button's
+   (feature-card.ts), and `order` puts the field back at the bottom for the eye. Auto-placement still
+   assigns the rows themselves, in this order — so an element the row does not render grows no empty
+   track and no stray gap. */
+.crm-settings-hub-feature-card__description {
+	order: 1;
+}
+
+.crm-settings-hub-feature-card__note {
+	order: 2;
+}
+
+.crm-settings-hub-feature-card__hint {
+	order: 3;
+}
+
+.crm-settings-hub-feature-card__action {
+	order: 4;
+}
+
+.crm-settings-hub-feature-card__details {
+	order: 5;
+}
+
+.crm-settings-hub-feature-card__control {
+	order: 6;
+}
+
+/* The button hugs its text instead of stretching to the row, and sits at the left edge under the
+   description — the mockup's own placement. */
+.crm-settings-hub-feature-card__action {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs);
+	align-items: center;
+}
+
+.crm-settings-hub-feature-card__description {
+	color: var(--ui-color-design-outline-content);
+}
+
+.crm-settings-hub-feature-card__note {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-feature-card__hint {
+	color: var(--ui-color-base-3);
+}
+
+/* An off row is the card surface at half strength over the panel — the mockup's own recipe. The
+   token ramp has nothing between soft-blue-3 and white, so the blend is computed here; BOTH sides of
+   it are tokens, which is the point. It used to be a literal white gradient laid over the token, and
+   that half could not follow a theme: AIR's dark palette is context-based (.--ui-context-content-dark),
+   so in a dark context the row would have been washed out by a white that never darkens. Nothing
+   places the hub in that context today — this is closing a trap, not a visible defect.
+   Light theme is unchanged to the byte: 50% #FFFFFF over #EDF7FF is #F6FBFF either way.
+   Off does not recolour the row, it fades it: the icon stays accent and the title stays black. */
+.crm-settings-hub-feature-card.--off {
+	background: color-mix(
+		in srgb,
+		var(--ui-color-bg-content-primary) 50%,
+		var(--ui-color-accent-soft-blue-3)
+	);
+}
+
+.crm-settings-hub-feature-card.--off .crm-settings-hub-feature-card__icon,
+.crm-settings-hub-feature-card.--off .crm-settings-hub-feature-card__title {
+	opacity: .7;
+}
+
+.crm-settings-hub-feature-card.--off .crm-settings-hub-feature-card__description {
+	opacity: .8;
+}
+
+/* The whole row toggles the setting, so it takes the pointer; the switch inside keeps its own
+   handler and is excluded from the row's click (feature-card.ts). The focus ring sits on the switch,
+   which is where the tab stop and the switch semantics are. */
+.crm-settings-hub-feature-card.--clickable {
+	cursor: pointer;
+}
+
+.crm-settings-hub-feature-card__switch:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-feature-card.--disabled,
+.crm-settings-hub-feature-card.--disabled .crm-settings-hub-feature-card__switch {
+	cursor: not-allowed;
+}
+
+.crm-settings-hub-feature-card.--disabled .crm-settings-hub-feature-card__title,
+.crm-settings-hub-feature-card.--disabled .crm-settings-hub-feature-card__description {
+	opacity: .6;
+}
+
+/* Groups of sub-options stack under the row's first line, each with its own heading. */
+.crm-settings-hub-feature-card__details {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.crm-settings-hub-option-row {
+	padding: var(--ui-space-inset-sm2) 0;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.crm-settings-hub-option-row.--last {
+	border-bottom: none;
+}
+
+.crm-settings-hub-option-row__main {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-md);
+}
+
+.crm-settings-hub-option-row.--interactive .crm-settings-hub-option-row__main {
+	cursor: pointer;
+}
+
+.crm-settings-hub-option-row.--disabled {
+	opacity: .5;
+}
+
+/* Свитчер центрируется по первой строке заголовка, чтобы не «скакать» при длинном тексте. */
+.crm-settings-hub-option-row__switch {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	height: 20px;
+}
+
+.crm-settings-hub-option-row__switch:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-option-row__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.crm-settings-hub-option-row__title {
+	display: block;
+	color: var(--ui-color-base-1);
+	line-height: 20px;
+}
+
+.crm-settings-hub-option-row__description {
+	display: block;
+	margin-top: var(--ui-space-stack-3xs);
+	color: var(--ui-color-base-3);
+	line-height: 1.4;
+}
+
+.crm-settings-hub-option-row__action {
+	flex-shrink: 0;
+}
+
+.crm-settings-hub-option-row__details {
+	margin: 0 0 var(--ui-space-stack-sm2) 43px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+/* Just the save/cancel pair now. The surface it used to draw moved up to the shell's panel slot
+   (hub-shell.css): this component is one of two things standing in that bar, not the bar itself. */
+.crm-settings-hub-save-panel {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}

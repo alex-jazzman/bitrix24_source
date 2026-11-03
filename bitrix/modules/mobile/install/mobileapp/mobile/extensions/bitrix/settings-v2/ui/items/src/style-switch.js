@@ -89,11 +89,13 @@ jn.define('settings-v2/ui/items/src/style-switch', (require, exports, module) =>
 
 			return Card(
 				{
+					testId: this.getTestId(`style-card-wrapper-${styleType}`),
 					excludePaddingSide: { all: true },
 					onClick: () => this.onChange(styleType),
 				},
 				Card(
 					{
+						testId: this.getTestId(`style-card-${styleType}`),
 						design: CardDesign.PRIMARY,
 						accent: selected,
 						border: true,

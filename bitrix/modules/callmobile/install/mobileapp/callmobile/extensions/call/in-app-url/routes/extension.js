@@ -1,6 +1,9 @@
 jn.define('call/in-app-url/routes', (require, exports, module) => {
 	const { Color } = require('tokens');
 
+	const routesExtensionData = (jnExtensionData ? jnExtensionData.get('call:in-app-url/routes') : null) || {};
+	BX.message(routesExtensionData.PHRASES || {});
+
 	const openFollowup = (callId) => {
 		PageManager.openComponent('JSStackComponent', {
 			scriptPath: availableComponents['call:followup'].publicUrl,
@@ -14,7 +17,7 @@ jn.define('call/in-app-url/routes', (require, exports, module) => {
 				settings: {
 					objectName: 'layoutWidget',
 					titleParams: {
-						text: BX.message('MOBILE_CALL_COPILOT_COMPONENT_TITLE'),
+						text: BX.message('MOBILE_CALL_COPILOT_COMPONENT_TITLE_MSGVER_1'),
 						type: 'entity',
 						textColor: Color.base4.toHex(),
 					},

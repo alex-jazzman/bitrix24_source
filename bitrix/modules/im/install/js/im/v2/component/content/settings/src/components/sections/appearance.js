@@ -4,7 +4,8 @@ import { ThemeManager } from 'im.v2.lib.theme';
 
 import { ChatBackground } from '../blocks/background';
 import { ChatAlignment } from '../blocks/alignment';
-import { initDemoData } from './functions/init-demo-data';
+import { ChatQuickReaction } from '../blocks/quick-reaction.js';
+import { initAppearanceDemoData, initQuickReactionDemoData } from './functions/init-demo-data';
 
 import type { BackgroundStyle } from 'im.v2.lib.theme';
 
@@ -13,11 +14,12 @@ import './css/appearance.css';
 // @vue/component
 export const AppearanceSection = {
 	name: 'AppearanceSection',
-	components: { ChatDialog, ChatBackground, ChatAlignment },
-	data(): { fakeDialogId: string }
+	components: { ChatDialog, ChatBackground, ChatAlignment, ChatQuickReaction },
+	data(): { fakeDialogId: string, quickReactionDialogId: string }
 	{
 		return {
 			fakeDialogId: '',
+			quickReactionDialogId: '',
 		};
 	},
 	computed:
@@ -35,7 +37,8 @@ export const AppearanceSection = {
 	},
 	created()
 	{
-		this.fakeDialogId = initDemoData();
+		this.fakeDialogId = initAppearanceDemoData();
+		this.quickReactionDialogId = initQuickReactionDemoData();
 	},
 	methods:
 	{
@@ -56,6 +59,15 @@ export const AppearanceSection = {
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_APPEARANCE_BACKGROUND') }}
 				</div>
 				<ChatBackground />
+			</div>
+			<div class="bx-im-settings-section-content__separator"></div>
+			<div class="bx-im-settings-section-content__block">
+				<div class="bx-im-settings-section-content__block_title">
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_APPEARANCE_QUICKREACTREACTION') }}
+				</div>
+				<ChatQuickReaction
+					:dialogId="quickReactionDialogId"
+				/>
 			</div>
 			<div class="bx-im-settings-section-content__separator"></div>
 			<div class="bx-im-settings-section-content__block">

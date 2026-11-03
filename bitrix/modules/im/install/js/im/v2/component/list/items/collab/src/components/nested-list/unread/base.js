@@ -1,9 +1,11 @@
 import { type JsonObject } from 'main.core';
 import { type BaseEvent, type EventEmitter } from 'main.core.events';
+import { markRaw } from 'ui.vue3';
 
 import { BaseRecentList } from 'im.v2.component.list.items.base';
+import { ActiveCallList } from 'im.v2.component.list.items.elements.active-call-list';
 import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
-import { type ImModelRecentItem } from 'im.v2.model';
+import { type ImModelCallItem, type ImModelRecentItem } from 'im.v2.model';
 import { DraftManager } from 'im.v2.lib.draft';
 import { Notifier } from 'im.v2.lib.notifier';
 import { type BaseRecentService } from 'im.v2.provider.service.recent';
@@ -16,7 +18,7 @@ import { CollabNestedRecentMenu } from '../classes/context-menu';
 // @vue/component
 export const BaseCollabNestedUnreadList = {
 	name: 'BaseCollabNestedUnreadList',
-	components: { BaseRecentList, RecentEmptyState },
+	components: { ActiveCallList, BaseRecentList, RecentEmptyState },
 	props: {
 		parentChatId: {
 			type: Number,
@@ -38,6 +40,7 @@ export const BaseCollabNestedUnreadList = {
 			isLoading: false,
 			isLoadingNextPage: false,
 			firstPageLoaded: false,
+			listIsScrolled: false,
 		};
 	},
 	computed: {
@@ -51,7 +54,7 @@ export const BaseCollabNestedUnreadList = {
 	},
 	async created()
 	{
-		this.contextMenuManager = new CollabNestedRecentMenu({ emitter: this.getEmitter() });
+		this.contextMenuManager = markRaw(new CollabNestedRecentMenu({ emitter: this.getEmitter() }));
 
 		this.clearCollection();
 		await this.loadInitialItems();
@@ -89,6 +92,10 @@ export const BaseCollabNestedUnreadList = {
 			this.firstPageLoaded = true;
 			this.isLoading = false;
 		},
+		onListScroll(isScrolled: boolean)
+		{
+			this.listIsScrolled = isScrolled;
+		},
 		async onLoadNextPage()
 		{
 			if (this.isLoadingNextPage || !this.getUnreadRecentService().hasMoreItemsToLoad())
@@ -103,6 +110,10 @@ export const BaseCollabNestedUnreadList = {
 		onSelectChat(dialogId: string)
 		{
 			this.$emit('selectChat', dialogId);
+		},
+		onCallClick({ item }: { item: ImModelCallItem })
+		{
+			this.onSelectChat(item.dialogId);
 		},
 		onItemRightClick(payload: { item: ImModelRecentItem, event: PointerEvent })
 		{
@@ -157,12 +168,21 @@ export const BaseCollabNestedUnreadList = {
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 			data-test-id="im_container-recent__unread-list"
 		>
+			<template #before-scroll>
+				<ActiveCallList
+					:listIsScrolled="listIsScrolled"
+					:parentChatId="parentChatId"
+					@onCallClick="onCallClick"
+				/>
+			</template>
 			<template #before-list>
 				<slot name="fixed-chats"></slot>
 			</template>

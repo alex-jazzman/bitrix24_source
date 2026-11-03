@@ -1,6 +1,7 @@
 import { Layout } from './layout';
 
 export const NavigationMenuItem = Object.freeze({
+	messenger: 'messenger',
 	[Layout.chat]: Layout.chat,
 	[Layout.copilot]: Layout.copilot,
 	[Layout.collab]: Layout.collab,
@@ -11,7 +12,10 @@ export const NavigationMenuItem = Object.freeze({
 	[Layout.market]: Layout.market,
 	[Layout.settings]: Layout.settings,
 	[Layout.taskComments]: Layout.taskComments,
+	[Layout.vibecodeApp]: Layout.vibecodeApp,
 	call: 'call',
 	timemanager: 'timemanager',
 	homepage: 'homepage',
 });
+
+export type NavigationMenuItemType = $Values<typeof NavigationMenuItem>;

@@ -16,7 +16,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		getMimeType,
 	} = require('utils/file');
 	const { qrauth } = require('qrauth/utils');
-	const { showToast } = require('toast');
+	const { showToast, showErrorToast } = require('toast');
 	const { Icon } = require('assets/icons');
 
 	const { Box } = require('ui-system/layout/box');
@@ -29,6 +29,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const {
 		DiskPull,
+		UnifiedLinkPullStrategy,
 		createCommandExistsMiddleware,
 		createCommandAllowedMiddleware,
 		createResolveObjectIdMiddleware,
@@ -60,12 +61,17 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 	const { DiskUploader } = require('disk/uploader');
 	const { createBoard } = require('disk/create-board');
 	const { finalizePendingRemovals } = require('disk/remove');
+	const { getUnifiedLinkDataWithRights } = require('disk/opener/unified-link/rest');
+
+	const ACCESS_DENIED_ERROR_CODES = new Set(['FORBIDDEN', 'ACCESS_DENIED']);
 
 	/**
 	 * @abstract
 	 */
 	class BaseFileGrid extends LayoutComponent
 	{
+		#unifiedLinkOpenInProgress = false;
+
 		constructor(props)
 		{
 			super(props);
@@ -113,7 +119,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 
 			this.sorting = new FileGridSorting({ type: sortingType, isASC });
 
-			this.state.folderRights = this.getFolderId() ? selectRightsById(store.getState(), this.getFolderId()) : {};
+			this.state.folderRights = this.getInitialFolderRights();
 
 			this.moreMenu = new FileGridMoreMenu(
 				this.sorting.getType(),
@@ -192,7 +198,44 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		 */
 		getCacheId()
 		{
-			return `disk:file-grid.${this.getId()}.${env.userId}.${this.getFolderId()}`;
+			const cacheId = `disk:file-grid.${this.getId()}.${env.userId}.${this.getFolderId()}`;
+			const uniqueCode = this.getUniqueCode();
+
+			return uniqueCode ? `${cacheId}.${uniqueCode}` : cacheId;
+		}
+
+		/**
+		 * @protected
+		 * @return {string|null}
+		 */
+		getUniqueCode()
+		{
+			const { uniqueCode } = this.props.context ?? {};
+
+			return Type.isStringFilled(uniqueCode) ? uniqueCode : null;
+		}
+
+		/**
+		 * @protected
+		 * @return {boolean}
+		 */
+		isUnifiedLinkMode()
+		{
+			return this.getUniqueCode() !== null;
+		}
+
+		/**
+		 * @protected
+		 * @return {FolderRights}
+		 */
+		getInitialFolderRights()
+		{
+			if (this.isUnifiedLinkMode())
+			{
+				return this.props.context.rights ?? {};
+			}
+
+			return this.getFolderId() ? selectRightsById(store.getState(), this.getFolderId()) : {};
 		}
 
 		/**
@@ -367,6 +410,11 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		 */
 		isShowFloatingButton()
 		{
+			if (this.isUnifiedLinkMode())
+			{
+				return this.state.folderRights?.canAdd === true;
+			}
+
 			return true;
 		}
 
@@ -487,12 +535,30 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		getListActions()
 		{
 			return {
-				loadItems: 'diskmobile.Folder.getChildren',
+				loadItems: this.isUnifiedLinkMode()
+					? 'diskmobile.Folder.getChildrenByUnifiedLink'
+					: 'diskmobile.Folder.getChildren',
 			};
 		}
 
 		getListActionParams()
 		{
+			if (this.isUnifiedLinkMode())
+			{
+				return {
+					loadItems: {
+						uniqueCode: this.getUniqueCode(),
+						search: this.getSearchParams().searchString,
+						sortingType: this.state.sortingType,
+						order: {
+							[this.state.sortingType]: this.state.isASC ? 'ASC' : 'DESC',
+						},
+						context: this.getRequestContext(),
+						showRights: 'Y',
+					},
+				};
+			}
+
 			return {
 				loadItems: {
 					id: this.getFolderId(),
@@ -508,6 +574,17 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 					showRights: 'Y',
 				},
 			};
+		}
+
+		/**
+		 * @protected
+		 * @return {{ storageId: number|null }}
+		 */
+		getRequestContext()
+		{
+			const { storageId } = this.props.context ?? {};
+
+			return { storageId: storageId ?? this.getStorageId() };
 		}
 
 		/**
@@ -582,6 +659,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				actionCallbacks: {
 					loadItems: this.onItemsLoaded,
 				},
+				actionResponseAdapter: this.onListResponse,
 				pull: {
 					moduleId: 'disk',
 					callback: this.onPullCallback,
@@ -698,6 +776,38 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 			];
 		}
 
+		onListResponse = (response) => {
+			if (this.isUnifiedLinkMode() && this.hasAccessDeniedError(response))
+			{
+				void this.showUnifiedLinkForbiddenToast();
+			}
+
+			return response;
+		};
+
+		/**
+		 * @protected
+		 * @return {Promise<void>}
+		 */
+		async showUnifiedLinkForbiddenToast()
+		{
+			const opener = await requireLazy('disk:opener/unified-link/opener', false);
+
+			opener?.showUnifiedLinkForbiddenToast(this.parentWidget);
+		}
+
+		/**
+		 * @protected
+		 * @param {Object} response
+		 * @return {boolean}
+		 */
+		hasAccessDeniedError(response)
+		{
+			const errors = response?.errors;
+
+			return Array.isArray(errors) && errors.some(({ code }) => ACCESS_DENIED_ERROR_CODES.has(code));
+		}
+
 		onItemsLoaded = (responseData, context) => {
 			const { items, users, storages, currentFolderRights } = responseData || {};
 			const isCache = context === 'cache';
@@ -786,16 +896,87 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 
 			return processors.reduce((prev, process) => prev.then((message) => process(message)), Promise.resolve(data))
 				.then((message) => {
-					const { objectId, actionType } = message;
+					if (this.isUnifiedLinkMode())
+					{
+						return this.processUnifiedLinkPullMessage(message);
+					}
 
-					return {
-						params: {
-							eventName: actionType,
-							items: [{ id: objectId }],
-						},
-					};
+					return this.buildPullListMessage(message);
 				});
 		};
+
+		/**
+		 * @protected
+		 * @param {Object} message
+		 * @return {Object}
+		 */
+		buildPullListMessage(message)
+		{
+			const { objectId, actionType } = message;
+
+			return {
+				params: {
+					eventName: actionType,
+					items: [{ id: objectId }],
+				},
+			};
+		}
+
+		/**
+		 * @protected
+		 * @param {Object} message
+		 * @return {Promise<Object>}
+		 */
+		processUnifiedLinkPullMessage(message)
+		{
+			const strategy = DiskPull.resolveUnifiedLinkPullStrategy(message.command);
+
+			if (strategy === UnifiedLinkPullStrategy.RELOAD_LIST)
+			{
+				this.reload();
+
+				return Promise.reject(new Error('Unified link list is reloaded instead of the added row request'));
+			}
+
+			if (strategy === UnifiedLinkPullStrategy.UPDATE_ROW)
+			{
+				return this.reloadUnifiedLinkRow(message.objectId);
+			}
+
+			return Promise.resolve(this.buildPullListMessage(message));
+		}
+
+		/**
+		 * @protected
+		 * @param {number} objectId
+		 * @return {Promise<Object>}
+		 */
+		async reloadUnifiedLinkRow(objectId)
+		{
+			const { uniqueCode } = selectById(store.getState(), objectId) ?? {};
+
+			if (!Type.isStringFilled(uniqueCode))
+			{
+				return Promise.reject(new Error('Unified link row has no own unique code - skip'));
+			}
+
+			const response = await getUnifiedLinkDataWithRights(uniqueCode).catch((error) => {
+				console.error(error);
+
+				return null;
+			});
+
+			const diskObject = response?.data?.diskObject;
+
+			if (!diskObject)
+			{
+				return Promise.reject(new Error('Could not load the unified link row'));
+			}
+
+			dispatch(filesUpsertedFromServer([diskObject]));
+
+			return Promise.reject(new Error('Unified link row is updated through the link data'));
+		}
 
 		onBeforeItemsSetState = (items, params) => {
 			const fileEntities = selectEntities(store.getState());
@@ -823,15 +1004,17 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		};
 
 		onBeforeItemsRender = (items) => {
+			const uniqueCode = this.getUniqueCode();
+
 			return items.map((item, index) => ({
 				...item,
 				showBorder: index !== items.length - 1,
 				order: {
 					[this.state.sortingType]: this.state.isASC ? 'ASC' : 'DESC',
 				},
-				context: {
-					storageId: this.getStorageId(),
-				},
+				context: uniqueCode
+					? { ...this.getRequestContext(), uniqueCode, rights: this.state.folderRights ?? {} }
+					: this.getRequestContext(),
 				parentWidget: this.parentWidget,
 				showStorageName: this.showStorageName(),
 				relativeFolderId: this.getFolderId(),
@@ -840,6 +1023,12 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 
 		onItemPress = (id) => {
 			const item = selectById(store.getState(), id);
+
+			if (this.isUnifiedLinkMode())
+			{
+				return this.#openUnifiedLinkItem(item);
+			}
+
 			if (item.isFolder)
 			{
 				return this.#openFolder(item);
@@ -909,6 +1098,92 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		};
 
 		/**
+		 * @param {FileReduxModel} folder
+		 * @return {FolderScreenContext|undefined}
+		 */
+		#getChildScreenContext(folder)
+		{
+			if (!this.isUnifiedLinkMode())
+			{
+				return undefined;
+			}
+
+			return {
+				storageId: this.getStorageId(),
+				uniqueCode: folder.uniqueCode,
+				rights: folder.rights ?? null,
+			};
+		}
+
+		/**
+		 * @param {FileReduxModel} item
+		 */
+		async #openUnifiedLinkItem(item)
+		{
+			if (this.#unifiedLinkOpenInProgress)
+			{
+				return null;
+			}
+
+			this.#unifiedLinkOpenInProgress = true;
+
+			try
+			{
+				return await this.#requestUnifiedLinkItem(item);
+			}
+			finally
+			{
+				this.#unifiedLinkOpenInProgress = false;
+			}
+		}
+
+		/**
+		 * @param {FileReduxModel} item
+		 */
+		async #requestUnifiedLinkItem(item)
+		{
+			const opener = await this.#requireUnifiedLinkOpener();
+			if (!opener)
+			{
+				return null;
+			}
+
+			if (!Type.isStringFilled(item.uniqueCode))
+			{
+				opener.showUnifiedLinkForbiddenToast(this.parentWidget);
+
+				return null;
+			}
+
+			const openerProps = {
+				uniqueCode: item.uniqueCode,
+				parentWidget: this.parentWidget,
+			};
+
+			if (!item.isFolder)
+			{
+				return opener.unifiedOpener(openerProps).catch(() => null);
+			}
+
+			const folder = await opener.resolveUnifiedFolder(openerProps).catch(() => null);
+
+			return folder ? this.#openFolder({ ...item, rights: folder.rights }) : null;
+		}
+
+		async #requireUnifiedLinkOpener()
+		{
+			const opener = await requireLazy('disk:opener/unified-link/opener', false);
+			if (!opener)
+			{
+				showErrorToast({}, this.parentWidget);
+
+				return null;
+			}
+
+			return opener;
+		}
+
+		/**
 		 * @param {Object} folder
 		 * @param {number} folder.id
 		 * @param {string} folder.name
@@ -938,6 +1213,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 					breadcrumbs: [...this.breadcrumbs],
 					groupId,
 					isCollabToolEnabled,
+					context: this.#getChildScreenContext(folder),
 				}),
 			);
 		}
@@ -994,6 +1270,11 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 
 		canUserUploadToFolder()
 		{
+			if (this.isUnifiedLinkMode())
+			{
+				return this.state.folderRights?.canAdd === true;
+			}
+
 			const preventByCollaber = this.currentUserIsCollaber() && !this.isCollabFolder();
 			const preventByPermissions = this.state.folderRights?.canAdd === false;
 			const preventByCollabAvailability = this.props.isCollabToolEnabled === false;
@@ -1013,11 +1294,33 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 			return true;
 		}
 
+		shouldWriteThroughUnifiedLink()
+		{
+			if (!this.isUnifiedLinkMode())
+			{
+				return false;
+			}
+
+			return this.state.folderRights?.canRename !== false;
+		}
+
+		getWriteUniqueCode()
+		{
+			return this.shouldWriteThroughUnifiedLink() ? this.getUniqueCode() : null;
+		}
+
 		ensureUserCanUploadToFolder()
 		{
 			if (!this.canUserUploadToFolder())
 			{
 				Haptics.notifyWarning();
+
+				if (this.isUnifiedLinkMode())
+				{
+					void this.showUnifiedLinkForbiddenToast();
+
+					return false;
+				}
 
 				showToast({
 					message: Loc.getMessage('M_DISK_UPLOAD_IS_POSSIBLE_ONLY_TO_COLLAB_DIR'),
@@ -1038,6 +1341,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		openCreateFolderDialog = () => {
 			void CreateFolderDialog.open({
 				parentFolderId: this.getFolderId(),
+				uniqueCode: this.getWriteUniqueCode(),
 				onCreate: () => {
 					this.sendCreateFolderAnalytics();
 					this.reload();
@@ -1052,14 +1356,17 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 					this.reload();
 				},
 				folderId: this.getFolderId(),
+				uniqueCode: this.getWriteUniqueCode(),
 				storageId: this.getStorageId(),
 				layoutWidget: this.parentWidget,
-				extraItems: [
-					{
-						id: 'board',
-						name: Loc.getMessage('M_DISK_FILE_GRID_CREATE_BOARD_MENU_ITEM'),
-					},
-				],
+				extraItems: this.isUnifiedLinkMode()
+					? []
+					: [
+						{
+							id: 'board',
+							name: Loc.getMessage('M_DISK_FILE_GRID_CREATE_BOARD_MENU_ITEM'),
+						},
+					],
 				itemSelectedCallback: (id) => {
 					if (id === 'board')
 					{

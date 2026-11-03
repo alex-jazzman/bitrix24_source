@@ -31,6 +31,8 @@ return [
 			'name' => Loc::getMessage('LANDING_BLOCK_24.3.IMAGE_GALLERY_6_COLS_FIX_3_NODES_LANDINGBLOCKCARDLOGOLINK'),
 			'type' => 'link',
 			'group' => 'logo',
+			// the hidden name of the logo is inside the link: a repour must not put the old inside back
+			'skipContent' => true,
 		],
 	],
 	'style' => [

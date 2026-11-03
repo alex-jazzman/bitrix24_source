@@ -4,13 +4,13 @@
 jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { uniqBy } = require('utils/array');
-	const { Moment } = require('utils/date/moment');
+	const { Moment } = require('utils/date');
 	const { monthYear } = require('utils/date/formats');
 	const { assertDefined } = require('utils/validation');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { FileType } = require('im/messenger/const');
 	const { DialogMediaGallery } = require('im/messenger/controller/dialog/lib/media-gallery');
-	const { SidebarBaseTabContent } = require('im/messenger/controller/sidebar-v2/tabs/base/src/content');
+	const { SidebarBaseTabContent } = require('im/messenger/controller/sidebar-v2/tabs/base');
 	const { SidebarTabMediaItemModel } = require('im/messenger/controller/sidebar-v2/tabs/media/src/items/model');
 
 	const isMediaGridAvailable = Boolean(MediaGrid);

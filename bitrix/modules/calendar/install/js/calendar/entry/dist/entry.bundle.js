@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, calendar_util, main_core, calendar_sectionmanager, main_core_events, calendar_compacteventform, ui_notification, calendar_roomsmanager, ui_dialogs_messagebox) {
+(function (exports, calendar_util, main_core, calendar_analytics, calendar_sectionmanager, main_core_events, calendar_compacteventform, ui_notification, calendar_roomsmanager, ui_dialogs_messagebox) {
 	'use strict';
 
 	class EntryManager {
@@ -139,6 +139,9 @@ this.BX = this.BX || {};
 			if (bx.Calendar && bx.Calendar.SliderLoader) {
 				const util = BX.Calendar.Util || bx.Calendar.Util;
 				const calendarContext = util.getCalendarContext();
+				const userSettings = util.getUserSettings();
+				const userTimezone = userSettings?.timezoneName || userSettings?.timezoneDefaultName;
+				const timezoneOffset = options.timezoneOffset ?? (main_core.Type.isStringFilled(userTimezone) && main_core.Type.isDate(options.entry?.from) ? -util.getTimeZoneOffset(userTimezone, options.entry.from) * 60 : null);
 				const roomsManager = options?.isLocationCalendar ? calendarContext.roomsManager : null;
 				const categoryManager = options?.isLocationCalendar ? calendarContext.categoryManager : null;
 				new bx.Calendar.SliderLoader(options.entry ? `EDIT${options.entry.id}` : 'NEW', {
@@ -153,6 +156,7 @@ this.BX = this.BX || {};
 					ownerId: options.ownerId || 0,
 					userId: options.userId,
 					formDataValue: options.formDataValue || null,
+					timezoneOffset,
 					jumpToControl: options.jumpToControl
 				}).show();
 			}
@@ -459,12 +463,35 @@ this.BX = this.BX || {};
 		static openCompactEditForm(options = {}) {
 			const compactForm = EntryManager.getCompactViewForm();
 			if (!compactForm.isShown()) {
+				EntryManager.sendCreateEventAnalytics(options);
 				compactForm.unsubscribeAll('onClose');
 				if (main_core.Type.isFunction(options.closeCallback)) {
 					compactForm.subscribe('onClose', options.closeCallback);
 				}
 				compactForm.showInEditMode(options);
 			}
+		}
+		static sendCreateEventAnalytics(options = {}) {
+			const isProject = options.type === 'group';
+			const calendar = calendar_util.Util.getCalendarContext();
+			calendar_analytics.Analytics.sendEvent({
+				event: 'click_create_event',
+				cSection: isProject ? 'project' : 'calendar',
+				cSubSection: isProject ? 'calendar_project' : 'calendar_personal',
+				cElement: 'short_form',
+				projectId: isProject ? parseInt(options.ownerId, 10) : null,
+				userType: EntryManager.getAnalyticsUserType(calendar),
+				status: 'success'
+			});
+		}
+		static getAnalyticsUserType(calendar) {
+			if (calendar?.util?.isExtranetUser()) {
+				return 'user_extranet';
+			}
+			if (calendar?.isCollabUser) {
+				return 'user_collaber';
+			}
+			return 'user_intranet';
 		}
 		static getEntryInstance(entry, userIndex, options = {}) {
 			let entryInstance = null;
@@ -1247,5 +1274,5 @@ this.BX = this.BX || {};
 	exports.Entry = Entry;
 	exports.EntryManager = EntryManager;
 
-})(this.BX.Calendar = this.BX.Calendar || {}, BX.Calendar, BX, BX.Calendar, BX.Event, BX.Calendar, BX.UI.Notification, BX.Calendar, BX.UI.Dialogs);
+})(this.BX.Calendar = this.BX.Calendar || {}, BX.Calendar, BX, BX.Calendar.Analytics, BX.Calendar, BX.Event, BX.Calendar, BX.UI.Notification, BX.Calendar, BX.UI.Dialogs);
 //# sourceMappingURL=entry.bundle.js.map

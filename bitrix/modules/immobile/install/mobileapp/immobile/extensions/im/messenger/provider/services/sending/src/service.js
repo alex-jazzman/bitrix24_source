@@ -17,6 +17,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { MessageRest } = require('im/messenger/provider/rest');
 	const { FileUploadService } = require('im/messenger/provider/services/sending/file');
 	const { FilesUploadService } = require('im/messenger/provider/services/sending/files');
 
@@ -41,6 +42,16 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			 * @type {MessengerCoreStore}
 			 */
 			this.store = serviceLocator.get('core').getStore();
+			this.messageRest = MessageRest;
+		}
+
+		/**
+		 * @param {ForwardTransportParams} params
+		 * @return {Promise<ForwardTransportResponse>}
+		 */
+		sendForwardMessages({ dialogId, forwardIds })
+		{
+			return this.messageRest.send({ dialogId, forwardIds });
 		}
 
 		/**
@@ -62,6 +73,11 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			this.#filesUploadService = this.#filesUploadService ?? new FilesUploadService();
 
 			return this.#filesUploadService;
+		}
+
+		uploadContactPhoto(dialogId, photoUrl)
+		{
+			return this.filesUploadService.uploadContactPhoto(dialogId, photoUrl);
 		}
 
 		unsubscribeEvents()

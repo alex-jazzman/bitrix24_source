@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { BaseSelection, DOMConversionMap, DOMExportOutput, EditorConfig, LexicalNode, NodeKey, ParagraphNode, RangeSelection, SerializedElementNode, Spread } from 'ui.lexical.core';
-import { ElementNode, LexicalEditor } from 'ui.lexical.core';
+import { type BaseSelection, type DOMExportOutput, type EditorConfig, ElementNode, type LexicalEditor, type LexicalNode, type LexicalUpdateJSON, type NodeKey, type ParagraphNode, type RangeSelection, type SerializedElementNode, type Spread } from 'ui.lexical.core';
+import { type ListNode } from './';
 export type SerializedListItemNode = Spread<{
     checked: boolean | undefined;
     value: number;
@@ -17,27 +17,38 @@ export declare class ListItemNode extends ElementNode {
     __value: number;
     /** @internal */
     __checked?: boolean;
-    static getType(): string;
-    static clone(node: ListItemNode): ListItemNode;
-    constructor(value?: number, checked?: boolean, key?: NodeKey);
+    /** @internal */
+    $config(): import("ui.lexical.core").BaseStaticNodeConfig & {
+        readonly listitem?: {
+            readonly $transform: (node: ListItemNode) => void;
+            readonly extends: typeof ElementNode;
+            readonly importDOM: import("ui.lexical.core").DOMConversionMap<HTMLElement>;
+        } | undefined;
+    } & import("ui.lexical.core").StaticNodeTypeAccessor<"listitem"> & import("ui.lexical.core").StaticNodeConfigAccessor<{
+        readonly $transform: (node: ListItemNode) => void;
+        readonly extends: typeof ElementNode;
+        readonly importDOM: import("ui.lexical.core").DOMConversionMap<HTMLElement>;
+    }>;
+    constructor(value?: number, checked?: undefined | boolean, key?: NodeKey);
+    afterCloneFrom(prevNode: this): void;
     createDOM(config: EditorConfig): HTMLElement;
+    updateListItemDOM(prevNode: ListItemNode | null, dom: HTMLLIElement, config: EditorConfig): void;
     updateDOM(prevNode: ListItemNode, dom: HTMLElement, config: EditorConfig): boolean;
-    static transform(): (node: LexicalNode) => void;
-    static importDOM(): DOMConversionMap | null;
-    static importJSON(serializedNode: SerializedListItemNode): ListItemNode;
+    updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedListItemNode>): this;
     exportDOM(editor: LexicalEditor): DOMExportOutput;
     exportJSON(): SerializedListItemNode;
     append(...nodes: LexicalNode[]): this;
     replace<N extends LexicalNode>(replaceWithNode: N, includeChildren?: boolean): N;
     insertAfter(node: LexicalNode, restoreSelection?: boolean): LexicalNode;
     remove(preserveEmptyParent?: boolean): void;
+    resetOnCopyNodeFrom(original: this): void;
     insertNewAfter(_: RangeSelection, restoreSelection?: boolean): ListItemNode | ParagraphNode;
-    collapseAtStart(selection: RangeSelection): true;
+    collapseAtStart(selection: RangeSelection): boolean;
     getValue(): number;
-    setValue(value: number): void;
+    setValue(value: number): this;
     getChecked(): boolean | undefined;
-    setChecked(checked?: boolean): void;
-    toggleChecked(): void;
+    setChecked(checked?: boolean): this;
+    toggleChecked(): this;
     getIndent(): number;
     setIndent(indent: number): this;
     /** @deprecated @internal */
@@ -47,7 +58,7 @@ export declare class ListItemNode extends ElementNode {
     canMergeWith(node: LexicalNode): boolean;
     extractWithChild(child: LexicalNode, selection: BaseSelection): boolean;
     isParentRequired(): true;
-    createParentElementNode(): ElementNode;
+    createParentElementNode(): ListNode;
     canMergeWhenEmpty(): true;
 }
 /**

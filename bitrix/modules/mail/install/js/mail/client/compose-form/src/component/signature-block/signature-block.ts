@@ -1,13 +1,7 @@
-import { Dom, Event, Tag, Type } from 'main.core';
+import { Dom, Tag, Type } from 'main.core';
 import { SidePanel } from 'main.sidepanel';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
-import 'ui.icon-set.outline';
-import { LabelSize, LabelStyle } from 'ui.system.label';
-import { Label as UiLabel } from 'ui.system.label.vue';
 import { BMenu, type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu.vue';
-import { TextSm } from 'ui.system.typography.vue';
 import { defineComponent, nextTick } from 'ui.vue3';
-import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
 
 import { Phrase } from '../../const';
 import {
@@ -21,8 +15,6 @@ import { type EditorUnsubscribe } from '../../infrastructure/adapter/editor/type
 import { loc } from '../../lib/loc/loc';
 import { getSelectedSender, useComposeState } from '../../model/compose/compose';
 import { type SenderDto, type SignatureItem } from '../../model/compose/types';
-
-import './signature-block.css';
 
 const MenuWidth = 300;
 
@@ -43,10 +35,11 @@ const KindColor = Object.freeze({
 	Own: 'var(--ui-color-base-3)',
 });
 
-const ControlTestId = 'mail-compose-signature-name';
+/** The control of the picker: the signature action of the form footer. */
+const FooterControlTestId = 'mail-compose-signature-action';
 
-/** Space for the Vue control drawn over the editor; the stylesheet stays outside the message body. */
-const SignatureControlSpace = 68;
+/** The editor puts this in place of a `<style>` block; in the signature of the user it is noise. */
+const SurrogateClass = 'bxhtmled-surrogate';
 
 /** Signatures have no name of their own, so their first line stands in for one and is cut to this length. */
 const NameMaxLength = 40;
@@ -253,7 +246,12 @@ function applySignatureLayout(node: HTMLElement, nodeId: string): void
 
 	const style = editorDocument.createElement('style');
 	style.dataset.mailComposeSignatureLayout = '';
-	style.textContent = `#${nodeId} { margin-top: ${SignatureControlSpace}px; }`;
+	// The structural tokens are there: the editor loads `ui.design-tokens` into the document of the letter.
+	style.textContent = [
+		`#${nodeId} { margin-top: var(--ui-space-stack-xl); }`,
+		// The editor shows every surrogate with `display: inline-block !important`, so hiding it takes the same weight.
+		`#${nodeId} .${SurrogateClass} { display: none !important; }`,
+	].join('\n');
 	Dom.append(style, editorDocument.head);
 }
 
@@ -267,27 +265,24 @@ export const SignatureBlock = defineComponent({
 	name: 'MailComposeSignatureBlock',
 
 	components: {
-		BIcon,
 		BMenu,
-		TextSm,
-		UiButton,
-		UiLabel,
 	},
 
 	setup()
 	{
+		const state = useComposeState();
+
 		return {
-			state: useComposeState(),
+			state,
 			editor: useComposeEditor(),
+			/**
+			 * A scheduled message is edited with the body it was saved with, the signature inside it
+			 * included, so this form neither resolves a default one nor writes over the one already there.
+			 */
+			isBodyRestored: state.scheduledMessage.id > 0,
 			// The editor adapter is shared and outlives this component, so its subscriptions are dropped here.
 			subscriptions: [] as EditorUnsubscribe[],
-			iconName: Outline.DOCUMENT_SIGN,
-			controlStyle: AirButtonStyle.PLAIN,
-			controlSize: ButtonSize.SMALL,
-			controlTestId: ControlTestId,
 			menuId: MenuId,
-			labelStyle: LabelStyle.TINTED,
-			labelSize: LabelSize.SM,
 		};
 	},
 
@@ -295,13 +290,7 @@ export const SignatureBlock = defineComponent({
 	{
 		return {
 			isMenuShown: false,
-			rowTop: null as number | null,
-			rowLeft: 0,
-			rowWidth: 0,
-			editorBody: null as HTMLElement | null,
-			editorWindow: null as Window | null,
-			contentScroll: null as HTMLElement | null,
-			positionFrame: null as number | null,
+			isSignatureSyncScheduled: false,
 		};
 	},
 
@@ -311,10 +300,16 @@ export const SignatureBlock = defineComponent({
 			return getSelectedSender(this.state);
 		},
 
-		/** Watch trigger for a changed sender. */
+		/**
+		 * Watch trigger for a changed sender. Two connections of one address share the formatted string,
+		 * so the identifier of the chosen one takes part in the key.
+		 */
 		senderKey(): string
 		{
-			return this.state.selectedSender ?? '';
+			const sender = this.sender;
+			const identity = sender ? `${sender.mailboxId ?? ''}:${sender.id ?? ''}` : '';
+
+			return `${this.state.selectedSender ?? ''}|${identity}`;
 		},
 
 		/** Signatures of the selected sender, in the order the server sent them. */
@@ -340,40 +335,9 @@ export const SignatureBlock = defineComponent({
 			return this.signatures.find((item) => item.signatureId === id) ?? null;
 		},
 
-		/** With no signature and no settings path the control would lead nowhere. */
-		isShown(): boolean
-		{
-			return this.signatures.length > 0 || this.settingsPath !== '';
-		},
-
 		settingsPath(): string
 		{
 			return this.state.signatures.settingsPath;
-		},
-
-		controlText(): string
-		{
-			const name = this.selectedSignature ? signatureName(this.selectedSignature) : '';
-
-			return name === '' ? loc(Phrase.SignatureNone) : name;
-		},
-
-		signatureLabel(): string
-		{
-			return loc(Phrase.SignatureButton);
-		},
-
-		/** Only a shared signature gets a label next to the name. */
-		kindLabel(): string
-		{
-			return this.selectedSignature?.isShared === true ? loc(Phrase.SignatureShared) : '';
-		},
-
-		rowPosition(): Record<string, string>
-		{
-			return this.rowTop === null
-				? {}
-				: { top: `${this.rowTop}px`, left: `${this.rowLeft}px`, width: `${this.rowWidth}px` };
 		},
 
 		menuItems(): SignatureMenuItem[]
@@ -424,37 +388,29 @@ export const SignatureBlock = defineComponent({
 		{
 			// Another sender has signatures of its own, so the default is resolved anew.
 			this.applyDefaultSignature();
-			this.syncSignatureNode();
+			this.scheduleSignatureSync();
 		},
 
 		selectedSignatureId(): void
 		{
-			this.syncSignatureNode();
-		},
-
-		draftLoading(loading: boolean): void
-		{
-			if (!loading)
-			{
-				void this.$nextTick(this.schedulePositionControl);
-			}
+			this.scheduleSignatureSync();
 		},
 	},
 
 	mounted(): void
 	{
-		this.applyDefaultSignature();
+		if (!this.isBodyRestored)
+		{
+			this.applyDefaultSignature();
+		}
 		// The body has to exist before the signature goes in, and the adapter writes the initial body ahead
 		// of this handler.
 		this.subscriptions.push(this.editor.subscribeReady(this.handleEditorReady));
-		Event.bind(window, 'resize', this.schedulePositionControl);
 	},
 
 	beforeUnmount(): void
 	{
-		Event.unbind(window, 'resize', this.schedulePositionControl);
-		this.cancelPositionControl();
-		this.unbindPositionListeners();
+		this.isSignatureSyncScheduled = false;
 		this.subscriptions.forEach((unsubscribe: EditorUnsubscribe): void => {
 			unsubscribe();
 		});
@@ -464,116 +420,14 @@ export const SignatureBlock = defineComponent({
 	methods: {
 		handleEditorReady(): void
 		{
-			this.syncSignatureNode();
-			this.unbindPositionListeners();
-
-			const signature = this.editor.getBodyNode(this.editor.bodyNodes.signature);
-			const editorFrame = this.editor.getHostNode()?.querySelector<HTMLIFrameElement>('iframe');
-			this.editorBody = signature?.ownerDocument.body ?? editorFrame?.contentDocument?.body ?? null;
-			this.editorWindow = this.editorBody?.ownerDocument.defaultView ?? null;
-			this.contentScroll = (this.$refs.row as HTMLElement | undefined)
-				?.closest<HTMLElement>('.mail-compose-form__content') ?? null;
-			if (this.editorBody)
+			if (this.isBodyRestored)
 			{
-				Event.bind(this.editorBody, 'input', this.schedulePositionControl);
-				Event.bind(this.editorBody, 'scroll', this.schedulePositionControl);
-			}
-
-			if (this.editorWindow)
-			{
-				Event.bind(this.editorWindow, 'scroll', this.schedulePositionControl);
-				Event.bind(this.editorWindow, 'resize', this.schedulePositionControl);
-			}
-
-			if (this.contentScroll)
-			{
-				Event.bind(this.contentScroll, 'scroll', this.schedulePositionControl);
-			}
-			this.positionControl();
-		},
-
-		unbindPositionListeners(): void
-		{
-			if (this.editorBody)
-			{
-				Event.unbind(this.editorBody, 'input', this.schedulePositionControl);
-				Event.unbind(this.editorBody, 'scroll', this.schedulePositionControl);
-			}
-
-			if (this.editorWindow)
-			{
-				Event.unbind(this.editorWindow, 'scroll', this.schedulePositionControl);
-				Event.unbind(this.editorWindow, 'resize', this.schedulePositionControl);
-			}
-
-			if (this.contentScroll)
-			{
-				Event.unbind(this.contentScroll, 'scroll', this.schedulePositionControl);
-			}
-			this.editorBody = null;
-			this.editorWindow = null;
-			this.contentScroll = null;
-		},
-
-		schedulePositionControl(): void
-		{
-			if (this.positionFrame !== null)
-			{
-				return;
-			}
-
-			this.positionFrame = window.requestAnimationFrame((): void => {
-				this.positionFrame = null;
-				this.positionControl();
-			});
-		},
-
-		cancelPositionControl(): void
-		{
-			if (this.positionFrame !== null)
-			{
-				window.cancelAnimationFrame(this.positionFrame);
-				this.positionFrame = null;
-			}
-		},
-
-		/** The control stays in Vue but is drawn directly above the signature that lives in the editor iframe. */
-		positionControl(): void
-		{
-			const signature = this.editor.getBodyNode(this.editor.bodyNodes.signature);
-			const row = this.$refs.row as HTMLElement | undefined;
-			const content = row?.closest<HTMLElement>('.mail-compose-form__content');
-			const editorDocument = signature?.ownerDocument ?? this.editorBody?.ownerDocument;
-			const frame = editorDocument?.defaultView?.frameElement as HTMLElement | null | undefined;
-			if (!row || !content || !frame || !this.editorBody)
-			{
-				this.rowTop = null;
-
-				return;
-			}
-
-			const frameRect = frame.getBoundingClientRect();
-			const contentRect = content.getBoundingClientRect();
-
-			if (signature)
-			{
-				const signatureRect = signature.getBoundingClientRect();
-				this.rowTop = content.scrollTop + frameRect.top + signatureRect.top - contentRect.top - row.offsetHeight
-					- parseFloat(getComputedStyle(row).gap || '0');
+				this.layoutSignatureNode();
 			}
 			else
 			{
-				const bodyRect = this.editorBody.getBoundingClientRect();
-				const lastContent = [...this.editorBody.children]
-					.findLast((node) => node.id !== this.editor.bodyNodes.quote) as HTMLElement | undefined;
-				const contentBottom = Math.max(
-					lastContent?.getBoundingClientRect().bottom ?? bodyRect.top,
-					bodyRect.top + 24,
-				);
-				this.rowTop = content.scrollTop + frameRect.top + contentBottom - contentRect.top + 24;
+				this.syncSignatureNode();
 			}
-			this.rowLeft = frameRect.left - contentRect.left;
-			this.rowWidth = frameRect.width;
 		},
 
 		buildSignatureItem(item: SignatureItem): SignatureMenuItem
@@ -677,28 +531,64 @@ export const SignatureBlock = defineComponent({
 			});
 		},
 
+		/** Apply spacing without overwriting the restored signature. */
+		layoutSignatureNode(): void
+		{
+			const node = this.editor.getBodyNode(this.editor.bodyNodes.signature);
+			if (node)
+			{
+				applySignatureLayout(node, this.editor.bodyNodes.signature);
+			}
+		},
+
+		/**
+		 * A sender switch resolves the default anew, so both watchers ask for a write of the same node; every
+		 * write syncs the whole body with the editor, and that costs the size of the message with its quote.
+		 * The node is written once a tick, and a sender switch that kept the same signature still gets it.
+		 */
+		scheduleSignatureSync(): void
+		{
+			if (this.isSignatureSyncScheduled)
+			{
+				return;
+			}
+
+			this.isSignatureSyncScheduled = true;
+			void nextTick((): void => {
+				if (this.isSignatureSyncScheduled)
+				{
+					this.syncSignatureNode();
+				}
+			});
+		},
+
 		/**
 		 * A repeated write touches the signature node alone: the text around it belongs to the user. The body
 		 * of a signature is rich HTML built by the module, so it goes in as markup rather than as text.
 		 */
 		syncSignatureNode(): void
 		{
+			this.isSignatureSyncScheduled = false;
 			const node = this.editor.getBodyNode(this.editor.bodyNodes.signature);
 
 			if (!this.selectedSignature)
 			{
 				this.removeSignatureNode(node);
-				this.positionControl();
 
 				return;
 			}
 
-			const html = SignatureMark + this.selectedSignature.full;
+			const markup = SignatureMark + this.selectedSignature.full;
+			// A `<style>` block of the signature would rule the document the user writes in, so the markup
+			// goes in through the parser of the editor. With no editor there is nothing to write into
+			// anyway, and writing the signature as it came is better than losing it.
+			const html = this.editor.parseForBody(markup) ?? markup;
 			if (node)
 			{
 				node.innerHTML = html;
 				applySignatureLayout(node, this.editor.bodyNodes.signature);
-				this.positionControl();
+				// The node is written into the document directly, so the editor learns of the new body here.
+				this.editor.syncBodyFromDocument();
 
 				return;
 			}
@@ -719,7 +609,6 @@ export const SignatureBlock = defineComponent({
 			{
 				this.editor.insertNode(Tag.render`<br>`, { at: 'before', anchor: node });
 				applySignatureLayout(node, this.editor.bodyNodes.signature);
-				this.positionControl();
 			}
 		},
 
@@ -741,49 +630,16 @@ export const SignatureBlock = defineComponent({
 		 */
 		getControlNode(): HTMLElement | null
 		{
-			const row = this.$refs.row as HTMLElement | undefined;
-
-			return row?.querySelector<HTMLElement>(`[data-testid="${ControlTestId}"]`) ?? null;
+			return document.querySelector<HTMLElement>(`[data-testid="${FooterControlTestId}"]`);
 		},
 	},
 
 	template: `
-		<div
-			v-if="isShown"
-			ref="row"
-			class="mail-compose-signature-block"
-			:class="{ '--unplaced': rowTop === null }"
-			:style="rowPosition"
-			data-testid="mail-compose-signature-block"
-		>
-			<BIcon
-				class="mail-compose-signature-block__icon"
-				:name="iconName"
-				:size="20"
-				data-testid="mail-compose-signature-icon"
-			/>
-			<TextSm class-name="mail-compose-signature-block__label">{{ signatureLabel }}:</TextSm>
-			<UiButton
-				:text="controlText"
-				:style="controlStyle"
-				:size="controlSize"
-				dropdown
-				:dataset="{ testid: controlTestId }"
-				@click="handleControlClick"
-			/>
-			<UiLabel
-				v-if="kindLabel !== ''"
-				:value="kindLabel"
-				:style="labelStyle"
-				:size="labelSize"
-				data-testid="mail-compose-signature-kind"
-			/>
-			<BMenu
-				v-if="isMenuShown"
-				:id="menuId"
-				:options="menuOptions"
-				@close="isMenuShown = false"
-			/>
-		</div>
+		<BMenu
+			v-if="isMenuShown"
+			:id="menuId"
+			:options="menuOptions"
+			@close="isMenuShown = false"
+		/>
 	`,
 });

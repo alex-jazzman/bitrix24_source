@@ -6,7 +6,6 @@ import {
 	type RecordTemplateUsageResponse,
 	type SearchTemplatesRequest,
 	type SearchTemplatesResponse,
-	type SetRememberLastResponse,
 	type TemplateAjaxError,
 	type TemplateAjaxResponse,
 	type TemplateReferenceDto,
@@ -85,9 +84,24 @@ async function runAction<T>(action: string, payload: RequestData = {}, method: '
 }
 
 export const TemplateApi = {
-	quickList(): Promise<QuickListResponse>
+	quickList(
+		priorityReference: TemplateReferenceDto | null = null,
+		pinRecentlyCreated: boolean = false,
+	): Promise<QuickListResponse>
 	{
-		return runAction<QuickListResponse>('quickList', {}, 'GET');
+		const payload: RequestData = {};
+		if (priorityReference)
+		{
+			payload.priorityReference = priorityReference;
+		}
+
+		// The flag travels as a number: the query string spells a boolean as a word the server has to guess at.
+		if (pinRecentlyCreated)
+		{
+			payload.pinRecentlyCreated = 1;
+		}
+
+		return runAction<QuickListResponse>('quickList', payload, 'GET');
 	},
 
 	search(request: SearchTemplatesRequest): Promise<SearchTemplatesResponse>
@@ -98,11 +112,6 @@ export const TemplateApi = {
 	prepare(reference: TemplateReferenceDto): Promise<PrepareTemplateResponse>
 	{
 		return runAction<PrepareTemplateResponse>('prepare', { reference });
-	},
-
-	setRememberLast(enabled: boolean): Promise<SetRememberLastResponse>
-	{
-		return runAction<SetRememberLastResponse>('setRememberLast', { enabled });
 	},
 
 	recordUsage(reference: TemplateReferenceDto): Promise<RecordTemplateUsageResponse>

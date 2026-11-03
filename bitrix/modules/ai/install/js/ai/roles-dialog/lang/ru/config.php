@@ -16,7 +16,7 @@ $MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT'] = 'Выберите отрасль и
 $MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT_2'] = 'Попробуйте изменить запрос или выберите подходящую роль в списке категорий';
 
 $MESS['AI_COPILOT_ROLES_FAVOURITE_GROUP'] = 'Избранное';
-$MESS['AI_COPILOT_ROLES_ADD_TO_FAVOURITE'] = 'Добавить в "Избранное';
+$MESS['AI_COPILOT_ROLES_ADD_TO_FAVOURITE'] = 'Добавить в "Избранное"';
 $MESS['AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE'] = 'Удалить из Избранного';
 $MESS['AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS'] = 'Роль <b>#ROLE#</b> добавлена в Избранное';
 $MESS['AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS'] = 'Роль <b>#ROLE#</b> удалена из Избранного';

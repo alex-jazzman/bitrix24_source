@@ -4,10 +4,10 @@
 jn.define('im/messenger/provider/services/sending/files', (require, exports, module) => {
 	const { Type } = require('type');
 	const { isEmpty } = require('utils/object');
-	const { debounce } = require('utils/function');
 	const { Uuid } = require('utils/uuid');
 	const { getExtension } = require('utils/file');
 	const { Filesystem, Reader } = require('native/filesystem');
+	const { Loc } = require('im/messenger/loc');
 
 	const { PerfPoint } = require('debug/prism');
 	const {
@@ -28,6 +28,88 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		UploadManager,
 		UploaderManagerEvent,
 	} = require('im/messenger/provider/services/sending/upload-manager');
+	const ProgressStage = {
+		processing: 'processing',
+		upload: 'upload',
+	};
+	const PROCESSING_PROGRESS_PHRASE = 'IMMOBILE_MESSENGER_PROVIDER_SERVICES_SENDING_VIDEO_PROCESSING_PROGRESS';
+	const PROGRESS_UPDATE_INTERVAL = 100;
+
+	class ProgressUpdateLimiter
+	{
+		constructor(callback, timeout, context)
+		{
+			this.callback = callback;
+			this.timeout = timeout;
+			this.context = context;
+			this.entries = new Map();
+		}
+
+		push(key, ...args)
+		{
+			const entry = this.entries.get(key);
+			if (entry)
+			{
+				entry.pendingArgs = args;
+
+				return;
+			}
+
+			const newEntry = { pendingArgs: null, timer: null };
+			this.entries.set(key, newEntry);
+			this.#invoke(key, newEntry, args);
+		}
+
+		clear(key)
+		{
+			const entry = this.entries.get(key);
+			if (!entry)
+			{
+				return;
+			}
+
+			clearTimeout(entry.timer);
+			this.entries.delete(key);
+		}
+
+		clearAll()
+		{
+			for (const key of this.entries.keys())
+			{
+				this.clear(key);
+			}
+		}
+
+		#invoke(key, entry, args)
+		{
+			entry.pendingArgs = null;
+			this.callback.apply(this.context, args);
+
+			if (this.entries.get(key) !== entry)
+			{
+				return;
+			}
+
+			entry.timer = setTimeout(() => this.#flush(key, entry), this.timeout);
+		}
+
+		#flush(key, entry)
+		{
+			if (this.entries.get(key) !== entry)
+			{
+				return;
+			}
+
+			if (entry.pendingArgs === null)
+			{
+				this.entries.delete(key);
+
+				return;
+			}
+
+			this.#invoke(key, entry, entry.pendingArgs);
+		}
+	}
 
 	/**
 	 * @class FilesUploadService
@@ -40,6 +122,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 		constructor()
 		{
+			this.isActive = true;
 			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
 			/** @type {UploadRegistry} */
@@ -48,8 +131,11 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			this.tasks = [];
 			/**  @type {AsyncGenerator} */
 			this.uploadGenerator = this.getUploadGenerator();
-			/**  @type {debounce<onFileUploadProgress>} */
-			this.onFileUploadProgressDebounce = debounce(this.onFileUploadProgress, 100, this, true);
+			this.progressUpdateLimiter = new ProgressUpdateLimiter(
+				this.applyProgress,
+				PROGRESS_UPDATE_INTERVAL,
+				this,
+			);
 
 			this.bindMethods();
 			this.uploadManager = new UploadManager(MessengerParams.getComponentCode());
@@ -58,23 +144,110 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 		bindMethods()
 		{
+			this.fileUploadStartHandler = this.fileUploadStartHandler.bind(this);
+			this.fileProcessingProgressHandler = this.fileProcessingProgressHandler.bind(this);
+			this.fileUploadProgressHandler = this.fileUploadProgressHandler.bind(this);
 			this.fileUploadDoneHandler = this.fileUploadDoneHandler.bind(this);
 			this.fileUploadErrorHandler = this.fileUploadErrorHandler.bind(this);
 		}
 
 		subscribeEvents()
 		{
-			this.uploadManager.on(UploaderManagerEvent.progress, this.onFileUploadProgressDebounce);
+			this.uploadManager.on(UploaderManagerEvent.start, this.fileUploadStartHandler);
+			this.uploadManager.on(UploaderManagerEvent.processingProgress, this.fileProcessingProgressHandler);
+			this.uploadManager.on(UploaderManagerEvent.progress, this.fileUploadProgressHandler);
 			this.uploadManager.on(UploaderManagerEvent.done, this.fileUploadDoneHandler);
 			this.uploadManager.on(UploaderManagerEvent.error, this.fileUploadErrorHandler);
 		}
 
 		unsubscribeEvents()
 		{
-			this.uploadManager.off(UploaderManagerEvent.progress, this.onFileUploadProgressDebounce);
+			this.isActive = false;
+			this.progressUpdateLimiter.clearAll();
+			this.uploadManager.off(UploaderManagerEvent.start, this.fileUploadStartHandler);
+			this.uploadManager.off(UploaderManagerEvent.processingProgress, this.fileProcessingProgressHandler);
+			this.uploadManager.off(UploaderManagerEvent.progress, this.fileUploadProgressHandler);
 			this.uploadManager.off(UploaderManagerEvent.done, this.fileUploadDoneHandler);
 			this.uploadManager.off(UploaderManagerEvent.error, this.fileUploadErrorHandler);
 			this.uploadManager.client.destroy();
+		}
+
+		/**
+		 * @param {FileId} fileId
+		 */
+		fileUploadStartHandler(fileId)
+		{
+			if (!this.#canHandleProgress(fileId))
+			{
+				return;
+			}
+
+			this.progressUpdateLimiter.clear(fileId);
+			this.#updateUploadRegistryData(fileId, { uploadStarted: true });
+		}
+
+		/**
+		 * @param {FileId} fileId
+		 * @param {object} data
+		 */
+		fileProcessingProgressHandler(fileId, data)
+		{
+			if (
+				!this.#canHandleProgress(fileId)
+				|| this.uploadRegistry[fileId].uploadStarted === true
+				|| !this.#isValidProcessingProgress(data)
+			)
+			{
+				return;
+			}
+
+			this.progressUpdateLimiter.push(fileId, ProgressStage.processing, fileId, { percent: data.percent });
+		}
+
+		/**
+		 * @param {FileId} fileId
+		 * @param {object} data
+		 */
+		fileUploadProgressHandler(fileId, data)
+		{
+			if (!this.#canHandleProgress(fileId))
+			{
+				return;
+			}
+
+			this.#updateUploadRegistryData(fileId, { status: FileStatus.progress });
+			this.progressUpdateLimiter.push(fileId, ProgressStage.upload, fileId, data);
+		}
+
+		/**
+		 * @param {string} stage
+		 * @param {FileId} fileId
+		 * @param {object} data
+		 * @return {Promise<void>}
+		 */
+		async applyProgress(stage, fileId, data)
+		{
+			if (!this.#canHandleProgress(fileId))
+			{
+				return;
+			}
+
+			if (stage === ProgressStage.processing)
+			{
+				if (this.uploadRegistry[fileId].uploadStarted === true || !this.#isValidProcessingProgress(data))
+				{
+					return;
+				}
+
+				await this.#notifyVideoProcessingProgress(fileId, data.percent);
+
+				return;
+			}
+
+			if (stage === ProgressStage.upload)
+			{
+				await this.onFileUploadProgress(fileId, data);
+			}
 		}
 
 		/**
@@ -85,7 +258,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		async onFileUploadProgress(fileId, data)
 		{
 			logger.log(`${this.constructor.name}.onFileUploadProgress:`, fileId, data);
-			if (!this.#isCurrentUploadManagerEvent(fileId))
+			if (!this.#canHandleProgress(fileId))
 			{
 				return;
 			}
@@ -94,13 +267,6 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			const textTotal = formatFileSize(data.byteTotal);
 			const textProgress = `${textCurrent} / ${textTotal}`;
 
-			if (this.#isCheckCompleteProgressByDebounce(fileId))
-			{
-				logger.warn(`${this.constructor.name}.onFileUploadProgress was canceled because the file has a wait or done status`, fileId, data);
-
-				return;
-			}
-
 			await this.#updateFileProgress(
 				fileId,
 				data.percent,
@@ -108,7 +274,17 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				data.byteTotal,
 				FileStatus.progress,
 			);
+			if (!this.#canHandleProgress(fileId))
+			{
+				return;
+			}
+
 			await this.#updateLoadTextProgressToModel(params.temporaryMessageId, textProgress, fileId);
+			if (!this.#canHandleProgress(fileId))
+			{
+				return;
+			}
+
 			this.#updateUploadRegistryData(fileId, { status: FileStatus.progress });
 		}
 
@@ -125,6 +301,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				return;
 			}
 
+			this.progressUpdateLimiter.clear(fileId);
 			const params = data.file.params;
 			const file = data.result.data?.file;
 			const realFileIdInt = file?.customData?.fileId;
@@ -173,6 +350,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			{
 				return;
 			}
+			this.progressUpdateLimiter.clear(fileId);
 			this.#updateUploadRegistryData(fileId, { status: FileStatus.error });
 			await this.#updateFileProgress(fileId, 0, 0, 0, FileStatus.error);
 			await this.#updateMessageModel(
@@ -226,6 +404,52 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			}
 
 			return Promise.all(createTasksPromises);
+		}
+
+		async uploadContactPhoto(dialogId, photoUrl)
+		{
+			const temporaryId = Uuid.getV4();
+			const diskFolderId = await this.getDiskFolderId(dialogId);
+			const { task } = await this.uploadManager.getFileDataAndTask({
+				dialogId,
+				temporaryMessageId: temporaryId,
+				temporaryFileId: temporaryId,
+				diskFolderId,
+				deviceFile: {
+					id: temporaryId,
+					url: photoUrl,
+					previewUrl: photoUrl,
+					width: 0,
+					height: 0,
+				},
+			});
+
+			return new Promise((resolve, reject) => {
+				const done = (fileId, data) => {
+					if (fileId !== temporaryId)
+					{
+						return;
+					}
+					cleanup();
+					resolve(data.result.data?.file?.customData?.fileId ?? null);
+				};
+				const failed = (fileId, error) => {
+					if (fileId !== temporaryId)
+					{
+						return;
+					}
+					cleanup();
+					reject(error);
+				};
+				const cleanup = () => {
+					this.uploadManager.off(UploaderManagerEvent.done, done);
+					this.uploadManager.off(UploaderManagerEvent.error, failed);
+				};
+
+				this.uploadManager.on(UploaderManagerEvent.done, done);
+				this.uploadManager.on(UploaderManagerEvent.error, failed);
+				this.uploadManager.client.addTask(task);
+			});
 		}
 
 		/**
@@ -626,6 +850,22 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			});
 		}
 
+		/**
+		 * @param {FileId} fileId
+		 * @param {number} percent
+		 * @return {Promise}
+		 */
+		#notifyVideoProcessingProgress(fileId, percent)
+		{
+			const text = Loc.getMessage(PROCESSING_PROGRESS_PHRASE, { '#PERCENT#': percent });
+
+			return this.store.dispatch('messagesModel/notifyVideoProcessingProgress', {
+				id: this.uploadRegistry[fileId].temporaryMessageId,
+				text,
+				uploadFileId: fileId,
+			});
+		}
+
 		async #updateDoneProgressToModel(messageId)
 		{
 			const messagesModel = this.store.getters['messagesModel/getByTemplateId'](messageId);
@@ -638,14 +878,31 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		}
 
 		/**
-		 * @desc checking when it is possible to update
-		 * the progress text after the DONE or WAIT status
-		 * @param {string} uploadFileId
+		 * @param {FileId} fileId
 		 * @return {boolean}
 		 */
-		#isCheckCompleteProgressByDebounce(uploadFileId)
+		#canHandleProgress(fileId)
 		{
-			return [FileStatus.wait, FileStatus.done].includes(this.uploadRegistry[uploadFileId]?.status);
+			if (!this.#isCurrentUploadManagerEvent(fileId))
+			{
+				return false;
+			}
+
+			return ![FileStatus.wait, FileStatus.done, FileStatus.error].includes(
+				this.uploadRegistry[fileId].status,
+			);
+		}
+
+		/**
+		 * @param {object} data
+		 * @return {boolean}
+		 */
+		#isValidProcessingProgress(data)
+		{
+			return Type.isObject(data)
+				&& Type.isInteger(data.percent)
+				&& data.percent >= 0
+				&& data.percent <= 100;
 		}
 
 		/**
@@ -758,7 +1015,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		 */
 		#isCurrentUploadManagerEvent(fileId)
 		{
-			return Boolean(this.uploadRegistry[fileId]);
+			return this.isActive && Boolean(this.uploadRegistry[fileId]);
 		}
 
 		/**
@@ -771,13 +1028,17 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			if (uploadRegistryData)
 			{
 				this.uploadManager.cancelTask(uploadRegistryData.taskId);
+				this.progressUpdateLimiter.clear(temporaryFileId);
 				delete this.uploadRegistry[temporaryFileId];
 				this.tasks = this.tasks.filter(
 					(addedTask) => addedTask.taskId !== uploadRegistryData.taskId,
 				);
 				logger.warn(`${this.constructor.name}.cancelTask`, temporaryFileId);
 
-				if (uploadRegistryData.status === FileStatus.progress)
+				if (
+					uploadRegistryData.status === FileStatus.progress
+					|| uploadRegistryData.uploadStarted === true
+				)
 				{
 					await this.#startNextTask();
 

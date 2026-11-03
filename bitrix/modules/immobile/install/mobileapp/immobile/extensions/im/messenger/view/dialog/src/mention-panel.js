@@ -135,6 +135,19 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		}
 
 		/**
+		 * @desc Sets (or clears with null) the panel placeholder shown while the list is empty.
+		 * Native method exists only behind the 'chat_mention_empty_state' flag, hence the guard.
+		 * @param {?MentionEmptyState} emptyState
+		 */
+		setEmptyState(emptyState)
+		{
+			if (this.isUiAvailable() && typeof this.ui.setEmptyState === 'function')
+			{
+				this.ui.setEmptyState(emptyState);
+			}
+		}
+
+		/**
 		 * @void
 		 */
 		showLoader()

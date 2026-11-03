@@ -26,6 +26,8 @@
 	--box-shadow-popup: none;
 	--transition-coords: all 0.05s ease-in-out;
 	position: absolute;
+	/* Keep the popup within the viewport so its content reflows instead of clipping at 320px / 200% zoom. */
+	max-width: 100vw;
 	border-radius: var(--border-radius-popup);
 	pointer-events: auto;
 }

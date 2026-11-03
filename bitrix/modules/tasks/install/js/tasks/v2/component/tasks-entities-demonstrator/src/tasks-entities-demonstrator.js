@@ -123,6 +123,54 @@ export const TasksEntitiesDemonstrator = {
 		{
 			return this.optionsFilled.componentOpener || this.getOpener();
 		},
+		opensPopup(): boolean
+		{
+			return Boolean(this.optionsFilled.entitiesCount);
+		},
+		openerAriaLabel(): ?string
+		{
+			// The opener carries only an icon and a count, so it needs an explicit name;
+			// a visible caption names the opener by itself and must not be overridden.
+			if (this.optionsFilled.textOpener)
+			{
+				return null;
+			}
+
+			if (this.optionsFilled.textHead)
+			{
+				return this.optionsFilled.textHead;
+			}
+
+			// The fallback phrase fits only the opener drawn here; an opener passed by a
+			// consumer names itself and must not be renamed to something it never shows.
+			if (this.optionsFilled.componentOpener)
+			{
+				return null;
+			}
+
+			return this.loc('TASKS_V2_ENTITIES_DEMONSTRATOR_VIEWERS_ARIA_LABEL');
+		},
+		openerAriaAttrs(): Object
+		{
+			// The popup belongs to the demonstrator and only it knows whether the popup is
+			// open, so an opener passed by a consumer is described the same way as the default
+			// one. Attributes with nothing to say are left out rather than passed as null,
+			// which would strip what such an opener declares on itself.
+			const attrs = {};
+
+			if (this.opensPopup)
+			{
+				attrs['aria-haspopup'] = 'dialog';
+				attrs['aria-expanded'] = this.isEntityDemonstratorPopupOpened;
+			}
+
+			if (this.openerAriaLabel)
+			{
+				attrs['aria-label'] = this.openerAriaLabel;
+			}
+
+			return attrs;
+		},
 		classNameEntitiesDemonstratorOpener(): boolean
 		{
 			let className = 'tasks-entities-demonstrator__opener';
@@ -157,7 +205,9 @@ export const TasksEntitiesDemonstrator = {
 
 			return {
 				isWithBG: true,
+				isTeleportedToContainer: true,
 				className: classNamePopup,
+				ariaLabel: this.optionsFilled.textHead,
 				positioning: {
 					isOpenedUp: true,
 					isOpenedLeft: true,
@@ -324,6 +374,7 @@ export const TasksEntitiesDemonstrator = {
 			return h(
 				'button',
 				{
+					type: 'button',
 					class: 'tasks-entities-demonstrator__opener_native',
 				},
 			);
@@ -334,7 +385,9 @@ export const TasksEntitiesDemonstrator = {
 			<component
 				:is="componentDemonstratorOpener"
 				ref="entityDemonstratorOpener"
+				data-testid="task-entities-demonstrator-opener"
 				:class="classNameEntitiesDemonstratorOpener"
+				v-bind="openerAriaAttrs"
 				@mouseenter="handleMouseEnterOpener"
 				@mouseleave="handleMouseLeaveOpener"
 				@click="handleClickOpener"

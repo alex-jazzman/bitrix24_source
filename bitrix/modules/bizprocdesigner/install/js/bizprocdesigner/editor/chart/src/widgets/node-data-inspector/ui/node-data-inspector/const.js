@@ -2,6 +2,10 @@ import { Loc } from 'main.core';
 import { Outline } from 'ui.icon-set.api.core';
 import { InspectorViewItemGroupColorDict } from '../../../../entities/node-data-inspector';
 
+// On a warm document-schemes cache the snapshot arrives within a frame, and a placeholder living
+// that long is a flicker, not a loading state.
+export const SKELETON_DELAY_MS = 150;
+
 export const ViewMode = Object.freeze({
 	SCHEME: 'scheme',
 	GRID: 'grid',
@@ -23,6 +27,7 @@ export const SchemeItemType = Object.freeze({
 	SECTION: 'section',
 	NODE: 'node',
 	DATA: 'data',
+	FOUND_ITEMS: 'foundItems',
 });
 
 export const SchemeViewGroupKey = Object.freeze({

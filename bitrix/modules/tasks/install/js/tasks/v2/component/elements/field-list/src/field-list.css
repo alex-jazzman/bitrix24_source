@@ -63,3 +63,36 @@
 .b24-field-list-value.--with-separator:before {
 	left: calc(var(--gap) * -1);
 }
+
+/* Reflow for narrow viewports (WCAG 1.4.10): the fixed-width title column squeezes the value
+   column to zero, so stack the title above its value and keep a single separator line. */
+@media (max-width: 600px) {
+	.b24-field-list {
+		--stack-gap: 4px;
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--stack-gap) 0;
+	}
+
+	.b24-field-list-title {
+		min-width: 0;
+		height: auto;
+		padding-right: 0;
+		margin-top: calc(var(--gap) - var(--stack-gap));
+	}
+
+	.b24-field-list-row:first-child .b24-field-list-title {
+		margin-top: 0;
+	}
+
+	.b24-field-list-value.--with-separator {
+		padding: 0;
+	}
+
+	.b24-field-list-title.--with-separator:before {
+		width: 100%;
+	}
+
+	.b24-field-list-value.--with-separator:before {
+		content: none;
+	}
+}

@@ -6,4 +6,4 @@ $MESS["ERROR_MESSAGE_NOTIFY_MODULE"] = "Не указан модуль отпр�
 $MESS["ERROR_MESSAGE_NOTIFY_TYPE"] = "Указан некорректный тип уведомления";
 $MESS["ERROR_MESSAGE_SENDING_FAILED"] = 'Ошибка при отправке сообщения';
 $MESS["ERROR_MESSAGE_SENDING_FAILED_DESC"] = 'Во время отправки сообщения произошла ошибка';
-
+$MESS["ERROR_MESSAGE_MESSAGE_FILES_MISMATCH"] = "Вложения сохранились не полностью";

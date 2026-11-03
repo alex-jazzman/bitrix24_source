@@ -21,6 +21,7 @@ return [
 		'im.v2.component.elements.search-input',
 		'im.v2.component.elements.search-item-layout',
 		'im.v2.const',
+		'im.v2.lib.a11y',
 		'im.v2.lib.analytics',
 		'im.v2.lib.collab',
 		'im.v2.lib.date-formatter',

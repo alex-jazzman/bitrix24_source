@@ -1,5 +1,26 @@
 .task-popup-list-list { margin: 0 }
-.task-popup-list-list .task-popup-list-item { display:block; margin:0 0 6px 0; cursor:pointer; position:relative; text-decoration:none;}
+.task-popup-list-list .task-popup-list-item {
+	display: block;
+	margin: 0 0 6px 0;
+	cursor: pointer;
+	position: relative;
+	text-decoration: none;
+	-webkit-appearance: none;
+	appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	width: 100%;
+	box-sizing: content-box;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+}
+.task-popup-list-list .task-popup-list-item:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	border-radius: 4px;
+}
 
 .task-popup-list-item-left, .task-popup-list-item-icon,
 .task-popup-list-item-text, .task-popup-list-item-right { display: inline-block; height: 19px; vertical-align:top; }

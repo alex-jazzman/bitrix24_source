@@ -306,6 +306,11 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 			}
 
 			context.headerController?.redrawRightButtonsIfNeeded(tabId);
+
+			// Every invocation is a real nested-tab switch (the initial default tab is
+			// pre-seeded in the switcher and never reaches this handler), so this mirrors
+			// web onSelectSection regardless of isFirstInit (first visit vs revisit).
+			AnalyticsService.getInstance().sendUseChatFilter({ tabId });
 		}
 
 		/**

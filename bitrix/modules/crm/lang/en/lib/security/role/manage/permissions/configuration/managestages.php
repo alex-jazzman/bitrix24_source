@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_SECURITY_ROLE_PERMS_CONFIG_STAGES'] = 'Manage stages';

@@ -103,35 +103,19 @@ if($request->isPost() && check_bitrix_sessid())
 	}
 	else
 	{
-		try
-		{
-			\Bitrix\Rest\Service\ServiceContainer::getInstance()
-				->getVibePlusTariffAccessService()
-				->ensureRestAccessAvailable()
-			;
+		$arResult['INFO']['PASSWORD'] = \Bitrix\Rest\APAuth\PasswordTable::generatePassword();
 
-			$arResult['INFO']['PASSWORD'] = \Bitrix\Rest\APAuth\PasswordTable::generatePassword();
+		$result = \Bitrix\Rest\APAuth\PasswordTable::add(
+			array(
+				'USER_ID' => $USER->getId(),
+				'PASSWORD' => $arResult['INFO']['PASSWORD'],
+				'DATE_CREATE' => new \Bitrix\Main\Type\DateTime(),
+				'TITLE' => $arResult['INFO']['TITLE'],
+				'COMMENT' => $arResult['INFO']['COMMENT'],
+			)
+		);
 
-			$result = \Bitrix\Rest\APAuth\PasswordTable::add(
-				array(
-					'USER_ID' => $USER->getId(),
-					'PASSWORD' => $arResult['INFO']['PASSWORD'],
-					'DATE_CREATE' => new \Bitrix\Main\Type\DateTime(),
-					'TITLE' => $arResult['INFO']['TITLE'],
-					'COMMENT' => $arResult['INFO']['COMMENT'],
-				)
-			);
-
-			$justCreated = true;
-		}
-		catch (\Bitrix\Rest\Internal\Exception\VibePlus\FeatureNotAvailableOnCurrentPlanExceptionInterface)
-		{
-			$result = (new \Bitrix\Main\Result())->addError(
-				new \Bitrix\Main\Error(
-					\Bitrix\Main\Localization\Loc::getMessage('REST_HAPE_CURRENT_PLAN_RESTRICTION'),
-				),
-			);
-		}
+		$justCreated = true;
 	}
 
 	if($result->isSuccess())

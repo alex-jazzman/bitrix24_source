@@ -6,8 +6,10 @@ import './content-separator.css';
 
 type ContentSeparatorData = {
 	isResizing: boolean,
-	containerX: number,
-	containerY: number,
+	containerScreenX: number,
+	containerScreenY: number,
+	chromeWidth: number,
+	chromeHeight: number,
 	firstPartSize: number,
 	secondPartSize: number,
 };
@@ -38,12 +40,14 @@ const FIRST_PART_CLASS_NAMES = {
 	base: 'chart-editor-content-separator__first-part',
 	resizing: '--resizing',
 	column: '--column',
+	fill: '--fill',
 };
 
 const SECOND_PART_CLASS_NAMES = {
 	base: 'chart-editor-content-separator__second-part',
 	resizing: '--resizing',
 	column: '--column',
+	fill: '--fill',
 };
 
 const FIRST_PART_SEPARATOR_TMP_CLASS_NAMES = {
@@ -105,6 +109,10 @@ export const ContentSeparator = {
 			type: Boolean,
 			default: false,
 		},
+		contentAttributes: {
+			type: Object,
+			default: () => ({}),
+		},
 	},
 	emits: ['update:separatorPosition'],
 	setup(): {...}
@@ -119,13 +127,12 @@ export const ContentSeparator = {
 	{
 		return {
 			isResizing: false,
-			resizeContainerWidth: 0,
-			resizeContainerHeight: 0,
-			resizeSeparatorPosition: 0,
-			resizeFirstPartSize: 0,
-			resizeSecondPartSize: 0,
-			containerX: 0,
-			containerY: 0,
+			// Screen pixels, unlike the sizes below: a mouse event is measured from them.
+			containerScreenX: 0,
+			containerScreenY: 0,
+			// Canvas coordinates: how much larger the block is than the separator container.
+			chromeWidth: 0,
+			chromeHeight: 0,
 			firstPartSize: 0,
 			secondPartSize: 0,
 		};
@@ -174,13 +181,6 @@ export const ContentSeparator = {
 				[CONTENT_WRAPPER_CLASS_NAMES.resizing]: this.resizing,
 			};
 		},
-		contentSeparatorStyle(): { [string]: string }
-		{
-			return {
-				width: `${this.width}px`,
-				height: `${this.height}px`,
-			};
-		},
 		separatorClassNames(): { [string]: boolean }
 		{
 			return {
@@ -195,7 +195,12 @@ export const ContentSeparator = {
 				[FIRST_PART_CLASS_NAMES.base]: true,
 				[FIRST_PART_CLASS_NAMES.resizing]: this.resizing && this.isTopOrLeftContentPosition(this.contentPosition),
 				[FIRST_PART_CLASS_NAMES.column]: this.isColumn,
+				[FIRST_PART_CLASS_NAMES.fill]: !this.isFirstContainerActive,
 			};
+		},
+		firstPartAttributes(): Object
+		{
+			return this.firstPartSlotName === SLOT_NAMES.CONTENT ? this.contentAttributes : {};
 		},
 		secondPartClassNames(): { [string]: boolean }
 		{
@@ -203,7 +208,12 @@ export const ContentSeparator = {
 				[SECOND_PART_CLASS_NAMES.base]: true,
 				[SECOND_PART_CLASS_NAMES.resizing]: this.resizing && this.isBottomOrRightContentPosition(this.contentPosition),
 				[SECOND_PART_CLASS_NAMES.column]: this.isColumn,
+				[SECOND_PART_CLASS_NAMES.fill]: !this.isSecondContainerActive,
 			};
+		},
+		secondPartAttributes(): Object
+		{
+			return this.secondPartSlotName === SLOT_NAMES.CONTENT ? this.contentAttributes : {};
 		},
 		firstPartSlotName(): string {
 			return ([
@@ -223,65 +233,11 @@ export const ContentSeparator = {
 		},
 		firstPartStyle(): { [string]: string }
 		{
-			if (this.resizing)
-			{
-				if (this.isColumn)
-				{
-					return {
-						height: `${this.resizeFirstPartSize}px`,
-						width: '100%',
-					};
-				}
-
-				return {
-					width: `${this.resizeFirstPartSize}px`,
-					height: '100%',
-				};
-			}
-
-			if (this.isColumn)
-			{
-				return {
-					height: `${this.firstPartSize}px`,
-					width: '100%',
-				};
-			}
-
-			return {
-				width: `${this.firstPartSize}px`,
-				height: '100%',
-			};
+			return this.getPartStyle(this.firstPartSize);
 		},
 		secondPartStyle(): { [string]: string }
 		{
-			if (this.resizing)
-			{
-				if (this.isColumn)
-				{
-					return {
-						height: `${this.resizeSecondPartSize}px`,
-						width: '100%',
-					};
-				}
-
-				return {
-					width: `${this.resizeSecondPartSize}px`,
-					height: '100%',
-				};
-			}
-
-			if (this.isColumn)
-			{
-				return {
-					height: `${this.secondPartSize}px`,
-					width: '100%',
-				};
-			}
-
-			return {
-				width: `${this.secondPartSize}px`,
-				height: '100%',
-			};
+			return this.getPartStyle(this.secondPartSize);
 		},
 		contentNoneStyle(): { [string]: string }
 		{
@@ -354,11 +310,21 @@ export const ContentSeparator = {
 		},
 		contentPosition(newContentPosition: string): void
 		{
+			// The parts are laid out in the same render flush the new axis is drawn in, so they are
+			// recomputed here and not with the measurement below.
 			this.recomputeParts();
+			this.scheduleGeometryUpdate();
 
 			this.$nextTick(() => {
 				this.setPartWheelHandlers(newContentPosition, this.contentScrollable);
 			});
+		},
+		resizing(isResizing: boolean): void
+		{
+			if (isResizing)
+			{
+				this.scheduleGeometryUpdate();
+			}
 		},
 		isResizing(value: boolean): void
 		{
@@ -374,43 +340,11 @@ export const ContentSeparator = {
 				this.setPartWheelHandlers(this.contentPosition, isScrollable);
 			});
 		},
-		resizing(newValue: boolean, oldValue: boolean): void
-		{
-			if (newValue)
-			{
-				this.resizeContainerWidth = this.width;
-				this.resizeContainerHeight = this.height;
-				this.resizeSeparatorPosition = this.separatorPosition;
-
-				this.resizeFirstPartSize = this.firstPartSize;
-				this.resizeSecondPartSize = this.secondPartSize;
-
-				console.table({
-					resizeContainerWidth: this.resizeContainerWidth,
-					resizeContainerHeight: this.resizeContainerHeight,
-					resizeSeparatorPosition: this.resizeSeparatorPosition,
-					firstPartSize: this.firstPartSize,
-					secondPartSize: this.secondPartSize,
-					bottomContent: this.resizeContainerHeight - this.resizeSeparatorPosition,
-					preSecondPathColumn: this.resizeContainerHeight - this.resizeSeparatorPosition - SEPARATOR_SIZE,
-					preSecondPath: this.resizeContainerWidth - this.resizeSeparatorPosition - SEPARATOR_SIZE,
-				});
-			}
-		},
 	},
 	mounted(): void
 	{
-		this.updateContainerRect();
-		this.recomputeParts();
+		this.updateGeometry();
 		this.setPartWheelHandlers(this.contentPosition, this.contentScrollable);
-
-		console.table({
-			width: this.width,
-			height: this.height,
-			firstPartSize: this.firstPartSize,
-			secondPartSize: this.secondPartSize,
-			separatorPosition: this.separatorPosition,
-		});
 	},
 	unmounted(): void
 	{
@@ -465,9 +399,21 @@ export const ContentSeparator = {
 		{
 			event.stopPropagation();
 		},
+		getPartStyle(size: number): { [string]: string }
+		{
+			return this.isColumn
+				? { height: `${size}px`, width: '100%' }
+				: { width: `${size}px`, height: '100%' };
+		},
 		getAxisSize(): number
 		{
-			return this.isColumn ? this.height : this.width;
+			// The block is larger than the separator container by the block border and the layout
+			// padding. The canvas scales the block with a CSS transform, so in canvas coordinates
+			// that correction stays the same at any zoom and while the block is being resized —
+			// the container never has to be measured during the gesture.
+			return this.isColumn
+				? this.height - this.chromeHeight
+				: this.width - this.chromeWidth;
 		},
 		getMinContentSize(): number
 		{
@@ -492,9 +438,6 @@ export const ContentSeparator = {
 				this.firstPartSize = emptySize;
 				this.secondPartSize = textSize;
 			}
-
-			this.resizeFirstPartSize = this.firstPartSize;
-			this.resizeSecondPartSize = this.secondPartSize;
 		},
 		getTextSizeFromEvent(event: MouseEvent): number
 		{
@@ -502,28 +445,63 @@ export const ContentSeparator = {
 			const minContentSize = this.getMinContentSize();
 			const cursorPosition = (
 				this.isColumn
-					? event.clientY - this.containerY
-					: event.clientX - this.containerX
+					? event.clientY - this.containerScreenY
+					: event.clientX - this.containerScreenX
 			) / this.zoom;
+			// The line is drawn in the middle of the separator, so the separator has to start
+			// half its size before the cursor for the line to end up under it.
+			const separatorStart = cursorPosition - (SEPARATOR_SIZE / 2);
 
 			const textSize = this.isFirstContainerActive
-				? cursorPosition
-				: axisSize - SEPARATOR_SIZE - cursorPosition;
+				? separatorStart
+				: axisSize - SEPARATOR_SIZE - separatorStart;
 
-			return Math.min(
-				Math.max(textSize, minContentSize),
-				axisSize - SEPARATOR_SIZE,
+			// Rounded after the limits, not before: the module declares the saved position an
+			// integer, and rounding a clamped value keeps it inside the limits.
+			return Math.round(
+				Math.min(
+					Math.max(textSize, minContentSize),
+					axisSize - SEPARATOR_SIZE,
+				),
 			);
 		},
 		updateContainerRect(): void
 		{
-			const {
-				x = 0,
-				y = 0,
-			} = this.$refs.containerSeparator?.getBoundingClientRect() ?? {};
+			const container = this.$refs.containerSeparator ?? null;
+			const width = container?.offsetWidth ?? 0;
+			const height = container?.offsetHeight ?? 0;
 
-			this.containerX = x;
-			this.containerY = y;
+			if (width <= 0 || height <= 0)
+			{
+				// A container mounted in a hidden subtree measures zero. Keeping the previous
+				// correction is safer than storing one equal to the whole block size.
+				return;
+			}
+
+			const { x = 0, y = 0 } = container.getBoundingClientRect();
+
+			// The rect is in screen pixels: a mouse event is measured from it.
+			this.containerScreenX = x;
+			this.containerScreenY = y;
+			// offsetWidth/offsetHeight are the border box in layout pixels. The canvas scales the
+			// block with a CSS transform, which those never see, so they are already in canvas
+			// coordinates — unlike the rect, they do not have to be read against a zoom that the
+			// state may hold a frame before the DOM does.
+			this.chromeWidth = this.width - width;
+			this.chromeHeight = this.height - height;
+		},
+		updateGeometry(): void
+		{
+			this.updateContainerRect();
+			this.recomputeParts();
+		},
+		scheduleGeometryUpdate(): void
+		{
+			// The container reaches its new size in the same render flush the props change in, so
+			// it can only be measured once that flush is over. Measuring reads the layout back, so
+			// it happens only where the correction may have changed: on mount, on a layout switch
+			// and at the start of a resize — never on the steps of the gesture itself.
+			this.$nextTick(this.updateGeometry);
 		},
 		applySeparatorDrag(event: MouseEvent): void
 		{
@@ -562,6 +540,7 @@ export const ContentSeparator = {
 		<div
 			ref="containerSeparator"
 			:class="contentSeparatorClassNames"
+			:data-test-id="$testId('contentSeparator', blockId)"
 		>
 			<div
 				v-if="!isNone"
@@ -571,6 +550,8 @@ export const ContentSeparator = {
 					:style="firstPartStyle"
 					ref="firstPartContainer"
 					:class="firstPartClassNames"
+					v-bind="firstPartAttributes"
+					:data-test-id="$testId('contentSeparatorFirstPart', blockId)"
 				>
 					<div :class="firstPartSeparatorTmpClassNames"/>
 					<slot
@@ -582,6 +563,7 @@ export const ContentSeparator = {
 				<div
 					ref="separator"
 					:class="separatorClassNames"
+					:data-test-id="$testId('contentSeparatorHandle', blockId)"
 					@mousedown.stop="onMouseDownSeparator"
 				>
 				</div>
@@ -589,6 +571,8 @@ export const ContentSeparator = {
 					:style="secondPartStyle"
 					ref="secondPartContainer"
 					:class="secondPartClassNames"
+					v-bind="secondPartAttributes"
+					:data-test-id="$testId('contentSeparatorSecondPart', blockId)"
 				>
 					<div :class="secondPartSeparatorTmpClassNames"/>
 					<slot

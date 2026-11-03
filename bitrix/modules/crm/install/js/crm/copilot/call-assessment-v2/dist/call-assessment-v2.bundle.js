@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, ui_vue3, ui_vue3_mixins_locMixin, main_core_events, ui_notification, ui_vue3_components_button, ui_system_typography_vue, ui_entitySelector, ui_iconSet_api_vue, ui_system_input_vue, crm_ai_nameService, ui_switcher, ui_vue3_directives_hint, ui_vue3_components_switcher, ui_draganddrop_draggable, ui_vue3_components_hint, main_date, ui_vue3_components_richLoc) {
+(function (exports, main_core, ui_vue3, ui_vue3_mixins_locMixin, crm_integration_analytics, main_core_events, ui_analytics, ui_notification, ui_vue3_components_button, ui_iconSet_api_vue, ui_system_typography_vue, ui_entitySelector, ui_system_input_vue, crm_ai_nameService, ui_switcher, ui_vue3_directives_hint, ui_vue3_components_switcher, ui_buttons, ui_draganddrop_draggable, ui_vue3_components_hint, main_date, ui_vue3_components_richLoc) {
 	'use strict';
 
 	const ActionBar = ui_vue3.defineComponent({
@@ -31,6 +31,7 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-call-assessment-v2-action-bar">
 			<template v-if="variant === 'create'">
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-generate' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_CREATE_GENERATE_BUTTON')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.FILLED_BITRIX_GPT"
@@ -38,6 +39,7 @@ this.BX.Crm = this.BX.Crm || {};
 					@click="$emit('generate')"
 				/>
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-cancel' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_CANCEL')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.PLAIN_NO_ACCENT"
@@ -46,6 +48,7 @@ this.BX.Crm = this.BX.Crm || {};
 			</template>
 			<template v-else-if="variant === 'view'">
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-edit' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_EDIT')"
 					:size="ButtonSize.EXTRA_LARGE"
 					:style="AirButtonStyle.OUTLINE"
@@ -54,12 +57,14 @@ this.BX.Crm = this.BX.Crm || {};
 			</template>
 			<template v-else>
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-save' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_SAVE')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.FILLED"
 					@click="$emit('save')"
 				/>
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-cancel' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_CANCEL')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.PLAIN_NO_ACCENT"
@@ -223,6 +228,7 @@ this.BX.Crm = this.BX.Crm || {};
 	const ClientTypesCard = ui_vue3.defineComponent({
 		name: 'CrmCopilotCallAssessmentV2ClientTypesCard',
 		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
 			FilterTagSelector,
 			HeadlineSm: ui_system_typography_vue.HeadlineSm,
 			TextXs: ui_system_typography_vue.TextXs
@@ -274,9 +280,12 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		template: `
 		<section class="crm-call-assessment-v2-client-types-card">
-			<HeadlineSm class="crm-call-assessment-v2-client-types-card__heading" tag="h2" accent>
-				{{ loc('CRM_CALL_ASSESSMENT_V2_AUDIENCE_HEADING') }}
-			</HeadlineSm>
+			<div class="crm-call-assessment-v2-client-types-card__title-row">
+				<BIcon class="crm-call-assessment-v2-client-types-card__title-icon" name="o-phone-up" :size="24"/>
+				<HeadlineSm class="crm-call-assessment-v2-client-types-card__heading" tag="h2" accent>
+					{{ loc('CRM_CALL_ASSESSMENT_V2_AUDIENCE_HEADING') }}
+				</HeadlineSm>
+			</div>
 			<div class="crm-call-assessment-v2-client-types-card__row">
 				<div class="crm-call-assessment-v2-client-types-card__field" v-if="clientFilter">
 					<TextXs class="crm-call-assessment-v2-client-types-card__label">
@@ -662,6 +671,230 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	});
 
+	const HintToggle = ui_vue3.defineComponent({
+		name: 'CrmCopilotCallAssessmentV2HintToggle',
+		props: {
+			text: {
+				type: String,
+				required: true
+			},
+			isChecked: {
+				type: Boolean,
+				required: true
+			},
+			isDisabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['check', 'uncheck'],
+		data() {
+			return {
+				splitButton: null,
+				switcher: null
+			};
+		},
+		mounted() {
+			const options = {
+				text: this.text,
+				size: ui_buttons.ButtonSize.LARGE,
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				mainButton: {
+					onclick: (button, event) => {
+						event.preventDefault();
+						if (!this.isDisabled) {
+							this.switcher?.toggle(event);
+						}
+						return {};
+					}
+				},
+				switcher: {
+					checked: this.isChecked,
+					disabled: this.isDisabled,
+					accessible: true,
+					ariaLabel: this.text,
+					handlers: {
+						toggled: () => {
+							this.$emit(this.switcher?.isChecked() ? 'check' : 'uncheck');
+						}
+					}
+				}
+			};
+			this.splitButton = ui_vue3.markRaw(new ui_buttons.SplitButton(options));
+			const container = this.splitButton.render();
+			const main = this.splitButton.getMainButton().getContainer();
+			main_core.Dom.attr(main, {
+				tabindex: -1,
+				'aria-hidden': 'true'
+			});
+			const switcher = this.splitButton.getSwitcher();
+			this.switcher = switcher ? ui_vue3.markRaw(switcher) : null;
+			main_core.Dom.append(container, this.$refs.container);
+		},
+		beforeUnmount() {
+			this.switcher?.destroy();
+			this.switcher = null;
+			this.splitButton = null;
+		},
+		watch: {
+			isChecked(value) {
+				if (this.switcher && this.switcher.isChecked() !== value) {
+					this.switcher.check(value, false);
+				}
+			},
+			isDisabled(value) {
+				this.switcher?.disable(value, false);
+			}
+		},
+		template: `
+		<span ref="container" class="crm-call-assessment-v2-hint-toggle"></span>
+	`
+	});
+
+	const editorToolbar = ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', 'link'];
+	const TextEditorComponent = ui_vue3.BitrixVue.defineAsyncComponent('ui.text-editor', 'TextEditorComponent');
+	const HintCard = ui_vue3.defineComponent({
+		name: 'CrmCopilotCallAssessmentV2HintCard',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			HeadlineSm: ui_system_typography_vue.HeadlineSm,
+			HintToggle,
+			TextEditorComponent,
+			TextMd: ui_system_typography_vue.TextMd
+		},
+		props: {
+			prompt: {
+				type: String,
+				default: ''
+			},
+			isHintEnabled: {
+				type: Boolean,
+				default: false
+			},
+			isEditable: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:prompt', 'update:isHintEnabled'],
+		data() {
+			return {
+				editorEvents: {
+					onChange: () => this.handleEditorChange()
+				}
+			};
+		},
+		computed: {
+			editorOptions() {
+				return {
+					ariaLabel: this.loc('CRM_CALL_ASSESSMENT_V2_HINT_HEADING'),
+					content: this.prompt,
+					editable: this.isEditable,
+					minHeight: 180,
+					maxHeight: 500,
+					toolbar: this.isEditable ? editorToolbar : [],
+					floatingToolbar: this.isEditable ? editorToolbar : [],
+					hideToolbar: !this.isEditable,
+					visualOptions: {
+						borderRadius: 'var(--ui-border-radius-lg)'
+					}
+				};
+			}
+		},
+		watch: {
+			prompt(value) {
+				const editor = this.getEditor();
+				if (editor && editor.getText() !== value) {
+					editor.setText(value);
+				}
+			}
+		},
+		mounted() {
+			this.setHintSwitcherTestId();
+		},
+		updated() {
+			this.setHintSwitcherTestId();
+		},
+		methods: {
+			setHintSwitcherTestId() {
+				const component = this.$refs.hintSwitcher;
+				const node = component?.switcher?.getNode();
+				if (node) {
+					node.dataset.testid = 'crm-call-assessment-v2-hint-toggle';
+				}
+			},
+			getEditor() {
+				const component = this.$refs.editor;
+				return component?.editor ?? null;
+			},
+			syncPrompt() {
+				const prompt = this.getEditor()?.getText() ?? this.prompt;
+				if (prompt !== this.prompt) {
+					this.$emit('update:prompt', prompt);
+				}
+				return prompt;
+			},
+			handleEditorChange() {
+				this.syncPrompt();
+			},
+			handleCheck() {
+				this.$emit('update:isHintEnabled', true);
+			},
+			handleUncheck() {
+				this.syncPrompt();
+				this.$emit('update:isHintEnabled', false);
+			}
+		},
+		template: `
+		<section
+			v-if="isEditable || isHintEnabled"
+			class="crm-call-assessment-v2__card crm-call-assessment-v2-hint-card"
+			data-testid="crm-call-assessment-v2-hint-card"
+		>
+			<header class="crm-call-assessment-v2-hint-card__header">
+				<div class="crm-call-assessment-v2-hint-card__heading">
+					<div class="crm-call-assessment-v2-hint-card__title-row">
+						<BIcon class="crm-call-assessment-v2-hint-card__title-icon" name="o-message" :size="24"/>
+						<HeadlineSm tag="h2" accent>
+							{{ loc('CRM_CALL_ASSESSMENT_V2_HINT_HEADING') }}
+						</HeadlineSm>
+					</div>
+					<TextMd v-if="isHintEnabled" tag="p">
+						{{ loc('CRM_CALL_ASSESSMENT_V2_HINT_DESCRIPTION') }}
+					</TextMd>
+				</div>
+				<div
+					v-if="isEditable"
+					class="crm-call-assessment-v2-hint-card__toggle"
+				>
+					<HintToggle
+						ref="hintSwitcher"
+						:text="loc('CRM_CALL_ASSESSMENT_V2_HINT_TOGGLE')"
+						:isChecked="isHintEnabled"
+						:isDisabled="!isEditable"
+						@check="handleCheck"
+						@uncheck="handleUncheck"
+					/>
+				</div>
+			</header>
+			<div
+				v-if="isHintEnabled"
+				class="crm-call-assessment-v2-hint-card__editor"
+				data-testid="crm-call-assessment-v2-hint-editor"
+			>
+				<TextEditorComponent
+					:key="isEditable ? 'editable' : 'read-only'"
+					ref="editor"
+					:editorOptions="editorOptions"
+					:events="editorEvents"
+					:editable="isEditable"
+				/>
+			</div>
+		</section>
+	`
+	});
+
 	const LoadingState = ui_vue3.defineComponent({
 		name: 'CrmCopilotCallAssessmentV2LoadingState',
 		components: {
@@ -964,6 +1197,7 @@ this.BX.Crm = this.BX.Crm || {};
 			<header v-if="isEditMode" class="crm-call-assessment-v2-scenario-card__header">
 				<div class="crm-call-assessment-v2-scenario-card__header-text">
 					<div class="crm-call-assessment-v2-scenario-card__heading-row">
+						<BIcon class="crm-call-assessment-v2-scenario-card__heading-icon" :name="Outline.CHATS" :size="24"/>
 						<HeadlineSm class="crm-call-assessment-v2-scenario-card__heading" tag="h2" accent>
 							{{ loc('CRM_CALL_ASSESSMENT_V2_CRITERIA_HEADING') }}
 						</HeadlineSm>
@@ -1253,6 +1487,8 @@ this.BX.Crm = this.BX.Crm || {};
 	});
 
 	const MIN_USER_TEXT_LENGTH = 100;
+	const originalCloseHandler = Symbol('originalCloseHandler');
+	const closeHandlerOwner = Symbol('closeHandlerOwner');
 	const App = ui_vue3.defineComponent({
 		name: 'CrmCopilotCallAssessmentV2App',
 		components: {
@@ -1260,6 +1496,7 @@ this.BX.Crm = this.BX.Crm || {};
 			ClientTypesCard,
 			DraftCard,
 			EditorToolbar,
+			HintCard,
 			LoadingState,
 			ScenarioCard,
 			ScriptInfoCard
@@ -1286,6 +1523,10 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			const initialMode = this.settings.isPendingGeneration ? 'loading' : initialEditMode;
 			const data = this.cloneData(this.initialData);
+			if (this.settings.isNewScript) {
+				data.prompt = '';
+				data.isHintEnabled = false;
+			}
 			if (isCopy) {
 				data.id = null;
 			}
@@ -1295,7 +1536,9 @@ this.BX.Crm = this.BX.Crm || {};
 				snapshot: this.cloneData(data),
 				userText: '',
 				isGenerating: this.settings.isPendingGeneration,
-				isSaving: false
+				isSaving: false,
+				criteriaGeneratedByAi: this.settings.isCopy === true && this.initialData.isGeneratedByCopilot === true,
+				slider: null
 			};
 		},
 		computed: {
@@ -1331,16 +1574,33 @@ this.BX.Crm = this.BX.Crm || {};
 			if (this.settings.isNewScript || this.settings.isPendingGeneration) {
 				main_core_events.EventEmitter.subscribe('onPullEvent-crm', this.handlePullEvent);
 			}
+			const slider = top?.BX?.SidePanel?.Instance?.getSliderByWindow?.(window) ?? null;
+			this.slider = slider ? ui_vue3.markRaw(slider) : null;
+			if (this.slider) {
+				this.wrapSliderCloseHandler();
+			}
 		},
 		beforeUnmount() {
 			main_core_events.EventEmitter.unsubscribe('onPullEvent-crm', this.handlePullEvent);
+			this.restoreSliderCloseHandler();
 		},
 		methods: {
 			cloneData(source) {
-				return JSON.parse(JSON.stringify(source));
+				const clone = JSON.parse(JSON.stringify(source));
+				return {
+					...clone,
+					prompt: clone.prompt ?? '',
+					isHintEnabled: clone.isHintEnabled === true
+				};
+			},
+			syncHintPrompt() {
+				const hintCard = this.$refs?.hintCard;
+				if (hintCard) {
+					this.data.prompt = hintCard.syncPrompt();
+				}
 			},
 			handlePullEvent(event) {
-				const data = event?.data;
+				const data = event.getData();
 				if (!Array.isArray(data) || data.length < 2) {
 					return;
 				}
@@ -1383,6 +1643,7 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			},
 			handleEnterEdit() {
+				ui_analytics.sendData(crm_integration_analytics.Builder.CallAssessment.GridActionsEvent.createDefault(crm_integration_analytics.Dictionary.ELEMENT_EDIT_BUTTON).setCallAssessmentId(this.data.id || null).buildData());
 				this.snapshot = this.cloneData(this.data);
 				this.mode = 'edit';
 			},
@@ -1390,6 +1651,7 @@ this.BX.Crm = this.BX.Crm || {};
 				if (this.isSaving) {
 					return;
 				}
+				this.syncHintPrompt();
 				const nonEmptyCriteria = this.data.criteria.filter(criterion => criterion.title.trim() !== '' && criterion.description.trim() !== '');
 				if (nonEmptyCriteria.length === 0) {
 					ui_notification.UI.Notification.Center.notify({
@@ -1411,9 +1673,13 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 				const payload = {
 					id: this.data.id,
+					criteriaGeneratedByAi: this.criteriaGeneratedByAi,
+					aiGeneratedCriteriaCount: this.criteriaGeneratedByAi ? nonEmptyCriteria.filter(criterion => criterion.id !== null && criterion.id > 0).length : 0,
 					data: {
 						title: this.data.title,
 						description: this.data.description,
+						prompt: this.data.prompt,
+						isHintEnabled: this.data.isHintEnabled,
 						clientTypeIds,
 						callTypeId,
 						isAiImprovementEnabled: this.data.isAiImprovementEnabled
@@ -1427,8 +1693,10 @@ this.BX.Crm = this.BX.Crm || {};
 				};
 				this.isSaving = true;
 				main_core.ajax.runAction('crm.copilot.callassessment.save', {
-					data: payload
+					data: payload,
+					analytics: crm_integration_analytics.Builder.CallAssessment.GridActionsEvent.createDefault(crm_integration_analytics.Dictionary.ELEMENT_SAVE_BUTTON).setCallAssessmentId(this.data.id || null).buildData()
 				}).then(response => {
+					this.criteriaGeneratedByAi = false;
 					const next = response?.data?.data;
 					if (next) {
 						this.data = this.cloneData(next);
@@ -1448,6 +1716,7 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			},
 			handleCancel() {
+				ui_analytics.sendData(crm_integration_analytics.Builder.CallAssessment.GridActionsEvent.createDefault(crm_integration_analytics.Dictionary.ELEMENT_CANCEL_BUTTON).setCallAssessmentId(this.data.id || null).buildData());
 				this.data = this.cloneData(this.snapshot);
 				this.mode = 'view';
 				this.events.onCancel?.();
@@ -1463,7 +1732,8 @@ this.BX.Crm = this.BX.Crm || {};
 					data: {
 						id: this.data.id,
 						isEnabled: value ? 1 : 0
-					}
+					},
+					analytics: crm_integration_analytics.Builder.CallAssessment.AutoUpdateEvent.createDefault(value).setCallAssessmentId(this.data.id).buildData()
 				}).catch(() => {
 					this.data.isAiImprovementEnabled = previous;
 					this.snapshot.isAiImprovementEnabled = previous;
@@ -1474,8 +1744,38 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			},
 			handleClose() {
-				const sidePanel = top?.BX?.SidePanel?.Instance;
-				sidePanel?.close();
+				this.slider?.close();
+			},
+			wrapSliderCloseHandler() {
+				if (!this.slider) {
+					return;
+				}
+				const slider = this.slider;
+				const label = slider.getLabel();
+				const currentHandler = label.getOnclick();
+				const originalHandler = currentHandler?.[closeHandlerOwner] ? currentHandler[originalCloseHandler] : currentHandler;
+				const sendCloseButtonAnalytics = () => this.sendCloseButtonAnalytics();
+				const wrappedHandler = function (...args) {
+					const wasOpen = slider.isOpen();
+					const result = originalHandler?.apply(this, args);
+					if (wasOpen && !slider.isOpen()) {
+						sendCloseButtonAnalytics();
+					}
+					return result;
+				};
+				wrappedHandler[originalCloseHandler] = originalHandler;
+				wrappedHandler[closeHandlerOwner] = this;
+				label.setOnclick(wrappedHandler);
+			},
+			restoreSliderCloseHandler() {
+				const label = this.slider?.getLabel();
+				const handler = label?.getOnclick();
+				if (handler?.[closeHandlerOwner] === this) {
+					label?.setOnclick(handler[originalCloseHandler]);
+				}
+			},
+			sendCloseButtonAnalytics() {
+				ui_analytics.sendData(crm_integration_analytics.Builder.CallAssessment.GridActionsEvent.createDefault(crm_integration_analytics.Dictionary.ELEMENT_CLOSE_BUTTON).setCallAssessmentId(this.data.id || null).buildData());
 			},
 			handleGenerate() {
 				if (this.isGenerating) {
@@ -1526,7 +1826,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		template: `
-		<div class="crm-call-assessment-v2">
+		<div class="crm-call-assessment-v2" data-testid="crm-call-assessment-v2-app">
 			<EditorToolbar
 				:isEditMode="isEditMode"
 				:isCreateMode="isCreateMode"
@@ -1560,6 +1860,12 @@ this.BX.Crm = this.BX.Crm || {};
 							v-model:criteria="data.criteria"
 						/>
 					</div>
+					<HintCard
+						ref="hintCard"
+						v-model:prompt="data.prompt"
+						v-model:isHintEnabled="data.isHintEnabled"
+						:isEditable="isEditMode && !settings.readOnly"
+					/>
 					<template v-if="isEditMode">
 						<ClientTypesCard v-model:filters="data.filters"/>
 					</template>
@@ -1623,5 +1929,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.CallAssessmentV2 = CallAssessmentV2;
 	exports.ScenarioStepView = ScenarioStepView;
 
-})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX, BX.Vue3, BX.Vue3.Mixins, BX.Event, BX.UI.Notification, BX.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.EntitySelector, BX.UI.IconSet, BX.UI.System.Input.Vue, BX.Crm.AI, BX.UI, BX.Vue3.Directives, BX.UI.Vue3.Components, BX.UI.DragAndDrop, BX.Vue3.Components, BX.Main, BX.UI.Vue3.Components);
+})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX, BX.Vue3, BX.Vue3.Mixins, BX.Crm.Integration.Analytics, BX.Event, BX.UI.Analytics, BX.UI.Notification, BX.Vue3.Components, BX.UI.IconSet, BX.UI.System.Typography.Vue, BX.UI.EntitySelector, BX.UI.System.Input.Vue, BX.Crm.AI, BX.UI, BX.Vue3.Directives, BX.UI.Vue3.Components, BX.UI, BX.UI.DragAndDrop, BX.Vue3.Components, BX.Main, BX.UI.Vue3.Components);
 //# sourceMappingURL=call-assessment-v2.bundle.js.map

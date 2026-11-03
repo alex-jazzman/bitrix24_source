@@ -4,6 +4,12 @@
 	gap: 12px;
 }
 
+@media (max-width: 960px) {
+	.tasks-full-card-footer-edit {
+		flex-wrap: wrap;
+	}
+}
+
 .tasks-full-card-footer-edit-grow {
 	flex-grow: 1;
 }
@@ -22,10 +28,23 @@
 
 .tasks-full-card-start-time-tracking-hint-info-link {
 	display: inline;
-	color: var(--ui-color-base-6);
-	cursor: pointer;
 	width: max-content;
-	border-bottom: 1px dashed #BAD7FF;
+	padding: 0;
+	border: none;
+	background: none;
+	font-family: inherit;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+	border-bottom: 1px dashed var(--ui-color-accent-main-link);
+}
+
+.tasks-full-card-start-time-tracking-hint-info-link:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 /* hover-pills in footer */

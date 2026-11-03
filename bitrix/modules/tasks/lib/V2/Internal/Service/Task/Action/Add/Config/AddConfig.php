@@ -24,6 +24,7 @@ class AddConfig
 	private RuntimeData $runtime;
 	private ?Processor\Task\Result $shiftResult = null;
 	private ?AnalyticsData $analyticsData;
+	private ?bool $manualDeadline;
 
 	public function __construct(
 		int $userId,
@@ -40,6 +41,10 @@ class AddConfig
 		?string $eventGuid = null,
 		RuntimeData $runtime = new RuntimeData(),
 		?AnalyticsData $analyticsData = null,
+		// Explicit client marker that the user set the deadline manually.
+		// null means the caller did not report it (mobile app, legacy CTaskItem,
+		// REST), in which case RunAddEvent falls back to the DEADLINE heuristic.
+		?bool $manualDeadline = null,
 	) {
 		$this->userId = $userId;
 		$this->fromAgent = $fromAgent;
@@ -55,6 +60,7 @@ class AddConfig
 		$this->eventGuid = $eventGuid;
 		$this->runtime = $runtime;
 		$this->analyticsData = $analyticsData;
+		$this->manualDeadline = $manualDeadline;
 	}
 
 	// Getter methods
@@ -71,6 +77,15 @@ class AddConfig
 	public function isFromWorkFlow(): bool
 	{
 		return $this->fromWorkFlow;
+	}
+
+	/**
+	 * Explicit client marker that the user set the deadline manually, or null
+	 * when the caller did not report it. Consumed by RunAddEvent.
+	 */
+	public function getManualDeadline(): ?bool
+	{
+		return $this->manualDeadline;
 	}
 
 	public function isCheckFileRights(): bool
@@ -166,6 +181,13 @@ class AddConfig
 	public function setFromWorkFlow(bool $fromWorkFlow): static
 	{
 		$this->fromWorkFlow = $fromWorkFlow;
+
+		return $this;
+	}
+
+	public function setManualDeadline(?bool $manualDeadline): static
+	{
+		$this->manualDeadline = $manualDeadline;
 
 		return $this;
 	}

@@ -4,9 +4,8 @@
 jn.define('im/messenger/provider/services/analytics/chat-delete', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 
-	const { Analytics, NavigationTabId } = require('im/messenger/const');
+	const { Analytics } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
@@ -18,33 +17,20 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 		constructor()
 		{
 			this.store = serviceLocator.get('core').getStore();
-			this.logger = getLoggerWithContext('analytics-service', this);
-		}
-
-		get #recentManager()
-		{
-			const recentManager = serviceLocator.get('recent-manager');
-			if (recentManager)
-			{
-				return recentManager;
-			}
-
-			this.logger.error('recentManager is not initialized.');
-
-			return null;
 		}
 
 		sendChatDeletePopupShown({ dialogId })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 
 			const analyticsEvent = new AnalyticsEvent();
 
 			analyticsEvent
 				.setTool(Analytics.Tool.im)
-				.setCategory(this.#getChatCategory())
+				.setCategory(category)
 				.setEvent(Analytics.Event.clickDelete)
-				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
+				.setType(AnalyticsHelper.getTypeByDialog(chatData))
 				.setSection(Analytics.Section.sidebar)
 				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
@@ -56,14 +42,15 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 		sendChatDeleteCanceled({ dialogId })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 
 			const analyticsEvent = new AnalyticsEvent();
 
 			analyticsEvent
 				.setTool(Analytics.Tool.im)
-				.setCategory(this.#getChatCategory())
+				.setCategory(category)
 				.setEvent(Analytics.Event.cancelDelete)
-				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
+				.setType(AnalyticsHelper.getTypeByDialog(chatData))
 				.setSection(Analytics.Section.popup)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
@@ -74,32 +61,49 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 		sendChatDeleteConfirmed({ dialogId })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 
 			const analyticsEvent = new AnalyticsEvent();
 
 			analyticsEvent
 				.setTool(Analytics.Tool.im)
-				.setCategory(this.#getChatCategory())
+				.setCategory(category)
 				.setEvent(Analytics.Event.delete)
-				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
+				.setType(AnalyticsHelper.getTypeByDialog(chatData))
 				.setSection(Analytics.Section.popup)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
+			if (category === Analytics.Category.project)
+			{
+				const projectId = AnalyticsHelper.getFormattedProjectId(chatData);
+				if (projectId)
+				{
+					analyticsEvent.setP4(projectId);
+				}
+			}
+
 			analyticsEvent.send();
 		}
 
-		sendToastShownChatDelete({ chatId, chatType, isChatOpened = false })
+		sendToastShownChatDelete({ dialogId, parentChatId, chatType, isChatOpened = false })
 		{
+			// The pull-driven delete notification fires AFTER the chat is removed from the
+			// store, so rebuild the minimal model the resolvers need from the pre-removal
+			// context (chatType + parentChatId; the parent collab survives) instead of the
+			// gone record. getCategoryByChat walks the subtree via the surviving parent.
+			const dialogModel = { dialogId, type: chatType, parentChatId };
+			const category = AnalyticsHelper.getCategoryByChat(dialogModel);
+
 			const analyticsEvent = new AnalyticsEvent();
 
 			analyticsEvent
 				.setTool(Analytics.Tool.im)
 				.setCategory(Analytics.Category.chatPopup)
 				.setEvent(Analytics.Event.view)
-				.setType(this.#getDeletingChatCategory())
-				.setP1(this.#prepareChatType(chatType))
+				.setType(`deleted_${category}`)
+				.setP1(AnalyticsHelper.getP1ByDialog(dialogModel))
 			;
 
 			if (isChatOpened)
@@ -108,37 +112,6 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 			}
 
 			analyticsEvent.send();
-		}
-
-		#getChatCategory()
-		{
-			switch (this.#recentManager?.getActiveRecentId())
-			{
-				case NavigationTabId.chats: return Analytics.Category.chat;
-				case NavigationTabId.copilot: return Analytics.Category.copilot;
-				case NavigationTabId.channel: return Analytics.Category.channel;
-				default: return Analytics.Category.chat;
-			}
-		}
-
-		#getDeletingChatCategory()
-		{
-			switch (this.#recentManager?.getActiveRecentId())
-			{
-				case NavigationTabId.chats: return 'deleted_chat';
-				case NavigationTabId.copilot: return 'deleted_copilot';
-				case NavigationTabId.channel: return 'deleted_channel';
-				default: return 'deleted_chat';
-			}
-		}
-
-		/**
-		 * @param {string} type
-		 * @returns {string}
-		 */
-		#prepareChatType(type)
-		{
-			return `chatType_${AnalyticsHelper.prepareChatType(type)}`;
 		}
 	}
 

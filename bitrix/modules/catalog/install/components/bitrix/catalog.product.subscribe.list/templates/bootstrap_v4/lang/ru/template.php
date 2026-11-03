@@ -30,4 +30,7 @@ $MESS["CPSL_SUBSCRIBE_PAGE_TITLE_AUTHORIZE"] = "Для просмотра спи
 <a href=\"javascript:void(0);\" class=\"alert-link\" id=\"cpsl-auth\">авторизоваться</a> или 
 <a href=\"javascript:void(0);\" class=\"alert-link\" id=\"cpsl-identification\">получить код доступа</a>";
 $MESS["CPSL_TPL_MESS_BTN_UNSUBSCRIBE"] = "Отписаться";
+$MESS['CPSL_TPL_SCU_GROUP_ARIA'] = '#PROPERTY#';
+$MESS['CPSL_TPL_SCU_NEXT_ARIA'] = 'Показать следующие варианты «#PROPERTY#»';
+$MESS['CPSL_TPL_SCU_PREV_ARIA'] = 'Показать предыдущие варианты «#PROPERTY#»';
 ?>

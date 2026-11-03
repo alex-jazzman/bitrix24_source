@@ -53,8 +53,34 @@
 	min-width: 52px;
 	margin-left: auto;
 	gap: var(--ui-space-inline-sm);
+	opacity: 0;
+	transition: opacity 200ms ease;
 }
 
-.tasks-time-tracking-list-column.--action .ui-icon-set {
+.tasks-time-tracking-list-row.--item:hover .tasks-time-tracking-list-column.--action,
+.tasks-time-tracking-list-column.--action:focus-within {
+	opacity: 1;
+}
+
+/* button reset */
+.tasks-time-tracking-list-action {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
 	cursor: pointer;
+}
+/* button reset end */
+
+.tasks-time-tracking-list-action {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-time-tracking-list-action:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }

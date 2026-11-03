@@ -37,6 +37,13 @@
 	color: var(--im-message-status__font-color_overlay-status);
 }
 
+/* The undelivered label carries meaning, unlike the time it replaces, so it is not dimmed at all:
+   at 11px on the red-20 bubble the dimmed variants fall below the 4.5:1 required by WCAG 1.4.3
+   (0.4 -> 1.6:1, 0.8 -> 3.8:1), while the solid token gives 5.8:1. */
+.bx-im-message-status__date.--not-delivered {
+	color: var(--im-color-palette-gray-90);
+}
+
 .bx-im-message-status__icon {
 	width: 13px;
 	height: 11px;

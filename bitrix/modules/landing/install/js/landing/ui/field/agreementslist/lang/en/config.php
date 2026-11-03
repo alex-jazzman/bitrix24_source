@@ -1,10 +1,20 @@
 <?php
-$MESS["LANDING_AGREEMENT_CONSENTS_BUTTON_LABEL"] = "View user consents";
-$MESS["LANDING_AGREEMENT_EDIT_BUTTON_LABEL"] = "Agreement parameters";
+$MESS['LANDING_AGREEMENT_ACCEPT_BY_SUBMIT_HINT'] = 'Consent is confirmed when this form is submitted successfully.';
+$MESS["LANDING_AGREEMENT_CONSENTS_BUTTON_LABEL"] = 'View accepted agreements';
+$MESS["LANDING_AGREEMENT_EDIT_BUTTON_LABEL"] = 'Configure agreements';
 $MESS["LANDING_AGREEMENT_FORM_TITLE"] = "Agreement behavior";
 $MESS["LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_1"] = "Consent is required.<br>Auto accept";
 $MESS["LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_2"] = "Consent is required.<br>Agreement text has to be read";
-$MESS["LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_3"] = "Consent is not required.<br>Auto accept";
-$MESS["LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_4"] = "Consent is not required.<br>Don't auto accept";
-$MESS["LANDING_AGREEMENT_LIST_CREATE_BUTTON_LABEL"] = "Create user agreement";
-$MESS["LANDING_AGREEMENT_LIST_SELECT_BUTTON_LABEL"] = "Select user agreement";
+$MESS["LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_3"] = 'Consent is optional<br>Accepted automatically';
+$MESS["LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_4"] = 'Consent is optional<br>Not accepted automatically';
+$MESS['LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_5'] = 'Consent is confirmed when the form is submitted';
+$MESS['LANDING_AGREEMENT_FORM_TYPE_FIELD_ITEM_5_CAPTION'] = 'No separate consent checkbox';
+$MESS["LANDING_AGREEMENT_LIST_CREATE_BUTTON_LABEL"] = 'Create document';
+$MESS["LANDING_AGREEMENT_LIST_SELECT_BUTTON_LABEL"] = 'Select document';
+$MESS['LANDING_AGREEMENT_NOTICE_DEFAULT_TEXT'] = 'Informational and promotional messages may only be sent with your consent. To receive them, give your consent. To continue without messages, click the button again.';
+$MESS['LANDING_AGREEMENT_NOTICE_DISABLED_ACCEPT_BY_SUBMIT_HINT'] = 'This option is unavailable for the selected agreement behaviors';
+$MESS['LANDING_AGREEMENT_NOTICE_DISABLED_REQUIRED_HINT'] = 'This option is unavailable for the selected agreement behaviors';
+$MESS['LANDING_AGREEMENT_NOTICE_HELP_LINK_TEXT'] = 'How it works';
+$MESS['LANDING_AGREEMENT_NOTICE_HELP_TEXT'] = 'This setting draws the customer\'s attention to the document without making consent mandatory. If they try to submit the form without consent, a warning appears and the form is not submitted. They can submit the form without consent on the next attempt.';
+$MESS['LANDING_AGREEMENT_NOTICE_SWITCH_LABEL'] = 'Show a warning on the first attempt to submit the form without accepting this agreement';
+$MESS['LANDING_AGREEMENT_NOTICE_TEXT_FIELD_LABEL'] = 'Warning text';

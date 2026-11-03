@@ -97,7 +97,7 @@ export class FeatureMenu
 		const baseFeature: ?FeatureParams = response.data;
 		if (baseFeature)
 		{
-			const feature = FeatureFactory.create(baseFeature);
+			const feature = FeatureFactory.create(baseFeature, baseFeature?.projectId);
 			feature?.handleClick();
 		}
 	}

@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import { Klass, LexicalEditor, TextNode } from 'ui.lexical.core';
+import { type Klass, type LexicalEditor, TextNode } from 'ui.lexical.core';
 export type EntityMatch = {
     end: number;
     start: number;
@@ -29,4 +29,4 @@ export type EntityMatch = {
  * @param createNode - A function that creates a new node to contain the matched text. eg createHashtagNode
  * @returns An array containing the plain text and reverse node transform listeners.
  */
-export declare function registerLexicalTextEntity<T extends TextNode>(editor: LexicalEditor, getMatch: (text: string) => null | EntityMatch, targetNode: Klass<T>, createNode: (textNode: TextNode) => T): Array<() => void>;
+export declare function registerLexicalTextEntity<T extends TextNode>(editor: LexicalEditor, getMatch: (text: string) => null | EntityMatch, targetNode: Klass<T>, createNode: (textNode: TextNode) => T): (() => void)[];

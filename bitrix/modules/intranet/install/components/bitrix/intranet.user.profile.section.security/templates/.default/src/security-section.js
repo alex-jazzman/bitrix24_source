@@ -1,9 +1,13 @@
-import { ComponentSlider } from './component-slider';
-import { Loc, Type, Text, Event } from 'main.core';
-import { Counter, CounterStyle } from 'ui.cnt';
+import { Loc, Type, Text, Event, Runtime } from 'main.core';
 import { SidePanel } from 'main.sidepanel';
 import { sendData } from 'ui.analytics';
+import { Counter, CounterStyle } from 'ui.cnt';
+import { UI } from 'ui.notification';
+import { Menu, MenuItemDesign } from 'ui.system.menu';
+
 import { LogoutAllConfirm } from 'intranet.logout-all-confirm';
+
+import { ComponentSlider } from './component-slider';
 
 export class SecuritySection
 {
@@ -21,6 +25,7 @@ export class SecuritySection
 		this.#isCloud = options.isCloud === true;
 		this.#passwordNetworkUrl = Type.isStringFilled(options.passwordNetworkUrl) ? options.passwordNetworkUrl : '';
 		this.#setAnalyticsEventHandlers(options);
+		this.#bindMenuItems(options);
 	}
 
 	open2FaSlider(): void
@@ -164,5 +169,113 @@ export class SecuritySection
 				});
 			});
 		}
+
+		if (options.profileManagementElement)
+		{
+			Event.bind(options.profileManagementElement, 'click', () => {
+				sendData({
+					tool: 'user_settings',
+					category: 'security',
+					event: 'click',
+					c_element: 'profile_management',
+				});
+			});
+		}
+	}
+
+	#bindMenuItems(options): void
+	{
+		if (!Type.isDomNode(options.profileManagementElement))
+		{
+			return;
+		}
+
+		Event.bind(
+			options.profileManagementElement,
+			'click',
+			this.#showProfileManagementMenu.bind(this, options.profileManagementElement),
+		);
+	}
+
+	#showProfileManagementMenu(bindElement): void
+	{
+		if (!Type.isDomNode(bindElement))
+		{
+			return;
+		}
+
+		if (!this.profileManagementMenu)
+		{
+			this.profileManagementMenu = new Menu({
+				id: 'intranet-user-profile-security-profile-management',
+				cacheable: true,
+				bindOptions: {
+					forceBindPosition: true,
+					forceLeft: true,
+				},
+				items: [
+					{
+						title: Loc.getMessage('INTRANET_USER_SECURITY_PROFILE_MANAGEMENT_DELETE_PROFILE'),
+						design: MenuItemDesign.Alert,
+						dataset: {
+							testid: 'intranet-user-security-delete-profile-menu-item',
+						},
+						onClick: this.#showSelfDeletePopup.bind(this),
+					},
+				],
+				events: {
+					onShow: () => {
+						bindElement.setAttribute('aria-expanded', 'true');
+					},
+					onClose: () => {
+						bindElement.setAttribute('aria-expanded', 'false');
+
+						if (bindElement.isConnected)
+						{
+							bindElement.focus();
+						}
+					},
+				},
+			});
+		}
+
+		this.profileManagementMenu.show(bindElement);
+		this.#adjustProfileManagementMenuPosition(bindElement);
+	}
+
+	#adjustProfileManagementMenuPosition(bindElement: HTMLElement): void
+	{
+		const popup = this.profileManagementMenu.getPopup();
+		const popupWidth = popup.getPopupContainer().offsetWidth;
+		const bindElementWidth = bindElement.getBoundingClientRect().width;
+
+		popup.setOffset({
+			offsetLeft: bindElementWidth - popupWidth,
+			offsetTop: 0,
+		});
+		popup.adjustPosition({
+			forceBindPosition: true,
+			forceLeft: true,
+		});
+	}
+
+	#showSelfDeletePopup(): Promise
+	{
+		return Runtime.loadExtension('intranet.user.self-delete-popup')
+			.then((popupExports) => {
+				const { SelfDeletePopup } = popupExports;
+
+				return SelfDeletePopup.show();
+			})
+			.catch((error) => {
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('INTRANET_USER_SECURITY_SELF_DELETE_POPUP_ERROR'),
+					autoHide: true,
+					useAirDesign: true,
+				});
+
+				console.error(error);
+			})
+		;
 	}
 }

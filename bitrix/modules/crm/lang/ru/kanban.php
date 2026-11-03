@@ -130,3 +130,7 @@ $MESS['CRM_KANBAN_CLOSE_QUICK_EDITOR_TITLE'] = 'Закрыть карточку 
 $MESS['CRM_KANBAN_CLOSE_QUICK_EDITOR_CONTENT'] = 'Ваши изменения не сохранятся';
 $MESS['CRM_KANBAN_CLOSE_QUICK_EDITOR_ACCEPT_BUTTON'] = 'Да, закрыть';
 $MESS['CRM_KANBAN_CLOSE_QUICK_EDITOR_CANCEL_BUTTON'] = 'Отмена';
+$MESS['CRM_KANBAN_STAGE_DEFAULT_NAME'] = 'Новая стадия';
+$MESS['CRM_KANBAN_STAGE_DELETE_HAS_ITEMS'] = 'Удалить можно только стадию без элементов';
+$MESS['CRM_KANBAN_STAGE_DELETE_BLOCKED'] = 'Стадию нельзя удалить';
+$MESS['CRM_KANBAN_STAGE_EDITOR_EXTERNAL_UPDATE'] = 'Другой сотрудник изменил стадию, обновите данные';

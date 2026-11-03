@@ -3,16 +3,30 @@
  */
 jn.define('layout/ui/file-attachment', (require, exports, module) => {
 	const { AppTheme } = require('apptheme/extended');
+	const { Color } = require('tokens');
+	const { Text2 } = require('ui-system/typography/text');
 	const { clip } = require('assets/common');
 	const { throttle } = require('utils/function');
 	const { Loc } = require('loc');
-	const { GridViewAdapter } = require('layout/ui/file-attachment/grid-view-adapter');
+	const { File } = require('layout/ui/file');
+	const { GridViewAdapter } = require('layout/ui/file-attachment/src/grid-view-adapter');
+
+	// spacing of one cell in the attachment grid; it goes to the tile itself, not around it: the action badge is
+	// anchored to the tile's right edge, and paddingRight is what lets it overhang the preview in this grid
+	const ATTACHMENT_ITEM_STYLE = {
+		marginBottom: 12,
+		marginHorizontal: 3,
+		paddingRight: 9,
+	};
 
 	/**
-	 * @class FileAttachment
+	 * @extends {LayoutComponent<FileAttachmentProps, FileAttachmentState>}
 	 */
 	class FileAttachment extends LayoutComponent
 	{
+		/**
+		 * @param {FileAttachmentProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -32,6 +46,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			this.layoutWidget.on('onViewRemoved', () => this.handleViewRemoved());
 		}
 
+		/**
+		 * @param {FileAttachmentProps} props
+		 */
 		componentWillReceiveProps(props)
 		{
 			this.state.attachments = props.attachments;
@@ -42,6 +59,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			this.props.onViewRemoved?.();
 		}
 
+		/**
+		 * @param {Array<FileAttachmentItem>} attachments
+		 */
 		onChangeAttachments(attachments)
 		{
 			this.setState({ attachments }, () => {
@@ -57,7 +77,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 						flex: 1,
 					},
 					safeArea: { bottom: true },
@@ -114,12 +134,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 						justifyContent: 'center',
 					},
 				},
-				Text({
+				Text2({
 					text: Loc.getMessage('UI_FILE_ATTACHMENT_NO_FILES'),
-					style: {
-						color: AppTheme.colors.base3,
-						fontSize: 18,
-					},
+					color: Color.base3,
 				}),
 			);
 		}
@@ -156,7 +173,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 					{
 						style: {
 							flexDirection: 'row',
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 							paddingVertical: 12.5,
 							justifyContent: 'center',
 							alignItems: 'center',
@@ -184,17 +201,18 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 							},
 						}),
 					),
-					Text({
+					Text2({
 						text,
-						style: {
-							color: AppTheme.colors.base3,
-							fontSize: 18,
-						},
+						color: Color.base3,
 					}),
 				),
 			);
 		}
 
+		/**
+		 * @param {FileAttachmentItem} file
+		 * @return {View}
+		 */
 		renderFile(file)
 		{
 			let uri = '';
@@ -212,9 +230,8 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			}
 
 			const {
-				attachmentFileIconFolder,
 				attachmentCloseIcon,
-				styles,
+				previewSize,
 				showName,
 				onFilePreviewMenuClick,
 			} = this.props;
@@ -222,7 +239,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			const onDeleteFile = () => this.onDeleteFile(file.id);
 			const onDeleteAttachmentItem = this.props.onDeleteAttachmentItem && !file.readOnly ? onDeleteFile : null;
 
-			return UI.File({
+			return File({
 				onDeleteAttachmentItem,
 				id: file.id,
 				url: file.url,
@@ -233,8 +250,8 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 				hasError: file.hasError || false,
 				readOnly: file.readOnly || false,
 				attachmentCloseIcon,
-				attachmentFileIconFolder,
-				styles,
+				previewSize,
+				style: ATTACHMENT_ITEM_STYLE,
 				files: this.state.attachments,
 				showName: showName ?? true,
 				textLines: 2,
@@ -250,6 +267,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {number|string} id
+		 */
 		onDeleteFile(id)
 		{
 			const index = this.state.attachments.findIndex((item) => item.id === id);
@@ -271,7 +291,14 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 		useGridViewAdapter()
 		{
 			return new Promise((resolve, reject) => {
-				return this.gridViewAdapter ? resolve(this.gridViewAdapter) : reject();
+				if (this.gridViewAdapter)
+				{
+					resolve(this.gridViewAdapter);
+				}
+				else
+				{
+					reject();
+				}
 			});
 		}
 
@@ -283,6 +310,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			this.useGridViewAdapter().then((adapter) => adapter.scrollToBottom()).catch(console.error);
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		get showAddButton()
 		{
 			return BX.prop.getBoolean(this.props, 'showAddButton', false);

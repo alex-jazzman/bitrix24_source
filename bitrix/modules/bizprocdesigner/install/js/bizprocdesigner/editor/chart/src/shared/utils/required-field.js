@@ -7,5 +7,8 @@ export function isRequiredField(field: Object): boolean
 
 export function hasVisibleFieldLabel(field: Object): boolean
 {
-	return Type.isStringFilled(field?.property?.Name);
+	return !field?.property?.Hidden
+		&& Type.isStringFilled(field?.property?.Name)
+		&& field?.property?.ShowFieldLabel !== false
+	;
 }

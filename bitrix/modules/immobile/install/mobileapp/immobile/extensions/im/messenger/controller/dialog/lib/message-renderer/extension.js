@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	const { Type } = require('type');
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
+	const { PerfPoint } = require('debug/prism');
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -32,10 +33,15 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	 */
 	class MessageRenderer
 	{
-		constructor({ chatId, dialogLocator })
+		constructor({ chatId, dialogLocator, validateQuote })
 		{
 			/** @type {DialogLocator} */
 			this.dialogLocator = dialogLocator;
+
+			// Injects the reply-quote synthetic block into a message text (Dialog.validateQuote).
+			// Needed wherever a message is redrawn straight from the raw store model, which lacks
+			// that block; see prepareStoreMessageForRender.
+			this.validateQuote = Type.isFunction(validateQuote) ? validateQuote : (message) => message;
 
 			/** @type {DialogView} */
 			this.view = this.dialogLocator.get('view');
@@ -188,7 +194,24 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 		isMessageRendered(messageId)
 		{
-			return this.messageIdCollection.has(messageId);
+			// a messageId can arrive as a string (e.g. from a native builder tap event),
+			// while server message ids are indexed here as numbers — match both, otherwise
+			// a transient block update (the form submit lock) is silently dropped
+			return this.messageIdCollection.has(messageId)
+				|| this.messageIdCollection.has(Number(messageId))
+				|| this.messageIdCollection.has(String(messageId));
+		}
+
+		/**
+		 * @description Prepares a raw store model for rendering: the store keeps a reply without the
+		 * synthetic quote block, so redrawing straight from the model would drop an already shown quote.
+		 * @param {MessagesModelState} message
+		 * @return {MessagesModelState}
+		 */
+		prepareStoreMessageForRender(message)
+		{
+			// clone before validateQuote: the injected callback is not guaranteed to keep the model intact.
+			return this.validateQuote(clone(message));
 		}
 
 		/**
@@ -270,7 +293,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					const previousMessageData = this.getMessageModelByAnyId(previousMessage.id);
 					if (previousMessageData)
 					{
-						updatedMessages.push(previousMessageData);
+						updatedMessages.push(this.prepareStoreMessageForRender(previousMessageData));
 					}
 				}
 
@@ -279,7 +302,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					const nextMessageData = this.getMessageModelByAnyId(nextMessage.id);
 					if (nextMessageData)
 					{
-						updatedMessages.push(nextMessageData);
+						updatedMessages.push(this.prepareStoreMessageForRender(nextMessageData));
 					}
 				}
 
@@ -832,7 +855,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		#updateMessageByType(message)
 		{
-			if (message.type === MessageType.audio)
+			// a builder message plays its audio from the block, and both audio kinds keep the
+			// playback state on the same message model fields
+			if (message.type === MessageType.audio || message.type === MessageType.builder)
 			{
 				return this.updatePlayingTimeByMessage(message);
 			}
@@ -842,13 +867,34 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				return this.updateVideoNoteByMessageId(message);
 			}
 
+			if (message.type === MessageType.copilot)
+			{
+				// a block message of a copilot chat reports the copilot type but still plays block audio
+				return this.#updatePlayingTimeIfSupported(this.updateCopilotByMessageId(message));
+			}
+
 			return message;
 		}
 
 		/**
 		 * @private
-		 * @param {AudioMessage} message
-		 * @return {AudioMessage}
+		 * @param {Message} message
+		 * @return {Message}
+		 */
+		#updatePlayingTimeIfSupported(message)
+		{
+			if (!Type.isFunction(message.getIsPlaying))
+			{
+				return message;
+			}
+
+			return this.updatePlayingTimeByMessage(message);
+		}
+
+		/**
+		 * @private
+		 * @param {AudioMessage|BlockMessage} message
+		 * @return {AudioMessage|BlockMessage}
 		 */
 		updatePlayingTimeByMessage(message)
 		{
@@ -871,6 +917,17 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		{
 			const { isPlaying, playingTime } = this.store.getters['messagesModel/playbackModel/getPlayback'](this.dialogId, message.id);
 			message.setPlayVideoNote(isPlaying, playingTime);
+
+			return message;
+		}
+
+		/**
+		 * @param {CopilotMessage} message
+		 * @return {CopilotMessage}
+		 */
+		updateCopilotByMessageId(message)
+		{
+			message.setActions(this.dialogId, message.id);
 
 			return message;
 		}
@@ -1278,6 +1335,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		{
 			logger.log('MessageRenderer.renderMessageBlock:', modelMessage.id, options);
 
+			// the point covers the wait in the render queue, the model-to-view
+			// conversion and the native block update
+			const point = new PerfPoint('IM Block Render Message Block', `message ${modelMessage.id}`).start();
+
 			this.renderQueuePromise = this.renderQueuePromise
 				.then(async () => {
 					const dialog = this.getDialog();
@@ -1294,13 +1355,22 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 						viewMessage.setShowUsername(modelMessage, currentViewMessage.showUsername);
 					}
 
+					// the update path recreates the view message, so re-hide the avatar in private dialogs
+					const dialogType = dialog?.type;
+					if (dialogType === DialogType.user || dialogType === DialogType.private)
+					{
+						this.preparePrivateMessage(viewMessage, modelMessage);
+					}
+
 					this.viewMessageCollection[viewMessage.id] = viewMessage;
 
 					await this.view.updateMessageBlock(viewMessage, blockId, options);
+					point.end();
 
 					this.doTick();
 				})
 				.catch((error) => {
+					point.end();
 					logger.error('MessageRenderer.renderMessageBlock error:', error);
 				})
 			;

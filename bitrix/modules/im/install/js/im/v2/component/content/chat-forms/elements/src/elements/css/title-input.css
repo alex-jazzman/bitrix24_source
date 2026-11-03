@@ -29,3 +29,12 @@
 .bx-im-chat-forms-title-input__input::selection {
 	background: var(--im-chat-forms-title-input__background-color_input-selection);
 }
+
+/* The naked design leaves the field without a border, a background and side padding, so the
+   heading keeps only the line under it. The rest of the metrics are variables of BInput. */
+.bx-im-chat-forms-title-input__field {
+	--font-size: var(--ui-font-size-4xl);
+	--min-height: 42px;
+
+	border-bottom: 1px solid var(--ui-color-divider-accent);
+}

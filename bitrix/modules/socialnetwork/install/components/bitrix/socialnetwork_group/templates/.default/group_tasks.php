@@ -15,6 +15,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use Bitrix\Socialnetwork\Collab\Registry\CollabRegistry;
+use Bitrix\Socialnetwork\V2\Feature;
 use Bitrix\Tasks\Ui\Filter\Task;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 
@@ -124,10 +125,18 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $groupId, "tasks"))
 		"CONTEXT" => $isCollab ? Context::getCollab() : '',
 	];
 
+	$isNewProject = Feature::isSectionPinAvailableForFields($arResult['groupFields']);
+	$componentParams['ALLOW_FAVORITE_STAR'] = $isNewProject;
 	$favoritesTitleTemplate = (
-		($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
-			? ''
-			: $arResult['PAGES_TITLE_TEMPLATE']
+		$isNewProject || ($arParams['HIDE_OWNER_IN_TITLE'] ?? null) !== 'Y'
+			? $arResult['FAVORITES_TITLE_TEMPLATE']
+			: ''
+	);
+
+	$favoritesUrl = (
+		$isNewProject
+			? CComponentEngine::MakePathFromTemplate($arResult['PATH_TO_GROUP_TASKS'], ['group_id' => $groupId])
+			: ''
 	);
 
 	$APPLICATION->IncludeComponent(
@@ -144,8 +153,10 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $groupId, "tasks"))
 			'USE_PADDING' => !($group && $group->isScrumProject()),
 			'USE_UI_TOOLBAR' => 'Y',
 			'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
+			'UI_TOOLBAR_FAVORITES_URL' => $favoritesUrl,
 		]
 	);
 
 	$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
+	$APPLICATION->SetPageProperty('FavoriteUrl', $favoritesUrl);
 }

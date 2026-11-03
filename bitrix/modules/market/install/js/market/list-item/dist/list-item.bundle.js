@@ -1,11 +1,11 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, market_popupInstall, market_popupUninstall, ui_vue3_pinia, market_installStore, market_uninstallStore, market_ratingStars, ui_iconSet_api_vue, main_popup, market_marketLinks, main_core) {
+(function (exports, market_popupUninstall, ui_vue3_pinia, market_installStore, market_uninstallStore, market_ratingStars, ui_iconSet_api_vue, main_popup, market_marketLinks, main_core, ui_vue3) {
 	'use strict';
 
+	let popupInstallLoadingPromise = null;
 	const ListItem = {
 		components: {
-			PopupInstall: market_popupInstall.PopupInstall,
 			PopupUninstall: market_popupUninstall.PopupUninstall,
 			BIcon: ui_iconSet_api_vue.BIcon,
 			RatingStars: market_ratingStars.RatingStars
@@ -20,7 +20,8 @@ this.BX = this.BX || {};
 			return {
 				favoriteProcess: false,
 				favoriteProcessStart: false,
-				MarketLinks: market_marketLinks.MarketLinks
+				MarketLinks: market_marketLinks.MarketLinks,
+				popupInstallComponent: null
 			};
 		},
 		computed: {
@@ -233,10 +234,30 @@ this.BX = this.BX || {};
 				});
 			},
 			updateApp: function () {
-				this.setAppInfo(this.item);
-				this.showInstallPopup(true);
+				void this.showInstallPopupOnDemand(true);
 			},
-			...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo']),
+			showInstallPopupOnDemand(isUpdate = false) {
+				if (popupInstallLoadingPromise) {
+					return popupInstallLoadingPromise;
+				}
+				this.prepareInstallContext(this.item, this.item.LICENSE);
+				if (this.popupInstallComponent) {
+					this.showInstallPopup(isUpdate);
+					return Promise.resolve();
+				}
+				popupInstallLoadingPromise = Promise.resolve().then(() => main_core.Runtime.loadExtension('market.popup-install')).then(({
+					PopupInstall
+				}) => {
+					this.popupInstallComponent = ui_vue3.markRaw(PopupInstall);
+					return ui_vue3.nextTick();
+				}).then(() => this.showInstallPopup(isUpdate)).catch(() => {
+					this.showError(this.$Bitrix.Loc.getMessage('MARKET_INSTALL_POPUP_LOAD_ERROR'));
+				}).finally(() => {
+					popupInstallLoadingPromise = null;
+				});
+				return popupInstallLoadingPromise;
+			},
+			...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'prepareInstallContext', 'showError']),
 			...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteAction', 'setDeleteActionInfo'])
 		},
 		template: `
@@ -417,8 +438,9 @@ this.BX = this.BX || {};
 		</template>
 		<div v-if="$parent.isInstalledList">
 			<div style="display: none">
-				<PopupInstall
-					v-if="item.BUTTONS.UPDATE === 'Y'"
+				<component
+					:is="popupInstallComponent"
+					v-if="popupInstallComponent && item.BUTTONS.UPDATE === 'Y'"
 					:appInfo="item"
 					:licenseInfo="item.LICENSE"
 				/>
@@ -435,4 +457,4 @@ this.BX = this.BX || {};
 
 	exports.ListItem = ListItem;
 
-})(this.BX.Market = this.BX.Market || {}, BX.Market, BX.Market, BX.Vue3.Pinia, BX.Market, BX.Market, BX.Market, BX.UI.IconSet, BX.Main, BX.Market, BX);
+})(this.BX.Market = this.BX.Market || {}, BX.Market, BX.Vue3.Pinia, BX.Market, BX.Market, BX.Market, BX.UI.IconSet, BX.Main, BX.Market, BX, BX.Vue3);

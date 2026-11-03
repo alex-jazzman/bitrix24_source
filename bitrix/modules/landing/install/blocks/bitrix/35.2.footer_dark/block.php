@@ -10,7 +10,7 @@
 				<address class="g-mb-20">
 					<div class="landing-block-card-contact d-flex g-pos-rel g-mb-7" data-card-preset="text">
 						<div class="landing-block-node-card-contact-icon-container g-color-gray-light-v1">
-							<i class="landing-block-node-card-contact-icon fa fa-home g-pr-5"></i>
+							<i class="landing-block-node-card-contact-icon fa fa-home g-pr-5" aria-hidden="true"></i>
 						</div>
 						<div class="landing-block-node-card-contact-text g-color-gray-light-v1">
 							Address: <span style="font-weight: bold;">In sed lectus tincidunt</span>
@@ -19,7 +19,7 @@
 
 					<div class="landing-block-card-contact d-flex g-pos-rel g-mb-7" data-card-preset="link">
 						<div class="landing-block-node-card-contact-icon-container g-color-gray-light-v1">
-							<i class="landing-block-node-card-contact-icon fa fa-phone g-pr-5"></i>
+							<i class="landing-block-node-card-contact-icon fa fa-phone g-pr-5" aria-hidden="true"></i>
 						</div>
 						<div>
 							<span class="landing-block-node-card-contact-text g-color-gray-light-v1">Phone Number: </span>
@@ -29,7 +29,7 @@
 
 					<div class="landing-block-card-contact d-flex g-pos-rel g-mb-7" data-card-preset="link">
 						<div class="landing-block-node-card-contact-icon-container g-color-gray-light-v1">
-							<i class="landing-block-node-card-contact-icon fa fa-envelope g-pr-5"></i>
+							<i class="landing-block-node-card-contact-icon fa fa-envelope g-pr-5" aria-hidden="true"></i>
 						</div>
 						<div>
 							<span class="landing-block-node-card-contact-text g-color-gray-light-v1">Email: </span>

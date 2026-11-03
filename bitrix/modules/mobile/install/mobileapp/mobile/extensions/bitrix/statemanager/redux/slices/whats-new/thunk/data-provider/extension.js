@@ -33,7 +33,8 @@ jn.define('statemanager/redux/slices/whats-new/thunk/data-provider', (require, e
 		return new Promise((resolve) => {
 			getRunActionExecutor()
 				.setHandler((result) => resolve(result))
-				.call(false);
+				.call(false)
+				.catch(console.error);
 		});
 	}
 

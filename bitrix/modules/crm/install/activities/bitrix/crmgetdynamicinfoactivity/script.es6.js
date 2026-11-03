@@ -6,7 +6,6 @@ import {
 	Document,
 	getGlobalContext,
 	setGlobalContext,
-	InlineSelector,
 	Designer,
 } from 'bizproc.automation';
 
@@ -118,6 +117,7 @@ class CrmGetDynamicInfoActivity
 				if (template && robot)
 				{
 					template.onOpenMenu(event, robot);
+					this.addTemplateFields(event.getData().selector, template);
 				}
 			};
 		}
@@ -126,7 +126,41 @@ class CrmGetDynamicInfoActivity
 			this.onOpenFilterFieldsMenu = (event) => this.addBPFields(event.getData().selector);
 		}
 	}
-	addBPFields(selector: InlineSelector): void
+
+	addTemplateFields(selector, template): void
+	{
+		const getSelectorProperties = (properties) => {
+			if (Type.isArray(properties))
+			{
+				return properties.map((property) => ({
+					id: property.SystemExpression,
+					title: property.Name,
+					customData: { field: property },
+				}));
+			}
+
+			return [];
+		};
+
+		selector.addGroup('workflowParameters', {
+			id: 'workflowParameters',
+			title: Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
+			children: [
+				{
+					id: 'parameters',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+					children: getSelectorProperties(template.getParameters()),
+				},
+				{
+					id: 'variables',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+					children: getSelectorProperties(template.getVariables()),
+				},
+			],
+		});
+	}
+
+	addBPFields(selector): void
 	{
 		const getSelectorProperties = ({properties, objectName, expressionPrefix}) => {
 			if (Type.isObject(properties))

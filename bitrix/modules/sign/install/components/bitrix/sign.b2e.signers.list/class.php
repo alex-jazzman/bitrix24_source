@@ -16,7 +16,6 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
-use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Repository\UserRepository;
 use Bitrix\Sign\Service\Container;
@@ -47,8 +46,6 @@ final class SignB2eSignersList extends SignBaseComponent
 	private readonly \Bitrix\Sign\Service\Sign\UrlGeneratorService $urlGeneratorService;
 	private readonly \Bitrix\Sign\Service\Integration\Socialnetwork\FeedPostService $feedPostService;
 	private UserModel $currentUserAccessModel;
-	/** @var array<int|string, string|null> */
-	private array $currentUserPermissionValuesCache = [];
 	/** @var array<string, mixed>|null */
 	private ?array $sortRequest = null;
 	private ?bool $canCurrentUserAddDocument = null;
@@ -721,14 +718,10 @@ final class SignB2eSignersList extends SignBaseComponent
 
 	private function getValueForPermissionFromCurrentUser(string|int $permissionId): ?string
 	{
-		$permissionService = new RolePermissionService();
-
-		$this->currentUserPermissionValuesCache[$permissionId] ??= $permissionService->getValueForPermission(
+		return Container::instance()->getRolePermissionService()?->getValueForPermission(
 			$this->getCurrentUserAccessModel()->getRoles(),
 			$permissionId,
 		);
-
-		return $this->currentUserPermissionValuesCache[$permissionId];
 	}
 
 	private function getResponsibleByList(\Bitrix\Sign\Item\SignersList $list): ?int

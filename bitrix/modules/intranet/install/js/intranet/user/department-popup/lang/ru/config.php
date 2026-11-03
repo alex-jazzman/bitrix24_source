@@ -1,0 +1,16 @@
+<?php
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_TITLE"] = "Перевод экстранет-пользователя в компанию";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_EMPLOYEE_TITLE"] = "Принять сотрудника на работу";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_COLLABA_TITLE"] = "Перевод гостя в компанию";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_INTEGRATOR_TITLE"] = "Перевод интегратора в компанию";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_INTEGRATOR_TITLE_RENAMED"] = "Перевод специалиста по внедрению в компанию";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_POSITION_EXTRANET"] = "Экстранет";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_POSITION_COLLABER"] = "Гость";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_POSITION_EMPLOYEE"] = "Сотрудник";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_POSITION_INTEGRATOR"] = "Интегратор";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_POSITION_INTEGRATOR_RENAMED"] = "Специалист по внедрению";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_TRANSFER"] = "Перевести";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_HIRE"] = "Принять на работу";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_CANCEL"] = "Отмена";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_DEPARTMENT_DESCRIPTION"] = "Сотрудник будет добавлен в нужный отдел с соответствующими правами доступа";
+$MESS["INTRANET_USER_DEPARTMENT_POPUP_DEPARTMENT_DESCRIPTION_EMPLOYEE"] = "Сотрудник получит доступ к Битрикс24, появится в структуре компании и будет добавлен в выбранный отдел";

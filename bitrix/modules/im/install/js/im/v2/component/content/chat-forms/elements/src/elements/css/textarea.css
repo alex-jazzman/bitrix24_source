@@ -43,3 +43,16 @@
 	border-radius: var(--im-border-radius-sm);
 }
 /* end rounded */
+
+/* Air description field */
+/* The description is an ordinary field of the form: the plain design of BInput draws its border,
+   its background and its rounding, and the resting and the active border come with it. This node
+   repeats the box of the field to carry the shadow every surface of the form has, the same way
+   the wrapper of the selects does. */
+.bx-im-chat-forms-textarea__field {
+	border-radius: var(--ui-border-radius-sm);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+/* End air description field */

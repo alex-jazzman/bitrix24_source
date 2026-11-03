@@ -77,6 +77,8 @@ jn.define('im/messenger/controller/recent/service/external/chat', (require, expo
 		}
 
 		/**
+		 * @desc A live external event: the call is marked so an active coalescing scope does not
+		 * delay the banner.
 		 * @private
 		 * @param {CallItemData} recentCallItem
 		 */
@@ -90,7 +92,7 @@ jn.define('im/messenger/controller/recent/service/external/chat', (require, expo
 				// findItemMethod: 'findInNative',
 			});
 
-			renderService.renderInstant();
+			renderService.renderInstant({ force: true });
 		}
 
 		/**
@@ -103,8 +105,10 @@ jn.define('im/messenger/controller/recent/service/external/chat', (require, expo
 
 			const renderService = this.recentLocator.get('render');
 
-			renderService.deleteItems([{ id: callId }]);
-			renderService.renderInstant();
+			// the call banner is a service row: it is excluded from the cache snapshot by section
+			// and its removal is not a composition change
+			renderService.deleteItems([{ id: callId }], { isServiceRow: true });
+			renderService.renderInstant({ force: true });
 		}
 
 		subscribeEvents()

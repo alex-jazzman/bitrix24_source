@@ -2,6 +2,8 @@
 
 namespace Bitrix\Intranet\Site\FirstPage;
 
+use Bitrix\Intranet\Internal\Service\Portal\PortalFirstPageUrlNormalizer;
+use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -21,11 +23,21 @@ class IntranetFirstPage implements FirstPage
 
 	public function getUri(): Uri
 	{
-		$firstPagePath = $this->getUserFirstPage();
-
-		if (empty($firstPagePath))
+		$effective = Manager::getEffectiveState(SITE_ID, $this->userId);
+		if ($effective !== null)
 		{
-			$firstPagePath = $this->getPortalFirstPage();
+			$firstPagePath = $effective['firstPage'] ?? '';
+		}
+		else
+		{
+			$firstPagePath = $this->getUserFirstPage();
+
+			if (empty($firstPagePath))
+			{
+				$firstPagePath = (new PortalFirstPageUrlNormalizer())
+					->normalize($this->getPortalFirstPage())
+				;
+			}
 		}
 
 		if (

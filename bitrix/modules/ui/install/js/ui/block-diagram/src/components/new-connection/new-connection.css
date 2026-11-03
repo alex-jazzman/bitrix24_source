@@ -8,8 +8,10 @@
 	overflow: visible;
 }
 
+/* Kept one step over the connection preview, as it was before the preview moved up: this layer sits
+   earlier in the markup, so an equal step would flip the two. */
 .ui-block-diagram-new-connection.--up {
-	z-index: 6;
+	z-index: 7;
 }
 
 .ui-block-diagram-new-connection__path {

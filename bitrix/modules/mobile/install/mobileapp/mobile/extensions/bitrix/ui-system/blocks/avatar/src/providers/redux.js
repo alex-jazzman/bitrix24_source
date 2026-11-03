@@ -6,6 +6,13 @@ jn.define('ui-system/blocks/avatar/src/providers/redux', (require, exports, modu
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 
+	/**
+	 * The users slice outranks the passed props: a stranger id shows the data of that stranger.
+	 *
+	 * @param {Record<string, unknown>} state
+	 * @param {AvatarComponentProps} props
+	 * @return {AvatarComponentProps}
+	 */
 	const mapStateToProps = (state, props) => {
 		const {
 			id: userId,

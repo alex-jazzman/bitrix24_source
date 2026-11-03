@@ -1,0 +1,25 @@
+<?php
+$MESS['BICONNECTOR_AI_AGENTS_CONFIGURE_DASHBOARD_DESCRIPTION'] = 'Suggests which charts and filters you need to keep your metrics under control';
+$MESS['BICONNECTOR_AI_AGENTS_CONFIGURE_DASHBOARD_PROMPT'] = 'Help me prepare the structure of a BI dashboard. If needed, ask me about the dashboard\'s goal, audience, metrics, filters, and data sources.';
+$MESS['BICONNECTOR_AI_AGENTS_CONFIGURE_DASHBOARD_TITLE'] = 'Dashboard setup';
+$MESS['BICONNECTOR_AI_AGENTS_DESCRIBE_METRICS_DESCRIPTION'] = 'Helps write clear metric definitions for your team';
+$MESS['BICONNECTOR_AI_AGENTS_DESCRIBE_METRICS_PROMPT'] = 'Help me describe BI metrics in clear language for the team. If needed, ask me about the list of metrics, calculation formulas, data sources, and usage examples.';
+$MESS['BICONNECTOR_AI_AGENTS_DESCRIBE_METRICS_TITLE'] = 'Metric descriptions';
+$MESS['BICONNECTOR_AI_AGENTS_EXPLAIN_TRENDS_DESCRIPTION'] = 'Helps find possible reasons behind a metric\'s growth or decline';
+$MESS['BICONNECTOR_AI_AGENTS_EXPLAIN_TRENDS_PROMPT'] = 'Help me understand the dynamics of BI metrics and the possible reasons behind their growth or decline. If needed, ask me about the report, metric, period, segment, and data source.';
+$MESS['BICONNECTOR_AI_AGENTS_EXPLAIN_TRENDS_TITLE'] = 'Trend explanation';
+$MESS['BICONNECTOR_AI_AGENTS_FIND_ANOMALIES_DESCRIPTION'] = 'Helps detect anomalies, drops, and sharp changes in your metrics';
+$MESS['BICONNECTOR_AI_AGENTS_FIND_ANOMALIES_PROMPT'] = 'Analyze BI reports and help me find notable deviations in key metrics. If you need to choose a specific report, metric, or period for the analysis, ask me a clarifying question.';
+$MESS['BICONNECTOR_AI_AGENTS_FIND_ANOMALIES_TITLE'] = 'Anomaly detection';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_INSIGHTS_DESCRIPTION'] = 'Helps turn dashboard data into short insights for a meeting or report';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_INSIGHTS_PROMPT'] = 'Help me prepare brief insights from BI data for a manager or a meeting. If needed, ask me about the report, period, audience, and key metrics.';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_INSIGHTS_TITLE'] = 'Insight preparation';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_REPORT_DESCRIPTION'] = 'Helps choose metrics, fields, and report structure for your business task';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_REPORT_PROMPT'] = 'Help me prepare a BI report for a business task. If needed, ask me about the report\'s goal, audience, key metrics, period, and data sources.';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_REPORT_TITLE'] = 'Report preparation';
+$MESS['BICONNECTOR_AI_AGENTS_TEST_HYPOTHESES_DESCRIPTION'] = 'Helps identify which data to check to confirm or refute a hypothesis';
+$MESS['BICONNECTOR_AI_AGENTS_TEST_HYPOTHESES_PROMPT'] = 'Help me test a business hypothesis using BI data. If the hypothesis, metric, period, or segment is not specified, ask clarifying questions before the analysis.';
+$MESS['BICONNECTOR_AI_AGENTS_TEST_HYPOTHESES_TITLE'] = 'Hypothesis testing';
+$MESS['BICONNECTOR_AI_AGENTS_WORK_WITH_DATASETS_DESCRIPTION'] = 'Helps figure out what data you need and how to connect it';
+$MESS['BICONNECTOR_AI_AGENTS_WORK_WITH_DATASETS_PROMPT'] = 'Help me determine which data and datasets are needed for a BI task. If context is missing, ask me about the business question, entities, fields, and relationships between data.';
+$MESS['BICONNECTOR_AI_AGENTS_WORK_WITH_DATASETS_TITLE'] = 'Working with datasets';

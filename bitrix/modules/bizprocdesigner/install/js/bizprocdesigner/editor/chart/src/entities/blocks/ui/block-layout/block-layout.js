@@ -151,9 +151,10 @@ export const BlockLayout = {
 			:class="blockLayoutClassNames"
 			ref="editorBlockMenu"
 		>
-			<div 
+			<div
 				:class="topMenuClassNames"
 				@mousedown.stop
+				@dblclick.stop
 			>
 				<div
 					v-if="!disabled"

@@ -18,6 +18,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/permission-manager',
+		'im:messenger/provider/services/analytics',
 		'im:messenger/lib/ui/alert',
 		'im:messenger/model/sidebar',
 		'im:messenger/provider/services/sharing-link',

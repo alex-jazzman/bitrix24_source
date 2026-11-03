@@ -413,6 +413,8 @@ export class BasketRestHandler extends BaseRestHandler
 
 				this.setModelPropertyError(properties);
             }
+
+			resolve();
         });
     }
 

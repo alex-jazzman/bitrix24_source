@@ -415,7 +415,7 @@ export default class ColorPopup extends BaseControl
 
 	getColorPickerPopupLayout()
 	{
-		this.colorPickerPopupId = `colorpicket_${Text.getRandom()}`;
+		this.colorPickerPopupId = `colorpicker_${Text.getRandom()}`;
 
 		let value = ColorPopup.HEX_DEFAULT_TEXT;
 		let bgValue = '#eeeeee';

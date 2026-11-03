@@ -3,14 +3,18 @@
  */
 jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { chevronDown, pen } = require('assets/common');
+	const { chevronDown } = require('assets/common');
 	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
+	const { IconView } = require('ui-system/blocks/icon');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { isEqual, clone } = require('utils/object');
 	const { isNil } = require('utils/type');
 	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
 	const { PropTypes } = require('utils/validation');
+
+	const EDIT_ICON_SIZE = 21;
 
 	const CastType = {
 		STRING: 'string',
@@ -659,17 +663,12 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						marginTop: (this.isLeftTitlePosition() ? undefined : 15),
 					},
 				},
-				Image(
-					{
-						style: {
-							height: 15,
-							width: 14,
-						},
-						svg: {
-							content: pen(),
-						},
-					},
-				),
+				IconView({
+					testId: 'EntitySelectorFieldEdit_icon',
+					icon: Icon.EDIT,
+					size: EDIT_ICON_SIZE,
+					color: Color.base3,
+				}),
 			);
 		}
 

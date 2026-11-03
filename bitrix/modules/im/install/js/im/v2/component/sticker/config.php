@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'im.v2.application.core',
 		'im.v2.const',
+		'im.v2.css.classes',
 		'im.v2.lib.helpdesk',
 		'im.v2.lib.notifier',
 		'im.v2.lib.permission',

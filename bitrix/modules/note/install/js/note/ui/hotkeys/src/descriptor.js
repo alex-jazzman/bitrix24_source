@@ -10,6 +10,10 @@ function entry(record)
 		aliases: [],
 		command: null,
 		editorScoped: true,
+		// Name of the feature the entry belongs to, NULL for one that is always there. A consumer that
+		// knows which features are on (the help panel) hides the rest: a shortcut listed for a feature
+		// the portal has switched off would be a promise nothing keeps.
+		feature: null,
 		...record,
 	});
 }
@@ -51,6 +55,8 @@ const HOTKEYS = Object.freeze([
 	// Group: insert — named actions resolved by the keymap extension in phase 2.
 	entry({ id: 'link', group: 'insert', combo: 'Mod-k', binding: 'new', command: 'openLinkPopup', labelKey: 'NOTE_HOTKEYS_ACTION_LINK' }),
 	entry({ id: 'attachments', group: 'insert', combo: 'Mod-Shift-u', binding: 'new', command: 'insertFileNode', labelKey: 'NOTE_HOTKEYS_ACTION_ATTACHMENTS' }),
+	entry({ id: 'diskAttachment', group: 'insert', combo: 'Mod-Shift-d', binding: 'new', command: 'pickDiskFile', labelKey: 'NOTE_HOTKEYS_ACTION_DISK_ATTACHMENT', feature: 'diskAttachments' }),
+	entry({ id: 'date', group: 'insert', combo: 'Mod-;', binding: 'new', command: 'toggleDate', labelKey: 'NOTE_HOTKEYS_ACTION_DATE' }),
 
 	// Group: history — from the TipTap history package.
 	entry({ id: 'undo', group: 'history', combo: 'Mod-z', binding: 'builtin', labelKey: 'NOTE_HOTKEYS_ACTION_UNDO' }),

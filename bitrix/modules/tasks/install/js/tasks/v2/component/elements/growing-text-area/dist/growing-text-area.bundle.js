@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, ui_vue3_directives_hint) {
+(function (exports, main_core, ui_vue3, ui_vue3_directives_hint) {
 	'use strict';
 
 	const URL_REGEXP = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])/;
@@ -24,9 +24,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		};
 	}
 	const LINK_MATCHERS = [createLinkMatcherWithRegExp(URL_REGEXP, text => text.startsWith('http') ? text : `https://${text}`), createLinkMatcherWithRegExp(EMAIL_REGEXP, text => `mailto:${text}`)];
-
-	// @vue/component
-	const GrowingTextArea = {
+	const GrowingTextArea = ui_vue3.defineComponent({
 		name: 'GrowingTextArea',
 		directives: {
 			hint: ui_vue3_directives_hint.hint
@@ -60,9 +58,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				type: Number,
 				default: 29
 			},
+			maxLines: {
+				type: Number,
+				default: 3
+			},
 			readonly: {
 				type: Boolean,
 				default: false
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
+			ariaDescribedby: {
+				type: String,
+				default: ''
+			},
+			editButtonLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['update:modelValue', 'input', 'focus', 'blur', 'emptyFocus', 'emptyBlur', 'enterBlur', 'linkClick'],
@@ -78,6 +92,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isDisplay() {
 				return !this.isEmpty && !this.focus && (this.overflowing || this.hasLinks);
+			},
+			hasEditButton() {
+				return !this.readonly && this.hasLinks && main_core.Type.isStringFilled(this.editButtonLabel);
+			},
+			displayRole() {
+				if (this.readonly || this.hasLinks) {
+					return null;
+				}
+				return 'button';
+			},
+			displayAriaLabel() {
+				if (this.displayRole !== 'button') {
+					return null;
+				}
+				return this.ariaLabel || null;
 			},
 			linkMatches() {
 				return this.findLinkMatches(this.modelValue);
@@ -200,11 +229,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				const textarea = this.$refs.textarea;
 				const display = this.$refs.display;
 				if (textarea) {
-					const maxHeight = this.lineHeight * 3;
+					const maxHeight = this.lineHeight * this.maxLines;
 					return textarea.scrollHeight > maxHeight;
 				}
 				if (display) {
-					return display.offsetHeight >= 60;
+					return display.offsetHeight >= this.lineHeight * this.maxLines;
 				}
 				return false;
 			},
@@ -214,7 +243,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return;
 				}
 				main_core.Dom.style(textarea, 'height', 'auto');
-				const maxHeight = this.lineHeight * 3;
+				const maxHeight = this.lineHeight * this.maxLines;
 				const height = Math.min(textarea.scrollHeight, maxHeight);
 				this.overflowing = this.isOverflowing();
 				main_core.Dom.style(textarea, 'height', `${height}px`);
@@ -263,7 +292,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			handleDisplayClick(event) {
 				if (event && event.target && event.target.closest && event.target.closest('.b24-growing-text-area-link')) {
 					this.$emit('linkClick', event);
-				} else {
+				} else if (!this.focus) {
+					this.focusTextarea();
+				}
+			},
+			handleDisplayKeyDown(event) {
+				if (event.target?.closest?.('.b24-growing-text-area-link')) {
+					return;
+				}
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
 					this.focusTextarea();
 				}
 			},
@@ -284,7 +322,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (event.key === 'Escape') {
 					event.target.blur();
 					event.stopPropagation();
+					if (this.hasEditButton) {
+						this.returnFocusToEditTrigger();
+					}
 				}
+			},
+			returnFocusToEditTrigger() {
+				requestAnimationFrame(() => {
+					if (document.activeElement !== document.body) {
+						return;
+					}
+					const editTrigger = this.$refs.editTrigger;
+					if (editTrigger?.isConnected) {
+						editTrigger.focus();
+					}
+				});
 			},
 			async handleFocus(event) {
 				this.focus = true;
@@ -317,27 +369,45 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<div class="b24-growing-text-area" :class="{ '--readonly': readonly }">
+			<button
+				ref="editTrigger"
+				v-if="isDisplay && hasEditButton"
+				type="button"
+				class="b24-growing-text-area-edit-trigger"
+				data-testid="tasks-growing-text-area-edit-trigger"
+				:aria-label="editButtonLabel"
+				@click="focusTextarea"
+			></button>
 			<div
 				ref="display"
 				v-if="isDisplay"
 				v-hint="tooltip"
 				class="b24-growing-text-area-display print-display-block"
+				data-testid="tasks-growing-text-area-display"
+				:role="displayRole"
+				:tabindex="hasEditButton || readonly ? null : 0"
+				:aria-label="displayAriaLabel"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
+					'-webkit-line-clamp': maxLines,
 				}"
 				@click="handleDisplayClick"
+				@keydown="handleDisplayKeyDown"
 			>
 				<span v-html="displayHtml"/>
 			</div>
 			<textarea
 				v-else
 				class="b24-growing-text-area-edit"
+				data-testid="tasks-growing-text-area-input"
 				rows="1"
 				:value="modelValue"
 				:placeholder
+				:aria-label="ariaLabel || null"
+				:aria-describedby="ariaDescribedby || null"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
@@ -353,9 +423,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			>{{ modelValue }}</textarea>
 		</div>
 	`
-	};
+	});
 
 	exports.GrowingTextArea = GrowingTextArea;
 
-})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX, BX.Vue3.Directives);
+})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX, BX.Vue3, BX.Vue3.Directives);
 //# sourceMappingURL=growing-text-area.bundle.js.map

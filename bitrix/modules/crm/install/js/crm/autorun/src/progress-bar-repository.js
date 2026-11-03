@@ -7,9 +7,11 @@ export class ProgressBarRepository
 {
 	#container: HTMLElement;
 
+	#gridId: string;
+
 	#storage: Map<string, HTMLElement> = new Map();
 
-	constructor(container: HTMLElement)
+	constructor(container: HTMLElement, gridId: string = '')
 	{
 		if (!Type.isElementNode(container))
 		{
@@ -17,18 +19,20 @@ export class ProgressBarRepository
 		}
 
 		this.#container = container;
+		this.#gridId = gridId;
 	}
 
 	getOrCreateProgressBarContainer(id: string): HTMLElement
 	{
-		const fullId = ProgressBarRepository.getFullId(id);
+		const fullId = this.#getFullId(id);
 
 		if (this.#storage.has(fullId))
 		{
 			return this.#storage.get(fullId);
 		}
 
-		let progressBarContainer = this.#container.querySelector(`div#${fullId}`);
+		// grid id comes from the page and may contain characters unsafe for a selector
+		let progressBarContainer = this.#container.querySelector(`div#${CSS.escape(fullId)}`);
 		if (!progressBarContainer)
 		{
 			progressBarContainer = Tag.render`<div id="${fullId}"></div>`;
@@ -40,8 +44,10 @@ export class ProgressBarRepository
 		return progressBarContainer;
 	}
 
-	static getFullId(id: string): string
+	#getFullId(id: string): string
 	{
-		return `crm-autorun-progress-bar-${id}`;
+		const suffix = Type.isStringFilled(this.#gridId) ? `${this.#gridId}-${id}` : id;
+
+		return `crm-autorun-progress-bar-${suffix}`;
 	}
 }

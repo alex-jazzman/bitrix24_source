@@ -53,6 +53,7 @@ if (check_bitrix_sessid() && CModule::IncludeModule("calendar"))
 
 			if(count($codes) > 0)
 				$codes[] = 'U'.$curUserId;
+			$codes = (new \Bitrix\Calendar\Planner\AccessCodeFilter($curUserId))->filter($codes);
 			$users = CCalendar::GetDestinationUsers($codes, true);
 
 			foreach($users as $user)

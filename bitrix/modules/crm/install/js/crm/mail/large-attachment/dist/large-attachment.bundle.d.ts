@@ -103,6 +103,7 @@ declare namespace BX.Crm.Mail {
 	const CrmLargeAttachmentErrorCode: Readonly<{
 		NoSpace: "MAIL_LA_NO_SPACE";
 		DiskUnavailable: "MAIL_LA_DISK_UNAVAILABLE";
+		DiskFeatureUnavailable: "MAIL_LA_DISK_FEATURE_UNAVAILABLE";
 		LinkUnavailable: "MAIL_LA_LINK_UNAVAILABLE";
 		AccessDenied: "MAIL_LA_ACCESS_DENIED";
 		InvalidContext: "MAIL_LA_INVALID_CONTEXT";

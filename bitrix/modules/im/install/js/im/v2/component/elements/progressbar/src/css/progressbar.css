@@ -24,6 +24,10 @@
 	cursor: pointer;
 }
 
+.bx-im-progress-bar__loader.--static {
+	cursor: default;
+}
+
 .bx-im-progress-bar__container.--size-s .bx-im-progress-bar__loader {
 	width: 38px;
 	height: 38px;

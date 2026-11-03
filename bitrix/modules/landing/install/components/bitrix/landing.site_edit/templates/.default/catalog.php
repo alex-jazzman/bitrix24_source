@@ -221,8 +221,9 @@ else
 				<?= Loc::getMessage('LANDING_TPL_HOOK_SETT_HEADER_USERCONSENT') ?>
 			</div>
 			<div class="ui-form-row" id="row_userconsent">
+				<?php $consentLabelId = $template->getFieldId('USERCONSENT-LABEL'); ?>
 				<div class="ui-form-label">
-					<div class="ui-ctl-label-text">
+					<div class="ui-ctl-label-text" id="<?= \htmlspecialcharsbx($consentLabelId) ?>">
 						<?= Loc::getMessage('LANDING_TPL_HOOK_SETT_HEADER_USERCONSENT_LABEL') ?>
 					</div>
 				</div>
@@ -234,7 +235,12 @@ else
 							]);?>
 						</div>
 						<div class="ui-form-row-hidden">
-							<div class="ui-form-row">
+							<div
+								class="ui-form-row"
+								role="group"
+								aria-labelledby="<?= \htmlspecialcharsbx($consentLabelId) ?>"
+								data-testid="catalog-settings-consent-group"
+							>
 								<?$APPLICATION->IncludeComponent(
 									'bitrix:landing.userconsent.selector',
 									'',

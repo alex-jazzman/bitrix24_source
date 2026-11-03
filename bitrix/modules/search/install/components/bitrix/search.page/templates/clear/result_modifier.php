@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+/** @var CMain $APPLICATION */
+/** @var array $arResult */
 
 $arResult['TAGS_CHAIN'] = [];
 if ($arResult['REQUEST']['~TAGS'])
@@ -18,7 +20,7 @@ if ($arResult['REQUEST']['~TAGS'])
 			unset($url_without[$key]);
 			$url[$tags] = $tags;
 			$result = [
-				'TAG_NAME' => htmlspecialcharsex($tags),
+				'TAG_NAME' => htmlspecialcharsEx($tags),
 				'TAG_PATH' => $APPLICATION->GetCurPageParam('tags=' . urlencode(implode(',', $url)), ['tags']),
 				'TAG_WITHOUT' => $APPLICATION->GetCurPageParam((count($url_without) > 0 ? 'tags=' . urlencode(implode(',', $url_without)) : ''), ['tags']),
 			];

@@ -3,10 +3,13 @@
  */
 jn.define('layout/ui/fields/url', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { pen } = require('assets/common');
+	const { Color } = require('tokens');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { URL, isValidLink, getHttpPath } = require('utils/url');
 	const { inAppUrl } = require('in-app-url');
+
+	const EDIT_ICON_SIZE = 21;
 
 	/**
 	 * @class UrlField
@@ -130,14 +133,11 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 						marginRight: 6,
 					},
 				},
-				Image({
-					style: {
-						width: 14,
-						height: 14,
-					},
-					svg: {
-						content: pen(),
-					},
+				IconView({
+					testId: 'UrlFieldEdit_icon',
+					icon: Icon.EDIT,
+					size: EDIT_ICON_SIZE,
+					color: Color.base3,
 				}),
 			);
 		}

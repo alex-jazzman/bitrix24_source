@@ -70,7 +70,8 @@ if(!function_exists('__CrmLeadConvertConfigSaveMap'))
 				}
 				elseif($item->getSourceField() != $srcFieldID)
 				{
-					$item->setSourceField($srcFieldID);
+					$map->replaceItemSource($item, $srcFieldID);
+					$item->markAsLocked(true);
 				}
 			}
 			elseif($srcFieldID !== '')

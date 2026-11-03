@@ -4,14 +4,24 @@
 jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 	const {
 		createThemeSwitch,
+		createFontSizeSwitch,
 		createSection,
 		createBanner,
 		createStyleSwitch,
+		createAppearanceBundleSwitch,
 		createDescription,
 	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { NativeSettingController } = require('settings-v2/controller/native');
-	const { SettingsPageId, BannerImageName, NativeSettingsId } = require('settings-v2/const');
+	const { AppearanceAnalytics } = require('settings-v2/analytics');
+	const {
+		SettingsPageId,
+		BannerImageName,
+		NativeSettingsId,
+		DEFAULT_APP_BUNDLE,
+		AppearanceBundlesAvailability,
+	} = require('settings-v2/const');
 	const { appConfig } = require('native/config');
+	const { Feature } = require('feature');
 	const { Loc } = require('loc');
 
 	/**
@@ -34,13 +44,64 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 		});
 	};
 
+	const createAppearanceBundleController = () => {
+		return new NativeSettingController({
+			settingId: NativeSettingsId.APP_BUNDLE,
+			fallbackValue: DEFAULT_APP_BUNDLE,
+		});
+	};
+
+	const createFontSizeController = () => {
+		return new NativeSettingController({
+			settingId: NativeSettingsId.APP_FONT_SIZE,
+			fallbackValue: '1.0',
+			onChangeAlertTitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_FONT_SIZE_ON_CHANGE_ALERT_TITLE'),
+			onChangeAlertDescription: Loc.getMessage('SETTINGS_V2_STRUCTURE_FONT_SIZE_ON_CHANGE_ALERT_DESCRIPTION'),
+			onChangeAlertOkButton: Loc.getMessage('SETTINGS_V2_STRUCTURE_FONT_SIZE_ON_CHANGE_ALERT_OK_BUTTON'),
+		});
+	};
+
+	/**
+	 * @param {Array<NativeSetting>} allSettings
+	 * @return {boolean}
+	 */
+	const isAppearanceBundleCustomizationAvailable = (allSettings) => {
+		const hasAppearanceBundleSetting = allSettings.some((setting) => setting.id === NativeSettingsId.APP_BUNDLE);
+
+		return Feature.isAppearanceBundlesEnabled() && hasAppearanceBundleSetting;
+	};
+
+	/**
+	 * @return {Promise<AppearanceBundlesAvailability>}
+	 */
+	const resolveBundlesAvailability = async () => {
+		try
+		{
+			const allSettings = await appConfig.getSettings() ?? [];
+
+			return isAppearanceBundleCustomizationAvailable(allSettings)
+				? AppearanceBundlesAvailability.AVAILABLE
+				: AppearanceBundlesAvailability.UNAVAILABLE;
+		}
+		catch (e)
+		{
+			console.error(e);
+
+			return AppearanceBundlesAvailability.UNAVAILABLE;
+		}
+	};
+
 	const requestSettingsData = async () => {
-		const allSettings = await appConfig.getSettings();
+		const allSettings = await appConfig.getSettings() ?? [];
 
 		const isStyleCustomizationEnabled = allSettings.some((setting) => setting.id === NativeSettingsId.APP_STYLE);
+		const isAppearanceBundleCustomizationEnabled = isAppearanceBundleCustomizationAvailable(allSettings);
+		const isFontSizeEnabled = Feature.isAppFontSizeEnabled();
 
 		return {
 			isStyleCustomizationEnabled,
+			isAppearanceBundleCustomizationEnabled,
+			isFontSizeEnabled,
 		};
 	};
 
@@ -48,6 +109,11 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 	const ThemePage = {
 		id: SettingsPageId.THEME,
 		title: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_TITLE'),
+		onOpen: async () => {
+			AppearanceAnalytics.sendViewAppearance({
+				bundlesAvailability: await resolveBundlesAvailability(),
+			});
+		},
 		requestSettingsData,
 		items: [
 			createSection({
@@ -60,6 +126,18 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 						text: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_BANNER_TEXT'),
 					}),
 				],
+			}),
+			createSection({
+				id: 'app-appearance-bundle-section',
+				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_APPEARANCE_BUNDLE_SECTION'),
+				divider: false,
+				items: [
+					createAppearanceBundleSwitch({
+						id: 'appearance-bundle',
+						controller: createAppearanceBundleController(),
+					}),
+				],
+				prefilter: (settingsData) => settingsData.isAppearanceBundleCustomizationEnabled === true,
 			}),
 			createSection({
 				id: 'app-theme-section',
@@ -76,6 +154,7 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 			createSection({
 				id: 'app-style-section',
 				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_STYLE_SECTION'),
+				divider: false,
 				items: [
 					createStyleSwitch({
 						id: 'style',
@@ -83,6 +162,19 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 					}),
 				],
 				prefilter: (settingsData) => settingsData.isStyleCustomizationEnabled === true,
+			}),
+			createSection({
+				id: 'app-font-size-section',
+				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_FONT_SIZE_SECTION'),
+				divider: false,
+				items: [
+					createFontSizeSwitch({
+						id: 'font-size',
+						controller: createFontSizeController(),
+						divider: false,
+					}),
+				],
+				prefilter: (settingsData) => settingsData.isFontSizeEnabled === true,
 			}),
 		],
 	};

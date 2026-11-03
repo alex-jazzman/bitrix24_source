@@ -2,15 +2,18 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { type JsonObject } from 'main.core';
 
 import { EventType, Layout, type LayoutType, RecentType, type OpenCollabOptions } from 'im.v2.const';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
 import { SlideAnimation, SlideEntrySide } from 'im.v2.component.animation';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
 import { Utils } from 'im.v2.lib.utils';
+import { isFocusOwnedByPopup, isKeyboardFocusHandoffHeldByNestedList } from 'im.v2.lib.a11y';
 import { CollabNestedListContainer, NestedListLoadingState } from 'im.v2.component.list.container.collab';
 import { TariffManager } from 'im.v2.lib.feature';
 
 import { NestedListManager } from './classes/nested-list-manager';
+import { findCollabTransitionTarget } from './functions/find-transition-target';
 import { chatMatchesChatId } from './functions/matches-chat-id';
 
 import './css/navigator.css';
@@ -50,9 +53,25 @@ export const ListNavigator = {
 		{
 			return this.nestedListParentChatId > 0;
 		},
+		isNestedListShown(): boolean
+		{
+			// The nested list drawer overlays the root list (loading state included).
+			return this.isLoading || this.isNestedListActive;
+		},
 		isRootListAvatarsOnly(): boolean
 		{
+			// Compact peek: only the 68px avatar strip of the root list stays visible beside the
+			// drawer, so it must remain mouse-clickable (switch collab without closing the drawer).
 			return this.isNestedListActive && this.nestedListCompactMode;
+		},
+		isRootListInert(): boolean
+		{
+			// `inert` pulls the root list out of the tab order while the drawer is shown (Tab enters
+			// the drawer, not the main header). It also kills mouse + AT - fine when the drawer covers
+			// the whole list, wrong for the compact peek. There the strip stays clickable, so `inert`
+			// is dropped and keyboard access is removed inside the list instead (header `inert` + row
+			// focus zone off). Cleared on close before P3 restores focus to the parent row.
+			return this.isNestedListShown && !this.isRootListAvatarsOnly;
 		},
 		nestedListClasses(): Record<string, boolean>
 		{
@@ -101,9 +120,12 @@ export const ListNavigator = {
 		},
 		closeNestedList()
 		{
-			if (LayoutManager.getInstance().isChatFormLayout(this.layout.name))
+			const layoutManager = LayoutManager.getInstance();
+			if (layoutManager.isChatFormLayout(this.layout.name))
 			{
-				this.openLayout(Layout.chat);
+				// The layout is set whole and not sent through the selectChat event: the event carries a
+				// name alone, and a personal folder is told apart by the folderId of its params.
+				void layoutManager.setLayout(FolderManager.getDefaultLayout() ?? { name: Layout.chat });
 			}
 
 			this.nestedListParentChatId = 0;
@@ -117,9 +139,23 @@ export const ListNavigator = {
 		{
 			this.$emit('selectChat', payload);
 		},
+		async openCollab({ layoutName, dialogId }: SelectChatPayload)
+		{
+			const target = findCollabTransitionTarget(dialogId);
+			if (target)
+			{
+				this.openChat({ layoutName, dialogId: target.dialogId });
+			}
+			else
+			{
+				this.openLayout(layoutName);
+			}
+			await this.$nextTick();
+			void this.openNestedList(dialogId);
+		},
 		async onSelectChat(initialEvent: SelectChatPayload)
 		{
-			const { dialogId, layoutName } = initialEvent;
+			const { dialogId } = initialEvent;
 
 			const { type }: ImModelChat = this.$store.getters['chats/get'](dialogId, true);
 
@@ -143,16 +179,14 @@ export const ListNavigator = {
 				return;
 			}
 
-			this.openLayout(layoutName);
-			await this.$nextTick();
-			void this.openNestedList(dialogId);
+			await this.openCollab(initialEvent);
 		},
 		onNestedListSelectChat(dialogId: string)
 		{
 			let layoutName = this.layout.name;
 			if (LayoutManager.getInstance().isChatFormLayout(this.layout.name))
 			{
-				layoutName = Layout.chat;
+				layoutName = FolderManager.getRegularChatsLayout().name;
 			}
 
 			this.openChat({ layoutName, dialogId });
@@ -166,7 +200,7 @@ export const ListNavigator = {
 				return;
 			}
 
-			if (this.isNestedListOpenedForChat(chat))
+			if (this.isLoading || this.isNestedListOpenedForChat(chat))
 			{
 				return;
 			}
@@ -215,18 +249,54 @@ export const ListNavigator = {
 				return EscEventAction.ignored;
 			}
 
+			const parentChatId = this.nestedListParentChatId;
 			this.closeNestedList();
+			this.returnFocusToParentRow(parentChatId);
 
 			return EscEventAction.handled;
 		},
 		onCloseNestedListClick()
 		{
+			const parentChatId = this.nestedListParentChatId;
 			if (LayoutManager.getInstance().isChatLayout(this.layout.name))
 			{
 				LayoutManager.getInstance().clearCurrentLayoutEntityId();
 			}
 
 			this.closeNestedList();
+			this.returnFocusToParentRow(parentChatId);
+		},
+		returnFocusToParentRow(parentChatId: number)
+		{
+			// User dismissed the nested list (Escape / close control), so send focus back to the
+			// collab row it was opened from. Capture parentChatId before closeNestedList() resets it.
+			if (parentChatId <= 0 || !this.canMoveFocus())
+			{
+				return;
+			}
+
+			const dialogId = Utils.dialog.buildChatDialogId(parentChatId);
+
+			// The collab was entered from a search with the keyboard, and this list was the last surface that
+			// walk opened: the collapsed search it started from outranks the row and takes the focus itself.
+			if (isKeyboardFocusHandoffHeldByNestedList({ layoutName: this.layout.name, dialogId }))
+			{
+				return;
+			}
+
+			// Root list re-expands from avatars-only on close; wait a tick so the row is laid out.
+			void this.$nextTick(() => {
+				const row = this.$refs.rootList?.$el?.querySelector?.(`[data-id="${dialogId}"]`);
+				if (row?.isConnected)
+				{
+					row.focus();
+				}
+			});
+		},
+		canMoveFocus(): boolean
+		{
+			// Do not steal focus from a popup/menu that currently owns it (active focus trap).
+			return !isFocusOwnedByPopup();
 		},
 		closeEventMatchesActiveList(event: BaseEvent<CloseNestedListPayload>): boolean
 		{
@@ -262,10 +332,10 @@ export const ListNavigator = {
 	},
 	template: `
 		<KeepAlive>
-			<component :is="listComponent" :avatarsOnly="isRootListAvatarsOnly" @selectChat="onSelectChat" />
+			<component :is="listComponent" ref="rootList" :inert="isRootListInert || null" :avatarsOnly="isRootListAvatarsOnly" @selectChat="onSelectChat" />
 		</KeepAlive>
 		<SlideAnimation :entrySide="SlideEntrySide.right">
-			<div v-if="isLoading || isNestedListActive" :class="nestedListClasses" class="bx-im-list-navigator-nested-list__container">
+			<div v-if="isLoading || isNestedListActive" :class="nestedListClasses" class="bx-im-list-navigator-nested-list__container" data-testid="im-nested-list-drawer">
 				<NestedListLoadingState v-if="isLoading" :compactMode="nestedListCompactMode" @close="onCloseNestedListClick" />
 				<CollabNestedListContainer
 					v-else-if="isNestedListActive"

@@ -1,0 +1,8 @@
+/* Only the outer node of the control: the widget wipes the classes of the node it
+   decorates and sets its own (user_selector.js:84-85), so nothing here may target
+   the widget container itself. */
+.bizproc-fields-user {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}

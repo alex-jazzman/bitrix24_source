@@ -28,4 +28,7 @@ $MESS["LANDING_TPL_ACCESS_ASK_DESCRIPTION_KNOWLEDGE"] = "Отправьте за
 $MESS["LANDING_TPL_ACCESS_ASK_SEND_KNOWLEDGE"] = "Запросить доступ";
 $MESS["LANDING_TPL_PUB_COPIED_LINK"] = "Ссылка на страницу скопирована в буфер обмена";
 $MESS["LANDING_TPL_VIEWS"] = "Просмотры";
+$MESS["LANDING_TPL_PUB_NAV_BACK"] = "Назад";
+$MESS["LANDING_TPL_PUB_NAV_FORWARD"] = "Вперёд";
+$MESS["LANDING_TPL_PUB_VIEW_LIMIT"] = "Лимит просмотров страниц базы знаний на текущем тарифе исчерпан, поэтому содержимое страницы скрыто.";
 ?>

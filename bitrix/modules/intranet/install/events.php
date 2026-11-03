@@ -1,5 +1,13 @@
 <?
 
+$otpEmailFrom = null;
+if (\Bitrix\Main\Loader::includeModule('intranet'))
+{
+	$otpEmailFrom = \Bitrix\Intranet\Internal\Service\Otp\OtpEmailFromService::initialize();
+}
+
+$otpEmailFromMacro = $otpEmailFrom !== null ? '#OTP_EMAIL_FROM#' : '#DEFAULT_EMAIL_FROM#';
+
 $eventsToInstall = [];
 foreach (['USER_OTP_AUTH_CODE', 'USER_OTP_EMAIL_CONFIRM'] as $eventName)
 {
@@ -148,7 +156,7 @@ while($lang = $langs->Fetch())
 				'EVENT_NAME' => 'USER_OTP_AUTH_CODE',
 				'LID' => $arSites,
 				'LANGUAGE_ID' => $lid,
-				'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+				'EMAIL_FROM' => $otpEmailFromMacro,
 				'EMAIL_TO' => '#EMAIL#',
 				'BCC' => '',
 				'SUBJECT' => GetMessage('INTRANET_OTP_AUTH_SUBJECT'),
@@ -163,7 +171,7 @@ while($lang = $langs->Fetch())
 				'EVENT_NAME' => 'USER_OTP_EMAIL_CONFIRM',
 				'LID' => $arSites,
 				'LANGUAGE_ID' => $lid,
-				'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+				'EMAIL_FROM' => $otpEmailFromMacro,
 				'EMAIL_TO' => '#EMAIL#',
 				'BCC' => '',
 				'SUBJECT' => GetMessage('INTRANET_OTP_CONFIRM_SUBJECT'),

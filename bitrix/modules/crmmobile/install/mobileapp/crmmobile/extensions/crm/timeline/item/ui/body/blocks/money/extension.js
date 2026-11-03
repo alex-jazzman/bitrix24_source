@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/money
  */
 jn.define('crm/timeline/item/ui/body/blocks/money', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineFontColor } = require('crm/timeline/item/ui/styles');
 	const { Money } = require('money');
@@ -33,9 +34,8 @@ jn.define('crm/timeline/item/ui/body/blocks/money', (require, exports, module) =
 
 		render()
 		{
-			return Text({
+			return Text4({
 				style: {
-					fontSize: 14,
 					color: TimelineFontColor.get(this.color),
 					fontWeight: '400',
 				},

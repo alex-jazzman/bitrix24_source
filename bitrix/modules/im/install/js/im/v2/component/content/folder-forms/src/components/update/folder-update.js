@@ -1,6 +1,7 @@
 import { type JsonObject } from 'main.core';
 
 import { FolderService } from 'im.v2.provider.service.folder';
+import { Analytics } from 'im.v2.lib.analytics';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Layout } from 'im.v2.const';
 import { type ImModelFolder } from 'im.v2.model';
@@ -23,6 +24,7 @@ export const FolderUpdate = {
 			isUpdating: false,
 			title: '',
 			dialogIds: [],
+			savedDialogIds: [],
 		};
 	},
 	computed: {
@@ -40,6 +42,7 @@ export const FolderUpdate = {
 		{
 			this.title = this.folder.title;
 			this.dialogIds = this.folder.definition.chats.map((chat) => chat.dialogId);
+			this.savedDialogIds = [...this.dialogIds];
 		},
 		async onSubmit()
 		{
@@ -64,10 +67,23 @@ export const FolderUpdate = {
 				return;
 			}
 
+			this.sendRemovedChatsAnalytics();
+
 			void LayoutManager.getInstance().setLayout({
 				name: Layout.folder,
 				params: { folderId: updatedFolder.id },
 			});
+		},
+		sendRemovedChatsAnalytics()
+		{
+			const currentIds = new Set(this.dialogIds);
+			const analytics = Analytics.getInstance().folder;
+
+			this.savedDialogIds
+				.filter((dialogId) => !currentIds.has(dialogId))
+				.forEach((dialogId) => analytics.onDeleteFromFolder({ dialogId }));
+
+			this.savedDialogIds = [...this.dialogIds];
 		},
 		onCancel()
 		{

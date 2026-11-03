@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
-(function (exports, main_core, ui_vue3, main_core_events, ui_dialogs_messagebox, ui_system_typography_vue, ui_iconSet_api_vue, ui_vue3_components_button, mail_connecting_crmIntegration, mail_connecting_calendarIntegration, mail_connecting_mailSyncSettings, mail_migrationState, ui_system_input, ui_system_input_vue, mail_connecting_settingsConfig, ui_vue3_components_switcher, ui_switcher, ui_vue3_directives_hint, ui_entitySelector, mail_lib_entitySelector, ui_tour, ui_buttons) {
+(function (exports, main_core, ui_vue3, main_core_events, ui_dialogs_messagebox, ui_system_typography_vue, ui_iconSet_api_vue, ui_vue3_components_button, mail_connecting_crmIntegration, mail_connecting_calendarIntegration, mail_connecting_mailSyncSettings, mail_migrationState, ui_system_input, ui_system_input_vue, mail_connecting_settingsConfig, ui_a11y, ui_vue3_components_switcher, ui_switcher, ui_vue3_directives_hint, ui_entitySelector, mail_lib_entitySelector, ui_tour, ui_buttons) {
 	'use strict';
 
 	const formStateKey = Symbol('mailbox-config-form-state');
@@ -38,10 +38,342 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			isSmtpAvailable: rawPermissions?.isSmtpAvailable ?? false,
 			isCrmAvailable: rawPermissions?.isCrmAvailable ?? mapped.crmAvailable,
 			isCalendarAvailable: rawPermissions?.isCalendarAvailable ?? false,
+			isAvatarAvailable: rawPermissions?.isAvatarAvailable ?? false,
 			syncOldLimit: rawPermissions?.syncOldLimit ?? 90,
 			sharedMailboxLimit,
 			sharedMailboxLimitReached: rawPermissions?.sharedMailboxLimitReached ?? false,
 			sharedMailboxesCount: rawPermissions?.sharedMailboxesCount ?? null
+		};
+	}
+	function setSourceGeneration(state, data) {
+		const generationId = data.sourceGenerationId;
+		const hasSourceGenerationId = Object.prototype.hasOwnProperty.call(data, 'sourceGenerationId') && (main_core.Type.isNull(generationId) || main_core.Type.isInteger(generationId) && generationId >= 0);
+		Object.assign(state, {
+			hasSourceGenerationId,
+			sourceGenerationId: hasSourceGenerationId ? generationId ?? null : null
+		});
+	}
+	function getSourceGenerationPrecondition(state) {
+		return state.hasSourceGenerationId ? {
+			expectedSourceGenerationId: state.sourceGenerationId
+		} : {};
+	}
+	function createMailboxAvatarState(mailboxId = null) {
+		return {
+			mailboxId,
+			confirmed: null,
+			intent: null,
+			selection: null,
+			loading: false,
+			saving: false,
+			needsRefresh: false,
+			rejectedUploadId: null,
+			preservedUploadId: null,
+			error: '',
+			imageErrorUrl: '',
+			requestId: 0,
+			resetKey: 0
+		};
+	}
+	function beginMailboxAvatarRead(state) {
+		const requestId = state.avatar.requestId + 1;
+		if (state.avatar.mailboxId !== state.mailboxId) {
+			Object.assign(state, {
+				avatar: createMailboxAvatarState(state.mailboxId)
+			});
+		}
+		Object.assign(state.avatar, {
+			requestId,
+			loading: true,
+			error: ''
+		});
+		return requestId;
+	}
+	function invalidateMailboxAvatarRead(state) {
+		Object.assign(state.avatar, {
+			requestId: state.avatar.requestId + 1,
+			loading: false
+		});
+	}
+	function acceptMailboxAvatarRead(state, requestId, data) {
+		if (state.avatar.requestId !== requestId || data.mailboxId !== state.mailboxId || state.avatar.mailboxId !== state.mailboxId) {
+			return false;
+		}
+		Object.assign(state.avatar, {
+			confirmed: {
+				...data
+			},
+			loading: false,
+			needsRefresh: false,
+			error: '',
+			imageErrorUrl: ''
+		});
+		return true;
+	}
+	function rejectMailboxAvatarRead(state, requestId, message) {
+		if (state.avatar.requestId === requestId && state.avatar.mailboxId === state.mailboxId) {
+			Object.assign(state.avatar, {
+				loading: false,
+				error: message
+			});
+		}
+	}
+	function canEditMailboxAvatar(state) {
+		return state.mode === 'edit' && !state.avatar.needsRefresh && state.avatar.mailboxId === state.mailboxId && state.avatar.confirmed?.supported === true && state.avatar.confirmed.canEdit === true;
+	}
+	function setMailboxAvatarSelection(state, selection) {
+		const confirmed = state.avatar.confirmed;
+		if (!confirmed || !canEditMailboxAvatar(state) || state.avatar.saving || selection.id === state.avatar.rejectedUploadId || state.loading && (!state.avatar.selection || state.avatar.selection.id !== selection.id)) {
+			return;
+		}
+		const expectedRevision = state.avatar.intent?.expectedRevision ?? confirmed.revision;
+		Object.assign(state.avatar, {
+			selection: {
+				...selection
+			},
+			rejectedUploadId: null,
+			intent: {
+				operation: 'replace',
+				expectedRevision,
+				uploadToken: selection.status === 'complete' ? selection.uploadToken : null
+			},
+			imageErrorUrl: ''
+		});
+	}
+	function resetMailboxAvatarIntent(state) {
+		Object.assign(state.avatar, {
+			intent: null,
+			selection: null,
+			rejectedUploadId: null,
+			imageErrorUrl: '',
+			resetKey: state.avatar.resetKey + 1
+		});
+	}
+	function deleteMailboxAvatar(state) {
+		const confirmed = state.avatar.confirmed;
+		if (!confirmed?.hasAvatar || !canEditMailboxAvatar(state) || state.loading || state.avatar.loading || state.avatar.error) {
+			return;
+		}
+		const expectedRevision = state.avatar.intent?.expectedRevision ?? confirmed.revision;
+		resetMailboxAvatarIntent(state);
+		Object.assign(state.avatar, {
+			intent: {
+				operation: 'delete',
+				expectedRevision
+			}
+		});
+	}
+	function isMailboxAvatarSaveBlocked(state) {
+		if (!state.avatar.intent) {
+			return false;
+		}
+		return !canEditMailboxAvatar(state) || state.avatar.loading || Boolean(state.avatar.error) || state.avatar.intent.operation === 'replace' && (state.avatar.selection?.status !== 'complete' || !state.avatar.intent.uploadToken);
+	}
+	function createMailboxAvatarSaveSnapshot(state) {
+		const intent = state.avatar.intent;
+		if (!intent || !state.mailboxId) {
+			return null;
+		}
+		if (isMailboxAvatarSaveBlocked(state)) {
+			throw new Error('Mailbox avatar is not ready to save.');
+		}
+		const change = intent.operation === 'delete' ? {
+			operation: 'delete',
+			expectedRevision: intent.expectedRevision
+		} : {
+			operation: 'replace',
+			expectedRevision: intent.expectedRevision,
+			uploadToken: String(intent.uploadToken)
+		};
+		return {
+			mailboxId: state.mailboxId,
+			requestId: state.avatar.requestId,
+			resetKey: state.avatar.resetKey,
+			selectionId: state.avatar.selection?.id ?? null,
+			change
+		};
+	}
+	function isMailboxAvatarSaveCurrent(state, snapshot) {
+		return state.mailboxId === snapshot.mailboxId && state.avatar.mailboxId === snapshot.mailboxId && state.avatar.requestId === snapshot.requestId;
+	}
+	function matchesMailboxAvatarIntent(state, snapshot) {
+		const intent = state.avatar.intent;
+		const change = snapshot.change;
+		return state.avatar.resetKey === snapshot.resetKey && (state.avatar.selection?.id ?? null) === snapshot.selectionId && intent?.operation === change.operation && intent.expectedRevision === change.expectedRevision && (change.operation === 'delete' || intent.operation === 'replace' && intent.uploadToken === change.uploadToken);
+	}
+	function acceptMailboxAvatarSave(state, snapshot, data) {
+		if (!isMailboxAvatarSaveCurrent(state, snapshot) || !data || data.mailboxId !== snapshot.mailboxId || !main_core.Type.isInteger(data.revision) || data.revision <= snapshot.change.expectedRevision) {
+			return false;
+		}
+		if (matchesMailboxAvatarIntent(state, snapshot)) {
+			resetMailboxAvatarIntent(state);
+		}
+		invalidateMailboxAvatarRead(state);
+		Object.assign(state.avatar, {
+			confirmed: {
+				...data
+			},
+			needsRefresh: false,
+			error: '',
+			imageErrorUrl: ''
+		});
+		return true;
+	}
+	function requireMailboxAvatarRefresh(state) {
+		resetMailboxAvatarIntent(state);
+		invalidateMailboxAvatarRead(state);
+		Object.assign(state.avatar, {
+			needsRefresh: true
+		});
+	}
+	function rejectMailboxAvatarUpload(state, snapshot, message) {
+		if (!isMailboxAvatarSaveCurrent(state, snapshot) || !matchesMailboxAvatarIntent(state, snapshot) || snapshot.change.operation !== 'replace' || !state.avatar.selection) {
+			return;
+		}
+		Object.assign(state.avatar, {
+			rejectedUploadId: state.avatar.selection.id,
+			intent: {
+				...snapshot.change,
+				uploadToken: null
+			},
+			selection: {
+				...state.avatar.selection,
+				status: 'error',
+				uploadToken: null,
+				previewUrl: '',
+				error: message
+			}
+		});
+	}
+	function getMailboxAvatarUrl(state) {
+		if (state.avatar.mailboxId !== state.mailboxId || state.avatar.intent?.operation === 'delete') {
+			return '';
+		}
+		const previewUrl = state.avatar.selection?.status === 'error' ? '' : state.avatar.selection?.previewUrl;
+		const url = previewUrl || state.avatar.confirmed?.url || '';
+		return url === state.avatar.imageErrorUrl ? '' : url;
+	}
+	function createGeneralSettingsSnapshot(state) {
+		const crm = state.crmSettings;
+		return {
+			mailboxName: state.mailbox.name,
+			link: state.mailbox.link,
+			senderName: state.mailbox.senderName,
+			useSenderName: state.mailbox.useSenderName,
+			iCalAccess: state.calendarSettings.enabled && state.calendarSettings.autoAddEvents,
+			shareAccess: [...new Set(state.access.sharedWith)].sort(),
+			crmOptions: {
+				enabled: crm.enabled,
+				config: {
+					crm_sync_days: crm.sync.enabled ? Number.parseInt(crm.sync.periodValue, 10) || 0 : null,
+					crm_new_entity_in: crm.incoming.enabled ? crm.incoming.createAction : '',
+					crm_new_entity_out: crm.outgoing.enabled ? crm.outgoing.createAction : '',
+					crm_lead_source: crm.source,
+					crm_lead_resp: crm.responsibleQueue.map(item => Number(item.id)),
+					crm_new_lead_for: crm.leadCreationAddresses.split(/[\n,]/).map(item => item.trim()).filter(Boolean),
+					crm_public: crm.assignKnownClientEmails,
+					crm_vcf: crm.vcf
+				}
+			}
+		};
+	}
+	function setGeneralSettingsBaseline(state, snapshot = createGeneralSettingsSnapshot(state)) {
+		const generalSettingsBaseline = {
+			...snapshot,
+			shareAccess: [...snapshot.shareAccess],
+			crmOptions: {
+				...snapshot.crmOptions,
+				config: {
+					...snapshot.crmOptions.config,
+					crm_lead_resp: [...snapshot.crmOptions.config.crm_lead_resp],
+					crm_new_lead_for: [...snapshot.crmOptions.config.crm_new_lead_for]
+				}
+			}
+		};
+		Object.assign(state, {
+			generalSettingsBaseline
+		});
+	}
+	function getChangedFields(current, baseline) {
+		const patch = {};
+		for (const key of Object.keys(current)) {
+			const value = current[key];
+			const previousValue = baseline[key];
+			const unchanged = main_core.Type.isArray(value) && main_core.Type.isArray(previousValue) ? value.length === previousValue.length && value.every((item, index) => item === previousValue[index]) : value === previousValue;
+			if (!unchanged) {
+				patch[key] = value;
+			}
+		}
+		return patch;
+	}
+	function buildGeneralSettingsPatch(state, snapshot = createGeneralSettingsSnapshot(state)) {
+		const baseline = state.generalSettingsBaseline;
+		if (!baseline) {
+			throw new Error('Saved mailbox settings are required to build a patch.');
+		}
+		const {
+			crmOptions,
+			...generalSettings
+		} = snapshot;
+		const {
+			crmOptions: savedCrmOptions,
+			...savedGeneralSettings
+		} = baseline;
+		const patch = getChangedFields(generalSettings, savedGeneralSettings);
+		if (!state.permissions.canEditAccess) {
+			delete patch.shareAccess;
+		}
+		if (!state.permissions.isCalendarAvailable) {
+			delete patch.iCalAccess;
+		}
+		if (state.permissions.canEditCrm && state.permissions.isCrmAvailable) {
+			const config = getChangedFields(crmOptions.config, savedCrmOptions.config);
+			if (crmOptions.enabled !== savedCrmOptions.enabled) {
+				patch.crmOptions = {
+					enabled: crmOptions.enabled
+				};
+			}
+			if (Object.keys(config).length > 0) {
+				patch.crmOptions = {
+					...patch.crmOptions,
+					config
+				};
+			}
+		}
+		return patch;
+	}
+	function acceptGeneralSettingsPatch(state, patch) {
+		const baseline = state.generalSettingsBaseline;
+		if (!baseline) {
+			throw new Error('Saved mailbox settings are required to accept a patch.');
+		}
+		setGeneralSettingsBaseline(state, {
+			...baseline,
+			...patch,
+			crmOptions: {
+				...baseline.crmOptions,
+				...patch.crmOptions,
+				config: {
+					...baseline.crmOptions.config,
+					...patch.crmOptions?.config
+				}
+			}
+		});
+	}
+	function createConnectionState(service) {
+		return {
+			email: '',
+			server: service?.server ?? '',
+			port: service?.port !== undefined && service?.port !== null ? Number(service.port) || null : null,
+			ssl: service?.encryption !== 'N',
+			login: '',
+			password: '',
+			isOAuth: Boolean(service?.oauth),
+			oauthUid: null,
+			oauthUser: null,
+			userPrincipalName: null,
+			oauthEmailNeedsConfirmation: false,
+			oauthEmailCheckStatus: 'idle'
 		};
 	}
 	function createFormState(initialData = {}) {
@@ -64,20 +396,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				crmEntity: mapped.crmEntityOptions,
 				crmSource: mapped.crmSourceOptions
 			},
-			connection: {
-				email: '',
-				server: service?.server ?? '',
-				port: service?.port !== undefined && service?.port !== null ? Number(service.port) || null : null,
-				ssl: service?.encryption !== 'N',
-				login: '',
-				password: '',
-				isOAuth: Boolean(service?.oauth),
-				oauthUid: null,
-				oauthUser: null,
-				userPrincipalName: null,
-				oauthEmailNeedsConfirmation: false,
-				oauthEmailCheckStatus: 'idle'
-			},
+			connection: createConnectionState(service),
 			smtp: {
 				enabled: true,
 				server: service?.smtp?.server ?? '',
@@ -96,6 +415,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				useSenderName: false,
 				messageMaxAge: Number(mapped.messageMaxAge) || 7
 			},
+			avatar: createMailboxAvatarState(initialData.mailboxId ?? null),
 			crmSettings: {
 				enabled: mapped.crmEnabled,
 				sync: {
@@ -132,6 +452,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			},
 			changedDirs: false,
 			migrationActive: false,
+			sourceGenerationId: null,
+			hasSourceGenerationId: false,
+			generalSettingsBaseline: null,
 			permissions: createPermissions(initialData, mapped),
 			loading: false,
 			isDataReady: initialData.mode !== 'edit',
@@ -168,6 +491,10 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			passwordPlaceholder: {
 				type: String,
 				default: ''
+			},
+			connectionSettingsLocked: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['oauth-email-blur'],
@@ -181,7 +508,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				return this.state.mode === 'edit';
 			},
 			credentialsReadOnly() {
-				return this.state.migrationActive;
+				return this.connectionSettingsLocked || this.state.migrationActive;
 			},
 			isOAuthService() {
 				return Boolean(this.state.service?.oauth) || Boolean(this.state.connection.isOAuth);
@@ -234,8 +561,17 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			showSenderNameHere() {
 				return !this.state.permissions.isSmtpAvailable;
 			},
+			credentialsAreExternal() {
+				return Boolean(this.state.service?.externalCredentials);
+			},
 			hasCustomImapServer() {
 				return !this.state.service?.server;
+			},
+			showServerFields() {
+				return !this.credentialsAreExternal && this.hasCustomImapServer;
+			},
+			showCredentialFields() {
+				return !this.credentialsAreExternal && !this.isOAuthService;
 			}
 		},
 		watch: {
@@ -271,6 +607,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.state.fieldSyncFlags.nameManual = true;
 			},
 			openDirsSlider() {
+				if (this.credentialsReadOnly) {
+					return;
+				}
 				const url = main_core.Uri.addParam('/mail/config/dirs', {
 					mailboxId: this.state.mailboxId
 				});
@@ -289,107 +628,103 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		},
 		template: `
 		<div class="mail-config-form__input-content" data-test-id="mail_config-form__connection-settings">
-			<div
-				v-if="showEmailField"
-				class="mail-config-form__email-field"
-				:class="oauthEmailStatusModifier"
-				data-test-id="mail_config-form__connection-email-group"
-			>
+			<template v-if="!credentialsReadOnly">
+				<div
+					v-if="showEmailField"
+					class="mail-config-form__email-field"
+					:class="oauthEmailStatusModifier"
+					data-test-id="mail_config-form__connection-email-group"
+				>
+					<BInput
+						:label="loc('MAIL_CONFIG_FORM_EMAIL_LABEL')"
+						:size="InputSize.Md"
+						v-model="state.connection.email"
+						:design="InputDesign.DEFAULT"
+						:error="state.errors.email"
+						:placeholder="loc('MAIL_CONFIG_FORM_EMAIL_LABEL_PLACEHOLDER')"
+						data-test-id="mail_config-form__connection-email_field"
+						@blur="onEmailBlur"
+					/>
+					<div
+						v-if="state.connection.oauthEmailNeedsConfirmation"
+						class="mail-config-form__email-hint"
+						:class="oauthEmailStatusModifier"
+						data-test-id="mail_config-form__connection-email-hint"
+					>{{ oauthEmailStatusHint }}</div>
+				</div>
+				<div
+					class="mail-config-form__input-group_checkbox"
+					v-if="showServerFields"
+					data-test-id="mail_config-form__connection-server-group"
+				>
+					<div class="mail-config-form__input-group">
+						<BInput
+							class="mail-config-form__input-group_main"
+							:label="loc('MAIL_CONFIG_FORM_SERVER_LABEL')"
+							:size="InputSize.Md"
+							:design="InputDesign.DEFAULT"
+							v-model="state.connection.server"
+							:placeholder="loc('MAIL_CONFIG_FORM_SERVER_LABEL_PLACEHOLDER')"
+							data-test-id="mail_config-form__connection-server_field"
+						/>
+						<BInput
+							class="mail-config-form__input-group_port"
+							:label="loc('MAIL_CONFIG_FORM_PORT_LABEL')"
+							type="number"
+							:size="InputSize.Md"
+							:design="InputDesign.DEFAULT"
+							v-model="portModel"
+							:placeholder="loc('MAIL_CONFIG_FORM_PORT_PLACEHOLDER')"
+							data-test-id="mail_config-form__connection-port_field"
+						/>
+					</div>
+					<div class="mail-config-form__checkbox-row">
+						<input
+							type="checkbox"
+							id="mail-config-imap-ssl"
+							class="mail-config-form__checkbox"
+							v-model="state.connection.ssl"
+							data-test-id="mail_config-form__connection-ssl_checkbox"
+						/>
+						<label class="mail-config-form__checkbox-label --connection-settings" for="mail-config-imap-ssl">
+							{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
+						</label>
+					</div>
+				</div>
 				<BInput
-					:label="loc('MAIL_CONFIG_FORM_EMAIL_LABEL')"
+					v-if="showCredentialFields"
+					:label="loc('MAIL_CONFIG_FORM_LOGIN_LABEL')"
 					:size="InputSize.Md"
-					v-model="state.connection.email"
-					:disabled="credentialsReadOnly"
-					:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-					:error="state.errors.email"
-					:placeholder="loc('MAIL_CONFIG_FORM_EMAIL_LABEL_PLACEHOLDER')"
-					data-test-id="mail_config-form__connection-email_field"
-					@blur="onEmailBlur"
+					:design="isEditMode ? InputDesign.Disabled : InputDesign.DEFAULT"
+					:model-value="state.connection.login"
+					:error="state.errors.login"
+					data-test-id="mail_config-form__connection-login_field"
+					@update:model-value="onLoginChange"
 				/>
 				<div
-					v-if="state.connection.oauthEmailNeedsConfirmation"
-					class="mail-config-form__email-hint"
-					:class="oauthEmailStatusModifier"
-					data-test-id="mail_config-form__connection-email-hint"
-				>{{ oauthEmailStatusHint }}</div>
-			</div>
-			<div
-				class="mail-config-form__input-group_checkbox"
-				v-if="hasCustomImapServer"
-				data-test-id="mail_config-form__connection-server-group"
-			>
-				<div class="mail-config-form__input-group">
-					<BInput
-						class="mail-config-form__input-group_main"
-						:label="loc('MAIL_CONFIG_FORM_SERVER_LABEL')"
-						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
-						v-model="state.connection.server"
-						:disabled="credentialsReadOnly"
-						:placeholder="loc('MAIL_CONFIG_FORM_SERVER_LABEL_PLACEHOLDER')"
-						data-test-id="mail_config-form__connection-server_field"
-					/>
-					<BInput
-						class="mail-config-form__input-group_port"
-						:label="loc('MAIL_CONFIG_FORM_PORT_LABEL')"
-						type="number"
-						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
-						v-model="portModel"
-						:disabled="credentialsReadOnly"
-						:placeholder="loc('MAIL_CONFIG_FORM_PORT_PLACEHOLDER')"
-						data-test-id="mail_config-form__connection-port_field"
-					/>
-				</div>
-				<div class="mail-config-form__checkbox-row">
-					<input
-						type="checkbox"
-						id="mail-config-imap-ssl"
-						class="mail-config-form__checkbox"
-						v-model="state.connection.ssl"
-						:disabled="credentialsReadOnly"
-						data-test-id="mail_config-form__connection-ssl_checkbox"
-					/>
-					<label class="mail-config-form__checkbox-label --connection-settings" for="mail-config-imap-ssl">
-						{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
-					</label>
-				</div>
-			</div>
-			<BInput
-				v-if="!isOAuthService"
-				:label="loc('MAIL_CONFIG_FORM_LOGIN_LABEL')"
-				:size="InputSize.Md"
-				:design="isEditMode || credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-				:model-value="state.connection.login"
-				:disabled="isEditMode || credentialsReadOnly"
-				:error="state.errors.login"
-				data-test-id="mail_config-form__connection-login_field"
-				@update:model-value="onLoginChange"
-			/>
-			<div
-				v-if="!isOAuthService"
-				class="mail-config-form__password-field"
-				data-id="mail-config-form-password-field"
-				data-test-id="mail_config-form__connection-password_field"
-			>
-				<BInput
-					:label="loc('MAIL_CONFIG_FORM_PASSWORD_LABEL')"
-					type="password"
-					:size="InputSize.Md"
-					:design="InputDesign.DEFAULT"
-					v-model="state.connection.password"
-					:disabled="credentialsReadOnly"
-					:placeholder="isEditMode ? passwordPlaceholder : ''"
-					:error="state.errors.password"
+					v-if="showCredentialFields"
+					class="mail-config-form__password-field"
+					data-id="mail-config-form-password-field"
 					data-test-id="mail_config-form__connection-password_field"
-				/>
-			</div>
-			<a v-if="isEditMode && state.mailboxId"
-				class="mail-config-form__dirs-link"
-				href="#"
-				@click.prevent="openDirsSlider"
-				data-test-id="mail_config-form__dirs_link"
-			>{{ loc('MAIL_CONFIG_FORM_DIRS_LINK') }}</a>
+				>
+					<BInput
+						:label="loc('MAIL_CONFIG_FORM_PASSWORD_LABEL')"
+						type="password"
+						:size="InputSize.Md"
+						:design="InputDesign.DEFAULT"
+						v-model="state.connection.password"
+						:placeholder="isEditMode ? passwordPlaceholder : ''"
+						:error="state.errors.password"
+						data-test-id="mail_config-form__connection-password_field"
+					/>
+				</div>
+				<a v-if="isEditMode && state.mailboxId"
+					class="mail-config-form__dirs-link"
+					href="#"
+					@click.prevent="openDirsSlider"
+					data-test-id="mail_config-form__dirs_link"
+				>{{ loc('MAIL_CONFIG_FORM_DIRS_LINK') }}</a>
+			</template>
 			<slot name="after-fields"></slot>
 			<a class="mail-config-form__extra-params-link"
 				href="#"
@@ -522,25 +857,51 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			buttonDisabled: {
 				type: Boolean,
 				default: false
+			},
+			secondaryButtonText: {
+				type: String,
+				default: ''
+			},
+			secondaryButtonDisabled: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['button-click'],
+		emits: ['button-click', 'secondary-button-click', 'avatar-error'],
 		setup() {
 			return {
 				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
 				loc
 			};
 		},
+		data() {
+			return {
+				failedAvatar: ''
+			};
+		},
 		computed: {
-			avatarStyle() {
-				return this.avatar ? {
-					backgroundImage: `url("${encodeURI(this.avatar)}")`
-				} : null;
+			showAvatar() {
+				return Boolean(this.avatar) && this.avatar !== this.failedAvatar;
+			}
+		},
+		watch: {
+			avatar() {
+				this.failedAvatar = '';
 			}
 		},
 		methods: {
+			onAvatarError(event) {
+				const url = event.target.getAttribute('src') ?? '';
+				if (url === this.avatar) {
+					this.failedAvatar = url;
+					this.$emit('avatar-error', url);
+				}
+			},
 			onButtonClick() {
 				this.$emit('button-click');
+			},
+			onSecondaryButtonClick() {
+				this.$emit('secondary-button-click');
 			}
 		},
 		template: `
@@ -548,14 +909,17 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			<div class="mail-provider-img-container">
 				<div :class="'mail-provider-' + iconKey + '-img'"></div>
 			</div>
-			<template v-if="avatar">
+			<template v-if="showAvatar">
 				<div class="mail-config-form__provider-divider"></div>
 				<div class="mail-config-form__provider-account">
-					<div
+					<img
+						:key="avatar"
 						class="mail-config-form__provider-avatar"
-						:style="avatarStyle"
+						:src="avatar"
+						alt=""
 						data-test-id="mail_config-form__provider-avatar"
-					></div>
+						@error="onAvatarError"
+					/>
 					<TextLg
 						v-if="email"
 						:accent="true"
@@ -578,12 +942,26 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				</TextSm>
 			</div>
 			<div
-				v-if="buttonText"
+				v-if="buttonText || secondaryButtonText"
 				class="mail-config-form__provider-action"
 				data-id="mail-config-form-provider-action"
 				data-test-id="mail_config-form__provider-action"
 			>
+				<span
+					v-if="secondaryButtonText"
+					data-id="mail-config-form-provider-reauthorization"
+					data-test-id="mail_config-form__provider-reauthorization"
+				>
+					<UiButton
+						:text="secondaryButtonText"
+						:style="AirButtonStyle.PLAIN_NO_ACCENT"
+						:disabled="secondaryButtonDisabled"
+						:dataset="{ testId: 'mail_config-form__provider-reauthorization_button' }"
+						@click="onSecondaryButtonClick"
+					/>
+				</span>
 				<UiButton
+					v-if="buttonText"
 					:text="buttonText"
 					:style="AirButtonStyle.PLAIN_NO_ACCENT"
 					:disabled="buttonDisabled"
@@ -591,6 +969,462 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					@click="onButtonClick"
 				/>
 			</div>
+		</div>
+	`
+	});
+
+	function loadUploaderStack() {
+		return main_core.Runtime.loadExtension('ui.uploader.core', 'ui.uploader.vue', 'ui.uploader.tile-widget');
+	}
+
+	const TileWidgetComponent = ui_vue3.defineAsyncComponent({
+		loader: () => loadUploaderStack().then(stack => stack.TileWidgetComponent)
+	});
+	function createPixelFilter(stack, uploader) {
+		const {
+			Filter,
+			UploaderError
+		} = stack;
+		class AvatarPixelFilter extends Filter {
+			apply(file) {
+				if ((file.getWidth() ?? 0) * (file.getHeight() ?? 0) > 4_194_304) {
+					return Promise.reject(new UploaderError('MAIL_AVATAR_LIMIT_EXCEEDED', loc('MAIL_CONFIG_FORM_AVATAR_LIMIT_ERROR')));
+				}
+				return Promise.resolve();
+			}
+		}
+		return new AvatarPixelFilter(uploader);
+	}
+	const MailboxAvatar = ui_vue3.defineComponent({
+		name: 'MailConfigMailboxAvatar',
+		components: {
+			UiButton: ui_vue3_components_button.Button,
+			TextSm: ui_system_typography_vue.TextSm,
+			TextXs: ui_system_typography_vue.TextXs,
+			TileWidgetComponent
+		},
+		props: {
+			avatar: {
+				type: Object,
+				required: true
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['selection-change', 'delete', 'reset', 'retry', 'image-error'],
+		setup() {
+			return {
+				loc,
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		data() {
+			return {
+				adapter: null,
+				uploaderStack: null,
+				editorState: 'idle',
+				activeFileId: '',
+				disposed: false,
+				focusRestoreRequest: null,
+				browseNode: null,
+				widgetOptions: {
+					compact: true,
+					autoCollapse: false,
+					readonly: this.disabled,
+					hideDropArea: this.disabled,
+					forceDisableSelection: this.disabled,
+					enableDropzone: !this.disabled,
+					removeFromServer: true
+				}
+			};
+		},
+		computed: {
+			canEdit() {
+				return this.avatar.confirmed?.supported === true && this.avatar.confirmed.canEdit === true;
+			},
+			hasPendingSelection() {
+				return Boolean(this.avatar.selection);
+			},
+			showSavedImage() {
+				return this.avatar.confirmed?.hasAvatar === true && Boolean(this.avatar.confirmed.url) && !this.avatar.intent && !this.avatar.selection && !this.avatar.imageErrorUrl;
+			},
+			imageUnavailable() {
+				return Boolean(this.avatar.imageErrorUrl) || this.avatar.confirmed?.hasAvatar === true && !this.avatar.confirmed.url && !this.avatar.intent;
+			},
+			controlsDisabled() {
+				return this.disabled || this.avatar.loading || this.avatar.needsRefresh || Boolean(this.avatar.error);
+			},
+			statusMessage() {
+				if (this.avatar.error && !this.avatar.confirmed) {
+					return '';
+				}
+				if (this.avatar.loading) {
+					return loc('MAIL_CONFIG_FORM_AVATAR_LOADING');
+				}
+				if (this.avatar.intent?.operation === 'delete') {
+					return loc('MAIL_CONFIG_FORM_AVATAR_DELETE_PENDING');
+				}
+				if (this.avatar.selection?.status === 'loading') {
+					return loc('MAIL_CONFIG_FORM_AVATAR_UPLOADING');
+				}
+				if (this.avatar.intent) {
+					return loc('MAIL_CONFIG_FORM_AVATAR_UNSAVED');
+				}
+				return loc(this.avatar.confirmed?.hasAvatar ? 'MAIL_CONFIG_FORM_AVATAR_SAVED' : 'MAIL_CONFIG_FORM_AVATAR_EMPTY');
+			}
+		},
+		watch: {
+			disabled(disabled) {
+				if (disabled) {
+					this.cancelFocusRestore();
+				}
+			},
+			'avatar.mailboxId': 'cancelFocusRestore',
+			'avatar.requestId': function (requestId) {
+				if (this.focusRestoreRequest?.requestId !== requestId) {
+					this.cancelFocusRestore();
+				}
+			},
+			'avatar.loading': function (loading) {
+				if (!loading) {
+					void this.$nextTick(this.restoreFocus);
+				}
+			},
+			controlsDisabled: {
+				immediate: true,
+				handler(disabled) {
+					Object.assign(this.widgetOptions, {
+						readonly: disabled,
+						hideDropArea: disabled || this.hasPendingSelection,
+						forceDisableSelection: disabled,
+						enableDropzone: !disabled
+					});
+				}
+			},
+			hasPendingSelection(pending) {
+				this.widgetOptions.hideDropArea = this.controlsDisabled || pending;
+			},
+			'avatar.resetKey': function () {
+				if (!this.avatar.selection) {
+					this.clearSelection();
+				}
+			},
+			canEdit: {
+				immediate: true,
+				handler(canEdit) {
+					if (canEdit && !this.adapter) {
+						void this.createUploader();
+					}
+				}
+			}
+		},
+		mounted() {
+			this.bindBrowseButton();
+		},
+		updated() {
+			this.bindBrowseButton();
+		},
+		beforeUnmount() {
+			this.disposed = true;
+			this.cancelFocusRestore();
+		},
+		unmounted() {
+			this.clearSelection();
+			this.unbindBrowseButton();
+			this.adapter?.destroy();
+			this.adapter = null;
+		},
+		methods: {
+			holdFocus() {
+				this.cancelFocusRestore();
+				const root = this.$refs.avatar;
+				if (root?.contains(ui_a11y.FocusNavigator.getActiveElement(root))) {
+					ui_a11y.FocusNavigator.focusContainer(root, {
+						preventScroll: true
+					});
+					this.focusRestoreRequest = {
+						mailboxId: this.avatar.mailboxId,
+						requestId: this.avatar.requestId
+					};
+				}
+			},
+			cancelFocusRestore() {
+				this.focusRestoreRequest = null;
+			},
+			onRootFocusOut(event) {
+				if (event.target === event.currentTarget) {
+					this.cancelFocusRestore();
+				}
+			},
+			isFocusRestoreCurrent(request) {
+				return !this.disposed && !this.disabled && request.mailboxId === this.avatar.mailboxId && request.requestId === this.avatar.requestId;
+			},
+			restoreFocus() {
+				const request = this.focusRestoreRequest;
+				if (!request || this.avatar.loading) {
+					return;
+				}
+				this.cancelFocusRestore();
+				const root = this.$refs.avatar;
+				if (this.isFocusRestoreCurrent(request) && root?.isConnected && ui_a11y.FocusNavigator.getActiveElement(root) === root) {
+					const actions = this.$refs.actions;
+					const scope = actions?.querySelector('button') ? actions : root;
+					ui_a11y.FocusNavigator.focusFirst(scope, {
+						preventScroll: true
+					});
+				}
+			},
+			async createUploader() {
+				if (this.editorState !== 'idle' || !this.avatar.mailboxId) {
+					return;
+				}
+				this.editorState = 'pending';
+				const stack = await loadUploaderStack().catch(() => null);
+				if (!stack) {
+					this.editorState = 'failed';
+					return;
+				}
+				if (this.disposed || !this.canEdit || !this.avatar.mailboxId) {
+					this.editorState = 'idle';
+					return;
+				}
+				const uploader = new stack.Uploader({
+					controller: 'mail.fileUploader.mailboxAvatarUploaderController',
+					controllerOptions: {
+						mailboxId: this.avatar.mailboxId
+					},
+					multiple: false,
+					allowReplaceSingle: true,
+					acceptedFileTypes: ['image/jpeg', 'image/png'],
+					acceptOnlyImages: true,
+					maxFileSize: 5 * 1024 * 1024,
+					imageMaxFileSize: 5 * 1024 * 1024,
+					imageMaxWidth: 4096,
+					imageMaxHeight: 4096,
+					imagePreviewWidth: 300,
+					imagePreviewHeight: 300,
+					imagePreviewUpscale: false,
+					events: {
+						[stack.UploaderEvent.BEFORE_FILES_ADD]: this.handleBeforeFilesAdd,
+						[stack.UploaderEvent.FILE_ADD_START]: this.handleFileAdd,
+						[stack.UploaderEvent.FILE_STATE_CHANGE]: this.handleFileChange,
+						[stack.UploaderEvent.FILE_COMPLETE]: this.handleFileChange,
+						[stack.UploaderEvent.FILE_ERROR]: this.handleFileChange,
+						[stack.UploaderEvent.FILE_REMOVE]: this.handleFileRemove,
+						[stack.UploaderEvent.BEFORE_BROWSE]: this.handleBeforeBrowse,
+						[stack.UploaderEvent.ERROR]: this.handleUploaderError
+					}
+				});
+				uploader.addFilter(stack.FilterType.VALIDATION, createPixelFilter(stack, uploader));
+				this.uploaderStack = ui_vue3.markRaw(stack);
+				this.adapter = ui_vue3.markRaw(new stack.VueUploaderAdapter(uploader));
+				this.editorState = 'ready';
+			},
+			bindBrowseButton() {
+				const node = this.$refs.selectButton;
+				if (!node || !this.adapter || this.browseNode === node) {
+					return;
+				}
+				this.unbindBrowseButton();
+				this.adapter.getUploader().assignBrowse(node);
+				this.browseNode = ui_vue3.markRaw(node);
+			},
+			unbindBrowseButton() {
+				if (this.browseNode) {
+					this.adapter?.getUploader().unassignBrowse(this.browseNode);
+					this.browseNode = null;
+				}
+			},
+			handleBeforeBrowse(event) {
+				if (this.controlsDisabled || !this.canEdit || this.disposed) {
+					event.preventDefault();
+				}
+			},
+			onPreviewError(event) {
+				const url = event.target?.src ?? '';
+				if (!this.disposed && url) {
+					this.$emit('image-error', url);
+				}
+			},
+			handleBeforeFilesAdd(event) {
+				if (this.controlsDisabled || !this.canEdit || this.disposed) {
+					event.preventDefault();
+				}
+			},
+			handleFileAdd(event) {
+				this.activeFileId = event.getData().file.getId();
+				this.handleFileChange(event);
+			},
+			handleFileChange(event) {
+				const stack = this.uploaderStack;
+				const file = event.getData().file;
+				if (this.disposed || !stack || file.getId() !== this.activeFileId) {
+					return;
+				}
+				const status = file.getStatus();
+				const failed = status === stack.FileStatus.LOAD_FAILED || status === stack.FileStatus.UPLOAD_FAILED;
+				const token = file.getServerFileId();
+				const selection = {
+					id: file.getId(),
+					status: failed ? 'error' : 'loading',
+					previewUrl: failed ? '' : file.getPreviewUrl() || '',
+					uploadToken: null,
+					error: file.getError()?.getMessage() || ''
+				};
+				if (status === stack.FileStatus.COMPLETE && main_core.Type.isStringFilled(token)) {
+					selection.status = 'complete';
+					selection.uploadToken = String(token);
+				}
+				this.$emit('selection-change', selection);
+			},
+			handleFileRemove(event) {
+				const file = event.getData().file;
+				file.revokeClientPreviewUrl();
+				if (!this.disposed && file.getId() === this.activeFileId) {
+					this.activeFileId = '';
+					this.$emit('reset');
+				}
+			},
+			handleUploaderError(event) {
+				if (!this.disposed) {
+					this.$emit('selection-change', {
+						id: this.activeFileId,
+						status: 'error',
+						previewUrl: '',
+						uploadToken: null,
+						error: event.getData().error.getMessage()
+					});
+				}
+			},
+			clearSelection() {
+				this.activeFileId = '';
+				if (!this.adapter) {
+					return;
+				}
+				const uploader = this.adapter.getUploader();
+				uploader.getFiles().forEach(file => {
+					uploader.removeFile(file, {
+						removeFromServer: file.getId() !== this.avatar.preservedUploadId
+					});
+				});
+			},
+			handleReset() {
+				if (!this.disabled) {
+					this.holdFocus();
+					this.clearSelection();
+					this.$emit('reset');
+					void this.$nextTick(this.restoreFocus);
+				}
+			},
+			handleDelete() {
+				if (!this.controlsDisabled) {
+					this.holdFocus();
+					this.clearSelection();
+					this.$emit('delete');
+					void this.$nextTick(this.restoreFocus);
+				}
+			},
+			handleRetry() {
+				if (this.disabled || this.avatar.loading) {
+					return;
+				}
+				this.holdFocus();
+				this.$emit('retry');
+				if (this.focusRestoreRequest) {
+					this.focusRestoreRequest.requestId = this.avatar.requestId;
+				}
+				void this.$nextTick(this.restoreFocus);
+			}
+		},
+		template: `
+		<div
+			v-if="avatar.loading || avatar.error || canEdit"
+			ref="avatar"
+			class="mail-config-form__mailbox-avatar"
+			data-test-id="mail_config-form__mailbox-avatar"
+			data-testid="mail-avatar"
+			@focusout="onRootFocusOut"
+		>
+			<TextSm>{{ loc('MAIL_CONFIG_FORM_AVATAR_TITLE') }}</TextSm>
+			<div v-if="statusMessage" role="status" aria-live="polite" data-testid="mail-avatar-status">
+				<TextXs>{{ statusMessage }}</TextXs>
+			</div>
+			<div v-if="avatar.error || imageUnavailable" role="alert" data-testid="mail-avatar-error">
+				<TextXs className="mail-config-form__mailbox-avatar-error">
+					{{ avatar.error || loc('MAIL_CONFIG_FORM_AVATAR_IMAGE_ERROR') }}
+				</TextXs>
+				<UiButton
+					:dataset="{ testid: 'mail-avatar-retry' }"
+					:text="loc('MAIL_CONFIG_FORM_AVATAR_RETRY')"
+					:style="AirButtonStyle.PLAIN"
+					:size="ButtonSize.SMALL"
+					:disabled="disabled || avatar.loading"
+					@click="handleRetry"
+				/>
+			</div>
+			<template v-if="canEdit">
+				<div v-if="editorState === 'failed'" role="alert" data-testid="mail-avatar-editor-error">
+					<TextXs className="mail-config-form__mailbox-avatar-error">
+						{{ loc('MAIL_CONFIG_FORM_ERROR_AJAX') }}
+					</TextXs>
+				</div>
+				<template v-else-if="adapter">
+					<img
+						v-if="showSavedImage"
+						:key="avatar.confirmed.url"
+						class="mail-config-form__mailbox-avatar-image"
+						:src="avatar.confirmed.url"
+						alt=""
+						data-testid="mail-avatar-image"
+						@error="onPreviewError"
+					>
+					<template v-else>
+						<TextXs className="mail-config-form__mailbox-avatar-hint">
+							{{ loc('MAIL_CONFIG_FORM_AVATAR_HINT') }}
+						</TextXs>
+						<TileWidgetComponent :uploaderAdapter="adapter" :widgetOptions="widgetOptions"/>
+					</template>
+					<div ref="selectButton" class="mail-config-form__mailbox-avatar-select">
+						<UiButton
+							:dataset="{ testid: 'mail-avatar-select' }"
+							:text="loc('MAIL_CONFIG_FORM_AVATAR_SELECT')"
+							:style="AirButtonStyle.PLAIN"
+							:size="ButtonSize.SMALL"
+							:disabled="controlsDisabled"
+						/>
+					</div>
+				</template>
+				<div v-if="avatar.selection?.error" role="alert" data-testid="mail-avatar-selection-error">
+					<TextXs className="mail-config-form__mailbox-avatar-error">{{ avatar.selection.error }}</TextXs>
+				</div>
+				<div
+					ref="actions"
+					class="mail-config-form__mailbox-avatar-actions"
+					data-test-id="mail_config-form__mailbox-avatar-actions"
+				>
+					<UiButton
+						v-if="avatar.confirmed.hasAvatar && avatar.intent?.operation !== 'delete'"
+						:dataset="{ testid: 'mail-avatar-delete' }"
+						:text="loc('MAIL_CONFIG_FORM_AVATAR_DELETE')"
+						:style="AirButtonStyle.PLAIN"
+						:size="ButtonSize.SMALL"
+						:disabled="controlsDisabled"
+						@click="handleDelete"
+					/>
+					<UiButton
+						v-if="avatar.intent"
+						:dataset="{ testid: 'mail-avatar-reset' }"
+						:text="loc('MAIL_CONFIG_FORM_AVATAR_RESET')"
+						:style="AirButtonStyle.PLAIN"
+						:size="ButtonSize.SMALL"
+						:disabled="disabled"
+						@click="handleReset"
+					/>
+				</div>
+			</template>
 		</div>
 	`
 	});
@@ -618,6 +1452,10 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			passwordPlaceholder: {
 				type: String,
 				default: ''
+			},
+			connectionSettingsLocked: {
+				type: Boolean,
+				default: false
 			}
 		},
 		computed: {
@@ -625,7 +1463,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				return this.state.mode === 'edit';
 			},
 			credentialsReadOnly() {
-				return this.state.migrationActive;
+				return this.connectionSettingsLocked || this.state.migrationActive;
 			},
 			isOAuthService() {
 				return Boolean(this.state.service?.oauth) || Boolean(this.state.connection.isOAuth);
@@ -640,14 +1478,17 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					useAirDesign: true
 				};
 			},
+			credentialsAreExternal() {
+				return Boolean(this.state.service?.externalCredentials);
+			},
 			showServerFields() {
-				return !this.state.service?.smtp?.server;
+				return !this.credentialsAreExternal && !this.state.service?.smtp?.server;
 			},
 			showLoginField() {
-				return !this.isOAuthService && !this.state.service?.smtp?.login;
+				return !this.credentialsAreExternal && !this.isOAuthService && !this.state.service?.smtp?.login;
 			},
 			showPasswordField() {
-				return !this.isOAuthService && !this.state.service?.smtp?.password;
+				return !this.credentialsAreExternal && !this.isOAuthService && !this.state.service?.smtp?.password;
 			},
 			smtpPortModel: {
 				get() {
@@ -686,7 +1527,6 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		template: `
 		<div
 			class="mail-config-form__section"
-			:class="{ '--disabled': !state.smtp.enabled }"
 			data-test-id="mail_config-form__smtp-section"
 		>
 			<div class="mail-config-form__section-header" data-test-id="mail_config-form__smtp-header">
@@ -696,9 +1536,8 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				</div>
 				<div class="mail-config-form__switcher-container">
 					<Switcher
-						v-if="isEditMode || !isOAuthService"
+						v-if="!credentialsReadOnly && (isEditMode || !isOAuthService)"
 						:isChecked="state.smtp.enabled"
-						:is-disabled="credentialsReadOnly"
 						:options="switcherOptions"
 						@click="toggleSmtp"
 						data-test-id="mail_config-form__smtp-switcher"
@@ -708,7 +1547,6 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			<transition name="mail-config-form__collapse">
 				<div
 					class="mail-config-form__section-content"
-					v-if="state.smtp.enabled"
 					data-test-id="mail_config-form__smtp-content"
 				>
 					<div class="mail-config-form__checkbox-row">
@@ -735,126 +1573,134 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 							/>
 						</div>
 					</transition>
-					<div class="mail-config-form__checkbox-row">
-						<input
-							type="checkbox"
-							id="mail-config-smtp-use-limit"
-							class="mail-config-form__checkbox"
-							v-model="state.smtp.useLimit"
-							data-test-id="mail_config-form__smtp-use-limit_checkbox"
-						/>
-						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-use-limit">
-							{{ loc('MAIL_CONFIG_FORM_SMTP_LIMIT_LABEL') }}
-						</label>
-					</div>
-					<transition name="mail-config-form__collapse">
-						<div v-if="state.smtp.useLimit" class="mail-config-form__collapse-field">
+					<template v-if="!credentialsReadOnly && state.smtp.enabled">
+						<div class="mail-config-form__checkbox-row">
+							<input
+								type="checkbox"
+								id="mail-config-smtp-use-limit"
+								class="mail-config-form__checkbox"
+								v-model="state.smtp.useLimit"
+								data-test-id="mail_config-form__smtp-use-limit_checkbox"
+							/>
+							<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-use-limit">
+								{{ loc('MAIL_CONFIG_FORM_SMTP_LIMIT_LABEL') }}
+							</label>
+						</div>
+						<transition name="mail-config-form__collapse">
+							<div v-if="state.smtp.useLimit" class="mail-config-form__collapse-field">
+								<BInput
+									type="number"
+									:size="InputSize.Md"
+									:design="InputDesign.DEFAULT"
+									v-model="limitModel"
+									:stretched="true"
+									:error="state.errors.smtpLimit"
+									data-test-id="mail_config-form__smtp-limit_field"
+								/>
+							</div>
+						</transition>
+						<div
+							class="mail-config-form__alert-container"
+							v-if="showServerFields"
+							data-test-id="mail_config-form__smtp-warning"
+						>
+							<span class="mail-config-form__alert-message">{{ loc('MAIL_CONFIG_FORM_SMTP_WARNING_ALERT') }}</span>
+						</div>
+						<div
+							class="mail-config-form__input-group"
+							v-if="showServerFields"
+							data-test-id="mail_config-form__smtp-server-group"
+						>
 							<BInput
+								class="mail-config-form__input-group_main"
+								:label="loc('MAIL_CONFIG_FORM_SMTP_SERVER_LABEL')"
+								:size="InputSize.Md"
+								:design="InputDesign.DEFAULT"
+								v-model="state.smtp.server"
+								data-test-id="mail_config-form__smtp-server_field"
+							/>
+							<BInput
+								class="mail-config-form__input-group_port"
+								:label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
+								:aria-label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
 								type="number"
 								:size="InputSize.Md"
 								:design="InputDesign.DEFAULT"
-								v-model="limitModel"
-								:stretched="true"
-								:error="state.errors.smtpLimit"
-								data-test-id="mail_config-form__smtp-limit_field"
+								v-model="smtpPortModel"
+								placeholder="587"
+								data-test-id="mail_config-form__smtp-port_field"
 							/>
 						</div>
-					</transition>
-					<div
-						class="mail-config-form__alert-container"
-						v-if="showServerFields"
-						data-test-id="mail_config-form__smtp-warning"
-					>
-						<span class="mail-config-form__alert-message">{{ loc('MAIL_CONFIG_FORM_SMTP_WARNING_ALERT') }}</span>
-					</div>
-					<div
-						class="mail-config-form__input-group"
-						v-if="showServerFields"
-						data-test-id="mail_config-form__smtp-server-group"
-					>
+						<div class="mail-config-form__checkbox-row" v-if="showServerFields">
+							<input
+								type="checkbox"
+								id="mail-config-smtp-ssl"
+								class="mail-config-form__checkbox"
+								v-model="state.smtp.ssl"
+								data-test-id="mail_config-form__smtp-ssl_checkbox"
+							/>
+							<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-ssl">
+								{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
+							</label>
+						</div>
 						<BInput
-							class="mail-config-form__input-group_main"
-							:label="loc('MAIL_CONFIG_FORM_SMTP_SERVER_LABEL')"
+							v-if="showLoginField"
+							:label="loc('MAIL_CONFIG_FORM_SMTP_LOGIN_LABEL')"
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
-							v-model="state.smtp.server"
-							:disabled="credentialsReadOnly"
-							data-test-id="mail_config-form__smtp-server_field"
+							:model-value="state.smtp.login"
+							data-test-id="mail_config-form__smtp-login_field"
+							@update:model-value="onSmtpLoginChange"
 						/>
 						<BInput
-							class="mail-config-form__input-group_port"
-							:label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
-							:aria-label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
-							type="number"
+							v-if="showPasswordField"
+							:label="loc('MAIL_CONFIG_FORM_SMTP_PASSWORD_LABEL')"
+							type="password"
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
-							v-model="smtpPortModel"
-							:disabled="credentialsReadOnly"
-							placeholder="587"
-							data-test-id="mail_config-form__smtp-port_field"
+							:model-value="state.smtp.password"
+							:placeholder="isEditMode ? passwordPlaceholder : ''"
+							data-test-id="mail_config-form__smtp-password_field"
+							@update:model-value="onSmtpPasswordChange"
+							:error="state.errors.smtpPassword"
 						/>
-					</div>
-					<div class="mail-config-form__checkbox-row" v-if="showServerFields">
-						<input
-							type="checkbox"
-							id="mail-config-smtp-ssl"
-							class="mail-config-form__checkbox"
-							v-model="state.smtp.ssl"
-							:disabled="credentialsReadOnly"
-							data-test-id="mail_config-form__smtp-ssl_checkbox"
-						/>
-						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-ssl">
-							{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
-						</label>
-					</div>
-					<BInput
-						v-if="showLoginField"
-						:label="loc('MAIL_CONFIG_FORM_SMTP_LOGIN_LABEL')"
-						:size="InputSize.Md"
-						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-						:model-value="state.smtp.login"
-						:disabled="credentialsReadOnly"
-						data-test-id="mail_config-form__smtp-login_field"
-						@update:model-value="onSmtpLoginChange"
-					/>
-					<BInput
-						v-if="showPasswordField"
-						:label="loc('MAIL_CONFIG_FORM_SMTP_PASSWORD_LABEL')"
-						type="password"
-						:size="InputSize.Md"
-						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-						:model-value="state.smtp.password"
-						:disabled="credentialsReadOnly"
-						:placeholder="isEditMode ? passwordPlaceholder : ''"
-						data-test-id="mail_config-form__smtp-password_field"
-						@update:model-value="onSmtpPasswordChange"
-						:error="state.errors.smtpPassword"
-					/>
-					<div class="mail-config-form__checkbox-row" v-if="!isOAuthService">
-						<input
-							type="checkbox"
-							id="mail-config-smtp-upload-outgoing"
-							class="mail-config-form__checkbox"
-							v-model="state.smtp.uploadOutgoing"
-							data-test-id="mail_config-form__smtp-upload-outgoing_checkbox"
-						/>
-						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-upload-outgoing">
-							{{ loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_LABEL') }}
-						</label>
-						<BIcon
-							class="mail-config-form__checkbox-hint-icon"
-							:name="outline.ALERT"
-							:size="16"
-							color="var(--ui-color-base-5)"
-							v-hint="loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_HINT')"
-						/>
-					</div>
+						<div class="mail-config-form__checkbox-row" v-if="!isOAuthService">
+							<input
+								type="checkbox"
+								id="mail-config-smtp-upload-outgoing"
+								class="mail-config-form__checkbox"
+								v-model="state.smtp.uploadOutgoing"
+								data-test-id="mail_config-form__smtp-upload-outgoing_checkbox"
+							/>
+							<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-upload-outgoing">
+								{{ loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_LABEL') }}
+							</label>
+							<BIcon
+								class="mail-config-form__checkbox-hint-icon"
+								:name="outline.ALERT"
+								:size="16"
+								color="var(--ui-color-base-5)"
+								v-hint="loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_HINT')"
+							/>
+						</div>
+					</template>
 				</div>
 			</transition>
 		</div>
 	`
 	});
 
+	function getAccessUserSelectorItems(users) {
+		return users.map(user => ({
+			entityId: 'user',
+			id: user.id,
+			title: user.title,
+			...(user.imageUrl ? {
+				avatar: user.imageUrl
+			} : {}),
+			hidden: true
+		}));
+	}
 	function resolvePopupTargetContainer$2(element) {
 		return element?.closest('.side-panel-content-container, .ui-slider-content-box') ?? document.body;
 	}
@@ -863,6 +1709,12 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		components: {
 			HeadlineSm: ui_system_typography_vue.HeadlineSm,
 			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			users: {
+				type: Array,
+				default: () => []
+			}
 		},
 		setup() {
 			return {
@@ -917,6 +1769,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				multiple: true,
 				dialogOptions: {
 					targetNode: selectorContainer,
+					items: getAccessUserSelectorItems(this.users),
 					popupOptions: {
 						targetContainer: resolvePopupTargetContainer$2(selectorContainer)
 					},
@@ -942,7 +1795,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				},
 				events: {
 					onAfterTagAdd: () => this.updateAccess(),
-					onAfterTagRemove: () => this.updateAccess()
+					onAfterTagRemove: event => this.handleTagRemove(event)
 				}
 			}));
 			this.selectorInstance.renderTo(this.$refs.selectorContainer);
@@ -962,6 +1815,18 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			}
 		},
 		methods: {
+			handleTagRemove(event) {
+				const tag = event.getData().tag;
+				const dialog = this.selectorInstance?.getDialog();
+				const item = dialog?.getItem({
+					id: tag.getId(),
+					entityId: tag.getEntityId()
+				});
+				if (item?.isHidden()) {
+					dialog?.removeItem(item);
+				}
+				this.updateAccess();
+			},
 			updateAccess() {
 				if (!this.selectorInstance) {
 					return;
@@ -1183,11 +2048,18 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			isEditMode: {
 				type: Boolean,
 				default: false
+			},
+			saveDisabled: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['save', 'cancel'],
 		methods: {
 			onSave() {
+				if (this.saveDisabled || this.state.loading || !this.state.isDataReady) {
+					return;
+				}
 				this.$emit('save');
 			},
 			onCancel() {
@@ -1200,14 +2072,13 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				:text="isEditMode ? loc('MAIL_CONFIG_FORM_SAVE_BUTTON') : loc('MAIL_CONFIG_FORM_CONNECT_BUTTON')"
 				:style="AirButtonStyle.FILLED"
 				:loading="state.loading"
-				:disabled="state.loading"
+				:disabled="state.loading || !state.isDataReady || saveDisabled"
 				:dataset="{ testId: 'mail_config-form__save_button' }"
 				@click="onSave"
 			/>
 			<UiButton
 				:text="loc('MAIL_CONFIG_FORM_CANCEL_BUTTON')"
 				:style="AirButtonStyle.PLAIN_NO_ACCENT"
-				:disabled="state.loading"
 				:dataset="{ testId: 'mail_config-form__cancel_button' }"
 				@click="onCancel"
 			/>
@@ -1228,6 +2099,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		getMailbox(mailboxId) {
 			return runAction('getMailbox', {
 				mailboxId
+			});
+		},
+		getMailboxAvatar(mailboxId) {
+			return main_core.ajax.runAction('mail.api.mailboxavatar.get', {
+				method: 'POST',
+				data: {
+					mailboxId
+				}
 			});
 		},
 		getOauthUser(mailboxId) {
@@ -1251,9 +2130,18 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			});
 		},
 		updateMailbox(mailboxId, data) {
-			return runAction('updateMailbox', {
-				mailboxId,
-				...data
+			return main_core.ajax.runAction(`${CONTROLLER}.updateMailbox`, {
+				method: 'POST',
+				json: {
+					mailboxId,
+					...data
+				}
+			});
+		},
+		updateGeneralSettings(params) {
+			return main_core.ajax.runAction(`${CONTROLLER}.updateGeneralSettings`, {
+				method: 'POST',
+				json: params
 			});
 		},
 		deleteMailbox(mailboxId) {
@@ -1500,11 +2388,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		box.show();
 	}
 
+	const PROVIDER_ACTION_GUIDE_TARGET = '[data-id="mail-config-form-provider-action"]';
+	const PROVIDER_REAUTHORIZATION_GUIDE_TARGET = '[data-id="mail-config-form-provider-reauthorization"]';
 	const SYNC_FAILURE_GUIDE_TARGETS = {
-		oauth: '[data-id="mail-config-form-provider-action"]',
+		oauth: PROVIDER_REAUTHORIZATION_GUIDE_TARGET,
 		password: '[data-id="mail-config-form-password-field"]'
 	};
 	const OAUTH_DENIED_ADMIN_CONSENT_SCENARIO = 'admin_consent';
+	const AVATAR_UPLOAD_REFUSAL_CODES = new Set(['MAIL_AVATAR_UPLOAD_INVALID', 'MAIL_AVATAR_FORMAT_INVALID', 'MAIL_AVATAR_IMAGE_INVALID', 'MAIL_AVATAR_LIMIT_EXCEEDED']);
 	async function notifyFallback(text) {
 		const topBX = getTopBX();
 		let center = topBX?.UI?.Notification?.Center ?? getRootBX().UI?.Notification?.Center ?? null;
@@ -1641,12 +2532,36 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 	function isConnectionRequestResult(result) {
 		return 'connectionRequestCompleted' in result;
 	}
+	function createConnectionSettingsSnapshot(state) {
+		return {
+			email: state.connection.email,
+			login: state.connection.login,
+			server: state.connection.server,
+			port: state.connection.port,
+			ssl: state.connection.ssl,
+			serviceId: state.service?.id ?? null,
+			oauthUid: state.connection.oauthUid,
+			userPrincipalName: state.connection.userPrincipalName,
+			password: state.connection.password,
+			smtpEnabled: state.smtp.enabled,
+			smtpServer: state.smtp.server,
+			smtpPort: state.smtp.port,
+			smtpSsl: state.smtp.ssl,
+			smtpLogin: state.smtp.login,
+			smtpPassword: state.smtp.password,
+			smtpUseLimit: state.smtp.useLimit,
+			smtpLimit: state.smtp.limit,
+			uploadOutgoing: state.smtp.uploadOutgoing,
+			ownerId: state.permissions.canChangeOwner ? state.access.ownerId : null
+		};
+	}
 	const App = ui_vue3.defineComponent({
 		name: 'mailbox-config-app',
 		components: {
 			ConnectionSettings,
 			MicrosoftConnection,
 			ProviderBadge,
+			MailboxAvatar,
 			SmtpSettings,
 			CrmIntegration: mail_connecting_crmIntegration.CrmIntegration,
 			CalendarIntegration: mail_connecting_calendarIntegration.CalendarIntegration,
@@ -1679,6 +2594,17 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				syncFailureGuide: null,
 				lastMailSyncPeriodValue: '7',
 				verifyEmailRequestSeq: 0,
+				formDisposed: false,
+				migrationStatusReady: false,
+				connectionSettingsReady: false,
+				migrationStatusRevision: -1,
+				mailboxLoadSeq: 0,
+				mailboxLoadRetryTimer: null,
+				mailboxLoadRetryAttempts: 0,
+				mailboxLoadFailed: false,
+				mailboxDataVersion: 0,
+				shareAccessUsers: [],
+				connectionSettingsBaseline: null,
 				migrationStateHolder: ui_vue3.markRaw({
 					current: null
 				}),
@@ -1695,6 +2621,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		computed: {
 			isEditMode() {
 				return this.state.mode === 'edit';
+			},
+			connectionSettingsLocked() {
+				return this.isEditMode && (!this.migrationStatusReady || !this.connectionSettingsReady || this.state.migrationActive);
 			},
 			isMicrosoftService() {
 				const serviceName = this.state.service?.name;
@@ -1779,6 +2708,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				if (!name || name === 'other' || name === 'imap') {
 					return main_core.Loc.getMessage('MAIL_CONFIG_FORM_PROVIDER_TITLE_IMAP') ?? '';
 				}
+				if (name === 'mailhost') {
+					return main_core.Loc.getMessage('MAIL_CONFIG_FORM_PROVIDER_TITLE_MAILHOST') ?? '';
+				}
 				const displayName = providerDisplayNameMap[name] ?? `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 				return main_core.Loc.getMessage('MAIL_CONFIG_FORM_PROVIDER_TITLE_PREFIXED', {
 					'#NAME#': displayName
@@ -1790,7 +2722,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				}
 				return '';
 			},
+			avatarSaveBlocked() {
+				return isMailboxAvatarSaveBlocked(this.state);
+			},
 			providerAvatar() {
+				const avatarUrl = this.isEditMode ? getMailboxAvatarUrl(this.state) : '';
+				if (avatarUrl) {
+					return avatarUrl;
+				}
 				if (this.isOAuthService && this.isOAuthConnected) {
 					return this.state.connection.oauthUser?.picture || '';
 				}
@@ -1804,6 +2743,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				return this.state.permissions.canViewMailboxList;
 			},
 			providerButtonText() {
+				if (this.connectionSettingsLocked) {
+					return '';
+				}
 				if (this.isEditMode || this.isOAuthConnected) {
 					return main_core.Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_DISCONNECT') ?? '';
 				}
@@ -1811,24 +2753,62 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					return '';
 				}
 				return main_core.Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_CONNECT') ?? '';
+			},
+			providerReauthorizationButtonText() {
+				if (!this.isEditMode || !this.isOAuthService) {
+					return '';
+				}
+				return main_core.Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_CONNECT') ?? '';
+			}
+		},
+		watch: {
+			'state.mailboxId': function () {
+				if (this.formDisposed || !this.isEditMode) {
+					return;
+				}
+				this.mailboxLoadSeq++;
+				this.clearMailboxLoadRetry();
+				this.unbindMigrationState();
+				this.handleOauthAborted();
+				this.closeSyncFailureGuide();
+				this.migrationStatusReady = false;
+				this.migrationStatusRevision = -1;
+				this.connectionSettingsReady = false;
+				this.connectionSettingsBaseline = null;
+				this.mailboxDataVersion = 0;
+				this.mailboxLoadFailed = false;
+				this.mailboxLoadRetryAttempts = 0;
+				this.state.isDataReady = false;
+				this.state.migrationActive = false;
+				this.state.generalSettingsBaseline = null;
+				this.state.hasSourceGenerationId = false;
+				this.state.sourceGenerationId = null;
+				this.state.connection.oauthUser = null;
+				this.state.connection.oauthUid = null;
+				this.state.connection.userPrincipalName = null;
+				this.oauthUserProfileRequest.current = null;
+				this.bindMigrationState();
+				void this.loadMailboxAvatar();
 			}
 		},
 		mounted() {
 			this.state.calendarSettings.enabled = true;
 			if (this.isEditMode && this.state.mailboxId) {
 				this.bindMigrationState();
-				void this.loadMailboxData();
+				void this.loadMailboxAvatar();
 			}
+			window.addEventListener('online', this.recoverMailboxData);
+			window.addEventListener('focus', this.recoverMailboxData);
 			this.bindSidePanelListeners();
 		},
 		beforeUnmount() {
+			this.disposeForm();
 			main_core_events.EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
 			main_core_events.EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
 			this.stopOauthPopupWatcher();
 			this.oauthPopupHolder.current = null;
 			this.unbindSidePanelListeners();
 			this.closeSyncFailureGuide();
-			this.unbindMigrationState();
 		},
 		methods: {
 			getMailboxMigrationState(mailboxId) {
@@ -1845,18 +2825,63 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.migrationStateUnsubscribe = migrationState.subscribe(({
 					active
 				}) => {
-					this.state.migrationActive = active;
+					this.applyMigrationStatus(migrationState, active);
 				});
-				void migrationState.initialize().then(() => {
-					if (this.migrationStateHolder.current === migrationState && migrationState.isInitialized()) {
-						this.state.migrationActive = migrationState.isActive();
+				void this.initializeMigrationState();
+			},
+			async initializeMigrationState() {
+				const migrationState = this.migrationStateHolder.current;
+				if (!migrationState || this.formDisposed) {
+					return;
+				}
+				this.state.loading = true;
+				await migrationState.initialize();
+				if (this.formDisposed || this.migrationStateHolder.current !== migrationState) {
+					return;
+				}
+				if (!migrationState.isInitialized()) {
+					this.state.loading = false;
+					this.mailboxLoadFailed = true;
+					return;
+				}
+				this.applyMigrationStatus(migrationState, migrationState.isActive());
+			},
+			applyMigrationStatus(migrationState, active) {
+				if (this.formDisposed || this.migrationStateHolder.current !== migrationState || !migrationState.isInitialized() || this.migrationStatusRevision === migrationState.getRevision()) {
+					return;
+				}
+				this.clearMailboxLoadRetry();
+				this.mailboxLoadRetryAttempts = 0;
+				this.mailboxLoadFailed = false;
+				this.migrationStatusRevision = migrationState.getRevision();
+				this.migrationStatusReady = true;
+				this.state.migrationActive = active;
+				this.connectionSettingsReady = false;
+				this.mailboxLoadSeq++;
+				this.closeSyncFailureGuide();
+				if (active) {
+					this.handleOauthAborted();
+					if (this.state.isDataReady) {
+						return;
 					}
-				});
+				}
+				void this.loadMailboxData();
 			},
 			unbindMigrationState() {
 				this.migrationStateUnsubscribe?.();
 				this.migrationStateUnsubscribe = null;
 				this.migrationStateHolder.current = null;
+			},
+			disposeForm() {
+				this.formDisposed = true;
+				resetMailboxAvatarIntent(this.state);
+				this.state.avatar.saving = false;
+				invalidateMailboxAvatarRead(this.state);
+				this.clearMailboxLoadRetry();
+				window.removeEventListener('online', this.recoverMailboxData);
+				window.removeEventListener('focus', this.recoverMailboxData);
+				this.mailboxLoadSeq++;
+				this.unbindMigrationState();
 			},
 			formatLastCheck(timestamp) {
 				const diffSeconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
@@ -1882,21 +2907,135 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					'#COUNT#': String(days)
 				}) ?? '';
 			},
-			async loadMailboxData() {
-				const mailboxId = this.state.mailboxId;
-				if (!mailboxId) {
+			clearMailboxLoadRetry() {
+				if (this.mailboxLoadRetryTimer !== null) {
+					clearTimeout(this.mailboxLoadRetryTimer);
+					this.mailboxLoadRetryTimer = null;
+				}
+			},
+			recoverMailboxAvatar() {
+				const avatar = this.state.avatar;
+				if (avatar.saving || avatar.loading || !(avatar.needsRefresh || avatar.error)) {
 					return;
 				}
+				void this.loadMailboxAvatar();
+			},
+			recoverMailboxData() {
+				if (this.formDisposed) {
+					return;
+				}
+				this.recoverMailboxAvatar();
+				if (!this.mailboxLoadFailed || this.state.loading || this.state.isDataReady) {
+					return;
+				}
+				if (!this.migrationStateHolder.current?.isInitialized()) {
+					void this.initializeMigrationState();
+					return;
+				}
+				this.mailboxLoadRetryAttempts = 0;
+				void this.loadMailboxData();
+			},
+			async loadMailboxAvatar() {
+				const savingCurrentMailbox = this.state.avatar.saving && this.state.avatar.mailboxId === this.state.mailboxId;
+				if (this.formDisposed || !this.isEditMode || !this.state.permissions.isAvatarAvailable || savingCurrentMailbox && !this.state.avatar.needsRefresh) {
+					return;
+				}
+				const mailboxId = this.state.mailboxId;
+				const requestId = beginMailboxAvatarRead(this.state);
+				if (!mailboxId) {
+					invalidateMailboxAvatarRead(this.state);
+					return;
+				}
+				try {
+					const response = await Api.getMailboxAvatar(mailboxId);
+					if (this.formDisposed) {
+						return;
+					}
+					if (response.status !== 'success' || response.errors?.length) {
+						throw response;
+					}
+					acceptMailboxAvatarRead(this.state, requestId, response.data);
+				} catch (error) {
+					if (!this.formDisposed) {
+						const message = extractAjaxErrors(error)[0]?.message || loc('MAIL_CONFIG_FORM_AVATAR_READ_ERROR');
+						rejectMailboxAvatarRead(this.state, requestId, message);
+					}
+				}
+			},
+			onAvatarSelectionChange(selection) {
+				if (!this.formDisposed) {
+					setMailboxAvatarSelection(this.state, selection);
+				}
+			},
+			onAvatarDelete() {
+				if (!this.formDisposed) {
+					deleteMailboxAvatar(this.state);
+				}
+			},
+			onAvatarReset() {
+				if (!this.formDisposed && !this.state.loading) {
+					resetMailboxAvatarIntent(this.state);
+				}
+			},
+			onAvatarImageError(url) {
+				if (!this.formDisposed && url === getMailboxAvatarUrl(this.state)) {
+					this.state.avatar.imageErrorUrl = url;
+				}
+			},
+			async loadMailboxData() {
+				const mailboxId = this.state.mailboxId;
+				const migrationState = this.migrationStateHolder.current;
+				if (!mailboxId || !migrationState?.isInitialized() || this.formDisposed) {
+					return;
+				}
+				this.clearMailboxLoadRetry();
+				this.mailboxLoadFailed = false;
+				const requestSeq = ++this.mailboxLoadSeq;
+				const revision = migrationState.getRevision();
+				const isCurrent = () => !this.formDisposed && this.state.mailboxId === mailboxId && this.mailboxLoadSeq === requestSeq && this.migrationStateHolder.current === migrationState && migrationState.getRevision() === revision;
 				this.state.loading = true;
+				this.state.isDataReady = false;
+				this.connectionSettingsReady = false;
 				try {
 					const response = await Api.getMailbox(mailboxId);
+					if (!isCurrent()) {
+						return;
+					}
+					if (response.status !== 'success') {
+						throw response;
+					}
+					this.mailboxLoadRetryAttempts = 0;
+					this.state.errors = createEmptyErrors();
+					this.state.migrationActive = this.state.migrationActive || response.data.migrationActive === true;
 					this.mapMailboxData(response.data);
+					this.mailboxDataVersion++;
+					setSourceGeneration(this.state, response.data);
+					setGeneralSettingsBaseline(this.state);
+					this.connectionSettingsBaseline = createConnectionSettingsSnapshot(this.state);
+					this.connectionSettingsReady = !this.state.migrationActive;
+					if (this.connectionSettingsReady) {
+						this.oauthUserProfileRequest.current = this.loadOauthUserProfile();
+					}
 				} catch (error) {
-					console.error('Failed to load mailbox data:', error);
+					if (isCurrent()) {
+						this.mailboxLoadFailed = true;
+						this.migrationStatusRevision = -1;
+						this.onSaveError(error);
+						if (this.mailboxLoadRetryAttempts < 3) {
+							this.mailboxLoadRetryAttempts++;
+							this.mailboxLoadRetryTimer = setTimeout(() => {
+								this.mailboxLoadRetryTimer = null;
+								if (isCurrent() && this.mailboxLoadFailed && !this.state.isDataReady) {
+									void this.loadMailboxData();
+								}
+							}, 5000 * this.mailboxLoadRetryAttempts);
+						}
+					}
 				} finally {
-					this.state.loading = false;
+					if (isCurrent()) {
+						this.state.loading = false;
+					}
 				}
-				this.oauthUserProfileRequest.current = this.loadOauthUserProfile();
 			},
 			async loadOauthUserProfile() {
 				const mailboxId = this.state.mailboxId;
@@ -1904,9 +3043,13 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				if (!mailboxId || !this.state.connection.isOAuth || !oauthUid) {
 					return;
 				}
+				const requestSeq = this.mailboxLoadSeq;
 				const principalNameBeforeRequest = this.state.connection.userPrincipalName;
 				try {
 					const response = await Api.getOauthUser(mailboxId);
+					if (this.formDisposed || mailboxId !== this.state.mailboxId || requestSeq !== this.mailboxLoadSeq || this.connectionSettingsLocked) {
+						return;
+					}
 					this.applyOauthUserProfile(response.data, {
 						oauthUid,
 						principalName: principalNameBeforeRequest
@@ -1925,11 +3068,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.state.connection.oauthUser = mapOauthUser(profile);
 				if (this.state.connection.userPrincipalName === requested.principalName) {
 					this.state.connection.userPrincipalName = profile.userPrincipalName ?? '';
+					if (this.connectionSettingsBaseline?.userPrincipalName === requested.principalName) {
+						this.connectionSettingsBaseline.userPrincipalName = this.state.connection.userPrincipalName;
+					}
 				}
 			},
 			mapMailboxData(data) {
-				const migrationState = this.migrationStateHolder?.current;
-				this.state.migrationActive = migrationState?.isInitialized() ? migrationState.isActive() : data.migrationActive === true;
+				this.state.connection.password = '';
+				this.state.smtp.password = '';
 				this.state.connection.email = data.imap.email || '';
 				this.state.connection.login = data.imap.login || '';
 				this.state.connection.server = data.imap.server || '';
@@ -1948,9 +3094,12 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.state.smtp.limit = data.smtp.limit || 250;
 				this.state.service = {
 					...(this.state.service ?? {}),
+					id: data.imap.serviceId,
+					oauth: data.imap.isOAuth,
 					name: data.service.name,
 					type: data.service.type,
 					link: data.service.link,
+					externalCredentials: Boolean(data.service.externalCredentials),
 					smtp: {
 						server: data.service.smtpServer ?? this.state.service?.smtp?.server ?? '',
 						port: this.state.service?.smtp?.port ?? '',
@@ -1971,6 +3120,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				if (Array.isArray(data.shareAccess)) {
 					this.state.access.sharedWith = data.shareAccess;
 				}
+				this.shareAccessUsers = Array.isArray(data.shareAccessUsers) ? data.shareAccessUsers : [];
 				this.state.access.ownerId = data.userId || null;
 				this.state.lastMailCheck = data.lastMailCheck || null;
 				this.state.providerRestriction = data.providerRestriction ?? null;
@@ -1984,6 +3134,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				});
 			},
 			triggerSyncFailureGuide() {
+				if (this.formDisposed || this.connectionSettingsLocked) {
+					return;
+				}
 				const lastCheck = this.state.lastMailCheck;
 				if (!lastCheck || lastCheck.date === null || lastCheck.isSuccess !== false) {
 					return;
@@ -2060,7 +3213,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					config
 				};
 			},
-			buildBasePayload() {
+			buildConnectionPayload() {
 				const state = this.state;
 				const payload = {
 					email: state.connection.email,
@@ -2077,19 +3230,25 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					loginSmtp: state.smtp.login || state.connection.login || state.connection.email,
 					useLimitSmtp: state.smtp.useLimit,
 					limitSmtp: state.smtp.limit,
-					mailboxName: state.mailbox.name || state.connection.email,
-					senderName: state.mailbox.senderName,
-					useSenderName: state.mailbox.useSenderName,
-					iCalAccess: state.calendarSettings.enabled && state.calendarSettings.autoAddEvents,
-					crmOptions: this.buildCrmOptions(),
-					uploadOutgoing: state.smtp.uploadOutgoing,
-					link: state.mailbox.link,
-					shareAccess: state.access.sharedWith
+					uploadOutgoing: state.smtp.uploadOutgoing
 				};
 				if (state.connection.userPrincipalName !== null) {
 					payload.userPrincipalName = state.connection.userPrincipalName;
 				}
 				return payload;
+			},
+			buildBasePayload() {
+				const state = this.state;
+				return {
+					...this.buildConnectionPayload(),
+					mailboxName: state.mailbox.name || state.connection.email,
+					senderName: state.mailbox.senderName,
+					useSenderName: state.mailbox.useSenderName,
+					iCalAccess: state.calendarSettings.enabled && state.calendarSettings.autoAddEvents,
+					crmOptions: this.buildCrmOptions(),
+					link: state.mailbox.link,
+					shareAccess: state.access.sharedWith
+				};
 			},
 			buildCreatePayload() {
 				const state = this.state;
@@ -2105,26 +3264,39 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					}
 				};
 			},
-			buildUpdatePayload() {
+			buildUpdatePayload(avatar) {
 				const state = this.state;
-				const payload = this.buildBasePayload();
-				if (state.migrationActive) {
-					const connectionFields = ['email', 'userPrincipalName', 'login', 'server', 'port', 'ssl', 'serviceId', 'storageOauthUid', 'useSmtp', 'serverSmtp', 'portSmtp', 'sslSmtp', 'loginSmtp'];
-					connectionFields.forEach(field => {
+				const payload = {
+					...this.buildConnectionPayload(),
+					...buildGeneralSettingsPatch(state),
+					...(avatar ? {
+						avatar
+					} : {})
+				};
+				if (this.connectionSettingsLocked || this.formDisposed) {
+					throw new Error(loc('MAIL_MIGRATION_CREDENTIALS_LOCKED'));
+				}
+				if (state.service?.externalCredentials) {
+					['email', 'userPrincipalName', 'login', 'server', 'port', 'ssl', 'serviceId', 'storageOauthUid', 'serverSmtp', 'portSmtp', 'sslSmtp', 'loginSmtp'].forEach(field => {
 						delete payload[field];
 					});
-				} else if (state.connection.password && state.connection.password !== this.passwordPlaceholder) {
-					payload.password = state.connection.password;
+				} else {
+					if (state.connection.password && state.connection.password !== this.passwordPlaceholder) {
+						payload.password = state.connection.password;
+					}
+					if (state.smtp.password && state.smtp.password !== this.passwordPlaceholder) {
+						payload.passwordSMTP = state.smtp.password;
+					}
 				}
-				if (!state.migrationActive && state.smtp.password && state.smtp.password !== this.passwordPlaceholder) {
-					payload.passwordSMTP = state.smtp.password;
-				}
-				if (state.access.ownerId) {
+				if (state.permissions.canChangeOwner && state.access.ownerId) {
 					payload.userIdToConnect = state.access.ownerId;
 				}
-				return payload;
+				return {
+					...payload,
+					...getSourceGenerationPrecondition(state)
+				};
 			},
-			async submitSave() {
+			async submitSave(onSubmit, avatarSnapshot = null) {
 				if (this.isMicrosoftService && this.oauthUserProfileRequest.current) {
 					let timeoutId = null;
 					try {
@@ -2137,14 +3309,19 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						}
 					}
 				}
+				if (this.formDisposed) {
+					return null;
+				}
 				if (this.state.mode === 'edit') {
 					const mailboxId = this.state.mailboxId;
 					if (!mailboxId) {
 						throw new Error('Mailbox id is required in edit mode.');
 					}
-					const payload = this.buildUpdatePayload();
-					const response = await Api.updateMailbox(mailboxId, payload);
-					return response.data;
+					if (onSubmit && !onSubmit()) {
+						return null;
+					}
+					const payload = this.buildUpdatePayload(avatarSnapshot?.change);
+					return this.submitMailboxUpdate(Api.updateMailbox(mailboxId, payload), avatarSnapshot);
 				}
 				const payload = this.buildCreatePayload();
 				if (this.isConnectionRequestMode) {
@@ -2154,8 +3331,138 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				const response = await Api.connectMailbox(payload);
 				return response.data;
 			},
+			hasConnectionSettingsChanges() {
+				if (this.connectionSettingsLocked || !this.connectionSettingsBaseline) {
+					return false;
+				}
+				const baseline = this.connectionSettingsBaseline;
+				const current = createConnectionSettingsSnapshot(this.state);
+				return Object.keys(current).some(key => current[key] !== baseline[key]);
+			},
+			hasPendingEditChanges() {
+				return Object.keys(buildGeneralSettingsPatch(this.state)).length > 0 || this.hasConnectionSettingsChanges() || this.state.avatar.intent !== null;
+			},
+			async submitMailboxUpdate(request, snapshot) {
+				if (snapshot?.change.operation === 'replace' && this.isCurrentSaveMailbox(snapshot.mailboxId) && isMailboxAvatarSaveCurrent(this.state, snapshot)) {
+					this.state.avatar.preservedUploadId = snapshot.selectionId;
+				}
+				try {
+					const response = await request;
+					if (response.status !== 'success' || response.errors?.length) {
+						throw response;
+					}
+					if (snapshot && this.isCurrentSaveMailbox(snapshot.mailboxId) && isMailboxAvatarSaveCurrent(this.state, snapshot)) {
+						this.state.avatar.preservedUploadId = null;
+					}
+					return response.data;
+				} catch (error) {
+					throw await this.resolveAvatarSaveError(error, snapshot);
+				}
+			},
+			async resolveAvatarSaveError(error, snapshot) {
+				if (!snapshot || this.formDisposed || !isMailboxAvatarSaveCurrent(this.state, snapshot)) {
+					return error;
+				}
+				const errors = extractAjaxErrors(error);
+				const unknownResult = errors.length === 0 || errors.some(item => item.code === 'NETWORK_ERROR');
+				if (!unknownResult) {
+					this.state.avatar.preservedUploadId = null;
+				}
+				const refusal = errors.find(item => AVATAR_UPLOAD_REFUSAL_CODES.has(String(item.code)));
+				if (refusal) {
+					const reason = refusal.message || loc('MAIL_CONFIG_FORM_AVATAR_UPLOAD_RETRY');
+					rejectMailboxAvatarUpload(this.state, snapshot, reason);
+					return error;
+				}
+				const conflict = errors.some(item => item.code === 'MAIL_AVATAR_VERSION_CONFLICT');
+				if (conflict || unknownResult) {
+					requireMailboxAvatarRefresh(this.state);
+					await this.loadMailboxAvatar();
+				}
+				if (unknownResult) {
+					return {
+						errors: [{
+							message: loc('MAIL_CONFIG_FORM_AVATAR_SAVE_RESULT_UNKNOWN')
+						}]
+					};
+				}
+				return error;
+			},
+			async acceptAvatarSaveResult(snapshot, avatar) {
+				if (!snapshot || this.formDisposed || !isMailboxAvatarSaveCurrent(this.state, snapshot)) {
+					return;
+				}
+				if (acceptMailboxAvatarSave(this.state, snapshot, avatar)) {
+					return;
+				}
+				requireMailboxAvatarRefresh(this.state);
+				await this.loadMailboxAvatar();
+			},
+			async submitEditSave() {
+				const mailboxId = this.state.mailboxId;
+				if (!mailboxId || !this.migrationStatusReady || !this.state.isDataReady || this.formDisposed) {
+					return null;
+				}
+				let sentPatch = buildGeneralSettingsPatch(this.state);
+				const hasConnectionChanges = this.hasConnectionSettingsChanges();
+				const sentAvatar = createMailboxAvatarSaveSnapshot(this.state);
+				if (!this.hasPendingEditChanges()) {
+					return null;
+				}
+				const requestSeq = this.mailboxLoadSeq;
+				const dataVersion = this.mailboxDataVersion;
+				let sentConnectionSettings = null;
+				let result = null;
+				if (hasConnectionChanges) {
+					result = await this.submitSave(() => {
+						if (this.formDisposed || this.connectionSettingsLocked || requestSeq !== this.mailboxLoadSeq) {
+							return false;
+						}
+						sentPatch = buildGeneralSettingsPatch(this.state);
+						sentConnectionSettings = createConnectionSettingsSnapshot(this.state);
+						return true;
+					}, sentAvatar);
+				} else {
+					result = await this.submitMailboxUpdate(Api.updateGeneralSettings({
+						mailboxId,
+						patch: sentPatch,
+						...(sentAvatar ? {
+							avatar: sentAvatar.change
+						} : {})
+					}), sentAvatar);
+				}
+				if (!result || this.formDisposed || mailboxId !== this.state.mailboxId) {
+					return null;
+				}
+				await this.acceptAvatarSaveResult(sentAvatar, result.avatar);
+				if (!this.isCurrentSaveMailbox(mailboxId)) {
+					return null;
+				}
+				if (dataVersion !== this.mailboxDataVersion) {
+					await this.loadMailboxData();
+					return null;
+				}
+				acceptGeneralSettingsPatch(this.state, sentPatch);
+				if (sentConnectionSettings) {
+					this.connectionSettingsBaseline = sentConnectionSettings;
+				}
+				return result;
+			},
+			isCurrentSaveMailbox(mailboxId) {
+				return !this.formDisposed && this.state.mailboxId === mailboxId;
+			},
 			async onSave() {
-				const errors = validateForm(this.state);
+				if (this.formDisposed || this.oauthPending || this.state.loading || !this.state.isDataReady || isMailboxAvatarSaveBlocked(this.state) || this.isEditMode && !this.migrationStatusReady) {
+					return;
+				}
+				const independentOnly = this.isEditMode && !this.hasConnectionSettingsChanges();
+				const generalPatch = this.isEditMode ? buildGeneralSettingsPatch(this.state) : {};
+				if (independentOnly && !this.hasPendingEditChanges()) {
+					return;
+				}
+				const errors = independentOnly ? generalPatch.link && !validateLink(generalPatch.link) ? {
+					link: loc('MAIL_CONFIG_FORM_ERROR_INVALID_LINK')
+				} : {} : validateForm(this.state);
 				if (Object.keys(errors).length > 0) {
 					this.state.errors = {
 						...createEmptyErrors(),
@@ -2163,15 +3470,28 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					};
 					return;
 				}
+				const saveMailboxId = this.state.mailboxId;
 				this.state.loading = true;
+				this.state.avatar.saving = true;
 				this.state.errors = createEmptyErrors();
 				try {
-					const result = await this.submitSave();
+					const result = this.isEditMode ? await this.submitEditSave() : await this.submitSave();
+					if (!result || !this.isCurrentSaveMailbox(saveMailboxId)) {
+						return;
+					}
+					if (this.isEditMode && this.hasPendingEditChanges()) {
+						return;
+					}
 					this.onSaveSuccess(result);
 				} catch (error) {
-					this.onSaveError(error);
+					if (this.isCurrentSaveMailbox(saveMailboxId)) {
+						this.onSaveError(error);
+					}
 				} finally {
-					this.state.loading = false;
+					if (this.isCurrentSaveMailbox(saveMailboxId)) {
+						this.state.loading = false;
+						this.state.avatar.saving = false;
+					}
 				}
 			},
 			sendOauthDeniedAnalytics(errorCode) {
@@ -2258,7 +3578,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.sendAnalytics('error');
 				const serverErrors = extractAjaxErrors(error);
 				if (serverErrors.length > 0) {
-					this.state.errors.generalItems = serverErrors.map(item => createServerErrorItem(item));
+					this.state.errors.generalItems = [createServerErrorItem(serverErrors[0])];
 				} else {
 					this.state.errors.generalItems = [createGeneralErrorItem(main_core.Loc.getMessage('MAIL_CONFIG_FORM_ERROR_AJAX') ?? '')];
 				}
@@ -2287,6 +3607,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				return true;
 			},
 			async onDelete() {
+				if (this.connectionSettingsLocked || this.formDisposed) {
+					return;
+				}
 				const mailboxId = this.state.mailboxId;
 				if (!mailboxId) {
 					return;
@@ -2295,14 +3618,21 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.state.errors.generalItems = [];
 				try {
 					await Api.deleteMailbox(mailboxId);
+					if (this.formDisposed) {
+						return;
+					}
 					this.postSliderMessage('mail-mailbox-config-delete', {
 						id: mailboxId
 					});
 					this.closeForm(0);
 				} catch (error) {
-					this.onSaveError(error);
+					if (!this.formDisposed) {
+						this.onSaveError(error);
+					}
 				} finally {
-					this.state.loading = false;
+					if (!this.formDisposed) {
+						this.state.loading = false;
+					}
 				}
 			},
 			openMailboxListWithFilter(email) {
@@ -2338,6 +3668,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				});
 			},
 			closeForm(id) {
+				this.disposeForm();
 				const slider = getTopSidePanel()?.getSliderByWindow?.(window) || getCurrentSidePanel()?.getTopSlider?.();
 				if (slider) {
 					slider.setCacheable(false);
@@ -2367,6 +3698,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				if (slider) {
 					this.boundSlider = slider;
 					const onSliderClose = () => {
+						this.disposeForm();
 						this.postSliderMessage('mail-mailbox-config-close', {
 							changed: this.state.changedDirs
 						});
@@ -2390,7 +3722,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.closeForm(0);
 			},
 			onProviderButtonClick() {
-				if (this.state.migrationActive) {
+				if (this.state.loading || this.connectionSettingsLocked || this.formDisposed) {
 					return;
 				}
 				if (this.isEditMode) {
@@ -2405,6 +3737,12 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					void this.startOAuth();
 				}
 			},
+			onProviderReauthorizationButtonClick() {
+				if (this.state.loading || this.connectionSettingsLocked || this.formDisposed || !this.isEditMode || !this.isOAuthService) {
+					return;
+				}
+				void this.startOAuth();
+			},
 			confirmDelete() {
 				ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('MAIL_CONFIG_FORM_DELETE_CONFIRM_TITLE') ?? '', null, messageBox => {
 					messageBox.close();
@@ -2412,26 +3750,41 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				}, main_core.Loc.getMessage('MAIL_CONFIG_FORM_DELETE_CONFIRM_OK') ?? '', null, null, true);
 			},
 			async startOAuth() {
+				if (this.oauthPending || this.state.loading || this.formDisposed || this.connectionSettingsLocked) {
+					return;
+				}
+				const requestSeq = this.mailboxLoadSeq;
 				const serviceName = this.state.service?.name;
 				if (!serviceName) {
 					return;
 				}
+				this.oauthPending = true;
 				try {
 					const response = await Api.getOauthUrl(serviceName);
-					const url = response.data;
-					if (url) {
-						const popup = getRootBX().util.popup(url, 800, 600);
-						this.oauthPending = true;
-						this.oauthPopupHolder.current = popup;
-						main_core_events.EventEmitter.subscribe('OnMailOAuthBCompleted', this.onOAuthCompleted, {
-							compatMode: true
-						});
-						main_core_events.EventEmitter.subscribe('OnMailOAuthBError', this.onOAuthDenied, {
-							compatMode: true
-						});
-						this.startOauthPopupWatcher();
+					if (this.formDisposed || this.connectionSettingsLocked || requestSeq !== this.mailboxLoadSeq) {
+						this.handleOauthAborted();
+						return;
 					}
+					const url = response.data;
+					if (!url) {
+						this.handleOauthAborted();
+						return;
+					}
+					const popup = getRootBX().util.popup(url, 800, 600);
+					if (!popup) {
+						this.handleOauthAborted();
+						return;
+					}
+					this.oauthPopupHolder.current = popup;
+					main_core_events.EventEmitter.subscribe('OnMailOAuthBCompleted', this.onOAuthCompleted, {
+						compatMode: true
+					});
+					main_core_events.EventEmitter.subscribe('OnMailOAuthBError', this.onOAuthDenied, {
+						compatMode: true
+					});
+					this.startOauthPopupWatcher();
 				} catch (error) {
+					this.handleOauthAborted();
 					console.error('OAuth URL error:', error);
 				}
 			},
@@ -2466,6 +3819,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.stopOauthPopupWatcher();
 				this.oauthPopupHolder.current = null;
 				this.oauthPending = false;
+				if (this.formDisposed || this.connectionSettingsLocked) {
+					return;
+				}
 				if (scenario === OAUTH_DENIED_ADMIN_CONSENT_SCENARIO) {
 					this.sendOauthDeniedAnalytics(errorCode ?? '');
 				}
@@ -2477,7 +3833,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					console.error('Mail: cannot announce the OAuth refusal', error);
 				});
 				const guide = showOauthDeniedGuide({
-					targetSelector: SYNC_FAILURE_GUIDE_TARGETS.oauth,
+					targetSelector: this.isEditMode ? PROVIDER_REAUTHORIZATION_GUIDE_TARGET : PROVIDER_ACTION_GUIDE_TARGET,
 					title: title ?? '',
 					text
 				});
@@ -2495,15 +3851,21 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.stopOauthPopupWatcher();
 				this.oauthPopupHolder.current = null;
 				this.oauthPending = false;
-				if (!uid || !user) {
+				if (this.formDisposed || this.connectionSettingsLocked || !uid) {
 					return;
 				}
 				this.state.connection.oauthUid = uid;
 				this.state.connection.isOAuth = true;
+				if (!user) {
+					return;
+				}
 				this.state.connection.oauthUser = mapOauthUser(user);
 				this.state.connection.userPrincipalName = user.userPrincipalName || '';
 				this.state.connection.oauthEmailNeedsConfirmation = false;
 				this.state.connection.oauthEmailCheckStatus = 'idle';
+				if (this.isEditMode) {
+					return;
+				}
 				if (user.email) {
 					this.state.connection.email = user.email;
 				}
@@ -2572,12 +3934,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			}
 		},
 		template: `
-		<template v-if="state.isDataReady">
-			<div class="mail-config-form" data-test-id="mail_config-form__root">
+		<template v-if="state.isDataReady || mailboxDataVersion > 0">
+			<div v-show="state.isDataReady" class="mail-config-form" data-test-id="mail_config-form__root">
 				<div
 					v-if="state.migrationActive"
 					class="mail-config-form__alert-container --warning"
 					data-test-id="mail_config-form__migration-warning"
+					role="status"
+					aria-atomic="true"
 				>
 					<BIcon
 						class="mail-config-form__alert-icon"
@@ -2585,7 +3949,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						:size="24"
 					/>
 					<span class="mail-config-form__alert-message">
-						{{ loc('MAIL_CONFIG_FORM_MIGRATION_CREDENTIALS_LOCKED') }}
+						{{ loc('MAIL_MIGRATION_CREDENTIALS_LOCKED') }}
 					</span>
 				</div>
 				<div
@@ -2614,13 +3978,29 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 							:email="providerEmail"
 							:avatar="providerAvatar"
 							:button-text="providerButtonText"
-							:button-disabled="oauthPending || state.migrationActive"
+							:button-disabled="oauthPending || state.loading || connectionSettingsLocked"
+							:secondary-button-text="providerReauthorizationButtonText"
+							:secondary-button-disabled="oauthPending || state.loading || connectionSettingsLocked"
 							@button-click="onProviderButtonClick"
+							@secondary-button-click="onProviderReauthorizationButtonClick"
+							@avatar-error="onAvatarImageError"
+						/>
+						<MailboxAvatar
+							v-if="isEditMode && state.permissions.isAvatarAvailable"
+							:key="state.mailboxId"
+							:avatar="state.avatar"
+							:disabled="state.loading || formDisposed"
+							@selection-change="onAvatarSelectionChange"
+							@delete="onAvatarDelete"
+							@reset="onAvatarReset"
+							@retry="loadMailboxAvatar"
+							@image-error="onAvatarImageError"
 						/>
 						<ConnectionRequestOwner v-if="isConnectionRequestMode" />
 						<ConnectionSettings
 							v-if="isEditMode || !isOAuthService || isOAuthConnected"
 							:password-placeholder="passwordPlaceholder"
+							:connection-settings-locked="connectionSettingsLocked"
 							@oauth-email-blur="onOauthEmailBlur"
 						>
 							<template #after-fields>
@@ -2632,14 +4012,15 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 								/>
 							</template>
 						</ConnectionSettings>
-						<MicrosoftConnection v-if="isMicrosoftService" />
+						<MicrosoftConnection v-if="isMicrosoftService && !connectionSettingsLocked" />
 					</div>
 				</div>
 
-				<MailboxOwnership v-if="isEditMode && state.permissions.canChangeOwner" />
+				<MailboxOwnership v-if="isEditMode && state.permissions.canChangeOwner && !connectionSettingsLocked" />
 
 				<SmtpSettings
 					v-if="state.permissions.isSmtpAvailable"
+					:connection-settings-locked="connectionSettingsLocked"
 					:password-placeholder="passwordPlaceholder"
 				/>
 
@@ -2660,11 +4041,12 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					:show-switcher="false"
 				/>
 
-				<AccessSharing />
+				<AccessSharing :users="shareAccessUsers" />
 
 				<div
 					v-if="generalErrorItems.length > 0"
 					ref="errorAlert"
+					role="alert"
 					class="mail-config-form__alert-container --danger"
 					data-test-id="mail_config-form__error"
 				>
@@ -2707,21 +4089,24 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						</div>
 					</div>
 				</div>
-
-				<FormActions
-					:is-edit-mode="isEditMode"
-					@save="onSave"
-					@cancel="onCancel"
-				/>
 			</div>
 		</template>
 			<div
-				v-else
+				v-if="!state.isDataReady"
 				class="mail-config-form --loading"
 				data-test-id="mail_config-form__loader"
 			>
 				<div class="mail-config-form__loader"></div>
+				<div v-if="generalErrorItems.length" class="mail-config-form__alert-message">
+					{{ generalErrorItems[0].message }}
+				</div>
 			</div>
+			<FormActions
+				:is-edit-mode="isEditMode"
+				:save-disabled="oauthPending || avatarSaveBlocked"
+				@save="onSave"
+				@cancel="onCancel"
+			/>
 		`
 	});
 
@@ -2781,5 +4166,5 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 
 	exports.MailboxConfigForm = MailboxConfigForm;
 
-})(this.BX.Mail.Connecting.ConfigForm = this.BX.Mail.Connecting.ConfigForm || {}, BX, BX.Vue3, BX.Event, BX.UI.Dialogs, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.Vue3.Components, BX.Mail.Connecting.CrmIntegration, BX.Mail.Connecting.CalendarIntegration, BX.Mail.Connecting.MailSyncSettings, BX.Mail, BX.UI.System.Input, BX.UI.System.Input.Vue, BX.Mail.Connecting.SettingsConfig, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Directives, BX.UI.EntitySelector, BX.Mail.Lib.EntitySelector, BX.UI.Tour, BX.UI);
+})(this.BX.Mail.Connecting.ConfigForm = this.BX.Mail.Connecting.ConfigForm || {}, BX, BX.Vue3, BX.Event, BX.UI.Dialogs, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.Vue3.Components, BX.Mail.Connecting.CrmIntegration, BX.Mail.Connecting.CalendarIntegration, BX.Mail.Connecting.MailSyncSettings, BX.Mail, BX.UI.System.Input, BX.UI.System.Input.Vue, BX.Mail.Connecting.SettingsConfig, BX.UI.Accessibility, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Directives, BX.UI.EntitySelector, BX.Mail.Lib.EntitySelector, BX.UI.Tour, BX.UI);
 //# sourceMappingURL=config-form.bundle.js.map

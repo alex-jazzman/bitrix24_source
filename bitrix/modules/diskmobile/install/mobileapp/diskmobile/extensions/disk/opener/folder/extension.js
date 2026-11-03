@@ -4,9 +4,37 @@
 jn.define('disk/opener/folder', (require, exports, module) => {
 	const { fetchObjectWithRights } = require('disk/rights');
 
-	async function openFolder(folderId, context = null, parentWidget = PageManager, scrollToItemId = null)
+	/**
+	 * @param {FolderScreenContext|null} context
+	 * @param {UnifiedLinkDiskObject} folder
+	 * @param {string|null} [uniqueCode]
+	 * @return {FolderScreenContext|null}
+	 */
+	function withUnifiedLinkContext(context, folder, uniqueCode)
 	{
-		const folder = await fetchObjectWithRights(folderId);
+		if (!uniqueCode)
+		{
+			return context;
+		}
+
+		return {
+			...context,
+			uniqueCode,
+			rights: folder.rights ?? null,
+		};
+	}
+
+	/**
+	 * @param {number} folderId
+	 * @param {FolderScreenContext|null} [context]
+	 * @param [parentWidget]
+	 * @param {number|null} [scrollToItemId]
+	 * @param {OpenFolderOptions} [options]
+	 * @return {Promise<void>}
+	 */
+	async function openFolder(folderId, context = null, parentWidget = PageManager, scrollToItemId = null, options = {})
+	{
+		const folder = options.folder ?? await fetchObjectWithRights(folderId);
 
 		PageManager.openComponent(
 			'JSStackComponent',
@@ -27,7 +55,7 @@ jn.define('disk/opener/folder', (require, exports, module) => {
 				},
 				params: {
 					folderId,
-					context,
+					context: withUnifiedLinkContext(context, folder, options.uniqueCode),
 					scrollToItemId,
 				},
 			},

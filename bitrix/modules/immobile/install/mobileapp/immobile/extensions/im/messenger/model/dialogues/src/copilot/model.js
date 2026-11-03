@@ -6,11 +6,13 @@
 jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { merge } = require('utils/object');
 
 	const { ModelUtils } = require('im/messenger/lib/utils');
 
 	const { validate, prepareMergeProperty } = require('im/messenger/model/dialogues/copilot/validator');
 	const { copilotDefaultElement } = require('im/messenger/model/dialogues/copilot/default-element');
+	const { MessageActionVoteValue } = require('im/messenger/const');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues-copilot');
@@ -128,6 +130,26 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 				}
 
 				return role;
+			},
+			/**
+			 * @function dialoguesModel/copilotModel/getVoteByMessageId
+			 * @return {?Record<MessageVote, boolean>}
+			 */
+			getVoteByMessageId: (state, getters) => (dialogId, messageId) => {
+				if (!Type.isString(dialogId) || Type.isNil(messageId))
+				{
+					return null;
+				}
+
+				const copilotDataState = getters.getByDialogId(dialogId);
+				if (!copilotDataState || !copilotDataState.messages)
+				{
+					return null;
+				}
+
+				const messageData = copilotDataState.messages.find((message) => message?.id === messageId);
+
+				return messageData?.vote || null;
 			},
 		},
 		actions: {
@@ -267,6 +289,49 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 
 				return true;
 			},
+			/**
+			 * @function dialoguesModel/copilotModel/updateVote
+			 * @param store
+			 * @param {{dialogId: DialogId, messageId: number, vote: MessageVote, value: boolean}} payload
+			 */
+			updateVote: (store, payload) => {
+				const { dialogId, messageId, vote, value } = payload;
+				const existingItem = store.state.collection[dialogId];
+				if (!Type.isArrayFilled(existingItem?.messages))
+				{
+					return false;
+				}
+
+				const messageIndex = existingItem.messages.findIndex((message) => message?.id === messageId);
+				if (messageIndex === -1)
+				{
+					logger.warn('copilotModel: updateVote - message not found', dialogId, messageId);
+					return false;
+				}
+
+				const updatedMessages = clone(existingItem.messages);
+				const message = updatedMessages[messageIndex];
+				const currentVote = message.vote || {};
+				const updatedVote = value === true
+					? { like: vote === MessageActionVoteValue.like, dislike: vote === MessageActionVoteValue.dislike }
+					: { ...currentVote, [vote]: false };
+
+				const hasActiveVote = Object.values(updatedVote).some((val) => val === true);
+
+				const newVote = hasActiveVote ? updatedVote : null;
+				merge(message, { vote: newVote });
+
+				store.commit('setVote', {
+					actionName: 'setVote',
+					data: {
+						dialogId,
+						messageId,
+						message,
+					},
+				});
+
+				return true;
+			},
 		},
 		mutations: {
 			/**
@@ -329,6 +394,24 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 					} = item;
 
 					state.collection[dialogId] = fields;
+				});
+			},
+			/**
+			 * @param state
+			 * @param {MutationPayload<CopilotSetVoteData, CopilotSetVoteActions>} payload
+			 */
+			setVote: (state, payload) => {
+				logger.log('copilotModel: setVote mutation', payload);
+				const { dialogId, messageId } = payload.data;
+
+				const messages = [...state.collection[dialogId].messages];
+				state.collection[dialogId].messages = messages.map((message) => {
+					if (message?.id === messageId)
+					{
+						return payload.data.message;
+					}
+
+					return message;
 				});
 			},
 		},

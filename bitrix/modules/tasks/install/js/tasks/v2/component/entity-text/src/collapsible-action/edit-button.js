@@ -8,6 +8,12 @@ export const EditButton = {
 		BIcon,
 		TextMd,
 	},
+	props: {
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+	},
 	setup(): { Outline: Object }
 	{
 		return {
@@ -15,15 +21,20 @@ export const EditButton = {
 		};
 	},
 	template: `
-		<div class="tasks-card-entity-collapsible-edit-button">
+		<button
+			type="button"
+			class="tasks-card-entity-collapsible-edit-button"
+			:aria-label="ariaLabel || null"
+		>
 			<BIcon
 				class="tasks-card-entity-collapsible-edit-button-icon"
 				:name="Outline.EDIT_L"
 				:size="20"
+				aria-hidden="true"
 			/>
 			<TextMd className="tasks-card-entity-collapsible-edit-button-text">
 				{{ loc('TASKS_V2_ENTITY_TEXT_EDIT') }}
 			</TextMd>
-		</div>
+		</button>
 	`,
 };

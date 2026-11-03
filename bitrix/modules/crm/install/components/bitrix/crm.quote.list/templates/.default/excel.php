@@ -152,6 +152,9 @@ else
 							$closed = !empty($arQuote['CLOSED']) ? $arQuote['CLOSED'] : 'N';
 							$quoteData['CLOSED'] = isset($arResult['CLOSED_LIST'][$closed]) ? $arResult['CLOSED_LIST'][$closed] : $closed;
 							break;
+						case 'OPENED':
+							$quoteData['OPENED'] = ($arQuote['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+							break;
 						case 'CONTENT':
 						case 'TERMS':
 						case 'COMMENTS':

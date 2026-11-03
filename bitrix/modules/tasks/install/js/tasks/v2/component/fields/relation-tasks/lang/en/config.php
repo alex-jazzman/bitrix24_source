@@ -2,3 +2,5 @@
 $MESS["TASKS_V2_RELATION_TASKS_MENU_SHOW_COMPLETED"] = "Show completed tasks";
 $MESS["TASKS_V2_RELATION_TASKS_MENU_SHOW_WITH_SUBTASKS"] = "Include subtasks";
 $MESS["TASKS_V2_RELATION_TASKS_MENU_SHOW_WITH_SUBTEMPLATES"] = "Include subtask templates";
+$MESS["TASKS_V2_RELATION_TASKS_SETTINGS_ARIA_LABEL"] = "View settings";
+$MESS["TASKS_V2_RELATION_TASKS_LOCK_ARIA_LABEL"] = "This feature is not available on your plan.";

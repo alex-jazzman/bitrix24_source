@@ -9,3 +9,7 @@ $MESS["UI_TOOLBAR_COPY_LINK_BUTTON_SUCCESS"] = "Ссылка скопирова�
 $MESS["UI_TOOLBAR_COPY_LINK_BUTTON_TITLE"] = "Скопировать ссылку";
 $MESS["UI_TOOLBAR_FULLSCREEN_MODE"] = "Полноэкранный режим";
 $MESS["UI_TOOLBAR_FOCUS_MODE_HINT"] = "Развернуть на весь экран";
+$MESS['UI_TOOLBAR_CANCEL_TITLE_EDIT_BUTTON'] = 'Отмена';
+$MESS["UI_TOOLBAR_EDIT_TITLE_BUTTON"] = "Изменить заголовок";
+$MESS["UI_TOOLBAR_EDIT_TITLE_INPUT_LABEL"] = "Заголовок страницы";
+$MESS['UI_TOOLBAR_SAVE_TITLE_BUTTON'] = 'Сохранить';

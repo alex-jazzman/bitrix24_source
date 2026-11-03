@@ -125,7 +125,7 @@ BX.Mobile.Crm.ProductEditor = {
 				attrs: {className: "crm-mobile-product-view-block-photo"},
 				children: [
 					BX.create("img", {
-						attrs: {src : "/bitrix/components/bitrix/crm.product_row.list/templates/mobile/images/icon-product.png"}
+						attrs: {src : "/bitrix/components/bitrix/crm.product_row.list/templates/mobile/images/icon-product.webp"}
 					})
 				]
 			}),

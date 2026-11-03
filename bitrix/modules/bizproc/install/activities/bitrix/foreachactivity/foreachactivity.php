@@ -146,6 +146,11 @@ class CBPForEachActivity extends CBPCompositeActivity implements IBPActivityEven
 		$this->Value = null;
 	}
 
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		return ['Variable', 'Object'];
+	}
+
 	public static function GetPropertiesDialog(
 		$documentType,
 		$activityName,

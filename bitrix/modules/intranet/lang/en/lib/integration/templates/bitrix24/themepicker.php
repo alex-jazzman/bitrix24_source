@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["INTRANET_B24_INTEGRATION_CANT_CREATE_THEME"] = "Cannot create a theme using data provided";
-$MESS["INTRANET_B24_INTEGRATION_UPLOAD_ERROR"] = "File upload error.";
+$MESS["INTRANET_B24_INTEGRATION_CUSTOM_THEME_TITLE"] = 'Custom theme';
+$MESS["INTRANET_B24_INTEGRATION_CUSTOM_THEME_TITLE_WITH_DATE"] = 'Custom theme, #DATE_TIME#';
 $MESS["INTRANET_B24_INTEGRATION_THEMES_LIMIT_EXCEEDED"] = "Maximum number of custom themes exceeded (#NUM#).";
-?>
+$MESS["INTRANET_B24_INTEGRATION_UPLOAD_ERROR"] = "File upload error.";

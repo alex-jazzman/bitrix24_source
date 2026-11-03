@@ -1141,6 +1141,16 @@ $MESS["BITRIX_AI_DAY_PLANNER_NODATA_ENDDAY_MESSAGE"] = "Сегодня нет з
 $MESS["BITRIX_AI_DAY_PLANNER_DAY_START_ERRORMESSAGE"] = "Не удалось подготовить план на день";
 $MESS["BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE"] = "{{=
 if(
+or(
+intval({=A2001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
+intval({=A2001_0001_0001_0022:COUNTER_TASKS_INFO}) > 0
+),
+\"Задачи:
+
+\",
+\"\"
+) &
+if(
 intval({=A2001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
 \"Просроченные:
 \" & {=A2001_0001_0001_0021:TASKS_TITLES_BB_LIST} & \"
@@ -1164,6 +1174,16 @@ intval({=A2001_0001_0001_0023:EventsCount}) > 0,
 )
 }}";
 $MESS["BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE_WDS"] = "{{=
+if(
+or(
+intval({=A3001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
+intval({=A3001_0001_0001_0022:COUNTER_TASKS_INFO}) > 0
+),
+\"Задачи:
+
+\",
+\"\"
+) &
 if(
 intval({=A3001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
 \"Просроченные:
@@ -1192,6 +1212,16 @@ $MESS["BITRIX_AI_DAY_PLANNER_USER_PLAN_DELIVERY_WDS"] = "{{=if(intval(date('G', 
 Ваш план на день:
 
 {{=
+if(
+or(
+intval({=A3001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
+intval({=A3001_0001_0001_0022:COUNTER_TASKS_INFO}) > 0
+),
+\"Задачи:
+
+\",
+\"\"
+) &
 if(
 intval({=A3001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
 \"Просроченные:
@@ -1230,6 +1260,22 @@ $MESS["BITRIX_AI_DAY_PLANNER_USER_ENDDAY_MESSAGE"] = "Новые (постано
 Встречи:
 {=A5001_0001_0001_0025:EVENTS_TITLES_BB_LIST}";
 $MESS["BITRIX_AI_DAY_PLANNER_USER_ENDDAY_MESSAGE_FALLBACK"] = "{{=
+if(
+or(
+or(
+intval({=A6001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
+intval({=A6001_0001_0001_0022:COUNTER_TASKS_INFO}) > 0
+),
+or(
+intval({=A6001_0001_0001_0023:COUNTER_TASKS_INFO}) > 0,
+intval({=A6001_0001_0001_0024:COUNTER_TASKS_INFO}) > 0
+)
+),
+\"Задачи:
+
+\",
+\"\"
+) &
 if(
 intval({=A6001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
 \"Новые (постановщик):
@@ -1272,6 +1318,22 @@ intval({=A6001_0001_0001_0025:EventsCount}) > 0,
 $MESS["BITRIX_AI_DAY_PLANNER_USER_ENDDAY_DELIVERY_FALLBACK"] = "Ваш итог дня:
 
 {{=
+if(
+or(
+or(
+intval({=A6001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
+intval({=A6001_0001_0001_0022:COUNTER_TASKS_INFO}) > 0
+),
+or(
+intval({=A6001_0001_0001_0023:COUNTER_TASKS_INFO}) > 0,
+intval({=A6001_0001_0001_0024:COUNTER_TASKS_INFO}) > 0
+)
+),
+\"Задачи:
+
+\",
+\"\"
+) &
 if(
 intval({=A6001_0001_0001_0021:COUNTER_TASKS_INFO}) > 0,
 \"Новые (постановщик):

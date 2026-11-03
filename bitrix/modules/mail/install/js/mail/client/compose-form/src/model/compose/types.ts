@@ -21,6 +21,11 @@ export type SenderDto = {
 	userUrl?: string | null,
 };
 
+export type SenderIdentityState = {
+	senderId: number | null,
+	mailboxId: number | null,
+};
+
 /**
  * Item of the entity selector, sent back to the server as it came, so nothing is normalised here. Only the
  * identifying pair is named: the remaining values are not plain strings, `title` of a typed node arrives as
@@ -123,6 +128,7 @@ export type PathsDto = {
 	 * the user cannot be led there, and the form then offers no entry.
 	 */
 	templatesManage?: string,
+	templatesCreate?: string,
 };
 
 /**
@@ -150,6 +156,7 @@ export type ComposeInitialData = {
 	},
 	subject?: string,
 	body?: {
+		content?: string,
 		quote?: string,
 		quoteFolded?: boolean,
 	},
@@ -168,14 +175,27 @@ export type ComposeInitialData = {
 	analytics?: AnalyticsDto,
 	features?: {
 		unfinishedElements?: boolean,
+		scheduledMessages?: boolean,
+		undoSend?: boolean,
 		templates?: boolean,
+		saveTemplate?: boolean,
+		subjectGeneration?: boolean,
 	},
+	/** IANA identifier of the zone the author schedules a letter in. */
+	authorTimezoneId?: string,
 	draft?: {
 		id?: number,
 		revision?: number,
 		clientId?: string,
 	},
 	paths?: PathsDto,
+	scheduledMessage?: {
+		id?: number,
+		revision?: number,
+		scheduledAt?: string,
+		timezoneId?: string,
+		attachments?: Array<{ id: number, objectId: number | null, fileId?: string | null }>,
+	},
 };
 
 export type ComposeMailboxState = {
@@ -209,6 +229,7 @@ export type RecipientsState = {
 };
 
 export type BodyState = {
+	content: string,
 	quote: string,
 	quoteFolded: boolean,
 };
@@ -244,6 +265,26 @@ export type PathsState = {
 	messageList: string | null,
 	home: string,
 	templatesManage: string,
+	templatesCreate: string,
+};
+
+/**
+ * Subject generation, the capability included: the block owns its own availability the way
+ * `calendarSharing` does, and the payload carries the flag among the other capabilities.
+ *
+ * `hash` and `requestId` belong to the state rather than to the scenario: the PULL handler and the scenario
+ * find each other through them without importing one another.
+ */
+export type SubjectGenerationState = {
+	available: boolean,
+	isRunning: boolean,
+	/** Hash of the deferred job an answer is awaited by; `null` while no job is active. */
+	hash: string | null,
+	/**
+	 * Monotonic. Every start, every cancel and the teardown of the form raise it, so an answer of a request
+	 * nobody waits for any more is told apart by comparison and dropped.
+	 */
+	requestId: number,
 };
 
 export type ComposeError = {
@@ -265,26 +306,30 @@ export type TemplateListItem = {
 	disabledReason: string | null,
 };
 
+export type PreparedTemplateAttachment = {
+	id: number,
+	name: string,
+	size: number,
+	contentType: string | null,
+};
+
 export type PreparedTemplate = {
 	reference: TemplateReference,
 	subject: string,
 	bodyHtml: string,
+	attachments: PreparedTemplateAttachment[],
 };
-
-export type TemplateAutoApplyStatus = 'idle' | 'pending' | 'applied' | 'skipped' | 'failed';
 
 export type TemplatesState = {
 	recent: TemplateListItem[],
 	isLoaded: boolean,
 	isLoading: boolean,
 	error: string | null,
+	priorityReference: TemplateReference | null,
+	/** A template was written, but the section never named it: the server leads the list with its newest. */
+	pinRecentlyCreated: boolean,
 	selected: TemplateListItem | null,
 	prepared: PreparedTemplate | null,
-	rememberLast: boolean,
-	autoApply: {
-		candidate: TemplateReference | null,
-		status: TemplateAutoApplyStatus,
-	},
 };
 
 /** One reactive object for the whole form, provided by `ComposeForm` and read via `useComposeState()`. */
@@ -297,6 +342,7 @@ export type ComposeState = {
 	mailbox: ComposeMailboxState,
 	senders: SenderDto[],
 	selectedSender: string | null,
+	selectedSenderIdentity: SenderIdentityState,
 
 	recipients: RecipientsState,
 	/** The row of `bcc` is shown once it carries an address or the user opens it; `cc` is always shown. */
@@ -321,8 +367,13 @@ export type ComposeState = {
 	analytics: AnalyticsState,
 	features: {
 		unfinishedElements: boolean,
+		scheduledMessages: boolean,
+		undoSend: boolean,
 		templates: boolean,
+		saveTemplate: boolean,
 	},
+	subjectGeneration: SubjectGenerationState,
+	authorTimezoneId: string,
 	draft: {
 		id: number,
 		revision: number,
@@ -332,7 +383,16 @@ export type ComposeState = {
 	},
 	templates: TemplatesState,
 	paths: PathsState,
+	scheduledMessage: {
+		id: number,
+		revision: number,
+		scheduledAt: string,
+		timezoneId: string,
+		attachments: Array<{ id: number, objectId: number | null, fileId?: string | null }>,
+		removedAttachmentIds: number[],
+	},
 
+	saveAsTemplate: boolean,
 	migrationActiveByMailboxId: Record<number, boolean>,
 	isSending: boolean,
 	errors: ComposeError[],

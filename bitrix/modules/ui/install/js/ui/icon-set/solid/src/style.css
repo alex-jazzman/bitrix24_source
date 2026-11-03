@@ -115,6 +115,413 @@
 	--ui-icon-set-solid__path_wallet: url('images/wallet.svg');
 	--ui-icon-set-solid__path_window-flag: url('images/window-flag.svg');
 	--ui-icon-set-solid__path_crown-1: url('images/crown-1.svg');
+	--ui-icon-set-solid__path_2gis: url('images/2gis.svg');
+	--ui-icon-set-solid__path_a-letter: url('images/a-letter.svg');
+	--ui-icon-set-solid__path_a-letter-sort-down: url('images/a-letter-sort-down.svg');
+	--ui-icon-set-solid__path_a-letter-sort-up: url('images/a-letter-sort-up.svg');
+	--ui-icon-set-solid__path_achievement: url('images/achievement.svg');
+	--ui-icon-set-solid__path_action-required: url('images/action-required.svg');
+	--ui-icon-set-solid__path_add-chat: url('images/add-chat.svg');
+	--ui-icon-set-solid__path_add-event: url('images/add-event.svg');
+	--ui-icon-set-solid__path_add-funnel: url('images/add-funnel.svg');
+	--ui-icon-set-solid__path_ai-internet-search: url('images/ai-internet-search.svg');
+	--ui-icon-set-solid__path_ai-process: url('images/ai-process.svg');
+	--ui-icon-set-solid__path_ai-projects: url('images/ai-projects.svg');
+	--ui-icon-set-solid__path_ai-reflection: url('images/ai-reflection.svg');
+	--ui-icon-set-solid__path_ai-robot: url('images/ai-robot.svg');
+	--ui-icon-set-solid__path_ai-stars-question: url('images/ai-stars-question.svg');
+	--ui-icon-set-solid__path_ai-two-stars: url('images/ai-two-stars.svg');
+	--ui-icon-set-solid__path_alarm: url('images/alarm.svg');
+	--ui-icon-set-solid__path_align-center: url('images/align-center.svg');
+	--ui-icon-set-solid__path_align-image-center: url('images/align-image-center.svg');
+	--ui-icon-set-solid__path_align-image-left: url('images/align-image-left.svg');
+	--ui-icon-set-solid__path_align-image-right: url('images/align-image-right.svg');
+	--ui-icon-set-solid__path_align-justify: url('images/align-justify.svg');
+	--ui-icon-set-solid__path_align-left: url('images/align-left.svg');
+	--ui-icon-set-solid__path_align-right: url('images/align-right.svg');
+	--ui-icon-set-solid__path_arrow-down: url('images/arrow-down.svg');
+	--ui-icon-set-solid__path_arrow-to-the-left: url('images/arrow-to-the-left.svg');
+	--ui-icon-set-solid__path_arrow-to-the-right: url('images/arrow-to-the-right.svg');
+	--ui-icon-set-solid__path_arrow-top: url('images/arrow-top.svg');
+	--ui-icon-set-solid__path_attach-2: url('images/attach-2.svg');
+	--ui-icon-set-solid__path_auto-check-in: url('images/auto-check-in.svg');
+	--ui-icon-set-solid__path_auto-selection: url('images/auto-selection.svg');
+	--ui-icon-set-solid__path_back: url('images/back.svg');
+	--ui-icon-set-solid__path_back-10: url('images/back-10.svg');
+	--ui-icon-set-solid__path_back-15: url('images/back-15.svg');
+	--ui-icon-set-solid__path_ball-one: url('images/ball-one.svg');
+	--ui-icon-set-solid__path_ban: url('images/ban.svg');
+	--ui-icon-set-solid__path_bank-card: url('images/bank-card.svg');
+	--ui-icon-set-solid__path_battery-1-stick: url('images/battery-1-stick.svg');
+	--ui-icon-set-solid__path_battery-2-sticks: url('images/battery-2-sticks.svg');
+	--ui-icon-set-solid__path_battery-no-charge: url('images/battery-no-charge.svg');
+	--ui-icon-set-solid__path_beer: url('images/beer.svg');
+	--ui-icon-set-solid__path_bitrix-gpt: url('images/bitrix-gpt.svg');
+	--ui-icon-set-solid__path_black-list: url('images/black-list.svg');
+	--ui-icon-set-solid__path_block-insertion: url('images/block-insertion.svg');
+	--ui-icon-set-solid__path_bluetooth: url('images/bluetooth.svg');
+	--ui-icon-set-solid__path_bold: url('images/bold.svg');
+	--ui-icon-set-solid__path_book-open: url('images/book-open.svg');
+	--ui-icon-set-solid__path_bookmark-4: url('images/bookmark-4.svg');
+	--ui-icon-set-solid__path_bottom-menu: url('images/bottom-menu.svg');
+	--ui-icon-set-solid__path_bottom-top-collapse: url('images/bottom-top-collapse.svg');
+	--ui-icon-set-solid__path_box-with-lid: url('images/box-with-lid.svg');
+	--ui-icon-set-solid__path_branch-network: url('images/branch-network.svg');
+	--ui-icon-set-solid__path_broom: url('images/broom.svg');
+	--ui-icon-set-solid__path_bulleted-list: url('images/bulleted-list.svg');
+	--ui-icon-set-solid__path_business-process-progress: url('images/business-process-progress.svg');
+	--ui-icon-set-solid__path_cake-celebrating: url('images/cake-celebrating.svg');
+	--ui-icon-set-solid__path_calendar: url('images/calendar.svg');
+	--ui-icon-set-solid__path_calendar-share: url('images/calendar-share.svg');
+	--ui-icon-set-solid__path_calendar-with-checks: url('images/calendar-with-checks.svg');
+	--ui-icon-set-solid__path_card: url('images/card.svg');
+	--ui-icon-set-solid__path_change-funnel: url('images/change-funnel.svg');
+	--ui-icon-set-solid__path_change-order-3: url('images/change-order-3.svg');
+	--ui-icon-set-solid__path_change-places: url('images/change-places.svg');
+	--ui-icon-set-solid__path_chat-list: url('images/chat-list.svg');
+	--ui-icon-set-solid__path_check-deferred: url('images/check-deferred.svg');
+	--ui-icon-set-solid__path_check-in-cancel: url('images/check-in-cancel.svg');
+	--ui-icon-set-solid__path_check-in-negative: url('images/check-in-negative.svg');
+	--ui-icon-set-solid__path_check-list: url('images/check-list.svg');
+	--ui-icon-set-solid__path_chevron-down: url('images/chevron-down.svg');
+	--ui-icon-set-solid__path_chevron-to-the-left: url('images/chevron-to-the-left.svg');
+	--ui-icon-set-solid__path_chevron-to-the-right: url('images/chevron-to-the-right.svg');
+	--ui-icon-set-solid__path_chevron-up: url('images/chevron-up.svg');
+	--ui-icon-set-solid__path_circle-check-forward: url('images/circle-check-forward.svg');
+	--ui-icon-set-solid__path_circle-cross: url('images/circle-cross.svg');
+	--ui-icon-set-solid__path_circle-minus: url('images/circle-minus.svg');
+	--ui-icon-set-solid__path_circle-more: url('images/circle-more.svg');
+	--ui-icon-set-solid__path_circle-plus: url('images/circle-plus.svg');
+	--ui-icon-set-solid__path_claw: url('images/claw.svg');
+	--ui-icon-set-solid__path_clock-back: url('images/clock-back.svg');
+	--ui-icon-set-solid__path_cloud-download: url('images/cloud-download.svg');
+	--ui-icon-set-solid__path_cloud-sync-cross: url('images/cloud-sync-cross.svg');
+	--ui-icon-set-solid__path_cloud-time: url('images/cloud-time.svg');
+	--ui-icon-set-solid__path_cloud-with-check: url('images/cloud-with-check.svg');
+	--ui-icon-set-solid__path_collab-add: url('images/collab-add.svg');
+	--ui-icon-set-solid__path_collapse: url('images/collapse.svg');
+	--ui-icon-set-solid__path_collection: url('images/collection.svg');
+	--ui-icon-set-solid__path_columns-sidebar-pending: url('images/columns-sidebar-pending.svg');
+	--ui-icon-set-solid__path_columns-sidebar-pending-left: url('images/columns-sidebar-pending-left.svg');
+	--ui-icon-set-solid__path_commands: url('images/commands.svg');
+	--ui-icon-set-solid__path_compass: url('images/compass.svg');
+	--ui-icon-set-solid__path_condition: url('images/condition.svg');
+	--ui-icon-set-solid__path_connection: url('images/connection.svg');
+	--ui-icon-set-solid__path_contact: url('images/contact.svg');
+	--ui-icon-set-solid__path_contact-details: url('images/contact-details.svg');
+	--ui-icon-set-solid__path_contrast: url('images/contrast.svg');
+	--ui-icon-set-solid__path_cookies: url('images/cookies.svg');
+	--ui-icon-set-solid__path_copy-link: url('images/copy-link.svg');
+	--ui-icon-set-solid__path_core: url('images/core.svg');
+	--ui-icon-set-solid__path_create-file: url('images/create-file.svg');
+	--ui-icon-set-solid__path_crm-field-except: url('images/crm-field-except.svg');
+	--ui-icon-set-solid__path_crm-field-linked: url('images/crm-field-linked.svg');
+	--ui-icon-set-solid__path_crm-field-simple: url('images/crm-field-simple.svg');
+	--ui-icon-set-solid__path_crm-form: url('images/crm-form.svg');
+	--ui-icon-set-solid__path_crm-online-store: url('images/crm-online-store.svg');
+	--ui-icon-set-solid__path_crm-optional-accepted: url('images/crm-optional-accepted.svg');
+	--ui-icon-set-solid__path_crm-optional-not-accepted: url('images/crm-optional-not-accepted.svg');
+	--ui-icon-set-solid__path_crm-payment-and-delivery: url('images/crm-payment-and-delivery.svg');
+	--ui-icon-set-solid__path_crm-required-consent: url('images/crm-required-consent.svg');
+	--ui-icon-set-solid__path_cross: url('images/cross.svg');
+	--ui-icon-set-solid__path_crossed-eye: url('images/crossed-eye.svg');
+	--ui-icon-set-solid__path_crown-forward: url('images/crown-forward.svg');
+	--ui-icon-set-solid__path_cup-winner: url('images/cup-winner.svg');
+	--ui-icon-set-solid__path_cursors-strike: url('images/cursors-strike.svg');
+	--ui-icon-set-solid__path_data-reading: url('images/data-reading.svg');
+	--ui-icon-set-solid__path_day-off: url('images/day-off.svg');
+	--ui-icon-set-solid__path_delete-event: url('images/delete-event.svg');
+	--ui-icon-set-solid__path_demonstration-on: url('images/demonstration-on.svg');
+	--ui-icon-set-solid__path_dial-10: url('images/dial-10.svg');
+	--ui-icon-set-solid__path_dial-20: url('images/dial-20.svg');
+	--ui-icon-set-solid__path_digits-123: url('images/digits-123.svg');
+	--ui-icon-set-solid__path_digits-24: url('images/digits-24.svg');
+	--ui-icon-set-solid__path_discount: url('images/discount.svg');
+	--ui-icon-set-solid__path_disike: url('images/disike.svg');
+	--ui-icon-set-solid__path_distribution: url('images/distribution.svg');
+	--ui-icon-set-solid__path_do-not-use-captcha: url('images/do-not-use-captcha.svg');
+	--ui-icon-set-solid__path_dots: url('images/dots.svg');
+	--ui-icon-set-solid__path_double-check: url('images/double-check.svg');
+	--ui-icon-set-solid__path_download: url('images/download.svg');
+	--ui-icon-set-solid__path_drag: url('images/drag.svg');
+	--ui-icon-set-solid__path_earth-with-check: url('images/earth-with-check.svg');
+	--ui-icon-set-solid__path_earth-with-clock: url('images/earth-with-clock.svg');
+	--ui-icon-set-solid__path_earth-with-cross: url('images/earth-with-cross.svg');
+	--ui-icon-set-solid__path_earth-with-stop: url('images/earth-with-stop.svg');
+	--ui-icon-set-solid__path_earth-with-tree: url('images/earth-with-tree.svg');
+	--ui-icon-set-solid__path_edit: url('images/edit.svg');
+	--ui-icon-set-solid__path_empty-battery: url('images/empty-battery.svg');
+	--ui-icon-set-solid__path_empty-message: url('images/empty-message.svg');
+	--ui-icon-set-solid__path_excel: url('images/excel.svg');
+	--ui-icon-set-solid__path_exclamation: url('images/exclamation.svg');
+	--ui-icon-set-solid__path_exclamation-circle: url('images/exclamation-circle.svg');
+	--ui-icon-set-solid__path_expand: url('images/expand.svg');
+	--ui-icon-set-solid__path_expert-mode: url('images/expert-mode.svg');
+	--ui-icon-set-solid__path_export: url('images/export.svg');
+	--ui-icon-set-solid__path_face-ident: url('images/face-ident.svg');
+	--ui-icon-set-solid__path_feedback: url('images/feedback.svg');
+	--ui-icon-set-solid__path_feedback-form: url('images/feedback-form.svg');
+	--ui-icon-set-solid__path_file-with-calendar: url('images/file-with-calendar.svg');
+	--ui-icon-set-solid__path_file-with-check: url('images/file-with-check.svg');
+	--ui-icon-set-solid__path_file-with-check-2: url('images/file-with-check-2.svg');
+	--ui-icon-set-solid__path_file-with-crown: url('images/file-with-crown.svg');
+	--ui-icon-set-solid__path_file-with-person: url('images/file-with-person.svg');
+	--ui-icon-set-solid__path_fill-out-again: url('images/fill-out-again.svg');
+	--ui-icon-set-solid__path_filter: url('images/filter.svg');
+	--ui-icon-set-solid__path_filter-2: url('images/filter-2.svg');
+	--ui-icon-set-solid__path_filter-2-lines: url('images/filter-2-lines.svg');
+	--ui-icon-set-solid__path_filter-funnel: url('images/filter-funnel.svg');
+	--ui-icon-set-solid__path_find-filters: url('images/find-filters.svg');
+	--ui-icon-set-solid__path_fingerprint: url('images/fingerprint.svg');
+	--ui-icon-set-solid__path_flag: url('images/flag.svg');
+	--ui-icon-set-solid__path_flag-with-cross: url('images/flag-with-cross.svg');
+	--ui-icon-set-solid__path_flower: url('images/flower.svg');
+	--ui-icon-set-solid__path_folder-24: url('images/folder-24.svg');
+	--ui-icon-set-solid__path_folder-plus: url('images/folder-plus.svg');
+	--ui-icon-set-solid__path_folders: url('images/folders.svg');
+	--ui-icon-set-solid__path_form: url('images/form.svg');
+	--ui-icon-set-solid__path_forward: url('images/forward.svg');
+	--ui-icon-set-solid__path_forward-10: url('images/forward-10.svg');
+	--ui-icon-set-solid__path_forward-16: url('images/forward-16.svg');
+	--ui-icon-set-solid__path_frame-create: url('images/frame-create.svg');
+	--ui-icon-set-solid__path_freelance: url('images/freelance.svg');
+	--ui-icon-set-solid__path_function: url('images/function.svg');
+	--ui-icon-set-solid__path_galaxy: url('images/galaxy.svg');
+	--ui-icon-set-solid__path_galaxy-server: url('images/galaxy-server.svg');
+	--ui-icon-set-solid__path_glasses: url('images/glasses.svg');
+	--ui-icon-set-solid__path_globe-extranet: url('images/globe-extranet.svg');
+	--ui-icon-set-solid__path_go-to: url('images/go-to.svg');
+	--ui-icon-set-solid__path_google-maps: url('images/google-maps.svg');
+	--ui-icon-set-solid__path_graphs-settings: url('images/graphs-settings.svg');
+	--ui-icon-set-solid__path_hamburger-menu: url('images/hamburger-menu.svg');
+	--ui-icon-set-solid__path_headlines: url('images/headlines.svg');
+	--ui-icon-set-solid__path_headlines-h1: url('images/headlines-h1.svg');
+	--ui-icon-set-solid__path_headlines-h2: url('images/headlines-h2.svg');
+	--ui-icon-set-solid__path_headlines-h3: url('images/headlines-h3.svg');
+	--ui-icon-set-solid__path_headlines-h4: url('images/headlines-h4.svg');
+	--ui-icon-set-solid__path_headlines-h5: url('images/headlines-h5.svg');
+	--ui-icon-set-solid__path_headset: url('images/headset.svg');
+	--ui-icon-set-solid__path_hide-3: url('images/hide-3.svg');
+	--ui-icon-set-solid__path_hide-4: url('images/hide-4.svg');
+	--ui-icon-set-solid__path_home-star: url('images/home-star.svg');
+	--ui-icon-set-solid__path_hourglass: url('images/hourglass.svg');
+	--ui-icon-set-solid__path_idea-lamp: url('images/idea-lamp.svg');
+	--ui-icon-set-solid__path_image: url('images/image.svg');
+	--ui-icon-set-solid__path_image-plus: url('images/image-plus.svg');
+	--ui-icon-set-solid__path_import: url('images/import.svg');
+	--ui-icon-set-solid__path_info-circle: url('images/info-circle.svg');
+	--ui-icon-set-solid__path_interval: url('images/interval.svg');
+	--ui-icon-set-solid__path_inventory-management: url('images/inventory-management.svg');
+	--ui-icon-set-solid__path_invoice: url('images/invoice.svg');
+	--ui-icon-set-solid__path_ip-address: url('images/ip-address.svg');
+	--ui-icon-set-solid__path_ip-address-crossed: url('images/ip-address-crossed.svg');
+	--ui-icon-set-solid__path_italic: url('images/italic.svg');
+	--ui-icon-set-solid__path_keyboard: url('images/keyboard.svg');
+	--ui-icon-set-solid__path_layers: url('images/layers.svg');
+	--ui-icon-set-solid__path_left-right: url('images/left-right.svg');
+	--ui-icon-set-solid__path_legal-process: url('images/legal-process.svg');
+	--ui-icon-set-solid__path_library-base: url('images/library-base.svg');
+	--ui-icon-set-solid__path_lightning-plus: url('images/lightning-plus.svg');
+	--ui-icon-set-solid__path_link: url('images/link.svg');
+	--ui-icon-set-solid__path_link-settings: url('images/link-settings.svg');
+	--ui-icon-set-solid__path_link-update: url('images/link-update.svg');
+	--ui-icon-set-solid__path_list-tasks-add: url('images/list-tasks-add.svg');
+	--ui-icon-set-solid__path_list-viewer: url('images/list-viewer.svg');
+	--ui-icon-set-solid__path_location-plus: url('images/location-plus.svg');
+	--ui-icon-set-solid__path_location-time: url('images/location-time.svg');
+	--ui-icon-set-solid__path_lock: url('images/lock.svg');
+	--ui-icon-set-solid__path_lock-2: url('images/lock-2.svg');
+	--ui-icon-set-solid__path_log-in: url('images/log-in.svg');
+	--ui-icon-set-solid__path_log-out: url('images/log-out.svg');
+	--ui-icon-set-solid__path_login-history: url('images/login-history.svg');
+	--ui-icon-set-solid__path_logo-android: url('images/logo-android.svg');
+	--ui-icon-set-solid__path_logo-apple: url('images/logo-apple.svg');
+	--ui-icon-set-solid__path_lower-left-arrow: url('images/lower-left-arrow.svg');
+	--ui-icon-set-solid__path_lower-right-arrow: url('images/lower-right-arrow.svg');
+	--ui-icon-set-solid__path_map: url('images/map.svg');
+	--ui-icon-set-solid__path_martini-glass: url('images/martini-glass.svg');
+	--ui-icon-set-solid__path_maximize: url('images/maximize.svg');
+	--ui-icon-set-solid__path_maximize-2: url('images/maximize-2.svg');
+	--ui-icon-set-solid__path_mcp: url('images/mcp.svg');
+	--ui-icon-set-solid__path_mcp-letters: url('images/mcp-letters.svg');
+	--ui-icon-set-solid__path_mention: url('images/mention.svg');
+	--ui-icon-set-solid__path_merge: url('images/merge.svg');
+	--ui-icon-set-solid__path_messenger: url('images/messenger.svg');
+	--ui-icon-set-solid__path_messenger-meta: url('images/messenger-meta.svg');
+	--ui-icon-set-solid__path_microphone-ai: url('images/microphone-ai.svg');
+	--ui-icon-set-solid__path_microphone-sounds-ai: url('images/microphone-sounds-ai.svg');
+	--ui-icon-set-solid__path_minimize: url('images/minimize.svg');
+	--ui-icon-set-solid__path_minimize-2: url('images/minimize-2.svg');
+	--ui-icon-set-solid__path_minus: url('images/minus.svg');
+	--ui-icon-set-solid__path_mobile: url('images/mobile.svg');
+	--ui-icon-set-solid__path_mobile-fill: url('images/mobile-fill.svg');
+	--ui-icon-set-solid__path_money-prize: url('images/money-prize.svg');
+	--ui-icon-set-solid__path_more: url('images/more.svg');
+	--ui-icon-set-solid__path_more-vertical: url('images/more-vertical.svg');
+	--ui-icon-set-solid__path_move-to-checklist: url('images/move-to-checklist.svg');
+	--ui-icon-set-solid__path_multi-page-form: url('images/multi-page-form.svg');
+	--ui-icon-set-solid__path_multichoice-off: url('images/multichoice-off.svg');
+	--ui-icon-set-solid__path_multichoice-on: url('images/multichoice-on.svg');
+	--ui-icon-set-solid__path_music: url('images/music.svg');
+	--ui-icon-set-solid__path_next: url('images/next.svg');
+	--ui-icon-set-solid__path_no-compass: url('images/no-compass.svg');
+	--ui-icon-set-solid__path_no-wifi: url('images/no-wifi.svg');
+	--ui-icon-set-solid__path_non-favorite: url('images/non-favorite.svg');
+	--ui-icon-set-solid__path_notification-off: url('images/notification-off.svg');
+	--ui-icon-set-solid__path_notification-settings: url('images/notification-settings.svg');
+	--ui-icon-set-solid__path_notification-with-cross: url('images/notification-with-cross.svg');
+	--ui-icon-set-solid__path_numbered-list: url('images/numbered-list.svg');
+	--ui-icon-set-solid__path_online-bank: url('images/online-bank.svg');
+	--ui-icon-set-solid__path_online-events: url('images/online-events.svg');
+	--ui-icon-set-solid__path_open-sequence: url('images/open-sequence.svg');
+	--ui-icon-set-solid__path_outline-icon-bold-ai-projects-2: url('images/outline-icon-bold-ai-projects-2.svg');
+	--ui-icon-set-solid__path_palette: url('images/palette.svg');
+	--ui-icon-set-solid__path_partner-nfc: url('images/partner-nfc.svg');
+	--ui-icon-set-solid__path_parts-record: url('images/parts-record.svg');
+	--ui-icon-set-solid__path_parts-record-play: url('images/parts-record-play.svg');
+	--ui-icon-set-solid__path_parts-record-stop: url('images/parts-record-stop.svg');
+	--ui-icon-set-solid__path_path: url('images/path.svg');
+	--ui-icon-set-solid__path_payment: url('images/payment.svg');
+	--ui-icon-set-solid__path_person-detect: url('images/person-detect.svg');
+	--ui-icon-set-solid__path_phone-down: url('images/phone-down.svg');
+	--ui-icon-set-solid__path_ping: url('images/ping.svg');
+	--ui-icon-set-solid__path_planning: url('images/planning.svg');
+	--ui-icon-set-solid__path_planning-2: url('images/planning-2.svg');
+	--ui-icon-set-solid__path_plug-left: url('images/plug-left.svg');
+	--ui-icon-set-solid__path_plug-right: url('images/plug-right.svg');
+	--ui-icon-set-solid__path_point-left: url('images/point-left.svg');
+	--ui-icon-set-solid__path_point-right: url('images/point-right.svg');
+	--ui-icon-set-solid__path_power: url('images/power.svg');
+	--ui-icon-set-solid__path_previous: url('images/previous.svg');
+	--ui-icon-set-solid__path_process: url('images/process.svg');
+	--ui-icon-set-solid__path_process-stop: url('images/process-stop.svg');
+	--ui-icon-set-solid__path_products-payment: url('images/products-payment.svg');
+	--ui-icon-set-solid__path_products-shirt: url('images/products-shirt.svg');
+	--ui-icon-set-solid__path_prompt-var: url('images/prompt-var.svg');
+	--ui-icon-set-solid__path_pulse: url('images/pulse.svg');
+	--ui-icon-set-solid__path_quantity: url('images/quantity.svg');
+	--ui-icon-set-solid__path_question: url('images/question.svg');
+	--ui-icon-set-solid__path_question-l: url('images/question-l.svg');
+	--ui-icon-set-solid__path_quick-crm-fill: url('images/quick-crm-fill.svg');
+	--ui-icon-set-solid__path_quote: url('images/quote.svg');
+	--ui-icon-set-solid__path_receipt-note: url('images/receipt-note.svg');
+	--ui-icon-set-solid__path_recent-items: url('images/recent-items.svg');
+	--ui-icon-set-solid__path_record-on: url('images/record-on.svg');
+	--ui-icon-set-solid__path_redirect: url('images/redirect.svg');
+	--ui-icon-set-solid__path_redo: url('images/redo.svg');
+	--ui-icon-set-solid__path_registration-on-site: url('images/registration-on-site.svg');
+	--ui-icon-set-solid__path_related-tasks: url('images/related-tasks.svg');
+	--ui-icon-set-solid__path_repeat-cycle: url('images/repeat-cycle.svg');
+	--ui-icon-set-solid__path_repeat-sales: url('images/repeat-sales.svg');
+	--ui-icon-set-solid__path_reply: url('images/reply.svg');
+	--ui-icon-set-solid__path_reply-to-all: url('images/reply-to-all.svg');
+	--ui-icon-set-solid__path_resume: url('images/resume.svg');
+	--ui-icon-set-solid__path_reveal-3: url('images/reveal-3.svg');
+	--ui-icon-set-solid__path_reveal-4: url('images/reveal-4.svg');
+	--ui-icon-set-solid__path_sale-tag: url('images/sale-tag.svg');
+	--ui-icon-set-solid__path_save-template: url('images/save-template.svg');
+	--ui-icon-set-solid__path_save-template-plus: url('images/save-template-plus.svg');
+	--ui-icon-set-solid__path_scrum: url('images/scrum.svg');
+	--ui-icon-set-solid__path_search: url('images/search.svg');
+	--ui-icon-set-solid__path_sended: url('images/sended.svg');
+	--ui-icon-set-solid__path_services: url('images/services.svg');
+	--ui-icon-set-solid__path_share: url('images/share.svg');
+	--ui-icon-set-solid__path_share-task: url('images/share-task.svg');
+	--ui-icon-set-solid__path_shield-attention: url('images/shield-attention.svg');
+	--ui-icon-set-solid__path_shop-order: url('images/shop-order.svg');
+	--ui-icon-set-solid__path_shuffle: url('images/shuffle.svg');
+	--ui-icon-set-solid__path_sick: url('images/sick.svg');
+	--ui-icon-set-solid__path_sigma-summ: url('images/sigma-summ.svg');
+	--ui-icon-set-solid__path_sign-default: url('images/sign-default.svg');
+	--ui-icon-set-solid__path_signal: url('images/signal.svg');
+	--ui-icon-set-solid__path_signal-1: url('images/signal-1.svg');
+	--ui-icon-set-solid__path_signal-2: url('images/signal-2.svg');
+	--ui-icon-set-solid__path_size-w-l: url('images/size-w-l.svg');
+	--ui-icon-set-solid__path_slash: url('images/slash.svg');
+	--ui-icon-set-solid__path_sms: url('images/sms.svg');
+	--ui-icon-set-solid__path_sort-activity: url('images/sort-activity.svg');
+	--ui-icon-set-solid__path_sort-calendar: url('images/sort-calendar.svg');
+	--ui-icon-set-solid__path_speaker: url('images/speaker.svg');
+	--ui-icon-set-solid__path_speaker-add: url('images/speaker-add.svg');
+	--ui-icon-set-solid__path_speed-0-5: url('images/speed-0-5.svg');
+	--ui-icon-set-solid__path_speed-0-7: url('images/speed-0-7.svg');
+	--ui-icon-set-solid__path_speed-1: url('images/speed-1.svg');
+	--ui-icon-set-solid__path_speed-1-2: url('images/speed-1-2.svg');
+	--ui-icon-set-solid__path_speed-1-5: url('images/speed-1-5.svg');
+	--ui-icon-set-solid__path_speed-1-7: url('images/speed-1-7.svg');
+	--ui-icon-set-solid__path_speed-2: url('images/speed-2.svg');
+	--ui-icon-set-solid__path_speed-meter: url('images/speed-meter.svg');
+	--ui-icon-set-solid__path_spoiler: url('images/spoiler.svg');
+	--ui-icon-set-solid__path_sso: url('images/sso.svg');
+	--ui-icon-set-solid__path_stage-minus: url('images/stage-minus.svg');
+	--ui-icon-set-solid__path_stage-plus: url('images/stage-plus.svg');
+	--ui-icon-set-solid__path_stages: url('images/stages.svg');
+	--ui-icon-set-solid__path_start-education: url('images/start-education.svg');
+	--ui-icon-set-solid__path_statistics-arrow: url('images/statistics-arrow.svg');
+	--ui-icon-set-solid__path_sticker: url('images/sticker.svg');
+	--ui-icon-set-solid__path_stop: url('images/stop.svg');
+	--ui-icon-set-solid__path_stress-no: url('images/stress-no.svg');
+	--ui-icon-set-solid__path_strikethrough: url('images/strikethrough.svg');
+	--ui-icon-set-solid__path_structure-horizontal: url('images/structure-horizontal.svg');
+	--ui-icon-set-solid__path_structure-vertical: url('images/structure-vertical.svg');
+	--ui-icon-set-solid__path_subscript: url('images/subscript.svg');
+	--ui-icon-set-solid__path_subtask: url('images/subtask.svg');
+	--ui-icon-set-solid__path_suitcase: url('images/suitcase.svg');
+	--ui-icon-set-solid__path_sun: url('images/sun.svg');
+	--ui-icon-set-solid__path_superscript: url('images/superscript.svg');
+	--ui-icon-set-solid__path_switch-camera: url('images/switch-camera.svg');
+	--ui-icon-set-solid__path_tablet: url('images/tablet.svg');
+	--ui-icon-set-solid__path_tag: url('images/tag.svg');
+	--ui-icon-set-solid__path_telephony: url('images/telephony.svg');
+	--ui-icon-set-solid__path_template-task: url('images/template-task.svg');
+	--ui-icon-set-solid__path_text: url('images/text.svg');
+	--ui-icon-set-solid__path_text-format-bottom: url('images/text-format-bottom.svg');
+	--ui-icon-set-solid__path_text-format-cancel: url('images/text-format-cancel.svg');
+	--ui-icon-set-solid__path_text-format-reset: url('images/text-format-reset.svg');
+	--ui-icon-set-solid__path_text-format-top: url('images/text-format-top.svg');
+	--ui-icon-set-solid__path_text-format-top-left: url('images/text-format-top-left.svg');
+	--ui-icon-set-solid__path_text-format-top-right: url('images/text-format-top-right.svg');
+	--ui-icon-set-solid__path_theme: url('images/theme.svg');
+	--ui-icon-set-solid__path_thread: url('images/thread.svg');
+	--ui-icon-set-solid__path_thread-single: url('images/thread-single.svg');
+	--ui-icon-set-solid__path_threads: url('images/threads.svg');
+	--ui-icon-set-solid__path_three-squares: url('images/three-squares.svg');
+	--ui-icon-set-solid__path_timeline: url('images/timeline.svg');
+	--ui-icon-set-solid__path_timer: url('images/timer.svg');
+	--ui-icon-set-solid__path_timer-dot: url('images/timer-dot.svg');
+	--ui-icon-set-solid__path_top-bottom-expand: url('images/top-bottom-expand.svg');
+	--ui-icon-set-solid__path_topic: url('images/topic.svg');
+	--ui-icon-set-solid__path_transcription: url('images/transcription.svg');
+	--ui-icon-set-solid__path_translation: url('images/translation.svg');
+	--ui-icon-set-solid__path_trend-down: url('images/trend-down.svg');
+	--ui-icon-set-solid__path_trend-up: url('images/trend-up.svg');
+	--ui-icon-set-solid__path_underline: url('images/underline.svg');
+	--ui-icon-set-solid__path_undo: url('images/undo.svg');
+	--ui-icon-set-solid__path_universal-access: url('images/universal-access.svg');
+	--ui-icon-set-solid__path_unlink: url('images/unlink.svg');
+	--ui-icon-set-solid__path_unlock: url('images/unlock.svg');
+	--ui-icon-set-solid__path_upload: url('images/upload.svg');
+	--ui-icon-set-solid__path_upload-document: url('images/upload-document.svg');
+	--ui-icon-set-solid__path_upload-file: url('images/upload-file.svg');
+	--ui-icon-set-solid__path_vacation: url('images/vacation.svg');
+	--ui-icon-set-solid__path_vibe-plus: url('images/vibe-plus.svg');
+	--ui-icon-set-solid__path_vibe-plus-2: url('images/vibe-plus-2.svg');
+	--ui-icon-set-solid__path_vibecode: url('images/vibecode.svg');
+	--ui-icon-set-solid__path_video-record: url('images/video-record.svg');
+	--ui-icon-set-solid__path_video-record-2: url('images/video-record-2.svg');
+	--ui-icon-set-solid__path_video-record-3: url('images/video-record-3.svg');
+	--ui-icon-set-solid__path_video-record-4: url('images/video-record-4.svg');
+	--ui-icon-set-solid__path_video-record-5: url('images/video-record-5.svg');
+	--ui-icon-set-solid__path_virtual-server: url('images/virtual-server.svg');
+	--ui-icon-set-solid__path_virtual-storage: url('images/virtual-storage.svg');
+	--ui-icon-set-solid__path_vk-lead-form: url('images/vk-lead-form.svg');
+	--ui-icon-set-solid__path_webhook: url('images/webhook.svg');
+	--ui-icon-set-solid__path_whatsapp: url('images/whatsapp.svg');
+	--ui-icon-set-solid__path_wifi: url('images/wifi.svg');
+	--ui-icon-set-solid__path_window-ring: url('images/window-ring.svg');
+	--ui-icon-set-solid__path_yandex-maps: url('images/yandex-maps.svg');
+	--ui-icon-set-solid__path_zoom-in: url('images/zoom-in.svg');
+	--ui-icon-set-solid__path_zoom-out: url('images/zoom-out.svg');
 }
 
 .ui-icon-set.--s-3-persons {
@@ -575,4 +982,1632 @@
 
 .ui-icon-set.--s-crown-1 {
 	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crown-1);
+}
+
+.ui-icon-set.--s-2gis {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_2gis);
+}
+
+.ui-icon-set.--s-a-letter {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_a-letter);
+}
+
+.ui-icon-set.--s-a-letter-sort-down {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_a-letter-sort-down);
+}
+
+.ui-icon-set.--s-a-letter-sort-up {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_a-letter-sort-up);
+}
+
+.ui-icon-set.--s-achievement {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_achievement);
+}
+
+.ui-icon-set.--s-action-required {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_action-required);
+}
+
+.ui-icon-set.--s-add-chat {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_add-chat);
+}
+
+.ui-icon-set.--s-add-event {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_add-event);
+}
+
+.ui-icon-set.--s-add-funnel {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_add-funnel);
+}
+
+.ui-icon-set.--s-ai-internet-search {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-internet-search);
+}
+
+.ui-icon-set.--s-ai-process {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-process);
+}
+
+.ui-icon-set.--s-ai-projects {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-projects);
+}
+
+.ui-icon-set.--s-ai-reflection {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-reflection);
+}
+
+.ui-icon-set.--s-ai-robot {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-robot);
+}
+
+.ui-icon-set.--s-ai-stars-question {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-stars-question);
+}
+
+.ui-icon-set.--s-ai-two-stars {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ai-two-stars);
+}
+
+.ui-icon-set.--s-alarm {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_alarm);
+}
+
+.ui-icon-set.--s-align-center {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-center);
+}
+
+.ui-icon-set.--s-align-image-center {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-image-center);
+}
+
+.ui-icon-set.--s-align-image-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-image-left);
+}
+
+.ui-icon-set.--s-align-image-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-image-right);
+}
+
+.ui-icon-set.--s-align-justify {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-justify);
+}
+
+.ui-icon-set.--s-align-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-left);
+}
+
+.ui-icon-set.--s-align-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_align-right);
+}
+
+.ui-icon-set.--s-arrow-down {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_arrow-down);
+}
+
+.ui-icon-set.--s-arrow-to-the-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_arrow-to-the-left);
+}
+
+.ui-icon-set.--s-arrow-to-the-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_arrow-to-the-right);
+}
+
+.ui-icon-set.--s-arrow-top {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_arrow-top);
+}
+
+.ui-icon-set.--s-attach-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_attach-2);
+}
+
+.ui-icon-set.--s-auto-check-in {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_auto-check-in);
+}
+
+.ui-icon-set.--s-auto-selection {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_auto-selection);
+}
+
+.ui-icon-set.--s-back {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_back);
+}
+
+.ui-icon-set.--s-back-10 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_back-10);
+}
+
+.ui-icon-set.--s-back-15 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_back-15);
+}
+
+.ui-icon-set.--s-ball-one {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ball-one);
+}
+
+.ui-icon-set.--s-ban {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ban);
+}
+
+.ui-icon-set.--s-bank-card {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bank-card);
+}
+
+.ui-icon-set.--s-battery-1-stick {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_battery-1-stick);
+}
+
+.ui-icon-set.--s-battery-2-sticks {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_battery-2-sticks);
+}
+
+.ui-icon-set.--s-battery-no-charge {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_battery-no-charge);
+}
+
+.ui-icon-set.--s-beer {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_beer);
+}
+
+.ui-icon-set.--s-bitrix-gpt {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bitrix-gpt);
+}
+
+.ui-icon-set.--s-black-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_black-list);
+}
+
+.ui-icon-set.--s-block-insertion {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_block-insertion);
+}
+
+.ui-icon-set.--s-bluetooth {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bluetooth);
+}
+
+.ui-icon-set.--s-bold {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bold);
+}
+
+.ui-icon-set.--s-book-open {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_book-open);
+}
+
+.ui-icon-set.--s-bookmark-4 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bookmark-4);
+}
+
+.ui-icon-set.--s-bottom-menu {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bottom-menu);
+}
+
+.ui-icon-set.--s-bottom-top-collapse {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bottom-top-collapse);
+}
+
+.ui-icon-set.--s-box-with-lid {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_box-with-lid);
+}
+
+.ui-icon-set.--s-branch-network {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_branch-network);
+}
+
+.ui-icon-set.--s-broom {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_broom);
+}
+
+.ui-icon-set.--s-bulleted-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_bulleted-list);
+}
+
+.ui-icon-set.--s-business-process-progress {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_business-process-progress);
+}
+
+.ui-icon-set.--s-cake-celebrating {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cake-celebrating);
+}
+
+.ui-icon-set.--s-calendar {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_calendar);
+}
+
+.ui-icon-set.--s-calendar-share {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_calendar-share);
+}
+
+.ui-icon-set.--s-calendar-with-checks {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_calendar-with-checks);
+}
+
+.ui-icon-set.--s-card {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_card);
+}
+
+.ui-icon-set.--s-change-funnel {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_change-funnel);
+}
+
+.ui-icon-set.--s-change-order-3 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_change-order-3);
+}
+
+.ui-icon-set.--s-change-places {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_change-places);
+}
+
+.ui-icon-set.--s-chat-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_chat-list);
+}
+
+.ui-icon-set.--s-check-deferred {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_check-deferred);
+}
+
+.ui-icon-set.--s-check-in-cancel {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_check-in-cancel);
+}
+
+.ui-icon-set.--s-check-in-negative {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_check-in-negative);
+}
+
+.ui-icon-set.--s-check-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_check-list);
+}
+
+.ui-icon-set.--s-chevron-down {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_chevron-down);
+}
+
+.ui-icon-set.--s-chevron-to-the-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_chevron-to-the-left);
+}
+
+.ui-icon-set.--s-chevron-to-the-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_chevron-to-the-right);
+}
+
+.ui-icon-set.--s-chevron-up {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_chevron-up);
+}
+
+.ui-icon-set.--s-circle-check-forward {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_circle-check-forward);
+}
+
+.ui-icon-set.--s-circle-cross {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_circle-cross);
+}
+
+.ui-icon-set.--s-circle-minus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_circle-minus);
+}
+
+.ui-icon-set.--s-circle-more {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_circle-more);
+}
+
+.ui-icon-set.--s-circle-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_circle-plus);
+}
+
+.ui-icon-set.--s-claw {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_claw);
+}
+
+.ui-icon-set.--s-clock-back {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_clock-back);
+}
+
+.ui-icon-set.--s-cloud-download {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cloud-download);
+}
+
+.ui-icon-set.--s-cloud-sync-cross {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cloud-sync-cross);
+}
+
+.ui-icon-set.--s-cloud-time {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cloud-time);
+}
+
+.ui-icon-set.--s-cloud-with-check {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cloud-with-check);
+}
+
+.ui-icon-set.--s-collab-add {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_collab-add);
+}
+
+.ui-icon-set.--s-collapse {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_collapse);
+}
+
+.ui-icon-set.--s-collection {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_collection);
+}
+
+.ui-icon-set.--s-columns-sidebar-pending {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_columns-sidebar-pending);
+}
+
+.ui-icon-set.--s-columns-sidebar-pending-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_columns-sidebar-pending-left);
+}
+
+.ui-icon-set.--s-commands {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_commands);
+}
+
+.ui-icon-set.--s-compass {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_compass);
+}
+
+.ui-icon-set.--s-condition {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_condition);
+}
+
+.ui-icon-set.--s-connection {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_connection);
+}
+
+.ui-icon-set.--s-contact {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_contact);
+}
+
+.ui-icon-set.--s-contact-details {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_contact-details);
+}
+
+.ui-icon-set.--s-contrast {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_contrast);
+}
+
+.ui-icon-set.--s-cookies {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cookies);
+}
+
+.ui-icon-set.--s-copy-link {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_copy-link);
+}
+
+.ui-icon-set.--s-core {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_core);
+}
+
+.ui-icon-set.--s-create-file {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_create-file);
+}
+
+.ui-icon-set.--s-crm-field-except {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-field-except);
+}
+
+.ui-icon-set.--s-crm-field-linked {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-field-linked);
+}
+
+.ui-icon-set.--s-crm-field-simple {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-field-simple);
+}
+
+.ui-icon-set.--s-crm-form {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-form);
+}
+
+.ui-icon-set.--s-crm-online-store {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-online-store);
+}
+
+.ui-icon-set.--s-crm-optional-accepted {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-optional-accepted);
+}
+
+.ui-icon-set.--s-crm-optional-not-accepted {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-optional-not-accepted);
+}
+
+.ui-icon-set.--s-crm-payment-and-delivery {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-payment-and-delivery);
+}
+
+.ui-icon-set.--s-crm-required-consent {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crm-required-consent);
+}
+
+.ui-icon-set.--s-cross {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cross);
+}
+
+.ui-icon-set.--s-crossed-eye {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crossed-eye);
+}
+
+.ui-icon-set.--s-crown-forward {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crown-forward);
+}
+
+.ui-icon-set.--s-cup-winner {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cup-winner);
+}
+
+.ui-icon-set.--s-cursors-strike {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_cursors-strike);
+}
+
+.ui-icon-set.--s-data-reading {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_data-reading);
+}
+
+.ui-icon-set.--s-day-off {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_day-off);
+}
+
+.ui-icon-set.--s-delete-event {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_delete-event);
+}
+
+.ui-icon-set.--s-demonstration-on {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_demonstration-on);
+}
+
+.ui-icon-set.--s-dial-10 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_dial-10);
+}
+
+.ui-icon-set.--s-dial-20 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_dial-20);
+}
+
+.ui-icon-set.--s-digits-123 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_digits-123);
+}
+
+.ui-icon-set.--s-digits-24 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_digits-24);
+}
+
+.ui-icon-set.--s-discount {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_discount);
+}
+
+.ui-icon-set.--s-disike {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_disike);
+}
+
+.ui-icon-set.--s-distribution {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_distribution);
+}
+
+.ui-icon-set.--s-do-not-use-captcha {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_do-not-use-captcha);
+}
+
+.ui-icon-set.--s-dots {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_dots);
+}
+
+.ui-icon-set.--s-double-check {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_double-check);
+}
+
+.ui-icon-set.--s-download {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_download);
+}
+
+.ui-icon-set.--s-drag {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_drag);
+}
+
+.ui-icon-set.--s-earth-with-check {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_earth-with-check);
+}
+
+.ui-icon-set.--s-earth-with-clock {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_earth-with-clock);
+}
+
+.ui-icon-set.--s-earth-with-cross {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_earth-with-cross);
+}
+
+.ui-icon-set.--s-earth-with-stop {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_earth-with-stop);
+}
+
+.ui-icon-set.--s-earth-with-tree {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_earth-with-tree);
+}
+
+.ui-icon-set.--s-edit {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_edit);
+}
+
+.ui-icon-set.--s-empty-battery {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_empty-battery);
+}
+
+.ui-icon-set.--s-empty-message {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_empty-message);
+}
+
+.ui-icon-set.--s-excel {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_excel);
+}
+
+.ui-icon-set.--s-exclamation {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_exclamation);
+}
+
+.ui-icon-set.--s-exclamation-circle {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_exclamation-circle);
+}
+
+.ui-icon-set.--s-expand {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_expand);
+}
+
+.ui-icon-set.--s-expert-mode {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_expert-mode);
+}
+
+.ui-icon-set.--s-export {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_export);
+}
+
+.ui-icon-set.--s-face-ident {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_face-ident);
+}
+
+.ui-icon-set.--s-feedback {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_feedback);
+}
+
+.ui-icon-set.--s-feedback-form {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_feedback-form);
+}
+
+.ui-icon-set.--s-file-with-calendar {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_file-with-calendar);
+}
+
+.ui-icon-set.--s-file-with-check {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_file-with-check);
+}
+
+.ui-icon-set.--s-file-with-check-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_file-with-check-2);
+}
+
+.ui-icon-set.--s-file-with-crown {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_file-with-crown);
+}
+
+.ui-icon-set.--s-file-with-person {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_file-with-person);
+}
+
+.ui-icon-set.--s-fill-out-again {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_fill-out-again);
+}
+
+.ui-icon-set.--s-filter {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_filter);
+}
+
+.ui-icon-set.--s-filter-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_filter-2);
+}
+
+.ui-icon-set.--s-filter-2-lines {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_filter-2-lines);
+}
+
+.ui-icon-set.--s-filter-funnel {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_filter-funnel);
+}
+
+.ui-icon-set.--s-find-filters {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_find-filters);
+}
+
+.ui-icon-set.--s-fingerprint {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_fingerprint);
+}
+
+.ui-icon-set.--s-flag {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_flag);
+}
+
+.ui-icon-set.--s-flag-with-cross {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_flag-with-cross);
+}
+
+.ui-icon-set.--s-flower {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_flower);
+}
+
+.ui-icon-set.--s-folder-24 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_folder-24);
+}
+
+.ui-icon-set.--s-folder-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_folder-plus);
+}
+
+.ui-icon-set.--s-folders {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_folders);
+}
+
+.ui-icon-set.--s-form {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_form);
+}
+
+.ui-icon-set.--s-forward {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_forward);
+}
+
+.ui-icon-set.--s-forward-10 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_forward-10);
+}
+
+.ui-icon-set.--s-forward-16 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_forward-16);
+}
+
+.ui-icon-set.--s-frame-create {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_frame-create);
+}
+
+.ui-icon-set.--s-freelance {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_freelance);
+}
+
+.ui-icon-set.--s-function {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_function);
+}
+
+.ui-icon-set.--s-galaxy {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_galaxy);
+}
+
+.ui-icon-set.--s-galaxy-server {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_galaxy-server);
+}
+
+.ui-icon-set.--s-glasses {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_glasses);
+}
+
+.ui-icon-set.--s-globe-extranet {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_globe-extranet);
+}
+
+.ui-icon-set.--s-go-to {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_go-to);
+}
+
+.ui-icon-set.--s-google-maps {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_google-maps);
+}
+
+.ui-icon-set.--s-graphs-settings {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_graphs-settings);
+}
+
+.ui-icon-set.--s-hamburger-menu {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_hamburger-menu);
+}
+
+.ui-icon-set.--s-headlines {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headlines);
+}
+
+.ui-icon-set.--s-headlines-h1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headlines-h1);
+}
+
+.ui-icon-set.--s-headlines-h2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headlines-h2);
+}
+
+.ui-icon-set.--s-headlines-h3 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headlines-h3);
+}
+
+.ui-icon-set.--s-headlines-h4 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headlines-h4);
+}
+
+.ui-icon-set.--s-headlines-h5 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headlines-h5);
+}
+
+.ui-icon-set.--s-headset {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_headset);
+}
+
+.ui-icon-set.--s-hide-3 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_hide-3);
+}
+
+.ui-icon-set.--s-hide-4 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_hide-4);
+}
+
+.ui-icon-set.--s-home-star {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_home-star);
+}
+
+.ui-icon-set.--s-hourglass {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_hourglass);
+}
+
+.ui-icon-set.--s-idea-lamp {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_idea-lamp);
+}
+
+.ui-icon-set.--s-image {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_image);
+}
+
+.ui-icon-set.--s-image-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_image-plus);
+}
+
+.ui-icon-set.--s-import {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_import);
+}
+
+.ui-icon-set.--s-info-circle {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_info-circle);
+}
+
+.ui-icon-set.--s-interval {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_interval);
+}
+
+.ui-icon-set.--s-inventory-management {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_inventory-management);
+}
+
+.ui-icon-set.--s-invoice {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_invoice);
+}
+
+.ui-icon-set.--s-ip-address {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ip-address);
+}
+
+.ui-icon-set.--s-ip-address-crossed {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ip-address-crossed);
+}
+
+.ui-icon-set.--s-italic {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_italic);
+}
+
+.ui-icon-set.--s-keyboard {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_keyboard);
+}
+
+.ui-icon-set.--s-layers {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_layers);
+}
+
+.ui-icon-set.--s-left-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_left-right);
+}
+
+.ui-icon-set.--s-legal-process {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_legal-process);
+}
+
+.ui-icon-set.--s-library-base {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_library-base);
+}
+
+.ui-icon-set.--s-lightning-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_lightning-plus);
+}
+
+.ui-icon-set.--s-link {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_link);
+}
+
+.ui-icon-set.--s-link-settings {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_link-settings);
+}
+
+.ui-icon-set.--s-link-update {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_link-update);
+}
+
+.ui-icon-set.--s-list-tasks-add {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_list-tasks-add);
+}
+
+.ui-icon-set.--s-list-viewer {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_list-viewer);
+}
+
+.ui-icon-set.--s-location-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_location-plus);
+}
+
+.ui-icon-set.--s-location-time {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_location-time);
+}
+
+.ui-icon-set.--s-lock {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_lock);
+}
+
+.ui-icon-set.--s-lock-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_lock-2);
+}
+
+.ui-icon-set.--s-log-in {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_log-in);
+}
+
+.ui-icon-set.--s-log-out {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_log-out);
+}
+
+.ui-icon-set.--s-login-history {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_login-history);
+}
+
+.ui-icon-set.--s-logo-android {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_logo-android);
+}
+
+.ui-icon-set.--s-logo-apple {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_logo-apple);
+}
+
+.ui-icon-set.--s-lower-left-arrow {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_lower-left-arrow);
+}
+
+.ui-icon-set.--s-lower-right-arrow {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_lower-right-arrow);
+}
+
+.ui-icon-set.--s-map {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_map);
+}
+
+.ui-icon-set.--s-martini-glass {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_martini-glass);
+}
+
+.ui-icon-set.--s-maximize {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_maximize);
+}
+
+.ui-icon-set.--s-maximize-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_maximize-2);
+}
+
+.ui-icon-set.--s-mcp {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_mcp);
+}
+
+.ui-icon-set.--s-mcp-letters {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_mcp-letters);
+}
+
+.ui-icon-set.--s-mention {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_mention);
+}
+
+.ui-icon-set.--s-merge {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_merge);
+}
+
+.ui-icon-set.--s-messenger {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_messenger);
+}
+
+.ui-icon-set.--s-messenger-meta {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_messenger-meta);
+}
+
+.ui-icon-set.--s-microphone-ai {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_microphone-ai);
+}
+
+.ui-icon-set.--s-microphone-sounds-ai {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_microphone-sounds-ai);
+}
+
+.ui-icon-set.--s-minimize {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_minimize);
+}
+
+.ui-icon-set.--s-minimize-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_minimize-2);
+}
+
+.ui-icon-set.--s-minus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_minus);
+}
+
+.ui-icon-set.--s-mobile {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_mobile);
+}
+
+.ui-icon-set.--s-mobile-fill {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_mobile-fill);
+}
+
+.ui-icon-set.--s-money-prize {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_money-prize);
+}
+
+.ui-icon-set.--s-more {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_more);
+}
+
+.ui-icon-set.--s-more-vertical {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_more-vertical);
+}
+
+.ui-icon-set.--s-move-to-checklist {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_move-to-checklist);
+}
+
+.ui-icon-set.--s-multi-page-form {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_multi-page-form);
+}
+
+.ui-icon-set.--s-multichoice-off {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_multichoice-off);
+}
+
+.ui-icon-set.--s-multichoice-on {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_multichoice-on);
+}
+
+.ui-icon-set.--s-music {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_music);
+}
+
+.ui-icon-set.--s-next {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_next);
+}
+
+.ui-icon-set.--s-no-compass {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_no-compass);
+}
+
+.ui-icon-set.--s-no-wifi {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_no-wifi);
+}
+
+.ui-icon-set.--s-non-favorite {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_non-favorite);
+}
+
+.ui-icon-set.--s-notification-off {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_notification-off);
+}
+
+.ui-icon-set.--s-notification-settings {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_notification-settings);
+}
+
+.ui-icon-set.--s-notification-with-cross {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_notification-with-cross);
+}
+
+.ui-icon-set.--s-numbered-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_numbered-list);
+}
+
+.ui-icon-set.--s-online-bank {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_online-bank);
+}
+
+.ui-icon-set.--s-online-events {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_online-events);
+}
+
+.ui-icon-set.--s-open-sequence {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_open-sequence);
+}
+
+.ui-icon-set.--s-outline-icon-bold-ai-projects-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_outline-icon-bold-ai-projects-2);
+}
+
+.ui-icon-set.--s-palette {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_palette);
+}
+
+.ui-icon-set.--s-partner-nfc {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_partner-nfc);
+}
+
+.ui-icon-set.--s-parts-record {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_parts-record);
+}
+
+.ui-icon-set.--s-parts-record-play {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_parts-record-play);
+}
+
+.ui-icon-set.--s-parts-record-stop {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_parts-record-stop);
+}
+
+.ui-icon-set.--s-path {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_path);
+}
+
+.ui-icon-set.--s-payment {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_payment);
+}
+
+.ui-icon-set.--s-person-detect {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_person-detect);
+}
+
+.ui-icon-set.--s-phone-down {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_phone-down);
+}
+
+.ui-icon-set.--s-ping {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_ping);
+}
+
+.ui-icon-set.--s-planning {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_planning);
+}
+
+.ui-icon-set.--s-planning-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_planning-2);
+}
+
+.ui-icon-set.--s-plug-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_plug-left);
+}
+
+.ui-icon-set.--s-plug-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_plug-right);
+}
+
+.ui-icon-set.--s-point-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_point-left);
+}
+
+.ui-icon-set.--s-point-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_point-right);
+}
+
+.ui-icon-set.--s-power {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_power);
+}
+
+.ui-icon-set.--s-previous {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_previous);
+}
+
+.ui-icon-set.--s-process {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_process);
+}
+
+.ui-icon-set.--s-process-stop {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_process-stop);
+}
+
+.ui-icon-set.--s-products-payment {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_products-payment);
+}
+
+.ui-icon-set.--s-products-shirt {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_products-shirt);
+}
+
+.ui-icon-set.--s-prompt-var {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_prompt-var);
+}
+
+.ui-icon-set.--s-pulse {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_pulse);
+}
+
+.ui-icon-set.--s-quantity {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_quantity);
+}
+
+.ui-icon-set.--s-question {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_question);
+}
+
+.ui-icon-set.--s-question-l {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_question-l);
+}
+
+.ui-icon-set.--s-quick-crm-fill {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_quick-crm-fill);
+}
+
+.ui-icon-set.--s-quote {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_quote);
+}
+
+.ui-icon-set.--s-receipt-note {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_receipt-note);
+}
+
+.ui-icon-set.--s-recent-items {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_recent-items);
+}
+
+.ui-icon-set.--s-record-on {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_record-on);
+}
+
+.ui-icon-set.--s-redirect {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_redirect);
+}
+
+.ui-icon-set.--s-redo {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_redo);
+}
+
+.ui-icon-set.--s-registration-on-site {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_registration-on-site);
+}
+
+.ui-icon-set.--s-related-tasks {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_related-tasks);
+}
+
+.ui-icon-set.--s-repeat-cycle {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_repeat-cycle);
+}
+
+.ui-icon-set.--s-repeat-sales {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_repeat-sales);
+}
+
+.ui-icon-set.--s-reply {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_reply);
+}
+
+.ui-icon-set.--s-reply-to-all {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_reply-to-all);
+}
+
+.ui-icon-set.--s-resume {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_resume);
+}
+
+.ui-icon-set.--s-reveal-3 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_reveal-3);
+}
+
+.ui-icon-set.--s-reveal-4 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_reveal-4);
+}
+
+.ui-icon-set.--s-sale-tag {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sale-tag);
+}
+
+.ui-icon-set.--s-save-template {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_save-template);
+}
+
+.ui-icon-set.--s-save-template-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_save-template-plus);
+}
+
+.ui-icon-set.--s-scrum {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_scrum);
+}
+
+.ui-icon-set.--s-search {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_search);
+}
+
+.ui-icon-set.--s-sended {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sended);
+}
+
+.ui-icon-set.--s-services {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_services);
+}
+
+.ui-icon-set.--s-share {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_share);
+}
+
+.ui-icon-set.--s-share-task {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_share-task);
+}
+
+.ui-icon-set.--s-shield-attention {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_shield-attention);
+}
+
+.ui-icon-set.--s-shop-order {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_shop-order);
+}
+
+.ui-icon-set.--s-shuffle {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_shuffle);
+}
+
+.ui-icon-set.--s-sick {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sick);
+}
+
+.ui-icon-set.--s-sigma-summ {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sigma-summ);
+}
+
+.ui-icon-set.--s-sign-default {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sign-default);
+}
+
+.ui-icon-set.--s-signal {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_signal);
+}
+
+.ui-icon-set.--s-signal-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_signal-1);
+}
+
+.ui-icon-set.--s-signal-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_signal-2);
+}
+
+.ui-icon-set.--s-size-w-l {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_size-w-l);
+}
+
+.ui-icon-set.--s-slash {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_slash);
+}
+
+.ui-icon-set.--s-sms {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sms);
+}
+
+.ui-icon-set.--s-sort-activity {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sort-activity);
+}
+
+.ui-icon-set.--s-sort-calendar {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sort-calendar);
+}
+
+.ui-icon-set.--s-speaker {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speaker);
+}
+
+.ui-icon-set.--s-speaker-add {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speaker-add);
+}
+
+.ui-icon-set.--s-speed-0-5 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-0-5);
+}
+
+.ui-icon-set.--s-speed-0-7 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-0-7);
+}
+
+.ui-icon-set.--s-speed-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-1);
+}
+
+.ui-icon-set.--s-speed-1-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-1-2);
+}
+
+.ui-icon-set.--s-speed-1-5 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-1-5);
+}
+
+.ui-icon-set.--s-speed-1-7 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-1-7);
+}
+
+.ui-icon-set.--s-speed-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-2);
+}
+
+.ui-icon-set.--s-speed-meter {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_speed-meter);
+}
+
+.ui-icon-set.--s-spoiler {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_spoiler);
+}
+
+.ui-icon-set.--s-sso {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sso);
+}
+
+.ui-icon-set.--s-stage-minus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_stage-minus);
+}
+
+.ui-icon-set.--s-stage-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_stage-plus);
+}
+
+.ui-icon-set.--s-stages {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_stages);
+}
+
+.ui-icon-set.--s-start-education {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_start-education);
+}
+
+.ui-icon-set.--s-statistics-arrow {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_statistics-arrow);
+}
+
+.ui-icon-set.--s-sticker {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sticker);
+}
+
+.ui-icon-set.--s-stop {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_stop);
+}
+
+.ui-icon-set.--s-stress-no {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_stress-no);
+}
+
+.ui-icon-set.--s-strikethrough {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_strikethrough);
+}
+
+.ui-icon-set.--s-structure-horizontal {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_structure-horizontal);
+}
+
+.ui-icon-set.--s-structure-vertical {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_structure-vertical);
+}
+
+.ui-icon-set.--s-subscript {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_subscript);
+}
+
+.ui-icon-set.--s-subtask {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_subtask);
+}
+
+.ui-icon-set.--s-suitcase {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_suitcase);
+}
+
+.ui-icon-set.--s-sun {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_sun);
+}
+
+.ui-icon-set.--s-superscript {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_superscript);
+}
+
+.ui-icon-set.--s-switch-camera {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_switch-camera);
+}
+
+.ui-icon-set.--s-tablet {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_tablet);
+}
+
+.ui-icon-set.--s-tag {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_tag);
+}
+
+.ui-icon-set.--s-telephony {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_telephony);
+}
+
+.ui-icon-set.--s-template-task {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_template-task);
+}
+
+.ui-icon-set.--s-text {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text);
+}
+
+.ui-icon-set.--s-text-format-bottom {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text-format-bottom);
+}
+
+.ui-icon-set.--s-text-format-cancel {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text-format-cancel);
+}
+
+.ui-icon-set.--s-text-format-reset {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text-format-reset);
+}
+
+.ui-icon-set.--s-text-format-top {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text-format-top);
+}
+
+.ui-icon-set.--s-text-format-top-left {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text-format-top-left);
+}
+
+.ui-icon-set.--s-text-format-top-right {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_text-format-top-right);
+}
+
+.ui-icon-set.--s-theme {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_theme);
+}
+
+.ui-icon-set.--s-thread {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_thread);
+}
+
+.ui-icon-set.--s-thread-single {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_thread-single);
+}
+
+.ui-icon-set.--s-threads {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_threads);
+}
+
+.ui-icon-set.--s-three-squares {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_three-squares);
+}
+
+.ui-icon-set.--s-timeline {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_timeline);
+}
+
+.ui-icon-set.--s-timer {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_timer);
+}
+
+.ui-icon-set.--s-timer-dot {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_timer-dot);
+}
+
+.ui-icon-set.--s-top-bottom-expand {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_top-bottom-expand);
+}
+
+.ui-icon-set.--s-topic {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_topic);
+}
+
+.ui-icon-set.--s-transcription {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_transcription);
+}
+
+.ui-icon-set.--s-translation {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_translation);
+}
+
+.ui-icon-set.--s-trend-down {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_trend-down);
+}
+
+.ui-icon-set.--s-trend-up {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_trend-up);
+}
+
+.ui-icon-set.--s-underline {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_underline);
+}
+
+.ui-icon-set.--s-undo {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_undo);
+}
+
+.ui-icon-set.--s-universal-access {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_universal-access);
+}
+
+.ui-icon-set.--s-unlink {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_unlink);
+}
+
+.ui-icon-set.--s-unlock {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_unlock);
+}
+
+.ui-icon-set.--s-upload {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_upload);
+}
+
+.ui-icon-set.--s-upload-document {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_upload-document);
+}
+
+.ui-icon-set.--s-upload-file {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_upload-file);
+}
+
+.ui-icon-set.--s-vacation {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_vacation);
+}
+
+.ui-icon-set.--s-vibe-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_vibe-plus);
+}
+
+.ui-icon-set.--s-vibe-plus-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_vibe-plus-2);
+}
+
+.ui-icon-set.--s-vibecode {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_vibecode);
+}
+
+.ui-icon-set.--s-video-record {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_video-record);
+}
+
+.ui-icon-set.--s-video-record-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_video-record-2);
+}
+
+.ui-icon-set.--s-video-record-3 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_video-record-3);
+}
+
+.ui-icon-set.--s-video-record-4 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_video-record-4);
+}
+
+.ui-icon-set.--s-video-record-5 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_video-record-5);
+}
+
+.ui-icon-set.--s-virtual-server {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_virtual-server);
+}
+
+.ui-icon-set.--s-virtual-storage {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_virtual-storage);
+}
+
+.ui-icon-set.--s-vk-lead-form {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_vk-lead-form);
+}
+
+.ui-icon-set.--s-webhook {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_webhook);
+}
+
+.ui-icon-set.--s-whatsapp {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_whatsapp);
+}
+
+.ui-icon-set.--s-wifi {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_wifi);
+}
+
+.ui-icon-set.--s-window-ring {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_window-ring);
+}
+
+.ui-icon-set.--s-yandex-maps {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_yandex-maps);
+}
+
+.ui-icon-set.--s-zoom-in {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_zoom-in);
+}
+
+.ui-icon-set.--s-zoom-out {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_zoom-out);
 }

@@ -67,7 +67,10 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 
 	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?\Bitrix\Bizproc\Activity\Dto\ContentBlock
 	{
-		return StorageActivityService::makeStorageContentBlock((string)($properties['StorageTitle'] ?? ''));
+		return StorageActivityService::makeStorageContentBlock(
+			(string)($properties['StorageTitle'] ?? ''),
+			(string)Loc::getMessage('BPCSN_DESCRIPTION_TITLE_FIELD_NAME'),
+		);
 	}
 
 	public static function getScopeContribution(): array
@@ -222,6 +225,16 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 		}
 	}
 
+	/**
+	 * Resolved by the shared resolver of the storage nodes, so this node and every consumer of the same code reach
+	 * one and the same storage: the resolve is exact - a code that merely contains this one must not make the node
+	 * rewrite a foreign storage - and an empty or unknown code gives 0 and sends the node to the add branch.
+	 *
+	 * The resolver memoises hits for the whole process, and sharing that memo with the consumers is safe because a
+	 * miss is never cached: a code this node is about to create resolves to 0 now and to the new id afterwards. A
+	 * cached hit cannot go stale either - a storage type is dropped by the catalog controllers alone, in a request
+	 * of its own; no node of a running workflow deletes one (the delete node removes items, not the type).
+	 */
 	private function findStorageId(): int
 	{
 		$rawStorageCode = $this->StorageCode;
@@ -307,6 +320,7 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 			],
 			'SelectedFields' => [
 				'Name' => Loc::getMessage('BPCSN_DESCRIPTION_SELECTED_FIELDS_NAME'),
+				'ShowFieldLabel' => false,
 				'FieldName' => 'SelectedFields',
 				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
 				'Required' => true,
@@ -319,6 +333,12 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 				]
 			],
 		];
+	}
+
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// Persisted but not typable via getPropertiesMap(): CUSTOM field selector and the computed field map.
+		return ['SelectedFields', 'StorageFields'];
 	}
 
 	public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array

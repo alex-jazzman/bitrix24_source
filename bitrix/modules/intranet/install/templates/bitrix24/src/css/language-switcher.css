@@ -10,9 +10,22 @@
 	padding: 10px 12px;
 	border-radius: var(--ui-border-radius-sm);
 	transition: background-color 0.1s ease-in-out;
+	box-sizing: border-box;
+	width: 100%;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
 }
 
 .intranet__language-popup_language-item:hover {
 	background-color: var(--ui-color-base-03);
 	transition-duration: 0s;
+}
+
+/* The ring is drawn inside the item so that the popup edges cannot clip it. */
+.intranet__language-popup_language-item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }

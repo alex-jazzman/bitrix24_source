@@ -27,6 +27,12 @@ export class VideoFrameKeeper
 	/** @type {number} */
 	#captureIntervalMs = 10000;
 
+	/** @type {number|null} */
+	#hideTimeoutId = null;
+
+	/** @type {number} */
+	#hideTimeoutMs = 3000;
+
 	attach(videoElement, options = {})
 	{
 		this.detach();
@@ -46,6 +52,7 @@ export class VideoFrameKeeper
 	detach()
 	{
 		this.#stopCaptureInterval();
+		this.#stopHideTimeout();
 
 		if (this.#videoElement && this.#onLoadedDataHandler)
 		{
@@ -70,6 +77,28 @@ export class VideoFrameKeeper
 		{
 			clearInterval(this.#captureIntervalId);
 			this.#captureIntervalId = null;
+		}
+	}
+
+	#startHideTimeout()
+	{
+		this.#stopHideTimeout();
+
+		this.#hideTimeoutId = setTimeout(() => {
+			// The frozen frame is a bridge for a temporary video gap on reconnect.
+			// If the video does not come back within this window (e.g. the camera
+			// was turned off during the reconnect, so no 'loadeddata' arrives),
+			// hide the overlay so the avatar and camera-off state become visible.
+			this.hideLastFrame();
+		}, this.#hideTimeoutMs);
+	}
+
+	#stopHideTimeout()
+	{
+		if (this.#hideTimeoutId !== null)
+		{
+			clearTimeout(this.#hideTimeoutId);
+			this.#hideTimeoutId = null;
 		}
 	}
 
@@ -124,18 +153,6 @@ export class VideoFrameKeeper
 		{
 			this.#overlayElement = document.createElement('div');
 			this.#overlayElement.className = 'video-frame-keeper-overlay';
-			this.#overlayElement.style.cssText = `
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background-size: contain;
-				background-position: center;
-				background-repeat: no-repeat;
-				z-index: 10;
-				pointer-events: none;
-			`;
 		}
 
 		this.#overlayElement.style.backgroundImage = `url('${this.#lastFrameData}')`;
@@ -146,10 +163,14 @@ export class VideoFrameKeeper
 		{
 			containerElement.appendChild(this.#overlayElement);
 		}
+
+		this.#startHideTimeout();
 	}
 
 	hideLastFrame()
 	{
+		this.#stopHideTimeout();
+
 		if (this.#overlayElement)
 		{
 			this.#overlayElement.style.display = 'none';

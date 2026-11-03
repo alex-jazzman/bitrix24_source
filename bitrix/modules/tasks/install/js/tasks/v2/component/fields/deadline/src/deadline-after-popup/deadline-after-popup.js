@@ -39,6 +39,9 @@ export const DeadlineAfterPopup = {
 				padding: 24,
 				offsetTop: 5,
 				targetContainer: document.body,
+				focusTrap: true,
+				closeByEsc: true,
+				ariaLabel: this.loc('TASKS_V2_DEADLINE_ARIA_LABEL'),
 			};
 		},
 	},

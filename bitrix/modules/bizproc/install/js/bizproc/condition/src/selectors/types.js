@@ -34,4 +34,6 @@ export type ConditionSelectorOptions = {
 	showValuesSelector: ?boolean,
 	customSelectorFn: ?Function,
 	context: ?ConditionContext,
+	viewMode?: string,
+	renderHeaderAction?: (container: HTMLElement) => void,
 }

@@ -1,0 +1,2 @@
+<?php
+$MESS['MAIL_MESSAGE_EMPTY_SUBJECT_PLACEHOLDER'] = '(no subject)';

@@ -2,7 +2,64 @@ import { mergeTokens } from './merge-tokens';
 import { CommentTokenTypes, StringTokenTypes, TokenType, type CodeToken } from './token-types';
 
 const WORD_REGEX = /[\p{L}\p{N}0-9_$]/u;
-// const NON_WHITESPACE_REGEX = /[^\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/;
+const NON_WHITESPACE_REGEX = /\S/;
+
+const ASCII_LIMIT = 128;
+
+const CharCode = {
+	DOUBLE_QUOTE: 34,
+	HASH: 35,
+	SINGLE_QUOTE: 39,
+	PARENTHESIS_OPEN: 40,
+	PARENTHESIS_CLOSE: 41,
+	SLASH: 47,
+	DIGIT_ZERO: 48,
+	DIGIT_NINE: 57,
+	SEMICOLON: 59,
+	ANGLE_OPEN: 60,
+	BRACKET_OPEN: 91,
+	BRACKET_CLOSE: 93,
+	BACKTICK: 96,
+	BRACE_OPEN: 123,
+	BRACE_CLOSE: 125,
+};
+
+// Every character of the text is classified twice: once to choose the type of a token, once to
+// tell where it ends. Regular expressions are what makes that costly, so the ASCII range -- all
+// of the code in practice -- answers both questions from a table instead, and only a character
+// above it falls back to the expression. The tables are built from the same expressions they
+// stand in for, so the answers cannot drift apart.
+const buildAsciiTable = (matches: (char: string) => boolean): Uint8Array => {
+	const table = new Uint8Array(ASCII_LIMIT);
+	for (let code = 0; code < ASCII_LIMIT; code++)
+	{
+		table[code] = matches(String.fromCodePoint(code)) ? 1 : 0;
+	}
+
+	return table;
+};
+
+const asciiWordChars = buildAsciiTable((char: string): boolean => WORD_REGEX.test(char));
+const asciiNonWhitespaceChars = buildAsciiTable((char: string): boolean => NON_WHITESPACE_REGEX.test(char));
+const asciiOperatorChars = buildAsciiTable((char: string): boolean => /[!&*+,./:;<=>?@\\|~-]/.test(char));
+
+const isWordChar = (char: string, charCode: number): boolean => {
+	return charCode < ASCII_LIMIT ? asciiWordChars[charCode] === 1 : WORD_REGEX.test(char);
+};
+
+const isNonWhitespaceChar = (char: string, charCode: number): boolean => {
+	return charCode < ASCII_LIMIT ? asciiNonWhitespaceChars[charCode] === 1 : NON_WHITESPACE_REGEX.test(char);
+};
+
+// the expression it stands in for holds ASCII characters only, so anything above the range is not
+// an operator and needs no fallback
+const isOperatorChar = (charCode: number): boolean => {
+	return charCode < ASCII_LIMIT && asciiOperatorChars[charCode] === 1;
+};
+
+const isDigitChar = (charCode: number): boolean => {
+	return charCode >= CharCode.DIGIT_ZERO && charCode <= CharCode.DIGIT_NINE;
+};
 
 const keywords: Set<string> = new Set([
 	'abstract', 'alias', 'and', 'arguments', 'array', 'asm', 'assert', 'auto',
@@ -38,6 +95,7 @@ export class CodeParser
 		let currentPosition = 0;
 		let nextChar = text[0];
 		let currentChar = 1;
+		let currentCharCode = 0;
 		let prevChar = null;
 		let beforePrevChar = null;
 		let tokenContent = '';
@@ -65,8 +123,7 @@ export class CodeParser
 				// case TokenType.TAB:
 				// 	return true;
 				case TokenType.WHITESPACE:
-					return /\S/.test(currentChar);
-				// return NON_WHITESPACE_REGEX.test(currentChar);
+					return isNonWhitespaceChar(currentChar, currentCharCode);
 				case TokenType.OPERATOR:
 				case TokenType.SEMICOLON:
 				case TokenType.BRACKET:
@@ -74,7 +131,7 @@ export class CodeParser
 				case TokenType.PARENTHESES:
 					return true;
 				case TokenType.WORD:
-					return !WORD_REGEX.test(currentChar);
+					return !isWordChar(currentChar, currentCharCode);
 				case TokenType.REGEX:
 					return (prevChar === '/' || prevChar === '\n') && isMultiChar;
 				case TokenType.STRING_DOUBLE:
@@ -95,98 +152,77 @@ export class CodeParser
 			}
 		};
 
-		const getTokenType = (): string => {
-			if (currentChar === '#')
-			{
-				return TokenType.COMMENT_HASH;
-			}
-
-			if (currentChar + nextChar === '//')
+		const getSlashTokenType = (): string => {
+			if (nextChar === '/')
 			{
 				return TokenType.COMMENT_SLASH;
 			}
 
-			if (currentChar + nextChar === '/*')
+			if (nextChar === '*')
 			{
 				return TokenType.COMMENT_MULTILINE;
 			}
 
-			if (currentChar + nextChar + text[currentPosition + 1] + text[currentPosition + 2] === '<!--')
-			{
-				return TokenType.XML_COMMENT;
-			}
+			const afterTokenRegexCanStart = (
+				lastTokenType === TokenType.WHITESPACE
+				|| lastTokenType === TokenType.OPERATOR
+			);
 
-			if (currentChar === '`')
-			{
-				return TokenType.STRING_TEMPLATE;
-			}
-
-			if (currentChar === '\'')
-			{
-				return TokenType.STRING_SINGLE;
-			}
-
-			if (currentChar === '"')
-			{
-				return TokenType.STRING_DOUBLE;
-			}
-
-			if (
-				currentChar === '/'
-				&& [TokenType.WHITESPACE, TokenType.OPERATOR].includes(lastTokenType)
-				&& prevChar !== '<'
-			)
-			{
-				return TokenType.REGEX;
-			}
-
-			if (currentChar === '(' || currentChar === ')')
-			{
-				return TokenType.PARENTHESES;
-			}
-
-			if (currentChar === '[' || currentChar === ']')
-			{
-				return TokenType.BRACKET;
-			}
-
-			if (currentChar === '{' || currentChar === '}')
-			{
-				return TokenType.BRACE;
-			}
-
-			if (WORD_REGEX.test(currentChar))
-			{
-				return TokenType.WORD;
-			}
-
-			// if (currentChar === '\n' || (currentChar === '\r' && nextChar === '\n'))
-			// {
-			// 	return TokenType.LINE_BREAK;
-			// }
-			//
-			// if (currentChar === '\t')
-			// {
-			// 	return TokenType.TAB;
-			// }
-
-			if (currentChar === ';')
-			{
-				return TokenType.SEMICOLON;
-			}
-
-			if (/[!&*+,./:;<=>?@\\|~-]/.test(currentChar))
-			{
-				return TokenType.OPERATOR;
-			}
-
-			return TokenType.WHITESPACE;
+			return afterTokenRegexCanStart && prevChar !== '<' ? TokenType.REGEX : TokenType.OPERATOR;
 		};
 
+		// The chain of tests this replaced ran over every character of the block; the switch answers
+		// most of them by the code of the character alone, and only a slash, an angle bracket and a
+		// word need more than that.
+		const getTokenType = (): string => {
+			switch (currentCharCode)
+			{
+				case CharCode.HASH:
+					return TokenType.COMMENT_HASH;
+				case CharCode.SLASH:
+					return getSlashTokenType();
+				case CharCode.ANGLE_OPEN:
+					return nextChar === '!' && text[currentPosition + 1] === '-' && text[currentPosition + 2] === '-'
+						? TokenType.XML_COMMENT
+						: TokenType.OPERATOR;
+				case CharCode.BACKTICK:
+					return TokenType.STRING_TEMPLATE;
+				case CharCode.SINGLE_QUOTE:
+					return TokenType.STRING_SINGLE;
+				case CharCode.DOUBLE_QUOTE:
+					return TokenType.STRING_DOUBLE;
+				case CharCode.PARENTHESIS_OPEN:
+				case CharCode.PARENTHESIS_CLOSE:
+					return TokenType.PARENTHESES;
+				case CharCode.BRACKET_OPEN:
+				case CharCode.BRACKET_CLOSE:
+					return TokenType.BRACKET;
+				case CharCode.BRACE_OPEN:
+				case CharCode.BRACE_CLOSE:
+					return TokenType.BRACE;
+				case CharCode.SEMICOLON:
+					return TokenType.SEMICOLON;
+				default:
+					if (isWordChar(currentChar, currentCharCode))
+					{
+						return TokenType.WORD;
+					}
+
+					return isOperatorChar(currentCharCode) ? TokenType.OPERATOR : TokenType.WHITESPACE;
+			}
+		};
+
+		// A backslash makes the loop wait for the character it escapes -- prevChar of `true` is
+		// what keeps that character from ending a string or a token. There is nothing to wait for
+		// past the end of the text, and waiting there used to add one iteration over no character
+		// at all, whose `undefined` was spelled out and handed back as a token of the text.
 		// eslint-disable-next-line no-cond-assign
-		while ((prevChar = !CommentTokenTypes.has(tokenType) && prevChar === '\\' ? true : currentChar))
+		while ((prevChar = currentChar !== undefined && prevChar === '\\' && !CommentTokenTypes.has(tokenType)
+			? true
+			: currentChar))
 		{
 			currentChar = nextChar;
+			currentCharCode = text.codePointAt(currentPosition);
 			nextChar = text[++currentPosition];
 			isMultiChar = tokenContent.length > 1;
 
@@ -240,7 +276,7 @@ export class CodeParser
 				return 'keyword';
 			}
 
-			if (/^\d+/.test(content))
+			if (isDigitChar(content.codePointAt(0)))
 			{
 				return 'number';
 			}

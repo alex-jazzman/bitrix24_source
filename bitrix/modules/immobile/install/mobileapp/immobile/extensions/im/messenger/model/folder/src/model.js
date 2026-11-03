@@ -51,6 +51,45 @@ jn.define('im/messenger/model/folder/src/model', (require, exports, module) => {
 			},
 
 			/**
+			 * Resolves the composite folder's `sourceFolders` codes into the set of
+			 * recent sections to union. The section is taken strictly from each member
+			 * folder's own `recentSection` (no static code-to-section aliasing): e.g. member
+			 * `tasksTaskRoot` carries `recentSection: 'tasksTask'`. Missing/unknown codes
+			 * are skipped. Single source of the section set for both list and counter.
+			 *
+			 * @function folderModel/getSourceSections
+			 * @return {Set<string>}
+			 */
+			getSourceSections: (state) => (folderId) => {
+				const sections = new Set();
+				const folder = state.collection[folderId];
+				if (!folder || !Type.isArrayFilled(folder.sourceFolders))
+				{
+					return sections;
+				}
+
+				const folderByCode = new Map();
+				for (const member of Object.values(state.collection))
+				{
+					if (member && Type.isStringFilled(member.code))
+					{
+						folderByCode.set(member.code, member);
+					}
+				}
+
+				for (const code of folder.sourceFolders)
+				{
+					const member = folderByCode.get(code);
+					if (member && Type.isStringFilled(member.recentSection))
+					{
+						sections.add(member.recentSection);
+					}
+				}
+
+				return sections;
+			},
+
+			/**
 			 * @function folderModel/getPersonalFolders
 			 * @return {Array<FolderModelState>}
 			 */
@@ -425,7 +464,8 @@ jn.define('im/messenger/model/folder/src/model', (require, exports, module) => {
 	}
 
 	/**
-	 * Shallow folder equality, comparing all top-level fields including chatIds order/content.
+	 * Shallow folder equality, comparing all top-level fields including the order and
+	 * content of the chatIds and sourceFolders arrays.
 	 *
 	 * @param {FolderModelState} a
 	 * @param {FolderModelState} b
@@ -438,7 +478,9 @@ jn.define('im/messenger/model/folder/src/model', (require, exports, module) => {
 			|| a.type !== b.type
 			|| a.code !== b.code
 			|| a.title !== b.title
+			|| a.description !== b.description
 			|| a.sort !== b.sort
+			|| a.visible !== b.visible
 			|| a.recentSection !== b.recentSection)
 		{
 			return false;
@@ -446,8 +488,15 @@ jn.define('im/messenger/model/folder/src/model', (require, exports, module) => {
 
 		const aChatIds = Type.isArray(a.chatIds) ? a.chatIds : [];
 		const bChatIds = Type.isArray(b.chatIds) ? b.chatIds : [];
+		if (!isEqual(aChatIds, bChatIds))
+		{
+			return false;
+		}
 
-		return isEqual(aChatIds, bChatIds);
+		const aSourceFolders = Type.isArray(a.sourceFolders) ? a.sourceFolders : [];
+		const bSourceFolders = Type.isArray(b.sourceFolders) ? b.sourceFolders : [];
+
+		return isEqual(aSourceFolders, bSourceFolders);
 	}
 
 	/**
@@ -460,7 +509,7 @@ jn.define('im/messenger/model/folder/src/model', (require, exports, module) => {
 	function diffFields(existing, incoming)
 	{
 		const fields = {};
-		const keys = ['parentChatId', 'type', 'code', 'title', 'sort', 'recentSection'];
+		const keys = ['parentChatId', 'type', 'code', 'title', 'description', 'sort', 'visible', 'recentSection'];
 		for (const key of keys)
 		{
 			if (existing[key] !== incoming[key])
@@ -474,6 +523,13 @@ jn.define('im/messenger/model/folder/src/model', (require, exports, module) => {
 		if (!isEqual(aChatIds, bChatIds))
 		{
 			fields.chatIds = bChatIds.slice();
+		}
+
+		const aSourceFolders = Type.isArray(existing.sourceFolders) ? existing.sourceFolders : [];
+		const bSourceFolders = Type.isArray(incoming.sourceFolders) ? incoming.sourceFolders : [];
+		if (!isEqual(aSourceFolders, bSourceFolders))
+		{
+			fields.sourceFolders = bSourceFolders.slice();
 		}
 
 		return fields;

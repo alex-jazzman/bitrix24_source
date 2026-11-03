@@ -42,7 +42,7 @@ $MESS["ABOUT_INFO"] = "With the establishing of the Global Food grocery supermar
 <br />
 
 <br />
- <img width='217' height='193' src='#SITE#images/en/company/about/facts.png' />
+ <img width='217' height='193' src='#SITE#images/en/company/about/facts.webp' />
 <br />
 
 <h2>Social Commitment</h2>

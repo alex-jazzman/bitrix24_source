@@ -1,0 +1,25 @@
+<?php
+$MESS['MAIL_AVATAR_ACCESS_DENIED'] = 'You don\'t have permission to change the sender photo.';
+$MESS['MAIL_AVATAR_FORMAT_INVALID'] = 'Select a JPEG or PNG photo.';
+$MESS['MAIL_AVATAR_IMAGE_INVALID'] = 'Could not process photo. Select a different one.';
+$MESS['MAIL_AVATAR_LIMIT_EXCEEDED'] = 'Photo is too large. Please select another one.';
+$MESS['MAIL_AVATAR_NOT_SUPPORTED'] = 'Shared photos for external senders are not available.';
+$MESS['MAIL_AVATAR_SAVE_FAILED'] = 'Could not save the changes. Please try again.';
+$MESS['MAIL_AVATAR_UPLOAD_INVALID'] = 'The selected photo is no longer available. Please select it again.';
+$MESS['MAIL_MESSAGE_ACCESS_DENIED'] = 'Message was not found or you don\'t have permission to view it.';
+$MESS['MAIL_SENDER_AVATAR_INVALID_CHANGE'] = 'Could not change sender photo.';
+$MESS['MAIL_SENDER_AVATAR_INVALID_SENDER'] = 'This sender\'s photo cannot be changed.';
+$MESS['MAIL_SENDER_AVATAR_LABEL_CANCEL'] = 'Cancel';
+$MESS['MAIL_SENDER_AVATAR_LABEL_CONFIRM'] = 'Save';
+$MESS['MAIL_SENDER_AVATAR_LABEL_DELETE'] = 'Delete photo';
+$MESS['MAIL_SENDER_AVATAR_LABEL_DELETE_PENDING'] = 'Deletion not saved';
+$MESS['MAIL_SENDER_AVATAR_LABEL_LOADING'] = 'Loading';
+$MESS['MAIL_SENDER_AVATAR_LABEL_OPEN'] = 'Change sender photo';
+$MESS['MAIL_SENDER_AVATAR_LABEL_REPLACE'] = 'Replace photo';
+$MESS['MAIL_SENDER_AVATAR_LABEL_REPLACE_PENDING'] = 'New photo not saved';
+$MESS['MAIL_SENDER_AVATAR_LABEL_RETRY'] = 'Try again';
+$MESS['MAIL_SENDER_AVATAR_LABEL_SAVING'] = 'Saving';
+$MESS['MAIL_SENDER_AVATAR_LABEL_SELECT'] = 'Select photo';
+$MESS['MAIL_SENDER_AVATAR_LABEL_TITLE'] = 'Sender photo';
+$MESS['MAIL_SENDER_AVATAR_LABEL_UPLOADER_ERROR'] = 'Could not complete the action. The photo has not been changed.';
+$MESS['MAIL_SENDER_AVATAR_VERSION_CONFLICT'] = 'The photo has already been changed. Check it and save again.';

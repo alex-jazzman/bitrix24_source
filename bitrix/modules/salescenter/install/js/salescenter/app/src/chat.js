@@ -575,6 +575,7 @@ export default {
 			},
 			editMenuItem(event, page)
 			{
+				event.stopPropagation();
 				this.editedPageId = page.id;
 				setTimeout(() =>
 				{
@@ -786,16 +787,16 @@ export default {
 							<div class="ui-sidepanel-toggle-btn">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>
 						</a>
 						<ul class="ui-sidepanel-submenu" :style="{height: pagesSubmenuHeight}">
-							<li v-for="page in pages" v-if="!page.isWebform" :key="page.id"
+							<li v-for="page in pages" v-if="!page.isWebform" :key="page.id" :data-testid="'salescenter-chat-page-item-' + page.id"
 							:class="{
 								'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),
 								'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)
 							}" class="ui-sidepanel-submenu-item">
-								<a :title="page.name" class="ui-sidepanel-submenu-link" @click.stop="onPageClick(page)">
-									<input class="ui-sidepanel-input" :value="page.name" v-on:keyup.enter="saveMenuItem($event)" @blur="saveMenuItem($event)" />
+								<a :title="page.name" :data-testid="'salescenter-chat-page-link-' + page.id" class="ui-sidepanel-submenu-link" @click.stop="onPageClick(page)">
+									<input :data-testid="'salescenter-chat-page-name-' + page.id" class="ui-sidepanel-input" :value="page.name" v-on:keyup.enter="saveMenuItem($event)" @blur="saveMenuItem($event)" />
 									<div class="ui-sidepanel-menu-link-text">{{page.name}}</div>
 									<div v-if="lastAddedPages.includes(page.id)" class="ui-sidepanel-badge-new"></div>
-									<div class="ui-sidepanel-edit-btn"><span class="ui-sidepanel-edit-btn-icon" @click="editMenuItem($event, page);"></span></div>
+									<div class="ui-sidepanel-edit-btn"><span :data-testid="'salescenter-chat-page-edit-' + page.id" class="ui-sidepanel-edit-btn-icon" @click="editMenuItem($event, page);"></span></div>
 								</a>
 							</li>
 							<li class="salescenter-app-helper-nav-item salescenter-app-menu-add-page" @click.stop="showAddPageActionPopup($event)">
@@ -871,7 +872,7 @@ export default {
 				</template>
 				<div v-show="isShowPreview && !isShowStartInfo && !isFrameError" class="salescenter-app-page-content">
 					<template v-for="page in pages">
-						<iframe class="salescenter-app-demo" v-show="currentPage && currentPage.id == page.id" :src="getFrameSource(page)" frameborder="0" @error="onFrameError(page.id)" @load="onFrameLoad(page.id)" :key="page.id"></iframe>
+						<iframe :data-testid="'salescenter-chat-page-preview-' + page.id" class="salescenter-app-demo" v-show="currentPage && currentPage.id == page.id" :src="getFrameSource(page)" frameborder="0" @error="onFrameError(page.id)" @load="onFrameLoad(page.id)" :key="page.id"></iframe>
 					</template>
 					<div class="salescenter-app-demo-overlay" :class="{
 						'salescenter-app-demo-overlay-loading': this.isShowLoader

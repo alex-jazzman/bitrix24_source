@@ -1,0 +1,3 @@
+<?php
+
+$MESS['TASKS_GRID_PROJECT_ROW_CONTENT_MEMBERS_OPEN_LIST'] = 'Открыть список участников';

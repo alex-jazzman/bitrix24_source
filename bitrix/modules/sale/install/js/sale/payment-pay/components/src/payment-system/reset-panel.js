@@ -5,6 +5,12 @@ import './button'
 
 BitrixVue.component('sale-payment_pay-components-payment_system-reset_panel', {
 	mixins:[MixinResetPanel],
+	// only the stage of errors provides it
+	inject: {
+		paymentErrorTextId: {
+			default: null,
+		},
+	},
 	computed:
 	{
 		localize()
@@ -20,7 +26,10 @@ BitrixVue.component('sale-payment_pay-components-payment_system-reset_panel', {
 				{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_6 }}
 			</div>
 			<div class="order-basket-section-another-payment-button">
-				<sale-payment_pay-components-payment_system-button @click="reset()">
+				<sale-payment_pay-components-payment_system-button
+					:aria-describedby="paymentErrorTextId"
+					@click="reset()"
+				>
 					{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_7 }}
 				</sale-payment_pay-components-payment_system-button>
 			</div>

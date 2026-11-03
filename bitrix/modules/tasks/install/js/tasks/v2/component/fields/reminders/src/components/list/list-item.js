@@ -51,7 +51,6 @@ export const ListItem = {
 	data(): Object
 	{
 		return {
-			isItemHovered: false,
 			isSheetShown: false,
 		};
 	},
@@ -112,11 +111,7 @@ export const ListItem = {
 		},
 	},
 	template: `
-		<div
-			class="tasks-field-reminders-row"
-			@mouseover="isItemHovered = true"
-			@mouseleave="isItemHovered = false"
-		>
+		<div class="tasks-field-reminders-row" data-testid="tasks-reminders-list-item">
 			<div class="tasks-field-reminders-column --via">
 				<BIcon v-hint="viaTooltip" :name="remindersMeta.via[reminder.remindVia].icon" ref="via"/>
 			</div>
@@ -129,13 +124,27 @@ export const ListItem = {
 				</div>
 				<TextMd>{{ recipient.title }}</TextMd>
 			</div>
-			<div class="tasks-field-reminders-column --action" v-if="isItemHovered">
-				<div ref="edit" @click="isSheetShown = true">
-					<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable/>
-				</div>
-				<div ref="remove" @click="removeItem">
-					<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable/>
-				</div>
+			<div class="tasks-field-reminders-column --action">
+				<button
+					type="button"
+					class="tasks-field-reminders-action"
+					:aria-label="loc('TASKS_V2_REMINDERS_LIST_ACTION_EDIT')"
+					data-testid="tasks-reminders-edit-btn"
+					ref="edit"
+					@click="isSheetShown = true"
+				>
+					<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable aria-hidden="true"/>
+				</button>
+				<button
+					type="button"
+					class="tasks-field-reminders-action"
+					:aria-label="loc('TASKS_V2_REMINDERS_LIST_ACTION_REMOVE')"
+					data-testid="tasks-reminders-remove-btn"
+					ref="remove"
+					@click="removeItem"
+				>
+					<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable aria-hidden="true"/>
+				</button>
 			</div>
 		</div>
 		<ReminderSheet

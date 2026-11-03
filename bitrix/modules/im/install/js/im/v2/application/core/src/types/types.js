@@ -1,4 +1,4 @@
-import { type RawSettings } from 'im.v2.const';
+import { type ChatTypeItem, type RawSettings } from 'im.v2.const';
 import {
 	type ImModelUser,
 	type ImModelAnchor,
@@ -25,8 +25,13 @@ export type ApplicationData = {
 	},
 	counters: ImModelCounter[],
 	notificationCounter: number,
-	folders: ImModelFolder[],
-	folderLimits: FolderLimits,
+	folders: {
+		list: ImModelFolder[],
+		limits: FolderLimits,
+		// Web values of ChatType, computed by the server per portal. Why the set is not closed -
+		// see FolderManager.canChatBeInFolder in im.v2.lib.folder.
+		allowedTypes: ChatTypeItem[],
+	},
 	isGuestWelcome?: boolean,
 	videoCallsTermsUrl?: string,
 };

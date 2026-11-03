@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder;
+
 $migration = \Bitrix\Main\UpdateSystem\Migration::getInstance();
 
 $migration->table('b_intranet_sharepoint')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -50,6 +52,13 @@ $migration->table('b_intranet_sharepoint_log')->create(function (\Bitrix\Main\Up
 	$table->addPrimaryKey('ID');
 	$table->addUniqueIndex('ui_b_intranet_sharepoint_log', ['IBLOCK_ID', 'ELEMENT_ID']);
 });
+
+$migration->table('b_intranet_sharepoint_allowed_origin')->create(
+	function (CreateTableBuilder $table) {
+		$table->addId();
+		$table->addColumn()->varchar('ORIGIN', 512)->notNull();
+	},
+);
 
 $migration->table('b_rating_subordinate')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();

@@ -51,12 +51,12 @@
 }
 .crm-fields-edit .crm-field-lhe { display:none; }
 
-.bx-edit-table tbody td.bx-field-value:hover .crm-field-icon {background:url("images/lead-mini-sprite.png") no-repeat 0 -55px;}
+.bx-edit-table tbody td.bx-field-value:hover .crm-field-icon {background:url("images/lead-mini-sprite.webp") no-repeat 0 -55px;}
 .crm-fields-edit .crm-field-icon { background: none repeat scroll 0 0 transparent !important; }
 .crm-fields-edit .crm-field-icon-lhe { display:none; }
 .crm-field-lhe-wrap { border:1px solid #dedede; margin:10px; }
 
-.bx-edit-table tbody td.bx-field-value:hover .crm-field-icon-lock {background:url("images/lead-mini-sprite.png") no-repeat 0 -154px;}
+.bx-edit-table tbody td.bx-field-value:hover .crm-field-icon-lock {background:url("images/lead-mini-sprite.webp") no-repeat 0 -154px;}
 
 table.bx-edit-table td.bx-padding {padding-top:6px!important;}
 .crm-field input[type="text"] {margin:1px 0 0 2px}

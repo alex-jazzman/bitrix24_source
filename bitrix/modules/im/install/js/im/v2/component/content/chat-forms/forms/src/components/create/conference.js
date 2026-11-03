@@ -11,7 +11,6 @@ import {
 	CreateChatHeading,
 	SettingsSection,
 	RightsSection,
-	AppearanceSection,
 	ConferenceSection,
 } from 'im.v2.component.content.chat-forms.elements';
 import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
@@ -32,7 +31,6 @@ export const ConferenceCreation = {
 		ChatMembersSelector,
 		SettingsSection,
 		RightsSection,
-		AppearanceSection,
 		ConferenceSection,
 		ButtonPanel,
 		CreateChatHeading,
@@ -249,7 +247,11 @@ export const ConferenceCreation = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat-forms__content --conference" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --conference"
+			data-testid="im-chat-form-create-videoconf"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar 
 					:avatarFile="avatarFile" 
@@ -261,7 +263,11 @@ export const ConferenceCreation = {
 			</div>
 			<CreateChatHeading :text="loc('IM_CREATE_CHAT_MEMBERS_TITLE')" />
 			<div class="bx-im-content-chat-forms__members_container">
-				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+				<ChatMembersSelector
+					:chatMembers="chatMembers"
+					:chatType="ChatType.videoconf"
+					@membersChange="onMembersChange"
+				/>
 			</div>
 			<ConferenceSection
 				:passwordNeeded="conference.passwordNeeded"

@@ -4,6 +4,21 @@
 
 	(function () {
 
+		/**
+		 * The keyboard entry point of the panel (getFirstFocusableNode, focusFirstItem) and
+		 * what a hidden panel exposes to the keyboard (setPanelInteractive) are covered by
+		 * unit tests that live in another module:
+		 * crm/install/js/crm/kanban/tests/unit/action-panel-accessibility.test.js.
+		 * This extension is legacy and has no bundle config of its own, so it cannot host
+		 * a chef test suite; crm.kanban loads it and takes the classes from the BX
+		 * namespace exactly as the product does.
+		 *
+		 * Run them when changing this file:
+		 *   chef test unit crm.kanban --project chromium
+		 *
+		 * The panel sits under every list of Bitrix24, so a change here reaches far
+		 * beyond the kanban the tests are named after.
+		 */
 		BX.namespace('BX.UI');
 
 		// a parent container holds one live panel: the previous one is destroyed when a new panel is drawn
@@ -44,6 +59,7 @@
 			this.parentPosition = options.parentPosition;
 			this.panelIsFixed = null;
 			this.removeLeftPosition = options.removeLeftPosition;
+			this.panelInteractive = false;
 			this.positionTracker = null;
 			this.overflowCalculator = null;
 			// the row width is the only input of the overflow: both widths tell a pass from a repeat of it
@@ -172,6 +188,46 @@
 					return item.id === id;
 				});
 			},
+			/**
+			 * Returns the node of the first panel item that can take keyboard focus: enabled,
+			 * shown and reachable from the keyboard. Items that are disabled, hidden or have no
+			 * accessible name are skipped -- focus on them is either a dead end or a no-op.
+			 * A panel that is not shown returns null for the same reason.
+			 *
+			 * This is the supported way for a consumer to reach into the panel: the markup of
+			 * the panel (class names, data attributes, the node that actually holds focus for
+			 * an item) is internal and changes without notice.
+			 *
+			 * @returns {HTMLElement|null}
+			 */
+			getFirstFocusableNode: function () {
+				// A hidden panel has nothing to offer: its actions are invisible, and the
+				// browser refuses focus inside an inert subtree anyway.
+				if (!this.panelInteractive) {
+					return null;
+				}
+				for (var i = 0; i < this.items.length; i++) {
+					var node = this.items[i].getFocusableNode();
+					if (node) {
+						return node;
+					}
+				}
+				return null;
+			},
+			/**
+			 * Moves keyboard focus to the first focusable panel item, see getFirstFocusableNode().
+			 * Part of the panel contract.
+			 *
+			 * @returns {boolean} whether focus has been moved
+			 */
+			focusFirstItem: function () {
+				var node = this.getFirstFocusableNode();
+				if (!node) {
+					return false;
+				}
+				node.focus();
+				return document.activeElement === node;
+			},
 			addItems: function (items) {
 				items.forEach(function (item) {
 					this.appendItem(item);
@@ -187,6 +243,12 @@
 					var item = this.buildItem(options);
 					this.items.push(item);
 					this.layout.itemContainer.appendChild(item.render());
+
+					// The panel is filled and refilled while it is hidden, so an item has to
+					// arrive in the state the panel is in, see setPanelInteractive().
+					if (!this.panelInteractive) {
+						item.setTabbable(false);
+					}
 				}
 			},
 			fillHiddenItems: function () {
@@ -207,9 +269,24 @@
 						props: {
 							className: "ui-action-panel-more"
 						},
+						attrs: {
+							role: 'button',
+							// The block is built on demand, and a window resize builds it while
+							// the panel is hidden, see setPanelInteractive().
+							tabindex: this.panelInteractive ? '0' : '-1',
+							'aria-haspopup': 'menu',
+							'aria-expanded': 'false',
+							'data-testid': 'ui-action-panel-more-btn'
+						},
 						text: BX.message('JS_UI_ACTIONPANEL_MORE_BLOCK'),
 						events: {
-							click: this.handleClickMoreBlock.bind(this)
+							click: this.handleClickMoreBlock.bind(this),
+							keydown: function (event) {
+								if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+									event.preventDefault();
+									this.handleClickMoreBlock(event);
+								}
+							}.bind(this)
 						}
 					});
 				}
@@ -323,6 +400,7 @@
 							// getMoreBlock() recreates the node: a destroyed panel must not get its markup back
 							if (!this.destroyed) {
 								BX.removeClass(this.getMoreBlock(), "ui-action-panel-item-active");
+								this.getMoreBlock().setAttribute('aria-expanded', 'false');
 							}
 						}.bind(this)
 					}
@@ -332,6 +410,7 @@
 				// menu up on every one of them costs more than the adjustment itself
 				this.moreMenuWindow = popupMenu;
 				popupMenu.show();
+				this.getMoreBlock().setAttribute('aria-expanded', 'true');
 			},
 			removeMoreBlock: function () {
 				if (!this.layout.more) return;
@@ -363,6 +442,38 @@
 					children: [this.showTotalSelectedBlock ? this.getTotalSelectedBlock() : null, this.getItemContainer(), this.showResetAllBlock ? this.getResetAllBlock() : null]
 				});
 				this.maxHeight ? this.layout.container.style.maxHeight = this.maxHeight + "px" : null;
+
+				// The panel is built hidden and is shown only once something is selected.
+				this.setPanelInteractive(false);
+			},
+			/**
+			 * Follows the visibility of the panel with its operability.
+			 *
+			 * A hidden panel is only faded out (.ui-action-panel has opacity: 0 and
+			 * pointer-events: none), so without this its actions and its "more" block keep
+			 * their place in the Tab order and in the accessibility tree: once the selection
+			 * is dropped, Tab would walk through actions nobody can see (WCAG 2.4.3, 4.1.2).
+			 *
+			 * Both mechanisms are used on purpose. 'inert' is the one that answers for the
+			 * whole subtree, whatever appears inside it later and however the panel is
+			 * filled, and it takes the panel out of the accessibility tree as well; the
+			 * tabindex switch keeps a browser that does not support the attribute out of the
+			 * same trap. Nothing else about an item is touched, so a panel shown again is
+			 * exactly the panel that was hidden.
+			 *
+			 * @param {boolean} interactive
+			 */
+			setPanelInteractive: function (interactive) {
+				this.panelInteractive = interactive;
+				if (this.layout.container) {
+					interactive ? this.layout.container.removeAttribute('inert') : this.layout.container.setAttribute('inert', '');
+				}
+				this.items.forEach(function (item) {
+					item.setTabbable(interactive);
+				});
+				if (this.layout.more) {
+					this.layout.more.setAttribute('tabindex', interactive ? '0' : '-1');
+				}
 			},
 			getItemContainer: function () {
 				return this.layout.itemContainer = BX.create('div', {
@@ -559,6 +670,10 @@
 				if (this.pinnedMode) {
 					this.activatePanelItems();
 				}
+
+				// Before the early return below, so a panel that is already shown cannot be
+				// left inert by a state the caller did not expect.
+				this.setPanelInteractive(true);
 				if (BX.hasClass(this.layout.container, "ui-action-panel-show")) return;
 				BX.addClass(this.layout.container, "ui-action-panel-show");
 				BX.addClass(this.layout.container, "ui-action-panel-show-animate");
@@ -576,10 +691,14 @@
 			},
 			hidePanel: function () {
 				BX.onCustomEvent(this, 'BX.UI.ActionPanel:hidePanel', [this]);
+
+				// A pinned panel stays on the screen and only disables its items, so it keeps
+				// answering to the keyboard the same way it answers to the mouse.
 				if (this.pinnedMode) {
 					this.disablePanelItems();
 					return;
 				}
+				this.setPanelInteractive(false);
 				BX.removeClass(this.layout.container, "ui-action-panel-show");
 				BX.removeClass(this.layout.container, "ui-action-panel-show-animate");
 				BX.addClass(this.layout.container, "ui-action-panel-hide-animate");
@@ -679,204 +798,451 @@
 		};
 	})();
 
-	(function () {
+	var item = {};
 
-		BX.namespace('BX.UI');
-		BX.UI.ActionPanel.Item = function (options) {
-			this.id = options.id;
-			this.type = options.type;
-			this.text = options.text;
-			this.html = options.text;
-			this.icon = options.icon;
-			this.title = options.title;
-			this.iconOnly = options.iconOnly;
-			this.additionalClassForPanel = options.additionalClassForPanel;
-			this.submenuOptions = {};
-			if (options.submenuOptions && BX.type.isString(options.submenuOptions)) {
-				try {
-					this.submenuOptions = JSON.parse(options.submenuOptions);
-				} catch (e) {}
+	var hasRequiredItem;
+
+	function requireItem () {
+		if (hasRequiredItem) return item;
+		hasRequiredItem = 1;
+		(function () {
+
+			/**
+			 * Accessibility of the panel items (button semantics, Tab order, Enter/Space
+			 * activation, getFocusableNode) is covered by unit tests that live in another
+			 * module: crm/install/js/crm/kanban/tests/unit/action-panel-accessibility.test.js.
+			 * This extension is legacy and has no bundle config of its own, so it cannot host
+			 * a chef test suite; crm.kanban loads it and takes the classes from the BX
+			 * namespace exactly as the product does.
+			 *
+			 * Run them when changing this file:
+			 *   chef test unit crm.kanban --project chromium
+			 *
+			 * The panel sits under every list of Bitrix24, so a change here reaches far
+			 * beyond the kanban the tests are named after.
+			 */
+			BX.namespace('BX.UI');
+
+			// Nodes that take keyboard focus on their own.
+			//
+			// One list answers both questions an item asks -- "can this node be focused" and
+			// "does the item already contain something interactive" -- because the two must
+			// not disagree. Content that cannot be focused (a disabled control, tabindex="-1")
+			// would otherwise stop the item from becoming a button while offering nothing to
+			// focus in its place, leaving the whole item unreachable from the keyboard.
+			//
+			// Such content may then end up inside a role="button", and that is allowed: what
+			// ARIA forbids there is a focusable descendant. It does lose its own place in the
+			// accessibility tree, which is the correct reading anyway -- it is not operable,
+			// while the item as a whole is.
+			var focusableSelector = ['a[href]', 'button:not([disabled])', 'input:not([disabled]):not([type="hidden"])', 'select:not([disabled])', 'textarea:not([disabled])', 'summary', '[contenteditable]:not([contenteditable="false"])', '[tabindex]:not([tabindex="-1"])'].join(', ');
+			function isFocusableNode(node) {
+				return node.matches(focusableSelector);
 			}
-			this.buttonIconClass = options.buttonIconClass;
-			this.onclick = options.onclick;
-			this.href = options.href;
-			this.items = options.items;
-			this.actionPanel = options.actionPanel;
-			this.options = options;
-			this.attributes = BX.prop.getObject(options, 'attributes');
-			this.dataset = options.dataset;
-			this.disabled = options.disabled;
-			this.layout = {
-				container: null,
-				icon: null,
-				text: null
-			};
-		};
-		BX.UI.ActionPanel.Item.prototype = {
-			changeIconClass: function (iconClass) {
-				BX.removeClass(this.layout.container, this.buttonIconClass);
-				BX.addClass(this.layout.container, iconClass);
-				this.buttonIconClass = iconClass;
-			},
-			render: function () {
-				var selectorType;
-				this.href ? selectorType = "a" : selectorType = "div";
-				var className = "ui-action-panel-item " + (this.additionalClassForPanel ? this.additionalClassForPanel + ' ' : '') + (this.disabled ? 'ui-action-panel-item-is-disabled' : '');
-				if (this.buttonIconClass) {
-					className = 'ui-btn ui-btn-lg ui-btn-link ' + this.buttonIconClass;
+
+			/**
+			 * Tells whether the node is laid out. Focus silently stays where it was when it
+			 * is moved to a node with 'display: none', which is how the panel hides items.
+			 *
+			 * @param {HTMLElement} node
+			 * @returns {boolean}
+			 */
+			function isDisplayed(node) {
+				for (var current = node; current && current.nodeType === 1; current = current.parentElement) {
+					if (current.hidden || current.style && current.style.display === 'none') {
+						return false;
+					}
 				}
-				if (this.onclick && BX.type.isArray(this.items) && this.items.length > 0) {
-					this.layout.container = BX.create('div', {
-						props: {
-							className: 'ui-btn-split ui-btn-link' + (this.buttonIconClass ? ' ' + this.buttonIconClass : '')
-						},
-						children: [BX.create('button', {
-							props: {
-								className: 'ui-btn-main'
-							},
-							events: {
-								click: this.handleMainClick.bind(this)
-							},
-							text: this.text
-						}), BX.create('button', {
+
+				// A node outside the document has no boxes to measure, so the inline check above
+				// is all there is; inside the document an empty rect list means it is not rendered.
+				return !node.isConnected || node.getClientRects().length > 0;
+			}
+			BX.UI.ActionPanel.Item = function (options) {
+				this.id = options.id;
+				this.type = options.type;
+				this.text = options.text;
+				this.html = options.text;
+				this.icon = options.icon;
+				this.title = options.title;
+				this.iconOnly = options.iconOnly;
+				this.additionalClassForPanel = options.additionalClassForPanel;
+				this.submenuOptions = {};
+				if (options.submenuOptions && BX.type.isString(options.submenuOptions)) {
+					try {
+						this.submenuOptions = JSON.parse(options.submenuOptions);
+					} catch (e) {}
+				}
+				this.buttonIconClass = options.buttonIconClass;
+				this.onclick = options.onclick;
+				this.href = options.href;
+				this.items = options.items;
+				this.actionPanel = options.actionPanel;
+				this.options = options;
+				this.attributes = BX.prop.getObject(options, 'attributes');
+				this.dataset = options.dataset;
+				this.disabled = options.disabled;
+				this.submenuTrigger = null;
+				this.layout = {
+					container: null,
+					icon: null,
+					text: null
+				};
+			};
+			BX.UI.ActionPanel.Item.prototype = {
+				changeIconClass: function (iconClass) {
+					BX.removeClass(this.layout.container, this.buttonIconClass);
+					BX.addClass(this.layout.container, iconClass);
+					this.buttonIconClass = iconClass;
+				},
+				/**
+				 * Test id of the item. The panel renders many items at once, so the shared
+				 * prefix alone selects all of them; the item id is mixed in to tell them
+				 * apart. Items without an id keep the bare prefix, hence the "starts with"
+				 * form in selectors: '[data-testid^="ui-action-panel-item"]'.
+				 *
+				 * @returns {string}
+				 */
+				getTestId: function () {
+					var base = 'ui-action-panel-item';
+					return BX.type.isNotEmptyString(this.id) || BX.type.isNumber(this.id) ? base + '-' + this.id : base;
+				},
+				render: function () {
+					var selectorType;
+					this.href ? selectorType = "a" : selectorType = "div";
+					var className = "ui-action-panel-item " + (this.additionalClassForPanel ? this.additionalClassForPanel + ' ' : '') + (this.disabled ? 'ui-action-panel-item-is-disabled' : '');
+					if (this.buttonIconClass) {
+						className = 'ui-btn ui-btn-lg ui-btn-link ' + this.buttonIconClass;
+					}
+					if (this.onclick && BX.type.isArray(this.items) && this.items.length > 0) {
+						// Native <button> submenu trigger: mark it as a menu opener for AT.
+						// It is icon-only, so the name comes from aria-label built on the main button text.
+						var submenuTriggerAttrs = {
+							'aria-haspopup': 'menu',
+							'aria-expanded': 'false',
+							'data-testid': this.getTestId() + '-submenu-trigger'
+						};
+						var submenuTriggerLabel = this.getSubmenuTriggerLabel();
+						if (submenuTriggerLabel) {
+							submenuTriggerAttrs['aria-label'] = submenuTriggerLabel;
+						}
+						this.submenuTrigger = BX.create('button', {
 							props: {
 								className: 'ui-btn-menu'
 							},
+							attrs: submenuTriggerAttrs,
 							events: {
 								click: this.handleMenuClick.bind(this)
 							}
-						})],
-						attrs: this.attributes,
-						dataset: {
-							role: 'action-panel-item'
-						}
-					});
-				} else {
-					this.layout.container = BX.create(selectorType, {
-						props: {
-							className: className
-						},
-						children: [this.icon ? '<span class="ui-action-panel-item-icon"><img src="' + this.icon + '"></span>' : null, this.text && !this.buttonIconClass && this.iconOnly !== true ? '<span class="ui-action-panel-item-title">' + this.text + '</span>' : this.iconOnly !== true ? this.text : null],
-						attrs: this.attributes,
-						dataset: {
-							role: 'action-panel-item'
-						},
-						events: {
-							click: this.handleClick.bind(this)
-						}
-					});
-				}
-				this.href ? this.layout.container.setAttribute('href', this.href) : null;
-				this.href || this.title ? this.layout.container.setAttribute('title', this.title ? this.title : this.text) : null;
-				if (BX.type.isString(this.onclick)) {
-					this.layout.container.setAttribute('onclick', this.onclick);
-				}
-				if (this.dataset) {
-					BX.adjust(this.layout.container, {
-						'dataset': this.dataset
-					});
-				}
-				if (this.options.hide) {
-					this.hide();
-				}
-				if (this.id) {
-					this.layout.container.id = this.id;
-				}
-				return this.layout.container;
-			},
-			show: function () {
-				BX.show(this.layout.container, 'block');
-			},
-			showAsInlineBlock: function () {
-				BX.style(this.layout.container, 'display', 'inline-block');
-			},
-			hide: function () {
-				BX.hide(this.layout.container, 'none');
-			},
-			destroy: function () {
-				BX.remove(this.layout.container);
-			},
-			isVisible: function () {
-				if (this.layout.container.offsetTop > 8) {
-					return false;
-				}
-				return true;
-			},
-			isNotFit: function () {
-				return this.layout.container.offsetHeight > 0 && !this.isVisible();
-			},
-			handleMenuClick: function (event) {
-				if (this.isDisabled()) {
+						});
+						this.layout.container = BX.create('div', {
+							props: {
+								className: 'ui-btn-split ui-btn-link' + (this.buttonIconClass ? ' ' + this.buttonIconClass : '')
+							},
+							children: [BX.create('button', {
+								props: {
+									className: 'ui-btn-main'
+								},
+								events: {
+									click: this.handleMainClick.bind(this)
+								},
+								text: this.text
+							}), this.submenuTrigger],
+							attrs: this.attributes,
+							dataset: {
+								role: 'action-panel-item',
+								testid: this.getTestId()
+							}
+						});
+					} else {
+						this.layout.container = BX.create(selectorType, {
+							props: {
+								className: className
+							},
+							children: [this.icon ? '<span class="ui-action-panel-item-icon"><img src="' + this.icon + '"></span>' : null, this.text && !this.buttonIconClass && this.iconOnly !== true ? '<span class="ui-action-panel-item-title">' + this.text + '</span>' : this.iconOnly !== true ? this.text : null],
+							attrs: this.attributes,
+							dataset: {
+								role: 'action-panel-item',
+								testid: this.getTestId()
+							},
+							events: {
+								click: this.handleClick.bind(this)
+							}
+						});
+						this.makeItemAccessible();
+					}
+					this.href ? this.layout.container.setAttribute('href', this.href) : null;
+					this.href || this.title ? this.layout.container.setAttribute('title', this.title ? this.title : this.text) : null;
+					if (BX.type.isString(this.onclick)) {
+						this.layout.container.setAttribute('onclick', this.onclick);
+					}
+					if (this.dataset) {
+						BX.adjust(this.layout.container, {
+							'dataset': this.dataset
+						});
+					}
+					if (this.options.hide) {
+						this.hide();
+					}
+					if (this.id) {
+						this.layout.container.id = this.id;
+					}
+					return this.layout.container;
+				},
+				/**
+				 * Tells whether the item will expose a name to assistive technology: own text,
+				 * a title attribute (set right after render) or an explicitly passed aria-label.
+				 *
+				 * @param {HTMLElement} container
+				 * @returns {boolean}
+				 */
+				hasAccessibleName: function (container) {
+					if (BX.util.trim(container.textContent || '') !== '') {
+						return true;
+					}
+					if (BX.type.isNotEmptyString(this.title)) {
+						return true;
+					}
+					return BX.type.isNotEmptyString(container.getAttribute('aria-label')) || BX.type.isNotEmptyString(container.getAttribute('aria-labelledby'));
+				},
+				/**
+				 * Tells whether the rendered item contains a control the keyboard can reach on its
+				 * own. The check runs over the parsed markup, not over the source string, so it also
+				 * covers content added to the item after render, and it uses the same definition of
+				 * a focusable node as getFocusableNode(): whatever stops the item from becoming a
+				 * button has to be something getFocusableNode() can then offer instead.
+				 *
+				 * @param {HTMLElement} container
+				 * @returns {boolean}
+				 */
+				hasInteractiveContent: function (container) {
+					return container.querySelector(focusableSelector) !== null;
+				},
+				/**
+				 * Returns the node that takes keyboard focus for this item, or null when the item
+				 * cannot be focused: disabled, hidden or not keyboard reachable at all. Part of the
+				 * panel contract, see BX.UI.ActionPanel.getFirstFocusableNode().
+				 *
+				 * @returns {HTMLElement|null}
+				 */
+				getFocusableNode: function () {
+					var container = this.layout.container;
+					if (!container || this.isDisabled() || !this.isVisible() || !isDisplayed(container)) {
+						return null;
+					}
+					if (isFocusableNode(container)) {
+						return container;
+					}
+
+					// A split button keeps the item semantics on its native child buttons, and an
+					// item with interactive content is reachable through that content.
+					var child = container.querySelector(focusableSelector);
+					return child && isDisplayed(child) ? child : null;
+				},
+				/**
+				 * Builds an accessible name for the icon-only submenu trigger of a split button.
+				 * A main button without text leaves nothing to build the name from, so the
+				 * trigger takes the name the panel already gives its own menu opener.
+				 *
+				 * @returns {string}
+				 */
+				getSubmenuTriggerLabel: function () {
+					var text = BX.type.isNotEmptyString(this.text) ? BX.util.trim(this.text) : '';
+					if (text === '') {
+						return BX.message('JS_UI_ACTIONPANEL_MORE_BLOCK') || '';
+					}
+					var template = BX.message('JS_UI_ACTIONPANEL_SUBMENU_TRIGGER_FOR');
+					return template ? template.replace('#TEXT#', text) : text;
+				},
+				/**
+				 * Makes a non-native panel item (rendered as a <div>) keyboard-reachable and
+				 * semantically a button: role, tabindex and Enter/Space activation. Links
+				 * (<a href>) are natively focusable and left untouched. Submenu triggers get
+				 * menu semantics.
+				 */
+				makeItemAccessible: function () {
+					var container = this.layout.container;
+					if (!container || this.href) {
+						return;
+					}
+
+					// An icon-only item without a title has no text at all: making it focusable
+					// would put a nameless control into the accessibility tree, so leave it as is.
+					if (!this.hasAccessibleName(container)) {
+						return;
+					}
+
+					// 'text' is rendered as markup, so a consumer may put a link or a form control
+					// inside the item. Content the keyboard can reach on its own must not be wrapped
+					// in a button; the item keeps its plain semantics and stays reachable through the
+					// control it contains. Content that cannot be reached does not count -- see
+					// focusableSelector.
+					if (this.hasInteractiveContent(container)) {
+						return;
+					}
+					container.setAttribute('role', 'button');
+					container.setAttribute('tabindex', this.disabled ? '-1' : '0');
+					if (this.disabled) {
+						container.setAttribute('aria-disabled', 'true');
+					}
+					if (BX.type.isArray(this.items) && this.items.length > 0) {
+						container.setAttribute('aria-haspopup', 'menu');
+						container.setAttribute('aria-expanded', 'false');
+						this.submenuTrigger = container;
+					}
+					BX.bind(container, 'keydown', this.handleKeyDown.bind(this));
+				},
+				/**
+				 * Activates the item on Enter/Space, matching a native button.
+				 *
+				 * Activation goes through a click dispatched on the item node, not through a direct
+				 * call of the click handler. An item carries its action either as a function, which
+				 * consumers write against a MouseEvent, or as a string, which lands in the inline
+				 * onclick attribute and only ever runs on a real click event. Dispatching makes the
+				 * keyboard do exactly what the mouse does for both kinds.
+				 *
+				 * @param {KeyboardEvent} event
+				 */
+				handleKeyDown: function (event) {
+					if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
+						return;
+					}
 					event.preventDefault();
-					return;
-				}
-				return this.openSubMenu();
-			},
-			handleMainClick: function (event) {
-				if (this.isDisabled()) {
-					event.preventDefault();
-					return;
-				}
-				if (BX.type.isFunction(this.onclick)) {
-					this.onclick.call(this, event, this);
-				}
-			},
-			handleClick: function (event) {
-				if (this.isDisabled()) {
-					event.preventDefault();
-					return;
-				}
-				if (BX.type.isArray(this.items) && this.items.length > 0) {
-					this.openSubMenu();
-				} else {
+					if (this.isDisabled()) {
+						return;
+					}
+					this.layout.container.click();
+				},
+				show: function () {
+					BX.show(this.layout.container, 'block');
+				},
+				showAsInlineBlock: function () {
+					BX.style(this.layout.container, 'display', 'inline-block');
+				},
+				hide: function () {
+					BX.hide(this.layout.container, 'none');
+				},
+				destroy: function () {
+					BX.remove(this.layout.container);
+				},
+				isVisible: function () {
+					if (this.layout.container.offsetTop > 8) {
+						return false;
+					}
+					return true;
+				},
+				isNotFit: function () {
+					return this.layout.container.offsetHeight > 0 && !this.isVisible();
+				},
+				handleMenuClick: function (event) {
+					if (this.isDisabled()) {
+						event.preventDefault();
+						return;
+					}
+					return this.openSubMenu();
+				},
+				handleMainClick: function (event) {
+					if (this.isDisabled()) {
+						event.preventDefault();
+						return;
+					}
 					if (BX.type.isFunction(this.onclick)) {
 						this.onclick.call(this, event, this);
 					}
-				}
-			},
-			isDisabled: function () {
-				return this.disabled;
-			},
-			disable: function () {
-				this.disabled = true;
-				if (this.layout && this.layout.container) {
-					BX.data(this.layout.container, 'slider-ignore-autobinding', true);
-					this.layout.container.classList.add('ui-action-panel-item-is-disabled');
-				}
-			},
-			enable: function () {
-				this.disabled = false;
-				if (this.layout && this.layout.container) {
-					BX.data(this.layout.container, 'slider-ignore-autobinding', false);
-					this.layout.container.classList.remove('ui-action-panel-item-is-disabled');
-				}
-			},
-			openSubMenu: function () {
-				if (!BX.type.isArray(this.items) || this.items.length === 0) {
-					return;
-				}
-				var bindElement = this.layout.container;
-				var popupMenuOptions = {
-					className: "ui-action-panel-item-popup-menu",
-					angle: true,
-					zIndex: this.actionPanel.zIndex ? this.actionPanel.zIndex + 1 : null,
-					offsetLeft: bindElement.offsetWidth / 2,
-					closeByEsc: true,
-					events: {
-						onPopupClose: function () {
-							popupMenu.destroy();
-							BX.removeClass(bindElement, "ui-action-panel-item-active");
+				},
+				handleClick: function (event) {
+					if (this.isDisabled()) {
+						event.preventDefault();
+						return;
+					}
+					if (BX.type.isArray(this.items) && this.items.length > 0) {
+						this.openSubMenu();
+					} else {
+						if (BX.type.isFunction(this.onclick)) {
+							this.onclick.call(this, event, this);
 						}
 					}
-				};
-				popupMenuOptions = BX.mergeEx(popupMenuOptions, this.submenuOptions);
-				var popupMenu = BX.PopupMenu.create("ui-action-panel-item-popup-menu", bindElement, this.items, popupMenuOptions);
-				popupMenu.layout.menuContainer.setAttribute("data-tile-grid", "tile-grid-stop-close");
-				popupMenu.show();
-				BX.addClass(this.layout.container, "ui-action-panel-item-active");
-			}
-		};
-	})();
+				},
+				isDisabled: function () {
+					return this.disabled;
+				},
+				/**
+				 * Puts the item in or out of the Tab order. Only an item that carries the button
+				 * semantics itself is written to: a link is natively focusable and content a
+				 * consumer put inside the item is not this extension's to touch.
+				 *
+				 * Called both when the item is enabled or disabled and when the whole panel is
+				 * shown or hidden, see BX.UI.ActionPanel.setPanelInteractive(). A disabled item
+				 * stays out of the Tab order in any case.
+				 *
+				 * @param {boolean} tabbable
+				 */
+				setTabbable: function (tabbable) {
+					var container = this.layout ? this.layout.container : null;
+					if (!container || container.getAttribute('role') !== 'button') {
+						return;
+					}
+					container.setAttribute('tabindex', tabbable && !this.isDisabled() ? '0' : '-1');
+				},
+				disable: function () {
+					this.disabled = true;
+					if (this.layout && this.layout.container) {
+						BX.data(this.layout.container, 'slider-ignore-autobinding', true);
+						this.layout.container.classList.add('ui-action-panel-item-is-disabled');
+						if (this.layout.container.getAttribute('role') === 'button') {
+							this.layout.container.setAttribute('aria-disabled', 'true');
+						}
+						this.setTabbable(false);
+					}
+				},
+				enable: function () {
+					this.disabled = false;
+					if (this.layout && this.layout.container) {
+						BX.data(this.layout.container, 'slider-ignore-autobinding', false);
+						this.layout.container.classList.remove('ui-action-panel-item-is-disabled');
+						if (this.layout.container.getAttribute('role') === 'button') {
+							this.layout.container.setAttribute('aria-disabled', 'false');
+						}
+						this.setTabbable(true);
+					}
+				},
+				openSubMenu: function () {
+					if (!BX.type.isArray(this.items) || this.items.length === 0) {
+						return;
+					}
+					var bindElement = this.layout.container;
+					var submenuTrigger = this.submenuTrigger;
+					var popupMenuOptions = {
+						className: "ui-action-panel-item-popup-menu",
+						angle: true,
+						zIndex: this.actionPanel.zIndex ? this.actionPanel.zIndex + 1 : null,
+						offsetLeft: bindElement.offsetWidth / 2,
+						closeByEsc: true,
+						events: {
+							onPopupClose: function () {
+								popupMenu.destroy();
+								BX.removeClass(bindElement, "ui-action-panel-item-active");
+								if (submenuTrigger) {
+									submenuTrigger.setAttribute('aria-expanded', 'false');
+								}
+							}
+						}
+					};
+					popupMenuOptions = BX.mergeEx(popupMenuOptions, this.submenuOptions);
+					var popupMenu = BX.PopupMenu.create("ui-action-panel-item-popup-menu", bindElement, this.items, popupMenuOptions);
+					popupMenu.layout.menuContainer.setAttribute("data-tile-grid", "tile-grid-stop-close");
+					popupMenu.show();
+					BX.addClass(this.layout.container, "ui-action-panel-item-active");
+					if (submenuTrigger) {
+						submenuTrigger.setAttribute('aria-expanded', 'true');
+					}
+				}
+			};
+		})();
+		return item;
+	}
+
+	requireItem();
 
 })(BX, BX.UI);
 //# sourceMappingURL=actionpanel.bundle.js.map

@@ -24,7 +24,6 @@ $MESS["SBB_BASKET_ITEM_ECONOMY_MSGVER_1"] = "Экономия #DISCOUNT_PRICE_FO
 $MESS["SBB_BASKET_ITEM_DELETED_MSGVER_1"] = "Товар #NAME# был удалён из корзины.";
 $MESS["SBB_BASKET_ITEM_RESTORE"] = "Восстановить";
 $MESS["SBB_COUPON_ENTER_MSGVER_1"] = "Введите код купона для скидки:";
-$MESS["SBB_COUPON"] = "купон";
 $MESS["SBB_TOTAL_MSGVER_1"] = "Итого:";
 $MESS["SBB_WEIGHT_MSGVER_1"] = "Общий вес: #WEIGHT_FORMATED#";
 $MESS["SBB_VAT_MSGVER_1"] = "Сумма НДС: #VAT_SUM_FORMATED#";

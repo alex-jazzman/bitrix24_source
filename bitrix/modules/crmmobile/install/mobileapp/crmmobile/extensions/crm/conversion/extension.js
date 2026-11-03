@@ -15,6 +15,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 	const { ConversionWizard } = require('crm/conversion/wizard');
 	const { createConversionConfig } = require('crm/conversion/utils');
 	const { CrmMode } = require('crm/crm-mode');
+	const { ClientCreation } = require('crm/conversion/client-creation');
 
 	const AJAX_ACTION = 'crmmobile.Conversion.getConversionMenuItems';
 
@@ -494,5 +495,5 @@ jn.define('crm/conversion', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { Conversion };
+	module.exports = { Conversion, ClientCreation };
 });

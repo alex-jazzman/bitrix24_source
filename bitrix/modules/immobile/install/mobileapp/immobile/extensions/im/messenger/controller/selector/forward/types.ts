@@ -6,4 +6,10 @@ type ForwardSelectorInitProps = {
 	closeOnSelect?: boolean,
 }
 
-export { ForwardSelectorInitProps };
+type ForwardSelectorRecipient = {
+	id: string,
+	title?: string,
+	imageUrl?: string,
+}
+
+export { ForwardSelectorInitProps, ForwardSelectorRecipient };

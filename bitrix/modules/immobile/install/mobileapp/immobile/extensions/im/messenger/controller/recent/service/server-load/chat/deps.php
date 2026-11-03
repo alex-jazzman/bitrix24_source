@@ -7,6 +7,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/cache',
 		'im:messenger/provider/rest',
+		'im:messenger/lib/helper',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/controller/recent/service/base',

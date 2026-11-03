@@ -1,3 +1,4 @@
+import { Loc } from 'main.core';
 import { GroupList } from './group-list';
 
 import { type GroupData } from '../types/group';
@@ -28,6 +29,10 @@ export const MainGroups = {
 		},
 	},
 	computed: {
+		groupsRegionName(): string
+		{
+			return Loc.getMessage('UI_JS_ENTITY_CATALOG_GROUPS_ARIA');
+		},
 		processedGroups()
 		{
 			const selectedGroupId = this.searching ? null : (this.selectedGroup ? this.selectedGroup.id : null);
@@ -55,10 +60,33 @@ export const MainGroups = {
 				.filter(list => list.length > 0);
 		},
 	},
+	data()
+	{
+		return { groupsScrollable: false };
+	},
+	mounted()
+	{
+		this.updateScrollableRegion();
+		this.groupsResizeObserver = new ResizeObserver(() => this.updateScrollableRegion());
+		this.groupsResizeObserver.observe(this.$refs.groupsContent);
+	},
+	updated()
+	{
+		this.updateScrollableRegion();
+	},
+	beforeUnmount()
+	{
+		this.groupsResizeObserver?.disconnect();
+	},
 	methods: {
-		handleGroupSelected(group: GroupData)
+		updateScrollableRegion()
 		{
-			this.$emit('groupSelected', group);
+			const content = this.$refs.groupsContent;
+			this.groupsScrollable = content && content.scrollHeight > content.clientHeight;
+		},
+		handleGroupSelected(group: GroupData, activatedByKeyboard: boolean = false)
+		{
+			this.$emit('groupSelected', group, activatedByKeyboard);
 		},
 		handleGroupUnselected()
 		{
@@ -88,7 +116,14 @@ export const MainGroups = {
 					</template>
 				</GroupList>
 			</div>
-			<div class="ui-entity-catalog__main-groups-content">
+			<div
+				class="ui-entity-catalog__main-groups-content"
+				data-testid="entity-catalog-groups-region"
+				ref="groupsContent"
+				role="region"
+				:aria-label="groupsRegionName"
+				:tabindex="groupsScrollable ? 0 : undefined"
+			>
 				<GroupList
 					:groups="mainLists"
 					@groupSelected="handleGroupSelected"

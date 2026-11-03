@@ -1,5 +1,7 @@
-import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { ajax as Ajax, Loc } from 'main.core';
 import { CardSelectPopup } from 'biconnector.card-select-popup';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { Center as NotificationCenter } from 'ui.notification';
 
 const ACTION_TRANSFER = 'transfer';
 const ACTION_CREATE_NEW = 'create_new';
@@ -98,12 +100,9 @@ export class RelinkSupersetPopup
 
 	#processErrorResponse(response): void
 	{
-		if (response.errors && Type.isStringFilled(response.errors[0]?.message))
-		{
-			BX.UI.Notification.Center.notify({
-				content: Text.encode(response.errors[0].message),
-			});
-		}
+		NotificationCenter.notify({
+			content: resolveErrorHtml(response, Loc.getMessage('BICONNECTOR_RELINK_POPUP_ERROR')),
+		});
 
 		this.#popup.setLoading(false);
 	}

@@ -1,0 +1,7 @@
+/* The caption is new to the window: the field used to stand under the title of the window with
+   nothing of its own. It takes a line above the field and inherits the size, the colour and the
+   centring of the box it stands in, so the window keeps the look it had. */
+.bx-disk-document-edit-name-label {
+	display: block;
+	margin-bottom: 6px;
+}

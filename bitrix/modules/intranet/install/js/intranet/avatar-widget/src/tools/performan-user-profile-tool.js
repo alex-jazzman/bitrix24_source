@@ -7,9 +7,14 @@ export class PerformanUserProfileTool extends BaseSecondaryTool
 		return '--o-achievement';
 	}
 
-	onClick(): void
+	getHref(): string
 	{
-		window.open(this.options.path || '/performan/', '_blank');
+		return this.options.path || '/performan/';
+	}
+
+	getTarget(): string
+	{
+		return '_blank';
 	}
 
 	getId(): string

@@ -54,7 +54,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				footer: entityId === tasks_v2_const.EntitySelectorEntity.Tag ? tasks_entitySelector.Footer : false,
 				footerOptions: {
 					userId,
-					groupId
+					groupId,
+					canCreateTag: true
 				},
 				clearUnavailableItems: true,
 				events: {
@@ -188,6 +189,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		template: `
 		<div
 			class="tasks-field-tags"
+			data-testid="tasks-tags"
 			:class="{ '--empty': !isFilled }"
 			:data-task-id="taskId"
 			:data-task-field-id="tagsMeta.id"
@@ -195,21 +197,40 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
-			<FieldHoverButton 
+			<FieldHoverButton
 				v-if="isAddActive"
 				:icon="Outline.PLUS_L"
-				:isVisible="isAddVisible" 
+				:isVisible="isAddVisible"
+				:ariaLabel="loc('TASKS_V2_TAGS_ADD_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isDialogShown"
+				data-testid="tasks-tags-add-hover-btn"
 				@click="handleClick"
 			/>
 			<template v-for="tag in tags" :key="tag">
 				<div class="tasks-field-tag print-background-white">
 					<TextMd>{{ tag }}</TextMd>
-					<div v-if="!readonly" class="tasks-field-tag-cross" @click.capture.stop="handleCrossClick(tag)">
-						<BIcon :name="Outline.CROSS_L" hoverable/>
-					</div>
+					<button
+						v-if="!readonly"
+						type="button"
+						class="tasks-field-tag-cross"
+						:aria-label="loc('TASKS_V2_TAGS_REMOVE_ARIA_LABEL', { '#TAG#': tag })"
+						data-testid="tasks-tags-remove-btn"
+						@click.capture.stop="handleCrossClick(tag)"
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</template>
-			<FieldAdd v-if="!isFilled" :icon="Outline.TAG" @click="handleClick"/>
+			<FieldAdd
+				v-if="!isFilled"
+				:icon="Outline.TAG"
+				:ariaLabel="loc('TASKS_V2_TAGS_ADD_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isDialogShown"
+				data-testid="tasks-tags-add-btn"
+				@click="handleClick"
+			/>
 			<div class="tasks-field-tags-anchor" ref="anchor"/>
 		</div>
 	`
@@ -230,25 +251,65 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				tagsMeta
 			};
 		},
+		data() {
+			return {
+				isDialogShown: false
+			};
+		},
 		computed: {
 			design() {
 				return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 			},
 			isSelected() {
 				return this.task.filledFields[tagsMeta.id];
+			},
+			opensDialog() {
+				return !this.isSelected;
 			}
 		},
+		watch: {
+			isDialogShown() {
+				this.syncAria();
+			},
+			opensDialog() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+			},
 			handleClick() {
 				if (this.isSelected) {
 					this.highlightField();
 					return;
 				}
+				this.isDialogShown = true;
 				tagsDialog.show({
 					targetNode: this.$el,
 					taskId: this.taskId,
-					onClose: this.highlightField
+					onClose: this.handleDialogClose
 				});
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
+			},
+			handleDialogClose() {
+				this.isDialogShown = false;
+				this.highlightField();
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(tagsMeta.id);
@@ -262,7 +323,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-id="taskId"
 			:data-task-chip-id="tagsMeta.id"
 			:data-task-chip-value="task.tags.join(',')"
+			data-testid="tasks-tags-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`
 	};

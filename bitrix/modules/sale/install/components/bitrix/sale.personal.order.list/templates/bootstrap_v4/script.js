@@ -11,26 +11,40 @@ BX.namespace('BX.Sale.PersonalOrderComponent');
 			params.templateName = params.templateName || "";
 			params.returnUrl = params.returnUrl || "";
 
+			Array.prototype.forEach.call(
+				document.getElementsByClassName('sale-order-list-inner-container'),
+				BX.proxy(this.bindOrderControls, this)
+			);
+
 			Array.prototype.forEach.call(rowWrapper, function(wrapper)
 			{
-				var shipmentTrackingId = wrapper.getElementsByClassName('sale-order-list-shipment-id');
-				if (shipmentTrackingId[0])
+				var rowMode = null;
+				var payResultNode = null;
+				var template = wrapper.getElementsByClassName('sale-order-list-inner-row-template')[0];
+				var cancelPaymentLink = template ? template.getElementsByClassName('sale-order-list-cancel-payment')[0] : null;
+
+				if (cancelPaymentLink)
 				{
-					Array.prototype.forEach.call(shipmentTrackingId, function(blockId)
+					BX.bind(cancelPaymentLink, 'click', BX.proxy(function(event)
 					{
-						var clipboard = blockId.parentNode.getElementsByClassName('sale-order-list-shipment-id-icon')[0];
-						if (clipboard)
+						if (rowMode === 'pay')
 						{
-							BX.clipboard.bindCopyClick(clipboard, {text : blockId.innerHTML});
+							event.preventDefault();
+							this.restorePayRow(wrapper, payResultNode);
+							payResultNode = null;
+							rowMode = null;
 						}
-					});
+						else if (rowMode === 'change')
+						{
+							event.preventDefault();
+							this.reloadToOrderHeading(wrapper);
+						}
+					}, this));
 				}
 
 				BX.bindDelegate(wrapper, 'click', { 'class': 'ajax_reload' }, BX.proxy(function(event)
 				{
 					var block = wrapper.getElementsByClassName('sale-order-list-inner-row-body')[0];
-					var template = wrapper.getElementsByClassName('sale-order-list-inner-row-template')[0];
-					var cancelPaymentLink = template.getElementsByClassName('sale-order-list-cancel-payment')[0];
 
 					BX.ajax(
 						{
@@ -50,13 +64,9 @@ BX.namespace('BX.Sale.PersonalOrderComponent');
 								block.style.display = 'none';
 								template.style.display = 'block';
 
-								BX.bind(cancelPaymentLink, 'click', function()
-								{
-									block.style.display = 'block';
-									template.style.display = 'none';
-									resultDiv.remove();
-								},this);
-
+								payResultNode = resultDiv;
+								rowMode = 'pay';
+								template.focus();
 							},this),
 							onfailure: BX.proxy(function()
 							{
@@ -76,8 +86,8 @@ BX.namespace('BX.Sale.PersonalOrderComponent');
 					event.preventDefault();
 
 					var block = wrapper.getElementsByClassName('sale-order-list-inner-row-body')[0];
-					var template = wrapper.getElementsByClassName('sale-order-list-inner-row-template')[0];
-					var cancelPaymentLink = template.getElementsByClassName('sale-order-list-cancel-payment')[0];
+					var changeLink = this.getChangePaymentLink(event.target, wrapper);
+					var paymentAccount = changeLink.getAttribute('data-payment-account') || changeLink.id;
 
 					BX.ajax(
 						{
@@ -87,7 +97,7 @@ BX.namespace('BX.Sale.PersonalOrderComponent');
 							data:
 							{
 								sessid: BX.bitrix_sessid(),
-								orderData: params.paymentList[event.target.id],
+								orderData: params.paymentList[paymentAccount],
 								templateName : params.templateName
 							},
 							onsuccess: BX.proxy(function(result)
@@ -98,14 +108,13 @@ BX.namespace('BX.Sale.PersonalOrderComponent');
 								});
 
 								template.insertBefore(resultDiv, cancelPaymentLink);
-								event.target.style.display = 'none';
+								changeLink.style.display = 'none';
 								block.parentNode.removeChild(block);
 								template.style.display = 'block';
-								BX.bind(cancelPaymentLink, 'click', function()
-								{
-									window.location.reload();
-								},this);
 
+								rowMode = 'change';
+								var firstTile = resultDiv.querySelector('[role="radio"]');
+								(firstTile || template).focus();
 							},this),
 							onfailure: BX.proxy(function()
 							{
@@ -116,7 +125,112 @@ BX.namespace('BX.Sale.PersonalOrderComponent');
 					);
 
 				}, this));
-			});
+			}, this);
+
+			BX.ready(BX.proxy(this.focusHeadingFromHash, this));
+		},
+
+		bindOrderControls: function(container)
+		{
+			Array.prototype.forEach.call(container.getElementsByClassName('sale-order-list-shipment-id'), function(blockId)
+			{
+				var clipboard = blockId.parentNode.getElementsByClassName('sale-order-list-shipment-id-icon')[0];
+				if (clipboard)
+				{
+					BX.clipboard.bindCopyClick(clipboard, {
+						text: blockId.textContent.trim(),
+						popup: { focusTrap: false },
+					});
+					BX.bind(clipboard, 'keydown', function(event)
+					{
+						if (this.isActivationKey(event))
+						{
+							event.preventDefault();
+							clipboard.click();
+						}
+					}.bind(this));
+				}
+			}, this);
+
+			Array.prototype.forEach.call(container.querySelectorAll('[role="button"][aria-disabled="true"]'), function(button)
+			{
+				BX.bind(button, 'keydown', function(event)
+				{
+					if (this.isActivationKey(event))
+					{
+						event.preventDefault();
+					}
+				}.bind(this));
+			}, this);
+		},
+
+		isActivationKey: function(event)
+		{
+			return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+		},
+
+		getChangePaymentLink: function(target, wrapper)
+		{
+			var link = BX.findParent(target, { className: 'sale-order-list-change-payment' }, wrapper);
+
+			return link || target;
+		},
+
+		restorePayRow: function(wrapper, resultNode)
+		{
+			var block = wrapper.getElementsByClassName('sale-order-list-inner-row-body')[0];
+			var template = wrapper.getElementsByClassName('sale-order-list-inner-row-template')[0];
+			var payButton = wrapper.getElementsByClassName('ajax_reload')[0];
+
+			block.style.display = 'block';
+			template.style.display = 'none';
+			if (resultNode)
+			{
+				BX.remove(resultNode);
+			}
+
+			if (payButton)
+			{
+				payButton.focus();
+			}
+		},
+
+		reloadToOrderHeading: function(wrapper)
+		{
+			var heading = this.getOrderHeading(wrapper);
+
+			if (heading && window.history && window.history.replaceState)
+			{
+				window.history.replaceState(window.history.state, '', '#' + heading.id);
+			}
+
+			window.location.reload();
+		},
+
+		getOrderHeading: function(wrapper)
+		{
+			var container = BX.findParent(wrapper, { className: 'sale-order-list-inner-container' });
+			var orderRow = container ? container.parentNode : null;
+			var titleRow = orderRow ? orderRow.previousElementSibling : null;
+
+			return titleRow ? titleRow.querySelector('h3[id^="sale-order-list-order-"]') : null;
+		},
+
+		focusHeadingFromHash: function()
+		{
+			var hash = window.location.hash.slice(1);
+			var heading;
+
+			if (hash.indexOf('sale-order-list-order-') !== 0)
+			{
+				return;
+			}
+
+			heading = document.getElementById(hash);
+			if (heading)
+			{
+				heading.focus();
+			}
 		}
 	};
 })();

@@ -44,8 +44,8 @@ export const OwnerHintByChatType = {
 };
 
 export const ManagerHintByChatType = {
-	[ChatType.channel]: Loc.getMessage('IM_CREATE_CHANNEL_MANAGER_HINT'),
-	default: Loc.getMessage('IM_CREATE_CHAT_MANAGER_HINT'),
+	[ChatType.channel]: Loc.getMessage('IM_CREATE_CHANNEL_MANAGER_HINT_MSGVER_1'),
+	default: Loc.getMessage('IM_CREATE_CHAT_MANAGER_HINT_MSGVER_1'),
 };
 
 export const AddUsersHintByChatType = {

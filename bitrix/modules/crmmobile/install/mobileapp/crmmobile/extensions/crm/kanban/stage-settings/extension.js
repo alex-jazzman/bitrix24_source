@@ -5,6 +5,7 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { KanbanStageSettings } = require('layout/ui/kanban/stage-settings');
 	const { TunnelList } = require('crm/tunnel-list');
+	const { getStageCardPermissions } = require('crm/kanban/stage-settings/permissions');
 	const { connect } = require('statemanager/redux/connect');
 	const {
 		selectById,
@@ -63,9 +64,26 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 			return BX.prop.getNumber(this.props, 'categoryId', null);
 		}
 
+		get configurationPermissions()
+		{
+			return getStageCardPermissions(this.stage);
+		}
+
 		componentWillReceiveProps(props)
 		{
 			super.componentWillReceiveProps(props);
+		}
+
+		initNavigation()
+		{
+			super.initNavigation();
+
+			// the base class hands the removal of the stage to every card but the successful one,
+			// and only managing the stages grants it
+			if (this.layout && !this.configurationPermissions.canManageStage)
+			{
+				this.layout.setRightButtons([]);
+			}
 		}
 
 		renderContent()
@@ -84,9 +102,35 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 			);
 		}
 
+		// the name and the color are hidden rather than shown unwritable: the base class of `mobile`
+		// hardcodes `readOnly: false` on the input, and an unwritable view would mean moving its whole
+		// layout here. The stage keeps its name in the navigation title either way.
+		renderStageName()
+		{
+			if (!this.configurationPermissions.canManageStage)
+			{
+				return null;
+			}
+
+			return super.renderStageName();
+		}
+
+		renderColorPicker()
+		{
+			if (!this.configurationPermissions.canManageStage)
+			{
+				return null;
+			}
+
+			return super.renderColorPicker();
+		}
+
+		// hidden rather than shown unwritable, as the name and the color above: an editable list
+		// would offer a change the server refuses, and refusing one part turns down the whole
+		// request - the rename the same user is allowed to make included
 		renderTunnelList()
 		{
-			if (!this.isTunnelsEnabled)
+			if (!this.isTunnelsEnabled || !this.configurationPermissions.canManageTunnels)
 			{
 				return null;
 			}
@@ -126,12 +170,14 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 				this.props.updateCrmStage(
 					{
 						entityTypeId: this.entityTypeId,
+						categoryId: this.categoryId,
 						kanbanSettingsId: this.kanbanSettingsId,
 						fields: {
 							id,
 							statusId: stageStatusId,
 							...this.changedFields,
 						},
+						permissions: this.configurationPermissions,
 					},
 				)
 					.unwrap()
@@ -157,6 +203,7 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 				this.props.deleteCrmStage({
 					id,
 					entityTypeId: this.entityTypeId,
+					categoryId: this.categoryId,
 					kanbanSettingsId: this.kanbanSettingsId,
 					statusId,
 					semantics,

@@ -10,7 +10,7 @@ this.BX = this.BX || {};
 			this.title = options.title ?? '';
 			this.description = options.description ?? '';
 			this.compact = options.compact === true;
-			this.imageSrc = options.imageSrc ?? '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon.png';
+			this.imageSrc = options.imageSrc ?? '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon.webp';
 			this.backgroundImageSrc = '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon-background.svg';
 			this.popupAlignment = options.popupAlignment === 'start' ? 'start' : 'center';
 			this.popupOffsetLeftAdjustment = main_core.Type.isNumber(options.popupOffsetLeftAdjustment) ? options.popupOffsetLeftAdjustment : 0;

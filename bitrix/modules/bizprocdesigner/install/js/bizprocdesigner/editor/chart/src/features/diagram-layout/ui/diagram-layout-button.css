@@ -1,0 +1,13 @@
+.editor-chart-diagram-layout-button .ui-btn {
+	--ui-btn-background: transparent;
+	--ui-btn-background-hover: transparent;
+	--ui-btn-background-active: transparent;
+}
+
+.editor-chart-diagram-layout-button .ui-btn:not(:disabled) .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.editor-chart-diagram-layout-button .ui-btn:not(:disabled):hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}

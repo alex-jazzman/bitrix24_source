@@ -6,7 +6,7 @@ jn.define('mail/mailbox/connector/steps/oauth', (require, exports, module) => {
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
 	const { Loc } = require('loc');
-	const { Color } = require('tokens');
+	const { Color, Typography } = require('tokens');
 	const { getParameterByName } = require('utils/url');
 	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
 	const NEXT_STEP_COLOR = Color.base6.toHex();
@@ -47,6 +47,7 @@ jn.define('mail/mailbox/connector/steps/oauth', (require, exports, module) => {
 				isEnabled: true,
 				title: {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_OAUTH_TITLE_1'),
+					style: Typography.text3Accent.getStyle(),
 				},
 				number: 2,
 				count: 3,

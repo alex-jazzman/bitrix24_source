@@ -5,6 +5,12 @@ import { type ImModelChat } from 'im.v2.model';
 const GetParameterByChatType = {
 	[ChatType.taskComments]: GetParameter.openTaskComments,
 	[ChatType.collab]: GetParameter.openCollab,
+	[ChatType.lines]: GetParameter.openLines,
+};
+
+const GetParameterByMessageChatType = {
+	[ChatType.taskComments]: GetParameter.openTaskComments,
+	[ChatType.collab]: GetParameter.openChat,
 };
 
 export const ChatManager = {
@@ -31,10 +37,13 @@ export const ChatManager = {
 
 	buildMessageLink(dialogId: string, messageId: number): string
 	{
-		const chatLink = this.buildChatLink(dialogId);
-		const chatUrl = new URL(chatLink);
-		chatUrl.searchParams.set(GetParameter.openMessage, messageId.toString());
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		const chatGetParameter = GetParameterByMessageChatType[chat.type] ?? GetParameter.openChat;
+		const getParams = new URLSearchParams({
+			[chatGetParameter]: dialogId,
+			[GetParameter.openMessage]: messageId.toString(),
+		});
 
-		return chatUrl.toString();
+		return `${Core.getHost()}${Path.online}?${getParams.toString()}`;
 	},
 };

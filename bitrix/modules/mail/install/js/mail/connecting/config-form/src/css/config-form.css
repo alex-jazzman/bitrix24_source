@@ -161,6 +161,7 @@
 	border-radius: 50%;
 	background-size: cover;
 	background-position: center;
+	object-fit: cover;
 	flex-shrink: 0;
 }
 
@@ -612,6 +613,14 @@
 	height: 22px;
 	width: 22px;
 }
+/* Taken by its path, unlike the icons above: the same file is shipped as the icon of the service
+   and is read from there by getIconSrc(), so a copy inlined here would be a second place to keep. */
+.mail-provider-mailhost-img {
+	background-image: url('/bitrix/images/mail/mailservice-icon/post-mailhost-icon.svg');
+	background-size: contain;
+	height: 30px;
+	width: 38px;
+}
 
 .mail-provider-restriction-popup .popup-window-content {
 	padding: 32px 36px 24px;
@@ -677,4 +686,38 @@
 }
 .mail-provider-restriction-popup .ui-btn {
 	text-transform: none;
+}
+
+.mail-config-form__mailbox-avatar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-sm);
+}
+
+.mail-config-form__mailbox-avatar-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+.mail-config-form__mailbox-avatar-hint {
+	color: var(--ui-color-base-2);
+}
+
+.mail-config-form__mailbox-avatar-image {
+	width: 120px;
+	height: 120px;
+	border-radius: var(--ui-border-radius-md);
+	object-fit: cover;
+	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.mail-config-form__mailbox-avatar-select {
+	display: inline-flex;
+	align-self: flex-start;
+}
+
+.mail-config-form__mailbox-avatar-error {
+	color: var(--ui-color-accent-main-alert);
 }

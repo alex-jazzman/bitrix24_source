@@ -1,4 +1,4 @@
-import { ApplyButton, ButtonColor, CancelButton, AirButtonStyle } from 'ui.buttons';
+import { ApplyButton, Button, CancelButton } from 'ui.buttons';
 import { Popup } from 'ui.vue3.components.popup';
 import '../../../css/value/value-popup.css';
 
@@ -26,8 +26,9 @@ export const ValuePopup = {
 				autoHide: true,
 				closeEsc: true,
 				cacheable: false,
-				minWidth: 466,
-				padding: 18,
+				width: 439,
+				padding: 24,
+				className: 'ui-access-rights-v2-value-popup',
 			};
 		},
 	},
@@ -35,22 +36,24 @@ export const ValuePopup = {
 	{
 		void this.$nextTick(() => {
 			const applyButton = new ApplyButton({
-				color: ButtonColor.PRIMARY,
+				useAirDesign: true,
+				style: Button.AirStyle.FILLED,
+				size: Button.Size.LARGE,
 				onclick: () => {
 					this.apply();
 					this.$emit('close');
 				},
-				useAirDesign: true,
 			});
 			applyButton.renderTo(this.$refs['button-container']);
 
 			const cancelButton = new CancelButton({
+				useAirDesign: true,
+				style: Button.AirStyle.OUTLINE,
+				size: Button.Size.LARGE,
 				onclick: () => {
 					this.$emit('close');
 				},
 				text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
-				useAirDesign: true,
-				style: AirButtonStyle.OUTLINE,
 			});
 			cancelButton.renderTo(this.$refs['button-container']);
 		});

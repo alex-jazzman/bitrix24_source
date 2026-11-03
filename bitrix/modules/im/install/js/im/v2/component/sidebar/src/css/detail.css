@@ -14,6 +14,8 @@
 	flex-shrink: 0;
 }
 
-.bx-im-sidebar-detail__container .bx-im-audio-player__timeline-container {
+/* one owner for both rows of the "Audio" tab: a second value would drift out of this one */
+.bx-im-sidebar-detail__container .bx-im-audio-player__timeline-container,
+.bx-im-sidebar-detail__container .bx-im-sidebar-file-video-note-detail-item__timeline {
 	padding-left: 20px;
 }

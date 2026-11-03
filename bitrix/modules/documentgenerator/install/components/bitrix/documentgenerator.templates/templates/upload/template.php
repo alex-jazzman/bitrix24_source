@@ -21,7 +21,7 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $this->IncludeLangFile();
 
-Extension::load([
+$extensions = [
 	'core',
 	'ui.design-tokens',
 	'sidepanel',
@@ -32,7 +32,12 @@ Extension::load([
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.entity-selector',
-]);
+];
+if (!empty($arResult['TITLE_PATTERN_ENABLED']))
+{
+	$extensions[] = 'documentgenerator.title-pattern';
+}
+Extension::load($extensions);
 
 if (Loader::includeModule('ui'))
 {
@@ -211,6 +216,13 @@ if (Loader::includeModule('ui'))
 					</div>
 				</div>
 			</div>
+			<?php if (!empty($arResult['TITLE_PATTERN_ENABLED'])): ?>
+				<div class="docs-template-load-crm" id="documentgenerator-title-pattern-block">
+					<div class="docs-template-load-block-wrap">
+						<div id="documentgenerator-title-pattern"></div>
+					</div>
+				</div>
+			<?php endif; ?>
 			<?php if (!DepartmentAccessCodesMigrateAgent::isDone()): ?>
 				<div class="docs-template-load-user" id="add-template-user-block">
 					<div class="docs-template-load-block-wrap">
@@ -309,6 +321,35 @@ if (Loader::includeModule('ui'))
 					</div>
 				</div>
 			</div>
+			<?php if (!empty($arResult['timezoneFeatureEnabled'])): ?>
+				<div class="docs-template-load-numerator" id="add-template-timezone-block">
+					<div class="docs-template-load-block-wrap">
+						<div class="docs-template-load-block-title-inner">
+							<span class="docs-template-load-title">
+								<?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_TIMEZONE') ?>
+							</span>
+						</div>
+						<div class="docs-template-load-num-select-wrap">
+							<select
+								class="docs-template-load-select docs-template-load-indentation-14"
+								id="docs-template-timezone-select"
+							>
+								<option value="" <?= $arResult['TEMPLATE']['TIMEZONE'] === null ? 'selected="selected"' : '' ?>>
+									<?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_TIMEZONE_INHERIT') ?>
+								</option>
+								<?php foreach ($arResult['timezoneItems'] as $timezoneItem): ?>
+									<option
+										value="<?= htmlspecialcharsbx($timezoneItem['value']) ?>"
+										<?= $arResult['TEMPLATE']['TIMEZONE'] === $timezoneItem['value'] ? 'selected="selected"' : '' ?>
+									>
+										<?= htmlspecialcharsbx($timezoneItem['label']) ?>
+									</option>
+								<?php endforeach ?>
+							</select>
+						</div>
+					</div>
+				</div>
+			<?php endif ?>
 			<div class="docs-template-load-numerator" id="add-template-numerator-block">
 				<div class="docs-template-load-block-wrap">
 					<div class="docs-template-load-block-title-inner">
@@ -381,6 +422,7 @@ if (Loader::includeModule('ui'))
 				}
 
 				?>BX.DocumentGenerator.UploadTemplate.initProviderPopup();
+				BX.DocumentGenerator.UploadTemplate.initTitlePattern();
 				BX.DocumentGenerator.UploadTemplate.regions = <?= CUtil::PhpToJSObject(
 					Converter::toJson()->process($arResult['REGIONS'])
 				); ?>;

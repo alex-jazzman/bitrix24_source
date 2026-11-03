@@ -1,4 +1,5 @@
-import { Dom, Event, Tag, Type, Loc } from 'main.core';
+import { Dom, Event, Extension, Tag, Type, Loc } from 'main.core';
+import { Analytics } from 'calendar.analytics';
 import { Filter } from '../filter';
 import { CalendarAddButtonMenu } from './calendar-add-button-menu';
 import { CalendarSettings } from './calendar-settings';
@@ -19,9 +20,14 @@ export class CalendarToolbar
 	#addButtonMenu: CalendarAddButtonMenu;
 	#settings: CalendarSettings;
 	#filter: Filter;
+	#type: string;
+	#ownerId: number;
 
 	constructor(params: Params)
 	{
+		this.#type = params.type;
+		this.#ownerId = params.ownerId;
+
 		this.#calendar = new Calendar({
 			type: params.type,
 			// eslint-disable-next-line no-constant-binary-expression
@@ -105,7 +111,24 @@ export class CalendarToolbar
 
 	#addMainClick(): void
 	{
+		this.#sendCreateEventAnalytics();
 		this.#calendar.addEvent();
+	}
+
+	#sendCreateEventAnalytics(): void
+	{
+		const settings = Extension.getSettings('socialnetwork.v2.lib.event-sender') ?? {};
+		const userType = Type.isStringFilled(settings.userType) ? settings.userType : null;
+
+		Analytics.sendEvent({
+			event: 'click_create_event',
+			cSection: 'project',
+			cSubSection: 'project_header',
+			cElement: 'slider',
+			status: 'success',
+			projectId: this.#type === 'group' ? this.#ownerId : null,
+			userType,
+		});
 	}
 
 	#addMenuClick(): void

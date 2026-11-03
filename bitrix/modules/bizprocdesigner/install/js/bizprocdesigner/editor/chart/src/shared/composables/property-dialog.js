@@ -1,6 +1,4 @@
-import { Dom, Runtime, Tag, Type } from 'main.core';
-
-import { useLoc } from './loc';
+import { Dom, Loc, Runtime, Tag, Type } from 'main.core';
 
 type FormPayload = {
 	id: string,
@@ -14,14 +12,21 @@ type FormPayload = {
 	},
 };
 
-const renderPropertyDialog = async (contentContainer: HTMLElement, formData: FormData): Promise<void> => {
+// Marker the inserted legacy form reads with element.closest() to stay non-editable.
+const READ_ONLY_CLASS = '--js-bp-settings-readonly';
+
+const renderPropertyDialog = async (
+	contentContainer: HTMLElement,
+	formData: FormData,
+	isReadOnly: boolean = false,
+): Promise<void> => {
 	if (Type.isUndefined(window.rootActivity))
 	{
 		return null;
 	}
 
-	const { getMessage } = useLoc();
-	const contentUrl = `/bitrix/tools/bizproc_activity_settings.php?mode=public&bxpublic=Y&lang=${getMessage('LANGUAGE_ID')}&app=vue`;
+	const lang = Loc.getMessage('LANGUAGE_ID') ?? '';
+	const contentUrl = `/bitrix/tools/bizproc_activity_settings.php?mode=public&bxpublic=Y&lang=${lang}&app=vue`;
 	const content = await fetch(contentUrl, {
 		method: 'POST',
 		body: formData,
@@ -33,6 +38,17 @@ const renderPropertyDialog = async (contentContainer: HTMLElement, formData: For
 			name="bx_popup_form">
 		</form>
 	`;
+	// Runtime.html runs the <script> of the form right away, so the marker has to be in place before it:
+	// the control of the form is raised before control returns to the caller.
+	if (isReadOnly)
+	{
+		Dom.addClass(contentContainer, READ_ONLY_CLASS);
+	}
+	else
+	{
+		Dom.removeClass(contentContainer, READ_ONLY_CLASS);
+	}
+
 	Dom.append(form, contentContainer);
 	await Runtime.html(form, await content.text());
 

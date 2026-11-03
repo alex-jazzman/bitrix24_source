@@ -47,6 +47,11 @@ export const Conference = {
 
 		DesktopApi.createWindow(Utils.conference.getWindowNameByCode(code), (controller) => {
 			controller.SetProperty('title', Loc.getMessage('IM_LIB_DESKTOP_CONFERENCE_TITLE'));
+			// The client fills this property only on the windows it opens by itself, so a window taken
+			// from GetWindow starts without it and the client fails to localise the notifications of a
+			// local record made here. The main window already runs in the right language — copy it.
+			const language = window.BXDesktopWindow?.GetProperty('lang') || Loc.getMessage('LANGUAGE_ID');
+			controller.SetProperty('lang', language);
 			controller.SetProperty('clientSize', { Width: windowSize.width, Height: windowSize.height });
 
 			// we need the first 'center' command to prevent the window from jumping after we show it

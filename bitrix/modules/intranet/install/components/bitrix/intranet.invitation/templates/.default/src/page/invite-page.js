@@ -1,4 +1,4 @@
-import { Event, Loc, Tag } from 'main.core';
+import { Event, Loc, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
 
@@ -60,10 +60,21 @@ export class InvitePage extends Page
 		}
 
 		this.#container = Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-invite-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-invite-page-form"
+				>
+					<h2
+						class="intranet-invitation-status__title ui-headline --sm"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-invite-page-title"
+					>${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</h2>
 					${this.#getInputRowsContainer().render()}
 					<span class="intranet-invitation-actions">
 						${this.#getAddButton().render()}
@@ -82,6 +93,11 @@ export class InvitePage extends Page
 		`;
 
 		return this.#container;
+	}
+
+	restoreErrors(): void
+	{
+		this.#inputsRowsContainer?.restoreErrors();
 	}
 
 	#getInputRowsContainer(): InputRowsContainer
@@ -107,9 +123,14 @@ export class InvitePage extends Page
 	#renderMassInviteButton(): HTMLElement
 	{
 		const button = Tag.render`
-			<span data-test-id="invite-invite-page-open-invite-popup-button" class="ui-link ui-link-secondary ui-link-dashed ui-text --sm">
+			<button
+				type="button"
+				class="ui-link ui-link-secondary ui-link-dashed ui-text --sm"
+				data-test-id="invite-invite-page-open-invite-popup-button"
+				data-testid="invitation-invite-page-open-invite-popup-button"
+			>
 				${Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MASSIVE')}
-			</span>
+			</button>
 		`;
 		Event.bind(button, 'click', this.#openMassInvitePopup.bind(this));
 
@@ -140,23 +161,31 @@ export class InvitePage extends Page
 			style: AirButtonStyle.FILLED,
 			props: {
 				'data-test-id': 'invite-invite-page-submit-button',
+				'data-testid': 'invitation-invite-page-submit-button',
 			},
 			onclick: () => {
-				if (inviteButton.isWaiting() || this.#inputsRowsContainer.hasError())
+				if (inviteButton.isWaiting())
 				{
+					return;
+				}
+
+				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:clearError');
+				this.#inputsRowsContainer.restoreErrors();
+
+				if (!this.#inputsRowsContainer.validate())
+				{
+					this.#inputsRowsContainer.focusFirstErrorInput();
+
 					return;
 				}
 
 				if (this.#inputsRowsContainer.isInvitationInputRowsEmpty())
 				{
-					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onError', {
-						error: this.#getEmptyError(),
-					});
+					this.#inputsRowsContainer.setFirstContactsError(this.#getEmptyError());
+					this.#inputsRowsContainer.focusFirstErrorInput();
 
 					return;
 				}
-
-				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:clearError');
 
 				inviteButton.setState(ButtonState.WAITING);
 
@@ -175,14 +204,14 @@ export class InvitePage extends Page
 					},
 					(reject) => {
 						inviteButton.setState(null);
-						let handled = false;
+						let errorsHandled = false;
 
 						if (reject.errors)
 						{
-							handled = this.#handleErrors(reject.errors);
+							errorsHandled = this.#handleErrors(reject.errors);
 						}
 
-						if (!handled)
+						if (!errorsHandled)
 						{
 							this.#transport.onError(reject);
 						}
@@ -223,28 +252,50 @@ export class InvitePage extends Page
 		errors.forEach((error) => {
 			if (error.code === 'EMAIL_EXIST_ERROR')
 			{
-				this.#inputsRowsContainer.highlightErrorInputs(error.customData.emailList, Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_EMAIL_EXIST_ERROR'));
-				handled = true;
+				handled = this.#inputsRowsContainer.highlightErrorInputs(
+					error.customData.emailList,
+					Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_EMAIL_EXIST_ERROR'),
+				) || handled;
 			}
 
 			if (error.code === 'PHONE_EXIST_ERROR')
 			{
-				this.#inputsRowsContainer.highlightErrorInputs(error.customData.phoneList, Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_PHONE_EXIST_ERROR'));
-				handled = true;
+				handled = this.#inputsRowsContainer.highlightErrorInputs(
+					error.customData.phoneList,
+					Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_PHONE_EXIST_ERROR'),
+				) || handled;
 			}
 
 			if (error.code === 'EMAIL_INVALID_ERROR')
 			{
-				this.#inputsRowsContainer.highlightErrorInputs(error.customData.emailList, Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL'));
-				handled = true;
+				handled = this.#inputsRowsContainer.highlightErrorInputs(
+					error.customData.emailList,
+					Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL'),
+				) || handled;
 			}
 
 			if (error.code === 'PHONE_INVALID_ERROR')
 			{
-				this.#inputsRowsContainer.highlightErrorInputs(error.customData.phoneList, Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE'));
-				handled = true;
+				handled = this.#inputsRowsContainer.highlightErrorInputs(
+					error.customData.phoneList,
+					Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE'),
+				) || handled;
+			}
+
+			const invitationIndex = error.customData?.invitationIndex;
+			if (Type.isStringFilled(error?.message) && Number.isInteger(invitationIndex))
+			{
+				handled = this.#inputsRowsContainer.setInvitationError(
+					invitationIndex,
+					error.message,
+				) || handled;
 			}
 		});
+
+		if (handled)
+		{
+			this.#inputsRowsContainer.focusFirstErrorInput();
+		}
 
 		return handled;
 	}
@@ -258,6 +309,7 @@ export class InvitePage extends Page
 			icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
 			props: {
 				'data-test-id': 'invite-invite-page-add-more-button',
+				'data-testid': 'invitation-invite-page-add-more-button',
 			},
 			onclick: () => {
 				const inputsRow = this.#inputsFactory.createInputsRow();

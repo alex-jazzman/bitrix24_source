@@ -21,8 +21,22 @@ export class AccountChangerTool extends BaseSecondaryTool
 		else if (this.options.type === 'network')
 		{
 			Analytics.send(Analytics.EVENT_CLICK_NETWORK);
-			window.open(this.options.path, '_blank');
 		}
+	}
+
+	getHref(): string
+	{
+		return this.options.type === 'network' ? this.options.path : '';
+	}
+
+	getTarget(): string
+	{
+		return this.options.type === 'network' ? '_blank' : '';
+	}
+
+	hasLinkClickHandler(): boolean
+	{
+		return this.options.type === 'network';
 	}
 
 	getId(): string

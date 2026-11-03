@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		<nav
 			class="navbar u-navbar-modal u-navbar-slider g-pa-0 u-navbar-color-gray-dark-v1 u-navbar-color-gray-dark-v1--hover flex-nowrap"
 			data-modal-alert-classes="d-none d-lg-block order-2 w-100"
+			role="presentation"
 		>
 			<div class="landing-block-node-title-container order-1 d-flex w-100 align-items-center g-overflow-hidden g-font-weight-700 g-letter-spacing-0_5 text-uppercase">
 				<a
@@ -38,7 +39,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 							/>
 						</svg>
 					</span>
-					<span class="landing-block-node-text d-none d-md-block g-font-size-17 g-font-weight-500 g-nowrap g-pl-10">
+					<span class="landing-block-node-text sr-only d-md-block g-font-size-17 g-font-weight-500 g-nowrap g-pl-10">
 						#crmPhoneTitle1
 					</span>
 				</a>
@@ -90,7 +91,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 				<button
 					class="navbar-toggler btn collapsed g-line-height-1 g-brd-none g-pa-0 d-block d-lg-none"
 					type="button"
-					aria-label="Toggle navigation"
+					aria-label="MESS[LNDBLCK_STOREMENUV3_1_MENU_TOGGLE_LABEL]"
 					aria-expanded="false"
 					aria-controls="navBar"
 					data-toggle="collapse"
@@ -139,7 +140,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 				<ul class="landing-block-node-menu-bottom navbar-nav g-py-10">
 					<li class="landing-block-node-menu-bottom-item nav-item g-pl-17 g-pr-17 g-py-9">
 						<a
-							class="landing-block-node-menu-bottom-link d-flex justify-content-between align-items-center g-text-decoration-none--hover g-font-size-16 g-opacity-0_6"
+							class="landing-block-node-menu-bottom-link d-flex justify-content-between align-items-center g-text-decoration-none--hover g-font-size-16"
 							href="#"
 						>
 							<span class="landing-block-node-menu-bottom-text">Business Card</span>
@@ -148,7 +149,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					</li>
 					<li class="landing-block-node-menu-bottom-item nav-item g-pl-17 g-pr-17 g-py-9">
 						<a
-							class="landing-block-node-menu-bottom-link d-flex justify-content-between align-items-center g-text-decoration-none--hover g-font-size-16 g-opacity-0_6"
+							class="landing-block-node-menu-bottom-link d-flex justify-content-between align-items-center g-text-decoration-none--hover g-font-size-16"
 							href="#"
 						>
 							<span class="landing-block-node-menu-bottom-text">Payment Options</span>

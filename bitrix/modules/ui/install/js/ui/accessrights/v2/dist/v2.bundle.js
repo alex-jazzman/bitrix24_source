@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
-(function (exports, main_core, main_core_events, ui_buttons, ui_dialogs_messagebox, ui_vue3, ui_vue3_vuex, ui_entitySelector, main_popup, ui_vue3_components_richMenu, ui_accessrights_v2_itemListSelector, ui_vue3_directives_hint, ui_system_chip_vue, ui_icon, ui_iconSet_actions, ui_vue3_components_switcher, ui_iconSet_api_vue, ui_vue3_components_popup, ui_ears, ui_hint, ui_notification, ui_analytics, main_loader) {
+(function (exports, main_core, main_core_events, ui_buttons, ui_dialogs_messagebox, ui_vue3, ui_vue3_vuex, ui_entitySelector, main_popup, ui_vue3_components_richMenu, ui_switcher, ui_accessrights_v2_itemListSelector, ui_vue3_directives_hint, ui_system_chip_vue, ui_icon, ui_iconSet_actions, ui_iconSet_api_vue, ui_vue3_components_switcher, ui_system_label_vue, ui_system_label, ui_iconSet_api_core, ui_vue3_components_button, ui_system_checkbox_vue, ui_system_checkbox, ui_system_radiobutton, ui_system_radiobutton_vue, ui_vue3_components_popup, ui_ears, ui_hint, ui_notification, ui_analytics, main_loader) {
 	'use strict';
 
 	/**
@@ -40,6 +40,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			return 'DependentVariables';
 		}
 	};
+
+	/**
+	 * Single-select variant of DependentVariables. Cell/Row components are shared
+	 * (the inherited getComponentName returns 'DependentVariables'); the difference
+	 * lives inside PopupContent and is keyed off right.type.
+	 */
+	class SingleDependentVariables extends DependentVariables$2 {}
 
 	let Multivariables$2 = class Multivariables extends Base {
 		getComponentName() {
@@ -387,6 +394,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				if (stringType === 'dependent_variables') {
 					return new DependentVariables$2();
 				}
+				if (stringType === 'single_dependent_variables') {
+					return new SingleDependentVariables();
+				}
 				if (stringType === 'multivariables') {
 					return new Multivariables$2();
 				}
@@ -471,6 +481,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	const SingleMember = {
 		name: 'SingleMember',
 		props: {
+			accessCode: {
+				type: String,
+				required: true
+			},
 			member: {
 				/** @type Member */
 				type: Object,
@@ -504,7 +518,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			}
 		},
 		template: `
-		<div class='ui-access-rights-v2-members-item'>
+		<div
+			class='ui-access-rights-v2-members-item'
+			:data-testid="'ui-accessrights-member-' + accessCode"
+		>
 			<a
 				v-if="member.avatar"
 				class='ui-access-rights-v2-members-item-avatar'
@@ -522,7 +539,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	`
 	};
 
-	const MAX_SHOWN_MEMBERS = 5;
+	const MAX_SHOWN_MEMBERS$1 = 5;
 	const Members = {
 		name: 'Members',
 		components: {
@@ -545,15 +562,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		popup: null,
 		computed: {
 			shownMembers() {
-				if (this.userGroup.members.size <= MAX_SHOWN_MEMBERS) {
+				if (this.userGroup.members.size <= MAX_SHOWN_MEMBERS$1) {
 					return this.userGroup.members;
 				}
-				const shownKeyValuePairs = [...this.userGroup.members].slice(0, MAX_SHOWN_MEMBERS);
+				const shownKeyValuePairs = [...this.userGroup.members].slice(0, MAX_SHOWN_MEMBERS$1);
 				return new Map(shownKeyValuePairs);
 			},
 			notShownMembersCount() {
-				if (this.userGroup.members.size > MAX_SHOWN_MEMBERS) {
-					return this.userGroup.members.size - MAX_SHOWN_MEMBERS;
+				if (this.userGroup.members.size > MAX_SHOWN_MEMBERS$1) {
+					return this.userGroup.members.size - MAX_SHOWN_MEMBERS$1;
 				}
 				return 0;
 			},
@@ -575,7 +592,12 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		template: `
 		<div ref="container" class="ui-access-rights-v2-members-container" @click="handleClick">
 			<div v-if="userGroup.members.size > 0" class='ui-access-rights-v2-members'>
-				<SingleMember v-for="[accessCode, member] in shownMembers" :key="accessCode" :member="member"/>
+				<SingleMember
+					v-for="[accessCode, member] in shownMembers"
+					:key="accessCode"
+					:access-code="accessCode"
+					:member="member"
+				/>
 				<span v-if="notShownMembersCount > 0" class="ui-access-rights-v2-members-more">
 					+ {{ notShownMembersCount }}
 				</span>
@@ -837,6 +859,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	`
 	};
 
+	// what the host module puts in its title pattern where the value of the right goes
+	const UNLOADED_VARIABLE_VALUE_PLACEHOLDER = '#VALUE#';
 	class ItemsMapper {
 		static mapUserGroups(userGroups) {
 			const result = [];
@@ -861,6 +885,55 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				items.push(item);
 			}
 			return items;
+		}
+
+		/**
+		 * A selected value the source did not return an item for: the title is the one the server already put in
+		 * the variables of the right, so the value stays visible and can be unchecked like any other.
+		 *
+		 * The dialog builds a nameless placeholder for such a value on its own, so these options describe both a
+		 * locally added item and the repair of that placeholder: hence the flags it has to override are explicit.
+		 */
+		static mapUnloadedVariable(entityId, value, variable, titlePattern = null) {
+			return {
+				id: value,
+				entityId,
+				title: ItemsMapper.#unloadedVariableTitle(value, variable, titlePattern),
+				hidden: false,
+				deselectable: true,
+				saveable: false,
+				selected: true,
+				searchable: false,
+				tabs: 'recents'
+			};
+		}
+
+		/**
+		 * The dictionary of the right names only part of the values a source-fed right may hold, so a value past
+		 * that part is captioned by the pattern of the host module. Without a pattern the value itself is shown,
+		 * the way it was before the pattern existed.
+		 */
+		static #unloadedVariableTitle(value, variable, titlePattern) {
+			const dictionaryTitle = variable?.title ?? null;
+			if (dictionaryTitle !== null) {
+				return dictionaryTitle;
+			}
+			if (!main_core.Type.isStringFilled(titlePattern)) {
+				return value;
+			}
+			return titlePattern.split(UNLOADED_VARIABLE_VALUE_PLACEHOLDER).join(value);
+		}
+		static mapAllSelectedVariable(right, isSelected) {
+			return {
+				id: right.allSelectedCode,
+				// a synthetic entity keeps the choice out of the recent items the server knows about
+				entityId: EntitySelectorEntities.VARIABLE,
+				title: right.allSelectedTitle ?? main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_ACCEPTED'),
+				saveable: false,
+				selected: isSelected,
+				searchable: false,
+				tabs: 'recents'
+			};
 		}
 	}
 
@@ -1719,18 +1792,33 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		}
 		return title;
 	}
-	function getMultipleSelectedVariablesHintHtml(selectedVariables, hintTitle, allVariables, isInherit = false) {
-		if (!isInherit && selectedVariables.size < 2) {
+	function getMultipleSelectedVariablesHintHtml(selectedVariables, hintTitle, allVariables, isInherit = false, restItemsCount = 0) {
+		if (!isInherit && !isHintWorthShowing(selectedVariables.size, restItemsCount)) {
 			return '';
 		}
 		let listItems = '';
 		for (const value of makeSortedVariablesArray(selectedVariables, allVariables)) {
 			listItems += `<li>${main_core.Text.encode(value.title)}</li>`;
 		}
+		if (restItemsCount > 0) {
+			const restItems = main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_HINT_REST_ITEMS', {
+				'#COUNT#': restItemsCount
+			});
+			listItems += `<li>${main_core.Text.encode(restItems)}</li>`;
+		}
 		return `
 		<p>${main_core.Text.encode(hintTitle)}</p>
 		<ul>${listItems}</ul>
 	`;
+	}
+
+	// a single name is already shown in the cell itself, so the list pays off from the second one
+	// or when the cell hides values whose names never arrived
+	function isHintWorthShowing(shownCount, restItemsCount) {
+		if (shownCount === 0) {
+			return false;
+		}
+		return shownCount > 1 || restItemsCount > 0;
 	}
 	function makeSortedVariablesArray(toSort, example) {
 		const orderMap = new Map();
@@ -1771,6 +1859,32 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				userSortConfig: sortConfig
 			}
 		});
+	}
+
+	// Shared Air-design switcher options (see #8). Pass a size to override the default 'extra-small'.
+	function createAirSwitcherOptions(size = 'extra-small') {
+		return {
+			size,
+			useAirDesign: true,
+			style: ui_switcher.AirSwitcherStyle.SOLID
+		};
+	}
+
+	// Shared hint popup options for the dependent-variables popup (see #7).
+	function createHintOptions(text) {
+		return {
+			text,
+			popupOptions: {
+				bindOptions: {
+					position: 'bottom'
+				},
+				width: 262,
+				angle: {
+					position: 'top',
+					offset: 33
+				}
+			}
+		};
 	}
 
 	const CellLayout = {
@@ -2562,72 +2676,66 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	`
 	};
 
-	const Icon = {
-		name: 'Icon',
-		inject: ['section'],
-		computed: {
-			iconBgColor() {
-				if (this.section.sectionIcon.bgColor.startsWith('--')) {
-					// css variable
-					return `var(${this.section.sectionIcon.bgColor})`;
-				}
-
-				// we assume its hex
-				return this.section.sectionIcon.bgColor;
-			}
-		},
-		template: `
-		<div v-if="section.sectionIcon" class="ui-access-rights-v2-section-header-icon" :style="{
-			backgroundColor: iconBgColor,
-		}">
-			<div class="ui-icon-set" :class="'--' + section.sectionIcon.type"></div>
-		</div>
-	`
-	};
-
 	const Locator = {
 		name: 'Locator',
 		components: {
-			SectionIcon: Icon
-		},
-		props: {
-			maxWidth: {
-				type: Number,
-				// same as value popup width
-				default: 430
-			}
+			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		inject: ['section', 'right'],
 		computed: {
-			rightOrGroupTitle() {
+			parentRight() {
 				if (!this.right.group) {
+					return null;
+				}
+				return this.section.rights.get(this.right.group) ?? null;
+			},
+			rightTitleText() {
+				if (!this.parentRight) {
 					return this.right.title;
 				}
-				const groupHead = this.section.rights.get(this.right.group);
-				return groupHead?.title;
+				return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RIGHT_TITLE_WITH_PARENT', {
+					'#PARENT#': this.parentRight.title,
+					'#RIGHT#': this.right.title
+				});
+			},
+			titleParts() {
+				const template = this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RIGHTS_TO');
+				const [before = '', after = ''] = template.split('#RIGHT#');
+				return {
+					before,
+					after
+				};
+			},
+			sectionText() {
+				if (this.section.sectionSubTitle) {
+					return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SECTION_TITLE_WITH_SUBTITLE', {
+						'#TITLE#': this.section.sectionTitle,
+						'#SUBTITLE#': this.section.sectionSubTitle
+					});
+				}
+				return this.section.sectionTitle;
+			},
+			iconColor() {
+				return 'var(--ui-color-design-outline-content-label)';
 			}
 		},
 		template: `
-		<div class="ui-access-rights-v2-cell-popup-header-locator" :style="{
-			maxWidth: maxWidth + 'px',
-		}">
-			<SectionIcon/>
-			<span
-				class="ui-access-rights-v2-text-ellipsis"
-				:title="section.sectionTitle"
-			>{{ section.sectionTitle }}</span>
-			<span
-				v-if="section.sectionSubTitle" 
-				class="ui-access-rights-v2-text-ellipsis"
-				:title="section.sectionSubTitle"
-				style="margin-left: 5px; color: var(--ui-color-palette-gray-70);"
-			>{{ section.sectionSubTitle }}</span>
-			<div class="ui-icon-set --chevron-right ui-access-rights-v2-cell-popup-header-chevron"></div>
-			<template v-if="rightOrGroupTitle !== right.title">
-				<span class="ui-access-rights-v2-text-ellipsis" :title="right.title">{{ right.title }}</span>
-				<div class="ui-icon-set --chevron-right ui-access-rights-v2-cell-popup-header-chevron"></div>
-			</template>
-			<span class="ui-access-rights-v2-text-ellipsis" :title="rightOrGroupTitle">{{ rightOrGroupTitle }}</span>
+		<div class="ui-access-rights-v2-cell-popup-header-locator">
+			<p class="ui-access-rights-v2-cell-popup-header-title">
+				<span>{{ titleParts.before }}</span><span class="ui-access-rights-v2-cell-popup-header-title-right" :title="rightTitleText">{{ rightTitleText }}</span><span>{{ titleParts.after }}</span>
+			</p>
+			<div class="ui-access-rights-v2-cell-popup-header-section">
+				<BIcon
+					v-if="section.sectionIcon"
+					:name="section.sectionIcon.type"
+					:color="iconColor"
+					:size="18"
+				/>
+				<span
+					class="ui-access-rights-v2-text-ellipsis ui-access-rights-v2-cell-popup-header-section-title"
+					:title="sectionText"
+				>{{ sectionText }}</span>
+			</div>
 		</div>
 	`
 	};
@@ -2635,127 +2743,385 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	const MasterSwitcher = {
 		name: 'MasterSwitcher',
 		components: {
-			Switcher: ui_vue3_components_switcher.Switcher
+			Switcher: ui_vue3_components_switcher.Switcher,
+			UiLabel: ui_system_label_vue.Label
 		},
 		emits: ['check', 'uncheck'],
 		props: {
 			isChecked: {
 				type: Boolean,
 				required: true
+			},
+			showBadge: {
+				type: Boolean,
+				default: true
+			},
+			isInteractive: {
+				type: Boolean,
+				default: true
 			}
 		},
 		inject: ['section', 'right'],
 		computed: {
 			switcherOptions() {
-				return {
-					size: 'small',
-					color: 'green'
-				};
+				return createAirSwitcherOptions('large');
+			},
+			badgeText() {
+				const code = this.isChecked ? 'JS_UI_ACCESSRIGHTS_V2_AVAILABLE_FOR_ROLE' : 'JS_UI_ACCESSRIGHTS_V2_UNAVAILABLE_FOR_ROLE';
+				return this.$Bitrix.Loc.getMessage(code);
+			},
+			badgeStyle() {
+				return this.isChecked ? ui_system_label.LabelStyle.TINTED : ui_system_label.LabelStyle.TINTED_NO_ACCENT;
+			},
+			labelSize() {
+				return ui_system_label.LabelSize.MD;
 			}
 		},
 		template: `
-		<div class="ui-access-rights-v2-cell-popup-header-master-switcher" :class="{
-			'--checked': isChecked,
-		}">
-			<slot/>
-			<div class="ui-access-rights-v2-cell-popup-header-toggle-container">
-				<Switcher
-					:is-checked="isChecked"
-					@check="$emit('check')"
-					@uncheck="$emit('uncheck')"
-					:options="switcherOptions"
-					data-accessrights-min-max
-				/>
+		<div class="ui-access-rights-v2-cell-popup-header-master-switcher">
+			<UiLabel
+				v-if="showBadge && isInteractive"
+				:value="badgeText"
+				:style="badgeStyle"
+				:size="labelSize"
+			/>
+			<div class="ui-access-rights-v2-cell-popup-header-master-switcher-row">
+				<slot/>
+				<div v-if="isInteractive" class="ui-access-rights-v2-cell-popup-header-toggle-container">
+					<Switcher
+						:is-checked="isChecked"
+						@check="$emit('check')"
+						@uncheck="$emit('uncheck')"
+						:options="switcherOptions"
+						data-accessrights-min-max
+					/>
+				</div>
 			</div>
 		</div>
 	`
 	};
 
-	const SingleRoleTitle = {
-		name: 'SingleRoleTitle',
+	const CUSTOM_TAB_ID = 'custom';
+	const Tabs = {
+		name: 'DependentVariablesTabs',
+		emits: ['selectTab'],
+		components: {
+			UiButton: ui_vue3_components_button.Button
+		},
 		props: {
-			userGroupTitle: {
+			tabs: {
+				type: Array,
+				required: true
+			},
+			hasCustomTab: {
+				type: Boolean,
+				required: true
+			},
+			activeTab: {
 				type: String,
 				required: true
 			}
 		},
+		watch: {
+			activeTab(tabId) {
+				void this.$nextTick(() => {
+					this.scrollTabIntoCenter(tabId);
+				});
+			}
+		},
+		mounted() {
+			// Center the initially active tab once the container and buttons exist in the DOM.
+			void this.$nextTick(() => {
+				this.scrollTabIntoCenter(this.activeTab);
+			});
+		},
+		computed: {
+			customTabTitle() {
+				return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CUSTOM_TAB_TITLE');
+			},
+			customTabIcon() {
+				return ui_iconSet_api_core.Outline.FILTER_2_LINES;
+			},
+			buttonSize() {
+				return ui_vue3_components_button.ButtonSize.MEDIUM;
+			},
+			customTabId() {
+				return CUSTOM_TAB_ID;
+			}
+		},
+		methods: {
+			styleFor(tabId) {
+				return this.activeTab === tabId ? ui_vue3_components_button.AirButtonStyle.OUTLINE_ACCENT_2 : ui_vue3_components_button.AirButtonStyle.OUTLINE_NO_ACCENT;
+			},
+			onClick(tabId) {
+				if (this.activeTab === tabId) {
+					return;
+				}
+				this.$emit('selectTab', tabId);
+			},
+			scrollTabIntoCenter(tabId) {
+				const container = this.$refs.container;
+				const tabElement = container?.querySelector(`[data-tab-id="${tabId}"]`) ?? null;
+				if (!container || !tabElement) {
+					return;
+				}
+				if (container.scrollWidth <= container.clientWidth) {
+					return;
+				}
+				const tabOffset = tabElement.offsetLeft + tabElement.offsetWidth / 2;
+				const targetScrollLeft = tabOffset - container.clientWidth / 2;
+				container.scrollTo({
+					left: targetScrollLeft,
+					behavior: 'smooth'
+				});
+			},
+			onWheel(event) {
+				const container = event.currentTarget;
+				if (container.scrollWidth <= container.clientWidth) {
+					return;
+				}
+				const delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+				if (delta === 0) {
+					return;
+				}
+				event.preventDefault();
+				container.scrollLeft += delta;
+			}
+		},
 		template: `
-		<div class="ui-access-rights-v2-cell-popup-header-role-container">
-			<div>
-				<div class="ui-access-rights-v2-cell-popup-header-role-caption">
-					{{ $Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE') }}
-				</div>
+		<div ref="container" class="ui-access-rights-v2-dv-tabs" @wheel="onWheel">
+			<UiButton
+				v-for="tab in tabs"
+				:key="tab.id"
+				:dataset="{ tabId: tab.id }"
+				class="ui-access-rights-v2-dv-tabs-button"
+				:text="tab.title"
+				:left-icon="tab.icon"
+				:size="buttonSize"
+				:style="styleFor(tab.id)"
+				@click="onClick(tab.id)"
+			/>
+			<UiButton
+				v-if="hasCustomTab"
+				:dataset="{ tabId: customTabId }"
+				class="ui-access-rights-v2-dv-tabs-button"
+				:text="customTabTitle"
+				:left-icon="customTabIcon"
+				:size="buttonSize"
+				:style="styleFor(customTabId)"
+				@click="onClick(customTabId)"
+			/>
+		</div>
+	`
+	};
+
+	const PresetTabContent = {
+		name: 'DependentVariablesPresetTabContent',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			Checkbox: ui_system_checkbox_vue.Checkbox
+		},
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		inject: ['section', 'right'],
+		props: {
+			preset: {
+				type: Object,
+				required: true
+			},
+			userGroup: {
+				type: Object,
+				default: null
+			}
+		},
+		computed: {
+			description() {
+				return this.preset.description ?? null;
+			},
+			groupHeadItems() {
+				if (!this.preset.showGroupHeadItems || !this.right.group || !this.userGroup) {
+					return [];
+				}
+				const parentRight = this.$store.getters['accessRights/getAccessRightItemById'](this.section.sectionCode, this.right.group);
+				if (!parentRight) {
+					return [];
+				}
+				const parentValue = this.$store.getters['userGroups/getAccessRightValue'](this.userGroup, this.section.sectionCode, this.right.group);
+				const parentValues = parentValue.values;
+				const result = [];
+				for (const [variableId, parentVariable] of parentRight.variables) {
+					if (parentValues.has(variableId)) {
+						result.push({
+							id: variableId,
+							title: parentVariable.title,
+							hint: parentVariable.hint ?? null
+						});
+					}
+				}
+				return result;
+			},
+			hintIcon() {
+				return ui_iconSet_api_vue.Outline.QUESTION_M;
+			},
+			checkboxSize() {
+				return ui_system_checkbox.CheckboxSize;
+			}
+		},
+		methods: {
+			getHintOptions(text) {
+				return createHintOptions(text);
+			}
+		},
+		template: `
+		<div class="ui-access-rights-v2-dv-preset-content">
+			<!--
+				Security invariant: 'description' is HTML already escaped on the backend and may contain only
+				controlled markup (<b>). User-supplied names are escaped in PHP via htmlspecialcharsbx.
+				Never pass raw user text here. Re-escaping would break the intentional <b>, so v-html stays.
+			-->
+			<p v-if="description" class="ui-access-rights-v2-dv-preset-content-description" v-html="description"></p>
+			<div v-if="groupHeadItems.length > 0" class="ui-access-rights-v2-dv-popup--line-container">
 				<div
-					class="ui-access-rights-v2-cell-popup-header-role-title ui-access-rights-v2-text-ellipsis"
-					:title="userGroupTitle"
+					v-for="item in groupHeadItems"
+					:key="item.id"
+					class="ui-access-rights-v2-dv-popup--line --disabled"
 				>
-					{{ userGroupTitle }}
+					<div class="ui-access-rights-v2-dv-popup--line-title">
+						<span class="ui-access-rights-v2-text-ellipsis" :title="item.title">{{ item.title }}</span>
+						<BIcon
+							v-if="item.hint"
+							:name="hintIcon"
+							:size="20"
+							:color="'var(--ui-color-palette-gray-40)'"
+							v-hint="getHintOptions(item.hint)"
+						/>
+					</div>
+					<div class="ui-access-rights-v2-dv-popup--line-checkbox">
+						<Checkbox
+							:model-value="true"
+							:disabled="true"
+							:size="checkboxSize.Md"
+						/>
+					</div>
 				</div>
 			</div>
 		</div>
 	`
 	};
 
-	const PopupHeader = {
-		name: 'DependentVariablesPopupHeader',
+	// Shared list of dependent-variable rows for both single-select (radio) and multi-select (checkbox + secondary
+	// switchers) modes. Row markup, hints and data-* attributes are identical between modes; only the row control
+	// differs, and multi-mode additionally renders the secondary switchers.
+	const SelectList = {
+		name: 'DependentVariablesSelectList',
+		emits: ['selectVariable', 'toggleVariable', 'enableSecondary', 'disableSecondary'],
 		components: {
-			Locator,
-			MasterSwitcher,
-			SingleRoleTitle
+			RadioButton: ui_system_radiobutton_vue.RadioButton,
+			Switcher: ui_vue3_components_switcher.Switcher,
+			Icon: ui_iconSet_api_vue.BIcon,
+			Checkbox: ui_system_checkbox_vue.Checkbox
 		},
-		emits: ['setMax', 'setMin'],
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
 		props: {
-			values: {
-				/** @type Set<string> */
+			mode: {
+				type: String,
+				required: true,
+				validator: value => ['single', 'multi'].includes(value)
+			},
+			variables: {
+				type: Map,
+				required: true
+			},
+			customValues: {
 				type: Set,
 				required: true
+			},
+			group: {
+				type: String,
+				default: ''
+			},
+			secondaryVariables: {
+				type: Map,
+				default: () => new Map()
 			}
 		},
-		inject: ['right'],
 		computed: {
-			isChecked() {
-				if (!this.isMinMaxValuesSet) {
-					return this.values.size > 0;
-				}
-				return this.isSelectedAnythingBesidesMin;
+			iconSet() {
+				return ui_iconSet_api_vue.Set;
 			},
-			isMinMaxValuesSet() {
-				return !main_core.Type.isNil(this.right.minValue) && !main_core.Type.isNil(this.right.maxValue);
+			checkboxSize() {
+				return ui_system_checkbox.CheckboxSize;
 			},
-			isSelectedAnythingBesidesMin() {
-				if (this.values.size <= 0) {
-					return false;
-				}
-				for (const variableId of this.values) {
-					if (!this.right.minValue.has(variableId)) {
-						return true;
-					}
-				}
-				return false;
+			isSingle() {
+				return this.mode === 'single';
+			},
+			secondarySwitcherOptions() {
+				return createAirSwitcherOptions();
 			}
 		},
 		methods: {
-			setMin() {
-				if (this.isMinMaxValuesSet) {
-					this.$emit('setMin');
-				}
+			getVariableHintOptions(variable) {
+				return createHintOptions(variable.hint);
 			},
-			setMax() {
-				if (this.isMinMaxValuesSet) {
-					this.$emit('setMax');
+			onRowClick(variable) {
+				this.$emit(this.isSingle ? 'selectVariable' : 'toggleVariable', variable.id);
+			},
+			onRadioUpdate(variableId, value) {
+				if (value) {
+					this.$emit('selectVariable', variableId);
 				}
 			}
 		},
 		template: `
-		<div>
-			<Locator/>
-			<MasterSwitcher
-				:is-checked="isChecked"
-				@check="setMax"
-				@uncheck="setMin"
+		<div class="ui-access-rights-v2-dv-popup--line-container">
+			<div
+				v-for="[variableId, variable] in variables"
+				:key="variableId"
+				class="ui-access-rights-v2-dv-popup--line --clickable"
+				:class="{ '--checked': customValues.has(variable.id) }"
+				@click="onRowClick(variable)"
 			>
-				<slot/>
-			</MasterSwitcher>
+				<div class="ui-access-rights-v2-dv-popup--line-title">
+					<span class="ui-access-rights-v2-text-ellipsis" :title="variable.title">{{ variable.title }}</span>
+					<Icon v-if="variable.hint" :name="iconSet.INFO_1" :color="'var(--ui-color-palette-gray-40)'" :size="20" v-hint="getVariableHintOptions(variable)" @click.stop></Icon>
+				</div>
+				<div v-if="isSingle" class="ui-access-rights-v2-dv-popup--line-radio" @click.stop>
+					<RadioButton
+						:model-value="customValues.has(variable.id)"
+						:group="group"
+						:data-accessrights-variable-id="variable.id"
+						@update:model-value="(value) => onRadioUpdate(variable.id, value)"
+					/>
+				</div>
+				<div v-else class="ui-access-rights-v2-dv-popup--line-checkbox" @click.stop>
+					<Checkbox
+						:model-value="customValues.has(variable.id)"
+						:size="checkboxSize.Md"
+						:data-accessrights-variable-id="variable.id"
+						@update:model-value="$emit('toggleVariable', variable.id)"
+					/>
+				</div>
+			</div>
+			<template v-if="!isSingle">
+				<div
+					v-for="[variableId, variable] in secondaryVariables"
+					:key="variableId"
+					class="ui-access-rights-v2-dv-popup--line --secondary"
+				>
+					<Switcher
+						:is-checked="customValues.has(variable.id)"
+						@check="$emit('enableSecondary', variable.id)"
+						@uncheck="$emit('disableSecondary', variable.id)"
+						:options="secondarySwitcherOptions"
+						style="padding-right: 5px;"
+						:data-accessrights-variable-id="variable.id"
+					/>
+					<span class="ui-access-rights-v2-text-ellipsis">{{ variable.title }}</span>
+				</div>
+			</template>
 		</div>
 	`
 	};
@@ -2764,55 +3130,118 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		name: 'DependentVariablesPopupContent',
 		emits: ['apply'],
 		components: {
-			Switcher: ui_vue3_components_switcher.Switcher,
-			PopupHeader,
+			Locator,
+			MasterSwitcher,
+			Tabs,
+			PresetTabContent,
+			SelectList,
 			Icon: ui_iconSet_api_vue.BIcon
-		},
-		directives: {
-			hint: ui_vue3_directives_hint.hint
 		},
 		props: {
 			// value for selector is id of a selected variable
 			initialValues: {
 				type: Set,
-				default: new Set()
+				default: () => new Set()
+			},
+			showMasterBadge: {
+				type: Boolean,
+				default: true
+			},
+			userGroup: {
+				type: Object,
+				default: null
 			}
 		},
 		data() {
+			const initial = this.computeInitialState();
 			return {
-				// values modified during popup lifetime and not yet dispatched to store
-				notSavedValues: this.getNotSavedValues()
+				selectedPresetId: initial.selectedPresetId,
+				customValues: initial.customValues
 			};
 		},
 		inject: ['section', 'right', 'redefineApply'],
 		computed: {
+			presetVariableIds() {
+				const ids = new Set();
+				for (const preset of this.right.presets.values()) {
+					for (const variableId of preset.variableIds) {
+						ids.add(variableId);
+					}
+				}
+				return ids;
+			},
+			presetTabs() {
+				const result = [];
+				for (const preset of this.right.presets.values()) {
+					result.push({
+						id: preset.id,
+						title: preset.title,
+						icon: preset.icon ?? null
+					});
+				}
+				return result;
+			},
+			hasCustomTab() {
+				for (const variableId of this.right.variables.keys()) {
+					if (!this.presetVariableIds.has(variableId)) {
+						return true;
+					}
+				}
+				return false;
+			},
+			activeTab() {
+				return this.selectedPresetId ?? CUSTOM_TAB_ID;
+			},
+			activePreset() {
+				if (!this.selectedPresetId) {
+					return null;
+				}
+				return this.right.presets.get(this.selectedPresetId) ?? null;
+			},
+			effectiveValues() {
+				if (this.activePreset) {
+					return new Set(this.activePreset.variableIds);
+				}
+				return this.customValues;
+			},
 			isMinMaxValuesSet() {
 				return !main_core.Type.isNil(this.right.minValue) && !main_core.Type.isNil(this.right.maxValue);
 			},
-			variablesShownInList() {
+			isMasterChecked() {
+				if (this.selectedPresetId) {
+					return true;
+				}
 				if (!this.isMinMaxValuesSet) {
-					return this.right.variables;
+					return this.customValues.size > 0;
 				}
-				const variablesWithoutMinAndSecondary = main_core.Runtime.clone(this.right.variables);
-				for (const variableId of this.right.minValue) {
-					variablesWithoutMinAndSecondary.delete(variableId);
-				}
-				for (const [variableId, variable] of variablesWithoutMinAndSecondary) {
-					if (variable.secondary) {
-						variablesWithoutMinAndSecondary.delete(variableId);
-					}
-					if (!main_core.Type.isNil(variable.dependant) && !this.notSavedValues.has(variableId)) {
-						for (const dependantId of variable.dependant) {
-							variablesWithoutMinAndSecondary.delete(dependantId);
-						}
+				for (const variableId of this.customValues) {
+					if (!this.right.minValue.has(variableId)) {
+						return true;
 					}
 				}
-				return variablesWithoutMinAndSecondary;
+				return false;
+			},
+			variablesShownInList() {
+				// Shallow copy is enough: only Map keys are removed below, the Variable values are never mutated.
+				const result = new Map(this.right.variables);
+				if (this.isMinMaxValuesSet) {
+					// minValue items are the floor — hidden from the list in both modes
+					// (multi-mode pins them on; single-mode treats them as the master-OFF fallback).
+					for (const variableId of this.right.minValue) {
+						result.delete(variableId);
+					}
+				}
+				for (const [variableId, variable] of result) {
+					if (variable.secondary || this.presetVariableIds.has(variableId)) {
+						result.delete(variableId);
+					}
+				}
+				return result;
 			},
 			secondaryVariables() {
 				const result = new Map();
 				for (const [variableId, variable] of this.right.variables) {
-					if (variable.secondary) {
+					if (variable.secondary && !this.presetVariableIds.has(variableId)) {
 						result.set(variableId, variable);
 					}
 				}
@@ -2821,21 +3250,17 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			nothingSelectedValues() {
 				return this.$store.getters['accessRights/getNothingSelectedValue'](this.section.sectionCode, this.right.id);
 			},
-			switcherOptions() {
-				return {
-					size: 'large',
-					color: 'primary',
-					useAirDesign: true
-				};
-			},
-			secondarySwitcherOptions() {
-				return {
-					size: 'extra-small',
-					color: 'green'
-				};
-			},
 			iconSet() {
 				return ui_iconSet_api_vue.Set;
+			},
+			isSingleSelect() {
+				return this.right.type === 'single_dependent_variables';
+			},
+			radioGroupName() {
+				return `ui-access-rights-v2-radio-${this.section.sectionCode}-${this.right.id}`;
+			},
+			customTabId() {
+				return CUSTOM_TAB_ID;
 			}
 		},
 		mounted() {
@@ -2849,16 +3274,16 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				if (!variable) {
 					return;
 				}
-				this.notSavedValues.add(variableId);
+				this.customValues.add(variableId);
 				if (!main_core.Type.isNil(variable.requires)) {
 					for (const requiredId of variable.requires) {
-						this.notSavedValues.add(requiredId);
+						this.customValues.add(requiredId);
 					}
 				}
 				if (!main_core.Type.isNil(variable.conflictsWith)) {
 					// remove old variables that conflict with variable we want to add
 					for (const conflictId of variable.conflictsWith) {
-						this.notSavedValues.delete(conflictId);
+						this.customValues.delete(conflictId);
 					}
 				}
 				for (const otherVariable of this.right.variables.values()) {
@@ -2867,18 +3292,18 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					}
 
 					// if one of the current variables conflicts with newly added variables, we remove old variable
-					if (this.notSavedValues.has(otherVariable.id) && !main_core.Type.isNil(otherVariable.conflictsWith)) {
+					if (this.customValues.has(otherVariable.id) && !main_core.Type.isNil(otherVariable.conflictsWith)) {
 						for (const conflictId of otherVariable.conflictsWith) {
-							if (this.notSavedValues.has(conflictId)) {
-								this.notSavedValues.delete(otherVariable.id);
+							if (this.customValues.has(conflictId)) {
+								this.customValues.delete(otherVariable.id);
 							}
 						}
 					}
 				}
 			},
 			removeValue(variableId) {
-				this.notSavedValues.delete(variableId);
-				for (const otherVariableId of this.notSavedValues) {
+				this.customValues.delete(variableId);
+				for (const otherVariableId of this.customValues) {
 					if (otherVariableId === variableId) {
 						continue;
 					}
@@ -2887,22 +3312,61 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 						continue;
 					}
 					if (!main_core.Type.isNil(otherVariable.requires) && otherVariable.requires.has(variableId)) {
-						this.notSavedValues.delete(otherVariableId);
+						this.customValues.delete(otherVariableId);
 					}
 				}
 			},
 			setMaxValue() {
+				if (!this.isMinMaxValuesSet) {
+					return;
+				}
+				for (const variableId of this.right.maxValue) {
+					const presetId = this.findPresetIdForVariable(variableId);
+					if (presetId !== null) {
+						this.selectTab(presetId);
+						return;
+					}
+				}
+				this.selectTab(CUSTOM_TAB_ID);
+				if (this.isSingleSelect) {
+					// pick the first maxValue id that is NOT pinned in minValue —
+					// otherwise master ON would select an item hidden from the list and stay visually OFF.
+					for (const variableId of this.right.maxValue) {
+						if (!this.right.minValue.has(variableId)) {
+							this.selectRadio(variableId);
+							break;
+						}
+					}
+					return;
+				}
 				for (const variableId of this.right.maxValue) {
 					this.addValue(variableId);
 				}
 			},
 			setMinValue() {
+				if (!this.isMinMaxValuesSet) {
+					return;
+				}
+				for (const variableId of this.right.minValue) {
+					const presetId = this.findPresetIdForVariable(variableId);
+					if (presetId !== null) {
+						this.selectTab(presetId);
+						return;
+					}
+				}
+				this.selectTab(CUSTOM_TAB_ID);
+				if (this.isSingleSelect) {
+					const firstMinId = [...this.right.minValue].find(id => this.right.variables.has(id)) ?? null;
+					this.customValues = firstMinId === null ? new Set() : new Set([firstMinId]);
+					return;
+				}
+				this.customValues = new Set();
 				for (const variableId of this.right.minValue) {
 					this.addValue(variableId);
 				}
 			},
 			apply() {
-				let values = this.notSavedValues;
+				let values = this.effectiveValues;
 				if (values.size <= 0) {
 					values = this.nothingSelectedValues;
 				}
@@ -2910,91 +3374,116 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					values
 				});
 			},
-			getNotSavedValues() {
-				const result = new Set();
-				this.initialValues.forEach(value => {
+			computeInitialState() {
+				const stored = new Set();
+				for (const value of this.initialValues) {
 					if (this.right.variables.has(value)) {
-						result.add(value);
-					}
-				});
-				return result;
-			},
-			getVariableHintOptions(variable) {
-				return {
-					text: variable.hint,
-					popupOptions: {
-						bindOptions: {
-							position: 'bottom'
-						},
-						width: 262,
-						angle: {
-							position: 'top',
-							offset: 33
-						}
-					}
-				};
-			},
-			isDependantVariable(variableId) {
-				for (const [, variable] of this.variablesShownInList) {
-					if (!main_core.Type.isNil(variable.dependant) && variable.dependant.has(variableId)) {
-						return true;
+						stored.add(value);
 					}
 				}
-				return false;
+				const ownedByPreset = new Set();
+				for (const preset of this.right.presets.values()) {
+					for (const variableId of preset.variableIds) {
+						ownedByPreset.add(variableId);
+					}
+					if (stored.size === preset.variableIds.length && preset.variableIds.every(variableId => stored.has(variableId))) {
+						return {
+							selectedPresetId: preset.id,
+							customValues: new Set()
+						};
+					}
+				}
+				const customValues = new Set();
+				for (const value of stored) {
+					if (!ownedByPreset.has(value)) {
+						customValues.add(value);
+					}
+				}
+				if (this.right.type === 'single_dependent_variables' && customValues.size > 1) {
+					const [first] = customValues;
+					customValues.clear();
+					customValues.add(first);
+				}
+				return {
+					selectedPresetId: null,
+					customValues
+				};
 			},
-			className(variableId) {
-				return this.isDependantVariable(variableId) ? '--dependant' : '';
+			findPresetIdForVariable(variableId) {
+				for (const preset of this.right.presets.values()) {
+					if (preset.variableIds.includes(variableId)) {
+						return preset.id;
+					}
+				}
+				return null;
+			},
+			toggleValue(variableId) {
+				if (this.customValues.has(variableId)) {
+					this.removeValue(variableId);
+				} else {
+					this.addValue(variableId);
+				}
+			},
+			selectRadio(variableId) {
+				if (this.right.variables.has(variableId)) {
+					this.customValues = new Set([variableId]);
+				}
+			},
+			selectTab(tabId) {
+				if (tabId === CUSTOM_TAB_ID || !this.right.presets.has(tabId)) {
+					this.selectedPresetId = null;
+					return;
+				}
+				if (tabId === this.selectedPresetId) {
+					return;
+				}
+				this.selectedPresetId = tabId;
 			}
 		},
 		// data attributes are needed for e2e automated tests
 		template: `
 		<div>
-			<PopupHeader
-				:values="notSavedValues"
-				@set-max="setMaxValue"
-				@set-min="setMinValue"
-			>
-				<slot name="role-title"/>
-			</PopupHeader>
-			<div class="ui-access-rights-v2-dv-popup--line-container">
-				<TransitionGroup
-					name="ui-access-rights-v2-dv-fade"
-					tag="div"
+			<Locator/>
+			<div class="ui-access-rights-v2-dv-popup--body">
+				<MasterSwitcher
+					:is-checked="isMasterChecked"
+					:show-badge="showMasterBadge"
+					:is-interactive="isMinMaxValuesSet"
+					@check="setMaxValue"
+					@uncheck="setMinValue"
 				>
-					<div
-						v-for="[variableId, variable] in variablesShownInList"
-						:key="variableId"
-						class="ui-access-rights-v2-dv-popup--line"
-						:class="className(variableId)"
-					>
-						<div class="ui-access-rights-v2-dv-popup--line-title">
-							<span class="ui-access-rights-v2-text-ellipsis" :title="variable.title">{{ variable.title }}</span>
-							<Icon v-if="variable.hint" :name="iconSet.INFO_1" :color="'var(--ui-color-palette-gray-40)'" :size="20" v-hint="getVariableHintOptions(variable)"></Icon>
-						</div>
-						<Switcher
-							:is-checked="notSavedValues.has(variable.id)"
-							@check="addValue(variable.id)"
-							@uncheck="removeValue(variable.id)"
-							:options="switcherOptions"
-							:data-accessrights-variable-id="variable.id"
-						/>
-					</div>
-				</TransitionGroup>
-				<div
-					v-for="[variableId, variable] in secondaryVariables"
-					:key="variableId"
-					class="ui-access-rights-v2-dv-popup--line --secondary"
-				>
-					<Switcher
-						:is-checked="notSavedValues.has(variable.id)"
-						@check="addValue(variable.id)"
-						@uncheck="removeValue(variable.id)"
-						:options="secondarySwitcherOptions"
-						style="padding-right: 5px;"
-						:data-accessrights-variable-id="variable.id"
-					/>
-					<span class="ui-access-rights-v2-text-ellipsis">{{ variable.title }}</span>
-				</div>
+					<slot name="role-title"/>
+				</MasterSwitcher>
+				<Tabs
+					v-if="presetTabs.length > 0"
+					:tabs="presetTabs"
+					:has-custom-tab="hasCustomTab"
+					:active-tab="activeTab"
+					@select-tab="selectTab"
+				/>
+				<PresetTabContent
+					v-if="activeTab !== customTabId && activePreset"
+					:preset="activePreset"
+					:user-group="userGroup"
+				/>
+				<SelectList
+					v-else-if="isSingleSelect"
+					mode="single"
+					:variables="variablesShownInList"
+					:custom-values="customValues"
+					:group="radioGroupName"
+					@select-variable="selectRadio"
+				/>
+				<SelectList
+					v-else
+					mode="multi"
+					:variables="variablesShownInList"
+					:custom-values="customValues"
+					:secondary-variables="secondaryVariables"
+					@toggle-variable="toggleValue"
+					@enable-secondary="addValue"
+					@disable-secondary="removeValue"
+				/>
 			</div>
 			<div
 				v-if="right.dependentVariablesPopupHint"
@@ -3045,29 +3534,32 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					autoHide: true,
 					closeEsc: true,
 					cacheable: false,
-					minWidth: 466,
-					padding: 18
+					width: 439,
+					padding: 24,
+					className: 'ui-access-rights-v2-value-popup'
 				};
 			}
 		},
 		mounted() {
 			void this.$nextTick(() => {
 				const applyButton = new ui_buttons.ApplyButton({
-					color: ui_buttons.ButtonColor.PRIMARY,
+					useAirDesign: true,
+					style: ui_buttons.Button.AirStyle.FILLED,
+					size: ui_buttons.Button.Size.LARGE,
 					onclick: () => {
 						this.apply();
 						this.$emit('close');
-					},
-					useAirDesign: true
+					}
 				});
 				applyButton.renderTo(this.$refs['button-container']);
 				const cancelButton = new ui_buttons.CancelButton({
+					useAirDesign: true,
+					style: ui_buttons.Button.AirStyle.OUTLINE,
+					size: ui_buttons.Button.Size.LARGE,
 					onclick: () => {
 						this.$emit('close');
 					},
-					text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
-					useAirDesign: true,
-					style: ui_buttons.AirButtonStyle.OUTLINE
+					text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL')
 				});
 				cancelButton.renderTo(this.$refs['button-container']);
 			});
@@ -3107,7 +3599,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		},
 		template: `
 		<ValuePopup @close="$emit('close')">
-			<PopupContent @apply="apply">
+			<PopupContent @apply="apply" :show-master-badge="false">
 				<template #role-title>
 					<AllRolesTitle/>
 				</template>
@@ -3119,20 +3611,36 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	class Footer extends ui_entitySelector.DefaultFooter {
 		constructor(dialog, options) {
 			super(dialog, options);
-			this.selectAllButton = main_core.Tag.render`<div class="ui-selector-footer-link">${main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_SELECT_LABEL')}</div>`;
+			this.selectAllButton = main_core.Tag.render`<div
+			class="ui-selector-footer-link"
+			data-testid="ui-accessrights-selector-footer-select-all"
+		>${main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_SELECT_LABEL')}</div>`;
 			main_core.Dom.style(this.selectAllButton, 'display', 'none');
 			main_core.Event.bind(this.selectAllButton, 'click', this.#selectAll.bind(this));
-			this.deselectAllButton = main_core.Tag.render`<div class="ui-selector-footer-link">${main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_DESELECT_LABEL')}</div>`;
+			this.deselectAllButton = main_core.Tag.render`<div
+			class="ui-selector-footer-link"
+			data-testid="ui-accessrights-selector-footer-deselect-all"
+		>${main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_DESELECT_LABEL')}</div>`;
 			main_core.Dom.style(this.deselectAllButton, 'display', 'none');
 			main_core.Event.bind(this.deselectAllButton, 'click', this.#deselectAll.bind(this));
-			this.getDialog().subscribe('Item:onSelect', this.#onItemStatusChange.bind(this));
-			this.getDialog().subscribe('Item:onDeselect', this.#onItemStatusChange.bind(this));
+			this.getDialog().subscribe('Item:onSelect', this.updateSelectButtons.bind(this));
+			this.getDialog().subscribe('Item:onDeselect', this.updateSelectButtons.bind(this));
+			// items of a server-fed dialog arrive after the footer is rendered and are selected silently
+			this.getDialog().subscribe('onLoad', this.updateSelectButtons.bind(this));
 		}
 		getContent() {
-			this.#toggleSelectButtons();
+			this.updateSelectButtons();
 			return [this.selectAllButton, this.deselectAllButton];
 		}
-		#toggleSelectButtons() {
+
+		// public because items put straight into the dialog raise no event: their owner asks for the recount
+		updateSelectButtons() {
+			if (this.getOption('hasVariablesSource') === true) {
+				// 'select all' would only cover the loaded page of a partially fetched source
+				main_core.Dom.style(this.selectAllButton, 'display', 'none');
+				main_core.Dom.style(this.deselectAllButton, 'display', this.getDialog().getSelectedItems().length > 0 ? '' : 'none');
+				return;
+			}
 			if (this.getDialog().getSelectedItems().length === this.getDialog().getItems().length) {
 				main_core.Dom.style(this.selectAllButton, 'display', 'none');
 				main_core.Dom.style(this.deselectAllButton, 'display', '');
@@ -3151,9 +3659,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				item.deselect();
 			});
 		}
-		#onItemStatusChange() {
-			this.#toggleSelectButtons();
-		}
 	}
 
 	let Header$1 = class Header extends ui_entitySelector.BaseHeader {
@@ -3162,9 +3667,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		}
 		#renderVueApp() {
 			const container = main_core.Tag.render`<div style="padding: 20px 20px 0;"></div>`;
-			const app = ui_vue3.BitrixVue.createApp(Locator, {
-				maxWidth: this.getDialog().getWidth()
-			});
+			const app = ui_vue3.BitrixVue.createApp(Locator);
 			app.provide('section', this.getOption('section'));
 			app.provide('right', this.getOption('right'));
 			app.mount(container);
@@ -3191,17 +3694,71 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		},
 		dialog: null,
 		computed: {
+			hasVariablesSource() {
+				return this.right.variablesSource !== null;
+			},
 			isAllSelected() {
 				return this.values.has(this.right.allSelectedCode);
 			},
 			selectedVariables() {
 				return getSelectedVariables(this.right.variables, this.values, this.isAllSelected);
 			},
-			dialogItems() {
-				return ItemsMapper.mapVariables(this.right.variables);
+			dialogModeOptions() {
+				return this.hasVariablesSource ? this.sourceModeOptions : this.staticModeOptions;
 			},
-			selectedDialogItems() {
-				return this.dialogItems.filter(item => this.selectedVariables.has(item.id));
+			staticModeOptions() {
+				const items = ItemsMapper.mapVariables(this.right.variables);
+				return {
+					enableSearch: this.right.enableSearch,
+					items,
+					selectedItems: items.filter(item => this.selectedVariables.has(item.id)),
+					entities: [{
+						id: EntitySelectorEntities.VARIABLE
+					}]
+				};
+			},
+			sourceModeOptions() {
+				const source = this.right.variablesSource;
+				return {
+					// without search only the first page of the source is reachable
+					enableSearch: true,
+					items: this.allSelectedItems,
+					preselectedItems: this.preselectedItems,
+					entities: [{
+						id: source.entityId,
+						options: source.providerOptions,
+						dynamicLoad: source.dynamicLoad,
+						dynamicSearch: source.dynamicSearch,
+						dynamicSearchMatchMode: source.dynamicSearchMatchMode,
+						fillRecentItems: source.fillRecentItems
+					}],
+					recentTabOptions: {
+						stub: true,
+						stubOptions: {
+							title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SELECTOR_EMPTY_STUB_TITLE')
+						}
+					}
+				};
+			},
+			allSelectedItems() {
+				if (!main_core.Type.isStringFilled(this.right.allSelectedCode)) {
+					return [];
+				}
+				return [ItemsMapper.mapAllSelectedVariable(this.right, this.isAllSelected)];
+			},
+			itemEntityId() {
+				return this.hasVariablesSource ? this.right.variablesSource.itemEntityId : null;
+			},
+			stateCodes() {
+				// "all" and "nothing" are states of the value set, not ids the source could ever resolve;
+				// "nothing" falls back to emptyValue when nothingSelectedValue is not set, see getNothingSelectedValue
+				return new Set([this.right.allSelectedCode, ...(this.right.nothingSelectedValue ?? []), ...(this.right.emptyValue ?? [])]);
+			},
+			concreteValues() {
+				return [...this.values].filter(value => !this.stateCodes.has(value));
+			},
+			preselectedItems() {
+				return this.concreteValues.map(value => [this.itemEntityId, value]);
 			}
 		},
 		mounted() {
@@ -3215,14 +3772,12 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				this.dialog = new ui_entitySelector.Dialog({
 					height: 400,
 					context: EntitySelectorContext.VARIABLE,
-					enableSearch: this.right.enableSearch,
 					multiple: true,
 					autoHide: true,
 					hideByEsc: true,
 					dropdownMode: true,
 					compactView: this.right.compactView,
 					showAvatars: this.right.showAvatars,
-					selectedItems: this.selectedDialogItems,
 					searchOptions: {
 						allowCreateItem: false
 					},
@@ -3230,54 +3785,148 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					events: {
 						'Item:onSelect': this.onItemSelect,
 						'Item:onDeselect': this.onItemDeselect,
+						onLoad: this.onDialogLoad,
 						onHide: this.apply,
 						onDestroy: () => {
 							this.dialog = null;
 						}
 					},
-					entities: [{
-						id: EntitySelectorEntities.VARIABLE
-					}],
-					items: this.dialogItems,
 					header: Header$1,
 					headerOptions: {
 						section: this.section,
 						right: this.right
 					},
-					footer: Footer
+					footer: Footer,
+					footerOptions: {
+						hasVariablesSource: this.hasVariablesSource
+					},
+					...this.dialogModeOptions
 				});
 				this.dialog.show();
 			},
 			onItemSelect(event) {
 				const addedItem = event.getData().item;
+				this.mergeVariable(addedItem);
 				this.addValue(String(addedItem.getId()));
 			},
 			onItemDeselect(event) {
 				const removedItem = event.getData().item;
 				this.removeValue(String(removedItem.getId()));
 			},
+			onDialogLoad() {
+				if (!this.hasVariablesSource) {
+					return;
+				}
+				const unloadedValues = this.concreteValues.filter(value => {
+					const item = this.dialog.getItem([this.itemEntityId, value]);
+					return item === null || item.isHidden();
+				});
+				unloadedValues.forEach(value => {
+					// a source-fed right may come with no dictionary at all, and a just picked value is not in it yet
+					const variable = this.right.variables?.get(value) ?? null;
+					const options = ItemsMapper.mapUnloadedVariable(this.itemEntityId, value, variable, this.right.unloadedVariableTitlePattern);
+					this.revealUnloadedItem(options);
+				});
+				if (unloadedValues.length > 0) {
+					// the footer counted the marks on its own load handler, when these items did not exist yet
+					this.dialog.getFooter()?.updateSelectButtons();
+				}
+
+				// the response marks the values the dialog was opened with, and the set could have changed meanwhile
+				this.syncDialogSelection();
+			},
+			// addItem() keeps the item it already holds and ignores the options passed with it, so the placeholder of
+			// the dialog is brought to the same state by hand. The call itself is still needed for both cases: it
+			// builds the item when there is none, and puts the placeholder into the tab it was created without.
+			revealUnloadedItem(options) {
+				const item = this.dialog.getItem(options);
+				if (item !== null) {
+					item.setTitle(options.title);
+					item.setHidden(options.hidden);
+					item.setDeselectable(options.deselectable);
+					item.setSearchable(options.searchable);
+					item.setSaveable(options.saveable);
+				}
+				this.dialog.addItem(options);
+			},
+			// the only way to show the title of a just picked value before the matrix is saved
+			mergeVariable(item) {
+				if (!this.hasVariablesSource) {
+					return;
+				}
+				void this.$store.dispatch('accessRights/mergeRightVariables', {
+					sectionCode: this.section.sectionCode,
+					rightId: this.right.id,
+					variables: [{
+						id: String(item.getId()),
+						title: item.getTitle()
+					}]
+				});
+			},
 			addValue(value) {
+				if (value === this.right.allSelectedCode) {
+					this.setValues(new Set([this.right.allSelectedCode]));
+					return;
+				}
 				const newValues = main_core.Runtime.clone(this.values);
+				for (const stateCode of this.stateCodes) {
+					newValues.delete(stateCode);
+				}
 				newValues.add(value);
-				if (newValues.size >= this.right.variables.size) {
+
+				// a source gives no total to compare with, so the set never collapses on its own
+				if (!this.hasVariablesSource && newValues.size >= this.right.variables.size) {
 					this.setValues(new Set([this.right.allSelectedCode]));
 				} else {
 					this.setValues(newValues);
 				}
 			},
 			removeValue(value) {
-				if (this.values.has(this.right.allSelectedCode)) {
+				if (this.isAllSelected && !this.hasVariablesSource) {
 					const allVariablesIds = [...this.right.variables.values()].map(variable => variable.id);
 					const allVariablesIdsWithoutRemoved = new Set(allVariablesIds);
 					allVariablesIdsWithoutRemoved.delete(value);
 					this.setValues(allVariablesIdsWithoutRemoved);
-				} else {
-					const newValues = [...this.values].filter(candidate => candidate !== value);
-					this.setValues(new Set(newValues));
+					return;
 				}
+				const newValues = main_core.Runtime.clone(this.values);
+				newValues.delete(value);
+				this.setValues(newValues);
 			},
 			setValues(newValues) {
 				this.values = newValues;
+				this.syncDialogSelection();
+			},
+			// "all" and the concrete values exclude each other inside the value set only, while the dialog keeps its
+			// own selection state: without this the marks would disagree with the set and the next click would be lost.
+			// Static mode is left alone: there "all" is a state, not an item, and every value is already in the set.
+			syncDialogSelection() {
+				if (!this.hasVariablesSource || !this.dialog) {
+					return;
+				}
+				let marksChanged = false;
+				for (const item of this.dialog.getItems()) {
+					const shouldBeSelected = this.values.has(String(item.getId()));
+					if (shouldBeSelected === item.isSelected()) {
+						continue;
+					}
+
+					// silently: these very events are what brought us here
+					if (shouldBeSelected) {
+						item.select({
+							emitEvents: false
+						});
+					} else {
+						item.deselect({
+							emitEvents: false
+						});
+					}
+					marksChanged = true;
+				}
+				if (marksChanged) {
+					// the marks changed without events, so the footer has nothing to recount its buttons on
+					this.dialog.getFooter()?.updateSelectButtons();
+				}
 			},
 			apply() {
 				this.setNothingSelectedValueIfNeeded();
@@ -3296,7 +3945,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			}
 		},
 		template: `
-		<div></div>
+		<div data-testid="ui-accessrights-multivariables-selector"></div>
 	`
 	};
 
@@ -3377,6 +4026,58 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		// invisible div for binding selector to it
 		template: `
 		<div></div>
+	`
+	};
+
+	const MAX_SHOWN_MEMBERS = 5;
+	const SingleRoleTitle = {
+		name: 'SingleRoleTitle',
+		components: {
+			SingleMember
+		},
+		props: {
+			userGroup: {
+				/** @type UserGroup */
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			shownMembers() {
+				if (this.userGroup.members.size <= MAX_SHOWN_MEMBERS) {
+					return this.userGroup.members;
+				}
+				const shown = new Map();
+				for (const [accessCode, member] of this.userGroup.members) {
+					if (shown.size >= MAX_SHOWN_MEMBERS) {
+						break;
+					}
+					shown.set(accessCode, member);
+				}
+				return shown;
+			},
+			notShownMembersCount() {
+				if (this.userGroup.members.size > MAX_SHOWN_MEMBERS) {
+					return this.userGroup.members.size - MAX_SHOWN_MEMBERS;
+				}
+				return 0;
+			}
+		},
+		template: `
+		<div class="ui-access-rights-v2-cell-popup-header-role-container">
+			<div
+				class="ui-access-rights-v2-cell-popup-header-role-title ui-access-rights-v2-text-ellipsis"
+				:title="userGroup.title"
+			>
+				{{ userGroup.title }}
+			</div>
+			<div v-if="userGroup.members.size > 0" class="ui-access-rights-v2-cell-popup-header-role-members">
+				<SingleMember v-for="[accessCode, member] in shownMembers" :key="accessCode" :member="member"/>
+				<span v-if="notShownMembersCount > 0" class="ui-access-rights-v2-members-more">
+					+ {{ notShownMembersCount }}
+				</span>
+			</div>
+		</div>
 	`
 	};
 
@@ -3510,9 +4211,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				<PopupContent
 					@apply="apply"
 					:initial-values="value.values"
+					:user-group="userGroup"
 				>
 					<template #role-title>
-						<SingleRoleTitle :user-group-title="userGroup.title"/>
+						<SingleRoleTitle :user-group="userGroup"/>
 					</template>
 				</PopupContent>
 			</ValuePopup>
@@ -3544,8 +4246,17 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			isAllSelected() {
 				return this.value.values.has(this.right.allSelectedCode);
 			},
+			hasVariablesSource() {
+				return this.right.variablesSource !== null;
+			},
 			selectedVariables() {
 				return getSelectedVariables(this.right.variables, this.value.values, this.isAllSelected);
+			},
+			selectedValuesCount() {
+				// "all" and "nothing" are states of the cell with a caption of their own, not picked values;
+				// "nothing" falls back to emptyValue when nothingSelectedValue is not set, see getNothingSelectedValue
+				const stateCodes = new Set([this.right.allSelectedCode, ...(this.right.nothingSelectedValue ?? []), ...(this.right.emptyValue ?? [])]);
+				return [...this.value.values].filter(value => !stateCodes.has(value)).length;
 			},
 			currentAlias() {
 				return this.$store.getters['accessRights/getSelectedVariablesAlias'](this.section.sectionCode, this.value.id, this.value.values);
@@ -3555,18 +4266,53 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					return this.currentAlias;
 				}
 				if (this.isAllSelected) {
-					return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_ACCEPTED');
+					return this.right.allSelectedTitle ?? this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_ACCEPTED');
+				}
+
+				// a source gives the dictionary only up to a threshold, so a role can hold values
+				// no name arrived for - and it must not read as an empty cell
+				if (this.hasVariablesSource && this.selectedValuesCount > 0) {
+					return this.sourceModeTitle;
 				}
 				if (this.selectedVariables.size <= 0) {
 					return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ADD');
 				}
 				return getMultipleSelectedVariablesTitle(this.selectedVariables);
 			},
+			// repeats getMultipleSelectedVariablesTitle on purpose: here the count comes from the picked values,
+			// not from the named ones, and that utility is shared with other modules, so it must keep its own contract
+			sourceModeTitle() {
+				if (this.selectedVariables.size === 0) {
+					return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SELECTED_COUNT', {
+						'#COUNT#': this.selectedValuesCount
+					});
+				}
+				const lastVariable = [...this.selectedVariables.values()].pop();
+				if (this.selectedValuesCount === 1) {
+					return lastVariable.title;
+				}
+				return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_HAS_SELECTED_ITEMS', {
+					'#FIRST_ITEM_NAME#': cutLongTitle(lastVariable.title),
+					'#COUNT_REST_ITEMS#': this.selectedValuesCount - 1
+				});
+			},
 			hintHtml() {
 				if (this.right.group && this.isUseGroupHeadValuesInHint) {
 					return getMultipleSelectedVariablesHintHtml(this.parentSelectedVariables, this.title, this.parentRight.variables, true);
 				}
-				return getMultipleSelectedVariablesHintHtml(this.selectedVariables, this.hintTitle, this.right.variables);
+
+				// under "all" the dictionary of a source holds an arbitrary subset gathered by other roles,
+				// and the list would read as the whole set
+				if (this.hasVariablesSource && this.isAllSelected) {
+					return '';
+				}
+				return getMultipleSelectedVariablesHintHtml(this.selectedVariables, this.hintTitle, this.right.variables, false, this.hintRestItemsCount);
+			},
+			hintRestItemsCount() {
+				if (!this.hasVariablesSource) {
+					return 0;
+				}
+				return Math.max(this.selectedValuesCount - this.selectedVariables.size, 0);
 			},
 			hintTitle() {
 				if (main_core.Type.isString(this.right.hintTitle)) {
@@ -3606,20 +4352,22 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			}
 		},
 		template: `
-		<SelectedHint 
+		<SelectedHint
 			v-if="hintHtml"
-			:html="hintHtml" 
+			:html="hintHtml"
 			class='ui-access-rights-v2-column-item-text-link'
 			@click="showSelector"
+			data-testid="ui-accessrights-multivariables-cell"
 			v-bind="$attrs"
 		>
 			{{ title }}
 		</SelectedHint>
-		<div 
+		<div
 			v-else
 			class='ui-access-rights-v2-column-item-text-link ui-access-rights-v2-text-ellipsis'
 			@click="showSelector"
 			:title="title"
+			data-testid="ui-accessrights-multivariables-cell"
 			v-bind="$attrs"
 		>
 			{{ title }}
@@ -3652,6 +4400,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			},
 			isReadOnly() {
 				return this.userGroup.isReadOnly === true;
+			},
+			switcherOptions() {
+				return createAirSwitcherOptions();
 			}
 		},
 		methods: {
@@ -3671,11 +4422,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			:is-disabled="isReadOnly"
 			@check="setValue('1')"
 			@uncheck="setValue('0')"
-			:options="{
-				size: 'small',
-				color: 'primary',
-				useAirDesign: true,
-			}"
+			:options="switcherOptions"
 		/>
 	`
 	};
@@ -3842,6 +4589,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			},
 			isReadOnly() {
 				return this.userGroup.isReadOnly === true;
+			},
+			// the dictionary of a right is shared by every role and is merged into in place, so its own reference
+			// never changes: the count is what invalidates the memoized cells when a picked value brings its title
+			variablesCount() {
+				return this.right.variables?.size ?? 0;
 			}
 		},
 		// data attributes are needed for e2e automated tests
@@ -3852,7 +4604,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				'--modified': value.isModified,
 				'--read-only': isReadOnly
 			}"
-			v-memo="[userGroup.id, value.values, value.isModified, isReadOnly]"
+			v-memo="[userGroup.id, value.values, value.isModified, isReadOnly, variablesCount]"
 		>
 			<Component
 				:is="cellComponent"
@@ -4106,6 +4858,29 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			}
 		},
 		template: '<span class="ui-access-rights-v2-hint-container" ref="container"></span>'
+	};
+
+	const Icon = {
+		name: 'Icon',
+		inject: ['section'],
+		computed: {
+			iconBgColor() {
+				if (this.section.sectionIcon.bgColor.startsWith('--')) {
+					// css variable
+					return `var(${this.section.sectionIcon.bgColor})`;
+				}
+
+				// we assume its hex
+				return this.section.sectionIcon.bgColor;
+			}
+		},
+		template: `
+		<div v-if="section.sectionIcon" class="ui-access-rights-v2-section-header-icon" :style="{
+			backgroundColor: iconBgColor,
+		}">
+			<div class="ui-icon-set" :class="'--' + section.sectionIcon.type"></div>
+		</div>
+	`
 	};
 
 	const Header = {
@@ -4874,7 +5649,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				nothingSelectedValue: this.#internalizeValueSet(externalItem.nothingSelectedValue),
 				setEmptyOnSetMinMaxValueInColumn: this.#internalizeSetEmptyOnSetMinMaxValueInColumn(externalItem),
 				variables: main_core.Type.isArray(externalItem.variables) || main_core.Type.isMap(externalItem.variables) ? new Map() : null,
+				presets: new Map(),
 				allSelectedCode: main_core.Type.isStringFilled(externalItem.allSelectedCode) ? externalItem.allSelectedCode : null,
+				allSelectedTitle: main_core.Type.isStringFilled(externalItem.allSelectedTitle) ? externalItem.allSelectedTitle : null,
+				variablesSource: this.#internalizeVariablesSource(externalItem.variablesSource),
+				unloadedVariableTitlePattern: main_core.Type.isStringFilled(externalItem.unloadedVariableTitlePattern) ? externalItem.unloadedVariableTitlePattern : null,
 				selectedVariablesAliases: aliases,
 				selectedVariablesAliasesSeparator: separator,
 				enableSearch: main_core.Type.isBoolean(externalItem.enableSearch) ? externalItem.enableSearch : null,
@@ -4900,6 +5679,14 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				for (const variable of externalItem.variables.values()) {
 					const normalizedVariable = this.#internalizeExternalVariable(variable);
 					normalizedItem.variables.set(normalizedVariable.id, normalizedVariable);
+				}
+			}
+			const knownVariableIds = new Set(normalizedItem.variables ? normalizedItem.variables.keys() : []);
+			const externalPresets = main_core.Type.isMap(externalItem.presets) ? [...externalItem.presets.values()] : main_core.Type.isArray(externalItem.presets) ? externalItem.presets : [];
+			for (const preset of externalPresets) {
+				const normalizedPreset = this.#internalizePreset(preset, knownVariableIds);
+				if (normalizedPreset) {
+					normalizedItem.presets.set(normalizedPreset.id, normalizedPreset);
 				}
 			}
 			return normalizedItem;
@@ -4939,6 +5726,23 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			// todo compatibility, can be removed when crm update is out
 			return boolOrNull(externalItem.setEmptyOnGroupActions);
 		}
+		#internalizePreset(externalPreset, knownVariableIds) {
+			if (!main_core.Type.isPlainObject(externalPreset) || main_core.Type.isNil(externalPreset.id)) {
+				return null;
+			}
+			const variableIds = (main_core.Type.isArray(externalPreset.variableIds) ? externalPreset.variableIds : []).map(x => String(x)).filter(id => knownVariableIds.has(id));
+			if (variableIds.length === 0) {
+				return null;
+			}
+			return {
+				id: String(externalPreset.id),
+				title: main_core.Type.isStringFilled(externalPreset.title) ? String(externalPreset.title) : '',
+				icon: main_core.Type.isStringFilled(externalPreset.icon) ? externalPreset.icon : null,
+				description: main_core.Type.isStringFilled(externalPreset.description) ? externalPreset.description : null,
+				showGroupHeadItems: main_core.Type.isBoolean(externalPreset.showGroupHeadItems) ? externalPreset.showGroupHeadItems : false,
+				variableIds
+			};
+		}
 		#internalizeExternalVariable(externalVariable) {
 			return {
 				id: String(externalVariable.id),
@@ -4953,6 +5757,26 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				secondary: main_core.Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null,
 				hint: main_core.Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null,
 				isUseGroupHeadValuesInHint: main_core.Type.isBoolean(externalVariable.isUseGroupHeadValuesInHint) ? externalVariable.isUseGroupHeadValuesInHint : false
+			};
+		}
+		#internalizeVariablesSource(externalSource) {
+			if (!main_core.Type.isPlainObject(externalSource) || !main_core.Type.isStringFilled(externalSource.entityId)) {
+				return null;
+			}
+			if (externalSource.dynamicLoad === false) {
+				// nothing else fills such a dialog, so the host module gets an empty list instead of its source
+				console.warn('ui.accessrights.v2: variablesSource with dynamicLoad disabled leaves the dialog without items', {
+					entityId: externalSource.entityId
+				});
+			}
+			return {
+				entityId: externalSource.entityId,
+				dynamicLoad: main_core.Type.isBoolean(externalSource.dynamicLoad) ? externalSource.dynamicLoad : true,
+				dynamicSearch: main_core.Type.isBoolean(externalSource.dynamicSearch) ? externalSource.dynamicSearch : true,
+				dynamicSearchMatchMode: main_core.Type.isStringFilled(externalSource.dynamicSearchMatchMode) ? externalSource.dynamicSearchMatchMode : null,
+				providerOptions: main_core.Type.isPlainObject(externalSource.providerOptions) ? externalSource.providerOptions : {},
+				fillRecentItems: main_core.Type.isBoolean(externalSource.fillRecentItems) ? externalSource.fillRecentItems : false,
+				itemEntityId: main_core.Type.isStringFilled(externalSource.itemEntityId) ? externalSource.itemEntityId : externalSource.entityId
 			};
 		}
 	}
@@ -5255,6 +6079,39 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 						rightId,
 						isModified
 					});
+				},
+				mergeRightVariables: (store, {
+					sectionCode,
+					rightId,
+					variables
+				}) => {
+					if (!store.state.collection.has(sectionCode)) {
+						console.warn('ui.accessrights.v2: Merging variables into section that doesn`t exists', {
+							sectionCode
+						});
+						return;
+					}
+					const section = store.state.collection.get(sectionCode);
+					if (!section.rights.has(rightId)) {
+						console.warn('ui.accessrights.v2: Merging variables into right that doesn`t exists', {
+							rightId
+						});
+						return;
+					}
+
+					// a right that came without the `variables` option has no dictionary to merge into
+					if (section.rights.get(rightId).variables === null) {
+						console.warn('ui.accessrights.v2: Merging variables into right without variables', {
+							sectionCode,
+							rightId
+						});
+						return;
+					}
+					store.commit('mergeRightVariables', {
+						sectionCode,
+						rightId,
+						variables
+					});
 				}
 			};
 		}
@@ -5305,6 +6162,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				}
 			}
 		}
+		#createVariable(id, title, entityId) {
+			return {
+				id,
+				title,
+				entityId,
+				supertitle: null,
+				avatar: null,
+				avatarOptions: null,
+				conflictsWith: null,
+				requires: null,
+				dependant: null,
+				secondary: null,
+				hint: null
+			};
+		}
 
 		// eslint-disable-next-line max-lines-per-function
 		getMutations() {
@@ -5347,6 +6219,28 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				}) => {
 					const section = state.collection.get(sectionCode);
 					section.rights.get(rightId).isModified = isModified;
+				},
+				mergeRightVariables: (state, {
+					sectionCode,
+					rightId,
+					variables
+				}) => {
+					const right = state.collection.get(sectionCode).rights.get(rightId);
+					const entityId = right.variablesSource?.itemEntityId ?? null;
+					for (const item of variables) {
+						const id = String(item.id);
+
+						// 'all' is a mode of the right, not one of its variables
+						if (id === right.allSelectedCode) {
+							continue;
+						}
+						const knownVariable = right.variables.get(id);
+						if (knownVariable) {
+							knownVariable.title = String(item.title);
+						} else {
+							right.variables.set(id, this.#createVariable(id, String(item.title), entityId));
+						}
+					}
 				},
 				toggleSection: (state, {
 					sectionCode
@@ -6116,5 +7010,5 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 
 	exports.App = App;
 
-})(this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}, BX, BX.Event, BX.UI, BX.UI.Dialogs, BX.Vue3, BX.Vue3.Vuex, BX.UI.EntitySelector, BX.Main, BX.UI.Vue3.Components, BX.UI.AccessRights.V2, BX.Vue3.Directives, BX.UI.System.Chip.Vue, BX, window, BX.UI.Vue3.Components, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI, BX.UI, BX.UI.Notification, BX.UI.Analytics, BX);
+})(this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}, BX, BX.Event, BX.UI, BX.UI.Dialogs, BX.Vue3, BX.Vue3.Vuex, BX.UI.EntitySelector, BX.Main, BX.UI.Vue3.Components, BX.UI, BX.UI.AccessRights.V2, BX.Vue3.Directives, BX.UI.System.Chip.Vue, BX, window, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI.System.Label.Vue, BX.UI.System.Label, BX.UI.IconSet, BX.Vue3.Components, BX.UI.System.Checkbox.Vue, BX.UI.System.Checkbox, BX.UI.System.RadioButton, BX.UI.System.RadioButton.Vue, BX.UI.Vue3.Components, BX.UI, BX.UI, BX.UI.Notification, BX.UI.Analytics, BX);
 //# sourceMappingURL=v2.bundle.js.map

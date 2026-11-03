@@ -1,6 +1,7 @@
 import { Messenger } from 'im.public';
 import { RestClient } from 'rest.client';
-import { Type, Loc, ajax } from 'main.core';
+import { Type, Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { CallManager } from 'call.lib.call-manager';
 import { Util } from 'call.core';
 import { CompactFormLauncher } from 'calendar.compacteventform-launcher';
@@ -8,20 +9,18 @@ import { UserSharingController } from 'calendar.sharing.interface';
 import { Analytics } from 'call.lib.analytics';
 import { Logger } from 'call.adapter.logger';
 import { Clipboard } from 'call.adapter.clipboard';
-import { BannerDispatcher } from 'ui.banner-dispatcher';
 
-const SYNC_PROMO_ID = 'call:sync-promo-popup:05052026:all';
-
-// give the banner dispatcher a pause before it shows the next queued banner
-const PROMO_QUEUE_RELEASE_DELAY_MS = 1000;
+// CompactEventForm sets this namespace and emits 'onClose' when it is really closed
+const COMPACT_FORM_CLOSE_EVENT = 'BX.Calendar.CompactEventForm:onClose';
 
 export class SyncPageService
 {
 	#actionMap;
 	#isStarting = false;
-	#promoOnDone = null;
-	#promoViewedSent = false;
-	#promoQueued = false;
+	#isOpeningMeetingForm = false;
+	#isOpeningFreeSlots = false;
+	#meetingFormLauncher = null;
+	#meetingFormCloseSubscribed = false;
 
 	constructor()
 	{
@@ -168,13 +167,29 @@ export class SyncPageService
 		});
 	}
 
+	#notifyScheduleMeetingError()
+	{
+		BX.UI.Notification.Center.notify({
+			content: Loc.getMessage('CALL_SYNC_PAGE_SCHEDULE_MEETING_ERROR'),
+			autoHideDelay: 5000,
+		});
+	}
+
+	#notifyFreeSlotsError()
+	{
+		BX.UI.Notification.Center.notify({
+			content: Loc.getMessage('CALL_SYNC_PAGE_FREE_SLOTS_ERROR'),
+			autoHideDelay: 5000,
+		});
+	}
+
 	#handleJoinMeeting()
 	{
 		// the component opens the join popup itself (local UI state); the service only reports analytics
 		Analytics.getInstance().sync.onJoinClick();
 	}
 
-	#handleScheduleMeeting()
+	async #handleScheduleMeeting()
 	{
 		Analytics.getInstance().sync.onCreateEventClick();
 
@@ -185,10 +200,50 @@ export class SyncPageService
 			return;
 		}
 
-		const form = new CompactFormLauncher();
+		// the guard is held until the form is actually closed, not just until it opens:
+		// re-showing the reused launcher would destroy the open form's unsaved input,
+		// bypassing its own "discard changes?" confirmation
+		if (this.#isOpeningMeetingForm)
+		{
+			return;
+		}
 
-		void form.showNewEventForm({
-			eventType: '#call_sync#',
+		this.#isOpeningMeetingForm = true;
+		this.#subscribeMeetingFormClose();
+
+		try
+		{
+			// a single launcher reuses its own form, so a repeated show replaces the popup
+			// instead of stacking an independent one
+			this.#meetingFormLauncher ??= new CompactFormLauncher();
+
+			await this.#meetingFormLauncher.showNewEventForm({
+				eventType: '#call_sync#',
+			});
+
+			// the form stays open now; the guard is released by the form's close event
+		}
+		catch (error)
+		{
+			Logger.error('SyncPage: failed to open schedule meeting form', error);
+			this.#notifyScheduleMeetingError();
+			// the form never opened, so no close event will arrive to release the guard
+			this.#isOpeningMeetingForm = false;
+		}
+	}
+
+	#subscribeMeetingFormClose()
+	{
+		if (this.#meetingFormCloseSubscribed)
+		{
+			return;
+		}
+
+		this.#meetingFormCloseSubscribed = true;
+
+		EventEmitter.subscribe(COMPACT_FORM_CLOSE_EVENT, () =>
+		{
+			this.#isOpeningMeetingForm = false;
 		});
 	}
 
@@ -212,6 +267,13 @@ export class SyncPageService
 			return;
 		}
 
+		if (this.#isOpeningFreeSlots)
+		{
+			return;
+		}
+
+		this.#isOpeningFreeSlots = true;
+
 		try
 		{
 			const userSharing = await UserSharingController.getUserSharing(userId);
@@ -221,75 +283,11 @@ export class SyncPageService
 		catch (error)
 		{
 			Logger.warn('SyncPage: failed to open free slots dialog', error);
+			this.#notifyFreeSlotsError();
 		}
-	}
-
-	async initPromo(showCallback)
-	{
-		if (this.#promoQueued)
+		finally
 		{
-			return;
+			this.#isOpeningFreeSlots = false;
 		}
-
-		const isActive = await this.#isPromoActive();
-		if (!isActive)
-		{
-			return;
-		}
-
-		this.#promoQueued = true;
-
-		BannerDispatcher.high.toQueue((onDone) =>
-		{
-			this.#promoOnDone = onDone;
-			showCallback();
-		});
-	}
-
-	closePromo()
-	{
-		// the popup emits 'close' twice on button close (component + container unmount):
-		// mark the promo as viewed only once per show
-		if (!this.#promoViewedSent)
-		{
-			this.#promoViewedSent = true;
-			void this.#markPromoViewed();
-		}
-
-		if (this.#promoOnDone)
-		{
-			const onDone = this.#promoOnDone;
-			this.#promoOnDone = null;
-			setTimeout(onDone, PROMO_QUEUE_RELEASE_DELAY_MS);
-		}
-	}
-
-	async #isPromoActive()
-	{
-		try
-		{
-			const response = await ajax.runAction('im.v2.Promotion.listActive', {
-				data: { type: 'web' },
-			});
-			const list = response?.data ?? [];
-
-			return list.some((promo) => promo?.id === SYNC_PROMO_ID);
-		}
-		catch (error)
-		{
-			Logger.error('SyncPage: failed to check promo status', error);
-
-			return false;
-		}
-	}
-
-	#markPromoViewed()
-	{
-		return ajax.runAction('im.v2.Promotion.read', {
-			data: { id: SYNC_PROMO_ID },
-		}).catch((error) =>
-		{
-			Logger.error('SyncPage: failed to mark promo as viewed', error);
-		});
 	}
 }

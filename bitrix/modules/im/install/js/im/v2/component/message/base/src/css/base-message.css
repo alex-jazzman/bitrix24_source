@@ -124,6 +124,23 @@
 .bx-im-message-base__body .bx-smile {
 	vertical-align: bottom;
 }
+
+/*
+ * A bubble running an AI task carries the indication UNDER its own content: the layer of
+ * `im.v2.component.message.elements` is positioned, so plain in-flow content would be painted over
+ * and washed out by the haze. The content is lifted rather than the layer sunk - a layer below the
+ * flow needs a stacking context on the body, and that context would also trap the reaction selector
+ * under the context-menu column standing next to the bubble.
+ *
+ * The two children left out are positioned already: the layer itself, and the reaction selector,
+ * which is absolute and would fall back into the flow if it were made relative. Media and the round
+ * player keep the layer over the graphics, so the modifier is set for the bubble layout alone.
+ */
+.bx-im-message-base__body.--ai-task-underlay > :not(.bx-im-message-ai-task__decor):not(.bx-im-reaction-selector__container) {
+	position: relative;
+	z-index: 1;
+}
+
 /* end body */
 
 /* body colors */

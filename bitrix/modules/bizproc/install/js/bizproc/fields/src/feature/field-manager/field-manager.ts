@@ -3,9 +3,15 @@ import { type BaseField } from '../../model/base-field/base-field';
 import { type CreateFieldParams, FieldFactory, resolveSelectionProvider } from '../field-factory/field-factory';
 import { FieldRegistry } from '../field-registry/field-registry';
 import { RenderMode } from '../../const/const';
-import { type ManagerOptions, type Property, type RenderedField, type RenderFieldParams } from '../../const/type';
+import {
+	type FieldValueState,
+	type ManagerOptions,
+	type Property,
+	type RenderedField,
+	type RenderFieldParams,
+} from '../../const/type';
 import { isMultiple } from '../../lib/property/property';
-import { applySelectionDecorator, type SelectionProvider } from '../../model/selection/selection';
+import { canApplySelectionDecorator, type SelectionProvider } from '../../model/selection/selection';
 import { BackendRenderer } from '../../infrastructure/service/backend-renderer/backend-renderer';
 
 /**
@@ -52,11 +58,11 @@ export class FieldManager
 	{
 		this.#options = options;
 		this.#selectionProvider = resolveSelectionProvider(options.selectionProvider);
-		// Infrastructure gets both the provider and the decorator handed in: it may not
-		// import the domain at runtime, so the choice stays on this side of the boundary.
+		// Infrastructure gets the provider and the rule of decoration handed in: it may not import
+		// the domain at runtime, so the choice stays on this side of the boundary.
 		this.#backendRenderer = new BackendRenderer(options, {
 			provider: this.#selectionProvider,
-			applyDecorator: applySelectionDecorator,
+			canApply: (property: Property): boolean => canApplySelectionDecorator(property, this.#selectionProvider),
 		});
 	}
 
@@ -137,16 +143,25 @@ export class FieldManager
 			return entry.node;
 		}
 
-		const carriedValue = FieldManager.#adaptValue(field.getValue(), property);
+		// The whole of what the field holds, not its value alone: a field being filled by an
+		// expression keeps its value node empty, so carrying the value would carry that emptiness
+		// and drop the expression at the first property change (see BaseField.getValueState).
+		const state = field.getValueState();
+		const carriedState: FieldValueState = {
+			...state,
+			// Only the value changes shape with the multiplicity: the expression travels under the
+			// one `{name}_text` name whatever the field is, and the mode is no value at all.
+			value: FieldManager.#adaptValue(state.value, property),
+		};
 
 		field.setProperty(property);
 
 		// Written back before the rebuild too: render() lays out the rows of a multiple
 		// field from the value the field holds, so seeding it first is what keeps every
 		// item of the snapshot. Re-applied after the rebuild to reach the fresh controls.
-		field.setValue(carriedValue);
+		field.setValueState(carriedState);
 		const nextNode = field.render();
-		field.setValue(carriedValue);
+		field.setValueState(carriedState);
 
 		Dom.replace(entry.node, nextNode);
 		entry.node = nextNode;
@@ -154,6 +169,11 @@ export class FieldManager
 		return nextNode;
 	}
 
+	/**
+	 * Read through getEffectiveValue(), not getValue(): a field filled by an expression keeps its
+	 * control empty, and answering with that emptiness would tell the caller the field holds
+	 * nothing while the expression is on the screen and on its way to the server.
+	 */
 	getValue(fieldName: string): string | string[] | null
 	{
 		const field = this.#findFieldByName(fieldName);
@@ -163,7 +183,7 @@ export class FieldManager
 			return null;
 		}
 
-		return field.getValue();
+		return field.getEffectiveValue();
 	}
 
 	/**
@@ -181,7 +201,7 @@ export class FieldManager
 			return null;
 		}
 
-		return entry.field.getValue();
+		return entry.field.getEffectiveValue();
 	}
 
 	/**
@@ -205,6 +225,13 @@ export class FieldManager
 	getValues(): Record<string, string | string[]>
 	{
 		const result: Record<string, string | string[]> = {};
+		/**
+		 * The one expression a name carries, kept apart from the values while they accumulate.
+		 * `{name}_text` is a name in the DOM and not a field's own: a group of namesakes submits
+		 * one companion - the last rendered - so the expressions of the earlier ones reach the
+		 * backend no more than the empty companion of a namesake standing on its value does.
+		 */
+		const expressions: Record<string, string | string[]> = {};
 
 		this.#entries.forEach((entry) =>
 		{
@@ -213,7 +240,18 @@ export class FieldManager
 				return;
 			}
 
-			const value = entry.field.getValue();
+			const value = entry.field.getEffectiveValue();
+
+			if (entry.field.carriesExpression())
+			{
+				expressions[entry.fieldName] = value;
+
+				return;
+			}
+
+			// Being the later companion, an empty one leaves the whole name without an expression.
+			delete expressions[entry.fieldName];
+
 			const collected = result[entry.fieldName];
 
 			// Fields sharing a name collapse the way a form submit does: `name[]` controls
@@ -221,6 +259,19 @@ export class FieldManager
 			result[entry.fieldName] = Type.isArray<string>(collected) && Type.isArray<string>(value)
 				? [...collected, ...value]
 				: value;
+		});
+
+		// Put back the way the backend puts it back: appended behind the values it stands beside
+		// (Base::extractValueMultiple), and standing for them where the value came out empty
+		// (Base::extractValueSingle takes `{name}_text` only past an empty value - and past the
+		// empty value node of the very field the companion belongs to, which is the last one).
+		Object.entries(expressions).forEach(([fieldName, expression]) =>
+		{
+			const collected = result[fieldName];
+
+			result[fieldName] = Type.isArray<string>(expression) && Type.isArray<string>(collected)
+				? [...collected, ...expression]
+				: expression;
 		});
 
 		return result;
@@ -275,6 +326,11 @@ export class FieldManager
 		this.#backendRenderer.cancelPending();
 
 		[...this.#entries.keys()].forEach((fieldId) => this.releaseField(fieldId));
+
+		// After the fields, and only here: one provider serves every field of the manager, so what
+		// it holds outside them - its own window standing in the body - outlives the release of a
+		// single field and would be left over whatever comes next (see SelectionProvider.release).
+		this.#selectionProvider.release?.();
 	}
 
 	#track(fieldName: string, field: BaseField | null, node: HTMLElement): RenderedField

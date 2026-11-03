@@ -11,4 +11,27 @@
 
 .bx_profile .main-profile-social-block { margin-top: 40px; }
 
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later, as well as its white band of `.btn:focus-visible`. */
+.bx_profile form .main-profile-submit.btn:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
 
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button (0,2,0). The resting values are put back, and the hovered ones over a hovered or pressed
+ * focused button. `--primary` is the colour of the theme of the site, `--bs-primary` the one
+ * `ui.bootstrap4` paints the button with where no theme declares it. */
+.main-profile-submit.btn-primary:focus {
+	background-color: var(--primary, var(--bs-primary, #0d6efd));
+	border-color: var(--primary, var(--bs-primary, #0d6efd));
+	color: #fff;
+}
+
+.main-profile-submit.btn-primary:focus:hover,
+.main-profile-submit.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary, var(--bs-primary, #0d6efd)));
+	border-color: var(--primary-darken-1, var(--primary, var(--bs-primary, #0d6efd)));
+	color: #fff;
+}

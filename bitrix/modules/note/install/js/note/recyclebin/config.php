@@ -10,6 +10,7 @@ return [
     'rel' => [
 		'main.core',
 		'main.core.events',
+		'note.analytics',
 		'note.sidebar',
 		'note.ui.action-menu',
 		'note.ui.collection-picker',

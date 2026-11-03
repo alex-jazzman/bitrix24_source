@@ -20,6 +20,8 @@ use Bitrix\Iblock;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
 use Bitrix\Catalog;
 use Bitrix\Currency;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\HttpRequest;
 
 $this->setFrameMode(false);
 
@@ -790,16 +792,17 @@ if (!empty($arCompare) && is_array($arCompare))
 		"ID" => "DESC",
 	);
 
-	$currentPath = CHTTP::urlDeleteParams(
-		$APPLICATION->GetCurPageParam(),
-		array(
+	$deleteParams = array_merge(
+		[
 			$arParams['PRODUCT_ID_VARIABLE'], $arParams['ACTION_VARIABLE'],
 			'DIFFERENT', 'ID',
 			'op_code', 'of_code', 'pr_code', 'pf_code',
 			'ajax_action'
-		),
-		array("delete_system_params" => true)
+		],
+		HttpRequest::getSystemParameters()
 	);
+
+	$currentPath = (string)(new Uri($APPLICATION->GetCurPageParam()))->deleteParams($deleteParams);
 
 	$arResult['~COMPARE_URL_TEMPLATE'] = $currentPath.(mb_stripos($currentPath, '?') === false ? '?' : '&');
 	$arResult['COMPARE_URL_TEMPLATE'] = htmlspecialcharsbx($arResult['~COMPARE_URL_TEMPLATE']);

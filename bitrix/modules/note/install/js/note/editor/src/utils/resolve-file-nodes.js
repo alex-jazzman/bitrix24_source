@@ -29,9 +29,9 @@ function collectUnresolvedFileIds(doc: Object, skip: Set<number>): number[]
  * Resolve missing file URLs by fileId for attachment nodes in the document.
  *
  * Sets showUrl/downloadUrl/name/viewerAttrs (and clears `unavailable`) for every node whose
- * fileId the backend resolved. Nodes the backend reports as failed (e.g. a file the [P4.T3]
+ * fileId the backend resolved. Nodes the backend reports as failed (e.g. a file the
  * reachability sweep already physically removed) are flagged `unavailable = true` here, which is
- * enough on its own to surface the existing placeholder (AC-024/ERR-004) — this is the fallback
+ * enough on its own to surface the existing placeholder - this is the fallback
  * for read-only consumers like the version preview, which have no extra caller-side handling.
  * A caller with origin-specific needs (e.g. the live editor's paste-delete flow) may still act on
  * `failedIds`/`failedById` afterwards — marking unavailable first does not preclude removing the

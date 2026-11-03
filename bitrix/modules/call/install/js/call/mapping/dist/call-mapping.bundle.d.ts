@@ -4,6 +4,18 @@ type ButtonDisplayName = 'microphone' | 'camera' | 'screen' | 'addUser' | 'chat'
 
 type ButtonActionName = 'toggleMute' | 'toggleVideo' | 'toggleScreenSharing' | 'inviteUser' | 'showChat' | 'toggleUsers' | 'showHistory' | 'toggleFloorRequest' | 'toggleRecord' | 'toggleCopilot' | 'toggleDocument';
 
+interface IncomingCallEventMap {
+	readonly onClose: 'onClose';
+	readonly onDestroy: 'onDestroy';
+	readonly onButtonClick: 'onButtonClick';
+}
+
+interface IncomingCallInternalEventMap {
+	readonly setHasCamera: 'CallNotification::setHasCamera';
+	readonly contentReady: 'CallNotification::contentReady';
+	readonly onButtonClick: 'CallNotification::onButtonClick';
+}
+
 declare namespace BX.Call.Mapping {
 	/**
 	 * Returns the controller action name for a given store button name.
@@ -47,6 +59,7 @@ declare namespace BX.Call.Mapping {
 		onCommonRecordMenu: "onCommonRecordMenu";
 		onPiPBodyClick: "onPiPBodyClick";
 		onFullScreenChange: "onFullScreenChange";
+		onPushToTalkShortPress: "onPushToTalkShortPress";
 	}>;
 
 	const ViewLayout: Readonly<{
@@ -76,5 +89,32 @@ declare namespace BX.Call.Mapping {
 
 	const ViewRecordSource: Readonly<{
 		Chat: "BXCLIENT_CHAT";
+	}>;
+
+	const IncomingCallEvent: IncomingCallEventMap;
+
+	const IncomingCallInternalEvent: IncomingCallInternalEventMap;
+
+	const CallState: Readonly<{
+		Idle: "Idle";
+		Proceeding: "Proceeding";
+		Connected: "Connected";
+		Finished: "Finished";
+	}>;
+
+	const Provider: Readonly<{
+		Plain: "Plain";
+		Bitrix: "Bitrix";
+	}>;
+
+	const CallType: Readonly<{
+		Instant: 1;
+		Permanent: 2;
+		Large: 3;
+	}>;
+
+	const ControllerEvent: Readonly<{
+		onPromoViewed: "onPromoViewed";
+		onOpenVideoConference: "onOpenVideoConference";
 	}>;
 }

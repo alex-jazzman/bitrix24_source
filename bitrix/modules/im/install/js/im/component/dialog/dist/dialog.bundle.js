@@ -2013,5 +2013,5 @@
 	`
 	});
 
-})(BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Const, BX, window, BX.Messenger.Lib, BX, BX.Event, BX);
+})(window, BX, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Const, BX, window, BX.Messenger.Lib, BX, BX.Event, BX);
 //# sourceMappingURL=dialog.bundle.js.map

@@ -1150,9 +1150,10 @@ this.BX = this.BX || {};
 			this.layout.fieldList.innerHTML = '';
 			const fields = this.getGrid().getFields();
 			Object.keys(fields).forEach(fieldName => {
-				if (fields[fieldName]['isVisibleOnKanban'] && !this.isEmptyValue(this.getData()[fieldName])) {
-					if (fields[fieldName]['isTitle']) {
-						this.renderTitle(this.getData()[fieldName]);
+				if (fields[fieldName].isVisibleOnKanban && (fields[fieldName].isTitle || !this.isEmptyValue(this.getData()[fieldName]))) {
+					if (fields[fieldName].isTitle) {
+						const title = this.getData()[fieldName];
+						this.renderTitle(this.isEmptyValue(title) ? this.getName() : title);
 					} else if (fieldName === 'createdBy' || fieldName === 'updatedBy' || fieldName === 'movedBy') {
 						const renderedUser = this.renderUser(fieldName);
 						if (renderedUser) {

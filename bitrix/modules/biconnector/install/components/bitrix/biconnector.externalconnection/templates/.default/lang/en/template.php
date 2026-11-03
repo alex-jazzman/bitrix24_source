@@ -1,6 +1,6 @@
 <?php
 $MESS["EXTERNAL_CONNECTION_CHECK_BUTTON"] = "Check connection";
-$MESS["EXTERNAL_CONNECTION_CHECK_FAILED"] = "Connection error.";
+$MESS['EXTERNAL_CONNECTION_CHECK_FAILED_MSGVER_1'] = 'Could not connect. Check the host, port, user name, password and database.';
 $MESS["EXTERNAL_CONNECTION_CHECK_SUCCESS"] = "Connection established.";
 $MESS["EXTERNAL_CONNECTION_CLOSE"] = "Close";
 $MESS["EXTERNAL_CONNECTION_CREATE_DATASET_MSGVER_1"] = "Create table";

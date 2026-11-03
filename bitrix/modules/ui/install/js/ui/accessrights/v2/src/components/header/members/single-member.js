@@ -3,6 +3,10 @@ import { Type } from 'main.core';
 export const SingleMember = {
 	name: 'SingleMember',
 	props: {
+		accessCode: {
+			type: String,
+			required: true,
+		},
 		member: {
 			/** @type Member */
 			type: Object,
@@ -51,7 +55,10 @@ export const SingleMember = {
 		},
 	},
 	template: `
-		<div class='ui-access-rights-v2-members-item'>
+		<div
+			class='ui-access-rights-v2-members-item'
+			:data-testid="'ui-accessrights-member-' + accessCode"
+		>
 			<a
 				v-if="member.avatar"
 				class='ui-access-rights-v2-members-item-avatar'

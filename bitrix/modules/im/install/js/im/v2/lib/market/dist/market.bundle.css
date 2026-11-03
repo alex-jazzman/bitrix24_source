@@ -1,0 +1,16 @@
+.bx-im-market-placement__container {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+}
+
+.bx-im-market-placement__loader {
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bx-im-market-placement__frame {
+	height: 100%;
+}

@@ -1,5 +1,5 @@
 import type { ProviderCodeType } from 'sign.type';
-import { LoadedDocumentData } from 'sign.v2.api';
+import type { LoadedDocumentData } from '../type';
 import type { CardItem } from 'sign.v2.b2e.user-party';
 import { post } from '../request';
 import type { Template, TemplateFieldsResponse, FieldValue, TemplateSelectedEntity, TemplateCreatedDocument } from './type';

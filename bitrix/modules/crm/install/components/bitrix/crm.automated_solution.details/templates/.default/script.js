@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
-(function (exports, crm_router, main_core, ui_vue3, ui_vue3_vuex, crm_integration_analytics, main_core_events, ui_analytics, ui_dialogs_messagebox, ui_entitySelector, crm_toolbarComponent, ui_infoHelper) {
+(function (exports, crm_router, main_core, ui_vue3, ui_vue3_vuex, crm_integration_analytics, main_core_events, ui_analytics, ui_a11y, ui_system_alert_vue, ui_system_skeleton_vue, ui_vue3_components_switcher, ui_dialogs_messagebox, ui_entitySelector, crm_toolbarComponent, ui_infoHelper) {
 	'use strict';
 
 	function createSaveAnalyticsBuilder(store) {
@@ -44,9 +44,284 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	`
 	};
 
+	const WidgetStatus = Object.freeze({
+		hidden: 'hidden',
+		loading: 'loading',
+		ready: 'ready',
+		empty: 'empty',
+		error: 'error'
+	});
+	const VibeSwitcher = {
+		components: {
+			Alert: ui_system_alert_vue.Alert,
+			BLine: ui_system_skeleton_vue.BLine,
+			Switcher: ui_vue3_components_switcher.Switcher
+		},
+		props: {
+			readOnly: Boolean
+		},
+		data() {
+			return {
+				widgetStatus: WidgetStatus.hidden,
+				widgetLoadingWidth: 0
+			};
+		},
+		computed: {
+			isVibeFeatureEnabled() {
+				return this.$store.state.isVibeFeatureEnabled;
+			},
+			isVibeEnabled: {
+				get() {
+					return this.$store.state.automatedSolution.isVibeEnabled;
+				},
+				set(isVibeEnabled) {
+					this.$store.dispatch('setIsVibeEnabled', isVibeEnabled);
+				}
+			},
+			isVibeAvailable() {
+				return this.$store.state.isVibeAvailable;
+			},
+			isVibeSettingsPending() {
+				return this.$store.state.isVibeSettingsPending;
+			},
+			vibeId() {
+				return this.$store.state.automatedSolution.vibeId;
+			},
+			automatedSolutionId() {
+				return this.$store.state.automatedSolution.id;
+			},
+			canLoadVibeSettings() {
+				return this.isVibeFeatureEnabled && !this.readOnly && this.isVibeAvailable && this.isVibeEnabled && this.vibeId > 0;
+			},
+			vibeSettingsContext() {
+				return [this.canLoadVibeSettings, this.automatedSolutionId, this.vibeId].join(':');
+			},
+			isWidgetLoading() {
+				return this.widgetStatus === WidgetStatus.loading;
+			},
+			isWidgetReady() {
+				return this.widgetStatus === WidgetStatus.ready;
+			},
+			isWidgetEmpty() {
+				return this.widgetStatus === WidgetStatus.empty;
+			},
+			isWidgetError() {
+				return this.widgetStatus === WidgetStatus.error;
+			},
+			isWidgetVisible() {
+				return this.widgetStatus !== WidgetStatus.hidden;
+			}
+		},
+		watch: {
+			isVibeSettingsPending(isVibeSettingsPending) {
+				if (isVibeSettingsPending) {
+					void this.$nextTick(() => this.updateWidgetLoadingWidth());
+				}
+			},
+			vibeSettingsContext() {
+				if (this.canLoadVibeSettings) {
+					void this.loadVibeSettings();
+				} else {
+					this.hideVibeSettings();
+				}
+			}
+		},
+		created() {
+			this.vibeSettingsRequestId = 0;
+			this.isDestroyed = false;
+		},
+		mounted() {
+			if (this.canLoadVibeSettings) {
+				void this.loadVibeSettings();
+			}
+		},
+		beforeUnmount() {
+			this.isDestroyed = true;
+			this.vibeSettingsRequestId++;
+		},
+		methods: {
+			handleVibeSwitcherKeydown(event) {
+				if (event.key !== 'Enter' && event.key !== ' ' && event.code !== 'Space') {
+					return;
+				}
+				event.preventDefault();
+				this.handleVibeSwitcherToggle(!this.isVibeEnabled);
+			},
+			handleVibeSwitcherToggle(isVibeEnabled) {
+				if (!isVibeEnabled) {
+					this.hideVibeSettings();
+				}
+				this.isVibeEnabled = isVibeEnabled;
+			},
+			setWidgetStatus(status) {
+				if (this.widgetStatus === status) {
+					return;
+				}
+				this.widgetStatus = status;
+				const messages = {
+					[WidgetStatus.loading]: 'CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOADING',
+					[WidgetStatus.ready]: 'CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOADED',
+					[WidgetStatus.empty]: 'CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_EMPTY',
+					[WidgetStatus.error]: 'CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOAD_ERROR'
+				};
+				const messageCode = messages[status];
+				if (messageCode) {
+					ui_a11y.LiveAnnouncer.announce(this.$Bitrix.Loc.getMessage(messageCode), status === WidgetStatus.error ? 'assertive' : 'polite');
+				}
+			},
+			hideVibeSettings() {
+				this.widgetLoadingWidth = 0;
+				if (this.widgetStatus === WidgetStatus.hidden) {
+					return;
+				}
+				this.vibeSettingsRequestId++;
+				this.setWidgetStatus(WidgetStatus.hidden);
+			},
+			isVibeSettingsRequestCurrent(requestId, automatedSolutionId, vibeId) {
+				return requestId === this.vibeSettingsRequestId && !this.isDestroyed && this.canLoadVibeSettings && this.automatedSolutionId === automatedSolutionId && this.vibeId === vibeId && this.isVibeEnabled;
+			},
+			async loadVibeSettings() {
+				if (!this.canLoadVibeSettings) {
+					this.hideVibeSettings();
+					return;
+				}
+				const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider) {
+					slider.setWidth(1100);
+					slider.adjustLayout();
+				}
+				const requestId = ++this.vibeSettingsRequestId;
+				const automatedSolutionId = this.automatedSolutionId;
+				const vibeId = this.vibeId;
+				this.widgetLoadingWidth = 0;
+				this.setWidgetStatus(WidgetStatus.loading);
+				await this.$nextTick();
+				if (!this.isVibeSettingsRequestCurrent(requestId, automatedSolutionId, vibeId)) {
+					return;
+				}
+				this.updateWidgetLoadingWidth();
+				try {
+					const response = await main_core.ajax.runAction('crm.automatedsolution.getVibeSettings', {
+						data: {
+							automatedSolutionId
+						}
+					});
+					if (!this.isVibeSettingsRequestCurrent(requestId, automatedSolutionId, vibeId)) {
+						return;
+					}
+					if (response.status !== 'success') {
+						this.widgetLoadingWidth = 0;
+						this.setWidgetStatus(WidgetStatus.error);
+						return;
+					}
+					const html = response.data?.html;
+					if (!main_core.Type.isStringFilled(html) || html.trim() === '') {
+						this.widgetLoadingWidth = 0;
+						this.setWidgetStatus(WidgetStatus.empty);
+						return;
+					}
+					this.widgetLoadingWidth = 0;
+					this.setWidgetStatus(WidgetStatus.ready);
+					await this.$nextTick();
+					if (!this.isVibeSettingsRequestCurrent(requestId, automatedSolutionId, vibeId)) {
+						return;
+					}
+					const settingsWrapper = this.$refs.settingsWrapper;
+					if (!main_core.Type.isDomNode(settingsWrapper)) {
+						this.setWidgetStatus(WidgetStatus.error);
+						return;
+					}
+					await main_core.Runtime.html(settingsWrapper, html);
+					if (!this.isVibeSettingsRequestCurrent(requestId, automatedSolutionId, vibeId) || settingsWrapper !== this.$refs.settingsWrapper) {
+						return;
+					}
+				} catch (error) {
+					if (!this.isVibeSettingsRequestCurrent(requestId, automatedSolutionId, vibeId)) {
+						return;
+					}
+					this.setWidgetStatus(WidgetStatus.error);
+					this.widgetLoadingWidth = 0;
+					// eslint-disable-next-line no-console
+					console.error('Error fetching Vibe settings:', error);
+				}
+			},
+			updateWidgetLoadingWidth() {
+				const widgetContainer = this.$refs.widgetContainer;
+				if (main_core.Type.isDomNode(widgetContainer) && widgetContainer.clientWidth > 0) {
+					this.widgetLoadingWidth = widgetContainer.clientWidth;
+					return;
+				}
+				const componentRoot = this.$el;
+				this.widgetLoadingWidth = main_core.Type.isDomNode(componentRoot) ? componentRoot.clientWidth : 0;
+			}
+		},
+		template: `
+		<div class="ui-form-row crm-automated-solution-details-form-label-xs">
+			<div class="ui-form-label">
+				<div
+					id="crm-automated-solution-details-vibe-switcher-label"
+					class="ui-ctl-label-text"
+				>
+					{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_ENABLE_VIBE') }}
+				</div>
+			</div>
+			<div class="ui-form-content">
+				<div
+					v-if="!isVibeAvailable"
+					class="ui-alert ui-alert-warning"
+				>
+					<span class="ui-alert-message">
+						{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_NOT_AVAILABLE') }}
+					</span>
+				</div>
+				<Switcher
+					v-else
+					class="crm-automated-solution-details-vibe-switcher"
+					data-testid="crm-automated-solution-details-vibe-switcher"
+					role="switch"
+					tabindex="0"
+					:aria-checked="isVibeEnabled"
+					aria-labelledby="crm-automated-solution-details-vibe-switcher-label"
+					:is-checked="isVibeEnabled"
+					@check="handleVibeSwitcherToggle(true)"
+					@uncheck="handleVibeSwitcherToggle(false)"
+					@keydown="handleVibeSwitcherKeydown"
+				/>
+			</div>
+			<div
+				v-if="isVibeAvailable && (isVibeSettingsPending || isWidgetVisible)"
+				ref="widgetContainer"
+				:aria-busy="isVibeSettingsPending || isWidgetLoading ? 'true' : null"
+				data-testid="crm-automated-solution-details-vibe-settings"
+			>
+				<BLine
+					v-if="isVibeSettingsPending || isWidgetLoading"
+					:height="430"
+					:radius="8"
+					:width="widgetLoadingWidth"
+				/>
+				<Alert v-else-if="isWidgetEmpty">
+					{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_EMPTY') }}
+				</Alert>
+				<Alert v-else-if="isWidgetError">
+					{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOAD_ERROR') }}
+				</Alert>
+				<div
+					v-else-if="isWidgetReady"
+					ref="settingsWrapper"
+				></div>
+			</div>
+		</div>
+	`
+	};
+
 	const CommonTab = {
 		components: {
-			Card
+			Card,
+			VibeSwitcher
+		},
+		props: {
+			readOnly: Boolean
 		},
 		computed: {
 			title: {
@@ -56,6 +331,9 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 				set(title) {
 					this.$store.dispatch('setTitle', title);
 				}
+			},
+			shouldShowVibe() {
+				return this.$store.state.isVibeFeatureEnabled && !this.readOnly;
 			}
 		},
 		template: `
@@ -80,6 +358,10 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 					</div>
 				</div>
 			</div>
+			<VibeSwitcher
+				v-if="shouldShowVibe"
+				:read-only="readOnly"
+			/>
 		</div>
 	`
 	};
@@ -266,7 +548,8 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 			TypesTab
 		},
 		props: {
-			initialActiveTabId: String
+			initialActiveTabId: String,
+			readOnly: Boolean
 		},
 		data() {
 			return {
@@ -310,6 +593,9 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 			// eslint-disable-next-line max-len
 			analyticsBuilder() {
 				return createSaveAnalyticsBuilder(this.$store);
+			},
+			shouldCloseOnSave() {
+				return this.$store.state.shouldCloseOnSave;
 			}
 		},
 		mounted() {
@@ -351,7 +637,11 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 
 					// don't register cancel event when this slider closes
 					this.isCancelEventAlreadyRegistered = true;
-					this.$Bitrix.Application.get().closeSliderOrRedirect();
+					if (this.shouldCloseOnSave) {
+						this.$Bitrix.Application.get().closeSliderOrRedirect();
+					} else {
+						this.$Bitrix.Application.get().reloadWithNewUri(this.$store.state.automatedSolution.id);
+					}
 				}).catch(() => {
 					ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).setId(this.$store.state.automatedSolution.id).buildData());
 				}).finally(() => this.unlockButtons());
@@ -424,7 +714,10 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 						<span class="ui-alert-close-btn" @click="hideError(error)"></span>
 					</template>
 				</div>
-				<CommonTab v-show="tabs.common"/>
+				<CommonTab
+					v-show="tabs.common"
+					:read-only="readOnly"
+				/>
 				<TypesTab v-show="tabs.types"/>
 			</form>
 		</div>
@@ -493,9 +786,15 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 		removeTypeId: (store, typeId) => {
 			store.commit('removeTypeId', typeId);
 		},
+		setIsVibeEnabled: (store, isVibeEnabled) => {
+			store.commit('setIsVibeEnabled', isVibeEnabled);
+		},
 		save: store => {
 			let savePromise = null;
+			const wasVibeEnabled = store.state.automatedSolutionOrigIsVibeEnabled;
 			const fields = main_core.Runtime.clone(store.state.automatedSolution);
+			const isVibeSettingsPending = wasVibeEnabled === false && fields.isVibeEnabled === true;
+			store.commit('setIsVibeSettingsPending', isVibeSettingsPending);
 			if (fields.typeIds.length <= 0) {
 				// we cant send an empty array in form data
 				fields.typeIds = false;
@@ -517,16 +816,22 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 			return savePromise.then(({
 				data
 			}) => {
+				const shouldReload = wasVibeEnabled === false && data.automatedSolution.isVibeEnabled === true;
 				store.dispatch('setState', {
-					automatedSolution: data.automatedSolution
+					automatedSolution: data.automatedSolution,
+					shouldCloseOnSave: !shouldReload
 				});
 				emitUpdateEventToOutsideWorld(data.automatedSolution);
 			}).catch(response => {
+				store.commit('setIsVibeSettingsPending', false);
 				// eslint-disable-next-line no-console
 				console.warn('could not save automated solution', {
 					response,
 					state: main_core.Runtime.clone(store.state)
 				});
+				if (response.data?.automatedSolution) {
+					store.commit('restoreAutomatedSolution', response.data.automatedSolution);
+				}
 				const {
 					errors
 				} = response;
@@ -609,12 +914,39 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 			const typeIds = normalizeTypesIds(stateToSet.automatedSolution?.typeIds);
 			state.automatedSolution.typeIds = [...typeIds];
 			state.automatedSolutionOrigTypeIds = [...typeIds];
+			state.automatedSolution.vibeId = normalizeId(stateToSet.automatedSolution?.vibeId);
+			state.automatedSolution.isVibeEnabled = stateToSet.automatedSolution?.isVibeEnabled ?? false;
+			state.automatedSolutionOrigIsVibeEnabled = state.automatedSolution.isVibeEnabled;
+			state.isVibeAvailable = main_core.Text.toBoolean(stateToSet.isVibeAvailable ?? false);
+			state.isVibeFeatureEnabled = main_core.Text.toBoolean(stateToSet.isVibeFeatureEnabled ?? false);
 			state.permissions.canMoveSmartProcessFromCrm = main_core.Text.toBoolean(stateToSet.permissions?.canMoveSmartProcessFromCrm ?? false);
 			state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution = main_core.Text.toBoolean(stateToSet.permissions?.canMoveSmartProcessFromAnotherAutomatedSolution ?? false);
 			state.dynamicTypesTitles = normalizeDynamicTypesTitles(stateToSet.dynamicTypesTitles);
 			state.errors = normalizeErrors(stateToSet.errors);
 			state.isModified = false;
+			state.isVibeSettingsPending = false;
+			state.shouldCloseOnSave = stateToSet.shouldCloseOnSave ?? true;
 			state.isPermissionsLayoutV2Enabled = main_core.Text.toBoolean(stateToSet.isPermissionsLayoutV2Enabled ?? false);
+		},
+		restoreAutomatedSolution: (state, {
+			id,
+			title,
+			typeIds,
+			vibeId,
+			isVibeEnabled
+		}) => {
+			const normalizedTypeIds = normalizeTypesIds(typeIds);
+			state.automatedSolution = {
+				id: normalizeId(id),
+				title: normalizeTitle(title),
+				typeIds: [...normalizedTypeIds],
+				vibeId: normalizeId(vibeId),
+				isVibeEnabled: main_core.Text.toBoolean(isVibeEnabled ?? false)
+			};
+			state.automatedSolutionOrigTypeIds = [...normalizedTypeIds];
+			state.automatedSolutionOrigIsVibeEnabled = state.automatedSolution.isVibeEnabled;
+			state.isModified = false;
+			state.isVibeSettingsPending = false;
 		},
 		setErrors: (state, errors) => {
 			state.errors = normalizeErrors(errors);
@@ -653,6 +985,13 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 				state.isModified = true;
 			}
 			state.automatedSolution.typeIds = newTypeIds;
+		},
+		setIsVibeEnabled: (state, isVibeEnabled) => {
+			state.automatedSolution.isVibeEnabled = isVibeEnabled;
+			state.isModified = true;
+		},
+		setIsVibeSettingsPending: (state, isVibeSettingsPending) => {
+			state.isVibeSettingsPending = isVibeSettingsPending;
 		}
 	};
 
@@ -661,11 +1000,16 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 		state() {
 			return {
 				automatedSolutionOrigTypeIds: [],
+				automatedSolutionOrigIsVibeEnabled: false,
 				automatedSolution: {
 					id: null,
 					title: null,
-					typeIds: []
+					typeIds: [],
+					isVibeEnabled: false,
+					vibeId: 0
 				},
+				isVibeAvailable: false,
+				isVibeFeatureEnabled: false,
 				permissions: {
 					canMoveSmartProcessFromCrm: false,
 					canMoveSmartProcessFromAnotherAutomatedSolution: false
@@ -673,6 +1017,8 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 				dynamicTypesTitles: {},
 				errors: [],
 				isModified: false,
+				isVibeSettingsPending: false,
+				shouldCloseOnSave: true,
 				isPermissionsLayoutV2Enabled: false
 			};
 		},
@@ -753,5 +1099,5 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 
 	exports.App = App;
 
-})(this.BX.Crm.AutomatedSolution.Details = this.BX.Crm.AutomatedSolution.Details || {}, BX.Crm, BX, BX.Vue3, BX.Vue3.Vuex, BX.Crm.Integration.Analytics, BX.Event, BX.UI.Analytics, BX.UI.Dialogs, BX.UI.EntitySelector, BX.Crm, BX.UI);
+})(this.BX.Crm.AutomatedSolution.Details = this.BX.Crm.AutomatedSolution.Details || {}, BX.Crm, BX, BX.Vue3, BX.Vue3.Vuex, BX.Crm.Integration.Analytics, BX.Event, BX.UI.Analytics, BX.UI.Accessibility, BX.UI.System.Alert.Vue, BX.UI.System.Skeleton.Vue, BX.UI.Vue3.Components, BX.UI.Dialogs, BX.UI.EntitySelector, BX.Crm, BX.UI);
 //# sourceMappingURL=script.js.map

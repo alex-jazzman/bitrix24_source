@@ -2,20 +2,16 @@
  * @module in-app-url/routes/development-routes
  */
 jn.define('in-app-url/routes/development-routes', (require, exports, module) => {
-	const { ComponentHelper } = require('helpers/component');
 	const { URL } = require('utils/url');
 	const { requireLazy } = require('require-lazy');
+	const { WidgetPresenter } = require('in-app-url/widget-presenter');
 
 	module.exports = function(inAppUrl) {
-		inAppUrl.register('/development/storybook', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'dev:storybook',
-				object: 'layout',
-				widgetParams: {
-					title: 'StoryBook',
-				},
-			});
+		inAppUrl.register('/development/storybook', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('dev:storybook')
+				.setTitle('StoryBook')
+				.open();
 		}).name('storybook');
 
 		inAppUrl
@@ -31,83 +27,46 @@ jn.define('in-app-url/routes/development-routes', (require, exports, module) => 
 			})
 			.name('dev:stories');
 
-		inAppUrl.register('/development/testing.tools', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'testing.tools',
-				object: 'layout',
-				widgetParams: {
-					title: 'Manual testing tools',
-				},
-			});
+		inAppUrl.register('/development/testing.tools', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('testing.tools')
+				.setTitle('Manual testing tools')
+				.open();
 		}).name('testing.tools');
 
-		inAppUrl.register('/development/unit.tests', ({ component }) => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'unit.tests',
-				object: 'layout',
-				widgetParams: {
-					title: 'Frontend Unit Tests',
-				},
-			});
+		inAppUrl.register('/development/unit.tests', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('unit.tests')
+				.setTitle('Frontend Unit Tests')
+				.open();
 		}).name('unit-tests');
 
-		inAppUrl.register('/development/playground', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'playground',
-				object: 'layout',
-				widgetParams: {
-					title: 'Playground',
-				},
-			});
+		inAppUrl.register('/development/playground', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('playground')
+				.setTitle('Playground')
+				.open();
 		}).name('playground');
 
-		inAppUrl.register('/development/fields.test', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'fields.test',
-				version: '1',
-				object: 'layout',
-				componentParams: {},
-				widgetParams: {
-					title: 'Fields Test',
-				},
-			});
-		}).name('fields-test');
-
-		inAppUrl.register('/development/listview.benchmark', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'listview.benchmark',
-				object: 'layout',
-				widgetParams: {
-					title: 'ListView Benchmark',
-				},
-			});
+		inAppUrl.register('/development/listview.benchmark', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('listview.benchmark')
+				.setTitle('ListView Benchmark')
+				.open();
 		}).name('listview-benchmark');
 
-		inAppUrl.register('/development/text-editor.demo', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'text-editor.demo',
-				object: 'layout',
-				widgetParams: {
-					title: 'Text Editor Demo',
-				},
-			});
+		inAppUrl.register('/development/text-editor.demo', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('text-editor.demo')
+				.setTitle('Text Editor Demo')
+				.open();
 		}).name('text-editor-demo');
 
-		inAppUrl.register('/development/formatter.sandbox', () => {
-			// eslint-disable-next-line no-undef
-			ComponentHelper.openLayout({
-				name: 'formatter.sandbox',
-				object: 'layout',
-				widgetParams: {
-					title: 'Formatter Sandbox',
-				},
-			});
+		inAppUrl.register('/development/formatter.sandbox', (params, { context }) => {
+			void WidgetPresenter.fromContext(context)
+				.setComponentName('formatter.sandbox')
+				.setTitle('Formatter Sandbox')
+				.open();
 		}).name('formatter-sandbox');
 	};
 });

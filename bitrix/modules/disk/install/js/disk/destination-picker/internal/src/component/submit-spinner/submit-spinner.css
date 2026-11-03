@@ -1,0 +1,7 @@
+/* Centred in the tree area, whose own height the frame already fixes. */
+.disk-destination-picker-submit-spinner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}

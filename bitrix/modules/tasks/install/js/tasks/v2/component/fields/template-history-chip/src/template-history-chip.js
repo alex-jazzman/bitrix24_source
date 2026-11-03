@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
@@ -8,6 +9,8 @@ import 'ui.icon-set.outline';
 import { EventName } from 'tasks.v2.const';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { tooltip } from 'tasks.v2.component.elements.hint';
+
+import './template-history-chip.css';
 
 // @vue/component
 export const TemplateHistoryChip = {
@@ -61,6 +64,16 @@ export const TemplateHistoryChip = {
 			});
 		},
 	},
+	watch: {
+		isEnabled(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
+	},
 	methods: {
 		handleClick(): void
 		{
@@ -71,14 +84,39 @@ export const TemplateHistoryChip = {
 
 			EventEmitter.emit(EventName.OpenTemplateHistory, { templateId: this.templateId });
 		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-disabled', this.isEnabled ? null : 'true');
+		},
 	},
 	template: `
 		<Chip
+			ref="chip"
 			v-hint="tooltip"
+			class="tasks-field-template-history-chip"
+			data-testid="tasks-template-history-chip"
 			:text="loc('TASKS_V2_TEMPLATE_HISTORY_CHIP_TITLE')"
 			:icon="Outline.FILE_WITH_CLOCK"
 			:design="design"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`,
 };

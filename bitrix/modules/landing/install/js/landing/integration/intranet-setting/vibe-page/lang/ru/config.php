@@ -15,6 +15,8 @@ $MESS["INTRANET_SETTINGS_VIBE_BUTTON_PUBLIC"] = "Опубликовать для
 $MESS["INTRANET_SETTINGS_VIBE_BUTTON_UNPUBLIC"] = "Снять с публикации";
 $MESS["INTRANET_SETTINGS_VIBE_BUTTON_MARKET"] = "Выбрать шаблон";
 $MESS["INTRANET_SETTINGS_VIBE_BUTTON_PARTNERS"] = "Заказать у партнёров";
+$MESS["INTRANET_SETTINGS_VIBE_BUTTON_IMPORT_ARIA"] = "Импорт главной страницы";
+$MESS["INTRANET_SETTINGS_VIBE_BUTTON_EXPORT_ARIA"] = "Экспорт главной страницы";
 
 $MESS["INTRANET_SETTINGS_VIBE_IMPORT_POPUP"] = "Импорт страницы";
 $MESS["INTRANET_SETTINGS_VIBE_EXPORT_POPUP"] = "Экспорт страницы";
@@ -30,6 +32,13 @@ $MESS["INTRANET_SETTINGS_VIBE_WITHDRAW_POPUP_BTN_CONFIRM"] = "Да, снять";
 $MESS["INTRANET_SETTINGS_VIBE_WITHDRAW_POPUP_BTN_CONFIRM_FREE"] = "Да, отключить";
 $MESS["INTRANET_SETTINGS_VIBE_HINT_SUCCESS"] = "Все сотрудники видят пункт Главная страница в левом меню";
 $MESS["INTRANET_SETTINGS_VIBE_HINT_WARNING"] = "Сотрудники не видят пункт Главная страница в левом меню";
+$MESS["INTRANET_SETTINGS_VIBE_HINT_PUBLISHED"] = "Страница опубликована, её видят все сотрудники";
+$MESS["INTRANET_SETTINGS_VIBE_HINT_WITHDRAWN"] = "Страница снята с публикации, её видите только вы";
+$MESS["INTRANET_SETTINGS_VIBE_STATUS_ERROR"] = "Не удалось изменить статус публикации, попробуйте ещё раз";
+$MESS["INTRANET_SETTINGS_VIBE_STATUS_ERROR_ANNOUNCE"] = "Статус публикации не изменён";
+$MESS["INTRANET_SETTINGS_VIBE_STATUS_ERROR_BTN_CLOSE"] = "Закрыть";
+$MESS["INTRANET_SETTINGS_VIBE_HELP_ARIA"] = "Подробнее о статусе публикации";
+$MESS["INTRANET_SETTINGS_VIBE_LOCK_REASON"] = "Функция входит в другой тарифный план — откроется описание ограничения";
 
 $MESS["INTRANET_SETTINGS_VIBE_IMPORT_POPUP_MESSAGEBOX_TITLE"] = "Удалить текущий шаблон и импортировать новый?";
 $MESS["INTRANET_SETTINGS_VIBE_IMPORT_POPUP_MESSAGEBOX_MESSAGE"] = "У вас уже есть шаблон главной страницы. Импорт нового шаблона удалит текущий вместе со всеми изменениями. Восстановить его не получится";

@@ -4,9 +4,9 @@
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
@@ -142,7 +142,7 @@ endif;?>
 	<?php echo ($arParams['DISPLAY_TOP_PAGER'] != 'N') ? $arResult['NAV_STRING'] : '';?>
 	<br /><hr />
 	<?php foreach ($arResult['SEARCH'] as $arItem):?>
-		<a href="<?php echo $arItem['URL']?>"><?php echo $arItem['TITLE_FORMATED']?></a>
+		<a href="<?php echo $arItem['URL']?>"><?php echo $arItem['TITLE_FORMATED'] ?: '&lt;totitle&gt;'?></a>
 		<p><?php echo $arItem['BODY_FORMATED']?></p>
 		<?php if (
 			$arParams['SHOW_RATING'] == 'Y'

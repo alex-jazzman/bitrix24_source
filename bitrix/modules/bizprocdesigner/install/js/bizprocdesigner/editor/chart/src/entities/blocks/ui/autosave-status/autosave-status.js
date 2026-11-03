@@ -13,6 +13,7 @@ import { SAVE_STATUSES, EDITOR_LOCK_REASONS } from '../../stores/diagram';
 const LOCK_REASON_MESSAGE_IDS = {
 	[EDITOR_LOCK_REASONS.TEMPLATE_DELETED]: 'BIZPROCDESIGNER_EDITOR_TEMPLATE_DELETED_TOAST',
 	[EDITOR_LOCK_REASONS.WRITE_ACCESS_LOST]: 'BIZPROCDESIGNER_EDITOR_WRITE_ACCESS_LOST_TOAST',
+	[EDITOR_LOCK_REASONS.TEMPLATE_BUSY]: 'BIZPROCDESIGNER_EDITOR_TEMPLATE_BUSY_STATUS_HINT',
 };
 
 const HINT_BACKGROUND_COLOR = '#085DC1';
@@ -125,15 +126,26 @@ export const AutosaveStatus = {
 		{
 			return this.saveStatus === SAVE_STATUSES.SAVING;
 		},
+		/**
+		 * The retry sends the same draft save the autosave does, so a reason that stopped the write in
+		 * the first place would only get repeated. This covers the reversible reason too: a template
+		 * held by somebody else does not lock the editor for good, and readonly alone would miss it.
+		 */
+		isRetryOffered(): boolean
+		{
+			return !this.readonly && this.lockReason === null;
+		},
 		errorHint(): HintParams
 		{
-			// A locked editor always means a server verdict, never a broken connection, so the
-			// hint must not offer the network explanation. Which verdict it was decides the
-			// wording: a template known to be gone is named directly, while a refusal the server
-			// deliberately leaves ambiguous names both of its possible causes.
-			const messageId = this.readonly
-				? LOCK_REASON_MESSAGE_IDS[this.lockReason] ?? 'BIZPROCDESIGNER_EDITOR_TEMPLATE_DELETED_TOAST'
-				: 'BIZPROCDESIGNER_EDITOR_TOP_PANEL_AUTOSAVE_STATUS_NOT_SAVED_HINT';
+			// A named reason is always a server verdict, never a broken connection, so the hint must not
+			// offer the network explanation. Which verdict it was decides the wording: a template known
+			// to be gone is named directly, a refusal the server deliberately leaves ambiguous names both
+			// of its possible causes, and the reversible one says what to do to get the writing back.
+			const messageId = LOCK_REASON_MESSAGE_IDS[this.lockReason]
+				?? (this.readonly
+					? 'BIZPROCDESIGNER_EDITOR_TEMPLATE_DELETED_TOAST'
+					: 'BIZPROCDESIGNER_EDITOR_TOP_PANEL_AUTOSAVE_STATUS_NOT_SAVED_HINT')
+			;
 
 			return {
 				text: this.getMessage(messageId),
@@ -177,6 +189,27 @@ export const AutosaveStatus = {
 		{
 			this.refreshAccessibleSavedHintText();
 			this.scheduleAccessibleSavedHintRefresh();
+		},
+		// A retry refused by a verdict names the reason without changing the status: the announcement of
+		// the error has already been made, and the wording that explains it arrives only now.
+		lockReason(lockReason: ?string): void
+		{
+			if (lockReason !== null && this.hasError)
+			{
+				this.announceStatus(SAVE_STATUSES.ERROR);
+			}
+		},
+		// The retry goes away under the person who pressed it: the server refuses the write, the reason
+		// turns out to be a template held elsewhere, and the block is left without a single control. The
+		// block itself takes the focus over so it is not dropped on body together with the button.
+		isRetryOffered(isRetryOffered: boolean): void
+		{
+			if (isRetryOffered || this.$refs.errorStatus?.contains(document.activeElement) !== true)
+			{
+				return;
+			}
+
+			this.$refs.errorStatus.focus({ preventScroll: true });
 		},
 	},
 	created(): void
@@ -246,10 +279,15 @@ export const AutosaveStatus = {
 
 			if (status === SAVE_STATUSES.ERROR)
 			{
-				LiveAnnouncer.announce(
-					this.getMessage('BIZPROCDESIGNER_EDITOR_TOP_PANEL_AUTOSAVE_STATUS_NOT_SAVED'),
-					'assertive',
-				);
+				// A named reason travels with the status: in the reading mode the block keeps no control
+				// the hint could be called from, so this is the only way to learn what stopped the save.
+				const notSaved = this.getMessage('BIZPROCDESIGNER_EDITOR_TOP_PANEL_AUTOSAVE_STATUS_NOT_SAVED');
+				const message = this.lockReason === null
+					? notSaved
+					: `${notSaved}. ${this.errorHint.text}`
+				;
+
+				LiveAnnouncer.announce(message, 'assertive');
 
 				return;
 			}
@@ -302,6 +340,8 @@ export const AutosaveStatus = {
 		<div
 			v-else-if="hasError"
 			v-hint="errorHint"
+			ref="errorStatus"
+			tabindex="-1"
 			class="bizprocdesigner-editor-header-save-status-box"
 			:data-testid="$testId('bizprocdesigner-autosave-status-error')"
 		>
@@ -313,7 +353,7 @@ export const AutosaveStatus = {
 			/>
 			{{ getMessage('BIZPROCDESIGNER_EDITOR_TOP_PANEL_AUTOSAVE_STATUS_NOT_SAVED') }}
 			<button
-				v-if="!readonly"
+				v-if="isRetryOffered"
 				type="button"
 				v-hint="retryHint"
 				class="bizprocdesigner-editor-header-save-status-retry"
@@ -329,6 +369,7 @@ export const AutosaveStatus = {
 					aria-hidden="true"
 				/>
 			</button>
+			<visually-hidden>{{ errorHint.text }}</visually-hidden>
 		</div>
 		<div
 			v-else

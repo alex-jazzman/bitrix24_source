@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/invitation-widget-counter.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	minification: true,
 };

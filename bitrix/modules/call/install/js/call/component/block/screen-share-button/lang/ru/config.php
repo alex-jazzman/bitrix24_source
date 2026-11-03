@@ -1,0 +1,2 @@
+<?php
+$MESS["CALL_BLOCK_SCREEN_SHARE_BUTTON_LABEL"] = "Экран";

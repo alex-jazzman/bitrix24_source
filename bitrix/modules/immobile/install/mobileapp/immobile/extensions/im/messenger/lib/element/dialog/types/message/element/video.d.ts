@@ -1,3 +1,5 @@
+import { FileStatus } from '../../../../../../model/files/src/types';
+
 export type MessageVideo = {
 	id: string,
 	type: 'video',
@@ -9,4 +11,5 @@ export type MessageVideo = {
 		width: number,
 	},
 	size: number,
+	status: FileStatus,
 }

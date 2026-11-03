@@ -187,7 +187,7 @@ function deleteAccessRowExtended(link)
 			);
 		});
 
-		// etended mode
+		// extended mode
 		BX.bind(
 			BX('landing-mode-form-submit'),
 			'click',

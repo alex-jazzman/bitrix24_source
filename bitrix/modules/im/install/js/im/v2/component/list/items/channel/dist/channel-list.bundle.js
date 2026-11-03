@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_application_core, im_v2_provider_service_recent, main_core, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_rest, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_emptyState) {
+(function (exports, ui_vue3, im_v2_component_list_items_base, im_v2_component_list_items_elements_activeCallList, im_v2_const, im_v2_application_core, im_v2_provider_service_recent, main_core, im_v2_lib_analytics, im_v2_lib_confirm, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_rest, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_emptyState) {
 	'use strict';
 
 	class ChannelService extends im_v2_provider_service_recent.BaseRecentService {
@@ -46,7 +46,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	class ChannelRecentMenu extends im_v2_lib_menu.RecentMenu {
 		getMenuItems() {
-			return [this.getOpenItem()];
+			return [this.getOpenItem(), this.getSubscribeItem(), this.getUnsubscribeItem()];
 		}
 		getOpenItem() {
 			return {
@@ -57,6 +57,41 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						entityId: this.context.dialogId
 					});
 					this.menuInstance.close();
+				}
+			};
+		}
+		getSubscribeItem() {
+			if (!this.isGuestRole()) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IM_LIST_CHANNEL_MENU_SUBSCRIBE'),
+				onClick: () => {
+					void this.chatService.joinChat(this.context.dialogId);
+					this.menuInstance.close();
+				}
+			};
+		}
+		getUnsubscribeItem() {
+			const {
+				dialogId
+			} = this.context;
+			if (this.isGuestRole()) {
+				return null;
+			}
+			const canLeave = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.leave, dialogId);
+			if (!canLeave) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IM_LIST_CHANNEL_MENU_UNSUBSCRIBE'),
+				onClick: async () => {
+					this.menuInstance.close();
+					const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(dialogId);
+					if (userChoice === true) {
+						this.chatService.leaveChat(dialogId);
+						im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onLeave(dialogId);
+					}
 				}
 			};
 		}
@@ -140,6 +175,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const ChannelList = {
 		name: 'ChannelList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			EmptyState,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			ChannelItem
@@ -149,7 +185,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -160,9 +197,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.contextMenuManager = new ChannelRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new ChannelRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 		},
 		beforeUnmount() {
 			this.contextMenuManager.destroy();
@@ -184,6 +221,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				await this.getRecentService().loadFirstPage();
 				this.firstPageLoaded = true;
 				this.isLoading = false;
+			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
 			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
@@ -214,6 +254,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onCloseMenu() {
 				this.contextMenuManager.close();
 			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
+			},
 			getRecentService() {
 				if (!this.service) {
 					this.service = new ChannelService();
@@ -238,11 +283,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<EmptyState />
 			</template>
@@ -259,5 +309,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChannelList = ChannelList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List);
 //# sourceMappingURL=channel-list.bundle.js.map

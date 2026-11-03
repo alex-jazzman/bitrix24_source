@@ -346,7 +346,9 @@
 /* region SIDEBAR MENU */
 
 
-.ui-mail-left-directory-menu .ui-sidepanel-menu-link-text-counter {
+/* The badge is scoped by the link of the item and not by the list around it: the section items of the message
+   list page are rendered by the server outside that list and carry the very same badge. */
+.mail-menu-directory-link .ui-sidepanel-menu-link-text-counter {
 	display: inline-block;
 	margin-left: auto;
 	margin-right: 28px;
@@ -355,7 +357,7 @@
 	vertical-align: middle;
 }
 
-.ui-mail-left-directory-menu .ui-sidepanel-menu-link-text-counter-hidden {
+.mail-menu-directory-link .ui-sidepanel-menu-link-text-counter-hidden {
 	display: none;
 }
 

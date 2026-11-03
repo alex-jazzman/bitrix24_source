@@ -163,6 +163,9 @@ else
 							$closed = !empty($arDeal['CLOSED']) ? $arDeal['CLOSED'] : 'N';
 							$dealData['CLOSED'] = isset($arResult['CLOSED_LIST'][$closed]) ? $arResult['CLOSED_LIST'][$closed] : $closed;
 							break;
+						case 'OPENED':
+							$dealData['OPENED'] = ($arDeal['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+							break;
 						case 'COMMENTS':
 							$dealData['COMMENTS'] = isset($arDeal['COMMENTS']) ? htmlspecialcharsback($arDeal['COMMENTS']) : '';
 							break;

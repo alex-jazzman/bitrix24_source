@@ -1,5 +1,5 @@
 import { Loc } from 'main.core';
-import { mapActions } from 'ui.vue3.pinia';
+import { mapActions, mapState } from 'ui.vue3.pinia';
 import { useHistory } from 'ui.block-diagram';
 import {
 	NodeTitle,
@@ -42,6 +42,7 @@ export const EditNodeTitle = {
 		};
 	},
 	computed: {
+		...mapState(useDiagramStore, ['isWriteLocked']),
 		// not getBlockUserTitle: a frame title stays visible even when it equals the node type name
 		title(): string
 		{
@@ -75,6 +76,17 @@ export const EditNodeTitle = {
 			'publicDraft',
 			'updateStatus',
 		]),
+		// The title of a frame is edited by a double click on it, so the ban cannot be left to the
+		// context menu the lock already trims.
+		onEditRequest(): void
+		{
+			if (this.isWriteLocked)
+			{
+				return;
+			}
+
+			this.nodeTitleEditService.startEdit();
+		},
 		async onConfirm(title: string): Promise<void>
 		{
 			// a node cannot stay unnamed: an empty title falls back to the node type name
@@ -118,7 +130,7 @@ export const EditNodeTitle = {
 			:description="description"
 			:editing="isEditing"
 			:ariaLabel="titleAriaLabel"
-			@editRequest="nodeTitleEditService.startEdit()"
+			@editRequest="onEditRequest"
 			@confirm="onConfirm"
 			@cancel="nodeTitleEditService.cancel()"
 		/>

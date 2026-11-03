@@ -61,7 +61,7 @@
 }
 
 /*
- * [ALG-02] Narrow window: the remainder no longer covers the panel minimum, so instead of squeezing
+ * Narrow window: the remainder no longer covers the panel minimum, so instead of squeezing
  * the document the panel goes over it. Deliberately NOT `position: fixed; inset: 0` — the panel keeps
  * its width and the page stays usable to its left. Anchored to `.note-page` (which app.css gives
  * `position: relative` for exactly this), so the column is full height here too; the widget's own

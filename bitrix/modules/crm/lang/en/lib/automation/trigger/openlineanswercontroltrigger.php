@@ -6,6 +6,6 @@ $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_FIELD_ANSWER_TIME"] = "Respon
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_FIELD_CONFIG_ID"] = "Open Channel";
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NAME"] = "Agent accepted chat (reaction time)";
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NAME_1"] = "Open Channel first message response is overdue";
-$MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NODE_DESCRIPTION"] = "Triggered after an agent responds to customer message outside of specified limit.";
+$MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NODE_DESCRIPTION"] = 'Triggered when an agent accepts a customer request in an Open Channel. The response time is set in the condition, so you can track requests accepted too late.';
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_RETURN_DATE_LAST_MESSAGE"] = "Last message time";
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_RETURN_OPERATOR_ID"] = "Agent";

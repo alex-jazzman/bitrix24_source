@@ -15,6 +15,7 @@
 		TasksDashboardMoreMenu,
 		TasksDashboardSorting,
 	} = require('tasks/dashboard');
+	const { requireLazy } = require('require-lazy');
 	const { SearchLayout } = require('layout/ui/search-bar');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
@@ -185,7 +186,7 @@
 					getOwnerId: () => ownerId || currentUserId,
 				},
 				this.getAnalyticsLabel(),
-				!(this.sorting.getType() === TasksDashboardSorting.types.ACTIVITY),
+				this.sorting.getType() !== TasksDashboardSorting.types.ACTIVITY,
 			);
 
 			this.search = new SearchLayout({
@@ -647,7 +648,7 @@
 		setSorting(sorting)
 		{
 			this.sorting.setType(sorting);
-			this.sorting.setIsASC(!(this.sorting.getType() === TasksDashboardSorting.types.ACTIVITY));
+			this.sorting.setIsASC(this.sorting.getType() !== TasksDashboardSorting.types.ACTIVITY);
 
 			this.moreMenu.setSelectedSorting(this.sorting.getType());
 			this.moreMenu.setIsASC(this.sorting.getIsASC());
@@ -837,7 +838,6 @@
 									crm: task.crm,
 									flowId: task.flowId,
 									relatedTaskId: task.relatedTaskId,
-									checklistFlatTree: task.checklistFlatTree,
 									startDatePlan: task.startDatePlan,
 									endDatePlan: task.endDatePlan,
 									IM_CHAT_ID: task.imChatId,
@@ -939,6 +939,7 @@
 					.setCacheHandler((response) => resolve(response))
 					.setHandler((response) => resolve(response))
 					.call(true)
+					.catch(console.error)
 				;
 			});
 			if (actionResponse?.status === 'success' && actionResponse.data)

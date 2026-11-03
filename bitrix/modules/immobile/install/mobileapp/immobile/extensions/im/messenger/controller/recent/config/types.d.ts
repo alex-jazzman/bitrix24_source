@@ -1,4 +1,5 @@
 import {CommonRenderServiceProps} from "../service/render/types";
+import {ItemButtonServiceProps} from "../service/item-button/types";
 
 declare type RecentConfig = {
 	services: {
@@ -45,6 +46,10 @@ declare type RecentConfig = {
 		'select'?: {
 			extension: string,
 			props?: object,
+		},
+		'item-button'?: {
+			extension: string,
+			props: ItemButtonServiceProps,
 		},
 		'external'?: {
 			extension: string,

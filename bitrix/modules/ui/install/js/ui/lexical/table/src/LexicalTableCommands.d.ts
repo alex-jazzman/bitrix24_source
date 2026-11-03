@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { LexicalCommand } from 'ui.lexical.core';
+import { type LexicalCommand } from 'ui.lexical.core';
 export type InsertTableCommandPayloadHeaders = Readonly<{
     rows: boolean;
     columns: boolean;

@@ -1,0 +1,70 @@
+/* The ring stands outside the link: the light tone fills the gap, the dark one is the ring. */
+.block-35-6-header-with-contacts-search-wo-logo .landing-block-node-card-link:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+}
+
+/*
+ * The search of the row (bitrix:search.title) is a component of another owner: only its button is reached from here.
+ * ui.bootstrap4 paints a focused .btn-primary the blue of air; the button keeps the colour of the theme and wears the
+ * ring of the other buttons of the showcase, a dark frame outside the box.
+ */
+.block-35-6-header-with-contacts-search-wo-logo .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.block-35-6-header-with-contacts-search-wo-logo .btn.btn-primary:focus:hover,
+.block-35-6-header-with-contacts-search-wo-logo .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}
+
+.block-35-6-header-with-contacts-search-wo-logo .btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: none;
+}
+
+/*
+ * The main menu of the clothes store (0.menu_03) is ringed from here. The menu is a block of the common layer - the app
+ * template, any site - and its own files stay as they are; this row is a block of stores and stands beside the menu in
+ * the header of the clothes store only. Where the menu stands without this row, it keeps the ring of the theme.
+ */
+.block-0-menu-03 .landing-block-node-menu-logo-link:focus-visible,
+.block-0-menu-03 .landing-block-node-menu-list-item-link:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+}
+
+/* The top bar of the hamburger sits 2px above the button (hamburgers.css, margin-top: -2px). */
+.block-0-menu-03 .navbar-toggler:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.block-0-menu-03 .navbar-toggler:focus-visible::after {
+	position: absolute;
+	inset: -2px 0 2px;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/* The theme animates everything of the button, the ring with it; the fades of its states stay. */
+.block-0-menu-03 .navbar-toggler {
+	transition-property: color, background-color, border-color, opacity;
+}
+
+/* The open menu scrolls and clips flush with its items: for the time of focus it grows by the ring on either side. */
+@media (max-width: 991.98px) {
+	.block-0-menu-03 .navbar-collapse:focus-within {
+		padding-inline: calc(var(--ui-focus-outline-offset) + var(--ui-focus-outline-width));
+		margin-inline: calc(-1 * calc(var(--ui-focus-outline-offset) + var(--ui-focus-outline-width)));
+	}
+}

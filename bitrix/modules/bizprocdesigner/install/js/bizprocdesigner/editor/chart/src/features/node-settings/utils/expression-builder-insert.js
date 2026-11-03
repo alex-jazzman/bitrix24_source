@@ -1,4 +1,7 @@
 import { Dom, Type } from 'main.core';
+// The recognition lives in the extension next to the formula model it parses with; taking it from the
+// facade also keeps this module clear of the stores an editor barrel would pull in.
+import { recognizeFieldValue } from 'bizprocdesigner.expression-builder';
 
 // Mirrors (does not import) the target-input resolution and caret insertion of
 // bp-selector-button.js: `findTargetInput` there is not exported, so the logic is
@@ -94,10 +97,26 @@ export function resolveFieldHost(root: ?HTMLElement, button: ?HTMLElement): ?HTM
 }
 
 /**
+ * Write a value into the input the way typing into it would: the text goes in, then bubbling
+ * `input` and `change` events follow, since the form input tracker is bound to the form, while the
+ * ordinary settings form binds `input` to the control itself.
+ */
+function writeValue(input: HTMLElement, value: string, caret: number): boolean
+{
+	const target = input;
+
+	target.value = value;
+	target.selectionEnd = caret;
+	target.focus();
+	target.dispatchEvent(new window.Event('input', { bubbles: true }));
+	target.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+	return true;
+}
+
+/**
  * Insert a value at the caret position (selectionEnd) of the input, keeping the text before
- * and after the caret, then dispatch bubbling `input` and `change` events, the way typing into
- * the field would: the form input tracker is bound to the form, while the ordinary settings form
- * binds `input` to the control itself.
+ * and after the caret.
  * Returns true when the value was inserted.
  */
 export function insertExpression(input: ?HTMLElement, value: string): boolean
@@ -107,16 +126,48 @@ export function insertExpression(input: ?HTMLElement, value: string): boolean
 		return false;
 	}
 
-	const target = input;
-	const caret = target.selectionEnd || 0;
-	const beforePart = target.value.slice(0, caret);
-	const afterPart = target.value.slice(caret);
+	const caret = input.selectionEnd || 0;
+	const beforePart = input.value.slice(0, caret);
+	const afterPart = input.value.slice(caret);
 
-	target.value = beforePart + value + afterPart;
-	target.selectionEnd = beforePart.length + value.length;
-	target.focus();
-	target.dispatchEvent(new window.Event('input', { bubbles: true }));
-	target.dispatchEvent(new window.Event('change', { bubbles: true }));
+	return writeValue(input, beforePart + value + afterPart, beforePart.length + value.length);
+}
 
-	return true;
+/**
+ * A value the window lifts into its own state whole: a chain of the flat model or a reference on its
+ * own, both of which the calculator is prefilled with, or a reference carrying an output modifier,
+ * which the modification mode is. These are what prefillFromValue reads back, so these are what the
+ * user sees before Apply. Everything else - text around a formula, two formulas in a row, a function
+ * call, a reference carrying a second modifier - the window shows as it is and never rewrites.
+ */
+function isBuilderValue(value: string): boolean
+{
+	const recognized = recognizeFieldValue(value);
+
+	return recognized.kind === 'draft' || recognized.kind === 'reference';
+}
+
+/**
+ * Write what the builder assembled into the field. The whole value is replaced when the window has
+ * lifted both sides into its own state: applying a second time then leaves the field with the one
+ * formula instead of appending another one after it, and a chain grown out of the reference the
+ * value picker left in the field takes the place of that reference instead of standing next to it.
+ * Both of those are values no mode could read back, and where the second one lands would be decided
+ * by the caret of a field nobody has typed in.
+ * Otherwise the value is inserted at the caret: a field holding text of its own must keep it, and
+ * a function call of the Functions mode goes where the caret stands, wherever the field value came
+ * from.
+ * Returns true when the value was written.
+ */
+export function applyExpression(input: ?HTMLElement, value: string): boolean
+{
+	if (!input || !Type.isStringFilled(value))
+	{
+		return false;
+	}
+
+	return (isBuilderValue(input.value) && isBuilderValue(value))
+		? writeValue(input, value, value.length)
+		: insertExpression(input, value)
+	;
 }

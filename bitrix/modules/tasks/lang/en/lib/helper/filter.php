@@ -64,3 +64,4 @@ $MESS["TASKS_STATUS_5"] = "Completed";
 $MESS["TASKS_STATUS_6"] = "Deferred";
 $MESS["TASKS_STATUS_7"] = "Declined";
 $MESS["TASKS_STATUS_8"] = "Completed in active sprint";
+$MESS['TASKS_FILTER_CRM_ITEM'] = 'CRM item';

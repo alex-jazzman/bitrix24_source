@@ -22,3 +22,14 @@ export function getErrorCode(responseOrError: Object): ?string
 {
 	return responseOrError?.errors?.[0]?.code ?? null;
 }
+
+// Payload of the refusal: the server puts it into the same first error the code comes from.
+export function getErrorCustomData(responseOrError: Object): mixed
+{
+	return responseOrError?.errors?.[0]?.customData ?? null;
+}
+
+export function getErrorMessage(responseOrError: Object): ?string
+{
+	return responseOrError?.errors?.[0]?.message ?? null;
+}

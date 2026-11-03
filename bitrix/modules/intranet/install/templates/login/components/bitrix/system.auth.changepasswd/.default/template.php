@@ -8,13 +8,32 @@
  */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
 }
 
-\Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.vue3']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.forms',
+	'ui.vue3',
+	'intranet.login.password-requirements',
+]);
+
+$passwordRequirementsPolicy = null;
+if (is_array($arResult['GROUP_POLICY'] ?? null))
+{
+	$passwordRequirementsPolicy = [
+		'minPasswordSize' => (int)($arResult['GROUP_POLICY']['PASSWORD_LENGTH'] ?? 0),
+		'isUpperCaseRequired' => ($arResult['GROUP_POLICY']['PASSWORD_UPPERCASE'] ?? null) === 'Y',
+		'isLowerCaseRequired' => ($arResult['GROUP_POLICY']['PASSWORD_LOWERCASE'] ?? null) === 'Y',
+		'isDigitRequired' => ($arResult['GROUP_POLICY']['PASSWORD_DIGITS'] ?? null) === 'Y',
+		'isSpecialCharsRequired' => ($arResult['GROUP_POLICY']['PASSWORD_PUNCTUATION'] ?? null) === 'Y',
+		'specialChars' => \CUser::PASSWORD_SPECIAL_CHARS,
+	];
+}
+
 ?>
 <div class="intranet-island" data-role="changepassword-container">
 	<div class="intranet-login-enter-form intranet-logging-in__login-form">
@@ -25,7 +44,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 		<template v-if="isFormVisible">
 			<?php ShowMessage($arParams['~AUTH_RESULT']); ?> <!-- errors -->
 
-			<form method="post" action="<?=$arResult['AUTH_URL']?>" name="form_auth">
+			<form
+				method="post"
+				action="<?=$arResult['AUTH_URL']?>"
+				name="form_auth"
+				data-testid="intranet-change-password-form"
+			>
 				<?php if ($arResult['BACKURL'] <> ''): ?>
 					<input type="hidden" name="backurl" value="<?=$arResult['BACKURL']?>" />
 				<?php endif ?>
@@ -56,10 +80,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 									class="ui-ctl-element intranet-text-input__field"
 									type="password"
 									name="USER_CURRENT_PASSWORD"
-									maxlength="255"
-									value="<?=$arResult['USER_CURRENT_PASSWORD']?>"
-									autocomplete="new-password"
-									placeholder="<?=Loc::getMessage('INTRANET_CHANGE_PASS_CURRENT_PASS')?>"
+								maxlength="255"
+								value="<?=$arResult['USER_CURRENT_PASSWORD']?>"
+								autocomplete="new-password"
+								placeholder="<?=Loc::getMessage('INTRANET_CHANGE_PASS_CURRENT_PASS')?>"
+								data-testid="user-current-password"
 								/>
 							</div>
 						<?php else: ?>
@@ -75,6 +100,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 								value="<?=$arResult['USER_PASSWORD']?>"
 								autocomplete="new-password"
 								placeholder="<?=Loc::getMessage('INTRANET_CHANGE_PASS_NEW_PASS')?>"
+								@input="onPasswordInput"
+								ref="passwordInput"
+								data-testid="user-password"
 							/>
 						</div>
 
@@ -87,13 +115,18 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 								value="<?=$arResult['USER_CONFIRM_PASSWORD']?>"
 								autocomplete="new-password"
 								placeholder="<?=Loc::getMessage('INTRANET_CHANGE_PASS_CONFIRM')?>"
+								data-testid="user-confirm-password"
 							/>
 						</div>
 
 						<div class="intranet-password-edit-form__indicators-wrapper">
 							<div class="intranet-password-indicators__indicator">
-								<div class="intranet-password-indicators__icon"></div>
-								<?=$arResult['GROUP_POLICY']['PASSWORD_REQUIREMENTS'];?>
+								<div
+									class="intranet-password-indicators__icon"
+									:class="{ 'intranet-password-indicators__icon--failed': isPasswordRequirementsInvalid }"
+									data-testid="bx-intranet-password-requirements-indicator"
+								></div>
+								<?=$arResult['GROUP_POLICY']['PASSWORD_REQUIREMENTS'] ?? '';?>
 							</div>
 						</div>
 					</div>
@@ -127,6 +160,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 					class="intranet-text-btn ui-btn ui-btn-lg ui-btn-success intranet-text-btn__width"
 					type="submit"
 					@click="onButtonClick($event)"
+					data-testid="intranet-change-password-submit"
 				>
 					<span class="intranet-text-btn__content-wrapper"><?=Loc::getMessage('INTRANET_CHANGE_PASS_BUTTON')?></span>
 					<div class="intranet-text-btn__spinner" v-show="isWaiting"></div>
@@ -153,10 +187,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	BX.ready(() => {
 		const params = {
 			containerNode: document.querySelector("[data-role='changepassword-container']"),
+			passwordRequirementsPolicy: <?=Json::encode($passwordRequirementsPolicy)?>,
 			isFormVisible: '<?=($arResult['SHOW_FORM'] ? 'Y' : 'N')?>',
-			isCaptchaAvailable: '<?=($arResult['USE_CAPTCHA'] ? 'Y' : 'N')?>'
+			isCaptchaAvailable: '<?=($arResult['USE_CAPTCHA'] ? 'Y' : 'N')?>',
 		};
 		new BX.Intranet.SystemAuthChangePassword(params);
 	});
 </script>
-

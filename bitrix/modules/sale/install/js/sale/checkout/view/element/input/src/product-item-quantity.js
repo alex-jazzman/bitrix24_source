@@ -1,4 +1,5 @@
 import { BitrixVue } from 'ui.vue';
+import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events'
 
 import { EventType } from 'sale.checkout.const';
@@ -19,9 +20,11 @@ BitrixVue.component('sale-checkout-view-element-input-product_item_quantity', {
 			},
 			onKeyDown(e)
 			{
-				if (['Enter'].indexOf(e.key) >= 0)
+				if (e.key === 'Enter')
 				{
-					this.$refs.container.blur();
+					// recalculation runs in place: leaving the field would also lose the focus
+					e.preventDefault();
+					this.validate();
 				}
 			}
 		},
@@ -30,6 +33,13 @@ BitrixVue.component('sale-checkout-view-element-input-product_item_quantity', {
 			checkedClassObject()
 			{
 				return {'checkout-item-quantity-field': true}
+			},
+			accessibleName()
+			{
+				return Loc.getMessage(
+					'CHECKOUT_VIEW_ELEMENT_INPUT_PRODUCT_ITEM_QUANTITY_NAME',
+					{'#NAME#': this.item.name},
+				);
 			}
 		},
 	// language=Vue
@@ -37,6 +47,7 @@ BitrixVue.component('sale-checkout-view-element-input-product_item_quantity', {
       <input :class="checkedClassObject" 
 			 type="text" 
 			 inputmode="numeric" 
+			 :aria-label="accessibleName"
              @blur="validate"
 			 @keydown="onKeyDown"
              v-model="item.quantity"

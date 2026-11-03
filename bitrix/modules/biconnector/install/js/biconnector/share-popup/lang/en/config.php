@@ -1,10 +1,14 @@
 <?php
+$MESS['BICONNECTOR_SHARE_POPUP_BANNED'] = 'Public links to this dashboard are blocked in the dashboard settings.';
 $MESS["BICONNECTOR_SHARE_POPUP_COPY_LINK"] = "Copy link";
 $MESS["BICONNECTOR_SHARE_POPUP_DATE_LABEL"] = "Link valid till:";
 $MESS["BICONNECTOR_SHARE_POPUP_DATE_PAST"] = "Day and time must be in the future.";
 $MESS["BICONNECTOR_SHARE_POPUP_DATE_PLACEHOLDER"] = "Select date";
 $MESS["BICONNECTOR_SHARE_POPUP_DATE_REQUIRED"] = "Date is required.";
+$MESS['BICONNECTOR_SHARE_POPUP_DISABLED_BY_ADMIN'] = 'Link disabled by administrator #NAME# on #DATE#';
+$MESS['BICONNECTOR_SHARE_POPUP_DISABLED_BY_ADMIN_NO_DATE'] = 'Link disabled by administrator #NAME#';
 $MESS["BICONNECTOR_SHARE_POPUP_DISABLED_DESC"] = "Until the dashboard is shared, guests cannot view it even if they have a link and a password.";
+$MESS['BICONNECTOR_SHARE_POPUP_ENABLE'] = 'Enable';
 $MESS["BICONNECTOR_SHARE_POPUP_ENABLED_DESC"] = "Anyone with a link and a password can view this dashboard.";
 $MESS["BICONNECTOR_SHARE_POPUP_ERROR"] = "Could not copy link.";
 $MESS["BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE"] = "Could not share dashboard.";

@@ -38,7 +38,7 @@ export const StageField: BitrixVueComponentProps = {
 		<Field class="--stage">
 			<FieldTitle>{{ title }}</FieldTitle>
 			<FieldValue>
-				<div class="crm-mini-card__stage-color" :style="{ backgroundColor: stage.color }"></div>
+				<div class="crm-mini-card__stage-color" :style="{ backgroundColor: stage.color }" aria-hidden="true"></div>
 				<ValueEllipsis :title="stage.name">{{ stage.name }}</ValueEllipsis>
 			</FieldValue>
 		</Field>

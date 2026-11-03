@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, call_adapter_utils, call_adapter_desktopApi, main_core_events, main_popup, im_v2_lib_desktopApi, call_lib_callTokenManager, call_lib_settingsManager, call_lib_stuckCallFinishTracker, im_v2_lib_utils, ui_dialogs_messagebox, ui_notification, im_lib_localstorage, im_v2_const, im_v2_lib_desktop, call_lib_analytics, ui_vue3_pinia, call_store, call_lib_hardware, call_infrastructure_broadcastChannel, call_lib_reconnectHistory, ui_buttons, call_mapping, im_v2_lib_promo, ui_switcher, call_component_lobby, call_component_userListPopup, call_component_userList, call_lib_mediaRegistry) {
+(function (exports, call_lib_backgroundDialog, main_core, im_v2_lib_desktopApi, main_popup, ui_a11y, ui_buttons, call_mapping, call_lib_callTokenManager, call_lib_settingsManager, call_lib_stuckCallFinishTracker, main_core_events, ui_dialogs_messagebox, ui_notification, im_lib_localstorage, im_v2_const, im_v2_lib_desktop, call_lib_a11y, call_lib_analytics, call_lib_hardware, call_infrastructure_broadcastChannel, call_application_incoming, call_lib_reconnectHistory, im_v2_lib_promo, ui_switcher, call_component_lobby, call_legacy_component_userListPopup, call_legacy_component_userList, call_lib_mediaRegistry) {
 	'use strict';
 
 	// screensharing workaround
@@ -25,57 +25,298 @@ this.BX = this.BX || {};
 		}
 	}
 
-	class BackgroundDialog {
-		static isAvailable() {
-			return call_adapter_utils.Utils.platform.getDesktopVersion() >= 52;
-		}
-		static isMaskAvailable() {
-			return call_adapter_utils.Utils.platform.isDesktopFeatureEnabled('mask');
-		}
-		static open(options) {
-			options = main_core.Type.isPlainObject(options) ? options : {};
-			const tab = main_core.Type.isStringFilled(options.tab) ? options.tab : 'background'; // mask, background
+	const Events$3 = {
+		onBackToCallClick: "FloatingScreenshare::onBackToCallClick",
+		onStopSharingClick: "FloatingScreenshare::onStopSharingClick",
+		onChangeScreenClick: "FloatingScreenshare::onChangeScreenClick"
+	};
+	const POPUP_WIDTH = 291;
+	const POPUP_HEIGHT = 81;
+	const POPUP_OFFSET_X = 80;
+	const POPUP_OFFSET_Y = 80;
 
-			if (!this.isAvailable()) {
-				if (window.BX.Helper) {
-					window.BX.Helper.show('redirect=detail&code=12398124');
+	/**
+	 *
+	 * @param {object} config
+	 * @constructor
+	 */
+	class FloatingScreenShare {
+		constructor(config) {
+			if (typeof config !== "object") {
+				config = {};
+			}
+			this.darkMode = config.darkMode || false;
+			this.window = null;
+			this.sharedWindowX = null;
+			this.sharedWindowY = null;
+			this.sharedWindowHeight = null;
+			this.sharedWindowWidth = null;
+			this.title = '';
+			this.app = '';
+			this.screens = [];
+			this.screenToUse = null;
+			this.callbacks = {
+				onBackToCallClick: main_core.Type.isFunction(config.onBackToCallClick) ? config.onBackToCallClick : BX.DoNothing,
+				onStopSharingClick: main_core.Type.isFunction(config.onStopSharingClick) ? config.onStopSharingClick : BX.DoNothing,
+				onChangeScreenClick: main_core.Type.isFunction(config.onChangeScreenClick) ? config.onChangeScreenClick : BX.DoNothing
+			};
+			this._onBackToCallClickHandler = this._onBackToCallClick.bind(this);
+			this._onStopSharingClickHandler = this._onStopSharingClick.bind(this);
+			this._onChangeScreenClickHandler = this._onChangeScreenClick.bind(this);
+			this.bindEventHandlers();
+		}
+		bindEventHandlers() {
+			im_v2_lib_desktopApi.DesktopApi.subscribe(Events$3.onBackToCallClick, this._onBackToCallClickHandler);
+			im_v2_lib_desktopApi.DesktopApi.subscribe(Events$3.onStopSharingClick, this._onStopSharingClickHandler);
+			im_v2_lib_desktopApi.DesktopApi.subscribe(Events$3.onChangeScreenClick, this._onChangeScreenClickHandler);
+		}
+		saveExistingScreens() {
+			return new Promise((resolve, reject) => {
+				if (this.screens.length > 0) {
+					return resolve();
 				}
+				BXDesktopSystem.ListScreenMedia(result => {
+					result.forEach(item => {
+						if (item.id.slice(0, 6) === 'screen') {
+							this.screens.push({
+								id: item.id,
+								x: item.x,
+								y: item.y,
+								width: item.width,
+								height: item.height
+							});
+						}
+					});
+					return resolve();
+				});
+			});
+		}
+		_onBackToCallClick() {
+			this.callbacks.onBackToCallClick();
+		}
+		_onStopSharingClick() {
+			this.close();
+			this.callbacks.onStopSharingClick();
+		}
+		_onChangeScreenClick() {
+			this.callbacks.onChangeScreenClick();
+		}
+		setSharingData(data) {
+			return this.saveExistingScreens().then(() => {
+				this.sharedWindowX = data.x + 10;
+				this.sharedWindowY = data.y + 10;
+				this.sharedWindowWidth = data.width;
+				this.sharedWindowHeight = data.height;
+				this.title = data.title;
+				this.app = data.app;
+				for (let i = 0; i < this.screens.length; i++) {
+					if (this.sharedWindowX >= this.screens[i].x && this.sharedWindowX <= this.screens[i].x + this.screens[i].width && this.sharedWindowY >= this.screens[i].y && this.sharedWindowY <= this.screens[i].y + this.screens[i].height) {
+						this.screenToUse = this.screens[i];
+						break;
+					}
+				}
+				if (!this.screenToUse && this.screens.length > 0) {
+					this.screenToUse = this.screens[0];
+				}
+			}).catch(error => {
+				console.log('save existing screens error', error);
+			});
+		}
+		show() {
+			if (!im_v2_lib_desktopApi.DesktopApi.isDesktop() || im_v2_lib_desktopApi.DesktopApi.getApiVersion() > 74) {
+				return;
+			}
+			if (this.window) {
+				this.window.BXDesktopWindow.ExecuteCommand("show");
+			} else {
+				var params = {
+					title: this.title,
+					app: this.app,
+					sharedWindowX: this.sharedWindowX,
+					sharedWindowY: this.sharedWindowY,
+					sharedWindowWidth: this.sharedWindowWidth,
+					sharedWindowHeight: this.sharedWindowHeight,
+					screenToUse: this.screenToUse,
+					darkMode: this.darkMode
+				};
+				const js = `window.FSSC = new BX.Call.FloatingScreenShareContent(${JSON.stringify(params)});`;
+				const htmlContent = im_v2_lib_desktopApi.DesktopApi.prepareHtml('', js);
+				this.window = im_v2_lib_desktopApi.DesktopApi.createTopmostWindow(htmlContent);
+			}
+		}
+		hide() {
+			if (!this.window || !this.window.document) {
 				return false;
 			}
-			const html = `
-			<div id="bx-desktop-loader" class="bx-desktop-loader-wrap">
-							<div class="bx-desktop-loader">
-								<svg class="bx-desktop-loader-circular" viewBox="25 25 50 50">
-									<circle class="bx-desktop-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
-								</svg>
-							</div>
-						</div>
-						<div id="placeholder"></div>
-		`;
-			const js = `
-			BX.Runtime.loadExtension("call.component.v2.call-background").then(function(exports) {
-										BX.Vue3.BitrixVue.createApp({
-											components: {CallBackground: exports.CallBackground},
-											template: '<CallBackground tab="${tab}"/>',
-										}).mount("#placeholder");
-									});
-		`;
-			call_adapter_desktopApi.DesktopApi.createWindow('callBackground', controller => {
-				const title = this.isMaskAvailable() ? BX.message('BXD_CALL_BG_MASK_TITLE') : BX.message('BXD_CALL_BG_TITLE');
-				controller.SetProperty('title', title);
-				controller.SetProperty('clientSize', {
-					Width: 943,
-					Height: 670
-				});
-				controller.SetProperty('minClientSize', {
-					Width: 943,
-					Height: 670
-				});
-				controller.SetProperty('backgroundColor', '#2B3038');
-				controller.ExecuteCommand('center');
-				controller.ExecuteCommand('html.load', call_adapter_desktopApi.DesktopApi.prepareHtml(html, js));
+			this.window.BXDesktopWindow.ExecuteCommand("hide");
+		}
+		close() {
+			if (!this.window || !this.window.document) {
+				return false;
+			}
+			this.window.BXDesktopWindow.ExecuteCommand("close");
+			this.window = null;
+			this.visible = false;
+		}
+		destroy() {
+			if (this.window) {
+				im_v2_lib_desktopApi.DesktopApi.closeWindow();
+				this.window = null;
+			}
+			im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$3.onBackToCallClick, this._onBackToCallClickHandler);
+			im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$3.onStopSharingClick, this._onStopSharingClickHandler);
+			im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$3.onChangeScreenClick, this._onChangeScreenClickHandler);
+		}
+	}
+	class FloatingScreenShareContent {
+		constructor(config) {
+			this.title = config.title || '';
+			this.app = config.app || '';
+			this.sharedWindowX = config.sharedWindowX || 0;
+			this.sharedWindowY = config.sharedWindowY || 0;
+			this.sharedWindowHeight = config.sharedWindowHeight || 0;
+			this.sharedWindowWidth = config.sharedWindowWidth || 0;
+			this.screenToUse = config.screenToUse || null;
+			this.darkMode = config.darkMode || false;
+			this.elements = {
+				container: null
+			};
+			this.render();
+			this.adjustWindow(POPUP_WIDTH, POPUP_HEIGHT);
+		}
+		render() {
+			const title = this.app ? this.app + ' - ' + this.title : this.title;
+			this.elements.container = main_core.Dom.create("div", {
+				props: {
+					className: 'bx-messenger-call-floating-screenshare-wrap' + (this.darkMode ? ' dark-mode' : '')
+				},
+				children: [main_core.Dom.create("div", {
+					props: {
+						className: 'bx-messenger-call-floating-screenshare-top'
+					},
+					children: [main_core.Dom.create("div", {
+						props: {
+							className: 'bx-messenger-call-floating-screenshare-top-icon'
+						}
+					}), main_core.Dom.create("div", {
+						props: {
+							className: 'bx-messenger-call-floating-screenshare-top-text',
+							title: title
+						},
+						text: title
+					})]
+				}), main_core.Dom.create("div", {
+					props: {
+						className: 'bx-messenger-call-floating-screenshare-bottom'
+					},
+					children: [main_core.Dom.create("div", {
+						props: {
+							className: 'bx-messenger-call-floating-screenshare-bottom-left'
+						},
+						children: [main_core.Dom.create("div", {
+							props: {
+								className: 'bx-messenger-call-floating-screenshare-back-icon'
+							}
+						}), main_core.Dom.create("div", {
+							props: {
+								className: 'bx-messenger-call-floating-screenshare-back-text'
+							},
+							text: BX.message('IM_M_CALL_SCREENSHARE_BACK_TO_CALL')
+						})],
+						events: {
+							click: this.onBackToCallClick.bind(this)
+						}
+					}), main_core.Dom.create("div", {
+						props: {
+							className: 'bx-messenger-call-floating-screenshare-bottom-center'
+						},
+						children: [main_core.Dom.create("div", {
+							props: {
+								className: 'bx-messenger-call-floating-screenshare-change-screen-icon'
+							}
+						}), main_core.Dom.create("div", {
+							props: {
+								className: 'bx-messenger-call-floating-screenshare-change-screen-text'
+							},
+							text: BX.message('IM_M_CALL_SCREENSHARE_CHANGE_SCREEN')
+						})],
+						events: {
+							click: this.onChangeScreenClick.bind(this)
+						}
+					}), main_core.Dom.create("div", {
+						props: {
+							className: 'bx-messenger-call-floating-screenshare-bottom-right'
+						},
+						children: [main_core.Dom.create("div", {
+							props: {
+								className: 'bx-messenger-call-floating-screenshare-stop-icon'
+							}
+						}), main_core.Dom.create("div", {
+							props: {
+								className: 'bx-messenger-call-floating-screenshare-stop-text'
+							},
+							text: BX.message('IM_M_CALL_SCREENSHARE_STOP')
+						})],
+						events: {
+							click: this.onStopSharingClick.bind(this)
+						}
+					})]
+				})]
 			});
-			return true;
+			document.body.appendChild(this.elements.container);
+			document.body.classList.add('bx-messenger-call-floating-screenshare');
+		}
+		onBackToCallClick() {
+			this.dispatchEvent(Events$3.onBackToCallClick, []);
+		}
+		onChangeScreenClick() {
+			this.dispatchEvent(Events$3.onChangeScreenClick, []);
+		}
+		onStopSharingClick() {
+			this.dispatchEvent(Events$3.onStopSharingClick, []);
+		}
+		adjustWindow(width, height) {
+			if (!this.screenToUse) {
+				return;
+			}
+			const blockOffset = 22;
+			const popupPadding = 22;
+			const leftBlockWidth = document.querySelector('.bx-messenger-call-floating-screenshare-bottom-left').scrollWidth;
+			const centerBlockWidth = document.querySelector('.bx-messenger-call-floating-screenshare-bottom-center').scrollWidth;
+			const rightBlockWidth = document.querySelector('.bx-messenger-call-floating-screenshare-bottom-right').scrollWidth;
+			const fullWidth = leftBlockWidth + centerBlockWidth + rightBlockWidth + 2 * blockOffset + 2 * popupPadding;
+			if (fullWidth > POPUP_WIDTH) {
+				width = fullWidth;
+			}
+			this.elements.container.style.width = width + "px";
+			this.elements.container.style.height = height + "px";
+			BXDesktopWindow.SetProperty("minClientSize", {
+				Width: width,
+				Height: height
+			});
+			BXDesktopWindow.SetProperty("resizable", false);
+			BXDesktopWindow.SetProperty("closable", false);
+			BXDesktopWindow.SetProperty("title", BX.message('IM_M_CALL_SCREENSHARE_TITLE'));
+			BXDesktopWindow.SetProperty("position", {
+				X: this.screenToUse.x + this.screenToUse.width - width - POPUP_OFFSET_X,
+				Y: this.screenToUse.y + POPUP_OFFSET_Y,
+				Width: width,
+				Height: height,
+				Mode: STP_FRONT
+			});
+		}
+		dispatchEvent(name, params) {
+			let convertedParams = {};
+			for (let i = 0; i < params.length; i++) {
+				convertedParams[i] = params[i];
+			}
+			const mainWindow = opener ? opener : top;
+			mainWindow.BXWindows.forEach(windowItem => {
+				if (windowItem && windowItem.name !== '' && windowItem.BXDesktopWindow && windowItem.BXDesktopWindow.DispatchCustomEvent) {
+					windowItem.BXDesktopWindow.DispatchCustomEvent(name, convertedParams);
+				}
+			});
+			mainWindow.BXDesktopWindow.DispatchCustomEvent(name, convertedParams);
 		}
 	}
 
@@ -135,12 +376,8 @@ this.BX = this.BX || {};
 		return main_core.Extension.getSettings('call.core')?.isConsoleLogsEnabled || localConsoleLogsEnabled;
 	};
 
-	const CallState = {
-		Idle: 'Idle',
-		Proceeding: 'Proceeding',
-		Connected: 'Connected',
-		Finished: 'Finished'
-	};
+	// CallState/Provider/CallType are canonically defined in call.mapping;
+	// re-exported here so call.core's public contract stays unchanged.
 	const UserState = {
 		Idle: 'Idle',
 		Busy: 'Busy',
@@ -157,20 +394,11 @@ this.BX = this.BX || {};
 		RecvOnly: 'recv',
 		SendRecv: 'sendrecv'
 	};
-	const CallType$1 = {
-		Instant: 1,
-		Permanent: 2,
-		Large: 3
-	};
 	const RoomType = {
 		Small: 1,
 		Conference: 2,
 		Large: 3,
 		Personal: 4
-	};
-	const Provider$1 = {
-		Plain: 'Plain',
-		Bitrix: 'Bitrix'
 	};
 	const Direction$1 = {
 		Incoming: 'Incoming',
@@ -199,6 +427,13 @@ this.BX = this.BX || {};
 		SecurityKeyChanged: 'SECURITY_KEY_CHANGED',
 		RoomClosed: 'ROOM_CLOSED',
 		SignalingReconnectCooldown: 'SIGNALING_RECONNECT_COOLDOWN'
+	};
+
+	// Server-side business outcomes. Not connection failures.
+	// Source of truth: call/lib/Controller/Call.php, call/lib/Controller/CallManager.php
+	const BusinessLeaveReason = {
+		AllUsersBusy: 'all_users_busy',
+		UserIsBusy: 'user_is_busy'
 	};
 	const UserMnemonic = {
 		all: 'all',
@@ -249,6 +484,7 @@ this.BX = this.BX || {};
 		onReconnecting: 'onReconnecting',
 		onReconnected: 'onReconnected',
 		onReconnectingFailed: 'onReconnectingFailed',
+		onReconnectSeriesOutcome: 'onReconnectSeriesOutcome',
 		onParticipantReconnecting: 'onParticipantReconnecting',
 		onParticipantReconnected: 'onParticipantReconnected',
 		onJoin: 'onJoin',
@@ -397,6 +633,8 @@ this.BX = this.BX || {};
 		HIGH_PACKET_LOSS_SEND: 'webrtc_high_packet_loss_send',
 		HIGH_PACKET_LOSS_RECEIVE: 'webrtc_high_packet_loss_receive',
 		CPU_ISSUES: 'webrtc_cpu_issues',
+		AUTO_QUALITY_DEGRADED: 'webrtc_auto_quality_degraded',
+		AUTO_QUALITY_IMPROVED: 'webrtc_auto_quality_improved',
 		NETWORK_ISSUES: 'webrtc_network_issues',
 		NETWORK_LATENCY_MS: 'webrtc_network_latency_ms',
 		PEER_CONNECTION_REFUSED: 'webrtc_peer_connection_refused',
@@ -526,7 +764,6 @@ this.BX = this.BX || {};
 	const CALL_ALREADY_FINISHED_EVENT = 'BX.Call.Engine:callAlreadyFinished';
 	let userData = {};
 	let usersInProcess = {};
-	let abortController = null;
 
 	/* User role & room permission */
 	let roomPermissions = {
@@ -991,9 +1228,9 @@ this.BX = this.BX || {};
 	}
 	function getConferenceProvider() {
 		if (isCallServerAllowed()) {
-			return Provider$1.Bitrix;
+			return call_mapping.Provider.Bitrix;
 		}
-		return Provider$1.Plain;
+		return call_mapping.Provider.Plain;
 	}
 	const getRoomType = chatId => {
 		if (isLargeCallEnabled()) {
@@ -1023,7 +1260,7 @@ this.BX = this.BX || {};
 	function getCurrentCall() {
 		for (const engine of _engines) {
 			for (const callId in engine.calls) {
-				if (engine.calls[callId].state === CallState.Connected) {
+				if (engine.calls[callId].state === call_mapping.CallState.Connected) {
 					return engine.calls[callId];
 				}
 			}
@@ -1033,7 +1270,7 @@ this.BX = this.BX || {};
 	function getCurrentBitrixCall() {
 		for (const engine of _engines) {
 			for (const callId in engine.calls) {
-				if (engine.calls[callId].provider === Provider$1.Bitrix) {
+				if (engine.calls[callId].provider === call_mapping.Provider.Bitrix) {
 					return engine.calls[callId];
 				}
 			}
@@ -1215,7 +1452,9 @@ this.BX = this.BX || {};
 		if (main_core.Type.isString(error) && error) {
 			errorCode = error;
 		} else if (main_core.Type.isObject(error) && error instanceof JoinResponseError) {
-			errorCode = error.name;
+			// Codes outside JoinRequestFailedCodes collapse into name 'UnknownError',
+			// while the raw server code (e.g. all_users_busy) survives in error.code.
+			errorCode = error.name === 'UnknownError' && main_core.Type.isStringFilled(error.code) ? error.code : error.name;
 		} else if (main_core.Type.isObject(error) && error.code) {
 			errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
 		}
@@ -1237,25 +1476,87 @@ this.BX = this.BX || {};
 		}
 		return errorMessage;
 	}
-	const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
-		if (!main_core.Type.isPlainObject(callOptions)) {
-			return Promise.reject(new Error('Incorrect type of callOptions'));
-		}
-		if (mustCreate === false && callOptions.callUuid && call_lib_stuckCallFinishTracker.stuckCallFinishTracker.isRecentlyClosed(callOptions.callUuid)) {
-			main_core_events.EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, {
-				callUuid: callOptions.callUuid
-			});
-			const recentlyClosedError = new JoinResponseError('room recently closed', JoinRequestFailedCodes.CanNotCreateRoom);
-			recentlyClosedError.isRoomClosed = true;
-			return Promise.reject(recentlyClosedError);
-		}
+
+	/**
+	 * Offline reclassification gate (STATUS-01): a network FailedRequest reported while the client is
+	 * confirmed offline. navigator is not read here — isOnline is passed in for testability, so the
+	 * boundary stays strictly navigator.onLine === false at the single call site (controller.js).
+	 *
+	 * @param {string} errorCode
+	 * @param {boolean} isOnline
+	 * @returns {boolean}
+	 */
+	function isOfflineJoinFailure(errorCode, isOnline) {
+		return errorCode === JoinRequestFailedCodes.FailedRequest && isOnline === false;
+	}
+
+	// Bounded resilience for the user-initiated /v2/join: a transient network blip
+	// (fetch TypeError or a per-attempt timeout) is retried with a growing backoff.
+	// The reconnect path (getCallConnectionDataById) opts out and stays single-shot.
+	const JOIN_RETRY_MAX_ATTEMPTS = 3;
+	const JOIN_RETRY_BASE_DELAY_MS = 300;
+	const JOIN_RETRY_MAX_DELAY_MS = 2000;
+	const JOIN_REQUEST_TIMEOUT_MS = 10000;
+
+	// Registry of in-flight getCallConnectionData calls. abortGetCallConnectionData()
+	// (called externally without a handle) walks it to cancel every active join. Each
+	// call owns its abortController/externalAborted/backoff-cancel, so a per-attempt
+	// timeout aborts only its own attempt and never a concurrent call's fetch.
+	const activeJoinInvocations = new Set();
+	const createJoinInvocationState = () => {
+		const state = {
+			abortController: null,
+			externalAborted: false,
+			cancelBackoff: null
+		};
+		state.handle = {
+			abort: () => state.abortController?.abort(),
+			markExternalAborted: () => {
+				state.externalAborted = true;
+			},
+			cancelBackoff: () => state.cancelBackoff?.()
+		};
+		return state;
+	};
+	const getJoinRetryDelay = attempt => Math.min(JOIN_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1), JOIN_RETRY_MAX_DELAY_MS);
+	const isTransientJoinFailure = error => error instanceof JoinResponseError && error.code === JoinRequestFailedCodes.FailedRequest;
+	const createJoinAbortError = () => {
+		const error = new Error('Join request aborted');
+		error.name = 'AbortError';
+		// Keep the machine-readable cancel code so a retry aborted out of the loop (external cancel
+		// during backoff) still classifies as AbortedRequest in getCallConnectionErrorCode, not
+		// CLIENT_UNCLASSIFIED — this plain Error skips the fetch-catch JoinResponseError wrapping.
+		error.code = JoinRequestFailedCodes.AbortedRequest;
+		return error;
+	};
+	const waitJoinRetryBackoff = (state, ms) => new Promise(resolve => {
+		const timeoutId = setTimeout(() => {
+			state.cancelBackoff = null;
+			resolve();
+		}, ms);
+		state.cancelBackoff = () => {
+			clearTimeout(timeoutId);
+			state.cancelBackoff = null;
+			resolve();
+		};
+	});
+	const runJoinAttempt = (state, abortController, callOptions, chatId, mustCreate) => {
 		return new Promise(async (resolve, reject) => {
 			try {
-				abortController = new AbortController();
+				// The caller owns the controller so the per-attempt timeout/external abort can bound the
+				// whole attempt (token load included), not just the fetch after the token resolves.
+				state.abortController = abortController;
 				const callBalancerUrl = call_lib_settingsManager.CallSettingsManager.callBalancerUrl;
 				const url = `${callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
 				const userToken = await call_lib_callTokenManager.CallTokenManager.getUserToken(chatId);
-				const isPlainCall = callOptions.provider === Provider$1.Plain;
+
+				// Aborted (timed out or externally) while the token was loading: settle as an abort and
+				// issue no network request, so a late token cannot leak a stray fetch to the balancer.
+				if (abortController.signal.aborted) {
+					reject(createJoinAbortError());
+					return;
+				}
+				const isPlainCall = callOptions.provider === call_mapping.Provider.Plain;
 				const data = JSON.stringify({
 					userToken,
 					isOneToOne: isPlainCall,
@@ -1373,13 +1674,80 @@ this.BX = this.BX || {};
 						reject(e);
 					}
 					reject(error);
-				}).finally(() => {
-					abortController = null;
 				});
 			} catch (error) {
 				reject(error);
 			}
 		});
+	};
+	const getCallConnectionData = async (callOptions, chatId, mustCreate = true, withRetry = false) => {
+		if (!main_core.Type.isPlainObject(callOptions)) {
+			return Promise.reject(new Error('Incorrect type of callOptions'));
+		}
+		if (mustCreate === false && callOptions.callUuid && call_lib_stuckCallFinishTracker.stuckCallFinishTracker.isRecentlyClosed(callOptions.callUuid)) {
+			main_core_events.EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, {
+				callUuid: callOptions.callUuid
+			});
+			const recentlyClosedError = new JoinResponseError('room recently closed', JoinRequestFailedCodes.CanNotCreateRoom);
+			recentlyClosedError.isRoomClosed = true;
+			return Promise.reject(recentlyClosedError);
+		}
+
+		// Per-call state + registry entry so an external abort can reach this call while a
+		// per-attempt timeout stays scoped to its own attempt (no shared controller).
+		const state = createJoinInvocationState();
+		activeJoinInvocations.add(state.handle);
+		try {
+			if (!withRetry) {
+				const abortController = new AbortController();
+				state.abortController = abortController;
+				return await runJoinAttempt(state, abortController, callOptions, chatId, mustCreate);
+			}
+			let lastError = null;
+			for (let attempt = 1; attempt <= JOIN_RETRY_MAX_ATTEMPTS; attempt++) {
+				let timedOut = false;
+				// Fresh controller per attempt; abort() (from the timeout or an external cancel) bounds the
+				// whole attempt via the race below — including a hung getUserToken, not only the fetch.
+				const abortController = new AbortController();
+				state.abortController = abortController;
+				const attemptSettled = new Promise((_, rejectAttempt) => {
+					abortController.signal.addEventListener('abort', () => {
+						rejectAttempt(createJoinAbortError());
+					}, {
+						once: true
+					});
+				});
+				const timeoutId = setTimeout(() => {
+					timedOut = true;
+					abortController.abort();
+				}, JOIN_REQUEST_TIMEOUT_MS);
+				try {
+					return await Promise.race([runJoinAttempt(state, abortController, callOptions, chatId, mustCreate), attemptSettled]);
+				} catch (error) {
+					// External abort (abortGetCallConnectionData) stops the cycle at once, no retry.
+					if (state.externalAborted) {
+						throw createJoinAbortError();
+					}
+					lastError = error;
+					const canRetry = (timedOut || isTransientJoinFailure(error)) && attempt < JOIN_RETRY_MAX_ATTEMPTS;
+					if (!canRetry) {
+						// A self-inflicted per-attempt timeout is an online transport failure (externalAborted
+						// is already handled above): keep it FailedRequest so the outcome is not reclassified
+						// as AbortedRequest outside the navigator.onLine boundary.
+						throw timedOut ? new JoinResponseError(error, JoinRequestFailedCodes.FailedRequest) : error;
+					}
+					await waitJoinRetryBackoff(state, getJoinRetryDelay(attempt));
+					if (state.externalAborted) {
+						throw createJoinAbortError();
+					}
+				} finally {
+					clearTimeout(timeoutId);
+				}
+			}
+			throw lastError;
+		} finally {
+			activeJoinInvocations.delete(state.handle);
+		}
 	};
 	const getCallConnectionDataById = async callUuid => {
 		try {
@@ -1399,7 +1767,13 @@ this.BX = this.BX || {};
 		}
 	};
 	const abortGetCallConnectionData = () => {
-		abortController?.abort();
+		// Abort every in-flight join: preserves the external-cancel contract (called
+		// without a handle) now that state is per-call rather than module-global.
+		activeJoinInvocations.forEach(handle => {
+			handle.markExternalAborted();
+			handle.abort();
+			handle.cancelBackoff();
+		});
 	};
 	function startSelfTest() {
 		const link = BX.Call.Util.getClientSelfTestUrl();
@@ -1449,11 +1823,11 @@ this.BX = this.BX || {};
 	const isPictureInPictureFeatureEnabled = () => {
 		return main_core.Extension.getSettings('call.core')?.isPictureInPictureFeatureEnabled;
 	};
-	const isMetricsEnabled = () => {
-		return main_core.Extension.getSettings('call.core')?.isMetricsEnabled;
+	const isWebPushToTalkEnabled = () => {
+		return main_core.Extension.getSettings('call.core')?.isWebPushToTalkEnabled;
 	};
-	const isMetricsLogsEnabled = () => {
-		return main_core.Extension.getSettings('call.core')?.isMetricsLogsEnabled;
+	const isPushToTalkAvailable = () => {
+		return isDesktop() || isWebPushToTalkEnabled() === true;
 	};
 	const isKibanaLogsEnabled = () => {
 		return main_core.Extension.getSettings('call.core')?.isKibanaLogsEnabled;
@@ -1469,6 +1843,27 @@ this.BX = this.BX || {};
 	};
 	const isCloudRecordLogEnabled = () => {
 		return main_core.Extension.getSettings('call.core')?.isCloudRecordLogEnabled;
+	};
+	const getNqeParams = () => {
+		const callSettings = main_core.Extension.getSettings('call.core')?.call || {};
+		return {
+			autoBalanceEnabled: callSettings.autoBalanceEnabled,
+			nqeDowngradeWindowSec: callSettings.nqeDowngradeWindowSec,
+			nqeUpgradeWindowSec: callSettings.nqeUpgradeWindowSec,
+			nqeWarmupSec: callSettings.nqeWarmupSec,
+			nqeHighDowngradePacketsLostPct: callSettings.nqeHighDowngradePacketsLostPct,
+			nqeHighDowngradeRttMs: callSettings.nqeHighDowngradeRttMs,
+			nqeHighDowngradeJitterMs: callSettings.nqeHighDowngradeJitterMs,
+			nqeMedDowngradePacketsLostPct: callSettings.nqeMedDowngradePacketsLostPct,
+			nqeMedDowngradeRttMs: callSettings.nqeMedDowngradeRttMs,
+			nqeMedDowngradeJitterMs: callSettings.nqeMedDowngradeJitterMs,
+			nqeMedUpgradePacketsLostPct: callSettings.nqeMedUpgradePacketsLostPct,
+			nqeMedUpgradeRttMs: callSettings.nqeMedUpgradeRttMs,
+			nqeMedUpgradeJitterMs: callSettings.nqeMedUpgradeJitterMs,
+			nqeLowUpgradePacketsLostPct: callSettings.nqeLowUpgradePacketsLostPct,
+			nqeLowUpgradeRttMs: callSettings.nqeLowUpgradeRttMs,
+			nqeLowUpgradeJitterMs: callSettings.nqeLowUpgradeJitterMs
+		};
 	};
 	const isCommonRecordStateInactive = state => {
 		return [CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(state);
@@ -1566,9 +1961,6 @@ this.BX = this.BX || {};
 		}
 		return result;
 	}
-	const isVueEnabled = () => {
-		return main_core.Extension.getSettings('call.core')?.isVueEnabled || false;
-	};
 	const getCallInvitePeriod = () => {
 		return main_core.Extension.getSettings('call.core')?.call?.callInvitePeriod ?? 30000;
 	};
@@ -1645,10 +2037,11 @@ this.BX = this.BX || {};
 		getSyncCallInvitePeriod,
 		isStreamQualityFeatureEnabled,
 		getCloudRecordSettings,
+		getNqeParams,
 		isUserControlFeatureEnabled,
 		isPictureInPictureFeatureEnabled,
-		isMetricsEnabled,
-		isMetricsLogsEnabled,
+		isWebPushToTalkEnabled,
+		isPushToTalkAvailable,
 		sendLog,
 		isChatMountInPage,
 		roomPermissions,
@@ -1679,1248 +2072,518 @@ this.BX = this.BX || {};
 		isCloudRecordLogEnabled,
 		getCallConnectionErrorCode,
 		getCallConnectionErrorMessage,
+		isOfflineJoinFailure,
 		isLegacyCall,
 		getCallIdentifier,
 		getClickLinkInterceptor,
 		getDisconnectedUsers,
-		isVueEnabled,
 		getCallInvitePeriod
 	};
 
-	function checkAndEncodeURI(uri) {
-		return decodeURI(uri) === uri ? encodeURI(uri) : uri;
-	}
-	const Events$6 = {
-		onClose: 'onClose',
-		onDestroy: 'onDestroy',
-		onButtonClick: 'onButtonClick'
-	};
-	const InternalEvents = {
-		setHasCamera: 'CallNotification::setHasCamera',
-		contentReady: 'CallNotification::contentReady',
-		onButtonClick: 'CallNotification::onButtonClick'
-	};
-	const FirstDesktopVersionWithChrome = 76;
-	const BroadcastChannelName = 'IncomingNotification';
-	class IncomingNotification extends main_core_events.EventEmitter {
-		static Events = Events$6;
-		constructor(config) {
-			super();
-			this.setEventNamespace('BX.Call.IncomingNotification');
-			this.popup = null;
-			this.window = null;
-			this.callerAvatar = main_core.Type.isStringFilled(config.callerAvatar) ? config.callerAvatar : '';
-			if (Util.isAvatarBlank(this.callerAvatar)) {
-				this.callerAvatar = '';
-			}
-			this.callerName = config.callerName;
-			this.callerType = config.callerType;
-			this.callerColor = config.callerColor;
-			this.video = config.video;
-			this.hasCamera = config.hasCamera === true;
-			this.zIndex = config.zIndex;
-			this.isMessengerOpen = config.isMessengerOpen;
-			this.contentReady = false;
-			this.postponedEvents = [];
-			this.microphoneState = config.microphoneState;
-			this.cameraState = config.cameraState;
-			this.#subscribeEvents(config);
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				this.onButtonClickHandler = this.#onButtonClick.bind(this);
-				this.onContentReadyHandler = this.#onContentReady.bind(this);
-				im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.onButtonClick, this.onButtonClickHandler);
-				im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.contentReady, this.onContentReadyHandler);
-			}
-			const broadcastChannel = new BroadcastChannel(BroadcastChannelName);
-			broadcastChannel.onmessage = event => {
-				if (event.data.desktopWindowIsReady) {
-					this.#showInDesktop();
-				}
-			};
-		}
-		#subscribeEvents(config) {
-			const eventKeys = Object.keys(Events$6);
-			for (const eventName of eventKeys) {
-				if (main_core.Type.isFunction(config[eventName])) {
-					this.subscribe(Events$6[eventName], config[eventName]);
-				}
-			}
-		}
-		#showInDesktop() {
-			if (!this.window) {
-				return;
-			}
+	/**
+	 * Auto-close policy of a call hint: the single owner of the "hide after N ms" timer.
+	 *
+	 * The policy knows nothing about the popup or the DOM - it takes a delay and an expiration
+	 * callback, and exposes control methods. That is what makes it testable without a browser.
+	 *
+	 * Pausing is taken by reason (`hover`, `focus`) and released only when the last reason is gone:
+	 * a popup that is both under the cursor and holding focus must not close when one of the two ends.
+	 * After the last pause is released the countdown starts over rather than resuming the remainder.
+	 *
+	 * Two states are terminal, and both stand for a real scenario:
+	 *  - EXPIRED - after the hint has auto-closed the user still moves the mouse over the place where
+	 *    it used to be; a `hold`/`release` pair there must not fire the callback a second time;
+	 *  - DESTROYED - the owner may call `close()` on an instance that is already gone.
+	 */
 
-			// Workaround to prevent incoming call window from hanging.
-			// Without it, there is a possible scenario, when BXDesktopWindow.ExecuteCommand("close") is executed too early
-			// (if invite window is closed before appearing), which leads to hanging of the window
-			if (this.window.opener.BXIM?.callController && !this.window.opener.BXIM.callController.callNotification) {
-				console.log('Workaround to prevent incoming call window from hanging');
-				this.window.BXDesktopWindow.ExecuteCommand('close');
-				return;
-			}
-			const width = 352;
-			const height = 495;
-			main_core.Dom.append(this.content.render(), this.window.document.body);
-			this.window.BXDesktopWindow?.SetProperty('position', {
-				X: 'STP_CENTER',
-				Y: 'STP_VCENTER',
-				Width: width,
-				Height: height
-			});
-		}
-		show() {
-			console.log('incoming notification : SHOW');
-			const params = {
-				video: this.video,
-				hasCamera: this.hasCamera,
-				callerAvatar: this.callerAvatar,
-				callerName: this.callerName,
-				callerType: this.callerType,
-				callerColor: this.callerColor,
-				microphoneState: this.microphoneState,
-				cameraState: this.cameraState,
-				isMessengerOpen: this.isMessengerOpen
-			};
-			if (im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
-				console.log('incoming notification : ISDESKTOP');
-				if (this.window) {
-					this.window.BXDesktopWindow.ExecuteCommand('show');
-				} else {
-					this.content = new IncomingNotificationContent({
-						...params
-					});
-					const js = `
-					const broadcastChannel = new BroadcastChannel('${BroadcastChannelName}');
-					broadcastChannel.postMessage({ desktopWindowIsReady: true });
-				`;
-					const htmlContent = im_v2_lib_desktopApi.DesktopApi.prepareHtml('', js);
-					this.window = im_v2_lib_desktopApi.DesktopApi.createTopmostWindow(htmlContent);
-				}
-			} else {
-				console.log('incoming notification : ISNOTDESKTOP');
-				this.content = new IncomingNotificationContent({
-					...params,
-					onClose: () => this.emit(Events$6.onClose),
-					onDestroy: () => this.emit(Events$6.onDestroy),
-					onButtonClick: e => this.emit(Events$6.onButtonClick, {
-						...e.data
-					})
-				});
-				this.createPopup(this.content.render());
-				this.popup.show();
-				window.addEventListener('resize', () => {
-					this.onResize();
-				});
-			}
-		}
-		onResize() {
-			if (this.popup) {
-				this.popup.setMaxHeight(document.body.clientHeight);
-			}
-		}
-		createPopup(content) {
-			this.popup = new main_popup.Popup({
-				id: 'bx-messenger-call-notify',
-				bindElement: null,
-				targetContainer: document.body,
-				content,
-				closeIcon: false,
-				noAllPaddings: true,
-				zIndex: this.zIndex,
-				disableScroll: true,
-				maxHeight: document.body.clientHeight,
-				offsetLeft: 0,
-				offsetTop: 0,
-				closeByEsc: false,
-				draggable: {
-					restrict: false
-				},
-				borderRadius: '25px',
-				overlay: {
-					backgroundColor: 'black',
-					opacity: 30
-				},
-				events: {
-					onPopupClose: () => {
-						window.removeEventListener('resize', () => {
-							this.onResize();
-						});
-						this.emit(Events$6.onClose);
-					},
-					onPopupDestroy: () => this.popup = null
-				}
-			});
-		}
-		setHasCamera(hasCamera) {
-			if (this.window) {
-				// desktop; send event to the window
-				if (this.contentReady) {
-					im_v2_lib_desktopApi.DesktopApi.emit(InternalEvents.setHasCamera, [hasCamera]);
-				} else {
-					this.postponedEvents.push({
-						name: InternalEvents.setHasCamera,
-						params: [hasCamera]
-					});
-				}
-			} else if (this.content) {
-				this.content.setHasCamera(hasCamera);
-			}
-		}
-		sendPostponedEvents() {
-			this.postponedEvents.forEach(event => {
-				im_v2_lib_desktopApi.DesktopApi.emit(event.name, event.params);
-			});
-			this.postponedEvents = [];
-		}
-		close() {
-			if (this.popup) {
-				this.popup.close();
-			}
-			if (this.window) {
-				const desktopVersion = window.BXDesktopSystem?.ApiVersion?.();
-				this.window.BXDesktopWindow.ExecuteCommand('hide');
-				if (desktopVersion >= FirstDesktopVersionWithChrome) {
-					this.window.BXDesktopWindow.ExecuteCommand('close');
-					this.window = null;
-				}
-			}
-			this.emit(Events$6.onClose);
-		}
-		destroy() {
-			if (this.popup) {
-				this.popup.destroy();
-				this.popup = null;
-			}
-			if (this.window) {
-				this.window.BXDesktopWindow.ExecuteCommand('close');
-				this.window = null;
-			}
-			if (this.content) {
-				this.content.destroy();
-				this.content = null;
-			}
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.unsubscribe(InternalEvents.onButtonClick, this.onButtonClickHandler);
-				im_v2_lib_desktopApi.DesktopApi.unsubscribe(InternalEvents.contentReady, this.onContentReadyHandler);
-			}
-			this.emit(Events$6.onDestroy);
-			this.unsubscribeAll(Events$6.onButtonClick);
-			this.unsubscribeAll(Events$6.onClick);
-			this.unsubscribeAll(Events$6.onDestroy);
-		}
-		#onButtonClick(event) {
-			this.emit(Events$6.onButtonClick, event);
-		}
-		#onContentReady() {
-			this.contentReady = true;
-			this.sendPostponedEvents();
-		}
-	}
-	class IncomingNotificationContent extends main_core_events.EventEmitter {
-		constructor(config) {
-			super();
-			this.setEventNamespace('BX.Call.IncomingNotificationContent');
-			this.video = Boolean(config.video);
-			this.hasCamera = Boolean(config.hasCamera);
-			this.callerAvatar = config.callerAvatar || '';
-			this.callerName = config.callerName || BX.message('IM_M_CALL_VIDEO_HD');
-			this.callerType = config.callerType || 'chat';
-			this.callerColor = config.callerColor || '';
-			this.microphoneState = config.microphoneState;
-			this.cameraState = config.cameraState;
-			this.isMessengerOpen = config.isMessengerOpen;
-			this.elements = {
-				root: null,
-				avatar: null,
-				buttons: {
-					answerVideo: null
-				}
-			};
-			this.#subscribeEvents(config);
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				this.onHasCameraHandler = this.#onHasCamera.bind(this);
-				im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.setHasCamera, this.onHasCameraHandler);
-				im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(InternalEvents.contentReady, []);
-			}
-		}
-		#subscribeEvents(config) {
-			const eventKeys = Object.keys(Events$6);
-			for (const eventName of eventKeys) {
-				if (main_core.Type.isFunction(config[eventName])) {
-					this.subscribe(Events$6[eventName], config[eventName]);
-				}
-			}
-		}
-		render() {
-			const callerPrefix = BX.message('IM_M_VIDEO_CALL_FROM_MSGVER_1');
-			let avatarClass = '';
-			let avatarImageStyles;
-			let avatarImageText = '';
-			if (this.callerAvatar) {
-				avatarImageStyles = {
-					backgroundImage: `url('${checkAndEncodeURI(this.callerAvatar)}')`,
-					backgroundSize: 'cover'
-				};
-			} else {
-				const callerType = this.callerType === 'private' ? 'user' : this.callerType;
-				avatarClass = `bx-messenger-panel-avatar-${callerType}`;
-				avatarImageStyles = {
-					backgroundColor: this.callerColor || '#525252',
-					backgroundSize: '40px',
-					backgroundPosition: 'center center'
-				};
-				avatarImageText = im_v2_lib_utils.Utils.text.getFirstLetters(this.callerName).toUpperCase();
-			}
-			this.elements.root = main_core.Dom.create('div', {
-				props: {
-					className: `bx-messenger-call-window${im_v2_lib_desktopApi.DesktopApi.isDesktop() ? ' desktop' : ''}`
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: 'bx-messenger-call-window-body'
-					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-top'
-						},
-						children: [main_core.Dom.create('div', {
-							props: {
-								className: 'bx-messenger-call-window-title'
-							},
-							children: [main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-call-overlay-title-caller-prefix'
-								},
-								children: [main_core.Dom.create('div', {
-									props: {
-										className: 'bx-messenger-call-overlay-title-caller-prefix-icon'
-									}
-								}), main_core.Dom.create('div', {
-									props: {
-										className: 'bx-messenger-call-overlay-title-caller-prefix-text'
-									},
-									text: callerPrefix
-								})]
-							}), main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-call-overlay-title-caller'
-								},
-								text: main_core.Text.decode(this.callerName)
-							})]
-						}), main_core.Dom.create('div', {
-							props: {
-								className: 'bx-messenger-call-window-photo bx-messenger-videocall-incoming-call-avatar-pulse'
-							},
-							children: [main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-videocall-incoming-call-pulse-element'
-								}
-							}), main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-videocall-incoming-call-pulse-element'
-								}
-							}), main_core.Dom.create('div', {
-								props: {
-									className: `bx-messenger-call-window-photo-left ${avatarClass}`
-								},
-								children: [this.elements.avatar = main_core.Dom.create('div', {
-									props: {
-										className: 'bx-messenger-call-window-photo-block'
-									},
-									style: avatarImageStyles,
-									text: avatarImageText
-								})]
-							})]
-						})]
-					}), this.elements.windowBottom = main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-bottom'
-						},
-						children: [main_core.Dom.create('div', {
-							props: {
-								className: 'bx-messenger-call-window-buttons'
-							},
-							children: [this.elements.buttonsBlock = main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-call-window-buttons-block'
-								},
-								children: []
-							})]
-						})]
-					})]
-				})]
-			});
-			this.elements.windowBottom.prepend(main_core.Dom.create('div', {
-				props: {
-					className: 'bx-messenger-call-window-settings-buttons-block'
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: 'bx-messenger-call-window-settings-button'
-					},
-					children: [this.elements.buttons.toggleMicrophoneIcon = main_core.Dom.create('div', {
-						props: {
-							className: `bx-messenger-call-window-settings-icon microphone-${this.microphoneState ? 'on' : 'off'}`
-						}
-					}), main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-settings-text microphone'
-						},
-						text: BX.message('IM_M_CALL_BTN_MIC')
-					})],
-					events: {
-						click: this.#onMicrophoneSettingClick.bind(this)
-					}
-				}), main_core.Dom.create('div', {
-					props: {
-						className: `bx-messenger-call-window-settings-button${this.hasCamera ? '' : ' bx-messenger-call-window-button-disabled'}`
-					},
-					children: [this.elements.buttons.toggleCameraIcon = main_core.Dom.create('div', {
-						props: {
-							className: `bx-messenger-call-window-settings-icon camera-${this.cameraState && this.hasCamera ? 'on' : 'off'}`
-						}
-					}), main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-settings-text camera'
-						},
-						text: BX.message('IM_M_CALL_BTN_CAMERA')
-					})],
-					events: {
-						click: this.#onCameraSettingClick.bind(this)
-					}
-				})]
-			}));
-			this.elements.buttonsBlock.append(main_core.Dom.create('div', {
-				props: {
-					className: 'bx-messenger-call-window-button-container'
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: 'bx-messenger-call-window-button bx-messenger-call-window-button-danger'
-					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down'
-						}
-					})]
-				})],
-				events: {
-					click: this.#onDeclineButtonClick.bind(this)
-				}
-			}), this.elements.buttons.answer = main_core.Dom.create('div', {
-				props: {
-					className: 'bx-messenger-call-window-button-container'
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: `bx-messenger-call-window-button${this.withBlur ? ' with-blur' : ''}`
-					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up'
-						}
-					})]
-				})],
-				events: {
-					click: this.#onAnswerButtonClick.bind(this)
-				}
-			}));
-			return this.elements.root;
-		}
-		setHasCamera(hasCamera) {
-			this.hasCamera = Boolean(hasCamera);
-		}
-		#onHasCamera() {}
-		#onMicrophoneSettingClick() {
-			this.microphoneState = !this.microphoneState;
-			if (this.microphoneState) {
-				this.elements.buttons.toggleMicrophoneIcon.classList.add('microphone-on');
-				this.elements.buttons.toggleMicrophoneIcon.classList.remove('microphone-off');
-			} else {
-				this.elements.buttons.toggleMicrophoneIcon.classList.add('microphone-off');
-				this.elements.buttons.toggleMicrophoneIcon.classList.remove('microphone-on');
-			}
-		}
-		#onCameraSettingClick() {
-			this.cameraState = !this.cameraState;
-			if (this.cameraState) {
-				this.elements.buttons.toggleCameraIcon.classList.add('camera-on');
-				this.elements.buttons.toggleCameraIcon.classList.remove('camera-off');
-			} else {
-				this.elements.buttons.toggleCameraIcon.classList.add('camera-off');
-				this.elements.buttons.toggleCameraIcon.classList.remove('camera-on');
-			}
-		}
-		#onAnswerButtonClick() {
-			if (!this.hasCamera) {
-				this.cameraState = false;
-			}
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.closeWindow();
-				im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(InternalEvents.onButtonClick, [{
-					button: 'answer',
-					mediaParams: {
-						audio: this.microphoneState,
-						video: this.cameraState
-					}
-				}]);
-			} else {
-				this.emit(Events$6.onButtonClick, {
-					button: 'answer',
-					mediaParams: {
-						audio: this.microphoneState,
-						video: this.cameraState
-					}
-				});
-			}
-		}
-		#onAnswerWithVideoButtonClick() {
-			if (!this.hasCamera) {
-				return;
-			}
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.closeWindow();
-				im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(InternalEvents.onButtonClick, [{
-					button: 'answer',
-					mediaParams: {
-						audio: true,
-						video: true
-					}
-				}]);
-			} else {
-				this.emit(Events$6.onButtonClick, {
-					button: 'answer',
-					mediaParams: {
-						audio: true,
-						video: true
-					}
-				});
-			}
-		}
-		#onDeclineButtonClick() {
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.closeWindow();
-				im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(InternalEvents.onButtonClick, [{
-					button: 'decline'
-				}]);
-			} else {
-				this.emit(Events$6.onButtonClick, {
-					button: 'decline'
-				});
-			}
-		}
-		destroy() {
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.unsubscribe(InternalEvents.setHasCamera, this.onHasCameraHandler);
-			}
-			this.unsubscribeAll(Events$6.onButtonClick);
-			this.unsubscribeAll(Events$6.onClick);
-			this.unsubscribeAll(Events$6.onDestroy);
-		}
-	}
-
-	const Events$5 = {
-		onButtonClick: 'ConferenceNotification::onButtonClick'
-	};
+	const State = Object.freeze({
+		Idle: 'IDLE',
+		Running: 'RUNNING',
+		Paused: 'PAUSED',
+		Expired: 'EXPIRED',
+		Destroyed: 'DESTROYED'
+	});
 
 	/**
-	 *
-	 * @param {Object} config
-	 * @param {string} config.callerName
-	 * @param {string} config.callerAvatar
-	 * @param {number} config.zIndex
-	 * @param {function} config.onClose
-	 * @param {function} config.onDestroy
-	 * @param {function} config.onButtonClick
-	 * @constructor
+	 * Reasons a countdown can be held. Names are normative.
+	 * @readonly
 	 */
-	class ConferenceNotifications {
-		constructor(config) {
-			this.popup = null;
-			this.window = null;
-			this.callerAvatar = main_core.Type.isStringFilled(config.callerAvatar) ? config.callerAvatar : '';
-			this.zIndex = config.zIndex;
-			if (Util.isAvatarBlank(this.callerAvatar)) {
-				this.callerAvatar = '';
-			}
-			this.callerName = config.callerName;
-			this.callerColor = config.callerColor;
-			this.callbacks = {
-				onClose: main_core.Type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
-				onDestroy: main_core.Type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing,
-				onButtonClick: main_core.Type.isFunction(config.onButtonClick) ? config.onButtonClick : BX.DoNothing
-			};
-			this._onContentButtonClickHandler = this._onContentButtonClick.bind(this);
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.subscribe(Events$5.onButtonClick, this._onContentButtonClickHandler);
-			}
+	const AutoClosePauseReason = Object.freeze({
+		Hover: 'hover',
+		Focus: 'focus'
+	});
+	class AutoClosePolicy {
+		#delayMs;
+		#onExpire;
+		#state = State.Idle;
+		#holds = new Set();
+		#timer = null;
+
+		/**
+		 * @param {number} delayMs - countdown length; zero or less means there is no auto-close at all
+		 * @param {Function} onExpire - called once the countdown runs out
+		 */
+		constructor(delayMs, onExpire) {
+			this.#delayMs = delayMs;
+			this.#onExpire = onExpire;
 		}
-		show() {
-			if (im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
-				const params = {
-					callerAvatar: this.callerAvatar,
-					callerName: this.callerName,
-					callerColor: this.callerColor
-				};
-				if (this.window) {
-					this.window.BXDesktopWindow.ExecuteCommand('show');
-				} else {
-					const js = `
-					window.conferenceNotification = new BX.Call.NotificationConferenceContent(${JSON.stringify(params)});
-					window.conferenceNotification.showInDesktop();
-				`;
-					const html = im_v2_lib_desktopApi.DesktopApi.prepareHtml('', js);
-					this.window = im_v2_lib_desktopApi.DesktopApi.createTopmostWindow(html);
-				}
-			} else {
-				this.content = new NotificationConferenceContent({
-					callerAvatar: this.callerAvatar,
-					callerName: this.callerName,
-					callerColor: this.callerColor,
-					onClose: this.callbacks.onClose,
-					onDestroy: this.callbacks.onDestroy,
-					onButtonClick: this.callbacks.onButtonClick
-				});
-				this.createPopup(this.content.render());
-				this.popup.show();
-				window.addEventListener('resize', () => {
-					this.onResize();
-				});
+
+		/**
+		 * Starts the countdown from the beginning. Showing a hint the cursor already rests on
+		 * does not start it: taken pauses are respected.
+		 */
+		start() {
+			if (this.#state === State.Destroyed) {
+				return;
 			}
-		}
-		onResize() {
-			if (this.popup) {
-				this.popup.setMaxHeight(document.body.clientHeight);
+			this.#clearTimer();
+			if (this.#delayMs <= 0) {
+				this.#state = State.Idle;
+				return;
 			}
-		}
-		createPopup(content) {
-			this.popup = new main_popup.Popup({
-				id: 'bx-messenger-call-notify',
-				targetContainer: document.body,
-				content,
-				closeIcon: false,
-				noAllPaddings: true,
-				zIndex: this.zIndex,
-				offsetLeft: 0,
-				offsetTop: 0,
-				closeByEsc: false,
-				draggable: {
-					restrict: false
-				},
-				borderRadius: '25px',
-				disableScroll: true,
-				maxHeight: document.body.clientHeight,
-				overlay: {
-					backgroundColor: 'black',
-					opacity: 30
-				},
-				events: {
-					onPopupClose: function () {
-						window.removeEventListener('resize', () => {
-							this.onResize();
-						});
-						this.callbacks.onClose();
-					}.bind(this),
-					onPopupDestroy: function () {
-						this.popup = null;
-					}.bind(this)
-				}
-			});
-		}
-		close() {
-			if (this.popup) {
-				this.popup.close();
+			if (this.#holds.size > 0) {
+				this.#state = State.Paused;
+				return;
 			}
-			if (this.window) {
-				this.window.BXDesktopWindow.ExecuteCommand('hide');
-			}
-			this.callbacks.onClose();
+			this.#arm();
 		}
+
+		/**
+		 * @param {string} reason - one of AutoClosePauseReason
+		 */
+		hold(reason) {
+			if (this.#state === State.Destroyed) {
+				return;
+			}
+			this.#holds.add(reason);
+			if (this.#state !== State.Running) {
+				return;
+			}
+			this.#clearTimer();
+			this.#state = State.Paused;
+		}
+
+		/**
+		 * @param {string} reason - one of AutoClosePauseReason
+		 */
+		release(reason) {
+			if (!this.#holds.delete(reason)) {
+				return;
+			}
+
+			// neither IDLE nor EXPIRED resumes the countdown
+			if (this.#holds.size > 0 || this.#state !== State.Paused) {
+				return;
+			}
+			this.#arm();
+		}
+
+		/**
+		 * Drops the timer unconditionally, including from a paused countdown. Terminal:
+		 * start() does not bring the policy back to life afterwards.
+		 */
 		destroy() {
-			if (this.popup) {
-				this.popup.destroy();
-				this.popup = null;
-			}
-			if (this.window) {
-				this.window.BXDesktopWindow.ExecuteCommand('close');
-				this.window = null;
-			}
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$5.onButtonClick, this._onContentButtonClickHandler);
-			}
-			this.callbacks.onDestroy();
+			this.#clearTimer();
+			this.#holds.clear();
+			this.#state = State.Destroyed;
 		}
-		_onContentButtonClick(e) {
-			this.callbacks.onButtonClick(e);
+		#arm() {
+			this.#state = State.Running;
+			this.#timer = setTimeout(() => this.#expire(), this.#delayMs);
 		}
-	}
-	class NotificationConferenceContent {
-		constructor(config) {
-			this.callerAvatar = config.callerAvatar || '';
-			this.callerName = config.callerName || BX.message('IM_CL_USER');
-			this.callerColor = config.callerColor || '#525252';
-			this.elements = {
-				root: null,
-				avatar: null
-			};
-			this.callbacks = {
-				onClose: main_core.Type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
-				onDestroy: main_core.Type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing,
-				onButtonClick: main_core.Type.isFunction(config.onButtonClick) ? config.onButtonClick : BX.DoNothing
-			};
+		#expire() {
+			this.#timer = null;
+			this.#state = State.Expired;
+			this.#onExpire();
 		}
-		render() {
-			let avatarImageStyles;
-			let avatarImageText = '';
-			if (this.callerAvatar) {
-				avatarImageStyles = {
-					backgroundImage: `url('${this.callerAvatar}')`,
-					backgroundSize: 'cover'
-				};
-			} else {
-				avatarImageStyles = {
-					backgroundImage: 'none',
-					backgroundColor: this.callerColor,
-					backgroundSize: '80px',
-					backgroundRepeat: 'no-repeat',
-					backgroundPosition: 'center center'
-				};
-				avatarImageText = im_v2_lib_utils.Utils.text.getFirstLetters(this.callerName).toUpperCase();
-			}
-			this.elements.root = main_core.Dom.create('div', {
-				props: {
-					className: `bx-messenger-call-window${im_v2_lib_desktopApi.DesktopApi.isDesktop() ? ' desktop' : ''}`
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: 'bx-messenger-call-window-body'
-					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-top center'
-						},
-						children: [main_core.Dom.create('div', {
-							props: {
-								className: 'bx-messenger-call-window-title'
-							},
-							children: [main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-call-overlay-title-caller-prefix'
-								},
-								children: [main_core.Dom.create('div', {
-									props: {
-										className: 'bx-messenger-call-overlay-title-caller-prefix-icon'
-									}
-								}), main_core.Dom.create('div', {
-									props: {
-										className: 'bx-messenger-call-overlay-title-caller-prefix-text'
-									},
-									text: BX.message('IM_M_VIDEO_CALL_FROM_MSGVER_1')
-								})]
-							}), main_core.Dom.create('div', {
-								text: main_core.Text.encode(this.callerName),
-								props: {
-									className: 'bx-messenger-call-overlay-title-caller'
-								}
-							})]
-						}), main_core.Dom.create('div', {
-							props: {
-								className: 'bx-messenger-call-window-photo bx-messenger-videocall-incoming-call-avatar-pulse'
-							},
-							children: [main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-videocall-incoming-call-pulse-element'
-								}
-							}), main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-videocall-incoming-call-pulse-element'
-								}
-							}), main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-call-window-photo-left'
-								},
-								children: [this.elements.avatar = main_core.Dom.create('div', {
-									props: {
-										className: 'bx-messenger-call-window-photo-block'
-									},
-									style: avatarImageStyles,
-									text: avatarImageText
-								})]
-							})]
-						})]
-					}), main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-bottom'
-						},
-						children: [main_core.Dom.create('div', {
-							props: {
-								className: 'bx-messenger-call-window-buttons'
-							},
-							children: [this.elements.buttonsBlock = main_core.Dom.create('div', {
-								props: {
-									className: 'bx-messenger-call-window-buttons-block'
-								},
-								children: []
-							})]
-						})]
-					})]
-				})]
-			});
-			this.elements.buttonsBlock.append(main_core.Dom.create('div', {
-				props: {
-					className: 'bx-messenger-call-window-button-container'
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: 'bx-messenger-call-window-button bx-messenger-call-window-button-danger'
-					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down'
-						}
-					})]
-				})],
-				events: {
-					click: this._onSkipConferenceButtonClick.bind(this)
-				}
-			}), main_core.Dom.create('div', {
-				props: {
-					className: 'bx-messenger-call-window-button-container'
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: `bx-messenger-call-window-button${this.withBlur ? ' with-blur' : ''}`
-					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up'
-						}
-					})]
-				})],
-				events: {
-					click: this._onAnswerConferenceButtonClick.bind(this)
-				}
-			}));
-			return this.elements.root;
-		}
-		showInDesktop() {
-			const width = 352;
-			const height = 495;
-			this.render();
-			document.body.appendChild(this.elements.root);
-			im_v2_lib_desktopApi.DesktopApi.setWindowPosition({
-				x: STP_CENTER,
-				y: STP_VCENTER,
-				width,
-				height
-			});
-		}
-		_onAnswerConferenceButtonClick(e) {
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.closeWindow();
-				im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(Events$5.onButtonClick, [{
-					button: 'answerConference'
-				}]);
-			} else {
-				this.callbacks.onButtonClick({
-					button: 'answerConference'
-				});
-			}
-		}
-		_onSkipConferenceButtonClick(e) {
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				im_v2_lib_desktopApi.DesktopApi.closeWindow();
-				im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(Events$5.onButtonClick, [{
-					button: 'skipConference'
-				}]);
-			} else {
-				this.callbacks.onButtonClick({
-					button: 'skipConference'
-				});
+		#clearTimer() {
+			if (this.#timer !== null) {
+				clearTimeout(this.#timer);
+				this.#timer = null;
 			}
 		}
 	}
 
-	const Events$4 = {
-		onBackToCallClick: "FloatingScreenshare::onBackToCallClick",
-		onStopSharingClick: "FloatingScreenshare::onStopSharingClick",
-		onChangeScreenClick: "FloatingScreenshare::onChangeScreenClick"
-	};
-	const POPUP_WIDTH = 291;
-	const POPUP_HEIGHT = 81;
-	const POPUP_OFFSET_X = 80;
-	const POPUP_OFFSET_Y = 80;
+	const SpaceHotkeyPhrase = 'IM_CALL_MIC_MUTED_WHILE_TALKING_HOTKEY';
+	const FoldedCallHotkeyPhrase = 'IM_CALL_MIC_MUTED_WHILE_TALKING_FOLDED_CALL_HOTKEY';
+
+	// U+2318 is the Command key
+	const MacHotkey = 'Shift + ⌘ + A';
+	const WindowsHotkey = 'Ctrl + Shift + A';
+	const HotkeyClassName = 'bx-call-view-popup-call-hint-text-hotkey';
+	const HotkeyTestId = 'call-hint-hotkey';
+	const BlockTag = /<\/?(?:br|div|li|p)\b[^>]*>/gi;
+	const AnyTag = /<[^>]*>/g;
 
 	/**
+	 * Both representations of one hint message, built in a single pass from the same source -
+	 * that is what makes the shown and the announced text impossible to diverge.
 	 *
-	 * @param {object} config
-	 * @constructor
+	 * @typedef {object} HintMessage
+	 * @property {string} html - marked-up representation, goes into the popup content
+	 * @property {string} text - flat text, goes to LiveAnnouncer.announce; never used as an accessible name
 	 */
-	class FloatingScreenShare {
-		constructor(config) {
-			if (typeof config !== "object") {
-				config = {};
-			}
-			this.darkMode = config.darkMode || false;
-			this.window = null;
-			this.sharedWindowX = null;
-			this.sharedWindowY = null;
-			this.sharedWindowHeight = null;
-			this.sharedWindowWidth = null;
-			this.title = '';
-			this.app = '';
-			this.screens = [];
-			this.screenToUse = null;
-			this.callbacks = {
-				onBackToCallClick: main_core.Type.isFunction(config.onBackToCallClick) ? config.onBackToCallClick : BX.DoNothing,
-				onStopSharingClick: main_core.Type.isFunction(config.onStopSharingClick) ? config.onStopSharingClick : BX.DoNothing,
-				onChangeScreenClick: main_core.Type.isFunction(config.onChangeScreenClick) ? config.onChangeScreenClick : BX.DoNothing
+
+	/**
+	 * @typedef {object} HintMessageOptions
+	 * @property {string} title - message body; may arrive as ready-made markup
+	 * @property {boolean} isDesktop - desktop application, the only place the letter shortcut is bound
+	 * @property {boolean} isPushToTalkAvailable - hold-to-talk works here, so the space line makes sense
+	 * @property {boolean} isMac - macOS keyboard layout, passed in rather than read from the browser
+	 * @property {boolean} callFolded - call window is folded, so the hotkey is the one that unfolds it
+	 * @property {boolean} showSpaceHint - whether the hotkey hint is needed at all
+	 * @property {string} buttonsLayout - 'right' | 'bottom'
+	 */
+
+	/**
+	 * Builds the hint message. Pure: no DOM, no popup, no global state.
+	 *
+	 * @param {HintMessageOptions} options
+	 * @return {HintMessage}
+	 */
+	function buildHintMessage(options = {}) {
+		const {
+			title = '',
+			isDesktop = false,
+			isPushToTalkAvailable = false,
+			isMac = false,
+			callFolded = false,
+			showSpaceHint = false,
+			buttonsLayout = 'right'
+		} = options;
+		const hotkeyMessage = showSpaceHint ? resolveHotkeyMessage({
+			isDesktop,
+			isPushToTalkAvailable,
+			isMac,
+			callFolded
+		}) : '';
+		if (hotkeyMessage === '') {
+			return {
+				html: title,
+				text: toPlainText$1(title)
 			};
-			this._onBackToCallClickHandler = this._onBackToCallClick.bind(this);
-			this._onStopSharingClickHandler = this._onStopSharingClick.bind(this);
-			this._onChangeScreenClickHandler = this._onChangeScreenClick.bind(this);
-			this.bindEventHandlers();
 		}
-		bindEventHandlers() {
-			im_v2_lib_desktopApi.DesktopApi.subscribe(Events$4.onBackToCallClick, this._onBackToCallClickHandler);
-			im_v2_lib_desktopApi.DesktopApi.subscribe(Events$4.onStopSharingClick, this._onStopSharingClickHandler);
-			im_v2_lib_desktopApi.DesktopApi.subscribe(Events$4.onChangeScreenClick, this._onChangeScreenClickHandler);
-		}
-		saveExistingScreens() {
-			return new Promise((resolve, reject) => {
-				if (this.screens.length > 0) {
-					return resolve();
-				}
-				BXDesktopSystem.ListScreenMedia(result => {
-					result.forEach(item => {
-						if (item.id.slice(0, 6) === 'screen') {
-							this.screens.push({
-								id: item.id,
-								x: item.x,
-								y: item.y,
-								width: item.width,
-								height: item.height
-							});
-						}
-					});
-					return resolve();
-				});
-			});
-		}
-		_onBackToCallClick() {
-			this.callbacks.onBackToCallClick();
-		}
-		_onStopSharingClick() {
-			this.close();
-			this.callbacks.onStopSharingClick();
-		}
-		_onChangeScreenClick() {
-			this.callbacks.onChangeScreenClick();
-		}
-		setSharingData(data) {
-			return this.saveExistingScreens().then(() => {
-				this.sharedWindowX = data.x + 10;
-				this.sharedWindowY = data.y + 10;
-				this.sharedWindowWidth = data.width;
-				this.sharedWindowHeight = data.height;
-				this.title = data.title;
-				this.app = data.app;
-				for (let i = 0; i < this.screens.length; i++) {
-					if (this.sharedWindowX >= this.screens[i].x && this.sharedWindowX <= this.screens[i].x + this.screens[i].width && this.sharedWindowY >= this.screens[i].y && this.sharedWindowY <= this.screens[i].y + this.screens[i].height) {
-						this.screenToUse = this.screens[i];
-						break;
-					}
-				}
-				if (!this.screenToUse && this.screens.length > 0) {
-					this.screenToUse = this.screens[0];
-				}
-			}).catch(error => {
-				console.log('save existing screens error', error);
-			});
-		}
-		show() {
-			if (!im_v2_lib_desktopApi.DesktopApi.isDesktop() || im_v2_lib_desktopApi.DesktopApi.getApiVersion() > 74) {
-				return;
-			}
-			if (this.window) {
-				this.window.BXDesktopWindow.ExecuteCommand("show");
-			} else {
-				var params = {
-					title: this.title,
-					app: this.app,
-					sharedWindowX: this.sharedWindowX,
-					sharedWindowY: this.sharedWindowY,
-					sharedWindowWidth: this.sharedWindowWidth,
-					sharedWindowHeight: this.sharedWindowHeight,
-					screenToUse: this.screenToUse,
-					darkMode: this.darkMode
-				};
-				const js = `window.FSSC = new BX.Call.FloatingScreenShareContent(${JSON.stringify(params)});`;
-				const htmlContent = im_v2_lib_desktopApi.DesktopApi.prepareHtml('', js);
-				this.window = im_v2_lib_desktopApi.DesktopApi.createTopmostWindow(htmlContent);
-			}
-		}
-		hide() {
-			if (!this.window || !this.window.document) {
-				return false;
-			}
-			this.window.BXDesktopWindow.ExecuteCommand("hide");
-		}
-		close() {
-			if (!this.window || !this.window.document) {
-				return false;
-			}
-			this.window.BXDesktopWindow.ExecuteCommand("close");
-			this.window = null;
-			this.visible = false;
-		}
-		destroy() {
-			if (this.window) {
-				im_v2_lib_desktopApi.DesktopApi.closeWindow();
-				this.window = null;
-			}
-			im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$4.onBackToCallClick, this._onBackToCallClickHandler);
-			im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$4.onStopSharingClick, this._onStopSharingClickHandler);
-			im_v2_lib_desktopApi.DesktopApi.unsubscribe(Events$4.onChangeScreenClick, this._onChangeScreenClickHandler);
-		}
-	}
-	class FloatingScreenShareContent {
-		constructor(config) {
-			this.title = config.title || '';
-			this.app = config.app || '';
-			this.sharedWindowX = config.sharedWindowX || 0;
-			this.sharedWindowY = config.sharedWindowY || 0;
-			this.sharedWindowHeight = config.sharedWindowHeight || 0;
-			this.sharedWindowWidth = config.sharedWindowWidth || 0;
-			this.screenToUse = config.screenToUse || null;
-			this.darkMode = config.darkMode || false;
-			this.elements = {
-				container: null
-			};
-			this.render();
-			this.adjustWindow(POPUP_WIDTH, POPUP_HEIGHT);
-		}
-		render() {
-			const title = this.app ? this.app + ' - ' + this.title : this.title;
-			this.elements.container = main_core.Dom.create("div", {
-				props: {
-					className: 'bx-messenger-call-floating-screenshare-wrap' + (this.darkMode ? ' dark-mode' : '')
-				},
-				children: [main_core.Dom.create("div", {
-					props: {
-						className: 'bx-messenger-call-floating-screenshare-top'
-					},
-					children: [main_core.Dom.create("div", {
-						props: {
-							className: 'bx-messenger-call-floating-screenshare-top-icon'
-						}
-					}), main_core.Dom.create("div", {
-						props: {
-							className: 'bx-messenger-call-floating-screenshare-top-text',
-							title: title
-						},
-						text: title
-					})]
-				}), main_core.Dom.create("div", {
-					props: {
-						className: 'bx-messenger-call-floating-screenshare-bottom'
-					},
-					children: [main_core.Dom.create("div", {
-						props: {
-							className: 'bx-messenger-call-floating-screenshare-bottom-left'
-						},
-						children: [main_core.Dom.create("div", {
-							props: {
-								className: 'bx-messenger-call-floating-screenshare-back-icon'
-							}
-						}), main_core.Dom.create("div", {
-							props: {
-								className: 'bx-messenger-call-floating-screenshare-back-text'
-							},
-							text: BX.message('IM_M_CALL_SCREENSHARE_BACK_TO_CALL')
-						})],
-						events: {
-							click: this.onBackToCallClick.bind(this)
-						}
-					}), main_core.Dom.create("div", {
-						props: {
-							className: 'bx-messenger-call-floating-screenshare-bottom-center'
-						},
-						children: [main_core.Dom.create("div", {
-							props: {
-								className: 'bx-messenger-call-floating-screenshare-change-screen-icon'
-							}
-						}), main_core.Dom.create("div", {
-							props: {
-								className: 'bx-messenger-call-floating-screenshare-change-screen-text'
-							},
-							text: BX.message('IM_M_CALL_SCREENSHARE_CHANGE_SCREEN')
-						})],
-						events: {
-							click: this.onChangeScreenClick.bind(this)
-						}
-					}), main_core.Dom.create("div", {
-						props: {
-							className: 'bx-messenger-call-floating-screenshare-bottom-right'
-						},
-						children: [main_core.Dom.create("div", {
-							props: {
-								className: 'bx-messenger-call-floating-screenshare-stop-icon'
-							}
-						}), main_core.Dom.create("div", {
-							props: {
-								className: 'bx-messenger-call-floating-screenshare-stop-text'
-							},
-							text: BX.message('IM_M_CALL_SCREENSHARE_STOP')
-						})],
-						events: {
-							click: this.onStopSharingClick.bind(this)
-						}
-					})]
-				})]
-			});
-			document.body.appendChild(this.elements.container);
-			document.body.classList.add('bx-messenger-call-floating-screenshare');
-		}
-		onBackToCallClick() {
-			this.dispatchEvent(Events$4.onBackToCallClick, []);
-		}
-		onChangeScreenClick() {
-			this.dispatchEvent(Events$4.onChangeScreenClick, []);
-		}
-		onStopSharingClick() {
-			this.dispatchEvent(Events$4.onStopSharingClick, []);
-		}
-		adjustWindow(width, height) {
-			if (!this.screenToUse) {
-				return;
-			}
-			const blockOffset = 22;
-			const popupPadding = 22;
-			const leftBlockWidth = document.querySelector('.bx-messenger-call-floating-screenshare-bottom-left').scrollWidth;
-			const centerBlockWidth = document.querySelector('.bx-messenger-call-floating-screenshare-bottom-center').scrollWidth;
-			const rightBlockWidth = document.querySelector('.bx-messenger-call-floating-screenshare-bottom-right').scrollWidth;
-			const fullWidth = leftBlockWidth + centerBlockWidth + rightBlockWidth + 2 * blockOffset + 2 * popupPadding;
-			if (fullWidth > POPUP_WIDTH) {
-				width = fullWidth;
-			}
-			this.elements.container.style.width = width + "px";
-			this.elements.container.style.height = height + "px";
-			BXDesktopWindow.SetProperty("minClientSize", {
-				Width: width,
-				Height: height
-			});
-			BXDesktopWindow.SetProperty("resizable", false);
-			BXDesktopWindow.SetProperty("closable", false);
-			BXDesktopWindow.SetProperty("title", BX.message('IM_M_CALL_SCREENSHARE_TITLE'));
-			BXDesktopWindow.SetProperty("position", {
-				X: this.screenToUse.x + this.screenToUse.width - width - POPUP_OFFSET_X,
-				Y: this.screenToUse.y + POPUP_OFFSET_Y,
-				Width: width,
-				Height: height,
-				Mode: STP_FRONT
-			});
-		}
-		dispatchEvent(name, params) {
-			let convertedParams = {};
-			for (let i = 0; i < params.length; i++) {
-				convertedParams[i] = params[i];
-			}
-			const mainWindow = opener ? opener : top;
-			mainWindow.BXWindows.forEach(windowItem => {
-				if (windowItem && windowItem.name !== '' && windowItem.BXDesktopWindow && windowItem.BXDesktopWindow.DispatchCustomEvent) {
-					windowItem.BXDesktopWindow.DispatchCustomEvent(name, convertedParams);
-				}
-			});
-			mainWindow.BXDesktopWindow.DispatchCustomEvent(name, convertedParams);
-		}
+		const lineBreak = buttonsLayout === 'bottom' ? '' : '<br>';
+		return {
+			html: `${title}${lineBreak}<span class="${HotkeyClassName}" data-testid="${HotkeyTestId}">` + `${hotkeyMessage}</span>`,
+			text: [toPlainText$1(title), toPlainText$1(hotkeyMessage)].filter(Boolean).join(' ')
+		};
 	}
 
+	/**
+	 * Two lines, two conditions. Holding space works wherever the hold-to-talk mode is available, while
+	 * the letter shortcut that unfolds the window is bound in the desktop application alone - so in the
+	 * web a folded window says nothing at all.
+	 *
+	 * @param {object} params
+	 * @param {boolean} params.isDesktop
+	 * @param {boolean} params.isPushToTalkAvailable
+	 * @param {boolean} params.isMac
+	 * @param {boolean} params.callFolded
+	 * @return {string} the phrase, or an empty string when neither line applies
+	 */
+	function resolveHotkeyMessage({
+		isDesktop,
+		isPushToTalkAvailable,
+		isMac,
+		callFolded
+	}) {
+		if (callFolded) {
+			return isDesktop ? main_core.Loc.getMessage(FoldedCallHotkeyPhrase, {
+				'#HOTKEY#': isMac ? MacHotkey : WindowsHotkey
+			}) : '';
+		}
+		return isPushToTalkAvailable ? main_core.Loc.getMessage(SpaceHotkeyPhrase) : '';
+	}
+
+	/**
+	 * Part of the input arrives as ready-made markup and cannot be built otherwise: the title is
+	 * assembled with <p> by the notification service, and the hotkey phrase carries <b> in the
+	 * localization source itself. Block tags turn into a space so that sentences do not glue together;
+	 * entities are decoded only after the tags are gone, so encoded text is never taken for markup.
+	 *
+	 * @param {string} value
+	 * @return {string}
+	 */
+	function toPlainText$1(value) {
+		if (!main_core.Type.isStringFilled(value)) {
+			return '';
+		}
+		return main_core.Text.decode(value.replaceAll(BlockTag, ' ').replaceAll(AnyTag, '')).replaceAll(/\s+/g, ' ').trim();
+	}
+
+	const doNothing$1 = () => {};
+	const HintBackground = '#00428F';
+	const HintBorderRadius = '27px';
+	const Politeness = Object.freeze({
+		Polite: 'polite'
+	});
+	const HandRaiseIconClassName = 'bx-call-view-popup-call-hint-hand-raise-icon';
+	const FocusableAnchorSelector = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+	const HiddenFromAssistiveSelector = '[aria-hidden="true"]';
+
+	/**
+	 * Scenario identifiers. The call site names its case with one of these and passes no accessibility
+	 * parameters at all: role, focus trap, Escape, auto-close base and accessible name come from the
+	 * factory.
+	 * @readonly
+	 */
+	const CallHintScenario = Object.freeze({
+		MicMuted: 'mic-muted',
+		AutoMicMute: 'auto-mic-mute',
+		FloorRequest: 'floor-request',
+		RoomJoined: 'room-joined',
+		MicTakenFrom: 'mic-taken-from',
+		MicTakenBy: 'mic-taken-by'
+	});
+	const Kind = Object.freeze({
+		Notification: 'notification',
+		Dialog: 'dialog'
+	});
+
+	// the role follows the kind of hint; it does not depend on the scenario
+	const KindTraits = Object.freeze({
+		[Kind.Notification]: {
+			role: 'group'
+		},
+		[Kind.Dialog]: {
+			role: 'dialog'
+		}
+	});
+	const NotificationDelay = 10000;
+	const FloorRequestDelay = 30 * 60 * 1000;
+	const NoAutoClose = 0;
+
+	/**
+	 * Accessible name, auto-close base and announcement politeness per scenario.
+	 *
+	 * Every hint announces politely. Nothing the call window announces interrupts the screen reader:
+	 * "call ended" and "connection lost" do not reach this live region at all.
+	 */
+	const ScenarioTraits = Object.freeze({
+		[CallHintScenario.MicMuted]: {
+			ariaLabelPhrase: 'CALL_HINT_ARIA_MIC',
+			autoCloseDelay: NotificationDelay,
+			politeness: Politeness.Polite
+		},
+		[CallHintScenario.AutoMicMute]: {
+			ariaLabelPhrase: 'CALL_HINT_ARIA_MIC',
+			autoCloseDelay: NotificationDelay,
+			politeness: Politeness.Polite
+		},
+		[CallHintScenario.FloorRequest]: {
+			ariaLabelPhrase: 'CALL_HINT_ARIA_FLOOR_REQUEST',
+			autoCloseDelay: FloorRequestDelay,
+			politeness: Politeness.Polite
+		},
+		[CallHintScenario.RoomJoined]: {
+			ariaLabelPhrase: 'CALL_HINT_ARIA_ROOM_JOINED',
+			autoCloseDelay: NoAutoClose,
+			politeness: Politeness.Polite
+		},
+		[CallHintScenario.MicTakenFrom]: {
+			ariaLabelPhrase: 'CALL_HINT_ARIA_MIC_TRANSFER',
+			autoCloseDelay: NotificationDelay,
+			politeness: Politeness.Polite
+		},
+		[CallHintScenario.MicTakenBy]: {
+			ariaLabelPhrase: 'CALL_HINT_ARIA_MIC_TRANSFER',
+			autoCloseDelay: NotificationDelay,
+			politeness: Politeness.Polite
+		}
+	});
+	const DefaultTraits = {
+		ariaLabelPhrase: 'CALL_HINT_ARIA_MIC',
+		autoCloseDelay: NotificationDelay,
+		politeness: Politeness.Polite
+	};
+	function toPlainText(value) {
+		return main_core.Type.isStringFilled(value) ? value.replaceAll(/\s+/g, ' ').trim() : '';
+	}
+
+	/**
+	 * A dark hint plate inside the call window: icon, message, action buttons and a close button.
+	 *
+	 * The component does not decide when to appear - NotificationService does. What it does own is
+	 * everything a hint needs to be perceivable: the role it exposes, its accessible name, the flat
+	 * text it announces and the single path every close goes through.
+	 *
+	 * Two ways in, and they no longer behave alike. A factory with a scenario is the supported one: the
+	 * scenario carries the role, the politeness and the auto-close base. The bare constructor stays for
+	 * `BX.Call.Hint` callers and falls back to DefaultTraits (10s, polite); the hotkey line it used to
+	 * append on desktop unconditionally now takes an explicit showSpaceHint, because that line speaks
+	 * about the microphone and belongs to the two mute scenarios alone.
+	 */
 	class CallHint {
-		constructor(options) {
+		#role;
+		#ariaLabelPhrase;
+		#politeness;
+		#autoClose;
+		#announcement = '';
+		#closeNotified = false;
+
+		/**
+		 * @param {object} options - see the constructor
+		 * @return {CallHint}
+		 */
+		static notification(options = {}) {
+			return new CallHint(options, Kind.Notification);
+		}
+
+		/**
+		 * Differs from a notification by role and accessible name - but not by the focus trap and not by
+		 * moving focus inside: a hint never takes focus away from the call.
+		 *
+		 * @param {object} options - see the constructor
+		 * @return {CallHint}
+		 */
+		static dialog(options = {}) {
+			return new CallHint(options, Kind.Dialog);
+		}
+
+		/**
+		 * @param {object} options
+		 * @param {string} [options.scenario] - scenario identifier from CallHintScenario
+		 * @param {string} [options.title] - message body, may arrive as ready-made markup
+		 * @param {string} [options.announceText] - flat text announced instead of the message body
+		 * @param {HTMLElement} [options.bindElement] - popup anchor and the source focus returns to
+		 * @param {HTMLElement} [options.targetContainer] - mount container
+		 * @param {boolean} [options.callFolded]
+		 * @param {string} [options.icon] - css class of the decorative icon
+		 * @param {string} [options.buttonsLayout] - 'right' | 'bottom'
+		 * @param {Array} [options.buttons] - action buttons
+		 * @param {boolean} [options.showSpaceHint] - whether the hotkey hint is needed; scenarios 1 and 2 only
+		 * @param {boolean} [options.showAngle] - passed through to the popup angle
+		 * @param {string} [options.customClassName] - extra popup class
+		 * @param {number} [options.autoCloseDelay] - overrides the auto-close base of the scenario
+		 * @param {Function} [options.customRender] - replaces the middle block entirely
+		 * @param {string} [options.initiatorName] - read from customRender
+		 * @param {Function} [options.onAskSpeakButtonClicked]
+		 * @param {Function} [options.onClose] - called once, whichever way the hint closes
+		 * @param {string} [kind] - internal: which factory built the instance
+		 */
+		constructor(options = {}, kind = Kind.Notification) {
+			const {
+				role
+			} = KindTraits[kind] ?? KindTraits[Kind.Notification];
+			const traits = ScenarioTraits[options.scenario] ?? DefaultTraits;
+			this.#role = role;
+			this.#ariaLabelPhrase = traits.ariaLabelPhrase;
+			this.#politeness = traits.politeness;
 			this.popup = null;
-			this.title = BX.prop.getString(options, "title", main_core.Text.encode(BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING")));
-			this.icon = BX.prop.getString(options, "icon", "mic");
-			this.bindElement = BX.prop.getElementNode(options, "bindElement", null);
-			this.targetContainer = BX.prop.getElementNode(options, "targetContainer", null);
-			this.callFolded = BX.prop.getBoolean(options, "callFolded", false);
-			this.showAngle = BX.prop.getBoolean(options, "showAngle", false);
-			this.autoCloseDelay = BX.prop.getInteger(options, "autoCloseDelay", 5000);
-			this.maxWidth = BX.prop.getInteger(options, "maxWidth", 600);
-			this.customClassName = BX.prop.getString(options, "customClassName", "");
-			this.initiatorName = BX.prop.getString(options, "initiatorName", "");
-			this.customRender = BX.prop.getFunction(options, "customRender", false);
-			this.buttonsLayout = BX.prop.getString(options, "buttonsLayout", "right");
-			this.buttons = BX.prop.getArray(options, "buttons", []);
+			this.title = main_core.Type.isString(options.title) ? options.title : main_core.Text.encode(main_core.Loc.getMessage('IM_CALL_MIC_MUTED_WHILE_TALKING'));
+
+			// the live region cuts an announcement off at 160 characters with nothing to reach the rest
+			// by, so a case whose content does not fit says what to announce in its place; the shown text
+			// stays as it is
+			this.announceText = toPlainText(options.announceText);
+			this.icon = main_core.Type.isStringFilled(options.icon) ? options.icon : 'mic';
+			this.bindElement = main_core.Type.isDomNode(options.bindElement) ? options.bindElement : null;
+			this.targetContainer = main_core.Type.isDomNode(options.targetContainer) ? options.targetContainer : null;
+			this.callFolded = options.callFolded === true;
+			this.showAngle = options.showAngle === true;
+			// off unless the case asks for it: the hotkey hint belongs to the two mute scenarios, not to
+			// every hint that happens to be shown on desktop
+			this.showSpaceHint = options.showSpaceHint === true;
+
+			// the base belongs to the scenario; an explicit value still wins for the legacy entry point
+			this.autoCloseDelay = main_core.Type.isNumber(options.autoCloseDelay) ? options.autoCloseDelay : traits.autoCloseDelay;
+			this.customClassName = main_core.Type.isStringFilled(options.customClassName) ? options.customClassName : '';
+			this.initiatorName = main_core.Type.isStringFilled(options.initiatorName) ? options.initiatorName : '';
+			this.customRender = main_core.Type.isFunction(options.customRender) ? options.customRender : null;
+			this.buttonsLayout = options.buttonsLayout === 'bottom' ? 'bottom' : 'right';
+			this.buttons = main_core.Type.isArray(options.buttons) ? options.buttons : [];
 			this.callbacks = {
-				onClose: BX.prop.getFunction(options, "onClose", BX.DoNothing),
-				onAskSpeakButtonClicked: BX.prop.getFunction(options, "onAskSpeakButtonClicked", BX.DoNothing)
+				onClose: main_core.Type.isFunction(options.onClose) ? options.onClose : doNothing$1,
+				onAskSpeakButtonClicked: main_core.Type.isFunction(options.onAskSpeakButtonClicked) ? options.onAskSpeakButtonClicked : doNothing$1
 			};
-			this.autoCloseTimeout = 0;
+			this.#autoClose = this.#createAutoClose();
 		}
 		show() {
-			clearTimeout(this.autoCloseTimeout);
-			if (this.autoCloseDelay > 0) {
-				this.autoCloseTimeout = setTimeout(() => this.onAutoClose(), this.autoCloseDelay);
+			if (!this.popup) {
+				this.popup = new main_popup.Popup(this.getPopupOptions());
+				this.#closeNotified = false;
+				// the previous policy is terminal once the hint has been closed, so a hint shown again
+				// counts down on a policy of its own
+				this.#autoClose = this.#createAutoClose();
+				this.#bindAutoClosePauses();
 			}
-			if (this.popup) {
-				this.popup.show();
-				return;
-			}
-			this.popup = new main_popup.Popup({
+			this.popup.show();
+			this.#autoClose.start();
+			this.#announce();
+		}
+		close() {
+			this.popup?.close();
+		}
+		destroy() {
+			this.#autoClose.destroy();
+			this.popup?.destroy();
+		}
+
+		/**
+		 * Built apart from the popup on purpose: what the hint exposes to assistive technology has to be
+		 * readable without a live call.
+		 *
+		 * @return {object}
+		 */
+		getPopupOptions() {
+			return {
 				bindElement: this.bindElement,
 				targetContainer: this.targetContainer,
 				content: this.render(),
 				padding: 0,
 				contentPadding: 0,
-				className: 'bx-call-view-popup-call-hint ' + this.customClassName,
-				background: '#00428F',
-				contentBackground: '#00428F',
+				className: ['bx-call-view-popup-call-hint', this.customClassName].filter(Boolean).join(' '),
+				background: HintBackground,
+				contentBackground: HintBackground,
 				darkMode: true,
-				contentBorderRadius: '27px',
-				borderRadius: '27px',
-				//maxWidth: this.maxWidth,
+				contentBorderRadius: HintBorderRadius,
+				borderRadius: HintBorderRadius,
 				angle: this.showAngle && this.bindElement,
+				role: this.#role,
+				ariaLabel: main_core.Loc.getMessage(this.#ariaLabelPhrase),
+				// main.popup builds a focus trap itself when the option is omitted and the portal
+				// setting is on - and a hint must never hold focus inside the call
+				focusTrap: false,
+				closeByEsc: true,
 				events: {
-					onClose: () => this.popup.destroy(),
-					onDestroy: () => this.popup = null
+					onPopupClose: () => this.#handleClose(),
+					onPopupDestroy: () => {
+						this.popup = null;
+					}
 				}
-			});
-			this.popup.show();
+			};
 		}
 		render() {
-			return main_core.Dom.create("div", {
+			return main_core.Dom.create('div', {
 				props: {
-					className: "bx-call-view-popup-call-hint-body layout-" + this.buttonsLayout
+					className: `bx-call-view-popup-call-hint-body layout-${this.buttonsLayout}`
 				},
-				children: [main_core.Dom.create("div", {
+				attrs: {
+					'data-testid': 'call-hint'
+				},
+				children: [main_core.Dom.create('div', {
 					props: {
-						className: "bx-call-view-popup-call-hint-icon " + this.icon
-					}
-				}), this.customRender ? this.customRender() : this.renderPopupMessage(), this.buttonsLayout === 'right' ? this.renderButtons() : null, main_core.Dom.create("div", {
-					props: {
-						className: "bx-call-view-popup-call-hint-close"
+						className: `bx-call-view-popup-call-hint-icon ${this.icon}`
 					},
-					events: {
-						click: () => {
-							this.callbacks.onClose();
-							if (this.popup) {
-								this.popup.close();
-							}
-						}
+					attrs: {
+						'aria-hidden': 'true',
+						'data-testid': 'call-hint-icon'
 					}
-				})]
+				}), this.#renderMessage(), this.buttonsLayout === 'right' ? this.#renderButtons() : null, this.#renderCloseButton()]
 			});
 		}
 		createAskSpeakButton() {
-			return new BX.UI.Button({
-				baseClass: "ui-btn",
-				text: BX.message("CALL_RISE_YOU_HAND_IN_HINT"),
-				size: BX.UI.Button.Size.EXTRA_SMALL,
-				color: BX.UI.Button.Color.LIGHT_BORDER,
+			return new ui_buttons.Button({
+				baseClass: 'ui-btn',
+				text: main_core.Loc.getMessage('CALL_RISE_YOU_HAND_IN_HINT'),
+				size: ui_buttons.Button.Size.EXTRA_SMALL,
+				color: ui_buttons.Button.Color.LIGHT_BORDER,
 				noCaps: true,
 				round: true,
+				dataset: {
+					testid: 'call-hint-ask-speak-btn'
+				},
 				events: {
 					click: () => {
 						this.callbacks.onAskSpeakButtonClicked();
@@ -2928,71 +2591,204 @@ this.BX = this.BX || {};
 				}
 			});
 		}
-
-		/*renderHandRaiseIcon()
-		{
-			return Dom.create("div", {
-				props: {className: "bx-call-view-popup-call-hint-hand-raise-icon"},
+		#renderMessage() {
+			if (this.customRender) {
+				const content = this.customRender();
+				this.#describeHandRaiseIcon(content);
+				this.#announcement = this.#toAnnouncement(content);
+				return content;
+			}
+			const message = buildHintMessage({
+				title: this.title,
+				isDesktop: Util.isDesktop(),
+				isPushToTalkAvailable: Util.isPushToTalkAvailable(),
+				isMac: main_core.Browser.isMac(),
+				callFolded: this.callFolded,
+				showSpaceHint: this.showSpaceHint,
+				buttonsLayout: this.buttonsLayout
 			});
-		}*/
-
-		renderButtons() {
-			return main_core.Dom.create("div", {
+			this.#announcement = message.text;
+			return main_core.Dom.create('div', {
 				props: {
-					className: "bx-call-view-popup-call-hint-buttons-container"
+					className: 'bx-call-view-popup-call-hint-middle-block'
+				},
+				attrs: {
+					'data-testid': 'call-hint-message'
+				},
+				children: [main_core.Dom.create('div', {
+					props: {
+						className: 'bx-call-view-popup-call-hint-text'
+					},
+					attrs: {
+						'data-testid': 'call-hint-text'
+					},
+					html: message.html
+				}), this.buttonsLayout === 'bottom' ? this.#renderButtons() : null]
+			});
+		}
+		#renderButtons() {
+			return main_core.Dom.create('div', {
+				props: {
+					className: 'bx-call-view-popup-call-hint-buttons-container'
+				},
+				attrs: {
+					'data-testid': 'call-hint-buttons'
 				},
 				children: this.buttons.map(button => button.render())
 			});
 		}
-		renderPopupMessage() {
-			return main_core.Dom.create("div", {
+		#renderCloseButton() {
+			return main_core.Dom.create('button', {
 				props: {
-					className: "bx-call-view-popup-call-hint-middle-block"
+					type: 'button',
+					className: 'bx-call-view-popup-call-hint-close'
 				},
-				children: [main_core.Dom.create("div", {
-					props: {
-						className: "bx-call-view-popup-call-hint-text"
-					},
-					html: this.getPopupMessage()
-				}), this.buttonsLayout === 'bottom' ? this.renderButtons() : null]
+				attrs: {
+					'aria-label': main_core.Loc.getMessage('CALL_HINT_CLOSE_ARIA'),
+					'data-testid': 'call-hint-close'
+				},
+				events: {
+					click: () => this.close()
+				}
 			});
-		}
-		getPopupMessage() {
-			if (!Util.isDesktop()) {
-				return this.title;
-			}
-			let hotKeyMessage = BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING_HOTKEY");
-			if (this.callFolded) {
-				const hotkey = BX.browser.IsMac() ? 'Shift + &#8984; + A' : 'Ctrl + Shift + A';
-				hotKeyMessage = BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING_FOLDED_CALL_HOTKEY").replace('#HOTKEY#', hotkey);
-			}
-			hotKeyMessage = '<span class="bx-call-view-popup-call-hint-text-hotkey">' + hotKeyMessage + '</span>';
-			return this.title + (this.buttonsLayout === 'bottom' ? '' : '<br>') + hotKeyMessage;
 		}
 
 		/**
-		 * Returns height in pixels for the popup.
-		 * The height depends on the hotkey hint (hint appears only in the desktop app).
+		 * The floor-request phrase puts an icon where a word belongs; without a text alternative the
+		 * sentence breaks in the middle both for a screen reader and for the announcement.
 		 *
-		 * @returns {number}
+		 * The name is an attribute rather than a hidden child: the icon is sized as an empty node, and a
+		 * child of any kind takes that away from it.
+		 *
+		 * @param {HTMLElement} content
 		 */
-		getPopupHeight() {
-			return Util.isDesktop() ? 60 : 54;
+		#describeHandRaiseIcon(content) {
+			content?.querySelectorAll?.(`.${HandRaiseIconClassName}`)?.forEach(icon => {
+				main_core.Dom.attr(icon, {
+					role: 'img',
+					'aria-label': main_core.Loc.getMessage('CALL_HINT_RISE_HAND_ICON_ALT')
+				});
+			});
 		}
-		close() {
-			if (this.popup) {
-				this.popup.close();
-				this.callbacks.onClose();
+
+		/**
+		 * An element named for assistive tech stands in the flat text for its name: an icon put where a
+		 * word belongs carries no text of its own.
+		 *
+		 * @param {HTMLElement} content
+		 * @return {string}
+		 */
+		#toAnnouncement(content) {
+			const copy = content?.cloneNode?.(true);
+			copy?.querySelectorAll?.('[aria-label]')?.forEach(node => {
+				node.replaceWith(node.getAttribute('aria-label'));
+			});
+			return toPlainText(copy?.textContent);
+		}
+
+		/**
+		 * Every way out - close button, timer, Escape and an external close() - arrives here through the
+		 * popup close event, so the owner learns about the closing exactly once.
+		 */
+		#handleClose() {
+			if (this.#closeNotified) {
+				return;
+			}
+			this.#closeNotified = true;
+
+			// the countdown outlives the popup otherwise: a floor-request hint keeps a closure alive for
+			// half an hour after the user has closed it
+			this.#autoClose.destroy();
+
+			// the popup node is gone right after destroy(), so the check has to happen before it
+			const focusWasInside = this.popup?.getPopupContainer()?.contains(document.activeElement) === true;
+			this.callbacks.onClose();
+			this.popup?.destroy();
+			this.popup = null;
+
+			// destroy() takes the focused node out of the document, so the keyboard has to be given a
+			// place to land. A hint that closed by itself while the user was elsewhere leaves focus alone
+			if (focusWasInside) {
+				this.#focusAnchor();
 			}
 		}
-		onAutoClose() {
-			this.close();
-		}
-		destroy() {
-			if (this.popup) {
-				this.popup.destroy();
+		#focusAnchor() {
+			const anchor = this.#resolveFocusAnchor();
+			if (!anchor) {
+				return;
 			}
-			clearTimeout(this.autoCloseTimeout);
+
+			// an anchor that cannot take focus on its own is made focusable programmatically; one that
+			// already can keeps the place in the tab order it was given
+			if (!anchor.hasAttribute('tabindex') && anchor.tabIndex < 0) {
+				main_core.Dom.attr(anchor, 'tabindex', -1);
+			}
+			anchor.focus();
+		}
+
+		/**
+		 * The popup is anchored where the call site wants it drawn, and in the call panel that is a
+		 * decorative glyph carrying aria-hidden inside the real button. Focus has to land on the control
+		 * instead: on the glyph the browser voids aria-hidden, and the screen reader is handed a node with
+		 * no accessible name.
+		 *
+		 * @returns {HTMLElement|null} element focus returns to, or null when there is nowhere safe to land
+		 */
+		#resolveFocusAnchor() {
+			if (!this.bindElement) {
+				return null;
+			}
+			const control = this.bindElement.closest(FocusableAnchorSelector);
+			if (control) {
+				return control;
+			}
+
+			// no control around and the anchor itself is hidden from assistive technology: <body> is a
+			// better landing place than a node the screen reader is not meant to see. main.popup restores
+			// focus to wherever it came from, so the keyboard is not lost by giving up here
+			return this.bindElement.closest(HiddenFromAssistiveSelector) ? null : this.bindElement;
+		}
+		#createAutoClose() {
+			return new AutoClosePolicy(this.autoCloseDelay, () => this.close());
+		}
+		#bindAutoClosePauses() {
+			const container = this.popup?.getPopupContainer();
+			if (!container) {
+				return;
+			}
+			main_core.Event.bind(container, 'mouseenter', () => this.#autoClose.hold(AutoClosePauseReason.Hover));
+			main_core.Event.bind(container, 'mouseleave', () => this.#autoClose.release(AutoClosePauseReason.Hover));
+			main_core.Event.bind(container, 'focusin', () => this.#autoClose.hold(AutoClosePauseReason.Focus));
+			main_core.Event.bind(container, 'focusout', event => {
+				// focusout bubbles when focus only moves between elements of the same popup
+				if (!container.contains(event.relatedTarget)) {
+					this.#autoClose.release(AutoClosePauseReason.Focus);
+				}
+			});
+		}
+		#announce() {
+			const text = [this.announceText || this.#announcement, this.#announceActions()].filter(Boolean).join(' ');
+			if (text === '') {
+				return;
+			}
+			ui_a11y.LiveAnnouncer.announce(text, this.#politeness);
+		}
+
+		/**
+		 * A hint never takes focus and a notification is gone in ten seconds, so the announcement is the
+		 * only place the actions can be learnt from before they disappear. Scenarios that build their
+		 * content themselves keep their buttons inside it and pass none here.
+		 *
+		 * @return {string}
+		 */
+		#announceActions() {
+			const names = this.buttons.map(button => toPlainText(button.getText?.())).filter(Boolean);
+			if (names.length === 0) {
+				return '';
+			}
+			return main_core.Loc.getMessage('CALL_HINT_ANNOUNCE_ACTIONS', {
+				'#ACTIONS#': names.join(', ')
+			});
 		}
 	}
 
@@ -3194,34 +2990,51 @@ this.BX = this.BX || {};
 			if (this.audioCtx.state === 'suspended') {
 				await this.audioCtx.resume();
 			}
-			if (stream && (!this.inputSource || this.inputStream !== stream)) {
-				this.inputStream?.getAudioTracks().forEach(track => {
-					const trackInNewStream = stream.getTrackById(track.id);
-					if (!trackInNewStream) {
-						track.stop();
-					}
-				});
-				// The replaced source node stays wired into the graph until it is unplugged explicitly.
-				this.inputSource?.disconnect();
-				this.inputSource = this.audioCtx.createMediaStreamSource(stream);
-				this.inputStream = stream;
-			} else if (!stream && !this.inputSource) {
-				return;
+			try {
+				if (stream && (!this.inputSource || this.inputStream !== stream)) {
+					this.inputStream?.getAudioTracks().forEach(track => {
+						const trackInNewStream = stream.getTrackById(track.id);
+						if (!trackInNewStream) {
+							track.stop();
+						}
+					});
+					// The replaced source node stays wired into the graph until it is unplugged explicitly.
+					this.inputSource?.disconnect();
+					this.inputSource = this.audioCtx.createMediaStreamSource(stream);
+					this.inputStream = stream;
+				} else if (!stream && !this.inputSource) {
+					return;
+				}
+				if (!this.noiseSuppressionNode) {
+					await this.audioCtx.audioWorklet.addModule(NOISE_SUPPRESSION_WORKLET_PATH);
+					this.noiseSuppressionNode = new AudioWorkletNode(this.audioCtx, 'NoiseSuppressorWorklet');
+				}
+				if (this.previousEnable === Boolean(this.previousEnable) && this.previousEnable !== this.enable) {
+					this.inputSource.disconnect();
+				}
+				if (this.enable) {
+					this.inputSource.connect(this.noiseSuppressionNode);
+					this.noiseSuppressionNode.connect(this.destination);
+				} else {
+					this.inputSource.connect(this.destination);
+				}
+				this.previousEnable = this.enable;
+			} catch (error) {
+				// turn(stream) is the getUserMedia path, which falls back to the raw stream: on any
+				// init error roll back so noiseSuppressionInputStream stays null; don't stop input
+				// tracks (they belong to that raw stream). The toggle path (no stream) leaves the
+				// running graph intact.
+				if (stream) {
+					this.audioCtx?.close();
+					this.audioCtx = null;
+					this.destination = null;
+					this.inputSource = null;
+					this.inputStream = null;
+					this.noiseSuppressionNode = null;
+					this.previousEnable = null;
+				}
+				throw error;
 			}
-			if (!this.noiseSuppressionNode) {
-				await this.audioCtx.audioWorklet.addModule(NOISE_SUPPRESSION_WORKLET_PATH);
-				this.noiseSuppressionNode = new AudioWorkletNode(this.audioCtx, 'NoiseSuppressorWorklet');
-			}
-			if (this.previousEnable === Boolean(this.previousEnable) && this.previousEnable !== this.enable) {
-				this.inputSource.disconnect();
-			}
-			if (this.enable) {
-				this.inputSource.connect(this.noiseSuppressionNode);
-				this.noiseSuppressionNode.connect(this.destination);
-			} else {
-				this.inputSource.connect(this.destination);
-			}
-			this.previousEnable = this.enable;
 		}
 		#isDestinationLive() {
 			return Boolean(this.destination?.stream?.getAudioTracks()?.some(track => track.readyState === 'live'));
@@ -3261,11 +3074,13 @@ this.BX = this.BX || {};
 		enableMirroring: 'bx-im-settings-camera-enable-mirroring'
 	};
 	const CallEvents = {
+		...call_lib_hardware.HardwareEvents,
 		onChangeMirroringVideo: 'onChangeMirroringVideo',
 		onChangeMicrophoneMuted: 'onChangeMicrophoneMuted',
 		onChangeCameraOn: 'onChangeCameraOn',
 		onChangeMicrophonePermission: 'onChangeMicrophonePermission',
-		onChangeCameraPermission: 'onChangeCameraPermission'
+		onChangeCameraPermission: 'onChangeCameraPermission',
+		onChangeMaxLocalStreamQualityHeight: 'onChangeMaxLocalStreamQualityHeight'
 	};
 	const CALL_HARDWARE_PERMISSIONS_STATE = Object.freeze({
 		DENIED: 'denied',
@@ -3273,12 +3088,13 @@ this.BX = this.BX || {};
 		GRANTED: 'granted'
 	});
 	class CallHardwareManager extends call_lib_hardware.HardwareManager {
+		Events = CallEvents;
 		#noiseSuppression;
+		#maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 		constructor() {
 			super();
 			this._isCameraOn = false;
 			this._isMicrophoneMuted = false;
-			this.Events = Object.assign(this.Events, CallEvents);
 			this.#noiseSuppression = new NoiseSuppressionService();
 			this.CALL_HARDWARE_PERMISSIONS_STATE = CALL_HARDWARE_PERMISSIONS_STATE;
 		}
@@ -3359,7 +3175,12 @@ this.BX = this.BX || {};
 			if (!stream || stream.getAudioTracks?.()?.length === 0) {
 				return stream;
 			}
-			return this.addNoiseSuppression(stream);
+			try {
+				return await this.addNoiseSuppression(stream);
+			} catch (error) {
+				console.error('Call: noise suppression init failed, falling back to raw stream', error);
+				return stream;
+			}
 		}
 		async addNoiseSuppression(stream) {
 			// A new capture gets a graph of its own: the outgoing audio recovers from a device change only when
@@ -3391,6 +3212,17 @@ this.BX = this.BX || {};
 		}
 		get noiseSuppressionOutputStream() {
 			return this.#noiseSuppression.destination?.stream ?? null;
+		}
+		get maxLocalStreamQualityHeight() {
+			return this.#maxLocalStreamQualityHeight;
+		}
+		set maxLocalStreamQualityHeight(value) {
+			if (this.#maxLocalStreamQualityHeight !== value) {
+				this.#maxLocalStreamQualityHeight = value;
+				this.emit(this.Events.onChangeMaxLocalStreamQualityHeight, {
+					maxLocalStreamQualityHeight: value
+				});
+			}
 		}
 		async checkPermissions() {
 			const permissions = await super.checkPermissions();
@@ -3431,6 +3263,464 @@ this.BX = this.BX || {};
 		return `${updatedSdp.join('\r\n')}\r\n`;
 	};
 
+	/**
+	 * Network Quality Evaluator
+	 *
+	 * Adaptive video quality balancing based on WebRTC stats.
+	 * Implements composite score calculation and asymmetric hysteresis.
+	 *
+	 * @module call/core/src/network-quality-evaluator
+	 */
+
+	/**
+	 * @class NetworkQualityEvaluator
+	 */
+	class NetworkQualityEvaluator {
+		/**
+		 * @param {Object} options - Configuration options from backend
+		 * @param {number} [options.nqeDowngradeWindowSec=5] - Downgrade hysteresis window (seconds)
+		 * @param {number} [options.nqeUpgradeWindowSec=15] - Upgrade hysteresis window (seconds)
+		 * @param {number} [options.nqeWarmupSec=30] - Warmup phase (seconds)
+		 *
+		 * Quality-specific thresholds (HIGH quality):
+		 * @param {number} [options.nqeHighDowngradePacketsLostPct=5] - HIGH→MEDIUM: packets lost threshold (%)
+		 * @param {number} [options.nqeHighDowngradeRttMs=100] - HIGH→MEDIUM: RTT threshold (ms)
+		 * @param {number} [options.nqeHighDowngradeJitterMs=30] - HIGH→MEDIUM: jitter threshold (ms)
+		 *
+		 * Quality-specific thresholds (MEDIUM quality):
+		 * @param {number} [options.nqeMedDowngradePacketsLostPct=10] - MEDIUM→LOW: packets lost threshold (%)
+		 * @param {number} [options.nqeMedDowngradeRttMs=200] - MEDIUM→LOW: RTT threshold (ms)
+		 * @param {number} [options.nqeMedDowngradeJitterMs=50] - MEDIUM→LOW: jitter threshold (ms)
+		 * @param {number} [options.nqeMedUpgradePacketsLostPct=2] - MEDIUM→HIGH: packets lost threshold (%)
+		 * @param {number} [options.nqeMedUpgradeRttMs=80] - MEDIUM→HIGH: RTT threshold (ms)
+		 * @param {number} [options.nqeMedUpgradeJitterMs=25] - MEDIUM→HIGH: jitter threshold (ms)
+		 *
+		 * Quality-specific thresholds (LOW quality):
+		 * @param {number} [options.nqeLowUpgradePacketsLostPct=3] - LOW→MEDIUM: packets lost threshold (%)
+		 * @param {number} [options.nqeLowUpgradeRttMs=150] - LOW→MEDIUM: RTT threshold (ms)
+		 * @param {number} [options.nqeLowUpgradeJitterMs=40] - LOW→MEDIUM: jitter threshold (ms)
+		 */
+		constructor(options) {
+			// Default hysteresis windows and warmup (overridable via backend options)
+			this.downgradeWindowSec = this.#validatePositiveNumber(options?.nqeDowngradeWindowSec, 5);
+			this.upgradeWindowSec = this.#validatePositiveNumber(options?.nqeUpgradeWindowSec, 15);
+			this.warmupSec = this.#validatePositiveNumber(options?.nqeWarmupSec, 30);
+
+			// Quality-specific thresholds for each level
+			// Allows fine-tuned hysteresis per quality transition
+			this.qualityThresholds = this.#getQualityThresholds(options);
+			this.state = {
+				currentQuality: STREAM_QUALITY.HIGH,
+				previousQuality: null,
+				// Store previous quality for comparison
+				targetQuality: STREAM_QUALITY.HIGH,
+				isWarmup: true,
+				warmupStartTime: Date.now(),
+				downgradeStartTime: null,
+				upgradeStartTime: null,
+				pendingAction: null // 'downgrade' | 'upgrade' | null
+			};
+		}
+
+		/**
+		 * Validate and return a positive number, or default value
+		 *
+		 * @param {*} value - Value to validate
+		 * @param {number} defaultValue - Default value if validation fails
+		 * @returns {number}
+		 */
+		#validatePositiveNumber(value, defaultValue) {
+			const num = Number(value);
+			if (!Number.isFinite(num) || num <= 0) {
+				return defaultValue;
+			}
+			return num;
+		}
+
+		/**
+		 * Get formatted quality thresholds per stream quality
+		 *
+		 * @param {Object} options - Initial options for NQE
+		 * @returns {Object} - Formatted options for NQE
+		 */
+		#getQualityThresholds(options) {
+			return {
+				[STREAM_QUALITY.HIGH]: {
+					downgrade: {
+						packetsLostPct: this.#validatePositiveNumber(options?.nqeHighDowngradePacketsLostPct, 5),
+						rttMs: this.#validatePositiveNumber(options?.nqeHighDowngradeRttMs, 100),
+						jitterMs: this.#validatePositiveNumber(options?.nqeHighDowngradeJitterMs, 30)
+					}
+				},
+				[STREAM_QUALITY.MEDIUM]: {
+					downgrade: {
+						packetsLostPct: this.#validatePositiveNumber(options?.nqeMedDowngradePacketsLostPct, 10),
+						rttMs: this.#validatePositiveNumber(options?.nqeMedDowngradeRttMs, 200),
+						jitterMs: this.#validatePositiveNumber(options?.nqeMedDowngradeJitterMs, 50)
+					},
+					upgrade: {
+						packetsLostPct: this.#validatePositiveNumber(options?.nqeMedUpgradePacketsLostPct, 2),
+						rttMs: this.#validatePositiveNumber(options?.nqeMedUpgradeRttMs, 80),
+						jitterMs: this.#validatePositiveNumber(options?.nqeMedUpgradeJitterMs, 25)
+					}
+				},
+				[STREAM_QUALITY.LOW]: {
+					upgrade: {
+						packetsLostPct: this.#validatePositiveNumber(options?.nqeLowUpgradePacketsLostPct, 3),
+						rttMs: this.#validatePositiveNumber(options?.nqeLowUpgradeRttMs, 150),
+						jitterMs: this.#validatePositiveNumber(options?.nqeLowUpgradeJitterMs, 40)
+					}
+				}
+			};
+		}
+
+		/**
+		 * Check if stats contain actual media traffic (inbound-rtp or outbound-rtp reports).
+		 *
+		 * @param {RTCStatsReport} stats - RTCStatsReport object (Map-like, iterable)
+		 * @returns {boolean}
+		 */
+		#hasMediaTraffic(stats) {
+			if (!stats) {
+				return false;
+			}
+
+			// Short-circuit: bail out on the first RTP media report.
+			for (const report of stats.values()) {
+				if (report.type === 'inbound-rtp' || report.type === 'outbound-rtp') {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * Reset an unfinished hysteresis window without changing quality or warmup state.
+		 */
+		resetPendingWindow() {
+			this.state.downgradeStartTime = null;
+			this.state.upgradeStartTime = null;
+			this.state.pendingAction = null;
+		}
+
+		/**
+		 * Process WebRTC stats and evaluate quality actions
+		 *
+		 * @param {Object} publisherStats - Publisher stats from getStats() (optional, for consume-only users)
+		 * @param {Object} subscriberStats - Subscriber stats from getStats()
+		 * @returns {string} - Action: 'downgrade' | 'upgrade' | 'stable'
+		 */
+		processStats(publisherStats, subscriberStats) {
+			if (!subscriberStats) {
+				this.resetPendingWindow();
+				return 'stable';
+			}
+
+			// If no actual media traffic, return stable (no evaluation needed)
+			if (!this.#hasMediaTraffic(publisherStats) && !this.#hasMediaTraffic(subscriberStats)) {
+				this.resetPendingWindow();
+				return 'stable';
+			}
+
+			// Warmup phase
+			if (this.state.isWarmup && Date.now() - this.state.warmupStartTime < this.warmupSec * 1000) {
+				return 'stable'; // Still in warmup phase
+			}
+
+			// Warmup phase just ended
+			if (this.state.isWarmup) {
+				this.state.isWarmup = false;
+			}
+			const score = this.#calculateCompositeScore(publisherStats, subscriberStats);
+			const action = this.#evaluateHysteresis(score);
+			if (action === 'downgrade') {
+				// Direction switched from upgrade: drop the stale upgrade timer/pending
+				// so a fresh downgrade window can start without waiting for a 'stable' tick.
+				this.state.upgradeStartTime = null;
+				if (this.state.pendingAction === 'upgrade') {
+					this.state.pendingAction = null;
+				}
+
+				// start timer only once per pending downgrade
+				if (!this.state.downgradeStartTime) {
+					this.state.downgradeStartTime = Date.now();
+					this.state.pendingAction = 'downgrade';
+				}
+
+				// if hysteresis elapsed, apply downgrade now
+				if (this.shouldDowngrade() && this.state.pendingAction === 'downgrade') {
+					this.downgrade();
+					this.resetPendingWindow();
+					return action;
+				}
+				return 'stable';
+			}
+			if (action === 'upgrade') {
+				// Direction switched from downgrade: drop the stale downgrade timer/pending
+				// so a fresh upgrade window can start without waiting for a 'stable' tick.
+				this.state.downgradeStartTime = null;
+				if (this.state.pendingAction === 'downgrade') {
+					this.state.pendingAction = null;
+				}
+				if (!this.state.upgradeStartTime) {
+					this.state.upgradeStartTime = Date.now();
+					this.state.pendingAction = 'upgrade';
+				}
+				if (this.shouldUpgrade() && this.state.pendingAction === 'upgrade') {
+					this.upgrade();
+					this.resetPendingWindow();
+					return action;
+				}
+				return 'stable';
+			}
+			if (action === 'stable') {
+				this.resetPendingWindow();
+			}
+			return action;
+		}
+
+		/**
+		 * Check if downgrade should be executed (hysteresis window)
+		 *
+		 * @returns {boolean}
+		 */
+		shouldDowngrade() {
+			if (this.state.pendingAction !== 'downgrade') {
+				return false;
+			}
+			if (!this.state.downgradeStartTime) {
+				return false;
+			}
+			if (this.state.currentQuality === STREAM_QUALITY.LOW) {
+				return false;
+			}
+			const elapsed = (Date.now() - this.state.downgradeStartTime) / 1000;
+			return elapsed >= this.downgradeWindowSec;
+		}
+
+		/**
+		 * Check if upgrade should be executed (hysteresis window)
+		 *
+		 * @returns {boolean}
+		 */
+		shouldUpgrade() {
+			if (this.state.pendingAction !== 'upgrade') {
+				return false;
+			}
+			if (!this.state.upgradeStartTime) {
+				return false;
+			}
+			if (this.state.currentQuality === STREAM_QUALITY.HIGH) {
+				return false;
+			}
+
+			// Manual selection is a hard ceiling: never auto-upgrade above the target quality.
+			if (this.state.currentQuality >= this.state.targetQuality) {
+				return false;
+			}
+			const elapsed = (Date.now() - this.state.upgradeStartTime) / 1000;
+			return elapsed >= this.upgradeWindowSec;
+		}
+
+		/**
+		 * Execute downgrade to next quality level
+		 */
+		downgrade() {
+			const levels = [STREAM_QUALITY.HIGH, STREAM_QUALITY.MEDIUM, STREAM_QUALITY.LOW];
+			const currentIndex = levels.indexOf(this.state.currentQuality);
+			if (currentIndex < levels.length - 1) {
+				this.state.previousQuality = this.state.currentQuality;
+				this.state.currentQuality = levels[currentIndex + 1];
+			}
+		}
+
+		/**
+		 * Execute upgrade to previous quality level
+		 */
+		upgrade() {
+			const levels = [STREAM_QUALITY.HIGH, STREAM_QUALITY.MEDIUM, STREAM_QUALITY.LOW];
+			const currentIndex = levels.indexOf(this.state.currentQuality);
+			if (currentIndex > 0) {
+				this.state.previousQuality = this.state.currentQuality;
+				this.state.currentQuality = levels[currentIndex - 1];
+			}
+		}
+
+		/**
+		 * Set manual target quality ceiling
+		 *
+		 * @param {number} quality - Target quality level (STREAM_QUALITY)
+		 */
+		setManualTarget(quality) {
+			// Keep previousQuality consistent with upgrade()/downgrade() semantics so that
+			// monitoring events (AUTO_QUALITY_DEGRADED/IMPROVED) compare against the level
+			// right before this change, not a stale one.
+			this.state.previousQuality = this.state.currentQuality;
+			this.state.targetQuality = quality;
+			this.state.currentQuality = quality;
+
+			// Restart hysteresis windows: a manual choice must not apply a stale, already
+			// elapsed window on the next processStats.
+			this.resetPendingWindow();
+		}
+
+		/**
+		 * Get current quality level
+		 *
+		 * @returns {number}
+		 */
+		getCurrentQuality() {
+			return this.state.currentQuality;
+		}
+
+		/**
+		 * Get previous quality level (before last change)
+		 *
+		 * @returns {number|null}
+		 */
+		getPreviousQuality() {
+			return this.state.previousQuality;
+		}
+
+		/**
+		 * Extract relevant metrics from RTCStatsReport
+		 *
+		 * @param {RTCStatsReport} stats - RTCStatsReport object (Map-like)
+		 * @returns {Object} - Extracted metrics { packetsLost, rtt, jitter }
+		 */
+		#extractMetricsFromStats(stats) {
+			if (!stats) {
+				return {
+					packetsLost: null,
+					rtt: null,
+					jitter: null
+				};
+			}
+			let packetsLost = null;
+			let rtt = null;
+			let jitter = null;
+			let totalPacketsLost = 0;
+			let packetsLostCount = 0;
+			let totalJitter = 0;
+			let jitterCount = 0;
+			let totalRtt = 0;
+			let rttCount = 0;
+
+			// RTCStatsReport is array-like, iterate through reports
+			stats.forEach(rawReport => {
+				const report = {
+					...rawReport
+				};
+
+				// Use pre-calculated packet loss percentage from packetsLostData
+				if (report.type === 'inbound-rtp' && report.packetsLostData && main_core.Type.isNumber(report.packetsLostData.currentPercentPacketLost)) {
+					totalPacketsLost += report.packetsLostData.currentPercentPacketLost;
+					packetsLostCount++;
+				}
+
+				// Extract jitter from inbound-rtp reports for consume-only users
+				if (report.type === 'inbound-rtp' && main_core.Type.isNumber(report.jitter)) {
+					totalJitter += report.jitter * 1000; // Convert to milliseconds;
+					jitterCount++;
+				}
+
+				// Extract jitter from remote-inbound-rtp reports (publisher side)
+				if (report.type === 'remote-inbound-rtp' && report.active === true && main_core.Type.isNumber(report.jitter)) {
+					totalJitter += report.jitter * 1000; // Convert to milliseconds
+					jitterCount++;
+				}
+
+				// Extract RTT from remote-inbound-rtp reports (more accurate)
+				if (report.type === 'remote-inbound-rtp' && report.active === true && main_core.Type.isNumber(report.roundTripTime)) {
+					totalRtt += report.roundTripTime * 1000; // Convert to milliseconds
+					rttCount++;
+				}
+			});
+
+			// Calculate average packetsLost
+			if (packetsLostCount > 0) {
+				packetsLost = totalPacketsLost / packetsLostCount;
+			}
+
+			// Calculate average jitter
+			if (jitterCount > 0) {
+				jitter = totalJitter / jitterCount;
+			}
+
+			// Calculate average rtt
+			if (rttCount > 0) {
+				rtt = totalRtt / rttCount;
+			}
+			return {
+				packetsLost,
+				rtt,
+				jitter
+			};
+		}
+
+		/**
+		 * Calculate composite score from stats
+		 *
+		 * @param {RTCStatsReport} publisherStats - Publisher stats
+		 * @param {RTCStatsReport} subscriberStats - Subscriber stats
+		 * @returns {Object} - Composite score { packetsLost, rtt, jitter, hasValidData }
+		 */
+		#calculateCompositeScore(publisherStats, subscriberStats) {
+			// Extract metrics from stats
+			const publisherMetrics = this.#extractMetricsFromStats(publisherStats);
+			const subscriberMetrics = this.#extractMetricsFromStats(subscriberStats);
+
+			// Select by Type.isNumber so a measured 0 is kept, not discarded as falsy.
+			// Packet loss and jitter come from the subscriber side, RTT from the publisher
+			// (with a subscriber fallback for consume-only users without publisher stats).
+			const packetsLost = main_core.Type.isNumber(subscriberMetrics.packetsLost) ? subscriberMetrics.packetsLost : null;
+			const rtt = main_core.Type.isNumber(publisherMetrics.rtt) ? publisherMetrics.rtt : main_core.Type.isNumber(subscriberMetrics.rtt) ? subscriberMetrics.rtt : null;
+			const jitter = main_core.Type.isNumber(publisherMetrics.jitter) ? publisherMetrics.jitter : main_core.Type.isNumber(subscriberMetrics.jitter) ? subscriberMetrics.jitter : null;
+
+			// At least one real measurement is required to trust the score. When every
+			// metric is absent everything coalesces to 0, which must NOT be read as
+			// "perfect network" and trigger an upgrade (see #evaluateHysteresis).
+			const hasValidData = main_core.Type.isNumber(packetsLost) || main_core.Type.isNumber(rtt) || main_core.Type.isNumber(jitter);
+			return {
+				packetsLost: main_core.Type.isNumber(packetsLost) ? packetsLost : 0,
+				rtt: main_core.Type.isNumber(rtt) ? rtt : 0,
+				jitter: main_core.Type.isNumber(jitter) ? jitter : 0,
+				hasValidData
+			};
+		}
+
+		/**
+		 * Evaluate hysteresis conditions
+		 *
+		 * @param {Object} score - Composite score { packetsLost, rtt, jitter, hasValidData }
+		 * @returns {string} - 'downgrade' | 'upgrade' | 'stable'
+		 */
+		#evaluateHysteresis(score) {
+			// Get quality-specific thresholds based on current quality level
+			const thresholds = this.qualityThresholds[this.state.currentQuality];
+			if (!thresholds) {
+				return 'stable';
+			}
+
+			// No real measurement this tick: metrics are coalesced to 0. Upgrade must never
+			// be granted on absence of data (all `0 < threshold` would look like a perfect
+			// link). Downgrade uses `>=` against positive thresholds, so all-zero cannot
+			// trigger it either; returning 'stable' keeps the state put.
+			if (!score.hasValidData) {
+				return 'stable';
+			}
+			const shouldDowngrade = score.packetsLost >= thresholds.downgrade?.packetsLostPct || score.rtt >= thresholds.downgrade?.rttMs || score.jitter >= thresholds.downgrade?.jitterMs;
+			if (shouldDowngrade) {
+				return 'downgrade';
+			}
+			const shouldUpgrade = score.packetsLost < thresholds.upgrade?.packetsLostPct && score.rtt < thresholds.upgrade?.rttMs && score.jitter < thresholds.upgrade?.jitterMs;
+			if (shouldUpgrade) {
+				return 'upgrade';
+			}
+			return 'stable';
+		}
+	}
+
 	class MediaServer {
 		constructor(config) {
 			this.id = Number(config.id);
@@ -3461,6 +3751,13 @@ this.BX = this.BX || {};
 			this.senderKinds = new WeakMap();
 			this.callStatsInterval = null;
 			this.statsTimeout = 3000;
+			if (config.autoBalanceEnabled) {
+				this.nqe = new NetworkQualityEvaluator({
+					...config
+				});
+			} else {
+				this.nqe = null;
+			}
 		}
 		updateConfig(config) {
 			if ('isPublishing' in config) {
@@ -3815,6 +4112,8 @@ this.BX = this.BX || {};
 					await Promise.allSettled(statsPromises);
 					this.#triggerEvents('stats', [statsAll, this.id]);
 				} catch {
+					this.nqe?.resetPendingWindow();
+
 					// if we're here it's almost okay
 					// we tried to get stats during reconnection
 				}
@@ -3886,16 +4185,12 @@ this.BX = this.BX || {};
 			return this.sendersProcesses[sender.track.id];
 		}
 		#getMaxEncodingsByVideoWidth(width) {
-			const aspectRation = 16 / 9;
-			const maxWidth = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
-			const optimizedWidth = maxWidth <= width ? maxWidth : width;
-
 			// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=76;
 
-			if (optimizedWidth >= 960) {
+			if (width >= 960) {
 				return 3;
 			}
-			if (optimizedWidth >= 480) {
+			if (width >= 480) {
 				return 2;
 			}
 			return 1;
@@ -3904,11 +4199,14 @@ this.BX = this.BX || {};
 			const maxEncodings = this.#getMaxEncodingsByVideoWidth(width);
 			const rids = ['q', 'h', 'f'];
 			const encodings = [];
+			const aspectRation = 16 / 9;
+			const maxWidthLimited = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
+			const maxEncodingsLimited = maxWidthLimited < width ? this.#getMaxEncodingsByVideoWidth(maxWidthLimited) : maxEncodings;
 			for (let i = 0; i < 3; i++) {
 				const rid = rids[i];
 				encodings.push({
 					rid,
-					active: i < maxEncodings && this.trackActivity[MediaStreamsKinds.Camera],
+					active: i < maxEncodingsLimited && this.trackActivity[MediaStreamsKinds.Camera],
 					maxBitrate: this.publicationParams.videoBitrate[rid],
 					scaleResolutionDownBy: 2 ** Math.max(0, maxEncodings - 1 - i)
 				});
@@ -4643,7 +4941,9 @@ this.BX = this.BX || {};
 			}
 			const localTrack = this.#tracks[kind];
 			const isSameConstraints = this.#isSameConstraints(constraints, localTrack?.constraints);
-			const isInputTrackLived = kind !== MediaStreamsKinds.Microphone || Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState === 'live';
+			// With a raw-fallback mic (NS init failed → no input stream) the local track is itself
+			// the live device track, so don't gate reuse on noiseSuppressionInputStream.
+			const isInputTrackLived = kind !== MediaStreamsKinds.Microphone || !Hardware.noiseSuppressionInputStream || Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState === 'live';
 			if (localTrack?.track?.readyState === 'live' && isInputTrackLived && isSameConstraints) {
 				return Promise.resolve([localTrack.track]);
 			}
@@ -4680,6 +4980,51 @@ this.BX = this.BX || {};
 		}
 	}
 	const CallStreamManager = new StreamManager();
+
+	/**
+	 * Process one stats tick without allowing incomplete data or processing errors
+	 * to leave a pending NQE window behind.
+	 *
+	 * @param {Object} options
+	 * @returns {Object}
+	 */
+	function processCallStats(options) {
+		const {
+			stats,
+			mediaServer,
+			processPublisherStats,
+			processSubscriberStats,
+			onAutoQuality,
+			onError,
+			onStatsReceived
+		} = options;
+		const processedStats = {};
+		try {
+			const isStatsIncomplete = !stats?.subscriber || mediaServer?.isPublishing && !stats?.publisher;
+			if (stats?.publisher) {
+				processedStats.publisher = processPublisherStats(stats.publisher);
+			}
+			if (stats?.subscriber) {
+				processedStats.subscriber = processSubscriberStats(stats.subscriber);
+			}
+			if (mediaServer?.nqe) {
+				if (isStatsIncomplete) {
+					mediaServer.nqe.resetPendingWindow();
+				} else {
+					const action = mediaServer.nqe.processStats(processedStats.publisher, processedStats.subscriber);
+					if (action === 'downgrade' || action === 'upgrade') {
+						onAutoQuality(mediaServer.nqe.getCurrentQuality(), mediaServer.nqe.getPreviousQuality());
+					}
+				}
+			}
+		} catch (error) {
+			mediaServer?.nqe?.resetPendingWindow();
+			onError(error);
+		} finally {
+			onStatsReceived(processedStats);
+		}
+		return processedStats;
+	}
 
 	const createMessage = rawMessage => {
 		let content = null;
@@ -4737,13 +5082,6 @@ this.BX = this.BX || {};
 			return acc;
 		}, {});
 	};
-
-	// TODO: delete in the future
-	const checkMetricsFeatureAndExecutionCallback = callback => {
-		if (main_core.Type.isFunction(callback) && main_core.Extension.getSettings('call.core')?.isMetricsEnabled) {
-			callback();
-		}
-	};
 	const sendMonitoringData = (data, url, token) => {
 		if (!url) {
 			return;
@@ -4796,6 +5134,20 @@ this.BX = this.BX || {};
 			constraints.audio = true;
 		}
 		return constraints;
+	};
+
+	/**
+	 * Get stream quality based on current max local stream quality height
+	 *
+	 * @returns {number} - STREAM_QUALITY value (HIGH, MEDIUM, or LOW)
+	 */
+	const getStreamQualityFromHeight = () => {
+		if (Hardware.maxLocalStreamQualityHeight >= LOCAL_STREAM_QUALITY_HEIGHT.HIGH) {
+			return STREAM_QUALITY.HIGH;
+		} else if (Hardware.maxLocalStreamQualityHeight >= LOCAL_STREAM_QUALITY_HEIGHT.MEDIUM) {
+			return STREAM_QUALITY.MEDIUM;
+		}
+		return STREAM_QUALITY.LOW;
 	};
 
 	// Pick the reconciliation operation when draining the single-slot audio queue.
@@ -4863,6 +5215,13 @@ this.BX = this.BX || {};
 		}
 		const settings = track?.getSettings?.() ?? {};
 		return Boolean(settings.deviceId) && settings.deviceId !== audioDeviceId;
+	}
+
+	function isRepublishAllowed(mediaStreamKind, isCameraOn) {
+		if (mediaStreamKind === MediaStreamsKinds.Camera) {
+			return Boolean(isCameraOn);
+		}
+		return true;
 	}
 
 	// Distinct result from getLocalAudio when the microphone capture was superseded by a newer request.
@@ -4935,6 +5294,7 @@ this.BX = this.BX || {};
 			needToEnableAudioAfterSystemMuted: false,
 			needToDisableAudioAfterPublish: false,
 			microphonePausedOnServer: false,
+			cameraPausedOnServer: false,
 			localTracks: {},
 			localConnectionQuality: 0,
 			minimalConnectionQuality: 2,
@@ -4995,7 +5355,8 @@ this.BX = this.BX || {};
 			stats: {},
 			videoQueue: VIDEO_QUEUE.INITIAL,
 			audioQueue: AUDIO_QUEUE.INITIAL,
-			videoStreamSetupErrorList: {}
+			videoStreamSetupErrorList: {},
+			mediaServersCurrentQuality: new Map()
 		};
 		constructor() {
 			this.sendLeaveBound = this.#sendLeave.bind(this);
@@ -5031,9 +5392,10 @@ this.BX = this.BX || {};
 				framesDropped: 0,
 				framesReceived: 0
 			};
-			main_core.Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', event => {
+			this.globalLogHandler = event => {
 				this.setLog(event.data);
-			});
+			};
+			main_core.Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', this.globalLogHandler);
 			this.initConnectionEvent();
 			Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 		}
@@ -5067,9 +5429,31 @@ this.BX = this.BX || {};
 			if (!connection) {
 				return;
 			}
-			connection.addEventListener('change', () => {
+			this.observedConnection = connection;
+			this.connectionChangeHandler = () => {
 				this.onChangeConnection(connection);
-			});
+			};
+			connection.addEventListener('change', this.connectionChangeHandler);
+		}
+
+		// Detaches the handlers the constructor put on global emitters and stops
+		// the self-restarting monitoring timers so a short-lived instance (e.g.
+		// a zombie-room close session) can be garbage collected instead of
+		// living and reporting as long as the page.
+		releaseGlobalSubscriptions() {
+			if (this.globalLogHandler) {
+				main_core.Event.EventEmitter.unsubscribe('BX.Call.Logger:sendLog', this.globalLogHandler);
+				this.globalLogHandler = null;
+			}
+			if (this.observedConnection && this.connectionChangeHandler) {
+				this.observedConnection.removeEventListener('change', this.connectionChangeHandler);
+			}
+			this.observedConnection = null;
+			this.connectionChangeHandler = null;
+			clearInterval(this.monitoringInterval);
+			this.monitoringInterval = null;
+			clearTimeout(this.monitoringTimeout);
+			this.monitoringTimeout = null;
 		}
 		clearMonitoringEvents() {
 			this.monitoringEvents = [];
@@ -5151,7 +5535,7 @@ this.BX = this.BX || {};
 		}
 		startAggregateMonitoringEvents() {
 			this.setClearValuesForCurrentMonitoringEventsObject();
-			if (Util.isMetricsEnabled()) {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.monitoringInterval = setInterval(() => {
 					const {
 						countVideoTracks,
@@ -5173,7 +5557,7 @@ this.BX = this.BX || {};
 			}, this.monitoringDelayTime);
 		}
 		sendLogMonitoringRtcStats() {
-			if (Util.isMetricsEnabled()) {
+			if (this.#privateProperties.monitoringServerUrl) {
 				const isRtcStatsNotEmpty = !!Object.keys(this.currentMonitoringRtcStatsObject);
 				let metricsResultString = '';
 				if (isRtcStatsNotEmpty) {
@@ -5192,7 +5576,7 @@ this.BX = this.BX || {};
 					sendMonitoringData(metricsResultString, this.#privateProperties.monitoringServerUrl, this.#privateProperties.monitoringJwtToken);
 				}
 			}
-			if (Util.isMetricsLogsEnabled() && this.currentMonitoringEventsObject.logs.length) {
+			if (this.#privateProperties.monitoringLogsServerUrl && this.currentMonitoringEventsObject.logs.length) {
 				const otplLogsStructure = {
 					resourceLogs: [{
 						resource: {
@@ -5249,19 +5633,16 @@ this.BX = this.BX || {};
 			} else if (kind === MediaStreamsKinds.Screen) {
 				eventName = MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_PUBLICATION_FAILED;
 			}
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.addMonitoringEvents({
 					name: eventName,
 					withCounter: true
 				});
-			});
+			}
 		}
 		async connect(options) {
 			this.setLog(`Connecting to the call (desktop: ${Util.isDesktop()})`, LOG_LEVEL.INFO);
 			this.#privateProperties.callState = CALL_STATE.PROGRESSING;
-			if (Util.isMetricsEnabled() || Util.isMetricsLogsEnabled()) {
-				this.startAggregateMonitoringEvents();
-			}
 			for (let key in options) {
 				this.#privateProperties[`${key}`] = options[key];
 			}
@@ -5306,9 +5687,6 @@ this.BX = this.BX || {};
 					}
 				} catch (error) {
 					if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted) {
-						// don't write error.name and error.message to analytics now,
-						// because we don't watch failed reconnecting requests now
-
 						this.#reconnect({
 							reconnectionReason: 'GET_MEDIASERVER_INFO',
 							reconnectionReasonInfo: error?.name || ''
@@ -5324,6 +5702,9 @@ this.BX = this.BX || {};
 					destroySocket: true
 				});
 				return;
+			}
+			if (this.#privateProperties.monitoringServerUrl || this.#privateProperties.monitoringLogsServerUrl) {
+				this.startAggregateMonitoringEvents();
 			}
 			this.#privateProperties.abortController.signal.addEventListener('abort', this.beforeDisconnectBound);
 			this.#privateProperties.socketConnection?.close(CloseCode.Reconnect);
@@ -5360,12 +5741,12 @@ this.BX = this.BX || {};
 			this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
 			this.#privateProperties.previousMediaServers = this.#privateProperties.mediaServers;
 			this.#privateProperties.mediaServers = new Map();
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.USER_RECONNECTED,
 					withCounter: true
 				});
-			});
+			}
 			this.#triggerEvents('Reconnecting', [data]);
 		}
 		#beforeDisconnect(options) {
@@ -5419,6 +5800,7 @@ this.BX = this.BX || {};
 				this.#privateProperties.previousMediaServers = null;
 				for (const mediaServer of mediaServersToRemove.values()) {
 					mediaServer.disconnect();
+					this.#privateProperties.mediaServersCurrentQuality.delete(mediaServer.id);
 				}
 				mediaServersToRemove.clear();
 			}
@@ -5482,22 +5864,10 @@ this.BX = this.BX || {};
 				}).catch(error => {
 					if (error.code && isErrorPreventingReconnection(error.code) || error.name === 'AbortError' || error.name === 'SyntaxError') {
 						this.#privateProperties.abortController.abort();
-						/*
-						let errorCode = 'UNKNOWN_ERROR';
-						if (Type.isObject(error) && error instanceof JoinResponseError)
-						{
-							errorCode = error.name;
-						}
-						else if (Type.isObject(error) && error.code)
-						{
-							errorCode = error.code === 'access_denied' 'ACCESS_DENIED' : error.code;
-						}
-							this.#triggerEvents('ReconnectingFailed', [null, {
-							code: errorCode,
-							message: error?.message,
+						this.#triggerEvents('ReconnectingFailed', [null, {
+							code: Util.getCallConnectionErrorCode(error),
+							message: error?.message
 						}]);
-						*/
-
 						reject({
 							name: 'MEDIASERVER_UNEXPECTED_ANSWER',
 							message: error?.message
@@ -5507,10 +5877,6 @@ this.BX = this.BX || {};
 						// itself already arrives as a coded JoinResponseError. The fast reconnection delay
 						// belongs to a lost transport (closed socket, missed ping), not here.
 						this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
-
-						// don't write error.name and error.message to analytics now,
-						// because we don't watch failed reconnecting requests now
-
 						reject({
 							name: 'MEDIASERVER_ERROR',
 							message: `Reason: ${error?.message}`
@@ -5587,6 +5953,7 @@ this.BX = this.BX || {};
 				// wedge audio publishing or accept a late trackCreated from the previous session.
 				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 				this.#privateProperties.microphonePausedOnServer = false;
+				this.#privateProperties.cameraPausedOnServer = false;
 				this.#privateProperties.ownInflightPublicationCids.clear();
 				this.#privateProperties.latestPublicationCidBySource = {};
 				const isReconnect = this.#privateProperties.isReconnecting && this.wasConnected;
@@ -5611,11 +5978,11 @@ this.BX = this.BX || {};
 					Util.setRoomPermissions(data.joinResponse.roomState);
 					Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 				}
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					if (isReconnect && this.monitoringEvents.length > 1) {
 						this.sendMonitoringEvents();
 					}
-				});
+				}
 				this.#processParticipants(data.joinResponse.otherParticipants, isReconnect);
 				if ('recorderStatus' in data.joinResponse) {
 					const recorderStatus = {
@@ -5712,6 +6079,8 @@ this.BX = this.BX || {};
 					this.#onTrackPublishResult(trackId, source, 'trackCreated');
 					if (source === MediaStreamsKinds.Microphone) {
 						this.#reconcilePublishedMicrophoneState();
+					} else if (source === MediaStreamsKinds.Camera) {
+						this.#reconcilePublishedCameraState();
 					}
 				} else {
 					this.#privateProperties.tracksDataFromSocket[trackId] = track;
@@ -5816,14 +6185,14 @@ this.BX = this.BX || {};
 							this.#privateProperties.remoteParticipants[remoteParticipant.userId].connectionQuality = participant.score;
 						}
 						this.#privateProperties.localTracks[MediaStreamsKinds.Camera] && this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted;
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							if (participant.participantSid === this.#privateProperties.localParticipantSid) {
 								this.addValidatedMonitoringMetric({
 									metricKey: MONITORING_METRICS.CONN_SCORE_CURRENT,
 									metricValue: participant.score
 								});
 							}
-						});
+						}
 					});
 				});
 			} else if (data.pongResp) {
@@ -5843,6 +6212,7 @@ this.BX = this.BX || {};
 					this.#clearPingTimeout(mediaServer.id);
 					mediaServer.disconnect();
 					this.#privateProperties.mediaServers.delete(mediaServer.id);
+					this.#privateProperties.mediaServersCurrentQuality.delete(mediaServer.id);
 				}
 			} else if (data.reconnectMediaServer) {
 				this.setLog(`Got reconnectMediaServer signal for ${data.reconnectMediaServer}`, LOG_LEVEL.WARNING);
@@ -5866,6 +6236,7 @@ this.BX = this.BX || {};
 					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 					this.#privateProperties.needToDisableAudioAfterPublish = false;
 					this.#privateProperties.microphonePausedOnServer = false;
+					this.#privateProperties.cameraPausedOnServer = false;
 				}
 				mediaServer.disconnect();
 				mediaServer.connect();
@@ -5954,7 +6325,10 @@ this.BX = this.BX || {};
 			return this.#getMediaServer(this.#privateProperties.publishingMediaServerId);
 		}
 		#createMediaServer(config) {
-			const mediaServer = new MediaServer(config);
+			const mediaServer = new MediaServer({
+				...config,
+				...Util.getNqeParams()
+			});
 			this.#privateProperties.mediaServers.set(mediaServer.id, mediaServer);
 			mediaServer.on('log', this.setLogBound);
 			mediaServer.on('signal', this.sendSignalBound);
@@ -5976,9 +6350,9 @@ this.BX = this.BX || {};
 			mediaServer.off('up', this.onMediaServerUpBound);
 		}
 		#onPeerConnectionIssue(mediaServerId, issue) {
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.addMonitoringEvents(issue);
-			});
+			}
 		}
 		#onMediaServerDown(mediaServerId, additionalData) {
 			if (!this.#privateProperties.isReconnecting) {
@@ -6011,13 +6385,86 @@ this.BX = this.BX || {};
 				}
 			}
 		}
-		#processStats(stats, mediaServerId) {
-			const processedStats = {};
-			if (stats.publisher) {
-				processedStats.publisher = this.#processPublisherStats(stats.publisher, mediaServerId);
+		#onAutoQuality(currentQuality, previousQuality, mediaServerId) {
+			// currentQuality is a numeric level (STREAM_QUALITY.LOW..STREAM_QUALITY.HIGH) coming from NQE
+			if (typeof currentQuality !== 'number' || !Number.isInteger(currentQuality) || currentQuality < STREAM_QUALITY.LOW || currentQuality > STREAM_QUALITY.HIGH) {
+				return;
 			}
-			processedStats.subscriber = this.#processSubscriberStats(stats.subscriber, mediaServerId);
-			this.#triggerEvents('CallStatsReceived', [processedStats]);
+
+			// NQE logging.
+			this.setLog(`NQE: auto-quality changed from ${previousQuality} to ${currentQuality}`, LOG_LEVEL.INFO);
+
+			// Save current quality for this media server
+			this.#privateProperties.mediaServersCurrentQuality.set(mediaServerId, currentQuality);
+
+			// Get minimal quality from all saved values
+			const allQualities = Array.from(this.#privateProperties.mediaServersCurrentQuality.values());
+			const minimalQuality = Math.min(...allQualities);
+
+			// If current quality exceeds minimal, exit
+			if (currentQuality > minimalQuality) {
+				return;
+			}
+
+			// Monitoring events
+			if (previousQuality !== null && currentQuality < previousQuality) {
+				this.addMonitoringEvents({
+					name: MONITORING_EVENTS_NAME_LIST.AUTO_QUALITY_DEGRADED,
+					withCounter: true
+				});
+			} else if (previousQuality !== null && currentQuality > previousQuality) {
+				this.addMonitoringEvents({
+					name: MONITORING_EVENTS_NAME_LIST.AUTO_QUALITY_IMPROVED,
+					withCounter: true
+				});
+			}
+
+			// Prepare params for changing both incoming and outgoing streams quality.
+			// Collect users with subscribed camera tracks.
+			const users = {
+				userId: this.#privateProperties.mainStream?.userId || null,
+				otherUsers: []
+			};
+			Object.entries(this.#privateProperties.remoteParticipants || {}).forEach(([userId, participant]) => {
+				try {
+					const track = participant?.getTrack?.(MediaStreamsKinds.Camera);
+					const subscribed = track && (track.subscribed === true || track.subscribed === 1 || track.subscribed === '1' || track.subscribed === 'true');
+					if (track && subscribed && !participant.isMutedVideo && !participant.isLocalVideoMute) {
+						users.otherUsers.push(Number(userId) || userId);
+					}
+				} catch (e) {
+					// defensive: ignore malformed participant entries
+				}
+			});
+
+			// Change quality for both incoming and outgoing streams.
+			// The setVideoQualityForStreams handles:
+			// - defaultRemoteStreamsQuality (for incoming streams)
+			// - Hardware.maxLocalStreamQualityHeight (for local capture resolution)
+			// - mediaServer.updateVideoEncodings() (for outgoing stream)
+			this.setVideoQualityForStreams({
+				users,
+				videoQuality: currentQuality,
+				auto: true
+			});
+		}
+		#processStats(stats, mediaServerId) {
+			const mediaServer = this.#getMediaServer(mediaServerId);
+			processCallStats({
+				stats,
+				mediaServer,
+				processPublisherStats: publisherStats => this.#processPublisherStats(publisherStats, mediaServerId),
+				processSubscriberStats: subscriberStats => this.#processSubscriberStats(subscriberStats, mediaServerId),
+				onAutoQuality: (currentQuality, previousQuality) => {
+					this.#onAutoQuality(currentQuality, previousQuality, mediaServerId);
+				},
+				onError: error => {
+					this.setLog(`NQE: auto-quality processing failed: ${error}`, LOG_LEVEL.WARNING);
+				},
+				onStatsReceived: processedStats => {
+					this.#triggerEvents('CallStatsReceived', [processedStats]);
+				}
+			});
 		}
 		#processPublisherStats(stats, mediaServerId) {
 			const statsOutput = [];
@@ -6046,6 +6493,9 @@ this.BX = this.BX || {};
 						remoteReports[reportId] = report;
 						return;
 					}
+					if (reportsWithoutRemoteInfo[reportId] && main_core.Type.isBoolean(reportsWithoutRemoteInfo[reportId].active)) {
+						report.active = reportsWithoutRemoteInfo[reportId].active;
+					}
 					if (!this.#privateProperties.outgoingTracksReports[mediaServerId][reportId]) {
 						this.#privateProperties.outgoingTracksReports[mediaServerId][reportId] = {};
 					}
@@ -6054,7 +6504,7 @@ this.BX = this.BX || {};
 					const {
 						currentPercentPacketLost
 					} = packetsLostData;
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl) {
 						this.addValidatedMonitoringMetric({
 							additionalData: {
 								currentReportPacketsSent: reportsWithoutRemoteInfo[reportId]?.packetsSent,
@@ -6065,15 +6515,15 @@ this.BX = this.BX || {};
 							metricKey: MONITORING_METRICS.PACKET_LOST_SEND,
 							metricValue: currentPercentPacketLost
 						});
-					});
+					}
 					if (!packetLostEventAdded && currentPercentPacketLost > this.#privateProperties.packetLostThreshold) {
 						packetLostEventAdded = true;
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							this.addMonitoringEvents({
 								name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_SEND,
 								withCounter: true
 							});
-						});
+						}
 					}
 					prevReport.packetsLostData = packetsLostData;
 					prevReport.packetsLost = {
@@ -6103,13 +6553,16 @@ this.BX = this.BX || {};
 					} else if (report.kind === 'video') {
 						report.source = report.contentType === 'screenshare' ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
 					}
+					if (remoteReports[reportId] && main_core.Type.isBoolean(report.active)) {
+						remoteReports[reportId].active = report.active;
+					}
 					totalBitrateOut.push({
 						bitrate: report.bitrate,
 						kind: report.kind,
 						contentType: report.contentType
 					});
 					if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent) {
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							if (report.qualityLimitationReason === 'cpu') {
 								this.addMonitoringEvents({
 									name: MONITORING_EVENTS_NAME_LIST.CPU_ISSUES,
@@ -6122,7 +6575,7 @@ this.BX = this.BX || {};
 									withCounter: true
 								});
 							}
-						});
+						}
 						isQualityLimitationSent = true;
 						const limitations = Object.entries(report.qualityLimitationDurations).reduce((accumulator, value, index) => `${accumulator}${index ? ', ' : ''}${value[0]}: ${value[1]}`, '');
 						this.setLog(`Local user have problems with sending video: ${report.qualityLimitationReason} (${limitations})`, LOG_LEVEL.WARNING);
@@ -6135,7 +6588,7 @@ this.BX = this.BX || {};
 					}
 				}
 			});
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				const bitrateSumOut = calcBitrateSumFromArray({
 					bitrateArray: totalBitrateOut
 				});
@@ -6151,7 +6604,7 @@ this.BX = this.BX || {};
 						metricValue: bitrateSumOut
 					});
 				}
-			});
+			}
 			if (!this.#privateProperties.stats[this.#privateProperties.userId]) {
 				this.#privateProperties.stats[this.#privateProperties.userId] = [];
 			}
@@ -6206,6 +6659,7 @@ this.BX = this.BX || {};
 				const needCheckPacketLosts = report?.trackIdentifier && report.hasOwnProperty('packetsLost') && report.hasOwnProperty('packetsReceived');
 				if (needCheckPacketLosts) {
 					const packetsLostData = Util.calcRemotePacketsLost(report, this.#privateProperties.reportsForIncomingTracks[mediaServerId][report.trackIdentifier]);
+					report.packetsLostData = packetsLostData;
 					report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
 					this.#privateProperties.reportsForIncomingTracks[mediaServerId][report.trackIdentifier] = report;
 					const realTrackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
@@ -6249,7 +6703,7 @@ this.BX = this.BX || {};
 					Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
 				}
 			});
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				const {
 					countVideoTracks,
 					countAudioTracks
@@ -6374,7 +6828,7 @@ this.BX = this.BX || {};
 						withCounter: true
 					});
 				}
-			});
+			}
 			for (let userId in dataLoss) {
 				if (!this.#privateProperties.stats[userId]) {
 					this.#privateProperties.stats[userId] = [];
@@ -6561,6 +7015,36 @@ this.BX = this.BX || {};
 				}
 			}
 		}
+
+		// Mirror of #reconcilePublishedMicrophoneState for the camera. Whatever raced while the publication
+		// was in flight - a camera-off with no sid to pause yet, an off/on pair, a system mute - the freshly
+		// published track is brought to the authoritative intent here. Guarded and idempotent: no redundant
+		// pause/unpause, and nothing to remember between calls.
+		#reconcilePublishedCameraState() {
+			const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Camera];
+			if (!localTrack?.sid) {
+				return;
+			}
+			const videoTrack = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+			const hasLiveCapture = videoTrack?.readyState === 'live';
+			// Honour a system mute too: under it the capture stays alive for onunmute, but it must not
+			// transmit, and a late publication result would otherwise re-enable it.
+			const shouldTransmit = Hardware.isCameraOn && !this.#privateProperties.mediaMutedBySystem;
+			if (hasLiveCapture) {
+				videoTrack.enabled = shouldTransmit;
+			}
+			// A publication whose capture has ended transmits nothing, whatever the camera button says, and
+			// isVideoPublished() reads this flag: claiming otherwise would tell callers that a track is going
+			// out when there is nothing left to send, and a re-capture never gets started.
+			localTrack.muted = !(shouldTransmit && hasLiveCapture);
+			if (!shouldTransmit && !this.#privateProperties.cameraPausedOnServer) {
+				this.pauseTrack(MediaStreamsKinds.Camera, true);
+			} else if (shouldTransmit && hasLiveCapture && this.#privateProperties.cameraPausedOnServer) {
+				// Never unpause a camera that is not being captured: enableVideo owns bringing it back, and
+				// unpausing ahead of it would have the server forward a sender whose track is stopped.
+				this.unpauseTrack(MediaStreamsKinds.Camera);
+			}
+		}
 		#onTrackPublishResult(trackId, source, calledFrom) {
 			if (source === MediaStreamsKinds.Microphone) {
 				if (this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE) {
@@ -6628,23 +7112,23 @@ this.BX = this.BX || {};
 			}
 			const timeout = setTimeout(() => {
 				this.setLog(`Track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) was not received, trying to subscribe to it`, LOG_LEVEL.WARNING);
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_DELAY,
 						withCounter: true
 					});
-				});
+				}
 				if (tries > 0) {
 					this.#addPendingSubscription(participant, track, tries - 1);
 					this.#changeSubscriptionToTrack(track.sid, participant.sid, true, participant.mediaServerId);
 				} else {
 					this.setLog(`Subscription to track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) failed`, LOG_LEVEL.ERROR);
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl) {
 						this.addMonitoringEvents({
 							name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_FAILED,
 							withCounter: true
 						});
-					});
+					}
 					if (!participant.hasFailedSubscription(track.source)) {
 						const data = {
 							eventName: 'SubscriptionFailed',
@@ -6731,20 +7215,6 @@ this.BX = this.BX || {};
 							await mediaServer.setBitrate(streamQualityOptions[key], kind);
 						}
 					}
-				} else if (source === MediaStreamsKinds.ScreenAudio) {
-					this.sender.addTransceiver(MediaStreamTrack, {
-						direction: 'sendonly'
-					});
-					this.sender.addTransceiver(MediaStreamTrack, {
-						direction: 'sendonly'
-					});
-					this.#addPendingPublication(MediaStreamTrack.id, source);
-					this.#sendSignal({
-						"addTrack": {
-							"cid": MediaStreamTrack.id,
-							"source": source
-						}
-					});
 				}
 			}
 		}
@@ -6754,6 +7224,10 @@ this.BX = this.BX || {};
 				isActive
 			} = this.#privateProperties.republication[mediaStreamKind];
 			if (tries >= this.#privateProperties.republicationTries || isActive) {
+				return;
+			}
+			if (!isRepublishAllowed(mediaStreamKind, Hardware.isCameraOn)) {
+				this.setLog(`Skip republishing a track with kind ${mediaStreamKind}: camera is turned off by user`, LOG_LEVEL.INFO);
 				return;
 			}
 			this.#updateRepublicationState(mediaStreamKind, true);
@@ -6916,6 +7390,8 @@ this.BX = this.BX || {};
 					quality = STREAM_QUALITY.MEDIUM;
 				}
 			}
+			const qualityFromHeight = getStreamQualityFromHeight();
+			quality = Math.min(quality, qualityFromHeight);
 			return quality;
 		}
 		#changeRoomStreamsQuality(users, kind) {
@@ -6924,7 +7400,8 @@ this.BX = this.BX || {};
 			if (mainStreamUserId) {
 				const participant = this.#privateProperties.remoteParticipants[users.userId];
 				if (participant) {
-					const quality = kind === MediaStreamsKinds.Camera ? STREAM_QUALITY.HIGH : this.#privateProperties.defaultRemoteStreamsQuality;
+					const qualityFromHeight = getStreamQualityFromHeight();
+					const quality = kind === MediaStreamsKinds.Camera ? Math.min(qualityFromHeight, STREAM_QUALITY.HIGH) : this.#privateProperties.defaultRemoteStreamsQuality;
 					this.#privateProperties.mainStream = {
 						userId: users.userId,
 						kind
@@ -7024,6 +7501,7 @@ this.BX = this.BX || {};
 				mediaServer.disconnect();
 			}
 			this.#privateProperties.mediaServers.clear();
+			this.#privateProperties.mediaServersCurrentQuality.clear();
 			clearTimeout(this.#privateProperties.reconnectionTimeout);
 			this.#resetAudioDeviceSwitch();
 			for (let trackId in this.#privateProperties.pendingPublications) {
@@ -7073,19 +7551,7 @@ this.BX = this.BX || {};
 			this.#changeRoomStreamsQuality(users, kind);
 		}
 		setVideoQualityForStreams(params) {
-			this.#privateProperties.defaultRemoteStreamsQuality = params.videoQuality;
-			this.#changeRoomStreamsQuality(params);
-			if (this.#privateProperties.defaultRemoteStreamsQuality === STREAM_QUALITY.NO_VIDEO) {
-				this.disableVideo({
-					calledFrom: 'setVideoQuality'
-				});
-				Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO;
-				return;
-			}
-			if (params.isCameraWasEnabledBeforeQualityChanged && this.#privateProperties.defaultRemoteStreamsQuality !== STREAM_QUALITY.NO_VIDEO) {
-				this.#triggerEvents('TurnOnCamera');
-			}
-			switch (this.#privateProperties.defaultRemoteStreamsQuality) {
+			switch (params.videoQuality) {
 				case STREAM_QUALITY.HIGH:
 					Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 					break;
@@ -7095,6 +7561,27 @@ this.BX = this.BX || {};
 				case STREAM_QUALITY.LOW:
 					Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.LOW;
 					break;
+			}
+			this.#changeRoomStreamsQuality(params.users, MediaStreamsKinds.Camera);
+			if (params.videoQuality === STREAM_QUALITY.NO_VIDEO) {
+				this.disableVideo({
+					calledFrom: 'setVideoQuality'
+				});
+				Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO;
+				return;
+			}
+			if (params.isCameraWasEnabledBeforeQualityChanged && params.videoQuality !== STREAM_QUALITY.NO_VIDEO) {
+				this.#triggerEvents('TurnOnCamera');
+			}
+
+			// Only a manual quality change updates the NQE target; auto changes come from the NQE itself.
+			if (!params.auto && params.videoQuality !== STREAM_QUALITY.NO_VIDEO) {
+				for (const mediaServer of this.#privateProperties.mediaServers.values()) {
+					if (mediaServer.nqe) {
+						mediaServer.nqe.setManualTarget(params.videoQuality);
+						this.setLog(`NQE: manual target set to ${params.videoQuality}`, LOG_LEVEL.INFO);
+					}
+				}
 			}
 			const mediaServer = this.#getPublishingMediaServer();
 			mediaServer?.updateVideoEncodings();
@@ -7127,6 +7614,9 @@ this.BX = this.BX || {};
 				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
 					this.#privateProperties.microphonePausedOnServer = true;
 				}
+				if (mediaStreamKind === MediaStreamsKinds.Camera) {
+					this.#privateProperties.cameraPausedOnServer = true;
+				}
 				this.#sendSignal({
 					mute: {
 						sid: trackSid,
@@ -7143,6 +7633,9 @@ this.BX = this.BX || {};
 				this.setLog(`Sending unpause signal for a track with kind ${mediaStreamKind} (sid: ${trackSid})`, LOG_LEVEL.INFO);
 				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
 					this.#privateProperties.microphonePausedOnServer = false;
+				}
+				if (mediaStreamKind === MediaStreamsKinds.Camera) {
+					this.#privateProperties.cameraPausedOnServer = false;
 				}
 				this.#sendSignal({
 					mute: {
@@ -7331,10 +7824,44 @@ this.BX = this.BX || {};
 			this.#updateRepublicationState(MediaStreamsKinds.Camera);
 			this.setLog(`Start disabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
 			if (this.#privateProperties.isReconnecting) {
+				// No session to signal on - a pause would target a sid of the session being torn down - but the
+				// capture still has to go: a reconnect deliberately keeps it alive in order to republish it, so
+				// nothing else releases a camera the user switched off, and the device would stay lit until the
+				// next manual on/off. The new session does not bring it back: republication is guarded by
+				// Hardware.isCameraOn. A system mute keeps the capture, as everywhere else.
+				if (!bySystem) {
+					this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+					// Releasing the capture kills the only thing that could ever clear a system mute - the
+					// track's onunmute - and the flag is shared with the microphone, so it would go on muting
+					// both until the next manual camera toggle. Clear it here, as the ordinary disable does.
+					const wasMutedBySystem = this.#privateProperties.mediaMutedBySystem;
+					this.#privateProperties.mediaMutedBySystem = false;
+					this.#releaseStream(MediaStreamsKinds.Camera);
+					if (this.#privateProperties.monitoringServerUrl) {
+						this.addMonitoringEvents({
+							name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
+							withCounter: true
+						});
+					}
+					// PublishEnded, not onPublishFailed: the local renderer is torn down either way (both events
+					// share one handler), but a user switching the camera off is not a publication failure and
+					// must not land in that metric. The republication watchdog is already updated at the top of
+					// this method.
+					this.#triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+					if (wasMutedBySystem) {
+						this.#triggerEvents('MediaMutedBySystem', [false]);
+					}
+				}
 				return;
 			}
 			this.#privateProperties.videoQueue = VIDEO_QUEUE.DISABLE;
 			if (hasQueue) {
+				// Privacy: stop transmitting at once, before the in-flight enable finishes publishing. The server
+				// side is not this branch's business - the publication result reconciles it.
+				const inflightTrack = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+				if (inflightTrack) {
+					inflightTrack.enabled = false;
+				}
 				return;
 			}
 			const track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
@@ -7347,12 +7874,12 @@ this.BX = this.BX || {};
 					if (this.#privateProperties.needToStopStreams) {
 						CallStreamManager.stopStream(MediaStreamsKinds.Camera);
 					}
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl) {
 						this.addMonitoringEvents({
 							name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
 							withCounter: true
 						});
-					});
+					}
 					this.onPublishFailed(MediaStreamsKinds.Camera);
 				};
 				if (this.#privateProperties.mediaMutedBySystem) {
@@ -7373,6 +7900,29 @@ this.BX = this.BX || {};
 				this.setLog(`Disabling video failed - track: ${Boolean(track)}, localTracks: ${Boolean(trackInfo)}`, LOG_LEVEL.ERROR);
 				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 			}
+		}
+
+		// A camera-off may have superseded an enableVideo that is awaiting a device switch or a capture.
+		// Hardware.isCameraOn is the only durable truth here: it survives a reconnect, which resets the
+		// queue, and it separates a user switching the camera off from a system mute - which the queue
+		// alone cannot, since a system mute writes DISABLE into it while the camera stays switched on.
+		#cancelEnableVideoIfCameraOff(stage) {
+			if (Hardware.isCameraOn) {
+				return false;
+			}
+			this.setLog(`Enabling video cancelled: the camera was switched off while ${stage}`, LOG_LEVEL.INFO);
+			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+			const hasCapture = Boolean(this.#privateProperties.cameraStream?.getVideoTracks()[0]);
+			const hasPublication = Boolean(this.#privateProperties.localTracks[MediaStreamsKinds.Camera]);
+			if (hasCapture || hasPublication) {
+				// Hand the cleanup to disableVideo: it pauses the publication and releases the capture, so a
+				// cancelled enable never leaves a half-captured camera behind. Guarded so a cancellation with
+				// nothing captured does not log a disabling failure.
+				this.disableVideo({
+					calledFrom: 'enableVideo.cameraSwitchedOff'
+				});
+			}
+			return true;
 		}
 		async enableVideo(options) /* {calledFrom: 'processVideoQueue', skipUnpause: true} */
 		{
@@ -7401,6 +7951,15 @@ this.BX = this.BX || {};
 			}
 			let hasTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Camera];
 			let track = await this.getLocalVideo();
+			if (this.#cancelEnableVideoIfCameraOff('awaiting the camera capture')) {
+				return;
+			}
+			if (track) {
+				// The capture may still be muted by a disable that caught it in flight. Restore it here: a
+				// republish through replaceTrack succeeds without ever producing a publication result, so the
+				// reconciliation above would never see it.
+				track.enabled = true;
+			}
 			if (track && hasTrack) {
 				if (this.#privateProperties.mediaMutedBySystem) {
 					this.#privateProperties.mediaMutedBySystem = false;
@@ -7520,7 +8079,9 @@ this.BX = this.BX || {};
 			});
 		}
 		switchConnectionType(type) {
-			this.#sendSignal({
+			// Returns whether the switch was actually delivered to the server, so callers can avoid
+			// a one-sided local switch when the signaling socket has already gone down.
+			return this.#sendSignal({
 				switchConnectionType: {
 					type
 				}
@@ -7772,12 +8333,12 @@ this.BX = this.BX || {};
 						monitoringEvent = MONITORING_EVENTS_NAME_LIST.LOCAL_MICROPHONE_STREAM_RECEIVING_FAILED;
 					}
 					if (monitoringEvent) {
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							this.addMonitoringEvents({
 								name: monitoringEvent,
 								withCounter: true
 							});
-						});
+						}
 					}
 					const stream = await this.#getUserMedia(options, true);
 					if (stream !== null) {
@@ -7808,12 +8369,12 @@ this.BX = this.BX || {};
 				return stream;
 			} catch (error) {
 				this.setLog(`Getting display media failed: ${error}`, LOG_LEVEL.ERROR);
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_RECEIVING_FAILED,
 						withCounter: true
 					});
-				});
+				}
 				return null;
 			}
 		}
@@ -8342,7 +8903,7 @@ this.BX = this.BX || {};
 				let a = ['Call API log [' + Util.getTimeForLog() + ']: '];
 				console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 			}
-			if (Util.isMetricsLogsEnabled()) {
+			if (this.#privateProperties.monitoringLogsServerUrl) {
 				return this.#sendLog(data, level);
 			}
 			if (this.#privateProperties.isloggingEnable) {
@@ -8392,7 +8953,7 @@ this.BX = this.BX || {};
 			this.currentMonitoringEventsObject.logs.push(logObject);
 		}
 		#sendLog(logData, level) {
-			if (Util.isMetricsLogsEnabled()) {
+			if (this.#privateProperties.monitoringLogsServerUrl) {
 				return this.prepareMetricsLogs({
 					logData,
 					level
@@ -8658,6 +9219,11 @@ this.BX = this.BX || {};
 						if (this.#privateProperties.videoQueue) {
 							this.#processVideoQueue();
 						}
+
+						// A mute/unmute confirmation is the other publication-state event: an off/on pair that raced
+						// an in-flight unpause lands here and never produces a trackCreated, so this is the only
+						// place left to bring the published camera back to the current intent.
+						this.#reconcilePublishedCameraState();
 					} else if (track.source === MediaStreamsKinds.Microphone) {
 						if (data?.muted && !Hardware.isMicrophoneMuted) {
 							// Server reports the mic muted while the local intent is unmuted - log the mismatch;
@@ -8980,9 +9546,9 @@ this.BX = this.BX || {};
 			return false;
 		}
 		#sendLeave() {
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.sendMonitoringEvents(false);
-			});
+			}
 			if (this.#privateProperties.socketConnection?.readyState === 1) {
 				this.#sendSignal({
 					leave: {
@@ -9243,9 +9809,9 @@ this.BX = this.BX || {};
 			this.parentUuid = params.parentUuid || null;
 			this.direction = params.direction;
 			this.scheme = params.scheme;
-			this.type = BX.prop.getInteger(params, "type", CallType$1.Instant); // @see {BX.Call.Type}
+			this.type = BX.prop.getInteger(params, "type", call_mapping.CallType.Instant); // @see {BX.Call.Type}
 			this.roomType = BX.prop.getInteger(params, 'roomType', RoomType.Small);
-			this.state = BX.prop.getString(params, "state", CallState.Idle);
+			this.state = BX.prop.getString(params, "state", call_mapping.CallState.Idle);
 			this.isReconnecting = false;
 			this.reconnectHistory = new call_lib_reconnectHistory.ReconnectHistory();
 			this.ready = false;
@@ -9403,7 +9969,7 @@ this.BX = this.BX || {};
 				this.logger.destroy();
 				this.logger = null;
 			}
-			this.state = CallState.Finished;
+			this.state = call_mapping.CallState.Finished;
 			this.runCallback(CallEvent.onDestroy);
 		}
 		updateCommonRecordState({
@@ -9488,6 +10054,10 @@ this.BX = this.BX || {};
 
 	// How long a single microphone capture may hold the device switch before the switch stops waiting for it.
 	const SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT = 15000;
+
+	// How many stats ticks in a row a remote microphone may bring no data before the episode is opened.
+	// A default, not a measured value: no distribution of real traffic to pick it from.
+	const FREEZE_TICKS = 2;
 	class CallLegacy {
 		sender = null;
 		recipient = null;
@@ -9562,6 +10132,7 @@ this.BX = this.BX || {};
 			needToEnableAudioAfterSystemMuted: false,
 			needToDisableAudioAfterPublish: false,
 			microphonePausedOnServer: false,
+			cameraPausedOnServer: false,
 			microphoneDiscrepancyLogged: false,
 			localTracks: {},
 			localConnectionQuality: 0,
@@ -9571,6 +10142,9 @@ this.BX = this.BX || {};
 			pingTimeoutDuration: 0,
 			ontrackData: {},
 			remoteTracks: {},
+			remoteAudioWatchers: {},
+			remoteAudioWatchersByUser: {},
+			freezeWatchers: {},
 			remoteParticipants: {},
 			participantsToUpdateTrackAvailability: {},
 			mainStream: {},
@@ -9617,7 +10191,8 @@ this.BX = this.BX || {};
 			statsTimeout: 3000,
 			videoQueue: VIDEO_QUEUE.INITIAL,
 			audioQueue: AUDIO_QUEUE.INITIAL,
-			videoStreamSetupErrorList: {}
+			videoStreamSetupErrorList: {},
+			nqe: null // Network Quality Evaluator instance.
 		};
 		constructor() {
 			this.sendLeaveBound = this.#sendLeave.bind(this);
@@ -9645,9 +10220,10 @@ this.BX = this.BX || {};
 				framesDropped: 0,
 				framesReceived: 0
 			};
-			main_core.Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', event => {
+			this.globalLogHandler = event => {
 				this.setLog(event.data);
-			});
+			};
+			main_core.Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', this.globalLogHandler);
 			this.initConnectionEvent();
 			Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 		}
@@ -9679,9 +10255,32 @@ this.BX = this.BX || {};
 			if (!connection) {
 				return;
 			}
-			connection.addEventListener('change', () => {
+			this.observedConnection = connection;
+			this.connectionChangeHandler = () => {
 				this.onChangeConnection(connection);
-			});
+			};
+			connection.addEventListener('change', this.connectionChangeHandler);
+		}
+
+		// Detaches the handlers the constructor put on global emitters and stops
+		// the self-restarting monitoring timers so a short-lived instance (e.g.
+		// a zombie-room close session) can be garbage collected instead of
+		// living and reporting as long as the page.
+		releaseGlobalSubscriptions() {
+			this.#forgetRemoteAudioTracks('global-release');
+			if (this.globalLogHandler) {
+				main_core.Event.EventEmitter.unsubscribe('BX.Call.Logger:sendLog', this.globalLogHandler);
+				this.globalLogHandler = null;
+			}
+			if (this.observedConnection && this.connectionChangeHandler) {
+				this.observedConnection.removeEventListener('change', this.connectionChangeHandler);
+			}
+			this.observedConnection = null;
+			this.connectionChangeHandler = null;
+			clearInterval(this.monitoringInterval);
+			this.monitoringInterval = null;
+			clearTimeout(this.monitoringTimeout);
+			this.monitoringTimeout = null;
 		}
 		clearMonitoringEvents() {
 			this.monitoringEvents = [];
@@ -9734,6 +10333,57 @@ this.BX = this.BX || {};
 				metricValue: value
 			});
 		}
+		#onAutoQuality(currentQuality, previousQuality) {
+			// currentQuality is a numeric level (STREAM_QUALITY.LOW..STREAM_QUALITY.HIGH) coming from NQE
+			if (typeof currentQuality !== 'number' || !Number.isInteger(currentQuality) || currentQuality < STREAM_QUALITY.LOW || currentQuality > STREAM_QUALITY.HIGH) {
+				return;
+			}
+
+			// NQE logging.
+			this.setLog(`NQE: auto-quality changed from ${previousQuality} to ${currentQuality}`, LOG_LEVEL.INFO);
+
+			// Monitoring events.
+			if (previousQuality !== null && currentQuality < previousQuality) {
+				this.addMonitoringEvents({
+					name: MONITORING_EVENTS_NAME_LIST.AUTO_QUALITY_DEGRADED,
+					withCounter: true
+				});
+			} else if (previousQuality !== null && currentQuality > previousQuality) {
+				this.addMonitoringEvents({
+					name: MONITORING_EVENTS_NAME_LIST.AUTO_QUALITY_IMPROVED,
+					withCounter: true
+				});
+			}
+
+			// Prepare params for changing both incoming and outgoing streams quality.
+			// Collect users with subscribed camera tracks.
+			const users = {
+				userId: this.#privateProperties.mainStream?.userId || null,
+				otherUsers: []
+			};
+			Object.entries(this.#privateProperties.remoteParticipants || {}).forEach(([userId, participant]) => {
+				try {
+					const track = participant?.getTrack?.(MediaStreamsKinds.Camera);
+					const subscribed = track && (track.subscribed === true || track.subscribed === 1 || track.subscribed === '1' || track.subscribed === 'true');
+					if (track && subscribed && !participant.isMutedVideo && !participant.isLocalVideoMute) {
+						users.otherUsers.push(Number(userId) || userId);
+					}
+				} catch (e) {
+					// defensive: ignore malformed participant entries.
+				}
+			});
+
+			// Change quality for both incoming and outgoing streams.
+			// The setVideoQualityForStreams handles:
+			// - defaultRemoteStreamsQuality (for incoming streams)
+			// - Hardware.maxLocalStreamQualityHeight (for local capture resolution)
+			// - mediaServer.updateVideoEncodings() (for outgoing stream)
+			this.setVideoQualityForStreams({
+				users,
+				videoQuality: currentQuality,
+				auto: true
+			});
+		}
 		setClearValuesForCurrentMonitoringEventsObject() {
 			this.currentMonitoringEventsObject.events = [];
 			this.currentMonitoringEventsObject.logs = [];
@@ -9763,7 +10413,7 @@ this.BX = this.BX || {};
 		}
 		startAggregateMonitoringEvents() {
 			this.setClearValuesForCurrentMonitoringEventsObject();
-			if (Util.isMetricsEnabled()) {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.monitoringInterval = setInterval(() => {
 					const {
 						countVideoTracks,
@@ -9785,7 +10435,7 @@ this.BX = this.BX || {};
 			}, this.monitoringDelayTime);
 		}
 		sendLogMonitoringRtcStats() {
-			if (Util.isMetricsEnabled()) {
+			if (this.#privateProperties.monitoringServerUrl) {
 				const isRtcStatsNotEmpty = !!Object.keys(this.currentMonitoringRtcStatsObject);
 				let metricsResultString = '';
 				if (isRtcStatsNotEmpty) {
@@ -9804,7 +10454,7 @@ this.BX = this.BX || {};
 					sendMonitoringData(metricsResultString, this.#privateProperties.monitoringServerUrl, this.#privateProperties.monitoringJwtToken);
 				}
 			}
-			if (Util.isMetricsLogsEnabled() && this.currentMonitoringEventsObject.logs.length) {
+			if (this.#privateProperties.monitoringLogsServerUrl && this.currentMonitoringEventsObject.logs.length) {
 				const otplLogsStructure = {
 					resourceLogs: [{
 						resource: {
@@ -9849,19 +10499,16 @@ this.BX = this.BX || {};
 			} else if (kind === MediaStreamsKinds.Screen) {
 				eventName = MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_PUBLICATION_FAILED;
 			}
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.addMonitoringEvents({
 					name: eventName,
 					withCounter: true
 				});
-			});
+			}
 		}
 		async connect(options) {
 			this.setLog(`Connecting to the call (desktop: ${Util.isDesktop()})`, LOG_LEVEL.INFO);
 			this.#privateProperties.callState = CALL_STATE.PROGRESSING;
-			if (Util.isMetricsEnabled() || Util.isMetricsLogsEnabled()) {
-				this.startAggregateMonitoringEvents();
-			}
 			for (let key in options) {
 				this.#privateProperties[`${key}`] = options[key];
 			}
@@ -9898,9 +10545,6 @@ this.BX = this.BX || {};
 					this.#privateProperties.monitoringRegion = mediaServerInfo.monitoringRegion;
 				} catch (error) {
 					if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted) {
-						// don't write error.name and error.message to analytics now,
-						// because we don't watch failed reconnecting requests now
-
 						this.#reconnect({
 							reconnectionReason: 'GET_MEDIASERVER_INFO',
 							reconnectionReasonInfo: error?.name || ''
@@ -9916,6 +10560,9 @@ this.BX = this.BX || {};
 					destroySocket: true
 				});
 				return;
+			}
+			if (this.#privateProperties.monitoringServerUrl || this.#privateProperties.monitoringLogsServerUrl) {
+				this.startAggregateMonitoringEvents();
 			}
 			this.#privateProperties.abortController.signal.addEventListener('abort', this.beforeDisconnectBound);
 			this.#privateProperties.socketConnect?.close(CloseCode.Reconnect);
@@ -9949,12 +10596,12 @@ this.BX = this.BX || {};
 			// previous attempt would run connect() a second time, with its own join request and socket.
 			clearTimeout(this.#privateProperties.reconnectionTimeout);
 			this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.USER_RECONNECTED,
 					withCounter: true
 				});
-			});
+			}
 			this.triggerEvents('Reconnecting', [data]);
 		}
 		#beforeDisconnect(options) {
@@ -10056,22 +10703,10 @@ this.BX = this.BX || {};
 				}).catch(error => {
 					if (error.code && isErrorPreventingReconnection(error.code) || error.name === 'AbortError' || error.name === 'SyntaxError') {
 						this.#privateProperties.abortController.abort();
-						/*
-						let errorCode = 'UNKNOWN_ERROR';
-						if (Type.isObject(error) && error instanceof JoinResponseError)
-						{
-							errorCode = error.name;
-						}
-						else if (Type.isObject(error) && error.code)
-						{
-							errorCode = error.code === 'access_denied' 'ACCESS_DENIED' : error.code;
-						}
-							this.triggerEvents('ReconnectingFailed', [null, {
-							code: errorCode,
-							message: error?.message,
+						this.triggerEvents('ReconnectingFailed', [null, {
+							code: Util.getCallConnectionErrorCode(error),
+							message: error?.message
 						}]);
-						*/
-
 						reject({
 							name: 'MEDIASERVER_UNEXPECTED_ANSWER',
 							message: error?.message
@@ -10081,10 +10716,6 @@ this.BX = this.BX || {};
 						// itself already arrives as a coded JoinResponseError. The fast reconnection delay
 						// belongs to a lost transport (closed socket, missed ping), not here.
 						this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
-
-						// don't write error.name and error.message to analytics now,
-						// because we don't watch failed reconnecting requests now
-
 						reject({
 							name: 'MEDIASERVER_ERROR',
 							message: `Reason: ${error?.message}`
@@ -10190,11 +10821,11 @@ this.BX = this.BX || {};
 					Util.setRoomPermissions(data.joinResponse.roomState);
 					Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 				}
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					if (isReconnect && this.monitoringEvents.length) {
 						this.sendMonitoringEvents();
 					}
-				});
+				}
 				const participantsToDelete = {
 					...this.#privateProperties.remoteParticipants
 				};
@@ -10209,6 +10840,7 @@ this.BX = this.BX || {};
 					for (let userId in participantsToDelete) {
 						const participant = this.#privateProperties.remoteParticipants[userId];
 						this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+						this.#forgetRemoteAudioTracksOfUser(userId, 'reconnect-cleanup');
 						this.triggerEvents('ParticipantLeaved', [participant]);
 						delete this.#privateProperties.remoteTracks[userId];
 						delete this.#privateProperties.remoteParticipants[userId];
@@ -10234,6 +10866,7 @@ this.BX = this.BX || {};
 				const participantId = data.participantLeft.userId;
 				const participant = this.#privateProperties.remoteParticipants[participantId];
 				const pendingSubscriptions = this.#privateProperties.pendingSubscriptions[participantId];
+				this.#forgetRemoteAudioTracksOfUser(participantId, 'participant-left');
 				if (pendingSubscriptions) {
 					for (let trackId in pendingSubscriptions) {
 						clearTimeout(pendingSubscriptions[trackId].timeout);
@@ -10299,8 +10932,11 @@ this.BX = this.BX || {};
 						if (track.source === MediaStreamsKinds.Microphone) {
 							this.#processTrackPublishedAudio();
 							this.#reconcilePublishedMicrophoneState();
-						} else if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue) {
-							this.#processVideoQueue();
+						} else if (track.source === MediaStreamsKinds.Camera) {
+							if (this.#privateProperties.videoQueue) {
+								this.#processVideoQueue();
+							}
+							this.#reconcilePublishedCameraState();
 						}
 						return;
 					}
@@ -10343,6 +10979,7 @@ this.BX = this.BX || {};
 						this.setLog(`Track with id ${trackId} was deleted during subscription attempt, cancel it`, LOG_LEVEL.WARNING);
 					}
 					if (participantId == this.#privateProperties.userId) return;
+					this.#forgetRemoteAudioTrack(trackId, 'track-deleted');
 					this.setLog(`Start deleting a track with id ${trackId} from a participant with id ${participantId} `, LOG_LEVEL.INFO);
 					const participant = this.#privateProperties.remoteParticipants[participantId];
 					if (!participant) {
@@ -10404,14 +11041,14 @@ this.BX = this.BX || {};
 							this.#privateProperties.remoteParticipants[remoteParticipant.userId].connectionQuality = participant.score;
 						}
 						const isLocalVideoMuted = this.#privateProperties.localTracks[MediaStreamsKinds.Camera] && this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted;
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							if (participant.participantSid === this.#privateProperties.localParticipantSid) {
 								this.addValidatedMonitoringMetric({
 									metricKey: MONITORING_METRICS.CONN_SCORE_CURRENT,
 									metricValue: participant.score
 								});
 							}
-						});
+						}
 						if (participant.participantSid === this.#privateProperties.localParticipantSid && (!isLocalVideoMuted || !this.#privateProperties.localConnectionQuality) && !this.#privateProperties.localTracks[MediaStreamsKinds.Screen]) {
 							participants[this.#privateProperties.userId] = participant.score;
 							this.#privateProperties.localConnectionQuality = participant.score;
@@ -10516,12 +11153,12 @@ this.BX = this.BX || {};
 					return;
 				}
 				this.#privateProperties.peerConnectionFailed = true;
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_REFUSED,
 						withCounter: true
 					});
-				});
+				}
 				this.#beforeDisconnect({
 					destroySocket: true
 				});
@@ -10603,10 +11240,16 @@ this.BX = this.BX || {};
 		triggerEvents(eventType, args) {
 			if (this.#privateProperties.events.has(eventType)) {
 				const event = this.#privateProperties.events.get(eventType);
-				if (args) {
-					event(...args);
-				} else {
-					event();
+				try {
+					if (args) {
+						event(...args);
+					} else {
+						event();
+					}
+				} catch (error) {
+					// String() and not error.message: a listener may throw anything, and message would be
+					// undefined for everything that is not an Error
+					this.setLog(`${eventType} callback error: ${String(error)}`, LOG_LEVEL.ERROR);
 				}
 			}
 		}
@@ -10682,23 +11325,23 @@ this.BX = this.BX || {};
 			}
 			const timeout = setTimeout(() => {
 				this.setLog(`Track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) was not received, trying to subscribe to it`, LOG_LEVEL.WARNING);
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_DELAY,
 						withCounter: true
 					});
-				});
+				}
 				if (tries > 0) {
 					this.#addPendingSubscription(participant, track, tries - 1);
 					this.#changeSubscriptionToTrack(track.sid, participant.sid, true);
 				} else {
 					this.setLog(`Subscription to track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) failed`, LOG_LEVEL.ERROR);
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl) {
 						this.addMonitoringEvents({
 							name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_FAILED,
 							withCounter: true
 						});
-					});
+					}
 					if (!participant.hasFailedSubscription(track.source)) {
 						const data = {
 							eventName: 'SubscriptionFailed',
@@ -10936,14 +11579,7 @@ this.BX = this.BX || {};
 			}
 		}
 		#getMaxEncodingsByVideoWidth(width) {
-			const aspectRation = 16 / 9;
-			let maxWidth = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
-			if (maxWidth <= width) {
-				width = maxWidth;
-			}
-
 			// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=76;
-
 			if (width >= 960) {
 				return 3;
 			} else if (width >= 480) {
@@ -10955,11 +11591,14 @@ this.BX = this.BX || {};
 			const maxEncodings = this.#getMaxEncodingsByVideoWidth(width);
 			const rids = ['q', 'h', 'f'];
 			const encodings = [];
+			const aspectRation = 16 / 9;
+			const maxWidthLimited = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
+			const maxEncodingsLimited = maxWidthLimited < width ? this.#getMaxEncodingsByVideoWidth(maxWidthLimited) : maxEncodings;
 			for (let i = 0; i < 3; i++) {
 				const rid = rids[i];
 				encodings.push({
 					rid,
-					active: i < maxEncodings,
+					active: i < maxEncodingsLimited,
 					maxBitrate: this.#privateProperties.defaultSimulcastBitrate[rid],
 					scaleResolutionDownBy: 2 ** Math.max(0, maxEncodings - 1 - i)
 				});
@@ -11016,10 +11655,17 @@ this.BX = this.BX || {};
 			if (tries >= this.#privateProperties.republicationTries || isActive) {
 				return;
 			}
+			if (!isRepublishAllowed(MediaStreamKind, Hardware.isCameraOn)) {
+				this.setLog(`Skip republishing a track with kind ${MediaStreamKind}: camera is turned off by user`, LOG_LEVEL.INFO);
+				return;
+			}
 			this.#updateRepublicationState(MediaStreamKind, true);
 			this.setLog(`Start republishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
 			try {
 				await this.unpublishTrack(MediaStreamKind);
+				if (this.#abortRepublishing(MediaStreamKind)) {
+					return;
+				}
 				const track = await this.getTrack(MediaStreamKind);
 				if (track === GET_LOCAL_AUDIO_SUPERSEDED) {
 					// A newer microphone capture superseded this republish; it owns the device now. Cancel
@@ -11029,6 +11675,9 @@ this.BX = this.BX || {};
 					return;
 				}
 				if (track) {
+					if (this.#abortRepublishing(MediaStreamKind)) {
+						return;
+					}
 					await this.publishTrack(MediaStreamKind, track);
 					return;
 				}
@@ -11039,6 +11688,15 @@ this.BX = this.BX || {};
 			this.#updateRepublicationState(MediaStreamKind);
 			this.#releaseStream(MediaStreamKind);
 			this.onPublishFailed(MediaStreamKind);
+		}
+		#abortRepublishing(mediaStreamKind) {
+			if (isRepublishAllowed(mediaStreamKind, Hardware.isCameraOn)) {
+				return false;
+			}
+			this.setLog(`Abort republishing a track with kind ${mediaStreamKind}: camera is turned off by user`, LOG_LEVEL.INFO);
+			this.#updateRepublicationState(mediaStreamKind);
+			this.#releaseStream(mediaStreamKind);
+			return true;
 		}
 		#updateRepublicationState(mediaStreamKind, addTry) {
 			if (addTry) {
@@ -11101,6 +11759,8 @@ this.BX = this.BX || {};
 			} else if (!this.#privateProperties.mainStream.userId) {
 				quality = this.#privateProperties.defaultRemoteStreamsQuality;
 			}
+			const qualityFromHeight = getStreamQualityFromHeight();
+			quality = Math.min(quality, qualityFromHeight);
 			return quality;
 		}
 		#changeRoomStreamsQuality(users, kind) {
@@ -11109,7 +11769,8 @@ this.BX = this.BX || {};
 			if (mainStreamUserId) {
 				const participant = this.#privateProperties.remoteParticipants[users.userId];
 				if (participant) {
-					const quality = kind === MediaStreamsKinds.Camera ? STREAM_QUALITY.HIGH : this.#privateProperties.defaultRemoteStreamsQuality;
+					const qualityFromHeight = getStreamQualityFromHeight();
+					const quality = kind === MediaStreamsKinds.Camera ? Math.min(qualityFromHeight, STREAM_QUALITY.HIGH) : this.#privateProperties.defaultRemoteStreamsQuality;
 					this.#privateProperties.mainStream = {
 						userId: users.userId,
 						kind
@@ -11213,6 +11874,10 @@ this.BX = this.BX || {};
 			}
 			this.#privateProperties.abortController.signal.removeEventListener('abort', this.beforeDisconnectBound);
 			this.#privateProperties.abortController.abort();
+
+			// above the TERMINATED assignment on purpose: once isConnected() is false the closing records
+			// of the registries no longer leave through the socket
+			this.#forgetRemoteAudioTracks('hangup');
 			this.#privateProperties.callState = CALL_STATE.TERMINATED;
 			this.setLog(`Disconnecting from the call`, LOG_LEVEL.INFO);
 			if (closeRoom) {
@@ -11292,19 +11957,7 @@ this.BX = this.BX || {};
 			this.#changeRoomStreamsQuality(users, kind);
 		}
 		setVideoQualityForStreams(params) {
-			this.#privateProperties.defaultRemoteStreamsQuality = params.videoQuality;
-			this.#changeRoomStreamsQuality(params);
-			if (this.#privateProperties.defaultRemoteStreamsQuality === STREAM_QUALITY.NO_VIDEO) {
-				this.disableVideo({
-					calledFrom: 'setVideoQuality'
-				});
-				Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO;
-				return;
-			}
-			if (params.isCameraWasEnabledBeforeQualityChanged && this.#privateProperties.defaultRemoteStreamsQuality !== STREAM_QUALITY.NO_VIDEO) {
-				this.triggerEvents('TurnOnCamera');
-			}
-			switch (this.#privateProperties.defaultRemoteStreamsQuality) {
+			switch (params.videoQuality) {
 				case STREAM_QUALITY.HIGH:
 					Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 					break;
@@ -11315,10 +11968,29 @@ this.BX = this.BX || {};
 					Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.LOW;
 					break;
 			}
-			const sender = this.#getSender(MediaStreamsKinds.Camera);
-			if (sender) {
-				this.#updateVideoEncodings(sender);
+			this.#changeRoomStreamsQuality(params.users, MediaStreamsKinds.Camera);
+			if (params.videoQuality === STREAM_QUALITY.NO_VIDEO) {
+				this.disableVideo({
+					calledFrom: 'setVideoQuality'
+				});
+				Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO;
+				return;
 			}
+			if (params.isCameraWasEnabledBeforeQualityChanged && params.videoQuality !== STREAM_QUALITY.NO_VIDEO) {
+				this.triggerEvents('TurnOnCamera');
+			}
+
+			// Only a manual quality change updates the NQE target; auto changes come from the NQE itself.
+			if (!params.auto && this.#privateProperties.nqe && params.videoQuality !== STREAM_QUALITY.NO_VIDEO) {
+				this.#privateProperties.nqe.setManualTarget(params.videoQuality);
+				this.setLog(`NQE: manual target set to ${params.videoQuality}`, LOG_LEVEL.INFO);
+			}
+			this.getLocalVideo().then(videoTrack => {
+				const sender = this.#getSender(MediaStreamsKinds.Camera);
+				if (sender && videoTrack) {
+					this.#updateVideoEncodings(sender, videoTrack);
+				}
+			});
 		}
 		resetMainStream(users) {
 			this.setLog(`Resetting main stream`, LOG_LEVEL.INFO);
@@ -11348,6 +12020,9 @@ this.BX = this.BX || {};
 				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
 					this.#privateProperties.microphonePausedOnServer = true;
 				}
+				if (mediaStreamKind === MediaStreamsKinds.Camera) {
+					this.#privateProperties.cameraPausedOnServer = true;
+				}
 				this.#sendSignal({
 					mute: {
 						sid: trackSid,
@@ -11364,6 +12039,9 @@ this.BX = this.BX || {};
 				this.setLog(`Sending unpause signal for a track with kind ${mediaStreamKind} (sid: ${trackSid})`, LOG_LEVEL.INFO);
 				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
 					this.#privateProperties.microphonePausedOnServer = false;
+				}
+				if (mediaStreamKind === MediaStreamsKinds.Camera) {
+					this.#privateProperties.cameraPausedOnServer = false;
 				}
 				this.#sendSignal({
 					mute: {
@@ -11552,10 +12230,40 @@ this.BX = this.BX || {};
 			this.#updateRepublicationState(MediaStreamsKinds.Camera);
 			this.setLog(`Start disabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
 			if (this.#privateProperties.isReconnecting) {
+				// No session to signal on - a pause would target a sid of the session being torn down - but the
+				// capture still has to go: a reconnect deliberately keeps it alive in order to republish it, so
+				// nothing else releases a camera the user switched off, and the device would stay lit until the
+				// next manual on/off. The new session does not bring it back: republication is guarded by
+				// Hardware.isCameraOn. A system mute keeps the capture, as everywhere else.
+				if (!bySystem) {
+					this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+					// Releasing the capture kills the only thing that could ever clear a system mute - the
+					// track's onunmute - and the flag is shared with the microphone, so it would go on muting
+					// both until the next manual camera toggle. Clear it here, as the ordinary disable does.
+					const wasMutedBySystem = this.#privateProperties.mediaMutedBySystem;
+					this.#privateProperties.mediaMutedBySystem = false;
+					this.#releaseStream(MediaStreamsKinds.Camera);
+					if (this.#privateProperties.monitoringServerUrl) {
+						this.addMonitoringEvents({
+							name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
+							withCounter: true
+						});
+					}
+					this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+					if (wasMutedBySystem) {
+						this.triggerEvents('MediaMutedBySystem', [false]);
+					}
+				}
 				return;
 			}
 			this.#privateProperties.videoQueue = VIDEO_QUEUE.DISABLE;
 			if (hasQueue) {
+				// Privacy: stop transmitting at once, before the in-flight enable finishes publishing. The server
+				// side is not this branch's business - the publication result reconciles it.
+				const inflightTrack = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+				if (inflightTrack) {
+					inflightTrack.enabled = false;
+				}
 				return;
 			}
 			const track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
@@ -11568,12 +12276,12 @@ this.BX = this.BX || {};
 					if (this.#privateProperties.needToStopStreams) {
 						CallStreamManager.stopStream(MediaStreamsKinds.Camera);
 					}
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl) {
 						this.addMonitoringEvents({
 							name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
 							withCounter: true
 						});
-					});
+					}
 					this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
 				};
 				if (this.#privateProperties.mediaMutedBySystem) {
@@ -11594,6 +12302,29 @@ this.BX = this.BX || {};
 				this.setLog(`Disabling video failed - track: ${Boolean(track)}, localTracks: ${Boolean(trackInfo)}`, LOG_LEVEL.ERROR);
 				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 			}
+		}
+
+		// A camera-off may have superseded an enableVideo that is awaiting a device switch or a capture.
+		// Hardware.isCameraOn is the only durable truth here: it survives a reconnect, which resets the
+		// queue, and it separates a user switching the camera off from a system mute - which the queue
+		// alone cannot, since a system mute writes DISABLE into it while the camera stays switched on.
+		#cancelEnableVideoIfCameraOff(stage) {
+			if (Hardware.isCameraOn) {
+				return false;
+			}
+			this.setLog(`Enabling video cancelled: the camera was switched off while ${stage}`, LOG_LEVEL.INFO);
+			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+			const hasCapture = Boolean(this.#privateProperties.cameraStream?.getVideoTracks()[0]);
+			const hasPublication = Boolean(this.#privateProperties.localTracks[MediaStreamsKinds.Camera]);
+			if (hasCapture || hasPublication) {
+				// Hand the cleanup to disableVideo: it pauses the publication and releases the capture, so a
+				// cancelled enable never leaves a half-captured camera behind. Guarded so a cancellation with
+				// nothing captured does not log a disabling failure.
+				this.disableVideo({
+					calledFrom: 'enableVideo.cameraSwitchedOff'
+				});
+			}
+			return true;
 		}
 		async enableVideo(options) /* {calledFrom: 'processVideoQueue', skipUnpause: true} */
 		{
@@ -11622,6 +12353,15 @@ this.BX = this.BX || {};
 			}
 			let hasTrack = !!this.#privateProperties.cameraStream?.getVideoTracks()[0];
 			let track = await this.getLocalVideo();
+			if (this.#cancelEnableVideoIfCameraOff('awaiting the camera capture')) {
+				return;
+			}
+			if (track) {
+				// The capture may still be muted by a disable that caught it in flight. Restore it here: a
+				// republish through replaceTrack succeeds without ever producing a publication result, so the
+				// reconciliation above would never see it.
+				track.enabled = true;
+			}
 			if (track && hasTrack && this.#privateProperties.localTracks[MediaStreamsKinds.Camera]) {
 				if (this.#privateProperties.mediaMutedBySystem) {
 					this.#privateProperties.mediaMutedBySystem = false;
@@ -11718,6 +12458,36 @@ this.BX = this.BX || {};
 				}
 			}
 		}
+
+		// Mirror of #reconcilePublishedMicrophoneState for the camera. Whatever raced while the publication
+		// was in flight - a camera-off with no sid to pause yet, an off/on pair, a system mute - the freshly
+		// published track is brought to the authoritative intent here. Guarded and idempotent: no redundant
+		// pause/unpause, and nothing to remember between calls.
+		#reconcilePublishedCameraState() {
+			const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Camera];
+			if (!localTrack?.sid) {
+				return;
+			}
+			const videoTrack = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+			const hasLiveCapture = videoTrack?.readyState === 'live';
+			// Honour a system mute too: under it the capture stays alive for onunmute, but it must not
+			// transmit, and a late publication result would otherwise re-enable it.
+			const shouldTransmit = Hardware.isCameraOn && !this.#privateProperties.mediaMutedBySystem;
+			if (hasLiveCapture) {
+				videoTrack.enabled = shouldTransmit;
+			}
+			// A publication whose capture has ended transmits nothing, whatever the camera button says, and
+			// isVideoPublished() reads this flag: claiming otherwise would tell callers that a track is going
+			// out when there is nothing left to send, and a re-capture never gets started.
+			localTrack.muted = !(shouldTransmit && hasLiveCapture);
+			if (!shouldTransmit && !this.#privateProperties.cameraPausedOnServer) {
+				this.pauseTrack(MediaStreamsKinds.Camera, true);
+			} else if (shouldTransmit && hasLiveCapture && this.#privateProperties.cameraPausedOnServer) {
+				// Never unpause a camera that is not being captured: enableVideo owns bringing it back, and
+				// unpausing ahead of it would have the server forward a sender whose track is stopped.
+				this.unpauseTrack(MediaStreamsKinds.Camera);
+			}
+		}
 		#processTrackPublishedAudio() {
 			if (this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE) {
 				// the latest intent is unmuted; a stale "disable after publish" must not override it
@@ -11797,7 +12567,9 @@ this.BX = this.BX || {};
 			});
 		}
 		switchConnectionType(type) {
-			this.#sendSignal({
+			// Returns whether the switch was actually delivered to the server, so callers can avoid
+			// a one-sided local switch when the signaling socket has already gone down.
+			return this.#sendSignal({
 				switchConnectionType: {
 					type
 				}
@@ -12038,12 +12810,12 @@ this.BX = this.BX || {};
 						monitoringEvent = MONITORING_EVENTS_NAME_LIST.LOCAL_MICROPHONE_STREAM_RECEIVING_FAILED;
 					}
 					if (monitoringEvent) {
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							this.addMonitoringEvents({
 								name: monitoringEvent,
 								withCounter: true
 							});
-						});
+						}
 					}
 					const stream = await this.#getUserMedia(options, true);
 					if (stream !== null) {
@@ -12074,12 +12846,12 @@ this.BX = this.BX || {};
 				return stream;
 			} catch (error) {
 				this.setLog(`Getting display media failed: ${error}`, LOG_LEVEL.ERROR);
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_RECEIVING_FAILED,
 						withCounter: true
 					});
-				});
+				}
 				return null;
 			}
 		}
@@ -12582,7 +13354,7 @@ this.BX = this.BX || {};
 				let a = ['Call API log [' + Util.getTimeForLog() + ']: '];
 				console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 			}
-			if (Util.isMetricsLogsEnabled()) {
+			if (this.#privateProperties.monitoringLogsServerUrl) {
 				return this.#sendLog(data, level);
 			}
 			if (this.#privateProperties.isloggingEnable) {
@@ -12632,7 +13404,7 @@ this.BX = this.BX || {};
 			this.currentMonitoringEventsObject.logs.push(logObject);
 		}
 		#sendLog(logData, level) {
-			if (Util.isMetricsLogsEnabled()) {
+			if (this.#privateProperties.monitoringLogsServerUrl) {
 				return this.prepareMetricsLogs({
 					logData,
 					level
@@ -12679,11 +13451,11 @@ this.BX = this.BX || {};
 					reconnectionReason: 'HANDLING_ANSWER',
 					reconnectionReasonInfo: `Handling a remote answer failed: ${e}`
 				});
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_HANDLING_ANSWER
 					});
-				});
+				}
 			} finally {
 				if (!hasError) {
 					this.setLog('Handling a remote answer succeeded', LOG_LEVEL.INFO);
@@ -12731,11 +13503,11 @@ this.BX = this.BX || {};
 					reconnectionReason: 'HANDLING_OFFER',
 					reconnectionReasonInfo: `Handling a remote offer failed: ${e}`
 				});
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_HANDLING_OFFER
 					});
-				});
+				}
 			}
 		}
 		#addIceCandidate(trickle) {
@@ -12766,12 +13538,12 @@ this.BX = this.BX || {};
 				}
 			} catch (e) {
 				this.setLog(`Adding an ICE candidate failed: ${e}`, LOG_LEVEL.ERROR);
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl) {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_ADDING_ICE_CANDIDATE,
 						value: 3
 					});
-				});
+				}
 			}
 		}
 		#processMessage(messageData) {
@@ -12813,6 +13585,11 @@ this.BX = this.BX || {};
 			const previousTrackSources = previousParticipantState?.tracks ? Object.keys(previousParticipantState.tracks) : [];
 			const newTrackSources = [];
 			const participantEvent = previousParticipantState ? 'ParticipantStateUpdated' : 'ParticipantJoined';
+
+			// only what the new composition no longer names: such a track is never visited by the loop
+			// below, and nothing else in this method clears it. A track that stayed in the composition
+			// is alive on the participantJoined path and keeps its watcher
+			this.#forgetRemoteAudioTracksMissingFrom(userId, participant.participantTracks, 'participant-refreshed');
 			const remoteParticipant = new Participant(participant, this.#privateProperties.socketConnect);
 			this.#privateProperties.remoteParticipants[userId] = remoteParticipant;
 			this.triggerEvents(participantEvent, [remoteParticipant]);
@@ -12844,7 +13621,7 @@ this.BX = this.BX || {};
 					if (ontrackData) {
 						this.#createRemoteTrack(track.sid, ontrackData);
 					} else {
-						this.#addPendingSubscription(participant, track);
+						this.#addPendingSubscription(remoteParticipant, track);
 					}
 				});
 			}
@@ -12875,9 +13652,12 @@ this.BX = this.BX || {};
 			}
 			const remoteTrack = new Track(trackId, track.source, track);
 			this.#privateProperties.remoteTracks[userId][trackId] = remoteTrack;
+			const streams = ontrackData.streams;
+			this.setLog(`Remote ${remoteTrack.source} track attached with ${streams.length} stream(s), ` + `first stream id ${streams[0].id} (sid: ${trackId}) ` + `for a participant with id ${userId}`, LOG_LEVEL.INFO);
 			if (remoteTrack.source === MediaStreamsKinds.Camera) {
 				participant.isMutedVideo = trackMuted;
 			} else if (remoteTrack.source === MediaStreamsKinds.Microphone) {
+				this.#watchRemoteAudioTrack(trackId, track, participant);
 				participant.isMutedAudio = trackMuted;
 				if (trackMuted) {
 					this.setLog(`Trigger mute signal (${trackMuted}) for received audio from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
@@ -12902,6 +13682,10 @@ this.BX = this.BX || {};
 			const streamRemovingId = Util.getUuidv4();
 			participant.streamRemovingId[remoteTrack.source] = streamRemovingId;
 			ontrackData.streams[0].onremovetrack = () => {
+				// above the streamRemovingId check: the handler occupies the single slot of the stream,
+				// so for the tracks sharing it this is the only run it ever gets
+				this.#forgetRemoteAudioTrack(trackId, 'track-removed');
+
 				// we need to check if a participant is still exists
 				// otherwise tracks were deleted when participant left room
 				const participant = this.#privateProperties.remoteParticipants[userId];
@@ -12915,6 +13699,193 @@ this.BX = this.BX || {};
 					this.setLog(`Track with kind ${track.source} (sid: ${track.id}) was removed from a disconnected participant with id ${userId} (sid: unknown) before it was removed from peer connection`, LOG_LEVEL.WARNING);
 				}
 			};
+		}
+
+		// Keyed by the sid the room addresses a track with, not by MediaStreamTrack.id: the two are
+		// different identifiers. The userId index is what the removal points that know only the
+		// participant address the registry by.
+		#watchRemoteAudioTrack(trackId, track, participant) {
+			const userId = participant.userId;
+			// the whole participant, not this key alone: a new subscription supersedes the previous
+			// watchers of that participant whether the sid is new or the same one is delivered again by
+			// a peer connection built on a reconnect, and trackDeleted is not guaranteed on either path
+			this.#forgetRemoteAudioTracksOfUser(userId, 'track-resubscribed');
+
+			// the sid is taken now, not at event time: the Participant object is rebuilt by
+			// #setRemoteParticipant, and participantLeft deletes it before the late events arrive
+			const trackAddress = `(sid: ${trackId}) for a participant with id ${userId} (sid: ${participant.sid})`;
+			const handlers = {
+				mute: () => this.setLog(`Remote audio track muted ${trackAddress}`, LOG_LEVEL.WARNING),
+				unmute: () => this.setLog(`Remote audio track unmuted ${trackAddress}`, LOG_LEVEL.INFO),
+				ended: () => this.setLog(`Remote audio track ended ${trackAddress}`, LOG_LEVEL.WARNING)
+			};
+			Object.entries(handlers).forEach(([eventName, handler]) => {
+				main_core.Event.bind(track, eventName, handler);
+			});
+			const watcher = {
+				track,
+				userId,
+				handlers
+			};
+			this.#privateProperties.remoteAudioWatchers[trackId] = watcher;
+			if (!this.#privateProperties.remoteAudioWatchersByUser[userId]) {
+				this.#privateProperties.remoteAudioWatchersByUser[userId] = {};
+			}
+			this.#privateProperties.remoteAudioWatchersByUser[userId][trackId] = watcher;
+
+			// the freeze episode of this track lives here and not on the socket track data: that object is
+			// rewritten by #setRemoteParticipant and deleted on trackDeleted, so an open episode would
+			// vanish without its closing record
+			this.#privateProperties.freezeWatchers[trackId] = {
+				userId,
+				growthSeen: false,
+				zeroTicks: 0,
+				firstZeroAt: null,
+				lastNonZeroAt: null,
+				episodeOpen: false
+			};
+			if (track.readyState === 'ended') {
+				handlers.ended();
+			} else {
+				// a track that is already flowing sends no unmute of its own
+				this.setLog(`Remote audio track initial state muted=${track.muted} ${trackAddress}`, LOG_LEVEL.INFO);
+			}
+		}
+		#forgetRemoteAudioTrack(trackId, reason) {
+			this.#closeAudioFreezeEpisode(trackId, reason);
+			delete this.#privateProperties.freezeWatchers[trackId];
+			const watcher = this.#privateProperties.remoteAudioWatchers[trackId];
+			if (!watcher) {
+				return;
+			}
+			Object.entries(watcher.handlers).forEach(([eventName, handler]) => {
+				main_core.Event.unbind(watcher.track, eventName, handler);
+			});
+			delete this.#privateProperties.remoteAudioWatchers[trackId];
+			const userWatchers = this.#privateProperties.remoteAudioWatchersByUser[watcher.userId];
+			if (userWatchers) {
+				delete userWatchers[trackId];
+				if (Object.keys(userWatchers).length === 0) {
+					delete this.#privateProperties.remoteAudioWatchersByUser[watcher.userId];
+				}
+			}
+		}
+		#forgetRemoteAudioTracksOfUser(userId, reason) {
+			const userWatchers = this.#privateProperties.remoteAudioWatchersByUser[userId];
+			if (!userWatchers) {
+				return;
+			}
+			Object.keys(userWatchers).forEach(trackId => this.#forgetRemoteAudioTrack(trackId, reason));
+		}
+		#forgetRemoteAudioTracksMissingFrom(userId, participantTracks, reason) {
+			const userWatchers = this.#privateProperties.remoteAudioWatchersByUser[userId];
+			if (!userWatchers) {
+				return;
+			}
+			const keptTrackIds = participantTracks ? Object.values(participantTracks).map(track => track.sid) : [];
+			Object.keys(userWatchers).filter(trackId => !keptTrackIds.includes(trackId)).forEach(trackId => this.#forgetRemoteAudioTrack(trackId, reason));
+		}
+		#forgetRemoteAudioTracks(reason) {
+			Object.keys(this.#privateProperties.remoteAudioWatchers).forEach(trackId => {
+				this.#forgetRemoteAudioTrack(trackId, reason);
+			});
+		}
+
+		// Runs once per stats tick over the whole accumulated collection, never inside the loop that
+		// builds it: report.inRemoteTracks is assigned at the end of that loop, and otherMediaAlive
+		// cannot be answered before every report of the tick is parsed.
+		#checkIncomingAudioFreeze(reports) {
+			// only the source discriminates here: an own track never gets a watcher, and a report carries
+			// no source unless the parsing loop found packetsReceived on it. The other two are defensive
+			const ownUserId = Number(this.#privateProperties.userId);
+			const incoming = reports.filter(report => Number(report.userId) !== ownUserId && report.source === MediaStreamsKinds.Microphone && Object.hasOwn(report, 'packetsReceived'));
+			incoming.forEach(report => {
+				const trackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
+				const watcher = this.#privateProperties.freezeWatchers[trackId];
+				if (!watcher) {
+					return;
+				}
+
+				// by the report, not by the camera track: the participant found by trackIdentifier below
+				// in the parsing loop is the one owning the camera, and for an audio report it points elsewhere
+				const participant = this.#privateProperties.remoteParticipants[report.userId];
+				if (!participant) {
+					this.#closeAudioFreezeEpisode(trackId, 'participant-gone');
+					return;
+				}
+				if (participant.isMutedAudio) {
+					this.#closeAudioFreezeEpisode(trackId, 'muted');
+					return;
+				}
+				if (report.inRemoteTracks !== 'Y') {
+					this.#closeAudioFreezeEpisode(trackId, 'unsubscribed');
+					return;
+				}
+
+				// ICE and not isConnected(): ticks in the PROGRESSING state do not happen at all, while the
+				// window between a disconnected ICE and the failed connection is exactly where the zero is lawful.
+				// The optional chaining is required: the check runs after an await, and #destroyPeerConnection
+				// may have nulled the connection by then
+				const iceState = this.recipient?.iceConnectionState;
+				if (iceState !== 'connected' && iceState !== 'completed') {
+					this.#closeAudioFreezeEpisode(trackId, 'reconnecting');
+					return;
+				}
+				if (report.bitrate > 0) {
+					watcher.growthSeen = true;
+					watcher.zeroTicks = 0;
+					watcher.lastNonZeroAt = report.timestamp;
+					if (watcher.episodeOpen) {
+						const durationMs = Math.round(report.timestamp - watcher.firstZeroAt);
+						this.setLog(`Incoming audio recovered after ${durationMs} ms (sid: ${trackId}) ` + `for a participant with id ${report.userId}`, LOG_LEVEL.INFO);
+						watcher.episodeOpen = false;
+					}
+					return;
+				}
+
+				// a track that never carried data has nothing to lose: on the first tick prevReport is empty,
+				// the divider is the epoch time and calcBitrate returns zero for every track alike
+				if (!watcher.growthSeen) {
+					return;
+				}
+				if (watcher.zeroTicks === 0) {
+					watcher.firstZeroAt = watcher.lastNonZeroAt || report.timestamp;
+				}
+				watcher.zeroTicks++;
+				if (watcher.zeroTicks < FREEZE_TICKS || watcher.episodeOpen) {
+					return;
+				}
+				watcher.episodeOpen = true;
+				const elapsedMs = Math.round(report.timestamp - watcher.firstZeroAt);
+				const otherMediaAlive = this.#hasOtherMediaAlive(reports, report, trackId);
+				this.setLog(`Incoming audio frozen for ${elapsedMs} ms (sid: ${trackId}) ` + `for a participant with id ${report.userId}; ` + `bytesReceived=${report.bytesReceived}, packetsReceived=${report.packetsReceived}, ` + `otherMediaAlive=${otherMediaAlive}, pageHidden=${document.hidden}`, LOG_LEVEL.WARNING);
+			});
+		}
+
+		// the ids are compared as numbers: trackCreated keeps the userId of the socket message as it is,
+		// while participantJoined takes it from the participant, so two tracks of one participant can
+		// carry it as different types
+		#hasOtherMediaAlive(reports, report, trackId) {
+			const userId = Number(report.userId);
+			return reports.some(other => other.bitrate > 0 && Number(other.userId) === userId && this.#privateProperties.realTracksIds[other.trackIdentifier] !== trackId);
+		}
+
+		// Date.now() and not report.timestamp: the removal points call this outside the stats tick, where
+		// no report exists. RTCStats timestamps are on the same epoch scale, so the two never disagree.
+		#closeAudioFreezeEpisode(trackId, reason) {
+			const watcher = this.#privateProperties.freezeWatchers[trackId];
+			if (!watcher) {
+				return;
+			}
+			if (watcher.episodeOpen) {
+				const durationMs = Math.round(Date.now() - watcher.firstZeroAt);
+				this.setLog(`Incoming audio freeze closed after ${durationMs} ms by ${reason} (sid: ${trackId}) ` + `for a participant with id ${watcher.userId}`, LOG_LEVEL.INFO);
+			}
+			watcher.episodeOpen = false;
+			watcher.zeroTicks = 0;
+			// the mark is meaningful only inside an uninterrupted series of ticks: kept across a closing,
+			// it would date the next episode by the moment before a ten-minute mute
+			watcher.lastNonZeroAt = null;
 		}
 		#speakerChangedHandler(data) {
 			data.speakersChanged.speakers.forEach(speaker => {
@@ -12946,6 +13917,11 @@ this.BX = this.BX || {};
 						if (this.#privateProperties.videoQueue) {
 							this.#processVideoQueue();
 						}
+
+						// A mute/unmute confirmation is the other publication-state event: an off/on pair that raced
+						// an in-flight unpause lands here and never produces a trackCreated, so this is the only
+						// place left to bring the published camera back to the current intent.
+						this.#reconcilePublishedCameraState();
 					} else if (track.source === MediaStreamsKinds.Microphone) {
 						if (data?.muted && !Hardware.isMicrophoneMuted) {
 							// Server reports the mic muted while the local intent is unmuted - log the mismatch;
@@ -13224,8 +14200,15 @@ this.BX = this.BX || {};
 			// stale queue or in-flight cids from a dropped connection would otherwise wedge audio publishing
 			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 			this.#privateProperties.microphonePausedOnServer = false;
+			this.#privateProperties.cameraPausedOnServer = false;
 			this.#privateProperties.ownInflightPublicationCids.clear();
 			this.#peerConnectionAbortController = new AbortController();
+			const nqeParams = Util.getNqeParams();
+			if (nqeParams.autoBalanceEnabled) {
+				this.#privateProperties.nqe = new NetworkQualityEvaluator(nqeParams);
+			} else {
+				this.#privateProperties.nqe = null;
+			}
 			const config = {};
 			if (this.#privateProperties.iceServers) {
 				config.iceServers = this.#privateProperties.iceServers;
@@ -13300,10 +14283,12 @@ this.BX = this.BX || {};
 						const reportsWithoutCodecs = {};
 						const remoteReports = {};
 						const reportsWithoutRemoteInfo = {};
-						let audioReport = null;
 						let isQualityLimitationSent = false;
 						const totalBitrateOut = [];
 						stats.forEach(rawReport => {
+							// Intentionally mutate a shallow copy of RTCStatsReport.
+							// Safe because browser creates a fresh report object for each getStats() call
+							// and we only use it within this callback scope.
 							const report = {
 								...rawReport
 							};
@@ -13317,6 +14302,9 @@ this.BX = this.BX || {};
 									remoteReports[reportId] = report;
 									return;
 								}
+								if (reportsWithoutRemoteInfo[reportId] && main_core.Type.isBoolean(reportsWithoutRemoteInfo[reportId].active)) {
+									report.active = reportsWithoutRemoteInfo[reportId].active;
+								}
 								if (!this.#privateProperties.outgoingTracksReports[reportId]) {
 									this.#privateProperties.outgoingTracksReports[reportId] = {};
 								}
@@ -13325,7 +14313,7 @@ this.BX = this.BX || {};
 								const {
 									currentPercentPacketLost
 								} = packetsLostData;
-								checkMetricsFeatureAndExecutionCallback(() => {
+								if (this.#privateProperties.monitoringServerUrl) {
 									this.addValidatedMonitoringMetric({
 										additionalData: {
 											currentReportPacketsSent: reportsWithoutRemoteInfo[reportId]?.packetsSent,
@@ -13336,20 +14324,18 @@ this.BX = this.BX || {};
 										metricKey: MONITORING_METRICS.PACKET_LOST_SEND,
 										metricValue: currentPercentPacketLost
 									});
-								});
+								}
 								if (!packetLostEventAdded && currentPercentPacketLost > this.#privateProperties.packetLostThreshold) {
 									packetLostEventAdded = true;
-									checkMetricsFeatureAndExecutionCallback(() => {
+									if (this.#privateProperties.monitoringServerUrl) {
 										this.addMonitoringEvents({
 											name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_SEND,
 											withCounter: true
 										});
-									});
+									}
 								}
 								prevReport.packetsLostData = packetsLostData;
-								prevReport.packetsLost = {
-									...packetsLostData
-								};
+								prevReport.packetsLost = packetsLostData.totalPacketsLost;
 								prevReport.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
 								delete reportsWithoutRemoteInfo[reportId];
 							}
@@ -13370,13 +14356,16 @@ this.BX = this.BX || {};
 								} else if (report.kind === 'video') {
 									report.source = report.contentType === 'screenshare' ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
 								}
+								if (remoteReports[reportId] && main_core.Type.isBoolean(report.active)) {
+									remoteReports[reportId].active = report.active;
+								}
 								totalBitrateOut.push({
 									bitrate: report.bitrate,
 									kind: report.kind,
 									contentType: report.contentType
 								});
 								if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent) {
-									checkMetricsFeatureAndExecutionCallback(() => {
+									if (this.#privateProperties.monitoringServerUrl) {
 										if (report.qualityLimitationReason === 'cpu') {
 											this.addMonitoringEvents({
 												name: MONITORING_EVENTS_NAME_LIST.CPU_ISSUES,
@@ -13389,7 +14378,7 @@ this.BX = this.BX || {};
 												withCounter: true
 											});
 										}
-									});
+									}
 									isQualityLimitationSent = true;
 									const limitations = Object.entries(report.qualityLimitationDurations).reduce((accumulator, value, index) => `${accumulator}${index ? ', ' : ''}${value[0]}: ${value[1]}`, '');
 									this.setLog(`Local user have problems with sending video: ${report.qualityLimitationReason} (${limitations})`, LOG_LEVEL.WARNING);
@@ -13400,7 +14389,7 @@ this.BX = this.BX || {};
 								Util.setLocalPacketsLostOrSaveReport(report, remoteReports, reportsWithoutRemoteInfo);
 							}
 						});
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							const bitrateSumOut = calcBitrateSumFromArray({
 								bitrateArray: totalBitrateOut
 							});
@@ -13416,7 +14405,7 @@ this.BX = this.BX || {};
 									metricValue: bitrateSumOut
 								});
 							}
-						});
+						}
 						statsAll.publisher = statsOutput;
 					});
 					await this.recipient.getStats(null).then(stats => {
@@ -13435,7 +14424,13 @@ this.BX = this.BX || {};
 							framesReceived: [],
 							framesLoss: []
 						};
-						stats.forEach(report => {
+						stats.forEach(rawReport => {
+							// Intentionally mutate a shallow copy of RTCStatsReport.
+							// Safe because browser creates a fresh report object for each getStats() call
+							// and we only use it within this callback scope.
+							const report = {
+								...rawReport
+							};
 							if (report.type === 'inbound-rtp' && report.kind === 'video') {
 								const {
 									freezeCount,
@@ -13457,6 +14452,7 @@ this.BX = this.BX || {};
 							const needCheckPacketLosts = report?.trackIdentifier && report.hasOwnProperty('packetsLost') && report.hasOwnProperty('packetsReceived');
 							if (needCheckPacketLosts) {
 								const packetsLostData = Util.calcRemotePacketsLost(report, this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier]);
+								report.packetsLostData = packetsLostData;
 								report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
 								this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier] = report;
 								const realTrackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
@@ -13495,7 +14491,7 @@ this.BX = this.BX || {};
 								Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
 							}
 						});
-						checkMetricsFeatureAndExecutionCallback(() => {
+						if (this.#privateProperties.monitoringServerUrl) {
 							const {
 								countVideoTracks,
 								countAudioTracks
@@ -13620,8 +14616,17 @@ this.BX = this.BX || {};
 									withCounter: true
 								});
 							}
-						});
+						}
 						statsAll.subscriber = statsOutput;
+
+						// its own try/catch on purpose: the catch of getStatsHandle swallows silently, so an
+						// exception thrown here would take the rest of the tick with it every three seconds
+						// and leave no trace at all
+						try {
+							this.#checkIncomingAudioFreeze(statsOutput);
+						} catch (error) {
+							this.setLog(`Checking incoming audio for a freeze failed: ${String(error)}`, LOG_LEVEL.ERROR);
+						}
 						if (participantsWithLargeDataLoss.size || this.#privateProperties.prevParticipantsWithLargeDataLoss.size) {
 							if (participantsWithLargeDataLoss.size) {
 								this.setLog(`Have high packetsLost on users: ${[...participantsWithLargeDataLoss.values()]}`, LOG_LEVEL.WARNING);
@@ -13630,8 +14635,18 @@ this.BX = this.BX || {};
 						}
 						this.#privateProperties.prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
 					});
+					if (this.#privateProperties.nqe) {
+						const action = this.#privateProperties.nqe.processStats(statsAll.publisher, statsAll.subscriber);
+						if (action === 'downgrade' || action === 'upgrade') {
+							const currentQuality = this.#privateProperties.nqe.getCurrentQuality();
+							const previousQuality = this.#privateProperties.nqe.getPreviousQuality();
+							this.#onAutoQuality(currentQuality, previousQuality);
+						}
+					}
 					this.triggerEvents('CallStatsReceived', [statsAll]);
 				} catch (e) {
+					this.#privateProperties.nqe?.resetPendingWindow();
+
 					// if we're here it's almost okay
 					// we tried to get stats during reconnection
 				}
@@ -13717,9 +14732,9 @@ this.BX = this.BX || {};
 			return false;
 		}
 		#sendLeave() {
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl) {
 				this.sendMonitoringEvents(false);
-			});
+			}
 			if (this.#privateProperties.socketConnect?.readyState === 1) {
 				this.#sendSignal({
 					leave: {
@@ -13812,7 +14827,9 @@ this.BX = this.BX || {};
 						quality: quality
 					}
 				};
-				this.#socketConnect.send(JSON.stringify(signal));
+				if (this.#socketConnect?.readyState === 1) {
+					this.#socketConnect.send(JSON.stringify(signal));
+				}
 			}
 		}
 	}
@@ -14017,6 +15034,9 @@ this.BX = this.BX || {};
 
 	class BitrixCallLegacy extends AbstractCall {
 		static Event = BitrixCallEvent$1;
+		// The reconnect event is sent by the reconnectionEventCount setter, which sees no reason of its own.
+		#reconnectionReason = null;
+		#reconnectionReasonInfo = null;
 		constructor(config) {
 			super(config);
 			this.invitePeriod = config.invitePeriod > 0 ? config.invitePeriod : Util.getCallInvitePeriod();
@@ -14068,7 +15088,7 @@ this.BX = this.BX || {};
 			this._isBoostExpired = false;
 		}
 		get provider() {
-			return Provider$1.Bitrix;
+			return call_mapping.Provider.Bitrix;
 		}
 		get screenShared() {
 			return this._screenShared;
@@ -14132,7 +15152,10 @@ this.BX = this.BX || {};
 		set reconnectionEventCount(newValue) {
 			if (this._reconnectionEventCount === 0 && newValue > 0) {
 				this.runCallback(CallEvent.onReconnecting, {
-					reconnectionEventCount: newValue
+					reconnectionEventCount: newValue,
+					reconnectionReason: this.#reconnectionReason,
+					reconnectionReasonInfo: this.#reconnectionReasonInfo,
+					reconnectionTarget: call_lib_reconnectHistory.ReconnectTarget.MediaServer
 				});
 			}
 			if (newValue === 0) {
@@ -14472,7 +15495,7 @@ this.BX = this.BX || {};
 					});
 				}
 			}).then(() => {
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -14483,13 +15506,13 @@ this.BX = this.BX || {};
 					}
 					if (!this.peers[userId]) {
 						this.peers[userId] = this.createPeer(userId);
-						if (this.type === CallType$1.Instant) {
+						if (this.type === call_mapping.CallType.Instant) {
 							this.runCallback(CallEvent.onUserInvited, {
 								userId: userId
 							});
 						}
 					}
-					if (this.type === CallType$1.Instant) {
+					if (this.type === call_mapping.CallType.Instant) {
 						this.peers[userId].onInvited();
 						this.scheduleRepeatInvite();
 					}
@@ -14541,7 +15564,7 @@ this.BX = this.BX || {};
 				joinAsViewer: joinAsViewer
 			}).then(() => {
 				this.log("Attached to conference");
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -14582,7 +15605,7 @@ this.BX = this.BX || {};
 			if (typeof reason != 'undefined') {
 				data.reason = reason;
 			}
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			this.runCallback(CallEvent.onLeave, {
 				local: true
 			});
@@ -14751,6 +15774,7 @@ this.BX = this.BX || {};
 			this.CallApi.on('VoiceEnded', this.#onEndpointVoiceEnd);
 			this.CallApi.on('Reconnecting', this.#onCallReconnecting);
 			this.CallApi.on('Reconnected', this.#onCallReconnected);
+			this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 			this.CallApi.on('Disconnected', this.#onCallDisconnected);
 			// if (Util.shouldCollectStats())
 			// {
@@ -14788,6 +15812,7 @@ this.BX = this.BX || {};
 				this.CallApi.on('VoiceEnded', BX.DoNothing);
 				this.CallApi.on('Reconnecting', BX.DoNothing);
 				this.CallApi.on('Reconnected', BX.DoNothing);
+				this.CallApi.on('ReconnectingFailed', BX.DoNothing);
 				this.CallApi.on('Disconnected', BX.DoNothing);
 				// if (Util.shouldCollectStats())
 				// {
@@ -14842,7 +15867,7 @@ this.BX = this.BX || {};
 						userId: userId
 					});
 				}
-				if (this.type === CallType$1.Instant && this.peers[userId].calculatedState !== UserState.Calling) {
+				if (this.type === call_mapping.CallType.Instant && this.peers[userId].calculatedState !== UserState.Calling) {
 					this.peers[userId].onInvited(show);
 				}
 				if (!this.users.includes(userId)) {
@@ -14878,7 +15903,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			if (e.state === UserState.Failed || e.state === UserState.Unavailable || e.state === UserState.Declined || e.state === UserState.Idle) {
-				if (this.type == CallType$1.Instant && !this.isAnyoneParticipating()) {
+				if (this.type == call_mapping.CallType.Instant && !this.isAnyoneParticipating()) {
 					this.hangup();
 				}
 			}
@@ -14952,7 +15977,7 @@ this.BX = this.BX || {};
 				this.peers[senderId].setBusy(true);
 				console.error("user " + senderId + " is busy");
 			}
-			if (this.ready && this.type == CallType$1.Instant && !this.isAnyoneParticipating()) {
+			if (this.ready && this.type == call_mapping.CallType.Instant && !this.isAnyoneParticipating()) {
 				this.hangup();
 			}
 		};
@@ -14965,7 +15990,7 @@ this.BX = this.BX || {};
 			this.log('__onPullEventUsersInvited', params);
 			const users = params.users;
 			const show = params.show;
-			if (this.type === CallType$1.Instant) {
+			if (this.type === call_mapping.CallType.Instant) {
 				this.addInvitedUsers(users, show);
 			}
 		};
@@ -15395,7 +16420,12 @@ this.BX = this.BX || {};
 		#onCallReconnecting = params => {
 			this.isReconnecting = true;
 			const data = main_core.Type.isObject(params) ? params : {};
-			this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Sdk);
+			this.#reconnectionReason = data.reconnectionReason ?? null;
+			this.#reconnectionReasonInfo = data.reconnectionReasonInfo ?? null;
+			this.reconnectHistory.startEntry({
+				target: call_lib_reconnectHistory.ReconnectTarget.MediaServer,
+				reason: this.#reconnectionReason
+			});
 			if (this.reconnectionEventCount++) {
 				return;
 			}
@@ -15417,7 +16447,10 @@ this.BX = this.BX || {};
 		#onCallReconnected = () => {
 			this.isReconnecting = false;
 			this.reconnectionEventCount = 0;
-			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Sdk, true);
+			this.reconnectHistory.updateLastEntry({
+				target: call_lib_reconnectHistory.ReconnectTarget.MediaServer,
+				isSuccessful: true
+			});
 			this.log("Call reconnected");
 			this.sendTelemetryEvent("reconnect");
 			this.localUserState = UserState.Connected;
@@ -15452,6 +16485,11 @@ this.BX = this.BX || {};
 			}
 			this.CallApi.raiseHand(this.floorRequestActive);
 		};
+		#onCallReconnectingFailed = (e, error) => {
+			this.runCallback(CallEvent.onReconnectingFailed, {
+				error
+			});
+		};
 		#onCallDisconnected = e => {
 			let logData = {};
 			const evt = e && typeof e === 'object' ? e : {};
@@ -15483,7 +16521,7 @@ this.BX = this.BX || {};
 			this.localVideoShown = false;
 			this.removeCallEvents();
 			this.unsubscribeHardwareChanges();
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			this.runCallback(CallEvent.onLeave, {
 				local: true
 			});
@@ -16099,6 +17137,61 @@ this.BX = this.BX || {};
 		}
 	};
 
+	/**
+	 * Decides how a 1-1 Plain call peer should react to WebRTC state changes while it is
+	 * still on the direct (P2P) path. Terminal ICE failures escalate to the media server (SFU);
+	 * a transient `disconnected` is given a grace window to self-heal first.
+	 *
+	 * Pure logic, no side effects — the connection engine wires the returned action to timers
+	 * and `setUseMediaServer`.
+	 */
+
+	const IceEscalationAction = {
+		None: 'none',
+		EscalateNow: 'escalate_now',
+		// terminal failure: switch to the media server immediately (latch)
+		StartGrace: 'start_grace',
+		// disconnected: start the grace timer before escalating
+		ClearGrace: 'clear_grace' // recovered: cancel a pending grace timer
+	};
+
+	/**
+	 * Reaction to an `RTCPeerConnection.connectionState` change.
+	 *
+	 * @param {string} connectionState
+	 * @returns {string} IceEscalationAction
+	 */
+	function decideConnectionStateAction(connectionState) {
+		return connectionState === 'failed' ? IceEscalationAction.EscalateNow : IceEscalationAction.None;
+	}
+
+	/**
+	 * Reaction to an `RTCPeerConnection.iceConnectionState` change.
+	 *
+	 * @param {string} iceConnectionState
+	 * @returns {string} IceEscalationAction
+	 */
+	function decideIceConnectionStateAction(iceConnectionState) {
+		if (iceConnectionState === 'disconnected') {
+			return IceEscalationAction.StartGrace;
+		}
+		if (iceConnectionState === 'connected' || iceConnectionState === 'completed') {
+			return IceEscalationAction.ClearGrace;
+		}
+		return IceEscalationAction.None;
+	}
+
+	/**
+	 * The user id of a peer series travels in an event payload, so it can arrive as a string or not
+	 * arrive at all. Anything that is not a number becomes null: the reconnect history refuses a peer
+	 * series without a numeric id loudly, and a silent zero would merge every interlocutor into one
+	 * series again.
+	 */
+	function toPeerUserId(value) {
+		const userId = Number.parseInt(value, 10);
+		return Number.isFinite(userId) ? userId : null;
+	}
+
 	const ajaxActions$5 = {
 		decline: 'call.Call.decline',
 		finish: 'call.CallManager.finish'
@@ -16122,6 +17215,8 @@ this.BX = this.BX || {};
 	};
 	const signalingConnectionRefreshPeriod$1 = 30000;
 	const signalingWaitReplyPeriod$1 = 10000;
+	// Grace period before treating a stuck ICE 'disconnected' as a failure and escalating to the media server.
+	const disconnectedGracePeriod = 2000;
 
 	/**
 	 * Implements Call interface
@@ -16221,7 +17316,7 @@ this.BX = this.BX || {};
 			main_core.Event.bind(window, 'online', this.#onOnlineHandler);
 		}
 		get provider() {
-			return Provider$1.Plain;
+			return call_mapping.Provider.Plain;
 		}
 		get hasConnectionData() {
 			return Boolean(this.connectionData.mediaServerUrl && this.connectionData.roomData);
@@ -16306,8 +17401,11 @@ this.BX = this.BX || {};
 				onReconnecting: event => {
 					this.#onCallReconnecting(event);
 				},
-				onReconnected: () => {
-					this.#onCallReconnected();
+				onReconnected: e => {
+					this.#onCallReconnected(call_lib_reconnectHistory.ReconnectTarget.Peer, e?.userId);
+				},
+				onReconnectSeriesOutcome: e => {
+					this.#raisePeerSeriesOutcome(toPeerUserId(e.userId), e.outcome);
 				},
 				onUpdateLastUsedCameraId: () => {
 					this.runCallback(CallEvent.onUpdateLastUsedCameraId);
@@ -16436,14 +17534,24 @@ this.BX = this.BX || {};
 		}
 		setUseMediaServer(useMediaServer) {
 			clearTimeout(this.iceConnectionStateTimer);
+			let targetConnectionType;
 			if (useMediaServer && !this.useMediaServer) {
-				this.#connectionType = ConnectionType.MediaServer;
+				targetConnectionType = ConnectionType.MediaServer;
 			} else if (!useMediaServer && this.useMediaServer) {
-				this.#connectionType = ConnectionType.PeerToPeer;
+				targetConnectionType = ConnectionType.PeerToPeer;
 			} else {
-				return;
+				return true;
 			}
+
+			// Announce the switch first. switchConnectionType is fire-and-forget over the signaling socket,
+			// so if the socket is already down the peer would never learn about the switch. Abort before
+			// destroying P2P to avoid a one-sided local latch; the caller retries instead.
+			if (this.CallApi && this.CallApi.switchConnectionType(targetConnectionType) === false) {
+				return false;
+			}
+			this.#connectionType = targetConnectionType;
 			if (useMediaServer) {
+				this.#raisePeerSeriesEscalated();
 				for (const peer of Object.values(this.peers)) {
 					peer._destroyPeerConnection();
 				}
@@ -16451,9 +17559,6 @@ this.BX = this.BX || {};
 				// The negotiation that would have released a pending camera hold dies with these connections:
 				// an answer to an already sent offer is dropped by the connection id guard.
 				this.#releaseCameraPublishingHold();
-			}
-			if (this.CallApi) {
-				this.CallApi.switchConnectionType(this.#connectionType);
 			}
 			this.#updateOutgoingTracks();
 			if (useMediaServer && this.CallApi && !Hardware.isMicrophoneMuted && this.CallApi.isAudioPublished()) {
@@ -16467,6 +17572,7 @@ this.BX = this.BX || {};
 			if (!useMediaServer) {
 				this.setRecorderState(RecorderStatus.PAUSED);
 			}
+			return true;
 		}
 		getCurrentMicrophoneId() {
 			if (!this.localStreams['main']) {
@@ -16564,8 +17670,15 @@ this.BX = this.BX || {};
 						if (this.isReconnecting && !this.#isAnyOneReconnecting()) {
 							this.isReconnecting = false;
 						}
+						// A join that took retries arrives as Connected: the SDK sends Reconnected only once
+						// the call has been established. Left open, the series of such a join would be
+						// continued by a real reconnect later in the call.
+						this.reconnectHistory.updateLastEntry({
+							target: call_lib_reconnectHistory.ReconnectTarget.MediaServer,
+							isSuccessful: true
+						});
 						this.CallApi.on('Failed', this.#onCallDisconnected);
-						this.state = CallState.Connected;
+						this.state = call_mapping.CallState.Connected;
 						this.runCallback(CallEvent.onJoin, {
 							local: true
 						});
@@ -16594,6 +17707,51 @@ this.BX = this.BX || {};
 				}
 			});
 		}
+		/**
+		 * Kills a zombie media room whose call is already finished on the portal.
+		 * An empty room is invisible to the call controller until someone joins,
+		 * so the only reliable way to close it is to connect with a bare data
+		 * channel and ask the media server to close the whole room.
+		 */
+		destroyZombieRoom() {
+			return new Promise((resolve, reject) => {
+				let closeTimeout = null;
+				const finish = error => {
+					if (!closeTimeout) {
+						return;
+					}
+					clearTimeout(closeTimeout);
+					closeTimeout = null;
+					if (this.CallApi) {
+						try {
+							// true asks the media server to close the whole room,
+							// false just disconnects a half-established session
+							this.CallApi.hangup(!error);
+						} catch (hangupError) {
+							this.log('Zombie room hangup error', hangupError);
+						}
+						this.CallApi.releaseGlobalSubscriptions?.();
+						this.CallApi = null;
+					}
+					error ? reject(error) : resolve();
+				};
+				closeTimeout = setTimeout(() => finish(new Error('Zombie room close timeout')), 5000);
+				try {
+					this.CallApi = Util.canUseNewCallApi(this.connectionData.roomType) ? new Call(this.userId) : new CallLegacy(this.userId);
+					this.CallApi.needToStopStreams = false;
+					this.CallApi.on('Connected', () => finish(null));
+					this.CallApi.on('Failed', error => finish(error || new Error('Zombie room connect failed')));
+					this.CallApi.connect({
+						roomId: this.uuid,
+						userId: this.userId,
+						autoSubscribe: false,
+						...this.connectionData
+					});
+				} catch (error) {
+					finish(error);
+				}
+			});
+		}
 		bindCallEvents() {
 			this.CallApi.on('ParticipantJoined', this.#onParticipantJoined);
 			this.CallApi.on('ParticipantLeaved', this.#onParticipantLeaved);
@@ -16614,7 +17772,7 @@ this.BX = this.BX || {};
 			this.CallApi.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
 			this.CallApi.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
 			this.CallApi.on('Reconnecting', this.#onCallReconnecting);
-			this.CallApi.on('Reconnected', this.#onCallReconnected);
+			this.CallApi.on('Reconnected', this.#onSdkReconnected);
 			this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 			this.CallApi.on('Disconnected', this.#onCallDisconnected);
 			this.CallApi.on('CallStatsReceived', this.#onCallStatsReceived);
@@ -17427,7 +18585,7 @@ this.BX = this.BX || {};
 			tempError.name = 'Call stack:';
 			this.log(`Hangup received \n${tempError.stack}`);
 			this.ready = false;
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			this.connectionData = {};
 			this.#screenShared = false;
 
@@ -17706,6 +18864,12 @@ this.BX = this.BX || {};
 			const senderId = params.senderId;
 			if (this.userId == senderId) {
 				if (this.instanceId != params.callInstanceId) {
+					if (this.associatedEntity?.isDeviceScoped === true) {
+						// Device-scoped (private 1-1 TYPE_INSTANT): self-decline from another device must not pull a
+						// still-ringing device out of the call — ending is driven solely
+						// by Call::finish (backend device-aware gate). Defense in depth.
+						return;
+					}
 					if (this.ready) {
 						return;
 					}
@@ -18270,27 +19434,46 @@ this.BX = this.BX || {};
 			this.isReconnecting = true;
 			this._reconnectionEventCount++;
 			const data = main_core.Type.isObject(event) ? event : {};
-			if (data.userId !== undefined) {
-				// Reconnecting from Provider (Peer)
-				this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Provider, data.userId);
-			} else {
-				// Reconnecting from SDK
-				this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Sdk);
-			}
+			// Only a peer forwards the participant it reconnects to, the SDK path carries no user id.
+			const isPeerTarget = data.userId !== undefined;
+			const target = isPeerTarget ? call_lib_reconnectHistory.ReconnectTarget.Peer : call_lib_reconnectHistory.ReconnectTarget.MediaServer;
+			const seriesUserId = isPeerTarget ? toPeerUserId(data.userId) : null;
+			this.reconnectHistory.startEntry({
+				target,
+				userId: seriesUserId,
+				reason: data.reconnectionReason ?? null
+			});
 			this.runCallback(CallEvent.onReconnecting, {
 				reconnectionEventCount: this._reconnectionEventCount,
 				reconnectionReason: data.reconnectionReason,
-				reconnectionReasonInfo: data.reconnectionReasonInfo
+				reconnectionReasonInfo: data.reconnectionReasonInfo,
+				reconnectionTarget: target,
+				userId: seriesUserId,
+				hasEverConnected: Boolean(data.hasEverConnected)
 			});
 		};
-		#onCallReconnected = () => {
+		#onSdkReconnected = () => {
+			this.#onCallReconnected(call_lib_reconnectHistory.ReconnectTarget.MediaServer);
+		};
+		#onCallReconnected = (target, userId = null) => {
 			if (this.CallApi.isConnected() || !this.#isAnyOneReconnecting()) {
 				this.isReconnecting = false;
 			}
 			this._reconnectionEventCount = 0;
-			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Sdk, !this.isReconnecting);
-			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Provider, !this.isReconnecting);
-			this.runCallback(CallEvent.onReconnected);
+			const isPeerTarget = target === call_lib_reconnectHistory.ReconnectTarget.Peer;
+			const seriesUserId = isPeerTarget ? toPeerUserId(userId) : null;
+			// The peer callback answers for the connection that came back; only the SDK path has to ask
+			// the call, whose isReconnecting says nothing about a particular interlocutor.
+			const isSuccessful = isPeerTarget || !this.isReconnecting;
+			this.reconnectHistory.updateLastEntry({
+				target,
+				userId: seriesUserId,
+				isSuccessful
+			});
+			this.runCallback(CallEvent.onReconnected, {
+				reconnectionTarget: target,
+				userId: seriesUserId
+			});
 			if (this.useMediaServer) {
 				this.#updateOutgoingTracks();
 			}
@@ -18301,6 +19484,35 @@ this.BX = this.BX || {};
 				}, true);
 			}
 		};
+		#raisePeerSeriesOutcome(userId, outcome) {
+			this.runCallback(CallEvent.onReconnectSeriesOutcome, {
+				reconnectionTarget: call_lib_reconnectHistory.ReconnectTarget.Peer,
+				userId,
+				reconnectionOutcome: outcome
+			});
+		}
+
+		/**
+		 * The switch to the media server tears down every peer connection for good, so the open series of
+		 * every interlocutor still in the call ends here. Two kinds of series are left alone: the one of an
+		 * interlocutor who has already left, because the switch tears down nothing of his and `escalated`
+		 * would drop a connection that never came back out of the failure count; and the one of the media
+		 * server, whose socket the switch does not touch.
+		 */
+		#raisePeerSeriesEscalated() {
+			this.reconnectHistory.getOpenSeries().filter(series => {
+				if (series.target !== call_lib_reconnectHistory.ReconnectTarget.Peer) {
+					return false;
+				}
+
+				// `ready` follows the signaling of an interlocutor rather than his ICE: it is already true
+				// while his connection has never come up, and false once he has left the call.
+				const {
+					userId
+				} = series;
+				return userId !== null && userId !== undefined && this.peers[userId]?.isReady() === true;
+			}).forEach(series => this.#raisePeerSeriesOutcome(series.userId, call_lib_reconnectHistory.ReconnectOutcome.Escalated));
+		}
 		#onCallReconnectingFailed = (e, error) => {
 			this.runCallback(CallEvent.onReconnectingFailed, {
 				error
@@ -18377,6 +19589,9 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.#connectionType = connectionType;
+			if (connectionType === ConnectionType.MediaServer) {
+				this.#raisePeerSeriesEscalated();
+			}
 
 			// A camera hold taken before the switch can no longer be released by the P2P negotiation it was
 			// waiting for, so drop it here as well.
@@ -18602,6 +19817,7 @@ this.BX = this.BX || {};
 				onNetworkProblem: main_core.Type.isFunction(params.onNetworkProblem) ? params.onNetworkProblem : BX.DoNothing,
 				onReconnecting: main_core.Type.isFunction(params.onReconnecting) ? params.onReconnecting : BX.DoNothing,
 				onReconnected: main_core.Type.isFunction(params.onReconnected) ? params.onReconnected : BX.DoNothing,
+				onReconnectSeriesOutcome: main_core.Type.isFunction(params.onReconnectSeriesOutcome) ? params.onReconnectSeriesOutcome : BX.DoNothing,
 				onUpdateLastUsedCameraId: main_core.Type.isFunction(params.onUpdateLastUsedCameraId) ? params.onUpdateLastUsedCameraId : BX.DoNothing
 			};
 
@@ -18615,7 +19831,9 @@ this.BX = this.BX || {};
 			this.connectionOfferReplyTimeout = null;
 			this.negotiationNeededReplyTimeout = null;
 			this.reconnectAfterDisconnectTimeout = null;
+			this.disconnectedGraceTimeout = null;
 			this.connectionAttempt = 0;
+			this.hasEverConnected = false;
 			this._outgoingVideoTrack = null;
 			Object.defineProperty(this, 'outgoingVideoTrack', {
 				get: function () {
@@ -18880,6 +20098,7 @@ this.BX = this.BX || {};
 			} else {
 				this.localStreams[tag] = this.call.getLocalStream(tag);
 				this.reconnect({
+					reconnectionReason: 'PEER_MEDIA_STREAM_REPLACED',
 					reconnectionReasonInfo: 'Reconnect by replaceMediaStream'
 				});
 			}
@@ -19221,6 +20440,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
+			clearTimeout(this.disconnectedGraceTimeout);
 			this.log("User " + this.userId + ": Destroying peer connection " + this.peerConnectionId);
 			this.stopStatisticsGathering();
 			this.peerConnection.removeEventListener("icecandidate", this._onPeerConnectionIceCandidateHandler);
@@ -19269,16 +20489,30 @@ this.BX = this.BX || {};
 			if (this.peerConnection.connectionState === "connected" || this.peerConnection.connectionState === "completed") {
 				this.isReconnecting = false;
 				this.connectionAttempt = 0;
-				this.callbacks.onReconnected();
+				this.hasEverConnected = true;
+				this.callbacks.onReconnected({
+					userId: this.userId
+				});
 				clearTimeout(this.reconnectAfterDisconnectTimeout);
 				this._updateTracksDebounced();
-			} else if (this.peerConnection.connectionState === "failed") {
-				const logMessage = 'Peer connection failed. Trying to restore connection immediately';
-				this.log(logMessage);
-				this.reconnect({
-					reconnectionReason: 'PEER_CONNECTION_FAILED',
-					reconnectionReasonInfo: logMessage
-				});
+			} else if (decideConnectionStateAction(this.peerConnection.connectionState) === IceEscalationAction.EscalateNow) {
+				clearTimeout(this.disconnectedGraceTimeout);
+
+				// Terminal ICE failure: switch to the media server (SFU) and stay there for the rest of the
+				// call. The switch is announced through a fire-and-forget CallApi signal (switchConnectionType),
+				// so it only sticks while the socket is up. setUseMediaServer returns false if the socket
+				// closed in the race window between isConnected() and the actual send, in which case the peer
+				// was never notified and we must not latch one-sidedly.
+				if (this.call.CallApi?.isConnected() && this.call.setUseMediaServer(true)) {
+					this.log('Peer connection failed. Escalated to the media server');
+				} else {
+					// Signaling is down (or went down mid-switch): retry P2P instead (bounded by reconnect());
+					// once the socket is back, a repeated failure escalates.
+					this.log('Peer connection failed while signaling is down. Retrying instead of a one-sided escalation');
+					this.reconnect({
+						reconnectionReason: 'PEER_CONNECTION_FAILED_SIGNALING_DOWN'
+					});
+				}
 			}
 			// else if (this.peerConnection.connectionState === "disconnected")
 			// {
@@ -19395,6 +20629,29 @@ this.BX = this.BX || {};
 			}
 			const state = this.peerConnection.iceConnectionState;
 			this.log(`User ${this.userId} #onPeerConnectionIceConnectionStateChange [ICE State]: ${state}`);
+			const action = decideIceConnectionStateAction(state);
+			if (action === IceEscalationAction.StartGrace) {
+				// 'disconnected' often self-heals; give ICE a grace window before escalating to the SFU.
+				clearTimeout(this.disconnectedGraceTimeout);
+				const graceConnection = this.peerConnection;
+				const escalateOrWait = () => {
+					// Bail if the connection recovered, was rebuilt/destroyed, or already moved to the SFU.
+					if (this.peerConnection !== graceConnection || this.peerConnection.iceConnectionState !== 'disconnected' || this.call.useMediaServer) {
+						return;
+					}
+					if (this.call.CallApi?.isConnected() && this.call.setUseMediaServer(true)) {
+						this.log('ICE disconnected grace expired. Escalated to the media server');
+					} else {
+						// Signaling socket is down (or closed mid-switch): escalating now would be a lost
+						// one-sided switch, and 'disconnected' won't re-emit on its own. Re-arm and escalate
+						// once the socket is back.
+						this.disconnectedGraceTimeout = setTimeout(escalateOrWait, disconnectedGracePeriod);
+					}
+				};
+				this.disconnectedGraceTimeout = setTimeout(escalateOrWait, disconnectedGracePeriod);
+			} else if (action === IceEscalationAction.ClearGrace) {
+				clearTimeout(this.disconnectedGraceTimeout);
+			}
 		}
 		#onVideoTrackMuted() {
 			console.log("Video track muted");
@@ -19456,6 +20713,7 @@ this.BX = this.BX || {};
 			this.log(logMessage);
 			this.call.setPublishingState(MediaStreamsKinds.Camera, false);
 			this.reconnect({
+				reconnectionReason: 'PEER_OFFER_REPLY_TIMEOUT',
 				reconnectionReasonInfo: logMessage
 			});
 		}
@@ -19463,6 +20721,7 @@ this.BX = this.BX || {};
 			const logMessage = 'Did not receive connection offer in time';
 			this.log(logMessage);
 			this.reconnect({
+				reconnectionReason: 'PEER_NEGOTIATION_REPLY_TIMEOUT',
 				reconnectionReasonInfo: logMessage
 			});
 		}
@@ -19512,6 +20771,7 @@ this.BX = this.BX || {};
 				this.log(logMessage);
 				Util.sendLog(`[call] ${logMessage}`);
 				this.reconnect({
+					reconnectionReason: 'PEER_OFFER_CREATE_FAILED',
 					reconnectionReasonInfo: logMessage
 				});
 			}).finally(() => {
@@ -19599,6 +20859,7 @@ this.BX = this.BX || {};
 				this.log(logMessage);
 				Util.sendLog(`[call] ${logMessage}`);
 				this.reconnect({
+					reconnectionReason: 'PEER_OFFER_APPLY_FAILED',
 					reconnectionReasonInfo: logMessage
 				});
 			}).finally(() => {
@@ -19657,6 +20918,7 @@ this.BX = this.BX || {};
 				this.log(logMessage);
 				Util.sendLog(`[call] ${logMessage}`);
 				this.reconnect({
+					reconnectionReason: 'PEER_ANSWER_APPLY_FAILED',
 					reconnectionReasonInfo: logMessage
 				});
 			}).finally(() => {
@@ -19718,18 +20980,23 @@ this.BX = this.BX || {};
 			this.isReconnecting = true;
 			this.connectionAttempt++;
 			const maxConnectionAttempt = 3;
-			const connectionAttempt = this.call.CallApi?.isConnected() ? 0 : this.connectionAttempt;
+			const connectionAttempt = this.connectionAttempt;
 			this.pendingLocalOfferConfig = null;
 			this.isCreatingOffer = false;
 			if (connectionAttempt > maxConnectionAttempt) {
 				this.log('Error: Too many reconnection attempts, giving up');
 				this.failureReason = this.failureReason || 'Could not connect to user in time';
 				this.updateCalculatedState();
+				this.callbacks.onReconnectSeriesOutcome({
+					userId: this.userId,
+					outcome: this.hasEverConnected ? call_lib_reconnectHistory.ReconnectOutcome.NotRecovered : call_lib_reconnectHistory.ReconnectOutcome.NotConnected
+				});
 				return;
 			}
 			this.callbacks.onReconnecting({
 				...event,
-				userId: this.userId
+				userId: this.userId,
+				hasEverConnected: this.hasEverConnected
 			});
 			this.log(`Trying to restore ICE connection. Attempt ${this.connectionAttempt}`);
 			if (this.isInitiator()) {
@@ -19767,6 +21034,8 @@ this.BX = this.BX || {};
 			this.connectionTimeout = null;
 			clearTimeout(this.signalingConnectionTimeout);
 			this.signalingConnectionTimeout = null;
+			clearTimeout(this.disconnectedGraceTimeout);
+			this.disconnectedGraceTimeout = null;
 			this.callbacks.onStateChanged = BX.DoNothing;
 			this.callbacks.onMediaReceived = BX.DoNothing;
 			this.callbacks.onMediaStopped = BX.DoNothing;
@@ -19785,7 +21054,6 @@ this.BX = this.BX || {};
 	}
 
 	/* eslint-disable max-classes-per-file */
-	const loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
 	const SpeakerManagerEvent = {
 		onSpeakerConfirmed: 'onSpeakerConfirmed',
 		onSpeakerFallback: 'onSpeakerFallback'
@@ -19803,9 +21071,8 @@ this.BX = this.BX || {};
 			const tag = this.constructor.name.replace('SpeakerStrategy', '').replace('Default', '');
 			const tagPrefix = tag ? ` ${tag}` : '';
 			error.message = `[SpeakerManager]${tagPrefix} ${prefix}: ${error.message}`;
-			loadAccidentLogger().then(({
-				accidentLogger
-			}) => accidentLogger?.addLog(error, 'speakerManager')).catch(() => {});
+			const accidentLogger = main_core.Reflection.getClass('BX.Call.Lib.accidentLogger');
+			void accidentLogger?.addLog(error, 'speakerManager');
 		}
 	}
 	class DefaultSpeakerStrategy extends SpeakerStrategy {
@@ -20127,7 +21394,7 @@ this.BX = this.BX || {};
 			});
 		}
 		get provider() {
-			return Provider$1.Bitrix;
+			return call_mapping.Provider.Bitrix;
 		}
 		get screenShared() {
 			return this._screenShared;
@@ -20602,13 +21869,13 @@ this.BX = this.BX || {};
 			this.videoEnabled = Hardware.isCameraOn;
 			this.muted = Hardware.isMicrophoneMuted;
 			this.attachToConference().then(() => {
-				if (this.type === CallType$1.Instant) {
+				if (this.type === call_mapping.CallType.Instant) {
 					clearTimeout(this.waitForAnswerTimeout);
 					this.waitForAnswerTimeout = setTimeout(() => {
 						this.#onNoAnswer();
 					}, this.invitePeriod);
 				}
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -20640,7 +21907,7 @@ this.BX = this.BX || {};
 					};
 					this.signaling.sendUsersInvited(inviteParams);
 				}
-				if (config.show && this.type === CallType$1.Instant && usersToInvite.length > 0) {
+				if (config.show && this.type === call_mapping.CallType.Instant && usersToInvite.length > 0) {
 					const inviteParams = {
 						users: usersToInvite,
 						video: Hardware.isCameraOn ? 'Y' : 'N'
@@ -20690,7 +21957,7 @@ this.BX = this.BX || {};
 				joinAsViewer: joinAsViewer
 			}).then(() => {
 				this.log("Attached to conference");
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -20726,7 +21993,7 @@ this.BX = this.BX || {};
 			}
 			clearInterval(this.microphoneLevelInterval);
 			this.ready = false;
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 
 			//clone users and append current user id to send event to all participants of the call
 			this.users.slice(0).concat(this.userId);
@@ -20991,7 +22258,7 @@ this.BX = this.BX || {};
 						}
 					});
 				}
-				if (this.type === CallType$1.Instant && this.peers[userId].calculatedState !== UserState.Calling) {
+				if (this.type === call_mapping.CallType.Instant && this.peers[userId].calculatedState !== UserState.Calling) {
 					this.peers[userId].onInvited();
 				}
 				if (!this.users.includes(userId)) {
@@ -21076,7 +22343,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			if (e.state === UserState.Failed || e.state === UserState.Unavailable || e.state === UserState.Declined || e.state === UserState.Idle) {
-				if (this.type == CallType$1.Instant && !this.isAnyoneParticipating()) ;
+				if (this.type == call_mapping.CallType.Instant && !this.isAnyoneParticipating()) ;
 			}
 		};
 		#onPeerInviteTimeout = e => {
@@ -21126,11 +22393,21 @@ this.BX = this.BX || {};
 			const callInstanceId = params.callInstanceId;
 			const peer = this.peers[senderId];
 			if (this.userId === senderId && callInstanceId && this.instanceId !== callInstanceId) {
+				if (this.associatedEntity?.isDeviceScoped === true) {
+					// Self-decline from another device in a device-scoped (private 1-1
+					// TYPE_INSTANT) call. While this device is still ringing (!this.ready)
+					// it must keep ringing:
+					// declining elsewhere no longer pulls a still-ringing device out of
+					// the call. Ending is driven solely by Call::finish (backend emits it
+					// once no ringing devices remain). Mirrors the mobile client.
+					return;
+				}
 				if (this.ready) {
 					return;
 				}
 
-				// Call declined by the same user elsewhere
+				// Group call: the server device-aware gate does not apply, so honor the
+				// self-decline from the other device and leave, as before.
 				this.runCallback(CallEvent.onLeave, {
 					local: false
 				});
@@ -21177,7 +22454,7 @@ this.BX = this.BX || {};
 				//   participating user if that user is privileged. Only auto-hangup
 				//   when the room would be considered dead by the backend anyway.
 				if (this.ready) {
-					const shouldAutoHangup = this.type === CallType$1.Instant ? !this.isAnyoneParticipating() : !this.#shouldKeepConferenceAlive();
+					const shouldAutoHangup = this.type === call_mapping.CallType.Instant ? !this.isAnyoneParticipating() : !this.#shouldKeepConferenceAlive();
 					if (shouldAutoHangup) {
 						this.hangup();
 					}
@@ -21483,6 +22760,13 @@ this.BX = this.BX || {};
 					}
 					peer.addMediaRenderer(e.mediaRenderer);
 				}
+				const cameraState = !p.isMutedVideo;
+				if (t.source === MediaStreamsKinds.Camera) {
+					this.runCallback(CallEvent.onUserCameraState, {
+						userId: p.userId,
+						cameraState
+					});
+				}
 				if (t.source === MediaStreamsKinds.Microphone) {
 					this.runCallback(CallEvent.onUserMicrophoneState, {
 						userId: p.userId,
@@ -21498,7 +22782,7 @@ this.BX = this.BX || {};
 					// 	break;
 				}
 				console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}`);
-				const cameraStateInfo = t.source === MediaStreamsKinds.Camera ? `, cameraState: ${!p?.isMutedVideo}` : '';
+				const cameraStateInfo = t.source === MediaStreamsKinds.Camera ? `, cameraState: ${cameraState}` : '';
 				Util.sendLog({
 					description: `[RemoteMediaAdded]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}${cameraStateInfo}`
 				});
@@ -21581,7 +22865,7 @@ this.BX = this.BX || {};
 			this.log('__onUsersInvited', params);
 			const users = params.users;
 			const show = params.show;
-			if (this.type === CallType$1.Instant) {
+			if (this.type === call_mapping.CallType.Instant) {
 				this.addInvitedUsers(users, show);
 			}
 		};
@@ -21715,10 +22999,16 @@ this.BX = this.BX || {};
 		#onCallReconnecting = params => {
 			this.isReconnecting = true;
 			const data = main_core.Type.isObject(params) ? params : {};
-			this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Sdk);
+			this.reconnectHistory.startEntry({
+				target: call_lib_reconnectHistory.ReconnectTarget.MediaServer,
+				reason: data.reconnectionReason ?? null
+			});
 			if (this._reconnectionEventCount === 0) {
-				params.reconnectionEventCount = this.reconnectionEventCount + 1;
-				this.runCallback(CallEvent.onReconnecting, params);
+				this.runCallback(CallEvent.onReconnecting, {
+					...data,
+					reconnectionEventCount: this.reconnectionEventCount + 1,
+					reconnectionTarget: call_lib_reconnectHistory.ReconnectTarget.MediaServer
+				});
 			}
 
 			// One event per incident, not per attempt: the counter is what closes the condition above and
@@ -21728,7 +23018,10 @@ this.BX = this.BX || {};
 		#onCallReconnected = () => {
 			this.isReconnecting = false;
 			this.reconnectionEventCount = 0;
-			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Sdk, true);
+			this.reconnectHistory.updateLastEntry({
+				target: call_lib_reconnectHistory.ReconnectTarget.MediaServer,
+				isSuccessful: true
+			});
 			this.log("Call reconnected");
 			this.sendTelemetryEvent("reconnect");
 			this.localUserState = UserState.Connected;
@@ -21801,7 +23094,7 @@ this.BX = this.BX || {};
 			this.localVideoShown = false;
 			this.removeCallEvents();
 			this.unsubscribeHardwareChanges();
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			if (leaveInformation?.reason === DisconnectReason.SecurityKeyChanged) {
 				this.#onFatalError(leaveInformation.reason);
 				return;
@@ -22531,14 +23824,27 @@ this.BX = this.BX || {};
 		addInvitedUsers() {
 			console.error("unexpected call to CallStub.addInvitedUsers");
 		}
+
+		// late pull events of a finished call are silently ignored
+		addDialogInfo(dialogInfo) {}
+		addLogToken(logToken) {}
 		destroy() {
 			clearTimeout(this.deleteTimeout);
 			this.callbacks.onDelete = BX.DoNothing;
 		}
 	}
 
+	// The ringer is raised for a fresh event, or for a manual invitation (a direct human
+	// add to a running conference -- it rings even when stale). Card-only reconciliation
+	// and stale automatic events raise the recent card only, never the ringer.
+	function shouldRaiseRinger(isStale, isCardOnly, isManualInvite, hasActiveCalls, canProcessEvent) {
+		return !hasActiveCalls && canProcessEvent && !isCardOnly && (!isStale || isManualInvite);
+	}
+
 	const ajaxActions$3 = {
-		createChatForChildCall: 'call.Call.createChatForChildCall'};
+		createChatForChildCall: 'call.Call.createChatForChildCall',
+		registerRingingDevice: 'call.Call.registerRingingDevice'
+	};
 	class Engine {
 		handlers = {
 			'Call::incoming': this.#onPullIncomingCall.bind(this)
@@ -22623,7 +23929,7 @@ this.BX = this.BX || {};
 				}
 				const chatId = config.chatInfo.chatId;
 				const callProvider = config.provider || this.getDefaultProvider();
-				const callType = config.type || CallType$1.Instant;
+				const callType = config.type || call_mapping.CallType.Instant;
 				const roomType = Util.getRoomType(chatId);
 				let data = null;
 				try {
@@ -22635,7 +23941,7 @@ this.BX = this.BX || {};
 						provider: callProvider,
 						isVideo: config.videoEnabled,
 						callUuid: config.roomId
-					}, chatId, !config.joinExisting);
+					}, chatId, !config.joinExisting, true);
 				} catch (error) {
 					if (main_core.Type.isObject(error) && error instanceof JoinResponseError) {
 						return reject(error);
@@ -22725,7 +24031,7 @@ this.BX = this.BX || {};
 					const chatId = createCallResponse.chatId;
 					const callFactory = this.#getCallFactory(newProvider);
 					const instanceId = Util.getUuidv4();
-					const callType = CallType$1.Instant;
+					const callType = call_mapping.CallType.Instant;
 					const roomType = Util.getRoomType(chatId);
 					call_lib_callTokenManager.CallTokenManager.setToken(chatId, token);
 					Util.getCallConnectionData({
@@ -22736,7 +24042,7 @@ this.BX = this.BX || {};
 						provider: newProvider,
 						isVideo: config.videoEnabled,
 						parentUuid: parentCall.uuid
-					}, chatId).then(data => {
+					}, chatId, true, true).then(data => {
 						if (!data?.result?.mediaServerUrl || !data?.result?.roomData) {
 							return reject({
 								name: 'MEDIA_SERVER_MISSING_PARAMS',
@@ -22868,6 +24174,9 @@ this.BX = this.BX || {};
 					if (finishedCallId) {
 						call_lib_stuckCallFinishTracker.stuckCallFinishTracker.cancelPending(finishedCallId, finishedCallUuid);
 					}
+					this.finishedCalls.add(finishedCallUuid);
+					// Bounded by the CallStub lifetime so the set does not grow for the whole session.
+					setTimeout(() => this.finishedCalls.delete(finishedCallUuid), 120 * 1000);
 				}
 			}
 			if (this.jwtPullHandlers[command]) {
@@ -22892,9 +24201,10 @@ this.BX = this.BX || {};
 				if (!call && command === 'Call::finish') {
 					this.log(callUuid, 'Got "Call::finish" before "Call::incoming"');
 					this.finishedCalls.add(callUuid);
+					setTimeout(() => this.finishedCalls.delete(callUuid), 120 * 1000);
 					return;
 				}
-				if (call && !this.#callHasAssociatedEntity(call) && command === 'Call::usersInvited' && !this.finishedCalls.has(callUuid)) {
+				if (call && !this.#callHasAssociatedEntity(call) && command === 'Call::usersInvited' && !this.finishedCalls.has(callUuid) && !(call instanceof CallStub)) {
 					call.addDialogInfo(params.call.ASSOCIATED_ENTITY);
 					this.onCallCreated(call);
 				} else if (!call && command === 'Call::usersInvited' && !this.finishedCalls.has(callUuid)) {
@@ -22906,14 +24216,16 @@ this.BX = this.BX || {};
 			}
 		}
 		async #onPullIncomingCall(params, extra) {
-			if (extra.server_time_ago > 30) {
-				console.error('Call was started too long time ago');
-				return;
-			}
 			const logToken = params.logToken;
 			const callFields = params.call;
 			const uuid = callFields.uuid;
 			let call = null;
+			const isStale = extra.server_time_ago > 30;
+			const isCardOnly = extra.cardOnly === true;
+			const isManualInvite = extra.manualInvite === true;
+			if (isStale && !isManualInvite) {
+				this.log(uuid, 'Call::incoming is stale (server_time_ago > 30); ringer suppressed');
+			}
 			CallAI.setup(params.aiSettings);
 			if (this.finishedCalls.has(uuid)) {
 				this.log(uuid, 'Got "Call::incoming" after "Call::finish"');
@@ -22952,12 +24264,21 @@ this.BX = this.BX || {};
 				this.calls[uuid] = call;
 				this.onCallCreated(call);
 			}
-			const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, {
-				timeout: 100
-			});
-			const hasActiveCalls = broadcastResponse.some(res => res);
 			const canProcessEvent = !params.isAlreadyInCall || params.activeCallPlatform !== 'any' && ClientPlatform === params.activeCallPlatform;
-			if (call && !hasActiveCalls && canProcessEvent) {
+
+			// Ringing is possible only for a fresh (or manually invited) non-card event we can
+			// process. For card-only/stale/foreign-platform events the ringer never rings, so we
+			// skip the up-to-100ms cross-tab broadcast -- its result could not change the outcome.
+			const canRing = !isCardOnly && (!isStale || isManualInvite) && canProcessEvent;
+			let hasActiveCalls = false;
+			if (canRing) {
+				const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, {
+					timeout: 100
+				});
+				hasActiveCalls = broadcastResponse.some(res => res);
+			}
+			if (call && shouldRaiseRinger(isStale, isCardOnly, isManualInvite, hasActiveCalls, canProcessEvent)) {
+				this.#registerRingingDevice(call);
 				BX.onCustomEvent(window, 'CallEvents::incomingCall', [{
 					call,
 					video: params.video === true,
@@ -22967,9 +24288,34 @@ this.BX = this.BX || {};
 			}
 			this.log(call.uuid, `Incoming call ${call.uuid}`);
 		}
+
+		// Register this device as a ringing callee so the backend keeps it in the
+		// call when the same user declines on another device (device-scoped decline).
+		// Best-effort: a failure must not block showing the incoming call.
+		//
+		// Scope is private 1-1 calls only (group calls never use the registry), and
+		// registration runs once per call instance — repeated Call::incoming events
+		// (redial fires roughly every 5s) reuse the same call object, so the flag
+		// suppresses redundant requests. A failed attempt clears the flag to retry.
+		#registerRingingDevice(call) {
+			if (call.associatedEntity?.isDeviceScoped !== true || call.ringingDeviceRegistered) {
+				return;
+			}
+			call.ringingDeviceRegistered = true;
+			BX.ajax.runAction(ajaxActions$3.registerRingingDevice, {
+				data: {
+					callUuid: call.uuid,
+					callInstanceId: call.instanceId
+				}
+			}).catch(() => {
+				call.ringingDeviceRegistered = false;
+			});
+		}
 		#onLogTokenUpdate(params) {
 			const call = this.calls[params.uuid];
-			call?.addLogToken(params.logToken);
+			if (call && !(call instanceof CallStub)) {
+				call.addLogToken?.(params.logToken);
+			}
 		}
 		#onCallTokenUpdate(params, extra) {
 			call_lib_callTokenManager.CallTokenManager.setToken(params.chatId, params.callToken);
@@ -23009,15 +24355,15 @@ this.BX = this.BX || {};
 			return true;
 		}
 		getDefaultProvider() {
-			return Provider$1.Plain;
+			return call_mapping.Provider.Plain;
 		}
 		getConferencePageTag(chatDialogId) {
 			return "conference-open-" + chatDialogId;
 		}
 		#getCallFactory(providerType) {
-			if (providerType == Provider$1.Plain) {
+			if (providerType == call_mapping.Provider.Plain) {
 				return PlainCallFactory$1;
-			} else if (providerType == Provider$1.Bitrix) {
+			} else if (providerType == call_mapping.Provider.Bitrix) {
 				return BitrixCallFactory$1;
 			}
 			throw new Error("Unknown call provider type " + providerType);
@@ -23177,7 +24523,7 @@ this.BX = this.BX || {};
 			window.addEventListener('online', this._onOnlineHandler);
 		}
 		get provider() {
-			return Provider$1.Plain;
+			return call_mapping.Provider.Plain;
 		}
 		get isCopilotActive() {
 			return this._isCopilotActive;
@@ -23245,18 +24591,41 @@ this.BX = this.BX || {};
 				onReconnecting: e => {
 					this.isReconnecting = true;
 					this._reconnectionEventCount++;
-					this.reconnectHistory.startEntry(e.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Provider, e.userId);
+					const seriesUserId = toPeerUserId(e.userId);
+					this.reconnectHistory.startEntry({
+						target: call_lib_reconnectHistory.ReconnectTarget.Peer,
+						userId: seriesUserId,
+						reason: e.reconnectionReason ?? null
+					});
 					this.runCallback(CallEvent.onReconnecting, {
 						reconnectionEventCount: this._reconnectionEventCount,
 						reconnectionReason: e.reconnectionReason,
-						reconnectionReasonInfo: e.reconnectionReasonInfo
+						reconnectionReasonInfo: e.reconnectionReasonInfo,
+						reconnectionTarget: call_lib_reconnectHistory.ReconnectTarget.Peer,
+						userId: seriesUserId,
+						hasEverConnected: Boolean(e.hasEverConnected)
 					});
 				},
-				onReconnected: () => {
+				onReconnected: e => {
 					this.isReconnecting = false;
 					this._reconnectionEventCount = 0;
-					this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Provider, true);
-					this.runCallback(CallEvent.onReconnected);
+					const seriesUserId = toPeerUserId(e?.userId);
+					this.reconnectHistory.updateLastEntry({
+						target: call_lib_reconnectHistory.ReconnectTarget.Peer,
+						userId: seriesUserId,
+						isSuccessful: true
+					});
+					this.runCallback(CallEvent.onReconnected, {
+						reconnectionTarget: call_lib_reconnectHistory.ReconnectTarget.Peer,
+						userId: seriesUserId
+					});
+				},
+				onReconnectSeriesOutcome: e => {
+					this.runCallback(CallEvent.onReconnectSeriesOutcome, {
+						reconnectionTarget: call_lib_reconnectHistory.ReconnectTarget.Peer,
+						userId: toPeerUserId(e.userId),
+						reconnectionOutcome: e.outcome
+					});
 				},
 				onUpdateLastUsedCameraId: () => {
 					this.runCallback(CallEvent.onUpdateLastUsedCameraId);
@@ -23393,7 +24762,7 @@ this.BX = this.BX || {};
 					video: Hardware.isCameraOn ? 'Y' : 'N'
 				});
 			}).then(() => {
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -23878,7 +25247,7 @@ this.BX = this.BX || {};
 						return;
 					}
 					this.subscribeHardwareChanges();
-					this.state = CallState.Connected;
+					this.state = call_mapping.CallState.Connected;
 					this.runCallback(CallEvent.onJoin, {
 						local: true
 					});
@@ -23918,7 +25287,7 @@ this.BX = this.BX || {};
 			tempError.name = "Call stack:";
 			this.log("Hangup received \n" + tempError.stack);
 			this.ready = false;
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			return new Promise((resolve, reject) => {
 				for (let userId in this.peers) {
 					this.peers[userId].disconnect();
@@ -24157,6 +25526,12 @@ this.BX = this.BX || {};
 			const senderId = params.senderId;
 			if (this.userId == senderId) {
 				if (this.instanceId != params.callInstanceId) {
+					if (this.associatedEntity?.isDeviceScoped === true) {
+						// Device-scoped (private 1-1 TYPE_INSTANT): self-decline from another device must not pull a
+						// still-ringing device out of the call — ending is driven solely
+						// by Call::finish (backend device-aware gate). Defense in depth.
+						return;
+					}
 					if (this.ready) {
 						//Received remote self-answer in ready state, ignoring
 						return;
@@ -24625,6 +26000,7 @@ this.BX = this.BX || {};
 				onNetworkProblem: main_core.Type.isFunction(params.onNetworkProblem) ? params.onNetworkProblem : BX.DoNothing,
 				onReconnecting: main_core.Type.isFunction(params.onReconnecting) ? params.onReconnecting : BX.DoNothing,
 				onReconnected: main_core.Type.isFunction(params.onReconnected) ? params.onReconnected : BX.DoNothing,
+				onReconnectSeriesOutcome: main_core.Type.isFunction(params.onReconnectSeriesOutcome) ? params.onReconnectSeriesOutcome : BX.DoNothing,
 				onUpdateLastUsedCameraId: main_core.Type.isFunction(params.onUpdateLastUsedCameraId) ? params.onUpdateLastUsedCameraId : BX.DoNothing
 			};
 
@@ -24639,6 +26015,7 @@ this.BX = this.BX || {};
 			this.negotiationNeededReplyTimeout = null;
 			this.reconnectAfterDisconnectTimeout = null;
 			this.connectionAttempt = 0;
+			this.hasEverConnected = false;
 			this._outgoingVideoTrack = null;
 			Object.defineProperty(this, 'outgoingVideoTrack', {
 				get: function () {
@@ -24883,6 +26260,7 @@ this.BX = this.BX || {};
 				this.localStreams[tag] = this.call.getLocalStream(tag);
 				const logMessage = 'Reconnect by replaceMediaStream';
 				this.reconnect({
+					reconnectionReason: 'PEER_MEDIA_STREAM_REPLACED',
 					reconnectionReasonInfo: logMessage
 				});
 			}
@@ -25275,7 +26653,10 @@ this.BX = this.BX || {};
 			if (this.peerConnection.connectionState === "connected" || this.peerConnection.connectionState === "completed") {
 				this.isReconnecting = false;
 				this.connectionAttempt = 0;
-				this.callbacks.onReconnected();
+				this.hasEverConnected = true;
+				this.callbacks.onReconnected({
+					userId: this.userId
+				});
 				clearTimeout(this.reconnectAfterDisconnectTimeout);
 				this._updateTracksDebounced();
 			} else if (this.peerConnection.connectionState === "failed") {
@@ -25420,12 +26801,14 @@ this.BX = this.BX || {};
 			const logMessage = 'Did not receive connection answer for connection ' + connectionId;
 			this.call.setPublishingState(MediaStreamsKinds.Camera, false);
 			this.reconnect({
+				reconnectionReason: 'PEER_OFFER_REPLY_TIMEOUT',
 				reconnectionReasonInfo: logMessage
 			});
 		}
 		_onNegotiationNeededReplyTimeout() {
 			const logMessage = 'Did not receive connection offer in time';
 			this.reconnect({
+				reconnectionReason: 'PEER_NEGOTIATION_REPLY_TIMEOUT',
 				reconnectionReasonInfo: logMessage
 			});
 		}
@@ -25641,13 +27024,18 @@ this.BX = this.BX || {};
 				this.log("Error: Too many reconnection attempts, giving up");
 				this.failureReason = "Could not connect to user in time";
 				this.updateCalculatedState();
+				this.callbacks.onReconnectSeriesOutcome({
+					userId: this.userId,
+					outcome: this.hasEverConnected ? call_lib_reconnectHistory.ReconnectOutcome.NotRecovered : call_lib_reconnectHistory.ReconnectOutcome.NotConnected
+				});
 				return;
 			}
 			const reconnectionReason = reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION';
 			this.callbacks.onReconnecting({
 				reconnectionReason,
 				reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
-				userId: this.userId
+				userId: this.userId,
+				hasEverConnected: this.hasEverConnected
 			});
 			if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo) {
 				this.log(reconnectInfoObject.reconnectionReasonInfo);
@@ -25712,7 +27100,8 @@ this.BX = this.BX || {};
 	const ajaxActions$1 = {
 		createCall: 'call.CallManager.create',
 		createChildCall: 'call.CallManager.createChildCall',
-		getCall: 'call.CallManager.get'
+		getCall: 'call.CallManager.get',
+		registerRingingDevice: 'call.Call.registerRingingDevice'
 	};
 	const CallScheme = {
 		classic: 1};
@@ -26104,6 +27493,7 @@ this.BX = this.BX || {};
 			}
 			if (call) {
 				call.addInvitedUsers(params.invitedUsers);
+				this.#registerRingingDevice(call);
 				BX.onCustomEvent(window, "CallEvents::incomingCall", [{
 					call: call,
 					video: params.video === true,
@@ -26112,6 +27502,25 @@ this.BX = this.BX || {};
 				}]);
 			}
 			this.log(call.id, "Incoming call " + call.id);
+		}
+		// Register this classic-scheme device as a ringing callee so the backend keeps
+		// it in the call when the same user declines on another device (device-scoped
+		// decline). Mirrors the JWT engine — scope is private 1-1 calls only, and the
+		// request runs once per call instance (repeated Call::incoming reuse the same
+		// call object). Best-effort: a failure must not block showing the incoming call.
+		#registerRingingDevice(call) {
+			if (call.associatedEntity?.isDeviceScoped !== true || call.ringingDeviceRegistered) {
+				return;
+			}
+			call.ringingDeviceRegistered = true;
+			BX.ajax.runAction(ajaxActions$1.registerRingingDevice, {
+				data: {
+					callUuid: call.uuid,
+					callInstanceId: call.instanceId
+				}
+			}).catch(() => {
+				call.ringingDeviceRegistered = false;
+			});
 		}
 		#onUnknownCallPing(params, extra) {
 			const callId = Number(params.callId);
@@ -26333,7 +27742,7 @@ this.BX = this.BX || {};
 			};
 		}
 		get provider() {
-			return Provider$1.Voximplant;
+			return call_mapping.Provider.Voximplant;
 		}
 		get screenShared() {
 			return this._screenShared;
@@ -26760,7 +28169,7 @@ this.BX = this.BX || {};
 					});
 				}
 			}).then(() => {
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -26771,13 +28180,13 @@ this.BX = this.BX || {};
 					}
 					if (!this.peers[userId]) {
 						this.peers[userId] = this.createPeer(userId);
-						if (this.type === CallType$1.Instant) {
+						if (this.type === call_mapping.CallType.Instant) {
 							this.runCallback(CallEvent.onUserInvited, {
 								userId: userId
 							});
 						}
 					}
-					if (this.type === CallType$1.Instant) {
+					if (this.type === call_mapping.CallType.Instant) {
 						this.peers[userId].onInvited();
 						this.scheduleRepeatInvite();
 					}
@@ -26828,7 +28237,7 @@ this.BX = this.BX || {};
 				joinAsViewer: joinAsViewer
 			}).then(() => {
 				this.log("Attached to conference");
-				this.state = CallState.Connected;
+				this.state = call_mapping.CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
 					local: true
 				});
@@ -26869,7 +28278,7 @@ this.BX = this.BX || {};
 			if (typeof reason != 'undefined') {
 				data.reason = reason;
 			}
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			this.runCallback(CallEvent.onLeave, {
 				local: true
 			});
@@ -27065,13 +28474,13 @@ this.BX = this.BX || {};
 				}
 				if (this.peers[userId]) {
 					if (this.peers[userId].calculatedState === UserState.Failed || this.peers[userId].calculatedState === UserState.Idle) {
-						if (this.type === CallType$1.Instant) {
+						if (this.type === call_mapping.CallType.Instant) {
 							this.peers[userId].onInvited();
 						}
 					}
 				} else {
 					this.peers[userId] = this.createPeer(userId);
-					if (this.type === CallType$1.Instant) {
+					if (this.type === call_mapping.CallType.Instant) {
 						this.peers[userId].onInvited();
 					}
 				}
@@ -27139,7 +28548,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			if (e.state == UserState.Failed || e.state == UserState.Unavailable || e.state == UserState.Declined || e.state == UserState.Idle) {
-				if (this.type == CallType$1.Instant && !this.isAnyoneParticipating()) {
+				if (this.type == call_mapping.CallType.Instant && !this.isAnyoneParticipating()) {
 					this.hangup();
 				}
 			}
@@ -27207,7 +28616,7 @@ this.BX = this.BX || {};
 				this.peers[senderId].setBusy(true);
 				console.error("user " + senderId + " is busy");
 			}
-			if (this.ready && this.type == CallType$1.Instant && !this.isAnyoneParticipating()) {
+			if (this.ready && this.type == call_mapping.CallType.Instant && !this.isAnyoneParticipating()) {
 				this.hangup();
 			}
 		};
@@ -27219,7 +28628,7 @@ this.BX = this.BX || {};
 		#onPullEventUsersInvited = params => {
 			this.log('__onPullEventUsersInvited', params);
 			const users = params.users;
-			if (this.type === CallType$1.Instant) {
+			if (this.type === call_mapping.CallType.Instant) {
 				this.addInvitedUsers(users);
 			}
 		};
@@ -27362,7 +28771,7 @@ this.BX = this.BX || {};
 			const client = VoxImplant.getInstance();
 			client.enableSilentLogging(false);
 			client.setLoggerCallback(null);
-			this.state = CallState.Proceeding;
+			this.state = call_mapping.CallState.Proceeding;
 			this.runCallback(CallEvent.onLeave, {
 				local: true
 			});
@@ -28111,16 +29520,13 @@ this.BX = this.BX || {};
 		/**
 		 * @param {object} config
 		 * @param {*} config.viewPort
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
-			viewPort,
-			callStore
+			viewPort
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.ButtonStateService');
 			this.viewPort = viewPort;
-			this.callStore = callStore ?? null;
 		}
 
 		/**
@@ -28334,11 +29740,6 @@ this.BX = this.BX || {};
 		 */
 		setButtonActive(name, active) {
 			this.viewPort.setButtonActive(name, active);
-			if (this.callStore) {
-				this.callStore.setButtonState(name, {
-					active
-				});
-			}
 		}
 
 		/**
@@ -28348,9 +29749,6 @@ this.BX = this.BX || {};
 		 */
 		blockButtons(names) {
 			this.viewPort.blockButtons(names);
-			if (this.callStore) {
-				this.callStore.blockButtons(names);
-			}
 		}
 
 		/**
@@ -28360,9 +29758,6 @@ this.BX = this.BX || {};
 		 */
 		unblockButtons(names) {
 			this.viewPort.unblockButtons(names);
-			if (this.callStore) {
-				this.callStore.unblockButtons(names);
-			}
 		}
 
 		/**
@@ -28373,20 +29768,82 @@ this.BX = this.BX || {};
 		 */
 		setButtonCounter(name, counter) {
 			this.viewPort.setButtonCounter(name, counter);
-			if (this.callStore) {
-				this.callStore.setButtonState(name, {
-					counter
-				});
-			}
 		}
 
 		/**
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			this.viewPort = null;
 		}
+	}
+
+	/**
+	 * Slot policy: decides what to do with the call currently occupying the controller slot
+	 * when the user addresses another call (or creates a new one).
+	 *
+	 * The controller owns a single slot (`currentCall`). A ringing incoming call takes that slot
+	 * before the user answers it, so "slot is taken" and "call is answered" are different questions:
+	 *
+	 *  - slot is taken      -> `currentCall` exists                  -> `slot.hasCall`
+	 *  - call is answered   -> the call window exists (`viewPort`)   -> `slot.isAnswered`
+	 *  - same call as target-> identifier comparison                 -> `slot.callKey` vs `target.callKey`
+	 *
+	 * This module is intentionally dependency-free: no engine, no DOM, no `BX.*`. That is what makes it
+	 * importable in Node and coverable by unit tests, unlike the controller itself.
+	 */
+
+	/**
+	 * @typedef {object} SlotSnapshot
+	 * @property {boolean} hasCall — the slot is taken by a call
+	 * @property {boolean} isAnswered — the call in the slot has been answered (its window exists)
+	 * @property {?(string|number)} callKey — identifier of the call in the slot, see Util.getCallIdentifier()
+	 */
+
+	/**
+	 * @typedef {object} SlotTarget
+	 * @property {?(string|number)} callKey — identifier of the addressed call, null when a new call is created
+	 * @property {?(string|number)} [dialogId] — dialog the call belongs to, informational for the caller
+	 */
+
+	/**
+	 * Decisions the controller must be able to execute. Names are normative.
+	 * @readonly
+	 */
+	const SlotDecision = Object.freeze({
+		/** Slot is free: enter the addressed call right away. */
+		Enter: 'enter',
+		/** The addressed call is the answered one already in the slot: just show its window. */
+		Unfold: 'unfold',
+		/** The addressed call is the ringing one already in the slot: answer it, no slot release. */
+		AnswerRinging: 'answerRinging',
+		/** Another call is addressed while a ringing invitation holds the slot: decline it, then enter. */
+		ReleaseRingingAndEnter: 'releaseRingingAndEnter',
+		/** Another call is addressed while an answered call holds the slot: leave it, then enter. */
+		LeaveAnsweredAndEnter: 'leaveAnsweredAndEnter'
+	});
+
+	/**
+	 * Decides what to do with the slot in order to enter the addressed target.
+	 *
+	 * Pure function: same input — same output, no side effects, no external state.
+	 *
+	 * @param {SlotSnapshot} slot
+	 * @param {SlotTarget} target
+	 * @return {string} one of SlotDecision
+	 */
+	function decideSlotAction(slot, target) {
+		if (!slot || !slot.hasCall) {
+			return SlotDecision.Enter;
+		}
+
+		// A target without a call key is a new call being created: it never matches the slot.
+		const targetKey = target ? target.callKey : null;
+		const isSameCall = targetKey !== null && targetKey !== undefined && targetKey === slot.callKey;
+		if (isSameCall) {
+			return slot.isAnswered ? SlotDecision.Unfold : SlotDecision.AnswerRinging;
+		}
+		return slot.isAnswered ? SlotDecision.LeaveAnsweredAndEnter : SlotDecision.ReleaseRingingAndEnter;
 	}
 
 	/**
@@ -28404,14 +29861,14 @@ this.BX = this.BX || {};
 		 * @param {HTMLElement} config.container
 		 * @param {Function} config.CopilotPopupClass — constructor for the copilot popup (injected to allow test isolation)
 		 * @param {Function} [config.onTariffGate] — called when the tariff gate fires
-		 * @param {*} [config.callStore]
+		 * @param {?string} [config.copilotModelName] — portal-specific model label for the notify text
 		 */
 		constructor({
 			viewPort,
 			container,
 			CopilotPopupClass,
 			onTariffGate,
-			callStore
+			copilotModelName = null
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.CopilotUiService');
@@ -28420,7 +29877,7 @@ this.BX = this.BX || {};
 			this.copilotPopup = null;
 			this.CopilotPopupClass = CopilotPopupClass;
 			this.onTariffGate = onTariffGate ?? null;
-			this.callStore = callStore ?? null;
+			this.copilotModelName = copilotModelName;
 		}
 
 		/**
@@ -28453,8 +29910,8 @@ this.BX = this.BX || {};
 				updateCopilotState: () => {
 					if (isCopilotActive) {
 						this.viewPort?.showConfirmModal({
-							title: main_core.Loc.getMessage('CALL_AI_RECORD_STOP_TITLE'),
-							message: main_core.Loc.getMessage('CALL_AI_RECORD_STOP_MESSAGE'),
+							title: main_core.Loc.getMessage('CALL_AI_RECORD_STOP_TITLE_MSGVER_1'),
+							message: main_core.Loc.getMessage('CALL_AI_RECORD_STOP_MESSAGE_MSGVER_1'),
 							yesButtonText: main_core.Loc.getMessage('CALL_AI_RECORD_STOP_YES_BUTTON'),
 							noButtonText: main_core.Loc.getMessage('CALL_AI_RECORD_STOP_NO_BUTTON')
 						}).then(choice => {
@@ -28503,11 +29960,6 @@ this.BX = this.BX || {};
 			this.viewPort.setButtonActive('copilot', isCopilotActive);
 			if (isCopilotActive) {
 				this.viewPort.showCopilotNotify(callId);
-				if (this.callStore) {
-					this.callStore.addNotification('copilot', {
-						callId
-					});
-				}
 			} else {
 				this.viewPort.closeCopilotNotify();
 			}
@@ -28530,14 +29982,9 @@ this.BX = this.BX || {};
 			force = false,
 			errorCode = ''
 		}) {
-			if ((isCopilotActive || force) && provider !== Provider$1.Plain && this.viewPort) {
-				this.viewPort.showCopilotNotify(callId, errorCode);
-				if (this.callStore) {
-					this.callStore.addNotification('copilot', {
-						callId,
-						errorCode
-					});
-				}
+			if ((isCopilotActive || force) && provider !== call_mapping.Provider.Plain && this.viewPort) {
+				const notifyText = this.copilotModelName ? main_core.Loc.getMessage('CALL_COPILOT_POPUP_NOTIFY_TEXT').replace('#MODEL_NAME#', this.copilotModelName) : null;
+				this.viewPort.showCopilotNotify(callId, errorCode, notifyText);
 			}
 		}
 
@@ -28573,7 +30020,6 @@ this.BX = this.BX || {};
 		 * Closes the copilot popup if open and releases all held references.
 		 */
 		destroy() {
-			this.callStore = null;
 			if (this.copilotPopup !== null) {
 				this.copilotPopup.close();
 				this.copilotPopup = null;
@@ -28583,7 +30029,7 @@ this.BX = this.BX || {};
 		}
 	}
 
-	const Events$3 = {
+	const Events$2 = {
 		onClose: 'onClose',
 		onDestroy: 'onDestroy',
 		onCloseClicked: 'onCloseClicked'
@@ -28643,7 +30089,7 @@ this.BX = this.BX || {};
 							})]
 						})],
 						events: {
-							click: () => this.emit(Events$3.onCloseClicked)
+							click: () => this.emit(Events$2.onCloseClicked)
 						}
 					})]
 				}), this.elements.contentContainer = main_core.Dom.create("div", {
@@ -28686,14 +30132,14 @@ this.BX = this.BX || {};
 					this.elements.root.classList.add('closing');
 					this.elements.root.addEventListener('animationend', () => {
 						this.container.removeChild(this.elements.root);
-						this.emit(Events$3.onClose);
+						this.emit(Events$2.onClose);
 						resolve();
 					}, {
 						once: true
 					});
 				} else {
 					this.container.removeChild(this.elements.root);
-					this.emit(Events$3.onClose);
+					this.emit(Events$2.onClose);
 					resolve();
 				}
 			});
@@ -28702,9 +30148,9 @@ this.BX = this.BX || {};
 			this.elements.root.classList.toggle('hidden', hidden);
 		}
 		destroy() {
-			this.emit(Events$3.onDestroy);
-			this.unsubscribeAll(Events$3.onClose);
-			this.unsubscribeAll(Events$3.onDestroy);
+			this.emit(Events$2.onDestroy);
+			this.unsubscribeAll(Events$2.onClose);
+			this.unsubscribeAll(Events$2.onDestroy);
 			this.eventEmitter = null;
 			this.elements = null;
 			this.container = null;
@@ -28732,15 +30178,13 @@ this.BX = this.BX || {};
 		 * @param {*} config.resizeObserver
 		 * @param {*} config.messengerFacade
 		 * @param {number} [config.minViewWidth=250] - minimum width of the call view when the editor sidebar is open
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
 			viewPort,
 			container,
 			resizeObserver,
 			messengerFacade,
-			minViewWidth = 250,
-			callStore
+			minViewWidth = 250
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.DocumentEditorService');
@@ -28749,7 +30193,6 @@ this.BX = this.BX || {};
 			this.resizeObserver = resizeObserver;
 			this.messengerFacade = messengerFacade;
 			this.minViewWidth = minViewWidth;
-			this.callStore = callStore ?? null;
 			this.sidebar = null;
 			this.docEditor = null;
 			this.docEditorIframe = null;
@@ -29107,7 +30550,6 @@ this.BX = this.BX || {};
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			this.closeDocumentEditor();
 			if (this.documentsMenu) {
 				this.documentsMenu.destroy();
@@ -29256,13 +30698,11 @@ this.BX = this.BX || {};
 		 * @param {*} config.viewPort
 		 * @param {*} config.container
 		 * @param {boolean} [config.darkMode=false]
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
 			viewPort,
 			container,
-			darkMode = false,
-			callStore
+			darkMode = false
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.FeedbackUiService');
@@ -29270,7 +30710,6 @@ this.BX = this.BX || {};
 			this.container = container;
 			this.darkMode = darkMode;
 			this.feedbackPopup = null;
-			this.callStore = callStore ?? null;
 		}
 
 		/**
@@ -29420,7 +30859,6 @@ this.BX = this.BX || {};
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			if (this.feedbackPopup) {
 				this.feedbackPopup.close();
 				this.feedbackPopup = null;
@@ -29430,7 +30868,7 @@ this.BX = this.BX || {};
 		}
 	}
 
-	const Events$2 = {
+	const Events$1 = {
 		setAudioMuted: "FloatingVideo::setAudioMuted",
 		setTitle: "FloatingVideo::setTitle",
 		setAvatars: "FloatingVideo::setAvatars",
@@ -29479,11 +30917,11 @@ this.BX = this.BX || {};
 			this.bindEventHandlers();
 		}
 		bindEventHandlers() {
-			BX.desktop.addCustomEvent(Events$2.onMainAreaClick, this._onContentMainAreaClickHandler);
-			BX.desktop.addCustomEvent(Events$2.onMicButtonClick, this._onContentMicButtonClickHandler);
-			BX.desktop.addCustomEvent(Events$2.onHangupButtonClick, this._onContentHangupButtonClickHandler);
-			BX.desktop.addCustomEvent(Events$2.connectionAnswer, this._onConnectionAnswerHandler);
-			BX.desktop.addCustomEvent(Events$2.connectionIceCandidate, this._onConnectionIceCandidateHandler);
+			BX.desktop.addCustomEvent(Events$1.onMainAreaClick, this._onContentMainAreaClickHandler);
+			BX.desktop.addCustomEvent(Events$1.onMicButtonClick, this._onContentMicButtonClickHandler);
+			BX.desktop.addCustomEvent(Events$1.onHangupButtonClick, this._onContentHangupButtonClickHandler);
+			BX.desktop.addCustomEvent(Events$1.connectionAnswer, this._onConnectionAnswerHandler);
+			BX.desktop.addCustomEvent(Events$1.connectionIceCandidate, this._onConnectionIceCandidateHandler);
 		}
 		_onContentMainAreaClick() {
 			this.callbacks.onMainAreaClick();
@@ -29516,18 +30954,18 @@ this.BX = this.BX || {};
 		setTitle(title) {
 			this.title = title;
 			if (this.window) {
-				BX.desktop.onCustomEvent(this.window, Events$2.setTitle, [this.title]);
+				BX.desktop.onCustomEvent(this.window, Events$1.setTitle, [this.title]);
 			}
 		}
 		setAvatars(avatarList) {
 			this.avatars = avatarList;
 			if (this.window && this.visible) {
-				BX.desktop.onCustomEvent(this.window, Events$2.setAvatars, [this.avatars]);
+				BX.desktop.onCustomEvent(this.window, Events$1.setAvatars, [this.avatars]);
 			}
 		}
 		setTalking(talking) {
 			if (this.window) {
-				BX.desktop.onCustomEvent(this.window, Events$2.setTalking, [talking]);
+				BX.desktop.onCustomEvent(this.window, Events$1.setTalking, [talking]);
 			}
 		}
 		sendVideo() {
@@ -29544,13 +30982,13 @@ this.BX = this.BX || {};
 				connectionOffer = offer;
 				return this.peerConnection.setLocalDescription(offer);
 			}.bind(this)).then(function () {
-				BX.desktop.onCustomEvent(this.window, Events$2.connectionOffer, [connectionOffer.sdp]);
+				BX.desktop.onCustomEvent(this.window, Events$1.connectionOffer, [connectionOffer.sdp]);
 			}.bind(this));
 		}
 		_onPCIceCandidate(e) {
 			var candidate = e.candidate;
 			if (candidate) {
-				BX.desktop.onCustomEvent(this.window, Events$2.connectionIceCandidate, [candidate.toJSON()]);
+				BX.desktop.onCustomEvent(this.window, Events$1.connectionIceCandidate, [candidate.toJSON()]);
 			}
 		}
 		_onConnectionAnswer(sdp) {
@@ -29574,7 +31012,7 @@ this.BX = this.BX || {};
 				this.peerConnection.removeEventListener("icecandidate", this._onPCIceCandidateHandler);
 				this.peerConnection = null;
 			}
-			BX.desktop.onCustomEvent(this.window, Events$2.connectionClose, []);
+			BX.desktop.onCustomEvent(this.window, Events$1.connectionClose, []);
 		}
 		setAudioMuted(audioMuted) {
 			if (this.audioMuted == audioMuted) {
@@ -29582,7 +31020,7 @@ this.BX = this.BX || {};
 			}
 			this.audioMuted = audioMuted;
 			if (this.window && this.visible) {
-				BX.desktop.onCustomEvent(this.window, Events$2.setAudioMuted, [this.audioMuted]);
+				BX.desktop.onCustomEvent(this.window, Events$1.setAudioMuted, [this.audioMuted]);
 			}
 		}
 		show() {
@@ -29591,8 +31029,8 @@ this.BX = this.BX || {};
 			}
 			if (this.window) {
 				this.window.BXDesktopWindow.ExecuteCommand("show");
-				BX.desktop.onCustomEvent(this.window, Events$2.setAudioMuted, [this.audioMuted]);
-				BX.desktop.onCustomEvent(this.window, Events$2.setAvatars, [this.avatars]);
+				BX.desktop.onCustomEvent(this.window, Events$1.setAudioMuted, [this.audioMuted]);
+				BX.desktop.onCustomEvent(this.window, Events$1.setAvatars, [this.avatars]);
 				if (this.stream) {
 					this.sendVideo();
 				}
@@ -29633,9 +31071,9 @@ this.BX = this.BX || {};
 				this.window = null;
 			}
 			this.stream = null;
-			BX.desktop.removeCustomEvents(Events$2.onMainAreaClick);
-			BX.desktop.removeCustomEvents(Events$2.onMicButtonClick);
-			BX.desktop.removeCustomEvents(Events$2.onHangupButtonClick);
+			BX.desktop.removeCustomEvents(Events$1.onMainAreaClick);
+			BX.desktop.removeCustomEvents(Events$1.onMicButtonClick);
+			BX.desktop.removeCustomEvents(Events$1.onHangupButtonClick);
 		}
 	}
 
@@ -29649,13 +31087,11 @@ this.BX = this.BX || {};
 		 * @param {boolean} config.floatingVideo - Whether to instantiate the floating video window (currently disabled)
 		 * @param {boolean} config.floatingScreenShare - Whether to instantiate the floating screen-share window
 		 * @param {boolean} config.darkMode
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
 			floatingVideo,
 			floatingScreenShare,
-			darkMode,
-			callStore
+			darkMode
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.FloatingWindowService');
@@ -29665,7 +31101,6 @@ this.BX = this.BX || {};
 			this.showFloatingWindowTimeout = 0;
 			this.showFloatingScreenShareWindowTimeout = 0;
 			this.darkMode = darkMode ?? false;
-			this.callStore = callStore ?? null;
 			if (floatingVideo) {
 				this.floatingWindow = new FloatingVideo({
 					onMainAreaClick: () => {
@@ -29810,7 +31245,6 @@ this.BX = this.BX || {};
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			clearTimeout(this.showFloatingWindowTimeout);
 			clearTimeout(this.showFloatingScreenShareWindowTimeout);
 			if (this.floatingWindow) {
@@ -29835,19 +31269,16 @@ this.BX = this.BX || {};
 		 * @param {object} config
 		 * @param {*} config.viewPort
 		 * @param {*} config.container
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
 			viewPort,
-			container,
-			callStore
+			container
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.HangupOptionsUiService');
 			this.viewPort = viewPort;
 			this.container = container;
 			this.hangupOptionsMenu = null;
-			this.callStore = callStore ?? null;
 		}
 
 		/**
@@ -29922,11 +31353,16 @@ this.BX = this.BX || {};
 					},
 					onDestroy: () => {
 						this.hangupOptionsMenu = null;
+						bindElement.setAttribute('aria-expanded', 'false');
+						if (!document.activeElement || document.activeElement === document.body) {
+							bindElement.focus();
+						}
 					}
 				},
 				items: menuItems
 			});
 			this.hangupOptionsMenu.show();
+			bindElement.setAttribute('aria-expanded', 'true');
 		}
 
 		/**
@@ -29934,7 +31370,6 @@ this.BX = this.BX || {};
 		 * Destroys the popup if it is open and nulls all references.
 		 */
 		destroy() {
-			this.callStore = null;
 			if (this.hangupOptionsMenu !== null) {
 				this.hangupOptionsMenu.destroy();
 				this.hangupOptionsMenu = null;
@@ -29944,31 +31379,170 @@ this.BX = this.BX || {};
 		}
 	}
 
+	class AuthoritativeUserNameService {
+		#scopeKey = null;
+		#scopeEpoch = 0;
+		#authoritativeNames = {};
+		#pendingRequests = {};
+		resolveUserData(call, userData, userIds, getCurrentName = null) {
+			this.#ensureScope(call);
+			if (!main_core.Type.isPlainObject(userData)) {
+				return {};
+			}
+			const result = {};
+			for (const userId of this.#normalizeUserIds(userIds)) {
+				const sourceUserData = main_core.Type.isPlainObject(userData[userId]) ? userData[userId] : {};
+				const resolvedName = this.resolveDisplayName(userId, sourceUserData.name, getCurrentName?.(userId));
+				result[userId] = {
+					...sourceUserData
+				};
+				if (resolvedName) {
+					result[userId].name = resolvedName;
+				}
+			}
+			return result;
+		}
+		resolveDisplayName(userId, transportName, currentName = null) {
+			const key = String(userId);
+			const authoritativeName = this.#authoritativeNames[key];
+			return authoritativeName || currentName || transportName;
+		}
+		setAuthoritativeUserName(userId, name) {
+			if (!userId || !name) {
+				return;
+			}
+			this.#authoritativeNames[String(userId)] = name;
+		}
+		fetchUserData(call, userIds, options = {}) {
+			this.#ensureScope(call);
+			const force = options.force === true;
+			const requestUserIds = this.#normalizeUserIds(userIds).filter(userId => {
+				const key = String(userId);
+				return !Object.prototype.hasOwnProperty.call(this.#pendingRequests, key) && (force || !Object.prototype.hasOwnProperty.call(this.#authoritativeNames, key));
+			});
+			if (requestUserIds.length === 0) {
+				return Promise.resolve({});
+			}
+			const requestData = this.#getRequestData(call, requestUserIds);
+			if (!requestData) {
+				return Promise.resolve({});
+			}
+			const scopeKey = this.#scopeKey;
+			const scopeEpoch = this.#scopeEpoch;
+			const request = BX.ajax.runAction('call.CallManager.getUsers', {
+				data: requestData
+			}).then(response => {
+				this.#clearPending(requestUserIds);
+				if (scopeKey !== this.#scopeKey || scopeEpoch !== this.#scopeEpoch) {
+					return {};
+				}
+				const responseData = main_core.Type.isPlainObject(response.data) ? response.data : {};
+				const result = {};
+				for (const userId of requestUserIds) {
+					const userRecord = main_core.Type.isPlainObject(responseData[userId]) ? responseData[userId] : null;
+					if (!userRecord) {
+						continue;
+					}
+					const key = String(userId);
+					if (userRecord.name && (force || !Object.prototype.hasOwnProperty.call(this.#authoritativeNames, key))) {
+						this.#authoritativeNames[key] = userRecord.name;
+					}
+					result[userId] = {
+						...userRecord
+					};
+					if (this.#authoritativeNames[key]) {
+						result[userId].name = this.#authoritativeNames[key];
+					}
+				}
+				return result;
+			}).catch(error => {
+				this.#clearPending(requestUserIds);
+				console.warn('[Call] Failed to fetch authoritative user names', error);
+				return {};
+			});
+			for (const userId of requestUserIds) {
+				this.#pendingRequests[String(userId)] = request;
+			}
+			return request;
+		}
+		reset() {
+			this.#scopeKey = null;
+			this.#scopeEpoch++;
+			this.#authoritativeNames = {};
+			this.#pendingRequests = {};
+		}
+		#ensureScope(call) {
+			const scopeKey = this.#getScopeKey(call);
+			if (scopeKey === this.#scopeKey) {
+				return;
+			}
+			this.#scopeKey = scopeKey;
+			this.#scopeEpoch++;
+			this.#authoritativeNames = {};
+			this.#pendingRequests = {};
+		}
+		#getRequestData(call, userIds) {
+			if (!call) {
+				return null;
+			}
+			const data = {
+				userIds
+			};
+			if (call.uuid) {
+				data.callUuid = call.uuid;
+				return data;
+			}
+			if (Util.isLegacyCall(call.provider, call.scheme) && call.id) {
+				data.callId = call.id;
+				return data;
+			}
+			if (call.id) {
+				data.callId = call.id;
+				return data;
+			}
+			return null;
+		}
+		#getScopeKey(call) {
+			if (!call) {
+				return null;
+			}
+			return `${call.provider || ''}:${call.scheme || ''}:${call.uuid || call.id || ''}`;
+		}
+		#normalizeUserIds(userIds) {
+			return [...new Set((Array.isArray(userIds) ? userIds : [userIds]).filter(userId => {
+				return userId !== null && userId !== undefined;
+			}))];
+		}
+		#clearPending(userIds) {
+			for (const userId of userIds) {
+				delete this.#pendingRequests[String(userId)];
+			}
+		}
+	}
+
 	/**
 	 * Manages call window layout: fold/unfold, fullscreen, detached mode, chat visibility, and window focus.
 	 */
 	class LayoutService extends main_core_events.EventEmitter {
 		#pendingTalkingUsers = new Set();
+		#authoritativeUserNameService = new AuthoritativeUserNameService();
 
 		/**
 		 * @param {object} config
 		 * @param {*} config.viewPort
 		 * @param {*} config.container
 		 * @param {*} config.resizeObserver
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
 			viewPort,
 			container,
-			resizeObserver,
-			callStore
+			resizeObserver
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.LayoutService');
 			this.viewPort = viewPort;
 			this.container = container;
 			this.resizeObserver = resizeObserver;
-			this.callStore = callStore ?? null;
 			this.folded = false;
 			this.detached = false;
 			this.isWindowFocus = true;
@@ -29978,26 +31552,13 @@ this.BX = this.BX || {};
 		}
 
 		/**
-		 * Returns user model from userRegistry or callStore.
+		 * Returns user model from userRegistry.
 		 *
 		 * @param {number|string} userId
 		 * @returns {{ name: string, avatar: string } | null}
 		 */
 		#getUserModel(userId) {
-			const registryModel = this.viewPort.userRegistry?.get(userId) ?? null;
-			if (registryModel) {
-				return registryModel;
-			}
-			if (this.callStore) {
-				const storeUser = this.callStore.users[userId];
-				if (storeUser) {
-					return {
-						name: storeUser.name,
-						avatar: storeUser.avatar
-					};
-				}
-			}
-			return null;
+			return this.viewPort.userRegistry?.get(userId) ?? null;
 		}
 
 		/**
@@ -30011,12 +31572,18 @@ this.BX = this.BX || {};
 			}
 			this.folded = true;
 			this.resizeObserver.unobserve(this.container);
+
+			// Asked while the window is still rendered: once it is hidden, a focus of its own is
+			// indistinguishable from a focus lost for any other reason.
+			const focusWasOurs = this.viewPort.releaseFocusBeforeHide();
 			this.container.classList.add('bx-messenger-call-overlay-folded');
+
+			// Only now does the focus history skip the hidden window and resolve outside it (ALG-02).
+			if (focusWasOurs) {
+				this.viewPort.restoreFocusAfterHide();
+			}
 			this.viewPort.setTitle(title);
 			this.viewPort.setSize('folded');
-			if (this.callStore) {
-				this.callStore.setCallTitle(title);
-			}
 			this.emit('LayoutService::onFold');
 		}
 
@@ -30024,23 +31591,30 @@ this.BX = this.BX || {};
 		 * Restores the call window from the folded state.
 		 *
 		 * @param {object} options
+		 * @param {boolean} [options.fromPiP]
+		 * @param {boolean} [options.isReturnGesture] the caller is an explicit "return to call" control,
+		 *        not a side effect of an action taken inside the call window
 		 */
 		unfold(options = {}) {
 			const {
-				fromPiP = false
+				fromPiP = false,
+				isReturnGesture = false
 			} = options;
 			if (this.detached) {
 				this.container.style.removeProperty('width');
 				this.viewPort.show();
 				this.detached = false;
-				this.emit('LayoutService::onUnfoldDetached');
+				this.emit('LayoutService::onUnfoldDetached', {
+					isReturnGesture
+				});
 			}
 			if (this.folded) {
 				this.folded = false;
 				this.container.classList.remove('bx-messenger-call-overlay-folded');
 				this.viewPort.setSize('full');
 				this.emit('LayoutService::onUnfold', {
-					fromPiP
+					fromPiP,
+					isReturnGesture
 				});
 			}
 			this.emit('LayoutService::onUnfoldComplete');
@@ -30139,9 +31713,6 @@ this.BX = this.BX || {};
 		updateWindowFocusState(isActive) {
 			this.isWindowFocus = isActive;
 			this.viewPort.setWindowFocusState(isActive);
-			if (this.callStore) {
-				this.callStore.setWindowFocus(isActive);
-			}
 		}
 
 		/**
@@ -30151,9 +31722,6 @@ this.BX = this.BX || {};
 		 */
 		setSize(size) {
 			this.viewPort.setSize(size);
-			if (this.callStore) {
-				this.callStore.setSize(size);
-			}
 		}
 
 		/**
@@ -30163,9 +31731,6 @@ this.BX = this.BX || {};
 		 */
 		setMaxWidth(maxWidth) {
 			this.viewPort.setMaxWidth(maxWidth);
-			if (this.callStore) {
-				this.callStore.setMaxWidth(maxWidth);
-			}
 		}
 
 		/**
@@ -30596,32 +32161,73 @@ this.BX = this.BX || {};
 		 */
 		handleUserJoinEvent(eventName, event, currentCall) {
 			if (!this.viewPort) {
-				return;
+				return event?.userData ?? {};
 			}
 			if (eventName === 'onUserInvited') {
+				const userData = this.#resolveUserData(currentCall, event.userData, [event.userId]);
 				if (Util.isLegacyCall(currentCall.provider, currentCall.scheme)) {
 					this.emit('LayoutService::onUpdateCallViewUsers', {
 						callId: currentCall.id,
 						users: [event.userId]
 					});
 				} else {
-					Util.setUserData(event.userData);
-					this.viewPort.updateUserData(event.userData);
+					Util.setUserData(userData);
+					this.viewPort.updateUserData(userData);
+					this.#fetchAuthoritativeUserData(currentCall, [event.userId]);
 				}
 				this.viewPort.addUser(event.userId);
+				return userData;
 			} else if (eventName === 'onUserJoined') {
-				Util.setUserData(event.userData);
-				this.viewPort.updateUserData(event.userData);
+				const userData = this.#resolveUserData(currentCall, event.userData, [event.userId]);
+				Util.setUserData(userData);
+				this.viewPort.updateUserData(userData);
 				this.viewPort.addUser(event.userId, BX.Call.UserState.Connected);
+				this.#fetchAuthoritativeUserData(currentCall, [event.userId]);
+				return userData;
 			}
+			return event?.userData ?? {};
+		}
+		updateUsers(currentCall, userData, userIds, options = {}) {
+			const resolvedUserData = this.#resolveUserData(currentCall, userData, userIds, options.getCurrentName);
+			if (Object.keys(resolvedUserData).length > 0) {
+				Util.setUserData(resolvedUserData);
+				this.viewPort?.updateUserData(resolvedUserData);
+			}
+			if (options.fetch !== false) {
+				this.refreshUsers(currentCall, userIds, {
+					force: options.forceFetch === true
+				});
+			}
+			return resolvedUserData;
+		}
+		refreshUsers(currentCall, userIds, options = {}) {
+			this.#fetchAuthoritativeUserData(currentCall, userIds, options);
+		}
+		setAuthoritativeUserName(userId, name) {
+			this.#authoritativeUserNameService.setAuthoritativeUserName(userId, name);
+		}
+		#resolveUserData(currentCall, userData, userIds, getCurrentName = null) {
+			return this.#authoritativeUserNameService.resolveUserData(currentCall, userData, userIds, getCurrentName ?? (userId => this.#getUserModel(userId)?.name));
+		}
+		#fetchAuthoritativeUserData(currentCall, userIds, options = {}) {
+			if (!currentCall) {
+				return;
+			}
+			this.#authoritativeUserNameService.fetchUserData(currentCall, userIds, options).then(userData => {
+				if (!this.viewPort || Object.keys(userData).length === 0) {
+					return;
+				}
+				Util.setUserData(userData);
+				this.viewPort.updateUserData(userData);
+			});
 		}
 
 		/**
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			this.#pendingTalkingUsers.clear();
+			this.#authoritativeUserNameService.reset();
 			if (this.roomMenu) {
 				this.roomMenu.destroy();
 				this.roomMenu = null;
@@ -30637,38 +32243,227 @@ this.BX = this.BX || {};
 		}
 	}
 
+	/**
+	 * Phrase directory of the moderation and media-failure notifications: the two decision tables
+	 * NotificationService used to carry as nested branches.
+	 *
+	 * A function here answers one question, which phrase key describes what happened, and answers it
+	 * from its arguments alone. No dictionary, no DOM, no service: reading the phrase and showing the
+	 * balloon stay with the caller, which is what keeps these functions coverable on their own.
+	 *
+	 * The directory is deliberately outside the entry point of the extension: it is imported by the
+	 * service and its test by relative path, and adds nothing to the public surface of `call.core`.
+	 */
+
+	const ROOM_SETTING_ICONS = Object.freeze({
+		audio: 'mic',
+		video: 'cam',
+		screen_share: 'screenshare'
+	});
+
+	/**
+	 * Which phrase a room setting change gets: prohibited or allowed, by me or by an administrator.
+	 * The administrator rows name a phrase family: the gender of the initiator is appended to it.
+	 */
+	const ROOM_SETTING_PHRASES = Object.freeze({
+		prohibited: {
+			own: {
+				audio: 'CALL_YOU_PROHIBITED_MIC_FOR_ALL_BY_SETTINGS',
+				video: 'CALL_YOU_PROHIBITED_CAM_FOR_ALL_BY_SETTINGS',
+				screen_share: 'CALL_YOU_PROHIBITED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
+			},
+			admin: {
+				audio: 'CALL_ADMIN_PROHIBITED_MIC_FOR_ALL_BY_SETTINGS',
+				video: 'CALL_ADMIN_PROHIBITED_CAM_FOR_ALL_BY_SETTINGS',
+				screen_share: 'CALL_ADMIN_PROHIBITED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
+			}
+		},
+		allowed: {
+			own: {
+				audio: 'CALL_YOU_ALLOWED_MIC_FOR_ALL_BY_SETTINGS',
+				video: 'CALL_YOU_ALLOWED_CAM_FOR_ALL_BY_SETTINGS',
+				screen_share: 'CALL_YOU_ALLOWED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
+			},
+			admin: {
+				audio: 'CALL_ADMIN_ALLOWED_MIC_FOR_ALL_BY_SETTINGS',
+				video: 'CALL_ADMIN_ALLOWED_CAM_FOR_ALL_BY_SETTINGS',
+				screen_share: 'CALL_ADMIN_ALLOWED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
+			}
+		}
+	});
+
+	/**
+	 * What the browser refused, by the name of the error it raised.
+	 * A family that has no row for the requested devices shows nothing.
+	 */
+	const MEDIA_FAILURE_PHRASES = Object.freeze({
+		denied: {
+			micAndCam: 'CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC_AND_CAM',
+			mic: 'CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC',
+			cam: 'CALL_DEVICE_ACCESS_DENIED_ALLOW_CAM'
+		},
+		overconstrained: {
+			mic: 'CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_MIC',
+			cam: 'CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_CAM'
+		},
+		inUse: {
+			mic: 'CALL_DEVICE_ACCESS_DENIED_MIC_IN_USE',
+			cam: 'CALL_DEVICE_ACCESS_DENIED_CAM_IN_USE'
+		}
+	});
+
+	/**
+	 * @typedef {object} RoomSettingsPhrase
+	 * @property {string|undefined} phraseKey - key of the phrase to read, undefined for an unknown device
+	 * @property {string} iconSuffix - tail of the icon class, appended to `bx-call-view-`
+	 * @property {boolean} isAllow - the change allows rather than prohibits: colours the balloon
+	 * @property {boolean} usesGenderChannel - the phrase carries the initiator, so it is read through
+	 *   the gendered channel with a name substitution; otherwise it is a plain phrase
+	 */
+
+	/**
+	 * Decides which phrase describes a change of the room settings.
+	 *
+	 * Pure function: same input, same output, no side effects, no external state.
+	 *
+	 * @param {object} params
+	 * @param {boolean} params.eft - the change prohibits the device (strictly true) rather than allows it
+	 * @param {string} params.act - device the change is about: audio, video or screen_share
+	 * @param {boolean} params.isOwnInitiator - the local user is the one who changed the setting
+	 * @param {string} params.initiatorGender - gender of the initiator, appended to a gendered phrase
+	 * @returns {RoomSettingsPhrase}
+	 */
+	function getRoomSettingsPhrase({
+		eft,
+		act,
+		isOwnInitiator,
+		initiatorGender
+	}) {
+		const isAllow = eft !== true;
+		const usesGenderChannel = !isOwnInitiator;
+		const phrases = ROOM_SETTING_PHRASES[isAllow ? 'allowed' : 'prohibited'][isOwnInitiator ? 'own' : 'admin'];
+		const phraseKey = phrases[act];
+		return {
+			phraseKey: usesGenderChannel && phraseKey !== undefined ? `${phraseKey}_${initiatorGender}` : phraseKey,
+			iconSuffix: `${ROOM_SETTING_ICONS[act]}-${isAllow ? 'unmuted' : 'muted'}`,
+			isAllow,
+			usesGenderChannel
+		};
+	}
+
+	/**
+	 * Names the family of a media failure by the error the browser raised.
+	 *
+	 * @param {string} errorName
+	 * @param {string} errorMessage
+	 * @returns {string} key of MEDIA_FAILURE_PHRASES, empty when the error is none of the known ones
+	 */
+	function getFailureFamily(errorName, errorMessage) {
+		if (errorName === 'PermissionDeniedError' || errorName === 'NotAllowedError') {
+			return 'denied';
+		}
+		if (errorName === 'OverconstrainedError') {
+			return 'overconstrained';
+		}
+		if (errorName === 'NotReadableError' || errorName === 'AbortError' && errorMessage === 'Starting videoinput failed') {
+			return 'inUse';
+		}
+		return '';
+	}
+
+	/**
+	 * Names what was asked of the browser: both devices, the microphone alone or the camera alone.
+	 *
+	 * @param {object} options
+	 * @param {boolean} options.audio
+	 * @param {boolean} options.video
+	 * @returns {string} key of a phrase family row, empty when nothing was asked for
+	 */
+	function getRequestedDevices({
+		audio,
+		video
+	}) {
+		if (audio && video) {
+			return 'micAndCam';
+		}
+		if (audio) {
+			return 'mic';
+		}
+		if (video) {
+			return 'cam';
+		}
+		return '';
+	}
+
+	/**
+	 * Decides which phrase describes a refusal of access to the media devices.
+	 *
+	 * Pure function: same input, same output, no side effects, no external state. An empty string is
+	 * the answer "nothing is shown": several combinations of error and requested devices have no phrase.
+	 *
+	 * @param {object} params
+	 * @param {string} params.errorName - name of the error the browser raised
+	 * @param {string} [params.errorMessage] - its message, read only for AbortError
+	 * @param {{audio: boolean, video: boolean}} params.options - what was asked of the browser
+	 * @returns {string} phrase key, or an empty string when there is nothing to show
+	 */
+	function getUserMediaFailurePhrase({
+		errorName,
+		errorMessage,
+		options
+	}) {
+		const phrases = MEDIA_FAILURE_PHRASES[getFailureFamily(errorName, errorMessage)];
+
+		// the requested devices are read only once the error is one we speak about, the way the ladder
+		// of the service reached them
+		if (!phrases) {
+			return '';
+		}
+		return phrases[getRequestedDevices(options)] ?? '';
+	}
+
 	const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
 
 	// Client-side fallback of Util.getCallConnectionErrorCode: an internal analytics label,
 	// never a code to show the user.
-	const CLIENT_UNCLASSIFIED_ERROR_CODE = 'CLIENT_UNCLASSIFIED';
+	const CLIENT_UNCLASSIFIED_ERROR_CODE$1 = 'CLIENT_UNCLASSIFIED';
 
 	/**
 	 * Manages in-call notification popups and hint overlays (mute, network, VPN, unsupported, etc.).
 	 */
-	class NotificationService extends main_core_events.EventEmitter {
+	class NotificationService {
 		#callControlPanelOpen = false;
+
+		// Both live next to `allowMutePopup` and only guard the push-to-talk trigger: the hint is offered
+		// once per call, and not at all once the user has managed to hold the key. Nothing is stored
+		// beyond the lifetime of the service.
+		#pushToTalkHintShown = false;
+		#pushToTalkUsed = false;
 
 		/**
 		 * @param {object} config
 		 * @param {*} config.viewPort
 		 * @param {HTMLElement} config.container
-		 * @param {*} [config.callStore]
+		 * @param {Function} [config.onAskSpeakButtonClicked] - `() => void`, the floor-request hint button
+		 * @param {Function} [config.onUnmuteMicButtonClicked] - `() => void`, the mute hint unmute button
 		 */
 		constructor({
 			viewPort,
 			container,
-			callStore
+			onAskSpeakButtonClicked,
+			onUnmuteMicButtonClicked
 		}) {
-			super();
-			this.setEventNamespace('BX.Call.NotificationService');
 			this.viewPort = viewPort;
 			this.container = container;
-			this.callStore = callStore ?? null;
+			this.callbacks = {
+				onAskSpeakButtonClicked,
+				onUnmuteMicButtonClicked
+			};
 			this.mutePopup = null;
 			this.riseYouHandToTalkPopup = null;
 			this.allowMutePopup = true;
 			this.reconnectionBalloon = null;
+			this.localRecordStartFailedBalloon = null;
 			this.remoteVideoMutedBalloon = null;
 			this.mediaDevicesResetStateHintBalloon = null;
 
@@ -30689,7 +32484,7 @@ this.BX = this.BX || {};
 		 * @param {Array} actions
 		 */
 		showNotification(notificationText, actions = []) {
-			ui_notification.Center.notify({
+			this.#notify({
 				content: main_core.Text.encode(notificationText),
 				position: 'top-right',
 				autoHideDelay: 5000,
@@ -30699,31 +32494,86 @@ this.BX = this.BX || {};
 		}
 
 		/**
+		 * Shows the refused local record start. The balloon has no auto hide: a lost record matters
+		 * too much to disappear on its own, so the user closes it. A repeated refusal replaces the
+		 * previous balloon instead of stacking one more on top of it.
+		 */
+		showLocalRecordStartFailed() {
+			this.closeLocalRecordStartFailedBalloon();
+			this.localRecordStartFailedBalloon = this.#notify({
+				content: main_core.Text.encode(main_core.Loc.getMessage('CALL_ERROR_LOCAL_RECORD_START_FAILED')),
+				position: 'top-right',
+				autoHide: false,
+				closeButton: true
+			});
+		}
+
+		/**
+		 * Closes the refused local record start balloon if it is open.
+		 */
+		closeLocalRecordStartFailedBalloon() {
+			if (this.localRecordStartFailedBalloon) {
+				this.localRecordStartFailedBalloon.close();
+				this.localRecordStartFailedBalloon = null;
+			}
+		}
+
+		/**
 		 * Shows the microphone-muted hint popup near the given element.
 		 *
 		 * @param {HTMLElement|null} bindElement - resolved by the controller; null when call is folded
+		 * @returns {boolean} whether the hint was shown; the mutual exclusions can turn the show down
 		 */
 		showMicMutedNotification(bindElement) {
 			if (this.riseYouHandToTalkPopup || !Util.havePermissionToBroadcast('mic')) {
-				return;
+				return false;
 			}
 			if (this.mutePopup) {
 				this.mutePopup.close();
 				this.mutePopup = null;
 			}
-			this.mutePopup = new CallHint({
+
+			// the callback belongs to this very hint: a stale one must not drop a newer popup
+			const hint = CallHint.notification({
+				scenario: CallHintScenario.MicMuted,
 				callFolded: !bindElement,
 				bindElement,
 				targetContainer: this.container,
 				icon: 'mic-off',
-				buttons: [this.#createUnmuteButton()],
+				showSpaceHint: true,
+				buttons: [this.#createUnmuteButton(() => hint.close())],
 				onClose: () => {
 					this.allowMutePopup = false;
-					this.mutePopup.destroy();
-					this.mutePopup = null;
+					if (this.mutePopup === hint) {
+						this.mutePopup = null;
+					}
 				}
 			});
-			this.mutePopup.show();
+			this.mutePopup = hint;
+			hint.show();
+			return true;
+		}
+
+		/**
+		 * Second trigger of the same hint: a short press that led to nothing, so the hold threshold is
+		 * explained right where the user has just tried and failed.
+		 *
+		 * @param {HTMLElement|null} bindElement - resolved by the controller; null when call is folded
+		 */
+		showPushToTalkHint(bindElement) {
+			if (this.#pushToTalkHintShown || this.#pushToTalkUsed) {
+				return;
+			}
+
+			// the single show per call is spent on a hint that appeared, not on one the exclusions dropped
+			this.#pushToTalkHintShown = this.showMicMutedNotification(bindElement);
+		}
+
+		/**
+		 * Push-to-talk has opened the microphone, so there is nothing left to explain.
+		 */
+		onPushToTalkUsed() {
+			this.#pushToTalkUsed = true;
 		}
 
 		/**
@@ -30744,7 +32594,8 @@ this.BX = this.BX || {};
 				this.mutePopup.close();
 				this.mutePopup = null;
 			}
-			this.riseYouHandToTalkPopup = new CallHint({
+			const hint = CallHint.notification({
+				scenario: CallHintScenario.FloorRequest,
 				callFolded: !params.bindElement,
 				bindElement: params.bindElement,
 				targetContainer: this.container,
@@ -30752,21 +32603,28 @@ this.BX = this.BX || {};
 				showAngle: false,
 				initiatorName: params.initiatorName,
 				customClassName: 'bx-call-view-popup-call-hint-rise-hand-to-talk',
-				autoCloseDelay: 30 * 60 * 1000,
 				customRender() {
-					const handRaiseContentElement = BX.Dom.create('div', {
+					// the phrase carries layout placeholders, so it becomes markup first and takes the name
+					// only afterwards
+					const markup = main_core.Loc.getMessage('CALL_ADMIN_PROHIBITED_TURN_ON_PARTICIPANTS_MICROPHONES_HINT', {
+						'[hint-label]': '<div class="bx-call-view-popup-call-hint-text" data-testid="call-hint-text">',
+						'[/hint-label]': '</div>',
+						'#RISE_HAND_ICON#': '<div class="ui-btn bx-call-view-popup-call-hint-hand-raise-icon"' + ' data-testid="call-hint-hand-raise-icon"></div>',
+						'[label-or]': '<div class="bx-call-view-popup-call-hint-hand-raise-or-label">',
+						'[/label-or]': '</div>',
+						'#REQUEST_NOW_BUTTON#': '<div class = "bx-call-view-popup-call-hint-button-placeholder"></div>'
+					});
+					const handRaiseContentElement = main_core.Dom.create('div', {
 						props: {
 							className: 'bx-call-view-popup-call-hint-rise-block'
 						},
-						children: [main_core.Loc.getMessage('CALL_ADMIN_PROHIBITED_TURN_ON_PARTICIPANTS_MICROPHONES_HINT', {
-							'#INITIATOR_NAME#': this.initiatorName,
-							'[hint-label]': '<div class="bx-call-view-popup-call-hint-text">',
-							'[/hint-label]': '</div>',
-							'#RISE_HAND_ICON#': '<div class="ui-btn bx-call-view-popup-call-hint-hand-raise-icon"></div>',
-							'[label-or]': '<div class="bx-call-view-popup-call-hint-hand-raise-or-label">',
-							'[/label-or]': '</div>',
-							'#REQUEST_NOW_BUTTON#': '<div class = "bx-call-view-popup-call-hint-button-placeholder"></div>'
-						})]
+						attrs: {
+							'data-testid': 'call-hint-message'
+						},
+						children: [
+						// a replacer function, so a placeholder or a $-pattern the user put in their own
+						// name stays text instead of turning into markup
+						markup.replaceAll('#INITIATOR_NAME#', () => main_core.Text.encode(this.initiatorName))]
 					});
 					const buttonPlaceholder = handRaiseContentElement.getElementsByClassName('bx-call-view-popup-call-hint-button-placeholder')[0];
 					buttonPlaceholder.replaceWith(this.createAskSpeakButton().render());
@@ -30774,17 +32632,17 @@ this.BX = this.BX || {};
 				},
 				buttons: [],
 				onClose: () => {
-					this.riseYouHandToTalkPopup = null;
-				},
-				onAskSpeakButtonClicked: () => {
-					this.emit('NotificationService::onAskSpeakButtonClicked');
-					if (this.riseYouHandToTalkPopup) {
-						this.riseYouHandToTalkPopup.close();
+					if (this.riseYouHandToTalkPopup === hint) {
 						this.riseYouHandToTalkPopup = null;
 					}
+				},
+				onAskSpeakButtonClicked: () => {
+					this.callbacks?.onAskSpeakButtonClicked?.();
+					hint.close();
 				}
 			});
-			this.riseYouHandToTalkPopup.show();
+			this.riseYouHandToTalkPopup = hint;
+			hint.show();
 		}
 
 		/**
@@ -30796,19 +32654,23 @@ this.BX = this.BX || {};
 			if (this.mutePopup || this.riseYouHandToTalkPopup || !Util.havePermissionToBroadcast('mic')) {
 				return;
 			}
-			this.mutePopup = new CallHint({
+			const hint = CallHint.notification({
+				scenario: CallHintScenario.AutoMicMute,
 				callFolded: !bindElement,
 				bindElement,
 				targetContainer: this.container,
-				title: main_core.Text.encode(BX.message('IM_CALL_MIC_AUTO_MUTED')),
+				title: main_core.Text.encode(main_core.Loc.getMessage('IM_CALL_MIC_AUTO_MUTED')),
 				icon: 'mic-off',
-				buttons: [this.#createUnmuteButton()],
+				showSpaceHint: true,
+				buttons: [this.#createUnmuteButton(() => hint.close())],
 				onClose: () => {
-					this.mutePopup.destroy();
-					this.mutePopup = null;
+					if (this.mutePopup === hint) {
+						this.mutePopup = null;
+					}
 				}
 			});
-			this.mutePopup.show();
+			this.mutePopup = hint;
+			hint.show();
 		}
 
 		/**
@@ -30816,7 +32678,7 @@ this.BX = this.BX || {};
 		 */
 		showVpnIsActiveNotification() {
 			if (this.viewPort) {
-				ui_notification.Center.notify({
+				this.#notify({
 					content: main_core.Text.encode(main_core.Loc.getMessage('CALL_MESSAGE_VPN_IS_ACTIVE')),
 					position: 'top-right',
 					autoHideDelay: 10000,
@@ -30832,13 +32694,13 @@ this.BX = this.BX || {};
 		 * @param {string} notificationText
 		 */
 		showNetworkProblemNotification(notificationText) {
-			ui_notification.Center.notify({
+			this.#notify({
 				content: main_core.Text.encode(notificationText),
 				position: 'top-right',
 				autoHideDelay: 5000,
 				closeButton: true,
 				actions: [{
-					title: BX.message('IM_M_CALL_HELP'),
+					title: main_core.Loc.getMessage('IM_M_CALL_HELP'),
 					events: {
 						click: (event, balloon) => {
 							top.BX.Helper.show('redirect=detail&code=12723718');
@@ -30853,34 +32715,29 @@ this.BX = this.BX || {};
 		 * Shows the unsupported-browser/feature dialog.
 		 */
 		showUnsupportedNotification() {
-			let messageBox;
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				messageBox = new ui_dialogs_messagebox.MessageBox({
-					message: BX.message('IM_CALL_DESKTOP_TOO_OLD'),
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-					okCaption: BX.message('IM_M_CALL_BTN_UPDATE'),
-					cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
-					onOk: async () => {
-						const {
-							DesktopDownload
-						} = await main_core.Runtime.loadExtension('intranet.desktop-download');
-						const url = DesktopDownload.getLinkForCurrentUser();
-						window.open(url, 'desktopApp');
-						return true;
-					}
-				});
-			} else {
-				messageBox = new ui_dialogs_messagebox.MessageBox({
-					message: BX.message('IM_CALL_WEBRTC_USE_CHROME_OR_DESKTOP'),
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-					okCaption: BX.message('IM_CALL_DETAILS'),
-					cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
-					onOk: () => {
-						top.BX.Helper.show('redirect=detail&code=11387752');
-						return true;
-					}
-				});
-			}
+			const messageBox = im_v2_lib_desktopApi.DesktopApi.isDesktop() ? new ui_dialogs_messagebox.MessageBox({
+				message: main_core.Loc.getMessage('IM_CALL_DESKTOP_TOO_OLD'),
+				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+				okCaption: main_core.Loc.getMessage('IM_M_CALL_BTN_UPDATE'),
+				cancelCaption: main_core.Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
+				onOk: async () => {
+					const {
+						DesktopDownload
+					} = await main_core.Runtime.loadExtension('intranet.desktop-download');
+					const url = DesktopDownload.getLinkForCurrentUser();
+					window.open(url, 'desktopApp');
+					return true;
+				}
+			}) : new ui_dialogs_messagebox.MessageBox({
+				message: main_core.Loc.getMessage('IM_CALL_WEBRTC_USE_CHROME_OR_DESKTOP'),
+				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+				okCaption: main_core.Loc.getMessage('IM_CALL_DETAILS'),
+				cancelCaption: main_core.Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
+				onOk: () => {
+					top.BX.Helper.show('redirect=detail&code=11387752');
+					return true;
+				}
+			});
 			messageBox.show();
 		}
 
@@ -30916,28 +32773,42 @@ this.BX = this.BX || {};
 		}
 
 		/**
-		 * Returns user model from viewPort.userRegistry with fallback to callStore.
+		 * Tells whether two participant ids name the same user.
+		 * An id reaches the service as a number from the engine and as its string form from the media
+		 * server, so both sides go to a number before they meet. A nil id is the one value a number
+		 * cannot carry: it names the same user only as another nil one.
+		 *
+		 * @param {string|number|null|undefined} left
+		 * @param {string|number|null|undefined} right
+		 * @returns {boolean}
+		 */
+		#isSameUser(left, right) {
+			if (main_core.Type.isNil(left) || main_core.Type.isNil(right)) {
+				return main_core.Type.isNil(left) && main_core.Type.isNil(right);
+			}
+			return Number(left) === Number(right);
+		}
+
+		/**
+		 * Returns user model from viewPort.userRegistry.
 		 *
 		 * @param {string|number} userId
 		 * @returns {object|null}
 		 */
 		#getUserModel(userId) {
-			const registryModel = this.viewPort.userRegistry?.get(userId) ?? null;
-			if (registryModel) {
-				return registryModel;
-			}
-			const storeUser = this.callStore?.users?.[userId] ?? null;
-			if (storeUser) {
-				return {
-					name: storeUser.name || '',
-					avatar: storeUser.avatar || '',
-					data: {
-						name: storeUser.name || '',
-						gender: storeUser.gender || 'M'
-					}
-				};
-			}
-			return null;
+			return this.viewPort.userRegistry?.get(userId) ?? null;
+		}
+
+		/**
+		 * The only point where the service reaches the platform notification centre.
+		 * Options go through untouched, the balloon comes back untouched: every default, every
+		 * stored reference and the balloon offset stay with the caller that owns them.
+		 *
+		 * @param {object} options
+		 * @returns {object} the balloon the centre returns
+		 */
+		#notify(options) {
+			return ui_notification.Center.notify(options);
 		}
 
 		/**
@@ -30958,7 +32829,7 @@ this.BX = this.BX || {};
 			} else if (params.isAllow === true) {
 				balloonClassName += 'bx-call-control-notification-allow ';
 			}
-			ui_notification.Center.notify({
+			this.#notify({
 				content: params.content,
 				position: 'top-right',
 				autoHideDelay: 8000,
@@ -30966,16 +32837,19 @@ this.BX = this.BX || {};
 				closeButton: true,
 				render() {
 					const actions = this.getActions().map(action => action.getContainer());
-					return BX.create('div', {
+					return main_core.Dom.create('div', {
 						props: {
 							className: balloonClassName
 						},
-						children: [BX.create('div', {
+						attrs: {
+							'data-testid': 'call-notification-moderation'
+						},
+						children: [main_core.Dom.create('div', {
 							props: {
 								className: 'ui-notification-balloon-message'
 							},
 							html: this.getContent()
-						}), BX.create('div', {
+						}), main_core.Dom.create('div', {
 							props: {
 								className: 'ui-notification-balloon-actions'
 							},
@@ -31022,7 +32896,7 @@ this.BX = this.BX || {};
 			const initiatorUserModel = this.#getUserModel(data.fromUserId);
 			const targetUserModel = this.#getUserModel(data.toUserId);
 			const initiatorGender = initiatorUserModel?.data?.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M';
-			if (data.toUserId == currentUserId) {
+			if (this.#isSameUser(data.toUserId, currentUserId)) {
 				switch (data.track.type) {
 					case 0:
 						{
@@ -31041,9 +32915,8 @@ this.BX = this.BX || {};
 							contentPhrase = `CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_SCREENSHARE_${initiatorGender}`;
 							break;
 						}
-					// No default
 				}
-			} else if (data.fromUserId == currentUserId) {
+			} else if (this.#isSameUser(data.fromUserId, currentUserId)) {
 				switch (data.track.type) {
 					case 0:
 						{
@@ -31062,7 +32935,6 @@ this.BX = this.BX || {};
 							contentPhrase = 'CALL_CONTROL_YOU_TURNED_OFF_USER_SCREENSHARE';
 							break;
 						}
-					// No default
 				}
 			} else {
 				switch (data.track.type) {
@@ -31083,14 +32955,14 @@ this.BX = this.BX || {};
 							contentPhrase = `CALL_CONTROL_MODERATOR_TURNED_OFF_USER_SCREENSHARE_${initiatorGender}`;
 							break;
 						}
-					// No default
 				}
 			}
-			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${contentIcon}-muted"></div>${main_core.Text.encode(Util.getCustomMessage(contentPhrase, {
-			gender: initiatorGender,
-			initiator_name: initiatorUserModel?.data?.name || '',
-			target_name: targetUserModel?.data?.name || ''
-		}))}`;
+			const phrase = Util.getCustomMessage(contentPhrase, {
+				gender: initiatorGender,
+				initiator_name: initiatorUserModel?.data?.name || '',
+				target_name: targetUserModel?.data?.name || ''
+			});
+			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${contentIcon}-muted"></div>${main_core.Text.encode(phrase)}`;
 			this.createCallControlNotify({
 				content,
 				isAllow: false
@@ -31118,10 +32990,11 @@ this.BX = this.BX || {};
 				video: 'CALL_USER_TURNED_OFF_CAM_FOR_ALL_MSGVER_1',
 				screenshare: 'CALL_USER_TURNED_OFF_SCREENSHARE_FOR_ALL_MSGVER_1'
 			};
-			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${iconClass}-muted"></div>${main_core.Text.encode(Util.getCustomMessage(phraseMap[type], {
-			gender,
-			name: userModel?.data?.name || ''
-		}))}`;
+			const phrase = Util.getCustomMessage(phraseMap[type], {
+				gender,
+				name: userModel?.data?.name || ''
+			});
+			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${iconClass}-muted"></div>${main_core.Text.encode(phrase)}`;
 			this.createCallControlNotify({
 				content,
 				isAllow: false
@@ -31144,7 +33017,10 @@ this.BX = this.BX || {};
 				1: 'CALL_YOU_TURNED_OFF_CAM_FOR_ALL_MSGVER_1',
 				2: 'CALL_YOU_TURNED_OFF_SCREENSHARE_FOR_ALL_MSGVER_1'
 			};
-			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${typesOfMute[event.data.track.type]}-muted"></div>${main_core.Text.encode(BX.message[typesOfMuteMessage[event.data.track.type]] || '')}`;
+
+			// reading through hasMessage: getMessage writes an empty string into the dictionary on a miss
+			const phraseKey = typesOfMuteMessage[event.data.track.type];
+			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${typesOfMute[event.data.track.type]}-muted"></div>${main_core.Text.encode(main_core.Loc.hasMessage(phraseKey) ? main_core.Loc.getMessage(phraseKey) : '')}`;
 			this.createCallControlNotify({
 				content,
 				isAllow: false
@@ -31154,10 +33030,13 @@ this.BX = this.BX || {};
 		/**
 		 * Shows a notification when user's speak permission changes (allow/deny floor request response).
 		 *
+		 * Unlike its neighbours, this one takes no currentUserId: nothing here ever read it. Which
+		 * participant the event is addressed to is decided on the media server side and is not
+		 * checked in this repository.
+		 *
 		 * @param {object} data - event.data (fromUserId, allow, toUserId)
-		 * @param {number} currentUserId
 		 */
-		showPermissionsChangedNotification(data, currentUserId) {
+		showPermissionsChangedNotification(data) {
 			if (!this.viewPort) {
 				return;
 			}
@@ -31177,12 +33056,6 @@ this.BX = this.BX || {};
 					isAllow: data.allow
 				});
 			}
-			if (this.callStore) {
-				this.callStore.addNotification('permissionToSpeak', {
-					userId: data.toUserId,
-					allow: data.allow
-				});
-			}
 		}
 
 		/**
@@ -31194,15 +33067,15 @@ this.BX = this.BX || {};
 		 * @returns {string|null} notification content HTML, or null if no notification needed
 		 */
 		getRoleChangedNotificationContent(data, currentUserId) {
-			if (data.toUserId != currentUserId) {
+			if (!this.#isSameUser(data.toUserId, currentUserId)) {
 				return null;
 			}
 			const newRole = data.role.toUpperCase();
 			if (newRole === Util.UsersRoles.ADMIN || newRole === Util.UsersRoles.MANAGER) {
-				return BX.message('CALL_YOU_HAVE_BEEN_APPOINTED_AS_ADMIN');
+				return main_core.Loc.getMessage('CALL_YOU_HAVE_BEEN_APPOINTED_AS_ADMIN');
 			}
 			if (newRole === Util.UsersRoles.USER) {
-				return BX.message('CALL_YOU_HAVE_BEEN_APPOINTED_AS_USER');
+				return main_core.Loc.getMessage('CALL_YOU_HAVE_BEEN_APPOINTED_AS_USER');
 			}
 			return null;
 		}
@@ -31212,72 +33085,52 @@ this.BX = this.BX || {};
 		 *
 		 * @param {object} data - event.data (eft, act, fromUserId)
 		 * @param {number} currentUserId
+		 * @returns {{ isAllow: boolean, initiatorName: string }|undefined} what both controllers read:
+		 *   whether the change allows and who made it; undefined on the early exit, which shows nothing
 		 */
 		showRoomSettingsChangedNotification(data, currentUserId) {
 			if (!this.viewPort) {
-				return;
+				// spelled out for consistent-return: the early exit gives the controllers no result, and
+				// that is the contract
+				// eslint-disable-next-line unicorn/no-useless-undefined
+				return undefined;
 			}
-			const typesOfMute = {
-				audio: 'mic',
-				video: 'cam',
-				screen_share: 'screenshare'
-			};
-			let content = '';
-			let isAllow = false;
 			const initiatorUserModel = this.#getUserModel(data.fromUserId);
 			const initiatorGender = initiatorUserModel?.data?.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M';
-			if (data.eft === true) {
-				if (data.fromUserId == currentUserId) {
-					const typesOfMuteMessage = {
-						audio: 'CALL_YOU_PROHIBITED_MIC_FOR_ALL_BY_SETTINGS',
-						video: 'CALL_YOU_PROHIBITED_CAM_FOR_ALL_BY_SETTINGS',
-						screen_share: 'CALL_YOU_PROHIBITED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
-					};
-					content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${typesOfMute[data.act]}-muted"></div>${main_core.Text.encode(BX.message[typesOfMuteMessage[data.act]] || '')}`;
-				} else {
-					const typesOfMuteMessage = {
-						audio: 'CALL_ADMIN_PROHIBITED_MIC_FOR_ALL_BY_SETTINGS',
-						video: 'CALL_ADMIN_PROHIBITED_CAM_FOR_ALL_BY_SETTINGS',
-						screen_share: 'CALL_ADMIN_PROHIBITED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
-					};
-					const contentPhrase = `${typesOfMuteMessage[data.act]}_${initiatorGender}`;
-					content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${typesOfMute[data.act]}-muted"></div>${main_core.Text.encode(Util.getCustomMessage(contentPhrase, {
-					gender: initiatorGender,
-					initiator_name: initiatorUserModel?.data?.name || ''
-				}))}`;
-				}
-			} else {
-				isAllow = true;
-				if (data.fromUserId == currentUserId) {
-					this.closeRiseYouHandToTalkPopup();
-					const typesOfMuteMessage = {
-						audio: 'CALL_YOU_ALLOWED_MIC_FOR_ALL_BY_SETTINGS',
-						video: 'CALL_YOU_ALLOWED_CAM_FOR_ALL_BY_SETTINGS',
-						screen_share: 'CALL_YOU_ALLOWED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
-					};
-					content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${typesOfMute[data.act]}-unmuted"></div>${main_core.Text.encode(BX.message[typesOfMuteMessage[data.act]] || '')}`;
-				} else {
-					const typesOfMuteMessage = {
-						audio: 'CALL_ADMIN_ALLOWED_MIC_FOR_ALL_BY_SETTINGS',
-						video: 'CALL_ADMIN_ALLOWED_CAM_FOR_ALL_BY_SETTINGS',
-						screen_share: 'CALL_ADMIN_ALLOWED_SCREENSHARE_FOR_ALL_BY_SETTINGS'
-					};
-					const contentPhrase = `${typesOfMuteMessage[data.act]}_${initiatorGender}`;
-					content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${typesOfMute[data.act]}-unmuted"></div>${main_core.Text.encode(Util.getCustomMessage(contentPhrase, {
-					gender: initiatorGender,
-					initiator_name: initiatorUserModel?.data?.name || ''
-				}))}`;
-					if (data.act === 'audio') {
-						this.closeRiseYouHandToTalkPopup();
-					}
-				}
+			const isOwnInitiator = this.#isSameUser(data.fromUserId, currentUserId);
+			const {
+				phraseKey,
+				iconSuffix,
+				isAllow,
+				usesGenderChannel
+			} = getRoomSettingsPhrase({
+				eft: data.eft,
+				act: data.act,
+				isOwnInitiator,
+				initiatorGender
+			});
+
+			// the skew between the two branches is kept as is: my own change closes the hint whatever the
+			// device, an administrator's closes it for the microphone alone
+			if (isAllow && (isOwnInitiator || data.act === 'audio')) {
+				this.closeRiseYouHandToTalkPopup();
 			}
-			if (content) {
-				this.createCallControlNotify({
-					content,
-					isAllow
+			let phrase = '';
+			if (usesGenderChannel) {
+				phrase = Util.getCustomMessage(phraseKey, {
+					gender: initiatorGender,
+					initiator_name: initiatorUserModel?.data?.name || ''
 				});
 			}
+			// reading through hasMessage: getMessage writes an empty string into the dictionary on a miss
+			else if (main_core.Loc.hasMessage(phraseKey)) {
+				phrase = main_core.Loc.getMessage(phraseKey);
+			}
+			const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${iconSuffix}"></div>${main_core.Text.encode(phrase)}`;
+			this.createCallControlNotify({
+				content,
+				isAllow
+			});
 			return {
 				isAllow,
 				initiatorName: initiatorUserModel?.data?.name || ''
@@ -31288,7 +33141,6 @@ this.BX = this.BX || {};
 		 * Shows a popup notifying that the local user has just joined a call room.
 		 *
 		 * @param {object} config
-		 * @param {boolean} config.isAuto - whether the user was auto-joined
 		 * @param {boolean} config.isSpeaker - whether the user joined as speaker
 		 * @param {number[]} config.userIdList - list of user IDs in the room
 		 * @param {number} config.localUserId - local user ID (to exclude from name list)
@@ -31302,7 +33154,6 @@ this.BX = this.BX || {};
 				return;
 			}
 			const {
-				isAuto,
 				isSpeaker,
 				userIdList,
 				localUserId,
@@ -31311,62 +33162,69 @@ this.BX = this.BX || {};
 				externalContainer,
 				onLeaveRoom
 			} = config;
-			let title;
-			if (isAuto) {
-				const userNames = userIdList.filter(userId => userId != localUserId).map(userId => {
-					const userModel = this.#getUserModel(userId);
-					return userModel?.name || '';
-				});
-				const usersInRoom = userNames.join(', ');
-				if (isSpeaker) {
-					title = BX.Text.encode(BX.message('IM_CALL_ROOM_JOINED_AUTO_SPEAKER').replace('#PARTICIPANTS_LIST#', usersInRoom));
-				} else {
-					title = BX.Text.encode(BX.message('IM_CALL_ROOM_JOINED_AUTO').replace('#PARTICIPANTS_LIST#', usersInRoom));
-					title += `<p>${BX.Text.encode(BX.message('IM_CALL_ROOM_JOINED_P2'))}</p>`;
-				}
-			} else {
-				title = `${BX.message('IM_CALL_ROOM_JOINED_MANUALLY')}<p>${BX.message('IM_CALL_ROOM_JOINED_P2')}</p>`;
-			}
-			this.roomJoinedPopup = new CallHint({
+			const otherUserIds = userIdList.filter(userId => !this.#isSameUser(userId, localUserId));
+			const userNames = otherUserIds.map(userId => {
+				const userModel = this.#getUserModel(userId);
+				return userModel?.name || '';
+			});
+			const usersInRoom = userNames.join(', ');
+
+			// the live region cuts the announcement off at 160 characters, and a roster of names passes
+			// that on the third participant: the announcement counts them, the shown text still lists them
+			const announceText = main_core.Loc.getMessage(isSpeaker ? 'CALL_HINT_ROOM_JOINED_ANNOUNCE_SPEAKER' : 'CALL_HINT_ROOM_JOINED_ANNOUNCE', {
+				'#COUNT#': otherUserIds.length
+			});
+			const roomJoinedPhrase = main_core.Text.encode(main_core.Loc.getMessage(isSpeaker ? 'IM_CALL_ROOM_JOINED_AUTO_SPEAKER' : 'IM_CALL_ROOM_JOINED_AUTO').replace('#PARTICIPANTS_LIST#', () => usersInRoom));
+
+			// the speaker gets the phrase alone, everyone else gets a second paragraph after it
+			const title = isSpeaker ? roomJoinedPhrase : `${roomJoinedPhrase}<p>${main_core.Text.encode(main_core.Loc.getMessage('IM_CALL_ROOM_JOINED_P2'))}</p>`;
+			const hint = CallHint.dialog({
+				scenario: CallHintScenario.RoomJoined,
 				callFolded: isFolded,
 				bindElement,
 				targetContainer: isFolded ? externalContainer : this.container,
 				title,
+				announceText,
 				buttonsLayout: 'bottom',
-				autoCloseDelay: 0,
 				buttons: [new ui_buttons.Button({
 					baseClass: 'ui-btn',
-					text: BX.message('IM_CALL_ROOM_JOINED_UNDERSTOOD'),
+					text: main_core.Loc.getMessage('IM_CALL_ROOM_JOINED_UNDERSTOOD'),
 					size: ui_buttons.Button.Size.EXTRA_SMALL,
 					color: ui_buttons.Button.Color.LIGHT_BORDER,
 					noCaps: true,
 					round: true,
+					dataset: {
+						testid: 'call-hint-room-joined-understood-btn'
+					},
 					events: {
-						click: () => {
-							this.roomJoinedPopup.destroy();
-							this.roomJoinedPopup = null;
-						}
+						// the buttons are the most common way out of the dialog, so they close it the
+						// same way Escape does - otherwise focus is left behind in <body>
+						click: () => hint.close()
 					}
 				}), new ui_buttons.Button({
-					text: BX.message('IM_CALL_ROOM_WRONG_ROOM'),
+					text: main_core.Loc.getMessage('IM_CALL_ROOM_WRONG_ROOM'),
 					size: ui_buttons.Button.Size.EXTRA_SMALL,
 					color: ui_buttons.Button.Color.LINK,
 					noCaps: true,
 					round: true,
+					dataset: {
+						testid: 'call-hint-room-joined-leave-btn'
+					},
 					events: {
 						click: () => {
-							this.roomJoinedPopup.destroy();
-							this.roomJoinedPopup = null;
+							hint.close();
 							onLeaveRoom();
 						}
 					}
 				})],
 				onClose: () => {
-					this.roomJoinedPopup.destroy();
-					this.roomJoinedPopup = null;
+					if (this.roomJoinedPopup === hint) {
+						this.roomJoinedPopup = null;
+					}
 				}
 			});
-			this.roomJoinedPopup.show();
+			this.roomJoinedPopup = hint;
+			hint.show();
 		}
 
 		/**
@@ -31389,21 +33247,23 @@ this.BX = this.BX || {};
 				externalContainer
 			} = config;
 			const userModel = this.#getUserModel(fromUserId);
-			const title = BX.message('IM_CALL_ROOM_MIC_TAKEN_FROM').replace('#USER_NAME#', userModel?.name || '');
-			this.micTakenFromPopup = new CallHint({
+			const title = main_core.Loc.getMessage('IM_CALL_ROOM_MIC_TAKEN_FROM').replace('#USER_NAME#', () => userModel?.name || '');
+			const hint = CallHint.notification({
+				scenario: CallHintScenario.MicTakenFrom,
 				callFolded: isFolded,
 				bindElement,
 				targetContainer: isFolded ? externalContainer : this.container,
-				title: BX.Text.encode(title),
+				title: main_core.Text.encode(title),
 				buttonsLayout: 'right',
-				autoCloseDelay: 5000,
 				buttons: [],
 				onClose: () => {
-					this.micTakenFromPopup.destroy();
-					this.micTakenFromPopup = null;
+					if (this.micTakenFromPopup === hint) {
+						this.micTakenFromPopup = null;
+					}
 				}
 			});
-			this.micTakenFromPopup.show();
+			this.micTakenFromPopup = hint;
+			hint.show();
 		}
 
 		/**
@@ -31426,20 +33286,22 @@ this.BX = this.BX || {};
 				externalContainer
 			} = config;
 			const userModel = this.#getUserModel(byUserId);
-			this.micTakenByPopup = new CallHint({
+			const hint = CallHint.notification({
+				scenario: CallHintScenario.MicTakenBy,
 				callFolded: isFolded,
 				bindElement,
 				targetContainer: isFolded ? externalContainer : this.container,
-				title: BX.Text.encode(BX.message('IM_CALL_ROOM_MIC_TAKEN_BY').replace('#USER_NAME#', userModel?.name || '')),
+				title: main_core.Text.encode(main_core.Loc.getMessage('IM_CALL_ROOM_MIC_TAKEN_BY').replace('#USER_NAME#', () => userModel?.name || '')),
 				buttonsLayout: 'right',
-				autoCloseDelay: 5000,
 				buttons: [],
 				onClose: () => {
-					this.micTakenByPopup.destroy();
-					this.micTakenByPopup = null;
+					if (this.micTakenByPopup === hint) {
+						this.micTakenByPopup = null;
+					}
 				}
 			});
-			this.micTakenByPopup.show();
+			this.micTakenByPopup = hint;
+			hint.show();
 		}
 
 		/**
@@ -31474,23 +33336,26 @@ this.BX = this.BX || {};
 		/**
 		 * Creates the unmute button shown inside the mute hint popup.
 		 *
-		 * @returns {BX.UI.Button}
+		 * @param {Function} closeHint - closes the hint this button belongs to
+		 * @returns {Button}
 		 */
-		#createUnmuteButton() {
-			return new BX.UI.Button({
+		#createUnmuteButton(closeHint) {
+			return new ui_buttons.Button({
 				baseClass: 'ui-btn bx-call-view-popup-call-hint-unmute',
-				text: BX.message('IM_CALL_UNMUTE_MIC'),
-				size: BX.UI.Button.Size.EXTRA_SMALL,
-				color: BX.UI.Button.Color.LIGHT_BORDER,
+				text: main_core.Loc.getMessage('IM_CALL_UNMUTE_MIC'),
+				size: ui_buttons.Button.Size.EXTRA_SMALL,
+				color: ui_buttons.Button.Color.LIGHT_BORDER,
 				noCaps: true,
 				round: true,
+				dataset: {
+					testid: 'call-hint-unmute-btn'
+				},
 				events: {
 					click: () => {
-						this.emit('NotificationService::onUnmuteMicButtonClicked');
-						if (this.mutePopup) {
-							this.mutePopup.destroy();
-							this.mutePopup = null;
-						}
+						this.callbacks?.onUnmuteMicButtonClicked?.();
+						// closing rather than destroying: destroy() sends no close event, so the owner
+						// would never learn about it and the focus of the pressed button would land in body
+						closeHint();
 					}
 				}
 			});
@@ -31520,7 +33385,7 @@ this.BX = this.BX || {};
 				case StartCallErrorCode.NoWebrtc:
 					errorMessage = main_core.Loc.getMessage(isHttps ? 'IM_CALL_NO_WEBRT' : 'IM_CALL_ERROR_HTTPS_REQUIRED');
 					break;
-				case CLIENT_UNCLASSIFIED_ERROR_CODE:
+				case CLIENT_UNCLASSIFIED_ERROR_CODE$1:
 				case StartCallErrorCode.UnknownError:
 					isUnknownError = true;
 					errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_UNKNOWN');
@@ -31539,7 +33404,7 @@ this.BX = this.BX || {};
 						errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_AUTHORIZATION');
 					} else if (errorCode === DisconnectReason.SecurityKeyChanged) {
 						errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_AUTHORIZATION');
-					} else if (errorCode == 403) {
+					} else if (Number(errorCode) === 403) {
 						errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
 					} else {
 						isUnknownError = true;
@@ -31562,8 +33427,8 @@ this.BX = this.BX || {};
 			if (this.reconnectionBalloon) {
 				return;
 			}
-			this.reconnectionBalloon = ui_notification.Center.notify({
-				content: main_core.Text.encode(BX.message('IM_CALL_RECONNECTING')),
+			this.reconnectionBalloon = this.#notify({
+				content: main_core.Text.encode(main_core.Loc.getMessage('IM_CALL_RECONNECTING')),
 				autoHide: false,
 				position: 'top-right',
 				closeButton: false
@@ -31576,8 +33441,8 @@ this.BX = this.BX || {};
 		 * @param {boolean} isMuted - whether the speaker is now muted
 		 */
 		showSpeakerToggleNotification(isMuted) {
-			ui_notification.Center.notify({
-				content: BX.message(isMuted ? 'IM_M_CALL_MUTE_SPEAKERS_OFF' : 'IM_M_CALL_MUTE_SPEAKERS_ON'),
+			this.#notify({
+				content: main_core.Loc.getMessage(isMuted ? 'IM_M_CALL_MUTE_SPEAKERS_OFF' : 'IM_M_CALL_MUTE_SPEAKERS_ON'),
 				position: 'top-right',
 				autoHideDelay: 3000,
 				closeButton: true
@@ -31597,10 +33462,10 @@ this.BX = this.BX || {};
 			bindElement,
 			externalContainer
 		}) {
-			const isSpeaker = event.speaker == userId;
+			const isSpeaker = this.#isSameUser(event.speaker, userId);
 			const initiatorUserModel = this.#getUserModel(event.initiator);
 			if (isSpeaker) {
-				if (event.initiator == userId) {
+				if (this.#isSameUser(event.initiator, userId)) {
 					this.showMicTakenFromPopup({
 						fromUserId: event.previousSpeaker,
 						isFolded,
@@ -31634,8 +33499,8 @@ this.BX = this.BX || {};
 				return;
 			}
 			if (!isVideoShown) {
-				this.remoteVideoMutedBalloon = ui_notification.Center.notify({
-					content: main_core.Text.encode(BX.message('IM_M_CALL_REMOTE_PARTICIPANTS_VIDEO_MUTED')),
+				this.remoteVideoMutedBalloon = this.#notify({
+					content: main_core.Text.encode(main_core.Loc.getMessage('IM_M_CALL_REMOTE_PARTICIPANTS_VIDEO_MUTED')),
 					autoHide: false,
 					position: 'top-right',
 					closeButton: false
@@ -31670,8 +33535,8 @@ this.BX = this.BX || {};
 			if (this.mediaDevicesResetStateHintBalloon) {
 				return;
 			}
-			this.mediaDevicesResetStateHintBalloon = ui_notification.Center.notify({
-				content: main_core.Text.encode(BX.message('CALL_MEDIA_DEVICES_RESET_STATE_HINT')),
+			this.mediaDevicesResetStateHintBalloon = this.#notify({
+				content: main_core.Text.encode(main_core.Loc.getMessage('CALL_MEDIA_DEVICES_RESET_STATE_HINT')),
 				autoHide: false,
 				position: 'top-right',
 				closeButton: true
@@ -31697,15 +33562,15 @@ this.BX = this.BX || {};
 			if (removedDevices.length === 0) {
 				return;
 			}
-			ui_notification.Center.notify({
-				content: `${BX.message('IM_CALL_DEVICES_DETACHED')}<br><ul>${removedDevices.map(deviceInfo => {
+			this.#notify({
+				content: `${main_core.Loc.getMessage('IM_CALL_DEVICES_DETACHED')}<br><ul>${removedDevices.map(deviceInfo => {
 				return `<li>${main_core.Text.encode(deviceInfo.label)}`;
 			}).join('')}</ul>`,
 				position: 'top-right',
 				autoHideDelay: 10000,
 				closeButton: true,
 				actions: [{
-					title: BX.message('IM_CALL_DEVICES_CLOSE'),
+					title: main_core.Loc.getMessage('IM_CALL_DEVICES_CLOSE'),
 					events: {
 						click: (event, balloon) => {
 							balloon.close();
@@ -31724,30 +33589,13 @@ this.BX = this.BX || {};
 		 * @param {{audio: boolean, video: boolean}} data.options
 		 */
 		showGetUserMediaFailedNotification(data) {
-			let contentPhrase = '';
-			if (data.error.name === 'PermissionDeniedError' || data.error.name === 'NotAllowedError') {
-				if (data.options.audio && data.options.video) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC_AND_CAM';
-				} else if (data.options.audio && !data.options.video) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC';
-				} else if (data.options.video && !data.options.audio) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_ALLOW_CAM';
-				}
-			} else if (data.error.name === 'OverconstrainedError') {
-				if (data.options.audio && !data.options.video) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_MIC';
-				} else if (data.options.video && !data.options.audio) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_CAM';
-				}
-			} else if (data.error.name === 'NotReadableError' || data.error.name === 'AbortError' && data.error.message === 'Starting videoinput failed') {
-				if (data.options.audio && !data.options.video) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_MIC_IN_USE';
-				} else if (data.options.video && !data.options.audio) {
-					contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_CAM_IN_USE';
-				}
-			}
+			const contentPhrase = getUserMediaFailurePhrase({
+				errorName: data.error.name,
+				errorMessage: data.error.message,
+				options: data.options
+			});
 			if (contentPhrase) {
-				ui_notification.Center.notify({
+				this.#notify({
 					content: main_core.Text.encode(main_core.Loc.getMessage(contentPhrase)),
 					position: 'top-right',
 					closeButton: true
@@ -31755,7 +33603,7 @@ this.BX = this.BX || {};
 			}
 		}
 		showLinkCopiedNotification(message, width = 400) {
-			ui_notification.Center.notify({
+			this.#notify({
 				content: message,
 				autoHideDelay: 4000,
 				width
@@ -31766,7 +33614,7 @@ this.BX = this.BX || {};
 		 * Shows a notification when a remote user's call state changes to Declined, Failed, or Busy.
 		 * Fetches user data asynchronously before showing the notification.
 		 *
-		 * @param {string} messageKey - BX.message key for the notification text
+		 * @param {string} messageKey - Loc message key for the notification text
 		 * @param {string|number} callId - call id to look up user data
 		 * @param {string|number} userId - user id
 		 * @param {string} [defaultGender='M'] - fallback gender for localization
@@ -31784,7 +33632,7 @@ this.BX = this.BX || {};
 				if (entry.cancelled) {
 					return;
 				}
-				entry.balloon = ui_notification.Center.notify({
+				entry.balloon = this.#notify({
 					content: main_core.Text.encode(Util.getCustomMessage(messageKey, {
 						gender: userData.gender || defaultGender,
 						name: userData.name
@@ -31794,7 +33642,7 @@ this.BX = this.BX || {};
 					closeButton: true
 				});
 			} catch (error) {
-				console.warn('not found userData:', error);
+				console.error('[Call] Failed to fetch user data for a call state notification', error);
 				if (this.userCallStateBalloons.get(userId) === entry) {
 					this.userCallStateBalloons.delete(userId);
 				}
@@ -31817,7 +33665,7 @@ this.BX = this.BX || {};
 			if (entry.balloon) {
 				try {
 					entry.balloon.close();
-				} catch (error) {
+				} catch {
 					// Balloon already auto-hidden — ignore.
 				}
 			}
@@ -31828,7 +33676,6 @@ this.BX = this.BX || {};
 		 * Releases all resources held by this service: closes all popups and balloons.
 		 */
 		destroy() {
-			this.callStore = null;
 			this.closeMutePopup();
 			this.closeRiseYouHandToTalkPopup();
 			if (this.roomJoinedPopup) {
@@ -31844,10 +33691,12 @@ this.BX = this.BX || {};
 				this.micTakenByPopup = null;
 			}
 			this.closeReconnectingBalloon();
+			this.closeLocalRecordStartFailedBalloon();
 			this.closeRemoteVideoMutedBalloon();
 			this.closeMediaDevicesResetStateHint();
 			this.viewPort = null;
 			this.container = null;
+			this.callbacks = null;
 		}
 	}
 
@@ -31858,16 +33707,13 @@ this.BX = this.BX || {};
 		/**
 		 * @param {object} config
 		 * @param {*} config.viewPort
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
-			viewPort,
-			callStore
+			viewPort
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.PictureInPictureService');
 			this.viewPort = viewPort;
-			this.callStore = callStore ?? null;
 			this.pictureInPictureDebounceForOpen = null;
 			this.isFileChooserActive = false;
 		}
@@ -31952,7 +33798,6 @@ this.BX = this.BX || {};
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			clearTimeout(this.pictureInPictureDebounceForOpen);
 			this.pictureInPictureDebounceForOpen = null;
 			this.viewPort = null;
@@ -31960,431 +33805,129 @@ this.BX = this.BX || {};
 		}
 	}
 
-	const Events$1 = {
-		onActionClick: 'onActionClick',
-		onClose: 'onClose'
-	};
-	class PromoPopup {
-		constructor(options) {
-			options = main_core.Type.isPlainObject(options) ? options : {};
-			this.promoCode = main_core.Type.isStringFilled(options.promoCode) ? options.promoCode : '';
-			this.bindElement = options.bindElement;
-			this.targetContainer = options.targetContainer || document.body;
-			this.elements = {
-				root: null
-			};
-			this.popup = null;
-			this.dontShowAgain = false;
-			this.eventEmitter = new main_core_events.EventEmitter(this, "BX.Call.PromoPopup");
-			if (options.events) {
-				this.subscribeToEvents(options.events);
-			}
-		}
-		subscribeToEvents(events) {
-			for (let eventName in events) {
-				if (events.hasOwnProperty(eventName)) {
-					this.eventEmitter.subscribe(eventName, events[eventName]);
-				}
-			}
-		}
-		render() {
-			this.elements.root = main_core.Dom.create("div", {
-				props: {
-					className: "bx-call-promo-container"
-				},
-				children: [main_core.Dom.create("div", {
-					props: {
-						className: "bx-call-promo-content"
-					},
-					children: [main_core.Dom.create("div", {
-						props: {
-							className: "bx-call-promo-icon-section"
-						},
-						children: [main_core.Dom.create("div", {
-							props: {
-								className: "bx-call-promo-icon"
-							}
-						})]
-					}), main_core.Dom.create("div", {
-						props: {
-							className: "bx-call-promo-text-section"
-						},
-						children: [main_core.Dom.create("div", {
-							props: {
-								className: "bx-call-promo-title"
-							},
-							text: BX.message("IM_CALL_DOCUMENT_PROMO_TITLE_MSGVER_2")
-						}), main_core.Dom.create("div", {
-							props: {
-								className: "bx-call-promo-text"
-							},
-							html: BX.message("IM_CALL_DOCUMENT_PROMO_TEXT")
-						}), main_core.Dom.create("div", {
-							props: {
-								className: "bx-call-promo-refuse"
-							},
-							children: [main_core.Dom.create("input", {
-								attrs: {
-									type: "checkbox"
-								},
-								props: {
-									className: "bx-call-promo-refuse-checkbox",
-									id: "bx-call-promo-refuse-checkbox"
-								},
-								events: {
-									change: this.onCheckboxChange.bind(this)
-								}
-							}), main_core.Dom.create("label", {
-								attrs: {
-									for: "bx-call-promo-refuse-checkbox"
-								},
-								props: {
-									className: "bx-call-promo-refuse-text"
-								},
-								text: BX.message("IM_CALL_DOCUMENT_PROMO_DONT_SHOW_AGAIN")
-							})]
-						})]
-					}), main_core.Dom.create("div", {
-						props: {
-							className: "bx-call-promo-button-section"
-						},
-						children: [main_core.Dom.create("button", {
-							props: {
-								className: "bx-call-promo-button bx-call-promo-button-action ui-btn ui-btn-round"
-							},
-							text: BX.message("IM_CALL_DOCUMENT_PROMO_ACTION"),
-							events: {
-								click: this.onActionClick.bind(this)
-							}
-						}), main_core.Dom.create("button", {
-							props: {
-								className: "bx-call-promo-button bx-call-promo-button-action-close ui-btn ui-btn-round"
-							},
-							text: BX.message("IM_CALL_DOCUMENT_PROMO_ACTION_CLOSE"),
-							events: {
-								click: this.close.bind(this)
-							}
-						})]
-					})]
-				})]
-			});
-		}
-		show() {
-			if (!this.elements.root) {
-				this.render();
-			}
-			this.createPopup();
-			this.popup.show();
-		}
-		close() {
-			if (!this.popup) {
-				return false;
-			}
-			this.popup.close();
-		}
-		createPopup() {
-			this.popup = new main_popup.Popup({
-				id: 'bx-call-promo-popup',
-				bindElement: this.bindElement,
-				targetContainer: this.targetContainer,
-				content: this.elements.root,
-				cacheable: false,
-				closeIcon: true,
-				bindOptions: {
-					position: "top"
-				},
-				angle: {
-					position: "bottom",
-					offset: 49
-				},
-				className: 'bx-call-promo-popup',
-				contentBackground: 'unset',
-				events: {
-					onPopupClose: this.onPopupClose.bind(this)
-				}
-			});
-		}
-		onPopupClose() {
-			this.popup.destroy();
-			this.destroy();
-		}
-		onCheckboxChange(event) {
-			this.dontShowAgain = event.currentTarget.checked;
-		}
-		onActionClick() {
-			this.eventEmitter.emit(Events$1.onActionClick);
-		}
-		destroy() {
-			this.eventEmitter.emit(Events$1.onClose, {
-				dontShowAgain: this.dontShowAgain
-			});
-			this.eventEmitter.unsubscribeAll(Events$1.onClose);
-			this.eventEmitter = null;
-			this.elements = null;
-		}
-	}
-	PromoPopup.Events = Events$1;
-	class PromoPopup3D {
-		constructor(options) {
-			options = main_core.Type.isPlainObject(options) ? options : {};
-			this.callView = options.callView;
-			this.bindElement = options.bindElement;
-			this.targetContainer = options.targetContainer || document.body;
-			this.popup = null;
-			options.events = main_core.Type.isPlainObject(options.events) ? options.events : {};
-			this.events = {
-				onActionClick: options.events.onActionClick ? options.events.onActionClick : () => {},
-				onClose: options.events.onClose ? options.events.onClose : () => {}
-			};
-		}
-		show() {
-			this.createPopup();
-			this.popup.show();
-			BX.bind(BX('promo-popup-3d-button'), "click", this.openWindow.bind(this));
-		}
-		openWindow() {
-			BackgroundDialog.open({
-				tab: 'mask'
-			});
-			setTimeout(() => this.close(), 100);
-		}
-		openLearningPopup() {
-			const bindElement = BX('bx-messenger-videocall-panel-item-with-arrow-camera');
-			if (!bindElement) {
-				return true;
-			}
-			const title = BX.message('IM_PROMO_3DAVATAR_30112022_LEARNING_TITLE');
-			const description = BX.message('IM_PROMO_3DAVATAR_30112022_LEARNING_TEXT');
-			const content = `
-			<div class="promo-popup-3d-learning-content">
-				<h4 class="ui-typography-heading-h4 promo-popup-3d-learning-content__title">${title}</h4>
-				<p class="promo-popup-3d-learning-content__description">${description}</p>
-			</div>
-		`;
-			this.popup = new main_popup.Popup({
-				id: 'bx-call-promo-learning-popup',
-				bindElement,
-				content,
-				targetContainer: this.targetContainer,
-				cacheable: false,
-				closeIcon: true,
-				autoHide: true,
-				closeByEsc: true,
-				bindOptions: {
-					position: "top",
-					forceTop: -100,
-					forceLeft: 100,
-					forceBindPosition: true
-				},
-				angle: {
-					position: "top",
-					offset: 49
-				},
-				className: 'bx-call-promo-popup-learn',
-				contentBackground: 'unset',
-				events: {
-					onPopupClose: () => {
-						this.events.onClose();
-					}
-				}
-			});
-			this.popup.show();
-			this.callView.subscribe(call_mapping.ViewEvent.onDeviceSelectorShow, () => this.popup ? this.popup.close() : '');
-		}
-		close() {
-			if (!this.popup) {
-				return false;
-			}
-			this.popup.close();
-		}
-		createPopup() {
-			const title = BX.message('IM_PROMO_3DAVATAR_30112022_TITLE');
-			const description = BX.message('IM_PROMO_3DAVATAR_30112022_TEXT');
-			const btnText = BX.message('IM_PROMO_3DAVATAR_30112022_BUTTON');
-			const content = `
-			<div class="promo-popup-3d-content">
-				<div class="promo-popup-3d-content__masks-container">
-					<div class="promo-popup-3d-content__mask --left-2 --bear"></div>
-					<div class="promo-popup-3d-content__mask --left-1 --pole-bear"></div>
-					<div class="promo-popup-3d-content__mask --center --fox"></div>
-					<div class="promo-popup-3d-content__mask --right-1 --santa"></div>
-					<div class="promo-popup-3d-content__mask --right-2 --owl"></div>
-				</div>
-				<h3 class="ui-typography-heading-h2 promo-popup-3d-content__title">${title}</h3>
-				<p class="promo-popup-3d-content__description">${description}</p>
-				<div class="promo-popup-3d-content__actions-btn">
-					<span class="ui-btn btn-primary ui-btn-lg ui-btn-round ui-btn-primary" id="promo-popup-3d-button">${btnText}</span>
-				</div>
-			</div>
-		`;
-			this.popup = new main_popup.Popup({
-				content,
-				id: 'bx-call-promo-popup-3d',
-				bindElement: this.bindElement,
-				targetContainer: this.targetContainer,
-				cacheable: false,
-				closeIcon: true,
-				overlay: {
-					backgroundColor: '#000',
-					opacity: 40
-				},
-				width: 531,
-				minHeight: 481,
-				bindOptions: {
-					position: "top"
-				},
-				className: 'bx-call-promo-popup-3d-masks',
-				events: {
-					onPopupClose: this.onPopupClose.bind(this)
-				}
-			});
-		}
-		onPopupClose() {
-			this.popup.destroy();
-			this.openLearningPopup();
-		}
-	}
-	PromoPopup3D.Events = Events$1;
-
-	const DOCUMENT_PROMO_CODE = 'im:call-document:16102021:web';
-	const DOCUMENT_PROMO_DELAY = 5 * 60 * 1000;
-	const MASK_PROMO_CODE = 'im:mask:06122022:desktop';
-	const MASK_PROMO_DELAY = 5 * 60 * 1000;
+	/**
+	 * Decides which layer the record button opens and which layer it announces. Dependency-free on
+	 * purpose: no DOM, no viewPort, no module singletons, so the decision is reproducible in a test.
+	 */
 
 	/**
-	 * Manages promotional popups shown during a call (document promo, mask promo, etc.).
+	 * Routes the record button can take.
+	 * @readonly
 	 */
-	class PromoService extends main_core_events.EventEmitter {
-		/**
-		 * @param {object} config
-		 * @param {*} config.viewPort
-		 * @param {HTMLElement} config.container
-		 * @param {Function} config.isPromoRequired - `(code: string) => boolean`
-		 * @param {*} [config.callStore]
-		 */
-		constructor({
-			viewPort,
-			container,
-			isPromoRequired,
-			callStore
-		}) {
-			super();
-			this.setEventNamespace('BX.Call.PromoService');
-			this.viewPort = viewPort;
-			this.container = container;
-			this.isPromoRequired = isPromoRequired;
-			this.callStore = callStore ?? null;
-			this.documentPromoPopup = null;
-			this.maskPromoPopup = null;
-			this.showPromoPopupTimeout = null;
-			this.showPromoPopup3dTimeout = null;
-		}
+	const RecordRoute = Object.freeze({
+		Menu: 'menu',
+		Dialog: 'dialog',
+		/** The tariff slider: cloud recording is not included in the tariff. */
+		TariffArticle: 'tariffArticle',
+		/** The helpdesk article: nothing can be recorded at all. */
+		HelpArticle: 'helpArticle',
+		/** The recording limit is used up; the layer behind it is decided by the view. */
+		RecordLimit: 'recordLimit'
+	});
 
-		/**
-		 * Shows the document feature promo popup near the given bind element.
-		 *
-		 * @param {HTMLElement|null} bindElement - Element to anchor the popup to.
-		 * @param {object} options
-		 * @param {boolean} [options.isFolded] - Whether the call window is currently folded.
-		 * @returns {false|undefined}
-		 */
-		showDocumentPromo(bindElement, options = {}) {
-			if (!this.viewPort || !Util.shouldShowDocumentButton()) {
-				return false;
-			}
-			if (!this.isPromoRequired(DOCUMENT_PROMO_CODE)) {
-				return false;
-			}
-			if (!bindElement) {
-				return false;
-			}
-			this.documentPromoPopup = new PromoPopup({
-				bindElement,
-				promoCode: DOCUMENT_PROMO_CODE,
-				targetContainer: this.container,
-				events: {
-					onActionClick: () => {
-						this.emit('PromoService::onDocumentPromoActionClicked');
-					},
-					onClose: ({
-						data
-					}) => {
-						this.documentPromoPopup = null;
-						if (data.dontShowAgain) {
-							this.emit('PromoService::onPromoViewed', {
-								code: DOCUMENT_PROMO_CODE
-							});
-						}
-					}
+	/**
+	 * Kinds of the popup layer a panel button can announce. The vocabulary is repeated in the view on
+	 * purpose: `call.core` does not depend on the extension that maps it onto ARIA attributes.
+	 * @readonly
+	 */
+	const ButtonPopupKind = Object.freeze({
+		Menu: 'menu',
+		Dialog: 'dialog'
+	});
+
+	/**
+	 * @typedef {object} RecordRouteFlags
+	 * @property {boolean} [isServiceEnabled] - the cloud record service is enabled on the portal
+	 * @property {boolean} [canRecord] - anything can be recorded at all (local desktop or cloud)
+	 * @property {boolean} [tariffAvailable] - cloud recording is included in the tariff
+	 * @property {boolean} [isCloudRecordFeaturesEnabled] - cloud record features are enabled for the call
+	 * @property {boolean} [isDesktop] - the call runs in the desktop client
+	 * @property {boolean} [isRecordLimitReached] - the recording limit is used up
+	 */
+
+	/**
+	 * @typedef {object} RecordRouteDecision
+	 * @property {string} route - one of RecordRoute
+	 * @property {boolean} [isDesktopRecord] - menu route only: the menu offers the local desktop record
+	 */
+
+	/**
+	 * Decides the route of the record button.
+	 *
+	 * @param {RecordRouteFlags} flags
+	 * @return {RecordRouteDecision}
+	 */
+	function resolveRecordRoute({
+		isServiceEnabled,
+		canRecord,
+		tariffAvailable,
+		isCloudRecordFeaturesEnabled,
+		isDesktop,
+		isRecordLimitReached
+	}) {
+		if (isRecordLimitReached) {
+			return {
+				route: RecordRoute.RecordLimit
+			};
+		}
+		if (isServiceEnabled) {
+			if (!tariffAvailable) {
+				if (canRecord) {
+					return {
+						route: RecordRoute.Menu,
+						isDesktopRecord: true
+					};
 				}
-			});
-			this.showPromoPopupTimeout = setTimeout(() => {
-				if (options.isFolded) {
-					return;
-				}
-				this.documentPromoPopup?.show();
-			}, DOCUMENT_PROMO_DELAY);
-		}
-
-		/**
-		 * Shows the background mask feature promo popup.
-		 *
-		 * @returns {false|undefined}
-		 */
-		showMaskPromo() {
-			if (!this.viewPort || !BackgroundDialog.isMaskAvailable()) {
-				return false;
+				return {
+					route: RecordRoute.TariffArticle
+				};
 			}
-			if (!this.isPromoRequired(MASK_PROMO_CODE)) {
-				return false;
+			if (!isCloudRecordFeaturesEnabled && !isDesktop) {
+				return {
+					route: RecordRoute.Dialog
+				};
 			}
-			this.maskPromoPopup = new PromoPopup3D({
-				callView: this.viewPort,
-				targetContainer: this.container,
-				events: {
-					onClose: () => {
-						this.emit('PromoService::onPromoViewed', {
-							code: MASK_PROMO_CODE
-						});
-						this.maskPromoPopup = null;
-					}
-				}
-			});
-			this.showPromoPopup3dTimeout = setTimeout(() => {
-				this.maskPromoPopup?.show();
-			}, MASK_PROMO_DELAY);
+			return {
+				route: RecordRoute.Menu,
+				isDesktopRecord: Boolean(isCloudRecordFeaturesEnabled) && Boolean(isDesktop)
+			};
 		}
-
-		/**
-		 * Closes all open promo popups and clears pending show timers.
-		 */
-		closeAll() {
-			if (this.documentPromoPopup) {
-				this.documentPromoPopup.close();
-			}
-			if (this.maskPromoPopup) {
-				this.maskPromoPopup.close();
-			}
-			clearTimeout(this.showPromoPopupTimeout);
-			clearTimeout(this.showPromoPopup3dTimeout);
+		if (!canRecord) {
+			return {
+				route: RecordRoute.HelpArticle
+			};
 		}
-
-		/**
-		 * Releases all resources and event listeners held by this service.
-		 */
-		destroy() {
-			this.callStore = null;
-			this.closeAll();
-			this.documentPromoPopup = null;
-			this.maskPromoPopup = null;
-			this.showPromoPopupTimeout = null;
-			this.showPromoPopup3dTimeout = null;
-			this.viewPort = null;
-			this.container = null;
-		}
+		return {
+			route: RecordRoute.Menu,
+			isDesktopRecord: true
+		};
 	}
 
-	/* global BXDesktopSystem */
+	/**
+	 * Projects a route onto the kind of popup layer the button announces.
+	 *
+	 * @param {string} route - one of RecordRoute
+	 * @return {?string} one of ButtonPopupKind, or null when the route opens no popup layer
+	 */
+	function popupKindOfRoute(route) {
+		if (route === RecordRoute.Menu) {
+			return ButtonPopupKind.Menu;
+		}
+		if (route === RecordRoute.Dialog) {
+			return ButtonPopupKind.Dialog;
+		}
+		return null;
+	}
+
+	/**
+	 * Closed list of local record start refusals the client is able to detect. The codes travel to
+	 * analytics and to the subscribers of `RecordingUiService::onLocalRecordStartFailed` as plain
+	 * strings, so the list stays local to the service.
+	 */
+	const LocalRecordStartError = Object.freeze({
+		DesktopCommandUnavailable: 'desktop_command_unavailable',
+		DesktopCommandThrew: 'desktop_command_threw'
+	});
 
 	/**
 	 * Manages recording-related UI: record button clicks, record menu popup, cloud record promos,
@@ -32394,21 +33937,21 @@ this.BX = this.BX || {};
 	 *  - `RecordingUiService::onStartRecord` — user triggered a recording start
 	 *  - `RecordingUiService::onStopRecord` — user triggered a recording stop (also used for pause/resume)
 	 *  - `RecordingUiService::onDestroyRecord` — user triggered a recording destroy
+	 *  - `RecordingUiService::onLocalRecordStartFailed` — a local record start was refused
 	 */
 	class RecordingUiService extends main_core_events.EventEmitter {
+		#recordStopSent = false;
+
 		/**
 		 * @param {object} config
 		 * @param {*} config.viewPort
-		 * @param {*} [config.callStore]
 		 */
 		constructor({
-			viewPort,
-			callStore
+			viewPort
 		}) {
 			super();
 			this.setEventNamespace('BX.Call.RecordingUiService');
 			this.viewPort = viewPort;
-			this.callStore = callStore ?? null;
 
 			/**
 			 * Tracks whether the local-record start notification has already been shown
@@ -32420,19 +33963,23 @@ this.BX = this.BX || {};
 		}
 
 		/**
+		 * Resets the cloud record_stop dedup flag.
+		 * Must be called when a new recording session starts (any type).
+		 */
+		resetRecordStopSent() {
+			this.#recordStopSent = false;
+		}
+
+		/**
 		 * Handles the record button click by showing the appropriate menu or promo popup.
 		 *
 		 * @param {object} recordingState
-		 * @param {object} recordingState.commonRecordState — current common record state object from controller
-		 * @param {boolean} recordingState.cloudRecordEnabled — whether cloud recording is available for this call
 		 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled — whether cloud recording features tariff is enabled
 		 * @param {string|number} recordingState.callId — current call id
 		 * @param {boolean} recordingState.isServiceEnabled — whether cloud record service is globally enabled
 		 * @param {boolean} recordingState.canRecord — whether recording is actually available (local desktop or cloud); gates the record menu vs. the tariff helpdesk article
 		 */
 		onRecordButtonClick({
-			commonRecordState,
-			cloudRecordEnabled,
 			isCloudRecordFeaturesEnabled,
 			callId,
 			isServiceEnabled,
@@ -32441,27 +33988,81 @@ this.BX = this.BX || {};
 			if (!this.viewPort) {
 				return;
 			}
-			if (isServiceEnabled) {
-				if (!CallCloudRecord.tariffAvailable) {
-					if (canRecord) {
-						this.viewPort.showCommonRecordMenuPopup(true);
-						return;
+			const {
+				route,
+				isDesktopRecord
+			} = resolveRecordRoute({
+				isServiceEnabled,
+				canRecord,
+				tariffAvailable: CallCloudRecord.tariffAvailable,
+				isCloudRecordFeaturesEnabled,
+				isDesktop: im_v2_lib_desktopApi.DesktopApi.isDesktop()
+			});
+			switch (route) {
+				case RecordRoute.Menu:
+					{
+						this.viewPort.showCommonRecordMenuPopup(isDesktopRecord);
+						break;
 					}
-					Util.openArticle(CallCloudRecord.tariffSlider);
-					return;
-				}
-				if (!isCloudRecordFeaturesEnabled && !im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-					this.viewPort.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
-					return;
-				}
-				this.viewPort.showCommonRecordMenuPopup(isCloudRecordFeaturesEnabled && im_v2_lib_desktopApi.DesktopApi.isDesktop());
+				case RecordRoute.Dialog:
+					{
+						this.viewPort.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
+						break;
+					}
+				case RecordRoute.TariffArticle:
+					{
+						Util.openArticle(CallCloudRecord.tariffSlider);
+						break;
+					}
+				case RecordRoute.HelpArticle:
+					{
+						window.BX?.Helper?.show('redirect=detail&code=22079566');
+						break;
+					}
+			}
+		}
+
+		/**
+		 * Tells the record button which layer it opens, so that it can announce it before it is pressed.
+		 *
+		 * Takes the flags the click handler takes, plus the recording limit the view decides on its own:
+		 * the announcement and the click must be answered by the same function, or the button promises a
+		 * menu and opens an article. Routes that lead to a slider or a hint announce no layer at all.
+		 *
+		 * Safe to call at any moment of the life of the panel: the button is created lazily, and the view
+		 * skips a button that is not there yet.
+		 *
+		 * @param {object} recordingState
+		 * @param {boolean} recordingState.isServiceEnabled - whether cloud record service is globally enabled
+		 * @param {boolean} recordingState.canRecord - whether recording is actually available (local desktop or cloud)
+		 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled - whether cloud record features tariff is enabled
+		 * @param {boolean} recordingState.isRecordLimitReached - whether the recording limit closes the button
+		 */
+		syncRecordButtonPopupKind({
+			isServiceEnabled,
+			canRecord,
+			isCloudRecordFeaturesEnabled,
+			isRecordLimitReached
+		}) {
+			// Every reason of the route is fixed for the life of a call: the cloud record service and its
+			// tariff are read once from the settings of the extension, the recording limit from the page,
+			// the desktop client from the environment. Only a new call brings a new provider and new cloud
+			// record features, and a new call rebinds its events. That is why the callers sync where call
+			// events are bound and where the record button is built, and nothing subscribes to the flags.
+			if (!this.viewPort) {
 				return;
 			}
-			if (!canRecord) {
-				window.BX?.Helper?.show('redirect=detail&code=22079566');
-				return;
-			}
-			this.viewPort.showCommonRecordMenuPopup(true);
+			const {
+				route
+			} = resolveRecordRoute({
+				isServiceEnabled,
+				canRecord,
+				tariffAvailable: CallCloudRecord.tariffAvailable,
+				isCloudRecordFeaturesEnabled,
+				isDesktop: im_v2_lib_desktopApi.DesktopApi.isDesktop(),
+				isRecordLimitReached
+			});
+			this.viewPort.setButtonPopupKind('record', popupKindOfRoute(route));
 		}
 
 		/**
@@ -32473,10 +34074,7 @@ this.BX = this.BX || {};
 		 * @param {string} menuAction.kind — one of CallCommonRecordType values
 		 * @param {boolean} menuAction.hotkey — whether triggered via hotkey (skip confirmation)
 		 * @param {object} recordingState
-		 * @param {object} recordingState.commonRecordState — current common record state from controller
 		 * @param {boolean} recordingState.cloudRecordEnabled — whether cloud recording is available for this call
-		 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled
-		 * @param {string|number} recordingState.callId
 		 * @param {boolean} recordingState.isCopilotActive — whether copilot is currently active
 		 */
 		onCommonRecordMenu({
@@ -32484,7 +34082,6 @@ this.BX = this.BX || {};
 			kind,
 			hotkey
 		}, {
-			commonRecordState,
 			cloudRecordEnabled,
 			isCopilotActive
 		}) {
@@ -32505,7 +34102,7 @@ this.BX = this.BX || {};
 						if (isCopilotActive && kind === CallCommonRecordType.Audio) {
 							this.viewPort.showConfirmModal({
 								title: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
-								message: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
+								message: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE_MSGVER_1'),
 								yesButtonText: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
 								noButtonText: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON')
 							}).then(choice => {
@@ -32588,11 +34185,7 @@ this.BX = this.BX || {};
 			if (!this.viewPort) {
 				return;
 			}
-			if (isCloudRecordFeaturesEnabled) {
-				this.viewPort.showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId);
-			} else {
-				this.viewPort.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
-			}
+			this.viewPort.showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId);
 		}
 
 		/**
@@ -32677,30 +34270,11 @@ this.BX = this.BX || {};
 				}
 				if (CallCloudRecord.isCisRegion) {
 					this.viewPort.showCommonRecordStartNotify(userId, CallCommonRecordState.Started);
-					if (this.callStore) {
-						this.callStore.addNotification('recordStarted', {
-							userId,
-							state: CallCommonRecordState.Started
-						});
-					}
 				} else {
 					this.viewPort.showCommonRecordStartModal();
-					if (this.callStore) {
-						this.callStore.addNotification('recordStarted', {
-							userId,
-							state: CallCommonRecordState.Started
-						});
-					}
 				}
 			} else {
 				this.viewPort.showCommonRecordStartNotify(userId, eventRecordState.state);
-				const notificationType = Util.isCommonRecordStateInactive(eventRecordState.state) ? 'recordStopped' : 'recordStarted';
-				if (this.callStore) {
-					this.callStore.addNotification(notificationType, {
-						userId,
-						state: eventRecordState.state
-					});
-				}
 			}
 		}
 
@@ -32721,12 +34295,6 @@ this.BX = this.BX || {};
 			if (!this.notifyShowed && state === CallCommonRecordState.Started && initiatorId !== currentUserId) {
 				this.notifyShowed = true;
 				this.viewPort.showCommonRecordStartNotify(initiatorId);
-				if (this.callStore) {
-					this.callStore.addNotification('recordStarted', {
-						userId: initiatorId,
-						state
-					});
-				}
 			}
 			if (Util.isCommonRecordStateInactive(state) && initiatorId !== currentUserId) {
 				this.notifyShowed = false;
@@ -32735,10 +34303,16 @@ this.BX = this.BX || {};
 
 		/**
 		 * Handles the desktop local recording start when initiated by the current user.
-		 * Formats the filename, fires the API call, tracks analytics, and triggers BXDesktopSystem.
+		 * Formats the filename and asks the desktop client to capture; the portal call and the
+		 * analytics of a started record follow the capture command, so a refused start is never
+		 * recorded as a running one. A detected refusal emits
+		 * `RecordingUiService::onLocalRecordStartFailed` and leaves the record state to the controller.
 		 *
 		 * @param {object} params
 		 * @param {string} params.callId - analytics call identifier
+		 * @param {string|number} [params.desktopCallId] - identifier the rest of the client knows the call
+		 *   by: it names the record file the user sees, so it must not follow the analytics one. Defaults
+		 *   to callId, for a caller whose call is known by one identifier only
 		 * @param {string} params.callType - analytics call type
 		 * @param {string|number} params.callApiId - currentCall.id (for REST call)
 		 * @param {string} params.callUuid - currentCall.uuid (for REST call)
@@ -32747,10 +34321,16 @@ this.BX = this.BX || {};
 		 * @param {string} params.formatRecordDate - date format string
 		 * @param {string} params.recordType - commonRecord.type
 		 * @param {boolean} params.isMicrophoneMuted - Hardware.isMicrophoneMuted
-		 * @param {string} params.windowId - desktop window id (View.RecordSource.Chat)
+		 * @param {string} [params.windowId] - id of the native window the client is asked to capture.
+		 *   The main window of the application answers to the alias `ViewRecordSource.Chat`, which is the
+		 *   default here and is what the call in a chat needs. A window opened by the client on its own —
+		 *   the public conference page — gets no id of its own (`window.bxdWindowId` is undefined there),
+		 *   so it is recognised by the title of its document and has to pass that value itself. Sending
+		 *   the alias from such a window makes the client refuse the capture.
 		 */
 		handleLocalRecordStart({
 			callId,
+			desktopCallId = callId,
 			callType,
 			callApiId,
 			callUuid,
@@ -32759,14 +34339,45 @@ this.BX = this.BX || {};
 			formatRecordDate,
 			recordType,
 			isMicrophoneMuted,
-			windowId
+			windowId = call_mapping.ViewRecordSource.Chat
 		}) {
 			const callDate = BX?.date?.format(formatRecordDate) || BX.Main.Date.format(formatRecordDate);
-			let fileName = main_core.Loc.getMessage('IM_CALL_RECORD_NAME');
-			if (fileName) {
-				fileName = fileName.replace('#CHAT_TITLE#', dialogName).replace('#CALL_ID#', callId).replace('#DATE#', callDate);
-			} else {
-				fileName = `call_record_${callId}`;
+			const fileName = this.#buildFileName({
+				dialogName,
+				desktopCallId,
+				callDate
+			});
+			const startCommand = this.#desktopRecordStartCommand();
+			const analyticsParams = {
+				callId,
+				callType,
+				recordType
+			};
+			if (!main_core.Type.isFunction(startCommand)) {
+				this.#failStart(LocalRecordStartError.DesktopCommandUnavailable, analyticsParams);
+				return;
+			}
+			try {
+				startCommand({
+					windowId,
+					fileName,
+					callId: desktopCallId,
+					callDate,
+					dialogId,
+					dialogName,
+					video: recordType !== CallCommonRecordType.Audio,
+					muted: isMicrophoneMuted,
+					cropTop: 72,
+					cropBottom: 90,
+					shareMethod: 'im.disk.record.share',
+					callType
+				});
+			} catch (error) {
+				// The code of the refusal is what analytics counts; the reason of this one lives only in the
+				// exception of the client, and without it a report from the field says nothing.
+				console.error('BX.Call.RecordingUiService: the desktop client refused the record start', error);
+				this.#failStart(LocalRecordStartError.DesktopCommandThrew, analyticsParams);
+				return;
 			}
 			BX.ajax.runAction('call.Call.onStartRecord', {
 				data: {
@@ -32774,25 +34385,58 @@ this.BX = this.BX || {};
 					callUuid
 				}
 			});
+			this.resetRecordStopSent();
 			call_lib_analytics.Analytics.getInstance().onRecordStart({
-				callId,
-				callType,
-				recordType,
-				errorCode: null
+				...analyticsParams,
+				errorCode: null,
+				storageType: call_lib_analytics.Analytics.AnalyticsStorageType.local
 			});
-			BXDesktopSystem.CallRecordStart({
-				windowId,
-				fileName,
-				callId,
-				callDate,
-				dialogId,
-				dialogName,
-				video: recordType !== CallCommonRecordType.Audio,
-				muted: isMicrophoneMuted,
-				cropTop: 72,
-				cropBottom: 90,
-				shareMethod: 'im.disk.record.share',
-				callType
+		}
+
+		/**
+		 * The only point where the service reaches the desktop capture command.
+		 *
+		 * @returns {Function|null} the command bound to its owner, or null when the client has none
+		 */
+		#desktopRecordStartCommand() {
+			const command = window.BXDesktopSystem?.CallRecordStart;
+			return main_core.Type.isFunction(command) ? command.bind(window.BXDesktopSystem) : null;
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {string} params.dialogName
+		 * @param {string|number} params.desktopCallId
+		 * @param {string} params.callDate
+		 * @returns {string} name of the record file the user sees
+		 */
+		#buildFileName({
+			dialogName,
+			desktopCallId,
+			callDate
+		}) {
+			const template = main_core.Loc.getMessage('IM_CALL_RECORD_NAME');
+			if (!template) {
+				return `call_record_${desktopCallId}`;
+			}
+			return template.replace('#CHAT_TITLE#', dialogName).replace('#CALL_ID#', desktopCallId).replace('#DATE#', callDate);
+		}
+
+		/**
+		 * Reports a refused local record start: analytics gets the code instead of a success, and the
+		 * controller gets the event it turns into a notification and a rollback of the record state.
+		 *
+		 * @param {string} errorCode - member of LocalRecordStartError
+		 * @param {object} analyticsParams - callId, callType and recordType of the refused start
+		 */
+		#failStart(errorCode, analyticsParams) {
+			call_lib_analytics.Analytics.getInstance().onRecordStart({
+				...analyticsParams,
+				errorCode,
+				storageType: call_lib_analytics.Analytics.AnalyticsStorageType.local
+			});
+			this.emit('RecordingUiService::onLocalRecordStartFailed', {
+				errorCode
 			});
 		}
 
@@ -32809,7 +34453,8 @@ this.BX = this.BX || {};
 				callType,
 				subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
 				element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
-				recordTime: Util.getRecordTimeText(commonRecordInfo, true)
+				recordTime: Util.getRecordTimeText(commonRecordInfo, true),
+				storageType: call_lib_analytics.Analytics.AnalyticsStorageType.local
 			});
 		}
 
@@ -32846,14 +34491,17 @@ this.BX = this.BX || {};
 							call_lib_analytics.Analytics.getInstance().onRecordResumed({
 								callId,
 								callType,
-								errorCode: null
+								errorCode: null,
+								storageType: call_lib_analytics.Analytics.AnalyticsStorageType.cloud
 							});
 						} else {
+							this.resetRecordStopSent();
 							call_lib_analytics.Analytics.getInstance().onRecordStart({
 								callId,
 								callType,
 								recordType,
-								errorCode: null
+								errorCode: null,
+								storageType: call_lib_analytics.Analytics.AnalyticsStorageType.cloud
 							});
 						}
 						break;
@@ -32863,19 +34511,24 @@ this.BX = this.BX || {};
 						call_lib_analytics.Analytics.getInstance().onRecordPaused({
 							callId,
 							callType,
-							errorCode: null
+							errorCode: null,
+							storageType: call_lib_analytics.Analytics.AnalyticsStorageType.cloud
 						});
 						break;
 					}
 				case CallCommonRecordState.Stopped:
 					{
-						call_lib_analytics.Analytics.getInstance().onRecordStop({
-							callId,
-							callType,
-							subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
-							element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
-							recordTime: Util.getRecordTimeText(commonRecordInfo, true)
-						});
+						if (!this.#recordStopSent) {
+							this.#recordStopSent = true;
+							call_lib_analytics.Analytics.getInstance().onRecordStop({
+								callId,
+								callType,
+								subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
+								element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
+								recordTime: Util.getRecordTimeText(commonRecordInfo, true),
+								storageType: call_lib_analytics.Analytics.AnalyticsStorageType.cloud
+							});
+						}
 						break;
 					}
 				case CallCommonRecordState.Destroyed:
@@ -32883,7 +34536,8 @@ this.BX = this.BX || {};
 						call_lib_analytics.Analytics.getInstance().onRecordDelete({
 							callId,
 							callType,
-							errorCode: null
+							errorCode: null,
+							storageType: call_lib_analytics.Analytics.AnalyticsStorageType.cloud
 						});
 						break;
 					}
@@ -32897,13 +34551,219 @@ this.BX = this.BX || {};
 		}
 
 		/**
+		 * Sends record_stop analytics for cloud recording when the call is being disconnected.
+		 * Implements ALG-01 dedup: only sends if record_stop has not already been sent in this session.
+		 *
+		 * @param {string} callId - analytics call identifier
+		 * @param {string} callType - analytics call type
+		 * @param {object|null} commonRecordInfo - current commonRecord.info (for record time)
+		 * @param {boolean} finishCall - true if finishing for all, false if disconnecting only
+		 */
+		trackCloudRecordStopOnDisconnect(callId, callType, commonRecordInfo, finishCall) {
+			if (this.#recordStopSent) {
+				return;
+			}
+			this.#recordStopSent = true;
+			call_lib_analytics.Analytics.getInstance().onRecordStop({
+				callId,
+				callType,
+				subSection: finishCall ? call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu : call_lib_analytics.Analytics.AnalyticsSubSection.window,
+				element: finishCall ? call_lib_analytics.Analytics.AnalyticsElement.finishForAllButton : call_lib_analytics.Analytics.AnalyticsElement.disconnectButton,
+				recordTime: Util.getRecordTimeText(commonRecordInfo, true),
+				storageType: call_lib_analytics.Analytics.AnalyticsStorageType.cloud
+			});
+		}
+
+		/**
 		 * Releases all resources and event listeners held by this service.
 		 */
 		destroy() {
-			this.callStore = null;
 			this.viewPort = null;
 			this.notifyShowed = false;
 		}
+	}
+
+	const CALL_PHONE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.4898 9.16245L13.5108 10.6311C14.1215 11.081 14.1688 11.9701 13.6054 12.4772C11.4924 14.4356 7.97177 15.1958 3.33697 10.4435C-1.2979 5.69121 -0.376129 2.28926 1.73683 0.330898C2.29964 -0.176043 3.19623 -0.0921704 3.62458 0.52528L5.03805 2.53011C5.5331 3.26605 5.22041 4.26872 4.46091 4.76034L3.61245 5.30957C3.41748 5.43002 3.36316 5.6824 3.46778 5.87581C4.56505 7.74363 6.15032 9.3805 8.00435 10.5535C8.18926 10.657 8.45482 10.6035 8.58372 10.4328L9.18285 9.60919C9.70675 8.89133 10.7721 8.63946 11.4898 9.16245Z' fill='%2311A9D9'/%3E%3C/svg%3E";
+
+	class TabBlinker {
+		#intervalId = null;
+		#originalTitle = null;
+		#originalFavicons = null;
+		#callFaviconLink = null;
+		#onFocus = () => this.stop();
+		start(blinkText, intervalMs = 1000) {
+			if (this.#intervalId !== null) {
+				return;
+			}
+			this.#originalTitle = document.title;
+			this.#setCallFavicon();
+			let toggle = false;
+			this.#intervalId = setInterval(() => {
+				document.title = toggle ? this.#originalTitle : blinkText;
+				toggle = !toggle;
+			}, intervalMs);
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+			window.addEventListener('focus', this.#onFocus, {
+				once: true
+			});
+		}
+		stop() {
+			if (this.#intervalId !== null) {
+				clearInterval(this.#intervalId);
+				this.#intervalId = null;
+			}
+			if (this.#originalTitle !== null) {
+				document.title = this.#originalTitle;
+				this.#originalTitle = null;
+			}
+			this.#restoreFavicon();
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+			window.removeEventListener('focus', this.#onFocus);
+		}
+		#setCallFavicon() {
+			this.#originalFavicons = [...document.querySelectorAll("link[rel~='icon']")];
+			this.#originalFavicons.forEach(link => link.remove());
+			this.#callFaviconLink = document.createElement('link');
+			this.#callFaviconLink.rel = 'icon';
+			this.#callFaviconLink.href = CALL_PHONE_SVG;
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dom-methods
+			document.head.appendChild(this.#callFaviconLink);
+		}
+		#restoreFavicon() {
+			if (this.#callFaviconLink === null) {
+				return;
+			}
+			this.#callFaviconLink.remove();
+			this.#callFaviconLink = null;
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dom-methods
+			this.#originalFavicons?.forEach(link => document.head.appendChild(link));
+			this.#originalFavicons = null;
+		}
+	}
+
+	class CallTabNotifier {
+		#tabBlinker;
+		#phrases;
+		constructor(tabBlinker, phrases) {
+			this.#tabBlinker = tabBlinker;
+			this.#phrases = phrases;
+		}
+		stop() {
+			this.#tabBlinker.stop();
+		}
+		notify(callName) {
+			this.#tabBlinker.start(this.#phrases.blinkTitle(callName));
+			if (Notification.permission !== 'granted') {
+				return;
+			}
+			const notification = new Notification(this.#phrases.notificationTitle(callName), {
+				body: this.#phrases.notificationBody,
+				icon: CALL_PHONE_SVG,
+				requireInteraction: true,
+				tag: 'call-on-other-tab'
+			});
+			const timer = setTimeout(() => notification.close(), 10000);
+			const onFocus = () => {
+				clearTimeout(timer);
+				notification.close();
+			};
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+			window.addEventListener('focus', onFocus, {
+				once: true
+			});
+			notification.onclick = () => {
+				clearTimeout(timer);
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+				window.removeEventListener('focus', onFocus);
+				window.focus();
+				notification.close();
+			};
+		}
+	}
+
+	/**
+	 * Which way this client tried to move CoPilot. Read from the state the client REQUESTED: while an
+	 * error is present the engine leaves the CoPilot flag untouched, so the flag still describes the
+	 * state before the attempt.
+	 */
+	const CopilotAttemptDirection = Object.freeze({
+		On: 'on',
+		Off: 'off',
+		Unknown: 'unknown'
+	});
+
+	/**
+	 * Only ENABLED, PAUSED and DESTROYED can be requested today; the rest of the enum is answered for
+	 * completeness. Deleting the record stays unknown rather than off on purpose: the start event
+	 * leaves on switching on only.
+	 *
+	 * @param {number} requestedRecorderState one of RecorderStatus
+	 * @returns {string} CopilotAttemptDirection
+	 */
+	function getCopilotAttemptDirection(requestedRecorderState) {
+		if (requestedRecorderState === RecorderStatus.ENABLED) {
+			return CopilotAttemptDirection.On;
+		}
+		if ([RecorderStatus.PAUSED, RecorderStatus.DISABLED].includes(requestedRecorderState)) {
+			return CopilotAttemptDirection.Off;
+		}
+		return CopilotAttemptDirection.Unknown;
+	}
+
+	/**
+	 * The mark of an own CoPilot toggle: this client asked for a state on this call, and which way it
+	 * asked. Commands to the recorder are not sent by the controller alone (the engine pauses the
+	 * recording itself when a one-to-one connection leaves the media server), so a status arriving
+	 * without a mark belongs to somebody else.
+	 *
+	 * The mark is keyed by the call it was raised on: it outlives the call in the controller slot, and
+	 * no controller event reliably coincides with that change.
+	 */
+	class CopilotOwnAttempt {
+		#direction = null;
+		#callIdentifier = null;
+
+		/**
+		 * A call that cannot be named raises no mark: there would be nothing to match the status against.
+		 *
+		 * @param {number} requestedRecorderState the state handed to the media server, one of RecorderStatus
+		 * @param {?string|?number} callIdentifier Util.getCallIdentifier of the call being toggled
+		 */
+		mark(requestedRecorderState, callIdentifier) {
+			if (isCallIdentifierEmpty(callIdentifier)) {
+				this.reset();
+				return;
+			}
+			this.#direction = getCopilotAttemptDirection(requestedRecorderState);
+			this.#callIdentifier = callIdentifier;
+		}
+
+		/**
+		 * Reads the mark and drops it. The drop happens whatever the answer is: being taken by the very
+		 * first status is part of the rule, not a side effect of the failure branch.
+		 *
+		 * @param {?string|?number} callIdentifier Util.getCallIdentifier of the call the status came from
+		 * @returns {?string} CopilotAttemptDirection, or null when there was no own attempt on this call
+		 */
+		consume(callIdentifier) {
+			const isOwnAttempt = !isCallIdentifierEmpty(callIdentifier) && this.#callIdentifier === callIdentifier;
+			const direction = isOwnAttempt ? this.#direction : null;
+			this.reset();
+			return direction;
+		}
+		reset() {
+			this.#direction = null;
+			this.#callIdentifier = null;
+		}
+	}
+
+	/**
+	 * Util.getCallIdentifier answers null when the controller holds no call, and the identifier of a
+	 * call is never an empty string, so an empty value names no call at all.
+	 */
+	function isCallIdentifierEmpty(callIdentifier) {
+		return callIdentifier === null || callIdentifier === undefined || callIdentifier === '';
 	}
 
 	function getUnknownErrorType(errorMsg) {
@@ -32958,6 +34818,300 @@ this.BX = this.BX || {};
 
 		// If no pattern matches, return the default error type
 		return 'CLIENT_UNCLASSIFIED';
+	}
+
+	const businessLeaveReasons = Object.values(BusinessLeaveReason);
+	function isBusinessLeaveReason(errorCode) {
+		return businessLeaveReasons.includes(String(errorCode ?? ''));
+	}
+
+	/**
+	 * The named outcomes the event can carry in `status`. The literals live in the analytics markup
+	 * next to the other statuses and repeat the outcomes of the library, so one string addresses both.
+	 * A refusal of the media server is the only other outcome, and it is built below.
+	 */
+	const SeriesStatus = {
+		success: 'success',
+		notConnected: 'not_connected',
+		notRecovered: 'not_recovered',
+		escalated: 'escalated'
+	};
+	const MAX_ERROR_CODE_LENGTH = 100;
+	const CLIENT_UNCLASSIFIED_ERROR_CODE = 'CLIENT_UNCLASSIFIED';
+
+	/**
+	 * Two analytics events per reconnect series: one when it opens, one when it ends. The controller
+	 * decides both, because the engines limit reconnect events differently: some raise one event per
+	 * series, others one on every attempt.
+	 *
+	 * The series itself belongs to the reconnect history of the call object; kept here is a snapshot
+	 * of the series this controller saw start. Without it a recovery cannot be told from an ordinary
+	 * join, since the engines raise the same event for both, and an outcome could leave under the
+	 * identifier of the next call.
+	 *
+	 * Snapshots are addressed the way the library addresses series: by the target and, for an
+	 * interlocutor, by the user id, so that the series of two interlocutors never share one.
+	 */
+	class ReconnectSeriesReporter {
+		#getCall;
+		#getCallId;
+		#getCallType;
+		#isVpnActive;
+		#snapshots = new Map();
+
+		/**
+		 * @param {Object} options
+		 * @param {Function} options.getCall the call the controller holds right now, or null
+		 * @param {Function} options.getCallId the analytics identifier of that call
+		 * @param {Function} options.getCallType the analytics type of that call
+		 * @param {Function} options.isVpnActive whether the desktop app reports a VPN
+		 */
+		constructor({
+			getCall,
+			getCallId,
+			getCallType,
+			isVpnActive
+		}) {
+			this.#getCall = getCall;
+			this.#getCallId = getCallId;
+			this.#getCallType = getCallType;
+			this.#isVpnActive = isVpnActive;
+		}
+
+		/**
+		 * A reconnect attempt reached the controller. The event goes out on the first attempt of the
+		 * series only, and the series is remembered so its outcome can be reported later.
+		 *
+		 * @param {Object} event payload of CallEvent.onReconnecting
+		 */
+		reportSeriesStarted(event) {
+			const key = readSeriesKey(event);
+			const series = this.#getSeries(key);
+
+			// An engine that keeps no history limits the event by itself: VoximplantCall raises it once
+			// per series through its own reconnectionEventCount setter.
+			if (!series) {
+				this.#sendInitiation(event);
+				return;
+			}
+			if (!this.#isSeriesCounted(key.target)) {
+				return;
+			}
+			this.#snapshots.set(call_lib_reconnectHistory.buildSeriesKey(key), {
+				...key,
+				callId: this.#getCallId(),
+				reason: series.reason,
+				attempts: series.attempts,
+				// Only a peer event carries the flag; the media server path leaves it false whatever
+				// the state of the connection, so it is kept out of the media server snapshot.
+				hasEverConnected: key.target === call_lib_reconnectHistory.ReconnectTarget.Peer && Boolean(event?.hasEverConnected)
+			});
+			if (series.attempts === 1) {
+				this.#sendInitiation(event);
+			}
+		}
+
+		/**
+		 * The connection is back. The library is told first, so an ordinary join does not leave the series
+		 * of a failed first join open for the next real reconnect to continue. Only a series this
+		 * controller saw start is reported: the same event arrives on an ordinary join as well.
+		 *
+		 * @param {Object} event payload of CallEvent.onReconnected
+		 */
+		reportSeriesRecovered(event) {
+			const key = readSeriesKey(event);
+
+			// The result is no guard here: the engines record the success in the library before raising the
+			// event, so on the regular path the series is already closed. A second outcome is stopped by
+			// the snapshot being taken.
+			this.#closeSeries(key, SeriesStatus.success);
+			const snapshot = this.#takeSnapshot(key);
+			if (snapshot) {
+				this.#sendResult(snapshot, SeriesStatus.success);
+			}
+		}
+
+		/**
+		 * The engine reached a moment that ends the series of one interlocutor: the peer gave up after
+		 * too many attempts, or the call moved to the media server. The engine picks the value there,
+		 * where the state that decides it lives; left here is closing the series and sending the event.
+		 * A moment that names a series this controller does not hold passes in silence: the limit of
+		 * attempts lives for the whole call and fires again on every later attempt.
+		 *
+		 * @param {Object} event payload of CallEvent.onReconnectSeriesOutcome
+		 */
+		reportSeriesOutcome(event) {
+			const status = toSeriesStatus(event?.reconnectionOutcome);
+			if (!status) {
+				return;
+			}
+			this.#reportOutcome(readSeriesKey(event), status);
+		}
+
+		/**
+		 * The media server refused the room data. The code is already collected on the error object
+		 * itself; here it goes through the second step the connect event uses.
+		 *
+		 * @param {Object} error payload of CallEvent.onReconnectingFailed
+		 */
+		reportSeriesFailed(error) {
+			this.#reportOutcome({
+				target: call_lib_reconnectHistory.ReconnectTarget.MediaServer,
+				userId: null
+			}, toServerErrorStatus(error));
+		}
+
+		/**
+		 * The call is gone. Every series still open at this moment never got its connection back and
+		 * will not get it. The media server has no limit of attempts to give up at, so this is the only
+		 * moment its series learns its outcome; a peer series can also end here when neither the limit
+		 * nor a move to the media server came first.
+		 *
+		 * The snapshots are the list, not the library: only a snapshot carries the identifier of the
+		 * call the outcome belongs to.
+		 */
+		reportCallLost() {
+			// Every entry is dropped by the report of its own outcome, which a map iterator tolerates.
+			for (const snapshot of this.#snapshots.values()) {
+				const {
+					target,
+					userId
+				} = snapshot;
+				this.#reportOutcome({
+					target,
+					userId
+				}, toLostSeriesStatus(snapshot));
+			}
+		}
+		#reportOutcome(key, status) {
+			const snapshot = this.#takeSnapshot(key);
+			if (!snapshot) {
+				return;
+			}
+
+			// The library owns the outcome of a series and records it once. A series that already has one
+			// keeps it, so a recovery this controller missed, or an outcome sent from an earlier point,
+			// never produces a second event.
+			if (!this.#closeSeries(key, status)) {
+				return;
+			}
+			this.#sendResult(snapshot, status);
+		}
+
+		/**
+		 * Reconnecting to the media server before the call was ever established is a failed join, not a
+		 * series: it is reported by the connect event and has no place here. A peer series has no such
+		 * rule: a connection that never came up is an outcome of its own.
+		 */
+		#isSeriesCounted(target) {
+			return target !== call_lib_reconnectHistory.ReconnectTarget.MediaServer || Boolean(this.#getCall()?.CallApi?.wasConnected);
+		}
+
+		/**
+		 * Reads the snapshot and drops it. Dropping guards against a second outcome of the same series
+		 * while the call object is already dead and the library cannot be asked. A snapshot of a call
+		 * the controller has already left is dropped silently: its identifier and context would be the
+		 * next call's.
+		 */
+		#takeSnapshot(key) {
+			const snapshotKey = call_lib_reconnectHistory.buildSeriesKey(key);
+			const snapshot = this.#snapshots.get(snapshotKey);
+			if (!snapshot) {
+				return null;
+			}
+			this.#snapshots.delete(snapshotKey);
+			const callId = this.#getCallId();
+			if (!callId || callId !== snapshot.callId) {
+				return null;
+			}
+
+			// The counter lives in the library while the call object does; the snapshot keeps the last
+			// known value for when it does not.
+			const attempts = this.#getSeries(key)?.attempts;
+			return attempts ? {
+				...snapshot,
+				attempts
+			} : snapshot;
+		}
+		#getSeries(key) {
+			return this.#getCall()?.reconnectHistory?.getSeries(key) ?? null;
+		}
+		#closeSeries(key, status) {
+			return Boolean(this.#getCall()?.reconnectHistory?.closeSeries({
+				...key,
+				outcome: status
+			}));
+		}
+		#sendInitiation(event) {
+			call_lib_analytics.Analytics.getInstance().onReconnect({
+				callId: this.#getCallId(),
+				callType: this.#getCallType(),
+				reconnectionReason: event?.reconnectionReason,
+				reconnectionReasonInfo: event?.reconnectionReasonInfo,
+				isVpnActive: this.#isVpnActive()
+			});
+		}
+		#sendResult(snapshot, status) {
+			call_lib_analytics.Analytics.getInstance().onReconnectResult({
+				callId: snapshot.callId,
+				callType: this.#getCallType(),
+				status,
+				reconnectionReason: snapshot.reason,
+				attemptCount: snapshot.attempts,
+				isVpnActive: this.#isVpnActive()
+			});
+		}
+	}
+
+	/**
+	 * The key of the series the event is about. Only the plain engines name the target: on the bitrix
+	 * ones the event comes from the reconnectionEventCount setter, which carries nothing but the count,
+	 * and the media server is the only target they have. A user id belongs to a peer series alone, so
+	 * an id arriving on any other target is dropped rather than turned into a key of its own.
+	 */
+	function readSeriesKey(event) {
+		const target = event?.reconnectionTarget ?? call_lib_reconnectHistory.ReconnectTarget.MediaServer;
+		const userId = target === call_lib_reconnectHistory.ReconnectTarget.Peer ? event?.userId ?? null : null;
+		return {
+			target,
+			userId
+		};
+	}
+
+	/**
+	 * The engine names the outcome in the vocabulary of the library, the event carries it in the
+	 * vocabulary of the analytics markup. The two repeat each other value for value, so a value the
+	 * markup does not know is a value that must not leave.
+	 */
+	function toSeriesStatus(outcome) {
+		return Object.values(SeriesStatus).includes(outcome) ? outcome : null;
+	}
+
+	/**
+	 * The outcome of a series the loss of the call ends. The media server has one; for an interlocutor
+	 * the connection that never came up is a different event from the one that came up and broke.
+	 */
+	function toLostSeriesStatus(snapshot) {
+		if (snapshot.target !== call_lib_reconnectHistory.ReconnectTarget.Peer) {
+			return SeriesStatus.notRecovered;
+		}
+		return snapshot.hasEverConnected ? SeriesStatus.notRecovered : SeriesStatus.notConnected;
+	}
+
+	/**
+	 * The refusal is turned into a code in two steps, the same two the connect event uses. The first one
+	 * runs on the error object itself, where it is still whole; the second refines an unknown code by
+	 * the text of the message.
+	 */
+	function toServerErrorStatus(error) {
+		const errorCode = error?.code;
+		if (errorCode === CLIENT_UNCLASSIFIED_ERROR_CODE && error?.message) {
+			return `error_${getUnknownErrorType(error.message)}`;
+		}
+
+		// The code comes from the server response and is not checked against a list, so bound it
+		// the same way the markup bounds p3: cut the value, not the prefix.
+		return `error_${String(errorCode).slice(0, MAX_ERROR_CODE_LENGTH)}`;
 	}
 
 	const StrategyType = {
@@ -33164,12 +35318,12 @@ this.BX = this.BX || {};
 			this.type = config.type || '';
 			this.code = config.code || '';
 			this.popup = null;
-			this.notifyText = '';
+			this.notifyText = config.notifyText || '';
 			this.promoId = '';
 			this.popupTemplate = null;
 			this.bindElement = config.bindElement;
 			this.notifyColor = '';
-			this.targetContainer = config.bindElement || document.body;
+			this.targetContainer = config.targetContainer ?? config.bindElement ?? document.body;
 			this.callbacks = {
 				onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing
 			};
@@ -33177,6 +35331,7 @@ this.BX = this.BX || {};
 		getPopupTemplate() {
 			if (!this.notifyText) {
 				this.popupTemplate = null;
+				return;
 			}
 			this.popupTemplate = main_core.Dom.create('div', {
 				props: {
@@ -33190,10 +35345,17 @@ this.BX = this.BX || {};
 					props: {
 						className: 'bx-call-copilot-notify__message'
 					},
+					attrs: {
+						'data-testid': 'copilot-notify-message'
+					},
 					text: this.notifyText
 				}), main_core.Dom.create('button', {
 					props: {
-						className: 'bx-call-copilot-notify__close-btn'
+						className: 'bx-call-copilot-notify__close-btn',
+						ariaLabel: main_core.Loc.getMessage('CALL_COPILOT_NOTIFY_CLOSE')
+					},
+					attrs: {
+						'data-testid': 'copilot-notify-close-btn'
 					},
 					events: {
 						click: () => {
@@ -33204,32 +35366,33 @@ this.BX = this.BX || {};
 			});
 		}
 		setAdditionalInformation() {
+			const customText = this.notifyText;
 			switch (this.type) {
 				case CopilotNotifyType.COPILOT_ENABLED:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_WARNING_ENABLED');
+					this.notifyText = customText || main_core.Loc.getMessage('CALL_POPUP_WARNING_ENABLED_MSGVER_1');
 					this.promoId = 'call:copilot-notify-warning:21112024:all';
 					this.notifyColor = '#8E52EC';
 					break;
 				case CopilotNotifyType.COPILOT_DISABLED:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_PROMO_ENABLED');
+					this.notifyText = customText || main_core.Loc.getMessage('CALL_POPUP_PROMO_ENABLED');
 					this.promoId = 'call:copilot-notify-promo:21112024:all';
 					this.notifyColor = '#8E52EC';
 					break;
 				case CopilotNotifyType.COPILOT_RESULT:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_RESULT_WARNING');
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_RESULT_WARNING_MSGVER_1');
 					this.promoId = 'call:copilot-notify-result:24112024:all';
 					this.notifyColor = '#8E52EC';
 					break;
 				case CopilotNotifyType.AI_UNAVAILABLE_ERROR:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_UNAVAILABLE_ERROR');
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_UNAVAILABLE_ERROR_MSGVER_1');
 					this.notifyColor = '#FF5752';
 					break;
 				case CopilotNotifyType.AI_MODULE_ERROR:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_MODULE_ERROR').replace('#ERROR_CODE#', this.code);
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_MODULE_ERROR_MSGVER_1').replace('#ERROR_CODE#', this.code);
 					this.notifyColor = '#FF5752';
 					break;
 				case CopilotNotifyType.AI_SETTINGS_ERROR:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_SETTINGS_ERROR');
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_SETTINGS_ERROR_MSGVER_1');
 					this.notifyColor = '#FF5752';
 					break;
 				case CopilotNotifyType.AI_AGREEMENT_ERROR:
@@ -33237,19 +35400,19 @@ this.BX = this.BX || {};
 					this.notifyColor = '#FF5752';
 					break;
 				case CopilotNotifyType.AI_NOT_ENOUGH_BAAS_ERROR:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR');
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR_MSGVER_1');
 					this.notifyColor = '#FF5752';
 					break;
 				case CopilotNotifyType.ENABLE_AI_INTERNAL_ERROR:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_ENABLE_AI_INTERNAL_ERROR').replace('#ERROR_CODE#', this.code);
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_ENABLE_AI_INTERNAL_ERROR_MSGVER_1').replace('#ERROR_CODE#', this.code);
 					this.notifyColor = '#FF5752';
 					break;
 				case CopilotNotifyType.DISABLE_AI_INTERNAL_ERROR:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_DISABLE_AI_INTERNAL_ERROR').replace('#ERROR_CODE#', this.code);
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_DISABLE_AI_INTERNAL_ERROR_MSGVER_1').replace('#ERROR_CODE#', this.code);
 					this.notifyColor = '#FF5752';
 					break;
 				default:
-					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_DEFAULT_TEXT');
+					this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_DEFAULT_TEXT_MSGVER_1');
 					this.notifyColor = '#FF5752';
 					break;
 			}
@@ -33358,7 +35521,7 @@ this.BX = this.BX || {};
 						props: {
 							className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
 						},
-						text: main_core.Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED')
+						text: main_core.Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED_MSGVER_1')
 					};
 				}
 				if (!CallAI.tariffAvailable) {
@@ -33404,6 +35567,9 @@ this.BX = this.BX || {};
 						props: {
 							className: 'bx-call-copilot-popup__button turn_off'
 						},
+						attrs: {
+							'data-testid': 'call-copilot-popup-turn-off-btn'
+						},
 						text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
 						events: {
 							click: () => {
@@ -33446,6 +35612,9 @@ this.BX = this.BX || {};
 					props: {
 						className: 'bx-call-copilot-popup__button turn_on'
 					},
+					attrs: {
+						'data-testid': 'call-copilot-popup-turn-on-btn'
+					},
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_ENABLE'),
 					events: {
 						click: () => {
@@ -33480,13 +35649,13 @@ this.BX = this.BX || {};
 							props: {
 								className: 'bx-call-copilot-popup__title-text'
 							},
-							text: BX.message('CALL_COPILOT_POPUP_TITLE')
+							text: BX.message('CALL_COPILOT_POPUP_TITLE_MSGVER_1')
 						})]
 					}), main_core.Dom.create("div", {
 						props: {
 							className: 'bx-call-copilot-popup__description'
 						},
-						text: BX.message('CALL_COPILOT_POPUP_LIST_TITLE')
+						text: BX.message('CALL_COPILOT_POPUP_LIST_TITLE_MSGVER_1')
 					}), main_core.Dom.create("ul", {
 						props: {
 							className: 'bx-call-copilot-popup__list'
@@ -33622,15 +35791,168 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const ParticipantsPermissionSwitcherEvents = {
+		onSwitch: 'onSwitch'
+	};
+	class ParticipantsPermissionSwitcher {
+		constructor(config = {}) {
+			this.label = config.label || '';
+			this.typeOfSetting = config.typeOfSetting || '';
+			this.settingEnabled = config.settingEnabled || false;
+			this.idSuffix = config.idSuffix || '';
+			this.eventEmitter = new main_core_events.EventEmitter(this, 'ParticipantsPermissionSwitcher');
+			this.switcher = null;
+			this.switchNode = null;
+			this.wrapperNode = null;
+			const events = config.events ?? {};
+			for (const [eventName, handler = () => {}] of Object.entries(events)) {
+				this.eventEmitter.subscribe(eventName, handler);
+			}
+		}
+		static create(config) {
+			return new ParticipantsPermissionSwitcher(config);
+		}
+		onSwitchToggled() {
+			// Widget assigns its `checked` before emitting 'toggled', so isChecked() is already the new state
+			this.settingEnabled = this.switcher.isChecked();
+			if (this.switchNode) {
+				// State comes only from the widget; its 'toggled' event carries no payload
+				main_core.Dom.attr(this.switchNode, 'aria-checked', String(this.switcher.isChecked()));
+			}
+			this.eventEmitter.emit(ParticipantsPermissionSwitcherEvents.onSwitch, {
+				settingEnabled: this.settingEnabled,
+				typeOfSetting: this.typeOfSetting
+			});
+		}
+		onSwitchNodeKeydown(event) {
+			const isEnter = event.key === 'Enter';
+			const isSpace = event.key === ' ';
+			if (!isEnter && !isSpace) {
+				return;
+			}
+			if (isSpace) {
+				// Prevent page scroll on Space activation
+				event.preventDefault();
+			}
+
+			// toggle() self-guards isDisabled(); no extra check needed
+			this.switcher.toggle(event);
+		}
+		getSwitchNode() {
+			return this.switchNode;
+		}
+		focus() {
+			this.switchNode?.focus();
+		}
+		render() {
+			const suffix = this.idSuffix ? `-${this.idSuffix}` : '';
+			const labelId = `call-participants-permissions-switch-label-${this.typeOfSetting}${suffix}`;
+			this.switcher = new ui_switcher.Switcher({
+				size: 'small',
+				checked: this.settingEnabled,
+				handlers: {
+					toggled: this.onSwitchToggled.bind(this)
+				}
+			});
+			this.switchNode = this.switcher.getNode();
+
+			// Give the widget's own node switch semantics: the wrapper stays a plain div
+			main_core.Dom.attr(this.switchNode, {
+				role: 'switch',
+				tabindex: '0',
+				'aria-checked': String(this.switcher.isChecked()),
+				'aria-labelledby': labelId,
+				'data-testid': `participants-permission-popup-switch-${this.typeOfSetting}`
+			});
+			main_core.Event.bind(this.switchNode, 'keydown', this.onSwitchNodeKeydown.bind(this));
+			this.wrapperNode = main_core.Dom.create('div', {
+				props: {
+					className: 'bx-call-view-participants-permissions-switch-wrapper'
+				},
+				dataset: {
+					id: `call-participants-permissions-switch-${this.typeOfSetting}`
+				},
+				children: [main_core.Dom.create('span', {
+					props: {
+						className: 'bx-call-view-participants-permissions-label'
+					},
+					attrs: {
+						id: labelId
+					},
+					text: this.label
+				}), main_core.Dom.create('div', {
+					props: {
+						className: 'bx-call-view-participants-permissions-switch'
+					},
+					children: [this.switchNode]
+				})]
+			});
+			return this.wrapperNode;
+		}
+	}
+
+	const ParticipantsStreamControlButtonEvents = {
+		onTurnOffStreamForAll: 'onTurnOffStreamForAll'
+	};
+	class ParticipantsStreamControlButton {
+		constructor(config = {}) {
+			this.label = config.label || '';
+			this.typeOfStream = config.typeOfStream || '';
+			this.eventEmitter = new main_core_events.EventEmitter(this, 'ParticipantsStreamControl');
+			const events = config.events ?? {};
+			for (const [eventName, handler = () => {}] of Object.entries(events)) {
+				this.eventEmitter.subscribe(eventName, handler);
+			}
+		}
+		static create(config) {
+			return new ParticipantsStreamControlButton(config);
+		}
+		render() {
+			return main_core.Dom.create('button', {
+				props: {
+					type: 'button',
+					className: 'bx-call-view-participants-control-stream-button'
+				},
+				attrs: {
+					'data-testid': `participants-permission-popup-turn-off-${this.typeOfStream}`
+				},
+				children: [main_core.Dom.create('span', {
+					props: {
+						className: `bx-call-view-participants-control-stream-button-icon bx-call-view-participants-control-stream-button-icon-${this.typeOfStream}`
+					},
+					attrs: {
+						'aria-hidden': 'true'
+					}
+				}), main_core.Dom.create('span', {
+					props: {
+						className: 'bx-call-view-participants-control-stream-button-action'
+					},
+					text: this.label
+				})],
+				events: {
+					click: () => {
+						this.eventEmitter.emit(ParticipantsStreamControlButtonEvents.onTurnOffStreamForAll, {
+							typeOfStream: this.typeOfStream
+						});
+					}
+				}
+			});
+		}
+	}
+
+	const doNothing = () => {};
 	class ParticipantsPermissionPopup {
 		constructor(config) {
 			this.popup = null;
-			this.roomPermissions = config.roomPermissions;
+
+			// Per-instance token keeps element ids unique when two popups coexist
+			this.instanceId = main_core.Text.getRandom();
 			this.elements = {
 				root: null,
 				roomPermissions: null,
 				roomSettings: null,
-				allParticipantsDeviceControl: null
+				roomSettingsToggle: null,
+				anchor: null
 			};
 			this.roomSettingsElements = {
 				mic: null,
@@ -33638,79 +35960,135 @@ this.BX = this.BX || {};
 				screenshare: null
 			};
 			this.callbacks = {
-				turnOffAllParticipansStream: BX.type.isFunction(config.turnOffAllParticipansStream) ? config.turnOffAllParticipansStream : BX.DoNothing,
-				onPermissionChanged: BX.type.isFunction(config.onPermissionChanged) ? config.onPermissionChanged : BX.DoNothing,
-				onPermissionCollapseStateChanged: BX.type.isFunction(config.onPermissionCollapseStateChanged) ? config.onPermissionCollapseStateChanged : BX.DoNothing,
-				onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
-				onOpen: BX.type.isFunction(config.onOpen) ? config.onOpen : BX.DoNothing
+				turnOffAllParticipansStream: main_core.Type.isFunction(config.turnOffAllParticipansStream) ? config.turnOffAllParticipansStream : doNothing,
+				onPermissionChanged: main_core.Type.isFunction(config.onPermissionChanged) ? config.onPermissionChanged : doNothing,
+				onPermissionCollapseStateChanged: main_core.Type.isFunction(config.onPermissionCollapseStateChanged) ? config.onPermissionCollapseStateChanged : doNothing,
+				onClose: main_core.Type.isFunction(config.onClose) ? config.onClose : doNothing,
+				onOpen: main_core.Type.isFunction(config.onOpen) ? config.onOpen : doNothing
 			};
 			this.targetContainer = main_core.Type.isDomNode(config.targetContainer) ? config.targetContainer : document.body;
 			this.eventEmitter = new main_core_events.EventEmitter(this, 'ParticipantsPermissionPopup');
 			this.currentBitrixCall = Util.getCurrentBitrixCall();
-			this.isShowPopup = Util.isUserControlFeatureEnabled() && this.currentBitrixCall && this.currentBitrixCall.provider !== Provider$1.Plain;
-			/*&&
-				!(this.currentBitrixCall.associatedEntity.type === 'chat'
-				&& this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');*/
+			this.isShowPopup = Util.isUserControlFeatureEnabled() && this.currentBitrixCall && this.currentBitrixCall.provider !== call_mapping.Provider.Plain;
+			/* &&
+					!(this.currentBitrixCall.associatedEntity.type === 'chat'
+					&& this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf'); */
 
-			this.isShowRoomSettings = BX.prop.getObject(config, 'showRoomSettings', false);
+			this.isShowRoomSettings = config.showRoomSettings ?? false;
 			if (!Util.getRoomPermissions().ScreenShareEnabled || !Util.getRoomPermissions().AudioEnabled || !Util.getRoomPermissions().VideoEnabled) {
 				this.isShowRoomSettings = true;
 			}
-			let events = BX.prop.getObject(config, 'events', {});
-			for (let eventName in events) {
-				if (!events.hasOwnProperty(eventName)) {
-					continue;
-				}
-				this.eventEmitter.subscribe(eventName, events[eventName]);
+			const events = config.events ?? {};
+			for (const [eventName, handler = () => {}] of Object.entries(events)) {
+				this.eventEmitter.subscribe(eventName, handler);
 			}
 		}
 		renderSettingsElements() {
 			this.roomSettingsElements.screenshare = ParticipantsPermissionSwitcher.create({
 				typeOfSetting: 'screenshare',
-				canControlPermission: true,
+				idSuffix: this.instanceId,
 				settingEnabled: Util.getRoomPermissions().ScreenShareEnabled,
-				label: BX.message('CALL_CONTROL_PERMISSIONS_IN_CALL_LABEL_SCREENSHARE'),
+				label: main_core.Loc.getMessage('CALL_CONTROL_PERMISSIONS_IN_CALL_LABEL_SCREENSHARE'),
 				events: {
-					onSwitch: this.onPermissionChanged.bind(this)
+					[ParticipantsPermissionSwitcherEvents.onSwitch]: this.onPermissionChanged.bind(this)
 				}
 			});
 			this.roomSettingsElements.mic = ParticipantsPermissionSwitcher.create({
 				typeOfSetting: 'mic',
-				canControlPermission: true,
+				idSuffix: this.instanceId,
 				settingEnabled: Util.getRoomPermissions().AudioEnabled,
-				label: BX.message('CALL_CONTROL_PERMISSIONS_IN_CALL_LABEL_MIC'),
+				label: main_core.Loc.getMessage('CALL_CONTROL_PERMISSIONS_IN_CALL_LABEL_MIC'),
 				events: {
-					onSwitch: this.onPermissionChanged.bind(this)
+					[ParticipantsPermissionSwitcherEvents.onSwitch]: this.onPermissionChanged.bind(this)
 				}
 			});
 			this.roomSettingsElements.cam = ParticipantsPermissionSwitcher.create({
 				typeOfSetting: 'cam',
-				canControlPermission: true,
+				idSuffix: this.instanceId,
 				settingEnabled: Util.getRoomPermissions().VideoEnabled,
-				label: BX.message('CALL_CONTROL_PERMISSIONS_IN_CALL_LABEL_CAM'),
+				label: main_core.Loc.getMessage('CALL_CONTROL_PERMISSIONS_IN_CALL_LABEL_CAM'),
 				events: {
-					onSwitch: this.onPermissionChanged.bind(this)
+					[ParticipantsPermissionSwitcherEvents.onSwitch]: this.onPermissionChanged.bind(this)
 				}
 			});
 			return [this.roomSettingsElements.screenshare.render(), this.roomSettingsElements.mic.render(), this.roomSettingsElements.cam.render()];
 		}
 		updateStatePermissions() {
 			if (this.elements.roomSettings) {
+				// capture focused switcher before renderSettingsElements() overwrites roomSettingsElements
+				let focusedType = null;
+				for (const [type, wrapper] of Object.entries(this.roomSettingsElements)) {
+					if (wrapper && wrapper.getSwitchNode() === document.activeElement) {
+						focusedType = type;
+						break;
+					}
+				}
 				const settingsElements = this.renderSettingsElements();
 				this.elements.roomSettings.innerHTML = '';
 				this.elements.roomSettings.append(...settingsElements);
+				if (focusedType) {
+					this.roomSettingsElements[focusedType]?.focus();
+				}
 			}
 		}
-		toggleRoomSettings(e) {
+		toggleRoomSettings() {
 			this.isShowRoomSettings = !this.isShowRoomSettings;
 			if (this.isShowRoomSettings) {
-				this.elements.roomPermissions.classList.add('permissions-uncollapsed');
+				main_core.Dom.addClass(this.elements.roomPermissions, 'permissions-uncollapsed');
 			} else {
-				this.elements.roomPermissions.classList.remove('permissions-uncollapsed');
+				main_core.Dom.removeClass(this.elements.roomPermissions, 'permissions-uncollapsed');
 			}
+			this.elements.roomSettingsToggle?.setAttribute('aria-expanded', String(this.isShowRoomSettings));
 			this.callbacks.onPermissionCollapseStateChanged(this.isShowRoomSettings);
 		}
 		getPopupTemplate() {
+			const permissionsId = `bx-call-participants-permission-popup-permissions-${this.instanceId}`;
+			const controlButtonsLabelId = `bx-call-participants-permission-popup-control-buttons-label-${this.instanceId}`;
+			this.elements.roomSettings = main_core.Dom.create('div', {
+				props: {
+					className: 'bx-call-participants-permission-popup__permissions'
+				},
+				attrs: {
+					id: permissionsId
+				}
+			});
+			this.elements.roomSettingsToggle = main_core.Dom.create('button', {
+				props: {
+					type: 'button',
+					className: 'bx-call-participants-permission-popup__permissions-title-wrapper'
+				},
+				attrs: {
+					'aria-expanded': String(this.isShowRoomSettings),
+					'aria-controls': permissionsId,
+					'data-testid': 'participants-permission-popup-permissions-toggle'
+				},
+				events: {
+					click: () => {
+						this.toggleRoomSettings();
+					}
+				},
+				children: [main_core.Dom.create('span', {
+					props: {
+						className: 'bx-call-participants-permission-popup__permissions-title'
+					},
+					text: main_core.Loc.getMessage('CALL_CONTROL_PERMISSIONS_IN_CALL_TITLE')
+				}),
+				// Decorative arrow, hidden from assistive tech
+				main_core.Dom.create('span', {
+					props: {
+						className: 'bx-call-participants-permission-popup__permissions-title-arrow'
+					},
+					attrs: {
+						'aria-hidden': 'true'
+					}
+				})]
+			});
+			this.elements.roomPermissions = main_core.Dom.create('div', {
+				props: {
+					className: 'bx-call-participants-permission-popup__permissions-wrapper'
+				},
+				children: [this.elements.roomSettingsToggle, this.elements.roomSettings]
+			});
 			return main_core.Dom.create('div', {
 				props: {
 					className: 'bx-call-participants-permission-popup__wrapper'
@@ -33719,60 +36097,39 @@ this.BX = this.BX || {};
 					props: {
 						className: 'bx-call-participants-permission-popup__content'
 					},
-					children: [this.elements.roomPermissions = main_core.Dom.create('div', {
-						props: {
-							className: 'bx-call-participants-permission-popup__permissions-wrapper'
-						},
-						children: [main_core.Dom.create('div', {
-							props: {
-								className: 'bx-call-participants-permission-popup__permissions-title-wrapper'
-							},
-							events: {
-								click: () => {
-									this.toggleRoomSettings();
-								}
-							},
-							children: [main_core.Dom.create('span', {
-								props: {
-									className: 'bx-call-participants-permission-popup__permissions-title'
-								},
-								text: BX.message('CALL_CONTROL_PERMISSIONS_IN_CALL_TITLE')
-							}), main_core.Dom.create('div', {
-								props: {
-									className: 'bx-call-participants-permission-popup__permissions-title-arrow'
-								}
-							})]
-						}), this.elements.roomSettings = main_core.Dom.create('div', {
-							props: {
-								className: 'bx-call-participants-permission-popup__permissions'
-							}
-						})]
-					}), main_core.Dom.create('div', {
+					children: [this.elements.roomPermissions, main_core.Dom.create('div', {
 						props: {
 							className: 'bx-call-participants-permission-popup__control-buttons-label'
 						},
-						text: BX.message('CALL_ADMIN_TURN_OFF_FOR_ALL_LABEL')
+						attrs: {
+							id: controlButtonsLabelId
+						},
+						text: main_core.Loc.getMessage('CALL_ADMIN_TURN_OFF_FOR_ALL_LABEL')
 					}), main_core.Dom.create('div', {
 						props: {
 							className: 'bx-call-participants-permission-popup__control-buttons'
 						},
-						children: [this.turnOffMicContainer = ParticipantsStreamControlButton.create({
+						attrs: {
+							role: 'group',
+							'aria-labelledby': controlButtonsLabelId
+						},
+						children: [ParticipantsStreamControlButton.create({
 							typeOfStream: 'mic',
-							label: BX.message('CALL_TURN_OFF_MIC_FOR_ALL_PARTICIPANTS_MSGVER_1'),
+							label: main_core.Loc.getMessage('CALL_TURN_OFF_MIC_FOR_ALL_PARTICIPANTS_MSGVER_1'),
 							events: {
-								onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this)
+								[ParticipantsStreamControlButtonEvents.onTurnOffStreamForAll]: this.onTurnOffStreamForAll.bind(this)
 							}
-						}).render(), this.turnOffMicContainer = ParticipantsStreamControlButton.create({
+						}).render(), ParticipantsStreamControlButton.create({
 							typeOfStream: 'cam',
-							label: BX.message('CALL_TURN_OFF_CAM_FOR_ALL_PARTICIPANTS_MSGVER_1'),
+							label: main_core.Loc.getMessage('CALL_TURN_OFF_CAM_FOR_ALL_PARTICIPANTS_MSGVER_1'),
 							events: {
-								onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this)
+								[ParticipantsStreamControlButtonEvents.onTurnOffStreamForAll]: this.onTurnOffStreamForAll.bind(this)
 							}
-						}).render(), this.turnOffMicContainer = ParticipantsStreamControlButton.create({
+						}).render(), ParticipantsStreamControlButton.create({
 							typeOfStream: 'screenshare',
-							label: BX.message('CALL_TURN_OFF_SCREENSHARE_FOR_ALL_PARTICIPANTS_MSGVER_1'),
+							label: main_core.Loc.getMessage('CALL_TURN_OFF_SCREENSHARE_FOR_ALL_PARTICIPANTS_MSGVER_1'),
 							events: {
-								onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this)
+								[ParticipantsStreamControlButtonEvents.onTurnOffStreamForAll]: this.onTurnOffStreamForAll.bind(this)
 							}
 						}).render()]
 					})]
@@ -33793,27 +36150,37 @@ this.BX = this.BX || {};
 		}
 		create() {
 			const participantsButton = document.querySelector('.bx-messenger-videocall-top-button-text.callcontrol');
-			const self = this;
 			if (!participantsButton) {
 				return;
 			}
 			if (!this.isShowPopup) {
 				return;
 			}
+
+			// Focus returns to the whole control, not to its inner text node.
+			// tabIndex reflects effective focusability: 0 for natively focusable elements, -1 otherwise,
+			// so the fallback is skipped once the control root becomes a native <button>.
+			const anchor = participantsButton.closest('.bx-messenger-videocall-top-button') ?? participantsButton;
+			if (anchor.tabIndex < 0) {
+				anchor.tabIndex = -1;
+			}
+			this.elements.anchor = anchor;
 			this.elements.root = this.getPopupTemplate();
 			const settingsElements = this.renderSettingsElements();
 			this.elements.roomSettings.innerHTML = '';
 			this.elements.roomSettings.append(...settingsElements);
 			if (this.isShowRoomSettings) {
-				this.elements.roomPermissions?.classList.add('permissions-uncollapsed');
+				main_core.Dom.addClass(this.elements.roomPermissions, 'permissions-uncollapsed');
 			} else {
-				this.elements.roomPermissions?.classList.remove('permissions-uncollapsed');
+				main_core.Dom.removeClass(this.elements.roomPermissions, 'permissions-uncollapsed');
 			}
+			this.elements.roomSettingsToggle?.setAttribute('aria-expanded', String(this.isShowRoomSettings));
 			this.popup = new main_popup.Popup({
 				className: 'bx-call-participants-permission-popup',
 				bindElement: participantsButton,
 				targetContainer: this.targetContainer,
 				content: this.elements.root,
+				ariaLabel: main_core.Loc.getMessage('CALL_CONTROL_PERMISSIONS_IN_CALL_TITLE'),
 				offsetTop: 10,
 				bindOptions: {
 					position: 'bottom'
@@ -33826,15 +36193,22 @@ this.BX = this.BX || {};
 				contentNoPaddings: true,
 				animation: 'fading',
 				events: {
-					onPopupClose() {
-						self.callbacks.onClose();
-						this.destroy();
+					onPopupClose: () => {
+						// Track focus before destroy: fading animation may defer node removal,
+						// so comparing activeElement to body after destroy is unreliable.
+						const focusWasInside = this.elements.root?.contains(document.activeElement);
+						this.callbacks.onClose();
+						this.popup.destroy();
+						if (focusWasInside) {
+							this.elements.anchor?.focus();
+						}
 					},
-					onPopupShow() {
-						self.callbacks.onOpen();
+					onPopupShow: () => {
+						this.callbacks.onOpen();
+						this.elements.roomSettingsToggle?.focus();
 					},
-					onPopupDestroy() {
-						self.popup = null;
+					onPopupDestroy: () => {
+						this.popup = null;
 					}
 				}
 			});
@@ -33849,112 +36223,6 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.close();
-		}
-	}
-	const ParticipantsStreamControlButtonEvents = {
-		onTurnOffStreamForAll: 'onTurnOffStreamForAll'
-	};
-	class ParticipantsStreamControlButton {
-		constructor(config) {
-			config = BX.type.isObject(config) ? config : {};
-			this.label = config.label || '';
-			this.typeOfStream = config.typeOfStream || '';
-			this.eventEmitter = new main_core_events.EventEmitter(this, 'ParticipantsStreamControl');
-			let events = BX.prop.getObject(config, 'events', {});
-			for (let eventName in events) {
-				if (!events.hasOwnProperty(eventName)) {
-					continue;
-				}
-				this.eventEmitter.subscribe(eventName, events[eventName]);
-			}
-		}
-		static create(config) {
-			return new ParticipantsStreamControlButton(config);
-		}
-		render() {
-			return main_core.Dom.create('div', {
-				props: {
-					className: 'bx-call-view-participants-control-stream-button'
-				},
-				children: [main_core.Dom.create('div', {
-					props: {
-						className: 'bx-call-view-participants-control-stream-button-icon bx-call-view-participants-control-stream-button-icon-' + this.typeOfStream
-					}
-				}), main_core.Dom.create('div', {
-					props: {
-						className: 'bx-call-view-participants-control-stream-button-action'
-					},
-					text: this.label
-				})],
-				events: {
-					click: e => {
-						this.eventEmitter.emit(ParticipantsStreamControlButtonEvents.onTurnOffStreamForAll, {
-							typeOfStream: this.typeOfStream
-						});
-					}
-				}
-			});
-		}
-	}
-	const ParticipantsPermissionSwitcherEvents = {
-		onSwitch: 'onSwitch'
-	};
-	class ParticipantsPermissionSwitcher {
-		constructor(config) {
-			config = BX.type.isObject(config) ? config : {};
-			this.label = config.label || '';
-			this.typeOfSetting = config.typeOfSetting || '';
-			this.canControlPermission = config.canControlPermission || false;
-			this.settingEnabled = config.settingEnabled || false;
-			this.eventEmitter = new main_core_events.EventEmitter(this, 'ParticipantsPermissionSwitcher');
-			let events = BX.prop.getObject(config, 'events', {});
-			for (let eventName in events) {
-				if (!events.hasOwnProperty(eventName)) {
-					continue;
-				}
-				this.eventEmitter.subscribe(eventName, events[eventName]);
-			}
-		}
-		static create(config) {
-			return new ParticipantsPermissionSwitcher(config);
-		}
-		onSwitchToggled(e) {
-			if (!this.canControlPermission) {
-				return;
-			}
-			this.settingEnabled = !this.settingEnabled;
-			this.eventEmitter.emit(ParticipantsPermissionSwitcherEvents.onSwitch, {
-				settingEnabled: this.settingEnabled,
-				typeOfSetting: this.typeOfSetting
-			});
-		}
-		render() {
-			return main_core.Dom.create('div', {
-				props: {
-					className: 'bx-call-view-participants-permissions-switch-wrapper'
-				},
-				dataset: {
-					id: 'call-participants-permissions-switch-' + this.typeOfSetting
-				},
-				children: [main_core.Dom.create('span', {
-					props: {
-						className: 'bx-call-view-participants-permissions-label'
-					},
-					text: this.label
-				}), main_core.Dom.create('div', {
-					props: {
-						className: 'bx-call-view-participants-permissions-switch'
-					},
-					children: [new BX.UI.Switcher({
-						size: 'small',
-						checked: this.settingEnabled,
-						handlers: {
-							toggled: this.onSwitchToggled.bind(this)
-						},
-						disabled: !this.canControlPermission
-					}).getNode()]
-				})]
-			});
 		}
 	}
 
@@ -34063,10 +36331,14 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// onOpenVideoConference/onPromoViewed come from call.mapping's ControllerEvent — they are the
+	// only two events call.lib.call-manager wires up via #buildEngineContext's ControllerEvent
+	// listener map. onViewStateChanged/onCallJoined/onCallLeft/onCallDestroyed are call.core-internal
+	// and stay local string literals; they are not part of that cross-extension contract.
 	const Events = {
 		onViewStateChanged: 'onViewStateChanged',
-		onOpenVideoConference: 'onOpenVideoConference',
-		onPromoViewed: 'onPromoViewed',
+		onOpenVideoConference: call_mapping.ControllerEvent.onOpenVideoConference,
+		onPromoViewed: call_mapping.ControllerEvent.onPromoViewed,
 		onCallJoined: 'onCallJoined',
 		onCallLeft: 'onCallLeft',
 		onCallDestroyed: 'onCallDestroyed'
@@ -34098,15 +36370,43 @@ this.BX = this.BX || {};
 		#onRecorderStatusChangedHandler;
 		#onFullScreenChangeHandler;
 		#onChangeMicrophonePermissionHandler;
+
+		// True while a plain-JWT createCall is in flight; keeps leaveCurrentCall from aborting v2/join.
+		#pendingCreateCallIsPlainJwt = false;
+
+		// The element that held focus when the call gesture happened; the window returns focus to it on close.
+		#pendingOpener = null;
 		#onCallFailureHandler;
+		#onReconnectSeriesOutcomeHandler;
 		#onCommonRecordMenuHandler;
 		#onPiPViewBodyClickHandler;
-		#onHardwareMicrophoneMutedChangeHandler;
-		#onHardwareCameraOnChangeHandler;
+		#onPushToTalkShortPressHandler;
 
 		// Calls where the user explicitly picked a microphone; hot-plug must not override that choice.
 		#callsWithManualMicrophone = new WeakSet();
-		#loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
+
+		// A recorder status arriving without a mark answers somebody else's command and is not reported
+		// as ours.
+		#copilotOwnAttempt = new CopilotOwnAttempt();
+
+		// One analytics event per reconnect series on each end of it; the engines limit reconnect events
+		// differently, so the decision belongs here.
+		#reconnectSeriesReporter = new ReconnectSeriesReporter({
+			getCall: () => this.currentCall,
+			getCallId: () => Util.getCallIdentifier(this.currentCall),
+			getCallType: () => this.getCallType(),
+			isVpnActive: () => this.#isVpnConnected()
+		});
+		#tabBlinker = new TabBlinker();
+		#callTabNotifier = new CallTabNotifier(this.#tabBlinker, {
+			blinkTitle: name => main_core.Loc.getMessage('CALL_MULTI_TAB_BLINK_TITLE', {
+				'#CALL_NAME#': name
+			}),
+			notificationTitle: name => main_core.Loc.getMessage('CALL_MULTI_TAB_NOTIFICATION_TITLE', {
+				'#CALL_NAME#': name
+			}),
+			notificationBody: main_core.Loc.getMessage('CALL_MULTI_TAB_NOTIFICATION_BODY')
+		});
 		#alreadyFinishedShownUuids = new Set();
 		#onCallAlreadyFinished = event => {
 			const {
@@ -34128,6 +36428,9 @@ this.BX = this.BX || {};
 			// makes prepareIncomingCall reject the next incoming call until a deferred
 			// Pull finish clears it — or forever if the recovery request fails.
 			if (this.currentCall?.uuid === callUuid) {
+				// The room the reconnect went after is gone, and this branch folds the call up on its own,
+				// past every other point where an open series would learn its outcome.
+				this.#reconnectSeriesReporter.reportCallLost();
 				this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
 				this.closeCallNotification();
 				this.#teardownCallConnection();
@@ -34140,6 +36443,27 @@ this.BX = this.BX || {};
 				closeButton: true
 			});
 		};
+		#startingCallLogContext = null;
+
+		// Live snapshot for accident log records; must stay cheap and exception-free
+		#provideCallLogContext = () => {
+			const call = this.currentCall;
+			const startingContext = this.#startingCallLogContext;
+
+			// During a call switch the previous call lingers in currentCall (hangup is async),
+			// so a mid-join to a different room must win over the stale live call
+			if (main_core.Type.isStringFilled(startingContext?.roomId) && call?.uuid !== startingContext.roomId) {
+				return startingContext;
+			}
+			if (call) {
+				return {
+					roomId: main_core.Type.isStringFilled(call.uuid) ? call.uuid : undefined,
+					callId: this.#toCallLogNumber(call.id),
+					chatId: this.#toCallLogNumber(call.associatedEntity?.chatId)
+				};
+			}
+			return startingContext ?? {};
+		};
 		constructor(config) {
 			super();
 			this.setEventNamespace('BX.Call.Controller');
@@ -34150,8 +36474,6 @@ this.BX = this.BX || {};
 			this.messengerFacade = config.messengerFacade;
 			this.inited = false;
 			this.debug = false;
-			this.pinia = null;
-			this.callStore = null;
 			this.container = null;
 			this.localStream = null;
 			this.audioRingtone = im_v2_const.SoundType.ringtoneModern;
@@ -34187,6 +36509,7 @@ this.BX = this.BX || {};
 			this.isCallHangupButtonPressed = false;
 			this.callMultiBroadcastClient = null;
 			this.savedScreenStream = null;
+			call_lib_settingsManager.CallLogContextRegistry.registerProvider(this.#provideCallLogContext);
 			if (needInit) {
 				this.init();
 				this.#subscribeEvents(config);
@@ -34206,8 +36529,6 @@ this.BX = this.BX || {};
 			this._onDocumentBodyClickHandler = this._onDocumentBodyClick.bind(this);
 			this.#onFullScreenChangeHandler = this.#onFullScreenChange.bind(this);
 			this.#onChangeMicrophonePermissionHandler = this.#onChangeMicrophonePermission.bind(this);
-			this.#onHardwareMicrophoneMutedChangeHandler = this.#onHardwareMicrophoneMutedChange.bind(this);
-			this.#onHardwareCameraOnChangeHandler = this.#onHardwareCameraOnChange.bind(this);
 		}
 		#initCallHandlers() {
 			this._onCallDestroyHandler = this._onCallDestroy.bind(this);
@@ -34233,6 +36554,7 @@ this.BX = this.BX || {};
 			this._onReconnectingHandler = this._onReconnecting.bind(this);
 			this._onReconnectedHandler = this._onReconnected.bind(this);
 			this._onReconnectingFailedHandler = this._onReconnectingFailed.bind(this);
+			this.#onReconnectSeriesOutcomeHandler = this.#onReconnectSeriesOutcome.bind(this);
 			this._onParticipantReconnectingHandler = this._onParticipantReconnecting.bind(this);
 			this._onParticipantReconnectedHandler = this._onParticipantReconnected.bind(this);
 			this._onCustomMessageHandler = this._onCustomMessage.bind(this);
@@ -34273,7 +36595,6 @@ this.BX = this.BX || {};
 		#initViewHandlers() {
 			this._onCallViewShowHandler = this._onCallViewShow.bind(this);
 			this._onCallViewCloseHandler = this._onCallViewClose.bind(this);
-			this._onCallViewDestroyHandler = this._onCallViewDestroy.bind(this);
 			this._onCallViewButtonClickHandler = this._onCallViewButtonClick.bind(this);
 			this._onCallViewBodyClickHandler = this._onCallViewBodyClick.bind(this);
 			this._onCallViewReplaceCameraHandler = this._onCallViewReplaceCamera.bind(this);
@@ -34297,6 +36618,7 @@ this.BX = this.BX || {};
 			this.#onPiPViewBodyClickHandler = this.#onPiPViewBodyClick.bind(this);
 			this._onChangeVideoQualityHandler = this._onChangeVideoQuality.bind(this);
 			this._onAudioElementCreatedHandler = this._onAudioElementCreated.bind(this);
+			this.#onPushToTalkShortPressHandler = this.#onPushToTalkShortPress.bind(this);
 		}
 		#subscribeEvents(config) {
 			const eventKeys = Object.keys(Events);
@@ -34310,7 +36632,7 @@ this.BX = this.BX || {};
 			return Number(BX.message('USER_ID'));
 		}
 		get activeSpeakerManager() {
-			if (this.currentCall?.provider === Provider$1.Bitrix && this.currentCall.speakerManager) {
+			if (this.currentCall?.provider === call_mapping.Provider.Bitrix && this.currentCall.speakerManager) {
 				return this.currentCall.speakerManager;
 			}
 			return null;
@@ -34333,8 +36655,6 @@ this.BX = this.BX || {};
 			Hardware.subscribe(Hardware.Events.deviceChanged, this._onDeviceChange.bind(this));
 			Hardware.subscribe(Hardware.Events.onChangeMirroringVideo, this._onCallLocalCameraFlipHandler);
 			Hardware.subscribe(Hardware.Events.onChangeMicrophonePermission, this.#onChangeMicrophonePermissionHandler);
-			Hardware.subscribe(Hardware.Events.onChangeMicrophoneMuted, this.#onHardwareMicrophoneMutedChangeHandler);
-			Hardware.subscribe(Hardware.Events.onChangeCameraOn, this.#onHardwareCameraOnChangeHandler);
 			window.addEventListener('blur', this._onWindowBlurHandler);
 			window.addEventListener('focus', this._onWindowFocusHandler);
 			document.body.addEventListener('click', this._onDocumentBodyClickHandler);
@@ -34370,20 +36690,45 @@ this.BX = this.BX || {};
 			BX.addCustomEvent('OnDesktopTabChange', this._onImTabChangeHandler);
 			BX.addCustomEvent(window, 'onImUpdateCounterMessage', this._onUpdateChatCounter.bind(this));
 			BX.garbage(this.destroy, this);
-			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-				this.callMultiBroadcastClient = new call_infrastructure_broadcastChannel.BroadcastRequestChannel('call_controller_multi_channel');
-				this.callMultiBroadcastClient.executer(callUuid => {
-					const currentCallUuid = this.currentCall?.uuid;
-					const hasView = Boolean(this.viewPort);
-					const hasActiveCall = currentCallUuid === callUuid && hasView;
-					if (hasActiveCall) {
+			this.callMultiBroadcastClient = new call_infrastructure_broadcastChannel.BroadcastRequestChannel('call_controller_multi_channel');
+			this.callMultiBroadcastClient.executer(({
+				callUuid,
+				silent
+			}) => {
+				const hasActiveCall = this.currentCall?.uuid === callUuid && Boolean(this.viewPort);
+				if (hasActiveCall && !silent) {
+					if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 						BXDesktopSystem.SetActiveTab();
+						return true;
 					}
-					return hasActiveCall;
-				});
-			}
+					const isPlainCall = this.currentCall.provider === call_mapping.Provider.Plain;
+					if (isPlainCall) {
+						this.#callTabNotifier.notify(main_core.Text.decode(this.currentCall?.associatedEntity.name ?? ''));
+						return true;
+					}
+					return false;
+				}
+				if (hasActiveCall) {
+					return true;
+				}
+				if (silent) {
+					return this.messengerFacade?.isCallJoinedOnDevice?.(callUuid) ?? false;
+				}
+				return false;
+			});
 			CallEngine.multiBroadcastClient.executer(() => Boolean(this.viewPort));
 			this.inited = true;
+		}
+		sendBroadcastRequest(callUuid, {
+			silent = false,
+			timeout = 100
+		} = {}) {
+			return this.callMultiBroadcastClient.broadcastRequest({
+				callUuid,
+				silent
+			}, {
+				timeout
+			});
 		}
 
 		/**
@@ -34400,7 +36745,7 @@ this.BX = this.BX || {};
 			if (!currentProvider) {
 				return;
 			}
-			return currentProvider === Provider$1.Plain ? call_lib_analytics.Analytics.AnalyticsType.private : call_lib_analytics.Analytics.AnalyticsType.group;
+			return currentProvider === call_mapping.Provider.Plain ? call_lib_analytics.Analytics.AnalyticsType.private : call_lib_analytics.Analytics.AnalyticsType.group;
 		}
 		getCallUsers(includeSelf) {
 			const result = Object.keys(this.currentCall.getUsers());
@@ -34483,7 +36828,7 @@ this.BX = this.BX || {};
 					// send busy
 					newCall.decline(486);
 					const isVideoconf = newCall.associatedEntity.type === 'chat' && newCall.associatedEntity.advanced.chatType === 'videoconf';
-					const newCallType = newCall.provider === Provider$1.Plain ? call_lib_analytics.Analytics.AnalyticsType.private : call_lib_analytics.Analytics.AnalyticsType.group;
+					const newCallType = newCall.provider === call_mapping.Provider.Plain ? call_lib_analytics.Analytics.AnalyticsType.private : call_lib_analytics.Analytics.AnalyticsType.group;
 					call_lib_analytics.Analytics.getInstance().onJoinCall({
 						callId: newCallId,
 						callType: isVideoconf ? call_lib_analytics.Analytics.AnalyticsType.videoconf : newCallType,
@@ -34551,7 +36896,7 @@ this.BX = this.BX || {};
 
 			// don't wait for init here to speedup process
 			Hardware.init();
-			if (this.currentCall || newCall.state == CallState.Finished) {
+			if (this.currentCall || newCall.state == call_mapping.CallState.Finished) {
 				return;
 			}
 			this.currentCall = newCall;
@@ -34636,6 +36981,7 @@ this.BX = this.BX || {};
 			this.currentCall.addEventListener(CallEvent.onReconnecting, this._onReconnectingHandler);
 			this.currentCall.addEventListener(CallEvent.onReconnected, this._onReconnectedHandler);
 			this.currentCall.addEventListener(CallEvent.onReconnectingFailed, this._onReconnectingFailedHandler);
+			this.currentCall.addEventListener(CallEvent.onReconnectSeriesOutcome, this.#onReconnectSeriesOutcomeHandler);
 			this.currentCall.addEventListener(CallEvent.onParticipantReconnecting, this._onParticipantReconnectingHandler);
 			this.currentCall.addEventListener(CallEvent.onParticipantReconnected, this._onParticipantReconnectedHandler);
 			this.currentCall.addEventListener(CallEvent.onCustomMessage, this._onCustomMessageHandler);
@@ -34652,23 +36998,10 @@ this.BX = this.BX || {};
 			this.currentCall.addEventListener(CallEvent.onRecorderStatusChanged, this.#onRecorderStatusChangedHandler);
 			this.currentCall.addEventListener(CallEvent.onSpeakerConfirmed, this._onSpeakerDeviceChangedHandler);
 			this.currentCall.addEventListener(CallEvent.onSpeakerFallback, this._onSpeakerDeviceChangedHandler);
-			if (this.callStore) {
-				try {
-					this.callStore.initCall({
-						callId: this.currentCall.id,
-						callUuid: this.currentCall.uuid,
-						callProvider: this.currentCall.provider,
-						callScheme: this.currentCall.scheme,
-						callType: this.currentCall.type,
-						associatedEntityId: this.currentCall.associatedEntity?.id,
-						associatedEntityType: this.currentCall.associatedEntity?.type,
-						isIncoming: this.currentCall.direction === 'Incoming',
-						localUserId: this.userId
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in bindCallEvents:', error);
-				}
-			}
+
+			// what can be recorded is known only once the call and its provider are: until then the button
+			// announces the route of a call that does not exist yet
+			this.#syncRecordButtonPopupKind();
 		}
 		removeCallEvents() {
 			this.currentCall.removeEventListener(CallEvent.onUserInvited, this._onCallUserInvitedHandler);
@@ -34714,6 +37047,7 @@ this.BX = this.BX || {};
 			this.currentCall.removeEventListener(CallEvent.onReconnecting, this._onReconnectingHandler);
 			this.currentCall.removeEventListener(CallEvent.onReconnected, this._onReconnectedHandler);
 			this.currentCall.removeEventListener(CallEvent.onReconnectingFailed, this._onReconnectingFailedHandler);
+			this.currentCall.removeEventListener(CallEvent.onReconnectSeriesOutcome, this.#onReconnectSeriesOutcomeHandler);
 			this.currentCall.removeEventListener(CallEvent.onParticipantReconnecting, this._onParticipantReconnectingHandler);
 			this.currentCall.removeEventListener(CallEvent.onParticipantReconnected, this._onParticipantReconnectedHandler);
 			this.currentCall.removeEventListener(CallEvent.onCustomMessage, this._onCustomMessageHandler);
@@ -34746,9 +37080,12 @@ this.BX = this.BX || {};
 			call.removeEventListener(CallEvent.onUserStateChanged, this._onCallUserStateChangedHandler);
 		}
 		bindCallViewEvents() {
+			// The destroy event carries no view, so the view is captured here: teardown of an old window
+			// must not wipe the window of the call that has already taken the slot.
+			const boundViewPort = this.viewPort;
 			this.viewPort.setCallback(call_mapping.ViewEvent.onShow, this._onCallViewShowHandler);
 			this.viewPort.setCallback(call_mapping.ViewEvent.onClose, this._onCallViewCloseHandler);
-			this.viewPort.setCallback(call_mapping.ViewEvent.onDestroy, this._onCallViewDestroyHandler);
+			this.viewPort.setCallback(call_mapping.ViewEvent.onDestroy, () => this._onCallViewDestroy(boundViewPort));
 			this.viewPort.setCallback(call_mapping.ViewEvent.onButtonClick, this._onCallViewButtonClickHandler);
 			this.viewPort.setCallback(call_mapping.ViewEvent.onBodyClick, this._onCallViewBodyClickHandler);
 			this.viewPort.setCallback(call_mapping.ViewEvent.onReplaceCamera, this._onCallViewReplaceCameraHandler);
@@ -34773,6 +37110,7 @@ this.BX = this.BX || {};
 			this.viewPort.setCallback(call_mapping.ViewEvent.onChangeVideoQuality, this._onChangeVideoQualityHandler);
 			this.viewPort.setCallback(call_mapping.ViewEvent.onFullScreenChange, this.#onFullScreenChangeHandler);
 			this.viewPort.setCallback(call_mapping.ViewEvent.onAudioElementCreated, this._onAudioElementCreatedHandler);
+			this.viewPort.setCallback(call_mapping.ViewEvent.onPushToTalkShortPress, this.#onPushToTalkShortPressHandler);
 			this._initUiServices();
 		}
 		initSpeakerManager() {
@@ -34790,23 +37128,9 @@ this.BX = this.BX || {};
 			}
 		}
 		async #buildCallViewPort(extraOptions) {
-			if (Util.isVueEnabled()) {
-				this.pinia = ui_vue3_pinia.createPinia();
-				ui_vue3_pinia.setActivePinia(this.pinia);
-				this.callStore = call_store.useCallStore();
-				this.callStore.setMediaState({
-					isMicrophoneMuted: Hardware.isMicrophoneMuted,
-					isCameraOn: Hardware.isCameraOn
-				});
-				const {
-					VueCallViewAdapter
-				} = await BX.Runtime.loadExtension('call.vue');
-				return new VueCallViewAdapter({
-					container: this.container,
-					pinia: this.pinia,
-					...extraOptions
-				});
-			}
+			// Released right away: an opener outliving its gesture would stick to the next window.
+			const focusOpener = this.#pendingOpener;
+			this.#pendingOpener = null;
 			const {
 				View: LegacyView,
 				LegacyCallViewAdapter
@@ -34821,7 +37145,9 @@ this.BX = this.BX || {};
 				language: this.language,
 				microphoneId: Hardware.defaultMicrophone,
 				isWindowFocus: this.layoutService?.isWindowFocus ?? true,
-				...extraOptions
+				...extraOptions,
+				focusOpener,
+				getCurrentCall: () => this.currentCall
 			}));
 		}
 		#getHiddenCallButtons(isPlainCall) {
@@ -34858,54 +37184,22 @@ this.BX = this.BX || {};
 		}
 		_initUiServices() {
 			this.buttonStateService = new ButtonStateService({
-				viewPort: this.viewPort,
-				callStore: this.callStore
+				viewPort: this.viewPort
 			});
 			this.layoutService = new LayoutService({
 				viewPort: this.viewPort,
 				container: this.container,
-				resizeObserver: this.resizeObserver,
-				callStore: this.callStore
+				resizeObserver: this.resizeObserver
 			});
 			this.notificationService = new NotificationService({
 				viewPort: this.viewPort,
 				container: this.container,
-				callStore: this.callStore
-			});
-			this.notificationService.subscribe('NotificationService::onAskSpeakButtonClicked', () => {
-				this._onCallViewFloorRequestButtonClick();
-			});
-			this.notificationService.subscribe('NotificationService::onUnmuteMicButtonClicked', () => {
-				this._onCallViewToggleMuteButtonClick({
+				onAskSpeakButtonClicked: () => this._onCallViewFloorRequestButtonClick(),
+				onUnmuteMicButtonClicked: () => this._onCallViewToggleMuteButtonClick({
 					muted: false
-				});
-			});
-			this.promoService = new PromoService({
-				viewPort: this.viewPort,
-				container: this.container,
-				isPromoRequired: code => this.messengerFacade.isPromoRequired(code),
-				callStore: this.callStore
-			});
-			this.promoService.subscribe('PromoService::onPromoViewed', ({
-				data
-			}) => {
-				this.emit(Events.onPromoViewed, {
-					code: data.code
-				});
-			});
-			this.promoService.subscribe('PromoService::onDocumentPromoActionClicked', () => {
-				this.promoService?.closeAll();
-				const articleCode = Util.getResumesArticleCode();
-				if (articleCode) {
-					BX.UI.InfoHelper.show(articleCode);
-					return;
-				}
-				this.showDocumentEditor({
-					type: DocumentType.Resume
-				});
+				})
 			});
 			this.layoutService.subscribe('LayoutService::onFold', () => {
-				this.promoService?.closeAll();
 				this.copilotUiService?.closeNotify();
 				this.pipService?.toggle({
 					hasActiveCall: Boolean(this.currentCall),
@@ -34933,10 +37227,22 @@ this.BX = this.BX || {};
 					isFolded: false,
 					isScreenSharing: false
 				});
+				// Forced entry only for an explicit "return to call" gesture, which must reach the window
+				// wherever the focus stands. Unforced it yields to a focus outside the window - the chat,
+				// a promo - but still takes it from the elements of the window itself.
+				this.viewPort?.focusWindow({
+					force: this.#unfoldIsReturnGesture(data)
+				});
 			});
-			this.layoutService.subscribe('LayoutService::onUnfoldDetached', () => {
+			this.layoutService.subscribe('LayoutService::onUnfoldDetached', ({
+				data
+			}) => {
 				this.floatingWindowService?.hide();
 				this.floatingWindowService?.hideScreenShareWindow();
+				// A detached window is shown again instead of unfolded, so the entry above never runs for it.
+				this.viewPort?.focusWindow({
+					force: this.#unfoldIsReturnGesture(data)
+				});
 			});
 			this.layoutService.subscribe('LayoutService::onShowChat', () => {
 				if (im_v2_lib_desktopApi.DesktopApi.isDesktop() && this.floatingWindowService?.hasFloatingVideo()) {
@@ -34962,14 +37268,12 @@ this.BX = this.BX || {};
 			});
 			this.hangupOptionsUiService = new HangupOptionsUiService({
 				viewPort: this.viewPort,
-				container: this.container,
-				callStore: this.callStore
+				container: this.container
 			});
 			this.feedbackUiService = new FeedbackUiService({
 				viewPort: this.viewPort,
 				container: this.container,
-				darkMode: this.messengerFacade.isThemeDark(),
-				callStore: this.callStore
+				darkMode: this.messengerFacade.isThemeDark()
 			});
 			this.hangupOptionsUiService.subscribe('HangupOptionsUiService::onFinishForAll', ({
 				data
@@ -35014,14 +37318,12 @@ this.BX = this.BX || {};
 				viewPort: this.viewPort,
 				container: this.container,
 				resizeObserver: this.resizeObserver,
-				messengerFacade: this.messengerFacade,
-				callStore: this.callStore
+				messengerFacade: this.messengerFacade
 			});
 			this.documentEditorService.subscribe('DocumentEditorService::onOpen', () => {
 				if (this.viewPort) {
 					this.buttonStateService?.activateDocumentButton(true);
 				}
-				this.promoService?.closeAll();
 			});
 			this.documentEditorService.subscribe('DocumentEditorService::onClose', ({
 				data
@@ -35057,12 +37359,10 @@ this.BX = this.BX || {};
 				});
 			});
 			this.pipService = new PictureInPictureService({
-				viewPort: this.viewPort,
-				callStore: this.callStore
+				viewPort: this.viewPort
 			});
 			this.recordingUiService = new RecordingUiService({
-				viewPort: this.viewPort,
-				callStore: this.callStore
+				viewPort: this.viewPort
 			});
 			this.recordingUiService.subscribe('RecordingUiService::onStartRecord', ({
 				data
@@ -35133,12 +37433,16 @@ this.BX = this.BX || {};
 				});
 				this.commonRecord.state = CallCommonRecordState.Destroyed;
 			});
+			this.recordingUiService.subscribe('RecordingUiService::onLocalRecordStartFailed', () => {
+				this.notificationService?.showLocalRecordStartFailed();
+				this.#stopCommonRecord();
+			});
 			this.copilotUiService = new CopilotUiService({
 				viewPort: this.viewPort,
 				container: this.container,
 				CopilotPopupClass: CopilotPopup,
 				onTariffGate: () => Util.openArticle(CallAI.helpSlider),
-				callStore: this.callStore
+				copilotModelName: main_core.Extension.getSettings('call.core').ai?.copilotModelName ?? null
 			});
 			this.copilotUiService.subscribe('CopilotUiService::onChangeStateCopilot', ({
 				data
@@ -35170,11 +37474,12 @@ this.BX = this.BX || {};
 				this.floatingWindowService = new FloatingWindowService({
 					floatingVideo: false,
 					floatingScreenShare: true,
-					darkMode: this.messengerFacade.isThemeDark(),
-					callStore: this.callStore
+					darkMode: this.messengerFacade.isThemeDark()
 				});
 				this.floatingWindowService.subscribe('FloatingWindowService::onMainAreaClick', () => {
-					this.layoutService?.unfold();
+					this.layoutService?.unfold({
+						isReturnGesture: true
+					});
 				});
 				this.floatingWindowService.subscribe('FloatingWindowService::onButtonClick', ({
 					data
@@ -35184,7 +37489,9 @@ this.BX = this.BX || {};
 				this.floatingWindowService.subscribe('FloatingWindowService::onBackToCall', () => {
 					im_v2_lib_desktopApi.DesktopApi.activateWindow();
 					im_v2_lib_desktopApi.DesktopApi.changeTab('im');
-					this.layoutService?.unfold();
+					this.layoutService?.unfold({
+						isReturnGesture: true
+					});
 				});
 				this.floatingWindowService.subscribe('FloatingWindowService::onStopSharing', () => {
 					im_v2_lib_desktopApi.DesktopApi.activateWindow();
@@ -35209,15 +37516,22 @@ this.BX = this.BX || {};
 			let userDataInt = [];
 			let notIncludedEl = [];
 			if (this.currentCall.userData) {
-				this.viewPort.updateUserData(this.currentCall.userData);
+				this.layoutService?.updateUsers(this.currentCall, this.currentCall.userData, Object.keys(this.currentCall.userData), {
+					forceFetch: true
+				}) ?? this.viewPort.updateUserData(this.currentCall.userData);
 				userDataInt = convertAllItemsToInt(Object.keys(this.currentCall.userData));
 				notIncludedEl = userListInt.filter(id => !userDataInt.includes(id));
 			}
 			if (this.currentCall.userData && notIncludedEl.length === 0) {
+				this.layoutService?.refreshUsers(this.currentCall, userListInt, {
+					force: true
+				});
 				return;
 			}
 			Util.getUsers(callId, userListInt).then(userData => {
-				this.viewPort.updateUserData(userData);
+				this.layoutService?.updateUsers(this.currentCall, userData, userListInt, {
+					forceFetch: true
+				}) ?? this.viewPort.updateUserData(userData);
 			});
 		}
 		createVideoStrategy() {
@@ -35253,9 +37567,12 @@ this.BX = this.BX || {};
 						className: BX.Messenger.v2.Lib.CallManager.viewContainerClass
 					}
 				});
-				externalContainer.setAttribute('data-a11y-ignore-inert', 'true');
 				document.body.appendChild(externalContainer);
 			}
+
+			// A modal focus trap marks body siblings inert; the call window opts out on every call,
+			// not only when this container happens to be created here.
+			externalContainer.setAttribute('data-a11y-ignore-inert', 'true');
 			return externalContainer;
 		}
 		createContainer() {
@@ -35281,12 +37598,15 @@ this.BX = this.BX || {};
 			}
 		}
 		answerChildCall() {
+			// The call being left is still in the slot; after the teardown below nothing of it is heard.
+			this.#reconnectSeriesReporter.reportCallLost();
 			this.#teardownCallConnection();
 			this.#bindChildCallEvents(this.childCall);
 			const provider = this.childCall.provider;
 			const uuid = this.childCall.uuid;
 			const isLegacyCall = Util.isLegacyCall(provider, this.childCall.scheme);
 			this.initCallPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(this.childCall.associatedEntity.chatId);
+			const thisPromise = this.initCallPromise;
 			this.initCallPromise.then(token => {
 				const config = {
 					provider,
@@ -35302,8 +37622,17 @@ this.BX = this.BX || {};
 				};
 				return isLegacyCall ? CallEngineLegacy.getCallWithId(this.childCall.id) : CallEngine.getCallWithId(uuid, config);
 			}).then(() => {
+				if (this.initCallPromise !== thisPromise) {
+					return Promise.reject({
+						code: 'CALL_CANCELLED'
+					});
+				}
 				this.childCall.answer();
 			}).catch(error => {
+				if (error?.code === 'CALL_CANCELLED') {
+					return;
+				}
+
 				// todo: We probably need to add hangup from current call and show a notification with error message
 				console.error('Can\'t answer a child call', error);
 			});
@@ -35359,6 +37688,10 @@ this.BX = this.BX || {};
 			}
 			this.viewPort.showButtons(['floorRequest', 'hangupOptions']);
 			this.#removeChildCallEvents(newCall);
+
+			// Above removeCallEvents(): the one-to-one call is hung up below, and by then no event of it
+			// reaches the controller on any engine.
+			this.#reconnectSeriesReporter.reportCallLost();
 			this.removeCallEvents();
 			const oldCall = this.currentCall;
 			call_lib_analytics.Analytics.getInstance().onFinishCall({
@@ -35440,7 +37773,8 @@ this.BX = this.BX || {};
 			params.video = params.video === true;
 			this.feedbackUiService?.destroy();
 			const allowVideo = this.callWithLegacyMobile ? params.video === true : true;
-			this.callNotification = new IncomingNotification({
+			this.callNotification = new call_application_incoming.IncomingCall({
+				callType: 'regular',
 				callerName: this.currentCall.associatedEntity.name,
 				callerAvatar: this.currentCall.associatedEntity.avatar,
 				callerType: this.currentCall.associatedEntity.advanced.chatType,
@@ -35452,22 +37786,22 @@ this.BX = this.BX || {};
 				zIndex: this.messengerFacade.getDefaultZIndex() + 200,
 				onClose: this._onCallNotificationClose.bind(this),
 				onDestroy: this._onCallNotificationDestroy.bind(this),
-				onButtonClick: this._onCallNotificationButtonClick.bind(this),
-				isMessengerOpen: this.messengerFacade.isMessengerOpen()
+				onButtonClick: this._onCallNotificationButtonClick.bind(this)
 			});
 			this.callNotification.show();
 			this.scheduleCancelNotification(false);
 			this.messengerFacade.repeatSound(this.audioRingtone, 3500, true);
 		}
 		showIncomingConference() {
-			this.callNotification = new ConferenceNotifications({
+			this.callNotification = new call_application_incoming.IncomingCall({
+				callType: 'conference',
 				zIndex: this.messengerFacade.getDefaultZIndex() + 200,
 				callerName: this.currentCall.associatedEntity.name,
 				callerAvatar: this.currentCall.associatedEntity.avatar,
 				callerColor: this.currentCall.associatedEntity.avatarColor,
 				onClose: this._onCallNotificationClose.bind(this),
 				onDestroy: this._onCallNotificationDestroy.bind(this),
-				onButtonClick: this._onCallConferenceNotificationButtonClick.bind(this)
+				onButtonClick: this._onCallNotificationButtonClick.bind(this)
 			});
 			this.callNotification.show();
 			this.scheduleCancelNotification(true);
@@ -35515,7 +37849,10 @@ this.BX = this.BX || {};
 		}
 		getBlockedButtons(needBlockAddButton = false) {
 			const result = ['camera', 'record', 'copilot'];
-			if (!this.messengerFacade.showUserSelector || needBlockAddButton) {
+			// A guest calls the people of their own chat only, while the selector behind this button reaches the
+			// whole portal - so the button is offered blocked rather than live-but-silent. Blocking is how this
+			// interface already says "not available here" (@see ButtonStateService.blockForLegacyMobile).
+			if (!this.messengerFacade.showUserSelector || needBlockAddButton || this.#isGuestUser()) {
 				result.push('add');
 			}
 			return result;
@@ -35528,34 +37865,51 @@ this.BX = this.BX || {};
 				this.notificationService?.showUnsupportedNotification();
 				return;
 			}
-			if (this.viewPort || this.currentCall) {
-				this.unfold();
-				return;
-			}
+
+			// The guard goes first: while another call is being initialized this click is ignored and the slot
+			// stays untouched. Releasing it here would decline the ringing call without entering anywhere.
 			if (this.initCallPromise) {
 				return;
 			}
-			this.onConnectToCallClick = Date.now();
-			this.feedbackUiService?.destroy();
 			const call = CallEngineLegacy.getCallWithDialogId(dialogId) || CallEngine.getCallWithDialogId(dialogId);
 			if (call) {
+				// The addressed dialog already has a call: the decision about the slot belongs to the entry that
+				// actually enters it, so joinCall() takes its own snapshot, captures its own opener and releases
+				// the slot on its own.
 				this.joinCall(call.id, call.uuid, video, {
 					chatInfo: call.associatedEntity,
 					mustCreate: true
 				});
 				return;
 			}
-			let provider = Provider$1.Plain;
+
+			// Captured before the slot is released: tearing the previous call down moves the focus away from the
+			// element that started this gesture. By the time the window is built the chat header may be redrawn.
+			this.#pendingOpener = document.activeElement;
+
+			// A new call is being created. A target without a call key never matches the slot, so the decision is
+			// Enter or a release — never Unfold: an explicit call must not turn into "show the ringing call".
+			this.#releaseCallSlot(decideSlotAction(this.#getSlotSnapshot(), {
+				callKey: null}));
+			this.onConnectToCallClick = Date.now();
+			this.feedbackUiService?.destroy();
+			let provider = call_mapping.Provider.Plain;
 			if (dialogId.toString().startsWith('chat')) {
 				provider = Util.getConferenceProvider();
 			}
-			const isPlainCall = provider === Provider$1.Plain;
+			const isPlainCall = provider === call_mapping.Provider.Plain;
 			const isLegacyCall = Util.isLegacyCall(provider);
 			const callTokenPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(chatInfo.chatId);
 			const isCallPrepared = this.preparedCall?.dialogId === dialogId;
+			const startingCallLogContext = this.#beginStartingCallLogContext({
+				chatId: this.#toCallLogNumber(chatInfo?.chatId)
+			});
 			let createdCall = null;
 			const debug1 = Date.now();
-			this.initCallPromise = this.messengerFacade.openMessenger(dialogId).then(() => {
+			this.initCallPromise = this.messengerFacade.openMessenger(dialogId);
+			const thisPromise = this.initCallPromise;
+			this.#pendingCreateCallIsPlainJwt = isPlainCall && !isLegacyCall;
+			this.initCallPromise.then(() => {
 				return Hardware.init();
 			}).then(async () => {
 				if (video && isCallPrepared) {
@@ -35566,7 +37920,7 @@ this.BX = this.BX || {};
 				Hardware.isCameraOn = video;
 				const isCopilotFeaturesEnabled = !isLegacyCall && isPlainCall && call_lib_settingsManager.CallSettingsManager.plainCallFollowUpEnabled || !isPlainCall;
 				const isCloudRecordFeaturesEnabled = im_v2_lib_desktopApi.DesktopApi.isDesktop() || isPlainCall && call_lib_settingsManager.CallSettingsManager.plainCallCloudRecordingEnabled || !isPlainCall;
-				const isBitrixProvider = provider === Provider$1.Bitrix;
+				const isBitrixProvider = provider === call_mapping.Provider.Bitrix;
 				this.viewPort = await this.#buildCallViewPort({
 					hiddenButtons,
 					isCopilotFeaturesEnabled,
@@ -35611,7 +37965,7 @@ this.BX = this.BX || {};
 					throw new Error('Empty callToken');
 				}
 				const callEngine = isLegacyCall ? CallEngineLegacy : CallEngine;
-				return callEngine.createCall({
+				const createCall = () => callEngine.createCall({
 					entityType: 'chat',
 					entityId: dialogId,
 					provider,
@@ -35623,8 +37977,16 @@ this.BX = this.BX || {};
 					chatInfo,
 					invitePeriod: options.invitePeriod
 				});
+				return createCall().then(result => this.#recoverFromZombieRoom(result, createCall));
 			}).then(e => {
-				if (!this.initCallPromise) {
+				if (this.initCallPromise !== thisPromise) {
+					// This tab created the room and then abandoned it, so finish it instead of
+					// leaving a zombie. Only a fresh 1-1 room (isNew, numeric dialogId): a group
+					// room or one we merely joined may already hold other participants.
+					const isGroupRoom = dialogId.toString().startsWith('chat');
+					if (e?.call && isPlainCall && e.isNew && !isGroupRoom) {
+						e.call.hangup(true, '', true)?.catch?.(() => {});
+					}
 					return;
 				}
 				const debug2 = Date.now();
@@ -35642,6 +38004,7 @@ this.BX = this.BX || {};
 				this.log(`Call creation time: ${(debug2 - debug1) / 1000} seconds`);
 				if (this.currentCall.isCopilotActive && isLegacyCall) {
 					this.sendStartCopilotRecordAnalytics({
+						isFailure: false,
 						isAutostart: true
 					});
 				}
@@ -35670,10 +38033,6 @@ this.BX = this.BX || {};
 					callId: Util.getCallIdentifier(this.currentCall),
 					force: true
 				});
-				this.promoService?.showDocumentPromo(this.viewPort?.buttons?.document?.elements?.root?.querySelector('.bx-messenger-videocall-panel-icon'), {
-					isFolded: this.layoutService?.isFolded
-				});
-				this.promoService?.showMaskPromo();
 				this.#showCloudRecordPromo();
 				if (this.currentCallIsNew) {
 					this.log('Inviting users');
@@ -35715,21 +38074,28 @@ this.BX = this.BX || {};
 				this.checkVpnStatus();
 				this._onUpdateLastUsedCameraId();
 			}).catch(async error => {
-				if (!this.initCallPromise) {
+				if (this.initCallPromise !== thisPromise) {
 					return;
 				}
 				console.error(error);
 				let errorCode = Util.getCallConnectionErrorCode(error);
 				const errorMessage = Util.getCallConnectionErrorMessage(error);
-				if (errorCode === 'user_is_busy') {
-					this.leaveCurrentCall();
+
+				// Business outcome, not a start failure: skip accidentLogger and onStartCallError.
+				if (isBusinessLeaveReason(errorCode)) {
+					this.#finishCallOnBusinessLeave(errorCode);
+					main_core_events.EventEmitter.emit('CallEvents::callStartFailed', {
+						errorCode
+					});
 				} else {
 					if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message) {
 						errorCode = getUnknownErrorType(error?.message);
 					}
-					this.#loadAccidentLogger().then(({
-						accidentLogger
-					}) => accidentLogger?.addLog(error, errorCode)).catch(() => {});
+
+					// addLog captures the call context synchronously, so nothing has to be awaited here:
+					// the starting context is released by finally, on this outcome as on every other one.
+					const accidentLogger = main_core.Reflection.getClass('BX.Call.Lib.accidentLogger');
+					void accidentLogger?.addLog(error, errorCode);
 					call_lib_analytics.Analytics.getInstance().onStartCallError({
 						callType: this.getCallType(provider),
 						// The room of this attempt, not this.currentCall: a failure before the room
@@ -35737,7 +38103,8 @@ this.BX = this.BX || {};
 						callId: Util.getCallIdentifier(createdCall),
 						errorCode,
 						errorMessage,
-						isVpnActive: this.#isVpnConnected()
+						isVpnActive: this.#isVpnConnected(),
+						isOffline: Util.isOfflineJoinFailure(errorCode, navigator.onLine)
 					});
 					this.#onCallFailure({
 						code: errorCode,
@@ -35746,8 +38113,14 @@ this.BX = this.BX || {};
 					this.layoutService?.stopLocalStream();
 				}
 			}).finally(() => {
-				this.initCallPromise = null;
+				if (this.initCallPromise === thisPromise) {
+					this.initCallPromise = null;
+					this.#pendingCreateCallIsPlainJwt = false;
+					// Every refusal of this chain lands here; the ownership check keeps a newer gesture intact.
+					this.#pendingOpener = null;
+				}
 				this.preparedCall = null;
+				this.#endStartingCallLogContext(startingCallLogContext);
 			});
 		}
 		closeCallNotification() {
@@ -35761,22 +38134,32 @@ this.BX = this.BX || {};
 				this.notificationService?.showUnsupportedNotification();
 				return;
 			}
-			const hasActiveCall = this.viewPort && this.currentCall;
-			if (hasActiveCall && this.currentCall.uuid === callUuid) {
-				this.unfold();
-				return;
-			}
-			if (hasActiveCall && this.currentCall.uuid !== callUuid) {
-				this.leaveCurrentCall();
-			}
+
+			// The guard goes first: while another call is being initialized this click is ignored and the slot
+			// stays untouched. Releasing it here would decline the ringing call without entering anywhere.
 			if (this.initCallPromise) {
 				return;
 			}
+
+			// Captured before the slot is released: tearing the previous call down moves the focus away from the
+			// element that started this gesture. By the time the window is built the chat header may be redrawn.
+			this.#pendingOpener = document.activeElement;
+			const call = CallEngineLegacy.calls[callId] || CallEngine.calls[callUuid];
+			const decision = decideSlotAction(this.#getSlotSnapshot(), {
+				callKey: call ? Util.getCallIdentifier(call) : callUuid || callId
+			});
+			if (decision === SlotDecision.Unfold) {
+				this.unfold({
+					isReturnGesture: true
+				});
+				this.#pendingOpener = null;
+				return;
+			}
+			this.#releaseCallSlot(decision);
 			this.onConnectToCallClick = Date.now();
 			const isCallPrepared = this.preparedCall?.dialogId === options.chatInfo.id;
 			const isGroupCall = options.chatInfo.id.toString().startsWith('chat');
-			const call = CallEngineLegacy.calls[callId] || CallEngine.calls[callUuid];
-			const defaultProvider = isGroupCall ? Util.getConferenceProvider() : Provider$1.Plain;
+			const defaultProvider = isGroupCall ? Util.getConferenceProvider() : call_mapping.Provider.Plain;
 			const provider = call?.provider || defaultProvider;
 			const isLegacyCall = Util.isLegacyCall(provider, call?.scheme);
 			const joinAttempt = {
@@ -35784,9 +38167,17 @@ this.BX = this.BX || {};
 				callId: isLegacyCall ? callId : callUuid
 			};
 			this.log(`Joining call ${callUuid}`);
+			const startingCallLogContext = this.#beginStartingCallLogContext({
+				roomId: main_core.Type.isStringFilled(callUuid) ? callUuid : undefined,
+				callId: this.#toCallLogNumber(callId),
+				chatId: this.#toCallLogNumber(options.chatInfo?.chatId)
+			});
 			this.initCallPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(options.chatInfo.chatId);
+			const thisPromise = this.initCallPromise;
+			let joinConfig = null;
+			const getCallForJoin = () => isLegacyCall ? CallEngineLegacy.getCallWithId(callId) : CallEngine.getCallWithId(callUuid, joinConfig);
 			this.initCallPromise.then(callToken => {
-				const config = {
+				joinConfig = {
 					provider,
 					entityType: 'chat',
 					entityId: options.chatInfo.id,
@@ -35798,12 +38189,22 @@ this.BX = this.BX || {};
 					token: callToken,
 					chatInfo: options.chatInfo
 				};
-				return isLegacyCall ? CallEngineLegacy.getCallWithId(callId) : CallEngine.getCallWithId(callUuid, config);
-			}).then(result => {
-				if (!this.currentCall || this.currentCall.uuid !== callUuid) {
-					Util.setUserData(result.call.userData);
-					this.currentCall = result.call;
+
+				// Guests defer the join until the lobby has persisted the new name,
+				// so the first /v2/join carries the fresh guest token.
+				if (this.#isGuestUser()) {
+					return null;
 				}
+				return getCallForJoin();
+			}).then(result => {
+				if (this.initCallPromise !== thisPromise) {
+					return Promise.reject({
+						code: 'CALL_CANCELLED'
+					});
+				}
+
+				// Guests arrive here with result === null: their join is deferred until after the lobby.
+				this.#adoptCurrentCall(result, callUuid);
 				this.#clearPromotedAdminTimeout();
 				return this.messengerFacade.openMessenger(options.chatInfo.id);
 			}).then(() => {
@@ -35811,21 +38212,19 @@ this.BX = this.BX || {};
 			}).then(async () => {
 				let withVideo = Boolean(video);
 				if (this.#isGuestUser()) {
-					const lobbyResult = await this.#showCallLobby();
+					const lobbyResult = await this.#runGuestLobbyAndPersistName(options.chatInfo?.name);
 					if (lobbyResult === null) {
-						this.currentCall?.decline();
+						// Call not created yet — nothing to decline. Release the lock so the guest can retry the join.
+						this.#releaseEntryLock(thisPromise);
 						return;
 					}
-
-					// If the guest changed their display name in the lobby, persist it server-side
-					const currentUser = this.messengerFacade.getCurrentUser?.();
-					if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name) {
-						BX.ajax.runAction('im.v2.Guest.setName', {
-							data: {
-								name: lobbyResult.userName
-							}
-						}).catch(() => {});
+					const guestJoinResult = await getCallForJoin();
+					if (this.initCallPromise !== thisPromise) {
+						return Promise.reject({
+							code: 'CALL_CANCELLED'
+						});
 					}
+					this.#adoptCurrentCall(guestJoinResult, callUuid);
 					withVideo = Boolean(lobbyResult.video);
 					Hardware.isMicrophoneMuted = !lobbyResult.audio;
 				}
@@ -35834,14 +38233,14 @@ this.BX = this.BX || {};
 					return;
 				}
 				this.createContainer();
-				const hiddenButtons = this.#getHiddenCallButtons(this.currentCall.provider === Provider$1.Plain);
+				const hiddenButtons = this.#getHiddenCallButtons(this.currentCall.provider === call_mapping.Provider.Plain);
 				Hardware.isCameraOn = withVideo;
-				const isBitrixCall = this.currentCall.provider === Provider$1.Bitrix;
+				const isBitrixCall = this.currentCall.provider === call_mapping.Provider.Bitrix;
 				this.viewPort = await this.#buildCallViewPort({
 					layout: isGroupCall ? call_mapping.ViewLayout.Grid : call_mapping.ViewLayout.Centered,
 					hiddenButtons,
-					blockedButtons: this.getBlockedButtons(this.currentCall.provider === Provider$1.Plain),
-					showAddUserButtonInList: this.currentCall.provider === Provider$1.Plain,
+					blockedButtons: this.getBlockedButtons(this.currentCall.provider === call_mapping.Provider.Plain),
+					showAddUserButtonInList: this.currentCall.provider === call_mapping.Provider.Plain,
 					isCloudRecordFeaturesEnabled: this.currentCall.isCloudRecordFeaturesEnabled,
 					isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
 					isCopilotActive: this.currentCall.isCopilotActive,
@@ -35868,9 +38267,6 @@ this.BX = this.BX || {};
 				console.log(`%c[debug] Time from click 'Join call' to show call card: ${Date.now() - this.onConnectToCallClick} ms`, style);
 				this.onCallViewRenderToMediaReceived = Date.now();
 				this.viewPort.show();
-				this.promoService?.showDocumentPromo(this.viewPort?.buttons?.document?.elements?.root?.querySelector('.bx-messenger-videocall-panel-icon'), {
-					isFolded: this.layoutService?.isFolded
-				});
 				this.copilotUiService?.showNotify({
 					isCopilotActive: this.currentCall.isCopilotActive,
 					provider: this.currentCall.provider,
@@ -35909,22 +38305,226 @@ this.BX = this.BX || {};
 				if (isCallPrepared && this.viewPort) {
 					this.viewPort.isPreparing = false;
 				}
-				this.initCallPromise = null;
-			}).catch(async error => {
-				this.initCallPromise = null;
-				await this.#handleJoinCallError(error, joinAttempt);
-			});
+				this.#releaseEntryLock(thisPromise);
+			}).catch(error => {
+				if (error?.code === 'CALL_CANCELLED') {
+					return;
+				}
+				this.#releaseEntryLock(thisPromise);
+				this.#handleJoinCallError(error, joinAttempt);
+			}).finally(() => this.#endStartingCallLogContext(startingCallLogContext));
+		}
+
+		/**
+		 * Snapshot of the call slot for the slot policy.
+		 *
+		 * The slot is taken by `currentCall` — including a ringing incoming call, which has no window yet.
+		 * That is why "the slot is taken" and "the call is answered" are two different questions.
+		 *
+		 * @return {{hasCall: boolean, isAnswered: boolean, callKey: ?(string|number)}}
+		 */
+		#getSlotSnapshot() {
+			return {
+				hasCall: Boolean(this.currentCall),
+				isAnswered: Boolean(this.viewPort),
+				callKey: this.currentCall ? Util.getCallIdentifier(this.currentCall) : null
+			};
+		}
+
+		/**
+		 * The single place where the slot is released. Called by every entry point before it enters
+		 * the addressed call, and only after the `initCallPromise` guard: a call that is not going to be
+		 * entered must never release the slot, otherwise the user loses both calls.
+		 *
+		 * The slot is emptied synchronously — `leaveCurrentCall()` alone does not clear it and waits for
+		 * an async hangup confirmation, so an entry started meanwhile would grab the same busy slot.
+		 *
+		 * @param {string} decision — SlotDecision
+		 */
+		#releaseCallSlot(decision) {
+			if (!this.currentCall) {
+				return;
+			}
+			if (decision === SlotDecision.ReleaseRingingAndEnter) {
+				const callId = Util.getCallIdentifier(this.currentCall);
+
+				// Mark the call as handled, otherwise a repeated invitation pops the incoming notification up again.
+				this.answeredOrDeclinedCalls.add(callId);
+				this.ignoreDeclinedCallsTimeout[callId] = setTimeout(() => this.answeredOrDeclinedCalls.delete(callId), 15000);
+				clearTimeout(this.hideIncomingCallTimeout);
+				this.closeCallNotification();
+				this.messengerFacade.stopRepeatSound(this.audioRingtone);
+				call_lib_analytics.Analytics.getInstance().onJoinCall({
+					callId,
+					callType: this.getCallType(),
+					mediaParams: {
+						video: Hardware.isCameraOn,
+						audio: !Hardware.isMicrophoneMuted
+					},
+					status: call_lib_analytics.Analytics.AnalyticsStatus.decline,
+					associatedEntity: this.currentCall.associatedEntity,
+					isVpnActive: this.#isVpnConnected()
+				});
+
+				// Listeners first: removeCallEvents() reads this.currentCall directly and would throw on an empty slot.
+				this.#teardownCallConnection();
+				// 603 (Decline), not 486 (Busy): at this moment the user is not in another call yet.
+				this.currentCall.decline(603);
+				this.currentCall = null;
+				this.#clearPromotedAdminTimeout();
+				return;
+			}
+			if (decision === SlotDecision.LeaveAnsweredAndEnter) {
+				// leaveCurrentCall() releases media, stops the recording and closes the window on its own.
+				this.leaveCurrentCall();
+				if (this.currentCall) {
+					// Only BitrixCall gets here with the call still in the slot: its hangup() raises no
+					// onLeave, so the first point never ran and an open series would end up in the next call.
+					this.#reconnectSeriesReporter.reportCallLost();
+					this.#teardownCallConnection();
+					this.currentCall = null;
+				}
+			}
+		}
+
+		/**
+		 * Public entry for consumers that enter a call bypassing the controller (a conference is opened by the
+		 * messenger itself). Releases the slot only when it is taken by a ringing incoming call — an answered
+		 * call is never dropped silently.
+		 */
+		releaseRingingCallSlot() {
+			if (!this.currentCall || this.viewPort) {
+				return;
+			}
+			this.#releaseCallSlot(SlotDecision.ReleaseRingingAndEnter);
+		}
+
+		// A repeated dial can land into a zombie media room: the balancer keeps the
+		// room of an already finished call when nobody had joined it before a fast
+		// hangup (an empty room cannot be closed from the portal side). Detect this
+		// by asking the portal for the call state and recover by closing the room
+		// and re-creating the call. The retry result is returned as is, so at most
+		// one recovery attempt happens per dial. The whole chain is bound to the
+		// dial it started for: a cancelled or restarted dial stops the recovery.
+		async #recoverFromZombieRoom(createResult, createCall) {
+			const dialPromise = this.initCallPromise;
+			const call = createResult?.call;
+			if (!dialPromise || !call || createResult.isNew !== false || call.provider !== call_mapping.Provider.Plain || Util.isLegacyCall(call.provider, call.scheme)) {
+				return createResult;
+			}
+			let callState = await this.#getCallStateForRecovery(call.uuid);
+			if (!callState || this.initCallPromise !== dialPromise) {
+				return createResult;
+			}
+			if (callState.exists && callState.state !== 'finished') {
+				return createResult;
+			}
+			if (!callState.exists) {
+				// A missing record does not prove a zombie: the room may belong to a
+				// counter dial whose startCall webhook is still in flight (~2 sec).
+				// Give the webhook its delivery window and re-check before killing
+				// the room; a live call showing up means a legitimate join.
+				await new Promise(resolve => setTimeout(resolve, 2500));
+				if (this.initCallPromise !== dialPromise) {
+					return createResult;
+				}
+				callState = await this.#getCallStateForRecovery(call.uuid);
+				if (!callState || this.initCallPromise !== dialPromise) {
+					return createResult;
+				}
+				if (callState.exists && callState.state !== 'finished') {
+					return createResult;
+				}
+			}
+			this.log(`Zombie room detected (uuid: ${call.uuid}), closing the room and recreating the call`);
+			try {
+				await call.destroyZombieRoom();
+			} catch (error) {
+				this.log('Zombie room close failed, joining the existing room', error);
+				return createResult;
+			}
+			call.destroy();
+
+			// The balancer learns about the closed room asynchronously: an
+			// immediate re-join may still return the dying room. Poll a few times
+			// until a fresh room is created.
+			const retryDelays = [0, 1500, 3000];
+			let retried = null;
+			let lastError = null;
+			for (const delay of retryDelays) {
+				if (delay > 0) {
+					await new Promise(resolve => setTimeout(resolve, delay));
+				}
+				if (this.initCallPromise !== dialPromise) {
+					return retried ?? createResult;
+				}
+				retried?.call?.destroy();
+				try {
+					retried = await createCall();
+				} catch (error) {
+					this.log('Zombie room recovery join attempt failed, retrying', error);
+					lastError = error;
+					retried = null;
+					continue;
+				}
+				if (retried?.isNew !== false) {
+					return retried;
+				}
+				this.log('Zombie room recovery got the same room again, retrying');
+			}
+
+			// The only room the balancer keeps offering is the one we just closed;
+			// joining it would fail with an obscure media error, so fail the dial
+			// honestly and let the user retry.
+			retried?.call?.destroy();
+			if (lastError) {
+				throw lastError;
+			}
+			const recoveryError = new Error('Could not recreate the call after closing a zombie room');
+			recoveryError.name = 'ZOMBIE_ROOM_RECOVERY_FAILED';
+			throw recoveryError;
+		}
+		async #getCallStateForRecovery(callUuid) {
+			try {
+				const response = await BX.ajax.runAction('call.CallManager.getCallState', {
+					data: {
+						callUuid
+					}
+				});
+				return response?.data ?? null;
+			} catch (error) {
+				this.log('Zombie room check failed, joining the existing room', error);
+				return null;
+			}
 		}
 		leaveCurrentCall(force, finishCall = false) {
+			// Let a pending plain-JWT createCall complete: its response carries the room UUID the
+			// stale branch needs to finish the abandoned room.
+			if (this.currentCall || !this.#pendingCreateCallIsPlainJwt) {
+				Util.abortGetCallConnectionData();
+			}
 			this.initCallPromise = null;
-			Util.abortGetCallConnectionData();
+			this.#pendingCreateCallIsPlainJwt = false;
 			if (this.#isLocalRecordStarted()) {
 				call_lib_analytics.Analytics.getInstance().onRecordStop({
 					...this.#getAnalyticsCallParams(),
 					subSection: finishCall ? call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu : call_lib_analytics.Analytics.AnalyticsSubSection.window,
 					element: finishCall ? call_lib_analytics.Analytics.AnalyticsElement.finishForAllButton : call_lib_analytics.Analytics.AnalyticsElement.disconnectButton,
-					recordTime: Util.getRecordTimeText(this.commonRecord.info, true)
+					recordTime: Util.getRecordTimeText(this.commonRecord.info, true),
+					storageType: call_lib_analytics.Analytics.AnalyticsStorageType.local
 				});
+			} else if (this.#canCloudRecord() && this.#isCommonRecordStarted()) {
+				// Cloud recording is shared and server-side: leaving a multi-user call does not stop it.
+				// Send record_stop on disconnect only when this exit actually ends the recording:
+				// finish-for-all, or a 1-on-1 (Plain) call where only the record initiator reports it.
+				const isOneOnOneInitiator = this.currentCall.provider === call_mapping.Provider.Plain && this.commonRecord.initiatorId === this.userId;
+				if (finishCall || isOneOnOneInitiator) {
+					const {
+						callId,
+						callType
+					} = this.#getAnalyticsCallParams();
+					this.recordingUiService?.trackCloudRecordStopOnDisconnect(callId, callType, this.commonRecord.info, finishCall);
+				}
 			}
 			this.#stopCommonRecord();
 			if (this.viewPort) {
@@ -35960,6 +38560,9 @@ this.BX = this.BX || {};
 		 * @group CommonRecord
 		 */
 		#canLocalRecord() {
+			if (!this.currentCall) {
+				return false;
+			}
 			const isDesktop = im_v2_lib_desktopApi.DesktopApi.isDesktop();
 			const isValidApi = im_v2_lib_desktopApi.DesktopApi.getApiVersion() >= 54;
 
@@ -35979,14 +38582,17 @@ this.BX = this.BX || {};
 			}
 
 			// If the cloud recording is active, and it is a paid plan, then we turn it on only in plain
-			return this.currentCall.provider === Provider$1.Plain;
+			return this.currentCall.provider === call_mapping.Provider.Plain;
 		}
 
 		/**
 		 * @group CommonRecord
 		 */
 		#canCloudRecord() {
-			const isPlainCall = this.currentCall.provider === Provider$1.Plain;
+			if (!this.currentCall) {
+				return false;
+			}
+			const isPlainCall = this.currentCall.provider === call_mapping.Provider.Plain;
 			const cloudRecordingEnabled = isPlainCall && call_lib_settingsManager.CallSettingsManager.plainCallCloudRecordingEnabled || !isPlainCall;
 			return CallCloudRecord.serviceEnabled && CallCloudRecord.tariffAvailable && cloudRecordingEnabled;
 		}
@@ -36076,7 +38682,7 @@ this.BX = this.BX || {};
 								deviceId = microphoneIds.length > 0 ? microphoneIds[0] : '';
 							}
 							this.currentCall.setMicrophoneId(deviceId);
-							if (this.currentCall.provider === Provider$1.Bitrix) {
+							if (this.currentCall.provider === call_mapping.Provider.Bitrix) {
 								this.viewPort.setMicrophoneId(deviceId);
 							}
 						}
@@ -36127,13 +38733,6 @@ this.BX = this.BX || {};
 			}
 			this.callViewState = ViewState.Folded;
 			this.layoutService.fold(foldedCallTitle);
-			if (this.callStore) {
-				try {
-					this.callStore.setViewState('Folded');
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in fold:', error);
-				}
-			}
 			BX.onCustomEvent(this, 'CallController::onFold', {});
 		}
 		setCallEditorMaxWidth(maxWidth) {
@@ -36216,14 +38815,16 @@ this.BX = this.BX || {};
 		unfold(options = {}) {
 			this.layoutService.unfold(options);
 			this.callViewState = ViewState.Opened;
-			if (this.callStore) {
-				try {
-					this.callStore.setViewState('Opened');
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in unfold:', error);
-				}
-			}
 			BX.onCustomEvent(this, 'CallController::onUnfold', {});
+		}
+
+		/**
+		 * The unfold event carries no trace of what caused it, so the gesture is declared by the caller
+		 * that knows it: controls whose only meaning is "put me into the call window" pass the flag,
+		 * unfolds triggered from inside the window do not.
+		 */
+		#unfoldIsReturnGesture(data) {
+			return data?.isReturnGesture === true;
 		}
 		isFullScreen() {
 			return this.layoutService.isFullScreen();
@@ -36232,8 +38833,8 @@ this.BX = this.BX || {};
 			this.layoutService.toggleFullScreen();
 		}
 		#onFullScreenChange(event) {
-			const isPlainCall = this.currentCall?.provider === Provider$1.Plain;
-			const isBitrixCall = this.currentCall?.provider === Provider$1.Bitrix;
+			const isPlainCall = this.currentCall?.provider === call_mapping.Provider.Plain;
+			const isBitrixCall = this.currentCall?.provider === call_mapping.Provider.Bitrix;
 			const isLegacyCall = Util.isLegacyCall(this.currentCall?.provider, this.currentCall?.scheme);
 			const isCopilotFeaturesEnabled = !isLegacyCall && isPlainCall && this.currentCall?.isCopilotFeaturesEnabled || isBitrixCall;
 			const shouldBlockCopilot = isCopilotFeaturesEnabled && CallAI.settingsEnabled && !CallAI.tariffAvailable;
@@ -36243,13 +38844,6 @@ this.BX = this.BX || {};
 				isCloudRecordFeaturesEnabled: !CallCloudRecord.tariffAvailable,
 				hasDocumentButton: Boolean(Util.getResumesArticleCode() && Util.getDocumentsArticleCode())
 			});
-			if (this.callStore) {
-				try {
-					this.callStore.setFullScreen(event.isFullScreen);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in #onFullScreenChange:', error);
-				}
-			}
 		}
 		enterFullScreen() {
 			this.layoutService.enterFullScreen();
@@ -36262,8 +38856,8 @@ this.BX = this.BX || {};
 		 * @group CommonRecord
 		 */
 		#showCloudRecordPromo() {
-			const isPlainCall = this.currentCall?.provider === Provider$1.Plain;
-			const isBitrixCall = this.currentCall?.provider === Provider$1.Bitrix;
+			const isPlainCall = this.currentCall?.provider === call_mapping.Provider.Plain;
+			const isBitrixCall = this.currentCall?.provider === call_mapping.Provider.Bitrix;
 			const cloudRecordingEnabled = isPlainCall && this.currentCall?.isCloudRecordFeaturesEnabled || isBitrixCall;
 			if (this.hasActiveCall() && CallCloudRecord.serviceEnabled && cloudRecordingEnabled) {
 				this.recordingUiService?.showCloudRecordPromo(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
@@ -36286,8 +38880,8 @@ this.BX = this.BX || {};
 		 * @group CommonRecord
 		 */
 		#startCommonRecord(type) {
-			const isPlainCall = this.currentCall.provider === Provider$1.Plain;
-			const isBitrixCall = this.currentCall.provider === Provider$1.Bitrix;
+			const isPlainCall = this.currentCall.provider === call_mapping.Provider.Plain;
+			const isBitrixCall = this.currentCall.provider === call_mapping.Provider.Bitrix;
 			const cloudRecordingEnabled = isPlainCall && this.currentCall.isCloudRecordFeaturesEnabled || isBitrixCall;
 			this.commonRecord.type = type;
 			if (CallCloudRecord.serviceEnabled && cloudRecordingEnabled) {
@@ -36312,8 +38906,11 @@ this.BX = this.BX || {};
 			const initiatorId = this.commonRecord.initiatorId;
 			const state = this.commonRecord.state;
 			this.commonRecord = this.#getDefaultCommonRecord();
-			if (this.#canLocalRecord()) {
-				BXDesktopSystem.CallRecordStop();
+
+			// The desktop gate says nothing about the record commands: a client without them refuses
+			// the start, and the rollback has to survive that instead of failing on the same absence.
+			if (this.#canLocalRecord() && main_core.Type.isFunction(window.BXDesktopSystem?.CallRecordStop)) {
+				window.BXDesktopSystem.CallRecordStop();
 			}
 			if (this.viewPort) {
 				this.viewPort.setCommonRecordState(this.viewPort.getDefaultCommonRecordState());
@@ -36341,76 +38938,136 @@ this.BX = this.BX || {};
 			this.callNotification = null;
 		}
 		async _onCallNotificationButtonClick(e) {
-			const data = e.data;
+			const {
+				button,
+				mediaParams
+			} = e.data;
 			clearTimeout(this.hideIncomingCallTimeout);
 			this.callNotification.close();
-			switch (data.button) {
-				case 'answer':
-					if (this.currentCall && !this.answeredOrDeclinedCalls.has(Util.getCallIdentifier(this.currentCall))) {
-						this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
-						const callParams = {
-							id: this.currentCall?.id,
-							uuid: this.currentCall?.uuid,
-							scheme: this.currentCall?.scheme || CallScheme$1.classic
-						};
-						if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-							this.onAnswerButtonClick(data.mediaParams, callParams);
-							return;
-						}
-						await im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
-						if (im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.portalTabActivation.id)) {
-							await im_v2_lib_desktopApi.DesktopApi.handlePortalTabActivation();
-						}
-						if (im_v2_lib_desktopApi.DesktopApi.shouldActivateTabWithChatPage()) {
-							await im_v2_lib_desktopApi.DesktopApi.setTabWithChatPageActive();
-						}
-						im_v2_lib_desktop.DesktopBroadcastManager.getInstance().sendActionMessage({
-							action: im_v2_const.DesktopBroadcastAction.answerButtonClick,
-							params: {
-								mediaParams: data.mediaParams,
-								callParams
-							}
-						});
+			if (button === 'answer') {
+				if (this.currentCall && !this.answeredOrDeclinedCalls.has(Util.getCallIdentifier(this.currentCall))) {
+					this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
+					const callParams = {
+						id: this.currentCall?.id,
+						uuid: this.currentCall?.uuid,
+						scheme: this.currentCall?.scheme || CallScheme$1.classic
+					};
+					if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+						this.onAnswerButtonClick(mediaParams, callParams);
+						return;
 					}
-					break;
-				case 'decline':
-					if (this.currentCall) {
-						const callId = Util.getCallIdentifier(this.currentCall);
-						this.answeredOrDeclinedCalls.add(callId);
-						this.ignoreDeclinedCallsTimeout[callId] = setTimeout(() => this.answeredOrDeclinedCalls.delete(callId), 15000);
-						this.#teardownCallConnection();
-						call_lib_analytics.Analytics.getInstance().onJoinCall({
-							callId,
-							callType: this.getCallType(),
-							mediaParams: {
-								video: Hardware.isCameraOn,
-								audio: !Hardware.isMicrophoneMuted
-							},
-							section: call_lib_analytics.Analytics.AnalyticsSection.callPopup,
-							element: call_lib_analytics.Analytics.AnalyticsElement.answerButton,
-							status: call_lib_analytics.Analytics.AnalyticsStatus.decline,
-							associatedEntity: this.currentCall.associatedEntity,
-							isVpnActive: this.#isVpnConnected()
-						});
-						this.currentCall.decline(603);
-						this.currentCall = null;
-						this.#clearPromotedAdminTimeout();
+					await im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
+					if (im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.portalTabActivation.id)) {
+						await im_v2_lib_desktopApi.DesktopApi.handlePortalTabActivation();
 					}
-					break;
+					if (im_v2_lib_desktopApi.DesktopApi.shouldActivateTabWithChatPage()) {
+						await im_v2_lib_desktopApi.DesktopApi.setTabWithChatPageActive();
+					}
+					im_v2_lib_desktop.DesktopBroadcastManager.getInstance().sendActionMessage({
+						action: im_v2_const.DesktopBroadcastAction.answerButtonClick,
+						params: {
+							mediaParams,
+							callParams
+						}
+					});
+				}
+			} else if (button === 'decline') {
+				if (this.currentCall) {
+					const callId = Util.getCallIdentifier(this.currentCall);
+					this.answeredOrDeclinedCalls.add(callId);
+					this.ignoreDeclinedCallsTimeout[callId] = setTimeout(() => this.answeredOrDeclinedCalls.delete(callId), 15000);
+					this.#teardownCallConnection();
+					call_lib_analytics.Analytics.getInstance().onJoinCall({
+						callId,
+						callType: this.getCallType(),
+						mediaParams: {
+							video: Hardware.isCameraOn,
+							audio: !Hardware.isMicrophoneMuted
+						},
+						section: call_lib_analytics.Analytics.AnalyticsSection.callPopup,
+						element: call_lib_analytics.Analytics.AnalyticsElement.answerButton,
+						status: call_lib_analytics.Analytics.AnalyticsStatus.decline,
+						associatedEntity: this.currentCall.associatedEntity,
+						isVpnActive: this.#isVpnConnected()
+					});
+					this.currentCall.decline(603);
+					this.currentCall = null;
+					this.#clearPromotedAdminTimeout();
+				}
+			} else if (button === 'answerConference') {
+				if (this.currentCall && 'id' in this.currentCall.associatedEntity) {
+					call_lib_analytics.Analytics.getInstance().onAnswerConference({
+						callId: Util.getCallIdentifier(this.currentCall)
+					});
+					this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
+					let dialogId = this.currentCall.associatedEntity.id.toString();
+					if (dialogId.startsWith('chat')) {
+						dialogId = dialogId.slice(4);
+					}
+					this.emit(Events.onOpenVideoConference, {
+						dialogId
+					});
+				}
+			} else if (button === 'skipConference') {
+				if (this.currentCall) {
+					call_lib_analytics.Analytics.getInstance().onDeclineConference({
+						callId: Util.getCallIdentifier(this.currentCall)
+					});
+					this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
+					this.#teardownCallConnection();
+					this.currentCall.decline();
+					this.currentCall = null;
+					this.#clearPromotedAdminTimeout();
+				}
 			}
 		}
 		onAnswerButtonClick(mediaParams, callParams) {
-			if (!this.currentCall) {
+			// On desktop this method is invoked through a broadcast from the window that shows the incoming
+			// notification, so the answered call may be a different one than the call in this window's slot.
+			// Everything below must therefore address the call from callParams, not the slot content.
+			if (this.initCallPromise) {
 				return;
 			}
+
+			// The incoming popup is already closed here and its focus trap has put the focus back where it
+			// stood before the call rang, so the candidate is that element and never the answer button. It
+			// serves as a return target at the end of the call; the entry cannot lean on it.
+			this.#pendingOpener = document.activeElement;
 			const isLegacyCall = callParams.scheme === CallScheme$1.classic;
+			const targetCall = isLegacyCall ? CallEngineLegacy.calls[callParams.id] : CallEngine.calls[callParams.uuid];
+			if (!targetCall) {
+				this.log(`Can not answer an unknown call ${callParams.uuid || callParams.id}`);
+				this.#pendingOpener = null;
+				return;
+			}
 			const joinAttempt = {
-				provider: this.currentCall.provider,
-				callId: Util.getCallIdentifier(this.currentCall)
+				provider: targetCall.provider,
+				callId: Util.getCallIdentifier(targetCall)
 			};
+			const decision = decideSlotAction(this.#getSlotSnapshot(), {
+				callKey: joinAttempt.callId
+			});
+			if (decision === SlotDecision.Unfold) {
+				this.unfold({
+					isReturnGesture: true
+				});
+				this.#pendingOpener = null;
+				return;
+			}
+			this.#releaseCallSlot(decision);
+			if (this.currentCall !== targetCall) {
+				// This window has never held the answered call in its slot, so it has no listeners bound to it.
+				this.currentCall = targetCall;
+				this.bindCallEvents();
+			}
 			const currentCallPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(this.currentCall.associatedEntity.chatId);
+
+			// Take the shared entry lock only now: leaveCurrentCall() inside #releaseCallSlot() resets it.
+			this.initCallPromise = currentCallPromise;
+			let answerConfig = null;
+			const getCallForAnswer = () => isLegacyCall ? CallEngineLegacy.getCallWithId(callParams.id) : CallEngine.getCallWithId(callParams.uuid, answerConfig);
 			currentCallPromise.then(callToken => {
-				const config = {
+				answerConfig = {
 					provider: this.currentCall.provider,
 					entityType: 'chat',
 					entityId: this.currentCall.associatedEntity.id,
@@ -36422,7 +39079,14 @@ this.BX = this.BX || {};
 					token: callToken,
 					chatInfo: this.currentCall.associatedEntity
 				};
-				return isLegacyCall ? CallEngineLegacy.getCallWithId(callParams.id) : CallEngine.getCallWithId(callParams.uuid, config);
+
+				// Q-F1: for incoming, /v2/join fires here (getCallWithId -> createCall).
+				// Guests defer it until the lobby has persisted the new name, so the
+				// first /v2/join carries the fresh guest token.
+				if (this.#isGuestUser()) {
+					return null;
+				}
+				return getCallForAnswer();
 			}).then(result => {
 				if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 					im_v2_lib_desktopApi.DesktopApi.activateWindow();
@@ -36434,6 +39098,7 @@ this.BX = this.BX || {};
 					this.currentCall = null;
 					this.#clearPromotedAdminTimeout();
 					this.notificationService?.showUnsupportedNotification();
+					this.#releaseEntryLock(currentCallPromise);
 					return;
 				}
 				call_lib_analytics.Analytics.getInstance().onJoinCall({
@@ -36455,21 +39120,12 @@ this.BX = this.BX || {};
 				}).then(() => {
 					return Hardware.init();
 				}).then(async () => {
-					if (this.#isGuestUser()) {
-						const lobbyResult = await this.#showCallLobby();
+					const isGuest = this.#isGuestUser();
+					if (isGuest) {
+						const lobbyResult = await this.#runGuestLobbyAndPersistName();
 						if (lobbyResult === null) {
 							this.currentCall?.decline();
 							return;
-						}
-
-						// If the guest changed their display name in the lobby, persist it server-side
-						const currentUser = this.messengerFacade.getCurrentUser?.();
-						if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name) {
-							BX.ajax.runAction('im.v2.Guest.setName', {
-								data: {
-									name: lobbyResult.userName
-								}
-							}).catch(() => {});
 						}
 						mediaParams = lobbyResult;
 					}
@@ -36477,17 +39133,21 @@ this.BX = this.BX || {};
 						this.log('The call was destroyed while being answered');
 						return;
 					}
+					if (isGuest) {
+						// Deferred join: /v2/join now carries the fresh guest token (Q-F1).
+						await getCallForAnswer();
+					}
 					this.createContainer();
-					const hiddenButtons = this.#getHiddenCallButtons(this.currentCall.provider === Provider$1.Plain);
+					const hiddenButtons = this.#getHiddenCallButtons(this.currentCall.provider === call_mapping.Provider.Plain);
 					Hardware.isCameraOn = mediaParams.video && Hardware.hasCamera();
-					const isBitrixCall = this.currentCall.provider === Provider$1.Bitrix;
+					const isBitrixCall = this.currentCall.provider === call_mapping.Provider.Bitrix;
 					this.viewPort = await this.#buildCallViewPort({
 						users: this.currentCall.users,
 						userStates: this.currentCall.getUsers(),
 						layout: isGroupCall ? call_mapping.ViewLayout.Grid : call_mapping.ViewLayout.Centered,
 						hiddenButtons,
-						blockedButtons: this.getBlockedButtons(this.currentCall.provider === Provider$1.Plain),
-						showAddUserButtonInList: this.currentCall.provider === Provider$1.Plain,
+						blockedButtons: this.getBlockedButtons(this.currentCall.provider === call_mapping.Provider.Plain),
+						showAddUserButtonInList: this.currentCall.provider === call_mapping.Provider.Plain,
 						isCloudRecordFeaturesEnabled: this.currentCall.isCloudRecordFeaturesEnabled,
 						isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
 						isCopilotActive: this.currentCall.isCopilotActive,
@@ -36496,24 +39156,6 @@ this.BX = this.BX || {};
 					this.autoCloseCallView = true;
 					if (this.callWithLegacyMobile) {
 						this.viewPort.blockAddUser();
-					}
-					if (this.callStore) {
-						try {
-							this.callStore.initCall({
-								callId: this.currentCall.id,
-								callUuid: this.currentCall.uuid,
-								callProvider: this.currentCall.provider,
-								callScheme: this.currentCall.scheme,
-								callType: this.currentCall.type,
-								associatedEntityId: this.currentCall.associatedEntity?.id,
-								associatedEntityType: this.currentCall.associatedEntity?.type,
-								isIncoming: this.currentCall.direction === 'Incoming',
-								localUserId: this.userId
-							});
-							this.callStore.setUiState('Connected');
-						} catch (error) {
-							console.error('[call.store] Pinia write failed in onAnswerButtonClick:', error);
-						}
 					}
 					this.bindCallViewEvents();
 					this.initSpeakerManager();
@@ -36543,10 +39185,12 @@ this.BX = this.BX || {};
 						}
 					}
 					this.viewPort.show();
-					this.promoService?.showDocumentPromo(this.viewPort?.buttons?.document?.elements?.root?.querySelector('.bx-messenger-videocall-panel-icon'), {
-						isFolded: this.layoutService?.isFolded
+					// Answering is an explicit gesture, so the entry must reach the window wherever the
+					// focus stands: opening the chat moves it into the message input, and on desktop the
+					// gesture happened in the notification window altogether.
+					this.viewPort.focusWindow({
+						force: true
 					});
-					this.promoService?.showMaskPromo();
 					this.copilotUiService?.showNotify({
 						isCopilotActive: this.currentCall.isCopilotActive,
 						provider: this.currentCall.provider,
@@ -36561,44 +39205,28 @@ this.BX = this.BX || {};
 					});
 					this.createVideoStrategy();
 					this._onUpdateLastUsedCameraId();
-				}).catch(async error => {
-					await this.#handleJoinCallError(error, joinAttempt);
+				}).catch(error => {
+					this.#handleJoinCallError(error, joinAttempt);
+				}).finally(() => {
+					this.#releaseEntryLock(currentCallPromise);
 				});
-			}).catch(async error => {
-				await this.#handleJoinCallError(error, joinAttempt);
+			}).catch(error => {
+				this.#releaseEntryLock(currentCallPromise);
+				this.#handleJoinCallError(error, joinAttempt);
 			});
 		}
-		_onCallConferenceNotificationButtonClick(e) {
-			clearTimeout(this.hideIncomingCallTimeout);
-			this.callNotification.close();
-			switch (e.button) {
-				case 'answerConference':
-					if (this.currentCall && 'id' in this.currentCall.associatedEntity) {
-						call_lib_analytics.Analytics.getInstance().onAnswerConference({
-							callId: Util.getCallIdentifier(this.currentCall)
-						});
-						this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
-						let dialogId = this.currentCall.associatedEntity.id.toString();
-						if (dialogId.startsWith('chat')) {
-							dialogId = dialogId.slice(4);
-						}
-						this.emit(Events.onOpenVideoConference, {
-							dialogId
-						});
-					}
-					break;
-				case 'skipConference':
-					if (this.currentCall) {
-						call_lib_analytics.Analytics.getInstance().onDeclineConference({
-							callId: Util.getCallIdentifier(this.currentCall)
-						});
-						this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
-						this.#teardownCallConnection();
-						this.currentCall.decline();
-						this.currentCall = null;
-						this.#clearPromotedAdminTimeout();
-					}
-					break;
+
+		/**
+		 * Releases the shared entry lock taken by an entry point, together with the focus opener that entry
+		 * captured. Called in every outcome, including failures: a single failed answer must not block every
+		 * entry forever, and an opener no window consumed must not reach the next one.
+		 *
+		 * @param {Promise} entryPromise — the chain that took the lock
+		 */
+		#releaseEntryLock(entryPromise) {
+			if (this.initCallPromise === entryPromise) {
+				this.initCallPromise = null;
+				this.#pendingOpener = null;
 			}
 		}
 		_onCallViewShow() {
@@ -36608,44 +39236,48 @@ this.BX = this.BX || {};
 			}
 			this.buttonStateService?.setChatCounter(this.messengerFacade.getMessageCount());
 			this.callViewState = ViewState.Opened;
-			if (this.callStore) {
-				try {
-					this.callStore.setViewState('Opened');
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallViewShow:', error);
-				}
+			this.#applyCallViewAccessibleName();
+
+			// the panel builds its buttons while it renders, so this is the first moment the record button
+			// exists: a kind told to the view before it was created was skipped and has to be told again
+			this.#syncRecordButtonPopupKind();
+		}
+		#applyCallViewAccessibleName() {
+			// On a prepared start the first onShow fires before currentCall is assigned, and it is that
+			// show the screen reader announces: the prepared payload names the window until the second
+			// show overwrites it with the call itself.
+			const windowName = call_lib_a11y.resolveCallWindowName({
+				entity: this.currentCall?.associatedEntity,
+				preparedCall: this.preparedCall
+			});
+			if (!windowName) {
+				return;
 			}
+			this.viewPort?.setAccessibleName?.(windowName.name, windowName.type);
 		}
 		_onCallViewClose() {
 			this.viewPort.destroy();
 			this.callViewState = ViewState.Closed;
-			if (this.callStore) {
-				try {
-					this.callStore.setViewState('Closed');
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallViewClose:', error);
-				}
-			}
 			this.floatingWindowService?.hide();
 			this.floatingWindowService?.hideScreenShareWindow();
 			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 				im_v2_lib_desktopApi.DesktopApi.closeWindow(im_v2_lib_desktopApi.DesktopApi.findWindow('callBackground'));
 			}
-			this.promoService?.closeAll();
 			this.notificationService?.closeMediaDevicesResetStateHint();
 			this.notificationService?.closeReconnectingBalloon();
 			this.notificationService?.closeRemoteVideoMutedBalloon();
 			this.notificationService?.closeRiseYouHandToTalkPopup();
 		}
-		_onCallViewDestroy() {
+		_onCallViewDestroy(destroyedViewPort) {
+			if (destroyedViewPort && this.viewPort && destroyedViewPort !== this.viewPort) {
+				return;
+			}
 			this.buttonStateService?.destroy();
 			this.buttonStateService = null;
 			this.layoutService?.destroy();
 			this.layoutService = null;
 			this.notificationService?.destroy();
 			this.notificationService = null;
-			this.promoService?.destroy();
-			this.promoService = null;
 			this.hangupOptionsUiService?.destroy();
 			this.hangupOptionsUiService = null;
 			this.feedbackUiService?.destroy();
@@ -36662,8 +39294,6 @@ this.BX = this.BX || {};
 			this.floatingWindowService?.destroy();
 			this.floatingWindowService = null;
 			this.viewPort = null;
-			this.callStore = null;
-			this.pinia = null;
 			this.autoCloseCallView = true;
 			if (hasSidebar) {
 				BX.adjust(this.container, {
@@ -36678,7 +39308,9 @@ this.BX = this.BX || {};
 		}
 		_onCallViewBodyClick() {
 			if (this.layoutService?.isFolded) {
-				this.unfold();
+				this.unfold({
+					isReturnGesture: true
+				});
 			}
 		}
 		#onPiPViewBodyClick() {
@@ -36686,6 +39318,8 @@ this.BX = this.BX || {};
 				isForceClose: false
 			});
 			if (this.layoutService?.isFolded) {
+				// No return gesture: PiP is the call window in another shape, not a control that only means
+				// "put me into the call window", so the entry stays yielding.
 				this.unfold();
 			}
 		}
@@ -36696,6 +39330,18 @@ this.BX = this.BX || {};
 					fromPiP: true
 				});
 			}
+		}
+
+		/**
+		 * Second trigger of the mute hint: the hold policy reports a short press that led to nothing. The
+		 * anchor is resolved exactly as the first trigger resolves it, and whether the hint is due at all
+		 * is answered by the notification service.
+		 */
+		#onPushToTalkShortPress() {
+			if (!this.isMutedPopupAllowed()) {
+				return;
+			}
+			this.notificationService?.showPushToTalkHint(this.layoutService?.isFolded ? null : this.viewPort?.buttons?.microphone?.elements?.icon);
 		}
 		_onCallViewButtonClick(e) {
 			const buttonName = e.buttonName;
@@ -36724,6 +39370,9 @@ this.BX = this.BX || {};
 				showHistory: () => this.messengerFacade.openHistory(this.currentCall?.associatedEntity?.id),
 				fullscreen: () => {
 					if (this.layoutService?.isFolded) {
+						// Unfolding here is a side effect of the fullscreen toggle, not a return gesture: the
+						// unforced entry yields to a focus outside the window, and takes it from the pressed
+						// button, which lives inside.
 						this.unfold();
 					}
 					this.toggleFullScreen();
@@ -36843,6 +39492,12 @@ this.BX = this.BX || {};
 			if (!this.messengerFacade.showUserSelector) {
 				return;
 			}
+
+			// The selector reaches the whole portal, and a guest calls the people of their own chat only -
+			// the server refuses such an invite anyway (@see \Bitrix\Call\Service\GuestCallPolicy).
+			if (this.#isGuestUser()) {
+				return;
+			}
 			const userStates = this.currentCall ? this.currentCall.getUsers() : {};
 			const idleUsers = Util.getDisconnectedUsers(this.currentCall);
 			this.messengerFacade.showUserSelector({
@@ -36872,7 +39527,9 @@ this.BX = this.BX || {};
 				this.currentCall.requestRoomSpeaker();
 				return;
 			}
-			if (this.currentCall && !this.currentCall.microphoneId && !e.muted) {
+
+			// same as the camera: a pick made while muted or unauthorised reaches the call on unmute
+			if (this.currentCall && !e.muted && Hardware.defaultMicrophone) {
 				this.currentCall.setMicrophoneId(Hardware.defaultMicrophone);
 			}
 			Hardware.setIsMicrophoneMuted({
@@ -36897,11 +39554,29 @@ this.BX = this.BX || {};
 			}
 		}
 		_onCallViewToggleMuteButtonClick(e) {
+			// the report goes out after the command, not before it: the handler applies the state
+			// synchronously, but leaves silently when there is no microphone and when the user is
+			// not the room speaker, and an unapplied command must not reach analytics
+			this._onCallViewToggleMuteHandler(e);
+			const applied = Hardware.isMicrophoneMuted === e.muted;
+
+			// ahead of the analytics gate: the gate also lets a mute through, and a mute must not count as
+			// having used the mode. Only a successful use stops the hint, hence the applied command
+			if (applied && !e.muted && e.source === call_lib_analytics.Analytics.AnalyticsElement.pushToTalk) {
+				this.notificationService?.onPushToTalkUsed();
+			}
+			if (!call_lib_analytics.shouldSendToggleMicrophone({
+				source: e.source,
+				muted: e.muted,
+				applied
+			})) {
+				return;
+			}
 			call_lib_analytics.Analytics.getInstance().onToggleMicrophone({
 				muted: e.muted,
+				source: e.source,
 				...this.#getAnalyticsCallParams()
 			});
-			this._onCallViewToggleMuteHandler(e);
 		}
 
 		/**
@@ -36912,8 +39587,8 @@ this.BX = this.BX || {};
 		 * @param { boolean } menuAction.hotkey
 		 */
 		#onCommonRecordMenu(menuAction) {
-			const isPlainCall = this.currentCall?.provider === Provider$1.Plain;
-			const isBitrixCall = this.currentCall?.provider === Provider$1.Bitrix;
+			const isPlainCall = this.currentCall?.provider === call_mapping.Provider.Plain;
+			const isBitrixCall = this.currentCall?.provider === call_mapping.Provider.Bitrix;
 			this.recordingUiService?.onCommonRecordMenu(menuAction, {
 				commonRecordState: this.commonRecord,
 				cloudRecordEnabled: isPlainCall && this.currentCall?.isCloudRecordFeaturesEnabled || isBitrixCall,
@@ -36932,16 +39607,58 @@ this.BX = this.BX || {};
 					...this.#getAnalyticsCallParams()
 				});
 			}
-			const isPlainCall = this.currentCall?.provider === Provider$1.Plain;
-			const isBitrixCall = this.currentCall?.provider === Provider$1.Bitrix;
-			this.recordingUiService?.onRecordButtonClick({
-				commonRecordState: this.commonRecord,
-				cloudRecordEnabled: isPlainCall && this.currentCall?.isCloudRecordFeaturesEnabled || isBitrixCall,
+			this.recordingUiService?.onRecordButtonClick(this.#getRecordButtonState());
+		}
+
+		/**
+		 * What the record button opens and what it announces are decided from one set of flags: two sets
+		 * would let the announcement and the click disagree.
+		 *
+		 * @group CommonRecord
+		 */
+		#getRecordButtonState() {
+			return {
 				isCloudRecordFeaturesEnabled: this.currentCall?.isCloudRecordFeaturesEnabled ?? false,
 				callId: this.currentCall?.id,
 				isServiceEnabled: CallCloudRecord.serviceEnabled,
-				canRecord: this.#canCommonRecord()
-			});
+				canRecord: this.#canCommonRecord(),
+				isRecordLimitReached: this.#isRecordLimitReached()
+			};
+		}
+
+		/**
+		 * The recording limit is applied by the view before the click ever reaches this controller
+		 * (`onClickButtonWithLimit`): the button opens the limit article instead of the menu, so it must
+		 * announce no layer either. Read from the portal features, the same source the view reads.
+		 *
+		 * @group CommonRecord
+		 */
+		#isRecordLimitReached() {
+			return !Util.getCallFeatures()?.call_record?.enable;
+		}
+
+		/**
+		 * Tells the record button which layer it opens. Called when a reason of the route changes, not on
+		 * every update of the recording: the route does not depend on the state of the recording at all.
+		 *
+		 * @group CommonRecord
+		 */
+		#syncRecordButtonPopupKind() {
+			this.recordingUiService?.syncRecordButtonPopupKind(this.#getRecordButtonState());
+		}
+
+		/**
+		 * Whether the slot still holds the call named by the identifier. An empty identifier names no call
+		 * at all and matches nothing: Util.getCallIdentifier answers null on an empty slot, and two empty
+		 * slots would otherwise pass for the same call.
+		 *
+		 * @param {?string|?number} callIdentifier Util.getCallIdentifier taken before the request
+		 */
+		#isCallStillInSlot(callIdentifier) {
+			if (callIdentifier === null || callIdentifier === undefined || callIdentifier === '') {
+				return false;
+			}
+			return Util.getCallIdentifier(this.currentCall) === callIdentifier;
 		}
 		#onChangeStateCopilotAction(state) {
 			let url = '';
@@ -36956,65 +39673,132 @@ this.BX = this.BX || {};
 					url = 'call.Track.destroy';
 					break;
 			}
+
+			// The answer is matched against the call it was asked for: over the round trip the slot may hold
+			// another call, and that one must get neither the command nor the report.
+			const toggledCall = Util.getCallIdentifier(this.currentCall);
+
+			// The failure handler is passed to then(), not chained as catch(): an exception of the success
+			// handler must never be reported as a refusal of the portal.
 			if (Util.isLegacyCall(this.currentCall.provider, this.currentCall.scheme)) {
-				BX.ajax.runAction(url, {
+				return BX.ajax.runAction(url, {
 					data: {
 						callId: this.currentCall.id,
 						callUuid: this.currentCall.uuid
 					}
 				}).then(() => {
+					// The call may have left the slot over the round trip: nothing to switch, nothing to report.
+					if (!this.#isCallStillInSlot(toggledCall)) {
+						return;
+					}
 					const newCopilotState = !this.currentCall.isCopilotActive;
 					this.#onUpdateCallCopilotState(newCopilotState);
 					call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
 						isAIOn: newCopilotState,
-						...this.#getAnalyticsCallParams()
+						...this.#getAnalyticsCallParams(),
+						isFailure: false
 					});
 					if (newCopilotState) {
 						this.sendStartCopilotRecordAnalytics({
+							isFailure: false,
 							isAutostart: false
 						});
 					} else {
 						this.copilotUiService?.showResultNotify();
 					}
-				}).catch(error => {
-					const errorCode = error.errors[0].code;
-					CallAI.handleCopilotError(errorCode);
-					if (this.viewPort) {
-						this.viewPort.showCopilotErrorNotify(errorCode);
-					}
-					const newCopilotState = !this.currentCall.isCopilotActive;
-					call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
-						isAIOn: newCopilotState,
-						...this.#getAnalyticsCallParams(),
-						error: errorCode
-					});
-					this.sendStartCopilotRecordAnalytics({
-						errorCode,
-						isAutostart: false
-					});
+				}, error => {
+					// Unlike the JWT branch below, the direction is read off the call after the answer,
+					// so a call that is no longer in the slot leaves it unknown.
+					const newCopilotState = this.#isCallStillInSlot(toggledCall) ? !this.currentCall.isCopilotActive : null;
+					this.#reportCopilotToggleFailure(error, toggledCall, newCopilotState);
 				});
-			} else {
-				const newCopilotState = !this.currentCall.isCopilotActive;
-				this.#onUpdateCallCopilotState(newCopilotState);
+			}
+			const newCopilotState = !this.currentCall.isCopilotActive;
+			return BX.ajax.runAction(url, {
+				data: {
+					callId: this.currentCall.id,
+					callUuid: this.currentCall.uuid
+				}
+			}).then(() => {
+				// The call may have left the slot over the round trip: nothing to switch, nothing to report.
+				if (!this.#isCallStillInSlot(toggledCall)) {
+					return;
+				}
+				this.#copilotOwnAttempt.mark(state, toggledCall);
 				this.currentCall.setRecorderState(state);
-				BX.ajax.runAction(url, {
-					data: {
-						callId: this.currentCall.id,
-						callUuid: this.currentCall.uuid
-					}
+				call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
+					isAIOn: newCopilotState,
+					...this.#getAnalyticsCallParams(),
+					isFailure: false
 				});
 				if (newCopilotState) {
 					this.sendStartCopilotRecordAnalytics({
+						isFailure: false,
 						isAutostart: false
 					});
 				} else {
 					this.copilotUiService?.showResultNotify();
 				}
+			}, error => this.#reportCopilotToggleFailure(error, toggledCall, newCopilotState));
+		}
+
+		/**
+		 * A refusal of the portal produces no recorder status at all, so the notify has to come from here:
+		 * nothing downstream shows it.
+		 *
+		 * Everything bound to the call — the notify and both analytics sends — happens only while the slot
+		 * still holds the call that asked: over the round trip it may hold another one, and that call
+		 * neither asked for the toggle nor owns the refusal.
+		 *
+		 * @param {*} error rejection of the toggle request
+		 * @param {?string|?number} toggledCall Util.getCallIdentifier taken before the request
+		 * @param {?boolean} newCopilotState the state the client asked for, or null when the direction can
+		 *   no longer be told
+		 */
+		#reportCopilotToggleFailure(error, toggledCall, newCopilotState) {
+			// the errors array is optional: a failure without one is still reported, as an unknown code
+			const failureCode = error?.errors?.[0]?.code;
+			const isSameCall = this.#isCallStillInSlot(toggledCall);
+
+			// The record names no call of its own: the log reads the context off the slot. Raised while a
+			// foreign call sits there, it would point the investigation at that call - worse than no record.
+			// An empty slot is fine: the record simply carries no room.
+			if (isSameCall || !this.currentCall) {
+				this.#writeCopilotAccident(failureCode);
+			}
+
+			// The portal answers about the portal: an availability flag it takes down stays true wherever
+			// the user is now. A refusal without a code names no flag, and the handler answers an unknown
+			// code with a console error of its own.
+			if (main_core.Type.isStringFilled(failureCode)) {
+				CallAI.handleCopilotError(failureCode);
+			}
+			if (!isSameCall) {
+				return;
+			}
+			if (this.viewPort) {
+				this.viewPort.showCopilotErrorNotify(failureCode);
+			}
+			if (newCopilotState === null) {
+				return;
+			}
+			call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
+				isAIOn: newCopilotState,
+				...this.#getAnalyticsCallParams(),
+				isFailure: true,
+				errorCode: failureCode
+			});
+			if (newCopilotState) {
+				this.sendStartCopilotRecordAnalytics({
+					isFailure: true,
+					errorCode: failureCode,
+					isAutostart: false
+				});
 			}
 		}
 		_onCallViewCopilotButtonClick() {
-			const isPlainCall = this.currentCall?.provider === Provider$1.Plain;
-			const isBitrixCall = this.currentCall?.provider === Provider$1.Bitrix;
+			const isPlainCall = this.currentCall?.provider === call_mapping.Provider.Plain;
+			const isBitrixCall = this.currentCall?.provider === call_mapping.Provider.Bitrix;
 			const isLegacyCall = Util.isLegacyCall(this.currentCall?.provider, this.currentCall?.scheme);
 			if (this.currentCall?.isCopilotActive) {
 				call_lib_analytics.Analytics.getInstance().copilot.onClickAIOff({
@@ -37073,6 +39857,9 @@ this.BX = this.BX || {};
 			error,
 			isCopilotActive
 		}) {
+			// Read before the early return on the tariff: on a portal with that flag down the mark
+			// would otherwise never be taken off.
+			const ownAttemptDirection = this.#copilotOwnAttempt.consume(Util.getCallIdentifier(this.currentCall));
 			this.#onUpdateCallCopilotState(isCopilotActive);
 			if (!CallAI.tariffAvailable) {
 				this.copilotUiService?.unblockCopilotButton();
@@ -37081,6 +39868,7 @@ this.BX = this.BX || {};
 			if (this.currentCall.isCopilotInitialized) {
 				if (!this.currentCall.initiatorId && isCopilotActive) {
 					this.sendStartCopilotRecordAnalytics({
+						isFailure: false,
 						isAutostart: true
 					});
 				}
@@ -37092,10 +39880,19 @@ this.BX = this.BX || {};
 					const errorType = isCopilotActive ? CopilotNotifyType.DISABLE_AI_INTERNAL_ERROR : CopilotNotifyType.ENABLE_AI_INTERNAL_ERROR;
 					this.viewPort.showCopilotErrorNotify(errorType);
 				}
-				this.sendStartCopilotRecordAnalytics({
-					error,
-					isAutostart: false
-				});
+
+				// The notify above stays unconditional: every participant sees it. Reporting the failure is the
+				// business of the client that asked for the toggle, and only of it.
+				if (ownAttemptDirection !== null) {
+					if (ownAttemptDirection === CopilotAttemptDirection.On) {
+						this.sendStartCopilotRecordAnalytics({
+							isFailure: true,
+							errorCode: error,
+							isAutostart: false
+						});
+					}
+					this.#writeCopilotAccident(error);
+				}
 			}
 			if (code === RecorderStatus.DISABLED) {
 				this.copilotUiService?.showResultNotify();
@@ -37138,17 +39935,6 @@ this.BX = this.BX || {};
 			} else {
 				this.commonRecord.info = structuredClone(event.commonRecordState);
 			}
-			if (this.callStore) {
-				try {
-					this.callStore.setRecordState({
-						state: this.commonRecord.state,
-						type: this.commonRecord.type ?? null,
-						initiatorId: this.commonRecord.initiatorId ?? null
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in recording handler:', error);
-				}
-			}
 			this.recordingUiService?.updateView(event.commonRecordState, {
 				type: 'cloudRecord',
 				userId: event.userId,
@@ -37157,17 +39943,43 @@ this.BX = this.BX || {};
 				eventRecordState: event.commonRecordState
 			});
 		}
+
+		/**
+		 * The message repeats the status of the analytics report verbatim, so a code read off the report is
+		 * searched for in the log as it stands. Telling these entries apart from the connection records of
+		 * the neighbouring log points is the job of the source: it is part of the grouping key.
+		 *
+		 * @param {*} failure refusal code of the portal, or the error of a recorder status
+		 */
+		#writeCopilotAccident(failure) {
+			// The logger is taken from the namespace, not from the loader: a failure worth logging is often
+			// a failure of the network, and a round trip in front of the record loses it exactly then.
+			const accidentLogger = main_core.Reflection.getClass('BX.Call.Lib.accidentLogger');
+			void accidentLogger?.addLog(null, call_lib_analytics.toAnalyticsErrorStatus(failure), 'copilot_record');
+		}
+
+		/**
+		 * @param {Object} params
+		 * @param {boolean} params.isFailure Set by the call site: a failure may come without a code, and a
+		 *   code on its own is not a sign of one.
+		 * @param {?string} [params.errorCode]
+		 * @param {boolean} params.isAutostart
+		 */
 		sendStartCopilotRecordAnalytics({
+			isFailure,
 			errorCode = null,
 			isAutostart
 		}) {
 			const params = {
 				...this.#getAnalyticsCallParams(),
+				isFailure,
 				errorCode,
-				chatUserCount: this.currentCall?.associatedEntity.userCounter,
+				chatUserCount: this.currentCall?.associatedEntity?.userCounter,
 				isAutostart
 			};
-			const userCount = this.getActiveCallUsers().length;
+
+			// Called from the answer to a toggle request, where the call may already be out of the slot.
+			const userCount = this.currentCall ? this.getActiveCallUsers().length : 0;
 			if (userCount) {
 				params.userCount = userCount + 1;
 			}
@@ -37187,7 +39999,6 @@ this.BX = this.BX || {};
 			if (this.currentCall.isScreenSharingStarted()) {
 				this.floatingWindowService?.hideScreenShareWindow();
 				this.layoutService?.closeWebScreenSharePopup();
-				this.promoService?.closeAll();
 				this.currentCall.stopScreenSharing();
 				if (this.#isCommonRecordStarted() && this.#canLocalRecord()) {
 					BXDesktopSystem.CallRecordStopSharing();
@@ -37219,11 +40030,15 @@ this.BX = this.BX || {};
 			if (!e.video && !this.currentCall.isScreenSharingStarted()) {
 				this.viewPort.releaseLocalMedia();
 			}
-			if (!this.currentCall.cameraId && e.video) {
+
+			// a pick made without the right to broadcast waits in Hardware until the camera goes on;
+			// the engine ignores an id it already holds, so an unchanged device costs nothing here
+			if (e.video && Hardware.defaultCamera) {
 				this.currentCall.setCameraId(Hardware.defaultCamera);
 			}
 		}
 		_onCallViewToggleVideoButtonClick(e) {
+			e.video = Boolean(e.video);
 			call_lib_analytics.Analytics.getInstance().onToggleCamera({
 				video: e.video,
 				...this.#getAnalyticsCallParams()
@@ -37267,38 +40082,22 @@ this.BX = this.BX || {};
 			if (this.reconnectingCameraId) {
 				this.setReconnectingCameraId(null);
 			}
-			if (this.currentCall) {
-				this.currentCall.setCameraId(e.deviceId);
-			}
 
-			// update default camera
+			// the pick is remembered regardless of the right to broadcast, applying it to the call is not
 			Hardware.defaultCamera = e.deviceId;
-			if (this.callStore) {
-				try {
-					this.callStore.setDeviceIds({
-						cameraId: Hardware.defaultCamera
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallViewReplaceCamera:', error);
-				}
+			if (this.currentCall && Util.havePermissionToBroadcast('cam')) {
+				this.currentCall.setCameraId(e.deviceId);
 			}
 		}
 		_onCallViewReplaceMicrophone(e) {
+			// the pick is remembered regardless of the right to broadcast, applying it to the call is not
+			Hardware.defaultMicrophone = e.deviceId;
 			if (this.currentCall) {
 				this.#callsWithManualMicrophone.add(this.currentCall);
-				this.currentCall.setMicrophoneId(e.deviceId);
+				// the view only mirrors the pick for the selector, the device is re-captured by the engine
 				this.viewPort.setMicrophoneId(e.deviceId);
-			}
-
-			// update default microphone
-			Hardware.defaultMicrophone = e.deviceId;
-			if (this.callStore) {
-				try {
-					this.callStore.setDeviceIds({
-						microphoneId: Hardware.defaultMicrophone
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallViewReplaceMicrophone:', error);
+				if (Util.havePermissionToBroadcast('mic')) {
+					this.currentCall.setMicrophoneId(e.deviceId);
 				}
 			}
 		}
@@ -37308,15 +40107,6 @@ this.BX = this.BX || {};
 				return;
 			}
 			Hardware.defaultSpeaker = e.deviceId;
-			if (this.callStore) {
-				try {
-					this.callStore.setDeviceIds({
-						speakerId: this.viewPort?.speakerId ?? null
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallViewReplaceSpeaker:', error);
-				}
-			}
 		}
 		_onAudioElementCreated(e) {
 			if (this.activeSpeakerManager) {
@@ -37327,23 +40117,14 @@ this.BX = this.BX || {};
 			if (this.viewPort) {
 				this.viewPort.confirmSpeakerSelection(e.deviceId);
 			}
-			if (this.callStore) {
-				try {
-					this.callStore.setDeviceIds({
-						speakerId: e.deviceId ?? null
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onSpeakerDeviceChanged:', error);
-				}
-			}
 		}
 		_onCallViewHasMainStream(event) {
 			if (!this.currentCall) {
 				return;
 			}
 			const provider = this.currentCall.provider;
-			const isBitrixCall = provider === Provider$1.Bitrix;
-			const isPlainCall = provider === Provider$1.Plain;
+			const isBitrixCall = provider === call_mapping.Provider.Bitrix;
+			const isPlainCall = provider === call_mapping.Provider.Plain;
 			const isJwtInPlainCallsEnabled = isPlainCall && !Util.isLegacyCall(provider, this.currentCall.scheme);
 			if (isBitrixCall || isJwtInPlainCallsEnabled) {
 				this.currentCall.setMainStream(event);
@@ -37412,52 +40193,26 @@ this.BX = this.BX || {};
 					stream: e.stream
 				});
 			}
-			if (this.callStore) {
-				try {
-					if (e.userId !== null && e.userId !== undefined) {
-						this.callStore.pinUser(e.userId);
-					} else {
-						this.callStore.unpinUser();
-					}
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallViewSetCentralUser:', error);
-				}
-			}
 		}
 		_onCallUserInvited(e) {
 			this.layoutService?.handleUserJoinEvent('onUserInvited', e, this.currentCall);
 		}
 		_onCallUserJoined(e) {
-			this.layoutService?.handleUserJoinEvent('onUserJoined', e, this.currentCall);
-			if (this.callStore) {
-				try {
-					const userFields = {
-						state: 'Connecting'
-					};
-					if (e.userData && e.userData[e.userId]) {
-						const userData = e.userData[e.userId];
-						if (userData.name !== undefined) {
-							userFields.name = userData.name;
-						}
-						if (userData.avatar_hr !== undefined) {
-							userFields.avatar = userData.avatar_hr;
-						} else if (userData.avatar !== undefined) {
-							userFields.avatar = userData.avatar;
-						}
-					}
-					this.callStore.updateUser(e.userId, userFields);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallUserJoined:', error);
-				}
-			}
+			const resolvedUserData = this.layoutService?.handleUserJoinEvent('onUserJoined', e, this.currentCall) ?? e.userData;
 			setTimeout(this.updateFloatingWindowContent.bind(this), 100);
 			if (this.viewPort) {
-				this.viewPort.updateUserData(e.userData);
+				this.viewPort.updateUserData(resolvedUserData);
 				this.viewPort.addUser(e.userId, UserState.Connected);
 			}
 		}
 		#isGuestUser() {
 			return this.messengerFacade.getCurrentUser?.()?.externalAuthId === 'im_guest';
+		}
+		#adoptCurrentCall(result, callUuid) {
+			if (result && (!this.currentCall || this.currentCall.uuid !== callUuid)) {
+				Util.setUserData(result.call.userData);
+				this.currentCall = result.call;
+			}
 		}
 		#createLobbyContainer() {
 			this.lobbyContainer = main_core.Tag.render`<div class="call-lobby-overlay"></div>`;
@@ -37469,12 +40224,36 @@ this.BX = this.BX || {};
 				this.lobbyContainer = null;
 			}
 		}
-		async #showCallLobby() {
+		async #runGuestLobbyAndPersistName(callerName) {
+			const lobbyResult = await this.#showCallLobby(callerName);
+			if (lobbyResult === null) {
+				return null;
+			}
+			const currentUser = this.messengerFacade.getCurrentUser?.();
+			if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name) {
+				try {
+					// Contract API-01: paired with im GuestService#applyUserToken (guest-name-popup) — keep both in sync.
+					const response = await BX.ajax.runAction('im.v2.Guest.setName', {
+						data: {
+							name: lobbyResult.userName
+						}
+					});
+					const userToken = response.data?.userToken;
+					if (userToken) {
+						call_lib_callTokenManager.CallTokenManager.setUserToken(userToken);
+					}
+				} catch (error) {
+					// Soft-fail: keep the previous name/token, do not block joining the call.
+					this.log('Guest setName failed, keeping previous name', error);
+				}
+			}
+			return lobbyResult;
+		}
+		async #showCallLobby(callerName = this.currentCall?.associatedEntity?.name || '') {
 			this.#createLobbyContainer();
 			const currentUser = this.messengerFacade.getCurrentUser?.();
 			const userName = currentUser?.name || '';
 			const userAvatar = currentUser?.avatar || '';
-			const callerName = this.currentCall?.associatedEntity?.name || '';
 			this.lobbyManager = new call_component_lobby.LobbyManager();
 			try {
 				const result = await this.lobbyManager.show({
@@ -37499,46 +40278,15 @@ this.BX = this.BX || {};
 		_onCallUserMicrophoneState(e) {
 			if (e.userId === this.userId) {
 				Hardware.isMicrophoneMuted = !e.microphoneState;
-				if (this.callStore) {
-					try {
-						this.callStore.setMediaState({
-							isMicrophoneMuted: !e.microphoneState
-						});
-						this.callStore.setUserMicrophoneState(e.userId, e.microphoneState);
-					} catch (error) {
-						console.error('[call.store] Pinia write failed in _onCallUserMicrophoneState (local):', error);
-					}
-				}
 			} else {
 				this.layoutService?.handleUserEvent('onUserMicrophoneState', e);
-				if (this.callStore) {
-					try {
-						this.callStore.setUserMicrophoneState(e.userId, e.microphoneState);
-					} catch (error) {
-						console.error('[call.store] Pinia write failed in _onCallUserMicrophoneState (remote):', error);
-					}
-				}
 			}
 		}
 		_onCallUserCameraState(e) {
 			this.layoutService?.handleUserEvent('onUserCameraState', e);
-			if (this.callStore) {
-				try {
-					this.callStore.setUserCameraState(e.userId, e.cameraState);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallUserCameraState:', error);
-				}
-			}
 		}
 		_onCallUserVideoPaused(e) {
 			this.layoutService?.handleUserEvent('onUserVideoPaused', e);
-			if (this.callStore) {
-				try {
-					this.callStore.setUserVideoPaused(e.userId, e.videoPaused);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallUserVideoPaused:', error);
-				}
-			}
 		}
 		_onCallUserScreenState(e) {
 			this.layoutService?.handleScreenStateEvent(e, this.currentCall);
@@ -37562,15 +40310,13 @@ this.BX = this.BX || {};
 		}
 		_onCallConnectionQualityChanged(e) {
 			this.layoutService?.handleUserEvent('onConnectionQualityChanged', e);
-			if (this.callStore) {
-				try {
-					this.callStore.setUserConnectionQuality(e.userId, e.quality);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallConnectionQualityChanged:', error);
-				}
-			}
 		}
 		_onCallUserVoiceStarted(e) {
+			// before the local branch: it returns early, and the silence limit must see every signal
+			this.viewPort?.notifySpeechSignal({
+				userId: e.userId,
+				local: e.local
+			}, true);
 			if (e.local) {
 				if (this.currentCall.muted && this.isMutedPopupAllowed()) {
 					this.notificationService?.showMicMutedNotification(this.layoutService?.isFolded ? null : this.viewPort?.buttons?.microphone?.elements?.icon);
@@ -37581,29 +40327,19 @@ this.BX = this.BX || {};
 			}
 			this.talkingUsers[e.userId] = true;
 			this.layoutService?.handleUserEvent('onUserVoiceStarted', e);
-			if (this.callStore) {
-				try {
-					this.callStore.setUserTalking(e.userId, true);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallUserVoiceStarted:', error);
-				}
-			}
 			if (e.userId === this.viewPort?.localUser?.id) {
 				this.viewPort?.setUserFloorRequestState(e.userId, false);
 			}
 		}
 		_onCallUserVoiceStopped(e) {
+			this.viewPort?.notifySpeechSignal({
+				userId: e.userId,
+				local: e.local
+			}, false);
 			if (this.talkingUsers[e.userId]) {
 				delete this.talkingUsers[e.userId];
 			}
 			this.layoutService?.handleUserEvent('onUserVoiceStopped', e);
-			if (this.callStore) {
-				try {
-					this.callStore.setUserTalking(e.userId, false);
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallUserVoiceStopped:', error);
-				}
-			}
 		}
 		_onAllParticipantsAudioMuted(e) {
 			this.notificationService?.showAllParticipantsMutedNotification(e, 'audio');
@@ -37646,7 +40382,6 @@ this.BX = this.BX || {};
 				} else if (e.data.track?.type === 2 && this.currentCall?.isScreenSharingStarted()) {
 					this.floatingWindowService?.hideScreenShareWindow();
 					this.layoutService?.closeWebScreenSharePopup();
-					this.promoService?.closeAll();
 					this.currentCall.stopScreenSharing();
 					if (this.#isCommonRecordStarted() && this.#canLocalRecord()) {
 						BXDesktopSystem.CallRecordStopSharing();
@@ -37658,11 +40393,23 @@ this.BX = this.BX || {};
 			this.layoutService?.handleUserEvent('onTrackSubscriptionFailed', e);
 		}
 		#onCallFailure(e) {
+			if (!this.#isEventFromSlotCall(e?.call)) {
+				return;
+			}
+			this.viewPort?.notifyConnectionLost();
 			const errorCode = e.code || e.name || e.error;
+			main_core_events.EventEmitter.emit('CallEvents::callStartFailed', {
+				callUuid: this.currentCall?.uuid,
+				errorCode
+			});
 			if (errorCode === DisconnectReason.SignalingReconnectCooldown) {
 				this.messengerFacade.stopRepeatSound('dialtone');
 				this.leaveCurrentCall();
 				Hardware.isMicrophoneMuted = false;
+				return;
+			}
+			if (isBusinessLeaveReason(errorCode)) {
+				this.#finishCallOnBusinessLeave(errorCode);
 				return;
 			}
 			if (e.name === 'VoxConnectionError' || e.name === 'AuthResult') {
@@ -37676,6 +40423,9 @@ this.BX = this.BX || {};
 			this.messengerFacade.stopRepeatSound('dialtone');
 			this.autoCloseCallView = false;
 			if (this.currentCall) {
+				// This branch destroys the call itself, so neither onLeave nor onDestroy reaches the
+				// controller: a series that broke together with the call would lose its outcome here.
+				this.#reconnectSeriesReporter.reportCallLost();
 				this.#teardownCallConnection();
 				if (this.currentCallIsNew && Util.isLegacyCall(this.currentCall.provider, this.currentCall.scheme)) {
 					BX.ajax.runAction('call.CallManager.interrupt', {
@@ -37691,6 +40441,27 @@ this.BX = this.BX || {};
 			this.#clearPromotedAdminTimeout();
 			Hardware.isMicrophoneMuted = false;
 		}
+		#finishCallOnBusinessLeave(errorCode) {
+			// Server business outcome, not a connection failure: finish the call the regular way.
+			this.log('Business leave', errorCode);
+			this.messengerFacade.stopRepeatSound('dialtone');
+			if (this.currentCall) {
+				// Keep listeners: destroy() must reach the regular teardown.
+				// BitrixCall emits onLeave, so _onCallLeave closes the view unconditionally.
+				// BitrixCallLegacy.destroy() emits onDestroy only, so the view is closed by
+				// _onCallDestroy — and solely because autoCloseCallView is still true.
+				// Never reset that flag here: on the classic scheme it is the only way out.
+				this.currentCall.destroy();
+				this.currentCall = null;
+				this.currentCallIsNew = false;
+			} else {
+				// The call rejected inside createCall(), so currentCall was never assigned,
+				// while the view port already exists. leaveCurrentCall() closes it and frees media.
+				this.leaveCurrentCall();
+			}
+			this.#clearPromotedAdminTimeout();
+			Hardware.isMicrophoneMuted = false;
+		}
 		_onCallMicrophoneLevel(e) {
 			this.layoutService?.handleUserEvent('onMicrophoneLevel', e);
 		}
@@ -37698,7 +40469,6 @@ this.BX = this.BX || {};
 			if (!e.initiator && !this.currentCall.currentRoom()) {
 				this.currentCall.joinRoom(e.roomId);
 				this.notificationService?.showRoomJoinedPopup({
-					isAuto: true,
 					isSpeaker: e.speaker === this.userId,
 					userIdList: e.users,
 					localUserId: this.userId,
@@ -37743,7 +40513,38 @@ this.BX = this.BX || {};
 				this.viewPort?.setRoomState(call_mapping.ViewRoomState.NonSpeaker);
 			}
 		}
-		_onCallDestroy() {
+
+		/**
+		 * Every call event carries its own call (see AbstractCall.runCallback). A call that has already left
+		 * the slot must not tear down the call that took it — so the destructive handlers check the source.
+		 *
+		 * @param {?object} call — call from the event payload
+		 * @return {boolean}
+		 */
+		#isEventFromSlotCall(call) {
+			if (!call || !this.currentCall) {
+				return true;
+			}
+			return Util.getCallIdentifier(call) === Util.getCallIdentifier(this.currentCall);
+		}
+		_onCallDestroy(e) {
+			if (!this.#isEventFromSlotCall(e?.call)) {
+				return;
+			}
+
+			// A classic-scheme call reaches the controller by this event alone, without onLeave.
+			this.#reconnectSeriesReporter.reportCallLost();
+			this.#copilotOwnAttempt.reset();
+
+			// Best-effort record_stop for cloud recording when the call is destroyed externally.
+			// Must run before currentCall is cleared, as helpers depend on it.
+			if (this.#canCloudRecord() && this.#isCommonRecordStarted() && this.commonRecord.initiatorId === this.userId) {
+				const {
+					callId,
+					callType
+				} = this.#getAnalyticsCallParams();
+				this.recordingUiService?.trackCloudRecordStopOnDisconnect(callId, callType, this.commonRecord.info, false);
+			}
 			if (this.lobbyManager && this.lobbyManager.isShown()) {
 				this.lobbyManager.destroy();
 				this.#destroyLobbyContainer();
@@ -37773,13 +40574,6 @@ this.BX = this.BX || {};
 			this.notificationService?.closeRiseYouHandToTalkPopup();
 			this.documentEditorService?.resetDocumentCreated();
 			this.#teardownCallUi();
-			if (this.callStore) {
-				try {
-					this.callStore.resetCall();
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallDestroy:', error);
-				}
-			}
 			this.emit(Events.onCallDestroyed, {
 				callDetails
 			});
@@ -37808,16 +40602,6 @@ this.BX = this.BX || {};
 					this.cameraBlockedForLegacyMobile = true;
 				}
 			}
-			this.#syncUserStateToPinia(e.userId, e.state);
-			if (this.callStore && e.direction !== undefined) {
-				try {
-					this.callStore.updateUser(e.userId, {
-						direction: e.direction
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallUserStateChanged (M1 direction):', error);
-				}
-			}
 			if (e.state !== UserState.Connected && this.loopTimers[e.userId] === undefined) {
 				this.loopConnectionQuality(e.userId, 1);
 			}
@@ -37828,7 +40612,7 @@ this.BX = this.BX || {};
 				this.clearConnectionQualityTimer(e.userId);
 				this.viewPort.setUserConnectionQuality(e.userId, 5);
 				this.viewPort?.notifyUserJoined(e.userId);
-				const isNeedUnblockCameraButton = Hardware.hasCamera() && (this.currentCall.provider === Provider$1.Bitrix && !Hardware.isCameraOn || this.currentCall.provider === Provider$1.Plain);
+				const isNeedUnblockCameraButton = Hardware.hasCamera() && (this.currentCall.provider === call_mapping.Provider.Bitrix && !Hardware.isCameraOn || this.currentCall.provider === call_mapping.Provider.Plain);
 				const isCopilotFeaturesEnabled = Util.isLegacyCall(this.currentCall.provider, this.currentCall.scheme) && CallAI.serviceEnabled;
 				this.buttonStateService?.unblockOnUserConnected({
 					isLegacyMobile: e.isLegacyMobile,
@@ -37839,7 +40623,7 @@ this.BX = this.BX || {};
 				if (!e.isLegacyMobile && isNeedUnblockCameraButton) {
 					this.cameraBlockedForLegacyMobile = false;
 				}
-				if (this.currentCall.provider === Provider$1.Plain) {
+				if (this.currentCall.provider === call_mapping.Provider.Plain && !this.#isGuestUser()) {
 					this.viewPort.unblockAddUser();
 				}
 			} else if (e.state == UserState.Idle && e.previousState == UserState.Connected) {
@@ -37855,7 +40639,7 @@ this.BX = this.BX || {};
 				const chatUserCount = this.currentCall?.associatedEntity?.userCounter ?? 0;
 				if (chatUserCount <= LARGE_CHAT_NOTIFICATION_THRESHOLD) {
 					const isLegacyCall = Util.isLegacyCall(this.currentCall.provider, this.currentCall.scheme);
-					const isBitrixCall = this.currentCall.provider === Provider$1.Bitrix;
+					const isBitrixCall = this.currentCall.provider === call_mapping.Provider.Bitrix;
 					const callId = isLegacyCall || !isBitrixCall ? this.currentCall.id : e.callId;
 					this.notificationService?.showUserCallStateNotification('IM_M_CALL_USER_DECLINED', callId, e.userId, DEFAULT_GENDER);
 				}
@@ -37873,19 +40657,6 @@ this.BX = this.BX || {};
 				}
 			}
 		}
-		#syncUserStateToPinia(userId, state) {
-			if (!this.callStore) {
-				return;
-			}
-			try {
-				this.callStore.setUserState(userId, state);
-				if (state === UserState.Connected) {
-					this.callStore.setUserConnectionQuality(userId, 5);
-				}
-			} catch (error) {
-				console.error('[call.store] Pinia write failed in _onCallUserStateChanged:', error);
-			}
-		}
 		_onNeedResetMediaDevicesState(e) {
 			console.log('_onNeedResetMediaDevicesState');
 			Util.sendLog({
@@ -37901,31 +40672,42 @@ this.BX = this.BX || {};
 		_onRemoteMediaUnavailable(e) {
 			this.viewPort?.trackAvailabilityChanged(e.userId, e.kind, e.available);
 		}
+
+		// Publishing holds the button for as long as the track is being sent. It is a state of the
+		// transport, not a change of what the user is allowed to do, so the picture-in-picture window
+		// is told to stay quiet about it: otherwise every own switch of a device is spoken twice.
 		_onCameraPublishing(e) {
+			if (!this.viewPort) {
+				return;
+			}
 			if (e.publishing) {
-				this.buttonStateService?.blockCameraButton();
+				this.viewPort.blockSwitchCamera({
+					announce: false
+				});
 			}
 			// The view keeps one blocked flag per button, so releasing our hold must not lift a block another
 			// reason still holds: the right to broadcast video and a legacy mobile participant share this button.
 			else if (Util.havePermissionToBroadcast('cam') && !this.cameraBlockedForLegacyMobile) {
-				this.buttonStateService?.unblockCameraButton();
+				this.viewPort.unblockSwitchCamera({
+					announce: false
+				});
 			}
-			if (this.viewPort) {
-				this.viewPort.updateButtons();
-			}
+			this.viewPort.updateButtons();
 		}
 		_onMicrophonePublishingd(e) {
 			if (!this.viewPort) {
 				return;
 			}
 			if (e.publishing) {
-				this.buttonStateService?.blockMicrophoneButton();
+				this.viewPort.blockSwitchMicrophone({
+					announce: false
+				});
 			} else {
-				this.buttonStateService?.unblockMicrophoneButton();
+				this.viewPort.unblockSwitchMicrophone({
+					announce: false
+				});
 			}
-			if (this.viewPort) {
-				this.viewPort.updateButtons();
-			}
+			this.viewPort.updateButtons();
 		}
 		_onCallLocalScreenUpdated(e) {
 			const {
@@ -37976,15 +40758,6 @@ this.BX = this.BX || {};
 					this.viewPort.updateButtons();
 				}
 			}
-			if (this.callStore) {
-				try {
-					this.callStore.setMediaState({
-						isScreenSharingActive: Boolean(this.currentCall?.isScreenSharingStarted())
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallLocalMediaReceived:', error);
-				}
-			}
 			const hasNoVideoTrack = !e.stream || e.stream?.getVideoTracks().length === 0;
 			if (this.currentCall && Hardware.isCameraOn && e.tag === 'main' && hasNoVideoTrack) {
 				Hardware.isCameraOn = false;
@@ -38003,15 +40776,6 @@ this.BX = this.BX || {};
 			if (this.viewPort && e.kind === 'audio') {
 				Hardware.isMicrophoneMuted = true;
 			}
-			if (this.callStore) {
-				try {
-					this.callStore.setMediaState({
-						isScreenSharingActive: Boolean(this.currentCall?.isScreenSharingStarted())
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in _onCallLocalMediaStopped:', error);
-				}
-			}
 		}
 		_onCallToggleRemoteParticipantVideo(e) {
 			this.notificationService?.handleRemoteParticipantVideoToggle(e.isVideoShown);
@@ -38026,6 +40790,9 @@ this.BX = this.BX || {};
 				this.buttonStateService?.unblockMicrophoneButton();
 			} else {
 				this.buttonStateService?.blockMicrophoneButton();
+				// all three ways the right can be revoked - permissions, role, room settings - end up
+				// here, and none of them touches the state of the microphone
+				this.viewPort?.notifyBroadcastRightLost();
 			}
 		}
 		_onTurnOnCamera(e) {
@@ -38044,7 +40811,7 @@ this.BX = this.BX || {};
 					this._onCallViewFloorRequestButtonClick();
 				}
 			}
-			this.notificationService?.showPermissionsChangedNotification(e.data, CallEngine.getCurrentUserId());
+			this.notificationService?.showPermissionsChangedNotification(e.data);
 			if (this.viewPort) {
 				this.viewPort.setUserPermissionToSpeakState(e.data.toUserId, e.data.allow);
 			}
@@ -38132,17 +40899,6 @@ this.BX = this.BX || {};
 			} else {
 				this.commonRecord.info = commonRecordState;
 			}
-			if (this.callStore) {
-				try {
-					this.callStore.setRecordState({
-						state: this.commonRecord.state,
-						type: this.commonRecord.type ?? null,
-						initiatorId: this.commonRecord.initiatorId ?? null
-					});
-				} catch (error) {
-					console.error('[call.store] Pinia write failed in recording handler:', error);
-				}
-			}
 			this.recordingUiService?.updateView(commonRecordState, {
 				type: 'localRecord',
 				initiatorId,
@@ -38162,8 +40918,7 @@ this.BX = this.BX || {};
 					dialogName: this.currentCall.associatedEntity.name,
 					formatRecordDate: this.formatRecordDate,
 					recordType: this.commonRecord.type,
-					isMicrophoneMuted: Hardware.isMicrophoneMuted,
-					windowId: call_mapping.ViewRecordSource.Chat
+					isMicrophoneMuted: Hardware.isMicrophoneMuted
 				});
 				return;
 			}
@@ -38174,16 +40929,14 @@ this.BX = this.BX || {};
 		}
 		_onNetworkProblem() {}
 		_onReconnecting(e) {
-			call_lib_analytics.Analytics.getInstance().onReconnect({
-				...this.#getAnalyticsCallParams(),
-				reconnectionReason: e.reconnectionReason,
-				reconnectionReasonInfo: e.reconnectionReasonInfo,
-				reconnectionEventCount: e.reconnectionEventCount,
-				isVpnActive: this.#isVpnConnected()
-			});
+			this.viewPort?.notifyConnectionLost();
 			this.notificationService?.showReconnectingBalloon();
+
+			// The report goes last: the interface tells the user about every attempt, the report wants one
+			// event per series, and a failure of the report must not cost the user the notice.
+			this.#reconnectSeriesReporter.reportSeriesStarted(e);
 		}
-		_onReconnected() {
+		_onReconnected(e) {
 			this.setReconnectingCameraId(this.lastUsedCameraId);
 			// todo: restore after fixing balloon resurrection issue
 			// related to multiple simultaneous calls to the balloon manager
@@ -38195,17 +40948,24 @@ this.BX = this.BX || {};
 				this.viewPort.resetTalkingUsers();
 				this.talkingUsers = {};
 			}
+
+			// The report goes last: a failure of the telemetry must not cost the user the picture back.
+			this.#reconnectSeriesReporter.reportSeriesRecovered(e);
 		}
 		_onReconnectingFailed(e) {
-			call_lib_analytics.Analytics.getInstance().onReconnectError({
-				callId: Util.getCallIdentifier(this.currentCall),
-				callType: this.getCallType(),
-				errorCode: e?.error?.code,
-				errorMessage: e?.error?.message,
-				isVpnActive: this.#isVpnConnected()
-			});
+			this.#reconnectSeriesReporter.reportSeriesFailed(e?.error);
 		}
-		_onParticipantReconnecting(e) {}
+		#onReconnectSeriesOutcome(e) {
+			this.#reconnectSeriesReporter.reportSeriesOutcome(e);
+		}
+		_onParticipantReconnecting(e) {
+			const userId = e?.participant?.userId;
+			if (userId) {
+				this._onCallUserVoiceStopped({
+					userId
+				});
+			}
+		}
 		_onParticipantReconnected(e) {
 			if (e?.participant?.userId && this.viewPort?.wrappedView?.users) {
 				const callUser = this.viewPort.wrappedView.users[e.participant.userId];
@@ -38297,6 +41057,9 @@ this.BX = this.BX || {};
 			this.#clearPromotedAdminTimeout();
 		}
 		_onCallJoin(e) {
+			if (!this.#isEventFromSlotCall(e?.call)) {
+				return;
+			}
 			if (this.viewPort && !this.clickLinkInterceptor) {
 				this.clickLinkInterceptor = Util.getClickLinkInterceptor();
 				this.clickLinkInterceptor.startIntercepting();
@@ -38325,6 +41088,10 @@ this.BX = this.BX || {};
 			this.messengerFacade.stopRepeatSound(this.audioRingtone);
 		}
 		_onCallLeave(e) {
+			if (!this.#isEventFromSlotCall(e?.call)) {
+				return;
+			}
+			this.#copilotOwnAttempt.reset();
 			if (this.lobbyManager && this.lobbyManager.isShown()) {
 				this.lobbyManager.destroy();
 				this.#destroyLobbyContainer();
@@ -38335,7 +41102,22 @@ this.BX = this.BX || {};
 				this.log(new Error('received remote leave with active call!'));
 				return;
 			}
+
+			// Below the guards on purpose: a remote leave means the user hung up somewhere else, and the
+			// call in this tab goes on. Above #teardownCallConnection(), while the call is still here.
+			this.#reconnectSeriesReporter.reportCallLost();
 			Hardware.isMicrophoneMuted = false;
+
+			// Best-effort record_stop for cloud recording when this leave actually ends the call:
+			// on last-user-left the engine auto-hangups and emits onLeave (onDestroy sees no record state).
+			// viewPort limits reporting to the tab hosting the call UI (mirrors the call_finish guard below).
+			if (this.currentCall && !this.#isLocalRecordStarted() && this.#canCloudRecord() && this.#isCommonRecordStarted() && Boolean(this.viewPort) && this.getActiveCallUsers().length === 0 && (this.currentCall.provider !== call_mapping.Provider.Plain || this.commonRecord.initiatorId === this.userId)) {
+				const {
+					callId,
+					callType
+				} = this.#getAnalyticsCallParams();
+				this.recordingUiService?.trackCloudRecordStopOnDisconnect(callId, callType, this.commonRecord.info, false);
+			}
 			this.#stopCommonRecord();
 			this.documentEditorService?.resetDocumentCreated();
 			let callDetails;
@@ -38438,7 +41220,7 @@ this.BX = this.BX || {};
 			});
 			Util.setUserData(userData);
 			this.viewPort?.updateUserData(userData);
-			if (Util.isCallServerAllowed() && this.currentCall.provider === Provider$1.Plain) {
+			if (Util.isCallServerAllowed() && this.currentCall.provider === call_mapping.Provider.Plain) {
 				this.#teardownCallConnection();
 				if (this.currentCall.isScreenSharingStarted()) {
 					if (this.currentCall.transferScreenStream) {
@@ -38603,7 +41385,7 @@ this.BX = this.BX || {};
 			}
 		}
 		#fetchAndSetGuestLink() {
-			const isGroupCall = this.currentCall.provider !== Provider$1.Plain;
+			const isGroupCall = this.currentCall.provider !== call_mapping.Provider.Plain;
 			if (!isGroupCall) {
 				this.viewPort.setGuestLink(null);
 				return;
@@ -38635,23 +41417,36 @@ this.BX = this.BX || {};
 		 *   The call instance does not exist yet when an entry fails, so the type and the identifier of
 		 *   the event come from the attempt and not from `currentCall`.
 		 */
-		async #handleJoinCallError(error, attempt = {}) {
+		#handleJoinCallError(error, attempt = {}) {
 			let errorCode = Util.getCallConnectionErrorCode(error);
 			const errorMessage = Util.getCallConnectionErrorMessage(error);
 			if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message) {
 				errorCode = getUnknownErrorType(error?.message);
 			}
-			this.#loadAccidentLogger().then(({
-				accidentLogger
-			}) => accidentLogger?.addLog(error, errorCode)).catch(() => {});
+			const accidentLogger = main_core.Reflection.getClass('BX.Call.Lib.accidentLogger');
+			void accidentLogger?.addLog(error, errorCode);
 			call_lib_analytics.Analytics.getInstance().onJoinCallError({
 				callType: this.getCallType(attempt.provider),
 				errorCode,
 				callId: attempt.callId,
 				errorMessage,
 				isVpnActive: this.#isVpnConnected(),
-				isRoomClosed: error?.isRoomClosed === true
+				isRoomClosed: error?.isRoomClosed === true,
+				isOffline: Util.isOfflineJoinFailure(errorCode, navigator.onLine)
 			});
+		}
+		#toCallLogNumber(value) {
+			const numericValue = Number(value);
+			return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : undefined;
+		}
+		#beginStartingCallLogContext(context) {
+			this.#startingCallLogContext = context;
+			return context;
+		}
+		#endStartingCallLogContext(context) {
+			if (this.#startingCallLogContext === context) {
+				this.#startingCallLogContext = null;
+			}
 		}
 		#clearPromotedAdminTimeout() {
 			if (this.promotedToAdminTimeout) {
@@ -38666,7 +41461,6 @@ this.BX = this.BX || {};
 			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 				im_v2_lib_desktopApi.DesktopApi.closeWindow(im_v2_lib_desktopApi.DesktopApi.findWindow('callBackground'));
 			}
-			this.promoService?.closeAll();
 			if (this.notificationService) {
 				this.notificationService.allowMutePopup = true;
 			}
@@ -38687,6 +41481,7 @@ this.BX = this.BX || {};
 			}
 		}
 		destroy() {
+			call_lib_settingsManager.CallLogContextRegistry.unregisterProvider(this.#provideCallLogContext);
 			this.floatingWindowService?.destroy();
 			this.floatingWindowService = null;
 			if (this.resizeObserver) {
@@ -38694,10 +41489,9 @@ this.BX = this.BX || {};
 				this.resizeObserver = null;
 			}
 			this.callMultiBroadcastClient && this.callMultiBroadcastClient.destroy();
+			this.#callTabNotifier.stop();
 			Hardware.unsubscribe(Hardware.Events.onChangeMirroringVideo, this._onCallLocalCameraFlipHandler);
 			Hardware.unsubscribe(Hardware.Events.onChangeMicrophonePermission, this.#onChangeMicrophonePermissionHandler);
-			Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.#onHardwareMicrophoneMutedChangeHandler);
-			Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.#onHardwareCameraOnChangeHandler);
 			main_core_events.EventEmitter.unsubscribe(CALL_ALREADY_FINISHED_EVENT, this.#onCallAlreadyFinished);
 		}
 		log() {
@@ -38712,16 +41506,19 @@ this.BX = this.BX || {};
 			return 4;
 		}
 		_onCallToggleSubscribe(e) {
-			if (this.currentCall && this.currentCall.provider === Provider$1.Bitrix) {
+			if (this.currentCall && this.currentCall.provider === call_mapping.Provider.Bitrix) {
 				this.currentCall.toggleRemoteParticipantVideo(e.participants, e.showVideo, true);
 			}
 		}
 		_onChangeVideoQuality(event) {
-			if (this.currentCall && this.currentCall.provider === Provider$1.Bitrix) {
+			if (this.currentCall && this.currentCall.provider === call_mapping.Provider.Bitrix) {
 				const params = {
 					isCameraWasEnabledBeforeQualityChanged: event.isCameraWasEnabledBeforeQualityChanged,
 					videoQuality: event.videoQuality,
-					otherUsers: this.currentCall.users
+					users: {
+						userId: event.userId,
+						otherUsers: this.currentCall.users
+					}
 				};
 				this.currentCall.setVideoQualityForStreams(params);
 			}
@@ -38739,7 +41536,7 @@ this.BX = this.BX || {};
 			if (!this.currentCall) {
 				return;
 			}
-			const isPlainCall = this.currentCall.provider === Provider$1.Plain;
+			const isPlainCall = this.currentCall.provider === call_mapping.Provider.Plain;
 
 			// Firefox returns 'prompt' instead of 'denied' when permission is revoked
 			const isPermissionBlocked = state === Hardware.CALL_HARDWARE_PERMISSIONS_STATE.DENIED || BX.browser.IsFirefox() && state === Hardware.CALL_HARDWARE_PERMISSIONS_STATE.PROMPT;
@@ -38748,92 +41545,25 @@ this.BX = this.BX || {};
 				this.notificationService?.showNotification(main_core.Loc.getMessage('CALL_ERROR_MICROPHONE_STREAM_STOPPED'));
 			}
 		}
-		#onHardwareMicrophoneMutedChange(event) {
-			if (this.callStore) {
-				this.callStore.setMediaState({
-					isMicrophoneMuted: event.data.isMicrophoneMuted
-				});
-			}
-		}
-		#onHardwareCameraOnChange(event) {
-			if (this.callStore) {
-				this.callStore.setMediaState({
-					isCameraOn: event.data.isCameraOn
-				});
-			}
-		}
 		static FeatureState = FeatureState;
 		static Events = Events;
 		static ViewState = ViewState;
 		static DocumentType = DocumentType;
 	}
 
-	const {
-		dbName,
-		storeName
-	} = call_lib_settingsManager.AccidentLogStorageKeys;
-	const countLogs = () => new Promise(resolve => {
-		const request = indexedDB.open(dbName);
-		request.onsuccess = () => {
-			const db = request.result;
-			if (!db.objectStoreNames.contains(storeName)) {
-				db.close();
-				resolve(0);
-				return;
-			}
-			const countRequest = db.transaction(storeName, 'readonly').objectStore(storeName).count();
-			countRequest.onsuccess = () => {
-				resolve(countRequest.result);
-				db.close();
-			};
-			countRequest.onerror = () => {
-				resolve(0);
-				db.close();
-			};
-		};
-		request.onerror = () => resolve(0);
-	});
-	const hasPendingLogs = async () => {
-		if (!main_core.Type.isObject(window.indexedDB)) {
-			return false;
-		}
-		if (main_core.Type.isFunction(indexedDB.databases)) {
-			const databases = await indexedDB.databases();
-			if (!databases.some(database => database.name === dbName)) {
-				return false;
-			}
-		}
-		return (await countLogs()) > 0;
-	};
-	const sendPendingAccidentLogs = () => {
-		const run = async () => {
-			try {
-				if (await hasPendingLogs()) {
-					await BX.Runtime.loadExtension('call.lib.accident-logger');
-				}
-			} catch {
-				//
-			}
-		};
-		if (main_core.Type.isFunction(window.requestIdleCallback)) {
-			requestIdleCallback(run, {
-				timeout: 5000
-			});
-		} else {
-			setTimeout(run, 2000);
-		}
-	};
-
 	applyHacks();
-	sendPendingAccidentLogs();
 	// compatibility
 	BX.CallEngine = CallEngine;
 
-	exports.UserListPopup = call_component_userListPopup.UserListPopup;
-	exports.UserList = call_component_userList.UserList;
+	exports.BackgroundDialog = call_lib_backgroundDialog.BackgroundDialog;
+	exports.Provider = call_mapping.Provider;
+	exports.State = call_mapping.CallState;
+	exports.Type = call_mapping.CallType;
+	exports.UserListPopup = call_legacy_component_userListPopup.UserListPopup;
+	exports.UserList = call_legacy_component_userList.UserList;
 	exports.MediaStreamRegistry = call_lib_mediaRegistry.MediaStreamRegistry;
-	exports.BackgroundDialog = BackgroundDialog;
 	exports.ButtonStateService = ButtonStateService;
+	exports.CALL_PHONE_SVG = CALL_PHONE_SVG;
 	exports.CallAI = CallAI;
 	exports.CallCloudRecord = CallCloudRecord;
 	exports.CallCommonRecordState = CallCommonRecordState;
@@ -38859,23 +41589,18 @@ this.BX = this.BX || {};
 	exports.HangupOptionsUiService = HangupOptionsUiService;
 	exports.Hardware = Hardware;
 	exports.Hint = CallHint;
-	exports.IncomingNotificationContent = IncomingNotificationContent;
 	exports.JoinResponseError = JoinResponseError;
 	exports.LOCAL_STREAM_QUALITY_HEIGHT = LOCAL_STREAM_QUALITY_HEIGHT;
 	exports.LayoutService = LayoutService;
 	exports.MediaRenderer = MediaRenderer;
 	exports.MediaStreamsKinds = MediaStreamsKinds;
-	exports.NotificationConferenceContent = NotificationConferenceContent;
 	exports.NotificationService = NotificationService;
 	exports.ParticipantsPermissionPopup = ParticipantsPermissionPopup;
 	exports.PictureInPictureService = PictureInPictureService;
-	exports.PromoService = PromoService;
-	exports.Provider = Provider$1;
+	exports.ReconnectSeriesReporter = ReconnectSeriesReporter;
 	exports.RecordingUiService = RecordingUiService;
 	exports.STREAM_QUALITY = STREAM_QUALITY;
 	exports.StartCallErrorCode = StartCallErrorCode;
-	exports.State = CallState;
-	exports.Type = CallType$1;
 	exports.UnsupportedBrowserFeatures = UnsupportedBrowserFeatures;
 	exports.UserState = UserState;
 	exports.Util = Util;
@@ -38883,5 +41608,5 @@ this.BX = this.BX || {};
 	exports.WebScreenSharePopup = WebScreenSharePopup;
 	exports.getUnknownErrorType = getUnknownErrorType;
 
-})(this.BX.Call = this.BX.Call || {}, BX, BX.Call.Adapter, BX.Call.Adapter, BX.Event, BX.Main, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Messenger.v2.Lib, BX.UI.Dialogs, BX.UI.Notification, BX.Messenger.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Vue3.Pinia, BX.Call.Store, BX.Call.Lib, BX.Call.Infrastructure, BX.Call.Lib, BX.UI, BX.Call.Mapping, BX.Messenger.v2.Lib, BX.UI, BX.Call.Lobby, BX.Call.Component, BX.Call.Component, BX.Call.Lib.MediaRegistry);
+})(this.BX.Call = this.BX.Call || {}, BX.Call.Lib, BX, BX.Messenger.v2.Lib, BX.Main, BX.UI.Accessibility, BX.UI, BX.Call.Mapping, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Event, BX.UI.Dialogs, BX.UI.Notification, BX.Messenger.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Infrastructure, BX.Call.Application, BX.Call.Lib, BX.Messenger.v2.Lib, BX.UI, BX.Call.Lobby, BX.Call.Legacy.Component, BX.Call.Legacy.Component, BX.Call.Lib.MediaRegistry);
 //# sourceMappingURL=call.bundle.js.map

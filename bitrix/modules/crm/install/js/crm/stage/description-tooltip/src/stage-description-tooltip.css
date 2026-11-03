@@ -1,0 +1,31 @@
+.crm-stage-description-tooltip {
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-lg);
+	overflow-wrap: anywhere;
+}
+
+.crm-stage-description-tooltip__name {
+	margin: 0;
+}
+
+.crm-stage-description-tooltip__description .ui-typography-paragraph,
+.crm-stage-description-tooltip__description .ui-typography-link,
+.crm-stage-description-tooltip__description .ui-typography-link:hover,
+.crm-stage-description-tooltip__description .ui-typography-link:active,
+.crm-stage-description-tooltip__description .ui-typography-link:focus,
+.crm-stage-description-tooltip__description .ui-typography-link:visited {
+	color: var(--ui-color-base-8) !important;
+}
+
+/* WCAG 1.4.1: links share the text color, so the underline tells them apart in every state. */
+.crm-stage-description-tooltip__description .ui-typography-link,
+.crm-stage-description-tooltip__description .ui-typography-link:hover,
+.crm-stage-description-tooltip__description .ui-typography-link:active,
+.crm-stage-description-tooltip__description .ui-typography-link:focus,
+.crm-stage-description-tooltip__description .ui-typography-link:visited {
+	text-decoration-line: underline;
+}
+
+.crm-stage-description-tooltip__description p {
+	margin: 0;
+}

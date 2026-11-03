@@ -1,7 +1,7 @@
 .tasks-field-results {
 	display: flex;
 	flex-direction: column;
-	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	background: var(--ui-color-bg-content-secondary);
 	border-radius: var(--ui-border-radius-md);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
@@ -18,6 +18,15 @@
 }
 
 .tasks-field-results-more {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	width: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -64,9 +73,33 @@
 }
 
 .tasks-field-results-title-main {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
 	display: flex;
 	align-items: center;
 	flex: 1;
+	cursor: pointer;
+}
+.tasks-field-results-title-main:disabled {
+	cursor: default;
+}
+
+.tasks-field-results-icon-button {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	display: flex;
+	align-items: center;
+	cursor: pointer;
 }
 
 .tasks-field-results-title-main .ui-icon-set {
@@ -92,4 +125,12 @@
 }
 .tasks-field-results-title-icon.--auto-left {
 	margin-left: auto;
+}
+
+.tasks-field-results-title-main:focus-visible,
+.tasks-field-results-icon-button:focus-visible,
+.tasks-field-results-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }

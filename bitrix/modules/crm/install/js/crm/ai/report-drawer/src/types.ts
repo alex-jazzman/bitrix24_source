@@ -16,17 +16,30 @@ export type ViewData = {
 	assessmentSetting: null | AssessmentSettingData;
 };
 
-export type SubtitleData = {
-	type: SubtitleType,
-	data: OpenLinesSubtitleData | CallSubtitleData;
-};
+export type SubtitleData =
+	| {
+		type: 'open-lines';
+		data: OpenLinesSubtitleData;
+	}
+	| {
+		type: 'email';
+		data: EmailSubtitleData;
+	}
+	| {
+		type: 'incoming-call' | 'outgoing-call';
+		data: CallSubtitleData;
+	}
+;
 
-export type SubtitleType = 'open-lines' | 'incoming-call' | 'outgoing-call';
+export type SubtitleType = SubtitleData['type'];
 
-export type OpenLinesSubtitleData = {
-	client: ClientData;
+export type ConversationSubtitleData = {
+	client: null | ClientData;
 	managers: ResponsibleData[];
 };
+
+export type OpenLinesSubtitleData = ConversationSubtitleData;
+export type EmailSubtitleData = ConversationSubtitleData;
 
 export type CallSubtitleData = {
 	client: null | ClientData,
@@ -83,7 +96,16 @@ export type InfoPopupPhoneCallActionData = {
 	activityId: null | number;
 };
 
-export type InfoPopupActionData = InfoPopupValueActionData | InfoPopupPhoneCallActionData;
+export type InfoPopupEmailActionData = {
+	type: 'email-activity';
+	value: number;
+};
+
+export type InfoPopupActionData =
+	| InfoPopupValueActionData
+	| InfoPopupPhoneCallActionData
+	| InfoPopupEmailActionData
+;
 
 export type InfoPopupValueData = {
 	text: string;
@@ -112,7 +134,19 @@ export type OpenLinesInfoPopupData = {
 	channel: string;
 };
 
-export type InfoPopupData = CallInfoPopupData | OpenLinesInfoPopupData;
+export type EmailInfoPopupData = {
+	type: 'email';
+	entity: null | InfoPopupEntityData;
+	conversationStartedAt: null | string;
+	lastAnalyzedAt: null | string;
+	managers: ResponsibleData[];
+	threadContext: 'current';
+	activity: {
+		action: null | InfoPopupEmailActionData;
+	};
+};
+
+export type InfoPopupData = CallInfoPopupData | OpenLinesInfoPopupData | EmailInfoPopupData;
 
 export type AnchorData = {
 	text: string;
@@ -158,6 +192,7 @@ type BaseBlockData = {
 export type SummaryBlockData = BaseBlockData & {
 	blockType: 'summary';
 	text: string;
+	preserveWhitespace?: boolean;
 };
 
 export type TranscriptionBlockData = BaseBlockData & {
@@ -184,6 +219,8 @@ export type AssessmentSettingData = {
 	promptUpdatedAt: string;
 	shouldShowReassessmentBadge: boolean;
 };
+
+export type ReassessmentSource = 'updated_script' | 'other_script';
 
 // region Network types
 export type ResponseData = {

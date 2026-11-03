@@ -121,3 +121,177 @@
 		width: calc(100% - 262px) !important;
 	}
 }
+
+.landing-skip-link {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 10000;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.landing-skip-link:focus {
+	width: auto;
+	max-width: 100%;
+	height: auto;
+	padding: 12px 20px;
+	box-sizing: border-box;
+	overflow: visible;
+	color: #333;
+	font-size: 16px;
+	/* The plate is laid out against the viewport: a long phrase has to wrap instead of widening it. */
+	white-space: normal;
+	text-decoration: underline;
+	background: #fff;
+	outline: var(--ui-focus-outline-width, 2px) solid #0075ff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	clip: auto;
+	clip-path: none;
+}
+
+/* WCAG 2.4.7. Two rules drawing one ring, written for two different reasons.
+
+   The first gives back what the theme takes away. The theme drops the ring in three places: from
+   every link outright (`theme.css` `a { outline: none }`), from the `.btn` family together with the
+   ring bootstrap gives it (`.btn:focus { outline: 0 none; box-shadow: none }`) and from the fields
+   of a form (`.form-control:focus, .custom-select:focus { box-shadow: none }`). The answer is here
+   and not in the theme: this file is loaded after it, the selectors are no weaker than the ones
+   that took the ring away, and `:focus-visible` leaves a mouse click looking exactly as it did.
+
+   The second gives nothing back - the theme touches neither `button` nor `[tabindex]`. It dresses
+   the markup of the blocks themselves and not of an author: the sanitizer of the html block drops
+   both a `button` and a `tabindex`, so nothing an author writes reaches this rule. Held to
+   `.block-wrapper`, it leaves the shell of the page alone. Few blocks answer it today - the search
+   form `59.3.search_dark`, of the knowledge and group scopes, is the one printing a native `button`
+   outside the `.btn` family, and the rest carry `tabindex` on links the first rule covers already -
+   and it is kept as the floor every block stands on: a block dropping the ring with a reset of its
+   own outweighs this rule and has to be answered in its own stylesheet, the way the buttons of the
+   chats were. `[tabindex="-1"]` is excluded here on purpose: such a container is focused from a
+   script and is not a stop of the keyboard walk. The vendored bootstrap of this template happens to
+   drop the ring on it with an `!important` of its own, but that is a foreign rule to lean on rather
+   than a decision of ours.
+
+   That scope is a class of the public output, and the public output is free to drop it:
+   `Block::view()` prints the wrapper only while `wrapper_show` holds, and outside the editor that
+   flag is cleared unless `Config::get('public_wrapper_block')` says otherwise (`lib/block.php`,
+   `lib/config.php`). The default does say otherwise, but a site template shipping a `.config.php`
+   of its own replaces the whole config array rather than merging into it, so a template that
+   forgets the key takes this rule down with it and takes it down silently.
+
+   Two tones, because neither the section a block stands on nor the fill of a control is known here.
+   One tone fails on both counts: an accent ring drawn inside the solid button of
+   `61.1.phone_w_btn_rght` holds 1.15:1 against the `#2186F0` that button theme fills it with, where
+   WCAG 1.4.11 asks 3:1 of a ring - measured on a published page, and invisible to the eye. So the
+   white ring goes inside the control and the dark halo outside it, and whichever tone the surface
+   behind swallows, the other is left with an edge to show: on a white page the halo holds 12.6:1, on
+   that blue fill the white ring holds 3.7:1, on a dark section the white ring holds 17.4:1. The
+   editor of the module draws its rings in one accent because the surface under them is known and
+   light; a published page gives no such promise.
+
+   The size is the focus tokens of the design system, `--ui-focus-outline-width` and
+   `--ui-focus-outline-offset-inset`; the halo has no token of its own and stays a number. The offset
+   token is the negative one on purpose: a ring hanging outside a control is cut wherever the box
+   around it clips, and the page clips at its own edge - a control standing flush against it would
+   show three sides of four.
+
+   The halo is a `box-shadow`, and both things that follow from it were measured rather than
+   assumed. It replaces a shadow the element carries of its own for as long as the focus stands
+   there - the editor hands a shadow to any node (`install/blocks/bitrix/.style.php`, `u-shadow-v*`)
+   - and that is the indicator taking the place of the decoration for the length of a focus, not a
+   defect to design around. Clipping is the one that costs: an ancestor of `overflow: hidden` cuts
+   the halo exactly as it cuts an outline, and a control filling such a box edge to edge loses the
+   halo whole, not three sides of four. `g-overflow-hidden` is common in the shipped blocks, so
+   where a block clips its controls that closely the ring drawn inside is the only tone left, and a
+   light fill under it leaves nothing to see - such a block has to answer for the ring in its own
+   stylesheet, the way the buttons of the chats do.
+
+   A link of text is the exception to the ring drawn inside. It has no padding, its glyphs reach the
+   edge of its box, and a white line inside ran over the letters of a dense link - the footer of
+   `35.2`, an e-mail of the contacts, the items of `55.1`. Its white ring moves out by the outer offset
+   token of the design system, and the halo, spreading from the edge of the link, fills that gap: a
+   dark line along the text and a white one around it, the same two tones turned inside out. A
+   button, a field and an image link keep the ring inside: their text sits inside a padding or they
+   carry none, and they are the controls that fill a clipping box. */
+a:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.custom-select:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid #fff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: 0 0 0 4px #333;
+}
+
+.block-wrapper button:focus-visible,
+.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid #fff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: 0 0 0 4px #333;
+}
+
+a:not(.btn):not(.landing-skip-link):not(:has(img)):focus-visible {
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+/* A dot of a carousel is a `li` around a 10 px `span`: the common ring turns it into a square blot,
+   and it would vanish once the autoplay moves the roving tabindex off a focused dot. The dot's own
+   opacity is on the `span`, so the ring is a circle drawn by the `li` around it, outside with a gap.
+   It stays within the 5 px margin of the dot, which keeps it clear of the `overflow: hidden` of the
+   carousel even for dots set flush against its bottom edge. */
+.block-wrapper .js-pagination > li[role="tab"]:focus-visible {
+	position: relative;
+	width: max-content;
+	outline: none;
+	box-shadow: none;
+}
+
+.block-wrapper .js-pagination > li[role="tab"]:focus-visible::after {
+	content: '';
+	position: absolute;
+	inset: -3px;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	box-shadow: 0 0 0 2px #333;
+	pointer-events: none;
+}
+
+/* The link a gallery wraps around an image (`gallery_cards_init.js`, `addOuterLink()`) is inline in most
+   blocks: its own ring is a strip one line high hidden under the image, and a ring around the image is
+   cut by the `overflow: hidden` of the box the image fills. So the ring is drawn inside the image by a
+   pseudo-element of the link, over the nearest positioned box - the one the image fills, or the link
+   itself where it is a positioned block; such a link hugs its centred image for as long as the focus
+   stands there. Links of `_popup` windows wrap no gallery image and keep the common ring. */
+a[data-fancybox]:has(> [data-fancybox-initied="Y"]):focus-visible {
+	width: fit-content;
+	margin-right: auto;
+	margin-left: auto;
+	outline: none;
+	box-shadow: none;
+}
+
+a[data-fancybox]:has(> [data-fancybox-initied="Y"]):focus-visible::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #333;
+	pointer-events: none;
+}
+
+/* The buttons and the thumbnails of the image viewer of a gallery live outside `.block-wrapper` and
+   drop the outline in the vendored fancybox stylesheet. The scope keeps the windows of `_popup` links
+   as they were. */
+.landing-gallery-viewer .fancybox-button:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid #fff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: 0 0 0 4px #333;
+}
+
+.landing-gallery-viewer .fancybox-thumbs li:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid #fff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: 0 0 0 4px #333;
+}

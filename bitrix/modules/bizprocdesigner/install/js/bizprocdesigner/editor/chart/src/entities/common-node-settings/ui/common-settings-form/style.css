@@ -180,6 +180,25 @@
 	margin-bottom: 0;
 }
 
+.node-settings-project-warning {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	margin-left: 4px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: help;
+	vertical-align: middle;
+}
+
+.node-settings-project-warning .ui-icon-set {
+	display: block;
+}
+
 .node-settings-select-dotted {
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
@@ -360,6 +379,16 @@
 
 .node-settings-edit-caption.--required:after {
 	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
+}
+
+.node-settings-edit-caption.--project-deleted {
+	display: inline-flex;
+	align-items: center;
+}
+
+.node-settings-edit-caption-required {
 	margin-left: 2px;
 	color: var(--ui-color-palette-red-60);
 }
@@ -1227,6 +1256,23 @@ select[name="delay_type"] {
 	display: flex;
 	align-items: center;
 	font-weight: 400;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.node-settings-panel select[multiple] option:active,
+.node-settings-panel select[multiple] option:checked,
+.node-settings-panel select[multiple] option:checked:focus,
+.node-settings-panel select[multiple] option:checked:focus-visible,
+.node-settings-panel select[multiple] option:checked:hover,
+.node-settings-panel select[multiple] option:checked:active,
+.node-settings-panel select[multiple]:active option:checked,
+.node-settings-panel select[multiple]:focus option:checked {
+	background-color: transparent !important;
+	background-image: none !important;
+	box-shadow: none !important;
+	color: var(--ui-color-design-outline-content) !important;
+	-webkit-text-fill-color: var(--ui-color-design-outline-content) !important;
 }
 
 .node-settings-panel select[multiple] option:before {
@@ -1739,8 +1785,16 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin-top: 10px;
 }
 
-.bizprocdesigner-activity-broken-link-show-more{
+/* The alert paints its own inner spans (see the rule above), and a native button takes none of that:
+   the reset repeats what the element had while it was a span. */
+.bizprocdesigner-activity-broken-link-show-more {
+	padding: 0;
+	border: 0;
 	border-bottom: 1px dashed rgba(145, 113, 30, .4);
+	background: none;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	font-size: var(--ui-font-size-sm);
 	cursor: pointer;
 	transition: .2s;
 }
@@ -1753,6 +1807,60 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	overflow: hidden;
 	transition: height 0.3s linear;
 	word-break: break-word;
+}
+
+/* In the rules section the warning stands between the section description and the rules preview,
+   so it is spaced from the preview - the top offset comes from the common panel alert rule. */
+.node-settings-form__section.--rules .ui-alert.ui-alert-warning.ui-alert-icon-info {
+	margin-bottom: 10px;
+}
+
+/* A reference of the list is its own element, so a clickable one carries the affordance of a link
+   without stretching it across the width of the block. */
+.bizprocdesigner-activity-broken-link-item {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+.bizprocdesigner-activity-broken-link-item.--clickable {
+	border-bottom: 1px dashed currentColor;
+	cursor: pointer;
+	transition: .2s;
+}
+
+/* The 2.5s here and BROKEN_LINK_HIGHLIGHT_DURATION of common-settings-form.js are one length: the
+   panel takes the class off when the animation ends. Change both or neither. */
+.node-settings-edit-box.--broken-link-target {
+	border-radius: 6px;
+	animation: bizprocdesigner-broken-link-target 2.5s ease-out;
+}
+
+@keyframes bizprocdesigner-broken-link-target {
+	from {
+		background-color: var(--ui-color-background-warning);
+		box-shadow: 0 0 0 6px var(--ui-color-background-warning);
+	}
+
+	to {
+		background-color: transparent;
+		box-shadow: 0 0 0 6px transparent;
+	}
+}
+
+/* Without the animation the accent simply stands until the panel takes the class off. */
+@media (prefers-reduced-motion: reduce) {
+	.node-settings-edit-box.--broken-link-target {
+		background-color: var(--ui-color-background-warning);
+		box-shadow: 0 0 0 6px var(--ui-color-background-warning);
+		animation: none;
+	}
 }
 
 .node-settings-form__section.--rules {

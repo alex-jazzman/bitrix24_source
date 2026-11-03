@@ -43,6 +43,8 @@ export type ScriptData = {
 	id: number | null,
 	title: string,
 	description: string,
+	prompt: string,
+	isHintEnabled: boolean,
 	isAiImprovementEnabled: boolean,
 	filters: FilterDescriptor[],
 	criteria: Criterion[],

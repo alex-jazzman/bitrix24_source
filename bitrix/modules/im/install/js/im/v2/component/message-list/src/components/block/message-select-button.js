@@ -15,6 +15,7 @@ const forwardMessageComponents = new Set([
 	MessageComponent.ImOpenLinesMessage,
 	MessageComponent.ImOpenLinesForm,
 	MessageComponent.sticker,
+	MessageComponent.contactMessage,
 ]);
 
 // @vue/component

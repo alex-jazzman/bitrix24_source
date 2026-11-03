@@ -14,6 +14,18 @@ $useActionColumn = in_array('DELETE', $arParams['COLUMNS_LIST']);
 
 $restoreColSpan = 2 + $usePriceInAdditionalColumn + $useSumColumn + $useActionColumn;
 
+// The name of a variant is its own value, and a swatch of a directory property may carry no name at all:
+// then the value is told apart by its code. An empty aria-label is worse than none - it wins over both
+// the title and the text of the node, and the variant is left with no name to speak.
+$notAvailableSku = htmlspecialcharsbx(Loc::getMessage('SBB_SCU_NOT_AVAILABLE_ARIA'));
+$skuValueLabel =
+	'{{#NAME}}aria-label="{{NAME}}{{#NOT_AVAILABLE_OFFER}}, '.$notAvailableSku.'{{/NOT_AVAILABLE_OFFER}}"{{/NAME}}'
+	.'{{^NAME}}'
+		.'{{#XML_ID}}aria-label="{{XML_ID}}{{#NOT_AVAILABLE_OFFER}}, '.$notAvailableSku.'{{/NOT_AVAILABLE_OFFER}}"{{/XML_ID}}'
+		.'{{^XML_ID}}{{#NOT_AVAILABLE_OFFER}}aria-label="'.$notAvailableSku.'"{{/NOT_AVAILABLE_OFFER}}{{/XML_ID}}'
+	.'{{/NAME}}'
+;
+
 $positionClassMap = array(
 	'left' => 'basket-item-label-left',
 	'center' => 'basket-item-label-center',
@@ -40,10 +52,14 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 		$labelPositionClass .= isset($positionClassMap[$pos]) ? ' '.$positionClassMap[$pos] : '';
 	}
 }
+
+// `tabindex="-1"` on the row: it takes the focus itself after a redraw that changed its shape, and
+// `restoreFocus` aims here when the control the focus stood on is gone with the previous shape. The
+// negative value keeps the row out of the tab order and out of the rule of the ring.
 ?>
 <script id="basket-item-template" type="text/html">
 	<tr class="basket-items-list-item-container{{#SHOW_RESTORE}} basket-items-list-item-container-expend{{/SHOW_RESTORE}}"
-		id="basket-item-{{ID}}" data-entity="basket-item" data-id="{{ID}}">
+		id="basket-item-{{ID}}" tabindex="-1" data-entity="basket-item" data-id="{{ID}}">
 		{{#SHOW_RESTORE}}
 			<td class="basket-items-list-item-notification" colspan="<?=$restoreColSpan?>">
 				<div class="basket-items-list-item-notification-inner basket-items-list-item-notification-removed" id="basket-item-height-aligner-{{ID}}">
@@ -58,7 +74,9 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 							<a href="javascript:void(0)" data-entity="basket-item-restore-button">
 								<?=Loc::getMessage('SBB_BASKET_ITEM_RESTORE')?>
 							</a>
-							<span class="basket-items-list-item-clear-btn" data-entity="basket-item-close-restore-button"></span>
+							<button type="button" class="basket-items-list-item-clear-btn basket-btn-plain"
+								aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_ITEM_RESTORE_DISMISS_ARIA'))?>"
+								data-entity="basket-item-close-restore-button"></button>
 						</div>
 					</div>
 				</div>
@@ -73,7 +91,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 						?>
 						<div class="basket-item-block-image<?=(!isset($mobileColumns['PREVIEW_PICTURE']) ? ' d-none d-sm-block' : '')?>">
 							{{#DETAIL_PAGE_URL}}
-								<a href="{{DETAIL_PAGE_URL}}" class="basket-item-image-link">
+								<a href="{{DETAIL_PAGE_URL}}" class="basket-item-image-link" tabindex="-1" aria-hidden="true">
 							{{/DETAIL_PAGE_URL}}
 
 							<img class="basket-item-image" alt="{{NAME}}"
@@ -114,7 +132,9 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 						if (isset($mobileColumns['DELETE']))
 						{
 							?>
-							<span class="basket-item-actions-remove d-block d-md-none" data-entity="basket-item-delete"></span>
+							<button type="button" class="basket-item-actions-remove d-block d-md-none basket-btn-plain"
+								aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_ITEM_REMOVE_ARIA', ['#PRODUCT#' => '{{NAME}}']))?>"
+								data-entity="basket-item-delete"></button>
 							<?
 						}
 						?>
@@ -149,7 +169,9 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 						{{#WARNINGS.length}}
 							<div class="basket-items-list-item-warning-container">
 								<div class="alert alert-warning alert-dismissable" data-entity="basket-item-warning-node">
-									<span class="close" data-entity="basket-item-warning-close">&times;</span>
+									<button type="button" class="close"
+										aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_WARNING_CLOSE_ARIA'))?>"
+										data-entity="basket-item-warning-close">&times;</button>
 										{{#WARNINGS}}
 											<div data-entity="basket-item-warning-text">{{{.}}}</div>
 										{{/WARNINGS}}
@@ -191,11 +213,16 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 														data-entity="basket-item-sku-block">
 														<div class="basket-item-property-name">{{NAME}}</div>
 														<div class="basket-item-property-value">
-															<ul class="basket-item-scu-list">
+															<ul class="basket-item-scu-list" role="radiogroup"
+																aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_SCU_GROUP_ARIA', ['#PROPERTY#' => '{{NAME}}']))?>">
 																{{#SKU_VALUES_LIST}}
 																	<li class="basket-item-scu-item{{#SELECTED}} selected{{/SELECTED}}
 																		{{#NOT_AVAILABLE_OFFER}} not-available{{/NOT_AVAILABLE_OFFER}}"
 																		title="{{NAME}}"
+																		role="radio"
+																		aria-checked="{{#SELECTED}}true{{/SELECTED}}{{^SELECTED}}false{{/SELECTED}}"
+																		tabindex="{{#SELECTED}}0{{/SELECTED}}{{^SELECTED}}-1{{/SELECTED}}"
+																		<?=$skuValueLabel?>
 																		data-entity="basket-item-sku-field"
 																		data-initial="{{#SELECTED}}true{{/SELECTED}}{{^SELECTED}}false{{/SELECTED}}"
 																		data-value-id="{{VALUE_ID}}"
@@ -215,11 +242,16 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 														data-entity="basket-item-sku-block">
 														<div class="basket-item-property-name">{{NAME}}</div>
 														<div class="basket-item-property-value">
-															<ul class="basket-item-scu-list">
+															<ul class="basket-item-scu-list" role="radiogroup"
+																aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_SCU_GROUP_ARIA', ['#PROPERTY#' => '{{NAME}}']))?>">
 																{{#SKU_VALUES_LIST}}
 																	<li class="basket-item-scu-item{{#SELECTED}} selected{{/SELECTED}}
 																		{{#NOT_AVAILABLE_OFFER}} not-available{{/NOT_AVAILABLE_OFFER}}"
 																		title="{{NAME}}"
+																		role="radio"
+																		aria-checked="{{#SELECTED}}true{{/SELECTED}}{{^SELECTED}}false{{/SELECTED}}"
+																		tabindex="{{#SELECTED}}0{{/SELECTED}}{{^SELECTED}}-1{{/SELECTED}}"
+																		<?=$skuValueLabel?>
 																		data-entity="basket-item-sku-field"
 																		data-initial="{{#SELECTED}}true{{/SELECTED}}{{^SELECTED}}false{{/SELECTED}}"
 																		data-value-id="{{VALUE_ID}}"
@@ -267,9 +299,14 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 														<div class="basket-item-property-custom-value">
 															{{#VALUE}}
 																<span>
-																	<img class="basket-item-custom-block-photo-item"
-																		src="{{{IMAGE_SRC}}}" data-image-index="{{INDEX}}"
-																		data-column-property-code="{{CODE}}">
+																	<button type="button" class="basket-btn-plain"
+																		aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_PROPERTY_IMAGE_ARIA', ['#PROPERTY#' => '{{NAME}}']))?>"
+																		data-entity="basket-item-property-image"
+																		data-image-index="{{INDEX}}"
+																		data-column-property-code="{{CODE}}"><img
+																			class="basket-item-custom-block-photo-item" aria-hidden="true"
+																			src="{{{IMAGE_SRC}}}" data-image-index="{{INDEX}}"
+																			data-column-property-code="{{CODE}}"></button>
 																</span>
 															{{/VALUE}}
 														</div>
@@ -357,15 +394,27 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 			<td class="basket-items-list-item-amount">
 				<div class="basket-item-block-amount{{#NOT_AVAILABLE}} disabled{{/NOT_AVAILABLE}}"
 					data-entity="basket-item-quantity-block">
-					<span class="basket-item-amount-btn-minus" data-entity="basket-item-quantity-minus"></span>
+					<button type="button" class="basket-item-amount-btn-minus basket-btn-plain"
+						aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_QUANTITY_DECREASE_ARIA'))?>"
+						data-entity="basket-item-quantity-minus"></button>
 					<div class="basket-item-amount-filed-block">
 						<input type="text" class="basket-item-amount-filed" value="{{QUANTITY}}"
 							{{#NOT_AVAILABLE}} disabled="disabled"{{/NOT_AVAILABLE}}
 							data-value="{{QUANTITY}}" data-entity="basket-item-quantity-field"
+							aria-label="<?=htmlspecialcharsbx(Loc::getMessage(
+								'SBB_QUANTITY_FIELD_ARIA',
+								[
+									'#PRODUCT#' => '{{NAME}}',
+									'#MEASURE#' => '{{MEASURE_TEXT}}',
+								],
+							))?>"
+							aria-describedby="basket-item-quantity-description-{{ID}}"
 							id="basket-item-quantity-{{ID}}">
 					</div>
-					<span class="basket-item-amount-btn-plus" data-entity="basket-item-quantity-plus"></span>
-					<div class="basket-item-amount-field-description">
+					<button type="button" class="basket-item-amount-btn-plus basket-btn-plain"
+						aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_QUANTITY_INCREASE_ARIA'))?>"
+						data-entity="basket-item-quantity-plus"></button>
+					<div class="basket-item-amount-field-description" id="basket-item-quantity-description-{{ID}}">
 						<?
 						if ($arParams['PRICE_DISPLAY_MODE'] === 'Y')
 						{
@@ -396,7 +445,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 			if ($useSumColumn)
 			{
 				?>
-				<td class="basket-items-list-item-price<?=(!isset($mobileColumns['SUM']) ? ' d-none d-sm-block' : '')?>">
+				<td class="basket-items-list-item-price<?=(!isset($mobileColumns['SUM']) ? ' basket-cell-block-sm-table-md' : '')?>">
 					<div class="basket-item-block-price">
 						{{#SHOW_DISCOUNT_PRICE}}
 							<div class="basket-item-price-old">
@@ -433,9 +482,11 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 			if ($useActionColumn)
 			{
 				?>
-				<td class="basket-items-list-item-remove d-none d-md-block">
+				<td class="basket-items-list-item-remove basket-cell-table-md">
 					<div class="basket-item-block-actions">
-						<span class="basket-item-actions-remove" data-entity="basket-item-delete"></span>
+						<button type="button" class="basket-item-actions-remove basket-btn-plain"
+							aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_ITEM_REMOVE_ARIA', ['#PRODUCT#' => '{{NAME}}']))?>"
+							data-entity="basket-item-delete"></button>
 						{{#SHOW_LOADING}}
 							<div class="basket-items-list-item-overlay"></div>
 						{{/SHOW_LOADING}}

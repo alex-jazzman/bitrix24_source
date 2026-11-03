@@ -8,5 +8,7 @@ return [
 		'disk:statemanager/redux/slices/files/selector',
 		'rest/run-action-executor',
 		'device/connection',
+		'type',
+		'disk:opener/unified-link/rest',
 	],
 ];

@@ -20,6 +20,7 @@ use Bitrix\Crm\Automation\Trigger\PaymentTrigger;
 use Bitrix\Crm\Automation\Trigger\QrTrigger;
 use Bitrix\Crm\Automation\Trigger\ResourceBookingTrigger;
 use Bitrix\Crm\Automation\Trigger\WebHookTrigger;
+use Bitrix\Crm\Integration\BizProc\Trigger\TestRunDocument;
 use Bitrix\Main\Loader;
 
 $excluded = [
@@ -34,8 +35,10 @@ $excluded = [
 ];
 
 $presets = [];
+$testRunDocument = null;
 if (Loader::includeModule('crm'))
 {
+	$testRunDocument = TestRunDocument::getDeclarations();
 	foreach (Factory::getTriggerRegistry() as $triggerClass)
 	{
 		if ($triggerClass::isEnabled() && !in_array($triggerClass, $excluded, true))
@@ -44,7 +47,10 @@ if (Loader::includeModule('crm'))
 				'ID' => 'automation_' . $triggerClass::getCode(),
 				'NAME' => $triggerClass::getNodeName(),
 				'DESCRIPTION' => $triggerClass::getNodeDescription(),
-				'PROPERTIES' => ['TriggerClass' => $triggerClass],
+				'PROPERTIES' => [
+					'TriggerClass' => $triggerClass,
+					'Return' => array_column($triggerClass::getReturnProperties(), null, 'Id'),
+				],
 				'NODE_ICON' => $triggerClass::getNodeIcon(),
 				'COLOR_INDEX' => $triggerClass::getNodeColor(),
 				'GROUPS' => [ActivityGroup::STARTER->value, ...$triggerClass::getNodeGroups()],
@@ -53,7 +59,7 @@ if (Loader::includeModule('crm'))
 	}
 }
 
-$arActivityDescription = (new ActivityDescription(
+$description = (new ActivityDescription(
 	name: '',
 	description: '',
 	type: [ ActivityType::TRIGGER->value ],
@@ -66,5 +72,11 @@ $arActivityDescription = (new ActivityDescription(
 	->set('ADDITIONAL_RESULT', [ 'Return' ])
 	->setGroups([ ActivityGroup::STARTER->value ])
 	->setColorIndex(ActivityColorIndex::BLUE->value)
-	->toArray()
 ;
+
+if ($testRunDocument !== null)
+{
+	$description->set('TEST_RUN_DOCUMENT', $testRunDocument);
+}
+
+$arActivityDescription = $description->toArray();

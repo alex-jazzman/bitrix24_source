@@ -43,6 +43,11 @@ export class Template extends EventEmitter
 	#templateNode: ?Element;
 	#listNode: Element | undefined;
 	#buttonsNode: Element | undefined;
+	#robotAddControlMouseMoveHandler: ?(MouseEvent) => void;
+	#robotAddControlMouseLeaveHandler: ?(MouseEvent) => void;
+	#robotAddControlAnimationFrame: ?number;
+	#robotAddControlPointerY: ?number;
+	#activeRobotAddControl: ?HTMLElement;
 
 	#robots: Array<Robot>;
 	#data: Object;
@@ -71,6 +76,9 @@ export class Template extends EventEmitter
 		this.#data = {};
 		this.#robots = [];
 		this.#viewMode = ViewMode.none();
+		this.#robotAddControlAnimationFrame = null;
+		this.#robotAddControlPointerY = null;
+		this.#activeRobotAddControl = null;
 	}
 
 	init(data: Object, viewMode: number)
@@ -138,6 +146,7 @@ export class Template extends EventEmitter
 
 	destroy()
 	{
+		this.#deactivateRobotAddControls();
 		this.#robots.forEach((robot) => robot.destroy());
 	}
 
@@ -167,10 +176,12 @@ export class Template extends EventEmitter
 					tracker: this.#tracker,
 				});
 				robot.init(this.#data.ROBOTS[i], this.#viewMode);
-				this.insertRobotNode(robot.node);
 				this.#robots.push(robot);
+				this.#insertRobotNode(robot.node);
 			}
 		}
+
+		this.#renderRobotAddControls();
 	}
 
 	get robots(): Array<Robot>
@@ -280,6 +291,7 @@ export class Template extends EventEmitter
 	{
 		if (this.#listNode)
 		{
+			this.#clearRobotAddControls();
 			this.#viewMode = ViewMode.manage().setProperty('isActive', isActive);
 
 			if (isActive)
@@ -332,6 +344,8 @@ export class Template extends EventEmitter
 					}
 				});
 			}
+
+			this.#renderRobotAddControls();
 		}
 	}
 
@@ -349,6 +363,247 @@ export class Template extends EventEmitter
 				}
 			}
 		});
+	}
+
+	#bindRobotAddControlHover()
+	{
+		if (this.#robotAddControlMouseMoveHandler || !this.#listNode)
+		{
+			return;
+		}
+
+		this.#robotAddControlMouseMoveHandler = this.#onRobotAddControlMouseMove.bind(this);
+		this.#robotAddControlMouseLeaveHandler = this.#deactivateRobotAddControls.bind(this);
+
+		Event.bind(this.#listNode, 'mousemove', this.#robotAddControlMouseMoveHandler);
+		Event.bind(this.#listNode, 'mouseleave', this.#robotAddControlMouseLeaveHandler);
+	}
+
+	#clearRobotAddControls()
+	{
+		if (!this.#listNode)
+		{
+			return;
+		}
+
+		this.#deactivateRobotAddControls();
+
+		this.#listNode
+			.querySelectorAll(`[data-role="${Robot.ADD_CONTROL_ROLE}"]`)
+			.forEach((node) => Dom.remove(node))
+		;
+	}
+
+	#renderRobotAddControls()
+	{
+		this.#clearRobotAddControls();
+
+		if (!this.#listNode || !this.#viewMode.isEdit() || this.#robots.length === 0)
+		{
+			return;
+		}
+
+		this.#bindRobotAddControlHover();
+
+		this.#robots.forEach((robot) => {
+			this.#listNode.insertBefore(this.#createRobotAddControl(robot), robot.node);
+		});
+
+		Dom.append(this.#createRobotAddControl(null, true), this.#listNode);
+	}
+
+	#createRobotAddControl(beforeRobot: ?Robot, isLast: boolean = false): HTMLElement
+	{
+		const addTitle = Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+		const ariaLabel = beforeRobot
+			? Loc.getMessage(
+				'BIZPROC_AUTOMATION_CMP_ADD_BEFORE',
+				{ '#TITLE#': beforeRobot.getTitle() },
+			)
+			: Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_TO_END')
+		;
+		const control = Tag.render`
+			<div
+				class="bizproc-automation-robot-add-insertion${isLast ? ' --last' : ''}"
+				data-role="${Robot.ADD_CONTROL_ROLE}"
+				data-testid="bizproc-automation-robot-add-insertion"
+			>
+				<button
+					class="bizproc-automation-robot-btn-add"
+					type="button"
+					title="${addTitle}"
+					aria-label="${Text.encode(ariaLabel || addTitle)}"
+					data-role="${Robot.ADD_CONTROL_BUTTON_ROLE}"
+					data-testid="bizproc-automation-robot-add-insertion-button"
+				></button>
+			</div>
+		`;
+		const button = control.querySelector(`[data-role="${Robot.ADD_CONTROL_BUTTON_ROLE}"]`);
+
+		Event.bind(button, 'click', (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+
+			if (!this.#viewMode.isManage())
+			{
+				this.emit('Template:robot:addButtonClick', {
+					template: this,
+					beforeRobot,
+				});
+			}
+		});
+
+		return control;
+	}
+
+	#onRobotAddControlMouseMove(event: MouseEvent)
+	{
+		if (!this.#listNode || !this.#viewMode.isEdit())
+		{
+			return;
+		}
+		if (window.jsDD.bPreStarted || window.jsDD.bStarted)
+		{
+			if (this.#activeRobotAddControl || this.#robotAddControlAnimationFrame !== null)
+			{
+				this.#deactivateRobotAddControls();
+			}
+
+			return;
+		}
+
+		this.#robotAddControlPointerY = event.clientY;
+		if (this.#robotAddControlAnimationFrame !== null)
+		{
+			return;
+		}
+
+		this.#robotAddControlAnimationFrame = window.requestAnimationFrame(() => {
+			this.#robotAddControlAnimationFrame = null;
+			this.#updateRobotAddControlState();
+		});
+	}
+
+	#updateRobotAddControlState()
+	{
+		if (!this.#listNode || !this.#viewMode.isEdit() || this.#robotAddControlPointerY === null)
+		{
+			return;
+		}
+
+		const activeControl = this.#findActiveRobotAddControl(this.#robotAddControlPointerY);
+
+		if (activeControl === this.#activeRobotAddControl)
+		{
+			return;
+		}
+
+		if (this.#activeRobotAddControl)
+		{
+			Dom.removeClass(this.#activeRobotAddControl, '--active');
+		}
+		if (activeControl)
+		{
+			Dom.addClass(activeControl, '--active');
+		}
+
+		this.#activeRobotAddControl = activeControl;
+	}
+
+	#findActiveRobotAddControl(pointerY: number): ?HTMLElement
+	{
+		const children = this.#listNode.children;
+		let firstControlIndex = 0;
+		while (
+			firstControlIndex < children.length
+			&& children[firstControlIndex].dataset.role !== Robot.ADD_CONTROL_ROLE
+		)
+		{
+			firstControlIndex++;
+		}
+
+		const robotCount = Math.floor((children.length - firstControlIndex) / 2);
+		const overlap = 12;
+		let left = 0;
+		let right = robotCount - 1;
+		let candidate = null;
+
+		while (left <= right)
+		{
+			const middle = Math.floor((left + right) / 2);
+			const controlIndex = firstControlIndex + (middle * 2);
+			const nextRobotNode = children[controlIndex + 1];
+			if (pointerY <= nextRobotNode.getBoundingClientRect().top + overlap)
+			{
+				candidate = children[controlIndex];
+				right = middle - 1;
+			}
+			else
+			{
+				left = middle + 1;
+			}
+		}
+
+		if (candidate && this.#isRobotAddControlActive(candidate, pointerY))
+		{
+			return candidate;
+		}
+
+		const lastControl = children[children.length - 1];
+
+		return lastControl && this.#isRobotAddControlActive(lastControl, pointerY) ? lastControl : null;
+	}
+
+	#isRobotAddControlActive(control: HTMLElement, pointerY: number): boolean
+	{
+		const rect = control.getBoundingClientRect();
+		if (Dom.hasClass(control, '--last'))
+		{
+			const previousRobotNode = control.previousElementSibling;
+			const previousRect = previousRobotNode ? previousRobotNode.getBoundingClientRect() : null;
+			const buttonsRect = this.#buttonsNode ? this.#buttonsNode.getBoundingClientRect() : null;
+			const overlap = 12;
+			const top = previousRect ? previousRect.bottom - overlap : rect.top - overlap;
+			const bottom = Math.max(rect.bottom, buttonsRect ? buttonsRect.top : rect.bottom) + overlap;
+
+			return pointerY >= top && pointerY <= bottom;
+		}
+
+		const nextRobotNode = control.nextElementSibling;
+		if (!nextRobotNode)
+		{
+			return false;
+		}
+
+		const nextRect = nextRobotNode.getBoundingClientRect();
+		const previousRobotNode = control.previousElementSibling;
+		const previousRect = previousRobotNode ? previousRobotNode.getBoundingClientRect() : null;
+		const overlap = 12;
+		const top = previousRect ? previousRect.bottom - overlap : Math.min(rect.top, nextRect.top) - overlap;
+		const bottom = nextRect.top + overlap;
+
+		return pointerY >= top && pointerY <= bottom;
+	}
+
+	#deactivateRobotAddControls()
+	{
+		if (this.#robotAddControlAnimationFrame !== null)
+		{
+			window.cancelAnimationFrame(this.#robotAddControlAnimationFrame);
+			this.#robotAddControlAnimationFrame = null;
+		}
+		this.#robotAddControlPointerY = null;
+		this.#activeRobotAddControl = null;
+
+		if (!this.#listNode)
+		{
+			return;
+		}
+
+		this.#listNode
+			.querySelectorAll(`[data-role="${Robot.ADD_CONTROL_ROLE}"]`)
+			.forEach((control) => Dom.removeClass(control, '--active'))
+		;
 	}
 
 	disableDragAndDrop()
@@ -660,6 +915,16 @@ export class Template extends EventEmitter
 
 	addRobot(robotData, callback)
 	{
+		this.#addRobot(robotData, null, callback);
+	}
+
+	addRobotBefore(robotData, beforeRobot: Robot, callback)
+	{
+		this.#addRobot(robotData, beforeRobot, callback);
+	}
+
+	#addRobot(robotData, beforeRobot: ?Robot, callback)
+	{
 		const robot = new Robot({
 			document: this.#context.document,
 			template: this,
@@ -673,10 +938,10 @@ export class Template extends EventEmitter
 			},
 			DialogContext: robotData.DIALOG_CONTEXT,
 		};
+		const parentRobot = this.#getParentRobot(beforeRobot);
 
-		if (this.#robots.length > 0)
+		if (parentRobot)
 		{
-			const parentRobot = this.#robots[this.#robots.length - 1];
 			if (!parentRobot.getDelayInterval().isNow() || parentRobot.isExecuteAfterPrevious())
 			{
 				initData.Delay = parentRobot.getDelayInterval().serialize();
@@ -687,8 +952,8 @@ export class Template extends EventEmitter
 		robot.draft = true;
 		robot.init(initData, this.#viewMode);
 
-		this.insertRobot(robot);
-		this.insertRobotNode(robot.node);
+		this.insertRobot(robot, beforeRobot);
+		this.insertRobotNode(robot.node, this.#getRobotNodeBefore(beforeRobot));
 		this.emit('Template:robot:add', { robot });
 
 		if (callback)
@@ -697,8 +962,31 @@ export class Template extends EventEmitter
 		}
 	}
 
+	#getParentRobot(beforeRobot: ?Robot): ?Robot
+	{
+		if (beforeRobot)
+		{
+			const index = this.#robots.indexOf(beforeRobot);
+			if (index < 0)
+			{
+				return this.#robots.length > 0 ? this.#robots[this.#robots.length - 1] : null;
+			}
+
+			return index > 0 ? this.#robots[index - 1] : null;
+		}
+
+		return this.#robots.length > 0 ? this.#robots[this.#robots.length - 1] : null;
+	}
+
+	#getRobotNodeBefore(beforeRobot: ?Robot): ?HTMLElement
+	{
+		return beforeRobot && this.#robots.includes(beforeRobot) ? beforeRobot.node : null;
+	}
+
 	insertRobot(robot, beforeRobot)
 	{
+		let inserted = false;
+
 		if (beforeRobot)
 		{
 			for (let i = 0; i < this.#robots.length; ++i)
@@ -709,10 +997,12 @@ export class Template extends EventEmitter
 				}
 
 				this.#robots.splice(i, 0, robot);
+				inserted = true;
 				break;
 			}
 		}
-		else
+
+		if (!inserted)
 		{
 			this.#robots.push(robot);
 		}
@@ -740,6 +1030,7 @@ export class Template extends EventEmitter
 			if (this.#robots[i].isEqual(robot))
 			{
 				this.#robots.splice(i, 1);
+				this.#renderRobotAddControls();
 
 				if (callback)
 				{
@@ -755,7 +1046,13 @@ export class Template extends EventEmitter
 
 	insertRobotNode(robotNode, beforeNode)
 	{
-		if (beforeNode)
+		this.#insertRobotNode(robotNode, beforeNode);
+		this.#renderRobotAddControls();
+	}
+
+	#insertRobotNode(robotNode, beforeNode)
+	{
+		if (beforeNode && beforeNode.parentNode === this.#listNode)
 		{
 			this.#listNode.insertBefore(robotNode, beforeNode);
 		}

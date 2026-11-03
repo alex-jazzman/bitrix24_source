@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports, main_core, pull_queuemanager, tasks_v2_const, tasks_v2_core, tasks_v2_provider_service_fileService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_resultService, ui_vue3_vuex, main_core_events, tasks_v2_application_taskCard, tasks_v2_lib_idUtils, tasks_v2_provider_service_relationService, tasks_v2_provider_service_groupService, tasks_v2_provider_service_flowService, tasks_v2_provider_service_userService, tasks_v2_provider_service_viewersService) {
+(function (exports, main_core, pull_queuemanager, tasks_v2_const, tasks_v2_provider_service_taskService, tasks_v2_core, tasks_v2_provider_service_fileService, tasks_v2_provider_service_resultService, ui_vue3_vuex, main_core_events, tasks_v2_application_taskCard, tasks_v2_lib_idUtils, tasks_v2_provider_service_relationService, tasks_v2_model_groups, tasks_v2_provider_service_flowService, tasks_v2_provider_service_userService, tasks_v2_provider_service_viewersService) {
 	'use strict';
 
 	class BasePullHandler {
@@ -20,6 +20,68 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		}
 		isFromAi(data) {
 			return data?.FROM_AI === true;
+		}
+	}
+
+	class CheckListPullHandler extends BasePullHandler {
+		#processing = {};
+		#pending = {};
+		getMap() {
+			return {
+				checklist_update: this.#handleCheckListUpdate
+			};
+		}
+		#handleCheckListUpdate = data => {
+			const {
+				taskId
+			} = data;
+			if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId, false)) {
+				return Promise.resolve();
+			}
+			const inFlight = this.#processing[taskId];
+			if (inFlight) {
+				this.#pending[taskId] = data;
+				return inFlight;
+			}
+			return this.#startProcessing(taskId, data);
+		};
+		#startProcessing(taskId, initial) {
+			const run = (async () => {
+				let data = initial;
+				while (data !== undefined) {
+					await this.#processCheckListUpdate(data);
+					data = this.#pending[taskId];
+					delete this.#pending[taskId];
+				}
+			})();
+			this.#processing[taskId] = run;
+			void run.finally(() => {
+				if (this.#processing[taskId] === run) {
+					delete this.#processing[taskId];
+				}
+			});
+			return run;
+		}
+		async #processCheckListUpdate(data) {
+			const {
+				taskId,
+				revision,
+				checklist
+			} = data;
+			if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId, false)) {
+				return;
+			}
+			try {
+				const {
+					checkListService
+				} = await main_core.Runtime.loadExtension('tasks.v2.provider.service.check-list-service');
+				if (checkListService.getRevision(taskId) === revision && !this.isFromAi(data)) {
+					return;
+				}
+				await checkListService.applyIncomingTree(taskId, checklist, revision);
+			} catch (error) {
+				console.error('tasks: checklist_update pull apply failed', taskId, error);
+			}
 		}
 	}
 
@@ -158,6 +220,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			status: model.status,
 			stageId: model.stageId,
 			auditorsIds: model.auditorsIds,
+			canCreateEpic: model.canCreateEpic,
+			canUpdateScrumFields: model.canUpdateScrumFields,
 			needsControl: model.needsControl,
 			requireResult: model.requireResult,
 			requireDeadlineChangeReason: model.requireDeadlineChangeReason
@@ -176,8 +240,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			startPlanTs: mapValue(data.START_DATE_PLAN, data.START_DATE_PLAN * 1000),
 			endPlanTs: mapValue(data.END_DATE_PLAN, data.END_DATE_PLAN * 1000),
 			groupId: data.GROUP_ID,
-			epicId: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask.groupId ? undefined : 0),
-			storyPoints: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask.groupId ? undefined : ''),
+			epicId: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : 0),
+			storyPoints: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : ''),
+			canCreateEpic: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : false),
+			canUpdateScrumFields: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : false),
 			stageId: mapValue(data.STAGE_INFO, data.STAGE_INFO?.id ?? 0),
 			flowId: data.FLOW_ID,
 			status: mapValue(data.STATUS, mapStatus(data.STATUS)),
@@ -188,13 +254,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			tags: mapValue(data.TAGS, data.TAGS ? data.TAGS.split(',') : []),
 			mark: mapValue(data.MARK, mapMark(data.MARK)),
 			fileIds: mapValue(data.UF_TASK_WEBDAV_FILES, mapFileIds(data.UF_TASK_WEBDAV_FILES)),
-			crmItemIds: mapCrmItemIds(storeTask.crmItemIds, data.UF_CRM_TASK_ADDED, data.UF_CRM_TASK_DELETED),
+			crmItemIds: mapCrmItemIds(storeTask?.crmItemIds, data.UF_CRM_TASK_ADDED, data.UF_CRM_TASK_DELETED),
 			estimatedTime: data.TIME_ESTIMATE,
 			needsControl: data.TASK_CONTROL,
 			requireResult: mapValue(data.taskRequireResult, data.taskRequireResult === 'Y'),
 			requireDeadlineChangeReason: data.taskRequireDeadlineChangeReason
 		};
-		return Object.fromEntries(Object.entries(task).filter(([, value]) => !main_core.Type.isUndefined(value)));
+		return Object.fromEntries(Object.entries(task).filter(([field, value]) => !main_core.Type.isUndefined(value) && (field !== 'creatorId' || main_core.Type.isInteger(value) && value > 0)));
 	}
 	const mapStatus = status => ({
 		2: tasks_v2_const.TaskStatus.Pending,
@@ -226,15 +292,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	};
 	const mapValue = (value, mapped) => main_core.Type.isUndefined(value) ? undefined : mapped;
 
+	const MutedOption = 1;
 	class TaskPullHandler extends BasePullHandler {
 		getMap() {
 			return {
+				task_add: this.#handleTaskAdded,
 				task_update: this.#handleTaskUpdated,
 				task_view: this.#handleTaskViewed,
 				task_remove: this.#handleTaskDeleted,
 				default_deadline_changed: this.#handleDefaultDeadlineChanged,
 				task_regular_template_add: this.#handleTaskRegularTemplateAdded,
-				task_timer_stop: this.#handleStopOfTimer
+				task_timer_start: this.#handleStartOfTimer,
+				task_timer_stop: this.#handleStopOfTimer,
+				user_option_changed: this.#handleUserOptionChanged
 			};
 		}
 		getDelayedMap() {
@@ -242,12 +312,42 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				task_update: this.#handleTaskUpdatedDelayed
 			};
 		}
+		#handleTaskAdded = data => {
+			void this.#addTaskToParentStore(data);
+		};
+		async #addTaskToParentStore(data) {
+			const taskId = Number(data.TASK_ID) || 0;
+			const hasParentId = !main_core.Type.isUndefined(data.AFTER?.PARENT_ID);
+			const parentId = Number(data.AFTER?.PARENT_ID) || 0;
+			if (!taskId) {
+				return;
+			}
+			if (parentId) {
+				tasks_v2_provider_service_relationService.subTasksService.addStore(parentId, [taskId]);
+				return;
+			}
+			if (hasParentId) {
+				return;
+			}
+			const {
+				task
+			} = await tasks_v2_provider_service_taskService.taskService.get(taskId);
+			if (task?.parentId) {
+				tasks_v2_provider_service_relationService.subTasksService.addStore(task.parentId, [taskId]);
+			}
+		}
 		#handleTaskUpdated = data => {
 			data.AFTER.UF_CRM_TASK_DELETED = data.BEFORE.UF_CRM_TASK_DELETED;
 			data.AFTER.taskRequireResult = data.taskRequireResult;
 			data.AFTER.taskRequireDeadlineChangeReason = data.requireDeadlineChangeReason;
 			const task = mapPushToModel(data.TASK_ID, data.AFTER);
 			const taskBefore = mapPushToModel(data.TASK_ID, data.BEFORE);
+			if (!main_core.Type.isUndefined(task.groupId) && task.groupId !== taskBefore.groupId) {
+				if (!this.#tasksWithChangedGroup.has(task.id)) {
+					this.#groupIdsBeforeChangedGroup.set(task.id, tasks_v2_provider_service_taskService.taskService.getStoreTask(task.id)?.groupId ?? 0);
+				}
+				this.#tasksWithChangedGroup.add(task.id);
+			}
 			this.#upsertStage(data.AFTER.STAGE_INFO);
 			if (taskBefore.parentId) {
 				tasks_v2_provider_service_relationService.subTasksService.deleteStore(taskBefore.parentId, [task.id]);
@@ -263,31 +363,63 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				id,
 				...fields
 			} = mapInstantFields(task);
-			tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields);
+			tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields, 'server');
+			if (task.auditorsIds && tasks_v2_provider_service_taskService.taskService.hasStoreTask(task.id)) {
+				void tasks_v2_provider_service_userService.userService.list(task.auditorsIds);
+			}
 		};
 		#pushedTasks = {};
+		#taskUpdateDebouncers = new Map();
+		#tasksWithChangedGroup = new Set();
+		#groupIdsBeforeChangedGroup = new Map();
+		#taskUpdateSequences = new Map();
+		#taskUpdateVersions = new Map();
 		#handleTaskUpdatedDelayed = async data => {
 			if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(data.TASK_ID)) {
+				this.#tasksWithChangedGroup.delete(data.TASK_ID);
+				this.#groupIdsBeforeChangedGroup.delete(data.TASK_ID);
 				return;
 			}
 			const task = mapPushToModel(data.TASK_ID, data.AFTER);
+			const taskBefore = mapPushToModel(data.TASK_ID, data.BEFORE);
+			const updateSequence = (this.#taskUpdateSequences.get(task.id) ?? 0) + 1;
+			this.#taskUpdateSequences.set(task.id, updateSequence);
 			if (!this.isFromAi(data) && data.USER_ID === this.#currentUserId) {
 				const {
 					TaskFullCard
 				} = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
-				if (TaskFullCard.isOpened(task.id)) {
+				if (this.#taskUpdateSequences.get(task.id) !== updateSequence) {
+					return;
+				}
+				if (TaskFullCard.isOpened(task.id) && !this.#tasksWithChangedGroup.has(task.id)) {
 					return;
 				}
 			}
+			const updateVersion = (this.#taskUpdateVersions.get(task.id) ?? 0) + 1;
+			this.#taskUpdateVersions.set(task.id, updateVersion);
+			const pendingTask = this.#pushedTasks[task.id];
+			const hasGroupChange = !main_core.Type.isUndefined(task.groupId) && task.groupId !== taskBefore.groupId;
 			this.#pushedTasks[task.id] = {
-				...this.#pushedTasks[task.id],
-				...task
+				...pendingTask,
+				...task,
+				...(pendingTask?.groupId && !hasGroupChange && this.#tasksWithChangedGroup.has(task.id) ? {
+					groupId: pendingTask.groupId
+				} : {})
 			};
-			this.#handleTaskUpdatedDebounced(data);
+			if (!this.#taskUpdateDebouncers.has(task.id)) {
+				this.#taskUpdateDebouncers.set(task.id, main_core.Runtime.debounce((pushData, version) => {
+					this.#taskUpdateDebouncers.delete(task.id);
+					void this.#applyTaskUpdate(pushData, version);
+				}, 0));
+			}
+			this.#taskUpdateDebouncers.get(task.id)(data, updateVersion);
 		};
-		#handleTaskUpdatedDebounced = main_core.Runtime.debounce(async data => {
+		async #applyTaskUpdate(data, updateVersion) {
 			const task = this.#pushedTasks[data.TASK_ID];
-			delete this.#pushedTasks[task.id];
+			if (!task || this.#taskUpdateVersions.get(task.id) !== updateVersion) {
+				return;
+			}
+			const shouldRefreshScrumInfo = this.#tasksWithChangedGroup.has(task.id);
 			if (this.#needToLoadTask(data)) {
 				await tasks_v2_provider_service_taskService.taskService.get(task.id);
 				await this.#loadViewersQuantity(task);
@@ -297,12 +429,30 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 					id,
 					...fields
 				} = task;
-				tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields);
+				const currentGroupId = tasks_v2_provider_service_taskService.taskService.getStoreTask(id)?.groupId;
+				const groupIdBeforeChangedGroup = this.#groupIdsBeforeChangedGroup.get(task.id);
+				if (task.groupId > 0 && groupIdBeforeChangedGroup > 0 && currentGroupId === 0) {
+					for (const field of ['groupId', 'epicId', 'storyPoints', 'canCreateEpic', 'canUpdateScrumFields', 'stageId', 'flowId']) {
+						delete fields[field];
+					}
+				}
+				if (this.#taskUpdateVersions.get(task.id) !== updateVersion) {
+					return;
+				}
+				tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields, 'server');
+			}
+			if (this.#taskUpdateVersions.get(task.id) !== updateVersion) {
+				return;
+			}
+			delete this.#pushedTasks[task.id];
+			this.#tasksWithChangedGroup.delete(task.id);
+			if (shouldRefreshScrumInfo) {
+				await this.#refreshScrumInfo(task.id);
 			}
 			main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TaskPullUpdated, {
 				task: tasks_v2_provider_service_taskService.taskService.getStoreTask(task.id)
 			});
-		}, 0);
+		}
 		#handleTaskViewed = data => {};
 		#handleTaskDeleted = data => {
 			const taskId = data.TASK_ID;
@@ -338,20 +488,62 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				}]
 			});
 		};
-		#handleStopOfTimer = async data => {
-			if (!data.taskId || !tasks_v2_provider_service_taskService.taskService.hasStoreTask(data.taskId)) {
+		#handleStartOfTimer = data => {
+			this.#applyTimerChange(data.taskId, task => this.#startTimerFields(task, data));
+		};
+		#handleStopOfTimer = data => {
+			this.#applyTimerChange(data.taskId, task => this.#stopTimerFields(task, data));
+		};
+
+		// Timer freshness rides task_timer_start/task_timer_stop (CONTRACT-timer-state), never task_update:
+		// the backend sends task_update before the timer side effect, so its timers are stale.
+		// Every push applies a targeted store patch with the fresh timer fields; non-timer fields
+		// ride the accompanying task_update, so no full task reload is needed here.
+		#applyTimerChange(taskId, buildFields) {
+			if (!taskId || !tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId)) {
 				return;
 			}
-			const {
-				TaskFullCard
-			} = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
-			if (!TaskFullCard.isOpened(data.taskId)) {
-				void tasks_v2_provider_service_taskService.taskService.get(data.taskId);
+			tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, buildFields(tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId)));
+		}
+		#startTimerFields(task, data) {
+			const currentUserId = this.#currentUserId;
+			const timers = (task.timers ?? []).filter(timer => timer.userId !== currentUserId);
+			timers.push({
+				userId: currentUserId,
+				taskId: String(data.taskId),
+				startedAtTs: data.timerStartedAtTs,
+				seconds: 0
+			});
+			const fields = {
+				timers
+			};
+			if (main_core.Type.isNumber(data.timeSpentInLogs)) {
+				fields.timeSpent = data.timeSpentInLogs;
 			}
+			return fields;
+		}
+		#stopTimerFields(task, data) {
+			const timers = (task.timers ?? []).filter(timer => timer.userId !== data.userId);
+			const fields = {
+				timers
+			};
+			const timeElapsed = data.timeElapsed?.[data.userId];
+			if (data.userId === this.#currentUserId && main_core.Type.isNumber(timeElapsed)) {
+				fields.timeSpent = timeElapsed;
+			}
+			return fields;
+		}
+		#handleUserOptionChanged = data => {
+			if (data.OPTION !== MutedOption || data.USER_ID !== this.#currentUserId) {
+				return;
+			}
+			tasks_v2_provider_service_taskService.taskService.updateStoreTask(data.TASK_ID, {
+				isMuted: data.ADDED
+			});
 		};
 		#upsertStage(stageDto) {
 			if (stageDto) {
-				const stage = tasks_v2_provider_service_groupService.GroupMappers.mapStageDtoToModel(stageDto);
+				const stage = tasks_v2_model_groups.mapStageDtoToModel(stageDto);
 				void this.$store.dispatch(`${tasks_v2_const.Model.Stages}/upsert`, stage);
 			}
 		}
@@ -361,8 +553,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		}
 		async #loadGroup(task) {
 			if (this.#needToLoadGroup(task)) {
-				await tasks_v2_provider_service_groupService.groupService.getGroupByTaskId(task.id);
+				const {
+					groupService
+				} = await main_core.Runtime.loadExtension('tasks.v2.provider.service.group-service');
+				await groupService.getGroupByTaskId(task.id);
 			}
+		}
+		async #refreshScrumInfo(taskId) {
+			const {
+				groupService
+			} = await main_core.Runtime.loadExtension('tasks.v2.provider.service.group-service');
+			await groupService.getScrumInfo(taskId, {
+				force: true
+			});
 		}
 		#needToLoadGroup(task) {
 			if (this.#needToLoadFlow(task)) {
@@ -398,7 +601,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		#handlers;
 		constructor(params) {
 			this.#params = params;
-			this.#handlers = new Set([new ResultsPullHandler(), new ScrumPullHandler(), new TagsPullHandler(), new TaskPullHandler()]);
+			this.#handlers = new Set([new CheckListPullHandler(), new ResultsPullHandler(), new ScrumPullHandler(), new TagsPullHandler(), new TaskPullHandler()]);
 		}
 		initQueueManager() {
 			return new pull_queuemanager.QueueManager({
@@ -487,5 +690,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	exports.PullManager = PullManager;
 
-})(this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}, BX, BX.Pull, BX.Tasks.V2.Const, BX.Tasks.V2, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Vuex, BX.Event, BX.Tasks.V2.Application, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service);
+})(this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}, BX, BX.Pull, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service, BX.Tasks.V2, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Vuex, BX.Event, BX.Tasks.V2.Application, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Model, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service);
 //# sourceMappingURL=pull-manager.bundle.js.map

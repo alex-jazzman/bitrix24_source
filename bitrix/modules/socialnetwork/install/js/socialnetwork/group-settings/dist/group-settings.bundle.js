@@ -1353,7 +1353,7 @@ this.BX = this.BX || {};
 	              const name = searchQuery.getQuery().toLowerCase();
 	              const dialog = event.getTarget();
 	              setTimeout(() => {
-	                const tagsList = name.split(',');
+	                const tagsList = name.split(',').map(tag => tag.trim()).filter(tag => main_core.Type.isStringFilled(tag));
 	                tagsList.forEach(tag => {
 	                  const item = dialog.addItem({
 	                    id: tag,

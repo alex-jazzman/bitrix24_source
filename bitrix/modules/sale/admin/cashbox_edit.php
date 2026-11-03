@@ -80,6 +80,13 @@ if ($server->getRequestMethod() == "POST"
 		'OFD_SETTINGS' => $request->getPost('OFD_SETTINGS') ?: array(),
 	);
 
+	// HANDLER is used as a class name below, so anything but a string (HANDLER[]=x)
+	// must not reach isset($handlerList[...]) or class_exists().
+	if (!is_string($cashbox['HANDLER']))
+	{
+		$cashbox['HANDLER'] = '';
+	}
+
 	$ofdHandler = $request->getPost('OFD');
 	if (!$ofdHandler || (is_string($ofdHandler) && Cashbox\Ofd::doesHandlerExist($ofdHandler)))
 	{
@@ -92,6 +99,7 @@ if ($server->getRequestMethod() == "POST"
 
 	/** @var Cashbox\Cashbox $handler */
 	$handler = $cashbox['HANDLER'];
+	$isHandlerAccepted = false;
 	if (empty($handler))
 	{
 		$errorMessage .= GetMessage('ERROR_NO_HANDLER')."<br>\n";
@@ -99,7 +107,11 @@ if ($server->getRequestMethod() == "POST"
 	else
 	{
 		$handlerList = Cashbox\Cashbox::getHandlerList();
-		if (!isset($handlerList[$cashbox['HANDLER']]))
+		if (isset($handlerList[$cashbox['HANDLER']]))
+		{
+			$isHandlerAccepted = true;
+		}
+		else
 		{
 			$errorMessage .= GetMessage('ERROR_NO_HANDLER_EXIST')."<br>\n";
 		}
@@ -110,18 +122,33 @@ if ($server->getRequestMethod() == "POST"
 		$adminSidePanelHelper->sendJsonErrorResponse($errorMessage);
 	}
 
-	if (class_exists($handler))
+	// What the user typed belongs to the form even when the handler is rejected, so this runs
+	// for any real handler; only the class name from the request is checked.
+	if (is_subclass_of($handler, Cashbox\Cashbox::class))
 	{
 		$cashbox['SETTINGS'] = $handler::extractSettingsFromRequest($request);
 	}
 
-	$cashboxObject = Cashbox\Cashbox::create($cashbox);
-	$result = $cashboxObject->validate();
-	if (!$result->isSuccess())
+	// Only a rejected handler stops the save: sendJsonErrorResponse() ends the request for AJAX
+	// alone. Other errors must not, or the form loses the messages validate() found.
+	if ($isHandlerAccepted)
 	{
-		foreach ($result->getErrors() as $error)
+		$cashboxObject = Cashbox\Cashbox::create($cashbox);
+		if ($cashboxObject === null)
 		{
-			$errorMessage .= $error->getMessage()."<br>\n";
+			// A handler listed by getHandlerList() whose class does not load.
+			$errorMessage .= GetMessage('ERROR_NO_HANDLER_EXIST')."<br>\n";
+		}
+		else
+		{
+			$result = $cashboxObject->validate();
+			if (!$result->isSuccess())
+			{
+				foreach ($result->getErrors() as $error)
+				{
+					$errorMessage .= $error->getMessage()."<br>\n";
+				}
+			}
 		}
 	}
 
@@ -206,7 +233,7 @@ if ($id > 0 && !$request->isPost())
 }
 
 $requireFields = array();
-if (class_exists($cashbox['HANDLER']))
+if (is_subclass_of($cashbox['HANDLER'], Cashbox\Cashbox::class))
 {
 	$requireFields = $cashbox['HANDLER']::getGeneralRequiredFields();
 }
@@ -240,7 +267,7 @@ $tabControl = new CAdminForm("tabControl", $aTabs);
 
 $restrictionsHtml = '';
 
-if ($id > 0 && !$isCashboxPaySystem)
+if ($id > 0 && $cashboxObject && !$isCashboxPaySystem)
 {
 	ob_start();
 	require_once($documentRoot."/bitrix/modules/sale/admin/cashbox_restrictions_list.php");
@@ -498,7 +525,7 @@ $tabControl->AddEditField('NAME', Loc::getMessage("SALE_CASHBOX_NAME").':', true
 $tabControl->BeginCustomField('KKM_ID', GetMessage("SALE_CASHBOX_KKM_ID"));
 ?>
 	<tbody id="sale-cashbox-models-container">
-		<?if ($cashbox['HANDLER'] && class_exists($cashbox['HANDLER'])):?>
+		<?if (is_subclass_of($cashbox['HANDLER'], Cashbox\Cashbox::class)):?>
 			<?
 			$kkmList = $cashbox['HANDLER']::getSupportedKkmModels();
 			if ($kkmList):

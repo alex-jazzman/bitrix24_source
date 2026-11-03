@@ -7,7 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Landing;
 use Bitrix\Main\Loader;
 use Bitrix\Crm;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Web\Json;
 use Bitrix\Catalog;
 
 class StoreV3Menu2 extends \Bitrix\Landing\LandingBlock
@@ -86,6 +88,26 @@ class StoreV3Menu2 extends \Bitrix\Landing\LandingBlock
 		$this->params['HIDE_SECTIONS_WITH_ZERO_COUNT_ELEMENTS'] = 'Y';
 
 		$this->setElementListFilter();
+		$this->registerPanelMessages();
+	}
+
+	/**
+	 * Hands the phrases of the panel script to the client ahead of the script itself.
+	 * @return void
+	 */
+	private function registerPanelMessages(): void
+	{
+		if ($this->getEditMode())
+		{
+			return;
+		}
+
+		$messages = [
+			'LNDBLCK_STOREMENUV3_2_PANEL_LABEL' => Loc::getMessage('LNDBLCK_STOREMENUV3_2_PANEL_LABEL'),
+			'LNDBLCK_STOREMENUV3_2_PANEL_CLOSE_LABEL' => Loc::getMessage('LNDBLCK_STOREMENUV3_2_PANEL_CLOSE_LABEL'),
+		];
+
+		echo '<script>BX.message(' . Json::encode($messages) . ');</script>';
 	}
 
 	protected function initCurrentUser(): void

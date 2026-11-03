@@ -264,6 +264,19 @@ body:not(.landing-copilot-generation) .landing-card:focus-within > .landing-ui-p
 	opacity: 1;
 }
 
+/* The action panels of the editor live inside `.block-wrapper`, so the two-tone ring the site
+   template draws for the content of a block reaches them too: a white outline inset into the
+   control plus a dark halo around it. The halo is a `box-shadow` and is painted outside the box,
+   while the two panels that collapse - `.landing-ui-panel-block-action` and
+   `.landing-ui-panel-content-action` - are their own clip: `overflow: hidden` in
+   `landing.ui.panel.base` is what lets the collapse animation slide their buttons behind the
+   panel edge. A button of such a panel sits flush with that edge, so the halo is cut off:
+   measured on the live editor, 4px of it are gone below every button of the panel and another
+   4px beside the first and the last of them. The dark half is therefore drawn inside the button,
+   right behind the white outline, where nothing clips it - both tones survive, the ring only
+   grows inward instead of outward. The four panels below that do not clip are listed on purpose:
+   they are the same family of service panels and wear the same ring, so the focused control looks
+   the same wherever the editor puts it. */
 .landing-ui-panel-block-action .landing-ui-button:focus-visible,
 .landing-ui-panel-content-action .landing-ui-button:focus-visible,
 .landing-ui-panel-create-action .landing-ui-button:focus-visible,
@@ -271,6 +284,7 @@ body:not(.landing-copilot-generation) .landing-card:focus-within > .landing-ui-p
 .landing-ui-panel-block-card-action .landing-ui-button:focus-visible,
 .landing-ui-panel-create-before-action .landing-ui-button:focus-visible {
 	outline-offset: -2px;
+	box-shadow: inset 0 0 0 4px #333;
 }
 
 body:not(.landing-copilot-generation) .landing-sidebar .block-wrapper:hover .landing-ui-panel-content-action,

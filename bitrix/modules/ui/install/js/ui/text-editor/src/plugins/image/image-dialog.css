@@ -1,18 +1,29 @@
 .ui-text-editor-image-dialog {
 	display: flex;
 	padding: 10px;
-	align-items: center;
+	align-items: flex-start;
+	gap: 8px;
 }
 
+/* the fields carry ui-ctl-w100, so the column must not add a margin of its own: the
+   full width plus a margin would overflow it */
 .ui-text-editor-image-dialog-form {
-	width: 320px;
+	width: 242px;
 	display: flex;
 	flex: 1;
+	flex-direction: column;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.ui-text-editor-image-dialog-actions {
+	display: flex;
 	align-items: center;
 }
 
-.ui-text-editor-image-dialog-textbox {
-	margin-right: 8px;
+.ui-text-editor-image-dialog-hint {
+	font-size: var(--ui-font-size-4xs);
+	color: var(--ui-color-base-3);
+	margin-left: var(--ui-space-inline-3xs);
 }
 
 .ui-text-editor-image-dialog-button {

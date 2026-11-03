@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-class CBPAiManualStartTrigger implements IBPActivityAiDescription
+class CBPAiAiAgentStartTrigger implements IBPActivityAiDescription
 {
 	public function getAiDescribedSettings(array $documentType): SettingCollection
 	{

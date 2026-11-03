@@ -1,4 +1,5 @@
 export const ChatAction = Object.freeze({
+	AddObserver: 'addObserver',
 	ChangeDeadline: 'changeDeadline',
 	CompleteTask: 'completeTask',
 	OpenResult: 'openResult',

@@ -67,7 +67,8 @@ class Social extends PresetAbstract
 
 	public function getStructure(): array
 	{
-		static $structure;
+		$cache = &$this->getCache();
+		$structure = &$cache['structure'];
 		if ($structure)
 		{
 			return $structure;

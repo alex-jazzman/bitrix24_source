@@ -268,6 +268,8 @@ class tasks extends CModule
 
 		CModule::includeModule('tasks');
 
+		\Bitrix\Tasks\Internals\DataBase\CrmItemIndex::ensure();
+
 		(new \Bitrix\Tasks\Access\Install\AccessInstaller($DB))->install();
 		(new \Bitrix\Tasks\Access\Install\Migration($DB))->migrateTemplateRights();
 
@@ -578,6 +580,10 @@ class tasks extends CModule
 				'nextExec' => \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + (86400 - (time() % 86400)))->toString(),  // without daylight saving time, leap years, etc.
 				'period' => 'Y',
 			],
+			[
+				'name' => '\Bitrix\Tasks\V2\Infrastructure\Agent\ClearOldViewedAbsence::execute();',
+				'interval' => 604800,
+			],
 		];
 		foreach ($agents as $agent)
 		{
@@ -692,6 +698,11 @@ class tasks extends CModule
 				'name' => 'tasksDisableDefaultListGroups',
 				'value' => (new \Bitrix\Main\Type\DateTime())->format('Y-m-d H:i:s'),
 			],
+			[
+				'condition' => Option::get('tasks', 'tasks_onboarding_feature_start_date', '') === '',
+				'name' => 'tasks_onboarding_feature_start_date',
+				'value' => (new \Bitrix\Main\Type\DateTime())->format('Y-m-d H:i:s'),
+			],
 		];
 		foreach ($options as $option)
 		{
@@ -700,6 +711,81 @@ class tasks extends CModule
 				Option::set('tasks', $option['name'], $option['value']);
 			}
 		}
+
+		$this->initializeChatAvatarFeatureForInstallation();
+	}
+
+	protected function initializeChatAvatarFeatureForInstallation(): void
+	{
+		$previousValue = Option::getRealValue('tasks', 'chat_avatar_feature', '');
+		$rollbackHandled = false;
+		try
+		{
+			if ($previousValue === null)
+			{
+				Option::set('tasks', 'chat_avatar_feature', 'Y', '');
+			}
+			$shouldBeEnabled = \Bitrix\Tasks\Feature\ChatAvatarFeature::getExplicitValue()
+				?? (Option::getRealValue('tasks', 'chat_avatar_feature', '') === 'Y');
+			if (
+				$shouldBeEnabled
+				&& !\Bitrix\Main\Config\Feature::isEnabled(\Bitrix\Tasks\Feature\ChatAvatarFeature::class)
+			)
+			{
+				throw new \Bitrix\Main\SystemException('Task chat avatars are disabled by a feature rule.');
+			}
+
+			$result = $this->createChatAvatarFeatureInitializer()->initialize();
+			if (
+				$result->isSuccess()
+				&& $shouldBeEnabled
+				&& !\Bitrix\Main\Config\Feature::isEnabled(\Bitrix\Tasks\Feature\ChatAvatarFeature::class)
+			)
+			{
+				throw new \Bitrix\Main\SystemException('Task chat avatars are disabled by a feature rule.');
+			}
+			if (!$result->isSuccess())
+			{
+				if (
+					$previousValue === null
+					&& \Bitrix\Tasks\V2\Infrastructure\Agent\ChatAvatarFeatureInitializer::isSchedulingFailure($result)
+				)
+				{
+					$rollbackHandled = true;
+					if ($this->reconcileChatAvatarSchedulingFailure(
+						static function (): void {
+							Option::delete('tasks', ['name' => 'chat_avatar_feature', 'site_id' => '']);
+						},
+					))
+					{
+						return;
+					}
+				}
+
+				throw new \Bitrix\Main\SystemException(
+					implode('; ', $result->getErrorMessages()) ?: 'Could not initialize task chat avatars.',
+				);
+			}
+		}
+		catch (\Throwable $exception)
+		{
+			if ($previousValue === null && !$rollbackHandled)
+			{
+				Option::delete('tasks', ['name' => 'chat_avatar_feature', 'site_id' => '']);
+			}
+
+			$this->setInstallError($exception->getMessage());
+		}
+	}
+
+	protected function reconcileChatAvatarSchedulingFailure(callable $rollback): bool
+	{
+		return \Bitrix\Tasks\V2\Infrastructure\Agent\UpdateTaskChatAvatarStepper::reconcileSchedulingFailure($rollback);
+	}
+
+	protected function createChatAvatarFeatureInitializer(): \Bitrix\Tasks\V2\Infrastructure\Agent\ChatAvatarFeatureInitializer
+	{
+		return new \Bitrix\Tasks\V2\Infrastructure\Agent\ChatAvatarFeatureInitializer();
 	}
 
 	function UnInstallDB($arParams = array())
@@ -825,22 +911,29 @@ class tasks extends CModule
 			'tasks',
 			'OnTaskAdd',
 			'tasks',
-			'\Bitrix\Tasks\Flow\Internal\FlowTaskTable',
-			'onTaskAdd'
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'OnTaskAdd'
 		);
 		$eventManager->unRegisterEventHandler(
 			'tasks',
 			'OnTaskUpdate',
 			'tasks',
-			'\Bitrix\Tasks\Flow\Internal\FlowTaskTable',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
 			'onTaskUpdate'
 		);
 		$eventManager->unRegisterEventHandler(
 			'tasks',
 			'OnTaskDelete',
 			'tasks',
-			'\Bitrix\Tasks\Flow\Internal\FlowTaskTable',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
 			'onTaskDelete'
+		);
+		$eventManager->unRegisterEventHandler(
+			'socialnetwork',
+			'OnBeforeSocNetGroupDelete',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'OnBeforeSocNetGroupDelete'
 		);
 		$eventManager->unRegisterEventHandler(
 			'main',

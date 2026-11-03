@@ -52,6 +52,7 @@ export type InitialStageResult = {
 	pagination: Pagination,
 	context: NavigationContext,
 	emptyReason: EmptyReasonValue,
+	sourceRevision: string | null,
 };
 
 export type ListChildrenResult = {
@@ -78,6 +79,17 @@ export type ResolveSelectionResult = {
 	partial: boolean,
 };
 
+// DTO-02: the viewer attribute map of one file, built by the server. Values are
+// opaque strings: the client only puts them on a node with setAttribute.
+export type ViewerAttributesEntry = {
+	objectId: number,
+	attributes: Record<string, string>,
+};
+
+export type ViewerAttributesResult = {
+	items: ViewerAttributesEntry[],
+};
+
 // Adapter request inputs.
 export type InitialStageRequest = {
 	initialStage: {
@@ -87,6 +99,7 @@ export type InitialStageRequest = {
 	} | null,
 	filters: SessionFilters,
 	allowedFileTypes: string[],
+	page: number,
 	pageSize: number,
 	signedConfig: Object | null,
 };
@@ -116,5 +129,10 @@ export type ResolveSelectionRequest = {
 	objectIds: number[],
 	selectionMode: SelectionModeValue,
 	allowedFileTypes: string[],
+	signedConfig: Object | null,
+};
+
+export type ViewerAttributesRequest = {
+	objectIds: number[],
 	signedConfig: Object | null,
 };

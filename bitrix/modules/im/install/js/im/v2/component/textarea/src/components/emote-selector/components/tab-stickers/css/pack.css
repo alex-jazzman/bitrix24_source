@@ -6,6 +6,13 @@
 }
 
 .bx-im-sticker-pack__header {
+	display: flex;
+}
+
+/* The single rowheader cell fills the header row and carries the layout the row used to: name on
+   the left, ... on the right. The visual result is unchanged. */
+.bx-im-sticker-pack__header-cell {
+	flex: 1;
 	padding-top: 8px;
 	display: flex;
 	justify-content: space-between;
@@ -22,8 +29,19 @@
 }
 
 .bx-im-sticker-pack__header-actions {
+	display: flex;
+	align-items: center;
 	margin: 8px 12px 8px 0;
+	padding: 0;
+	border: none;
+	/* literal 50%: the visible-focus outline hugs the round icon;
+		--im-border-radius-* tokens live only inside .bx-im-messenger__scope */
+	border-radius: 50%;
+	background: transparent;
+	color: inherit;
 	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 .bx-im-sticker-pack__stickers {

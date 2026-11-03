@@ -45,6 +45,9 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && $_REQUEST["save_form"]=="Y" && $MOD_RIG
 		if($_REQUEST["DELETE_MESSAGE"]=="Y")
 		{
 			CMailMessage::Delete($ID);
+			// The letter is gone for good, so the conversation projection may not keep it either
+			(new \Bitrix\Mail\Internal\Service\Message\Conversation\ConversationBackfill())
+				->removeMessages((int)$dbr_arr["MAILBOX_ID"], array($ID));
 		}
 	}
 

@@ -1,19 +1,22 @@
-import { Browser, Loc } from 'main.core';
-import { TextSm, TextXs } from 'ui.system.typography.vue';
+import { Loc, Type } from 'main.core';
+import { BLine } from 'ui.system.skeleton.vue';
+import { HeadlineSm, TextXs } from 'ui.system.typography.vue';
 import { defineComponent } from 'ui.vue3';
 
-import { SelectionMode } from '../../const/picker';
 import { formatDate } from '../../lib/format-date/format-date';
 import { formatSize } from '../../lib/format-size/format-size';
 import { useItemStore } from '../../model/item/item';
 import { type PickerItem } from '../../model/item/types';
 import { useSelectionStore } from '../../model/selection/selection';
+import { type SelectionSnapshot } from '../../model/selection/types';
 import { useSessionStore } from '../../model/session/session';
 import { DiskIconView } from '../disk-icon/disk-icon';
 
 import './preview-panel.css';
 
-const FAN_LIMIT = 5;
+// The fan shows the tail of the selection, not its head: the card in front is the file just
+// picked, so three is the depth at which the stack still reads as separate cards.
+const FAN_LIMIT = 3;
 
 type PreviewProp = {
 	key: string,
@@ -21,22 +24,56 @@ type PreviewProp = {
 	value: string,
 };
 
-// Right column of the body. Three states with an explicit priority: no active
-// file in the visible list -> hint; active visible with several files selected ->
-// fan of thumbnails, count and total size; otherwise the active file -> its
-// thumbnail or a large type icon, name and a property table. The composition is
-// extensible: supporting a preview for a new type does not require rebuilding the
-// layout. The absence of an active file wins over a multi selection.
+// The span the given moments fall into, both ends through the product formatter. Equal ends
+// collapse to a single date: "2 May - 2 May" states nothing the one date does not.
+function formatDateRange(timestamps: Array<number | null>): string
+{
+	const known = timestamps.filter((value): value is number => value !== null);
+	if (known.length === 0)
+	{
+		return '';
+	}
+
+	const from = formatDate(Math.min(...known));
+	const to = formatDate(Math.max(...known));
+
+	return from === to ? from : `${from} - ${to}`;
+}
+
+// Right column of the body. Three states with an explicit priority: several picked
+// files -> fan of thumbnails, count and total size, all of it read from the picking
+// snapshots and therefore true in a feed that lists none of them; a single active
+// file of the visible list -> its thumbnail or a large type icon, name and a property
+// table; neither -> hint. The composition is extensible: supporting a preview for a
+// new type does not require rebuilding the layout.
 export const PreviewPanel = defineComponent({
 	name: 'DiskPickerPreviewPanel',
 	components: {
 		BDiskIcon: DiskIconView,
-		TextSm,
+		BLine,
+		HeadlineSm,
 		TextXs,
 	},
+	data(): { loadedPreviewUrl: string | null }
+	{
+		return { loadedPreviewUrl: null };
+	},
+	watch: {
+		// A new file means a new picture: the placeholder comes back until that one is decoded.
+		'activeItem.previewUrl': function(): void
+		{
+			this.loadedPreviewUrl = null;
+		},
+	},
 	computed: {
-		// getById returns null when the active id is not in the visible list, which
-		// is exactly the empty-state trigger.
+		// The url the browser has finished with, compared against the one on screen: a flag alone
+		// would leave the placeholder off for a picture that has not arrived yet.
+		previewImageLoaded(): boolean
+		{
+			return this.loadedPreviewUrl !== null && this.loadedPreviewUrl === this.activeItem?.previewUrl;
+		},
+		// getById returns null when the active id is not in the visible list; the panel
+		// then falls back to the set summary or, with nothing to summarize, to the hint.
 		activeItem(): PickerItem | null
 		{
 			const activeObjectId = useSelectionStore().activeObjectId;
@@ -51,38 +88,48 @@ export const PreviewPanel = defineComponent({
 		{
 			return useSelectionStore().count;
 		},
-		isMultipleMode(): boolean
+		// The whole set as it was at the moment of picking: the panel describes it from the
+		// snapshots and never resolves picked ids through the visible list.
+		selectedSnapshots(): SelectionSnapshot[]
 		{
-			return useSessionStore().constraints.selectionMode === SelectionMode.Multiple;
-		},
-		multiSelectShortcut(): string
-		{
-			return Browser.isMac() ? 'Cmd' : 'Ctrl';
-		},
-		// Only visible selected files: the fan is never built from hidden ids.
-		selectedItems(): PickerItem[]
-		{
-			const item = useItemStore();
-
-			return useSelectionStore().selectedIds
-				.map((objectId) => item.getById(objectId))
-				.filter((entry): entry is PickerItem => entry !== null);
+			return useSelectionStore().selectedSnapshotList;
 		},
 		showEmpty(): boolean
 		{
-			return this.activeItem === null;
+			return !this.showMulti && this.activeItem === null;
 		},
 		showMulti(): boolean
 		{
-			return this.activeItem !== null && this.count > 1;
+			return this.count > 1;
 		},
 		showSingle(): boolean
 		{
-			return this.activeItem !== null && this.count <= 1;
+			return !this.showMulti && this.activeItem !== null;
 		},
-		fanItems(): PickerItem[]
+		previewImageAllowed(): boolean
 		{
-			return this.selectedItems.slice(0, FAN_LIMIT);
+			return !useSessionStore().navigationPending;
+		},
+		// A thumbnail is shown only once the picture is there and the list has settled;
+		// otherwise the panel falls back to the format icon.
+		showsPreviewImage(): boolean
+		{
+			return Type.isStringFilled(this.activeItem?.previewUrl) && this.previewImageAllowed;
+		},
+		// The last picked files, in the order they were picked: the template paints them in
+		// sequence, so the newest lands on top of the stack without a z-index of its own.
+		fanItems(): SelectionSnapshot[]
+		{
+			return this.selectedSnapshots.slice(-FAN_LIMIT);
+		},
+		// What the file is, under its name: the extension as the disk stores it, in capitals.
+		// A file without one — a folder never reaches this panel — leaves the line out rather
+		// than showing an empty label.
+		formatLabel(): string
+		{
+			const extension = this.activeItem?.extension ?? null;
+
+			return extension ? extension.toUpperCase() : '';
 		},
 		multiTitle(): string
 		{
@@ -90,15 +137,32 @@ export const PreviewPanel = defineComponent({
 		},
 		multiSize(): string
 		{
-			const selection = useSelectionStore();
-			const item = useItemStore();
-			const total = selection.selectedIds.reduce((sum, objectId) => {
-				return sum + (selection.selectedSizes[objectId] ?? item.getById(objectId)?.size ?? 0);
-			}, 0);
+			const total = this.selectedSnapshots.reduce((sum, snapshot) => sum + (snapshot.size ?? 0), 0);
 
 			return formatSize(total);
 		},
-		singleProps(): PreviewProp[]
+		// The selection is described by spans rather than by one date: the files were created
+		// and changed at different moments, and the panel states the range they fall into.
+		multiProps(): PreviewProp[]
+		{
+			return [
+				{ key: 'size', label: this.loc('DISK_PICKER_PREVIEW_PROP_SIZE'), value: this.multiSize },
+				{
+					key: 'created',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_CREATED'),
+					value: formatDateRange(this.selectedSnapshots.map((snapshot) => snapshot.createTime)),
+				},
+				{
+					key: 'changed',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_CHANGED'),
+					value: formatDateRange(this.selectedSnapshots.map((snapshot) => snapshot.updateTime)),
+				},
+			].filter((prop) => prop.value !== '');
+		},
+		// The properties come in two groups, separated in the panel by a divider: what the
+		// file is, and where it came from. They are separate lists rather than one flagged
+		// list because the template renders each group as its own block.
+		fileProps(): PreviewProp[]
 		{
 			const item = this.activeItem;
 			if (item === null)
@@ -110,11 +174,26 @@ export const PreviewPanel = defineComponent({
 				{ key: 'size', label: this.loc('DISK_PICKER_PREVIEW_PROP_SIZE'), value: formatSize(item.size) },
 				{ key: 'created', label: this.loc('DISK_PICKER_PREVIEW_PROP_CREATED'), value: formatDate(item.createTime) },
 				{ key: 'changed', label: this.loc('DISK_PICKER_PREVIEW_PROP_CHANGED'), value: formatDate(item.updateTime) },
+			];
+		},
+		originProps(): PreviewProp[]
+		{
+			const item = this.activeItem;
+			if (item === null)
+			{
+				return [];
+			}
+
+			return [
 				{ key: 'source', label: this.loc('DISK_PICKER_PREVIEW_PROP_SOURCE'), value: item.sourceTitle },
 			];
 		},
 	},
 	methods: {
+		handlePreviewLoad(): void
+		{
+			this.loadedPreviewUrl = this.activeItem?.previewUrl ?? null;
+		},
 		loc(messageCode: string, replacements?: { [key: string]: string }): string
 		{
 			return Loc.getMessage(messageCode, replacements) ?? '';
@@ -129,61 +208,84 @@ export const PreviewPanel = defineComponent({
 					aria-hidden="true"
 				></div>
 				<div class="disk-picker-preview-panel__empty-hint">
-					<TextXs>{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT') }}</TextXs>
-					<TextXs
-						v-if="isMultipleMode"
-						class="disk-picker-preview-panel__multi-hint"
-						data-testid="universal-disk-picker-preview-empty-shortcut"
-					>
-						<span>{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT_MULTI') }}</span>
-						<span class="disk-picker-preview-panel__multi-hint-action">
-							<span>{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT_MULTI_ACTION') }}</span>
-							<kbd>{{ multiSelectShortcut }}</kbd>
-							<span aria-hidden="true">+</span>
-							<span
-								class="disk-picker-preview-panel__click"
-								data-testid="universal-disk-picker-preview-empty-click"
-								role="img"
-								:aria-label="loc('DISK_PICKER_PREVIEW_MOUSE_CLICK_ARIA')"
-							></span>
-						</span>
-					</TextXs>
+					<TextXs class="disk-picker-preview-panel__empty-hint-text">{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT') }}</TextXs>
 				</div>
 			</div>
 
-			<div v-else-if="showMulti" class="disk-picker-preview-panel__multi" data-testid="universal-disk-picker-preview-multi">
+			<div v-else-if="showMulti" :key="'multi'" class="disk-picker-preview-panel__multi" data-testid="universal-disk-picker-preview-multi">
 				<div class="disk-picker-preview-panel__fan">
 					<div
-						v-for="item in fanItems"
-						:key="item.objectId"
+						v-for="snapshot in fanItems"
+						:key="snapshot.objectId"
 						class="disk-picker-preview-panel__fan-thumb"
 					>
-						<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
+						<BDiskIcon
+							:type="snapshot.iconType"
+							:size="138"
+							:preview-url="snapshot.previewUrl"
+							keep-preview-on-feed-change
+						/>
 					</div>
 				</div>
-				<TextSm class="disk-picker-preview-panel__multi-title">{{ multiTitle }}</TextSm>
+				<HeadlineSm accent class="disk-picker-preview-panel__multi-title">{{ multiTitle }}</HeadlineSm>
 				<div class="disk-picker-preview-panel__props">
-					<div class="disk-picker-preview-panel__prop">
-						<TextXs class="disk-picker-preview-panel__prop-label">{{ loc('DISK_PICKER_PREVIEW_PROP_SIZE') }}</TextXs>
-						<TextXs class="disk-picker-preview-panel__prop-value">{{ multiSize }}</TextXs>
+					<div
+						v-for="prop in multiProps"
+						:key="prop.key"
+						class="disk-picker-preview-panel__prop"
+					>
+						<TextXs class="disk-picker-preview-panel__prop-label">{{ prop.label }}</TextXs>
+						<TextXs class="disk-picker-preview-panel__prop-value">{{ prop.value }}</TextXs>
 					</div>
 				</div>
 			</div>
 
-			<div v-else-if="showSingle" class="disk-picker-preview-panel__single" data-testid="universal-disk-picker-preview-single">
+			<div v-else-if="showSingle" :key="'single-' + activeItem.objectId" class="disk-picker-preview-panel__single" data-testid="universal-disk-picker-preview-single">
 				<div class="disk-picker-preview-panel__thumb">
+					<div
+						v-if="showsPreviewImage && !previewImageLoaded"
+						class="disk-picker-preview-panel__thumb-skeleton"
+						aria-hidden="true"
+					>
+						<BLine :height="154" :radius="12"/>
+					</div>
 					<img
-						v-if="activeItem.previewUrl"
+						v-if="showsPreviewImage"
+						v-show="previewImageLoaded"
 						class="disk-picker-preview-panel__image"
 						:src="activeItem.previewUrl"
 						:alt="activeItem.name"
+						@load="handlePreviewLoad"
+						@error="handlePreviewLoad"
 					/>
-					<BDiskIcon v-else :type="activeItem.iconType" :size="64"/>
+					<BDiskIcon
+						v-else
+						:key="activeItem.objectId"
+						:type="activeItem.iconType"
+						:size="128"
+					/>
 				</div>
-				<TextSm class="disk-picker-preview-panel__name">{{ activeItem.name }}</TextSm>
+				<div class="disk-picker-preview-panel__title">
+					<HeadlineSm accent class="disk-picker-preview-panel__name">{{ activeItem.name }}</HeadlineSm>
+					<TextXs
+						v-if="formatLabel"
+						class="disk-picker-preview-panel__format"
+						data-testid="universal-disk-picker-preview-format"
+					>{{ formatLabel }}</TextXs>
+				</div>
 				<div class="disk-picker-preview-panel__props">
 					<div
-						v-for="prop in singleProps"
+						v-for="prop in fileProps"
+						:key="prop.key"
+						class="disk-picker-preview-panel__prop"
+					>
+						<TextXs class="disk-picker-preview-panel__prop-label">{{ prop.label }}</TextXs>
+						<TextXs class="disk-picker-preview-panel__prop-value">{{ prop.value }}</TextXs>
+					</div>
+				</div>
+				<div class="disk-picker-preview-panel__props --origin">
+					<div
+						v-for="prop in originProps"
 						:key="prop.key"
 						class="disk-picker-preview-panel__prop"
 					>

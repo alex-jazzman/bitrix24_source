@@ -148,6 +148,9 @@ jn.define('im/messenger/controller/recent/service/vuex/collab', (require, export
 			}
 
 			this.#updateItems(recentItems);
+			// the add mutation only fires for records new to the model, and the items are already
+			// filtered by the tab collection: a chat appeared in the tab set
+			this.recentLocator.get('render')?.markCompositionChanged();
 		};
 
 		/**
@@ -220,7 +223,7 @@ jn.define('im/messenger/controller/recent/service/vuex/collab', (require, export
 		recentDeleteFromIdCollectionHandler = ({ payload }) => {
 			this.logger.log('recentDeleteFromIdCollectionHandler', payload);
 
-			const hideActions = ['hideByNavigationTabs', 'hideByRecentConfigTabs'];
+			const hideActions = ['hideByRecentConfigTabs'];
 			if (!hideActions.includes(payload.actionName))
 			{
 				return;
@@ -250,7 +253,7 @@ jn.define('im/messenger/controller/recent/service/vuex/collab', (require, export
 				return;
 			}
 
-			if (!this.recentLocator.get('render').hasItemRendered(itemId))
+			if (!this.recentLocator.get('render').hasItemPending(itemId))
 			{
 				this.logger.log('recentDeleteFromIdCollectionHandler: deleting an item not from the Collab tab, skipping', itemId);
 

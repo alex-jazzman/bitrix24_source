@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports, ui_vue3, main_core, main_date, ui_system_typography_vue, ui_vue3_components_button, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_component_elements_hint, tasks_v2_lib_calendar, tasks_v2_provider_service_absenceService, tasks_v2_core) {
+(function (exports, ui_vue3, tasks_v2_const, main_core, main_date, ui_system_typography_vue, ui_vue3_components_button, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_elements_hint, tasks_v2_lib_calendar, tasks_v2_provider_service_absenceService, ui_a11y, tasks_v2_core) {
 	'use strict';
 
 	const popupClassName = 'tasks-absence-popup';
@@ -81,6 +81,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					},
 					autoHideHandler: this.handleHide.bind(this),
 					closeIcon: true,
+					focusTrap: {
+						initialFocus: false
+					},
 					bindOptions: {
 						forceBindPosition: true,
 						forceTop: true,
@@ -129,6 +132,47 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	`
 	};
 
+	const listedNamesLimit = 3;
+	const pendingNames = new Set();
+	let isFlushScheduled = false;
+	function buildMessage(names) {
+		if (names.length === 1) {
+			return main_core.Loc.getMessage('TASKS_V2_ABSENCE_POPUP_ANNOUNCE', {
+				'#USER_NAME#': names[0]
+			});
+		}
+		if (names.length <= listedNamesLimit) {
+			return main_core.Loc.getMessage('TASKS_V2_ABSENCE_POPUP_ANNOUNCE_LIST', {
+				'#USER_NAMES#': names.join(', ')
+			});
+		}
+		return main_core.Loc.getMessagePlural('TASKS_V2_ABSENCE_POPUP_ANNOUNCE_COUNT', names.length, {
+			'#COUNT#': String(names.length)
+		});
+	}
+	function flush() {
+		isFlushScheduled = false;
+		const names = [...pendingNames];
+		pendingNames.clear();
+		if (names.length > 0) {
+			ui_a11y.LiveAnnouncer.announce(buildMessage(names));
+		}
+	}
+
+	/**
+	 * One popup is mounted per absent participant, and the live region plays messages
+	 * one after another. Names are collected across the whole mount flush and spoken
+	 * as a single message, so the region is not held busy for the whole list.
+	 */
+	function announceAbsentParticipant(userName) {
+		pendingNames.add(userName);
+		if (isFlushScheduled) {
+			return;
+		}
+		isFlushScheduled = true;
+		void Promise.resolve().then(flush);
+	}
+
 	async function loadUsersAbsenceInfo(items = []) {
 		const $store = tasks_v2_core.Core.getStore();
 		const currentUserId = $store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
@@ -169,6 +213,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		},
 		mounted() {
 			this.showPopup();
+			this.announceAbsence();
 		},
 		methods: {
 			showPopup() {
@@ -176,6 +221,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					this.shown = true;
 					this.$emit('open', this.userId);
 				}, this.delay);
+			},
+			announceAbsence() {
+				const user = this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.userId);
+				if (!user?.name) {
+					return;
+				}
+				announceAbsentParticipant(user.name);
 			}
 		},
 		render() {
@@ -199,5 +251,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	exports.AbsencePopup = AbsencePopup;
 	exports.loadUsersAbsenceInfo = loadUsersAbsenceInfo;
 
-})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX.Vue3, BX, BX.Main, BX.UI.System.Typography.Vue, BX.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2);
+})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX.Vue3, BX.Tasks.V2.Const, BX, BX.Main, BX.UI.System.Typography.Vue, BX.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.UI.Accessibility, BX.Tasks.V2);
 //# sourceMappingURL=absence-popup.bundle.js.map

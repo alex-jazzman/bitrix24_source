@@ -1,4 +1,4 @@
-import { LocationRepository, SourceRepository } from 'location.core';
+import { CheckInMapEventType, LocationRepository, SourceRepository } from 'location.core';
 import { Leaflet } from '../leaflet/src/leaflet';
 import OSM from './osm';
 import AutocompleteService from './autocompleteservice';
@@ -8,6 +8,7 @@ import ReverseRequester from './requesters/reverserequester';
 import MapService from './mapservice';
 import MapMobileService from './mapmobileservice';
 import CheckInMapService from './check-in-map-service';
+import CheckInEngineRegistry, { BUILT_IN_ENGINE_CODE } from './check-in-engine-registry';
 import TileLayerAuth from '../leaflet/src/tilelayerauth';
 import TokenContainer from './tokencontainer';
 import NominatimResponseConverter from './responseconverters/nominatimresponseconverter';
@@ -20,7 +21,8 @@ export type OSMFactoryProps = {
 	serviceUrl: string,
 	mapServiceUrl: string,
 	hostName: string,
-	autocompletePromptsCount: ?number
+	autocompletePromptsCount: ?number,
+	mapEngine: ?string
 }
 
 export default class OSMFactory
@@ -111,7 +113,7 @@ export default class OSMFactory
 			mapServiceUrl: params.mapServiceUrl,
 		});
 
-		osmParams.checkInMapService = new CheckInMapService({
+		const checkInProps = {
 			languageId: params.languageId,
 			sourceLanguageId: params.sourceLanguageId,
 			tileLayerFactoryMethod: () => {
@@ -121,10 +123,48 @@ export default class OSMFactory
 
 				return tileLayerAuth;
 			},
+			// MapLibre engine handles tile auth via OsmAuthProtocol, so it needs
+			// the token container and host name directly (Leaflet uses the factory).
+			tokenContainer,
+			hostName: params.hostName,
 			serviceUrl: params.serviceUrl,
 			mapServiceUrl: params.mapServiceUrl,
-		});
+		};
+
+		// Engines other than Leaflet live in their own extensions and register themselves
+		// once loaded (location.osm.check-in-maplibre), so an engine that was not loaded
+		// falls back to Leaflet instead of pulling its bundle into every location.osm page.
+		const RequestedEngineClass = CheckInEngineRegistry.get(params.mapEngine);
+
+		osmParams.checkInMapService = new (RequestedEngineClass || CheckInMapService)(checkInProps);
+
+		if (!RequestedEngineClass && params.mapEngine && params.mapEngine !== BUILT_IN_ENGINE_CODE)
+		{
+			OSMFactory.reportCheckInEngineFallback(osmParams.checkInMapService, params.mapEngine);
+		}
 
 		return new OSM(osmParams);
+	}
+
+	/**
+	 * The substitute engine keeps the map alive but not every feature the caller asked the requested
+	 * one for (layer clicks, direction arrows, freshness fade), so the swap is said out loud on both
+	 * channels instead of leaving the host with a half-working map it believes is whole.
+	 */
+	static reportCheckInEngineFallback(checkInMapService, requestedEngine: string)
+	{
+		console.error(
+			`Check-in map engine "${requestedEngine}" is not loaded, falling back to "${BUILT_IN_ENGINE_CODE}"`,
+		);
+
+		if (typeof BXNativeBridge === 'undefined')
+		{
+			return;
+		}
+
+		checkInMapService.sendEvent(CheckInMapEventType.ENGINE_FALLBACK, {
+			requestedEngine,
+			actualEngine: BUILT_IN_ENGINE_CODE,
+		});
 	}
 }

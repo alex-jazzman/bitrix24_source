@@ -1,5 +1,12 @@
 import { Type, type JsonObject, type JsonValue } from 'main.core';
-import { BBCodeNode, type BBCodeNodeOptions, type BBCodeContentNode, type SerializedBBCodeNode, privateMap } from './node';
+import {
+	BBCodeNode,
+	type BBCodeNodeOptions,
+	type BBCodeContentNode,
+	type SerializedBBCodeNode,
+	privateMap,
+	detachFromParents,
+} from './node';
 import { typeof BBCodeFragmentNode } from './fragment-node';
 import { type BBCodeNodeStringifier } from '../scheme/node-schemes/node-scheme';
 import { typeof BBCodeTagScheme } from '../scheme/node-schemes/tag-scheme';
@@ -179,6 +186,8 @@ export class BBCodeElementNode extends BBCodeNode
 		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(flattenedChildren);
 		const filteredChildren: FilteredChildren = this.filterChildren(convertedChildren);
 
+		detachFromParents(filteredChildren.resolved);
+
 		filteredChildren.resolved.forEach((node: BBCodeContentNode) => {
 			node.remove();
 			node.setParent(this);
@@ -202,9 +211,7 @@ export class BBCodeElementNode extends BBCodeNode
 			}
 			else
 			{
-				filteredChildren.unresolved.forEach((node: BBCodeContentNode) => {
-					node.remove();
-				});
+				detachFromParents(filteredChildren.unresolved);
 			}
 		}
 	}
@@ -214,6 +221,8 @@ export class BBCodeElementNode extends BBCodeNode
 		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(flattenedChildren);
 		const filteredChildren: FilteredChildren = this.filterChildren(convertedChildren);
+
+		detachFromParents(filteredChildren.resolved);
 
 		filteredChildren.resolved.forEach((node: BBCodeContentNode) => {
 			node.remove();
@@ -238,30 +247,35 @@ export class BBCodeElementNode extends BBCodeNode
 			}
 			else
 			{
-				filteredChildren.unresolved.forEach((node: BBCodeContentNode) => {
-					node.remove();
-				});
+				detachFromParents(filteredChildren.unresolved);
 			}
 		}
 	}
 
 	replaceChild(targetNode: BBCodeContentNode, ...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
-		this.children = this.children.flatMap((node: BBCodeContentNode) => {
+		// the snapshot is taken before the detach: detaching an own child reassigns this.children
+		const snapshot: Array<BBCodeContentNode> = this.children;
+
+		this.children = snapshot.flatMap((node: BBCodeContentNode) => {
 			if (node === targetNode)
 			{
 				node.setParent(null);
 
+				// everything below happens only once the target is found: a replacement that does
+				// not happen must leave the new children with the parents they had, and must not
+				// convert them either -- the code converter serializes what it converts
 				const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 				const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(flattenedChildren);
 				const filteredChildren: FilteredChildren = this.filterChildren(convertedChildren);
 
-				return filteredChildren.resolved.map((child: BBCodeContentNode) => {
-					child.remove();
-					child.setParent(this);
+				detachFromParents(filteredChildren.resolved);
 
-					return child;
+				filteredChildren.resolved.forEach((child: BBCodeContentNode) => {
+					child.setParent(this);
 				});
+
+				return filteredChildren.resolved;
 			}
 
 			return node;

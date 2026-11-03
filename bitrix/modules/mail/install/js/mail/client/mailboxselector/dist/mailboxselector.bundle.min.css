@@ -1,1 +1,1 @@
-[data-role=mailbox-selector-root]{flex:0 1 auto;max-width:240px;width:calc(100% - 75px)}
+[data-role=mailbox-selector-root]{flex:0 1 auto;max-width:240px;width:calc(100% - 75px)}.mail-mailbox-avatar{border-radius:var(--ui-border-radius-circle);flex:0 0 var(--ui-size-xl);height:var(--ui-size-xl);margin-right:var(--ui-space-inline-xs);object-fit:cover;width:var(--ui-size-xl)}

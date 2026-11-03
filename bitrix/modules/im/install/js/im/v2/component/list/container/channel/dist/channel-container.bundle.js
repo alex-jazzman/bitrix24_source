@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_container_elements_createChatPromo, im_v2_component_list_container_elements_createChatButton, im_v2_component_list_items_channel, im_v2_const, im_v2_lib_analytics, im_v2_lib_createChat, im_v2_lib_logger, im_v2_lib_promo) {
+(function (exports, ui_vue3, im_v2_component_list_container_elements_createChatPromo, im_v2_component_list_container_elements_createChatButton, im_v2_component_list_items_channel, im_v2_const, im_v2_lib_analytics, im_v2_lib_createChat, im_v2_lib_logger, im_v2_lib_promo) {
 	'use strict';
 
 	// @vue/component
@@ -13,6 +13,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChannelList: im_v2_component_list_items_channel.ChannelList,
 			CreateChatPromo: im_v2_component_list_container_elements_createChatPromo.CreateChatPromo,
 			CreateChatButton: im_v2_component_list_container_elements_createChatButton.CreateChatButton
+		},
+		provide() {
+			return {
+				avatarsOnly: ui_vue3.computed(() => this.avatarsOnly)
+			};
+		},
+		props: {
+			avatarsOnly: {
+				type: Boolean,
+				default: false
+			}
 		},
 		emits: ['selectChat'],
 		data() {
@@ -77,5 +88,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChannelListContainer = ChannelListContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=channel-container.bundle.js.map

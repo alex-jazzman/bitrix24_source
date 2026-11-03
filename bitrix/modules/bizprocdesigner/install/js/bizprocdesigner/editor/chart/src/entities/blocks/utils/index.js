@@ -7,3 +7,5 @@ export * from './should-animate-block';
 export * from './content-block-scope';
 export * from './timestamps';
 export * from './insert-node-connection-policy.ts';
+export * from './complex-node-port-plan.ts';
+export * from './aux-ports';

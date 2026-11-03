@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/lang-selector.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.buttons',
 		'sign.v2.api',
+		'ui.buttons',
 	],
 	'skip_core' => false,
 ];

@@ -1,7 +1,15 @@
 import { BIcon, Outline, Solid } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 import 'ui.icon-set.solid';
-import { SubscriptionBellView } from 'note.ui.document-history';
+import {
+	hasSubscriptionSurface,
+	isShippedSubscriptionMode,
+	SubscriptionBellView,
+	SUBSCRIPTION_MODE_MUTED,
+	SUBSCRIPTION_MODE_SUBTREE,
+	SUBSCRIPTION_SCOPE_COLLECTION,
+	SUBSCRIPTION_SCOPE_DOCUMENT,
+} from 'note.ui.document-history';
 
 import { favoriteKey } from '../domain/sidebar-store/shared/keys';
 import { rowNameReserve } from '../utils/row-controls';
@@ -9,7 +17,7 @@ import { ExpandTransition } from './expand-transition';
 import { SidebarLoader } from './sidebar-loader';
 import { TreeNode } from './tree-node';
 
-// [DTO-01] One row of the favorites block. The row carries no URL - the address is built here,
+// One row of the favorites block. The row carries no URL - the address is built here,
 // exactly as it is for every other tree row. A row with nested documents opens into its branch: the
 // branch is read from the namespace the server named in expandVia, and drawn by the tree's own row
 // component so nested rows behave like tree rows, stars included.
@@ -68,11 +76,22 @@ export const FavoriteRow = {
 
 			return this.isCollection ? `/note/workspace/${id}/` : `/note/document/${id}/`;
 		},
-		// [DTO-02] "Notifications actually arrive" - a direct subscription or coverage from above,
-		// and not muted.
+		// Scope the row's subscription is written in: the map of shipped modes is read per scope, and
+		// a knowledge base and a document are two different scopes of it.
+		notifyScope(): string
+		{
+			return this.isCollection ? SUBSCRIPTION_SCOPE_COLLECTION : SUBSCRIPTION_SCOPE_DOCUMENT;
+		},
+		// MODES-01 / Q-1: a direct row in a shipped mode, and only that. A row of a mode outside the
+		// shipping delivers nothing, so reading it as on would promise notifications that never arrive -
+		// it reads as off instead, and one press rewrites it into the shipped mode (set() upserts).
+		// Derived from the row's own fields rather than taken from the DTO's `notified`, which the
+		// server now answers by this very rule: a page cached before the rule changed still draws right.
 		isNotified(): boolean
 		{
-			return this.item?.notify?.notified === true;
+			return this.item?.notify?.subscribed === true
+				&& isShippedSubscriptionMode(this.notifyScope, this.item?.notify?.mode)
+			;
 		},
 		notifyLabel(): string
 		{
@@ -83,25 +102,36 @@ export const FavoriteRow = {
 
 			return this.isNotified ? this.messages.notifyOff : this.messages.notifyOn;
 		},
+		// Coverage from above is a state of the row only while `muted` is shipped: the inherited and muted
+		// layouts of the control exist to suppress that coverage, and coverage nothing can suppress has
+		// nothing to offer. Read from the map, like the gate of the nested rows and the one of the bell of
+		// the activity line, so returning `muted` to the shipping brings the state back by itself - same
+		// rule and same terms as SubscriptionBellComponent.isCovered.
+		isCovered(): boolean
+		{
+			return this.item?.notify?.inherited === true
+				&& isShippedSubscriptionMode(this.notifyScope, SUBSCRIPTION_MODE_MUTED)
+			;
+		},
 		// Only while there is coverage to suppress: the negative row survives the covering subscription
-		// being switched off, and on its own it mutes nothing (same rule in SubscriptionBellView).
+		// being switched off, and on its own it mutes nothing (same rule in SubscriptionBellView), so a
+		// mute outside the shipping reads as plain "off" instead of drawing a third state `aria-pressed`
+		// has no way to tell apart.
 		isMuted(): boolean
 		{
-			return this.item?.notify?.muted === true && this.item?.notify?.inherited === true;
+			return this.item?.notify?.muted === true && this.isCovered;
 		},
 		// Room the title leaves before the visible right edge, by the same rule the tree rows follow: the
 		// star of a block row never hides, and a bell with something to say stays next to it. A bell that
 		// only shows under the pointer gets nothing - it may cover the tail of the title.
 		nameReserve(): string
 		{
+			// Q-2: the previous rule without the `muted` term, and only where a bell is offered at all -
+			// a row that carries none holds no room for one.
 			return rowNameReserve({
 				isFavorite: true,
-				hasBell: this.notificationsEnabled && (this.isNotified || this.isMuted),
+				hasBell: this.hasNotifyBell && this.isNotified,
 			});
-		},
-		notificationsEnabled(): boolean
-		{
-			return this.state.notificationsEnabled === true;
 		},
 		notifyIcon(): string
 		{
@@ -112,17 +142,56 @@ export const FavoriteRow = {
 
 			return this.isNotified ? Solid.NOTIFICATION : Outline.NOTIFICATION;
 		},
-		// [P4.T1] A row with nested documents has a depth to choose, so its bell opens the popover of
+		// Bootstrap flag off the sidebar root state - with the notifications option off the block has
+		// no bells at all, neither on its rows nor inside their branches.
+		notificationsEnabled(): boolean
+		{
+			return this.state.notificationsEnabled === true;
+		},
+		// MODES-01: a bell is offered only where the shipping has a mode to write and the option
+		// leaves the feature on. An article is followed with `self`, so its row carries one; a
+		// knowledge base is subscribed with `all` alone and `all` is not shipped, so its row carries
+		// no bell whatever the option says. Read from the policy, so widening the shipping brings the
+		// bell back without touching this component.
+		hasNotifyBell(): boolean
+		{
+			return hasSubscriptionSurface(this.notifyScope, this.notificationsEnabled);
+		},
+		// A row with nested documents has a depth to choose, so its bell opens the popover of
 		// the editor. Everything else - a document with nothing under it, a knowledge base - is one press.
+		// A depth is a `subtree` row, and while that mode is not shipped there is nothing to choose: the
+		// row takes the plain toggle form the block already has.
 		hasNotifyDepth(): boolean
 		{
-			return !this.isCollection && this.item?.hasChildren === true;
+			return !this.isCollection
+				&& this.item?.hasChildren === true
+				&& isShippedSubscriptionMode(SUBSCRIPTION_SCOPE_DOCUMENT, SUBSCRIPTION_MODE_SUBTREE)
+			;
+		},
+		// The state surface the control draws from. The control is presentational and normalizes nothing
+		// itself, so both of its hosts owe it the same shape, already brought to the shipped modes: this
+		// is SubscriptionBellComponent.bellState written over the DTO of the row instead of over the
+		// component's own fields. Handing the raw `notify` over instead would let a row of an unshipped
+		// mode light the bell up here while the activity line reads the very same row as off.
+		bellState(): Object
+		{
+			const notify = this.item?.notify ?? null;
+			const inherited = notify?.inherited === true;
+
+			return {
+				mode: this.isNotified ? String(notify?.mode || '') : null,
+				subscribed: this.isNotified,
+				muted: this.isMuted,
+				inherited: this.isCovered,
+				inheritedSource: inherited ? String(notify?.inheritedSource || '') : null,
+				inheritedTitle: inherited ? String(notify?.inheritedTitle || '') : '',
+			};
 		},
 		isNotifySaving(): boolean
 		{
 			return this.state.favorites.isNotifyPending(this.item.entityType, Number(this.item.entityId));
 		},
-		// [DTO-01] hasChildren is the whole answer about the chevron of a document; a branch already read
+		// hasChildren is the whole answer about the chevron of a document; a branch already read
 		// keeps it after the last child left, so the row can still be closed. A knowledge base carries its
 		// chevron whether it holds anything or not - the row it has in the knowledge-bases block does, and
 		// one base is not to be drawn two ways in one panel.
@@ -150,7 +219,7 @@ export const FavoriteRow = {
 		{
 			return this.state.favorites.expandedDocsByRow[this.rowScope] ?? {};
 		},
-		// [DTO-01] expandVia: a document seen only through a personal grant lives in the accessible-tree
+		// expandVia: a document seen only through a personal grant lives in the accessible-tree
 		// namespace, and the regular branch action would turn its owner down.
 		isSharedBranch(): boolean
 		{
@@ -311,14 +380,18 @@ export const FavoriteRow = {
 		{
 			void this.actions.clearFavoriteNotify(this.notifyTarget());
 		},
-		// [AC-045] A document of the branch keeps only what it is allowed to do there: mute what
+		// A document of the branch keeps only what it is allowed to do there: mute what
 		// reaches it and lift that mute. The depth of the subscription above it is not its to change.
 		nestedNotifyState(doc: Object): Object | null
 		{
-			if (!this.notificationsEnabled)
+			// The only source of a bell for a row of the branch: no state, no bell, no room held for one.
+			// Nothing else in tree-node has to know about either gate. MODES-01: what a nested row is
+			// offered is a `muted` row, and while that mode is not shipped its bell would suppress
+			// nothing - read from the shipped map, so returning `muted` to it brings those bells back
+			// by itself.
+			if (!this.notificationsEnabled
+				|| !isShippedSubscriptionMode(SUBSCRIPTION_SCOPE_DOCUMENT, SUBSCRIPTION_MODE_MUTED))
 			{
-				// The only source of a bell for a row of the branch: no state, no bell, no room held
-				// for one. Nothing else in tree-node has to know about the flag.
 				return null;
 			}
 
@@ -352,7 +425,7 @@ export const FavoriteRow = {
 		{
 			void this.actions.toggleFavoriteExpanded(this.nestedTarget(doc));
 		},
-		// [ERR-005] Read and written under one key: the branch of a nested row fails in this row's scope.
+		// Read and written under one key: the branch of a nested row fails in this row's scope.
 		nestedBranchError(doc: Object): string | null
 		{
 			return this.state.favorites.branchError('document', Number(doc?.id), this.rowScope);
@@ -424,13 +497,14 @@ export const FavoriteRow = {
 				     block scroll sideways. -->
 				<span class="tree-actions-anchor">
 				<span class="favorite-row__actions">
-					<!-- [P4.T1] Depth to choose - the popover of the editor, one and the same control.
+					<!-- Depth to choose - the popover of the editor, one and the same control.
 					     Nothing to choose - one press. -->
 					<SubscriptionBellView
-						v-if="notificationsEnabled && hasNotifyDepth"
-						:state="item.notify"
+						v-if="hasNotifyBell && hasNotifyDepth"
+						:state="bellState"
 						:is-saving="isNotifySaving"
 						:messages="messages.notifyPopover"
+						test-id="note-sidebar-favorite-notify"
 						trigger-class="favorite-row__btn favorite-row__btn--notify"
 						active-class="is-on"
 						muted-class="is-muted"
@@ -443,13 +517,14 @@ export const FavoriteRow = {
 						@resume="onClearNotify"
 					/>
 					<button
-						v-else-if="notificationsEnabled"
+						v-else-if="hasNotifyBell"
 						type="button"
 						class="favorite-row__btn favorite-row__btn--notify"
 						:class="{ 'is-on': isNotified, 'is-muted': isMuted }"
 						:title="notifyLabel"
 						:aria-label="messages.notifyState"
 						:aria-pressed="isNotified.toString()"
+						data-testid="note-sidebar-favorite-notify"
 						@click.stop="onToggleNotify"
 					>
 						<BIcon :name="notifyIcon" :size="16" />
@@ -512,7 +587,7 @@ export const FavoriteRow = {
 						aria-hidden="true"
 					/>
 				</ul>
-				<!-- [ERR-005] The failure of one branch stays in its own row. An empty branch is not a
+				<!-- The failure of one branch stays in its own row. An empty branch is not a
 				     failure: personal grants can leave a branch with nothing visible in it. -->
 				<div v-if="branchError !== null" class="favorites-empty">
 					{{ branchError }}

@@ -10,7 +10,7 @@ import {
 
 export class BitrixGptAgentPromo
 {
-	onBannerView(): void
+	onPopupView(): void
 	{
 		this.#sendData(AnalyticsEvent.bitrixGptAgentPromoView);
 	}
@@ -20,7 +20,7 @@ export class BitrixGptAgentPromo
 		this.#sendData(AnalyticsEvent.bitrixGptAgentPromoButtonClick);
 	}
 
-	onBannerClose(): void
+	onPopupClose(): void
 	{
 		this.#sendData(AnalyticsEvent.bitrixGptAgentPromoClose);
 	}
@@ -29,7 +29,7 @@ export class BitrixGptAgentPromo
 	{
 		sendData({
 			tool: AnalyticsTool.ai,
-			category: AnalyticsCategory.banners,
+			category: AnalyticsCategory.popups,
 			type: AnalyticsType.ahaSpringRelease2026,
 			c_section: AnalyticsSection.im,
 			event,

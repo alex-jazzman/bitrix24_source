@@ -8,6 +8,7 @@ use Bitrix\Tasks\Control\Exception\TaskNotExistsException;
 use Bitrix\Tasks\V2\Internal\Entity\Task;
 use Bitrix\Tasks\V2\Internal\Repository\TaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Service\Consistency\ConsistencyResolverInterface;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\AddSearchIndex;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\AddUserFields;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Config\AddConfig;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Integration\RunBizProc;
@@ -31,18 +32,32 @@ class AddTaskService
 	{
 		if ($config->isUseConsistency())
 		{
-			[$task, $fields] = $this->consistencyResolver->resolve('task.add')->wrap(
-				fn (): array => $this->addService->add($task, $config)
+			[$task, $fields, $fullTaskData] = $this->consistencyResolver->resolve('task.add')->wrap(
+				fn (): array => $this->addService->add(
+					task: $task,
+					config: $config,
+					deferSearchIndex: true,
+				),
 			);
 		}
 		else
 		{
-			[$task, $fields] = $this->addService->add($task, $config);
+			[$task, $fields, $fullTaskData] = $this->addService->add(
+				task: $task,
+				config: $config,
+				deferSearchIndex: true,
+			);
 		}
 
-		(new AddUserFields($config))($fields);
-
-		$this->taskRepository->invalidate($task->id);
+		try
+		{
+			(new AddUserFields($config))($fields);
+		}
+		finally
+		{
+			(new AddSearchIndex())($fullTaskData);
+			$this->taskRepository->invalidate($task->id);
+		}
 
 		(new RunBizProc($config))($fields);
 

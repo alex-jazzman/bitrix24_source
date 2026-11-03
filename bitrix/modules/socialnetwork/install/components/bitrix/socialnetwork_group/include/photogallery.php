@@ -170,9 +170,47 @@ elseif (!CModule::IncludeModule("iblock"))
 	$arParams["ERROR_MESSAGE"] = GetMessage("SONET_IB_MODULE_IS_NOT_INSTALLED");
 	return 0;
 }
-elseif (($object == "user" && $arParams["PHOTO_USER_IBLOCK_ID"] <= 0) || ($object == "group" && $arParams["PHOTO_GROUP_IBLOCK_ID"] <= 0))
+
+if ($object === 'group' && (int)$arParams['PHOTO_GROUP_IBLOCK_ID'] <= 0)
 {
-	$arParams["ERROR_MESSAGE"] = GetMessage("SONET_IBLOCK_ID_EMPTY");
+	$photoIblockIds = [];
+	$photoIblocks = CIBlock::GetList([], [
+		'ACTIVE' => 'Y',
+		'CODE' => 'group_photogallery%',
+	]);
+
+	while ($photoIblock = $photoIblocks->Fetch())
+	{
+		$photoIblockIds[] = (int)$photoIblock['ID'];
+	}
+
+	if (!empty($photoIblockIds))
+	{
+		$photoSections = CIBlockSection::GetList(
+			['TIMESTAMP_X' => 'DESC'],
+			[
+				'IBLOCK_ID' => $photoIblockIds,
+				'SECTION_ID' => 0,
+				'SOCNET_GROUP_ID' => $arResult['VARIABLES']['group_id'],
+			],
+			false,
+			['IBLOCK_ID'],
+		);
+		$photoSection = $photoSections->Fetch();
+
+		if ($photoSection)
+		{
+			$arParams['PHOTO_GROUP_IBLOCK_ID'] = (int)$photoSection['IBLOCK_ID'];
+		}
+	}
+}
+
+if (
+	($object === 'user' && $arParams['PHOTO_USER_IBLOCK_ID'] <= 0)
+	|| ($object === 'group' && $arParams['PHOTO_GROUP_IBLOCK_ID'] <= 0)
+)
+{
+	$arParams['ERROR_MESSAGE'] = GetMessage('SONET_IBLOCK_ID_EMPTY');
 	return 0;
 }
 

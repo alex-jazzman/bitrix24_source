@@ -8,7 +8,7 @@
 				<article class="h-100 d-flex align-items-center justify-content-center text-center">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img info-v3-3__img g-py-30"
-						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img1.png" alt="">
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img1.png" alt="MESS[LANDING_BLOCK_44_1_CARD_IMG_ALT_1]">
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
@@ -39,7 +39,7 @@
 				<article class="h-100 d-flex align-items-center justify-content-center text-center">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img info-v3-3__img g-py-30"
-						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img2.png" alt="">
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img2.png" alt="MESS[LANDING_BLOCK_44_1_CARD_IMG_ALT_2]">
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
@@ -70,7 +70,7 @@
 				<article class="h-100 d-flex align-items-center justify-content-center text-center">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img info-v3-3__img g-py-30"
-						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img3.png" alt="">
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img3.png" alt="MESS[LANDING_BLOCK_44_1_CARD_IMG_ALT_3]">
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
@@ -101,7 +101,7 @@
 				<article class="h-100 d-flex align-items-center justify-content-center text-center">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img info-v3-3__img g-py-30"
-						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img4.png" alt="">
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/166x319/img4.png" alt="MESS[LANDING_BLOCK_44_1_CARD_IMG_ALT_4]">
 					<!-- End Article Image -->
 
 					<!-- Article Content -->

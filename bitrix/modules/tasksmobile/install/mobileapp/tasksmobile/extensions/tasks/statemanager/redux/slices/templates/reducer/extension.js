@@ -6,6 +6,7 @@ jn.define('tasks/statemanager/redux/slices/templates/reducer', (require, exports
 		defaultSorting,
 		templatesAdapter,
 	} = require('tasks/statemanager/redux/slices/templates/meta');
+	const { isRootRaw } = require('tasks/statemanager/redux/slices/checklists/model');
 
 	const defaultTemplate = {
 		id: 0,
@@ -61,36 +62,26 @@ jn.define('tasks/statemanager/redux/slices/templates/reducer', (require, exports
 		}
 	};
 
-	const countChecklistItems = (item) => {
-		const descendants = Array.isArray(item?.descendants) ? item.descendants : [];
-
-		return descendants.reduce(
-			(result, descendant) => {
-				const isComplete = Boolean(descendant?.fields?.isComplete);
-				const nested = countChecklistItems(descendant);
-
-				return {
-					completed: result.completed + (isComplete ? 1 : 0) + nested.completed,
-					uncompleted: result.uncompleted + (isComplete ? 0 : 1) + nested.uncompleted,
-				};
-			},
-			{ completed: 0, uncompleted: 0 },
-		);
-	};
-
-	const getChecklistSummary = (checklistTree) => {
-		if (!checklistTree || !Array.isArray(checklistTree.descendants))
+	const getChecklistSummaryFromV2 = (items) => {
+		if (!Array.isArray(items))
 		{
 			return null;
 		}
 
-		return checklistTree.descendants.reduce(
-			(result, checklist) => {
-				const counts = countChecklistItems(checklist);
+		return items.reduce(
+			(result, item) => {
+				// only checklist items are counted; `isRootRaw` is the same predicate `splitFlatList` uses,
+				// and a copy-prepared template payload keeps its hierarchy in `parentNodeId`, not `parentId`
+				if (isRootRaw(item ?? {}))
+				{
+					return result;
+				}
+
+				const isComplete = Boolean(item?.isComplete);
 
 				return {
-					completed: result.completed + counts.completed,
-					uncompleted: result.uncompleted + counts.uncompleted,
+					completed: result.completed + (isComplete ? 1 : 0),
+					uncompleted: result.uncompleted + (isComplete ? 0 : 1),
 				};
 			},
 			{ completed: 0, uncompleted: 0 },
@@ -112,11 +103,7 @@ jn.define('tasks/statemanager/redux/slices/templates/reducer', (require, exports
 	};
 
 	const getTemplateChecklistTree = (template, existingTemplate = {}) => {
-		if (
-			template?.checklist
-			&& !Array.isArray(template.checklist)
-			&& Array.isArray(template.checklist?.descendants)
-		)
+		if (Array.isArray(template?.checklist))
 		{
 			return template.checklist;
 		}
@@ -125,9 +112,9 @@ jn.define('tasks/statemanager/redux/slices/templates/reducer', (require, exports
 	};
 
 	const getTemplateChecklist = (template, existingTemplate = {}, checklistTree = null) => {
-		if (checklistTree)
+		if (Array.isArray(checklistTree))
 		{
-			return getChecklistSummary(checklistTree);
+			return getChecklistSummaryFromV2(checklistTree);
 		}
 
 		return template?.checklist ?? existingTemplate?.checklist ?? null;

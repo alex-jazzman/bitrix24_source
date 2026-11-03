@@ -1,6 +1,6 @@
 import { Cache } from 'main.core';
 import { Popup } from './popup';
-import type { GeneralOptions } from './types';
+import type { GeneralOptions, ShowOptions } from './types';
 import './style.css';
 
 export class AvatarWidget
@@ -18,14 +18,9 @@ export class AvatarWidget
 		return this.#instance;
 	}
 
-	show(): void
+	show(options: ShowOptions = {}): void
 	{
-		if (this.#getPopup().getBasePopup().isShown())
-		{
-			return;
-		}
-
-		this.#getPopup().show();
+		this.#getPopup().show(options);
 	}
 
 	setOptions(options: GeneralOptions): AvatarWidget

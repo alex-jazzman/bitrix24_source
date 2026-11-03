@@ -1,27 +1,25 @@
 import { Text } from 'ui.system.typography.vue';
 import { useBlockDiagram } from 'ui.block-diagram';
-import { FeatureCode } from 'bizprocdesigner.feature';
-import { useLoc, useFeature } from '../../../../shared/composables';
-import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS } from '../../../../shared/constants';
+import { useLoc } from '../../../../shared/composables';
+import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS, MAX_AUX_COUNT } from '../../../../shared/constants';
 import { createUniqueId, parsePortTitle } from '../../../../shared/utils';
-import { normalyzeAuxConnection } from '../../utils';
+import {
+	buildComplexNodeRuleRows,
+	createComplexNodePlaceholderId,
+	findFirstComplexNodePlaceholderIndex,
+	getComplexNodeMinRuleItemsCount,
+	normalyzeAuxConnection,
+} from '../../utils';
 import { useNodeSettingsStore } from '../../../node-settings/stores/node-settings-store';
 
 import './style.css';
 
-import type { BlockId, Port as TPort } from '../../../../shared/types';
-
-const MAX_AUX_COUNT = 5;
-const MIN_RULE_ITEMS_COUNT = 5;
-const RESERVED_INPUT_RULES_TITLES = Array.from({ length: MIN_RULE_ITEMS_COUNT }, (_, i) => {
-	return `${COMPLEX_NODE_PORT_LABELS.inputRule}${i + 1}`;
-});
-const RESERVED_OUTPUT_RULES_TITLES = Array.from({ length: MIN_RULE_ITEMS_COUNT }, (_, i) => {
-	return `${COMPLEX_NODE_PORT_LABELS.outputRule}${i + 1}`;
-});
+import type { Port as TPort } from '../../../../shared/types';
 
 type BlockComplexSetup = {
 	updatePort: () => void;
+	updatePortRect: () => void;
+	updatePortSegmentSizes: () => void;
 	getMessage: () => string;
 };
 
@@ -41,15 +39,6 @@ type RuleType = {
 const BLOCK_COMPLEX_CLASS_NAMES = {
 	base: 'block-complex',
 	deactivated: '--deactivated',
-};
-
-// Ids of droppable placeholders (input rule slots, relation entry point) become
-// engine virtual port ids: the engine keeps virtual ports in a live map keyed by
-// id and resolves the drop target by that key on mouseup. The id must therefore
-// stay the same while the slot means the same thing — a recompute between drag
-// start and drop would otherwise lose the drop handler.
-const createPlaceholderId = (blockId: BlockId, title: string): string => {
-	return `placeholder_${blockId}_${title}`;
 };
 
 // @vue/component
@@ -87,22 +76,28 @@ export const BlockComplexContent = {
 		},
 		minRuleItemsCount: {
 			type: Number,
-			default: MIN_RULE_ITEMS_COUNT,
+			default: getComplexNodeMinRuleItemsCount(),
 		},
 	},
 	setup(): BlockComplexSetup
 	{
-		const { updatePort, newConnection, addConnection } = useBlockDiagram();
+		const {
+			updatePort,
+			updatePortRect,
+			updatePortSegmentSizes,
+			newConnection,
+			addConnection,
+		} = useBlockDiagram();
 		const { getMessage } = useLoc();
-		const { isFeatureAvailable } = useFeature();
 		const nodeSettingsStore = useNodeSettingsStore();
 
 		return {
 			updatePort,
+			updatePortRect,
+			updatePortSegmentSizes,
 			newConnection,
 			addConnection,
 			getMessage,
-			isFeatureAvailable,
 			nodeSettingsStore,
 		};
 	},
@@ -114,11 +109,6 @@ export const BlockComplexContent = {
 				[BLOCK_COMPLEX_CLASS_NAMES.base]: true,
 				[BLOCK_COMPLEX_CLASS_NAMES.deactivated]: this.deactivated,
 			};
-		},
-		inputPorts(): Array<TPort>
-		{
-			return this.ports
-				.filter((port) => port.type === PORT_TYPES.input || port.type === PORT_TYPES.inputRelation);
 		},
 		outputPorts(): Array<TPort>
 		{
@@ -137,21 +127,31 @@ export const BlockComplexContent = {
 		{
 			return this.ports.filter((port) => port.type === PORT_TYPES.outputRelation);
 		},
-		inputPortsLength(): number
+		portsGeometryGroups(): Array<Array<TPort | Placeholder>>
 		{
-			return this.inputPorts.length;
+			return [
+				this.allInputRules,
+				this.allOutputRules,
+				this.relationPorts,
+				this.outputRelationPorts,
+				this.auxPortItems,
+			];
 		},
-		outputPortsLength(): number
+		portsGeometrySignature(): string
 		{
-			return this.outputPorts.length;
+			return this.portsGeometryGroups
+				.map((ports) => {
+					return ports
+						.map((port, index) => (port.type ? `${index}:${port.id}` : ''))
+						.filter(Boolean)
+						.join(',')
+					;
+				})
+				.join(';');
 		},
 		auxPorts(): Array<TPort>
 		{
 			return this.block.ports.filter((port) => port.type === PORT_TYPES.aux);
-		},
-		auxPortsLength(): number
-		{
-			return this.auxPorts.length;
 		},
 		auxPortItems(): Array<TPort | Placeholder>
 		{
@@ -160,7 +160,7 @@ export const BlockComplexContent = {
 				return [];
 			}
 
-			const realPorts = this.auxPorts;
+			const realPorts = this.auxPorts.filter((port) => port.isActive !== false);
 			const items = [];
 			for (let i = 1; i <= MAX_AUX_COUNT; i++)
 			{
@@ -181,19 +181,18 @@ export const BlockComplexContent = {
 			return this.block.node?.shouldShowAuxPorts === true;
 		},
 		/**
-		 * Gate for the canvas relation section.
-		 * If the node data already carries an explicit availableBlocks descriptor
-		 * (relationsAvailable is set), use it — this keeps the gate consistent whether
-		 * or not the node settings are open (no flicker for unified nodes).
-		 * Otherwise fall back to the store when this block is selected, then to the
-		 * legacy feature-flag gate for non-descriptor (legacy) nodes.
+		 * Gate for the canvas relation section: the server verdict on the block itself, so the gate
+		 * is the same whether or not the node settings are open (no flicker for unified nodes).
+		 * A block whose data carries no verdict is answered by the store while it is selected - the
+		 * store holds the descriptor loaded for the very same node - and has no relations otherwise:
+		 * relations exist only where the server declares them.
 		 */
 		isRelationFeatureAvailable(): boolean
 		{
 			const nodeRelationsAvailable = this.block.node?.relationsAvailable;
 			if (nodeRelationsAvailable !== null && nodeRelationsAvailable !== undefined)
 			{
-				return nodeRelationsAvailable;
+				return nodeRelationsAvailable === true;
 			}
 
 			if (
@@ -204,67 +203,51 @@ export const BlockComplexContent = {
 				return this.nodeSettingsStore.isBlockAvailable('relations');
 			}
 
-			// Legacy fallback for non-selected blocks (transition period)
-			return this.isFeatureAvailable(FeatureCode.complexNodeConnections);
+			return false;
 		},
 		reservedInputRules(): Array<TPort | Placeholder>
 		{
-			return RESERVED_INPUT_RULES_TITLES.slice(0, this.minRuleItemsCount).map((title) => {
-				const port = this.rulePorts.find((p) => p.title === title);
-				if (port)
-				{
-					return port;
-				}
-
-				return {
-					id: createPlaceholderId(this.block.id, title),
-					title,
-				};
-			});
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.rulePorts,
+				portType: PORT_TYPES.input,
+				label: COMPLEX_NODE_PORT_LABELS.inputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).reservedRows;
 		},
 		restInputRules(): Array<TPort>
 		{
-			const reserved = RESERVED_INPUT_RULES_TITLES.slice(0, this.minRuleItemsCount);
-
-			return this.rulePorts.filter((p) => {
-				return !reserved.includes(p.title);
-			});
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.rulePorts,
+				portType: PORT_TYPES.input,
+				label: COMPLEX_NODE_PORT_LABELS.inputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).restPorts;
 		},
 		lastInputRulePlaceholder(): Placeholder
 		{
-			let lastRule = null;
-			if (this.restInputRules.length > 0)
-			{
-				lastRule = this.restInputRules[this.restInputRules.length - 1];
-			}
-			else if (this.reservedInputRules[this.reservedInputRules.length - 1].type)
-			{
-				lastRule = this.reservedInputRules[this.reservedInputRules.length - 1];
-			}
-
-			if (!lastRule)
-			{
-				return null;
-			}
-
-			const { label, id } = parsePortTitle(lastRule.title)
-				?? { label: COMPLEX_NODE_PORT_LABELS.inputRule, id: 0 };
-			const title = `${label}${id + 1}`;
-
-			return {
-				id: createPlaceholderId(this.block.id, title),
-				title,
-			};
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.rulePorts,
+				portType: PORT_TYPES.input,
+				label: COMPLEX_NODE_PORT_LABELS.inputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).trailingPlaceholder;
 		},
 		allInputRules(): Array<TPort | Placeholder>
 		{
-			return this.lastInputRulePlaceholder
-				? [...this.reservedInputRules, ...this.restInputRules, this.lastInputRulePlaceholder]
-				: [...this.reservedInputRules, ...this.restInputRules];
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.rulePorts,
+				portType: PORT_TYPES.input,
+				label: COMPLEX_NODE_PORT_LABELS.inputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).rows;
 		},
 		firstInputPlaceholderIndex(): number
 		{
-			return this.allInputRules.findIndex((item) => !item.type);
+			return findFirstComplexNodePlaceholderIndex(this.allInputRules);
 		},
 		relationPlaceholder(): Placeholder
 		{
@@ -274,64 +257,53 @@ export const BlockComplexContent = {
 			const title = `${label}${id + 1}`;
 
 			return {
-				id: createPlaceholderId(this.block.id, title),
+				id: createComplexNodePlaceholderId(this.block.id, title),
 				title,
 			};
 		},
 		reservedOutputRules(): Array<TPort | Placeholder>
 		{
-			return RESERVED_OUTPUT_RULES_TITLES.slice(0, this.minRuleItemsCount).map((title) => {
-				const port = this.outputPorts.find((p) => p.title === title);
-				if (port)
-				{
-					return port;
-				}
-
-				return {
-					id: createUniqueId(),
-					title,
-				};
-			});
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.outputPorts,
+				portType: PORT_TYPES.output,
+				label: COMPLEX_NODE_PORT_LABELS.outputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).reservedRows;
 		},
 		restOutputRules(): Array<TPort>
 		{
-			const reserved = RESERVED_OUTPUT_RULES_TITLES.slice(0, this.minRuleItemsCount);
-
-			return this.outputPorts.filter((p) => {
-				return !reserved.includes(p.title);
-			});
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.outputPorts,
+				portType: PORT_TYPES.output,
+				label: COMPLEX_NODE_PORT_LABELS.outputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).restPorts;
 		},
 		lastOutputRulePlaceholder(): Placeholder
 		{
-			let lastRule = null;
-			if (this.restOutputRules.length > 0)
-			{
-				lastRule = this.restOutputRules[this.restOutputRules.length - 1];
-			}
-			else if (this.reservedOutputRules[this.reservedOutputRules.length - 1].type)
-			{
-				lastRule = this.reservedOutputRules[this.reservedOutputRules.length - 1];
-			}
-
-			if (!lastRule)
-			{
-				return null;
-			}
-
-			const { label, id } = parsePortTitle(lastRule.title)
-				?? { label: COMPLEX_NODE_PORT_LABELS.outputRule, id: 0 };
-			const title = `${label}${id + 1}`;
-
-			return {
-				id: createUniqueId(),
-				title,
-			};
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.outputPorts,
+				portType: PORT_TYPES.output,
+				label: COMPLEX_NODE_PORT_LABELS.outputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).trailingPlaceholder;
 		},
 		allOutputRules(): Array<TPort | Placeholder>
 		{
-			return this.lastOutputRulePlaceholder
-				? [...this.reservedOutputRules, ...this.restOutputRules, this.lastOutputRulePlaceholder]
-				: [...this.reservedOutputRules, ...this.restOutputRules];
+			return buildComplexNodeRuleRows({
+				blockId: this.block.id,
+				ports: this.outputPorts,
+				portType: PORT_TYPES.output,
+				label: COMPLEX_NODE_PORT_LABELS.outputRule,
+				minRuleItemsCount: this.minRuleItemsCount,
+			}).rows;
+		},
+		firstOutputPlaceholderIndex(): number
+		{
+			return findFirstComplexNodePlaceholderIndex(this.allOutputRules);
 		},
 		ruleTypes(): Array<RuleType>
 		{
@@ -354,29 +326,9 @@ export const BlockComplexContent = {
 	},
 	watch:
 	{
-		inputPortsLength(): void
+		portsGeometrySignature(): void
 		{
-			this.$nextTick(() => {
-				this.inputPorts.forEach((port, index) => {
-					this.updatePort(this.block.id, port.id, index);
-				});
-			});
-		},
-		outputPortsLength(): void
-		{
-			this.$nextTick(() => {
-				this.outputPorts.forEach((port, index) => {
-					this.updatePort(this.block.id, port.id, index);
-				});
-			});
-		},
-		auxPortsLength(): void
-		{
-			this.$nextTick(() => {
-				this.auxPorts.forEach((port, index) => {
-					this.updatePort(this.block.id, port.id, index);
-				});
-			});
+			this.updatePortsGeometry();
 		},
 		auxPorts(newAuxPorts: Array<TPort>, oldAuxPorts: Array<TPort>): void
 		{
@@ -396,6 +348,42 @@ export const BlockComplexContent = {
 					targetPortId: addedPort.id,
 				}));
 			}
+		},
+	},
+	methods:
+	{
+		updatePortsGeometry(): void
+		{
+			this.$nextTick(() => {
+				let isBlockGeometryUpdated = false;
+				this.portsGeometryGroups.forEach((ports) => {
+					isBlockGeometryUpdated = this.updatePortsGroupGeometry(ports, isBlockGeometryUpdated);
+				});
+			});
+		},
+		updatePortsGroupGeometry(ports: Array<TPort | Placeholder>, isBlockGeometryUpdated: boolean): boolean
+		{
+			let hasBlockGeometryUpdated = isBlockGeometryUpdated;
+			ports.forEach((port, index) => {
+				if (!port.type)
+				{
+					return;
+				}
+
+				if (!hasBlockGeometryUpdated)
+				{
+					// updatePort refreshes the block rect before recalculating this port.
+					this.updatePort(this.block.id, port.id, index);
+					hasBlockGeometryUpdated = true;
+
+					return;
+				}
+
+				this.updatePortRect(this.block.id, port.id);
+				this.updatePortSegmentSizes(this.block.id, port.id, index);
+			});
+
+			return hasBlockGeometryUpdated;
 		},
 	},
 	template: `
@@ -431,6 +419,7 @@ export const BlockComplexContent = {
 								:position="ruleType.position"
 								:isOutput="ruleType.id === 'output-rules'"
 								:isInputDroppable="ruleType.id === 'input-rules' && index === firstInputPlaceholderIndex"
+								:isOutputDroppable="ruleType.id === 'output-rules' && index === firstOutputPlaceholderIndex"
 							/>
 						</div>
 					</div>

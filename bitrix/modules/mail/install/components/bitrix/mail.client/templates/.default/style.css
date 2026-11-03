@@ -395,3 +395,7 @@
 	background-position: 50% 40%;
 	background-repeat: no-repeat;
 }
+
+.mail-msg-view-read-skeleton-loader {
+	opacity: var(--ui-opacity-full) !important;
+}

@@ -1,5 +1,4 @@
 import { MessengerModel, PayloadData } from '../../base';
-import { DialogType } from '../../dialogues/src/types';
 
 declare type AnchorModelActions = (
 	'anchorModel/setState'
@@ -10,7 +9,7 @@ declare type AnchorModelActions = (
 	| 'anchorModel/deleteByMessageIdList'
 	| 'anchorModel/updateByAuthorId'
 	| 'anchorModel/clear'
-	| 'anchorModel/clearByDialogType'
+	| 'anchorModel/clearByChatIdList'
 );
 
 export type AnchorModelActionParams = {
@@ -22,7 +21,7 @@ export type AnchorModelActionParams = {
 	'anchorModel/deleteByMessageIdList': {chatId: number, messageIdList: Array<number>};
 	'anchorModel/updateByAuthorId': AnchorModelState;
 	'anchorModel/clear': void;
-	'anchorModel/clearByDialogType': { dialogType: DialogType };
+	'anchorModel/clearByChatIdList': { chatIdList: Array<number> };
 };
 
 declare type AnchorModelState = {

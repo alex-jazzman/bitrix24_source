@@ -5,6 +5,8 @@
 jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports, module) => {
 	const { isModuleInstalled } = require('module');
 	const { Type } = require('type');
+	const { PerfPoint } = require('debug/prism');
+	const { NotifyManager } = require('notify-manager');
 
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -12,17 +14,75 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 	const { Uuid } = require('utils/uuid');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const {
+		ChatEntityType,
 		RestMethod,
 		EventType,
 	} = require('im/messenger/const');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { VoteCreation } = require('im/messenger/controller/vote/creation');
+	const { withTimeout } = require('im/messenger/lib/utils');
+
+	// Max wait (ms) for im.chat.calendar.prepare. Prefill is a bonus, so a slow or failed
+	// request must never hold back the meeting form.
+	const MEETING_PREPARE_TIMEOUT = 3000;
+
+	// Safety limit (ms) for the double-tap guard, above the worst legit path (prepare timeout
+	// plus extension load and tool check): a hung await must not lock meeting creation in the
+	// dialog until an app restart.
+	const MEETING_IN_FLIGHT_GUARD_TIMEOUT = 10000;
+
+	/**
+	 * Maps the im.chat.calendar.prepare response to the fields the meeting form is prefilled with.
+	 * The calendar owner is resolved locally, so a sonet project chat must not get chat data into
+	 * a personal event.
+	 * @param {?PrepareCalendarParams} params
+	 * @param {boolean} isCollab
+	 * @return {MeetingPrefill}
+	 */
+	function buildMeetingPrefill(params, isCollab)
+	{
+		if (!Type.isPlainObject(params) || (params.type === 'group' && !isCollab))
+		{
+			return {};
+		}
+
+		const prefill = {};
+
+		if (Type.isStringFilled(params.entryDescription))
+		{
+			prefill.description = params.entryDescription;
+		}
+
+		if (Type.isArrayFilled(params.participantsEntityList))
+		{
+			// The prepare contract is private, so ids are taken only from entities the form reads as users.
+			prefill.participantsEntityList = params.participantsEntityList
+				.filter((item) => item?.entityId === 'user')
+				.map((item) => item.id)
+			;
+		}
+
+		return prefill;
+	}
+
+	/**
+	 * A message on its way to the server has a temporary string id no calendar method can resolve.
+	 * @param {?number|string} messageId
+	 * @return {boolean}
+	 */
+	function isSavedMessageId(messageId)
+	{
+		return Type.isNumber(messageId);
+	}
 
 	/**
 	 * @class EntityManager
 	 */
 	class EntityManager
 	{
+		/** @type {Set<DialogId>} */
+		static #dialogsWithMeetingInFlight = new Set();
+
 		#onCalendarEntrySaveHandler;
 
 		/**
@@ -58,7 +118,13 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 			});
 		}
 
-		async #onCreateTask(params)
+		/**
+		 * @param {object} params
+		 * @param {object} [options]
+		 * @param {boolean} [options.sendOpenAnalytics] - false when the creation starts from the
+		 *        message menu: that path reports itself, and chat_textarea would be a second label
+		 */
+		async #onCreateTask(params, { sendOpenAnalytics = true } = {})
 		{
 			logger.log(`${this.constructor.name}.onClickActionTask`);
 
@@ -67,7 +133,10 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 				const { Entry } = await requireLazy('tasks:entry');
 				Entry.openTaskCreation(params);
 
-				AnalyticsService.getInstance().sendOpenCreateTask(this.dialogId);
+				if (sendOpenAnalytics)
+				{
+					AnalyticsService.getInstance().sendOpenCreateTask(this.dialogId);
+				}
 			}
 			catch (error)
 			{
@@ -199,26 +268,86 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 				};
 			}
 
-			await this.#onCreateTask(openTaskCreateFormOptions);
+			await this.#onCreateTask(openTaskCreateFormOptions, { sendOpenAnalytics: false });
 		}
 
 		/**
-		 * @param {?number} messageId
+		 * Never rejects: the prefill is optional, so any error or timeout degrades to an empty one.
+		 * @param {number} chatId
+		 * @param {?number|string} messageId
+		 * @param {boolean} isCollab
+		 * @return {Promise<MeetingPrefill>}
 		 */
-		async createMeeting(messageId)
+		async #getMeetingPrefill({ chatId, messageId, isCollab })
+		{
+			const queryParams = { CHAT_ID: chatId };
+			if (isSavedMessageId(messageId))
+			{
+				queryParams.MESSAGE_ID = messageId;
+			}
+
+			try
+			{
+				const result = await withTimeout(
+					BX.rest.callMethod(RestMethod.imChatCalendarPrepare, queryParams),
+					MEETING_PREPARE_TIMEOUT,
+				);
+
+				return buildMeetingPrefill(result.data()?.params, isCollab);
+			}
+			catch (error)
+			{
+				// A rest rejection carries the server reason behind error(); a timeout rejects with an Error.
+				logger.error(`${this.constructor.name}.getMeetingPrefill catch`, error?.error?.() ?? error);
+
+				return {};
+			}
+		}
+
+		/**
+		 * @param {?number|string} messageId
+		 * @param {object} [options]
+		 * @param {boolean} [options.sendOpenAnalytics] - false when the creation starts from the
+		 *        message menu: that path reports itself, and chat_textarea would be a second label
+		 */
+		async createMeeting(messageId, { sendOpenAnalytics = true } = {})
 		{
 			if (!isModuleInstalled('calendar'))
 			{
 				return;
 			}
 
+			// Both message entry points build their own manager per tap, so the mark is kept per
+			// dialog: while waiting for prepare is silent, a second tap would subscribe to the save
+			// event twice and open the form twice.
+			if (EntityManager.#dialogsWithMeetingInFlight.has(this.dialogId))
+			{
+				logger.warn(`${this.constructor.name}.createMeeting: already underway, tap ignored`, this.dialogId);
+
+				return;
+			}
+
+			const point = new PerfPoint('IM Create Meeting', `dialog ${this.dialogId}`).start();
+			EntityManager.#dialogsWithMeetingInFlight.add(this.dialogId);
+			const inFlightGuardTimer = setTimeout(
+				() => EntityManager.#dialogsWithMeetingInFlight.delete(this.dialogId),
+				MEETING_IN_FLIGHT_GUARD_TIMEOUT,
+			);
+			// The wait before the form opens is user-visible (up to the prepare timeout), so the tap
+			// answers with a single loader; requireLazy's own indicator is disabled below.
+			NotifyManager.showLoadingIndicator();
+			let currentStage = 'load-calendar-entry';
+
 			try
 			{
-				const { Entry } = await requireLazy('calendar:entry');
-				if (!Entry)
-				{
-					return;
-				}
+				// Not awaited right away: the extension loads in parallel with the prefill request below.
+				point.startPoint('load-calendar-entry');
+				const calendarEntryPromise = requireLazy('calendar:entry', false)
+					.then((entryExports) => {
+						point.endPoint('load-calendar-entry');
+
+						return entryExports;
+					});
 
 				let ownerId = MessengerParams.getUserId();
 				let calType = 'user';
@@ -226,8 +355,9 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 				const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
 				const collabInfo = this.store.getters['dialoguesModel/collabModel/getByDialogId'](this.dialogId);
 				const collabId = collabInfo?.collabId;
+				const isCollab = collabId > 0;
 
-				if (collabId > 0)
+				if (isCollab)
 				{
 					ownerId = collabId;
 					calType = 'group';
@@ -235,23 +365,64 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 
 				if (dialog?.chatId > 0)
 				{
+					// A sonet project chat gets an empty prefill anyway (see buildMeetingPrefill),
+					// so it must not wait for the request at all.
+					const isSonetProjectChat = dialog.entityType === ChatEntityType.sonetGroup && !isCollab;
+
+					let prefill = {};
+					if (!isSonetProjectChat)
+					{
+						currentStage = 'calendar-prepare';
+						point.startPoint(currentStage);
+						prefill = await this.#getMeetingPrefill({
+							chatId: dialog.chatId,
+							messageId,
+							isCollab,
+						});
+						point.endPoint(currentStage, {
+							itemsCount: prefill.participantsEntityList?.length ?? 0,
+						});
+					}
+
+					const { Entry } = await calendarEntryPromise;
+					if (!Entry)
+					{
+						return;
+					}
+
 					const uuid = Uuid.getV4();
 					this.#onCalendarEntrySaveHandler = (event) => this.#onCalendarEntrySave(event, dialog.chatId, uuid, messageId);
 					BX.addCustomEvent(EventType.calendar.addMeeting, this.#onCalendarEntrySaveHandler);
 
-					void Entry.openEventEditForm({
+					currentStage = 'open-form';
+					point.startPoint(currentStage);
+					// Awaited so the in-flight guard holds until the form is handed over for opening.
+					await Entry.openEventEditForm({
 						ownerId,
 						calType,
 						createChatId: dialog.chatId,
 						uuid,
+						...prefill,
 					});
+					point.endPoint(currentStage);
 
-					AnalyticsService.getInstance().sendOpenCreateMeeting(this.dialogId);
+					if (sendOpenAnalytics)
+					{
+						AnalyticsService.getInstance().sendOpenCreateMeeting(this.dialogId);
+					}
 				}
 			}
 			catch (error)
 			{
+				point.endPoint(currentStage, { error: error?.message });
 				logger.error(`${this.constructor.name}.createMeeting catch`, error);
+			}
+			finally
+			{
+				clearTimeout(inFlightGuardTimer);
+				EntityManager.#dialogsWithMeetingInFlight.delete(this.dialogId);
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				point.end();
 			}
 		}
 
@@ -262,7 +433,7 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 		 * @param {string} eventData.uuid
 		 * @param {string} uuid
 		 * @param {number} chatId
-		 * @param {number} messageId
+		 * @param {?number|string} messageId
 		 */
 		#onCalendarEntrySave(eventData, chatId, uuid, messageId)
 		{
@@ -280,7 +451,7 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 				CHAT_ID: chatId,
 			};
 
-			if (messageId)
+			if (isSavedMessageId(messageId))
 			{
 				queryParams.MESSAGE_ID = messageId;
 			}
@@ -313,5 +484,6 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 
 	module.exports = {
 		EntityManager,
+		buildMeetingPrefill,
 	};
 });

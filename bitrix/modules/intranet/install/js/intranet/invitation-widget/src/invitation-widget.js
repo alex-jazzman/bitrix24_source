@@ -28,11 +28,6 @@ export class InvitationWidget extends EventEmitter
 
 	show(): void
 	{
-		if (this.#getPopup().getPopup().isShown())
-		{
-			return;
-		}
-
 		this.#getPopup().show();
 	}
 
@@ -41,11 +36,18 @@ export class InvitationWidget extends EventEmitter
 		this.#cache.set('options', options);
 		Analytics.isAdmin = this.getOptions().isCurrentUserAdmin;
 		Event.bind(this.getOptions().button, 'click', () => {
-			Analytics.send(Analytics.EVENT_SHOW);
-			this.#getPopup().show();
+			const popup = this.#getPopup();
+			const wasShown = popup.getPopup().isShown();
+
+			popup.show();
+
+			if (!wasShown && popup.getPopup().isShown())
+			{
+				Analytics.send(Analytics.EVENT_SHOW);
+			}
 		});
 		EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.NotifyPanel:showInvitationWidget', () => {
-			this.#getPopup().show();
+			this.show();
 		});
 
 		return this;

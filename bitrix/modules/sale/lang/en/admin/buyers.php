@@ -33,6 +33,7 @@ $MESS["BUYER_ORDER_LAST"] = "Last order date";
 $MESS["BUYER_PRLIST"] = "Customers";
 $MESS["BUYER_PROFILE"] = "User profile";
 $MESS["BUYER_ROW_BUYER"] = "Customer";
+$MESS['BUYER_ROW_BUYER_NOT_FOUND'] = 'User not found';
 $MESS["BUYER_ROW_COUNTRY"] = "Country";
 $MESS["BUYER_ROW_COUNT_FULL_PAID_ORDER"] = "Orders paid in full";
 $MESS["BUYER_ROW_COUNT_ORDER"] = "Orders paid";

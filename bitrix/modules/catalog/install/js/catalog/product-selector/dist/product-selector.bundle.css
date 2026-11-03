@@ -173,6 +173,28 @@
 	background-color: #fff;
 }
 
+/* The icons inherit a transition from ui.forms; without pinning outline to 0s the ring animates
+   its colour and width instead of appearing at once. Same trick as the settings-popup row. */
+.catalog-product-field-input .ui-ctl-after {
+	transition: opacity 250ms linear, outline 0s, outline-offset 0s;
+}
+
+/* Visible focus (TPL-01) for the field icons. ui.forms kills their ring with
+   `outline: none !important`, so the keyboard ring has to win with !important too.
+   The offset is inset: the icons sit flush with the field edge and an outward ring
+   would be clipped by the grid cell. */
+.catalog-product-field-input .ui-ctl-after:focus-visible,
+html[data-input-modality="keyboard"] .catalog-product-field-input .ui-ctl-after:focus:not(:focus-visible) {
+	outline-style: solid !important;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF) !important;
+	outline-width: var(--ui-focus-outline-width, 2px) !important;
+	outline-offset: -2px !important;
+}
+
+html[data-input-modality="pointer"] .catalog-product-field-input .ui-ctl-after:focus-visible {
+	outline: none !important;
+}
+
 .catalog-product-error {
 	font-size: 13px;
 	color: #ff5752;

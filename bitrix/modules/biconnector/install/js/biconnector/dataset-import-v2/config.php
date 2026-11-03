@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/dataset-import-v2.bundle.css',
 	'js' => 'dist/dataset-import-v2.bundle.js',
 	'rel' => [
+		'biconnector.error-message',
 		'biconnector.file-export',
 		'main.core',
 		'main.core.events',

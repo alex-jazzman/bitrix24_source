@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import type { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'tasks.v2.core';
 import { Endpoint, Limit, Model, ResultStatus } from 'tasks.v2.const';
@@ -8,10 +8,11 @@ import { apiClient } from 'tasks.v2.lib.api-client';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { entityTextEditor, EntityTextTypes } from 'tasks.v2.component.entity-text';
-import type { ResultModel } from 'tasks.v2.model.results';
+import { type ResultModel } from 'tasks.v2.model.results';
+import { resultMessageService } from 'tasks.v2.provider.service.result-message-service';
 
 import { mapDtoToModel, mapModelToDto } from './mappers';
-import type { ResultDto } from './types';
+import { type ResultDto } from './types';
 
 const limit = Limit.Results;
 
@@ -45,10 +46,13 @@ class ResultService
 		{
 			const ids = Object.keys(map).map((it) => parseInt(it, 10)).reverse();
 
-			void taskService.updateStoreTask(taskId, {
-				results: ids,
-				resultsMessageMap: map,
-			});
+			if (this.#hasStore())
+			{
+				void taskService.updateStoreTask(taskId, {
+					results: ids,
+					resultsMessageMap: map,
+				});
+			}
 		}
 	}
 
@@ -159,32 +163,46 @@ class ResultService
 		}
 	}
 
-	async delete(id: number): Promise<void>
+	async delete(id: number, taskId: number | string | null = null): Promise<void>
 	{
 		const resultBeforeDelete = this.getStoreResult(id);
-		const taskId = resultBeforeDelete?.taskId;
+		const resolvedTaskId = taskId ?? resultBeforeDelete?.taskId;
+		const messageIdBeforeDelete = this.#getResultMessageId(resolvedTaskId, id);
 
-		this.deleteResultFromTask(taskId, id);
+		this.deleteResultFromTask(resolvedTaskId, id);
 
 		await this.deleteStoreResult(id);
 
-		if (!idUtils.isReal(taskId))
+		if (!idUtils.isReal(resolvedTaskId))
 		{
 			return;
 		}
 
 		try
 		{
-			await apiClient.post(Endpoint.TaskResultDelete, { result: { id } });
+			await resultMessageService.delete(resolvedTaskId, id);
 		}
 		catch (error)
 		{
 			console.error('ResultService.delete error', error);
 
-			await this.insertStoreResult(resultBeforeDelete);
+			if (resultBeforeDelete)
+			{
+				await this.insertStoreResult(resultBeforeDelete);
 
-			this.addResultToTask(taskId, id);
+				this.addResultToTask(resolvedTaskId, id, messageIdBeforeDelete);
+			}
 		}
+	}
+
+	#getResultMessageId(taskId: number | string, resultId: number): number | null
+	{
+		if (!this.#hasStore())
+		{
+			return null;
+		}
+
+		return taskService.getStoreTask(taskId)?.resultsMessageMap?.[resultId] ?? null;
 	}
 
 	async addResultFromMessage(taskId: number, messageId: number, result: ResultModel): Promise<boolean>
@@ -197,7 +215,7 @@ class ResultService
 
 			this.addResultToTask(taskId, tempId, messageId);
 
-			const data = await apiClient.post(Endpoint.TaskResultMessageAdd, { message: { id: messageId } });
+			const data = await resultMessageService.add(taskId, messageId, result);
 
 			await this.#handleResultAfterAdd(taskId, tempId, data);
 
@@ -217,6 +235,11 @@ class ResultService
 
 	hasOpenedResults(taskId: number): boolean
 	{
+		if (!this.#hasStore())
+		{
+			return false;
+		}
+
 		const task = taskService.getStoreTask(taskId);
 		if (!task?.results.length > 0)
 		{
@@ -238,6 +261,11 @@ class ResultService
 
 	async closeResults(taskId: number): void
 	{
+		if (!this.#hasStore())
+		{
+			return;
+		}
+
 		const task = taskService.getStoreTask(taskId);
 		if (!task?.results.length > 0)
 		{
@@ -259,6 +287,11 @@ class ResultService
 	async #handleResultAfterAdd(taskId: number | string, tempId: string, data: ResultDto): Promise<ResultDto>
 	{
 		const { id } = data;
+
+		if (!this.#hasStore())
+		{
+			return data;
+		}
 
 		fileService.replace(tempId, id, EntityTypes.Result);
 		entityTextEditor.replace(tempId, id, EntityTextTypes.Result);
@@ -284,11 +317,19 @@ class ResultService
 		}
 
 		await this.deleteStoreResult(tempId);
+
+		return data;
 	}
 
 	getStoreResult(id: number): ?ResultModel
 	{
-		return this.$store.getters[`${Model.Results}/getById`](id) || null;
+		const store = this.$store;
+		if (!store)
+		{
+			return null;
+		}
+
+		return store.getters[`${Model.Results}/getById`](id) || null;
 	}
 
 	hasStoreResult(id: number): boolean
@@ -298,21 +339,44 @@ class ResultService
 
 	async insertStoreResult(result: ResultModel): Promise<void>
 	{
-		await this.$store.dispatch(`${Model.Results}/insert`, result);
+		const store = this.$store;
+		if (!store)
+		{
+			return;
+		}
+
+		await store.dispatch(`${Model.Results}/insert`, result);
 	}
 
 	async updateStoreResult(id: number, fields: ResultModel): Promise<void>
 	{
-		await this.$store.dispatch(`${Model.Results}/update`, { id, fields });
+		const store = this.$store;
+		if (!store)
+		{
+			return;
+		}
+
+		await store.dispatch(`${Model.Results}/update`, { id, fields });
 	}
 
 	async deleteStoreResult(id: number): Promise<void>
 	{
-		await this.$store.dispatch(`${Model.Results}/delete`, id);
+		const store = this.$store;
+		if (!store)
+		{
+			return;
+		}
+
+		await store.dispatch(`${Model.Results}/delete`, id);
 	}
 
 	async #addResultToStore(result: ResultDto): void
 	{
+		if (!this.#hasStore())
+		{
+			return;
+		}
+
 		const mappedResult = mapDtoToModel(result);
 
 		await this.insertStoreResult(mappedResult);
@@ -334,6 +398,11 @@ class ResultService
 
 	addResultToTask(taskId: number, resultId: number, messageId: number | null = null): void
 	{
+		if (!this.#hasStore())
+		{
+			return;
+		}
+
 		const task = taskService.getStoreTask(taskId);
 
 		const results = [resultId, ...(task?.results || [])];
@@ -345,6 +414,11 @@ class ResultService
 
 	deleteResultFromTask(taskId: number, resultId: number): void
 	{
+		if (!this.#hasStore())
+		{
+			return;
+		}
+
 		const task = taskService.getStoreTask(taskId);
 
 		const results = (task?.results || []).filter((it) => it !== resultId);
@@ -357,6 +431,11 @@ class ResultService
 
 	#updateStoreTask(taskId: number, results: number[], resultsMessageMap: {}): void
 	{
+		if (!this.#hasStore())
+		{
+			return;
+		}
+
 		const containsResults = results.length > 0;
 
 		void taskService.updateStoreTask(taskId, {
@@ -366,7 +445,12 @@ class ResultService
 		});
 	}
 
-	get $store(): Store
+	#hasStore(): boolean
+	{
+		return Boolean(this.$store);
+	}
+
+	get $store(): ?Store
 	{
 		return Core.getStore();
 	}

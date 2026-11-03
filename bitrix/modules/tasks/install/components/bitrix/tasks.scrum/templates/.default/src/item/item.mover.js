@@ -229,10 +229,11 @@ export class ItemMover extends EventEmitter
 			return;
 		}
 
-		const isMultipleDrag = (this.dragItems.size > 0);
+		const dragItems = new Set(this.dragItems);
+		const isMultipleDrag = (dragItems.size > 0);
 		if (isMultipleDrag)
 		{
-			this.removeMultipleMode(item, this.dragItems);
+			this.removeMultipleMode(item, dragItems);
 		}
 
 		this.planBuilder.unblockScrumContainerSelect();
@@ -269,11 +270,10 @@ export class ItemMover extends EventEmitter
 		if (sourceEntity && endEntity)
 		{
 			this.onItemMove(item, sourceEntity, endEntity)
-				.then(() => {
-					const isMultipleDrag = (this.dragItems.size > 0);
-					if (isMultipleDrag)
+				.then((moveSucceeded) => {
+					if (moveSucceeded && isMultipleDrag)
 					{
-						this.dragGroupItems(item, this.dragItems, sourceEntity, endEntity);
+						return this.dragGroupItems(item, dragItems, sourceEntity, endEntity);
 					}
 				})
 			;
@@ -328,18 +328,22 @@ export class ItemMover extends EventEmitter
 		const itemId = parseInt(itemNode.dataset.id, 10);
 
 		const item = this.entityStorage.findItemByItemId(itemId);
+		const dragItems = new Set(this.dragItems);
 
 		if (this.planBuilder.isSprintDropzone(dropzone))
 		{
 			this.planBuilder.createSprint()
 				.then((sprint: Sprint) => {
 					this.addSprintContainers(sprint);
-					this.moveTo(sourceEntity, sprint, item);
-					const isMultipleDrag = (this.dragItems.size > 0);
-					if (isMultipleDrag)
-					{
-						this.dragGroupItems(item, this.dragItems, sourceEntity, sprint);
-					}
+					this.moveTo(sourceEntity, sprint, item, true, false);
+					return this.moveInAnotherContainer(new Set([item.getId()]), sourceEntity, sprint)
+						.then((moveSucceeded) => {
+							if (moveSucceeded && dragItems.size > 0)
+							{
+								return this.dragGroupItems(item, dragItems, sourceEntity, sprint);
+							}
+						})
+					;
 				})
 			;
 		}
@@ -354,17 +358,19 @@ export class ItemMover extends EventEmitter
 				if (item)
 				{
 					this.onItemMove(item, sourceEntity, endEntity, true)
-						.then(() => {
-							const isMultipleDrag = (this.dragItems.size > 0);
-							if (isMultipleDrag)
+						.then((moveSucceeded) => {
+							let groupMovePromise = null;
+							if (moveSucceeded && dragItems.size > 0)
 							{
-								this.dragGroupItems(item, this.dragItems, sourceEntity, endEntity);
+								groupMovePromise = this.dragGroupItems(item, dragItems, sourceEntity, endEntity);
 							}
 
 							sourceEntity.adjustListItemsWidth();
 							endEntity.adjustListItemsWidth();
 
 							this.planBuilder.adjustSprintListWidth();
+
+							return groupMovePromise;
 						})
 					;
 				}
@@ -415,20 +421,23 @@ export class ItemMover extends EventEmitter
 			const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
 
 			return this.onMoveConfirm(sourceEntity, message)
-				.then(() => {
-					if (insertDom)
-					{
-						Dom.insertBefore(item.getNode(), endEntity.getLoaderNode());
+				.then(
+					() => {
+						if (insertDom)
+						{
+							Dom.insertBefore(item.getNode(), endEntity.getLoaderNode());
+						}
+						this.moveItemFromEntityToEntity(item, sourceEntity, endEntity);
+						return this.moveInAnotherContainer(new Set([item.getId()]), sourceEntity, endEntity);
+					},
+					() => {
+						Dom.insertBefore(
+							item.getNode(),
+							sourceEntity.getListItemsNode().children[item.getSort() - 1]
+						);
+						return false;
 					}
-					this.moveItemFromEntityToEntity(item, sourceEntity, endEntity);
-					this.moveInAnotherContainer(new Set([item.getId()]), sourceEntity, endEntity);
-				})
-				.catch(() => {
-					Dom.insertBefore(
-						item.getNode(),
-						sourceEntity.getListItemsNode().children[item.getSort() - 1]
-					);
-				})
+				)
 			;
 		}
 	}
@@ -444,9 +453,19 @@ export class ItemMover extends EventEmitter
 				this.updateEntityCounters(entityFrom, entityTo);
 			})
 			.catch((response) => {
-				this.requestSender.showErrorAlert(response);
+				this.handleUpdateItemSortError(response);
 			})
 		;
+	}
+
+	handleUpdateItemSortError(response)
+	{
+		const alert = response?.errors ? this.requestSender.showErrorAlert(response) : null;
+		const title = Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP');
+		const messageBox = alert || MessageBox.alert(title, title);
+		messageBox.getPopupWindow().subscribe('onClose', () => {
+			window.location.reload();
+		});
 	}
 
 	onMoveConfirm(entity: Entity, message: string): Promise
@@ -474,7 +493,7 @@ export class ItemMover extends EventEmitter
 		});
 	}
 
-	dragGroupItems(dragItem: Item, dragItems: Set<Item>, entityFrom: Entity, entityTo: Entity)
+	dragGroupItems(dragItem: Item, dragItems: Set<Item>, entityFrom: Entity, entityTo: Entity): Promise
 	{
 		const isMoveInCurrentContainer = (entityFrom.getId() === entityTo.getId());
 
@@ -499,11 +518,11 @@ export class ItemMover extends EventEmitter
 
 		if (isMoveInCurrentContainer)
 		{
-			this.moveInCurrentContainer(dragItemIds, entityFrom);
+			return this.moveInCurrentContainer(dragItemIds, entityFrom);
 		}
 		else
 		{
-			this.moveInAnotherContainer(dragItemIds, entityFrom, entityTo);
+			return this.moveInAnotherContainer(dragItemIds, entityFrom, entityTo);
 		}
 	}
 
@@ -575,7 +594,7 @@ export class ItemMover extends EventEmitter
 					this.requestSender.updateItemSort({
 						sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds),
 					}).catch((response) => {
-						this.requestSender.showErrorAlert(response);
+						this.handleUpdateItemSortError(response);
 					});
 
 					entity.deactivateGroupMode();
@@ -623,7 +642,7 @@ export class ItemMover extends EventEmitter
 							this.requestSender.updateItemSort({
 								sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds),
 							}).catch((response) => {
-								this.requestSender.showErrorAlert(response);
+								this.handleUpdateItemSortError(response);
 							});
 
 							entity.deactivateGroupMode();
@@ -662,28 +681,35 @@ export class ItemMover extends EventEmitter
 			itemIds: [item.getId()],
 			sortInfo: this.calculateSort(listItemsNode, new Set([item.getId()])),
 		}).catch((response) => {
-			this.requestSender.showErrorAlert(response);
+			this.handleUpdateItemSortError(response);
 		});
 	}
 
-	moveInCurrentContainer(itemIds: Set<Item>, entity: Entity)
+	moveInCurrentContainer(itemIds: Set<Item>, entity: Entity): Promise
 	{
 		return this.requestSender.updateItemSort({
 			sortInfo: this.calculateSort(entity.getListItemsNode(), itemIds),
-		}).catch((response) => {
-			this.requestSender.showErrorAlert(response);
+		}).then(() => true).catch((response) => {
+			this.handleUpdateItemSortError(response);
+			return false;
 		});
 	}
 
-	moveInAnotherContainer(itemIds: Set<Item>, sourceEntity: Entity, endEntity: Entity)
+	moveInAnotherContainer(itemIds: Set<Item>, sourceEntity: Entity, endEntity: Entity): Promise
 	{
-		this.requestSender.updateItemSort({
+		return this.requestSender.updateItemSort({
 			entityId: endEntity.getId(),
 			itemIds: [...itemIds],
 			sortInfo: this.calculateSort(endEntity.getListItemsNode(), itemIds, true),
 		})
-			.then(() => this.updateEntityCounters(sourceEntity, endEntity))
-			.catch((response) => this.requestSender.showErrorAlert(response))
+			.then(() => {
+				this.updateEntityCounters(sourceEntity, endEntity);
+				return true;
+			})
+			.catch((response) => {
+				this.handleUpdateItemSortError(response);
+				return false;
+			})
 		;
 	}
 
@@ -893,7 +919,7 @@ export class ItemMover extends EventEmitter
 							this.updateEntityCounters(entityFrom, entityTo);
 						})
 						.catch((response) => {
-							this.requestSender.showErrorAlert(response);
+							this.handleUpdateItemSortError(response);
 						})
 					;
 

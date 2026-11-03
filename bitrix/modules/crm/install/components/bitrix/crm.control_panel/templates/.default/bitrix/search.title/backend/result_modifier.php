@@ -48,7 +48,7 @@ $arResult['USER_PROPERTY'] = array(
 
 //8, 9 and 10
 //forum_message.png
-//intranet_user.png
+//intranet_user.webp
 //socialnetwork_group.png
 
 //11
@@ -56,7 +56,7 @@ $arResult['USER_PROPERTY'] = array(
 //<module_id>_default.png
 
 //12
-//default.png
+//default.webp
 
 $arIBlocks = array();
 
@@ -203,8 +203,8 @@ foreach($arResult["SEARCH"] as $i=>$arItem)
 				$file = "forum_message.png";
 			break;
 		case "intranet":
-			if(mb_substr($arItem["ITEM_ID"], 0, 1) === "U" && file_exists($abs_path."intranet_user.png"))
-				$file = "intranet_user.png";
+			if(mb_substr($arItem["ITEM_ID"], 0, 1) === "U" && file_exists($abs_path."intranet_user.webp"))
+				$file = "intranet_user.webp";
 			break;
 	}
 
@@ -213,7 +213,7 @@ foreach($arResult["SEARCH"] as $i=>$arItem)
 		if(file_exists($abs_path.$arItem["MODULE_ID"]."_default.png"))
 			$file = $arItem["MODULE_ID"]."_default.png";
 		else
-			$file = "default.png";
+			$file = "default.webp";
 	}
 
 	$arResult["SEARCH"][$i]["ICON"] = $image_path.$file;

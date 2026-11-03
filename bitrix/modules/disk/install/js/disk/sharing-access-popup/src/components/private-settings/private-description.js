@@ -52,19 +52,24 @@ export const PrivateAccessDescription = {
 			helpDesk(HELP_DESK_SLIDER_CODE_DESCRIPTION, true);
 		},
 	},
+	// the root is a fragment on purpose: the blocks below have to stay flex items of the parent
+	// wrapper to keep their own align-self and z-index
 	template: `
 		<div class="access-private-block__description-wrapper">
 			<TextXl
 				tag="p"
 				className="access-private-block__description-text"
+				data-testid="disk-sharing-access-private-description"
 			>
 				{{ privateDescriptionText }}
 			</TextXl>
 		</div>
 		<button
 			v-if="!isChangeSettings && (canChangeRights || isSettingsBlocked)"
+			data-testid="disk-sharing-private-settings-button"
 			@click="onChangeSettingsClick"
 			class="access-private-block__open-settings"
+			data-testid="disk-sharing-access-private-settings-toggle"
 			:class="{ 'access-private-block__open-settings--disabled': isSettingsBlocked }"
 			:aria-disabled="isSettingsBlocked"
 		>
@@ -74,6 +79,7 @@ export const PrivateAccessDescription = {
 			v-if="isChangeSettings"
 			@click="openHelpDesk"
 			class="access-private-block__open-aside-popup"
+			data-testid="disk-sharing-access-private-details"
 		>
 			${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_DETAILS_BUTTON')}
 		</button>

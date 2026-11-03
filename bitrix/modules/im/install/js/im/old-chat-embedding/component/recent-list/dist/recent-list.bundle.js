@@ -1091,5 +1091,5 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 
 	exports.RecentList = RecentList;
 
-})(this.BX.Messenger.Embedding.ComponentLegacy = this.BX.Messenger.Embedding.ComponentLegacy || {}, BX, BX.Event, BX.Vue3.Vuex, BX.Messenger.Embedding.Const, BX.Messenger.Embedding.Lib, BX.Messenger.Embedding.Provider.Service, BX.Messenger.Embedding.ComponentLegacy, BX.Messenger.Embedding.LibLegacy, BX.Main, BX.Main, BX.Messenger.v2.Lib, BX, BX.Messenger.Embedding.Lib);
+})(this.BX.Messenger.Embedding.ComponentLegacy = this.BX.Messenger.Embedding.ComponentLegacy || {}, window, BX.Event, BX.Vue3.Vuex, BX.Messenger.Embedding.Const, BX.Messenger.Embedding.Lib, BX.Messenger.Embedding.Provider.Service, BX.Messenger.Embedding.ComponentLegacy, BX.Messenger.Embedding.LibLegacy, BX.Main, BX.Main, BX.Messenger.v2.Lib, BX, BX.Messenger.Embedding.Lib);
 //# sourceMappingURL=recent-list.bundle.js.map

@@ -1,13 +1,24 @@
-/* global BXDesktopSystem */
-import { Loc } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 
 import { Analytics } from 'call.lib.analytics';
+import { ViewRecordSource } from 'call.mapping';
 
 import { CallCloudRecord, CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
 import Util from '../util';
+import { popupKindOfRoute, RecordRoute, resolveRecordRoute } from './resolve-record-route';
+
+/**
+ * Closed list of local record start refusals the client is able to detect. The codes travel to
+ * analytics and to the subscribers of `RecordingUiService::onLocalRecordStartFailed` as plain
+ * strings, so the list stays local to the service.
+ */
+const LocalRecordStartError = Object.freeze({
+	DesktopCommandUnavailable: 'desktop_command_unavailable',
+	DesktopCommandThrew: 'desktop_command_threw',
+});
 
 /**
  * Manages recording-related UI: record button clicks, record menu popup, cloud record promos,
@@ -17,21 +28,22 @@ import Util from '../util';
  *  - `RecordingUiService::onStartRecord` — user triggered a recording start
  *  - `RecordingUiService::onStopRecord` — user triggered a recording stop (also used for pause/resume)
  *  - `RecordingUiService::onDestroyRecord` — user triggered a recording destroy
+ *  - `RecordingUiService::onLocalRecordStartFailed` — a local record start was refused
  */
 export class RecordingUiService extends EventEmitter
 {
+	#recordStopSent = false;
+
 	/**
 	 * @param {object} config
 	 * @param {*} config.viewPort
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, callStore })
+	constructor({ viewPort })
 	{
 		super();
 		this.setEventNamespace('BX.Call.RecordingUiService');
 
 		this.viewPort = viewPort;
-		this.callStore = callStore ?? null;
 
 		/**
 		 * Tracks whether the local-record start notification has already been shown
@@ -43,19 +55,24 @@ export class RecordingUiService extends EventEmitter
 	}
 
 	/**
+	 * Resets the cloud record_stop dedup flag.
+	 * Must be called when a new recording session starts (any type).
+	 */
+	resetRecordStopSent()
+	{
+		this.#recordStopSent = false;
+	}
+
+	/**
 	 * Handles the record button click by showing the appropriate menu or promo popup.
 	 *
 	 * @param {object} recordingState
-	 * @param {object} recordingState.commonRecordState — current common record state object from controller
-	 * @param {boolean} recordingState.cloudRecordEnabled — whether cloud recording is available for this call
 	 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled — whether cloud recording features tariff is enabled
 	 * @param {string|number} recordingState.callId — current call id
 	 * @param {boolean} recordingState.isServiceEnabled — whether cloud record service is globally enabled
 	 * @param {boolean} recordingState.canRecord — whether recording is actually available (local desktop or cloud); gates the record menu vs. the tariff helpdesk article
 	 */
 	onRecordButtonClick({
-		commonRecordState,
-		cloudRecordEnabled,
 		isCloudRecordFeaturesEnabled,
 		callId,
 		isServiceEnabled,
@@ -67,42 +84,86 @@ export class RecordingUiService extends EventEmitter
 			return;
 		}
 
-		if (isServiceEnabled)
+		const { route, isDesktopRecord } = resolveRecordRoute({
+			isServiceEnabled,
+			canRecord,
+			tariffAvailable: CallCloudRecord.tariffAvailable,
+			isCloudRecordFeaturesEnabled,
+			isDesktop: DesktopApi.isDesktop(),
+		});
+
+		switch (route)
 		{
-			if (!CallCloudRecord.tariffAvailable)
-			{
-				if (canRecord)
-				{
-					this.viewPort.showCommonRecordMenuPopup(true);
-
-					return;
-				}
-
-				Util.openArticle(CallCloudRecord.tariffSlider);
-
-				return;
+			case RecordRoute.Menu: {
+				this.viewPort.showCommonRecordMenuPopup(isDesktopRecord);
+				break;
 			}
 
-			if (!isCloudRecordFeaturesEnabled && !DesktopApi.isDesktop())
-			{
+			case RecordRoute.Dialog: {
 				this.viewPort.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
-
-				return;
+				break;
 			}
 
-			this.viewPort.showCommonRecordMenuPopup(isCloudRecordFeaturesEnabled && DesktopApi.isDesktop());
+			case RecordRoute.TariffArticle: {
+				Util.openArticle(CallCloudRecord.tariffSlider);
+				break;
+			}
 
-			return;
+			case RecordRoute.HelpArticle: {
+				window.BX?.Helper?.show('redirect=detail&code=22079566');
+				break;
+			}
+
+			// RecordRoute.RecordLimit is decided by the view, so the click never resolves to it here.
+			default: {
+				break;
+			}
 		}
+	}
 
-		if (!canRecord)
+	/**
+	 * Tells the record button which layer it opens, so that it can announce it before it is pressed.
+	 *
+	 * Takes the flags the click handler takes, plus the recording limit the view decides on its own:
+	 * the announcement and the click must be answered by the same function, or the button promises a
+	 * menu and opens an article. Routes that lead to a slider or a hint announce no layer at all.
+	 *
+	 * Safe to call at any moment of the life of the panel: the button is created lazily, and the view
+	 * skips a button that is not there yet.
+	 *
+	 * @param {object} recordingState
+	 * @param {boolean} recordingState.isServiceEnabled - whether cloud record service is globally enabled
+	 * @param {boolean} recordingState.canRecord - whether recording is actually available (local desktop or cloud)
+	 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled - whether cloud record features tariff is enabled
+	 * @param {boolean} recordingState.isRecordLimitReached - whether the recording limit closes the button
+	 */
+	syncRecordButtonPopupKind({
+		isServiceEnabled,
+		canRecord,
+		isCloudRecordFeaturesEnabled,
+		isRecordLimitReached,
+	})
+	{
+		// Every reason of the route is fixed for the life of a call: the cloud record service and its
+		// tariff are read once from the settings of the extension, the recording limit from the page,
+		// the desktop client from the environment. Only a new call brings a new provider and new cloud
+		// record features, and a new call rebinds its events. That is why the callers sync where call
+		// events are bound and where the record button is built, and nothing subscribes to the flags.
+		if (!this.viewPort)
 		{
-			window.BX?.Helper?.show('redirect=detail&code=22079566');
-
 			return;
 		}
 
-		this.viewPort.showCommonRecordMenuPopup(true);
+		const { route } = resolveRecordRoute({
+			isServiceEnabled,
+			canRecord,
+			tariffAvailable: CallCloudRecord.tariffAvailable,
+			isCloudRecordFeaturesEnabled,
+			isDesktop: DesktopApi.isDesktop(),
+			isRecordLimitReached,
+		});
+
+		this.viewPort.setButtonPopupKind('record', popupKindOfRoute(route));
 	}
 
 	/**
@@ -114,13 +175,10 @@ export class RecordingUiService extends EventEmitter
 	 * @param {string} menuAction.kind — one of CallCommonRecordType values
 	 * @param {boolean} menuAction.hotkey — whether triggered via hotkey (skip confirmation)
 	 * @param {object} recordingState
-	 * @param {object} recordingState.commonRecordState — current common record state from controller
 	 * @param {boolean} recordingState.cloudRecordEnabled — whether cloud recording is available for this call
-	 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled
-	 * @param {string|number} recordingState.callId
 	 * @param {boolean} recordingState.isCopilotActive — whether copilot is currently active
 	 */
-	onCommonRecordMenu({ state, kind, hotkey }, { commonRecordState, cloudRecordEnabled, isCopilotActive })
+	onCommonRecordMenu({ state, kind, hotkey }, { cloudRecordEnabled, isCopilotActive })
 	{
 		if (!this.viewPort)
 		{
@@ -147,7 +205,7 @@ export class RecordingUiService extends EventEmitter
 					this.viewPort
 						.showConfirmModal({
 							title: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
-							message: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
+							message: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE_MSGVER_1'),
 							yesButtonText: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
 							noButtonText: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON'),
 						})
@@ -235,14 +293,7 @@ export class RecordingUiService extends EventEmitter
 			return;
 		}
 
-		if (isCloudRecordFeaturesEnabled)
-		{
-			this.viewPort.showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId);
-		}
-		else
-		{
-			this.viewPort.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
-		}
+		this.viewPort.showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId);
 	}
 
 	/**
@@ -336,34 +387,15 @@ export class RecordingUiService extends EventEmitter
 			if (CallCloudRecord.isCisRegion)
 			{
 				this.viewPort.showCommonRecordStartNotify(userId, CallCommonRecordState.Started);
-
-				if (this.callStore)
-				{
-					this.callStore.addNotification('recordStarted', { userId, state: CallCommonRecordState.Started });
-				}
 			}
 			else
 			{
 				this.viewPort.showCommonRecordStartModal();
-
-				if (this.callStore)
-				{
-					this.callStore.addNotification('recordStarted', { userId, state: CallCommonRecordState.Started });
-				}
 			}
 		}
 		else
 		{
 			this.viewPort.showCommonRecordStartNotify(userId, eventRecordState.state);
-
-			const notificationType = Util.isCommonRecordStateInactive(eventRecordState.state)
-				? 'recordStopped'
-				: 'recordStarted';
-
-			if (this.callStore)
-			{
-				this.callStore.addNotification(notificationType, { userId, state: eventRecordState.state });
-			}
 		}
 	}
 
@@ -382,11 +414,6 @@ export class RecordingUiService extends EventEmitter
 		{
 			this.notifyShowed = true;
 			this.viewPort.showCommonRecordStartNotify(initiatorId);
-
-			if (this.callStore)
-			{
-				this.callStore.addNotification('recordStarted', { userId: initiatorId, state });
-			}
 		}
 
 		if (Util.isCommonRecordStateInactive(state) && initiatorId !== currentUserId)
@@ -397,10 +424,16 @@ export class RecordingUiService extends EventEmitter
 
 	/**
 	 * Handles the desktop local recording start when initiated by the current user.
-	 * Formats the filename, fires the API call, tracks analytics, and triggers BXDesktopSystem.
+	 * Formats the filename and asks the desktop client to capture; the portal call and the
+	 * analytics of a started record follow the capture command, so a refused start is never
+	 * recorded as a running one. A detected refusal emits
+	 * `RecordingUiService::onLocalRecordStartFailed` and leaves the record state to the controller.
 	 *
 	 * @param {object} params
 	 * @param {string} params.callId - analytics call identifier
+	 * @param {string|number} [params.desktopCallId] - identifier the rest of the client knows the call
+	 *   by: it names the record file the user sees, so it must not follow the analytics one. Defaults
+	 *   to callId, for a caller whose call is known by one identifier only
 	 * @param {string} params.callType - analytics call type
 	 * @param {string|number} params.callApiId - currentCall.id (for REST call)
 	 * @param {string} params.callUuid - currentCall.uuid (for REST call)
@@ -409,10 +442,16 @@ export class RecordingUiService extends EventEmitter
 	 * @param {string} params.formatRecordDate - date format string
 	 * @param {string} params.recordType - commonRecord.type
 	 * @param {boolean} params.isMicrophoneMuted - Hardware.isMicrophoneMuted
-	 * @param {string} params.windowId - desktop window id (View.RecordSource.Chat)
+	 * @param {string} [params.windowId] - id of the native window the client is asked to capture.
+	 *   The main window of the application answers to the alias `ViewRecordSource.Chat`, which is the
+	 *   default here and is what the call in a chat needs. A window opened by the client on its own —
+	 *   the public conference page — gets no id of its own (`window.bxdWindowId` is undefined there),
+	 *   so it is recognised by the title of its document and has to pass that value itself. Sending
+	 *   the alias from such a window makes the client refuse the capture.
 	 */
 	handleLocalRecordStart({
 		callId,
+		desktopCallId = callId,
 		callType,
 		callApiId,
 		callUuid,
@@ -421,42 +460,107 @@ export class RecordingUiService extends EventEmitter
 		formatRecordDate,
 		recordType,
 		isMicrophoneMuted,
-		windowId,
+		windowId = ViewRecordSource.Chat,
 	})
 	{
 		const callDate = BX?.date?.format(formatRecordDate) || BX.Main.Date.format(formatRecordDate);
+		const fileName = this.#buildFileName({ dialogName, desktopCallId, callDate });
+		const startCommand = this.#desktopRecordStartCommand();
+		const analyticsParams = { callId, callType, recordType };
 
-		let fileName = Loc.getMessage('IM_CALL_RECORD_NAME');
-		if (fileName)
+		if (!Type.isFunction(startCommand))
 		{
-			fileName = fileName
-				.replace('#CHAT_TITLE#', dialogName)
-				.replace('#CALL_ID#', callId)
-				.replace('#DATE#', callDate);
+			this.#failStart(LocalRecordStartError.DesktopCommandUnavailable, analyticsParams);
+
+			return;
 		}
-		else
+
+		try
 		{
-			fileName = `call_record_${callId}`;
+			startCommand({
+				windowId,
+				fileName,
+				callId: desktopCallId,
+				callDate,
+				dialogId,
+				dialogName,
+				video: recordType !== CallCommonRecordType.Audio,
+				muted: isMicrophoneMuted,
+				cropTop: 72,
+				cropBottom: 90,
+				shareMethod: 'im.disk.record.share',
+				callType,
+			});
+		}
+		catch (error)
+		{
+			// The code of the refusal is what analytics counts; the reason of this one lives only in the
+			// exception of the client, and without it a report from the field says nothing.
+			console.error('BX.Call.RecordingUiService: the desktop client refused the record start', error);
+			this.#failStart(LocalRecordStartError.DesktopCommandThrew, analyticsParams);
+
+			return;
 		}
 
 		BX.ajax.runAction('call.Call.onStartRecord', { data: { callId: callApiId, callUuid } });
 
-		Analytics.getInstance().onRecordStart({ callId, callType, recordType, errorCode: null });
-
-		BXDesktopSystem.CallRecordStart({
-			windowId,
-			fileName,
-			callId,
-			callDate,
-			dialogId,
-			dialogName,
-			video: recordType !== CallCommonRecordType.Audio,
-			muted: isMicrophoneMuted,
-			cropTop: 72,
-			cropBottom: 90,
-			shareMethod: 'im.disk.record.share',
-			callType,
+		this.resetRecordStopSent();
+		Analytics.getInstance().onRecordStart({
+			...analyticsParams,
+			errorCode: null,
+			storageType: Analytics.AnalyticsStorageType.local,
 		});
+	}
+
+	/**
+	 * The only point where the service reaches the desktop capture command.
+	 *
+	 * @returns {Function|null} the command bound to its owner, or null when the client has none
+	 */
+	#desktopRecordStartCommand()
+	{
+		const command = window.BXDesktopSystem?.CallRecordStart;
+
+		return Type.isFunction(command) ? command.bind(window.BXDesktopSystem) : null;
+	}
+
+	/**
+	 * @param {object} params
+	 * @param {string} params.dialogName
+	 * @param {string|number} params.desktopCallId
+	 * @param {string} params.callDate
+	 * @returns {string} name of the record file the user sees
+	 */
+	#buildFileName({ dialogName, desktopCallId, callDate })
+	{
+		const template = Loc.getMessage('IM_CALL_RECORD_NAME');
+		if (!template)
+		{
+			return `call_record_${desktopCallId}`;
+		}
+
+		return template
+			.replace('#CHAT_TITLE#', dialogName)
+			.replace('#CALL_ID#', desktopCallId)
+			.replace('#DATE#', callDate);
+	}
+
+	/**
+	 * Reports a refused local record start: analytics gets the code instead of a success, and the
+	 * controller gets the event it turns into a notification and a rollback of the record state.
+	 *
+	 * @param {string} errorCode - member of LocalRecordStartError
+	 * @param {object} analyticsParams - callId, callType and recordType of the refused start
+	 */
+	#failStart(errorCode, analyticsParams)
+	{
+		Analytics.getInstance().onRecordStart({
+			...analyticsParams,
+			errorCode,
+			storageType: Analytics.AnalyticsStorageType.local,
+		});
+
+		this.emit('RecordingUiService::onLocalRecordStartFailed', { errorCode });
 	}
 
 	/**
@@ -474,6 +578,7 @@ export class RecordingUiService extends EventEmitter
 			subSection: Analytics.AnalyticsSubSection.window,
 			element: Analytics.AnalyticsElement.recordButton,
 			recordTime: Util.getRecordTimeText(commonRecordInfo, true),
+			storageType: Analytics.AnalyticsStorageType.local,
 		});
 	}
 
@@ -511,35 +616,62 @@ export class RecordingUiService extends EventEmitter
 			case CallCommonRecordState.Started: {
 				if (previousState === CallCommonRecordState.Resumed)
 				{
-					Analytics.getInstance().onRecordResumed({ callId, callType, errorCode: null });
+					Analytics.getInstance().onRecordResumed({
+						callId,
+						callType,
+						errorCode: null,
+						storageType: Analytics.AnalyticsStorageType.cloud,
+					});
 				}
 				else
 				{
-					Analytics.getInstance().onRecordStart({ callId, callType, recordType, errorCode: null });
+					this.resetRecordStopSent();
+					Analytics.getInstance().onRecordStart({
+						callId,
+						callType,
+						recordType,
+						errorCode: null,
+						storageType: Analytics.AnalyticsStorageType.cloud,
+					});
 				}
 
 				break;
 			}
 
 			case CallCommonRecordState.Paused: {
-				Analytics.getInstance().onRecordPaused({ callId, callType, errorCode: null });
+				Analytics.getInstance().onRecordPaused({
+					callId,
+					callType,
+					errorCode: null,
+					storageType: Analytics.AnalyticsStorageType.cloud,
+				});
 				break;
 			}
 
 			case CallCommonRecordState.Stopped: {
-				Analytics.getInstance().onRecordStop({
-					callId,
-					callType,
-					subSection: Analytics.AnalyticsSubSection.window,
-					element: Analytics.AnalyticsElement.recordButton,
-					recordTime: Util.getRecordTimeText(commonRecordInfo, true),
-				});
+				if (!this.#recordStopSent)
+				{
+					this.#recordStopSent = true;
+					Analytics.getInstance().onRecordStop({
+						callId,
+						callType,
+						subSection: Analytics.AnalyticsSubSection.window,
+						element: Analytics.AnalyticsElement.recordButton,
+						recordTime: Util.getRecordTimeText(commonRecordInfo, true),
+						storageType: Analytics.AnalyticsStorageType.cloud,
+					});
+				}
 
 				break;
 			}
 
 			case CallCommonRecordState.Destroyed: {
-				Analytics.getInstance().onRecordDelete({ callId, callType, errorCode: null });
+				Analytics.getInstance().onRecordDelete({
+					callId,
+					callType,
+					errorCode: null,
+					storageType: Analytics.AnalyticsStorageType.cloud,
+				});
 				break;
 			}
 
@@ -553,11 +685,41 @@ export class RecordingUiService extends EventEmitter
 	}
 
 	/**
+	 * Sends record_stop analytics for cloud recording when the call is being disconnected.
+	 * Implements ALG-01 dedup: only sends if record_stop has not already been sent in this session.
+	 *
+	 * @param {string} callId - analytics call identifier
+	 * @param {string} callType - analytics call type
+	 * @param {object|null} commonRecordInfo - current commonRecord.info (for record time)
+	 * @param {boolean} finishCall - true if finishing for all, false if disconnecting only
+	 */
+	trackCloudRecordStopOnDisconnect(callId, callType, commonRecordInfo, finishCall)
+	{
+		if (this.#recordStopSent)
+		{
+			return;
+		}
+
+		this.#recordStopSent = true;
+		Analytics.getInstance().onRecordStop({
+			callId,
+			callType,
+			subSection: finishCall
+				? Analytics.AnalyticsSubSection.contextMenu
+				: Analytics.AnalyticsSubSection.window,
+			element: finishCall
+				? Analytics.AnalyticsElement.finishForAllButton
+				: Analytics.AnalyticsElement.disconnectButton,
+			recordTime: Util.getRecordTimeText(commonRecordInfo, true),
+			storageType: Analytics.AnalyticsStorageType.cloud,
+		});
+	}
+
+	/**
 	 * Releases all resources and event listeners held by this service.
 	 */
 	destroy()
 	{
-		this.callStore = null;
 		this.viewPort = null;
 		this.notifyShowed = false;
 	}

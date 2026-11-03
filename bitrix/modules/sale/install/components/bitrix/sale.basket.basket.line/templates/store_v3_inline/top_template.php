@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -12,9 +14,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 $compositeStub = ($arResult['COMPOSITE_STUB'] ?? 'N') === 'Y';
+$showCounter =
+	!$compositeStub
+	&& $arParams['SHOW_NUM_PRODUCTS'] === 'Y'
+	&& ($arResult['NUM_PRODUCTS'] > 0 || $arParams['SHOW_EMPTY_VALUES'] === 'Y')
+;
+$cartLabel =
+	$showCounter
+		? Loc::getMessage('TSB1_CART_ARIA', ['#COUNT#' => $arResult['BASKET_COUNT_DESCRIPTION']])
+		: Loc::getMessage('TSB1_CART')
+;
 ?>
-<a class="d-flex g-text-decoration-none--hover" href="<?= $arParams['PATH_TO_BASKET'] ?>" data-page-url="#system_mainpage">
-	<svg width="31" height="27" viewBox="0 0 31 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+<a
+	class="d-flex g-text-decoration-none--hover catalog-cart-menu-link<?= $showCounter ? ' catalog-cart-menu-link--with-counter' : '' ?>"
+	href="<?= $arParams['PATH_TO_BASKET'] ?>"
+	aria-label="<?= htmlspecialcharsbx($cartLabel) ?>"
+	data-page-url="#system_mainpage"
+>
+	<svg width="31" height="27" viewBox="0 0 31 27" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 		<path
 			d="M7.24627 1.86722L8.08452 5.48828L29.0807 5.4494C29.4306 5.45089 29.7597 5.61317 29.9741 5.88713C30.19 6.1626 30.2674 6.51993 30.187 6.85941L28.0518 18.7144C27.9298 19.2266 27.4727 19.5884 26.9471 19.5914H10.0277C9.50215 19.5884 9.04506 19.2266 8.92297 18.7144L5.22598 3.27722H1.9472C1.31567 3.27722 0.803711 2.76526 0.803711 2.13373C0.803711 1.50219 1.31567 0.990234 1.9472 0.990234H6.14001C6.66709 0.993207 7.12269 1.35501 7.24627 1.86722Z"
 			fill="#121212"
@@ -29,15 +46,20 @@ $compositeStub = ($arResult['COMPOSITE_STUB'] ?? 'N') === 'Y';
 		/>
 	</svg>
 	<?php
-	if (!$compositeStub)
+	if ($showCounter)
 	{
-		if (
-			$arParams['SHOW_NUM_PRODUCTS'] === 'Y'
-			&& ($arResult['NUM_PRODUCTS'] > 0 || $arParams['SHOW_EMPTY_VALUES'] === 'Y')
-		)
-		{
-			?><span class="catalog-cart-counter-menu"><?= $arResult['NUM_PRODUCTS'] ?></span><?php
-		}
+		?><span class="catalog-cart-counter-menu" aria-hidden="true"><?= $arResult['NUM_PRODUCTS'] ?></span><?php
 	}
 	?>
 </a>
+<?php
+if (!$compositeStub)
+{
+	?>
+	<span
+		class="catalog-cart-announce"
+		hidden
+		data-basket-announce="<?= htmlspecialcharsbx($arResult['PRODUCTS']) ?>"
+	></span>
+	<?php
+}

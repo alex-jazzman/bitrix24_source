@@ -4,6 +4,7 @@ import { Loader } from 'main.loader';
 import { Messenger } from 'im.public';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { VendorBlock } from './blocks/vendor';
 import { ViewsBlock } from './blocks/views';
 import { ButtonsBlock, MoreMenu } from './blocks/buttons';
@@ -45,8 +46,8 @@ export class InfoInstance
 		this.moreMenuId = `biconnector-dashboard-detail-info-more-menu-${this.dashboardId || 'default'}`;
 		this.dashboardListUrl = Type.isStringFilled(config.dashboardListUrl) ? config.dashboardListUrl : '/bi/dashboard/';
 		this.imagesPath = Type.isStringFilled(config.imagesPath) ? config.imagesPath : '';
-		this.emptyIconPath = this.imagesPath ? `${this.imagesPath}/icon_empty.png` : '';
-		this.emptyDescriptionPath = this.imagesPath ? `${this.imagesPath}/description_empty.png` : '';
+		this.emptyIconPath = this.imagesPath ? `${this.imagesPath}/icon_empty.webp` : '';
+		this.emptyDescriptionPath = this.imagesPath ? `${this.imagesPath}/description_empty.webp` : '';
 		this.isMarketModuleInstalled = config.isMarketModuleInstalled === true;
 		this.marketBackgroundPath = CoverBlock.getRandomMarketBackgroundPath(this.isMarketModuleInstalled);
 		this.canModifySettings = config.canModifySettings === true;
@@ -105,7 +106,7 @@ export class InfoInstance
 					c_element: 'context_menu',
 					status: 'error',
 				});
-				this.renderError(this.getErrorMessage(response));
+				this.renderError(this.getErrorHtml(response));
 			})
 		;
 	}
@@ -318,7 +319,7 @@ export class InfoInstance
 		this.appNode.innerHTML = this.getDashboardMarkup(dashboard);
 	}
 
-	renderError(message: string): void
+	renderError(messageHtml: string): void
 	{
 		if (!Type.isDomNode(this.appNode))
 		{
@@ -327,11 +328,6 @@ export class InfoInstance
 
 		this.destroyGalleryBlocks();
 
-		const safeMessage = Type.isStringFilled(message)
-			? Text.encode(message)
-			: Text.encode(this.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_LOAD_ERROR'))
-		;
-
 		this.appNode.innerHTML = `
 			<section class="report">
 				<div class="report__row">
@@ -339,32 +335,21 @@ export class InfoInstance
 						<div class="report__description-title">
 							${Text.encode(this.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_DESCRIPTION_TITLE'))}
 						</div>
-						<div class="report__description-content">${safeMessage}</div>
+						<div class="report__description-content">${messageHtml}</div>
 					</div>
 				</div>
 			</section>
 		`;
 	}
 
-	getErrorMessage(response: Object, fallbackMessage: string = ''): string
+	getErrorHtml(response: Object, fallbackMessage: string = ''): string
 	{
 		const defaultMessage = Type.isStringFilled(fallbackMessage)
 			? fallbackMessage
 			: this.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_LOAD_ERROR')
 		;
 
-		if (response instanceof Error && Type.isStringFilled(response.message))
-		{
-			return response.message;
-		}
-
-		const firstError = response?.errors?.[0];
-		if (Type.isStringFilled(firstError?.message))
-		{
-			return firstError.message;
-		}
-
-		return defaultMessage;
+		return resolveErrorHtml(response, defaultMessage);
 	}
 
 	bindDynamicElements(): void
@@ -438,7 +423,6 @@ export class InfoInstance
 		const canShowMoreMenu = this.currentCanModifySettings || this.currentCanDelete;
 		const publishedDate = InfoBlock.getDateValue(dashboard.PUBLISHED_DATE);
 		const updatedDate = InfoBlock.getDateValue(dashboard.UPDATED_DATE);
-		const period = InfoBlock.getPeriodValue(dashboard.PERIOD);
 		const description = DescriptionBlock.getDescriptionValue(
 			dashboard.DESCRIPTION,
 			this.emptyDescriptionPath,
@@ -448,7 +432,7 @@ export class InfoInstance
 		return `
 			<section class="report">
 				${this.getTopRowMarkup(vendorBlock.render(), viewsBlock.render(), canShowMoreMenu)}
-				${this.getOverviewMarkup(dashboard, publishedDate, updatedDate, period)}
+				${this.getOverviewMarkup(dashboard, publishedDate, updatedDate)}
 				${GalleryBlock.render(images, this.viewerGroupId)}
 				${new DescriptionBlock(description).render()}
 			</section>
@@ -471,7 +455,7 @@ export class InfoInstance
 		`;
 	}
 
-	getOverviewMarkup(dashboard: Object, publishedDate: string, updatedDate: string, period: string): string
+	getOverviewMarkup(dashboard: Object, publishedDate: string, updatedDate: string): string
 	{
 		const coverBlock = new CoverBlock({
 			icon: dashboard.ICON,
@@ -484,7 +468,6 @@ export class InfoInstance
 			dashboard,
 			publishedDate,
 			updatedDate,
-			period,
 			reloadDashboardCallback: this.reloadDashboard.bind(this),
 			isMarketModuleInstalled: this.isMarketModuleInstalled,
 			appCode: this.appCode,
@@ -608,7 +591,7 @@ export class InfoInstance
 					status: 'error',
 				});
 				BX.UI.Notification.Center.notify({
-					content: Text.encode(this.getErrorMessage(response, fallbackMessage)),
+					content: this.getErrorHtml(response, fallbackMessage),
 				});
 				finishRequest();
 			})

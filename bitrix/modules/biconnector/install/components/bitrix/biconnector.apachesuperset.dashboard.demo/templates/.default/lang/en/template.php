@@ -1,0 +1,13 @@
+<?php
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_INFO_BUTTON"] = "About dashboard";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_INTERNAL_FAILURE_TEXT"] = "Could not load demo.";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_LABEL"] = "Demo dashboard";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_LABEL_HINT"] = "Demo uses fictional data that in no way will affect your real dashboards.";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_LABEL_HINT_CLOSE"] = "Close";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_LOGO_LINK"] = "BI Builder dashboards";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_NOT_READY_TEXT"] = "Collecting demo data now. Refresh the page in a few minutes.";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_NOT_READY_TITLE"] = "Preparing demo dashboard";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_RATE_LIMITED_TEXT"] = "Demo dashboards are experiencing heavy traffic. Try again in a few minutes.";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_RATE_LIMITED_TITLE"] = "Too many requests.";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_UNAVAILABLE_TEXT"] = "Demo dashboards were not activated on this Bitrix24.";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_DEMO_UNAVAILABLE_TITLE"] = "Demo unavailable";

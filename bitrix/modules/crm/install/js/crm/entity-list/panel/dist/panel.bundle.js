@@ -278,15 +278,15 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 
 	class Router {
 		static #handlers = new Set([]);
-		#grid;
+		#gridId;
 		#progressBarRepo;
 		#extensionSettings;
 		#subscriptions = new Map();
-		constructor(grid, progressBarRepo, extensionSettings) {
-			if (!(grid instanceof BX.Main.grid)) {
-				throw new TypeError('expected grid to be instance of BX.Main.grid');
+		constructor(gridId, progressBarRepo, extensionSettings) {
+			if (!main_core.Type.isStringFilled(gridId)) {
+				throw new TypeError('expected gridId to be a non empty string');
 			}
-			this.#grid = grid;
+			this.#gridId = gridId;
 			if (!(progressBarRepo instanceof crm_autorun.ProgressBarRepository)) {
 				throw new TypeError('expected progressBarRepo to be instance of ProgressBarRepository');
 			}
@@ -299,6 +299,9 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 		static registerHandler(handler) {
 			this.#handlers.add(handler);
 		}
+		static unregisterHandler(handler) {
+			this.#handlers.delete(handler);
+		}
 		startListening() {
 			for (const HandlerClass of this.constructor.#handlers) {
 				const eventName = `BX.Crm.EntityList.Panel:${HandlerClass.getEventName()}`;
@@ -309,10 +312,38 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 		}
 		#createSubscriptionHandler(HandlerClass) {
 			return event => {
-				const eventHandler = new HandlerClass(event.getData());
+				const eventData = event.getData();
+				if (!this.#isAddressedToOwnGrid(eventData, HandlerClass.getEventName())) {
+					return;
+				}
+
+				// a card loads its tabs one by one and redraws them, so the instance behind the address
+				// appears and changes after the panel was initialized
+				const grid = this.#getGrid();
+				if (!grid) {
+					console.error(`entity list panel grid not found: ${this.#gridId}`);
+					return;
+				}
+				const eventHandler = new HandlerClass(eventData);
 				eventHandler.injectDependencies(this.#progressBarRepo, this.#extensionSettings);
-				eventHandler.execute(this.#grid, this.#grid.getRows().getSelectedIds(), this.#grid.getActionsPanel()?.getForAllCheckbox()?.checked ?? false);
+				eventHandler.execute(grid, grid.getRows().getSelectedIds(), grid.getActionsPanel()?.getForAllCheckbox()?.checked ?? false);
 			};
+		}
+		#getGrid() {
+			const gridManager = main_core.Reflection.getClass('BX.Main.gridManager');
+			const gridClass = main_core.Reflection.getClass('BX.Main.grid');
+			if (!main_core.Type.isFunction(gridManager?.getInstanceById) || !gridClass) {
+				return null;
+			}
+			const grid = gridManager.getInstanceById(this.#gridId);
+			return grid instanceof gridClass ? grid : null;
+		}
+		#isAddressedToOwnGrid(eventData, eventName) {
+			if (!main_core.Type.isPlainObject(eventData) || !main_core.Type.isStringFilled(eventData.gridId)) {
+				console.error(`entity list panel command without gridId: ${eventName}, own grid: ${this.#gridId}`);
+				return false;
+			}
+			return eventData.gridId === this.#gridId;
 		}
 		stopListening() {
 			for (const [eventName, subscriptionHandler] of this.#subscriptions.entries()) {
@@ -1294,28 +1325,22 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 		gridId,
 		progressBarContainerId
 	}) {
-		if (!main_core.Reflection.getClass('BX.Main.gridManager.getInstanceById')) {
-			console.error('BX.Main.gridManager is not found on page');
-			return;
-		}
-		const grid = BX.Main.gridManager.getInstanceById(gridId);
-		if (!grid) {
-			console.error('grid not found', gridId);
+		if (!main_core.Type.isStringFilled(gridId)) {
+			console.error('entity list panel gridId is empty');
 			return;
 		}
 		const progressBarContainer = document.getElementById(progressBarContainerId);
 		if (!main_core.Type.isElementNode(progressBarContainer)) {
-			console.error('progressBarContainer not found', progressBarContainerId);
+			console.error(`entity list panel progress bar container not found: ${progressBarContainerId}`);
 			return;
 		}
-		const existingRouter = routers.get(gridId);
-		if (existingRouter) {
-			existingRouter.stopListening();
-			routers.delete(gridId);
-		}
-		const progressBarRepo = new crm_autorun.ProgressBarRepository(progressBarContainer);
+		const progressBarRepo = new crm_autorun.ProgressBarRepository(progressBarContainer, gridId);
 		const settings = main_core.Extension.getSettings('crm.entity-list.panel');
-		const eventRouter = new Router(grid, progressBarRepo, settings);
+		const eventRouter = new Router(gridId, progressBarRepo, settings);
+
+		// the working router is dropped only once its replacement stands: a panel left without one
+		// swallows every command of its grid
+		routers.get(gridId)?.stopListening();
 		eventRouter.startListening();
 		routers.set(gridId, eventRouter);
 	}

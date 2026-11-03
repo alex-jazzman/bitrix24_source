@@ -1,22 +1,44 @@
 import { Dialog } from 'ui.system.dialog';
-import { BaseCache, MemoryCache } from 'main.core.cache';
+import { MemoryCache } from 'main.core.cache';
 import { Button, AirButtonStyle, CancelButton } from 'ui.buttons';
-import { Tag, Loc, ajax, Extension, Runtime } from 'main.core';
+import { Tag, Loc, ajax, Event, Extension, Runtime } from 'main.core';
 import { UI } from 'ui.notification';
+
+import { bootstrap } from './bootstrap';
+import { NetworkLogoutFlow } from './network-logout-flow';
+import { createNotificationContent } from './notification-content';
 import './style.css';
 
 export type ExtensionSettings = {
 	signedUserId: string,
 	pushOtpConnected: boolean,
+	isCloud: boolean,
+	notificationContent: string,
 };
 
 export class LogoutAllConfirm
 {
-	#cache: BaseCache = new MemoryCache();
+	#cache = new MemoryCache();
+	#networkLogoutFlow: NetworkLogoutFlow;
+
+	constructor()
+	{
+		this.#networkLogoutFlow = new NetworkLogoutFlow({
+			isCloud: this.#getSettings().isCloud,
+		});
+	}
 
 	show(): void
 	{
 		this.#getPopup().show();
+	}
+
+	restoreAfterNetworkReturn(): boolean
+	{
+		return this.#networkLogoutFlow.restoreAfterNetworkReturn({
+			reconnect: () => this.#showReconnectPopup(),
+			notify: () => this.#showNotification(),
+		});
 	}
 
 	#getPopup(): Dialog
@@ -30,49 +52,23 @@ export class LogoutAllConfirm
 				centerButtons: [
 					new Button({
 						text: Loc.getMessage('INTRANET_LOGOUT_ALL_CONFIRM_BTN_YES'),
+						dataset: {
+							testid: 'intranet-logout-all-confirm-submit',
+						},
 						onclick: () => {
 							// eslint-disable-next-line promise/catch-or-return
-							this.#logout().then(() => {
+							this.#logout().then((response) => {
 								dialog.hide();
 
 								const settings = this.#getSettings();
-								if (settings.pushOtpConnected && !this.#isKeepTrustedDevice())
-								{
-									// eslint-disable-next-line promise/catch-or-return
-									Runtime.loadExtension('intranet.push-otp.connect-popup')
-										.then((exports) => {
-											const { EnablePushOtpProvider } = exports;
-											ajax.runAction('intranet.v2.Otp.getConfig', {
-												method: 'POST',
-												data: { signedUserId: settings.signedUserId },
-											}).then((response) => {
-												const provider = new EnablePushOtpProvider({
-													...response?.data,
-													signedUserId: settings.signedUserId,
-													deviceName: settings.deviceName,
-													devicePlatform: settings.devicePlatform,
-												});
-												const popup = provider.reconnectDevice();
-												popup.show();
-												// eslint-disable-next-line promise/no-nesting
-											}).catch(() => {});
-										});
-								}
-								else
-								{
-									UI.Notification.Center.notify({
-										content: Loc.getMessage(
-											'INTRANET_LOGOUT_ALL_CONFIRM_NOTIFY_TEXT',
-											{
-												'#TITLE#': `<span style="font-size: 14px; font-weight: 500;line-height: 19px;">${Loc.getMessage('INTRANET_LOGOUT_ALL_CONFIRM_NOTIFY_TITLE')}</span>`,
-											},
-										),
-										autoHide: true,
-										position: 'top-right',
-										closeButton: false,
-										useAirDesign: true,
-									});
-								}
+								this.#networkLogoutFlow.handleLogoutSuccess(
+									response,
+									settings.pushOtpConnected && !this.#isKeepTrustedDevice(),
+									{
+										reconnect: () => this.#showReconnectPopup(),
+										notify: () => this.#showNotification(),
+									},
+								);
 							});
 						},
 						useAirDesign: true,
@@ -109,32 +105,53 @@ export class LogoutAllConfirm
 		});
 	}
 
-	#getTrustedDeviceCheckbox(): HTMLDivElement
-	{
-		return this.#cache.remember('trusted-device', () => {
-			return Tag.render`
-				<div class="intranet-logout-all-confirm-popup__checkbox">
-					<label class="intranet-logout-all-confirm-popup__checkbox-label">
-						<input type="checkbox" checked>
-						${Loc.getMessage('INTRANET_LOGOUT_ALL_CONFIRM_KEEP_TRUSTED')}
-					</label>
-				</div>
-			`;
-		});
-	}
-
 	#isKeepTrustedDevice(): boolean
 	{
 		return false;
 	}
 
-	#logout(): Promise<void>
+	#logout(): Promise
 	{
 		return ajax.runAction('intranet.v2.Otp.logoutAll', {
-			data: {
+			data: this.#networkLogoutFlow.createRequestData({
 				signedUserId: this.#getSettings().signedUserId,
 				keepTrustedDevice: this.#isKeepTrustedDevice() ? 'Y' : 'N',
-			},
+			}),
+		});
+	}
+
+	#showReconnectPopup(): void
+	{
+		const settings = this.#getSettings();
+		// eslint-disable-next-line promise/catch-or-return
+		Runtime.loadExtension('intranet.push-otp.connect-popup')
+			.then((exports) => {
+				const { EnablePushOtpProvider } = exports;
+				ajax.runAction('intranet.v2.Otp.getConfig', {
+					method: 'POST',
+					data: { signedUserId: settings.signedUserId },
+				}).then((response) => {
+					const provider = new EnablePushOtpProvider({
+						...response?.data,
+						signedUserId: settings.signedUserId,
+						deviceName: settings.deviceName,
+						devicePlatform: settings.devicePlatform,
+					});
+					const popup = provider.reconnectDevice();
+					popup.show();
+					// eslint-disable-next-line promise/no-nesting
+				}).catch(() => {});
+			});
+	}
+
+	#showNotification(): void
+	{
+		UI.Notification.Center.notify({
+			content: createNotificationContent(this.#getSettings().notificationContent),
+			autoHide: true,
+			position: 'top-right',
+			closeButton: false,
+			useAirDesign: true,
 		});
 	}
 
@@ -143,3 +160,8 @@ export class LogoutAllConfirm
 		return Extension.getSettings('intranet.logout-all-confirm');
 	}
 }
+
+bootstrap({
+	ready: Event.ready,
+	restore: () => (new LogoutAllConfirm()).restoreAfterNetworkReturn(),
+});

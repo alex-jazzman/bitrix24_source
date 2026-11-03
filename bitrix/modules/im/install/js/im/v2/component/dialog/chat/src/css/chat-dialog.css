@@ -50,3 +50,19 @@
 .bx-im-dialog-chat__scroll-container:hover::-webkit-scrollbar-thumb {
 	background-color: rgba(255,255,255, .8) !important;
 }
+
+.bx-im-dialog-chat__scroll-pin-spacer {
+	flex-shrink: 0;
+	width: 100%;
+	pointer-events: none;
+}
+
+.bx-im-dialog-chat__scroll-pin-spacer.--rising {
+	transition: height 500ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-dialog-chat__scroll-pin-spacer.--rising {
+		transition: none;
+	}
+}

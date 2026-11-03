@@ -10,6 +10,7 @@ export const subTasksMeta: RelationDialogMeta = Object.freeze({
 	footerText: Loc.getMessage('TASKS_V2_SUB_TASKS_CREATE'),
 	service: subTasksService,
 	isTemplate: true,
+	isSubTasks: true,
 });
 
 export const relatedTasksMeta: RelationDialogMeta = Object.freeze({

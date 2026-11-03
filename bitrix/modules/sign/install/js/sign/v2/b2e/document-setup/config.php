@@ -5,6 +5,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Loader;
+use Bitrix\Sign\Config;
+
+// Extension::getConfig() includes this file in any context, and the sign module is not guaranteed
+// to be loaded there: an unguarded call to its classes makes the whole config unreadable, and with
+// it the rel list of the extension.
+$featureStorage = null;
+if (Loader::includeModule('sign'))
+{
+	$featureStorage = Config\Feature::instance();
+}
+
 return [
 	'css' => 'dist/document-setup.bundle.css',
 	'js' => 'dist/document-setup.bundle.js',
@@ -26,7 +38,7 @@ return [
 		'ui.uploader.core',
 	],
 	'settings' => [
-		'isSenderTypeAvailable' => \Bitrix\Sign\Config\Feature::instance()->isSenderTypeAvailable(),
+		'isSenderTypeAvailable' => $featureStorage?->isSenderTypeAvailable() ?? false,
 	],
 	'skip_core' => false,
 ];

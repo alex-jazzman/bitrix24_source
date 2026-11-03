@@ -1,37 +1,41 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, landing_backend, landing_loc, main_core, main_popup, ui_dialogs_messagebox) {
+(function (exports, landing_backend, landing_loc, main_core, ui_dialogs_messagebox) {
 	'use strict';
 
 	class ExplorerUI {
 		static getLoader() {
-			return main_core.Tag.render`<div class="landing-explorer-loader">
-			<div class="main-ui-loader">
-				<svg class="main-ui-loader-svg" viewBox="25 25 50 50">
-					<circle class="main-ui-loader-svg-circle" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
-				</svg>
-			</div>
-		</div>`;
+			return main_core.Tag.render`
+			<div class="landing-explorer-loader">
+						<div class="main-ui-loader">
+							<svg class="main-ui-loader-svg" viewBox="25 25 50 50">
+								<circle class="main-ui-loader-svg-circle" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
+							</svg>
+						</div>
+					</div>
+		`;
 		}
-		static getActionButton(title, hadnler) {
+		static getActionButton(title, handler) {
 			return new BX.UI.Button({
 				id: 'landing-explorer-action',
 				size: BX.UI.Button.Size.MEDIUM,
-				color: BX.UI.Button.Color.SUCCESS,
+				useAirDesign: true,
+				style: BX.UI.Button.AirStyle.FILLED,
 				text: title,
 				events: {
-					click: hadnler
+					click: handler
 				}
 			});
 		}
-		static getCancelButton(hadnler) {
+		static getCancelButton(handler) {
 			return new BX.UI.Button({
 				id: 'landing-explorer-cancel',
 				size: BX.UI.Button.Size.MEDIUM,
-				color: BX.UI.Button.Color.LINK,
+				useAirDesign: true,
+				style: BX.UI.Button.AirStyle.OUTLINE,
 				text: main_core.Loc.getMessage('LANDING_EXT_EXPLORER_BUTTON_CANCEL'),
 				events: {
-					click: hadnler
+					click: handler
 				}
 			});
 		}
@@ -82,18 +86,29 @@ this.BX = this.BX || {};
 		}
 		getPopupWindow() {
 			if (this.popupWindow === null) {
-				this.popupWindow = new main_popup.Popup({
-					bindElement: null,
-					className: 'ui-message-box landing-explorer--copy-page',
-					content: null,
-					titleBar: '&nbsp;',
-					overlay: {
-						opacity: 30
-					},
-					closeIcon: false,
-					contentBackground: 'transparent',
-					padding: 0
+				const dialog = new ui_dialogs_messagebox.MessageBox({
+					title: '&nbsp;',
+					message: '',
+					useAirDesign: true,
+					cacheable: true,
+					mediumButtonSize: false,
+					popupOptions: {
+						closeIcon: false,
+						minWidth: false,
+						maxWidth: false,
+						minHeight: false,
+						contentBackground: 'transparent',
+						overlay: {
+							opacity: 30
+						},
+						padding: 0
+					}
 				});
+				this.popupWindow = dialog.getPopupWindow();
+				const container = this.popupWindow.getPopupContainer();
+				if (container) {
+					main_core.Dom.addClass(container, 'landing-explorer--copy-page');
+				}
 			}
 			return this.popupWindow;
 		}
@@ -509,5 +524,5 @@ this.BX = this.BX || {};
 
 	exports.Explorer = Explorer;
 
-})(this.BX.Landing = this.BX.Landing || {}, BX.Landing, BX.Landing, BX, BX.Main, BX.UI.Dialogs);
+})(this.BX.Landing = this.BX.Landing || {}, BX.Landing, BX.Landing, BX, BX.UI.Dialogs);
 //# sourceMappingURL=explorer.bundle.js.map

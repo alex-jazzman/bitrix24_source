@@ -3,7 +3,6 @@
  */
 jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { dateTime, bigCross } = require('assets/common');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { longDate, longTime } = require('utils/date/formats');
 	const { PropTypes } = require('utils/validation');
@@ -12,6 +11,10 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		DATETIME: 'datetime',
 	};
 	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
+	const { IconView } = require('ui-system/blocks/icon');
+
+	const ICON_SIZE = 24;
 
 	/**
 	 * @class DateTimeField
@@ -263,18 +266,12 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 							marginLeft: 12,
 						},
 					},
-					Image(
-						{
-							style: {
-								width: 24,
-								height: 24,
-							},
-							tintColor: AppTheme.colors.base3,
-							svg: {
-								content: dateTime(),
-							},
-						},
-					),
+					IconView({
+						testId: 'DateTimeFieldIcon_icon',
+						icon: Icon.CALENDAR_WITH_SLOTS,
+						size: ICON_SIZE,
+						color: Color.base3,
+					}),
 				);
 			}
 
@@ -289,18 +286,12 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 					},
 					onClick: () => this.handleChange(null),
 				},
-				Image(
-					{
-						style: {
-							width: 33,
-							height: 33,
-						},
-						tintColor: AppTheme.colors.base3,
-						svg: {
-							content: bigCross(),
-						},
-					},
-				),
+				IconView({
+					testId: 'DateTimeFieldClear_icon',
+					icon: Icon.CROSS,
+					size: ICON_SIZE,
+					color: Color.base3,
+				}),
 			);
 		}
 
@@ -318,18 +309,12 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 							marginRight: 8,
 						},
 					},
-					Image(
-						{
-							style: {
-								width: 24,
-								height: 24,
-							},
-							tintColor: AppTheme.colors.base3,
-							svg: {
-								content: dateTime(),
-							},
-						},
-					),
+					IconView({
+						testId: 'DateTimeFieldIcon_icon',
+						icon: Icon.CALENDAR_WITH_SLOTS,
+						size: ICON_SIZE,
+						color: Color.base3,
+					}),
 				);
 			}
 

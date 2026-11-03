@@ -22,6 +22,10 @@ export const ChangeFoundedCatalogItem = {
 			type: Object,
 			required: true,
 		},
+		dragDisabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	setup(): Record<string, GetDragItemSlotName>
 	{
@@ -45,6 +49,7 @@ export const ChangeFoundedCatalogItem = {
 	template: `
 		<CatalogItem
 			:item="item"
+			:dragDisabled="dragDisabled"
 			@dblclick="onChangeItem"
 		>
 			<template #[getDragItemSlotName(item.type)]="{ item }">

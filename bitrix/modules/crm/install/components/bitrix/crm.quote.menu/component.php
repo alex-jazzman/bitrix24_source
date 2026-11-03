@@ -16,6 +16,8 @@ use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\DocumentGenerator;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
@@ -117,7 +119,12 @@ else
 }
 
 $bAdd = Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Quote);
-$bConfig = Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$configuration = Container::getInstance()->getUserPermissions()->configuration();
+$scope = ConfigurationScope::ofEntityType(CCrmOwnerType::Quote);
+$bConfig =
+	$configuration->canManageFields(ConfigurationCallSite::FieldsSettingsMenu, $scope)
+	|| $configuration->canDeleteFields(ConfigurationCallSite::FieldsSettingsMenu, $scope)
+;
 
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
@@ -270,6 +277,14 @@ if ($arParams['TYPE'] === 'list')
 
 		$stExportId = 'EXPORT_'.\CCrmOwnerType::QuoteName;
 		$componentName = 'bitrix:crm.quote.list';
+		$componentParams = [
+			'QUOTE_COUNT' => '20',
+			'PATH_TO_QUOTE_SHOW' => $arResult['PATH_TO_QUOTE_SHOW'] ?? '',
+			'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'] ?? '',
+			'PATH_TO_QUOTE_KANBAN' => $arResult['PATH_TO_QUOTE_KANBAN'] ?? '',
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+			'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::QuoteName
+		];
 
 		$arResult['EXPORT_CSV_PARAMS'] = [
 			'id' => $stExportId. '_CSV',
@@ -284,17 +299,9 @@ if ($arParams['TYPE'] === 'list')
 				'ENTITY_TYPE' => \CCrmOwnerType::QuoteName,
 				'EXPORT_TYPE' => 'csv',
 				'COMPONENT_NAME' => $componentName,
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
-					$componentName,
-					[
-						'QUOTE_COUNT' => '20',
-						'PATH_TO_QUOTE_SHOW' => $arResult['PATH_TO_QUOTE_SHOW'] ?? '',
-						'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'] ?? '',
-						'PATH_TO_QUOTE_KANBAN' => $arResult['PATH_TO_QUOTE_KANBAN'] ?? '',
-						'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
-						'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::QuoteName
-					]
-				),
+				'signedParameters' => method_exists(\Bitrix\Crm\Controller\Export::class, 'signExportParameters')
+					? \Bitrix\Crm\Controller\Export::signExportParameters($componentName, $componentParams)
+					: \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			],
 			'optionsFields' => array(
 				'EXPORT_ALL_FIELDS' => array(

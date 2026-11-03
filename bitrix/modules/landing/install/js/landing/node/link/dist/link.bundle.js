@@ -193,6 +193,9 @@ this.BX.Landing = this.BX.Landing || {};
 				main_core.Dom.attr(this.node, 'data-url', null);
 				main_core.Dom.attr(this.node, 'data-embed', null);
 			}
+			if (this.manifest.ariaLabelFromHref === true) {
+				main_core.Dom.attr(this.node, 'aria-label', this.node.getAttribute('href') || '#');
+			}
 		}
 
 		/**

@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/secretary.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

@@ -21,3 +21,6 @@ $MESS["IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE_MSGVER_1"] = "Выбрат�
 $MESS["IM_RECENT_CREATE_INVITE_TITLE"] = "Пригласите команду";
 $MESS["IM_RECENT_CREATE_INVITE_SUBTITLE"] = "Чтобы быстрее начать работу";
 $MESS["IM_RECENT_CREATE_COLLAB_DESCRIPTION_BANNER"] = "Внутри [color_highlight]задачи, файлы, календарь[/color_highlight] и другие инструменты";
+$MESS["IM_RECENT_CREATE_COLLAB_DESCRIPTION_BANNER_CLOSE_ARIA"] = "Закрыть";
+$MESS["IM_RECENT_CREATE_INVITE_CLOSE_ARIA"] = "Закрыть";
+$MESS["IM_RECENT_CREATE_CHAT_MENU_BUTTON_ARIA"] = "Создать чат";

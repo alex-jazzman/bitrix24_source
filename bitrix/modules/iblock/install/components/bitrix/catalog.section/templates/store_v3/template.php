@@ -145,9 +145,9 @@ $containerName = 'container-'.$navParams['NavNum'];
 
 $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_THEME'] : '';
 ?>
-<div class="catalog-section<?=$themeClass?> container-fluid" data-entity="<?=$containerName?>">
+<div class="catalog-section<?=$themeClass?> container-fluid" data-entity="<?=$containerName?>" data-testid="catalog-section-container">
 	<!-- items-container -->
-	<div data-entity="items-row" class="row flex-wrap">
+	<div data-entity="items-row" class="row flex-wrap" data-testid="catalog-section-items">
 		<?php
 		if (!empty($arResult['ITEMS']))
 		{
@@ -305,6 +305,9 @@ $templateData['SIGNED_PARAMETERS'] = $signedParams;
 		BTN_MESSAGE_COMPARE_REDIRECT: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_COMPARE_REDIRECT')?>',
 		BTN_MESSAGE_LAZY_LOAD: '<?=CUtil::JSEscape($arParams['MESS_BTN_LAZY_LOAD'])?>',
 		BTN_MESSAGE_LAZY_LOAD_WAITER: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_LAZY_LOAD_WAITER')?>',
+		CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_0: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_0')?>',
+		CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_1: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_1')?>',
+		CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_2: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_2')?>',
 		SITE_ID: '<?=CUtil::JSEscape($component->getSiteId())?>'
 	});
 	var <?=$obName?> = new JCCatalogSectionComponentStoreV3({

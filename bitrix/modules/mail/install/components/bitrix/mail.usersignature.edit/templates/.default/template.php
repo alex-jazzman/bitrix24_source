@@ -50,7 +50,13 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pa
 	>
 		<?php
 		$editor = new CHTMLEditor;
-		$editor->show(SignatureEditorConfig::getHtmlEditorConfig('signature', (string)($arResult['signature'] ?? '')));
+		$editor->show(
+			SignatureEditorConfig::getHtmlEditorConfig(
+				'signature',
+				(string)($arResult['signature'] ?? ''),
+				includeImageControl: true,
+			),
+		);
 		?>
 	</div>
 	<div

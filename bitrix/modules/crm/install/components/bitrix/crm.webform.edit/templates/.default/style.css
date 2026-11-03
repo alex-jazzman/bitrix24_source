@@ -1109,7 +1109,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .task-option-inp-del:after {
 	content: '';
-	background: url(images/media.png) no-repeat 0 -15px;
+	background: url(images/media.webp) no-repeat 0 -15px;
 	width: 10px;
 	height: 10px;
 	position: absolute;
@@ -1124,7 +1124,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-task-options-destination .task-option-inp-del:after {
 	width: 6px;
 	height: 6px;
-	background: url(images/media.png) no-repeat -2px -17px;
+	background: url(images/media.webp) no-repeat -2px -17px;
 }
 
 .task-inline-selector-item {

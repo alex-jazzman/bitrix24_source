@@ -1,0 +1,14 @@
+/*
+ * The button of the sites made before it got its g-btn-type-* class: the white text of the theme (0,1,0) loses to
+ * a:focus of landing24 (0,1,1) and melts into the background. The class of the node is shared by other blocks,
+ * hence the class of the wrapper.
+ */
+.block-46-9-cover-bgimg-vertical-slider
+.landing-block-node-card-button.g-btn-primary:not([class*="g-btn-type-"]):focus {
+	color: #fff;
+}
+
+.block-46-9-cover-bgimg-vertical-slider
+.landing-block-node-card-button.g-button-color:not([class*="g-btn-type-"]):focus {
+	color: var(--button-color-contrast);
+}

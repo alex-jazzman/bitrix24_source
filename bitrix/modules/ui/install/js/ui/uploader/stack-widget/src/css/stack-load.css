@@ -1,3 +1,7 @@
+/**
+ * A native button, but unlike the other two states this one draws the card itself, so its own
+ * background and border stay: only the padding, the appearance and the font of a button are dropped.
+ */
 .ui-uploader-stack-load {
 	display: inline-flex;
 	flex-direction: column;
@@ -5,10 +9,15 @@
 	justify-content: center;
 	width: 100%;
 	height: 100%;
+	padding: 0;
 	background: #fff;
 	border: 1px solid rgba(130, 139, 149, 0.3);
 	box-sizing: border-box;
 	border-radius: 6px;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
 	cursor: pointer;
 	position: absolute;
 	left: 0;
@@ -17,6 +26,12 @@
 
 .ui-uploader-stack-load:hover {
 	background-color: #fafafb;
+}
+
+/** the ring goes inside: the card fills the item, and an outer ring would leave the widget */
+.ui-uploader-stack-load:focus-visible {
+	outline: 2px solid var(--ui-color-accent-brand-blue);
+	outline-offset: -2px;
 }
 
 .ui-uploader-stack-load-icon {

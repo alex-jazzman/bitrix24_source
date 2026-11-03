@@ -8,6 +8,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Helper\Feature;
+use Bitrix\Socialnetwork\V2;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $APPLICATION->SetTitle(Loc::getMessage("SLLS_TEMPLATE_PAGE_TITLE"));
@@ -30,7 +31,24 @@ if (!$isProjectFeatureEnabled)
 	\Bitrix\Main\UI\Extension::load(['socialnetwork.limit']);
 }
 
-$isNewProjectsOn = \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn();
+$isNewProjectsOn = V2\Feature::isNewProjectsOn();
+$canCreateSource = $isNewProjectsOn || !empty($arResult['URL_GROUP_CREATE']);
+
+$createButtonText = Loc::getMessage(
+	$isNewProjectsOn
+		? 'SLLS_TEMPLATE_CREATE_PROJECT_BUTTON'
+		: 'SLLS_TEMPLATE_CREATE_GROUP_BUTTON',
+);
+$createLinkText = Loc::getMessage(
+	$isNewProjectsOn
+		? 'SLLS_TEMPLATE_CREATE_PROJECT'
+		: 'SLLS_TEMPLATE_CREATE_GROUP',
+);
+$emptyStateText = Loc::getMessage(
+	$isNewProjectsOn
+		? 'SLLS_TEMPLATE_NO_PROJECTS'
+		: 'SLLS_TEMPLATE_NO_GROUPS_MSGVER_2',
+);
 
 ?><script>
 	BX.message({
@@ -67,7 +85,7 @@ Toolbar::addFilter([
 	)
 ]);
 
-if (!empty($arResult["URL_GROUP_CREATE"]))
+if ($canCreateSource)
 {
 	$buttonOptions = [
 		"color" => \Bitrix\UI\Buttons\Color::PRIMARY,
@@ -76,7 +94,7 @@ if (!empty($arResult["URL_GROUP_CREATE"]))
 			"BX.SocialnetworkLandingLivefeedSelector.createWorkgroup",
 			"BX.SocialnetworkLandingLivefeedSelector.Instance"
 		),
-		"text" => Loc::getMessage('SLLS_TEMPLATE_CREATE_GROUP_BUTTON')
+		"text" => $createButtonText,
 	];
 
 	if (!$isProjectFeatureEnabled)
@@ -97,6 +115,7 @@ if (!empty($arResult["URL_GROUP_CREATE"]))
 
 	$menuButton = new \Bitrix\UI\Buttons\Button($buttonOptions);
 	$menuButton->addAttribute('id', 'landing-livefeed-selector');
+	$menuButton->addAttribute('data-testid', 'socialnetwork-landing-livefeed-selector-create-button');
 	Toolbar::addButton($menuButton);
 }
 
@@ -110,10 +129,13 @@ if (
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."landing-livefeed-selector-wrapper-empty");
 
-	?><div class="landing-livefeed-selector-content landing-livefeed-selector-content-empty">
-		<div class="landing-livefeed-selector-content-message"><?=Loc::getMessage("SLLS_TEMPLATE_NO_GROUPS_MSGVER_2")?></div>
+	?><div
+		class="landing-livefeed-selector-content landing-livefeed-selector-content-empty"
+		data-testid="socialnetwork-landing-livefeed-selector-empty"
+	>
+		<div class="landing-livefeed-selector-content-message"><?= $emptyStateText ?></div>
 		<?
-		if (!empty($arResult["URL_GROUP_CREATE"]))
+		if ($canCreateSource)
 		{
 			$btnClass = (
 				$isProjectFeatureEnabled
@@ -125,7 +147,8 @@ if (
 				<a
 					class="<?= $btnClass ?>"
 					id="slls_group_create"
-				><?=Loc::getMessage("SLLS_TEMPLATE_CREATE_GROUP")?></a>
+					data-testid="socialnetwork-landing-livefeed-selector-create-link"
+				><?= $createLinkText ?></a>
 			</div>
 			<?
 		}
@@ -207,4 +230,3 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 		['TYPE' => 'cancel']
 	]
 ]);
-

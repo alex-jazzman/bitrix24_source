@@ -11,6 +11,7 @@ use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Task\Template\UnresolvedFormMembers;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Site;
@@ -225,6 +226,21 @@ $groups = array_map(function($item){
 	$item['ENTITY_TYPE'] = SocialNetwork::getGroupEntityPrefix();
 	return $item;
 }, $groups);
+
+$formMemberIds = array(
+	'ACCOMPLICES' => $template['ACCOMPLICES'],
+	'AUDITORS' => $template['AUDITORS'],
+);
+$resolvedUserIds = array_keys($users);
+
+$arResult['TEMPLATE_DATA']['UNRESOLVED_MEMBERS'] = UnresolvedFormMembers::collectExisting(
+	$formMemberIds,
+	$resolvedUserIds,
+);
+$arResult['TEMPLATE_DATA']['RENDERED_MEMBERS'] = UnresolvedFormMembers::collectRenderedFlags(
+	$formMemberIds,
+	$resolvedUserIds,
+);
 
 $seUser = array();
 foreach($template['RESPONSIBLES'] as $uId)

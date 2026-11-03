@@ -14,35 +14,39 @@
 	 */
 	BX.Landing.UI.Field.Unit = function(data)
 	{
-		BX.Landing.UI.Field.Text.apply(this, arguments);
-		this.layout.classList.add("landing-ui-field-unit");
-		this.unit = BX.Landing.UI.Field.Unit.createUnit();
+		// Text is a native ES class: it cannot be called through apply(), so the instance is built
+		// with Reflect.construct and returned from this legacy constructor
+		var self = Reflect.construct(BX.Landing.UI.Field.Text, [data], new.target || BX.Landing.UI.Field.Unit);
+		self.layout.classList.add("landing-ui-field-unit");
+		self.unit = BX.Landing.UI.Field.Unit.createUnit();
 
-		this.onInputHandler = typeof data.onInput === "function" ? data.onInput : (function() {});
-		this.input.addEventListener("keydown", this.onInputKeydown.bind(this));
-		this.input.addEventListener("input", BX.debounce(this.onInputInput, 200, this));
-		this.input.addEventListener("input", this.onInputInputWithoutDebounce.bind(this));
-		this.input.value = data.content;
-		this.input.placeholder = this.placeholder;
-		this.items = data.items;
-		this.unit.innerText = typeof data.unit === "string" ? data.unit : "";
-		this.input.min = typeof data.min === "number" ? data.min : 0;
-		this.input.max = typeof data.max === "number" ? data.max : Infinity;
-		this.input.step = typeof data.step === "number" ? data.step : 1;
-		this.frame = typeof data.frame === "object" ? data.frame : null;
-		this.selector = typeof data.selector === "string" ? data.selector : null;
-		this.property = typeof data.property === "string" ? data.property : null;
-		this.postfix = typeof data.postfix === "string" ? data.postfix : "";
-		this.format = typeof data.format === "function" ? data.format : (function() {});
-		this.elements = null;
+		self.onInputHandler = typeof data.onInput === "function" ? data.onInput : (function() {});
+		self.input.addEventListener("keydown", self.onInputKeydown.bind(self));
+		self.input.addEventListener("input", BX.debounce(self.onInputInput, 200, self));
+		self.input.addEventListener("input", self.onInputInputWithoutDebounce.bind(self));
+		self.input.value = data.content;
+		self.input.placeholder = self.placeholder;
+		self.items = data.items;
+		self.unit.innerText = typeof data.unit === "string" ? data.unit : "";
+		self.input.min = typeof data.min === "number" ? data.min : 0;
+		self.input.max = typeof data.max === "number" ? data.max : Infinity;
+		self.input.step = typeof data.step === "number" ? data.step : 1;
+		self.frame = typeof data.frame === "object" ? data.frame : null;
+		self.selector = typeof data.selector === "string" ? data.selector : null;
+		self.property = typeof data.property === "string" ? data.property : null;
+		self.postfix = typeof data.postfix === "string" ? data.postfix : "";
+		self.format = typeof data.format === "function" ? data.format : (function() {});
+		self.elements = null;
 
-		if (this.frame)
+		if (self.frame)
 		{
-			this.onFrameLoad();
+			self.onFrameLoad();
 		}
 
-		this.layout.appendChild(this.unit);
-		this.enableTextOnly();
+		self.layout.appendChild(self.unit);
+		self.enableTextOnly();
+
+		return self;
 	};
 
 

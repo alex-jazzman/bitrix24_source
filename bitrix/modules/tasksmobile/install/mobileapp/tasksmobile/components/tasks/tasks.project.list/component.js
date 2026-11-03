@@ -903,6 +903,7 @@
 				new RunActionExecutor('tasksmobile.Project.startWatchList')
 					.setHandler((response) => (response.status === 'success' ? resolve(response.data) : reject(response)))
 					.call(false)
+					.catch(console.error)
 				;
 			});
 		}

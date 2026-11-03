@@ -13,26 +13,19 @@ export default class ItemSharing extends Item
 		const uniqueCode = dataset.uniqueCode;
 		const supportsSharingAccessPopup = dataset.supportsSharingAccessPopup === 'true';
 
+		this.data.dataset = { ...dataset, testid: 'disk-documents-menu-sharing' };
+
 		this.data['onclick'] = () => {
 			this.emit('close');
 
 			if (!supportsSharingAccessPopup)
 			{
-				const legacyMethodByMode = {
-					'without-edit': 'showSharingDetailWithoutEdit',
-					'with-change-rights': 'showSharingDetailWithChangeRights',
-					'with-sharing': 'showSharingDetailWithSharing',
-				};
-				const legacyMethod = legacyMethodByMode[mode] ?? 'showSharingDetailWithChangeRights';
-
-				BX.Runtime.loadExtension('disk.sharing-legacy-popup').then(({ LegacyPopup }) => {
-					const popup = new LegacyPopup();
-					popup[legacyMethod]({
-						object: {
-							id: Number(objectId),
-							name: objectName,
-							isFolder: false,
-						},
+				BX.Runtime.loadExtension('disk.sharing-members-popup').then(({ SharingMembersPopup }) => {
+					const popup = new SharingMembersPopup();
+					popup.open({
+						objectId: Number(objectId),
+						objectName,
+						mode,
 					});
 				});
 

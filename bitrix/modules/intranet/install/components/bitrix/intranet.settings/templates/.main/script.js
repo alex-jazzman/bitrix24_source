@@ -377,24 +377,13 @@ this.BX = this.BX || {};
 					page,
 					fieldName
 				} = event.data;
-				if (this.getCurrentPage()?.getType() === page) {
-					this.moveTo(this.getCurrentPage(), fieldName);
-					return;
-				}
-				const pageObj = this.getPageByType(page);
-				if (!pageObj?.hasData()) {
-					main_core_events.EventEmitter.subscribeOnce('BX.Intranet.Settings:onPageComplete', event => {
-						if (event.data.page.hasContent()) {
-							this.moveTo(event.data.page, fieldName);
-						}
-					});
-				}
-				main_core_events.EventEmitter.subscribeOnce('BX.Intranet.Settings:onAfterShowPage', event => {
-					if (event.data.page.hasContent()) {
-						this.moveTo(event.data.page, fieldName);
+				this.#settings.show(page, {
+					userInitiated: true,
+					focusTarget: {
+						type: 'field',
+						fieldName
 					}
 				});
-				this.#settings.show(page);
 			});
 		}
 		getPageByType(type) {
@@ -430,14 +419,14 @@ this.BX = this.BX || {};
 			top.window.history.replaceState(null, '', url.toString());
 		}
 		findByFieldName(rootNode, fieldName) {
-			const node = ui_formElements_field.RecursiveFilteringVisitor.startFrom(rootNode, node => {
-				if (node instanceof ui_formElements_field.SettingsSection && node.getSectionView().getId() === fieldName) {
+			const node = ui_formElements_field.RecursiveFilteringVisitor.startFrom(rootNode, fieldElement => {
+				if (fieldElement instanceof ui_formElements_field.SettingsSection && fieldElement.getSectionView().getId() === fieldName) {
 					return true;
 				}
-				if (node instanceof ui_formElements_field.TabField && node.getFieldView().getId() === fieldName) {
+				if (fieldElement instanceof ui_formElements_field.TabField && fieldElement.getFieldView().getId() === fieldName) {
 					return true;
 				}
-				return (node instanceof ui_formElements_field.SettingsField || node instanceof SiteTitleField || node instanceof SiteTitle24Field) && (node.getFieldView().getName() === fieldName || node.getFieldView().getId() === fieldName);
+				return (fieldElement instanceof ui_formElements_field.SettingsField || fieldElement instanceof SiteTitleField || fieldElement instanceof SiteTitle24Field) && (fieldElement.getFieldView().getName() === fieldName || fieldElement.getFieldView().getId() === fieldName);
 			});
 			return node.shift() ?? null;
 		}
@@ -451,28 +440,97 @@ this.BX = this.BX || {};
 				behavior: "smooth"
 			});
 		}
-		moveTo(element, fieldName) {
+		moveTo(element, fieldName, shouldFocus = false) {
+			if (!main_core.Type.isStringFilled(fieldName)) {
+				return false;
+			}
 			const fieldNode = this.findByFieldName(element, fieldName);
 			if (main_core.Type.isNil(fieldNode)) {
-				return;
+				return false;
 			}
 			let isColored = false;
-			ui_formElements_field.AscendingOpeningVisitor.startFrom(fieldNode, element => {
-				if (element instanceof ui_formElements_field.SettingsRow) {
-					element.getRowView().show();
-				} else if (element instanceof ui_formElements_field.SettingsSection) {
-					element.getSectionView().toggle(true, false);
-				} else if (element instanceof ui_formElements_field.TabField) {
-					const tabs = element.getParentElement();
+			ui_formElements_field.AscendingOpeningVisitor.startFrom(fieldNode, ancestorElement => {
+				if (ancestorElement instanceof ui_formElements_field.SettingsRow) {
+					ancestorElement.getRowView().show();
+				} else if (ancestorElement instanceof ui_formElements_field.SettingsSection) {
+					ancestorElement.getSectionView().toggle(true, false);
+				} else if (ancestorElement instanceof ui_formElements_field.TabField) {
+					const tabs = ancestorElement.getParentElement();
 					if (tabs instanceof ui_formElements_field.TabsField) {
-						tabs.activateTab(element, false);
+						tabs.activateTab(ancestorElement, false);
 					}
 				}
 				if (!isColored) {
-					isColored = element.highlight();
+					isColored = ancestorElement.highlight();
 				}
 			});
 			this.scrollToNode(fieldNode);
+			if (shouldFocus) {
+				return this.#focusElement(this.#getFocusNode(fieldNode));
+			}
+			return true;
+		}
+		focusPageTitle(page) {
+			return this.#focusElement(page.getPage().querySelector('.intranet-settings__page-header'));
+		}
+		focusNode(node) {
+			return this.#focusElement(node);
+		}
+		#getFocusNode(element) {
+			if (element instanceof ui_formElements_field.SettingsField || element instanceof SiteTitleField || element instanceof SiteTitle24Field) {
+				const inputNode = element.getFieldView()?.getInputNode?.();
+				const focusableNode = this.#findFocusableNode(inputNode);
+				return focusableNode || inputNode || element.render();
+			}
+			if (element instanceof ui_formElements_field.SettingsSection) {
+				const sectionNode = element.getSectionView().render();
+				return sectionNode.querySelector('.ui-section__title, h2, h3') || sectionNode;
+			}
+			if (element instanceof ui_formElements_field.TabField) {
+				return element.getFieldView().getHeader();
+			}
+			return element.render();
+		}
+		#findFocusableNode(node) {
+			if (!main_core.Type.isDomNode(node)) {
+				return null;
+			}
+			return node.matches?.('input:not([type="hidden"]), textarea, select, button, a[href], [tabindex]') ? node : node.querySelector('input:not([type="hidden"]), textarea, select, button, a[href], [tabindex]');
+		}
+		#focusElement(node) {
+			if (!this.#isAvailableFocusTarget(node)) {
+				return false;
+			}
+			const hadTabIndex = node.hasAttribute('tabindex');
+			const previousTabIndex = node.getAttribute('tabindex');
+			const needsTemporaryTabIndex = !this.#isNaturallyFocusable(node);
+			if (needsTemporaryTabIndex) {
+				node.setAttribute('tabindex', '-1');
+			}
+			node.focus({
+				preventScroll: true
+			});
+			const isFocused = document.activeElement === node || node.contains(document.activeElement);
+			if (!hadTabIndex && needsTemporaryTabIndex) {
+				if (isFocused) {
+					const removeTemporaryTabIndex = () => {
+						main_core.Event.unbind(node, 'blur', removeTemporaryTabIndex);
+						node.removeAttribute('tabindex');
+					};
+					main_core.Event.bind(node, 'blur', removeTemporaryTabIndex);
+				} else {
+					node.removeAttribute('tabindex');
+				}
+			} else if (previousTabIndex !== null) {
+				node.setAttribute('tabindex', previousTabIndex);
+			}
+			return isFocused;
+		}
+		#isAvailableFocusTarget(node) {
+			return main_core.Type.isDomNode(node) && node.isConnected && node.closest('[inert]') === null && !node.hasAttribute('disabled') && node.getAttribute('aria-disabled') !== 'true' && Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length > 0);
+		}
+		#isNaturallyFocusable(node) {
+			return node.matches('input:not([type="hidden"]), textarea, select, button, a[href], [tabindex]');
 		}
 	}
 
@@ -482,6 +540,11 @@ this.BX = this.BX || {};
 		#draggable;
 		#mainSection;
 		#settingsSection;
+		#switcherA11yHandlers = new Map();
+		#sectionA11yHeaderHandlers = new Map();
+		#sectionA11yDisclosureHandlers = new Map();
+		#sectionA11yDisclosureFocusHandlers = new Map();
+		#scheduledSwitcherA11yGroups = new WeakSet();
 		constructor() {
 			super();
 			this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_TOOLS');
@@ -504,6 +567,7 @@ this.BX = this.BX || {};
 			this.#getSettingsSection().renderTo(contentNode);
 		}
 		#renderToolsSelectors() {
+			this.#cleanupToolsA11y();
 			const tools = this.getValue('tools');
 			const startSort = [];
 			Object.keys(tools).forEach(item => {
@@ -530,7 +594,8 @@ this.BX = this.BX || {};
 						'#TOOL#': tool.name
 					})
 				});
-				const switcher = ui_switcher.Switcher.getById(tool.code);
+				this.#adaptToolSelectorA11y(toolSelector, toolSelectorItems);
+				const switcher = this.#getToolSelectorSwitcher(toolSelector);
 				if (switcher) {
 					if (tool.disableConfirmation.isNeeded) {
 						main_core_events.EventEmitter.subscribe(switcher, 'toggled', () => {
@@ -595,6 +660,12 @@ this.BX = this.BX || {};
 					isDefault: subgroupConfig.default ?? subgroupConfig.disabled ?? false,
 					helpMessage: this.#getSubToolHelpMessage(subgroupConfig, tool.name)
 				});
+				const descriptionLink = toolSelectorItem.render().querySelector('.ui-section__tools-subgroup-description-link');
+				if (main_core.Type.isDomNode(descriptionLink)) {
+					main_core.Dom.removeClass(descriptionLink, 'ui-section__tools-subgroup-description-link');
+					main_core.Dom.addClass(descriptionLink, 'ui-section__tools-description-link');
+					main_core.Dom.addClass(descriptionLink, 'intranet-settings__tools-subgroup-description-link');
+				}
 				if (subgroupConfig.disabled) {
 					main_core.Dom.style(toolSelectorItem.getSwitcher().getNode(), {
 						opacity: '0.4'
@@ -614,6 +685,272 @@ this.BX = this.BX || {};
 				toolSelectorItems.push(toolSelectorItem);
 			});
 			return toolSelectorItems;
+		}
+		#adaptToolSelectorA11y(toolSelector, toolSelectorItems) {
+			const sectionNode = toolSelector.render();
+			const parentSwitcher = this.#getToolSelectorSwitcher(toolSelector);
+			const switcherGroup = {
+				controls: [],
+				sections: [toolSelector]
+			};
+			if (parentSwitcher) {
+				switcherGroup.controls.push({
+					switcher: parentSwitcher,
+					isUnavailable: !this.getPermission().canEdit() || toolSelector.isDefault(),
+					hasUnavailableExplanation: true,
+					labelNode: sectionNode.querySelector('.ui-section__title'),
+					testId: `intranet-settings-tools-switcher-${this.#getSafeIdPart(toolSelector.getId())}`
+				});
+			}
+			toolSelectorItems.forEach(item => {
+				switcherGroup.controls.push({
+					switcher: item.getSwitcher(),
+					isUnavailable: !this.getPermission().canEdit() || item.isDefault(),
+					hasUnavailableExplanation: true,
+					labelNode: item.render().querySelector('.ui-section__row-tool-selector_title'),
+					testId: `intranet-settings-tools-switcher-${this.#getSafeIdPart(item.getId())}`
+				});
+			});
+			switcherGroup.controls.forEach(control => {
+				this.#adaptSwitcherA11y(control, switcherGroup);
+			});
+			this.#adaptToolSectionA11y(toolSelector);
+			this.#syncSwitcherGroupA11y(switcherGroup);
+		}
+		#adaptSwitcherA11y(control, switcherGroup = null) {
+			const switcher = control.switcher;
+			const switcherNode = switcher?.getNode();
+			if (!main_core.Type.isDomNode(switcherNode) || !main_core.Type.isDomNode(control.labelNode)) {
+				return;
+			}
+			const labelId = this.#ensureNodeId(control.labelNode, `${control.testId}-label`);
+			main_core.Dom.attr(switcherNode, {
+				role: 'switch',
+				'aria-labelledby': labelId,
+				'data-testid': control.testId
+			});
+			main_core.Dom.addClass(switcherNode, 'intranet-settings__tools-switcher');
+			if (!this.#switcherA11yHandlers.has(switcher)) {
+				const handleKeydown = event => {
+					if (!this.#isSwitcherActionKey(event)) {
+						return;
+					}
+					event.preventDefault();
+					if (this.#isSwitcherKeyboardActionAvailable(control)) {
+						switcherNode.click();
+					}
+				};
+				const handleSync = () => {
+					if (switcherGroup) {
+						this.#scheduleSwitcherGroupA11ySync(switcherGroup);
+					} else {
+						this.#syncSwitcherA11y(control);
+					}
+				};
+				main_core.Event.bind(switcherNode, 'keydown', handleKeydown);
+				main_core_events.EventEmitter.subscribe(switcher, 'toggled', handleSync);
+				main_core_events.EventEmitter.subscribe(switcher, 'lock', handleSync);
+				main_core_events.EventEmitter.subscribe(switcher, 'unlock', handleSync);
+				this.#switcherA11yHandlers.set(switcher, {
+					node: switcherNode,
+					keydown: handleKeydown,
+					sync: handleSync
+				});
+			}
+			this.#syncSwitcherA11y(control);
+		}
+		#adaptToolSectionA11y(section) {
+			if (section.isNestedMenu !== true) {
+				return;
+			}
+			const sectionNode = section.render();
+			const headerNode = sectionNode.querySelector('.ui-section__header');
+			const titleNode = sectionNode.querySelector('.ui-section__title');
+			const contentNode = sectionNode.querySelector('.ui-section__content');
+			const iconNode = sectionNode.querySelector('.ui-section__collapse-icon');
+			if (!main_core.Type.isDomNode(headerNode) || !main_core.Type.isDomNode(titleNode) || !main_core.Type.isDomNode(contentNode) || !main_core.Type.isDomNode(iconNode)) {
+				return;
+			}
+			const safeSectionId = this.#getSafeIdPart(section.getId());
+			const titleId = this.#ensureNodeId(titleNode, `intranet-settings-tools-section-${safeSectionId}-label`);
+			const contentId = this.#ensureNodeId(contentNode, `intranet-settings-tools-section-${safeSectionId}-content`);
+			const button = this.#getToolSectionButton(iconNode, section, titleId, contentId);
+			this.#adaptToolSectionDisclosureFocus(button, titleNode);
+			if (!this.#sectionA11yHeaderHandlers.has(headerNode)) {
+				const handleHeaderClick = () => {
+					this.#scheduleToolSectionA11ySync(section);
+				};
+				main_core.Event.bind(headerNode, 'click', handleHeaderClick);
+				this.#sectionA11yHeaderHandlers.set(headerNode, handleHeaderClick);
+			}
+			main_core.Dom.attr(contentNode, {
+				'data-testid': `intranet-settings-tools-content-${safeSectionId}`
+			});
+			this.#syncToolSectionA11y(section, button, contentNode);
+		}
+		#getToolSectionButton(iconNode, section, titleId, contentId) {
+			if (iconNode.tagName === 'BUTTON') {
+				main_core.Dom.attr(iconNode, {
+					type: 'button',
+					'aria-labelledby': titleId,
+					'aria-controls': contentId,
+					'data-testid': `intranet-settings-tools-disclosure-${this.#getSafeIdPart(section.getId())}`
+				});
+				return iconNode;
+			}
+			const button = main_core.Tag.render`
+			<button
+				class="${iconNode.className} intranet-settings__tools-disclosure"
+				type="button"
+				aria-labelledby="${titleId}"
+				aria-controls="${contentId}"
+				data-testid="intranet-settings-tools-disclosure-${this.#getSafeIdPart(section.getId())}"
+			></button>
+		`;
+			const handleButtonClick = event => {
+				event.stopPropagation();
+				section.toggle();
+				this.#syncToolSectionA11y(section, button);
+			};
+			main_core.Event.bind(button, 'click', handleButtonClick);
+			this.#sectionA11yDisclosureHandlers.set(button, handleButtonClick);
+			main_core.Dom.replace(iconNode, button);
+			return button;
+		}
+		#adaptToolSectionDisclosureFocus(button, titleNode) {
+			if (this.#sectionA11yDisclosureFocusHandlers.has(button)) {
+				return;
+			}
+			const handleFocus = () => {
+				if (button.matches(':focus-visible')) {
+					main_core.Dom.addClass(titleNode, '--disclosure-focus-visible');
+				}
+			};
+			const handleBlur = () => {
+				main_core.Dom.removeClass(titleNode, '--disclosure-focus-visible');
+			};
+			main_core.Event.bind(button, 'focus', handleFocus);
+			main_core.Event.bind(button, 'blur', handleBlur);
+			this.#sectionA11yDisclosureFocusHandlers.set(button, {
+				focus: handleFocus,
+				blur: handleBlur,
+				title: titleNode
+			});
+		}
+		#scheduleSwitcherGroupA11ySync(switcherGroup) {
+			if (this.#scheduledSwitcherA11yGroups.has(switcherGroup)) {
+				return;
+			}
+			this.#scheduledSwitcherA11yGroups.add(switcherGroup);
+			queueMicrotask(() => {
+				this.#scheduledSwitcherA11yGroups.delete(switcherGroup);
+				this.#syncSwitcherGroupA11y(switcherGroup);
+			});
+		}
+		#syncSwitcherGroupA11y(switcherGroup) {
+			switcherGroup.controls.forEach(control => {
+				this.#syncSwitcherA11y(control);
+			});
+			switcherGroup.sections.forEach(section => {
+				this.#syncToolSectionA11y(section);
+			});
+		}
+		#scheduleToolSectionA11ySync(section) {
+			queueMicrotask(() => {
+				this.#syncToolSectionA11y(section);
+			});
+		}
+		#syncSwitcherA11y(control) {
+			const switcher = control.switcher;
+			const switcherNode = switcher.getNode();
+			const isAvailable = this.#isSwitcherActionAvailable(control);
+			const isKeyboardActionAvailable = this.#isSwitcherKeyboardActionAvailable(control);
+			main_core.Dom.attr(switcherNode, {
+				'aria-checked': switcher.isChecked() ? 'true' : 'false',
+				'aria-disabled': isAvailable ? 'false' : 'true',
+				tabindex: isKeyboardActionAvailable ? '0' : '-1'
+			});
+			if (switcher.isLoading()) {
+				main_core.Dom.attr(switcherNode, 'aria-busy', 'true');
+			} else {
+				switcherNode.removeAttribute('aria-busy');
+			}
+		}
+		#syncToolSectionA11y(section, button = null, contentNode = null) {
+			const sectionNode = section.render();
+			const disclosureButton = button ?? sectionNode.querySelector('.intranet-settings__tools-disclosure');
+			const sectionContent = contentNode ?? sectionNode.querySelector('.ui-section__content');
+			if (!main_core.Type.isDomNode(disclosureButton) || !main_core.Type.isDomNode(sectionContent)) {
+				return;
+			}
+			const isExpanded = section.isOpen === true;
+			disclosureButton.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+			if (isExpanded) {
+				sectionContent.removeAttribute('inert');
+				sectionContent.removeAttribute('aria-hidden');
+				return;
+			}
+			if (sectionContent.contains(document.activeElement)) {
+				disclosureButton.focus();
+			}
+			sectionContent.setAttribute('inert', '');
+			sectionContent.setAttribute('aria-hidden', 'true');
+		}
+		#isSwitcherActionKey(event) {
+			return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+		}
+		#isSwitcherActionAvailable(control) {
+			return control.isUnavailable !== true && !control.switcher.isDisabled() && !control.switcher.isLoading();
+		}
+		#isSwitcherKeyboardActionAvailable(control) {
+			return !control.switcher.isDisabled() && !control.switcher.isLoading() && (control.isUnavailable !== true || control.hasUnavailableExplanation === true);
+		}
+		#getToolSelectorSwitcher(toolSelector) {
+			const switcherNode = toolSelector.render().querySelector('.ui-section__switcher-wrapper');
+			if (!main_core.Type.isDomNode(switcherNode)) {
+				return null;
+			}
+			return ui_switcher.Switcher.getList().find(switcher => switcher.getNode() === switcherNode) ?? null;
+		}
+		#cleanupToolsA11y() {
+			this.#switcherA11yHandlers.forEach(({
+				node,
+				keydown,
+				sync
+			}, switcher) => {
+				main_core.Event.unbind(node, 'keydown', keydown);
+				main_core_events.EventEmitter.unsubscribe(switcher, 'toggled', sync);
+				main_core_events.EventEmitter.unsubscribe(switcher, 'lock', sync);
+				main_core_events.EventEmitter.unsubscribe(switcher, 'unlock', sync);
+			});
+			this.#switcherA11yHandlers.clear();
+			this.#sectionA11yHeaderHandlers.forEach((handler, node) => {
+				main_core.Event.unbind(node, 'click', handler);
+			});
+			this.#sectionA11yHeaderHandlers.clear();
+			this.#sectionA11yDisclosureHandlers.forEach((handler, node) => {
+				main_core.Event.unbind(node, 'click', handler);
+			});
+			this.#sectionA11yDisclosureHandlers.clear();
+			this.#sectionA11yDisclosureFocusHandlers.forEach(({
+				focus,
+				blur,
+				title
+			}, node) => {
+				main_core.Event.unbind(node, 'focus', focus);
+				main_core.Event.unbind(node, 'blur', blur);
+				main_core.Dom.removeClass(title, '--disclosure-focus-visible');
+			});
+			this.#sectionA11yDisclosureFocusHandlers.clear();
+		}
+		#ensureNodeId(node, id) {
+			if (!main_core.Type.isStringFilled(node.id)) {
+				main_core.Dom.attr(node, 'id', id);
+			}
+			return node.id;
+		}
+		#getSafeIdPart(value) {
+			return String(value).replaceAll(/[^\w-]/g, '-');
 		}
 		#getMainSection() {
 			if (this.#mainSection) {
@@ -635,9 +972,13 @@ this.BX = this.BX || {};
 		getDescription() {
 			const descriptionText = `
 			${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TOOLS_DESCRIPTION')}
-			<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=18213196')">
+			<button
+				type="button"
+				class="ui-section__link intranet-settings__tools-description-more"
+				onclick="top.BX.Helper.show('redirect=detail&code=18213196')"
+			>
 				${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
-			</a>
+			</button>
 		`;
 			return new BX.UI.Alert({
 				text: descriptionText,
@@ -1420,6 +1761,9 @@ this.BX = this.BX || {};
 			}
 			let diskSection = this.#buildDiskSection();
 			diskSection.renderTo(contentNode);
+			if (BX.UI.Hint) {
+				BX.UI.Hint.init(contentNode);
+			}
 		}
 		#buildNewsFeedSection() {
 			if (!this.hasValue('sectionFeed')) {
@@ -1532,6 +1876,10 @@ this.BX = this.BX || {};
 				let chatWithGuestsField = new ui_formElements_view.Checker(this.getValue('chat_with_guests_available'));
 				CommunicationPage.addToSectionHelper(chatWithGuestsField, settingsSection);
 			}
+			if (this.hasValue('video_note_download_available')) {
+				let videoNoteDownloadField = new ui_formElements_view.Checker(this.getValue('video_note_download_available'));
+				CommunicationPage.addToSectionHelper(videoNoteDownloadField, settingsSection);
+			}
 			if (this.hasValue('general_chat_message_admin_rights')) {
 				let adminMessageField = new ui_formElements_view.Checker(this.getValue('general_chat_message_admin_rights'));
 				CommunicationPage.addToSectionHelper(adminMessageField, settingsSection);
@@ -1642,6 +1990,10 @@ this.BX = this.BX || {};
 				let unifiedLinkDefaultAccessLevelSelector = new ui_formElements_view.Selector(this.getValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'));
 				CommunicationPage.addToSectionHelper(unifiedLinkDefaultAccessLevelSelector, settingsSection);
 			}
+			if (this.hasValue('DISK_UNIFIED_LINK_FOLDER_DEFAULT_ACCESS_LEVEL')) {
+				const unifiedLinkFolderDefaultAccessLevelSelector = new ui_formElements_view.Selector(this.getValue('DISK_UNIFIED_LINK_FOLDER_DEFAULT_ACCESS_LEVEL'));
+				CommunicationPage.addToSectionHelper(unifiedLinkFolderDefaultAccessLevelSelector, settingsSection);
+			}
 			if (this.hasValue('DISK_LIMIT_PER_FILE')) {
 				const messageNode = main_core.Tag.render`<span>${main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE')}</span>`;
 				let fileLimitField = new ui_formElements_view.Selector({
@@ -1667,6 +2019,18 @@ this.BX = this.BX || {};
 					main_core.Event.bind(messageNode.querySelector('a'), 'click', () => this.getAnalytic()?.addEventOpenTariffSelector(this.getValue('DISK_LIMIT_PER_FILE').name));
 				}
 				CommunicationPage.addToSectionHelper(fileLimitField, settingsSection, fileLimitRow);
+			}
+			if (this.hasValue('DISK_SECONDS_TO_JOIN_VERSION')) {
+				const versionJoinOptions = this.getValue('DISK_SECONDS_TO_JOIN_VERSION');
+				const versionJoinLabel = versionJoinOptions.label ?? main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SECONDS_TO_JOIN_VERSION');
+				const versionJoinHint = versionJoinOptions.hintTitle;
+				const versionJoinField = new ui_formElements_view.TextInput({
+					inputName: versionJoinOptions.inputName,
+					label: versionJoinHint ? `${versionJoinLabel} <span data-hint="${main_core.Text.encode(versionJoinHint)}" class="intranet-settings__ui-hint"></span>` : versionJoinLabel,
+					value: versionJoinOptions.value,
+					type: 'number'
+				});
+				CommunicationPage.addToSectionHelper(versionJoinField, settingsSection);
 			}
 			new ui_formElements_field.SettingsRow({
 				row: new ui_section.SeparatorRow(),
@@ -3110,6 +3474,8 @@ this.BX = this.BX || {};
 			cardsProductPropertiesSection?.renderTo(contentNode);
 			const biconnectorSettingsSection = this.#buildBIConnectorSettingsSection();
 			biconnectorSettingsSection?.renderTo(contentNode);
+			let closingDocumentsSection = this.#buildClosingDocumentsSection();
+			closingDocumentsSection?.renderTo(contentNode);
 			let additionalSettingsSection = this.#buildAdditionalSettingsSection();
 			additionalSettingsSection?.renderTo(contentNode);
 			if (this.hasValue('deletePortalOptions') && this.hasValue('sectionDeletePortal')) {
@@ -3508,6 +3874,43 @@ this.BX = this.BX || {};
 
 			return settingsSection;
 		}
+		#buildClosingDocumentsSection() {
+			if (!this.hasValue('sectionClosingDocuments') || !this.hasValue('closingDocumentsAllEmployees') || !this.hasValue('closingDocumentsAudience')) {
+				return;
+			}
+			const section = new ui_section.Section(this.getValue('sectionClosingDocuments'));
+			const settingsSection = new ui_formElements_field.SettingsSection({
+				section,
+				parent: this
+			});
+			const closingDocuments = new ui_formElements_view.Checker(this.getValue('closingDocumentsAllEmployees'));
+			const closingDocumentsAudience = ui_formElements_view.FieldFactory.createUserSelector({
+				...this.getValue('closingDocumentsAudience'),
+				enableAll: false,
+				enableDepartments: true
+			});
+			const closingDocumentsRow = new ui_section.Row({
+				content: closingDocuments.render()
+			});
+			const closingDocumentsAudienceRow = new ui_section.Row({
+				content: closingDocumentsAudience.render(),
+				isHidden: closingDocuments.isChecked()
+			});
+			for (const row of [closingDocumentsRow, closingDocumentsAudienceRow]) {
+				new ui_formElements_field.SettingsRow({
+					row,
+					parent: settingsSection
+				});
+			}
+			main_core_events.EventEmitter.subscribe(closingDocuments.switcher, 'toggled', () => {
+				if (closingDocuments.isChecked()) {
+					closingDocumentsAudienceRow.hide();
+					return;
+				}
+				closingDocumentsAudienceRow.show();
+			});
+			return settingsSection;
+		}
 		#geoDataSwitch(element) {
 			if (element.isChecked()) {
 				BX.UI.Dialogs.MessageBox.show({
@@ -3843,10 +4246,106 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const POPUP_TEST_ID = 'intranet-settings-security-otp-disable-popup';
+	const CONFIRM_BUTTON_TEST_ID = 'intranet-settings-security-otp-disable-confirm-btn';
+	const CANCEL_BUTTON_TEST_ID = 'intranet-settings-security-otp-disable-cancel-btn';
+	class OtpDisableConfirm {
+		#checker;
+		#messageBox = null;
+		#resolve = null;
+		#confirmed = false;
+		constructor(checker) {
+			this.#checker = checker;
+		}
+		confirm() {
+			return new Promise(resolve => {
+				this.#resolve = resolve;
+				this.#confirmed = false;
+				this.#getMessageBox().show();
+			});
+		}
+		#getMessageBox() {
+			if (this.#messageBox !== null) {
+				return this.#messageBox;
+			}
+
+			// Popup renders its content node with the id popup-window-content-{popupId}.
+			const popupId = `intranet-settings-otp-disable-${main_core.Text.getRandom().toLowerCase()}`;
+			this.#messageBox = BX.UI.Dialogs.MessageBox.create({
+				title: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_DISABLE_TITLE'),
+				message: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_DISABLE_TEXT'),
+				modal: true,
+				useAirDesign: true,
+				cacheable: true,
+				popupOptions: {
+					id: popupId,
+					closeByEsc: true,
+					autoHide: true,
+					focusTrap: true,
+					ariaDescribedBy: `popup-window-content-${popupId}`,
+					events: {
+						onPopupClose: () => this.#complete()
+					}
+				},
+				buttons: [new BX.UI.Button({
+					text: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_DISABLE_BUTTON_CONFIRM'),
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+					useAirDesign: true,
+					dataset: {
+						testid: CONFIRM_BUTTON_TEST_ID
+					},
+					events: {
+						click: () => {
+							this.#confirmed = true;
+							this.#messageBox.close();
+						}
+					}
+				}), new BX.UI.Button({
+					text: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_DISABLE_BUTTON_CANCEL'),
+					style: BX.UI.AirButtonStyle.FILLED,
+					useAirDesign: true,
+					dataset: {
+						autofocus: '',
+						testid: CANCEL_BUTTON_TEST_ID
+					},
+					events: {
+						click: () => {
+							this.#messageBox.close();
+						}
+					}
+				})]
+			});
+			this.#markPopupContainer();
+			return this.#messageBox;
+		}
+		#markPopupContainer() {
+			main_core.Dom.attr(this.#messageBox.getPopupWindow().getPopupContainer(), 'data-testid', POPUP_TEST_ID);
+		}
+		#complete() {
+			if (this.#resolve === null) {
+				return;
+			}
+			const resolve = this.#resolve;
+			this.#resolve = null;
+			if (!this.#confirmed) {
+				this.#checker.cancel();
+				this.#checker.switcher.check(true, false);
+				this.#checker.switcher.inputNode?.form?.dispatchEvent(new window.Event('change'));
+			}
+			resolve(this.#confirmed);
+		}
+	}
+
+	const OTP_PERIOD_HINT_TEST_ID = 'intranet-settings-security-otp-period-hint';
+	const OTP_DISABLED_BY_TEST_ID = 'intranet-settings-security-otp-disabled-by-note';
+	const OTP_SWITCHER_TEST_ID = 'intranet-settings-security-otp-switcher';
+	const OTP_PERIOD_SELECTOR_TEST_ID = 'intranet-settings-security-otp-period-selector';
 	class SecurityPage extends ui_formElements_field.BaseSettingsPage {
 		#otpChecker;
 		#otpSelector;
 		#otpPopup;
+		#otpDisableConfirm;
+		#otpPeriodHintId = `intranet-settings-otp-period-hint-${main_core.Text.getRandom().toLowerCase()}`;
 		constructor() {
 			super();
 			this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_SECURITY');
@@ -3891,8 +4390,13 @@ this.BX = this.BX || {};
 				row: descriptionRow,
 				parent: section
 			});
+			let securityOtpCheckerRow = null;
+			let securityOtpPeriodSelectorRow = null;
+			let securityOtpDisabledByRow = null;
+			let securityOtpPeriodHintRow = null;
 			if (this.hasValue('SECURITY_OTP')) {
-				const securityOtpCheckerRow = new ui_section.Row({
+				main_core.Dom.attr(this.#getOTPChecker().getInputNode(), 'data-testid', OTP_SWITCHER_TEST_ID);
+				securityOtpCheckerRow = new ui_section.Row({
 					content: this.#getOTPChecker().render(),
 					separator: this.#getOTPChecker().isChecked() ? '' : 'bottom',
 					className: this.#getOTPChecker().isChecked() ? '' : '--block'
@@ -3901,7 +4405,18 @@ this.BX = this.BX || {};
 					row: securityOtpCheckerRow,
 					parent: section
 				});
-				const securityOtpPeriodSelectorRow = new ui_section.Row({
+				const disabledByText = this.#getOTPDisabledByText();
+				if (disabledByText !== null) {
+					securityOtpDisabledByRow = new ui_section.Row({
+						content: this.#createOTPNoteAlert(disabledByText, OTP_DISABLED_BY_TEST_ID).getContainer()
+					});
+					new ui_formElements_field.SettingsRow({
+						row: securityOtpDisabledByRow,
+						parent: section
+					});
+				}
+				main_core.Dom.attr(this.#getOTPPeriodSelector().getInputNode(), 'data-testid', OTP_PERIOD_SELECTOR_TEST_ID);
+				securityOtpPeriodSelectorRow = new ui_section.Row({
 					content: this.#getOTPPeriodSelector().render(),
 					isHidden: !this.#getOTPChecker().isChecked()
 				});
@@ -3909,6 +4424,38 @@ this.BX = this.BX || {};
 					row: securityOtpPeriodSelectorRow,
 					parent: section
 				});
+				const otpPeriodHintNode = this.#createOTPNoteAlert(main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_OTP_SWITCHING_PERIOD'), OTP_PERIOD_HINT_TEST_ID).getContainer();
+				main_core.Dom.attr(otpPeriodHintNode, 'id', this.#otpPeriodHintId);
+				securityOtpPeriodHintRow = new ui_section.Row({
+					content: otpPeriodHintNode,
+					isHidden: !this.#getOTPChecker().isChecked()
+				});
+				new ui_formElements_field.SettingsRow({
+					row: securityOtpPeriodHintRow,
+					parent: section
+				});
+				this.#describeOTPPeriodSelector(this.#getOTPChecker().isChecked());
+			}
+			if (this.hasValue('fieldAllowSkipDeviceConnect')) {
+				const allowSkipDeviceConnectChecker = new ui_formElements_view.Checker(this.getValue('fieldAllowSkipDeviceConnect'));
+				const allowSkipDeviceConnectRow = new ui_section.Row({
+					content: allowSkipDeviceConnectChecker.render()
+				});
+				new ui_formElements_field.SettingsRow({
+					row: allowSkipDeviceConnectRow,
+					parent: section
+				});
+			}
+			if (this.hasValue('fieldSecurityOtpEmailFrom')) {
+				const otpEmailFrom = new ui_formElements_view.TextInput(this.getValue('fieldSecurityOtpEmailFrom'));
+				new ui_formElements_field.SettingsRow({
+					parent: section,
+					child: new ui_formElements_field.SettingsField({
+						fieldView: otpEmailFrom
+					})
+				});
+			}
+			if (this.hasValue('SECURITY_OTP')) {
 				let securityOtpMessageChatCheckerRow = null;
 				if (this.hasValue('SEND_OTP_PUSH')) {
 					const switcherWrapper = main_core.Tag.render`
@@ -3992,24 +4539,55 @@ this.BX = this.BX || {};
 					if (this.getValue('SECURITY_IS_USER_OTP_ACTIVE') !== true && this.#getOTPChecker().isChecked()) {
 						this.#getOTPPopup().show();
 						this.#getOTPChecker().cancel();
-						this.#getOTPChecker().switcher.check(false);
+						this.#getOTPChecker().switcher.check(false, false);
+						this.#getOTPChecker().switcher.inputNode?.form?.dispatchEvent(new window.Event('change'));
+						return;
+					}
+					if (!this.#getOTPChecker().isChecked()) {
+						this.#getOTPDisableConfirm().confirm().then(isConfirmed => {
+							if (!isConfirmed) {
+								return;
+							}
+							if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED')) {
+								this.getAnalytic()?.addEventToggle2fa(false);
+							}
+							const rowsToHide = [securityOtpPeriodSelectorRow, securityOtpPeriodHintRow, securityOtpMessageChatCheckerRow].filter(row => row !== null);
+							main_core.Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
+							this.#moveFocusFromRows(rowsToHide, securityOtpCheckerRow.render());
+							rowsToHide.forEach(row => row.hide());
+							securityOtpDisabledByRow?.show();
+							this.#describeOTPPeriodSelector(false);
+						});
 						return;
 					}
 					if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED')) {
-						this.getAnalytic()?.addEventToggle2fa(this.#getOTPChecker().isChecked());
+						this.getAnalytic()?.addEventToggle2fa(true);
 					}
-					if (this.#getOTPChecker().isChecked()) {
-						main_core.Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
-						securityOtpPeriodSelectorRow.show();
-						securityOtpMessageChatCheckerRow?.show();
-					} else {
-						main_core.Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
-						securityOtpPeriodSelectorRow.hide();
-						securityOtpMessageChatCheckerRow?.hide();
-					}
+					main_core.Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
+					securityOtpDisabledByRow?.hide();
+					securityOtpPeriodSelectorRow.show();
+					securityOtpPeriodHintRow.show();
+					securityOtpMessageChatCheckerRow?.show();
+					this.#describeOTPPeriodSelector(true);
 				});
 			}
 			return section;
+		}
+		#describeOTPPeriodSelector(isHintVisible) {
+			main_core.Dom.attr(this.#getOTPPeriodSelector().getInputNode(), 'aria-describedby', isHintVisible ? this.#otpPeriodHintId : null);
+		}
+		#moveFocusFromRows(rows, targetNode) {
+			const activeNode = document.activeElement;
+			if (!main_core.Type.isDomNode(activeNode) || !rows.some(row => row.render().contains(activeNode))) {
+				return;
+			}
+			main_core.Dom.attr(targetNode, 'tabindex', '-1');
+			targetNode.addEventListener('focusout', () => main_core.Dom.attr(targetNode, 'tabindex', null), {
+				once: true
+			});
+			targetNode.focus({
+				preventScroll: true
+			});
 		}
 		#getOTPChecker() {
 			if (this.#otpChecker instanceof ui_formElements_view.Checker) {
@@ -4069,6 +4647,13 @@ this.BX = this.BX || {};
 			});
 			return this.#otpPopup;
 		}
+		#getOTPDisableConfirm() {
+			if (this.#otpDisableConfirm instanceof OtpDisableConfirm) {
+				return this.#otpDisableConfirm;
+			}
+			this.#otpDisableConfirm = new OtpDisableConfirm(this.#getOTPChecker());
+			return this.#otpDisableConfirm;
+		}
 		#getOTPPeriodSelector() {
 			if (this.#otpSelector instanceof ui_formElements_view.Selector) {
 				return this.#otpSelector;
@@ -4080,6 +4665,34 @@ this.BX = this.BX || {};
 				current: this.getValue('SECURITY_OTP_DAYS').CURRENT
 			});
 			return this.#otpSelector;
+		}
+		#getOTPDisabledByText() {
+			if (!this.hasValue('SECURITY_OTP_DISABLED_BY')) {
+				return null;
+			}
+			const disabledBy = this.getValue('SECURITY_OTP_DISABLED_BY');
+			const userName = main_core.Text.encode(disabledBy.USER_NAME ?? '');
+			const date = main_core.Text.encode(disabledBy.DATE ?? '');
+			if (userName === '') {
+				return main_core.Loc.getMessage('INTRANET_SETTINGS_SECURITY_OTP_DISABLED_BY_UNKNOWN_USER', {
+					'#DATE#': date
+				});
+			}
+			return main_core.Loc.getMessage('INTRANET_SETTINGS_SECURITY_OTP_DISABLED_BY', {
+				'#DATE#': date,
+				'#USER_NAME#': userName
+			});
+		}
+		#createOTPNoteAlert(text, testId) {
+			const alert = new BX.UI.Alert({
+				text,
+				inline: true,
+				size: BX.UI.Alert.Size.SMALL,
+				color: BX.UI.Alert.Color.PRIMARY,
+				animated: true
+			});
+			main_core.Dom.attr(alert.getContainer(), 'data-testid', testId);
+			return alert;
 		}
 		#getOTPDescription() {
 			return new BX.UI.Alert({
@@ -4603,6 +5216,9 @@ this.BX = this.BX || {};
 				}
 			});
 		}
+		getPages() {
+			return this.#pages;
+		}
 		collectData() {
 			const data = {};
 			this.#pages.forEach(page => {
@@ -4627,12 +5243,13 @@ this.BX = this.BX || {};
 		static STATE_READY = 'ready';
 		static STATE_WAIT = 'wait';
 		static STATE_NOT_FOUND = 'not_found';
+		static STATE_ERROR = 'error';
 		#query;
 		#minSymbol;
 		#dataSource;
 		#result;
-		#state; // ready | wait;
-
+		#requestId = 0;
+		#lastEvent = null;
 		constructor(dataSource, minSymbol = 3) {
 			if (!(dataSource instanceof DataSource)) {
 				throw new Error('Unexpected type, expect: DataSource');
@@ -4640,38 +5257,89 @@ this.BX = this.BX || {};
 			this.#dataSource = dataSource;
 			this.#minSymbol = minSymbol;
 			this.#result = [];
-			this.#state = 'ready';
 		}
 		find(query) {
+			const requestId = this.#nextRequestId();
 			if (query.length < this.#minSymbol) {
+				this.reset(requestId);
 				return;
 			}
 			this.#query = query;
-			this.changeState(Searcher.STATE_WAIT);
-			this.#dataSource.fetch(this.#query).then(this.resolve.bind(this), this.reject.bind(this));
+			this.#result = [];
+			this.changeState(Searcher.STATE_WAIT, {
+				requestId,
+				query
+			});
+			this.#dataSource.fetch(this.#query).then(response => this.resolve(response, requestId), response => this.reject(response, requestId));
 		}
-		changeState(state) {
-			if (this.#state === state) {
+		invalidate(query) {
+			const requestId = this.#nextRequestId();
+			this.#query = query;
+			this.#result = [];
+			this.changeState(Searcher.STATE_READY, {
+				requestId,
+				query,
+				reset: true
+			});
+		}
+		#nextRequestId() {
+			this.#requestId += 1;
+			return this.#requestId;
+		}
+		changeState(state, payload = {}) {
+			const eventData = {
+				state,
+				requestId: payload.requestId ?? this.#requestId,
+				query: payload.query ?? this.#query,
+				resultCount: this.#getResultCount(),
+				reset: payload.reset === true
+			};
+			if (this.#isSameEvent(eventData)) {
 				return;
 			}
-			this.#state = state;
-			main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:searchChangeState', {
-				state: this.#state
-			});
+			this.#lastEvent = eventData;
+			main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:searchChangeState', eventData);
+		}
+		#isSameEvent(eventData) {
+			return this.#lastEvent?.state === eventData.state && this.#lastEvent?.requestId === eventData.requestId && this.#lastEvent?.query === eventData.query && this.#lastEvent?.resultCount === eventData.resultCount && this.#lastEvent?.reset === eventData.reset;
+		}
+		#getResultCount() {
+			return this.#result.reduce((count, group) => {
+				return count + (Array.isArray(group.options) ? group.options.length : 0);
+			}, 0);
 		}
 		getMinSymbol() {
 			return this.#minSymbol;
 		}
-		resolve(response) {
-			this.#result = response.data;
-			this.changeState(this.#result.length > 0 ? Searcher.STATE_READY : Searcher.STATE_NOT_FOUND);
+		resolve(response, requestId) {
+			if (requestId !== this.#requestId) {
+				return;
+			}
+			this.#result = Array.isArray(response.data) ? response.data : [];
+			this.changeState(this.#getResultCount() > 0 ? Searcher.STATE_READY : Searcher.STATE_NOT_FOUND, {
+				requestId
+			});
 		}
-		reject(response) {
+		reject(response, requestId) {
+			if (requestId !== this.#requestId) {
+				return;
+			}
 			this.#result = [];
-			this.changeState(Searcher.STATE_READY);
+			this.changeState(Searcher.STATE_ERROR, {
+				requestId
+			});
 		}
 		getResult() {
 			return this.#result;
+		}
+		reset(requestId) {
+			const actualRequestId = main_core.Type.isNumber(requestId) ? requestId : this.#nextRequestId();
+			this.#query = '';
+			this.#result = [];
+			this.changeState(Searcher.STATE_READY, {
+				requestId: actualRequestId,
+				reset: true
+			});
 		}
 		getOthers() {
 			return [{
@@ -4700,23 +5368,31 @@ this.BX = this.BX || {};
 		#searcher;
 		#inputNode;
 		#iconContainer;
+		#clearButton;
 		#popup;
 		#timeoutId;
 		#timeout;
-		#nav;
+		#liveStatusNode;
+		#liveAlertNode;
+		#lastRenderedRequestId = 0;
+		#restoreInputFocusAfterPopupClose = false;
 		static EXTERNAL_LINK = 'EXTERNAL_LINKS';
 		constructor(options) {
 			this.#searcher = options.searcher;
 			this.#inputNode = options.inputNode;
 			this.#iconContainer = options.iconContainer;
+			this.#clearButton = this.#iconContainer.querySelector('#intranet-settings-icon-delete');
+			this.#liveStatusNode = main_core.Type.isDomNode(options.liveStatusNode) ? options.liveStatusNode : null;
+			this.#liveAlertNode = main_core.Type.isDomNode(options.liveAlertNode) ? options.liveAlertNode : null;
 			this.#timeout = options.timeout;
-			this.#nav = new SearchNavigation();
+			this.#inputNode.setAttribute('aria-label', main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_PLACEHOLDER'));
 			this.#popup = new main_popup.Popup('settings-search-popup', this.#inputNode, {
+				ariaLabel: main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_PLACEHOLDER'),
+				focusTrap: false,
 				closeByEsc: true,
 				angle: false,
 				overlay: false,
 				width: 332,
-				//470,//this.#inputNode.offsetWidth,
 				offsetTop: 4,
 				background: '#fff',
 				contentBackground: '#fff',
@@ -4724,65 +5400,97 @@ this.BX = this.BX || {};
 				autoHide: true,
 				borderRadius: 6,
 				autoHideHandler: event => {
-					return event.target !== this.#inputNode;
+					return !this.#inputNode.contains(event.target) && !this.#clearButton?.contains(event.target);
+				},
+				events: {
+					onAfterShow: () => {
+						this.#inputNode.setAttribute('aria-expanded', 'true');
+					},
+					onAfterClose: () => {
+						this.#resetActiveResult();
+						this.#inputNode.setAttribute('aria-expanded', 'false');
+						if (this.#restoreInputFocusAfterPopupClose) {
+							this.#restoreInputFocusAfterPopupClose = false;
+							this.#focusInput();
+						}
+					}
 				}
+			});
+			const popupContainer = this.#popup.getPopupContainer();
+			popupContainer.removeAttribute('aria-modal');
+			main_core.Dom.attr(popupContainer, {
+				role: 'listbox',
+				'data-testid': 'intranet-settings-search-popup'
 			});
 			this.#popup.setContent(this.renderContent());
-			main_core.Event.bind(this.#inputNode, 'focus', () => {
-				if (!this.#popup.isShown()) {
-					this.#popup.show();
-				}
+			this.#syncClearButton();
+			main_core.Event.bind(this.#inputNode, 'click', () => {
+				this.#activateInput();
 			});
 			main_core_events.EventEmitter.subscribe('BX.Intranet.Settings:searchChangeState', event => {
-				const {
-					state
-				} = event.data;
-				this.#nav.clean();
-				this.#popup.setContent(this.renderContent(state));
-			});
-			main_core.Event.bind(this.#iconContainer.querySelector('#intranet-settings-icon-delete'), 'click', () => {
-				main_core.Dom.removeClass(this.#iconContainer, 'main-ui-show');
-				this.#inputNode.value = '';
-			});
-			main_core.Event.bind(this.#inputNode, 'keyup', event => {
-				if (event.keyCode === 37 || event.keyCode === 39) {
+				const searchState = event.data;
+				if (!this.#isActualSearchState(searchState)) {
 					return;
 				}
-				if (event.keyCode === 13)
-					//enter
-					{
-						this.#nav.current().dispatchEvent(new MouseEvent('click'));
-						this.#nav.unHighlightAll();
-						return;
+				this.#lastRenderedRequestId = searchState.requestId;
+				this.#resetActiveResult();
+				this.#popup.setContent(this.renderContent(searchState.state));
+				this.#syncLiveSearchState(searchState);
+			});
+			if (this.#clearButton) {
+				main_core.Event.bind(this.#clearButton, 'click', () => {
+					clearTimeout(this.#timeoutId);
+					this.#inputNode.value = '';
+					this.#searcher.reset();
+					this.#closePopupAndFocusInput();
+					this.#syncClearButton();
+				});
+			}
+			main_core.Event.bind(this.#inputNode, 'keydown', event => {
+				if (event.key === 'Enter') {
+					event.preventDefault();
+					if (this.#inputNode.hasAttribute('readonly')) {
+						this.#activateInput();
+					} else if (!this.#activateActiveResult()) {
+						this.#activateInput();
 					}
-				if (event.keyCode === 38)
-					//up
-					{
-						this.#nav.prev().highlight();
-						if (!main_core.Type.isNil(this.#nav.current())) {
-							this.updateScroll(this.#nav.current());
-						}
-						return;
-					}
-				if (event.keyCode === 40)
-					//down
-					{
-						this.#nav.next().highlight();
-						if (!main_core.Type.isNil(this.#nav.current())) {
-							this.updateScroll(this.#nav.current());
-						}
-						return;
-					}
-				if (this.getQuery().length > 0) {
-					main_core.Dom.addClass(this.#iconContainer, 'main-ui-show');
-				} else {
-					main_core.Dom.removeClass(this.#iconContainer, 'main-ui-show');
+					return;
 				}
+				if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+					if (this.#inputNode.hasAttribute('readonly')) {
+						return;
+					}
+					if (!this.#popup.isShown()) {
+						this.#popup.show();
+					}
+					if (this.#moveActiveResult(event.key === 'ArrowDown' ? 1 : -1)) {
+						event.preventDefault();
+					}
+					return;
+				}
+				if (event.key === 'Escape') {
+					this.#handleEscape(event);
+				}
+			});
+			main_core.Event.bind(this.#inputNode, 'input', () => {
+				this.#resetActiveResult();
+				this.#syncClearButton();
 				if (!this.#popup.isShown() && this.getQuery().length > 0) {
 					this.#popup.show();
 				}
 				this.find();
 			});
+		}
+		#handleEscape(event) {
+			if (!this.#popup.isShown()) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			this.#closePopupAndFocusInput();
+		}
+		#isActualSearchState(searchState) {
+			return main_core.Type.isNumber(searchState.requestId) && searchState.requestId >= this.#lastRenderedRequestId;
 		}
 		updateScroll(element) {
 			const rect = element.getBoundingClientRect();
@@ -4790,15 +5498,89 @@ this.BX = this.BX || {};
 			const relTop = rect.top - container.getBoundingClientRect().top;
 			const relBot = rect.bottom - container.getBoundingClientRect().bottom;
 			const padding = 10;
-			if (relTop < 0 && relBot <= 0)
-				//invisible top
-				{
-					container.scrollTo(0, relTop + container.scrollTop - padding);
-				} else if (relTop >= 0 && relBot > 0)
-				//invisible bottom
-				{
-					container.scrollTo(0, relBot + container.scrollTop + padding);
-				}
+			if (relTop < 0 && relBot <= 0) {
+				container.scrollTo(0, relTop + container.scrollTop - padding);
+			} else if (relTop >= 0 && relBot > 0) {
+				container.scrollTo(0, relBot + container.scrollTop + padding);
+			}
+		}
+		#syncClearButton() {
+			const hasQuery = this.getQuery().length > 0;
+			if (hasQuery) {
+				main_core.Dom.addClass(this.#iconContainer, 'main-ui-show');
+			} else {
+				main_core.Dom.removeClass(this.#iconContainer, 'main-ui-show');
+			}
+			if (this.#clearButton) {
+				this.#clearButton.hidden = !hasQuery;
+			}
+		}
+		#getResultLinks() {
+			return [...this.#popup.getContentContainer().querySelectorAll('.search-title-top-item-link[href]')];
+		}
+		#getResultOptions() {
+			return [...this.#popup.getContentContainer().querySelectorAll('.search-title-top-item-link[role="option"][href]')];
+		}
+		#focusInput() {
+			this.#inputNode.focus({
+				preventScroll: true
+			});
+		}
+		#activateInput() {
+			this.#inputNode.removeAttribute('readonly');
+			if (!this.#popup.isShown()) {
+				this.#popup.show();
+			}
+		}
+		#closePopupAndFocusInput() {
+			this.#resetActiveResult();
+			this.#inputNode.setAttribute('readonly', '');
+			if (!this.#popup.isShown()) {
+				this.#inputNode.setAttribute('aria-expanded', 'false');
+				this.#focusInput();
+				return;
+			}
+			this.#restoreInputFocusAfterPopupClose = true;
+			this.#popup.close();
+		}
+		#moveActiveResult(direction) {
+			const options = this.#getResultOptions();
+			if (options.length === 0) {
+				return false;
+			}
+			const activeId = this.#inputNode.getAttribute('aria-activedescendant');
+			const currentIndex = options.findIndex(option => option.id === activeId);
+			const nextIndex = currentIndex === -1 ? direction > 0 ? 0 : options.length - 1 : currentIndex + direction;
+			const nextOption = options[nextIndex];
+			if (nextOption) {
+				this.#setActiveResult(nextOption);
+			}
+			return true;
+		}
+		#setActiveResult(option) {
+			this.#resetActiveResult();
+			option.setAttribute('aria-selected', 'true');
+			main_core.Dom.addClass(option, 'active');
+			this.#inputNode.setAttribute('aria-activedescendant', option.id);
+			this.updateScroll(option);
+		}
+		#resetActiveResult() {
+			this.#getResultOptions().forEach(option => {
+				option.setAttribute('aria-selected', 'false');
+			});
+			this.#getResultLinks().forEach(link => {
+				main_core.Dom.removeClass(link, 'active');
+			});
+			this.#inputNode.removeAttribute('aria-activedescendant');
+		}
+		#activateActiveResult() {
+			const activeId = this.#inputNode.getAttribute('aria-activedescendant');
+			const activeOption = this.#getResultOptions().find(option => option.id === activeId);
+			if (!(activeOption instanceof HTMLElement)) {
+				return false;
+			}
+			activeOption.click();
+			return true;
 		}
 		renderWait() {
 			const loaderContainer = main_core.Tag.render`<span class="title-search-waiter-img"></span>`;
@@ -4817,95 +5599,141 @@ this.BX = this.BX || {};
 		}
 		find() {
 			clearTimeout(this.#timeoutId);
+			const searchQuery = this.getQuery();
+			this.#searcher.invalidate(searchQuery);
+			if (searchQuery.length < this.#searcher.getMinSymbol()) {
+				return;
+			}
 			this.#timeoutId = setTimeout(() => {
-				this.#searcher.find(this.getQuery());
+				this.#searcher.find(String(searchQuery));
 			}, this.#timeout);
 		}
 		getQuery() {
 			return BX.util.trim(this.#inputNode.value);
 		}
 		createLinkOption(option) {
-			const link = main_core.Dom.create('a', {
-				props: {
-					className: 'search-title-top-item-link'
-				},
-				events: {
-					mouseenter: event => {
-						this.#nav.unHighlightAll();
-						this.#nav.cursorTo(event.target);
-						SearchNavigation.highlight(event.target);
-					},
-					mouseleave: event => {
-						SearchNavigation.unHighlight(event.target);
-					}
-				},
-				attrs: {
-					title: option.title,
-					href: main_core.Type.isStringFilled(option.url) ? option.url : '#',
-					target: '_blank'
-				},
-				children: [main_core.Tag.render`<span class="search-title-top-item-text"><span>${option.title}</span></span>`]
-			});
-			this.#nav.add(link);
-			return link;
+			const testId = `intranet-settings-search-external-${this.#normalizeTestId(option.code || option.url || String(option.index))}`;
+			const optionId = `intranet-settings-search-external-${option.groupIndex}-${option.index}-option`;
+			return this.#createExternalLink(option.url, option.title, testId, optionId);
 		}
 		createBtnOption(page, option) {
-			const link = main_core.Dom.create('a', {
+			const testId = ['intranet-settings-search-result', this.#normalizeTestId(page), this.#normalizeTestId(option.code), this.#normalizeTestId(String(option.index))].join('-');
+			return main_core.Dom.create('a', {
 				props: {
 					className: 'search-title-top-item-link'
 				},
 				events: {
 					click: event => {
+						if (!this.#isPrimaryUnmodifiedClick(event)) {
+							return;
+						}
+						event.preventDefault();
+						this.#popup.close();
 						main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.SettingsNavigation:onMove', {
-							page: page,
+							page,
 							fieldName: option.code
 						});
-						this.#inputNode.blur();
-						this.#popup.close();
-						event.preventDefault();
-					},
-					mouseenter: event => {
-						this.#nav.unHighlightAll();
-						this.#nav.cursorTo(event.target);
-						SearchNavigation.highlight(event.target);
-					},
-					mouseleave: event => {
-						SearchNavigation.unHighlight(event.target);
 					}
 				},
 				attrs: {
+					id: `${testId}-option`,
+					role: 'option',
+					'aria-selected': 'false',
+					tabindex: '-1',
 					title: option.title,
-					href: "#"
+					href: this.#createInternalHref(page, option.code),
+					'data-testid': testId
 				},
-				children: [main_core.Tag.render`<span class="search-title-top-item-text"><span>${option.title}</span></span>`]
+				children: [this.#createResultText(option.title)]
 			});
-			this.#nav.add(link);
-			return main_core.Tag.render`<div class="search-title-top-item search-title-top-item-js">${link}</div>`;
 		}
 		renderOption(page, option) {
-			let link;
 			if (page === Renderer.EXTERNAL_LINK) {
-				link = this.createLinkOption(option);
-			} else {
-				link = this.createBtnOption(page, option);
+				return this.#createOptionItem(this.createLinkOption(option));
 			}
-			return main_core.Tag.render`<div class="search-title-top-item search-title-top-item-js">${link}</div>`;
+			return this.#createOptionItem(this.createBtnOption(page, option));
 		}
-		renderGroup(group) {
-			const optionsContainer = main_core.Tag.render`<div class="search-title-top-list search-title-top-list-js"></div>`;
-			group.options.forEach(option => {
-				main_core.Dom.append(this.renderOption(group.page, option), optionsContainer);
+		#createOptionItem(link) {
+			return main_core.Dom.create('li', {
+				props: {
+					className: 'search-title-top-item search-title-top-item-js'
+				},
+				attrs: {
+					role: 'presentation'
+				},
+				children: [link]
 			});
-			return main_core.Tag.render`
-			<div class="search-title-top-block search-title-top-block-sonetgroups">
-				<div class="search-title-top-subtitle">
-					<div class="search-title-top-subtitle-text">${group.title}</div>
-				</div>
-				<div class="search-title-top-list-wrap">
-					${optionsContainer}
-				</div>
-			</div>
-		`;
+		}
+		renderGroup(group, groupIndex) {
+			const optionsContainer = main_core.Dom.create('ul', {
+				props: {
+					className: 'search-title-top-list search-title-top-list-js'
+				},
+				attrs: {
+					role: 'presentation'
+				}
+			});
+			group.options.forEach((option, index) => {
+				main_core.Dom.append(this.renderOption(group.page, {
+					...option,
+					groupIndex,
+					index
+				}), optionsContainer);
+			});
+			return main_core.Dom.create('div', {
+				props: {
+					className: 'search-title-top-block search-title-top-block-sonetgroups'
+				},
+				children: [main_core.Dom.create('div', {
+					props: {
+						className: 'search-title-top-subtitle'
+					},
+					children: [main_core.Dom.create('div', {
+						props: {
+							className: 'search-title-top-subtitle-text'
+						},
+						text: group.title
+					})]
+				}), main_core.Dom.create('div', {
+					props: {
+						className: 'search-title-top-list-wrap'
+					},
+					children: [optionsContainer]
+				})]
+			});
+		}
+		#syncLiveSearchState(searchState) {
+			if (searchState.reset === true) {
+				this.#setLiveText(this.#liveStatusNode, '');
+				this.#setLiveText(this.#liveAlertNode, '');
+				return;
+			}
+			if (searchState.state === Searcher.STATE_WAIT) {
+				this.#setLiveText(this.#liveAlertNode, '');
+				this.#setLiveText(this.#liveStatusNode, main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_LOADING'));
+				return;
+			}
+			if (searchState.state === Searcher.STATE_NOT_FOUND) {
+				this.#setLiveText(this.#liveAlertNode, '');
+				this.#setLiveText(this.#liveStatusNode, main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_NOT_FOUND'));
+				return;
+			}
+			if (searchState.state === Searcher.STATE_ERROR) {
+				this.#setLiveText(this.#liveStatusNode, '');
+				this.#setLiveText(this.#liveAlertNode, main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_ERROR'));
+				return;
+			}
+			this.#setLiveText(this.#liveAlertNode, '');
+			this.#setLiveText(this.#liveStatusNode, main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_RESULTS_COUNT', {
+				'#COUNT#': searchState.resultCount
+			}));
+		}
+		#setLiveText(node, text) {
+			if (!main_core.Type.isDomNode(node) || node.textContent === (text || '')) {
+				return;
+			}
+			const liveNode = node;
+			liveNode.textContent = text || '';
 		}
 		renderContent(state = 'ready') {
 			const optionsContainer = main_core.Tag.render`<div class="search-title-top-result"></div>`;
@@ -4919,9 +5747,19 @@ this.BX = this.BX || {};
 				case 'not_found':
 					main_core.Dom.append(this.renderNotFound(), optionsContainer);
 					break;
+				case 'error':
+					main_core.Dom.append(this.renderSearchError(), optionsContainer);
+					break;
 			}
 			main_core.Dom.append(this.renderOthers(this.#searcher.getOthers()), optionsContainer);
 			return optionsContainer;
+		}
+		renderSearchError() {
+			return main_core.Tag.render`
+			<div class="title-search-waiter">
+				<span class="title-search-waiter-text">${main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_ERROR')}</span>
+			</div>
+		`;
 		}
 		renderNotFound() {
 			return main_core.Tag.render`
@@ -4932,127 +5770,141 @@ this.BX = this.BX || {};
 		}
 		renderSearchResult(result) {
 			const container = main_core.Tag.render`<div class="search-title-content-result"></div>`;
-			result.forEach(item => {
-				main_core.Dom.append(this.renderGroup(item), container);
+			result.forEach((item, index) => {
+				main_core.Dom.append(this.renderGroup(item, index), container);
 			});
 			return container;
 		}
 		renderOthers(links) {
-			const wraper = main_core.Tag.render`<div class="search-title-top-list search-title-top-list-js"></div>`;
-			const other = main_core.Tag.render`
-		<div class="search-title-top-block search-title-top-block-tools">
-			<div class="search-title-top-subtitle">
-				<div class="search-title-top-subtitle-text">${main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_SEARCH_IN')}</div>
-			</div>
-			<div class="search-title-top-list-height-wrap">
-					<div class="search-title-top-list-wrap">${wraper}</div>
-				</div>
-		</div>
-		`;
-			links.forEach(link => {
-				main_core.Dom.append(this.renderOtherLink(link), wraper);
+			const wrapper = main_core.Dom.create('ul', {
+				props: {
+					className: 'search-title-top-list search-title-top-list-js'
+				},
+				attrs: {
+					role: 'presentation'
+				}
+			});
+			const other = main_core.Dom.create('div', {
+				props: {
+					className: 'search-title-top-block search-title-top-block-tools'
+				},
+				children: [main_core.Dom.create('div', {
+					props: {
+						className: 'search-title-top-subtitle'
+					},
+					children: [main_core.Dom.create('div', {
+						props: {
+							className: 'search-title-top-subtitle-text'
+						},
+						text: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_SEARCH_IN')
+					})]
+				}), main_core.Dom.create('div', {
+					props: {
+						className: 'search-title-top-list-height-wrap'
+					},
+					children: [main_core.Dom.create('div', {
+						props: {
+							className: 'search-title-top-list-wrap'
+						},
+						children: [wrapper]
+					})]
+				})]
+			});
+			links.forEach((link, index) => {
+				main_core.Dom.append(this.renderOtherLink(link, index), wrapper);
 			});
 			return other;
 		}
-		renderOtherLink(link) {
-			const linkTag = main_core.Dom.create('a', {
+		renderOtherLink(link, index) {
+			const linkTag = this.#createExternalLink(link.link, link.title, `intranet-settings-search-other-${index}`);
+			return this.#createOptionItem(linkTag);
+		}
+		#createResultText(title) {
+			return main_core.Dom.create('span', {
 				props: {
-					className: 'search-title-top-item-link'
+					className: 'search-title-top-item-text'
 				},
-				events: {
-					mouseenter: event => {
-						this.#nav.unHighlightAll();
-						this.#nav.cursorTo(event.target);
-						SearchNavigation.highlight(event.target);
-					},
-					mouseleave: event => {
-						SearchNavigation.unHighlight(event.target);
-					}
-				},
-				attrs: {
-					title: link.title,
-					href: link.link,
-					target: 'blank_'
-				},
-				children: [main_core.Tag.render`<span class="search-title-top-item-text"><span>${link.title}</span></span>`]
+				children: [main_core.Dom.create('span', {
+					text: title
+				})]
 			});
-			this.#nav.add(linkTag);
-			return main_core.Tag.render`
-		<div class="search-title-top-item search-title-top-item-js">
-			${linkTag}
-		</div>`;
 		}
-	}
-	class SearchNavigation {
-		#index = null;
-		#elementList;
-		constructor(nodeList = []) {
-			this.#elementList = nodeList;
-		}
-		add(element) {
-			this.#elementList.push(element);
-		}
-		clean() {
-			this.#index = null;
-			this.#elementList = [];
-		}
-		next() {
-			if (main_core.Type.isNil(this.#index)) {
-				this.#index = 0;
-				return this;
+		#createExternalLink(url, title, testId, optionId = null) {
+			const href = this.#getSafeHref(url);
+			const props = {
+				className: 'search-title-top-item-link'
+			};
+			const attrs = {
+				title,
+				'data-testid': testId
+			};
+			const children = [this.#createResultText(title)];
+			if (!href) {
+				return main_core.Dom.create('span', {
+					props,
+					attrs,
+					children
+				});
 			}
-			if (this.#elementList.length - 1 > this.#index) {
-				this.#index++;
-			}
-			return this;
+			return main_core.Dom.create('a', {
+				props,
+				attrs: {
+					id: optionId || `${attrs['data-testid']}-option`,
+					role: 'option',
+					'aria-selected': 'false',
+					tabindex: '-1',
+					title: attrs.title,
+					'data-testid': attrs['data-testid'],
+					href,
+					target: '_blank',
+					rel: 'noopener'
+				},
+				children
+			});
 		}
-		current() {
-			if (main_core.Type.isNil(this.#index)) {
+		#createInternalHref(page, optionCode) {
+			const params = new URLSearchParams();
+			params.set('page', page);
+			if (main_core.Type.isStringFilled(optionCode)) {
+				params.set('option', optionCode);
+			}
+			return `?${params.toString()}`;
+		}
+		#getSafeHref(url) {
+			if (!main_core.Type.isStringFilled(url)) {
 				return null;
 			}
-			return this.#elementList[this.#index];
-		}
-		prev() {
-			if (main_core.Type.isNil(this.#index)) {
-				this.#index = this.#elementList.length - 1;
-				return this;
+			const value = url.trim();
+			if (this.#hasControlCharacters(value)) {
+				return null;
 			}
-			if (this.#index > 0) {
-				this.#index -= 1;
-			}
-			return this;
-		}
-		highlight() {
-			this.unHighlightAll();
-			if (!main_core.Dom.hasClass(this.current(), 'active')) {
-				main_core.Dom.addClass(this.current(), 'active');
-			}
-			return this;
-		}
-		unHighlight() {
-			if (main_core.Dom.hasClass(this.current(), 'active')) {
-				main_core.Dom.removeClass(this.current(), 'active');
-			}
-			return this;
-		}
-		static highlight(element) {
-			element.classList.add('active');
-		}
-		static unHighlight(element) {
-			element.classList.remove('active');
-		}
-		cursorTo(element) {
-			this.#elementList.forEach((item, index) => {
-				if (item === element) {
-					this.#index = index;
-					return;
+			try {
+				const parsedUrl = new URL(value, window.location.origin);
+				if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+					return null;
 				}
-			});
+			} catch {
+				return null;
+			}
+			return value;
 		}
-		unHighlightAll() {
-			this.#elementList.forEach(item => {
-				SearchNavigation.unHighlight(item);
-			});
+		#isPrimaryUnmodifiedClick(event) {
+			return event.button === 0 && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+		}
+		#normalizeTestId(value) {
+			if (!main_core.Type.isStringFilled(value)) {
+				return 'item';
+			}
+			return value.toLowerCase().replaceAll(/[^\d_a-z-]+/g, '-').replaceAll(/^-+|-+$/g, '') || 'item';
+		}
+		#hasControlCharacters(value) {
+			for (const char of value) {
+				const charCode = char.codePointAt(0);
+				if (charCode < 32 || charCode === 127) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -5100,6 +5952,16 @@ this.BX = this.BX || {};
 		#navigator;
 		#permission;
 		#pagesPermission;
+		#menuA11yCleanups = [];
+		#onSliderDestroyHandler = null;
+		#onPageCompleteHandler = null;
+		#onContentFetchedHandler = null;
+		#pageBaselines = new Map();
+		#dirtyPages = new Set();
+		#pendingNavigationRequest = null;
+		#menuNavigationNode = null;
+		#liveStatusNode = null;
+		#liveAlertNode = null;
 		#extraSettings = {
 			reloadAfterClose: false
 		};
@@ -5124,6 +5986,8 @@ this.BX = this.BX || {};
 			this.#menuNode = main_core.Type.isDomNode(params.menuNode) ? params.menuNode : null;
 			this.#settingsNode = main_core.Type.isDomNode(params.settingsNode) ? params.settingsNode : null;
 			this.#contentNode = main_core.Type.isDomNode(params.contentNode) ? params.contentNode : null;
+			this.#liveStatusNode = main_core.Type.isDomNode(params.liveStatusNode) ? params.liveStatusNode : null;
+			this.#liveAlertNode = main_core.Type.isDomNode(params.liveAlertNode) ? params.liveAlertNode : null;
 			this.#basePage = main_core.Type.isString(params.basePage) ? params.basePage : '';
 			this.#permission = params.permission instanceof Permission ? params.permission : new Permission();
 			this.#pagesPermission = params.pagesPermission;
@@ -5140,20 +6004,250 @@ this.BX = this.BX || {};
 				toolsMenuItem.setDefaultToggleButtonName();
 			}
 			this.#navigator = new Navigation(this);
+			this.#onPageCompleteHandler = this.#onPageComplete.bind(this);
+			main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onPageComplete', this.#onPageCompleteHandler);
+			this.#onContentFetchedHandler = this.#onContentFetched.bind(this);
+			main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onContentFetched', this.#onContentFetchedHandler);
 			if (this.#menuNode) {
-				this.#menuNode.querySelectorAll('li.ui-sidepanel-menu-item a.ui-sidepanel-menu-link').forEach(item => {
-					const helpPopup = new ui_section.HelpMessage(item.dataset.type + '_help-msg', item, main_core.Loc.getMessage('INTRANET_SETTINGS_PERMISSION_MSG'));
-					helpPopup.getPopup().setWidth(275);
-					const page = this.getNavigator().getPageByType(item.dataset.type);
-					item.addEventListener('click', event => {
-						if (page?.getPermission()?.canRead()) {
-							this.show(item.dataset.type);
-						} else {
-							helpPopup.show();
+				this.#adaptMenuLinksClick();
+				this.#adaptMenuA11y();
+			}
+		}
+		#adaptMenuLinksClick() {
+			if (!main_core.Type.isDomNode(this.#menuNode)) {
+				return;
+			}
+			this.#menuNode.querySelectorAll('li.ui-sidepanel-menu-item a.ui-sidepanel-menu-link').forEach(linkNode => {
+				const item = linkNode;
+				if (item.dataset.a11yClickAdapted === 'true') {
+					return;
+				}
+				const helpPopup = new ui_section.HelpMessage(`${item.dataset.type}_help-msg`, item, main_core.Loc.getMessage('INTRANET_SETTINGS_PERMISSION_MSG'));
+				helpPopup.getPopup().setWidth(275);
+				const page = this.getNavigator().getPageByType(item.dataset.type);
+				const nativeNavigationHandler = event => {
+					if (page?.getPermission()?.canRead() && this.#isNativeNavigationEvent(event)) {
+						event.stopImmediatePropagation();
+					}
+				};
+				const clickHandler = event => {
+					if (!page?.getPermission()?.canRead()) {
+						event.preventDefault();
+						helpPopup.show();
+						return;
+					}
+					if (this.#isNativeNavigationEvent(event)) {
+						return;
+					}
+					event.preventDefault();
+					this.show(item.dataset.type, {
+						userInitiated: true,
+						focusTarget: {
+							type: 'page'
 						}
 					});
+				};
+				main_core.Event.bind(item, 'click', nativeNavigationHandler, true);
+				main_core.Event.bind(item, 'click', clickHandler);
+				this.#menuA11yCleanups.push(() => {
+					main_core.Event.unbind(item, 'click', nativeNavigationHandler, true);
+					main_core.Event.unbind(item, 'click', clickHandler);
+					delete item.dataset.a11yClickAdapted;
+				});
+				item.dataset.a11yClickAdapted = 'true';
+			});
+		}
+		#adaptMenuA11y() {
+			if (!main_core.Type.isDomNode(this.#menuNode) || this.#menuNode.dataset.a11yAdapted === 'true') {
+				return;
+			}
+			this.#ensureMenuNavigation();
+			main_core.Dom.attr(this.#menuNode, {
+				'data-testid': 'intranet-settings-menu-root'
+			});
+			this.#menuNode.dataset.a11yAdapted = 'true';
+			this.#menuNode.querySelectorAll('a.ui-sidepanel-menu-link[data-type]').forEach(link => {
+				if (!this.getNavigator().getPageByType(link.dataset.type)?.getPermission()?.canRead()) {
+					link.removeAttribute('href');
+					link.setAttribute('aria-disabled', 'true');
+				}
+			});
+			this.#syncMenuCurrentItem();
+			this.#adaptMenuDisclosure('tools');
+			this.#onSliderDestroyHandler = this.#destroyMenuA11y.bind(this);
+			main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onDestroy', this.#onSliderDestroyHandler);
+		}
+		#ensureMenuNavigation() {
+			if (!main_core.Type.isDomNode(this.#menuNode)) {
+				return;
+			}
+			const parentNode = this.#menuNode.parentElement;
+			if (main_core.Type.isDomNode(parentNode) && parentNode.matches('nav.intranet-settings__menu-navigation')) {
+				this.#menuNavigationNode = parentNode;
+			} else {
+				const navigationNode = document.createElement('nav');
+				navigationNode.className = 'intranet-settings__menu-navigation';
+				main_core.Dom.insertBefore(navigationNode, this.#menuNode);
+				main_core.Dom.append(this.#menuNode, navigationNode);
+				this.#menuNavigationNode = navigationNode;
+				this.#menuA11yCleanups.push(() => {
+					if (main_core.Type.isDomNode(this.#menuNavigationNode) && main_core.Type.isDomNode(this.#menuNode)) {
+						main_core.Dom.insertBefore(this.#menuNode, this.#menuNavigationNode);
+						main_core.Dom.remove(this.#menuNavigationNode);
+						this.#menuNavigationNode = null;
+					}
 				});
 			}
+			const navigationNode = this.#menuNavigationNode;
+			if (main_core.Type.isDomNode(navigationNode)) {
+				main_core.Dom.attr(navigationNode, {
+					'aria-label': main_core.Loc.getMessage('INTRANET_SETTINGS_MENU_NAVIGATION_LABEL'),
+					'data-testid': 'intranet-settings-menu-navigation'
+				});
+			}
+		}
+		#adaptMenuDisclosure(type) {
+			const link = this.#getMenuLinkByType(type);
+			const menuItem = main_core.Type.isDomNode(link) ? BX.UI.DropdownMenuItem.getItemByNode(link) : null;
+			if (!main_core.Type.isDomNode(link) || !menuItem?.subItems || menuItem.subItems.length === 0) {
+				return;
+			}
+			const submenu = menuItem.submenu;
+			if (!main_core.Type.isDomNode(submenu)) {
+				return;
+			}
+			const legacyToggle = link.querySelector('.ui-sidepanel-toggle-btn');
+			if (main_core.Type.isDomNode(legacyToggle)) {
+				main_core.Dom.remove(legacyToggle);
+			}
+			const disclosure = this.#getMenuDisclosureButton(link, type);
+			const itemText = this.#getMenuItemText(link);
+			const clickHandler = event => {
+				menuItem.showSubmenuHandler(event);
+				this.#syncMenuDisclosure(menuItem, disclosure, itemText);
+			};
+			if (disclosure.dataset.a11yAdapted !== 'true') {
+				main_core.Event.bind(disclosure, 'click', clickHandler);
+				this.#menuA11yCleanups.push(() => main_core.Event.unbind(disclosure, 'click', clickHandler));
+				disclosure.dataset.a11yAdapted = 'true';
+			}
+			const submenuId = `intranet-settings-menu-submenu-${type}`;
+			submenu.id = submenu.id || submenuId;
+			main_core.Dom.attr(disclosure, {
+				'aria-controls': submenu.id,
+				'data-testid': `intranet-settings-menu-disclosure-${type}`
+			});
+			this.#syncMenuDisclosure(menuItem, disclosure, itemText);
+		}
+		#getMenuDisclosureButton(link, type) {
+			const item = link.parentElement;
+			let disclosure = item?.querySelector(`.intranet-settings__menu-disclosure[data-type="${type}"]`);
+			if (!main_core.Type.isDomNode(disclosure)) {
+				disclosure = document.createElement('button');
+				disclosure.type = 'button';
+				disclosure.className = 'ui-sidepanel-toggle-btn intranet-settings__menu-disclosure';
+				disclosure.dataset.type = type;
+				main_core.Dom.insertAfter(disclosure, link);
+				this.#menuA11yCleanups.push(() => main_core.Dom.remove(disclosure));
+			}
+			return disclosure;
+		}
+		#syncMenuDisclosure(menuItem, disclosure, itemText = '') {
+			const isOpen = menuItem.submenuOpen === true;
+			const disclosureNode = disclosure;
+			const labelMessage = main_core.Loc.getMessage(isOpen ? 'INTRANET_SETTINGS_MENU_COLLAPSE' : 'INTRANET_SETTINGS_MENU_EXPAND', {
+				'#TITLE#': itemText
+			});
+			const buttonText = isOpen ? BX.Loc.getMessage('UI_SIDEPANEL_MENU_BUTTON_CLOSE') : BX.Loc.getMessage('UI_SIDEPANEL_MENU_BUTTON_OPEN');
+			disclosureNode.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+			disclosureNode.setAttribute('aria-label', labelMessage || itemText);
+			disclosureNode.textContent = main_core.Type.isString(buttonText) ? buttonText : '';
+			const submenu = menuItem.submenu;
+			if (main_core.Type.isDomNode(submenu)) {
+				submenu.inert = !isOpen;
+				submenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+			}
+		}
+		#syncMenuCurrentItem() {
+			if (!main_core.Type.isDomNode(this.#menuNode)) {
+				return;
+			}
+			const currentPageType = this.getCurrentPage()?.getType();
+			let currentFound = false;
+			this.#menuNode.querySelectorAll('a.ui-sidepanel-menu-link[aria-current]').forEach(link => {
+				link.removeAttribute('aria-current');
+			});
+			this.#menuNode.querySelectorAll('a.ui-sidepanel-menu-link[data-type]').forEach(link => {
+				const item = link.parentElement;
+				const isCurrentPage = main_core.Type.isStringFilled(currentPageType) ? link.dataset.type === currentPageType : main_core.Type.isDomNode(item) && main_core.Dom.hasClass(item, 'ui-sidepanel-menu-active');
+				if (!currentFound && isCurrentPage) {
+					link.setAttribute('aria-current', 'page');
+					currentFound = true;
+				}
+			});
+			this.#syncMenuDisclosureByType('tools');
+		}
+		#syncMenuDisclosureByType(type) {
+			const link = this.#getMenuLinkByType(type);
+			const disclosure = link?.parentElement?.querySelector(`.intranet-settings__menu-disclosure[data-type="${type}"]`);
+			const menuItem = main_core.Type.isDomNode(link) ? BX.UI.DropdownMenuItem.getItemByNode(link) : null;
+			if (main_core.Type.isDomNode(disclosure) && menuItem) {
+				this.#syncMenuDisclosure(menuItem, disclosure, main_core.Type.isDomNode(link) ? this.#getMenuItemText(link) : '');
+			}
+		}
+		#destroyMenuA11y(event) {
+			if (!this.#isCurrentSliderEvent(event)) {
+				return;
+			}
+			this.#menuA11yCleanups.forEach(cleanup => cleanup());
+			this.#menuA11yCleanups = [];
+			this.#pendingNavigationRequest = null;
+			if (main_core.Type.isDomNode(this.#menuNode)) {
+				delete this.#menuNode.dataset.a11yAdapted;
+				this.#menuNode.removeAttribute('data-testid');
+			}
+			if (this.#onSliderDestroyHandler) {
+				main_core_events.EventEmitter.unsubscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onDestroy', this.#onSliderDestroyHandler);
+				this.#onSliderDestroyHandler = null;
+			}
+			if (this.#onPageCompleteHandler) {
+				main_core_events.EventEmitter.unsubscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onPageComplete', this.#onPageCompleteHandler);
+				this.#onPageCompleteHandler = null;
+			}
+			if (this.#onContentFetchedHandler) {
+				main_core_events.EventEmitter.unsubscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onContentFetched', this.#onContentFetchedHandler);
+				this.#onContentFetchedHandler = null;
+			}
+			this.#pageBaselines.clear();
+			this.#dirtyPages.clear();
+		}
+		#isCurrentSliderEvent(event) {
+			if (!event) {
+				return true;
+			}
+			const [panelEvent] = event.getCompatData();
+			const slider = panelEvent?.slider;
+			if (!slider) {
+				return false;
+			}
+			const frameWindow = main_core.Type.isFunction(slider.getFrameWindow) ? slider.getFrameWindow() : null;
+			if (frameWindow === window) {
+				return true;
+			}
+			const frame = main_core.Type.isFunction(slider.getFrame) ? slider.getFrame() : null;
+			return main_core.Type.isDomNode(frame) && frame.contentWindow === window;
+		}
+		#getMenuLinkByType(type) {
+			if (!main_core.Type.isDomNode(this.#menuNode)) {
+				return null;
+			}
+			return [...this.#menuNode.querySelectorAll('a.ui-sidepanel-menu-link[data-type]')].find(link => link.dataset.type === type);
+		}
+		#getMenuItemText(link) {
+			return link.querySelector('.ui-sidepanel-menu-link-text')?.textContent?.trim() || link.textContent.trim();
+		}
+		#isNativeNavigationEvent(event) {
+			return event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
 		}
 		registerPage(page) {
 			page.setParentElement(this);
@@ -5177,7 +6271,13 @@ this.BX = this.BX || {};
 				return;
 			}
 			const nextPage = this.getNavigator().getPageByType(type);
+			const showOptions = this.#normalizeShowOptions(option);
+			this.#requestNavigation(nextPage, showOptions);
 			if (this.getCurrentPage() === nextPage) {
+				this.#syncMenuCurrentItem();
+				if (nextPage.hasContent()) {
+					this.#applyPendingNavigationRequest(nextPage);
+				}
 				return;
 			}
 			this.getNavigator().changePage(nextPage);
@@ -5194,16 +6294,122 @@ this.BX = this.BX || {};
 				source: this,
 				page: nextPage
 			});
-			if (main_core.Type.isString(option) && option !== '') {
-				main_core_events.EventEmitter.subscribeOnce(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onPageComplete', () => {
-					console.log(option);
-					this.getNavigator().moveTo(nextPage, option);
-				});
+			if (nextPage.hasContent()) {
+				this.#applyPendingNavigationRequest(nextPage);
 			}
+		}
+		#normalizeShowOptions(option) {
+			if (main_core.Type.isStringFilled(option)) {
+				return {
+					moveTo: option,
+					userInitiated: false,
+					focusTarget: null
+				};
+			}
+			if (main_core.Type.isPlainObject(option)) {
+				return option;
+			}
+			return {
+				moveTo: null,
+				userInitiated: false,
+				focusTarget: null
+			};
+		}
+		#requestNavigation(page, showOptions) {
+			const moveTo = main_core.Type.isStringFilled(showOptions.moveTo) ? showOptions.moveTo : null;
+			const focusTarget = showOptions.userInitiated === true && main_core.Type.isPlainObject(showOptions.focusTarget) ? showOptions.focusTarget : null;
+			if (!(page instanceof ui_formElements_field.BaseSettingsPage)) {
+				this.#pendingNavigationRequest = null;
+				return;
+			}
+			if (!main_core.Type.isStringFilled(moveTo) && !focusTarget) {
+				if (this.#pendingNavigationRequest?.pageType !== page.getType()) {
+					this.#pendingNavigationRequest = null;
+				}
+				return;
+			}
+			this.#pendingNavigationRequest = {
+				pageType: page.getType(),
+				moveTo,
+				focusTarget
+			};
+		}
+		#onPageComplete(event) {
+			this.#applyPendingNavigationRequest(event.data.page);
+		}
+		#applyPendingNavigationRequest(page) {
+			const pendingRequest = this.#pendingNavigationRequest;
+			if (!(page instanceof ui_formElements_field.BaseSettingsPage) || !pendingRequest || pendingRequest.pageType !== page.getType() || this.getCurrentPage() !== page || !page.getPage().isConnected) {
+				return;
+			}
+			this.#pendingNavigationRequest = null;
+			if (main_core.Type.isStringFilled(pendingRequest.moveTo)) {
+				this.getNavigator().moveTo(page, pendingRequest.moveTo);
+			}
+			if (!pendingRequest.focusTarget) {
+				return;
+			}
+			if (pendingRequest.focusTarget.type === 'field') {
+				if (!this.getNavigator().moveTo(page, pendingRequest.focusTarget.fieldName, true)) {
+					this.getNavigator().focusPageTitle(page);
+				}
+				return;
+			}
+			if (pendingRequest.focusTarget.type === 'error') {
+				if (!this.getNavigator().moveTo(page, pendingRequest.focusTarget.fieldName, true)) {
+					this.#focusErrorSummary(page, pendingRequest.focusTarget.message);
+				}
+				return;
+			}
+			this.getNavigator().focusPageTitle(page);
+		}
+		#focusErrorSummary(page, message) {
+			const pageNode = page.getPage();
+			let summaryNode = pageNode.querySelector('.intranet-settings__save-error-summary');
+			if (!main_core.Type.isDomNode(summaryNode)) {
+				summaryNode = main_core.Dom.create('div', {
+					props: {
+						className: 'intranet-settings__save-error-summary',
+						tabIndex: -1
+					},
+					attrs: {
+						'aria-live': 'off'
+					}
+				});
+				main_core.Dom.prepend(summaryNode, pageNode);
+			}
+			summaryNode.textContent = main_core.Type.isStringFilled(message) ? message : main_core.Loc.getMessage('INTRANET_SETTINGS_ERROR_FETCH_DATA');
+			this.getNavigator().focusNode(summaryNode);
+		}
+		#clearErrorSummaries() {
+			if (!main_core.Type.isDomNode(this.#contentNode)) {
+				return;
+			}
+			this.#contentNode.querySelectorAll('.intranet-settings__save-error-summary').forEach(summaryNode => main_core.Dom.remove(summaryNode));
+		}
+		#announceStatus(message) {
+			this.#setLiveText(this.#liveAlertNode, '');
+			this.#setLiveText(this.#liveStatusNode, message);
+		}
+		#announceAlert(message) {
+			this.#setLiveText(this.#liveStatusNode, '');
+			this.#setLiveText(this.#liveAlertNode, message);
+		}
+		#setLiveText(node, message) {
+			if (!main_core.Type.isDomNode(node) || node.textContent === (message || '')) {
+				return;
+			}
+			const liveNode = node;
+			liveNode.textContent = message || '';
+		}
+		#clearLiveRegions() {
+			this.#setLiveText(this.#liveStatusNode, '');
+			this.#setLiveText(this.#liveAlertNode, '');
 		}
 		activateMenuItem(type) {
 			const menuItem = BX.UI.DropdownMenuItem.getItemByNode(this.#menuNode.querySelector(`a.ui-sidepanel-menu-link[data-type="${type}"]`));
 			menuItem && menuItem.setActiveHandler();
+			this.#syncMenuCurrentItem();
 		}
 		#getPageManager() {
 			if (!this.#pageManager) {
@@ -5232,6 +6438,7 @@ this.BX = this.BX || {};
 							click: () => {
 								main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onCancel', {});
 								panelEvent.slider.getData().set('ignoreChanges', true);
+								this.#dirtyPages.clear();
 								this.isChanged = false;
 								BX.UI.ButtonPanel.hide();
 								this.#cancelMessageBox.close();
@@ -5275,10 +6482,52 @@ this.BX = this.BX || {};
 			if (!this.#permission.canEdit()) {
 				return;
 			}
-			this.isChanged = true;
-			BX.UI.ButtonPanel.show();
+			const page = event?.getData()?.source;
+			if (!(page instanceof ui_formElements_field.BaseSettingsPage)) {
+				this.isChanged = true;
+				BX.UI.ButtonPanel.show();
+				return;
+			}
+			const type = page.getType();
+			if (this.#pageBaselines.get(type) === this.#getPageState(page)) {
+				this.#dirtyPages.delete(type);
+			} else {
+				this.#dirtyPages.add(type);
+			}
+			this.#syncChangedState();
+		}
+		#onContentFetched(event) {
+			const page = event?.getData()?.page;
+			if (!(page instanceof ui_formElements_field.BaseSettingsPage) || !this.#getPageManager().getPages().includes(page)) {
+				return;
+			}
+			this.#captureBaseline(page);
+		}
+		#captureBaseline(page) {
+			const state = this.#getPageState(page);
+			if (state === null) {
+				return;
+			}
+			this.#pageBaselines.set(page.getType(), state);
+			this.#dirtyPages.delete(page.getType());
+		}
+		#getPageState(page) {
+			if (!page.hasData() || !main_core.Type.isDomNode(page.getFormNode())) {
+				return null;
+			}
+			return JSON.stringify(PageManager.getFormData(page.getFormNode()) ?? null);
+		}
+		#syncChangedState() {
+			this.isChanged = this.#dirtyPages.size > 0;
+			if (this.isChanged) {
+				BX.UI.ButtonPanel.show();
+			} else {
+				BX.UI.ButtonPanel.hide();
+			}
 		}
 		#onClickSaveBtn(event) {
+			this.#clearErrorSummaries();
+			this.#clearLiveRegions();
 			let data = this.#getPageManager().collectData();
 			main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onBeforeSave', {
 				data: data
@@ -5291,19 +6540,42 @@ this.BX = this.BX || {};
 		}
 		#successSaveHandler(response) {
 			this.#extraSettings.reloadAfterClose = true;
+			this.#getPageManager().getPages().forEach(page => this.#captureBaseline(page));
+			this.#dirtyPages.clear();
 			this.isChanged = false;
 			this.#hideWaitIcon();
 			BX.UI.ButtonPanel.hide();
+			this.#clearErrorSummaries();
+			this.#announceStatus(main_core.Loc.getMessage('INTRANET_SETTINGS_SAVE_SUCCESS'));
 			main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onSuccessSave', this.#extraSettings);
 		}
 		#failSaveHandler(response) {
 			let errorCollection = this.#prepareErrorCollection(response.errors);
+			const saveErrorMessage = this.#getSaveErrorMessage(errorCollection);
 			this.#hideWaitIcon();
+			this.#announceAlert(saveErrorMessage);
 			main_core_events.EventEmitter.emit('BX.UI.FormElement.Field:onFailedSave', {
 				errors: errorCollection
 			});
 			let pageType = this.#selectPageForError(errorCollection);
-			this.show(pageType);
+			if (!main_core.Type.isStringFilled(pageType)) {
+				const currentPage = this.getCurrentPage();
+				if (currentPage instanceof ui_formElements_field.BaseSettingsPage) {
+					this.#focusErrorSummary(currentPage, saveErrorMessage);
+				}
+				return;
+			}
+			this.show(pageType, {
+				userInitiated: true,
+				focusTarget: {
+					type: 'error',
+					fieldName: this.#selectFieldForError(errorCollection[pageType]),
+					message: saveErrorMessage
+				}
+			});
+		}
+		#getSaveErrorMessage(errorCollection) {
+			return Object.keys(errorCollection).length > 0 ? main_core.Loc.getMessage('INTRANET_SETTINGS_SAVE_ERROR') : main_core.Loc.getMessage('INTRANET_SETTINGS_ERROR_FETCH_DATA');
 		}
 		#prepareErrorCollection(rawErrors) {
 			let errorCollection = {};
@@ -5311,7 +6583,6 @@ this.BX = this.BX || {};
 				let type = error.customData?.page;
 				let field = error.customData?.field;
 				if (main_core.Type.isNil(type) || main_core.Type.isNil(field)) {
-					ui_formElements_field.ErrorCollection.showSystemError(main_core.Loc.getMessage('INTRANET_SETTINGS_ERROR_FETCH_DATA'));
 					break;
 				}
 				if (main_core.Type.isNil(errorCollection[type])) {
@@ -5335,6 +6606,16 @@ this.BX = this.BX || {};
 			for (let pageType in errors) {
 				return pageType;
 			}
+			return null;
+		}
+		#selectFieldForError(pageErrors) {
+			if (!main_core.Type.isPlainObject(pageErrors)) {
+				return null;
+			}
+			for (const fieldName in pageErrors) {
+				return fieldName;
+			}
+			return null;
 		}
 	}
 

@@ -9,7 +9,7 @@
 	height: 394px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding-bottom: 46px;
+	padding-bottom: var(--im-emote-popup__footer_height);
 	background-color: var(--ui-color-bg-vibrant-less);
 }
 

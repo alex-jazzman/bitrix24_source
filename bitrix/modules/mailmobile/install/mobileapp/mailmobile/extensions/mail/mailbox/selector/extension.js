@@ -19,8 +19,10 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 	const { selectMailboxesSortedById } = require('mail/statemanager/redux/slices/mailboxes/selector');
 	const { selectTotalUnreadCount } = require('mail/statemanager/redux/slices/folders/selector');
 	const { MailDialog } = require('mail/dialog');
+	const { Connector } = require('mail/mailbox/connector');
 	const { MoreMenu } = require('mail/mailbox/selector/src/more-menu');
-	const { Corner, Color } = require('tokens');
+	const { Corner, Color, Indent } = require('tokens');
+	const { Text2, Text4, Text5 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const {
 		Button,
@@ -86,7 +88,7 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						paddingBottom: 22,
+						paddingBottom: Indent.XL4.toNumber(),
 					},
 				},
 				mailboxButton,
@@ -161,15 +163,39 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 
 		openMailboxConnector()
 		{
-			MailDialog.show({
-				type: MailDialog.CONNECTING_MAIL_TYPE,
-				parentWidget: this.parentWidget,
-				successCallback: (id) => {
-					this.parentWidget.close(() => {
-						BX.postComponentEvent('Mail.Mailbox::significantChangesInStructure', [id]);
-					});
-				},
-			});
+			const successCallback = (id) => {
+				this.parentWidget.close(() => {
+					BX.postComponentEvent('Mail.Mailbox::significantChangesInStructure', [id]);
+				});
+			};
+
+			const openConnectorDirectly = () => {
+				(new Connector({
+					connectFrom: 'mail',
+					parentWidget: this.parentWidget,
+					successCallback,
+					startStepId: 'servicesList',
+					createBitrixEnabled: false,
+				})).show();
+			};
+
+			BX.ajax.runAction(AjaxMethod.getCreateBitrixMailboxState, {})
+				.then(({ data }) => {
+					if (data?.enabled === true)
+					{
+						MailDialog.show({
+							type: MailDialog.CREATE_MAILBOX_CHOICE_TYPE,
+							parentWidget: this.parentWidget,
+							successCallback,
+							createBitrixEnabled: true,
+						});
+					}
+					else
+					{
+						openConnectorDirectly();
+					}
+				})
+				.catch(openConnectorDirectly);
 		}
 
 		renderMailboxesList(mailboxes = [])
@@ -231,7 +257,7 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						paddingTop: 12,
+						paddingTop: Indent.XL.toNumber(),
 						width: '100%',
 					},
 				},
@@ -240,8 +266,8 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 					{
 						style: {
 							width: '100%',
-							paddingLeft: 18,
-							paddingRight: 18,
+							paddingLeft: Indent.XL3.toNumber(),
+							paddingRight: Indent.XL3.toNumber(),
 						},
 					},
 					Button({
@@ -337,12 +363,12 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 					flexDirection: 'row',
 					height: 73,
 					alignItems: 'center',
-					paddingLeft: 18,
-					paddingRight: 18,
-					paddingTop: 16,
-					paddingBottom: 15,
-					marginLeft: 18,
-					marginRight: 18,
+					paddingLeft: Indent.XL3.toNumber(),
+					paddingRight: Indent.XL3.toNumber(),
+					paddingTop: Indent.XL3.toNumber(),
+					paddingBottom: Indent.XL2.toNumber(),
+					marginLeft: Indent.XL3.toNumber(),
+					marginRight: Indent.XL3.toNumber(),
 					...(isSelected ? {
 						backgroundColor: Color.accentSoftBlue3.toHex(),
 						borderColor: Color.accentSoftBorderBlue.toHex(),
@@ -359,25 +385,25 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			View(
 				{
 					style: {
-						marginLeft: 12,
+						marginLeft: Indent.XL.toNumber(),
 					},
 				},
-				Text({
+				Text2({
+					testId: 'mailmobile-mailbox-selector-item-name',
+					color: isSelected ? Color.accentMainPrimary : Color.base1,
 					style: {
-						color: isSelected ? Color.accentMainPrimary.toHex() : Color.base1.toHex(),
-						fontSize: 17,
-						fontWeight: '400',
 						maxWidth: 161,
 					},
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: name,
 				}),
-				Text({
+				Text4({
+					testId: 'mailmobile-mailbox-selector-item-email',
+					color: isSelected ? Color.base1 : Color.base3,
+					accent: isSelected,
 					style: {
-						color: isSelected ? Color.base1.toHex() : Color.base3.toHex(),
 						maxWidth: 161,
-						fontWeight: isSelected ? '500' : '400',
 					},
 					numberOfLines: 1,
 					ellipsize: 'end',
@@ -395,25 +421,24 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			&& View(
 				{
 					style: {
-						marginRight: 12,
-						marginLeft: 12,
-						height: 18,
+						marginRight: Indent.XL.toNumber(),
+						marginLeft: Indent.XL.toNumber(),
 						minWidth: 20,
 						borderRadius: 50,
 						backgroundColor: (isSelected && count !== '') ? Color.accentMainPrimary.toHex() : 'transparent',
 					},
 				},
-				Text({
+				Text5({
+					testId: 'mailmobile-mailbox-selector-item-counter',
 					text: String(count),
+					numberOfLines: 1,
+					ellipsize: 'end',
+					accent: true,
+					color: isSelected ? Color.baseWhiteFixed : Color.base3,
 					style: {
-						ellipsize: 'end',
-						numberOfLines: 1,
 						textAlign: 'center',
 						paddingVertical: 1,
-						paddingHorizontal: 6,
-						color: isSelected ? Color.baseWhiteFixed.toHex() : Color.base3.toHex(),
-						fontSize: 13,
-						fontWeight: '500',
+						paddingHorizontal: Indent.S.toNumber(),
 					},
 				}),
 			),

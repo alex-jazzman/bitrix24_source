@@ -96,4 +96,9 @@ export const settingsFieldsConfig: FieldsConfig = [
 		targetFieldName: Settings.user.status,
 		checkFunction: Type.isString,
 	},
+	{
+		fieldName: Settings.message.defaultReaction,
+		targetFieldName: Settings.message.defaultReaction,
+		checkFunction: Type.isString,
+	},
 ];

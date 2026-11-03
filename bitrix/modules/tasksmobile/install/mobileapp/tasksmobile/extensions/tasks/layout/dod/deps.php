@@ -19,6 +19,7 @@ return [
 		'ui-system/form/buttons/button',
 		'utils/object',
 		'tasks:checklist',
+		'tasks:checklist/enum',
 		'tasks:layout/checklist/preview',
 	],
 	'bundle' => [

@@ -1,0 +1,520 @@
+/* No padding and no gap of its own: the sections are told apart by rules drawn edge to edge of the
+   card, so each one carries its own insets instead. */
+.bizprocdesigner-expression-builder {
+	display: flex;
+	flex-direction: column;
+	/* Floor for the layout, capped by the popup width JS gives it: a window too narrow for the
+	   popup gets a narrower one, and the content must not stick out of it. */
+	min-width: min(340px, 100%);
+	box-sizing: border-box;
+	/* No height of its own: the window is as tall as its content asks for, so a tall screen does
+	   not stretch it and a low one does not squeeze it. It stops at the lower of two ceilings:
+	   its own 560px and the room the trigger leaves on the side the window is bound by, i.e. the roomier
+	   of the two sides while the window is below the trigger, the room above once it has moved
+	   above and latched there (--eb-max-height from JS, see popup-fit.js; `calc` covers the first
+	   paint, before the measurement runs).
+	   560 is the card of the layout (305 to 345 by its three states) plus the list block the modes
+	   with a list add under it: the search row and the 200px ceiling of the list itself
+	   (source-list.css). Past that the window would read as a sheet rather than as a card.
+	   overflow:hidden and no scroll here: what scrolls is __content, so the footer is never
+	   clipped and there is no second scrollbar. */
+	max-height: min(560px, var(--eb-max-height, calc(100vh - 32px)));
+	overflow: hidden;
+}
+
+/* Everything above the footer. Takes the height its content asks for, and once the window is at
+   its ceiling - a long list, a low browser window - it is what scrolls: the footer stands below it
+   and stays whole in any position of the window. */
+.bizprocdesigner-expression-builder__content {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+}
+
+/* A titled section of the window: its title and what it explains read as one block, so they sit
+   closer to each other than the insets of the section. The modes section holds the chips and the
+   hint of the current mode; the formula section holds the chain of the current mode and the note
+   under it. */
+.bizprocdesigner-expression-builder__formula-section,
+.bizprocdesigner-expression-builder__modes-section {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizprocdesigner-expression-builder__modes-section {
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md) var(--ui-space-inset-sm);
+}
+
+.bizprocdesigner-expression-builder__formula-section {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+/* Small caps of the card: its weight, leading and letter spacing come from the typography component
+   itself (the uppercase transform of the smallest text), so only the color is set here. */
+.bizprocdesigner-expression-builder__section-title {
+	color: var(--ui-color-base-4);
+}
+
+.bizprocdesigner-expression-builder__modes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* No scroll and no floor of its own: a scrolling box has a minimum height of zero, and that is
+   what let the window squeeze the mode body away. Its floor comes from what it holds - the search
+   row and several rows of the list (source-list.css), the chips of the calculator and of the
+   modification - and what does not fit scrolls in the list itself or in __content around it. */
+.bizprocdesigner-expression-builder__mode-body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+/* The functions list is the one mode body that lives outside the sections, directly under the
+   formula one, so it carries the side insets of the card itself. */
+.bizprocdesigner-expression-builder__content > .bizprocdesigner-expression-builder__mode-body {
+	padding: 0 var(--ui-space-inset-md);
+}
+
+/* Keep their own height inside the scrolling column: a flex child shrinks by default, which
+   squashes the fields and the chip rows instead of letting the column scroll. The source list is
+   the exception: it is the one child that takes the leftover room and scrolls on its own. */
+.bizprocdesigner-expression-builder__mode-body > *:not(.bizprocdesigner-expression-builder-source-list) {
+	flex: 0 0 auto;
+}
+
+.bizprocdesigner-expression-builder__hint {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}
+
+/* The operand opened for editing takes a whole row of the chain: it is a field with a visible
+   label above it and the source button beside it, and none of that fits between two chips. */
+.bizprocdesigner-expression-builder__operand {
+	flex: 1 1 100%;
+	display: flex;
+	align-items: flex-end;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder__operand .ui-ctl,
+.bizprocdesigner-expression-builder__operand > :first-child {
+	flex: 1 1 auto;
+}
+
+/* The sign is an element of the formula and not a design-system button, so its own button look is
+   reset here - the same way the chip does it for its two buttons. Its color comes from the
+   operator part of the formula palette, and that class sits on the text node inside: the
+   typography component paints a color of its own, which an inherited one would not beat.
+   The parenthesis of a group is the same kind of element - a mark of the formula that is clicked -
+   so it is reset, hovered and focused the same way. The parenthesis of a rounding call is no
+   control at all and stays a plain text node of the chain; both are painted by the depth they
+   stand at (see the --paren-depth-* parts). */
+.bizprocdesigner-expression-builder__operation-sign,
+.bizprocdesigner-expression-builder__group-bracket {
+	display: inline-flex;
+	align-items: center;
+	min-height: 28px;
+	padding: 0 var(--ui-space-inset-2xs);
+	border: none;
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+	font: inherit;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder__operation-sign:hover,
+.bizprocdesigner-expression-builder__group-bracket:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder__operation-sign:focus-visible,
+.bizprocdesigner-expression-builder__group-bracket:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* What a rounding sign reaches over: the whole chain to the left of it goes into the first argument
+   of the call, and the sign marks that prefix while it is hovered or focused (see showSignScope).
+   The soft background of the operator palette, so the mark reads as belonging to the sign that
+   raised it; it comes after the hover rules on purpose, the mark of a scope outweighing the hover of
+   a single element of it. */
+.bizprocdesigner-expression-builder__operation-sign.--scope,
+.bizprocdesigner-expression-builder__chips.--calc .bizprocdesigner-expression-builder-chip.--scope {
+	background: var(--ui-color-accent-soft-orange-2);
+}
+
+/* The value as a chain: chips with the operator sign between them, wrapping onto the next line
+   in a narrow window. The chain sits on a backdrop of its own, which reads as the field of the
+   window; the floor keeps it a block of that shape even while every chip of it is empty. */
+.bizprocdesigner-expression-builder__chips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 44px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+/* A chip of the chain: two native buttons in one shell - the body opens the layer that fills the
+   chip, the clear one empties it. Both reset the default button look here.
+   A dashed outline on the backdrop of the chain: the chip reads as a slot to fill rather than as a
+   filled tag. The height is a floor and not a fixed one - a shown value of several lines grows the
+   chip instead of spilling out of it (see __value). */
+.bizprocdesigner-expression-builder-chip {
+	display: inline-flex;
+	/* Both buttons take the full height of the chip, so their hover and focus ring cover it whole. */
+	align-items: stretch;
+	max-width: 100%;
+	min-height: 26px;
+	box-sizing: border-box;
+	border: 1px dashed var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+}
+
+.bizprocdesigner-expression-builder-chip.--disabled {
+	border-color: var(--ui-color-divider-less);
+}
+
+/* An operand inside the range picked for grouping. The border is what draws the range: a solid
+   accent one against the dashed outline of an unpicked chip, so the range reads as a block even in
+   a monochrome rendering. The pressed state of the chip button carries the same thing for a screen
+   reader (see the toggle prop of FormulaChip) - the color is never the only sign of it. */
+.bizprocdesigner-expression-builder-chip.--selected {
+	border-style: solid;
+	border-color: var(--ui-color-accent-soft-border-blue);
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+/* An operand of the calculator stands 2px taller than a chip of the other modes: it shares the row
+   with the sign of the operation, and the layout gives both of them the same height. */
+.bizprocdesigner-expression-builder__chips.--calc .bizprocdesigner-expression-builder-chip {
+	min-height: 28px;
+}
+
+/* The shell of the chip is the same whether its content is a control or a value shown as is
+   (__value, see the readonly prop of FormulaChip); only the interactive part below is not. */
+.bizprocdesigner-expression-builder-chip__body,
+.bizprocdesigner-expression-builder-chip__clear,
+.bizprocdesigner-expression-builder-chip__value {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 var(--ui-space-inset-xs);
+	border: none;
+	border-radius: inherit;
+	background: none;
+	font: inherit;
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-expression-builder-chip__body,
+.bizprocdesigner-expression-builder-chip__clear {
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder-chip__body,
+.bizprocdesigner-expression-builder-chip__value {
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+/* A shown value is the whole value of the field, and that can be a long text (a letter or a
+   notification body). The height of the window follows its content, so without a cap such a value
+   grows the window up to its ceiling and takes the room of the list under it. Five lines of the
+   text of the chip (20px each): enough to tell one value from another, and the rest scrolls.
+   Top-aligned: a centred child taller than its box would keep its first lines out of reach of the
+   scroll. */
+.bizprocdesigner-expression-builder-chip__value {
+	align-items: flex-start;
+	max-height: 100px;
+	overflow-y: auto;
+}
+
+/* The label of the source can be a long field title: it wraps inside the chip instead of pushing
+   the row out of the window. */
+.bizprocdesigner-expression-builder-chip__text {
+	word-break: break-word;
+	text-align: left;
+}
+
+/* The placeholder of an empty chip is set in the same size as the value of a filled one and differs
+   from it by color alone: the chain keeps one rhythm whether its chips are filled or not. */
+.bizprocdesigner-expression-builder-chip.--empty .bizprocdesigner-expression-builder-chip__text {
+	color: var(--ui-color-base-4);
+}
+
+/* A chip that shows one label - the title of a source, the name of a modifier - is painted in the
+   same palette, so a label reads next to the parts as one thing. The kind comes as a class on the
+   chip (see FormulaChip.kindClass) and the color sits on the text element itself: the typography
+   component paints a color of its own, which a color inherited from the chip would not beat. An
+   empty chip carries no kind class at all, so the muted color of its placeholder stays. A chip that
+   shows parts needs none of this - every part of it carries its own role. */
+.bizprocdesigner-expression-builder-chip.--source .bizprocdesigner-expression-builder-chip__text {
+	color: var(--ui-color-design-tinted-green-content);
+}
+
+.bizprocdesigner-expression-builder-chip.--modifier .bizprocdesigner-expression-builder-chip__text {
+	color: var(--ui-color-design-tinted-violet-content);
+}
+
+.bizprocdesigner-expression-builder-chip__clear {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+/* The gap between the value and the clear button is the one of the layout, but it falls on the seam
+   of two buttons: each of them gives half, so the hover of either still reaches the value. */
+.bizprocdesigner-expression-builder-chip__body:not(:last-child) {
+	padding-right: var(--ui-space-inset-2xs);
+}
+
+.bizprocdesigner-expression-builder-chip__clear {
+	padding-left: var(--ui-space-inset-2xs);
+}
+
+.bizprocdesigner-expression-builder-chip__body:hover,
+.bizprocdesigner-expression-builder-chip__clear:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder-chip__body:disabled {
+	color: var(--ui-color-base-4);
+	background: none;
+	cursor: default;
+}
+
+.bizprocdesigner-expression-builder-chip__body:focus-visible,
+.bizprocdesigner-expression-builder-chip__clear:focus-visible,
+.bizprocdesigner-expression-builder-chip__value:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* What is done to the chain as a whole, under the chain itself: a row of small buttons that wraps
+   onto the next line in a narrow window, the same way the chain above it does. */
+.bizprocdesigner-expression-builder__chain-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder__preview {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__preview-text {
+	color: var(--ui-color-base-2);
+}
+
+/* A warning about the value is a row and not a block on a backdrop of its own: the icon and the
+   text stand in one line and both take the color of the row. The icon follows it through its own
+   `color` prop, see the template. */
+.bizprocdesigner-expression-builder__preview-warning {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	color: var(--ui-color-accent-main-warning);
+}
+
+/* The typography component paints a color of its own, which an inherited one would not beat. */
+.bizprocdesigner-expression-builder__preview-warning .bizprocdesigner-expression-builder__preview-warning-text {
+	color: inherit;
+}
+
+.bizprocdesigner-expression-builder__warning {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__warning-text {
+	color: var(--ui-color-accent-main-warning);
+}
+
+/* One part of the formula: the sign between two chips of a chain, a parenthesis of it, a piece of
+   the value inside a chip (see formula-parts.js). Spaces of a part are its own text, so they are
+   kept - a part carries a slice of the value as it was typed. */
+.bizprocdesigner-expression-builder__part {
+	white-space: pre-wrap;
+}
+
+/* The palette of the roles (TPL-04). It sits on the part element itself and not on a wrapper: a
+   typography component paints a color of its own, which an inherited one would not beat, and the
+   parts live inside such a component. */
+.bizprocdesigner-expression-builder__part.--function {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bizprocdesigner-expression-builder__part.--modifier {
+	color: var(--ui-color-design-tinted-violet-content);
+}
+
+.bizprocdesigner-expression-builder__part.--operator {
+	color: var(--ui-color-accent-soft-element-orange);
+}
+
+.bizprocdesigner-expression-builder__part.--source,
+.bizprocdesigner-expression-builder__part.--value {
+	color: var(--ui-color-design-tinted-green-content);
+}
+
+.bizprocdesigner-expression-builder__part.--number {
+	color: var(--ui-color-accent-soft-element-red);
+}
+
+/* Structure and the filler of the seams carry no value of their own, so both stay muted. */
+.bizprocdesigner-expression-builder__part.--brace,
+.bizprocdesigner-expression-builder__part.--plain {
+	color: var(--ui-color-base-3);
+}
+
+/* The cycle of the nesting: three colors of one family, so a pair of parentheses is told from the
+   pair around it by color. The family is `accent-soft-element-*` on purpose - it keeps its hues in
+   all four surface contexts, while `design-tinted-*-content` collapses to one color in the edge
+   ones and would lose the level of nesting there. The fourth level starts the cycle over, see
+   parenDepthClass. */
+.bizprocdesigner-expression-builder__part.--paren-depth-1 {
+	color: var(--ui-color-accent-soft-element-violet);
+}
+
+.bizprocdesigner-expression-builder__part.--paren-depth-2 {
+	color: var(--ui-color-accent-soft-element-orange);
+}
+
+.bizprocdesigner-expression-builder__part.--paren-depth-3 {
+	color: var(--ui-color-accent-soft-element-green);
+}
+
+/* Tells the parts of the chain apart without being one of them: it carries no operation, so it is
+   muted rather than painted in the palette of the values. */
+.bizprocdesigner-expression-builder__part.--separator {
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-expression-builder__footer {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-xs);
+	height: 56px;
+	padding: 0 var(--ui-space-inset-md);
+	box-sizing: border-box;
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+/* Fills the mode body given by the parent. No floor of its own: it is the scroll below that both
+   sets the height the list asks for and keeps it from being squeezed away. */
+.bizprocdesigner-expression-builder-source-list {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__toolbar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__search {
+	flex: 1 1 auto;
+}
+
+/* The field is type="search" for the semantics; hide the engine's own clear button so the
+   look stays the design-system one. */
+.bizprocdesigner-expression-builder-source-list__search input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.bizprocdesigner-expression-builder-source-list__scroll {
+	flex: 1 1 auto;
+	/* The height of the window follows its content, so the list is what has to know its limits.
+	   A row is 50px tall (two lines of text and the insets around them, see __item below) and a
+	   row without a subtitle 33px: the list opens at four rows at most and keeps two of them
+	   whatever happens to the window, which is what stops the mode body from being squeezed away.
+	   Both limits are on the scrolling box itself: a shrinking box has no minimum height of its
+	   own, and the rows past the ceiling scroll here rather than grow the window. */
+	min-height: 100px;
+	max-height: 200px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	overflow-y: auto;
+}
+
+.bizprocdesigner-expression-builder-source-list__hint {
+	color: var(--ui-color-base-3);
+	padding: var(--ui-space-inset-xs);
+}
+
+/* A load failure, as opposed to an empty list: told apart by colour as well as by wording. */
+.bizprocdesigner-expression-builder-source-list__hint.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-expression-builder-source-list__section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__section-title {
+	color: var(--ui-color-base-4);
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs) 0;
+}
+
+/* Native button reset: the row is a button, its own look comes from the rules below. */
+.bizprocdesigner-expression-builder-source-list__item {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-3xs);
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs);
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder-source-list__item:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder-source-list__item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.bizprocdesigner-expression-builder-source-list__item-title {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-expression-builder-source-list__item-subtitle {
+	color: var(--ui-color-base-3);
+	word-break: break-word;
+}

@@ -57,33 +57,45 @@ export class IntegratorContent extends Content
 	{
 		return this.cache.remember('title', () => {
 			const isPartnerConnect = this.isConnected();
-			const title = isPartnerConnect && this.getPartnerName() !== ''
+
+			return isPartnerConnect
 				? this.#getTitleWithIntegrator()
 				: this.#getTitleWithoutPartner();
-
-			if (isPartnerConnect && this.getPartnerCardUrl())
-			{
-				Event.bind(title, 'click', async () => {
-					window.open(this.getPartnerCardUrl(), '_blank', 'noopener,noreferrer');
-				});
-			}
-
-			return title;
 		});
 	}
 
 	#getTitleWithIntegrator(): HTMLElement
 	{
-		const partnerName = this.getPartnerName();
+		const partnerName = this.getPartnerName() || this.getOptions().title || '';
+		const partnerCardUrl = this.getPartnerCardUrl();
+
+		if (partnerCardUrl === '')
+		{
+			return Tag.render`
+				<div class="license-widget-item-name">
+					<span class="license-widget-item-name__inner" title="${Text.encode(partnerName)}">
+						${Text.encode(partnerName)}
+					</span>
+					${this.#getHelpIcon()}
+				</div>
+			`;
+		}
 
 		return Tag.render`
-			<div class="license-widget-item-name --link">
-				<span class="license-widget-item-name__inner" title="${Text.encode(partnerName)}">
-					${Text.encode(partnerName)}
-				</span>
-				<div class="license-widget-item-chevron-right">
-					<div class="ui-icon-set --chevron-right"></div>
-				</div>
+			<div class="license-widget-item-name-controls">
+				<a
+					class="license-widget-item-name --link"
+					href="${partnerCardUrl}"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<span class="license-widget-item-name__inner" title="${Text.encode(partnerName)}">
+						${Text.encode(partnerName)}
+					</span>
+					<span class="license-widget-item-chevron-right" aria-hidden="true">
+						<span class="ui-icon-set --chevron-right"></span>
+					</span>
+				</a>
 				${this.#getHelpIcon()}
 			</div>
 		`;
@@ -103,10 +115,18 @@ export class IntegratorContent extends Content
 	{
 		const showHelper = (event) => {
 			event.stopPropagation();
-			BX.Helper.show('redirect=detail&code=26952922');
+			BX.Helper.show('redirect=detail&code=25822439');
 		};
 
-		return Tag.render`<span class="license-widget-item-help" onclick="${showHelper}"></span>`;
+		return Tag.render`
+			<button
+				type="button"
+				class="license-widget-item-help"
+				data-testid="license-widget-integrator-help-btn"
+				aria-label="${Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_HELP_BUTTON')}"
+				onclick="${showHelper}"
+			></button>
+		`;
 	}
 
 	getDescription(): HTMLElement
@@ -132,9 +152,9 @@ export class IntegratorContent extends Content
 	#renderButtonsWithConnectedPartner(): HTMLElement | string
 	{
 		const buttonConnect = Tag.render`
-			<a class="license-widget-item-btn" >
+			<button type="button" class="license-widget-item-btn">
 				${this.getButtonTitle('connect')}
-			</a>
+			</button>
 		`;
 
 		Event.bind(buttonConnect, 'click', async () => {
@@ -159,12 +179,24 @@ export class IntegratorContent extends Content
 		if (this.isCurrentUserAdmin())
 		{
 			const buttonMore = Tag.render`
-				<a class="license-widget-item-btn --partner-more" >
-					<div class="ui-icon-set --more-m"></div>
-				</a>
+				<button
+					type="button"
+					class="license-widget-item-btn --partner-more"
+					aria-label="${Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_MORE_BUTTON')}"
+					aria-haspopup="menu"
+					aria-expanded="false"
+				>
+					<span class="ui-icon-set --more-m" aria-hidden="true"></span>
+				</button>
 			`;
 
 			const menu = this.getMoreMenu(buttonMore);
+			menu.subscribe('onShow', () => {
+				buttonMore.setAttribute('aria-expanded', 'true');
+			});
+			menu.subscribe('onClose', () => {
+				buttonMore.setAttribute('aria-expanded', 'false');
+			});
 			Event.bind(buttonMore, 'click', () => {
 				menu.show();
 			});
@@ -178,9 +210,9 @@ export class IntegratorContent extends Content
 	#renderButtonsWithoutPartner(): HTMLElement
 	{
 		const button = Tag.render`
-			<a class="license-widget-item-btn">
+			<button type="button" class="license-widget-item-btn">
 				${this.getButtonTitle('choose')}
-			</a>
+			</button>
 		`;
 
 		Event.bind(button, 'click', () => {
@@ -200,6 +232,10 @@ export class IntegratorContent extends Content
 			const menu = new Menu({
 				bindElement,
 				cacheable: true,
+				focusTrap: {
+					initialFocus: 'container',
+					restoreFocus: () => bindElement,
+				},
 				items: [
 					{
 						text: this.getButtonTitle('feedback'),

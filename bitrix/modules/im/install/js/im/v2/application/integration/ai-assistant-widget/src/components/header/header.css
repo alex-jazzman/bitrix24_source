@@ -68,8 +68,11 @@
 }
 
 .bx-im-ai-assistant-chat-header__create-chat .bx-im-ai-assistant-create-chat-button__scope {
-	--im-ai-assistant-create-chat-button__icon-background: var(--ui-color-design-tinted-content-icon);
-	--im-ai-assistant-create-chat-button__background: var(--ui-color-design-tinted-bg);
+	--im-ai-assistant-create-chat-button__icon-color: var(--ui-color-base-white-fixed);
+	--im-ai-assistant-create-chat-button__icon-background: var(--ui-color-base-white-fixed);
+	--im-ai-assistant-create-chat-button__icon-opacity: var(--ui-opacity-60);
+	--im-ai-assistant-create-chat-button__background:
+		color-mix(in srgb, var(--ui-color-base-white-fixed) 15%, transparent);
 }
 
 .bx-im-ai-assistant-chat-header__icon {

@@ -1,9 +1,12 @@
 import { markRaw } from 'ui.vue3';
 import { BitrixVue } from 'ui.vue3.bitrixvue';
+import { Type } from 'main.core';
 import { MentionChip } from 'note.ui.mention-chip';
 import { MentionDialog } from './mention-dialog';
 import { byType } from './mention-type-registry';
 import { openLinkNative } from '../../utils/open-link';
+import { buildInternalDocumentUrl } from '../../utils/internal-link';
+import { createMentionSnapshot } from '../../utils/resolve-mentions';
 
 /**
  * ProseMirror NodeView that mounts a Vue MentionChip for noteMention nodes.
@@ -24,6 +27,11 @@ export class MentionNodeView
 	vm: Object | null;
 	dom: HTMLElement;
 	#editDialog: MentionDialog | null = null;
+	#projection: Object | null = null;
+	#projectionKey: string = '';
+	#projectionSnapshot: Object | null = null;
+	#initialSnapshot: Object | null = null;
+	#unsubscribeProjection: Function | null = null;
 
 	constructor({ node, editor, getPos, extension })
 	{
@@ -33,13 +41,83 @@ export class MentionNodeView
 		this.options = extension?.options ?? {};
 		this.app = null;
 		this.vm = null;
+		this.#projection = editor.storage?.noteMentionResolver ?? null;
 
 		this.dom = document.createElement('span');
 		this.dom.setAttribute('data-type', 'note-mention');
 		this.dom.contentEditable = 'false';
 
+		this.#subscribeProjection();
 		this.#mountVue();
 		this.#syncDiffState();
+	}
+
+	#buildPresentationAttrs(): Object
+	{
+		const fallbackLabel = this.node.attrs.entityType === 'document' ? this.node.attrs.label : null;
+		const fallbackAvailable = fallbackLabel ? true : null;
+		const snapshot = this.#projectionSnapshot ?? this.#initialSnapshot;
+
+		return {
+			...this.node.attrs,
+			label: snapshot?.label ?? fallbackLabel ?? null,
+			avatar: snapshot?.avatar ?? null,
+			url: snapshot?.url ?? null,
+			available: snapshot?.available ?? fallbackAvailable,
+			isCurrentUser: snapshot?.isCurrentUser ?? false,
+			unavailable: snapshot?.unavailable ?? false,
+		};
+	}
+
+	#readInitialSnapshot(): ?Object
+	{
+		const { entityType, entityId } = this.node.attrs;
+		const id = Number(entityId);
+		if (entityType !== 'document' || !Number.isInteger(id) || id <= 0)
+		{
+			return null;
+		}
+
+		const cachedSnapshot = this.options.labelCache?.get(id);
+		if (!cachedSnapshot)
+		{
+			return null;
+		}
+
+		return createMentionSnapshot({
+			type: 'document',
+			label: cachedSnapshot.label,
+			available: cachedSnapshot.available,
+		});
+	}
+
+	#subscribeProjection(): void
+	{
+		this.#unsubscribeProjection?.();
+		this.#unsubscribeProjection = null;
+		this.#projectionSnapshot = null;
+		this.#initialSnapshot = this.#readInitialSnapshot();
+		this.#projectionKey = `${this.node.attrs.entityType}:${this.node.attrs.entityId}`;
+
+		if (typeof this.#projection?.subscribe !== 'function')
+		{
+			this.#syncPresentation();
+
+			return;
+		}
+
+		this.#unsubscribeProjection = this.#projection.subscribe(this.#projectionKey, (snapshot) => {
+			this.#projectionSnapshot = snapshot;
+			this.#syncPresentation();
+		});
+	}
+
+	#syncPresentation(): void
+	{
+		if (this.vm)
+		{
+			this.vm.attrs = this.#buildPresentationAttrs();
+		}
 	}
 
 	// [version-diff] Reflect the diffState attr as a class on the chip wrapper. The attr is part of the
@@ -61,14 +139,15 @@ export class MentionNodeView
 			data()
 			{
 				return {
-					attrs: { ...nodeView.node.attrs },
+					attrs: nodeView.#buildPresentationAttrs(),
+					navigationPending: false,
 					// Passed to the chip so it can gate keyboard/tabindex enhancements.
 					// Reactive: updated by MentionNodeView.update() when editor state changes.
 					isEditable: nodeView.editor.isEditable,
 				};
 			},
 			methods: {
-				handleClick()
+				async handleClick(event)
 				{
 					if (nodeView.editor.isEditable)
 					{
@@ -77,12 +156,7 @@ export class MentionNodeView
 						return;
 					}
 
-					const { entityType, entityId, url, unavailable } = nodeView.node.attrs;
-					if (unavailable)
-					{
-						return;
-					}
-
+					const { entityType, entityId, url, unavailable } = nodeView.#buildPresentationAttrs();
 					const entry = byType(entityType);
 					if (!entry)
 					{
@@ -91,19 +165,71 @@ export class MentionNodeView
 
 					// Dispatch navigation by navKind:
 					// internal-link (document/collection) → delegate to onMentionClick (feature emits open-internal-link)
-					// slider (user/task) → open in a new browser tab (mobile app: native card via the bridge).
+					// slider (user/task/diskfolder) → open in a new browser tab
+					// (mobile app: native card via the bridge).
 					if (entry.navKind === 'internal-link')
 					{
-						const onMentionClick = nodeView.options?.onMentionClick;
-						if (typeof onMentionClick === 'function')
+						const internalUrl = url || (
+							entityType === 'document' && Number(entityId) > 0
+								? buildInternalDocumentUrl(entityId)
+								: ''
+						);
+						const isMiddleClick = event?.type === 'auxclick' && event?.button === 1;
+						const isModifiedClick = event?.button === 0
+							&& (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey)
+						;
+						if ((isMiddleClick || isModifiedClick) && !unavailable)
 						{
-							onMentionClick({ type: entityType, id: entityId, url });
+							if (internalUrl)
+							{
+								openLinkNative(internalUrl);
+							}
+
+							return;
+						}
+
+						const isUnavailableDocumentActivation = unavailable
+							&& entityType === 'document'
+							&& (isMiddleClick || isModifiedClick)
+						;
+						if (event?.button > 0 && !isUnavailableDocumentActivation)
+						{
+							return;
+						}
+
+						if (unavailable && entityType !== 'document')
+						{
+							return;
+						}
+
+						if (entityType === 'document' && this.navigationPending)
+						{
+							return;
+						}
+
+						const onMentionClick = nodeView.options?.onMentionClick;
+						if (Type.isFunction(onMentionClick))
+						{
+							this.navigationPending = entityType === 'document';
+							try
+							{
+								await onMentionClick({
+									type: entityType,
+									id: entityId,
+									url: internalUrl,
+									origin: event?.type === 'keydown' ? 'keyboard' : 'pointer',
+								});
+							}
+							finally
+							{
+								this.navigationPending = false;
+							}
 						}
 
 						return;
 					}
 
-					if (entry.navKind === 'slider' && url)
+					if (!unavailable && entry.navKind === 'slider' && url)
 					{
 						openLinkNative(url);
 					}
@@ -119,7 +245,10 @@ export class MentionNodeView
 					:is-current-user="attrs.isCurrentUser"
 					:unavailable="attrs.unavailable"
 					:is-editable="isEditable"
+					:allow-unavailable-activation="attrs.entityType === 'document' && Number(attrs.entityId) > 0"
+					:navigation-pending="navigationPending"
 					@click="handleClick"
+					@auxclick="handleClick"
 				/>
 			`,
 		});
@@ -183,11 +312,17 @@ export class MentionNodeView
 			return false;
 		}
 
+		const previousProjectionKey = this.#projectionKey;
 		this.node = node;
 		this.#syncDiffState();
+		const nextProjectionKey = `${node.attrs.entityType}:${node.attrs.entityId}`;
+		if (nextProjectionKey !== previousProjectionKey)
+		{
+			this.#subscribeProjection();
+		}
 		if (this.vm)
 		{
-			this.vm.attrs = { ...node.attrs };
+			this.vm.attrs = this.#buildPresentationAttrs();
 			this.vm.isEditable = this.editor.isEditable;
 		}
 
@@ -203,7 +338,7 @@ export class MentionNodeView
 	{
 		// Return true = ProseMirror ignores the event (won't place cursor inside atom).
 		// The DOM event still bubbles so Vue's @click / @keydown handlers fire normally.
-		if (event.type === 'click')
+		if (event.type === 'click' || event.type === 'auxclick')
 		{
 			return true;
 		}
@@ -225,6 +360,8 @@ export class MentionNodeView
 
 	destroy(): void
 	{
+		this.#unsubscribeProjection?.();
+		this.#unsubscribeProjection = null;
 		this.#editDialog?.destroy();
 		this.#editDialog = null;
 		this.app?.unmount();

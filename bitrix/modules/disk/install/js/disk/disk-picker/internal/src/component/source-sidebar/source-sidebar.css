@@ -1,3 +1,5 @@
+/* The fade sits on this wrapper and not on the scrolling child below it: a mask on the
+   scroller would move with the rows and never let the last one clear it. */
 .disk-picker-source-sidebar {
 	display: flex;
 	flex-direction: column;
@@ -6,6 +8,8 @@
 	height: 100%;
 	min-height: 0;
 	overflow: hidden;
+	-webkit-mask-image: var(--disk-picker-fade-out-bottom);
+	mask-image: var(--disk-picker-fade-out-bottom);
 }
 
 .disk-picker-source-sidebar__scroll {
@@ -26,12 +30,24 @@
 	gap: var(--ui-space-stack-2xs);
 }
 
+/* The top padding separates one group from the disks above it, the bottom one holds the heading
+   off its own disks, and the whole block is the advance declared in picker-layout.css — the one
+   the virtual scroll counts. It is padding rather than margin so that the row occupies exactly
+   that advance and nothing of it can collapse. */
 .disk-picker-source-sidebar__group-title {
 	display: flex;
 	align-items: center;
-	height: 28px;
-	padding: 0 var(--ui-space-inset-xs);
-	color: var(--ui-color-base-4);
+	box-sizing: border-box;
+	height: var(--disk-picker-source-group-advance);
+	padding:
+		var(--ui-space-stack-sm)
+		var(--ui-space-inset-xs)
+		var(--ui-space-stack-2xs2);
+	color: var(--ui-color-base-5);
+}
+
+.disk-picker-source-sidebar__group-title-short {
+	display: none;
 }
 
 .disk-picker-source-sidebar__item {
@@ -40,30 +56,85 @@
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
 	width: 100%;
-	height: 40px;
+	/* Height and gap are derived from the advance declared in picker-layout.css, the number the
+	   virtual scroll counts. The air is a margin rather than a gap on the list, because a gap
+	   would also apply to the virtual spacer and push the computed offsets out of step with the
+	   rendered rows. */
+	box-sizing: border-box;
+	height: calc(var(--disk-picker-source-row-advance) - var(--disk-picker-source-row-gap));
+	margin-bottom: var(--disk-picker-source-row-gap);
 	flex-shrink: 0;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-xs);
 	border: none;
-	border-radius: var(--ui-border-radius-sm);
+	border-radius: var(--ui-border-radius-xl);
 	background: none;
 	cursor: pointer;
 	text-align: left;
-	transition: background-color 200ms ease;
+	transition:
+		background-color var(--disk-picker-duration-state) var(--disk-picker-ease),
+		transform var(--disk-picker-duration-press) var(--disk-picker-ease);
 }
 
+/* The lighter of the two hover fills: the overlay step resolves to a fifth of black on the
+   light panel, which read as a press rather than a hover. */
 .disk-picker-source-sidebar__item:hover {
 	background: var(--ui-color-bg-state-hover-default);
 }
 
+/* The picked source is a film over the glass rather than a plate on it: the panel is
+   translucent, so a solid fill would cut a hole in the dialog. The name keeps the shade of
+   its neighbours — the fill and the ring below are what mark the row. */
 .disk-picker-source-sidebar__item.--active {
-	background: var(--ui-color-bg-state-hover-default);
+	position: relative;
+	background: var(--ui-color-bg-vibrant-less);
+}
+
+/* The ring runs the corners as one gradient rather than as four edge colours: at full
+   strength along the top, gone by the far corner and back to a trace along the left, so the
+   row reads as lit from above the way the avatars' rings do. Per-side colours could not do
+   that — they change in steps at the corners, and the 14deg tilt of the rounded corner shows
+   every step. The whole ring is then taken to half strength, the weight it has in the design.
+
+   Drawn over the fill and cut out by a mask, not set in the element's edge: a border would
+   add 2px to the row, and the row advance feeds the virtual scroll — it would
+   drift by a row's worth every screen. */
+.disk-picker-source-sidebar__item.--active::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		160deg,
+		var(--ui-color-base-white-fixed) 0%,
+		transparent 55%,
+		var(--ui-color-base-6) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	opacity: 0.5;
+	pointer-events: none;
 }
 
 .disk-picker-source-sidebar__item:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
+	/* White, because the rail stands on dark glass, and inside the row rather than outside it:
+	   the rail scrolls, and an outward ring would be cut at its edges. */
+	outline: 2px solid var(--ui-color-base-white-fixed);
 	outline-offset: -2px;
 }
 
+/* The picked disk already carries a pale ring of its own along the same edge, and a focus ring
+   drawn over it merged with it. On this row the focus steps inward, so the fill of the row shows
+   between the two lines and the focus reads as the inner one. */
+.disk-picker-source-sidebar__item.--active:focus-visible {
+	outline-offset: -5px;
+}
+
+/* Solid white, not a step of the scale: in this context base-3 is white at seven tenths, and
+   over the picture behind the dialog the names came out washed. base-1 is the same white at
+   full strength. */
 .disk-picker-source-sidebar__name {
 	min-width: 0;
 	overflow: hidden;
@@ -73,17 +144,118 @@
 }
 
 .disk-picker-source-sidebar__avatar {
-	flex: 0 0 24px;
-	width: 24px;
-	height: 24px;
+	flex: 0 0 var(--ui-size-2xl);
+	width: var(--ui-size-2xl);
+	height: var(--ui-size-2xl);
 }
 
-.disk-picker-source-sidebar__personal-avatar {
-	display: block;
-	width: 24px;
-	height: 24px;
+/* Recent and the personal disk have no avatar of their own: the glyph sits in an
+   avatar-sized circle so the list keeps one column of round marks. */
+.disk-picker-source-sidebar__icon-avatar {
+	/* The glyph is a mask over `background`, so its colour variable takes a gradient. The
+	   circle under it is a filled surface with its own blue gradient in every theme, so the
+	   glyph takes the content colours of a filled design, fading to its secondary step. */
+	--ui-icon-set__icon-color: linear-gradient(
+		180deg,
+		var(--ui-color-design-filled-content-icon) 0%,
+		var(--ui-color-design-filled-content-secondary) 100%
+	);
+
+	box-sizing: border-box;
+	position: relative;
+	display: flex;
+	flex: 0 0 var(--ui-size-2xl);
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-2xl);
+	height: var(--ui-size-2xl);
 	border-radius: var(--ui-border-radius-circle);
-	background: url('../../image/my-disk.png') center / cover no-repeat;
+	background: var(--disk-picker-icon-avatar-fill);
+}
+
+/* The ring is drawn over the fill, not inside the element's edge: in the edge it sank
+   into the gradient underneath. The overlay is filled with the ring gradient and has its
+   middle cut out by a mask, so only the 1px circle remains. The 140deg tilt is the one
+   the Marta avatar uses for its own ring. */
+.disk-picker-source-sidebar__icon-avatar::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-divider-vibrant-default-alt) 0%,
+		var(--ui-color-divider-vibrant-less-alt) 50%,
+		var(--ui-color-divider-vibrant-default-alt) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+}
+
+/* The palette has no dark turquoise yet, so the lower stop stays a literal until the
+   design system ships a token for it. The upper stop is --ui-color-accent-brand-blue. */
+.disk-picker-source-sidebar__icon-avatar.--recent {
+	--disk-picker-icon-avatar-bottom: #0AAEC7;
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-accent-brand-blue) 0%,
+		var(--disk-picker-icon-avatar-bottom) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--personal {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-accent-main-primary-alt-2) 0%,
+		var(--ui-color-blue-80) 100%
+	);
+}
+
+/* Tints for lettered avatars, built on the same light-to-dark pair as the personal disk.
+   The design system carries four hue scales, so there are four tints; resolveAvatarTint
+   in lib/source-avatar picks one by storage id, so keep TINT_COUNT in step. Blue comes
+   last and on a lighter upper stop, to stay distinct from the personal disk above. */
+.disk-picker-source-sidebar__icon-avatar.--tint-1 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-green-50) 0%,
+		var(--ui-color-green-80) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--tint-2 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-orange-50) 0%,
+		var(--ui-color-orange-80) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--tint-3 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-red-50) 0%,
+		var(--ui-color-red-80) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--tint-4 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-blue-50) 0%,
+		var(--ui-color-blue-70) 100%
+	);
+}
+
+/* Fixed white for the same reason as the glyph above: the contextual whites are
+   translucent and the gradient would wash the letters out. */
+.disk-picker-source-sidebar__initials {
+	color: var(--ui-color-base-white-fixed);
+	user-select: none;
 }
 
 .disk-picker-source-sidebar__error {
@@ -93,6 +265,21 @@
 	gap: var(--ui-space-stack-2xs);
 	padding: var(--ui-space-inset-xs);
 	color: var(--ui-color-base-3);
+}
+
+.disk-picker-source-sidebar__error.--page {
+	align-items: center;
+}
+
+.disk-picker-source-sidebar__skeleton {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+}
+
+.disk-picker-source-sidebar__sentinel {
+	height: 1px;
+	flex-shrink: 0;
 }
 
 .disk-picker-source-sidebar__retry {
@@ -108,11 +295,79 @@
 }
 
 .disk-picker-source-sidebar__retry:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline: 2px solid var(--ui-color-accent-main-link);
 	outline-offset: 2px;
 }
 
 .disk-picker-source-sidebar__retry:disabled {
 	opacity: 0.4;
 	cursor: default;
+}
+
+/* Collapsed rail on a narrow window: icons and avatars only. Row and group heights feed
+   the virtual scroll, so they stay as they are and only horizontal content changes. */
+@media (max-width: 999px) {
+	.disk-picker-source-sidebar__item {
+		position: relative;
+		justify-content: center;
+	}
+
+	/* The name leaves the layout but stays in the accessibility tree. */
+	.disk-picker-source-sidebar__name {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	/* The rail swaps the group title for its short form and drops the inset, so the whole
+	   56px of the rail goes to the text. */
+	.disk-picker-source-sidebar__group-title {
+		padding: 0;
+	}
+
+	.disk-picker-source-sidebar__group-title-full {
+		display: none;
+	}
+
+	.disk-picker-source-sidebar__group-title-short {
+		display: inline;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+}
+
+/* A disk answers the press like a file row does, and its film fades in over the same beat, so
+   moving between disks reads as one motion with the list that follows it. */
+.disk-picker-source-sidebar__item:active {
+	transform: scale(0.99);
+}
+
+.disk-picker-source-sidebar__item.--active::after {
+	animation: disk-picker-source-pick var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+@keyframes disk-picker-source-pick {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 0.5;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-source-sidebar__item,
+	.disk-picker-source-sidebar__item:active {
+		transform: none;
+		transition: background-color var(--disk-picker-duration-state) ease;
+	}
+
+	.disk-picker-source-sidebar__item.--active::after {
+		animation: none;
+	}
 }

@@ -1,6 +1,8 @@
 .tasks-field-replication-repeat-select {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
+	row-gap: var(--ui-space-stack-xs);
 }
 
 .tasks-field-replication-secondary {
@@ -8,7 +10,8 @@
 }
 
 .tasks-field-replication-period-select {
-	width: 160px;
+	flex: 0 1 160px;
+	min-width: 0;
 }
 
 .tasks-field-replication-period-select .ui-system-input {

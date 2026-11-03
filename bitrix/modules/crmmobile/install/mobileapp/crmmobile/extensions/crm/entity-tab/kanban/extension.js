@@ -3,9 +3,7 @@
  */
 jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { TypeId } = require('crm/type');
-	const { EntityTab } = require('crm/entity-tab');
-	const { TypeSort } = require('crm/entity-tab/sort');
-	const { TypePull } = require('crm/entity-tab/pull-manager');
+	const { EntityTab, TypePull, TypeSort } = require('crm/entity-tab');
 	const { ToolbarFactory } = require('crm/kanban/toolbar');
 	const { getActionChangeCrmMode } = require('crm/entity-actions/change-crm-mode');
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component/smart-activity-menu-item');
@@ -14,6 +12,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { Kanban } = require('layout/ui/kanban');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { requireLazy } = require('require-lazy');
 
 	const store = require('statemanager/redux/store');
 	const {
@@ -89,9 +88,12 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 			const viewComponent = this.getViewComponent();
 
-			if (viewComponent.setFilter)
+			// the filter of presets names a preset of its own, and the view writes it over the conditions
+			// of the request; the unified filter is already in the params, so it hands the view nothing
+			const viewFilter = this.filterMode.getViewFilter();
+			if (viewComponent.setFilter && viewFilter !== null)
 			{
-				viewComponent.setFilter(this.filter);
+				viewComponent.setFilter(viewFilter);
 			}
 
 			const force = BX.prop.getBoolean(params, 'force', false);
@@ -105,10 +107,14 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		 */
 		initCategoryCounters(params = {}, force = false)
 		{
+			const conditions = this.filterMode.getConditions();
+
 			store.dispatch(fetchStageCounters({
 				entityTypeId: this.props.entityTypeId,
 				categoryId: this.getCurrentCategoryId(),
-				params,
+				// the view knows the filter of presets only, and the sums of the stages stand over the
+				// list: in the unified mode they are counted under the conditions the list is asked with
+				params: (conditions === null ? params : { ...params, filter: conditions }),
 				forceFetch: force,
 			}));
 		}
@@ -253,6 +259,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 						entityTypeName: this.entityTypeName,
 						entityTypeId: this.props.entityTypeId,
 						filterParams: this.getFilterParams(),
+						isCompactView: this.itemsViewManager.isCompactView(),
 						showSum: entityType ? entityType.isLinkWithProductsEnabled : false,
 						onToolbarRef: (ref) => {
 							if (ref)
@@ -272,6 +279,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				layoutMenuActions: this.getMenuActions(),
 				itemCounterLongClickHandler: this.getCounterLongClickHandler(),
 				isShowFloatingButton: this.isShowFloatingButton(),
+				getVoiceContext: () => this.getVoiceContext(),
 				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
 				popupItemMenu: true,
@@ -281,8 +289,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				itemActions: this.getItemActions(),
 				itemParams: {
 					isClientEnabled: this.isClientEnabled(),
+					isCompactView: this.itemsViewManager.isCompactView(),
 					...this.props.itemParams,
 				},
+				deepMergeStyles: this.getListDeepMergeStyles(),
 				onPrepareItemParams: (params) => ({
 					...params,
 					categoryId: this.getCurrentCategoryId(),
@@ -423,7 +433,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			const menuActions = [];
 			const { permissions, entityTypeId } = this.props;
 			const entityType = this.getCurrentEntityType();
-			if (entityType && entityType.isLastActivityEnabled)
+			// where the order is a section of the filter drawer, the "---" menu does not offer it twice
+			if (entityType && entityType.isLastActivityEnabled && !this.filterMode.hasDrawerSorting())
 			{
 				menuActions.push(this.itemsSortManager.getSortMenuAction(this.onSetSortTypeHandler));
 			}

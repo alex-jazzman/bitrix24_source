@@ -31,6 +31,14 @@ jn.define('im/messenger/lib/element/dialog/message/sticker', (require, exports, 
 			if (nativeMessageSupported)
 			{
 				this.#setSticker(stickerData);
+
+				// A sticker can be a reply: the quote is delivered as encoded text (validateQuote).
+				// Parse it so the quote element reaches native alongside the sticker (reply-with-media).
+				// setMessage strips the quote's trailing empty node, so native keeps a bare quote.
+				if (Feature.isReplyWithMediaAvailable && modelMessage.text)
+				{
+					this.setMessage(modelMessage.text, { dialogId: options.dialogId });
+				}
 			}
 			else
 			{

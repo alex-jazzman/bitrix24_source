@@ -54,7 +54,8 @@ this.BX.Call = this.BX.Call || {};
 		onAudioPlay: 'onAudioPlay',
 		onCommonRecordMenu: 'onCommonRecordMenu',
 		onPiPBodyClick: 'onPiPBodyClick',
-		onFullScreenChange: 'onFullScreenChange'
+		onFullScreenChange: 'onFullScreenChange',
+		onPushToTalkShortPress: 'onPushToTalkShortPress'
 	});
 	const ViewLayout = Object.freeze({
 		Grid: 1,
@@ -81,6 +82,43 @@ this.BX.Call = this.BX.Call || {};
 		Chat: 'BXCLIENT_CHAT'
 	});
 
+	const IncomingCallEvent = Object.freeze({
+		onClose: 'onClose',
+		onDestroy: 'onDestroy',
+		onButtonClick: 'onButtonClick'
+	});
+	const IncomingCallInternalEvent = Object.freeze({
+		setHasCamera: 'CallNotification::setHasCamera',
+		contentReady: 'CallNotification::contentReady',
+		onButtonClick: 'CallNotification::onButtonClick'
+	});
+
+	const CallState = Object.freeze({
+		Idle: 'Idle',
+		Proceeding: 'Proceeding',
+		Connected: 'Connected',
+		Finished: 'Finished'
+	});
+	const Provider = Object.freeze({
+		Plain: 'Plain',
+		Bitrix: 'Bitrix'
+	});
+	const CallType = Object.freeze({
+		Instant: 1,
+		Permanent: 2,
+		Large: 3
+	});
+	const ControllerEvent = Object.freeze({
+		onPromoViewed: 'onPromoViewed',
+		onOpenVideoConference: 'onOpenVideoConference'
+	});
+
+	exports.CallState = CallState;
+	exports.CallType = CallType;
+	exports.ControllerEvent = ControllerEvent;
+	exports.IncomingCallEvent = IncomingCallEvent;
+	exports.IncomingCallInternalEvent = IncomingCallInternalEvent;
+	exports.Provider = Provider;
 	exports.ViewEvent = ViewEvent;
 	exports.ViewLayout = ViewLayout;
 	exports.ViewRecordSource = ViewRecordSource;

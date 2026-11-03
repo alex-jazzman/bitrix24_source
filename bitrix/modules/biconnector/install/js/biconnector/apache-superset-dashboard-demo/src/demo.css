@@ -1,0 +1,229 @@
+.biconnector-demo {
+	--biconnector-demo-header-height: 58px;
+
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	overflow: clip;
+}
+
+.biconnector-demo__header {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-shrink: 0;
+	gap: var(--ui-space-inline-lg);
+	height: var(--biconnector-demo-header-height);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.biconnector-demo__header-main {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+}
+
+.biconnector-demo__header-buttons {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	gap: var(--ui-space-inline-sm);
+}
+
+.biconnector-demo__header .dashboard-header-logo {
+	flex-shrink: 0;
+}
+
+.biconnector-demo__logo-link {
+	display: flex;
+	align-items: flex-end;
+}
+
+.biconnector-demo__title {
+	margin: 0;
+}
+
+.biconnector-demo__label {
+	position: relative;
+	flex-shrink: 0;
+	margin-left: var(--ui-space-inline-xs);
+	overflow: hidden;
+}
+
+/* блик glance: полоса света пробегает по чипсу раз в 5 секунд */
+.biconnector-demo__label::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -60%;
+	width: 56%;
+	transform: skewX(-20deg);
+	background: linear-gradient(
+		90deg,
+		var(--ui-color-glance-gradient-1, rgba(255, 255, 255, 0)) 0%,
+		var(--ui-color-glance-gradient-2, #ffffff) 50%,
+		var(--ui-color-glance-gradient-3, rgba(255, 255, 255, 0)) 100%
+	);
+	opacity: .85;
+	pointer-events: none;
+	animation: biconnector-demo-label-glance 5s ease-in-out infinite;
+}
+
+@keyframes biconnector-demo-label-glance {
+	0% { left: -60%; }
+	28% { left: 120%; }
+	100% { left: 120%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.biconnector-demo__label::after {
+		display: none;
+	}
+}
+
+.biconnector-demo__hint-description {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+.biconnector-demo__hint-popup {
+	max-width: 400px;
+}
+
+.biconnector-demo__hint-popup.ui-hint-popup.popup-window-dark {
+	--ui-hint-color: var(--ui-color-accent-main-primary);
+}
+
+.biconnector-demo__hint {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+	margin: var(--ui-space-inset-2xs2);
+	padding-right: var(--ui-space-inset-lg);
+}
+
+.biconnector-demo__hint-image {
+	flex-shrink: 0;
+	width: 74px;
+	height: 74px;
+	background: url('../images/demo-hint-zephyr.webp') center center / contain no-repeat;
+}
+
+.biconnector-demo__hint-text {
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	white-space: pre-line;
+	word-wrap: break-word;
+	opacity: .92;
+}
+
+.biconnector-demo__hint-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+
+	position: absolute;
+	top: calc(-1 * var(--ui-space-inset-3xs));
+	right: calc(-1 * var(--ui-space-inset-3xs));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-circle, 50%);
+	background: transparent;
+	cursor: pointer;
+	opacity: .7;
+	transition: opacity 180ms;
+}
+
+.biconnector-demo__hint-close:hover,
+.biconnector-demo__hint-close:focus-visible {
+	opacity: 1;
+}
+
+.biconnector-demo__hint-close:focus-visible {
+	outline: 2px solid var(--ui-color-base-white-fixed);
+	outline-offset: 1px;
+}
+
+.biconnector-demo__skeleton,
+.biconnector-demo__frame {
+	position: absolute;
+	top: var(--biconnector-demo-header-height);
+	right: 0;
+	left: 0;
+	height: calc(100vh - var(--biconnector-demo-header-height));
+	max-height: calc(100vh - var(--biconnector-demo-header-height));
+	overflow: hidden;
+}
+
+.biconnector-demo__skeleton {
+	z-index: 1;
+	background-color: var(--ui-color-base-7);
+}
+
+.biconnector-demo__frame iframe {
+	width: 100%;
+	height: 100%;
+	border: none;
+}
+
+.biconnector-demo__state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-stack-sm);
+	min-height: calc(100vh - var(--biconnector-demo-header-height));
+	padding: var(--ui-space-inset-md);
+	overflow: auto;
+	text-align: center;
+}
+
+.biconnector-demo__state-icon {
+	width: 80px;
+	height: 80px;
+	background: url("../images/state-warning.svg") center center / contain no-repeat;
+}
+
+.biconnector-demo__state-animation {
+	width: 200px;
+	height: 120px;
+}
+
+.biconnector-demo__state-title {
+	margin: 0;
+	max-width: 450px;
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-1);
+}
+
+.biconnector-demo__state-text {
+	max-width: 560px;
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-lg);
+	color: var(--ui-color-base-3);
+}
+
+.biconnector-demo__skeleton.--hidden,
+.biconnector-demo__frame.--hidden,
+.biconnector-demo__state.--hidden {
+	display: none;
+}

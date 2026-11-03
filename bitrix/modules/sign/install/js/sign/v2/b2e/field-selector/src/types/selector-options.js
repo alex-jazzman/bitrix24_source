@@ -48,4 +48,6 @@ export type SelectorOptions = {
 	customBackendSettings?: CustomBackendSettings,
 	alwaysHideCreateFieldButton?: boolean,
 	disableSelection?: boolean,
+	/** Title the editor of a newly created user field opens with. */
+	initialFieldTitle?: string | null,
 };

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_popup, ui_vue3, timeman_provider_service_fullReportService, main_core_events, pull_client, ui_iconSet_api_vue, ui_textEditor, ui_vue3_components_avatar, ui_vue3_components_button, timeman_provider_service_recordService, timeman_provider_service_reportService, main_loader, ui_icons_b24, ui_bbcode_formatter_htmlFormatter, main_date, ui_bbcode_parser) {
+(function (exports, main_core, main_popup, ui_vue3, timeman_provider_service_fullReportService, main_core_events, pull_client, ui_iconSet_api_vue, ui_textEditor, ui_vue3_components_avatar, ui_vue3_components_button, timeman_provider_service_recordService, timeman_provider_service_reportService, main_loader, ui_icons_b24, ui_bbcode_formatter_htmlFormatter, main_date) {
 	'use strict';
 
 	const closeOnSliderOpen = handler => {
@@ -333,7 +333,9 @@ this.BX = this.BX || {};
 				if (this.openedAsInProgress) {
 					void loadPromise.then(() => {
 						void this.$nextTick(() => {
-							this.editor?.focus();
+							this.editor?.focus(null, {
+								defaultSelection: 'rootEnd'
+							});
 						});
 					});
 				}
@@ -385,7 +387,9 @@ this.BX = this.BX || {};
 			startCommentEdit() {
 				this.commentEditMode = true;
 				this.$nextTick(() => {
-					this.editor?.focus();
+					this.editor?.focus(null, {
+						defaultSelection: 'rootEnd'
+					});
 				});
 			},
 			formatDateRange(fromTs, toTs) {
@@ -927,87 +931,6 @@ this.BX = this.BX || {};
 		}
 	}
 
-	const ENTITY_TYPE = 'WORK_REPORT';
-	const BLOCK_TAGS = new Set(['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote']);
-	const collectText = node => {
-		const name = node.getName();
-		if (name === '#text') {
-			return String(node.getContent() ?? '');
-		}
-		if (name === '#linebreak') {
-			return '\n';
-		}
-		if (name === '#tab') {
-			return '\t';
-		}
-		const inner = node.getChildren().map(collectText).join('');
-		if (BLOCK_TAGS.has(name.toLowerCase())) {
-			return `${inner}\n`;
-		}
-		return inner;
-	};
-	const stripBbcode = text => {
-		const preprocessed = String(text).replace(/\[br\s*\/?\]/gi, '\n');
-		const root = new ui_bbcode_parser.BBCodeParser().parse(preprocessed);
-		return collectText(root).trim();
-	};
-	const callRest = (method, params) => new Promise(resolve => {
-		const rest = window.BX?.rest;
-		if (!rest?.callMethod) {
-			console.error('discuss-chat: BX.rest is not available');
-			resolve(null);
-			return;
-		}
-		rest.callMethod(method, params, result => {
-			const error = result?.error?.();
-			if (error) {
-				console.error(`discuss-chat: ${method} failed`, error);
-				resolve(null);
-				return;
-			}
-			resolve(result?.data?.() ?? null);
-		});
-	});
-	const openDiscussChat = async params => {
-		const restParams = {
-			ENTITY_TYPE,
-			ENTITY_ID: String(params.entityId)
-		};
-		const existing = await callRest('im.chat.get', restParams);
-		let chatId = Number(existing?.ID ?? (main_core.Type.isNumber(existing) ? existing : 0));
-		if (chatId <= 0) {
-			const addParams = {
-				USERS: params.userIds,
-				...restParams
-			};
-			if (params.message) {
-				const stripped = stripBbcode(params.message);
-				if (stripped) {
-					addParams.MESSAGE = stripped;
-				}
-			}
-			if (params.title) {
-				addParams.TITLE = params.title;
-			}
-			const created = await callRest('im.chat.add', addParams);
-			chatId = Number(created?.ID ?? (main_core.Type.isNumber(created) ? created : 0));
-		}
-		if (chatId <= 0) {
-			console.error('discuss-chat: could not resolve chatId');
-			return;
-		}
-		const dialogId = `chat${chatId}`;
-		const messengerHost = resolveMessengerHost();
-		if (main_core.Type.isFunction(messengerHost?.BXIM?.openMessenger)) {
-			messengerHost.BXIM.openMessenger(dialogId);
-			return;
-		}
-		if (main_core.Type.isFunction(messengerHost?.BX?.MessengerCommon?.openDialog)) {
-			messengerHost.BX.MessengerCommon.openDialog(dialogId);
-			return;
-		}
-		console.error('discuss-chat: messenger API not found on window');
-	};
 	const resolveMessengerHost = () => {
 		try {
 			if (window.top && window.top !== window && window.top.BXIM) {
@@ -1017,6 +940,24 @@ this.BX = this.BX || {};
 			console.error('discuss-chat: resolveMessengerHost not work');
 		}
 		return window;
+	};
+	const openDiscussChat = async reportId => {
+		const {
+			dialogId
+		} = await timeman_provider_service_fullReportService.fullReportService.discuss(reportId);
+		if (!main_core.Type.isStringFilled(dialogId)) {
+			throw new Error('discuss-chat: empty dialogId in response');
+		}
+		const messengerHost = resolveMessengerHost();
+		if (main_core.Type.isFunction(messengerHost?.BXIM?.openMessenger)) {
+			messengerHost.BXIM.openMessenger(dialogId);
+			return;
+		}
+		if (main_core.Type.isFunction(messengerHost?.BX?.MessengerCommon?.openDialog)) {
+			messengerHost.BX.MessengerCommon.openDialog(dialogId);
+			return;
+		}
+		throw new Error('discuss-chat: messenger API not found on window');
 	};
 
 	const APPROVE_MARK = 'G';
@@ -1224,61 +1165,37 @@ this.BX = this.BX || {};
 					}]);
 				}
 			},
-			collectUserIds() {
-				const fromId = Number(this.reportData?.fromUser?.id ?? 0);
-				const toList = this.reportData?.toUsers ?? [];
-				const toIds = toList.map(user => Number(user?.id ?? 0)).filter(id => id > 0);
-				const ids = [];
-				if (fromId > 0) {
-					ids.push(fromId);
-				}
-				toIds.forEach(id => {
-					if (!ids.includes(id)) {
-						ids.push(id);
-					}
-				});
-				return ids;
-			},
-			buildChatMessage() {
-				const parts = [];
-				if (this.gptReport) {
-					parts.push(this.gptReport);
-				}
-				if (this.bbcodeSource) {
-					parts.push(this.bbcodeSource);
-				} else if (this.reportText) {
-					parts.push(this.reportText);
-				}
-				return parts.length > 0 ? parts.join('\n\n') : null;
-			},
-			buildChatTitle() {
-				if (!this.dateText) {
-					return null;
-				}
-				return main_core.Loc.getMessage('TIMEMAN_WORK_TIME_REPORT_REVIEW_CHAT_TITLE').replace('#DATE#', this.dateText);
-			},
 			async handleDiscuss() {
 				if (this.discussing || this.currentReportId <= 0) {
 					return;
 				}
-				const userIds = this.collectUserIds();
-				if (userIds.length === 0) {
-					console.error('ReviewApp.handleDiscuss: no userIds resolved');
-					return;
-				}
 				this.discussing = true;
 				try {
-					await openDiscussChat({
-						userIds,
-						entityId: this.currentReportId,
-						message: this.buildChatMessage(),
-						title: this.buildChatTitle()
-					});
+					await openDiscussChat(this.currentReportId);
 				} catch (error) {
-					console.error('ReviewApp.handleDiscuss failed:', error);
+					await this.notifyDiscussError(error);
 				} finally {
 					this.discussing = false;
 				}
+			},
+			async notifyDiscussError(error) {
+				const code = main_core.Type.isArrayFilled(error?.errors) ? error.errors[0]?.code ?? null : null;
+				let messageKey = 'TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_COMMON';
+				if (code === 'CHAT_CREATION_ERROR') {
+					messageKey = 'TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_CHAT';
+				} else if (code === 'ACCESS_DENIED' || code === 'NO_MANAGER' || code === 'REPORT_NOT_FOUND') {
+					messageKey = 'TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_ACCESS';
+				}
+
+				// Lazy-load ui.notification: it is only needed on the rare discuss error path,
+				// not on every card open.
+				const {
+					UI
+				} = await main_core.Runtime.loadExtension('ui.notification');
+				UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage(messageKey),
+					autoHideDelay: 5000
+				});
 			},
 			handleContentScroll() {
 				this.updateScrollFlags();
@@ -1311,7 +1228,7 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div class="tm-work-time-report">
+		<div class="tm-work-time-report" data-testid="timeman-report-review">
 			<div class="tm-work-time-report__title-row">
 				<div class="tm-work-time-report__title-block">
 					<div class="tm-work-time-report__title">
@@ -1380,6 +1297,7 @@ this.BX = this.BX || {};
 					:style="AirButtonStyle.OUTLINE_ACCENT_2"
 					:text="discussText"
 					:loading="discussing"
+					:dataset="{ testid: 'timeman-report-review-discuss-btn' }"
 					@click="handleDiscuss"
 				/>
 				<UiButton
@@ -1497,5 +1415,5 @@ this.BX = this.BX || {};
 	exports.WorkTimeReport = WorkTimeReport;
 	exports.WorkTimeReportReview = WorkTimeReportReview;
 
-})(this.BX.Timeman = this.BX.Timeman || {}, BX, BX.Main, BX.Vue3, BX.Timeman.Provider.Service, BX.Event, BX, BX.UI.IconSet, BX.UI.TextEditor, BX.UI.Vue3.Components, BX.Vue3.Components, BX.Timeman.Provider.Service, BX.Timeman.Provider.Service, BX, BX, BX.UI.BBCode.Formatter, BX.Main, BX.UI.BBCode);
+})(this.BX.Timeman = this.BX.Timeman || {}, BX, BX.Main, BX.Vue3, BX.Timeman.Provider.Service, BX.Event, BX, BX.UI.IconSet, BX.UI.TextEditor, BX.UI.Vue3.Components, BX.Vue3.Components, BX.Timeman.Provider.Service, BX.Timeman.Provider.Service, BX, BX, BX.UI.BBCode.Formatter, BX.Main);
 //# sourceMappingURL=work-time-report.bundle.js.map

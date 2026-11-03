@@ -40,11 +40,14 @@ export const RootLayout = {
 			'areNoRowsVisible',
 			'hasFieldNameErrors',
 			'isSystem',
+			'isEditingForbidden',
 			'isEditMode',
 			'datasetProperties',
 			'connectionProperties',
 			'connectionEditing',
 			'hasPreviewSchemaMismatch',
+			'tableGroupIds',
+			'isConnectionLoading',
 		]),
 		isExternalConnection()
 		{
@@ -76,7 +79,15 @@ export const RootLayout = {
 				&& !this.hasDatasetNameErrors
 				&& !this.hasFieldNameErrors
 				&& !this.hasPreviewSchemaMismatch
-				&& !this.isSystem;
+				&& !this.isConnectionLoading
+				&& !this.isEditingForbidden
+				&& !this.isTableGroupMissing;
+		},
+		isTableGroupMissing()
+		{
+			return Boolean(this.appParams?.isTablePermissionsEnabled)
+				&& !this.isEditMode
+				&& this.tableGroupIds.length === 0;
 		},
 	},
 	watch:
@@ -118,6 +129,7 @@ export const RootLayout = {
 		this.saveController = new SaveController(this.$store, {
 			sourceCode: this.sourceId,
 			isSupersetReady: Boolean(this.appParams?.isSupersetReady),
+			isTablePermissionsEnabled: Boolean(this.appParams?.isTablePermissionsEnabled),
 		});
 		this.saveController.attach();
 		this.validationController = new ValidationController(this.$store, { sourceCode: this.sourceId });

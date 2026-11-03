@@ -4,12 +4,8 @@
 /** @var array<string, mixed> $arResult */
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use Bitrix\UI\Buttons\Button;
-use Bitrix\UI\Buttons\Color;
-use Bitrix\UI\Buttons\Size;
 use Bitrix\Disk\Document\Flipchart\Configuration;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die;
@@ -18,6 +14,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die;
 global $APPLICATION;
 
 $containerId = 'flipchart-wrapper';
+$boardContainerId = 'flipchart-editor';
 
 Loader::includeModule('socialnetwork');
 
@@ -27,7 +24,9 @@ Extension::load([
 	'ui.buttons',
 	'popup',
 	'main.core',
-	'disk.sharing-legacy-popup',
+	// The shared header of the viewer: the page renders only its container and hands over the
+	// context of the opening.
+	'disk.document-header',
 	'disk.external-link',
 	'loader',
 	'socnetlogdest',
@@ -45,6 +44,9 @@ $tasksPickEnabled = $tasksEnabled && Loader::includeModule('tasks');
 // Stage 4 (spec 2): the same reinforced gate - without the tasks module the
 // action controllers and the tasks.v2.lib.* extension configs are absent.
 $tasksActionsEnabled = $tasksPickEnabled;
+$annotationsEnabled = (bool)($arResult['ANNOTATIONS_ENABLED'] ?? false);
+$tagsEnabled = (bool)($arResult['TAGS_ENABLED'] ?? false);
+$commentsEnabled = (bool)($arResult['COMMENTS_ENABLED'] ?? false);
 $appOrigin = '';
 if ($tasksEnabled)
 {
@@ -64,69 +66,14 @@ if ($tasksEnabled)
 
 $helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/', byLang: true);
 $frameOpenUrl = (new Bitrix\Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
-
-$sharingButtonHtml = '';
-if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
-{
-	$setupSharingButton = Button::create();
-
-	$setupSharingButton
-		->setText(Loc::getMessage('DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS_MSGVER_1'))
-		->addClass('disk-fe-flipchart-btn-access-setting')
-		->setSize(Size::SMALL)
-		->setColor(Color::PRIMARY)
-		->setRound()
-		->addAttribute(
-			'data-should-block-external-link-feature',
-			$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'] ? 'true' : 'false',
-		)
-		->addAttribute(
-			'data-blocker-external-link-feature',
-			(string)$arResult['BLOCKER_EXTERNAL_LINK_FEATURE'],
-		)
-	;
-
-	$sharingButtonHtml = $setupSharingButton->render(false);
-}
 ?>
 
 <div data-id="<?= $containerId ?>-wrapper">
-	<?php if (!$isMobile)
-		{ ?>
-	<div class="disk-fe-office-header">
-		<div class="disk-fe-office-header-left">
-			<div class="disk-fe-flipchart-header-logo-box">
-				<?php
-				if ($arResult['LANGUAGE'] === 'ru')
-				{
-				?>
-					<a href="<?= $arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo" target="_blank"></a>
-				<?php
-				}
-				else
-				{
-				?>
-					<a href="<?= $arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo --eng" target="_blank"></a>
-				<?php
-				}
-				?>
-				<span class="disk-fe-flipchart-header-logo-name"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_HEADER_BOARDS') ?></span>
-			</div>
-			<div class="disk-fe-office-header-mode">
-				<span class="disk-fe-office-header-mode-text"><?= htmlspecialcharsbx($arResult['DOCUMENT_NAME']) ?></span>
-<?php if (isset($arResult['SERVICE_PROFILE'])): ?>
-				<span class="disk-fe-flipchart-service-profile"><?= htmlspecialcharsbx($arResult['SERVICE_PROFILE']) ?></span>
-<?php endif; ?>
-			</div>
-		</div>
-		<div class="disk-fe-office-header-right">
-			<div class="disk-fe-office-header-online"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_AUTOSAVE') ?></div>
-			<?= $sharingButtonHtml?>
-		</div>
-	</div>
-	<?php } ?>
-	<div data-id="<?= $containerId ?>" style="height: calc(<?=$isMobile ? '100dvh' : '100vh - 70px' ?>);">
-		<div class="boards-editor-wrapper" id="flipchart-editor" style="height: 100%"></div>
+	<?php if (!$isMobile): ?>
+		<div data-id="<?= $containerId ?>-header" class="disk-document-header-container"></div>
+	<?php endif ?>
+	<div data-id="<?= $containerId ?>" class="disk-fe-flipchart-editor-box<?= $isMobile ? ' --without-header' : '' ?>">
+		<div class="boards-editor-wrapper" id="<?= $boardContainerId ?>" style="height: 100%"></div>
 	</div>
 </div>
 
@@ -186,21 +133,21 @@ if ($isMobile)
 	history.replaceState(null, '', url.toString());
 
 	new BX.Disk.Flipchart.Board({
-		panelButtonUniqIds: {
-			setupSharing: '<?= isset($setupSharingButton) ? $setupSharingButton->getUniqId() : '' ?>',
-		},
-		boardData: {
-			id: <?= $arResult['ORIGINAL_DOCUMENT_ID'] ?>,
-			name: '<?= \CUtil::JSEscape($arResult['DOCUMENT_NAME']) ?>',
-			uniqueCode: '<?= \CUtil::JSEscape($arResult['FILE_UNIQUE_CODE']) ?>',
-		},
-		sharingControlType: '<?= $arResult['SHARING_CONTROL_TYPE'] ?>',
-		unifiedLinkAccessOnly: <?= Json::encode($arResult['UNIFIED_LINK_ACCESS_ONLY']) ?>,
+		// The header draws itself from the composition the server describes; the shell gives it the
+		// container and the part of the context of the opening the composition does not carry.
+		headerContainerNode: document.querySelector('[data-id="<?= $containerId ?>-header"]'),
+		documentSessionHash: '<?= \CUtil::JSEscape($arResult['SESSION_ID']) ?>',
+		logoUrl: '<?= \CUtil::JSEscape($arResult['HEADER_LOGO_URL']) ?>',
+		headerComposition: <?= Json::encode($arResult['HEADER_COMPOSITION'] ?? null) ?>,
+		// what the board says is accepted only from the frame it was opened in
+		boardContainerId: '<?= $boardContainerId ?>',
 	})
 
 	BX.ready(() => {
+		const mentionMembers = new BX.Disk.Flipchart.MentionMembers();
+
 		const sdk = new BX.Disk.Flipchart.SDK({
-			containerId: 'flipchart-editor',
+			containerId: '<?= $boardContainerId ?>',
 			appUrl: '<?= \CUtil::JSEscape((string)$arResult['APP_URL']) ?>',
 			token: '<?= \CUtil::JSEscape((string)$arResult['TOKEN']) ?>',
 			lang: '<?= $arResult['LANGUAGE'] ?>',
@@ -220,6 +167,10 @@ if ($isMobile)
 					bitrixTasks: <?= Json::encode($tasksEnabled) ?>,
 					bitrixTasksPick: <?= Json::encode($tasksPickEnabled) ?>,
 					bitrixTasksActions: <?= Json::encode($tasksActionsEnabled) ?>,
+					mentions: true,
+					annotations: <?= Json::encode($annotationsEnabled) ?>,
+					tags: <?= Json::encode($tagsEnabled) ?>,
+					comments: <?= Json::encode($commentsEnabled) ?>,
 				},
 				shareElementInBitrix: <?= Json::encode($tasksEnabled ? [] : ['createTask']) ?>,
 			},
@@ -234,6 +185,9 @@ if ($isMobile)
 				fileName: '<?= CUtil::JSEscape($arResult['DOCUMENT_NAME_WITHOUT_EXTENSION']) ?>',
 			},
 			events: {
+<?php if ($isMobile): ?>
+				// This variant renders no header, so the page keeps renaming the object itself; where
+				// the header is mounted, the same event goes to the server through it.
 				onBoardRenamed(newName) {
 
 					notifyMobileApp({ boardName: newName });
@@ -246,6 +200,7 @@ if ($isMobile)
 					});
 
 				},
+<?php endif ?>
 				onShareElementWithBitrix(event) {
 
 					if (event.actionType === "createTask")
@@ -259,6 +214,19 @@ if ($isMobile)
 								console.log('error creating task', e)
 							})
 					}
+
+				},
+
+				// Wiring only: the lookup and the shape of a member live in the extension, and every
+				// request is ended there - by its result, by its error or by the cancel of the board.
+				onMentionMembersRequest(data) {
+
+					return mentionMembers.request(data);
+
+				},
+				onMentionMembersCancel(data) {
+
+					mentionMembers.cancel(data);
 
 				},
 			}

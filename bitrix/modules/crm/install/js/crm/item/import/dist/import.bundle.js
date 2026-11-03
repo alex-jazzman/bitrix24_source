@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, ui_vue3, main_core, main_core_events, main_core_cache, ui_system_typography_vue, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_vue3_components_button, ui_uploader_core, crm_integration_analytics, ui_analytics, ui_buttons, ui_dialogs_messagebox, ui_notification, ui_system_alert, ui_infoHelper, ui_iconSet_outline, ui_progressbar, ui_vue3_components_popup) {
+(function (exports, ui_vue3, main_core, main_core_events, main_core_cache, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_vue3_components_button, ui_uploader_core, crm_integration_analytics, ui_analytics, ui_buttons, ui_dialogs_messagebox, ui_notification, ui_system_alert, ui_infoHelper, ui_iconSet_outline, ui_progressbar, ui_vue3_components_popup) {
 	'use strict';
 
 	class Binding {
@@ -155,7 +155,7 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
-	const Alert$1 = {
+	const Alert = {
 		name: 'Alert',
 		template: `
 		<div class="crm-item-import__alert">
@@ -177,7 +177,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		components: {
-			Alert: Alert$1
+			Alert
 		},
 		methods: {
 			content() {
@@ -345,7 +345,7 @@ this.BX.Crm = this.BX.Crm || {};
 	const ErrorAlert = {
 		name: 'ErrorAlert',
 		components: {
-			Alert: Alert$1
+			Alert
 		},
 		template: `
 		<Alert class="--error"><slot/></Alert>
@@ -355,7 +355,7 @@ this.BX.Crm = this.BX.Crm || {};
 	const WarningAlert = {
 		name: 'WarningAlert',
 		components: {
-			Alert: Alert$1
+			Alert
 		},
 		template: `
 		<Alert class="--warning"><slot/></Alert>
@@ -572,65 +572,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const AlertDesign = Object.freeze({
-		tinted: 'tinted',
-		tintedSuccess: 'tinted-success',
-		tintedWarning: 'tinted-warning',
-		tintedAlert: 'tinted-alert'
-	});
-	const Alert = {
-		name: 'Alert',
-		components: {
-			Text2Xs: ui_system_typography_vue.Text2Xs,
-			BIcon: ui_iconSet_api_vue.BIcon
-		},
-		props: {
-			design: {
-				type: String,
-				required: false,
-				default: AlertDesign.tinted,
-				validator: value => {
-					return Object.values(AlertDesign).includes(value);
-				}
-			},
-			leftImage: {
-				type: String,
-				required: false,
-				default: null
-			}
-		},
-		computed: {
-			closeIcon() {
-				return ui_iconSet_api_vue.Outline.CROSS_S;
-			},
-			rootClasses() {
-				return ['ui-system-alert', 'ui-system-alert__scope', `--${this.design}`, {
-					'--has-left-image': Boolean(this.leftImage)
-				}];
-			},
-			leftImageStyle() {
-				if (!this.leftImage) {
-					return {};
-				}
-				return {
-					'--ui-alert-left-image': `url(${this.leftImage})`
-				};
-			}
-		},
-		template: `
-		<div :class="rootClasses" :style="leftImageStyle">
-			<div class="ui-system-alert-inner">
-				<div class="ui-system-alert__left-image"></div>
-				<div class="ui-system-alert__content">
-					<Text2Xs>
-						<slot></slot>
-					</Text2Xs>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
 	const Checkbox = {
 		name: 'Checkbox',
 		components: {
@@ -682,7 +623,7 @@ this.BX.Crm = this.BX.Crm || {};
 		emits: ['onSelectMouseDown'],
 		components: {
 			RequiredMark,
-			Alert: Alert$1,
+			Alert,
 			Icon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
@@ -777,7 +718,7 @@ this.BX.Crm = this.BX.Crm || {};
 		name: 'TagSelector',
 		components: {
 			RequiredMark,
-			Alert: Alert$1
+			Alert
 		},
 		props: {
 			fieldName: {
@@ -1907,9 +1848,8 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	// todo: Remove after adding dependency on ui 26.200.0
-	const AlertComponent = BX?.UI?.System?.Alert?.Vue?.Alert || Alert;
-	const AlertDesignEnum = BX?.UI?.System?.Alert?.AlertDesign || AlertDesign;
+	var settingsImage = "/bitrix/js/crm/item/import/dist/assets/settings.webp";
+
 	const RequisiteHintSet = {
 		name: 'RequisiteHintSet',
 		props: {
@@ -1919,11 +1859,11 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		components: {
-			Alert: AlertComponent
+			Alert: ui_system_alert.Vue.Alert
 		},
 		data() {
 			return {
-				AlertDesignEnum
+				AlertDesignEnum: ui_system_alert.AlertDesign
 			};
 		},
 		methods: {
@@ -2004,7 +1944,7 @@ this.BX.Crm = this.BX.Crm || {};
 			<Alert
 				:design="AlertDesignEnum.tinted"
 				:hasCloseButton="false"
-				leftImage="/bitrix/js/crm/item/import/dist/images/settings.png"
+				leftImage="${settingsImage}"
 			>
 				<div class="crm-item-import__requisite-help-hint-group-list">
 					<div class="crm-item-import__requisite-help-hint-group-item">
@@ -4111,5 +4051,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Import = Import;
 
-})(this.BX.Crm.Item = this.BX.Crm.Item || {}, BX.Vue3, BX, BX.Event, BX.Cache, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.Vue3.Components, BX.UI.Uploader, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX.UI, BX.UI.Dialogs, BX, BX.UI.System.Alert, BX.UI, BX, BX.UI, BX.UI.Vue3.Components);
+})(this.BX.Crm.Item = this.BX.Crm.Item || {}, BX.Vue3, BX, BX.Event, BX.Cache, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.Vue3.Components, BX.UI.Uploader, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX.UI, BX.UI.Dialogs, BX.UI.Notification, BX.UI.System.Alert, BX.UI, window, BX.UI, BX.UI.Vue3.Components);
 //# sourceMappingURL=import.bundle.js.map

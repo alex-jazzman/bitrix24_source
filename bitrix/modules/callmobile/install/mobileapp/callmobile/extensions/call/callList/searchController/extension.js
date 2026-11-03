@@ -16,6 +16,7 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			this.searchView = null;
 			this.searchTimer = null;
 			this.searchAnalyticsSent = false;
+			this.searchGeneration = 0;
 		}
 
 		setupSearch(extraButtons = [])
@@ -68,6 +69,8 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 
 		onSearchTextChanged(text)
 		{
+			this.searchGeneration += 1;
+
 			if (!this.searchAnalyticsSent)
 			{
 				CallListAnalyticsController.sendStartSearch();
@@ -79,10 +82,7 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			const isActive = (query.trim().length >= minTokenSize);
 			this.component.setState({ searchQuery: query, isSearchMode: isActive });
 
-			if (this.searchTimer)
-			{
-				clearTimeout(this.searchTimer);
-			}
+			this.clearSearchTimer();
 
 			if (!isActive)
 			{
@@ -93,11 +93,20 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 				return;
 			}
 
-			this.searchTimer = setTimeout(() => this.performSearch(query), 350);
+			this.setLoading(true);
+			this.applySearchResults(null);
+
+			const generation = this.searchGeneration;
+			this.searchTimer = setTimeout(() => this.performSearch(query, generation), 350);
 		}
 
-		async performSearch(query)
+		async performSearch(query, generation)
 		{
+			if (generation !== this.searchGeneration)
+			{
+				return;
+			}
+
 			this.setLoading(true);
 
 			let callItems = [];
@@ -125,6 +134,12 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			catch (error)
 			{
 				console.error('[CallList][search][users][error]', error);
+			}
+
+			// ignore results of a stale request superseded by a newer search
+			if (generation !== this.searchGeneration)
+			{
+				return;
 			}
 
 			this.applySearchResults([...callItems, ...userItems]);
@@ -159,6 +174,8 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 
 		onSearchCancel()
 		{
+			this.searchGeneration += 1;
+			this.clearSearchTimer();
 			this.component.setState({ searchQuery: '', isSearchMode: false, searchItems: null });
 
 			this.setLoading(false);
@@ -166,6 +183,8 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 
 		onSearchHide()
 		{
+			this.searchGeneration += 1;
+			this.clearSearchTimer();
 			this.component.setState({ searchQuery: '', isSearchMode: false, searchItems: null });
 			this.searchAnalyticsSent = false;
 
@@ -202,13 +221,18 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			}
 		}
 
-		cleanup()
+		clearSearchTimer()
 		{
 			if (this.searchTimer)
 			{
 				clearTimeout(this.searchTimer);
 				this.searchTimer = null;
 			}
+		}
+
+		cleanup()
+		{
+			this.clearSearchTimer();
 		}
 	}
 

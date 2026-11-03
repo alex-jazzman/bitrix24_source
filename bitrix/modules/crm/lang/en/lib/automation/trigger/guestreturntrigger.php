@@ -3,4 +3,4 @@ $MESS["CRM_AUTOMATION_TRIGGER_GUEST_RETURN_DESCRIPTION"] = "Changes the stage wh
 $MESS["CRM_AUTOMATION_TRIGGER_GUEST_RETURN_EVENT_DATE_TIME"] = "Visitor returned to website date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_GUEST_RETURN_NAME"] = "Visitor return";
 $MESS["CRM_AUTOMATION_TRIGGER_GUEST_RETURN_NAME_1"] = "Customer revisited the website";
-$MESS["CRM_AUTOMATION_TRIGGER_GUEST_RETURN_NODE_DESCRIPTION"] = "Triggered after customer revisited a website.";
+$MESS["CRM_AUTOMATION_TRIGGER_GUEST_RETURN_NODE_DESCRIPTION"] = 'Triggered when a customer returns to a website with the Bitrix24 widget.';

@@ -1,13 +1,17 @@
-import { Dom, Event, Type } from 'main.core';
-import { nextTick, onBeforeUnmount, toValue, watch } from 'ui.vue3';
+import { Dom, Type } from 'main.core';
+import { toValue } from 'ui.vue3';
 
 import { useBlockDiagram } from './block-diagram';
-import { isSnapModifier, useSnapModifier } from './snap-modifier';
+import { useBlockPlacement } from './block-placement';
+import { useDisplacedBlocks } from './displaced-blocks';
+import { useGroupable, isCaptureCancelModifier } from './groupable';
+import { useGestureRunner } from './gesture';
 import { DRAG_START_THRESHOLD } from '../constants';
-import { type DiagramBlock, type DiagramBlockId } from '../types';
+import { type PlacementRect } from '../utils';
+import { type DiagramBlock, type DiagramBlockId, type Point } from '../types';
 
 type UseGroupDragLogic = {
-	onGroupMouseDown: MouseEvent;
+	onGroupMouseDown: (event: MouseEvent) => void,
 };
 
 type MovingItem = {
@@ -36,31 +40,23 @@ export function useGroupDragLogic(
 		updateBlockRectById,
 		setPortOffsetByBlockId,
 		highlitedBlockIds,
-		startAutoScroll,
-		stopAutoScroll,
-		updateMousePosition,
 		snapPoint,
-		setGestureBlocks,
-		resetGestureBlocks,
 		setGroupDragOffset,
 		resetGroupDragOffset,
-		isDisabledBlockDiagram,
 	} = useBlockDiagram();
-	const snapModifier = useSnapModifier();
+	const { captureContainedBlockIds, hasGroupableBlock } = useGroupable();
+	const { resolvePlacementDelta } = useBlockPlacement();
+	const { mark: markDisplacedBlocks, markRefused: markRefusedBlocks } = useDisplacedBlocks();
 
 	let currentZoom = 1;
 	let movingItems: MovingItem[] = [];
+	let committedPositions: CommittedPosition[] = [];
+	// Where the button went down: the frame is measured from it, with the camera travel of the
+	// autoscroll already added in by the core.
 	let anchor = { x: 0, y: 0 };
-	// Where the button went down, in the coordinates of the pointer. Unlike the anchor it is never
-	// compensated for autoscroll: the drag threshold is about the hand, not about the camera.
-	let downClient = { x: 0, y: 0 };
-	let client = { x: 0, y: 0 };
 	let lastTotalDelta = { x: 0, y: 0 };
-	let gestureToken = 0;
-	let isGestureActive = false;
-	let isDragStarted = false;
-	// Whether the last applied frame was snapped: the release must commit exactly the position that
-	// frame has drawn, even if the modifier changed between it and the mouseup.
+	// Whether the last drawn frame snapped the delta: the release commits the position that frame
+	// drew, so the correction of the placement rule is rounded to the grid on the very same terms.
 	let isLastFrameSnapped = false;
 
 	const drawMarkup = (blockId: string, x: number, y: number): void => {
@@ -73,16 +69,13 @@ export function useGroupDragLogic(
 		}
 	};
 
-	// One node moved by hand, the way a dragged node moves its group members: the markup by style,
-	// the cached rect and the port coordinates by the step of this frame. The model is left alone
-	// until mouseup - a frame-by-frame write goes outside the command path, so the block watcher
-	// clears the spatial index on every frame and the connections leave the canvas for the whole
-	// gesture.
+	// The markup, the cached rect and the port coordinates of one node. The model is left alone
+	// until mouseup: a per-frame write would clear the spatial index and take the connections off.
 	const moveItem = (blockId: string, x: number, y: number, stepX: number, stepY: number): void => {
 		drawMarkup(blockId, x, y);
 
 		// Only an existing entry is moved: a merge over a missing one would recreate geometry that
-		// a purge removed on purpose, and without a measured size at that.
+		// a purge removed on purpose.
 		if (Type.isObjectLike(toValue(blocksRectMap)?.[blockId]))
 		{
 			updateBlockRectById(blockId, { x, y });
@@ -94,68 +87,8 @@ export function useGroupDragLogic(
 		}
 	};
 
-	// The same threshold the node gesture is held to (moveable-block.js): below it the press is a
-	// click on the selection rather than a drag.
-	const isBeyondDragThreshold = (clientX: number, clientY: number): boolean => {
-		return Math.abs(clientX - downClient.x) >= DRAG_START_THRESHOLD
-			|| Math.abs(clientY - downClient.y) >= DRAG_START_THRESHOLD;
-	};
-
-	const updatePositions = (clientX: number, clientY: number, isSnapRequested: boolean): void => {
-		// the whole group moves by one snapped delta, so distances inside it stay untouched;
-		// the delta is whole-pixel even unsnapped, because the model keeps integer coordinates
-		const { x: totalDeltaX, y: totalDeltaY } = snapPoint({
-			x: Math.round((clientX - anchor.x) / currentZoom),
-			y: Math.round((clientY - anchor.y) / currentZoom),
-		}, isSnapRequested);
-
-		// Nothing but a finite delta is ever applied: a NaN would spread over the rect cache, the
-		// port coordinates and the model, and the coordinates it came from are past recovering by
-		// the time the gesture is committed.
-		if (!Number.isFinite(totalDeltaX) || !Number.isFinite(totalDeltaY))
-		{
-			return;
-		}
-
-		const stepX = totalDeltaX - lastTotalDelta.x;
-		const stepY = totalDeltaY - lastTotalDelta.y;
-
-		isLastFrameSnapped = isSnapRequested;
-
-		if (stepX === 0 && stepY === 0)
-		{
-			return;
-		}
-
-		for (const item of movingItems)
-		{
-			moveItem(item.id, item.startX + totalDeltaX, item.startY + totalDeltaY, stepX, stepY);
-		}
-
-		lastTotalDelta = { x: totalDeltaX, y: totalDeltaY };
-		setGroupDragOffset({ x: totalDeltaX, y: totalDeltaY });
-	};
-
-	const releaseGesture = (): void => {
-		stopAutoScroll();
-		snapModifier.stopTracking();
-		resetGestureBlocks();
-		Event.unbind(window, 'mousemove', onGroupMouseMove);
-		Event.unbind(window, 'mouseup', onGroupMouseUp);
-		Event.unbind(document, 'keydown', onGroupKeyDown);
-		Event.unbind(document, 'pointercancel', onGroupGestureAbort);
-		Event.unbind(window, 'blur', onGroupGestureAbort);
-
-		isGestureActive = false;
-		isDragStarted = false;
-		movingItems = [];
-		lastTotalDelta = { x: 0, y: 0 };
-		resetGroupDragOffset();
-	};
-
 	// A node whose model position is unusable stays out of the gesture: a non-finite coordinate
-	// would poison the rect cache on the very first frame, write NaN into every port of the node on
-	// the commit and reach the model from there.
+	// would spread NaN over the rect cache, the ports and the model.
 	const createMovingItem = (block: DiagramBlock): MovingItem | null => {
 		const position = toValue(block).position;
 
@@ -175,104 +108,38 @@ export function useGroupDragLogic(
 		return { id: toValue(block).id, startX, startY };
 	};
 
-	const onGroupMouseDown = (event: MouseEvent): void => {
-		// The frame is shown by the selection alone, so it stays on screen over a readonly template
-		// and over an animation: without this the gesture would move the nodes there and write the
-		// move into the model. A press over a gesture still open is refused as well: restarting the
-		// gesture would lose the nodes the open one carries, leaving them shifted with nothing to
-		// bring them back.
-		if (event.button !== 0 || toValue(isDisabledBlockDiagram) || isGestureActive)
-		{
-			return;
-		}
-		event.stopPropagation();
-		closeContextMenu();
+	// Nodes lying inside a container that took part in the selection. They join the gesture as
+	// ordinary members and go through the same filtering the selected nodes do; the union goes by
+	// block id, so a node that is both selected and contained is taken exactly once. With no
+	// container among the selected blocks the capture answers without a single lookup in the
+	// intersections index, and the selection itself stays the list of participants - nothing new is
+	// built for a gesture that has no containers in it.
+	const collectParticipantIds = (
+		selectedBlocks: DiagramBlock[],
+		selectedIds: Set<DiagramBlockId>,
+	): Set<DiagramBlockId> => {
+		let participantIds = null;
 
-		const selectedIds = new Set(toValue(highlitedBlockIds));
-		const items = toValue(uiBlocksRef)
-			.filter((block) => selectedIds.has(block.id))
-			.map((block) => createMovingItem(block))
-			.filter((item) => item !== null);
-
-		// Nothing is left to move once the unusable positions are filtered out. A gesture started over
-		// such a selection would subscribe to the pointer, run autoscroll and carry the frame away
-		// from the nodes it belongs to.
-		if (items.length === 0)
+		for (const block of selectedBlocks)
 		{
-			return;
+			for (const capturedId of captureContainedBlockIds(block))
+			{
+				if (participantIds === null)
+				{
+					participantIds = new Set(selectedIds);
+				}
+
+				participantIds.add(capturedId);
+			}
 		}
 
-		// The zoom divides the pointer delta, so a zero or non-finite one would turn every position
-		// of the gesture into infinity or NaN and carry it into the rect cache, into the ports and
-		// into the model on the commit.
-		const gestureZoom = toValue(zoom);
-
-		if (!Number.isFinite(gestureZoom) || gestureZoom <= 0)
-		{
-			return;
-		}
-
-		currentZoom = gestureZoom;
-		++gestureToken;
-		anchor = { x: event.clientX, y: event.clientY };
-		downClient = { x: event.clientX, y: event.clientY };
-		client = { x: event.clientX, y: event.clientY };
-		lastTotalDelta = { x: 0, y: 0 };
-		isGestureActive = true;
-		isDragStarted = false;
-		resetGroupDragOffset();
-
-		snapModifier.sync(event);
-		snapModifier.startTracking();
-		isLastFrameSnapped = isSnapModifier(event);
-
-		movingItems = items;
-
-		// The model keeps the pre-gesture positions until mouseup, so culling would judge these
-		// nodes by boxes the gesture has already left behind: autoscroll pans the camera past them
-		// and unmounts a node that is in fact on screen.
-		setGestureBlocks(movingItems.map((item) => item.id));
-
-		startAutoScroll(event, (dx: number, dy: number) => {
-			anchor.x -= dx;
-			anchor.y -= dy;
-			updatePositions(client.x, client.y, snapModifier.isPressed());
-		});
-
-		Event.bind(window, 'mousemove', onGroupMouseMove);
-		Event.bind(window, 'mouseup', onGroupMouseUp);
-		Event.bind(document, 'keydown', onGroupKeyDown);
-		Event.bind(document, 'pointercancel', onGroupGestureAbort);
-		Event.bind(window, 'blur', onGroupGestureAbort);
+		return participantIds ?? selectedIds;
 	};
 
-	const onGroupMouseMove = (event: MouseEvent): void => {
-		client.x = event.clientX;
-		client.y = event.clientY;
-		snapModifier.sync(event);
-
-		if (!isDragStarted)
-		{
-			isDragStarted = isBeyondDragThreshold(event.clientX, event.clientY);
-		}
-
-		// The press only arms the autoscroll, and the pointer is reported to it past the threshold, as
-		// the node gesture reports it: below the threshold the press is still a click on the selection
-		// and the camera must stand.
-		if (isDragStarted)
-		{
-			updateMousePosition(event);
-		}
-
-		updatePositions(client.x, client.y, snapModifier.isPressed());
-	};
-
-	// The model is the truth about where a node stands, so after the gesture the markup and the
-	// measured geometry are brought to the model position instead of being left on the result of the
-	// gesture: a consumer may refuse the move or write a position of its own. The rect of a node is
-	// written absolutely and would come back into agreement on the next gesture anyway, but the port
-	// offsets are written as steps - nothing but this brings them back into step.
-	const alignGeometryToModel = (
+	// After the gesture the markup and the measured geometry are brought to the model position: a
+	// consumer may refuse the move or write a position of its own. The port offsets are written as
+	// steps, so nothing but this brings them back into step.
+	const alignItemToModel = (
 		{ id, x, y }: CommittedPosition,
 		blockById: Map<DiagramBlockId, DiagramBlock>,
 	): void => {
@@ -300,181 +167,254 @@ export function useGroupDragLogic(
 		moveItem(id, position.x, position.y, position.x - x, position.y - y);
 	};
 
-	// One pass over the model instead of a linear lookup per node: the commit and the
-	// reconciliation each walk the whole selection, and the model of a large diagram is long.
+	// One pass over the model instead of a linear lookup per node of the selection.
 	const buildBlockByIdMap = (): Map<DiagramBlockId, DiagramBlock> => {
 		return new Map(
 			toValue(uiBlocksRef).map((block) => [toValue(block).id, block]),
 		);
 	};
 
-	const onGroupMouseUp = (event: MouseEvent): void => {
-		// The watcher below is flushed before the render, so a diagram disabled in this very tick is
-		// still to reach it: without this check the release would carry the gesture into the model
-		// over a readonly template or an animation.
-		if (toValue(isDisabledBlockDiagram))
-		{
-			cancelGesture();
+	const resolveTargets = (event: MouseEvent): Array<DiagramBlockId> | null => {
+		closeContextMenu();
 
-			return;
+		const selectedIds = new Set(toValue(highlitedBlockIds));
+		const modelBlocks = toValue(uiBlocksRef);
+		// The modifier is read off this very press: the set of a gesture is fixed here, so Alt taken
+		// or let go later changes nothing. With it held the selection alone moves, as it did before
+		// containers existed.
+		const participantIds = isCaptureCancelModifier(event)
+			? selectedIds
+			: collectParticipantIds(
+				modelBlocks.filter((block) => selectedIds.has(block.id)),
+				selectedIds,
+			);
+		const items = modelBlocks
+			.filter((block) => participantIds.has(block.id))
+			.map((block) => createMovingItem(block))
+			.filter((item) => item !== null);
+
+		if (items.length === 0)
+		{
+			return null;
 		}
 
-		// A mouseup can arrive with no coordinates at all - a plain `Event('mouseup')` from a
-		// consumer, or the core `BX.fireEvent`. Applying it as a frame would make the release delta
-		// NaN, and a NaN passes the "moved nothing" check below straight into the model.
-		if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY))
-		{
-			cancelGesture();
+		currentZoom = toValue(zoom);
+		anchor = { x: event.clientX, y: event.clientY };
+		lastTotalDelta = { x: 0, y: 0 };
+		isLastFrameSnapped = false;
+		movingItems = items;
 
-			return;
-		}
-
-		// A mouseup can carry a position no mousemove has seen, so the release point is applied as
-		// the last frame of the gesture - but only once it is past the threshold that separates a
-		// drag from a click, the same one the node gesture uses. Otherwise the shake of a hand over
-		// the frame writes a command per selected node. A gesture that has already moved the nodes
-		// is past that question: its release point is a frame like any other. The modifier is taken
-		// from the last frame rather than from this event: Shift released an instant before the
-		// button would part the committed position from the drawn one.
-		if (
-			lastTotalDelta.x !== 0
-			|| lastTotalDelta.y !== 0
-			|| isBeyondDragThreshold(event.clientX, event.clientY)
-		)
-		{
-			updatePositions(event.clientX, event.clientY, isLastFrameSnapped);
-		}
-
-		// A gesture that left the nodes where they started is a click on the selection, not a drag:
-		// committing it would write a command per selected node, with the pre-gesture coordinates,
-		// and ask the consumer to save a diagram nothing changed in. A pointer that wandered off and
-		// came back to the press point ends there just as a press that never moved does.
-		if (lastTotalDelta.x === 0 && lastTotalDelta.y === 0)
-		{
-			releaseGesture();
-
-			return;
-		}
-
-		// The markup and the geometry are brought to the whole-pixel position first, so all three
-		// describe the same place: the model keeps integer coordinates.
-		const committedPositions = movingItems.map((item) => {
-			const currentX = item.startX + lastTotalDelta.x;
-			const currentY = item.startY + lastTotalDelta.y;
-			const x = Math.round(currentX);
-			const y = Math.round(currentY);
-
-			moveItem(item.id, x, y, x - currentX, y - currentY);
-
-			return { id: item.id, x, y };
-		});
-
-		const token = gestureToken;
-		const blockById = buildBlockByIdMap();
-
-		// The commands go out first and the gesture is released after them, but the release is not
-		// theirs to skip: a consumer hook that throws would leave the gesture live - the window
-		// listeners bound, the nodes held and the frame offset standing, so the next pointer move
-		// would drag them with no button held. The exception itself is not the extension's to handle
-		// and goes on to the consumer, taking the reconciliation below with it: a torn commit leaves
-		// the model in a state there is nothing to align the geometry to.
-		try
-		{
-			for (const { id, x, y } of committedPositions)
-			{
-				const block = blockById.get(id) ?? null;
-
-				if (block === null)
-				{
-					continue;
-				}
-
-				updateBlock({
-					...toValue(block),
-					position: {
-						...toValue(block).position,
-						x,
-						y,
-					},
-				});
-			}
-		}
-		finally
-		{
-			// The nodes are held in the visible set until the last command has gone out: released
-			// earlier, they would be judged by the pre-gesture boxes the spatial index still holds
-			// for as long as the write takes.
-			releaseGesture();
-		}
-
-		// Rendering a node rewrites its markup from the block input, and under render optimization
-		// that input still carries the pre-gesture position on the render of this very commit. The
-		// position is put back once that render has flushed, so the nodes do not blink back to where
-		// the gesture started while the visible set catches up.
-		// Precondition of the extension: the consumer applies `changedBlocks` within this same flush
-		// cycle - the model is read once here, and a command applied later misses the alignment.
-		void nextTick(() => {
-			if (token !== gestureToken)
-			{
-				return;
-			}
-
-			// The lookup is built again rather than reused: the consumer applies the commands by
-			// replacing the model, so the map of the commit holds the pre-commit blocks, and the
-			// whole point here is to read where the consumer has put the nodes.
-			const committedBlockById = buildBlockByIdMap();
-
-			for (const committedPosition of committedPositions)
-			{
-				alignGeometryToModel(committedPosition, committedBlockById);
-			}
-		});
+		return movingItems.map((item) => item.id);
 	};
 
-	const cancelGesture = (): void => {
-		if (!isGestureActive)
+	// Every node of this gesture keeps its position in the markup alone until mouseup, so all of
+	// them are drawn again.
+	const redrawMarkup = (): void => {
+		for (const item of movingItems)
 		{
-			return;
+			drawMarkup(item.id, item.startX + lastTotalDelta.x, item.startY + lastTotalDelta.y);
+		}
+	};
+
+	const applyFrame = (point: Point, isSnapRequested: boolean): boolean => {
+		isLastFrameSnapped = isSnapRequested;
+
+		// the whole group moves by one snapped delta, so distances inside it stay untouched;
+		// the delta is whole-pixel even unsnapped, because the model keeps integer coordinates
+		const { x: totalDeltaX, y: totalDeltaY } = snapPoint({
+			x: Math.round((point.x - anchor.x) / currentZoom),
+			y: Math.round((point.y - anchor.y) / currentZoom),
+		}, isSnapRequested);
+
+		// Nothing but a finite delta is ever applied: a NaN would spread over the rect cache, the
+		// port coordinates and the model.
+		if (!Number.isFinite(totalDeltaX) || !Number.isFinite(totalDeltaY))
+		{
+			return false;
+		}
+
+		const stepX = totalDeltaX - lastTotalDelta.x;
+		const stepY = totalDeltaY - lastTotalDelta.y;
+
+		if (stepX === 0 && stepY === 0)
+		{
+			return false;
 		}
 
 		for (const item of movingItems)
 		{
+			moveItem(item.id, item.startX + totalDeltaX, item.startY + totalDeltaY, stepX, stepY);
+		}
+
+		lastTotalDelta = { x: totalDeltaX, y: totalDeltaY };
+		setGroupDragOffset({ x: totalDeltaX, y: totalDeltaY });
+
+		return true;
+	};
+
+	const revert = (): void => {
+		for (const item of movingItems)
+		{
 			moveItem(item.id, item.startX, item.startY, -lastTotalDelta.x, -lastTotalDelta.y);
 		}
-
-		releaseGesture();
 	};
 
-	const onGroupKeyDown = (event: KeyboardEvent): void => {
-		if (event.key === 'Escape')
+	// The rectangles the placement rule is asked about: the whole-pixel position the gesture aims at,
+	// and the size the model states. The gesture itself knows no sizes - `MovingItem` carries only a
+	// starting point - so the size comes from the block the model holds under the same id. A node the
+	// model has lost keeps its place among the participants without a usable rect: the rule leaves it
+	// out of the geometry but still knows it is not an obstacle to the rest of the gesture.
+	const collectPlacementRects = (
+		blockById: Map<DiagramBlockId, DiagramBlock>,
+	): Map<DiagramBlockId, PlacementRect> => {
+		const rects = new Map();
+
+		for (const item of movingItems)
 		{
-			cancelGesture();
+			const dimensions = toValue(toValue(blockById.get(item.id))?.dimensions) ?? {};
+
+			rects.set(item.id, {
+				id: item.id,
+				x: Math.round(item.startX + lastTotalDelta.x),
+				y: Math.round(item.startY + lastTotalDelta.y),
+				width: dimensions.width,
+				height: dimensions.height,
+			});
+		}
+
+		return rects;
+	};
+
+	const commit = (): boolean => {
+		// A gesture that left the nodes where they started is a click on the selection, not a drag:
+		// committing it would ask the consumer to save a diagram nothing changed in.
+		if (lastTotalDelta.x === 0 && lastTotalDelta.y === 0)
+		{
+			return false;
+		}
+
+		const blockById = buildBlockByIdMap();
+		const placementRects = collectPlacementRects(blockById);
+		// Asked before the first write: the intersections index refreshes inside every `updateBlock`,
+		// so after the first one the rule would answer about a picture that no longer stands.
+		const placementDelta = resolvePlacementDelta(
+			[...placementRects.values()],
+			{ followsGrid: isLastFrameSnapped },
+		);
+
+		// No free room within the budget: the gesture is given up whole, so the model never comes to
+		// hold a forbidden overlap. The feedback still goes out - on the positions the participants
+		// have just come back to, so the refusal is not a silent one.
+		if (placementDelta === null)
+		{
+			revert();
+			markRefusedBlocks(movingItems.map((item) => item.id));
+
+			return false;
+		}
+
+		// Where the frame left the nodes, before the correction: the step given to the markup and to
+		// the port offsets is counted from there.
+		const drawnDelta = lastTotalDelta;
+
+		// Added to the delta of the whole gesture rather than to the position of each node: the
+		// selection travels by one value, so the layout inside it comes out of the correction as it
+		// went in.
+		lastTotalDelta = {
+			x: drawnDelta.x + placementDelta.x,
+			y: drawnDelta.y + placementDelta.y,
+		};
+
+		// The markup and the geometry are brought to the whole-pixel position of the model first, so
+		// all three describe the same place. That position is the very rect the rule was asked about
+		// plus the correction it answered with: rounding happens once, before the question, so the
+		// model gets exactly the geometry the rule cleared. Rounding the corrected sum a second time
+		// would leave a node with a fractional model position a pixel off that geometry - and a pixel
+		// is enough to overlap the neighbour it was moved away from.
+		committedPositions = movingItems.map((item) => {
+			const { x, y } = placementRects.get(item.id);
+			const correctedX = x + placementDelta.x;
+			const correctedY = y + placementDelta.y;
+			const drawnX = item.startX + drawnDelta.x;
+			const drawnY = item.startY + drawnDelta.y;
+
+			moveItem(item.id, correctedX, correctedY, correctedX - drawnX, correctedY - drawnY);
+
+			return { id: item.id, x: correctedX, y: correctedY };
+		});
+
+		// A participant the model has lost is written nowhere, so it has not moved either.
+		const committedBlockIds = [];
+
+		for (const { id, x, y } of committedPositions)
+		{
+			const block = blockById.get(id) ?? null;
+
+			if (block === null)
+			{
+				continue;
+			}
+
+			updateBlock({
+				...toValue(block),
+				position: {
+					...toValue(block).position,
+					x,
+					y,
+				},
+			});
+			committedBlockIds.push(id);
+		}
+
+		if (placementDelta.x !== 0 || placementDelta.y !== 0)
+		{
+			markDisplacedBlocks(committedBlockIds);
+		}
+
+		return true;
+	};
+
+	// Runs a tick after the commit: under render optimization the block input still carries the
+	// pre-gesture position on the render of that commit, and the nodes would blink back to it.
+	const alignToModel = (): void => {
+		// Built again rather than reused: the consumer applies the commands by replacing the model,
+		// and the point here is to read where it has put the nodes.
+		const committedBlockById = buildBlockByIdMap();
+
+		for (const committedPosition of committedPositions)
+		{
+			alignItemToModel(committedPosition, committedBlockById);
 		}
 	};
 
-	// The pointer can be lost without a mouseup: released outside the browser window, or taken away
-	// by the system. Left alone the gesture would stay live - the markup shifted, the model on the
-	// pre-gesture positions, and the next pointer move dragging the nodes with no button held.
-	const onGroupGestureAbort = (): void => {
-		cancelGesture();
+	const onOpen = (): void => {
+		resetGroupDragOffset();
+		// Not on close: the alignment runs a tick later and these positions are what it reads.
+		committedPositions = [];
 	};
 
-	watch(isDisabledBlockDiagram, (isDisabled: boolean) => {
-		if (isDisabled)
-		{
-			cancelGesture();
-		}
+	const onClose = (): void => {
+		resetGroupDragOffset();
+		movingItems = [];
+		lastTotalDelta = { x: 0, y: 0 };
+	};
+
+	const gesture = useGestureRunner({
+		threshold: DRAG_START_THRESHOLD,
+		resolveTargets,
+		elevatesTargets: hasGroupableBlock,
+		redrawMarkup,
+		applyFrame,
+		revert,
+		commit,
+		alignToModel,
+		onOpen,
+		onClose,
 	});
 
-	// A gesture torn down without a mouseup would leave the markup and the geometry where the
-	// pointer left them while the model still holds the pre-gesture positions. The token is bumped
-	// on top of that: the reconciliation of a release is a microtask, and a teardown between the two
-	// would otherwise let it write geometry and markup on a diagram that is gone. `cancelGesture`
-	// cannot do it - by then the gesture is already released and it returns at once.
-	onBeforeUnmount(() => {
-		++gestureToken;
-		cancelGesture();
-	});
+	const onGroupMouseDown = (event: MouseEvent): void => {
+		gesture.start(event);
+	};
 
 	return { onGroupMouseDown };
 }

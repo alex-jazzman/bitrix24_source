@@ -142,6 +142,9 @@ export const Accomplices = {
 			:dataset
 			:isLocked
 			:featureId
+			:ariaLabel="loc('TASKS_V2_ACCOMPLICES_TITLE')"
+			ariaHaspopup="dialog"
+			:clearAriaLabel="loc('TASKS_V2_ACCOMPLICES_REMOVE_ARIA_LABEL')"
 			warnAboutAbsence
 			@update="update"
 			@absenceLoaded="armAbsenceForUsers"

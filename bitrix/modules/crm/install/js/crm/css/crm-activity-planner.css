@@ -803,7 +803,7 @@
 	right: 0;
 	width: 25px;
 	height: 30px;
-	/*background: url(../images/calendar-sprite-mpf-2.png) no-repeat;*/
+	/*background: url(../images/calendar-sprite-mpf-2.webp) no-repeat;*/
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2011%2011%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7.076%205.485l3.448-3.448-1.59-1.59-3.45%203.447L2.04.446.45%202.036l3.446%203.45L.446%208.93l1.59%201.59%203.45-3.446%203.447%203.447%201.59-1.59%22/%3E%3C/svg%3E') center no-repeat;
 	background-size: 7px auto;
 	transition: opacity .3s;
@@ -1108,6 +1108,11 @@
 .crm-task-list-header-image.mail-send:before { background-position: 0 -234px; }
 
 .crm-task-list-header-image.mail-accept:before { background-position: 0 -269px; }
+
+.crm-task-list-header-image.todo:before {
+	background: url(../images/task-list-sprite.svg?5);
+	background-position: 0 -269px;
+}
 
 .crm-task-list-header-image.chat:before {
 	height: 36px;
@@ -1727,7 +1732,7 @@ table.quote {
 	margin: 0.6em 0;
 	width: 80%;
 	border: 1px solid #e8e8e8;
-	background: url(../images/quote-gray.png) no-repeat left top #f7f7f7;
+	background: url(../images/quote-gray.webp) no-repeat left top #f7f7f7;
 	color: #555;
 	font-size: 1em;
 }
@@ -2197,6 +2202,10 @@ table.quote td { padding: 0.95em 1.5em; }
 
 .crm-activity-planner-slider-header-icon-mail-accept:before { background-position: 0 -269px; }
 
+.crm-activity-planner-slider-header-icon-todo:before {
+	background-position: 0 -269px;
+}
+
 .crm-activity-planner-slider-header-icon-chat:before {
 	height: 36px;
 	background-position: 0 -34px;
@@ -2596,7 +2605,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	left: -20px;
 	width: 18px;
 	height: 16px;
-	background: url(../images/crm-activity-email-control-sprite.png) 0 1px no-repeat;
+	background: url(../images/crm-activity-email-control-sprite.webp) 0 1px no-repeat;
 	content: "";
 }
 
@@ -3460,4 +3469,3 @@ table.quote td { padding: 0.95em 1.5em; }
 }
 
 /* endregion END OF LOADER */
-

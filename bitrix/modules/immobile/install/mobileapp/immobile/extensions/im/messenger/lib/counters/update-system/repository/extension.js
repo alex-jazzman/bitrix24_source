@@ -164,6 +164,22 @@ jn.define('im/messenger/lib/counters/update-system/repository', (require, export
 		}
 
 		/**
+		 * @param {Array<number>} chatIdList
+		 * @return {Promise<void>}
+		 */
+		async deleteOperationsByChatIdList(chatIdList)
+		{
+			if (!Type.isArrayFilled(chatIdList))
+			{
+				return;
+			}
+
+			chatIdList.forEach((chatId) => this.pendingOperationCollection.delete(chatId));
+
+			await this.repository.deletePendingOperationsByChatIdList(chatIdList);
+		}
+
+		/**
 		 * Save multiple counters with their pending operations in batch
 		 * @param {Array<CounterModelState>} counterStateList
 		 * @param {Object<number, Array<PendingOperation>>} pendingOperationsByChatId

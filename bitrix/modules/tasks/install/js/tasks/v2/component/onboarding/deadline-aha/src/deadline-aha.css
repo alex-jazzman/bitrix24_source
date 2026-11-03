@@ -1,0 +1,142 @@
+/* SC-003 deadline aha-moment — main.popup placed in document.body.
+ * The angle/arrow is rendered by main.popup itself (angle: { position: 'top', offset: 30 }).
+ * The popup wrapper gets background and border-radius from Popup constructor params
+ * (background: '#0056bf', borderRadius: 16), but we duplicate them on the root element
+ * so the content area itself is correctly styled regardless of popup internals. */
+
+/* ── Popup wrapper override ──────────────────────────────────────────── */
+.tasks-onboarding-deadline-aha-popup .popup-window {
+	border-radius: 16px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Root layout ──────────────────────────────────────────────────────── */
+.tasks-onboarding-deadline-aha {
+	display: flex;
+	align-items: stretch;
+	position: relative;
+	min-height: 116px;
+	background: #0056bf;
+	border-radius: 16px;
+}
+
+/* ── Left graphics column ─────────────────────────────────────────── */
+.tasks-onboarding-deadline-aha__graphics {
+	position: relative;
+	flex: 0 0 98px;
+	width: 98px;
+	overflow: hidden; /* Zefir overflows and is clipped by border-radius */
+	border-radius: 16px 0 0 16px;
+}
+
+/* Calendar icon — top-left */
+.tasks-onboarding-deadline-aha__calendar {
+	position: absolute;
+	top: 14px;
+	left: 17px;
+	width: 56px;
+	height: 56px;
+	background-image: url('../images/calendar-aha.png');
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+/* Zefir — peeks from bottom-left, partially clipped */
+.tasks-onboarding-deadline-aha__zefir {
+	position: absolute;
+	left: -46px;
+	top: 40px;
+	width: 144px;
+	height: 144px;
+	background-image: url('../images/zefir-aha.png');
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+/* ── Right text column ────────────────────────────────────────────── */
+.tasks-onboarding-deadline-aha__body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px 18px 12px 12px;
+}
+
+.tasks-onboarding-deadline-aha__title {
+	font-family: Inter, sans-serif;
+	font-weight: 500;
+	font-size: 17px;
+	line-height: 23px;
+	letter-spacing: -0.1px;
+	color: #fff;
+	padding-right: 24px; /* space for close button */
+}
+
+.tasks-onboarding-deadline-aha__text {
+	font-family: Inter, sans-serif;
+	font-weight: 400;
+	font-size: 15px;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── CTA button — "glass" style ──────────────────────────────────── */
+.tasks-onboarding-deadline-aha__cta {
+	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 24px;
+	border: 0;
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.16);
+	backdrop-filter: blur(24px);
+	color: #fff;
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	line-height: 17px;
+	cursor: pointer;
+}
+
+.tasks-onboarding-deadline-aha__cta:hover {
+	background: rgba(255, 255, 255, 0.24);
+}
+
+.tasks-onboarding-deadline-aha__cta:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+/* ── Close button (×) ────────────────────────────────────────────── */
+.tasks-onboarding-deadline-aha__close {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	cursor: pointer;
+	--ui-icon-set__icon-color: #fff;
+}
+
+.tasks-onboarding-deadline-aha__close:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.tasks-onboarding-deadline-aha__close:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.tasks-onboarding-deadline-aha__close .ui-icon-set {
+	--ui-icon-set__icon-color: #fff;
+}

@@ -5,6 +5,7 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 $isSidePanel = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'intranet.old-interface.form']);
 
@@ -389,7 +390,7 @@ $checkboxValuesTmpl = '<select name="TYPE_#FIELD_ID#" id="TYPE_#FIELD_ID#" style
 
 	BX.crmPSActionFile.onHandlerModeChange();
 
-	<? if (isset($_REQUEST['SIDE_PANEL_REQUEST']) && $_REQUEST['SIDE_PANEL_REQUEST'] === 'Y'): ?>
+	<?php if (!$isSettingsHub && isset($_REQUEST['SIDE_PANEL_REQUEST']) && $_REQUEST['SIDE_PANEL_REQUEST'] === 'Y'): ?>
 	BX.ready(function () {
 		if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 		{
@@ -404,7 +405,9 @@ $checkboxValuesTmpl = '<select name="TYPE_#FIELD_ID#" id="TYPE_#FIELD_ID#" style
 
 	function cancelEdit()
 	{
-		<? if ($isSidePanel): ?>
+		<?php if ($isSettingsHub): ?>
+			window.location.href = '<?=CUtil::JSEscape($arResult['BACK_URL'])?>';
+		<?php elseif ($isSidePanel): ?>
 			if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 			{
 				top.BX.SidePanel.Instance.close();
@@ -418,7 +421,7 @@ $checkboxValuesTmpl = '<select name="TYPE_#FIELD_ID#" id="TYPE_#FIELD_ID#" style
 
 <?
 $componentContent = ob_get_clean();
-if ($isSidePanel)
+if ($isSidePanel && !$isSettingsHub)
 {
 	$APPLICATION->RestartBuffer();
 	$APPLICATION->ShowHead();

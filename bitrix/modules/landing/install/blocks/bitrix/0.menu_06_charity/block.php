@@ -2,17 +2,17 @@
 	<div class="u-header__section g-bg-black-opacity-0_5 g-bg-transparent--lg g-transition-0_3 g-py-15"
 		 data-header-fix-moment-exclude="g-bg-black-opacity-0_5 g-bg-transparent--lg g-py-15"
 		 data-header-fix-moment-classes="u-header__section--light u-shadow-v27 g-bg-white g-py-12">
-		<nav class="navbar navbar-expand-lg g-py-0 g-px-10">
+		<nav class="navbar navbar-expand-lg g-py-0 g-px-10" aria-label="MESS[LANDING_BLOCK_0_MENU_06_NAV_LABEL]">
 			<div class="container">
 				<!-- Logo -->
 				<a href="#system_mainpage" class="landing-block-node-menu-logo-link navbar-brand u-header__logo p-0">
 					<img class="landing-block-node-menu-logo u-header__logo-img u-header__logo-img--main d-block g-max-width-180"
-						 src="https://cdn.bitrix24.site/bitrix/images/landing/logos/charity-logo-light.png" alt=""
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/logos/charity-logo-light.png" alt="MESS[LANDING_BLOCK_0_MENU_06_LOGO_ALT]"
 						 data-header-fix-moment-exclude="d-block"
 						 data-header-fix-moment-classes="d-none">
 
 					<img class="landing-block-node-menu-logo2 u-header__logo-img u-header__logo-img--main d-none g-max-width-180"
-						 src="https://cdn.bitrix24.site/bitrix/images/landing/logos/charity-logo-dark.png" alt=""
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/logos/charity-logo-dark.png" alt="MESS[LANDING_BLOCK_0_MENU_06_LOGO_ALT]"
 						 data-header-fix-moment-exclude="d-none"
 						 data-header-fix-moment-classes="d-block">
 				</a>
@@ -51,7 +51,7 @@
 
 				<!-- Responsive Toggle Button -->
 				<button class="navbar-toggler btn g-line-height-1 g-brd-none g-pa-0 ml-auto" type="button"
-						aria-label="Toggle navigation"
+						aria-label="MESS[LANDING_BLOCK_0_MENU_06_TOGGLE_LABEL]"
 						aria-expanded="false"
 						aria-controls="navBar"
 						data-toggle="collapse"

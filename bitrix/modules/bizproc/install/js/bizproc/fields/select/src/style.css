@@ -1,18 +1,21 @@
-/* Bordered card wrapping the whole control (option list + insert zone) as one
-   surface, per the mockup. The field label/legend is rendered ABOVE the card by
-   FieldLayout, so the card styling stays on this container only. */
+/* The control of the list view as a whole: the card of options and, under it, the insert row
+   the expression of the field is typed into. The field label/legend is rendered ABOVE by
+   FieldLayout, so nothing of it is styled here. */
 .bizproc-fields-select {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+/* Bordered card holding the option list, per the mockup: the insert row stands under it, outside
+   the border, so the card is the list itself rather than a wrapper around both. */
+.bizproc-fields-select__list {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 	background: var(--ui-color-bg-content-primary);
 	border: 1px solid var(--ui-color-base-6);
 	border-radius: var(--ui-border-radius-lg);
-}
-
-.bizproc-fields-select__list {
-	display: flex;
-	flex-direction: column;
 }
 
 /* Option rows are separated by their own padding (no container gap), so every row
@@ -52,21 +55,25 @@
 	color: var(--ui-color-base-4);
 }
 
-/* Inset hairline between the option list and the insert zone. */
-.bizproc-fields-select__divider {
-	/* 1px hairline: ui.design-tokens exposes no 1px size token. */
-	height: 1px;
-	margin: 0 var(--ui-space-inset-md);
-	background: var(--ui-color-base-6);
-}
-
-/* Insert zone inside the card: a bordered stub input + a trailing "..." button
-   sitting outside the input, per the mockup. Padded away from the card edges. */
+/* Insert zone under the card: the companion input fills the row and the "..." button sits next
+   to it, outside the input, per the mockup. */
 .bizproc-fields-select__insert-row {
 	display: flex;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
-	padding: var(--ui-space-inset-md);
+}
+
+/* The row also carries `.bizproc-fields-expression` (see #renderInsertRow), styled by the core for
+   a taller input. The rules the two disagree on are restated on both classes at once: which
+   stylesheet the page loads last is nothing this file may rely on. */
+.bizproc-fields-select__insert-row.bizproc-fields-expression {
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-fields-select__insert-row.bizproc-fields-expression > .bizproc-fields-insert {
+	width: 32px;
+	height: 32px;
 }
 
 /* The insert input is the anchor the selection provider wraps, so its wrapper takes the
@@ -78,9 +85,8 @@
 	min-width: 0;
 }
 
-/* The insert field is a visible bordered control (like a ui.forms text input),
-   matching the mockup: rounded border, content background, inner padding. It is a
-   readonly stub (see #renderInsertRow) - the value arrives via the "..." picker. */
+/* The companion is a visible bordered control (like a ui.forms text input), matching the
+   mockup: rounded border, content background, inner padding. */
 .bizproc-fields-select__insert-input {
 	box-sizing: border-box;
 	flex: 1 1 auto;
@@ -105,7 +111,7 @@
 	color: var(--ui-color-base-4);
 }
 
-/* The stub resets the UA outline and its border keeps the same color on focus, so without
+/* The input resets the UA outline and its border keeps the same color on focus, so without
    this the keyboard focus on it would be invisible (WCAG 2.4.7). */
 .bizproc-fields-select__insert-input:focus-visible {
 	outline: 1px solid var(--ui-color-accent-main-link);
@@ -114,4 +120,137 @@
 
 .bizproc-fields-select--readonly {
 	cursor: default;
+}
+
+/*
+ * The dropdown view (see #renderDropdownControl): the field itself, then whatever insertion puts
+ * beside it. The "..." button - the field's own or the one the provider brings - stands outside
+ * the field, which is why the field is a box of its own rather than the row.
+ */
+.bizproc-fields-select-dropdown {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-fields-select-dropdown__field {
+	position: relative;
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* The visible input is the anchor the selection provider wraps, so its wrapper takes the input's
+   place inside the field and has to carry the stretching. Same consumer-side compensation as
+   `.bizproc-fields-box > .bizproc-automation-popup-select` in the core stylesheet. */
+.bizproc-fields-select-dropdown__field > .bizproc-automation-popup-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bizproc-fields-select-dropdown__input {
+	box-sizing: border-box;
+	flex: 1 1 auto;
+	min-width: 0;
+	/* 32px: the text-control height every type of the extension uses (date, int, string and the
+	   insert row above); DS has no control-height token. */
+	height: 32px;
+	/* The right padding is the room the chevron stands in, over the input rather than beside it. */
+	padding: 0 var(--ui-space-inset-3xl) 0 var(--ui-space-inset-xs2);
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-sm);
+	outline: none;
+	background: var(--ui-color-bg-content-primary);
+	/* N-1 exception (as in every input of the extension): font-family resets the browser default;
+	   --ui-font-family-primary is not a standard DS token - inherit is the DS-compliant fallback. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	/* 20px is the ui.forms control text line-height (same as every sibling type). */
+	line-height: 20px;
+	color: var(--ui-color-base-1);
+	transition: border-color .15s ease;
+}
+
+.bizproc-fields-select-dropdown__input:focus {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+/* Keyboard focus ring, the same one every other control of the extension gets (WCAG 2.4.7):
+   `outline: none` above drops the UA default, and a 1px border colour swapped under a transition
+   is too weak an indicator to stand alone. */
+.bizproc-fields-select-dropdown__input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bizproc-fields-select-dropdown__input::placeholder {
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-fields-select-dropdown__input[readonly] {
+	background: var(--ui-color-design-disabled-bg);
+	border-color: var(--ui-color-design-disabled-stroke);
+	cursor: default;
+}
+
+/* The menu trigger stands inside the field, on its right edge. Out of the flow on purpose: the
+   selection provider splices its wrapper in place of the input, and a chevron in the flow would
+   be pushed out of the field by it. */
+.bizproc-fields-select-dropdown__chevron {
+	position: absolute;
+	top: 50%;
+	right: var(--ui-space-inline-xs);
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 0;
+	/* 24px: hit-target square that fits inside the 34px field. */
+	width: 24px;
+	height: 24px;
+	border: none;
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	/* .15s is the transition duration shared by every field type here; DS has no duration token. */
+	transition: color .15s ease;
+}
+
+.bizproc-fields-select-dropdown__chevron:hover:not(:disabled) {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-fields-select-dropdown__chevron:disabled {
+	cursor: default;
+	opacity: var(--ui-opacity-40);
+}
+
+/* Keyboard focus ring, as on every other icon button of the extension (WCAG 2.4.7). */
+.bizproc-fields-select-dropdown__chevron:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bizproc-fields-select-dropdown__chevron .ui-icon-set {
+	/* 16px: DS icon glyph size inside the 24px button. */
+	--ui-icon-set__icon-size: 16px;
+}
+
+/* Decorated, the "..." handle of the provider stands between the input and the right edge of the
+   field, so the edge the chevron is anchored to is no longer the edge of the input: it moves left
+   by the width of that handle to stay over the input it opens. 24px is the icon button every
+   handle of the extension is (see renderSelectionControl, which puts the class here). */
+.bizproc-fields-select-dropdown__field--decorated .bizproc-fields-select-dropdown__chevron {
+	right: calc(24px + var(--ui-space-inline-xs));
+}
+
+/* The automation selector brings a wider handle of its own - a fixed 30px in
+   `.bizproc-automation-popup-select-dotted`. */
+.bizproc-fields-select-dropdown__field .bizproc-automation-popup-select .bizproc-fields-select-dropdown__chevron {
+	right: calc(30px + var(--ui-space-inline-xs));
 }

@@ -12,6 +12,9 @@ $MESS['SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_HCMLINK'] = "Из 1C";
 $MESS['SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_HCMLINK_HINT'] = "Регистрационный номер будет автоматически добавлен из 1С";
 $MESS['SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_HCMLINK_HINT'] = "Дата создания будет автоматически добавлена из 1С";
 $MESS['SIGN_B2E_DOCUMENT_FILLING_REMOVE_TEMPLATE'] = 'Убрать шаблон из комплекта на отправку';
+$MESS['SIGN_B2E_DOCUMENT_FILLING_MESSAGE_TITLE'] = 'Сообщение по документу';
+$MESS['SIGN_B2E_DOCUMENT_FILLING_MESSAGE_PLACEHOLDER'] = 'Добавьте сообщение для сотрудника';
+$MESS['SIGN_B2E_DOCUMENT_FILLING_MESSAGE_LENGTH_ERROR'] = 'Максимум #MAX_LENGTH# символов';
 
 $MESS['PERIOD_TOO_LONG_PLURAL_0'] = 'Срок подписания документа не должен превышать #MAX_PERIOD# месяц';
 $MESS['PERIOD_TOO_LONG_PLURAL_1'] = 'Срок подписания документа не должен превышать #MAX_PERIOD# месяца';

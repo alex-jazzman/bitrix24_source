@@ -17,6 +17,7 @@ jn.define('intranet/simple-list/items/user-redux/src/actions/src/utils', (requir
 			new RunActionExecutor('bitrix24.v2.FirstAdmin.FirstAdminRightsController.isFirstAdminConfirmationEnabled')
 				.setHandler((response) => resolve(response.data?.isFirstAdminConfirmationEnabled))
 				.call()
+				.catch(console.error)
 			;
 		});
 	};

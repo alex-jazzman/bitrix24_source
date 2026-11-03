@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_MS_EDITOR_SCENE_PAYMENT_DETAILS_NAME'] = 'Оплата';

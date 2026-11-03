@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 /**
- * @var StoreCatalogCopmilation $classBlock
+ * @var StoreCatalogCompilation $classBlock
  * @var \CMain $APPLICATION
  */
 

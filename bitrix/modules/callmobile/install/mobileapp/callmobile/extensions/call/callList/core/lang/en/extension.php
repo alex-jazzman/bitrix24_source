@@ -6,6 +6,7 @@ $MESS["MOBILEAPP_CALL_LIST_ACTION_CANCEL"] = "Cancel";
 $MESS["MOBILEAPP_CALL_LIST_ACTION_OPEN_CHAT"] = "Open chat";
 $MESS["MOBILEAPP_CALL_LIST_ACTION_WITHOUT_VIDEO"] = "Audio call";
 $MESS["MOBILEAPP_CALL_LIST_ACTION_WITH_VIDEO"] = "Video call";
+$MESS["MOBILEAPP_CALL_LIST_LOAD_ERROR"] = "Could not load calls.";
 $MESS["MOBILEAPP_EMPTY_TAB_INCOMING"] = "There are no inbound calls.";
 $MESS["MOBILEAPP_EMPTY_TAB_MAIN_DESCRIPTION"] = "Enjoy unlimited calls for all team members.";
 $MESS["MOBILEAPP_EMPTY_TAB_MAIN_TITLE"] = "No calls so far";

@@ -1,0 +1,14 @@
+/* The warning never gives up its place: it belongs to the name it stands next to, not to the row of
+   controls, and a header which ran out of room still has to carry it. */
+.disk-document-header-content-warning {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* Opened by keyboard as well, so the ring has to be visible on the icon itself. */
+.disk-document-header-content-warning:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}

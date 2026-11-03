@@ -103,6 +103,11 @@ else
 					$result = $arResult['EXPORT_LIST'][$arContact['EXPORT']];
 					break;
 				}
+				case 'OPENED':
+				{
+					$result = ($arContact['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+					break;
+				}
 				case 'CREATED_BY':
 				{
 					$result = $arContact['CREATED_BY_FORMATTED_NAME'];

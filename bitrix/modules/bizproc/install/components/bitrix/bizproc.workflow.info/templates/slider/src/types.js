@@ -3,6 +3,8 @@ export type TaskField = {
 	Name: string,
 	FieldId: string,
 	Type: string,
+	// the type of `Bitrix\Bizproc\BaseType` the control is drawn by; empty for a type the server cannot resolve
+	BaseType?: ?string,
 	Required: boolean,
 	Multiple: boolean,
 	Description?: string,

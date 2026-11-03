@@ -22,6 +22,10 @@ export const TranscribedVideoPlayer = {
 			type: Object,
 			required: true,
 		},
+		withMessageText: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['closeTranscription', 'clickPlay'],
 	data(): JsonObject
@@ -65,6 +69,7 @@ export const TranscribedVideoPlayer = {
 				<div
 					:style="playButtonStyles"
 					class="bx-im-transcribed-video-player__play"
+					data-testid="im-transcribed-video-player-play-btn"
 					@click="$emit('clickPlay')"
 				>
 					<div class="bx-im-transcribed-video-player__play-button-overlay"></div>
@@ -80,7 +85,10 @@ export const TranscribedVideoPlayer = {
 						/>
 						<div class="bx-im-transcribed-video-player__metainfo">{{ formattedTime }}</div>
 					</div>
-					<div class="bx-im-transcribed-video-player__transcription-button">
+					<div
+						class="bx-im-transcribed-video-player__transcription-button"
+						data-testid="im-transcribed-video-player-collapse-btn"
+					>
 						<TranscriptionButton
 							:file="file"
 							:isOpened="true"
@@ -101,6 +109,7 @@ export const TranscribedVideoPlayer = {
 				:file="file"
 				:isOpened="true"
 				:messageId="message.id"
+				:withMessageText="withMessageText"
 				class="bx-im-transcribed-video-player__transcription-text"
 			/>
 		</div>

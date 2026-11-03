@@ -11,10 +11,12 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 	const { handleItemClick } = require('more-menu/utils');
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
-
 	const { RefRegistry } = require('more-menu/ref-registry');
+	const { SETTINGS_SECTIONS } = require('more-menu/block/settings-list');
 
 	const MORE_MENU_REFRESH_VIEW_REF_KEY = 'more_menu_refresh_view';
+	const HIGHLIGHT_VISIBILITY_DELAY = 300;
+	const REVEAL_GIVE_UP_DELAY = 2000;
 
 	/**
 	 * @class MenuNavigator
@@ -83,7 +85,10 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 				return;
 			}
 
-			if (!this.getItemById(menuItemId))
+			// under the flag the item is awaited by #openItem below, because on a cold start menuList
+			// arrives later; every other caller keeps the synchronous check and its timing
+			const openOnHighlight = params?.openOnHighlight === true;
+			if (!openOnHighlight && !this.getItemById(menuItemId))
 			{
 				console.error(`Menu item is not found in menu: ${menuItemId}`);
 
@@ -95,12 +100,54 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 				await this.makeTabActive();
 			}
 
+			if (openOnHighlight)
+			{
+				await this.#revealAndOpenItem(menuItemId, Boolean(params?.highlightItem));
+
+				return;
+			}
+
 			await this.scrollToMenuItem(menuItemId);
 
 			if (params?.highlightItem)
 			{
 				this.highlightMenuItem(menuItemId);
 			}
+		}
+
+		/**
+		 * Scroll and highlight ask the native layer for the item position, and that request never
+		 * settles while the item is covered by another screen. So the section opens on its own
+		 * timer instead of queueing behind them.
+		 *
+		 * @param {string} menuItemId
+		 * @param {boolean} highlightItem
+		 */
+		async #revealAndOpenItem(menuItemId, highlightItem)
+		{
+			let hasGivenUp = false;
+
+			const reveal = this.scrollToMenuItem(menuItemId)
+				.then(() => {
+					// A position that settles after the timer settles it under an already opened
+					// section: the highlight would light an item nobody sees and stay lit for its
+					// whole five seconds, down to the return to the menu.
+					if (highlightItem && !hasGivenUp)
+					{
+						this.highlightMenuItem(menuItemId);
+					}
+				})
+				.catch((error) => {
+					console.error('Menu item reveal error', error);
+				});
+
+			const giveUp = this.pauseBeforeScroll(REVEAL_GIVE_UP_DELAY).then(() => {
+				hasGivenUp = true;
+			});
+
+			await Promise.race([reveal, giveUp]);
+			await this.pauseBeforeScroll(HIGHLIGHT_VISIBILITY_DELAY);
+			await this.#openItem(menuItemId);
 		}
 
 		async scrollToMenuItem(menuItemId)
@@ -181,7 +228,7 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			{
 				inAppUrl.open('/intranetmobile/users', {
 					canInvite: restrictions.canInvite,
-					canUseTelephony: restrictions.canUseTimeMan,
+					canUseTelephony: restrictions.canUseTelephony,
 					openInviteOnMount,
 				});
 			}
@@ -219,8 +266,8 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 		{
 			await this.#ensureActiveTab();
 
-			// При холодном старте menuList заполняется позже (через update()), а push-обработчик
-			// уже сработал — без ожидания getItemById вернёт null и мы останемся на вкладке «Ещё».
+			// On a cold start, menuList is populated later (via update()), but the push handler has
+			// already fired. Without waiting, getItemById returns null and the More tab remains open.
 			const item = await this.#waitForItemById(itemKey);
 			if (item)
 			{
@@ -274,6 +321,15 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			for (const section of this.menuList)
 			{
 				const item = section?.items.find((sectionItem) => sectionItem?.id === id);
+				if (item)
+				{
+					return item;
+				}
+			}
+
+			for (const section of SETTINGS_SECTIONS)
+			{
+				const item = section?.items?.find((sectionItem) => sectionItem?.id === id);
 				if (item)
 				{
 					return item;

@@ -151,9 +151,32 @@
 						backgroundImage: this.image ? 'url(' + this.image + ')' : null
 					}
 				});
+				this.setBackgroundImage(this.image);
 			}
 
 			return this.layout.image;
+		},
+
+		setBackgroundImage: function(image)
+		{
+			if (!image)
+			{
+				return;
+			}
+
+			var encodedImage = encodeURI(image);
+			var encodedImage2x = encodedImage.replace(/\.webp$/i, '-2x.webp');
+
+			this.layout.image.style.backgroundImage = 'url("' + encodedImage + '")';
+			if (encodedImage2x !== encodedImage)
+			{
+				this.layout.image.style.backgroundImage =
+					'-webkit-image-set(url("' + encodedImage + '") 1x, url("' + encodedImage2x + '") 2x)'
+				;
+				this.layout.image.style.backgroundImage =
+					'image-set(url("' + encodedImage + '") 1x, url("' + encodedImage2x + '") 2x)'
+				;
+			}
 		},
 
 		getStatus: function()
@@ -201,7 +224,7 @@
 
 			if(this.itemSelectedImage)
 			{
-				this.layout.image.style.backgroundImage = 'url(' + this.itemSelectedImage + ')';
+				this.setBackgroundImage(this.itemSelectedImage);
 			}
 
 			if(this.itemSelectedColor)
@@ -229,7 +252,7 @@
 
 			if(this.image)
 			{
-				this.layout.image.style.backgroundImage = 'url(' + this.image + ')';
+				this.setBackgroundImage(this.image);
 			}
 
 			this.layout.wrapper.style.backgroundColor = '';

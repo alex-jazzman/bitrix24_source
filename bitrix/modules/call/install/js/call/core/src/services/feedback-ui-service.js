@@ -12,9 +12,8 @@ export class FeedbackUiService extends EventEmitter
 	 * @param {*} config.viewPort
 	 * @param {*} config.container
 	 * @param {boolean} [config.darkMode=false]
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, container, darkMode = false, callStore })
+	constructor({ viewPort, container, darkMode = false })
 	{
 		super();
 		this.setEventNamespace('BX.Call.FeedbackUiService');
@@ -23,7 +22,6 @@ export class FeedbackUiService extends EventEmitter
 		this.container = container;
 		this.darkMode = darkMode;
 		this.feedbackPopup = null;
-		this.callStore = callStore ?? null;
 	}
 
 	/**
@@ -175,8 +173,6 @@ export class FeedbackUiService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
-
 		if (this.feedbackPopup)
 		{
 			this.feedbackPopup.close();

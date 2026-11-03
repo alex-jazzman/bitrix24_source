@@ -518,7 +518,15 @@ else
 			if(IsModuleInstalled("bitrix24") && isset($arFieldsValue["GROUP_ID"]) && defined("BX_COMP_MANAGED_CACHE"))
 			{
 				global $CACHE_MANAGER;
-				$CACHE_MANAGER->ClearByTag('sonet_group');
+
+				if (\Bitrix\Socialnetwork\V2\Internal\Cache\DeferredCacheFeature::isOn())
+				{
+					\Bitrix\Socialnetwork\V2\Internal\Cache\DeferredTagCleaner::getInstance()->clearByTag('sonet_group');
+				}
+				else
+				{
+					$CACHE_MANAGER->ClearByTag('sonet_group');
+				}
 			}
 		}
 

@@ -1,19 +1,44 @@
-import { Restriction } from 'crm.kanban.restriction';
-import { ToolbarComponent } from 'crm.toolbar-component';
+import 'ls';
 import { ajax, Dom, Event, Loc, Runtime, Text, Type } from 'main.core';
-
+import { EventEmitter } from 'main.core.events';
 import 'main.kanban';
 import { Menu, MenuManager, Popup, PopupManager, PopupWindowButton } from 'main.popup';
+import { LiveAnnouncer } from 'ui.a11y';
+import { QueueManager } from 'pull.queuemanager';
 import 'ui.design-tokens';
-import 'ui.fonts.opensans';
-import 'ls';
 import { Dialog as EntitySelectorDialog } from 'ui.entity-selector';
+import 'ui.fonts.opensans';
+import { UI } from 'ui.notification';
 import { Guide } from 'ui.tour';
+
+import { Restriction } from 'crm.kanban.restriction';
+import { ToolbarComponent } from 'crm.toolbar-component';
 
 import DeleteAction from './actions/deleteaction';
 import RestartAutomationAction from './actions/restartautomationaction';
 import StageLabels from './analytics/stagelabels';
+import { getStageTargetColumnId, normalizeStageRealSorts } from './stage-editor-placement';
 import { ViewMode } from './viewmode';
+import { SliderViewObserver, getSliderFromEvent } from './slider-view-observer';
+
+let stageEditorLoadPromise = null;
+
+// Kanban::BLOCK_SIZE: the answer of the server never carries more items than this.
+const LOAD_NEW_PORTION_SIZE = 20;
+function loadStageEditor()
+{
+	stageEditorLoadPromise ??= Runtime
+		.loadExtension('crm.stage.editor')
+		.then(({ StageEditor }) => StageEditor)
+		.catch((error) => {
+			stageEditorLoadPromise = null;
+
+			throw error;
+		})
+	;
+
+	return stageEditorLoadPromise;
+}
 
 /**
  * @param options
@@ -51,6 +76,21 @@ export class Grid extends BX.Kanban.Grid
 	handleHideHintForNotVisibleItems = null;
 	canUpdateItemAtItsPosition = false;
 	stageAnalyticsLabels = null;
+	suppressLoadAnnounce = false;
+	pendingMoveFocus = null;
+	pendingMoveAnnounce = null;
+	stageEditor = null;
+	stageEditorClass = null;
+	stageEditorColumnId = null;
+	stageEditorDraftColumnId = null;
+	stageEditorExternalConflict = false;
+	stageEditorExternalSnapshot = null;
+	stageEditorPreviewFrameId = null;
+	stageEditorPendingPreview = null;
+	stageEditorOpenRequestId = 0;
+	currentLiveFilterAjaxParams = {};
+	liveFilterRequestId = 0;
+	sliderViewObserver = null;
 
 	constructor(options)
 	{
@@ -73,6 +113,7 @@ export class Grid extends BX.Kanban.Grid
 		BX.addCustomEvent(this, "Kanban.Grid:onColumnRemovedAsync", this.onColumnRemovedAsync.bind(this));
 		BX.addCustomEvent(this, "Kanban.Grid:onColumnLoadAsync", this.onColumnLoadAsync.bind(this));
 		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", this.onItemDragStartHandler.bind(this));
+		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", this.closeStageDescriptionTooltips.bind(this));
 		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", this.setKanbanDragMode.bind(this));
 		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", this.unSetKanbanDragMode.bind(this));
 
@@ -82,6 +123,7 @@ export class Grid extends BX.Kanban.Grid
 		BX.addCustomEvent("onPullEvent-im", this.onPullEventHandlerCrm.bind(this));
 		BX.addCustomEvent("onCrmActivityTodoChecked", this.onCrmActivityTodoChecked.bind(this));
 		BX.addCustomEvent("SidePanel.Slider:onClose", this.onSliderClose.bind(this));
+		this.sliderViewObserver = new SliderViewObserver(() => this.getData().entityPath);
 		BX.addCustomEvent("BX.CRM.Kanban.Item.select", this.startActionPanel.bind(this));
 		BX.addCustomEvent("BX.CRM.Kanban.Item.unSelect", this.onItemUnselect.bind(this));
 		BX.addCustomEvent("BX.UI.ActionPanel:clickResetAllBlock", this.resetMultiSelectMode.bind(this));
@@ -103,6 +145,717 @@ export class Grid extends BX.Kanban.Grid
 		this.stageAnalyticsLabels = new StageLabels(options.stageAnalyticsLabels);
 
 		Grid.Instance = this;
+		this.initCurrentLiveFilterAjaxParams();
+	}
+
+	initCurrentLiveFilterAjaxParams()
+	{
+		const gridId = this.getData().gridId;
+		const filterManager = BX.Main?.filterManager;
+
+		if (
+			!Type.isStringFilled(gridId)
+			|| !Type.isObject(filterManager)
+			|| !Type.isFunction(filterManager.getById)
+		)
+		{
+			return;
+		}
+
+		this.currentLiveFilterAjaxParams = this.getLiveFilterAjaxParams(filterManager.getById(gridId));
+	}
+
+	/**
+	 * Accessible name of the board. Overridable name hook. Returns the category
+	 * name so a screen reader announces the board as a named one.
+	 *
+	 * @returns {string}
+	 */
+	getBoardAriaLabel()
+	{
+		const categoryName = this.getCategoryName();
+		if (categoryName === '')
+		{
+			return super.getBoardAriaLabel();
+		}
+
+		return Loc.getMessage('CRM_KANBAN_BOARD_ARIA_LABEL', { '#NAME#': categoryName });
+	}
+
+	/**
+	 * Name of the current category of the board: a funnel for deals, a direction
+	 * for dynamic entities. Empty string when the entity type has no categories
+	 * or the current one is unknown.
+	 *
+	 * @returns {string}
+	 */
+	getCategoryName()
+	{
+		const gridData = this.getData();
+		const categories = Type.isArray(gridData.categories) ? gridData.categories : [];
+		if (categories.length === 0)
+		{
+			return '';
+		}
+
+		// The category list comes from the server with upper-case keys, the same way
+		// the category switcher of the group actions panel reads it.
+		const categoryId = Text.toInteger(gridData.params?.CATEGORY_ID ?? 0);
+		const category = categories.find((item) => Text.toInteger(item.ID) === categoryId);
+
+		return Type.isStringFilled(category?.NAME) ? category.NAME : '';
+	}
+
+	closeStageDescriptionTooltips()
+	{
+		this.getColumns().forEach((column) => {
+			if (Type.isFunction(column.closeStageDescriptionTooltip))
+			{
+				column.closeStageDescriptionTooltip();
+			}
+		});
+	}
+
+	ensureStageEditorAccess()
+	{
+		const gridData = this.getData();
+		const canEdit = this.hasStageEditorAccess();
+		if (canEdit)
+		{
+			return true;
+		}
+
+		if (gridData.isLockedEntity)
+		{
+			this.showLockedEntitySlider();
+		}
+		else if (!Type.isUndefined(BX.Intranet))
+		{
+			this.accessNotify();
+		}
+
+		return false;
+	}
+
+	hasStageEditorAccess()
+	{
+		return Boolean(this.getData().rights?.areStagesEditable);
+	}
+
+	isStageEditorOpenRequestCurrent(requestId, column, isDraft = false)
+	{
+		const columnId = column.getId();
+
+		return this.stageEditorOpenRequestId === requestId
+			&& this.hasStageEditorAccess()
+			&& this.getColumn(columnId) === column
+			&& this.stageEditorColumnId === columnId
+			&& (isDraft
+				? this.stageEditorDraftColumnId === columnId
+				: this.stageEditorDraftColumnId === null)
+		;
+	}
+
+	openStageEditorForEdit(column)
+	{
+		if (!column)
+		{
+			return;
+		}
+
+		if (!this.ensureStageEditorAccess())
+		{
+			return;
+		}
+
+		this.closeStageDescriptionTooltips();
+		this.stageEditor?.close();
+		this.stageEditorColumnId = column.getId();
+		this.stageEditorDraftColumnId = null;
+		this.stageEditorExternalConflict = false;
+		this.stageEditorExternalSnapshot = null;
+		const requestId = ++this.stageEditorOpenRequestId;
+
+		const openStageEditor = async () => {
+			let StageEditorClass = this.stageEditorClass;
+			if (!StageEditorClass)
+			{
+				try
+				{
+					StageEditorClass = await loadStageEditor();
+				}
+				catch
+				{
+					if (this.stageEditorOpenRequestId === requestId)
+					{
+						this.clearStageEditorState();
+					}
+
+					return;
+				}
+			}
+
+			const snapshot = this.getStageEditorStageData(column);
+			if (!this.isStageEditorOpenRequestCurrent(requestId, column))
+			{
+				return;
+			}
+
+			this.stageEditor = StageEditorClass.open({
+				stage: snapshot,
+				entityTextContext: this.getStageEditorEntityTextContext(),
+				mode: 'edit',
+				anchor: this.getStageEditorAnchor(column),
+				canEdit: true,
+				canDelete: this.canDeleteStage(column),
+				deleteBlockReasons: this.getDeleteBlockReasons(column),
+				onChange: (payload, field) => {
+					this.applyStageEditorPreview(column, payload, field);
+				},
+				onSave: (payload) => {
+					return this.saveStageEditorStage(column, payload);
+				},
+				onDelete: () => {
+					return this.deleteStageFromEditor(column);
+				},
+				onCancel: () => {
+					this.restoreStageEditorSnapshot(column, this.stageEditorExternalSnapshot ?? snapshot);
+					this.clearStageEditorState();
+				},
+			});
+		};
+
+		return openStageEditor();
+	}
+
+	openStageEditorForCreate(afterColumn)
+	{
+		if (!afterColumn)
+		{
+			return;
+		}
+
+		if (!this.ensureStageEditorAccess())
+		{
+			return;
+		}
+
+		this.closeStageDescriptionTooltips();
+		this.stageEditor?.close();
+
+		const draftColumn = this.addColumn({
+			id: `kanban-new-column-${BX.util.getRandomString(5)}`,
+			type: 'BX.CRM.Kanban.DraftColumn',
+			name: Loc.getMessage('CRM_KANBAN_STAGE_DEFAULT_NAME'),
+			color: afterColumn.getColor(),
+			canSort: false,
+			canAddItem: false,
+			droppable: false,
+			data: {
+				description: '',
+				sort: this.getDraftColumnSort(afterColumn),
+			},
+			targetId: this.getNextColumnSibling(afterColumn),
+		});
+
+		if (!draftColumn)
+		{
+			return;
+		}
+
+		this.stageEditorColumnId = draftColumn.getId();
+		this.stageEditorDraftColumnId = draftColumn.getId();
+		this.stageEditorExternalConflict = false;
+		const requestId = ++this.stageEditorOpenRequestId;
+
+		const snapshot = this.getStageEditorStageData(draftColumn);
+		const openStageEditor = async () => {
+			let StageEditorClass = this.stageEditorClass;
+			if (!StageEditorClass)
+			{
+				try
+				{
+					StageEditorClass = await loadStageEditor();
+				}
+				catch
+				{
+					if (this.getColumn(draftColumn.getId()) === draftColumn)
+					{
+						this.removeColumn(draftColumn);
+					}
+
+					if (this.stageEditorOpenRequestId === requestId)
+					{
+						this.clearStageEditorState();
+					}
+
+					return;
+				}
+			}
+
+			if (!this.isStageEditorOpenRequestCurrent(requestId, draftColumn, true))
+			{
+				if (this.getColumn(draftColumn.getId()) === draftColumn)
+				{
+					this.removeColumn(draftColumn);
+				}
+
+				return;
+			}
+
+			this.stageEditor = StageEditorClass.open({
+				stage: snapshot,
+				entityTextContext: this.getStageEditorEntityTextContext(),
+				mode: 'create',
+				anchor: this.getStageEditorAnchor(draftColumn),
+				canEdit: true,
+				canDelete: false,
+				deleteBlockReasons: [Loc.getMessage('CRM_KANBAN_STAGE_DELETE_BLOCKED')],
+				onChange: (payload, field) => {
+					this.applyStageEditorPreview(draftColumn, payload, field);
+				},
+				onSave: (payload) => {
+					return this.createStageFromEditor(draftColumn, afterColumn, payload);
+				},
+				onDelete: () => Promise.resolve(),
+				onCancel: () => {
+					this.removeColumn(draftColumn);
+					this.clearStageEditorState();
+				},
+			});
+		};
+
+		const gridContainer = this.getGridContainer();
+		const maxScrollLeft = gridContainer.scrollWidth - gridContainer.clientWidth;
+		if (this.getNextColumnSibling(draftColumn) === null && gridContainer.scrollLeft < maxScrollLeft)
+		{
+			gridContainer.scrollLeft = gridContainer.scrollWidth;
+			requestAnimationFrame(openStageEditor);
+
+			return;
+		}
+
+		return openStageEditor();
+	}
+
+	getStageEditorAnchor(column)
+	{
+		return column.layout?.info || column.getContainer();
+	}
+
+	getStageEditorEntityTextContext()
+	{
+		const gridData = this.getData();
+
+		return {
+			entityTypeId: Text.toInteger(gridData.entityTypeInt),
+			entityTypeName: Type.isStringFilled(gridData.entityType) ? gridData.entityType : '',
+		};
+	}
+
+	getStageEditorStageData(column)
+	{
+		const data = column.getData();
+
+		return {
+			...data,
+			id: column.getId(),
+			statusId: data.statusId ?? data.id ?? column.getId(),
+			name: column.getName(),
+			color: column.getColor(),
+			description: Type.isString(data.description) ? data.description : '',
+		};
+	}
+
+	getDraftColumnSort(afterColumn)
+	{
+		const sort = parseInt(afterColumn.getData().sort, 10);
+
+		return Type.isNumber(sort) ? sort + 10 : 0;
+	}
+
+	canDeleteStage(column)
+	{
+		return column.isRemovable() && column.getTotal() <= 0;
+	}
+
+	getDeleteBlockReasons(column)
+	{
+		const reasons = [];
+		if (column.getTotal() > 0)
+		{
+			reasons.push(Loc.getMessage('CRM_KANBAN_STAGE_DELETE_HAS_ITEMS'));
+		}
+
+		if (!column.isRemovable())
+		{
+			reasons.push(Loc.getMessage('CRM_KANBAN_STAGE_DELETE_BLOCKED'));
+		}
+
+		return reasons;
+	}
+
+	applyStageEditorPreview(column, payload, field)
+	{
+		if (field === 'description')
+		{
+			return;
+		}
+
+		this.stageEditorPendingPreview = { column, payload };
+		if (this.stageEditorPreviewFrameId !== null)
+		{
+			return;
+		}
+
+		this.stageEditorPreviewFrameId = window.requestAnimationFrame(() => {
+			const pendingPreview = this.stageEditorPendingPreview;
+			this.stageEditorPreviewFrameId = null;
+			this.stageEditorPendingPreview = null;
+			if (pendingPreview)
+			{
+				this.previewStageColumnFromStageData(pendingPreview.column, {
+					...this.getStageEditorStageData(pendingPreview.column),
+					...pendingPreview.payload,
+				});
+			}
+		});
+	}
+
+	restoreStageEditorSnapshot(column, snapshot)
+	{
+		if (this.getColumn(column.getId()))
+		{
+			this.updateStageColumnFromStageData(column, snapshot);
+		}
+	}
+
+	previewStageColumnFromStageData(column, stage)
+	{
+		const data = {
+			...column.getData(),
+			...stage,
+			description: Type.isString(stage.description) ? stage.description : '',
+		};
+
+		column.setOptions({
+			id: column.getId(),
+			name: stage.name,
+			color: stage.color,
+			total: column.getTotal(),
+			data,
+		});
+		column.renderTitle();
+
+		const container = column.getContainer();
+		const ariaLabel = column.getColumnAriaLabel();
+		if (ariaLabel)
+		{
+			container.setAttribute('aria-label', ariaLabel);
+		}
+		else
+		{
+			container.removeAttribute('aria-label');
+		}
+	}
+
+	updateStageColumnFromStageData(column, stage)
+	{
+		const data = {
+			...column.getData(),
+			...stage,
+			description: Type.isString(stage.description) ? stage.description : '',
+		};
+
+		this.updateColumn(column, {
+			id: column.getId(),
+			name: stage.name,
+			color: stage.color,
+			total: column.getTotal(),
+			data,
+		});
+	}
+
+	isStageEditorAccessDeniedResponse(data)
+	{
+		return Type.isPlainObject(data)
+			&& (data.ERROR_CODE === 'ACCESS_DENIED' || data.errorCode === 'ACCESS_DENIED')
+		;
+	}
+
+	isStageEditorStageResponse(data)
+	{
+		if (!Type.isPlainObject(data) || data.error || data.ERROR)
+		{
+			return false;
+		}
+
+		const stageId = data.id ?? data.statusId;
+
+		return stageId !== null
+			&& !Type.isUndefined(stageId)
+			&& String(stageId).length > 0
+			&& Type.isStringFilled(data.name)
+			&& Type.isStringFilled(data.color)
+			&& Type.isNumber(parseInt(data.sort, 10))
+		;
+	}
+
+	isStageEditorDeleteResponse(data)
+	{
+		return Type.isPlainObject(data)
+			&& !data.error
+			&& !data.ERROR
+			&& (data.success === true || data.SUCCESS === true)
+		;
+	}
+
+	getStageEditorResponseError(data)
+	{
+		const message = data?.error || data?.ERROR;
+
+		return new Error(
+			Type.isStringFilled(message) ? message : Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA'),
+		);
+	}
+
+	handleStageEditorAccessDenied(data, onFailure)
+	{
+		if (!this.isStageEditorAccessDeniedResponse(data))
+		{
+			return false;
+		}
+
+		onFailure();
+		this.accessNotify();
+
+		return true;
+	}
+
+	saveStageEditorStage(column, payload)
+	{
+		if (this.getColumn(column.getId()) !== column)
+		{
+			return Promise.reject(new Error(Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA')));
+		}
+
+		return new Promise((resolve, reject) => {
+			this.ajax({
+					action: 'modifyStage',
+					eventId: QueueManager.registerRandomEventId(),
+					columnId: column.getId(),
+					columnName: payload.name,
+					columnColor: payload.color,
+					columnDescription: payload.description,
+				},
+				(data) => {
+					if (this.handleStageEditorAccessDenied(
+						data,
+						() => this?.stageAnalyticsLabels.sendRenameFailure(),
+					))
+					{
+						reject(this.getStageEditorResponseError(data));
+
+						return;
+					}
+
+					if (this.isStageEditorStageResponse(data))
+					{
+						this?.stageAnalyticsLabels.sendRenameSuccess();
+						this.resetActionPanel();
+						this.replaceStageColumnWithDto(column, this.getStageEditorSavedStage(data));
+						BX.onCustomEvent('Crm.Stage.DescriptionChanged', [{
+							entityType: this.getData()?.entityType ?? '',
+							categoryId: this.getData()?.params?.CATEGORY_ID ?? 0,
+							stageId: column.getId(),
+							description: data.description,
+						}]);
+						this.notifyStageEditorExternalConflict();
+						this.clearStageEditorState();
+						resolve(data);
+					}
+					else
+					{
+						this?.stageAnalyticsLabels.sendRenameFailure();
+						reject(this.getStageEditorResponseError(data));
+					}
+				},
+				(error) => {
+					this?.stageAnalyticsLabels.sendRenameFailure();
+					reject(new Error(`Error: ${error}`));
+				},
+			);
+		});
+	}
+
+	createStageFromEditor(draftColumn, afterColumn, payload)
+	{
+		const afterColumnId = afterColumn && this.getColumn(afterColumn.getId()) ? afterColumn.getId() : 0;
+
+		return new Promise((resolve, reject) => {
+			this.ajax({
+					action: 'modifyStage',
+					eventId: QueueManager.registerRandomEventId(),
+					columnName: payload.name,
+					columnColor: payload.color,
+					columnDescription: payload.description,
+					afterColumnId,
+				},
+				(data) => {
+					if (this.handleStageEditorAccessDenied(
+						data,
+						() => this?.stageAnalyticsLabels.sendCreateFailure(),
+					))
+					{
+						reject(this.getStageEditorResponseError(data));
+
+						return;
+					}
+
+					if (this.isStageEditorStageResponse(data))
+					{
+						this?.stageAnalyticsLabels.sendCreateSuccess();
+						this.resetActionPanel();
+						this.removeColumn(draftColumn);
+						this.addColumn({
+							...this.getStageColumnOptionsFromDto(this.getStageEditorSavedStage(data)),
+							targetId: getStageTargetColumnId(data, this.getColumns()),
+						});
+						normalizeStageRealSorts(this.getColumns());
+						this.clearStageEditorState();
+						resolve(data);
+					}
+					else
+					{
+						this?.stageAnalyticsLabels.sendCreateFailure();
+						reject(this.getStageEditorResponseError(data));
+					}
+				},
+				(error) => {
+					this?.stageAnalyticsLabels.sendCreateFailure();
+					reject(new Error(`Error: ${error}`));
+				},
+			);
+		});
+	}
+
+	getStageEditorSavedStage(stage)
+	{
+		return stage;
+	}
+
+	deleteStageFromEditor(column)
+	{
+		return new Promise((resolve, reject) => {
+			this.ajax({
+					action: 'modifyStage',
+					eventId: QueueManager.registerRandomEventId(),
+					columnId: column.getId(),
+					delete: 1,
+				},
+				(data) => {
+					if (this.handleStageEditorAccessDenied(
+						data,
+						() => this?.stageAnalyticsLabels.sendDeleteFailure(),
+					))
+					{
+						reject(this.getStageEditorResponseError(data));
+
+						return;
+					}
+
+					if (this.isStageEditorDeleteResponse(data))
+					{
+						this?.stageAnalyticsLabels.sendDeleteSuccess();
+						this.resetActionPanel();
+						this.removeColumn(column);
+						this.clearStageEditorState();
+						resolve();
+					}
+					else
+					{
+						this?.stageAnalyticsLabels.sendDeleteFailure();
+						reject(this.getStageEditorResponseError(data));
+					}
+				},
+				(error) => {
+					this?.stageAnalyticsLabels.sendDeleteFailure();
+					reject(new Error(`Error: ${error}`));
+				},
+			);
+		});
+	}
+
+	replaceStageColumnWithDto(column, stage)
+	{
+		this.updateColumn(column, this.getStageColumnOptionsFromDto(stage));
+	}
+
+	getStageColumnOptionsFromDto(stage)
+	{
+		return {
+			id: stage.id,
+			name: stage.name,
+			color: stage.color,
+			data: {
+				...stage,
+				description: Type.isString(stage.description) ? stage.description : '',
+				type: stage.type ?? stage.TYPE,
+				sort: parseInt(stage.sort, 10),
+			},
+		};
+	}
+
+	isStageEditorOpenedFor(stageId)
+	{
+		return String(this.stageEditorColumnId) === String(stageId);
+	}
+
+	markStageEditorExternalConflict(stageId, stage = null)
+	{
+		if (this.isStageEditorOpenedFor(stageId))
+		{
+			this.stageEditorExternalConflict = true;
+			this.stageEditorExternalSnapshot = Type.isPlainObject(stage) ? stage : null;
+		}
+	}
+
+	handleStageEditorExternalDelete(stageId)
+	{
+		if (!this.isStageEditorOpenedFor(stageId))
+		{
+			return;
+		}
+
+		const stageEditor = this.stageEditor;
+		this.clearStageEditorState();
+		stageEditor?.close();
+	}
+
+	notifyStageEditorExternalConflict()
+	{
+		if (this.stageEditorExternalConflict)
+		{
+			UI.Notification.Center.notify({
+				content: Loc.getMessage('CRM_KANBAN_STAGE_EDITOR_EXTERNAL_UPDATE'),
+			});
+		}
+	}
+
+	clearStageEditorState()
+	{
+		this.stageEditorOpenRequestId++;
+		if (this.stageEditorPreviewFrameId !== null)
+		{
+			window.cancelAnimationFrame(this.stageEditorPreviewFrameId);
+		}
+		this.stageEditorPreviewFrameId = null;
+		this.stageEditorPendingPreview = null;
+		this.stageEditor = null;
+		this.stageEditorColumnId = null;
+		this.stageEditorDraftColumnId = null;
+		this.stageEditorExternalConflict = false;
+		this.stageEditorExternalSnapshot = null;
 	}
 
 	/**
@@ -203,6 +956,8 @@ export class Grid extends BX.Kanban.Grid
 					autoHide: false,
 					overlay: true,
 					maxWidth: 350,
+					focusTrap: true,
+					ariaLabel: Loc.getMessage('CRM_KANBAN_A11Y_MESSAGE_DIALOG_LABEL'),
 					buttons: [
 						new PopupWindowButton({
 							text: 'OK',
@@ -478,6 +1233,18 @@ export class Grid extends BX.Kanban.Grid
 		this.ajaxParams = data;
 	}
 
+	getRequestContext()
+	{
+		const gridData = this.getData();
+
+		return {
+			extra: gridData.params,
+			entity_type: gridData.entityType,
+			viewMode: gridData.viewMode,
+			version: 2,
+		};
+	}
+
 	/**
 	 * Perform ajax query.
 	 * @param {Object} data
@@ -495,11 +1262,14 @@ export class Grid extends BX.Kanban.Grid
 			dataType = 'json';
 		}
 
+		const [handleSuccess, handleFailure] = (
+			this.pendingMoveAnnounce !== null && data.action === 'status'
+				? this.wrapPendingMoveCallbacks(onsuccess, onfailure)
+				: [onsuccess, onfailure]
+		);
+
 		data.sessid = BX.bitrix_sessid();
-		data.extra = gridData.params;
-		data.entity_type = gridData.entityType;
-		data.viewMode = gridData.viewMode;
-		data.version = 2;
+		Object.assign(data, this.getRequestContext());
 		data.ajaxParams = this.ajaxParams;
 		data.entityPath = gridData.entityPath;
 
@@ -529,8 +1299,8 @@ export class Grid extends BX.Kanban.Grid
 				dataType,
 				url,
 				data,
-				onsuccess,
-				onfailure,
+				onsuccess: handleSuccess,
+				onfailure: handleFailure,
 			});
 		}
 	}
@@ -609,24 +1379,33 @@ export class Grid extends BX.Kanban.Grid
 	accessNotify()
 	{
 		if (
-			typeof BX.Intranet !== "undefined" &&
-			typeof BX.Intranet.NotifyDialog !== "undefined"
+			typeof BX.Intranet !== 'undefined' &&
+			typeof BX.Intranet.NotifyDialog !== 'undefined'
 		)
 		{
-			if (this.accessNotifyDialog === null)
+			const accessNotifyPopup = this.accessNotifyDialog?.popup ?? null;
+			const isAccessNotifyPopupDestroyed = (
+				accessNotifyPopup !== null
+				&& Type.isFunction(accessNotifyPopup.isDestroyed)
+				&& accessNotifyPopup.isDestroyed()
+			);
+
+			if (
+				this.accessNotifyDialog === null
+				|| Type.isUndefined(this.accessNotifyDialog)
+				|| isAccessNotifyPopupDestroyed
+			)
 			{
-				var gridData = this.getData();
 				this.accessNotifyDialog = new BX.Intranet.NotifyDialog({
 					listUserData: this.getData().admins,
-					notificationHandlerUrl: this.getAjaxHandlerPath() +
-											"?action=notifyAdmin&version=2&entity_type=" +
-											gridData.entityType,
+					notificationHandlerUrl: this.getAjaxHandlerPath() + '?action=notifyAdmin',
+					postData: this.getRequestContext(),
 					popupTexts: {
-						sendButton: Loc.getMessage("CRM_KANBAN_NOTIFY_BUTTON"),
-						title: Loc.getMessage("CRM_KANBAN_NOTIFY_TITLE"),
-						header: Loc.getMessage("CRM_KANBAN_NOTIFY_HEADER"),
-						description: Loc.getMessage("CRM_KANBAN_NOTIFY_TEXT2")
-					}
+						sendButton: Loc.getMessage('CRM_KANBAN_NOTIFY_BUTTON'),
+						title: Loc.getMessage('CRM_KANBAN_NOTIFY_TITLE'),
+						header: Loc.getMessage('CRM_KANBAN_NOTIFY_HEADER'),
+						description: Loc.getMessage('CRM_KANBAN_NOTIFY_TEXT2'),
+					},
 				});
 			}
 			this.accessNotifyDialog.show();
@@ -643,13 +1422,16 @@ export class Grid extends BX.Kanban.Grid
 		var promise = new BX.Promise();
 		var targetColumn = this.getPreviousColumnSibling(column);
 		var targetColumnId = targetColumn ? targetColumn.getId() : 0;
+		const request = {
+			action: "modifyStage",
+			columnName: column.getName(),
+			columnColor: column.getColor(),
+			columnDescription: Type.isString(column.getData().description) ? column.getData().description : '',
+			afterColumnId: targetColumnId,
+			beforeColumnId: this.getNextColumnSibling(column)?.getId() ?? 0,
+		};
 
-		this.ajax({
-				action: "modifyStage",
-				columnName: column.getName(),
-				columnColor: column.getColor(),
-				afterColumnId: targetColumnId
-			},
+		this.ajax(request,
 			function(data)
 			{
 				if (data && !data.error)
@@ -763,12 +1545,12 @@ export class Grid extends BX.Kanban.Grid
 
 		const page = pagination.getPage() + 1;
 		this.ajax(
-			{
+			Object.assign({
 				action: 'page',
 				page,
 				column: column.getId(),
 				onlyItems: (page > 1 ? 'Y' : 'N'),
-			},
+			}, this.currentLiveFilterAjaxParams),
 			(data) => {
 				this.updateConfig(data);
 
@@ -922,7 +1704,7 @@ export class Grid extends BX.Kanban.Grid
 		}
 
 		item.beforeItem = beforeItem;
-		currentColumn.removeItem(item).then(() => {
+		const movePromise = currentColumn.removeItem(item).then(() => {
 			targetColumn.addItem(item, item.beforeItem);
 		});
 
@@ -930,9 +1712,7 @@ export class Grid extends BX.Kanban.Grid
 
 		if (usePromise)
 		{
-			return Promise.resolve({
-				status: true,
-			});
+			return movePromise.then(() => ({ status: true }));
 		}
 
 		return true;
@@ -1024,6 +1804,17 @@ export class Grid extends BX.Kanban.Grid
 		{
 			const gridData = this.getData();
 			this.showNotCompletedPopup(gridData);
+			this.resetMultiSelectMode();
+			this.stopActionPanel();
+
+			if (usePromise)
+			{
+				return Promise.resolve({
+					status: false,
+				});
+			}
+
+			return;
 		}
 
 		const removePromises = [];
@@ -1073,38 +1864,32 @@ export class Grid extends BX.Kanban.Grid
 	 */
 	loadNew(id, force, forceUpdate, onlyItems, useAnimation)
 	{
-		var gridData = this.getData();
-		var entityIds = (typeof id !== 'undefined' ? (Array.isArray(id) ? id : [id]) : 0);
-
 		if (document.hidden)
 		{
 			return Promise.reject(new Error('Tab is not active'));
 		}
 
-		var loadItemsCount = 0;
-		loadItemsCount = entityIds.reduce(function(count, current, index, arr){
-			var item = this.getItem(current);
-			if (item && item.getData().updateRestrictionCallback)
-			{
-				delete arr[index];
-				return count;
-			}
-			return ++count;
-		}.bind(this), 0);
+		const gridData = this.getData();
+		const entityIds = (Type.isNil(id) ? [] : (Array.isArray(id) ? id : [id])).filter((entityId) => {
+			const item = this.getItem(entityId);
 
-		if (!loadItemsCount)
+			return !(item && item.getData().updateRestrictionCallback);
+		});
+
+		if (entityIds.length === 0)
 		{
 			return Promise.resolve();
 		}
 
+		const byId = Boolean(entityIds[0]);
 		useAnimation = Type.isBoolean(useAnimation) ? useAnimation : false;
 
-		return new Promise(function(resolve, reject){
+		const loadPortion = (portionIds) => new Promise((resolve, reject) => {
 			this.ajax(
-				entityIds[0]
+				byId
 					? {
 						action: "get",
-						entity_id: entityIds,
+						entity_id: portionIds,
 						force: force === true ? "Y" : "N",
 						onlyItems: (onlyItems === true ? 'Y' : 'N')
 					}
@@ -1114,18 +1899,21 @@ export class Grid extends BX.Kanban.Grid
 						force: force === true ? "Y" : "N",
 						onlyItems: (onlyItems === true ? 'Y' : 'N')
 					},
-				function (data)
-				{
+				(data) => {
 					if (!data)
 					{
 						resolve(data);
+
+						return;
 					}
+
+					const itemUpdatePromises = [];
 
 					this.updateConfig(data);
 
 					if (data.items)
 					{
-						var worked = false;
+						const loadedIds = {};
 						if (data.items.length)
 						{
 							var titlesForRender = {};
@@ -1138,7 +1926,7 @@ export class Grid extends BX.Kanban.Grid
 								{
 									continue;
 								}
-								worked = true;
+								loadedIds[String(item.id)] = true;
 								if (existItem)
 								{
 									var existData = existItem.getData();
@@ -1164,12 +1952,12 @@ export class Grid extends BX.Kanban.Grid
 											{
 												item.targetId = beforeItem.getId();
 											}
-											this.updateItem(item.id, item);
+											itemUpdatePromises.push(this.updateItem(item.id, item, true));
 											titlesForRender[newColumn.getId()] = newColumn;
 										}
 										else if (newColumn.getPreviousItemSibling(existItem) !== beforeItem)
 										{
-											this.moveItem(existItem, newColumn, beforeItem);
+											itemUpdatePromises.push(this.moveItem(existItem, newColumn, beforeItem, true));
 										}
 									}
 									else
@@ -1185,7 +1973,7 @@ export class Grid extends BX.Kanban.Grid
 								{
 									this.addItemTop(item);
 								}
-								if (!entityIds[0])
+								if (!byId)
 								{
 									gridData.lastId = item.id;
 									this.setData(gridData);
@@ -1198,28 +1986,59 @@ export class Grid extends BX.Kanban.Grid
 							}
 						}
 
-						if (!worked && entityIds[0])
+						// An item asked for by id and not sent back no longer belongs to
+						// the board: it left the filter, or the event drew it from its
+						// own payload before the server was asked at all.
+						if (byId)
 						{
-							var item = this.getItem(entityIds[0]);
-							if (item)
-							{
-								var itemData = item.getData();
-								var column = item.getColumn();
+							portionIds.forEach((entityId) => {
+								if (loadedIds[String(entityId)])
+								{
+									return;
+								}
 
-								column.decPrice(itemData.price);
-								this.removeItem(entityIds[0]);
-							}
+								const missedItem = this.getItem(entityId);
+								if (!missedItem)
+								{
+									return;
+								}
+
+								const missedColumn = missedItem.getColumn();
+
+								missedColumn.decPrice(missedItem.getData().price);
+								this.removeItem(entityId);
+							});
 						}
 					}
 
-					resolve(data);
-				}.bind(this),
-				function (error)
-				{
+					Promise.all(itemUpdatePromises).then(() => resolve(data)).catch(reject);
+				},
+				() => {
 					reject();
-				}.bind(this)
+				}
 			);
-		}.bind(this));
+		});
+
+		if (!byId)
+		{
+			return loadPortion([]);
+		}
+
+		// The server answers with at most Kanban::BLOCK_SIZE items whatever the number
+		// of ids asked for, so a longer batch goes portion by portion: a card is taken
+		// off the board only by the answer to the portion it was asked in. The first
+		// portion leaves synchronously, as it did before batching: callers close the
+		// editor and read the board right after the call.
+		let chain = null;
+		for (let index = 0; index < entityIds.length; index += LOAD_NEW_PORTION_SIZE)
+		{
+			const portionIds = entityIds.slice(index, index + LOAD_NEW_PORTION_SIZE);
+			chain = chain === null
+				? loadPortion(portionIds)
+				: chain.then(() => loadPortion(portionIds));
+		}
+
+		return chain;
 	}
 
 	updateConfig(data)
@@ -1263,15 +2082,18 @@ export class Grid extends BX.Kanban.Grid
 	 *
 	 * @param {Number} item
 	 * @param {BX.CRM.Kanban.Item} options
-	 * @returns {boolean}
+	 * @param {boolean} usePromise
+	 * @returns {boolean|Promise<boolean>}
 	 */
-	updateItem(item, options)
+	updateItem(item, options, usePromise = false)
 	{
 		item = this.getItem(item);
 		if (!item)
 		{
-			return false;
+			return usePromise ? Promise.resolve(false) : false;
 		}
+
+		let movePromise = Promise.resolve();
 
 		if (BX.Kanban.Utils.isValidId(options.columnId) && options.columnId !== item.getColumn().getId())
 		{
@@ -1283,7 +2105,12 @@ export class Grid extends BX.Kanban.Grid
 			{
 				item.useAnimation = options.useAnimation;
 			}
-			this.moveItem(item, this.getColumn(options.columnId), this.getItem(options.targetId));
+			movePromise = this.moveItem(
+				item,
+				this.getColumn(options.columnId),
+				this.getItem(options.targetId),
+				usePromise,
+			);
 		}
 
 		var eventArgs = ['UPDATE', { task: item, options: options }];
@@ -1292,8 +2119,11 @@ export class Grid extends BX.Kanban.Grid
 
 		item.setOptions(options);
 		item.render();
+		// The redraw goes through render(), not renderLayout(), so the accessible
+		// name is rewritten explicitly for the new data.
+		item.refreshAriaLabel();
 
-		return true;
+		return usePromise ? Promise.resolve(movePromise).then(() => true) : true;
 	}
 
 	/**
@@ -1468,12 +2298,17 @@ export class Grid extends BX.Kanban.Grid
 	{
 		if (this.isBlockedIncomingMoving(event.targetColumn))
 		{
+			const blockedMessage = Loc.getMessage('CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2');
+
 			BX.UI.Notification.Center.notify(
 				{
-					content: Loc.getMessage('CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2'),
+					content: blockedMessage,
 					autoHideDelay: 5000,
 				}
 			);
+
+			// Echo the denial to the live region so screen readers hear it.
+			LiveAnnouncer.announce(blockedMessage, 'assertive');
 
 			event.denyAction();
 			return;
@@ -1778,23 +2613,17 @@ export class Grid extends BX.Kanban.Grid
 					this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR_FILLING_FIELDS)
 				}
 
-				if (
-					this.getData().useItemPlanner
-					&& !this.itemMoving?.groupIds
-					&& Restriction.Instance.isTodoActivityCreateAvailable()
-				)
-				{
-					setTimeout(() => this.showItemPlannerMenu(item), 500);
-				}
-
 				const { items } = data;
 				let { isShouldUpdateCard } = data;
 				if (Type.isArrayFilled(items))
 				{
-					this.updateItem(itemId, items[0]);
+					this.showItemPlannerAfterUpdate(item, this.updateItem(itemId, items[0], true));
 
 					return;
 				}
+
+				let itemUpdatePromise = Promise.resolve();
+				let isItemReloaded = false;
 
 				const prevColumnId = item.getLastPosition()?.columnId;
 				if (prevColumnId)
@@ -1816,14 +2645,43 @@ export class Grid extends BX.Kanban.Grid
 
 				if (isShouldUpdateCard)
 				{
-					void this.loadNew(itemId, false, true, true, true);
+					itemUpdatePromise = this.loadNew(itemId, false, true, true, true);
+					isItemReloaded = true;
 				}
+
+				this.showItemPlannerAfterUpdate(item, itemUpdatePromise, isItemReloaded);
 			},
 			(error) => {
+				void this.loadNew(ids, false, true, true, ids.length <= 1);
 				this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR)
 
 				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 			},
+		);
+	}
+
+	showItemPlannerAfterUpdate(item, updatePromise, isItemReloaded = false)
+	{
+		if (
+			!this.getData().useItemPlanner
+			|| this.itemMoving?.groupIds
+			|| !Restriction.Instance.isTodoActivityCreateAvailable()
+		)
+		{
+			return;
+		}
+
+		let plannerUpdatePromise = Promise.resolve(updatePromise);
+		if (!isItemReloaded && this.getData().viewMode === ViewMode.MODE_ACTIVITIES)
+		{
+			plannerUpdatePromise = plannerUpdatePromise.then(
+				() => this.loadNew(item.getId(), false, true, true, true),
+			);
+		}
+
+		void plannerUpdatePromise.then(
+			() => this.showItemPlannerMenu(item),
+			() => this.showItemPlannerMenu(item),
 		);
 	}
 
@@ -2083,6 +2941,10 @@ export class Grid extends BX.Kanban.Grid
 		{
 			message = Loc.getMessage("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1")
 		}
+		else if (gridData.entityType === 'SMART_INVOICE')
+		{
+			message = Loc.getMessage('CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_INVOICE_MSGVER_1');
+		}
 		else
 		{
 			message = Loc.getMessage("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType + '_MSGVER_1');
@@ -2101,32 +2963,82 @@ export class Grid extends BX.Kanban.Grid
 		var columnId = column.getId();
 		var title = column.getName();
 		var color = column.getColor();
+		const request = {
+			action: 'modifyStage',
+			columnId,
+			columnName: title,
+			columnColor: color,
+		};
+		if (Type.isString(column.getData().description))
+		{
+			request.columnDescription = column.getData().description;
+		}
+		var editModeSnapshot = this.getColumnEditModeSnapshot(column);
 
-		this.ajax({
-				action: "modifyStage",
-				columnId: columnId,
-				columnName: title,
-				columnColor: color
-			},
+		this.setColumnStageUpdateInProgress(column, true);
+
+		this.ajax(
+			request,
 			function(data)
 			{
 				if (data && data.error)
 				{
 					this?.stageAnalyticsLabels.sendRenameFailure();
+					this.setColumnStageUpdateInProgress(column, false);
+					this.restoreColumnEditModeSnapshot(column, editModeSnapshot);
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
 				}
 				else
 				{
 					this?.stageAnalyticsLabels.sendRenameSuccess();
+					this.setColumnStageUpdateInProgress(column, false);
+					this.clearColumnEditModeSnapshot(column, editModeSnapshot);
 					this.resetActionPanel();
 				}
 			}.bind(this),
 			function(error)
 			{
 				this?.stageAnalyticsLabels.sendRenameFailure();
+				this.setColumnStageUpdateInProgress(column, false);
+				this.clearColumnEditModeSnapshot(column, editModeSnapshot);
+				this.reload();
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
+	}
+
+	getColumnEditModeSnapshot(column)
+	{
+		if (Type.isFunction(column?.getEditModeSnapshot))
+		{
+			return column.getEditModeSnapshot();
+		}
+
+		return null;
+	}
+
+	setColumnStageUpdateInProgress(column, inProgress)
+	{
+		if (Type.isFunction(column?.setStageUpdateInProgress))
+		{
+			column.setStageUpdateInProgress(inProgress);
+		}
+	}
+
+	restoreColumnEditModeSnapshot(column, snapshot)
+	{
+		if (Type.isFunction(column?.restoreEditModeSnapshot))
+		{
+			column.restoreEditModeSnapshot(snapshot);
+		}
+	}
+
+	clearColumnEditModeSnapshot(column, snapshot)
+	{
+		if (Type.isFunction(column?.clearEditModeSnapshot))
+		{
+			column.clearEditModeSnapshot(snapshot);
+		}
 	}
 
 	/**
@@ -2140,12 +3052,18 @@ export class Grid extends BX.Kanban.Grid
 		var columnId = column.getId();
 		var afterColumn = this.getPreviousColumnSibling(column);
 		var afterColumnId = afterColumn ? afterColumn.getId() : 0;
+		const request = {
+			action: 'modifyStage',
+			columnId,
+			afterColumnId,
+		};
+		if (Type.isString(column.getData().description))
+		{
+			request.columnDescription = column.getData().description;
+		}
 
-		this.ajax({
-				action: "modifyStage",
-				columnId: columnId,
-				afterColumnId: afterColumnId
-			},
+		this.ajax(
+			request,
 			function(data)
 			{
 				if (data && data.error)
@@ -2157,6 +3075,7 @@ export class Grid extends BX.Kanban.Grid
 				{
 					this?.stageAnalyticsLabels.sendUpdateSuccess();
 					this.resetActionPanel();
+					normalizeStageRealSorts(this.getColumns());
 				}
 			}.bind(this),
 			function(error)
@@ -2178,21 +3097,49 @@ export class Grid extends BX.Kanban.Grid
 	 */
 	onApplyFilter(filterId, values, filterInstance, promise, params)
 	{
+		// Every reload of the board goes through here, the global filter event being
+		// only one of its callers.
+		BX.Event.EventEmitter.emit(this, 'Kanban.Grid:onApplyFilter');
+
 		this.clearItemMoving();
 		this.fadeOut();
+
+		// Announce board (re)loading. A move that reloads the board
+		// suppresses this so the "N moved to stage X" message is not duplicated.
+		if (this.suppressLoadAnnounce !== true)
+		{
+			LiveAnnouncer.announce(Loc.getMessage('CRM_KANBAN_A11Y_BOARD_LOADING'));
+		}
 
 		if (Type.isObject(params))
 		{
 			params.autoResolve = false;
 		}
 
-		this.ajax(
-			{
-				action: 'get',
-			},
-			(data) => {
-				const gridData = this.getData();
+		const liveFilterAjaxParams = this.getLiveFilterAjaxParams(filterInstance);
+		const liveFilterRequestId = ++this.liveFilterRequestId;
 
+		const ajaxParams = {
+			action: 'get',
+			...liveFilterAjaxParams,
+		};
+
+		this.ajax(
+			ajaxParams,
+			(data) => {
+				if (liveFilterRequestId !== this.liveFilterRequestId)
+				{
+					if (typeof promise !== "undefined")
+					{
+						promise.reject();
+					}
+
+					return;
+				}
+
+				this.currentLiveFilterAjaxParams = liveFilterAjaxParams;
+
+				const gridData = this.getData();
 				if (!Type.isUndefined(data.customFields))
 				{
 					gridData.customFields = data.customFields;
@@ -2277,6 +3224,23 @@ export class Grid extends BX.Kanban.Grid
 
 				this.resetMultiSelectMode();
 
+				// Announce that loading finished with the stage count,
+				// unless this reload followed a move (already announced its result).
+				if (this.suppressLoadAnnounce === true)
+				{
+					this.suppressLoadAnnounce = false;
+				}
+				else
+				{
+					const stageCount = this.getColumns().length;
+					LiveAnnouncer.announce(
+						Loc.getMessagePlural('CRM_KANBAN_A11Y_BOARD_LOADED', stageCount, { '#COUNT#': stageCount }),
+					);
+				}
+
+				// Return focus to the moved card / target stage after a keyboard move.
+				this.restorePendingMoveFocus();
+
 				setTimeout(() => {
 					if (this.hasOnlyNotVisibleColumnsWithItems())
 					{
@@ -2291,14 +3255,53 @@ export class Grid extends BX.Kanban.Grid
 
 			},
 			(error) => {
+				if (liveFilterRequestId !== this.liveFilterRequestId)
+				{
+					if (typeof promise !== "undefined")
+					{
+						promise.reject();
+					}
+
+					return;
+				}
+
 				if (typeof promise !== "undefined")
 				{
 					promise.reject();
 				}
 
+				// The board was not redrawn: nothing is left to announce or to focus.
+				this.cancelPendingMove();
+
 				this.fadeIn();
 			}
 		);
+	}
+
+	getLiveFilterAjaxParams(filterInstance)
+	{
+		if (!Type.isObject(filterInstance))
+		{
+			return Object.assign({}, this.currentLiveFilterAjaxParams);
+		}
+
+		const ajaxParams = {};
+
+		if (Type.isFunction(filterInstance.getPreset))
+		{
+			const preset = filterInstance.getPreset();
+			if (Type.isObject(preset) && Type.isFunction(preset.getCurrentPresetId))
+			{
+				ajaxParams.filterPresetId = preset.getCurrentPresetId();
+			}
+		}
+
+		if (Type.isFunction(filterInstance.getFilterFieldsValues))
+		{
+			ajaxParams.filterFields = Object.assign({}, filterInstance.getFilterFieldsValues());
+		}
+
+		return ajaxParams;
 	}
 
 	handleHintForNotVisibleColumns()
@@ -3142,27 +4145,30 @@ export class Grid extends BX.Kanban.Grid
 				this.itemMoving.item
 			);
 		}
-		else
+		else if (!stilError)
 		{
-			// // move visual and save
-			// this.onItemMoved(
-			// 	this.itemMoving.item,
-			// 	this.itemMoving.newColumn,
-			// 	this.itemMoving.newNextSibling
-			// );
-			if (!stilError)
+			if (this.itemMoving?.oldColumn?.id)
 			{
-				if (this.itemMoving?.oldColumn?.id)
-				{
-					this.itemMoving.item.columnId = this.itemMoving.oldColumn.id;
-				}
-
-				this.moveItem(
-					this.itemMoving.item,
-					this.itemMoving.newColumn,
-					this.itemMoving.newNextSibling
-				);
+				this.itemMoving.item.columnId = this.itemMoving.oldColumn.id;
 			}
+
+			const { entityData } = eventParams;
+			const targetColumnId = entityData?.STAGE_ID ?? entityData?.STATUS_ID;
+			const columnAfterEditor = targetColumnId && targetColumnId !== this.itemMoving.oldColumn?.id
+				? this.getColumn(targetColumnId)
+				: this.itemMoving.newColumn;
+			if (!columnAfterEditor)
+			{
+				void this.loadNew(this.itemMoving.item.getId(), false, true, true, true);
+
+				return;
+			}
+
+			this.moveItem(
+				this.itemMoving.item,
+				columnAfterEditor,
+				this.itemMoving.newNextSibling,
+			);
 		}
 	}
 
@@ -3173,6 +4179,12 @@ export class Grid extends BX.Kanban.Grid
 	 */
 	getRequiredFieldsForColumnId(columnId, itemData)
 	{
+		// the delete zone is not a stage, deleting an item never asks for its fields
+		if (columnId === 'DELETED')
+		{
+			return [];
+		}
+
 		return [
 			...(itemData.required?.[columnId] ?? []),
 			...(itemData.required?.ALL ?? []),
@@ -3272,16 +4284,21 @@ export class Grid extends BX.Kanban.Grid
 	 */
 	onSliderClose(SliderEvent)
 	{
-		var gridData = this.getData();
-		var maskUrl = gridData.entityPath;
-		var sliderUrl = SliderEvent.slider.getUrl();
-		maskUrl = maskUrl.replace(/\#([^\#]+)\#/, '([\\d]+)');
-
-		var match = sliderUrl.match(new RegExp(maskUrl));
-		if (match && match[1])
+		const slider = getSliderFromEvent(SliderEvent);
+		const matchedEntityId = slider ? this.sliderViewObserver.getEntityId(slider) : null;
+		if (!matchedEntityId)
 		{
-			this.loadNew(match[1], false, true, true, true);
+			return;
 		}
+
+		// The creation card keeps 0 in its url, so items created in it are loaded by the grid tail.
+		const entityId = parseInt(matchedEntityId, 10) > 0 ? matchedEntityId : 0;
+		if (entityId !== 0 && this.sliderViewObserver.canSkipCloseRefresh(slider, entityId))
+		{
+			return;
+		}
+
+		this.loadNew(entityId, false, true, true, true);
 	}
 
 	/**
@@ -3589,10 +4606,7 @@ export class Grid extends BX.Kanban.Grid
 				onclick: function(i, item)
 				{
 					item.menuWindow.close();
-					BX.CRM.Kanban.Actions.changeColumn(
-						this,
-						item.column
-					);
+					this.moveCheckedItemsToColumn(item.column);
 				}.bind(this)
 			});
 		}
@@ -3600,9 +4614,7 @@ export class Grid extends BX.Kanban.Grid
 			id: "kanban_column",
 			text: Loc.getMessage("CRM_KANBAN_PANEL_STAGE"),
 			items: items,
-			icon: (gridData.entityType === "DEAL" || gridData.isDynamicEntity)
-				? "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-stage.svg"
-				: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-status.svg"
+			icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-status.svg"
 		});
 		/* endregion */
 
@@ -3858,6 +4870,271 @@ export class Grid extends BX.Kanban.Grid
 	onItemUnselect(itemInArray)
 	{
 		this.stopActionPanel();
+	}
+
+	/**
+	 * Keyboard counterpart of onContainerClick selection: toggles the item's
+	 * selection through the same check/uncheck flow the mouse uses, then moves
+	 * focus predictably between the board and the group-actions panel.
+	 *
+	 * Selecting can be deferred: an open quick form editor is closed first, and the
+	 * editor may refuse to close. The returned promise settles when the selection
+	 * state is final and tells whether it has changed, so the caller can report the
+	 * result instead of guessing when it is ready.
+	 *
+	 * @param {BX.CRM.Kanban.Item} item
+	 * @returns {Promise<boolean>} whether the selection state has changed
+	 */
+	toggleItemSelectionFromKeyboard(item)
+	{
+		if (item.checked)
+		{
+			this.unCheckItem(item);
+
+			const stillChecked = Type.isArrayFilled(this.getChecked());
+			if (!stillChecked)
+			{
+				this.resetMultiSelectMode();
+				this.stopActionPanel();
+			}
+
+			this.calculateTotalCheckItems();
+
+			if (stillChecked)
+			{
+				this.focusActionPanel();
+			}
+			else
+			{
+				// Selection cleared: keep focus on the card so navigation continues.
+				item.getContainer().focus();
+			}
+
+			return Promise.resolve(true);
+		}
+
+		const openColumn = this.getColumnWithOpenEditor();
+		const editorClosePromise = openColumn
+			? openColumn.closeQuickFormEditor()
+			: Promise.resolve(true);
+
+		return editorClosePromise.then((closed) => {
+			if (!closed)
+			{
+				return false;
+			}
+
+			this.checkItem(item);
+			this.onMultiSelectMode();
+			this.startActionPanel();
+			this.calculateTotalCheckItems();
+			this.focusActionPanel();
+
+			return true;
+		});
+	}
+
+	/**
+	 * Moves keyboard focus to the group-actions panel (its first action item), so
+	 * a keyboard user lands on the panel right after selecting a card.
+	 */
+	focusActionPanel()
+	{
+		const panel = this.actionPanel;
+		// A custom panel can be set from outside, and the method is a recent addition
+		// to ui.actionpanel: without it there is simply nothing to focus.
+		if (!panel || typeof panel.focusFirstItem !== 'function')
+		{
+			return;
+		}
+
+		panel.focusFirstItem();
+	}
+
+	/**
+	 * Starts a group stage move chosen in the actions panel: remembers what has
+	 * to be announced and where focus should return, then hands the move over to
+	 * the regular action. The announcement waits for the server answer.
+	 *
+	 * Focus is restored for every way of choosing the menu item, mouse included,
+	 * and that is deliberate. The menu closes and the board is redrawn, so the
+	 * node that held focus is gone and focus falls back to the document body -
+	 * a loss that hurts the next Tab press no matter how the item was activated.
+	 * Telling a mouse click from a keyboard activation would mean tracking the
+	 * input method through the whole move, which buys nothing: focus lands on the
+	 * cards the user has just moved, which is where the attention already is.
+	 *
+	 * @param {Object} column target stage
+	 */
+	moveCheckedItemsToColumn(column)
+	{
+		this.pendingMoveAnnounce = {
+			stageName: column.name,
+			count: this.getCheckedId().length,
+		};
+		this.rememberMoveFocusTarget(column);
+		this.suppressLoadAnnounce = true;
+
+		BX.CRM.Kanban.Actions.changeColumn(this, column);
+	}
+
+	/**
+	 * Wraps the transport callbacks of the stage change request, so the move is
+	 * announced only once the server has confirmed it, and the state prepared for
+	 * the move never outlives a request that failed.
+	 *
+	 * @param {Function} onsuccess
+	 * @param {Function} onfailure
+	 * @returns {Function[]} wrapped callbacks, in the same order
+	 */
+	wrapPendingMoveCallbacks(onsuccess, onfailure)
+	{
+		const pending = this.pendingMoveAnnounce;
+		this.pendingMoveAnnounce = null;
+
+		return [
+			(result) => {
+				if (result && !result.error)
+				{
+					this.announceItemsMoved(pending.stageName, pending.count);
+				}
+				else
+				{
+					this.announceItemsMoveFailed(
+						pending.stageName,
+						pending.count,
+						result ? result.error : '',
+					);
+					this.cancelPendingMove();
+				}
+
+				onsuccess(result);
+			},
+			(error) => {
+				this.announceItemsMoveFailed(pending.stageName, pending.count);
+				this.cancelPendingMove();
+				onfailure(error);
+			},
+		];
+	}
+
+	/**
+	 * Drops the state prepared for a stage move that did not happen: the next
+	 * unrelated board reload has to announce itself and must not move focus to
+	 * items that were never moved.
+	 */
+	cancelPendingMove()
+	{
+		this.pendingMoveAnnounce = null;
+		this.pendingMoveFocus = null;
+		this.suppressLoadAnnounce = false;
+	}
+
+	/**
+	 * Announces the result of a menu/keyboard stage move via the live region,
+	 * e.g. "N cards moved to stage X".
+	 *
+	 * @param {String} stageName name of the target stage
+	 * @param {Number} count number of moved items
+	 */
+	announceItemsMoved(stageName, count)
+	{
+		if (count <= 0)
+		{
+			return;
+		}
+
+		LiveAnnouncer.announce(
+			Loc.getMessagePlural('CRM_KANBAN_A11Y_ITEMS_MOVED', count, {
+				'#COUNT#': count,
+				'#STAGE#': stageName,
+			}),
+		);
+	}
+
+	/**
+	 * Announces that a stage move did not happen: the board only reloads after a
+	 * refusal, so without this the user believes the move went through.
+	 *
+	 * The error dialog of the shared layer voices its own text once it takes
+	 * focus, and does not take focus at all while the focus trap is off. The
+	 * reason therefore joins the announcement only in the latter case, so it is
+	 * never heard twice.
+	 *
+	 * @param {String} stageName name of the target stage
+	 * @param {Number} count number of items that were to be moved
+	 * @param {String} [reason] error text from the server, if it sent one
+	 */
+	announceItemsMoveFailed(stageName, count, reason)
+	{
+		if (count <= 0)
+		{
+			return;
+		}
+
+		const message = Loc.getMessagePlural('CRM_KANBAN_A11Y_ITEMS_MOVE_FAILED', count, {
+			'#COUNT#': count,
+			'#STAGE#': stageName,
+		});
+
+		const isReasonVoicedByDialog = Popup.shouldUseFocusTrapByDefault();
+
+		LiveAnnouncer.announce(
+			Type.isStringFilled(reason) && !isReasonVoicedByDialog ? `${message}: ${reason}` : message,
+			'assertive',
+		);
+	}
+
+	/**
+	 * Records where focus should return after the board reloads following a stage
+	 * move: the moved cards and the target stage as a fallback.
+	 *
+	 * @param {Object} column target stage
+	 */
+	rememberMoveFocusTarget(column)
+	{
+		this.pendingMoveFocus = {
+			columnId: column.id,
+			itemIds: this.getCheckedId(),
+		};
+	}
+
+	/**
+	 * Restores focus after a stage move once the board has been redrawn:
+	 * a moved card in its new column, else the target stage column, else nothing.
+	 */
+	restorePendingMoveFocus()
+	{
+		const pending = this.pendingMoveFocus;
+		if (!pending)
+		{
+			return;
+		}
+
+		this.pendingMoveFocus = null;
+
+		for (let i = 0; i < pending.itemIds.length; i++)
+		{
+			const movedItem = this.getItem(pending.itemIds[i]);
+			const container = movedItem && typeof movedItem.getContainer === 'function'
+				? movedItem.getContainer()
+				: null;
+			if (container && typeof container.focus === 'function')
+			{
+				container.focus();
+
+				return;
+			}
+		}
+
+		const column = this.getColumn(pending.columnId);
+		const columnContainer = column && typeof column.getContainer === 'function'
+			? column.getContainer()
+			: null;
+		if (columnContainer && typeof columnContainer.focus === 'function')
+		{
+			columnContainer.focus();
+		}
 	}
 
 	/**

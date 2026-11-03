@@ -6,6 +6,7 @@ export const InspectorViewItemTypeDict = Object.freeze({
 	NODE: 'node',
 	DATA_GROUP: 'data-group',
 	DATA: 'data',
+	FOUND_ITEMS: 'foundItems',
 });
 
 export const DataTypeBaseType = Object.freeze({

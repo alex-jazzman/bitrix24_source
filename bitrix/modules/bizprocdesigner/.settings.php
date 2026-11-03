@@ -2,6 +2,12 @@
 
 
 return [
+	'feature-flags' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\BizprocDesigner\\Public\\Features',
+		],
+		'readonly' => true,
+	],
 	'rest' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\BizprocDesigner\\Infrastructure\\Rest\\Controller',
@@ -53,6 +59,20 @@ return [
 				'className' => \Bitrix\BizprocDesigner\Internal\Service\AddMessage2LogLogger::class,
 			],
 		],
+	],
+	'ui.entity-selector' => [
+		'value' => [
+			'entities' => [
+				[
+					'entityId' => 'bizprocdesigner-document',
+					'provider' => [
+						'moduleId' => 'bizprocdesigner',
+						'className' => \Bitrix\BizprocDesigner\Internal\Integration\UI\EntitySelector\DocumentProvider::class,
+					],
+				],
+			],
+		],
+		'readonly' => true,
 	],
 	'aiassistant.marta' => [
 		'value' => [

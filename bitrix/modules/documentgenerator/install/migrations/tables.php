@@ -7,8 +7,10 @@ $migration->table('b_documentgenerator_template')->create(function (\Bitrix\Main
 	$columns->int('ID')->unsigned()->notNull()->autoincrement();
 	$columns->char('ACTIVE', 1)->notNull()->default('Y');
 	$columns->varchar('NAME', 255)->notNull();
+	$columns->varchar('TITLE_PATTERN', 255);
 	$columns->varchar('CODE', 50);
 	$columns->varchar('REGION', 50);
+	$columns->varchar('TIMEZONE', 255);
 	$columns->int('SORT')->notNull()->default('500');
 	$columns->datetime('CREATE_TIME')->notNull();
 	$columns->datetime('UPDATE_TIME');
@@ -177,6 +179,7 @@ $migration->table('b_documentgenerator_document_binding')->create(function (\Bit
 	$table->addPrimaryKey('ID');
 });
 
+/** @deprecated The queue is unused; keep its table for installation schema compatibility. */
 $migration->table('b_documentgenerator_actualize_queue')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
 	$columns->int('DOCUMENT_ID')->unsigned()->notNull();

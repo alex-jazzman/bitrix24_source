@@ -1,0 +1,49 @@
+.crm-call-assessment-v2-hint-card__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xl);
+}
+
+.crm-call-assessment-v2-hint-card__heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.crm-call-assessment-v2-hint-card__heading > * {
+	margin: 0;
+}
+
+.crm-call-assessment-v2-hint-card__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+}
+
+.crm-call-assessment-v2-hint-card__title-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
+}
+
+.crm-call-assessment-v2-hint-card__heading .ui-headline {
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-hint-card__heading .ui-headline.--accent {
+	font-weight: var(--ui-headline-sm-font-weight);
+}
+
+.crm-call-assessment-v2-hint-card__toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex: 0 0 auto;
+	/* The L button (38px) is taller than the title row (24px): centre it on the title, not on the header top. */
+	margin-block: -7px;
+}
+
+.crm-call-assessment-v2-hint-card__editor {
+	min-width: 0;
+}

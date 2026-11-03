@@ -21,3 +21,4 @@ $MESS["SIGN_SERVICE_ERROR_SMS_LIMIT_EXCEEDED"] = "Превышен лимит н
 $MESS["SIGN_SERVICE_ERROR_MEMBERS_NOT_READY_FOR_RESEND"] = "Документ не готов к отправке";
 $MESS["SIGN_SERVICE_ERROR_INCORRECT_TAX_ID"] = "Компании с таким ИНН нет. Убедитесь, что указали ИНН без ошибок";
 $MESS["SIGN_SERVICE_ERROR_UNKNOWN_ACTION"] = "Действие пока недоступно, попробуйте чуть позже";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_RESEND_WINDOW_EXPIRED"] = "Срок отправки копии подписанного документа закончился";

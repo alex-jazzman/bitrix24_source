@@ -78,19 +78,44 @@ $splitButton = new SplitButton([
 	],
 ]);
 $splitButton->addAttribute('id', 'tasks-buttonAdd');
-$splitButton->getMenuButton()->addAttribute('id', 'tasks-popupMenuAdd');
+$splitButton->getMainButton()->addAttribute('data-testid', 'tasks-filter-create-btn');
+$splitButton->getMenuButton()
+	->addAttribute('id', 'tasks-popupMenuAdd')
+	->addAttribute('data-testid', 'tasks-filter-create-menu-btn')
+	->addAttribute('aria-label', Loc::getMessage('TASKS_FILTER_ADD_MENU_ARIA_LABEL'))
+	->addAttribute('aria-haspopup', 'menu')
+	->addAttribute('aria-expanded', 'false')
+;
 Toolbar::addButton($splitButton, ButtonLocation::AFTER_TITLE);
 
 if (!$arResult['IS_SCRUM_PROJECT'])
 {
+	$selectedRoleName = $arResult['roles']['selectedRoleName'] ?? Loc::getMessage('TASKS_ALL_ROLES');
+	$rolesCounter = $arResult['roles']['totalCounter'] ?? null;
+
 	$rolesButton = (new Buttons\Button())
-		->setText($arResult['roles']['selectedRoleName'] ?? Loc::getMessage('TASKS_ALL_ROLES'))
+		->setText($selectedRoleName)
 		->setCollapsedIcon(Buttons\Icon::TWO_PERSONS)
-		->setCounter($arResult['roles']['totalCounter'])
+		->setCounter($rolesCounter)
 		->setStyle(Buttons\AirButtonStyle::OUTLINE)
 		->setDropdown()
 		->addAttribute('id', 'tasks-buttonRoles')
+		->addAttribute('data-testid', 'tasks-filter-roles-btn')
+		->addAttribute('aria-haspopup', 'dialog')
+		->addAttribute('aria-expanded', 'false')
 	;
+
+	if (!empty($rolesCounter))
+	{
+		$rolesButton->addAttribute(
+			'aria-label',
+			Loc::getMessage('TASKS_FILTER_ROLES_BTN_ARIA_LABEL', [
+				'#ROLE#' => $selectedRoleName,
+				'#COUNT#' => $rolesCounter,
+			])
+		);
+	}
+
 	Toolbar::addButton($rolesButton, ButtonLocation::AFTER_TITLE);
 }
 
@@ -150,6 +175,7 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 				multiple: false,
 				enableSearch: true,
 				dropdownMode: true,
+				ariaLabel: '<?= GetMessageJS('TASKS_FILTER_TEMPLATE_DIALOG_ARIA_LABEL') ?>',
 				entities: [
 					{
 						id: EntitySelectorEntity.TemplateCommon,
@@ -172,7 +198,8 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 					},
 				},
 				popupOptions: {
-					className: 'popup-window_entity-picker-no-check',
+					focusTrap: true,
+					className: 'popup-window_entity-picker-no-check tasks-interface-filter-popup-adaptive',
 					events: {
 						onClose: () => {
 							if (intervalAutoHideWorkaround)
@@ -185,6 +212,7 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 				},
 			});
 
+			dialogTemplate.getPopup().getPopupContainer().setAttribute('aria-modal', 'true');
 			dialogTemplate.showTo(openerElement);
 
 			// TODO: if maybe one day we get entity selector without restriction on
@@ -276,6 +304,10 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 			closeByEsc: true,
 			offsetLeft: -15,
 			offsetTop: 5,
+			events: {
+				onShow: () => createButtonExtra.setAttribute('aria-expanded', 'true'),
+				onClose: () => createButtonExtra.setAttribute('aria-expanded', 'false'),
+			},
 		});
 
 		BX.bind(createButtonExtra, 'click', () => {

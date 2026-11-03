@@ -150,11 +150,43 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 		<?
 	}
 	//endregion
+
+	// The list role is printed only over a list that has items: an empty container with the role
+	// would be announced as a list of nothing.
+	$hasItems = !empty($arResult['ITEMS']) && !empty($arResult['ITEM_ROWS']);
+	$itemsContainerId = $obName.'_items';
+	$itemsShown = count($arResult['ITEMS']);
+	$itemsCount = $itemsShown;
+	if (!empty($arResult['NAV_RESULT']) && (int)$arResult['NAV_RESULT']->NavRecordCount > 0)
+	{
+		$itemsCount = (int)$arResult['NAV_RESULT']->NavRecordCount;
+	}
+
+	// The line only names the list: read on its own as well, it would be heard twice.
+	$itemsCountId = $itemsContainerId.'_count';
+
+	if ($hasItems)
+	{
+		// A reader says the number of items of the list after its name, so a name telling only the size
+		// of the whole result leaves that number unexplained while a part of the result is shown.
+		$itemsCountLine = (
+			$itemsShown < $itemsCount
+				? Loc::getMessage('CT_BCS_CATALOG_ITEMS_SHOWN_ARIA', [
+					'#COUNT#' => $itemsCount,
+					'#SHOWN#' => $itemsShown,
+				])
+				: Loc::getMessage('CT_BCS_CATALOG_ITEMS_COUNT_ARIA', ['#COUNT#' => $itemsCount])
+		);
+		?>
+		<p class="sr-only" id="<?=$itemsCountId?>" aria-hidden="true"><?=htmlspecialcharsbx($itemsCountLine)?></p>
+		<?
+	}
 	?>
-		<div class="mb-4 catalog-section" data-entity="<?=$containerName?>">
+		<div class="mb-4 catalog-section" data-entity="<?=$containerName?>"
+			<?=($hasItems ? 'id="'.$itemsContainerId.'" role="list" aria-labelledby="'.$itemsCountId.'" data-testid="catalog-section-container"' : '')?>>
 			<!-- items-container -->
 			<?
-			if (!empty($arResult['ITEMS']) && !empty($arResult['ITEM_ROWS']))
+			if ($hasItems)
 			{
 				$generalParams = [
 					'SHOW_DISCOUNT_PERCENT' => $arParams['SHOW_DISCOUNT_PERCENT'],
@@ -201,7 +233,11 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 
 				foreach ($arResult['ITEMS'] as $item)
 				{
-					$uniqueId = $item['ID'].'_'.md5($this->randString().$component->getAction());
+					// The random sequence starts over in every ajax request, so a portion of "show more" would
+					// repeat the ids of a portion of another list on the page: the list and the page are mixed in.
+					$uniqueId = $item['ID'].'_'.md5(
+						$this->randString().$component->getAction().$navParams['NavNum'].'_'.$navParams['NavPageNomer']
+					);
 					$areaIds[$item['ID']] = $this->GetEditAreaId($uniqueId);
 					$this->AddEditAction($uniqueId, $item['EDIT_LINK'], $elementEdit);
 					$this->AddDeleteAction($uniqueId, $item['DELETE_LINK'], $elementDelete, $elementDeleteParams);
@@ -219,13 +255,13 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				{
 					$rowItems = array_splice($arResult['ITEMS'], 0, $rowData['COUNT']);
 					?>
-					<div class="row <?=$rowData['CLASS']?>" data-entity="items-row">
+					<div class="row <?=$rowData['CLASS']?>" data-entity="items-row" role="none">
 						<?
 						switch ($rowData['VARIANT'])
 						{
 							case 0:
 								?>
-								<div class="col product-item-big-card">
+								<div class="col product-item-big-card" role="listitem">
 									<?
 									$item = reset($rowItems);
 									$APPLICATION->IncludeComponent(
@@ -255,7 +291,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 								foreach ($rowItems as $item)
 								{
 									?>
-									<div class="col-6 product-item-big-card">
+									<div class="col-6 product-item-big-card" role="listitem">
 										<?
 										$APPLICATION->IncludeComponent(
 											'bitrix:catalog.item',
@@ -285,7 +321,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 								foreach ($rowItems as $item)
 								{
 									?>
-									<div class="col-sm-4 product-item-small-card">
+									<div class="col-sm-4 product-item-small-card" role="listitem">
 										<?
 										$APPLICATION->IncludeComponent(
 											'bitrix:catalog.item',
@@ -315,7 +351,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 								foreach ($rowItems as $item)
 								{
 									?>
-									<div class="col-6 col-md-3 product-item-small-card">
+									<div class="col-6 col-lg-3 product-item-small-card" role="listitem">
 										<?
 										$APPLICATION->IncludeComponent(
 											'bitrix:catalog.item',
@@ -344,7 +380,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							case 4:
 								$rowItemsCount = count($rowItems);
 								?>
-								<div class="col-sm-6 product-item-big-card">
+								<div class="col-sm-6 product-item-big-card" role="listitem">
 									<?
 									$item = array_shift($rowItems);
 									$APPLICATION->IncludeComponent(
@@ -368,13 +404,13 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 									unset($item);
 									?>
 								</div>
-								<div class="col-sm-6 product-item-small-card">
-									<div class="row">
+								<div class="col-sm-6 product-item-small-card" role="none">
+									<div class="row" role="none">
 										<?
 										for ($i = 0; $i < $rowItemsCount - 1; $i++)
 										{
 											?>
-											<div class="col-6">
+											<div class="col-6" role="listitem">
 												<?
 												$APPLICATION->IncludeComponent(
 													'bitrix:catalog.item',
@@ -407,13 +443,13 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							case 5:
 								$rowItemsCount = count($rowItems);
 								?>
-								<div class="col-sm-6 col-12 product-item-small-card">
-									<div class="row">
+								<div class="col-sm-6 col-12 product-item-small-card" role="none">
+									<div class="row" role="none">
 										<?
 										for ($i = 0; $i < $rowItemsCount - 1; $i++)
 										{
 											?>
-											<div class="col-6">
+											<div class="col-6" role="listitem">
 												<?
 												$APPLICATION->IncludeComponent(
 													'bitrix:catalog.item',
@@ -440,7 +476,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 										?>
 									</div>
 								</div>
-								<div class="col-sm-6 product-item-big-card">
+								<div class="col-sm-6 product-item-big-card" role="listitem">
 									<?
 									$item = end($rowItems);
 									$APPLICATION->IncludeComponent(
@@ -471,7 +507,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 								foreach ($rowItems as $item)
 								{
 									?>
-									<div class="col-6 col-sm-4 col-md-4 col-lg-2 product-item-small-card">
+									<div class="col-6 col-sm-4 col-md-4 col-lg-2 product-item-small-card" role="listitem">
 										<?
 										$APPLICATION->IncludeComponent(
 											'bitrix:catalog.item',
@@ -501,7 +537,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							case 7:
 								$rowItemsCount = count($rowItems);
 								?>
-								<div class="col-sm-6 col-12 product-item-big-card">
+								<div class="col-sm-6 col-12 product-item-big-card" role="listitem">
 									<?
 									$item = array_shift($rowItems);
 									$APPLICATION->IncludeComponent(
@@ -525,13 +561,13 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 									unset($item);
 									?>
 								</div>
-								<div class="col-sm-6 col-12 product-item-small-card">
-									<div class="row">
+								<div class="col-sm-6 col-12 product-item-small-card" role="none">
+									<div class="row" role="none">
 										<?
 										for ($i = 0; $i < $rowItemsCount - 1; $i++)
 										{
 											?>
-											<div class="col-6 col-md-4">
+											<div class="col-6 col-md-4" role="listitem">
 												<?
 												$APPLICATION->IncludeComponent(
 													'bitrix:catalog.item',
@@ -564,13 +600,13 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							case 8:
 								$rowItemsCount = count($rowItems);
 								?>
-								<div class="col-sm-6 col-12 product-item-small-card">
-									<div class="row">
+								<div class="col-sm-6 col-12 product-item-small-card" role="none">
+									<div class="row" role="none">
 										<?
 										for ($i = 0; $i < $rowItemsCount - 1; $i++)
 										{
 											?>
-											<div class="col-6 col-md-4">
+											<div class="col-6 col-md-4" role="listitem">
 												<?
 												$APPLICATION->IncludeComponent(
 													'bitrix:catalog.item',
@@ -597,7 +633,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 										?>
 									</div>
 								</div>
-								<div class="col-sm-6 col-12 product-item-big-card">
+								<div class="col-sm-6 col-12 product-item-big-card" role="listitem">
 									<?
 									$item = end($rowItems);
 									$APPLICATION->IncludeComponent(
@@ -628,7 +664,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 								foreach ($rowItems as $item)
 								{
 									?>
-									<div class="col product-item-line-card">
+									<div class="col product-item-line-card" role="listitem">
 										<? $APPLICATION->IncludeComponent(
 											'bitrix:catalog.item',
 											'bootstrap_v4',
@@ -688,6 +724,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				<button type="button"
 						class="btn btn-primary btn-md"
 						style="margin: 15px;"
+						aria-controls="<?=$itemsContainerId?>"
+						data-testid="catalog-section-show-more"
 						data-use="show-more-<?=$navParams['NavNum']?>">
 							<?=$arParams['MESS_BTN_LAZY_LOAD']?>
 				</button>
@@ -730,12 +768,19 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				COMPARE_MESSAGE_OK: '<?=GetMessageJS('CT_BCS_CATALOG_MESS_COMPARE_OK')?>',
 				COMPARE_UNKNOWN_ERROR: '<?=GetMessageJS('CT_BCS_CATALOG_MESS_COMPARE_UNKNOWN_ERROR')?>',
 				COMPARE_TITLE: '<?=GetMessageJS('CT_BCS_CATALOG_MESS_COMPARE_TITLE')?>',
+				CT_BCS_TPL_MESS_COMPARE_REMOVED_ARIA: '<?=GetMessageJS('CT_BCS_TPL_MESS_COMPARE_REMOVED_ARIA')?>',
 				PRICE_TOTAL_PREFIX: '<?=GetMessageJS('CT_BCS_CATALOG_PRICE_TOTAL_PREFIX')?>',
 				RELATIVE_QUANTITY_MANY: '<?=CUtil::JSEscape($arParams['MESS_RELATIVE_QUANTITY_MANY'])?>',
 				RELATIVE_QUANTITY_FEW: '<?=CUtil::JSEscape($arParams['MESS_RELATIVE_QUANTITY_FEW'])?>',
 				BTN_MESSAGE_COMPARE_REDIRECT: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_COMPARE_REDIRECT')?>',
 				BTN_MESSAGE_LAZY_LOAD: '<?=CUtil::JSEscape($arParams['MESS_BTN_LAZY_LOAD'])?>',
 				BTN_MESSAGE_LAZY_LOAD_WAITER: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_LAZY_LOAD_WAITER')?>',
+				CT_BCS_CATALOG_BTN_LAZY_LOAD_LIST_ARIA: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_LAZY_LOAD_LIST_ARIA')?>',
+				CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_0: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_0')?>',
+				CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_1: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_1')?>',
+				CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_2: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_ADDED_ARIA_PLURAL_2')?>',
+				CT_BCS_CATALOG_ITEMS_COUNT_ARIA: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_COUNT_ARIA')?>',
+				CT_BCS_CATALOG_ITEMS_SHOWN_ARIA: '<?=GetMessageJS('CT_BCS_CATALOG_ITEMS_SHOWN_ARIA')?>',
 				SITE_ID: '<?=CUtil::JSEscape($component->getSiteId())?>'
 			});
 			var <?=$obName?> = new JCCatalogSectionComponentBootstrapV4({
@@ -745,6 +790,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				deferredLoad: false,
 				initiallyShowHeader: '<?=!empty($arResult['ITEM_ROWS'])?>',
 				bigData: <?=CUtil::PhpToJSObject($arResult['BIG_DATA'])?>,
+				itemsTotal: <?=(int)$itemsCount?>,
 				lazyLoad: !!'<?=$showLazyLoad?>',
 				loadOnScroll: !!'<?=($arParams['LOAD_ON_SCROLL'] === 'Y')?>',
 				template: '<?=CUtil::JSEscape($signedTemplate)?>',

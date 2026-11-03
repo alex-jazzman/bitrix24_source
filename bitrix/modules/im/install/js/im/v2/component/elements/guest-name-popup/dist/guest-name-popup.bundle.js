@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core_events, im_v2_component_elements_popup, im_v2_const, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_guest, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_user, main_core, ui_system_input_vue, ui_vue3_components_button, ui_vue3_components_richLoc, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle) {
+(function (exports, main_core_events, im_v2_component_elements_popup, im_v2_const, im_v2_lib_analytics, im_v2_lib_notifier, main_core, im_v2_lib_guest, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_user, ui_system_input_vue, ui_vue3_components_button, ui_vue3_components_richLoc, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle) {
 	'use strict';
 
 	class GuestService {
@@ -14,10 +14,30 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 			}).then(response => {
 				void new im_v2_lib_user.UserManager().setUsersToModel(response.user);
+				const tokenApplied = this.#applyUserToken(response.userToken);
 				im_v2_lib_guest.GuestManager.getInstance().setGuestNamePopupState(false);
+
+				// Resolve only once the fresh token is applied; #applyUserToken never rejects (soft-fail).
+				return tokenApplied;
 			}).catch(([error]) => {
 				im_v2_lib_logger.Logger.error('GuestService: setName error', error);
 				throw error;
+			});
+		}
+		#applyUserToken(userToken) {
+			if (!userToken) {
+				return Promise.resolve();
+			}
+
+			// Contract API-01: paired with call Controller#runGuestLobbyAndPersistName — keep both in sync.
+			// call module is optional: apply the fresh guest token only when it is installed
+			return main_core.Runtime.loadExtension('call.lib.call-token-manager').then(({
+				CallTokenManager
+			}) => {
+				CallTokenManager?.setUserToken(userToken);
+			}).catch(error => {
+				// Soft-fail: call module may be absent; keep the guest token as-is, do not block.
+				im_v2_lib_logger.Logger.warn('GuestService: failed to apply fresh guest token to CallTokenManager', error);
 			});
 		}
 	}
@@ -224,5 +244,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.GuestNamePopup = GuestNamePopup;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Event, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.UI.System.Input.Vue, BX.Vue3.Components, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Event, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.System.Input.Vue, BX.Vue3.Components, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=guest-name-popup.bundle.js.map

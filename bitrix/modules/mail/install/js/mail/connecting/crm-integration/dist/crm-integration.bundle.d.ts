@@ -101,6 +101,21 @@ type SelectorDialog = {
 	destroy(): void;
 	show(): void;
 	isOpen(): boolean;
+	getItem(item: {
+		id: string | number;
+		entityId: string;
+	}): SelectorDialogItem | null;
+	removeItem(item: SelectorDialogItem): SelectorDialogItem | null;
+};
+
+type SelectorDialogItem = {
+	isHidden(): boolean;
+};
+
+type SelectorTagEvent = {
+	getData(): {
+		tag: SelectorTag;
+	};
 };
 
 declare namespace BX.Mail.Connecting.CrmIntegration {
@@ -207,8 +222,8 @@ declare namespace BX.Mail.Connecting.CrmIntegration {
 	}>> & Readonly<{
 		"onUpdate:modelValue"?: ((...args: any[]) => any) | undefined;
 	}>, {
-		canEditCrmIntegration: boolean;
 		backgroundColor: string;
+		canEditCrmIntegration: boolean;
 		isEditMode: boolean;
 		showVcfOption: boolean;
 		showEnableSwitcher: boolean;
@@ -232,6 +247,7 @@ declare namespace BX.Mail.Connecting.CrmIntegration {
 			};
 			switcher: null;
 			mounted(): void;
+			beforeUnmount(): void;
 			watch: {
 				isChecked(): void;
 				isDisabled(): void;
@@ -365,11 +381,31 @@ declare namespace BX.Mail.Connecting.CrmIntegration {
 					destroy(): void;
 					show(): void;
 					isOpen(): boolean;
+					getItem(item: {
+						id: string | number;
+						entityId: string;
+					}): {
+						isHidden(): boolean;
+					} | null;
+					removeItem(item: {
+						isHidden(): boolean;
+					}): {
+						isHidden(): boolean;
+					} | null;
 				} | null;
 				getOuterContainer(): HTMLElement | null | undefined;
 				renderTo(target: Element | null | undefined): void;
 			} | null;
 		}, {}, {
+			handleTagRemove(event: {
+				getData(): {
+					tag: {
+						getEntityId(): string;
+						getId(): string | number;
+						getTitle(): string;
+					};
+				};
+			}): void;
 			onUpdate(): void;
 		}, BX.Vue3.ComponentOptionsMixin, BX.Vue3.ComponentOptionsMixin, "update:modelValue"[], "update:modelValue", BX.Vue3.PublicProps, Readonly<BX.Vue3.ExtractPropTypes<{
 			modelValue: {
@@ -525,6 +561,7 @@ declare namespace BX.Mail.Connecting.CrmIntegration {
 	}>, {}, {
 		selectorInstance: TagSelectorInstance | null;
 	}, {}, {
+		handleTagRemove(event: SelectorTagEvent): void;
 		onUpdate(): void;
 	}, BX.Vue3.ComponentOptionsMixin, BX.Vue3.ComponentOptionsMixin, "update:modelValue"[], "update:modelValue", BX.Vue3.PublicProps, Readonly<BX.Vue3.ExtractPropTypes<{
 		modelValue: {

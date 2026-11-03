@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_message_base, im_v2_component_message_elements, ui_iconSet_api_vue, ui_vue3_components_richLoc, im_v2_lib_utils, im_v2_lib_helpdesk, im_v2_lib_notifier, im_v2_const) {
+(function (exports, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_copilot, ui_iconSet_api_vue, ui_vue3_components_richLoc, im_v2_lib_utils, im_v2_lib_helpdesk, im_v2_lib_notifier, im_v2_const) {
 	'use strict';
 
 	const ICON_SIZE = 18;
@@ -101,15 +101,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			message() {
 				return this.item;
 			},
+			isGenerationActive() {
+				return im_v2_lib_copilot.isCopilotGenerationActive(this.message, this.$store);
+			},
 			hasKeyboard() {
 				return this.message.keyboard.length > 0;
 			}
 		},
 		template: `
-		<BaseMessage :item="item" :dialogId="dialogId" class="bx-im-message-ai-assistant-base-message__container">
+		<BaseMessage :item="item" :dialogId="dialogId" :withContextMenu="!isGenerationActive" class="bx-im-message-ai-assistant-base-message__container">
 			<div class="bx-im-message-default__container">
 				<AuthorTitle v-if="withTitle" :item="message"/>
-				<DefaultMessageContent :item="message" :dialogId="dialogId" :withMessageStatus="false" />
+				<DefaultMessageContent
+					:item="message"
+					:dialogId="dialogId"
+					:withMessageStatus="false"
+					:withBuilder="true"
+				/>
 			</div>
 			<BottomPanelContent :item="message" />
 			<template #after-message v-if="hasKeyboard">
@@ -121,5 +129,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.AiAssistantMessage = AiAssistantMessage;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.UI.IconSet, BX.UI.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const);
 //# sourceMappingURL=ai-assistant-answer.bundle.js.map

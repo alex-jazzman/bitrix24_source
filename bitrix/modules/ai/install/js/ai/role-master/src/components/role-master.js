@@ -10,7 +10,7 @@ import { ButtonState } from 'ui.buttons';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Actions } from 'ui.icon-set.api.core';
 import 'ui.icon-set.actions';
-import { toRaw } from 'ui.vue3';
+import { shallowRef, toRaw } from 'ui.vue3';
 
 const currentUserId = Extension.getSettings('ai.role-master').get('currentUserId');
 
@@ -21,7 +21,6 @@ type RoleMasterData = {
 	roleAvatar: string;
 	roleDescription: string;
 	roleItemsWithAccess: [];
-	uploadedAvatarFile: UploaderFile;
 }
 
 export const RoleSavingStatus = Object.freeze({
@@ -40,6 +39,11 @@ export const RoleMaster = {
 		RoleMasterBtn,
 		RoleMasterWarning,
 		BIcon,
+	},
+	setup(): { uploadedAvatarFile: Object } {
+		return {
+			uploadedAvatarFile: shallowRef(null),
+		};
 	},
 	props: {
 		id: {
@@ -68,7 +72,6 @@ export const RoleMaster = {
 			roleAvatarUrl: this.avatarUrl,
 			roleDescription: this.description,
 			roleItemsWithAccess: this.itemsWithAccess.length > 0 ? this.itemsWithAccess : [['user', currentUserId]],
-			uploadedAvatarFile: null,
 			roleSavingStatus: RoleSavingStatus.NONE,
 		};
 	},
@@ -204,15 +207,11 @@ export const RoleMaster = {
 			return this.uploadedAvatarFile.getBinary();
 		},
 		handleAvatarFileUpload(file: UploaderFile): void {
-			this.uploadedAvatarFile = file;
+			this.uploadedAvatarFile = toRaw(file);
 		},
 		handleAvatarFileRemove(): void {
 			this.uploadedAvatarFile = null;
 			this.roleAvatar = null;
-		},
-		handleAvatarFileLoad(file: UploaderFile): void
-		{
-			this.uploadedAvatarFile = toRaw(file);
 		},
 		closeMaster(): void {
 			EventEmitter.emit('AI.RoleMasterApp:Close');
@@ -255,7 +254,6 @@ export const RoleMaster = {
 					:undeselected-items-with-access="undeselectedItemsWithAccess"
 					@upload-avatar-file="handleAvatarFileUpload"
 					@remove-avatar-file="handleAvatarFileRemove"
-					@load-avatar-file="handleAvatarFileLoad"
 					@update:name="roleName = $event"
 					@update:description="roleDescription = $event"
 					@update:avatar="roleAvatar = $event"

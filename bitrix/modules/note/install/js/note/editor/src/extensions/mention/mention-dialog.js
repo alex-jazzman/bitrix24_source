@@ -6,6 +6,23 @@ import { allTypes, byType } from './mention-type-registry';
 
 const POPUP_CLASS = 'note-editor-mention-popup';
 
+// 500 fits a 41-char collection title on one line without truncation.
+const TARGET_WIDTH = 500;
+const MIN_WIDTH = 260;
+const TARGET_HEIGHT = 400;
+const MIN_HEIGHT = 240;
+
+// The tab labels rail sits outside the dialog, to its left (ui.entity-selector tab.css:
+// absolute, translate(-100%), max-width 38px), so the popup footprint is width + rail.
+// Both gutters mirror --note-popup-rail-gutter / --note-popup-vh-gutter of note.app mobile.css.
+const RAIL_GUTTER = 44;
+const VIEWPORT_GUTTER = 30;
+
+// main.popup keeps this much free at the right edge when it shifts a popup that does not fit
+// (Popup#bordersWidth, main/install/js/main/popup/src/popup/popup.ts). Unless it is reserved here
+// too, the shift moves the dialog left by these pixels and takes the rail off the left edge.
+const POPUP_SHIFT_RESERVE = 20;
+
 // Reverse map: entityId -> wire type string (e.g. 'note-document' -> 'document').
 // Built once from the registry to avoid O(n) scan on every Item:onSelect.
 const ENTITY_ID_TO_TYPE = Object.fromEntries(
@@ -13,6 +30,27 @@ const ENTITY_ID_TO_TYPE = Object.fromEntries(
 );
 
 let dialogCounter = 0;
+
+/**
+ * Dialog size at open time, capped by the viewport.
+ *
+ * On mobile the width declared here loses to the module-wide
+ * `html.note-mobile .popup-window:has(.ui-selector-dialog)` rule (note.app mobile.css),
+ * which owns width and left with !important. The height has no CSS owner in either
+ * environment: vertical placement follows the caret, which CSS cannot see.
+ *
+ * @returns {{ width: number, height: number }}
+ */
+function getViewportBoundSize()
+{
+	const availableWidth = window.innerWidth - RAIL_GUTTER - POPUP_SHIFT_RESERVE;
+	const availableHeight = window.innerHeight - VIEWPORT_GUTTER;
+
+	return {
+		width: Math.max(MIN_WIDTH, Math.min(TARGET_WIDTH, availableWidth)),
+		height: Math.max(MIN_HEIGHT, Math.min(TARGET_HEIGHT, availableHeight)),
+	};
+}
 
 /**
  * Wrapper around EntitySelector.Dialog for mention entity selection.
@@ -75,7 +113,7 @@ export class MentionDialog
 	#createDialog({ anchor, suggestionMode, preselected = null })
 	{
 		const id = `note-mention-dialog-${++dialogCounter}`;
-		const isMobile = document.documentElement.classList.contains('note-mobile');
+		const { width, height } = getViewportBoundSize();
 
 		const popupClass = suggestionMode
 			? `${POPUP_CLASS} ${POPUP_CLASS}--suggestion ${NoteThemeContext.getDesignSystemContext()}`
@@ -96,8 +134,8 @@ export class MentionDialog
 			alwaysShowLabels: false,
 			showAvatars: true,
 			compactView: false,
-			width: 350,
-			height: isMobile ? 300 : 400,
+			width,
+			height,
 			preselectedItems,
 			popupOptions: {
 				className: popupClass,
@@ -133,6 +171,14 @@ export class MentionDialog
 					dynamicLoad: true,
 					dynamicSearch: true,
 					options: { withTab: true },
+				},
+				{
+					id: 'note-disk-folder',
+					dynamicLoad: true,
+					dynamicSearch: true,
+					// Disk answers from its full-text index, which holds the author's name as well as the
+					// folder's, so the default 'exact' re-match on the client would drop what the server found.
+					dynamicSearchMatchMode: 'all',
 				},
 			],
 			events: {

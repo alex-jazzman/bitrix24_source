@@ -26,6 +26,12 @@ export const MenuButton = {
 			type: {},
 			default: () => ({}),
 		},
+		// Passed to the button as it is: the caller names the button of its own menu, the way it already
+		// names the items of it.
+		dataset: {
+			type: Object,
+			default: () => ({}),
+		},
 		/** The accessible name of an icon-only button, which has no text to be named by. */
 		ariaLabel: {
 			type: String,
@@ -83,6 +89,7 @@ export const MenuButton = {
 			:text="text"
 			:leftIcon="icon"
 			:style="buttonStyle"
+			:dataset="dataset"
 			ref="button"
 			@click="isMenuShown = true"
 		/>

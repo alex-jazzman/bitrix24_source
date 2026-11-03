@@ -1,0 +1,23 @@
+.bizprocdesigner-fragment-library-item__name
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.bizprocdesigner-fragment-library-item__actions
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	justify-content: flex-end;
+	min-width: max-content;
+}
+
+/* UiButton renders its own node after mounting, so the layout of the menu button lives on a wrapper. */
+.bizprocdesigner-fragment-library-item__menu
+{
+	display: flex;
+	align-items: center;
+}

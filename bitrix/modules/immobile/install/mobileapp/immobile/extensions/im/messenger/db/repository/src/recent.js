@@ -146,7 +146,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		{
 			if (!Feature.isLocalStorageEnabled)
 			{
-				return { items: [], users: [], messages: [], files: [], stickers: [], draft: [], hasMore: false };
+				return this.#emptyPage();
 			}
 
 			const result = await Query.select()
@@ -170,17 +170,12 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				.execute()
 			;
 
-			const items = result.map((row) => {
-				const recentData = row.extract(RecentSchema);
-				recentData.chat = row.extract(DialogSchema);
-
-				return recentData;
-			});
+			const items = this.#extractItems(result);
 
 			const [related, hasMore] = await Promise.all([
 				this.#fetchRelatedData(items),
-				this.#hasMoreBySectionFilter({
-					section,
+				this.#hasMoreBelowCursor({
+					sectionCondition: RecentSectionSchema.section.equal(section),
 					parentChatId,
 					lastActivityDate: items[items.length - 1]?.lastActivityDate?.toISOString() ?? null,
 				}),
@@ -191,6 +186,154 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				...related,
 				hasMore,
 			};
+		}
+
+		/**
+		 * Multi-section variant of getListBySectionFilter: a page of the union of the given
+		 * sections. A chat that belongs to several of them is returned once.
+		 *
+		 * @param {object} filter
+		 * @param {Array<string>|Set<string>} filter.sections
+		 * @param {number|null} [filter.parentChatId]
+		 * @param {string|null} [filter.lastActivityDate]
+		 * @param {number} [filter.limit]
+		 * @return {Promise<RecentPage>}
+		 */
+		async getListBySectionsFilter({
+			sections,
+			parentChatId = null,
+			lastActivityDate = null,
+			limit = 50,
+		})
+		{
+			const sectionList = this.#toSectionList(sections);
+			if (!Feature.isLocalStorageEnabled || sectionList.length === 0)
+			{
+				return this.#emptyPage();
+			}
+
+			const result = await Query.select()
+				.from(RecentSchema)
+				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
+				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
+				.leftJoin(DraftSchema, equalField(RecentSchema.id, DraftSchema.dialogId))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
+				.where(
+					RecentSectionSchema.section.in(sectionList),
+					Type.isNumber(parentChatId) && DialogSchema.parentChatId.equal(parentChatId),
+					lastActivityDate && RecentSchema.lastActivityDate.lessThan(lastActivityDate),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
+				)
+				// the section join multiplies a chat by its sections: collapse back to one row per dialog
+				.groupBy(RecentSchema.id)
+				.orderBy(
+					RecentSchema.pinned.desc(),
+					DraftSchema.lastActivityDate.desc().nullsLast(),
+					RecentSchema.lastActivityDate.desc(),
+				)
+				.limit(limit)
+				.execute()
+			;
+
+			const items = this.#extractItems(result);
+
+			const [related, hasMore] = await Promise.all([
+				this.#fetchRelatedData(items),
+				this.#hasMoreBelowCursor({
+					sectionCondition: RecentSectionSchema.section.in(sectionList),
+					parentChatId,
+					lastActivityDate: items[items.length - 1]?.lastActivityDate?.toISOString() ?? null,
+				}),
+			]);
+
+			return {
+				items,
+				...related,
+				hasMore,
+			};
+		}
+
+		/**
+		 * State of the rows a server page of the section is compared against: the same slice
+		 * `getListBySectionFilter` shows (section, nesting level, rows of active users), narrowed by
+		 * the dialog types the tab never lists.
+		 *
+		 * A page with a tail asserts nothing beyond its own window, so only the rows a verdict can be
+		 * reached about are read: the ones inside the window, the ones pinned locally - a pinned row
+		 * missing from the first page loses the flag wherever it lies - and the ones the page itself
+		 * carries, since a chat pinned on the server may sit in the response with activity older than
+		 * the cursor. Without the boundary the window is the whole section, and then the slice is read
+		 * in full: that is the only case where absence from the response is a verdict for every row.
+		 *
+		 * @param {object} filter
+		 * @param {string} filter.section
+		 * @param {number|null} [filter.parentChatId]
+		 * @param {Array<string>} [filter.exceptDialogTypes]
+		 * @param {Date|null} [filter.boundary] cursor of the next page, null covers the whole section
+		 * @param {Array<string>} [filter.dialogIds] ids the compared page carries
+		 * @return {Promise<Array<{id: string, pinned: boolean, lastActivityDate: Date|null}>>}
+		 */
+		async getSectionRowStates({
+			section,
+			parentChatId = null,
+			exceptDialogTypes = [],
+			boundary = null,
+			dialogIds = [],
+		})
+		{
+			if (!Feature.isLocalStorageEnabled || !Type.isStringFilled(section))
+			{
+				return [];
+			}
+
+			const result = await Query.select()
+				.from(RecentSchema)
+				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
+				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
+				.setSelect(RecentSchema.id, RecentSchema.pinned, RecentSchema.lastActivityDate)
+				.where(
+					RecentSectionSchema.section.equal(section),
+					Type.isNumber(parentChatId) && DialogSchema.parentChatId.equal(parentChatId),
+					Type.isArrayFilled(exceptDialogTypes) && DialogSchema.type.notIn(exceptDialogTypes),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
+					boundary && or(
+						RecentSchema.lastActivityDate.greaterThan(boundary),
+						RecentSchema.pinned.equal(true),
+						Type.isArrayFilled(dialogIds) && RecentSchema.id.in(dialogIds),
+					),
+				)
+				.execute()
+			;
+
+			return result.map((row) => ({
+				id: String(row.id),
+				pinned: row.pinned === true,
+				lastActivityDate: DateHelper.cast(row.lastActivityDate, null),
+			}));
+		}
+
+		/**
+		 * Writes the pinned flag of the given dialogs.
+		 * Rows outside the list are left as they are.
+		 *
+		 * @param {Array<string>} dialogIds
+		 * @param {boolean} pinned
+		 * @return {Promise<void>}
+		 */
+		async setPinnedByIds(dialogIds, pinned)
+		{
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(dialogIds))
+			{
+				return;
+			}
+
+			await Query.update()
+				.from(RecentSchema)
+				.set({ pinned })
+				.where(RecentSchema.id.in(dialogIds))
+				.execute()
+			;
 		}
 
 		/**
@@ -205,7 +348,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		{
 			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(dialogIds))
 			{
-				return { items: [], users: [], messages: [], files: [], stickers: [], draft: [], hasMore: false };
+				return this.#emptyPage();
 			}
 
 			const result = await Query.select()
@@ -219,12 +362,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				)
 				.execute();
 
-			const items = result.map((row) => {
-				const recentData = row.extract(RecentSchema);
-				recentData.chat = row.extract(DialogSchema);
-
-				return recentData;
-			});
+			const items = this.#extractItems(result);
 
 			const related = await this.#fetchRelatedData(items);
 
@@ -248,7 +386,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			const numericChatIds = Type.isArray(chatIds) ? chatIds.filter((id) => Type.isNumber(id)) : [];
 			if (!Feature.isLocalStorageEnabled || numericChatIds.length === 0)
 			{
-				return { items: [], users: [], messages: [], files: [], stickers: [], draft: [], hasMore: false };
+				return this.#emptyPage();
 			}
 
 			const result = await Query.select()
@@ -262,12 +400,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				)
 				.execute();
 
-			const items = result.map((row) => {
-				const recentData = row.extract(RecentSchema);
-				recentData.chat = row.extract(DialogSchema);
-
-				return recentData;
-			});
+			const items = this.#extractItems(result);
 
 			const related = await this.#fetchRelatedData(items);
 
@@ -279,9 +412,14 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		}
 
 		/**
+		 * Searches within a section scope: either one section, as a tab standing on a section asks for
+		 * it, or a set of them, as the tab scoped to the composition of a folder does. One section keeps
+		 * the equality condition and no collapse: that is the query every other tab runs.
+		 *
 		 * @param {object} params
 		 * @param {string} params.searchText
-		 * @param {string} params.section
+		 * @param {string} [params.section]
+		 * @param {Array<string>|Set<string>} [params.sections]
 		 * @param {number | null} [params.parentChatId]
 		 * @param {number} [params.limit]
 		 * @return {Promise<{items: Array}>}
@@ -289,6 +427,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		async searchByText({
 			searchText,
 			section,
+			sections,
 			parentChatId = null,
 			limit = 25,
 		})
@@ -298,40 +437,118 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				return { items: [] };
 			}
 
-			const result = await Query.select()
+			const sectionList = this.#toSectionList(sections ?? section);
+			if (sectionList.length === 0)
+			{
+				return { items: [] };
+			}
+
+			const isSingleSection = sectionList.length === 1;
+			const query = Query.select()
 				.from(RecentSchema)
 				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
 				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
 				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
 				.where(
-					RecentSectionSchema.section.equal(section),
+					isSingleSection
+						? RecentSectionSchema.section.equal(sectionList[0])
+						: RecentSectionSchema.section.in(sectionList),
 					Type.isNumber(parentChatId) && DialogSchema.parentChatId.equal(parentChatId),
 					getStartWordsSearchCondition(DialogSchema.name, searchText),
 					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
+				)
+			;
+
+			if (!isSingleSection)
+			{
+				// the section join multiplies a chat by its sections: collapse back to one row per dialog
+				query.groupBy(RecentSchema.id);
+			}
+
+			const result = await query
+				.orderBy(RecentSchema.lastActivityDate.desc())
+				.limit(limit)
+				.execute()
+			;
+
+			return { items: this.#extractItems(result) };
+		}
+
+		/**
+		 * Chats of a section filtered by dialog type, with no text condition at all.
+		 *
+		 * The text search above runs over the stored name, and for some chats that is not the name the
+		 * user reads: a copilot chat nobody renamed is drawn under the name of the assistant while the
+		 * base keeps the title the server generated for it. Such a chat is found by its type, and the
+		 * caller keeps the rows whose DISPLAYED title matches - a rule that lives in the interface and
+		 * has no twin in SQL.
+		 *
+		 * @param {object} filter
+		 * @param {string} filter.section
+		 * @param {Array<string>} filter.dialogTypes
+		 * @param {number|null} [filter.parentChatId]
+		 * @param {number} [filter.limit]
+		 * @return {Promise<{items: Array<object>}>}
+		 */
+		async getListBySectionAndTypes({ section, dialogTypes, parentChatId = null, limit = 25 })
+		{
+			if (
+				!Feature.isLocalStorageEnabled
+				|| !Type.isStringFilled(section)
+				|| !Type.isArrayFilled(dialogTypes)
+			)
+			{
+				return { items: [] };
+			}
+
+			const result = await Query.select()
+				.from(RecentSchema)
+				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
+				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
+				.where(
+					RecentSectionSchema.section.equal(section),
+					DialogSchema.type.in(dialogTypes),
+					Type.isNumber(parentChatId) && DialogSchema.parentChatId.equal(parentChatId),
 				)
 				.orderBy(RecentSchema.lastActivityDate.desc())
 				.limit(limit)
 				.execute()
 			;
 
-			const items = result.map((row) => {
-				const recentData = row.extract(RecentSchema);
-				recentData.chat = row.extract(DialogSchema);
-
-				return recentData;
-			});
-
-			return { items };
+			return { items: this.#extractItems(result) };
 		}
 
 		/**
+		 * The scope of a read as a list of sections: a set, a list or a single section, whichever the
+		 * caller works with. Anything else is no scope at all and comes back empty.
+		 *
+		 * @param {string|Array<string>|Set<string>} [sections]
+		 * @return {Array<string>}
+		 */
+		#toSectionList(sections)
+		{
+			if (Type.isStringFilled(sections))
+			{
+				return [sections];
+			}
+
+			const sectionList = Type.isSet(sections) ? [...sections] : sections;
+
+			return Type.isArrayFilled(sectionList) ? sectionList : [];
+		}
+
+		/**
+		 * Whether at least one row below the cursor still matches the page filter.
+		 * The single- and the multi-section page differ only in the condition on the section,
+		 * so both pass it in ready-made.
+		 *
 		 * @param {object} filter
-		 * @param {string} filter.section
+		 * @param {Condition} filter.sectionCondition
 		 * @param {number|null} [filter.parentChatId]
 		 * @param {string|null} [filter.lastActivityDate]
 		 * @return {Promise<boolean>}
 		 */
-		async #hasMoreBySectionFilter({ section, parentChatId = null, lastActivityDate = null })
+		async #hasMoreBelowCursor({ sectionCondition, parentChatId = null, lastActivityDate = null })
 		{
 			if (!lastActivityDate)
 			{
@@ -344,13 +561,13 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
 				.setSelect(expressionField('1', 'hasMore'))
 				.where(
-					RecentSectionSchema.section.equal(section),
+					sectionCondition,
 					RecentSchema.lastActivityDate.lessThan(lastActivityDate),
 					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
 				)
 				.limit(1);
 
-			if (!Type.isNull(parentChatId))
+			if (Type.isNumber(parentChatId))
 			{
 				query
 					.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
@@ -360,6 +577,28 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			const result = await query.execute();
 
 			return result.length > 0;
+		}
+
+		/**
+		 * @param {SelectResult} result
+		 * @return {Array<object>}
+		 */
+		#extractItems(result)
+		{
+			return result.map((row) => {
+				const recentData = row.extract(RecentSchema);
+				recentData.chat = row.extract(DialogSchema);
+
+				return recentData;
+			});
+		}
+
+		/**
+		 * @return {RecentPage}
+		 */
+		#emptyPage()
+		{
+			return { items: [], users: [], messages: [], files: [], stickers: [], draft: [], hasMore: false };
 		}
 
 		/**
@@ -478,6 +717,38 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		}
 
 		// ─── recent sections ──────────────────────────────────────────
+
+		/**
+		 * Sections of the given dialogs. The multi-section page query returns one row per
+		 * dialog, so the section membership needed to seed the model is read separately
+		 * for the dialogs of the loaded page.
+		 *
+		 * @param {Array<string>} dialogIds
+		 * @return {Promise<Map<string, Array<string>>>}
+		 */
+		async getSectionsByDialogIds(dialogIds)
+		{
+			const sectionsByDialogId = new Map();
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(dialogIds))
+			{
+				return sectionsByDialogId;
+			}
+
+			const result = await Query.select()
+				.from(RecentSectionSchema)
+				.where(RecentSectionSchema.dialogId.in(dialogIds))
+				.execute();
+
+			for (const row of result)
+			{
+				const { dialogId, section } = row.extract(RecentSectionSchema);
+				const sections = sectionsByDialogId.get(dialogId) ?? [];
+				sections.push(section);
+				sectionsByDialogId.set(dialogId, sections);
+			}
+
+			return sectionsByDialogId;
+		}
 
 		/**
 		 * Full replace of sections for a dialog.

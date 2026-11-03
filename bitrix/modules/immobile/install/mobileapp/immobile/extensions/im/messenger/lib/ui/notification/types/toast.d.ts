@@ -8,7 +8,11 @@ export type ShowToastParams = {
 	icon?: object,
 	buttonText?: string,
 	buttonTextColor?: string,
-	buttonTap?: () => {},
+	time?: number,
+	shouldCloseOnTap?: boolean,
+	onTap?: () => void,
+	onButtonTap?: () => void,
+	onTimerOver?: () => void,
 }
 
 export type ShowNotifierParams = {

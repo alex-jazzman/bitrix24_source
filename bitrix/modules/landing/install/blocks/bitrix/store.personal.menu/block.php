@@ -1,5 +1,5 @@
 <section class="landing-block g-pt-20 g-pb-20 g-pl-20 g-pr-20">
-		<nav class="landing-node-container align-items-center flex-sm-row w-100">
+		<nav class="landing-node-container align-items-center flex-sm-row w-100" aria-label="MESS[LANDING_BLOCK_PERSONAL_MENU_NAV_LABEL]">
 			<ul class="landing-node-list navbar-nav ml-auto text-uppercase g-font-size-13 g-font-weight-700 u-sub-menu-v1 ">
 				<li class="landing-node-item nav-item">
 					<a class="landing-node-item-link nav-link g-color-black g-color-primary--hover" href="#system_personal">Personal</a>

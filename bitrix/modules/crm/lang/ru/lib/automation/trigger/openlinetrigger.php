@@ -7,5 +7,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_DESCRIPTION'] = 'Меняет стади�
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_PROPERTY_CONFIG'] = 'Выберите Открытую линию';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_DEFAULT_CONFIG'] = '[любая]';
 
-$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_NODE_DESCRIPTION'] = 'Запускает процесс после первого обращения клиента';
+$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_NODE_DESCRIPTION'] = 'Запускает процесс, когда клиент пишет в открытую линию и начинается новое обращение';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_EVENT_DATE_TIME'] = 'Дата и время первого сообщения';

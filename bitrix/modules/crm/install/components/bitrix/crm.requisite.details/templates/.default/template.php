@@ -24,6 +24,7 @@ if($this->getComponent()->hasErrors())
 
 Extension::load([
 	'ui.design-tokens',
+	'ui.dialogs.messagebox',
 	'ls',
 	'crm_common',
 	'crm.entity-editor.manager.duplicates',
@@ -112,7 +113,8 @@ $APPLICATION->IncludeComponent(
 			BX.CrmEntityType.categoryCaptions = <?=CUtil::PhpToJSObject(\CCrmOwnerType::GetAllCategoryCaptions(true))?>;
 			BX.message(
 				{
-					"CRM_EDITOR_PLACEMENT_CAUTION": "<?=GetMessageJS('CRM_REQUISITE_DETAILS_PLACEMENT_CAUTION')?>"
+					"CRM_EDITOR_PLACEMENT_CAUTION": "<?=GetMessageJS('CRM_REQUISITE_DETAILS_PLACEMENT_CAUTION')?>",
+					'CRM_REQUISITE_DETAILS_NAME_REQUIRED': '<?=GetMessageJS('CRM_REQUISITE_DETAILS_NAME_REQUIRED')?>',
 				}
 			);
 		});

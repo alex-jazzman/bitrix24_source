@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { TextSm } from 'ui.system.typography.vue';
 import { SwitcherSize, type SwitcherOptions } from 'ui.switcher';
@@ -31,6 +32,12 @@ export const ForNewUserSwitcher = {
 	},
 	emits: ['update:isChecked'],
 	setup(): { task: TaskModel } {},
+	data(): Object
+	{
+		return {
+			labelId: `tasks-for-new-user-switch-${Text.getRandom()}`,
+		};
+	},
 	computed: {
 		disabled(): boolean
 		{
@@ -67,12 +74,32 @@ export const ForNewUserSwitcher = {
 				this.$emit('update:isChecked', !this.isChecked);
 			}
 		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== 'Enter' && event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
 	},
 	template: `
 		<div :class="['tasks-field-responsible-new-user', { '--disabled': disabled }]">
-			<div v-hint="tooltip" class="tasks-field-responsible-new-user-switcher" @click="handleClick">
+			<div
+				v-hint="tooltip"
+				class="tasks-field-responsible-new-user-switcher"
+				role="switch"
+				:aria-checked="isChecked"
+				:aria-labelledby="labelId"
+				:aria-disabled="disabled ? 'true' : null"
+				tabindex="0"
+				@click="handleClick"
+				@keydown="handleKeydown"
+			>
 				<Switcher :isChecked :options/>
-				<TextSm className="tasks-field-responsible-new-user-text">
+				<TextSm :id="labelId" className="tasks-field-responsible-new-user-text">
 					{{ loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER') }}
 				</TextSm>
 			</div>

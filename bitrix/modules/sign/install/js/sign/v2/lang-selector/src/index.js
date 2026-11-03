@@ -10,6 +10,7 @@ export class LangSelector
 	#langButton: Button;
 	#region: string;
 	#documentUids: Array<string>;
+	#isLangChosenByUser: boolean = false;
 
 	constructor(region, langs)
 	{
@@ -37,6 +38,7 @@ export class LangSelector
 		const onItemClick = function(event) {
 			const id = event.currentTarget.getAttribute('data-lang-id');
 			this.#langButton.menuWindow.close();
+			this.#isLangChosenByUser = true;
 			this.#changeLang(id);
 			this.#langButton.setText(this.#langs[id].NAME);
 		}.bind(this);
@@ -65,6 +67,26 @@ export class LangSelector
 			},
 			className: 'sign-lang-selector__language-button',
 		});
+	}
+
+	// The document keeps the language it was saved with, so a wizard opened on it must show that
+	// language instead of the portal region default. Only the displayed language is restored: the
+	// document already carries it, and a write would be a change the user did not make. A language
+	// the user has already picked here is never restored over: that choice is the newer one.
+	setLangId(langId: ?string): void
+	{
+		if (this.#isLangChosenByUser)
+		{
+			return;
+		}
+
+		const langName = this.#langs?.[langId]?.NAME;
+		if (!langName)
+		{
+			return;
+		}
+
+		this.#langButton.setText(langName);
 	}
 
 	async #changeLang(langId)

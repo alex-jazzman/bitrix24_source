@@ -1,0 +1,41 @@
+/* Placed absolutely in the same relative container as `bp-selector-button`,
+   shifted left of it (selector button sits at right: 8px, width 24px). */
+.bizprocdesigner-expression-builder-trigger {
+	position: absolute;
+	right: 36px;
+	top: 6px;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+/* Reserve room in the field for both the trigger and the selector button.
+   Specificity (0,3,1) beats the shared field padding rules in common-settings-form,
+   for the node settings controls (`.field-row`) and for the legacy property dialog,
+   where fields are laid out in the tables of `.adm-detail-content-table`. */
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host input[type="text"],
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host input[type="text"] {
+	padding-right: 60px !important;
+}
+
+.bizprocdesigner-expression-builder-trigger:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	border-color: var(--ui-color-divider-accent);
+}
+
+.bizprocdesigner-expression-builder-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}

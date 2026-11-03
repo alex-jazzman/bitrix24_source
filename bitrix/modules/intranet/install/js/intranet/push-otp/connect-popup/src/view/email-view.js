@@ -1,14 +1,16 @@
-import { Dom, Loc, Tag, Text, Type, Validation } from 'main.core';
+import { Browser, Dom, Loc, Tag, Text, Type, Validation } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { AirButtonStyle, Button } from 'ui.buttons';
 
 import { Analytics } from '../analytics';
-import { BaseView } from './base-view';
+import { BaseView, MOBILE_POPUP_WIDTH } from './base-view';
 import './css/email-view.css';
+import { createFinishButton, createSwitchChannelButton } from './switch-channel-button';
 
 export class EmailView extends BaseView
 {
 	#signedUserId: ?string;
+	#flowIdProvider: () => ?string;
 	#timeLeft: number = 0;
 	#email: string;
 	#signedData: string;
@@ -20,15 +22,34 @@ export class EmailView extends BaseView
 	#confirmButton: Button;
 	#errorContainer: HTMLElement;
 	#titleContainer: HTMLElement;
+	#isMobile: boolean;
+	#isSkippingDeviceConnectProvider: () => boolean;
+	#canSwitchChannelProvider: () => boolean;
+	#switchChannelButton: Button;
+	#canFinishProvider: () => boolean;
+	#finishButton: Button;
 
 	constructor(options)
 	{
 		super(options);
 		this.#signedUserId = options.signedUserId || null;
+		this.#flowIdProvider = Type.isFunction(options.flowIdProvider) ? options.flowIdProvider : () => null;
 		this.#email = Type.isStringFilled(options.email) ? options.email : '';
 		this.#signedData = '';
 		this.#changeClicked = false;
 		this.#showInput = !Type.isStringFilled(this.#email);
+		this.#isMobile = Browser.isMobile();
+		this.#isSkippingDeviceConnectProvider = Type.isFunction(options.isSkippingDeviceConnectProvider)
+			? options.isSkippingDeviceConnectProvider
+			: () => options.hideSkipButton === true;
+		this.#canSwitchChannelProvider = Type.isFunction(options.canSwitchChannelProvider)
+			? options.canSwitchChannelProvider
+			: () => false;
+		this.#switchChannelButton = createSwitchChannelButton(this, 'phone');
+		this.#canFinishProvider = Type.isFunction(options.canFinishProvider)
+			? options.canFinishProvider
+			: () => false;
+		this.#finishButton = createFinishButton(this);
 		this.#skipButton = this.#createSkipButton();
 		this.#confirmButton = this.#createConfirmButton();
 		this.#titleContainer = Tag.render`
@@ -44,9 +65,14 @@ export class EmailView extends BaseView
 	render(): HTMLElement
 	{
 		return this.#container.remember('view', () => {
+			if (this.#isMobile)
+			{
+				return this.#renderMobileView();
+			}
+
 			const shouldShowInput = this.#forceChangeMode || this.#showInput;
 
-			const skipButton = this.isForceChangeMode() ? '' : this.#skipButton.render();
+			const skipButton = this.#renderSecondaryButton();
 
 			return Tag.render`
 				<div class="intranet-push-otp-connect-popup__view-container">
@@ -89,6 +115,57 @@ export class EmailView extends BaseView
 				</div>
 			`;
 		});
+	}
+
+	getPopupWidth(): ?number
+	{
+		return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+	}
+
+	#renderMobileView(): HTMLElement
+	{
+		const shouldShowInput = this.#forceChangeMode || this.#showInput;
+		const skipButton = this.#renderSecondaryButton();
+
+		return Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div>
+					<div class="intranet-push-otp-connect-popup__popup-title">
+						${this.#renderTitle()}
+					</div>
+					${this.renderStepIndicators()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_EMAIL_DESC')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-email-container --mobile">
+					${shouldShowInput ? this.#renderInputEmail() : this.#renderCurrentEmail()}
+					${this.#renderGraphic()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">
+					${skipButton}
+					${this.#confirmButton.render()}
+				</div>
+			</div>
+		`;
+	}
+
+	#renderSecondaryButton(): string | HTMLElement
+	{
+		if (this.isForceChangeMode())
+		{
+			return '';
+		}
+		if (this.#isSkippingDeviceConnectProvider())
+		{
+			return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
+		}
+		if (this.#canFinishProvider())
+		{
+			return this.#finishButton.render();
+		}
+
+		return this.#skipButton.render();
 	}
 
 	beforeShow(option: Object): void
@@ -262,6 +339,8 @@ export class EmailView extends BaseView
 			method: 'POST',
 			data: {
 				email: this.#email,
+				flowId: this.#flowIdProvider(),
+				signedUserId: this.#signedUserId,
 			},
 		}).then((response) => {
 			this.#confirmButton.setWaiting(false);

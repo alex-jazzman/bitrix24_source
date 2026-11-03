@@ -18,6 +18,7 @@ use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Loader;
 use Bitrix\Iblock;
+use Bitrix\Main\Web\Uri;
 
 CPageOption::SetOptionString("main", "nav_page_in_session", "N");
 
@@ -343,7 +344,7 @@ if (
 					unset($pagerParameters["BASE_LINK"]);
 				}
 
-				$navComponentParameters["BASE_LINK"] = CHTTP::urlAddParams($pagerBaseLink, $pagerParameters, array("encode"=>true));
+				$navComponentParameters["BASE_LINK"] = (string)(new Uri($pagerBaseLink))->addParams($pagerParameters);
 			}
 
 			$arResult["NAV_STRING"] = $arResult["NAV_RESULT"]->GetPageNavStringEx(

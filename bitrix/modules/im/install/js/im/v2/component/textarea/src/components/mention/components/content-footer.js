@@ -46,7 +46,11 @@ export const ContentFooter = {
 					<span class="bx-im-mention-content-footer__control-description">{{ escControlTitle }}</span>
 				</div>
 			</div>
-			<Loader v-if="isLoading" class="bx-im-mention-content-footer__loader" />
+			<Loader
+				v-if="isLoading"
+				class="bx-im-mention-content-footer__loader"
+				data-testid="im-textarea-mention-loader"
+			/>
 		</div>
 	`,
 };

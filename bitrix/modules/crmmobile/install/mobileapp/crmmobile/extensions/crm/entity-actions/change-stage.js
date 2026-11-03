@@ -4,6 +4,7 @@
 jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 	const { Type } = require('crm/type');
 	const { NotifyManager } = require('notify-manager');
+	const { requireLazy } = require('require-lazy');
 	const store = require('statemanager/redux/store');
 	const { fetchCrmKanbanList } = require('crm/statemanager/redux/slices/kanban-settings');
 
@@ -12,27 +13,29 @@ jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 	 * @returns {Object}
 	 */
 	const getActionToChangeStage = () => {
-		const loadCategoryList = (entityTypeId) => new Promise((resolve) => {
+		const loadCategoryList = async (entityTypeId) => {
 			NotifyManager.showLoadingIndicator();
-			store.dispatch(fetchCrmKanbanList({
-				entityTypeId,
-			})).then((response) => {
-				resolve(response.payload.data);
+			try
+			{
+				const response = await store.dispatch(fetchCrmKanbanList({ entityTypeId })).unwrap();
+
+				return response.data;
+			}
+			finally
+			{
 				NotifyManager.hideLoadingIndicatorWithoutFallback();
-			}).catch((error) => {
-				NotifyManager.hideLoadingIndicatorWithoutFallback();
-				NotifyManager.showDefaultError();
-			});
-		});
+			}
+		};
 
 		/**
 		 * @function onAction
 		 * @param params.title string
 		 * @param params.entityTypeId number
+		 * @param {PerfPoint} [perfPoint]
 		 * @returns {Promise}
 		 */
-		const onAction = async (params) => {
-			const { title, entityTypeId, layoutWidget } = params;
+		const onAction = async (params, perfPoint = null) => {
+			const { title, entityTypeId, layoutWidget, allowedCategoryIds } = params;
 			let selectedCategoryId = null;
 
 			if (!Type.isEntitySupportedById(entityTypeId))
@@ -40,45 +43,78 @@ jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 				return null;
 			}
 
-			const { categories } = await loadCategoryList(entityTypeId);
-
-			if (!Array.isArray(categories) || categories.length === 0)
+			perfPoint?.start();
+			try
 			{
-				return null;
-			}
+				perfPoint?.startPoint('Load Categories');
+				const { categories: loadedCategories } = await loadCategoryList(entityTypeId);
+				perfPoint?.endPoint('Load Categories');
 
-			if (categories.length === 1)
-			{
-				return categories[0].id;
-			}
+				const categories = Array.isArray(loadedCategories) && Array.isArray(allowedCategoryIds)
+					? loadedCategories.filter((category) => allowedCategoryIds.includes(category.id))
+					: loadedCategories;
 
-			const { CategoryListView } = await requireLazy('crm:category-list-view').catch(console.error);
+				if (!Array.isArray(categories) || categories.length === 0)
+				{
+					return null;
+				}
 
-			const getSelectedCategoryId = () => new Promise((resolve) => {
-				CategoryListView.open(
+				if (categories.length === 1)
+				{
+					return categories[0].id;
+				}
+
+				perfPoint?.startPoint('Load Category View');
+				const { CategoryListView } = await requireLazy('crm:category-list-view');
+				perfPoint?.endPoint('Load Category View');
+
+				const getSelectedCategoryId = () => new Promise((resolve, reject) => {
+					perfPoint?.startPoint('Open Category Widget');
+					let openingPromise = CategoryListView.open(
+						{
+							entityTypeId,
+							allowedCategoryIds,
+							readOnly: true,
+							currentCategoryId: null,
+							showPreselectedCategory: false,
+							showCounters: false,
+							showTunnels: false,
+							onSelectCategory: (category, categoryListLayout) => {
+								selectedCategoryId = category.categoryId;
+								categoryListLayout.close();
+							},
+							onViewHidden: () => {
+								resolve(selectedCategoryId);
+							},
+						},
+						{ title },
+						layoutWidget,
+					);
+					if (perfPoint)
 					{
-						entityTypeId,
-						readOnly: true,
-						currentCategoryId: null,
-						showPreselectedCategory: false,
-						showCounters: false,
-						showTunnels: false,
-						onSelectCategory: (category, categoryListLayout) => {
-							selectedCategoryId = category.categoryId;
-							categoryListLayout.close();
-						},
-						onViewHidden: () => {
-							resolve(selectedCategoryId);
-						},
-					},
-					{ title },
-					layoutWidget,
-				).catch(console.error);
-			});
+						openingPromise = openingPromise.finally(() => {
+							perfPoint.endPoint('Open Category Widget');
+							perfPoint.end();
+						});
+					}
 
-			selectedCategoryId = await getSelectedCategoryId();
+					openingPromise.catch(reject);
+				});
 
-			return selectedCategoryId;
+				selectedCategoryId = await getSelectedCategoryId();
+
+				return selectedCategoryId;
+			}
+			finally
+			{
+				if (perfPoint)
+				{
+					perfPoint.endPoint('Load Categories');
+					perfPoint.endPoint('Load Category View');
+					perfPoint.endPoint('Open Category Widget');
+					perfPoint.end();
+				}
+			}
 		};
 
 		return { onAction };

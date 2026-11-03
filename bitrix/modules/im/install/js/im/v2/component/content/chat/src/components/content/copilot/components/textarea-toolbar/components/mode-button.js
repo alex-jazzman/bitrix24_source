@@ -58,7 +58,7 @@ export const ModeButton = {
 		{
 			if (this.isTempChat)
 			{
-				return ChipDesign.Disabled;
+				return ChipDesign.Outline;
 			}
 
 			if (this.isActive)

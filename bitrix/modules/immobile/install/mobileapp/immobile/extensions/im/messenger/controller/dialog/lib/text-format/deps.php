@@ -7,6 +7,7 @@ return [
 		'utils/url',
 		'im:messenger/loc',
 		'im:messenger/const',
+		'im:messenger/lib/bbcode/style-canonicalizer',
 		'im:messenger/lib/logger',
 		'im:messenger/provider/services/analytics',
 	],

@@ -24,6 +24,12 @@ export class PostFormRouter
 
 	redirectTo(groupId: number)
 	{
+		// the form can be opened from a page outside the feed, where there is nothing to reload
+		if (!top.BX.Socialnetwork?.Spaces?.space)
+		{
+			return;
+		}
+
 		if (groupId)
 		{
 			if (this.#pathToGroupRedirect)

@@ -1,78 +1,30 @@
-import { Type, Loc } from 'main.core';
-import { Switcher } from 'ui.switcher';
+import { Loc } from 'main.core';
+import { Switcher } from 'ui.vue3.components.switcher';
 import { TextXl } from 'ui.system.typography.vue';
+
+import { SWITCHER_OPTIONS } from '../consts';
 
 export const PrivateAccessFullSettingsSwitcher = {
 	name: 'PrivateAccessFullSettingsSwitcher',
-	components: { TextXl },
+	components: { Switcher, TextXl },
 	props: {
 		isActive: { type: Boolean, required: true },
 	},
 	emits: ['toggle'],
-	data()
+	setup()
 	{
-		return {
-			switcher: null,
-		};
-	},
-	watch: {
-		isActive(next)
-		{
-			if (!this.switcher)
-			{
-				return;
-			}
-
-			this.switcher.check(next);
-		},
-	},
-	mounted()
-	{
-		this.initSwitcher();
-	},
-	beforeUnmount()
-	{
-		this.destroySwitcher();
-	},
-	methods: {
-		initSwitcher()
-		{
-			if (this.switcher || !this.$refs.switcherNode)
-			{
-				return;
-			}
-
-			this.switcher = new Switcher({
-				node: this.$refs.switcherNode,
-				checked: this.isActive,
-				size: 'small',
-				showStateTitle: false,
-				useAirDesign: true,
-				handlers: {
-					toggled: () => {
-						this.$emit('toggle', this.switcher.isChecked());
-					},
-				},
-			});
-		},
-		destroySwitcher()
-		{
-			if (!this.switcher)
-			{
-				return;
-			}
-
-			if (Type.isFunction(this.switcher.destroy))
-			{
-				this.switcher.destroy();
-			}
-
-			this.switcher = null;
-		},
+		return { SWITCHER_OPTIONS };
 	},
 	template: `
 		<div class="access-private-switcher__wrapper">
-			<div class="access-private-block__switcher" ref="switcherNode"></div>
+			<Switcher
+				class="access-private-block__switcher"
+				data-testid="disk-sharing-access-private-switcher"
+				:isChecked="isActive"
+				:options="SWITCHER_OPTIONS"
+				@check="$emit('toggle', true)"
+				@uncheck="$emit('toggle', false)"
+			/>
 			<TextXl
 				tag="p"
 				className="access-private-block__title"

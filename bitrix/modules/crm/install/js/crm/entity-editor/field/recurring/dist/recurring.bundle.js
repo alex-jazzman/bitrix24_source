@@ -112,12 +112,68 @@ this.BX.Crm = this.BX.Crm || {};
 		return Object.values(periods).find(item => item.value === value) ?? null;
 	}
 
-	function showPopupMenu(id, target, menu) {
+	function showPopupMenu(id, target, menu, onClose = null, event = null) {
+		/*
+			MenuManager.create() hands back an already created menu untouched, so focusTrap never
+			reaches it on the second and later calls. The gear avoids this by destroying its menu on
+			close; here it lives until beforeUnmount, so "open with the mouse, close, open from the
+			keyboard" would reuse a menu built without a trap: focus stays on the selector and the
+			arrows never walk the items. Only a closed menu is dropped - destroy() emits onDestroy,
+			not onClose, and would swallow the handler that puts aria-expanded back to false.
+		*/
+		const existingMenu = main_popup.PopupMenu.getMenuById(id);
+		if (existingMenu && !existingMenu.getPopupWindow().isShown()) {
+			destroyPopupMenu(id);
+		}
+
+		/*
+			Opening from the keyboard would throw the card to the top: MenuNavigation focuses the
+			first item on the menu's own onShow, before the popup has been positioned - measured,
+			the item still sits at document 0,0 at that moment - and MenuItem.focus() passes
+			preventScroll: false, so the browser scrolls that far-away item into view while the menu
+			stays anchored to its button, off screen. The jump is synchronous inside show() and the
+			popup is positioned in document coordinates, so putting the scroll back the moment show()
+			returns leaves the menu exactly where it belongs. The cause itself is in main.popup
+			(menu-navigation.ts, menu-item.ts) and is out of this ticket's reach.
+		*/
+		const scroller = document.scrollingElement;
+		const scrollTop = scroller ? scroller.scrollTop : 0;
 		main_popup.PopupMenu.show(id, target, menu, {
 			angle: false,
-			width: target.offsetWidth + 'px'
+			width: target.offsetWidth + 'px',
+			/*
+				Without a focus trap the menu opens with focus left behind on the selector:
+				MenuNavigation moves focus onto the first item only while Menu.getFocusTrap()
+				is not null, items keep tabindex="-1", and the arrow keys scroll the card
+				instead of walking the menu. The portal-wide ui.a11y "useFocusTrapInDialogs"
+				switch is on for dev clones and off for client portals, so it is passed here
+				explicitly - with the very value Menu itself uses when that switch is on.
+					Only for keyboard activation: passing an object bypasses the whole of
+				Popup.shouldUseFocusTrapByDefault(), including its exception for text inputs,
+				so on the mouse path the decision is left to the popup itself.
+			*/
+			...(event?.type === 'keydown' ? {
+				focusTrap: {
+					initialFocus: 'container'
+				}
+			} : {})
 		});
-		main_popup.PopupMenu.currentItem.popupWindow.setWidth(BX.pos(target).width);
+		if (scroller) {
+			scroller.scrollTop = scrollTop;
+		}
+		const popup = main_popup.PopupMenu.currentItem.popupWindow;
+		popup.setWidth(BX.pos(target).width);
+
+		/*
+			Re-armed on every open rather than bound once at creation: PopupMenu.show reuses an already
+			created menu, so params passed on the second and later calls never reach it.
+				The event is 'onClose', not the legacy 'onPopupClose': the latter is emitted through
+			BX.onCustomEvent only, and subscribe() never sees it — measured on the stand, the listener
+			stayed silent and aria-expanded kept saying true after the menu had closed.
+		*/
+		if (onClose) {
+			popup.subscribeOnce('onClose', onClose);
+		}
 	}
 	function destroyPopupMenu(id) {
 		main_popup.PopupMenu.destroy(id);
@@ -147,12 +203,20 @@ this.BX.Crm = this.BX.Crm || {};
 			title: {
 				type: String,
 				required: true
+			},
+			/*
+				The selectors below the title are plain divs turned into buttons; they borrow this label
+				for their accessible name through aria-labelledby, which needs something to point at.
+			*/
+			labelId: {
+				type: String,
+				default: ''
 			}
 		},
 		// language=Vue
 		template: `
 		<div class="ui-entity-editor-block-title ui-entity-widget-content-block-title-edit">
-			<label class="ui-entity-editor-block-title-text">{{title}}</label>
+			<label class="ui-entity-editor-block-title-text" :id="labelId || null">{{title}}</label>
 		</div>
 	`
 	};
@@ -1294,12 +1358,57 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	});
 
+	let uid = 0;
+
+	/**
+	 * The lists of this field are plain divs with the click on an inner one: no tabindex, no role,
+	 * no focusable child, so they were unreachable from the keyboard (2.1.1, #255182). They are
+	 * declared buttons the same way the editor's own list field is.
+	 *
+	 * The name is assembled by aria-labelledby out of the already translated FieldTitle and the
+	 * control's own text, rather than a phrase per selector: "#TITLE#: #VALUE#" over two translatable
+	 * phrases is what rule 2 of the localization checklist forbids.
+	 *
+	 * Selectors are addressed by name because one component can own several (DateFields has two).
+	 */
+	const selectorA11yMixin = {
+		data() {
+			uid++;
+			return {
+				a11yUid: uid,
+				expandedSelectors: {}
+			};
+		},
+		methods: {
+			a11yId(name) {
+				return `crm-recurring-${name}-${this.a11yUid}`;
+			},
+			selectorLabelledBy(name) {
+				return `${this.a11yId(`${name}-title`)} ${this.a11yId(`${name}-value`)}`;
+			},
+			isSelectorExpanded(name) {
+				return this.expandedSelectors[name] ? 'true' : 'false';
+			},
+			markSelectorOpened(name) {
+				this.expandedSelectors[name] = true;
+			},
+			/*
+				The menu also closes on a click past it, which the opening handler never learns about,
+				so the flag is driven by the popup's own close event — otherwise aria-expanded would
+				stay true after the first dismissal.
+			*/
+			markSelectorClosed(name) {
+				this.expandedSelectors[name] = false;
+			}
+		}
+	};
+
 	// @vue/component
 	const CategorySelector = {
 		components: {
 			FieldTitle
 		},
-		mixins: [popupMenuMixin('crm-recurring-category-selector')],
+		mixins: [popupMenuMixin('crm-recurring-category-selector'), selectorA11yMixin],
 		props: {
 			categoryId: {
 				type: Number,
@@ -1320,7 +1429,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		methods: {
-			showCategorySelector() {
+			showCategorySelector(event = null) {
 				const menu = [];
 				this.categories.forEach(category => {
 					menu.push({
@@ -1329,7 +1438,8 @@ this.BX.Crm = this.BX.Crm || {};
 						onclick: this.onChangeCategory.bind(this)
 					});
 				});
-				showPopupMenu(this.popupMenuId, this.$refs.categorySelector, menu);
+				this.markSelectorOpened('category');
+				showPopupMenu(this.popupMenuId, this.$refs.categorySelector, menu, () => this.markSelectorClosed('category'), event);
 			},
 			onChangeCategory(_, item) {
 				this.$emit('onChange', item.value);
@@ -1339,14 +1449,24 @@ this.BX.Crm = this.BX.Crm || {};
 		// language=Vue
 		template: `
 		<div>
-			<FieldTitle :title="categoryTitle" />
+			<FieldTitle :title="categoryTitle" :label-id="a11yId('category-title')" />
 		
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('category')"
+					:aria-labelledby="selectorLabelledBy('category')"
+					@click="showCategorySelector"
+					@keydown.enter.prevent="showCategorySelector"
+					@keydown.space.prevent="showCategorySelector"
+				>
 					<div
 						ref="categorySelector"
+						:id="a11yId('category-value')"
 						class="ui-ctl-element"
-						@click="showCategorySelector"
 					>
 						{{currentCategoryTitle}}
 					</div>
@@ -1362,7 +1482,7 @@ this.BX.Crm = this.BX.Crm || {};
 		components: {
 			FieldTitle
 		},
-		mixins: [popupMenuMixin(['crm-recurring-dates-section-selector-beginDate', 'crm-recurring-dates-section-selector-closeDate'])],
+		mixins: [popupMenuMixin(['crm-recurring-dates-section-selector-beginDate', 'crm-recurring-dates-section-selector-closeDate']), selectorA11yMixin],
 		props: {
 			entityTypeId: {
 				type: Number,
@@ -1487,7 +1607,7 @@ this.BX.Crm = this.BX.Crm || {};
 				this.datePicker.setTargetNode(this.$refs.dateStart);
 				this.datePicker.show();
 			},
-			showPeriodSelector(target, name) {
+			showPeriodSelector(event, name) {
 				const menu = [];
 				Object.values(getPeriods()).forEach(item => {
 					menu.push({
@@ -1497,7 +1617,8 @@ this.BX.Crm = this.BX.Crm || {};
 					});
 				});
 				const id = `crm-recurring-dates-section-selector-${name}`;
-				showPopupMenu(id, target, menu);
+				this.markSelectorOpened(name);
+				showPopupMenu(id, event.target, menu, () => this.markSelectorClosed(name), event);
 			},
 			onSelectPeriodItem(name, _, item) {
 				const value = item.value;
@@ -1562,7 +1683,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<span class="ui-ctl-label-text">{{offsetDateBeginTitle}}</span>
 				</label>
 
-				<FieldTitle v-if="isShowOffsetBeginDate" :title="beginDateTitle" />
+				<FieldTitle v-if="isShowOffsetBeginDate" :title="beginDateTitle" :label-id="a11yId('beginDate-title')" />
 				
 				<div
 					v-if="isShowOffsetBeginDate"
@@ -1576,14 +1697,22 @@ this.BX.Crm = this.BX.Crm || {};
 						>
 						<div class="crm-entity-widget-content-block-select">
 							<div
+								:id="a11yId('beginDate-value')"
 								class="crm-entity-widget-content-select"
-								@click="(event) => showPeriodSelector(event.target, 'beginDate')"
+								role="button"
+								tabindex="0"
+								aria-haspopup="menu"
+								:aria-expanded="isSelectorExpanded('beginDate')"
+								:aria-labelledby="selectorLabelledBy('beginDate')"
+								@click="(event) => showPeriodSelector(event, 'beginDate')"
+								@keydown.enter.prevent="(event) => showPeriodSelector(event, 'beginDate')"
+								@keydown.space.prevent="(event) => showPeriodSelector(event, 'beginDate')"
 							>{{offsetBeginDateTypeTitle}}</div>
 						</div>
 					</div>
 				</div>
 				
-				<FieldTitle :title="closeDateTitle" />
+				<FieldTitle :title="closeDateTitle" :label-id="a11yId('closeDate-title')" />
 				
 				<div class="crm-entity-widget-content-block-inner crm-entity-widget-content-block-colums-input">
 					<div class="crm-entity-widget-content-block-input-wrapper">
@@ -1594,8 +1723,16 @@ this.BX.Crm = this.BX.Crm || {};
 						>
 						<div class="crm-entity-widget-content-block-select">
 							<div
+								:id="a11yId('closeDate-value')"
 								class="crm-entity-widget-content-select"
-								@click="(event) => showPeriodSelector(event.target, 'closeDate')"
+								role="button"
+								tabindex="0"
+								aria-haspopup="menu"
+								:aria-expanded="isSelectorExpanded('closeDate')"
+								:aria-labelledby="selectorLabelledBy('closeDate')"
+								@click="(event) => showPeriodSelector(event, 'closeDate')"
+								@keydown.enter.prevent="(event) => showPeriodSelector(event, 'closeDate')"
+								@keydown.space.prevent="(event) => showPeriodSelector(event, 'closeDate')"
 							>{{offsetCloseDateTypeTitle}}</div>
 						</div>
 					</div>
@@ -1610,7 +1747,7 @@ this.BX.Crm = this.BX.Crm || {};
 		components: {
 			FieldTitle
 		},
-		mixins: [popupMenuMixin('crm-recurring-mode-selector')],
+		mixins: [popupMenuMixin('crm-recurring-mode-selector'), selectorA11yMixin],
 		props: {
 			entityTypeId: {
 				type: Number,
@@ -1631,7 +1768,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		methods: {
-			showModeSelector() {
+			showModeSelector(event = null) {
 				const menu = [];
 				Object.values(modeItems).forEach(({
 					value,
@@ -1643,7 +1780,8 @@ this.BX.Crm = this.BX.Crm || {};
 						onclick: this.onChangeMode.bind(this)
 					});
 				});
-				showPopupMenu(this.popupMenuId, this.$refs.modeSelector, menu);
+				this.markSelectorOpened('mode');
+				showPopupMenu(this.popupMenuId, this.$refs.modeSelector, menu, () => this.markSelectorClosed('mode'), event);
 			},
 			onChangeMode(_, item) {
 				this.$emit('onChange', item.value);
@@ -1653,14 +1791,24 @@ this.BX.Crm = this.BX.Crm || {};
 		// language=Vue
 		template: `
 		<div>
-			<FieldTitle :title="modeTitle" />
+			<FieldTitle :title="modeTitle" :label-id="a11yId('mode-title')" />
 		
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('mode')"
+					:aria-labelledby="selectorLabelledBy('mode')"
+					@click="showModeSelector"
+					@keydown.enter.prevent="showModeSelector"
+					@keydown.space.prevent="showModeSelector"
+				>
 					<div
 						ref="modeSelector"
+						:id="a11yId('mode-value')"
 						class="ui-ctl-element"
-						@click="showModeSelector"
 					>
 						{{currentModeTitle}}
 					</div>
@@ -1676,7 +1824,7 @@ this.BX.Crm = this.BX.Crm || {};
 		components: {
 			FieldTitle
 		},
-		mixins: [popupMenuMixin('crm-recurring-multiple-limit-selector')],
+		mixins: [popupMenuMixin('crm-recurring-multiple-limit-selector'), selectorA11yMixin],
 		props: {
 			entityTypeId: {
 				type: Number,
@@ -1746,7 +1894,7 @@ this.BX.Crm = this.BX.Crm || {};
 			this.datePicker.destroy();
 		},
 		methods: {
-			showSelector() {
+			showSelector(event = null) {
 				const menu = [];
 				Object.values(multipleLimits).forEach(({
 					value,
@@ -1758,7 +1906,8 @@ this.BX.Crm = this.BX.Crm || {};
 						onclick: this.onChange.bind(this)
 					});
 				});
-				showPopupMenu(this.popupMenuId, this.$refs.selector, menu);
+				this.markSelectorOpened('multipleLimit');
+				showPopupMenu(this.popupMenuId, this.$refs.selector, menu, () => this.markSelectorClosed('multipleLimit'), event);
 			},
 			onChange(_, item) {
 				this.currentType = item.value;
@@ -1781,14 +1930,24 @@ this.BX.Crm = this.BX.Crm || {};
 		// language=Vue
 		template: `
 		<div class="ui-entity-editor-content-block">
-			<FieldTitle :title="title" />
+			<FieldTitle :title="title" :label-id="a11yId('multipleLimit-title')" />
 			
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('multipleLimit')"
+					:aria-labelledby="selectorLabelledBy('multipleLimit')"
+					@click="showSelector"
+					@keydown.enter.prevent="showSelector"
+					@keydown.space.prevent="showSelector"
+				>
 					<div
 						ref="selector"
+						:id="a11yId('multipleLimit-value')"
 						class="ui-ctl-element"
-						@click="showSelector"
 					>
 						{{currentMultipleLimitTitle}}
 					</div>
@@ -1843,7 +2002,7 @@ this.BX.Crm = this.BX.Crm || {};
 		components: {
 			FieldTitle
 		},
-		mixins: [popupMenuMixin('crm-recurring-multiple-repeat-selector')],
+		mixins: [popupMenuMixin('crm-recurring-multiple-repeat-selector'), selectorA11yMixin],
 		props: {
 			interval: {
 				type: Number,
@@ -1877,7 +2036,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		methods: {
-			showSelector() {
+			showSelector(event = null) {
 				const menu = [];
 				Object.values(getPeriods(true)).forEach(({
 					value,
@@ -1889,7 +2048,8 @@ this.BX.Crm = this.BX.Crm || {};
 						onclick: this.onChange.bind(this)
 					});
 				});
-				showPopupMenu(this.popupMenuId, this.$refs.selector, menu);
+				this.markSelectorOpened('repeat');
+				showPopupMenu(this.popupMenuId, this.$refs.selector, menu, () => this.markSelectorClosed('repeat'), event);
 			},
 			onChange(_, item) {
 				this.currentType = item.value;
@@ -1907,7 +2067,7 @@ this.BX.Crm = this.BX.Crm || {};
 		// language=Vue
 		template: `
 		<div class="ui-entity-editor-content-block">
-			<FieldTitle :title="title" />
+			<FieldTitle :title="title" :label-id="a11yId('repeat-title')" />
 			<div class="crm-entity-widget-content-block-inner crm-entity-widget-content-block-colums-input">
 				<div class="crm-entity-widget-content-block-input-wrapper">
 					<input
@@ -1918,8 +2078,16 @@ this.BX.Crm = this.BX.Crm || {};
 					<div class="crm-entity-widget-content-block-select">
 						<div
 							ref="selector"
+							:id="a11yId('repeat-value')"
 							class="crm-entity-widget-content-select"
+							role="button"
+							tabindex="0"
+							aria-haspopup="menu"
+							:aria-expanded="isSelectorExpanded('repeat')"
+							:aria-labelledby="selectorLabelledBy('repeat')"
 							@click="showSelector"
+							@keydown.enter.prevent="showSelector"
+							@keydown.space.prevent="showSelector"
 						>{{currentItemTitle}}</div>
 					</div>
 				</div>
@@ -1933,6 +2101,7 @@ this.BX.Crm = this.BX.Crm || {};
 		components: {
 			FieldTitle
 		},
+		mixins: [selectorA11yMixin],
 		props: {
 			type: {
 				type: Number,
@@ -1958,7 +2127,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		methods: {
-			showSelector() {
+			showSelector(event = null) {
 				const menu = [];
 				Object.values(multipleTypes).forEach(({
 					value,
@@ -1972,7 +2141,8 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 				const target = this.$refs.selector;
 				const id = 'crm-recurring-multiple-type-selector';
-				showPopupMenu(id, target, menu);
+				this.markSelectorOpened('multipleType');
+				showPopupMenu(id, target, menu, () => this.markSelectorClosed('multipleType'), event);
 			},
 			onChange(_, item) {
 				this.currentType = item.value;
@@ -1989,14 +2159,24 @@ this.BX.Crm = this.BX.Crm || {};
 		// language=Vue
 		template: `
 		<div class="ui-entity-editor-content-block">
-			<FieldTitle :title="title"/>
+			<FieldTitle :title="title" :label-id="a11yId('multipleType-title')"/>
 
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('multipleType')"
+					:aria-labelledby="selectorLabelledBy('multipleType')"
+					@click="showSelector"
+					@keydown.enter.prevent="showSelector"
+					@keydown.space.prevent="showSelector"
+				>
 					<div
 						ref="selector"
+						:id="a11yId('multipleType-value')"
 						class="ui-ctl-element"
-						@click="showSelector"
 					>
 						{{currentMultipleTypeTitle}}
 					</div>
@@ -2013,7 +2193,7 @@ this.BX.Crm = this.BX.Crm || {};
 			FieldTitle,
 			HiddenInput
 		},
-		mixins: [popupMenuMixin('crm-recurring-period-selector')],
+		mixins: [popupMenuMixin('crm-recurring-period-selector'), selectorA11yMixin],
 		props: {
 			interval: {
 				type: Number,
@@ -2078,7 +2258,7 @@ this.BX.Crm = this.BX.Crm || {};
 					});
 				});
 			},
-			showPeriodSelector() {
+			showPeriodSelector(event = null) {
 				const menu = [];
 				Object.values(getPeriods()).forEach(({
 					value,
@@ -2090,7 +2270,8 @@ this.BX.Crm = this.BX.Crm || {};
 						onclick: this.onChangePeriod.bind(this)
 					});
 				});
-				showPopupMenu(this.popupMenuId, this.$refs.periodSelector, menu);
+				this.markSelectorOpened('period');
+				showPopupMenu(this.popupMenuId, this.$refs.periodSelector, menu, () => this.markSelectorClosed('period'), event);
 			},
 			onChangePeriod(_, item) {
 				this.currentType = item.value;
@@ -2113,11 +2294,19 @@ this.BX.Crm = this.BX.Crm || {};
 						v-model="currentInterval"
 					>
 					
-					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div
+						class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown"
+						role="button"
+						tabindex="0"
+						aria-haspopup="menu"
+						:aria-expanded="isSelectorExpanded('period')"
+						@click="showPeriodSelector"
+						@keydown.enter.prevent="showPeriodSelector"
+						@keydown.space.prevent="showPeriodSelector"
+					>
 						<div
 							ref="periodSelector"
 							class="ui-ctl-element"
-							@click="showPeriodSelector"
 						>
 							{{currentModeTitle}}
 						</div>

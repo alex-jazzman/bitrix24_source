@@ -82,6 +82,7 @@
 .bizproc-type-control-bool,
 .bizproc-type-control-select,
 .bizproc-type-control-internalselect,
+.bizproc-type-control-nodereference,
 .bizproc-type-control-date-lc {
 	display: inline-block;
 	min-width: 155px;
@@ -154,6 +155,49 @@
 {
 	height: auto;
 	background-image: none;
+}
+
+/* Node reference control classes */
+
+.bizproc-type-control-nodereference-wrapper {
+	display: inline-block;
+	vertical-align: middle;
+	max-width: 100%;
+}
+
+/* The group rule's right margin spaces a select from a sibling; here the select's only
+   sibling is its own state line below, so the margin would just inflate the wrapper. */
+.bizproc-type-control-nodereference-wrapper .bizproc-type-control-nodereference {
+	margin-right: 0;
+}
+
+/* The list family above drops the outline altogether, so the focus ring is restored here for this
+   control alone. It is drawn inside the control box: a narrow form row clips whatever sticks out. */
+.bizproc-type-control-nodereference:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: -1px;
+}
+
+/* Read-only value of the field: plain text, so it takes none of the box the list family draws. */
+.bizproc-type-control-nodereference-printable {
+	display: inline-block;
+	vertical-align: middle;
+	max-width: 100%;
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: var(--ui-font-line-height-md, 1.4);
+	color: var(--ui-color-base-1, #333333);
+}
+
+.bizproc-type-control-nodereference-state {
+	margin-top: var(--ui-space-stack-2xs, 4px);
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-md, 1.4);
+	color: var(--ui-color-base-3, #828b95);
+}
+
+/* The state is always printed, so an empty one must take neither space nor margin. */
+.bizproc-type-control-nodereference-state:empty {
+	display: none;
 }
 
 /* Destination classes */

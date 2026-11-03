@@ -24,6 +24,7 @@ jn.define('im/messenger/controller/folder/chat-selector', (require, exports, mod
 				providerOptions: {
 					allowMultipleSelection: true,
 					useNotes: true,
+					folderEligibleOnly: true,
 					initialDialogIds: selectedChatIds,
 				},
 				allowMultipleSelection: true,

@@ -20,6 +20,8 @@ $isMultiDocumentLoadingEnabled = $featureStorage?->isMultiDocumentLoadingEnabled
 $isGroupSendingEnabled = $featureStorage?->isGroupSendingEnabled() ?? false;
 $isDocumentsInSignersSelectorEnabled = $featureStorage?->isDocumentsInSignersSelectorEnabled() ?? false;
 $isTemplateFolderGroupingAllowed = $featureStorage?->isTemplateFolderGroupingAllowed() ?? false;
+$isDocumentMessageEnabled = $featureStorage?->isDocumentMessageEnabled() ?? false;
+$isKedoRunProcessEnabled = $featureStorage?->isKedoRunProcessEnabled() ?? false;
 
 return [
 	'css' => 'dist/feature-storage.bundle.css',
@@ -32,7 +34,9 @@ return [
 		'isMultiDocumentLoadingEnabled' => $isMultiDocumentLoadingEnabled,
 		'isGroupSendingEnabled' => $isGroupSendingEnabled,
 		'isDocumentsInSignersSelectorEnabled' => $isDocumentsInSignersSelectorEnabled,
-		'isTemplateFolderGroupingAllowed' => $isTemplateFolderGroupingAllowed
+		'isTemplateFolderGroupingAllowed' => $isTemplateFolderGroupingAllowed,
+		'isDocumentMessageEnabled' => $isDocumentMessageEnabled,
+		'isKedoRunProcessEnabled' => $isKedoRunProcessEnabled,
 	],
 	'skip_core' => false,
 ];

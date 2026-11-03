@@ -138,6 +138,8 @@ export class InitManager
 		void Core.getStore().dispatch('copilot/setName', copilot.botName);
 		void Core.getStore().dispatch('copilot/setAgentName', copilot.agentName);
 		void Core.getStore().dispatch('copilot/setSuggests', copilot.suggests ?? []);
+		void Core.getStore().dispatch('copilot/setGreetings', copilot.greetings ?? []);
+		void Core.getStore().dispatch('copilot/setGreetingWeekHolidays', copilot.greetingWeekHolidays ?? []);
 
 		if (!copilot.availableEngines)
 		{
@@ -199,6 +201,6 @@ export class InitManager
 	{
 		const { folders } = Core.getApplicationData();
 
-		void Core.getStore().dispatch('recent/folders/set', folders);
+		void Core.getStore().dispatch('recent/folders/set', folders.list);
 	}
 }

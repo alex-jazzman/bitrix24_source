@@ -28,6 +28,8 @@ return [
 		'loc',
 	],
 	'bundle' => [
+		'./src/name-checker',
+		'./src/info-area-graphics',
 		'./src/name-checker-item',
 		'./src/name-checker-item-avatar',
 	],

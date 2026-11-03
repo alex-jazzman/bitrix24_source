@@ -1,8 +1,15 @@
 import { Loc } from 'main.core';
-import { Text2Xs, TextSm } from 'ui.system.typography.vue';
+import { TextMd, TextXs } from 'ui.system.typography.vue';
 import { defineComponent } from 'ui.vue3';
 
-import { toggleSelection } from '../../feature/toggle-selection/toggle-selection';
+import { StageType } from '../../const/picker';
+import { confirmItem } from '../../feature/confirm-selection/confirm-selection';
+import {
+	beginClick,
+	openPreviewFromButton,
+	openPreviewFromDblclick,
+} from '../../feature/row-activation/row-activation';
+import { toggleFileSelection } from '../../feature/toggle-selection/toggle-selection';
 import { formatTableDate } from '../../lib/format-date/format-date';
 import { formatSize } from '../../lib/format-size/format-size';
 import { useItemStore } from '../../model/item/item';
@@ -10,21 +17,32 @@ import { type PickerItem } from '../../model/item/types';
 import { useSelectionStore } from '../../model/selection/selection';
 import { useSessionStore } from '../../model/session/session';
 import { DiskIconView } from '../disk-icon/disk-icon';
+import { PreviewButton } from '../preview-button/preview-button';
 
 import './item-table.css';
 
 // The table view is a second projection of the same feed: the same items in rows
-// with Name/Size/Added columns, spanning the whole work area with no preview
-// panel. The selection and navigation logic is not duplicated here - every row
-// delegates to the toggleSelection scenario, exactly like the list row. The event
-// plumbing mirrors ItemRow because both are thin presentational shells over the
-// same domain action.
+// with Name/Size/Date columns, spanning the whole work area with no preview
+// panel. Selection, navigation and the click protocol are not duplicated here -
+// every row delegates to the same scenarios the list row does. The name cell holds a
+// native button; Enter and Space are handled explicitly on keydown, same as ItemRow, so
+// Enter can confirm the selection instead of only toggling it.
+//
+// The preview column header is visually hidden text rather than aria-label: a header cell named
+// only by aria-label reads as empty to an audit. On a picked row the eye takes the edge-dark
+// token context, same as the list row.
 export const ItemTable = defineComponent({
 	name: 'DiskPickerItemTable',
 	components: {
 		BDiskIcon: DiskIconView,
-		Text2Xs,
-		TextSm,
+		PreviewButton,
+		TextMd,
+		TextXs,
+	},
+	// `<visually-hidden>` is the custom element of ui.a11y (a dependency of the extension),
+	// so it is an element to render and not a component to look up.
+	compilerOptions: {
+		isCustomElement: (tag: string): boolean => tag === 'visually-hidden',
 	},
 	props: {
 		items: {
@@ -81,29 +99,58 @@ export const ItemTable = defineComponent({
 		{
 			return item.isFolder ? '' : formatSize(item.size);
 		},
-		addedText(item: PickerItem): string
+		dateColumnLabel(): string
 		{
-			return formatTableDate(item.createTime, this.loc('DISK_PICKER_TABLE_TODAY'));
+			return this.loc(
+				useSessionStore().stageType === StageType.Recent
+					? 'DISK_PICKER_TABLE_CHANGED'
+					: 'DISK_PICKER_TABLE_ADDED',
+			);
 		},
-		activate(item: PickerItem, modifier: boolean): void
+		dateText(item: PickerItem): string
 		{
-			if (this.isDisabled(item))
-			{
-				return;
-			}
+			const timestamp = useSessionStore().stageType === StageType.Recent
+				? item.updateTime
+				: item.createTime;
 
-			toggleSelection(item, modifier, useSessionStore().callbacks);
+			return formatTableDate(timestamp, this.loc('DISK_PICKER_TABLE_TODAY'));
 		},
 		handleClick(item: PickerItem, event: MouseEvent): void
 		{
-			this.activate(item, event.metaKey || event.ctrlKey);
+			beginClick(item, event);
 		},
+		// The preview starts from the name button of the row - the only focusable element a
+		// row has - so closing the viewer brings the focus back onto the row.
+		handleDblclick(item: PickerItem, event: MouseEvent): void
+		{
+			const row = event.currentTarget as HTMLElement;
+			const initiator = row.querySelector<HTMLElement>('.disk-picker-item-table__action') ?? row;
+
+			openPreviewFromDblclick(item, initiator, this.windowContainer());
+		},
+		handlePreviewOpen(item: PickerItem, initiator: HTMLElement | null): void
+		{
+			openPreviewFromButton(item, initiator, this.windowContainer());
+		},
+		// The window the viewer shows itself over is the picker popup around this table; a
+		// table mounted on its own (a unit test) has none, and the scenario falls back to
+		// the page.
+		windowContainer(): HTMLElement | null
+		{
+			return (this.$el as HTMLElement).closest<HTMLElement>('.disk-picker');
+		},
+		// Same keyboard contract as the list row, see ItemRow.handleKeydown.
 		handleKeydown(item: PickerItem, event: KeyboardEvent): void
 		{
 			if (event.key === ' ' || event.key === 'Spacebar')
 			{
 				event.preventDefault();
-				this.activate(item, true);
+				toggleFileSelection(item, useSessionStore().callbacks);
+			}
+			else if (event.key === 'Enter')
+			{
+				event.preventDefault();
+				void confirmItem(item, useSessionStore().callbacks);
 			}
 		},
 	},
@@ -113,23 +160,27 @@ export const ItemTable = defineComponent({
 				<col class="--name">
 				<col class="--size">
 				<col class="--added">
+				<col class="--preview">
 			</colgroup>
 			<thead>
 				<tr class="disk-picker-item-table__head">
 					<th scope="col" class="disk-picker-item-table__cell --name">
-						<Text2Xs :accent="true">{{ loc('DISK_PICKER_TABLE_NAME') }}</Text2Xs>
+						<TextXs class="disk-picker-item-table__head-label">{{ loc('DISK_PICKER_TABLE_NAME') }}</TextXs>
 					</th>
 					<th scope="col" class="disk-picker-item-table__cell --size">
-						<Text2Xs :accent="true">{{ loc('DISK_PICKER_TABLE_SIZE') }}</Text2Xs>
+						<TextXs class="disk-picker-item-table__head-label">{{ loc('DISK_PICKER_TABLE_SIZE') }}</TextXs>
 					</th>
 					<th scope="col" class="disk-picker-item-table__cell --added">
-						<Text2Xs :accent="true">{{ loc('DISK_PICKER_TABLE_ADDED') }}</Text2Xs>
+						<TextXs class="disk-picker-item-table__head-label">{{ dateColumnLabel() }}</TextXs>
+					</th>
+					<th scope="col" class="disk-picker-item-table__cell --preview">
+						<visually-hidden>{{ loc('DISK_PICKER_PREVIEW_OPEN') }}</visually-hidden>
 					</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr v-if="topSpacerHeight > 0" aria-hidden="true">
-					<td :style="{ height: topSpacerHeight + 'px' }" colspan="3"></td>
+					<td :style="{ height: topSpacerHeight + 'px' }" colspan="4"></td>
 				</tr>
 				<tr
 					v-for="item in items"
@@ -138,6 +189,7 @@ export const ItemTable = defineComponent({
 					:class="rowClass(item)"
 					:data-testid="testId(item)"
 					@click="handleClick(item, $event)"
+					@dblclick="handleDblclick(item, $event)"
 				>
 					<td class="disk-picker-item-table__cell --name">
 						<button
@@ -150,14 +202,27 @@ export const ItemTable = defineComponent({
 							@keydown="handleKeydown(item, $event)"
 						>
 							<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
-							<TextSm class="disk-picker-item-table__name">{{ item.name }}</TextSm>
+							<TextMd class="disk-picker-item-table__name">{{ item.name }}</TextMd>
 						</button>
 					</td>
-					<td class="disk-picker-item-table__cell --size"><TextSm>{{ sizeText(item) }}</TextSm></td>
-					<td class="disk-picker-item-table__cell --added"><TextSm>{{ addedText(item) }}</TextSm></td>
+					<td class="disk-picker-item-table__cell --size">
+						<TextMd class="disk-picker-item-table__value">{{ sizeText(item) }}</TextMd>
+					</td>
+					<td class="disk-picker-item-table__cell --added">
+						<TextMd class="disk-picker-item-table__value">{{ dateText(item) }}</TextMd>
+					</td>
+					<td class="disk-picker-item-table__cell --preview">
+						<PreviewButton
+							:item="item"
+							:tab-index="item.objectId === focusObjectId ? 0 : -1"
+							:class="{ '--ui-context-edge-dark': isSelected(item), '--air-context-blurred-bg': isSelected(item) }"
+							:on-accent="isSelected(item)"
+							@open="handlePreviewOpen(item, $event)"
+						/>
+					</td>
 				</tr>
 				<tr v-if="bottomSpacerHeight > 0" aria-hidden="true">
-					<td :style="{ height: bottomSpacerHeight + 'px' }" colspan="3"></td>
+					<td :style="{ height: bottomSpacerHeight + 'px' }" colspan="4"></td>
 				</tr>
 			</tbody>
 		</table>

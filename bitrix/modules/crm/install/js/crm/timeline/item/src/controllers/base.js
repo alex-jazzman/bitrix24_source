@@ -19,6 +19,11 @@ export type ActionAnimationCallbacks =
 	onStop: ?Function,
 };
 
+export type ScheduleActionOptions =
+{
+	activateClient?: boolean,
+};
+
 export class Base
 {
 	getDeleteActionMethod(): string
@@ -111,10 +116,16 @@ export class Base
 	 * @param activityId Activity ID
 	 * @param scheduleDate Date to use in editor
 	 * @param description Default description to use in editor
+	 * @param options Additional editor options
 	 *
 	 * @protected
 	 */
-	runScheduleAction(activityId: Number, scheduleDate: String, description: String = ''): void
+	runScheduleAction(
+		activityId: Number,
+		scheduleDate: String,
+		description: String = '',
+		options: ScheduleActionOptions = {},
+	): void
 	{
 		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
 		if (menuBar)
@@ -128,6 +139,10 @@ export class Base
 				todoEditor.focus();
 				todoEditor.setParentActivityId(activityId);
 				todoEditor.setDeadLine(scheduleDate);
+				if (options.activateClient === true)
+				{
+					todoEditor.activateClientBlock();
+				}
 
 				if (Type.isStringFilled(description))
 				{

@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/go-to-chat/messenger-slider
  */
 jn.define('crm/timeline/scheduler/providers/go-to-chat/messenger-slider', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Line } = require('utils/skeleton');
 	const AppTheme = require('apptheme');
@@ -200,7 +201,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/messenger-slider', (requi
 			paddingVertical: 12,
 		},
 		title: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base2,
 			marginLeft: 19,
 		},
@@ -247,7 +248,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/messenger-slider', (requi
 			return {
 				textAlign: 'center',
 				marginTop: 8,
-				fontSize: 16,
+				fontSize: Typography.text3.getValue().fontSize,
 				color: (active ? AppTheme.colors.base1 : AppTheme.colors.base3),
 			};
 		},

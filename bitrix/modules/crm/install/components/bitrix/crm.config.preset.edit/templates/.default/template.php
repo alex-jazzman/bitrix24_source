@@ -21,6 +21,11 @@ $toolbarButtons = array(
 			array($arResult['ENTITY_TYPE_ID']),
 			$arResult['PRESET_LIST_URL']
 		),
+		'LINK_PARAM' => 'data-testid="crm-config-preset-edit-back-btn"'
+			. (($arParams['IS_SETTINGS_HUB'] ?? false) === true
+				? ' data-slider-ignore-autobinding="true" target="_self"'
+				: ''
+			),
 		'ICON'=>'btn-view-elements'
 	)
 );
@@ -29,6 +34,7 @@ $toolbarButtons[] = array(
 	'TEXT' => GetMessage('CRM_PRESET_TOOLBAR_FIELD_ADD'),
 	'TITLE' => GetMessage('CRM_PRESET_TOOLBAR_FIELD_ADD_TITLE'),
 	'LINK' => htmlspecialcharsbx('javascript:BX.Crm["'.CUtil::JSEscape($presetFieldListManagerId).'"].addField();'),
+	'LINK_PARAM' => 'data-testid="crm-config-preset-edit-add-field-btn"',
 	'ICON' => 'btn-add-field'
 );
 

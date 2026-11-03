@@ -1,7 +1,6 @@
 <?php
 
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_NAME"] = "Сделка";
-$MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION"] = "Создаёт и изменяет сделки, назначает ответственных, меняет стадии и делает многое другое в сделках";
 
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CREATE_DEAL"] = "Создать новую сделку";
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_DEAL"] = "Изменить сделку";
@@ -10,4 +9,5 @@ $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_STATUS"] = "Из
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_CONTACT"] = "Изменить связанный контакт";
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_COMPANY"] = "Изменить связанную компанию";
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_DELETE_DEAL"] = "Удалить сделку";
+$MESS['CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_1'] = 'Создаёт и изменяет сделки: меняет стадию и воронку, назначает ответственного, работает с товарами, клиентом и документами';
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_ADD_COMMENT"] = "Добавить комментарий";

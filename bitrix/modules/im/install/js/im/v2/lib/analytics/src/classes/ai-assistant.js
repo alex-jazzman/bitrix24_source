@@ -13,6 +13,7 @@ import {
 } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
+import { getLayoutName } from '../helpers/get-layout-name';
 import { getUserType } from '../helpers/get-user-type';
 import { isAiAssistant } from '../helpers/is-ai-assistant';
 
@@ -56,7 +57,7 @@ export class AiAssistant
 
 	onOpenChatAI(dialog: ImModelChat, fromWidget: boolean = false): void
 	{
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 
 		sendData({
 			tool: AnalyticsTool.ai,
@@ -73,7 +74,7 @@ export class AiAssistant
 	onUseAudioInput(dialogId: string): void
 	{
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 		if (!isAiAssistant(dialog.dialogId))
 		{
 			return;

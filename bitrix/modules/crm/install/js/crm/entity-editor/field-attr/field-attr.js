@@ -359,8 +359,10 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 					this.removeItems();
 				}
 
-				this.saveConfiguration(visibilityConfig, fieldName, entityTypeId);
+				return this.saveConfiguration(visibilityConfig, fieldName, entityTypeId);
 			}
+
+			return null;
 		},
 		getTitle:function()
 		{
@@ -369,7 +371,7 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		saveConfiguration:function(config, fieldName, entityTypeId)
 		{
 			entityTypeId = entityTypeId || this.getSettings().editor.getEntityTypeId();
-			this._isChanged = BX.ajax.runAction("crm.api.userFieldVisibility.saveConfiguration",
+			return BX.ajax.runAction("crm.api.userFieldVisibility.saveConfiguration",
 				{
 					data:
 						{
@@ -379,8 +381,9 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 						}
 				}
 			).then(function (event, data){
+				this._isChanged = false;
 				return true;
-			});
+			}.bind(this));
 		},
 		formatAccessCodesFromConfig: function(config)
 		{

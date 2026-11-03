@@ -12,6 +12,7 @@
 		this.items = items;
 		this.menu = null;
 		this.menuShowed = false;
+		this.lastClickedButton = null;
 		this.sections = params.sections || {};
 		this.frequencyItem = params.frequencyItem || {};
 		this.ajaxPath = params.ajaxPath || '';
@@ -101,13 +102,13 @@
 		 */
 		clickMenuButton: function(event)
 		{
+			this.lastClickedButton = event.currentTarget;
+
 			if (!this.menu)
 			{
 				this.menu = new BX.PopupMenuWindow(
 					this.id,
-					(event.target === BX(this.idTop))
-					? BX(this.idTop)
-					: BX(this.id),
+					this.lastClickedButton,
 					this.buildMenu(this.items),
 					{
 						autoHide: true,
@@ -115,9 +116,9 @@
 							onClose: function()
 							{
 								this.menuShowed = false;
-								if (event && event.target)
+								if (this.lastClickedButton)
 								{
-									event.target.blur();
+									this.lastClickedButton.blur();
 								}
 							}.bind(this)
 						}

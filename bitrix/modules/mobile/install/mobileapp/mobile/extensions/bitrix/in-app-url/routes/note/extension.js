@@ -4,6 +4,7 @@
 jn.define('in-app-url/routes/note', (require, exports, module) => {
 	const { URL } = require('utils/url');
 	const { Loc } = require('loc');
+	const { openPortalPage } = require('in-app-url/portal-page');
 
 	const MOBILE_NOTE_ENTRY = '/mobile/note/';
 
@@ -59,10 +60,7 @@ jn.define('in-app-url/routes/note', (require, exports, module) => {
 			const entryPath = extractNoteEntryPath(url);
 			if (entryPath === null)
 			{
-				PageManager.openPage({
-					url,
-					bx24ModernStyle: true,
-				});
+				openPortalPage(url);
 
 				return;
 			}

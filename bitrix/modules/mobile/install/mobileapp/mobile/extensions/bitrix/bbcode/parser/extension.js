@@ -41,7 +41,7 @@ jn.define('bbcode/parser', (require, exports, module) => {
 		}
 	}
 
-	const TAG_REGEX_GS = /\[(\/)?(\w+|\*)(.*?)]/gs;
+	const TAG_REGEX_GS = /\[(\/)?((?!\d)\w+|\*)(?=]|=|\s)(.*?)]/gs;
 	const LF = '\n';
 	const CRLF = '\r\n';
 	const TAB = '\t';
@@ -68,25 +68,42 @@ jn.define('bbcode/parser', (require, exports, module) => {
 		tokenize(bbcode) {
 			const tokens = [];
 			let lastIndex = 0;
+			let codeDepth = 0;
+			let codeToken = null;
 			bbcode.replace(TAG_REGEX_GS, (fullTag, slash, tagName, attrs, index) => {
+				const isOpeningTag = Boolean(slash) === false;
+				const lowerCaseTagName = BBCodeTokenizer.toLowerCase(tagName);
+				const isCodeTag = lowerCaseTagName === 'code';
+				if (codeToken) {
+					if (isCodeTag) {
+						codeDepth += isOpeningTag ? 1 : -1;
+					}
+					if (codeDepth > 0) {
+						return;
+					}
+					codeToken.unclosed = false;
+					codeToken = null;
+				}
 				if (index > lastIndex) {
 					const textBetween = bbcode.slice(lastIndex, index);
 					tokens.push(...this.parseText(textBetween));
 				}
-				const isOpeningTag = Boolean(slash) === false;
 				const startIndex = fullTag.length + index;
 				const attributes = this.parseAttributes(attrs);
-				const lowerCaseTagName = BBCodeTokenizer.toLowerCase(tagName);
 				if (isOpeningTag) {
-					const nextContent = bbcode.slice(startIndex);
-					const unclosed = !nextContent.includes(`[/${tagName}]`);
-					tokens.push({
+					const unclosed = isCodeTag || !bbcode.slice(startIndex).includes(`[/${tagName}]`);
+					const token = {
 						type: 'OPEN_TAG',
 						name: lowerCaseTagName,
 						value: attributes.value,
 						attributes: Object.fromEntries(attributes.attributes),
 						unclosed
-					});
+					};
+					tokens.push(token);
+					if (isCodeTag) {
+						codeDepth = 1;
+						codeToken = token;
+					}
 				} else {
 					tokens.push({
 						type: 'CLOSE_TAG',

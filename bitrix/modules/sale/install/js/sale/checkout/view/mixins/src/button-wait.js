@@ -14,6 +14,11 @@ export default {
 	},
 	computed:
 	{
+		// a string: Vue 2 drops an attribute bound to false
+		ariaBusy()
+		{
+			return this.wait ? 'true' : 'false';
+		},
 		getObjectClass()
 		{
 			const classes = [

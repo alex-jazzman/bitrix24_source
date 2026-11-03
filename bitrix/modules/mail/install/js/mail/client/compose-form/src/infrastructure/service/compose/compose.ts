@@ -1,9 +1,16 @@
-import { ajax } from 'main.core';
+import { ajax, Runtime } from 'main.core';
+import {
+	type CreateUndoSendRequest,
+	type UndoSendOperationDto,
+} from 'mail.client.undo-send';
 
 import {
 	type AjaxError,
 	type AjaxResponse,
 	type CalendarSharingLinkResponse,
+	type GenerateSubjectRequest,
+	type GenerateSubjectResponse,
+	type SendMessageResponseData,
 	type SignaturesResponse,
 } from './types';
 
@@ -18,6 +25,7 @@ type RequestData = Record<string, unknown>;
  */
 export type SendMessageResponse = {
 	status?: string,
+	data?: Partial<SendMessageResponseData>,
 	errors?: AjaxError[],
 };
 
@@ -36,6 +44,24 @@ type Transport = {
 };
 
 const transport = ajax as Transport;
+
+type UndoSendExtension = {
+	undoSendApi: {
+		create(request: CreateUndoSendRequest): Promise<UndoSendOperationDto>,
+	},
+	undoSendNotification: {
+		show(operation: UndoSendOperationDto): void,
+	},
+};
+
+let undoSendExtensionPromise: Promise<UndoSendExtension> | null = null;
+
+function loadUndoSendExtension(): Promise<UndoSendExtension>
+{
+	undoSendExtensionPromise ??= Runtime.loadExtension('mail.client.undo-send') as unknown as Promise<UndoSendExtension>;
+
+	return undoSendExtensionPromise;
+}
 
 function runAction<T>(action: string, data: RequestData = {}): Promise<AjaxResponse<T>>
 {
@@ -57,6 +83,15 @@ export const Api = {
 	},
 
 	/**
+	 * Subject out of the body being composed by `mail.api.composeform.generateSubject`. The action is POST-only,
+	 * which `runAction` sends by default; the answer carries either a ready subject or the hash of a deferred job.
+	 */
+	generateSubject(request: GenerateSubjectRequest): Promise<AjaxResponse<GenerateSubjectResponse>>
+	{
+		return runAction<GenerateSubjectResponse>('generateSubject', { ...request });
+	},
+
+	/**
 	 * The request is the serialisation of the real server form: `multipart/form-data` to the address of its
 	 * `action`, with the fields, the files of the uploader control and the `sessid` coming from the form itself.
 	 * The action belongs to `bitrix:mail.client` and not to a controller of the module, so `runAction` does not
@@ -74,5 +109,15 @@ export const Api = {
 				},
 			});
 		});
+	},
+
+	async createUndoSend(request: CreateUndoSendRequest): Promise<UndoSendOperationDto>
+	{
+		return (await loadUndoSendExtension()).undoSendApi.create(request);
+	},
+
+	async showUndoSend(operation: UndoSendOperationDto): Promise<void>
+	{
+		(await loadUndoSendExtension()).undoSendNotification.show(operation);
 	},
 };

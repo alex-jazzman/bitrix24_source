@@ -2,6 +2,27 @@ import { Dom, Type, Event, Uri } from 'main.core';
 import type { LoaderOption } from './loader-option';
 import { Switchboard } from './switchboard';
 
+export type BxAiConfig = {
+	version: number,
+	enabled: boolean,
+	mode: 'analyze' | 'notify',
+	labels: { action: string, unavailable: string, busy: string },
+};
+
+export type BxAiConfigResult = {
+	version: number,
+	applied: boolean,
+	supportedVersions: number[],
+};
+
+export type BxAiState = {
+	version: number,
+	busyRequestId: string | null,
+	doneRequestId?: string,
+};
+
+const BX_AI_STATE_TIMEOUT_MS = 3000;
+
 export class ApacheSupersetEmbeddedLoader
 {
 	static IFRAME_COMMS_MESSAGE_TYPE = '__embedded_comms__';
@@ -54,6 +75,10 @@ export class ApacheSupersetEmbeddedLoader
 		const getActiveTabs = () => this.#switchboard.get('getActiveTabs');
 		const getScreenshot = () => this.#switchboard.get('getScreenshot');
 		const getPdf = () => this.#switchboard.get('getPdf');
+		const getDataMask = (signal?: AbortSignal) => this.#switchboard.get('getDataMask', undefined, { signal });
+		const observeDataMask = (callback: (dataMask: Object) => void) => {
+			this.#switchboard.defineMethod('observeDataMask', callback);
+		};
 
 		return {
 			getScrollSize,
@@ -61,6 +86,8 @@ export class ApacheSupersetEmbeddedLoader
 			getActiveTabs,
 			getScreenshot,
 			getPdf,
+			getDataMask,
+			observeDataMask,
 		};
 	}
 
@@ -89,6 +116,11 @@ export class ApacheSupersetEmbeddedLoader
 			configNumber += 8;
 		}
 
+		if (dashboardUiConfig.emitDataMasks)
+		{
+			configNumber += 16;
+		}
+
 		return configNumber;
 	}
 
@@ -114,6 +146,14 @@ export class ApacheSupersetEmbeddedLoader
 			const supersetDomain = this.#options.supersetDomain;
 			const debug = this.#options.debug;
 
+			if (!ApacheSupersetEmbeddedLoader.#hasAllowedScheme(supersetDomain))
+			{
+				this.log('superset domain scheme is not allowed, rejecting');
+				reject(new Error('Embedded dashboard domain is not allowed'));
+
+				return;
+			}
+
 			const onAlive = (event) => {
 				if (
 					event.source === iframe.contentWindow
@@ -131,6 +171,11 @@ export class ApacheSupersetEmbeddedLoader
 			Event.bind(window, 'message', onAlive);
 
 			iframe.style.visibility = 'hidden';
+
+			if (Type.isStringFilled(this.#options.title))
+			{
+				Dom.attr(iframe, 'title', this.#options.title);
+			}
 
 			// set up the iframe's sandbox configuration
 			iframe.sandbox.add('allow-same-origin'); // needed for postMessage to work
@@ -190,6 +235,20 @@ export class ApacheSupersetEmbeddedLoader
 		});
 	}
 
+	static #hasAllowedScheme(domain: string): boolean
+	{
+		const allowedSchemes = ['http:', 'https:'];
+
+		try
+		{
+			return allowedSchemes.includes(new URL(domain).protocol);
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
 	// Need patched superset with getScreenshot and getPdf actions - superset-frontend/src/embedded/api.tsx:61
 	getScreenshot(): Promise
 	{
@@ -234,6 +293,52 @@ export class ApacheSupersetEmbeddedLoader
 		}
 
 		return this.#switchboard.get('getExternalFilterValues');
+	}
+
+	defineFrameMethod(name: string, executor: (args: Object) => any): void
+	{
+		if (!this.#switchboard)
+		{
+			throw new Error('Switchboard not initialized');
+		}
+
+		this.#switchboard.defineMethod(name, executor);
+	}
+
+	setBxAiConfig(config: BxAiConfig, signal?: AbortSignal): Promise<BxAiConfigResult>
+	{
+		if (!this.#switchboard)
+		{
+			return Promise.reject(new Error('Switchboard not initialized'));
+		}
+
+		return this.#switchboard.get('setBxAiConfig', config, { signal });
+	}
+
+	/**
+	 * Channel errors and timeouts are not rethrown: the frame releases a stale busy state by itself.
+	 */
+	async setBxAiState(state: BxAiState): Promise<void>
+	{
+		if (!this.#switchboard)
+		{
+			return;
+		}
+
+		const controller = new AbortController();
+		const timerId = setTimeout(() => controller.abort(), BX_AI_STATE_TIMEOUT_MS);
+		try
+		{
+			await this.#switchboard.get('setBxAiState', state, { signal: controller.signal });
+		}
+		catch (error)
+		{
+			this.log('setBxAiState failed', error);
+		}
+		finally
+		{
+			clearTimeout(timerId);
+		}
 	}
 
 	log(...info: []): void

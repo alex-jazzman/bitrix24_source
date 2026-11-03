@@ -50,7 +50,7 @@ export const Content = {
 					{
 						this[code] = data[code];
 					}
-					// todo: and crete refs if not exists?
+					// todo: and create refs if not exists?
 				});
 			}
 		},

@@ -1,12 +1,12 @@
 <?php
 $MESS["TILE_UPLOADER_CANCEL_UPLOAD_LABEL"] = "Cancel file upload";
 $MESS["TILE_UPLOADER_DROP_FILES_HERE"] = "Drop your files here";
-$MESS["TILE_UPLOADER_DROP_KEYBOARD_HINT"] = "Press Enter or Space to open the file picker";
-$MESS["TILE_UPLOADER_ERROR_ANNOUNCE"] = "Failed to upload files";
+$MESS["TILE_UPLOADER_DROP_KEYBOARD_HINT"] = "Press Enter or Space to open the file selection dialog box";
+$MESS["TILE_UPLOADER_ERROR_ANNOUNCE"] = "Could not upload files";
 $MESS["TILE_UPLOADER_ERROR_STATUS"] = "Error";
 $MESS["TILE_UPLOADER_FILE_ADDED_ANNOUNCE"] = "File added: #FILENAME#";
-$MESS["TILE_UPLOADER_FILE_ERROR_ANNOUNCE"] = "Failed to upload file #FILENAME#";
-$MESS["TILE_UPLOADER_FILE_INSERTED_STATUS"] = "File inserted into text";
+$MESS["TILE_UPLOADER_FILE_ERROR_ANNOUNCE"] = "Could not upload file #FILENAME#";
+$MESS["TILE_UPLOADER_FILE_INSERTED_STATUS"] = "File added to the text";
 $MESS["TILE_UPLOADER_FILE_LIST_LABEL"] = "Attached files";
 $MESS["TILE_UPLOADER_FILE_REMOVED_ANNOUNCE"] = "File removed: #FILENAME#";
 $MESS["TILE_UPLOADER_FILE_SIZE"] = "File size: #filesize#";
@@ -15,8 +15,8 @@ $MESS["TILE_UPLOADER_ITEM_MENU_LABEL"] = "File actions";
 $MESS["TILE_UPLOADER_MENU_DOWNLOAD"] = "Download";
 $MESS["TILE_UPLOADER_MENU_REMOVE"] = "Delete";
 $MESS["TILE_UPLOADER_MORE_BUTTON_CAPTION"] = "#COUNT# more";
-$MESS["TILE_UPLOADER_OPEN_FILE_LABEL"] = "Open file #FILENAME#";
+$MESS["TILE_UPLOADER_OPEN_FILE_LABEL"] = "Open #FILENAME#";
 $MESS["TILE_UPLOADER_REMOVE_FILE_LABEL"] = "Remove file";
 $MESS["TILE_UPLOADER_SETTINGS_LABEL"] = "File upload settings";
-$MESS["TILE_UPLOADER_UPLOAD_PROGRESS_LABEL"] = "Uploading file";
+$MESS["TILE_UPLOADER_UPLOAD_PROGRESS_LABEL"] = "Upload file";
 $MESS["TILE_UPLOADER_WAITING_STATUS"] = "Waiting";

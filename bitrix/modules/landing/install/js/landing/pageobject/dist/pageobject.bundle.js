@@ -1,172 +1,177 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports, main_core) {
 	'use strict';
 
 	/**
 	 * @memberOf BX.Landing
 	 */
-	var PageObject = /*#__PURE__*/function () {
-	  function PageObject() {
-	    babelHelpers.classCallCheck(this, PageObject);
-	    babelHelpers.defineProperty(this, "store", {});
-	  }
-	  babelHelpers.createClass(PageObject, [{
-	    key: "top",
-	    /**
-	     * @deprecated
-	     * @see PageObject.getTopPanel()
-	     * @return {Promise}
-	     */
-	    value: function top() {
-	      var _this = this;
-	      return new Promise(function (resolve, reject) {
-	        if (!_this.store.topPanel) {
-	          _this.store.topPanel = PageObject.getTopPanel();
-	        }
-	        if (_this.store.topPanel) {
-	          resolve(_this.store.topPanel);
-	          return;
-	        }
-	        reject(new Error('Top panel unavailable'));
-	        console.warn('Top panel unavailable');
-	      });
-	    }
-	    /**
-	     * @deprecated
-	     * @see BX.Landing.UI.Panel.StylePanel.getInstance()
-	     * @return {Promise}
-	     */
-	  }, {
-	    key: "design",
-	    value: function design() {
-	      return Promise.resolve(BX.Landing.UI.Panel.StylePanel.getInstance());
-	    }
-	    /**
-	     * @deprecated
-	     * @see BX.Landing.UI.Panel.ContentEdit.getInstance()
-	     * @return {Promise}
-	     */
-	  }, {
-	    key: "content",
-	    value: function content() {
-	      return Promise.resolve(BX.Landing.UI.Panel.ContentEdit.getInstance());
-	    }
-	    /**
-	     * @deprecated
-	     * @see BX.Landing.UI.Panel.EditorPanel.getInstance()
-	     * @return {Promise}
-	     */
-	  }, {
-	    key: "inlineEditor",
-	    value: function inlineEditor() {
-	      return Promise.resolve(BX.Landing.UI.Panel.EditorPanel.getInstance());
-	    }
-	    /**
-	     * @deprecated
-	     * @see PageObject.getEditorWindow()
-	     * @return {Promise}
-	     */
-	  }, {
-	    key: "view",
-	    value: function view() {
-	      var _this2 = this;
-	      return new Promise(function (resolve, reject) {
-	        if (!_this2.store.view) {
-	          var rootWindow = PageObject.getRootWindow();
-	          _this2.store.view = rootWindow.document.querySelector('.landing-ui-view');
-	        }
-	        if (_this2.store.view) {
-	          resolve(_this2.store.view);
-	          return;
-	        }
-	        reject(new Error('View iframe unavailable'));
-	        console.warn('View iframe unavailable');
-	      });
-	    }
-	    /**
-	     * @deprecated
-	     * @see BX.Landing.Block.storage
-	     * @return {Promise}
-	     */
-	  }, {
-	    key: "blocks",
-	    value: function blocks() {
-	      return Promise.resolve(PageObject.getRootWindow().BX.Landing.Block.storage);
-	    }
-	  }], [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      if (main_core.Type.isNil(PageObject.instance)) {
-	        PageObject.instance = new PageObject();
-	      }
-	      return PageObject.instance;
-	    }
-	  }, {
-	    key: "getRootWindow",
-	    value: function getRootWindow() {
-	      return this.cache.remember('rootWindow', function () {
-	        var frames = window.top.frames;
-	        for (var i = frames.length - 1; i >= 0; i--) {
-	          try {
-	            if (frames[i].document.body && frames[i].document.body.querySelector('.landing-ui-view')) {
-	              return frames[i];
-	            }
-	          } catch (e) {}
-	        }
-	        return window.top;
-	      });
-	    }
-	  }, {
-	    key: "getEditorWindow",
-	    value: function getEditorWindow() {
-	      var _this3 = this;
-	      return this.cache.remember('editorWindow', function () {
-	        var rootWindow = _this3.getRootWindow();
-	        var rootDocument = rootWindow.document;
-	        var editorFrame = rootDocument.querySelector('.landing-ui-view');
-	        if (editorFrame && editorFrame.contentWindow) {
-	          return editorFrame.contentWindow;
-	        }
-	        return null;
-	      });
-	    }
-	  }, {
-	    key: "getTopPanel",
-	    value: function getTopPanel() {
-	      var _this4 = this;
-	      return this.cache.remember('topPanel', function () {
-	        return _this4.getRootWindow().document.querySelector('.landing-ui-panel-top');
-	      });
-	    }
-	  }, {
-	    key: "getEditPanelContent",
-	    value: function getEditPanelContent() {
-	      var _this5 = this;
-	      return this.cache.remember('editPanel', function () {
-	        return _this5.getRootWindow().document.querySelector('.landing-ui-panel-content.landing-ui-panel-content-edit .landing-ui-panel-content-body-content');
-	      });
-	    }
-	  }, {
-	    key: "getStylePanelContent",
-	    value: function getStylePanelContent() {
-	      var _this6 = this;
-	      return this.cache.remember('stylePanel', function () {
-	        return _this6.getRootWindow().document.querySelector('.landing-ui-panel-content.landing-ui-panel-style .landing-ui-panel-content-body-content');
-	      });
-	    }
-	  }, {
-	    key: "getBlocks",
-	    value: function getBlocks() {
-	      return this.getRootWindow().BX.Landing.Block.storage;
-	    }
-	  }]);
-	  return PageObject;
-	}();
-	babelHelpers.defineProperty(PageObject, "cache", new main_core.Cache.MemoryCache());
-	babelHelpers.defineProperty(PageObject, "instance", null);
+	class PageObject {
+		static cache = new main_core.Cache.MemoryCache();
+		static instance = null;
+		store = {};
+		static getInstance() {
+			if (main_core.Type.isNil(PageObject.instance)) {
+				PageObject.instance = new PageObject();
+			}
+			return PageObject.instance;
+		}
+		static getRootWindow() {
+			return this.cache.remember('rootWindow', () => {
+				const topWindow = window.top;
+				const directFrames = PageObject.#getSameOriginFrames(topWindow);
+				const directRoot = directFrames.find(frame => PageObject.#hasEditorFrame(frame));
+				if (directRoot) {
+					return directRoot;
+				}
+				if (PageObject.#hasEditorFrame(topWindow)) {
+					return topWindow;
+				}
+
+				// The editor may live deeper, e.g. the group page opened by a direct link
+				let frames = directFrames;
+				while (frames.length > 0) {
+					frames = frames.flatMap(frame => PageObject.#getSameOriginFrames(frame));
+					const nestedRoot = frames.find(frame => PageObject.#hasEditorFrame(frame));
+					if (nestedRoot) {
+						return nestedRoot;
+					}
+				}
+				return topWindow;
+			});
+		}
+
+		/**
+		 * Child frames of the window, from the last to the first; cross-origin ones are skipped with their subtree.
+		 */
+		static #getSameOriginFrames(parentWindow) {
+			const result = [];
+			const frames = parentWindow.frames;
+			for (let i = frames.length - 1; i >= 0; i--) {
+				try {
+					if (frames[i].document) {
+						result.push(frames[i]);
+					}
+				} catch {
+					// cross-origin frame
+				}
+			}
+			return result;
+		}
+		static #hasEditorFrame(win) {
+			try {
+				return Boolean(win.document.body && win.document.body.querySelector('.landing-ui-view'));
+			} catch {
+				return false;
+			}
+		}
+		static getEditorWindow() {
+			return this.cache.remember('editorWindow', () => {
+				const rootWindow = this.getRootWindow();
+				const rootDocument = rootWindow.document;
+				const editorFrame = rootDocument.querySelector('.landing-ui-view');
+				if (editorFrame && editorFrame.contentWindow) {
+					return editorFrame.contentWindow;
+				}
+				return null;
+			});
+		}
+		static getTopPanel() {
+			return this.cache.remember('topPanel', () => {
+				return this.getRootWindow().document.querySelector('.landing-ui-panel-top');
+			});
+		}
+		static getEditPanelContent() {
+			return this.cache.remember('editPanel', () => {
+				return this.getRootWindow().document.querySelector('.landing-ui-panel-content.landing-ui-panel-content-edit .landing-ui-panel-content-body-content');
+			});
+		}
+		static getStylePanelContent() {
+			return this.cache.remember('stylePanel', () => {
+				return this.getRootWindow().document.querySelector('.landing-ui-panel-content.landing-ui-panel-style .landing-ui-panel-content-body-content');
+			});
+		}
+		static getBlocks() {
+			return this.getRootWindow().BX.Landing.Block.storage;
+		}
+
+		/**
+		 * @deprecated
+		 * @see PageObject.getTopPanel()
+		 * @return {Promise}
+		 */
+		top() {
+			return new Promise((resolve, reject) => {
+				if (!this.store.topPanel) {
+					this.store.topPanel = PageObject.getTopPanel();
+				}
+				if (this.store.topPanel) {
+					resolve(this.store.topPanel);
+					return;
+				}
+				reject(new Error('Top panel unavailable'));
+				console.warn('Top panel unavailable');
+			});
+		}
+
+		/**
+		 * @deprecated
+		 * @see BX.Landing.UI.Panel.StylePanel.getInstance()
+		 * @return {Promise}
+		 */
+		design() {
+			return Promise.resolve(BX.Landing.UI.Panel.StylePanel.getInstance());
+		}
+
+		/**
+		 * @deprecated
+		 * @see BX.Landing.UI.Panel.ContentEdit.getInstance()
+		 * @return {Promise}
+		 */
+		content() {
+			return Promise.resolve(BX.Landing.UI.Panel.ContentEdit.getInstance());
+		}
+
+		/**
+		 * @deprecated
+		 * @see BX.Landing.UI.Panel.EditorPanel.getInstance()
+		 * @return {Promise}
+		 */
+		inlineEditor() {
+			return Promise.resolve(BX.Landing.UI.Panel.EditorPanel.getInstance());
+		}
+
+		/**
+		 * @deprecated
+		 * @see PageObject.getEditorWindow()
+		 * @return {Promise}
+		 */
+		view() {
+			return new Promise((resolve, reject) => {
+				if (!this.store.view) {
+					const rootWindow = PageObject.getRootWindow();
+					this.store.view = rootWindow.document.querySelector('.landing-ui-view');
+				}
+				if (this.store.view) {
+					resolve(this.store.view);
+					return;
+				}
+				reject(new Error('View iframe unavailable'));
+				console.warn('View iframe unavailable');
+			});
+		}
+
+		/**
+		 * @deprecated
+		 * @see BX.Landing.Block.storage
+		 * @return {Promise}
+		 */
+		blocks() {
+			return Promise.resolve(PageObject.getRootWindow().BX.Landing.Block.storage);
+		}
+	}
 
 	exports.PageObject = PageObject;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX));
+})(this.BX.Landing = this.BX.Landing || {}, BX);
 //# sourceMappingURL=pageobject.bundle.js.map

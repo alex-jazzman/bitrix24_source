@@ -7,6 +7,7 @@ $MESS["UI_DATE_PICKER_MONTH_VIEW_LABEL"] = "Select month";
 $MESS["UI_DATE_PICKER_NEXT_DECADE"] = "Next 12 years";
 $MESS["UI_DATE_PICKER_NEXT_MONTH"] = "Next month";
 $MESS["UI_DATE_PICKER_NEXT_YEAR"] = "Next year";
+$MESS['UI_DATE_PICKER_PERIOD_BOUNDARY_REACHED'] = 'Cannot move in this direction';
 $MESS["UI_DATE_PICKER_PRESETS_LABEL"] = "Date picker";
 $MESS["UI_DATE_PICKER_PREV_DECADE"] = "Previous 12 years";
 $MESS["UI_DATE_PICKER_PREV_MONTH"] = "Previous month";

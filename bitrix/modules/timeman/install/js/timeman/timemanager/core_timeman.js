@@ -7427,7 +7427,7 @@ BX.JSTimeManReportFullForm.prototype.GetContent = function()
 			});
 		}
 		this.enterHandler = function(e) {if(((e.keyCode == 0xA)||(e.keyCode == 0xD)) && e.ctrlKey == true) this.AddComment();}
-		this.comment_form = BX.create("DIV",{
+		this.comment_form = this.data.INFO.CAN_ADD_COMMENT === 'Y' ? BX.create("DIV",{
 			props:{className:"tm-comment-link-div"},
 			children:[
 				this.comment_link_span = BX.create("SPAN",{
@@ -7469,7 +7469,7 @@ BX.JSTimeManReportFullForm.prototype.GetContent = function()
 					]
 				}))
 			]
-		});
+		}) : null;
 		content.appendChild(
 				BX.create('DIV', {
 				children:[

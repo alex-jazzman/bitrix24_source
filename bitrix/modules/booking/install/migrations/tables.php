@@ -72,7 +72,7 @@ $migration->table('b_booking_resource_data')->create(function (CreateTableBuilde
 	$columns->varchar('NAME', 255)->notNull();
 	$columns->text('DESCRIPTION');
 	$columns->char('IS_DELETED', 1)->notNull()->default('N');
-	$columns->timestamp('DELETED_AT');
+	$columns->datetime('DELETED_AT');
 	$columns->timestamp('CREATED_AT')->defaultCurrentTimestamp();
 	$columns->timestamp('UPDATED_AT')->defaultCurrentTimestamp();
 	$columns->bigInt('CREATED_BY')->unsigned()->notNull();
@@ -139,14 +139,14 @@ $migration->table('b_booking_booking')->create(function (CreateTableBuilder $tab
 	$columns->int('PARENT_ID')->unsigned();
 	$columns->char('IS_DELETED', 1)->notNull()->default('N');
 	$columns->char('IS_CONFIRMED', 1)->notNull()->default('N');
-	$columns->timestamp('CONFIRMED_AT');
+	$columns->datetime('CONFIRMED_AT');
 	$columns->text('DESCRIPTION');
 	$columns->varchar('VISIT_STATUS', 20)->notNull()->default('unknown');
 	$columns->varchar('SOURCE', 20)->notNull()->default('internal');
 	$columns->varchar('DELETION_SCENARIO', 20);
 	$columns->timestamp('CREATED_AT')->defaultCurrentTimestamp();
 	$columns->timestamp('UPDATED_AT')->defaultCurrentTimestamp();
-	$columns->timestamp('DELETED_AT');
+	$columns->datetime('DELETED_AT');
 	$columns->bigInt('CREATED_BY')->unsigned()->notNull();
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_BB_IS_DELETED_DATE_FROM_DATE_MAX', ['IS_DELETED', 'DATE_FROM', 'DATE_MAX']);
@@ -270,7 +270,7 @@ $migration->table('b_booking_booking_message')->create(function (CreateTableBuil
 	$columns->timestamp('CREATED_AT')->defaultCurrentTimestamp();
 	$columns->varchar('STATUS', 20)->notNull()->default('success');
 	$columns->int('RETRY_COUNT')->unsigned()->notNull()->default('0');
-	$columns->timestamp('NEXT_RETRY_AT');
+	$columns->datetime('NEXT_RETRY_AT');
 	$columns->timestamp('SENT_AT')->notNull()->defaultCurrentTimestamp();
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_BBM_COMPLEX_1', ['BOOKING_ID', 'NOTIFICATION_TYPE', 'SENT_AT']);

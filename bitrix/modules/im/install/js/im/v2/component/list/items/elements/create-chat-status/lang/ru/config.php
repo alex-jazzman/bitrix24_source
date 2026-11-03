@@ -7,3 +7,4 @@ $MESS['IM_LIST_RECENT_CREATE_CHAT_SUBTITLE'] = "Создание чата";
 $MESS['IM_LIST_RECENT_CREATE_CONFERENCE_SUBTITLE'] = "Создание видеоконференции";
 $MESS['IM_LIST_RECENT_CREATE_CHANNEL_SUBTITLE'] = "Создание канала";
 $MESS['IM_LIST_RECENT_CREATE_COLLAB_SUBTITLE'] = "Создание коллабы";
+$MESS['IM_LIST_RECENT_CREATE_CHAT_CANCEL_ARIA'] = "Отменить создание";

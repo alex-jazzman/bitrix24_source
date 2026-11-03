@@ -15,6 +15,11 @@ export const AiAssistantBotContent = {
 			type: Boolean,
 			default: true,
 		},
+		// pass-through only: this content serves both the messenger and the embeddable widget
+		withKeyboardNavigation: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	methods:
 	{
@@ -28,7 +33,7 @@ export const AiAssistantBotContent = {
 			<template #header v-if="$slots['header']">
 				<slot name="header"></slot>
 			</template>
-			<template #textarea="{ onTextareaMount }">
+			<template #textarea>
 				<ChatTextarea
 					:dialogId="dialogId"
 					:key="dialogId"
@@ -37,7 +42,7 @@ export const AiAssistantBotContent = {
 					:withEdit="false"
 					:withUploadMenu="false"
 					:withSmileSelector="false"
-					@mounted="onTextareaMount"
+					:withKeyboardNavigation="withKeyboardNavigation"
 				>
 					<template #bottom-panel-buttons>
 						<McpIntegration />

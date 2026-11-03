@@ -31,8 +31,6 @@ export const CALL_ALREADY_FINISHED_EVENT = 'BX.Call.Engine:callAlreadyFinished';
 let userData = {}
 let usersInProcess = {}
 
-let abortController = null;
-
 /* User role & room permission */
 let roomPermissions =
 {
@@ -1042,7 +1040,11 @@ function getCallConnectionErrorCode(error)
 	}
 	else if (Type.isObject(error) && error instanceof JoinResponseError)
 	{
-		errorCode = error.name;
+		// Codes outside JoinRequestFailedCodes collapse into name 'UnknownError',
+		// while the raw server code (e.g. all_users_busy) survives in error.code.
+		errorCode = error.name === 'UnknownError' && Type.isStringFilled(error.code)
+			? error.code
+			: error.name;
 	}
 	else if (Type.isObject(error) && error.code)
 	{
@@ -1070,35 +1072,108 @@ function getCallConnectionErrorMessage(error)
 	return errorMessage;
 }
 
-const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
-	if (!Type.isPlainObject(callOptions))
-	{
-		return Promise.reject(new Error('Incorrect type of callOptions'));
-	}
+/**
+ * Offline reclassification gate (STATUS-01): a network FailedRequest reported while the client is
+ * confirmed offline. navigator is not read here — isOnline is passed in for testability, so the
+ * boundary stays strictly navigator.onLine === false at the single call site (controller.js).
+ *
+ * @param {string} errorCode
+ * @param {boolean} isOnline
+ * @returns {boolean}
+ */
+function isOfflineJoinFailure(errorCode, isOnline)
+{
+	return errorCode === JoinRequestFailedCodes.FailedRequest && isOnline === false;
+}
 
-	if (
-		mustCreate === false
-		&& callOptions.callUuid
-		&& stuckCallFinishTracker.isRecentlyClosed(callOptions.callUuid)
-	)
-	{
-		EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, { callUuid: callOptions.callUuid });
+// Bounded resilience for the user-initiated /v2/join: a transient network blip
+// (fetch TypeError or a per-attempt timeout) is retried with a growing backoff.
+// The reconnect path (getCallConnectionDataById) opts out and stays single-shot.
+const JOIN_RETRY_MAX_ATTEMPTS = 3;
+const JOIN_RETRY_BASE_DELAY_MS = 300;
+const JOIN_RETRY_MAX_DELAY_MS = 2000;
+const JOIN_REQUEST_TIMEOUT_MS = 10000;
 
-		const recentlyClosedError = new JoinResponseError('room recently closed', JoinRequestFailedCodes.CanNotCreateRoom);
-		recentlyClosedError.isRoomClosed = true;
+// Registry of in-flight getCallConnectionData calls. abortGetCallConnectionData()
+// (called externally without a handle) walks it to cancel every active join. Each
+// call owns its abortController/externalAborted/backoff-cancel, so a per-attempt
+// timeout aborts only its own attempt and never a concurrent call's fetch.
+const activeJoinInvocations = new Set();
 
-		return Promise.reject(recentlyClosedError);
-	}
+const createJoinInvocationState = () =>
+{
+	const state = {
+		abortController: null,
+		externalAborted: false,
+		cancelBackoff: null,
+	};
 
+	state.handle = {
+		abort: () => state.abortController?.abort(),
+		markExternalAborted: () => { state.externalAborted = true; },
+		cancelBackoff: () => state.cancelBackoff?.(),
+	};
+
+	return state;
+};
+
+const getJoinRetryDelay = (attempt) => Math.min(
+	JOIN_RETRY_BASE_DELAY_MS * (2 ** (attempt - 1)),
+	JOIN_RETRY_MAX_DELAY_MS,
+);
+
+const isTransientJoinFailure = (error) => (
+	error instanceof JoinResponseError && error.code === JoinRequestFailedCodes.FailedRequest
+);
+
+const createJoinAbortError = () =>
+{
+	const error = new Error('Join request aborted');
+	error.name = 'AbortError';
+	// Keep the machine-readable cancel code so a retry aborted out of the loop (external cancel
+	// during backoff) still classifies as AbortedRequest in getCallConnectionErrorCode, not
+	// CLIENT_UNCLASSIFIED — this plain Error skips the fetch-catch JoinResponseError wrapping.
+	error.code = JoinRequestFailedCodes.AbortedRequest;
+
+	return error;
+};
+
+const waitJoinRetryBackoff = (state, ms) => new Promise((resolve) => {
+	const timeoutId = setTimeout(() => {
+		state.cancelBackoff = null;
+		resolve();
+	}, ms);
+
+	state.cancelBackoff = () => {
+		clearTimeout(timeoutId);
+		state.cancelBackoff = null;
+		resolve();
+	};
+});
+
+const runJoinAttempt = (state, abortController, callOptions, chatId, mustCreate) =>
+{
 	return new Promise(async (resolve, reject) =>
 	{
 		try
 		{
-			abortController = new AbortController();
+			// The caller owns the controller so the per-attempt timeout/external abort can bound the
+			// whole attempt (token load included), not just the fetch after the token resolves.
+			state.abortController = abortController;
 			const callBalancerUrl = CallSettingsManager.callBalancerUrl;
 			const url = `${callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
 
 			const userToken = await CallTokenManager.getUserToken(chatId);
+
+			// Aborted (timed out or externally) while the token was loading: settle as an abort and
+			// issue no network request, so a late token cannot leak a stray fetch to the balancer.
+			if (abortController.signal.aborted)
+			{
+				reject(createJoinAbortError());
+
+				return;
+			}
+
 			const isPlainCall = callOptions.provider === Provider.Plain;
 
 			const data = JSON.stringify({
@@ -1262,9 +1337,6 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 					}
 
 					reject(error);
-				})
-				.finally(() => {
-					abortController = null;
 				});
 		}
 		catch (error)
@@ -1272,6 +1344,110 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 			reject(error);
 		}
 	});
+};
+
+const getCallConnectionData = async (callOptions, chatId, mustCreate = true, withRetry = false) =>
+{
+	if (!Type.isPlainObject(callOptions))
+	{
+		return Promise.reject(new Error('Incorrect type of callOptions'));
+	}
+
+	if (
+		mustCreate === false
+		&& callOptions.callUuid
+		&& stuckCallFinishTracker.isRecentlyClosed(callOptions.callUuid)
+	)
+	{
+		EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, { callUuid: callOptions.callUuid });
+
+		const recentlyClosedError = new JoinResponseError('room recently closed', JoinRequestFailedCodes.CanNotCreateRoom);
+		recentlyClosedError.isRoomClosed = true;
+
+		return Promise.reject(recentlyClosedError);
+	}
+
+	// Per-call state + registry entry so an external abort can reach this call while a
+	// per-attempt timeout stays scoped to its own attempt (no shared controller).
+	const state = createJoinInvocationState();
+	activeJoinInvocations.add(state.handle);
+
+	try
+	{
+		if (!withRetry)
+		{
+			const abortController = new AbortController();
+			state.abortController = abortController;
+
+			return await runJoinAttempt(state, abortController, callOptions, chatId, mustCreate);
+		}
+
+		let lastError = null;
+
+		for (let attempt = 1; attempt <= JOIN_RETRY_MAX_ATTEMPTS; attempt++)
+		{
+			let timedOut = false;
+			// Fresh controller per attempt; abort() (from the timeout or an external cancel) bounds the
+			// whole attempt via the race below — including a hung getUserToken, not only the fetch.
+			const abortController = new AbortController();
+			state.abortController = abortController;
+
+			const attemptSettled = new Promise((_, rejectAttempt) => {
+				abortController.signal.addEventListener('abort', () => {
+					rejectAttempt(createJoinAbortError());
+				}, { once: true });
+			});
+
+			const timeoutId = setTimeout(() => {
+				timedOut = true;
+				abortController.abort();
+			}, JOIN_REQUEST_TIMEOUT_MS);
+
+			try
+			{
+				return await Promise.race([
+					runJoinAttempt(state, abortController, callOptions, chatId, mustCreate),
+					attemptSettled,
+				]);
+			}
+			catch (error)
+			{
+				// External abort (abortGetCallConnectionData) stops the cycle at once, no retry.
+				if (state.externalAborted)
+				{
+					throw createJoinAbortError();
+				}
+
+				lastError = error;
+				const canRetry = (timedOut || isTransientJoinFailure(error)) && attempt < JOIN_RETRY_MAX_ATTEMPTS;
+				if (!canRetry)
+				{
+					// A self-inflicted per-attempt timeout is an online transport failure (externalAborted
+					// is already handled above): keep it FailedRequest so the outcome is not reclassified
+					// as AbortedRequest outside the navigator.onLine boundary.
+					throw timedOut
+						? new JoinResponseError(error, JoinRequestFailedCodes.FailedRequest)
+						: error;
+				}
+
+				await waitJoinRetryBackoff(state, getJoinRetryDelay(attempt));
+				if (state.externalAborted)
+				{
+					throw createJoinAbortError();
+				}
+			}
+			finally
+			{
+				clearTimeout(timeoutId);
+			}
+		}
+
+		throw lastError;
+	}
+	finally
+	{
+		activeJoinInvocations.delete(state.handle);
+	}
 };
 
 const getCallConnectionDataById = async (callUuid) => {
@@ -1297,7 +1473,13 @@ const getCallConnectionDataById = async (callUuid) => {
 };
 
 const abortGetCallConnectionData = () => {
-	abortController?.abort();
+	// Abort every in-flight join: preserves the external-cancel contract (called
+	// without a handle) now that state is per-call rather than module-global.
+	activeJoinInvocations.forEach((handle) => {
+		handle.markExternalAborted();
+		handle.abort();
+		handle.cancelBackoff();
+	});
 };
 
 function startSelfTest()
@@ -1377,14 +1559,14 @@ const isPictureInPictureFeatureEnabled = () =>
 	return Extension.getSettings('call.core')?.isPictureInPictureFeatureEnabled;
 }
 
-const isMetricsEnabled = () =>
+const isWebPushToTalkEnabled = () =>
 {
-	return Extension.getSettings('call.core')?.isMetricsEnabled;
+	return Extension.getSettings('call.core')?.isWebPushToTalkEnabled;
 }
 
-const isMetricsLogsEnabled = () =>
+const isPushToTalkAvailable = () =>
 {
-	return Extension.getSettings('call.core')?.isMetricsLogsEnabled;
+	return isDesktop() || isWebPushToTalkEnabled() === true;
 }
 
 const isKibanaLogsEnabled = () =>
@@ -1408,6 +1590,28 @@ const isCloudRecordTariffEnabled = () => {
 
 const isCloudRecordLogEnabled = () => {
 	return Extension.getSettings('call.core')?.isCloudRecordLogEnabled;
+};
+
+const getNqeParams = () => {
+	const callSettings = Extension.getSettings('call.core')?.call || {};
+	return {
+		autoBalanceEnabled: callSettings.autoBalanceEnabled,
+		nqeDowngradeWindowSec: callSettings.nqeDowngradeWindowSec,
+		nqeUpgradeWindowSec: callSettings.nqeUpgradeWindowSec,
+		nqeWarmupSec: callSettings.nqeWarmupSec,
+		nqeHighDowngradePacketsLostPct: callSettings.nqeHighDowngradePacketsLostPct,
+		nqeHighDowngradeRttMs: callSettings.nqeHighDowngradeRttMs,
+		nqeHighDowngradeJitterMs: callSettings.nqeHighDowngradeJitterMs,
+		nqeMedDowngradePacketsLostPct: callSettings.nqeMedDowngradePacketsLostPct,
+		nqeMedDowngradeRttMs: callSettings.nqeMedDowngradeRttMs,
+		nqeMedDowngradeJitterMs: callSettings.nqeMedDowngradeJitterMs,
+		nqeMedUpgradePacketsLostPct: callSettings.nqeMedUpgradePacketsLostPct,
+		nqeMedUpgradeRttMs: callSettings.nqeMedUpgradeRttMs,
+		nqeMedUpgradeJitterMs: callSettings.nqeMedUpgradeJitterMs,
+		nqeLowUpgradePacketsLostPct: callSettings.nqeLowUpgradePacketsLostPct,
+		nqeLowUpgradeRttMs: callSettings.nqeLowUpgradeRttMs,
+		nqeLowUpgradeJitterMs: callSettings.nqeLowUpgradeJitterMs,
+	};
 };
 
 const isCommonRecordStateInactive = (state) => {
@@ -1546,10 +1750,6 @@ function getDisconnectedUsers(currentCall)
 	return result;
 }
 
-const isVueEnabled = () => {
-	return Extension.getSettings('call.core')?.isVueEnabled || false;
-};
-
 const getCallInvitePeriod = () => {
 	return Extension.getSettings('call.core')?.call?.callInvitePeriod ?? 30000;
 };
@@ -1627,10 +1827,11 @@ export default {
 	getSyncCallInvitePeriod,
 	isStreamQualityFeatureEnabled,
 	getCloudRecordSettings,
+	getNqeParams,
 	isUserControlFeatureEnabled,
 	isPictureInPictureFeatureEnabled,
-	isMetricsEnabled,
-	isMetricsLogsEnabled,
+	isWebPushToTalkEnabled,
+	isPushToTalkAvailable,
 	sendLog,
 	isChatMountInPage,
 	roomPermissions,
@@ -1661,10 +1862,10 @@ export default {
 	isCloudRecordLogEnabled,
 	getCallConnectionErrorCode,
 	getCallConnectionErrorMessage,
+	isOfflineJoinFailure,
 	isLegacyCall,
 	getCallIdentifier,
 	getClickLinkInterceptor,
 	getDisconnectedUsers,
-	isVueEnabled,
 	getCallInvitePeriod,
 };

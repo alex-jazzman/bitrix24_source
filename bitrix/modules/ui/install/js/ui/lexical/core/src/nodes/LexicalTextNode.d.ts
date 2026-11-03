@@ -6,10 +6,9 @@
  *
  */
 import type { EditorConfig, KlassConstructor, LexicalEditor, Spread } from '../LexicalEditor';
-import type { DOMConversionMap, DOMExportOutput, NodeKey, SerializedLexicalNode } from '../LexicalNode';
-import type { BaseSelection, RangeSelection } from '../LexicalSelection';
 import type { ElementNode } from './LexicalElementNode';
-import { LexicalNode } from '../LexicalNode';
+import { type DOMConversionOutput, type DOMExportOutput, LexicalNode, type LexicalUpdateJSON, type NodeKey, type SerializedLexicalNode } from '../LexicalNode';
+import { type BaseSelection, type RangeSelection } from '../LexicalSelection';
 export type SerializedTextNode = Spread<{
     detail: number;
     format: number;
@@ -18,20 +17,34 @@ export type SerializedTextNode = Spread<{
     text: string;
 }, SerializedLexicalNode>;
 export type TextDetailType = 'directionless' | 'unmergable';
-export type TextFormatType = 'bold' | 'underline' | 'strikethrough' | 'italic' | 'highlight' | 'code' | 'subscript' | 'superscript';
+export type TextFormatType = 'bold' | 'underline' | 'strikethrough' | 'italic' | 'highlight' | 'code' | 'subscript' | 'superscript' | 'lowercase' | 'uppercase' | 'capitalize';
 export type TextModeType = 'normal' | 'token' | 'segmented';
 export type TextMark = {
     end: null | number;
     id: string;
     start: null | number;
 };
-export type TextMarks = Array<TextMark>;
+export type TextMarks = TextMark[];
 export interface TextNode {
     getTopLevelElement(): ElementNode | null;
     getTopLevelElementOrThrow(): ElementNode;
 }
+export interface InlineFormattableNode {
+    /** @internal */
+    readonly __isInlineFormattable: true;
+    getFormat(): number;
+    getFormatFlags(type: TextFormatType, alignWithFormat: null | number): number;
+    hasFormat(type: TextFormatType): boolean;
+    setFormat(format: number): unknown;
+    toggleFormat(type: TextFormatType): unknown;
+}
+/** Returns true if the given node supports inline text formatting. */
+export declare function $isInlineFormattable(node: (LexicalNode & {
+    __isInlineFormattable?: unknown;
+}) | null | undefined): node is LexicalNode & InlineFormattableNode;
 /** @noInheritDoc */
-export declare class TextNode extends LexicalNode {
+export declare class TextNode extends LexicalNode implements InlineFormattableNode {
+    /** @internal */
     ['constructor']: KlassConstructor<typeof TextNode>;
     __text: string;
     /** @internal */
@@ -42,10 +55,64 @@ export declare class TextNode extends LexicalNode {
     __mode: 0 | 1 | 2 | 3;
     /** @internal */
     __detail: number;
-    static getType(): string;
-    static clone(node: TextNode): TextNode;
+    /** @internal */
+    get __isInlineFormattable(): true;
+    $config(): import("..").BaseStaticNodeConfig & {
+        readonly text?: {
+            readonly importDOM: {
+                readonly '#text': () => {
+                    conversion: typeof $convertTextDOMNode;
+                    priority: 0;
+                };
+                readonly b: () => {
+                    conversion: typeof convertBringAttentionToElement;
+                    priority: 0;
+                };
+                readonly code: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly em: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly i: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly mark: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly s: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly span: () => {
+                    conversion: typeof convertSpanElement;
+                    priority: 0;
+                };
+                readonly strong: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly sub: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly sup: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+                readonly u: () => {
+                    conversion: typeof convertTextFormatElement;
+                    priority: 0;
+                };
+            };
+        } | undefined;
+    };
     afterCloneFrom(prevNode: this): void;
-    constructor(text: string, key?: NodeKey);
+    constructor(text?: string, key?: NodeKey);
     /**
      * Returns a 32-bit integer that represents the TextFormatTypes currently applied to the
      * TextNode. You probably don't want to use this method directly - consider using TextNode.hasFormat instead.
@@ -75,7 +142,7 @@ export declare class TextNode extends LexicalNode {
     getStyle(): string;
     /**
      * Returns whether or not the node is in "token" mode. TextNodes in token mode can be navigated through character-by-character
-     * with a RangeSelection, but are deleted as a single entity (not invdividually by character).
+     * with a RangeSelection, but are deleted as a single entity (not individually by character).
      *
      * @returns true if the node is in token mode, false otherwise.
      */
@@ -87,7 +154,7 @@ export declare class TextNode extends LexicalNode {
      */
     isComposing(): boolean;
     /**
-     * Returns whether or not the node is in "segemented" mode. TextNodes in segemented mode can be navigated through character-by-character
+     * Returns whether or not the node is in "segmented" mode. TextNodes in segmented mode can be navigated through character-by-character
      * with a RangeSelection, but are deleted in space-delimited "segments".
      *
      * @returns true if the node is in segmented mode, false otherwise.
@@ -139,10 +206,13 @@ export declare class TextNode extends LexicalNode {
      * @returns true if the text node supports font styling, false otherwise.
      */
     canHaveFormat(): boolean;
+    /**
+     * @returns true if the text node is inline, false otherwise.
+     */
+    isInline(): true;
     createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement;
-    updateDOM(prevNode: TextNode, dom: HTMLElement, config: EditorConfig): boolean;
-    static importDOM(): DOMConversionMap | null;
-    static importJSON(serializedNode: SerializedTextNode): TextNode;
+    updateDOM(prevNode: this, dom: HTMLElement, config: EditorConfig): boolean;
+    updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedTextNode>): this;
     exportDOM(editor: LexicalEditor): DOMExportOutput;
     exportJSON(): SerializedTextNode;
     selectionTransform(prevSelection: null | BaseSelection, nextSelection: RangeSelection): void;
@@ -203,6 +273,12 @@ export declare class TextNode extends LexicalNode {
     /**
      * Sets the mode of the node.
      *
+     * Note: during IME composition, a segmented TextNode may be temporarily
+     * switched to normal mode to preserve the DOM element that the browser's
+     * composition tracker is bound to. Subclass transforms or method overrides
+     * that assume the node is always in segmented mode should account for this
+     * transient state.
+     *
      * @returns this TextNode.
      */
     setMode(type: TextModeType): this;
@@ -238,7 +314,7 @@ export declare class TextNode extends LexicalNode {
      */
     spliceText(offset: number, delCount: number, newText: string, moveSelection?: boolean): TextNode;
     /**
-     * This method is meant to be overriden by TextNode subclasses to control the behavior of those nodes
+     * This method is meant to be overridden by TextNode subclasses to control the behavior of those nodes
      * when a user event would cause text to be inserted before them in the editor. If true, Lexical will attempt
      * to insert text into this node. If false, it will insert the text in a new sibling node.
      *
@@ -246,7 +322,7 @@ export declare class TextNode extends LexicalNode {
      */
     canInsertTextBefore(): boolean;
     /**
-     * This method is meant to be overriden by TextNode subclasses to control the behavior of those nodes
+     * This method is meant to be overridden by TextNode subclasses to control the behavior of those nodes
      * when a user event would cause text to be inserted after them in the editor. If true, Lexical will attempt
      * to insert text into this node. If false, it will insert the text in a new sibling node.
      *
@@ -261,7 +337,7 @@ export declare class TextNode extends LexicalNode {
      *
      * @returns an Array containing the newly-created TextNodes.
      */
-    splitText(...splitOffsets: Array<number>): Array<TextNode>;
+    splitText(...splitOffsets: number[]): TextNode[];
     /**
      * Merges the target TextNode into this TextNode, removing the target node.
      *
@@ -271,7 +347,7 @@ export declare class TextNode extends LexicalNode {
      */
     mergeWithSibling(target: TextNode): TextNode;
     /**
-     * This method is meant to be overriden by TextNode subclasses to control the behavior of those nodes
+     * This method is meant to be overridden by TextNode subclasses to control the behavior of those nodes
      * when used with the registerLexicalTextEntity function. If you're using registerLexicalTextEntity, the
      * node class that you create and replace matched text with should return true from this method.
      *
@@ -279,6 +355,13 @@ export declare class TextNode extends LexicalNode {
      */
     isTextEntity(): boolean;
 }
+declare function convertSpanElement(domNode: HTMLSpanElement): DOMConversionOutput;
+declare function convertBringAttentionToElement(domNode: HTMLElement): DOMConversionOutput;
 export declare function findParentPreDOMNode(node: Node): Node | null;
+declare function $convertTextDOMNode(domNode: Node): DOMConversionOutput;
+declare function convertTextFormatElement(domNode: HTMLElement): DOMConversionOutput;
+/** Creates a TextNode initialized with the given text, defaulting to empty. */
 export declare function $createTextNode(text?: string): TextNode;
+/** Returns true if the given node is a TextNode. */
 export declare function $isTextNode(node: LexicalNode | null | undefined): node is TextNode;
+export {};

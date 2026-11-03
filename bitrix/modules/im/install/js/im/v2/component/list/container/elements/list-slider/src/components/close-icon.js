@@ -19,6 +19,7 @@ export const CloseIcon = {
 		<button
 			type="button"
 			class="bx-im-list-container-slider__close-container"
+			data-testid="im-list-slider-close"
 			:aria-label="loc('IM_LIST_SLIDER_CLOSE_BUTTON_ARIA_LABEL')"
 		>
 			<BIcon

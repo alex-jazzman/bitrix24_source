@@ -8,7 +8,6 @@ $MESS["DASHBOARD_EDIT_FORM_EMPTY_TITLE_ERROR"] = "Dashboard name is required.";
 $MESS["DASHBOARD_EDIT_FORM_ERROR"] = "Cannot create dashboard. Please try again.";
 $MESS["DASHBOARD_EDIT_FORM_HELP"] = "Help";
 $MESS["DASHBOARD_EDIT_FORM_INVALID_IMAGE_ERROR"] = "Dashboard includes invalid images. Please refresh the page and try again.";
-$MESS["DASHBOARD_EDIT_FORM_INVALID_RANGE_ERROR"] = "Date range is incorrect.";
 $MESS["DASHBOARD_EDIT_FORM_ONLY_CUSTOM_EDIT_ERROR"] = "Only custom dashboards can be edited.";
 $MESS["DASHBOARD_EDIT_FORM_OPEN_ACCESS_ERROR"] = "Insufficient permission to create dashboard.";
 $MESS["DASHBOARD_EDIT_FORM_OPEN_BIC_ACCESS_ERROR"] = "Insufficient permission to use BI Builder.";

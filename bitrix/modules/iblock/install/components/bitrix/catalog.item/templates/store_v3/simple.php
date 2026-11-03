@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -49,7 +51,7 @@ if (isset($item))
 		}
 	}
 	?>
-	<div class="catalog-section-item" id="<?=$areaId?>" data-entity="item">
+	<div class="catalog-section-item" id="<?=$areaId?>" data-entity="item" data-testid="catalog-item-card">
 		<?php
 		//region COVER
 		$percent = '';
@@ -123,7 +125,8 @@ if (isset($item))
 							<a href="<?=$item["DETAIL_PAGE_URL"]; ?>"
 								class="catalog-section-item-slider-image<?= ($key == $activePhoto ? ' active' : '') ?>"
 								data-entity="image"
-								data-id="<?= $photo['ID'] ?>">
+								data-id="<?= $photo['ID'] ?>"
+								tabindex="-1" aria-hidden="true">
 								<img
 									src="<?= $xResizedImage ?>"
 									srcset="<?= $xResizedImage ?> 1x, <?= $x2ResizedImage ?> 2x"
@@ -138,7 +141,7 @@ if (isset($item))
 					?>
 				</div>
 				<?php //region SLIDER PAGER ?>
-				<a href="<?=$item["DETAIL_PAGE_URL"]; ?>" class="catalog-section-item-slider-images-slider-pager d-none d-sm-flex" id="<?=$itemIds['PICT_SLIDER']?>_pager">
+				<a href="<?=$item["DETAIL_PAGE_URL"]; ?>" class="catalog-section-item-slider-images-slider-pager d-none d-sm-flex" id="<?=$itemIds['PICT_SLIDER']?>_pager" tabindex="-1" aria-hidden="true">
 					<?php
 					if ($photosExist)
 					{
@@ -152,16 +155,23 @@ if (isset($item))
 				<?php //endregion ?>
 			</div>
 			<?php //region SLIDER CONTROLS ?>
-			<div class="catalog-section-item-slider-controls-block" id="<?=$itemIds['PICT_SLIDER']?>_indicator" <?=($photosExist && count($morePhoto) > 1 ? '' : 'style="display: none;"')?>>
+			<div class="catalog-section-item-slider-controls-block" id="<?=$itemIds['PICT_SLIDER']?>_indicator"
+				role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_ARIA'))?>" data-testid="catalog-item-gallery-dots"
+				<?=($photosExist && count($morePhoto) > 1 ? '' : 'style="display: none;"')?>>
 				<?php
 				if ($photosExist)
 				{
+					$photosTotal = count($morePhoto);
 					foreach ($morePhoto as $key => $photo)
 					{
 						?>
-						<div class="catalog-section-item-slider-controls-image<?=($key == $activePhoto ? ' active' : '')?>" data-entity="slider-control" data-value="<?=$photo['ID']?>" data-go-to="<?=$key; ?>">
+						<button type="button" class="catalog-section-item-slider-controls-image<?=($key == $activePhoto ? ' active' : '')?>"
+							data-entity="slider-control" data-value="<?=$photo['ID']?>" data-go-to="<?=$key; ?>"
+							tabindex="-1"
+							<?=($key == $activePhoto ? 'aria-current="true"' : '')?>
+							aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_DOT_ARIA', ['#NUM#' => $key + 1, '#TOTAL#' => $photosTotal]))?>" data-testid="catalog-item-gallery-dot">
 							<div class="catalog-section-item-slider-controls-dot" data-entity="slider-control-dot" data-go-to="<?=$key; ?>"></div>
-						</div>
+						</button>
 						<?php
 					}
 				}
@@ -177,7 +187,7 @@ if (isset($item))
 			//region NAME
 			?>
 			<h3 class="catalog-section-item-name">
-				<a class="catalog-section-item-name-link" href="<?=$item["DETAIL_PAGE_URL"]?>"><?=$item["NAME"]?></a>
+				<a class="catalog-section-item-name-link" data-testid="catalog-item-name-link" href="<?=$item["DETAIL_PAGE_URL"]?>"><?=$item["NAME"]?></a>
 			</h3>
 			<?php
 			//endregion
@@ -213,7 +223,7 @@ if (isset($item))
 					if ($actualItem['CAN_BUY'])
 					{
 						?>
-						<button class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['PREBUY_OPEN_BTN']?>">
+						<button type="button" class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['PREBUY_OPEN_BTN']?>" aria-haspopup="dialog" data-testid="catalog-item-buy-open">
 							<?=($arParams['ADD_TO_BASKET_ACTION'] === 'BUY'
 								? $arParams['MESS_BTN_BUY']
 								: $arParams['MESS_BTN_ADD_TO_BASKET']
@@ -224,7 +234,7 @@ if (isset($item))
 					else
 					{
 						?>
-						<button class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill disabled" id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" disabled>
+						<button type="button" class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill disabled" id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" disabled data-testid="catalog-item-not-available">
 							<?=$arParams['MESS_NOT_AVAILABLE']?>
 						</button>
 						<?php
@@ -234,22 +244,22 @@ if (isset($item))
 				</div>
 			</div>
 			<?php //region DETAIL POPUP ?>
-				<div class="catalog-section-item-detail-wrapper closed" data-attr-simple id="<?=$itemIds['PREBUY']?>" >
-					<div class="catalog-section-item-detail-cover" id="<?=$itemIds['PREBUY_OVERLAY']?>"></div>
-					<div class="catalog-section-item-detail-container" id="<?=$itemIds['PREBUY_CONTAINER']?>">
+				<div class="catalog-section-item-detail-wrapper closed" data-attr-simple id="<?=$itemIds['PREBUY']?>" inert data-testid="catalog-item-prebuy">
+					<div class="catalog-section-item-detail-cover" id="<?=$itemIds['PREBUY_OVERLAY']?>" data-testid="catalog-item-prebuy-overlay"></div>
+					<div class="catalog-section-item-detail-container" id="<?=$itemIds['PREBUY_CONTAINER']?>" role="dialog" data-testid="catalog-item-prebuy-dialog" aria-labelledby="<?=$itemIds['PREBUY_NAME']?>">
 						<div class="catalog-section-item-detail-header d-flex justify-content-between align-items-center">
 							<div class="catalog-section-item-detail-header-separate"></div>
-							<div class="catalog-section-item-detail-swipe-btn-container" id="<?=$itemIds['PREBUY_SWIPE_BTN']?>">
+							<div class="catalog-section-item-detail-swipe-btn-container" id="<?=$itemIds['PREBUY_SWIPE_BTN']?>" data-testid="catalog-item-prebuy-swipe">
 								<div class="catalog-section-item-detail-swipe-btn"></div>
 							</div>
 							<div class="catalog-section-item-detail-close-btn-container">
-								<span class="catalog-section-item-detail-close-btn" id="<?=$itemIds['PREBUY_CLOSE_BTN']?>">
+								<button type="button" class="catalog-section-item-detail-close-btn" id="<?=$itemIds['PREBUY_CLOSE_BTN']?>" data-testid="catalog-item-prebuy-close">
 									<span class="catalog-section-item-detail-close-btn-text"><?=$messages['CLOSE_BTN']; ?></span>
-								</span>
+								</button>
 							</div>
 						</div>
 
-						<div class="catalog-section-item-detail">
+						<div class="catalog-section-item-detail" role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_PREBUY_CONTENT_ARIA'))?>">
 							<section class="catalog-section-item-detail-props-container">
 								<div class="d-flex align-items-center justify-content-start" style="margin-bottom: 19px;">
 									<?php
@@ -418,16 +428,23 @@ if (isset($item))
 									//region QUANTITY
 									if ($actualItem['CAN_BUY'] && $arParams['USE_PRODUCT_QUANTITY'])
 									{
+										$measureStep = $actualItem['ITEM_MEASURE_RATIOS'][$actualItem['ITEM_MEASURE_RATIO_SELECTED']]['RATIO'];
 										?>
 										<div class="catalog-section-item-quantity-container" data-entity="quantity-block">
 											<div class="catalog-section-item-quantity-field-container">
 												<?php //.product-item-detail-quantity-btn-disabled ?>
-												<div class="catalog-section-item-quantity-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>"></div>
+												<button type="button" class="catalog-section-item-quantity-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_DOWN_ARIA'))?>" data-testid="catalog-item-quantity-down"></button>
 												<div class="catalog-section-item-quantity-field-block">
-													<input class="catalog-section-item-quantity-field" id="<?=$itemIds['QUANTITY']?>" type="number" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value="<?=$measureRatio?>">
-													<div class="catalog-section-item-quantity-field" id="<?=$itemIds['QUANTITY_COUNTER']?>" contentEditable="true" inputmode="numeric" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value=""><?=$measureRatio?></div>
+													<input class="catalog-section-item-quantity-field"
+														id="<?=$itemIds['QUANTITY']?>" type="number"
+														name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>"
+														value="<?=$measureRatio?>" min="<?=$measureRatio?>"
+														step="<?=$measureStep?>"
+														aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_ARIA'))?>"
+														data-testid="catalog-item-quantity-field">
+													<div class="catalog-section-item-quantity-field" id="<?=$itemIds['QUANTITY_COUNTER']?>" aria-hidden="true"><?=$measureRatio?></div>
 												</div>
-												<div class="catalog-section-item-quantity-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>"></div>
+												<button type="button" class="catalog-section-item-quantity-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_UP_ARIA'))?>" data-testid="catalog-item-quantity-up"></button>
 											</div>
 											<span class="catalog-section-item-quantity-description" id="<?=$itemIds['QUANTITY_MEASURE_CONTAINER']?>">
 												<span class="catalog-item-quantity-description-text"  id="<?=$itemIds['QUANTITY_MEASURE']?>"><?=$actualItem['ITEM_MEASURE']['TITLE']?></span>
@@ -447,11 +464,10 @@ if (isset($item))
 								{
 									?>
 									<div id="<?=$itemIds['BASKET_ACTIONS']?>" class="mb-2" <?=($actualItem['CAN_BUY'] ? '' : 'style="display: none;"')?>>
-										<button class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['BUY_LINK']?>"
-												href="javascript:void(0)" rel="nofollow">
+										<button type="button" class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['BUY_LINK']?>" data-testid="catalog-item-prebuy-buy">
 											<?=$arParams['BTN_MESSAGE_CREATE_ORDER']; ?>
 										</button>
-										<button class="catalog-section-item-popup-buy-btn btn border btn-md rounded-pill mt-2" id="<?=$itemIds['ADD_BASKET_LINK']?>">
+										<button type="button" class="catalog-section-item-popup-buy-btn btn border btn-md rounded-pill mt-2" id="<?=$itemIds['ADD_BASKET_LINK']?>" data-testid="catalog-item-prebuy-add-to-basket">
 											<?=$arParams['BTN_MESSAGE_CONTINUE_SHOPPING']; ?>
 										</button>
 									</div>
@@ -460,8 +476,8 @@ if (isset($item))
 								else
 								{
 									?>
-									<button class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill"
-											id="<?=$itemIds['NOT_AVAILABLE_MESS']?>">
+									<button type="button" class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill"
+											id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" disabled data-testid="catalog-item-prebuy-not-available">
 										<?=$arParams['MESS_NOT_AVAILABLE']?>
 									</button>
 									<?php

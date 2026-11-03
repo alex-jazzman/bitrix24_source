@@ -57,8 +57,16 @@ export const UserBaseInfo = {
 			type: Boolean,
 			default: false,
 		},
+		isShowMapButton: {
+			type: Boolean,
+			default: false,
+		},
+		isMapView: {
+			type: Boolean,
+			default: false,
+		},
 	},
-	emits: ['expand'],
+	emits: ['expand', 'toggleView'],
 	data(): UserBaseInfoDataType
 	{
 		return {
@@ -254,12 +262,22 @@ export const UserBaseInfo = {
 					</div>
 				</template>
 			</div>
-			<div v-if="isShowExpand"
-				class="intranet-user-mini-profile__expand"
-				data-test-id="usermp_expand-button"
-				@click="() => $emit('expand')"
-			>
-				<BIcon :name="!isExpanded ? outlineSet.OPEN_CHAT : outlineSet.CLOSE_CHAT"/>
+			<div class="intranet-user-mini-profile__header-actions">
+				<div v-if="isShowMapButton"
+					class="intranet-user-mini-profile__header-action"
+					:class="{ '--active': isMapView }"
+					data-test-id="usermp_map-button"
+					@click="() => $emit('toggleView')"
+				>
+					<BIcon :name="set.PERSON_LOCATION"/>
+				</div>
+				<div v-if="isShowExpand"
+					class="intranet-user-mini-profile__header-action"
+					data-test-id="usermp_expand-button"
+					@click="() => $emit('expand')"
+				>
+					<BIcon :name="!isExpanded ? outlineSet.OPEN_CHAT : outlineSet.CLOSE_CHAT"/>
+				</div>
 			</div>
 			<div class="intranet-user-mini-profile__base-info__role">
 				<UserRole 

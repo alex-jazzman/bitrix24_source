@@ -59,6 +59,8 @@ export const Title = {
 			:data-task-field-value="task.title"
 			data-field-container
 			:placeholder="titleMeta.getTitle(isTemplate)"
+			:ariaLabel="titleMeta.getTitle(isTemplate)"
+			:editButtonLabel="titleMeta.getEditLabel(isTemplate)"
 			:readonly="!task.rights.edit || disabled"
 			@input="handleInput"
 		/>

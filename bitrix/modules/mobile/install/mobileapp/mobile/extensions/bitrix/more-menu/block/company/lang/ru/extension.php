@@ -2,9 +2,4 @@
 
 $MESS['MORE_MENU_COMPANY_TITLE'] = 'Ваш Битрикс24';
 
-$MESS['MORE_MENU_COMPANY_WHATS_NEW'] = 'Что нового';
-
-$MESS['MORE_MENU_COMPANY_DEMO_TITLE'] = 'Демо на 15 дней';
-$MESS['MORE_MENU_COMPANY_DEMO_DESCRIPTION'] = 'Включите бесплатно';
-$MESS['MORE_MENU_COMPANY_DEMO_BUTTON'] = 'Включить';
 $MESS['MORE_MENU_COMPANY_DEMO_TILL_DATE'] = 'до #TIME#';

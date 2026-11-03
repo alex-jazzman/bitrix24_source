@@ -168,8 +168,9 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 				},
 				Text2({
 					style: {
-						maxWidth: '70%',
+						maxWidth: '60%',
 						flexWrap: 'no-wrap',
+						flexShrink: 0,
 					},
 					color: Color.base1,
 					numberOfLines: 1,
@@ -178,8 +179,9 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 				}),
 				Text2({
 					style: {
-						width: '30%',
+						maxWidth: 'auto',
 						flexWrap: 'no-wrap',
+						flexShrink: 1,
 					},
 					color: Color.base4,
 					numberOfLines: 1,

@@ -562,6 +562,7 @@ if(typeof BX.UI.EntityUserFieldLayoutLoader === "undefined")
 		this._owner = null;
 		this._items = [];
 	};
+	BX.UI.EntityUserFieldLayoutLoader.callbackTimeout = 5000;
 	BX.UI.EntityUserFieldLayoutLoader.prototype =
 	{
 		initialize: function(id, settings)
@@ -635,9 +636,8 @@ if(typeof BX.UI.EntityUserFieldLayoutLoader === "undefined")
 			var data = { "FIELDS": fields, "FORM": this._id, "CONTEXT": "UI_EDITOR" };
 
 			const onRequestCompleteWrapper = (result) => {
-				this.onRequestComplete(result);
-				resolve();
-			}
+				this.onRequestComplete(result).then(() => resolve(), () => resolve());
+			};
 
 			if(this._mode === BX.UI.EntityEditorMode.view)
 			{
@@ -648,8 +648,25 @@ if(typeof BX.UI.EntityUserFieldLayoutLoader === "undefined")
 				BX.Main.UF.Manager.getEdit(data, onRequestCompleteWrapper);
 			}
 		},
+		waitForCallback: function(result)
+		{
+			return new Promise((resolve) => {
+				const timeout = window.setTimeout(resolve, BX.UI.EntityUserFieldLayoutLoader.callbackTimeout);
+				Promise.resolve(result).then(
+					() => {
+						window.clearTimeout(timeout);
+						resolve();
+					},
+					() => {
+						window.clearTimeout(timeout);
+						resolve();
+					},
+				);
+			});
+		},
 		onRequestComplete: function(result)
 		{
+			const promises = [];
 			for(var i = 0, length = this._items.length; i < length; i++)
 			{
 				var item = this._items[i];
@@ -657,9 +674,17 @@ if(typeof BX.UI.EntityUserFieldLayoutLoader === "undefined")
 				var callback = BX.prop.getFunction(item, "callback", null);
 				if(name !== "" && callback !== null)
 				{
-					callback(BX.prop.getObject(result, name, {}));
+					try
+					{
+						promises.push(this.waitForCallback(callback(BX.prop.getObject(result, name, {}))));
+					}
+					catch (error)
+					{
+						// A failed field must not prevent the remaining fields from being deployed.
+					}
 				}
 			}
+			return Promise.all(promises);
 		}
 	};
 	BX.UI.EntityUserFieldLayoutLoader.create = function(id, settings)
@@ -909,7 +934,7 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -1037,6 +1062,7 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 	};
 	BX.UI.EntityEditorUserField.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(this._mode !== BX.UI.EntityEditorMode.edit)
 		{
 			return;
@@ -1061,7 +1087,7 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 		{
 			//console.log("setupContentHtml: %s->%s->%s", this._editor.getId(), this._id, BX.UI.EntityEditorMode.getName(this._mode));
 
-			BX.html(this._innerWrapper, html).then(
+			return BX.html(this._innerWrapper, html).then(
 				function()
 				{
 					this.onLayoutSuccess();
@@ -1075,6 +1101,7 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 				}.bind(this)
 			);
 		}
+		return Promise.resolve();
 	};
 	BX.UI.EntityEditorUserField.prototype.doSetActive = function()
 	{
@@ -1210,10 +1237,12 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 		var html = BX.prop.getString(result, "HTML", "");
 		if(html !== "")
 		{
-			this.setupContentHtml(html);
+			const promise = this.setupContentHtml(html);
 			this._hasLayout = true;
 			this.raiseLayoutEvent();
+			return promise;
 		}
+		return Promise.resolve();
 	};
 	BX.UI.EntityEditorUserField.prototype.onEmployeeSelectorOpen = function(e)
 	{

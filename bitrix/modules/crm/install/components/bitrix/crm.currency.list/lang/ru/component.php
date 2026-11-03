@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['CRM_MODULE_NOT_INSTALLED'] = 'Модуль CRM не установлен.';
 $MESS['CRM_PERMISSION_DENIED'] = 'Доступ запрещен';
 $MESS['CRM_COLUMN_ID'] = 'ID';
@@ -11,5 +11,6 @@ $MESS['CRM_CURRENCY_UPDATE_GENERAL_ERROR'] = 'При обновлении вал
 $MESS['CRM_COLUMN_INVOICE_DEF'] = 'Базовая для счетов';
 $MESS['CRM_COLUMN_CURRENCY_LIST_BASE'] = 'Базовая';
 $MESS['CRM_COLUMN_AMOUNT_CNT'] = 'Номинал';
-$MESS['CRM_CURRENCY_MARK_AS_BASE_GENERAL_ERROR'] = 'При установке базовой валюты произошла ошибка.'
-?>
+$MESS['CRM_CURRENCY_MARK_AS_BASE_GENERAL_ERROR'] = 'Не удалось сделать валюту базовой. Попробуйте ещё раз';
+$MESS['CRM_CURRENCY_LIST_ADD'] = 'Добавить';
+$MESS['CRM_CURRENCY_ACTION_SET_BASE'] = 'Сделать базовой';

@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/sharing-slots-list
  */
 jn.define('crm/timeline/item/ui/body/blocks/sharing-slots-list', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Loc } = require('loc');
 	const { Moment } = require('utils/date');
@@ -48,11 +49,10 @@ jn.define('crm/timeline/item/ui/body/blocks/sharing-slots-list', (require, expor
 						alignItems: 'center',
 					},
 				},
-				Text({
+				Text6({
 					testId: 'TimelineItemBodySharingSlotsListBlockText',
 					text: itemText,
 					style: {
-						fontSize: 12,
 						fontWeight: '600',
 						color: AppTheme.colors.base3,
 					},

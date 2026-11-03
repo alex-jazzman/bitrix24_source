@@ -21,13 +21,15 @@ import {
 	type ResolvedPickerItem,
 	type ResolveSelectionResult,
 	type SearchResult,
+	type ViewerAttributesEntry,
+	type ViewerAttributesResult,
 } from './types';
 
 export { ContractViolationError } from './types';
 
 const ITEM_KEYS = Object.freeze([
 	'objectId', 'type', 'name', 'extension', 'size', 'updateTime', 'createTime',
-	'recentTime', 'selectable', 'fileType', 'source', 'preview',
+	'recentTime', 'selectable', 'fileType', 'source', 'preview', 'previewable',
 ]);
 const SELECTION_ITEM_KEYS = Object.freeze([...ITEM_KEYS, 'parentFolderName', 'editorFileType']);
 const SOURCE_KEYS = Object.freeze(['storageId', 'storageType', 'title', 'entityId']);
@@ -48,10 +50,23 @@ const STAGE_KEYS = Object.freeze(['type', 'storageId', 'folderId']);
 const REJECTED_KEYS = Object.freeze(['objectId', 'reason']);
 const REJECT_REASONS = Object.freeze(['not_found', 'not_selectable']);
 
-const INITIAL_STAGE_RESPONSE_KEYS = Object.freeze(['stage', 'items', 'sources', 'pagination', 'context', 'emptyReason']);
+const INITIAL_STAGE_RESPONSE_KEYS = Object.freeze([
+	'stage',
+	'items',
+	'sources',
+	'pagination',
+	'context',
+	'emptyReason',
+	'sourceRevision',
+]);
 const LIST_CHILDREN_RESPONSE_KEYS = Object.freeze(['items', 'pagination', 'context', 'emptyReason']);
 const SEARCH_RESPONSE_KEYS = Object.freeze(['items', 'pagination', 'emptyReason']);
 const RESOLVE_RESPONSE_KEYS = Object.freeze(['items', 'rejectedItems', 'partial']);
+const VIEWER_ATTRIBUTES_RESPONSE_KEYS = Object.freeze(['items']);
+const VIEWER_ATTRIBUTES_ENTRY_KEYS = Object.freeze(['objectId', 'attributes']);
+// Only a name setAttribute accepts: anything else throws on the detached node the
+// viewer item is built from, far away from this contract check.
+const VIEWER_ATTRIBUTE_NAME = /^data-[a-z0-9-]+$/;
 
 type RawObject = { [key: string]: unknown };
 
@@ -310,6 +325,19 @@ function mapItem(
 		fileType = schema.enumValue(item.fileType, FILE_TYPE_ALIASES, `${path}.fileType`) as FileTypeFilterValue;
 	}
 
+	let previewable = false;
+	if (isFolder)
+	{
+		if (item.previewable !== null)
+		{
+			schema.fail(`${path}.previewable`);
+		}
+	}
+	else
+	{
+		previewable = schema.boolean(item.previewable, `${path}.previewable`);
+	}
+
 	const source = mapSource(schema, item.source, `${path}.source`);
 	const previewUrl = mapPreviewUrl(schema, item.preview, isFolder, `${path}.preview`);
 
@@ -326,6 +354,7 @@ function mapItem(
 		fileType,
 		iconType: resolveIconType({ isFolder, extension, fileType }),
 		previewUrl,
+		previewable,
 		sourceTitle: source.title,
 		sourceId: source.storageId,
 	};
@@ -557,14 +586,21 @@ export function mapInitialStage(data: unknown): InitialStageResult
 {
 	const schema = new Schema('getInitialStage');
 	const response = schema.object(data, 'data', INITIAL_STAGE_RESPONSE_KEYS);
+	const stage = mapStage(schema, response.stage, 'data.stage');
+	const sourceRevision = schema.stringOrNull(response.sourceRevision, 'data.sourceRevision');
+	if ((stage.stageType === 'sources') !== (sourceRevision !== null))
+	{
+		schema.fail('data.sourceRevision');
+	}
 
 	return {
-		stage: mapStage(schema, response.stage, 'data.stage'),
+		stage,
 		items: mapItems(schema, response.items, 'data.items'),
 		sources: mapSources(schema, response.sources, 'data.sources'),
 		pagination: mapPagination(schema, response.pagination, 'data.pagination'),
 		context: mapContext(schema, response.context, 'data.context'),
 		emptyReason: mapEmptyReason(schema, response.emptyReason, 'data.emptyReason'),
+		sourceRevision,
 	};
 }
 
@@ -607,4 +643,59 @@ export function mapResolveSelection(data: unknown): ResolveSelectionResult
 	}
 
 	return { items, rejectedItems, partial };
+}
+
+// A flat map of viewer attributes: every key is a data-attribute name and every
+// value is a string, including the empty string of a flag attribute.
+function mapViewerAttributeMap(schema: Schema, raw: unknown, path: string): Record<string, string>
+{
+	if (!Type.isPlainObject(raw))
+	{
+		schema.fail(path);
+	}
+
+	const source = raw as RawObject;
+	const attributes: Record<string, string> = {};
+
+	Object.keys(source).forEach((key) => {
+		if (!VIEWER_ATTRIBUTE_NAME.test(key) || !Type.isString(source[key]))
+		{
+			schema.fail(`${path}.${key}`);
+		}
+
+		attributes[key] = source[key] as string;
+	});
+
+	return attributes;
+}
+
+function mapViewerAttributesEntry(schema: Schema, raw: unknown, path: string): ViewerAttributesEntry
+{
+	const entry = schema.object(raw, path, VIEWER_ATTRIBUTES_ENTRY_KEYS);
+
+	return {
+		objectId: schema.positiveInt(entry.objectId, `${path}.objectId`),
+		attributes: mapViewerAttributeMap(schema, entry.attributes, `${path}.attributes`),
+	};
+}
+
+export function mapViewerAttributes(data: unknown): ViewerAttributesResult
+{
+	const schema = new Schema('getViewerAttributes');
+	const response = schema.object(data, 'data', VIEWER_ATTRIBUTES_RESPONSE_KEYS);
+	const entries = schema.array(response.items, 'data.items');
+	const seenObjectIds = new Set<number>();
+
+	const items = entries.map((entry, index) => {
+		const attributesEntry = mapViewerAttributesEntry(schema, entry, `data.items[${index}]`);
+		if (seenObjectIds.has(attributesEntry.objectId))
+		{
+			schema.fail(`data.items[${index}].objectId`);
+		}
+		seenObjectIds.add(attributesEntry.objectId);
+
+		return attributesEntry;
+	});
+
+	return { items };
 }

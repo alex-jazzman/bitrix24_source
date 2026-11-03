@@ -6,3 +6,4 @@ export * from './inspector-scheme-view/inspector-scheme-view';
 export * from './inspector-close-button/inspector-close-button';
 export * from './node-settings-rules-inspector-toggle-button/node-settings-rules-inspector-toggle-button';
 export * from './inspector-empty-state/inspector-empty-state';
+export * from './inspector-skeleton/inspector-skeleton';

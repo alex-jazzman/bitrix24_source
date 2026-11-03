@@ -22,6 +22,7 @@ jn.define('im/messenger/db/model-writer/vuex/application', (require, exports, mo
 		 * @param {MutationPayload<{
 		 *     recordMediaType?: string,
 		 *     audioRate?: number,
+		 *     defaultReaction?: string,
 		 * }, string>} mutation.payload
 		 */
 		addRouter(mutation)
@@ -42,6 +43,14 @@ jn.define('im/messenger/db/model-writer/vuex/application', (require, exports, mo
 			if (mutation.payload.actionName === 'setRecordMediaType')
 			{
 				this.repository.option.set(Setting.option.APP_SETTING_RECORD_MEDIA_TYPE, data.recordMediaType)
+					.catch((error) => Logger.error(`${this.constructor.name}.addRouter.option.set.catch:`, error));
+			}
+
+			if (mutation.payload.actionName === 'setDefaultReaction')
+			{
+				const defaultReaction = this.store.getters['applicationModel/getDefaultReaction']();
+
+				this.repository.option.set(Setting.option.APP_SETTING_DEFAULT_REACTION, defaultReaction)
 					.catch((error) => Logger.error(`${this.constructor.name}.addRouter.option.set.catch:`, error));
 			}
 		}

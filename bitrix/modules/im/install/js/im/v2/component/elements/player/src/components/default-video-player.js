@@ -1,7 +1,10 @@
 import 'ui.fonts.opensans';
 import 'main.polyfill.intersectionobserver';
 
+import { EventEmitter } from 'main.core.events';
+
 import { FadeAnimation } from 'im.v2.component.animation';
+import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 
 import './css/default-video-player.css';
@@ -157,13 +160,19 @@ export const DefaultVideoPlayer = {
 			}
 			else
 			{
+				this.notifyPlaybackServiceAboutStart();
 				this.play();
 			}
+		},
+		notifyPlaybackServiceAboutStart()
+		{
+			EventEmitter.emit(EventType.playback.onExternalPlayerStart, { fileId: this.fileId });
 		},
 		handleMuteClick()
 		{
 			if (this.isMuted)
 			{
+				this.notifyPlaybackServiceAboutStart();
 				this.unmute();
 			}
 			else
@@ -299,14 +308,28 @@ export const DefaultVideoPlayer = {
 		},
 	},
 	template: `
-		<div class="bx-im-video-player__container" @click.stop="handleContainerClick">
+		<div
+			class="bx-im-video-player__container"
+			data-testid="im-video-player"
+			@click.stop="handleContainerClick"
+		>
 			<FadeAnimation :duration="500">
-				<div v-if="showStartButton" class="bx-im-video-player__start-play_button" @click.stop="handleControlClick">
+				<div
+					v-if="showStartButton"
+					class="bx-im-video-player__start-play_button"
+					data-testid="im-video-player-start"
+					@click.stop="handleControlClick"
+				>
 					<span class="bx-im-video-player__start-play_icon"></span>
 				</div>
 			</FadeAnimation>
 			<FadeAnimation :duration="500">
-				<div v-if="showInterface" class="bx-im-video-player__control-button_container" @click.stop="handleControlClick">
+				<div
+					v-if="showInterface"
+					class="bx-im-video-player__control-button_container"
+					data-testid="im-video-player-play"
+					@click.stop="handleControlClick"
+				>
 					<button class="bx-im-video-player__control-button" :class="controlButtonClass"></button>
 				</div>
 			</FadeAnimation>
@@ -314,9 +337,13 @@ export const DefaultVideoPlayer = {
 				<div 
 					v-if="showInterface" 
 					class="bx-im-video-player__info-container" 
+					data-testid="im-video-player-sound"
 					@click.stop="handleMuteClick"
 				>
-					<span class="bx-im-video-player__time">{{ formattedTime }}</span>
+					<span
+						class="bx-im-video-player__time"
+						data-testid="im-video-player-time"
+					>{{ formattedTime }}</span>
 					<span class="bx-im-video-player__sound" :class="{'--muted': isMuted}"></span>
 				</div>
 			</FadeAnimation>
@@ -327,6 +354,7 @@ export const DefaultVideoPlayer = {
 					class="bx-im-video-player__video"
 					:poster="previewImageUrl"
 					ref="source"
+					data-testid="im-video-player-video"
 					:preload="preloadAttribute"
 					playsinline
 					loop

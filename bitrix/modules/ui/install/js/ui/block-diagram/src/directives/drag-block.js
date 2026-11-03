@@ -84,17 +84,36 @@ function initDragItemWrapper(): void
 	});
 }
 
+// The handlers the element was bound with: they close over the value of the directive, so
+// unbinding cannot rebuild them and has to find the very functions that were bound.
+const boundHandlers = new WeakMap();
+
 export const DragBlock = {
-	mounted(el, { arg, value }): void
+	mounted(el, { value }): void
 	{
 		initDragItemWrapper();
 		Dom.attr(el, 'draggable', 'true');
-		Event.bind(el, 'dragstart', (event: MouseEvent) => onDragStart(event, value));
-		Event.bind(el, 'dragend', (event: MouseEvent) => onDragEnd());
+
+		const handlers = {
+			dragStart: (event: MouseEvent) => onDragStart(event, value),
+			dragEnd: (event: MouseEvent) => onDragEnd(event),
+		};
+
+		boundHandlers.set(el, handlers);
+		Event.bind(el, 'dragstart', handlers.dragStart);
+		Event.bind(el, 'dragend', handlers.dragEnd);
 	},
-	unmounted(el, { arg, value })
+	unmounted(el)
 	{
-		Event.unbind(el, 'dragstart', (event: MouseEvent) => onDragStart(event, value));
-		Event.unbind(el, 'dragend', (event: MouseEvent) => onDragEnd(event));
+		const handlers = boundHandlers.get(el) ?? null;
+
+		if (handlers === null)
+		{
+			return;
+		}
+
+		boundHandlers.delete(el);
+		Event.unbind(el, 'dragstart', handlers.dragStart);
+		Event.unbind(el, 'dragend', handlers.dragEnd);
 	},
 };

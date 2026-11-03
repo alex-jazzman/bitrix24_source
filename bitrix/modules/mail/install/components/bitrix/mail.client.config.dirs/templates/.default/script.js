@@ -4,6 +4,13 @@
 	BX.namespace('BX.Mail.Client.Config.Dirs');
 	BX.Mail.Client.Config.Dirs.Form = function (options)
 	{
+		this.form = options.form;
+		this.content = options.content;
+		this.disposed = false;
+		this.statusReady = false;
+		this.migrationActive = false;
+		this.statusRevision = null;
+		this.saving = false;
 		this.mailboxId = options.mailboxId;
 		this.dirs = options.dirs;
 		this.items = {};
@@ -23,7 +30,8 @@
 		this.menuDirsTypes = new BX.Mail.Client.Config.Dirs.DirsTypes({
 			items: options.menuItemDirsTypes,
 			dirs: options.dirs,
-			mailboxId: options.mailboxId
+			mailboxId: options.mailboxId,
+			root: this,
 		});
 		this.selectAllButton = new BX.Mail.Client.Config.Dirs.SelectAllButton({
 			container: options.dirs && options.dirs.length > 0 ? options.container : null,
@@ -47,7 +55,129 @@
 			this.loadData();
 			this.addEvents();
 
-			this.loadContainers();
+			this.initMigrationState();
+		},
+
+		initMigrationState: function ()
+		{
+			this.loader = new BX.Loader({ target: BX('mail-config-dirs-loading') });
+			this.loader.show();
+			this.unloadHandler = this.dispose.bind(this);
+			BX.bind(window, 'pagehide', this.unloadHandler);
+			this.slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+			this.sliderCloseHandler = (event) => {
+				if (event.getSlider() === this.slider)
+				{
+					this.dispose();
+				}
+			};
+			BX.addCustomEvent(window, 'SidePanel.Slider:onClose', this.sliderCloseHandler);
+			this.migrationState = BX.Mail.getMigrationState(Number(this.mailboxId));
+			this.unsubscribeMigration = this.migrationState.subscribe((change) => {
+				this.applyMigrationState(change.active);
+			});
+			this.migrationState.initialize().then(() => {
+				if (!this.disposed && this.migrationState.isInitialized())
+				{
+					this.applyMigrationState(this.migrationState.isActive());
+				}
+			});
+		},
+
+		applyMigrationState: function (active)
+		{
+			if (this.disposed || !this.migrationState.isInitialized())
+			{
+				return;
+			}
+
+			const revision = this.migrationState.getRevision();
+			if (this.statusRevision === revision)
+			{
+				return;
+			}
+			this.statusRevision = revision;
+			Object.values(this.items).forEach((item) => item.hideSpinner());
+			this.migrationActive = active;
+			if (!active && this.statusReady)
+			{
+				this.statusReady = false;
+				this.renderAvailability();
+				this.dispose();
+				window.location.reload();
+
+				return;
+			}
+
+			const firstStatus = !this.statusReady;
+			this.statusReady = true;
+			this.loader?.destroy();
+			this.loader = null;
+			BX('mail-config-dirs-loading').hidden = true;
+			this.renderAvailability();
+			if (firstStatus)
+			{
+				this.loadContainers();
+			}
+		},
+
+		isEditingAllowed: function ()
+		{
+			return !this.disposed && this.statusReady && !this.migrationActive && !this.saving;
+		},
+
+		renderAvailability: function ()
+		{
+			const editable = this.isEditingAllowed();
+			this.content.style.visibility = this.statusReady && !this.disposed ? '' : 'hidden';
+			this.buttonSubmit.disabled = !editable;
+			this.buttonSubmit.style.display = this.statusReady && !this.migrationActive ? '' : 'none';
+			this.content.querySelectorAll('input[type="checkbox"]').forEach((control) => {
+				if (!control.hasAttribute('data-mail-initial-disabled'))
+				{
+					control.setAttribute('data-mail-initial-disabled', control.disabled ? 'Y' : 'N');
+				}
+				control.disabled = !editable || control.getAttribute('data-mail-initial-disabled') === 'Y';
+			});
+			this.menuDirsTypes.items.forEach((button) => {
+				if (!button.readonlyValue)
+				{
+					button.readonlyValue = document.createElement('span');
+					button.after(button.readonlyValue);
+				}
+				button.readonlyValue.textContent = button.textContent;
+				button.readonlyValue.hidden = editable;
+				button.disabled = !editable;
+				button.style.display = editable ? '' : 'none';
+			});
+			this.content.querySelectorAll('.mail-config-dirs-button-select, .mail-config-dirs-button-select-all')
+				.forEach((control) => {
+					control.style.display = editable ? '' : 'none';
+				});
+			if (!editable)
+			{
+				this.menuDirsTypes.closeMenuDropdown();
+			}
+			const notice = BX('mail-config-dirs-notice');
+			notice.hidden = !this.statusReady || !this.migrationActive || this.disposed;
+			notice.style.display = notice.hidden ? 'none' : '';
+			notice.textContent = notice.hidden ? '' : BX.message('MAIL_MIGRATION_ACTION_UNAVAILABLE');
+		},
+
+		dispose: function ()
+		{
+			if (this.disposed)
+			{
+				return;
+			}
+			this.disposed = true;
+			this.unsubscribeMigration?.();
+			this.unsubscribeMigration = null;
+			this.loader?.destroy();
+			this.loader = null;
+			this.menuDirsTypes.destroy();
+			BX.unbind(window, 'pagehide', this.unloadHandler);
+			BX.removeCustomEvent(window, 'SidePanel.Slider:onClose', this.sliderCloseHandler);
 		},
 
 		/**
@@ -83,7 +213,7 @@
 				}
 			}
 
-			if (this.selectAllButton)
+			if (!this.disposed && this.selectAllButton)
 			{
 				this.selectAllButton.setChecked(this.isSelectedAll());
 			}
@@ -95,6 +225,10 @@
 		 * @returns {Promise<void>}
 		 */
 		selectAll: async function(val, options = {}) {
+			if (!this.isEditingAllowed())
+			{
+				return;
+			}
 			const withSpinner = options.withSpinner === true;
 			const loadAllContainers = options.loadAllContainers === true;
 
@@ -145,6 +279,10 @@
 				}
 			}
 
+			if (!this.isEditingAllowed())
+			{
+				return;
+			}
 			this.doSelectAll(val);
 			if (this.selectAllButton)
 			{
@@ -166,7 +304,10 @@
 			}
 			finally
 			{
-				item.hideSpinner();
+				if (!this.disposed)
+				{
+					item.hideSpinner();
+				}
 			}
 		},
 
@@ -197,17 +338,14 @@
 
 		addEvents: function ()
 		{
-			if (this.buttonSubmit)
-			{
-				this.buttonSubmit.addEventListener('click', this.onSubmitForm.bind(this));
-			}
+			this.form.addEventListener('submit', this.onSubmitForm.bind(this));
 
 			if (this.buttonCancel)
 			{
 				this.buttonCancel.addEventListener('click', this.onCancelForm.bind(this));
 			}
 
-			if (this.selectAllButton)
+			if (this.selectAllButton?.getButton())
 			{
 				this.selectAllButton.getButton().addEventListener('change', this.onChangeSelectAllButton.bind(this));
 			}
@@ -228,6 +366,11 @@
 		onSubmitForm: function (e)
 		{
 			e.preventDefault();
+			if (!this.isEditingAllowed())
+			{
+				return;
+			}
+			BX('mail_connect_form_error').textContent = '';
 
 			var list = [];
 			for (var i in this.items)
@@ -236,8 +379,6 @@
 				{
 					continue;
 				}
-
-				this.items[i].resetDefaultCheckbox();
 
 				var item = {};
 				item.path = this.items[i].path;
@@ -271,23 +412,51 @@
 				return;
 			}
 
+			this.saving = true;
+			this.renderAvailability();
+			BX.addClass(this.buttonSubmit, 'ui-btn-wait');
+			const revision = this.statusRevision;
 			BX.ajax.runComponentAction('bitrix:mail.client.config.dirs', 'save', {
 				mode: 'class',
 				data: {mailboxId: this.mailboxId, dirs: list, dirsTypes: listTypes}
 			}).then(
 				function (response)
 				{
+					if (this.disposed || revision !== this.statusRevision || this.migrationActive)
+					{
+						return;
+					}
 					this.close();
 					top.BX.SidePanel.Instance.postMessage(window, 'mail-mailbox-config-dirs-success', {changed: true});
 				}.bind(this),
 				function (response)
 				{
+					if (this.disposed)
+					{
+						return;
+					}
+					const message = response?.errors?.[0]?.message || BX.message('MAIL_CLIENT_AJAX_ERROR');
+					const alert = new BX.UI.Alert({
+						text: BX.util.htmlspecialchars(message),
+						inline: true,
+						closeBtn: true,
+						color: BX.UI.Alert.Color.DANGER,
+					});
+					BX('mail_connect_form_error').replaceChildren(alert.getContainer());
 				}.bind(this)
-			);
+			).finally(() => {
+				if (!this.disposed)
+				{
+					this.saving = false;
+					BX.removeClass(this.buttonSubmit, 'ui-btn-wait');
+					this.renderAvailability();
+				}
+			});
 		},
 
 		close: function ()
 		{
+			this.dispose();
 			var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
 			if (slider)
 			{
@@ -424,6 +593,7 @@
 			this.loadData();
 			this.showSubmenu();
 			this.countParentAllChildCounter();
+			this.root.renderAvailability();
 		},
 
 		loadSubmenu: function ()
@@ -591,6 +761,7 @@
 
 		getLevelDirs: function ()
 		{
+			const revision = this.root.statusRevision;
 			var item = {};
 			item.path = this.path;
 			item.dirMd5 = this.id;
@@ -603,6 +774,10 @@
 			}).then(
 				function (response)
 				{
+					if (this.root.disposed || revision !== this.root.statusRevision)
+					{
+						return;
+					}
 					const dirs = response.data && response.data.dirs;
 					if (!dirs || dirs.length === 0)
 					{
@@ -618,6 +793,10 @@
 				}.bind(this),
 				function (response)
 				{
+					if (this.root.disposed || revision !== this.root.statusRevision)
+					{
+						return;
+					}
 					if (response.errors && response.errors.length > 0)
 					{
 						this.notify(response.errors.map(
@@ -644,6 +823,7 @@
 		 */
 		loadChildrenForSelectAll: async function()
 		{
+			const revision = this.root.statusRevision;
 			const item = {
 				path: this.path,
 				dirMd5: this.id,
@@ -659,6 +839,10 @@
 					},
 				});
 
+				if (this.root.disposed || revision !== this.root.statusRevision)
+				{
+					return;
+				}
 				const dirs = response.data && response.data.dirs;
 				if (!dirs || dirs.length === 0)
 				{
@@ -727,6 +911,10 @@
 
 		setCheckboxChecked: function (val)
 		{
+			if (!this.root.isEditingAllowed())
+			{
+				return;
+			}
 			if (this.checkbox.checked !== val)
 			{
 				this.checkbox.click();
@@ -996,6 +1184,7 @@
 
 	BX.Mail.Client.Config.Dirs.DirsTypes = function (options)
 	{
+		this.root = options.root;
 		this.items = options.items;
 		this.dirs = options.dirs;
 		this.itemsTypes = {};
@@ -1022,8 +1211,12 @@
 				this.items[i].addEventListener('click', this.onClickMenuDropdown.bind(this));
 			}
 
-			BX.Event.EventEmitter.subscribe('BX.Main.Menu.Item:onmouseenter', function (event)
+			this.menuMouseEnterHandler = function (event)
 			{
+				if (!this.root.isEditingAllowed())
+				{
+					return;
+				}
 				var menuItem = event.target;
 
 				if (!menuItem.dataset || !menuItem.getMenuWindow())
@@ -1081,11 +1274,19 @@
 						this.loadLevelMenu(item, hash)
 					}
 				}
-			}.bind(this));
+			}.bind(this);
+			BX.Event.EventEmitter.subscribe('BX.Main.Menu.Item:onmouseenter', this.menuMouseEnterHandler);
+		},
+
+		destroy: function ()
+		{
+			this.closeMenuDropdown();
+			BX.Event.EventEmitter.unsubscribe('BX.Main.Menu.Item:onmouseenter', this.menuMouseEnterHandler);
 		},
 
 		loadLevelMenu: function (menuItem, hash)
 		{
+			const revision = this.root.statusRevision;
 			var menu = this.getCache(menuItem.getId());
 			var popup = BX.Main.PopupManager.getPopupById('menu-popup-popup-submenu-' + menuItem.getId());
 
@@ -1118,6 +1319,10 @@
 			}).then(
 				function (response)
 				{
+					if (!this.root.isEditingAllowed() || revision !== this.root.statusRevision)
+					{
+						return;
+					}
 					var dirs = response.data.dirs;
 					var data = this.getDataDropdownMenu(dirs);
 
@@ -1175,6 +1380,10 @@
 		{
 			e.preventDefault();
 
+			if (!this.root.isEditingAllowed())
+			{
+				return;
+			}
 			this.dataId = e.currentTarget.getAttribute('data-id');
 			this.dataType = e.currentTarget.getAttribute('data-type');
 			this.activeButton = e.currentTarget;
@@ -1235,7 +1444,7 @@
 
 		onClickMenuDropdownItem: function (e, item)
 		{
-			if (item.dataset.isDisabled)
+			if (!this.root.isEditingAllowed() || item.dataset.isDisabled)
 			{
 				e.preventDefault();
 				return;
@@ -1295,6 +1504,7 @@
 			if (this.menuDropdown)
 			{
 				BX.Main.MenuManager.destroy(this.menuDropdown.id);
+				this.menuDropdown = null;
 			}
 		},
 	};

@@ -100,9 +100,10 @@ export default class Iterator {
 		EventEmitter.emit(this, "Iterator:finish", []);
 		this.resetButton.setDisabled(true);
 	}
-	error({errors})
+	error(response)
 	{
-		EventEmitter.emit(this, "Iterator:error", data);
+		const errors = Type.isPlainObject(response) && Type.isArray(response.errors) ? response.errors : [];
+		EventEmitter.emit(this, "Iterator:error", errors);
 	}
 	execute(stepId, stepAction, stepData)
 	{

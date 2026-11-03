@@ -250,7 +250,7 @@ jn.define('call/calls/layout/scrollview-grid', (require, exports, module) => {
 				Avatar({
 					testId: 'userCallContainer-avatar',
 					uri: this.userRegistry.get(item.data.id).avatar,
-					name: BX.utils.html.htmlDecode(item.data.name),
+					name: Utils.htmlDecode(item.data.name),
 					size: 90,
 					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id]?.color),
 				}),

@@ -1,6 +1,10 @@
 <?php
 $MESS['TASKS_V2_RESPONSIBLE_TITLE'] = 'Исполнитель';
 $MESS['TASKS_V2_RESPONSIBLE_TITLE_MANY'] = 'Исполнители';
+$MESS['TASKS_V2_RESPONSIBLE_ARIA_LABEL'] = 'Выбор исполнителя';
+$MESS['TASKS_V2_RESPONSIBLE_VALUE_ARIA_LABEL'] = 'Исполнитель: #VALUE#';
+$MESS['TASKS_V2_RESPONSIBLE_ADD_ARIA_LABEL'] = 'Добавить исполнителя';
+$MESS['TASKS_V2_RESPONSIBLE_CLEAR_ARIA_LABEL'] = 'Убрать исполнителя';
 $MESS['TASKS_V2_RESPONSIBLE_CANT_CHANGE'] = 'Чтобы выбрать другого исполнителя, назначьте [action]себя постановщиком[/action]';
 $MESS['TASKS_V2_RESPONSIBLE_AUTO'] = 'Назначается автоматически';
 $MESS['TASKS_V2_RESPONSIBLE_NEW_USER'] = 'Новый сотрудник';

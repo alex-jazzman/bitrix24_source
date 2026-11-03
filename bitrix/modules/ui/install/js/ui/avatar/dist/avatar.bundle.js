@@ -100,19 +100,30 @@ this.BX = this.BX || {};
 				this.title = text;
 				if (this.title.length > 0) {
 					this.getContainer().setAttribute('title', this.title);
-					const validSymbolsPattern = /[\p{L}\p{N} ]/u;
-					const words = this.title.split(/[\s,]/).filter(word => {
-						const firstLetter = word.charAt(0);
-						return validSymbolsPattern.test(firstLetter);
-					});
-					let initials = '';
-					if (words.length > 0) {
-						initials = words.length > 1 ? words[0].charAt(0) + words[1].charAt(0) : initials = words[0].charAt(0);
-					}
-					this.setInitials(initials.toUpperCase());
+					this.setInitials(this.#getInitialsFromTitle());
 				}
 			}
 			return this;
+		}
+
+		/**
+		 * Two kinds of "no initials", and setInitials() treats them differently:
+		 * `null` leaves the text node alone, `''` creates it empty.
+		 */
+		#getInitialsFromTitle() {
+			if (!main_core.Type.isStringFilled(this.title) || this.title.trim().length === 0) {
+				return null;
+			}
+			const validSymbolsPattern = /[\p{L}\p{N} ]/u;
+			const words = this.title.split(/[\s,]/).filter(word => {
+				const firstLetter = word.charAt(0);
+				return validSymbolsPattern.test(firstLetter);
+			});
+			if (words.length === 0) {
+				return '';
+			}
+			const initials = words.length > 1 ? words[0].charAt(0) + words[1].charAt(0) : words[0].charAt(0);
+			return initials.toUpperCase();
 		}
 		getInitialsNode() {
 			if (!this.node.initials) {
@@ -232,7 +243,7 @@ this.BX = this.BX || {};
 		removeUserPic() {
 			main_core.Dom.remove(this.getUserPicNode());
 			this.picPath = null;
-			this.setInitials(this.title);
+			this.setInitials(main_core.Type.isStringFilled(this.initials) ? this.initials : this.#getInitialsFromTitle());
 			main_core.Dom.style(this.getContainer(), '--ui-avatar-base-color-rgb', this.baseColor);
 		}
 		setSize(size) {

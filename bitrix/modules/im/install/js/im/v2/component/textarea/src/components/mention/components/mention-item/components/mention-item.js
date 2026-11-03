@@ -27,6 +27,7 @@ export const MentionItem = {
 				:avatarDialogId="id"
 				:size="AvatarSize.M"
 				class="bx-im-mention-item__avatar-container"
+				aria-hidden="true"
 			/>
 		</slot>
 		<div class="bx-im-mention-item__content-container">
@@ -36,6 +37,7 @@ export const MentionItem = {
 					:text="title"
 					:withLeftIcon="false"
 					class="bx-im-mention-item__title"
+					data-testid="im-mention-item-title"
 				/>
 			</slot>
 			<slot name="subtitle">

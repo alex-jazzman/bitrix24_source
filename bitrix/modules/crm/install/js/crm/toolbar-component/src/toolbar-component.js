@@ -1,6 +1,6 @@
 import { Router } from 'crm.router';
 import { PULL } from 'pull.client';
-import { ajax as Ajax, Dom, Event, Loc, Reflection, Text, Type } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Reflection, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu } from 'main.popup';
 import { BaseButton, Button, ButtonIcon } from 'ui.buttons';
@@ -26,6 +26,8 @@ class ToolbarEvents
  */
 export default class ToolbarComponent extends EventEmitter
 {
+	#categoryMenuStateByMenu: WeakMap<Menu, Object> = new WeakMap();
+
 	constructor()
 	{
 		super();
@@ -64,6 +66,11 @@ export default class ToolbarComponent extends EventEmitter
 			const toolbar =	BX.UI.ToolbarManager.getDefaultToolbar();
 			const button = toolbar.getButton(Dom.attr(buttonNode, 'data-btn-uniqid'));
 			const entityTypeId = Number(buttonNode.dataset.entityTypeId);
+			const menu = button?.getMenuWindow();
+			if (menu)
+			{
+				this.#attachCategoryMenuLifecycle(menu);
+			}
 
 			if (button.counterNode && button.counterNode.innerText > 99)
 			{
@@ -204,8 +211,7 @@ export default class ToolbarComponent extends EventEmitter
 
 	#reloadCategoriesMenu(button: BaseButton, entityTypeId: number, categoryId: ?number): void
 	{
-		const menu = button.getMenuWindow();
-		if (!menu)
+		if (!button.getMenuWindow())
 		{
 			return;
 		}
@@ -213,8 +219,15 @@ export default class ToolbarComponent extends EventEmitter
 		Ajax.runAction('crm.controller.category.list', {
 			data: {
 				entityTypeId,
+				isCategoryMenu: true,
 			},
 		}).then((response) => {
+			const menu = button.getMenuWindow();
+			if (!menu)
+			{
+				return;
+			}
+
 			let startKey = 0;
 			const items = [];
 			const categories = response.data.categories;
@@ -231,25 +244,13 @@ export default class ToolbarComponent extends EventEmitter
 				}
 			});
 
-			menu.destroy();
-
-			Event.unbindAll(button.getContainer(), 'click');
-
 			categories.forEach((category) => {
 				const link = entityTypeId === BX.CrmEntityType.enumeration.deal
 					? Router.Instance.getDealKanbanUrl(category.id)?.toString()
 					: Router.Instance.getItemListUrlInCurrentView(entityTypeId, category.id)?.toString()
 				;
 
-				items.splice(startKey, 0, {
-					id: `${MENU_ID_PREFIX}${category.id}`,
-					text: Text.encode(category.name),
-					href: link || null,
-					dataset: {
-						isDefault: category.isDefault || false,
-						categoryId: category.id,
-					},
-				});
+				items.splice(startKey, 0, this.#formatCategoryMenuItem(category, link));
 
 				if (category.id >= 0 && categoryId >= 0 && Number(categoryId) === Number(category.id))
 				{
@@ -259,10 +260,25 @@ export default class ToolbarComponent extends EventEmitter
 				startKey++;
 			});
 
-			const options = menu.params;
-			options.items = items;
+			const menuState = this.#categoryMenuStateByMenu.get(menu);
+			const sourceBindOptions = menuState?.bindOptions ?? menu.getParams().bindOptions ?? {};
+			const bindOptions = {
+				...sourceBindOptions,
+				forceBindPosition: true,
+			};
+			const options = {
+				...menu.getParams(),
+				items,
+				bindOptions,
+			};
+
+			menu.destroy();
+
+			Event.unbindAll(button.getContainer(), 'click');
 
 			button.menuWindow = new Menu(options);
+			this.#attachCategoryMenuLifecycle(button.menuWindow, true);
+			this.#setCategoryMenuMaxWidth(button.menuWindow);
 			Event.bind(button.getContainer(), 'click', button.menuWindow.show.bind(button.menuWindow));
 
 			if (entityTypeId === BX.CrmEntityType.enumeration.deal)
@@ -274,6 +290,140 @@ export default class ToolbarComponent extends EventEmitter
 		}).catch((response) => {
 			console.log('error trying reload categories', response.errors);
 		});
+	}
+
+	#formatCategoryMenuItem(category: Object, href: ?string): Object
+	{
+		const content = Dom.create('span', {
+			props: {
+				className: 'crm-toolbar-category-menu-item-content',
+			},
+			children: [
+				Dom.create('span', {
+					props: {
+						className: 'crm-toolbar-category-menu-item-name',
+					},
+					text: category.name,
+				}),
+			],
+		});
+
+		if (category.counter > 0)
+		{
+			Dom.append(Dom.create('span', {
+				props: {
+					className: 'crm-toolbar-category-menu-item-counter main-buttons-item-counter',
+				},
+				text: String(category.counter),
+			}), content);
+		}
+
+		return {
+			id: `${MENU_ID_PREFIX}${category.id}`,
+			html: content,
+			title: category.name,
+			className: 'menu-popup-no-icon crm-toolbar-category-menu-item',
+			href: href || null,
+			dataset: {
+				isDefault: category.isDefault === true || category.isDefault === 'Y',
+				categoryId: category.id,
+			},
+		};
+	}
+
+	#attachCategoryMenuLifecycle(menu: Menu, isBindStateInstalled: boolean = false): void
+	{
+		if (this.#categoryMenuStateByMenu.has(menu))
+		{
+			return;
+		}
+
+		const popup = menu.getPopupWindow();
+		const sourceBindOptions = menu.getParams().bindOptions ?? {};
+		const state = {
+			bindOptions: {
+				...sourceBindOptions,
+				forceBindPosition: true,
+			},
+			isBindStateInstalled,
+			isResizeBound: false,
+			resizeHandler: null,
+		};
+		state.resizeHandler = () => {
+			if (!popup.isShown())
+			{
+				return;
+			}
+
+			this.#setCategoryMenuMaxWidth(menu);
+			this.#adjustCategoryMenuPosition(menu);
+		};
+		this.#categoryMenuStateByMenu.set(menu, state);
+
+		popup.subscribe('onBeforeShow', () => {
+			this.#setCategoryMenuMaxWidth(menu);
+		});
+		popup.subscribe('onShow', () => {
+			if (!state.isResizeBound)
+			{
+				Event.bind(window, 'resize', state.resizeHandler);
+				state.isResizeBound = true;
+			}
+
+			this.#adjustCategoryMenuPosition(menu);
+		});
+		popup.subscribe('onAfterClose', () => {
+			this.#unbindCategoryMenuResize(menu);
+		});
+		popup.subscribe('onDestroy', () => {
+			this.#unbindCategoryMenuResize(menu);
+			this.#categoryMenuStateByMenu.delete(menu);
+		});
+		popup.subscribe('onBeforeAdjustPosition', (event) => {
+			const viewportWidth = document.documentElement.clientWidth;
+			const scrollLeft = window.pageXOffset;
+			const popupWidth = popup.getPopupContainer().offsetWidth;
+			const minLeft = scrollLeft + 16;
+			const maxLeft = scrollLeft + viewportWidth - 16 - popupWidth;
+
+			// eslint-disable-next-line no-param-reassign
+			event.left = Math.min(Math.max(event.left, minLeft), maxLeft);
+		});
+	}
+
+	#setCategoryMenuMaxWidth(menu: Menu): void
+	{
+		const viewportWidth = document.documentElement.clientWidth;
+		menu.getPopupWindow().setMaxWidth(Math.min(400, viewportWidth - 32));
+	}
+
+	#adjustCategoryMenuPosition(menu: Menu): void
+	{
+		const state = this.#categoryMenuStateByMenu.get(menu);
+		if (!state)
+		{
+			return;
+		}
+
+		if (!state.isBindStateInstalled)
+		{
+			menu.getPopupWindow().adjustPosition(state.bindOptions);
+			state.isBindStateInstalled = true;
+
+			return;
+		}
+
+		menu.getPopupWindow().adjustPosition();
+	}
+
+	#unbindCategoryMenuResize(menu: Menu): void
+	{
+		const state = this.#categoryMenuStateByMenu.get(menu);
+		if (state?.isResizeBound)
+		{
+			Event.unbind(window, 'resize', state.resizeHandler);
+			state.isResizeBound = false;
+		}
 	}
 
 	#reloadAddButtonMenu(categories: Array)

@@ -30,6 +30,12 @@ export const CrmItem = {
 	},
 	emits: ['clear'],
 	setup(): { task: TaskModel } {},
+	computed: {
+		entityName(): string
+		{
+			return this.prepareTitle(this.item).replace(/\[\/?a\]/g, '');
+		},
+	},
 	async mounted(): Promise<void>
 	{
 		const { EntityMiniCard } = await Runtime.loadExtension('crm.mini-card');
@@ -60,6 +66,10 @@ export const CrmItem = {
 		<HoverPill
 			class="tasks-field-crm-item"
 			:withClear="!isEdit || task.rights.edit"
+			:ariaLabel="entityName"
+			:ariaHaspopup="'dialog'"
+			:clearAriaLabel="loc('TASKS_V2_CRM_CLEAR_ARIA_LABEL')"
+			data-testid="tasks-crm-item"
 			textOnly
 			@click.stop="handleClick"
 			@clear="$emit('clear', item.id)"
@@ -67,7 +77,7 @@ export const CrmItem = {
 			<TextMd class="tasks-field-crm-item-text print-font-color-base-1-recursive">
 				<RichLoc tag="span" :text="prepareTitle(item)" placeholder="[a]">
 					<template #a="{ text }">
-						<a @click.prevent>{{ text }}</a>
+						<span>{{ text }}</span>
 					</template>
 				</RichLoc>
 			</TextMd>

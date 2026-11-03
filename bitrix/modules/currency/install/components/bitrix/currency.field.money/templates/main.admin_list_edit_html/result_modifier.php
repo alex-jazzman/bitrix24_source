@@ -24,10 +24,21 @@ foreach ($currencyList as $currency => $currencyInfo)
 }
 
 $arResult['VALUE_NUMBER'] = '';
-$arResult['VALUE_CURRENCY'] = '';
+$configuredCurrency = $arResult['userField']['SETTINGS']['DEFAULT_CURRENCY'] ?? '';
+$arResult['VALUE_CURRENCY'] = isset($arResult['CURRENCY_LIST'][$configuredCurrency])
+	? $configuredCurrency
+	: $defaultCurrency;
+
 if (!empty($arResult['additionalParameters']['VALUE']))
 {
-	$explode = MoneyType::unFormatFromDb($arResult['additionalParameters']['VALUE']);
-	$arResult['VALUE_NUMBER'] = htmlspecialcharsbx($explode[0]);
-	$arResult['VALUE_CURRENCY'] = htmlspecialcharsbx($explode[1]);
+	[$value, $currency] = MoneyType::unFormatFromDb($arResult['additionalParameters']['VALUE']);
+	$arResult['VALUE_NUMBER'] = htmlspecialcharsbx($value);
+	if ($currency !== '')
+	{
+		if (!isset($arResult['CURRENCY_LIST'][$currency]))
+		{
+			$arResult['CURRENCY_LIST'][$currency] = $currency;
+		}
+		$arResult['VALUE_CURRENCY'] = $currency;
+	}
 }

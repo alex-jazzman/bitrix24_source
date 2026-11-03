@@ -4,6 +4,71 @@
 	if (window.JCCatalogItemStoreV3)
 		return;
 
+	// A held step button repeats the change every 250 ms and the announcer plays every queued
+	// message in full instead of dropping stale ones. Announcing the total only after this
+	// quiet period turns a series of steps into a single announcement.
+	var TOTAL_PRICE_ANNOUNCE_DELAY = 500;
+
+	// String.replace reads $& and $' in the replacement, and both the name of a property and the name
+	// of a value come from the product.
+	var fillTemplate = function(template, values)
+	{
+		var filled = template;
+
+		for (var placeholder in values)
+		{
+			if (values.hasOwnProperty(placeholder))
+			{
+				filled = filled.split(placeholder).join(values[placeholder]);
+			}
+		}
+
+		return filled;
+	};
+
+	// The accessibility primitives come from an extension of their own. Without it the card keeps its
+	// price, quantity and buy button and loses only the keyboard and reader extras.
+	var getAccessibility = function()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	};
+
+	// Left alone, every card schedules a frame of its own to activate the zone over its dots, so a
+	// list spends one frame and one read-write boundary per card. The cards share a single pass
+	// instead: it reads the visibility of every strip first and activates the zones after that.
+	var pendingDotsCards = [];
+	var pendingDotsFrame = null;
+
+	var runPendingDotsSync = function()
+	{
+		var cards = pendingDotsCards;
+		var visibility = [];
+		var i;
+
+		pendingDotsCards = [];
+		pendingDotsFrame = null;
+
+		for (i = 0; i < cards.length; i++)
+		{
+			visibility[i] = cards[i].isDotsZoneVisible();
+		}
+
+		for (i = 0; i < cards.length; i++)
+		{
+			cards[i].applyDotsZoneState(visibility[i]);
+		}
+	};
+
+	var scheduleDotsZoneSync = function(card)
+	{
+		pendingDotsCards.push(card);
+
+		if (pendingDotsFrame === null)
+		{
+			pendingDotsFrame = requestAnimationFrame(runPendingDotsSync);
+		}
+	};
+
 	var BasketButton = function(params)
 	{
 		params = params || {};
@@ -94,6 +159,7 @@
 			isDblQuantity: false,
 			canBuy: true,
 			name: '',
+			imageAlt: '',
 			pict: {},
 			id: 0,
 			addUrl: '',
@@ -174,6 +240,9 @@
 		this.prebuyPopupCloseBtn = null;
 		this.prebuyPopupName = null;
 		this.prebuyPopupPict = null;
+		this.prebuyScrollArea = null;
+		this.prebuyFocusTrap = null;
+		this.prebuyVisibleWait = null;
 
 		this.obProduct = null;
 		this.blockNodes = {};
@@ -185,6 +254,9 @@
 		this.obName = null;
 		this.obPictSlider = null;
 		this.obPictSliderIndicator = null;
+		this.dotsFocusZone = null;
+		this.zoneFocusOrigin = null;
+		this.skuFocusZones = [];
 
 		this.obPrice = null;
 		this.priceTwin = null;
@@ -211,6 +283,7 @@
 		this.basketParams = {};
 		this.isTouchDevice = BX.hasClass(document.documentElement, 'bx-touch');
 		this.hoverTimer = null;
+		this.totalPriceAnnounceTimer = null;
 		this.hoverStateChangeForbidden = false;
 		this.mouseX = null;
 		this.mouseY = null;
@@ -218,6 +291,8 @@
 		this.useEnhancedEcommerce = false;
 		this.dataLayerName = 'dataLayer';
 		this.brandProperty = false;
+		this.galleryDotAria = '';
+		this.skuSelectedAria = '';
 
 		this.errorCode = 0;
 
@@ -251,6 +326,8 @@
 			this.useEnhancedEcommerce = arParams.USE_ENHANCED_ECOMMERCE === 'Y';
 			this.dataLayerName = arParams.DATA_LAYER_NAME;
 			this.brandProperty = arParams.BRAND_PROPERTY;
+			this.galleryDotAria = (arParams.MESS && arParams.MESS.GALLERY_DOT_ARIA) || '';
+			this.skuSelectedAria = (arParams.MESS && arParams.MESS.SKU_SELECTED_ARIA) || '';
 
 			this.visual = arParams.VISUAL;
 
@@ -301,6 +378,7 @@
 							this.product.morePhotoCount = arParams.PRODUCT.MORE_PHOTO_COUNT;
 							this.product.morePhoto = arParams.PRODUCT.MORE_PHOTO;
 							this.product.sliderPhoto = arParams.PRODUCT.RESIZED_SLIDER;
+							this.product.imageAlt = arParams.PRODUCT.ALT || '';
 						}
 
 						if (arParams.PRODUCT.RCM_ID)
@@ -347,6 +425,7 @@
 						this.product.morePhotoCount = arParams.PRODUCT.MORE_PHOTO_COUNT;
 						this.product.morePhoto = arParams.PRODUCT.MORE_PHOTO;
 						this.product.sliderPhoto = arParams.PRODUCT.RESIZED_SLIDER;
+						this.product.imageAlt = arParams.PRODUCT.ALT || '';
 
 						if (arParams.PRODUCT.RCM_ID)
 						{
@@ -534,6 +613,10 @@
 			this.prebuyPopupOpenBtn = BX(this.visual.PREBUY_OPEN_BTN);
 			this.prebuyPopupCloseBtn = BX(this.visual.PREBUY_CLOSE_BTN);
 			this.prebuyPopupPict = BX(this.visual.PREBUY_PICT);
+			if (BX.type.isElementNode(this.prebuyPopupContainer))
+			{
+				this.prebuyScrollArea = this.prebuyPopupContainer.querySelector('.catalog-section-item-detail');
+			}
 
 			if (this.showQuantity && this.visual.QUANTITY_ID)
 			{
@@ -716,9 +799,11 @@
 								for (i = 0; i < treeItems.length; i++)
 								{
 									BX.bind(treeItems[i], 'click', BX.delegate(this.selectOfferProp, this));
+									BX.bind(treeItems[i], 'keydown', BX.delegate(this.selectOfferPropKey, this));
 								}
 							}
 
+							this.createSkuZones();
 							this.setCurrent();
 						}
 
@@ -1013,6 +1098,11 @@
 
 		quantityUp: function()
 		{
+			if (this.isQuantityButtonDisabled(this.obQuantityUp))
+			{
+				return;
+			}
+
 			var curValue = 0,
 				boolSet = true;
 
@@ -1060,6 +1150,11 @@
 
 		quantityDown: function()
 		{
+			if (this.isQuantityButtonDisabled(this.obQuantityDown))
+			{
+				return;
+			}
+
 			var curValue = 0,
 				boolSet = true;
 
@@ -1321,6 +1416,10 @@
 					}
 
 					this.obQuantity.disabled = !this.canBuy;
+					// the native bounds of the field belong to the chosen offer: the arrows inside
+					// the field step by them, and the browser validates the value against them
+					this.obQuantity.setAttribute('min', this.minQuantity);
+					this.obQuantity.setAttribute('step', this.stepQuantity);
 
 					if (resetQuantity)
 					{
@@ -1399,11 +1498,19 @@
 		disableQuantityButton: function(button)
 		{
 			button.classList.add('catalog-section-item-quantity-btn-disabled');
+			button.setAttribute('aria-disabled', 'true');
 		},
 
 		enableQuantityButton: function(button)
 		{
 			button.classList.remove('catalog-section-item-quantity-btn-disabled');
+			button.removeAttribute('aria-disabled');
+		},
+
+		// the step button keeps the focus at the limit, so the step is refused here
+		isQuantityButtonDisabled: function(button)
+		{
+			return BX.type.isElementNode(button) && button.getAttribute('aria-disabled') === 'true';
 		},
 
 		initializeSlider: function()
@@ -1416,6 +1523,19 @@
 			else
 			{
 				this.slider.options.wrap = this.defaultSliderOptions.wrap;
+			}
+
+			if (this.obPictSliderIndicator)
+			{
+				BX.bindDelegate(
+					this.obPictSliderIndicator,
+					'click',
+					{'attribute': 'data-entity'},
+					BX.proxy(this.sliderClickHandler, this)
+				);
+				BX.bind(this.obPictSliderIndicator, 'focusin', BX.proxy(this.dotsFocusInHandler, this));
+
+				this.createDotsZone();
 			}
 
 			if (!this.isTouchDevice)
@@ -1440,6 +1560,120 @@
 					}
 				}
 			}
+		},
+
+		createDotsZone: function()
+		{
+			var accessibility = getAccessibility();
+
+			if (this.dotsFocusZone || !accessibility)
+			{
+				return;
+			}
+
+			var keys = accessibility.FocusKeys;
+
+			this.dotsFocusZone = new accessibility.FocusZone(this.obPictSliderIndicator, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(this.getDotsTabStop, this),
+				getNextFocusable: BX.delegate(this.getNextDot, this)
+			});
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			scheduleDotsZoneSync(this);
+		},
+
+		// The dots block is hidden inline while the offer has a single photo,
+		// and a zone over a hidden block would collect an empty set.
+		isDotsZoneVisible: function()
+		{
+			return BX.type.isElementNode(this.obPictSliderIndicator)
+				&& this.obPictSliderIndicator.style.display !== 'none';
+		},
+
+		applyDotsZoneState: function(visible)
+		{
+			if (!this.dotsFocusZone)
+			{
+				return;
+			}
+
+			if (visible && !this.dotsFocusZone.isActive())
+			{
+				this.dotsFocusZone.activate();
+			}
+			else if (!visible && this.dotsFocusZone.isActive())
+			{
+				this.dotsFocusZone.deactivate();
+			}
+		},
+
+		syncDotsZone: function()
+		{
+			this.applyDotsZoneState(this.isDotsZoneVisible());
+		},
+
+		getDotsTabStop: function()
+		{
+			if (!BX.type.isElementNode(this.obPictSliderIndicator))
+			{
+				return null;
+			}
+
+			return this.obPictSliderIndicator.querySelector('[data-entity="slider-control"].active')
+				|| this.obPictSliderIndicator.querySelector('[data-entity="slider-control"]');
+		},
+
+		// The arrows, Home and End change the photo right away, so the dot the zone is
+		// about to focus is switched through the same path a click takes. Wrapping is done
+		// here as well: the zone falls back to its own navigation only on an empty answer.
+		getNextDot: function(direction, from)
+		{
+			var navigator = BX.UI.Accessibility.FocusNavigator;
+			var options = {from: from || undefined, tabbableOnly: false, wrap: true};
+			var nextDot;
+
+			switch (direction)
+			{
+				case 'previous':
+					nextDot = navigator.getPrevious(this.obPictSliderIndicator, options);
+					break;
+				case 'next':
+					nextDot = navigator.getNext(this.obPictSliderIndicator, options);
+					break;
+				case 'start':
+					nextDot = navigator.getFirst(this.obPictSliderIndicator, options);
+					break;
+				default:
+					nextDot = navigator.getLast(this.obPictSliderIndicator, options);
+					break;
+			}
+
+			this.slideToControl(nextDot);
+
+			return nextDot;
+		},
+
+		getDotList: function()
+		{
+			if (!BX.type.isElementNode(this.obPictSliderIndicator))
+			{
+				return [];
+			}
+
+			return BX.convert.nodeListToArray(
+				this.obPictSliderIndicator.querySelectorAll('[data-entity="slider-control"]')
+			);
+		},
+
+		// The dot position lives only in the accessible name: aria-posinset and
+		// aria-setsize are not allowed on the button role.
+		getDotAriaLabel: function(index, total)
+		{
+			return this.galleryDotAria
+				.replace('#NUM#', index + 1)
+				.replace('#TOTAL#', total);
 		},
 
 		checkTouch: function(event)
@@ -1533,6 +1767,45 @@
 			document.documentElement.setAttribute("data-scroll-top", scrollTop);
 			BX.addClass(this.prebuyPopup, "opened");
 			BX.removeClass(this.prebuyPopup, "closed");
+			// the layer must be open and interactive before the trap activates:
+			// an inert or transparent node passes no focus candidate
+			this.prebuyPopup.removeAttribute("inert");
+			this.prebuyPopupContainer.setAttribute("aria-modal", "true");
+
+			var accessibility = getAccessibility();
+
+			if (!this.prebuyFocusTrap && accessibility)
+			{
+				this.prebuyFocusTrap = new accessibility.FocusTrap(this.prebuyPopupContainer, {
+					initialFocus: true,
+					restoreFocus: this.prebuyPopupOpenBtn,
+					isolateOutside: false
+				});
+				BX.bind(this.prebuyPopupContainer, 'keydown', BX.proxy(this.onPrebuyKeydown, this));
+			}
+
+			if (this.prebuyFocusTrap)
+			{
+				// The initial focus is applied twice on purpose. Synchronously the container is still
+				// transparent, no candidate inside passes the visibility check and the trap falls back
+				// to the container itself, so Escape works from the first press. After the layer has
+				// appeared the same call lands on the first tab stop, which has a visible ring.
+				this.prebuyFocusTrap.activate();
+				// the guard skips a layer closed before it appeared: its trap is already deactivated,
+				// so neither the zones nor the focus reach an inert layer
+				this.whenPrebuyVisible(BX.delegate(function() {
+					if (!this.prebuyFocusTrap.isActive())
+					{
+						return;
+					}
+
+					this.prebuyZonesActivate();
+					// after the zones: an offer variant becomes tabbable only from its zone
+					this.syncPrebuyScrollStop();
+					this.prebuyFocusTrap.applyInitialFocus();
+				}, this));
+			}
+
 			document.documentElement.style.overflow = "hidden";
 			document.documentElement.style.height = "100vh";
 			document.documentElement.scrollTop = scrollTop;
@@ -1542,12 +1815,219 @@
 		prebuyPopupClose: function()
 		{
 			var scrollTop = document.documentElement.getAttribute("data-scroll-top");
+			if (this.prebuyFocusTrap)
+			{
+				this.prebuyFocusTrap.deactivate();
+			}
+
+			this.dropPrebuyVisibleWait();
+			this.prebuyZonesDeactivate();
+			this.dropPrebuyScrollStop();
+			this.prebuyPopupContainer.removeAttribute("aria-modal");
+
 			BX.addClass(this.prebuyPopup, "closed");
 			BX.removeClass(this.prebuyPopup, "opened");
+			// inert goes back only after the focus has left the layer
+			this.prebuyPopup.setAttribute("inert", "");
 			document.documentElement.style.overflow = "";
 			document.documentElement.style.height = "";
 			document.documentElement.scrollTop = scrollTop;
 			document.documentElement.removeAttribute("data-scroll-top");
+		},
+
+		onPrebuyKeydown: function(event)
+		{
+			if (event.key === 'Escape')
+			{
+				event.preventDefault();
+				this.prebuyPopupClose();
+			}
+		},
+
+		// on screens from 615px the container fades in over 200ms, and a transparent
+		// node is not visible for the focus primitives
+		// The wait is for the layer being on the screen and not for a timer: a transparent node
+		// hands out no focus candidate, so a callback let through too early switches the zones on
+		// over an empty set and parks the initial focus on the container. Neither is ever redone,
+		// and the variants stay out of the keyboard until the page is reloaded.
+		whenPrebuyVisible: function(callback)
+		{
+			var self = this;
+			var fired = false;
+			var deadline = Date.now() + 2000;
+			var wait = {timer: null, frame: null, unbind: null};
+
+			var settle = function()
+			{
+				if (fired || self.prebuyVisibleWait !== wait)
+				{
+					return;
+				}
+
+				if (!self.isPrebuyVisible() && Date.now() < deadline)
+				{
+					wait.frame = requestAnimationFrame(settle);
+
+					return;
+				}
+
+				fired = true;
+				self.dropPrebuyVisibleWait();
+				callback();
+			};
+
+			var onEnd = function(event)
+			{
+				if (event.propertyName === 'opacity' && event.target === self.prebuyPopupContainer)
+				{
+					settle();
+				}
+			};
+
+			// a layer reopened before the previous wait has settled must not be reached by it
+			this.dropPrebuyVisibleWait();
+			wait.unbind = function()
+			{
+				BX.unbind(self.prebuyPopupContainer, 'transitionend', onEnd);
+			};
+			this.prebuyVisibleWait = wait;
+			BX.bind(this.prebuyPopupContainer, 'transitionend', onEnd);
+			wait.timer = setTimeout(settle, 250);
+		},
+
+		dropPrebuyVisibleWait: function()
+		{
+			var wait = this.prebuyVisibleWait;
+
+			if (!wait)
+			{
+				return;
+			}
+
+			this.prebuyVisibleWait = null;
+			wait.unbind();
+			clearTimeout(wait.timer);
+
+			if (wait.frame !== null)
+			{
+				cancelAnimationFrame(wait.frame);
+			}
+		},
+
+		isPrebuyVisible: function()
+		{
+			var node = this.prebuyPopupContainer;
+
+			if (!BX.type.isElementNode(node))
+			{
+				return false;
+			}
+
+			// the same check the focus helpers apply to a candidate
+			if (typeof node.checkVisibility === 'function')
+			{
+				return node.checkVisibility({visibilityProperty: true, opacityProperty: true});
+			}
+
+			return node.offsetWidth > 0 || node.offsetHeight > 0;
+		},
+
+		// A scrollable area needs a tab stop of its own only while nothing inside it can
+		// take focus: otherwise the content is reached through the content itself
+		// (axe scrollable-region-focusable). Decided after the layer has appeared:
+		// a transparent or inert node passes no candidate.
+		syncPrebuyScrollStop: function()
+		{
+			if (!BX.type.isElementNode(this.prebuyScrollArea))
+			{
+				return;
+			}
+
+			var scrollable = this.prebuyScrollArea.scrollHeight > this.prebuyScrollArea.clientHeight;
+			var reachableInside = BX.UI.Accessibility.FocusNavigator.getFirst(
+				this.prebuyScrollArea,
+				{tabbableOnly: true}
+			);
+
+			if (scrollable && reachableInside === null)
+			{
+				this.prebuyScrollArea.setAttribute('tabindex', '0');
+			}
+			else
+			{
+				this.dropPrebuyScrollStop();
+			}
+		},
+
+		dropPrebuyScrollStop: function()
+		{
+			if (BX.type.isElementNode(this.prebuyScrollArea))
+			{
+				this.prebuyScrollArea.removeAttribute('tabindex');
+			}
+		},
+
+		// The lists live inside the prebuy layer, so the zones are only built here:
+		// they are switched on when the layer opens and off when it closes.
+		createSkuZones: function()
+		{
+			if (this.skuFocusZones.length || !this.obTree || !getAccessibility())
+			{
+				return;
+			}
+
+			var lineContainer = this.obTree.querySelectorAll('[data-entity="sku-line-block"]');
+			var list;
+
+			for (var i = 0; i < lineContainer.length; i++)
+			{
+				list = lineContainer[i].querySelector('ul');
+				// a group without a list keeps its slot: updateRow addresses zones by line index
+				this.skuFocusZones.push(list ? this.createSkuZone(list) : null);
+			}
+		},
+
+		createSkuZone: function(list)
+		{
+			var accessibility = getAccessibility();
+			var keys = accessibility.FocusKeys;
+
+			return new accessibility.FocusZone(list, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getSkuTabStop(list);
+				}, this)
+			});
+		},
+
+		getSkuTabStop: function(list)
+		{
+			return list.querySelector('[role="radio"][aria-checked="true"]')
+				|| list.querySelector('[role="radio"]');
+		},
+
+		// a closed layer is inert, and the zone would collect an empty set there
+		prebuyZonesActivate: function()
+		{
+			for (var i = 0; i < this.skuFocusZones.length; i++)
+			{
+				if (this.skuFocusZones[i] && !this.skuFocusZones[i].isActive())
+				{
+					this.skuFocusZones[i].activate();
+				}
+			}
+		},
+
+		prebuyZonesDeactivate: function()
+		{
+			for (var i = 0; i < this.skuFocusZones.length; i++)
+			{
+				if (this.skuFocusZones[i] && this.skuFocusZones[i].isActive())
+				{
+					this.skuFocusZones[i].deactivate();
+				}
+			}
 		},
 
 		prebuyPopupStartEvent: function(event)
@@ -1597,15 +2077,31 @@
 
 		sliderClickHandler: function(event)
 		{
-			var target = BX.getEventTarget(event),
-				slideIndex = target.getAttribute('data-go-to');
+			this.slideToControl(BX.getEventTarget(event));
+
+			BX.PreventDefault(event);
+		},
+
+		// A reader in browse mode moves the system focus onto a dot without a key, so the photo follows
+		// the focus and the dot under it is always the current one.
+		dotsFocusInHandler: function(event)
+		{
+			var dot = BX.getEventTarget(event);
+
+			if (BX.type.isElementNode(dot) && !BX.hasClass(dot, 'active'))
+			{
+				this.slideToControl(dot);
+			}
+		},
+
+		slideToControl: function(control)
+		{
+			var slideIndex = BX.type.isElementNode(control) ? control.getAttribute('data-go-to') : null;
 
 			if (slideIndex)
 			{
-				this.slideTo(slideIndex)
+				this.slideTo(slideIndex);
 			}
-
-			BX.PreventDefault(event);
 		},
 
 		slideNext: function()
@@ -1639,8 +2135,6 @@
 
 			if (activeIndex == pos)
 			{
-				//this.stopSlider();
-				this.cycleSlider();
 				return;
 			}
 
@@ -1668,9 +2162,19 @@
 
 			if (this.obPictSliderIndicator)
 			{
-				BX.removeClass(this.obPictSliderIndicator.querySelector('.active'), 'active');
+				var prevIndicator = this.obPictSliderIndicator.querySelector('.active');
+				BX.removeClass(prevIndicator, 'active');
+				if (prevIndicator)
+				{
+					prevIndicator.removeAttribute('aria-current');
+				}
+
 				var nextIndicator = this.obPictSliderIndicator.querySelectorAll("[data-entity='slider-control']")[this.getItemIndex(next)];
-				nextIndicator && BX.addClass(nextIndicator, 'active');
+				if (nextIndicator)
+				{
+					BX.addClass(nextIndicator, 'active');
+					nextIndicator.setAttribute('aria-current', 'true');
+				}
 			}
 
 			if (BX.hasClass(this.obPictSlider, 'catalog-section-item-slider-images-container') && !BX.browser.IsIE())
@@ -1801,6 +2305,10 @@
 				rowItems = null,
 				target = BX.proxy_context;
 
+			// the dots are rebuilt by the variation change started here, so keep
+			// the origin node as the focus fallback
+			this.zoneFocusOrigin = target;
+
 			if (target && target.hasAttribute('data-treevalue'))
 			{
 				if (BX.hasClass(target, 'selected'))
@@ -1819,13 +2327,17 @@
 							if (value === arTreeItem[1])
 							{
 								BX.addClass(rowItems[i], 'selected');
+								rowItems[i].setAttribute('aria-checked', 'true');
 							}
 							else
 							{
 								BX.removeClass(rowItems[i], 'selected');
+								rowItems[i].setAttribute('aria-checked', 'false');
 							}
 						}
 					}
+
+					this.announceSkuChoice(target);
 
 					if (
 						this.isFacebookConversionCustomizeProductEventEnabled
@@ -1844,6 +2356,19 @@
 					}
 				}
 			}
+		},
+
+		// the <li> carries the radio role but is not an interactive element,
+		// so the browser synthesizes no activation from Enter or Space
+		selectOfferPropKey: function(event)
+		{
+			if (event.key !== 'Enter' && event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.selectOfferProp();
 		},
 
 		searchOfferPropIndex: function(strPropID, strPropValue)
@@ -1939,7 +2464,8 @@
 				rowItems = null;
 
 			var lineContainer = this.obTree.querySelectorAll('[data-entity="sku-line-block"]'),
-				listContainer;
+				listContainer,
+				visibleItems = [];
 
 			if (intNumber > -1 && intNumber < lineContainer.length)
 			{
@@ -1955,29 +2481,56 @@
 						if (isCurrent)
 						{
 							BX.addClass(rowItems[i], 'selected');
+							rowItems[i].setAttribute('aria-checked', 'true');
 						}
 						else
 						{
 							BX.removeClass(rowItems[i], 'selected');
+							rowItems[i].setAttribute('aria-checked', 'false');
 						}
 
 						if (BX.util.in_array(value, canBuyID))
 						{
 							BX.removeClass(rowItems[i], 'notallowed');
+							rowItems[i].removeAttribute('aria-disabled');
 						}
 						else
 						{
 							BX.addClass(rowItems[i], 'notallowed');
+							// not `disabled`: the value stays reachable by arrows and explained to a screen reader
+							rowItems[i].setAttribute('aria-disabled', 'true');
 						}
 
 						rowItems[i].style.display = BX.util.in_array(value, showID) ? '' : 'none';
+						if (rowItems[i].style.display !== 'none')
+						{
+							visibleItems.push(rowItems[i]);
+						}
 
 						if (isCurrent)
 						{
 							lineContainer[intNumber].style.display = (value == 0 && canBuyID.length == 1) ? 'none' : '';
 						}
 					}
+
+					this.updateSkuPositions(visibleItems);
+					if (this.skuFocusZones[intNumber])
+					{
+						// the zone observer does not watch inline styles, so the set is rebuilt here
+						this.skuFocusZones[intNumber].refreshElements();
+					}
 				}
+			}
+		},
+
+		// the browser cannot compute the set position for a role carried by <li>,
+		// and a hidden value must not be counted
+		updateSkuPositions: function(items)
+		{
+			for (var i = 0; i < items.length; i++)
+			{
+				items[i].setAttribute('aria-setsize', items.length);
+				items[i].setAttribute('aria-posinset', i + 1);
 			}
 		},
 
@@ -2199,6 +2752,13 @@
 				return;
 			}
 			var indicatorExist = BX.type.isElementNode(this.obPictSliderIndicator);
+			var accessibility = getAccessibility();
+
+			var dots = this.obPictSliderIndicator;
+			var activeDot = accessibility ? accessibility.FocusNavigator.getActiveElement(dots) : null;
+			var hadFocus = indicatorExist && activeDot !== null && dots.contains(activeDot);
+			var prevIndex = hadFocus ? this.getDotList().indexOf(activeDot) : -1;
+
 			BX.cleanNode(this.obPictSlider);
 			if (indicatorExist)
 			{
@@ -2222,6 +2782,11 @@
 						attrs: {
 							src: xPhotos[i].SRC,
 							srcset: xPhotos[i].SRC + " 1x, " + x2Photos[i].SRC + " 2x",
+						},
+						// a caption set as an attribute disappears when empty, and the photo
+						// needs an explicit empty one: it is hidden from the reader on purpose
+						props: {
+							alt: this.product.imageAlt
 						}
 					}
 				);
@@ -2248,7 +2813,9 @@
 						{
 							attrs: {
 								'data-entity': 'image',
-								'data-id': xPhotos[i].ID
+								'data-id': xPhotos[i].ID,
+								'tabindex': '-1',
+								'aria-hidden': 'true'
 							},
 							props: {
 								href: this.product.DETAIL_PAGE_URL,
@@ -2264,14 +2831,18 @@
 
 				if (indicatorExist && useIndicator)
 				{
-					this.obPictSliderIndicator.appendChild(
+					var indicator = this.obPictSliderIndicator.appendChild(
 						BX.create(
-							'DIV',
+							'BUTTON',
 							{
 								attrs: {
+									'type': 'button',
 									'data-go-to': i,
 									'data-value': xPhotos[i].ID,
-									'data-entity': 'slider-control'
+									'data-entity': 'slider-control',
+									'data-testid': 'catalog-item-gallery-dot',
+									'tabindex': '-1',
+									'aria-label': this.getDotAriaLabel(currentIndex, xPhotos.length)
 								},
 								props: {
 									className: 'catalog-section-item-slider-controls-image' + (selected ? ' active' : '')
@@ -2295,6 +2866,11 @@
 							}
 						)
 					);
+
+					if (selected)
+					{
+						indicator.setAttribute('aria-current', 'true');
+					}
 				}
 
 				if (selected)
@@ -2321,6 +2897,24 @@
 			{
 				this.obPictSliderIndicator.style.display = (useIndicator ? '' : 'none');
 			}
+
+			this.syncDotsZone();
+
+			if (!hadFocus)
+			{
+				return;
+			}
+
+			var dotList = this.getDotList();
+			if (dotList.length === 0)
+			{
+				accessibility.FocusNavigator.focusTarget(this.zoneFocusOrigin);
+			}
+			else
+			{
+				var dotToFocus = dotList[activePhoto] || dotList[Math.min(prevIndex, dotList.length - 1)];
+				accessibility.FocusNavigator.focusTarget(dotToFocus, {preventScroll: true});
+			}
 		},
 
 		hidePictureSlider: function()
@@ -2329,9 +2923,25 @@
 			{
 				return;
 			}
-			if (BX.type.isElementNode(this.obPictSliderIndicator))
+
+			// the offer has no photos at all: the dots go away, so the focus state
+			// is read while they are still visible and focusable
+			var dots = this.obPictSliderIndicator;
+			var indicatorExist = BX.type.isElementNode(dots);
+			var accessibility = getAccessibility();
+			var activeDot = accessibility ? accessibility.FocusNavigator.getActiveElement(dots) : null;
+			var hadFocus = indicatorExist && activeDot !== null && dots.contains(activeDot);
+
+			if (indicatorExist)
 			{
-				this.obPictSliderIndicator.style.display = 'none';
+				dots.style.display = 'none';
+			}
+
+			this.syncDotsZone();
+
+			if (hadFocus)
+			{
+				accessibility.FocusNavigator.focusTarget(this.zoneFocusOrigin);
 			}
 		},
 
@@ -2444,6 +3054,7 @@
 				formatPrice = '',
 				formatOldPrice = '',
 				formatDiscount = '',
+				formatTotalPrice = '',
 				showBlock;
 
 			if (this.obQuantity)
@@ -2563,15 +3174,23 @@
 							})
 						}
 
+						formatTotalPrice = BX.Currency.currencyFormat(price.PRICE * this.obQuantity.value, price.CURRENCY, true);
+
 						BX.adjust(this.obPriceTotal, {
 							html: BX.message('PRICE_TOTAL_PREFIX') + ' <span>'
-							+ BX.Currency.currencyFormat(price.PRICE * this.obQuantity.value, price.CURRENCY, true)
+							+ formatTotalPrice
 							+ '</span>',
 							style: {display: ''}
 						});
+
+						// the announcer writes plain text, so the currency template is read back
+						// from the visible node, where the browser has already decoded it
+						this.announceTotalPrice(this.obPriceTotal.textContent);
 					}
 					else
 					{
+						this.cancelTotalPriceAnnounce();
+
 						BX.adjust(this.obPriceTotal, {
 							html: '',
 							style: {display: 'none'}
@@ -2588,6 +3207,81 @@
 					}
 				}
 			}
+		},
+
+		// The choice of a variant is spoken by us and not left to the reader. Orca repeats the state of
+		// a radio only when the last key was the space bar (orca/scripts/default.py: onCheckedChanged),
+		// so a choice made with Enter, with the arrows or with the mouse stayed silent. The property is
+		// named next to the value because a card carries several groups and a bare value does not say
+		// which of them changed.
+		announceSkuChoice: function(node)
+		{
+			var accessibility = getAccessibility();
+
+			if (this.skuSelectedAria === '' || !BX.type.isElementNode(node) || !accessibility)
+			{
+				return;
+			}
+
+			var value = node.getAttribute('aria-label') || node.getAttribute('title') || '';
+			if (value === '')
+			{
+				return;
+			}
+
+			var property = this.getSkuGroupName(node);
+
+			accessibility.LiveAnnouncer.announce(
+				property === ''
+					? value
+					: fillTemplate(this.skuSelectedAria, {'#PROPERTY#': property, '#VALUE#': value})
+			);
+		},
+
+		getSkuGroupName: function(node)
+		{
+			var group = node.closest ? node.closest('[role="radiogroup"]') : null;
+			if (!group)
+			{
+				return '';
+			}
+
+			var label = group.getAttribute('aria-label');
+			if (label)
+			{
+				return label;
+			}
+
+			var titleId = group.getAttribute('aria-labelledby');
+			var title = titleId ? document.getElementById(titleId) : null;
+
+			return title ? (title.textContent || '').trim() : '';
+		},
+
+		announceTotalPrice: function(text)
+		{
+			this.cancelTotalPriceAnnounce();
+
+			var accessibility = getAccessibility();
+
+			if (!accessibility)
+			{
+				return;
+			}
+
+			this.totalPriceAnnounceTimer = setTimeout(
+				BX.delegate(function() {
+					this.totalPriceAnnounceTimer = null;
+					accessibility.LiveAnnouncer.announce(text);
+				}, this),
+				TOTAL_PRICE_ANNOUNCE_DELAY
+			);
+		},
+
+		cancelTotalPriceAnnounce: function()
+		{
+			clearTimeout(this.totalPriceAnnounceTimer);
+			this.totalPriceAnnounceTimer = null;
 		},
 
 		compare: function(event)

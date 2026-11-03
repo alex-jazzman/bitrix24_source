@@ -19,6 +19,7 @@ $extensions = [
 $isAdmin = $arResult['IS_ADMIN'] ?? false;
 if ($isAdmin)
 {
+	$extensions[] = 'ui.notification';
 	$extensions[] = 'biconnector.relink-superset-popup';
 }
 

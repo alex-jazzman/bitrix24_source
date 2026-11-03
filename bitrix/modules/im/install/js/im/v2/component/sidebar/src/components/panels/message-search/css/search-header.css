@@ -6,23 +6,19 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap: var(--ui-space-inline-xs2);
 	height: 65px;
-	padding-left: 16px;
+	padding-left: var(--ui-space-inset-md);
+	padding-right: var(--ui-space-inset-md);
 	border-bottom: 1px solid var(--im-sidebar-search-header__border-color_separator);
 }
 
 .bx-im-sidebar-search-header__title-container {
 	display: flex;
 	align-items: center;
+	flex: 1;
+	min-width: 0;
 	overflow: hidden;
-}
-
-.bx-im-sidebar-search-header__calendar-icon {
-	margin: 0 20px 0 10px;
-	width: 24px;
-	height: 24px;
-	background: url("./images/calendar-icon.svg") no-repeat center;
-	cursor: pointer;
 }
 
 .bx-im-sidebar-search-header__title-text {
@@ -34,9 +30,20 @@
 	overflow: hidden;
 }
 
+/* The detail header of the other panels borrows this class for a row of its own. */
 .bx-im-sidebar-search-header__input {
 	margin-left: 11px;
 	width: 246px;
+}
+
+/* Here the row is shared with the leading button, the calendar button, the gap and the padding, and
+   the field takes what is left of it: 246px is the width it reaches only while the row is wide
+   enough for it, not a width it always has. */
+.bx-im-sidebar-search-header__title-container > .bx-im-sidebar-search-header__input {
+	flex: 1;
+	width: auto;
+	min-width: 0;
+	max-width: 246px;
 }
 
 .bx-im-sidebar-search-header__ds-icon {

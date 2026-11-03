@@ -2,6 +2,7 @@ import { Dom, Event, Loc, Tag, Type } from 'main.core';
 import { CloseIconSize, Popup } from 'main.popup';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
 import { Text } from 'ui.system.typography';
+import { LiveAnnouncer } from 'ui.a11y';
 import type { Transport } from '../transport';
 import { AvatarRound, AvatarRoundGuest, AvatarRoundExtranet } from 'ui.avatar';
 
@@ -11,6 +12,7 @@ export type RestoreFiredUsersPopupOptionsType = {
 	transport: Transport,
 	departmentIds: Array;
 	workgroupIds: Array;
+	restoreFocusElement?: HTMLElement;
 }
 
 export class RestoreFiredUsersPopup
@@ -25,6 +27,7 @@ export class RestoreFiredUsersPopup
 	#popupContainer: ?HTMLElement;
 	#isMultipleMode: Boolean;
 	#isRestoreUsersAccessAvailable: Boolean;
+	#restoreFocusElement: ?HTMLElement;
 
 	constructor(options: RestoreFiredUsersPopupOptionsType)
 	{
@@ -33,6 +36,7 @@ export class RestoreFiredUsersPopup
 		this.#transport = options.transport;
 		this.#departmentIds = options.departmentIds;
 		this.#workgroupIds = options.workgroupIds;
+		this.#restoreFocusElement = options.restoreFocusElement;
 		this.#isMultipleMode = this.#userList.length > 1;
 		this.#selectedUserIds = this.#userList.map((user) => user.id);
 	}
@@ -47,25 +51,56 @@ export class RestoreFiredUsersPopup
 
 	#getPopup(): Popup
 	{
-		this.#popup ??= new Popup({
-			id: 'intranet-restore-fired-users',
-			content: this.#isRestoreUsersAccessAvailable
-				? this.#getPopupContent()
-				: this.#getPopupContentWithoutRestoreAccess(),
-			closeByEsc: true,
-			closeIcon: true,
-			closeIconSize: CloseIconSize.LARGE,
-			autoHide: true,
-			padding: 25,
-			width: this.#isRestoreUsersAccessAvailable ? 515 : 400,
-			events: {
-				onPopupClose: () => {
-					this.#popup.destroy();
+		if (!this.#popup)
+		{
+			this.#popup = new Popup({
+				id: 'intranet-restore-fired-users',
+				content: this.#isRestoreUsersAccessAvailable
+					? this.#getPopupContent()
+					: this.#getPopupContentWithoutRestoreAccess(),
+				ariaLabel: this.#getAriaLabel(),
+				focusTrap: {
+					initialFocus: '[data-autofocus]',
+					restoreFocus: this.#restoreFocusElement ?? true,
 				},
-			},
-		});
+				closeByEsc: true,
+				closeIcon: true,
+				closeIconSize: CloseIconSize.LARGE,
+				autoHide: true,
+				padding: 25,
+				width: this.#isRestoreUsersAccessAvailable ? 515 : 400,
+				events: {
+					onPopupClose: () => {
+						this.#popup.destroy();
+					},
+				},
+			});
+			this.#popup.getPopupContainer().dataset.testid = 'invitation-restore-fired-users-popup';
+		}
 
 		return this.#popup;
+	}
+
+	#getAriaLabel(): string
+	{
+		if (this.#isRestoreUsersAccessAvailable)
+		{
+			return this.#isMultipleMode
+				? Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_TITLE_MULTIPLE')
+				: Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_TITLE_SINGLE', {
+					'#LOGIN#': this.#userList[0]?.login,
+				})
+			;
+		}
+
+		return this.#isMultipleMode
+			? Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_MULTIPLE', {
+				'#LOGIN#': this.#userList.map((user) => user.login).join(', '),
+			})
+			: Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_SINGLE', {
+				'#LOGIN#': this.#userList[0]?.login,
+			})
+		;
 	}
 
 	#getPopupContentWithoutRestoreAccess(): HTMLElement
@@ -74,13 +109,17 @@ export class RestoreFiredUsersPopup
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_OK'),
 			style: AirButtonStyle.FILLED,
 			useAirDesign: true,
+			dataset: {
+				autofocus: '',
+				testid: 'invitation-restore-fired-users-popup-ok-button',
+			},
 			onclick: () => {
 				this.#getPopup().close();
 			},
 		}).render();
 
 		return Tag.render`
-			<div>
+			<div data-testid="invitation-restore-fired-users-popup-no-access-content">
 				<span class="ui-text --lg">
 					${this.#isMultipleMode
 						? Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_MULTIPLE', {
@@ -101,7 +140,10 @@ export class RestoreFiredUsersPopup
 	#getPopupContent(): HTMLElement
 	{
 		this.#popupContainer = Tag.render`
-			<div class="" data-role="intranet-invitation-fired-popup-container"></div>
+			<div
+				data-role="intranet-invitation-fired-popup-container"
+				data-testid="invitation-restore-fired-users-popup-content"
+			></div>
 		`;
 
 		const headTitle = Tag.render`
@@ -165,29 +207,45 @@ export class RestoreFiredUsersPopup
 	#getUserBlockContent(user: Object): HTMLElement
 	{
 		let checkboxNode = Tag.render``;
+		const userNameId = `intranet-restore-fired-user-name-${user.id}`;
 
 		if (this.#isMultipleMode)
 		{
 			checkboxNode = Tag.render`
 				<div style="margin-left: 10px;">
-					<input 
-						type="checkbox" 
-						checked 
-						class="intranet-invitation-checkbox" 
+					<input
+						type="checkbox"
+						checked
+						class="intranet-invitation-checkbox"
 						value="${user?.id}"
+						aria-labelledby="${userNameId}"
+						data-testid="invitation-restore-fired-users-popup-checkbox-${user.id}"
 					/>
 				</div>
 			`;
+
+			if (user.id === this.#userList[0]?.id)
+			{
+				checkboxNode.querySelector('input').dataset.autofocus = '';
+			}
 		}
 
 		const userBlock = Tag.render`
-			<div class="intranet-invitation-fired-popup-user__wrapper ${this.#isMultipleMode ? '--filled' : ''}">
+			<div
+				class="intranet-invitation-fired-popup-user__wrapper ${this.#isMultipleMode ? '--filled' : ''}"
+				data-testid="invitation-restore-fired-users-popup-user-${user.id}"
+			>
 				${checkboxNode}
 				<div>
 					${this.#renderUserAvatar(user)}
 				</div>
 				<div class="intranet-invitation-fired-popup-user__name-block ${this.#isMultipleMode ? '' : '--wide'}">
-					<a href="${user.profileUrl}" class="ui-link ui-link-dashed" style="font-size:16px;">${user.name}</a>
+					<a
+						id="${userNameId}"
+						href="${user.profileUrl}"
+						class="ui-link ui-link-dashed"
+						style="font-size:16px;"
+					>${user.name}</a>
 					<div>${Text.render(user?.position, { size: '2xs', className: 'intranet-invitation-fired-popup-user__text' })}</div>
 					${this.#getUserRole(user)}
 				</div>
@@ -287,6 +345,10 @@ export class RestoreFiredUsersPopup
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_RESTORE'),
 			style: AirButtonStyle.FILLED,
 			useAirDesign: true,
+			dataset: {
+				...(this.#isMultipleMode ? {} : { autofocus: '' }),
+				testid: 'invitation-restore-fired-users-popup-restore-button',
+			},
 			onclick: () => {
 				const currentButtonState = this.#sendButton.getState();
 
@@ -306,11 +368,16 @@ export class RestoreFiredUsersPopup
 							workgroupIds: this.#workgroupIds,
 						},
 					},
+					(reject) => {
+						this.#transport.onError(reject);
+						throw reject;
+					},
 					{ showSuccessPopup: false },
 				).then((response) => {
 					this.#getPopup().close();
 					this.#showSuccessNotification(response.data.restoredUserIds);
 				}).catch((reject) => {
+					this.#sendButton.setState(null);
 					console.error(reject);
 				});
 			},
@@ -325,6 +392,9 @@ export class RestoreFiredUsersPopup
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_PASS_LOGIN'),
 			useAirDesign: true,
 			style: AirButtonStyle.PLAIN,
+			dataset: {
+				testid: 'invitation-restore-fired-users-popup-pass-login-button',
+			},
 			onclick: () => {
 				if (top.BX.Helper)
 				{
@@ -338,26 +408,35 @@ export class RestoreFiredUsersPopup
 	{
 		const restoredUserIdsNumeric = new Set(restoredUserIds.map((id) => Number(id)));
 		const restoredUsers = this.#userList.filter((user) => restoredUserIdsNumeric.has(user.id));
+		const notificationContent = this.#getNotificationContent(restoredUsers);
 
 		const notificationOptions = {
 			id: 'restore-notification-success',
 			autoHideDelay: 4000,
 			closeButton: false,
 			autoHide: true,
-			content: this.#getNotificationContent(restoredUsers),
+			content: notificationContent,
 			useAirDesign: true,
 		};
 
 		const notify = BX.UI.Notification.Center.notify(notificationOptions);
 		notify.show();
 		notify.activateAutoHide();
+
+		LiveAnnouncer.announce((notificationContent.textContent ?? '').replace(/\s+/g, ' ').trim(), 'polite');
 	}
 
 	#getNotificationContent(restoredUsers: Array): HTMLElement
 	{
 		return Tag.render`
-			<div class="invite-email-notification">
-				<div class="invite-email-notification__content">
+			<div
+				class="invite-email-notification"
+				data-testid="invitation-restore-success-notification"
+			>
+				<div
+					class="invite-email-notification__content"
+					data-testid="invitation-restore-success-notification-message"
+				>
 					<div class="invite-email-notification__description ui-text --2xs">
 						${restoredUsers.length > 1
 							? Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_SUCCESS_NOTIFICATION_MULTIPLE', {

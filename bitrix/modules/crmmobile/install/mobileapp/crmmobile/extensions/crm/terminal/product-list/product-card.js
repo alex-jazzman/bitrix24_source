@@ -2,6 +2,8 @@
  * @module crm/terminal/product-list/product-card
  */
 jn.define('crm/terminal/product-list/product-card', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { InlineSkuTree } = require('layout/ui/product-grid/components/inline-sku-tree');
@@ -74,19 +76,17 @@ jn.define('crm/terminal/product-list/product-card', (require, exports, module) =
 						flexDirection: 'row',
 					},
 				},
-				Text({
+				Text3({
 					text: productRow.getQuantity().toString(),
 					style: {
-						fontSize: 16,
 						color: AppTheme.colors.base1,
 						fontWeight: '700',
 						marginRight: 5,
 					},
 				}),
-				Text({
+				Text3({
 					text: productRow.getMeasureName(),
 					style: {
-						fontSize: 16,
 						color: AppTheme.colors.base3,
 						fontWeight: '700',
 					},
@@ -122,18 +122,16 @@ jn.define('crm/terminal/product-list/product-card', (require, exports, module) =
 						amount: price,
 						currency,
 					}),
-					renderAmount: (formattedAmount) => Text({
+					renderAmount: (formattedAmount) => Text3({
 						text: formattedAmount,
 						style: {
-							fontSize: 16,
 							color: AppTheme.colors.base1,
 							fontWeight: '700',
 						},
 					}),
-					renderCurrency: (formattedCurrency) => Text({
+					renderCurrency: (formattedCurrency) => Text3({
 						text: formattedCurrency,
 						style: {
-							fontSize: 16,
 							color: AppTheme.colors.base3,
 							fontWeight: '700',
 						},
@@ -206,7 +204,7 @@ jn.define('crm/terminal/product-list/product-card', (require, exports, module) =
 			totalText: {
 				flexDirection: 'row',
 				color: AppTheme.colors.base4,
-				fontSize: 12,
+				fontSize: Typography.text6.getValue().fontSize,
 			},
 			total: {
 				quantity: {

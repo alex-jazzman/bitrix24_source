@@ -40,3 +40,76 @@
 {
 	height: calc(100vh - 240px) !important;
 }
+
+#biconnector_unused_elements_grid_table .main-grid-row-head {
+	background-color: var(--ui-color-bg-vibrant-default);
+}
+
+#biconnector_unused_elements_grid_table .main-grid-cell-head {
+	background-color: transparent;
+}
+
+#ui-page-slider-content .ui-page-slider-workarea {
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-item:only-child .ui-action-panel-item-title::before {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	background-color: var(--ui-color-design-plain-content-icon);
+	content: '';
+	mask: url('/bitrix/js/ui/icon-set/outline/dist/images/trashcan.svg') center / contain no-repeat;
+	-webkit-mask: url('/bitrix/js/ui/icon-set/outline/dist/images/trashcan.svg') center / contain no-repeat;
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-item {
+	display: inline-flex;
+	align-items: center;
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-item::before {
+	display: none;
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-item-title {
+	display: inline-flex;
+	align-items: center;
+	text-transform: none;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-reset {
+	order: 0;
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-total {
+	padding-right: var(--ui-space-inline-xs);
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-total::after {
+	display: none;
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-reset::before {
+	right: 0;
+	left: auto;
+}
+
+.biconnector-unused-elements-action-panel .ui-action-panel-reset::after
+{
+	width: 10px;
+	height: 10px;
+	opacity: 1;
+	background:
+		linear-gradient(
+			var(--ui-color-design-plain-content-icon),
+			var(--ui-color-design-plain-content-icon)
+		) center / 1px 100% no-repeat,
+		linear-gradient(
+			var(--ui-color-design-plain-content-icon),
+			var(--ui-color-design-plain-content-icon)
+		) center / 100% 1px no-repeat;
+	transform: translate(-50%, -50%) rotate(45deg);
+}

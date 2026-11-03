@@ -31,11 +31,16 @@ export const useToastStore = defineStore('bizprocdesigner-toast-store', {
 		{
 			this.toastQueue = this.toastQueue.filter((toast) => toast.type !== type);
 		},
-		addWarning(message: string): void
+		clearByTag(tag: string): void
+		{
+			this.toastQueue = this.toastQueue.filter((toast) => toast.tag !== tag);
+		},
+		addWarning(message: string, tag: ?string = null): void
 		{
 			this.addToQueue({
 				message,
 				type: SHARED_TOAST_TYPES.WARNING,
+				...(tag === null ? {} : { tag }),
 			});
 		},
 		addCustom(message: string, type: ToastType, extra: $Shape<ToastMessage> = {}): void

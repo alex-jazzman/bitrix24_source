@@ -68,10 +68,15 @@
 }
 .tasks-control-panel-section__item-action[disabled] {
 	cursor: auto;
+}
+.tasks-control-panel-section__item-action[disabled],
+.tasks-control-panel-section__item-action[aria-disabled="true"] {
 	opacity: 0.5;
 }
 .tasks-control-panel-section__item-action[disabled],
-.tasks-control-panel-section__item-action[disabled]:hover {
+.tasks-control-panel-section__item-action[disabled]:hover,
+.tasks-control-panel-section__item-action[aria-disabled="true"],
+.tasks-control-panel-section__item-action[aria-disabled="true"]:hover {
 	--color-section-control: var(--ui-color-accent-soft-blue-1);
 }
 

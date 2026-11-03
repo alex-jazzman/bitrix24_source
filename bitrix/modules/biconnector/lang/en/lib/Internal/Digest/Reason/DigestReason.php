@@ -1,0 +1,22 @@
+<?php
+$MESS['BI_DIGEST_REASON_BI_DELETED'] = 'BI Builder has been deleted or is being deleted.';
+$MESS['BI_DIGEST_REASON_BI_DISABLED'] = 'BI Builder is disabled by the plan or in the settings.';
+$MESS['BI_DIGEST_REASON_BI_LIMIT_EXCEEDED'] = 'The license key has reached the BI Builder limit.';
+$MESS['BI_DIGEST_REASON_BI_PREPARING'] = 'BI Builder is getting ready.';
+$MESS['BI_DIGEST_REASON_DASHBOARD_NOT_FOUND'] = 'The dashboard is not found or has been deleted.';
+$MESS['BI_DIGEST_REASON_DASHBOARD_NOT_SYNCED'] = 'The dashboard is not synced with BI Builder.';
+$MESS['BI_DIGEST_REASON_DASHBOARD_PREPARING'] = 'The dashboard is being installed or reinstalled.';
+$MESS['BI_DIGEST_REASON_DASHBOARD_TIMEOUT'] = 'The dashboard took too long to load.';
+$MESS['BI_DIGEST_REASON_DOMAIN_NOT_LINKED'] = 'The address is not linked to BI Builder.';
+$MESS['BI_DIGEST_REASON_NO_ACCESSIBLE_SCOPE_VALUE'] = 'The recipient has no available values for the required dashboard parameter.';
+$MESS['BI_DIGEST_REASON_NO_DASHBOARD_RIGHT'] = 'The recipient has no permission to view the dashboard.';
+$MESS['BI_DIGEST_REASON_SCOPE_PARAMETERS_MISMATCH'] = 'The dashboard parameters do not match the digest settings.';
+$MESS['BI_DIGEST_REASON_SCOPE_VALUE_FOREIGN'] = 'The parameter from the digest settings does not belong to the selected dashboard.';
+$MESS['BI_DIGEST_REASON_SCOPE_VALUE_NOT_ACCESSIBLE'] = 'The dashboard parameter value is not available to the recipient.';
+$MESS['BI_DIGEST_REASON_WARMUP_FAILED'] = 'Could not get a response from BI Builder.';
+$MESS['BI_DIGEST_SETUP_REASON_DASHBOARD_NOT_FOUND'] = 'dashboard not found';
+$MESS['BI_DIGEST_SETUP_REASON_NO_ACCESSIBLE_SCOPE_VALUE'] = 'no access to any dashboard parameter value';
+$MESS['BI_DIGEST_SETUP_REASON_NO_DASHBOARD_RIGHT'] = 'no permission to view the dashboard';
+$MESS['BI_DIGEST_SETUP_REASON_SCOPE_PARAMETERS_MISMATCH'] = 'The setup parameters do not match the dashboard parameters, so no one will receive the digest.';
+$MESS['BI_DIGEST_SETUP_REASON_SCOPE_VALUE_FOREIGN'] = 'The parameter in the settings is not part of the selected dashboard. No one will receive the digest.';
+$MESS['BI_DIGEST_SETUP_REASON_SCOPE_VALUE_NOT_ACCESSIBLE'] = 'no access to the selected dashboard parameter value';

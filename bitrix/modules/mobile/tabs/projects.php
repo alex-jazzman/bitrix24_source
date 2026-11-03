@@ -146,6 +146,6 @@ class Projects implements Tabable
 
 	public function getIconId(): string
 	{
-		return 'folder_with_card';
+		return 'folder';
 	}
 }

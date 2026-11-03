@@ -1,24 +1,18 @@
 import './style.css';
 
-import { Type, Dom, Event } from 'main.core';
+import { Type, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { MenuManager } from 'main.popup';
 import { markRaw } from 'ui.vue3';
 import { mapActions, mapState } from 'ui.vue3.pinia';
-import {
-	Context,
-	ConditionGroup,
-	ConditionGroupSelector,
-	Document,
-	tryGetGlobalContext,
-	setGlobalContext,
-} from 'bizproc.automation';
+import { ConditionGroup, ConditionGroupSelector } from 'bizproc.condition';
 
 import { useLoc } from '../../../../shared/composables';
-import { editorAPI } from '../../../../shared/api';
 import { Loader } from '../../../../shared/ui';
-import { createUniqueId, deepEqual } from '../../../../shared/utils';
+import { createUniqueId, filterMetadataCache } from '../../../../shared/utils';
 import { PROPERTY_TYPES, EVALUATION_STAGE } from '../../../../shared/constants';
 import { EditExtendedAction } from '../edit-extended-action';
+import { handleBpSelectorButtonClick } from '../../utils/bp-selector-button';
 import {
 	closeReadableExpressionPopover,
 	mountFormVeneers,
@@ -28,10 +22,13 @@ import { diagramStore } from '../../../../entities/blocks';
 import { ValueSelector } from '../../../../entities/common-node-settings';
 import {
 	useNodeSettingsStore,
-	DEV_NODE_FILTER_BACKING_ACTIVITY_TYPES,
 	EVENT_NAMES,
-	NODE_FILTER_BACKING_ACTIVITY_TYPES,
+	buildFilterMetadataParams,
 	getConnectedBlocksContextForConstruction,
+	resolveRuleCollection,
+	resolveFilterBackingActivityType,
+	resolveFilterContextDocumentType,
+	resolveFilterFixedEntityTypeId,
 } from '../../../../entities/node-settings';
 const FILTER_DOCUMENT_PROPERTY_ID = 'Document';
 const CorrectDocumentTypeLength = 3;
@@ -42,27 +39,44 @@ const Status = Object.freeze({
 	Error: 'error',
 });
 
-const CRM_ENTITY_TYPE_IDS = Object.freeze({
-	LEAD: 1,
-	DEAL: 2,
-	CONTACT: 3,
-	COMPANY: 4,
-	QUOTE: 7,
-	SMART_INVOICE: 31,
-});
-
 const EMPTY_CONDITIONS = Object.freeze({ items: [] });
 
-const queueMicrotaskSafe = (callback: () => void): void => {
-	if (Type.isFunction(window.queueMicrotask))
-	{
-		window.queueMicrotask(callback);
+// Without a cap the menu grows by its widest item, and a title plus the name of its place overruns the panel.
+const ENTITY_TYPE_MENU_MAX_WIDTH = 472;
 
-		return;
-	}
+const BADGE_CLASS = 'editor-chart-node-settings-edit-filter-expression__badge';
+const MENU_ITEM_CLASS = 'editor-chart-node-settings-edit-filter-expression__menu-item';
+const MENU_ITEM_TITLE_CLASS = 'editor-chart-node-settings-edit-filter-expression__menu-item-title';
 
-	void Promise.resolve().then(callback);
-};
+// The menu is drawn into the body, outside the root of the component, so the parts of a row are narrowed
+// by the type the row stands for, the way the row itself is - see getEntityTypeMenuItems.
+const MENU_ITEM_TITLE_TEST_ID = 'filterEntityTypeSelectItemTitle';
+const MENU_ITEM_BADGE_TEST_ID = 'filterEntityTypeSelectItemBadge';
+
+/**
+ * Content of a menu item that carries a badge: the badge needs an element of its own, which the `text` of an
+ * item cannot give, and a string given to `html` instead would reach the item unescaped.
+ */
+function renderBadgedMenuItemContent(title: string, badge: string, entityTypeId: string): HTMLElement
+{
+	return Dom.create('span', {
+		props: { className: MENU_ITEM_CLASS },
+		children: [
+			Dom.create('span', {
+				props: { className: MENU_ITEM_TITLE_CLASS, title },
+				dataset: { testId: `${MENU_ITEM_TITLE_TEST_ID}-${entityTypeId}` },
+				text: title,
+			}),
+			// The gap of the row is no separator to a screen reader: without a space it reads both names as one.
+			document.createTextNode(' '),
+			Dom.create('span', {
+				props: { className: BADGE_CLASS, title: badge },
+				dataset: { testId: `${MENU_ITEM_BADGE_TEST_ID}-${entityTypeId}` },
+				text: badge,
+			}),
+		],
+	});
+}
 
 // @vue/component
 export const EditFilterExpression = {
@@ -93,8 +107,28 @@ export const EditFilterExpression = {
 			type: [Object, null],
 			required: true,
 		},
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the section this filter belongs to. Without it the filter works on the single rule the
+		 * panel shows: only the all-rules mode has no single one, and there every section names its own.
+		 */
+		rulePort:
+		{
+			type: [Object, null],
+			default: null,
+		},
+		/**
+		 * True while the rule of the section has been reached (see isSectionLive). The filter asks the
+		 * server for its metadata and renders the legacy condition tree, so all of that waits for the
+		 * rule; until then the card keeps its header and shows the committed source as plain text.
+		 */
+		isLive:
+		{
+			type: Boolean,
+			default: true,
+		},
 	},
-	setup(): { getMessage: () => string; }
+	setup(): { getMessage: () => string }
 	{
 		const { getMessage } = useLoc();
 
@@ -105,19 +139,15 @@ export const EditFilterExpression = {
 		entityTypeOptions: Array<{ value: string, title: string }>,
 		filterFieldsMap: Map<string, Array<Object>>,
 		documentTypeMap: Map<string, Array<string>>,
-		documentFields: Array<Object>,
-		documentName: string,
+		entityTypeBadges: Map<string, string>,
 		filteringFieldsPrefix: string,
 		currentEntityTypeId: string,
 		serializedConditions: Object,
 		conditionGroup: ConditionGroup | null,
 		conditionGroupSelector: ConditionGroupSelector | null,
 		isExpanded: boolean,
+		isEntityTypeMenuOpen: boolean,
 		lastLoadId: number,
-		selectorInteractionHandler: Function | null,
-		selectorStateObserver: MutationObserver | null,
-		isSelectorStateSyncQueued: boolean,
-		isSelectorMarkupChanged: boolean,
 		onBeforeSubmitCallback: Function | null,
 	}
 	{
@@ -126,28 +156,39 @@ export const EditFilterExpression = {
 			entityTypeOptions: [],
 			filterFieldsMap: new Map(),
 			documentTypeMap: new Map(),
-			documentFields: [],
-			documentName: '',
+			entityTypeBadges: new Map(),
 			filteringFieldsPrefix: 'dynamic_filter_fields_',
 			currentEntityTypeId: '',
 			serializedConditions: EMPTY_CONDITIONS,
 			conditionGroup: null,
 			conditionGroupSelector: null,
 			isExpanded: true,
+			isEntityTypeMenuOpen: false,
 			lastLoadId: 0,
-			selectorInteractionHandler: null,
-			selectorStateObserver: null,
-			isSelectorStateSyncQueued: false,
-			isSelectorMarkupChanged: false,
 			onBeforeSubmitCallback: null,
 		};
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule', 'currentSettingsItems']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
 		Status(): typeof Status
 		{
 			return Status;
+		},
+		/** Rule this filter works on: the one of its own section, or the single rule the panel shows. */
+		targetRulePort(): Object | null
+		{
+			return this.rulePort ?? this.currentRule;
+		},
+		/** Id of that rule, as the context builder and the value selector take it. */
+		targetRulePortId(): string | null
+		{
+			return this.targetRulePort?.id ?? null;
+		},
+		/** Rules collection the target rule lives in - relation rules are the ones kept apart. */
+		targetSettingsItems(): Map | null
+		{
+			return resolveRuleCollection(this.nodeSettings, this.targetRulePort);
 		},
 		/** Load failure without a fallback editor: shown as a message inside the live region. */
 		isUnsupportedDocument(): boolean
@@ -161,37 +202,26 @@ export const EditFilterExpression = {
 		},
 		connectedBlocks(): Array<Object>
 		{
-			if (!this.block || !this.currentRule)
+			if (!this.block || !this.targetRulePort)
 			{
 				return [];
 			}
 
 			return getConnectedBlocksContextForConstruction(
 				this.block,
-				this.currentRule?.id ?? null,
+				this.targetRulePortId,
 				this.ruleCard,
 				this.construction,
-				this.currentSettingsItems,
+				this.targetSettingsItems,
 			).allBlocks;
 		},
 		fixedEntityTypeId(): number | null
 		{
-			const fixedDocumentType = this.nodeSettings?.fixedDocumentType ?? [];
-			const entityCode = fixedDocumentType?.[2] ?? '';
-
-			return CRM_ENTITY_TYPE_IDS[entityCode] ?? null;
+			return resolveFilterFixedEntityTypeId(this.nodeSettings?.fixedDocumentType);
 		},
 		backingActivityType(): string
 		{
-			const documentType = this.getContextDocumentType();
-			const moduleId = Type.isArrayFilled(documentType) ? String(documentType[0]) : '';
-
-			// The dev-only map is asked last: on a portal it never matches, on a developer stand it
-			// adds the virtual `bizproc` document.
-			return NODE_FILTER_BACKING_ACTIVITY_TYPES[moduleId]
-				?? DEV_NODE_FILTER_BACKING_ACTIVITY_TYPES[moduleId]
-				?? ''
-			;
+			return resolveFilterBackingActivityType(this.getContextDocumentType());
 		},
 		/**
 		 * Whether the legacy settings dialog can be used as the fallback editor. It is keyed by the
@@ -217,13 +247,57 @@ export const EditFilterExpression = {
 
 			return [];
 		},
+		/** Id of the label the source selector is named by: the control is a div, not a `select`. */
+		sourceLabelId(): string
+		{
+			return `editor-chart-node-settings-filter-source-label-${this.construction.id}`;
+		},
+		sourceValueId(): string
+		{
+			return `editor-chart-node-settings-filter-source-value-${this.construction.id}`;
+		},
+		/** Load-bearing order: `aria-labelledby` replaces the accessible name, so the value follows the label. */
+		sourceLabelledBy(): string
+		{
+			return `${this.sourceLabelId} ${this.sourceValueId}`;
+		},
 		isEntitySelectorVisible(): boolean
 		{
-			return this.entityTypeOptions.length >= 2;
+			// The source selector belongs to the loaded state alone: picking another source runs
+			// the watcher into syncActivityData(), which writes the construction the fallback owns.
+			return this.status === Status.Loaded && this.entityTypeOptions.length >= 2;
 		},
 		hasSelectedEntityType(): boolean
 		{
 			return Type.isStringFilled(this.currentEntityTypeId);
+		},
+		currentEntityTypeTitle(): string
+		{
+			const selectedOption = this.entityTypeOptions.find((option) => option.value === this.currentEntityTypeId);
+
+			return selectedOption?.title
+				?? this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED')
+			;
+		},
+		currentEntityTypeBadge(): string
+		{
+			return this.entityTypeBadges.get(this.currentEntityTypeId) ?? '';
+		},
+		/**
+		 * Source of the filter as its committed data names it: the document the filter publishes carries
+		 * the title of the entity that was picked (buildReturnProperties), so a section not yet reached
+		 * says what the filter works on without asking the server for the metadata of the entity types.
+		 */
+		committedSourceTitle(): string
+		{
+			const documentProperty = this.getCurrentActivityData()?.ReturnProperties?.find(
+				(property) => property?.Id === FILTER_DOCUMENT_PROPERTY_ID,
+			);
+
+			return Type.isStringFilled(documentProperty?.Name)
+				? documentProperty.Name
+				: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED')
+			;
 		},
 		fallbackActionMeta(): Object
 		{
@@ -273,17 +347,33 @@ export const EditFilterExpression = {
 			this.syncActivityData();
 			void this.syncConditionSelectorRendering();
 		},
+		isLive(isLive: boolean): void
+		{
+			// A section is reached once and stays reached, so this is the one build of the filter.
+			if (isLive)
+			{
+				this.activate();
+			}
+		},
+	},
+	created(): void
+	{
+		// menu instance must stay non-reactive (main.popup Menu)
+		this.entityTypeMenu = null;
 	},
 	mounted(): void
 	{
-		void this.init();
-		this.subscribeOnBeforeSubmit();
+		if (this.isLive)
+		{
+			this.activate();
+		}
 	},
 	unmounted(): void
 	{
 		this.lastLoadId++;
 		this.unsubscribe();
 		this.destroyConditionSelector();
+		this.entityTypeMenu?.close();
 		// The fields of the filter go away with the editor without a pass of their own, so the
 		// popover of a token would be left in `document.body` bound to an anchor no longer there.
 		closeReadableExpressionPopover();
@@ -291,6 +381,17 @@ export const EditFilterExpression = {
 	methods:
 	{
 		...mapActions(useNodeSettingsStore, ['changeRuleExpression']),
+
+		/**
+		 * Builds the filter: its metadata is one request per activity type and its condition tree is a
+		 * legacy control, so nothing of that happens until the rule of the section has been reached.
+		 * The pre-save flush is subscribed here too - there is nothing to flush while no tree exists.
+		 */
+		activate(): void
+		{
+			void this.init();
+			this.subscribeOnBeforeSubmit();
+		},
 
 		async init(): Promise<void>
 		{
@@ -310,7 +411,6 @@ export const EditFilterExpression = {
 				this.conditionGroup = markRaw(new ConditionGroup(this.serializedConditions));
 				this.currentEntityTypeId = this.resolveCurrentEntityTypeId();
 				this.isExpanded = this.getCurrentExpandedState();
-				this.initAutomationContext();
 				this.status = Status.Loaded;
 
 				if (requestId !== this.lastLoadId)
@@ -325,6 +425,11 @@ export const EditFilterExpression = {
 			{
 				if (requestId === this.lastLoadId)
 				{
+					// The selector is assigned and subscribed before the render, so a throw out of it
+					// leaves the selector alive behind the fallback action the error state shows
+					// instead. Both would then own the construction on submit - the fallback writing
+					// its rawActivityData into it, this component its activityData.
+					this.destroyConditionSelector();
 					this.status = Status.Error;
 					console.error('Complex node filter direct UI init failed', error);
 				}
@@ -333,13 +438,16 @@ export const EditFilterExpression = {
 
 		async loadMetadata(): Promise<Object>
 		{
-			const documentType = this.getContextDocumentType();
-			const metadata = await editorAPI.getNodeFilterMetadata({
-				activityType: this.backingActivityType,
-				documentType,
-				onlyDynamicEntities: !this.fixedEntityTypeId,
-				includeRelatedEntityTypes: true,
-			});
+			// Through the cache of the open node: every filter of one activity type asks the very same
+			// question, so the rules of a node share one answer instead of one request each. The cache
+			// is also warmed at the load of the node, so the first filter reached costs no round trip.
+			const metadata = await filterMetadataCache.load(
+				buildFilterMetadataParams(
+					this.documentType,
+					this.nodeSettings?.fixedDocumentType,
+					this.block?.activity?.Type ?? null,
+				),
+			);
 
 			if (!Type.isPlainObject(metadata))
 			{
@@ -369,6 +477,10 @@ export const EditFilterExpression = {
 				? metadata.documentTypeMap
 				: {}
 			;
+			const badges = Type.isPlainObject(metadata.entityTypeBadges)
+				? metadata.entityTypeBadges
+				: {}
+			;
 
 			this.filterFieldsMap = new Map(
 				Object.entries(fieldsMap).map(([entityTypeId, fields]) => [String(entityTypeId), fields]),
@@ -376,30 +488,32 @@ export const EditFilterExpression = {
 			this.documentTypeMap = new Map(
 				Object.entries(documentTypeMap).map(([entityTypeId, documentType]) => [String(entityTypeId), documentType]),
 			);
-			this.documentFields = Type.isArray(metadata.documentFields) ? metadata.documentFields : [];
-			this.documentName = Type.isStringFilled(metadata.documentName) ? metadata.documentName : '';
+			// The empty key is the entry back to "no source chosen", which is this component's own and
+			// belongs to no entity type: nothing names it, whatever the answer carries.
+			this.entityTypeBadges = new Map(
+				Object.entries(badges)
+					.filter(([entityTypeId, badge]) => (
+						entityTypeId !== '' && Type.isStringFilled(badge) && badge.trim() !== ''
+					)),
+			);
 			this.filteringFieldsPrefix = 'dynamic_filter_fields_';
 		},
 
 		getContextDocumentType(): Array<string>
 		{
-			if (!Type.isArrayFilled(this.nodeSettings?.fixedDocumentType))
-			{
-				return this.documentType;
-			}
-
-			return this.nodeSettings.fixedDocumentType.length < CorrectDocumentTypeLength
-				? this.documentType
-				: this.nodeSettings.fixedDocumentType
-			;
+			return resolveFilterContextDocumentType(this.documentType, this.nodeSettings?.fixedDocumentType);
 		},
 
 		resolveCurrentEntityTypeId(): string
 		{
 			const currentDynamicTypeId = this.getCurrentDynamicTypeId();
-			if (currentDynamicTypeId > 0)
+			const currentDynamicTypeIdString = String(currentDynamicTypeId);
+			if (
+				currentDynamicTypeId > 0
+				&& this.entityTypeOptions.some(({ value }) => value === currentDynamicTypeIdString)
+			)
 			{
-				return String(currentDynamicTypeId);
+				return currentDynamicTypeIdString;
 			}
 
 			if (this.fixedEntityTypeId)
@@ -455,41 +569,6 @@ export const EditFilterExpression = {
 			return properties.FilterIsExpanded !== 'N';
 		},
 
-		initAutomationContext(): void
-		{
-			const contextDocumentType = this.getContextDocumentType();
-
-			const currentContext = tryGetGlobalContext();
-			const currentDocument = currentContext?.document ?? null;
-			const isSameDocument = (
-				currentDocument
-				&& deepEqual(currentDocument.rawDocumentType, contextDocumentType)
-				&& deepEqual(currentDocument.documentFields, this.documentFields)
-			);
-
-			if (!isSameDocument)
-			{
-				const document = new Document({
-					rawDocumentType: contextDocumentType,
-					documentFields: this.documentFields,
-					title: this.documentName,
-				});
-				const contextValues = currentContext?.getValues?.() ?? {};
-				setGlobalContext(new Context({
-					...contextValues,
-					document,
-				}));
-			}
-
-			if (
-				BX?.Bizproc?.Automation?.API
-				&& !deepEqual(BX.Bizproc.Automation.API.documentType, contextDocumentType)
-			)
-			{
-				BX.Bizproc.Automation.API.documentType = contextDocumentType;
-			}
-		},
-
 		renderConditionSelector(): void
 		{
 			if (
@@ -505,7 +584,9 @@ export const EditFilterExpression = {
 			this.conditionGroupSelector = markRaw(new ConditionGroupSelector(this.conditionGroup, {
 				fields: this.filterFields,
 				fieldPrefix: this.filteringFieldsPrefix,
-				customSelector: this.showFieldSelector.bind(this),
+				documentType: this.getFilterDocumentType(),
+				customSelectorFn: this.showFieldSelector.bind(this),
+				viewMode: 'new',
 				caption: {
 					head: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_FIELDS'),
 					collapsed: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_FIELDS_COLLAPSED'),
@@ -513,17 +594,19 @@ export const EditFilterExpression = {
 				isExpanded: this.isExpanded,
 			}));
 
-			this.conditionGroupSelector.subscribe('onToggleGroupViewClick', (event) => {
-				this.isExpanded = event.getData().isExpanded;
+			this.conditionGroupSelector.subscribe('onChange', (event) => {
+				this.serializedConditions = event.getData().value;
 				this.syncActivityData();
+				// A change repaints the value control, and the blocks of the node context may have
+				// moved on since the render: the pass covers the new field and refreshes the context.
+				mountFormVeneers(this.$refs.filterFieldsContainer, this.connectedBlocks);
 			});
 
 			Dom.clean(this.$refs.filterFieldsContainer);
 			Dom.append(this.conditionGroupSelector.createNode(), this.$refs.filterFieldsContainer);
-			this.bindSelectorStateTracking();
-			this.observeConditionSelectorState();
-			this.isSelectorMarkupChanged = true;
-			this.queueSelectorStateSync();
+			// One pass is enough: the veneer watches the container itself and covers the rows the
+			// condition tree adds later — a new condition, another value control after a field change.
+			mountFormVeneers(this.$refs.filterFieldsContainer, this.connectedBlocks);
 		},
 
 		async syncConditionSelectorRendering(): Promise<void>
@@ -554,10 +637,6 @@ export const EditFilterExpression = {
 		destroyConditionSelector(): void
 		{
 			unmountFormVeneers(this.$refs.filterFieldsContainer);
-			this.unbindSelectorStateTracking();
-			this.disconnectConditionSelectorObserver();
-			this.isSelectorStateSyncQueued = false;
-			this.isSelectorMarkupChanged = false;
 
 			if (this.conditionGroupSelector)
 			{
@@ -571,86 +650,76 @@ export const EditFilterExpression = {
 			}
 		},
 
-		bindSelectorStateTracking(): void
+		onShowEntityTypeMenu({ currentTarget }: PointerEvent | KeyboardEvent): void
 		{
-			if (!this.$refs.filterFieldsContainer)
+			// toggle: a second click or key press on the control closes the open list
+			if (this.entityTypeMenu)
 			{
+				this.entityTypeMenu.close();
+
 				return;
 			}
 
-			this.selectorInteractionHandler ??= () => {
-				this.queueSelectorStateSync();
-			};
-
-			Event.bind(this.$refs.filterFieldsContainer, 'input', this.selectorInteractionHandler);
-			Event.bind(this.$refs.filterFieldsContainer, 'change', this.selectorInteractionHandler);
-		},
-
-		unbindSelectorStateTracking(): void
-		{
-			if (!this.$refs.filterFieldsContainer || !this.selectorInteractionHandler)
-			{
-				return;
-			}
-
-			Event.unbind(this.$refs.filterFieldsContainer, 'input', this.selectorInteractionHandler);
-			Event.unbind(this.$refs.filterFieldsContainer, 'change', this.selectorInteractionHandler);
-		},
-
-		observeConditionSelectorState(): void
-		{
-			if (!this.$refs.filterFieldsContainer)
-			{
-				return;
-			}
-
-			this.disconnectConditionSelectorObserver();
-			this.selectorStateObserver = new MutationObserver(() => {
-				this.isSelectorMarkupChanged = true;
-				this.queueSelectorStateSync();
+			this.entityTypeMenu = MenuManager.create({
+				id: `filter-entity-type-menu-${this.construction.id}`,
+				bindElement: currentTarget,
+				items: this.getEntityTypeMenuItems(),
+				maxHeight: 200,
+				maxWidth: ENTITY_TYPE_MENU_MAX_WIDTH,
+				closeByEsc: true,
+				autoHide: true,
+				cacheable: false,
+				events: {
+					onShow: () => {
+						this.isEntityTypeMenuOpen = true;
+					},
+					onClose: () => this.handleEntityTypeMenuClose(),
+				},
 			});
-
-			this.selectorStateObserver.observe(this.$refs.filterFieldsContainer, {
-				subtree: true,
-				childList: true,
-			});
+			this.entityTypeMenu.show();
 		},
 
-		disconnectConditionSelectorObserver(): void
+		handleEntityTypeMenuClose(): void
 		{
-			if (this.selectorStateObserver)
+			this.isEntityTypeMenuOpen = false;
+			this.entityTypeMenu = null;
+			// return focus to the control unless the user moved it elsewhere
+			const active = document.activeElement;
+			if (!active || active === document.body)
 			{
-				this.selectorStateObserver.disconnect();
-				this.selectorStateObserver = null;
+				this.$refs.entityTypeSelect?.focus();
 			}
 		},
 
-		queueSelectorStateSync(): void
+		getEntityTypeMenuItems(): Array<Object>
 		{
-			if (this.isSelectorStateSyncQueued)
-			{
-				return;
-			}
-
-			this.isSelectorStateSyncQueued = true;
-			queueMicrotaskSafe(() => {
-				this.isSelectorStateSyncQueued = false;
-
-				if (!this.conditionGroupSelector)
+			// The empty entry comes first: it is the only way back to «no source chosen».
+			const options = [
 				{
-					return;
-				}
+					value: '',
+					title: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED'),
+				},
+				...this.entityTypeOptions,
+			];
 
-				this.syncSelectorStateFromDom();
+			return options.map(({ value, title }) => {
+				const badge = this.entityTypeBadges.get(value) ?? '';
+				// The cap of the menu cuts a long row with an ellipsis, so every row carries its full text: a
+				// badged one on the spans of its own, a plain one on the `title` the item puts on itself.
+				const content = badge === ''
+					? { text: title, title }
+					: { html: renderBadgedMenuItemContent(title, badge, value) }
+				;
 
-				// Only new markup can hold a field left without a layer. Typing raises the same sync
-				// through `input`, and a pass over every keystroke would read the computed style of
-				// each selector button of the filter.
-				if (this.isSelectorMarkupChanged)
-				{
-					this.isSelectorMarkupChanged = false;
-					mountFormVeneers(this.$refs.filterFieldsContainer, this.connectedBlocks);
-				}
+				return {
+					id: `filter-entity-type-${value || 'none'}`,
+					...content,
+					dataset: { testId: `filterEntityTypeSelectItem-${value}` },
+					onclick: () => {
+						this.currentEntityTypeId = value;
+						this.entityTypeMenu?.close();
+					},
+				};
 			});
 		},
 
@@ -665,7 +734,7 @@ export const EditFilterExpression = {
 			const selector = new ValueSelector(
 				diagramStore(),
 				this.block,
-				this.currentRule?.id,
+				this.targetRulePortId,
 				this.connectedBlocks,
 				// The results of a filter are published onto the activity of a running workflow, so its
 				// fields keep the full set of template sources even under a trigger.
@@ -693,66 +762,36 @@ export const EditFilterExpression = {
 			;
 		},
 
-		syncSelectorStateFromDom(force: boolean = false): void
+		/**
+		 * Value controls of types without a local renderer are painted by the server, and its markup
+		 * carries a selector button whose only handler is the inline global `BPAShowSelector` of the
+		 * legacy dialog. That markup arrives after the row has been built, so the row cannot bind to the
+		 * button: the click is taken here by delegation, with the context the filter builds its own
+		 * selector with.
+		 */
+		onValueSelectorClick(event: MouseEvent): void
 		{
-			const nextConditions = this.readConditionsFromSelectorDom();
+			handleBpSelectorButtonClick(event, {
+				form: this.$refs.filterFieldsContainer,
+				store: diagramStore(),
+				block: this.block,
+				portId: this.targetRulePortId,
+				connectedBlocks: this.connectedBlocks,
+				evaluationStage: EVALUATION_STAGE.IN_STARTED_WORKFLOW,
+				onChange: () => this.flushConditions(),
+			});
+		},
 
-			if (!force && deepEqual(this.serializedConditions, nextConditions))
+		/** Read the conditions off the block and carry them into the construction. */
+		flushConditions(): void
+		{
+			if (!this.conditionGroupSelector)
 			{
 				return;
 			}
 
-			this.serializedConditions = nextConditions;
+			this.serializedConditions = this.conditionGroupSelector.getValue();
 			this.syncActivityData();
-		},
-
-		readConditionsFromSelectorDom(): Object
-		{
-			const container = this.$refs.filterFieldsContainer;
-			if (!container)
-			{
-				return this.getSerializedConditions();
-			}
-
-			const formFields = {};
-			const elements = container.querySelectorAll('input[name], select[name], textarea[name]');
-
-			elements.forEach((element) => {
-				if (element.disabled || !Type.isStringFilled(element.name))
-				{
-					return;
-				}
-
-				if (
-					(element.type === 'checkbox' || element.type === 'radio')
-					&& !element.checked
-				)
-				{
-					return;
-				}
-
-				const isMultiple = element.name.endsWith('[]');
-				const fieldName = isMultiple ? element.name.slice(0, -2) : element.name;
-
-				if (isMultiple)
-				{
-					if (!Type.isArray(formFields[fieldName]))
-					{
-						formFields[fieldName] = [];
-					}
-
-					formFields[fieldName].push(element.value);
-				}
-				else
-				{
-					formFields[fieldName] = element.value;
-				}
-			});
-
-			return Object.keys(formFields).length > 0
-				? ConditionGroup.createFromForm(formFields, this.filteringFieldsPrefix).serialize()
-				: EMPTY_CONDITIONS
-			;
 		},
 
 		syncActivityData(): void
@@ -844,7 +883,8 @@ export const EditFilterExpression = {
 				return [];
 			}
 
-			const entityTitle = this.entityTypeOptions.find((option) => option.value === String(dynamicTypeId))?.title
+			const entityTitle = this.entityTypeOptions
+				.find((option) => option.value === this.currentEntityTypeId)?.title
 				?? this.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT')
 			;
 
@@ -855,6 +895,13 @@ export const EditFilterExpression = {
 				Multiple: false,
 				Default: documentType,
 			}];
+		},
+
+		// Value controls of types without a local renderer are drawn server-side, and the server
+		// needs the document type of the entity the filter selects - not the one of the node.
+		getFilterDocumentType(): ?Array<string>
+		{
+			return this.resolveReturnDocumentType(Number(this.currentEntityTypeId));
 		},
 
 		resolveReturnDocumentType(dynamicTypeId: number): ?Array<string>
@@ -874,9 +921,9 @@ export const EditFilterExpression = {
 				}
 			}
 
-			if (this.documentTypeMap.has(String(dynamicTypeId)))
+			if (this.documentTypeMap.has(this.currentEntityTypeId))
 			{
-				return this.documentTypeMap.get(String(dynamicTypeId));
+				return this.documentTypeMap.get(this.currentEntityTypeId);
 			}
 
 			if (this.nodeSettings?.fixedDocumentType?.length === CorrectDocumentTypeLength)
@@ -890,7 +937,7 @@ export const EditFilterExpression = {
 		subscribeOnBeforeSubmit(): void
 		{
 			this.unsubscribe();
-			this.onBeforeSubmitCallback = () => this.syncSelectorStateFromDom(true);
+			this.onBeforeSubmitCallback = () => this.flushConditions();
 			EventEmitter.subscribe(EVENT_NAMES.BEFORE_SUBMIT_EVENT, this.onBeforeSubmitCallback);
 		},
 
@@ -906,14 +953,85 @@ export const EditFilterExpression = {
 		<div
 			class="editor-chart-node-settings-edit-filter-expression"
 			data-testid="bizprocdesigner-filter-expression"
+			:data-test-id="$testId('filterSelectionCard')"
 		>
 			<!--
-				Live region: announces loading/error status changes to screen readers. Kept mounted
-				across the whole loading-to-error transition, and left out of the column gap once
-				there is no status left to show.
+				Same dropdown as the rest of the node settings panel (edit-condition-expression,
+				edit-action-expression): the value is a plain element of the control and the options
+				are a main.popup menu - a native select inside the ui-ctl wrapper is drawn by the
+				browser and never matches the control it is framed by. What that native select
+				gave for free is stated here instead: the role, the place in the tab order, the keys
+				that open the list and the label it is named by.
 			-->
 			<div
-				v-if="status === Status.Loading || isUnsupportedDocument"
+				v-if="isEntitySelectorVisible"
+				class="editor-chart-node-settings-edit-filter-expression__item"
+			>
+				<span
+					:id="sourceLabelId"
+					class="editor-chart-node-settings-edit-filter-expression__label"
+				>
+					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_SOURCE_LABEL') }}
+				</span>
+				<div
+					ref="entityTypeSelect"
+					class="editor-chart-node-settings-edit-filter-expression__source-selector ui-ctl ui-ctl-after-icon ui-ctl-dropdown"
+					:data-test-id="$testId('filterEntityTypeSelect')"
+					role="button"
+					tabindex="0"
+					aria-haspopup="true"
+					:aria-expanded="isEntityTypeMenuOpen ? 'true' : 'false'"
+					:aria-labelledby="sourceLabelledBy"
+					@click="onShowEntityTypeMenu"
+					@keydown.enter.prevent="onShowEntityTypeMenu"
+					@keydown.space.prevent="onShowEntityTypeMenu"
+				>
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<div
+						:id="sourceValueId"
+						class="ui-ctl-element editor-chart-node-settings-edit-filter-expression__source-value"
+						:class="{ '--with-badge': currentEntityTypeBadge !== '' }"
+						:data-test-id="$testId('filterEntityTypeSelectValue')"
+					>
+						<template v-if="currentEntityTypeBadge !== ''">
+							<span
+								class="editor-chart-node-settings-edit-filter-expression__source-title"
+								:title="currentEntityTypeTitle"
+								:data-test-id="$testId('filterEntityTypeSelectTitle')"
+							>{{ currentEntityTypeTitle }}</span>{{ ' ' }}<span
+								class="editor-chart-node-settings-edit-filter-expression__badge"
+								:title="currentEntityTypeBadge"
+								:data-test-id="$testId('filterEntityTypeSelectBadge')"
+							>{{ currentEntityTypeBadge }}</span>
+						</template>
+						<template v-else>{{ currentEntityTypeTitle }}</template>
+					</div>
+				</div>
+			</div>
+			<!--
+				Until the rule of the section is reached the filter itself is not built (see the
+				isLive prop): the block shows the source the committed data names, the way a condition
+				shows its committed value.
+			-->
+			<div
+				v-if="!isLive"
+				class="editor-chart-node-settings-edit-filter-expression__preview"
+				data-testid="bizprocdesigner-filter-expression-preview"
+				:data-test-id="$testId('filterPreview')"
+			>
+				<div class="ui-ctl ui-ctl-textbox">
+					<div class="ui-ctl-element">{{ committedSourceTitle }}</div>
+				</div>
+			</div>
+			<!--
+				Live region: announces loading/error status changes to screen readers. Kept mounted
+				across the whole loading-to-error transition, and left out once there is no status
+				left to show. The delete control is not one of these branches: it belongs to the
+				header of rule-construction, above this area, so a block whose metadata never
+				arrived stays removable.
+			-->
+			<div
+				v-else-if="status === Status.Loading || isUnsupportedDocument"
 				class="editor-chart-node-settings-edit-filter-expression__status"
 				data-testid="bizprocdesigner-filter-expression-status"
 				aria-live="polite"
@@ -937,11 +1055,12 @@ export const EditFilterExpression = {
 				The legacy field layout of EditExtendedAction lives under .node-settings-panel: it is
 				what puts the selector button and the expression-builder trigger at the right edge of
 				the field and reserves the room for them. Same wrapper as the main path in
-				edit-action-expression.
+				edit-action-expression. The __fallback class carries no styles: it is the selector
+				of tests/unit/filter-render-failure.test.js.
 			-->
 			<div
 				v-else-if="status === Status.Error && isFallbackActionAvailable"
-				class="node-settings-panel"
+				class="editor-chart-node-settings-edit-filter-expression__fallback node-settings-panel"
 				data-testid="bizprocdesigner-filter-expression-fallback"
 			>
 				<EditExtendedAction
@@ -951,44 +1070,20 @@ export const EditFilterExpression = {
 					:construction="construction"
 					:documentType="documentType"
 					:ruleCard="ruleCard"
+					:rulePort="targetRulePort"
 					:template="template"
 				/>
 			</div>
-			<template v-else-if="isFilterReady">
+			<div
+				v-else-if="isFilterReady && hasSelectedEntityType"
+				class="editor-chart-node-settings-edit-filter-expression__condition-container"
+			>
 				<div
-					v-if="isEntitySelectorVisible"
-					class="editor-chart-node-settings-edit-filter-expression__item"
-				>
-					<span class="editor-chart-node-settings-edit-filter-expression__label">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_ENTITY_TYPE') }}
-					</span>
-					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
-						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-						<select
-							v-model="currentEntityTypeId"
-							class="ui-ctl-element"
-							:data-test-id="$testId('filterEntityTypeSelect')"
-						>
-							<option value="">
-								{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED') }}
-							</option>
-							<option
-								v-for="option in entityTypeOptions"
-								:key="option.value"
-								:value="option.value"
-							>
-								{{ option.title }}
-							</option>
-						</select>
-					</div>
-				</div>
-				<div
-					v-if="hasSelectedEntityType"
-					class="editor-chart-node-settings-edit-filter-expression__item"
-				>
-					<div ref="filterFieldsContainer" :data-test-id="$testId('filterFieldsContainer')"></div>
-				</div>
-			</template>
+					ref="filterFieldsContainer"
+					:data-test-id="$testId('filterFieldsContainer')"
+					@click.capture="onValueSelectorClick"
+				></div>
+			</div>
 		</div>
 	`,
 };

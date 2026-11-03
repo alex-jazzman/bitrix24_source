@@ -1,21 +1,25 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_infoHelper, vibecodeconnector_catalogPopup) {
+(function (exports, main_core, main_core_events, ui_infoHelper, ui_notification, vibecodeconnector_catalogPopup) {
 	'use strict';
 
 	const SELECTOR = '.bx-im-list-container-vibe-code-catalog-button__container';
 	const EVENTS_ATTRIBUTE = 'data-bx-vibe-code-catalog-events';
 	const CATALOG_EXTENSION = 'vibecodeconnector.catalog';
+	const OPEN_APP_EXTENSION = 'vibecodeconnector.open-app';
 	const BANNER_DISPATCHER_EXTENSION = 'ui.banner-dispatcher';
 	const SELF_EXTENSION = 'vibecodeconnector.im-button-binder';
 	const MARK_SHOWN_ACTION = 'vibecodeconnector.Catalog.markCatalogShown';
 	const GET_NEW_APPS_COUNT_ACTION = 'vibecodeconnector.Catalog.getNewAppsCount';
 	const NEW_APPS_COUNT_OVERFLOW = 99;
 	const RECALC_DEBOUNCE_MS = 300;
+	const OPEN_APP_PAGE_ACTION_PATTERN = /[&?]action=vibecodeconnector\.Catalog\.openAppPage(?:[#&]|$)/;
+	const CATALOG_ITEM_ID_PATTERN = /[&?]catalogItemId=(\d+)(?:[#&]|$)/;
 	const BADGE_CLASS = 'vibecodeconnector-im-button-binder__badge';
 	const BADGE_OVERFLOWED_CLASS = 'vibecodeconnector-im-button-binder__badge--overflowed';
 	const BADGE_LABEL_CLASS = 'vibecodeconnector-im-button-binder__badge-label';
 	const BADGE_LABEL_ID = 'vibecodeconnector-im-button-binder__badge-label';
+	const OPEN_APP_ANCHOR_BOUND_PANELS = new WeakSet();
 	const CatalogEvent = Object.freeze({
 		request: 'im:vibe-code-catalog:request',
 		stateChanged: 'im:vibe-code-catalog:state-changed',
@@ -38,6 +42,7 @@ this.BX = this.BX || {};
 		#autoShownInSession = false;
 		#autoShowOnClose = null;
 		#newAppsCount = 0;
+		#isNewAppsBadgeAvailable = false;
 		#badgeNode = null;
 		#badgeLabelNode = null;
 		#recalcTimer = null;
@@ -56,11 +61,71 @@ this.BX = this.BX || {};
 			this.#mustAutoShow = this.#isCatalogAllowed && this.#vibePlusPromoterCode === null && settings.get('catalog_must_be_shown', false) === true;
 			const rawNewAppsCount = settings.get('newAppsCount', 0);
 			this.#newAppsCount = this.#isCatalogAllowed && main_core.Type.isNumber(rawNewAppsCount) && rawNewAppsCount > 0 ? Math.trunc(rawNewAppsCount) : 0;
+			// Closed by default as well: the badge on the button is drawn only when the server says
+			// the app chats do not announce the novelties instead (see config.php). The count itself
+			// is kept either way — the catalog popup decides its starting slice by it.
+			this.#isNewAppsBadgeAvailable = this.#isCatalogAllowed && settings.get('isNewAppsBadgeAvailable', false) === true;
+			this.#bindOpenAppAnchors();
 			main_core_events.EventEmitter.subscribe(CatalogEvent.request, this.#handleRequest);
 			main_core_events.EventEmitter.subscribe(CatalogEvent.opened, this.#handleOpened);
 			this.#observer = new MutationObserver(() => this.#tryAttachInside(window.document));
 			this.#observeDocument();
 			this.#tryAttachInside(window.document);
+		}
+		#bindOpenAppAnchors() {
+			if (!this.#isCatalogAllowed || main_core.Page.getRootWindow() !== window) {
+				return;
+			}
+			const sidePanel = window.BX?.SidePanel?.Instance ?? null;
+			if (sidePanel === null || OPEN_APP_ANCHOR_BOUND_PANELS.has(sidePanel)) {
+				return;
+			}
+			sidePanel.bindAnchors({
+				rules: [{
+					condition: [OPEN_APP_PAGE_ACTION_PATTERN],
+					handler: (event, link) => {
+						const catalogItemId = this.#extractCatalogItemId(link?.url);
+						if (catalogItemId === null || !this.#canInterceptOpenAppClick(event, link?.target)) {
+							return;
+						}
+						event.preventDefault();
+						this.#openCatalogAppById(catalogItemId);
+					}
+				}]
+			});
+			OPEN_APP_ANCHOR_BOUND_PANELS.add(sidePanel);
+		}
+		#extractCatalogItemId(url) {
+			if (!main_core.Type.isStringFilled(url)) {
+				return null;
+			}
+			const matches = url.match(CATALOG_ITEM_ID_PATTERN);
+			if (matches === null) {
+				return null;
+			}
+			const catalogItemId = Number.parseInt(matches[1], 10);
+			return Number.isInteger(catalogItemId) && catalogItemId > 0 ? catalogItemId : null;
+		}
+		#canInterceptOpenAppClick(event, target) {
+			if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+				return false;
+			}
+			return !main_core.Type.isStringFilled(target) || ['_self', '_blank'].includes(target.toLowerCase());
+		}
+		#openCatalogAppById(catalogItemId) {
+			const suppressNavigationFallback = () => {};
+			main_core.Runtime.loadExtension(OPEN_APP_EXTENSION).then(exports => {
+				if (!main_core.Type.isFunction(exports?.openCatalogAppById)) {
+					throw new TypeError('vibecodeconnector.open-app has no openCatalogAppById');
+				}
+				return exports.openCatalogAppById(catalogItemId, suppressNavigationFallback);
+			}).catch(() => false).then(opened => {
+				if (opened !== true) {
+					ui_notification.Center.notify({
+						content: main_core.Loc.getMessage('VIBECODECONNECTOR_IM_BUTTON_BINDER_OPEN_APP_ERROR')
+					});
+				}
+			});
 		}
 		#handleRequest = event => {
 			const {
@@ -346,7 +411,7 @@ this.BX = this.BX || {};
 			});
 		}
 		#renderBadge(node) {
-			if (!this.#isCatalogAllowed || this.#vibePlusPromoterCode !== null) {
+			if (!this.#isNewAppsBadgeAvailable || this.#vibePlusPromoterCode !== null) {
 				return;
 			}
 			if (this.#badgeNode === null || this.#badgeNode.parentElement !== node) {
@@ -356,8 +421,8 @@ this.BX = this.BX || {};
 				this.#badgeLabelNode = document.createElement('span');
 				this.#badgeLabelNode.className = BADGE_LABEL_CLASS;
 				this.#badgeLabelNode.id = BADGE_LABEL_ID;
-				node.appendChild(this.#badgeNode);
-				node.appendChild(this.#badgeLabelNode);
+				main_core.Dom.append(this.#badgeNode, node);
+				main_core.Dom.append(this.#badgeLabelNode, node);
 			}
 			this.#syncBadge();
 		}
@@ -367,9 +432,9 @@ this.BX = this.BX || {};
 			}
 			const count = this.#newAppsCount;
 			const isVisible = count > 0;
-			this.#badgeNode.style.display = isVisible ? '' : 'none';
+			main_core.Dom.style(this.#badgeNode, 'display', isVisible ? null : 'none');
 			if (this.#badgeLabelNode !== null) {
-				this.#badgeLabelNode.style.display = isVisible ? '' : 'none';
+				main_core.Dom.style(this.#badgeLabelNode, 'display', isVisible ? null : 'none');
 			}
 			this.#toggleBadgeDescription(isVisible);
 			if (!isVisible) {
@@ -377,7 +442,7 @@ this.BX = this.BX || {};
 			}
 			const overflowed = count > NEW_APPS_COUNT_OVERFLOW;
 			this.#badgeNode.textContent = overflowed ? `${NEW_APPS_COUNT_OVERFLOW}+` : String(count);
-			this.#badgeNode.classList.toggle(BADGE_OVERFLOWED_CLASS, overflowed);
+			main_core.Dom.toggleClass(this.#badgeNode, BADGE_OVERFLOWED_CLASS, overflowed);
 			if (this.#badgeLabelNode !== null) {
 				this.#badgeLabelNode.textContent = main_core.Loc.getMessagePlural('VIBECODECONNECTOR_IM_BUTTON_BINDER_NEW_APPS_COUNT', count, {
 					'#COUNT#': count
@@ -452,5 +517,5 @@ this.BX = this.BX || {};
 
 	exports.ImButtonBinder = ImButtonBinder;
 
-})(this.BX.Vibecodeconnector = this.BX.Vibecodeconnector || {}, BX, BX.Event, BX.UI, BX.Vibecodeconnector);
+})(this.BX.Vibecodeconnector = this.BX.Vibecodeconnector || {}, BX, BX.Event, BX.UI, BX.UI.Notification, BX.Vibecodeconnector);
 //# sourceMappingURL=binder.bundle.js.map

@@ -5,9 +5,6 @@ jn.define('ui-system/blocks/badges/button/src/design-enum', (require, exports, m
 	const { Color } = require('tokens');
 	const { BaseEnum } = require('utils/enums/base');
 
-	/**
-	 * @class BadgeButtonDesign
-	 */
 	class BadgeButtonDesign extends BaseEnum
 	{
 		static GREY = new BadgeButtonDesign('GREY', {
@@ -23,7 +20,6 @@ jn.define('ui-system/blocks/badges/button/src/design-enum', (require, exports, m
 		});
 
 		/**
-		 *
 		 * @returns {Color}
 		 */
 		getColor()
@@ -32,7 +28,6 @@ jn.define('ui-system/blocks/badges/button/src/design-enum', (require, exports, m
 		}
 
 		/**
-		 *
 		 * @returns {Color}
 		 */
 		getBackgroundColor()
@@ -41,7 +36,6 @@ jn.define('ui-system/blocks/badges/button/src/design-enum', (require, exports, m
 		}
 
 		/**
-		 *
 		 * @returns {Color}
 		 */
 		getBorderColor()

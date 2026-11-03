@@ -65,11 +65,20 @@ $copilotParams = $copilotEnabled
 		'moduleId' => $composeData['copilot']['moduleId'] ?? 'main',
 		'contextId' => $composeData['copilot']['contextId'] ?? 'bxhtmled_copilot',
 		'category' => $composeData['copilot']['category'] ?? null,
-		'invitationLineMode' => $composeData['copilot']['invitationLineMode'] ?? 'eachLine',
+		// No invitation line in the body: the BitrixGPT control of the footer is the entry point here.
+		'invitationLineMode' => 'none',
 		'contextParameters' => $composeData['copilot']['contextParameters'] ?? [],
 	]
 	: null
 ;
+
+// The letter is a document of its own, and the editor loads only the structural tokens into it; the colours the
+// form styles the letter with are air tokens, so their stylesheet goes to the form for the head of that document.
+$editorHeadHtml = '';
+foreach (Extension::getAssets('ui.design-tokens.air')['css'] as $cssPath)
+{
+	$editorHeadHtml .= '<link rel="stylesheet" href="' . htmlspecialcharsbx(\CUtil::GetAdditionalFileURL($cssPath)) . '">';
+}
 
 ?>
 
@@ -115,13 +124,21 @@ $copilotParams = $copilotEnabled
 			],
 			'LHE' => [
 				'id' => 'mail_compose_form_editor_lhe',
-				'documentCSS' => 'body { color:#434343; }',
 				'fontSize' => '15px',
 				'height' => 200,
+				// The letter grows with its text and the form scrolls as a whole; no scroll of its own.
+				'autoResizeMaxHeight' => 'Infinity',
+				// The floor belongs to the editor: it writes min-height on its own container inline.
+				'minBodyHeight' => 240,
 				'lazyLoad' => true,
 				'bbCode' => false,
 				'setFocusAfterShow' => true,
-				'iframeCss' => 'body { padding-left: 0 !important; font-size: 15px; }',
+				/*
+				 * `html body` rather than `body`: in the Infinity mode the editor appends its own
+				 * iframe-style.css to the end of the head once more, after this rule, and at equal
+				 * specificity the later sheet would win back its 18px padding and 14px font.
+				 */
+				'iframeCss' => 'html body { padding-left: 0 !important; font-size: 15px; color: var(--ui-color-base-1); }',
 				'useFileDialogs' => false,
 				'useLinkStat' => false,
 				'uploadImagesFromClipboard' => false,
@@ -169,6 +186,7 @@ $copilotParams = $copilotEnabled
 			formId: 'mail_compose_form',
 			editorFormId: 'mail_compose_form_editor',
 			editorId: 'mail_compose_form_editor_lhe',
+			editorHeadHtml: <?= Json::encode($editorHeadHtml) ?>,
 			initialData: <?= $initialData ?>,
 		});
 		application.start();

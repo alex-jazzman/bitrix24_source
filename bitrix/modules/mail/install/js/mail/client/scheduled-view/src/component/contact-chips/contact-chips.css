@@ -1,0 +1,6 @@
+.mail-scheduled-view-chips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs);
+}

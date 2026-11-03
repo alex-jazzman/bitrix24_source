@@ -147,7 +147,8 @@ this.BX.Call = this.BX.Call || {};
 				},
 				user: {
 					id: -1,
-					hash: ''
+					hash: '',
+					hasCustomName: null
 				}
 			};
 		}
@@ -257,6 +258,9 @@ this.BX.Call = this.BX.Call || {};
 					}
 					if (main_core.Type.isString(payload.hash) && payload.hash !== state.user.hash) {
 						state.user.hash = payload.hash;
+					}
+					if (main_core.Type.isBoolean(payload.hasCustomName)) {
+						state.user.hasCustomName = payload.hasCustomName;
 					}
 					if (this.isSaveNeeded({
 						user: payload

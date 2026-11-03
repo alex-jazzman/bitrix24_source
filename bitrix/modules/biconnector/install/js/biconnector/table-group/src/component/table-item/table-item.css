@@ -1,0 +1,27 @@
+.biconnector-table-group-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-sm) 0;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.biconnector-table-group-item__icon {
+	flex-shrink: 0;
+}
+
+.biconnector-table-group-item__name {
+	overflow: hidden;
+	flex: 1;
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.biconnector-table-group-item__remove {
+	flex-shrink: 0;
+	cursor: pointer;
+}

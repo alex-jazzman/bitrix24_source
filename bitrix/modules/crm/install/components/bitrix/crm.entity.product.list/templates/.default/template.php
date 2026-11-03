@@ -642,7 +642,15 @@ foreach ($grid['ROWS'] as $product)
 		if ($hasStoreAvailable)
 		{
 			$storeAvailable = $rawProduct['STORE_AVAILABLE'] . " " . $measureName;
-			$columns['STORE_AVAILABLE'] = "<a href='#' data-name='STORE_AVAILABLE'>{$storeAvailable}</a>";
+			// aria-label is encoded once here, so build its value from the raw MEASURE_NAME:
+			// $measureName is already htmlspecialcharsbx-encoded, and re-encoding would turn
+			// entities into literal text (e.g. &quot;) in the spoken name.
+			$storeAvailableAriaValue = $rawProduct['STORE_AVAILABLE'] . " " . $rawProduct['MEASURE_NAME'];
+			$storeAvailableAriaLabel = HtmlFilter::encode(
+				(string)Loc::getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_ARIA', ['#VALUE#' => $storeAvailableAriaValue]),
+				ENT_QUOTES
+			);
+			$columns['STORE_AVAILABLE'] = "<a href='#' data-name='STORE_AVAILABLE' aria-label=\"{$storeAvailableAriaLabel}\">{$storeAvailable}</a>";
 		}
 		else
 		{
@@ -752,6 +760,7 @@ foreach ($rows as $key => $row)
 			</div>
 			<button type="button" class="crm-entity-product-list-setting-button"
 				data-role="product-list-settings-button"
+				aria-label="<?=HtmlFilter::encode(Loc::getMessage('CRM_ENTITY_PL_SETTINGS_BUTTON_ARIA'))?>"
 				aria-haspopup="true"
 				aria-expanded="false"
 			>
@@ -828,6 +837,7 @@ foreach ($rows as $key => $row)
 			</div>
 			<button type="button" class="ui-btn ui-btn-light-border ui-btn-icon-setting"
 					data-role="product-list-settings-button"
+					aria-label="<?=HtmlFilter::encode(Loc::getMessage('CRM_ENTITY_PL_SETTINGS_BUTTON_ARIA'))?>"
 					aria-haspopup="true"
 					aria-expanded="false"></button>
 		</div>

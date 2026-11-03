@@ -7,8 +7,9 @@ import {
 } from 'messageservice.message.editor';
 
 import { Editor, type State, type EditorOptions, type Context } from './editor';
+import { EscapeService } from './service/escape-service';
 
-export { Editor, replaceCustomMessagePlaceholders };
+export { Editor, EscapeService, replaceCustomMessagePlaceholders };
 
 export type {
 	State,

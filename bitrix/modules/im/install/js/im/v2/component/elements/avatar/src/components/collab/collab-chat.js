@@ -75,9 +75,9 @@ export const CollabChatAvatar = {
 	template: `
 		<BaseUiAvatar
 			:type="avatarType"
-			:key="avatarKey" 
-			:title="dialogName" 
-			:size="size" 
+			:key="avatarKey"
+			:title="dialogName"
+			:size="size"
 			:url="dialogAvatarUrl"
 			:backgroundColor="backgroundColor"
 		/>

@@ -1,17 +1,16 @@
-import { Settings } from 'im.v2.const';
-import { SettingsService } from 'im.v2.provider.service.settings';
+import { HotkeyCombination, Settings } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Utils } from 'im.v2.lib.utils';
+import { SettingsService } from 'im.v2.provider.service.settings';
 
 import { RadioOption, type RadioOptionItem } from '../elements/radio';
+import { ReferenceBlock } from './hotkey/reference-block';
+import { getHotkeyReference, type HotkeyReferenceBlock } from './hotkey/reference';
 
 // @vue/component
 export const HotkeySection = {
 	name: 'HotkeySection',
-	components: { RadioOption },
-	data(): {}
-	{
-		return {};
-	},
+	components: { RadioOption, ReferenceBlock },
 	computed:
 	{
 		sendByEnter(): boolean
@@ -20,37 +19,40 @@ export const HotkeySection = {
 		},
 		sendCombinationItems(): RadioOptionItem[]
 		{
-			const ctrlKey = Utils.platform.isMac() ? '&#8984;' : 'Ctrl';
-			const enterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
-				'#HOTKEY#': 'Shift + Enter',
-			});
-			const ctrlEnterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
-				'#HOTKEY#': 'Enter',
-			});
+			const { sendMessage, newLine } = HotkeyCombination;
 
 			return [
 				{
 					value: true,
-					text: 'Enter',
-					subtext: enterSubtext,
+					text: Utils.key.getCombinationText(sendMessage.byEnter),
+					subtext: this.newLineSubtext(newLine.byShiftEnter),
 					selected: this.sendByEnter === true,
 				},
 				{
 					value: false,
-					text: `${ctrlKey} + Enter`,
-					subtext: ctrlEnterSubtext,
-					html: true,
+					text: Utils.key.getCombinationText(sendMessage.byCtrlEnter),
+					subtext: this.newLineSubtext(newLine.byEnter),
 					selected: this.sendByEnter === false,
 				},
 			];
 		},
-		isMac(): boolean
+		referenceBlocks(): HotkeyReferenceBlock[]
 		{
-			return Utils.platform.isMac();
+			return getHotkeyReference(this.sendByEnter);
 		},
+	},
+	mounted(): void
+	{
+		Analytics.getInstance().settings.onOpenHotkeySection();
 	},
 	methods:
 	{
+		newLineSubtext(combination: string): string
+		{
+			return this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
+				'#HOTKEY#': Utils.key.getCombinationText(combination),
+			});
+		},
 		onSendByEnterChange(newValue: boolean)
 		{
 			this.getSettingsService().changeSetting(Settings.hotkey.sendByEnter, newValue);
@@ -81,5 +83,10 @@ export const HotkeySection = {
 				/>
 			</div>
 		</div>
+		<ReferenceBlock
+			v-for="block in referenceBlocks"
+			:key="block.id"
+			:block="block"
+		/>
 	`,
 };

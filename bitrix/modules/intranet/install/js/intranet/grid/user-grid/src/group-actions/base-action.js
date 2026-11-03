@@ -95,9 +95,13 @@ export class BaseAction
 	{
 		this.grid.reload();
 
-		if (this.showPopups)
-		{
-			const { skippedActiveUsers, skippedFiredUsers } = result.data;
+		const { skippedActiveUsers, skippedFiredUsers, failedIntegrationUsers } = result.data;
+
+		const showSkippedUsersPopup = () => {
+			if (!this.showPopups)
+			{
+				return;
+			}
 
 			if (skippedActiveUsers && Object.keys(skippedActiveUsers).length > 0)
 			{
@@ -107,7 +111,16 @@ export class BaseAction
 			{
 				this.showFiredUsersPopup(skippedFiredUsers);
 			}
+		};
+
+		if (failedIntegrationUsers && Object.keys(failedIntegrationUsers).length > 0)
+		{
+			this.showFailedIntegrationUsersPopup(failedIntegrationUsers, showSkippedUsersPopup);
+
+			return;
 		}
+
+		showSkippedUsersPopup();
 	}
 
 	handleError(result: Result): void
@@ -154,6 +167,23 @@ export class BaseAction
 			yesCaption: Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
 			onYes: (messageBox) => {
 				messageBox.close();
+			},
+		});
+	}
+
+	showFailedIntegrationUsersPopup(failedUsers: Array, onClose: ?function = null): void
+	{
+		MessageBox.show({
+			title: Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_INTEGRATION_FAILED_TITLE'),
+			message: this.getMessageWithProfileNames(
+				'INTRANET_USER_LIST_GROUP_ACTION_INTEGRATION_FAILED_MESSAGE',
+				failedUsers,
+			),
+			buttons: MessageBoxButtons.YES,
+			yesCaption: Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+			onYes: (messageBox) => {
+				messageBox.close();
+				onClose?.();
 			},
 		});
 	}

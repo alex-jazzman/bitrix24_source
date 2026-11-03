@@ -1,20 +1,22 @@
 import 'main.polyfill.intersectionobserver';
 
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { PlaybackRate } from 'im.v2.lib.playback';
 import { Outline as OutlineIcons, BIcon } from 'ui.icon-set.api.vue';
 
 import { Utils } from 'im.v2.lib.utils';
-import { Color, EventType, PlaylistScope } from 'im.v2.const';
+import { AudioPlaybackRate, Color, EventType, FileStatus, PlaylistScope } from 'im.v2.const';
 import { FadeAnimation } from 'im.v2.component.animation';
 
-import { Playlist } from '../classes/playlist';
+import { Playlist, type PlaylistTrack } from '../classes/playlist';
 import { RoundProgressBar } from './elements/round-progress-bar';
 import { TranscriptionButton } from './elements/transcription-button/transcription-button';
 
 import './css/round-video-player.css';
 
-import type { EventEmitter, BaseEvent } from 'main.core.events';
 import type { JsonObject } from 'main.core';
 import type { ImModelFile } from 'im.v2.model';
 
@@ -59,6 +61,7 @@ export const RoundVideoPlayer = {
 			duration: 0,
 			animationFrameId: null,
 			currentTimeSmoothed: 0,
+			currentRate: AudioPlaybackRate['1'],
 		};
 	},
 	computed: {
@@ -112,19 +115,42 @@ export const RoundVideoPlayer = {
 				&& FeatureManager.isFeatureAvailable(Feature.videoNoteTranscriptionAvailable)
 				&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
 		},
+		isPlaybackRateFeatureAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isVideoNotePlaybackRateAvailable);
+		},
+		isPlaybackRateAvailable(): boolean
+		{
+			return this.file.status === FileStatus.done && this.isPlaybackRateFeatureAvailable;
+		},
+		currentRateLabel(): string
+		{
+			return `${this.currentRate}x`;
+		},
+		rateControlAriaLabel(): string
+		{
+			return this.loc('IM_ELEMENTS_PLAYER_ROUND_VIDEO_RATE_ARIA', { '#RATE#': this.currentRateLabel });
+		},
 	},
 	created()
 	{
-		Playlist.getInstance(PlaylistScope.chat).register(this.file);
+		Playlist.getInstance(PlaylistScope.chat).register(this.playlistTrack());
 	},
 	mounted()
 	{
 		this.getObserver().observe(this.$refs.body);
 		this.getEmitter().subscribe(EventType.player.playNext, this.handlePlayNextRequest);
 		this.getEmitter().subscribe(EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
+		EventEmitter.subscribe(EventType.playback.onServiceStart, this.handleServiceStarted);
+		this.getEmitter().subscribe(EventType.audioPlayer.pause, this.handleOtherPlayerStarted);
+		if (this.isPlaybackRateFeatureAvailable)
+		{
+			EventEmitter.subscribe(EventType.player.rateChange, this.handleRateChange);
+		}
 
 		if (this.startWithSound)
 		{
+			this.notifyPlaybackServiceAboutStart();
 			this.switchToManualMode();
 		}
 	},
@@ -132,9 +158,15 @@ export const RoundVideoPlayer = {
 	{
 		this.stopProgressAnimation();
 		this.getObserver().unobserve(this.$refs.body);
-		Playlist.getInstance(PlaylistScope.chat).unregister(this.file);
+		Playlist.getInstance(PlaylistScope.chat).unregister(this.playlistTrack());
 		this.getEmitter().unsubscribe(EventType.player.playNext, this.handlePlayNextRequest);
 		this.getEmitter().unsubscribe(EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
+		EventEmitter.unsubscribe(EventType.playback.onServiceStart, this.handleServiceStarted);
+		this.getEmitter().unsubscribe(EventType.audioPlayer.pause, this.handleOtherPlayerStarted);
+		// Unconditionally: the guard on the subscribe is enough, and unsubscribing a listener that was
+		// never subscribed is a no-op. A condition here would leak the listener the moment it names the
+		// neighbouring isPlaybackRateAvailable, which is reactive and can read differently than at mount.
+		EventEmitter.unsubscribe(EventType.player.rateChange, this.handleRateChange);
 	},
 	methods: {
 		togglePlayMode()
@@ -143,6 +175,7 @@ export const RoundVideoPlayer = {
 			if (this.playbackMode === PlaybackMode.autoplay)
 			{
 				Analytics.getInstance().player.onPlay(this.file.id);
+				this.notifyPlaybackServiceAboutStart();
 				this.switchToManualMode();
 
 				return;
@@ -156,16 +189,62 @@ export const RoundVideoPlayer = {
 			else
 			{
 				Analytics.getInstance().player.onPlay(this.file.id);
+				this.notifyPlaybackServiceAboutStart();
 				this.playVideo();
 			}
 		},
+		notifyPlaybackServiceAboutStart()
+		{
+			EventEmitter.emit(EventType.playback.onExternalPlayerStart, { fileId: this.file.id });
+		},
 		playVideo()
 		{
+			if (this.isPlaybackRateFeatureAvailable)
+			{
+				// every start goes through here, so the common rate is re-read at each of them, not kept from the mount
+				this.updateRate(PlaybackRate.get());
+			}
+
+			// Only a start with sound claims the audible channel: a muted preview leaves the voice
+			// messages alone. The circle owns no file the voice players know, so their own guard by
+			// initiator keeps them from answering their own request - and keeps this one out of it.
+			if (!this.isAutoplay)
+			{
+				this.getEmitter().emit(EventType.audioPlayer.pause, { initiator: this.file.id });
+			}
+
 			void this.videoElement.play();
 		},
 		pauseVideo()
 		{
 			this.videoElement.pause();
+		},
+		handleRateControlClick()
+		{
+			// the new value comes back through the broadcast, so this player applies it the same way as the others
+			PlaybackRate.set(PlaybackRate.getNext(PlaybackRate.get()));
+		},
+		handleRateChange(event: BaseEvent<{rate: $Values<typeof AudioPlaybackRate>}>)
+		{
+			this.updateRate(event.getData().rate);
+		},
+		// A voice message has taken the audible channel, so this circle goes back to the muted preview -
+		// the same retreat as when another circle starts. Without it both play at once, and the chat
+		// playlist holds files of both kinds: the one that ends first sends playNext into the other,
+		// interrupting a play() with a pause() on a live element.
+		handleOtherPlayerStarted(event: BaseEvent<{initiator: string | number}>)
+		{
+			if (event.getData().initiator === this.file.id || this.isAutoplay)
+			{
+				return;
+			}
+
+			this.switchToAutoplayMode();
+		},
+		updateRate(newRate: $Values<typeof AudioPlaybackRate>)
+		{
+			this.currentRate = newRate;
+			this.videoElement.playbackRate = newRate;
 		},
 		handleLoadedMetaData()
 		{
@@ -193,7 +272,7 @@ export const RoundVideoPlayer = {
 		{
 			this.switchToAutoplayMode();
 			Playlist.getInstance(PlaylistScope.chat).onFileEnded({
-				file: this.file,
+				...this.playlistTrack(),
 				context: { emitter: this.getEmitter() },
 			});
 		},
@@ -208,10 +287,15 @@ export const RoundVideoPlayer = {
 			this.duration = 0;
 			this.stopProgressAnimation();
 		},
-		handlePlayNextRequest(event: BaseEvent<{fileId: string, scope: string}>)
+		// See AudioPlayer.playlistTrack: the message is a part of the address of a track.
+		playlistTrack(): PlaylistTrack
 		{
-			const { fileId, scope } = event.getData();
-			if (fileId !== this.file.id || scope !== PlaylistScope.chat)
+			return { messageId: this.message.id, file: this.file };
+		},
+		handlePlayNextRequest(event: BaseEvent<{messageId: string | number, fileId: string, scope: string}>)
+		{
+			const { messageId, fileId, scope } = event.getData();
+			if (fileId !== this.file.id || messageId !== this.message.id || scope !== PlaylistScope.chat)
 			{
 				return;
 			}
@@ -229,8 +313,18 @@ export const RoundVideoPlayer = {
 
 			this.switchToAutoplayMode();
 		},
+		handleServiceStarted()
+		{
+			if (this.playbackMode !== PlaybackMode.manual)
+			{
+				return;
+			}
+
+			this.switchToAutoplayMode();
+		},
 		switchToAutoplayMode()
 		{
+			this.keepFocusInsidePlayer();
 			this.playbackMode = PlaybackMode.autoplay;
 			this.videoElement.loop = true;
 			this.videoElement.muted = true;
@@ -243,6 +337,18 @@ export const RoundVideoPlayer = {
 			this.videoElement.loop = false;
 			this.videoElement.muted = false;
 			this.playVideo();
+		},
+		// autoplay unmounts the rate control, so the focus it holds is moved to the circle before that happens
+		keepFocusInsidePlayer()
+		{
+			if (document.activeElement !== this.$refs.rateControl)
+			{
+				return;
+			}
+
+			// preventScroll is deliberate: moving the focus must not pull the feed back to a circle
+			// the user has already scrolled away from
+			this.$refs.body.focus({ preventScroll: true });
 		},
 		getObserver(): IntersectionObserver
 		{
@@ -297,17 +403,34 @@ export const RoundVideoPlayer = {
 		{
 			return this.$Bitrix.eventEmitter;
 		},
+		loc(code: string, replacements: {[p: string]: string} = {}): string
+		{
+			return this.$Bitrix.Loc.getMessage(code, replacements);
+		},
 	},
 	template: `
-		<div class="bx-im-round-video-player__container">
+		<div class="bx-im-round-video-player__container" data-testid="im-round-video-player">
 			<FadeAnimation :duration="200">
-				<div v-if="isAutoplay" class="bx-im-round-video-player__mute">
+				<div
+					v-if="isAutoplay"
+					class="bx-im-round-video-player__mute"
+					data-testid="im-round-video-player-mute"
+				>
 					<BIcon
 						:name="OutlineIcons.SOUND_OFF"
 						:color="Color.white"
 						:size="MUTE_ICON_SIZE"
 					/>
 				</div>
+				<button
+					v-else-if="isPlaybackRateAvailable"
+					type="button"
+					class="bx-im-round-video-player__rate-button --focus-visible"
+					data-testid="im-round-video-player-rate-btn"
+					:aria-label="rateControlAriaLabel"
+					ref="rateControl"
+					@click="handleRateControlClick"
+				>{{ currentRateLabel }}</button>
 			</FadeAnimation>
 			<div v-if="isTranscriptionAvailable" class="bx-im-round-video-player__transcribe-button">
 				<TranscriptionButton
@@ -319,9 +442,18 @@ export const RoundVideoPlayer = {
 				/>
 			</div>
 			<div class="bx-im-round-video-player__time-container">
-				<div class="bx-im-round-video-player__time">{{ formattedTime }}</div>
+				<div
+					class="bx-im-round-video-player__time"
+					data-testid="im-round-video-player-time"
+				>{{ formattedTime }}</div>
 			</div>
-			<div class="bx-im-round-video-player__video-container" ref="body" @click.stop="togglePlayMode">
+			<div
+				class="bx-im-round-video-player__video-container"
+				data-testid="im-round-video-player-video-container"
+				ref="body"
+				tabindex="-1"
+				@click.stop="togglePlayMode"
+			>
 				<FadeAnimation :duration="200">
 					<div v-if="isPaused" class="bx-im-round-video-player__start-play_button"></div>
 				</FadeAnimation>
@@ -330,6 +462,7 @@ export const RoundVideoPlayer = {
 					class="bx-im-round-video-player__video"
 					:poster="file.urlPreview"
 					ref="videoElement"
+					data-testid="im-round-video-player-video"
 					preload="metadata"
 					playsinline
 					loop

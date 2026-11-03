@@ -19,6 +19,7 @@ return [
 		'note.ui.document-history',
 		'note.ui.document-list',
 		'note.ui.theme-context',
+		'ui.a11y',
 		'ui.buttons',
 		'ui.design-tokens.air',
 		'ui.icon-set.api.vue',

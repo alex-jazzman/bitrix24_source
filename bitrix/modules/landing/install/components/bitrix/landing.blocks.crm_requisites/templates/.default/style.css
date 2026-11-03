@@ -5,11 +5,15 @@
 .landing-crm-requisites__title {
 	display: block;
 	padding-bottom: 24px;
-	margin-bottom: 25px;
+	/* the heading is a h2 now, and the browser gives a heading a margin of its own */
+	margin: 0 0 25px;
 	border-bottom: 1px solid rgba(var(--ui-color-base-90-rgb), .08);
 	font-size: 28px;
 	text-align: center;
 	font-weight: var(--ui-font-weight-semi-bold);
+	/* the theme of the site colours a heading apart from the text and leads it tighter */
+	color: inherit;
+	line-height: inherit;
 }
 
 .landing-crm-requisites_inner,
@@ -52,6 +56,8 @@
 .landing-crm-requisites_main {
 	flex-direction: column;
 	width: calc(100% - 62px);
+	/* the box is a dl now: both the browser and bootstrap space a list out */
+	margin: 0;
 }
 
 .landing-crm-requisites_icon {
@@ -69,30 +75,31 @@
 .landing-crm-requisites__table_cell:first-child {
 	font-size: var(--ui-font-size-md);
 	opacity: .5;
+	/* the name of a pair is a dt and a th now, and both are printed bold by default */
+	font-weight: inherit;
 }
 
 .landing-crm-requisites__value {
 	width: 100%;
+	/* the value is a dd now, and a dd is indented by default */
+	margin: 0;
 	overflow-wrap: break-word;
 	font-size: var(--ui-font-size-xl);
 	font-weight: var(--ui-font-weight-medium);
 	color: var(--ui-color-base-90);
 }
 
+/* the pseudo table is a table now: what the tags do themselves is only undone here */
 .landing-crm-requisites__table {
-	display: table;
 	table-layout: fixed;
-}
-
-.landing-crm-requisites__table_row {
-	display: table-row;
+	border-collapse: collapse;
 }
 
 .landing-crm-requisites__table_cell {
-	display: table-cell;
 	line-height: 16px;
-	padding-bottom: 16px;
+	padding: 0 0 16px;
 	font-size: var(--ui-font-size-lg);
+	text-align: inherit;
 }
 
 .landing-crm-requisites__table_cell:first-child {

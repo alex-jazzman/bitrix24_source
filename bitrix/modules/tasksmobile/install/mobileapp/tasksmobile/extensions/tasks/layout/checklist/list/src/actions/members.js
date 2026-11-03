@@ -11,6 +11,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 		MEMBER_TYPE_RESTRICTION_FEATURE_META,
 	} = require('tasks/layout/checklist/list/src/constants');
 	const { Text4 } = require('ui-system/typography/text');
+	const { ItemPresenter } = require('tasks/layout/checklist/presenter');
 
 	const IMAGE_SIZE = 22;
 
@@ -26,7 +27,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 		{
 			const { item } = this.props;
 
-			return item.getMembersCount() > 0;
+			return item.hasMembers();
 		}
 
 		/** @return {Object | null} */
@@ -56,7 +57,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 			const { item, testId } = this.props;
 			const memberSections = {};
 
-			item.getPrepareMembers().forEach(({ type, id }) => {
+			ItemPresenter.getPreparedMembers(item).forEach(({ type, id }) => {
 				if (memberSections[type])
 				{
 					memberSections[type].push(id);

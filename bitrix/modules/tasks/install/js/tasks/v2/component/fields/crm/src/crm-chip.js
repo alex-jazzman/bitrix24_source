@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -27,6 +28,12 @@ export const CrmChip = {
 			crmMeta,
 		};
 	},
+	data(): Object
+	{
+		return {
+			isDialogShown: false,
+		};
+	},
 	computed: {
 		design(): string
 		{
@@ -40,8 +47,38 @@ export const CrmChip = {
 		{
 			return !Core.getParams().restrictions.crmIntegration.available;
 		},
+		opensDialog(): boolean
+		{
+			return !this.isSelected && !this.isLocked;
+		},
+	},
+	watch: {
+		isDialogShown(): void
+		{
+			this.syncAria();
+		},
+		opensDialog(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
 	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+		},
 		handleClick(): void
 		{
 			if (this.isSelected)
@@ -60,11 +97,27 @@ export const CrmChip = {
 				return;
 			}
 
+			this.isDialogShown = true;
 			crmDialog.show({
 				targetNode: this.$el,
 				taskId: this.taskId,
-				onClose: this.highlightField,
+				onClose: this.handleDialogClose,
+				onUpdate: this.highlightField,
 			});
+		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
+		handleDialogClose(): void
+		{
+			this.isDialogShown = false;
 		},
 		highlightField(): void
 		{
@@ -81,7 +134,10 @@ export const CrmChip = {
 			:data-task-id="taskId"
 			:data-task-chip-id="crmMeta.id"
 			:data-task-crm-item-ids="task.crmItemIds?.join(',')"
+			data-testid="tasks-crm-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`,
 };

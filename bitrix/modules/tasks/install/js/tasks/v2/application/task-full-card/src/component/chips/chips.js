@@ -61,7 +61,11 @@ export const Chips = {
 				:design="ChipDesign.ShadowNoAccent"
 				:icon="chipsCollapsed ? Outline.APPS : Outline.CHEVRON_TOP_L"
 				:text="chipsCollapsed ? loc('TASKS_V2_TASK_FULL_CARD_MORE') : ''"
+				role="button"
+				:aria-label="chipsCollapsed ? loc('TASKS_V2_TASK_FULL_CARD_MORE') : loc('TASKS_V2_TASK_FULL_CARD_CHIPS_COLLAPSE')"
+				:aria-expanded="chipsCollapsed ? 'false' : 'true'"
 				@click="chipsCollapsed = !chipsCollapsed"
+				@keydown.space.prevent="chipsCollapsed = !chipsCollapsed"
 			/>
 		</div>
 	`,

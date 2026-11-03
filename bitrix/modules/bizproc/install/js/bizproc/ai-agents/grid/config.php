@@ -43,6 +43,7 @@ return [
 		'ui.entity-selector',
 		'ui.info-helper',
 		'ui.notification',
+		'ui.system.label',
 		'ui.system.typography',
 	],
 	'skip_core' => false,

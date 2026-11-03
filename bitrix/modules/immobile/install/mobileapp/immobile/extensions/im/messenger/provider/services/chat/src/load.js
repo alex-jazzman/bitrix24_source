@@ -348,6 +348,13 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			void await this.store.dispatch('dialoguesModel/set', dialogData);
 
+			const parentChat = extractor.getParentChat();
+			if (Type.isPlainObject(parentChat) && parentChat.type === DialogType.collab)
+			{
+				await this.store.dispatch('dialoguesModel/setShortFormat', [parentChat]);
+				await this.store.dispatch('dialoguesModel/collabModel/set', extractor.getCollabInfo());
+			}
+
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions: extractor.getReactions(),

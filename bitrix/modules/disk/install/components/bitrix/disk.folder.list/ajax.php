@@ -10,6 +10,7 @@ use Bitrix\Disk\FileLink;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\FolderLink;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkAccessService;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ExternalLinkTable;
 use Bitrix\Disk\Internals\FolderTable;
@@ -27,6 +28,7 @@ use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessCheckHandler;
 use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessLevel;
 use Bitrix\Disk\Internal\Command\UnifiedLink\SetAccessCommand;
+use Bitrix\Disk\Internal\Service\ExternalLink\ExternalLinkAccessService;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Analytics\AnalyticsEvent;
@@ -70,6 +72,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	private ?array $prevRightsOnStorage = null;
 	private ServiceLocator $serviceLocator;
 	private ExternalLinkProvider $externalLinkProvider;
+	private UnifiedLinkAccessService $unifiedLinkAccessService;
+	private ExternalLinkAccessService $externalLinkAccessService;
 
 	public function __construct()
 	{
@@ -77,6 +81,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		parent::__construct();
 
 		$this->externalLinkProvider = $this->serviceLocator->get(ExternalLinkProvider::class);
+		$this->unifiedLinkAccessService = $this->serviceLocator->get(UnifiedLinkAccessService::class);
+		$this->externalLinkAccessService = $this->serviceLocator->get(ExternalLinkAccessService::class);
 	}
 
 	protected function listActions()
@@ -104,9 +110,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				'method' => array('POST'),
 			),
 			'saveRightsOnObject' => array(
-				'method' => array('POST'),
-			),
-			'showRightsDetail' => array(
 				'method' => array('POST'),
 			),
 			'showSharingDetail' => array(
@@ -942,41 +945,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		return $changedDomainRights;
 	}
 
-	protected function processActionShowRightsDetail($objectId)
-	{
-		/** @var \Bitrix\Disk\File|\Bitrix\Disk\Folder $object */
-		$object = BaseObject::loadById((int)$objectId, array('STORAGE'));
-		if(!$object)
-		{
-			$this->errorCollection[] = new Error(Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'), self::ERROR_COULD_NOT_FIND_OBJECT);
-			$this->sendJsonErrorResponse();
-		}
-
-		$rightsManager = Driver::getInstance()->getRightsManager();
-		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-		if(!$object->canChangeRights($securityContext))
-		{
-			$this->sendJsonAccessDeniedResponse();
-		}
-
-		$rightsByAccessCode = array();
-		foreach($rightsManager->getAllListNormalizeRights($object->getRealObject()) as $rightOnObject)
-		{
-			if(empty($rightOnObject['NEGATIVE']))
-			{
-				$rightOnObject['TASK'] = $rightsManager->getTaskById($rightOnObject['TASK_ID']);
-				$rightsByAccessCode[$rightOnObject['ACCESS_CODE']][] = $rightOnObject;
-			}
-		}
-		$access  = new CAccess();
-		$names = $access->getNames(array_keys($rightsByAccessCode));
-
-		$this->sendJsonSuccessResponse(array(
-			'rights' => $rightsByAccessCode,
-			'accessCodeNames' => $names,
-		));
-	}
-
 	protected function processActionShowSharingDetail($objectId)
 	{
 		/** @var \Bitrix\Disk\File|\Bitrix\Disk\Folder $object */
@@ -989,14 +957,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-
-		$isAccessDeniedByUnifiedLink = false;
-		if ($object instanceof File)
-		{
-			$accessByUnifiedLink = $this->getUnifiedLinkCurrentAccessLevel($object);
-			$isAccessDeniedByUnifiedLink = $accessByUnifiedLink === UnifiedLinkAccessLevel::Denied;
-		}
-		if($isAccessDeniedByUnifiedLink && !$object->canRead($securityContext))
+		if(!$object->canRead($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
@@ -1255,7 +1216,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 		}
-		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
+		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object, $this->getUser()->getId());
 		$this->sendJsonSuccessResponse();
 	}
 
@@ -1275,7 +1236,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonAccessDeniedResponse();
 		}
 
-		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
+		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object, $this->getUser()->getId());
 
 		$isBoard = $object instanceof \Bitrix\Disk\File && $object->getTypeFile() == TypeFile::FLIPCHART;
 		$isFolder = $object instanceof \Bitrix\Disk\Folder;
@@ -1524,7 +1485,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$sessionTerminationService->terminateSessionsWithInsufficientRights();
 	}
 
-	protected function processActionCopyTo($objectId, $targetObjectId)
+	protected function processActionCopyTo($objectId, $targetObjectId, ?string $uls = null)
 	{
 		/** @var \Bitrix\Disk\File|\Bitrix\Disk\Folder $object */
 		$object = BaseObject::loadById((int)$objectId, array('STORAGE'));
@@ -1534,7 +1495,15 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
+		$shouldCheckUnifiedLink =
+			is_string($uls)
+			&& $this->unifiedLinkAccessService->validateUlsForObjectId(
+				objectId: $object->getId(),
+				uls: $uls,
+			)
+		;
+
+		$securityContext = $object->getStorage()->getCurrentUserSecurityContext($shouldCheckUnifiedLink);
 		if(!$object->canRead($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
@@ -1618,7 +1587,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		return !Bitrix24Manager::isFeatureEnabled('disk_common_storage');
 	}
 
-	protected function processActionMoveTo($objectId, $targetObjectId)
+	protected function processActionMoveTo($objectId, $targetObjectId, ?string $uls = null)
 	{
 		/** @var \Bitrix\Disk\File|\Bitrix\Disk\Folder $object */
 		$object = BaseObject::loadById((int)$objectId, array('STORAGE'));
@@ -1628,7 +1597,15 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
+		$shouldCheckUnifiedLink =
+			is_string($uls)
+			&& $this->unifiedLinkAccessService->validateUlsForObjectId(
+				objectId: $object->getId(),
+				uls: $uls,
+			)
+		;
+
+		$securityContext = $object->getStorage()->getCurrentUserSecurityContext($shouldCheckUnifiedLink);
 		if(!$object->canRead($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
@@ -1759,8 +1736,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 	protected function processActionDisableExternalLink($objectId)
 	{
+		/** @var File|Folder $object */
 		/** @var ExternalLink $extLink */
-		[, $extLink] = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
+		if($extLink && !$this->externalLinkAccessService->canManageExternalLink($object))
+		{
+			$this->sendJsonAccessDeniedResponse();
+		}
+
 		if(!$extLink || $extLink->delete())
 		{
 			$this->sendJsonSuccessResponse();
@@ -1802,6 +1785,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		if($forceCreate && !$extLink)
 		{
+			if(!$this->externalLinkAccessService->canManageExternalLink($object))
+			{
+				$this->sendJsonAccessDeniedResponse();
+			}
+
 			$extLink = $object->getRealObject()->addExternalLink(array(
 				'CREATED_BY' => $this->getUser()->getId(),
 				'TYPE' => ExternalLinkTable::TYPE_MANUAL,
@@ -1857,6 +1845,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		if (!$extLink->canEditSettings())
 		{
 			$this->sendJsonErrorResponse();
+		}
+
+		if (!$this->externalLinkAccessService->canManageExternalLink($object))
+		{
+			$this->sendJsonAccessDeniedResponse();
 		}
 
 		if($this->request->getPost('deathTime'))
@@ -1923,6 +1916,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 		if(!$extLink)
 		{
+			if(!$this->externalLinkAccessService->canManageExternalLink($object))
+			{
+				$this->sendJsonAccessDeniedResponse();
+			}
+
 			$extLink = $object->getRealObject()->addExternalLink(array(
 				'CREATED_BY' => $this->getUser()->getId(),
 				'TYPE' => ExternalLinkTable::TYPE_MANUAL,
@@ -1990,6 +1988,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
 		$parameters = array(
+			//TYPE and REAL_OBJECT_ID choose the model class, the rest is read while building an item
+			'select' => array('ID', 'TYPE', 'NAME', 'PARENT_ID', 'STORAGE_ID', 'REAL_OBJECT_ID'),
 			'filter' => array(
 				'TYPE' => FolderTable::TYPE,
 				'=IS_LINK' => true,
@@ -2004,6 +2004,12 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			),
 		);
 
+		//the filter narrows candidates by TYPE alone, which beats the join only when the subtree is the whole storage
+		if ((int)$folder->getStorage()->getRootObjectId() === (int)$folder->getId())
+		{
+			$parameters['subtree_check'] = ObjectTable::SUBTREE_CHECK_EXISTS;
+		}
+
 		$subSymlinks = $folder->getDescendants(
 			$securityContext,
 			$parameters
@@ -2011,12 +2017,17 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		$urlManager = Driver::getInstance()->getUrlManager();
 
+		$crumbStorage = \Bitrix\Disk\CrumbStorage::getInstance();
+		//the loop below asks for the path of every symlink, which is a query per chain of parents unless
+		//the crumbs of the whole answer are read ahead of it in one
+		$crumbStorage->preloadByObjects($subSymlinks);
+
 		$items = array();
 		foreach ($subSymlinks as $symlink)
 		{
 			if($symlink instanceof Folder)
 			{
-				$distance = \Bitrix\Disk\CrumbStorage::getInstance()->calculateDistance($folder, $symlink)?: array();
+				$distance = $crumbStorage->calculateDistance($folder, $symlink)?: array();
 				$distance[] = $symlink->getName();
 
 				$pathFromFolder = trim(implode('/', $distance), '/');
@@ -2028,6 +2039,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				);
 			}
 		}
+		//the two modes of the subtree check answer in orders of their own, so the list is put in one here on
+		//both of them: the option switching the mode off returns the form of the query and not the order,
+		//the same way it returns the form and not the fields the query reads
+		\Bitrix\Main\Type\Collection::sortByColumn($items, array('name' => SORT_ASC, 'id' => SORT_ASC));
 
 		$this->sendJsonSuccessResponse(array(
 			'items' => $items,
@@ -2389,7 +2404,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$this->sendJsonSuccessResponse();
 	}
 
-	protected function processActionAddFolder($targetFolderId, $name)
+	protected function processActionAddFolder($targetFolderId, $name, ?string $uls = null)
 	{
 		/** @var Folder $folder */
 		$folder = Folder::loadById((int)$targetFolderId, array('STORAGE'));
@@ -2402,7 +2417,16 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
+		$shouldCheckUnifiedLink =
+			is_string($uls)
+			&& $this->unifiedLinkAccessService->validateUlsForObjectId(
+				objectId: $folder->getId(),
+				uls: $uls,
+			)
+		;
+
+		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext($shouldCheckUnifiedLink);
+
 		if (!$folder->canAdd($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
@@ -2428,6 +2452,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			array(
 				'folder' => array(
 					'id' => $subFolderModel->getId(),
+					'uniqueCode' => $subFolderModel->getUniqueCode(),
+					'uls' => $this->unifiedLinkAccessService->getUlsForObjectId($subFolderModel->getId()),
 				),
 			)
 		);

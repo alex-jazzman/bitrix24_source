@@ -1,4 +1,6 @@
-import { ajax as Ajax, Dom, Type, Event, Tag, Text } from 'main.core';
+import { ajax as Ajax, Dom, Loc, Type, Event, Tag } from 'main.core';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { Center as NotificationCenter } from 'ui.notification';
 import './css/editable-columns.css';
 
 type Field = {
@@ -211,20 +213,14 @@ export class EditableColumnManager
 			}
 			this.#cancelEdit(rowId);
 		}).catch((response) => {
-			if (response.errors)
-			{
-				this.#notifyErrors(response.errors);
-			}
+			this.#notifyError(response);
 		});
 	}
 
-	#notifyErrors(errors: Array): void
+	#notifyError(response: Object): void
 	{
-		if (errors[0] && errors[0].message)
-		{
-			BX.UI.Notification.Center.notify({
-				content: Text.encode(errors[0].message),
-			});
-		}
+		NotificationCenter.notify({
+			content: resolveErrorHtml(response, Loc.getMessage('BICONNECTOR_GRID_EDITABLE_COLUMN_SAVE_ERROR')),
+		});
 	}
 }

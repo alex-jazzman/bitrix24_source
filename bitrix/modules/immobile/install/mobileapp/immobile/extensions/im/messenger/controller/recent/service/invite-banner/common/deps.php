@@ -11,6 +11,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/controller/recent/const',
 		'im:messenger/controller/recent/service/base',
-		'im:messenger/lib/element/recent',
+		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/converter/ui/recent',
 	],
 ];

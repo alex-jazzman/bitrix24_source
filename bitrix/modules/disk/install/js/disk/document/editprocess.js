@@ -41,6 +41,7 @@
 		;
 
 		this.analytics = parameters.analytics || null;
+		this.uls = parameters.uls || null;
 		this.isCreate = false;
 	};
 
@@ -129,6 +130,7 @@
 				serviceCode: this.serviceCode,
 				objectId: this.objectId || 0,
 				attachedObjectId: this.attachedObjectId || 0,
+				_uls: this.uls ?? '',
 			};
 		},
 
@@ -144,6 +146,9 @@
 			const newTab = window.open('', '_blank');
 
 			BX.ajax.runAction('disk.api.documentService.goToEdit', {
+				getParameters: {
+					_uls: this.uls ?? '',
+				},
 				data: {
 					serviceCode: this.serviceCode,
 					objectId: this.objectId || 0,
@@ -193,12 +198,10 @@
 
 		buildModalWindow: function ()
 		{
-			return this.openModal(BX.util.add_url_param('/bitrix/services/main/ajax.php', {
-				action: 'disk.api.documentService.goToEdit',
-				serviceCode: this.serviceCode,
-				objectId: this.objectId || 0,
-				attachedObjectId: this.attachedObjectId || 0
-			}));
+			return this.openModal(BX.util.add_url_param(
+				'/bitrix/services/main/ajax.php',
+				this.getSliderQueryParameters()
+			));
 		},
 
 		isActive: function ()
@@ -297,7 +300,9 @@
 			uri = BX.util.remove_url_param(uri, 'document_action');
 			uri = BX.util.add_url_param(uri, {'document_action': 'commit'});
 
-			return uri;
+			return BX.Uri.addParam(uri, {
+				_uls: this.uls ?? '',
+			});
 		},
 
 		save: function ()

@@ -4,6 +4,65 @@
 	if (window.JCCatalogElement)
 		return;
 
+	// A held step button repeats the change every 150 ms and the announcer plays every queued
+	// message in full instead of dropping stale ones. Announcing the quantity only after this
+	// quiet period turns a series of steps into a single announcement.
+	var QUANTITY_ANNOUNCE_DELAY = 500;
+
+	// The arrows choose a variation on every step of a walk over the values. What a choice sends to
+	// the server, loads into the gallery and says out loud waits for this pause in the walk.
+	var OFFER_EFFECTS_DELAY = 400;
+
+	// String.replace reads $& and $' in the replacement, and both the name of a property and the name
+	// of a value come from the product.
+	var fillTemplate = function(template, values)
+	{
+		var filled = template;
+
+		for (var placeholder in values)
+		{
+			if (values.hasOwnProperty(placeholder))
+			{
+				filled = filled.split(placeholder).join(values[placeholder]);
+			}
+		}
+
+		return filled;
+	};
+
+	// Attributes the zoom layer borrows from the gallery block: it puts its own values there and
+	// puts back whatever the template had printed.
+	var galleryLayerAttrs = ['role', 'aria-modal', 'aria-label'];
+
+	// How long the trap of the zoom layer waits for the layer to stop being transparent. The wait
+	// normally ends on the second frame, and the budget only keeps it finite if something else holds
+	// the layer at zero opacity.
+	var GALLERY_LAYER_FRAME_BUDGET = 30;
+
+	// The width below which the styles hide the strip of tabs and open every section at once
+	// (style.css:1005, :1012). The roles of a tab strip follow that same line.
+	var TABS_NARROW_QUERY = '(max-width: 991px)';
+
+	// A state written into an attribute: a value of null takes the attribute off the node.
+	var writeAttr = function(node, name, value)
+	{
+		if (value === null)
+		{
+			node.removeAttribute(name);
+		}
+		else
+		{
+			node.setAttribute(name, value);
+		}
+	};
+
+	// The accessibility primitives come from an extension of their own. Without it the page keeps its
+	// gallery, price and buy button and loses only the keyboard and reader extras.
+	var getAccessibility = function()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	};
+
 	var BasketButton = function(params)
 	{
 		params = params || {};
@@ -23,17 +82,19 @@
 			}
 		}
 
-		this.buttonNode = BX.create('SPAN', {
+		var attrs = {type: 'button', tabindex: '0'};
+		if (params.autofocus)
+		{
+			attrs['data-autofocus'] = 'true';
+		}
+
+		this.buttonNode = BX.create('BUTTON', {
 			props: {className: 'btn btn-primary btn-buy btn-sm', id: this.id},
+			attrs: attrs,
 			style: typeof params.style === 'object' ? params.style : {},
 			text: this.text,
 			events: this.contextEvents
 		});
-
-		if (BX.browser.IsIE())
-		{
-			this.buttonNode.setAttribute('hideFocus', 'hidefocus');
-		}
 	};
 	BX.extend(BasketButton, BX.PopupWindowButton);
 
@@ -147,11 +208,28 @@
 			paused: null,
 			controls: []
 		};
+		this.dotsFocusZone = null;
+		this.dotsFocusZoneCont = null;
+		this.dotsZones = [];
+		this.skuFocusZones = [];
+		this.tabsFocusZone = null;
+		this.tabsZoneRefreshPending = false;
+		this.galleryTrap = null;
+		this.galleryTrapFrame = null;
+		this.galleryTrapFramesLeft = 0;
+		this.galleryAttrsBeforeLayer = null;
+		this.galleryOpenerTabIndex = undefined;
 
 		this.quantityDelay = null;
 		this.quantityTimer = null;
+		this.quantityAnnounceTimer = null;
+		this.skuAnnounceNode = null;
+		this.offerEffectsDeferred = false;
+		this.offerEffectsTimer = null;
+		this.offerEffectsNode = null;
 
 		this.obProduct = null;
+		this.obProductTitle = null;
 		this.obQuantity = null;
 		this.obQuantityUp = null;
 		this.obQuantityDown = null;
@@ -210,6 +288,7 @@
 		};
 
 		this.obPopupWin = null;
+		this.popupInitiator = null;
 		this.basketUrl = '';
 		this.basketParams = {};
 
@@ -349,6 +428,8 @@
 			{
 				this.errorCode = -1;
 			}
+
+			this.obProductTitle = BX(this.visual.TITLE_ID);
 
 			this.obBigSlider = BX(this.visual.BIG_SLIDER_ID);
 			this.node.imageContainer = this.getEntity(this.obProduct, 'images-container');
@@ -501,6 +582,10 @@
 
 			this.initPopup();
 			this.initTabs();
+			// the zone is collected off the markup the server printed, so the roles are dropped to
+			// the width of the window only once it has been built
+			this.createTabsZone();
+			this.initTabRoles();
 
 			if (this.smallCardNodes.panel)
 			{
@@ -582,6 +667,8 @@
 								BX.bind(this.product.slider.ITEMS[j], 'click', BX.delegate(this.selectSliderImg, this));
 							}
 
+							this.activateDotsZone(this.product.slider.CONT);
+
 							this.setCurrentImg(this.product.sliderPict[0], true, true);
 							this.checkSliderControls(this.product.sliderCount);
 
@@ -603,6 +690,10 @@
 							{
 								BX.bind(treeItems[i], 'click', BX.delegate(this.selectOfferProp, this));
 							}
+
+							BX.bind(this.obTree, 'keydown', BX.delegate(this.selectOfferPropKey, this));
+
+							this.createSkuZones();
 						}
 
 						for (i = 0; i < this.offers.length; i++)
@@ -1099,6 +1190,8 @@
 							{
 								BX.addClass(tabs[i], 'active');
 								BX.addClass(panelTabs[i], 'active');
+								this.setTabSelected(tabs[i], true);
+								this.setTabCurrent(panelTabs[i], true);
 								BX.show(targetTab);
 								haveActive = true;
 							}
@@ -1106,11 +1199,199 @@
 							{
 								BX.removeClass(tabs[i], 'active');
 								BX.removeClass(panelTabs[i], 'active');
+								this.setTabSelected(tabs[i], false);
+								this.setTabCurrent(panelTabs[i], false);
 								BX.hide(targetTab);
 							}
 						}
 					}
 				}
+			}
+		},
+
+		// Selection stays detached from focus: the arrows only move it, Enter and Space click the
+		// button. Opening a tab scrolls the page down to the panel, and that stays with the click.
+		createTabsZone: function()
+		{
+			var accessibility = getAccessibility();
+
+			if (this.tabsFocusZone || !accessibility || !this.obTabs)
+			{
+				return;
+			}
+
+			// the zone lives exactly where the role does: an empty strip carries neither
+			var list = this.obTabs.querySelector('[role="tablist"]');
+
+			if (!list)
+			{
+				return;
+			}
+
+			var keys = accessibility.FocusKeys;
+
+			this.tabsFocusZone = new accessibility.FocusZone(list, {
+				bindKeys: keys.ArrowHorizontal | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getTabsTabStop(list);
+				}, this)
+			});
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			requestAnimationFrame(BX.delegate(this.startTabsZone, this));
+
+			// below 992px the strip is hidden, so a page opened narrow gives the zone an empty set;
+			// widening the window brings the tabs back and the set has to be collected again
+			BX.bind(window, 'resize', BX.delegate(this.refreshTabsZone, this));
+		},
+
+		startTabsZone: function()
+		{
+			if (this.tabsFocusZone && !this.tabsFocusZone.isActive())
+			{
+				this.tabsFocusZone.activate();
+			}
+		},
+
+		refreshTabsZone: function()
+		{
+			if (!this.tabsFocusZone || this.tabsZoneRefreshPending)
+			{
+				return;
+			}
+
+			this.tabsZoneRefreshPending = true;
+
+			requestAnimationFrame(BX.delegate(function() {
+				this.tabsZoneRefreshPending = false;
+				this.startTabsZone();
+				this.tabsFocusZone.refreshElements();
+			}, this));
+		},
+
+		/* Below 992px the styles hide the strip of tabs and open every section at once, so a reader
+		   would be handed two or three panels of a tab with no tab anywhere to open them. The roles
+		   are printed for the wide layout and taken off with the strip, so a page opened narrow
+		   takes them off at once and a window widened later gets them back. */
+		initTabRoles: function()
+		{
+			if (!this.obTabs || !window.matchMedia)
+			{
+				return;
+			}
+
+			var query = window.matchMedia(TABS_NARROW_QUERY);
+
+			this.setTabRoles(!query.matches);
+
+			query.addEventListener('change', BX.delegate(function(event) {
+				this.setTabRoles(!event.matches);
+				this.refreshTabsZone();
+			}, this));
+		},
+
+		// The strip is a list of tabs, its buttons are the tabs, and the sections below are their
+		// panels: the three of them carry the roles, and none of them keeps one without the others.
+		// The tab that is open is read off the class the script keeps on it, so a switch made while
+		// the roles were off is not lost when they come back.
+		setTabRoles: function(on)
+		{
+			var list = this.obTabs.querySelector('.product-item-detail-tabs-list');
+			var tabs = this.getEntities(this.obTabs, 'tab');
+			var containers = this.getEntities(this.obTabContainers, 'tab-container');
+			var control, i;
+
+			// a product that prints no tab prints an empty strip, and an empty strip is no list of
+			// tabs at any width
+			if (!tabs.length)
+			{
+				return;
+			}
+
+			if (list)
+			{
+				writeAttr(list, 'role', on ? 'tablist' : null);
+			}
+
+			for (i = 0; i < tabs.length; i++)
+			{
+				control = tabs[i].querySelector('.product-item-detail-tab-link');
+
+				if (!control)
+				{
+					continue;
+				}
+
+				writeAttr(control, 'role', on ? 'tab' : null);
+
+				if (on)
+				{
+					this.setTabSelected(tabs[i], BX.hasClass(tabs[i], 'active'));
+				}
+				else
+				{
+					control.removeAttribute('aria-selected');
+				}
+			}
+
+			// The role of a section changes with the width, its name stays: below the breakpoint the
+			// section opens no tab, but it is still a named block of the card — the way the gallery
+			// and the two sticky panels are named — and a section left nameless would run into the
+			// next one. The name is printed by the server and comes off the button of the tab, which
+			// names the block just as well while the strip is hidden.
+			for (i = 0; i < containers.length; i++)
+			{
+				containers[i].setAttribute('role', on ? 'tabpanel' : 'group');
+			}
+		},
+
+		getTabsTabStop: function(list)
+		{
+			return list.querySelector('[role="tab"][aria-selected="true"]')
+				|| list.querySelector('[role="tab"]');
+		},
+
+		// The class and the role live on different nodes: data-entity="tab" is the <li>, and the tab
+		// the reader sees is the button inside it. The sticky strip carries no role, so its items
+		// answer with nothing and the selected state stays on the main strip alone.
+		setTabSelected: function(tab, selected)
+		{
+			var control = tab.querySelector('[role="tab"]');
+
+			if (control)
+			{
+				control.setAttribute('aria-selected', selected ? 'true' : 'false');
+			}
+		},
+
+		/* The sticky strip carries no tab roles, and without a role there is nothing to hold
+		   aria-selected. The open section is told there by aria-current, which needs no role. */
+		setTabCurrent: function(tab, current)
+		{
+			var control = tab.querySelector('.product-item-detail-tab-link');
+
+			if (control)
+			{
+				control.setAttribute('aria-current', current ? 'true' : 'false');
+			}
+		},
+
+		/* The sticky strip slides away as soon as the page scrolls to the tabs below, and the browser
+		   drops the focus of a hidden node on the body. The scroll runs on every press of the strip,
+		   the one that opens another section and the one that lands on the section already open, so
+		   both hand the focus over to the panel that ends up open, the way the sticky card hands it
+		   over to the heading: the panel takes focus by script alone and is no stop of its own. The
+		   twin tab of the main strip would do as well, but it is managed by a focus zone, and a focus
+		   put there from the outside leaves the zone pointing at the tab it kept before. */
+		focusTabPanel: function(tabValue)
+		{
+			var selector = '[data-entity="tab-container"][data-value="' + tabValue + '"]',
+				container = this.obTabContainers.querySelector(selector);
+
+			if (container)
+			{
+				container.focus({preventScroll: true});
 			}
 		},
 
@@ -1268,8 +1549,27 @@
 					transition: BX.easing.makeEaseOut(BX.easing.transitions.quint),
 					step: BX.delegate(function(state){
 						window.scrollTo(0, state.scroll);
-					}, this)
+					}, this),
+					complete: BX.delegate(this.focusProduct, this)
 				}).animate();
+			}
+			else
+			{
+				this.focusProduct();
+			}
+		},
+
+		/* The panel that brought us here slides away and turns invisible, and the browser drops the
+		   focus of a hidden node on the body: the next Tab would start over from the top of the page.
+		   So focus goes to the card itself - to its heading, or to the card when the component prints
+		   no heading. Neither node is a stop of its own: both take focus by script alone. */
+		focusProduct: function()
+		{
+			var target = this.obProductTitle || this.obProduct;
+
+			if (target)
+			{
+				target.focus({preventScroll: true});
 			}
 		},
 
@@ -1311,11 +1611,14 @@
 		{
 			BX.PreventDefault(event);
 
-			var targetTabValue = BX.proxy_context && BX.proxy_context.getAttribute('data-value'),
+			var initiator = BX.proxy_context,
+				targetTabValue = initiator && initiator.getAttribute('data-value'),
 				containers, tabs, panelTabs;
 
-			if (!BX.hasClass(BX.proxy_context, 'active') && targetTabValue)
+			if (!BX.hasClass(initiator, 'active') && targetTabValue)
 			{
+				this.announceTabChange(initiator);
+
 				containers = this.getEntities(this.obTabContainers, 'tab-container');
 				for (var i in containers)
 				{
@@ -1343,14 +1646,23 @@
 						{
 							BX.addClass(tabs[i], 'active');
 							BX.addClass(panelTabs[i], 'active');
+							this.setTabSelected(tabs[i], true);
+							this.setTabCurrent(panelTabs[i], true);
 						}
 						else
 						{
 							BX.removeClass(tabs[i], 'active');
 							BX.removeClass(panelTabs[i], 'active');
+							this.setTabSelected(tabs[i], false);
+							this.setTabCurrent(panelTabs[i], false);
 						}
 					}
 				}
+			}
+
+			if (targetTabValue && this.obTabsPanel && this.obTabsPanel.contains(initiator))
+			{
+				this.focusTabPanel(targetTabValue);
 			}
 
 			var scrollTop = BX.GetWindowScrollPos().scrollTop,
@@ -1393,6 +1705,216 @@
 			this.node.sliderControlRight && (this.node.sliderControlRight.style.display = display);
 		},
 
+		// Every offer has its own thumbnails container, and only the shown one carries the zone.
+		activateDotsZone: function(container)
+		{
+			var accessibility = getAccessibility();
+
+			if (!BX.type.isElementNode(container) || !accessibility)
+			{
+				return;
+			}
+
+			if (this.dotsFocusZone && this.dotsFocusZoneCont === container)
+			{
+				return;
+			}
+
+			this.removeDotsZone(this.dotsFocusZoneCont);
+
+			this.dotsFocusZoneCont = container;
+			this.dotsFocusZone = this.getDotsZone(container);
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			requestAnimationFrame(BX.delegate(this.startDotsZone, this));
+		},
+
+		// A zone is bound to its container for life, so every container keeps its own one and
+		// switching an offer only turns the zones off and on.
+		getDotsZone: function(container)
+		{
+			for (var i = 0; i < this.dotsZones.length; i++)
+			{
+				if (this.dotsZones[i].container === container)
+				{
+					return this.dotsZones[i].zone;
+				}
+			}
+
+			var accessibility = getAccessibility();
+			var keys = accessibility.FocusKeys;
+
+			var zone = new accessibility.FocusZone(container, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getDotsTabStop(container);
+				}, this),
+				getNextFocusable: BX.delegate(function(direction, from) {
+					return this.getNextDot(container, direction, from);
+				}, this)
+			});
+
+			this.dotsZones.push({container: container, zone: zone});
+
+			return zone;
+		},
+
+		startDotsZone: function()
+		{
+			if (this.dotsFocusZone && !this.dotsFocusZone.isActive())
+			{
+				this.dotsFocusZone.activate();
+			}
+		},
+
+		// Called for every hidden container, so the zone goes away only with its own one.
+		removeDotsZone: function(container)
+		{
+			if (!this.dotsFocusZone || this.dotsFocusZoneCont !== container)
+			{
+				return;
+			}
+
+			this.dotsFocusZone.deactivate();
+			this.dotsFocusZone = null;
+			this.dotsFocusZoneCont = null;
+		},
+
+		getDotsTabStop: function(container)
+		{
+			return this.getEntity(container, 'slider-control', '.active')
+				|| this.getEntity(container, 'slider-control');
+		},
+
+		// The arrows, Home and End change the photo right away, so the thumbnail the zone is
+		// about to focus is switched through the same path a click takes: showing the photo is
+		// the only thing a thumbnail does. Wrapping is done here as well: the zone falls back
+		// to its own navigation only on an empty answer.
+		getNextDot: function(container, direction, from)
+		{
+			var navigator = BX.UI.Accessibility.FocusNavigator;
+			var options = {from: from || undefined, tabbableOnly: false, wrap: true};
+			var nextDot;
+
+			switch (direction)
+			{
+				case 'previous':
+					nextDot = navigator.getPrevious(container, options);
+					break;
+				case 'next':
+					nextDot = navigator.getNext(container, options);
+					break;
+				case 'start':
+					nextDot = navigator.getFirst(container, options);
+					break;
+				default:
+					nextDot = navigator.getLast(container, options);
+					break;
+			}
+
+			if (nextDot)
+			{
+				this.selectSliderImg(nextDot);
+			}
+
+			return nextDot;
+		},
+
+		createSkuZones: function()
+		{
+			if (this.skuFocusZones.length || !getAccessibility())
+			{
+				return;
+			}
+
+			var lineContainer = this.getEntities(this.obTree, 'sku-line-block');
+			var list;
+
+			for (var i = 0; i < lineContainer.length; i++)
+			{
+				list = lineContainer[i].querySelector('ul');
+				// a group without a list keeps its slot: updateRow addresses zones by line index
+				this.skuFocusZones.push(list ? this.createSkuZone(list) : null);
+			}
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			requestAnimationFrame(BX.delegate(this.startSkuZones, this));
+		},
+
+		// As in a radio group, the choice follows the focus: the zone moves it over the shown values,
+		// wrapping at either end, and selectOfferPropKey then picks the value the zone has focused.
+		createSkuZone: function(list)
+		{
+			var accessibility = getAccessibility();
+			var keys = accessibility.FocusKeys;
+
+			return new accessibility.FocusZone(list, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getSkuTabStop(list);
+				}, this)
+			});
+		},
+
+		startSkuZones: function()
+		{
+			for (var i = 0; i < this.skuFocusZones.length; i++)
+			{
+				if (this.skuFocusZones[i] && !this.skuFocusZones[i].isActive())
+				{
+					this.skuFocusZones[i].activate();
+				}
+			}
+		},
+
+		// The zone ignores a node outside the set it manages, and that set holds only the values
+		// shown on the page. The chosen value may be hidden or carried by no offer, so the entry
+		// point falls back to the first value that is both shown and allowed.
+		getSkuTabStop: function(list)
+		{
+			var accessibility = getAccessibility();
+
+			if (!accessibility)
+			{
+				return null;
+			}
+
+			var checker = accessibility.InteractivityChecker;
+			var values = list.querySelectorAll('[role="radio"]');
+			var chosen = null;
+			var firstAllowed = null;
+			var firstShown = null;
+			var value;
+
+			for (var i = 0; i < values.length; i++)
+			{
+				value = values[i];
+
+				if (!checker.isFocusable(value))
+				{
+					continue;
+				}
+
+				firstShown = firstShown || value;
+
+				if (checker.isDisabled(value))
+				{
+					continue;
+				}
+
+				firstAllowed = firstAllowed || value;
+
+				if (value.getAttribute('aria-checked') === 'true')
+				{
+					chosen = value;
+				}
+			}
+
+			return chosen || firstAllowed || firstShown;
+		},
+
 		setCurrentImg: function(img, showImage, showPanelImage)
 		{
 			var images, l;
@@ -1416,10 +1938,16 @@
 						}
 
 						BX.addClass(images[l], 'active');
+						images[l].removeAttribute('aria-hidden');
 					}
-					else if (BX.hasClass(images[l], 'active'))
+					else
 					{
-						BX.removeClass(images[l], 'active');
+						if (BX.hasClass(images[l], 'active'))
+						{
+							BX.removeClass(images[l], 'active');
+						}
+
+						images[l].setAttribute('aria-hidden', 'true');
 					}
 				}
 			}
@@ -1640,6 +2168,8 @@
 						{
 							BX.removeClass(this.product.slider.ITEMS[i], 'active');
 						}
+
+						this.product.slider.ITEMS[i].setAttribute('aria-pressed', value === intPict ? 'true' : 'false');
 					}
 				}
 			}
@@ -1738,6 +2268,8 @@
 							{
 								BX.removeClass(this.product.slider.ITEMS[i], 'active');
 							}
+
+							this.product.slider.ITEMS[i].setAttribute('aria-pressed', value === strValue ? 'true' : 'false');
 						}
 					}
 				}
@@ -1805,10 +2337,14 @@
 			this.node.imageContainer.style.cursor = '';
 			// remove double scroll bar
 			document.body.style.overflow = 'hidden';
+			// the class goes first: without it the close button is display:none and cannot take focus
+			this.activateGalleryTrap();
 		},
 
 		hideMainPictPopup: function()
 		{
+			// the trap goes first: the close button holding the focus disappears with the class
+			this.deactivateGalleryTrap();
 			this.config.useMagnifier && this.disableMagnifier(false);
 			BX.removeClass(this.obBigSlider, 'popup');
 			this.node.imageContainer.style.cursor = 'zoom-in';
@@ -1816,19 +2352,206 @@
 			document.body.style.overflow = '';
 		},
 
+		// The layer is the whole gallery container, so the zoom button, the thumbnails and the close
+		// button all live inside the trap and the focus never left it on its own. The return is needed
+		// for another reason: the close button is hidden outside the layer, and the focus would fall
+		// onto <body> after closing.
+		activateGalleryTrap: function()
+		{
+			var accessibility = getAccessibility();
+
+			if (!accessibility)
+			{
+				return;
+			}
+
+			this.saveGalleryAttrs();
+			this.parkGalleryOpener();
+
+			this.obBigSlider.setAttribute('role', 'dialog');
+			this.obBigSlider.setAttribute('aria-modal', 'true');
+
+			var layerName = BX.message('GALLERY_ZOOM_LAYER_ARIA');
+			if (BX.type.isNotEmptyString(layerName))
+			{
+				this.obBigSlider.setAttribute('aria-label', layerName);
+			}
+
+			if (!this.galleryTrap)
+			{
+				this.galleryTrap = new accessibility.FocusTrap(this.obBigSlider, {
+					initialFocus: BX.delegate(function() {
+						return this.getEntity(this.obBigSlider, 'close-popup');
+					}, this),
+					// the zoom button is inside the trap, so the trap keeps the focus unless forced
+					forceInitialFocus: true,
+					restoreFocus: BX.delegate(function() {
+						return this.node.imageContainer;
+					}, this),
+					isolateOutside: true
+				});
+			}
+
+			this.galleryTrapFramesLeft = GALLERY_LAYER_FRAME_BUDGET;
+			this.startGalleryTrap();
+		},
+
+		// The layer opens with the fade of imgPopupShow, and its first frame is fully transparent. The
+		// trap drops an invisible candidate without a word: switched on in that frame it leaves the
+		// focus on the container instead of the close button, and Escape pressed before the layer has
+		// shown itself finds the opener invisible too and drops the focus onto the page. So the trap
+		// waits for the first frame where the layer is no longer transparent, not for the whole fade.
+		startGalleryTrap: function()
+		{
+			this.galleryTrapFrame = null;
+
+			if (!this.galleryTrap || !BX.hasClass(this.obBigSlider, 'popup'))
+			{
+				return;
+			}
+
+			if (this.galleryTrapFramesLeft > 0 && BX.style(this.obBigSlider, 'opacity') === '0')
+			{
+				this.galleryTrapFramesLeft--;
+				this.galleryTrapFrame = requestAnimationFrame(BX.delegate(this.startGalleryTrap, this));
+
+				return;
+			}
+
+			this.galleryTrap.activate();
+		},
+
+		// deactivate() restores the focus by itself, no separate handler is needed for that.
+		deactivateGalleryTrap: function()
+		{
+			if (this.galleryTrapFrame !== null)
+			{
+				cancelAnimationFrame(this.galleryTrapFrame);
+				this.galleryTrapFrame = null;
+			}
+
+			if (this.galleryTrap)
+			{
+				this.galleryTrap.deactivate();
+			}
+
+			this.releaseGalleryOpener();
+			this.restoreGalleryAttrs();
+		},
+
+		// Inside the layer the photograph is no stop of its own. It is the button that opened the layer:
+		// its name speaks of opening, and its ring runs along the edges of the screen, where there is
+		// nothing to see. The layer leaves two stops - the strip of thumbnails and the cross - and hands
+		// the stop back when it closes. The focus still returns here by script, which -1 allows.
+		parkGalleryOpener: function()
+		{
+			var opener = this.node.imageContainer;
+
+			if (!opener)
+			{
+				return;
+			}
+
+			this.galleryOpenerTabIndex = opener.hasAttribute('tabindex')
+				? opener.getAttribute('tabindex')
+				: null
+			;
+			opener.setAttribute('tabindex', '-1');
+		},
+
+		releaseGalleryOpener: function()
+		{
+			var opener = this.node.imageContainer;
+
+			// the layer never opened with accessibility around, so there is nothing of ours to take off
+			if (!opener || this.galleryOpenerTabIndex === undefined)
+			{
+				return;
+			}
+
+			if (this.galleryOpenerTabIndex === null)
+			{
+				opener.removeAttribute('tabindex');
+			}
+			else
+			{
+				opener.setAttribute('tabindex', this.galleryOpenerTabIndex);
+			}
+
+			this.galleryOpenerTabIndex = undefined;
+		},
+
+		// The layer borrows the gallery block itself, and the template prints role="group" with the block
+		// name on that very node. Stripping the attributes on close would leave the gallery nameless for
+		// the rest of the page life, so the layer gives back what it found instead.
+		saveGalleryAttrs: function()
+		{
+			var saved = {};
+
+			for (var i = 0; i < galleryLayerAttrs.length; i++)
+			{
+				var name = galleryLayerAttrs[i];
+				saved[name] = this.obBigSlider.hasAttribute(name)
+					? this.obBigSlider.getAttribute(name)
+					: null
+				;
+			}
+
+			this.galleryAttrsBeforeLayer = saved;
+		},
+
+		restoreGalleryAttrs: function()
+		{
+			var saved = this.galleryAttrsBeforeLayer;
+
+			// the layer never opened with accessibility around, so there is nothing of ours to take off
+			if (!saved)
+			{
+				return;
+			}
+
+			for (var i = 0; i < galleryLayerAttrs.length; i++)
+			{
+				var name = galleryLayerAttrs[i];
+
+				if (saved[name] === null)
+				{
+					this.obBigSlider.removeAttribute(name);
+				}
+				else
+				{
+					this.obBigSlider.setAttribute(name, saved[name]);
+				}
+			}
+
+			this.galleryAttrsBeforeLayer = null;
+		},
+
 		closeByEscape: function(event)
 		{
 			event = event || window.event;
 
-			if (event.keyCode == 27)
+			// the handler sits on the document: without the class check any Escape on the page would
+			// close the layer that is not open and reset the page scroll lock and the gallery cursor
+			if (event.keyCode == 27 && BX.hasClass(this.obBigSlider, 'popup'))
 			{
 				this.hideMainPictPopup();
 			}
 		},
 
+		isQuantityControlDisabled: function(control)
+		{
+			return !!control && control.getAttribute('aria-disabled') === 'true';
+		},
+
 		startQuantityInterval: function()
 		{
 			var target = BX.proxy_context;
+			if (this.isQuantityControlDisabled(target))
+			{
+				return;
+			}
+
 			var func = target.id === this.visual.QUANTITY_DOWN_ID
 				? BX.proxy(this.quantityDown, this)
 				: BX.proxy(this.quantityUp, this);
@@ -1849,6 +2572,11 @@
 
 		quantityUp: function()
 		{
+			if (this.isQuantityControlDisabled(this.obQuantityUp))
+			{
+				return;
+			}
+
 			var curValue = 0,
 				boolSet = true;
 
@@ -1876,6 +2604,7 @@
 						this.obQuantity.value = curValue;
 
 						this.setPrice();
+						this.announceQuantity();
 					}
 				}
 			}
@@ -1883,6 +2612,11 @@
 
 		quantityDown: function()
 		{
+			if (this.isQuantityControlDisabled(this.obQuantityDown))
+			{
+				return;
+			}
+
 			var curValue = 0,
 				boolSet = true;
 
@@ -1910,6 +2644,7 @@
 						this.obQuantity.value = curValue;
 
 						this.setPrice();
+						this.announceQuantity();
 					}
 				}
 			}
@@ -1963,6 +2698,7 @@
 				}
 
 				this.setPrice();
+				this.announceQuantity();
 			}
 		},
 
@@ -2067,7 +2803,7 @@
 							);
 					}
 
-					this.obQuantity.disabled = !this.canBuy;
+					this.setQuantityControlDisabled(this.obQuantity, !this.canBuy);
 
 					if (resetQuantity)
 					{
@@ -2148,27 +2884,27 @@
 			}
 		},
 
-		selectOfferProp: function()
+		selectOfferProp: function(target)
 		{
 			var i = 0,
 				strTreeValue = '',
 				arTreeItem = [],
 				rowItems = null,
-				target = BX.proxy_context,
 				smallCardItem;
+
+			target = BX.type.isDomNode(target) ? target : BX.proxy_context;
 
 			if (target && target.hasAttribute('data-treevalue'))
 			{
 				if (BX.hasClass(target, 'selected'))
 					return;
 
-				if (typeof document.activeElement === 'object')
-				{
-					document.activeElement.blur();
-				}
-
 				strTreeValue = target.getAttribute('data-treevalue');
 				arTreeItem = strTreeValue.split('_');
+
+				// searchOfferPropIndex reaches changeInfo in the same turn, and the value is spoken
+				// there together with what the choice has changed on the page
+				this.skuAnnounceNode = target;
 				this.searchOfferPropIndex(arTreeItem[0], arTreeItem[1]);
 				rowItems = BX.findChildren(target.parentNode, {tagName: 'li'}, false);
 
@@ -2177,10 +2913,12 @@
 					for (i = 0; i < rowItems.length; i++)
 					{
 						BX.removeClass(rowItems[i], 'selected');
+						rowItems[i].setAttribute('aria-checked', 'false');
 					}
 				}
 
 				BX.addClass(target, 'selected');
+				target.setAttribute('aria-checked', 'true');
 
 				if (this.smallCardNodes.panel)
 				{
@@ -2197,21 +2935,80 @@
 					}
 				}
 
-				if (
-					this.isFacebookConversionCustomizeProductEventEnabled
-					&& BX.Type.isArrayFilled(this.offers)
-					&& BX.Type.isObject(this.offers[this.offerNum])
-				)
+				if (!this.offerEffectsDeferred)
 				{
-					BX.ajax.runAction(
-						'sale.facebookconversion.customizeProduct',
-						{
-							data: {
-								offerId: this.offers[this.offerNum]['ID']
-							}
-						}
-					);
+					this.sendCustomizeProductEvent();
 				}
+			}
+		},
+
+		sendCustomizeProductEvent: function()
+		{
+			if (
+				this.isFacebookConversionCustomizeProductEventEnabled
+				&& BX.Type.isArrayFilled(this.offers)
+				&& BX.Type.isObject(this.offers[this.offerNum])
+			)
+			{
+				BX.ajax.runAction(
+					'sale.facebookconversion.customizeProduct',
+					{
+						data: {
+							offerId: this.offers[this.offerNum]['ID']
+						}
+					}
+				);
+			}
+		},
+
+		// the <li> carries the radio role but is not an interactive element, so the browser
+		// synthesizes no activation from Enter or Space. One listener on the tree serves every
+		// value: the keys always arrive from the value holding the focus. The zone of the row
+		// listens on its list, below the tree, so by the time an arrow, Home or End gets here
+		// the focus already stands on the value it leads to.
+		selectOfferPropKey: function(event)
+		{
+			var target = event.target && event.target.closest
+				? event.target.closest('li[data-treevalue]')
+				: null
+			;
+
+			if (!target)
+			{
+				return;
+			}
+
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
+
+				// the arrow has already chosen this value, and the key only hurries what the pause would bring;
+				// the walk may have been in another row, so the announcement names the value the key is on
+				if (this.offerEffectsTimer && BX.hasClass(target, 'selected'))
+				{
+					this.offerEffectsNode = target;
+					this.flushOfferEffects(true);
+
+					return;
+				}
+
+				this.selectOfferProp(target);
+
+				return;
+			}
+
+			var focused = document.activeElement;
+
+			if (
+				focused !== target
+				&& BX.type.isElementNode(focused)
+				&& focused.parentNode === target.parentNode
+				&& focused.hasAttribute('data-treevalue')
+			)
+			{
+				this.offerEffectsDeferred = true;
+				this.selectOfferProp(focused);
+				this.offerEffectsDeferred = false;
 			}
 		},
 
@@ -2303,13 +3100,18 @@
 		{
 			var i = 0,
 				value = '',
+				display = '',
 				isCurrent = false,
 				rowItems = null;
 
-			var lineContainer = this.getEntities(this.obTree, 'sku-line-block');
+			var lineContainer = this.getEntities(this.obTree, 'sku-line-block'),
+				visibleItems = [];
 
 			if (intNumber > -1 && intNumber < lineContainer.length)
 			{
+				var rowDisplay = lineContainer[intNumber].style.display,
+					visibilityChanged = false;
+
 				rowItems = lineContainer[intNumber].querySelectorAll('li');
 				for (i = 0; i < rowItems.length; i++)
 				{
@@ -2325,21 +3127,57 @@
 						BX.removeClass(rowItems[i], 'selected');
 					}
 
+					this.setSkuValueState(rowItems[i], 'aria-checked', isCurrent ? 'true' : 'false');
+
 					if (BX.util.in_array(value, canBuyId))
 					{
 						BX.removeClass(rowItems[i], 'notallowed');
+						this.setSkuValueAvailability(rowItems[i], true);
 					}
 					else
 					{
 						BX.addClass(rowItems[i], 'notallowed');
+						this.setSkuValueAvailability(rowItems[i], false);
 					}
 
-					rowItems[i].style.display = BX.util.in_array(value, showId) ? '' : 'none';
+					display = BX.util.in_array(value, showId) ? '' : 'none';
+					if (rowItems[i].style.display !== display)
+					{
+						rowItems[i].style.display = display;
+						visibilityChanged = true;
+					}
+
+					if (display !== 'none')
+					{
+						visibleItems.push(rowItems[i]);
+					}
 
 					if (isCurrent)
 					{
 						lineContainer[intNumber].style.display = (value == 0 && canBuyId.length == 1) ? 'none' : '';
 					}
+				}
+
+				if (lineContainer[intNumber].style.display !== rowDisplay)
+				{
+					visibilityChanged = true;
+				}
+
+				// a value of a property row hidden as a whole is not on the page either
+				if (lineContainer[intNumber].style.display === 'none')
+				{
+					visibleItems = [];
+				}
+
+				this.updateSkuPositions(visibleItems);
+
+				// The observer of the zone watches neither the inline display, nor aria-label, nor
+				// aria-checked, so a row whose set of shown values has changed asks for the rebuild
+				// itself. Without it the stop of the row stays on a value that is no longer on the
+				// page, and the whole group falls out of the keyboard path.
+				if (this.skuFocusZones[intNumber] && visibilityChanged)
+				{
+					this.skuFocusZones[intNumber].refreshElements();
 				}
 
 				if (this.smallCardNodes.panel)
@@ -2374,6 +3212,55 @@
 						}
 					}
 				}
+			}
+		},
+
+		/* A value the product cannot be bought in stays a value the buyer picks: that is how the card
+		   is asked to redraw the price and the buy block and show that the combination is gone.
+		   aria-disabled would promise the opposite — that the radio is not operable — while the arrows,
+		   Enter and the mouse all still choose it. So the unavailability is carried by the accessible
+		   name, where it costs the radio none of its behaviour, and the base name is kept aside so
+		   that repeated redraws do not stack the suffix and the announcement of the choice does not
+		   say it twice. */
+		setSkuValueAvailability: function(node, canBuy)
+		{
+			var base = node.getAttribute('data-name-base');
+
+			if (base === null)
+			{
+				base = node.getAttribute('aria-label') || node.getAttribute('title') || '';
+				node.setAttribute('data-name-base', base);
+			}
+
+			var unavailable = BX.message('SKU_UNAVAILABLE_ARIA');
+			var name = (canBuy || base === '' || !BX.type.isNotEmptyString(unavailable))
+				? base
+				: base + ', ' + unavailable
+			;
+
+			this.setSkuValueState(node, 'aria-label', name);
+		},
+
+		// The redraw walks every value of the row, and most of them keep the state they had: a state
+		// is written only when it differs, so that nothing watching the row sees a write of the same.
+		setSkuValueState: function(node, name, value)
+		{
+			if (node.getAttribute(name) === value)
+			{
+				return;
+			}
+
+			writeAttr(node, name, value);
+		},
+
+		// the browser cannot compute the set position for a role carried by <li>,
+		// and a hidden value must not be counted
+		updateSkuPositions: function(items)
+		{
+			for (var i = 0; i < items.length; i++)
+			{
+				items[i].setAttribute('aria-setsize', items.length);
+				items[i].setAttribute('aria-posinset', i + 1);
 			}
 		},
 
@@ -2528,6 +3415,13 @@
 
 			var i, offerGroupNode;
 
+			// the page speaks only what the visitor has just done: the first pass of the card
+			// goes through the same code and leaves no pressed value behind
+			var announceNode = this.skuAnnounceNode;
+			this.skuAnnounceNode = null;
+
+			var deferEffects = this.offerEffectsDeferred;
+
 			for (i = 0; i < this.offers.length; i++)
 			{
 				boolOneSearch = true;
@@ -2555,9 +3449,6 @@
 					this.isGift = false;
 				}
 
-				this.drawImages(this.offers[index].SLIDER);
-				this.checkSliderControls(this.offers[index].SLIDER_COUNT);
-
 				for (i = 0; i < this.offers.length; i++)
 				{
 					if (this.config.showOfferGroup && this.offers[i].OFFER_GROUP)
@@ -2567,41 +3458,12 @@
 							offerGroupNode.style.display = (i == index ? '' : 'none');
 						}
 					}
-
-					if (this.slider.controls[i].ID)
-					{
-						if (i === index)
-						{
-							this.product.slider = this.slider.controls[i];
-							this.slider.controls[i].CONT && BX.show(this.slider.controls[i].CONT);
-						}
-						else
-						{
-							this.slider.controls[i].CONT && BX.hide(this.slider.controls[i].CONT);
-						}
-					}
-					else if (i === index)
-					{
-						this.product.slider = {};
-					}
 				}
 
-				if (this.offers[index].SLIDER_COUNT > 0)
+				if (!deferEffects)
 				{
-					this.setMainPict(this.offers[index].ID, this.offers[index].SLIDER[0].ID, true);
-				}
-				else
-				{
-					this.setMainPictFromItem(index);
-				}
-
-				if (this.offers[index].SLIDER_COUNT > 1)
-				{
-					this.initSlider();
-				}
-				else
-				{
-					this.stopSlider();
+					this.cancelOfferEffects();
+					this.showOfferGallery(index);
 				}
 
 				if (this.obDescription && this.config.showSkuDescription === 'Y')
@@ -2637,20 +3499,128 @@
 				}
 
 				this.quantitySet(index);
-				this.setPrice();
+				this.setPrice(true);
 				this.setCompared(this.offers[index].COMPARED);
 
 				this.offerNum = index;
 				this.fixFontCheck();
-				this.setAnalyticsDataLayer('showDetail');
-				this.incViewedCounter();
+
+				if (deferEffects)
+				{
+					this.deferOfferEffects(announceNode);
+				}
+				else
+				{
+					this.setAnalyticsDataLayer('showDetail');
+					this.incViewedCounter();
+					// only for compatible catalog.store.amount custom templates
+					BX.onCustomEvent('onCatalogStoreProductChange', [this.offers[this.offerNum].ID]);
+				}
 
 				eventData.newId = this.offers[this.offerNum].ID;
-				// only for compatible catalog.store.amount custom templates
-				BX.onCustomEvent('onCatalogStoreProductChange', [this.offers[this.offerNum].ID]);
 				// new event
 				BX.onCustomEvent('onCatalogElementChangeOffer', [eventData]);
 				eventData = null;
+
+				if (announceNode && !deferEffects)
+				{
+					this.announceOfferChange(announceNode, index, true);
+				}
+			}
+		},
+
+		showOfferGallery: function(index)
+		{
+			var i;
+
+			this.drawImages(this.offers[index].SLIDER);
+			this.checkSliderControls(this.offers[index].SLIDER_COUNT);
+
+			for (i = 0; i < this.offers.length; i++)
+			{
+				if (this.slider.controls[i].ID)
+				{
+					if (i === index)
+					{
+						this.product.slider = this.slider.controls[i];
+						if (this.slider.controls[i].CONT)
+						{
+							BX.show(this.slider.controls[i].CONT);
+							this.activateDotsZone(this.slider.controls[i].CONT);
+						}
+					}
+					else
+					{
+						if (this.slider.controls[i].CONT)
+						{
+							BX.hide(this.slider.controls[i].CONT);
+							this.removeDotsZone(this.slider.controls[i].CONT);
+						}
+					}
+				}
+				else if (i === index)
+				{
+					this.product.slider = {};
+				}
+			}
+
+			if (this.offers[index].SLIDER_COUNT > 0)
+			{
+				this.setMainPict(this.offers[index].ID, this.offers[index].SLIDER[0].ID, true);
+			}
+			else
+			{
+				this.setMainPictFromItem(index);
+			}
+
+			if (this.offers[index].SLIDER_COUNT > 1)
+			{
+				this.initSlider();
+			}
+			else
+			{
+				this.stopSlider();
+			}
+		},
+
+		// Every step of a walk puts the effects off again, so the walk ends in one round of them for the
+		// value it stopped on.
+		deferOfferEffects: function(announceNode)
+		{
+			clearTimeout(this.offerEffectsTimer);
+			this.offerEffectsNode = announceNode || this.offerEffectsNode;
+			this.offerEffectsTimer = setTimeout(
+				BX.delegate(function() {
+					this.flushOfferEffects(false);
+				}, this),
+				OFFER_EFFECTS_DELAY
+			);
+		},
+
+		cancelOfferEffects: function()
+		{
+			clearTimeout(this.offerEffectsTimer);
+			this.offerEffectsTimer = null;
+			this.offerEffectsNode = null;
+		},
+
+		// The focus has said the value the walk stopped on, so the announcement leaves it out unless the
+		// visitor has pressed a key on the value too.
+		flushOfferEffects: function(withValue)
+		{
+			var announceNode = this.offerEffectsNode;
+
+			this.cancelOfferEffects();
+			this.showOfferGallery(this.offerNum);
+			this.setAnalyticsDataLayer('showDetail');
+			this.incViewedCounter();
+			// only for compatible catalog.store.amount custom templates
+			BX.onCustomEvent('onCatalogStoreProductChange', [this.offers[this.offerNum].ID]);
+			this.sendCustomizeProductEvent();
+
+			if (announceNode)
+			{
+				this.announceOfferChange(announceNode, this.offerNum, withValue);
 			}
 		},
 		changeSkuDescription: function(index)
@@ -2723,18 +3693,25 @@
 					img.setAttribute('itemprop', 'image');
 				}
 
-				this.node.imageContainer.appendChild(
-					BX.create('DIV', {
-						attrs: {
-							'data-entity': 'image',
-							'data-id': images[i].ID
-						},
-						props: {
-							className: 'product-item-detail-slider-image' + (i == 0 ? ' active' : '')
-						},
-						children: [img]
-					})
-				);
+				var slide = BX.create('DIV', {
+					attrs: {
+						'data-entity': 'image',
+						'data-id': images[i].ID
+					},
+					props: {
+						className: 'product-item-detail-slider-image' + (i == 0 ? ' active' : '')
+					},
+					children: [img]
+				});
+
+				// an inactive slide stays in the DOM under zero opacity, and its image is kept out of
+				// the accessibility tree: otherwise the reader repeats the same alt for every photo
+				if (i != 0)
+				{
+					slide.setAttribute('aria-hidden', 'true');
+				}
+
+				this.node.imageContainer.appendChild(slide);
 			}
 		},
 
@@ -2920,37 +3897,61 @@
 			var reachedTopLimit = this.checkQuantity && parseFloat(this.obQuantity.value) + this.stepQuantity > this.maxQuantity,
 				reachedBottomLimit = parseFloat(this.obQuantity.value) - this.stepQuantity < this.minQuantity;
 
-			if (reachedTopLimit)
-			{
-				BX.addClass(this.obQuantityUp, 'product-item-amount-field-btn-disabled');
-			}
-			else if (BX.hasClass(this.obQuantityUp, 'product-item-amount-field-btn-disabled'))
-			{
-				BX.removeClass(this.obQuantityUp, 'product-item-amount-field-btn-disabled');
-			}
+			this.setQuantityStepLimit(this.obQuantityUp, reachedTopLimit);
+			this.setQuantityStepLimit(this.obQuantityDown, reachedBottomLimit);
+			this.setQuantityControlDisabled(this.obQuantity, reachedTopLimit && reachedBottomLimit);
+		},
 
-			if (reachedBottomLimit)
-			{
-				BX.addClass(this.obQuantityDown, 'product-item-amount-field-btn-disabled');
-			}
-			else if (BX.hasClass(this.obQuantityDown, 'product-item-amount-field-btn-disabled'))
-			{
-				BX.removeClass(this.obQuantityDown, 'product-item-amount-field-btn-disabled');
-			}
+		setQuantityStepLimit: function(button, limitReached)
+		{
+			if (!button)
+				return;
 
-			if (reachedTopLimit && reachedBottomLimit)
+			if (limitReached)
 			{
-				this.obQuantity.setAttribute('disabled', 'disabled');
+				BX.addClass(button, 'product-item-amount-field-btn-disabled');
 			}
 			else
 			{
-				this.obQuantity.removeAttribute('disabled');
+				BX.removeClass(button, 'product-item-amount-field-btn-disabled');
+			}
+
+			this.setQuantityControlDisabled(button, limitReached);
+		},
+
+		// aria-disabled instead of the native attribute: disabled would throw the focus to body.
+		// A field says the state to a reader and keeps it as well: readonly stops the typing the
+		// native attribute used to stop, and leaves the field where the keyboard can reach it.
+		setQuantityControlDisabled: function(control, disabled)
+		{
+			if (!control)
+				return;
+
+			if (disabled)
+			{
+				control.setAttribute('aria-disabled', 'true');
+			}
+			else
+			{
+				control.removeAttribute('aria-disabled');
+			}
+
+			if (control.tagName === 'INPUT')
+			{
+				control.readOnly = disabled;
 			}
 		},
 
-		setPrice: function()
+		// silentTotal comes from changeInfo: the choice of a variation is announced there as a whole,
+		// and the quantity recounted along the way must not speak over it
+		setPrice: function(silentTotal)
 		{
 			var economyInfo = '', price;
+
+			if (silentTotal)
+			{
+				this.cancelQuantityAnnounce();
+			}
 
 			if (this.obQuantity)
 			{
@@ -3008,6 +4009,10 @@
 					{
 						this.obPrice.percent && BX.adjust(this.obPrice.percent, {
 							style: {display: ''},
+							attrs: {
+								role: 'img',
+								'aria-label': BX.message('DISCOUNT_PERCENT_ARIA').replace('#PERCENT#', price.PERCENT)
+							},
 							html: -price.PERCENT + '%'
 						});
 					}
@@ -3023,7 +4028,11 @@
 
 					if (this.config.showPercent)
 					{
-						this.obPrice.percent && BX.adjust(this.obPrice.percent, {style: {display: 'none'}, html: ''});
+						this.obPrice.percent && BX.adjust(this.obPrice.percent, {
+							style: {display: 'none'},
+							attrs: {role: '', 'aria-label': ''},
+							html: ''
+						});
 					}
 				}
 
@@ -3049,6 +4058,192 @@
 			}
 		},
 
+		// The only way the page speaks to a reader. The live region belongs to the primitive, so the
+		// markup of the template keeps no aria-live of its own.
+		announce: function(text)
+		{
+			var accessibility = getAccessibility();
+
+			if (!accessibility || !BX.type.isNotEmptyString(text))
+			{
+				return;
+			}
+
+			accessibility.LiveAnnouncer.announce(text);
+		},
+
+		// Both strips open the section, but only the main one carries the tab role: the item of the
+		// sticky strip answers with its own text.
+		announceTabChange: function(tab)
+		{
+			var control = tab.querySelector('[role="tab"]') || tab;
+			var name = (control.textContent || '').trim();
+			var template = BX.message('TAB_SELECTED_ARIA');
+
+			if (name === '' || !BX.type.isNotEmptyString(template))
+			{
+				return;
+			}
+
+			this.announce(fillTemplate(template, {'#TAB#': name}));
+		},
+
+		// The choice of a variant is spoken by us and not left to the reader. Orca repeats the state of
+		// a radio only when the last key was the space bar (orca/scripts/default.py: onCheckedChanged),
+		// so a choice made with Enter, with the arrows or with the mouse stayed silent. The value comes
+		// with what it has changed: the card redraws the price, the buy block and the gallery at once.
+		announceOfferChange: function(node, index, withValue)
+		{
+			var choice = this.getSkuChoiceText(node);
+
+			if (choice === '')
+			{
+				return;
+			}
+
+			var parts = withValue ? [choice] : [];
+			var price = this.obPrice.price ? (this.obPrice.price.textContent || '').trim() : '';
+
+			if (price !== '')
+			{
+				parts.push(price);
+			}
+
+			var availability = this.canBuy
+				? BX.message('SKU_AVAILABLE_ARIA')
+				: BX.message('SKU_UNAVAILABLE_ARIA')
+			;
+
+			if (BX.type.isNotEmptyString(availability))
+			{
+				parts.push(availability);
+			}
+
+			var photos = this.offers[index].SLIDER_COUNT;
+			var photosTemplate = BX.message('SKU_PHOTOS_ARIA');
+
+			if (photos > 0 && BX.type.isNotEmptyString(photosTemplate))
+			{
+				parts.push(fillTemplate(photosTemplate, {'#COUNT#': photos}));
+			}
+
+			this.announce(parts.join(', '));
+		},
+
+		getSkuChoiceText: function(node)
+		{
+			// the base name, so that a chosen value the product is out of does not say so twice:
+			// the availability is a part of this announcement on its own
+			var value = node.getAttribute('data-name-base')
+				|| node.getAttribute('aria-label')
+				|| node.getAttribute('title')
+				|| ''
+			;
+
+			if (value === '')
+			{
+				return '';
+			}
+
+			var template = BX.message('SKU_SELECTED_ARIA') || '';
+			var property = this.getSkuGroupName(node);
+
+			return (template === '' || property === '')
+				? value
+				: fillTemplate(template, {'#PROPERTY#': property, '#VALUE#': value})
+			;
+		},
+
+		getSkuGroupName: function(node)
+		{
+			var group = node.closest ? node.closest('[role="radiogroup"]') : null;
+
+			if (!group)
+			{
+				return '';
+			}
+
+			var label = group.getAttribute('aria-label');
+
+			if (label)
+			{
+				return label;
+			}
+
+			var titleId = group.getAttribute('aria-labelledby');
+			var title = titleId ? document.getElementById(titleId) : null;
+
+			return title ? (title.textContent || '').trim() : '';
+		},
+
+		// One announcement for a series of steps or a typed value, built when the series is over: the
+		// last step decides both the quantity and whether the total is printed at all.
+		announceQuantity: function()
+		{
+			this.cancelQuantityAnnounce();
+
+			if (!getAccessibility())
+			{
+				return;
+			}
+
+			this.quantityAnnounceTimer = setTimeout(
+				BX.delegate(function() {
+					this.quantityAnnounceTimer = null;
+					this.announce(this.getQuantityText());
+				}, this),
+				QUANTITY_ANNOUNCE_DELAY
+			);
+		},
+
+		cancelQuantityAnnounce: function()
+		{
+			clearTimeout(this.quantityAnnounceTimer);
+			this.quantityAnnounceTimer = null;
+		},
+
+		// The announcer writes plain text, so the figures are read back from the visible nodes, where the
+		// browser has already decoded the currency template. At the smallest quantity the page hides the
+		// total, and the price of one step stands in for it.
+		getQuantityText: function()
+		{
+			if (!this.obQuantity)
+			{
+				return '';
+			}
+
+			// the script keeps the node of the unit for the offers only, a simple product prints it too
+			var measure = this.obMeasure || BX(this.visual.QUANTITY_MEASURE);
+			var values = {
+				'#QUANTITY#': this.obQuantity.value,
+				'#MEASURE#': measure ? (measure.textContent || '').trim() : ''
+			};
+			var total = this.obPrice.total && this.obPrice.total.style.display !== 'none'
+				? this.obPrice.total.querySelector('strong')
+				: null
+			;
+			var template;
+
+			if (total)
+			{
+				template = BX.message('QUANTITY_CHANGED_ARIA');
+				values['#SUM#'] = (total.textContent || '').trim();
+			}
+			else
+			{
+				template = BX.message('QUANTITY_CHANGED_PRICE_ARIA');
+				values['#PRICE#'] = this.obPrice.price ? (this.obPrice.price.textContent || '').trim() : '';
+			}
+
+			if (!BX.type.isNotEmptyString(template))
+			{
+				return '';
+			}
+
+			// a product with no unit leaves a gap where the unit stood
+			return fillTemplate(template, values).replace(/\s+/g, ' ').replace(/ ,/g, ',').trim();
+		},
+
 		compare: function(event)
 		{
 			var checkbox = this.obCompare.querySelector('[data-entity="compare-checkbox"]'),
@@ -3059,6 +4254,8 @@
 			{
 				checked = target === checkbox ? checkbox.checked : !checkbox.checked;
 			}
+
+			this.popupInitiator = checkbox;
 
 			var url = checked ? this.compareData.compareUrl : this.compareData.compareDeleteUrl,
 				compareLink;
@@ -3130,7 +4327,8 @@
 							events: {
 								click: BX.delegate(this.compareRedirect, this)
 							},
-							style: {marginRight: '10px'}
+							style: {marginRight: '10px'},
+							autofocus: true
 						}),
 						new BasketButton({
 							text: BX.message('BTN_MESSAGE_CLOSE'),
@@ -3147,7 +4345,8 @@
 							text: BX.message('BTN_MESSAGE_COMPARE_REDIRECT'),
 							events: {
 								click: BX.delegate(this.compareRedirect, this)
-							}
+							},
+							autofocus: true
 						})
 					];
 				}
@@ -3162,15 +4361,30 @@
 						text: BX.message('BTN_MESSAGE_CLOSE'),
 						events: {
 							click: BX.delegate(this.obPopupWin.close, this.obPopupWin)
-						}
+						},
+						autofocus: true
 					})
 				];
 			}
 
-			this.obPopupWin.setTitleBar(BX.message('COMPARE_TITLE'));
+			this.setPopupTitle(BX.message('COMPARE_TITLE'));
 			this.obPopupWin.setContent(popupContent);
 			this.obPopupWin.setButtons(popupButtons);
 			this.obPopupWin.show();
+
+			// The focus that went into the layer reads the result out with it. The panel of the compare
+			// list changes in silence, so a layer kept from opening leaves the result to the announcer.
+			if (result.STATUS === 'OK' && !this.popupHoldsFocus())
+			{
+				this.announce(BX.message('COMPARE_MESSAGE_OK') || '');
+			}
+		},
+
+		popupHoldsFocus: function()
+		{
+			return this.obPopupWin.isShown()
+				&& this.obPopupWin.getPopupContainer().contains(document.activeElement)
+			;
 		},
 
 		compareDeleteResult: function()
@@ -3381,14 +4595,16 @@
 			});
 		},
 
-		add2Basket: function()
+		add2Basket: function(event)
 		{
+			this.popupInitiator = this.getPressedButton(event, this.obAddToBasketBtn);
 			this.basketMode = 'ADD';
 			this.basket();
 		},
 
-		buyBasket: function()
+		buyBasket: function(event)
 		{
+			this.popupInitiator = this.getPressedButton(event, this.obBuyBtn);
 			this.basketMode = 'BUY';
 			this.basket();
 		},
@@ -3408,7 +4624,7 @@
 					if (this.basketData.useProps && !this.basketData.emptyProps)
 					{
 						this.initPopupWindow();
-						this.obPopupWin.setTitleBar(BX.message('TITLE_BASKET_PROPS'));
+						this.setPopupTitle(BX.message('TITLE_BASKET_PROPS'));
 
 						if (BX(this.visual.BASKET_PROP_DIV))
 						{
@@ -3480,7 +4696,7 @@
 					}
 
 					popupContent = '<div style="width: 100%; margin: 0; text-align: center;">'
-						+ '<img src="' + productPict + '" height="130" style="max-height:130px"><p>'
+						+ '<img src="' + productPict + '" height="130" style="max-height:130px" alt=""><p>'
 						+ this.product.name + '</p></div>';
 
 					if (this.config.showClosePopup)
@@ -3491,7 +4707,8 @@
 								events: {
 									click: BX.delegate(this.basketRedirect, this)
 								},
-								style: {marginRight: '10px'}
+								style: {marginRight: '10px'},
+								autofocus: true
 							}),
 							new BasketButton({
 								text: BX.message('BTN_MESSAGE_DETAIL_CLOSE_POPUP'),
@@ -3508,7 +4725,8 @@
 								text: BX.message('BTN_MESSAGE_DETAIL_BASKET_REDIRECT'),
 								events: {
 									click: BX.delegate(this.basketRedirect, this)
-								}
+								},
+								autofocus: true
 							})
 						];
 					}
@@ -3523,12 +4741,15 @@
 							text: BX.message('BTN_MESSAGE_CLOSE'),
 							events: {
 								click: BX.delegate(this.obPopupWin.close, this.obPopupWin)
-							}
+							},
+							autofocus: true
 						})
 					];
 				}
 
-				this.obPopupWin.setTitleBar(arResult.STATUS === 'OK' ? BX.message('TITLE_SUCCESSFUL') : BX.message('TITLE_ERROR'));
+				this.setPopupTitle(
+					arResult.STATUS === 'OK' ? BX.message('TITLE_SUCCESSFUL') : BX.message('TITLE_ERROR')
+				);
 				this.obPopupWin.setContent(popupContent);
 				this.obPopupWin.setButtons(popupButtons);
 				this.obPopupWin.show();
@@ -3538,6 +4759,30 @@
 		basketRedirect: function()
 		{
 			location.href = (this.basketData.basketUrl ? this.basketData.basketUrl : BX.message('BASKET_URL'));
+		},
+
+		// buy and add buttons are duplicated in the sticky panel, so the pressed one is taken from the event
+		getPressedButton: function(event, defaultButton)
+		{
+			var target = event ? BX.getEventTarget(event) : null;
+
+			return target && target.tagName === 'BUTTON' ? target : defaultButton;
+		},
+
+		// the popup is built once per page while its initiator differs from call to call
+		getPopupReturnTarget: function()
+		{
+			var node = this.popupInitiator;
+
+			return node && node.isConnected ? node : null;
+		},
+
+		// The layer is shared by the basket and the comparison, and the popup takes its name from the
+		// title only while it has none: the name of the previous window is dropped first.
+		setPopupTitle: function(title)
+		{
+			this.obPopupWin.getPopupContainer().removeAttribute('aria-label');
+			this.obPopupWin.setTitleBar(title);
 		},
 
 		initPopupWindow: function()
@@ -3554,8 +4799,15 @@
 				titleBar: true,
 				closeIcon: true,
 				contentColor: 'white',
-				className: this.config.templateTheme ? 'bx-' + this.config.templateTheme : ''
+				className: this.config.templateTheme ? 'bx-' + this.config.templateTheme : '',
+				focusTrap: {restoreFocus: BX.delegate(this.getPopupReturnTarget, this)}
 			});
+
+			// The focus lands on a button of the layer, and the content is what the button is read out with.
+			this.obPopupWin.getPopupContainer().setAttribute(
+				'aria-describedby',
+				this.obPopupWin.getContentContainer().id
+			);
 		},
 
 		incViewedCounter: function()

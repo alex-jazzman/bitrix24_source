@@ -1,3 +1,5 @@
 <?php
+$MESS["TASKS_V2_TAGS_ADD_ARIA_LABEL"] = "Add tag";
+$MESS["TASKS_V2_TAGS_REMOVE_ARIA_LABEL"] = "Remove tag \"#TAG#\"";
 $MESS["TASKS_V2_TAGS_TITLE"] = "Tags:";
 $MESS["TASKS_V2_TAGS_TITLE_CHIP"] = "Tags";

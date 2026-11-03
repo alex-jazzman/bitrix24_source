@@ -92,7 +92,11 @@ $menuStructure[] = $favorite;
  * Marketplace apps
  */
 
-if (CModule::IncludeModule("rest"))
+if (
+	!$isExtranetUser
+	&& !$isCollaber
+	&& CModule::IncludeModule("rest")
+)
 {
 	$arMenuApps = [];
 	$arUserGroupCode = $USER->GetAccessCodes();

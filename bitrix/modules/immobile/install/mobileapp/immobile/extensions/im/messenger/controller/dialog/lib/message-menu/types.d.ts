@@ -128,7 +128,7 @@ interface IMessageMenuActionHelper {
 
 	isPossibleDownloadToDevice(): boolean;
 
-	isPossibleSaveGallery(): boolean;
+	isPossibleSaveSeveralFiles(): boolean;
 
 	isPossibleSaveToLibrary(): boolean;
 

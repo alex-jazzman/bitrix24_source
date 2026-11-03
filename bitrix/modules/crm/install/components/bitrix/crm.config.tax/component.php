@@ -1,6 +1,10 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+$arParams['IS_SETTINGS_HUB'] = is_string($arParams['SETTINGS_HUB_URL'] ?? null)
+	&& $arParams['SETTINGS_HUB_URL'] !== '';
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -42,7 +46,31 @@ $arDefaultUrlTemplates404 = array(
 	'tax_show' => 'show/#tax_id#/'
 );
 
-if ($arParams['SEF_MODE'] === 'Y')
+if ($arParams['IS_SETTINGS_HUB'])
+{
+	$componentPage = match ($arParams['MODE'] ?? 'list')
+	{
+		'add' => 'tax_add',
+		'edit' => 'tax_edit',
+		'show' => 'tax_show',
+		default => 'tax_list',
+	};
+	$arVariables = ['tax_id' => (int)($arParams['TAX_ID'] ?? 0)];
+	$arVariableAliases = [];
+
+	$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+	$arResult['PATH_TO_TAX_LIST'] = $url->getUri();
+	$addUrl = clone $url;
+	$addUrl->addParams(['add' => '']);
+	$arResult['PATH_TO_TAX_ADD'] = $addUrl->getUri();
+	$editUrl = clone $url;
+	$editUrl->addParams(['edit' => '']);
+	$arResult['PATH_TO_TAX_EDIT'] = $editUrl->getUri() . '&tax_id=#tax_id#';
+	$showUrl = clone $url;
+	$showUrl->addParams(['show' => '']);
+	$arResult['PATH_TO_TAX_SHOW'] = $showUrl->getUri() . '&tax_id=#tax_id#';
+}
+elseif ($arParams['SEF_MODE'] === 'Y')
 {
 	$arDefaultVariableAliases404 = array();
 	$arComponentVariables = array('tax_id');
@@ -85,6 +113,10 @@ else
 	elseif (isset($_REQUEST['show']))
 	{
 		$componentPage = 'tax_show';
+	}
+	elseif (isset($_REQUEST['add']))
+	{
+		$componentPage = 'tax_add';
 	}
 
 	$curPage = $APPLICATION->GetCurPage();

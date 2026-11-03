@@ -21,8 +21,9 @@
 	const { DetailToolbarFactory } = require('crm/entity-detail/toolbar');
 	const { DetailCardComponent } = require('layout/ui/detail-card');
 
-	DetailCardComponent
-		.create(result.card)
+	const detailCard = DetailCardComponent.create(result.card);
+	detailCard.getComponentParams();
+	detailCard
 		.setTestIdPrefix('CRM_ENTITY_DETAILS')
 		.setAnalyticsProvider(analyticsProvider)
 		.setSendAnalyticsInBody(true)

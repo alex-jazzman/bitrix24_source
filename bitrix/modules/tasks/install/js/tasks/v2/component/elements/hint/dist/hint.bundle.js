@@ -40,6 +40,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					angle: true,
 					targetContainer: document.body,
 					className: 'tasks-hint-popup',
+					// main.popup leaves closeByEsc off by default and picks focusTrap by
+					// environment, so a hint pins both here. Esc closes only the topmost popup
+					// by z-index, so an open card underneath survives. Interactive hints
+					// override focusTrap through `options`, hence both keys sit above the spread.
+					closeByEsc: true,
+					focusTrap: false,
 					...this.options
 				};
 			}

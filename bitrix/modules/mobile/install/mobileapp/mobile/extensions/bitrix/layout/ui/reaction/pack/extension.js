@@ -50,9 +50,12 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 		 * @param {Array<string>|ReactionPack|{ids:Array<string>}} [source=ReactionPack.ALL]
 		 * @param {String} [order=OrderType.DEFAULT]
 		 * @param {boolean} [setPngPadding=false]
+		 * @param {String} [primaryReactionId] main reaction pinned first. Force-inserted only when
+		 *   explicitly passed; omitted keeps the requested ids intact (only reorders "like" first
+		 *   when it is already present), so arbitrary packs behave as before the feature.
 		 * @returns {Promise<Array<Object>> | Array<Object>}
 		 */
-		static getPackByReactionIds(source, order = OrderType.DEFAULT, setPngPadding = false)
+		static getPackByReactionIds(source, order = OrderType.DEFAULT, setPngPadding = false, primaryReactionId = null)
 		{
 			const ids = ReactionPack.#normalizeIds(source ?? ReactionPack.#getAllPack(setPngPadding));
 			const allReactions = ReactionPack.#getAllPack(setPngPadding)?.getValue();
@@ -62,14 +65,16 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 
 			const result = ReactionPack.#sortByOrder(order, setPngPadding, filtered, ids);
 
+			const forceIncludePrimary = Type.isStringFilled(primaryReactionId);
+
 			if (result instanceof Promise)
 			{
-				return result.then(ReactionPack.#ensureLikeFirst);
+				return result.then((reactions) => ReactionPack.#ensurePrimaryFirst(reactions, primaryReactionId, allReactions, forceIncludePrimary));
 			}
 
 			if (order !== OrderType.PRESERVE)
 			{
-				return ReactionPack.#ensureLikeFirst(result);
+				return ReactionPack.#ensurePrimaryFirst(result, primaryReactionId, allReactions, forceIncludePrimary);
 			}
 
 			return result;
@@ -78,18 +83,19 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 		/**
 		 * @static
 		 * @param {number} quantity
-		 * @param {boolean} [forceIncludeLike=true]
+		 * @param {boolean} [forceIncludePrimary=true]
 		 * @param {boolean} [setPngPadding=false]
+		 * @param {String} [primaryReactionId=DEFAULT_REACTION]
 		 * @returns {Promise<Array<Object>>}
 		 */
-		static async getCurrentUserFavouritePack(quantity, forceIncludeLike = true, setPngPadding = false)
+		static async getCurrentUserFavouritePack(quantity, forceIncludePrimary = true, setPngPadding = false, primaryReactionId = DEFAULT_REACTION)
 		{
 			const stats = await ReactionStorageManager.get?.() ?? {};
 
-			return ReactionPack.#prepareUserFavorites(quantity, forceIncludeLike, stats, setPngPadding);
+			return ReactionPack.#prepareUserFavorites(quantity, forceIncludePrimary, stats, setPngPadding, primaryReactionId);
 		}
 
-		static getCurrentUserFavoritePackFromCache(quantity, forceIncludeLike = true, setPngPadding = false)
+		static getCurrentUserFavoritePackFromCache(quantity, forceIncludePrimary = true, setPngPadding = false, primaryReactionId = DEFAULT_REACTION)
 		{
 			const cachedStats = ReactionStorageManager.getFromCache() ?? {};
 
@@ -100,10 +106,10 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 				return [];
 			}
 
-			return ReactionPack.#prepareUserFavorites(quantity, forceIncludeLike, cachedStats, setPngPadding);
+			return ReactionPack.#prepareUserFavorites(quantity, forceIncludePrimary, cachedStats, setPngPadding, primaryReactionId);
 		}
 
-		static #prepareUserFavorites(quantity, forceIncludeLike, stats, setPngPadding)
+		static #prepareUserFavorites(quantity, forceIncludePrimary, stats, setPngPadding, primaryReactionId = DEFAULT_REACTION)
 		{
 			if (!quantity || quantity <= 0)
 			{
@@ -130,7 +136,7 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 				];
 			}
 
-			return ReactionPack.#ensureLikeFirst(topReactions, allReactions, forceIncludeLike, limit);
+			return ReactionPack.#ensurePrimaryFirst(topReactions, primaryReactionId, allReactions, forceIncludePrimary, limit);
 		}
 
 		static #computeTopReactions(allReactions, stats, limit)
@@ -209,16 +215,18 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 				.slice(0, count);
 		}
 
-		static #ensureLikeFirst(reactions, allReactions = null, forceIncludeLike = true, limit = null)
+		static #ensurePrimaryFirst(reactions, primaryId = DEFAULT_REACTION, allReactions = null, forceIncludePrimary = true, limit = null)
 		{
-			const hasLike = reactions.some((r) => r.id === DEFAULT_REACTION);
+			const primaryReactionId = ReactionPack.#resolvePrimaryReactionId(primaryId, allReactions);
 
-			if (!hasLike && forceIncludeLike && allReactions)
+			const hasPrimary = reactions.some((r) => r.id === primaryReactionId);
+
+			if (!hasPrimary && forceIncludePrimary && allReactions)
 			{
-				const likeReaction = allReactions.find((r) => r.id === DEFAULT_REACTION);
-				if (likeReaction)
+				const primaryReaction = allReactions.find((r) => r.id === primaryReactionId);
+				if (primaryReaction)
 				{
-					reactions.unshift(likeReaction);
+					reactions.unshift(primaryReaction);
 					if (limit)
 					{
 						reactions.splice(limit);
@@ -226,14 +234,36 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 				}
 			}
 
-			const likeIndex = reactions.findIndex((r) => r.id === DEFAULT_REACTION);
-			if (likeIndex > 0)
+			const primaryIndex = reactions.findIndex((r) => r.id === primaryReactionId);
+			if (primaryIndex > 0)
 			{
-				const [like] = reactions.splice(likeIndex, 1);
-				reactions.unshift(like);
+				const [primary] = reactions.splice(primaryIndex, 1);
+				reactions.unshift(primary);
 			}
 
 			return reactions;
+		}
+
+		/**
+		 * @desc Resolves the primary reaction id: falls back to DEFAULT_REACTION when it is empty
+		 * or absent from the available reactions.
+		 * @param {String} primaryId
+		 * @param {Array<Object>|null} allReactions
+		 * @returns {String}
+		 */
+		static #resolvePrimaryReactionId(primaryId, allReactions)
+		{
+			if (!Type.isStringFilled(primaryId))
+			{
+				return DEFAULT_REACTION;
+			}
+
+			if (Type.isArrayFilled(allReactions) && !allReactions.some((r) => r.id === primaryId))
+			{
+				return DEFAULT_REACTION;
+			}
+
+			return primaryId;
 		}
 
 		static #getAllPack(setPngPadding = false)

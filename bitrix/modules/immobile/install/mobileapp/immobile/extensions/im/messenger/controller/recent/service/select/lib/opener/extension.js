@@ -57,6 +57,7 @@ jn.define('im/messenger/controller/recent/service/select/lib/opener', (require, 
 	 * @param {string} dialogId
 	 * @param {object} [options]
 	 * @param {boolean} [options.skipNestedStrategy]
+	 * @return {Promise<boolean>} whether the dialog was actually opened
 	 */
 	async function openDialog(dialogId, options = {})
 	{
@@ -65,11 +66,13 @@ jn.define('im/messenger/controller/recent/service/select/lib/opener', (require, 
 		{
 			logger.error('openDialog error: dialogManager not found!', dialogId);
 
-			return;
+			return false;
 		}
 
-		await dialogManager.openDialog({ dialogId, ...options });
+		const isOpened = await dialogManager.openDialog({ dialogId, ...options });
 		removeUnreadState(dialogId);
+
+		return isOpened === true;
 	}
 
 	module.exports = { openDialog };

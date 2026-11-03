@@ -5,8 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die;
 }
 
+use Bitrix\Intranet\Integration\Templates\Air\CollaborationWebMenu;
+use Bitrix\Intranet\Internal\Integration\Bitrix24\CollaborationWebMenu as CollaborationWebMenuFlag;
 use Bitrix\Intranet\Internal\Provider\AnnualSummary\FeatureProvider;
 use Bitrix\Intranet\Internal\Service\AnnualSummary\Visibility;
+use Bitrix\Intranet\Internal\Service\CollaborationMenuBalloon;
 use Bitrix\Intranet\License\Notification;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Contract\Controllerable;
@@ -27,6 +30,12 @@ class IntranetNotifyPanelComponent extends \CBitrixComponent implements Controll
 
 	public function onPrepareComponentParams($arParams): array
 	{
+		$this->arResult['collaboration_balloon_menu_id'] = CollaborationWebMenuFlag::isEnabled()
+			&& CollaborationMenuBalloon::getActivationTimestamp() !== null
+			&& ($userId = (int)CurrentUser::get()->getId()) > 0
+			&& \CUserOptions::GetOption('intranet', 'collaboration_menu_balloon_processed', null, $userId) !== 'Y'
+			? CollaborationWebMenu::getMenuId('collaboration')
+			: null;
 		$this->arResult['config'] = [
 			'isAdmin' => CurrentUser::get()->isAdmin(),
 			'notify' => $this->getNotifyConfiguration(),

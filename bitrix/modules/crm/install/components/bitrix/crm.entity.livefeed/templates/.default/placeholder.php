@@ -16,6 +16,6 @@ if(in_array(LANGUAGE_ID, array('en', 'de', 'ru', 'ua'), true))
 	<div class="crm-livefeed-placeholder-text"><?=GetMessage('CRM_ENTITY_LF_PLACEHOLDER_PARAGRAPH_2')?></div>
 	<?if($imageFileName !== '')
 	{
-		?><img alt="<?=GetMessage('CRM_ENTITY_LF_PLACEHOLDER_IMAGE_HINT')?>" class="crm-livefeed-placeholder-img" src="/bitrix/js/crm/images/placeholder/<?=$imageFileName?>.png"/><?
+		?><img alt="<?=GetMessage('CRM_ENTITY_LF_PLACEHOLDER_IMAGE_HINT')?>" class="crm-livefeed-placeholder-img" src="/bitrix/js/crm/images/placeholder/<?=$imageFileName?>.webp"/><?
 	}?>
 </div>

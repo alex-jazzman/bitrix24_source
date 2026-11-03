@@ -1,10 +1,11 @@
-import { Type, Loc } from 'main.core';
+import { Dom, Loc, Type } from 'main.core';
 import { EditorToolbarComponent } from './editor-toolbar';
 import { TableContextMenuComponent } from './table-context-menu';
+import { TableAlignmentControls } from './nodes/table-alignment-controls';
 import { LinkFloatingPopupComponent } from './link-floating-popup';
 import { ActivityLineComponent, createHistoryMessages } from 'note.ui.document-history';
 import { Loader } from 'note.ui.loader';
-import { createEditorExtensions, MAX_FILE_SIZE, MAX_IMAGE_SIZE } from '../extensions/registry';
+import { createEditorExtensions, MAX_IMAGE_SIZE } from '../extensions/registry';
 import { FileUploadService } from '../services/file-upload-service';
 import { createEditorInstance } from '../utils/create-editor-instance';
 import { resolveCanRedo, resolveCanUndo, resolveHeadingLevel } from '../utils/editor-state';
@@ -17,7 +18,10 @@ import { createAttachmentSelectionDecorationPlugin } from '../extensions/attachm
 import { buildVersionDiffDoc } from '../extensions/version-diff';
 import { parseInternalNoteLink } from '../utils/internal-link';
 import { isAllowedUrl, openViaMobileApp, openLinkNative } from '../utils/open-link';
-import { createScopedUploadService, insertUploadAssetNode } from '../services/upload-orchestration';
+import { createScopedUploadService, insertDiskAssetNodes, insertUploadAssetNode } from '../services/upload-orchestration';
+import { DiskPickerService, resolveDiskPickerErrorMessage } from '../services/disk-picker-service';
+import { showErrorToast } from '../utils/show-error-toast';
+import { waitForToolbarLayoutTransition } from '../utils/toolbar-layout-transition.ts';
 import '../styles/editor.css';
 import '../styles/editor.mobile.css';
 
@@ -35,6 +39,7 @@ export const DocumentEditorComponent = {
 	components: {
 		EditorToolbarComponent,
 		TableContextMenuComponent,
+		TableAlignmentControls,
 		LinkFloatingPopupComponent,
 		ActivityLineComponent,
 		Loader,
@@ -120,7 +125,11 @@ export const DocumentEditorComponent = {
 			type: Function,
 			default: null,
 		},
-		// [P1.T5 relocation, #2] Activity line hub (chip / eye / bell), rendered right under the
+		openInternalLink: {
+			type: Function,
+			default: null,
+		},
+		// Activity line hub (chip / eye / bell), rendered right under the
 		// <h1> title — that DOM lives in this component, not in note-document-page.js.
 		// ActivityLineComponent now lives in the note.ui.document-history extension and owns its
 		// own lang (see historyMessages below). `lastChange` is `{ authors, time } | null`,
@@ -131,19 +140,27 @@ export const DocumentEditorComponent = {
 			type: Object,
 			default: null,
 		},
-		// [P8.T5] ISO creation timestamp — passed through to ActivityLineComponent for the chip's
+		// ISO creation timestamp - passed through to ActivityLineComponent for the chip's
 		// "Created <date>" fallback when there is no last-change info.
 		createdAt: {
 			type: String,
 			default: null,
 		},
-		// [P8.T2/T3] Bootstrap UI flags. historyEnabled gates the chip's history-open affordance;
+		// Bootstrap UI flags. historyEnabled gates the chip's history-open affordance;
 		// notificationsEnabled gates the subscription bell. Both default off (hidden).
 		historyEnabled: {
 			type: Boolean,
 			default: false,
 		},
 		notificationsEnabled: {
+			type: Boolean,
+			default: false,
+		},
+		// Decides whether the file button offers a choice of sources at all. Off — the button uploads
+		// from the device exactly as it always has. A prop and not an inject: this component is the
+		// root of its own Vue app (see EditorMount), and note.app's provide() does not cross that
+		// boundary — the flag travels the same way historyEnabled/notificationsEnabled do.
+		diskAttachmentsEnabled: {
 			type: Boolean,
 			default: false,
 		},
@@ -154,7 +171,7 @@ export const DocumentEditorComponent = {
 			type: Object,
 			default: null,
 		},
-		// [DTO-01] Backlinks counter bundled with the document bootstrap payload — passed through to
+		// Backlinks counter bundled with the document bootstrap payload - passed through to
 		// ActivityLineComponent/BacklinksWidgetComponent, which adopts it instead of reading the count
 		// itself (see note.editor's type.js). `null` = nothing reported, the widget asks on its own.
 		initialBacklinks: {
@@ -167,7 +184,7 @@ export const DocumentEditorComponent = {
 			type: Object,
 			default: null,
 		},
-		// [TPL-01] "In favorites" flag bundled with the document bootstrap - passed through to
+		// "In favorites" flag bundled with the document bootstrap - passed through to
 		// ActivityLineComponent/FavoriteStarComponent so the star is right on the first frame of a
 		// document opened by a direct link. `null` = nothing reported, the star reads the sidebar only.
 		initialFavorite: {
@@ -198,6 +215,8 @@ export const DocumentEditorComponent = {
 			// force-reflows on every toggle).
 			toolbarInDom: this.showToolbar,
 			toolbarShown: this.showToolbar,
+			toolbarLayoutStable: true,
+			toolbarLayoutCycle: 0,
 			// [#11/#12 rework] Version-preview state — driven imperatively by EditorMount's
 			// setPreview()/clearPreview() (see create-document-feature.js's showVersionPreview/
 			// hideVersionPreview), not by props: this instance is mounted once via
@@ -219,6 +238,12 @@ export const DocumentEditorComponent = {
 		isPreviewMode(): boolean
 		{
 			return this.previewActive;
+		},
+		// Optional features whose hotkeys the keymap may bind at all (see buildHotkeyShortcuts). Named the
+		// same way the shortcuts panel names them, from the same flag.
+		enabledHotkeyFeatures(): Array<string>
+		{
+			return this.diskAttachmentsEnabled ? ['diskAttachments'] : [];
 		},
 		displayTitle(): string
 		{
@@ -330,7 +355,7 @@ export const DocumentEditorComponent = {
 	{
 		// Non-reactive handles for the toolbar enter/leave animation.
 		this.toolbarEnterRaf = 0;
-		this.toolbarLeaveTimer = 0;
+		this.cancelToolbarLayoutWait = null;
 	},
 	mounted()
 	{
@@ -344,6 +369,7 @@ export const DocumentEditorComponent = {
 	},
 	beforeUnmount()
 	{
+		this.toolbarLayoutCycle += 1;
 		this.clearToolbarAnim();
 		this.toolbarTracker?.stop();
 		this.editor?.off?.('note:hotkey', this.handleEditorHotkeyIntent);
@@ -351,6 +377,38 @@ export const DocumentEditorComponent = {
 		this.editor = null;
 	},
 	methods: {
+		async activateInternalLink(anchor: HTMLAnchorElement, payload: Object, origin: string): Promise<void>
+		{
+			const isAnotherDocument = payload.type === 'document'
+				&& Number(payload.id) !== Number(this.documentId)
+			;
+			if (isAnotherDocument && Dom.hasClass(anchor, 'note-editor-link--pending'))
+			{
+				return;
+			}
+
+			if (isAnotherDocument)
+			{
+				Dom.addClass(anchor, 'note-editor-link--pending');
+			}
+
+			try
+			{
+				const nextPayload = { ...payload, origin };
+				if (Type.isFunction(this.openInternalLink))
+				{
+					await this.openInternalLink(nextPayload);
+				}
+				else
+				{
+					this.$emit('open-internal-link', nextPayload);
+				}
+			}
+			finally
+			{
+				Dom.removeClass(anchor, 'note-editor-link--pending');
+			}
+		},
 		handleEditorAnchorClick(event: MouseEvent): boolean
 		{
 			if (event.defaultPrevented)
@@ -377,7 +435,7 @@ export const DocumentEditorComponent = {
 			if (parsed)
 			{
 				event.preventDefault();
-				this.$emit('open-internal-link', parsed);
+				void this.activateInternalLink(anchor, parsed, event.detail === 0 ? 'keyboard' : 'pointer');
 
 				return true;
 			}
@@ -394,6 +452,31 @@ export const DocumentEditorComponent = {
 			}
 
 			return false;
+		},
+		handleEditorAnchorKeydown(event: KeyboardEvent): boolean
+		{
+			if (event.defaultPrevented || this.editor?.isEditable || (event.key !== 'Enter' && event.key !== ' '))
+			{
+				return false;
+			}
+
+			const target = event.target instanceof Element ? event.target : null;
+			const anchor = target?.closest('a[href]');
+			if (!(anchor instanceof HTMLAnchorElement))
+			{
+				return false;
+			}
+
+			const parsed = parseInternalNoteLink(anchor.getAttribute('href'));
+			if (!parsed)
+			{
+				return false;
+			}
+
+			event.preventDefault();
+			void this.activateInternalLink(anchor, parsed, 'keyboard');
+
+			return true;
 		},
 		updateTitle(newTitle: string): void
 		{
@@ -528,6 +611,9 @@ export const DocumentEditorComponent = {
 		animateToolbar(show: boolean): void
 		{
 			this.clearToolbarAnim();
+			const cycle = this.toolbarLayoutCycle + 1;
+			this.toolbarLayoutCycle = cycle;
+			this.toolbarLayoutStable = false;
 
 			if (show)
 			{
@@ -538,22 +624,80 @@ export const DocumentEditorComponent = {
 				// read that was causing the jank.
 				this.toolbarInDom = true;
 				this.$nextTick(() => {
+					if (cycle !== this.toolbarLayoutCycle)
+					{
+						return;
+					}
+
 					this.toolbarEnterRaf = requestAnimationFrame(() => {
+						if (cycle !== this.toolbarLayoutCycle)
+						{
+							return;
+						}
+
 						this.toolbarEnterRaf = requestAnimationFrame(() => {
+							this.toolbarEnterRaf = 0;
+							if (cycle !== this.toolbarLayoutCycle)
+							{
+								return;
+							}
+
 							this.toolbarShown = true;
+							this.$nextTick(() => this.startToolbarLayoutWait(cycle, show));
 						});
 					});
 				});
 			}
 			else
 			{
-				// Play the leave transition, then unmount once it has finished (see
-				// --note-editor-toolbar-anim duration mirrored in editor.css).
 				this.toolbarShown = false;
-				this.toolbarLeaveTimer = setTimeout(() => {
-					this.toolbarInDom = false;
-				}, 200);
+				this.$nextTick(() => this.startToolbarLayoutWait(cycle, show));
 			}
+		},
+		startToolbarLayoutWait(cycle: number, show: boolean): void
+		{
+			if (cycle !== this.toolbarLayoutCycle || this.toolbarShown !== show)
+			{
+				return;
+			}
+
+			const placeholder = this.$refs.toolbarPlaceholder instanceof HTMLElement
+				? this.$refs.toolbarPlaceholder
+				: null;
+			const toolbar = !placeholder && !show && this.$refs.toolbar?.$el instanceof HTMLElement
+				? this.$refs.toolbar.$el
+				: null;
+			const transitionElement = placeholder ?? toolbar;
+			this.cancelToolbarLayoutWait = waitForToolbarLayoutTransition(transitionElement, {
+				visible: show,
+				propertyName: placeholder ? 'height' : 'opacity',
+				onComplete: () => {
+					this.cancelToolbarLayoutWait = null;
+					this.finishToolbarLayoutChange(cycle, show);
+				},
+			});
+		},
+		finishToolbarLayoutChange(cycle: number, show: boolean): void
+		{
+			if (cycle !== this.toolbarLayoutCycle || this.toolbarShown !== show)
+			{
+				return;
+			}
+
+			if (show)
+			{
+				this.toolbarLayoutStable = true;
+
+				return;
+			}
+
+			this.toolbarInDom = false;
+			this.$nextTick(() => {
+				if (cycle === this.toolbarLayoutCycle && this.toolbarShown === show)
+				{
+					this.toolbarLayoutStable = true;
+				}
+			});
 		},
 		clearToolbarAnim(): void
 		{
@@ -563,10 +707,10 @@ export const DocumentEditorComponent = {
 				this.toolbarEnterRaf = 0;
 			}
 
-			if (this.toolbarLeaveTimer)
+			if (this.cancelToolbarLayoutWait)
 			{
-				clearTimeout(this.toolbarLeaveTimer);
-				this.toolbarLeaveTimer = 0;
+				this.cancelToolbarLayoutWait();
+				this.cancelToolbarLayoutWait = null;
 			}
 		},
 		onTitleFocus(): void
@@ -645,6 +789,7 @@ export const DocumentEditorComponent = {
 					user: this.normalizedCurrentUser,
 					documentId: this.documentId,
 					onMentionClick: typeof this.onMentionClick === 'function' ? this.onMentionClick : null,
+					hotkeyFeatures: this.enabledHotkeyFeatures,
 				}),
 				...extraExtensions,
 			];
@@ -665,6 +810,7 @@ export const DocumentEditorComponent = {
 					},
 					handleDOMEvents: {
 						click: (_view, event) => this.handleEditorAnchorClick(event),
+						keydown: (_view, event) => this.handleEditorAnchorKeydown(event),
 					},
 				},
 				content: isMarkdownContent ? undefined : resolvedContent,
@@ -783,16 +929,81 @@ export const DocumentEditorComponent = {
 				return;
 			}
 
+			this.insertUploadFileNode();
+		},
+		// The Disk source has a button of its own next to the file one, so the click goes straight to the
+		// picker: nothing to choose between beforehand.
+		handlePickDiskFile(): void
+		{
+			void this.pickFileFromDisk();
+		},
+		// Unlike the hotkey toggle (hotkeys-bindings.js), the menu item always opens the calendar:
+		// the author came by mouse to pick a value, not just to drop today's date. `insertDate`
+		// (note-date-node.js) leaves a NodeSelection on the new node, which the picker owner reads.
+		handleInsertDate(): void
+		{
+			if (!this.editor?.isEditable)
+			{
+				return;
+			}
+
+			this.editor.chain().focus().insertDate().run();
+			this.editor.commands.openDatePicker();
+		},
+		insertUploadFileNode(): void
+		{
 			insertUploadAssetNode(this.editor, 'file', {
 				documentId: this.documentId,
 				collectionId: this.collectionId,
 			});
 		},
-		// Attachments hotkey (see hotkeys-bindings.js `insertFileNode`): drop a file tile at the caret
-		// and select it, so a click browses-and-uploads while an arrow key / click-away just moves on.
+		async pickFileFromDisk(): Promise<void>
+		{
+			if (!this.editor?.isEditable)
+			{
+				return;
+			}
+
+			// Errors of the picker are shown by the picker, and cancelling is not an error at all. What
+			// reaches this catch is the failure to even get that far, and the document stays untouched.
+			let pickedFiles = [];
+			try
+			{
+				pickedFiles = await DiskPickerService.pick(this.documentId);
+			}
+			catch (error)
+			{
+				const fallback = Loc.getMessage('NOTE_EDITOR_DISK_PICKER_ERROR');
+				showErrorToast(resolveDiskPickerErrorMessage(error, fallback));
+
+				return;
+			}
+
+			insertDiskAssetNodes(this.editor, pickedFiles);
+		},
+		// Attachment hotkeys (see hotkeys-bindings.js). `insertFileNode` drops a file tile at the caret
+		// and selects it, so a click browses-and-uploads while an arrow key / click-away just moves on;
+		// `pickDiskFile` opens the Disk picker, exactly as its toolbar button does.
 		handleEditorHotkeyIntent(payload: Object): void
 		{
-			if (payload?.action !== 'insertFileNode' || !this.editor?.isEditable)
+			if (!this.editor?.isEditable)
+			{
+				return;
+			}
+
+			if (payload?.action === 'pickDiskFile')
+			{
+				// The combo is not even bound where the feature is off (see buildHotkeyShortcuts), so this
+				// is the second line of the same defence: the intent bus is open to any caller.
+				if (this.diskAttachmentsEnabled)
+				{
+					void this.pickFileFromDisk();
+				}
+
+				return;
+			}
+
+			if (payload?.action !== 'insertFileNode')
 			{
 				return;
 			}
@@ -834,6 +1045,7 @@ export const DocumentEditorComponent = {
 			<div ref="toolbarAnchor"></div>
 			<EditorToolbarComponent
 				v-if="toolbarInDom && !isPreviewMode"
+				ref="toolbar"
 				:class="{ 'is-visible': toolbarShown }"
 				:editor="editor"
 				:heading-level="headingLevel"
@@ -841,16 +1053,23 @@ export const DocumentEditorComponent = {
 				:can-undo="canUndo"
 				:can-redo="canRedo"
 				:max-image-size="${MAX_IMAGE_SIZE}"
-				:max-file-size="${MAX_FILE_SIZE}"
 				:fixed="toolbarFixed"
 				:fixed-top="toolbarTop"
 				:fixed-left="toolbarLeft"
 				:fixed-max-width="toolbarMaxWidth"
+				:disk-attachments-enabled="diskAttachmentsEnabled"
 				@insertFileStub="handleInsertFileStub"
 				@insertImageStub="handleInsertImageStub"
 				@insertVideoStub="handleInsertVideoStub"
+				@pickDiskFile="handlePickDiskFile"
+				@insertDate="handleInsertDate"
 			/>
-			<div v-if="toolbarInDom && toolbarFixed && !isPreviewMode" class="note-editor-toolbar-placeholder" :class="{ 'is-visible': toolbarShown }"></div>
+			<div
+				v-if="toolbarInDom && toolbarFixed && !isPreviewMode"
+				ref="toolbarPlaceholder"
+				class="note-editor-toolbar-placeholder"
+				:class="{ 'is-visible': toolbarShown }"
+			></div>
 			<div v-if="!contentOnly && (displayTitle || effectiveEditable)" class="note-editor-title-block">
 				<h1
 					ref="titleEl"
@@ -906,6 +1125,12 @@ export const DocumentEditorComponent = {
 				<div ref="content" class="note-editor-content"></div>
 			</div>
 			<TableContextMenuComponent :editor="editor" :editor-tick="editorTick" />
+			<TableAlignmentControls
+				v-if="!isPreviewMode"
+				:editor="editor"
+				:editor-tick="editorTick"
+				:layout-stable="toolbarLayoutStable"
+			/>
 			<LinkFloatingPopupComponent :editor="editor" :editor-tick="editorTick" />
 		</div>
 	`,

@@ -5,6 +5,45 @@ import { EventEmitter } from 'main.core.events';
 import './address.css';
 import { MenuManager, PopupManager } from 'main.popup';
 
+// A div or span with role="button" gets no click of its own from Enter or Space, unlike a real
+// button, so the key has to raise one. Going through click() rather than calling the handler keeps
+// a single path for both devices: the handlers read event.target, and a click raised on the
+// container binds the menu to the field instead of to whichever inner div the mouse happened to hit.
+//
+// The depth is module-local rather than shared with ui.entity-editor: this extension declares no
+// dependency on it, and reaching for BX.UI.EntityEditorControl from here would create an undeclared
+// one. Activation and the menu it opens run in one synchronous call, so the flag is still raised
+// while the menu decides whether to take a focus trap.
+let keyboardActivationDepth = 0;
+
+function activateOnKey(event: KeyboardEvent): boolean
+{
+	if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar')
+	{
+		return false;
+	}
+
+	// Space would otherwise scroll the card out from under the control.
+	event.preventDefault();
+
+	keyboardActivationDepth++;
+	try
+	{
+		event.currentTarget.click();
+	}
+	finally
+	{
+		keyboardActivationDepth--;
+	}
+
+	return true;
+}
+
+function isKeyboardActivation(): boolean
+{
+	return keyboardActivationDepth > 0;
+}
+
 export class EntityEditorBaseAddressField
 {
 	initialize(id, settings)
@@ -335,10 +374,20 @@ export class EntityEditorBaseAddressField
 				'crm-entity-widget-content-block-add-field' : 'ui-entity-widget-content-block-add-field';
 			let addButtonClass = crmCompatibilityMode ?
 				'crm-entity-widget-content-add-field' : 'ui-entity-editor-content-add-lnk';
+			// Bare span with a click handler, like the togglers above: no tab stop, no role (2.1.1).
+			// Its own visible text is the accessible name.
 			Dom.append(Tag.render`
-				<div class="${addButtonWrapClass}"><span class="${addButtonClass}" onclick="${this.onAddNewAddress.bind(this)}">${Loc.getMessage('CRM_ADDRESS_ADD')}</span></div>
+				<div class="${addButtonWrapClass}"><span class="${addButtonClass}"
+					role="button" tabindex="0"
+					onclick="${this.onAddNewAddress.bind(this)}"
+					onkeydown="${this.onActivationKeyDown.bind(this)}">${Loc.getMessage('CRM_ADDRESS_ADD')}</span></div>
 			`, this._wrapper);
 		}
+	}
+
+	onActivationKeyDown(event)
+	{
+		activateOnKey(event);
 	}
 
 	release()
@@ -448,8 +497,14 @@ export class EntityEditorBaseAddressField
 
 	onAddNewAddress()
 	{
-		this.addAddress(this.getDefaultType());
+		const addressItem = this.addAddress(this.getDefaultType());
 		this.refreshLayout();
+
+		// refreshLayout() rebuilds the block through Dom.clean(), and the "Add" link that has just
+		// been activated goes with it. Removing a focused node drops the focus to <body> on the
+		// spot - no rendering update needed, unlike hiding one - so a keyboard visitor would land
+		// nowhere. They are put into the address they have just created instead.
+		addressItem.focusFirstField();
 	}
 
 	onUpdateAddress(event)
@@ -773,6 +828,19 @@ class AddressItem extends EventEmitter
 			);
 		}
 
+		/*
+			Opening from the keyboard would throw the card to the top: MenuNavigation focuses the
+			first item on the menu's own onShow, before the popup has been positioned - measured,
+			the item still sits at document 0,0 at that moment - and MenuItem.focus() passes
+			preventScroll: false, so the browser scrolls that far-away item into view while the menu
+			stays anchored to its button, off screen. The jump is synchronous inside show() and the
+			popup is positioned in document coordinates, so putting the scroll back the moment show()
+			returns leaves the menu exactly where it belongs. The cause itself is in main.popup
+			(menu-navigation.ts, menu-item.ts) and is out of this ticket's reach.
+		*/
+		const scroller = document.scrollingElement;
+		const scrollTop = scroller ? scroller.scrollTop : 0;
+
 		MenuManager.show(
 			this.typesMenuId,
 			bindElement,
@@ -780,19 +848,39 @@ class AddressItem extends EventEmitter
 			{
 				angle: false,
 				cacheable: false,
+				/*
+					Without a focus trap the menu opens with focus left behind on the selector:
+					MenuNavigation moves focus onto the first item only while Menu.getFocusTrap()
+					is not null, items keep tabindex="-1", and the arrow keys scroll the card
+					instead of walking the menu. The portal-wide ui.a11y "useFocusTrapInDialogs"
+					switch is on for dev clones and off for client portals, so it is passed here
+					explicitly - with the very value Menu itself uses when that switch is on.
+
+					Only for keyboard activation: passing an object bypasses the whole of
+					Popup.shouldUseFocusTrapByDefault(), including its exception for text inputs,
+					so on the mouse path the decision is left to the popup itself.
+				*/
+				...(isKeyboardActivation() ? { focusTrap: { initialFocus: 'container' } } : {}),
 				events:
 					{
 						onPopupShow: () =>
 						{
 							this._isTypesMenuOpened = true;
+							this.setSelectorExpanded(this._domNodes.addressTypeSelector, true);
 						},
 						onPopupClose: () =>
 						{
 							this._isTypesMenuOpened = false;
+							this.setSelectorExpanded(this._domNodes.addressTypeSelector, false);
 						}
 					}
 			}
 		);
+
+		if (scroller)
+		{
+			scroller.scrollTop = scrollTop;
+		}
 		let createdMenu = MenuManager.getMenuById(this.typesMenuId);
 		if (createdMenu && Type.isDomNode(this._domNodes.addressTypeSelector)
 			&& this._domNodes.addressTypeSelector.offsetWidth > 200)
@@ -837,7 +925,10 @@ class AddressItem extends EventEmitter
 			if (this._isTypeSelectorVisible)
 			{
 				this._domNodes.addressTypeSelector = Tag.render`
-					<div class="ui-ctl ui-ctl-inline ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w25" onclick="${this.onToggleTypesMenu.bind(this)}">
+					<div class="ui-ctl ui-ctl-inline ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w25"
+						role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false"
+						onclick="${this.onToggleTypesMenu.bind(this)}"
+						onkeydown="${this.onActivationKeyDown.bind(this)}">
 						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 						${this._domNodes.typeName}
 					</div>`;
@@ -853,8 +944,15 @@ class AddressItem extends EventEmitter
 			}
 			else
 			{
+				// The type selector opens a popup menu on click, but it is built out of plain divs:
+				// no tab stop, no role, no focusable child, so the field could be neither reached
+				// nor opened from the keyboard - 2.1.1 Keyboard. It is declared a button the same
+				// way the editor's own list field is (ui.entity-editor, EntityEditorList).
 				this._domNodes.addressTypeSelector = Tag.render`
-					<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown" onclick="${this.onToggleTypesMenu.bind(this)}">
+					<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown"
+						role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false"
+						onclick="${this.onToggleTypesMenu.bind(this)}"
+						onkeydown="${this.onActivationKeyDown.bind(this)}">
 						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 						${this._domNodes.typeName}
 					</div>`;
@@ -874,13 +972,26 @@ class AddressItem extends EventEmitter
 
 		this.refreshIcon();
 
+		// The toggler is the only way into the detail fields, and once the collapsed block stops
+		// handing out tab stops (address.css) it is the only way in from the keyboard too, so it
+		// has to be reachable itself. It discloses inline content rather than a popup: that is
+		// aria-expanded without aria-haspopup.
 		this._domNodes.detailsToggler =
-			Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link" onclick="${this.onToggleDetailsVisibility.bind(this)}"></span>`;
+			Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link"
+				role="button" tabindex="0" aria-expanded="false"
+				onclick="${this.onToggleDetailsVisibility.bind(this)}"
+				onkeydown="${this.onActivationKeyDown.bind(this)}"></span>`;
 
 		if (this._canChangeType)
 		{
+			// Same span-with-onclick as the toggler next to it. This one opens a dialog, hence
+			// aria-haspopup; refreshCopyButtonVisibility() hides it with display: none when there
+			// is no address to copy, which already keeps it out of the tab order.
 			this._domNodes.copyButton =
-				Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link" onclick="${this.onCopyButtonClick.bind(this)}">${Loc.getMessage('CRM_ADDRESS_COPY1')}</span>`;
+				Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link"
+					role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"
+					onclick="${this.onCopyButtonClick.bind(this)}"
+					onkeydown="${this.onActivationKeyDown.bind(this)}">${Loc.getMessage('CRM_ADDRESS_COPY1')}</span>`;
 		}
 
 		this.refreshCopyButtonVisibility();
@@ -940,7 +1051,29 @@ class AddressItem extends EventEmitter
 
 			this._domNodes.typeName.textContent = typeName;
 			this._domNodes.typeName.title = typeName;
+			this.refreshTypeSelectorLabel(typeName);
 		}
+	}
+
+	refreshTypeSelectorLabel(typeName)
+	{
+		if (!Type.isDomNode(this._domNodes.addressTypeSelector))
+		{
+			return;
+		}
+
+		// The chosen type is rendered inside the button and the caption above is a <label> with no
+		// "for", so the name carries the caption too - spelled out inside the phrase rather than
+		// substituted from CRM_ADDRESS_TYPE, which would reach the translator as "#TITLE#: #VALUE#"
+		// with nothing to translate (rule 2 of the localization checklist).
+		// Substitution goes through Loc, not String.replace(): the latter reads "$&", "$`" and "$'"
+		// in a type name as backreferences.
+		this._domNodes.addressTypeSelector.setAttribute(
+			'aria-label',
+			Loc.getMessage('CRM_ADDRESS_TYPE_ARIA_LABEL', {
+				'#VALUE#': typeName,
+			}),
+		);
 	}
 
 	refreshIcon()
@@ -1044,6 +1177,7 @@ class AddressItem extends EventEmitter
 			if (Type.isDomNode(this._domNodes.detailsToggler))
 			{
 				this._domNodes.detailsToggler.textContent = Loc.getMessage('CRM_ADDRESS_MODE_SHORT_MSGVER_1');
+				this.setSelectorExpanded(this._domNodes.detailsToggler, true);
 			}
 			if (this._canChangeType)
 			{
@@ -1056,6 +1190,7 @@ class AddressItem extends EventEmitter
 			if (Type.isDomNode(this._domNodes.detailsToggler))
 			{
 				this._domNodes.detailsToggler.textContent = Loc.getMessage('CRM_ADDRESS_MODE_DETAILED_MSGVER_1');
+				this.setSelectorExpanded(this._domNodes.detailsToggler, false);
 			}
 			if (this._canChangeType)
 			{
@@ -1088,7 +1223,12 @@ class AddressItem extends EventEmitter
 							destinationTypes: this._selectedCopyDestinations});
 					}
 				})
-			]
+			],
+			events:
+				{
+					onPopupShow: () => this.setSelectorExpanded(this._domNodes.copyButton, true),
+					onPopupClose: () => this.setSelectorExpanded(this._domNodes.copyButton, false),
+				}
 		});
 		popup.show();
 	}
@@ -1121,9 +1261,34 @@ class AddressItem extends EventEmitter
 		}
 	}
 
+	onActivationKeyDown(event)
+	{
+		activateOnKey(event);
+	}
+
+	setSelectorExpanded(node, isExpanded)
+	{
+		if (Type.isDomNode(node))
+		{
+			node.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+		}
+	}
+
 	onToggleDetailsVisibility()
 	{
 		this.setDetailsVisibility(!this._showDetails);
+	}
+
+	focusFirstField()
+	{
+		// The address line, not the first tab stop of the item: the copy and "in detail" links are
+		// rendered above it, and landing on those after adding an address would say nothing about
+		// what has just appeared. Read-only when autocomplete is off - still focusable, and the
+		// detail fields are the very next stops.
+		if (Type.isDomNode(this._domNodes.searchInput))
+		{
+			this._domNodes.searchInput.focus();
+		}
 	}
 
 	onDelete()

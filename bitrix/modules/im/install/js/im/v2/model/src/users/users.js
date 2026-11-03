@@ -56,6 +56,7 @@ export class UsersModel extends BuilderModel
 
 		return {
 			id,
+			active: true,
 			name: '',
 			firstName: '',
 			lastName: '',
@@ -64,9 +65,14 @@ export class UsersModel extends BuilderModel
 			workPosition: '',
 			gender: 'M',
 			type: UserType.user,
+			extranet: false,
 			network: false,
 			connector: false,
 			externalAuthId: 'default',
+			// only the full server format brings these verdicts of the server,
+			// so their default means 'the server did not confirm'
+			internalAccount: false,
+			intranetUser: false,
 			status: '',
 			idle: false,
 			lastActivityDate: false,
@@ -133,6 +139,10 @@ export class UsersModel extends BuilderModel
 
 				return result;
 			},
+			/** @function users/getCollection */
+			getCollection: (state: UsersState): ImModelUser[] => {
+				return Object.values(state.collection);
+			},
 			/** @function users/hasBirthday */
 			hasBirthday: (state: UsersState) => (rawUserId) => {
 				const userId = Number.parseInt(rawUserId, 10);
@@ -194,6 +204,14 @@ export class UsersModel extends BuilderModel
 			/** @function users/isGuest */
 			isGuest: (state: UsersState) => (userId: number) => {
 				return state.collection[userId]?.type === UserType.guest;
+			},
+			/** @function users/isBot */
+			isBot: (state: UsersState) => (userId: number) => {
+				return state.collection[userId]?.type === UserType.bot;
+			},
+			/** @function users/isExtranet */
+			isExtranet: (state: UsersState) => (userId: number) => {
+				return state.collection[userId]?.type === UserType.extranet;
 			},
 		};
 	}

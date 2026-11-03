@@ -31,6 +31,11 @@ class ShowCheckListAction extends CheckListBaseAction
 
 		EventEmitter.emit(EventName.ShowCheckList, { checkListId: entityId });
 	}
+
+	isTooltipOnly(payload: ActionPayload): boolean
+	{
+		return !checkListService.isCheckListExists(payload.entityId);
+	}
 }
 
 export const showCheckListAction = new ShowCheckListAction();

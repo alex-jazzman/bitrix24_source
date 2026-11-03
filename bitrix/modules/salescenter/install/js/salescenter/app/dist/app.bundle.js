@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, crm_messagesender_editor, main_core_events, main_loader, main_popup, rest_client, salescenter_manager, ui_buttons, bitrix24_phoneverify, ui_designTokens, ui_fonts_opensans, ui_notification, ui_dialogs_messagebox, ui_vue, ui_vue_vuex, salescenter_component_stageBlock, Tile, TimeLineItem, salescenter_marketplace, salescenter_component_stageBlock_tile, Hint, catalog_productForm, currency_currencyCore, DeliverySelector$1, ui_fonts_ruble, salescenter_component_stageBlock_smsMessage, salescenter_component_stageBlock_automation, AutomationStage, salescenter_component_stageBlock_timeline, ui_icons_disk, popup, ui_buttons_icons, ui_forms, ui_pinner, crm_integration_analytics, crm_router, salescenter_lib, ui_entitySelector, landing_backend, ui_iconSet_actions, ui_analytics) {
+(function (exports, main_core, crm_messagesender_editor, main_core_events, main_loader, main_popup, rest_client, salescenter_manager, ui_buttons, bitrix24_phoneverify, ui_designTokens, ui_fonts_opensans, ui_notification, ui_dialogs_messagebox, ui_vue, ui_vue_vuex, salescenter_component_stageBlock, Tile, TimeLineItem, salescenter_marketplace, salescenter_component_stageBlock_tile, Hint, catalog_productForm, currency_currencyCore, salescenter_deliveryselector, ui_fonts_ruble, salescenter_component_stageBlock_smsMessage, salescenter_component_stageBlock_automation, AutomationStage, salescenter_component_stageBlock_timeline, ui_icons_disk, popup, ui_buttons_icons, ui_forms, ui_pinner, crm_integration_analytics, crm_router, salescenter_lib, ui_entitySelector, landing_backend, ui_iconSet_actions, ui_analytics) {
 	'use strict';
 
 	function _interopNamespaceDefault(e) {
@@ -640,7 +640,7 @@ this.BX = this.BX || {};
 			}
 		},
 		components: {
-			'delivery-selector': DeliverySelector$1
+			'delivery-selector': salescenter_deliveryselector.DeliverySelector
 		},
 		data() {
 			return {
@@ -2886,6 +2886,7 @@ this.BX = this.BX || {};
 				}
 			},
 			editMenuItem(event, page) {
+				event.stopPropagation();
 				this.editedPageId = page.id;
 				setTimeout(() => {
 					event.target.parentNode.parentNode.querySelector('input').focus();
@@ -3034,16 +3035,16 @@ this.BX = this.BX || {};
 							<div class="ui-sidepanel-toggle-btn">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>
 						</a>
 						<ul class="ui-sidepanel-submenu" :style="{height: pagesSubmenuHeight}">
-							<li v-for="page in pages" v-if="!page.isWebform" :key="page.id"
+							<li v-for="page in pages" v-if="!page.isWebform" :key="page.id" :data-testid="'salescenter-chat-page-item-' + page.id"
 							:class="{
 								'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),
 								'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)
 							}" class="ui-sidepanel-submenu-item">
-								<a :title="page.name" class="ui-sidepanel-submenu-link" @click.stop="onPageClick(page)">
-									<input class="ui-sidepanel-input" :value="page.name" v-on:keyup.enter="saveMenuItem($event)" @blur="saveMenuItem($event)" />
+								<a :title="page.name" :data-testid="'salescenter-chat-page-link-' + page.id" class="ui-sidepanel-submenu-link" @click.stop="onPageClick(page)">
+									<input :data-testid="'salescenter-chat-page-name-' + page.id" class="ui-sidepanel-input" :value="page.name" v-on:keyup.enter="saveMenuItem($event)" @blur="saveMenuItem($event)" />
 									<div class="ui-sidepanel-menu-link-text">{{page.name}}</div>
 									<div v-if="lastAddedPages.includes(page.id)" class="ui-sidepanel-badge-new"></div>
-									<div class="ui-sidepanel-edit-btn"><span class="ui-sidepanel-edit-btn-icon" @click="editMenuItem($event, page);"></span></div>
+									<div class="ui-sidepanel-edit-btn"><span :data-testid="'salescenter-chat-page-edit-' + page.id" class="ui-sidepanel-edit-btn-icon" @click="editMenuItem($event, page);"></span></div>
 								</a>
 							</li>
 							<li class="salescenter-app-helper-nav-item salescenter-app-menu-add-page" @click.stop="showAddPageActionPopup($event)">
@@ -3119,7 +3120,7 @@ this.BX = this.BX || {};
 				</template>
 				<div v-show="isShowPreview && !isShowStartInfo && !isFrameError" class="salescenter-app-page-content">
 					<template v-for="page in pages">
-						<iframe class="salescenter-app-demo" v-show="currentPage && currentPage.id == page.id" :src="getFrameSource(page)" frameborder="0" @error="onFrameError(page.id)" @load="onFrameLoad(page.id)" :key="page.id"></iframe>
+						<iframe :data-testid="'salescenter-chat-page-preview-' + page.id" class="salescenter-app-demo" v-show="currentPage && currentPage.id == page.id" :src="getFrameSource(page)" frameborder="0" @error="onFrameError(page.id)" @load="onFrameLoad(page.id)" :key="page.id"></iframe>
 					</template>
 					<div class="salescenter-app-demo-overlay" :class="{
 						'salescenter-app-demo-overlay-loading': this.isShowLoader
@@ -6364,7 +6365,13 @@ this.BX = this.BX || {};
 									this.componentKey += 1;
 									this.$root.$app.getLoader().hide();
 								}
-							}.bind(this));
+							}.bind(this), () => {
+								this.componentKey += 1;
+								this.$root.$app.getLoader().hide();
+								ui_notification.UI.Notification.Center.notify({
+									content: main_core.Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR')
+								});
+							});
 						},
 						initOrderSelector() {
 							try {

@@ -87,6 +87,10 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			delay: {
 				type: Number,
 				default: socialnetwork_v2_const.AutoDeleteMessageDelay.Off
+			},
+			targetContainer: {
+				type: HTMLElement,
+				default: () => document.body
 			}
 		},
 		emits: ['close', 'change'],
@@ -111,7 +115,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 					height: 390,
 					width: 400,
 					closeIcon: true,
-					targetContainer: document.body,
+					targetContainer: this.targetContainer,
 					fixed: true,
 					padding: 0,
 					autoHide: true,

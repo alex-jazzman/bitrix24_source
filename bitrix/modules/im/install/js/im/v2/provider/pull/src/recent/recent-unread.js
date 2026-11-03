@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { RecentType, type RecentTypeItem } from 'im.v2.const';
+import { type RecentTypeItem } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelChat, type ImModelRecentItem } from 'im.v2.model';
 import { type MessageAddParams, type PullExtraParams, type ReadMessageParams } from 'im.v2.provider.pull';
@@ -34,7 +34,7 @@ export class RecentUnreadPullHandler
 
 	handleReadAllChats()
 	{
-		UnreadModeManager.removeClosedChats(RecentType.default);
+		UnreadModeManager.removeAllClosedChats();
 	}
 
 	handleReadAllChatsByRecentSection(params: ChatReadAllParams)

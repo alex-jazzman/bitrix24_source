@@ -1,5 +1,6 @@
 <?php
 $MESS["ERROR_MESSAGE_EMPTY_MESSAGE"] = "The message text is empty.";
+$MESS['ERROR_MESSAGE_MESSAGE_FILES_MISMATCH'] = 'Could not save all attachments.';
 $MESS["ERROR_MESSAGE_NOTIFY_BUTTONS"] = "The button set is incorrect.";
 $MESS["ERROR_MESSAGE_NOTIFY_EVENT"] = "The notification mnemonic name is missing.";
 $MESS["ERROR_MESSAGE_NOTIFY_MODULE"] = "The module originating (sending) this message is not specified";

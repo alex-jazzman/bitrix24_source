@@ -28,7 +28,7 @@ use Bitrix\Main\Localization\Loc;
 		}
 	</style>
 	<div class="bx-extranet-403-container">
-		<div class="bx-extranet-403-image"><img src="images/403.png" alt=""></div>
+		<div class="bx-extranet-403-image"><img src="images/403.webp" alt=""></div>
 		<div class="bx-extranet-403-title">
 			<?= Loc::getMessage('EXTRANET_403_TITLE') ?>
 		</div>

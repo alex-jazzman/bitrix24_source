@@ -10,6 +10,7 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 	const { Navigator } = require('selector/widget/entity/tree-selectors/shared/navigator');
 	const { Color } = require('tokens');
 
+	/** @type {NestedDepartmentSelectorTabConfig} */
 	const SCOPES = {
 		[ScopesIds.RECENT]: {
 			id: ScopesIds.RECENT,
@@ -24,46 +25,14 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_GROUPS'),
 		},
 	};
+	const SUBORDINATE_DEPARTMENTS_ROOT = 'subordinate-departments-root';
 
-	/**
-	 * @class NestedDepartmentSelector
-	 */
 	class NestedDepartmentSelector extends BaseTreeSelector
 	{
 		/**
-		 * @typedef {Object} Events
-		 * @property {Function} onClose - Handler for the close event.
-		 *
-		 * @typedef {Object} CreateOptions
-		 * @property {boolean} enableCreation - Whether creation is enabled.
-		 *
-		 * @typedef {Object} SelectOptions
-		 * @property {boolean} canUnselectLast - Whether the last item can be unselected.
-		 * @property {boolean} singleEntityByType - Whether a single entity by type is allowed.
-		 *
-		 * @typedef {Object} ProviderOptions
-		 * @property {boolean} useLettersForEmptyAvatar - Whether to use letters for empty avatars.
-		 * @property {boolean} allowFlatDepartments - Whether flat departments are allowed.
-		 * @property {boolean} allowSelectRootDepartment - Whether selecting the root department is allowed.
-		 * @property {boolean} addMetaUser - Whether to add a meta user.
-		 *
-		 * @typedef {Object} Provider
-		 * @property {string} context - Context for the provider.
-		 * @property {ProviderOptions} options - Options for the provider.
-		 *
-		 * @typedef {Object} Options
-		 * @property {Array|null} initSelectedIds - Initial selected IDs.
-		 * @property {Array|null} undeselectableIds - IDs that can't be unselected.
-		 * @property {WidgetParams} widgetParams - Widget parameters.
-		 * @property {boolean} allowMultipleSelection - Whether multiple selection is allowed.
-		 * @property {boolean} closeOnSelect - Whether to close on select.
-		 * @property {Events} events - Event handlers.
-		 * @property {CreateOptions} createOptions - Options for creation.
-		 * @property {SelectOptions} selectOptions - Options for selection.
-		 * @property {boolean} canUseRecent - Whether recent items can be used.
-		 * @property {Provider} provider - Provider settings.
+		 * @param {NestedDepartmentSelectorOptions} options
 		 */
-		constructor(options = {})
+		constructor(options)
 		{
 			super(options);
 
@@ -78,21 +47,28 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			this.tabConfig = this.createTabConfig(options.customTabsConfig);
 		}
 
+		/** @return {boolean} */
 		hasDepartmentScope()
 		{
 			return Object.prototype.hasOwnProperty.call(this.tabConfig, ScopesIds.DEPARTMENT);
 		}
 
+		/** @return {typeof NestedDepartmentSelectorEntity} */
 		getEntity()
 		{
 			return NestedDepartmentSelectorEntity;
 		}
 
+		/** @return {string} */
 		getNodeEntityId()
 		{
-			return 'department';
+			return this.#getProvider().getDepartmentEntityId();
 		}
 
+		/**
+		 * @param {NestedDepartmentSelectorOptions} options
+		 * @return {NestedDepartmentSelectorPreparedOptions}
+		 */
 		prepareOptions(options)
 		{
 			return {
@@ -101,6 +77,10 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			};
 		}
 
+		/**
+		 * @param {NestedDepartmentSelectorOptions} options
+		 * @return {NestedDepartmentSelectorOptions['provider']}
+		 */
 		prepareProvider(options)
 		{
 			const provider = { ...options.provider };
@@ -120,6 +100,10 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			};
 		}
 
+		/**
+		 * @param {NestedDepartmentSelectorOptions} options
+		 * @return {NestedDepartmentSelectorSearchOptions}
+		 */
 		prepareSearchOptions(options)
 		{
 			return {
@@ -129,15 +113,21 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			};
 		}
 
+		/** @return {Array<Record<string, unknown>>} */
 		getExternalLeftButtons()
 		{
 			return Type.isArrayFilled(this.options?.leftButtons) ? this.options?.leftButtons : [];
 		}
 
+		/** @return {NestedDepartmentSelectorScopeId} */
 		getCurrentScopeId = () => {
 			return this.scopeId || {};
 		};
 
+		/**
+		 * @param {Array<string>|null} customTabsConfig
+		 * @return {NestedDepartmentSelectorTabConfig}
+		 */
 		createTabConfig(customTabsConfig = null)
 		{
 			const defaultTabs = {
@@ -161,6 +151,7 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			return defaultTabs;
 		}
 
+		/** @return {Array<NestedDepartmentSelectorScope>} */
 		#getScopes()
 		{
 			return Object.entries(this.tabConfig)
@@ -168,19 +159,85 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			;
 		}
 
+		/**
+		 * @param {Array<NestedDepartmentSelectorTreeItem>} items
+		 * @return {void}
+		 */
 		#onInitialItemsLoad = (items) => {
-			this.setTitle(
-				this.recentTitle,
-			);
+			this.setTitle(this.recentTitle);
 
-			if (this.hasDepartmentScope())
+			if (!this.hasDepartmentScope())
 			{
-				const rootDepartment = items.find(({ entityId }) => entityId === this.getNodeEntityId());
+				const rootDepartment = this.#getProvider().getDepartmentRoot(items, this.getNodeEntityId());
+				if (!rootDepartment)
+				{
+					return;
+				}
 
+				const navigator = this.getNavigator();
+				navigator.init(rootDepartment);
+				this.setInitialRootChildren(rootDepartment);
+
+				return;
+			}
+
+			const nodeEntityId = this.getNodeEntityId();
+			if (this.#getProvider().getOptions().onlyManagedHierarchy)
+			{
+				const rootDepartments = items.filter(({ entityId }) => entityId === nodeEntityId);
+				const navigator = this.getNavigator();
+
+				if (rootDepartments.length === 1)
+				{
+					navigator.init(rootDepartments[0]);
+				}
+				else if (rootDepartments.length > 1)
+				{
+					const rootDepartment = {
+						id: SUBORDINATE_DEPARTMENTS_ROOT,
+						entityId: nodeEntityId,
+						title: Loc.getMessage('NESTED_DEPARTMENT_SELECTOR_MY_DEPARTMENTS'),
+					};
+
+					navigator.init(rootDepartment);
+					navigator.setChildren({
+						id: rootDepartment.id,
+						entityId: rootDepartment.entityId,
+						children: rootDepartments.map((department) => ({ ...department, type: 'button' })),
+					});
+				}
+			}
+			else
+			{
+				const rootDepartment = this.#getProvider().getDepartmentRoot(items, nodeEntityId);
 				this.getNavigator().init(rootDepartment);
+				this.setInitialRootChildren(rootDepartment);
 			}
 		};
 
+		/**
+		 * @param {NestedDepartmentSelectorTreeItem} rootDepartment
+		 * @return {void}
+		 */
+		setInitialRootChildren(rootDepartment)
+		{
+			const provider = this.getSelector().getProvider();
+			if (!provider.isRestrictedVirtualRoot?.(rootDepartment))
+			{
+				return;
+			}
+
+			this.getNavigator().setChildren({
+				id: rootDepartment.id,
+				entityId: rootDepartment.entityId,
+				children: provider.getRestrictedVirtualRootChildren?.() ?? [],
+			});
+		}
+
+		/**
+		 * @param {Array<NestedDepartmentSelectorTreeItem>} items
+		 * @return {void}
+		 */
 		#onItemsLoadedFromServer = (items) => {
 			let scopes = null;
 			if (items.some(({ entityId }) => entityId === this.getNodeEntityId() || this.options.customTabsConfig))
@@ -197,6 +254,10 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			this.getSelector().getWidget()?.setScopes(scopes);
 		};
 
+		/**
+		 * @param {NestedDepartmentSelectorScopeChangeParams} params
+		 * @return {void}
+		 */
 		#onScopeChanged = ({ text, scope, shouldResetSearch = true }) => {
 			this.scopeId = scope.id;
 
@@ -217,6 +278,10 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			this.#setItemsByScope({ text, scope });
 		};
 
+		/**
+		 * @param {NestedDepartmentSelectorScopeChangeParams} params
+		 * @return {void}
+		 */
 		#setItemsByScope = ({ text, scope }) => {
 			const scopeHandlers = {
 				[ScopesIds.RECENT]: () => this.recentTitle,
@@ -235,14 +300,22 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 				.catch(console.error);
 		};
 
+		/**
+		 * @param {NestedDepartmentSelectorSearchQueryData} data
+		 * @return {void}
+		 */
 		#onSearch = ({ text }) => {
 			this.setTitle(
 				Loc.getMessage('NESTED_DEPARTMENT_SELECTOR_SEARCH_TITLE'),
 			);
 
-			this.getSelector().getProvider().doSearch(text);
+			this.#getProvider().doSearch(text);
 		};
 
+		/**
+		 * @param {NestedDepartmentSelectorSearchCancelledData} data
+		 * @return {void}
+		 */
 		#onSearchCancelled = ({ scope }) => {
 			this.resetSearch();
 
@@ -260,16 +333,22 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			this.#setItemsByScope({ scope });
 		};
 
+		/** @return {Array<NestedDepartmentSelectorTreeItem>} */
 		getServiceElements()
 		{
-			const {
-				allowFlatDepartments,
-				allowSelectRootDepartment,
-			} = this.getSelector().getProvider().getOptions();
-
+			const rootNode = this.getNavigator().getRootNode();
 			const currentNode = this.getNavigator().getCurrentNode();
-			const shouldRenderDepartmentItem = allowSelectRootDepartment
-				|| this.getNavigator().getRootNode() !== currentNode;
+			const provider = this.#getProvider();
+			if (
+				provider.isRestrictedVirtualRoot?.(currentNode)
+				|| currentNode?.id === SUBORDINATE_DEPARTMENTS_ROOT
+			)
+			{
+				return [];
+			}
+
+			const { allowSelectRootDepartment, allowFlatDepartments } = provider.getOptions();
+			const shouldRenderDepartmentItem = allowSelectRootDepartment || rootNode !== currentNode;
 
 			const commonParams = {
 				type: 'selectable',
@@ -311,9 +390,41 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			].filter(Boolean);
 		}
 
+		async getOrLoadNodeChildren(node)
+		{
+			if (node.id !== SUBORDINATE_DEPARTMENTS_ROOT)
+			{
+				return super.getOrLoadNodeChildren(node);
+			}
+
+			const navigator = this.getNavigator();
+			const children = navigator.getChildren(node);
+			if (children)
+			{
+				return children;
+			}
+
+			this.getSelector().setItems([this.getLoadingItem()]);
+
+			const { data: { dialog } } = await this.#getProvider().fetchItemsFromServer();
+			const departments = dialog.items
+				.filter(({ entityId }) => entityId === this.getNodeEntityId())
+				.map((department) => ({ ...department, type: 'button' }))
+			;
+
+			navigator.setChildren({
+				id: node.id,
+				entityId: node.entityId,
+				children: departments,
+			});
+
+			return departments;
+		}
+
+		/** @return {Promise<Array<NestedDepartmentSelectorTreeItem>>} */
 		async #getItemsByScope()
 		{
-			const provider = this.getSelector().getProvider();
+			const provider = this.#getProvider();
 
 			const scopeHandlers = {
 				[ScopesIds.DEPARTMENT]: async () => {
@@ -336,6 +447,11 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			const handler = scopeHandlers[currentScopeId];
 
 			return handler ? handler() : [];
+		}
+
+		#getProvider()
+		{
+			return this.getSelector().getProvider();
 		}
 	}
 

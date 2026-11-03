@@ -1,13 +1,12 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType } from 'im.v2.const';
 
-import { AnalyticsEvent, AnalyticsTool, AnalyticsSection } from '../const';
+import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool, AnalyticsSection } from '../const';
 import { getChatType } from '../helpers/get-chat-type';
-import { getCollabId } from '../helpers/get-collab-id';
+import { getProjectId } from '../helpers/get-collab-id';
 import { getUserType } from '../helpers/get-user-type';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -49,14 +48,16 @@ export class UserAdd
 
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
-		sendData({
+		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.startSearch,
 			c_section: AnalyticsSection.userAdd,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onClosePopup(): void
@@ -86,16 +87,18 @@ export class UserAdd
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
+		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.selectUser,
 			type: source,
 			c_section: AnalyticsSection.userAdd,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 			p3: `position_${position}`,
-		});
+		};
+
+		sendData(params);
 	}
 
 	#onAddUserClick(dialogId: string, element: AnalyticsSection.chatSidebar | AnalyticsSection.chatHeader): void
@@ -104,7 +107,7 @@ export class UserAdd
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.clickAddUser,
 			c_section: element,
 			p1: `chatType_${getChatType(chat)}`,
@@ -112,9 +115,13 @@ export class UserAdd
 			p5: `chatId_${chat.chatId}`,
 		};
 
-		if (chat.type === ChatType.collab)
+		if (params.category === AnalyticsCategory.collab)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);

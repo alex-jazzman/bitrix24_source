@@ -10,4 +10,8 @@ export const Option = Object.freeze({
 	AhaTaskChatPopup: 'aha_task_chat',
 	AhaTaskImportantMessagesPopup: 'aha_task_important_messages',
 	AhaTasksAiPromo: 'aha_tasks_ai_promo',
+	AhaFilesView: 'aha_files_view',
+
+	// UserOptions
+	FilesViewMode: 'files_view_mode',
 });

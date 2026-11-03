@@ -1,5 +1,5 @@
 import { defineComponent, markRaw, type PropType } from 'ui.vue3';
-import { TagSelector } from 'ui.entity-selector';
+import { type ItemOptions, TagSelector } from 'ui.entity-selector';
 
 import type { ResponsibleQueueItem } from '../../utils/crm-integration-settings-type';
 
@@ -18,6 +18,16 @@ type SelectorDialog = {
 	destroy(): void;
 	show(): void;
 	isOpen(): boolean;
+	getItem(item: { id: string | number; entityId: string }): SelectorDialogItem | null;
+	removeItem(item: SelectorDialogItem): SelectorDialogItem | null;
+};
+
+type SelectorDialogItem = {
+	isHidden(): boolean;
+};
+
+type SelectorTagEvent = {
+	getData(): { tag: SelectorTag };
 };
 
 type TagSelectorInstance = {
@@ -33,6 +43,16 @@ type TagSelectorInstance = {
 	getOuterContainer(): HTMLElement | null | undefined;
 	renderTo(target: Element | null | undefined): void;
 };
+
+export function getResponsibleQueueSelectorItems(items: ResponsibleQueueItem[]): ItemOptions[]
+{
+	return items.map((item: ResponsibleQueueItem): ItemOptions => ({
+		id: item.id,
+		entityId: item.entityId,
+		title: item.name,
+		hidden: true,
+	}));
+}
 
 // @vue/component
 export const UserSelector = defineComponent({
@@ -106,6 +126,7 @@ export const UserSelector = defineComponent({
 		this.selectorInstance = markRaw(new TagSelector({
 			multiple: true,
 			dialogOptions: {
+				items: getResponsibleQueueSelectorItems(this.modelValue),
 				width: 425,
 				height: 320,
 				targetNode: selectorContainer,
@@ -144,7 +165,7 @@ export const UserSelector = defineComponent({
 			},
 			events: {
 				onAfterTagAdd: this.onUpdate,
-				onAfterTagRemove: this.onUpdate,
+				onAfterTagRemove: this.handleTagRemove,
 			},
 		})) as TagSelectorInstance;
 
@@ -173,6 +194,20 @@ export const UserSelector = defineComponent({
 	},
 
 	methods: {
+		handleTagRemove(event: SelectorTagEvent): void
+		{
+			const tag = event.getData().tag;
+			const dialog = this.selectorInstance?.getDialog();
+			const item = dialog?.getItem({ id: tag.getId(), entityId: tag.getEntityId() });
+
+			if (item?.isHidden())
+			{
+				dialog?.removeItem(item);
+			}
+
+			this.onUpdate();
+		},
+
 		onUpdate(): void
 		{
 			if (!this.selectorInstance || this.disabled)

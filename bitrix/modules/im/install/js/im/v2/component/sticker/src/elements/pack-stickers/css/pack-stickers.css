@@ -4,3 +4,13 @@
 	align-content: flex-start;
 	padding: 0 2px 0 8px;
 }
+
+/*
+ * Grid context only: real role="row" rows stack because each fills the container width - the visual
+ * result is identical to the wrapping flat layout (four cells per row). The second consumer, a
+ * sticker message, has no such rows and keeps wrapping its cells directly.
+ */
+.bx-im-pack-stickers__row {
+	display: flex;
+	flex: 0 0 100%;
+}

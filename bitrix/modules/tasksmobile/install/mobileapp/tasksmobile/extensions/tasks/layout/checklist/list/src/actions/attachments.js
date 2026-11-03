@@ -143,12 +143,23 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 			if (isChanged)
 			{
+				this.syncAttachmentsToServer();
+
 				this.setState({
 					fileInfo: this.prepareUploadingInfo(fileInfo),
 				}, () => {
 					this.handleOnChange(isChanged);
 				});
 			}
+		}
+
+		/**
+		 * @private
+		 */
+		syncAttachmentsToServer()
+		{
+			const { item } = this.props;
+			item.syncAttachments();
 		}
 
 		/**
@@ -307,6 +318,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 			if (!diskConfig?.folderId)
 			{
+				// eslint-disable-next-line no-console
 				console.warn('Checklist: folderId not found, cannot save');
 			}
 

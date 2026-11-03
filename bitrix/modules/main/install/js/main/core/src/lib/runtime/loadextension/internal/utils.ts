@@ -1,59 +1,30 @@
+import { load, setJSList, setCSSList } from '../../../../legacy/assets';
 import Type from '../../../type';
 
-export function fetchInlineScripts(acc: Array<string>, item: { JS: string; isInternal: boolean })
+// Registers already-present assets as loaded so a later `load` skips them.
+// Legacy parity: CJSCore emitted setJSList/setCSSList for the files bundled inside core.js
+// right after core.js, keeping a direct `load` from re-executing the embedded core_ajax.js,
+// polyfills, etc.
+//
+// The registry used to be reached through `BX.*` and guarded by an isFunction check, because
+// it lives in the legacy layer and the layer was a separate bundle - absent from
+// main.core.minimal, where the guard made the call a silent no-op. The layer is part of the
+// module graph now, so the functions are imported and always present; the guard went with the
+// global.
+export function registerAssetsAsLoaded(js: Array<string>, css: Array<string>): void
 {
-	if (item.isInternal)
+	if (Type.isArrayFilled(js))
 	{
-		acc.push(item.JS);
+		setJSList(js);
 	}
 
-	return acc;
-}
-
-export function fetchExternalScripts(acc: Array<string>, item: { JS: string; isInternal: boolean })
-{
-	if (!item.isInternal)
+	if (Type.isArrayFilled(css))
 	{
-		acc.push(item.JS);
+		setCSSList(css);
 	}
-
-	return acc;
 }
 
-export function fetchExternalStyles(acc: Array<string>, item: string | null | undefined)
-{
-	if (Type.isString(item) && item !== '')
-	{
-		acc.push(item);
-	}
-
-	return acc;
-}
-
-type SettingsEntry = { extension: string; script: string };
-
-export function fetchExtensionSettings(html: string): Array<SettingsEntry>
-{
-	if (Type.isStringFilled(html))
-	{
-		const scripts = html.match(/<script type="extension\/settings" \b[^>]*>([\S\s]*?)<\/script>/g);
-		if (Type.isArrayFilled(scripts))
-		{
-			return scripts.map((script) => {
-				const [, extension] = script.match(/data-extension="(.[\d._a-z-]+)"/)!;
-
-				return {
-					extension,
-					script,
-				};
-			});
-		}
-	}
-
-	return [];
-}
-
-export function loadAll(items: Array<string>): Promise<void>
+export function loadAll(items: Array<string | { url: string, ext?: string }>): Promise<void>
 {
 	const itemsList = Type.isArray(items) ? items : [items];
 
@@ -63,7 +34,6 @@ export function loadAll(items: Array<string>): Promise<void>
 	}
 
 	return new Promise((resolve, reject) => {
-		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-		BX.load(itemsList, resolve, document, reject);
+		load(itemsList, resolve, document, reject);
 	});
 }

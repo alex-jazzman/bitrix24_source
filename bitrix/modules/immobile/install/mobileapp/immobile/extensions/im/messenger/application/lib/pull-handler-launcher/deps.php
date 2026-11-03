@@ -15,6 +15,7 @@ return [
 		'im:messenger/provider/pull/openlines',
 		'im:messenger/provider/pull/plan-limits',
 		'im:messenger/provider/pull/recent',
+		'im:messenger/provider/pull/settings',
 		'im:messenger/provider/pull/sidebar',
 		'im:messenger/provider/pull/sticker-pack',
 		'im:messenger/provider/pull/sharing-link',

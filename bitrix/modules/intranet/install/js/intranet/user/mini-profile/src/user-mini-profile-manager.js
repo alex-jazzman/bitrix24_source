@@ -13,7 +13,7 @@ export class UserMiniProfileManager
 
 	static create(options: UserMiniProfileOptions & { id: string }): UserMiniProfile
 	{
-		const { id, bindElement } = options;
+		const { id, bindElement, direction } = options;
 
 		// If other widget was already binded to element, we need to unbind it
 		if (this.#instanceByBindElementMap.has(bindElement))
@@ -38,6 +38,7 @@ export class UserMiniProfileManager
 				instance.setBindElement(bindElement);
 			}
 
+			instance.setDirection(direction);
 			this.#instanceByBindElementMap.set(bindElement, instance);
 
 			return instance;

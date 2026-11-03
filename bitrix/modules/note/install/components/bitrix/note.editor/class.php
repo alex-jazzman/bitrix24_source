@@ -131,12 +131,23 @@ class NoteEditorComponent extends CBitrixComponent
 			// corresponding slider on top of the mounted interface.
 			'TARIFF_SLIDER_CODE' => $blockSliderCode,
 			'HISTORY_ENABLED' => Configuration::isHistoryUiEnabled(),
+			// Hides every subscription surface at once - the bells and the "only notified" filter.
+			// Delivery is stopped by the same option on the drainer, not from here.
 			'NOTIFICATIONS_ENABLED' => Configuration::isNotificationsEnabled(),
 			'HOTKEYS_ENABLED' => Configuration::isHotkeysUiEnabled(),
 			// Replaces the flat note.shared page/button with the collapsible sidebar tree section.
 			'SHARED_TREE_ENABLED' => Configuration::isSubtreeInheritanceEnabled(),
 			// Feature flag: download/upload .md menu items are hidden unless explicitly enabled.
 			'MARKDOWN_IO_ENABLED' => Configuration::isMarkdownIoEnabled(),
+			// Gates the "pick from Disk" entry point only. Documents that already carry Disk
+			// attachments keep rendering them with the flag off — see Configuration.
+			//
+			// Off on a mobile hit: the app opens this very web editor in a webview, and Disk's picker
+			// is a popup with a hard 980x538 minimum, so on a phone it does not fit the screen at all.
+			// Attaching from Disk on mobile needs the app's own native file list, which no webview API
+			// exposes — until that exists as its own entry point, the phone gets no button rather than
+			// a dialog wider than the window.
+			'DISK_ATTACHMENTS_ENABLED' => Configuration::isDiskAttachmentsEnabled() && !$this->isMobileHit(),
 			// DTO-01. Both keys stay empty unless the chat is actually reachable, so the front end
 			// cannot tell "flag off" from "conditions did not hold" — and must not try to.
 			'AI_CHAT_ENABLED' => $aiChatEnabled,

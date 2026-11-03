@@ -57,6 +57,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					const userActionNew = {
 						isEntityClickable: true,
 						id: userAction.id,
+						url: tasks_v2_provider_service_userService.userService.getUrl(userAction.id),
 						name: userAction.name,
 						type: userAction.type,
 						optionsAvatar: {

@@ -9,7 +9,7 @@ import {MessageCard} from 'landing.ui.card.messagecard';
 import {FormClient} from 'crm.form.client';
 import {FormSettingsPanel} from 'landing.ui.panel.formsettingspanel';
 
-export default class Whatsapp extends ContentWrapper
+export class Whatsapp extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -141,3 +141,4 @@ export default class Whatsapp extends ContentWrapper
 		this.emit('onChange', {...event.getData(), skipPrepare: true});
 	}
 }
+export { Whatsapp as Content };

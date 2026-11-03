@@ -8,10 +8,13 @@ export type ConfirmParams = {
 	title?: string,
 	firstButtonCaption?: string,
 	secondButtonCaption?: string,
+	// the DOM id of the popup: the messagebox renders no anchors of its own, and autotests reach
+	// the confirmation and its buttons through the container
+	popupId?: string,
 };
 
 export const showTwoButtonConfirm = (params: ConfirmParams): Promise<boolean> => {
-	const { text = '', firstButtonCaption = '', secondButtonCaption = '', title = '' } = params;
+	const { text = '', firstButtonCaption = '', secondButtonCaption = '', title = '', popupId = '' } = params;
 
 	return new Promise((resolve) => {
 		const options = {
@@ -21,6 +24,7 @@ export const showTwoButtonConfirm = (params: ConfirmParams): Promise<boolean> =>
 			popupOptions:
 			{
 				closeByEsc: true,
+				id: Type.isStringFilled(popupId) ? popupId : undefined,
 			},
 			onYes: (messageBox: ChatConfirm) => {
 				resolve(true);

@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
@@ -17,6 +18,7 @@ import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CoreParams } from 'tasks.v2.core';
 
+import { findScrollableAncestor } from '../../../lib/scroll-container';
 import { ButtonId } from '../footer-edit-const';
 import type { ButtonOptions } from '../footer-edit';
 
@@ -91,6 +93,7 @@ export const More = {
 			return (): MenuOptions => ({
 				id: 'tasks-full-card-footer-more-menu',
 				bindElement: this.$refs.button,
+				targetContainer: findScrollableAncestor(this.$refs.button),
 				items: this.menuItems,
 			});
 		},
@@ -148,10 +151,41 @@ export const More = {
 			return !this.settings.restrictions.delegating.available;
 		},
 	},
+	watch: {
+		isMenuShown(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
+	},
 	methods: {
 		handleClick(): void
 		{
 			this.isMenuShown = true;
+		},
+		getButtonElement(): ?HTMLElement
+		{
+			return this.$refs.button?.querySelector('.tasks-full-card-footer-more');
+		},
+		syncAria(): void
+		{
+			const button = this.getButtonElement();
+			if (!button)
+			{
+				return;
+			}
+
+			Dom.attr(button, 'aria-label', this.loc('TASKS_V2_TASK_FULL_CARD_MORE'));
+			Dom.attr(button, 'aria-haspopup', 'menu');
+			Dom.attr(button, 'aria-expanded', this.isMenuShown ? 'true' : 'false');
+		},
+		onMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.getButtonElement()?.focus();
 		},
 		getStartItem(): MenuItemOptions
 		{
@@ -406,15 +440,15 @@ export const More = {
 		<div ref="button">
 			<UiButton
 				v-if="menuItems.length > 0"
+				class="tasks-full-card-footer-more"
 				:size="ButtonSize.LARGE"
 				:style="AirButtonStyle.PLAIN"
 				:leftIcon="Outline.MORE_L"
 				:loading
 				:dataset="{ taskButtonId: 'more' }"
-				ref="button"
 				@click="handleClick"
 			/>
 		</div>
-		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
+		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="onMenuClose"/>
 	`,
 };

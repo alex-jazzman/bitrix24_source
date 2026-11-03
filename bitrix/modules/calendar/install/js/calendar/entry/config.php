@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/entry.bundle.css',
 	'js' => 'dist/entry.bundle.js',
 	'rel' => [
+		'calendar.analytics',
 		'calendar.compacteventform',
 		'calendar.roomsmanager',
 		'calendar.sectionmanager',

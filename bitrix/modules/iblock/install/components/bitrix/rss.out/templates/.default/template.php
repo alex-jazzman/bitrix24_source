@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -20,12 +24,12 @@ $this->setFrameMode(false);
 ?>>
 <channel>
 <title><?=$arResult["NAME"].($arResult["SECTION"]["NAME"] <> ''?" / ".$arResult["SECTION"]["NAME"]:"")?></title>
-<link><?=CHTTP::URN2URI("", $arResult["SERVER_NAME"])?></link>
+<link><?=(new Uri(""))->toAbsolute($arResult["SERVER_NAME"])?></link>
 <description><?=$arResult["SECTION"]["DESCRIPTION"] <> ''?$arResult["SECTION"]["DESCRIPTION"]:$arResult["DESCRIPTION"]?></description>
 <lastBuildDate><?=date("r")?></lastBuildDate>
 <ttl><?=$arResult["RSS_TTL"]?></ttl>
 <?if(is_array($arResult["PICTURE"])):?>
-	<?$image = mb_substr($arResult["PICTURE"]["SRC"], 0, 1) == "/"? CHTTP::URN2URI($arResult["PICTURE"]["SRC"], $arResult["SERVER_NAME"]): $arResult["PICTURE"]["SRC"];?>
+	<?$image = mb_substr($arResult["PICTURE"]["SRC"], 0, 1) == "/"? (string)(new Uri($arResult["PICTURE"]["SRC"]))->toAbsolute($arResult["SERVER_NAME"]): $arResult["PICTURE"]["SRC"];?>
 	<?if($arParams["YANDEX"]):?>
 		<yandex:logo><?=$image?></yandex:logo>
 		<?
@@ -39,7 +43,7 @@ $this->setFrameMode(false);
 			);
 			if ($squarePicture)
 			{
-				$squareImage = mb_substr($squarePicture["src"], 0, 1) == "/"? CHTTP::URN2URI($squarePicture["src"], $arResult["SERVER_NAME"]): $squarePicture["src"];
+				$squareImage = mb_substr($squarePicture["src"], 0, 1) == "/"? (string)(new Uri($squarePicture["src"]))->toAbsolute($arResult["SERVER_NAME"]): $squarePicture["src"];
 				?><yandex:logo type="square"><?=$squareImage?></yandex:logo><?
 			}
 		}
@@ -49,7 +53,7 @@ $this->setFrameMode(false);
 		<image>
 			<title><?=$arResult["NAME"]?></title>
 			<url><?=$image?></url>
-			<link><?=CHTTP::URN2URI("", $arResult["SERVER_NAME"])?></link>
+			<link><?=(string)(new Uri(""))->toAbsolute($arResult["SERVER_NAME"])?></link>
 			<width><?=$arResult["PICTURE"]["WIDTH"]?></width>
 			<height><?=$arResult["PICTURE"]["HEIGHT"]?></height>
 		</image>

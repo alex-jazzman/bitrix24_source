@@ -18,7 +18,10 @@ export const ProjectWizardLayout = {
 		loading: Boolean,
 	},
 	template: `
-		<div class="socialnetwork--project-wizard">
+		<div
+			class="socialnetwork--project-wizard"
+			data-testid="socialnetwork-project-wizard"
+		>
 			<div class="socialnetwork--project-wizard-main">
 				<UiLoader v-if="loading" :show="loading"/>
 				<div v-else ref="body" class="socialnetwork--project-wizard-body">

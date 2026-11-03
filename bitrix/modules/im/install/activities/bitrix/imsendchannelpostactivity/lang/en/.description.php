@@ -1,0 +1,6 @@
+<?php
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_DESCRIPTION"] = "Publishes a post in the specified channel as a specified user.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_NAME"] = "Send post to channel";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_RETURN_COLLECTION"] = "Post collection (JSON)";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_RETURN_ERROR"] = "Error message";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_RETURN_STATUS"] = "Status";

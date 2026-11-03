@@ -34,6 +34,11 @@ if(typeof BX.Crm.EntityEditorUserFieldConfigurator === "undefined")
 	{
 		BX.Crm.EntityEditorUserFieldConfigurator.superclass.constructor.apply(this);
 		this._visibilityConfigurator = null;
+		this._aiFillPolicy = null;
+		this._aiFillPolicySettings = null;
+		this._aiFillPolicyCheckBox = null;
+		this._aiFillPolicyContainer = null;
+		this._aiFillPolicySavedState = true;
 	};
 	BX.extend(BX.Crm.EntityEditorUserFieldConfigurator, BX.UI.EntityEditorUserFieldConfigurator);
 	BX.Crm.EntityEditorUserFieldConfigurator.prototype.doInitialize = function()
@@ -42,13 +47,55 @@ if(typeof BX.Crm.EntityEditorUserFieldConfigurator === "undefined")
 		if (this.getEditor().canChangeCommonConfiguration())
 		{
 			this._visibilityConfigurator = BX.prop.get(this._settings, "visibilityConfigurator", null);
+
+			if (this._field)
+			{
+				this._aiFillPolicy = BX.prop.getObject(this._field.getData(), "aiFillPolicy", null);
+				this._aiFillPolicySavedState = BX.prop.getBoolean(this._aiFillPolicy, "enabled", true);
+			}
+			else if (this.canManageFields())
+			{
+				this._aiFillPolicySettings = this.getEditor().getAiFillPolicySettings();
+			}
 		}
+	};
+	/**
+	 * Creating a field from the card. The capability comes from the server through the user field manager
+	 * of the editor and is a capability of its own: changing the common layout never grants it.
+	 */
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.canManageFields = function()
+	{
+		var userFieldManager = this.getEditor().getUserFieldManager();
+
+		return !!userFieldManager && userFieldManager.isCreationEnabled();
 	};
 	BX.Crm.EntityEditorUserFieldConfigurator.prototype.getOptionContainer = function()
 	{
 		this._optionWrapper = BX.Crm.EntityEditorUserFieldConfigurator.superclass.getOptionContainer.apply(this);
 
 		var isNew = (this._field === null);
+		//region AI fill policy
+		if (this.isAiFillPolicyAvailable())
+		{
+			this._aiFillPolicyCheckBox = this.createOption(
+				{ caption: this.getMessage("aiFillPolicy") }
+			);
+			this._aiFillPolicyCheckBox.setAttribute("data-testid", "crm-entity-editor-ai-fill-policy-checkbox");
+			this._aiFillPolicyCheckBox.checked = this._aiFillPolicySavedState;
+			// createOption returns the checkbox and appends its own row last: the row is what gets hidden
+			this._aiFillPolicyContainer = this._optionWrapper.lastElementChild;
+
+			if (this._isTimeEnabledCheckBox)
+			{
+				BX.bind(
+					this._isTimeEnabledCheckBox,
+					"change",
+					BX.delegate(this.adjustAiFillPolicyVisibility, this)
+				);
+			}
+		}
+		//endregion
+
 		//region Use timezone
 		if(this._typeId === "datetime")
 		{
@@ -80,6 +127,121 @@ if(typeof BX.Crm.EntityEditorUserFieldConfigurator === "undefined")
 
 		return this._optionWrapper;
 	};
+	//region AI fill policy state
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.isAiFillPolicyAvailable = function()
+	{
+		if (this._field)
+		{
+			return BX.prop.getBoolean(this._aiFillPolicy, "available", false);
+		}
+
+		return this.isAiFillPolicySupportedForType(this.getAiFillPolicyTypeId());
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.getAiFillPolicyTypeId = function()
+	{
+		// a new datetime field with the time switched off is saved as a date one, the policy follows the saved type
+		if (this._field === null && this._typeId === "datetime")
+		{
+			return (this._isTimeEnabledCheckBox && this._isTimeEnabledCheckBox.checked) ? "datetime" : "date";
+		}
+
+		return this._typeId;
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.adjustAiFillPolicyVisibility = function()
+	{
+		if (!this._aiFillPolicyContainer)
+		{
+			return;
+		}
+
+		if (this.isAiFillPolicyAvailable())
+		{
+			BX.show(this._aiFillPolicyContainer);
+		}
+		else
+		{
+			BX.hide(this._aiFillPolicyContainer);
+		}
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.isAiFillPolicySupportedForType = function(typeId)
+	{
+		return BX.prop.getBoolean(this._aiFillPolicySettings, "available", false)
+			&& BX.util.in_array(typeId, BX.prop.getArray(this._aiFillPolicySettings, "supportedTypes", []));
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.isAiFillPolicyChanged = function()
+	{
+		return this._aiFillPolicyCheckBox !== null
+			&& this.isAiFillPolicyAvailable()
+			&& this._aiFillPolicyCheckBox.checked !== this._aiFillPolicySavedState;
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.isAiFillPolicyEnabled = function()
+	{
+		return this._aiFillPolicyCheckBox
+			? this._aiFillPolicyCheckBox.checked
+			: this._aiFillPolicySavedState;
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.getSavedAiFillPolicyState = function()
+	{
+		return this._aiFillPolicySavedState;
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.setAiFillPolicyState = function(isEnabled)
+	{
+		this._aiFillPolicySavedState = isEnabled;
+		if (this._aiFillPolicyCheckBox)
+		{
+			this._aiFillPolicyCheckBox.checked = isEnabled;
+		}
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.setAiFillPolicyBusy = function(isBusy)
+	{
+		if (this._aiFillPolicyCheckBox)
+		{
+			this._aiFillPolicyCheckBox.disabled = isBusy;
+
+			if (isBusy)
+			{
+				// "disabled" alone reads as "unavailable", so the reason for it is announced
+				BX.UI.Accessibility.LiveAnnouncer.announce(
+					this.getMessage("aiFillPolicySaving")
+						.replace(/#OPTION#/gi, () => this.getMessage("aiFillPolicy")),
+					"polite"
+				);
+			}
+		}
+	};
+	BX.Crm.EntityEditorUserFieldConfigurator.prototype.onAiFillPolicySaveError = function(response)
+	{
+		if (this._aiFillPolicyCheckBox)
+		{
+			this._aiFillPolicyCheckBox.checked = this._aiFillPolicySavedState;
+		}
+
+		var errors = BX.prop.getArray(response, "errors", []);
+		var message = errors.length > 0 ? BX.prop.getString(errors[0], "message", "") : "";
+		if (message === "")
+		{
+			message = BX.message("UI_ENTITY_EDITOR_SAVE_ERROR_CONTENT");
+		}
+
+		BX.UI.Notification.Center.notify(
+			{
+				content: BX.util.htmlspecialchars(message),
+				position: "top-center",
+				autoHideDelay: 10000
+			}
+		);
+
+		// the notification balloon has no live region, so the error and the reverted state are announced here
+		BX.UI.Accessibility.LiveAnnouncer.announce(
+			this.getMessage(
+				this._aiFillPolicySavedState ? "aiFillPolicySaveErrorRevertOn" : "aiFillPolicySaveErrorRevertOff"
+			)
+				.replace(/#OPTION#/gi, () => this.getMessage("aiFillPolicy"))
+				.replace(/#ERROR#/gi, () => message),
+			"assertive"
+		);
+	};
+	//endregion
 	BX.Crm.EntityEditorUserFieldConfigurator.prototype.getMessage = function(name)
 	{
 		var m = BX.Crm.EntityEditorUserFieldConfigurator.messages;

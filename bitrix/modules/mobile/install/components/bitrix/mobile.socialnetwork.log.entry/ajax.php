@@ -1321,6 +1321,31 @@ if(CModule::IncludeModule("socialnetwork"))
 
 		if ($log_id > 0)
 		{
+			if ($arLog = CSocNetLog::GetByID($log_id))
+			{
+				$logEntityType = $arLog["ENTITY_TYPE"];
+				$arListParams = (
+					mb_strpos($logEntityType, "CRM") === 0 && IsModuleInstalled("crm")
+						? array("IS_CRM" => "Y", "CHECK_CRM_RIGHTS" => "Y")
+						: array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N")
+				);
+
+				if (
+					!($rsLog = CSocNetLog::GetList(array(), array("ID" => $log_id), false, false, array(), $arListParams))
+					|| !($arLog = $rsLog->Fetch())
+				)
+				{
+					$log_id = 0;
+				}
+			}
+			else
+			{
+				$log_id = 0;
+			}
+		}
+
+		if ($log_id > 0)
+		{
 			$arRights = array();
 			$dbRight = CSocNetLogRights::GetList(array(), array("LOG_ID" => $log_id));
 			while ($arRight = $dbRight->Fetch())

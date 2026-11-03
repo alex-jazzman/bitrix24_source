@@ -1,0 +1,262 @@
+/* Значения градиентов, размеров и таймингов — из макета GenuiBoard kanaly/page-subscribe-blur.
+   Паддинги бара статичные: изменение высоты дёргает высоту ленты и зацикливает порог скролла;
+   визуальное поджатие при скролле — только transform контента. */
+
+.bx-im-content-channel-subscribe-bar__container {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 90;
+	display: flex;
+	justify-content: center;
+	padding: 16px 16px 24px;
+	pointer-events: none;
+}
+
+.bx-im-content-channel-subscribe-bar__veil {
+	position: absolute;
+	top: 18px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	opacity: 0;
+	background: linear-gradient(
+		to top,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 72%, transparent) 0%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 60%, transparent) 22%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 38%, transparent) 36%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 12%, transparent) 55%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 3%, transparent) 75%,
+		transparent 100%
+	);
+	transition: opacity 320ms ease;
+}
+
+.bx-im-content-channel-subscribe-bar__container.--compact .bx-im-content-channel-subscribe-bar__veil {
+	opacity: 1;
+}
+
+.bx-im-content-channel-subscribe-bar__frost {
+	position: absolute;
+	top: 72px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	-webkit-backdrop-filter: blur(2px);
+	backdrop-filter: blur(2px);
+}
+
+.bx-im-content-channel-subscribe-bar__content {
+	position: relative;
+	max-width: 100%;
+	pointer-events: auto;
+	transition: transform 320ms ease;
+}
+
+.bx-im-content-channel-subscribe-bar__container.--compact .bx-im-content-channel-subscribe-bar__content {
+	transform: translateY(20px);
+}
+
+.bx-im-content-channel-subscribe-bar__card,
+.bx-im-content-channel-subscribe-bar__ring {
+	position: absolute;
+	top: -14px;
+	bottom: -12px;
+	left: -24px;
+	right: -24px;
+	border-radius: 20px;
+	pointer-events: none;
+	transition: opacity 320ms ease;
+}
+
+.bx-im-content-channel-subscribe-bar__card {
+	opacity: 0.5;
+	background: linear-gradient(
+		to top,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 98%, transparent) 0%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 80%, transparent) 38%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 67%, transparent) 72%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 57%, transparent) 100%
+	);
+}
+
+.bx-im-content-channel-subscribe-bar__ring {
+	padding: 1px;
+	opacity: 1;
+	background: linear-gradient(
+		to top,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 29%, transparent) 0%,
+		color-mix(in srgb, var(--ui-color-bg-content-primary) 20%, transparent) 100%
+	);
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+}
+
+.bx-im-content-channel-subscribe-bar__container.--compact .bx-im-content-channel-subscribe-bar__card,
+.bx-im-content-channel-subscribe-bar__container.--compact .bx-im-content-channel-subscribe-bar__ring {
+	opacity: 0;
+}
+
+.bx-im-content-channel-subscribe-bar__stack {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	text-align: center;
+}
+
+.bx-im-content-channel-subscribe-bar__text-stack {
+	position: relative;
+	display: grid;
+	justify-items: center;
+	pointer-events: none;
+	transition: opacity 320ms ease;
+}
+
+.bx-im-content-channel-subscribe-bar__container.--compact .bx-im-content-channel-subscribe-bar__text-stack {
+	opacity: 0;
+}
+
+.bx-im-content-channel-subscribe-bar__text {
+	grid-area: 1 / 1;
+	color: var(--ui-color-base-1);
+	font-size: var(--im-font-size-md);
+	line-height: var(--im-font-line-height-2xs, 1.3);
+	opacity: 0;
+	transition: opacity 300ms ease, transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-content-channel-subscribe-bar__text.--call {
+	transform: translateY(-4px);
+}
+
+.bx-im-content-channel-subscribe-bar__text.--subscribed {
+	transform: translateY(4px);
+}
+
+.bx-im-content-channel-subscribe-bar__text.--visible {
+	opacity: 1;
+	transform: none;
+}
+
+.bx-im-content-channel-subscribe-bar__error-row {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	opacity: 0;
+	transform: translateY(4px);
+	transition: opacity 300ms ease, transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-content-channel-subscribe-bar__error-row.--visible {
+	opacity: 1;
+	transform: none;
+}
+
+.bx-im-content-channel-subscribe-bar__error-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	border-radius: 512px;
+	background: color-mix(in srgb, var(--ui-color-bg-content-primary) 55%, transparent);
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-content-channel-subscribe-bar__error-text {
+	color: var(--ui-color-base-1);
+	font-size: var(--im-font-size-md);
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: var(--im-font-line-height-2xs, 1.3);
+	white-space: nowrap;
+}
+
+.bx-im-content-channel-subscribe-bar__button-scale {
+	transform-origin: top center;
+	transition: transform 320ms ease;
+}
+
+.bx-im-content-channel-subscribe-bar__container.--compact .bx-im-content-channel-subscribe-bar__button-scale {
+	transform: scale(0.895);
+}
+
+.bx-im-content-channel-subscribe-bar__button-stack {
+	display: grid;
+	justify-items: center;
+	align-items: center;
+}
+
+.bx-im-content-channel-subscribe-bar__subscribe-layer {
+	grid-area: 1 / 1;
+	opacity: 1;
+	transition: opacity 300ms ease, transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-content-channel-subscribe-bar__subscribe-layer.--pressed {
+	transform: scale(0.97);
+}
+
+.bx-im-content-channel-subscribe-bar__subscribe-layer.--hidden {
+	opacity: 0;
+	transform: scale(0.96);
+	pointer-events: none;
+}
+
+.bx-im-content-channel-subscribe-bar__morph {
+	position: relative;
+	overflow: hidden;
+	max-width: 100%;
+	border-radius: 10px;
+	transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-content-channel-subscribe-bar__sound-layer {
+	grid-area: 1 / 1;
+	border-radius: 512px;
+	box-shadow: 0 2px 10px color-mix(in srgb, var(--ui-color-base-1) 12%, transparent);
+	opacity: 0;
+	transform: scale(0.82);
+	pointer-events: none;
+	transition: opacity 260ms ease, transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bx-im-content-channel-subscribe-bar__sound-layer.--visible {
+	opacity: 1;
+	transform: scale(1);
+	pointer-events: auto;
+}
+
+.bx-im-content-channel-subscribe-bar__probes {
+	position: absolute;
+	left: -9999px;
+	top: 0;
+	display: flex;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.bx-im-content-channel-subscribe-bar__probe {
+	display: inline-block;
+}
+
+/* Лента канала резервирует место под бар (и плавно поджимается в компакт-режиме).
+   Переменную и класс на .bx-im-content-chat__content ставит ChannelSubscribeBar. */
+.bx-im-content-chat__content.--with-channel-subscribe-bar .bx-im-dialog-chat__scroll-container {
+	padding-bottom: var(--im-channel-subscribe-bar-reserve, 0px);
+	transition: padding-bottom 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Полоса статусов держит фиксированные 44px под последним постом и раздувает зазор
+   до карточки; в макете её нет, а в резервной зоне её всё равно скрывает бар */
+.bx-im-content-chat__content.--with-channel-subscribe-bar .bx-im-dialog-chat-status__container {
+	display: none;
+}

@@ -1,2 +1,1409 @@
-this.BX=this.BX||{},function(t,e,o,n,s,r,i,a,c,d,u){"use strict";var p={system:"SYSTEM",custom:"CUSTOM"},l="SYSTEM",h="MARKET";function f(t,e){var o="undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(!o){if(Array.isArray(t)||(o=function(t,e){if(!t)return;if("string"==typeof t)return g(t,e);var o=Object.prototype.toString.call(t).slice(8,-1);"Object"===o&&t.constructor&&(o=t.constructor.name);if("Map"===o||"Set"===o)return Array.from(t);if("Arguments"===o||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(o))return g(t,e)}(t))||e&&t&&"number"==typeof t.length){o&&(t=o);var n=0,s=function(){};return{s:s,n:function(){return n>=t.length?{done:!0}:{done:!1,value:t[n++]}},e:function(t){throw t},f:s}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var r,i=!0,a=!1;return{s:function(){o=o.call(t)},n:function(){var t=o.next();return i=t.done,t},e:function(t){a=!0,r=t},f:function(){try{i||null==o.return||o.return()}finally{if(a)throw r}}}}function g(t,e){(null==e||e>t.length)&&(e=t.length);for(var o=0,n=new Array(e);o<e;o++)n[o]=t[o];return n}var m=function(){function t(){babelHelpers.classCallCheck(this,t)}return babelHelpers.createClass(t,null,[{key:"buildStore",value:function(e){return t.initialGroup=i.Runtime.clone(e.group),o.createStore({state:function(){return e},mutations:{setIsLoading:function(t,e){t.isLoading=e},setGroupName:function(t,e){t.group.name=e},setEmptyGroupName:function(e,o){e.group.name=o,t.initialGroup.name=o},addDashboard:function(t,e){t.group.dashboardIds.unshift(e.id);var o=t.group.scopes;t.dashboards.get(e.id)&&(e.scopes=t.dashboards.get(e.id).scopes);var n,s=new Set(e.scopes.map((function(t){return t.code}))),r=f(o);try{for(r.s();!(n=r.n()).done;){var i=n.value;s.has(i.code)||e.scopes.push(i)}}catch(t){r.e(t)}finally{r.f()}t.dashboards.set(e.id,e)},removeDashboard:function(t,e){var o=t.dashboards.get(e);if(o){t.group.dashboardIds=t.group.dashboardIds.filter((function(t){return t!==e}));var n,s=f(t.group.scopes);try{var r=function(){var s,r=n.value,i=!1,a=f(t.otherGroups);try{for(a.s();!(s=a.n()).done;){var c=s.value;c.dashboardIds.includes(e)&&c.scopes.some((function(t){return t.code===r.code}))&&(i=!0)}}catch(t){a.e(t)}finally{a.f()}!i&&o.scopes.some((function(t){return t.code===r.code}))&&(o.scopes=o.scopes.filter((function(t){return t.code!==r.code})),t.dashboards.set(e,o))};for(s.s();!(n=s.n()).done;)r()}catch(t){s.e(t)}finally{s.f()}}},setDashboardScopes:function(t,e){var o=e.dashboardId,n=e.scopes;t.dashboards.get(o).scopes=n},addGroupScope:function(t,e){t.group.scopes.push(e);var o,n=e.code,s=f(t.group.dashboardIds);try{for(s.s();!(o=s.n()).done;){var r=o.value,i=t.dashboards.get(r);i.scopes.some((function(t){return t.code===n}))||(i.scopes.push(e),t.dashboards.set(r,i))}}catch(t){s.e(t)}finally{s.f()}},removeGroupScope:function(t,e){t.group.scopes=t.group.scopes.filter((function(t){return t.code!==e.code}));var o,n=e.code,s=f(t.group.dashboardIds);try{for(s.s();!(o=s.n()).done;){var r,i=o.value,a=!1,c=f(t.otherGroups);try{for(c.s();!(r=c.n()).done;){var d=r.value;d.dashboardIds.includes(i)&&d.scopes.some((function(t){return t.code===n}))&&(a=!0)}}catch(t){c.e(t)}finally{c.f()}if(!a){var u=t.dashboards.get(i);u.scopes.some((function(t){return t.code===n}))&&(u.scopes=u.scopes.filter((function(t){return t.code!==n})),t.dashboards.set(i,u))}}}catch(t){s.e(t)}finally{s.f()}}},getters:{user:function(t){return t.user},groupName:function(t){return t.group.name},groupScopes:function(t){return t.group.scopes},dashboards:function(t){return t.dashboards},otherGroups:function(t){return t.otherGroups},groupDashboardsData:function(t){var e,o=[],n=f(t.group.dashboardIds);try{for(n.s();!(e=n.n()).done;){var s=e.value;o.push(t.dashboards.get(s))}}catch(t){n.e(t)}finally{n.f()}return o},isSystemGroup:function(t){return t.group.type===p.system},isNewGroup:function(t){var e;return String(null!==(e=t.group.id)&&void 0!==e?e:"").startsWith("new_")},groupData:function(t){return{id:t.group.id,name:t.group.name,type:t.group.type,scopes:t.group.scopes,dashboardIds:t.group.dashboardIds}},isSaveEnabled:function(t){return t.saveEnabled},isLoading:function(t){return t.isLoading},isGroupScope:function(t){return function(e,o){if(t.group.scopes.some((function(t){return t.code===o})))return!0;var n,s=f(t.otherGroups);try{for(s.s();!(n=s.n()).done;){var r=n.value;if(r.dashboardIds.includes(e)&&r.scopes.some((function(t){return t.code===o})))return!0}}catch(t){s.e(t)}finally{s.f()}return!1}},accessibleDashboardIdsSet:function(t){return new Set(t.otherGroups.filter((function(e){return t.user.accessibleGroupIds.includes(e.id)})).flatMap((function(t){return t.dashboardIds})))},shouldShowDeleteWarning:function(t,e){return function(o){var n=t.user;if(n.isAdmin||n.hasAccessToPermission)return!1;var s=t.dashboards.get(o);return!!s&&(s.createdById!==n.id&&!e.accessibleDashboardIdsSet.has(o))}},getGroupsNameForDashboardScope:function(t){return function(e,o){var n=[];t.group.scopes.some((function(t){return t.code===o}))&&n.push(t.group.name);var s,r=f(t.otherGroups);try{for(r.s();!(s=r.n()).done;){var i=s.value;i.dashboardIds.includes(e)&&i.scopes.some((function(t){return t.code===o}))&&n.push(i.name)}}catch(t){r.e(t)}finally{r.f()}return n}},isTitleEdited:function(e){return e.group.name!==t.initialGroup.name},isDashboardListEdited:function(e){return!t.areSetsEqual(new Set(t.initialGroup.dashboardIds),new Set(e.group.dashboardIds))},isScopeListEdited:function(e){return!t.areSetsEqual(new Set(t.initialGroup.scopes.map((function(t){return t.code}))),new Set(e.group.scopes.map((function(t){return t.code}))))}}})}},{key:"areSetsEqual",value:function(t,e){if(t.size!==e.size)return!1;var o,n=f(t);try{for(n.s();!(o=n.n()).done;){var s=o.value;if(!e.has(s))return!1}}catch(t){n.e(t)}finally{n.f()}return!0}}]),t}();function b(t,e){var o="undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(!o){if(Array.isArray(t)||(o=function(t,e){if(!t)return;if("string"==typeof t)return v(t,e);var o=Object.prototype.toString.call(t).slice(8,-1);"Object"===o&&t.constructor&&(o=t.constructor.name);if("Map"===o||"Set"===o)return Array.from(t);if("Arguments"===o||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(o))return v(t,e)}(t))||e&&t&&"number"==typeof t.length){o&&(t=o);var n=0,s=function(){};return{s:s,n:function(){return n>=t.length?{done:!0}:{done:!1,value:t[n++]}},e:function(t){throw t},f:s}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var r,i=!0,a=!1;return{s:function(){o=o.call(t)},n:function(){var t=o.next();return i=t.done,t},e:function(t){a=!0,r=t},f:function(){try{i||null==o.return||o.return()}finally{if(a)throw r}}}}function v(t,e){(null==e||e>t.length)&&(e=t.length);for(var o=0,n=new Array(e);o<e;o++)n[o]=t[o];return n}var S={props:{dashboard:{type:Object,required:!0}},data:function(){return{initialScopedIds:[]}},beforeUnmount:function(){this.dialog&&this.dialog.destroy(),this.dialog=null,this.hintManagers&&(this.hintManagers.forEach((function(t){t.popup&&t.popup.destroy()})),this.hintManagers=[]);var t=this.$el.querySelector(".scope-hint");t&&i.Event.unbindAll(t)},computed:{visibleScopes:function(){return this.scopes.slice(0,3)},scopes:function(){return babelHelpers.toConsumableArray(this.dashboard.scopes)},isGroupScope:function(){var t=this;return function(e){return t.$store.getters.isGroupScope(t.dashboard.id,e)}},scopeText:function(){var t,e=[],o=b(this.visibleScopes.entries());try{for(o.s();!(t=o.n()).done;){var n=babelHelpers.slicedToArray(t.value,2),s=n[0],r=n[1],a=r.name,c=s<this.visibleScopes.length-1?", ":"",d='\n\t\t\t\t\t<span \n\t\t\t\t\t\tclass="scope-name"\n\t\t\t\t\t\ttitle="'.concat(i.Text.encode(r.name),'"\n\t\t\t\t\t>\n\t\t\t\t\t\t').concat(i.Text.encode(a+c),"\n\t\t\t\t\t</span>\n\t\t\t\t");e.push(d)}}catch(t){o.e(t)}finally{o.f()}return this.scopes.length<=3?e.join(""):this.$Bitrix.Loc.getMessage("BI_GROUP_SCOPES_DASHBOARD").replace("#FIRST_SCOPES#",e.join("")).replace("[hint]",'<span class="scope-list scope-list-more scope-hint">').replace("[/hint]","</span>").replace("#NUMBER#",this.dashboard.scopes.length-3)}},emits:["onScopeChange"],methods:{openSelector:function(){this.dialog||this.initDialog(),this.initialScopedIds=this.dashboard.scopes.map((function(t){return t.code})),this.dialog.show()},initDialog:function(){var t,e=this,o=[],n=[],s=b(this.dashboard.scopes);try{for(s.s();!(t=s.n()).done;){var r=t.value;o.push(["biconnector-superset-scope",r.code]),this.isGroupScope(r.code)&&n.push(["biconnector-superset-scope",r.code])}}catch(t){s.e(t)}finally{s.f()}this.dialog=new c.Dialog({id:"dashboard-scope-selector",targetNode:this.$refs.dashboardScopes,width:350,height:370,dropdownMode:!0,compactView:!0,showAvatars:!1,enableSearch:!0,preload:!0,preselectedItems:o,undeselectedItems:n,entities:[{id:"biconnector-superset-scope",dynamicLoad:!0,dynamicSearch:!0}],events:{"Item:onSelect":this.handleScopeAdd,"Item:onDeselect":this.handleScopeRemove,onHide:this.handleDialogHide,onLoad:function(){e.addHintsForUndeselectedScopes()}}}),this.dialog.getPopup().setOffset({offsetLeft:-320}),this.dialog.adjustPosition(),i.Dom.addClass(this.dialog.getContainer(),"biconnector-scope-selector")},addHintsForUndeselectedScopes:function(){var t=this;if(this.dialog){var e,o=[],n=b(this.scopes);try{for(n.s();!(e=n.n()).done;){var s=e.value,r=this.$store.getters.getGroupsNameForDashboardScope(this.dashboard.id,s.code);r.length>0&&o.push({scopeName:s.name,groupNameList:r})}}catch(t){n.e(t)}finally{n.f()}o.forEach((function(e){var o=e.scopeName,n=e.groupNameList;t.createHintForUndeselectebleScope(o,n)}))}},handleScopeAdd:function(t){var e=t.getData().item,o=this.scopes;o.push({code:e.getId(),name:e.getTitle()}),this.$store.commit("setDashboardScopes",{dashboardId:this.dashboard.id,scopes:o}),this.$emit("onScopeChange")},handleScopeRemove:function(t){var e=t.getData().item,o=this.scopes.filter((function(t){return t.code!==e.id}));this.$store.commit("setDashboardScopes",{dashboardId:this.dashboard.id,scopes:o}),this.$emit("onScopeChange")},handleDialogHide:function(t){var e=!m.areSetsEqual(new Set(this.initialScopedIds),new Set(this.dashboard.scopes.map((function(t){return t.code}))));a.EventEmitter.emit("BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide",{isScopeListEdited:e})},showMoreScopesHint:function(){var t=this.$el.querySelector(".scope-hint");this.hintManager.show(t,this.scopes.slice(3).map((function(t){return t.name})).join(", "),!1)},hideMoreScopesHint:function(){this.hintManager.hide(),this.hintManager.popup=null},onGroupScopeChanged:function(){var t;null===(t=this.dialog)||void 0===t||t.destroy(),this.dialog=null},attachHintHandlers:function(){var t=this.$el.querySelector(".scope-hint");t&&(i.Event.unbindAll(t),i.Event.bind(t,"mouseenter",this.showMoreScopesHint),i.Event.bind(t,"mouseleave",this.hideMoreScopesHint))},createHintForUndeselectebleScope:function(t,e){var o,n=this.dialog.getPopup().getContentContainer(),s=this.findSelectorItemByTitle(n,t);this.hintManagers=null!==(o=this.hintManagers)&&void 0!==o?o:[];var r="";if(1===e.length)r=i.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE",{"#GROUP_NAME#":i.Text.encode(e[0])});else{var a=i.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE_MANY"),c='<ul style="margin: 3px 0; padding-left: 20px;">'.concat(e.map((function(t){return"<li>".concat(i.Text.encode(t),"</li>")})).join(""),"</ul>");r=a+c}var d="scope-hint-dash-".concat(this.dashboard.id,"-").concat(t.replaceAll(/\s/g,"-")),u=BX.UI.Hint.createInstance({id:d,popupParameters:{offsetLeft:340,offsetTop:-45,autoHide:!0,width:330,angle:{position:"left",offset:15}}});this.hintManagers.push(u),i.Event.bind(s,"click",(function(){u.show(s,r,!1,!1)})),i.Event.bind(s,"mouseleave",(function(){u.hide()}))},findSelectorItemByTitle:function(t,e){var o,n=b(t.querySelectorAll(".ui-selector-item"));try{for(n.s();!(o=n.n()).done;){var s=o.value,r=s.querySelector(".ui-selector-item-title");if(r&&r.textContent.trim()===e)return s}}catch(t){n.e(t)}finally{n.f()}return null}},mounted:function(){this.hintManager=i.UI.Hint.createInstance({id:"dashboard-scope-hint-".concat(Date.now()),popupParameters:{bindOptions:{position:"bottom"},width:190,offsetLeft:-80,angle:{position:"top",offset:130},cacheable:!1}}),this.attachHintHandlers()},updated:function(){this.attachHintHandlers()},template:'\n\t\t<div class="group-dashboard-scopes-container">\n\t\t\t<span \n\t\t\t\tclass="scope-list scope-list-dashboard"\n\t\t\t\t@click="openSelector"\n\t\t\t\tv-if="scopes.length > 0"\n\t\t\t\tv-html="scopeText"\n\t\t\t>\n\t\t\t</span>\n\t\t\t<span\n\t\t\t\tclass="scope-list-empty"\n\t\t\t\t@click="openSelector"\n\t\t\t\tv-else\n\t\t\t>\n\t\t\t\t{{$Bitrix.Loc.getMessage(\'BI_GROUP_DASHBOARD_SCOPES_EMPTY\')}}\n\t\t\t</span>\n\t\t\t<span ref="dashboardScopes"></span>\n\t\t</div>\n\t'},y={props:{dashboard:{type:Object,required:!0}},computed:{iconPath:function(){return this.dashboard.type===l?"/bitrix/images/biconnector/superset-dashboard-selector/icon-type-system.png":this.dashboard.type===h?"/bitrix/images/biconnector/superset-dashboard-selector/icon-type-market.png":"/bitrix/images/biconnector/superset-dashboard-selector/icon-type-custom.png"},set:function(){return d.Outline}},methods:{onRemoveClick:function(){a.EventEmitter.emit("BIConnector.GroupPopup.DashboardList:onDashboardRemove",{isDashboardListEdited:!0}),this.$emit("onDashboardRemove",{dashboardId:this.dashboard.id}),this.emitDashboardChange()},emitDashboardChange:function(){this.$emit("onDashboardChange")},onGroupScopeChanged:function(){this.$refs.scopeSelector.onGroupScopeChanged()}},emits:["onDashboardChange","onDashboardRemove"],components:{BIcon:d.BIcon,DashboardScopeSelector:S},template:'\n\t\t<div class="group-dashboard">\n\t\t\t<img class="group-dashboard-icon" :src="iconPath" width="32" height="32" alt="Dashboard icon">\n\t\t\t<div class="group-dashboard-name" :title="dashboard.name">{{dashboard.name}}</div>\n\t\t\t<DashboardScopeSelector :dashboard="dashboard" ref="scopeSelector" @on-scope-change="emitDashboardChange"/>\n\t\t\t<BIcon\n\t\t\t\t:name="set.CROSS_L"\n\t\t\t\t:size="20"\n\t\t\t\tcolor="var(--ui-color-base-4)"\n\t\t\t\t:class="\'group-dashboard-remove-icon\'"\n\t\t\t\t@click="onRemoveClick"\n\t\t\t></BIcon>\n\t\t</div>\n\t'};function I(t,e){var o="undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(!o){if(Array.isArray(t)||(o=function(t,e){if(!t)return;if("string"==typeof t)return E(t,e);var o=Object.prototype.toString.call(t).slice(8,-1);"Object"===o&&t.constructor&&(o=t.constructor.name);if("Map"===o||"Set"===o)return Array.from(t);if("Arguments"===o||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(o))return E(t,e)}(t))||e&&t&&"number"==typeof t.length){o&&(t=o);var n=0,s=function(){};return{s:s,n:function(){return n>=t.length?{done:!0}:{done:!1,value:t[n++]}},e:function(t){throw t},f:s}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var r,i=!0,a=!1;return{s:function(){o=o.call(t)},n:function(){var t=o.next();return i=t.done,t},e:function(t){a=!0,r=t},f:function(){try{i||null==o.return||o.return()}finally{if(a)throw r}}}}function E(t,e){(null==e||e>t.length)&&(e=t.length);for(var o=0,n=new Array(e);o<e;o++)n[o]=t[o];return n}var D={props:{dashboards:{type:Array,required:!0}},data:function(){return{initialDashboardIds:[],bypassDeselectHandler:!1}},mounted:function(){this.initDialog()},methods:{onAddDashboardClick:function(){this.initialDashboardIds=this.dashboards.map((function(t){return t.id})),this.dialog.show()},initDialog:function(){var t,e=this,o=[],n=I(this.dashboards);try{for(n.s();!(t=n.n()).done;){var s=t.value;o.push(["biconnector-superset-dashboard",s.id])}}catch(t){n.e(t)}finally{n.f()}this.dialog=new c.Dialog({id:"group-dashboard-selector",targetNode:this.$refs.addDashboardButton,width:400,height:370,dropdownMode:!0,enableSearch:!0,preload:!0,preselectedItems:o,entities:[{id:"biconnector-superset-dashboard",dynamicLoad:!0,dynamicSearch:!0,options:{loadProxyData:!1,checkAccessRights:this.$store.getters.isSaveEnabled}}],tagSelectorOptions:{events:{onBeforeTagRemove:function(t){if(!e.bypassDeselectHandler){var o=t.data.tag.getId();e.$store.getters.isSaveEnabled&&e.$store.getters.shouldShowDeleteWarning(o)&&(t.preventDefault(),e.dialog.setAutoHide(!1),e.$emit("onBeforeRemoveConfirmation",{dashboardId:o}))}}}},events:{"Item:onSelect":function(t){var o,n,s=t.data.item,r={id:s.getId(),name:s.getTitle(),type:null!==(o=s.getCustomData().get("type"))&&void 0!==o?o:l,createdById:s.getCustomData().get("createdById"),scopes:null!==(n=s.getCustomData().get("scopes"))&&void 0!==n?n:[]};e.$store.commit("addDashboard",r),e.$emit("onDashboardsChange")},"Item:onBeforeDeselect":function(t){if(!e.bypassDeselectHandler){var o=t.data.item.getId();e.$store.getters.isSaveEnabled&&e.$store.getters.shouldShowDeleteWarning(o)&&(t.preventDefault(),e.dialog.setAutoHide(!1),e.$emit("onBeforeRemoveConfirmation",{dashboardId:o}))}},"Item:onDeselect":function(t){var o=t.data.item;e.$store.commit("removeDashboard",o.getId()),e.$emit("onDashboardsChange")},onHide:function(t){var o=!m.areSetsEqual(new Set(e.initialDashboardIds),new Set(e.dashboards.map((function(t){return t.id}))));a.EventEmitter.emit("BIConnector.GroupPopup.DashboardSelector:onDialogHide",{isDashboardListEdited:o})}}})},deselect:function(t){var e;this.bypassDeselectHandler=!0,null===(e=this.dialog.getItem({entityId:"biconnector-superset-dashboard",id:t}))||void 0===e||e.deselect()},resetDialog:function(){this.dialog.setAutoHide(!0),this.bypassDeselectHandler=!1}},emits:["onBeforeRemoveConfirmation","onDashboardsChange"],watch:{dashboards:function(t,e){var o,n=this.dialog,s=I(e);try{for(s.s();!(o=s.n()).done;){var r,i=o.value;if(!t.includes(i))null===(r=n.getItem(["biconnector-superset-dashboard",i.id]))||void 0===r||r.deselect()}}catch(t){s.e(t)}finally{s.f()}}},template:'\n\t\t<div class="ui-btn --air ui-btn-md ui-btn-icon-add ui-icon-set__scope --with-left-icon --style-tinted ui-btn-no-caps"\n\t\t\t@click="onAddDashboardClick"\n\t\t\tref="addDashboardButton"\n\t\t>\n\t\t\t<span class="ui-btn-text">\n\t\t\t\t{{ $Bitrix.Loc.getMessage(\'BI_GROUP_ADD_DASHBOARD\') }}\n\t\t\t</span>\n\t\t</div>\n\t'},B={emits:["confirm","close"],props:{},setup:function(){return{ButtonSize:r.ButtonSize,AirButtonStyle:r.AirButtonStyle,Outline:s.Outline}},data:function(){return{popupInstance:null,popupId:"biconnector-dashboard-deletion",dontShow:!1}},computed:{popupOptions:function(){return{id:this.popupId,content:this.$refs.content,width:410,padding:12,borderRadius:"16px",autoHide:!0,overlay:!0,events:{onPopupClose:this.closePopup},fixed:!0}}},methods:{closePopup:function(){var t;this.popupInstance&&(null===(t=n.PopupManager.getPopupById(this.popupId))||void 0===t||t.destroy(),this.popupInstance=null,this.$emit("close"))},onConfirm:function(){this.$emit("confirm",{dontShow:this.dontShow}),this.closePopup()},getPopupText:function(){return this.$Bitrix.Loc.getMessage("BI_GROUP_SAVE_WARN_TEXT_MSGVER_1")}},mounted:function(){this.popupInstance||(this.popupInstance=new n.Popup(this.popupOptions)),this.popupInstance.show()},beforeUnmount:function(){this.closePopup()},components:{BIcon:d.BIcon,UiButton:r.Button},template:'\n\t\t<div ref="content" class="group-warn-popup">\n\t\t\t<div class="group-warn-popup-title-block">\n\t\t\t\t<div class="group-warn-popup-title">{{ $Bitrix.Loc.getMessage(\'BI_GROUP_SAVE_WARN_TITLE\') }}</div>\n\t\t\t\t<BIcon\n\t\t\t\t\t:name="Outline.CROSS_L"\n\t\t\t\t\t:size="24"\n\t\t\t\t\tcolor="#A7A7A7"\n\t\t\t\t\t:class="\'group-warn-popup-close\'"\n\t\t\t\t\t@click="closePopup"\n\t\t\t\t></BIcon>\n\t\t\t</div>\n\t\t\t<div class="group-warn-popup-box" v-html="getPopupText()"></div>\n\t\t\t<div class="group-warn-popup-buttons">\n\t\t\t\t<UiButton\n\t\t\t\t\t:text="$Bitrix.Loc.getMessage(\'BI_GROUP_SAVE_WARN_YES\')"\n\t\t\t\t\t:size="ButtonSize.MEDIUM"\n\t\t\t\t\t:style="AirButtonStyle.FILLED"\n\t\t\t\t\t@click="onConfirm"\n\t\t\t\t/>\n\t\t\t\t<UiButton\n\t\t\t\t\t:text="$Bitrix.Loc.getMessage(\'BI_GROUP_SAVE_WARN_NO\')"\n\t\t\t\t\t:size="ButtonSize.MEDIUM"\n\t\t\t\t\t:style="AirButtonStyle.PLAIN"\n\t\t\t\t\t@click="closePopup"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t'};function w(t,e){var o="undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(!o){if(Array.isArray(t)||(o=function(t,e){if(!t)return;if("string"==typeof t)return G(t,e);var o=Object.prototype.toString.call(t).slice(8,-1);"Object"===o&&t.constructor&&(o=t.constructor.name);if("Map"===o||"Set"===o)return Array.from(t);if("Arguments"===o||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(o))return G(t,e)}(t))||e&&t&&"number"==typeof t.length){o&&(t=o);var n=0,s=function(){};return{s:s,n:function(){return n>=t.length?{done:!0}:{done:!1,value:t[n++]}},e:function(t){throw t},f:s}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var r,i=!0,a=!1;return{s:function(){o=o.call(t)},n:function(){var t=o.next();return i=t.done,t},e:function(t){a=!0,r=t},f:function(){try{i||null==o.return||o.return()}finally{if(a)throw r}}}}function G(t,e){(null==e||e>t.length)&&(e=t.length);for(var o=0,n=new Array(e);o<e;o++)n[o]=t[o];return n}var A={props:{canEdit:{type:Boolean,required:!0}},directives:{hint:u.hint},data:function(){return{initialScopedIds:[]}},computed:{scopes:function(){return this.$store.getters.groupScopes},hintOptions:function(){return{html:this.$Bitrix.Loc.getMessage("BI_GROUP_SCOPE_HINT_MSGVER_1").replace("[link]",'<a class="scope-hint-link" onclick="top.BX.Helper.show(`redirect=detail&code=25556500`)">').replace("[/link]","</a>"),interactivity:!0,popupOptions:{bindOptions:{position:"bottom"},autoHide:!1,width:244,offsetTop:-4,angle:{position:"top",offset:34}}}},scopeText:function(){var t='\n\t\t\t\t<span\n\t\t\t\t\tclass="scope-name '.concat(this.canEdit?"":"scope-list-system",'"\n\t\t\t\t\ttitle="').concat(i.Text.encode(this.scopes[0].name),'"\n\t\t\t\t>\n\t\t\t\t\t').concat(i.Text.encode(this.scopes[0].name),"\n\t\t\t\t</span>\n\t\t\t");return this.scopes.length<=1?this.$Bitrix.Loc.getMessage("BI_GROUP_SCOPES_GROUP_MSGVER_1").replace("[title]",'<span class="group-scope-title">').replace("[/title]","</span>").replace("#SCOPE#",t):this.$Bitrix.Loc.getMessage("BI_GROUP_SCOPES_GROUP_MANY_MSGVER_1").replace("[title]",'<span class="group-scope-title">').replace("[/title]","</span>").replace("#FIRST_SCOPES#",t).replace("[hint]",'<span class="scope-list scope-list-more group-scope-hint">').replace("[/hint]","</span>").replace("#NUMBER#",this.scopes.length-1)},emptyScopesText:function(){return this.$Bitrix.Loc.getMessage("BI_GROUP_SCOPES_GROUP_EMPTY_MSGVER_1").replace("[title]",'<span class="group-scope-title">').replace("[/title]","</span>")},set:function(){return d.Outline}},methods:{openScopeSelector:function(){this.canEdit&&(this.dialog||this.initDialog(),this.initialScopedIds=this.scopes.map((function(t){return t.code})),this.dialog.show())},initDialog:function(){var t,e=[],o=w(this.scopes);try{for(o.s();!(t=o.n()).done;){var n=t.value;e.push(["biconnector-superset-scope",n.code])}}catch(t){o.e(t)}finally{o.f()}this.dialog=new c.Dialog({id:"group-scope-selector",targetNode:this.$refs.groupScopes,width:350,height:370,dropdownMode:!0,compactView:!0,showAvatars:!1,enableSearch:!0,preload:!0,preselectedItems:e,entities:[{id:"biconnector-superset-scope",dynamicLoad:!0,dynamicSearch:!0}],events:{"Item:onSelect":this.onGroupScopeAdd,"Item:onDeselect":this.onGroupScopeRemove,onHide:this.onDialogHide}}),this.dialog.getPopup().setOffset({offsetLeft:-320}),this.dialog.adjustPosition(),i.Dom.addClass(this.dialog.getContainer(),"biconnector-scope-selector")},onGroupScopeAdd:function(t){var e=t.getData().item,o={code:e.getId(),name:e.getTitle()};this.$emit("onGroupScopeAdd",o)},onGroupScopeRemove:function(t){var e=t.getData().item,o={code:e.getId(),name:e.getTitle()};this.$emit("onGroupScopeRemove",o)},onDialogHide:function(t){var e=!m.areSetsEqual(new Set(this.initialScopedIds),new Set(this.scopes.map((function(t){return t.code}))));a.EventEmitter.emit("BIConnector.GroupPopup.ScopeSelector:onDialogHide",{isScopeListEdited:e})},showMoreScopesHint:function(){var t=this.$el.querySelector(".group-scope-hint");this.hintManager.show(t,this.scopes.slice(1).map((function(t){return t.name})).join(", "),!1)},hideMoreScopesHint:function(){this.hintManager.hide(),this.hintManager.popup=null},showSystemScopesHint:function(){var t=this.$el.querySelector(".scope-list-system");this.systemScopeHintManager.show(t,this.$Bitrix.Loc.getMessage("BI_GROUP_SYSTEM_SCOPES_HINT"),!1)},hideSystemScopesHint:function(){this.systemScopeHintManager.hide(),this.systemScopeHintManager.popup=null},attachHintHandlers:function(){var t=this.$el.querySelector(".group-scope-hint");if(t&&(i.Event.unbindAll(t),i.Event.bind(t,"mouseenter",this.showMoreScopesHint),i.Event.bind(t,"mouseleave",this.hideMoreScopesHint)),!this.canEdit){var e=this.$el.querySelector(".scope-list-system");e&&(i.Event.unbindAll(e),i.Event.bind(e,"mouseenter",this.showSystemScopesHint),i.Event.bind(e,"mouseleave",this.hideSystemScopesHint))}}},mounted:function(){this.hintManager=i.UI.Hint.createInstance({id:"group-scope-hint",popupParameters:{bindOptions:{position:"bottom"},width:190,offsetLeft:-80,angle:{position:"top",offset:130},cacheable:!1}}),this.systemScopeHintManager=i.UI.Hint.createInstance({id:"system-scope-hint",popupParameters:{bindOptions:{position:"bottom"},width:244,offsetLeft:-140,angle:{position:"top",offset:180},cacheable:!1}}),this.attachHintHandlers()},updated:function(){this.attachHintHandlers()},beforeUnmount:function(){this.dialog&&this.dialog.destroy(),this.dialog=null;var t=this.$el.querySelector(".group-scope-hint");t&&i.Event.unbindAll(t);var e=this.$el.querySelector(".scope-list-system");e&&i.Event.unbindAll(e)},emits:["onGroupScopeAdd","onGroupScopeRemove"],components:{BIcon:d.BIcon},template:'\n\t\t<div class="group-scope-selector">\n\t\t\t<span\n\t\t\t\tv-if="scopes.length > 0"\n\t\t\t\t@click="openScopeSelector"\n\t\t\t\tclass="scope-list scope-list-group"\n\t\t\t\tv-html="scopeText"\n\t\t\t></span>\n\t\t\t<span\n\t\t\t\tv-else\n\t\t\t\t@click="openScopeSelector"\n\t\t\t\tclass="scope-list scope-list-group"\n\t\t\t\tv-html="emptyScopesText"\n\t\t\t></span>\n\t\t\t<div class="group-scope-list-hint" ref="groupScopes" v-hint="hintOptions">\n\t\t\t\t<BIcon\n\t\t\t\t\t:name="set.QUESTION"\n\t\t\t\t\t:size="20"\n\t\t\t\t\tcolor="var(--ui-color-base-4)"\n\t\t\t\t></BIcon>\n\t\t\t</div>\n\t\t</div>\n\t'},$={props:{canEdit:{type:Boolean,required:!0}},data:function(){return{editMode:!1}},directives:{hint:u.hint},computed:{namePlaceholder:function(){return this.isNewGroup?this.$Bitrix.Loc.getMessage("BI_GROUP_NAME_NEW"):""},displayedGroupName:function(){return this.isNewGroup&&!this.groupName?this.namePlaceholder:this.groupName},isNewGroup:function(){return this.$store.getters.isNewGroup},groupName:{get:function(){return this.$store.getters.groupName},set:function(t){this.$store.commit("setGroupName",t)}},set:function(){return d.Outline},nameHintOptions:function(){return{text:this.$Bitrix.Loc.getMessage("BI_GROUP_SYSTEM_NAME_HINT"),popupOptions:{bindOptions:{position:"bottom"},width:220,offsetLeft:40,angle:{position:"top",offset:0}}}}},methods:{setEditMode:function(){var t=this;this.editMode=!0,this.$nextTick((function(){t.$refs.nameInput.focus()}))},setViewMode:function(){this.editMode=!1,this.$emit("onNameUpdate")}},emits:["onNameUpdate"],components:{BIcon:d.BIcon},template:'\n\t\t<div class="group-header-title" :style="{ width: editMode ? \'80%\' : \'auto\' }">\n\t\t\t<template v-if="canEdit">\n\t\t\t\t<input\n\t\t\t\t\tv-if="editMode"\n\t\t\t\t\tclass="group-name-input"\n\t\t\t\t\t@blur="setViewMode"\n\t\t\t\t\t@keyup.enter="setViewMode"\n\t\t\t\t\tv-model="groupName"\n\t\t\t\t\tref="nameInput"\n\t\t\t\t\t:placeholder="namePlaceholder"\n\t\t\t\t>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class="group-name">{{displayedGroupName}}</div>\n\t\t\t\t\t<BIcon\n\t\t\t\t\t\t:name="set.EDIT_L"\n\t\t\t\t\t\t:size="20"\n\t\t\t\t\t\tcolor="var(--ui-color-base-4)"\n\t\t\t\t\t\t:class="\'group-name-edit-icon\'"\n\t\t\t\t\t\t@click="setEditMode"\n\t\t\t\t\t></BIcon>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div class="group-name" v-hint="nameHintOptions">{{displayedGroupName}}</div>\n\t\t\t</template>\n\t\t</div>\n\t'};function _(t,e){var o="undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(!o){if(Array.isArray(t)||(o=function(t,e){if(!t)return;if("string"==typeof t)return P(t,e);var o=Object.prototype.toString.call(t).slice(8,-1);"Object"===o&&t.constructor&&(o=t.constructor.name);if("Map"===o||"Set"===o)return Array.from(t);if("Arguments"===o||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(o))return P(t,e)}(t))||e&&t&&"number"==typeof t.length){o&&(t=o);var n=0,s=function(){};return{s:s,n:function(){return n>=t.length?{done:!0}:{done:!1,value:t[n++]}},e:function(t){throw t},f:s}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var r,i=!0,a=!1;return{s:function(){o=o.call(t)},n:function(){var t=o.next();return i=t.done,t},e:function(t){a=!0,r=t},f:function(){try{i||null==o.return||o.return()}finally{if(a)throw r}}}}function P(t,e){(null==e||e>t.length)&&(e=t.length);for(var o=0,n=new Array(e);o<e;o++)n[o]=t[o];return n}var M={mounted:function(){a.EventEmitter.subscribe("BIConnector.Internal.GroupPopup:onPopupClose",this.onGroupPopupClose)},beforeUnmount:function(){a.EventEmitter.unsubscribe("BIConnector.Internal.GroupPopup:onPopupClose",this.onGroupPopupClose)},data:function(){return{deletionWarning:{popupShown:!1,dashboardId:null}}},computed:{isNoDashboards:function(){return 0===this.$store.state.group.dashboardIds.length},dashboards:function(){return this.$store.getters.groupDashboardsData},isSystemGroup:function(){return this.$store.getters.isSystemGroup},isSaveEnabled:function(){return this.$store.getters.isSaveEnabled},isLoading:function(){return this.$store.getters.isLoading},isDashboardListScrollable:function(){return this.isSaveEnabled?this.dashboards.length>6:this.dashboards.length>7},set:function(){return d.Outline}},methods:{handleDeletionConfirmationRequest:function(t){this.deletionWarning.dashboardId=t.dashboardId,this.deletionWarning.popupShown=!0},updateRight:function(){a.EventEmitter.emit("BIConnector.GroupPopup:onGroupUpdated",{group:i.Runtime.clone(this.$store.getters.groupData),dashboards:i.Runtime.clone(this.$store.getters.dashboards)})},onGroupScopeAdd:function(t){var e;this.$store.commit("addGroupScope",t),this.updateRight();var o,n=_(null!==(e=this.$refs.dashboardItem)&&void 0!==e?e:[]);try{for(n.s();!(o=n.n()).done;){o.value.onGroupScopeChanged()}}catch(t){n.e(t)}finally{n.f()}},onGroupScopeRemove:function(t){var e;this.$store.commit("removeGroupScope",t),this.updateRight();var o,n=_(null!==(e=this.$refs.dashboardItem)&&void 0!==e?e:[]);try{for(n.s();!(o=n.n()).done;){o.value.onGroupScopeChanged()}}catch(t){n.e(t)}finally{n.f()}},onDashboardRemove:function(t){var e=t.dashboardId;this.isSaveEnabled&&this.$store.getters.shouldShowDeleteWarning(e)?(this.deletionWarning.dashboardId=e,this.deletionWarning.popupShown=!0):(this.$store.commit("removeDashboard",e),this.updateRight())},confirmDashboardDeletion:function(){this.$store.commit("removeDashboard",this.deletionWarning.dashboardId),this.$refs.dashboardSelector.deselect(this.deletionWarning.dashboardId),this.deletionWarning.dashboardId=null,this.deletionWarning.popupShown=!1,this.updateRight()},cancelDashboardDeletion:function(){this.$refs.dashboardSelector.resetDialog(),this.deletionWarning.dashboardId=null,this.deletionWarning.popupShown=!1},saveGroup:function(){var t=this;this.ensureNewGroupName(),this.$store.commit("setIsLoading",!0),i.ajax.runAction("biconnector.group.save",{data:{group:this.$store.getters.groupData,dashboards:babelHelpers.toConsumableArray(this.$store.getters.dashboards.values())}}).then((function(){t.$store.commit("setIsLoading",!1),t.closePopup(),a.EventEmitter.emit("BIConnector.GroupPopup:onGroupSaved",{group:i.Runtime.clone(t.$store.getters.groupData),dashboards:i.Runtime.clone(t.$store.getters.dashboards),isTitleEdited:t.$store.getters.isTitleEdited,isDashboardListEdited:t.$store.getters.isDashboardListEdited,isScopeListEdited:t.$store.getters.isScopeListEdited})})).catch((function(e){var o;BX.UI.Notification.Center.notify({content:null===(o=e.errors[0])||void 0===o?void 0:o.message}),t.$store.commit("setIsLoading",!1)}))},ensureNewGroupName:function(){this.$store.getters.isNewGroup&&!this.$store.getters.groupName&&this.$store.commit("setEmptyGroupName",this.$Bitrix.Loc.getMessage("BI_GROUP_NAME_NEW"))},closePopup:function(){n.PopupManager.getPopupById("biconnector-dashboard-group").close()},onGroupPopupClose:function(){a.EventEmitter.emit("BIConnector.GroupPopup:onPopupClose",{group:this.$store.getters.groupData,isTitleEdited:this.$store.getters.isTitleEdited,isDashboardListEdited:this.$store.getters.isDashboardListEdited,isScopeListEdited:this.$store.getters.isScopeListEdited})}},components:{BIcon:d.BIcon,DashboardItem:y,DashboardSelector:D,GroupScopeSelector:A,TitleEditor:$,DeletionWarningPopup:B},template:'\n\t\t<div class="group-header">\n\t\t\t<TitleEditor @on-name-update="updateRight" :can-edit="!isSystemGroup"/>\n\t\t\t<div class="group-header-controls">\n\t\t\t\t<BIcon\n\t\t\t\t\t:name="set.CROSS_L"\n\t\t\t\t\t:size="20"\n\t\t\t\t\tcolor="var(--ui-color-base-4)"\n\t\t\t\t\t:class="\'group-close\'"\n\t\t\t\t\t@click="closePopup"\n\t\t\t\t></BIcon>\n\t\t\t</div>\n\t\t</div>\n\t\t<div class="group-button-panel">\n\t\t\t<div class="group-button-wrapper">\n\t\t\t\t<DashboardSelector\n\t\t\t\t\t:dashboards="dashboards"\n\t\t\t\t\t@on-dashboards-change="updateRight"\n\t\t\t\t\t@on-before-remove-confirmation="handleDeletionConfirmationRequest"\n\t\t\t\t\tref="dashboardSelector"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<GroupScopeSelector @on-group-scope-add="onGroupScopeAdd" @on-group-scope-remove="onGroupScopeRemove" :can-edit="!isSystemGroup"/>\n\t\t</div>\n\t\t<div class="group-dashboard-empty" v-if="isNoDashboards">\n\t\t\t<div class="group-dashboard-empty-image"></div>\n\t\t\t<div class="group-dashboard-empty-title">{{ $Bitrix.Loc.getMessage(\'BI_GROUP_EMPTY_TITLE\') }}</div>\n\t\t\t<div class="group-dashboard-empty-subtitle">{{ $Bitrix.Loc.getMessage(\'BI_GROUP_EMPTY_SUBTITLE\') }}</div>\n\t\t</div>\n\t\t<div class="group-dashboard-list" :class="{\'group-dashboard-list-scroll\': isDashboardListScrollable}" v-else>\n\t\t\t<DashboardItem\n\t\t\t\tv-for="dashboard of dashboards"\n\t\t\t\t:key="dashboard.id"\n\t\t\t\tref="dashboardItem"\n\t\t\t\t:dashboard="dashboard"\n\t\t\t\t@on-dashboard-change="updateRight"\n\t\t\t\t@on-dashboard-remove="onDashboardRemove"\n\t\t\t/>\n\t\t</div>\n\t\t<div class="group-footer" v-if="isSaveEnabled">\n\t\t\t<div\n\t\t\t\t:class="[\'ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps\', {\'ui-btn-disabled ui-btn-wait\': isLoading}]" \n\t\t\t\t@click="saveGroup"\n\t\t\t>\n\t\t\t\t{{ $Bitrix.Loc.getMessage(\'BI_GROUP_SAVE\') }}\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps"\n\t\t\t\t@click="closePopup"\n\t\t\t>\n\t\t\t\t{{ $Bitrix.Loc.getMessage(\'BI_GROUP_SAVE_CANCEL_MSGVER_1\') }}\n\t\t\t</div>\n\t\t</div>\n\t\t<div class="group-loader" v-if="isLoading"></div>\n\t\t<DeletionWarningPopup \n\t\t\tv-if="deletionWarning.popupShown" \n\t\t\t@confirm="confirmDashboardDeletion" \n\t\t\t@close="cancelDashboardDeletion"\n\t\t/>\n\t'},C=function(){function t(){babelHelpers.classCallCheck(this,t)}return babelHelpers.createClass(t,null,[{key:"open",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getApp(t),o=new n.Popup({id:"biconnector-dashboard-group",width:800,height:560,overlay:!0,closeIcon:!1,autoHide:!0,padding:0,cacheable:!1,content:'<div id="app"></div>',events:{onPopupClose:function(){a.EventEmitter.emit("BIConnector.Internal.GroupPopup:onPopupClose"),e.unmount()}}});o.show(),e.mount("#app")}},{key:"getApp",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},o=t.groups.find((function(e){return e.id===t.groupId}));o||(o={id:"new_G0",name:"",type:p.custom,scopes:[],dashboardIds:[]});var n={group:o,otherGroups:t.groups.filter((function(e){return e.id!==t.groupId})),dashboards:t.dashboards,saveEnabled:t.saveEnabled,isLoading:!1,user:t.user},s=e.BitrixVue.createApp({name:"GroupPopupApp",data:function(){return{}},components:{App:M},computed:{componentName:function(){return M}},template:"\n\t\t\t\t<App/>\n\t\t\t"}),r=m.buildStore(n);return s.use(r),s}}]),t}();t.DashboardGroup=C,t.GroupType=p}(this.BX.BIConnector=this.BX.BIConnector||{},BX.Vue3,BX.Vue3.Vuex,BX.Main,BX.UI.IconSet,BX.Vue3.Components,BX,BX.Event,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core_events, main_popup, ui_vue3, main_core, ui_vue3_vuex, ui_iconSet_api_vue, ui_notification, biconnector_errorMessage, ui_entitySelector, ui_iconSet_api_core, ui_vue3_components_button, ui_vue3_directives_hint) {
+	'use strict';
+
+	const GroupType = {
+		system: 'SYSTEM',
+		custom: 'CUSTOM'
+	};
+	const DashboardType = {
+		system: 'SYSTEM',
+		market: 'MARKET'};
+
+	/* eslint-disable no-param-reassign */
+	class Store {
+		// eslint-disable-next-line max-lines-per-function
+		static buildStore(defaultValues) {
+			Store.initialGroup = main_core.Runtime.clone(defaultValues.group);
+			return ui_vue3_vuex.createStore({
+				state() {
+					return defaultValues;
+				},
+				mutations: {
+					setIsLoading(state, isLoading) {
+						state.isLoading = isLoading;
+					},
+					setGroupName(state, groupName) {
+						state.group.name = groupName;
+					},
+					setEmptyGroupName(state, groupName) {
+						state.group.name = groupName;
+						Store.initialGroup.name = groupName;
+					},
+					addDashboard(state, dashboard) {
+						state.group.dashboardIds.unshift(dashboard.id);
+						const groupScopes = state.group.scopes;
+						if (state.dashboards.get(dashboard.id)) {
+							dashboard.scopes = state.dashboards.get(dashboard.id).scopes;
+						}
+						const dashboardScopeCodes = new Set(dashboard.scopes.map(dashScope => dashScope.code));
+						for (const groupScope of groupScopes) {
+							if (!dashboardScopeCodes.has(groupScope.code)) {
+								dashboard.scopes.push(groupScope);
+							}
+						}
+						state.dashboards.set(dashboard.id, dashboard);
+					},
+					removeDashboard(state, dashboardId) {
+						const dashboard = state.dashboards.get(dashboardId);
+						if (!dashboard) {
+							return;
+						}
+						state.group.dashboardIds = state.group.dashboardIds.filter(id => id !== dashboardId);
+						for (const groupScope of state.group.scopes) {
+							let dashboardIsInOtherGroupWithScope = false;
+							for (const otherGroup of state.otherGroups) {
+								if (otherGroup.dashboardIds.includes(dashboardId) && otherGroup.scopes.some(item => item.code === groupScope.code)) {
+									dashboardIsInOtherGroupWithScope = true;
+								}
+							}
+							if (!dashboardIsInOtherGroupWithScope && dashboard.scopes.some(item => item.code === groupScope.code)) {
+								dashboard.scopes = dashboard.scopes.filter(item => item.code !== groupScope.code);
+								state.dashboards.set(dashboardId, dashboard);
+							}
+						}
+					},
+					setDashboardScopes(state, data) {
+						const {
+							dashboardId,
+							scopes
+						} = data;
+						const dashboard = state.dashboards.get(dashboardId);
+						dashboard.scopes = scopes;
+					},
+					addGroupScope(state, scope) {
+						state.group.scopes.push(scope);
+						const newScopeCode = scope.code;
+						for (const dashboardId of state.group.dashboardIds) {
+							const dashboard = state.dashboards.get(dashboardId);
+							if (!dashboard.scopes.some(item => item.code === newScopeCode)) {
+								dashboard.scopes.push(scope);
+								state.dashboards.set(dashboardId, dashboard);
+							}
+						}
+					},
+					removeGroupScope(state, scope) {
+						state.group.scopes = state.group.scopes.filter(existingScope => existingScope.code !== scope.code);
+						const deletedScopeCode = scope.code;
+						for (const dashboardId of state.group.dashboardIds) {
+							let dashboardIsInOtherGroupWithScope = false;
+							for (const otherGroup of state.otherGroups) {
+								if (otherGroup.dashboardIds.includes(dashboardId) && otherGroup.scopes.some(item => item.code === deletedScopeCode)) {
+									dashboardIsInOtherGroupWithScope = true;
+								}
+							}
+							if (!dashboardIsInOtherGroupWithScope) {
+								const dashboard = state.dashboards.get(dashboardId);
+								if (dashboard.scopes.some(item => item.code === deletedScopeCode)) {
+									dashboard.scopes = dashboard.scopes.filter(item => item.code !== deletedScopeCode);
+									state.dashboards.set(dashboardId, dashboard);
+								}
+							}
+						}
+					}
+				},
+				getters: {
+					user(state) {
+						return state.user;
+					},
+					groupName(state) {
+						return state.group.name;
+					},
+					groupScopes(state) {
+						return state.group.scopes;
+					},
+					dashboards(state) {
+						return state.dashboards;
+					},
+					otherGroups(state) {
+						return state.otherGroups;
+					},
+					groupDashboardsData(state) {
+						const result = [];
+						for (const dashboardId of state.group.dashboardIds) {
+							result.push(state.dashboards.get(dashboardId));
+						}
+						return result;
+					},
+					isSystemGroup(state) {
+						return state.group.type === GroupType.system;
+					},
+					isNewGroup(state) {
+						return String(state.group.id ?? '').startsWith('new_');
+					},
+					groupData(state) {
+						return {
+							id: state.group.id,
+							name: state.group.name,
+							type: state.group.type,
+							scopes: state.group.scopes,
+							dashboardIds: state.group.dashboardIds
+						};
+					},
+					isSaveEnabled(state) {
+						return state.saveEnabled;
+					},
+					isLoading(state) {
+						return state.isLoading;
+					},
+					isGroupScope(state) {
+						return (dashboardId, scopeCode) => {
+							if (state.group.scopes.some(groupScope => groupScope.code === scopeCode)) {
+								return true;
+							}
+							for (const otherGroup of state.otherGroups) {
+								if (otherGroup.dashboardIds.includes(dashboardId) && otherGroup.scopes.some(groupScope => groupScope.code === scopeCode)) {
+									return true;
+								}
+							}
+							return false;
+						};
+					},
+					accessibleDashboardIdsSet(state) {
+						return new Set(state.otherGroups.filter(group => state.user.accessibleGroupIds.includes(group.id)).flatMap(group => group.dashboardIds));
+					},
+					shouldShowDeleteWarning(state, getters) {
+						return dashboardId => {
+							const user = state.user;
+							if (user.isAdmin || user.hasAccessToPermission) {
+								return false;
+							}
+							const dashboard = state.dashboards.get(dashboardId);
+							if (!dashboard) {
+								return false;
+							}
+							if (dashboard.createdById === user.id) {
+								return false;
+							}
+							return !getters.accessibleDashboardIdsSet.has(dashboardId);
+						};
+					},
+					getGroupsNameForDashboardScope(state) {
+						return (dashboardId, scopeCode) => {
+							const groups = [];
+							if (state.group.scopes.some(groupScope => groupScope.code === scopeCode)) {
+								groups.push(state.group.name);
+							}
+							for (const otherGroup of state.otherGroups) {
+								if (otherGroup.dashboardIds.includes(dashboardId) && otherGroup.scopes.some(groupScope => groupScope.code === scopeCode)) {
+									groups.push(otherGroup.name);
+								}
+							}
+							return groups;
+						};
+					},
+					isTitleEdited(state) {
+						return state.group.name !== Store.initialGroup.name;
+					},
+					isDashboardListEdited(state) {
+						return !Store.areSetsEqual(new Set(Store.initialGroup.dashboardIds), new Set(state.group.dashboardIds));
+					},
+					isScopeListEdited(state) {
+						return !Store.areSetsEqual(new Set(Store.initialGroup.scopes.map(scope => scope.code)), new Set(state.group.scopes.map(scope => scope.code)));
+					}
+				}
+			});
+		}
+		static areSetsEqual(setA, setB) {
+			if (setA.size !== setB.size) {
+				return false;
+			}
+			for (const item of setA) {
+				if (!setB.has(item)) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	// eslint-disable-next-line no-unused-vars
+
+	const DashboardScopeSelector = {
+		props: {
+			dashboard: {
+				/** @type Dashboard */
+				type: Object,
+				required: true
+			}
+		},
+		data() {
+			return {
+				initialScopedIds: []
+			};
+		},
+		beforeUnmount() {
+			if (this.dialog) {
+				this.dialog.destroy();
+			}
+			this.dialog = null;
+			if (this.hintManagers) {
+				this.hintManagers.forEach(manager => {
+					if (manager.popup) {
+						manager.popup.destroy();
+					}
+				});
+				this.hintManagers = [];
+			}
+			const node = this.$el.querySelector('.scope-hint');
+			if (node) {
+				main_core.Event.unbindAll(node);
+			}
+		},
+		computed: {
+			visibleScopes() {
+				return this.scopes.slice(0, 3);
+			},
+			scopes() {
+				return [...this.dashboard.scopes];
+			},
+			isGroupScope() {
+				return scopeCode => this.$store.getters.isGroupScope(this.dashboard.id, scopeCode);
+			},
+			scopeText() {
+				const formattedScopes = [];
+				for (const [index, scope] of this.visibleScopes.entries()) {
+					const name = scope.name;
+					const suffix = index < this.visibleScopes.length - 1 ? ', ' : '';
+					const element = `
+					<span 
+						class="scope-name"
+						title="${main_core.Text.encode(scope.name)}"
+					>
+						${main_core.Text.encode(name + suffix)}
+					</span>
+				`;
+					formattedScopes.push(element);
+				}
+				if (this.scopes.length <= 3) {
+					return formattedScopes.join('');
+				}
+				return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_DASHBOARD').replace('#FIRST_SCOPES#', formattedScopes.join('')).replace('[hint]', '<span class="scope-list scope-list-more scope-hint">').replace('[/hint]', '</span>').replace('#NUMBER#', this.dashboard.scopes.length - 3);
+			}
+		},
+		emits: ['onScopeChange'],
+		methods: {
+			openSelector() {
+				if (!this.dialog) {
+					this.initDialog();
+				}
+				this.initialScopedIds = this.dashboard.scopes.map(scope => scope.code);
+				this.dialog.show();
+			},
+			initDialog() {
+				const preselectedItems = [];
+				const undeselectedItems = [];
+				for (const scope of this.dashboard.scopes) {
+					preselectedItems.push(['biconnector-superset-scope', scope.code]);
+					if (this.isGroupScope(scope.code)) {
+						undeselectedItems.push(['biconnector-superset-scope', scope.code]);
+					}
+				}
+				this.dialog = new ui_entitySelector.Dialog({
+					id: 'dashboard-scope-selector',
+					targetNode: this.$refs.dashboardScopes,
+					width: 350,
+					height: 370,
+					dropdownMode: true,
+					compactView: true,
+					showAvatars: false,
+					enableSearch: true,
+					preload: true,
+					preselectedItems,
+					undeselectedItems,
+					entities: [{
+						id: 'biconnector-superset-scope',
+						dynamicLoad: true,
+						dynamicSearch: true
+					}],
+					events: {
+						'Item:onSelect': this.handleScopeAdd,
+						'Item:onDeselect': this.handleScopeRemove,
+						onHide: this.handleDialogHide,
+						onLoad: () => {
+							this.addHintsForUndeselectedScopes();
+						}
+					}
+				});
+				this.dialog.getPopup().setOffset({
+					offsetLeft: -320
+				});
+				this.dialog.adjustPosition();
+				main_core.Dom.addClass(this.dialog.getContainer(), 'biconnector-scope-selector');
+			},
+			addHintsForUndeselectedScopes() {
+				if (!this.dialog) {
+					return;
+				}
+				const undeselectedItems = [];
+				for (const scope of this.scopes) {
+					const groupNameList = this.$store.getters.getGroupsNameForDashboardScope(this.dashboard.id, scope.code);
+					if (groupNameList.length > 0) {
+						undeselectedItems.push({
+							scopeName: scope.name,
+							groupNameList
+						});
+					}
+				}
+				undeselectedItems.forEach(mapItem => {
+					const scopeName = mapItem.scopeName;
+					const groupNameList = mapItem.groupNameList;
+					this.createHintForUndeselectebleScope(scopeName, groupNameList);
+				});
+			},
+			handleScopeAdd(event) {
+				const addedItem = event.getData().item;
+				const scopes = this.scopes;
+				scopes.push({
+					code: addedItem.getId(),
+					name: addedItem.getTitle()
+				});
+				this.$store.commit('setDashboardScopes', {
+					dashboardId: this.dashboard.id,
+					scopes
+				});
+				this.$emit('onScopeChange');
+			},
+			handleScopeRemove(event) {
+				const removedItem = event.getData().item;
+				const scopes = this.scopes.filter(item => item.code !== removedItem.id);
+				this.$store.commit('setDashboardScopes', {
+					dashboardId: this.dashboard.id,
+					scopes
+				});
+				this.$emit('onScopeChange');
+			},
+			handleDialogHide(event) {
+				const wasChanged = !Store.areSetsEqual(new Set(this.initialScopedIds), new Set(this.dashboard.scopes.map(scope => scope.code)));
+				main_core_events.EventEmitter.emit('BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide', {
+					isScopeListEdited: wasChanged
+				});
+			},
+			showMoreScopesHint() {
+				const hintNode = this.$el.querySelector('.scope-hint');
+				this.hintManager.show(hintNode, this.scopes.slice(3).map(scope => scope.name).join(', '), false);
+			},
+			hideMoreScopesHint() {
+				this.hintManager.hide();
+				this.hintManager.popup = null;
+			},
+			onGroupScopeChanged() {
+				this.dialog?.destroy();
+				this.dialog = null;
+			},
+			attachHintHandlers() {
+				const node = this.$el.querySelector('.scope-hint');
+				if (node) {
+					main_core.Event.unbindAll(node);
+					main_core.Event.bind(node, 'mouseenter', this.showMoreScopesHint);
+					main_core.Event.bind(node, 'mouseleave', this.hideMoreScopesHint);
+				}
+			},
+			createHintForUndeselectebleScope(scopeName, groupNameList) {
+				const popupContent = this.dialog.getPopup().getContentContainer();
+				const tagContentNode = this.findSelectorItemByTitle(popupContent, scopeName);
+				this.hintManagers = this.hintManagers ?? [];
+				let hintText = '';
+				if (groupNameList.length === 1) {
+					hintText = main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE', {
+						'#GROUP_NAME#': main_core.Text.encode(groupNameList[0])
+					});
+				} else {
+					const contextText = main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE_MANY');
+					const groupListHtml = `<ul style="margin: 3px 0; padding-left: 20px;">${groupNameList.map(groupName => `<li>${main_core.Text.encode(groupName)}</li>`).join('')}</ul>`;
+					hintText = contextText + groupListHtml;
+				}
+				const hintId = `scope-hint-dash-${this.dashboard.id}-${scopeName.replaceAll(/\s/g, '-')}`;
+				const hintManager = BX.UI.Hint.createInstance({
+					id: hintId,
+					popupParameters: {
+						offsetLeft: 340,
+						offsetTop: -45,
+						autoHide: true,
+						width: 330,
+						angle: {
+							position: 'left',
+							offset: 15
+						}
+					}
+				});
+				this.hintManagers.push(hintManager);
+				main_core.Event.bind(tagContentNode, 'click', () => {
+					hintManager.show(tagContentNode, hintText, false, false);
+				});
+				main_core.Event.bind(tagContentNode, 'mouseleave', () => {
+					hintManager.hide();
+				});
+			},
+			findSelectorItemByTitle(rootElement, titleText) {
+				const items = rootElement.querySelectorAll('.ui-selector-item');
+				for (const item of items) {
+					const titleElement = item.querySelector('.ui-selector-item-title');
+					if (titleElement && titleElement.textContent.trim() === titleText) {
+						return item;
+					}
+				}
+				return null;
+			}
+		},
+		mounted() {
+			this.hintManager = main_core.UI.Hint.createInstance({
+				id: `dashboard-scope-hint-${Date.now()}`,
+				popupParameters: {
+					bindOptions: {
+						position: 'bottom'
+					},
+					width: 190,
+					offsetLeft: -80,
+					angle: {
+						position: 'top',
+						offset: 130
+					},
+					cacheable: false
+				}
+			});
+			this.attachHintHandlers();
+		},
+		updated() {
+			this.attachHintHandlers();
+		},
+		template: `
+		<div class="group-dashboard-scopes-container">
+			<span 
+				class="scope-list scope-list-dashboard"
+				@click="openSelector"
+				v-if="scopes.length > 0"
+				v-html="scopeText"
+			>
+			</span>
+			<span
+				class="scope-list-empty"
+				@click="openSelector"
+				v-else
+			>
+				{{$Bitrix.Loc.getMessage('BI_GROUP_DASHBOARD_SCOPES_EMPTY')}}
+			</span>
+			<span ref="dashboardScopes"></span>
+		</div>
+	`
+	};
+
+	const DashboardItem = {
+		props: {
+			dashboard: {
+				/** @type Dashboard */
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			iconPath() {
+				if (this.dashboard.type === DashboardType.system) {
+					return '/bitrix/images/biconnector/database-connections/system.svg';
+				}
+				if (this.dashboard.type === DashboardType.market) {
+					return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-market.webp';
+				}
+				return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-custom.webp';
+			},
+			set() {
+				return ui_iconSet_api_vue.Outline;
+			}
+		},
+		methods: {
+			onRemoveClick() {
+				main_core_events.EventEmitter.emit('BIConnector.GroupPopup.DashboardList:onDashboardRemove', {
+					isDashboardListEdited: true
+				});
+				this.$emit('onDashboardRemove', {
+					dashboardId: this.dashboard.id
+				});
+				this.emitDashboardChange();
+			},
+			emitDashboardChange() {
+				this.$emit('onDashboardChange');
+			},
+			onGroupScopeChanged() {
+				this.$refs.scopeSelector.onGroupScopeChanged();
+			}
+		},
+		emits: ['onDashboardChange', 'onDashboardRemove'],
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			DashboardScopeSelector
+		},
+		template: `
+		<div class="group-dashboard">
+			<img class="group-dashboard-icon" :src="iconPath" width="32" height="32" alt="Dashboard icon">
+			<div class="group-dashboard-name" :title="dashboard.name">{{dashboard.name}}</div>
+			<DashboardScopeSelector :dashboard="dashboard" ref="scopeSelector" @on-scope-change="emitDashboardChange"/>
+			<BIcon
+				:name="set.CROSS_L"
+				:size="20"
+				color="var(--ui-color-base-4)"
+				:class="'group-dashboard-remove-icon'"
+				@click="onRemoveClick"
+			></BIcon>
+		</div>
+	`
+	};
+
+	const DashboardSelector = {
+		props: {
+			dashboards: {
+				/** @type Dashboard[] */
+				type: Array,
+				required: true
+			}
+		},
+		data() {
+			return {
+				initialDashboardIds: [],
+				bypassDeselectHandler: false
+			};
+		},
+		mounted() {
+			this.initDialog();
+		},
+		methods: {
+			onAddDashboardClick() {
+				this.initialDashboardIds = this.dashboards.map(dashboard => dashboard.id);
+				this.dialog.show();
+			},
+			initDialog() {
+				const preselectedItems = [];
+				for (const dashboard of this.dashboards) {
+					preselectedItems.push(['biconnector-superset-dashboard', dashboard.id]);
+				}
+				this.dialog = new ui_entitySelector.Dialog({
+					id: 'group-dashboard-selector',
+					targetNode: this.$refs.addDashboardButton,
+					width: 400,
+					height: 370,
+					dropdownMode: true,
+					enableSearch: true,
+					preload: true,
+					preselectedItems,
+					entities: [{
+						id: 'biconnector-superset-dashboard',
+						dynamicLoad: true,
+						dynamicSearch: true,
+						options: {
+							loadProxyData: false,
+							checkAccessRights: this.$store.getters.isSaveEnabled
+						}
+					}],
+					tagSelectorOptions: {
+						events: {
+							onBeforeTagRemove: event => {
+								if (this.bypassDeselectHandler) {
+									return;
+								}
+								const tag = event.data.tag;
+								const dashboardId = tag.getId();
+								if (this.$store.getters.isSaveEnabled && this.$store.getters.shouldShowDeleteWarning(dashboardId)) {
+									event.preventDefault();
+									this.dialog.setAutoHide(false);
+									this.$emit('onBeforeRemoveConfirmation', {
+										dashboardId
+									});
+								}
+							}
+						}
+					},
+					events: {
+						'Item:onSelect': event => {
+							const item = event.data.item;
+							const dashboard = {
+								id: item.getId(),
+								name: item.getTitle(),
+								type: item.getCustomData().get('type') ?? DashboardType.system,
+								createdById: item.getCustomData().get('createdById'),
+								scopes: item.getCustomData().get('scopes') ?? []
+							};
+							this.$store.commit('addDashboard', dashboard);
+							this.$emit('onDashboardsChange');
+						},
+						'Item:onBeforeDeselect': event => {
+							if (this.bypassDeselectHandler) {
+								return;
+							}
+							const item = event.data.item;
+							const dashboardId = item.getId();
+							if (this.$store.getters.isSaveEnabled && this.$store.getters.shouldShowDeleteWarning(dashboardId)) {
+								event.preventDefault();
+								this.dialog.setAutoHide(false);
+								this.$emit('onBeforeRemoveConfirmation', {
+									dashboardId
+								});
+							}
+						},
+						'Item:onDeselect': event => {
+							const item = event.data.item;
+							this.$store.commit('removeDashboard', item.getId());
+							this.$emit('onDashboardsChange');
+						},
+						onHide: event => {
+							const wasChanged = !Store.areSetsEqual(new Set(this.initialDashboardIds), new Set(this.dashboards.map(dashboard => dashboard.id)));
+							main_core_events.EventEmitter.emit('BIConnector.GroupPopup.DashboardSelector:onDialogHide', {
+								isDashboardListEdited: wasChanged
+							});
+						}
+					}
+				});
+			},
+			deselect(dashboardId) {
+				this.bypassDeselectHandler = true;
+				this.dialog.getItem({
+					entityId: 'biconnector-superset-dashboard',
+					id: dashboardId
+				})?.deselect();
+			},
+			resetDialog() {
+				this.dialog.setAutoHide(true);
+				this.bypassDeselectHandler = false;
+			}
+		},
+		emits: ['onBeforeRemoveConfirmation', 'onDashboardsChange'],
+		watch: {
+			dashboards(newValue, oldValue) {
+				const dialog = this.dialog;
+				for (const oldItem of oldValue) {
+					if (!newValue.includes(oldItem)) {
+						dialog.getItem(['biconnector-superset-dashboard', oldItem.id])?.deselect();
+					}
+				}
+			}
+		},
+		template: `
+		<div class="ui-btn --air ui-btn-md ui-btn-icon-add ui-icon-set__scope --with-left-icon --style-tinted ui-btn-no-caps"
+			@click="onAddDashboardClick"
+			ref="addDashboardButton"
+		>
+			<span class="ui-btn-text">
+				{{ $Bitrix.Loc.getMessage('BI_GROUP_ADD_DASHBOARD') }}
+			</span>
+		</div>
+	`
+	};
+
+	const DeletionWarningPopup = {
+		emits: ['confirm', 'close'],
+		props: {},
+		setup() {
+			return {
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				Outline: ui_iconSet_api_core.Outline
+			};
+		},
+		data() {
+			return {
+				popupInstance: null,
+				popupId: 'biconnector-dashboard-deletion',
+				dontShow: false
+			};
+		},
+		computed: {
+			popupOptions() {
+				return {
+					id: this.popupId,
+					content: this.$refs.content,
+					width: 410,
+					padding: 12,
+					borderRadius: '16px',
+					autoHide: true,
+					overlay: true,
+					events: {
+						onPopupClose: this.closePopup
+					},
+					fixed: true
+				};
+			}
+		},
+		methods: {
+			closePopup() {
+				if (this.popupInstance) {
+					main_popup.PopupManager.getPopupById(this.popupId)?.destroy();
+					this.popupInstance = null;
+					this.$emit('close');
+				}
+			},
+			onConfirm() {
+				this.$emit('confirm', {
+					dontShow: this.dontShow
+				});
+				this.closePopup();
+			},
+			getPopupText() {
+				return this.$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_TEXT_MSGVER_1');
+			}
+		},
+		mounted() {
+			if (!this.popupInstance) {
+				this.popupInstance = new main_popup.Popup(this.popupOptions);
+			}
+			this.popupInstance.show();
+		},
+		beforeUnmount() {
+			this.closePopup();
+		},
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			UiButton: ui_vue3_components_button.Button
+		},
+		template: `
+		<div ref="content" class="group-warn-popup">
+			<div class="group-warn-popup-title-block">
+				<div class="group-warn-popup-title">{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_TITLE') }}</div>
+				<BIcon
+					:name="Outline.CROSS_L"
+					:size="24"
+					color="#A7A7A7"
+					:class="'group-warn-popup-close'"
+					@click="closePopup"
+				></BIcon>
+			</div>
+			<div class="group-warn-popup-box" v-html="getPopupText()"></div>
+			<div class="group-warn-popup-buttons">
+				<UiButton
+					:text="$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_YES')"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.FILLED"
+					@click="onConfirm"
+				/>
+				<UiButton
+					:text="$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_NO')"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.PLAIN"
+					@click="closePopup"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const GroupScopeSelector = {
+		props: {
+			canEdit: {
+				type: Boolean,
+				required: true
+			}
+		},
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		data() {
+			return {
+				initialScopedIds: []
+			};
+		},
+		computed: {
+			scopes() {
+				return this.$store.getters.groupScopes;
+			},
+			hintOptions() {
+				return {
+					html: this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPE_HINT_MSGVER_1').replace('[link]', '<a class="scope-hint-link" onclick="top.BX.Helper.show(`redirect=detail&code=25556500`)">').replace('[/link]', '</a>'),
+					interactivity: true,
+					popupOptions: {
+						bindOptions: {
+							position: 'bottom'
+						},
+						autoHide: false,
+						width: 244,
+						offsetTop: -4,
+						angle: {
+							position: 'top',
+							offset: 34
+						}
+					}
+				};
+			},
+			scopeText() {
+				const element = `
+				<span
+					class="scope-name ${this.canEdit ? '' : 'scope-list-system'}"
+					title="${main_core.Text.encode(this.scopes[0].name)}"
+				>
+					${main_core.Text.encode(this.scopes[0].name)}
+				</span>
+			`;
+				if (this.scopes.length <= 1) {
+					return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_MSGVER_1').replace('[title]', '<span class="group-scope-title">').replace('[/title]', '</span>').replace('#SCOPE#', element);
+				}
+				return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_MANY_MSGVER_1').replace('[title]', '<span class="group-scope-title">').replace('[/title]', '</span>').replace('#FIRST_SCOPES#', element).replace('[hint]', '<span class="scope-list scope-list-more group-scope-hint">').replace('[/hint]', '</span>').replace('#NUMBER#', this.scopes.length - 1);
+			},
+			emptyScopesText() {
+				return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_EMPTY_MSGVER_1').replace('[title]', '<span class="group-scope-title">').replace('[/title]', '</span>');
+			},
+			set() {
+				return ui_iconSet_api_vue.Outline;
+			}
+		},
+		methods: {
+			openScopeSelector() {
+				if (!this.canEdit) {
+					return;
+				}
+				if (!this.dialog) {
+					this.initDialog();
+				}
+				this.initialScopedIds = this.scopes.map(scope => scope.code);
+				this.dialog.show();
+			},
+			initDialog() {
+				const preselectedItems = [];
+				for (const scope of this.scopes) {
+					preselectedItems.push(['biconnector-superset-scope', scope.code]);
+				}
+				this.dialog = new ui_entitySelector.Dialog({
+					id: 'group-scope-selector',
+					targetNode: this.$refs.groupScopes,
+					width: 350,
+					height: 370,
+					dropdownMode: true,
+					compactView: true,
+					showAvatars: false,
+					enableSearch: true,
+					preload: true,
+					preselectedItems,
+					entities: [{
+						id: 'biconnector-superset-scope',
+						dynamicLoad: true,
+						dynamicSearch: true
+					}],
+					events: {
+						'Item:onSelect': this.onGroupScopeAdd,
+						'Item:onDeselect': this.onGroupScopeRemove,
+						onHide: this.onDialogHide
+					}
+				});
+				this.dialog.getPopup().setOffset({
+					offsetLeft: -320
+				});
+				this.dialog.adjustPosition();
+				main_core.Dom.addClass(this.dialog.getContainer(), 'biconnector-scope-selector');
+			},
+			onGroupScopeAdd(event) {
+				const item = event.getData().item;
+				const scope = {
+					code: item.getId(),
+					name: item.getTitle()
+				};
+				this.$emit('onGroupScopeAdd', scope);
+			},
+			onGroupScopeRemove(event) {
+				const item = event.getData().item;
+				const scope = {
+					code: item.getId(),
+					name: item.getTitle()
+				};
+				this.$emit('onGroupScopeRemove', scope);
+			},
+			onDialogHide(event) {
+				const wasChanged = !Store.areSetsEqual(new Set(this.initialScopedIds), new Set(this.scopes.map(scope => scope.code)));
+				main_core_events.EventEmitter.emit('BIConnector.GroupPopup.ScopeSelector:onDialogHide', {
+					isScopeListEdited: wasChanged
+				});
+			},
+			showMoreScopesHint() {
+				const hintNode = this.$el.querySelector('.group-scope-hint');
+				this.hintManager.show(hintNode, this.scopes.slice(1).map(scope => scope.name).join(', '), false);
+			},
+			hideMoreScopesHint() {
+				this.hintManager.hide();
+				this.hintManager.popup = null;
+			},
+			showSystemScopesHint() {
+				const hintNode = this.$el.querySelector('.scope-list-system');
+				this.systemScopeHintManager.show(hintNode, this.$Bitrix.Loc.getMessage('BI_GROUP_SYSTEM_SCOPES_HINT'), false);
+			},
+			hideSystemScopesHint() {
+				this.systemScopeHintManager.hide();
+				this.systemScopeHintManager.popup = null;
+			},
+			attachHintHandlers() {
+				const node = this.$el.querySelector('.group-scope-hint');
+				if (node) {
+					main_core.Event.unbindAll(node);
+					main_core.Event.bind(node, 'mouseenter', this.showMoreScopesHint);
+					main_core.Event.bind(node, 'mouseleave', this.hideMoreScopesHint);
+				}
+				if (!this.canEdit) {
+					const scopeName = this.$el.querySelector('.scope-list-system');
+					if (scopeName) {
+						main_core.Event.unbindAll(scopeName);
+						main_core.Event.bind(scopeName, 'mouseenter', this.showSystemScopesHint);
+						main_core.Event.bind(scopeName, 'mouseleave', this.hideSystemScopesHint);
+					}
+				}
+			}
+		},
+		mounted() {
+			this.hintManager = main_core.UI.Hint.createInstance({
+				id: 'group-scope-hint',
+				popupParameters: {
+					bindOptions: {
+						position: 'bottom'
+					},
+					width: 190,
+					offsetLeft: -80,
+					angle: {
+						position: 'top',
+						offset: 130
+					},
+					cacheable: false
+				}
+			});
+			this.systemScopeHintManager = main_core.UI.Hint.createInstance({
+				id: 'system-scope-hint',
+				popupParameters: {
+					bindOptions: {
+						position: 'bottom'
+					},
+					width: 244,
+					offsetLeft: -140,
+					angle: {
+						position: 'top',
+						offset: 180
+					},
+					cacheable: false
+				}
+			});
+			this.attachHintHandlers();
+		},
+		updated() {
+			this.attachHintHandlers();
+		},
+		beforeUnmount() {
+			if (this.dialog) {
+				this.dialog.destroy();
+			}
+			this.dialog = null;
+			const node = this.$el.querySelector('.group-scope-hint');
+			if (node) {
+				main_core.Event.unbindAll(node);
+			}
+			const scopeName = this.$el.querySelector('.scope-list-system');
+			if (scopeName) {
+				main_core.Event.unbindAll(scopeName);
+			}
+		},
+		emits: ['onGroupScopeAdd', 'onGroupScopeRemove'],
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		template: `
+		<div class="group-scope-selector">
+			<span
+				v-if="scopes.length > 0"
+				@click="openScopeSelector"
+				class="scope-list scope-list-group"
+				v-html="scopeText"
+			></span>
+			<span
+				v-else
+				@click="openScopeSelector"
+				class="scope-list scope-list-group"
+				v-html="emptyScopesText"
+			></span>
+			<div class="group-scope-list-hint" ref="groupScopes" v-hint="hintOptions">
+				<BIcon
+					:name="set.QUESTION"
+					:size="20"
+					color="var(--ui-color-base-4)"
+				></BIcon>
+			</div>
+		</div>
+	`
+	};
+
+	const TitleEditor = {
+		props: {
+			canEdit: {
+				type: Boolean,
+				required: true
+			}
+		},
+		data() {
+			return {
+				editMode: false
+			};
+		},
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		computed: {
+			namePlaceholder() {
+				return this.isNewGroup ? this.$Bitrix.Loc.getMessage('BI_GROUP_NAME_NEW') : '';
+			},
+			displayedGroupName() {
+				if (this.isNewGroup && !this.groupName) {
+					return this.namePlaceholder;
+				}
+				return this.groupName;
+			},
+			isNewGroup() {
+				return this.$store.getters.isNewGroup;
+			},
+			groupName: {
+				get() {
+					return this.$store.getters.groupName;
+				},
+				set(value) {
+					this.$store.commit('setGroupName', value);
+				}
+			},
+			set() {
+				return ui_iconSet_api_vue.Outline;
+			},
+			nameHintOptions() {
+				return {
+					text: this.$Bitrix.Loc.getMessage('BI_GROUP_SYSTEM_NAME_HINT'),
+					popupOptions: {
+						bindOptions: {
+							position: 'bottom'
+						},
+						width: 220,
+						offsetLeft: 40,
+						angle: {
+							position: 'top',
+							offset: 0
+						}
+					}
+				};
+			}
+		},
+		methods: {
+			setEditMode() {
+				this.editMode = true;
+				this.$nextTick(() => {
+					this.$refs.nameInput.focus();
+				});
+			},
+			setViewMode() {
+				this.editMode = false;
+				this.$emit('onNameUpdate');
+			}
+		},
+		emits: ['onNameUpdate'],
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		template: `
+		<div class="group-header-title" :style="{ width: editMode ? '80%' : 'auto' }">
+			<template v-if="canEdit">
+				<input
+					v-if="editMode"
+					class="group-name-input"
+					data-testid="biconnector-dashboard-group-name-input"
+					@blur="setViewMode"
+					@keyup.enter="setViewMode"
+					v-model="groupName"
+					ref="nameInput"
+					:placeholder="namePlaceholder"
+				>
+				<template v-else>
+					<div class="group-name" data-testid="biconnector-dashboard-group-name">{{displayedGroupName}}</div>
+					<BIcon
+						:name="set.EDIT_L"
+						:size="20"
+						color="var(--ui-color-base-4)"
+						:class="'group-name-edit-icon'"
+						data-testid="biconnector-dashboard-group-name-edit"
+						@click="setEditMode"
+					></BIcon>
+				</template>
+			</template>
+			<template v-else>
+				<div
+					class="group-name"
+					data-testid="biconnector-dashboard-group-name"
+					v-hint="nameHintOptions"
+				>{{displayedGroupName}}</div>
+			</template>
+		</div>
+	`
+	};
+
+	const GROUP_POPUP_ID = 'biconnector-dashboard-group';
+
+	const App = {
+		mounted() {
+			main_core_events.EventEmitter.subscribe('BIConnector.Internal.GroupPopup:onPopupClose', this.onGroupPopupClose);
+		},
+		beforeUnmount() {
+			main_core_events.EventEmitter.unsubscribe('BIConnector.Internal.GroupPopup:onPopupClose', this.onGroupPopupClose);
+		},
+		data() {
+			return {
+				deletionWarning: {
+					popupShown: false,
+					dashboardId: null
+				}
+			};
+		},
+		computed: {
+			isNoDashboards() {
+				return this.$store.state.group.dashboardIds.length === 0;
+			},
+			dashboards() {
+				return this.$store.getters.groupDashboardsData;
+			},
+			isSystemGroup() {
+				return this.$store.getters.isSystemGroup;
+			},
+			isSaveEnabled() {
+				return this.$store.getters.isSaveEnabled;
+			},
+			isLoading() {
+				return this.$store.getters.isLoading;
+			},
+			isDashboardListScrollable() {
+				if (this.isSaveEnabled) {
+					return this.dashboards.length > 6;
+				}
+				return this.dashboards.length > 7;
+			},
+			set() {
+				return ui_iconSet_api_vue.Outline;
+			}
+		},
+		methods: {
+			handleDeletionConfirmationRequest(event) {
+				this.deletionWarning.dashboardId = event.dashboardId;
+				this.deletionWarning.popupShown = true;
+			},
+			updateRight() {
+				main_core_events.EventEmitter.emit('BIConnector.GroupPopup:onGroupUpdated', {
+					group: main_core.Runtime.clone(this.$store.getters.groupData),
+					dashboards: main_core.Runtime.clone(this.$store.getters.dashboards)
+				});
+			},
+			onGroupScopeAdd(event) {
+				this.$store.commit('addGroupScope', event);
+				this.updateRight();
+				for (const dashboardItem of this.$refs.dashboardItem ?? []) {
+					dashboardItem.onGroupScopeChanged();
+				}
+			},
+			onGroupScopeRemove(event) {
+				this.$store.commit('removeGroupScope', event);
+				this.updateRight();
+				for (const dashboardItem of this.$refs.dashboardItem ?? []) {
+					dashboardItem.onGroupScopeChanged();
+				}
+			},
+			onDashboardRemove(event) {
+				const dashboardId = event.dashboardId;
+				if (this.isSaveEnabled && this.$store.getters.shouldShowDeleteWarning(dashboardId)) {
+					this.deletionWarning.dashboardId = dashboardId;
+					this.deletionWarning.popupShown = true;
+				} else {
+					this.$store.commit('removeDashboard', dashboardId);
+					this.updateRight();
+				}
+			},
+			confirmDashboardDeletion() {
+				this.$store.commit('removeDashboard', this.deletionWarning.dashboardId);
+				this.$refs.dashboardSelector.deselect(this.deletionWarning.dashboardId);
+				this.deletionWarning.dashboardId = null;
+				this.deletionWarning.popupShown = false;
+				this.updateRight();
+			},
+			cancelDashboardDeletion() {
+				this.$refs.dashboardSelector.resetDialog();
+				this.deletionWarning.dashboardId = null;
+				this.deletionWarning.popupShown = false;
+			},
+			saveGroup() {
+				this.ensureNewGroupName();
+				this.$store.commit('setIsLoading', true);
+				main_core.ajax.runAction('biconnector.group.save', {
+					data: {
+						group: this.$store.getters.groupData,
+						dashboards: [...this.$store.getters.dashboards.values()]
+					}
+				}).then(() => {
+					this.$store.commit('setIsLoading', false);
+					this.closePopup();
+					main_core_events.EventEmitter.emit('BIConnector.GroupPopup:onGroupSaved', {
+						group: main_core.Runtime.clone(this.$store.getters.groupData),
+						dashboards: main_core.Runtime.clone(this.$store.getters.dashboards),
+						isTitleEdited: this.$store.getters.isTitleEdited,
+						isDashboardListEdited: this.$store.getters.isDashboardListEdited,
+						isScopeListEdited: this.$store.getters.isScopeListEdited
+					});
+				}).catch(response => {
+					ui_notification.Center.notify({
+						content: biconnector_errorMessage.resolveErrorHtml(response, this.$Bitrix.Loc.getMessage('BI_GROUP_SAVE_ERROR'))
+					});
+					this.$store.commit('setIsLoading', false);
+				});
+			},
+			ensureNewGroupName() {
+				if (this.$store.getters.isNewGroup && !this.$store.getters.groupName) {
+					this.$store.commit('setEmptyGroupName', this.$Bitrix.Loc.getMessage('BI_GROUP_NAME_NEW'));
+				}
+			},
+			closePopup() {
+				const popup = main_popup.PopupManager.getPopupById(GROUP_POPUP_ID);
+				popup.close();
+			},
+			onGroupPopupClose() {
+				main_core_events.EventEmitter.emit('BIConnector.GroupPopup:onPopupClose', {
+					group: this.$store.getters.groupData,
+					isTitleEdited: this.$store.getters.isTitleEdited,
+					isDashboardListEdited: this.$store.getters.isDashboardListEdited,
+					isScopeListEdited: this.$store.getters.isScopeListEdited
+				});
+			}
+		},
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			DashboardItem,
+			DashboardSelector,
+			GroupScopeSelector,
+			TitleEditor,
+			DeletionWarningPopup
+		},
+		template: `
+		<div class="group-header">
+			<TitleEditor @on-name-update="updateRight" :can-edit="!isSystemGroup"/>
+			<div class="group-header-controls">
+				<BIcon
+					:name="set.CROSS_L"
+					:size="20"
+					color="var(--ui-color-base-4)"
+					:class="'group-close'"
+					data-testid="biconnector-dashboard-group-close"
+					@click="closePopup"
+				></BIcon>
+			</div>
+		</div>
+		<div class="group-button-panel">
+			<div class="group-button-wrapper">
+				<DashboardSelector
+					:dashboards="dashboards"
+					@on-dashboards-change="updateRight"
+					@on-before-remove-confirmation="handleDeletionConfirmationRequest"
+					ref="dashboardSelector"
+				/>
+			</div>
+			<GroupScopeSelector @on-group-scope-add="onGroupScopeAdd" @on-group-scope-remove="onGroupScopeRemove" :can-edit="!isSystemGroup"/>
+		</div>
+		<div class="group-dashboard-empty" v-if="isNoDashboards">
+			<div class="group-dashboard-empty-image"></div>
+			<div class="group-dashboard-empty-title">{{ $Bitrix.Loc.getMessage('BI_GROUP_EMPTY_TITLE') }}</div>
+			<div class="group-dashboard-empty-subtitle">{{ $Bitrix.Loc.getMessage('BI_GROUP_EMPTY_SUBTITLE') }}</div>
+		</div>
+		<div class="group-dashboard-list" :class="{'group-dashboard-list-scroll': isDashboardListScrollable}" v-else>
+			<DashboardItem
+				v-for="dashboard of dashboards"
+				:key="dashboard.id"
+				ref="dashboardItem"
+				:dashboard="dashboard"
+				@on-dashboard-change="updateRight"
+				@on-dashboard-remove="onDashboardRemove"
+			/>
+		</div>
+		<div class="group-footer" v-if="isSaveEnabled">
+			<div
+				:class="['ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps', {'ui-btn-disabled ui-btn-wait': isLoading}]" 
+				@click="saveGroup"
+			>
+				{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE') }}
+			</div>
+			<div
+				class="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps"
+				@click="closePopup"
+			>
+				{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_CANCEL_MSGVER_1') }}
+			</div>
+		</div>
+		<div class="group-loader" v-if="isLoading"></div>
+		<DeletionWarningPopup 
+			v-if="deletionWarning.popupShown" 
+			@confirm="confirmDashboardDeletion" 
+			@close="cancelDashboardDeletion"
+		/>
+	`
+	};
+
+	class DashboardGroup {
+		static open(appParams = {}) {
+			// The popup is not cacheable, so it exists only while it is open.
+			if (main_popup.PopupManager.isPopupExists(GROUP_POPUP_ID)) {
+				return;
+			}
+			const app = this.getApp(appParams);
+			const popup = new main_popup.Popup({
+				id: GROUP_POPUP_ID,
+				width: 800,
+				height: 560,
+				overlay: true,
+				closeIcon: false,
+				autoHide: true,
+				padding: 0,
+				cacheable: false,
+				content: '<div id="app"></div>',
+				events: {
+					onPopupClose: () => {
+						main_core_events.EventEmitter.emit('BIConnector.Internal.GroupPopup:onPopupClose');
+						app.unmount();
+					}
+				}
+			});
+			popup.show();
+			app.mount('#app');
+		}
+		static getApp(appParams = {}) {
+			let group = appParams.groups.find(item => item.id === appParams.groupId);
+			if (!group) {
+				group = {
+					id: 'new_G0',
+					name: '',
+					type: GroupType.custom,
+					scopes: [],
+					dashboardIds: []
+				};
+			}
+			const state = {
+				group,
+				otherGroups: appParams.groups.filter(item => item.id !== appParams.groupId),
+				dashboards: appParams.dashboards,
+				saveEnabled: appParams.saveEnabled,
+				isLoading: false,
+				user: appParams.user
+			};
+			const app = ui_vue3.BitrixVue.createApp({
+				name: 'GroupPopupApp',
+				data() {
+					return {};
+				},
+				components: {
+					App
+				},
+				computed: {
+					componentName() {
+						return App;
+					}
+				},
+				// language=Vue
+				template: `
+				<App/>
+			`
+			});
+			const store = Store.buildStore(state);
+			app.use(store);
+			return app;
+		}
+	}
+
+	exports.DashboardGroup = DashboardGroup;
+	exports.GroupType = GroupType;
+
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX.Event, BX.Main, BX.Vue3, BX, BX.Vue3.Vuex, BX.UI.IconSet, BX.UI.Notification, BX.BIConnector, BX.UI.EntitySelector, BX.UI.IconSet, BX.Vue3.Components, BX.Vue3.Directives);
 //# sourceMappingURL=dashboard-group.bundle.js.map

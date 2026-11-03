@@ -1,0 +1,18 @@
+.sign-b2e-run-process {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-xl);
+}
+
+.sign-b2e-run-process__title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-md);
+}
+
+/* a wizard of a single step has nothing to show a path through (AC-003) */
+.sign-b2e-run-process.--single-step .sign-wizard__stages {
+	display: none;
+}

@@ -258,7 +258,7 @@ CJSCore::Init(["popup"]);
 		</div>
 		<div class="crm-lead-info-descript">
 			<div class="crm-lead-info-descript-text"><?=GetMessage("CRM_TYPE_CHANGE")?></div>
-			<img class="crm-lead-info-descript-img" src="<?=$this->GetFolder()?>/images/<?=$arResult["CURRENT_LANG"]?>.png" alt="">
+			<img class="crm-lead-info-descript-img" src="<?=$this->GetFolder()?>/images/<?=$arResult["CURRENT_LANG"]?>.webp" alt="">
 			<?if (!$arResult["IS_CRM_ADMIN"]):?>
 			<div class="crm-lead-info-descript-text crm-lead-info-descript-text-info"><?=GetMessage("CRM_RIGTHS_INFO")?></div>
 			<?endif?>

@@ -12,10 +12,8 @@ jn.define('vibecode/catalog/src/const', (require, exports, module) => {
 		ACTIVE: 'active',
 		HIDDEN: 'hidden',
 		NEW: 'new',
+		FAVORITE: 'favorite',
 		ALL: 'all',
-	});
-	const VIBECODE_KIND = Object.freeze({
-		BOT: 'bot',
 	});
 	const VIBECODE_PULL_CONFIG = Object.freeze({
 		shouldReloadDynamically: true,
@@ -28,7 +26,6 @@ jn.define('vibecode/catalog/src/const', (require, exports, module) => {
 		SEARCH_DEBOUNCE_DELAY,
 		VIBECODE_CREATE_URL,
 		VIBECODE_ITEM_TYPE,
-		VIBECODE_KIND,
 		VIBECODE_MENU_SECTION_CODE,
 		VIBECODE_PULL_CONFIG,
 	};

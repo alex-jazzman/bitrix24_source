@@ -48,9 +48,7 @@ export const ChangeFrameTextAlignTopBtn = {
 	},
 	methods: {
 		...mapActions(useDiagramStore, [
-			'beginSaveRun',
-			'publicDraft',
-			'updateStatus',
+			'saveDraftWithStatus',
 		]),
 		async onUpdateFrameTextAlign(frameTextAlign: string): Promise<void>
 		{
@@ -66,24 +64,14 @@ export const ChangeFrameTextAlignTopBtn = {
 				}
 			}
 
-			// Reserved after the confirm dialog and before the request: a save started after this
-			// one owns the status, so a late answer here must not overwrite it.
-			const runId = this.beginSaveRun();
-			try
-			{
-				this.updateBlock({
-					...this.block,
-					node: {
-						...this.block.node,
-						frameTextAlign,
-					},
-				});
-				this.updateStatus(await this.publicDraft(), runId);
-			}
-			catch
-			{
-				this.updateStatus(false, runId);
-			}
+			this.updateBlock({
+				...this.block,
+				node: {
+					...this.block.node,
+					frameTextAlign,
+				},
+			});
+			await this.saveDraftWithStatus();
 		},
 	},
 	template: `

@@ -29,6 +29,13 @@ export class TriggerManager extends EventEmitter
 	#listNodes: NodeList;
 	#modified: boolean;
 	#triggerEventsListeners: Object<string, (event: BaseEvent) => void> = {};
+	#triggerAddControlMouseMoveHandler: ?(MouseEvent) => void;
+	#triggerAddControlMouseLeaveHandler: ?(MouseEvent) => void;
+	#triggerAddControlAnimationFrame: ?number = null;
+	#triggerAddControlPointerY: ?number = null;
+	#triggerAddControlListNode: ?HTMLElement = null;
+	#activeTriggerAddControl: ?HTMLElement = null;
+	#activeTriggerAddControlListNode: ?HTMLElement = null;
 
 	constructor(triggersContainerNode: HTMLElement, params: { userOptions: ?UserOptions } = {})
 	{
@@ -120,9 +127,10 @@ export class TriggerManager extends EventEmitter
 			const trigger = new Trigger();
 			trigger.init(triggerData, this.#viewMode);
 			this.subscribeTriggerEvents(trigger);
-			this.insertTriggerNode(trigger.getStatusId(), trigger.node);
 			this.#triggers.push(trigger);
+			this.#insertTriggerNode(trigger.getStatusId(), trigger.node);
 		});
+		this.#renderTriggerAddControls();
 	}
 
 	subscribeTriggerEvents(trigger: Trigger)
@@ -135,10 +143,17 @@ export class TriggerManager extends EventEmitter
 			{
 				this.insertTriggerNode(trigger.getStatusId(), trigger.node);
 			}
+			else
+			{
+				this.#renderTriggerAddControls();
+			}
 			this.subscribeTriggerEvents(trigger);
 			this.markModified();
 		});
-		trigger.subscribe('Trigger:modified', () => this.markModified());
+		trigger.subscribe('Trigger:modified', () => {
+			this.#renderTriggerAddControls();
+			this.markModified();
+		});
 		trigger.subscribe('Trigger:onSettingsOpen', (event) => {
 			this.openTriggerSettingsDialog(event.data.trigger);
 		});
@@ -170,6 +185,7 @@ export class TriggerManager extends EventEmitter
 
 	enableManageMode(status)
 	{
+		this.#clearTriggerAddControls();
 		this.#viewMode = ViewMode.manage();
 
 		document.querySelectorAll('[data-role="trigger-list"]').forEach((listNode) => {
@@ -192,6 +208,7 @@ export class TriggerManager extends EventEmitter
 		});
 
 		this.#triggers.forEach((trigger) => trigger.disableManageMode());
+		this.#renderTriggerAddControls();
 	}
 
 	addTrigger(triggerData: ?Object<string, any>, callback)
@@ -207,6 +224,19 @@ export class TriggerManager extends EventEmitter
 		this.emit('TriggerManager:trigger:add', { trigger });
 	}
 
+	addTriggerBefore(triggerData: ?Object<string, any>, beforeTrigger: Trigger, callback)
+	{
+		this.addTrigger(triggerData, (trigger) => {
+			if (callback)
+			{
+				callback.call(this, trigger);
+			}
+
+			this.insertTrigger(trigger, beforeTrigger);
+			this.insertTriggerNode(trigger.getStatusId(), trigger.node, this.#getTriggerNodeBefore(beforeTrigger));
+		});
+	}
+
 	deleteTrigger(trigger: Trigger, callback)
 	{
 		if (trigger.getId() > 0)
@@ -220,6 +250,7 @@ export class TriggerManager extends EventEmitter
 				if (this.#triggers[i] === trigger)
 				{
 					this.#triggers.splice(i, 1);
+					this.#renderTriggerAddControls();
 				}
 			}
 		}
@@ -231,6 +262,7 @@ export class TriggerManager extends EventEmitter
 
 		this.emit('TriggerManager:trigger:delete', { trigger });
 
+		this.#renderTriggerAddControls();
 		this.markModified();
 	}
 
@@ -256,19 +288,359 @@ export class TriggerManager extends EventEmitter
 		;
 	}
 
-	insertTrigger(trigger)
+	#bindTriggerAddControlHover()
 	{
-		this.#triggers.push(trigger);
+		if (this.#triggerAddControlMouseMoveHandler)
+		{
+			return;
+		}
+
+		this.#triggerAddControlMouseMoveHandler = this.#onTriggerAddControlMouseMove.bind(this);
+		this.#triggerAddControlMouseLeaveHandler = this.#deactivateTriggerAddControls.bind(this);
+
+		this.#listNodes.forEach((listNode) => {
+			Event.bind(listNode, 'mousemove', this.#triggerAddControlMouseMoveHandler);
+			Event.bind(listNode, 'mouseleave', this.#triggerAddControlMouseLeaveHandler);
+		});
+	}
+
+	#clearTriggerAddControls()
+	{
+		this.#cancelTriggerAddControlUpdate();
+		this.#activeTriggerAddControl = null;
+		this.#activeTriggerAddControlListNode = null;
+
+		this.#listNodes.forEach((listNode) => {
+			Dom.removeClass(listNode, '--has-active-inner-add');
+		});
+
+		this.#triggersContainerNode
+			.querySelectorAll('[data-role="trigger-add-insertion"]')
+			.forEach((node) => Dom.remove(node))
+		;
+	}
+
+	#renderTriggerAddControls()
+	{
+		this.#clearTriggerAddControls();
+
+		if (!this.#viewMode.isEdit())
+		{
+			return;
+		}
+
+		this.#bindTriggerAddControlHover();
+
+		this.#listNodes.forEach((listNode) => {
+			const documentStatus = listNode.dataset.statusId;
+			const triggers = this
+				.findTriggersByDocumentStatus(documentStatus)
+				.filter((trigger) => !trigger.deleted && trigger.node.parentNode === listNode)
+			;
+
+			if (triggers.length === 0)
+			{
+				return;
+			}
+
+			triggers.forEach((trigger) => {
+				listNode.insertBefore(this.#createTriggerAddControl(documentStatus, trigger), trigger.node);
+			});
+
+			Dom.append(this.#createTriggerAddControl(documentStatus, null, true), listNode);
+		});
+	}
+
+	#createTriggerAddControl(documentStatus: string, beforeTrigger: ?Trigger, isLast: boolean = false): HTMLElement
+	{
+		const addTitle = Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+		const ariaLabel = beforeTrigger
+			? Loc.getMessage(
+				'BIZPROC_AUTOMATION_CMP_ADD_BEFORE',
+				{ '#TITLE#': beforeTrigger.getName() },
+			)
+			: Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_TO_END')
+		;
+		const control = Tag.render`
+			<div
+				class="bizproc-automation-trigger-add-insertion${isLast ? ' --last' : ''}"
+				data-role="trigger-add-insertion"
+				data-testid="bizproc-automation-trigger-add-insertion"
+			>
+				<button
+					class="bizproc-automation-robot-btn-add"
+					type="button"
+					title="${addTitle}"
+					aria-label="${Text.encode(ariaLabel || addTitle)}"
+					data-role="trigger-add-insertion-button"
+					data-testid="bizproc-automation-trigger-add-insertion-button"
+				></button>
+			</div>
+		`;
+		const button = control.querySelector('[data-role="trigger-add-insertion-button"]');
+
+		Event.bind(button, 'click', (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+
+			if (!this.#viewMode.isManage())
+			{
+				this.emit('TriggerManager:trigger:addButtonClick', {
+					documentStatus,
+					beforeTrigger,
+				});
+			}
+		});
+
+		return control;
+	}
+
+	#onTriggerAddControlMouseMove(event: MouseEvent)
+	{
+		if (!this.#viewMode.isEdit())
+		{
+			return;
+		}
+		if (window.jsDD.bPreStarted || window.jsDD.bStarted)
+		{
+			if (this.#activeTriggerAddControl || this.#triggerAddControlAnimationFrame !== null)
+			{
+				this.#deactivateTriggerAddControls(event);
+			}
+
+			return;
+		}
+
+		this.#triggerAddControlListNode = event.currentTarget;
+		this.#triggerAddControlPointerY = event.clientY;
+		if (this.#triggerAddControlAnimationFrame !== null)
+		{
+			return;
+		}
+
+		this.#triggerAddControlAnimationFrame = window.requestAnimationFrame(() => {
+			this.#triggerAddControlAnimationFrame = null;
+			this.#updateTriggerAddControlState();
+		});
+	}
+
+	#updateTriggerAddControlState()
+	{
+		const listNode = this.#triggerAddControlListNode;
+		if (!listNode || !this.#viewMode.isEdit() || this.#triggerAddControlPointerY === null)
+		{
+			return;
+		}
+
+		const activeControl = this.#findActiveTriggerAddControl(listNode, this.#triggerAddControlPointerY);
+
+		if (
+			activeControl === this.#activeTriggerAddControl
+			&& listNode === this.#activeTriggerAddControlListNode
+		)
+		{
+			return;
+		}
+
+		if (this.#activeTriggerAddControl)
+		{
+			Dom.removeClass(this.#activeTriggerAddControl, '--active');
+		}
+		if (this.#activeTriggerAddControlListNode)
+		{
+			Dom.removeClass(this.#activeTriggerAddControlListNode, '--has-active-inner-add');
+		}
+		if (activeControl)
+		{
+			Dom.addClass(activeControl, '--active');
+			if (!Dom.hasClass(activeControl, '--last'))
+			{
+				Dom.addClass(listNode, '--has-active-inner-add');
+			}
+			else
+			{
+				Dom.removeClass(listNode, '--has-active-inner-add');
+			}
+		}
+
+		this.#activeTriggerAddControl = activeControl;
+		this.#activeTriggerAddControlListNode = listNode;
+	}
+
+	#findActiveTriggerAddControl(listNode: HTMLElement, pointerY: number): ?HTMLElement
+	{
+		const children = listNode.children;
+		let firstControlIndex = 0;
+		while (
+			firstControlIndex < children.length
+			&& children[firstControlIndex].dataset.role !== 'trigger-add-insertion'
+		)
+		{
+			firstControlIndex++;
+		}
+
+		const triggerCount = Math.floor((children.length - firstControlIndex) / 2);
+		const overlap = 12;
+		let left = 0;
+		let right = triggerCount - 1;
+		let candidate = null;
+
+		while (left <= right)
+		{
+			const middle = Math.floor((left + right) / 2);
+			const controlIndex = firstControlIndex + (middle * 2);
+			const nextTriggerNode = children[controlIndex + 1];
+			if (pointerY <= nextTriggerNode.getBoundingClientRect().top + overlap)
+			{
+				candidate = children[controlIndex];
+				right = middle - 1;
+			}
+			else
+			{
+				left = middle + 1;
+			}
+		}
+
+		if (candidate && this.#isTriggerAddControlActive(candidate, pointerY))
+		{
+			return candidate;
+		}
+
+		const lastControl = children[children.length - 1];
+
+		return lastControl && this.#isTriggerAddControlActive(lastControl, pointerY) ? lastControl : null;
+	}
+
+	#isTriggerAddControlActive(control: HTMLElement, pointerY: number): boolean
+	{
+		const rect = control.getBoundingClientRect();
+		if (Dom.hasClass(control, '--last'))
+		{
+			const previousTriggerNode = control.previousElementSibling;
+			const previousRect = previousTriggerNode ? previousTriggerNode.getBoundingClientRect() : null;
+			const overlap = 12;
+			const top = previousRect ? previousRect.bottom - overlap : rect.top - overlap;
+			const bottom = rect.bottom + overlap;
+
+			return pointerY >= top && pointerY <= bottom;
+		}
+
+		const nextTriggerNode = control.nextElementSibling;
+		if (!nextTriggerNode)
+		{
+			return false;
+		}
+
+		const nextRect = nextTriggerNode.getBoundingClientRect();
+		const previousTriggerNode = control.previousElementSibling;
+		const previousRect = previousTriggerNode ? previousTriggerNode.getBoundingClientRect() : null;
+		const overlap = 12;
+		const top = previousRect ? previousRect.bottom - overlap : Math.min(rect.top, nextRect.top) - overlap;
+		const bottom = nextRect.top + overlap;
+
+		return pointerY >= top && pointerY <= bottom;
+	}
+
+	#deactivateTriggerAddControls(event: MouseEvent)
+	{
+		this.#cancelTriggerAddControlUpdate();
+		if (this.#activeTriggerAddControlListNode === event.currentTarget)
+		{
+			this.#activeTriggerAddControl = null;
+			this.#activeTriggerAddControlListNode = null;
+		}
+
+		event.currentTarget
+			.querySelectorAll('[data-role="trigger-add-insertion"]')
+			.forEach((control) => Dom.removeClass(control, '--active'))
+		;
+		Dom.removeClass(event.currentTarget, '--has-active-inner-add');
+	}
+
+	#cancelTriggerAddControlUpdate()
+	{
+		if (this.#triggerAddControlAnimationFrame !== null)
+		{
+			window.cancelAnimationFrame(this.#triggerAddControlAnimationFrame);
+			this.#triggerAddControlAnimationFrame = null;
+		}
+		this.#triggerAddControlPointerY = null;
+		this.#triggerAddControlListNode = null;
+	}
+
+	insertTrigger(trigger, beforeTrigger)
+	{
+		this.#insertTrigger(trigger, beforeTrigger);
+		this.#renderTriggerAddControls();
 		this.markModified(true);
 	}
 
-	insertTriggerNode(documentStatus: string, triggerNode)
+	insertTriggerWithNode(trigger, beforeTrigger)
+	{
+		const beforeNode = this.#getTriggerNodeBefore(beforeTrigger);
+
+		this.#insertTrigger(trigger, beforeTrigger);
+		this.#insertTriggerNode(trigger.getStatusId(), trigger.node, beforeNode);
+		this.#renderTriggerAddControls();
+		this.markModified(true);
+	}
+
+	#insertTrigger(trigger, beforeTrigger)
+	{
+		let inserted = false;
+
+		if (beforeTrigger)
+		{
+			for (let i = 0; i < this.#triggers.length; ++i)
+			{
+				if (this.#triggers[i] !== beforeTrigger)
+				{
+					continue;
+				}
+
+				this.#triggers.splice(i, 0, trigger);
+				inserted = true;
+				break;
+			}
+		}
+
+		if (!inserted)
+		{
+			this.#triggers.push(trigger);
+		}
+	}
+
+	#getTriggerNodeBefore(beforeTrigger: ?Trigger): ?HTMLElement
+	{
+		return beforeTrigger && this.#triggers.includes(beforeTrigger) ? beforeTrigger.node : null;
+	}
+
+	insertTriggerNode(documentStatus: string, triggerNode, beforeNode)
+	{
+		if (this.#insertTriggerNode(documentStatus, triggerNode, beforeNode))
+		{
+			this.#renderTriggerAddControls();
+		}
+	}
+
+	#insertTriggerNode(documentStatus: string, triggerNode, beforeNode): boolean
 	{
 		const listNode = this.#triggersContainerNode.querySelector(`[data-role="trigger-list"][data-status-id="${documentStatus}"]`);
-		if (listNode)
+		if (!listNode)
+		{
+			return false;
+		}
+
+		if (beforeNode && beforeNode.parentNode === listNode)
+		{
+			listNode.insertBefore(triggerNode, beforeNode);
+		}
+		else
 		{
 			Dom.append(triggerNode, listNode);
 		}
+
+		return true;
 	}
 
 	serialize(): Array<Object<string, any>>

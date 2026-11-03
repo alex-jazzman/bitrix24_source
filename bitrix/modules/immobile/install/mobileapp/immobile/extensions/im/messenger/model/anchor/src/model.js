@@ -271,22 +271,24 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 			},
 
 			/**
-			 * @function anchorModel/clearByDialogType
+			 * @function anchorModel/clearByChatIdList
 			 * @param store
-			 * @param {{ dialogType: DialogType }} payload
+			 * @param {{ chatIdList: Array<number> }} payload
 			 */
-			clearByDialogType: (store, payload) => {
-				const { dialogType } = payload;
-
-				const anchorsToDelete = [];
+			clearByChatIdList: (store, payload) => {
+				const { chatIdList } = payload;
+				if (!Type.isArrayFilled(chatIdList))
+				{
+					return;
+				}
 
 				const anchorCollection = store.state.collection;
-				const chatIdList = Object.keys(anchorCollection).map((chatId) => Number(chatId));
-				const dialogList = store.rootGetters['dialoguesModel/getByChatIdList'](chatIdList);
-				dialogList.forEach((dialog) => {
-					if (dialog.type === dialogType)
+				const anchorsToDelete = [];
+				chatIdList.forEach((chatId) => {
+					const chatAnchors = anchorCollection[chatId];
+					if (Type.isArrayFilled(chatAnchors))
 					{
-						anchorsToDelete.push(...anchorCollection[dialog.chatId]);
+						anchorsToDelete.push(...chatAnchors);
 					}
 				});
 
@@ -296,7 +298,7 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				}
 
 				store.commit('deleteMany', {
-					actionName: 'clearByDialogType',
+					actionName: 'clearByChatIdList',
 					data: {
 						anchorList: anchorsToDelete,
 					},

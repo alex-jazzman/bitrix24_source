@@ -45,7 +45,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		data() {
 			return {
 				localAllowsTimeTracking: true,
-				localEstimatedTime: 0
+				localEstimatedTime: 0,
+				switcherLabelId: `tasks-time-tracking-switcher-label-${main_core.Text.getRandom()}`
 			};
 		},
 		computed: {
@@ -60,7 +61,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					className: 'tasks-time-tracking-popup',
 					bindElement: this.bindElement,
 					width: 540,
-					targetContainer: document.body
+					targetContainer: document.body,
+					focusTrap: true,
+					closeByEsc: true,
+					ariaLabel: this.loc('TASKS_V2_TIME_TRACKING_SETTINGS_ARIA_LABEL')
 				};
 			},
 			switcherOptions() {
@@ -181,6 +185,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					void tasks_v2_provider_service_statusService.statusService.pauseTimer(this.taskId);
 				}
 			},
+			handleSwitcherKeydown(event) {
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.toggleAllows();
+			},
 			openHelpDesk() {
 				top.BX.Helper.show('redirect=detail&code=27145920');
 			},
@@ -199,29 +210,43 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			>
 				<div class="tasks-time-tracking-popup-content">
 					<div class="tasks-time-tracking-popup-content-info">
-						<div class="tasks-time-tracking-popup-content-switcher">
+						<div
+							class="tasks-time-tracking-popup-content-switcher"
+							role="switch"
+							data-testid="tasks-time-tracking-allows-switcher"
+							:aria-checked="localAllowsTimeTracking"
+							:aria-labelledby="switcherLabelId"
+							tabindex="0"
+							@click="toggleAllows"
+							@keydown="handleSwitcherKeydown"
+						>
 							<Switcher
 								:isChecked="localAllowsTimeTracking"
 								:options="switcherOptions"
-								@click="toggleAllows"
 							/>
 							<Text2Xl
+								:id="switcherLabelId"
 								class="tasks-task-setting-switcher-label"
-								@click="toggleAllows"
 							>{{ loc('TASKS_V2_TIME_TRACKING_POPUP_LABEL') }}</Text2Xl>
 						</div>
 						<TextMd class="tasks-time-tracking-popup-content-text">
 							{{ loc('TASKS_V2_TIME_TRACKING_POPUP_TEXT') }}
 						</TextMd>
-						<div class="tasks-time-tracking-popup-content-more" @click="openHelpDesk">
+						<button
+							type="button"
+							class="tasks-time-tracking-popup-content-more"
+							data-testid="tasks-time-tracking-more-btn"
+							@click="openHelpDesk"
+						>
 							<BIcon
 								:name="Outline.KNOWLEDGE_BASE"
 								class="tasks-time-tracking-popup-content-more-icon"
+								aria-hidden="true"
 							/>
 							<TextSm class="tasks-time-tracking-popup-content-more-text">
 								{{ loc('TASKS_V2_TIME_TRACKING_POPUP_MORE') }}
 							</TextSm>
-						</div>
+						</button>
 					</div>
 					<div class="tasks-time-tracking-popup-content-icon"/>
 				</div>
@@ -239,6 +264,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						class="tasks-time-tracking-popup-form-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
+						data-testid="tasks-time-tracking-estimate-hours-input"
 						labelInline
 					/>
 					<BInput
@@ -246,6 +273,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						class="tasks-time-tracking-popup-form-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						data-testid="tasks-time-tracking-estimate-minutes-input"
 						labelInline
 					/>
 				</div>
@@ -383,6 +412,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
+	const OPEN_KEYS = ['Enter', ' ', 'ArrowDown'];
+	const VISIBLE_LABEL_SELECTOR = '.ui-system-input-label:not(.--error)';
+
 	// @vue/component
 	const TimeTrackingListItemEdit = {
 		name: 'TasksTimeTrackingListItemEdit',
@@ -416,7 +448,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				ButtonIcon: ui_vue3_components_button.ButtonIcon,
 				ButtonColor: ui_vue3_components_button.ButtonColor,
 				InputDesign: ui_system_input_vue.InputDesign,
-				Outline: ui_iconSet_api_vue.Outline
+				Outline: ui_iconSet_api_vue.Outline,
+				calendarPopupId: `tasks-time-tracking-list-popup-${main_core.Text.getRandom()}`
 			};
 		},
 		data() {
@@ -483,6 +516,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				} else {
 					this.datePicker.hide();
 				}
+				this.syncAria();
 			}
 		},
 		created() {
@@ -493,16 +527,82 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		mounted() {
 			this.datePicker = this.createDatePicker();
+			this.syncAria();
+
+			// main.popup closes the sheet from a capture-phase keyup listener on the document,
+			// so an Escape that only dismisses the picker has to be claimed earlier: capture at
+			// the window always runs before capture at the document, whatever the bind order.
+			main_core.Event.bind(window, 'keyup', this.handleWindowKeyUp, true);
 		},
 		unmounted() {
+			main_core.Event.unbind(window, 'keyup', this.handleWindowKeyUp, true);
 			this.datePicker?.destroy();
 		},
 		methods: {
+			syncAria() {
+				this.syncDateTriggerAria();
+				this.nameSaveButton();
+			},
+			/**
+			 * The trigger is the input wrapper, not the inner input: BInput blurs the input
+			 * on focus in the clickable mode, so a tab stop on it swallows the focus.
+			 *
+			 * A combobox reads its value off the text of its own subtree, so the visible label
+			 * has to leave the accessibility tree: it would repeat the name in place of the
+			 * value. The input stays there - it always shows the date of the record, which is
+			 * exactly the value the role has to read.
+			 */
+			syncDateTriggerAria() {
+				const trigger = this.$refs.calendarInput?.$el;
+				const input = trigger?.querySelector('input');
+				if (!input) {
+					return;
+				}
+				main_core.Dom.attr(trigger, 'role', 'combobox');
+				main_core.Dom.attr(trigger, 'aria-label', this.loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_COLUMN_DATE'));
+				main_core.Dom.attr(trigger, 'aria-haspopup', 'dialog');
+				main_core.Dom.attr(trigger, 'aria-expanded', this.isCalendarShown ? 'true' : 'false');
+				main_core.Dom.attr(trigger, 'aria-controls', this.isCalendarShown ? this.calendarPopupId : null);
+				main_core.Dom.attr(trigger, 'tabindex', '0');
+				main_core.Dom.attr(trigger.querySelector(VISIBLE_LABEL_SELECTOR), 'aria-hidden', 'true');
+				main_core.Dom.attr(input, 'tabindex', '-1');
+			},
+			/**
+			 * ui.vue3.components.button renders its <button> imperatively through ui.buttons and
+			 * forwards no aria-* to it, so an icon-only button can only be named on the live node.
+			 */
+			nameSaveButton() {
+				const button = this.$refs.editRow?.querySelector('.tasks-time-tracking-list-item-edit-save');
+				if (!button) {
+					return;
+				}
+				main_core.Dom.attr(button, 'aria-label', this.loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_SAVE_ARIA_LABEL'));
+			},
+			handleCalendarKeydown(event) {
+				if (!OPEN_KEYS.includes(event.key)) {
+					return;
+				}
+
+				// The open picker runs its own arrow navigation, so ArrowDown has nothing to move
+				// here: cancelling the page default would leave the key doing nothing at all.
+				if (this.isCalendarShown && event.key === 'ArrowDown') {
+					return;
+				}
+				event.preventDefault();
+				this.isCalendarShown = !this.isCalendarShown;
+			},
+			handleWindowKeyUp(event) {
+				if (event.key !== 'Escape' || !this.isCalendarShown) {
+					return;
+				}
+				event.stopImmediatePropagation();
+				this.isCalendarShown = false;
+			},
 			createDatePicker() {
 				const selectedDateTs = this.localCreatedAt ? this.localCreatedAt.getTime() : null;
 				return new ui_datePicker.DatePicker({
 					popupOptions: {
-						id: `tasks-time-tracking-list-popup-${main_core.Text.getRandom()}`,
+						id: this.calendarPopupId,
 						bindElement: this.$refs.calendarInput.$el,
 						bindOptions: {
 							forceBindPosition: true
@@ -558,9 +658,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div class="tasks-time-tracking-list-row">
+		<div class="tasks-time-tracking-list-row" data-testid="tasks-time-tracking-list-item-edit">
 			<div class="tasks-time-tracking-list-item-edit">
-				<div class="tasks-time-tracking-list-item-edit-time">
+				<div ref="editRow" class="tasks-time-tracking-list-item-edit-time">
 					<BInput
 						ref="calendarInput"
 						class="tasks-time-tracking-list-item-edit-time-calendar"
@@ -568,42 +668,60 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						:design="InputDesign.LightGrey"
 						clickable
 						:label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_COLUMN_DATE')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_COLUMN_DATE')"
+						data-testid="tasks-time-tracking-date-input"
 						@click="isCalendarShown = !isCalendarShown"
+						@keydown="handleCalendarKeydown"
 					/>
 					<BInput
 						v-model="hours"
 						class="tasks-time-tracking-list-item-edit-time-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
 						:placeholder="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_INPUT_H')"
+						data-testid="task-time-tracking-edit-hours-input"
+						active
 					/>
 					<BInput
 						v-model="minutes"
 						class="tasks-time-tracking-list-item-edit-time-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						data-testid="tasks-time-tracking-minutes-input"
 						:placeholder="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_INPUT_M')"
 					/>
 					<UiButton
+						class="tasks-time-tracking-list-item-edit-save"
 						:leftIcon="Outline.CHECK_L"
 						:style="AirButtonStyle.FILLED"
 						:size="ButtonSize.SMALL"
 						@click="save"
 					/>
-					<BIcon
-						:name="Outline.CROSS_L"
-						hoverable
-						class="tasks-time-tracking-list-item-edit-close-icon"
+					<button
+						type="button"
+						class="tasks-time-tracking-list-item-edit-close"
+						:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_CANCEL_ARIA_LABEL')"
+						data-testid="tasks-time-tracking-cancel-btn"
 						@click="$emit('cancel')"
-					/>
+					>
+						<BIcon
+							:name="Outline.CROSS_L"
+							hoverable
+							class="tasks-time-tracking-list-item-edit-close-icon"
+							aria-hidden="true"
+						/>
+					</button>
 				</div>
 				<div class="tasks-time-tracking-list-item-edit-text">
 					<BInput
 						v-model="text"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_TEXT_ARIA_LABEL')"
 						:placeholder="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_TEXT')"
 						:rowsQuantity="3"
-						active
 						resize="none"
+						data-testid="task-time-tracking-edit-comment-input"
 					/>
 				</div>
 			</div>
@@ -647,11 +765,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
-		data() {
-			return {
-				isItemHovered: false
-			};
-		},
 		computed: {
 			elapsedTime() {
 				return this.$store.getters[`${tasks_v2_const.Model.ElapsedTimes}/getById`](this.elapsedId);
@@ -692,11 +805,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div
-			class="tasks-time-tracking-list-row --item"
-			@mouseover="isItemHovered = true"
-			@mouseleave="isItemHovered = false"
-		>
+		<div class="tasks-time-tracking-list-row --item" data-testid="tasks-time-tracking-list-item">
 			<div class="tasks-time-tracking-list-item-view">
 				<div class="tasks-time-tracking-list-item-view-time">
 					<div class="tasks-time-tracking-list-column --date">
@@ -708,21 +817,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<div class="tasks-time-tracking-list-column --author">
 						<UserLabel :user="author"/>
 					</div>
-					<div
-						class="tasks-time-tracking-list-column --action"
-					>
-						<div
-							v-if="isItemHovered && elapsedTime.rights.edit && isEdit"
-							ref="edit" @click="$emit('edit')"
+					<div class="tasks-time-tracking-list-column --action">
+						<button
+							v-if="elapsedTime.rights.edit && isEdit"
+							ref="edit"
+							type="button"
+							class="tasks-time-tracking-list-action"
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ACTION_EDIT')"
+							data-testid="tasks-time-tracking-edit-btn"
+							@click="$emit('edit')"
 						>
-							<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable/>
-						</div>
-						<div
-							v-if="isItemHovered && elapsedTime.rights.remove && isEdit"
-							ref="remove" @click="$emit('remove')"
+							<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable aria-hidden="true"/>
+						</button>
+						<button
+							v-if="elapsedTime.rights.remove && isEdit"
+							ref="remove"
+							type="button"
+							class="tasks-time-tracking-list-action"
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ACTION_REMOVE')"
+							data-testid="tasks-time-tracking-remove-btn"
+							@click="$emit('remove')"
 						>
-							<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable/>
-						</div>
+							<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable aria-hidden="true"/>
+						</button>
 					</div>
 				</div>
 				<div v-if="this.elapsedTime.text" class="tasks-time-tracking-list-item-view-text">
@@ -1075,7 +1192,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					maxHeight: 240,
 					offsetTop: 8,
 					offsetLeft: -18,
-					targetContainer: document.body
+					targetContainer: document.body,
+					focusTrap: true,
+					closeByEsc: true,
+					ariaLabel: this.loc('TASKS_V2_TIME_TRACKING_PARTICIPANTS_ARIA_LABEL')
 				};
 			}
 		},
@@ -1320,26 +1440,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<BottomSheet
 			customClass="tasks-task-time-tracking-sheet"
 			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_TIME_TRACKING_TITLE_SHEET')"
 			@close="$emit('close')"
 		>
-			<div class="tasks-task-time-tracking-sheet-container">
+			<div class="tasks-task-time-tracking-sheet-container" data-testid="tasks-time-tracking-sheet">
 				<div class="tasks-task-time-tracking-sheet-header">
 					<HeadlineSm>{{ loc('TASKS_V2_TIME_TRACKING_TITLE_SHEET') }}</HeadlineSm>
 					<div class="tasks-task-time-tracking-sheet-header-icons">
-						<BIcon
-							ref="filterIcon"
+						<button
 							v-if="task.rights.edit && !isTimeTrackingLocked"
+							ref="filterButton"
+							type="button"
 							class="tasks-task-time-tracking-sheet-filter"
-							:name="Outline.FILTER_2_LINES"
-							hoverable
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SETTINGS_ARIA_LABEL')"
+							aria-haspopup="dialog"
+							:aria-expanded="isSettingsPopupShown"
+							data-testid="tasks-time-tracking-sheet-filter-btn"
 							@click="isSettingsPopupShown = true"
-						/>
-						<BIcon
+						>
+							<BIcon :name="Outline.FILTER_2_LINES" hoverable aria-hidden="true"/>
+						</button>
+						<button
+							type="button"
 							class="tasks-task-time-tracking-sheet-close"
-							:name="Outline.CROSS_L"
-							hoverable
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_CLOSE_ARIA_LABEL')"
+							data-testid="tasks-time-tracking-sheet-close-btn"
 							@click="$emit('close')"
-						/>
+						>
+							<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+						</button>
 					</div>
 				</div>
 				<div class="tasks-task-time-tracking-sheet-content">
@@ -1368,6 +1497,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<div
 						v-else-if="task.numberOfElapsedTimes > 0"
 						ref="participants"
+						data-testid="tasks-time-tracking-participants"
 						class="tasks-task-time-tracking-sheet-users"
 					>
 						<UserAvatarList
@@ -1386,6 +1516,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					</div>
 					<div
 						ref="invoiceBtn"
+						data-testid="tasks-time-tracking-invoice-btn"
 						class="tasks-task-time-tracking-sheet-invoice"
 						@mouseover="isInvoiceHintShown = true"
 					>
@@ -1399,7 +1530,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			</div>
 			<TaskTrackingPopup
 				v-if="isSettingsPopupShown"
-				:bindElement="$refs.filterIcon.$el"
+				:bindElement="$refs.filterButton"
 				:timeSpent
 				@close="handleClosePopup"
 			/>
@@ -1540,15 +1671,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<div
 			class="tasks-task-time-tracking"
 			:data-task-field-id="timeTrackingMeta.id"
+			data-testid="tasks-time-tracking"
 			@mouseover="isFieldHovered = true"
 			@mouseleave="isFieldHovered = false"
 		>
 			<HoverPill
 				:readonly
+				:ariaLabel="readonly ? '' : loc('TASKS_V2_TIME_TRACKING_ARIA_LABEL')"
+				:ariaHaspopup="readonly ? '' : 'dialog'"
+				:ariaExpanded="readonly ? null : isSheetShown"
+				data-testid="tasks-time-tracking-timer-btn"
 				@click="handleClick"
 				ref="timer"
 			>
-				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER"/>
+				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER" aria-hidden="true"/>
 				<TimeTrackingTimer
 					:timeSpent
 					:totalTime="task.estimatedTime"
@@ -1559,11 +1695,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<div
 				v-if="task.rights.edit && !isTimeTrackingLocked"
 				class="tasks-task-time-tracking-settings"
+				:class="{ '--visible': isFieldHovered || isPopupShown }"
 				ref="settings"
 			>
 				<SettingsLabel
-					v-if="isFieldHovered || isPopupShown"
+					:ariaLabel="loc('TASKS_V2_TIME_TRACKING_SETTINGS_ARIA_LABEL')"
 					data-time-tracking-settings
+					data-testid="tasks-time-tracking-settings-btn"
 					@click="handleSettingsClick"
 				/>
 			</div>
@@ -1643,6 +1781,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isTimeTrackingLocked() {
 				return !tasks_v2_core.Core.getParams().restrictions.timeTracking.available;
+			},
+			opensDialog() {
+				if (this.isLocked) {
+					return false;
+				}
+				if (this.canOnlyAddFirstElapsedTime()) {
+					return true;
+				}
+				return !this.isSelected && !this.isTimeTrackingLocked;
+			},
+			isDialogShown() {
+				return this.isSheetShown || this.isPopupShown;
+			}
+		},
+		watch: {
+			isDialogShown() {
+				this.syncAria();
+			},
+			opensDialog() {
+				this.syncAria();
 			}
 		},
 		created() {
@@ -1651,7 +1809,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			const localTimeSpent = timerStartedTs === 0 ? this.task.timeSpent : this.task.timeSpent + currentTs - timerStartedTs;
 			this.localTimeSpent = main_core.Type.isNumber(localTimeSpent) ? localTimeSpent : 0;
 		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+			},
 			handleClick() {
 				if (this.isLocked) {
 					void tasks_v2_lib_showLimit.showLimit({
@@ -1675,6 +1845,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				this.isPopupShown = true;
 			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
+			},
 			handleClosePopup() {
 				this.isPopupShown = false;
 				this.highlightField();
@@ -1684,6 +1861,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(timeTrackingMeta.id);
+			},
+			getChipElement() {
+				return this.$refs.chip?.$el ?? null;
 			},
 			canOnlyAddFirstElapsedTime() {
 				return (!this.task.rights.edit || this.isTimeTrackingLocked) && this.task.rights.elapsedTime && !this.task.numberOfElapsedTimes && !this.readonly;
@@ -1699,11 +1879,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="timeTrackingMeta.id"
+			data-testid="tasks-time-tracking-chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 		<TaskTrackingPopup
-			v-if="isPopupShown"
-			:bindElement="$refs.chip.$el"
+			v-if="isPopupShown && getChipElement()"
+			:bindElement="getChipElement()"
 			:timeSpent="localTimeSpent"
 			@close="handleClosePopup"
 		/>

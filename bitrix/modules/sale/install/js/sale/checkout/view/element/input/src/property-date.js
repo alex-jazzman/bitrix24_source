@@ -1,9 +1,11 @@
 import { BitrixVue } from 'ui.vue';
-import { EventEmitter } from 'main.core.events';
 import { Type } from 'main.core';
-import { EventType, Property as Const } from 'sale.checkout.const';
+import { Property as Const } from 'sale.checkout.const';
+
+import { MixinPropertyField } from './property-field';
 
 BitrixVue.component('sale-checkout-view-element-input-property-date', {
+	mixins: [MixinPropertyField],
 	props: ['item', 'index', 'autocomplete', 'isDateTime'],
 	methods: {
 		onClick()
@@ -72,10 +74,6 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 			const date = BX.parseDate(value);
 			return date && date.toLocaleDateString() !== 'Invalid Date';
 		},
-		validate()
-		{
-			EventEmitter.emit(EventType.property.validate, {index: this.index});
-		},
 		setDate(date)
 		{
 			this.item.value = date;
@@ -94,10 +92,6 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 		{
 			return this.item.value === '';
 		},
-		isRequired()
-		{
-			return this.item.required === 'Y';
-		},
 		isAsteriskShown()
 		{
 			return this.isEmpty && this.isRequired;
@@ -105,7 +99,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 	},
 	// language=Vue
 	template: `
-		<div class="form-wrap form-asterisk">
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-date">
 			<input
 				class="form-control form-control-lg"
 				:class="checkedClassObject"
@@ -118,11 +112,16 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 				@dragstart="(e) => e.preventDefault()"
 				@paste="(e) => e.preventDefault()"
 				:autocomplete="autocomplete"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
 				:placeholder="item.name"
 				v-model="item.value"
 			/>
 			<span
 				class="asterisk-item"
+				aria-hidden="true"
 				v-if="isAsteriskShown"
 			>
 				{{item.name}}

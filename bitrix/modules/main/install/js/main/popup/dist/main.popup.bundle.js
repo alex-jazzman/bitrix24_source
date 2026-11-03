@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_designTokens, ui_fonts_opensans, main_core_events, ui_a11y, main_core_zIndexManager) {
+(function (exports, main_core, ui_designTokens, ui_designTokens_air, ui_fonts_opensans, ui_iconSet_outline, main_core_events, ui_a11y, main_core_zIndexManager) {
 	'use strict';
 
 	class PositionEvent extends main_core_events.BaseEvent {
@@ -221,6 +221,7 @@ this.BX = this.BX || {};
 	}
 	const ariaModalRoles = new Set(['alertdialog', 'dialog', 'window']);
 	var _focusTrap = new WeakMap();
+	var _hasDeclaredMovement = new WeakMap();
 	var _Popup_brand = new WeakSet();
 	let Popup = function (_EventEmitter) {
 		function Popup(_options, compatBindElement, compatParams) {
@@ -268,7 +269,7 @@ this.BX = this.BX || {};
 			babelHelpers.defineProperty(_this, "dragPageY", 0);
 			babelHelpers.defineProperty(_this, "animationShowClassName", null);
 			babelHelpers.defineProperty(_this, "animationCloseClassName", null);
-			babelHelpers.defineProperty(_this, "animationCloseEventType", null);
+			_classPrivateFieldInitSpec$1(_this, _hasDeclaredMovement, false);
 			babelHelpers.defineProperty(_this, "buttonsContainer", null);
 			babelHelpers.defineProperty(_this, "resizeContentOffset", 0);
 			babelHelpers.defineProperty(_this, "handleAutoHide", event => {
@@ -326,6 +327,7 @@ this.BX = this.BX || {};
 				this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
 				this.autoHideHandler = main_core.Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
 				this.closeByEsc = params.closeByEsc === true;
+				this.blockBackgroundEsc = params.blockBackgroundEsc !== false;
 				this.designSystemContext = params.darkMode ? '--ui-context-content-dark' : '--ui-context-content-light';
 				this.setTargetContainer(params.targetContainer);
 			}
@@ -1384,16 +1386,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "bindAnimationEnd",
 			value: function bindAnimationEnd(className, callback) {
-				const eventName = `${this.animationCloseEventType}end`;
-				const popupContainer = this.getPopupContainer();
-				const handleTransitionEnd = event => {
-					if (!main_core.Dom.hasClass(event.target, className)) {
-						return;
-					}
-					main_core.Event.unbind(popupContainer, eventName, handleTransitionEnd);
-					callback();
-				};
-				main_core.Event.bind(popupContainer, eventName, handleTransitionEnd);
+				void _assertClassBrand$1(_Popup_brand, this, _callAfterAnimationEnd).call(this, className, callback);
 			}
 		}, {
 			key: "animateOpening",
@@ -1403,10 +1396,10 @@ this.BX = this.BX || {};
 					callback();
 				} else {
 					main_core.Dom.addClass(this.getPopupContainer(), this.animationShowClassName);
-					if (this.animationCloseEventType === null) {
-						callback();
-					} else {
+					if (_classPrivateFieldGet$1(_hasDeclaredMovement, this)) {
 						this.bindAnimationEnd(this.animationShowClassName, callback);
+					} else {
+						callback();
 					}
 				}
 			}
@@ -1418,10 +1411,10 @@ this.BX = this.BX || {};
 					callback();
 				} else {
 					main_core.Dom.addClass(this.getPopupContainer(), this.animationCloseClassName);
-					if (this.animationCloseEventType === null) {
-						callback();
-					} else {
+					if (_classPrivateFieldGet$1(_hasDeclaredMovement, this)) {
 						this.bindAnimationEnd(this.animationCloseClassName, callback);
+					} else {
+						callback();
 					}
 				}
 			}
@@ -1431,36 +1424,41 @@ this.BX = this.BX || {};
 				if (main_core.Type.isPlainObject(options)) {
 					this.animationShowClassName = main_core.Type.isStringFilled(options.showClassName) ? options.showClassName : null;
 					this.animationCloseClassName = main_core.Type.isStringFilled(options.closeClassName) ? options.closeClassName : null;
-					this.animationCloseEventType = options.closeAnimationType === 'animation' || options.closeAnimationType === 'transition' ? options.closeAnimationType : null;
+					_classPrivateFieldSet$1(_hasDeclaredMovement, this, options.closeAnimationType === 'animation' || options.closeAnimationType === 'transition');
 				} else if (main_core.Type.isStringFilled(options)) {
 					const animationName = options;
 					switch (animationName) {
 						case 'fading':
 							this.animationShowClassName = 'popup-window-show-animation-opacity';
 							this.animationCloseClassName = 'popup-window-close-animation-opacity';
-							this.animationCloseEventType = 'animation';
+							_classPrivateFieldSet$1(_hasDeclaredMovement, this, true);
 							break;
 						case 'fading-slide':
 							this.animationShowClassName = 'popup-window-show-animation-opacity-transform';
 							this.animationCloseClassName = 'popup-window-close-animation-opacity';
-							this.animationCloseEventType = 'animation';
+							_classPrivateFieldSet$1(_hasDeclaredMovement, this, true);
 							break;
 						case 'scale':
 							this.animationShowClassName = 'popup-window-show-animation-scale';
 							this.animationCloseClassName = 'popup-window-close-animation-opacity';
-							this.animationCloseEventType = 'animation';
+							_classPrivateFieldSet$1(_hasDeclaredMovement, this, true);
 							break;
 					}
 				} else if (options === false || options === null) {
 					this.animationShowClassName = null;
 					this.animationCloseClassName = null;
-					this.animationCloseEventType = null;
+					_classPrivateFieldSet$1(_hasDeclaredMovement, this, false);
 				}
 			}
 		}, {
 			key: "isShown",
 			value: function isShown() {
 				return !this.isDestroyed() && this.getPopupContainer()?.style.display === 'block';
+			}
+		}, {
+			key: "shouldBlockBackgroundEsc",
+			value: function shouldBlockBackgroundEsc() {
+				return this.blockBackgroundEsc;
 			}
 		}, {
 			key: "destroy",
@@ -1828,7 +1826,7 @@ this.BX = this.BX || {};
 			<button
 				tabindex="0"
 				type="button"
-				aria-label="Close"
+				aria-label="${main_core.Loc.getMessage('MAIN_POPUP_CLOSE')}"
 				class="${className}"
 				onclick="${this.handleCloseIconClick.bind(this)}"
 			>
@@ -1962,6 +1960,13 @@ this.BX = this.BX || {};
 		}
 		if (popups === null || popups.size === 0) {
 			main_core.Dom.removeClass(target, 'popup-window-disable-scroll');
+		}
+	}
+	async function _callAfterAnimationEnd(className, callback) {
+		const popupContainer = this.getPopupContainer();
+		await Promise.all([main_core.Animation.waitTransitionEnd(popupContainer), main_core.Animation.waitAnimationEnd(popupContainer)]);
+		if (main_core.Dom.hasClass(popupContainer, className)) {
+			callback();
 		}
 	}
 	function _startDrag(event, options) {
@@ -3417,6 +3422,14 @@ this.BX = this.BX || {};
 			}
 			return false;
 		}
+		static isAnyPopupBlockingBackgroundEscShown() {
+			for (let i = 0, length = this._popups.length; i < length; i++) {
+				if (this._popups[i].isShown() && this._popups[i].shouldBlockBackgroundEsc()) {
+					return true;
+				}
+			}
+			return false;
+		}
 		static getPopupById(id) {
 			for (let i = 0; i < this._popups.length; i++) {
 				if (this._popups[i].getId() === id) {
@@ -3720,5 +3733,5 @@ this.BX = this.BX || {};
 	exports.PopupWindowCustomButton = PopupWindowCustomButton;
 	exports.PopupWindowManager = PopupManager;
 
-})(this.BX.Main = this.BX.Main || {}, BX, window, BX, BX.Event, BX.UI.Accessibility, BX);
+})(this.BX.Main = this.BX.Main || {}, BX, window, window, BX, window, BX.Event, BX.UI.Accessibility, BX);
 //# sourceMappingURL=main.popup.bundle.js.map

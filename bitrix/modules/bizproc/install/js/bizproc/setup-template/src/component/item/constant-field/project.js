@@ -1,5 +1,10 @@
-import { Type } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { type TagItem, TagSelector, type ItemId } from 'ui.entity-selector';
+
+import {
+	getDeletedProjectIds,
+	isDeletedProjectSelected,
+} from '../../../lib/project-field-state/project-field-state';
 
 const ENTITY_TYPES = Object.freeze({
 	PROJECT: 'project',
@@ -23,12 +28,38 @@ export const ConstantProject = {
 		},
 	},
 	emits: ['update:modelValue'],
+	data(): Object
+	{
+		return {
+			tagObserver: null,
+		};
+	},
+	computed: {
+		projectState(): ?Object
+		{
+			return this.item.meta?.projectState ?? null;
+		},
+		isProjectDeleted(): boolean
+		{
+			return isDeletedProjectSelected(this.projectState, this.modelValue);
+		},
+		deletedProjectIds(): Array<string>
+		{
+			return getDeletedProjectIds(this.projectState);
+		},
+		projectDeletedTitle(): string
+		{
+			return Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_PROJECT_DELETED_VALUE') ?? '';
+		},
+	},
 	mounted(): void
 	{
 		this.initializeSelector();
 	},
 	beforeUnmount(): void
 	{
+		this.disconnectTagObserver();
+
 		if (this.tagSelector)
 		{
 			this.tagSelector.getDialog().destroy();
@@ -63,17 +94,11 @@ export const ConstantProject = {
 		},
 		normalizeModelValues(): Array<number>
 		{
-			if (Type.isArray(this.modelValue))
-			{
-				return this.modelValue
-					.map((v) => Number(v))
-					.filter((v: number) => Type.isNumber(v))
-				;
-			}
+			const values = Type.isArray(this.modelValue) ? this.modelValue : [this.modelValue];
 
-			return this.modelValue
-				? [Number(this.modelValue)].filter((v: number) => Type.isNumber(v))
-				: []
+			return values
+				.map((value) => Number(value))
+				.filter((value: number) => Number.isFinite(value) && value > 0)
 			;
 		},
 		initializeSelector(): void
@@ -104,6 +129,60 @@ export const ConstantProject = {
 			});
 
 			this.tagSelector.renderTo(this.$refs.container);
+			this.syncDeletedProjectTag();
+			this.watchDeletedProjectTag();
+		},
+		syncDeletedProjectTag(): void
+		{
+			if (!this.isProjectDeleted || !this.tagSelector)
+			{
+				return;
+			}
+
+			const selectedProjectIds = new Set(
+				this.normalizeModelValues().map((value: number) => String(value)),
+			);
+			this.deletedProjectIds
+				.filter((projectId: string) => selectedProjectIds.has(projectId))
+				.forEach((projectId: string) => {
+					const tag = this.tagSelector
+						.getTags()
+						.find((item: TagItem) => {
+							return item.getEntityId() === ENTITY_TYPES.PROJECT && String(item.getId()) === projectId;
+						})
+						?? this.tagSelector.addTag({
+							id: Number(projectId),
+							entityId: ENTITY_TYPES.PROJECT,
+							title: this.projectDeletedTitle,
+							deselectable: false,
+							animate: false,
+						})
+					;
+
+					if (tag && tag.getTitle() !== this.projectDeletedTitle)
+					{
+						tag.setTitle(this.projectDeletedTitle);
+						tag.render();
+					}
+				});
+		},
+		watchDeletedProjectTag(): void
+		{
+			if (!this.isProjectDeleted || !Type.isFunction(window.MutationObserver))
+			{
+				return;
+			}
+
+			this.tagObserver = new MutationObserver(this.syncDeletedProjectTag);
+			this.tagObserver.observe(this.$refs.container, { childList: true, subtree: true });
+		},
+		disconnectTagObserver(): void
+		{
+			if (this.tagObserver)
+			{
+				this.tagObserver.disconnect();
+				this.tagObserver = null;
+			}
 		},
 	},
 	template: `

@@ -7,31 +7,42 @@
 	height: 100%;
 	padding: var(--ui-space-inset-2xl) var(--ui-space-inset-lg);
 	text-align: center;
-	color: var(--ui-color-base-70);
+	color: var(--ui-color-base-2);
 }
 
+/* The glyph is a mask over `background`, so its shade comes from the icon set's own variable
+   — a plain `color` never reached it, and the mark stayed near-black on the blue glass. */
 .disk-picker-empty-state__icon {
-	color: var(--ui-color-base-50);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+/* Module artwork instead of a glyph: the design system carries no three-dimensional set,
+   so the asset is ours and each variant names its own file. */
+.disk-picker-empty-state__graphic {
+	flex: none;
+	width: 100px;
+	height: 100px;
+}
+
+.disk-picker-empty-state__graphic.--folder {
+	background: url('../../image/blue-folder.webp') center / contain no-repeat;
+}
+
+.disk-picker-empty-state__graphic.--no-file {
+	background: url('../../image/no-file.webp') center / contain no-repeat;
+}
+
+.disk-picker-empty-state__graphic.--no-results {
+	background: url('../../image/no-results.webp') center / contain no-repeat;
 }
 
 .disk-picker-empty-state__title {
-	color: var(--ui-color-base-80);
+	color: var(--ui-color-base-1);
 }
 
+/* The action is a design-system button now: as a bare link in the accent blue it all but
+   vanished against the blue glass behind it. The component brings its own fill, states and
+   focus ring, so nothing is styled here beyond keeping it from stretching. */
 .disk-picker-empty-state__action {
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: var(--ui-color-accent-main-primary);
-	cursor: pointer;
-}
-
-.disk-picker-empty-state__action:hover {
-	text-decoration: underline;
-}
-
-.disk-picker-empty-state__action:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 2px;
-	border-radius: var(--ui-border-radius-2xs);
+	flex: none;
 }

@@ -31,6 +31,10 @@ jn.define('disk/uploader', (require, exports, module) => {
 			this.options = options;
 		}
 
+		/**
+		 * @private
+		 * @return {void}
+		 */
 		run()
 		{
 			this.#pickFiles((files) => {
@@ -42,6 +46,7 @@ jn.define('disk/uploader', (require, exports, module) => {
 						layoutWidget,
 						onCommit: this.options.onCommit,
 						shouldOpenNativeViewer: this.options.shouldOpenNativeViewer,
+						uniqueCode: this.options.uniqueCode,
 					}),
 				});
 
@@ -68,11 +73,19 @@ jn.define('disk/uploader', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * PageManager satisfies the same shape, so it stands in when no widget is given.
+		 * @return {DiskUploaderParentWidget}
+		 */
 		#getParentWidget()
 		{
 			return this.options.layoutWidget ?? PageManager;
 		}
 
+		/**
+		 * @param {(files: Array<DiskUploaderPickedFile>) => void} onFilesSelected
+		 * @return {void}
+		 */
 		#pickFiles(onFilesSelected)
 		{
 			const items = [
@@ -110,6 +123,10 @@ jn.define('disk/uploader', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {Array<DiskUploaderPickedFile>} [files]
+		 * @return {Array<DiskUploadTask>}
+		 */
 		#prepareTasks(files = [])
 		{
 			return files.map((file) => {

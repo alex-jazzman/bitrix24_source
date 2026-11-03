@@ -1,17 +1,16 @@
+import { type ComponentOptions } from 'ui.vue3';
+import { type JsonObject } from 'main.core';
+
 import { Logger } from 'im.v2.lib.logger';
 import { SidebarManager } from 'im.v2.lib.sidebar';
+import { type ImModelChat } from 'im.v2.model';
 
 import { Main } from '../../../classes/panels/main';
-
+import { SidebarSkeleton } from '../../elements/skeleton/skeleton';
 import { MainHeader } from './components/header';
 import { ComponentMap } from './config/component-map';
-import { SidebarSkeleton } from '../../elements/skeleton/skeleton';
 
 import './css/main-panel.css';
-
-import type { JsonObject } from 'main.core';
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const MainPanel = {
@@ -35,14 +34,14 @@ export const MainPanel = {
 	},
 	computed:
 	{
-		blocks(): BitrixVueComponentProps[]
+		blocks(): ComponentOptions[]
 		{
 			const sidebarConfig = SidebarManager.getInstance().getConfig(this.dialogId);
-			const blocks = sidebarConfig.getBlocks(this.dialogId);
+			const defaultBlocks = sidebarConfig.getBlocks(this.dialogId)
+				.map((block) => ComponentMap[block]);
+			const customBlocks = sidebarConfig.getCustomBlocks();
 
-			return blocks.map((block) => {
-				return ComponentMap[block];
-			});
+			return [...defaultBlocks, ...customBlocks];
 		},
 		dialog(): ImModelChat
 		{

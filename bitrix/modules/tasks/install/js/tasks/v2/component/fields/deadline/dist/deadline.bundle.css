@@ -16,6 +16,16 @@
 	gap: 18px;
 }
 
+.tasks-field-deadline-settings-label {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+
+.tasks-field-deadline-settings-label.--visible,
+.tasks-field-deadline-settings-label:focus-within {
+	opacity: 1;
+}
+
 .tasks-field-deadline-icon {
 	margin-right: var(--ui-space-inline-2xs2);
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
@@ -55,9 +65,24 @@
 	pointer-events: none;
 }
 
+.tasks-field-deadline-chip .ui-chip:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
+}
+
+/* Wrapping shrinks min-content width, so main.popup measures a collapsed popup and cannot shift it off the viewport edge. */
 .tasks-field-deadline-popup {
 	display: flex;
 	gap: var(--ui-space-inline-md2);
+}
+
+@media (max-width: 480px) {
+	.tasks-field-deadline-popup {
+		flex-wrap: wrap;
+	}
+
+	.tasks-field-deadline-preset {
+		min-width: min(160px, 100%);
+	}
 }
 
 .tasks-field-deadline-presets {
@@ -66,6 +91,17 @@
 	gap: var(--ui-space-stack-xs);
 }
 
+/* deadline preset button reset */
+.tasks-field-deadline-preset {
+	appearance: none;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	background-color: transparent;
+}
+/* deadline preset button reset end */
+
 .tasks-field-deadline-preset {
 	box-sizing: border-box;
 	min-width: 160px;
@@ -73,6 +109,23 @@
 	border-radius: var(--ui-border-radius-lg);
 	border: var(--ui-border-width-thin) solid var(--ui-color-design-outline-a2-content-divider);
 	cursor: pointer;
+}
+
+.tasks-field-deadline-preset:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.tasks-field-deadline-preset-limit-reason {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
 }
 
 .tasks-field-deadline-preset:hover:not(.--disabled) {
@@ -126,6 +179,24 @@
 	color: var(--ui-color-base-1);
 	font-size: var(--ui-font-size-xl);
 	font-weight: var(--ui-font-weight-medium);
+}
+
+/* change-reason close button reset */
+.tasks-deadline-change-reason-popup-close {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	line-height: 0;
+	cursor: pointer;
+}
+/* change-reason close button reset end */
+
+.tasks-deadline-change-reason-popup-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-deadline-change-reason-popup-close-icon {

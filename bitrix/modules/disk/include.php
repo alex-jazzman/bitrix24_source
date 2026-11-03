@@ -27,9 +27,20 @@ Loader::registerAutoLoadClasses(
 		"bitrix\\disk\\userconfiguration" => "lib/configuration.php",
 		"bitrix\\disk\\folder" => "lib/folder.php",
 		"bitrix\\disk\\specificfolder" => "lib/folder.php",
-		"bitrix\\disk\\controller\\filepicker" => "lib/Controller/FilePicker.php",
+		"bitrix\\disk\\controller\\filepicker" => "lib/controller/FilePicker.php",
+		"bitrix\\disk\\controller\\destination" => "lib/controller/Destination.php",
 	)
 );
+
+// Dev/QA controllers (e2e provisioning among them) live under dev/, which is not part of a
+// shipped portal, so they exist only in a developer checkout. Registered the way ui, imbot and
+// statistic register theirs: the whole dev/ under Controller\Dev — Controller, not Dev, because
+// the action resolver only routes to classes under the module's controller namespaces from
+// .settings.php. Each controller under it guards itself in processBeforeAction.
+if (is_dir(__DIR__ . '/dev'))
+{
+	Loader::registerNamespace('Bitrix\\Disk\\Controller\\Dev', __DIR__ . '/dev');
+}
 
 
 CJSCore::RegisterExt('disk', array(
@@ -134,7 +145,7 @@ CJSCore::RegisterExt('disk_external_loader', [
 CJSCore::RegisterExt('disk_information_popups', [
 	'js' => '/bitrix/js/disk/information_popups.js',
 	'lang' => '/bitrix/modules/disk/lang/'.LANGUAGE_ID.'/install/js/information_popups.php',
-	'rel' => ['core', 'disk', 'helper', 'intranet.desktop-download'],
+	'rel' => ['core', 'disk', 'helper', 'intranet.desktop-download', 'ui.a11y', 'disk.dialog-markup'],
 ]);
 
 \Bitrix\Disk\Internals\Engine\Binder::registerDefaultAutoWirings();

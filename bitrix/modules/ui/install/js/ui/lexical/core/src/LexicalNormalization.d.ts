@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { RangeSelection, TextNode } from '.';
+import { type RangeSelection, type TextNode } from '.';
 export declare function $normalizeTextNode(textNode: TextNode): void;
+/** Descends element-type anchor and focus points of a RangeSelection toward the deepest text-type points, stopping at non-element leaf nodes. */
 export declare function $normalizeSelection(selection: RangeSelection): RangeSelection;

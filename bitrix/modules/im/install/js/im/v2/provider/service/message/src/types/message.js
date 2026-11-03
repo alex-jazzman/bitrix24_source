@@ -1,3 +1,5 @@
+import type { RunActionError } from 'im.v2.lib.rest';
+
 import type {
 	RawCopilot,
 	RawFile,
@@ -24,6 +26,16 @@ export type PaginationRestResult = {
 	copilot: RawCopilot,
 	tariffRestrictions: RawTariffRestrictions,
 	stickers: RawSticker[],
+};
+
+export type EditMessageResult = {
+	success: boolean,
+	// false when a newer attempt for the same message has already started
+	isLatestAttempt: boolean,
+	// the snapshot the optimistic update overwrote; both fields are restored on a rollback
+	textBeforeEdit: string,
+	isEditedBeforeEdit: boolean,
+	reason: ?RunActionError,
 };
 
 export type TranscriptionResponse = {

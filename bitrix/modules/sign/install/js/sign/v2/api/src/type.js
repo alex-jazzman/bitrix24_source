@@ -1,4 +1,4 @@
-import type { ProviderCodeType } from 'sign.type';
+import type { MemberRoleType, ProviderCodeType, ReminderType } from 'sign.type';
 
 export type Provider = {
 	code: ProviderCodeType,
@@ -32,6 +32,7 @@ export type LoadedDocumentData = {
 	version: number;
 	providerCode: ProviderCodeType;
 	dateSignUntilUserTime: string | null;
+	inviteMessage: string | null;
 	previewUrl?: string;
 	externalDateCreateSourceType: SourceType;
 	externalIdSourceType: SourceType;
@@ -79,6 +80,18 @@ export type SetupMember = {
 	entityId: number;
 	party: number;
 	role?: Role;
+	signingMethod?: ?string;
+};
+
+export type LoadedMember = {
+	uid: string;
+	entityId: number;
+	entityType: string;
+	entityTypeId: number | null;
+	presetId: number | null;
+	party: number;
+	role: MemberRoleType;
+	reminderType: ReminderType;
 };
 
 export type Company = {
@@ -88,13 +101,14 @@ export type Company = {
 	registerUrl: ?string,
 	providers: ?Array<Provider>,
 	goskeyLiteAvailable: ?boolean,
+	goskeyRepresentativeSigningAvailable: ?boolean,
 };
 
 export type B2eCompanyList = { companies: Array<Company>, showTaxId: boolean };
 
 export type CountMember = {
 	entityType: string;
-	entityId: number;
+	entityId: number | string;
 };
 
 export type HcmLinkMultipleVacancyEmployee = {
@@ -139,4 +153,37 @@ export type Restrictions = {
 	newDocAllowed: boolean;
 	availableOnTariff: boolean;
 	b2bPhoneVerificationRequired: boolean;
+};
+
+/**
+ * Per-file outcome of the batch document creation.
+ */
+export type AddGroupDocumentsItem = {
+	fileId: string,
+	success: boolean,
+	uid: string | null,
+	documentId: number | null,
+	blankId: number | null,
+	/** Whether the blank of the file was created with placeholders; false for a failed file. */
+	hasPlaceholders: boolean,
+	errorCode: string | null,
+};
+
+export type AddGroupDocumentsResponse = {
+	groupId: number,
+	items: Array<AddGroupDocumentsItem>,
+};
+
+export type ModifyInviteMessageRequest = {
+	uid: string;
+	message: string | null;
+};
+
+export type ModifyDocumentsInviteMessageRequest = {
+	documentIds: Array<number>;
+	message: string | null;
+};
+
+export type ModifyInviteMessageResponse = {
+	success: boolean;
 };

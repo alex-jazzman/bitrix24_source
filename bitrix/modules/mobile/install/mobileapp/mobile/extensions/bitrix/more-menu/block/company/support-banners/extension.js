@@ -23,6 +23,9 @@ jn.define('more-menu/block/company/support-banners', (require, exports, module) 
 						flexDirection: 'row',
 						justifyContent: 'space-between',
 						maxWidth: 400,
+						// the pair closes the block and belongs to it less than the cards above do, so it
+						// stands a little further from them than they stand from each other
+						marginTop: Component.cardListGap.toNumber(),
 					},
 				},
 				Card(

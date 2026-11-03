@@ -437,6 +437,23 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 
 /* endregion */
 
+/* region Change Owner Dialog */
+.bizproc-ai-agents__change-owner {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.bizproc-ai-agents__change-owner-error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-ai-agents__change-owner-error:empty {
+	display: none;
+}
+
+/* endregion */
+
 /* region Launch Control Field */
 
 .launch-control-field-date
@@ -525,6 +542,14 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 }
 .launch-control-field-rag-files-hint > span {
 	margin: 0;
+}
+
+/* endregion */
+
+/* region Version Field */
+
+.bizproc-ai-agents-grid-version-text {
+	color: var(--ui-color-base-2);
 }
 
 /* endregion */

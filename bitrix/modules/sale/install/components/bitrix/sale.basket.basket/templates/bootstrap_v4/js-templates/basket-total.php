@@ -19,8 +19,10 @@ use Bitrix\Main\Localization\Loc;
 					</div>
 					<div class="form">
 						<div class="form-group" style="position: relative;">
-							<input type="text" class="form-control" id="" placeholder="" data-entity="basket-coupon-input">
-							<span class=" basket-coupon-block-coupon-btn"></span>
+							<input type="text" class="form-control"
+								aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_COUPON_FIELD_ARIA'))?>"
+								data-entity="basket-coupon-input">
+							<span class=" basket-coupon-block-coupon-btn" aria-hidden="true"></span>
 						</div>
 					</div>
 
@@ -73,9 +75,18 @@ use Bitrix\Main\Localization\Loc;
 
 				<div class="basket-checkout-block basket-checkout-block-btn">
 					<button class="btn btn-lg btn-primary basket-btn-checkout{{#DISABLE_CHECKOUT}} disabled{{/DISABLE_CHECKOUT}}"
+						{{#DISABLE_CHECKOUT}}aria-disabled="true" aria-describedby="basket-checkout-disabled-reason"{{/DISABLE_CHECKOUT}}
 						data-entity="basket-checkout-button">
 						<?=Loc::getMessage('SBB_ORDER')?>
 					</button>
+					{{#DISABLE_CHECKOUT}}
+						<span class="basket-visually-hidden" id="basket-checkout-disabled-reason">
+							<?=Loc::getMessage(
+								'SBB_CHECKOUT_DISABLED_ARIA',
+								['#REASON#' => Loc::getMessage('SBB_CHECKOUT_DISABLED_REASON_ARIA')],
+							)?>
+						</span>
+					{{/DISABLE_CHECKOUT}}
 				</div>
 			</div>
 		</div>
@@ -89,12 +100,15 @@ use Bitrix\Main\Localization\Loc;
 					{{#COUPON_LIST}}
 					<div class="basket-coupon-alert text-{{CLASS}}">
 						<span class="basket-coupon-text">
-							<strong>{{COUPON}}</strong> - <?=Loc::getMessage('SBB_COUPON')?> {{JS_CHECK_CODE}}
+							<strong>{{COUPON}}</strong> - {{JS_CHECK_CODE}}
 							{{#DISCOUNT_NAME}}({{DISCOUNT_NAME}}){{/DISCOUNT_NAME}}
 						</span>
-						<span class="close-link" data-entity="basket-coupon-delete" data-coupon="{{COUPON}}">
+						<button type="button" class="close-link basket-btn-plain"
+							aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_COUPON_DELETE_ARIA', ['#COUPON#' => '{{COUPON}}']))?>"
+							data-entity="basket-coupon-delete"
+							data-coupon="{{COUPON}}">
 							<?=Loc::getMessage('SBB_DELETE')?>
-						</span>
+						</button>
 					</div>
 					{{/COUPON_LIST}}
 				</div>

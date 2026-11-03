@@ -25,6 +25,7 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 			this.nameFieldRef = null;
 
 			this.objectId = props.objectId ?? '';
+			this.uniqueCode = props.uniqueCode ?? null;
 			this.object = selectById(store.getState(), Number(this.objectId)) ?? {};
 			this.startName = (this.object.isFolder ? this.object.name : getNameWithoutExtension(this.object.name)) ?? '';
 			this.isConfirmShown = false;
@@ -163,6 +164,7 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 				dispatch(rename({
 					objectId: this.objectId,
 					newName,
+					uniqueCode: this.uniqueCode,
 				}));
 			}
 
@@ -173,6 +175,7 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 		 * @public
 		 * @param {Object} data
 		 * @param {number} [data.objectId]
+		 * @param {string|null} [data.uniqueCode]
 		 * @param {LayoutWidget} parentWidget
 		 */
 		static async open(data, parentWidget)

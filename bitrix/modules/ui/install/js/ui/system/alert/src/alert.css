@@ -6,12 +6,13 @@
 }
 
 .ui-system-alert {
-	width: 100%;
+	box-sizing: border-box;
 	position: relative;
 	display: flex;
-	background-color: var(--ui-system-alert-bg);
+	width: 100%;
 	border: var(--ui-system-alert-stroke-width) solid var(--ui-system-alert-stroke);
 	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-system-alert-bg);
 }
 
 .ui-system-alert-inner {

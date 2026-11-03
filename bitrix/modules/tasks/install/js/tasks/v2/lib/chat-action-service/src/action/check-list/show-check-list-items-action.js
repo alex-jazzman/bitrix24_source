@@ -40,6 +40,23 @@ class ShowCheckListItemsAction extends CheckListBaseAction
 
 		EventEmitter.emit(EventName.ShowCheckListItems, { checkListItemIds: filteredItems.slice(0, 10) });
 	}
+
+	isTooltipOnly(payload: ActionPayload): boolean
+	{
+		const { entityId, childrenIds } = payload;
+
+		if (!checkListService.isCheckListExists(entityId))
+		{
+			return true;
+		}
+
+		return checkListService.filterItemsBelongingToCheckList(entityId, childrenIds).length === 0;
+	}
+
+	getCheckedEntityIds(payload: ActionPayload): number[]
+	{
+		return [payload.entityId, ...(payload.childrenIds ?? [])];
+	}
 }
 
 export const showCheckListItemsAction = new ShowCheckListItemsAction();

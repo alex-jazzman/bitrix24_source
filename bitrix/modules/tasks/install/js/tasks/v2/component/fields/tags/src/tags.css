@@ -34,6 +34,22 @@
 	opacity: 0;
 }
 
+.tasks-field-tag:focus-within .tasks-field-tag-cross {
+	opacity: 1;
+}
+
+/* button reset */
+.tasks-field-tag-cross {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* button reset end */
+
 .tasks-field-tag-cross {
 	position: absolute;
 	display: flex;
@@ -45,6 +61,11 @@
 	background: var(--ui-color-base-8);
 	box-shadow: 0 1px 1px rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
 	cursor: pointer;
+}
+
+.tasks-field-tag-cross:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .tasks-field-tag-cross .ui-icon-set {
@@ -60,4 +81,8 @@
 
 .tasks-field-tags.--empty .tasks-field-tags-anchor {
 	position: absolute;
+}
+
+.ui-chip[data-task-chip-id="tags"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }

@@ -1,14 +1,17 @@
 import { ajax, Type } from 'main.core';
 import {
 	normalizeCheckConnectionResponse,
+	normalizeCheckOverlapResponse,
 	normalizeGetCollectionsResponse,
 	normalizeGetDocumentTreeResponse,
 	normalizeStartResponse,
 	normalizeGetStatusResponse,
+	normalizeGetConvertedCollectionsResponse,
 } from './import-normalizer';
 import type {
 	CheckConnectionRequest,
 	CheckConnectionResponse,
+	CheckOverlapResponse,
 	GetCollectionsRequest,
 	GetCollectionsResponse,
 	GetDocumentTreeRequest,
@@ -18,6 +21,8 @@ import type {
 	GetStatusRequest,
 	GetStatusResponse,
 	CancelRequest,
+	GetConvertedCollectionsRequest,
+	GetConvertedCollectionsResponse,
 } from '../type';
 
 export class ImportApi
@@ -34,9 +39,11 @@ export class ImportApi
 		return this.#call('getActiveSession', {});
 	}
 
-	async checkOverlap(payload: Object): Promise<Object>
+	async checkOverlap(payload: Object): Promise<CheckOverlapResponse>
 	{
-		return this.#call('checkOverlap', payload);
+		const response = await this.#call('checkOverlap', payload);
+
+		return normalizeCheckOverlapResponse(response);
 	}
 
 	async checkConnection(payload: CheckConnectionRequest): Promise<CheckConnectionResponse>
@@ -86,6 +93,13 @@ export class ImportApi
 		const response = await this.#call('acknowledgeFinish', payload);
 
 		return response === true;
+	}
+
+	async getConvertedCollections(payload: GetConvertedCollectionsRequest): Promise<GetConvertedCollectionsResponse>
+	{
+		const response = await this.#call('getConvertedCollections', payload);
+
+		return normalizeGetConvertedCollectionsResponse(response);
 	}
 
 	#call(action: string, data: Object): Promise<mixed>

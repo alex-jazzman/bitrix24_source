@@ -1,0 +1,99 @@
+.biconnector-share-setting {
+	color: var(--ui-color-base-1);
+}
+
+/* The header reuses the section header of the settings form, so its spacing and font come from the form. */
+.biconnector-share-setting .biconnector-share-setting__header {
+	justify-content: flex-start;
+	margin: 0;
+}
+
+.biconnector-share-setting .biconnector-share-setting__title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	height: auto;
+}
+
+.biconnector-share-setting__control {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+.biconnector-share-setting__state {
+	font-size: var(--ui-font-size-md);
+}
+
+.biconnector-share-setting__description {
+	margin-bottom: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-md);
+	border-radius: var(--ui-border-radius-sm);
+	background-color: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.biconnector-share-setting__hint {
+	margin-top: var(--ui-space-stack-xs);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-3);
+}
+
+.biconnector-share-setting-reduced {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.biconnector-share-setting-reduced__notice {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-soft-element-blue);
+	font-size: var(--ui-font-size-md);
+}
+
+.biconnector-share-setting-reduced__section {
+	margin: 0;
+	padding: var(--ui-space-inset-md);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.biconnector-share-setting-reduced__info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.biconnector-share-setting-reduced__row {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.biconnector-share-setting-reduced__label {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-3);
+}
+
+.biconnector-share-setting-reduced__value {
+	margin: 0;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-1);
+}
+
+/* The reduced mode has no settings form, so the header takes the form's section header look by itself. */
+.biconnector-share-setting-reduced .biconnector-share-setting__header {
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
+.biconnector-share-setting-reduced .biconnector-share-setting__title {
+	color: var(--ui-color-base-2);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-2xl);
+	line-height: 24px;
+}

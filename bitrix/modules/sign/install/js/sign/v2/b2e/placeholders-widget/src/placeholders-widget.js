@@ -1,18 +1,12 @@
-import { Api } from 'sign.v2.api';
-import { BitrixVue } from 'ui.vue3';
-import { PlaceholdersApp } from 'sign.v2.grid.b2e.placeholders';
-import { Loader } from 'main.loader';
+import { PlaceholdersMount } from 'sign.v2.grid.b2e.placeholders';
 import { Dom, Tag, Loc, Event, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import './style.css';
 
 export class PlaceholdersWidget
 {
-	#api = new Api();
-	#app = null;
-	#appInstance = null;
+	#mount = null;
 	#widget = null;
-	#loader = null;
 	#isDragging = false;
 	#dragOffsetX = 0;
 	#dragOffsetY = 0;
@@ -29,30 +23,12 @@ export class PlaceholdersWidget
 		this.#initControls();
 		this.#initSliderDestroyHandler();
 
-		const contentContainer = this.#widget.querySelector('.sign-placeholders-widget-body');
-		this.#loader = new Loader({ target: contentContainer });
+		this.#mount = new PlaceholdersMount({
+			container: this.#widget.querySelector('.sign-placeholders-widget-body'),
+			showHeader: false,
+		});
 
-		await this.#loadPlaceholders(contentContainer);
-	}
-
-	async #loadPlaceholders(container: HTMLElement, clearCache: boolean = false): Promise<void>
-	{
-		void this.#loader.show();
-
-		try
-		{
-			const placeholdersData = await this.#api.placeholder.list(clearCache);
-			this.#unmount();
-			this.#createApp(container, placeholdersData);
-		}
-		catch (error)
-		{
-			console.error('Load placeholders data error:', error);
-		}
-		finally
-		{
-			void this.#loader.hide();
-		}
+		await this.#mount.load();
 	}
 
 	#createWidget(): HTMLElement
@@ -61,24 +37,24 @@ export class PlaceholdersWidget
 		const createHint = Loc.getMessage('SIGN_EDITOR_PLACEHOLDERS_WIDGET_BTN_CREATE_HINT');
 
 		return Tag.render`
-			<div class="sign-placeholders-widget" data-test-id="sign-placeholders-widget">
+			<div class="sign-placeholders-widget" data-testid="sign-placeholders-widget">
 				<div class="sign-placeholders-widget-header">
 					<div class="sign-placeholders-widget-drag-handle">
 						<div class="sign-placeholders-widget-drag-icon"
-							 data-test-id="sign-placeholders-widget-drag-icon"
+							 data-testid="sign-placeholders-widget-drag-icon"
 						></div>
 						<span class="sign-placeholders-widget-title">${Text.encode(title)}</span>
 					</div>
 					<div class="sign-placeholders-widget-controls">
 						<div class="sign-placeholders-widget-btn-collapse"
-							 data-test-id="sign-placeholders-widget-btn-collapse"
+							 data-testid="sign-placeholders-widget-btn-collapse"
 						>
 						</div>
 					</div>
 				</div>
 				<div class="sign-placeholders-widget-body"></div>
 				<div class="sign-placeholders-widget-btn-create"
-					 data-test-id="sign-placeholders-widget-btn-create"
+					 data-testid="sign-placeholders-widget-btn-create"
 					 title="${Text.encode(createHint)}"
 				>
 				</div>
@@ -188,22 +164,7 @@ export class PlaceholdersWidget
 
 	#handleCreate(): void
 	{
-		if (this.#appInstance)
-		{
-			this.#appInstance.onCreateClick();
-		}
-	}
-
-	#createApp(container: HTMLElement, placeholdersData: Array): void
-	{
-		this.#app = BitrixVue.createApp(PlaceholdersApp, {
-			sectionsData: placeholdersData,
-			showHeader: false,
-			onListUpdate: () => {
-				void this.#loadPlaceholders(container, true);
-			},
-		});
-		this.#appInstance = this.#app.mount(container);
+		this.#mount?.getAppInstance()?.onCreateClick();
 	}
 
 	destroy(): void
@@ -213,22 +174,12 @@ export class PlaceholdersWidget
 		this.#handleMouseMove = null;
 		this.#handleMouseUp = null;
 
-		this.#unmount();
+		this.#mount?.unmount();
 
 		if (this.#widget)
 		{
 			Dom.remove(this.#widget);
 			this.#widget = null;
-		}
-	}
-
-	#unmount(): void
-	{
-		if (this.#app)
-		{
-			this.#app.unmount();
-			this.#app = null;
-			this.#appInstance = null;
 		}
 	}
 }

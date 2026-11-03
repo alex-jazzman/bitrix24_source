@@ -74,6 +74,21 @@ export class GroupSelector extends EventEmitter
 				entities: this.#entitiesByMode[this.#mode],
 				events: {
 					'Item:onSelect': (event) => this.onItemSelect(event),
+					'onHide': (event) => {
+						const dialog = event.getTarget();
+						const targetNode = dialog.getTargetNode();
+						const activeNode = document.activeElement;
+						if (
+							targetNode
+							&& (
+								activeNode === document.body
+								|| dialog.getContainer().contains(activeNode)
+							)
+						)
+						{
+							targetNode.focus();
+						}
+					},
 				},
 			});
 		}

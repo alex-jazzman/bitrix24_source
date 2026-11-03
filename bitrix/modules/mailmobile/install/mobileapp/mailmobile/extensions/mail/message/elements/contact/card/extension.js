@@ -2,7 +2,8 @@
  * @module mail/message/elements/contact/card
  */
 jn.define('mail/message/elements/contact/card', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color, Indent } = require('tokens');
+	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { PureComponent } = require('layout/pure-component');
 	const { AnalyticsEvent } = require('analytics');
 	const { UserProfile } = require('user-profile');
@@ -21,22 +22,16 @@ jn.define('mail/message/elements/contact/card', (require, exports, module) => {
 			return null;
 		}
 
-		const styles = {
-			little: {
-				fontSize: 13,
-				color: AppTheme.colors.base2,
-			},
-			big: {
-				fontSize: 15,
-				color: AppTheme.colors.base2,
-			},
-		};
+		const TextComponent = format === 'big' ? Text4 : Text5;
 
 		return View(
 			{},
-			Text({
-				maxWidth: maxWidthTextFiled,
-				style: styles[format],
+			TextComponent({
+				testId: `mail-contact-card-email-${format}`,
+				color: Color.base2,
+				style: {
+					maxWidth: maxWidthTextFiled,
+				},
 				text: value,
 			}),
 		);
@@ -55,26 +50,18 @@ jn.define('mail/message/elements/contact/card', (require, exports, module) => {
 			return null;
 		}
 
-		const styles = {
-			little: {
-				fontSize: 13,
-				fontWeight: '400',
-				color: AppTheme.colors.base2,
-			},
-			big: {
-				fontSize: 15,
-				fontWeight: '500',
-			},
-		};
+		const TextComponent = format === 'big' ? Text4 : Text5;
 
-		return Text({
+		return TextComponent({
+			testId: `mail-contact-card-name-${format}`,
 			ellipsize: 'end',
+			numberOfLines: 1,
+			color: Color.base2,
+			accent: format === 'big',
 			style: {
 				textAlignVertical: 'center',
 				maxWidth: maxWidthTextFiled,
-				...styles[format],
 			},
-			numberOfLines: 1,
 			text: value,
 		});
 	}
@@ -145,7 +132,7 @@ jn.define('mail/message/elements/contact/card', (require, exports, module) => {
 				style: {
 					alignItems: 'center',
 					flexDirection: 'row',
-					paddingRight: 3,
+					paddingRight: Indent.XS.toNumber(),
 				},
 			},
 			contactFiled,

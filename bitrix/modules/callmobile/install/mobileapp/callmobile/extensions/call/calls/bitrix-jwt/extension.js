@@ -4,9 +4,14 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 	const { CallLogger } = require('call/calls/logger');
 	const { ActiveCallNotification } = require('call/calls/active-call-notification');
 	const { IncomingCallHider } = require('call/calls/incoming-call-hider');
-	const { SignalsBehavior, MediaStreamKind } = require('call/const');
+	const { SignalsBehavior, MediaStreamKind, StreamQuality } = require('call/const');
+	const { CallSettingsManager } = require('call/settings-manager');
+	const { NetworkQualityEvaluator } = require('call/network-quality-evaluator');
 
 	BX.DoNothing = function() {};
+
+	// NQE WebRTC stats polling interval (ms), aligned with web (SDD P2)
+	const NQE_STATS_INTERVAL_MS = 3000;
 
 	const ajaxActions = {
 		invite: 'call.Call.invite',
@@ -63,10 +68,36 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.scheme = params.scheme;
 			this.isTransitioningToGroupCall = false;
 
+			// NQE instance (will be initialized if config allows)
+			this.nqe = null;
+			this.peerConnectionStatsInterval = null;
+			this.currentQuality = StreamQuality.high;
+			// NQE quality ceiling applied to every native video subscription in the choke point.
+			// null = no cap (no native stats yet), so the grid emits pass through unchanged.
+			this.nqeQualityCeiling = null;
+
+			// Pull provider for the grid's per-user subscription snapshot, injected by the controller.
+			// Lets NQE auto-quality cap quality at min(grid, nqe) per shown user without a direct
+			// transport -> UI reference.
+			this.visibleUsersProvider = null;
+
 			this.ready = false;
 			this.userId = env.userId;
 			this.userData = params.userData;
 			this.usersAfterReconnect = null;
+			// Participant snapshot scoped to ONE reconnect (see `__onCallReconnecting`). Unlike
+			// `usersAfterReconnect`, which is never cleared and therefore holds the last joinResponse
+			// ever seen (including the initial join), this field is armed empty on every reconnect
+			// attempt, written ONLY by a joinResponse that lands while that reconnect is still in
+			// flight, and consumed by `__onCallReconnected`. Consumers may only treat it as "the
+			// state of the room at the end of THIS outage" because of that lifetime.
+			this.reconnectParticipantsSnapshot = null;
+			// The write gate of the field above, as one explicit state instead of a predicate over
+			// `_reconnectionEventCount`. That counter has its own semantics and THREE reset points
+			// (here, `onCallConnected`, `__onCallReconnected`), only one of which is about the
+			// snapshot; deriving the gate from it made "gate open" and "snapshot armed" drift apart.
+			// Armed only between entering a reconnect and resolving it.
+			this.isReconnectSnapshotArmed = false;
 			this.autoSubscribe = params.connectionData?.roomType === BX.Call.RoomType.Large ? 0 : 1;
 
 			this.initiatorId = params.initiatorId || '';
@@ -273,7 +304,6 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				isIncomingVideoAllowed: incomingVideoAllowed,
 				canChangeUI: canChangeUI,
 
-				// вот это прок нуть в UI
 				onStreamReceived: (e) => this.eventEmitter.emit(BX.Call.Event.onStreamReceived, [e.userId, e.stream, e.canChangeUI]),
 				onUserVoiceStarted: (e) => this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [e.userId]),
 				onUserVoiceStopped: (e) => this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [e.userId]),
@@ -429,10 +459,57 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		toggleSubscriptionRemoteVideo(toggleList)
 		{
+			const out = this.#applyNqeCeiling(toggleList);
 			if (this.bitrixCallDev && this.bitrixCallDev.toggleSubscriptionRemoteVideo)
 			{
-				this.bitrixCallDev.toggleSubscriptionRemoteVideo(toggleList);
+				this.bitrixCallDev.toggleSubscriptionRemoteVideo(out);
 			}
+		}
+
+		/**
+		 * Single choke point where the NQE quality ceiling is enforced on the way to native, so any
+		 * writer (grid emit via controller, or NQE re-emit) gets capped and cannot overwrite the NQE
+		 * ceiling. Only shown entries are capped; hidden ones and non-array input pass through, and
+		 * when there is no ceiling (null) the list is returned untouched.
+		 * @param {Array<{id: number, quality: number, isShowVideo: boolean}>} toggleList
+		 * @returns {*}
+		 */
+		#applyNqeCeiling(toggleList)
+		{
+			if (this.nqeQualityCeiling == null || !Array.isArray(toggleList))
+			{
+				return toggleList;
+			}
+
+			return toggleList.map((item) => (item && item.isShowVideo === true)
+				? { ...item, quality: Math.min(Number(item.quality), this.nqeQualityCeiling) }
+				: item);
+		}
+
+		/**
+		 * Registers a provider that returns the grid's per-user subscription snapshot (its
+		 * toggleList reduced by id).
+		 * @param {function(): (Array<{id: number, quality: number, isShowVideo: boolean}>|null|undefined)} provider
+		 */
+		setVisibleUsersProvider(provider)
+		{
+			this.visibleUsersProvider = typeof provider === 'function' ? provider : null;
+		}
+
+		/**
+		 * Reads the per-user subscription snapshot from the injected provider with a null-safe guard.
+		 * @returns {Array<{id: number, quality: number, isShowVideo: boolean}>|null}
+		 */
+		#getVisibleUsersSnapshot()
+		{
+			if (typeof this.visibleUsersProvider !== 'function')
+			{
+				return null;
+			}
+
+			const snapshot = this.visibleUsersProvider();
+
+			return Array.isArray(snapshot) && snapshot.length > 0 ? snapshot : null;
 		}
 
 		toggleSubscriptionRemoteAudio(toggleList)
@@ -779,6 +856,16 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 						this.log('Call connected');
 						this._reconnectionEventCount = 0;
 
+						// `bindCallEvents()` above subscribes to Reconnecting/Reconnected BEFORE
+						// `start()`, so a Reconnecting emitted while the FIRST connection is being
+						// established would arm the snapshot and let the initial joinResponse into it.
+						// That picture describes the room at entry ("nobody shares yet"), and a later
+						// Reconnected - the SDK does not guarantee a preceding Reconnecting - would
+						// consume it and tear down a screenshare started after the join. The initial
+						// connect is done here, so disarm and drop whatever was captured.
+						this.isReconnectSnapshotArmed = false;
+						this.reconnectParticipantsSnapshot = null;
+
 						this.bitrixCallDev.off(JNBXCall.Events.Connected, onCallConnected);
 						this.bitrixCallDev.off(JNBXCall.Events.Failed, onCallFailed);
 
@@ -797,6 +884,20 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 							this.signaling.sendShowUsers(this.videoAllowedFrom);
 						}
 
+						this.#initializeNQE();
+
+						if (this.peerConnectionStatsInterval)
+						{
+							clearInterval(this.peerConnectionStatsInterval);
+							this.peerConnectionStatsInterval = null;
+						}
+
+						if (this.nqe)
+						{
+							this.peerConnectionStatsInterval = setInterval(() => {
+								this.processPeerConnectionStats();
+							}, NQE_STATS_INTERVAL_MS);
+						}
 						this.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
 
 						if (this.isTransitioningToGroupCall)
@@ -1187,10 +1288,22 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		__onCallReconnecting()
 		{
+			// Everything known before the outage is stale by definition, and a re-join that never
+			// lands must leave "no data" behind rather than an old picture. Ahead of the readiness
+			// guard on purpose - the snapshot must never outlive an outage, even one this handler
+			// bails out of; and a disarmed gate is exactly what "no data" means downstream.
+			this.reconnectParticipantsSnapshot = null;
+			this.isReconnectSnapshotArmed = false;
+
 			if (!this.ready || !this.bitrixCallDev)
 			{
 				return;
 			}
+
+			// Arm the one-shot snapshot: from here until the reconnect resolves, a joinResponse
+			// describes the room AFTER the outage. Behind the guard, so a reconnect this handler
+			// refused to enter never opens the gate.
+			this.isReconnectSnapshotArmed = true;
 
 			this._reconnectionEventCount++;
 			this.eventEmitter.emit(BX.Call.Event.onReconnecting, [{
@@ -1234,7 +1347,19 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 		{
 			this._reconnectionEventCount = 0;
 			this.signaling.sendCameraState(this.videoEnabled);
-			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{ reconnectedUsers: this.usersAfterReconnect }]);
+
+			// Consume the snapshot and close the gate: it describes this reconnect only, so it must
+			// not survive into the next one. Stays null when the re-join response has not arrived
+			// yet - consumers read that as "no data" and must not reconcile anything away. The
+			// layout logs which of the two flavours of "no data" this was (see [ALG-03] log line).
+			const participantsSnapshot = this.reconnectParticipantsSnapshot;
+			this.reconnectParticipantsSnapshot = null;
+			this.isReconnectSnapshotArmed = false;
+
+			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{
+				reconnectedUsers: this.usersAfterReconnect,
+				participantsSnapshot,
+			}]);
 		}
 
 		getMediaServerInfo(finalUrl)
@@ -1678,6 +1803,20 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 					{
 						this.usersAfterReconnect = [Object.values(joinResponse.otherParticipants)];
 
+						// Same shape, different lifetime: armed on entering a reconnect and written
+						// only here, so it is the only field that can be read as "the room right
+						// now". The write is gated because this handler also parses the joinResponse
+						// of the INITIAL join: a snapshot taken at entry (nobody sharing yet) would
+						// sit there until some later `Reconnected` and would tear down a screenshare
+						// started after the join. The gate is the explicit armed state, NOT
+						// `_reconnectionEventCount` (as the `permissions`/`roomState` branches below
+						// use): that counter is also zeroed by `onCallConnected`, which would leave
+						// the snapshot armed with an entry-time picture while the gate reads closed.
+						if (this.isReconnectSnapshotArmed)
+						{
+							this.reconnectParticipantsSnapshot = [Object.values(joinResponse.otherParticipants)];
+						}
+
 						const toggleList = [];
 
 						Object.values(joinResponse.otherParticipants).forEach((participant) => {
@@ -1950,6 +2089,153 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * Initializes Network Quality Evaluator if auto balance is available
+		 * @private
+		 */
+		#initializeNQE()
+		{
+			if (!CallSettingsManager.isAutoBalanceAvailable())
+			{
+				this.log('[NQE] Server-side flag disabled, auto-balance not available');
+				this.nqe = null;
+
+				return;
+			}
+
+			if (typeof this.bitrixCallDev?.getPeerConnectionStats !== 'function')
+			{
+				this.log('[NQE] Native getPeerConnectionStats not available, auto-balance not available');
+				this.nqe = null;
+
+				return;
+			}
+
+			this.nqe = new NetworkQualityEvaluator({
+				downgradeWindowSec: CallSettingsManager.nqeDowngradeWindowSec,
+				upgradeWindowSec: CallSettingsManager.nqeUpgradeWindowSec,
+				warmupSec: CallSettingsManager.nqeWarmupSec,
+				highToMedium: {
+					downgrade: {
+						packetsLostPct: CallSettingsManager.nqeHighDowngradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeHighDowngradeRttMs,
+						jitterMs: CallSettingsManager.nqeHighDowngradeJitterMs,
+					}
+				},
+				mediumToLow: {
+					downgrade: {
+						packetsLostPct: CallSettingsManager.nqeMedDowngradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeMedDowngradeRttMs,
+						jitterMs: CallSettingsManager.nqeMedDowngradeJitterMs,
+					}
+				},
+				mediumToHigh: {
+					upgrade: {
+						packetsLostPct: CallSettingsManager.nqeMedUpgradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeMedUpgradeRttMs,
+						jitterMs: CallSettingsManager.nqeMedUpgradeJitterMs,
+					}
+				},
+				lowToMedium: {
+					upgrade: {
+						packetsLostPct: CallSettingsManager.nqeLowUpgradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeLowUpgradeRttMs,
+						jitterMs: CallSettingsManager.nqeLowUpgradeJitterMs,
+					}
+				}
+			});
+
+			// Reset tracked quality to match the freshly created evaluator's initial state
+			this.currentQuality = StreamQuality.high;
+			// New evaluator starts with no ceiling — grid emits pass through until NQE degrades.
+			this.nqeQualityCeiling = null;
+		}
+
+		/**
+		 * Gets peer connection WebRTC stats
+		 * @returns {Object} - Object with publisher and subscriber stats
+		 */
+		getPeerConnectionStats()
+		{
+			if (typeof this.bitrixCallDev?.getPeerConnectionStats === 'function')
+			{
+				return this.bitrixCallDev.getPeerConnectionStats();
+			}
+
+			return null;
+		}
+
+		/**
+		 * Processes one Network Quality Evaluator stats polling iteration.
+		 */
+		processPeerConnectionStats()
+		{
+			if (!this.nqe)
+			{
+				return;
+			}
+
+			try
+			{
+				const stats = this.getPeerConnectionStats();
+				if (!stats)
+				{
+					this.nqe.resetPendingWindow();
+
+					return;
+				}
+
+				const action = this.nqe.processStats(stats.SENDER, stats.RECEIVER);
+				if (action === 'downgrade' || action === 'upgrade')
+				{
+					this.#applyAutoQuality(this.nqe.getCurrentQuality());
+				}
+			}
+			catch (error)
+			{
+				this.nqe?.resetPendingWindow();
+				this.log(`[NQE] Failed to process peer connection stats: ${error}`);
+			}
+		}
+
+		/**
+		 * Applies automatic quality adjustment based on NQE evaluation
+		 * @param {number} quality - The quality level to apply (high, medium, low)
+		 * @private
+		 */
+		#applyAutoQuality(quality)
+		{
+			if (quality === this.currentQuality)
+			{
+				return;
+			}
+
+			if (!Object.values(StreamQuality).includes(quality))
+			{
+				this.log(`[NQE] Invalid quality value: ${quality}.`);
+
+				return;
+			}
+
+			const oldQuality = this.currentQuality;
+			const logEvent = quality < oldQuality ? 'AUTO_QUALITY_DEGRADED' : 'AUTO_QUALITY_IMPROVED';
+			this.log(`[NQE] ${logEvent} from ${oldQuality} to ${quality}, platform: mobile`);
+
+			// Set the ceiling: from now on every video subscription heading to native is capped in
+			// the choke point, so a subsequent grid emit can no longer overwrite the NQE quality.
+			this.nqeQualityCeiling = quality;
+			this.currentQuality = quality;
+
+			// Apply immediately to the users currently on screen. getVisibleUsers() returns the grid
+			// quality of the shown users; the choke (#applyNqeCeiling) caps it at min(grid, nqe). If
+			// no snapshot is available right now, the ceiling still applies on the next grid emit.
+			const visible = this.#getVisibleUsersSnapshot();
+			if (visible)
+			{
+				this.toggleSubscriptionRemoteVideo(visible);
+			}
+		}
+
 		destroy()
 		{
 			this.cancelIncomingCallHiding();
@@ -1982,6 +2268,12 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			}
 
 			this.removeClientEvents();
+
+			if (this.peerConnectionStatsInterval)
+			{
+				clearInterval(this.peerConnectionStatsInterval);
+				this.peerConnectionStatsInterval = null;
+			}
 
 			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callUuid: this.uuid }]);
 			this.eventEmitter = null;

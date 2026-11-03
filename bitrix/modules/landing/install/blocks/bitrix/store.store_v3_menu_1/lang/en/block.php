@@ -1,0 +1,2 @@
+<?php
+$MESS['LNDBLCK_STOREMENUV3_1_MENU_TOGGLE_LABEL'] = 'Store menu';

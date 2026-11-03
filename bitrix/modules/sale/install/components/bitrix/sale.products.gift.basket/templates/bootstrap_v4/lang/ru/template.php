@@ -26,4 +26,8 @@ $MESS["CT_SPGB_CATALOG_SHOW_MAX_QUANTITY"] = "Наличие";
 $MESS["CT_SPGB_CATALOG_RELATIVE_QUANTITY_MANY"] = "много";
 $MESS["CT_SPGB_CATALOG_RELATIVE_QUANTITY_FEW"] = "мало";
 $MESS["CT_SPGB_TPL_TEXT_LABEL_GIFT_DEFAULT"] = "Подарок";
+$MESS["CT_SPGB_TPL_GIFTS_LIST_ARIA"] = "Подарки на выбор: #COUNT#";
+$MESS["CT_SPGB_TPL_GIFTS_UPDATED_ARIA"] = "Список подарков обновлён. Подарков на выбор: #COUNT#";
+$MESS["CT_SPGB_TPL_GIFTS_EMPTY_ARIA"] = "Подарков на выбор больше нет";
+$MESS["CT_SPGB_TPL_BTN_CHOOSE_ARIA_MSGVER_1"] = "#BUTTON#: #NAME#";
 ?>

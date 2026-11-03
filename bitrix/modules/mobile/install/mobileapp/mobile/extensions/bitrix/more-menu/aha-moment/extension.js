@@ -9,27 +9,25 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { RefRegistry } = require('more-menu/ref-registry');
 	const { MoreMenuAnalytics, AHA_EVENT_KEY } = require('more-menu/analytics');
+	const { MyCompany } = require('my-company');
+	const { Indent } = require('tokens');
 
 	const TYPE = {
 		INVITATION: 'invitation',
-		FIRST_INVITATION: 'first_invitation',
 		RELOCATION: 'relocation',
 		CALL_LIST: 'call_list',
 		MAIL_LIST: 'mail_list',
+		MY_COMPANY_RELOCATION: 'my_company_relocation',
+		MY_COMPANY_INVITE: 'my_company_invite',
 	};
 
 	const TYPE_CONFIG = {
 		[TYPE.INVITATION]: {
 			buttonText: Loc.getMessage('MOBILE_MENU_AHA_MOMENT_INVITATION_BUTTON'),
 			imageName: 'invite.png',
-			refKey: 'company_users_invite_button',
+			refKey: 'my_company_entry_plate',
+			legacyRefKey: 'company_users_invite_button',
 			testId: 'more-menu-aha-moment-invitation',
-		},
-		[TYPE.FIRST_INVITATION]: {
-			badgeCode: 'more',
-			buttonText: Loc.getMessage('MOBILE_MENU_AHA_MOMENT_INVITATION_BUTTON'),
-			imageName: 'invite.png',
-			testId: 'more-menu-aha-moment-first-invitation',
 		},
 		[TYPE.RELOCATION]: {
 			badgeCode: 'more',
@@ -52,7 +50,20 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			imageName: 'mail.png',
 			testId: 'more-menu-aha-moment-mail-list',
 		},
+		[TYPE.MY_COMPANY_RELOCATION]: {
+			imageName: 'zephyr-employees.png',
+			refKey: 'my_company_entry_plate',
+			testId: 'more-menu-aha-moment-my-company-relocation',
+		},
+		[TYPE.MY_COMPANY_INVITE]: {
+			imageName: 'zephyr-employees.png',
+			refKey: 'my_company_entry_plate',
+			testId: 'more-menu-aha-moment-my-company-invite',
+		},
 	};
+
+	// the argument the section reads to highlight the card of the employees
+	const EMPLOYEES_HIGHLIGHT = 'employees';
 
 	/**
 	 * @typedef {Object} AhaMomentDto
@@ -76,9 +87,10 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 		/**
 		 * @param {AhaMomentDto} dto
 		 * @param {object} menuNavigator
+		 * @param {LayoutWidget} [parentWidget] the root widget of the tab, the parent of what the moment opens
 		 * @return {Object|null}
 		 */
-		static createConfig(dto, menuNavigator)
+		static createConfig(dto, menuNavigator, parentWidget = null)
 		{
 			const { type, title, description } = dto || {};
 
@@ -91,14 +103,15 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			{
 				case TYPE.INVITATION:
 					return this.buildInvitationConfig(dto, menuNavigator);
-				case TYPE.FIRST_INVITATION:
-					return this.buildFirstInvitationConfig(dto, menuNavigator);
 				case TYPE.RELOCATION:
 					return this.buildRelocationConfig(dto);
 				case TYPE.CALL_LIST:
 					return this.buildTabPresetConfig(dto, TYPE.CALL_LIST);
 				case TYPE.MAIL_LIST:
 					return this.buildTabPresetConfig(dto, TYPE.MAIL_LIST);
+				case TYPE.MY_COMPANY_RELOCATION:
+				case TYPE.MY_COMPANY_INVITE:
+					return this.buildMyCompanyConfig(dto, type, parentWidget);
 				default:
 					return null;
 			}
@@ -113,11 +126,17 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			}
 
 			const def = TYPE_CONFIG[TYPE.INVITATION];
-			const { imageName, buttonText, testId, refKey } = def;
+			const {
+				imageName,
+				buttonText,
+				testId,
+				refKey,
+				legacyRefKey,
+			} = def;
 
 			return {
 				testId,
-				refKey,
+				refKey: menuNavigator.restrictions?.canUseMyCompany ? refKey : legacyRefKey,
 				title,
 				description,
 				image: imageName && Image({
@@ -126,12 +145,6 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 					style: { width: 78, height: 78 },
 				}),
 				buttonText,
-				onHide: () => {
-					if (Type.isStringFilled(eventName))
-					{
-						Tourist.remember(eventName);
-					}
-				},
 				onClick: () => {
 					try
 					{
@@ -139,57 +152,11 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 					}
 					catch (error)
 					{
-						console.log('navigator error', error);
-					}
-
-					if (Type.isStringFilled(eventName))
-					{
-						Tourist.remember(eventName);
+						console.error('navigator error', error);
 					}
 				},
 				shouldShowImageBackgroundColor: false,
 				delay: 500,
-				disableHideByOutsideClick: false,
-			};
-		}
-
-		static buildFirstInvitationConfig(dto, menuNavigator)
-		{
-			const { eventName, title, description } = dto || {};
-			if (!this.isFirstTimeEvent(eventName))
-			{
-				return null;
-			}
-
-			const def = TYPE_CONFIG[TYPE.FIRST_INVITATION];
-			const { imageName, badgeCode, buttonText, testId } = def;
-
-			return {
-				testId,
-				targetRef: badgeCode,
-				title,
-				description,
-				image: Image({
-					testId: `${testId}-image`,
-					uri: makeLibraryImagePath(imageName, 'more-menu'),
-					style: { width: 78, height: 78 },
-				}),
-				buttonText,
-				onHide: () => {
-					if (Type.isStringFilled(eventName))
-					{
-						Tourist.remember(eventName);
-					}
-				},
-				onClick: () => {
-					menuNavigator.onInviteNotification(false);
-
-					if (Type.isStringFilled(eventName))
-					{
-						Tourist.remember(eventName);
-					}
-				},
-				shouldShowImageBackgroundColor: false,
 				disableHideByOutsideClick: false,
 			};
 		}
@@ -276,6 +243,57 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 				disableHideByOutsideClick: false,
 			};
 		}
+
+		static buildMyCompanyConfig(dto, type, parentWidget = null)
+		{
+			const { eventName, title, description } = dto || {};
+			if (!this.isFirstTimeEvent(eventName))
+			{
+				return null;
+			}
+
+			const {
+				refKey,
+				imageName,
+				testId,
+			} = TYPE_CONFIG[type];
+			let isRemembered = false;
+			const remember = () => {
+				if (!isRemembered && Type.isStringFilled(eventName))
+				{
+					isRemembered = true;
+					Tourist.rememberFirstTime(eventName);
+				}
+			};
+
+			const handleTargetClick = () => {
+				MyCompany.open({ highlight: EMPLOYEES_HIGHLIGHT, context: { parentWidget } }).catch(console.error);
+			};
+
+			return {
+				refKey,
+				testId,
+				title,
+				description,
+				image: Image({
+					testId: `${testId}-image`,
+					uri: makeLibraryImagePath(imageName, 'my-company', undefined, false),
+					style: {
+						width: 96,
+						height: 96,
+						marginLeft: -Indent.XL.toNumber(),
+						marginBottom: -Indent.XL.toNumber(),
+						padding: 0,
+					},
+					resizeMode: 'contain',
+				}),
+				onTargetClick: handleTargetClick,
+				onShow: remember,
+				targetParams: { useHighlight: false },
+				shouldShowImageBackgroundColor: false,
+				disableHideByOutsideClick: true,
+			};
+		}
 	}
 
 	/**
@@ -283,9 +301,10 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 	 * @param {MenuNavigator} menuNavigator
 	 * @param {function} [onComplete]
 	 * @param {function} [canShow]
+	 * @param {LayoutWidget} [parentWidget] the root widget of the tab, the parent of what the moment opens
 	 * @return {boolean} wasScheduled
 	 */
-	const showAhaMoment = (dto, menuNavigator, onComplete = null, canShow = null) => {
+	const showAhaMoment = (dto, menuNavigator, onComplete = null, canShow = null, parentWidget = null) => {
 		let isCompleted = false;
 		const complete = () => {
 			if (isCompleted)
@@ -297,7 +316,7 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			onComplete?.();
 		};
 
-		const config = AhaMomentFactory.createConfig(dto, menuNavigator);
+		const config = AhaMomentFactory.createConfig(dto, menuNavigator, parentWidget);
 		if (!config)
 		{
 			complete();
@@ -305,7 +324,7 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			return false;
 		}
 
-		const { onHide } = config;
+		const { onHide, targetRef: directTargetRef } = config;
 		const show = (targetRef) => {
 			if (canShow && !canShow())
 			{
@@ -362,7 +381,7 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			return true;
 		}
 
-		show(config.targetRef);
+		show(directTargetRef);
 
 		return true;
 	};

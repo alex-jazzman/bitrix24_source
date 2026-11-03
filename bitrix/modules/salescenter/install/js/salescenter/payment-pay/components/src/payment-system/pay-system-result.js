@@ -18,8 +18,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-pay_syste
 	{
 		localize()
 		{
-			return Object.freeze(
-				BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_'))
+			return BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_');
 		},
 	},
 	mounted()
@@ -31,7 +30,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-pay_syste
 	},
 	// language=Vue
 	template: `
-		<div>
+		<div data-payment-stage="result" data-testid="salescenter-payment-result" tabindex="-1">
 			<template v-if="html">
 				<div ref="paySystemResultTemplate"></div>
 				<slot></slot>

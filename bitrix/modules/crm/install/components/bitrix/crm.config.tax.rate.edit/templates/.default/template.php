@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 			alert("<?=$arResult['ERROR_MSG']?>");
 			BX.closeWait();
 		<?else:?>
-			top.location.href = '<?=CUtil::JSEscape($arResult['RATE_PAGE'])?>';
+			parent.location.href = '<?=CUtil::JSEscape($arResult['RATE_PAGE'])?>';
 		<?endif;?>
 	</script><?
 	die();

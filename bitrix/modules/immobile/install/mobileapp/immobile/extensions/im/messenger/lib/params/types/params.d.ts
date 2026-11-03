@@ -33,6 +33,7 @@ declare type ImFeatures = {
 	isCopilotMentionAvailable: boolean,
 	videoNoteTranscriptionAvailable: boolean,
 	isBitrixGptV2Available: boolean,
+	isBitrixGptStopGenerationAvailable: boolean,
 	aiAssistantMcpSelectorAvailable: boolean,
 	isAiAssistantAgentModeAvailable: boolean,
 	isCopilotForceSearchAvailable: boolean,
@@ -41,11 +42,17 @@ declare type ImFeatures = {
 	isChatWithGuestsAvailable: boolean,
 	isNestedChatAvailable: boolean,
 	isReplyWithMediaAvailable: boolean,
+	isAddToChatPopupAvailable: boolean,
 	isAiAssistantFeedbackAvailable: boolean,
 	isAiAssistantRegenerateAvailable: boolean,
 	collabPreviewSourceEnabled: boolean,
 	isCopilotDraftChatAvailable: boolean,
 	isAttachChatToProjectAvailable: boolean,
+	isAiTaskCreationFromMessagesAvailable: boolean,
+	isMessageFormBlockAvailable: boolean,
+	isMessageFileAudioBlockAvailable: boolean,
+	isVideoNoteCaptionAvailable: boolean,
+	isChatThreadsAvailable: boolean,
 }
 
 declare type UserInfo = {
@@ -58,6 +65,17 @@ declare type MessengerPermissions = {
 	byUserType: Record<Exclude<UserType, 'bot'>, PermissionsByUserType>,
 	actionGroups: object,
 	actionGroupsDefaults: object,
+}
+
+declare type MessengerFolders = {
+	allowedTypes?: string[],
+	limits?: MessengerFolderLimits,
+}
+
+declare type MessengerFolderLimits = {
+	maxFolders?: number,
+	maxChatsPerFolder?: number,
+	maxTitleLength?: number,
 }
 
 declare type PermissionsByUserType = {

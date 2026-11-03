@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 this.BX.Mail.Client = this.BX.Mail.Client || {};
-(function (exports, main_core, main_core_events, main_loader, main_sidepanel, ui_vue3, mail_migrationState, ui_iconSet_api_vue, ui_iconSet_outline, ui_vue3_components_button, ui_dialogs_messagebox, ui_infoHelper, ui_buttons, ui_vue3_components_popup, main_popup, ui_system_label, ui_system_label_vue, ui_system_menu_vue, ui_system_input_vue, ui_system_typography_vue, ui_system_alert, ui_system_alert_vue, ui_a11y, ui_entitySelector, ui_system_chip_vue, ui_bannerDispatcher, ui_analytics) {
+(function (exports, main_core, main_core_events, main_loader, main_sidepanel, ui_vue3, mail_migrationState, ui_iconSet_api_vue, ui_iconSet_outline, ui_system_typography_vue, ui_vue3_components_button, ui_dialogs_messagebox, ui_infoHelper, ui_buttons, ui_system_alert, ui_system_alert_vue, ui_vue3_components_popup, main_popup, ui_a11y, ui_system_label, ui_system_label_vue, ui_system_menu_vue, ui_system_input_vue, mail_messageBody, ui_entitySelector, ui_system_chip_vue, ui_bannerDispatcher, ui_analytics) {
 	'use strict';
 
 	const Scenario = Object.freeze({
@@ -21,6 +21,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	});
 	const SlotsControlTestId = 'mail-compose-slots-action';
 	const SendControlTestId = 'mail-compose-send';
+	const SaveTemplateContainerTestId = 'mail-compose-save-template';
+	const SaveTemplateControlTestId = 'mail-compose-save-template-control';
 	const AttachmentAnchorTestId = 'mail-compose-attachment-list';
 	const NoticesTestId = 'mail-compose-form-notices';
 	const Phrase = Object.freeze({
@@ -33,6 +35,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		FieldCc: 'MAIL_COMPOSE_FORM_FIELD_CC',
 		FieldBcc: 'MAIL_COMPOSE_FORM_FIELD_BCC',
 		FieldAdd: 'MAIL_COMPOSE_FORM_FIELD_ADD',
+		RecipientsShowAll: 'MAIL_COMPOSE_FORM_RECIPIENTS_SHOW_ALL',
 		AddressBookAdd: 'MAIL_COMPOSE_FORM_ADDRESS_BOOK_ADD',
 		AddressBookAddFromSearch: 'MAIL_COMPOSE_FORM_ADDRESS_BOOK_ADD_FROM_SEARCH',
 		AddressBookEmptyTitle: 'MAIL_COMPOSE_FORM_ADDRESS_BOOK_EMPTY_TITLE',
@@ -63,19 +66,48 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		SlotsButton: 'MAIL_COMPOSE_FORM_SLOTS_BUTTON',
 		SendButton: 'MAIL_COMPOSE_FORM_SEND_BUTTON',
 		CancelButton: 'MAIL_COMPOSE_FORM_CANCEL_BUTTON',
+		SaveAsTemplate: 'MAIL_COMPOSE_FORM_SAVE_AS_TEMPLATE',
 		CreateDocumentButton: 'MAIL_COMPOSE_FORM_CREATE_DOCUMENT_BUTTON',
 		ScheduleButton: 'MAIL_COMPOSE_FORM_SCHEDULE_BUTTON',
-		SchedulePresetToday: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_TODAY',
+		ScheduleConfirm: 'MAIL_COMPOSE_FORM_SCHEDULE_CONFIRM',
+		SchedulePresetInOneHour: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_IN_ONE_HOUR',
 		SchedulePresetTomorrow: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_TOMORROW',
 		SchedulePresetWeekEnd: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_WEEK_END',
 		SchedulePresetNextWeek: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_NEXT_WEEK',
 		SchedulePresetMonthEnd: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_MONTH_END',
+		ScheduleErrorPastTime: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_PAST_TIME',
+		ScheduleErrorTime: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_TIME',
+		ScheduleErrorFeatureUnavailable: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_FEATURE_UNAVAILABLE',
+		ScheduleErrorAccessDenied: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ACCESS_DENIED',
+		ScheduleErrorNotFound: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_NOT_FOUND',
+		ScheduleErrorRevisionConflict: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_REVISION_CONFLICT',
+		ScheduleErrorAlreadySending: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ALREADY_SENDING',
+		ScheduleErrorAlreadySent: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ALREADY_SENT',
+		ScheduleErrorAlreadyCancelled: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ALREADY_CANCELLED',
+		ScheduleErrorMailboxUnavailable: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_MAILBOX_UNAVAILABLE',
+		ScheduleErrorMailboxAccess: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_MAILBOX_ACCESS',
+		ScheduleErrorSenderUnavailable: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_SENDER_UNAVAILABLE',
+		ScheduleErrorRecipients: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_RECIPIENTS',
+		ScheduleErrorSendLimit: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_SEND_LIMIT',
+		ScheduleErrorAttachmentLimit: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_LIMIT',
+		ScheduleErrorInvalidHeader: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_INVALID_HEADER',
+		ScheduleErrorAttachmentAccess: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_ACCESS',
+		ScheduleErrorAttachmentInvalid: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_INVALID',
+		ScheduleErrorAttachmentCopy: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_COPY',
+		ScheduleErrorAttachmentSize: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_SIZE',
+		ScheduleErrorSaveFailed: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_SAVE_FAILED',
+		ScheduleErrorUnknown: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_UNKNOWN',
+		ScheduleSuccess: 'MAIL_COMPOSE_FORM_SCHEDULE_SUCCESS',
 		TemplatesButton: 'MAIL_COMPOSE_FORM_TEMPLATES_BUTTON',
 		TemplatesNewLabel: 'MAIL_COMPOSE_FORM_TEMPLATES_NEW_LABEL',
 		TemplatesMenuTitle: 'MAIL_COMPOSE_FORM_TEMPLATES_MENU_TITLE',
-		TemplatesRemember: 'MAIL_COMPOSE_FORM_TEMPLATES_REMEMBER',
 		TemplatesAllButton: 'MAIL_COMPOSE_FORM_TEMPLATES_ALL_BUTTON',
 		TemplatesConfigureButton: 'MAIL_COMPOSE_FORM_TEMPLATES_CONFIGURE_BUTTON',
+		TemplatesCreateButton: 'MAIL_COMPOSE_FORM_TEMPLATES_CREATE_BUTTON',
+		TemplatePreviewButton: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_BUTTON',
+		TemplatePreviewTitle: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_TITLE',
+		TemplatePreviewClose: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_CLOSE',
+		TemplatePreviewError: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_ERROR',
 		TemplatesSearch: 'MAIL_COMPOSE_FORM_TEMPLATES_SEARCH',
 		TemplatesLoading: 'MAIL_COMPOSE_FORM_TEMPLATES_LOADING',
 		TemplatesEmpty: 'MAIL_COMPOSE_FORM_TEMPLATES_EMPTY',
@@ -90,6 +122,12 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		TemplateApplyInsert: 'MAIL_COMPOSE_FORM_TEMPLATE_APPLY_INSERT',
 		TemplateApplyReplace: 'MAIL_COMPOSE_FORM_TEMPLATE_APPLY_REPLACE',
 		TemplateApplyError: 'MAIL_COMPOSE_FORM_TEMPLATE_APPLY_ERROR',
+		SubjectGenerationButton: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_BUTTON',
+		SubjectGenerationRunning: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_RUNNING',
+		SubjectGenerationEmptyBody: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_EMPTY_BODY',
+		SubjectGenerationError: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_ERROR',
+		SubjectGenerationLimit: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_LIMIT',
+		SubjectGenerationDone: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_DONE',
 		SlotsText: 'MAIL_COMPOSE_FORM_SLOTS_TEXT',
 		SlotsCalendarTitle: 'MAIL_COMPOSE_FORM_SLOTS_CALENDAR_TITLE',
 		SlotsCalendarText: 'MAIL_COMPOSE_FORM_SLOTS_CALENDAR_TEXT',
@@ -109,9 +147,36 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		ErrorSendFailed: 'MAIL_COMPOSE_FORM_ERROR_SEND_FAILED',
 		SendSuccess: 'MAIL_COMPOSE_FORM_SEND_SUCCESS'
 	});
+	const ScheduleErrorPhrase = Object.freeze({
+		feature_unavailable: Phrase.ScheduleErrorFeatureUnavailable,
+		invalid_time: Phrase.ScheduleErrorPastTime,
+		access_denied: Phrase.ScheduleErrorAccessDenied,
+		not_found: Phrase.ScheduleErrorNotFound,
+		revision_conflict: Phrase.ScheduleErrorRevisionConflict,
+		already_sending: Phrase.ScheduleErrorAlreadySending,
+		already_sent: Phrase.ScheduleErrorAlreadySent,
+		already_cancelled: Phrase.ScheduleErrorAlreadyCancelled,
+		mailbox_unavailable: Phrase.ScheduleErrorMailboxUnavailable,
+		mailbox_access_denied: Phrase.ScheduleErrorMailboxAccess,
+		sender_unavailable: Phrase.ScheduleErrorSenderUnavailable,
+		recipient_limit: Phrase.ScheduleErrorRecipients,
+		send_limit: Phrase.ScheduleErrorSendLimit,
+		attachment_limit: Phrase.ScheduleErrorAttachmentLimit,
+		invalid_header: Phrase.ScheduleErrorInvalidHeader,
+		attachment_access_denied: Phrase.ScheduleErrorAttachmentAccess,
+		attachment_invalid: Phrase.ScheduleErrorAttachmentInvalid,
+		attachment_copy_failed: Phrase.ScheduleErrorAttachmentCopy,
+		attachment_size_limit: Phrase.ScheduleErrorAttachmentSize,
+		save_failed: Phrase.ScheduleErrorSaveFailed
+	});
 
 	const Controller$1 = 'mail.api.composeform';
 	const transport$2 = main_core.ajax;
+	let undoSendExtensionPromise = null;
+	function loadUndoSendExtension() {
+		undoSendExtensionPromise ??= main_core.Runtime.loadExtension('mail.client.undo-send');
+		return undoSendExtensionPromise;
+	}
 	function runAction$1(action, data = {}) {
 		return transport$2.runAction(`${Controller$1}.${action}`, {
 			data
@@ -124,6 +189,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		getCalendarSharingLink() {
 			return runAction$1('getCalendarSharingLink');
 		},
+		generateSubject(request) {
+			return runAction$1('generateSubject', {
+				...request
+			});
+		},
 		sendMessage(form) {
 			return new Promise((resolve, reject) => {
 				transport$2.submitAjax(form, {
@@ -135,6 +205,12 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					}
 				});
 			});
+		},
+		async createUndoSend(request) {
+			return (await loadUndoSendExtension()).undoSendApi.create(request);
+		},
+		async showUndoSend(operation) {
+			(await loadUndoSendExtension()).undoSendNotification.show(operation);
 		}
 	};
 
@@ -152,7 +228,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 	}
 
-	const TestId$8 = Object.freeze({
+	const TestId$a = Object.freeze({
 		calendarDialog: 'mail-compose-slots-calendar',
 		calendarOpen: 'mail-compose-slots-calendar-open'
 	});
@@ -282,8 +358,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}
 		});
 		markMessageBox(box, {
-			dialog: TestId$8.calendarDialog,
-			ok: TestId$8.calendarOpen
+			dialog: TestId$a.calendarDialog,
+			ok: TestId$a.calendarOpen
 		});
 		box.show();
 	}
@@ -352,8 +428,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	const ShowMode = 'justShow';
 	const CopilotButtonSelector = '[data-id="copilot"]';
 	const UploaderPanelSelector = '.disk-user-field-control';
+	const UploaderPanelToggleEvent = 'onUploaderPanelToggle';
+	const DocumentPanelToggleEvent = 'onDocumentPanelToggle';
 	const BodyPlaceholderAttribute = 'placeholder';
 	const BodyPlaceholderVisibleAttribute = 'data-mail-compose-placeholder-visible';
+	const HeadHtmlMarkAttribute = 'data-mail-compose-head';
 	const noop$2 = () => {};
 	function buildBodyNodeIds() {
 		const suffix = main_core.Text.getRandom();
@@ -398,18 +477,26 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		bodyNodes;
 		#uploaderControlId;
 		#closeForm;
+		#headHtml;
+		#isUploaderPanelShown = false;
+		#isDocumentPanelShown = false;
+		#arePanelsFollowed = false;
 		#teardown = new Set();
 		#systemNodeIds;
 		#systemNodeRegistrations;
 		#initialBody = null;
 		#isInitialBodySet = false;
+		#isReadOnly = false;
 		#isDestroyed = false;
+		#heightRecalcFrame = 0;
+		#lastBodyHeight = -1;
 		constructor(params) {
 			this.editorId = params.editorId;
 			this.bodyNodes = buildBodyNodeIds();
 			this.#systemNodeIds = new Set(Object.values(this.bodyNodes));
 			this.#systemNodeRegistrations = new Map([...this.#systemNodeIds].map(nodeId => [nodeId, 1]));
 			this.#uploaderControlId = params.uploaderControlId ?? '';
+			this.#headHtml = params.headHtml ?? '';
 			this.#closeForm = params.closeForm ?? noop$2;
 			this.subscribeReady(this.#handleReady);
 		}
@@ -451,6 +538,10 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}
 			this.#initialBody = html;
 			return this.#isReady() && this.#applyInitialBody();
+		}
+		setReadOnly(readOnly) {
+			this.#isReadOnly = readOnly;
+			return this.#applyReadOnly();
 		}
 		hasUserContent() {
 			const body = this.#resolveEditor()?.GetIframeDoc()?.body;
@@ -577,6 +668,58 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			await control.nextTick();
 			return true;
 		}
+		async addFiles(files) {
+			const control = this.#resolveUploaderControl();
+			if (!control) {
+				return files.length === 0 ? [] : null;
+			}
+			if (files.length === 0) {
+				return [];
+			}
+			const uploader = control.getUploader();
+			const existingFileIds = new Set(control.getFiles().map(file => file.getId()));
+			const existingObjectIds = new Set(control.getFiles().map(file => Number(file.getCustomData('objectId'))).filter(objectId => Number.isInteger(objectId) && objectId > 0));
+			const filesToAdd = files.filter(file => {
+				if (existingObjectIds.has(file.id) || existingFileIds.has(`n${file.id}`)) {
+					return false;
+				}
+				existingObjectIds.add(file.id);
+				return true;
+			});
+			if (filesToAdd.length === 0) {
+				return [];
+			}
+			const requestedFileIds = new Set(filesToAdd.map(file => `n${file.id}`));
+			let addedFileIds = [];
+			let isAdditionComplete = false;
+			try {
+				const addedFiles = uploader.addFiles(filesToAdd.map(file => {
+					const id = `n${file.id}`;
+					return {
+						id,
+						serverFileId: id,
+						name: file.name,
+						size: file.size,
+						customData: {
+							objectId: file.id
+						}
+					};
+				}));
+				addedFileIds = addedFiles.map(file => file.getId()).filter(fileId => !existingFileIds.has(fileId));
+				await control.nextTick();
+				isAdditionComplete = addedFileIds.length === filesToAdd.length;
+			} catch {
+				isAdditionComplete = false;
+			}
+			if (isAdditionComplete) {
+				return addedFileIds;
+			}
+			const partiallyAddedFileIds = control.getFiles().map(file => file.getId()).filter(fileId => !existingFileIds.has(fileId) && requestedFileIds.has(fileId));
+			new Set([...addedFileIds, ...partiallyAddedFileIds]).forEach(fileId => {
+				uploader.removeFile(fileId);
+			});
+			return null;
+		}
 		removeFile(fileId) {
 			const control = this.#resolveUploaderControl();
 			if (!control) {
@@ -585,14 +728,36 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			control.getUploader().removeFile(fileId);
 			return true;
 		}
-		showUploader() {
+		toggleUploader() {
 			const control = this.#resolveUploaderControl();
 			if (!control) {
 				return false;
 			}
+			if (this.#isUploaderPanelShown) {
+				control.hide();
+				return true;
+			}
 			control.showUploaderPanel();
 			this.#scrollPanelIntoView(control);
 			return true;
+		}
+		#followPanels(control) {
+			if (this.#arePanelsFollowed) {
+				return;
+			}
+			this.#arePanelsFollowed = true;
+			const followFiles = event => {
+				this.#isUploaderPanelShown = event.getData().isOpen === true;
+			};
+			const followDocuments = event => {
+				this.#isDocumentPanelShown = event.getData().isOpen === true;
+			};
+			control.subscribe(UploaderPanelToggleEvent, followFiles);
+			control.subscribe(DocumentPanelToggleEvent, followDocuments);
+			this.#teardown.add(() => {
+				control.unsubscribe(UploaderPanelToggleEvent, followFiles);
+				control.unsubscribe(DocumentPanelToggleEvent, followDocuments);
+			});
 		}
 		showCopilot() {
 			const button = this.#resolveCopilotButton();
@@ -602,10 +767,14 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			button.click();
 			return true;
 		}
-		showCreateDocument() {
+		toggleCreateDocument() {
 			const control = this.#resolveUploaderControl();
 			if (!control || !control.canCreateDocuments()) {
 				return false;
+			}
+			if (this.#isDocumentPanelShown) {
+				control.hide();
+				return true;
 			}
 			control.showDocumentPanel();
 			this.#scrollPanelIntoView(control);
@@ -614,6 +783,18 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		parseQuote(html) {
 			const parsed = this.#resolveEditor()?.Parse(html, true, false);
 			return main_core.Type.isString(parsed) ? parsed : null;
+		}
+		parseForBody(html) {
+			const parsed = this.#resolveEditor()?.Parse(html);
+			return main_core.Type.isString(parsed) ? parsed : null;
+		}
+		syncBodyFromDocument() {
+			const editor = this.#resolveEditor();
+			if (!editor) {
+				return false;
+			}
+			editor.synchro.FullSyncFromIframe();
+			return true;
 		}
 		updateCopilotContext(parameters) {
 			const bodyCopilot = this.#resolveEditor()?.iframeView?.copilot;
@@ -682,7 +863,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}
 				const style = bodyDocument.createElement('style');
 				style.textContent = [
-				`body[${BodyPlaceholderVisibleAttribute}] {`, '\tposition: relative;', '}', `body[${BodyPlaceholderVisibleAttribute}]::before {`, `\tcontent: attr(${BodyPlaceholderAttribute});`, '\tposition: absolute;', '\tinset: 0 auto auto 0;', '\tpointer-events: none;', '\tcolor: var(--ui-color-base-4, #a8adb4);', '\tfont: var(--ui-font-weight-normal, 400) var(--ui-font-size-md, 16px)/var(--ui-font-line-height-md, 22px) var(--ui-font-family-system, Arial, sans-serif);', '}'].join('\n');
+				`body[${BodyPlaceholderVisibleAttribute}] {`, '\tposition: relative;', '}', `body[${BodyPlaceholderVisibleAttribute}]::before {`, `\tcontent: attr(${BodyPlaceholderAttribute});`, '\tposition: absolute;', '\tinset: 8px auto auto 0;', '\tpointer-events: none;', '\tcolor: var(--ui-color-base-4);', '\tfont: var(--ui-font-size-md)/var(--ui-font-line-height-md) var(--ui-font-family-system);',
+				'\tfont-weight: var(--ui-font-weight-light) !important;', '}'].join('\n');
 				main_core.Dom.append(style, bodyDocument.head);
 				body.setAttribute(BodyPlaceholderAttribute, text);
 				body.setAttribute('aria-placeholder', text);
@@ -754,6 +936,10 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				return;
 			}
 			this.#isDestroyed = true;
+			if (this.#heightRecalcFrame !== 0) {
+				window.cancelAnimationFrame(this.#heightRecalcFrame);
+				this.#heightRecalcFrame = 0;
+			}
 			this.#teardown.forEach(unsubscribe => {
 				unsubscribe();
 			});
@@ -763,8 +949,13 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			if (this.#isDestroyed) {
 				return;
 			}
-			this.#applyInitialBody();
 			const bodyDocument = this.#resolveEditor()?.GetIframeDoc();
+			if (bodyDocument) {
+				this.#injectHeadHtml(bodyDocument);
+			}
+			this.#applyInitialBody();
+			this.#applyReadOnly();
+			this.#resolveUploaderControl();
 			if (!bodyDocument) {
 				return;
 			}
@@ -772,7 +963,62 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			this.#track(() => {
 				main_core.Event.unbind(bodyDocument, 'keydown', this.#handleBodyKeydown);
 			});
+			this.#followBodyHeight(bodyDocument);
 		};
+		#applyReadOnly() {
+			const body = this.#resolveEditor()?.GetIframeDoc()?.body;
+			if (!body) {
+				return false;
+			}
+			body.contentEditable = this.#isReadOnly ? 'false' : 'true';
+			if (this.#isReadOnly) {
+				body.blur();
+			}
+			return true;
+		}
+		#followBodyHeight(bodyDocument) {
+			const editor = this.#resolveEditor();
+			const body = bodyDocument.body;
+			if (!editor?.AutoResizeSceleton || !editor.ResizeSceleton || !body) {
+				return;
+			}
+			const resize = editor.ResizeSceleton;
+			editor.ResizeSceleton = (...args) => {
+				if (args.length > 0) {
+					resize.call(editor, ...args);
+					return;
+				}
+				this.#scheduleResize(() => {
+					resize.call(editor);
+				});
+			};
+			this.#track(() => {
+				editor.ResizeSceleton = resize;
+			});
+			const observer = new ResizeObserver(() => {
+				if (body.scrollHeight === this.#lastBodyHeight) {
+					return;
+				}
+				this.#lastBodyHeight = body.scrollHeight;
+				editor.AutoResizeSceleton?.();
+			});
+			observer.observe(body);
+			this.#track(() => {
+				observer.disconnect();
+			});
+		}
+		#scheduleResize(resize) {
+			if (this.#heightRecalcFrame !== 0) {
+				return;
+			}
+			this.#heightRecalcFrame = window.requestAnimationFrame(() => {
+				this.#heightRecalcFrame = 0;
+				if (this.#isDestroyed) {
+					return;
+				}
+				resize();
+			});
+		}
 		#handleBodyKeydown = event => {
 			if (event.key !== 'Escape') {
 				return;
@@ -781,6 +1027,16 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				this.#closeForm();
 			}
 		};
+		#injectHeadHtml(bodyDocument) {
+			if (this.#headHtml === '' || bodyDocument.head.querySelector(`[${HeadHtmlMarkAttribute}]`)) {
+				return;
+			}
+			const fragment = this.#createHtmlFragment(bodyDocument, this.#headHtml);
+			for (const node of fragment.children) {
+				node.setAttribute(HeadHtmlMarkAttribute, '');
+			}
+			bodyDocument.head.append(fragment);
+		}
 		#isReady() {
 			return this.#resolveHandler()?.isReady === true;
 		}
@@ -872,7 +1128,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				return null;
 			}
 			const uploaderApi = BX.Disk?.Uploader?.UserFieldControl;
-			return uploaderApi?.getById(this.#uploaderControlId) ?? null;
+			const control = uploaderApi?.getById(this.#uploaderControlId) ?? null;
+			if (control) {
+				this.#followPanels(control);
+			}
+			return control;
 		}
 		#resolveCopilotButton() {
 			return this.getHostNode()?.querySelector(CopilotButtonSelector) ?? null;
@@ -897,7 +1157,42 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		return state;
 	}
 	function getSelectedSender(state) {
-		return state.senders.find(sender => sender.formated === state.selectedSender) ?? null;
+		const selectedByIdentity = findSenderByIdentity(state.senders, state.selectedSenderIdentity);
+		if (selectedByIdentity?.formated === state.selectedSender) {
+			return selectedByIdentity;
+		}
+		const selectedByFormatted = state.senders.find(sender => sender.formated === state.selectedSender);
+		if (selectedByFormatted && toPositiveIdOrNull(selectedByFormatted.mailboxId) === null) {
+			return selectedByFormatted;
+		}
+		const mailboxId = state.mailbox?.id ?? null;
+		if (mailboxId !== null) {
+			const selectedByMailbox = state.senders.find(sender => {
+				return toPositiveIdOrNull(sender.mailboxId) === mailboxId;
+			});
+			if (selectedByMailbox) {
+				return selectedByMailbox;
+			}
+		}
+		return selectedByFormatted ?? null;
+	}
+	function getSelectedSenderIdentity(state) {
+		return buildSenderIdentity(getSelectedSender(state));
+	}
+	function selectSender(state, sender) {
+		const identity = buildSenderIdentity(sender);
+		Object.assign(state, {
+			selectedSender: sender.formated,
+			selectedSenderIdentity: identity
+		});
+		if (identity.mailboxId !== null) {
+			Object.assign(state.mailbox, {
+				id: identity.mailboxId
+			});
+		}
+	}
+	function getScheduleTimezoneId(state) {
+		return state.scheduledMessage.timezoneId || Intl.DateTimeFormat().resolvedOptions().timeZone;
 	}
 	function getSelectedSenderMailboxId(state) {
 		const selectedMailboxId = Number(getSelectedSender(state)?.mailboxId ?? 0);
@@ -959,21 +1254,46 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		const id = Number(value ?? 0);
 		return id > 0 ? id : null;
 	}
-	function findSender(senders, selectedSender, mailboxEmail) {
-		if (selectedSender !== '') {
-			const requested = senders.find(sender => sender.formated === selectedSender);
-			if (requested) {
-				return requested;
-			}
+	function buildSenderIdentity(sender) {
+		const mailboxId = toPositiveIdOrNull(sender?.mailboxId);
+		if (mailboxId !== null) {
+			return {
+				senderId: null,
+				mailboxId
+			};
 		}
-		return senders.find(sender => normalizeAddress(sender.email) === mailboxEmail) ?? senders[0];
+		const senderId = sender?.type === 'mailbox' ? null : toPositiveIdOrNull(sender?.id);
+		return {
+			senderId,
+			mailboxId: null
+		};
 	}
-	function resolveSelectedSender(senders, selectedSender, mailboxEmail) {
+	function findSenderByIdentity(senders, identity) {
+		if (!identity) {
+			return null;
+		}
+		if (identity.mailboxId !== null) {
+			return senders.find(sender => toPositiveIdOrNull(sender.mailboxId) === identity.mailboxId) ?? null;
+		}
+		if (identity.senderId !== null) {
+			return senders.find(sender => toPositiveIdOrNull(sender.mailboxId) === null && toPositiveIdOrNull(sender.id) === identity.senderId) ?? null;
+		}
+		return null;
+	}
+	function resolveSelectedSender(senders, selectedSender, mailboxEmail, mailboxId) {
 		if (senders.length === 0) {
 			return null;
 		}
-		const matched = findSender(senders, (selectedSender ?? '').trim(), mailboxEmail);
-		return matched.formated === '' ? null : matched.formated;
+		const selected = (selectedSender ?? '').trim();
+		let matched = selected === '' ? undefined : senders.find(sender => sender.formated === selected);
+		matched ??= senders.find(sender => normalizeAddress(sender.email) === mailboxEmail) ?? senders[0];
+		if (toPositiveIdOrNull(matched.mailboxId) === null) {
+			return matched;
+		}
+		if (mailboxId !== null) {
+			return senders.find(sender => toPositiveIdOrNull(sender.mailboxId) === mailboxId) ?? matched;
+		}
+		return matched;
 	}
 	function normalizeSignature(item) {
 		const assignedAt = Number(item.assignedAt ?? 0);
@@ -1009,6 +1329,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	}
 	function buildBody(initialData) {
 		return {
+			content: initialData.body?.content ?? '',
 			quote: initialData.body?.quote ?? '',
 			quoteFolded: isEnabled(initialData.body?.quoteFolded)
 		};
@@ -1064,12 +1385,15 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		return {
 			messageList: toValueOrNull(initialData.paths?.messageList),
 			home: initialData.paths?.home ?? '',
-			templatesManage: initialData.paths?.templatesManage ?? ''
+			templatesManage: initialData.paths?.templatesManage ?? '',
+			templatesCreate: initialData.paths?.templatesCreate ?? ''
 		};
 	}
 	function createComposeState(initialData = {}) {
 		const senders = initialData.senders ?? [];
 		const mailboxEmail = normalizeAddress(initialData.mailbox?.email);
+		const mailboxId = toPositiveIdOrNull(initialData.mailbox?.id);
+		const selectedSender = resolveSelectedSender(senders, initialData.selectedSender, mailboxEmail, mailboxId);
 		const recipients = buildRecipients(initialData);
 		return ui_vue3.reactive({
 			scenario: initialData.scenario ?? Scenario.New,
@@ -1077,11 +1401,12 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			messageId: initialData.messageId ?? 0,
 			parentMessageId: toPositiveIdOrNull(initialData.parentMessageId),
 			mailbox: {
-				id: toPositiveIdOrNull(initialData.mailbox?.id),
+				id: mailboxId,
 				email: mailboxEmail
 			},
 			senders,
-			selectedSender: resolveSelectedSender(senders, initialData.selectedSender, mailboxEmail),
+			selectedSender: selectedSender?.formated || null,
+			selectedSenderIdentity: buildSenderIdentity(selectedSender),
 			recipients,
 			bccExpanded: recipients.bcc.length > 0,
 			subject: initialData.subject ?? '',
@@ -1102,8 +1427,18 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			analytics: buildAnalytics(initialData),
 			features: {
 				unfinishedElements: isEnabled(initialData.features?.unfinishedElements),
-				templates: isEnabled(initialData.features?.templates)
+				scheduledMessages: isEnabled(initialData.features?.scheduledMessages),
+				undoSend: isEnabled(initialData.features?.undoSend),
+				templates: isEnabled(initialData.features?.templates),
+				saveTemplate: isEnabled(initialData.features?.saveTemplate)
 			},
+			subjectGeneration: {
+				available: isEnabled(initialData.features?.subjectGeneration),
+				isRunning: false,
+				hash: null,
+				requestId: 0
+			},
+			authorTimezoneId: (initialData.authorTimezoneId ?? '').trim(),
 			draft: {
 				id: Math.max(0, Number(initialData.draft?.id ?? 0)),
 				revision: Math.max(0, Number(initialData.draft?.revision ?? 0)),
@@ -1116,35 +1451,90 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				isLoaded: false,
 				isLoading: false,
 				error: null,
+				priorityReference: null,
+				pinRecentlyCreated: false,
 				selected: null,
-				prepared: null,
-				rememberLast: false,
-				autoApply: {
-					candidate: null,
-					status: 'idle'
-				}
+				prepared: null
 			},
 			paths: buildPaths(initialData),
+			scheduledMessage: {
+				id: toPositiveIdOrNull(initialData.scheduledMessage?.id) ?? 0,
+				revision: Number(initialData.scheduledMessage?.revision ?? 0),
+				scheduledAt: initialData.scheduledMessage?.scheduledAt ?? '',
+				timezoneId: initialData.scheduledMessage?.timezoneId ?? '',
+				attachments: initialData.scheduledMessage?.attachments ?? [],
+				removedAttachmentIds: []
+			},
+			saveAsTemplate: false,
 			migrationActiveByMailboxId: {},
 			isSending: false,
 			errors: []
 		});
 	}
 
-	const TestId$7 = Object.freeze({
+	const TestId$9 = Object.freeze({
 		popup: 'mail-compose-schedule-popup',
 		calendar: 'mail-compose-schedule-calendar',
-		presets: 'mail-compose-schedule-presets'
+		confirm: 'mail-compose-schedule-confirm',
+		presets: 'mail-compose-schedule-presets',
+		error: 'mail-compose-schedule-error'
 	});
 	const CardPadding = 16;
 	const PopupOffsetTop = 5;
-	const Preset = Object.freeze([Phrase.SchedulePresetToday, Phrase.SchedulePresetTomorrow, Phrase.SchedulePresetWeekEnd, Phrase.SchedulePresetNextWeek, Phrase.SchedulePresetMonthEnd]);
+	const CustomPreset = 'custom';
+	const PastTimeErrorCode = 'past_time';
+	const Preset = [{
+		phrase: Phrase.SchedulePresetInOneHour,
+		value: 'inOneHour'
+	}, {
+		phrase: Phrase.SchedulePresetTomorrow,
+		value: 'tomorrow'
+	}, {
+		phrase: Phrase.SchedulePresetWeekEnd,
+		value: 'weekEnd'
+	}, {
+		phrase: Phrase.SchedulePresetNextWeek,
+		value: 'nextWeek'
+	}, {
+		phrase: Phrase.SchedulePresetMonthEnd,
+		value: 'monthEnd'
+	}];
+	function isKnownTimezoneId(timezoneId) {
+		try {
+			return Intl.DateTimeFormat('en', {
+				timeZone: timezoneId
+			}).resolvedOptions().timeZone !== '';
+		} catch {
+			return false;
+		}
+	}
+	function currentDateInTimezone(timezoneId) {
+		const parts = new Intl.DateTimeFormat('en-CA', {
+			timeZone: timezoneId,
+			year: 'numeric',
+			month: 'numeric',
+			day: 'numeric',
+			hour: 'numeric',
+			minute: 'numeric',
+			second: 'numeric',
+			hourCycle: 'h23'
+		}).formatToParts(new Date());
+		const values = Object.fromEntries(parts.map(({
+			type,
+			value
+		}) => [type, Number(value)]));
+		return new Date(values.year, values.month - 1, values.day, values.hour, values.minute, values.second);
+	}
+	function dateOf(localDateTime) {
+		return new Date(localDateTime.year, localDateTime.month - 1, localDateTime.day, localDateTime.hour, localDateTime.minute, localDateTime.second);
+	}
 	function loadDatePicker() {
 		return main_core.Runtime.loadExtension('ui.date-picker').then(extension => extension.DatePicker);
 	}
 	const SchedulePopup = ui_vue3.defineComponent({
 		name: 'MailComposeSchedulePopup',
 		components: {
+			Alert: ui_system_alert_vue.Alert,
 			Popup: ui_vue3_components_popup.Popup,
 			UiButton: ui_vue3_components_button.Button
 		},
@@ -1158,17 +1548,24 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				required: true
 			}
 		},
-		emits: ['close'],
+		emits: ['close', 'schedule'],
 		setup() {
 			return {
+				state: useComposeState(),
 				presetStyle: ui_vue3_components_button.AirButtonStyle.OUTLINE,
 				presetSize: ui_vue3_components_button.ButtonSize.LARGE,
-				testId: TestId$7
+				confirmStyle: ui_vue3_components_button.AirButtonStyle.FILLED,
+				confirmSize: ui_vue3_components_button.ButtonSize.LARGE,
+				errorDesign: ui_system_alert.AlertDesign.tintedAlert,
+				testId: TestId$9
 			};
 		},
 		data() {
 			return {
-				picker: null
+				picker: null,
+				selectedLocalDateTime: null,
+				error: '',
+				isScheduling: false
 			};
 		},
 		computed: {
@@ -1178,16 +1575,29 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					targetContainer: document.body,
 					offsetTop: PopupOffsetTop,
 					padding: CardPadding,
-					focusTrap: true,
+					focusTrap: {
+						initialFocus: true
+					},
 					closeByEsc: true,
 					ariaLabel: loc(Phrase.ScheduleButton)
 				};
 			},
 			presets() {
-				return Preset.map((phrase, index) => ({
-					label: loc(phrase),
-					testId: `mail-compose-schedule-preset-${index}`
+				return Preset.map((preset, index) => ({
+					label: loc(preset.phrase),
+					testId: `mail-compose-schedule-preset-${index}`,
+					value: preset.value
 				}));
+			},
+			confirmLabel() {
+				return loc(Phrase.ScheduleConfirm);
+			},
+			isCustomDateAllowed() {
+				return this.selectedLocalDateTime !== null && dateOf(this.selectedLocalDateTime) > currentDateInTimezone(this.timezoneId);
+			},
+			timezoneId() {
+				const timezoneId = getScheduleTimezoneId(this.state);
+				return isKnownTimezoneId(timezoneId) ? timezoneId : Intl.DateTimeFormat().resolvedOptions().timeZone;
 			}
 		},
 		mounted() {
@@ -1200,25 +1610,84 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		methods: {
 			createPicker() {
 				const Calendar = this.datePicker;
+				const minDate = currentDateInTimezone(this.timezoneId);
+				minDate.setHours(0, 0, 0, 0);
 				const picker = ui_vue3.markRaw(new Calendar({
 					targetNode: this.$refs.calendar,
 					selectionMode: 'single',
 					inline: true,
-					enableTime: true
+					enableTime: true,
+					minDate,
+					events: {
+						onSelect: this.handleCustomDateSelect
+					}
 				}));
 				this.picker = picker;
 				picker.show();
 			},
-			handlePresetClick() {}
+			handleCustomDateSelect() {
+				const selectedDate = this.picker?.getSelectedDate() ?? null;
+				this.selectedLocalDateTime = selectedDate === null ? null : {
+					year: selectedDate.getUTCFullYear(),
+					month: selectedDate.getUTCMonth() + 1,
+					day: selectedDate.getUTCDate(),
+					hour: selectedDate.getUTCHours(),
+					minute: selectedDate.getUTCMinutes(),
+					second: selectedDate.getUTCSeconds()
+				};
+			},
+			handleCustomConfirm() {
+				const selectedLocalDateTime = this.selectedLocalDateTime;
+				if (selectedLocalDateTime !== null) {
+					void this.schedule(CustomPreset, {
+						selectedLocalDateTime
+					});
+				}
+			},
+			handlePresetClick(preset) {
+				void this.schedule(preset.value);
+			},
+			async schedule(preset, options) {
+				if (this.isScheduling) {
+					return;
+				}
+				this.isScheduling = true;
+				try {
+					const {
+						timezoneId
+					} = this;
+					const extension = await main_core.Runtime.loadExtension('mail.client.scheduled-message');
+					const scheduledTime = extension.resolveScheduledTimePreset(preset, timezoneId, options);
+					this.error = '';
+					this.$emit('schedule', {
+						scheduledAt: scheduledTime.iso,
+						timezoneId
+					});
+				} catch (error) {
+					this.isScheduling = false;
+					this.error = error.code === PastTimeErrorCode ? loc(Phrase.ScheduleErrorPastTime) : loc(Phrase.ScheduleErrorTime);
+				}
+			}
 		},
 		template: `
 		<Popup :options="options" @close="$emit('close')">
 			<div class="mail-compose-schedule" :data-testid="testId.popup">
-				<div
-					ref="calendar"
-					class="mail-compose-schedule__calendar"
-					:data-testid="testId.calendar"
-				></div>
+				<div class="mail-compose-schedule__date">
+					<div
+						ref="calendar"
+						class="mail-compose-schedule__calendar"
+						:data-testid="testId.calendar"
+					></div>
+					<UiButton
+						:text="confirmLabel"
+						:style="confirmStyle"
+						:size="confirmSize"
+						:disabled="!isCustomDateAllowed || isScheduling"
+						wide
+						:dataset="{ testid: testId.confirm }"
+						@click="handleCustomConfirm"
+					/>
+				</div>
 				<div class="mail-compose-schedule__presets" :data-testid="testId.presets">
 					<UiButton
 						v-for="preset of presets"
@@ -1226,17 +1695,26 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						:text="preset.label"
 						:style="presetStyle"
 						:size="presetSize"
+						:disabled="isScheduling"
 						wide
 						:dataset="{ testid: preset.testId }"
-						@click="handlePresetClick"
+						@click="handlePresetClick(preset)"
 					/>
+				</div>
+				<div
+					v-if="error"
+					class="mail-compose-schedule__error"
+					:data-testid="testId.error"
+					role="alert"
+				>
+					<Alert :design="errorDesign">{{ error }}</Alert>
 				</div>
 			</div>
 		</Popup>
 	`
 	});
 
-	const TestId$6 = Object.freeze({
+	const TestId$8 = Object.freeze({
 		control: 'mail-compose-send-split',
 		send: SendControlTestId,
 		schedule: 'mail-compose-schedule-action'
@@ -1248,11 +1726,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		components: {
 			SchedulePopup
 		},
-		emits: ['send'],
+		emits: ['send', 'schedule'],
 		setup() {
 			return {
 				state: useComposeState(),
-				testId: TestId$6
+				testId: TestId$8
 			};
 		},
 		data() {
@@ -1272,6 +1750,9 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			isSendDisabled() {
 				return this.isSending || isSelectedSenderMigrationActive(this.state) || this.isRecipientsLimitExceeded;
 			},
+			sendUnavailableHint() {
+				return isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_ACTION_UNAVAILABLE') : '';
+			},
 			scheduleNode() {
 				return this.control?.getMenuButton().getContainer() ?? null;
 			}
@@ -1281,6 +1762,9 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				this.syncSending();
 			},
 			isSendDisabled() {
+				this.syncSending();
+			},
+			sendUnavailableHint() {
 				this.syncSending();
 			},
 			isRecipientsLimitExceeded() {
@@ -1303,7 +1787,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					mainButton: {
 						text: loc(Phrase.SendButton),
 						dataset: {
-							testid: TestId$6.send
+							testid: TestId$8.send
 						},
 						props: {
 							type: 'button'
@@ -1316,13 +1800,12 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					menuButton: {
 						className: ScheduleClassName,
 						dataset: {
-							testid: TestId$6.schedule
+							testid: TestId$8.schedule
 						},
 						props: {
 							type: 'button',
 							'aria-label': loc(Phrase.ScheduleButton),
-							'aria-haspopup': 'dialog',
-							'aria-expanded': 'false'
+							'aria-haspopup': 'dialog'
 						},
 						onclick: () => {
 							this.handleSchedule();
@@ -1341,7 +1824,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					new ui_iconSet_api_vue.Icon({
 						icon: ui_iconSet_api_vue.Outline.CALENDAR,
 						size: ScheduleIconSize,
-						color: 'var(--ui-btn-color)'
+						color: 'currentColor'
 					}).renderTo(half);
 				}
 			},
@@ -1350,6 +1833,10 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				if (!control) {
 					return;
 				}
+				const sendHalf = control.getMainButton().getContainer();
+				if (this.isSending) {
+					this.stepFocusOutOfSendHalf(sendHalf);
+				}
 				if (this.isSending) {
 					control.setDisabled(false);
 					control.setWaiting(true);
@@ -1357,11 +1844,19 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					control.setWaiting(false);
 					control.setDisabled(this.isSendDisabled);
 				}
-				main_core.Dom.attr(control.getMainButton().getContainer(), 'disabled', this.isSendDisabled ? true : null);
+				main_core.Dom.attr(sendHalf, 'disabled', this.isSendDisabled ? true : null);
 				main_core.Dom.attr(control.getMenuButton().getContainer(), 'disabled', this.isSendDisabled ? true : null);
-				const title = isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_SEND_UNAVAILABLE') : null;
+				const title = this.sendUnavailableHint || null;
 				main_core.Dom.attr(control.getMainButton().getContainer(), 'title', title);
 				main_core.Dom.attr(control.getMenuButton().getContainer(), 'title', title);
+			},
+			stepFocusOutOfSendHalf(sendHalf) {
+				const container = this.control?.getContainer();
+				if (!container || !sendHalf.contains(document.activeElement)) {
+					return;
+				}
+				main_core.Dom.attr(container, 'tabindex', '-1');
+				container.focus();
 			},
 			destroyControl() {
 				main_core.Dom.remove(this.control?.getContainer());
@@ -1384,17 +1879,17 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				void loadDatePicker().then(datePicker => {
 					this.datePicker = datePicker;
 					this.isScheduleShown = true;
-					this.syncScheduleState();
 				}, () => {});
 			},
 			handleScheduleClose() {
 				this.isScheduleShown = false;
-				this.syncScheduleState();
 			},
-			syncScheduleState() {
-				this.control?.getMenuButton().setProps({
-					'aria-expanded': this.isScheduleShown ? 'true' : 'false'
-				});
+			handleScheduleSubmit(payload) {
+				if (this.isSending) {
+					return;
+				}
+				this.handleScheduleClose();
+				this.$emit('schedule', payload);
 			}
 		},
 		template: `
@@ -1404,6 +1899,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			:bindElement="scheduleNode"
 			:datePicker="datePicker"
 			@close="handleScheduleClose"
+			@schedule="handleScheduleSubmit"
 		/>
 	`
 	});
@@ -1449,8 +1945,15 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 	}
 	const TemplateApi = {
-		quickList() {
-			return runAction('quickList', {}, 'GET');
+		quickList(priorityReference = null, pinRecentlyCreated = false) {
+			const payload = {};
+			if (priorityReference) {
+				payload.priorityReference = priorityReference;
+			}
+			if (pinRecentlyCreated) {
+				payload.pinRecentlyCreated = 1;
+			}
+			return runAction('quickList', payload, 'GET');
 		},
 		search(request) {
 			return runAction('search', {
@@ -1462,11 +1965,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				reference
 			});
 		},
-		setRememberLast(enabled) {
-			return runAction('setRememberLast', {
-				enabled
-			});
-		},
 		recordUsage(reference) {
 			return runAction('recordUsage', {
 				reference
@@ -1474,8 +1972,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 	};
 
-	const RecentLimit = 5;
-	const rememberUpdates = new WeakMap();
 	const pendingLoads = new WeakMap();
 	async function loadRecentTemplates(state, force = false) {
 		const pending = pendingLoads.get(state) ?? null;
@@ -1504,66 +2000,165 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		} = state;
 		templates.isLoading = true;
 		templates.error = null;
+		const priorityReference = templates.priorityReference;
+		const pinRecentlyCreated = templates.pinRecentlyCreated;
+		templates.priorityReference = null;
+		templates.pinRecentlyCreated = false;
 		try {
-			const response = await TemplateApi.quickList();
-			templates.recent = response.items.slice(0, RecentLimit);
-			if (!rememberUpdates.has(state)) {
-				templates.rememberLast = response.rememberLast;
-			}
-			templates.autoApply.candidate = response.autoApply;
+			const response = await TemplateApi.quickList(priorityReference, pinRecentlyCreated);
+			templates.recent = response.items;
 			templates.isLoaded = true;
 		} catch {
+			templates.priorityReference = templates.priorityReference ?? priorityReference;
+			templates.pinRecentlyCreated = templates.pinRecentlyCreated || pinRecentlyCreated;
 			templates.error = 'load';
 			templates.isLoaded = false;
 		} finally {
 			templates.isLoading = false;
 		}
 	}
-	async function updateRememberLast(state, enabled) {
-		const {
-			templates
-		} = state;
-		const update = rememberUpdates.get(state) ?? {
-			desired: templates.rememberLast,
-			confirmed: templates.rememberLast,
-			promise: null
+
+	const SubmitEvent = 'CrmMailTemplateEdit:onSubmit';
+	const SliderMessageEvent$1 = 'SidePanel.Slider:onMessage';
+	function getSliderEvents() {
+		const rootWindow = main_core.Page.getRootWindow();
+		const localEmitter = main_core_events.EventEmitter;
+		const rootEmitter = rootWindow?.BX?.Event?.EventEmitter ?? null;
+		const emitters = rootEmitter === null || rootEmitter === localEmitter ? [localEmitter] : [rootEmitter, localEmitter];
+		return {
+			subscribe: (eventName, handler, options) => {
+				emitters.forEach(emitter => emitter.subscribe(eventName, handler, options));
+			},
+			unsubscribe: (eventName, handler) => {
+				emitters.forEach(emitter => emitter.unsubscribe(eventName, handler));
+			}
 		};
-		rememberUpdates.set(state, update);
-		update.desired = enabled;
-		templates.rememberLast = enabled;
-		if (!update.promise) {
-			update.promise = synchronizeRememberLast(state, update);
-		}
-		return update.promise;
 	}
-	async function synchronizeRememberLast(state, update) {
-		const {
-			templates
-		} = state;
-		const current = update;
-		if (current.confirmed === current.desired) {
-			current.promise = null;
+	function namesExistingTemplate(address) {
+		const url = new main_core.Uri(address);
+		return /\/edit\/\d+\/?$/.test(url.getPath()) || Number(url.getQueryParam('element_id')) > 0;
+	}
+	function isCreation(payload, sender) {
+		if (payload.operation !== undefined) {
+			return payload.operation === 'create';
+		}
+		return !namesExistingTemplate(sender?.getUrl?.() ?? '');
+	}
+	function isOwnSender(ownSlider, sender) {
+		if (ownSlider === null || sender === null) {
+			return false;
+		}
+		if (ownSlider === sender) {
 			return true;
 		}
-		const requested = current.desired;
-		try {
-			const response = await TemplateApi.setRememberLast(requested);
-			current.confirmed = response.enabled;
-			if (current.desired === requested) {
-				templates.rememberLast = response.enabled;
-				if (response.enabled !== requested) {
-					current.promise = null;
-					return true;
+		const openSliders = main_sidepanel.SidePanel.Instance.getOpenSliders?.() ?? [];
+		const ownIndex = openSliders.indexOf(ownSlider);
+		return ownIndex !== -1 && openSliders.indexOf(sender) > ownIndex;
+	}
+	function openTemplateManager(params) {
+		const {
+			state,
+			onRefresh,
+			path: managePath,
+			createPath,
+			create
+		} = params;
+		const path = create ? createPath || `${managePath.replace(/\/$/, '')}/add/` : managePath;
+		const initialReferences = new Set(state.templates.recent.map(({
+			reference
+		}) => `${reference.source}:${reference.id}`));
+		let wasSaved = false;
+		let mayHaveCreated = false;
+		let ownSlider = null;
+		const handleMessage = event => {
+			const sender = event.getSender?.() ?? null;
+			if (event.getEventId() !== SubmitEvent || !isOwnSender(ownSlider, sender)) {
+				return;
+			}
+			const payload = event.getData() ?? {};
+			if (payload.operation === 'create' && payload.reference?.source === 'crm') {
+				state.templates.priorityReference = payload.reference;
+			}
+			wasSaved = true;
+			mayHaveCreated = mayHaveCreated || isCreation(payload, sender);
+		};
+		const sliderEvents = getSliderEvents();
+		let isListening = true;
+		const stopListening = () => {
+			if (!isListening) {
+				return;
+			}
+			isListening = false;
+			sliderEvents.unsubscribe(SliderMessageEvent$1, handleMessage);
+		};
+		sliderEvents.subscribe(SliderMessageEvent$1, handleMessage, {
+			compatMode: true
+		});
+		const isOpened = main_sidepanel.SidePanel.Instance.open(path, {
+			cacheable: false,
+			events: {
+				onOpen: event => {
+					ownSlider = event.getSlider?.() ?? null;
+				},
+				onCloseComplete: async () => {
+					stopListening();
+					state.templates.pinRecentlyCreated = mayHaveCreated && state.templates.priorityReference === null;
+					await loadRecentTemplates(state, true);
+					if (!state.templates.isLoaded || state.templates.error !== null) {
+						return;
+					}
+					const hasNewTemplate = state.templates.recent.some(({
+						reference
+					}) => !initialReferences.has(`${reference.source}:${reference.id}`));
+					if (!create || wasSaved || hasNewTemplate) {
+						onRefresh?.();
+					}
 				}
 			}
-		} catch {
-			if (current.desired === requested) {
-				templates.rememberLast = current.confirmed;
-				current.promise = null;
-				return false;
-			}
+		});
+		if (!isOpened) {
+			stopListening();
 		}
-		return synchronizeRememberLast(state, current);
+	}
+
+	function toPreparedTemplate(dto) {
+		return Object.assign(dto, {
+			attachments: dto.attachments ?? []
+		});
+	}
+
+	function createTemplatePreviewController(params) {
+		let sequence = 0;
+		let lastReference = null;
+		const preview = reference => {
+			lastReference = reference;
+			const requestSequence = ++sequence;
+			params.onPendingChange(true);
+			void TemplateApi.prepare(reference).then(response => {
+				if (sequence === requestSequence) {
+					params.onResult(toPreparedTemplate(response.template));
+				}
+			}, () => {
+				if (sequence === requestSequence) {
+					params.onError();
+				}
+			}).finally(() => {
+				if (sequence === requestSequence) {
+					params.onPendingChange(false);
+				}
+			});
+		};
+		return {
+			preview,
+			retry() {
+				if (lastReference) {
+					preview(lastReference);
+				}
+			},
+			destroy() {
+				sequence += 1;
+			}
+		};
 	}
 
 	const ComposeFormEvent = Object.freeze({
@@ -1574,8 +2169,318 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		Destroy: 'BX.Mail.Client.ComposeForm:destroy'
 	});
 	const SliderMessage = Object.freeze({
-		MessageCreated: 'Mail.Client.MessageCreatedSuccess'
+		MessageCreated: 'Mail.Client.MessageCreatedSuccess',
+		ScheduledMessageSaved: 'Mail.Client.ScheduledMessageSaved'
 	});
+
+	const SubjectGenerationMode = Object.freeze({
+		New: 'new',
+		Reply: 'reply',
+		Forward: 'forward'
+	});
+
+	const AutoHideDelay = 2000;
+	function getPortalNotificationCenter() {
+		const portalWindow = main_core.Page.getRootWindow();
+		return portalWindow.BX?.UI?.Notification?.Center ?? null;
+	}
+	function notifyPortal(text, options = {}) {
+		const center = getPortalNotificationCenter();
+		if (!center) {
+			return;
+		}
+		const notification = {
+			content: createContent(text, options.role),
+			autoHideDelay: AutoHideDelay
+		};
+		if (options.closeButton !== undefined) {
+			notification.closeButton = options.closeButton;
+		}
+		center.notify(notification);
+	}
+	function createContent(text, role) {
+		if (!role) {
+			return text;
+		}
+		const content = main_core.Page.getRootWindow().document.createElement('span');
+		content.setAttribute('role', role);
+		content.setAttribute('aria-atomic', 'true');
+		content.textContent = text;
+		return content;
+	}
+
+	const CurrentSubjectMaxLength = 500;
+	const GeneratedSubjectMaxLength = CurrentSubjectMaxLength;
+	const LimitErrorCode = 'LIMIT_IS_EXCEEDED';
+	const DefaultLimitSliderCode = 'limit_copilot_requests';
+	const LineEndingTags = 'p, div, li, tr, h1, h2, h3, h4, h5, h6, blockquote, pre, table, ul, ol, hr';
+	const GenerationStepTimeout = 30_000;
+	const waitByForm = new WeakMap();
+	const callByForm = new WeakMap();
+	const earlyJobsByForm = new WeakMap();
+	function generateSubject(params) {
+		const {
+			state
+		} = params;
+		if (state.subjectGeneration.isRunning) {
+			return Promise.resolve();
+		}
+		const body = readBodyForGeneration(params.editor);
+		if (body === '') {
+			notifyRefusal(Phrase.SubjectGenerationEmptyBody);
+			return Promise.resolve();
+		}
+		const requestId = state.subjectGeneration.requestId + 1;
+		state.subjectGeneration.requestId = requestId;
+		state.subjectGeneration.isRunning = true;
+		state.subjectGeneration.hash = null;
+		callByForm.set(state, params);
+		armWait(params, requestId);
+		ui_a11y.LiveAnnouncer.announce(loc(Phrase.SubjectGenerationRunning), 'polite');
+		return Api.generateSubject(buildRequest(state, body)).then(response => {
+			const call = readActiveCall(state, requestId);
+			if (call === null) {
+				return;
+			}
+			applyAnswer(call, requestId, response.data);
+		}, reason => {
+			const call = readActiveCall(state, requestId);
+			if (call === null) {
+				return;
+			}
+			finishSubjectGeneration(state);
+			reportFailure(call, readErrors(reason));
+		});
+	}
+	function invalidateSubjectGeneration(state) {
+		if (!state.subjectGeneration.isRunning) {
+			return;
+		}
+		state.subjectGeneration.requestId += 1;
+		finishSubjectGeneration(state);
+	}
+	function destroySubjectGeneration(state) {
+		state.subjectGeneration.requestId += 1;
+		finishSubjectGeneration(state);
+	}
+	function finishSubjectGeneration(state) {
+		const wait = waitByForm.get(state);
+		if (wait) {
+			clearTimeout(wait.timerId);
+			waitByForm.delete(state);
+		}
+		callByForm.delete(state);
+		earlyJobsByForm.delete(state);
+		state.subjectGeneration.isRunning = false;
+		state.subjectGeneration.hash = null;
+	}
+	function readActiveCall(state, requestId) {
+		return isAnswerStale(state, requestId) ? null : callByForm.get(state) ?? null;
+	}
+	function applySubjectJobResult(state, hash, result) {
+		if (!isJobOfTheForm(state, hash, {
+			kind: 'result',
+			result
+		})) {
+			return;
+		}
+		const wait = readActiveWait(state);
+		if (!wait) {
+			return;
+		}
+		const subject = normalizeSubject(result);
+		finishSubjectGeneration(state);
+		if (subject === '') {
+			notifyRefusal(Phrase.SubjectGenerationError);
+			return;
+		}
+		applyGeneratedSubject(wait.params, subject);
+	}
+	function applySubjectJobFailure(state, hash, error) {
+		if (!isJobOfTheForm(state, hash, {
+			kind: 'failure',
+			error
+		})) {
+			return;
+		}
+		const wait = readActiveWait(state);
+		if (!wait) {
+			return;
+		}
+		finishSubjectGeneration(state);
+		reportFailure(wait.params, error === null ? [] : [error]);
+	}
+	function readActiveWait(state) {
+		const wait = waitByForm.get(state);
+		return wait && !isAnswerStale(state, wait.requestId) ? wait : null;
+	}
+	function isJobOfTheForm(state, hash, job) {
+		if (state.subjectGeneration.hash === hash) {
+			return true;
+		}
+		if (state.subjectGeneration.isRunning && state.subjectGeneration.hash === null) {
+			const jobs = earlyJobsByForm.get(state) ?? new Map();
+			jobs.set(hash, job);
+			earlyJobsByForm.set(state, jobs);
+		}
+		return false;
+	}
+	function takeEarlyJob(state, hash) {
+		const job = earlyJobsByForm.get(state)?.get(hash) ?? null;
+		earlyJobsByForm.delete(state);
+		return job;
+	}
+	function applyEarlyJob(state, hash, job) {
+		if (job.kind === 'result') {
+			applySubjectJobResult(state, hash, job.result);
+			return;
+		}
+		applySubjectJobFailure(state, hash, job.error);
+	}
+	function armWait(params, requestId) {
+		const {
+			state
+		} = params;
+		const previous = waitByForm.get(state);
+		if (previous) {
+			clearTimeout(previous.timerId);
+		}
+		const timerId = setTimeout(() => {
+			if (isAnswerStale(state, requestId)) {
+				return;
+			}
+			finishSubjectGeneration(state);
+			notifyRefusal(Phrase.SubjectGenerationError);
+		}, GenerationStepTimeout);
+		waitByForm.set(state, {
+			requestId,
+			timerId,
+			params
+		});
+	}
+	function readBodyForGeneration(editor) {
+		const template = document.createElement('template');
+		template.innerHTML = editor.getBody();
+		for (const nodeId of [editor.bodyNodes.signature, editor.bodyNodes.quote]) {
+			template.content.getElementById(nodeId)?.remove();
+		}
+		return toPlainText$1(template.content);
+	}
+	function applyAnswer(params, requestId, data) {
+		const {
+			state
+		} = params;
+		const subject = normalizeSubject(data?.subject ?? '');
+		if (subject !== '') {
+			applyGeneratedSubject(params, subject);
+			finishSubjectGeneration(state);
+			return;
+		}
+		const queueHash = data?.queueHash ?? '';
+		if (queueHash !== '') {
+			state.subjectGeneration.hash = queueHash;
+			armWait(params, requestId);
+			const early = takeEarlyJob(state, queueHash);
+			if (early) {
+				applyEarlyJob(state, queueHash, early);
+			}
+			return;
+		}
+		finishSubjectGeneration(state);
+		notifyRefusal(Phrase.SubjectGenerationError);
+	}
+	function applyGeneratedSubject(params, subject) {
+		params.state.subject = subject;
+		notifyFormChanged(params);
+		ui_a11y.LiveAnnouncer.announce(loc(Phrase.SubjectGenerationDone), 'polite');
+	}
+	function notifyFormChanged(params) {
+		const {
+			formId
+		} = params;
+		if (formId === undefined || formId === '') {
+			return;
+		}
+		const payload = {
+			formId,
+			reason: 'user'
+		};
+		main_core_events.EventEmitter.emit(ComposeFormEvent.Changed, payload);
+	}
+	function notifyRefusal(phrase) {
+		const text = loc(phrase);
+		notifyPortal(text);
+		ui_a11y.LiveAnnouncer.announce(text, 'assertive');
+	}
+	function reportFailure(params, errors) {
+		if (!isLimitReached(errors)) {
+			notifyRefusal(Phrase.SubjectGenerationError);
+			return;
+		}
+		notifyRefusal(Phrase.SubjectGenerationLimit);
+		ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+			code: resolveLimitSliderCode(errors),
+			bindElement: params.getControlNode?.() ?? undefined
+		}).show();
+	}
+	function isAnswerStale(state, requestId) {
+		return requestId !== state.subjectGeneration.requestId;
+	}
+	function buildRequest(state, body) {
+		const request = {
+			body,
+			mode: resolveMode(state.scenario),
+			currentSubject: normalizeCurrentSubject(state.subject)
+		};
+		if (state.parentMessageId !== null && state.parentMessageId > 0) {
+			request.originalMessageId = state.parentMessageId;
+		}
+		return request;
+	}
+	function resolveMode(scenario) {
+		if (scenario === Scenario.Forward) {
+			return SubjectGenerationMode.Forward;
+		}
+		return scenario === Scenario.Reply || scenario === Scenario.ReplyAll ? SubjectGenerationMode.Reply : SubjectGenerationMode.New;
+	}
+	function readErrors(reason) {
+		const errors = reason?.errors;
+		return Array.isArray(errors) ? errors : [];
+	}
+	function isLimitReached(errors) {
+		return errors.some(error => isLimitCode(error.code));
+	}
+	function isLimitCode(code) {
+		return code === LimitErrorCode || typeof code === 'string' && code.startsWith(`${LimitErrorCode}_`);
+	}
+	function resolveLimitSliderCode(errors) {
+		const limitError = errors.find(error => isLimitCode(error.code));
+		const sliderCode = limitError?.customData?.sliderCode;
+		return typeof sliderCode === 'string' && sliderCode !== '' ? sliderCode : DefaultLimitSliderCode;
+	}
+	function toPlainText$1(content) {
+		for (const lineBreak of content.querySelectorAll('br')) {
+			lineBreak.replaceWith('\n');
+		}
+		for (const block of content.querySelectorAll(LineEndingTags)) {
+			block.append('\n');
+		}
+		return (content.textContent ?? '').replaceAll(/[^\S\n]+/gu, ' ').replaceAll(/ ?\n ?/gu, '\n').replaceAll(/\n{3,}/gu, '\n\n').trim();
+	}
+	function normalizeSubject(value) {
+		return cutToLength(value.replaceAll(/\s+/gu, ' ').trim(), GeneratedSubjectMaxLength).trim();
+	}
+	function normalizeCurrentSubject(value) {
+		return cutToLength(value.trim(), CurrentSubjectMaxLength).trim();
+	}
+	function cutToLength(value, maxLength) {
+		if (value.length <= maxLength) {
+			return value;
+		}
+		return value.slice(0, maxLength)
+		.replace(/[\uD800-\uDBFF]$/u, '')
+		.replace(/(?:\uFE0F?\u200D)+$/u, '');
+	}
 
 	async function prepareTemplateApplication(params, reference) {
 		const {
@@ -1585,16 +2490,17 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		} = params;
 		state.templates.prepared = null;
 		const {
-			template
+			template: preparedTemplate
 		} = await api.prepare(reference);
-		state.templates.prepared = template;
+		state.templates.prepared = toPreparedTemplate(preparedTemplate);
+		const template = state.templates.prepared;
 		if (editor.hasUserContent() || state.subject.trim() !== '') {
 			return {
 				status: 'needsDecision',
 				template
 			};
 		}
-		return applyPrepared(params, template, 'replace');
+		return applyPrepared(params, template, 'replace', true);
 	}
 	async function completeTemplateApplication(params, decision) {
 		const {
@@ -1609,20 +2515,61 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 		return applyPrepared(params, template, decision);
 	}
-	async function applyPrepared(params, template, decision) {
+	async function applyPrepared(params, template, decision, requireCleanCompose = false) {
 		const {
 			api,
 			editor,
 			formId,
 			state
 		} = params;
+		const subject = state.subject;
+		let addedFileIds = [];
+		if (!isApplicationCurrent(params, template)) {
+			cancelApplication(params, template, addedFileIds);
+			return {
+				status: 'cancelled'
+			};
+		}
+		if (template.attachments?.length > 0) {
+			try {
+				const result = await editor.addFiles(template.attachments);
+				if (result === null) {
+					return {
+						status: 'failed',
+						reason: 'editor'
+					};
+				}
+				addedFileIds = result;
+			} catch {
+				return {
+					status: 'failed',
+					reason: 'editor'
+				};
+			}
+		}
+		if (!isApplicationCurrent(params, template)) {
+			cancelApplication(params, template, addedFileIds);
+			return {
+				status: 'cancelled'
+			};
+		}
+		if (requireCleanCompose && (editor.hasUserContent() || state.subject.trim() !== '')) {
+			removeAddedFiles(editor, addedFileIds);
+			return {
+				status: 'needsDecision',
+				template
+			};
+		}
 		const isApplied = decision === 'insert' ? editor.insertHtmlAtCaret(template.bodyHtml) : editor.replaceUserContent(template.bodyHtml);
 		if (!isApplied) {
+			removeAddedFiles(editor, addedFileIds);
+			state.subject = subject;
 			return {
 				status: 'failed',
 				reason: 'editor'
 			};
 		}
+		invalidateSubjectGeneration(state);
 		if (decision === 'replace') {
 			state.subject = template.subject;
 		}
@@ -1633,16 +2580,40 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		};
 		main_core_events.EventEmitter.emit(ComposeFormEvent.Changed, payload);
 		void api.recordUsage(template.reference).catch(() => {});
+		await ui_vue3.nextTick();
 		return {
 			status: 'applied'
 		};
+	}
+	function isApplicationCurrent(params, template) {
+		return params.state.templates.prepared === template && (params.isCurrent?.() ?? true);
+	}
+	function cancelApplication(params, template, addedFileIds) {
+		const {
+			editor,
+			state
+		} = params;
+		removeAddedFiles(editor, addedFileIds);
+		if (state.templates.prepared === template) {
+			state.templates.prepared = null;
+		}
+	}
+	function removeAddedFiles(editor, addedFileIds) {
+		addedFileIds.forEach(fileId => {
+			editor.removeFile(fileId);
+		});
 	}
 
 	class StalePreparationError extends Error {}
 	function createTemplatePreparationController(params) {
 		let sequence = 0;
+		let isPending = false;
 		let lastReference = null;
 		const select = reference => {
+			if (isPending) {
+				return;
+			}
+			isPending = true;
 			lastReference = reference;
 			const requestSequence = ++sequence;
 			params.onPendingChange(true);
@@ -1659,10 +2630,15 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				},
 				editor: params.editor,
 				state: params.state,
-				formId: params.formId
+				formId: params.formId,
+				isCurrent: () => sequence === requestSequence
 			}, reference).then(result => {
 				if (sequence === requestSequence) {
-					params.onResult(result);
+					if (result.status === 'failed') {
+						params.onError();
+					} else {
+						params.onResult(result);
+					}
 				}
 			}, error => {
 				if (sequence === requestSequence && !(error instanceof StalePreparationError)) {
@@ -1670,6 +2646,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}
 			}).finally(() => {
 				if (sequence === requestSequence) {
+					isPending = false;
 					params.onPendingChange(false);
 				}
 			});
@@ -1782,7 +2759,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		};
 	}
 
-	const TestId$5 = Object.freeze({
+	const TestId$7 = Object.freeze({
 		screen: 'mail-compose-templates-all',
 		search: 'mail-compose-templates-search',
 		list: 'mail-compose-templates-list',
@@ -1791,8 +2768,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		rowName: 'mail-compose-template-row-name',
 		rowSubtitle: 'mail-compose-template-row-subtitle',
 		retry: 'mail-compose-templates-search-retry',
-		loadMore: 'mail-compose-templates-load-more',
-		applyRetry: 'mail-compose-templates-apply-retry'
+		loadMore: 'mail-compose-templates-load-more'
 	});
 	const LockIconSize = 20;
 	const TemplateAll = ui_vue3.defineComponent({
@@ -1809,17 +2785,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			popupId: {
 				type: String,
 				default: () => `mail-compose-templates-all-${main_core.Text.getRandom()}`
-			},
-			formId: {
-				type: String,
-				required: true
 			}
 		},
 		emits: ['close', 'select'],
 		setup() {
 			return {
-				state: useComposeState(),
-				editor: useComposeEditor(),
 				loc,
 				searchSize: ui_system_input_vue.InputSize.Md,
 				searchIcon: ui_iconSet_api_vue.Outline.SEARCH,
@@ -1827,7 +2797,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				lockIconSize: LockIconSize,
 				buttonStyle: ui_vue3_components_button.AirButtonStyle.OUTLINE,
 				buttonSize: ui_vue3_components_button.ButtonSize.SMALL,
-				testId: TestId$5
+				testId: TestId$7
 			};
 		},
 		data() {
@@ -1839,10 +2809,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					error: false,
 					nextOffset: null
 				},
-				controller: null,
-				selectionController: null,
-				selectionError: false,
-				isSelectionPending: false
+				controller: null
 			};
 		},
 		computed: {
@@ -1890,7 +2857,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		},
 		beforeUnmount() {
 			this.controller?.destroy();
-			this.selectionController?.destroy();
 			this.controller = null;
 		},
 		methods: {
@@ -1910,41 +2876,17 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				this.query = '';
 			},
 			handleSelect(template) {
-				if (!template.canApply) {
-					return;
+				if (template.canApply) {
+					this.$emit('select', template.reference);
 				}
-				this.selectionError = false;
-				this.getSelectionController().select(template.reference);
-			},
-			getSelectionController() {
-				this.selectionController ??= createTemplatePreparationController({
-					state: this.state,
-					editor: this.editor,
-					formId: this.formId,
-					onPendingChange: isPending => {
-						this.isSelectionPending = isPending;
-						if (isPending) {
-							this.selectionError = false;
-						}
-					},
-					onResult: result => {
-						this.selectionError = false;
-						if (result.status === 'needsDecision') {
-							this.$emit('select', result.template);
-						} else if (result.status === 'applied') {
-							this.$emit('close');
-						}
-					},
-					onError: () => {
-						this.selectionError = true;
-					}
-				});
-				return this.selectionController;
 			}
 		},
 		template: `
 		<Popup :id="popupId" :options="options" @close="$emit('close')">
-			<div class="mail-compose-templates-all" :data-testid="testId.screen">
+			<div
+				class="mail-compose-templates-all --ui-context-content-light"
+				:data-testid="testId.screen"
+			>
 				<BInput
 					v-model="query"
 					class="mail-compose-templates-all__search"
@@ -1963,17 +2905,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					:data-testid="testId.status"
 				>{{ listStatus }}</div>
 				<div class="mail-compose-templates-all__list" :data-testid="testId.list">
-					<div v-if="selectionError" class="mail-compose-templates-all__state">
-						<TextMd>{{ loc('MAIL_COMPOSE_FORM_TEMPLATE_APPLY_ERROR') }}</TextMd>
-						<UiButton
-							:text="loc('MAIL_COMPOSE_FORM_TEMPLATES_RETRY')"
-							:style="buttonStyle"
-							:size="buttonSize"
-							:loading="isSelectionPending"
-							:dataset="{ testid: testId.applyRetry }"
-							@click="selectionController?.retry()"
-						/>
-					</div>
 					<TextMd v-if="search.isLoading" className="mail-compose-templates-all__note">
 						{{ loc('MAIL_COMPOSE_FORM_TEMPLATES_LOADING') }}
 					</TextMd>
@@ -2050,7 +2981,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	`
 	});
 
-	const TestId$4 = Object.freeze({
+	const TestId$6 = Object.freeze({
 		dialog: 'mail-compose-template-apply',
 		cancel: 'mail-compose-template-apply-cancel',
 		insert: 'mail-compose-template-apply-insert',
@@ -2088,7 +3019,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				insertStyle: ui_vue3_components_button.AirButtonStyle.OUTLINE,
 				replaceStyle: ui_vue3_components_button.AirButtonStyle.FILLED,
 				buttonSize: ui_vue3_components_button.ButtonSize.MEDIUM,
-				testId: TestId$4
+				testId: TestId$6
 			};
 		},
 		data() {
@@ -2103,7 +3034,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				return {
 					targetContainer: document.body,
 					overlay: true,
-					closeIcon: true,
+					closeIcon: false,
 					closeByEsc: true,
 					padding: DialogPadding,
 					focusTrap: true,
@@ -2125,6 +3056,13 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					insert: loc(Phrase.TemplateApplyInsert),
 					replace: loc(Phrase.TemplateApplyReplace)
 				};
+			}
+		},
+		watch: {
+			isPending(pending) {
+				const popup = main_popup.PopupManager.getPopupById(this.popupId);
+				popup?.setAutoHide(!pending);
+				popup?.setClosingByEsc(!pending);
 			}
 		},
 		methods: {
@@ -2205,7 +3143,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						:style="insertStyle"
 						:size="buttonSize"
 						:loading="isPending"
-						:disabled="isPending"
 						:dataset="{ testid: testId.insert }"
 						@click="handleInsert"
 					/>
@@ -2214,7 +3151,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						:style="replaceStyle"
 						:size="buttonSize"
 						:loading="isPending"
-						:disabled="isPending"
 						:dataset="{ testid: testId.replace }"
 						@click="handleReplace"
 					/>
@@ -2224,22 +3160,150 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	`
 	});
 
-	const TestId$3 = Object.freeze({
-		picker: 'mail-compose-template-picker',
-		control: 'mail-compose-templates-action',
-		newLabel: 'mail-compose-templates-new',
-		retry: 'mail-compose-templates-retry',
-		applyRetry: 'mail-compose-templates-apply-retry',
-		toggle: 'mail-compose-templates-remember',
-		allControl: 'mail-compose-templates-all-action',
-		configureControl: 'mail-compose-templates-configure-action'
+	const TestId$5 = Object.freeze({
+		preview: 'mail-template-preview',
+		close: 'mail-template-preview-close',
+		retry: 'mail-template-preview-retry'
+	});
+	const TemplatePreview = ui_vue3.defineComponent({
+		name: 'MailComposeTemplatePreview',
+		components: {
+			Popup: ui_vue3_components_popup.Popup,
+			TextLg: ui_system_typography_vue.TextLg,
+			TextSm: ui_system_typography_vue.TextSm,
+			UiButton: ui_vue3_components_button.Button
+		},
+		props: {
+			template: {
+				type: Object,
+				default: null
+			},
+			isLoading: {
+				type: Boolean,
+				default: false
+			},
+			hasError: {
+				type: Boolean,
+				default: false
+			},
+			popupId: {
+				type: String,
+				default: () => `mail-compose-template-preview-${main_core.Text.getRandom()}`
+			}
+		},
+		emits: ['close', 'retry'],
+		setup() {
+			return {
+				loc,
+				Phrase,
+				buttonStyle: ui_vue3_components_button.AirButtonStyle.OUTLINE,
+				buttonSize: ui_vue3_components_button.ButtonSize.SMALL,
+				testId: TestId$5
+			};
+		},
+		data() {
+			return {
+				renderer: null,
+				renderedContainer: null,
+				renderedBodyHtml: null,
+				prefix: `mail-template-preview-${main_core.Text.getRandom()}`,
+				titleId: `mail-template-preview-title-${main_core.Text.getRandom()}`
+			};
+		},
+		computed: {
+			options() {
+				return {
+					targetContainer: document.body,
+					closeByEsc: true,
+					focusTrap: {
+						restoreFocus: false
+					},
+					padding: 0,
+					ariaLabelledBy: this.titleId
+				};
+			},
+			preparedTemplate() {
+				return this.template;
+			}
+		},
+		mounted() {
+			this.renderBody();
+		},
+		updated() {
+			this.renderBody();
+		},
+		beforeUnmount() {
+			this.renderer?.destroy();
+		},
+		methods: {
+			renderBody() {
+				const container = this.$refs.body;
+				const template = this.preparedTemplate;
+				if (!container || !template) {
+					return;
+				}
+				if (this.renderedContainer === container && this.renderedBodyHtml === template.bodyHtml) {
+					return;
+				}
+				this.renderer?.destroy();
+				this.renderer = ui_vue3.markRaw(new mail_messageBody.MessageBody({
+					container,
+					messageId: 1,
+					prefix: this.prefix
+				}));
+				this.renderer.renderTo(template.bodyHtml);
+				this.renderedContainer = container;
+				this.renderedBodyHtml = template.bodyHtml;
+			}
+		},
+		template: `
+		<Popup :id="popupId" :options="options" @close="$emit('close')">
+			<section class="mail-compose-template-preview" :data-testid="testId.preview">
+				<header class="mail-compose-template-preview__header">
+					<div :id="titleId"><TextLg>{{ loc(Phrase.TemplatePreviewTitle) }}</TextLg></div>
+					<UiButton
+						:text="loc(Phrase.TemplatePreviewClose)"
+						:style="buttonStyle"
+						:size="buttonSize"
+						:dataset="{ testid: testId.close }"
+						@click="$emit('close')"
+					/>
+				</header>
+				<TextSm v-if="isLoading">{{ loc(Phrase.TemplatesLoading) }}</TextSm>
+				<div v-else-if="hasError" class="mail-compose-template-preview__state">
+					<TextSm>{{ loc(Phrase.TemplatePreviewError) }}</TextSm>
+					<UiButton
+						:text="loc(Phrase.TemplatesRetry)"
+						:style="buttonStyle"
+						:size="buttonSize"
+						:dataset="{ testid: testId.retry }"
+						@click="$emit('retry')"
+					/>
+				</div>
+				<template v-else-if="preparedTemplate">
+					<TextLg class="mail-compose-template-preview__subject">{{ preparedTemplate.subject }}</TextLg>
+					<div ref="body" class="mail-compose-template-preview__body"></div>
+				</template>
+			</section>
+		</Popup>
+	`
+	});
+
+	const TestId$4 = Object.freeze({
+		picker: 'mail-template-picker',
+		control: 'mail-template-picker-open',
+		newLabel: 'mail-template-picker-new-label',
+		retry: 'mail-template-picker-load-retry',
+		applyRetry: 'mail-template-picker-apply-retry',
+		allControl: 'mail-template-picker-all',
+		createControl: 'mail-template-picker-create',
+		configureControl: 'mail-template-picker-configure'
 	});
 	const MenuWidth$2 = 360;
 	const MenuWindowGap = 16;
 	const MenuMinHeight = 120;
 	const MenuSection$1 = Object.freeze({
 		Templates: 'templates',
-		Options: 'options',
 		Actions: 'actions'
 	});
 	const TemplatePicker = ui_vue3.defineComponent({
@@ -2248,6 +3312,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			BMenu: ui_system_menu_vue.BMenu,
 			TemplateAll,
 			TemplateApplyDialog,
+			TemplatePreview,
 			UiButton: ui_vue3_components_button.Button,
 			UiLabel: ui_system_label_vue.Label
 		},
@@ -2267,14 +3332,20 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				controlIcon: ui_iconSet_api_vue.Outline.O_TEMPLATE_TASK,
 				labelStyle: ui_system_label.LabelStyle.TINTED_SUCCESS,
 				labelSize: ui_system_label.LabelSize.XS,
-				testId: TestId$3
+				testId: TestId$4
 			};
 		},
 		data() {
 			return {
-				isMenuShown: false,
 				isAllShown: false,
+				isMenuShown: false,
+				isPreviewShown: false,
+				previewTemplate: null,
+				previewError: false,
+				isPreviewPending: false,
+				previewController: null,
 				isApplyShown: false,
+				applicationTemplate: null,
 				selectionError: false,
 				isSelectionPending: false,
 				selectionController: null
@@ -2293,20 +3364,71 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			managePath() {
 				return this.state.paths.templatesManage;
 			},
+			manageItems() {
+				if (this.managePath === '') {
+					return [];
+				}
+				return [{
+					sectionCode: MenuSection$1.Actions,
+					uiButtonOptions: {
+						useAirDesign: true,
+						text: loc(Phrase.TemplatesCreateButton),
+						style: ui_buttons.AirButtonStyle.OUTLINE,
+						size: ui_buttons.ButtonSize.SMALL,
+						icon: ui_iconSet_api_vue.Outline.O_TEMPLATE_TASK,
+						dataset: {
+							testid: TestId$4.createControl
+						},
+						onclick: () => {
+							void this.handleCreateClick();
+							return {};
+						}
+					}
+				}, {
+					sectionCode: MenuSection$1.Actions,
+					uiButtonOptions: {
+						useAirDesign: true,
+						text: loc(Phrase.TemplatesConfigureButton),
+						style: ui_buttons.AirButtonStyle.OUTLINE,
+						size: ui_buttons.ButtonSize.SMALL,
+						icon: ui_iconSet_api_vue.Outline.SETTINGS,
+						dataset: {
+							testid: TestId$4.configureControl
+						},
+						onclick: () => {
+							this.handleConfigureClick();
+							return {};
+						}
+					}
+				}];
+			},
 			menuItems() {
-				const items = this.templates.map(template => ({
+				const items = this.templates.flatMap(template => [{
 					id: `template-${template.reference.source}-${template.reference.id}`,
 					sectionCode: MenuSection$1.Templates,
 					title: template.title,
 					subtitle: this.subtitle(template),
 					isLocked: !template.canApply,
-					testId: this.templateTestId(template.reference),
+					dataset: {
+						testid: this.templateTestId(template.reference)
+					},
 					onClick: () => {
 						if (template.canApply) {
 							this.handleTemplateClick(template.reference);
 						}
 					}
-				}));
+				}, {
+					id: `preview-${template.reference.source}-${template.reference.id}`,
+					sectionCode: MenuSection$1.Templates,
+					title: loc(Phrase.TemplatePreviewButton),
+					ariaLabel: `${loc(Phrase.TemplatePreviewButton)}: ${template.title}`,
+					dataset: {
+						testid: this.previewTestId(template.reference)
+					},
+					onClick: () => {
+						this.handlePreviewClick(template.reference);
+					}
+				}]);
 				if (this.state.templates.isLoading) {
 					items.push({
 						sectionCode: MenuSection$1.Templates,
@@ -2317,7 +3439,9 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						sectionCode: MenuSection$1.Templates,
 						title: loc(Phrase.TemplatesRetry),
 						subtitle: loc(Phrase.TemplatesLoadError),
-						testId: TestId$3.retry,
+						dataset: {
+							testid: TestId$4.retry
+						},
 						onClick: () => {
 							this.handleRetry();
 						}
@@ -2333,58 +3457,30 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						sectionCode: MenuSection$1.Templates,
 						title: loc(Phrase.TemplatesRetry),
 						subtitle: loc(Phrase.TemplateApplyError),
-						testId: TestId$3.applyRetry,
+						dataset: {
+							testid: TestId$4.applyRetry
+						},
 						onClick: () => {
 							this.selectionController?.retry();
 						}
 					});
 				}
-				items.push({
-					sectionCode: MenuSection$1.Options,
-					id: 'remember-last',
-					title: loc(Phrase.TemplatesRemember),
-					isSelected: this.state.templates.rememberLast,
-					testId: TestId$3.toggle,
-					onClick: () => {
-						this.handleRememberToggle();
-					}
-				}, {
+				return [...items, {
 					sectionCode: MenuSection$1.Actions,
 					uiButtonOptions: {
 						useAirDesign: true,
 						text: loc(Phrase.TemplatesAllButton),
 						style: ui_buttons.AirButtonStyle.OUTLINE,
 						size: ui_buttons.ButtonSize.SMALL,
-						icon: ui_iconSet_api_vue.Outline.O_TEMPLATE_TASK,
 						dataset: {
-							testid: TestId$3.allControl
+							testid: TestId$4.allControl
 						},
 						onclick: () => {
 							this.handleAllClick();
 							return {};
 						}
 					}
-				});
-				if (this.managePath !== '') {
-					items.push({
-						sectionCode: MenuSection$1.Actions,
-						uiButtonOptions: {
-							useAirDesign: true,
-							text: loc(Phrase.TemplatesConfigureButton),
-							style: ui_buttons.AirButtonStyle.OUTLINE,
-							size: ui_buttons.ButtonSize.SMALL,
-							icon: ui_iconSet_api_vue.Outline.SETTINGS,
-							dataset: {
-								testid: TestId$3.configureControl
-							},
-							onclick: () => {
-								this.handleConfigureClick();
-								return {};
-							}
-						}
-					});
-				}
-				return items;
+				}, ...this.manageItems];
 			},
 			menuOptions() {
 				return {
@@ -2397,8 +3493,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					sections: [{
 						code: MenuSection$1.Templates,
 						title: loc(Phrase.TemplatesMenuTitle)
-					}, {
-						code: MenuSection$1.Options
 					}, {
 						code: MenuSection$1.Actions
 					}],
@@ -2416,6 +3510,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		},
 		beforeUnmount() {
 			this.selectionController?.destroy();
+			this.previewController?.destroy();
 		},
 		methods: {
 			markControlAria() {
@@ -2430,7 +3525,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				return template.disabledReason === 'CRM_CONTEXT_REQUIRED' ? loc(Phrase.TemplateUnavailableCrmContext) : loc(Phrase.TemplateUnavailable);
 			},
 			handleControlClick() {
+				if (this.isSelectionPending || this.isApplyShown) {
+					return;
+				}
 				this.isMenuShown = true;
+				this.markMenuItems();
 				this.fitMenuToWindow();
 				void loadRecentTemplates(this.state).then(this.markMenuItems);
 			},
@@ -2451,29 +3550,74 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				});
 			},
 			handleTemplateClick(reference) {
+				if (this.isSelectionPending || this.isApplyShown) {
+					return;
+				}
 				this.selectionError = false;
 				this.getSelectionController().select(reference);
+			},
+			handleAllClick() {
+				if (this.isSelectionPending || this.isApplyShown) {
+					return;
+				}
+				main_popup.PopupManager.getPopupById(this.menuId)?.destroy();
+				this.isMenuShown = false;
+				this.isAllShown = true;
+			},
+			handleAllClose() {
+				if (!this.isSelectionPending) {
+					this.isAllShown = false;
+					void ui_vue3.nextTick(() => {
+						ui_a11y.FocusNavigator.restoreFocus(this.getControlNode(), {
+							preventScroll: true
+						});
+					});
+				}
 			},
 			handleRetry() {
 				void loadRecentTemplates(this.state, true).then(this.markMenuItems);
 			},
-			handleRememberToggle() {
-				void updateRememberLast(this.state, !this.state.templates.rememberLast).then(this.markMenuItems);
-			},
-			handleAllClick() {
+			async handleCreateClick() {
+				main_popup.PopupManager.getPopupById(this.menuId)?.destroy();
 				this.isMenuShown = false;
-				this.isAllShown = true;
+				await ui_vue3.nextTick();
+				if (this.managePath !== '') {
+					openTemplateManager({
+						state: this.state,
+						path: this.managePath,
+						createPath: this.state.paths.templatesCreate,
+						create: true,
+						onRefresh: this.handleCreateClosed
+					});
+				}
 			},
-			handleAllSelect() {
-				this.handlePreparedTemplate();
+			handleCreateClosed() {
+				this.isMenuShown = true;
+				this.markMenuItems();
+				this.fitMenuToWindow();
+			},
+			handlePreviewClick(reference) {
+				main_popup.PopupManager.getPopupById(this.menuId)?.destroy();
+				this.isMenuShown = false;
+				this.isPreviewShown = true;
+				this.previewError = false;
+				this.getPreviewController().preview(reference);
+			},
+			handlePreviewClose() {
+				this.isPreviewShown = false;
+				void ui_vue3.nextTick(() => {
+					ui_a11y.FocusNavigator.restoreFocus(this.getControlNode(), {
+						preventScroll: true
+					});
+				});
 			},
 			handleConfigureClick() {
+				main_popup.PopupManager.getPopupById(this.menuId)?.close();
 				this.isMenuShown = false;
-				main_sidepanel.SidePanel.Instance.open(this.managePath, {
-					cacheable: false,
-					events: {
-						onCloseComplete: this.handleConfigureClosed
-					}
+				openTemplateManager({
+					state: this.state,
+					path: this.managePath,
+					onRefresh: this.markMenuItems
 				});
 			},
 			handleConfigureClosed() {
@@ -2486,27 +3630,63 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}
 				this.isMenuShown = false;
 				this.isAllShown = false;
+				this.applicationTemplate = template;
 				this.isApplyShown = true;
 				this.$emit('decision-required', template);
 			},
 			handleApplicationClose() {
 				this.isMenuShown = false;
-				this.isAllShown = false;
+				this.isPreviewShown = false;
 				this.isApplyShown = false;
+				this.applicationTemplate = null;
+			},
+			getPreviewController() {
+				this.previewController ??= createTemplatePreviewController({
+					onPendingChange: pending => {
+						this.isPreviewPending = pending;
+					},
+					onResult: template => {
+						this.previewTemplate = template;
+						this.previewError = false;
+					},
+					onError: () => {
+						this.previewError = true;
+					}
+				});
+				return this.previewController;
 			},
 			getFormId() {
 				return this.getControlNode()?.closest('form')?.id ?? '';
 			},
 			templateTestId(reference) {
-				return `mail-compose-template-item-${reference.source}-${reference.id}`;
+				return `mail-template-picker-apply-${reference.source}-${reference.id}`;
+			},
+			previewTestId(reference) {
+				return `mail-template-picker-preview-${reference.source}-${reference.id}`;
 			},
 			markMenuItems() {
 				void ui_vue3.nextTick(() => {
 					const menu = document.getElementById(this.menuId);
 					const actions = menu?.querySelectorAll('.ui-popup-menu-item-action') ?? [];
 					this.menuItems.forEach((item, index) => {
-						if (item.testId && actions[index]) {
-							actions[index].dataset.testid = item.testId;
+						if (item.ariaLabel && actions[index]) {
+							actions[index].setAttribute('aria-label', item.ariaLabel);
+						}
+					});
+					this.templates.forEach(template => {
+						const apply = menu?.querySelector(`[data-testid="${this.templateTestId(template.reference)}"]`);
+						const preview = menu?.querySelector(`[data-testid="${this.previewTestId(template.reference)}"]`);
+						const applyItem = apply?.closest('.ui-popup-menu-item');
+						const previewItem = preview?.closest('.ui-popup-menu-item');
+						if (!apply || !preview || !applyItem || !previewItem) {
+							return;
+						}
+						main_core.Dom.addClass(applyItem, 'mail-compose-template-picker__template-item');
+						main_core.Dom.addClass(apply, 'mail-compose-template-picker__template-apply');
+						main_core.Dom.addClass(preview, 'mail-compose-template-picker__template-preview');
+						if (previewItem !== applyItem) {
+							applyItem.append(preview);
+							previewItem.remove();
 						}
 					});
 				});
@@ -2519,6 +3699,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					onPendingChange: isPending => {
 						this.isSelectionPending = isPending;
 						if (isPending) {
+							this.isMenuShown = false;
+							this.isAllShown = false;
 							this.selectionError = false;
 						}
 					},
@@ -2527,6 +3709,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						if (result.status === 'needsDecision') {
 							this.handlePreparedTemplate();
 						} else if (result.status === 'applied') {
+							this.isAllShown = false;
 							this.isMenuShown = false;
 						}
 					},
@@ -2540,7 +3723,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			},
 			getControlNode() {
 				const row = this.$refs.row;
-				return row?.querySelector(`[data-testid="${TestId$3.control}"]`) ?? null;
+				return row?.querySelector(`[data-testid="${TestId$4.control}"]`) ?? null;
 			}
 		},
 		template: `
@@ -2550,6 +3733,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				:style="controlStyle"
 				:size="controlSize"
 				:leftIcon="controlIcon"
+				:loading="isSelectionPending"
+				:disabled="isApplyShown"
 				:dataset="{ testid: testId.control }"
 				@click="handleControlClick"
 			/>
@@ -2567,21 +3752,30 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			/>
 			<TemplateAll
 				v-if="isAllShown"
-				:formId="getFormId()"
-				@select="handleAllSelect"
-				@close="isAllShown = false"
+				:popupId="menuId + '-all'"
+				@select="handleTemplateClick"
+				@close="handleAllClose"
+			/>
+			<TemplatePreview
+				v-if="isPreviewShown"
+				:template="previewTemplate"
+				:isLoading="isPreviewPending"
+				:hasError="previewError"
+				@retry="previewController?.retry()"
+				@close="handlePreviewClose"
 			/>
 			<TemplateApplyDialog
-				v-if="isApplyShown && state.templates.prepared"
+				v-if="isApplyShown && applicationTemplate"
+				:popupId="menuId + '-apply'"
 				:formId="getFormId()"
-				:template="state.templates.prepared"
+				:template="applicationTemplate"
 				@close="handleApplicationClose"
 			/>
 		</div>
 	`
 	});
 
-	const TestId$2 = Object.freeze({
+	const TestId$3 = Object.freeze({
 		actions: 'mail-compose-action-bar',
 		copilot: 'mail-compose-copilot-action',
 		attach: 'mail-compose-attach-action',
@@ -2590,16 +3784,34 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		slots: SlotsControlTestId,
 		sendRow: 'mail-compose-send-row',
 		send: SendControlTestId,
-		cancel: 'mail-compose-cancel'
+		cancel: 'mail-compose-cancel',
+		saveTemplate: SaveTemplateContainerTestId,
+		saveTemplateControl: SaveTemplateControlTestId
+	});
+	const CheckboxSizeMd = 'md';
+	const Checkbox = ui_vue3.defineAsyncComponent({
+		loader: () => {
+			return main_core.Runtime.loadExtension('ui.system.checkbox').then(exports => {
+				return exports.Vue.Checkbox;
+			});
+		}
 	});
 	const ActionBar = ui_vue3.defineComponent({
 		name: 'MailComposeActionBar',
 		components: {
+			Checkbox,
 			SendSplitButton,
 			TemplatePicker,
+			TextSm: ui_system_typography_vue.TextSm,
 			UiButton: ui_vue3_components_button.Button
 		},
-		emits: ['signature', 'send', 'cancel'],
+		props: {
+			formId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['signature', 'send', 'schedule', 'cancel'],
 		setup() {
 			return {
 				state: useComposeState(),
@@ -2609,12 +3821,14 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				sendStyle: ui_vue3_components_button.AirButtonStyle.FILLED,
 				cancelStyle: ui_vue3_components_button.AirButtonStyle.PLAIN,
 				sendSize: ui_vue3_components_button.ButtonSize.MEDIUM,
-				copilotIcon: ui_iconSet_api_vue.Outline.COPILOT,
+				checkboxSize: CheckboxSizeMd,
+				copilotStyle: ui_vue3_components_button.AirButtonStyle.TINTED_BITRIX_GPT,
+				copilotIcon: ui_iconSet_api_vue.Outline.AI_STARS,
 				attachIcon: ui_iconSet_api_vue.Outline.ATTACH,
 				createDocumentIcon: ui_iconSet_api_vue.Outline.CREATE_FILE,
 				signatureIcon: ui_iconSet_api_vue.Outline.DOCUMENT_SIGN,
 				slotsIcon: ui_iconSet_api_vue.Outline.CALENDAR_WITH_SLOTS,
-				testId: TestId$2
+				testId: TestId$3
 			};
 		},
 		data() {
@@ -2623,6 +3837,9 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			};
 		},
 		computed: {
+			saveTemplateControlId() {
+				return `${this.formId}-${TestId$3.saveTemplateControl}`;
+			},
 			labels() {
 				return {
 					copilot: loc(Phrase.CopilotButton),
@@ -2631,7 +3848,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					signature: loc(Phrase.SignatureButton),
 					slots: loc(Phrase.SlotsButton),
 					send: loc(Phrase.SendButton),
-					cancel: loc(Phrase.CancelButton)
+					cancel: loc(Phrase.CancelButton),
+					saveTemplate: loc(Phrase.SaveAsTemplate)
 				};
 			},
 			isUnfinishedShown() {
@@ -2640,25 +3858,48 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			isTemplatesShown() {
 				return this.state.features.templates;
 			},
+			isSaveTemplateShown() {
+				return this.state.features.saveTemplate && this.state.scheduledMessage.id <= 0;
+			},
+			isScheduleShown() {
+				return this.state.features.scheduledMessages;
+			},
 			isCopilotShown() {
 				return this.state.copilot.isCopilotEnabled === true;
 			},
 			isSending() {
 				return this.state.isSending;
 			},
+			isRestoreFailed() {
+				return this.state.draft.restoreFailed;
+			},
 			isSendDisabled() {
 				return this.isSending || isSelectedSenderMigrationActive(this.state) || isRecipientsTotalLimitExceeded(this.state);
 			},
 			sendUnavailableHint() {
-				return isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_SEND_UNAVAILABLE') : '';
+				return isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_ACTION_UNAVAILABLE') : '';
 			}
+		},
+		watch: {
+			sendUnavailableHint() {
+				this.syncSendHint();
+			},
+			isRestoreFailed() {
+				void this.$nextTick(this.syncSendHint);
+			}
+		},
+		mounted() {
+			this.syncSendHint();
+		},
+		updated() {
+			this.syncSendHint();
 		},
 		methods: {
 			handleCopilot() {
 				this.editor.showCopilot();
 			},
 			handleAttach() {
-				this.editor.showUploader();
+				this.editor.toggleUploader();
 			},
 			handleSignature() {
 				this.$emit('signature');
@@ -2678,7 +3919,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}).then(stopWaiting, stopWaiting);
 			},
 			handleCreateDocument() {
-				this.editor.showCreateDocument();
+				this.editor.toggleCreateDocument();
 			},
 			handleSend() {
 				if (this.isSendDisabled) {
@@ -2691,15 +3932,35 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			},
 			getSlotsControlNode() {
 				const row = this.$refs.actions;
-				return row?.querySelector(`[data-testid="${TestId$2.slots}"]`) ?? null;
+				return row?.querySelector(`[data-testid="${TestId$3.slots}"]`) ?? null;
+			},
+			syncSendHint() {
+				if (this.isScheduleShown) {
+					return;
+				}
+				const control = this.getSendControlNode();
+				if (control) {
+					main_core.Dom.attr(control, 'title', this.sendUnavailableHint || null);
+				}
+			},
+			getSendControlNode() {
+				const row = this.$refs.sendRow;
+				return row?.querySelector(`[data-testid="${TestId$3.send}"]`) ?? null;
 			}
 		},
 		template: `
-		<div ref="actions" class="mail-compose-action-bar" :data-testid="testId.actions">
+		<div
+			v-if="!isRestoreFailed"
+			ref="actions"
+			class="mail-compose-action-bar"
+			:class="{ '--with-copilot': isCopilotShown }"
+			:data-testid="testId.actions"
+		>
 			<UiButton
 				v-if="isCopilotShown"
+				class="mail-compose-copilot-button"
 				:text="labels.copilot"
-				:style="actionStyle"
+				:style="copilotStyle"
 				:size="actionSize"
 				:leftIcon="copilotIcon"
 				:dataset="{ testid: testId.copilot }"
@@ -2741,19 +4002,24 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			/>
 			<TemplatePicker v-if="isTemplatesShown"/>
 		</div>
-		<div class="mail-compose-send-row" :data-testid="testId.sendRow">
-			<SendSplitButton v-if="isUnfinishedShown" @send="handleSend"/>
-			<UiButton
-				v-else
-				:text="labels.send"
-				:style="sendStyle"
-				:size="sendSize"
-				:loading="isSending"
-				:disabled="isSendDisabled"
-				:title="sendUnavailableHint"
-				:dataset="{ testid: testId.send }"
-				@click="handleSend"
-			/>
+		<div ref="sendRow" class="mail-compose-send-row" :data-testid="testId.sendRow">
+			<template v-if="!isRestoreFailed">
+				<SendSplitButton
+					v-if="isScheduleShown"
+					@send="handleSend"
+					@schedule="$emit('schedule', $event)"
+				/>
+				<UiButton
+					v-else
+					:text="labels.send"
+					:style="sendStyle"
+					:size="sendSize"
+					:loading="isSending"
+					:disabled="isSendDisabled"
+					:dataset="{ testid: testId.send }"
+					@click="handleSend"
+				/>
+			</template>
 			<UiButton
 				:text="labels.cancel"
 				:style="cancelStyle"
@@ -2761,6 +4027,24 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				:dataset="{ testid: testId.cancel }"
 				@click="handleCancel"
 			/>
+			<div
+				v-if="isSaveTemplateShown"
+				class="mail-compose-save-template"
+				:data-testid="testId.saveTemplate"
+			>
+				<Checkbox
+					v-model="state.saveAsTemplate"
+					:id="saveTemplateControlId"
+					:size="checkboxSize"
+					:data-testid="testId.saveTemplateControl"
+					@keydown.enter.prevent
+				/>
+				<TextSm
+					tag="label"
+					class-name="mail-compose-save-template__label"
+					:for="saveTemplateControlId"
+				>{{ labels.saveTemplate }}</TextSm>
+			</div>
 		</div>
 	`
 	});
@@ -2780,7 +4064,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		setup() {
 			return {
 				state: useComposeState(),
-				iconName: ui_iconSet_api_vue.Outline.MAIL_SEND
+				iconName: ui_iconSet_api_vue.Outline.MAIL,
+				iconColor: 'var(--ui-color-accent-main-primary)'
 			};
 		},
 		computed: {
@@ -2793,6 +4078,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			<BIcon
 				class="mail-compose-header__icon"
 				:name="iconName"
+				:color="iconColor"
 				:size="24"
 				data-testid="mail-compose-header-icon"
 			/>
@@ -2806,10 +4092,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		return `<div id="${editor.bodyNodes.quote}">${body.quote === '' ? EmptyLine : body.quote}</div>`;
 	}
 	function buildInitialBody(editor, body) {
+		const content = body.content ?? '';
 		if (body.quoteFolded || body.quote === '') {
-			return '';
+			return content;
 		}
-		return renderQuoteNode(editor, body);
+		return content + renderQuoteNode(editor, body);
 	}
 	function buildUnfoldedBody(editor, body) {
 		return editor.getBody() + renderQuoteNode(editor, body);
@@ -2984,7 +4271,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		return Math.ceil(totalSize / 3) * 4;
 	}
 
-	const TestId$1 = 'mail-compose-error-alert';
+	const TestId$2 = 'mail-compose-error-alert';
 	const ErrorAlert = ui_vue3.defineComponent({
 		name: 'MailComposeErrorAlert',
 		components: {
@@ -2994,7 +4281,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			return {
 				state: useComposeState(),
 				design: ui_system_alert.AlertDesign.tintedAlert,
-				testId: TestId$1
+				testId: TestId$2
 			};
 		},
 		computed: {
@@ -3044,7 +4331,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			role="alert"
 			tabindex="-1"
 		>
-			<Alert :design="design" hasCloseButton @closeButtonClick="handleClose">
+			<Alert
+				:design="design"
+				:hasCloseButton="!state.draft.restoreFailed"
+				@closeButtonClick="handleClose"
+			>
 				<span
 					v-for="(message, index) in messages"
 					:key="index"
@@ -3055,7 +4346,92 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	`
 	});
 
-	const ControlTestId$1 = 'mail-compose-quote-show';
+	const TestId$1 = 'mail-compose-generate-subject';
+	const GenerateSubjectButton = ui_vue3.defineComponent({
+		name: 'MailComposeGenerateSubjectButton',
+		components: {
+			UiButton: ui_vue3_components_button.Button
+		},
+		props: {
+			formId: {
+				type: String,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				state: useComposeState(),
+				editor: useComposeEditor(),
+				buttonStyle: ui_vue3_components_button.AirButtonStyle.TINTED_BITRIX_GPT,
+				buttonSize: ui_vue3_components_button.ButtonSize.SMALL,
+				buttonIcon: ui_iconSet_api_vue.Outline.AI_STARS,
+				testId: TestId$1
+			};
+		},
+		computed: {
+			isShown() {
+				return this.state.subjectGeneration.available;
+			},
+			isRunning() {
+				return this.state.subjectGeneration.isRunning;
+			},
+			text() {
+				return loc(Phrase.SubjectGenerationButton);
+			},
+			waitingState() {
+				return this.isRunning ? ui_vue3_components_button.ButtonState.WAITING : null;
+			}
+		},
+		watch: {
+			isRunning(running) {
+				this.markWaiting(running);
+			}
+		},
+		methods: {
+			handleClick() {
+				if (this.isRunning) {
+					return;
+				}
+				void generateSubject({
+					editor: this.editor,
+					state: this.state,
+					formId: this.formId,
+					getControlNode: this.getControlNode
+				});
+			},
+			getControlNode() {
+				const row = this.$refs.control;
+				return row?.querySelector(`[data-testid="${TestId$1}"]`) ?? null;
+			},
+			markWaiting(running) {
+				const flag = running ? 'true' : null;
+				main_core.Dom.attr(this.getControlNode(), {
+					'aria-busy': flag,
+					'aria-disabled': flag
+				});
+			}
+		},
+		template: `
+		<div
+			v-if="isShown"
+			ref="control"
+			class="mail-compose-generate-subject-button"
+			data-testid="mail-compose-generate-subject-button"
+		>
+			<UiButton
+				:text="text"
+				:style="buttonStyle"
+				:size="buttonSize"
+				:leftIcon="buttonIcon"
+				:state="waitingState"
+				:dataset="{ testid: testId }"
+				@click="handleClick"
+			/>
+		</div>
+	`
+	});
+
+	const ControlTestId = 'mail-compose-quote-show';
 	const QuoteToggle = ui_vue3.defineComponent({
 		name: 'MailComposeQuoteToggle',
 		components: {
@@ -3068,7 +4444,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				subscriptions: [],
 				controlStyle: ui_vue3_components_button.AirButtonStyle.PLAIN,
 				controlSize: ui_vue3_components_button.ButtonSize.SMALL,
-				controlTestId: ControlTestId$1
+				controlTestId: ControlTestId
 			};
 		},
 		computed: {
@@ -3401,7 +4777,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}
 		}
 		function handleSliderClosed(event) {
-			if (event.getSlider()?.getUrl() === sliderUrl) {
+			const sliderEvent = event.getData()?.[0];
+			if (sliderEvent?.getSlider()?.getUrl() === sliderUrl) {
 				release();
 			}
 		}
@@ -3416,9 +4793,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			onClose?.();
 		}
 		eventEmitter.subscribe(ContactSavedEvent, handleContactSaved);
-		eventEmitter.subscribe(SliderClosedEvent, handleSliderClosed, {
-			compatMode: true
-		});
+		eventEmitter.subscribe(SliderClosedEvent, handleSliderClosed);
 	}
 	function bindDialogLifecycle(dialog, onDestroy) {
 		if (!isDialogAlive(dialog)) {
@@ -3562,6 +4937,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 
 	const TextBoxWidth = 220;
 	const TagMaxWidth = 400;
+	const CollapsedRowLimit = 3;
+	const TagHiddenClass = '--hidden-by-collapse';
 	const RecipientFieldPhrase = {
 		to: Phrase.FieldTo,
 		cc: Phrase.FieldCc,
@@ -3575,25 +4952,27 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				required: true
 			}
 		},
-		emits: ['pickerClose'],
 		setup() {
 			return {
-				state: useComposeState()
+				state: useComposeState(),
+				moreChip: null,
+				moreChipInstance: null,
+				outsideCollapseHandler: null,
+				widthObserver: null,
+				observedWidth: 0
 			};
 		},
 		data() {
 			return {
 				selector: null,
 				isPickerOpen: false,
-				restoreFocusAfterDraft: false
+				restoreFocusAfterDraft: false,
+				isTagsCollapsed: true
 			};
 		},
 		computed: {
 			isRequired() {
 				return this.field === 'to';
-			},
-			hasRecipients() {
-				return this.state.recipients[this.field].length > 0;
 			}
 		},
 		watch: {
@@ -3635,7 +5014,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					textBoxWidth: TextBoxWidth,
 					tagMaxWidth: TagMaxWidth,
 					tagClickable: true,
-					showAddButton: false,
+					addButtonCaption: loc(Phrase.FieldAdd),
+					addButtonCaptionMore: loc(Phrase.FieldAdd),
 					dialogOptions: {
 						targetNode: container,
 						id: this.selectorId(),
@@ -3654,17 +5034,45 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					}
 				}));
 				const dialog = selector.getDialog();
+				dialog?.subscribe('onShow', this.handlePickerShow);
 				dialog?.subscribe('onHide', this.handlePickerHide);
+				if (dialog) {
+					const fieldLeft = container.getBoundingClientRect().left;
+					dialog.setOffsetLeft(Math.max(0, dialog.getMaxLabelWidth() - fieldLeft));
+				}
 				this.selector = selector;
 				selector.renderTo(container);
+				this.scheduleTagsCollapse();
+				this.observeWidth(container);
 				if (this.isRequired) {
 					main_core.Dom.attr(selector.getTextBox(), 'aria-required', 'true');
 				}
 			},
 			destroySelector() {
+				this.disarmOutsideCollapse();
+				this.unobserveWidth();
 				this.selector?.getDialog()?.destroy();
 				this.selector = null;
+				this.moreChip = null;
+				this.moreChipInstance = null;
 				main_core.Dom.clean(this.$refs.field);
+			},
+			observeWidth(container) {
+				this.unobserveWidth();
+				this.widthObserver = new ResizeObserver(entries => {
+					const width = entries[0]?.contentRect.width ?? 0;
+					if (width === this.observedWidth) {
+						return;
+					}
+					this.observedWidth = width;
+					this.scheduleTagsCollapse();
+				});
+				this.widthObserver.observe(container);
+			},
+			unobserveWidth() {
+				this.widthObserver?.disconnect();
+				this.widthObserver = null;
+				this.observedWidth = 0;
 			},
 			selectorId() {
 				return `mail-compose-form-recipient-${this.field}`;
@@ -3678,37 +5086,23 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				this.$el.dispatchEvent(new window.Event('input', {
 					bubbles: true
 				}));
+				this.scheduleTagsCollapse();
 			},
-			openPicker() {
-				const {
-					$el,
-					selector
-				} = this;
-				const dialog = selector?.getDialog();
-				if (!selector || !dialog) {
-					return;
-				}
+			handlePickerShow() {
+				this.disarmOutsideCollapse();
 				this.isPickerOpen = true;
-				main_core.Dom.addClass($el, '--editing');
-				selector.showTextBox();
-				selector.focusTextBox();
-				dialog.show();
+				this.collapseTags();
 			},
 			handlePickerHide() {
 				const {
-					$el,
 					selector
 				} = this;
 				if (!selector) {
 					return;
 				}
 				this.isPickerOpen = false;
-				main_core.Dom.removeClass($el, '--editing');
-				selector.hideAddButton();
-				const field = $el;
-				if (ui_a11y.FocusNavigator.isFocusLost() || field.contains(ui_a11y.FocusNavigator.getActiveElement())) {
-					this.$emit('pickerClose');
-				}
+				this.isTagsCollapsed = true;
+				this.scheduleTagsCollapse();
 			},
 			handleContactCreate(event) {
 				const dialog = this.selector?.getDialog();
@@ -3719,6 +5113,110 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					searchQuery
 				} = event.getData();
 				return createContact(dialog, searchQuery?.getQuery() ?? '');
+			},
+			scheduleTagsCollapse() {
+				window.requestAnimationFrame(() => {
+					this.collapseTags();
+				});
+			},
+			collapseTags() {
+				const selector = this.selector;
+				if (!selector) {
+					return;
+				}
+				const tags = selector.getTags();
+				tags.forEach(tag => {
+					main_core.Dom.removeClass(tag.getContainer(), TagHiddenClass);
+				});
+				main_core.Dom.remove(this.moreChip);
+				if (!this.isTagsCollapsed || this.isPickerOpen || tags.length === 0) {
+					return;
+				}
+				const rowTops = [...new Set(tags.map(tag => tag.getContainer().offsetTop))];
+				if (rowTops.length < CollapsedRowLimit) {
+					return;
+				}
+				const lastVisibleRowTop = rowTops[CollapsedRowLimit - 1];
+				const addButton = selector.getAddButton();
+				if (rowTops.length === CollapsedRowLimit && addButton.offsetTop <= lastVisibleRowTop) {
+					return;
+				}
+				const chip = this.getMoreChip();
+				main_core.Dom.insertBefore(chip, selector.getTextBox());
+				let low = 1;
+				let high = tags.length;
+				while (low < high) {
+					const middle = Math.floor((low + high) / 2);
+					if (this.fitsCollapsedTo(tags, middle, addButton, lastVisibleRowTop)) {
+						high = middle;
+					} else {
+						low = middle + 1;
+					}
+				}
+				this.applyCollapsedCount(tags, low);
+			},
+			fitsCollapsedTo(tags, hidden, addButton, lastVisibleRowTop) {
+				const chip = this.applyCollapsedCount(tags, hidden);
+				return chip.offsetTop <= lastVisibleRowTop && addButton.offsetTop <= lastVisibleRowTop;
+			},
+			applyCollapsedCount(tags, hidden) {
+				const firstHidden = tags.length - hidden;
+				tags.forEach((tag, index) => {
+					main_core.Dom.toggleClass(tag.getContainer(), TagHiddenClass, index >= firstHidden);
+				});
+				const chip = this.getMoreChip();
+				this.moreChipInstance?.setText(`+${hidden}`);
+				main_core.Dom.attr(chip, 'aria-label', loc(Phrase.RecipientsShowAll, {
+					'#COUNT#': String(hidden)
+				}));
+				return chip;
+			},
+			expandTags() {
+				this.isTagsCollapsed = false;
+				this.collapseTags();
+				this.armOutsideCollapse();
+			},
+			armOutsideCollapse() {
+				if (this.outsideCollapseHandler) {
+					return;
+				}
+				const handler = event => {
+					if (this.$el.contains(event.target)) {
+						return;
+					}
+					this.disarmOutsideCollapse();
+					this.isTagsCollapsed = true;
+					this.collapseTags();
+				};
+				this.outsideCollapseHandler = handler;
+				main_core.Event.bind(document, 'pointerdown', handler, true);
+			},
+			disarmOutsideCollapse() {
+				if (this.outsideCollapseHandler) {
+					main_core.Event.unbind(document, 'pointerdown', this.outsideCollapseHandler, true);
+					this.outsideCollapseHandler = null;
+				}
+			},
+			getMoreChip() {
+				if (!this.moreChip) {
+					const instance = ui_vue3.markRaw(new ui_buttons.Button({
+						size: ui_buttons.ButtonSize.SMALL,
+						style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
+						useAirDesign: true,
+						noCaps: true,
+						dataset: {
+							testid: 'mail-compose-recipient-more'
+						}
+					}));
+					const chip = instance.getContainer();
+					main_core.Event.bind(chip, 'click', () => {
+						this.expandTags();
+					});
+					main_core.Dom.addClass(chip, 'mail-compose-recipient-field__more');
+					this.moreChipInstance = instance;
+					this.moreChip = chip;
+				}
+				return this.moreChip;
 			},
 			handleTagClick(event) {
 				const dialog = this.selector?.getDialog();
@@ -3734,10 +5232,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		<div
 			ref="field"
 			class="mail-compose-recipient-field"
-			:class="{
-				'--empty': !hasRecipients,
-				'--editing': isPickerOpen,
-			}"
 			role="group"
 			:data-testid="'mail-compose-recipient-field-' + field"
 		></div>
@@ -3745,23 +5239,15 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	});
 
 	const FieldOrder = ['to', 'cc', 'bcc'];
-	function addTestId(field) {
-		return `mail-compose-recipient-add-${field}`;
-	}
 	const RecipientRows = ui_vue3.defineComponent({
 		name: 'MailComposeRecipientRows',
 		components: {
 			RecipientField,
-			TextSm: ui_system_typography_vue.TextSm,
-			UiButton: ui_vue3_components_button.Button
+			TextSm: ui_system_typography_vue.TextSm
 		},
 		setup() {
 			return {
-				state: useComposeState(),
-				addStyle: ui_vue3_components_button.AirButtonStyle.PLAIN_ACCENT,
-				addSize: ui_vue3_components_button.ButtonSize.SMALL,
-				addIcon: ui_iconSet_api_vue.Outline.PLUS_M,
-				fields: {}
+				state: useComposeState()
 			};
 		},
 		computed: {
@@ -3770,16 +5256,12 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					return {
 						field,
 						label: loc(RecipientFieldPhrase[field]),
-						labelId: `mail-compose-form-recipient-label-${field}`,
-						addTestId: addTestId(field)
+						labelId: `mail-compose-form-recipient-label-${field}`
 					};
 				});
 			},
 			isBccExpanded() {
 				return this.state.bccExpanded;
-			},
-			addText() {
-				return loc(Phrase.FieldAdd);
 			}
 		},
 		watch: {
@@ -3792,15 +5274,10 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}
 		},
 		methods: {
-			setFieldRef(field, instance) {
-				this.fields[field] = instance;
-			},
-			openPicker(field) {
-				this.fields[field]?.openPicker();
-			},
 			focusAddControl(field) {
 				const rows = this.$el;
-				rows.querySelector(`[data-testid="${addTestId(field)}"]`)?.focus();
+				const control = rows.querySelector(`[data-testid="mail-compose-recipient-field-${field}"]` + ' [data-testid="ui-tag-selector-add-item-button"] button');
+				control?.focus();
 			}
 		},
 		template: `
@@ -3816,18 +5293,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					class-name="mail-compose-recipient-rows__label"
 				>{{ row.label }}:</TextSm>
 				<RecipientField
-					:ref="(instance) => setFieldRef(row.field, instance)"
 					:field="row.field"
 					:aria-labelledby="row.labelId"
-					@picker-close="focusAddControl(row.field)"
-				/>
-				<UiButton
-					:text="addText"
-					:style="addStyle"
-					:size="addSize"
-					:left-icon="addIcon"
-					:dataset="{ testid: row.addTestId }"
-					@click="openPicker(row.field)"
 				/>
 			</div>
 		</div>
@@ -3858,7 +5325,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		},
 		data() {
 			return {
-				isMenuShown: false
+				isMenuShown: false,
+				failedAvatarUrls: new Set()
 			};
 		},
 		computed: {
@@ -3879,7 +5347,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			},
 			chipImage() {
 				const avatar = this.sender?.avatar;
-				return avatar ? {
+				return avatar && !this.failedAvatarUrls.has(avatar) ? {
 					src: avatar,
 					alt: ''
 				} : null;
@@ -3890,7 +5358,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						sectionCode: SenderSectionCode,
 						title: senderTitle(sender),
 						subtitle: sender.email,
-						isSelected: sender.formated === this.state.selectedSender,
+						isSelected: sender === this.sender,
 						onClick: () => {
 							this.handleSelect(sender);
 						}
@@ -3923,17 +5391,23 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}
 			},
 			handleSelect(sender) {
-				this.state.selectedSender = sender.formated;
+				selectSender(this.state, sender);
 				this.isMenuShown = false;
 				void ui_vue3.nextTick(() => {
 					this.$el?.dispatchEvent(new window.Event('input', {
 						bubbles: true
 					}));
 				});
+			},
+			handleImageError(event) {
+				const failedUrl = event.target?.getAttribute('src');
+				if (failedUrl) {
+					this.failedAvatarUrls.add(failedUrl);
+				}
 			}
 		},
 		template: `
-		<div v-if="sender" class="mail-compose-sender-chip">
+		<div v-if="sender" class="mail-compose-sender-chip" @error.capture="handleImageError">
 			<TextSm class-name="mail-compose-sender-chip__label">{{ label }}:</TextSm>
 			<Chip
 				ref="chip"
@@ -4131,18 +5605,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		main_core.Page.redirect(main_core.Uri.addParam(path, StrictParam));
 	}
 
-	const AutoHideDelay = 2000;
-	function getPortalNotificationCenter() {
-		const portalWindow = main_core.Page.getRootWindow();
-		return portalWindow.BX?.UI?.Notification?.Center ?? null;
-	}
-	function notifyPortal(text) {
-		getPortalNotificationCenter()?.notify({
-			content: text,
-			autoHideDelay: AutoHideDelay
-		});
-	}
-
 	const DraftBodyNodeClass = Object.freeze({
 		Signature: 'mail-compose-draft-signature',
 		Quote: 'mail-compose-draft-quote'
@@ -4160,6 +5622,18 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		BeforeSubmit: 'BX.Mail.Client.ComposeForm:beforeSubmit',
 		SubmitAjaxSuccess: 'BX.Mail.Client.ComposeForm:submitAjaxSuccess'
 	});
+	function getDraftWait(eventName, formId) {
+		const pending = [];
+		main_core_events.EventEmitter.emit(eventName, {
+			formId,
+			data: {
+				waitUntil: promise => {
+					pending.push(promise);
+				}
+			}
+		});
+		return pending.length > 0 ? Promise.all(pending).then(() => {}) : null;
+	}
 	class DraftComposeAdapter {
 		#params;
 		#restored = false;
@@ -4200,7 +5674,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				clientId: state.draft.clientId,
 				sender: sender ? {
 					name: sender.name,
-					email: sender.email
+					email: sender.email,
+					mailboxId: toMailboxId(sender.mailboxId)
 				} : null,
 				to: state.recipients.to.map(item => toDraftRecipient(item)),
 				cc: state.recipients.cc.map(item => toDraftRecipient(item)),
@@ -4225,15 +5700,19 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			if (!this.#active) {
 				return;
 			}
-			const selectedSender = resolveSender(this.#params.state, snapshot.sender);
-			if (snapshot.sender && !selectedSender) {
+			const restoredSender = resolveSender(this.#params.state, snapshot.sender);
+			if (snapshot.sender && !restoredSender) {
 				throw new Error('Draft sender is unavailable.');
 			}
 			if (!(await this.#params.editor.replaceFiles(attachments))) {
 				throw new Error('Draft attachments cannot be restored.');
 			}
 			const state = this.#params.state;
-			state.selectedSender = selectedSender;
+			if (restoredSender) {
+				selectSender(state, restoredSender);
+			} else {
+				state.selectedSender = null;
+			}
 			state.recipients.to = snapshot.to.map(recipient => toRecipientItem(recipient));
 			state.recipients.cc = snapshot.cc.map(recipient => toRecipientItem(recipient));
 			state.recipients.bcc = snapshot.bcc.map(recipient => toRecipientItem(recipient));
@@ -4385,6 +5864,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 		setDraftRestoreFailed(failed) {
 			this.#params.state.draft.restoreFailed = failed;
+			this.#params.editor.setReadOnly(failed);
 		}
 		showError(message) {
 			this.#params.state.errors = [{
@@ -4489,24 +5969,207 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}
 		};
 	}
+	function toMailboxId(value) {
+		const mailboxId = Number(value ?? 0);
+		return Number.isFinite(mailboxId) && mailboxId > 0 ? mailboxId : null;
+	}
 	function resolveSender(state, sender) {
 		if (!sender) {
 			return null;
 		}
+		const mailboxId = toMailboxId(sender.mailboxId);
+		if (mailboxId !== null) {
+			const byMailbox = state.senders.find(item => toMailboxId(item.mailboxId) === mailboxId);
+			if (byMailbox) {
+				return byMailbox;
+			}
+		}
 		const email = sender.email.trim().toLowerCase();
-		return state.senders.find(item => item.email.trim().toLowerCase() === email)?.formated ?? null;
+		return state.senders.find(item => item.email.trim().toLowerCase() === email) ?? null;
+	}
+
+	const MailboxKeyPrefix = 'mailbox:';
+	const ChoiceOption = Object.freeze({
+		category: 'mail',
+		name: 'signature_choice'
+	});
+	function normalizeSenderKey(value) {
+		return main_core.Type.isStringFilled(value) ? value.replace(/ +$/, '').toLowerCase() : '';
+	}
+	function collectSignatures(bySender, sender) {
+		const byKey = {};
+		Object.keys(bySender).forEach(rawKey => {
+			const key = normalizeSenderKey(rawKey);
+			byKey[key] = [...(byKey[key] ?? []), ...(bySender[rawKey] ?? [])];
+		});
+		const mailboxKey = mailboxSenderKey(sender);
+		const own = [normalizeSenderKey(sender.formated), normalizeSenderKey(sender.email), ''].filter((key, index, keys) => keys.indexOf(key) === index).flatMap(key => byKey[key] ?? []);
+		const laidOutByMailbox = Object.keys(byKey).some(key => key.startsWith(MailboxKeyPrefix));
+		if (mailboxKey === null || !laidOutByMailbox) {
+			return own;
+		}
+		return [...own.filter(item => !item.isShared), ...(byKey[mailboxKey] ?? [])];
+	}
+	function mailboxSenderKey(sender) {
+		const mailboxId = Number(sender.mailboxId ?? 0);
+		return mailboxId > 0 ? normalizeSenderKey(`${MailboxKeyPrefix}${mailboxId}`) : null;
+	}
+	function resolveDefaultSignature(list, choices, sender) {
+		const signatures = list.filter(item => item.full !== '');
+		const shared = signatures.find(item => item.isShared) ?? null;
+		const own = signatures.find(item => !item.isShared) ?? null;
+		const choice = parseChoice(choices[normalizeSenderKey(sender.formated)] ?? choices[normalizeSenderKey(sender.email)]);
+		const assignedAt = shared?.assignedAt ?? 0;
+		if (choice && signatures.some(item => item.signatureId === choice.id) && (!shared || assignedAt > 0 && choice.time > assignedAt)) {
+			return choice.id;
+		}
+		return shared?.signatureId ?? own?.signatureId ?? null;
+	}
+	function rememberSignatureChoice(sender, signatureId) {
+		const senderKey = buildChoiceKey(sender);
+		if (signatureId <= 0 || senderKey === '') {
+			return null;
+		}
+		const value = `${signatureId}:${Math.floor(Date.now() / 1000)}`;
+		BX.userOptions.save(ChoiceOption.category, ChoiceOption.name, senderKey, value);
+		return {
+			senderKey,
+			value
+		};
+	}
+	function loadSignatures(settingsPath) {
+		return Api.getSignatures().then(response => buildSignatures({
+			bySender: response.data?.bySender,
+			choices: response.data?.choices,
+			settingsPath
+		}));
+	}
+	function buildChoiceKey(sender) {
+		const email = sender.email.trim();
+		const name = sender.name.trim();
+		return normalizeSenderKey(name !== '' && email !== '' ? `${name} <${email}>` : email);
+	}
+	function parseChoice(raw) {
+		if (!main_core.Type.isStringFilled(raw)) {
+			return null;
+		}
+		const [rawId, rawTime] = raw.split(':');
+		const id = main_core.Text.toInteger(rawId);
+		const time = main_core.Text.toInteger(rawTime);
+		return id > 0 ? {
+			id,
+			time: time > 0 ? time : 0
+		} : null;
+	}
+
+	const ScheduledBodyNodeClass = Object.freeze({
+		Signature: 'mail-compose-scheduled-signature',
+		Quote: 'mail-compose-scheduled-quote'
+	});
+	const SignatureSelectionClassPrefix = 'mail-compose-scheduled-signature-selection-';
+	function buildScheduledBody(editor, state) {
+		const body = buildMessageBody(editor, state.body);
+		if (body === null) {
+			return null;
+		}
+		const holder = document.createElement('template');
+		holder.innerHTML = body;
+		markBodyNode(holder.content, editor.bodyNodes.quote, ScheduledBodyNodeClass.Quote);
+		const signature = markBodyNode(holder.content, editor.bodyNodes.signature, ScheduledBodyNodeClass.Signature);
+		if (signature) {
+			main_core.Dom.addClass(signature, `${SignatureSelectionClassPrefix}${state.selectedSignatureId ?? 'none'}`);
+		}
+		return holder.innerHTML;
+	}
+	function markBodyNode(body, nodeId, markerClass) {
+		const node = [...body.children].find(child => child.id === nodeId);
+		if (!node) {
+			return null;
+		}
+		main_core.Dom.addClass(node, markerClass);
+		return node;
+	}
+	function restoreScheduledBody(params) {
+		const {
+			editor,
+			state
+		} = params;
+		if (state.scheduledMessage.id <= 0) {
+			return;
+		}
+		const body = document.createElement('template');
+		body.innerHTML = state.body.content;
+		const signature = adoptBodyNode(body.content, BodyNodePrefix.Signature, editor.bodyNodes.signature, ScheduledBodyNodeClass.Signature);
+		adoptBodyNode(body.content, BodyNodePrefix.Quote, editor.bodyNodes.quote, ScheduledBodyNodeClass.Quote);
+		const signatureId = signature === null ? null : resolveSignatureId(signature, state);
+		if (signature !== null && signatureId === null) {
+			signature.removeAttribute('id');
+		}
+		state.selectedSignatureId = signatureId;
+		state.body.content = body.innerHTML;
+	}
+	function adoptBodyNode(body, prefix, currentId, markerClass) {
+		const [node, ...duplicates] = [...body.children].filter(child => main_core.Dom.hasClass(child, markerClass) || child.id === prefix || child.id.startsWith(`${prefix}-`));
+		if (!node) {
+			return null;
+		}
+		node.id = currentId;
+		takeClass(node, markerClass);
+		duplicates.forEach(duplicate => duplicate.remove());
+		return node;
+	}
+	function resolveSignatureId(node, state) {
+		const marked = takeSelectionMark(node);
+		return main_core.Type.isUndefined(marked) ? matchSignatureByText(node, state) : marked;
+	}
+	function takeSelectionMark(node) {
+		const selectionClass = [...node.classList].find(className => className.startsWith(SignatureSelectionClassPrefix));
+		if (!selectionClass) {
+			return undefined;
+		}
+		takeClass(node, selectionClass);
+		const signatureId = Number(selectionClass.slice(SignatureSelectionClassPrefix.length));
+		return Number.isInteger(signatureId) && signatureId > 0 ? signatureId : null;
+	}
+	function takeClass(node, className) {
+		main_core.Dom.removeClass(node, className);
+		if ((node.getAttribute('class') ?? '').trim() === '') {
+			node.removeAttribute('class');
+		}
+	}
+	function matchSignatureByText(node, state) {
+		const sender = getSelectedSender(state);
+		const text = normalizeSignatureText(node.textContent ?? '');
+		if (!sender || text === '') {
+			return null;
+		}
+		return collectSignatures(state.signatures.bySender, sender).find(item => item.full !== '' && normalizeSignatureText(toPlainText(item.full)) === text)?.signatureId ?? null;
+	}
+	function toPlainText(html) {
+		const holder = document.createElement('template');
+		holder.innerHTML = html;
+		return holder.content.textContent ?? '';
+	}
+	function normalizeSignatureText(value) {
+		return value.replaceAll(/[\s-]+/g, '').toLowerCase();
 	}
 
 	const SuccessStatus = 'success';
+	const TemplateSaveWarningPhrase = 'MAIL_COMPOSE_FORM_TEMPLATE_SAVE_WARNING';
+	const CrmRecipientEntities = new Set(['contact', 'company', 'lead', 'mail_crm_recipient', 'mail_recipient']);
+	const DefaultUndoSend = {
+		create: request => Api.createUndoSend(request),
+		show: operation => Api.showUndoSend(operation)
+	};
+	const undoSendAttempts = new WeakMap();
 	async function sendMessage(params) {
 		const {
 			state,
 			editor,
 			largeAttachment,
-			writeFields,
 			formId
 		} = params;
-		if (state.isSending) {
+		if (state.isSending || state.draft.restoreFailed) {
 			return;
 		}
 		if (isSelectedSenderMigrationActive(state)) {
@@ -4527,6 +6190,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			return;
 		}
 		state.isSending = true;
+		invalidateSubjectGeneration(state);
 		try {
 			const draftWait = getDraftWait(DraftBridgeEvent.BeforeSubmit, formId);
 			if (draftWait) {
@@ -4541,23 +6205,196 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					return;
 				}
 			}
-			const form = writeFields(body);
-			if (!form) {
-				state.errors = [{
-					message: loc(Phrase.ErrorSendFailed),
-					code: null
-				}];
-				return;
+			const undoSend = params.undoSend ?? DefaultUndoSend;
+			if (shouldUseUndoSend(state)) {
+				const request = createUndoSendRequest(state, editor, largeAttachment);
+				if (request !== null) {
+					await createUndoSend(params, undoSend, request, body);
+					return;
+				}
 			}
-			const submitted = {
-				formId,
-				body
-			};
-			main_core_events.EventEmitter.emit(ComposeFormEvent.Submit, submitted);
-			await deliver(params, form);
+			await deliverImmediately(params, body);
 		} finally {
 			state.isSending = false;
 		}
+	}
+	function shouldUseUndoSend(state) {
+		if (state.scheduledMessage.id > 0 || state.mailbox.id === null || hasCrmRecipients(state)) {
+			return false;
+		}
+		return state.features.undoSend;
+	}
+	function hasCrmRecipients(state) {
+		return [...state.recipients.to, ...state.recipients.cc, ...state.recipients.bcc].some(recipient => {
+			const customData = recipient.customData;
+			const entityType = String(customData?.entityType ?? '');
+			return CrmRecipientEntities.has(recipient.entityId) || recipient.entityId === 'address_book' && CrmRecipientEntities.has(entityType);
+		});
+	}
+	async function deliverImmediately(params, body) {
+		const {
+			formId,
+			state,
+			writeFields
+		} = params;
+		const form = writeFields(body);
+		if (!form) {
+			state.errors = [{
+				message: loc(Phrase.ErrorSendFailed),
+				code: null
+			}];
+			return;
+		}
+		main_core_events.EventEmitter.emit(ComposeFormEvent.Submit, {
+			formId,
+			body
+		});
+		await deliver(params, form);
+	}
+	async function createUndoSend(params, undoSend, request, messageBody) {
+		const {
+			closeForm,
+			formId,
+			state
+		} = params;
+		try {
+			const operation = await undoSend.create(request);
+			main_core_events.EventEmitter.emit(ComposeFormEvent.Submit, {
+				formId,
+				body: messageBody
+			});
+			main_core_events.EventEmitter.emit(DraftBridgeEvent.SubmitAjaxSuccess, {
+				formId,
+				data: {}
+			});
+			emitFormEvent(ComposeFormEvent.SendSuccess, formId);
+			main_sidepanel.SidePanel.Instance.postMessage(window, SliderMessage.MessageCreated, {
+				undoSendProjection: {
+					operationId: operation.operationId,
+					draftId: state.draft.id,
+					cancelUntil: operation.cancelUntil,
+					recipients: {
+						to: request.recipients.to.map(({
+							email,
+							name
+						}) => ({
+							email,
+							name: name ?? ''
+						})),
+						cc: (request.recipients.cc ?? []).map(({
+							email,
+							name
+						}) => ({
+							email,
+							name: name ?? ''
+						})),
+						bcc: (request.recipients.bcc ?? []).map(({
+							email,
+							name
+						}) => ({
+							email,
+							name: name ?? ''
+						}))
+					},
+					subject: operation.subject ?? request.subject
+				}
+			});
+			try {
+				await undoSend.show(operation);
+			} catch {
+			}
+			closeForm();
+		} catch (error) {
+			const apiError = error;
+			if (apiError.code === 'feature_unavailable' || apiError.code === 'preference_disabled') {
+				await deliverImmediately(params, messageBody);
+				return;
+			}
+			state.errors = [{
+				message: loc(Phrase.ErrorSendFailed),
+				code: apiError.code ?? null
+			}];
+			emitFormEvent(ComposeFormEvent.SendError, formId);
+		}
+	}
+	function createUndoSendRequest(state, editor, largeAttachment) {
+		const sender = getSelectedSender(state);
+		const body = buildScheduledBody(editor, state);
+		if (sender === null || state.mailbox.id === null || body === null) {
+			return null;
+		}
+		const payload = {
+			mailboxId: state.mailbox.id,
+			inReplyTo: state.send.inReplyTo,
+			sender: toUndoSendSender(sender),
+			recipients: {
+				to: state.recipients.to.map(recipient => toUndoSendRecipient(recipient)),
+				cc: state.recipients.cc.map(recipient => toUndoSendRecipient(recipient)),
+				bcc: state.recipients.bcc.map(recipient => toUndoSendRecipient(recipient))
+			},
+			subject: state.subject,
+			body,
+			attachments: editor.getFiles().filter(file => file.id !== null).map(file => ({
+				objectId: file.id,
+				fileName: file.name,
+				isInline: false
+			})),
+			largeAttachments: (largeAttachment?.getDraftState() ?? []).map(attachment => ({
+				token: attachment.token,
+				publicUrl: attachment.publicUrl,
+				fileIds: [...attachment.fileIds],
+				sourceFileIds: [...attachment.sourceFileIds],
+				tokenFileIds: [...(attachment.tokenFileIds ?? attachment.sourceFileIds)]
+			})),
+			timezoneId: state.authorTimezoneId || getScheduleTimezoneId(state),
+			...(state.draft.id > 0 && state.draft.revision > 0 ? {
+				draftId: state.draft.id,
+				draftRevision: state.draft.revision
+			} : {}),
+			...(state.features.saveTemplate && state.saveAsTemplate ? {
+				saveAsTemplate: true
+			} : {})
+		};
+		return {
+			...payload,
+			idempotencyKey: getUndoSendIdempotencyKey(state, payload)
+		};
+	}
+	function getUndoSendIdempotencyKey(state, payload) {
+		const {
+			draftRevision: _draftRevision,
+			...stablePayload
+		} = payload;
+		const fingerprint = JSON.stringify(stablePayload);
+		const previousAttempt = undoSendAttempts.get(state);
+		if (previousAttempt?.fingerprint === fingerprint) {
+			return previousAttempt.key;
+		}
+		const attempt = {
+			fingerprint,
+			key: main_core.Text.getRandom(32)
+		};
+		undoSendAttempts.set(state, attempt);
+		return attempt.key;
+	}
+	function toUndoSendSender(sender) {
+		return {
+			email: sender.email,
+			name: sender.name,
+			...(main_core.Type.isStringFilled(sender.avatar) ? {
+				avatar: sender.avatar
+			} : {})
+		};
+	}
+	function toUndoSendRecipient(item) {
+		const customData = item.customData;
+		return {
+			email: String(customData?.email ?? item.id),
+			name: String(customData?.name ?? ''),
+			...(main_core.Type.isStringFilled(item.avatar) ? {
+				avatar: item.avatar
+			} : {})
+		};
 	}
 	function passesChecks(params) {
 		const {
@@ -4579,42 +6416,51 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			state,
 			formId
 		} = params;
-		const errors = await send(form);
-		if (errors === null) {
+		const result = await send(form);
+		if (result.status === SuccessStatus) {
+			const templateSaveWarning = result.response.data?.templateSaveWarning === true;
+			if (templateSaveWarning) {
+				notifyPortal(loc(TemplateSaveWarningPhrase), {
+					role: 'alert',
+					closeButton: false
+				});
+			}
 			main_core_events.EventEmitter.emit(DraftBridgeEvent.SubmitAjaxSuccess, {
 				formId,
-				data: {}
+				data: result.response
 			});
 			emitFormEvent(ComposeFormEvent.SendSuccess, formId);
-			finishSuccessfulSend(params);
+			finishSuccessfulSend(params, !templateSaveWarning);
 			return;
 		}
-		state.errors = errors;
+		state.errors = result.errors;
 		emitFormEvent(ComposeFormEvent.SendError, formId);
 	}
-	function getDraftWait(eventName, formId) {
-		const pending = [];
-		main_core_events.EventEmitter.emit(eventName, {
-			formId,
-			data: {
-				waitUntil: promise => {
-					pending.push(promise);
-				}
-			}
-		});
-		return pending.length > 0 ? Promise.all(pending).then(() => {}) : null;
-	}
-	function finishSuccessfulSend(params) {
+	function finishSuccessfulSend(params, showNotification = true) {
 		main_sidepanel.SidePanel.Instance.postMessage(window, SliderMessage.MessageCreated, {});
-		notifyPortal(loc(Phrase.SendSuccess));
+		if (showNotification) {
+			notifyPortal(loc(Phrase.SendSuccess));
+		}
 		params.closeForm();
 	}
 	async function send(form) {
 		try {
 			const response = await Api.sendMessage(form);
-			return response.status === SuccessStatus ? null : toComposeErrors(response.errors);
+			if (response.status === SuccessStatus) {
+				return {
+					status: SuccessStatus,
+					response
+				};
+			}
+			return {
+				status: 'error',
+				errors: toComposeErrors(response.errors)
+			};
 		} catch {
-			return toComposeErrors();
+			return {
+				status: 'error',
+				errors: toComposeErrors()
+			};
 		}
 	}
 	function toComposeErrors(errors) {
@@ -4635,6 +6481,177 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			formId
 		};
 		main_core_events.EventEmitter.emit(eventName, payload);
+	}
+
+	async function scheduleMessage(params) {
+		const {
+			state,
+			formId
+		} = params;
+		if (state.isSending) {
+			return;
+		}
+		const snapshot = prepareSnapshot(params);
+		if (snapshot === null || state.mailbox.id === null) {
+			return;
+		}
+		state.isSending = true;
+		invalidateSubjectGeneration(state);
+		try {
+			const draftWait = getDraftWait(DraftBridgeEvent.BeforeSubmit, formId);
+			if (draftWait) {
+				try {
+					await draftWait;
+				} catch {
+					state.errors = [{
+						message: loc(Phrase.ScheduleErrorUnknown),
+						code: null
+					}];
+					return;
+				}
+			}
+			const api = params.api ?? (await loadScheduledMessageApi());
+			if (state.scheduledMessage.id > 0) {
+				await api.update({
+					id: state.scheduledMessage.id,
+					revision: state.scheduledMessage.revision,
+					...snapshot
+				});
+			} else {
+				await api.schedule({
+					mailboxId: state.mailbox.id,
+					...snapshot,
+					...getDraftFields(state),
+					...getSaveAsTemplateField(state)
+				});
+			}
+			finishSuccessfulSchedule(params);
+		} catch (error) {
+			state.errors = [toComposeError(error)];
+		} finally {
+			state.isSending = false;
+		}
+	}
+	function finishSuccessfulSchedule(params) {
+		main_core_events.EventEmitter.emit(DraftBridgeEvent.SubmitAjaxSuccess, {
+			formId: params.formId,
+			data: {}
+		});
+		main_sidepanel.SidePanel.Instance.postMessageAll(window, SliderMessage.ScheduledMessageSaved, {});
+		notifyPortal(loc(Phrase.ScheduleSuccess));
+		params.closeForm();
+	}
+	function getSaveAsTemplateField(state) {
+		return state.features.saveTemplate && state.saveAsTemplate ? {
+			saveAsTemplate: true
+		} : {};
+	}
+	function getDraftFields(state) {
+		if (state.draft.id > 0 && state.draft.revision > 0) {
+			return {
+				draftId: state.draft.id,
+				draftRevision: state.draft.revision
+			};
+		}
+		return {};
+	}
+	async function loadScheduledMessageApi() {
+		const extension = await main_core.Runtime.loadExtension('mail.client.scheduled-message');
+		return extension.scheduledMessageApi;
+	}
+	function prepareSnapshot(params) {
+		const {
+			state,
+			editor,
+			reminder,
+			largeAttachment,
+			scheduledAt,
+			timezoneId
+		} = params;
+		state.errors = validateMessage({
+			state,
+			files: editor.getFiles()
+		});
+		if (state.errors.length > 0 || reminder.check()) {
+			return null;
+		}
+		if (largeAttachment && !largeAttachment.prepareSend()) {
+			return null;
+		}
+		const body = buildScheduledBody(editor, state);
+		const sender = getSelectedSender(state);
+		if (body === null || sender === null) {
+			state.errors = [{
+				message: loc(Phrase.ErrorSendFailed),
+				code: null
+			}];
+			return null;
+		}
+		const files = editor.getFiles();
+		const retainedAttachments = getRetainedAttachments(state);
+		const existingObjectIds = new Set(retainedAttachments.map(({
+			objectId
+		}) => objectId).filter(objectId => objectId !== null));
+		const snapshot = {
+			inReplyTo: state.send.inReplyTo,
+			sender: toScheduledSender(sender),
+			recipients: {
+				to: state.recipients.to.map(item => toScheduledRecipient(item)),
+				cc: state.recipients.cc.map(item => toScheduledRecipient(item)),
+				bcc: state.recipients.bcc.map(item => toScheduledRecipient(item))
+			},
+			subject: state.subject,
+			body,
+			attachments: files.filter(file => file.id !== null && !existingObjectIds.has(file.id)).map(file => ({
+				objectId: file.id,
+				fileName: file.name,
+				isInline: false
+			})),
+			scheduledAt,
+			timezoneId
+		};
+		if (state.scheduledMessage.id > 0) {
+			snapshot.existingAttachmentIds = retainedAttachments.map(({
+				id
+			}) => id);
+		}
+		return snapshot;
+	}
+	function getRetainedAttachments(state) {
+		const removedIds = new Set(state.scheduledMessage.removedAttachmentIds);
+		return state.scheduledMessage.attachments.filter(({
+			id
+		}) => !removedIds.has(id));
+	}
+	function toScheduledSender(sender) {
+		return {
+			email: sender.email,
+			name: sender.name,
+			...(sender.avatar ? {
+				avatar: sender.avatar
+			} : {})
+		};
+	}
+	function toScheduledRecipient(item) {
+		const customData = item.customData;
+		return {
+			email: String(customData?.email ?? item.id),
+			name: String(customData?.name ?? ''),
+			...(main_core.Type.isStringFilled(item.avatar) ? {
+				avatar: item.avatar
+			} : {})
+		};
+	}
+	function toComposeError(error) {
+		const apiError = error;
+		const code = apiError.code || null;
+		if (apiError.message) {
+			console.error('Mail compose form: the schedule was refused.', code, apiError.message);
+		}
+		return {
+			message: loc(ScheduleErrorPhrase[code ?? ''] ?? Phrase.ScheduleErrorUnknown),
+			code
+		};
 	}
 
 	const CorePhrase = Object.freeze({
@@ -5046,12 +7063,15 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	const FieldsTestId = 'mail-compose-send-fields';
 	const Field = Object.freeze({
 		From: 'data[from]',
+		SenderId: 'data[SENDER_ID]',
+		SenderMailboxId: 'data[SENDER_MAILBOX_ID]',
 		Subject: 'data[subject]',
 		Message: 'data[message]',
 		InReplyTo: 'data[IN_REPLY_TO]',
 		MailboxId: 'data[MAILBOX_ID]',
 		DraftId: 'data[draftId]',
-		DraftRevision: 'data[draftRevision]'
+		DraftRevision: 'data[draftRevision]',
+		SaveAsTemplate: 'data[saveAsTemplate]'
 	});
 	const RecipientFields = [{
 		kind: 'to',
@@ -5097,11 +7117,27 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			value: String(reply.mailboxId)
 		}];
 	}
+	function getSenderIdentityFields(state) {
+		const identity = getSelectedSenderIdentity(state);
+		if (identity.mailboxId !== null) {
+			return [{
+				name: Field.SenderMailboxId,
+				value: String(identity.mailboxId)
+			}];
+		}
+		if (identity.senderId !== null) {
+			return [{
+				name: Field.SenderId,
+				value: String(identity.senderId)
+			}];
+		}
+		return [];
+	}
 	function getMessageFields(state, body) {
 		const fields = [{
 			name: Field.From,
 			value: state.selectedSender ?? ''
-		}, ...getRecipientFields(state), {
+		}, ...getSenderIdentityFields(state), ...getRecipientFields(state), {
 			name: Field.Subject,
 			value: state.subject
 		}, {
@@ -5115,6 +7151,12 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}, {
 				name: Field.DraftRevision,
 				value: String(state.draft.revision)
+			});
+		}
+		if (state.features.saveTemplate && state.saveAsTemplate) {
+			fields.push({
+				name: Field.SaveAsTemplate,
+				value: '1'
 			});
 		}
 		return fields;
@@ -5147,6 +7189,17 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					reminder: this.getReminder(),
 					largeAttachment: this.resolveLargeAttachmentGate(),
 					closeForm: this.closeForm
+				});
+			},
+			schedule(payload) {
+				void scheduleMessage({
+					formId: this.formId,
+					state: this.state,
+					editor: this.editor,
+					reminder: this.getReminder(),
+					largeAttachment: this.resolveLargeAttachmentGate(),
+					closeForm: this.closeForm,
+					...payload
 				});
 			},
 			getReminder() {
@@ -5213,69 +7266,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 	`
 	});
 
-	const ChoiceOption = Object.freeze({
-		category: 'mail',
-		name: 'signature_choice'
-	});
-	function normalizeSenderKey(value) {
-		return main_core.Type.isStringFilled(value) ? value.replace(/ +$/, '').toLowerCase() : '';
-	}
-	function collectSignatures(bySender, sender) {
-		const byKey = {};
-		Object.keys(bySender).forEach(rawKey => {
-			const key = normalizeSenderKey(rawKey);
-			byKey[key] = [...(byKey[key] ?? []), ...(bySender[rawKey] ?? [])];
-		});
-		return [normalizeSenderKey(sender.formated), normalizeSenderKey(sender.email), ''].filter((key, index, keys) => keys.indexOf(key) === index).flatMap(key => byKey[key] ?? []);
-	}
-	function resolveDefaultSignature(list, choices, sender) {
-		const signatures = list.filter(item => item.full !== '');
-		const shared = signatures.find(item => item.isShared) ?? null;
-		const own = signatures.find(item => !item.isShared) ?? null;
-		const choice = parseChoice(choices[normalizeSenderKey(sender.formated)] ?? choices[normalizeSenderKey(sender.email)]);
-		const assignedAt = shared?.assignedAt ?? 0;
-		if (choice && signatures.some(item => item.signatureId === choice.id) && (!shared || assignedAt > 0 && choice.time > assignedAt)) {
-			return choice.id;
-		}
-		return shared?.signatureId ?? own?.signatureId ?? null;
-	}
-	function rememberSignatureChoice(sender, signatureId) {
-		const senderKey = buildChoiceKey(sender);
-		if (signatureId <= 0 || senderKey === '') {
-			return null;
-		}
-		const value = `${signatureId}:${Math.floor(Date.now() / 1000)}`;
-		BX.userOptions.save(ChoiceOption.category, ChoiceOption.name, senderKey, value);
-		return {
-			senderKey,
-			value
-		};
-	}
-	function loadSignatures(settingsPath) {
-		return Api.getSignatures().then(response => buildSignatures({
-			bySender: response.data?.bySender,
-			choices: response.data?.choices,
-			settingsPath
-		}));
-	}
-	function buildChoiceKey(sender) {
-		const email = sender.email.trim();
-		const name = sender.name.trim();
-		return normalizeSenderKey(name !== '' && email !== '' ? `${name} <${email}>` : email);
-	}
-	function parseChoice(raw) {
-		if (!main_core.Type.isStringFilled(raw)) {
-			return null;
-		}
-		const [rawId, rawTime] = raw.split(':');
-		const id = main_core.Text.toInteger(rawId);
-		const time = main_core.Text.toInteger(rawTime);
-		return id > 0 ? {
-			id,
-			time: time > 0 ? time : 0
-		} : null;
-	}
-
 	const MenuWidth = 300;
 	const MenuId = 'mail-compose-signature-menu';
 	const MenuSection = Object.freeze({
@@ -5286,8 +7276,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		Shared: 'var(--ui-color-accent-main-primary)',
 		Own: 'var(--ui-color-base-3)'
 	});
-	const ControlTestId = 'mail-compose-signature-name';
-	const SignatureControlSpace = 68;
+	const FooterControlTestId = 'mail-compose-signature-action';
+	const SurrogateClass = 'bxhtmled-surrogate';
 	const NameMaxLength = 40;
 	const SignatureMark = '--<br>';
 	const GraphemeExtendPattern = /^[\p{M}\p{Emoji_Modifier}\u{0E33}\u{0EB3}]$/u;
@@ -5390,42 +7380,29 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 		const style = editorDocument.createElement('style');
 		style.dataset.mailComposeSignatureLayout = '';
-		style.textContent = `#${nodeId} { margin-top: ${SignatureControlSpace}px; }`;
+		style.textContent = [`#${nodeId} { margin-top: var(--ui-space-stack-xl); }`,
+		`#${nodeId} .${SurrogateClass} { display: none !important; }`].join('\n');
 		main_core.Dom.append(style, editorDocument.head);
 	}
 	const SignatureBlock = ui_vue3.defineComponent({
 		name: 'MailComposeSignatureBlock',
 		components: {
-			BIcon: ui_iconSet_api_vue.BIcon,
-			BMenu: ui_system_menu_vue.BMenu,
-			TextSm: ui_system_typography_vue.TextSm,
-			UiButton: ui_vue3_components_button.Button,
-			UiLabel: ui_system_label_vue.Label
+			BMenu: ui_system_menu_vue.BMenu
 		},
 		setup() {
+			const state = useComposeState();
 			return {
-				state: useComposeState(),
+				state,
 				editor: useComposeEditor(),
+				isBodyRestored: state.scheduledMessage.id > 0,
 				subscriptions: [],
-				iconName: ui_iconSet_api_vue.Outline.DOCUMENT_SIGN,
-				controlStyle: ui_vue3_components_button.AirButtonStyle.PLAIN,
-				controlSize: ui_vue3_components_button.ButtonSize.SMALL,
-				controlTestId: ControlTestId,
-				menuId: MenuId,
-				labelStyle: ui_system_label.LabelStyle.TINTED,
-				labelSize: ui_system_label.LabelSize.SM
+				menuId: MenuId
 			};
 		},
 		data() {
 			return {
 				isMenuShown: false,
-				rowTop: null,
-				rowLeft: 0,
-				rowWidth: 0,
-				editorBody: null,
-				editorWindow: null,
-				contentScroll: null,
-				positionFrame: null
+				isSignatureSyncScheduled: false
 			};
 		},
 		computed: {
@@ -5433,7 +7410,9 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				return getSelectedSender(this.state);
 			},
 			senderKey() {
-				return this.state.selectedSender ?? '';
+				const sender = this.sender;
+				const identity = sender ? `${sender.mailboxId ?? ''}:${sender.id ?? ''}` : '';
+				return `${this.state.selectedSender ?? ''}|${identity}`;
 			},
 			signatures() {
 				return this.sender ? collectSignatures(this.state.signatures.bySender, this.sender) : [];
@@ -5448,28 +7427,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				const id = this.state.selectedSignatureId;
 				return this.signatures.find(item => item.signatureId === id) ?? null;
 			},
-			isShown() {
-				return this.signatures.length > 0 || this.settingsPath !== '';
-			},
 			settingsPath() {
 				return this.state.signatures.settingsPath;
-			},
-			controlText() {
-				const name = this.selectedSignature ? signatureName(this.selectedSignature) : '';
-				return name === '' ? loc(Phrase.SignatureNone) : name;
-			},
-			signatureLabel() {
-				return loc(Phrase.SignatureButton);
-			},
-			kindLabel() {
-				return this.selectedSignature?.isShared === true ? loc(Phrase.SignatureShared) : '';
-			},
-			rowPosition() {
-				return this.rowTop === null ? {} : {
-					top: `${this.rowTop}px`,
-					left: `${this.rowLeft}px`,
-					width: `${this.rowWidth}px`
-				};
 			},
 			menuItems() {
 				const items = this.signatures.filter(item => item.full !== '').map(item => this.buildSignatureItem(item));
@@ -5509,26 +7468,20 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		watch: {
 			senderKey() {
 				this.applyDefaultSignature();
-				this.syncSignatureNode();
+				this.scheduleSignatureSync();
 			},
 			selectedSignatureId() {
-				this.syncSignatureNode();
-			},
-			draftLoading(loading) {
-				if (!loading) {
-					void this.$nextTick(this.schedulePositionControl);
-				}
+				this.scheduleSignatureSync();
 			}
 		},
 		mounted() {
-			this.applyDefaultSignature();
+			if (!this.isBodyRestored) {
+				this.applyDefaultSignature();
+			}
 			this.subscriptions.push(this.editor.subscribeReady(this.handleEditorReady));
-			main_core.Event.bind(window, 'resize', this.schedulePositionControl);
 		},
 		beforeUnmount() {
-			main_core.Event.unbind(window, 'resize', this.schedulePositionControl);
-			this.cancelPositionControl();
-			this.unbindPositionListeners();
+			this.isSignatureSyncScheduled = false;
 			this.subscriptions.forEach(unsubscribe => {
 				unsubscribe();
 			});
@@ -5536,80 +7489,11 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		},
 		methods: {
 			handleEditorReady() {
-				this.syncSignatureNode();
-				this.unbindPositionListeners();
-				const signature = this.editor.getBodyNode(this.editor.bodyNodes.signature);
-				const editorFrame = this.editor.getHostNode()?.querySelector('iframe');
-				this.editorBody = signature?.ownerDocument.body ?? editorFrame?.contentDocument?.body ?? null;
-				this.editorWindow = this.editorBody?.ownerDocument.defaultView ?? null;
-				this.contentScroll = this.$refs.row?.closest('.mail-compose-form__content') ?? null;
-				if (this.editorBody) {
-					main_core.Event.bind(this.editorBody, 'input', this.schedulePositionControl);
-					main_core.Event.bind(this.editorBody, 'scroll', this.schedulePositionControl);
-				}
-				if (this.editorWindow) {
-					main_core.Event.bind(this.editorWindow, 'scroll', this.schedulePositionControl);
-					main_core.Event.bind(this.editorWindow, 'resize', this.schedulePositionControl);
-				}
-				if (this.contentScroll) {
-					main_core.Event.bind(this.contentScroll, 'scroll', this.schedulePositionControl);
-				}
-				this.positionControl();
-			},
-			unbindPositionListeners() {
-				if (this.editorBody) {
-					main_core.Event.unbind(this.editorBody, 'input', this.schedulePositionControl);
-					main_core.Event.unbind(this.editorBody, 'scroll', this.schedulePositionControl);
-				}
-				if (this.editorWindow) {
-					main_core.Event.unbind(this.editorWindow, 'scroll', this.schedulePositionControl);
-					main_core.Event.unbind(this.editorWindow, 'resize', this.schedulePositionControl);
-				}
-				if (this.contentScroll) {
-					main_core.Event.unbind(this.contentScroll, 'scroll', this.schedulePositionControl);
-				}
-				this.editorBody = null;
-				this.editorWindow = null;
-				this.contentScroll = null;
-			},
-			schedulePositionControl() {
-				if (this.positionFrame !== null) {
-					return;
-				}
-				this.positionFrame = window.requestAnimationFrame(() => {
-					this.positionFrame = null;
-					this.positionControl();
-				});
-			},
-			cancelPositionControl() {
-				if (this.positionFrame !== null) {
-					window.cancelAnimationFrame(this.positionFrame);
-					this.positionFrame = null;
-				}
-			},
-			positionControl() {
-				const signature = this.editor.getBodyNode(this.editor.bodyNodes.signature);
-				const row = this.$refs.row;
-				const content = row?.closest('.mail-compose-form__content');
-				const editorDocument = signature?.ownerDocument ?? this.editorBody?.ownerDocument;
-				const frame = editorDocument?.defaultView?.frameElement;
-				if (!row || !content || !frame || !this.editorBody) {
-					this.rowTop = null;
-					return;
-				}
-				const frameRect = frame.getBoundingClientRect();
-				const contentRect = content.getBoundingClientRect();
-				if (signature) {
-					const signatureRect = signature.getBoundingClientRect();
-					this.rowTop = content.scrollTop + frameRect.top + signatureRect.top - contentRect.top - row.offsetHeight - parseFloat(getComputedStyle(row).gap || '0');
+				if (this.isBodyRestored) {
+					this.layoutSignatureNode();
 				} else {
-					const bodyRect = this.editorBody.getBoundingClientRect();
-					const lastContent = [...this.editorBody.children].findLast(node => node.id !== this.editor.bodyNodes.quote);
-					const contentBottom = Math.max(lastContent?.getBoundingClientRect().bottom ?? bodyRect.top, bodyRect.top + 24);
-					this.rowTop = content.scrollTop + frameRect.top + contentBottom - contentRect.top + 24;
+					this.syncSignatureNode();
 				}
-				this.rowLeft = frameRect.left - contentRect.left;
-				this.rowWidth = frameRect.width;
 			},
 			buildSignatureItem(item) {
 				return {
@@ -5677,18 +7561,36 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					}));
 				});
 			},
+			layoutSignatureNode() {
+				const node = this.editor.getBodyNode(this.editor.bodyNodes.signature);
+				if (node) {
+					applySignatureLayout(node, this.editor.bodyNodes.signature);
+				}
+			},
+			scheduleSignatureSync() {
+				if (this.isSignatureSyncScheduled) {
+					return;
+				}
+				this.isSignatureSyncScheduled = true;
+				void ui_vue3.nextTick(() => {
+					if (this.isSignatureSyncScheduled) {
+						this.syncSignatureNode();
+					}
+				});
+			},
 			syncSignatureNode() {
+				this.isSignatureSyncScheduled = false;
 				const node = this.editor.getBodyNode(this.editor.bodyNodes.signature);
 				if (!this.selectedSignature) {
 					this.removeSignatureNode(node);
-					this.positionControl();
 					return;
 				}
-				const html = SignatureMark + this.selectedSignature.full;
+				const markup = SignatureMark + this.selectedSignature.full;
+				const html = this.editor.parseForBody(markup) ?? markup;
 				if (node) {
 					node.innerHTML = html;
 					applySignatureLayout(node, this.editor.bodyNodes.signature);
-					this.positionControl();
+					this.editor.syncBodyFromDocument();
 					return;
 				}
 				this.insertSignatureNode(html);
@@ -5709,7 +7611,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 						anchor: node
 					});
 					applySignatureLayout(node, this.editor.bodyNodes.signature);
-					this.positionControl();
 				}
 			},
 			removeSignatureNode(node) {
@@ -5723,48 +7624,35 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}
 			},
 			getControlNode() {
-				const row = this.$refs.row;
-				return row?.querySelector(`[data-testid="${ControlTestId}"]`) ?? null;
+				return document.querySelector(`[data-testid="${FooterControlTestId}"]`);
 			}
 		},
 		template: `
-		<div
-			v-if="isShown"
-			ref="row"
-			class="mail-compose-signature-block"
-			:class="{ '--unplaced': rowTop === null }"
-			:style="rowPosition"
-			data-testid="mail-compose-signature-block"
-		>
-			<BIcon
-				class="mail-compose-signature-block__icon"
-				:name="iconName"
-				:size="20"
-				data-testid="mail-compose-signature-icon"
-			/>
-			<TextSm class-name="mail-compose-signature-block__label">{{ signatureLabel }}:</TextSm>
-			<UiButton
-				:text="controlText"
-				:style="controlStyle"
-				:size="controlSize"
-				dropdown
-				:dataset="{ testid: controlTestId }"
-				@click="handleControlClick"
-			/>
-			<UiLabel
-				v-if="kindLabel !== ''"
-				:value="kindLabel"
-				:style="labelStyle"
-				:size="labelSize"
-				data-testid="mail-compose-signature-kind"
-			/>
-			<BMenu
-				v-if="isMenuShown"
-				:id="menuId"
-				:options="menuOptions"
-				@close="isMenuShown = false"
-			/>
-		</div>
+		<BMenu
+			v-if="isMenuShown"
+			:id="menuId"
+			:options="menuOptions"
+			@close="isMenuShown = false"
+		/>
+	`
+	});
+
+	const SubjectGenerationText = ui_vue3.defineComponent({
+		name: 'MailComposeSubjectGenerationText',
+		components: {
+			TextMd: ui_system_typography_vue.TextMd
+		},
+		computed: {
+			text() {
+				return loc(Phrase.SubjectGenerationRunning);
+			}
+		},
+		template: `
+		<TextMd
+			class-name="mail-compose-subject-generation-text"
+			wrap="truncate"
+			data-testid="mail-compose-subject-generation-text"
+		>{{ text }}</TextMd>
 	`
 	});
 
@@ -5772,6 +7660,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		name: 'MailComposeSubjectField',
 		components: {
 			BInput: ui_system_input_vue.BInput,
+			SubjectGenerationText,
 			TextSm: ui_system_typography_vue.TextSm
 		},
 		setup() {
@@ -5782,11 +7671,17 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			};
 		},
 		computed: {
+			isGenerating() {
+				return this.state.subjectGeneration.isRunning;
+			},
 			subject: {
 				get() {
-					return this.state.subject;
+					return this.isGenerating ? '' : this.state.subject;
 				},
 				set(value) {
+					if (this.isGenerating) {
+						return;
+					}
 					this.state.subject = value;
 				}
 			},
@@ -5794,31 +7689,53 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				return loc(Phrase.SubjectLabel);
 			},
 			placeholder() {
-				return loc(Phrase.SubjectPlaceholder);
+				return this.isGenerating ? '' : loc(Phrase.SubjectPlaceholder);
+			}
+		},
+		watch: {
+			isGenerating(generating) {
+				main_core.Dom.attr(this.inputNode(), 'aria-busy', generating ? 'true' : null);
 			}
 		},
 		mounted() {
 			this.denyAutofill();
+			main_core.Event.bind(this.fieldNode(), 'input', this.handleUserInput);
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(this.fieldNode(), 'input', this.handleUserInput);
 		},
 		methods: {
+			fieldNode() {
+				return this.$refs.input.$el;
+			},
+			inputNode() {
+				return this.fieldNode().querySelector('input');
+			},
 			denyAutofill() {
 				const field = this.$refs.input.$el;
 				main_core.Dom.attr(field.querySelector('input'), 'autocomplete', 'off');
+			},
+			handleUserInput() {
+				invalidateSubjectGeneration(this.state);
 			}
 		},
 		template: `
 		<TextSm class-name="mail-compose-subject-field__label">{{ label }}:</TextSm>
-		<BInput
-			ref="input"
-			v-model="subject"
-			class="mail-compose-subject-field"
-			:design="design"
-			:size="size"
-			:placeholder="placeholder"
-			:aria-label="label"
-			stretched
-			data-testid="mail-compose-subject-field"
-		/>
+		<div class="mail-compose-subject-field__slot">
+			<BInput
+				ref="input"
+				v-model="subject"
+				class="mail-compose-subject-field"
+				:design="design"
+				:size="size"
+				:placeholder="placeholder"
+				:aria-label="label"
+				:readonly="isGenerating"
+				stretched
+				data-testid="mail-compose-subject-field"
+			/>
+			<SubjectGenerationText v-if="isGenerating"/>
+		</div>
 	`
 	});
 
@@ -5844,6 +7761,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			ComposeHeader,
 			EditorHost,
 			ErrorAlert,
+			GenerateSubjectButton,
 			QuoteToggle,
 			RecipientRows,
 			SenderChip,
@@ -5864,6 +7782,10 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			uploaderControlId: {
 				type: String,
 				required: true
+			},
+			editorHeadHtml: {
+				type: String,
+				default: ''
 			}
 		},
 		setup(props) {
@@ -5871,12 +7793,18 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			const editor = new EditorAdapter({
 				editorId: props.editorId,
 				uploaderControlId: props.uploaderControlId,
+				headHtml: props.editorHeadHtml,
 				closeForm
 			});
 			ui_vue3.provide(composeEditorKey, editor);
+			const state = useComposeState();
+			restoreScheduledBody({
+				editor,
+				state
+			});
 			return {
 				editor,
-				state: useComposeState(),
+				state,
 				closeForm,
 				subscriptions: [],
 				noticesTestId: NoticesTestId,
@@ -5910,6 +7838,13 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				sendComposeSendAnalytics(this.state.analytics);
 				const sendForm = this.$refs.sendForm;
 				sendForm?.submit();
+			},
+			scheduleMessage(payload) {
+				if (!this.state.features.scheduledMessages) {
+					return;
+				}
+				const sendForm = this.$refs.sendForm;
+				sendForm?.schedule(payload);
 			}
 		},
 		template: `
@@ -5918,15 +7853,20 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			:class="{ '--draft-loading': state.draft.isLoading }"
 			data-testid="mail-compose-form"
 			:aria-busy="state.draft.isLoading ? 'true' : 'false'"
-			:inert="state.draft.isLoading || state.draft.restoreFailed || state.isSending || undefined"
+			:inert="state.draft.isLoading || state.isSending || undefined"
 		>
 			<ComposeHeader/>
-			<div class="mail-compose-form__content" data-testid="mail-compose-form-content">
+			<div
+				class="mail-compose-form__content"
+				data-testid="mail-compose-form-content"
+				:inert="state.draft.restoreFailed || undefined"
+			>
 				<div class="mail-compose-form__fields" data-testid="mail-compose-form-fields">
 					<SenderChip/>
 					<RecipientRows/>
 					<div class="mail-compose-form__subject-row" data-testid="mail-compose-form-subject-row">
 						<SubjectField/>
+						<GenerateSubjectButton :formId="formId"/>
 						<ShowBccButton/>
 					</div>
 				</div>
@@ -5938,95 +7878,18 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			</div>
 			<div ref="footer" class="mail-compose-form__footer" data-testid="mail-compose-form-footer">
 				<ErrorAlert/>
-				<ActionBar @signature="openSignatureMenu" @send="submitMessage" @cancel="closeForm"/>
+				<ActionBar
+					:formId="formId"
+					@signature="openSignatureMenu"
+					@send="submitMessage"
+					@schedule="scheduleMessage"
+					@cancel="closeForm"
+				/>
 			</div>
 			<SendForm ref="sendForm" :formId="formId"/>
 		</div>
 	`
 	});
-
-	class AutoApplyTemplate {
-		#params;
-		#active = true;
-		#unsubscribeReady = () => {};
-		#unsubscribeInput = () => {};
-		#userInput = false;
-		constructor(params) {
-			this.#params = {
-				...params,
-				api: params.api ?? TemplateApi
-			};
-		}
-		async start() {
-			const {
-				api,
-				editor,
-				loadRecent,
-				state
-			} = this.#params;
-			if (state.scenario !== Scenario.New || !state.features.templates) {
-				this.#finish('skipped');
-				return;
-			}
-			const inputSubscriptions = [editor.subscribeContentChange(this.markUserInput), editor.subscribeFileAdd(this.markUserInput), editor.subscribeFileRemove(this.markUserInput)];
-			this.#unsubscribeInput = () => {
-				inputSubscriptions.forEach(unsubscribe => unsubscribe());
-			};
-			state.templates.autoApply.status = 'pending';
-			const [draftRestore] = await Promise.all([this.#params.draftRestore, this.#waitForEditor(editor)]);
-			if (!this.#active || draftRestore.restored) {
-				this.#finish('skipped');
-				return;
-			}
-			await (loadRecent ?? loadRecentTemplates)(state);
-			const candidate = state.templates.autoApply.candidate;
-			if (!this.#active || !state.templates.rememberLast || !candidate || this.#userInput || !this.#isComposeClean()) {
-				this.#finish('skipped');
-				return;
-			}
-			try {
-				const {
-					template
-				} = await api.prepare(candidate);
-				if (!this.#active || !state.templates.rememberLast || this.#userInput || !this.#isComposeClean()) {
-					this.#finish('skipped');
-					return;
-				}
-				state.templates.prepared = template;
-				const result = await completeTemplateApplication(this.#params, 'replace');
-				this.#finish(this.#active && result.status === 'applied' ? 'applied' : 'skipped');
-			} catch {
-				this.#finish(this.#active ? 'failed' : 'skipped');
-			}
-		}
-		destroy() {
-			this.#active = false;
-			this.#unsubscribeReady();
-			this.#unsubscribeInput();
-		}
-		markUserInput = () => {
-			this.#userInput = true;
-		};
-		#finish(status) {
-			this.#params.state.templates.autoApply.status = status;
-			this.#unsubscribeReady();
-			this.#unsubscribeReady = () => {};
-			this.#unsubscribeInput();
-			this.#unsubscribeInput = () => {};
-		}
-		#isComposeClean() {
-			return this.#params.state.subject.trim() === '' && !this.#params.editor.hasUserContent();
-		}
-		#waitForEditor(editor) {
-			return new Promise(resolve => {
-				this.#unsubscribeReady = editor.subscribeReady(() => {
-					this.#unsubscribeReady();
-					this.#unsubscribeReady = () => {};
-					resolve();
-				});
-			});
-		}
-	}
 
 	class DraftIntegration {
 		#params;
@@ -6123,6 +7986,60 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		}
 	}
 
+	const PullEvent = 'onPullEvent-ai';
+	const JobDoneCommand = 'onQueueJobExecute';
+	const JobFailedCommand = 'onQueueJobFail';
+	function subscribeSubjectGeneration(state) {
+		if (!state.subjectGeneration.available) {
+			return () => {};
+		}
+		const handler = event => {
+			handleJobEvent(state, event);
+		};
+		main_core_events.EventEmitter.subscribe(PullEvent, handler);
+		return () => {
+			main_core_events.EventEmitter.unsubscribe(PullEvent, handler);
+		};
+	}
+	function handleJobEvent(state, event) {
+		const [command, payload] = event.getData();
+		if (command !== JobDoneCommand && command !== JobFailedCommand) {
+			return;
+		}
+		if (!main_core.Type.isObject(payload)) {
+			return;
+		}
+		const params = payload;
+		const hash = typeof params.hash === 'string' ? params.hash : '';
+		if (hash === '') {
+			return;
+		}
+		const error = readError(params);
+		if (command === JobFailedCommand || error !== null) {
+			applySubjectJobFailure(state, hash, error);
+			return;
+		}
+		applySubjectJobResult(state, hash, readResult(params));
+	}
+	function readError(params) {
+		if (!main_core.Type.isObject(params.error)) {
+			return null;
+		}
+		const error = params.error;
+		const code = typeof error.code === 'string' || typeof error.code === 'number' ? error.code : undefined;
+		return {
+			code,
+			message: typeof error.message === 'string' ? error.message : ''
+		};
+	}
+	function readResult(params) {
+		if (!main_core.Type.isObject(params.data)) {
+			return '';
+		}
+		const result = params.data.result;
+		return typeof result === 'string' ? result : '';
+	}
+
 	const FrameClass = 'mail-compose-form-frame';
 	const ShellClass = 'mail-compose-form-shell';
 	const SliderMessageEvent = 'SidePanel.Slider:onMessage';
@@ -6137,7 +8054,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		#largeAttachment = null;
 		#slider = null;
 		#draft = null;
-		#autoApply = null;
 		#formNode = null;
 		#editorSubscriptions = [];
 		#draftLoader = null;
@@ -6145,6 +8061,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		#panelClosePending = false;
 		#panelCloseApproved = false;
 		#migrationStateUnsubscribes = [];
+		#unsubscribeSubjectGeneration = null;
 		constructor(options) {
 			this.#options = options;
 		}
@@ -6163,6 +8080,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			}
 			this.#state = createComposeState(this.#options.initialData);
 			this.#subscribeToMigrationState(this.#state);
+			this.#unsubscribeSubjectGeneration = subscribeSubjectGeneration(this.#state);
 			this.#state.draft.isLoading = main_core.Type.isStringFilled(this.#state.draft.clientId) && this.#state.draft.id > 0;
 			this.#draftLoaderTarget = this.#formNode ?? container.parentElement ?? container;
 			if (this.#state.draft.isLoading) {
@@ -6171,29 +8089,31 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			this.#app = ui_vue3.BitrixVue.createApp(App, {
 				editorId: this.#options.editorId,
 				formId: this.#options.formId,
-				uploaderControlId: this.#options.editorFormId
+				uploaderControlId: this.#options.editorFormId,
+				editorHeadHtml: this.#options.editorHeadHtml ?? ''
 			});
 			this.#app.config.globalProperties.loc = loc;
 			this.#app.provide(composeStateKey, this.#state);
 			this.#app.provide(largeAttachmentGateKey, this.#resolveLargeAttachmentGate);
 			this.#app.provide(closeComposeFormKey, this.#closeForm);
 			const root = this.#app.mount(container);
-			this.#editorSubscriptions = [root.editor.subscribeContentChange(this.#handleUserInput), root.editor.subscribeFileAdd(this.#handleUserInput), root.editor.subscribeFileRemove(this.#handleUserInput)];
-			main_core_events.EventEmitter.subscribe(SliderMessageEvent, this.#relaySliderMessage, {
-				compatMode: true
-			});
+			this.#editorSubscriptions = [root.editor.subscribeContentChange(this.#handleBodyChange), root.editor.subscribeFileAdd(this.#handleUserInput), root.editor.subscribeFileRemove(this.#handleUserInput)];
+			main_core_events.EventEmitter.subscribe(SliderMessageEvent, this.#relaySliderMessage);
 			this.#watchPanelClose();
-			this.#startDraftAndAutoApply(root, this.#state);
+			this.#startDraft(root, this.#state);
 		}
 		destroy() {
-			this.#autoApply?.destroy();
-			this.#autoApply = null;
 			if (this.#formNode) {
 				main_core.Event.unbind(this.#formNode, 'input', this.#handleUserInput);
 			}
 			this.#formNode = null;
 			this.#editorSubscriptions.forEach(unsubscribe => unsubscribe());
 			this.#editorSubscriptions = [];
+			this.#unsubscribeSubjectGeneration?.();
+			this.#unsubscribeSubjectGeneration = null;
+			if (this.#state) {
+				destroySubjectGeneration(this.#state);
+			}
 			main_core_events.EventEmitter.unsubscribe(SliderMessageEvent, this.#relaySliderMessage);
 			this.#unwatchPanelClose();
 			main_core_events.EventEmitter.emit(ComposeFormEvent.Destroy, {
@@ -6223,7 +8143,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				void migrationState.initialize();
 			});
 		}
-		#startDraftAndAutoApply(root, state) {
+		#startDraft(root, state) {
 			const draft = new DraftIntegration({
 				formId: this.#options.formId,
 				state,
@@ -6235,15 +8155,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				}
 			});
 			this.#draft = draft;
-			const autoApply = new AutoApplyTemplate({
-				editor: root.editor,
-				state,
-				formId: this.#options.formId,
-				draftRestore: draft.restore
-			});
-			this.#autoApply = autoApply;
 			void draft.start();
-			void autoApply.start();
 		}
 		#handleDraftLoadingChange = loading => {
 			if (loading) {
@@ -6266,8 +8178,13 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			this.#draftLoader?.destroy();
 			this.#draftLoader = null;
 		}
+		#handleBodyChange = () => {
+			if (this.#state) {
+				invalidateSubjectGeneration(this.#state);
+			}
+			this.#handleUserInput();
+		};
 		#handleUserInput = () => {
-			this.#autoApply?.markUserInput();
 			if (!this.#state?.draft.isLoading) {
 				main_core_events.EventEmitter.emit(ComposeFormEvent.Changed, {
 					formId: this.#options.formId,
@@ -6348,9 +8265,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		#watchPanelClose() {
 			this.#slider = main_sidepanel.SidePanel.Instance.getSliderByWindow(window);
 			if (this.#slider) {
-				main_core_events.EventEmitter.subscribe(this.#slider, SliderCanCloseEvent, this.#handlePanelCanClose, {
-					compatMode: true
-				});
+				main_core_events.EventEmitter.subscribe(this.#slider, SliderCanCloseEvent, this.#handlePanelCanClose);
 				main_core_events.EventEmitter.subscribe(this.#slider, SliderCloseEvent, this.#handlePanelClose);
 			}
 		}
@@ -6363,7 +8278,8 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			this.#panelClosePending = false;
 			this.#panelCloseApproved = false;
 		}
-		#handlePanelCanClose = sliderEvent => {
+		#handlePanelCanClose = event => {
+			const sliderEvent = event.getData()?.[0];
 			if (!sliderEvent || this.#panelCloseApproved || !this.#state) {
 				this.#panelCloseApproved = false;
 				return;
@@ -6394,9 +8310,10 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 		};
 		#resolveLargeAttachmentGate = () => this.#largeAttachment;
 		#relaySliderMessage = event => {
-			const eventId = event.getEventId();
-			if (eventId !== null && RelayedSliderMessages.has(eventId)) {
-				main_sidepanel.SidePanel.Instance.postMessage(window, eventId, event.getData() ?? {});
+			const messageEvent = event.getData()?.[0];
+			const eventId = messageEvent?.getEventId();
+			if (eventId && RelayedSliderMessages.has(eventId)) {
+				main_sidepanel.SidePanel.Instance.postMessage(window, eventId, messageEvent?.getData() ?? {});
 			}
 		};
 		#markLayout(container) {
@@ -6418,5 +8335,5 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 
 	exports.ComposeForm = ComposeForm;
 
-})(this.BX.Mail.Client.ComposeForm = this.BX.Mail.Client.ComposeForm || {}, BX, BX.Event, BX, BX.SidePanel, BX.Vue3, BX.Mail, BX.UI.IconSet, window, BX.Vue3.Components, BX.UI.Dialogs, BX.UI, BX.UI, BX.UI.Vue3.Components, BX.Main, BX.UI.System.Label, BX.UI.System.Label.Vue, BX.UI.System.Menu, BX.UI.System.Input.Vue, BX.UI.System.Typography.Vue, BX.UI.System.Alert, BX.UI.System.Alert.Vue, BX.UI.Accessibility, BX.UI.EntitySelector, BX.UI.System.Chip.Vue, BX.UI, BX.UI.Analytics);
+})(this.BX.Mail.Client.ComposeForm = this.BX.Mail.Client.ComposeForm || {}, BX, BX.Event, BX, BX.SidePanel, BX.Vue3, BX.Mail, BX.UI.IconSet, window, BX.UI.System.Typography.Vue, BX.Vue3.Components, BX.UI.Dialogs, BX.UI, BX.UI, BX.UI.System.Alert, BX.UI.System.Alert.Vue, BX.UI.Vue3.Components, BX.Main, BX.UI.Accessibility, BX.UI.System.Label, BX.UI.System.Label.Vue, BX.UI.System.Menu, BX.UI.System.Input.Vue, BX.Mail, BX.UI.EntitySelector, BX.UI.System.Chip.Vue, BX.UI, BX.UI.Analytics);
 //# sourceMappingURL=compose-form.bundle.js.map

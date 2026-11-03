@@ -737,6 +737,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	`
 	};
 
+	const normalizeDeadlineUserOption = pendingDeadlineUserOption => {
+		return pendingDeadlineUserOption.defaultDeadlineInSeconds === 0 ? {
+			...pendingDeadlineUserOption,
+			defaultDeadlineDate: ''
+		} : pendingDeadlineUserOption;
+	};
+	const mergeSavedDeadlineUserOption = (pendingDeadlineUserOption, savedState) => {
+		const savedDeadlineUserOption = savedState?.deadlineUserOption ?? savedState;
+		if (main_core.Type.isPlainObject(savedDeadlineUserOption) && savedDeadlineUserOption.defaultDeadlineDate !== undefined) {
+			return {
+				...pendingDeadlineUserOption,
+				defaultDeadlineDate: savedDeadlineUserOption.defaultDeadlineDate
+			};
+		}
+		return pendingDeadlineUserOption;
+	};
+
 	// @vue/component
 	const TaskSettingsPopup = {
 		name: 'TaskSettingsPopup',
@@ -796,46 +813,70 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			},
 			async handleSave() {
 				this.saving = true;
-				const isMaxDeadlineChangesChanged = this.pendingDeadlineUserOption.maxDeadlineChanges && this.task.maxDeadlineChanges !== this.pendingDeadlineUserOption.maxDeadlineChanges;
-				if (this.isEdit && isMaxDeadlineChangesChanged) {
-					void tasks_v2_provider_service_deadlineService.deadlineService.cleanChangeLog(this.task.id);
-				}
-				if (this.isEdit) {
-					if (!main_core.Type.isNil(this.pendingDeadlineUserOption.defaultDeadlineInSeconds)) {
-						await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, {
-							defaultDeadlineInSeconds: this.pendingDeadlineUserOption.defaultDeadlineInSeconds
-						});
-						if (!this.isTemplate) {
-							void tasks_v2_provider_service_stateService.stateService.set({
-								defaultDeadline: this.deadlineUserOption
+				try {
+					const isMaxDeadlineChangesChanged = this.pendingDeadlineUserOption.maxDeadlineChanges && this.task.maxDeadlineChanges !== this.pendingDeadlineUserOption.maxDeadlineChanges;
+					if (this.isEdit) {
+						if (!main_core.Type.isNil(this.pendingDeadlineUserOption.defaultDeadlineInSeconds)) {
+							let pendingDeadlineUserOption = normalizeDeadlineUserOption({
+								defaultDeadlineInSeconds: this.pendingDeadlineUserOption.defaultDeadlineInSeconds
 							});
+							const nextDeadlineUserOption = {
+								...this.deadlineUserOption,
+								...pendingDeadlineUserOption
+							};
+							if (!this.isTemplate) {
+								const savedState = await tasks_v2_provider_service_stateService.stateService.set({
+									defaultDeadline: nextDeadlineUserOption
+								});
+								pendingDeadlineUserOption = mergeSavedDeadlineUserOption(pendingDeadlineUserOption, savedState);
+							}
+							await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, pendingDeadlineUserOption);
 						}
+					} else if (this.isTemplate) {
+						const nextTemplateStateFlags = {
+							...this.templateStateFlags,
+							...this.pendingFlagsData
+						};
+						await tasks_v2_provider_service_stateService.stateService.setTemplateFlags(nextTemplateStateFlags);
+						await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, this.pendingFlagsData);
+					} else {
+						const nextStateFlags = {
+							...this.stateFlags,
+							...this.pendingFlagsData
+						};
+						const pendingDeadlineUserOption = normalizeDeadlineUserOption(this.pendingDeadlineUserOption);
+						const nextDeadlineUserOption = {
+							...this.deadlineUserOption,
+							...pendingDeadlineUserOption
+						};
+						const savedState = await tasks_v2_provider_service_stateService.stateService.set({
+							needsControl: nextStateFlags.needsControl,
+							matchesWorkTime: nextStateFlags.matchesWorkTime,
+							defaultRequireResult: nextStateFlags.defaultRequireResult,
+							defaultDeadline: nextDeadlineUserOption,
+							allowsTimeTracking: nextStateFlags.allowsTimeTracking
+						});
+						const nextPendingDeadlineUserOption = mergeSavedDeadlineUserOption(pendingDeadlineUserOption, savedState);
+						await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, this.pendingFlagsData);
+						await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, nextPendingDeadlineUserOption);
 					}
-				} else if (this.isTemplate) {
-					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, this.pendingFlagsData);
-					void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
-				} else {
-					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, this.pendingFlagsData);
-					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, this.pendingDeadlineUserOption);
-					void tasks_v2_provider_service_stateService.stateService.set({
-						needsControl: this.stateFlags.needsControl,
-						matchesWorkTime: this.stateFlags.matchesWorkTime,
-						defaultRequireResult: this.stateFlags.defaultRequireResult,
-						defaultDeadline: this.deadlineUserOption,
-						allowsTimeTracking: this.stateFlags.allowsTimeTracking
-					});
+					const updateFields = {
+						...this.pendingFlagsData,
+						...this.pendingDeadlineUserOption
+					};
+					const isMatchesWorkTimeChanged = !main_core.Type.isNil(this.pendingFlagsData.matchesWorkTime) && this.task.matchesWorkTime !== this.pendingFlagsData.matchesWorkTime;
+					if (this.isTemplate && this.task.deadlineAfter && isMatchesWorkTimeChanged) {
+						updateFields.deadlineAfter = tasks_v2_lib_calendar.calendar.recalculateDurationByMatchWorkTime(this.task.deadlineAfter, this.task.matchesWorkTime, this.pendingFlagsData.matchesWorkTime);
+					}
+					const updatePromise = tasks_v2_provider_service_taskService.taskService.update(this.taskId, updateFields);
+					this.$emit('close');
+					await updatePromise;
+					if (this.isEdit && isMaxDeadlineChangesChanged) {
+						void tasks_v2_provider_service_deadlineService.deadlineService.cleanChangeLog(this.task.id);
+					}
+				} finally {
+					this.saving = false;
 				}
-				const updateFields = {
-					...this.pendingFlagsData,
-					...this.pendingDeadlineUserOption
-				};
-				const isMatchesWorkTimeChanged = !main_core.Type.isNil(this.pendingFlagsData.matchesWorkTime) && this.task.matchesWorkTime !== this.pendingFlagsData.matchesWorkTime;
-				if (this.isTemplate && this.task.deadlineAfter && isMatchesWorkTimeChanged) {
-					updateFields.deadlineAfter = tasks_v2_lib_calendar.calendar.recalculateDurationByMatchWorkTime(this.task.deadlineAfter, this.task.matchesWorkTime, this.pendingFlagsData.matchesWorkTime);
-				}
-				this.$emit('close');
-				await tasks_v2_provider_service_taskService.taskService.update(this.taskId, updateFields);
-				this.saving = false;
 			},
 			handleFlagsUpdate(updatedData) {
 				this.pendingFlagsData = {

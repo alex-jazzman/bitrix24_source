@@ -24,7 +24,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			text = '',
 			firstButtonCaption = '',
 			secondButtonCaption = '',
-			title = ''
+			title = '',
+			popupId = ''
 		} = params;
 		return new Promise(resolve => {
 			const options = {
@@ -32,7 +33,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				modal: true,
 				buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
 				popupOptions: {
-					closeByEsc: true
+					closeByEsc: true,
+					id: main_core.Type.isStringFilled(popupId) ? popupId : undefined
 				},
 				onYes: messageBox => {
 					resolve(true);
@@ -215,11 +217,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		});
 	};
 
+	const DELETE_EMPTY_MESSAGE_POPUP_ID = 'im-confirm-delete-empty-message';
 	const showDeleteChannelPostConfirm = () => {
 		return showTwoButtonConfirm({
 			title: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TITLE'),
 			text: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT'),
 			firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT_CONFIRM')
+		});
+	};
+	const showDeleteEmptyMessageConfirm = () => {
+		return showTwoButtonConfirm({
+			title: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_EMPTY_MESSAGE_TITLE'),
+			text: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_EMPTY_MESSAGE_TEXT'),
+			firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_EMPTY_MESSAGE_CONFIRM'),
+			popupId: DELETE_EMPTY_MESSAGE_POPUP_ID
 		});
 	};
 	const showDeleteMessagesConfirm = title => {
@@ -14315,6 +14326,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showCloseWithActiveCallConfirm = showCloseWithActiveCallConfirm;
 	exports.showDeleteChannelPostConfirm = showDeleteChannelPostConfirm;
 	exports.showDeleteChatConfirm = showDeleteChatConfirm;
+	exports.showDeleteEmptyMessageConfirm = showDeleteEmptyMessageConfirm;
 	exports.showDeleteMessagesConfirm = showDeleteMessagesConfirm;
 	exports.showDesktopConfirm = showDesktopConfirm;
 	exports.showDesktopDeleteConfirm = showDesktopDeleteConfirm;

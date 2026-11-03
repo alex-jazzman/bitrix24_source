@@ -3,17 +3,16 @@ import { Popup } from 'main.popup';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import type { ButtonOptions } from 'ui.buttons';
 import { Icon, Outline } from 'ui.icon-set.api.core';
+import { resolveErrorHtml } from 'biconnector.error-message';
 
 export function showErrorPopup(
 	error: { errors?: Array<{ message: string }>, message?: string } | unknown,
 	title?: string | null,
+	fallbackHtml?: string | null,
 ): void
 {
 	const safeTitle = title ?? Loc.getMessage('DATASET_IMPORT_V2_ERROR_POPUP_TITLE') ?? '';
-	const message = (error as { errors?: Array<{ message: string }> })?.errors?.[0]?.message
-		|| (error as { message?: string })?.message
-		|| Loc.getMessage('DATASET_IMPORT_V2_SAVE_ERROR')
-		|| '';
+	const messageHtml = resolveErrorHtml(error, fallbackHtml ?? Loc.getMessage('DATASET_IMPORT_V2_SAVE_ERROR'));
 
 	const content = Tag.render`
 		<div class="biconnector-dataset-import-v2-error-popup" data-testid="dataset-import-error-popup">
@@ -21,7 +20,7 @@ export function showErrorPopup(
 				<div class="biconnector-dataset-import-v2-error-popup__mascot"></div>
 				<div class="biconnector-dataset-import-v2-error-popup__text">
 					<h3 class="biconnector-dataset-import-v2-error-popup__title" id="biconnector-dataset-import-v2-error-popup-title">${Text.encode(safeTitle)}</h3>
-					<div class="biconnector-dataset-import-v2-error-popup__description">${Text.encode(message)}</div>
+					<div class="biconnector-dataset-import-v2-error-popup__description">${messageHtml}</div>
 				</div>
 			</div>
 			<div class="biconnector-dataset-import-v2-error-popup__actions"></div>

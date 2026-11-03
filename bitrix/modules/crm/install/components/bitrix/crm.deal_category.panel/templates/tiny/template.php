@@ -7,6 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Category\CategoryPullManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
@@ -31,7 +33,7 @@ $counterId = HtmlFilter::encode("{$guid}_counter");
 $tunnelsUrl = Container::getInstance()->getRouter()->getCategoryListUrl(\CCrmOwnerType::Deal);
 
 $menuItems = isset($arResult['ITEMS']) && is_array($arResult['ITEMS'])
-	? Bitrix\Crm\UI\Tools\ToolBar::mapItems($arResult['ITEMS'])
+	? Bitrix\Crm\UI\Tools\ToolBar::mapItems($arResult['ITEMS'], null, ['isCategoryMenu' => true])
 	: [];
 
 $menuItems = array_map(static function ($item)
@@ -42,7 +44,12 @@ $menuItems = array_map(static function ($item)
 	return $item;
 }, $menuItems);
 
-if (Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId))
+$tunnelsConfigurationScope = ConfigurationScope::ofEntityType($entityTypeId);
+$configuration = Container::getInstance()->getUserPermissions()->configuration();
+if (
+	$configuration->canManageFunnels(ConfigurationCallSite::SalesTunnelsComponent, $tunnelsConfigurationScope)
+	|| $configuration->canManageStages(ConfigurationCallSite::SalesTunnelsComponent, $tunnelsConfigurationScope)
+)
 {
 	$menuItems[] = [
 		'delimiter' => true,

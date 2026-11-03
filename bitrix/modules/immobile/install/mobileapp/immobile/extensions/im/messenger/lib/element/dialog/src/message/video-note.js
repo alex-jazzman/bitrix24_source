@@ -2,11 +2,18 @@
  * @module im/messenger/lib/element/dialog/message/video-note
  */
 jn.define('im/messenger/lib/element/dialog/message/video-note', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 
 	const { Loc } = require('im/messenger/loc');
-	const { MessageType, TranscriptStatus, AiTasksStatusType } = require('im/messenger/const');
+	const {
+		MessageType,
+		TranscriptStatus,
+		AiTasksStatusType,
+		FileStatus,
+		AiTaskIndicationRole,
+	} = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 	const { Video } = require('im/messenger/lib/element/dialog/message/element/video/video');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -58,6 +65,18 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 			this.fileModel = firstFile;
 			this.transcriptModel = serviceLocator.get('core').getStore().getters['filesModel/transcriptModel/getById'](firstFile?.id);
 			this.videoNote = this.getVideoNote(modelMessage, options, { ...firstFile });
+
+			// The text reaches native for two independent reasons: the caption is available and native
+			// renders the saved text under the round video, or the note is a reply whose quote travels
+			// as encoded text (validateQuote) and has to be parsed for native (reply-with-media).
+			// setMessage strips the quote's trailing empty node, so native keeps a bare quote.
+			if (
+				modelMessage.text
+				&& (Feature.isVideoNoteCaptionAvailable || Feature.isReplyWithMediaAvailable)
+			)
+			{
+				this.setMessage(modelMessage.text, { dialogId: options.dialogId });
+			}
 		}
 
 		/**
@@ -82,7 +101,8 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 			const video = Video.createByFileModel(file).toMessageFormat();
 			const { isPlaying, playingTime } = serviceLocator.get('core').getStore().getters['messagesModel/playbackModel/getPlayback'](options.dialogId, modelMessage.id);
 
-			return {
+			/** @type {MessageVideoNote} */
+			const videoNote = {
 				id: video.id,
 				localUrl: video.localUrl,
 				url: video.url,
@@ -92,6 +112,13 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 				speech2text: this.#prepareTranscriptProps(),
 				aiAnimation: this.#prepareAiAnimation(modelMessage),
 			};
+
+			if (this.#shouldSendRate(options, video.status))
+			{
+				videoNote.rate = options.audioRate;
+			}
+
+			return videoNote;
 		}
 
 		setPlayVideoNote(isPlaying, playingTime)
@@ -103,6 +130,22 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 		getType()
 		{
 			return MessageType.videoNote;
+		}
+
+		/**
+		 * Native shows the rate control by the presence of the field, so unlike the audio element
+		 * the rate is sent only for a video note the user can act on: shared options exist in the
+		 * message list only, and the tap is handled there as well.
+		 *
+		 * @param {CreateMessageOptions|{}} options
+		 * @param {FileStatus} fileStatus
+		 * @return {boolean}
+		 */
+		#shouldSendRate(options, fileStatus)
+		{
+			return Feature.isVideoNotePlaybackRateAvailable
+				&& Type.isNumber(options.audioRate)
+				&& fileStatus === FileStatus.done;
 		}
 
 		/**
@@ -127,7 +170,7 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 		 */
 		#prepareAiAnimation(modelMessage)
 		{
-			if (!this.#canTranscript() || !this.#canAiAnimation())
+			if (!this.#canTranscript() || !this.#canAiAnimation(modelMessage))
 			{
 				return null;
 			}
@@ -138,9 +181,15 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 			}
 
 			const status = modelMessage.visualState?.aiTaskStatus;
-			const config = AiAnimationConfig[status];
 
-			return config || null;
+			// The status comes from a pull event payload, so an inherited key of Object.prototype
+			// (constructor, toString) would otherwise hand a function to the native side as a frame.
+			if (!Object.prototype.hasOwnProperty.call(AiAnimationConfig, status))
+			{
+				return null;
+			}
+
+			return AiAnimationConfig[status];
 		}
 
 		#canTranscript()
@@ -149,11 +198,31 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 		}
 
 		/**
+		 * @param {MessagesModelState} modelMessage
 		 * @return {boolean}
 		 */
-		#canAiAnimation()
+		#canAiAnimation(modelMessage)
 		{
+			// An operation led by the message-level indication owns the message on its own: both tracks
+			// key their frames by the same aiTaskStatus values, so leaving this one on would draw two
+			// indications at once. The role is written by the indication manager alone, and pull offers
+			// every event to that manager first, so a status without a role is exactly what the new
+			// track did not take - on a build without the native indication, that is every status there is.
+			if (Feature.isAiTaskMessageIndicationSupported && this.#isLedByMessageIndication(modelMessage))
+			{
+				return false;
+			}
+
 			return Feature.isAiTaskCreationUISupported && Feature.isAiTaskCreationUIAvailable;
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @return {boolean}
+		 */
+		#isLedByMessageIndication(modelMessage)
+		{
+			return AiTaskIndicationRole.isIndicationRole(modelMessage.visualState?.aiTaskRole);
 		}
 	}
 

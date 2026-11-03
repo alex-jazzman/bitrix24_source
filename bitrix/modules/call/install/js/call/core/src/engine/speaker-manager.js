@@ -1,8 +1,6 @@
 /* eslint-disable max-classes-per-file */
-import { Browser, Type, Event } from 'main.core';
+import { Browser, Type, Event, Reflection } from 'main.core';
 import { Hardware } from '../call_hardware';
-
-const loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
 
 const SpeakerManagerEvent = {
 	onSpeakerConfirmed: 'onSpeakerConfirmed',
@@ -29,9 +27,8 @@ class SpeakerStrategy
 		const tag = this.constructor.name.replace('SpeakerStrategy', '').replace('Default', '');
 		const tagPrefix = tag ? ` ${tag}` : '';
 		error.message = `[SpeakerManager]${tagPrefix} ${prefix}: ${error.message}`;
-		loadAccidentLogger()
-			.then(({ accidentLogger }) => accidentLogger?.addLog(error, 'speakerManager'))
-			.catch(() => {});
+		const accidentLogger = Reflection.getClass('BX.Call.Lib.accidentLogger');
+		void accidentLogger?.addLog(error, 'speakerManager');
 	}
 }
 

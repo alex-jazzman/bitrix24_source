@@ -12,6 +12,7 @@ $event
 	->register('main', 'OnAfterUserUpdate', \Bitrix\HumanResources\Compatibility\Event\UserEventHandler::class, 'onAfterUserUpdate')
 	->register('main', 'OnAfterUserDelete', \Bitrix\HumanResources\Compatibility\Event\UserEventHandler::class, 'onAfterUserDelete')
 	->register('main', 'OnAuthProvidersBuildList', '\Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider', 'getProviders')
+	->register('main', 'OnAfterUserAuthorize', \Bitrix\HumanResources\Integration\Bizproc\FirstLoginDispatcher::class, 'onAfterUserAuthorize')
 	->register('humanresources', 'OnMemberAdded', \Bitrix\HumanResources\Compatibility\Event\NewToOldEventHandler::class, 'onMemberAdded')
 	->register('humanresources', 'OnMemberDeleted', \Bitrix\HumanResources\Compatibility\Event\NewToOldEventHandler::class, 'onMemberDeleted')
 	->register('humanresources', 'OnMemberUpdated', \Bitrix\HumanResources\Compatibility\Event\NewToOldEventHandler::class, 'onMemberUpdated')

@@ -75,7 +75,12 @@ $APPLICATION->IncludeComponent('bitrix:crm.item.list',
 			$parentEntityId
 		),
 		'isEmbedded' => true,
-	] + $unsignedParameters,
+	] + $unsignedParameters + [
+		// a grid reload comes back here through backendUrl, which carries no signed parameters:
+		// without a default the reloaded list is rendered with no group action panel, and the panel
+		// of the tab keeps the action that has just been executed selected
+		'enableGroupActions' => true,
+	],
 	false,
 	[
 		'HIDE_ICONS' => 'Y',

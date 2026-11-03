@@ -55,7 +55,10 @@
 }
 
 .sonet--project-wizard--notifications-banner-image {
-	background-image: url(./images/notification-settings.png);
+	background-image: image-set(
+		url(./images/notification-settings.webp) 1x,
+		url(./images/notification-settings@2x.webp) 2x
+	);
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: contain;

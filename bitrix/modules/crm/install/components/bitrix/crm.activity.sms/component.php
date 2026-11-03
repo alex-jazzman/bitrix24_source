@@ -1,4 +1,8 @@
 <?php
+use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Activity\Provider\Sms\MessageDescriptionFormatter;
+use Bitrix\Main\Text\Emoji;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
@@ -27,7 +31,21 @@ $params => array(
 $arResult['IS_ROBOT'] = isset($params['sender']) && $params['sender'] === 'robot';
 $arResult['SMS_MESSAGE'] = \Bitrix\Crm\Integration\SmsManager::getMessageFields($activity['ASSOCIATED_ENTITY_ID']);
 $arResult['SMS_MESSAGE_STATUS_DESCRIPTIONS'] = \Bitrix\Crm\Integration\SmsManager::getMessageStatusDescriptions();
-$arResult['SMS_MESSAGE_STATUS_IS_ERROR'] = \Bitrix\Crm\Integration\SmsManager::isMessageErrorStatus($arResult['SMS_MESSAGE']['STATUS_ID']);
+$statusId = $arResult['SMS_MESSAGE']['STATUS_ID'] ?? null;
+$arResult['SMS_MESSAGE_STATUS_IS_ERROR'] = \Bitrix\Crm\Integration\SmsManager::isMessageErrorStatus($statusId);
+
+$descriptionType = (int)($activity['DESCRIPTION_TYPE'] ?? CCrmContentType::PlainText);
+$isSmsActivity = ($activity['PROVIDER_ID'] ?? null) === Provider\Sms::getId();
+if ($isSmsActivity || $descriptionType === CCrmContentType::PlainText)
+{
+	$description = (string)($activity['DESCRIPTION'] ?? '');
+	$description = Emoji::decode($description) ?? $description;
+	$arResult['SMS_DESCRIPTION_HTML'] = MessageDescriptionFormatter::prepareHtml($description);
+}
+else
+{
+	$arResult['SMS_DESCRIPTION_HTML'] = (string)($activity['DESCRIPTION_HTML'] ?? '');
+}
 
 if (!empty($params['recipient_user_id']))
 {

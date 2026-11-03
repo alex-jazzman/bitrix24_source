@@ -1,0 +1,16 @@
+.crm-settings-hub-passport-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	background: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.crm-settings-hub-passport-card__title {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-passport-card__subtitle {
+	color: var(--ui-color-base-3);
+}

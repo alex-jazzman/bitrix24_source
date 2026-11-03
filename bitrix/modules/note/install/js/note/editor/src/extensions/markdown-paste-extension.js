@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { safeParseMarkdown } from '../utils/safe-parse-markdown';
 import { markPastedFileIds } from './file-node-resolver-extension';
+import { DATE_TOKEN_PATTERN } from './date/note-date-parser';
 
 const MARKDOWN_PASTE_KEY = new PluginKey('noteMarkdownPaste');
 
@@ -27,7 +28,13 @@ function looksLikeMarkdown(text: string): boolean
 {
 	const trimmed = text.trimStart();
 
-	return MD_PATTERN.test(trimmed) || NOTE_ASSET_PATTERN.test(trimmed) || NOTE_MENTION_PATTERN.test(trimmed);
+	return MD_PATTERN.test(trimmed)
+		|| NOTE_ASSET_PATTERN.test(trimmed)
+		|| NOTE_MENTION_PATTERN.test(trimmed)
+		// Date token [[date YYYY-MM-DD]] - a standalone one matches none of the patterns above, so
+		// without this branch it never reaches the inline tokenizer and pastes as plain text. The
+		// pattern comes from the grammar module, not a copy of it, so the two cannot drift apart.
+		|| DATE_TOKEN_PATTERN.test(trimmed);
 }
 
 // A code block stores raw source, so markdown markup in the clipboard (e.g. a Python `# comment`)

@@ -3,7 +3,7 @@ import { BitrixVue, markRaw } from 'ui.vue3';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BLine } from 'ui.system.skeleton.vue';
 import { Button as UiButton, AirButtonStyle, ButtonSize, ButtonIcon } from 'ui.vue3.components.button';
-import { TextMd, TextXs } from 'ui.system.typography.vue';
+import { TextMd } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
@@ -20,6 +20,8 @@ import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 import { statusService } from 'tasks.v2.provider.service.status-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { viewersService } from 'tasks.v2.provider.service.viewers-service';
+
+import { findScrollableAncestor } from '../../lib/scroll-container';
 
 // eslint-disable-next-line import/namespace
 import { More } from './more/more';
@@ -44,7 +46,6 @@ export const FooterEdit = {
 		BIcon,
 		More,
 		TextMd,
-		TextXs,
 		MarkTaskButton,
 		TasksUserActionsDemonstrator,
 		HoverPill,
@@ -83,6 +84,7 @@ export const FooterEdit = {
 		return {
 			isLoadingActions: false,
 			showStartTimeTrackingHint: false,
+			isStartTimeTrackingHintShownByKeyboard: false,
 			computedSecondaryButton: null,
 		};
 	},
@@ -187,6 +189,19 @@ export const FooterEdit = {
 				&& this.primaryButton?.id === ButtonId.Start
 			);
 		},
+		startTimeTrackingHintOptions(): Object
+		{
+			return {
+				className: 'tasks-hint-popup --ui-context-edge-dark',
+				closeIcon: true,
+				offsetLeft: 24,
+				minWidth: 344,
+				maxWidth: 344,
+				// The popup lives in document.body, so only its own trap keeps Tab inside the hint
+				// and returns focus to the button on Esc. Hovering must not touch focus at all.
+				focusTrap: this.isStartTimeTrackingHintShownByKeyboard ? { initialFocus: false } : false,
+			};
+		},
 		shouldShowMoreButton(): boolean
 		{
 			return this.task.rights.remove
@@ -221,6 +236,10 @@ export const FooterEdit = {
 		this.$bitrix.eventEmitter.subscribe(EventName.TimeTrackingChange, this.handleTimeTrackingActivating);
 	},
 	methods: {
+		getMenuTargetContainer(): ?HTMLElement
+		{
+			return findScrollableAncestor(this.$refs.footer);
+		},
 		async updateSecondaryButton(): void
 		{
 			await this.$nextTick();
@@ -306,6 +325,50 @@ export const FooterEdit = {
 		},
 		handleOverPrimaryButton(): void
 		{
+			this.tryShowStartTimeTrackingHint({ shownByKeyboard: false });
+		},
+		handleFocusInPrimaryButton(event: FocusEvent): void
+		{
+			if (this.isInsideStartTimeTrackingHint(event.relatedTarget))
+			{
+				return;
+			}
+
+			this.tryShowStartTimeTrackingHint({ shownByKeyboard: true });
+		},
+		handleFocusOutPrimaryButton(event: FocusEvent): void
+		{
+			if (this.isInsideStartTimeTrackingHint(event.relatedTarget))
+			{
+				return;
+			}
+
+			this.hideStartTimeTrackingHint();
+		},
+		handleTabFromPrimaryButton(event: KeyboardEvent): void
+		{
+			if (!this.isStartTimeTrackingHintShownByKeyboard)
+			{
+				return;
+			}
+
+			const hint = this.$refs.startTimeTrackingHint;
+			if (Type.isFunction(hint?.focus) && hint.focus())
+			{
+				event.preventDefault();
+
+				return;
+			}
+
+			const container = hint?.popupId ? document.getElementById(hint.popupId) : null;
+			if (container)
+			{
+				container.focus({ preventScroll: true });
+				event.preventDefault();
+			}
+		},
+		tryShowStartTimeTrackingHint({ shownByKeyboard }: { shownByKeyboard: boolean }): void
+		{
 			if (
 				this.task.rights.timeTracking
 				&& this.primaryButton?.id === ButtonId.Start
@@ -313,8 +376,26 @@ export const FooterEdit = {
 			)
 			{
 				ahaMoments.setActive(Option.AhaStartTimeTracking);
+
+				if (!this.showStartTimeTrackingHint)
+				{
+					this.isStartTimeTrackingHintShownByKeyboard = shownByKeyboard;
+				}
+
 				this.showStartTimeTrackingHint = true;
 			}
+		},
+		isInsideStartTimeTrackingHint(element: ?HTMLElement): boolean
+		{
+			const hint = this.$refs.startTimeTrackingHint;
+			if (Type.isFunction(hint?.contains))
+			{
+				return hint.contains(element);
+			}
+
+			const container = hint?.popupId ? document.getElementById(hint.popupId) : null;
+
+			return container?.contains(element) ?? false;
 		},
 		handleTimeTrackingActivating(): void
 		{
@@ -463,7 +544,7 @@ export const FooterEdit = {
 		},
 	},
 	template: `
-		<div v-if="showFooter" class="tasks-full-card-footer print-ignore">
+		<div v-if="showFooter" ref="footer" class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-edit">
 				<UiButton
 					v-if="isTemplate && settings.rights.tasks.createFromTemplate"
@@ -478,6 +559,9 @@ export const FooterEdit = {
 						v-if="primaryButton"
 						ref="primaryButton"
 						@mouseover="handleOverPrimaryButton"
+						@focusin="handleFocusInPrimaryButton"
+						@focusout="handleFocusOutPrimaryButton"
+						@keydown.tab.exact="handleTabFromPrimaryButton"
 					>
 						<UiButton
 							:text="primaryButton.text"
@@ -502,7 +586,10 @@ export const FooterEdit = {
 				</template>
 				<More :selectedButtons/>
 				<div class="tasks-full-card-footer-edit-grow"/>
-				<MarkTaskButton v-if="!isTemplate && shouldShowMarkTaskButton"/>
+				<MarkTaskButton
+					v-if="!isTemplate && shouldShowMarkTaskButton"
+					:getMenuTargetContainer="getMenuTargetContainer"
+				/>
 				<TemplatePermissionsButton v-if="isTemplate && task.rights.edit"/>
 				<TasksUserActionsDemonstrator
 					v-if="!isTemplate"
@@ -513,25 +600,22 @@ export const FooterEdit = {
 			</div>
 			<Hint
 				v-if="shouldShowStartTimeTrackingHint"
+				ref="startTimeTrackingHint"
 				:bindElement="$refs.primaryButton"
-				:options="{
-					closeIcon: true,
-					offsetLeft: 24,
-					minWidth: 344,
-					maxWidth: 344,
-				}"
+				:options="startTimeTrackingHintOptions"
 				@close="hideStartTimeTrackingHint"
 			>
 				<div class="tasks-full-card-start-time-tracking-hint">
 					<TextMd class="tasks-full-card-start-time-tracking-hint-info-text">
 						{{ loc('TASKS_V2_TASK_FULL_CARD_AHA_START_TIME_TRACKING_HINT_TEXT') }}
 					</TextMd>
-					<TextXs
+					<button
+						type="button"
 						class="tasks-full-card-start-time-tracking-hint-info-link"
 						@click.stop="hidePermanentStartTimeTrackingHint"
 					>
 						{{ loc('TASKS_V2_TASK_FULL_CARD_AHA_START_TIME_TRACKING_HINT_MORE') }}
-					</TextXs>
+					</button>
 				</div>
 			</Hint>
 		</div>

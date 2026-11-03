@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 /*TAGS*/
 if ($arParams["SEARCH_PAGE"])
@@ -11,15 +15,7 @@ if ($arParams["SEARCH_PAGE"])
 			$tag = trim($tag, " \t\n\r");
 			if ($tag)
 			{
-				$url = CHTTP::urlAddParams(
-					$arParams["SEARCH_PAGE"],
-					array(
-						"tags" => $tag,
-					),
-					array(
-						"encode" => true,
-					)
-				);
+				$url = (string)(new Uri($arParams["SEARCH_PAGE"]))->addParams(["tags" => $tag]);
 				$tags[] = '<a href="'.$url.'">'.$tag.'</a>';
 			}
 		}

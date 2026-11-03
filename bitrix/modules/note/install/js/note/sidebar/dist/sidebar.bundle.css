@@ -607,7 +607,7 @@
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
-/* [P4.T1] A bell with something to say - notifications arrive, or they are muted on this object -
+/* A bell with something to say - notifications arrive, or they are muted on this object -
    stays on screen without hover, the same rule the lit star follows. */
 .favorite-row__btn--notify.is-on,
 .favorite-row__btn--notify.is-muted {
@@ -630,7 +630,10 @@
    order altogether, so the row shows its controls while the keyboard focus is inside it too - Tab reaches
    the title link first and the controls right after it. A trigger holding an open popover keeps itself on
    screen: the focus is inside the teleported popover then, not in the row, and Esc has to have
-   something to come back to. */
+   something to come back to. The only trigger that carries `aria-expanded` here is the popover form
+   of the bell (`favorite-row.js`, the SubscriptionBellView branch), and the shipping currently has no
+   second mode for it to offer - so the rule matches nothing until `subtree` is shipped again, and it
+   is kept for the same reason that branch is. */
 .favorite-row__btn[aria-expanded='true'] {
 	display: inline-flex;
 }
@@ -1221,7 +1224,7 @@
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
-/* [P4.T5] Bell of a row inside the favorites block: what it says about the row is visible without
+/* Bell of a row inside the favorites block: what it says about the row is visible without
    hover, filled where notifications arrive and struck through where they are muted. */
 .tree-actions .row-action-btn--notify.is-on,
 .tree-actions .row-action-btn--notify.is-muted {

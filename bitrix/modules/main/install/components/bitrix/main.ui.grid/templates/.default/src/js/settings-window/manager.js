@@ -14,6 +14,7 @@ import { Tag, Text, Type } from 'main.core';
 		this.parent = null;
 
 		this.fieldsSettingsInstance = null;
+		this.popupStateTracked = false;
 		this.init(parent);
 	};
 
@@ -21,15 +22,28 @@ import { Tag, Text, Type } from 'main.core';
 		init(parent)
 		{
 			this.parent = parent;
-			BX.bind(this.parent.getContainer(), 'click', BX.proxy(this._onContainerClick, this));
-			BX.addCustomEvent(window, 'Grid::columnMoved', BX.proxy(this._onColumnMoved, this));
+
+			// BX.proxy returns a new function every call, so the handlers have to be kept to be
+			// unbound later: passing a fresh proxy to unbind left them in place.
+			this.boundContainerClick = BX.proxy(this._onContainerClick, this);
+			this.boundColumnMoved = BX.proxy(this._onColumnMoved, this);
+
+			BX.bind(this.parent.getContainer(), 'click', this.boundContainerClick);
+			BX.addCustomEvent(window, 'Grid::columnMoved', this.boundColumnMoved);
 		},
 
 		destroy()
 		{
-			BX.unbind(this.parent.getContainer(), 'click', BX.proxy(this._onContainerClick, this));
-			BX.removeCustomEvent(window, 'Grid::columnMoved', BX.proxy(this._onColumnMoved, this));
-			this.getPopup().close();
+			BX.unbind(this.parent.getContainer(), 'click', this.boundContainerClick);
+			BX.removeCustomEvent(window, 'Grid::columnMoved', this.boundColumnMoved);
+
+			// getPopup() builds the window when there is none, so asking it here used to raise
+			// one on a grid whose settings were never opened, only to take it down again.
+			if (this.fieldsSettingsInstance)
+			{
+				this.fieldsSettingsInstance.destroy();
+				this.fieldsSettingsInstance = null;
+			}
 		},
 
 		_onContainerClick(event)
@@ -44,10 +58,58 @@ import { Tag, Text, Type } from 'main.core';
 		{
 			this.getFieldsSettingsInstance().then((fieldsSettingsInstance) => {
 				this.fieldsSettingsInstance = fieldsSettingsInstance;
+				this.trackPopupState(fieldsSettingsInstance);
 				this.fieldsSettingsInstance.show();
 
 				BX.onCustomEvent(window, 'BX.Grid.SettingsWindow:show', [this.fieldsSettingsInstance]);
 			});
+		},
+
+		/**
+		 * Keeps `aria-expanded` of the settings button in step with the dialog: a screen reader
+		 * has to hear the state change, not only the initial collapsed one. The dialog closes on
+		 * its own too (Esc, the close icon, an applied change), so the state is read from the
+		 * popup rather than from the click.
+		 *
+		 * @param {Object} fieldsSettingsInstance
+		 */
+		trackPopupState(fieldsSettingsInstance)
+		{
+			if (this.popupStateTracked)
+			{
+				return;
+			}
+
+			const popup = fieldsSettingsInstance.getMainPopup?.();
+
+			if (!popup?.subscribe)
+			{
+				return;
+			}
+
+			this.popupStateTracked = true;
+
+			popup.subscribe('onShow', () => this.setButtonExpanded(true));
+			popup.subscribe('onAfterClose', () => this.setButtonExpanded(false));
+			popup.subscribe('onDestroy', () => this.setButtonExpanded(false));
+		},
+
+		setButtonExpanded(expanded)
+		{
+			const button = this.getSettingsButton();
+
+			if (button)
+			{
+				button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			}
+		},
+
+		getSettingsButton()
+		{
+			// The head of the grid itself: the pinned copy of it carries a button of its own.
+			const head = this.parent.getHead();
+
+			return head ? head.querySelector(`.${this.parent.settings.get('classSettingsButton')}`) : null;
 		},
 
 		getFieldsSettingsInstance()
@@ -108,15 +170,15 @@ import { Tag, Text, Type } from 'main.core';
 			return Boolean(this.parent.getParam('LAZY_LOAD'));
 		},
 
-		_onColumnMoved()
+		_onColumnMoved(grid, columns)
 		{
-			this.sortItems();
+			this.sortItems(columns);
 			this.reset();
 		},
 
-		sortItems()
+		sortItems(columns)
 		{
-			this.getPopup().sortItems();
+			this.getPopup().sortItems(columns);
 		},
 
 		reset()

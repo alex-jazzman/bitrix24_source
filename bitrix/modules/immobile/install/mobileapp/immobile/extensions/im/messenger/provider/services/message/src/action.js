@@ -16,6 +16,9 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 
 	class ActionService
 	{
+		/** @type {Map<MessageId, number>} */
+		#editAttemptNumberByMessageId = new Map();
+
 		constructor()
 		{
 			/** @type {MessengerCoreStore} */
@@ -175,28 +178,141 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 
 		/**
 		 * @desc update text message
-		 * @param {string|number} messageId
+		 * @param {MessageId} messageId
 		 * @param {string} text
-		 * @param {string} dialogId
+		 * @param {DialogId} dialogId
+		 * @return {Promise<MessageUpdateTextResult>}
 		 */
 		async updateText(messageId, text, dialogId)
 		{
+			// the attempt is registered before the early exit below: an answer that skipped the registry
+			// would call itself the latest one while a newer attempt for the same message is still in flight
+			const attempt = this.#registerEditAttempt(messageId);
+
 			const getMessageStateModel = this.store.getters['messagesModel/getById'](messageId);
+			if (Type.isNil(getMessageStateModel.id))
+			{
+				Logger.warn('ActionService.updateText.messageNotFound: ', messageId);
+
+				// nothing to update and nothing to roll back: for the caller this is a failed attempt, so the
+				// typed text goes to recovery unless a newer attempt has already replaced it
+				return this.#buildUpdateTextResult(this.#isLatestEditAttempt(attempt), { success: false });
+			}
+
 			await this.saveMessages([getMessageStateModel]);
 
-			const clientDonePromise = this.updateMessage([getMessageStateModel], text, dialogId)
+			await this.updateMessage([getMessageStateModel], text, dialogId)
 				.catch((r) => Logger.error(r));
 
-			clientDonePromise
-				.then(() => this.updateRequest(getMessageStateModel.id, text))
-				.catch((errors) => {
-					Logger.error('ActionService.updateText.updateRequest.catch: ', errors);
+			// without a connection the request is queued instead of being rejected, so there is nothing to wait for
+			const isQueued = !this.isAvailableInternet();
 
-					return this.restoreMessage([getMessageStateModel.id], dialogId);
-				})
-				.finally(() => this.deleteTemporaryMessages([getMessageStateModel.id]))
-				.catch((errors) => Logger.error('ActionService.updateText.deleteTemporaryMessages.catch: ', errors))
-			;
+			let updateResult;
+			try
+			{
+				await this.updateRequest(getMessageStateModel.id, text);
+
+				updateResult = { success: !isQueued, queued: isQueued };
+			}
+			catch (errors)
+			{
+				Logger.error('ActionService.updateText.updateRequest.catch: ', errors);
+
+				await this.#restoreMessageByFailedUpdate(getMessageStateModel.id, text, dialogId);
+
+				updateResult = { reason: errors?.[0] ?? null };
+			}
+
+			const isLatestAttempt = this.#isLatestEditAttempt(attempt);
+			if (isLatestAttempt)
+			{
+				// the snapshot is one per message: the answer of a superseded attempt must not drop the snapshot
+				// a newer attempt rolls back to
+				this.deleteTemporaryMessages([getMessageStateModel.id]);
+			}
+
+			return this.#buildUpdateTextResult(isLatestAttempt, updateResult);
+		}
+
+		/**
+		 * @desc rolls the message back to the state before the failed update attempt
+		 * @param {MessageId} messageId
+		 * @param {string} text text written by this attempt
+		 * @param {DialogId} dialogId
+		 * @return {Promise}
+		 */
+		async #restoreMessageByFailedUpdate(messageId, text, dialogId)
+		{
+			const messageModel = this.store.getters['messagesModel/getById'](messageId);
+			if (messageModel?.text !== text)
+			{
+				// a newer update or a delete wins: only the text this attempt wrote may be rolled back
+				return;
+			}
+
+			// restoreMessage answers false in three places: one before it applies the snapshot and two after,
+			// so its answer alone cannot tell a missed rollback from an unrefreshed chat list preview. The read
+			// below sees the state restoreMessage sees: both happen before its first await
+			const hasSnapshotToRestore = Type.isArrayFilled(
+				this.store.getters['messagesModel/getTemporaryMessagesByIdList']([messageId]),
+			);
+
+			const isRestored = await this.restoreMessage([messageId], dialogId, {
+				// a message may have had no text before the attempt - a picture without a caption as much as
+				// a video note - and that state has to come back
+				allowEmptyText: true,
+			})
+				.catch((errors) => Logger.error('ActionService.updateText.restoreMessage.catch: ', errors));
+
+			if (!hasSnapshotToRestore)
+			{
+				// nothing to roll back to: the model silently keeps the text of the failed attempt
+				Logger.error('ActionService.updateText.restoreMessage.nothingToRestore: ', messageId);
+			}
+			else if (isRestored === false)
+			{
+				// the message is already rolled back here, only the chat list preview was left untouched
+				Logger.warn('ActionService.updateText.restoreMessage.recentNotUpdated: ', messageId);
+			}
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @return {MessageUpdateTextAttempt}
+		 */
+		#registerEditAttempt(messageId)
+		{
+			// the registry is keyed the way the message collection is: the id of one message may arrive both
+			// as a number and as a string, and its attempts have to share a single counter
+			const attemptKey = String(messageId);
+			const attemptNumber = (this.#editAttemptNumberByMessageId.get(attemptKey) ?? 0) + 1;
+			this.#editAttemptNumberByMessageId.set(attemptKey, attemptNumber);
+
+			return { messageId: attemptKey, attemptNumber, attemptId: `${attemptKey}:${attemptNumber}` };
+		}
+
+		/**
+		 * @param {MessageUpdateTextAttempt} attempt
+		 * @return {boolean}
+		 */
+		#isLatestEditAttempt(attempt)
+		{
+			return this.#editAttemptNumberByMessageId.get(attempt.messageId) === attempt.attemptNumber;
+		}
+
+		/**
+		 * @param {boolean} isLatestAttempt
+		 * @param {{success?: boolean, queued?: boolean, reason?: RunActionError}} result
+		 * @return {MessageUpdateTextResult}
+		 */
+		#buildUpdateTextResult(isLatestAttempt, result)
+		{
+			return {
+				isLatestAttempt,
+				success: result.success ?? false,
+				queued: result.queued ?? false,
+				reason: result.reason ?? null,
+			};
 		}
 
 		/**
@@ -313,6 +429,8 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 
 			await this.store.dispatch('messagesModel/updateList', {
 				messageList: preparedMessageList,
+				// the caller hands over the whole text of the message, so an empty one is a removed text
+				allowEmptyText: true,
 			});
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
@@ -508,8 +626,10 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 		/**
 		 * @param {Array<MessageId>} messageIdList
 		 * @param {DialogId} dialogId
+		 * @param {{ allowEmptyText?: boolean }} [options] a snapshot may carry no text at all, and an
+		 *   empty text reaches the model only when the caller asks for it
 		 */
-		async restoreMessage(messageIdList, dialogId)
+		async restoreMessage(messageIdList, dialogId, { allowEmptyText = false } = {})
 		{
 			const tempMessages = this.store.getters['messagesModel/getTemporaryMessagesByIdList'](messageIdList);
 			if (!Type.isArrayFilled(tempMessages))
@@ -534,9 +654,12 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 			{
 				await this.store.dispatch('messagesModel/updateList', {
 					messageList: updateMessages,
+					allowEmptyText,
 				});
 			}
 
+			// addList rebuilds the record of the model from the snapshot, and an absent text falls back to
+			// the empty default: this branch needs no intent of its own
 			if (addMessages.length > 0)
 			{
 				await this.store.dispatch('messagesModel/addList', { messageList: addMessages });

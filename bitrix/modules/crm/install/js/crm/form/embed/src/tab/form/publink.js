@@ -62,7 +62,7 @@ export class Publink extends Form
 				BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_QR_TITLE'),
 				BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_QR_DESC'),
 				BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_OPEN_IN_NEW_TAB'),
-				this.dataProvider.data.embed.pubLink
+				this.dataProvider.data.embed.qrLink
 			), this.#container);
 			Dom.append(this.renderCopySection(
 				null, // BX.Loc.getMessage('EMBED_SLIDER_COPY_LINK'),

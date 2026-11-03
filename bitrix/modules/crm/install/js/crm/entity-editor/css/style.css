@@ -907,6 +907,39 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 
 .crm-entity-widget-content-block-inner-box .crm-entity-widget-content-block-colums-right { font-size: 26px; }
 
+/*region Reflow: the amount does not break mid-number at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The amount is set at 36px and inherits word-break: break-word. At narrow widths
+	the block is left with ~138px; a number this size does not fit and breaks IN THE MIDDLE of a digit group:
+	"10 000 00 / 0 ₽", "1 234 567. / 89". Measured at a card area width of 241px.
+	Observed on a company (annual turnover) and an invoice (amount).
+
+	Two changes, both required:
+	1. A 24px size below the breakpoint — an eight-digit number fits on one line.
+	   This does not violate 1.4.4: at 200% zoom the same 24 CSS px give 48 physical px,
+	   so the text still scales rather than being pinned.
+	2. word-break: normal + overflow-wrap: break-word — if the number still does not fit
+	   (very long, or the user has a large font), the break happens at
+	   a space between digit groups, not in the middle of a group. Splitting a number in half is forbidden:
+	   "10 000 00" reads as a different number. The emergency break is still preserved:
+	   a format with no separating space ("1234567.89") is a single token with no break
+	   opportunity, and without it it would overflow the viewport, bringing horizontal scrolling back.
+
+	The -inner-box selector is listed separately: there the size is declared by a rule
+	with specificity (0,2,0), and a media query adds no specificity — without this
+	the rule would silently fail to apply on the invoice and the order.
+*/
+@media (max-width: 768px) {
+	.crm-entity-widget-content-block-colums-right,
+	.crm-entity-widget-content-block-colums,
+	.crm-entity-widget-content-block-inner-box .crm-entity-widget-content-block-colums-right {
+		font-size: 24px;
+		word-break: normal;
+		overflow-wrap: break-word;
+	}
+}
+/*endregion*/
+
 .crm-entity-widget-content-block-wallet {
 	color: #80868e;
 	font-size: 24px;
@@ -1147,6 +1180,18 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	height: 17px;
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+.crm-entity-widget-client-box-icon--outline {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-70);
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	background-image: none;
 }
 
 .crm-entity-widget-client-box-icon--deal {
@@ -2655,6 +2700,30 @@ div.crm-entity-widget-content-block-radio-label {
 	margin-left: auto;
 }
 
+/*region Reflow: amount and payment button stacked at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The amount and the "Accept payment" button sit in one flex row with no wrap.
+	At narrow widths the amount is left with about 90px and breaks mid-number
+	("10 00 / 0 ₽") because of the inherited word-break: break-word.
+	Below the breakpoint we stack them: the amount takes the full block width and does not break.
+	We drop margin-left: auto from the button - in a column direction it would push it to the right.
+	The .ui-btn.--air variant is repeated here on purpose: the rule above pins it right at (0,3,0),
+	so the reset needs the same specificity and must stay after that rule to win by source order.
+*/
+@media (max-width: 768px) {
+	.crm-entity-widget-content-block-inner-text-pay {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
+
+	.crm-entity-widget-content-block-inner-pay-button,
+	.ui-btn.--air.crm-entity-widget-content-block-inner-pay-button {
+		margin-left: 0;
+	}
+}
+/*endregion*/
+
 .crm-entity-widget-content-block-click-empty.crm-entity-widget-content-block-field-money .crm-entity-widget-content-block-inner {
 	opacity: 1;
 }
@@ -2679,6 +2748,25 @@ div.crm-entity-widget-content-block-radio-label {
 	-webkit-box-align: center;
 	align-items: center;
 }
+
+/*region Reflow: wrapping the card actions row at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The "Create section / Marketplace / Card general view" row is a flex with no wrap.
+	Measured at a card area width of 241px: container 201px, children 52 + 84 + 57
+	plus the gaps do not fit, and the last label ends at 259px — 18px past the edge
+	of the area. It gets clipped by the edge, and there is nowhere to pull the full text from.
+	Below the breakpoint we allow wrapping.
+
+	This is a separate container from `.ui-entity-card-content-actions-container`
+	(the "Select field / Delete section" row) — that one lives in the ui module and is fixed there.
+*/
+@media (max-width: 768px) {
+	.crm-entity-card-widget-add-btn-container {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
+}
+/*endregion*/
 
 .crm-entity-card-common,
 .crm-entity-card-private {
@@ -2896,6 +2984,71 @@ div.crm-entity-widget-content-block-radio-label {
 }
 
 .crm-entity-widget-content-block-mutlifield-value { -ms-flex-order: 1; -webkit-box-ordinal-group: 2; order: 1; }
+
+/*region Reflow: the "value — type" row wraps at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The row is compound: the value on the left (phone, email, website), the type label on the right
+	("Work", "Corporate"). A flex with no wrap: the type label claims its own
+	width, and the value is left with the remainder. Measured at a card area width of 241px:
+	row 155px, type 65px, value 80px — but the phone "8 (401) 253-12-49" needs ~130px.
+	Then the inherited word-break: break-word kicks in and breaks the value
+	IN THE MIDDLE of a token: "8 / (401) / 253- / 12-49", "ww / w.m / pzk. / com".
+
+	Below the breakpoint we allow wrapping and give the value the whole row — the type label
+	moves to the next one. order: 0 is required: the value has order: 1 declared,
+	and without resetting it on wrap the type label would end up ABOVE the value.
+
+	The full width is enough for email and website, but not for the longest phone: it needs
+	a bit more than 155px, and the wrap still happens. So the second part of the fix is
+	to fix WHERE the break lands. The inherited `word-break: break-word` breaks per character
+	("253-12-" / "49"), which reads as corrupted data. We switch to the standard pair:
+
+	  word-break: normal        — break only at spaces,
+	  overflow-wrap: break-word — but still break a word if it alone does not fit.
+
+	The phone gets "8 (401)" / "253-12-49" — the groups stay intact. The safeguard against
+	overflowing the viewport stays: a pathologically long value with no spaces will still
+	be broken rather than sliding off into horizontal scrolling (which would violate 1.4.10).
+*/
+@media (max-width: 768px) {
+	.crm-entity-widget-content-block-mutlifield {
+		flex-wrap: wrap;
+	}
+
+	.crm-entity-widget-content-block-mutlifield-value {
+		order: 0;
+		flex-basis: 100%;
+		max-width: 100%;
+	}
+
+	.crm-entity-widget-content-block-mutlifield-value,
+	.crm-entity-widget-content-block-mutlifield-value .crm-entity-phone-number {
+		word-break: normal;
+		overflow-wrap: break-word;
+	}
+
+	/*
+		A hyphen is a Unicode line-break opportunity, so "8 (401) 253-12-49"
+		wraps after "253-12-" regardless of word-break, even though it fits:
+		max-content is 129px inside a 155px container. width: max-content asks
+		for exactly the width the content needs so the browser stops wrapping it.
+
+		The element also carries margin-right: 35px reserving room for the
+		absolutely-positioned call icon (right: -25px, width: 20px, so its right
+		edge sits at -5px). A plain max-width: 100% ignores that margin, letting
+		the outer box reach content + 35px and overflow a narrow container.
+		Reserve 25px instead — enough for the icon's -5px right edge — and cap the
+		content at 100% minus that reserve so the outer box never exceeds the row.
+		If the number is longer than the cap (international, with extension), the
+		width clamps and wrapping resumes as before.
+	*/
+	.crm-entity-widget-content-block-mutlifield-value .crm-entity-phone-number {
+		width: max-content;
+		max-width: calc(100% - 25px);
+		margin-right: 25px;
+	}
+}
+/*endregion*/
 
 /*endregion*/
 
@@ -3937,8 +4090,14 @@ a.crm-widget-employee-position:hover {
 
 .crm-entity-widget-client-contact-item:last-child:after { content: ''; }
 
-.crm-entity-widget-client-contact-phone, .crm-entity-widget-client-contact-email { margin: 0 3px 0 0; }
+.crm-entity-widget-client-contact-phone,
+.crm-entity-widget-client-contact-email {
+	margin: 0 3px 0 0;
+	min-width: 0;
+	max-width: 100%;
+}
 
+.crm-entity-widget-client-contact-phone,
 .crm-entity-widget-client-contact-email {
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -4480,6 +4639,16 @@ html[data-input-modality="keyboard"] .crm-entity-widget-payment-detail-inner > .
 	width: auto;
 }
 
+.crm-entity-selector-container__icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-70);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
 .ui-link .crm-entity-widget-payment-rub {
 	display: inline-block;
 	max-width: 10px;
@@ -4500,3 +4669,79 @@ html[data-input-modality="keyboard"] .crm-entity-widget-payment-detail-inner > .
 	margin-left: 5px;
 }
 
+/*region Reflow: the "Total due" row stacked at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The label and the amount sit in one flex row (space-between) with no wrap.
+	At narrow widths the amount is left with about 50px, and the number breaks mid-group.
+	Below the breakpoint we stack them — the amount takes the full block width.
+	The rule is placed at the end of the file: .crm-entity-widget-payment-total is declared
+	in several places, and this way it reliably overrides the later declarations.
+*/
+@media (max-width: 768px) {
+	.crm-entity-widget-payment-total {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+}
+/*endregion*/
+
+
+/*region Reflow: the client block wraps instead of truncating (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The name shares one flex row with the call/mail/chat icons and is cut with an ellipsis:
+	.crm-entity-widget-participants-block .crm-entity-widget-client-box-name pins white-space: nowrap
+	at (0,2,0) and, with flex-basis 0, the icons take the width first - measured at a card width of
+	241px the name was left with 26px of the 116px it needs, so "Boris Sokolov" rendered as "B...".
+	The position line loses its text the same way and the e-mail ends up with zero visible width.
+	Dropping nowrap alone makes it worse: the name then wraps inside those 26px, a letter or two per
+	line. So below the breakpoint the name takes the whole row and the icons move under it.
+
+	Specificity is repeated on purpose - the rules above are (0,2,0) for the name and the position -
+	and this region sits at the end of the file, so source order decides. The contacts ask for their
+	own width instead of stretching: the separator comma is an ::after pseudo-element, and a stretched
+	item breaks the phone after a hyphen ("8 (903) 236-55- / 44,"), the same reason width: max-content
+	was needed for the multifield values.
+*/
+@media (max-width: 768px) {
+	.crm-entity-widget-participants-block .crm-entity-widget-client-box-name-row {
+		flex-wrap: wrap;
+		row-gap: 4px;
+	}
+
+	.crm-entity-widget-participants-block .crm-entity-widget-client-box-name {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+		-o-text-overflow: clip;
+		flex-basis: 100%;
+	}
+
+	.crm-entity-widget-participants-block .crm-entity-widget-client-box-position {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+		-o-text-overflow: clip;
+	}
+
+	.crm-entity-widget-client-contact {
+		flex-wrap: wrap;
+		row-gap: 2px;
+		white-space: normal;
+	}
+
+	.crm-entity-widget-client-contact-item {
+		flex: 0 0 auto;
+		width: max-content;
+		max-width: 100%;
+		word-break: normal;
+		overflow-wrap: break-word;
+	}
+
+	.crm-entity-widget-client-contact-email {
+		overflow: visible;
+		text-overflow: clip;
+		-o-text-overflow: clip;
+	}
+}
+/*endregion*/

@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/widget-loader.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	minification: true,
 };

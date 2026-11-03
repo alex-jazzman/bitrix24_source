@@ -5,26 +5,26 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
-$this->setFrameMode(true);?>
-<?php
+$this->setFrameMode(true);
+
 $INPUT_ID = trim($arParams['~INPUT_ID']);
-if ($INPUT_ID == '')
+if ($INPUT_ID === '')
 {
 	$INPUT_ID = 'title-search-input';
 }
 $INPUT_ID = CUtil::JSEscape($INPUT_ID);
 
 $CONTAINER_ID = trim($arParams['~CONTAINER_ID']);
-if ($CONTAINER_ID == '')
+if ($CONTAINER_ID === '')
 {
 	$CONTAINER_ID = 'title-search';
 }

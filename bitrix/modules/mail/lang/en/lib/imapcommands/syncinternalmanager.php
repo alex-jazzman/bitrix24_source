@@ -8,3 +8,4 @@ $MESS["MAIL_CLIENT_SPAM_FOLDER_NOT_SELECTED_ERROR"] = "Destination folder for sp
 $MESS["MAIL_CLIENT_SYNC_ERROR"] = "Data sync error";
 $MESS["MAIL_CLIENT_TRASH_FOLDER_NOT_SELECTED_ERROR"] = "Destination folder for deleted messages is not selected";
 $MESS["MAIL_CLIENT_WRONG_PARAMETERS"] = "Invalid parameters";
+$MESS['MAIL_MESSAGE_DELETE_ACCESS_DENIED'] = 'Insufficient permissions to delete emails';

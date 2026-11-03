@@ -5,13 +5,15 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import { $addNodeStyle, $isAtNodeEnd, $patchStyleText, $sliceSelectedTextNodeContent, $trimTextContentFromAnchor } from './lexical-node';
-import { $getSelectionStyleValueForProperty, $isParentElementRTL, $moveCaretSelection, $moveCharacter, $selectAll, $setBlocksType, $shouldOverrideDefaultCharacterSelection, $wrapNodes } from './range-selection';
-import { createDOMRange, createRectsFromDOMRange, getStyleObjectFromCSS } from './utils';
-export { 
-/** @deprecated moved to the lexical package */ $cloneWithProperties, } from 'ui.lexical.core';
-export { $addNodeStyle, $isAtNodeEnd, $patchStyleText, $sliceSelectedTextNodeContent, $trimTextContentFromAnchor, };
+import { getStyleObjectFromCSS as getStyleObjectFromCSS_ } from 'ui.lexical.core';
+import { $trimTextContentFromAnchor } from './lexical-node';
+export { $addNodeStyle, $ensureForwardRangeSelection, $forEachSelectedTextNode, $isAtNodeEnd, $patchStyleText, $sliceSelectedTextNodeContent, $trimTextContentFromAnchor, } from './lexical-node';
+export { $copyBlockFormatIndent, $getSelectionStyleValueForProperty, $isAtEdgeOfElement, $isParentElementRTL, $moveCaretSelection, $moveCharacter, $setBlocksType, $shouldOverrideDefaultCharacterSelection, $wrapNodes, } from './range-selection';
+export { $getComputedStyleForElement, $getComputedStyleForParent, $isParentRTL, createDOMRange, createRectsFromDOMRange, getCSSFromStyleObject, } from './utils';
+/** @deprecated moved to the `lexical` package */
+export declare const getStyleObjectFromCSS: typeof getStyleObjectFromCSS_;
 /** @deprecated renamed to {@link $trimTextContentFromAnchor} by @lexical/eslint-plugin rules-of-lexical */
 export declare const trimTextContentFromAnchor: typeof $trimTextContentFromAnchor;
-export { $getSelectionStyleValueForProperty, $isParentElementRTL, $moveCaretSelection, $moveCharacter, $selectAll, $setBlocksType, $shouldOverrideDefaultCharacterSelection, $wrapNodes, };
-export { createDOMRange, createRectsFromDOMRange, getStyleObjectFromCSS };
+export { 
+/** @deprecated moved to the lexical package */ $cloneWithProperties, 
+/** @deprecated moved to the lexical package */ $selectAll, } from 'ui.lexical.core';

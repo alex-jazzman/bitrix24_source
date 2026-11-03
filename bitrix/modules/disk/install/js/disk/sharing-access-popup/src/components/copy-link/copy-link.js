@@ -174,6 +174,7 @@ export const AccessCopyLink = {
 	template: `
 		<UiButton
 			:text="buttonText"
+			:dataset="{ testid: 'disk-sharing-access-copy-link' }"
 			:leftIcon="toggleIcon"
 			:size="ButtonSize.MEDIUM"
 			:style="buttonStyle"

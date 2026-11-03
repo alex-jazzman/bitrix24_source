@@ -19,6 +19,9 @@
 }
 
 .bx-im-list-base__fixed_container .bx-im-list-recent-item__wrap:not(.--selected) {
+	--im-list-recent-item__background-color: var(--im-list-base-fixed__background-color_container);
+	--im-list-recent-item__background-color_hover: var(--im-list-base-fixed__background-color_container_hover);
+
 	background-color: var(--im-list-base-fixed__background-color_container);
 }
 

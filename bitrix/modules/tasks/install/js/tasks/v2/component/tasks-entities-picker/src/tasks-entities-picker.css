@@ -11,6 +11,11 @@
 	text-align: inherit;
 	cursor: pointer;
 }
+.tasks-entities-picker__entity:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
 .tasks-entities-picker__head-text,
 .tasks-entities-picker__loader-text,
 .tasks-entities-picker__entity-text,
@@ -52,12 +57,17 @@
 	color: var(--ui-color-base-4);
 }
 
+/* overflow-y makes this a scroll container on both axes, clipping the entity focus ring on the
+   left. The negative margin and the equal padding widen the clip box without moving the rows;
+   scroll-padding keeps the ring off the scroll edges when focus moves through the list. */
 .tasks-entities-picker__list {
 	position: relative;
-	margin: 0 -5px 0 0;
+	margin: 0 -5px 0 -4px;
+	padding-left: 4px;
 	max-height: var(--height-max-content);
 	overflow-y: auto;
 	scrollbar-width: thin;
+	scroll-padding: 3px 0;
 }
 
 .tasks-entities-picker__list-container {
@@ -66,7 +76,9 @@
 	flex-direction: column;
 	gap: 10px;
 	padding: 20px 0 20px 0;
-	width: var(--width-content-scrollable);
+	/* Relative width so the list reflows on narrow viewports instead of clipping the fixed popup width. */
+	width: 100%;
+	max-width: var(--width-content-scrollable);
 }
 .tasks-entities-picker__list:not(:first-child) .tasks-entities-picker__list-container {
 	padding-top: 10px;
@@ -185,7 +197,7 @@
 }
 
 .tasks-entities-picker__entity-tooltip {
-	--color-popup-bg: darkcyan;
+	--color-popup-bg: var(--ui-color-base-8);
 	--border-radius-popup: 10px;
 	--opacity-popup-bg: 0.7;
 }

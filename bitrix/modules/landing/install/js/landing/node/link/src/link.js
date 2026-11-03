@@ -255,6 +255,11 @@ export class Link extends Base
 			Dom.attr(this.node, 'data-url', null);
 			Dom.attr(this.node, 'data-embed', null);
 		}
+
+		if (this.manifest.ariaLabelFromHref === true)
+		{
+			Dom.attr(this.node, 'aria-label', this.node.getAttribute('href') || '#');
+		}
 	}
 
 	/**

@@ -1,0 +1,29 @@
+/* The container clipped nothing but the focus ring; min-width keeps the shrink the clipping gave it. */
+.block-store-store-v3-menu-3 .landing-block-node-title-container {
+	min-width: 0;
+	overflow: visible;
+}
+
+/* The ring stands outside the control: the light tone fills the gap, the dark one is the ring. */
+.block-store-store-v3-menu-3 .landing-block-node-title:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+}
+
+/* The phone keeps 25px of padding (g-px-25) on either side: the ring goes round the icon and the caption. */
+.block-store-store-v3-menu-3 .landing-block-node-phone:focus-visible {
+	position: relative;
+	outline: none;
+	box-shadow: none;
+}
+
+.block-store-store-v3-menu-3 .landing-block-node-phone:focus-visible::before {
+	position: absolute;
+	inset: 0 25px;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}

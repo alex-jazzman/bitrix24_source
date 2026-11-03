@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'loc',
-		'type',
 		'ui-system/blocks/avatar',
 		'layout/ui/user/user-name',
 		'selector/providers/common',
@@ -17,6 +16,7 @@ return [
 		'./src/entities/user',
 		'./src/entities/meta-user',
 		'./src/entities/department',
+		'./src/entities/structure-node',
 		'./src/entities/project',
 		'./src/entities/base-entity',
 	],

@@ -7,3 +7,4 @@ $MESS['BICONNECTOR_REBIND_POPUP_REBIND_TITLE'] = 'Перепривязать к 
 $MESS['BICONNECTOR_REBIND_POPUP_REBIND_DESCRIPTION'] = 'BI Конструктор продолжит работу с данными этого портала';
 $MESS['BICONNECTOR_REBIND_POPUP_DISABLE_TITLE'] = 'Выключить BI Конструктор';
 $MESS['BICONNECTOR_REBIND_POPUP_DISABLE_DESCRIPTION'] = 'Выберите этот вариант, если не планируете использовать BI Конструктор в этом Битрикс24.';
+$MESS['BICONNECTOR_REBIND_POPUP_ERROR'] = 'Не удалось перенастроить BI Конструктор. Обновите страницу и попробуйте ещё раз';

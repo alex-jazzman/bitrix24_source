@@ -2,6 +2,7 @@ import type { SetupTemplateData } from '../../../setup-template/src/types';
 import {
 	ACTION_TYPE,
 	AJAX_REQUEST_TYPE,
+	CHANGE_OWNER_DIALOG_OUTCOME,
 	EXISTING_RUNS_WARNING_OUTCOME,
 	FILTER_HINT_STATE,
 	GRID_API_ACTION,
@@ -27,6 +28,15 @@ export type LaunchControlFieldType = {
 	agentId: number,
 	launchedAt: ?number,
 	ragFilesStatuses: ?RagFilesStatusesDataType,
+};
+
+/**
+ * Render params of the version cell (DTO-10). The two axes are independent: a date does not imply
+ * a state and a state does not imply a date, and both empty means the cell renders a dash.
+ */
+export type VersionFieldType = {
+	state: ?string,
+	date: ?number,
 };
 
 export type DepartmentFieldType = {
@@ -104,6 +114,19 @@ export type RestartActionParams = {
 
 export type RestartActionDataType = {
 	templateId: number,
+};
+
+export type ChangeOwnerActionParams = {
+	templateId: string,
+	expectedOwnerId: string,
+};
+
+/**
+ * Owner the copy ended up with. The transfer is the only action whose answer is a value and not a
+ * row, so the new state of the row is read back separately.
+ */
+export type ChangeOwnerResponse = {
+	ownerId: number,
 };
 
 export type UpgradeActionParams = {
@@ -230,5 +253,15 @@ export type ExistingRunsDecision = {
 };
 
 export type ExistingRunsWarningOutcome = $Values<typeof EXISTING_RUNS_WARNING_OUTCOME>;
+
+export type ChangeOwnerDialogOutcome = $Values<typeof CHANGE_OWNER_DIALOG_OUTCOME>;
+
+/**
+ * userId is filled only for the confirmed outcome; a cancelled dialog carries none.
+ */
+export type ChangeOwnerDialogResult = {
+	outcome: ChangeOwnerDialogOutcome,
+	userId: ?number,
+};
 
 export type FilterHintState = $Values<typeof FILTER_HINT_STATE>;

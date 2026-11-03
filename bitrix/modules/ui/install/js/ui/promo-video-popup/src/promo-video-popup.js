@@ -1,4 +1,4 @@
-import { Loc, Tag, Type } from 'main.core';
+import { Dom, Loc, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Icon, Main as MainIconSet, Set } from 'ui.icon-set.api.core';
@@ -190,11 +190,23 @@ export class PromoVideoPopup extends EventEmitter
 			className: this.#getPopupClassname(),
 			events: {
 				onPopupClose: () => {
-					setTimeout(() => {
+					this.#keepStateForClosing();
+				},
+				/**
+				 * The popup is not cacheable, so it is taken apart right after the closing. This step
+				 * is the one every way the window goes reaches, a destruction in the middle of the
+				 * closing included, while the step after the close is skipped there. The reference
+				 * goes before the event: a consumer that shows the promo from its own handler has to
+				 * get a new window built for it, not the one on its way out. The event itself leaves
+				 * the destruction: the popup takes its node, its overlay and its listeners apart
+				 * after this handler, and a subscriber that throws would leave that undone.
+				 */
+				onPopupDestroy: () => {
+					this.#popup = null;
+
+					queueMicrotask(() => {
 						this.emit(PromoVideoPopupEvents.HIDE);
-						this.#popup.destroy();
-						this.#popup = null;
-					}, 300);
+					});
 				},
 			},
 			animation: {
@@ -207,6 +219,30 @@ export class PromoVideoPopup extends EventEmitter
 		this.#popup.setOffset({
 			offsetTop: this.#offset?.top,
 			offsetLeft: this.#offset?.left,
+		});
+	}
+
+	/**
+	 * The popup takes the show class off and puts the close class on in one go, so a close that
+	 * interrupts the show would otherwise start the closing from the resting visible state and
+	 * make the popup jump. The state the show was cut at becomes the first frame of the closing.
+	 */
+	#keepStateForClosing(): void
+	{
+		const container = this.#popup.getPopupContainer();
+
+		// A repeated close keeps the movement of the close going, so a state written down again
+		// would move the first frame of a closing already under way.
+		if (Dom.hasClass(container, this.#getAnimationCloseClassName()))
+		{
+			return;
+		}
+
+		const interrupted = getComputedStyle(container);
+
+		Dom.style(container, {
+			'--ui__promo-video-popup_close-from-opacity': interrupted.opacity,
+			'--ui__promo-video-popup_close-from-transform': interrupted.transform,
 		});
 	}
 

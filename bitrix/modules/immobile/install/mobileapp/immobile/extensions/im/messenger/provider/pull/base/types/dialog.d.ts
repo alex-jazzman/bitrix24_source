@@ -107,3 +107,10 @@ export type CopilotChangeEnginePullHandlerParams = {
 	engineCode: string,
 	engineName: string,
 };
+
+export type CopilotGenerationStatePullHandlerParams = {
+	dialogId: string,
+	chatId: number,
+	status: 'generating' | 'stopped' | 'completed' | 'error',
+	initiatorId: number,
+};

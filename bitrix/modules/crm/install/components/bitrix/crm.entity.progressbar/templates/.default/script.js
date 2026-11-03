@@ -22,7 +22,14 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 		this._isReadOnly = false;
 		this._terminationControl = null;
 		this._permissionChecker = null;
+		this._stageDescriptionTooltip = null;
+		this._stageDescriptionTooltipStepId = null;
+		this._stageDescriptionTooltipRequestId = 0;
+		this._stageDescriptionChangeHandler = null;
 		this._beforeFailureDialogOpenStepId = null;
+		this._stageFinalTransition = null;
+		this._isStageFinalTransitionOpening = false;
+		this._isStageFinalTransitionCloseHoverSuppressed = false;
 
 		this._entityEditorDialog = null;
 		this._entityEditorDialogHandler = BX.delegate(this.onEntityEditorDialogClose, this);
@@ -49,7 +56,6 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				this._currentSemantics = BX.prop.getString(this._settings, "currentSemantics", "");
 				this._stepInfoTypeId = BX.prop.getString(this._settings, "stepInfoTypeId", "");
 				this.loadingNotificationMessage = BX.prop.getString(this._settings, 'loadingNotificationMessage', null);
-
 				this.entityEditorGuid = BX.prop.getString(this._settings, 'entityEditorGuid', null);
 				this.eventId = BX.util.getRandomString(16);
 
@@ -95,6 +101,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				}
 
 				this._stepInfos = this._manager.getInfos(this._stepInfoTypeId);
+				this._stageDescriptionChangeHandler = this.onStageDescriptionChanged.bind(this);
+				BX.addCustomEvent('Crm.Stage.DescriptionChanged', this._stageDescriptionChangeHandler);
 				var currentStepIndex = this.findStepInfoIndex(this._currentStepId);
 				var currentStepInfo = this._stepInfos[currentStepIndex];
 
@@ -109,7 +117,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					}
 
 					var stepContainerText = stepContainer.querySelector(".crm-entity-section-status-step-item-text");
-					if (stepContainerText.scrollWidth > (stepContainerText.clientWidth))
+					const isNameCropped = stepContainerText.scrollWidth > stepContainerText.clientWidth;
+					if (isNameCropped)
 					{
 						BX.addClass(stepContainer, "crm-entity-section-status-step-hover");
 						stepContainer.style.maxWidth = stepContainerText.scrollWidth + 23 + "px"
@@ -120,6 +129,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						{
 							name: info["name"],
 							hint: BX.prop.getString(info, "hint", ""),
+							description: BX.prop.getString(info, 'description', ''),
 							sort: BX.prop.getNumber(info, "sort", 0),
 							semantics: BX.prop.getString(info, "semantics", ""),
 							index: i,
@@ -138,6 +148,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				{
 					this.adjustStepsByCurrentStep();
 					this.adjustStepDisabling();
+					this.adjustStepCurrent();
 				}
 
 				BX.addCustomEvent(window, 'Crm.EntityModel.Change', this.onEntityModelChange.bind(this));
@@ -365,6 +376,11 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					return false;
 				}
 
+				BX.UI?.Notification?.Center
+					?.getBalloonById('crm-stage-final-transition-toast')
+					?.close()
+				;
+
 				if(BX.prop.getBoolean(options, 'keepPreviousStep', true))
 				{
 					this._previousStepId = this._currentStepId;
@@ -382,6 +398,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				this.adjustStepsVisibility();
 				this.adjustFinalStepName();
 				this.adjustStepDisabling();
+				this.adjustStepCurrent();
 
 				BX.onCustomEvent(
 					window,
@@ -495,6 +512,24 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					}
 				}
 			},
+			//Keep aria-current in sync with the current stage. The stage changes
+			//without a page reload, so the initial aria-current="step" rendered by
+			//the template would otherwise stay on the previous stage and a screen
+			//reader would announce the wrong position (WCAG 4.1.2, 1.4.1).
+			adjustStepCurrent: function()
+			{
+				for (let i = 0, l = this._steps.length; i < l; i++)
+				{
+					if (this._steps[i].getId() === this._currentStepId)
+					{
+						this._steps[i].setCurrent();
+					}
+					else
+					{
+						this._steps[i].removeCurrent();
+					}
+				}
+			},
 			setStepColorsBefore: function(step)
 			{
 				var textColor = step.calculateTextColor();
@@ -565,6 +600,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						onsuccess: this.onSaveRequestSuccess.bind(this),
 						onfailure: () => {
 							this.setLoading(false);
+							BX.onCustomEvent(this, 'Crm.EntityProgress.SaveFailed', [this, {}]);
 						},
 					}
 				);
@@ -599,10 +635,15 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
 
 					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					BX.onCustomEvent(this, 'Crm.EntityProgress.SaveFailed', [this, data]);
 
 					return;
 				}
 
+				this.completeSaveRequestSuccess(data);
+			},
+			completeSaveRequestSuccess(data)
+			{
 				this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 
 				BX.onCustomEvent(
@@ -624,6 +665,9 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			},
 			openEntityEditorDialog: function(params)
 			{
+				this._stageFinalTransition?.close();
+				this._stageFinalTransition = null;
+
 				BX.Crm.PartialEditorDialog.close("progressbar-entity-editor");
 
 				this._entityEditorDialog = BX.Crm.PartialEditorDialog.create(
@@ -669,14 +713,40 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					{
 						this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL);
 					}
+
+					BX.onCustomEvent(this, 'Crm.EntityProgress.SaveFailed', [
+						this,
+						{ code: 'CRM_STAGE_TRANSITION_CANCELLED' },
+					]);
 				}
 				else if (this._analyticsData)
 				{
-					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+					this.completeSaveRequestSuccess({
+						VALUE: BX.prop.getString(eventParams, 'stageId', this._currentStepId) || this._currentStepId,
+					});
 				}
 			},
 			openTerminationDialog: function()
 			{
+				if (!this._skipStageFinalTransition)
+				{
+					if (this._stageFinalTransition || this._isStageFinalTransitionOpening)
+					{
+						return;
+					}
+
+					this._isStageFinalTransitionOpening = true;
+					BX.Crm.EntityDetailProgressControl.getFinalTransitionExtension().then((finalTransition) => {
+						this._isStageFinalTransitionOpening = false;
+						if (!this.openStageFinalTransition(finalTransition))
+						{
+							this.openLegacyTerminationDialog();
+						}
+					});
+
+					return;
+				}
+
 				if(this._terminationDlg)
 				{
 					this._terminationDlg.close();
@@ -702,6 +772,219 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				);
 
 				this._terminationDlg.open();
+			},
+			openStageFinalTransition(
+				finalTransition = BX?.Crm?.Stage?.FinalTransition,
+			)
+			{
+				if (!BX.type.isFunction(finalTransition?.open))
+				{
+					return false;
+				}
+
+				const currentStage = this.getFinalTransitionStageData(this._stepInfos[this.findStepInfoIndex(this._currentStepId)]);
+				const successStage = this.getFinalTransitionStageData(this.findStepInfoBySemantics('success'));
+				const failureStages = [
+					this.findStepInfoBySemantics('failure'),
+					...this.findAllStepInfoBySemantics('apology'),
+				]
+					.map((stage) => this.getFinalTransitionStageData(stage))
+					.filter((stage) => BX.type.isNotEmptyString(stage.statusId))
+				;
+
+				if (!BX.type.isNotEmptyString(currentStage.statusId) || !BX.type.isNotEmptyString(successStage.statusId))
+				{
+					return false;
+				}
+
+				const customSuccessOptions = {};
+				if (this._terminationControl)
+				{
+					const successButton = this._terminationControl.prepareStageFinalTransitionSuccessButton();
+					if (!successButton)
+					{
+						return false;
+					}
+
+					customSuccessOptions.successButton = successButton;
+					customSuccessOptions.onSuccessButtonShow = (complete) => {
+						this._terminationControl.onStageFinalTransitionSuccessButtonShow(complete);
+					};
+					customSuccessOptions.onSuccessButtonHide = () => {
+						this._terminationControl.onStageFinalTransitionSuccessButtonHide();
+					};
+				}
+
+				const stageFinalTransition = finalTransition.open({
+					currentStage,
+					successStage,
+					failureStages,
+					entityTitle: this.getEntityTitle(),
+					entityTextContext: {
+						entityTypeId: this._entityTypeId,
+						entityTypeName: this._entityType,
+					},
+					onMoveToStage: (statusId) => {
+						return this.moveToStageWithPromise(statusId).then((result) => {
+							if (this._stageFinalTransition === stageFinalTransition)
+							{
+								this._stageFinalTransition = null;
+							}
+
+							return result;
+						});
+					},
+					canMoveToStage: (statusId) => {
+						if (statusId === successStage.statusId)
+						{
+							return this.isHasPermissionToMoveSuccessStage();
+						}
+
+						return this.getPermissionChecker().isHasPermissionToMove(
+							currentStage.statusId,
+							statusId,
+						);
+					},
+					onMovePermissionDenied: () => {
+						this.showMissPermissionError();
+					},
+					onUndo: (previousStatusId, targetStatusId) => {
+						if (this.isLoading || this.getCurrentStepId() !== targetStatusId)
+						{
+							return Promise.reject({ code: 'CRM_STAGE_TRANSITION_CANCELLED' });
+						}
+
+						return this.moveToStageWithPromise(previousStatusId);
+					},
+					isMoveCancelled: (error) => error?.code === 'CRM_STAGE_TRANSITION_CANCELLED',
+					onClose: () => {
+						this._stageFinalTransition = null;
+						this._isStageFinalTransitionCloseHoverSuppressed = true;
+						this.adjustStepsByCurrentStep();
+						window.requestAnimationFrame(() => {
+							this._isStageFinalTransitionCloseHoverSuppressed = false;
+						});
+					},
+					...customSuccessOptions,
+					analytics: this._analyticsData ?? {},
+				});
+				this._stageFinalTransition = stageFinalTransition;
+
+				return true;
+			},
+			getEntityTitle()
+			{
+				const editor = BX.Crm.EntityEditor?.get(this.entityEditorGuid) || BX.Crm.EntityEditor?.getDefault?.();
+				const title = editor?.getModel?.()?.getField?.('TITLE', '');
+
+				return BX.type.isNotEmptyString(title) ? title : '';
+			},
+			openLegacyTerminationDialog()
+			{
+				this._skipStageFinalTransition = true;
+
+				try
+				{
+					this.openTerminationDialog();
+				}
+				finally
+				{
+					this._skipStageFinalTransition = false;
+				}
+			},
+			getFinalTransitionStageData(stepInfo)
+			{
+				if (!stepInfo)
+				{
+					return {};
+				}
+
+				return {
+					...stepInfo,
+					statusId: stepInfo.id,
+					description: BX.prop.getString(stepInfo, 'description', ''),
+				};
+			},
+			getStageDescriptionCategoryId()
+			{
+				const match = /^category_(-?\d+)$/.exec(this._stepInfoTypeId);
+
+				return match ? parseInt(match[1], 10) : 0;
+			},
+			onStageDescriptionChanged(params)
+			{
+				if (
+					!BX.Type.isPlainObject(params)
+					|| String(params.entityType).toUpperCase() !== String(this._entityType).toUpperCase()
+					|| Number(params.categoryId ?? 0) !== this.getStageDescriptionCategoryId()
+				)
+				{
+					return;
+				}
+
+				const stepIndex = this.findStepInfoIndex(params.stageId);
+				if (stepIndex < 0)
+				{
+					return;
+				}
+
+				const stepInfo = this._stepInfos[stepIndex];
+				const step = this.getStepById(params.stageId);
+				if (BX.Type.isString(params.description))
+				{
+					stepInfo.description = params.description;
+					step?.setDescription(params.description);
+				}
+			},
+			moveToStageWithPromise(stageId)
+			{
+				const stepIndex = this.findStepInfoIndex(stageId);
+				if (stepIndex < 0)
+				{
+					return Promise.reject(new Error('Stage is not found'));
+				}
+
+				return new Promise((resolve, reject) => {
+					const onSuccess = (control) => {
+						if (control !== this)
+						{
+							return;
+						}
+
+						cleanup();
+						resolve(this.getFinalTransitionStageData(this._stepInfos[this.findStepInfoIndex(stageId)]));
+					};
+
+					const onFailure = (control, error) => {
+						if (control !== this)
+						{
+							return;
+						}
+
+						cleanup();
+						reject(error);
+					};
+
+					const cleanup = () => {
+						BX.removeCustomEvent(window, 'Crm.EntityProgress.Saved', onSuccess);
+						BX.removeCustomEvent(this, 'Crm.EntityProgress.SaveFailed', onFailure);
+					};
+
+					BX.addCustomEvent(window, 'Crm.EntityProgress.Saved', onSuccess);
+					BX.addCustomEvent(this, 'Crm.EntityProgress.SaveFailed', onFailure);
+
+					this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(
+							this._entityTypeId,
+							this._entityId,
+						)
+						.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_DETAILS)
+						.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_DETAILS_PROGRESS_BAR)
+						.buildData();
+
+					this.setCurrentStep(this._stepInfos[stepIndex]);
+					this.adjustSteps(stepIndex, BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[stepIndex]));
+					this.save();
+				});
 			},
 			terminationButtonPrepareCallback(button, stepInfo)
 			{
@@ -991,6 +1274,13 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			},
 			processStepHover: function(step)
 			{
+				if (this._isStageFinalTransitionCloseHoverSuppressed)
+				{
+					return;
+				}
+
+				this.showStageDescriptionTooltip(step);
+
 				if (step.isDisabled())
 				{
 					return;
@@ -1003,6 +1293,13 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			},
 			processStepLeave: function(step)
 			{
+				this._stageDescriptionTooltipRequestId++;
+				if (this._stageDescriptionTooltipStepId === step.getId())
+				{
+					this._stageDescriptionTooltipStepId = null;
+				}
+				this._stageDescriptionTooltip?.hide();
+
 				if(step.getIndex() < (this._steps.length - 1))
 				{
 					this.recoverStepColorsBefore(step);
@@ -1010,6 +1307,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			},
 			processStepSelect: function(step)
 			{
+				this.hideStageDescriptionTooltip();
+
 				if (this.isLoading)
 				{
 					this.throttleShowLoadingNotification();
@@ -1046,6 +1345,49 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				{
 					this.setupStep(step);
 				}
+			},
+			showStageDescriptionTooltip(step)
+			{
+				const stepIndex = this.findStepInfoIndex(step.getId());
+				const stepInfo = stepIndex >= 0 ? this._stepInfos[stepIndex] : null;
+				if (!stepInfo || !BX.Type.isStringFilled(stepInfo.description))
+				{
+					return;
+				}
+
+				this._stageDescriptionTooltipStepId = step.getId();
+				const requestId = ++this._stageDescriptionTooltipRequestId;
+				BX.Crm.EntityDetailProgressControl.getStageDescriptionTooltipExtension().then((Tooltip) => {
+					if (!Tooltip)
+					{
+						return;
+					}
+
+					this._stageDescriptionTooltip ??= new Tooltip();
+					if (
+						this._stageDescriptionTooltipRequestId !== requestId
+						|| this._stageDescriptionTooltipStepId !== step.getId()
+						|| this.getStepById(step.getId()) !== step
+					)
+					{
+						return;
+					}
+
+					const description = BX.prop.getString(stepInfo, 'description', '');
+					step.setDescription(description);
+					this._stageDescriptionTooltip.show({
+						bindElement: step.getElement(),
+						name: step.getName(),
+						description,
+						showName: false,
+					});
+				});
+			},
+			hideStageDescriptionTooltip()
+			{
+				this._stageDescriptionTooltipRequestId++;
+				this._stageDescriptionTooltipStepId = null;
+				this._stageDescriptionTooltip?.hideImmediately();
 			},
 			setupStep: function(step)
 			{
@@ -1158,6 +1500,38 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 	{
 		BX.Crm.EntityDetailProgressControl.defaultColors = {};
 	}
+	BX.Crm.EntityDetailProgressControl._finalTransitionExtensionPromise = null;
+	BX.Crm.EntityDetailProgressControl._stageDescriptionTooltipExtensionPromise = null;
+	BX.Crm.EntityDetailProgressControl.getFinalTransitionExtension = function()
+	{
+		this._finalTransitionExtensionPromise ??= BX.Runtime.loadExtension('crm.stage.final-transition')
+			.then((exports) => {
+				return BX.type.isFunction(exports?.FinalTransition?.open) ? exports.FinalTransition : null;
+			})
+			.catch(() => {
+				this._finalTransitionExtensionPromise = null;
+
+				return null;
+			})
+		;
+
+		return this._finalTransitionExtensionPromise;
+	};
+	BX.Crm.EntityDetailProgressControl.getStageDescriptionTooltipExtension = function()
+	{
+		this._stageDescriptionTooltipExtensionPromise ??= BX.Runtime.loadExtension('crm.stage.description-tooltip')
+			.then((exports) => {
+				return BX.type.isFunction(exports?.StageDescriptionTooltip) ? exports.StageDescriptionTooltip : null;
+			})
+			.catch(() => {
+				this._stageDescriptionTooltipExtensionPromise = null;
+
+				return null;
+			})
+		;
+
+		return this._stageDescriptionTooltipExtensionPromise;
+	};
 	BX.Crm.EntityDetailProgressControl.getStepColor = function(stepInfo)
 	{
 		var color = BX.prop.getString(stepInfo, "color");
@@ -1189,8 +1563,11 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 		this._container = null;
 		this._element = null;
 		this._clickHandler = BX.delegate(this.onClick, this);
+		this._keyDownHandler = BX.delegate(this.onKeyDown, this);
 		this._hoverHandler = BX.delegate(this.onMouseHover, this);
 		this._leaveHandler = BX.delegate(this.onMouseLeave, this);
+		this._focusHandler = BX.delegate(this.onFocus, this);
+		this._blurHandler = BX.delegate(this.onBlur, this);
 
 		this._isVisible = true;
 		this._isDisabled = false;
@@ -1207,8 +1584,21 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 				this._container = BX.prop.getElementNode(this._settings, "container");
 				this._element = this._container.querySelector(".crm-entity-section-status-step-item-text");
 				BX.bind(this._container, "click", this._clickHandler);
-				BX.bind(this._element, "mouseenter", this._hoverHandler);
-				BX.bind(this._element, "mouseleave", this._leaveHandler);
+				BX.bind(this._container, "keydown", this._keyDownHandler);
+				BX.bind(this._container, "mouseenter", this._hoverHandler);
+				BX.bind(this._container, "mouseleave", this._leaveHandler);
+				BX.bind(this._container, "focus", this._focusHandler);
+				BX.bind(this._container, "blur", this._blurHandler);
+
+				if (!BX.prop.getBoolean(this._settings, "isReadOnly", false))
+				{
+					this._container.setAttribute("role", "button");
+					this._container.setAttribute("tabindex", "0");
+				}
+				else if (this.getDescription() !== "")
+				{
+					this._container.setAttribute("tabindex", "0");
+				}
 
 				if(BX.prop.getBoolean(this._settings, "isPassed", false))
 				{
@@ -1225,6 +1615,22 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 			getIndex: function()
 			{
 				return BX.prop.getNumber(this._settings, "index", 0);
+			},
+			getElement: function()
+			{
+				return this._element;
+			},
+			getName: function()
+			{
+				return BX.prop.getString(this._settings, 'name', this._id);
+			},
+			getDescription: function()
+			{
+				return BX.prop.getString(this._settings, 'description', '');
+			},
+			setDescription: function(description)
+			{
+				this._settings.description = BX.type.isString(description) ? description : '';
 			},
 			isVisible: function()
 			{
@@ -1267,9 +1673,39 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 			{
 				this._control.processStepLeave(this);
 			},
+			onFocus: function(e)
+			{
+				this._control.processStepHover(this);
+			},
+			onBlur: function(e)
+			{
+				this._control.processStepLeave(this);
+			},
 			onClick: function(e)
 			{
 				this._control.processStepSelect(this);
+			},
+			onKeyDown: function(e)
+			{
+				var key = e && e.key ? e.key : "";
+				if(key !== "Enter" && key !== " " && key !== "Spacebar")
+				{
+					return;
+				}
+				if (
+					BX.prop.getBoolean(this._settings, "isReadOnly", false)
+					|| (e.target !== this._container && !this._element.contains(e.target))
+				)
+				{
+					return;
+				}
+
+				if(e.preventDefault)
+				{
+					e.preventDefault();
+				}
+
+				this.onClick(e);
 			},
 			calculateTextColor: function()
 			{
@@ -1335,6 +1771,11 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 				}
 
 				BX.addClass(this._container, '--disabled');
+				//The step carries role="button"; mirror the disabled state in
+				//aria-disabled so a screen reader stops announcing a step that
+				//adjustStepDisabling() blocked by permissions or during loading
+				//as a plain, actionable button (WCAG 4.1.2).
+				this._container.setAttribute('aria-disabled', 'true');
 				this._isDisabled = true;
 			},
 			removeDisabled: function()
@@ -1345,7 +1786,19 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 				}
 
 				BX.removeClass(this._container, '--disabled');
+				this._container.setAttribute('aria-disabled', 'false');
 				this._isDisabled = false;
+			},
+			setCurrent: function()
+			{
+				//Marks this step as the entity's current position so a screen
+				//reader can announce it among the otherwise identical steps
+				//(WCAG 1.4.1, 4.1.2). Kept in sync from adjustStepCurrent().
+				this._container.setAttribute('aria-current', 'step');
+			},
+			removeCurrent: function()
+			{
+				this._container.removeAttribute('aria-current');
 			},
 		};
 
@@ -1361,33 +1814,24 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 
 	BX.Crm.EntityDetailProgressStep.calculateTextColor = function(baseColor)
 	{
-		var r, g, b;
-		if ( baseColor > 7 )
+		// Shared WCAG 2.1 rule from crm.stage.color: black or white, whichever has the higher contrast ratio.
+		return BX.Crm.Stage.getStageTextColor(BX.Crm.EntityDetailProgressStep.toHexColor(baseColor));
+	};
+	// getComputedStyle returns "rgb(r, g, b)" or "rgba(r, g, b, a)": convert it to "#rrggbb", ignoring alpha.
+	// Hex colors from data-base-color are passed as is.
+	BX.Crm.EntityDetailProgressStep.toHexColor = function(color)
+	{
+		var channels = BX.type.isString(color)
+			? color.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i)
+			: null;
+		if (!channels)
 		{
-			var hexComponent = baseColor.split("(")[1].split(")")[0];
-			hexComponent = hexComponent.split(",");
-			r = parseInt(hexComponent[0]);
-			g = parseInt(hexComponent[1]);
-			b = parseInt(hexComponent[2]);
-		}
-		else
-		{
-			if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(baseColor))
-			{
-				var c = baseColor.substring(1).split('');
-				if(c.length === 3)
-				{
-					c= [c[0], c[0], c[1], c[1], c[2], c[2]];
-				}
-				c = '0x'+c.join('');
-				r = ( c >> 16 ) & 255;
-				g = ( c >> 8 ) & 255;
-				b =  c & 255;
-			}
+			return color;
 		}
 
-		var y = 0.21 * r + 0.72 * g + 0.07 * b;
-		return ( y < 145 ) ? "#fff" : "#333";
+		return '#' + channels.slice(1, 4).map(function(channel) {
+			return Math.min(255, Math.round(parseFloat(channel))).toString(16).padStart(2, '0');
+		}).join('');
 	};
 	BX.Crm.EntityDetailProgressStep.create = function(id, settings)
 	{

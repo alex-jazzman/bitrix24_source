@@ -1,0 +1,22 @@
+<?php
+$MESS['SIGN_B2E_PROCESS_LIST_CONTENT_TRIMMED'] = 'Showing the first #COUNT# employees in this launch.';
+$MESS['SIGN_B2E_PROCESS_LIST_CREATE_PROCESS'] = 'Create workflow';
+$MESS['SIGN_B2E_PROCESS_LIST_DOCUMENTS_NONE'] = 'No documents';
+$MESS['SIGN_B2E_PROCESS_LIST_DOCUMENT_CREATED'] = 'Document created';
+$MESS['SIGN_B2E_PROCESS_LIST_DOCUMENT_LABEL'] = '#DOCUMENT#, #STATUS#';
+$MESS['SIGN_B2E_PROCESS_LIST_DOCUMENT_NOT_CREATED'] = 'Document not created';
+$MESS['SIGN_B2E_PROCESS_LIST_EMPTY_TEXT'] = 'Workflows route documents for approval using conditions, branches and steps outside e-Signature for HR. A document is created only if the workflow reaches the signing step.';
+$MESS['SIGN_B2E_PROCESS_LIST_EMPTY_TITLE'] = 'No launched workflows';
+$MESS['SIGN_B2E_PROCESS_LIST_GROUP_NAME'] = '#PROCESS# - employees: #COUNT#';
+$MESS['SIGN_B2E_PROCESS_LIST_PARTICIPANT_LABEL'] = '#NAME#, #DURATION#';
+$MESS['SIGN_B2E_PROCESS_LIST_PROTOCOL'] = 'Journal';
+$MESS['SIGN_B2E_PROCESS_LIST_RETRY'] = 'Retry';
+$MESS['SIGN_B2E_PROCESS_LIST_RUN_PROCESS'] = 'Launch workflow';
+$MESS['SIGN_B2E_PROCESS_LIST_STATE_COMPLETED'] = 'Completed';
+$MESS['SIGN_B2E_PROCESS_LIST_STATE_ERROR'] = 'Not started';
+$MESS['SIGN_B2E_PROCESS_LIST_STATE_IN_WORK'] = 'In progress';
+$MESS['SIGN_B2E_PROCESS_LIST_STATE_LAUNCHING'] = 'Starting';
+$MESS['SIGN_B2E_PROCESS_LIST_TITLE'] = 'Workflows';
+$MESS['SIGN_B2E_PROCESS_LIST_UNAVAILABLE_TEXT'] = 'The "HR workflows" SPA was deleted or could not be created due to plan restrictions. Workflows cannot be launched or created until this SPA is available.';
+$MESS['SIGN_B2E_PROCESS_LIST_UNAVAILABLE_TITLE'] = 'Workflows unavailable';
+$MESS['SIGN_B2E_PROCESS_LIST_USER_UNNAMED'] = 'User #ID#';

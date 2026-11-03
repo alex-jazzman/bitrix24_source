@@ -31,6 +31,7 @@ return [
 		'utils/test',
 		'tasks:checklist',
 		'tasks:checklist/controller',
+		'tasks:checklist/enum',
 		'tasks:entry',
 		'tasks:enum',
 		'tasks:layout/checklist/preview',

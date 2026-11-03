@@ -18,7 +18,7 @@
 	display: inline-block;
 	min-height: 108px;
 	min-width: 108px;
-	background-image: image-set(url(./images/person-key.png) 1x, url(./images/person-key2x.png) 2x);
+	background-image: image-set(url(../images/person-key.webp) 1x, url(../images/person-key2x.webp) 2x);
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
@@ -37,6 +37,6 @@
 
 .image-section.--person-key-img
 {
-	background: url('../images/person-key.png') center no-repeat;
+	background: url('../images/person-key.webp') center no-repeat;
 	background-size: 180%;
 }

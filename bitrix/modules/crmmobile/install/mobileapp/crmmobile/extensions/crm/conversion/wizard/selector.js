@@ -7,6 +7,7 @@ jn.define('crm/conversion/wizard/selector', (require, exports, module) => {
 	const { TypeName, Type, TypeId } = require('crm/type');
 	const { NotifyManager } = require('notify-manager');
 	const { CrmElementSelector } = require('crm/selector/entity/element');
+	const { createSelectorEvents } = require('crm/conversion/wizard/selector-events');
 
 	const SELECTOR_ENTITIES = [TypeName.Company, TypeName.Contact];
 
@@ -23,7 +24,6 @@ jn.define('crm/conversion/wizard/selector', (require, exports, module) => {
 		openCrmElementSelector(supportedEntities)
 		{
 			const { layoutWidget } = this.props;
-			let selectedEntity = [];
 
 			const selector = CrmElementSelector.make({
 				entityIds: supportedEntities,
@@ -52,17 +52,10 @@ jn.define('crm/conversion/wizard/selector', (require, exports, module) => {
 					})),
 					useRawResult: true,
 				},
-				events: {
-					onViewRemoved: () => {
-						this.closeSelector(selectedEntity);
-					},
-					onClose: (currentEntities) => {
-						selectedEntity = currentEntities;
-					},
-				},
+				events: createSelectorEvents((entities) => this.closeSelector(entities)),
 			});
 
-			selector.show({}, layoutWidget);
+			return selector.show({}, layoutWidget);
 		}
 
 		closeSelector(selectedEntity)
@@ -143,7 +136,7 @@ jn.define('crm/conversion/wizard/selector', (require, exports, module) => {
 			const conversionSelector = new ConversionSelector(props);
 			const supportedEntities = ConversionSelector.getSupportedEntities();
 
-			conversionSelector.openCrmElementSelector(supportedEntities);
+			return conversionSelector.openCrmElementSelector(supportedEntities);
 		}
 	}
 

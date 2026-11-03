@@ -6,7 +6,7 @@ jn.define('im/messenger/lib/dev/menu/src/recent-snippets', (require, exports, mo
 	/* globals tabs */
 	const AppTheme = require('apptheme');
 	const { Alert } = require('alert');
-	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
+	const { Checkbox, CheckboxShape } = require('ui-system/form/checkbox');
 
 	class RecentSnippets extends LayoutComponent
 	{
@@ -145,8 +145,11 @@ jn.define('im/messenger/lib/dev/menu/src/recent-snippets', (require, exports, mo
 						}),
 						View(
 							{ style: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 } },
-							new CheckBox({
+							new Checkbox({
+								testId: 'im-dev-menu-recent-add-right-button-checkbox',
 								checked: this.state.addRightButton,
+								size: 24,
+							shape: CheckboxShape?.CIRCLE,
 								onClick: () => this.setState({ addRightButton: !this.state.addRightButton }),
 							}),
 							Text({ text: 'Add right button (settings)', style: { marginLeft: 8 } }),

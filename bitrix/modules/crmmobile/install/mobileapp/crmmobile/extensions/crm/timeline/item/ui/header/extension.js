@@ -2,6 +2,8 @@
  * @module crm/timeline/item/ui/header
  */
 jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { VerticalSeparator } = require('crm/timeline/item/ui/header/vertical-separator');
 	const { Checkbox } = require('crm/timeline/item/ui/header/checkbox');
 	const { PinButton } = require('crm/timeline/item/ui/header/pin-button');
@@ -109,11 +111,10 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 						},
 						onClick: () => this.onAction(this.props.titleAction),
 					},
-					Text({
+					Text4({
 						testId: 'TimelineItemHeaderTitleText',
 						text: this.props.title,
 						style: {
-							fontSize: 15,
 							fontWeight: '500',
 							color: AppTheme.colors.base1,
 							marginRight: 6,
@@ -191,7 +192,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			const dateFormat = moment.inThisYear ? dayMonth() : longDate();
 			const style = {
 				color: AppTheme.colors.base4,
-				fontSize: 13,
+				fontSize: Typography.text5.getValue().fontSize,
 				fontWeight: '400',
 			};
 

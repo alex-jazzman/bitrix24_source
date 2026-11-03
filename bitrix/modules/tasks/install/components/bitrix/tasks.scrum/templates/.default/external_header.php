@@ -45,6 +45,7 @@ if (Loader::includeModule('disk'))
 	Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
 
 	Extension::load([
+		'disk.disk-picker',
 		'file_dialog',
 		'mobile_uploader',
 		'disk.document',

@@ -1,4 +1,4 @@
-import { Text, Event, Type } from 'main.core';
+import { Text, Event } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 
 import { mapGetters } from 'ui.vue3.vuex';
@@ -8,19 +8,24 @@ import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
-import { Model, EventName, Analytics } from 'tasks.v2.const';
-import { analytics } from 'tasks.v2.lib.analytics';
+import { Model, EventName } from 'tasks.v2.const';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
-import { resultService } from 'tasks.v2.provider.service.result-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { stateService } from 'tasks.v2.provider.service.state-service';
-import { UserMappers, type UserDto } from 'tasks.v2.provider.service.user-service';
 import { type UserModel } from 'tasks.v2.model.users';
 import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { resultsMeta } from './results-meta';
+import { captureFocusTrigger, restoreFocusTrigger } from './lib/results-focus';
 import { ResultEditorSheet } from './components/result-editor-sheet/result-editor-sheet';
+
+const ChipAction = Object.freeze({
+	Highlight: 'highlight',
+	RequireResult: 'requireResult',
+	Menu: 'menu',
+	AddResult: 'addResult',
+});
 
 // @vue/component
 export const ResultsChip = {
@@ -33,8 +38,6 @@ export const ResultsChip = {
 		task: {},
 		taskId: {},
 		isEdit: {},
-		analytics: {},
-		cardType: {},
 		isTemplate: {},
 		embedded: {},
 	},
@@ -61,6 +64,7 @@ export const ResultsChip = {
 		return {
 			isMenuShown: false,
 			sheetResultId: 0,
+			sheetFocusTrigger: null,
 		};
 	},
 	computed: {
@@ -91,7 +95,7 @@ export const ResultsChip = {
 				minWidth: 240,
 				items: this.menuItems,
 				autoHide: true,
-				closeByEsc: false,
+				closeByEsc: true,
 			};
 		},
 		menuItems(): MenuItemOptions[]
@@ -124,103 +128,89 @@ export const ResultsChip = {
 		{
 			return Core.getParams().restrictions.requiredResult.featureId;
 		},
+		clickAction(): string
+		{
+			if (this.isSelected)
+			{
+				return ChipAction.Highlight;
+			}
+
+			if (this.isTemplate || (!this.isEdit && !this.isLocked))
+			{
+				return ChipAction.RequireResult;
+			}
+
+			return this.task.rights.edit ? ChipAction.Menu : ChipAction.AddResult;
+		},
+		shownPopupType(): ?string
+		{
+			if (this.isMenuShown)
+			{
+				return 'menu';
+			}
+
+			return this.isSheetShown ? 'dialog' : null;
+		},
+		popupType(): ?string
+		{
+			// A popup this chip opened stays on screen even when the click branch moves on meanwhile
+			// (a result arrives, a result becomes required): keep announcing what is really open.
+			return this.shownPopupType ?? {
+				[ChipAction.Menu]: 'menu',
+				[ChipAction.AddResult]: 'dialog',
+			}[this.clickAction] ?? null;
+		},
+		isPopupShown(): boolean
+		{
+			return Boolean(this.shownPopupType);
+		},
+	},
+	watch: {
+		popupType(): void
+		{
+			this.syncChipAria();
+		},
+		isPopupShown(): void
+		{
+			this.syncChipAria();
+		},
 	},
 	mounted(): void
 	{
-		Event.EventEmitter.subscribe(EventName.AddResultFromChat, this.handleAddResultFromChat);
-		Event.EventEmitter.subscribe(EventName.DeleteResultFromChat, this.handleDeleteResultFromChat);
 		Event.EventEmitter.subscribe(EventName.OpenPrefilledResultForm, this.handleOpenPrefilledResultForm);
+
+		this.syncChipAria();
 	},
 	beforeUnmount(): void
 	{
-		Event.EventEmitter.unsubscribe(EventName.AddResultFromChat, this.handleAddResultFromChat);
-		Event.EventEmitter.unsubscribe(EventName.DeleteResultFromChat, this.handleDeleteResultFromChat);
 		Event.EventEmitter.unsubscribe(EventName.OpenPrefilledResultForm, this.handleOpenPrefilledResultForm);
 	},
 	methods: {
 		handleClick(): void
 		{
-			if (this.isSelected)
+			switch (this.clickAction)
 			{
-				this.highlightField();
+				case ChipAction.Highlight:
+					this.highlightField();
+					break;
 
-				return;
+				case ChipAction.RequireResult:
+					this.requireResult();
+					break;
+
+				case ChipAction.Menu:
+					this.isMenuShown = true;
+					break;
+
+				default:
+					this.openAddResultSheet();
+					break;
 			}
-
-			if (this.isTemplate || (!this.isEdit && !this.isLocked))
-			{
-				this.requireResult();
-
-				return;
-			}
-
-			if (this.task.rights.edit)
-			{
-				this.isMenuShown = true;
-			}
-			else
-			{
-				this.openAddResultSheet();
-			}
-		},
-		async handleAddResultFromChat(event: BaseEvent): void
-		{
-			const { taskId, messageId, text, authorId } = event.data;
-
-			if (taskId !== this.taskId || event.isDefaultPrevented())
-			{
-				return;
-			}
-
-			event.preventDefault();
-
-			const payload = {
-				text: Type.isStringFilled(text) ? text : this.loc('TASKS_V2_RESULT_DEFAULT_TITLE_FROM_MESSAGE'),
-				author: this.getUserDto(authorId),
-				id: Text.getRandom(),
-				taskId: this.taskId,
-				createdAtTs: Date.now() / 1000,
-				updatedAtTs: Date.now() / 1000,
-				rights: {
-					edit: true,
-					remove: true,
-				},
-			};
-
-			const isSuccess = await resultService.addResultFromMessage(taskId, messageId, payload);
-
-			this.sendAnalyticsResultFromMessageAdd(isSuccess);
-
-			if (isSuccess)
-			{
-				Event.EventEmitter.emit(EventName.ResultFromMessageAdded, { taskId });
-			}
-		},
-		sendAnalyticsResultFromMessageAdd(isSuccess: boolean): void
-		{
-			analytics.sendStatusSummaryAdd(this.analytics, {
-				isSuccess,
-				cardType: this.cardType,
-				taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
-				element: Analytics.Element.ChatContextMenu,
-				subSection: Analytics.SubSection.Chat,
-			});
-		},
-		handleDeleteResultFromChat(event: BaseEvent): void
-		{
-			const { taskId, resultId } = event.data;
-
-			if (taskId !== this.taskId || event.isDefaultPrevented())
-			{
-				return;
-			}
-
-			event.preventDefault();
-
-			void resultService.delete(resultId);
 		},
 		openAddResultSheet(text = null): void
 		{
+			this.sheetFocusTrigger = captureFocusTrigger();
+
 			const id = Text.getRandom();
 
 			const payload = {
@@ -234,6 +224,38 @@ export const ResultsChip = {
 
 			this.sheetResultId = id;
 			this.setSheetShown(true);
+		},
+		syncChipAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			el.setAttribute('role', 'button');
+
+			if (this.popupType === null)
+			{
+				el.removeAttribute('aria-haspopup');
+				el.removeAttribute('aria-expanded');
+
+				return;
+			}
+
+			el.setAttribute('aria-haspopup', this.popupType);
+			el.setAttribute('aria-expanded', String(this.isPopupShown));
+		},
+		handleMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.$refs.chip?.$el?.focus();
+		},
+		handleSheetClose(): void
+		{
+			this.setSheetShown(false);
+			restoreFocusTrigger(this.sheetFocusTrigger);
+			this.sheetFocusTrigger = null;
 		},
 		async requireResult(): void
 		{
@@ -278,10 +300,6 @@ export const ResultsChip = {
 		{
 			return this.$store.getters[`${Model.Users}/getById`](userId);
 		},
-		getUserDto(userId): UserDto | null
-		{
-			return UserMappers.mapModelToDto(this.getUser(userId));
-		},
 		setSheetShown(isShown: boolean): void
 		{
 			this.$emit('update:isSheetShown', isShown);
@@ -320,15 +338,16 @@ export const ResultsChip = {
 			:icon="Outline.WINDOW_FLAG"
 			:data-task-id="taskId"
 			:data-task-chip-id="resultsMeta.id"
+			data-testid="tasks-results-chip"
 			ref="chip"
 			@click="handleClick"
 		/>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
 		<ResultEditorSheet
 			v-if="isSheetShown"
 			:resultId="sheetResultId"
 			:sheetBindProps
-			@close="setSheetShown(false)"
+			@close="handleSheetClose"
 		/>
 	`,
 };

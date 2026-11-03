@@ -32,8 +32,20 @@ jn.define('more-menu/ref-registry', (require, exports, module) => {
 			}
 		}
 
-		unregister(key)
+		/**
+		 * @param {string} key
+		 * @param {object} [ref] drop the key only while it still holds this very ref. Several instances
+		 *   of one component share the key the registry is asked for by name, and a replacement registers
+		 *   itself before the one it replaces is taken down - an unconditional drop would leave the key
+		 *   empty with the live instance still on the screen.
+		 */
+		unregister(key, ref)
 		{
+			if (ref && this.map.get(key) !== ref)
+			{
+				return;
+			}
+
 			this.map.delete(key);
 		}
 

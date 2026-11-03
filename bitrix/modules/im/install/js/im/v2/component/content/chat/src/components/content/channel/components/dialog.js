@@ -7,6 +7,10 @@ import { CommentsButton } from './comments-button';
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelLayout } from 'im.v2.model';
 
+// Deliberately not LayoutManager.isChatLayout(): that set also holds the channels section, where
+// comments open as a nested list and a floating button would be a second way into the same place.
+const REGULAR_CHATS_LAYOUTS = new Set([Layout.chat, Layout.folderAll]);
+
 // @vue/component
 export const ChannelDialog = {
 	name: 'ChannelDialog',
@@ -38,9 +42,9 @@ export const ChannelDialog = {
 		{
 			return this.dialog.role === UserRole.guest;
 		},
-		isChatLayout(): boolean
+		isInRegularChatsSection(): boolean
 		{
-			return this.layout.name === Layout.chat;
+			return REGULAR_CHATS_LAYOUTS.has(this.layout.name);
 		},
 		commentIdsWithCounter(): number[]
 		{
@@ -52,7 +56,7 @@ export const ChannelDialog = {
 		},
 		showCommentsButton(): boolean
 		{
-			return this.isChatLayout && this.totalChannelCommentsCounter > 0;
+			return this.isInRegularChatsSection && this.totalChannelCommentsCounter > 0;
 		},
 	},
 	beforeUnmount()

@@ -18,10 +18,14 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 
 		render()
 		{
-			return View(
-				{},
-				this.renderListItem(this.props),
-			);
+			const { user, showBorder, testId, renderBelowBlock } = this.props;
+
+			if (renderBelowBlock)
+			{
+				return this.#renderWithBelowBlock(user, showBorder, testId);
+			}
+
+			return this.renderListItem(this.props);
 		}
 
 		renderListItem({ user, showBorder, testId })
@@ -35,15 +39,9 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 					},
 					testId,
 					onClick: () => this.#openUserProfile(user.id),
+					onLongClick: this.props.onItemLongClick && (() => this.props.onItemLongClick(user)),
 				},
-				Avatar({
-					id: user.id,
-					name: user.name,
-					size: 40,
-					testId: `${testId}_AVATAR`,
-					image: user.avatar,
-					withRedux: true,
-				}),
+				this.#renderAvatar(user, testId),
 				View(
 					{
 						style: {
@@ -57,17 +55,78 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 							paddingVertical: Indent.XL2.toNumber(),
 						},
 					},
-					UserName({
-						id: user.id,
-						testId: `${testId}_NAME`,
-						text: user.name,
-						numberOfLines: 1,
-						ellipsize: 'end',
-						textElement: Text2,
-					}),
+					this.#renderName(user, testId),
 					this.#renderAdditionalText(user, testId),
 				),
+				this.#renderRightAction(user, testId),
 			);
+		}
+
+		/**
+		 * Layout for rows that carry a below-block (e.g. a status chip): the chip row starts
+		 * under the avatar - below the whole "avatar + texts" block, not under the text column.
+		 */
+		#renderWithBelowBlock(user, showBorder, testId)
+		{
+			return View(
+				{
+					style: {
+						marginLeft: Indent.XL3.toNumber(),
+						borderTopWidth: showBorder ? 1 : 0,
+						borderTopColor: Color.bgSeparatorPrimary.toHex(),
+						paddingVertical: Indent.XL2.toNumber(),
+					},
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							alignItems: 'flex-start',
+						},
+						testId,
+						onClick: () => this.#openUserProfile(user.id),
+						onLongClick: this.props.onItemLongClick && (() => this.props.onItemLongClick(user)),
+					},
+					this.#renderAvatar(user, testId),
+					View(
+						{
+							style: {
+								flex: 1,
+								flexDirection: 'column',
+								marginHorizontal: Indent.XL.toNumber(),
+							},
+						},
+						this.#renderName(user, testId),
+						this.#renderAdditionalText(user, testId),
+					),
+					this.#renderRightAction(user, testId),
+				),
+				this.#renderBelowBlock(user, testId),
+			);
+		}
+
+		#renderAvatar(user, testId)
+		{
+			return Avatar({
+				id: user.id,
+				name: user.name,
+				size: 40,
+				testId: `${testId}_AVATAR`,
+				image: user.avatar,
+				withRedux: true,
+			});
+		}
+
+		#renderName(user, testId)
+		{
+			return UserName({
+				id: user.id,
+				testId: `${testId}_NAME`,
+				text: user.name,
+				numberOfLines: 1,
+				ellipsize: 'end',
+				textElement: Text2,
+			});
 		}
 
 		#renderAdditionalText(user, testId)
@@ -91,6 +150,39 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 			}
 
 			return null;
+		}
+
+		#renderBelowBlock(user, testId)
+		{
+			if (!this.props.renderBelowBlock)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					testId: `${testId}-below-block`,
+				},
+				this.props.renderBelowBlock(user, this.props.parentWidget),
+			);
+		}
+
+		#renderRightAction(user, testId)
+		{
+			if (!this.props.renderRightAction)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					testId: `${testId}-right-action`,
+					style: {
+						marginRight: Indent.XL3.toNumber(),
+					},
+				},
+				this.props.renderRightAction(user, this.props.parentWidget),
+			);
 		}
 
 		/**

@@ -14,10 +14,30 @@ jn.define('disk/move', (require, exports, module) => {
 	const { showErrorToast, showToast } = require('toast');
 	const { openFolder } = require('disk/opener/folder');
 	const { fetchObjectWithRights } = require('disk/rights');
+	const { fetchPersonalStorageId } = require('disk/storage/personal');
+	const { requireLazy } = require('require-lazy');
+	const { Type } = require('type');
 
-	function moveObject(objectId, order, context, parentWidget = PageManager)
+	const showUnifiedLinkForbiddenToast = async (parentWidget) => {
+		const opener = await requireLazy('disk:opener/unified-link/opener', false);
+
+		opener?.showUnifiedLinkForbiddenToast(parentWidget);
+	};
+
+	async function moveObject(objectId, order, context, parentWidget = PageManager)
 	{
 		const movedObject = selectById(store.getState(), objectId);
+		const isUnifiedLinkMode = Boolean(context?.uniqueCode);
+		const storageId = isUnifiedLinkMode
+			? await fetchPersonalStorageId()
+			: (context.storageId || movedObject.storageId);
+
+		if (!storageId)
+		{
+			showErrorToast({}, parentWidget);
+
+			return;
+		}
 
 		const selector = new DirectorySelector({
 			widgetParams: {
@@ -36,12 +56,12 @@ jn.define('disk/move', (require, exports, module) => {
 				},
 			},
 			provider: {
-				storageId: context.storageId || movedObject.storageId,
+				storageId,
 				options: {
 					showDirectoriesOnly: false,
 					canSelectFiles: false,
 					order,
-					context,
+					context: { storageId },
 				},
 			},
 		});
@@ -61,6 +81,14 @@ jn.define('disk/move', (require, exports, module) => {
 		const movedObject = selectById(store.getState(), objectId);
 		if (!movedObject)
 		{
+			return;
+		}
+
+		const isUnifiedLinkMode = Boolean(openFolderOptions.context?.uniqueCode);
+		if (isUnifiedLinkMode && !Type.isStringFilled(movedObject.uniqueCode))
+		{
+			void showUnifiedLinkForbiddenToast(openFolderOptions.parentWidget);
+
 			return;
 		}
 
@@ -111,6 +139,7 @@ jn.define('disk/move', (require, exports, module) => {
 			move({
 				objectId,
 				targetId: target.id,
+				uniqueCode: isUnifiedLinkMode ? movedObject.uniqueCode : null,
 				onFulfilledSuccess: () => {
 					const toastMessagePhraseId = movedObject.typeFile
 						? 'M_DISK_MOVE_FILE_TOAST_MESSAGE'
@@ -123,7 +152,7 @@ jn.define('disk/move', (require, exports, module) => {
 						onButtonTap: () => {
 							openFolder(
 								target.id,
-								openFolderOptions.context,
+								{ storageId: openFolderOptions.context?.storageId },
 								openFolderOptions.parentWidget,
 							).catch((e) => console.error(e));
 						},

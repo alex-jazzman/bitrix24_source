@@ -2,7 +2,6 @@ import { getFilesFromDataTransfer, hasDataTransferOnlyFiles } from 'ui.uploader.
 import { Event, Type, type JsonObject } from 'main.core';
 
 import { EventType } from 'im.v2.const';
-import { MultiUploadingService, type MultiUploadingResult } from 'im.v2.provider.service.uploading';
 
 import { Height } from '../const/size';
 
@@ -56,14 +55,13 @@ export const DropArea = {
 	{
 		container: {
 			immediate: true,
-			handler(newValue)
+			handler(container)
 			{
-				if (!Type.isElementNode(newValue))
+				this.unbindEvents();
+				if (Type.isElementNode(container))
 				{
-					return;
+					this.bindEvents(container);
 				}
-
-				this.bindEvents();
 			},
 		},
 	},
@@ -73,19 +71,27 @@ export const DropArea = {
 	},
 	methods:
 	{
-		bindEvents()
+		bindEvents(container: HTMLElement)
 		{
-			Event.bind(this.container, 'dragenter', this.onDragEnter);
-			Event.bind(this.container, 'dragleave', this.onDragLeave);
-			Event.bind(this.container, 'dragover', this.onDragOver);
-			Event.bind(this.container, 'drop', this.onDrop);
+			Event.bind(container, 'dragenter', this.onDragEnter);
+			Event.bind(container, 'dragleave', this.onDragLeave);
+			Event.bind(container, 'dragover', this.onDragOver);
+			Event.bind(container, 'drop', this.onDrop);
+			// the prop may point elsewhere by unbind time, so remember the node that actually got the listeners
+			this.boundContainer = container;
 		},
 		unbindEvents()
 		{
-			Event.unbind(this.container, 'dragenter', this.onDragEnter);
-			Event.unbind(this.container, 'dragleave', this.onDragLeave);
-			Event.unbind(this.container, 'dragover', this.onDragOver);
-			Event.unbind(this.container, 'drop', this.onDrop);
+			if (!this.boundContainer)
+			{
+				return;
+			}
+
+			Event.unbind(this.boundContainer, 'dragenter', this.onDragEnter);
+			Event.unbind(this.boundContainer, 'dragleave', this.onDragLeave);
+			Event.unbind(this.boundContainer, 'dragover', this.onDragOver);
+			Event.unbind(this.boundContainer, 'drop', this.onDrop);
+			this.boundContainer = null;
 		},
 		async onDragEnter(event: DragEvent)
 		{
@@ -120,28 +126,13 @@ export const DropArea = {
 		{
 			event.preventDefault();
 
-			const multiUploadingService: MultiUploadingService = this.getMultiUploadingService();
-			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.upload({
-				files: await getFilesFromDataTransfer(event.dataTransfer),
-				dialogId: this.dialogId,
-				sendAsFile: false,
-				autoUpload: false,
-			});
-
-			if (Type.isArrayFilled(multiUploadingResult.uploaderIds))
+			const files: File[] = await getFilesFromDataTransfer(event.dataTransfer);
+			if (Type.isArrayFilled(files))
 			{
-				this.getEmitter().emit(EventType.textarea.openUploadPreview, { multiUploadingResult });
+				// the textarea owns the preview session: it validates the files and opens the popup
+				this.getEmitter().emit(EventType.textarea.openUploadPreview, { dialogId: this.dialogId, files });
 			}
 			this.showDropArea = false;
-		},
-		getMultiUploadingService(): MultiUploadingService
-		{
-			if (!this.multiUploadingService)
-			{
-				this.multiUploadingService = new MultiUploadingService();
-			}
-
-			return this.multiUploadingService;
 		},
 		getEmitter(): EventEmitter
 		{
@@ -154,7 +145,12 @@ export const DropArea = {
 	},
 	template: `
 		<Transition name="drop-area-fade">
-			<div v-if="showDropArea" :style="dropAreaStyles" class="bx-im-content-chat-drop-area__container bx-im-content-chat-drop-area__scope">
+			<div
+				v-if="showDropArea"
+				:style="dropAreaStyles"
+				class="bx-im-content-chat-drop-area__container bx-im-content-chat-drop-area__scope"
+				data-testid="im-content-chat-drop-area"
+			>
 				<div class="bx-im-content-chat-drop-area__box">
 					<span class="bx-im-content-chat-drop-area__icon"></span>
 					<label class="bx-im-content-chat-drop-area__label-text">

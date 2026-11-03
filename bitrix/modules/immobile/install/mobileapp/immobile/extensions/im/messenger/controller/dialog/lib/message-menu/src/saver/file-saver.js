@@ -20,10 +20,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 		async save()
 		{
 			const messageId = String(this.messageHelper.messageId);
-			const shouldUseMultipleFilesDownload = MobileFeature.isMultipleFilesDownloadSupported()
-				&& this.messageHelper.isGallery
-				&& !this.messageHelper.isMediaGallery;
-			const downloadMethod = shouldUseMultipleFilesDownload
+			const downloadMethod = this.canDownloadFilesByMessage()
 				? this.multipleFilesDownload
 				: this.fallbackMultipleFilesDownload;
 
@@ -43,6 +40,27 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 				this.downloadFailure(Analytics.DownloadErrorStatus.toDevice);
 				this.logger.error('MessageMenu.saveFiles.catch:', error);
 			}
+		}
+
+		/**
+		 * The native batch warms the cache and gives the iOS download menu, but it is scoped to the
+		 * files of the message itself: block files are out of its list, and the download link of a
+		 * single block must not pull the files of the whole message. Both cases go the URL list path
+		 * instead, at the cost of the native download UI.
+		 *
+		 * @protected
+		 * @returns {boolean}
+		 */
+		canDownloadFilesByMessage()
+		{
+			if (this.hasExplicitFileScope() || this.messageHelper.getBlockFiles().length > 0)
+			{
+				return false;
+			}
+
+			return MobileFeature.isMultipleFilesDownloadSupported()
+				&& this.messageHelper.isGallery
+				&& !this.messageHelper.isMediaGallery;
 		}
 
 		/**
@@ -94,11 +112,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 
 		async saveFiles(filePaths)
 		{
-			const isMediaMessage = this.messageHelper.isMediaMessage;
+			const isMediaFileSet = this.isMediaFileSet();
 
 			try
 			{
-				const saver = isMediaMessage
+				const saver = isMediaFileSet
 					? fileSaverUtility().saveToMediaLibrary
 					: fileSaverUtility().saveToStorage;
 
@@ -118,7 +136,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 				{
 					this.#showSettings();
 				}
-				else if (isMediaMessage)
+				else if (isMediaFileSet)
 				{
 					this.downloadFailure(Analytics.DownloadErrorStatus.toGallery);
 				}

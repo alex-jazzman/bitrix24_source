@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'mail:message/elements/contact/card',
 		'layout/pure-component',
+		'mail:message/elements/contact/card',
+		'tokens',
+		'ui-system/typography/text',
 	],
 ];

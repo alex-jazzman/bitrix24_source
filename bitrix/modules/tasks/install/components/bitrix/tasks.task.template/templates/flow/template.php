@@ -164,6 +164,34 @@ $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_
 				<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[SCENARIO_NAME]" value="<?=htmlspecialcharsbx($arResult['TEMPLATE_DATA']['SCENARIO'])?>" />
 			<?php endif?>
 
+			<?php
+			foreach (($arResult['TEMPLATE_DATA']['UNRESOLVED_MEMBERS'] ?? []) as $memberField => $memberIds):
+				foreach ($memberIds as $memberId):
+					$memberInputName = $inputPrefix
+						. '[UNRESOLVED_MEMBERS][' . $memberField . '][' . (int)$memberId . ']'
+					;
+					?>
+					<input
+						type="hidden"
+						name="<?=htmlspecialcharsbx($memberInputName)?>"
+						value="<?=(int)$memberId?>"
+					/>
+					<?php
+				endforeach;
+			endforeach;
+
+			foreach (($arResult['TEMPLATE_DATA']['RENDERED_MEMBERS'] ?? []) as $memberField => $hasRenderedMembers):
+				$memberInputName = $inputPrefix . '[RENDERED_MEMBERS][' . $memberField . ']';
+				?>
+				<input
+					type="hidden"
+					name="<?=htmlspecialcharsbx($memberInputName)?>"
+					value="<?=$hasRenderedMembers ? 'Y' : 'N'?>"
+				/>
+				<?php
+			endforeach;
+			?>
+
 			<?php if($request->get('IFRAME')):?>
 				<input type="hidden" name="IFRAME" value="<?= $request->get('IFRAME') === 'Y' ? 'Y':'N' ?>" />
 			<?php endif?>

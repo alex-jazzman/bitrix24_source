@@ -16,7 +16,9 @@ return [
 		'im:messenger/model/folder',
 		'im:messenger/controller/folder/list',
 		'im:messenger/controller/folder/update',
+		'im:messenger/controller/folder/sources-settings',
 		'im:messenger/controller/folder/lib/actions',
+		'im:messenger/controller/recent/service/lib/folder-composition',
 		'im:messenger/provider/services/analytics',
 	],
 	'bundle' => [

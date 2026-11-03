@@ -46,3 +46,5 @@ $MESS["IM_OPTIONS_NAME_TEMPLATE"] = "Формат отображения име�
 $MESS["IM_OPTIONS_NAME_IN_SITE_FORMAT"] = "Формат сайта";
 $MESS["IM_OPTIONS_NAME_IN_IM_FORMAT"] = "Формат по умолчанию";
 $MESS["IM_OPTIONS_PATH_TO_USER_PROFILE"] = "Шаблон пути к странице пользователя";
+$MESS["IM_VOICE_MESSAGE_RECORDING_AVAILABLE"] = "Включить запись голосовых сообщений";
+$MESS["IM_VOICE_MESSAGE_RECORDING_HTTPS_REQUIRED"] = 'Настройка не подействует: браузер разрешает доступ к микрофону только по защищённому соединению (https)';

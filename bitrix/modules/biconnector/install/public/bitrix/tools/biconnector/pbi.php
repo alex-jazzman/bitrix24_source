@@ -189,6 +189,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 			else
 			{
 				$emitQueryErrors = static function (\Bitrix\Main\Result $resultQuery): void {
+					if ($resultQuery->getData()['errorStreamed'] ?? false)
+					{
+						return;
+					}
+
 					foreach ($resultQuery->getErrorCollection() as $error)
 					{
 						$outputError = ['error' => $error->getMessage()];

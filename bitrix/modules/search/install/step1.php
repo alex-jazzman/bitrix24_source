@@ -1,6 +1,9 @@
+<?php
+/** @var CMain $APPLICATION */
+?>
 <form action="<?php echo $APPLICATION->GetCurPage()?>" name="form1">
 <?=bitrix_sessid_post()?>
-<input type="hidden" name="lang" value="<?php echo LANG?>">
+<input type="hidden" name="lang" value="<?php echo LANGUAGE_ID?>">
 <input type="hidden" name="id" value="search">
 <input type="hidden" name="install" value="Y">
 <input type="hidden" name="step" value="2">
@@ -37,7 +40,10 @@
 	ChangeInstallPublic(false);
 	</script>
 	<br>
-	<?php $connection = \Bitrix\Main\Application::getConnection(); ?>
+	<?php
+		/** @var \Bitrix\Main\DB\Connection $connection */
+		$connection = \Bitrix\Main\Application::getConnection();
+	?>
 	<?php if (CModule::IncludeModule('cluster') && $connection->getType() === 'mysql'):?>
 	<p><?php echo GetMessage('SEARCH_INSTALL_DATABASE')?><select name="DATABASE">
 		<option value=""><?php echo GetMessage('SEARCH_MAIN_DATABASE')?></option><?php

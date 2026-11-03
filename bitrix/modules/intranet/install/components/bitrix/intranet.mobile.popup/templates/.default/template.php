@@ -13,8 +13,17 @@ if ($arResult['isMobile'])
 	]);
 	?>
 	<script>
-		BX.ready(() => {
-			(new BX.Intranet.MobilePopup()).show();
+		let mobilePopupRegistrationPromise = new Promise((resolve) => {
+			BX.ready(() => {
+				try
+				{
+					(new BX.Intranet.MobilePopup()).show().then(resolve, () => resolve(true));
+				}
+				catch
+				{
+					resolve(true);
+				}
+			});
 		});
 	</script>
 <?php
@@ -23,11 +32,13 @@ else
 {
 ?>
 	<script>
+		let mobilePopupRegistrationPromise = Promise.resolve(true);
 		if (BX.browser.IsMobile())
 		{
-			BX.Runtime.loadExtension('intranet.mobile-popup').then((exports) => {
-				(new exports.MobilePopup()).show();
-			});
+			mobilePopupRegistrationPromise = BX.Runtime.loadExtension('intranet.mobile-popup')
+				.then((exports) => (new exports.MobilePopup()).show())
+				.catch(() => true)
+			;
 		}
 	</script>
 <?php

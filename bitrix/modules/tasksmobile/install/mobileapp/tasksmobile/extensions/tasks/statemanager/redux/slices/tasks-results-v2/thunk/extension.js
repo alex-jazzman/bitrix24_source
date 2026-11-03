@@ -13,6 +13,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-results-v2/thunk', (require, ex
 				.enableJson()
 				.setHandler(resolve)
 				.call()
+				.catch(console.error)
 			;
 		})
 	);

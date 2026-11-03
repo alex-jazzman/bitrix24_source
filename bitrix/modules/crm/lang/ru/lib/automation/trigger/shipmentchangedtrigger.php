@@ -5,6 +5,6 @@ $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NAME_1'] = 'Отследить и
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_DESCRIPTION'] = 'Меняет стадию после любых изменений в процессе отгрузки - смены статуса, запрета или разрешения на отгрузку';
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_CONDITION'] = 'Поля отгрузки';
 
-$MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NODE_DESCRIPTION'] = 'Запускает процесс после любых изменений в процессе отгрузки';
+$MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NODE_DESCRIPTION'] = 'Запускает процесс при любом изменении отгрузки заказа. В условии можно отобрать нужные изменения по полям отгрузки';
 
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_EVENT_DATE_TIME'] = 'Дата и время изменения отгрузки';

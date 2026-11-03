@@ -43,31 +43,43 @@ if (!empty($arParams['ERRORS']))
 	return;
 }
 
+// The block is not operated in the editor: the click is already stopped there by
+// `g-pointer-events-none--edit-mode`, and a real button would otherwise add stops to the keyboard
+// path of the editor that the `div` before it never had. The public page keeps them all.
+$editModeTabIndex = $arParams['EDIT_MODE'] === 'Y' ? ' tabindex="-1"' : '';
+
+// The circles carry no text at all - the service is told by the background image - so the name of
+// the widget is the only thing a screen reader can announce them by. It comes encoded from
+// `class.php`, so it is printed as it is.
 foreach ($arParams['WIDGETS'] as $widget) :?>
 	<?php if (is_array($widget['show']) && isset($widget['show']['url'])): ?>
 		<?php if (is_array($widget['show']['url'])): ?>
 			<?php if ($arParams['IS_MOBILE']): ?>
-				<a class="<?= $widget['classList'] ?> openlines-style-circle g-pointer-events-none--edit-mode" target="_blank" href="<?= $widget['show']['url']['mobile'] ?>">
+				<a class="<?= $widget['classList'] ?> openlines-style-circle g-pointer-events-none--edit-mode" target="_blank" href="<?= $widget['show']['url']['mobile'] ?>" aria-label="<?= $widget['title'] ?>">
 				</a>
 			<?php else: ?>
-				<div
+				<button
+					type="button"
 					class="openlines-style-circle g-cursor-pointer g-pointer-events-none--edit-mode <?= $widget['classList'] ?>"
-					target="_blank"
 					onclick='<?= $widget['show']['js']['desktop'] ?>'
+					aria-label="<?= $widget['title'] ?>"
+					<?= $editModeTabIndex ?>
 				>
-				</div>
+				</button>
 			<?php endif; ?>
 		<?php else: ?>
-			<a class="<?= $widget['classList'] ?> openlines-style-circle g-pointer-events-none--edit-mode" target="_blank" href="<?= $widget['show']['url'] ?>">
+			<a class="<?= $widget['classList'] ?> openlines-style-circle g-pointer-events-none--edit-mode" target="_blank" href="<?= $widget['show']['url'] ?>" aria-label="<?= $widget['title'] ?>">
 			</a>
 		<?php endif; ?>
 	<?php else: ?>
-		<div
+		<button
+			type="button"
 			class="openlines-style-circle g-cursor-pointer g-pointer-events-none--edit-mode <?= $widget['classList'] ?>"
-			target="_blank"
 			onclick="<?= $widget['show'] ?>"
+			aria-label="<?= $widget['title'] ?>"
+			<?= $editModeTabIndex ?>
 		>
-		</div>
+		</button>
 	<?php endif; ?>
 <?php endforeach;
 

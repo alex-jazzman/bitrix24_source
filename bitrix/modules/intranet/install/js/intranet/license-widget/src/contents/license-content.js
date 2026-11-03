@@ -40,7 +40,7 @@ export class LicenseContent extends Content
 	getMainIcon(): HTMLElement
 	{
 		const icon = Tag.render`
-			<div class="license-widget-item-icon"/>
+			<div class="license-widget-item-icon" aria-hidden="true"/>
 		`;
 
 		if (this.getOptions().isAlmostExpired)
@@ -65,38 +65,50 @@ export class LicenseContent extends Content
 
 	getButton(): HTMLElement
 	{
+		const className = `license-widget-item-btn ${
+			this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired
+				? 'license-widget-item-btn--green'
+				: ''
+		}`;
+
 		if (this.getOptions().button.isAdminRestricted)
 		{
 			const onclick = (event) => {
-				event.preventDefault();
-				AdminRestrictedPopup.show(event.target);
+				AdminRestrictedPopup.show(event.currentTarget);
 			};
 
 			return Tag.render`
-				<a href="#" onclick="${onclick}" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
-					${this.getOptions().button.text}
-				</a>
-			`;
-		}
-
-		if (this.getOptions().button.type === 'POST')
-		{
-			const onclick = () => {
-				document.querySelector('#renew-license-form').submit();
-			};
-
-			return Tag.render`
-				<button onclick="${onclick}" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
-					<form id="renew-license-form" action="${this.getOptions().button.link}" method="post" target="_blank">
-						<input name="license_key" value="${this.getOptions().button.hashKey}" hidden>
-					</form>
+				<button type="button" onclick="${onclick}" class="${className}">
 					${this.getOptions().button.text}
 				</button>
 			`;
 		}
 
+		if (this.getOptions().button.type === 'POST')
+		{
+			return Tag.render`
+				<form
+					id="renew-license-form"
+					class="license-widget-item-form"
+					action="${this.getOptions().button.link}"
+					method="post"
+					target="_blank"
+				>
+					<input type="hidden" name="license_key" value="${this.getOptions().button.hashKey}">
+					<button type="submit" class="${className}">
+						${this.getOptions().button.text}
+					</button>
+				</form>
+			`;
+		}
+
 		return Tag.render`
-			<a href="${this.getOptions().button.link}" target="_blank" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
+			<a
+				href="${this.getOptions().button.link}"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="${className}"
+			>
 				${this.getOptions().button.text}
 			</a>
 		`;
@@ -154,15 +166,26 @@ export class LicenseContent extends Content
 
 	getLink(): HTMLElement
 	{
-		const onclick = this.getOptions().more.isAdminRestricted
-			? (event) => {
-				event.preventDefault();
-				AdminRestrictedPopup.show(event.target);
-			}
-			: () => {};
+		if (this.getOptions().more.isAdminRestricted)
+		{
+			const onclick = (event) => {
+				AdminRestrictedPopup.show(event.currentTarget);
+			};
+
+			return Tag.render`
+				<button type="button" onclick="${onclick}" class="license-widget-item-link-text">
+					${this.getOptions().more.text}
+				</button>
+			`;
+		}
 
 		return Tag.render`
-			<a href="${this.getOptions().more.link}" onclick="${onclick}" class="license-widget-item-link-text" target="_blank">
+			<a
+				href="${this.getOptions().more.link}"
+				class="license-widget-item-link-text"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
 				${this.getOptions().more.text}
 			</a>
 		`;

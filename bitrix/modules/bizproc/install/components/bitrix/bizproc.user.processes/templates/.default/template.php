@@ -11,6 +11,7 @@ use Bitrix\Main\Loader;
 <?php
 
 /**
+ * @var array $arParams
  * @var array $arResult
  * @var CBitrixComponentTemplate $this
  */
@@ -65,6 +66,14 @@ $appLink =
 		: ''
 ;
 
+/**
+ * How long a step of a group pass waits for the form of its task to open, in milliseconds. How long an
+ * honest open takes belongs to the portal and not to the client - a loaded one is slower, and a pass
+ * broken off by the limit leaves the person to start the rest of the queue anew. Nothing named here
+ * leaves the client with a default of its own.
+ */
+$taskFormOpenTimeout = (int)($arParams['TASK_FORM_OPEN_TIMEOUT'] ?? 0);
+
 $wrapJsRender = static function (array $workflow, string $columnId, string $placeholder = ''): string
 {
 	return sprintf(
@@ -73,6 +82,42 @@ $wrapJsRender = static function (array $workflow, string $columnId, string $plac
 		htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($workflow)),
 		htmlspecialcharsbx($placeholder),
 	);
+};
+
+/**
+ * The description of a row rides the markup of every drawn cell, so the fields of the task nothing but
+ * a group action reads are taken out of it and given to the row itself, once (see $rowTaskFields).
+ */
+$dropRowTaskFields = static function (array $workflow): array
+{
+	if (is_array($workflow['task'] ?? null))
+	{
+		unset($workflow['task']['hash'], $workflow['task']['activity'], $workflow['task']['controls']);
+	}
+
+	return $workflow;
+};
+
+/**
+ * The row is the only carrier that travels with a row of the grid on every path of it - a reload,
+ * another page, the "show more" button - so the fields of the task go there and the client puts them
+ * back while reading a cell.
+ */
+$rowTaskFields = static function (array $workflow): array
+{
+	$task = $workflow['task'] ?? null;
+	if (!is_array($task))
+	{
+		return [];
+	}
+
+	return [
+		'data-bp-task' => \Bitrix\Main\Web\Json::encode([
+			'hash' => $task['hash'] ?? null,
+			'activity' => $task['activity'] ?? null,
+			'controls' => $task['controls'] ?? [],
+		]),
+	];
 };
 
 $getRowActions = function (array $document, ?array $task, string $workflowId): array
@@ -167,23 +212,25 @@ foreach ($workflows as $row)
 	$workflowId = $row['workflowId'] ?? '';
 	$document = $row['document'] ?? [];
 	$taskToShow = $row['task'] ?? null;
+	$cellRow = $dropRowTaskFields($row);
 
 	$gridRows[] = [
 		'id' => $workflowId,
+		'attrs' => $rowTaskFields($row),
 		'columns' => [
 			'ID' => $workflowId,
-			'PROCESS' => $wrapJsRender($row, 'PROCESS', $row['name'] ?? ''),
-			'TASK_PROGRESS' =>  $wrapJsRender($row, 'TASK_PROGRESS'),
-			'TASK' => $wrapJsRender($row, 'TASK'),
+			'PROCESS' => $wrapJsRender($cellRow, 'PROCESS', $row['name'] ?? ''),
+			'TASK_PROGRESS' =>  $wrapJsRender($cellRow, 'TASK_PROGRESS'),
+			'TASK' => $wrapJsRender($cellRow, 'TASK'),
 			'WORKFLOW_STATE' => htmlspecialcharsbx($row['statusText'] ?? ''),
-			'DOCUMENT_NAME' => $wrapJsRender($row, 'DOCUMENT_NAME', $row['document']['name'] ?? ''),
+			'DOCUMENT_NAME' => $wrapJsRender($cellRow, 'DOCUMENT_NAME', $row['document']['name'] ?? ''),
 			'WORKFLOW_TEMPLATE_NAME' => htmlspecialcharsbx($row['templateName'] ?? ''),
 			'TASK_DESCRIPTION' => $row['description'] ?? '',
 			'MODIFIED' => htmlspecialcharsbx($row['modified'] ?? ''),
 			'WORKFLOW_STARTED' => htmlspecialcharsbx($row['workflowStarted'] ?? ''),
 			'WORKFLOW_STARTED_BY' => htmlspecialcharsbx($row['startedBy'] ?? ''),
 			'OVERDUE_DATE' => htmlspecialcharsbx($row['overdueDate'] ?? ''),
-			'SUMMARY' => $wrapJsRender($row, 'SUMMARY'),
+			'SUMMARY' => $wrapJsRender($cellRow, 'SUMMARY'),
 		],
 		'actions' => $getRowActions($row['document'] ?? [], $taskToShow, $workflowId),
 		'columnClasses' => [
@@ -201,7 +248,10 @@ $gridParams['ROWS'] = $gridRows;
 /** @var array $arResult */
 global $APPLICATION;
 ?>
-<section aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_GRID_ARIA_LABEL')) ?>">
+<section
+	aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_GRID_ARIA_LABEL')) ?>"
+	data-testid="bizproc-user-processes-grid"
+>
 <?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
@@ -227,14 +277,23 @@ $messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 			filterId,
 			counters: <?= \Bitrix\Main\Web\Json::encode($arResult['counters']) ?>,
 			actionPanelUserWrapperId: '<?= CUtil::JSEscape($viewData['actionPanelUserWrapperId'] ?? null) ?>',
+			actionPanelDecisionWrapperId: '<?= CUtil::JSEscape($viewData['actionPanelDecisionWrapperId'] ?? '') ?>',
 			errors: [],
 			currentUserId: <?= (int)($viewData['userId'] ?? 0) ?>,
 			targetUserId: <?= $targetUserId ?>,
 			mustSubscribeToPushes: <?= ($arResult['mustSubscribeToPushes'] ?? false) ? 'true' : 'false' ?>,
 			shownMobilePopup: <?= ($mobilePopupOption['shown_popup'] ?? false) ? 'true' : 'false' ?>,
 			appLink: '<?= CUtil::JSEscape($appLink) ?>',
+			taskFormOpenTimeout: <?= $taskFormOpenTimeout ?>,
 		});
-		BX.addCustomEvent('Grid::updated', () => BX.Bizproc.Component.UserProcesses.Instance.init());
+		// a grid rebuilt from scratch reports itself with ready, not updated, and the cells of its rows
+		// come back empty: the drawing of cells has to answer both, or the list stays undrawn
+		['Grid::ready', 'Grid::updated'].forEach(
+			(eventName) => BX.addCustomEvent(
+				eventName,
+				() => BX.Bizproc.Component.UserProcesses.Instance.init(),
+			),
+		);
 
 		setTimeout(() => {
 			BX.Runtime.loadExtension('ui.analytics').then(({ sendData }) => {

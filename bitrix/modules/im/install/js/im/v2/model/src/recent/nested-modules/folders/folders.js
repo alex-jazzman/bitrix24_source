@@ -1,8 +1,13 @@
 import { BuilderModel, type ActionTree, type MutationTree, type GetterTree } from 'ui.vue3.vuex';
 import { Type, type JsonObject } from 'main.core';
 
-import { FolderType } from 'im.v2.const';
-import { formatFieldsWithConfig, type ImModelFolder, type ImModelFolderChat } from 'im.v2.model';
+import { FolderType, type RecentTypeItem, type SystemFolderCodeItem } from 'im.v2.const';
+import {
+	formatFieldsWithConfig,
+	type ImModelFolder,
+	type ImModelFolderChat,
+	type ImModelFolderDefinition,
+} from 'im.v2.model';
 
 import { folderFieldsConfig } from './format/field-config';
 
@@ -24,20 +29,74 @@ export class FoldersModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
+			// The whole registry in the order of the server. Outside the model the list is asked about
+			// something in particular - the getters below answer those questions.
 			/** @function recent/folders/getList */
 			getList: (state: FoldersState): ImModelFolder[] => {
 				return Object.values(state.collection)
 					.sort((a, b) => (a.sort - b.sort) || (a.id - b.id));
 			},
+			// Service member folders of the composite "all" folder stay in the collection for the
+			// composition resolver, but the server marks them invisible: they must not reach the rail, the
+			// folder list or the initial layout. Folders without the flag (personal and pre-existing system
+			// ones) stay visible.
+			/** @function recent/folders/getVisibleList */
+			getVisibleList: (state: FoldersState, getters): ImModelFolder[] => {
+				return getters.getList.filter((folder: ImModelFolder) => folder.visible !== false);
+			},
+			// Visibility is no part of this question: a hidden personal folder would still hold its place
+			// against the creation limit.
+			/** @function recent/folders/getPersonalList */
+			getPersonalList: (state: FoldersState, getters): ImModelFolder[] => {
+				return getters.getList.filter((folder: ImModelFolder) => folder.type === FolderType.personal);
+			},
 			/** @function recent/folders/getById */
 			getById: (state: FoldersState) => (folderId: number): ImModelFolder => {
 				return state.collection[folderId];
 			},
+			/** @function recent/folders/getByCode */
+			getByCode: (state: FoldersState) => (code: string): ImModelFolder | null => {
+				if (!Type.isStringFilled(code))
+				{
+					return null;
+				}
+
+				return Object.values(state.collection).find((folder) => folder.code === code) ?? null;
+			},
+			// A composite folder is recognized by the shape of its definition, not by its code:
+			// its content is a union of the sections of the folders it unites.
+			/** @function recent/folders/isComposite */
+			isComposite: (state: FoldersState) => (folderId: number): boolean => {
+				return Type.isArrayFilled(state.collection[folderId]?.definition?.sourceFolders);
+			},
+			/** @function recent/folders/getSourceDefinitions */
+			getSourceDefinitions: (state: FoldersState, getters) => (
+				folderId: number,
+			): ImModelFolderDefinition[] => {
+				if (!getters.isComposite(folderId))
+				{
+					return [];
+				}
+
+				// the source is known by its code alone, and there is no code -> section table: what the
+				// source contributes lives in the definition of the source folder itself
+				return [...new Set(state.collection[folderId].definition.sourceFolders)]
+					.map((sourceCode: SystemFolderCodeItem) => getters.getByCode(sourceCode))
+					// the composition comes already resolved for the owner, but a source becoming
+					// available is not pushed at all, so its code can outrun the folder itself
+					.filter((sourceFolder: ?ImModelFolder) => sourceFolder !== null)
+					.map((sourceFolder: ImModelFolder) => sourceFolder.definition);
+			},
+			// the list body needs the sections alone: it shows root chats only, the frames say nothing there
+			/** @function recent/folders/getSourceSections */
+			getSourceSections: (state: FoldersState, getters) => (folderId: number): RecentTypeItem[] => {
+				const definitions: ImModelFolderDefinition[] = getters.getSourceDefinitions(folderId);
+
+				return [...new Set(definitions.map((definition) => definition.recentSection))];
+			},
 			/** @function recent/folders/getPersonalCount */
-			getPersonalCount: (state: FoldersState) => {
-				return Object.values(state.collection)
-					.filter((folder) => folder.type === FolderType.personal)
-					.length;
+			getPersonalCount: (state: FoldersState, getters): number => {
+				return getters.getPersonalList.length;
 			},
 		};
 	}

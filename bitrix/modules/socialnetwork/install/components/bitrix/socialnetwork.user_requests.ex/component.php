@@ -438,13 +438,14 @@ else
 				}
 
 				$arTmpUser = array(
-					"NAME" => $arUserRequest["FIRST_USER_NAME"],
-					"LAST_NAME" => $arUserRequest["FIRST_USER_LAST_NAME"],
-					"FIRST_NAME" => $arUserRequest["FIRST_USER_FIRST_NAME"],
-					"LOGIN" => $arUserRequest["FIRST_USER_LOGIN"],
+					"NAME" => $arUserRequest["~FIRST_USER_NAME"],
+					"LAST_NAME" => $arUserRequest["~FIRST_USER_LAST_NAME"],
+					"FIRST_NAME" => $arUserRequest["~FIRST_USER_FIRST_NAME"],
+					"LOGIN" => $arUserRequest["~FIRST_USER_LOGIN"],
 				);
 
-				$strNameFormatted = CUser::FormatName($arParams['NAME_TEMPLATE'], $arTmpUser, $bUseLogin);		
+				// $bHTMLSpec is explicit: this call is the only escaping layer for ~USER_NAME_FORMATTED.
+				$strNameFormatted = CUser::FormatName($arParams['NAME_TEMPLATE'], $arTmpUser, $bUseLogin, true);
 				
 				$arEventTmp = array(
 					"EVENT_TYPE" => "INVITE_USER",
@@ -613,13 +614,14 @@ else
 				}
 
 				$arTmpUser = array(
-					"NAME" => $arUserRequest["SECOND_USER_NAME"],
-					"LAST_NAME" => $arUserRequest["SECOND_USER_LAST_NAME"],
-					"SECOND_NAME" => $arUserRequest["SECOND_USER_SECOND_NAME"],
-					"LOGIN" => $arUserRequest["SECOND_USER_LOGIN"],
+					"NAME" => $arUserRequest["~SECOND_USER_NAME"],
+					"LAST_NAME" => $arUserRequest["~SECOND_USER_LAST_NAME"],
+					"SECOND_NAME" => $arUserRequest["~SECOND_USER_SECOND_NAME"],
+					"LOGIN" => $arUserRequest["~SECOND_USER_LOGIN"],
 				);
 
-				$strNameFormatted = CUser::FormatName($arParams['NAME_TEMPLATE'], $arTmpUser, $bUseLogin);		
+				// $bHTMLSpec is explicit: this call is the only escaping layer for ~USER_NAME_FORMATTED.
+				$strNameFormatted = CUser::FormatName($arParams['NAME_TEMPLATE'], $arTmpUser, $bUseLogin, true);
 				
 				$arEventTmp = array(
 					"EVENT_TYPE" => "INVITE_USER",

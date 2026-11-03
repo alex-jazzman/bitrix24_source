@@ -2,11 +2,18 @@ import { Builder } from 'crm.integration.analytics';
 import { Extension, Loc, Tag, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
 import 'ui.feedback.form';
+import { SidePanel } from 'ui.sidepanel';
 import 'ui.system.highlighter';
 
 type Analytics = {
 	type: string,
 	subSection: string,
+}
+
+type FooterOptions = {
+	showSettingsButton?: boolean,
+	analytics?: Analytics,
+	isGlowingSettingsButton?: boolean,
 }
 
 export class Footer
@@ -15,19 +22,21 @@ export class Footer
 	#isGlowingSettingsButton: boolean = false;
 	#analytics: Analytics = {};
 
-	constructor(showSettingsButton: boolean = false, analytics: Analytics = {}, isGlowingSettingsButton: boolean = false)
+	constructor(options: FooterOptions = {})
 	{
-		this.#showSettingsButton = showSettingsButton;
-		this.#isGlowingSettingsButton = isGlowingSettingsButton;
-		this.#analytics = analytics;
+		this.#showSettingsButton = options.showSettingsButton ?? false;
+		this.#isGlowingSettingsButton = options.isGlowingSettingsButton ?? false;
+		this.#analytics = options.analytics ?? {};
 	}
 
 	getFooterContent(): HTMLElement
 	{
 		return Tag.render`
-			<div class="crm-rs__w-footer-row">
-				${this.#getFeedbackButton()}
-				${this.#getSettingsButton()}
+			<div>
+				<div class="crm-rs__w-footer-row">
+					${this.#getFeedbackButton()}
+					${this.#getSettingsButton()}
+				</div>
 			</div>
 		`;
 	}
@@ -42,7 +51,11 @@ export class Footer
 		return Tag.render`
 			<div
 				onclick="${this.#onFeedbackClick.bind(this)}"
+				onkeydown="${(event) => this.#onButtonKeyDown(event, this.#onFeedbackClick.bind(this))}"
 				class="crm-rs__w-footer-button --feedback"
+				data-testid="repeat-sale-widget-footer-feedback"
+				role="button"
+				tabindex="0"
 			>
 				${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_POPUP_FOOTER_FEEDBACK')}
 			</div>
@@ -59,12 +72,29 @@ export class Footer
 		return Tag.render`
 			<div
 				onclick="${this.#onSettingsClick.bind(this)}"
+				onkeydown="${(event) => this.#onButtonKeyDown(event, this.#onSettingsClick.bind(this))}"
 				class="crm-rs__w-footer-button --settings ${this.#isGlowingSettingsButton ? '--glowing' : ''}"
+				data-testid="repeat-sale-widget-footer-settings"
+				role="button"
+				tabindex="0"
 			>
 				${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_POPUP_FOOTER_SETTINGS')}
 				${this.#isGlowingSettingsButton ? '<span class="ui-highlighter --with-glow --glow-md --border-md"></span>' : ''}
 			</div>
 		`;
+	}
+
+	// Both footer buttons are divs, so the browser turns neither Enter nor Space into a click on its
+	// own, and Space would scroll the popup instead.
+	#onButtonKeyDown(event: KeyboardEvent, activate: Function): void
+	{
+		if (event.key !== 'Enter' && event.key !== ' ')
+		{
+			return;
+		}
+
+		event.preventDefault();
+		activate();
 	}
 
 	#onSettingsClick(): void
@@ -73,7 +103,7 @@ export class Footer
 		eventBuilder.setElement('config');
 		sendData(eventBuilder.buildData());
 
-		window.location.href = '/crm/repeat-sale-segment/';
+		SidePanel.Instance.open('/crm/repeat-sale-segment/');
 	}
 
 	#onFeedbackClick(): void

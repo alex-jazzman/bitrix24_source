@@ -57,6 +57,7 @@ jn.define('intranet/reinvite/entry', (require, exports, module) => {
 					.setCacheHandler((response) => resolve(response))
 					.setHandler((response) => resolve(response))
 					.call(true)
+					.catch(console.error)
 				;
 			});
 		}

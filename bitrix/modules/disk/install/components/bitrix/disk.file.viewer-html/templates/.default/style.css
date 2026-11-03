@@ -1,123 +1,9 @@
-.disk-html-viewer-page__header {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 0 20px 0 22px;
-	width: 100%;
-	/* fixed, not derived from the content: the frame height below subtracts exactly this value */
-	height: 58px;
-	box-sizing: border-box;
-	background-color: var(--ui-color-bg-content-primary, #fff);
-	border-bottom: 1px solid var(--ui-color-separator-primary, #e6e7e9);
-	/* narrow viewports and deep zoom: the page wrapper clips its overflow, so without a scroll of
-	   its own the header would cut the actions off with no way to reach them (WCAG 1.4.10) */
-	overflow-x: auto;
-}
-
-/* Copy of the left menu logo (intranet menu-items-header__logo): the page carries no bitrix24 site
-   template, so neither its css nor its icon file is reachable here. The colour is the text base
-   token instead of the menu's fixed white, which would be invisible on this light header. */
-.disk-html-viewer-page__logo {
-	--disk-html-viewer-page-logo-color: var(--ui-color-base-1, #333);
-
-	display: flex;
-	flex: 0 0 auto;
-	text-decoration: none;
-	font-size: var(--ui-font-size-2xl, 18px);
-	font-weight: var(--ui-font-weight-medium, 500);
-	line-height: var(--ui-font-line-height-3xs, 1.2);
-	color: var(--disk-html-viewer-page-logo-color);
-}
-
-.disk-html-viewer-page__logo:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
-	outline-offset: 2px;
-	border-radius: 4px;
-}
-
-.disk-html-viewer-page__logo::after {
-	content: '';
-	width: 9px;
-	height: 9px;
-	position: relative;
-	top: 4px;
-	left: 3px;
-	-webkit-mask-image: url("data:image/svg+xml,%3Csvg%20width='9'%20height='9'%20viewBox='0%200%209%209'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.99833%205.00194H6.49822V4.00192H4.99822V2.25128H3.99833V5.00194Z'%20fill='white'/%3E%3Cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M4.5%200C2.01473%200%200%202.01465%200%204.49994C0%206.98522%202.01473%209%204.5%209C6.98528%209%209%206.98522%209%204.49994C9%202.01465%206.98528%200%204.5%200ZM4.5%207.99996C2.56701%207.99996%201.00005%206.4329%201.00005%204.49994C1.00005%202.56696%202.56701%201.00003%204.5%201.00003C6.43315%201.00003%208.00011%202.56696%208.00011%204.49994C8.00011%206.4329%206.43315%207.99996%204.5%207.99996Z'%20fill='white'/%3E%3C/svg%3E");
-	mask-image: url("data:image/svg+xml,%3Csvg%20width='9'%20height='9'%20viewBox='0%200%209%209'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.99833%205.00194H6.49822V4.00192H4.99822V2.25128H3.99833V5.00194Z'%20fill='white'/%3E%3Cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M4.5%200C2.01473%200%200%202.01465%200%204.49994C0%206.98522%202.01473%209%204.5%209C6.98528%209%209%206.98522%209%204.49994C9%202.01465%206.98528%200%204.5%200ZM4.5%207.99996C2.56701%207.99996%201.00005%206.4329%201.00005%204.49994C1.00005%202.56696%202.56701%201.00003%204.5%201.00003C6.43315%201.00003%208.00011%202.56696%208.00011%204.49994C8.00011%206.4329%206.43315%207.99996%204.5%207.99996Z'%20fill='white'/%3E%3C/svg%3E");
-	-webkit-mask-repeat: no-repeat;
-	mask-repeat: no-repeat;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-	background-color: var(--disk-html-viewer-page-logo-color);
-}
-
-/* Separates the portal logo from the document it hosts, as in the office editor header. */
-.disk-html-viewer-page__divider {
-	flex: 0 0 auto;
-	width: 1px;
-	height: 22px;
-	background-color: var(--ui-color-base-6, #e2e2e2);
-}
-
-/* The full row asks 390px, which a phone in portrait does not have. The logo is what goes, together
-   with the divider that only makes sense beside it: the name of the open document, the warning about
-   it and the three actions all have to stay in the window. */
-@media (max-width: 389px) {
-	.disk-html-viewer-page__logo,
-	.disk-html-viewer-page__divider {
-		display: none;
-	}
-}
-
-/* The document is user content the portal does not vet, and the header says so next to its name. */
-.disk-html-viewer-page__warning {
-	flex: 0 0 auto;
-	/* the hint keeps its node at 40% until hover, which a warning cannot afford */
-	opacity: 1;
-	/* Pulled out of the 14px rhythm of the header: the warning belongs to the file name beside it,
-	   not to the row of controls. */
-	margin-left: -8px;
-}
-
-/* Opened by keyboard as well, so the focus ring has to be visible on the icon itself. */
-.disk-html-viewer-page__warning:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
-	outline-offset: 2px;
-	border-radius: 4px;
-}
-
-/* The icon the hint renders into the node above. It sets the colour variable on itself, so a value
-   inherited from the parent would never reach it — hence the child selector and the extra weight. */
-.disk-html-viewer-page .disk-html-viewer-page__warning > * {
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-warning, #f2a100);
-}
-
-/* an h1: the file name is the heading of the page that hosts the document. It gives way first when
-   the header runs out of room — the warning and the buttons next to it do not shrink — but not past
-   a few characters: it is the only thing on the page naming the open document, and the header has a
-   scroll of its own for what no longer fits. */
-.disk-html-viewer-page__name {
-	margin: 0;
-	flex: 0 1 auto;
-	min-width: 6ch;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	font-size: var(--ui-font-size-xl, 16px);
-	font-weight: var(--ui-font-weight-regular, 400);
-	line-height: 21px;
-	letter-spacing: -0.1px;
-	color: var(--ui-color-base-2, #525c69);
-}
-
-/* Pushed to the right edge by the margin rather than by a stretched name, so the warning beside the
-   name stays beside the name however short it is. */
-.disk-html-viewer-page__actions {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex: 0 0 auto;
-	margin-left: auto;
+/* The layers of the page, declared together because the product has no shared scale of them to
+   take a place in. */
+.disk-html-viewer-page {
+	--disk-html-viewer-layer-presentation-exit: 1000;
+	--disk-html-viewer-layer-warning: 1050;
+	--disk-html-viewer-layer-warning-return: 1100;
 }
 
 /* Viewport-based height like the office editor shell: the site template keeps body at height auto,
@@ -125,9 +11,146 @@
 .disk-html-viewer-page__frame {
 	display: block;
 	width: 100%;
-	height: calc(100vh - 58px);
-	height: calc(100dvh - 58px);
+	height: calc(100vh - var(--disk-document-header-height, 58px));
+	height: calc(100dvh - var(--disk-document-header-height, 58px));
 	border: 0;
+}
+
+/* The height is repeated here as a floor: a page whose header never arrived gets no stylesheet of
+   the extension either, and the strip still has to keep its place for the name the page drew. */
+.disk-html-viewer-page__header {
+	position: relative;
+	min-height: var(--disk-document-header-height, 58px);
+}
+
+/* Laid over the strip, so it takes no height of its own and moves nothing when it goes. */
+.disk-html-viewer-page__name {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0 var(--ui-space-inset-lg, 20px) 0 var(--ui-space-inset-lg2, 22px);
+	overflow: hidden;
+	/* The stand-in lies over the whole strip, so the header drawn under it keeps every press. */
+	pointer-events: none;
+	color: var(--ui-color-base-1, #333);
+	font-size: var(--ui-font-size-xl, 16px);
+	font-weight: var(--ui-font-weight-regular);
+	/* the strip is one line high, so the line itself is what centers the name in it */
+	line-height: var(--disk-document-header-height, 58px);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* The class marks the moment the header reached the strip. The condition is the drawing of the
+   header itself and not of one element of it: what it draws there is its own composition to decide. */
+.disk-html-viewer-page--header-mounted .disk-html-viewer-page__name {
+	display: none;
+}
+
+/* Below the strip and out of the flow, so it moves nothing when it goes; the offset is the height
+   the strip keeps as its floor. The paint is put off long enough for a header which mounts normally
+   to take the strip first, so an ordinary opening never blinks with it. */
+.disk-html-viewer-page__warning {
+	position: fixed;
+	top: var(--disk-document-header-height, 58px);
+	right: 0;
+	left: 0;
+	z-index: var(--disk-html-viewer-layer-warning);
+	/* The band stands over the top of the document, so a reader left with it still reaches the part
+	   of the document under it with pointer and wheel. */
+	pointer-events: none;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	min-height: var(--disk-document-header-height, 58px);
+	margin: 0;
+	padding: 8px 20px;
+	background-color: var(--ui-color-accent-soft-orange-2, #fff4d6);
+	color: var(--ui-color-accent-soft-element-orange, #a56300);
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: 20px;
+	opacity: 0;
+	animation: disk-html-viewer-warning-appear 150ms 1s forwards;
+}
+
+@keyframes disk-html-viewer-warning-appear {
+	to {
+		opacity: 1;
+	}
+}
+
+/* The motion goes, the delay stays: the delay is what keeps an ordinary opening from blinking. */
+@media (prefers-reduced-motion: reduce) {
+	.disk-html-viewer-page__warning {
+		animation: disk-html-viewer-warning-appear 0s 1s forwards;
+	}
+}
+
+.disk-html-viewer-page--header-mounted .disk-html-viewer-page__warning {
+	display: none;
+}
+
+/* A page the server described no header for waits for nothing: the band is never taken off it, so it
+   takes its own place in the flow instead of standing over the top of the document forever, and the
+   page hands out its height rather than counting one. */
+.disk-html-viewer-page--headerless {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	height: 100dvh;
+}
+
+.disk-html-viewer-page--headerless .disk-html-viewer-page__warning {
+	position: static;
+	pointer-events: auto;
+	/* Nothing is coming to take the strip, so the delay that kept an ordinary opening from blinking
+	   would only leave this reader a second of unwarned document. */
+	opacity: 1;
+	animation: none;
+}
+
+.disk-html-viewer-page--headerless .disk-html-viewer-page__content {
+	flex: 1;
+	min-height: 0;
+}
+
+.disk-html-viewer-page--headerless .disk-html-viewer-page__frame,
+.disk-html-viewer-page--headerless .disk-html-viewer-page__unavailable {
+	height: 100%;
+}
+
+/* The frame starts with focus, so once its own tab order ends this skip link is the visible route
+   back to the strip, and from there to the warning and the actions that precede the frame. */
+.disk-html-viewer-page__warning-return {
+	position: fixed;
+	top: 8px;
+	left: 50%;
+	z-index: var(--disk-html-viewer-layer-warning-return);
+	box-sizing: border-box;
+	max-width: calc(100vw - 32px);
+	padding: 8px 12px;
+	transform: translate(-50%, calc(-100% - 16px));
+	border-radius: 6px;
+	background-color: var(--ui-color-bg-content-primary, #fff);
+	box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
+	color: var(--ui-color-accent-main-link, #0154c8);
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: 20px;
+	text-decoration: none;
+}
+
+.disk-html-viewer-page__warning-return:focus-visible {
+	transform: translate(-50%, 0);
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+}
+
+.disk-html-viewer-page__warning-return [aria-hidden="true"] {
+	margin-right: 6px;
 }
 
 /* Takes the place of the frame when there is no document to show, so the page keeps its shape. */
@@ -136,12 +159,55 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: calc(100vh - 58px);
-	height: calc(100dvh - 58px);
+	height: calc(100vh - var(--disk-document-header-height, 58px));
+	height: calc(100dvh - var(--disk-document-header-height, 58px));
 	padding: 0 20px;
 	box-sizing: border-box;
 	text-align: center;
 	font-size: var(--ui-font-size-xl, 16px);
 	line-height: 21px;
 	color: var(--ui-color-base-3, #828b95);
+}
+
+.disk-html-viewer-page--presentation .disk-html-viewer-page__header {
+	display: none;
+}
+
+.disk-html-viewer-page--presentation .disk-html-viewer-page__warning,
+.disk-html-viewer-page--presentation .disk-html-viewer-page__warning-return {
+	display: none;
+}
+
+.disk-html-viewer-page--presentation .disk-html-viewer-page__frame,
+.disk-html-viewer-page--presentation .disk-html-viewer-page__unavailable {
+	height: 100vh;
+	height: 100dvh;
+}
+
+.disk-html-viewer-page__presentation-exit {
+	display: none;
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	z-index: var(--disk-html-viewer-layer-presentation-exit);
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+
+.disk-html-viewer-page--presentation .disk-html-viewer-page__presentation-exit {
+	display: block;
+}
+
+/* The focus is followed on the container: a selector by the state of the button inside is missing
+   from the oldest browsers the product supports, and an unknown selector takes the whole rule down. */
+.disk-html-viewer-page__presentation-exit--visible,
+.disk-html-viewer-page__presentation-exit:hover,
+.disk-html-viewer-page__presentation-exit:focus-within {
+	opacity: 1;
+}
+
+@media (hover: none) {
+	.disk-html-viewer-page--presentation .disk-html-viewer-page__presentation-exit {
+		opacity: 1;
+	}
 }

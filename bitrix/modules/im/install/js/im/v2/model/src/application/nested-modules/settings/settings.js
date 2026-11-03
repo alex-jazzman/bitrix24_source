@@ -37,6 +37,7 @@ export class SettingsModel extends BuilderModel
 			notifications: {},
 
 			[Settings.message.bigSmiles]: true,
+			[Settings.message.defaultReaction]: 'like',
 
 			[Settings.recent.showBirthday]: true,
 			[Settings.recent.showInvited]: true,

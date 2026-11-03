@@ -9,7 +9,7 @@ type TypeSeparatorOptions = {
 	typeId: number,
 };
 
-export default class TypeSeparator
+export class TypeSeparator
 {
 	cache = new Cache.MemoryCache();
 

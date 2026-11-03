@@ -5,6 +5,7 @@ declare namespace BX.Crm {
 		formBeforeSubmitHandler: (ajaxForm: any, eventArgs: any) => void;
 		postFormAnalytics: Record<string, any>;
 		appendParamsFromCurrentUrl: boolean;
+		kanbanCreateOrigin: string;
 		constructor();
 		doInitialize(): void;
 		bindToAjaxForms(ajaxForms: any): void;
@@ -13,6 +14,4 @@ declare namespace BX.Crm {
 		release(): void;
 		static create(id: string, settings: any): EntityEditorAnalyticsController;
 	}
-
-	const BX: any;
 }

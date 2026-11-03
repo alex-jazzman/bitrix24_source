@@ -6,7 +6,7 @@ import {FormSettingsForm} from 'landing.ui.form.formsettingsform';
 import {FieldsListField} from 'landing.ui.field.fieldslistfield';
 import messageIcon from './images/message-icon.svg';
 
-export default class FieldsContent extends ContentWrapper
+export class FieldsContent extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -58,3 +58,4 @@ export default class FieldsContent extends ContentWrapper
 		this.addItem(fieldsForm);
 	}
 }
+export { FieldsContent as Content };

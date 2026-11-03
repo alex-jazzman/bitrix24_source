@@ -6,7 +6,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 (function (exports, main_core, ui_dialogs_messagebox, tasks_v2_core, tasks_v2_const, tasks_v2_lib_analytics, tasks_v2_lib_scrumManager, tasks_v2_lib_apiClient, tasks_v2_lib_idUtils, tasks_v2_provider_service_deadlineService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_resultService) {
 	'use strict';
 
-	const statusService = new class {
+	class StatusService {
 		async start(id) {
 			await this.#updateStatus(id, tasks_v2_const.Endpoint.TaskStatusStart, tasks_v2_const.TaskStatus.InProgress);
 		}
@@ -68,7 +68,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			await this.#updateStatus(id, tasks_v2_const.Endpoint.TaskStatusPause, tasks_v2_const.TaskStatus.Pending);
 		}
 		async pauseTimer(id) {
-			await this.#updateStatus(id, tasks_v2_const.Endpoint.TaskTrackingTimerStop, tasks_v2_const.TaskStatus.Pending);
+			await this.#updateStatus(id, tasks_v2_const.Endpoint.TaskTrackingTimerStop);
 		}
 		async complete(id, analyticsParams = {}, handleRequireResult = true) {
 			const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
@@ -88,16 +88,27 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				parentId: task.parentId,
 				groupId: task.groupId
 			});
-			let canComplete = true;
-			if (scrumManager.isScrum(group?.type)) {
-				canComplete = await scrumManager.handleDodDisplay();
-			}
-			if (!canComplete) {
-				return null;
-			}
 			const status = task.needsControl ? tasks_v2_const.TaskStatus.SupposedlyCompleted : tasks_v2_const.TaskStatus.Completed;
-			const error = await this.#updateStatus(id, tasks_v2_const.Endpoint.TaskStatusComplete, status, true);
-			if (error) {
+			try {
+				const {
+					checkListCompletionService,
+					isCompletionSuccessful
+				} = await main_core.Runtime.loadExtension('tasks.v2.lib.check-list-completion');
+				// V2 always delegates checklist completion to the server, even for an empty client snapshot
+				const completeTask = () => this.#updateStatus(id, tasks_v2_const.Endpoint.TaskStatusComplete, status, true, {
+					completeWithChecklist: true
+				});
+				const completionResult = await checkListCompletionService.run({
+					taskId: id,
+					complete: completeTask,
+					completeWithChecklist: completeTask,
+					beforeComplete: () => scrumManager.isScrum(group?.type) ? scrumManager.handleDodDisplay() : Promise.resolve(true)
+				});
+				if (!isCompletionSuccessful(completionResult)) {
+					return completionResult.error;
+				}
+			} catch (error) {
+				console.error('StatusService: complete error', error);
 				return error;
 			}
 			if (scrumManager.isScrum(group?.type)) {
@@ -115,34 +126,46 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		async renew(id) {
 			await this.#updateStatus(id, tasks_v2_const.Endpoint.TaskStatusRenew, tasks_v2_const.TaskStatus.Pending);
 		}
-		async #updateStatus(id, action, status, silent = false) {
+		async #updateStatus(id, action, status = null, silent = false, actionData = {}) {
 			const taskBeforeUpdate = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
 			if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
-				tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
-					status
-				});
+				if (status !== null) {
+					tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
+						status
+					});
+				}
 				return null;
 			}
 			try {
-				const data = await tasks_v2_lib_apiClient.apiClient.post(action, {
-					task: {
-						id
+				await tasks_v2_provider_service_taskService.taskService.withStageSnapshot(async snapshot => {
+					const data = await tasks_v2_lib_apiClient.apiClient.post(action, {
+						task: {
+							id
+						},
+						...actionData
+					});
+					if (status !== null) {
+						tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
+							status
+						});
 					}
+					tasks_v2_provider_service_taskService.taskService.extractTask(data, true, snapshot);
 				});
-				tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
-					status
-				});
-				tasks_v2_provider_service_taskService.taskService.extractTask(data);
 				return null;
 			} catch (error) {
-				tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, taskBeforeUpdate);
+				if (status !== null) {
+					tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
+						status: taskBeforeUpdate.status
+					});
+				}
 				if (!silent) {
 					console.error(`StatusService: ${action} error`, error);
 				}
 				return new Error(error.errors?.[0]?.message);
 			}
 		}
-	}();
+	}
+	const statusService = new StatusService();
 
 	exports.statusService = statusService;
 

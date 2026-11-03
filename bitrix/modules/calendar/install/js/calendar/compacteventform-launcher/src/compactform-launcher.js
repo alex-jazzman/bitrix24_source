@@ -14,24 +14,36 @@ export class CompactFormLauncher
 	#data = null;
 	#formInstance = null;
 	#lightContext = null;
+	#onClose = null;
+
+	constructor(options = {})
+	{
+		this.#onClose = Type.isFunction(options.onClose) ? options.onClose : null;
+	}
 
 	async showNewEventForm(params = {})
 	{
+		const initiator = document.activeElement;
+
 		await this.#loadData();
 
 		return this.#showForm('edit', {
 			...params,
 			entry: null,
+			initiator,
 		});
 	}
 
 	async showEventForm(entryData, params = {})
 	{
+		const initiator = document.activeElement;
+
 		await this.#loadData();
 
 		return this.#showForm('view', {
 			...params,
 			entry: entryData,
+			initiator,
 		});
 	}
 
@@ -130,11 +142,25 @@ export class CompactFormLauncher
 			throw new Error('CompactFormLauncher: no calendar section is available for the current user');
 		}
 
-		this.#formInstance ??= new CompactEventForm({
-			type: this.#type,
-			ownerId: this.#ownerId,
-			userId: this.#userId,
-		});
+		if (!this.#formInstance)
+		{
+			const form = new CompactEventForm({
+				type: this.#type,
+				ownerId: this.#ownerId,
+				userId: this.#userId,
+			});
+			this.#formInstance = form;
+			form.subscribe('onClose', () => {
+				if (form !== this.#formInstance)
+				{
+					return;
+				}
+
+				this.#onClose?.({ launcher: this, form });
+			});
+		}
+
+		const form = this.#formInstance;
 
 		const showParams = {
 			type: this.#type,
@@ -156,9 +182,12 @@ export class CompactFormLauncher
 
 		// a form that failed to open is already torn down, so the next call starts over from a fresh
 		// bootstrap instead of reusing the data the failure was seen with
-		return this.#formInstance.show(formMode, showParams).catch((error) => {
-			this.#formInstance = null;
-			this.#data = null;
+		return form.show(formMode, showParams).catch((error) => {
+			if (form === this.#formInstance)
+			{
+				this.#formInstance = null;
+				this.#data = null;
+			}
 
 			throw error;
 		});

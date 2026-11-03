@@ -11,6 +11,9 @@ import { Menu, MenuItem } from 'main.popup';
 
 export class Robot extends EventEmitter
 {
+	static ADD_CONTROL_ROLE = 'robot-add-insertion';
+	static ADD_CONTROL_BUTTON_ROLE = 'robot-add-insertion-button';
+
 	SYSTEM_EXPRESSION_PATTERN = '\\{=\\s*(?<object>[a-z0-9_]+)\\s*\\:\\s*(?<field>[a-z0-9_\\.]+)(\\s*>\\s*(?<mod1>[a-z0-9_\\:]+)(\\s*,\\s*(?<mod2>[a-z0-9_]+))?)?\\s*\\}';
 
 	#data: Object<string, any>;
@@ -171,7 +174,30 @@ export class Robot extends EventEmitter
 		if (node.parentNode)
 		{
 			Dom.replace(node, this.#node);
+			this.#updateAddControlAriaLabel();
 		}
+	}
+
+	#updateAddControlAriaLabel(): void
+	{
+		const control = this.#node.previousElementSibling;
+		if (control?.dataset.role !== Robot.ADD_CONTROL_ROLE)
+		{
+			return;
+		}
+
+		const button = control.querySelector(`[data-role="${Robot.ADD_CONTROL_BUTTON_ROLE}"]`);
+		if (!button)
+		{
+			return;
+		}
+
+		const addTitle = Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+		const ariaLabel = Loc.getMessage(
+			'BIZPROC_AUTOMATION_CMP_ADD_BEFORE',
+			{ '#TITLE#': this.getTitle() },
+		);
+		Dom.attr(button, 'aria-label', ariaLabel || addTitle);
 	}
 
 	destroy()

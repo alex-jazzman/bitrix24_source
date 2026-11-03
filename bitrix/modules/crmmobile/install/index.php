@@ -1,8 +1,5 @@
 <?php
 
-use Bitrix\CrmMobile\Integration\Pull\Counter;
-use Bitrix\CrmMobile\Workspace;
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -15,8 +12,7 @@ class CrmMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = Workspace::class;
+	public array $errors = [];
 
 	public function __construct()
 	{
@@ -37,32 +33,33 @@ class CrmMobile extends CModule
 	{
 		ModuleManager::registerModule($this->MODULE_ID);
 
-		$eventManager = EventManager::getInstance();
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
+			return false;
+		}
 
 		return true;
 	}
 
 	public function uninstallDB($arParams = [])
 	{
-		$eventManager = EventManager::getInstance();
+		// the module has no tables of its own, so nothing is ever dropped
+		$dropTables = false;
 
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function installFiles()
@@ -80,64 +77,6 @@ class CrmMobile extends CModule
 	public function uninstallFiles(): void
 	{
 		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
-	}
-
-	public function installEvents()
-	{
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->registerEventHandler(
-			'pull',
-			'onGetMobileCounter',
-			'crmmobile',
-			Counter::class,
-			'onGetMobileCounter'
-		);
-
-		$eventManager->registerEventHandler(
-			'pull',
-			'onGetMobileCounterTypes',
-			'crmmobile',
-			Counter::class,
-			'onGetMobileCounterTypes'
-		);
-
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'crmmobile',
-			'Bitrix\CrmMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
-	}
-
-	public function uninstallEvents()
-	{
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->unregisterEventHandler(
-			'pull',
-			'onGetMobileCounter',
-			'crmmobile',
-			Counter::class,
-			'onGetMobileCounter'
-		);
-
-		$eventManager->unregisterEventHandler(
-			'pull',
-			'onGetMobileCounterTypes',
-			'crmmobile',
-			Counter::class,
-			'onGetMobileCounterTypes'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'crmmobile',
-			'Bitrix\CrmMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
 	}
 
 	private function installDependencies()
@@ -172,7 +111,6 @@ class CrmMobile extends CModule
 		{
 			$this->installDB();
 			$this->installFiles();
-			$this->installEvents();
 			$this->installDependencies();
 
 			$this->showInstallStep(2);
@@ -210,7 +148,6 @@ class CrmMobile extends CModule
 		{
 			$this->uninstallDB();
 			$this->uninstallFiles();
-			$this->uninstallEvents();
 
 			$APPLICATION->IncludeAdminFile(
 				Loc::getMessage('CRMMOBILE_UNINSTALL_TITLE'),

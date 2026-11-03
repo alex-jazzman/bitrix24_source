@@ -5,6 +5,7 @@ import { MenuItem, PopupManager } from 'main.popup';
 import { AirButtonStyle, Button } from 'ui.buttons';
 import PresetCustomController from './controllers/preset-custom-controller';
 import PresetDefaultController from './controllers/preset-default-controller';
+import { MainToolInitialShow } from './controllers/main-tool-initial-show';
 import SettingsController from './controllers/settings-controller';
 import Options from './options';
 import Backend from './backend';
@@ -18,6 +19,7 @@ import { BannerDispatcher } from 'ui.banner-dispatcher';
 import { Analytics, AnalyticActions } from './analytics';
 import { GroupPanel } from './group-panel';
 import Utils from './utils';
+import { canApplyTopMenuFirstItem, resolveLinkedTopMenuId } from './collaboration-menu-item';
 
 export default class Menu
 {
@@ -42,6 +44,10 @@ export default class Menu
 	isResponsiveCollapsed = false;
 	wasExpandedBeforeResponsive = false;
 	narrowViewportQuery = null;
+	#mainToolSettingsRequest = 0;
+	#mainToolSettingsLoading = false;
+	#mainToolSettingsError = false;
+	#mainToolInitialShow: ?MainToolInitialShow = null;
 
 	constructor(params)
 	{
@@ -66,6 +72,7 @@ export default class Menu
 		Options.licenseButtonPath = params.licenseButtonPath;
 		Options.isMessengerEmbedded = params.isMessengerEmbedded === 'Y';
 		Options.currentPresetId = params.currentPresetId;
+		Options.setMainToolPickerEnabled(params.isMainToolPickerEnabled === true);
 
 		this.isCollapsedMode = params.isCollapsedMode;
 		this.analytics = new Analytics(params.isAdmin);
@@ -84,6 +91,7 @@ export default class Menu
 		// Emulate document scroll because init() can be invoked after page load scroll
 		// (a hard reload with script at the bottom).
 		// this.handleDocumentScroll();
+		this.#scheduleMainToolInitialShow();
 	}
 
 	initAndBindNodes()
@@ -200,7 +208,10 @@ export default class Menu
 				{
 					events: {
 						onGettingSettingMenuItems: this.onGettingSettingMenuItems.bind(this),
-						onShow: () => { this.isMenuMouseLeaveBlocked.push('settings'); },
+						onShow: () => {
+							this.isMenuMouseLeaveBlocked.push('settings');
+							this.refreshMainToolSettings();
+						},
 						onClose: () => { this.isMenuMouseLeaveBlocked.pop(); },
 					}
 				}
@@ -248,6 +259,19 @@ export default class Menu
 				this.menuContainer,
 				{
 					events: {
+						onMainToolPickerAutoRequested: () => this.#scheduleMainToolInitialShow(),
+						onMainToolPickerShown: ({ data: { openingReason } }) => {
+							this.analytics.sendMainToolPickerShown(openingReason);
+						},
+						onMainToolPickerApplied: ({ data: { presetId, applyForAll, openingReason } }) => {
+							this.analytics.sendMainToolPickerApplied(presetId, applyForAll, openingReason);
+						},
+						onMainToolPickerClosed: ({ data: { openingReason, reason, wasShown } }) => {
+							if (reason === 'close' && wasShown)
+							{
+								this.analytics.sendMainToolPickerClosed(openingReason);
+							}
+						},
 						onPresetIsSet: ({ data: { mode, presetId } }) => {
 							this.analytics.sendSetPreset(
 								presetId,
@@ -292,6 +316,149 @@ export default class Menu
 			return presetController;
 		});
 	}
+
+	setMainToolPickerEnabled(enabled: boolean): void
+	{
+		if (Options.isMainToolPickerEnabled !== (enabled === true))
+		{
+			this.#mainToolInitialShow?.destroy();
+			this.#mainToolInitialShow = null;
+			Options.setMainToolPickerEnabled(enabled);
+			this.#updateMainToolSettingsItem();
+			this.#scheduleMainToolInitialShow();
+		}
+	}
+
+	#scheduleMainToolInitialShow(): void
+	{
+		const bootstrapRevision = Options.mainToolPickerBootstrapRevision;
+		BX.ready(() => {
+			// BX.ready may run before the global menu instance is assigned.
+			Promise.resolve().then(() => {
+				if (
+					BX.Intranet.LeftMenu !== this
+					|| !Options.isMainToolPickerEnabled
+					|| bootstrapRevision !== Options.mainToolPickerBootstrapRevision
+				)
+				{
+					return;
+				}
+
+				this.#mainToolInitialShow ??= new MainToolInitialShow(
+					this.getDefaultPresetController(),
+					this.menuContainer.ownerDocument,
+				);
+				void this.#mainToolInitialShow.start();
+			});
+		});
+	}
+
+	refreshMainToolSettings(): void
+	{
+		if (!Options.isMainToolPickerEnabled)
+		{
+			return;
+		}
+
+		const request = ++this.#mainToolSettingsRequest;
+		const bootstrapRevision = Options.mainToolPickerBootstrapRevision;
+		const isCurrent = () => (
+			request === this.#mainToolSettingsRequest
+			&& bootstrapRevision === Options.mainToolPickerBootstrapRevision
+			&& this.menuContainer === document.getElementById('menu-items-block')
+		);
+		this.#mainToolSettingsLoading = true;
+		this.#mainToolSettingsError = false;
+		this.#updateMainToolSettingsItem();
+		Backend.getMainToolState()
+			.then(({ data }) => {
+				if (!isCurrent())
+				{
+					return;
+				}
+
+				if (!Type.isPlainObject(data))
+				{
+					throw new Error('Invalid main tool state.');
+				}
+
+				Options.mainToolState = data;
+				this.#mainToolSettingsLoading = false;
+				this.#updateMainToolSettingsItem();
+			})
+			.catch((response) => {
+				if (!isCurrent())
+				{
+					return;
+				}
+
+				Options.mainToolState = null;
+				this.#mainToolSettingsLoading = false;
+				this.#mainToolSettingsError = true;
+				PresetDefaultController.notifyMainToolError(response);
+				this.#updateMainToolSettingsItem();
+			})
+		;
+	}
+
+	#getMainToolSettingsItem()
+	{
+		if (!Options.isMainToolPickerEnabled)
+		{
+			return {
+				text: Loc.getMessage('MENU_SET_DEFAULT2'),
+				onclick: () => this.getDefaultPresetController().show('personal'),
+			};
+		}
+
+		const isWaitingForState = !this.#mainToolSettingsError
+			&& (this.#mainToolSettingsLoading || !Options.mainToolState)
+		;
+		const canChange = !this.#mainToolSettingsLoading && Options.canChangeMainTool();
+		let reason = Loc.getMessage('MENU_MAIN_TOOL_PICKER_ACCESS_DENIED');
+		if (this.#mainToolSettingsError)
+		{
+			reason = Loc.getMessage('MENU_MAIN_TOOL_PICKER_ERROR');
+		}
+		else if (Options.mainToolState?.forced)
+		{
+			reason = Loc.getMessage('MENU_MAIN_TOOL_PICKER_FORCED');
+		}
+
+		const title = Loc.getMessage('MENU_SET_DEFAULT2');
+
+		return {
+			id: 'main-tool-picker',
+			text: canChange || isWaitingForState ? title : `${title}: ${reason}`,
+			disabled: !canChange,
+			onclick: () => {
+				if (!Options.isMainToolPickerEnabled || (!this.#mainToolSettingsLoading && Options.canChangeMainTool()))
+				{
+					this.getDefaultPresetController().show('personal');
+				}
+			},
+		};
+	}
+
+	#updateMainToolSettingsItem(): void
+	{
+		const item = this.getSettingsController()?.getMenuItem('main-tool-picker');
+		if (!item)
+		{
+			return;
+		}
+
+		const data = this.#getMainToolSettingsItem();
+		item.setText(data.text);
+		if (data.disabled)
+		{
+			item.disable();
+		}
+		else
+		{
+			item.enable();
+		}
+	}
 	// endregion
 
 	bindEvents(): void
@@ -335,8 +502,13 @@ export default class Menu
 				return;
 			}
 
-			const topMenuId = firstNode.getAttribute('data-top-menu-id');
+			const topMenuId = this.#getLinkedTopMenuId(firstNode.getAttribute('data-top-menu-id'));
 			const leftMenuNode = this.menuBody.querySelector(`[data-top-menu-id="${topMenuId}"]`);
+			if (!canApplyTopMenuFirstItem(leftMenuNode))
+			{
+				return;
+			}
+
 			if (leftMenuNode)
 			{
 				leftMenuNode.setAttribute('data-link', firstPageLink);
@@ -614,12 +786,25 @@ export default class Menu
 		ajax.runAction('intranet.leftmenu.clearCache', {data: {}});
 	}
 
+	#getLinkedTopMenuId(menuId: string | null): string | null
+	{
+		const collaborationItem = this.menuBody.querySelector('[data-collaboration-menu="Y"]');
+		const collaborationMenuId = Loc.hasMessage('INTRANET_COLLABORATION_MENU_ID')
+			? Loc.getMessage('INTRANET_COLLABORATION_MENU_ID')
+			: null;
+		const legacyMenuId = Loc.hasMessage('INTRANET_COLLABORATION_MENU_LEGACY_ID')
+			? Loc.getMessage('INTRANET_COLLABORATION_MENU_LEGACY_ID')
+			: null;
+
+		return resolveLinkedTopMenuId(menuId, collaborationItem, collaborationMenuId, legacyMenuId);
+	}
+
 	#getLeftMenuItemByTopMenuItem({DATA_ID, NODE}): ?Item
 	{
 		let item = this.getItemsController().items.get(DATA_ID);
 		if (!item)
 		{
-			const topMenuId = NODE.getAttribute('data-top-menu-id');
+			const topMenuId = this.#getLinkedTopMenuId(NODE.getAttribute('data-top-menu-id'));
 			if (NODE === NODE.parentNode.querySelector('[data-top-menu-id]'))
 			{
 				const leftMenuNode = this.menuItemsBlock.querySelector(`[data-top-menu-id="${topMenuId}"]`);
@@ -751,12 +936,7 @@ export default class Menu
 					Messenger.openSettings();
 				},
 			} : null,
-			Options.isExtranet ? null : {
-				text: Loc.getMessage('MENU_SET_DEFAULT2'),
-				onclick: () => {
-					this.getDefaultPresetController().show('personal');
-				},
-			},
+			Options.isExtranet ? null : this.#getMainToolSettingsItem(),
 			!Options.inviteDialogLink ? null : {
 				text: Loc.getMessage('MENU_INVITE_USERS'),
 				onclick: () => {
@@ -1645,7 +1825,7 @@ export default class Menu
 			icon: 'o-rocket',
 			className: 'menu-license-all-button',
 			onclick: () => {
-				BX.SidePanel.Instance.open(Options.licenseButtonPath, { width: 1250, cacheable: false });
+				BX.SidePanel.Instance.open(Options.licenseButtonPath, { cacheable: false });
 			},
 		});
 	}

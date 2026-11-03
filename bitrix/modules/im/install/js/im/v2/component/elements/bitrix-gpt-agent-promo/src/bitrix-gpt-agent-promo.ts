@@ -73,7 +73,6 @@ export class BitrixGptAgentPromo
 			content: BitrixGptAgentPromo.#getContent(),
 			designSystemContext: '--ui-context-content-dark',
 			width: 440,
-			// @ts-expect-error: main.popup types declare closeIcon as boolean, but runtime accepts a style object too.
 			closeIcon: { top: '4px', right: '4px' },
 			autoHide: false,
 			closeByEsc: true,
@@ -90,11 +89,11 @@ export class BitrixGptAgentPromo
 			events: {
 				onAfterPopupShow: () => {
 					this.#trackInteractions();
-					Analytics.getInstance().bitrixGptAgentPromo.onBannerView();
+					Analytics.getInstance().bitrixGptAgentPromo.onPopupView();
 					void PromoManager.getInstance().markAsWatched(PromoId.bitrixGptAgent);
 				},
 				onPopupClose: () => {
-					Analytics.getInstance().bitrixGptAgentPromo.onBannerClose();
+					Analytics.getInstance().bitrixGptAgentPromo.onPopupClose();
 				},
 				onPopupDestroy: () => {
 					this.#untrackInteractions();

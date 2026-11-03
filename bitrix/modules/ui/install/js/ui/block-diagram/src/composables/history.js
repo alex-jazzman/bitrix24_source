@@ -1,6 +1,7 @@
 import { computed, toValue, nextTick, markRaw } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
 import { pruneSelection } from './watch-props';
+import { replaceSelection } from './highlighted-blocks';
 import { commandToArray } from '../utils';
 import type { DiagramBlock, DiagramBlockId, DiagramPort, Point, State, Snapshot } from '../types';
 
@@ -386,7 +387,7 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistory
 		// The restored model reaches the state on the next flush, together with the trimming
 		// useWatchProps does, so the kept selection is put back only after that.
 		await nextTick();
-		highlitedBlockIds.value = selectionBeforeRevert;
+		replaceSelection(highlitedBlockIds, selectionBeforeRevert);
 		pruneSelection(highlitedBlockIds, blockIdsInModel);
 	}
 

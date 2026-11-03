@@ -31,6 +31,7 @@ $MESS["IM_LIB_MENU_USER_MENTION"] = "Упомянуть";
 $MESS['IM_LIB_MENU_USER_WRITE'] = "Написать лично";
 
 $MESS["IM_LIB_MENU_AI_ASSISTANT_FEEDBACK"] = "Обратная связь";
+$MESS["IM_LIB_MENU_CREATE_AI_TASK"] = "Создать AI-задачу";
 
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "Посмотреть в канале";
 

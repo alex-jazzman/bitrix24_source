@@ -12,7 +12,7 @@ const fetchName = (item) => {
 	return !Type.isNil(item.NAME) ? item.NAME : item.name;
 };
 
-export default class StageField extends BaseField
+export class StageField extends BaseField
 {
 	constructor(options)
 	{

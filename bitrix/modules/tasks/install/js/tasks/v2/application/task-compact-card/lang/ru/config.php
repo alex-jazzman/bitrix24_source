@@ -1,6 +1,8 @@
 <?php
+$MESS['TASKS_V2_TCC_CLOSE_BTN'] = 'Закрыть';
 $MESS['TASKS_V2_TCC_CANCEL_BTN'] = 'Отмена';
 $MESS['TASKS_V2_TCC_FULL_CARD_BTN'] = 'Полная форма';
+$MESS['TASKS_V2_TCC_FULL_CARD_DISABLED_REASON'] = 'Открыть полную форму можно после загрузки всех файлов';
 $MESS['TASKS_V2_TCC_FILE_IS_UPLOADING'] = 'Вы сможете открыть полную форму, когда все файлы загрузятся';
 $MESS['TASKS_V2_TCC_DROP_ZONE'] = 'Переместите файлы в эту область';
 

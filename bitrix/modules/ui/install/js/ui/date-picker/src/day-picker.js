@@ -1,17 +1,20 @@
 import { Dom, Tag, Loc, Text } from 'main.core';
+import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { DateTimeFormat } from 'main.date';
-import { MemoryCache } from 'main.core.cache';
-import { BasePicker } from './base-picker';
+import { InteractivityChecker } from 'ui.a11y';
 
+import { BasePicker } from './base-picker';
+import { type DayMark } from './date-picker-options';
 import { addDate } from './helpers/add-date';
 import { ceilDate } from './helpers/ceil-date';
 import { cloneDate } from './helpers/clone-date';
 import { createUtcDate } from './helpers/create-utc-date';
 import { floorDate } from './helpers/floor-date';
+import { getGridStartDate } from './helpers/get-grid-start-date';
 import { isDatesEqual } from './helpers/is-dates-equal';
+import { setTabAnchor } from './helpers/set-tab-anchor';
 
-import { type BaseCache } from 'main.core.cache';
-import { type DayMark } from './date-picker-options';
+import './css/day-picker.css';
 
 export type DayPickerMonth = {
 	weeks: Array<DayPickerWeek>,
@@ -44,8 +47,6 @@ export type DayPickerDay = {
 	marks: string[],
 };
 
-import './css/day-picker.css';
-
 export class DayPicker extends BasePicker
 {
 	#refs: BaseCache<HTMLElement> = new MemoryCache();
@@ -56,7 +57,11 @@ export class DayPicker extends BasePicker
 	{
 		return this.#refs.remember('container', () => {
 			return Tag.render`
-				<div class="ui-day-picker${this.getDatePicker().isFullYear() ? ' --full-year' : ''}" role="none">
+				<div
+					class="ui-day-picker${this.getDatePicker().isFullYear() ? ' --full-year' : ''}"
+					data-testid="ui-date-picker-day-view"
+					role="none"
+				>
 					${this.getHeader()}
 					${this.getContentContainer(this.getMonthContainer())}
 					${
@@ -116,6 +121,7 @@ export class DayPicker extends BasePicker
 				<button
 					type="button"
 					class="ui-date-picker-header-month"
+					data-testid="ui-date-picker-month-view-btn"
 					aria-label="${Loc.getMessage('UI_DATE_PICKER_MONTH_VIEW_LABEL')}"
 					onclick="${this.#handleMonthClick.bind(this)}"
 				></button>
@@ -145,6 +151,7 @@ export class DayPicker extends BasePicker
 				<button 
 					type="button" 
 					class="ui-date-picker-header-year"
+					data-testid="ui-date-picker-year-view-btn"
 					aria-label="${Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
 					onclick="${this.#handleYearClick.bind(this)}"
 				></button>
@@ -352,7 +359,9 @@ export class DayPicker extends BasePicker
 			const dayContainer = Tag.render`
 				<button
 					type="button"
+					id="${this.getDatePicker().getContainerId()}-${id}"
 					class="ui-day-picker-day"
+					data-testid="ui-date-picker-day-cell"
 					data-day="${day.day}"
 					data-month="${day.month}"
 					data-year="${day.year}"
@@ -419,6 +428,8 @@ export class DayPicker extends BasePicker
 			'--range-in-selected': day.rangeInSelected,
 			'--range-selected': day.rangeSelected,
 			'--focused': day.focused,
+			// Owned by KeyboardNavigation, kept so that rebuilding className does not drop the focus ring.
+			'--focus-visible': Dom.hasClass(button, '--focus-visible'),
 		};
 
 		let classNames = 'ui-day-picker-day';
@@ -435,9 +446,22 @@ export class DayPicker extends BasePicker
 			button.className = classNames;
 		}
 
-		button.disabled = Boolean(day.disabled);
+		const ariaDisabled = day.disabled ? 'true' : 'false';
+		if (button.getAttribute('aria-disabled') !== ariaDisabled)
+		{
+			button.setAttribute('aria-disabled', ariaDisabled);
+		}
 
-		// Day Colors
+		this.#renderDayColors(button, day);
+		this.#renderDayMarks(button, day);
+
+		button.tabIndex = day.tabIndex;
+
+		return button;
+	}
+
+	#renderDayColors(button: HTMLElement, day: DayPickerDay): void
+	{
 		const currentBgColor: string | null = button.dataset.bgColor || null;
 		const currentTextColor: string | null = button.dataset.textColor || null;
 		if (currentBgColor !== day.bgColor)
@@ -451,31 +475,28 @@ export class DayPicker extends BasePicker
 			Dom.style(button.firstElementChild, '--ui-day-picker-day-text-color', day.textColor);
 			Dom.attr(button, 'data-text-color', day.textColor);
 		}
+	}
 
-		// Day Marks
+	#renderDayMarks(button: HTMLElement, day: DayPickerDay): void
+	{
 		const currentMarks: string = button.dataset.marks || '';
-		if (currentMarks !== day.marks.toString())
+		if (currentMarks === day.marks.toString())
 		{
-			Dom.clean(button.lastElementChild);
-			if (day.marks.length > 0)
-			{
-				for (const mark of day.marks)
-				{
-					Dom.append(
-						Tag.render`
-							<span class="ui-day-picker-day-mark" style="background-color: ${mark}"></span>
-						`,
-						button.lastElementChild,
-					);
-				}
-			}
-
-			Dom.attr(button, 'data-marks', day.marks.toString());
+			return;
 		}
 
-		button.tabIndex = day.tabIndex;
+		Dom.clean(button.lastElementChild);
+		for (const mark of day.marks)
+		{
+			Dom.append(
+				Tag.render`
+					<span class="ui-day-picker-day-mark" style="background-color: ${mark}"></span>
+				`,
+				button.lastElementChild,
+			);
+		}
 
-		return button;
+		Dom.attr(button, 'data-marks', day.marks.toString());
 	}
 
 	#renderTime(): void
@@ -584,24 +605,26 @@ export class DayPicker extends BasePicker
 			this.#renderTime();
 		}
 
-		this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('day', 'prev');
-		this.getNextBtn().disabled = !this.getDatePicker().canNavigate('day', 'next');
+		this.setPrevBtnDisabled(!this.getDatePicker().canNavigate('day', 'prev'));
+		this.setNextBtnDisabled(!this.getDatePicker().canNavigate('day', 'next'));
 	}
 
 	getMonths(): DayPickerMonth[]
 	{
 		const months = [];
+		const tabCells: DayPickerDay[] = [];
 		const picker = this.getDatePicker();
 		let date = picker.getViewDate();
 		const numberOfMonths = picker.getNumberOfMonths();
 		const today = picker.getToday();
 		const focusDate = picker.getFocusDate();
-		const initialFocusDate = this.getDatePicker().getInitialFocusDate();
+		const anchorDate = picker.getInitialFocusDate();
 		const showOutsideDays = picker.shouldShowOutsideDays();
 
 		const { year, month } = picker.getViewDateParts();
 		const firstAvailableDay = createUtcDate(year, month);
 		const lastAvailableDay = ceilDate(createUtcDate(year, month + numberOfMonths - 1), 'month');
+
 		const [from, to] = this.#getRangeDates();
 		const rangeSelected = (
 			picker.isRangeMode() && picker.getRangeStart() !== null && picker.getRangeEnd() !== null
@@ -620,19 +643,11 @@ export class DayPicker extends BasePicker
 				let prevDay: DayPickerDay = null;
 				for (let weekDay = 0; weekDay < 7; weekDay++)
 				{
-					let available = true;
 					const outside = date.getUTCMonth() !== currentMonthIndex;
-					if (outside)
-					{
-						if (showOutsideDays && numberOfMonths > 1)
-						{
-							available = date.getTime() < firstAvailableDay || date.getTime() >= lastAvailableDay;
-						}
-						else if (!showOutsideDays)
-						{
-							available = false;
-						}
-					}
+					const available = (
+						!outside
+						|| this.#isOutsideDayAvailable(date, firstAvailableDay, lastAvailableDay)
+					);
 
 					const disabled = available && !picker.isDateAllowed(date, 'day');
 					const selected = available && picker.isDateSelected(date, 'day');
@@ -652,12 +667,6 @@ export class DayPicker extends BasePicker
 
 					const rangeInSelected = selected && rangeIn && !rangeFrom && !rangeTo;
 					const focused = available && isDatesEqual(date, focusDate, 'day');
-					const tabIndex = (
-						available && (isDatesEqual(date, focusDate, 'day') || isDatesEqual(date, initialFocusDate, 'day'))
-							? 0
-							: -1
-					);
-
 					const dayColor = this.getDatePicker().getDayColor(date);
 					const marks = this.getDatePicker().getDayMarks(date).map(
 						(dayMark: DayMark): string => {
@@ -671,14 +680,14 @@ export class DayPicker extends BasePicker
 						month: date.getUTCMonth(),
 						year: date.getUTCFullYear(),
 						outside,
-						current: isDatesEqual(date, today, 'day'),
+						current: picker.shouldShowToday() && isDatesEqual(date, today, 'day'),
 						selected,
 						disabled,
 						hidden: outside && !showOutsideDays,
 						dayOff: picker.isDayOff(date),
 						rangeSelected: selected && rangeSelected,
 						focused,
-						tabIndex,
+						tabIndex: -1,
 						rangeFrom,
 						rangeTo,
 						rangeIn,
@@ -693,6 +702,12 @@ export class DayPicker extends BasePicker
 					week.push(day);
 					prevDay = day;
 
+					// A hidden cell and a cell repeating a neighbour month are out of the tab order.
+					if (available)
+					{
+						tabCells.push(day);
+					}
+
 					date = addDate(date, 'day', 1);
 				}
 
@@ -702,18 +717,31 @@ export class DayPicker extends BasePicker
 			months.push({ weeks, date: firstMonthDay });
 		}
 
+		setTabAnchor(tabCells, (cell: DayPickerDay): boolean => isDatesEqual(cell.date, anchorDate, 'day'));
+
 		return months;
+	}
+
+	// A day of a neighbour month is shown twice on a multi-month grid: the page it belongs to keeps it.
+	#isOutsideDayAvailable(date: Date, firstAvailableDay: Date, lastAvailableDay: Date): boolean
+	{
+		const picker = this.getDatePicker();
+		if (!picker.shouldShowOutsideDays())
+		{
+			return false;
+		}
+
+		if (picker.getNumberOfMonths() === 1)
+		{
+			return true;
+		}
+
+		return date.getTime() < firstAvailableDay || date.getTime() >= lastAvailableDay;
 	}
 
 	#getStartMonthDate(date: Date): Date
 	{
-		const picker = this.getDatePicker();
-		const firstWeekDay: number = picker.getFirstWeekDay();
-		const firstMonthDay = floorDate(date, 'month');
-		let daysFromPrevMonth = firstMonthDay.getUTCDay() - firstWeekDay;
-		daysFromPrevMonth = daysFromPrevMonth < 0 ? daysFromPrevMonth + 7 : daysFromPrevMonth;
-
-		return addDate(firstMonthDay, 'day', -daysFromPrevMonth);
+		return getGridStartDate(date, this.getDatePicker().getFirstWeekDay());
 	}
 
 	getFirstDay(): DayPickerDay
@@ -762,31 +790,17 @@ export class DayPicker extends BasePicker
 			from = range[0] || null;
 			to = range[1] || null;
 
-			if (focusDate !== null)
+			if (focusDate !== null && range.length === 1)
 			{
-				if (range.length === 1)
+				if (focusDate > from.getTime())
 				{
-					if (focusDate > from.getTime())
-					{
-						to = focusDate;
-					}
-					else
-					{
-						to = from;
-						from = focusDate;
-					}
+					to = focusDate;
 				}
-				/* else if (range.length === 2)
+				else
 				{
-					if (focusDate > to.getTime())
-					{
-						to = focusDate;
-					}
-					else if (focusDate < from.getTime())
-					{
-						from = focusDate;
-					}
-				} */
+					to = from;
+					from = focusDate;
+				}
 			}
 		}
 
@@ -796,7 +810,8 @@ export class DayPicker extends BasePicker
 	#handleDayClick(event: MouseEvent): void
 	{
 		const dayElement = event.target.closest('.ui-day-picker-day');
-		if (dayElement === null || dayElement.disabled)
+		// Keyboard activation reaches the handler past the pointer-events guard, so the cell is refused here.
+		if (dayElement === null || InteractivityChecker.isDisabled(dayElement))
 		{
 			return;
 		}

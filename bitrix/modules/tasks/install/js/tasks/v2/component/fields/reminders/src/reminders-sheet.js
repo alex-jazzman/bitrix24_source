@@ -57,16 +57,23 @@ export const RemindersSheet = {
 		this.isLoading = false;
 	},
 	template: `
-		<BottomSheet :sheetBindProps @close="$emit('close')">
-			<div class="tasks-field-reminders-sheet">
+		<BottomSheet
+			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_REMINDERS_TITLE_SHEET')"
+			@close="$emit('close')"
+		>
+			<div class="tasks-field-reminders-sheet" data-testid="tasks-reminders-sheet">
 				<div class="tasks-field-reminders-sheet-header">
 					<HeadlineMd>{{ loc('TASKS_V2_REMINDERS_TITLE_SHEET') }}</HeadlineMd>
-					<BIcon
+					<button
+						type="button"
 						class="tasks-field-reminders-sheet-close"
-						:name="Outline.CROSS_L"
-						hoverable
+						:aria-label="loc('TASKS_V2_REMINDERS_CLOSE_ARIA_LABEL')"
+						data-testid="tasks-reminders-sheet-close-btn"
 						@click="$emit('close')"
-					/>
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 				<div class="tasks-field-reminders-sheet-content">
 					<List
@@ -75,7 +82,7 @@ export const RemindersSheet = {
 						:sheetBindProps
 					/>
 				</div>
-				<div class="tasks-field-reminders-sheet-footer">
+				<div class="tasks-field-reminders-sheet-footer" data-testid="tasks-reminders-sheet-footer">
 					<UiButton
 						:text="loc('TASKS_V2_REMINDERS_ADD')"
 						:size="ButtonSize.SMALL"

@@ -10,7 +10,7 @@
 }
 
 .bx-im-copilot-header__avatar {
-	margin-right: 10px;
+	margin-right: var(--ui-space-inline-xs2);
 }
 
 .bx-im-copilot-header__subtitle {
@@ -30,4 +30,14 @@
 .bx-im-copilot-header__container .bx-im-chat-header__icon.--panel.--active {
 	background-image: url('./images/panel-active.svg');
 	opacity: 1;
+}
+
+/* Copilot header subtitle typography (role / member count). The `--air` modifier
+   is added by the base ChatHeader on this same container. The title goes through
+   the shared EditableChatTitle and is not touched here. */
+.bx-im-copilot-header__container.--air .bx-im-copilot-header__subtitle {
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-4);
 }

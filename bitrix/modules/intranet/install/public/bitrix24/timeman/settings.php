@@ -17,7 +17,19 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 }
 ?><?
 
-if (ModuleManager::isModuleInstalled("timeman"))
+if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime'))
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:intranet.settings.tool.stub',
+		'',
+		[
+			'LIMIT_CODE' => 'limit_office_worktime_off',
+			'MODULE' => 'timeman',
+			'SOURCE' => 'settings',
+		],
+	);
+}
+elseif (ModuleManager::isModuleInstalled("timeman"))
 {
 	try
 	{
@@ -40,7 +52,7 @@ elseif (!(!ModuleManager::isModuleInstalled("timeman") && in_array($licenseType,
 	}
 	?>
 	<p><?= Loc::getMessage("TARIFF_RESTRICTION_TEXT") ?></p>
-	<div style="text-align: center;"><img src="images/<?= $lang ?>/timeman.png"/></div>
+	<div style="text-align: center;"><img src="images/<?= $lang ?>/timeman.webp"/></div>
 	<p><?= Loc::getMessage("TARIFF_RESTRICTION_TEXT2") ?></p>
 	<br/>
 	<?php if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>

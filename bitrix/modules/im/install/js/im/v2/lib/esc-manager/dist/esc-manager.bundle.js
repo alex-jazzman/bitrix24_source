@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, main_popup, main_sidepanel, im_v2_lib_utils, im_v2_lib_call, im_v2_application_core, im_v2_const, im_v2_lib_layout, im_v2_lib_slider, im_v2_lib_desktop, im_v2_lib_desktopApi) {
+(function (exports, main_core, main_core_events, main_popup, main_sidepanel, im_v2_lib_utils, im_v2_lib_call, im_v2_application_core, im_v2_const, im_v2_lib_folder, im_v2_lib_layout, im_v2_lib_slider, im_v2_lib_desktop, im_v2_lib_desktopApi) {
 	'use strict';
 
 	const EscEventAction = Object.freeze({
@@ -49,6 +49,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (await this.#isHandledBySubscriber()) {
 				return;
 			}
+			if (main_popup.PopupWindowManager.isAnyPopupShown()) {
+				return;
+			}
 			if (this.#handleActiveInput()) {
 				return;
 			}
@@ -68,9 +71,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#shouldIgnoreEscape() {
 			const hasVisibleCall = im_v2_lib_call.CallManager.getInstance().hasVisibleCall();
-			// popups have their own escape handling
-			const isAnyPopupShown = main_popup.PopupWindowManager.isAnyPopupShown();
-			return hasVisibleCall || isAnyPopupShown || this.#isExternalSliderOpened();
+			// Popups handle Escape independently from the messenger.
+			const isAnyPopupBlockingBackgroundEscShown = main_core.Type.isFunction(main_popup.PopupWindowManager.isAnyPopupBlockingBackgroundEscShown) ? main_popup.PopupWindowManager.isAnyPopupBlockingBackgroundEscShown() : main_popup.PopupWindowManager.isAnyPopupShown();
+			return hasVisibleCall || isAnyPopupBlockingBackgroundEscShown || this.#isExternalSliderOpened();
 		}
 		async #isHandledBySubscriber() {
 			const eventResult = await this.#emitter.emitAsync(im_v2_const.EventType.key.onBeforeEscape);
@@ -104,7 +107,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (isChatLayout) {
 				layoutManager.clearCurrentLayoutEntityId();
 			} else {
-				this.#switchToChatLayout();
+				this.#switchToDefaultLayout();
 			}
 			return true;
 		}
@@ -133,9 +136,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			// Viewer has its own ESC keydown handler, so we need to check if it is opened
 			this.#wasKeyDownHandled = BX.UI.Viewer.Instance.isOpen();
 		}
-		#switchToChatLayout() {
+		#switchToDefaultLayout() {
 			void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-				name: im_v2_const.Layout.chat,
+				...(im_v2_lib_folder.FolderManager.getDefaultLayout() ?? {
+					name: im_v2_const.Layout.chat
+				}),
 				entityId: ''
 			});
 		}
@@ -162,5 +167,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.EscEventAction = EscEventAction;
 	exports.EscManager = EscManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=esc-manager.bundle.js.map

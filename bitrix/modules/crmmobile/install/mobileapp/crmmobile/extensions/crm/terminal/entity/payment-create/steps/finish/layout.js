@@ -2,6 +2,8 @@
  * @module crm/terminal/entity/payment-create/steps/finish/layout
  */
 jn.define('crm/terminal/entity/payment-create/steps/finish/layout', (require, exports, module) => {
+	const { Text2 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { Random } = require('utils/random');
@@ -124,7 +126,7 @@ jn.define('crm/terminal/entity/payment-create/steps/finish/layout', (require, ex
 		renderTopText()
 		{
 			let text = '';
-			let fontSize = 18;
+			let fontSize = Typography.text1.getValue().fontSize;
 			let marginBottom = 2;
 
 			// eslint-disable-next-line default-case
@@ -132,7 +134,7 @@ jn.define('crm/terminal/entity/payment-create/steps/finish/layout', (require, ex
 			{
 				case STATUSES.creating:
 					text = Loc.getMessage('M_CRM_TL_EPC_FINISH_STEP_CREATING_PAYMENT');
-					fontSize = 16;
+					fontSize = Typography.text3.getValue().fontSize;
 					marginBottom = 4;
 					break;
 
@@ -183,10 +185,9 @@ jn.define('crm/terminal/entity/payment-create/steps/finish/layout', (require, ex
 					break;
 			}
 
-			return text && Text({
+			return text && Text2({
 				text,
 				style: {
-					fontSize: 17,
 					color: AppTheme.colors.base4,
 					marginTop: 15,
 					textAlign: 'center',
@@ -226,7 +227,7 @@ jn.define('crm/terminal/entity/payment-create/steps/finish/layout', (require, ex
 					borderRadius: 512,
 					selfAlign: 'center',
 					marginTop: 25,
-					fontSize: 17,
+					...Typography.text2.getValue(),
 					...additionalStyle,
 				},
 				text: getEntityMessage(
@@ -255,7 +256,7 @@ jn.define('crm/terminal/entity/payment-create/steps/finish/layout', (require, ex
 					borderRadius: 512,
 					selfAlign: 'center',
 					marginTop: 16,
-					fontSize: 17,
+					...Typography.text2.getValue(),
 					color: AppTheme.colors.base2,
 					borderWidth: 1,
 					borderColor: AppTheme.colors.base6,

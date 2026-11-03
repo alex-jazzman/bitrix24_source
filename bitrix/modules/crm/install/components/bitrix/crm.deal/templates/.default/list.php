@@ -94,26 +94,32 @@ else
 		);
 	}
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.deal.menu',
-		'',
-		[
-			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? '',
-			'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'] ?? '',
-			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',
-			'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
-			'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? '',
-			'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'] ?? '',
-			'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'] ?? '',
-			'IS_RECURRING' => $isRecurring ? 'Y' : 'N',
-			'ELEMENT_ID' => 0,
-			'CATEGORY_ID' => $categoryID,
-			'TYPE' => 'list',
-			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
-			'ANALYTICS' => $analytics,
-		],
-		$component
-	);
+	$isRepeatSaleWidgetDealGrid = \Bitrix\Main\Context::getCurrent()
+		->getRequest()->getQuery('repeatSaleWidgetDealGrid') === 'Y'
+	;
+	if (!$isRepeatSaleWidgetDealGrid)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.deal.menu',
+			'',
+			[
+				'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? '',
+				'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'] ?? '',
+				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',
+				'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
+				'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? '',
+				'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'] ?? '',
+				'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'] ?? '',
+				'IS_RECURRING' => $isRecurring ? 'Y' : 'N',
+				'ELEMENT_ID' => 0,
+				'CATEGORY_ID' => $categoryID,
+				'TYPE' => 'list',
+				'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+				'ANALYTICS' => $analytics,
+			],
+			$component,
+		);
+	}
 
 	if (!$isSlider)
 	{

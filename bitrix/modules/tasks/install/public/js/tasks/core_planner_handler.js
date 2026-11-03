@@ -26,6 +26,8 @@ BX.CTasksPlannerHandler = function()
 	this.TASKS_WND = null;
 
 	this.DATA_TASKS = null;
+	this.taskQuerySuccessCallbacks = [];
+	this.taskQuerySuccessHandler = null;
 
 	this.PLANNER = null;
 
@@ -579,7 +581,7 @@ BX.CTasksPlannerHandler.prototype.addTask = function(task_data)
 	if(typeof task_data.name != 'undefined')
 		data.name = task_data.name;
 
-	this.query(data);
+	this.query(data, task_data.callback);
 };
 
 BX.CTasksPlannerHandler.prototype.removeTask = function(e, taskId)
@@ -647,8 +649,17 @@ BX.CTasksPlannerHandler.prototype.drawTasksForm = function(cb)
 			inp_Task.value = BX.util.trim(inp_Task.value);
 			if (inp_Task.value)
 			{
+				var taskName = inp_Task.value;
 				cb({
-					name: inp_Task.value
+					name: taskName,
+					callback: function()
+					{
+						if (inp_Task.value === taskName)
+						{
+							inp_Task.value = '';
+							inp_Task.focus();
+						}
+					}
 				});
 			}
 
@@ -705,7 +716,7 @@ BX.CTasksPlannerHandler.prototype.query = function(entry, callback)
 		clearTimeout(this.TASK_CHANGES_TIMEOUT);
 	}
 
-	if (typeof entry == 'object')
+	if (entry && typeof entry == 'object')
 	{
 		if(!!entry.id)
 		{
@@ -719,7 +730,7 @@ BX.CTasksPlannerHandler.prototype.query = function(entry, callback)
 				this.TASK_CHANGES.name = entry.name;
 			}
 
-			this.query();
+			this.query(false, callback);
 		}
 		else
 		{
@@ -733,15 +744,60 @@ BX.CTasksPlannerHandler.prototype.query = function(entry, callback)
 		if(!!this.PLANNER)
 		{
 			this.DATA_TASKS = [];
+			this.subscribeOnTaskQuerySuccess(callback, BX);
 			this.PLANNER.query('task', this.TASK_CHANGES);
 		}
 		else
 		{
 			const changes = this.TASK_CHANGES;
-			void top.BX.Runtime.loadExtension('planner').then(() => top.BX.CPlanner.query('task', changes));
+			void top.BX.Runtime.loadExtension('planner').then(() => {
+				this.subscribeOnTaskQuerySuccess(callback, top.BX);
+				top.BX.CPlanner.query('task', changes);
+			});
 		}
 		this.TASK_CHANGES = {add: [], remove: []};
 	}
+};
+
+BX.CTasksPlannerHandler.prototype.subscribeOnTaskQuerySuccess = function(callback, bx)
+{
+	if (!BX.type.isFunction(callback) || !bx)
+	{
+		return;
+	}
+
+	this.taskQuerySuccessCallbacks.push(callback);
+
+	if (this.taskQuerySuccessHandler)
+	{
+		return;
+	}
+
+	var self = this;
+
+	this.taskQuerySuccessHandler = function(data, action)
+	{
+		var callback = null;
+
+		if (action != 'task')
+		{
+			return;
+		}
+
+		callback = self.taskQuerySuccessCallbacks.shift();
+		if (self.taskQuerySuccessCallbacks.length === 0)
+		{
+			bx.removeCustomEvent('onPlannerQueryResult', self.taskQuerySuccessHandler);
+			self.taskQuerySuccessHandler = null;
+		}
+
+		if (callback && !(data && data.error))
+		{
+			callback();
+		}
+	};
+
+	bx.addCustomEvent('onPlannerQueryResult', this.taskQuerySuccessHandler);
 };
 
 BX.CTasksPlannerSelector = function(params)

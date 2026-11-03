@@ -261,11 +261,9 @@ this.BX = this.BX || {};
 	}
 	function openUrl(viewUrl, loaderPath, width) {
 		if (BX.SidePanel) {
-			if (!main_core.Type.isNumber(width)) {
-				width = 810;
-			}
+			const sliderWidth = main_core.Type.isNumber(width) ? width : 810;
 			BX.SidePanel.Instance.open(viewUrl, {
-				width,
+				width: sliderWidth,
 				cacheable: false,
 				loader: loaderPath
 			});
@@ -279,33 +277,31 @@ this.BX = this.BX || {};
 	}
 	let popupConfirm = null;
 	function showMessage(content, buttons, title, onclose) {
-		title = title || '';
-		if (main_core.Type.isNil(buttons) || main_core.Type.isObjectLike(buttons) && Object.keys(buttons).length <= 0) {
-			buttons = [new main_popup.PopupWindowButton({
-				text: main_core.Loc.getMessage('DOCGEN_PREVIEW_CLOSE_BUTTON'),
-				className: 'ui-btn ui-btn-md ui-btn-default',
-				events: {
-					click(e) {
-						this.popupWindow.close();
-						BX.PreventDefault(e);
-					}
+		const popupTitle = title || '';
+		const popupButtons = main_core.Type.isNil(buttons) || main_core.Type.isObjectLike(buttons) && Object.keys(buttons).length <= 0 ? [new main_popup.PopupWindowButton({
+			id: 'documentgenerator-preview-message-close',
+			text: main_core.Loc.getMessage('DOCGEN_PREVIEW_CLOSE_BUTTON'),
+			className: 'ui-btn ui-btn-md ui-btn-default',
+			events: {
+				click(e) {
+					this.popupWindow.close();
+					e.preventDefault();
+					e.stopPropagation();
 				}
-			})];
-		}
+			}
+		})] : buttons;
 		popupConfirm?.destroy();
-		if (!main_core.Type.isDomNode(content)) {
+		const normalizedContent = main_core.Type.isDomNode(content) ? content : (() => {
 			const node = document.createElement('div');
 			node.innerHTML = content;
-			content = node;
-		}
-		if (!main_core.Type.isArray(content)) {
-			content = [content];
-		}
+			return node;
+		})();
+		const popupContent = main_core.Type.isArray(normalizedContent) ? normalizedContent : [normalizedContent];
 		popupConfirm = new main_popup.Popup('bx-popup-documentgenerator-popup', null, {
 			zIndex: 200,
 			autoHide: true,
 			closeByEsc: true,
-			buttons,
+			buttons: popupButtons,
 			closeIcon: true,
 			overlay: true,
 			events: {
@@ -323,9 +319,9 @@ this.BX = this.BX || {};
 				attrs: {
 					className: 'bx-popup-documentgenerator-popup-content-text'
 				},
-				children: content
+				children: popupContent
 			}),
-			titleBar: title,
+			titleBar: popupTitle,
 			contentColor: 'white',
 			className: 'bx-popup-documentgenerator-popup',
 			maxWidth: 470
@@ -365,6 +361,7 @@ this.BX = this.BX || {};
 						if (response.data.documents.length > 0) {
 							const previousNumber = response.data.documents[0].number;
 							showMessage(main_core.Loc.getMessage('DOCGEN_PREVIEW_DO_USE_OLD_NUMBER'), [new main_popup.PopupWindowButton({
+								id: 'documentgenerator-preview-number-new',
 								text: main_core.Loc.getMessage('DOCGEN_PREVIEW_NEW_BUTTON'),
 								className: 'ui-btn ui-btn-md ui-btn-primary',
 								events: {
@@ -374,6 +371,7 @@ this.BX = this.BX || {};
 									}
 								}
 							}), new main_popup.PopupWindowButton({
+								id: 'documentgenerator-preview-number-previous',
 								text: main_core.Loc.getMessage('DOCGEN_PREVIEW_OLD_BUTTON'),
 								className: 'ui-btn ui-btn-md ui-btn-primary',
 								events: {
@@ -421,22 +419,22 @@ this.BX = this.BX || {};
 						openUrl(viewUrl, loaderPath, sliderWidth);
 					} else {
 						Document.askAboutUsingPreviousDocumentNumber(provider, templateId, value, previousNumber => {
-							if (previousNumber) {
-								viewUrl = BX.util.add_url_param(viewUrl, {
-									number: previousNumber
-								});
-							}
-							openUrl(viewUrl, loaderPath, sliderWidth);
+							const targetViewUrl = previousNumber ? BX.util.add_url_param(viewUrl, {
+								number: previousNumber
+							}) : viewUrl;
+							openUrl(targetViewUrl, loaderPath, sliderWidth);
 						});
 					}
 				}).catch(reason => {
 					showMessage(reason.errors.map(error => error.message).join('<br>'), [new main_popup.PopupWindowButton({
+						id: 'documentgenerator-preview-continue',
 						text: main_core.Loc.getMessage('DOCGEN_PREVIEW_CONTINUE_BUTTON'),
 						className: 'ui-btn ui-btn-md ui-btn-success',
 						events: {
 							click(e) {
 								this.popupWindow.close();
-								BX.PreventDefault(e);
+								e.preventDefault();
+								e.stopPropagation();
 							}
 						}
 					})], main_core.Loc.getMessage('DOCGEN_PREVIEW_PRINT_TITLE'));
@@ -445,7 +443,110 @@ this.BX = this.BX || {};
 		}
 	}
 
-	let isPushEventInited = false;
+	const PULL_EVENT_NAME = 'onPullEvent-documentgenerator';
+	const PULL_COMMAND_SHOW_IMAGE = 'showImage';
+	const EARLY_EVENT_TTL = 60000;
+	const EARLY_EVENT_LIMIT = 100;
+	const previewInstancesByTag = new Map();
+	const previewTagsByInstance = new Map();
+	const earlyPullEvents = new Map();
+	let isPullEventSubscribed = false;
+	const removePreviewInstance = (pullTag, instance) => {
+		if (!main_core.Type.isStringFilled(pullTag) || !previewInstancesByTag.has(pullTag)) {
+			return;
+		}
+		const instances = previewInstancesByTag.get(pullTag);
+		instances.delete(instance);
+		if (instances.size === 0) {
+			previewInstancesByTag.delete(pullTag);
+		}
+	};
+	const pruneEarlyPullEvents = () => {
+		const expiresBefore = Date.now() - EARLY_EVENT_TTL;
+		earlyPullEvents.forEach(({
+			createdAt
+		}, pullTag) => {
+			if (createdAt < expiresBefore) {
+				earlyPullEvents.delete(pullTag);
+			}
+		});
+	};
+	const handlePullEvent = (command, params) => {
+		if (command !== PULL_COMMAND_SHOW_IMAGE || !main_core.Type.isPlainObject(params) || !main_core.Type.isStringFilled(params.pullTag)) {
+			return;
+		}
+		pruneEarlyPullEvents();
+		const instances = previewInstancesByTag.get(params.pullTag);
+		if (instances?.size > 0) {
+			[...instances].forEach(instance => instance.showImage(command, params));
+			return;
+		}
+		earlyPullEvents.delete(params.pullTag);
+		while (earlyPullEvents.size >= EARLY_EVENT_LIMIT) {
+			earlyPullEvents.delete(earlyPullEvents.keys().next().value);
+		}
+		earlyPullEvents.set(params.pullTag, {
+			command,
+			params,
+			createdAt: Date.now()
+		});
+	};
+	const pullDispatcher = {
+		register(instance) {
+			if (!previewTagsByInstance.has(instance)) {
+				previewTagsByInstance.set(instance, null);
+			}
+		},
+		bind(instance, pullTag) {
+			pruneEarlyPullEvents();
+			this.register(instance);
+			const previousTag = previewTagsByInstance.get(instance);
+			if (previousTag !== pullTag) {
+				removePreviewInstance(previousTag, instance);
+				if (main_core.Type.isStringFilled(previousTag)) {
+					earlyPullEvents.delete(previousTag);
+				}
+			}
+			if (!main_core.Type.isStringFilled(pullTag)) {
+				previewTagsByInstance.set(instance, null);
+				return;
+			}
+			if (!previewInstancesByTag.has(pullTag)) {
+				previewInstancesByTag.set(pullTag, new Set());
+			}
+			previewInstancesByTag.get(pullTag).add(instance);
+			previewTagsByInstance.set(instance, pullTag);
+			const earlyEvent = earlyPullEvents.get(pullTag);
+			if (earlyEvent) {
+				earlyPullEvents.delete(pullTag);
+				instance.showImage(earlyEvent.command, earlyEvent.params);
+			}
+		},
+		unregister(instance) {
+			const pullTag = previewTagsByInstance.get(instance);
+			removePreviewInstance(pullTag, instance);
+			previewTagsByInstance.delete(instance);
+			if (main_core.Type.isStringFilled(pullTag)) {
+				earlyPullEvents.delete(pullTag);
+			}
+			if (previewTagsByInstance.size === 0) {
+				earlyPullEvents.clear();
+				this.unsubscribe();
+			}
+		},
+		subscribe() {
+			if (!isPullEventSubscribed) {
+				top.BX.addCustomEvent(PULL_EVENT_NAME, handlePullEvent);
+				isPullEventSubscribed = true;
+			}
+		},
+		unsubscribe() {
+			if (isPullEventSubscribed) {
+				top.BX.removeCustomEvent(PULL_EVENT_NAME, handlePullEvent);
+				isPullEventSubscribed = false;
+			}
+		}
+	};
 
 	/**
 	 * @memberOf BX.Crm.DocumentGenerator
@@ -468,6 +569,15 @@ this.BX = this.BX || {};
 		transformationErrorCode = 0;
 		previewNode = null;
 		onReady = () => {};
+		fallbackTimeoutId = null;
+		fallbackRequestGeneration = null;
+		fallbackGeneration = 0;
+		isDestroyed = false;
+		handlePageHide = event => {
+			if (!event.persisted) {
+				this.destroy();
+			}
+		};
 		constructor(options) {
 			this.hash = options.hash || '';
 			this.isPublicMode = options.isPublicMode || false;
@@ -477,9 +587,11 @@ this.BX = this.BX || {};
 			this.transformationErrorCode = 0;
 			this.previewNode = null;
 			this.onReady = () => {};
+			pullDispatcher.register(this);
 			this.applyOptions(options);
 			this.initPushEvent();
 			this.start();
+			main_core.Event.bind(window, 'pagehide', this.handlePageHide);
 		}
 		isPullConnected() {
 			if (top.BX.PULL) {
@@ -492,38 +604,49 @@ this.BX = this.BX || {};
 			return false;
 		}
 		initPushEvent() {
-			if (!isPushEventInited) {
-				if (this.isPullConnected()) {
-					isPushEventInited = true;
-					top.BX.addCustomEvent('onPullEvent-documentgenerator', this.showImage.bind(this));
-				} else if (this.documentId > 0 && !this.imageUrl) {
-					let action = 'documentgenerator.api.document.get';
-					const data = {
-						id: this.documentId
-					};
-					if (this.isPublicMode && main_core.Type.isString(this.hash) && this.hash.length > 10) {
-						action = 'documentgenerator.api.publicdocument.get';
-						data.hash = this.hash;
-					}
-					isPushEventInited = true;
-					setTimeout(() => {
-						void main_core.ajax.runAction(action, {
-							data
-						}).then(response => {
-							isPushEventInited = false;
-							if (response.data.document.imageUrl) {
-								this.showImage('showImage', response.data.document);
-							} else {
-								this.initPushEvent();
-							}
-						}, () => {
-							isPushEventInited = false;
-						});
-					}, 5000);
-				}
+			pullDispatcher.subscribe();
+			if (this.isDestroyed) {
+				return;
 			}
+			if (this.isPullConnected()) {
+				this.#cancelFallback();
+				return;
+			}
+			if (this.fallbackTimeoutId !== null || this.fallbackRequestGeneration !== null || this.documentId <= 0 || this.imageUrl) {
+				return;
+			}
+			let action = 'documentgenerator.api.document.get';
+			const data = {
+				id: this.documentId
+			};
+			if (this.isPublicMode && main_core.Type.isString(this.hash) && this.hash.length > 10) {
+				action = 'documentgenerator.api.publicdocument.get';
+				data.hash = this.hash;
+			}
+			const generation = ++this.fallbackGeneration;
+			this.fallbackTimeoutId = setTimeout(() => {
+				this.fallbackTimeoutId = null;
+				this.fallbackRequestGeneration = generation;
+				void main_core.ajax.runAction(action, {
+					data
+				}).then(response => {
+					if (!this.#completeFallbackRequest(generation)) {
+						return;
+					}
+					if (response.data.document.imageUrl) {
+						this.showImage(PULL_COMMAND_SHOW_IMAGE, response.data.document);
+					} else {
+						this.initPushEvent();
+					}
+				}, () => this.#completeFallbackRequest(generation));
+			}, 5000);
 		}
 		applyOptions(options) {
+			if (this.isDestroyed) {
+				return;
+			}
+			const previousDocumentId = this.documentId;
+			const previousPullTag = this.pullTag;
 			if (options.id) {
 				this.documentId = options.id;
 			}
@@ -570,7 +693,34 @@ this.BX = this.BX || {};
 			if (main_core.Type.isFunction(options.onReady)) {
 				this.onReady = options.onReady;
 			}
+			if (previousDocumentId !== this.documentId || previousPullTag !== this.pullTag) {
+				this.#cancelFallback();
+			}
+			pullDispatcher.bind(this, this.pullTag);
 			this.initPushEvent();
+		}
+		destroy() {
+			this.isDestroyed = true;
+			main_core.Event.unbind(window, 'pagehide', this.handlePageHide);
+			this.#cancelFallback();
+			pullDispatcher.unregister(this);
+		}
+		#cancelFallback() {
+			this.fallbackGeneration++;
+			this.fallbackRequestGeneration = null;
+			this.#clearFallbackTimeout();
+		}
+		#completeFallbackRequest(generation) {
+			if (this.fallbackRequestGeneration === generation) {
+				this.fallbackRequestGeneration = null;
+			}
+			return !this.isDestroyed && generation === this.fallbackGeneration;
+		}
+		#clearFallbackTimeout() {
+			if (this.fallbackTimeoutId !== null) {
+				clearTimeout(this.fallbackTimeoutId);
+				this.fallbackTimeoutId = null;
+			}
 		}
 		getLoader() {
 			if (!this.loader) {
@@ -605,10 +755,10 @@ this.BX = this.BX || {};
 			}
 		}
 		isValidPullTag(command, params) {
-			return command === 'showImage' && params.pullTag === this.pullTag;
+			return command === PULL_COMMAND_SHOW_IMAGE && params.pullTag === this.pullTag;
 		}
 		showImage(command, params) {
-			if (this.isValidPullTag(command, params)) {
+			if (!this.isDestroyed && this.isValidPullTag(command, params)) {
 				this.applyOptions(params);
 				if (main_core.Type.isDomNode(this.previewNode)) {
 					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx

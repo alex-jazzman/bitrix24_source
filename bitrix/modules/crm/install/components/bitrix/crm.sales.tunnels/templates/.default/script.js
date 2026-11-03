@@ -1,21 +1,15 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, main_kanban, main_popup, d3, ui_notification, ui_analytics) {
+(function (exports, main_core, crm_stage_color, main_kanban, ui_hint, main_popup, d3, ui_notification, ui_analytics) {
 	'use strict';
 
 	function _interopNamespaceDefault(e) {
 		var n = Object.create(null);
 		if (e) {
-			Object.keys(e).forEach(function (k) {
-				if (k !== 'default') {
-					var d = Object.getOwnPropertyDescriptor(e, k);
-					Object.defineProperty(n, k, d.get ? d : {
-						enumerable: true,
-						get: function () { return e[k]; }
-					});
-				}
-			});
+			for (var k in e) {
+				n[k] = e[k];
+			}
 		}
 		n.default = e;
 		return Object.freeze(n);
@@ -343,7 +337,7 @@ this.BX.Crm = this.BX.Crm || {};
 			this.emit('Marker:dragEnd', event);
 			if (destinationMarker && destinationMarker.isEnabled()) {
 				if (destinationMarker && !event.isDefaultPrevented()) {
-					if (!this.data.column.data.isCategoryEditable) {
+					if (!this.data.column.data.areTunnelsEditable) {
 						this.emit('Marker:error', {
 							message: main_core.Loc.getMessage('CRM_ST_TUNNEL_EDIT_ACCESS_DENIED')
 						});
@@ -641,7 +635,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		}
 		getTunnelButton() {
-			const canEdit = this.data.column.data.isCategoryEditable;
+			const canEdit = this.data.column.data.areTunnelsEditable;
 			return this.cache.remember('tunnelButton', () => main_core.Tag.render`
 				<div class="crm-st-tunnel-button" 
 					 onmouseenter="${this.onTunnelButtonMouseEnter.bind(this)}"
@@ -649,6 +643,7 @@ this.BX.Crm = this.BX.Crm || {};
 					 onclick="${this.onTunnelButtonClick.bind(this)}"
 					 title="${main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE')}"
 					 style="${!canEdit ? 'pointer-events: none;' : ''}"
+					 data-testid="crm-sales-tunnels-tunnel-btn"
 				>${main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL')}</div>
 			`);
 		}
@@ -846,6 +841,187 @@ this.BX.Crm = this.BX.Crm || {};
 		});
 	}
 
+	const darkTitleClass = 'main-kanban-column-title-dark';
+	BX.Crm ??= {};
+	BX.Crm.SalesTunnels ??= {};
+	const salesTunnelsNamespace = BX.Crm.SalesTunnels;
+	salesTunnelsNamespace.stageEditorExtensionPromise ??= null;
+	salesTunnelsNamespace.stageDescriptionTooltipExtensionPromise ??= null;
+	function loadStageEditorExtension() {
+		salesTunnelsNamespace.stageEditorExtensionPromise ??= main_core.Runtime.loadExtension('crm.stage.editor').then(extension => {
+			if (!main_core.Type.isFunction(extension?.StageEditor?.open)) {
+				salesTunnelsNamespace.stageEditorExtensionPromise = null;
+				return null;
+			}
+			return extension.StageEditor;
+		}).catch(() => {
+			salesTunnelsNamespace.stageEditorExtensionPromise = null;
+			return null;
+		});
+		return salesTunnelsNamespace.stageEditorExtensionPromise;
+	}
+	function loadStageDescriptionTooltipExtension() {
+		salesTunnelsNamespace.stageDescriptionTooltipExtensionPromise ??= main_core.Runtime.loadExtension('crm.stage.description-tooltip').then(extension => {
+			if (!main_core.Type.isFunction(extension?.StageDescriptionTooltip)) {
+				salesTunnelsNamespace.stageDescriptionTooltipExtensionPromise = null;
+				return null;
+			}
+			return extension.StageDescriptionTooltip;
+		}).catch(() => {
+			salesTunnelsNamespace.stageDescriptionTooltipExtensionPromise = null;
+			return null;
+		});
+		return salesTunnelsNamespace.stageDescriptionTooltipExtensionPromise;
+	}
+	function loadStageDescriptionTooltipForColumn(column) {
+		if (!main_core.Type.isStringFilled(getStageDescription(column)) && !column.isStageTitleCropped()) {
+			return Promise.resolve(null);
+		}
+		return loadStageDescriptionTooltipExtension();
+	}
+	function createLazyStageEditorFactory() {
+		return {
+			open(options) {
+				const state = {
+					closed: false,
+					editor: null
+				};
+				const placeholder = {
+					close() {
+						if (state.closed) {
+							return;
+						}
+						state.closed = true;
+						if (main_core.Type.isFunction(state.editor?.close)) {
+							state.editor.close();
+						} else if (main_core.Type.isFunction(options.onCancel)) {
+							options.onCancel();
+						}
+					}
+				};
+				loadStageEditorExtension().then(editorFactory => {
+					if (state.closed) {
+						return;
+					}
+					if (!editorFactory) {
+						placeholder.close();
+						return;
+					}
+					try {
+						state.editor = editorFactory.open(options);
+					} catch {
+						placeholder.close();
+					}
+				});
+				return placeholder;
+			}
+		};
+	}
+	function getStage(source) {
+		if (main_core.Type.isFunction(source?.getData)) {
+			return source.getData().stage || {};
+		}
+		return main_core.Type.isPlainObject(source) ? source : {};
+	}
+	function getStageDescription(source) {
+		const stage = getStage(source);
+		return stage.DESCRIPTION ?? stage.description ?? '';
+	}
+	function openStageEditorForColumn(column) {
+		if (!column.getData().areStagesEditable || !main_core.Type.isFunction(column.onEditHandler)) {
+			return false;
+		}
+		column.closeStageDescriptionTooltip();
+		column.onEditHandler(column);
+		return true;
+	}
+	function clearLegacyStageTitleHint(element, hint = null) {
+		const hintObject = element?.closest?.('.main-kanban-column-title-info') || element;
+		if (!main_core.Type.isElementNode(hintObject)) {
+			return;
+		}
+		hintObject.removeAttribute('data-hint-init');
+		hintObject.removeAttribute('data-hint');
+		hintObject.removeAttribute('data-hint-no-icon');
+		hint?.hide(hintObject);
+	}
+	function finalizeStageTitleRender(column, title, textColor) {
+		main_core.Dom.toggleClass(title, darkTitleClass, textColor === '#ffffff');
+		column.bindStageInteractions();
+		return title;
+	}
+	function getStageEditorInteractionNode(column) {
+		return column.layout?.title || column.layout?.info || null;
+	}
+	function getStageTooltipInteractionNode(column) {
+		return column.layout?.title || column.layout?.info || null;
+	}
+	function getStagePopupAnchorElement(column) {
+		return getStageTooltipBindElement(column);
+	}
+	function getStageTooltipBindElement(column) {
+		return column.layout?.color || column.layout?.title || column.layout?.info || column.getContainer?.() || null;
+	}
+	function shouldShowStageTooltipForControl(column, target) {
+		const tooltipInteractionNode = getStageTooltipInteractionNode(column);
+		return main_core.Type.isElementNode(tooltipInteractionNode) && main_core.Type.isElementNode(target) && tooltipInteractionNode.contains(target);
+	}
+	function shouldRestoreStageTooltipAfterControl(column, relatedTarget) {
+		const tooltipInteractionNode = getStageTooltipInteractionNode(column);
+		return main_core.Type.isElementNode(tooltipInteractionNode) && main_core.Type.isElementNode(relatedTarget) && tooltipInteractionNode.contains(relatedTarget);
+	}
+	function canOpenStageEditorFromEvent(column, event) {
+		if (column.stageDragging) {
+			return false;
+		}
+		const target = event?.target;
+		if (!main_core.Type.isElementNode(target)) {
+			return false;
+		}
+		return !target.closest(['.main-kanban-column-title-add-column', '.main-kanban-column-edit', '.main-kanban-column-color', '.main-kanban-column-remove-button', '.crm-st-kanban-column-dot'].join(','));
+	}
+	function toStageEditorData(source) {
+		const stage = getStage(source);
+		const isColumn = main_core.Type.isFunction(source?.getData);
+		return {
+			id: stage.ID ?? stage.id ?? null,
+			statusId: stage.STATUS_ID ?? stage.statusId ?? (isColumn ? source.getId() : null),
+			entityId: stage.ENTITY_ID ?? stage.entityId ?? null,
+			name: stage.NAME ?? stage.name ?? (isColumn ? source.getName() : ''),
+			color: String(stage.COLOR ?? stage.color ?? (isColumn ? source.getColor() : '')).replace('#', '').toLowerCase(),
+			description: getStageDescription(stage),
+			sort: main_core.Text.toInteger(stage.SORT ?? stage.sort),
+			semantics: stage.SEMANTICS ?? stage.semantics ?? null,
+			categoryId: main_core.Text.toInteger(stage.CATEGORY_ID ?? stage.categoryId),
+			system: (stage.SYSTEM ?? stage.system) === 'Y' || stage.system === true
+		};
+	}
+	function createAddStageRequest(column, payload) {
+		const source = toStageEditorData(column);
+		return {
+			afterStageId: source.id,
+			name: payload.name,
+			entityId: source.entityId,
+			color: payload.color,
+			semantics: source.semantics,
+			categoryId: source.categoryId,
+			description: payload.description
+		};
+	}
+	function createUpdateStageRequest(column, payload) {
+		const source = toStageEditorData(column);
+		return {
+			statusId: source.statusId,
+			stageId: source.id,
+			entityId: source.entityId,
+			name: payload.name,
+			sort: source.sort,
+			color: payload.color,
+			categoryId: source.categoryId,
+			description: payload.description
+		};
+	}
+
 	if (BX.Kanban.Pagination) {
 		BX.Kanban.Pagination.prototype.adjust = () => {};
 	}
@@ -853,6 +1029,17 @@ this.BX.Crm = this.BX.Crm || {};
 		constructor(options) {
 			super(options);
 			this.currentName = this.getName();
+			this.stageDescriptionTooltip = null;
+			this.stageDescriptionTooltipRequestId = 0;
+			this.handleStageTitleMouseEnter = this.handleStageTitleMouseEnter.bind(this);
+			this.handleStageTitleMouseLeave = this.handleStageTitleMouseLeave.bind(this);
+			this.handleStageTitleFocusIn = this.handleStageTitleFocusIn.bind(this);
+			this.handleStageTitleFocusOut = this.handleStageTitleFocusOut.bind(this);
+			this.handleStageTitleMouseDown = this.handleStageTitleMouseDown.bind(this);
+			this.handleStageTitleClick = this.handleStageTitleClick.bind(this);
+			this.handleStageTitleKeyDown = this.handleStageTitleKeyDown.bind(this);
+			this.handleAddColumnButtonMouseEnter = this.handleAddColumnButtonMouseEnter.bind(this);
+			this.handleAddColumnButtonMouseLeave = this.handleAddColumnButtonMouseLeave.bind(this);
 			this.marker = new Marker({
 				dispatcher: this.getDot(),
 				receiver: this.getHeader(),
@@ -905,6 +1092,9 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			if (main_core.Type.isFunction(options.data.onAddColumn)) {
 				this.onAddColumnHandler = options.data.onAddColumn;
+			}
+			if (main_core.Type.isFunction(options.data.onEdit)) {
+				this.onEditHandler = options.data.onEdit;
 			}
 			if (main_core.Type.isFunction(options.data.onRemove)) {
 				this.onRemoveHandler = options.data.onRemove;
@@ -1038,6 +1228,137 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			return header;
 		}
+		renderTitle() {
+			return finalizeStageTitleRender(this, super.renderTitle(), crm_stage_color.getStageTextColor(this.getColor()));
+		}
+		getAddColumnButton() {
+			const button = super.getAddColumnButton();
+			button.dataset.testid = `crm-sales-tunnels-stage-add-${this.getId()}`;
+			main_core.Event.unbind(button, 'mouseenter', this.handleAddColumnButtonMouseEnter);
+			main_core.Event.unbind(button, 'mouseleave', this.handleAddColumnButtonMouseLeave);
+			main_core.Event.bind(button, 'mouseenter', this.handleAddColumnButtonMouseEnter);
+			main_core.Event.bind(button, 'mouseleave', this.handleAddColumnButtonMouseLeave);
+			return button;
+		}
+		bindStageInteractions() {
+			const titleNode = this.layout?.info;
+			const editorInteractionNode = getStageEditorInteractionNode(this);
+			const tooltipInteractionNode = getStageTooltipInteractionNode(this);
+			if (!main_core.Type.isElementNode(titleNode) || !main_core.Type.isElementNode(editorInteractionNode) || !main_core.Type.isElementNode(tooltipInteractionNode)) {
+				return;
+			}
+			main_core.Event.unbind(titleNode, 'mouseenter', this.handleStageTitleMouseEnter);
+			main_core.Event.unbind(titleNode, 'mouseleave', this.handleStageTitleMouseLeave);
+			main_core.Event.unbind(titleNode, 'mousedown', this.handleStageTitleMouseDown);
+			main_core.Event.unbind(titleNode, 'click', this.handleStageTitleClick);
+			main_core.Event.unbind(titleNode, 'keydown', this.handleStageTitleKeyDown);
+			main_core.Event.unbind(tooltipInteractionNode, 'mouseenter', this.handleStageTitleMouseEnter);
+			main_core.Event.unbind(tooltipInteractionNode, 'mouseleave', this.handleStageTitleMouseLeave);
+			main_core.Event.unbind(tooltipInteractionNode, 'focusin', this.handleStageTitleFocusIn);
+			main_core.Event.unbind(tooltipInteractionNode, 'focusout', this.handleStageTitleFocusOut);
+			main_core.Event.unbind(tooltipInteractionNode, 'mousedown', this.handleStageTitleMouseDown);
+			main_core.Event.unbind(editorInteractionNode, 'click', this.handleStageTitleClick);
+			main_core.Event.unbind(editorInteractionNode, 'keydown', this.handleStageTitleKeyDown);
+			main_core.Event.bind(tooltipInteractionNode, 'mouseenter', this.handleStageTitleMouseEnter);
+			main_core.Event.bind(tooltipInteractionNode, 'mouseleave', this.handleStageTitleMouseLeave);
+			main_core.Event.bind(tooltipInteractionNode, 'focusin', this.handleStageTitleFocusIn);
+			main_core.Event.bind(tooltipInteractionNode, 'focusout', this.handleStageTitleFocusOut);
+			main_core.Event.bind(tooltipInteractionNode, 'mousedown', this.handleStageTitleMouseDown);
+			main_core.Event.bind(editorInteractionNode, 'click', this.handleStageTitleClick);
+			main_core.Event.bind(editorInteractionNode, 'keydown', this.handleStageTitleKeyDown);
+			titleNode.removeAttribute('title');
+			editorInteractionNode.removeAttribute('role');
+			editorInteractionNode.removeAttribute('tabindex');
+			editorInteractionNode.removeAttribute('aria-haspopup');
+			this.clearDefaultStageTitleHint();
+			editorInteractionNode.dataset.testid = `crm-sales-tunnels-stage-title-${this.getId()}`;
+			if (this.getData().areStagesEditable) {
+				editorInteractionNode.setAttribute('role', 'button');
+				editorInteractionNode.setAttribute('tabindex', '0');
+				editorInteractionNode.setAttribute('aria-haspopup', 'dialog');
+			} else if (main_core.Type.isStringFilled(getStageDescription(this)) || this.isStageTitleCropped()) {
+				tooltipInteractionNode.setAttribute('tabindex', '0');
+			}
+		}
+		handleStageTitleMouseEnter() {
+			this.clearDefaultStageTitleHint();
+			if (this.stageEditorOpened) {
+				this.closeStageDescriptionTooltip();
+				return;
+			}
+			this.showStageDescriptionTooltip();
+		}
+		addTitleHint(element) {
+			this.clearDefaultStageTitleHint(element);
+		}
+		clearDefaultStageTitleHint(element = this.layout?.info) {
+			clearLegacyStageTitleHint(element, ui_hint.Hint);
+		}
+		handleStageTitleMouseLeave() {
+			this.stageDescriptionTooltipRequestId++;
+			this.stageDescriptionTooltip?.hide();
+		}
+		handleStageTitleFocusIn() {
+			this.handleStageTitleMouseEnter();
+		}
+		handleStageTitleFocusOut() {
+			this.handleStageTitleMouseLeave();
+		}
+		handleStageTitleMouseDown() {
+			this.closeStageDescriptionTooltip();
+		}
+		handleAddColumnButtonMouseEnter(event) {
+			if (shouldShowStageTooltipForControl(this, event.target)) {
+				this.handleStageTitleMouseEnter();
+			}
+		}
+		handleAddColumnButtonMouseLeave(event) {
+			if (shouldRestoreStageTooltipAfterControl(this, event.relatedTarget)) {
+				this.handleStageTitleMouseEnter();
+			}
+		}
+		handleStageTitleClick(event) {
+			if (!this.getData().areStagesEditable || !main_core.Type.isFunction(this.onEditHandler) || !canOpenStageEditorFromEvent(this, event)) {
+				return;
+			}
+			this.closeStageDescriptionTooltip();
+			event.preventDefault();
+			event.stopPropagation();
+			this.onEditHandler(this);
+		}
+		handleStageTitleKeyDown(event) {
+			if (!['Enter', ' '].includes(event.key)) {
+				return;
+			}
+			this.handleStageTitleClick(event);
+		}
+		showStageDescriptionTooltip() {
+			const requestId = ++this.stageDescriptionTooltipRequestId;
+			loadStageDescriptionTooltipForColumn(this).then(Tooltip => {
+				if (requestId !== this.stageDescriptionTooltipRequestId || !Tooltip) {
+					return;
+				}
+				this.stageDescriptionTooltip ??= new Tooltip();
+				this.stageDescriptionTooltip.show({
+					bindElement: this.getStageDescriptionTooltipBindElement(),
+					focusElement: getStageTooltipInteractionNode(this),
+					name: this.getName(),
+					description: getStageDescription(this),
+					showName: this.isStageTitleCropped()
+				});
+			});
+		}
+		getStageDescriptionTooltipBindElement() {
+			return getStageTooltipBindElement(this);
+		}
+		isStageTitleCropped() {
+			const titleText = this.layout?.nameInner;
+			return main_core.Type.isElementNode(titleText) && titleText.offsetWidth < titleText.scrollWidth;
+		}
+		closeStageDescriptionTooltip() {
+			this.stageDescriptionTooltipRequestId++;
+			this.stageDescriptionTooltip?.hideImmediately();
+		}
 		getSubTitle() {
 			return createStub();
 		}
@@ -1051,6 +1372,16 @@ this.BX.Crm = this.BX.Crm || {};
 		getTotalItem() {
 			this.layout.total = createStub();
 			return this.layout.total;
+		}
+		getAddColumnButton() {
+			const button = super.getAddColumnButton();
+			button.setAttribute('data-testid', 'crm-sales-tunnels-stage-add-btn');
+			return button;
+		}
+		getEditButton() {
+			const button = super.getEditButton();
+			button.setAttribute('data-testid', 'crm-sales-tunnels-stage-edit-btn');
+			return button;
 		}
 		handleTextBoxBlur(event) {
 			super.handleTextBoxBlur(event);
@@ -1069,7 +1400,15 @@ this.BX.Crm = this.BX.Crm || {};
 			this.onColorChangeHandler(this);
 		}
 		handleAddColumnButtonClick(event) {
+			event?.preventDefault();
+			this.closeStageDescriptionTooltip();
 			this.onAddColumnHandler(this);
+		}
+		switchToEditMode() {
+			if (openStageEditorForColumn(this)) {
+				return;
+			}
+			super.switchToEditMode();
 		}
 		handleRemoveButtonClick(event) {
 			this.getConfirmDialog().setContent(main_core.Loc.getMessage('CRM_ST_CONFIRM_STAGE_REMOVE_TEXT'));
@@ -1103,9 +1442,6 @@ this.BX.Crm = this.BX.Crm || {};
 			});
 			this.onRemoveHandler(event);
 		}
-		switchToEditMode() {
-			super.switchToEditMode();
-		}
 		applyEditMode() {
 			const title = BX.util.trim(this.getTitleTextBox().value);
 			const colorChanged = this.colorChanged;
@@ -1122,6 +1458,16 @@ this.BX.Crm = this.BX.Crm || {};
 		onColumnDrag(x, y) {
 			super.onColumnDrag(x, y);
 			Marker.adjustLinks();
+		}
+		onColumnDragStart() {
+			this.stageDragging = true;
+			super.onColumnDragStart();
+		}
+		onColumnDragStop(x, y) {
+			super.onColumnDragStop(x, y);
+			setTimeout(() => {
+				this.stageDragging = false;
+			});
 		}
 		resetRectArea() {
 			super.resetRectArea();
@@ -1290,6 +1636,16 @@ this.BX.Crm = this.BX.Crm || {};
 				data
 			});
 		}
+		static updateRobot(data) {
+			return Backend.request({
+				action: 'updateRobot',
+				analyticsLabel: {
+					component: Backend.component,
+					action: 'update.robot'
+				},
+				data
+			});
+		}
 		static getRobotSettingsDialog(data) {
 			return Backend.request({
 				action: 'getRobotSettingsDialog',
@@ -1385,7 +1741,9 @@ this.BX.Crm = this.BX.Crm || {};
 			this.drawed = false;
 			this.allowWrite = Boolean(options.allowWrite);
 			this.isCategoryEditable = Boolean(options.isCategoryEditable);
+			this.isCategoryAccessEditable = Boolean(options.isCategoryAccessEditable);
 			this.areStagesEditable = Boolean(options.areStagesEditable);
+			this.areTunnelsEditable = Boolean(options.areTunnelsEditable);
 			this.isAvailableGenerator = options.isAvailableGenerator;
 			this.isAutomationEnabled = options.isAutomationEnabled;
 			this.isStagesEnabled = options.isStagesEnabled;
@@ -1548,7 +1906,7 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		getContainer() {
 			return this.cache.remember('container', () => main_core.Tag.render`
-				<div class="crm-st-category" data-id="${this.id}">
+				<div class="crm-st-category" data-id="${this.id}" data-testid="crm-sales-tunnels-category-${this.id}">
 					<div class="crm-st-category-action">
 						${this.getDragButton()}
 					</div>
@@ -1731,6 +2089,11 @@ this.BX.Crm = this.BX.Crm || {};
 						column
 					});
 				},
+				onEdit: column => {
+					this.emit('Column:edit', {
+						column
+					});
+				},
 				onRemove: event => {
 					this.emit('Column:remove', event);
 				},
@@ -1757,8 +2120,8 @@ this.BX.Crm = this.BX.Crm || {};
 				},
 				currentStageGroup: this.getFailContainer(),
 				categoryName: this.getTitle().textContent,
-				isCategoryEditable: this.isCategoryEditable,
-				areStagesEditable: this.areStagesEditable
+				areStagesEditable: this.areStagesEditable,
+				areTunnelsEditable: this.areTunnelsEditable
 			};
 		}
 
@@ -1846,6 +2209,7 @@ this.BX.Crm = this.BX.Crm || {};
 					class="crm-st-edit-button" 
 					onmousedown="${this.onEditButtonClick.bind(this)}"
 					title="${main_core.Loc.getMessage('CRM_ST_EDIT_CATEGORY_TITLE')}"
+					data-testid="crm-sales-tunnels-category-edit-btn"
 					> </span>
 			`);
 		}
@@ -1937,6 +2301,7 @@ this.BX.Crm = this.BX.Crm || {};
 					class="crm-st-option-button" 
 					onclick="${this.onOptionButtonClick.bind(this)}" 
 					title="${main_core.Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY')}"
+					data-testid="crm-sales-tunnels-category-access-btn"
 					> </span>
 			`;
 			});
@@ -1990,7 +2355,8 @@ this.BX.Crm = this.BX.Crm || {};
 					text: main_core.Text.encode(category.name),
 					dataset: {
 						categoryId: category.id,
-						access: category.access
+						access: category.access,
+						testid: `crm-sales-tunnels-category-access-copy-item-${category.id}`
 					},
 					onclick: onSubMenuItemClick
 				};
@@ -2002,17 +2368,20 @@ this.BX.Crm = this.BX.Crm || {};
 				items: [{
 					text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL_MSGVER_1'),
 					dataset: {
-						access: 'X'
+						access: 'X',
+						testid: 'crm-sales-tunnels-category-access-item-all'
 					}
 				}, {
 					text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL_MSGVER_1'),
 					dataset: {
-						access: ''
+						access: '',
+						testid: 'crm-sales-tunnels-category-access-item-none'
 					}
 				}, {
 					text: myItemsText,
 					dataset: {
-						access: 'A'
+						access: 'A',
+						testid: 'crm-sales-tunnels-category-access-item-own'
 					}
 				}, items.length > 0 ? {
 					text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2'),
@@ -2022,7 +2391,8 @@ this.BX.Crm = this.BX.Crm || {};
 				}, {
 					text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_CUSTOM'),
 					dataset: {
-						access: false
+						access: false,
+						testid: 'crm-sales-tunnels-category-access-item-custom'
 					},
 					className: this.access !== 'A' && this.access !== 'X' && this.access !== '' ? 'menu-popup-item-accept' : '',
 					href: this.permissionEditLink,
@@ -2063,6 +2433,7 @@ this.BX.Crm = this.BX.Crm || {};
 					class="crm-st-remove-button" 
 					onclick="${this.onRemoveButtonClick.bind(this)}" 
 					title="${main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY2')}"
+					data-testid="crm-sales-tunnels-category-remove-btn"
 					> </span>
 			`;
 				if (this.default) {
@@ -2177,7 +2548,7 @@ this.BX.Crm = this.BX.Crm || {};
 			return this.cache.remember('getActionsButtons', () => main_core.Tag.render`
 				<div class="crm-st-category-action-buttons">
 					${this.isCategoryEditable ? this.getEditButton() : ''}
-					${this.isCategoryEditable ? this.getOptionButton() : ''}
+					${this.isCategoryAccessEditable ? this.getOptionButton() : ''}
 					${this.isCategoryEditable ? this.getRemoveButton() : ''}
 				</div>
 			`);
@@ -2319,6 +2690,201 @@ this.BX.Crm = this.BX.Crm || {};
 		return main_core.Loc.getMessage('CRM_ST_SAVE_ERROR2');
 	}
 
+	function sanitizeMessage(message) {
+		if (typeof message !== 'string') {
+			return '';
+		}
+		return message.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').split('\n').map(line => line.trim()).filter(line => line !== '' && !/^at\s+\S+/i.test(line)).join('\n');
+	}
+	function getErrorItemMessage(error) {
+		if (typeof error === 'string') {
+			return sanitizeMessage(error);
+		}
+		return sanitizeMessage(error?.message);
+	}
+	function getStageOperationErrorMessage(error, fallbackMessage) {
+		const errors = Array.isArray(error?.errors) ? error.errors : error?.data?.errors;
+		if (Array.isArray(errors)) {
+			const message = errors.map(item => getErrorItemMessage(item)).filter(Boolean).join('\n');
+			if (message !== '') {
+				return message;
+			}
+		}
+		const message = getErrorItemMessage(error);
+		return message || fallbackMessage;
+	}
+
+	class StageEditorController {
+		constructor(options) {
+			this.entityTypeId = options.entityTypeId;
+			this.entityTypeName = options.entityTypeName;
+			this.backend = options.backend;
+			this.editorFactory = options.editorFactory;
+			this.getDeleteBlockReasons = options.getDeleteBlockReasons || (() => []);
+			this.createDraft = options.createDraft || (() => null);
+			this.removeDraft = options.removeDraft || (() => {});
+			this.onPreview = options.onPreview || (() => {});
+			this.onRestore = options.onRestore || (() => {});
+			this.onCreate = options.onCreate || (() => {});
+			this.onUpdate = options.onUpdate || (() => {});
+			this.onDelete = options.onDelete || (() => {});
+			this.onOperationSuccess = options.onOperationSuccess || (() => {});
+			this.onOperationFailure = options.onOperationFailure || (() => {});
+			this.editor = null;
+			this.column = null;
+			this.previewFrameId = null;
+			this.pendingPreview = null;
+		}
+		openEdit(column) {
+			this.close();
+			const snapshot = toStageEditorData(column);
+			const canDelete = column.isRemovable() && !snapshot.system;
+			this.column = column;
+			column.stageEditorOpened = true;
+			this.editor = this.editorFactory.open({
+				stage: snapshot,
+				entityTextContext: {
+					entityTypeId: this.entityTypeId,
+					entityTypeName: this.entityTypeName
+				},
+				mode: 'edit',
+				anchor: getStagePopupAnchorElement(column),
+				canEdit: true,
+				canDelete,
+				deleteBlockReasons: canDelete ? [] : this.getDeleteBlockReasons(column),
+				onChange: (payload, field) => {
+					this.schedulePreview(column, payload, field);
+				},
+				onSave: payload => this.save(column, payload),
+				onDelete: () => this.delete(column),
+				onCancel: () => {
+					this.onRestore(column, snapshot);
+					this.clear(column);
+				}
+			});
+		}
+		openCreate(column) {
+			this.close();
+			const draftColumn = this.createDraft(column);
+			if (!draftColumn) {
+				return;
+			}
+			this.column = draftColumn;
+			draftColumn.stageEditorOpened = true;
+			this.editor = this.editorFactory.open({
+				stage: toStageEditorData(draftColumn),
+				entityTextContext: {
+					entityTypeId: this.entityTypeId,
+					entityTypeName: this.entityTypeName
+				},
+				mode: 'create',
+				anchor: getStagePopupAnchorElement(draftColumn),
+				canEdit: true,
+				canDelete: false,
+				deleteBlockReasons: this.getDeleteBlockReasons(column),
+				onChange: (payload, field) => {
+					this.schedulePreview(draftColumn, payload, field);
+				},
+				onSave: payload => this.create(draftColumn, column, payload),
+				onDelete: () => Promise.resolve(),
+				onCancel: () => {
+					this.removeDraft(draftColumn);
+					this.clear(draftColumn);
+				}
+			});
+		}
+		schedulePreview(column, payload, field) {
+			if (field === 'description') {
+				return;
+			}
+			this.pendingPreview = {
+				column,
+				payload
+			};
+			if (this.previewFrameId !== null) {
+				return;
+			}
+			this.previewFrameId = window.requestAnimationFrame(() => {
+				const preview = this.pendingPreview;
+				this.previewFrameId = null;
+				this.pendingPreview = null;
+				if (preview) {
+					this.onPreview(preview.column, preview.payload);
+				}
+			});
+		}
+		create(draftColumn, sourceColumn, payload) {
+			return this.backend.addStage(createAddStageRequest(sourceColumn, payload)).then(({
+				data
+			}) => {
+				const stage = data?.stage;
+				if (!stage) {
+					throw new Error(this.getFallbackErrorMessage());
+				}
+				this.onCreate(draftColumn, sourceColumn, stage);
+				this.onOperationSuccess('create');
+				this.clear(draftColumn);
+				return toStageEditorData(stage);
+			}).catch(error => this.handleOperationFailure('create', error));
+		}
+		save(column, payload) {
+			return this.backend.updateStage(createUpdateStageRequest(column, payload)).then(({
+				data
+			}) => {
+				if (!data?.success || !data.stage) {
+					throw new Error(getStageOperationErrorMessage({
+						data
+					}, this.getFallbackErrorMessage()));
+				}
+				this.onUpdate(column, data.stage);
+				this.onOperationSuccess('update');
+				this.clear(column);
+				return toStageEditorData(data.stage);
+			}).catch(error => this.handleOperationFailure('update', error));
+		}
+		delete(column) {
+			const stage = toStageEditorData(column);
+			return this.backend.removeStage({
+				statusId: stage.statusId,
+				stageId: stage.id,
+				entityId: stage.entityId
+			}).then(() => {
+				this.onDelete(column);
+				this.onOperationSuccess('delete');
+				this.clear(column);
+			}).catch(error => this.handleOperationFailure('delete', error));
+		}
+		handleOperationFailure(operation, error) {
+			const normalizedError = this.normalizeError(error);
+			this.onOperationFailure(operation, normalizedError);
+			throw normalizedError;
+		}
+		normalizeError(error) {
+			return new Error(getStageOperationErrorMessage(error, this.getFallbackErrorMessage()));
+		}
+		getFallbackErrorMessage() {
+			return main_core.Loc.getMessage('CRM_ST_STAGE_OPERATION_ERROR') || main_core.Loc.getMessage('CRM_ST_SAVE_ERROR2');
+		}
+		close() {
+			this.editor?.close();
+		}
+		isOpenedFor(column) {
+			return this.column === column;
+		}
+		clear(column) {
+			if (this.previewFrameId !== null) {
+				window.cancelAnimationFrame(this.previewFrameId);
+			}
+			this.previewFrameId = null;
+			this.pendingPreview = null;
+			column.stageEditorOpened = false;
+			if (this.column === column) {
+				this.column = null;
+				this.editor = null;
+			}
+		}
+	}
+
 	class Manager {
 		static lastInstance = null;
 		constructor(options) {
@@ -2335,16 +2901,34 @@ this.BX.Crm = this.BX.Crm || {};
 			this.tunnelScheme = options.tunnelScheme;
 			this.isCategoryEditable = Boolean(options.isCategoryEditable);
 			this.isCategoryCreatable = Boolean(options.isCategoryCreatable);
+			this.isCategoryAccessEditable = Boolean(options.isCategoryAccessEditable);
 			this.areStagesEditable = Boolean(options.areStagesEditable);
+			this.areTunnelsEditable = Boolean(options.areTunnelsEditable);
 			this.isAvailableGenerator = options.isAvailableGenerator;
 			this.isStagesEnabled = options.isStagesEnabled;
 			this.isAutomationEnabled = options.isAutomationEnabled && this.isStagesEnabled;
 			this.categories = new Map();
 			this.cache = new main_core.Cache.MemoryCache();
 			this.isChanged = false;
+			Backend.entityTypeId = this.entityTypeId;
+			this.stageEditorController = new StageEditorController({
+				entityTypeId: this.entityTypeId,
+				entityTypeName: this.documentType[2],
+				backend: Backend,
+				editorFactory: createLazyStageEditorFactory(),
+				getDeleteBlockReasons: () => [main_core.Loc.getMessage('CRM_ST_STAGE_DELETE_BLOCKED')],
+				createDraft: column => this.createStageEditorDraft(column),
+				removeDraft: column => this.removeStageEditorDraft(column),
+				onPreview: (column, stage) => this.updateColumnFromEditorData(column, stage),
+				onRestore: (column, stage) => this.updateColumnFromEditorData(column, stage),
+				onCreate: (draftColumn, sourceColumn, stage) => this.handleStageCreated(draftColumn, sourceColumn, stage),
+				onUpdate: (column, stage) => this.handleStageUpdated(column, stage),
+				onDelete: column => this.handleStageDeleted(column),
+				onOperationSuccess: operation => this.sendStageEditorAnalytics(operation, 'success'),
+				onOperationFailure: operation => this.sendStageEditorAnalytics(operation, 'error')
+			});
 			this.initCategories();
 			this.initTunnels();
-			Backend.entityTypeId = this.entityTypeId;
 			if (this.isCategoryCreatable) {
 				setTimeout(() => {
 					if (!this.hasTunnels()) {
@@ -2360,6 +2944,24 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		hasTunnels() {
 			return this.getTunnels().length > 0;
+		}
+
+		// Automation is the technical support of tunnels, the right is what makes them editable. The right
+		// belongs to one funnel; without one the page-wide right answers, as it does for the funnel the page
+		// offers to create.
+		canEditTunnels(areTunnelsEditable = this.areTunnelsEditable) {
+			return this.isAutomationEnabled && Boolean(areTunnelsEditable);
+		}
+
+		// A tunnel belongs to the funnel it starts in, the one the server resolves from the source stage.
+		canEditTunnelsOfLink(link) {
+			return this.canEditTunnels(link.from.getData().column.getData().areTunnelsEditable);
+		}
+
+		// The right the server sent with the funnel, and the page-wide one for a funnel that arrives without
+		// it.
+		tunnelsEditableOf(options) {
+			return Boolean(options.ARE_TUNNELS_EDITABLE ?? this.areTunnelsEditable);
 		}
 		getContainer() {
 			return this.cache.remember('container', () => {
@@ -2515,7 +3117,9 @@ this.BX.Crm = this.BX.Crm || {};
 				generatorsCount: options.RC_COUNT,
 				generatorsListUrl: options.RC_LIST_URL,
 				isCategoryEditable: this.isCategoryEditable,
+				isCategoryAccessEditable: this.isCategoryAccessEditable,
 				areStagesEditable: this.areStagesEditable,
+				areTunnelsEditable: this.tunnelsEditableOf(options),
 				isAvailableGenerator: this.isAvailableGenerator,
 				isAutomationEnabled: this.isAutomationEnabled,
 				isStagesEnabled: this.isStagesEnabled,
@@ -2608,7 +3212,7 @@ this.BX.Crm = this.BX.Crm || {};
 					ui_analytics.sendData(this.analyticsLabels.deleteFunnelLabel);
 				});
 			}).subscribe('Column:link', event => {
-				if (!this.isAutomationEnabled) {
+				if (!this.canEditTunnelsOfLink(event.data.link)) {
 					return;
 				}
 				if (!event.data.preventSave) {
@@ -2650,7 +3254,7 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 				this.hideCategoryStub();
 			}).subscribe('Column:removeLinkFrom', event => {
-				if (!this.isAutomationEnabled) {
+				if (!this.canEditTunnelsOfLink(event.data.link)) {
 					return;
 				}
 				if (!event.data.preventSave) {
@@ -2693,7 +3297,7 @@ this.BX.Crm = this.BX.Crm || {};
 					}
 				}
 			}).subscribe('Column:changeRobotAction', event => {
-				if (!this.isAutomationEnabled || event.data.preventSave) {
+				if (!this.canEditTunnelsOfLink(event.data.link) || event.data.preventSave) {
 					return;
 				}
 				if (BX.Crm.Restriction.Bitrix24.isRestricted('automation')) {
@@ -2738,7 +3342,7 @@ this.BX.Crm = this.BX.Crm || {};
 					}).catch(response => this.showErrorPopup(makeErrorMessageFromResponse(response)));
 				}
 			}).subscribe('Column:editLink', event => {
-				if (!this.isAutomationEnabled) {
+				if (!this.canEditTunnelsOfLink(event.data.link)) {
 					return;
 				}
 				const tunnel = this.getTunnelByLink(event.data.link);
@@ -2746,14 +3350,7 @@ this.BX.Crm = this.BX.Crm || {};
 				// eslint-disable-next-line
 				BX.Bizproc.Automation.API.showRobotSettings(tunnel.robot, this.documentType, tunnel.srcStage, robot => {
 					tunnel.robot = robot.serialize();
-					Backend.request({
-						action: 'updateRobot',
-						analyticsLabel: {
-							component: Backend.component,
-							action: 'update.robot'
-						},
-						data: tunnel
-					}).then(() => {
+					Backend.updateRobot(tunnel).then(() => {
 						ui_notification.UI.Notification.Center.notify({
 							content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
 							autoHideDelay: 1500,
@@ -2821,7 +3418,8 @@ this.BX.Crm = this.BX.Crm || {};
 					entityId: event.data.column.data.entityId,
 					name: event.data.column.getName(),
 					sort: event.data.column.data.stage.SORT,
-					color: event.data.column.getColor()
+					color: event.data.column.getColor(),
+					categoryId: event.data.column.getData().category.id
 				}).then(({
 					data
 				}) => {
@@ -2841,69 +3439,10 @@ this.BX.Crm = this.BX.Crm || {};
 					}
 					ui_analytics.sendData(this.analyticsLabels.renameStageLabel);
 				});
+			}).subscribe('Column:edit', event => {
+				this.stageEditorController.openEdit(event.data.column);
 			}).subscribe('Column:addColumn', event => {
-				Backend.addStage({
-					name: event.data.column.getGrid().getMessage('COLUMN_TITLE_PLACEHOLDER'),
-					sort: (() => {
-						const {
-							column
-						} = event.data;
-						return Number(column.data.stage.SORT) + 1;
-					})(),
-					entityId: (() => {
-						const {
-							column
-						} = event.data;
-						return column.data.stage.ENTITY_ID;
-					})(),
-					color: BX.Kanban.Column.DEFAULT_COLOR,
-					semantics: (() => {
-						const {
-							column
-						} = event.data;
-						return column.data.stage.SEMANTICS;
-					})(),
-					categoryId: (() => {
-						const {
-							column
-						} = event.data;
-						return column.data.category.id;
-					})()
-				}).then(({
-					data
-				}) => {
-					ui_notification.UI.Notification.Center.notify({
-						content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-						autoHideDelay: 1500,
-						category: 'save'
-					});
-					this.isChanged = true;
-					const {
-						stage
-					} = data;
-					const prevColumn = event.data.column;
-					const grid = prevColumn.getGrid();
-					const category = this.getCategory(prevColumn.data.category.id);
-					stage.TUNNELS = [];
-					this.getStages().push(stage);
-					const targetId = grid.getNextColumnSibling(prevColumn);
-					// column.getGrid().removeColumn(column);
-					const column = grid.addColumn({
-						id: stage.STATUS_ID,
-						name: stage.NAME,
-						color: stage.COLOR.replace('#', ''),
-						data: category.getColumnData(stage),
-						targetId
-					});
-					column.switchToEditMode();
-					Marker.adjustLinks();
-					this.analyticsLabels.createStageLabel.status = 'success';
-				}).catch(response => {
-					this.analyticsLabels.createStageLabel.status = 'error';
-					this.showErrorPopup(makeErrorMessageFromResponse(response));
-				}).finally(() => {
-					ui_analytics.sendData(this.analyticsLabels.createStageLabel);
-				});
+				this.stageEditorController.openCreate(event.data.column);
 			}).subscribe('Column:sort', event => {
 				const sortData = event.data.columns.map((column, index) => {
 					const newSorting = (index + 1) * 100;
@@ -2913,7 +3452,8 @@ this.BX.Crm = this.BX.Crm || {};
 						entityId: column.data.entityId,
 						name: column.getName(),
 						sort: newSorting,
-						color: column.getColor()
+						color: column.getColor(),
+						categoryId: column.getData().category.id
 					};
 					column.data.stage.SORT = newSorting;
 					return columnData;
@@ -2950,6 +3490,127 @@ this.BX.Crm = this.BX.Crm || {};
 				}));
 			});
 			this.categories.set(String(options.ID), category);
+		}
+		updateColumnFromEditorData(column, stageData) {
+			const currentStage = column.getData().stage;
+			const stage = {
+				...currentStage,
+				NAME: stageData.name,
+				COLOR: stageData.color,
+				DESCRIPTION: stageData.description
+			};
+			const data = {
+				...column.getData(),
+				stage
+			};
+			column.getGrid().updateColumn(column, {
+				id: column.getId(),
+				name: stage.NAME,
+				color: stage.COLOR,
+				total: column.getTotal(),
+				data
+			});
+			column.currentName = stage.NAME;
+		}
+		createStageEditorDraft(sourceColumn) {
+			const grid = sourceColumn.getGrid();
+			const sourceStage = sourceColumn.getData().stage;
+			const category = this.getCategory(sourceColumn.getData().category.id);
+			const draftId = `kanban-new-column-${BX.util.getRandomString(5)}`;
+			const draftStage = {
+				...sourceStage,
+				ID: null,
+				STATUS_ID: draftId,
+				NAME: grid.getMessage('COLUMN_TITLE_PLACEHOLDER'),
+				COLOR: `#${sourceColumn.getColor()}`,
+				DESCRIPTION: '',
+				SORT: Number(sourceStage.SORT) + 1,
+				SYSTEM: 'N',
+				TUNNELS: []
+			};
+			const draftColumn = grid.addColumn({
+				id: draftId,
+				name: draftStage.NAME,
+				color: sourceColumn.getColor(),
+				canSort: false,
+				canAddItem: false,
+				droppable: false,
+				data: category.getColumnData(draftStage),
+				targetId: grid.getNextColumnSibling(sourceColumn)
+			});
+			Marker.adjustLinks();
+			return draftColumn;
+		}
+		removeStageEditorDraft(draftColumn) {
+			draftColumn.getGrid().removeColumn(draftColumn);
+			Marker.adjustLinks();
+		}
+		handleStageCreated(draftColumn, sourceColumn, stage) {
+			const grid = draftColumn.getGrid();
+			const category = this.getCategory(sourceColumn.getData().category.id);
+			const targetId = grid.getNextColumnSibling(draftColumn);
+			stage.TUNNELS = [];
+			this.getStages().push(stage);
+			grid.removeColumn(draftColumn);
+			grid.addColumn({
+				id: stage.STATUS_ID,
+				name: stage.NAME,
+				color: stage.COLOR.replace('#', ''),
+				data: category.getColumnData(stage),
+				targetId
+			});
+			this.notifyStageEditorSaved();
+			Marker.adjustLinks();
+			return toStageEditorData(stage);
+		}
+		handleStageUpdated(column, stage) {
+			const oldStage = column.getData().stage;
+			stage.TUNNELS = stage.TUNNELS || oldStage.TUNNELS || [];
+			const category = column.getData().category;
+			column.getGrid().updateColumn(column, {
+				id: column.getId(),
+				name: stage.NAME,
+				color: stage.COLOR.replace('#', ''),
+				total: column.getTotal(),
+				data: category.getColumnData(stage)
+			});
+			column.currentName = stage.NAME;
+			this.notifyStageEditorSaved();
+			Marker.adjustLinks();
+			return toStageEditorData(stage);
+		}
+		handleStageDeleted(column) {
+			Marker.getAllLinks().forEach(link => {
+				if (link.from === column.marker || link.to === column.marker) {
+					link.from.removeLink(link);
+				}
+			});
+			column.getGrid().removeColumn(column);
+			this.notifyStageEditorSaved();
+			setTimeout(() => {
+				Marker.removeAllLinks();
+				Marker.restoreAllLinks();
+			});
+		}
+		notifyStageEditorSaved() {
+			ui_notification.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+				autoHideDelay: 1500,
+				category: 'save'
+			});
+			this.isChanged = true;
+		}
+		sendStageEditorAnalytics(operation, status) {
+			const labels = {
+				create: this.analyticsLabels.createStageLabel,
+				update: this.analyticsLabels.renameStageLabel,
+				delete: this.analyticsLabels.deleteStageLabel
+			};
+			const label = labels[operation];
+			if (label) {
+				label.status = status;
+				ui_analytics.sendData(label);
+			}
 		}
 		showErrorPopup(message) {
 			if (!this.errorPopup) {
@@ -3053,5 +3714,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Kanban = Kanban;
 	exports.Manager = Manager;
 
-})(this.BX.Crm.SalesTunnels = this.BX.Crm.SalesTunnels || {}, BX, BX, BX.Main, BX.Main, BX, BX.UI.Analytics);
+})(this.BX.Crm.SalesTunnels = this.BX.Crm.SalesTunnels || {}, BX, BX.Crm.Stage, BX, BX.UI, BX.Main, BX.Main, BX.UI.Notification, BX.UI.Analytics);
 //# sourceMappingURL=script.js.map

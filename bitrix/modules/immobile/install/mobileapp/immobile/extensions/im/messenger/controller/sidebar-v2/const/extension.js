@@ -2,6 +2,11 @@
  * @module im/messenger/controller/sidebar-v2/const
  */
 jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module) => {
+	const {
+		SidebarFileType,
+		SidebarAudioTabSubtypes,
+	} = require('im/messenger/controller/sidebar-v2/const/src/file-subtype');
+
 	const SidebarContextMenuActionId = {
 		MORE: 'more',
 		EDIT: 'edit',
@@ -36,13 +41,6 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 		BOTTOM: 500,
 	};
 
-	const SidebarFileType = Object.freeze({
-		document: 'document',
-		other: 'other',
-		media: 'media',
-		audio: 'audio',
-	});
-
 	const SIDEBAR_DEFAULT_TOAST_OFFSET = 26;
 
 	const SidebarPrimaryActionButtonId = {
@@ -61,6 +59,7 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 		SidebarContextMenuActionPosition,
 		SidebarContextMenuActionSection,
 		SidebarFileType,
+		SidebarAudioTabSubtypes,
 		SIDEBAR_DEFAULT_TOAST_OFFSET,
 		SidebarPrimaryActionButtonId,
 	};

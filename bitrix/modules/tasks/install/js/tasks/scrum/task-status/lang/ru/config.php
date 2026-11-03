@@ -10,3 +10,7 @@ $MESS["TST_PARENT_PROCEED_CAPTION"] = "Продолжить";
 $MESS["TST_PARENT_COMPLETE_NOTIFY"] = "Базовая задача успешно завершена";
 $MESS["TST_PARENT_RENEW_NOTIFY"] = "Базовая задача успешно возобновлена";
 $MESS["TST_PARENT_PROCEED_NOTIFY"] = "Теперь вы сможете продолжить работу с базовой задачей на канбане спринта";
+$MESS["TST_PARENT_CHECKLIST_COMPLETE_TITLE"] = "Завершить родительскую задачу?";
+$MESS["TST_PARENT_CHECKLIST_COMPLETE_SUBTITLE"] = "Все подзадачи выполнены, но остались незавершённые пункты чек-листа. Проверьте, всё ли готово";
+$MESS["TST_PARENT_CHECKLIST_COMPLETE_BUTTON"] = "Завершить задачу";
+$MESS["TST_PARENT_CHECKLIST_CONTINUE_BUTTON"] = "Пока не завершать";

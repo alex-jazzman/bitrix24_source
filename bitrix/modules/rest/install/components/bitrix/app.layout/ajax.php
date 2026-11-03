@@ -14,11 +14,16 @@ class AppLayoutAjax extends Main\Engine\Controller
 	{
 		if ($placement = Rest\PlacementTable::getById($placementId)->fetchObject())
 		{
+			$placementId = (int)$placement->getId();
+
 			$component = new Main\Engine\Response\Component(
 				'bitrix:app.layout',
 				'',
 				[
-					'ID' => $placement->getAppId(),
+					'ID' => (new Rest\Internal\Service\Placement\LegacyAppIdPresenter())->encode([
+						'ID' => $placementId,
+						'APP_ID' => $placement->getAppId(),
+					]),
 					'PLACEMENT' => $placement->getPlacement(),
 					'PLACEMENT_ID' => $placementId,
 					'PLACEMENT_OPTIONS' => $placementOptions,

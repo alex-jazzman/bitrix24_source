@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_cache, main_core_events, ui_entitySelector) {
+(function (exports, main_core, main_core_events, ui_entitySelector) {
 	'use strict';
 
 	class InvitationProvider {
@@ -259,12 +259,14 @@ this.BX = this.BX || {};
 						this.#setUnreadySaveState();
 						resolve(response);
 					}).catch(response => {
+						const serverMessage = response?.errors?.[0]?.message;
+						const message = main_core.Type.isStringFilled(serverMessage) && serverMessage.trim().length > 0 ? serverMessage : main_core.Loc.getMessage('INTRANET_CONTROLLER_INVITE_ERROR_INVALID_RESPONSE');
 						if (this.#showErrorAfterSubmit) {
-							this.#addErrorBlockByMessage(response.errors[0].message);
+							this.#addErrorBlockByMessage(message);
 						} else {
 							this.getTagSelector().removeTags();
 						}
-						reject(response.errors[0].message);
+						reject(message);
 					});
 				}
 			});
@@ -368,17 +370,22 @@ this.BX = this.BX || {};
 			this.#setReadySaveState();
 			if (tag.getEntityType() === 'error') {
 				this.#setErrorStateForTag(tag);
+				this.#setTextBoxInvalidState();
 				if (this.#showErrorBeforeSubmit) {
 					this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
 				}
 			}
 			if (tag.getEntityType() === 'phone') {
 				this.#getPhoneParser().parse(tag.getTitle()).then(result => {
+					if (!this.getTagSelector().getTags().includes(tag)) {
+						return;
+					}
 					if (result.valid) {
 						tag.setTitle(result.rawNumber);
 					} else {
 						this.#setErrorStateForTag(tag);
 						this.#invalidPhoneNumbersTagIds.push(tag.getId());
+						this.#setTextBoxInvalidState();
 						this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
 					}
 					tag.render();
@@ -457,6 +464,7 @@ this.BX = this.BX || {};
 			}
 			const errorBlock = this.#createErrorBlockByMessage(message);
 			this.getWrapper().append(errorBlock);
+			this.#setTextBoxInvalidState(errorBlock.id);
 			this.#setUnreadySaveState();
 			if (!main_core.Dom.hasClass(this.getTagSelector().getOuterContainer(), '--error')) {
 				main_core.Dom.addClass(this.getTagSelector().getOuterContainer(), '--error');
@@ -467,21 +475,39 @@ this.BX = this.BX || {};
 			if (errorBlock) {
 				errorBlock.remove();
 			}
+			const textBox = this.getTagSelector().getTextBox();
+			textBox.removeAttribute('aria-describedby');
+			if (this.#getErrorTags().length === 0) {
+				textBox.removeAttribute('aria-invalid');
+			}
 			if (main_core.Dom.hasClass(this.getTagSelector().getOuterContainer(), '--error')) {
 				main_core.Dom.removeClass(this.getTagSelector().getOuterContainer(), '--error');
 			}
 		}
 		#createErrorBlockByMessage(message) {
 			return main_core.Tag.render`
-			<div class="intranet-invitation-input-error__wrapper">
-				<span class="intranet-invitation-input-error__text">${message}</span>
+			<div
+				id="${this.#id}-error"
+				class="intranet-invitation-input-error__wrapper"
+				role="alert"
+				aria-atomic="true"
+				data-testid="${this.#id}-error"
+			>
+				<span class="intranet-invitation-input-error__text">${main_core.Text.encode(message)}</span>
 			</div>
 		`;
+		}
+		#setTextBoxInvalidState(errorId = null) {
+			const textBox = this.getTagSelector().getTextBox();
+			textBox.setAttribute('aria-invalid', 'true');
+			if (main_core.Type.isStringFilled(errorId)) {
+				textBox.setAttribute('aria-describedby', errorId);
+			}
 		}
 	}
 
 	exports.InvitationInput = InvitationInput;
 	exports.InvitationInputType = InvitationInputType;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Cache, BX.Event, BX.UI.EntitySelector);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI.EntitySelector);
 //# sourceMappingURL=invitation-input.bundle.js.map

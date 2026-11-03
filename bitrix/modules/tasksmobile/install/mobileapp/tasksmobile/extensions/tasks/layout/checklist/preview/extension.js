@@ -224,10 +224,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 
 		#getActions(checklists)
 		{
-			const getId = (item) => item.getRootItem()?.getId?.();
+			const getId = (item) => item.getRoot()?.getId?.();
 
 			const getTitle = (item) => {
-				return item.getRootItem()?.getTitle?.()
+				return item.getRoot()?.getTitle?.()
 					|| Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_COMPACT_TITLE');
 			};
 
@@ -265,7 +265,8 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 
 			if (elementsLoaded && this.controller)
 			{
-				const checklistsCount = this.controller.getChecklists().size;
+				// count by displayed (non-empty) checklists, consistent with restCount
+				const checklistsCount = this.getSortedChecklists().length;
 				this.state.collapsed = checklistsCount > this.#getMaxElements();
 			}
 		}
@@ -315,11 +316,11 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 		{
 			const checklists = this.controller.getChecklists();
 
+			// empty checklists are counted too: they are removed only when the screen closes
 			return [...checklists.values()]
-				.filter((checklist) => checklist?.getRootItem()?.hasDescendants())
 				.sort((a, b) => {
-					const itemA = a.getRootItem()?.getSortIndex();
-					const itemB = b.getRootItem()?.getSortIndex();
+					const itemA = a.getRoot()?.getSortIndex();
+					const itemB = b.getRoot()?.getSortIndex();
 
 					return itemA - itemB;
 				});
@@ -417,14 +418,17 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 					testId: `${this.testId}_CONTENT`,
 				},
 				...checklists.map((checklist, index) => {
-					const rootItem = checklist.getRootItem();
+					const rootItem = checklist.getRoot();
+					const totalCount = rootItem.getChildrenCount();
+					const completedCount = rootItem.getCompletedChildrenCount();
+					const isComplete = rootItem.isComplete() || (totalCount > 0 && completedCount === totalCount);
 
 					return Item({
 						testId: this.testId,
-						totalCount: rootItem.getTotalCount(),
-						completedCount: rootItem.getCompletedCount(),
+						totalCount,
+						completedCount,
 						title: rootItem.getTitle(),
-						isComplete: rootItem.getIsComplete(),
+						isComplete,
 						showBorder: index < (checklists.length - 1),
 						onClick: () => this.openPageManager(checklist),
 					});
@@ -461,7 +465,8 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 		 */
 		renderMoreButton(restCount)
 		{
-			if (!this.#isCollapsed())
+			// guard against a stale collapsed flag showing "Show more -1" when restCount <= 0
+			if (!this.#isCollapsed() || restCount <= 0)
 			{
 				return null;
 			}

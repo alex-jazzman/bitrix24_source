@@ -12,6 +12,7 @@ use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Crm\Integration\BizProc\Trigger\TestRunDocument;
 use Bitrix\Main\Localization\Loc;
 
 if (\CBPRuntime::ACTIVITY_API_VERSION < 3)
@@ -24,9 +25,15 @@ if (!class_exists('CBPCrmEntityCreateTrigger'))
 	\CBPRuntime::getRuntime()->includeActivityFile('crmentitycreatetrigger');
 }
 
-$presets = class_exists('CBPCrmEntityCreateTrigger') ? CBPCrmEntityCreateTrigger::getPresets() : [];
+$presets = [];
+$testRunDocument = null;
+if (class_exists('CBPCrmEntityCreateTrigger'))
+{
+	$presets = CBPCrmEntityCreateTrigger::getPresets();
+	$testRunDocument = TestRunDocument::getDeclarations();
+}
 
-$arActivityDescription = (new ActivityDescription(
+$description = (new ActivityDescription(
 	name: '',
 	description: '',
 	type: [ActivityType::TRIGGER->value],
@@ -49,5 +56,11 @@ $arActivityDescription = (new ActivityDescription(
 	->set('ADDITIONAL_RESULT', ['Return'])
 	->setGroups([ActivityGroup::STARTER->value])
 	->setColorIndex(ActivityColorIndex::BLUE->value)
-	->toArray()
 ;
+
+if ($testRunDocument !== null)
+{
+	$description->set('TEST_RUN_DOCUMENT', $testRunDocument);
+}
+
+$arActivityDescription = $description->toArray();

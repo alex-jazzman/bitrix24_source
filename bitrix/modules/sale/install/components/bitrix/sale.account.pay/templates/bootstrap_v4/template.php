@@ -4,6 +4,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(array("popup"));
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\Main\UI\Extension::load('ui.a11y');
+}
 
 if (!empty($arResult["errorMessage"]))
 {
@@ -41,8 +45,9 @@ else
 										<?
 										foreach ($arParams["SELL_TOTAL"] as $valueChanging)
 										{
+											$fixedSumAria = Loc::getMessage('SAP_FIXED_SUM_ARIA', ['#SUM#' => $valueChanging]);
 											?>
-											<div class="sale-accountpay-fixedpay-item"><?=CUtil::JSEscape(htmlspecialcharsbx($valueChanging))?></div>
+											<div class="sale-accountpay-fixedpay-item" role="button" tabindex="0" data-sum="<?=htmlspecialcharsbx($valueChanging)?>" aria-label="<?=htmlspecialcharsbx($fixedSumAria)?>"><?=CUtil::JSEscape(htmlspecialcharsbx($valueChanging))?></div>
 											<?
 										}
 										?>
@@ -55,13 +60,14 @@ else
 					?>
 					<div class="row mb-3">
 						<div class="col form-horizontal">
-							<h3 class="mb-2"><?=Loc::getMessage("SAP_SUM")?></h3>
+							<h3 class="mb-2" id="bx-sap-sum-title<?=htmlspecialcharsbx($wrapperId)?>"><?=Loc::getMessage("SAP_SUM")?></h3>
 							<div class="form-group row">
 								<div class='col-12 col-md-4 input-group'>
 									<?
 									$inputElement = "
 										<input type='text' placeholder='0.00' 
 											class='form-control sale-accountpay-input text-right' value='0.00' "
+											."aria-labelledby='bx-sap-sum-title".htmlspecialcharsbx($wrapperId)."' "
 											."name=".CUtil::JSEscape(htmlspecialcharsbx($arParams["VAR"]))." "
 											.($arParams['SELL_USER_INPUT'] === 'N' ? "disabled" :"").
 										">";
@@ -102,14 +108,14 @@ else
 				<div class="row mb-3">
 					<div class="col">
 						<h3 class="mb-2"><?=Loc::getMessage("SAP_TYPE_PAYMENT_TITLE")?></h3>
-						<div class="row sale-accountpay-pp">
+						<div class="row sale-accountpay-pp" role="radiogroup" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SAP_PAY_SYSTEM_GROUP_ARIA'))?>">
 							<?
 							foreach ($arResult['PAYSYSTEMS_LIST'] as $key => $paySystem)
 							{
 							?>
-								<div class="sale-accountpay-pp-company col-lg-2 col-md-3 col-sm-4 col-6 <?= ($key == 0) ? 'bx-selected' :""?>">
+								<div class="sale-accountpay-pp-company col-lg-2 col-md-3 col-sm-4 col-6 <?= ($key == 0) ? 'bx-selected' :""?>" role="radio" aria-checked="<?= ($key == 0) ? 'true' : 'false' ?>" tabindex="<?= ($key == 0) ? '0' : '-1' ?>">
 									<div class="sale-accountpay-pp-company-graf-container">
-										<input type="checkbox" class="sale-accountpay-pp-company-checkbox" name="PAY_SYSTEM_ID" value="<?=$paySystem['ID']?>" <?= ($key == 0) ? "checked='checked'" :""?>>
+										<input type="checkbox" class="sale-accountpay-pp-company-checkbox" tabindex="-1" aria-hidden="true" inert name="PAY_SYSTEM_ID" value="<?=$paySystem['ID']?>" <?= ($key == 0) ? "checked='checked'" :""?>>
 										<?
 										if (isset($paySystem['LOGOTIP']))
 										{
@@ -129,7 +135,7 @@ else
 				</div>
 				<div class="row mb-3">
 					<div class="col">
-						<a href="" class="btn btn-primary sale-account-pay-button"><?=Loc::getMessage("SAP_BUTTON")?></a>
+						<a href="" class="btn btn-primary sale-account-pay-button" role="button"><?=Loc::getMessage("SAP_BUTTON")?></a>
 					</div>
 				</div>
 			</div>
@@ -144,8 +150,10 @@ else
 			"wrapperId" => $wrapperId
 		);
 		$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
+		$messages = Loc::loadLanguageFile(__FILE__);
 		?>
 		<script>
+			BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 			var sc = new BX.saleAccountPay(<?=$javascriptParams?>);
 		</script>
 	<?

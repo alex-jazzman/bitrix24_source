@@ -306,7 +306,7 @@
 			});
 
 			this.parent.getUserOptions().setColumns(columns);
-			BX.onCustomEvent(this.parent.getContainer(), 'Grid::columnMoved', [this.parent]);
+			BX.onCustomEvent(this.parent.getContainer(), 'Grid::columnMoved', [this.parent, columns]);
 
 			setTimeout(() => {
 				this.parent.preventSortableClick = false;

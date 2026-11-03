@@ -9,6 +9,7 @@
 use Bitrix\Crm\Component\Utils\JsonCompatibleConverter;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
 define('NO_KEEP_STATISTIC', 'Y');
@@ -18,6 +19,8 @@ define('PUBLIC_AJAX_MODE', true);
 define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+
+Loc::loadMessages(__DIR__ . '/class.php');
 
 $context = \Bitrix\Main\Application::getInstance()->getContext();
 $request = $context->getRequest();
@@ -35,6 +38,8 @@ $onlyItems = $request->get('onlyItems');
 $viewMode = $request->get('viewMode');
 $useItemPlanner = $request->get('useItemPlanner');
 $skipColumnsCountCheck = $request->get('skipColumnCountCheck');
+$filterPresetId = $request->get('filterPresetId');
+$filterFields = $request->get('filterFields');
 $result = null;
 
 $version = $request->get('version');
@@ -52,6 +57,8 @@ if ($action === 'get')
 		'VIEW_MODE' => $viewMode,
 		'USE_ITEM_PLANNER' => $useItemPlanner,
 		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
+		'FILTER_PRESET_ID' => $filterPresetId,
+		'FILTER_FIELDS' => is_array($filterFields) ? $filterFields : [],
 	];
 
 	if (!empty($id) || $minId)
@@ -87,6 +94,8 @@ elseif ($action === 'page' && !empty($column))
 			'VIEW_MODE' => $viewMode,
 			'USE_ITEM_PLANNER' => $useItemPlanner,
 			'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
+			'FILTER_PRESET_ID' => $filterPresetId,
+			'FILTER_FIELDS' => is_array($filterFields) ? $filterFields : [],
 		]
 	);
 }
@@ -199,24 +208,7 @@ if ($isVersion2)
 					&& !ViewMode::isDatesBasedView($viewMode)
 				);
 
-				$column = [
-					'id' => $column['id'],
-					'total' => (int) $column['count'],
-					'color' => $column['color'],
-					'name' => htmlspecialcharsback($column['name']),
-					'canSort' => $canSort,
-					'canAddItem' => $column['canAddItem'],
-					'data' => [
-						'sort' => $column['sort'],
-						'type' => $column['type'],
-						'sum' => round($column['total'] ?? 0),
-						'sum_init' => 0,
-						'sum_format' => $column['total_format'] ?? null,
-						'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
-						'hiddenTotalSum' => ($column['hiddenTotalSum'] ?? false),
-						'currencyFormat' => ($column['currencyFormat'] ?? false),
-					],
-				];
+				$column = CrmKanbanComponent::prepareColumnForClient($column, $canSort);
 			}
 		}
 		unset($column);
@@ -226,8 +218,10 @@ if ($isVersion2)
 	}
 	else if (!isset($result['data']) && mb_strtolower($action) === 'modifystage')
 	{
+		$result['description'] = $result['description'] ?? $result['DESCRIPTION'] ?? '';
 		$result['data'] = [
 			'type' => $result['type'] ?? 'PROGRESS',
+			'description' => $result['description'],
 			'sum' => $result['sum'] ?? 0,
 			'sum_format' => isset($result['sum_format']) ? $result['sum'] : '',
 			'sum_init' => 0,

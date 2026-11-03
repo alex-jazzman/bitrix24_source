@@ -1,6 +1,12 @@
 import { Type, Dom } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { FocusNavigator } from 'ui.a11y';
 import { Page } from './page/page';
+
+export type NavigationShowOptions = {
+	focusFirstControl?: boolean;
+	fallbackFocus?: HTMLElement;
+};
 
 export class Navigation extends EventEmitter
 {
@@ -33,7 +39,7 @@ export class Navigation extends EventEmitter
 		this.#subscribeEvents();
 	}
 
-	show(code: string): void
+	show(code: string, options: NavigationShowOptions = {}): void
 	{
 		if (!this.#container || !this.has(code))
 		{
@@ -56,6 +62,15 @@ export class Navigation extends EventEmitter
 			current: this.current(),
 			previous: this.prev(),
 		});
+
+		if (options.focusFirstControl === true)
+		{
+			const focusedControl = FocusNavigator.focusFirst(this.#container);
+			if (!focusedControl && Type.isDomNode(options.fallbackFocus))
+			{
+				FocusNavigator.focusTarget(options.fallbackFocus);
+			}
+		}
 	}
 
 	showFirst(): void

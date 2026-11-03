@@ -1,12 +1,15 @@
 <?php
 $MESS["MARKET_DETAIL_ACTION_JS_ACCESS_DENIED"] = "To install the app, contact your Bitrix24 administrator.";
 $MESS["MARKET_DETAIL_ACTION_JS_ADD_FAVORITE"] = "Add to Favorites";
+$MESS["MARKET_DETAIL_ACTION_JS_ADMIN_REQUIRED"] = "Requires administrator's approval";
 $MESS["MARKET_DETAIL_ACTION_JS_CONFIG"] = "Configure";
 $MESS["MARKET_DETAIL_ACTION_JS_DELETE"] = "Uninstall";
 $MESS["MARKET_DETAIL_ACTION_JS_INSTALL"] = "Install";
 $MESS["MARKET_DETAIL_ACTION_JS_OPEN_APP"] = "Open";
 $MESS["MARKET_DETAIL_ACTION_JS_REFRESH"] = "Update";
 $MESS["MARKET_DETAIL_ACTION_JS_REIMPORT"] = "Reinstall";
+$MESS["MARKET_DETAIL_ACTION_JS_REQUEST_ALREADY_SENT"] = "You have already sent a request to install this app";
+$MESS["MARKET_DETAIL_ACTION_JS_REQUEST_ERROR"] = "Cannot submit your request. Please try again later.";
 $MESS["MARKET_DETAIL_ACTION_JS_RM_FAVORITE"] = "Remove from Favorites";
 $MESS["MARKET_DETAIL_ACTION_JS_VIEW_DEMO"] = "View demo";
 $MESS["MARKET_DETAIL_ITEM_JS_ALL"] = "All";

@@ -5,6 +5,7 @@ import { AttachmentCard } from '../attachment-card/attachment-card';
 import { AttachmentAnchorTestId, Phrase } from '../../const';
 import { useComposeEditor } from '../../infrastructure/adapter/editor/editor';
 import { type EditorAttachment, type EditorUnsubscribe } from '../../infrastructure/adapter/editor/types';
+import { markScheduledAttachmentRemoved } from '../../feature/schedule-message/schedule-message';
 import { loc } from '../../lib/loc/loc';
 import { useComposeState } from '../../model/compose/compose';
 
@@ -109,8 +110,21 @@ export const AttachmentList = defineComponent({
 		/** The fold shrinks with the set it stands for, so a file attached in place of a removed one shows. */
 		readRemainingFiles(): void
 		{
+			const previousFiles = this.files;
 			this.readFiles();
+			this.markRemovedScheduledAttachments(previousFiles, this.files);
 			this.carriedFileCount = Math.min(this.carriedFileCount, this.files.length);
+		},
+
+		markRemovedScheduledAttachments(previousFiles: EditorAttachment[], currentFiles: EditorAttachment[]): void
+		{
+			const currentFileIds = new Set(currentFiles.map((file: EditorAttachment): string => file.fileId));
+			previousFiles.forEach((file: EditorAttachment): void => {
+				if (!currentFileIds.has(file.fileId))
+				{
+					markScheduledAttachmentRemoved(this.state, file.fileId);
+				}
+			});
 		},
 
 		handleUnfoldClick(): void

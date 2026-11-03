@@ -2,22 +2,27 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/prolog.php';
 IncludeModuleLangFile(__FILE__);
-/** @global CMain $APPLICATION */
+/** @var CMain $APPLICATION */
 global $APPLICATION;
-/** @var CAdminMessage $message */
+/** @var CAdminMessage|null $message */
+/** @var \Bitrix\Main\HttpRequest $request */
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
 $searchDB = CDatabase::GetModuleConnection('search');
 $searchDB->StartUsingMasterOnly();
 
-$POST_RIGHT = $APPLICATION->GetGroupRight('search');
+$POST_RIGHT = CMain::GetGroupRight('search');
 if ($POST_RIGHT == 'D')
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
 
-$res = false;
-$bFull = !isset($_REQUEST['Full']) || $_REQUEST['Full'] != 'N';
+CPageOption::SetOptionString('search', 'full_text_delay_index', 'N');
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Reindex'] == 'Y')
+$res = false;
+$bFull = !isset($request['Full']) || $request['Full'] != 'N';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $request['Reindex'] == 'Y')
 {
 	@set_time_limit(0);
 
@@ -30,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Reindex'] == 'Y')
 	else
 	{
 		$NS = [];
-		$max_execution_time = intval($max_execution_time);
+		$max_execution_time = intval($request['max_execution_time']);
 		if ($max_execution_time <= 0)
 		{
 			$max_execution_time = '';
@@ -38,13 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Reindex'] == 'Y')
 		COption::SetOptionString('search', 'max_execution_time', $max_execution_time);
 		if (!$bFull)
 		{
-			if (isset($_REQUEST['site_id']) && $_REQUEST['site_id'] != '')
+			if (isset($request['site_id']) && $request['site_id'] != '')
 			{
-				$NS['SITE_ID'] = $_REQUEST['site_id'];
+				$NS['SITE_ID'] = $request['site_id'];
 			}
-			if (isset($_REQUEST['module_id']) && $_REQUEST['module_id'] != '')
+			if (isset($request['module_id']) && $request['module_id'] != '')
 			{
-				$NS['MODULE_ID'] = $_REQUEST['module_id'];
+				$NS['MODULE_ID'] = $request['module_id'];
 			}
 		}
 	}
@@ -70,9 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Reindex'] == 'Y')
 		$NS['CLEAR'] = 'Y';
 	}
 
-	$res = CSearch::ReIndexAll($bFull, COption::GetOptionInt('search', 'max_execution_time'), $NS, $_REQUEST['clear_suggest'] === 'Y');
+	$res = CSearch::ReIndexAll($bFull, COption::GetOptionInt('search', 'max_execution_time'), $NS, $request['clear_suggest'] === 'Y');
 	if (is_array($res)):
-		$jsNS = CUtil::PhpToJSObject(['NS' => $res]);
+		$jsNS = \Bitrix\Main\Web\Json::encode(['NS' => $res]);
 		$urlNS = '';
 		foreach ($res as $key => $value)
 		{
@@ -141,193 +146,211 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['Reindex'] == 'Y')
 }
 else
 {
-$APPLICATION->SetTitle(GetMessage('SEARCH_REINDEX_TITLE'));
+	$APPLICATION->SetTitle(GetMessage('SEARCH_REINDEX_TITLE'));
 
-$aTabs = [
-	['DIV' => 'edit1', 'TAB' => GetMessage('SEARCH_REINDEX_TAB'), 'ICON' => 'main_user_edit', 'TITLE' => GetMessage('SEARCH_REINDEX_TAB_TITLE')],
-];
-$tabControl = new CAdminTabControl('tabControl', $aTabs, true, true);
+	$aTabs = [
+		[
+			'DIV' => 'edit1',
+			'TAB' => GetMessage('SEARCH_REINDEX_TAB'),
+			'ICON' => 'main_user_edit',
+			'TITLE' => GetMessage('SEARCH_REINDEX_TAB_TITLE'),
+		],
+	];
+	$tabControl = new CAdminTabControl('tabControl', $aTabs, true, true);
 
-require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
-if (is_object($message))
-{
-	echo '<div id="search_message">',$message->Show(),'</div>';
-}
-?>
-<script>
-var savedNS;
-var stop;
-var interval = 0;
-function StartReindex()
-{
-	stop=false;
-	document.getElementById('reindex_result_div').innerHTML='';
-	document.getElementById('stop_button').disabled=false;
-	document.getElementById('start_button').disabled=true;
-	document.getElementById('continue_button').disabled=true;
-	DoNext();
-}
-function DoNext(NS)
-{
-	var queryString = 'Reindex=Y'
-		+ '&lang=<?php echo htmlspecialcharsbx(LANG)?>';
-
-	if(!NS)
+	if (is_object($message))
 	{
-		interval = document.getElementById('max_execution_time').value;
-		queryString += '&<?php echo bitrix_sessid_get()?>'
-		queryString += '&max_execution_time='+interval;
+		echo '<div id="search_message">',$message->Show(),'</div>';
 	}
-
-	if(document.getElementById('Full').checked)
+	?>
+	<script>
+	var savedNS;
+	var stop;
+	var interval = 0;
+	function StartReindex()
 	{
-		queryString += '&Full=N';
+		stop=false;
+		document.getElementById('reindex_result_div').innerHTML='';
+		document.getElementById('stop_button').disabled=false;
+		document.getElementById('start_button').disabled=true;
+		document.getElementById('continue_button').disabled=true;
+		DoNext();
+	}
+	function DoNext(NS)
+	{
+		var queryString = 'Reindex=Y'
+			+ '&lang=<?php echo htmlspecialcharsbx(LANGUAGE_ID)?>';
 
 		if(!NS)
 		{
-			site_id = document.getElementById('LID').value;
-			if(site_id != 'NOT_REF')
-				queryString += '&site_id=' + site_id;
-
-			module_id = document.getElementById('MODULE_ID').value;
-			if(module_id != 'NOT_REF')
-				queryString += '&module_id='+module_id;
-
-			if(document.getElementById('clear_suggest').checked)
-				queryString += '&clear_suggest=Y';
+			interval = document.getElementById('max_execution_time').value;
+			queryString += '&<?php echo bitrix_sessid_get()?>'
+			queryString += '&max_execution_time='+interval;
 		}
-	}
-	else
-	{
-		queryString+='&Full=Y';
-	}
 
-	savedNS = NS;
+		if(document.getElementById('Full').checked)
+		{
+			queryString += '&Full=N';
 
-	if(!stop)
-	{
-		ShowWaitWindow();
-		BX.ajax.post(
-			'search_reindex.php?'+queryString,
-			NS,
-			function(result){
-				document.getElementById('reindex_result_div').innerHTML = result;
-				var href = document.getElementById('continue_href');
-				if(!href)
-				{
-					CloseWaitWindow();
-					StopReindex();
-				}
+			if(!NS)
+			{
+				site_id = document.getElementById('LID').value;
+				if(site_id != 'NOT_REF')
+					queryString += '&site_id=' + site_id;
+
+				module_id = document.getElementById('MODULE_ID').value;
+				if(module_id != 'NOT_REF')
+					queryString += '&module_id='+module_id;
+
+				if(document.getElementById('clear_suggest').checked)
+					queryString += '&clear_suggest=Y';
 			}
-		);
+		}
+		else
+		{
+			queryString+='&Full=Y';
+		}
+
+		savedNS = NS;
+
+		if(!stop)
+		{
+			ShowWaitWindow();
+			BX.ajax.post(
+				'search_reindex.php?'+queryString,
+				NS,
+				function(result){
+					document.getElementById('reindex_result_div').innerHTML = result;
+					var href = document.getElementById('continue_href');
+					if(!href)
+					{
+						CloseWaitWindow();
+						StopReindex();
+					}
+				}
+			);
+		}
+
+		return false;
+	}
+	function StopReindex()
+	{
+		stop=true;
+		document.getElementById('stop_button').disabled=true;
+		document.getElementById('start_button').disabled=false;
+		document.getElementById('continue_button').disabled=false;
+	}
+	function ContinueReindex()
+	{
+		stop=false;
+		document.getElementById('stop_button').disabled=false;
+		document.getElementById('start_button').disabled=true;
+		document.getElementById('continue_button').disabled=true;
+		DoNext(savedNS);
+	}
+	function EndReindex()
+	{
+		stop=true;
+		document.getElementById('stop_button').disabled=true;
+		document.getElementById('start_button').disabled=false;
+		document.getElementById('continue_button').disabled=true;
+	}
+	</script>
+
+	<div id="reindex_result_div" style="margin:0px">
+	</div>
+
+	<script>
+	function Full_OnClick(full_checked)
+	{
+		document.getElementById('MODULE_ID').disabled = !full_checked;
+		document.getElementById('LID').disabled = !full_checked;
+		document.getElementById('clear_suggest').disabled = !full_checked;
 	}
 
-	return false;
-}
-function StopReindex()
-{
-	stop=true;
-	document.getElementById('stop_button').disabled=true;
-	document.getElementById('start_button').disabled=false;
-	document.getElementById('continue_button').disabled=false;
-}
-function ContinueReindex()
-{
-	stop=false;
-	document.getElementById('stop_button').disabled=false;
-	document.getElementById('start_button').disabled=true;
-	document.getElementById('continue_button').disabled=true;
-	DoNext(savedNS);
-}
-function EndReindex()
-{
-	stop=true;
-	document.getElementById('stop_button').disabled=true;
-	document.getElementById('start_button').disabled=false;
-	document.getElementById('continue_button').disabled=true;
-}
-</script>
+	</script>
+	<form method="POST" action="<?php echo $APPLICATION->GetCurPage()?>?lang=<?php echo htmlspecialcharsbx(LANGUAGE_ID)?>" name="fs1">
+	<?php
+	$tabControl->Begin();
+	$tabControl->BeginNextTab();
+	?>
+		<tr>
+			<td width="40%"><?php echo GetMessage('SEARCH_REINDEX_REINDEX_CHANGED')?></td>
+			<td width="60%"><input type="checkbox" name="Full" id="Full" value="N" checked OnClick="Full_OnClick(this.checked)"></td>
+		</tr>
+	<?php
+	$max_execution_time = intval(COption::GetOptionString('search', 'max_execution_time'));
+	if ($max_execution_time <= 0)
+	{
+		$max_execution_time = '';
+	}
+	?>
+		<tr>
+			<td><?php echo GetMessage('SEARCH_REINDEX_STEP')?></td>
+			<td><input type="text" name="max_execution_time" id="max_execution_time" size="3" value="<?php echo $max_execution_time;?>"> <?php echo GetMessage('SEARCH_REINDEX_STEP_sec')?></td>
+		</tr>
+		<tr>
+			<td><?=GetMessage('SEARCH_REINDEX_SITE')?></td>
+			<td><?php echo CLang::SelectBox('LID', $request['LID'], GetMessage('SEARCH_REINDEX_ALL'), '', 'id="LID"');?></td>
+		</tr>
+		<tr>
+			<td><?=GetMessage('SEARCH_REINDEX_MODULE')?></td>
+			<td>
+			<select name="MODULE_ID" id="MODULE_ID">
+			<option value="NOT_REF"><?=GetMessage('SEARCH_REINDEX_ALL')?></option>
+			<option value="main"><?=GetMessage('SEARCH_REINDEX_MAIN')?></option>
+			<?php foreach (CSearchParameters::GetModulesList() as $module_id => $module_name):?>
+				<option value="<?php echo $module_id?>"><?php echo htmlspecialcharsbx($module_name)?></option>
+			<?php endforeach;?>
+			</select>
+			</td>
+		</tr>
+		<tr>
+			<td width="40%"><?php echo GetMessage('SEARCH_REINDEX_CLEAR_SUGGEST')?></td>
+			<td width="60%"><input type="checkbox" name="clear_suggest" id="clear_suggest" value="Y"></td>
+		</tr>
 
-<div id="reindex_result_div" style="margin:0px">
-</div>
+	<?php
+	$tabControl->Buttons();
+	?>
+		<input type="button" id="start_button" value="<?php echo GetMessage('SEARCH_REINDEX_REINDEX_BUTTON')?>" OnClick="StartReindex();" class="adm-btn-save">
+		<input type="button" id="stop_button" value="<?=GetMessage('SEARCH_REINDEX_STOP')?>" OnClick="StopReindex();" disabled>
+		<input type="button" id="continue_button" value="<?=GetMessage('SEARCH_REINDEX_CONTINUE')?>" OnClick="ContinueReindex();" disabled>
+	<?php
+	$tabControl->End();
+	?>
+	</form>
+	<?php if ($request['Continue'] === 'Y'):?>
+	<script>
+		savedNS = <?php echo \Bitrix\Main\Web\Json::encode(['NS' => $_GET['NS']]);?>;
+		<?php if ($_GET['Full'] == 'Y'):?>
+			document.getElementById('Full').checked = false;
+			Full_OnClick(false);
+		<?php endif;?>
+		ContinueReindex();
+	</script>
+	<?php endif?>
 
-<script>
-function Full_OnClick(full_checked)
-{
-	document.getElementById('MODULE_ID').disabled = !full_checked;
-	document.getElementById('LID').disabled = !full_checked;
-	document.getElementById('clear_suggest').disabled = !full_checked;
-}
-
-</script>
-<form method="POST" action="<?php echo $APPLICATION->GetCurPage()?>?lang=<?php echo htmlspecialcharsbx(LANG)?>" name="fs1">
-<?php
-$tabControl->Begin();
-$tabControl->BeginNextTab();
-?>
-	<tr>
-		<td width="40%"><?php echo GetMessage('SEARCH_REINDEX_REINDEX_CHANGED')?></td>
-		<td width="60%"><input type="checkbox" name="Full" id="Full" value="N" checked OnClick="Full_OnClick(this.checked)"></td>
-	</tr>
-<?php
-$max_execution_time = intval(COption::GetOptionString('search', 'max_execution_time'));
-if ($max_execution_time <= 0)
-{
-	$max_execution_time = '';
-}
-?>
-	<tr>
-		<td><?php echo GetMessage('SEARCH_REINDEX_STEP')?></td>
-		<td><input type="text" name="max_execution_time" id="max_execution_time" size="3" value="<?php echo $max_execution_time;?>"> <?php echo GetMessage('SEARCH_REINDEX_STEP_sec')?></td>
-	</tr>
-	<tr>
-		<td><?=GetMessage('SEARCH_REINDEX_SITE')?></td>
-		<td><?php echo CLang::SelectBox('LID', $str_LID, GetMessage('SEARCH_REINDEX_ALL'), '', 'id="LID"');?></td>
-	</tr>
-	<tr>
-		<td><?=GetMessage('SEARCH_REINDEX_MODULE')?></td>
-		<td>
-		<select name="MODULE_ID" id="MODULE_ID">
-		<option value="NOT_REF"><?=GetMessage('SEARCH_REINDEX_ALL')?></option>
-		<option value="main"><?=GetMessage('SEARCH_REINDEX_MAIN')?></option>
-		<?php foreach (CSearchParameters::GetModulesList() as $module_id => $module_name):?>
-			<option value="<?php echo $module_id?>"><?php echo htmlspecialcharsbx($module_name)?></option>
-		<?php endforeach;?>
-		</select>
-		</td>
-	</tr>
-	<tr>
-		<td width="40%"><?php echo GetMessage('SEARCH_REINDEX_CLEAR_SUGGEST')?></td>
-		<td width="60%"><input type="checkbox" name="clear_suggest" id="clear_suggest" value="Y"></td>
-	</tr>
-
-<?php
-$tabControl->Buttons();
-?>
-	<input type="button" id="start_button" value="<?php echo GetMessage('SEARCH_REINDEX_REINDEX_BUTTON')?>" OnClick="StartReindex();" class="adm-btn-save">
-	<input type="button" id="stop_button" value="<?=GetMessage('SEARCH_REINDEX_STOP')?>" OnClick="StopReindex();" disabled>
-	<input type="button" id="continue_button" value="<?=GetMessage('SEARCH_REINDEX_CONTINUE')?>" OnClick="ContinueReindex();" disabled>
-<?php
-$tabControl->End();
-?>
-</form>
-<?php if ($Continue == 'Y'):?>
-<script>
-	savedNS = <?php echo CUtil::PhpToJSObject(['NS' => $_GET['NS']]);?>;
-	<?php if ($_GET['Full'] == 'Y'):?>
-		document.getElementById('Full').checked = false;
-		Full_OnClick(false);
-	<?php endif;?>
-	ContinueReindex();
-</script>
-<?php endif?>
-
-<?php
+	<?php
 	if (IsModuleInstalled('socialnetwork'))
 	{
-		echo BeginNote(),GetMessage('SEARCH_REINDEX_SOCNET_MESSAGE'),EndNote();
+		$imageLanguage = mb_strlen(LANGUAGE_ID) === 2 ? LANGUAGE_ID : \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
+		$socnetImagePath = '/bitrix/images/search/socnet_reindex_' . $imageLanguage . '.webp';
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $socnetImagePath))
+		{
+			$imageLanguage = \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
+			$socnetImagePath = '/bitrix/images/search/socnet_reindex_' . $imageLanguage . '.webp';
+		}
+		$socnetImage = file_exists($_SERVER['DOCUMENT_ROOT'] . $socnetImagePath)
+			? '<br><br><img src="' . $socnetImagePath . '" alt="">'
+			: '';
+		echo BeginNote(),
+			GetMessage('SEARCH_REINDEX_SOCNET_NOTE'),
+			$socnetImage,
+			EndNote();
 	}
 
-require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
 }

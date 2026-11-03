@@ -2,6 +2,7 @@
  * @module crm/crm-mode/wizard/layouts/mode/label
  */
 jn.define('crm/crm-mode/wizard/layouts/mode/label', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const isAndroid = Application.getPlatform() === 'android';
 
@@ -25,12 +26,11 @@ jn.define('crm/crm-mode/wizard/layouts/mode/label', (require, exports, module) =
 					borderRadius: 60,
 				},
 			},
-			Text(
+			Text6(
 				{
 					text,
 					style: {
 						fontWeight: '600',
-						fontSize: 11,
 						color,
 					},
 				},

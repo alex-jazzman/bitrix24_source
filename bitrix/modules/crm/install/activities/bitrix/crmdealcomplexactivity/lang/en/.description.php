@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION"] = "Creates and modifies deals, assigns responsible parties, changes stages, and performs many other actions in deals.";
+$MESS['CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_1'] = 'Creates and edits deals: changes the stage and pipeline, assigns the responsible person, works with products, the customer and documents.';
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_CATEGORY"] = "Change pipeline";
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_COMPANY"] = "Change associated company";
 $MESS["CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_NODE_ACTION_CHANGE_CONTACT"] = "Change associated contact";

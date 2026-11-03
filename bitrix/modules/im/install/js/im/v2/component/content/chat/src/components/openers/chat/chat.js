@@ -1,3 +1,4 @@
+import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 import 'ui.notification';
 import { type BitrixVueComponentProps } from 'ui.vue3';
@@ -7,6 +8,7 @@ import { ChatType, Layout, UserRole, ErrorCode, PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { PromoManager } from 'im.v2.lib.promo';
@@ -35,7 +37,8 @@ import './css/default-chat-content.css';
 
 type ContentComponentConfigItem = {
 	condition: boolean,
-	component: BitrixVueComponentProps
+	component: BitrixVueComponentProps,
+	props?: JsonObject
 };
 
 // @vue/component
@@ -83,6 +86,13 @@ export const ChatOpener = {
 		{
 			return this.dialog.type === ChatType.copilot;
 		},
+		// Cross-fade the empty-state → chat swap only for the chat the send just activated; every
+		// other navigation carries no mark, so it stays instant — as does every non-copilot chat type.
+		withOpenerTransition(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCopilotDraftChatAvailable)
+				&& this.$store.getters['copilot/isChatOpenedBySend'](this.dialogId);
+		},
 		isAiAssistantBot(): boolean
 		{
 			return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
@@ -117,10 +127,12 @@ export const ChatOpener = {
 				{
 					condition: this.isCopilot,
 					component: CopilotContent,
+					props: { withKeyboardNavigation: true },
 				},
 				{
 					condition: this.isAiAssistantBot,
 					component: AiAssistantBotContent,
+					props: { withKeyboardNavigation: true },
 				},
 				{
 					condition: this.isTaskComments,
@@ -128,13 +140,17 @@ export const ChatOpener = {
 				},
 			];
 		},
+		matchingContentConfig(): ContentComponentConfigItem | null
+		{
+			return this.contentComponentConfig.find((item) => item.condition === true) ?? null;
+		},
 		contentComponent(): BitrixVueComponentProps
 		{
-			const matchingItem: ContentComponentConfigItem = this.contentComponentConfig.find((item) => {
-				return item.condition === true;
-			});
-
-			return matchingItem ? matchingItem.component : BaseChatContent;
+			return this.matchingContentConfig?.component ?? BaseChatContent;
+		},
+		contentComponentProps(): JsonObject
+		{
+			return this.matchingContentConfig?.props ?? {};
 		},
 		emptyStateComponent(): BitrixVueComponentProps
 		{
@@ -147,6 +163,7 @@ export const ChatOpener = {
 				[Layout.collab]: CollabEmptyStateWrapper,
 				[Layout.copilot]: copilotEmptyState,
 				[Layout.chat]: this.chatEmptyStateComponent,
+				[Layout.folderAll]: this.chatEmptyStateComponent,
 				[Layout.taskComments]: TaskEmptyState,
 				default: EmptyState,
 			};
@@ -168,12 +185,26 @@ export const ChatOpener = {
 	},
 	watch:
 	{
-		dialogId(newValue, oldValue)
-		{
-			Logger.warn(`ChatContent: switching from ${oldValue || 'empty'} to ${newValue}`);
+		dialogId: [
+			function(newValue, oldValue)
+			{
+				Logger.warn(`ChatContent: switching from ${oldValue || 'empty'} to ${newValue}`);
 
-			this.onChatChange();
-		},
+				this.onChatChange();
+			},
+			{
+				// clear the mark after the animated swap has rendered (post-flush, so it does not cancel
+				// the running transition) — a later navigation into the same chat stays instant
+				flush: 'post',
+				handler()
+				{
+					if (this.$store.getters['copilot/isChatOpenedBySend'](this.dialogId))
+					{
+						void this.$store.dispatch('copilot/setActivatedChatDialogId', '');
+					}
+				},
+			},
+		],
 	},
 	created()
 	{
@@ -198,7 +229,7 @@ export const ChatOpener = {
 				const realDialogId = await this.getChatService().prepareDialogId(this.dialogId);
 
 				void LayoutManager.getInstance().setLayout({
-					name: Layout.chat,
+					...FolderManager.getRegularChatsLayout(),
 					entityId: realDialogId,
 					contextId: this.layout.contextId,
 				});
@@ -303,8 +334,10 @@ export const ChatOpener = {
 	},
 	template: `
 		<div class="bx-im-content-default-chat__container">
-			<component :is="emptyStateComponent" v-if="!dialogId" />
-			<component :is="contentComponent" v-else :dialogId="dialogId" />
+			<Transition name="im-content-opener-flip" :css="withOpenerTransition" :duration="400">
+				<component :is="emptyStateComponent" v-if="!dialogId" />
+				<component :is="contentComponent" v-else :dialogId="dialogId" v-bind="contentComponentProps" />
+			</Transition>
 		</div>
 	`,
 };

@@ -170,7 +170,7 @@
 
 				this.audioPlayerInstance[audioId] = BitrixVue.createApp({
 					components: {
-						AudioPlayer: BX.Call.Component.Elements.AudioPlayer,
+						AudioPlayer: BX.Call.Legacy.Component.Elements.AudioPlayer,
 					},
 					data() {
 						return {
@@ -210,7 +210,7 @@
 
 			BitrixVue.createApp({
 				components: {
-					UserList: BX.Call.Component.UserList
+					UserList: BX.Call.Legacy.Component.UserList
 				},
 				data() {
 					return {
@@ -541,7 +541,7 @@
 
 			this.deletePopupInstance = BitrixVue.createApp({
 				components: {
-					CallActionPopup: BX.Call.Component.Elements.CallActionPopup,
+					CallActionPopup: BX.Call.Legacy.Component.Elements.CallActionPopup,
 				},
 				data() {
 					return {

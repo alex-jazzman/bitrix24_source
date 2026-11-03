@@ -106,7 +106,7 @@
 	font-size: var(--ui-font-size-sm);
 	line-height: 17px;
 	letter-spacing: -0.05px;
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-2);
 }
 
 .crm-mini-card__field-value {
@@ -124,7 +124,7 @@
 .crm-mini-card__field-value a.--value-link {
 	display: flex;
 	align-items: center;
-	color: rgba(1, 84, 200, 1);
+	color: var(--ui-color-accent-main-link, rgba(1, 84, 200, 1));
 	cursor: pointer;
 	transition: -webkit-text-decoration .15s linear;
 	transition: text-decoration .15s linear;
@@ -135,6 +135,16 @@
 
 .crm-mini-card__field-value a.--value-link:hover {
 	text-decoration: underline !important;
+}
+
+/* Visible keyboard focus indicator for card links, consistent with the board. */
+.crm-mini-card__field-value a.--value-link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+
+.crm-mini-card__field-value a.--value-link:focus:not(:focus-visible) {
+	outline: none;
 }
 
 .crm-mini-card__field-value-list {
@@ -154,12 +164,20 @@
 
 
 .crm-mini-card__show-more {
+	appearance: none;
+	background: none;
+	border: none;
+	border-bottom: 1px dashed rgba(130, 139, 149, .28);
+	padding: 0;
+	margin: 0;
+	font-family: inherit;
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-md);
 	line-height: 19px;
 	letter-spacing: var(--ui-letter-spacing-l);
-	border-bottom: 1px dashed rgba(130, 139, 149, .28);
-	color: var(--ui-color-base-3);
+	color: var(--ui-color-base-2);
+	text-align: left;
+	text-decoration: none;
 	cursor: pointer;
 	align-self: baseline;
 
@@ -170,9 +188,19 @@
 	border-bottom: 1px dashed rgba(130, 139, 149, .7);
 }
 
+/* Visible keyboard focus indicator, consistent with the board. */
+.crm-mini-card__show-more:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+
+.crm-mini-card__show-more:focus:not(:focus-visible) {
+	outline: none;
+}
+
 
 .crm-mini-card__field.--link .crm-mini-card__field-value {
-	color: rgba(1, 84, 200, 1);
+	color: var(--ui-color-accent-main-link, rgba(1, 84, 200, 1));
 	cursor: pointer;
 }
 
@@ -213,6 +241,5 @@
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-xs);
 	line-height: var(--ui-font-line-height-sm);
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-2);
 }
-

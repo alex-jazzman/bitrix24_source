@@ -18,6 +18,19 @@ type RecentTypeMatchParams = {
 	parentChatId?: ParentChatIdType,
 };
 
+// A recent section constrained to a nesting frame: parentChatId 0 - root chats only, null or absent -
+// every nesting level.
+type FramedRecentSection = {
+	recentSection: RecentTypeItem,
+	parentChatId?: ParentChatIdType,
+};
+
+type RecentSectionsMatchParams = {
+	collection: CountersCollection,
+	counterItem: ImModelCounter,
+	recentSections: FramedRecentSection[],
+};
+
 // noinspection UnnecessaryLocalVariableJS
 export class CountersModel extends BuilderModel
 {
@@ -108,6 +121,30 @@ export class CountersModel extends BuilderModel
 
 				return totalCount;
 			},
+			/** @function counters/getCounterByRecentSections */
+			getCounterByRecentSections: (state: CountersState) => (
+				recentSections: FramedRecentSection[],
+			): number => {
+				let totalCount = 0;
+				const collection = state.collection;
+
+				for (const counterItem of Object.values(collection))
+				{
+					if (this.#isMuted(counterItem))
+					{
+						continue;
+					}
+
+					if (!this.#isCountedBySections({ collection, counterItem, recentSections }))
+					{
+						continue;
+					}
+
+					totalCount += this.#resolveCounter(counterItem);
+				}
+
+				return totalCount;
+			},
 			/** @function counters/getTotalCounterByIds */
 			getTotalCounterByIds: (state: CountersState) => (chatIds: number[]): number => {
 				let totalCount = 0;
@@ -177,6 +214,27 @@ export class CountersModel extends BuilderModel
 				}
 
 				return childrenIdsWithCounter;
+			},
+			/** @function counters/getTreeChatIdsWithUnread */
+			getTreeChatIdsWithUnread: (state: CountersState) => (parentChatId: number): number[] => {
+				if (parentChatId === 0)
+				{
+					return [];
+				}
+
+				const chatIds = [];
+				for (const counterItem of Object.values(state.collection))
+				{
+					const isInTree = counterItem.chatId === parentChatId || counterItem.parentChatId === parentChatId;
+					if (!isInTree || this.#isMuted(counterItem) || this.#resolveCounter(counterItem) === 0)
+					{
+						continue;
+					}
+
+					chatIds.push(counterItem.chatId);
+				}
+
+				return chatIds;
 			},
 			/** @function counters/getCounterByChatId */
 			getCounterByChatId: (state: CountersState) => (chatId: number): number => {
@@ -381,6 +439,43 @@ export class CountersModel extends BuilderModel
 		}
 
 		return this.#hasRecentType(counterItem, recentType);
+	}
+
+	// A chat is counted when at least one of the sections counts it: either through the section of its
+	// direct parent, or through its own section inside the nesting frame of that section.
+	// The frame is what makes the mute of a parent stick, so there is no bypass of the parent-mute check here.
+	#isCountedBySections(params: RecentSectionsMatchParams): boolean
+	{
+		const { collection, counterItem, recentSections } = params;
+
+		for (const { recentSection: recentType, parentChatId } of recentSections)
+		{
+			// the direct parent's section: the frame does not apply, the parent mute does
+			if (this.#hasParentRecentType({ collection, counterItem, recentType }))
+			{
+				if (!this.#isParentMuted(collection, counterItem))
+				{
+					return true;
+				}
+
+				continue;
+			}
+
+			// the chat's own section, but only inside the frame of that section
+			if (!this.#hasRecentType(counterItem, recentType))
+			{
+				continue;
+			}
+
+			// a section without a frame of its own takes every nesting level
+			const hasFrame = Type.isNumber(parentChatId);
+			if (!hasFrame || counterItem.parentChatId === parentChatId)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	#shouldClearByRecentType(params: RecentTypeMatchParams): boolean

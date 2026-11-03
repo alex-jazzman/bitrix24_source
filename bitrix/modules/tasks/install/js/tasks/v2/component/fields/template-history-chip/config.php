@@ -8,7 +8,7 @@ return [
 	'css' => 'dist/template-history-chip.bundle.css',
 	'js' => 'dist/template-history-chip.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'main.core.events',
 		'tasks.v2.component.elements.hint',
 		'tasks.v2.const',
@@ -18,5 +18,5 @@ return [
 		'ui.system.chip.vue',
 		'ui.vue3.directives.hint',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

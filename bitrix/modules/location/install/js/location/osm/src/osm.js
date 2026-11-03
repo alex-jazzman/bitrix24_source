@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { BaseSource, SourceCreationError } from 'location.core';
+import { BaseSource, SourceCreationError, CheckInMapServiceBase } from 'location.core';
 import AutocompleteService from './autocompleteservice';
 import MapService from './mapservice';
 import MapMobileService from './mapmobileservice';
@@ -63,9 +63,10 @@ export default class OSM extends BaseSource
 		}
 		this.#mapMobileService = props.mapMobileService;
 
-		if (!(props.checkInMapService instanceof CheckInMapService))
+		// Accept any engine deriving from the base (Leaflet CheckInMapService or MapLibre CheckInMapServiceMapLibre).
+		if (!(props.checkInMapService instanceof CheckInMapServiceBase))
 		{
-			throw new SourceCreationError('props.checkInMapService must be instanceof CheckInMapService');
+			throw new SourceCreationError('props.checkInMapService must be instanceof CheckInMapServiceBase');
 		}
 		this.#checkInMapService = props.checkInMapService;
 

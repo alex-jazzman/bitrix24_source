@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'ui-system/typography/text',
+		'tokens',
 		'haptics',
 		'apptheme',
 		'animation',
@@ -10,8 +12,11 @@ return [
 		'utils/function',
 		'notify-manager',
 		'assets/communication',
+		'assets/icons',
 		'communication/events',
 		'layout/ui/context-menu',
+		'tokens',
+		'ui-system/blocks/icon',
 	],
 	'bundle' => [
 		'./base',

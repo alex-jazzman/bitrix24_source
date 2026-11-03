@@ -87,7 +87,7 @@
 	text-overflow: ellipsis
 }
 
-.biconnector-grid-username {
+.biconnector-grid-username-wrapper .biconnector-grid-username {
 	display: inline-block;
 	overflow: hidden;
 	vertical-align: middle;
@@ -98,12 +98,12 @@
 	margin: -5px 0;
 }
 
-.biconnector-grid-username:hover {
+.biconnector-grid-username-wrapper .biconnector-grid-username:hover {
 	background: #C0EDFD;
 	text-decoration: none !important;
 }
 
-.biconnector-grid-username:hover {
+.biconnector-grid-username-wrapper .biconnector-grid-username:hover {
 	color: #525c69;
 	text-decoration: none;
 }
@@ -118,7 +118,7 @@
 	white-space: nowrap;
 }
 
-.biconnector-grid-username {
+.biconnector-grid-username-wrapper .biconnector-grid-username {
 	max-width: 100%;
 	display: inline-flex;
 	align-items: center;
@@ -134,4 +134,128 @@
 	height: 29px;
 	background: transparent;
 	border-radius: 14.5px;
+}
+
+.biconnector-grid-date-time
+{
+	display: inline-flex;
+	flex-direction: column;
+}
+
+#biconnector-external-source-grid .biconnector-grid-market-cell {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+}
+
+:is(
+	#biconnector-external-dataset-grid,
+	#biconnector-external-source-grid,
+	#biconnector-unused-elements-grid
+) .main-grid-cell
+{
+	vertical-align: middle;
+}
+
+:is(
+	#biconnector-external-dataset-grid,
+	#biconnector-external-source-grid,
+	#biconnector-unused-elements-grid
+) .main-grid-cell-content
+{
+	margin-block: var(--ui-space-stack-sm);
+}
+
+:is(
+	#biconnector-external-dataset-grid,
+	#biconnector-external-source-grid,
+	#biconnector-unused-elements-grid
+) :is(
+	.biconnector-grid-type-cell,
+	.biconnector-grid-username-cell,
+	.biconnector-grid-market-cell
+)
+{
+	margin-top: 0;
+}
+
+#biconnector-external-source-grid td[data-column-id="DESCRIPTION"] .editable-column-content {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+:is(
+	.biconnector-workspace-analytic-page,
+	#biconnector-dashboard-grid
+) .main-grid-col-sortable .main-grid-head-title {
+	display: block;
+}
+
+:is(
+	.biconnector-workspace-analytic-page,
+	#biconnector-dashboard-grid
+) .main-grid-col-sortable .main-grid-control-sort {
+	position: absolute;
+	top: calc(50% - 7px);
+	right: 16px;
+	left: auto;
+}
+
+.biconnector-grid-date-time__time {
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.biconnector-grid-stub {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-3xl);
+}
+
+.biconnector-grid-stub__image {
+	display: block;
+	height: 100px;
+}
+
+.biconnector-grid-stub__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 524px;
+	max-width: 100%;
+	gap: var(--ui-space-stack-xs2);
+}
+
+.biconnector-grid-stub__description {
+	color: var(--ui-color-base-2);
+	max-width: 476px;
+	white-space: pre-line;
+}
+
+/* the stub content already has a 10px gap, this keeps the reviewed 24px above the button */
+.biconnector-grid-stub__button {
+	margin-top: var(--ui-space-stack-sm2);
+}
+
+.biconnector-grid-menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.biconnector-grid-menu-item-icon {
+	margin-left: 32px;
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.biconnector-grid-menu-item.alert {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.biconnector-grid-menu-item-icon.alert {
+	background-color: var(--ui-color-accent-soft-border-red);
 }

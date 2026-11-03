@@ -873,7 +873,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/** @function messagesModel/update */
-			update: async (store, { id, fields, skipCheckEquality = false }) => {
+			update: async (store, { id, fields, skipCheckEquality = false, allowEmptyText = false }) => {
 				if (!store.state.collection[id])
 				{
 					return;
@@ -892,7 +892,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 
 				const updateMessageData = {
 					id,
-					fields: validate(fields),
+					fields: validate(fields, { allowEmptyText }),
 				};
 
 				if (
@@ -930,7 +930,9 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			 * @function messagesModel/updateListFromSync
 			 */
 			updateListFromSync: (store, payload) => {
-				return store.dispatch('updateList', { ...payload, actionName: 'setFromSync' });
+				// a record of the changelog carries the text of the server in full, so an empty one is a
+				// removed text: an edit that happened while the application slept has to reach the model
+				return store.dispatch('updateList', { ...payload, actionName: 'setFromSync', allowEmptyText: true });
 			},
 
 			/**
@@ -995,8 +997,47 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
+			/**
+			 * @function messagesModel/updateAiTaskIndication
+			 * @desc Writes one frame of the AI-task indication to a message: the status of the operation,
+			 * the role of the message inside it and the partial-result flag of the outcome. All three are
+			 * written together, and an explicit null of each of them takes the indication down.
+			 * Unlike updateVisualState the action pays no attention to the animationInterrupted lock: the
+			 * operation is started from the menu of the very message the lock is put on, so a frame the
+			 * user has just asked for must not be dropped silently. The mutation keeps the actionName of
+			 * updateVisualState: the block of the message to redraw is the same aiAnimation one.
+			 */
+			updateAiTaskIndication: (store, { id, status, role, isPartial }) => {
+				const storedMessage = store.state.collection[id];
+				if (!storedMessage)
+				{
+					return;
+				}
+
+				const updateMessageData = {
+					id,
+					fields: validate({
+						visualState: {
+							aiTaskStatus: status ?? null,
+							aiTaskRole: role ?? null,
+							aiTaskPartial: isPartial ?? null,
+						},
+					}),
+				};
+
+				if (isEqual(storedMessage, mergeImmutable(storedMessage, updateMessageData.fields)))
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'updateVisualState',
+					data: updateMessageData,
+				});
+			},
+
 			/** @function messagesModel/updateList */
-			updateList: async (store, { messageList, actionName = 'updateList' }) => {
+			updateList: async (store, { messageList, actionName = 'updateList', allowEmptyText = false }) => {
 				if (!Type.isArrayFilled(messageList))
 				{
 					return false;
@@ -1016,7 +1057,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				const updateMessagesData = filteredMessageList.map((message) => {
 					return {
 						id: message.id,
-						fields: validate(message),
+						fields: validate(message, { allowEmptyText }),
 					};
 				});
 
@@ -1372,6 +1413,26 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					data: {
 						id: payload.id,
 						fields: { loadText: payload.loadText, uploadFileId: payload.uploadFileId },
+					},
+				});
+			},
+
+			/** @function messagesModel/notifyVideoProcessingProgress */
+			notifyVideoProcessingProgress(store, payload)
+			{
+				const message = store.state.collection[payload.id];
+				if (!message)
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'notifyVideoProcessingProgress',
+					data: {
+						id: payload.id,
+						fields: {},
+						text: payload.text,
+						uploadFileId: payload.uploadFileId,
 					},
 				});
 			},

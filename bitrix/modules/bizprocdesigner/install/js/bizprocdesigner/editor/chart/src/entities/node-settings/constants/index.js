@@ -13,12 +13,14 @@ export const CONSTRUCTION_TYPES = Object.freeze({
 
 export const CRM_FILTER_BACKING_ACTIVITY_TYPE = 'CrmGetDynamicInfoActivity';
 export const TASKS_FILTER_BACKING_ACTIVITY_TYPE = 'TasksComplexActivity';
+export const BOOKING_FILTER_BACKING_ACTIVITY_TYPE = 'BookingComplexActivity';
 
 // Module of the document -> activity whose settings dialog backs the selection editor. A module absent
 // from the map has no editor, and the server hides the selection block for it anyway.
 export const NODE_FILTER_BACKING_ACTIVITY_TYPES = Object.freeze({
 	crm: CRM_FILTER_BACKING_ACTIVITY_TYPE,
 	tasks: TASKS_FILTER_BACKING_ACTIVITY_TYPE,
+	booking: BOOKING_FILTER_BACKING_ACTIVITY_TYPE,
 });
 
 // Developer stand only, kept apart from the shipped map above: the virtual `bizproc` document has no
@@ -63,6 +65,10 @@ export const FIELD_OBJECT_TYPES = Object.freeze({
 
 export const EVENT_NAMES = Object.freeze({
 	BEFORE_SUBMIT_EVENT: 'BizprocDesigner.NodeSettings.BeforeSubmit',
+	// The settings panel has been scrolled. Surfaces standing outside the scrolled flow - popups and
+	// selector dialogs anchored to a control - close on it. An event and not a reactive flag: a flag
+	// would re-render every editor of every rule twice per scroll event.
+	SCROLL_EVENT: 'Bizproc.NodeSettings:onScroll',
 });
 
 // Display order of the universal actions, mirrors server-side ActionGroup enum.

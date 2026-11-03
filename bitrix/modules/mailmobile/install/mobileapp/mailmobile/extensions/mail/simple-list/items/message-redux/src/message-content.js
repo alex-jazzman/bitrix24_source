@@ -3,29 +3,53 @@
  */
 jn.define('mail/simple-list/items/message-redux/src/message-content', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
-	const { Text } = require('ui-system/typography/text');
+	const { Text, Text4, Text5 } = require('ui-system/typography/text');
 	const { Moment } = require('utils/date');
 	const { Haptics } = require('haptics');
-	const { Color } = require('tokens');
+	const connection = require('device/connection');
+	const { Color, Indent } = require('tokens');
 	const { Loc } = require('loc');
 	const { selectById, selectIsMultiSelectMode } = require('mail/statemanager/redux/slices/messages/selector');
 	const { selectStartEmailSender } = require('mail/statemanager/redux/slices/mailboxes/selector');
 	const { markAsSelected, unmarkAsSelected } = require('mail/statemanager/redux/slices/messages');
-	const { changeReadStatus } = require('mail/statemanager/redux/slices/messages/thunk');
+	const { changeReadStatus, setFavoriteState } = require('mail/statemanager/redux/slices/messages/thunk');
 	const { connect } = require('mail/statemanager/redux/connect');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
 	const { Checkbox } = require('ui-system/form/checkbox');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { ActionMenu } = require('mail/simple-list/items/message-redux/src/action-menu');
 	const { Avatar } = require('mail/message/elements/avatar');
 	const { MessageBindings } = require('mail/simple-list/items/message-redux/src/message-bindings');
+
+	const DRAFT_AVATAR_EMAIL = 'mail-draft';
+
+	function getMessageDisplayName({ isDraft, fullName, email, draftRecipientPlaceholder })
+	{
+		return fullName || email || (isDraft ? draftRecipientPlaceholder : '');
+	}
+
+	function getMessageAvatarName({ isDraft, fullName, email, draftLabel })
+	{
+		return fullName || email || (isDraft ? draftLabel : '');
+	}
+
+	function getMessageAvatarEmail({ isDraft, email })
+	{
+		return email || (isDraft ? DRAFT_AVATAR_EMAIL : '');
+	}
 
 	class MessageContent extends PureComponent
 	{
 		get isSelected()
 		{
 			return this.props.isSelected ?? false;
+		}
+
+		get isDraft()
+		{
+			return this.props.item?.isDraft === true;
 		}
 
 		get isMultiSelectMode()
@@ -77,6 +101,34 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 			return this.#primaryRecipient.email ?? '';
 		}
 
+		get avatarName()
+		{
+			return getMessageAvatarName({
+				isDraft: this.isDraft,
+				fullName: this.fullName,
+				email: this.email,
+				draftLabel: Loc.getMessage('MAILMOBILE_GRID_MESSAGE_DRAFT_AVATAR_LABEL'),
+			});
+		}
+
+		get avatarEmail()
+		{
+			return getMessageAvatarEmail({
+				isDraft: this.isDraft,
+				email: this.email,
+			});
+		}
+
+		get displayName()
+		{
+			return getMessageDisplayName({
+				isDraft: this.isDraft,
+				fullName: this.fullName,
+				email: this.email,
+				draftRecipientPlaceholder: Loc.getMessage('MAILMOBILE_GRID_MESSAGE_DRAFT_NO_RECIPIENTS'),
+			});
+		}
+
 		get date()
 		{
 			return this.props.item.date;
@@ -120,9 +172,9 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 				View(
 					{
 						style: {
-							paddingLeft: 18,
-							paddingTop: 8,
-							paddingBottom: 14,
+							paddingLeft: Indent.XL3.toNumber(),
+							paddingTop: Indent.M.toNumber(),
+							paddingBottom: Indent.XL2.toNumber(),
 						},
 					},
 					View(
@@ -133,15 +185,15 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 							},
 						},
 						Avatar({
-							fullName: this.fullName,
-							email: this.email,
+							fullName: this.avatarName,
+							email: this.avatarEmail,
 							size: 40,
 						}),
 						View(
 							{
 								style: {
 									flex: 1,
-									marginLeft: 12,
+									marginLeft: Indent.XL.toNumber(),
 									flexDirection: 'column',
 									alignItems: 'flex-start',
 								},
@@ -149,12 +201,13 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 							this.renderHeaderName(),
 							this.renderSubject(),
 							this.renderAbbreviatedText(),
-							MessageBindings({
+							!this.isDraft && MessageBindings({
 								itemId: this.itemId,
 								crmBindId: this.props.item.crmBindId ?? 0,
 								chatBindId: this.props.item.chatBindId ?? 0,
 								taskBindId: this.props.item.taskBindId ?? 0,
 								eventBindId: this.props.item.eventBindId ?? 0,
+								blogPostBindId: this.props.item.blogPostBindId ?? 0,
 							}),
 						),
 						View(
@@ -185,8 +238,8 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 					style: {
 						justifyContent: 'center',
 						alignItems: 'center',
-						paddingRight: 14,
-						paddingLeft: 8,
+						paddingRight: Indent.XL2.toNumber(),
+						paddingLeft: Indent.M.toNumber(),
 					},
 				},
 				new Checkbox({
@@ -207,14 +260,14 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 						overflow: 'hidden',
 					},
 				},
-				Text({
+				Text4({
+					testId: `mailmobile-message-list-item-subject-${this.itemId}`,
 					numberOfLines: 1,
 					ellipsize: 'end',
+					accent: !this.isRead,
 					style: {
-						fontWeight: this.isRead ? 'regular' : 'bold',
 						alignSelf: 'center',
-						fontSize: 15,
-						marginBottom: 2,
+						marginBottom: Indent.XS2.toNumber(),
 					},
 					text: this.subject,
 				}),
@@ -230,19 +283,19 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 						alignItems: 'flex-start',
 						height: 20,
 						overflow: 'hidden',
-						marginBottom: 4,
+						marginBottom: Indent.XS.toNumber(),
 					},
 				},
 				this.readingMarker(this.isRead),
-				Text({
+				Text4({
+					testId: `mailmobile-message-list-item-name-${this.itemId}`,
 					numberOfLines: 1,
 					ellipsize: 'end',
+					accent: !this.isRead,
 					style: {
-						fontWeight: this.isRead ? 'regular' : 'bold',
 						alignSelf: 'center',
-						fontSize: 15,
 					},
-					text: this.fullName,
+					text: this.displayName,
 				}),
 			);
 		}
@@ -252,10 +305,11 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 			if (!this.isRead)
 			{
 				return Text({
+					testId: `mailmobile-message-list-item-unread-${this.itemId}`,
 					style: {
-						marginTop: 7,
-						marginBottom: 7,
-						marginRight: 6,
+						marginTop: Indent.M.toNumber(),
+						marginBottom: Indent.M.toNumber(),
+						marginRight: Indent.S.toNumber(),
 						width: 6,
 						height: 6,
 						backgroundColor: Color.accentMainPrimary.toHex(),
@@ -270,14 +324,11 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 
 		renderAbbreviatedText()
 		{
-			return Text({
+			return Text4({
+				testId: `mailmobile-message-list-item-snippet-${this.itemId}`,
 				numberOfLines: 1,
 				ellipsize: 'end',
-				style: {
-					color: Color.base3.toHex(),
-					fontWeight: 'regular',
-					fontSize: 15,
-				},
+				color: Color.base3,
 				text: this.abbreviatedText,
 			});
 		}
@@ -290,8 +341,8 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 					height: 1,
 					borderTopWidth: 1,
 					borderTopColor: Color.bgSeparatorSecondary.toHex(),
-					marginLeft: 12,
-					marginRight: 12,
+					marginLeft: Indent.XL.toNumber(),
+					marginRight: Indent.XL.toNumber(),
 					alignSelf: 'flex-end',
 				},
 			});
@@ -305,22 +356,67 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 				return momentInstance.isToday ? 'HH:mm' : 'DD MMM';
 			});
 
-			return Text({
-				numberOfLines: 1,
-				ellipsize: 'end',
-				style: {
-					marginRight: 18,
-					marginTop: 2,
-					maxWidth: 120,
-					textAlign: 'center',
-					fontWeight: '400',
-					fontSize: 13,
-					alignSelf: 'flex-end',
-					color: Color.base4.toHex(),
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
+						marginRight: Indent.XL3.toNumber(),
+						marginTop: Indent.XS2.toNumber(),
+					},
 				},
-				text,
+				this.renderFavoriteIcon(),
+				Text5({
+					testId: `mailmobile-message-list-item-date-${this.itemId}`,
+					numberOfLines: 1,
+					ellipsize: 'end',
+					color: Color.base4,
+					style: {
+						maxWidth: 120,
+						textAlign: 'center',
+					},
+					text,
+				}),
+			);
+		}
+
+		renderFavoriteIcon()
+		{
+			if (this.props.item.isFavoriteAllowed !== true || this.isMultiSelectMode)
+			{
+				return null;
+			}
+
+			const isFavorite = this.props.item.isFavorite === true;
+
+			return IconView({
+				testId: `mailmobile-message-list-item-favorite-${this.itemId}`,
+				icon: Icon.FAVORITE,
+				solid: isFavorite,
+				size: 18,
+				color: isFavorite ? Color.accentMainWarning : Color.base4,
+				style: {
+					marginRight: Indent.XS.toNumber(),
+				},
+				onClick: this.toggleFavorite,
 			});
 		}
+
+		toggleFavorite = (isOnline = connection.isOnline()) => {
+			if (this.props.item.isFavoriteAllowed !== true || !isOnline)
+			{
+				return false;
+			}
+
+			Haptics.impactLight();
+			dispatch(setFavoriteState({
+				objectId: this.itemId,
+				uidId: this.itemUidId,
+				isFavorite: this.props.item.isFavorite !== true,
+			}));
+
+			return true;
+		};
 
 		attachmentsIcon()
 		{
@@ -329,8 +425,8 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 				return View(
 					{
 						style: {
-							marginTop: 8,
-							marginRight: 18,
+							marginTop: Indent.M.toNumber(),
+							marginRight: Indent.XL3.toNumber(),
 						},
 					},
 					Image({
@@ -349,6 +445,14 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 		}
 
 		openActionMenu = () => {
+			if (this.isDraft)
+			{
+				Haptics.impactLight();
+				this.props.onEnterDraftMultiSelectMode?.(this.itemId);
+
+				return;
+			}
+
 			if (!this.isMultiSelectMode)
 			{
 				Haptics.impactLight();
@@ -364,6 +468,20 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 		onMessageClick = () => {
 			const itemId = this.itemId;
 			const itemUidId = this.itemUidId;
+
+			if (this.isDraft)
+			{
+				if (this.isMultiSelectMode)
+				{
+					this.props.onToggleDraftSelection?.(itemId);
+				}
+				else
+				{
+					this.props.itemDetailOpenHandler(itemId);
+				}
+
+				return;
+			}
 
 			if (this.isMultiSelectMode)
 			{
@@ -395,6 +513,10 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 	};
 
 	module.exports = {
+		getMessageAvatarEmail,
+		getMessageAvatarName,
+		getMessageDisplayName,
+		MessageContent,
 		MessageContentView: connect(mapStateToProps)(MessageContent),
 	};
 });

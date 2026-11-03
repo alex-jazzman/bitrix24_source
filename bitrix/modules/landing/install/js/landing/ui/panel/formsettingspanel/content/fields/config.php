@@ -12,9 +12,9 @@ return [
 		'landing.loc',
 		'landing.ui.card.headercard',
 		'landing.ui.card.messagecard',
-		'landing.ui.panel.basepresetpanel',
-		'landing.ui.form.formsettingsform',
 		'landing.ui.field.fieldslistfield',
+		'landing.ui.form.formsettingsform',
+		'landing.ui.panel.basepresetpanel',
 	],
 	'skip_core' => true,
 ];

@@ -1,12 +1,26 @@
 import { Text, Type } from 'main.core';
-import { ref, toValue, watch } from 'ui.vue3';
+import { nextTick, ref, toValue, watch } from 'ui.vue3';
+
+import { FeatureCode } from 'bizprocdesigner.feature';
 
 import {
 	isSameInsertConnectionCandidate,
 	validateInsertConnectionSet,
 } from '../../../entities/blocks/utils';
+import { useFeature } from '../../../shared/composables';
+import { BLOCK_TYPES } from '../../../shared/constants';
 
 const CONNECTION_ID_ATTEMPTS = 16;
+
+// While the feature is on, a frame stays out of connection insertion: the insertion is built around
+// a single moving block and republishes the rest of the blocks from the store, so it would lose the
+// move of the nodes a frame can carry. The drag start hook gives no press modifiers, so the ban
+// covers every frame drag, including the ones that carry nothing. With the feature off the frame
+// travels alone and the insertion is available to it as it was before.
+function isFrameBlock(block)
+{
+	return block?.type === BLOCK_TYPES.FRAME;
+}
 
 function isPlacedBlock(block)
 {
@@ -59,6 +73,8 @@ function copyRect(rect)
 		|| !['x', 'y', 'width', 'height'].every((field) => (
 			Type.isNumber(rect[field]) && Number.isFinite(rect[field])
 		))
+		|| rect.width < 0
+		|| rect.height < 0
 	)
 	{
 		return null;
@@ -136,9 +152,16 @@ export function useInsertNodeIntoConnection(options = {})
 		createConnectionId = () => Text.getRandom(),
 		now = () => Date.now(),
 		scheduleSave = () => {},
-		requestFrame = (callback) => requestAnimationFrame(callback),
+		syncSettingsWithDiagram = () => {},
+		probeConnectionPreview = () => false,
+		requestFrame = (callback) => requestAnimationFrame(() => {
+			void nextTick(callback);
+		}),
 		cancelFrame = (frameId) => cancelAnimationFrame(frameId),
 	} = options;
+
+	// Read once: the flag comes from the server settings of the page and cannot change within a session.
+	const isFrameNodeStickingAvailable = useFeature().isFeatureAvailable(FeatureCode.frameNodeSticking);
 
 	let nextGestureToken = 0;
 	let nextPreviewActivation = 0;
@@ -150,6 +173,10 @@ export function useInsertNodeIntoConnection(options = {})
 	let frameId = null;
 	let modelVersion = 0;
 	let gestureModelSnapshot = null;
+	let pendingCandidate = null;
+	let pendingCandidateModelVersion = null;
+	let pendingRectVersion = null;
+	let pendingActivationKey = null;
 	let shownCandidate = null;
 	let shownCandidateModelVersion = null;
 	let shownActivationKey = null;
@@ -165,7 +192,7 @@ export function useInsertNodeIntoConnection(options = {})
 
 	function effectiveCanEdit()
 	{
-		return toValue(disabled) !== true && diagramStore?.isEditorReadonly !== true;
+		return toValue(disabled) !== true && diagramStore?.isWriteLocked !== true;
 	}
 
 	function getCurrentBlocks()
@@ -182,6 +209,11 @@ export function useInsertNodeIntoConnection(options = {})
 	{
 		modelVersion++;
 		gestureModelSnapshot = null;
+		if (pendingCandidate !== null)
+		{
+			cancelPendingFrame();
+			clearActivePreview();
+		}
 	}
 
 	function getPolicyConnection(connection, connectionTimestamps)
@@ -290,9 +322,10 @@ export function useInsertNodeIntoConnection(options = {})
 		}
 	}
 
-	function clearShownPreview(force = false)
+	function clearActivePreview(force = false)
 	{
-		if (!force && shownActivationKey === null)
+		const activationKey = pendingActivationKey ?? shownActivationKey;
+		if (!force && activationKey === null)
 		{
 			return;
 		}
@@ -300,11 +333,15 @@ export function useInsertNodeIntoConnection(options = {})
 		try
 		{
 			blockDiagram?.clearConnectionPreview(
-				force ? null : shownActivationKey,
+				force ? null : activationKey,
 			);
 		}
 		catch
 		{
+			pendingActivationKey = null;
+			pendingCandidate = null;
+			pendingCandidateModelVersion = null;
+			pendingRectVersion = null;
 			shownActivationKey = null;
 			shownCandidate = null;
 			shownCandidateModelVersion = null;
@@ -312,6 +349,10 @@ export function useInsertNodeIntoConnection(options = {})
 			return;
 		}
 
+		pendingActivationKey = null;
+		pendingCandidate = null;
+		pendingCandidateModelVersion = null;
+		pendingRectVersion = null;
 		shownActivationKey = null;
 		shownCandidate = null;
 		shownCandidateModelVersion = null;
@@ -321,6 +362,28 @@ export function useInsertNodeIntoConnection(options = {})
 	{
 		return shownActivationKey !== null
 			&& toValue(blockDiagram?.connectionPreview)?.activationKey === shownActivationKey
+		;
+	}
+
+	function isSourceConnectionCurrent(candidate, snapshot)
+	{
+		const current = snapshot?.connectionsById.get(candidate?.sourceConnection?.id);
+		const source = candidate?.sourceConnection;
+
+		return current?.id === source?.id
+			&& current?.sourceBlockId === source?.sourceBlockId
+			&& current?.sourcePortId === source?.sourcePortId
+			&& current?.targetBlockId === source?.targetBlockId
+			&& current?.targetPortId === source?.targetPortId
+			&& current?.createdAt === source?.createdAt
+			&& current?.type === source?.type
+		;
+	}
+
+	function isPendingPreviewActive()
+	{
+		return pendingActivationKey !== null
+			&& toValue(blockDiagram?.connectionPreview)?.activationKey === pendingActivationKey
 		;
 	}
 
@@ -338,7 +401,7 @@ export function useInsertNodeIntoConnection(options = {})
 		cancelPendingFrame();
 		if (clearPreview)
 		{
-			clearShownPreview();
+			clearActivePreview();
 		}
 
 		gesture = null;
@@ -362,7 +425,7 @@ export function useInsertNodeIntoConnection(options = {})
 		}
 
 		cancelPendingFrame();
-		clearShownPreview();
+		clearActivePreview();
 		gesture.isInvalid = true;
 		bufferedBlocks = null;
 		bufferedMovingBlock = null;
@@ -416,6 +479,21 @@ export function useInsertNodeIntoConnection(options = {})
 	function getCandidateCacheKey(sourceConnection, inputPortId, outputPortId)
 	{
 		return JSON.stringify([sourceConnection?.id, inputPortId, outputPortId]);
+	}
+
+	function rejectCandidate(snapshot, candidate)
+	{
+		snapshot.rejectedCandidateKeys.add(getCandidateCacheKey(candidate.sourceConnection, null, null));
+		snapshot.rejectedCandidateKeys.add(getCandidateCacheKey(
+			candidate.sourceConnection,
+			candidate.inputPort.id,
+			candidate.outputPort.id,
+		));
+		if (snapshot.validatedCandidate === candidate)
+		{
+			snapshot.validatedCandidateKey = null;
+			snapshot.validatedCandidate = null;
+		}
 	}
 
 	function validateCandidate(
@@ -528,12 +606,87 @@ export function useInsertNodeIntoConnection(options = {})
 		};
 	}
 
-	function showCandidate(candidate, snapshot)
+	function hasMeasuredCandidateEndpoints(candidate)
+	{
+		const portsRectMap = toValue(blockDiagram?.portsRectMap);
+
+		return candidate.connectionDrafts.every((connection) => {
+			return copyRect(portsRectMap?.[connection.sourceBlockId]?.[connection.sourcePortId]) !== null
+				&& copyRect(portsRectMap?.[connection.targetBlockId]?.[connection.targetPortId]) !== null
+			;
+		});
+	}
+
+	function confirmPendingCandidate(token, version, snapshot, activationKey)
+	{
+		if (
+			!isCurrentFrame(token, version)
+			|| !isCurrentModelSnapshot(snapshot)
+			|| pendingCandidate === null
+			|| pendingCandidateModelVersion !== snapshot.version
+			|| pendingActivationKey !== activationKey
+			|| !isPendingPreviewActive()
+		)
+		{
+			if (pendingActivationKey === activationKey)
+			{
+				clearActivePreview();
+				scheduleCandidateFrame();
+			}
+
+			return;
+		}
+
+		let isRendered = false;
+		try
+		{
+			isRendered = probeConnectionPreview(activationKey) === true;
+		}
+		catch
+		{
+			isRendered = false;
+		}
+
+		if (
+			!isRendered
+			|| !isCurrentFrame(token, version)
+			|| !isCurrentModelSnapshot(snapshot)
+			|| pendingActivationKey !== activationKey
+			|| !isPendingPreviewActive()
+		)
+		{
+			if (pendingActivationKey !== activationKey)
+			{
+				return;
+			}
+
+			if (pendingCandidate !== null)
+			{
+				rejectCandidate(snapshot, pendingCandidate);
+			}
+			clearActivePreview();
+
+			return;
+		}
+
+		shownCandidate = pendingCandidate;
+		shownCandidateModelVersion = pendingCandidateModelVersion;
+		shownActivationKey = pendingActivationKey;
+		pendingCandidate = null;
+		pendingCandidateModelVersion = null;
+		pendingRectVersion = null;
+		pendingActivationKey = null;
+		gesture.hadShownCandidate = true;
+	}
+
+	function showPendingCandidate(candidate, snapshot, token, version)
 	{
 		const activationKey = `insert-${gesture.token}-${++nextPreviewActivation}`;
 		const preview = createPreview(candidate, activationKey, snapshot);
-		if (preview === null)
+		if (preview === null || !hasMeasuredCandidateEndpoints(candidate))
 		{
+			rejectCandidate(snapshot, candidate);
+
 			return false;
 		}
 
@@ -560,10 +713,24 @@ export function useInsertNodeIntoConnection(options = {})
 			return false;
 		}
 
-		shownCandidate = candidate;
-		shownCandidateModelVersion = snapshot.version;
-		shownActivationKey = activationKey;
-		gesture.hadShownCandidate = true;
+		pendingCandidate = candidate;
+		pendingCandidateModelVersion = snapshot.version;
+		pendingRectVersion = version;
+		pendingActivationKey = activationKey;
+		try
+		{
+			frameId = requestFrame(() => {
+				frameId = null;
+				confirmPendingCandidate(token, version, snapshot, activationKey);
+			});
+		}
+		catch
+		{
+			frameId = null;
+			clearActivePreview();
+
+			return false;
+		}
 
 		return true;
 	}
@@ -643,6 +810,22 @@ export function useInsertNodeIntoConnection(options = {})
 		{
 			return;
 		}
+		if (pendingCandidate !== null)
+		{
+			const pendingHit = hits.find((hit) => (
+				hit?.connection?.id === pendingCandidate.sourceConnection.id
+			));
+			if (
+				pendingCandidateModelVersion !== snapshot.version
+				|| !isPendingPreviewActive()
+				|| !pendingHit
+			)
+			{
+				clearActivePreview();
+			}
+
+			return;
+		}
 
 		if (shownCandidate !== null)
 		{
@@ -670,14 +853,14 @@ export function useInsertNodeIntoConnection(options = {})
 						return;
 					}
 
-					clearShownPreview();
-					showCandidate(candidateToRestore, snapshot);
+					clearActivePreview();
+					showPendingCandidate(candidateToRestore, snapshot, token, version);
 				}
 
 				return;
 			}
 
-			clearShownPreview();
+			clearActivePreview();
 		}
 
 		for (const hit of hits)
@@ -699,7 +882,7 @@ export function useInsertNodeIntoConnection(options = {})
 				return;
 			}
 
-			showCandidate(candidate, snapshot);
+			showPendingCandidate(candidate, snapshot, token, version);
 
 			return;
 		}
@@ -805,7 +988,57 @@ export function useInsertNodeIntoConnection(options = {})
 			return null;
 		}
 
-		const newConnections = finalCandidate.connectionDrafts.map((draft, index) => ({
+		const portPlan = finalCandidate.portPlan;
+		const movingBlockIndex = finalBlocks.findIndex((block) => block.id === gesture.movingBlockId);
+		const [incomingDraft, outgoingDraft] = finalCandidate.connectionDrafts;
+		if (
+			movingBlockIndex < 0
+			|| !Type.isArray(finalBlocks[movingBlockIndex].ports)
+			|| finalCandidate.connectionDrafts.length !== 2
+			|| portPlan?.previewOutput?.id !== finalCandidate.outputPort.id
+			|| !Type.isStringFilled(portPlan?.publicationOutput?.id)
+			|| incomingDraft?.targetBlockId !== gesture.movingBlockId
+			|| incomingDraft?.targetPortId !== portPlan.input.id
+			|| outgoingDraft?.sourceBlockId !== gesture.movingBlockId
+			|| outgoingDraft?.sourcePortId !== portPlan.previewOutput.id
+		)
+		{
+			return null;
+		}
+
+		const movingBlock = finalBlocks[movingBlockIndex];
+		let publicationBlocks = finalBlocks;
+		if (portPlan.materialize === true)
+		{
+			if (
+				movingBlock.ports.some((port) => port.id === portPlan.previewOutput.id)
+				|| movingBlock.ports.some((port) => port.id === portPlan.publicationOutput.id)
+			)
+			{
+				return null;
+			}
+
+			publicationBlocks = [...finalBlocks];
+			publicationBlocks[movingBlockIndex] = {
+				...movingBlock,
+				ports: [
+					...movingBlock.ports,
+					{ ...portPlan.publicationOutput },
+				],
+			};
+		}
+		else if (!movingBlock.ports.some((port) => port.id === portPlan.publicationOutput.id))
+		{
+			return null;
+		}
+
+		const publicationDrafts = finalCandidate.connectionDrafts.map((draft, index) => {
+			return index === 1
+				? { ...draft, sourcePortId: portPlan.publicationOutput.id }
+				: draft
+			;
+		});
+		const newConnections = publicationDrafts.map((draft, index) => ({
 			...draft,
 			id: index === 0 ? incomingId : outgoingId,
 			createdAt: timestamp,
@@ -833,7 +1066,7 @@ export function useInsertNodeIntoConnection(options = {})
 		connectionCurrentTimestamps[outgoingId] = timestamp;
 
 		const publication = {
-			blocks: finalBlocks,
+			blocks: publicationBlocks,
 			connections,
 			blockCurrentTimestamps,
 			connectionCurrentTimestamps,
@@ -847,6 +1080,22 @@ export function useInsertNodeIntoConnection(options = {})
 		try
 		{
 			const result = scheduleSave();
+			if (Type.isFunction(result?.catch))
+			{
+				result.catch(() => null);
+			}
+		}
+		catch
+		{
+			return;
+		}
+	}
+
+	function syncPublishedSettings()
+	{
+		try
+		{
+			const result = syncSettingsWithDiagram();
 			if (Type.isFunction(result?.catch))
 			{
 				result.catch(() => null);
@@ -890,6 +1139,7 @@ export function useInsertNodeIntoConnection(options = {})
 			return;
 		}
 
+		syncPublishedSettings();
 		closeGesture();
 		requestSave();
 	}
@@ -902,7 +1152,7 @@ export function useInsertNodeIntoConnection(options = {})
 		}
 
 		closeGesture({ syncCurrentHistory: true });
-		clearShownPreview(true);
+		clearActivePreview(true);
 		const movingBlock = toValue(block);
 		if (!Type.isStringFilled(movingBlock?.id))
 		{
@@ -919,6 +1169,7 @@ export function useInsertNodeIntoConnection(options = {})
 		const snapshot = getGestureModelSnapshot();
 		if (
 			!canEdit
+			|| (isFrameNodeStickingAvailable && isFrameBlock(movingBlock))
 			|| !isGestureSelectionEligible(movingBlock.id)
 			|| snapshot?.isGestureEligible !== true
 		)
@@ -1031,9 +1282,26 @@ export function useInsertNodeIntoConnection(options = {})
 			return;
 		}
 
-		cancelPendingFrame();
 		const canEdit = effectiveCanEdit();
 		const snapshot = getGestureModelSnapshot();
+		cancelPendingFrame();
+		if (
+			pendingCandidate !== null
+			&& pendingCandidateModelVersion === snapshot?.version
+			&& Type.isNumber(pendingRectVersion)
+			&& pendingActivationKey !== null
+			&& isCurrentFrame(gesture.token, pendingRectVersion)
+			&& isCurrentModelSnapshot(snapshot)
+			&& isPendingPreviewActive()
+		)
+		{
+			confirmPendingCandidate(
+				gesture.token,
+				pendingRectVersion,
+				snapshot,
+				pendingActivationKey,
+			);
+		}
 		if (
 			gesture.isInvalid === true
 			|| bufferedBlocks === null
@@ -1064,7 +1332,7 @@ export function useInsertNodeIntoConnection(options = {})
 
 		if (!isShownPreviewActive())
 		{
-			clearShownPreview();
+			clearActivePreview();
 			publishOrdinaryMove(finalBlocks);
 
 			return;
@@ -1079,7 +1347,7 @@ export function useInsertNodeIntoConnection(options = {})
 		;
 		if (!shownHit)
 		{
-			clearShownPreview();
+			clearActivePreview();
 			publishOrdinaryMove(finalBlocks);
 
 			return;
@@ -1088,14 +1356,22 @@ export function useInsertNodeIntoConnection(options = {})
 		const publication = prepareInsertionPublication(shownCandidate, finalBlocks, snapshot, canEdit);
 		if (publication === null)
 		{
-			closeGesture({ syncCurrentHistory: true });
+			if (isSourceConnectionCurrent(shownCandidate, snapshot))
+			{
+				clearActivePreview();
+				publishOrdinaryMove(finalBlocks);
+			}
+			else
+			{
+				closeGesture({ syncCurrentHistory: true });
+			}
 
 			return;
 		}
 
 		if (!isShownPreviewActive())
 		{
-			clearShownPreview();
+			clearActivePreview();
 			publishOrdinaryMove(finalBlocks);
 
 			return;
@@ -1109,19 +1385,16 @@ export function useInsertNodeIntoConnection(options = {})
 		closeGesture({ syncCurrentHistory: true });
 	}
 
-	const stopModelUpdates = Type.isFunction(diagramStore?.$subscribe)
-		? diagramStore.$subscribe(invalidateModelSnapshot, { flush: 'sync' })
-		: watch(
-			() => [
-				diagramStore?.blocks,
-				diagramStore?.connections,
-				diagramStore?.blockCurrentTimestamps,
-				diagramStore?.connectionCurrentTimestamps,
-			],
-			invalidateModelSnapshot,
-			{ deep: true, flush: 'sync' },
-		)
-	;
+	const stopModelUpdates = watch(
+		() => [
+			diagramStore?.blocks,
+			diagramStore?.connections,
+			diagramStore?.blockCurrentTimestamps,
+			diagramStore?.connectionCurrentTimestamps,
+		],
+		invalidateModelSnapshot,
+		{ deep: true, flush: 'sync' },
+	);
 
 	const stopEligibilityWatch = watch(
 		() => ({
@@ -1160,7 +1433,7 @@ export function useInsertNodeIntoConnection(options = {})
 		{ flush: 'sync' },
 	);
 
-	function dispose()
+	function destroy()
 	{
 		if (isDisposed)
 		{
@@ -1180,6 +1453,6 @@ export function useInsertNodeIntoConnection(options = {})
 		onEndDragBlock,
 		interceptBlocksUpdate,
 		cancel,
-		dispose,
+		destroy,
 	};
 }

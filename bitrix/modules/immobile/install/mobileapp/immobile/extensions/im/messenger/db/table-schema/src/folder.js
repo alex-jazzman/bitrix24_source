@@ -5,6 +5,7 @@ jn.define('im/messenger/db/table-schema/src/folder', (require, exports, module) 
 	const {
 		IntegerField,
 		StringField,
+		BooleanField,
 	} = require('im/messenger/db/schema/field');
 	const { FieldDefaultValue } = require('im/messenger/db/const');
 	const { Index } = require('im/messenger/db/schema/index');
@@ -21,7 +22,10 @@ jn.define('im/messenger/db/table-schema/src/folder', (require, exports, module) 
 			.configureDefaultValue(FieldDefaultValue.emptyText);
 		static sort = new IntegerField('sort')
 			.configureDefaultValue(FieldDefaultValue.zeroInteger);
+		static visible = new BooleanField('visible')
+			.configureDefaultValue(FieldDefaultValue.trueBoolean);
 		static recentSection = new StringField('recentSection');
+		static description = new StringField('description');
 
 		static getTableName()
 		{
@@ -38,7 +42,9 @@ jn.define('im/messenger/db/table-schema/src/folder', (require, exports, module) 
 				this.code,
 				this.title,
 				this.sort,
+				this.visible,
 				this.recentSection,
+				this.description,
 			];
 		}
 

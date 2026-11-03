@@ -9,14 +9,14 @@ export const ImageAttachmentNodeViewComponent = {
 	components: {
 		MediaResizeControls,
 	},
-	props: {
-		defaultTypeMessage: {
-			type: String,
-			default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE',
-		},
-	},
 	computed: {
 		imageUrl(): string
+		{
+			return this.mediaUrl;
+		},
+		// The anchor leads to the file itself: our own viewer for a file of ours, Disk's page for one
+		// of theirs — where the file's own permission check lives.
+		linkUrl(): string
 		{
 			return this.showUrl || this.downloadUrl;
 		},
@@ -44,7 +44,7 @@ export const ImageAttachmentNodeViewComponent = {
 				attrs['data-title'] = this.fileName;
 			}
 
-			attrs.href = this.hasImage ? this.imageUrl : '#';
+			attrs.href = this.linkUrl || (this.hasImage ? this.imageUrl : '#');
 			if (this.hasImage)
 			{
 				attrs['data-viewer-preview'] = this.imageUrl;
@@ -67,8 +67,12 @@ export const ImageAttachmentNodeViewComponent = {
 	},
 	// language=Vue
 	template: `
-		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
-			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
+		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable, 'note-editor-attachment--deleted': isDeleted }">
+			<div v-if="isDeleted" class="note-editor-image-attachment-empty">
+				{{ deletedMessage }}
+				<a v-if="restoreUrl" class="note-editor-file-attachment-restore" :href="restoreUrl" target="_blank" rel="noopener noreferrer">{{ restoreMessage }}</a>
+			</div>
+			<div v-else-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
 			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
 			<div v-else class="note-editor-image-attachment-preview" :class="{ 'note-editor-image-attachment-preview--resizing': dragging }">
 				<a

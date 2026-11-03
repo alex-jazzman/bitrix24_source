@@ -380,12 +380,25 @@ if(typeof BX.Crm.EntityBizprocManager === "undefined")
 
 if(typeof BX.Crm.EntityRestPlacementManager === "undefined")
 {
+	const PLACEMENT_SECTION_SELECTOR = '.crm-entity-section[data-tab-id^="tab_rest_"]';
+	const PLACEMENT_LAYOUT_SELECTOR = ':scope > .app-frame-layout';
+	const PLACEMENT_MIN_HEIGHT = 300;
+	const PLACEMENT_FIT_DELAY = 100;
+	const PLACEMENT_SETTLE_DELAY = 100;
+
 	BX.Crm.EntityRestPlacementManager = function()
 	{
 		this._id = "";
-		this._entity = "";
+		this._detailTabPlacement = "";
 
 		this._editor = null;
+
+		this._fitTimeout = null;
+		this._settleTimeout = null;
+		this._fitHandler = null;
+		this._resizeHandler = null;
+		this._documentClickHandler = null;
+		this._placementObservers = [];
 	};
 
 	BX.Crm.EntityRestPlacementManager.items = {};
@@ -394,7 +407,7 @@ if(typeof BX.Crm.EntityRestPlacementManager === "undefined")
 		{
 			this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
 			this._settings = settings ? settings : {};
-			this._entity = this.getSetting("entity");
+			this._detailTabPlacement = this.getSetting("detail_tab_placement");
 
 			var bottomButton = BX(this.getSetting("bottom_button_id"));
 			if(bottomButton)
@@ -402,7 +415,123 @@ if(typeof BX.Crm.EntityRestPlacementManager === "undefined")
 				BX.bind(bottomButton, 'click', BX.proxy(this.openMarketplace, this));
 			}
 
+			this._fitHandler = BX.proxy(this.scheduleFit, this);
+			this._resizeHandler = BX.proxy(this.onWindowResize, this);
+			this._documentClickHandler = BX.proxy(this.onDocumentClick, this);
+
+			BX.addCustomEvent(window, 'onEntityDetailsTabShow', this._fitHandler);
+			BX.bind(window, 'resize', this._resizeHandler);
+			BX.bind(document, 'click', this._documentClickHandler);
+			BX.ready(BX.proxy(this.observePlacements, this));
+
 			BX.defer(this.initializeInterface, this)();
+		},
+
+		observePlacements: function()
+		{
+			if(typeof MutationObserver === "undefined")
+			{
+				return;
+			}
+
+			var sections = document.querySelectorAll(PLACEMENT_SECTION_SELECTOR);
+			for(var i = 0; i < sections.length; i++)
+			{
+				if(this.getPlacementLayout(sections[i]))
+				{
+					continue;
+				}
+
+				var observer = new MutationObserver(this._fitHandler);
+				observer.observe(sections[i], { childList: true });
+
+				this._placementObservers.push({ section: sections[i], observer: observer });
+			}
+		},
+
+		stopObservingPlacement: function(section)
+		{
+			for(var i = this._placementObservers.length - 1; i >= 0; i--)
+			{
+				if(this._placementObservers[i].section === section)
+				{
+					this._placementObservers[i].observer.disconnect();
+					this._placementObservers.splice(i, 1);
+				}
+			}
+		},
+
+		onWindowResize: function()
+		{
+			clearTimeout(this._fitTimeout);
+			this._fitTimeout = setTimeout(this._fitHandler, PLACEMENT_FIT_DELAY);
+		},
+
+		onDocumentClick: function(event)
+		{
+			if(event.target && event.target.closest && event.target.closest('.app-update-close'))
+			{
+				this.scheduleFit();
+			}
+		},
+
+		scheduleFit: function()
+		{
+			var fit = BX.proxy(this.fitPlacements, this);
+
+			requestAnimationFrame(function()
+			{
+				requestAnimationFrame(fit);
+			});
+
+			clearTimeout(this._settleTimeout);
+			this._settleTimeout = setTimeout(fit, PLACEMENT_SETTLE_DELAY);
+		},
+
+		fitPlacements: function()
+		{
+			var sections = document.querySelectorAll(PLACEMENT_SECTION_SELECTOR);
+			for(var i = 0; i < sections.length; i++)
+			{
+				var layout = this.getPlacementLayout(sections[i]);
+				if(layout)
+				{
+					this.stopObservingPlacement(sections[i]);
+					this.fitPlacement(layout);
+				}
+			}
+		},
+
+		getPlacementLayout: function(section)
+		{
+			return section.querySelector(PLACEMENT_LAYOUT_SELECTOR);
+		},
+
+		fitPlacement: function(layout)
+		{
+			if(layout.dataset.appHeight === 'Y' || layout.offsetParent === null)
+			{
+				return;
+			}
+
+			if(layout.dataset.cardFit !== 'Y')
+			{
+				layout.dataset.cardFit = 'Y';
+
+				if(layout.style.height !== '')
+				{
+					layout.dataset.appHeight = 'Y';
+
+					return;
+				}
+			}
+
+			var scroller = document.scrollingElement || document.documentElement;
+
+			layout.style.height = window.innerHeight + 'px';
+			var fitted = layout.offsetHeight - (scroller.scrollHeight - scroller.clientHeight);
+
+			layout.style.height = Math.max(fitted, PLACEMENT_MIN_HEIGHT) + 'px';
 		},
 
 		openMarketplace: function()
@@ -419,9 +548,9 @@ if(typeof BX.Crm.EntityRestPlacementManager === "undefined")
 
 		initializeInterface: function()
 		{
-			if(!!BX.rest && !!BX.rest.AppLayout)
+			if(!!BX.rest && !!BX.rest.AppLayout && this._detailTabPlacement !== '')
 			{
-				var PlacementInterface = BX.rest.AppLayout.initializePlacement('CRM_' + this._entity + '_DETAIL_TAB');
+				var PlacementInterface = BX.rest.AppLayout.initializePlacement(this._detailTabPlacement);
 
 				var entityTypeId = this._editor._entityTypeId, entityId = this._editor._entityId;
 
@@ -432,6 +561,7 @@ if(typeof BX.Crm.EntityRestPlacementManager === "undefined")
 
 					if(!!params.height)
 					{
+						f.dataset.appHeight = 'Y';
 						f.style.height = params.height + 'px';
 					}
 

@@ -27,12 +27,12 @@ export const More = {
 	},
 	template: `
 		<div v-if="count || withRemove" :class="['tasks-field-users-footer', { '--inline': inline }]">
-			<div v-if="count" class="tasks-field-users-more" @click="$emit('showMore')">
+			<button v-if="count" type="button" class="tasks-field-users-more" @click="$emit('showMore')">
 				{{ moreFormatted }}
-			</div>
-			<div v-if="withRemove" class="tasks-field-users-more --remove" @click="$emit('removeAll')">
+			</button>
+			<button v-if="withRemove" type="button" class="tasks-field-users-more --remove" @click="$emit('removeAll')">
 				{{ loc('TASKS_V2_USERS_REMOVE_ALL') }}
-			</div>
+			</button>
 		</div>
 	`,
 };

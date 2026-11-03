@@ -89,12 +89,7 @@ export class LegacyRecentService
 
 		void Core.getStore().dispatch('recent/hide', { dialogId });
 
-		const chatIsOpened = Core.getStore().getters['application/isChatOpen'](dialogId);
-		if (chatIsOpened)
-		{
-			LayoutManager.getInstance().clearCurrentLayoutEntityId();
-			void LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
-		}
+		LayoutManager.getInstance().clearCurrentChat(dialogId);
 
 		Core.getRestClient().callMethod(RestMethod.imRecentHide, { DIALOG_ID: dialogId })
 			.catch((result: RestResult) => {

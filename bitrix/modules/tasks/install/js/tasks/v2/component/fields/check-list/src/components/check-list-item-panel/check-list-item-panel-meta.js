@@ -23,6 +23,8 @@ export const PanelAction = Object.freeze({
 	AttachFile: 'attachFile',
 	MoveRight: 'moveRight',
 	MoveLeft: 'moveLeft',
+	MoveItemUp: 'moveItemUp',
+	MoveItemDown: 'moveItemDown',
 	AssignAccomplice: 'assignAccomplice',
 	AssignAuditor: 'assignAuditor',
 	Forward: 'forward',
@@ -38,6 +40,7 @@ export const PanelMeta = Object.freeze({
 				{
 					icon: Outline.FIRE,
 					activeIcon: Outline.FIRE_SOLID,
+					activeIconColor: 'var(--tasks-check-list-important-icon-color)',
 					action: PanelAction.SetImportant,
 					hint: 'TASKS_V2_CHECK_LIST_ITEM_IMPORTANT_HINT',
 					className: '--important',
@@ -143,6 +146,7 @@ export const PanelMeta = Object.freeze({
 			items: [
 				{
 					icon: Outline.TRASHCAN,
+					iconColor: 'var(--ui-color-accent-main-alert)',
 					action: PanelAction.Delete,
 					hint: 'TASKS_V2_CHECK_LIST_ITEM_REMOVE_HINT',
 				},
@@ -169,6 +173,8 @@ export type Section = {
 export type Item = {
 	icon: string,
 	activeIcon?: string,
+	iconColor?: string,
+	activeIconColor?: string,
 	iconSize?: number,
 	action: string,
 	label?: string,

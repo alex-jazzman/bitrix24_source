@@ -44,22 +44,29 @@ this.BX.UI = this.BX.UI || {};
 						mailboxId,
 						getSenderWithoutSmtp: !instance.options.isCloud
 					}
-				}).then(response => {
+				}).then(async response => {
 					const data = response.data;
 					if (!data) {
 						return;
 					}
-					instance.setSender(data.id, data.name, data.email);
+					await instance.setSender(data.id, data.name, data.email, {
+						senderId: data.mailboxId ? null : data.id,
+						mailboxId: data.mailboxId ?? null
+					});
 					if (instance.addSenderCallback || data.type === mailboxType) {
 						return;
 					}
 					ui_mail_senderEditor.AliasEditor.openSlider({
 						senderId: data.id,
 						email: data.email,
-						setSenderCallback: instance.setSenderCallback,
-						updateSenderList: () => {
-							void instance.updateSenderList();
-						}
+						setSenderCallback: async (id, name, email) => {
+							await instance.updateSenderList();
+							instance.setSenderCallback?.(id, name, email, {
+								senderId: id,
+								mailboxId: null
+							});
+						},
+						updateSenderList: () => {}
 					});
 				}).catch(() => {});
 			};
@@ -82,7 +89,7 @@ this.BX.UI = this.BX.UI || {};
 				events: {
 					onClose: () => {
 						top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onMessage', onSliderMessage);
-						if (instance.updateSenderList && instance.#wasSenderUpdated) {
+						if (instance.updateSenderList && instance.#wasSenderUpdated && !instance.setSenderCallback) {
 							instance.updateSenderList();
 						}
 					}
@@ -137,11 +144,14 @@ this.BX.UI = this.BX.UI || {};
 				const slider = BX.SidePanel.Instance.getTopSlider();
 				if (slider) {
 					ui_mail_senderEditor.SmtpEditor.openSlider({
-						setSenderCallback: (senderId, senderName, senderEmail) => {
+						setSenderCallback: async (senderId, senderName, senderEmail) => {
 							if (this.setSenderCallback && senderId && senderName && senderEmail) {
-								this.setSenderCallback(senderId, senderName, senderEmail);
+								await this.updateSenderList();
+								this.setSenderCallback(senderId, senderName, senderEmail, {
+									senderId,
+									mailboxId: null
+								});
 							}
-							this.updateSenderList();
 							slider.close();
 						},
 						addSenderCallback: this.addSenderCallback
@@ -260,11 +270,12 @@ this.BX.UI = this.BX.UI || {};
 			});
 			main_core.Dom.append(this.promotionShowcaseNode, this.container);
 		}
-		setSender(id, senderName, senderEmail) {
+		async setSender(id, senderName, senderEmail, coordinate = null) {
 			const name = senderName;
 			const email = senderEmail;
 			if (this.setSenderCallback) {
-				this.setSenderCallback(id, name, email);
+				await this.updateSenderList();
+				this.setSenderCallback(id, name, email, coordinate);
 			}
 			if (!this.addSenderCallback) {
 				return;

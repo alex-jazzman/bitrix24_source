@@ -11,6 +11,8 @@ CJSCore::Init('file_dialog');
 		<?
 		$objectId = 0;
 		$objectName = GetMessage('BPDCM_PD_LABEL_DISK_EMPTY');
+		$isFileSelected = false;
+		$isFolderSelected = false;
 		if ($arCurrentValues['source_id'] && !CBPDocument::IsExpression($arCurrentValues['source_id']))
 		{
 			$object = \Bitrix\Disk\BaseObject::loadById($arCurrentValues['source_id']);
@@ -18,6 +20,9 @@ CJSCore::Init('file_dialog');
 			{
 				$objectId = $object->getId();
 				$objectName = $object->getName();
+				$objectType = (int)$object->getType();
+				$isFileSelected = $objectType === \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE;
+				$isFolderSelected = $objectType === \Bitrix\Disk\Internals\ObjectTable::TYPE_FOLDER;
 			}
 		}
 		?>
@@ -28,8 +33,8 @@ CJSCore::Init('file_dialog');
 			</span>
 			<a href="#" id="id_source_id_clear" onclick="return BPDCM_removeDiskObject('source_id')" style="<?=$objectId?'':'display: none;'?>color: red; text-decoration: none; border-bottom: 1px dotted">x</a>
 			<br/>
-			<a href="#" onclick="return BPDCM_showDiskFileDialog('source_id')" style="color: black; text-decoration: none; border-bottom: 1px dotted"><?=GetMessage('BPDCM_PD_LABEL_DISK_CHOOSE_FILE')?></a>
-			<a href="#" onclick="return BPDCM_showDiskFolderDialog('source_id')" style="color: black; text-decoration: none; border-bottom: 1px dotted"><?=GetMessage('BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER')?></a>
+			<a href="#" id="id_source_id_choose_file" onclick="return BPDCM_showDiskFileDialog('source_id')" style="color: black; text-decoration: none; border-bottom: 1px dotted" data-testid="disk-copy-move-source-file-action"><?=GetMessage($isFileSelected ? 'BPDCM_PD_LABEL_DISK_REPLACE_FILE' : 'BPDCM_PD_LABEL_DISK_CHOOSE_FILE')?></a>
+			<a href="#" id="id_source_id_choose_folder" onclick="return BPDCM_showDiskFolderDialog('source_id')" style="color: black; text-decoration: none; border-bottom: 1px dotted" data-testid="disk-copy-move-source-folder-action"><?=GetMessage($isFolderSelected ? 'BPDCM_PD_LABEL_DISK_CHANGE_FOLDER' : 'BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER')?></a>
 		</div>
 		<?=\CBPDocument::ShowParameterField('int', 'source_id_x', CBPDocument::IsExpression($arCurrentValues['source_id'])? $arCurrentValues['source_id'] : '', array('size' => 30))?>
 	</td>
@@ -148,7 +153,7 @@ CJSCore::Init('file_dialog');
 			</span>
 			<a href="#" id="id_entity_id_folder_clear" onclick="return BPDCM_removeDiskObject('entity_id_folder')" style="<?=$folderId?'':'display: none;'?>color: red; text-decoration: none; border-bottom: 1px dotted">x</a>
 			<br/>
-			<a href="#" onclick="return BPDCM_showDiskFolderDialog('entity_id_folder')" style="color: black; text-decoration: none; border-bottom: 1px dotted"><?=GetMessage('BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER')?></a>
+			<a href="#" id="id_entity_id_folder_choose_folder" onclick="return BPDCM_showDiskFolderDialog('entity_id_folder')" style="color: black; text-decoration: none; border-bottom: 1px dotted" data-testid="disk-copy-move-destination-folder-action"><?=GetMessage($folderId ? 'BPDCM_PD_LABEL_DISK_CHANGE_FOLDER' : 'BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER')?></a>
 		</div>
 		<?
 		echo \CBPDocument::ShowParameterField('int', 'entity_id_folder_x', CBPDocument::IsExpression($value) ? $value : '', array('size' => 30))
@@ -195,6 +200,7 @@ CJSCore::Init('file_dialog');
 									BX('id_'+field+'_value').value = selected[i].id;
 									BX('id_'+field+'_name').innerHTML = selected[i].name;
 									BX('id_'+field+'_clear').style.display = '';
+									BPDCM_updateDiskObjectButtons(field, 'folder');
 									break;
 								}
 							}
@@ -231,6 +237,7 @@ CJSCore::Init('file_dialog');
 									BX('id_'+field+'_value').value = (selected[i].id).toString().substr(1);
 									BX('id_'+field+'_name').innerHTML = selected[i].name;
 									BX('id_'+field+'_clear').style.display = '';
+									BPDCM_updateDiskObjectButtons(field, 'file');
 									break;
 								}
 							}
@@ -243,11 +250,34 @@ CJSCore::Init('file_dialog');
 		return false;
 	};
 
+	var BPDCM_updateDiskObjectButtons = function(field, selectedType)
+	{
+		var fileButton = BX('id_'+field+'_choose_file');
+		if (fileButton)
+		{
+			fileButton.innerHTML = selectedType === 'file'
+				? '<?=GetMessageJs('BPDCM_PD_LABEL_DISK_REPLACE_FILE')?>'
+				: '<?=GetMessageJs('BPDCM_PD_LABEL_DISK_CHOOSE_FILE')?>';
+		}
+
+		var folderButton = BX('id_'+field+'_choose_folder');
+		if (folderButton)
+		{
+			folderButton.innerHTML = selectedType === 'folder'
+				? '<?=GetMessageJs('BPDCM_PD_LABEL_DISK_CHANGE_FOLDER')?>'
+				: '<?=GetMessageJs('BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER')?>';
+		}
+	};
+
+	BPDCM_updateDiskObjectButtons('source_id', '<?=$isFileSelected ? 'file' : ($isFolderSelected ? 'folder' : '')?>');
+	BPDCM_updateDiskObjectButtons('entity_id_folder', '<?=$folderId ? 'folder' : ''?>');
+
 	var BPDCM_removeDiskObject = function(field)
 	{
 		BX('id_'+field+'_value').value = 0;
 		BX('id_'+field+'_name').innerHTML = '<?=GetMessageJs('BPDCM_PD_LABEL_DISK_EMPTY')?>';
 		BX('id_'+field+'_clear').style.display = 'none';
+		BPDCM_updateDiskObjectButtons(field, '');
 		return false;
 	}
 </script>

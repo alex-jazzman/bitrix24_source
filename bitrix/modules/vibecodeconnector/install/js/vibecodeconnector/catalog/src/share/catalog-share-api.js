@@ -1,6 +1,7 @@
 import { ajax } from 'main.core';
 
 import {
+	type CatalogChatWritingResult,
 	type CatalogLinkState,
 	type CatalogShareState,
 	type SetCatalogLinkPayload,
@@ -17,6 +18,18 @@ type LinkResponse = {
 		linkState: CatalogLinkState,
 	},
 };
+
+type ChatWritingResponse = {
+	data: {
+		ok: boolean,
+		allowed: boolean,
+	},
+};
+
+function toWireFlag(value: boolean): 'Y' | 'N'
+{
+	return value ? 'Y' : 'N';
+}
 
 export class CatalogShareApi
 {
@@ -76,6 +89,19 @@ export class CatalogShareApi
 		return ajax.runAction('vibecodeconnector.Catalog.setLink', {
 			data,
 		}).then((response: LinkResponse) => response.data.linkState);
+	}
+
+	setChatWriting(catalogItemId: number, allowed: boolean): Promise<CatalogChatWritingResult>
+	{
+		return ajax.runAction('vibecodeconnector.Catalog.setChatWriting', {
+			data: {
+				catalogItemId,
+				allowed: toWireFlag(allowed),
+			},
+		}).then((response: ChatWritingResponse) => ({
+			ok: response.data.ok === true,
+			allowed: response.data.allowed === true,
+		}));
 	}
 }
 

@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { RecentType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { type ImModelChat } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
@@ -7,8 +8,17 @@ import { BaseRecentHeaderMenu } from '../base';
 
 export class CollabDefaultHeaderMenu extends BaseRecentHeaderMenu
 {
+	onSelectUnreadMode()
+	{
+		Analytics.getInstance().recentHeaderMenu.onOpenProjectUnreadMode();
+
+		this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+	}
+
 	onReadAllClick()
 	{
+		Analytics.getInstance().recentHeaderMenu.onReadAllProjectChats();
+
 		(new ChatService()).readAllByRecentType(RecentType.collabDefault, this.context.parentChatId);
 
 		this.#readParentChat();

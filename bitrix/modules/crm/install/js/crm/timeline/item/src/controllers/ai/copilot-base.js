@@ -307,8 +307,13 @@ export class CopilotBase extends Base
 		previousButtonState: ?string,
 	): void
 	{
-		const customData: ?CoPilotAdditionalInfoData = response?.errors?.[0]?.customData;
-		if (customData)
+		const error = response?.errors?.[0];
+		const customData: ?CoPilotAdditionalInfoData = error?.customData;
+		if (error?.code === 'AI_FILL_FIELDS_ENTITY_DISABLED')
+		{
+			this.#showGenericError(response, btnUI, previousButtonState);
+		}
+		else if (customData)
 		{
 			this.#showAdditionalInfo(customData, item);
 

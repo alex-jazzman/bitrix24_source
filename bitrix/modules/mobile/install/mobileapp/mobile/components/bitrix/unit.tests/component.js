@@ -251,6 +251,11 @@
 		{
 			const externalCatalogs = [
 				{
+					moduleId: 'callmobile',
+					importName: 'call:testing/catalog',
+					requireName: 'call/testing/catalog',
+				},
+				{
 					moduleId: 'crmmobile',
 					importName: 'crm:testing/catalog',
 					requireName: 'crm/testing/catalog',
@@ -259,6 +264,16 @@
 					moduleId: 'tasksmobile',
 					importName: 'tasks:testing/catalog',
 					requireName: 'tasks/testing/catalog',
+				},
+				{
+					moduleId: 'diskmobile',
+					importName: 'disk:testing/catalog',
+					requireName: 'disk/testing/catalog',
+				},
+				{
+					moduleId: 'mailmobile',
+					importName: 'mail:testing/catalog',
+					requireName: 'mail/testing/catalog',
 				},
 			].filter(({ moduleId }) => isModuleInstalled(moduleId));
 			const catalogResults = await Promise.allSettled(

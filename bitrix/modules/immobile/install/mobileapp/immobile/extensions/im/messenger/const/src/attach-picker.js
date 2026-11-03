@@ -9,6 +9,7 @@ jn.define('im/messenger/const/attach-picker', (require, exports, module) => {
 		task: 'task',
 		meeting: 'meeting',
 		vote: 'vote',
+		contact: 'contact',
 	});
 
 	module.exports = {

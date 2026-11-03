@@ -1,0 +1,2 @@
+<?php
+$MESS['BICONNECTOR_SHARE_REGISTRY_ACTION_OPEN'] = 'Open dashboard';

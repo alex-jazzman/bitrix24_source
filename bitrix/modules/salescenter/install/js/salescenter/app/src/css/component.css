@@ -2696,7 +2696,9 @@
 }
 
 .salescenter-app-payment-by-sms-message-sender-empty-state-image {
-	background: url(./../image/empty-state.webp) no-repeat;
+	background: url(./../image/empty-state.0df8a7255c367ba3.webp) no-repeat;
+	background-image: -webkit-image-set(url(./../image/empty-state.0df8a7255c367ba3.webp) 1x, url(./../image/empty-state-2x.773f5f90fe56a928.webp) 2x);
+	background-image: image-set(url(./../image/empty-state.0df8a7255c367ba3.webp) 1x, url(./../image/empty-state-2x.773f5f90fe56a928.webp) 2x);
 	background-size: cover;
 	width: 250px;
 	height: 234px;

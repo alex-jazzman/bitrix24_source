@@ -11,9 +11,27 @@
 	margin-bottom: var(--ui-space-stack-md2);
 }
 
+/* button reset */
 .tasks-field-reminders-sheet-close {
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
 	cursor: pointer;
+}
+/* button reset end */
+
+.tasks-field-reminders-sheet-close {
+	display: flex;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-sheet-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-reminders-sheet-content {

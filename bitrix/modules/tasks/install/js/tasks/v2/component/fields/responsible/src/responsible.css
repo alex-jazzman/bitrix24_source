@@ -11,14 +11,32 @@
 	display: grid;
 }
 
-.tasks-field-responsible-many-aha span {
-	margin-top: 12px;
-	max-width: max-content;
+/* aha stop button reset */
+.tasks-field-responsible-many-aha-stop {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background-color: transparent;
 	color: inherit;
-	border-bottom: 1px dashed;
+	text-align: left;
 	cursor: pointer;
 }
+/* aha stop button reset end */
 
-.tasks-field-responsible-many-aha span:not(:hover) {
+.tasks-field-responsible-many-aha-stop {
+	margin-top: 12px;
+	max-width: max-content;
+	border-bottom: 1px dashed;
 	opacity: 0.8;
+}
+
+.tasks-field-responsible-many-aha-stop:hover,
+.tasks-field-responsible-many-aha-stop:focus-visible {
+	opacity: 1;
+}
+
+.tasks-field-responsible-many-aha-stop:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }

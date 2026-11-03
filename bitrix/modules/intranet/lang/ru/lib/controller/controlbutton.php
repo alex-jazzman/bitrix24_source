@@ -10,3 +10,4 @@ $MESS["INTRANET_CONTROL_BUTTON_POST_MESSAGE_CALENDAR"] = "Создано на о
 $MESS["INTRANET_CONTROL_BUTTON_POST_MESSAGE_TASK"] = "Создано на основании [url=#LINK#]задачи[/url]";
 $MESS["INTRANET_CONTROL_BUTTON_CREATE_CHAT_LOCK_ERROR"] = "Ошибка создания чата. Попробуйте еще раз.";
 $MESS["INTRANET_CONTROL_BUTTON_DELETE_TASK_FILE_ERROR"] = "Ошибка при удалении файла.";
+$MESS["INTRANET_CONTROL_BUTTON_WORKGROUP_ACCESS_ERROR"] = "Недостаточно прав для доступа к чату группы";

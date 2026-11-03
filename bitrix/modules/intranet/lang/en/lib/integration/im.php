@@ -1,3 +1,5 @@
-<?
+<?php
+$MESS['INTRANET_NOTIFY_SCHEMA_PRODUCT_SOURCE_DESCRIPTION']  = 'Company news and announcements.';
+$MESS['INTRANET_NOTIFY_SCHEMA_PRODUCT_SOURCE_NAME'] = 'Intranet';
 $MESS["INTRANET_NOTIFY_SCHEMA_SECURITY_OTP"] = "Sign in confirmation code";
 ?>

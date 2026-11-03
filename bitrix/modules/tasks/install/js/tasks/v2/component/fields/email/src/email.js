@@ -46,6 +46,10 @@ export const Email = {
 		{
 			return Type.isStringFilled(this.email.body) ? this.email.body : null;
 		},
+		ariaLabel(): string
+		{
+			return this.loc('TASKS_V2_EMAIL_VALUE_ARIA_LABEL', { '#SUBJECT#': this.emailTitle });
+		},
 		tooltip(): Function
 		{
 			return (): HintParams => tooltip({
@@ -69,9 +73,16 @@ export const Email = {
 			:data-task-field-id="emailMeta.id"
 			:data-task-field-value="email.id"
 		>
-			<HoverPill v-hint="tooltip" ref="email" @click="handleClick">
+			<HoverPill
+				v-hint="tooltip"
+				ref="email"
+				:ariaLabel
+				:ariaHaspopup="'dialog'"
+				data-testid="tasks-email-btn"
+				@click="handleClick"
+			>
 				<div class="tasks-field-email-content">
-					<BIcon :name="Outline.MAIL"/>
+					<BIcon :name="Outline.MAIL" aria-hidden="true"/>
 					<div class="tasks-field-email-title">{{ emailTitle }}</div>
 				</div>
 			</HoverPill>

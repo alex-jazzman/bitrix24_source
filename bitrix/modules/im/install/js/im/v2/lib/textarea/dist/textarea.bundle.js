@@ -236,6 +236,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			textarea.selectionEnd = newSelectionPosition;
 			return resultText;
 		},
+		// the counterpart of the replacing branch of insertMention: the query is taken out of the field
+		// and nothing takes its place, so a suppressed pick leaves the text as it was before typing it
+		removeTextBeforeCursor(textarea, textToRemove) {
+			const textBefore = textarea.value.slice(0, textarea.selectionStart - textToRemove.length);
+			const textAfter = textarea.value.slice(textarea.selectionStart);
+			const resultText = `${textBefore}${textAfter}`;
+			textarea.value = resultText;
+			textarea.selectionStart = textBefore.length;
+			textarea.selectionEnd = textBefore.length;
+			return resultText;
+		},
 		insertMention(textarea, config = {}) {
 			const {
 				textToInsert,
@@ -252,7 +263,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} else {
 				const textBefore = textarea.value.slice(0, textarea.selectionStart);
 				const textAfter = textarea.value.slice(textarea.selectionEnd);
-				resultText = `${textBefore}${textToInsert} ${textAfter}`;
+				const separator = textBefore.length > 0 && !/\s$/.test(textBefore) ? ' ' : '';
+				resultText = `${textBefore}${separator}${textToInsert} ${textAfter}`;
+				newSelectionPosition += separator.length;
 			}
 			textarea.focus({
 				preventScroll: true

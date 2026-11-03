@@ -43,6 +43,16 @@ export default class ActionsPopup
 				angle: true,
 				closeByEsc: false,
 				items: this.#getPreparedItems(),
+				events: {
+					// Keep the trigger button's aria-expanded in sync with the menu.
+					// Covers every close path (item click, outside click), not only item click.
+					onPopupShow: () => {
+						EventEmitter.emit(this, Events.EVENT_ACTIONS_POPUP_SHOW);
+					},
+					onPopupClose: () => {
+						EventEmitter.emit(this, Events.EVENT_ACTIONS_POPUP_CLOSE);
+					},
+				},
 			});
 		}
 

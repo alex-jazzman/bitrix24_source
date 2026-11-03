@@ -68,6 +68,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				@blur="$emit('focus', $event)"
 				@change="$emit('focus', $event)"
 			/>
+			<slot/>
 		</Component>
 	`
 	};

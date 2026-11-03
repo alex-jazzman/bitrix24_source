@@ -1,0 +1,124 @@
+/*
+ * The bubble of the popover: ui.system.popover wraps the content node in nothing and puts no class on it,
+ * so the frame, the padding and the shadow live here. The background may never be transparent - the engine
+ * reads it off the computed style to paint the pointer. The width is not written here: constrainSize of the
+ * surface caps the bubble, and min-height: 0 lets the list inside scroll under the cap of the height.
+ */
+.biconnector-agent-connection {
+	display: flex;
+	box-sizing: border-box;
+	flex-direction: column;
+	min-height: 0;
+	/* The cap of the surface counts the space left under the anchor, so a full list ends up right on the
+	   lower edge of the document - and the bubble stands in body by an absolute position, so those last
+	   pixels grow the page and give it a scroll it had none of before the popup. A cap counted off the
+	   viewport keeps that edge clear at any height of the window: the bubble stops short of the bottom, and
+	   the list of operations takes the shortfall on itself and scrolls inside. */
+	max-height: 80vh;
+	padding: var(--ui-space-inset-md);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-primary);
+	/* One token by the role of the surface: the popup is the nearest layer of the screen, so the top of the
+	   elevation scale. Stacking several shadows would be a scale of our own. */
+	box-shadow: var(--ui-shadow-bottom-4xl);
+}
+
+/* The title and the body of the state: two zones at different rhythms, so the popup has two containers and
+   not one - the title stands closer to the body than the lines of the body stand to each other. */
+.biconnector-agent-connection__content {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	gap: var(--ui-space-stack-sm);
+}
+
+.biconnector-agent-connection__body {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	gap: var(--ui-space-stack-md);
+}
+
+.biconnector-agent-connection__reading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+/* The only scrolling area of the popup: the notices and the action stay in sight while the list of the
+   catalogue runs past the height the surface allows. */
+.biconnector-agent-connection__operations {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.biconnector-agent-connection__operations:focus-visible {
+	border-radius: var(--ui-border-radius-xs);
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* A set of the catalogue: its caption and the records under it. The sets are told apart by a divider as
+   well as by the caption - a set whose code the popup does not know keeps the divider and loses only the
+   words. */
+.biconnector-agent-connection__tool-set {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-stack-sm) 0;
+	gap: var(--ui-space-stack-sm);
+}
+
+.biconnector-agent-connection__tool-set + .biconnector-agent-connection__tool-set {
+	border-top: 1px solid var(--ui-color-divider-less);
+}
+
+.biconnector-agent-connection__tool-set-list {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	gap: var(--ui-space-stack-sm);
+	list-style: none;
+}
+
+.biconnector-agent-connection__operation {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.biconnector-agent-connection__warning {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.biconnector-agent-connection__operation.--irreversible .biconnector-agent-connection__warning {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Secondary lines of the states of a connection: the dates and the honest note about an unknown scope. */
+.biconnector-agent-connection__note {
+	color: var(--ui-color-base-3);
+}
+
+.biconnector-agent-connection__scope {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.biconnector-agent-connection__scope-list {
+	display: flex;
+	margin: 0;
+	padding: 0;
+	gap: var(--ui-space-inline-xs) var(--ui-space-inline-sm);
+	flex-wrap: wrap;
+	list-style: none;
+}
+
+.biconnector-agent-connection__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}

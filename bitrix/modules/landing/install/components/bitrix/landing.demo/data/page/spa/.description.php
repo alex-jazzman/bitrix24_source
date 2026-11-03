@@ -56,7 +56,7 @@ return [
 							<a href="#block@block[31.1.two_cols_text_img]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">OUR PROCEDURES</a>
 						</li>
 						<li class="landing-block-node-menu-list-item nav-item g-mx-12--lg g-mb-7 g-mb-0--lg">
-							<a href="#block@block[04.1.one_col_fix_with_title]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">ADVICES</a>
+							<a href="#block@block[04.1.one_col_fix_with_title]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">TIPS</a>
 						</li>
 						
 						
@@ -408,7 +408,7 @@ return [
 				'CONTENT' => '<section class="landing-block g-bg-primary js-animation fadeInUp animated g-pt-60 g-pb-20">
         <div class="container">
             <div class="landing-block-node-inner text-uppercase text-center u-heading-v2-4--bottom g-brd-white">
-                <h6 class="landing-block-node-subtitle g-font-weight-800 g-letter-spacing-1 g-mb-20 g-text-transform-none g-font-size-20 g-color-white-opacity-0_7">Some Advices</h6>
+                <h6 class="landing-block-node-subtitle g-font-weight-800 g-letter-spacing-1 g-mb-20 g-text-transform-none g-font-size-20 g-color-white-opacity-0_7">Some Tips</h6>
                 <h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-color-white g-font-size-22">WE CARE ABOUT OUR CLIENTS</h2>
             </div>
         </div>

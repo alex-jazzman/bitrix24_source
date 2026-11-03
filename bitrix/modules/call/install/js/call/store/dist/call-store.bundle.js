@@ -1,12 +1,11 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports, ui_vue3_pinia) {
+(function (exports, ui_vue3_pinia, main_core, call_lib_mediaRegistry) {
 	'use strict';
 
 	const useCallStore = ui_vue3_pinia.defineStore('call-core', {
 		state: () => ({
-			// region Call lifecycle
 			callState: 'Idle',
 			callId: null,
 			callUuid: null,
@@ -16,90 +15,9 @@ this.BX.Call = this.BX.Call || {};
 			associatedEntityId: null,
 			associatedEntityType: null,
 			isIncoming: false,
-			localUserId: null,
-			// endregion Call lifecycle
-
-			// region Participants
-			users: {},
-			// endregion Participants
-
-			// region Media state
-			isMicrophoneMuted: false,
-			isCameraOn: false,
-			isScreenSharingActive: false,
-			isSpeakerMuted: false,
-			currentMicrophoneId: null,
-			currentCameraId: null,
-			currentSpeakerId: null,
-			// endregion Media state
-
-			// region Recording
-			commonRecordState: 'Inactive',
-			commonRecordType: null,
-			commonRecordInitiatorId: null,
-			// endregion Recording
-
-			// region UI state
-			viewState: 'Closed',
-			isFullScreen: false,
-			pinnedUserId: null,
-			layout: 'Grid',
-			uiState: 'Idle',
-			callTitle: '',
-			size: 'full',
-			maxWidth: null,
-			isWindowFocus: true,
-			roomState: '',
-			isRenameSliderOpen: false,
-			allowRename: false,
-			renameRequested: false,
-			wasRenamed: false,
-			// endregion UI state
-
-			// region Buttons
-			buttons: {},
-			// endregion Buttons
-
-			// region Copilot
-			isCopilotActive: false,
-			isCopilotFeaturesEnabled: false,
-			// endregion Copilot
-
-			// region Notifications
-			notifications: [],
-			notificationTick: Date.now(),
-			// endregion Notifications
-
-			// region Local media metadata
-			hasLocalVideo: false,
-			hasLocalAudio: false,
-			flipLocalVideo: false,
-			localStreamVersion: 0,
-			// endregion Local media metadata
-
-			// region Confirm modal
-			confirmModal: {
-				visible: false,
-				title: '',
-				message: '',
-				buttons: [],
-				promiseId: null
-			},
-			// endregion Confirm modal
-
-			// region Talking queue
-			talkingQueueData: [],
-			// endregion Talking queue
-
-			// region Call mode
 			callMode: 'direct',
-			// 'direct' | 'group' | 'conference'
-			// endregion Call mode
-
-			// region Conference context (used when callMode === 'conference')
 			conferenceTitle: '',
 			conferenceState: 'preparation',
-			// 'preparation' | 'call'
 			conferenceCallEnded: false,
 			conferenceStarted: null,
 			conferenceStartDate: null,
@@ -107,9 +25,6 @@ this.BX.Call = this.BX.Call || {};
 			conferenceAlias: '',
 			conferenceError: '',
 			conferenceComponentError: '',
-			// endregion Conference context
-
-			// region Conference participants
 			conferenceUsers: [],
 			conferenceUsersInCall: [],
 			conferencePresenters: [],
@@ -117,9 +32,6 @@ this.BX.Call = this.BX.Call || {};
 			conferenceMessageCount: 0,
 			conferenceUserInCallCount: 0,
 			currentUserHash: '',
-			// endregion Conference participants
-
-			// region Conference UI
 			conferencePassChecked: true,
 			conferenceShowChat: false,
 			conferenceShowSmiles: false,
@@ -129,541 +41,25 @@ this.BX.Call = this.BX.Call || {};
 			conferenceIsBroadcast: false,
 			conferenceRightPanelMode: 'hidden',
 			conferenceHasErrorInCall: false
-			// endregion Conference UI
 		}),
 		getters: {
-			connectedUsers: state => Object.values(state.users).filter(u => u.state === 'Connected'),
-			userById: state => userId => state.users[userId] || null,
-			hasConnectedUsers: state => Object.values(state.users).some(u => u.state === 'Connected'),
-			talkingUsers: state => Object.values(state.users).filter(u => u.talking),
-			isRecordingActive: state => state.commonRecordState !== 'Inactive' && state.commonRecordState !== 'Destroyed',
-			activeNotifications: state => state.notifications.filter(n => n.createdAt + n.ttl > state.notificationTick),
-			isButtonBlocked: state => buttonName => state.buttons[buttonName]?.blocked ?? false,
-			talkingQueue: state => state.talkingQueueData,
-			isConferenceCallActive: state => state.conferenceState === 'call' && !state.conferenceCallEnded,
-			isCurrentUserPresenter: state => state.conferencePresenters.includes(state.localUserId),
-			isViewerMode: state => state.conferenceIsBroadcast && !state.conferencePresenters.includes(state.localUserId)
+			isConferenceCallActive: state => state.conferenceState === 'call' && !state.conferenceCallEnded
 		},
 		actions: {
-			/**
-			 * Initializes call metadata. Sets callState to 'Proceeding'.
-			 *
-			 * @param {object} params
-			 * @param {number|null} params.callId
-			 * @param {string|null} params.callUuid
-			 * @param {string|null} params.callProvider
-			 * @param {string|null} params.callScheme
-			 * @param {string|null} params.callType
-			 * @param {number|null} params.associatedEntityId
-			 * @param {string|null} params.associatedEntityType
-			 * @param {boolean} params.isIncoming
-			 * @param {number|null} params.localUserId
-			 */
 			initCall(params = {}) {
-				const nullableFields = ['callId', 'callUuid', 'callProvider', 'callScheme', 'callType', 'associatedEntityId', 'associatedEntityType', 'localUserId'];
+				const nullableFields = ['callId', 'callUuid', 'callProvider', 'callScheme', 'callType', 'associatedEntityId', 'associatedEntityType'];
 				nullableFields.forEach(key => {
 					this[key] = params[key] === undefined ? null : params[key];
 				});
 				this.isIncoming = params.isIncoming === true;
 				this.callState = 'Proceeding';
 			},
-			/**
-			 * Resets all state to defaults.
-			 */
 			resetCall() {
 				this.$reset();
 			},
-			/**
-			 * Creates a new UserEntry with defaults on first call or merges fields on subsequent calls.
-			 *
-			 * @param {number|string} userId
-			 * @param {object} fields
-			 */
-			updateUser(userId, fields) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id] = {
-						...this.users[id],
-						...fields
-					};
-				} else {
-					this.users[id] = {
-						id,
-						state: 'Idle',
-						talking: false,
-						pinned: false,
-						cameraState: false,
-						microphoneState: false,
-						screenState: false,
-						floorRequestState: false,
-						videoPaused: false,
-						connectionQuality: 0,
-						direction: null,
-						name: '',
-						avatar: '',
-						streamVersion: 0,
-						permissionToSpeakState: false,
-						badNetworkIndicator: false,
-						...fields
-					};
-				}
+			setCallMode(mode) {
+				this.callMode = mode;
 			},
-			/**
-			 * Updates user.state field.
-			 *
-			 * @param {number|string} userId
-			 * @param {string} state
-			 */
-			setUserState(userId, state) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].state = state;
-				}
-			},
-			/**
-			 * Updates user.microphoneState field.
-			 *
-			 * @param {number|string} userId
-			 * @param {boolean} microphoneState
-			 */
-			setUserMicrophoneState(userId, microphoneState) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].microphoneState = microphoneState;
-				}
-			},
-			/**
-			 * Updates user.cameraState field.
-			 *
-			 * @param {number|string} userId
-			 * @param {boolean} cameraState
-			 */
-			setUserCameraState(userId, cameraState) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].cameraState = cameraState;
-				}
-			},
-			/**
-			 * Updates user.talking field.
-			 *
-			 * @param {number|string} userId
-			 * @param {boolean} talking
-			 */
-			setUserTalking(userId, talking) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].talking = talking;
-				}
-			},
-			/**
-			 * Updates user.floorRequestState field.
-			 *
-			 * @param {number|string} userId
-			 * @param {boolean} floorRequestState
-			 */
-			setUserFloorRequestState(userId, floorRequestState) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].floorRequestState = floorRequestState;
-				}
-			},
-			/**
-			 * Updates user.videoPaused field.
-			 *
-			 * @param {number|string} userId
-			 * @param {boolean} videoPaused
-			 */
-			setUserVideoPaused(userId, videoPaused) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].videoPaused = videoPaused;
-				}
-			},
-			/**
-			 * Updates user.connectionQuality field.
-			 *
-			 * @param {number|string} userId
-			 * @param {number} connectionQuality
-			 */
-			setUserConnectionQuality(userId, connectionQuality) {
-				const id = parseInt(userId, 10);
-				if (this.users[id]) {
-					this.users[id].connectionQuality = connectionQuality;
-				}
-			},
-			/**
-			 * Pins a user: unpins previously pinned user, sets pinned flag and updates pinnedUserId.
-			 *
-			 * @param {number|string} userId
-			 */
-			pinUser(userId) {
-				const id = parseInt(userId, 10);
-				if (this.pinnedUserId !== null && this.users[this.pinnedUserId]) {
-					this.users[this.pinnedUserId].pinned = false;
-				}
-				if (this.users[id]) {
-					this.users[id].pinned = true;
-				}
-				this.pinnedUserId = id;
-			},
-			/**
-			 * Unpins current pinned user and clears pinnedUserId.
-			 */
-			unpinUser() {
-				if (this.pinnedUserId !== null && this.users[this.pinnedUserId]) {
-					this.users[this.pinnedUserId].pinned = false;
-				}
-				this.pinnedUserId = null;
-			},
-			/**
-			 * Updates local media state fields. Ignores undefined fields.
-			 *
-			 * @param {object} fields
-			 * @param {boolean} [fields.isMicrophoneMuted]
-			 * @param {boolean} [fields.isCameraOn]
-			 * @param {boolean} [fields.isScreenSharingActive]
-			 * @param {boolean} [fields.isSpeakerMuted]
-			 */
-			setMediaState(fields) {
-				const allowedFields = ['isMicrophoneMuted', 'isCameraOn', 'isScreenSharingActive', 'isSpeakerMuted'];
-				allowedFields.forEach(key => {
-					if (fields[key] !== undefined) {
-						this[key] = fields[key];
-					}
-				});
-			},
-			/**
-			 * Updates device IDs. Ignores undefined fields.
-			 *
-			 * @param {object} fields
-			 * @param {string|null} [fields.microphoneId]
-			 * @param {string|null} [fields.cameraId]
-			 * @param {string|null} [fields.speakerId]
-			 */
-			setDeviceIds(fields) {
-				if (fields.microphoneId !== undefined) {
-					this.currentMicrophoneId = fields.microphoneId;
-				}
-				if (fields.cameraId !== undefined) {
-					this.currentCameraId = fields.cameraId;
-				}
-				if (fields.speakerId !== undefined) {
-					this.currentSpeakerId = fields.speakerId;
-				}
-			},
-			/**
-			 * Updates recording state fields.
-			 *
-			 * @param {object} fields
-			 * @param {string} [fields.state]
-			 * @param {string|null} [fields.type]
-			 * @param {number|null} [fields.initiatorId]
-			 */
-			setRecordState(fields) {
-				if (fields.state !== undefined) {
-					this.commonRecordState = fields.state;
-				}
-				if (fields.type !== undefined) {
-					this.commonRecordType = fields.type;
-				}
-				if (fields.initiatorId !== undefined) {
-					this.commonRecordInitiatorId = fields.initiatorId;
-				}
-			},
-			/**
-			 * Updates viewState.
-			 *
-			 * @param {string} viewState
-			 */
-			setViewState(viewState) {
-				this.viewState = viewState;
-			},
-			/**
-			 * Updates isFullScreen flag.
-			 *
-			 * @param {boolean} isFullScreen
-			 */
-			setFullScreen(isFullScreen) {
-				this.isFullScreen = isFullScreen;
-			},
-			// region UI state actions
-
-			/**
-			 * Sets layout mode.
-			 *
-			 * @param {string} layout
-			 */
-			setLayout(layout) {
-				this.layout = layout;
-			},
-			/**
-			 * Sets UI lifecycle state.
-			 *
-			 * @param {string} uiState
-			 */
-			setUiState(uiState) {
-				this.uiState = uiState;
-			},
-			/**
-			 * Sets call screen title.
-			 *
-			 * @param {string} title
-			 */
-			setCallTitle(title) {
-				this.callTitle = title;
-			},
-			/**
-			 * Sets view size hint.
-			 *
-			 * @param {string} size
-			 */
-			setSize(size) {
-				this.size = size;
-			},
-			/**
-			 * Sets max width constraint.
-			 *
-			 * @param {number|null} maxWidth
-			 */
-			setMaxWidth(maxWidth) {
-				this.maxWidth = maxWidth;
-			},
-			/**
-			 * Sets window focus state.
-			 *
-			 * @param {boolean} isActive
-			 */
-			setWindowFocus(isActive) {
-				this.isWindowFocus = isActive;
-			},
-			/**
-			 * Sets current room state.
-			 *
-			 * @param {string} roomState
-			 */
-			setRoomState(roomState) {
-				this.roomState = roomState;
-			},
-			/**
-			 * Closes the rename slider.
-			 */
-			closeRenameSlider() {
-				this.isRenameSliderOpen = false;
-			},
-			/**
-			 * Sets whether the local user may rename.
-			 *
-			 * @param {boolean} allow
-			 */
-			setAllowRename(allow) {
-				this.allowRename = allow;
-			},
-			setRenameRequested(value) {
-				this.renameRequested = value;
-			},
-			setWasRenamed(value) {
-				this.wasRenamed = value;
-			},
-			// endregion UI state actions
-
-			// region Button actions
-
-			/**
-			 * Creates or merges button state entry.
-			 *
-			 * @param {string} buttonName
-			 * @param {object} fields
-			 */
-			setButtonState(buttonName, fields) {
-				if (!this.buttons[buttonName]) {
-					this.buttons[buttonName] = {
-						active: false,
-						blocked: false,
-						visible: true,
-						counter: 0
-					};
-				}
-				this.buttons[buttonName] = {
-					...this.buttons[buttonName],
-					...fields
-				};
-			},
-			/**
-			 * Blocks specified buttons.
-			 *
-			 * @param {string[]} buttonNames
-			 */
-			blockButtons(buttonNames) {
-				buttonNames.forEach(name => {
-					this.setButtonState(name, {
-						blocked: true
-					});
-				});
-			},
-			/**
-			 * Unblocks specified buttons.
-			 *
-			 * @param {string[]} buttonNames
-			 */
-			unblockButtons(buttonNames) {
-				buttonNames.forEach(name => {
-					this.setButtonState(name, {
-						blocked: false
-					});
-				});
-			},
-			/**
-			 * Makes specified buttons visible.
-			 *
-			 * @param {string[]} buttonNames
-			 */
-			showButtons(buttonNames) {
-				buttonNames.forEach(name => {
-					this.setButtonState(name, {
-						visible: true
-					});
-				});
-			},
-			hideButtons(buttonNames) {
-				buttonNames.forEach(name => {
-					this.setButtonState(name, {
-						visible: false
-					});
-				});
-			},
-			// endregion Button actions
-
-			// region Notification actions
-
-			/**
-			 * Adds a notification and returns its id.
-			 *
-			 * @param {string} type
-			 * @param {object} data
-			 * @returns {string}
-			 */
-			addNotification(type, data) {
-				const id = crypto.randomUUID();
-				this.notifications.push({
-					id,
-					type,
-					data,
-					createdAt: Date.now(),
-					ttl: 5000
-				});
-				return id;
-			},
-			/**
-			 * Removes a notification by id.
-			 *
-			 * @param {string} id
-			 */
-			removeNotification(id) {
-				this.notifications = this.notifications.filter(n => n.id !== id);
-			},
-			/**
-			 * Updates notificationTick to force recomputation of activeNotifications getter.
-			 */
-			refreshNotificationTick() {
-				this.notificationTick = Date.now();
-			},
-			// endregion Notification actions
-
-			// region Confirm modal actions
-
-			/**
-			 * Shows confirm modal with given params.
-			 *
-			 * @param {object} params
-			 */
-			showConfirmModal(params) {
-				this.confirmModal = {
-					visible: true,
-					...params
-				};
-			},
-			/**
-			 * Hides confirm modal and resets its state.
-			 */
-			hideConfirmModal() {
-				this.confirmModal = {
-					visible: false,
-					title: '',
-					message: '',
-					buttons: [],
-					promiseId: null
-				};
-			},
-			// endregion Confirm modal actions
-
-			// region Talking queue actions
-
-			/**
-			 * Recomputes talkingQueue ordered by talking priority.
-			 */
-			refreshTalkingQueue() {
-				const talking = Object.values(this.users).filter(u => u.talking === true).map(u => u.id).sort((a, b) => a - b);
-				const connected = Object.values(this.users).filter(u => u.state === 'Connected' && u.talking !== true).map(u => u.id);
-				this.talkingQueueData = [...talking, ...connected];
-			},
-			// endregion Talking queue actions
-
-			// region Local media metadata actions
-
-			/**
-			 * Merges local media metadata fields into state.
-			 *
-			 * @param {object} fields
-			 */
-			setLocalMediaMetadata(fields) {
-				const allowedFields = ['hasLocalVideo', 'hasLocalAudio', 'flipLocalVideo'];
-				allowedFields.forEach(key => {
-					if (fields[key] !== undefined) {
-						this[key] = fields[key];
-					}
-				});
-			},
-			/**
-			 * Increments local stream version counter.
-			 */
-			incrementLocalStreamVersion() {
-				this.localStreamVersion += 1;
-			},
-			/**
-			 * Increments stream version counter for a specific user.
-			 *
-			 * @param {number} userId
-			 */
-			incrementUserStreamVersion(userId) {
-				if (this.users[userId]) {
-					this.users[userId].streamVersion += 1;
-				}
-			},
-			// endregion Local media metadata actions
-
-			// region Copilot actions
-
-			/**
-			 * Sets copilot active state.
-			 *
-			 * @param {boolean} isActive
-			 */
-			setCopilotState(isActive) {
-				this.isCopilotActive = isActive;
-			},
-			/**
-			 * Sets copilot features enabled flag.
-			 *
-			 * @param {boolean} isEnabled
-			 */
-			setCopilotFeaturesEnabled(isEnabled) {
-				this.isCopilotFeaturesEnabled = isEnabled;
-			},
-			// endregion Copilot actions
-
-			// region Conference actions
-
 			setConferenceTitle(title) {
 				this.conferenceTitle = title;
 			},
@@ -705,7 +101,7 @@ this.BX.Call = this.BX.Call || {};
 			addConferenceUsers(userIds) {
 				const ids = Array.isArray(userIds) ? userIds : [userIds];
 				ids.forEach(id => {
-					const parsed = parseInt(id, 10);
+					const parsed = parseInt(String(id), 10);
 					if (!this.conferenceUsers.includes(parsed)) {
 						this.conferenceUsers.push(parsed);
 					}
@@ -713,13 +109,13 @@ this.BX.Call = this.BX.Call || {};
 			},
 			removeConferenceUsers(userIds) {
 				const ids = Array.isArray(userIds) ? userIds : [userIds];
-				const idsToRemove = new Set(ids.map(id => parseInt(id, 10)));
+				const idsToRemove = new Set(ids.map(id => parseInt(String(id), 10)));
 				this.conferenceUsers = this.conferenceUsers.filter(id => !idsToRemove.has(id));
 			},
 			addConferenceUsersInCall(userIds) {
 				const ids = Array.isArray(userIds) ? userIds : [userIds];
 				ids.forEach(id => {
-					const parsed = parseInt(id, 10);
+					const parsed = parseInt(String(id), 10);
 					if (!this.conferenceUsersInCall.includes(parsed)) {
 						this.conferenceUsersInCall.push(parsed);
 					}
@@ -727,16 +123,16 @@ this.BX.Call = this.BX.Call || {};
 			},
 			removeConferenceUsersInCall(userIds) {
 				const ids = Array.isArray(userIds) ? userIds : [userIds];
-				const idsToRemove = new Set(ids.map(id => parseInt(id, 10)));
+				const idsToRemove = new Set(ids.map(id => parseInt(String(id), 10)));
 				this.conferenceUsersInCall = this.conferenceUsersInCall.filter(id => !idsToRemove.has(id));
 			},
 			setConferencePresenters(presenters, replace = false) {
 				const ids = Array.isArray(presenters) ? presenters : [presenters];
 				if (replace) {
-					this.conferencePresenters = ids.map(id => parseInt(id, 10));
+					this.conferencePresenters = ids.map(id => parseInt(String(id), 10));
 				} else {
 					ids.forEach(id => {
-						const parsed = parseInt(id, 10);
+						const parsed = parseInt(String(id), 10);
 						if (!this.conferencePresenters.includes(parsed)) {
 							this.conferencePresenters.push(parsed);
 						}
@@ -805,16 +201,575 @@ this.BX.Call = this.BX.Call || {};
 				this.conferenceIsBroadcast = false;
 				this.conferenceRightPanelMode = 'hidden';
 				this.conferenceHasErrorInCall = false;
-			},
-			resetAll() {
-				this.$reset();
 			}
-
-			// endregion Conference actions
 		}
 	});
 
-	exports.useCallStore = useCallStore;
+	const useCallIncomingStore = ui_vue3_pinia.defineStore('call-incoming', {
+		state: () => ({
+			callType: 'regular',
+			callerName: '',
+			callerAvatar: '',
+			callerType: '',
+			callerColor: null,
+			video: false,
+			hasCamera: false,
+			initialMicrophoneState: true,
+			initialCameraState: false,
+			isDesktop: false
+		}),
+		actions: {
+			initFromParams(params) {
+				if (params.callType === 'regular' || params.callType === 'conference') {
+					this.callType = params.callType;
+				}
+				if (main_core.Type.isString(params.callerName)) {
+					this.callerName = main_core.Text.decode(params.callerName);
+				}
+				if (main_core.Type.isString(params.callerAvatar)) {
+					this.callerAvatar = params.callerAvatar;
+				} else {
+					this.callerAvatar = '';
+				}
+				if (main_core.Type.isString(params.callerType)) {
+					this.callerType = params.callerType;
+				} else {
+					this.callerType = '';
+				}
+				if (main_core.Type.isStringFilled(params.callerColor)) {
+					this.callerColor = params.callerColor;
+				}
+				this.video = Boolean(params.video);
+				this.hasCamera = Boolean(params.hasCamera);
+				this.initialMicrophoneState = Boolean(params.microphoneState ?? true);
+				this.initialCameraState = Boolean(params.cameraState ?? false);
+				this.isDesktop = Boolean(params.isDesktop);
+			},
+			setHasCamera(value) {
+				if (this.callType !== 'regular') {
+					return;
+				}
+				this.hasCamera = Boolean(value);
+			}
+		}
+	});
 
-})(this.BX.Call.Store = this.BX.Call.Store || {}, BX.Vue3.Pinia);
+	function normalizeRenderer(renderer) {
+		if (!renderer) {
+			return null;
+		}
+		if (typeof renderer.getTracks === 'function') {
+			return renderer;
+		}
+		const inner = renderer.stream;
+		if (inner && typeof inner.getTracks === 'function') {
+			return inner;
+		}
+		return null;
+	}
+
+	function useMediaStore$1() {
+		const pinia = ui_vue3_pinia.getActivePinia();
+		return pinia?._s?.get('callMedia') ?? null;
+	}
+	function defaultUser(id, overrides = {}) {
+		return {
+			id,
+			name: '',
+			avatar: '',
+			state: 'Idle',
+			microphoneState: true,
+			cameraState: false,
+			screenSharingState: false,
+			talking: false,
+			floorRequestState: false,
+			connectionQuality: 100,
+			videoPaused: false,
+			streamVersion: 0,
+			...overrides
+		};
+	}
+	const useUsersStore = ui_vue3_pinia.defineStore('callUsers', {
+		state: () => ({
+			users: {},
+			currentUserId: null,
+			speakerId: null,
+			raiseHandQueue: [],
+			talkingQueue: []
+		}),
+		getters: {
+			userById: state => userId => state.users[userId] ?? null,
+			currentUser: state => state.currentUserId === null ? null : state.users[state.currentUserId] ?? null,
+			isCurrentUser: state => userId => userId === state.currentUserId,
+			usersArray: state => Object.values(state.users),
+			userIds: state => Object.keys(state.users).map(Number),
+			connectedUsers: state => Object.values(state.users).filter(u => u.state === 'Connected'),
+			talkingUsers: state => Object.values(state.users).filter(u => u.talking),
+			speakerUser: state => state.speakerId === null ? null : state.users[state.speakerId] ?? null,
+			raiseHandUsers: state => state.raiseHandQueue.map(id => state.users[id]).filter(Boolean),
+			streamForUser(state) {
+				return userId => {
+					if (userId === state.currentUserId) {
+						const mediaStore = useMediaStore$1();
+						if (mediaStore !== null) {
+							void mediaStore.localStreamVersion;
+						}
+						return normalizeRenderer(call_lib_mediaRegistry.MediaStreamRegistry.getLocalStream());
+					}
+					void state.users[userId]?.streamVersion;
+					return normalizeRenderer(call_lib_mediaRegistry.MediaStreamRegistry.getRenderer(userId));
+				};
+			},
+			mirrorFor(state) {
+				return userId => {
+					if (userId !== state.currentUserId) {
+						return false;
+					}
+					return useMediaStore$1()?.flipLocalVideo ?? false;
+				};
+			}
+		},
+		actions: {
+			setCurrentUser(userId, fields = {}) {
+				this.currentUserId = userId;
+				this.users[userId] = {
+					...defaultUser(userId, {
+						state: 'Connected'
+					}),
+					...this.users[userId],
+					...fields,
+					id: userId
+				};
+			},
+			clearCurrentUser() {
+				this.currentUserId = null;
+			},
+			upsertUser(userId, fields = {}) {
+				const id = parseInt(String(userId), 10);
+				this.users[id] = {
+					...(this.users[id] ?? defaultUser(id)),
+					...fields,
+					id
+				};
+			},
+			updateUser(userId, fields) {
+				const id = parseInt(String(userId), 10);
+				if (this.users[id]) {
+					this.users[id] = {
+						...this.users[id],
+						...fields
+					};
+				} else {
+					this.upsertUser(id, fields);
+				}
+			},
+			removeUser(userId) {
+				const id = parseInt(String(userId), 10);
+				if (id === this.currentUserId) {
+					return;
+				}
+				delete this.users[id];
+				this.raiseHandQueue = this.raiseHandQueue.filter(uid => uid !== id);
+				this.talkingQueue = this.talkingQueue.filter(uid => uid !== id);
+			},
+			setSpeaker(userId) {
+				this.speakerId = userId;
+			},
+			incrementStreamVersion(userId) {
+				const id = parseInt(String(userId), 10);
+				if (this.users[id]) {
+					this.users[id].streamVersion += 1;
+				} else {
+					this.upsertUser(id, {
+						streamVersion: 1
+					});
+				}
+			},
+			addRaiseHand(userId) {
+				const id = parseInt(String(userId), 10);
+				if (!this.raiseHandQueue.includes(id)) {
+					this.raiseHandQueue.push(id);
+				}
+			},
+			removeRaiseHand(userId) {
+				const id = parseInt(String(userId), 10);
+				this.raiseHandQueue = this.raiseHandQueue.filter(uid => uid !== id);
+			},
+			clearRaiseHands() {
+				this.raiseHandQueue = [];
+			},
+			setFloorRequest(userId, raised) {
+				const id = parseInt(String(userId), 10);
+				this.updateUser(id, {
+					floorRequestState: raised
+				});
+				if (raised) {
+					this.addRaiseHand(id);
+				} else {
+					this.removeRaiseHand(id);
+				}
+			},
+			refreshTalkingQueue() {
+				const talking = Object.values(this.users).filter(u => u.talking).map(u => u.id).sort((a, b) => a - b);
+				const connected = Object.values(this.users).filter(u => u.state === 'Connected' && !u.talking).map(u => u.id);
+				this.talkingQueue = [...talking, ...connected];
+			},
+			toggleRaiseHand() {
+				const me = this.currentUser;
+				if (!me) {
+					return;
+				}
+				const next = !me.floorRequestState;
+				this.setFloorRequest(me.id, next);
+				useMediaStore$1()?._bridge?.emit('onButtonClick', {
+					buttonName: 'floorRequest'
+				});
+			},
+			resetUsers() {
+				this.users = {};
+				this.currentUserId = null;
+				this.speakerId = null;
+				this.raiseHandQueue = [];
+				this.talkingQueue = [];
+			}
+		}
+	});
+
+	const useMediaStore = ui_vue3_pinia.defineStore('callMedia', {
+		state: () => ({
+			localStreamVersion: 0,
+			flipLocalVideo: false,
+			hasLocalVideo: false,
+			hasLocalAudio: false,
+			microphoneDeviceId: null,
+			cameraDeviceId: null,
+			speakerDeviceId: null,
+			isSpeakerMuted: false,
+			connectionQuality: 100,
+			_bridge: null
+		}),
+		getters: {
+			localStream(state) {
+				void state.localStreamVersion;
+				return normalizeRenderer(call_lib_mediaRegistry.MediaStreamRegistry.getLocalStream());
+			},
+			isMicrophoneMuted() {
+				const me = useUsersStore().currentUser;
+				return me ? !me.microphoneState : false;
+			},
+			isCameraOn() {
+				return useUsersStore().currentUser?.cameraState ?? false;
+			},
+			isScreenSharingActive() {
+				return useUsersStore().currentUser?.screenSharingState ?? false;
+			}
+		},
+		actions: {
+			setFlipLocalVideo(flip) {
+				this.flipLocalVideo = flip;
+			},
+			setLocalMediaMetadata(fields) {
+				if (fields.hasLocalVideo !== undefined) {
+					this.hasLocalVideo = fields.hasLocalVideo;
+				}
+				if (fields.hasLocalAudio !== undefined) {
+					this.hasLocalAudio = fields.hasLocalAudio;
+				}
+			},
+			setDeviceIds(fields) {
+				if (fields.microphoneId !== undefined) {
+					this.microphoneDeviceId = fields.microphoneId;
+				}
+				if (fields.cameraId !== undefined) {
+					this.cameraDeviceId = fields.cameraId;
+				}
+				if (fields.speakerId !== undefined) {
+					this.speakerDeviceId = fields.speakerId;
+				}
+			},
+			setSpeakerMuted(muted) {
+				this.isSpeakerMuted = muted;
+			},
+			setConnectionQuality(quality) {
+				this.connectionQuality = quality;
+			},
+			incrementLocalStreamVersion() {
+				this.localStreamVersion += 1;
+			},
+			attachBridge(bridge) {
+				this._bridge = bridge;
+			},
+			detachBridge() {
+				this._bridge = null;
+			},
+			toggleMicrophone() {
+				const usersStore = useUsersStore();
+				const me = usersStore.currentUser;
+				if (!me) {
+					return;
+				}
+				const next = !me.microphoneState;
+				usersStore.updateUser(me.id, {
+					microphoneState: next
+				});
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'microphone'
+				});
+			},
+			toggleCamera() {
+				const usersStore = useUsersStore();
+				const me = usersStore.currentUser;
+				if (!me) {
+					return;
+				}
+				const next = !me.cameraState;
+				usersStore.updateUser(me.id, {
+					cameraState: next
+				});
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'camera'
+				});
+			},
+			toggleScreenSharing() {
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'screen'
+				});
+			},
+			toggleRaiseHand() {
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'floorRequest'
+				});
+			}
+		}
+	});
+
+	const useUiStore = ui_vue3_pinia.defineStore('callUi', {
+		state: () => ({
+			viewState: 'Closed',
+			isFullScreen: false,
+			layout: 'Grid',
+			uiState: 'Idle',
+			callTitle: '',
+			size: 'full',
+			maxWidth: null,
+			isWindowFocus: true,
+			roomState: '',
+			pinnedUserId: null,
+			layoutWidth: 0,
+			layoutHeight: 0,
+			layoutContentHeight: 0,
+			isCopilotActive: false,
+			isCopilotFeaturesEnabled: false,
+			buttons: {},
+			notifications: [],
+			notificationTick: Date.now(),
+			confirmModal: {
+				visible: false,
+				title: '',
+				message: '',
+				buttons: [],
+				promiseId: null
+			},
+			isRenameSliderOpen: false,
+			_bridge: null
+		}),
+		getters: {
+			isGridMode: state => state.layout === 'Grid',
+			isCenteredMode: state => state.layout === 'Centered',
+			isMobileMode: state => state.layout === 'Mobile',
+			isUserPinned: state => userId => state.pinnedUserId === userId,
+			isButtonBlocked: state => buttonName => state.buttons[buttonName]?.blocked ?? false,
+			isButtonVisible: state => buttonName => state.buttons[buttonName]?.visible ?? true,
+			buttonCounter: state => buttonName => state.buttons[buttonName]?.counter ?? 0,
+			activeNotifications: state => state.notifications.filter(n => n.createdAt + n.ttl > state.notificationTick)
+		},
+		actions: {
+			setViewState(viewState) {
+				this.viewState = viewState;
+			},
+			setFullScreen(value) {
+				this.isFullScreen = value;
+			},
+			setLayout(layout) {
+				this.layout = layout;
+			},
+			setUiState(uiState) {
+				this.uiState = uiState;
+			},
+			setCallTitle(title) {
+				this.callTitle = title;
+			},
+			setSize(size) {
+				this.size = size;
+			},
+			setMaxWidth(maxWidth) {
+				this.maxWidth = maxWidth;
+			},
+			setWindowFocus(focus) {
+				this.isWindowFocus = focus;
+			},
+			setRoomState(state) {
+				this.roomState = state;
+			},
+			setLayoutDimensions(fields) {
+				if (fields.layoutWidth !== undefined) this.layoutWidth = fields.layoutWidth;
+				if (fields.layoutHeight !== undefined) this.layoutHeight = fields.layoutHeight;
+				if (fields.layoutContentHeight !== undefined) this.layoutContentHeight = fields.layoutContentHeight;
+			},
+			setPinnedUser(userId) {
+				this.pinnedUserId = userId;
+			},
+			togglePinnedUser(userId) {
+				this.pinnedUserId = this.pinnedUserId === userId ? null : userId;
+			},
+			setCopilotActive(value) {
+				this.isCopilotActive = value;
+			},
+			setCopilotFeaturesEnabled(value) {
+				this.isCopilotFeaturesEnabled = value;
+			},
+			closeRenameSlider() {
+				this.isRenameSliderOpen = false;
+			},
+			setButtonState(buttonName, fields) {
+				if (!this.buttons[buttonName]) {
+					this.buttons[buttonName] = {
+						active: false,
+						blocked: false,
+						visible: true,
+						counter: 0
+					};
+				}
+				this.buttons[buttonName] = {
+					...this.buttons[buttonName],
+					...fields
+				};
+			},
+			blockButtons(names) {
+				names.forEach(n => this.setButtonState(n, {
+					blocked: true
+				}));
+			},
+			unblockButtons(names) {
+				names.forEach(n => this.setButtonState(n, {
+					blocked: false
+				}));
+			},
+			showButtons(names) {
+				names.forEach(n => this.setButtonState(n, {
+					visible: true
+				}));
+			},
+			hideButtons(names) {
+				names.forEach(n => this.setButtonState(n, {
+					visible: false
+				}));
+			},
+			addNotification(type, data) {
+				const id = crypto.randomUUID();
+				this.notifications.push({
+					id,
+					type,
+					data,
+					createdAt: Date.now(),
+					ttl: 5000
+				});
+				return id;
+			},
+			removeNotification(id) {
+				this.notifications = this.notifications.filter(n => n.id !== id);
+			},
+			refreshNotificationTick() {
+				this.notificationTick = Date.now();
+			},
+			showConfirmModal(params) {
+				this.confirmModal = {
+					visible: true,
+					title: '',
+					message: '',
+					buttons: [],
+					promiseId: null,
+					...params
+				};
+			},
+			hideConfirmModal() {
+				this.confirmModal = {
+					visible: false,
+					title: '',
+					message: '',
+					buttons: [],
+					promiseId: null
+				};
+			},
+			attachBridge(bridge) {
+				this._bridge = bridge;
+			},
+			detachBridge() {
+				this._bridge = null;
+			},
+			toggleChat() {
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'chat'
+				});
+			},
+			toggleFollowUp() {
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'copilot'
+				});
+			},
+			hangup() {
+				this._bridge?.emit('onButtonClick', {
+					buttonName: 'hangup'
+				});
+			}
+		}
+	});
+
+	const useRecordingStore = ui_vue3_pinia.defineStore('callRecording', {
+		state: () => ({
+			state: 'Inactive',
+			type: null,
+			initiatorId: null,
+			startedAt: null,
+			_bridge: null
+		}),
+		getters: {
+			isActive: state => state.state !== 'Inactive' && state.state !== 'Destroyed',
+			isPaused: state => state.state === 'Paused',
+			duration(state) {
+				return state.startedAt === null ? 0 : Date.now() - state.startedAt;
+			}
+		},
+		actions: {
+			setState(fields) {
+				if (fields.state !== undefined) this.state = fields.state;
+				if (fields.type !== undefined) this.type = fields.type;
+				if (fields.initiatorId !== undefined) this.initiatorId = fields.initiatorId;
+			},
+			setStartedAt(timestamp) {
+				this.startedAt = timestamp;
+			},
+			attachBridge(bridge) {
+				this._bridge = bridge;
+			},
+			detachBridge() {
+				this._bridge = null;
+			},
+			menuAction(state, kind) {
+				this._bridge?.emit('onCommonRecordMenu', {
+					state,
+					kind
+				});
+			}
+		}
+	});
+
+	exports.useCallIncomingStore = useCallIncomingStore;
+	exports.useCallStore = useCallStore;
+	exports.useMediaStore = useMediaStore;
+	exports.useRecordingStore = useRecordingStore;
+	exports.useUiStore = useUiStore;
+	exports.useUsersStore = useUsersStore;
+
+})(this.BX.Call.Store = this.BX.Call.Store || {}, BX.Vue3.Pinia, BX, BX.Call.Lib.MediaRegistry);
 //# sourceMappingURL=call-store.bundle.js.map

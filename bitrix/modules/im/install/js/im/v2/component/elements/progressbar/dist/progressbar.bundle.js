@@ -55,6 +55,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				default: () => {
 					return {};
 				}
+			},
+			// the cross of the loader stops the upload; where it cannot be stopped the loader only tells
+			// that the file is on its way, and offers no control that would do nothing
+			allowCancel: {
+				type: Boolean,
+				default: true
 			}
 		},
 		emits: ['cancelClick'],
@@ -87,7 +93,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.statusMap?.[this.file.status]?.iconClass) {
 					return this.statusMap[this.file.status].iconClass;
 				}
-				return ui_iconSet_api_vue.Outline.CROSS_L;
+				return this.allowCancel ? ui_iconSet_api_vue.Outline.CROSS_L : ui_iconSet_api_vue.Outline.CLOUD_SYNC;
 			},
 			containerClass() {
 				return `--size-${this.size.toLowerCase()}`;
@@ -101,7 +107,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		methods: {
 			onLoaderClick() {
-				if (!this.handleStatus.includes(this.file.status)) {
+				if (!this.allowCancel || !this.handleStatus.includes(this.file.status)) {
 					return;
 				}
 				this.$emit('cancelClick', {
@@ -118,7 +124,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:class="containerClass"
 			class="bx-im-progress-bar__container" 
 		>
-			<div class="bx-im-progress-bar__loader" @click="onLoaderClick">
+			<div
+				class="bx-im-progress-bar__loader"
+				:class="{ '--static': !allowCancel }"
+				@click="onLoaderClick"
+			>
 				<svg viewBox="0 0 48 48">
 					<circle
 						:style="progressStyles"

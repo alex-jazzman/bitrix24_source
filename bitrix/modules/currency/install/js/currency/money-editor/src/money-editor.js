@@ -104,10 +104,17 @@ export class MoneyEditor
 	{
 		const cursorPos = BX.getCaretPosition(this.input);
 		const originalValue = this.input.value;
+		const selectionStart = this.input.selectionStart;
+		const selectionEnd = this.input.selectionEnd;
+		const selectionDirection = this.input.selectionDirection;
 
 		this.changeValue();
 
-		if (originalValue.length > 0)
+		if (originalValue === this.input.value)
+		{
+			this.input.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
+		}
+		else if (originalValue.length > 0)
 		{
 			BX.setCaretPosition(this.input, cursorPos - originalValue.length + this.input.value.length);
 		}

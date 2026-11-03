@@ -159,3 +159,12 @@ declare type OpenlinesSession = {
 	pinned: boolean,
 	isClosed: boolean,
 }
+
+/**
+ * A once-subscription of the init result together with the run it waits for.
+ * runId is null until a run starts and claims the subscription.
+ */
+declare type OnceInitSubscription = {
+	runId: number | null,
+	listener: Function | null,
+}

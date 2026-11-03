@@ -23,7 +23,7 @@ export default class ZIndexManager
 		return stack!.register(element, options);
 	}
 
-	static unregister(element: HTMLElement)
+	static unregister(element: HTMLElement): void
 	{
 		const parentNode = this.#getParentNode(element);
 		const stack = this.getStack(parentNode as HTMLElement);

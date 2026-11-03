@@ -5,6 +5,7 @@ return [
 		'type',
 		'utils/url',
 		'utils/uuid',
+		'utils/array',
 		'assets/icons',
 		'device/connection',
 		'im:messenger/const',
@@ -30,5 +31,7 @@ return [
 		'./src/entity-selector',
 		'./src/counter',
 		'./src/sticker',
+		'./src/copilot-mention',
+		'./src/guest-call',
 	],
 ];

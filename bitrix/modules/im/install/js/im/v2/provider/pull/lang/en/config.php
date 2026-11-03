@@ -1,2 +1,2 @@
 <?php
-$MESS["IM_PULL_RECENT_MESSAGE_DELETED"] = "This message has been deleted.";
+$MESS['IM_PULL_AI_TASK_CREATE_ERROR'] = 'Could not create task. Please try again';

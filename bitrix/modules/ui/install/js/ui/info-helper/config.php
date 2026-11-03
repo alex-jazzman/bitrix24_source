@@ -15,11 +15,13 @@ return [
 	'css' => 'dist/info-helper.bundle.css',
 	'js' => 'dist/info-helper.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.loader',
 		'ui.analytics',
+		'ui.buttons',
+		'ui.dialogs.messagebox',
 		'ui.info-helper',
 		'ui.popup-with-header',
-		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [

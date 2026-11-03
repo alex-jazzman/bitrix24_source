@@ -33,7 +33,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription =
 	(new ActivityDescription(
 		(string)Loc::getMessage('FULL_REPORT_READY_NAME'),
-		(string)Loc::getMessage('FULL_REPORT_READY_DESCR'),
+		(string)Loc::getMessage('FULL_REPORT_READY_DESCR_MSGVER_1'),
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('FullReportReadyTrigger')
@@ -50,6 +50,10 @@ $arActivityDescription =
 			'MANAGER' => [
 				'Name' => (string)Loc::getMessage('FULL_REPORT_READY_TRIGGER_RETURN_FIELD_MANAGER'),
 				'Type' => FieldType::USER,
+			],
+			'EventDateTime' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_READY_TRIGGER_RETURN_FIELD_EVENT_DATE_TIME'),
+				'Type' => FieldType::DATETIME,
 			],
 		])
 		->setIcon(Outline::FILE_WITH_CLOCK->name)

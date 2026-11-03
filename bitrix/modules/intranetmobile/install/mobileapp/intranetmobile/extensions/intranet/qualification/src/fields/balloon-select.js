@@ -16,6 +16,7 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 		 * @param {string} props.testId
 		 * @param {Array} [props.items=[]]
 		 * @param {Array} [props.selectedItemIds=[]]
+		 * @param {boolean} [props.multiple=false] several items can be selected at once
 		 * @param {Function} [props.onChange=null]
 		 */
 		constructor(props)
@@ -54,12 +55,14 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 
 		#renderItem(item, isFirst)
 		{
+			const isSelected = this.#isItemSelected(item.id);
+
 			let borderWidth = 0;
 			let backgroundColor = Color.accentSoftBlue2;
-			let textColor = this.#isAnyItemSelected() ? Color.base4 : Color.base1;
+			let textColor = this.#shouldDimUnselectedItems() ? Color.base4 : Color.base1;
 			let iconColor = backgroundColor;
 
-			if (this.#isItemSelected(item.id))
+			if (isSelected)
 			{
 				borderWidth = 2;
 				backgroundColor = Color.bgContentPrimary;
@@ -81,7 +84,7 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 						borderColor: Color.accentMainPrimaryalt.toHex(),
 						backgroundColor: backgroundColor.toHex(),
 					},
-					testId: this.getTestId('item-container'),
+					testId: this.getTestId(`item-container-${item.id}`),
 					onClick: () => this.#onItemClick(item.id),
 				},
 				Text4({
@@ -91,7 +94,7 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 					accent: true,
 					color: textColor,
 					text: item.title,
-					testId: this.getTestId('item-field'),
+					testId: this.getTestId(`item-field-${item.id}`),
 				}),
 				IconView({
 					style: {
@@ -100,20 +103,52 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 					icon: Icon.CHECK,
 					size: 24,
 					color: iconColor,
+					// the mark is always rendered and only recolored, so the state has to live in the locator
+					testId: this.getTestId(`item-check-${isSelected ? 'selected' : 'unselected'}-${item.id}`),
 				}),
 			);
 		}
 
 		#onItemClick(itemId)
 		{
-			const { items, onChange } = this.props;
+			const { onChange } = this.props;
 
-			const selectedItemIds = this.#isItemSelected(itemId) ? [] : [itemId];
-			const selectedItems = Object.fromEntries(
-				selectedItemIds.map((id) => [id, items.find((item) => item.id === id).value]),
+			let toggledItemIds = [];
+
+			this.setState(
+				// setState is not synchronous, so the accumulated set is derived from the previous state
+				(state) => {
+					toggledItemIds = this.#toggleItem(itemId, state.selectedItemIds);
+
+					return { selectedItemIds: toggledItemIds };
+				},
+				// the payload is the set the updater computed: a parent rerender can reassign the state by then
+				() => onChange?.(this.#getSelectedItems(toggledItemIds)),
 			);
+		}
 
-			this.setState({ selectedItemIds }, () => onChange?.(selectedItems));
+		#getSelectedItems(selectedItemIds)
+		{
+			const { items } = this.props;
+
+			return Object.fromEntries(
+				selectedItemIds
+					.map((itemId) => items.find((item) => item.id === itemId))
+					.filter(Boolean)
+					.map(({ id, value }) => [id, value]),
+			);
+		}
+
+		#toggleItem(itemId, selectedItemIds)
+		{
+			if (selectedItemIds.includes(itemId))
+			{
+				return this.props.multiple
+					? selectedItemIds.filter((id) => id !== itemId)
+					: [];
+			}
+
+			return this.props.multiple ? [...selectedItemIds, itemId] : [itemId];
 		}
 
 		#isItemSelected(itemId)
@@ -121,15 +156,16 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 			return this.state.selectedItemIds.includes(itemId);
 		}
 
-		#isAnyItemSelected()
+		#shouldDimUnselectedItems()
 		{
-			return this.state.selectedItemIds.length > 0;
+			return !this.props.multiple && this.state.selectedItemIds.length > 0;
 		}
 	}
 
 	BalloonSelect.defaultProps = {
 		items: [],
 		selectedItemIds: [],
+		multiple: false,
 		onChange: null,
 	};
 
@@ -143,6 +179,7 @@ jn.define('intranet/qualification/fields/balloon-select', (require, exports, mod
 			}),
 		),
 		selectedItemIds: PropTypes.arrayOf(PropTypes.string),
+		multiple: PropTypes.bool,
 		onChange: PropTypes.func,
 	};
 

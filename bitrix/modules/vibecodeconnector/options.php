@@ -3,15 +3,18 @@
 declare(strict_types=1);
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Feature;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Vibecodeconnector\Internal\Config\Feature\CabinetSeamlessEntry;
 use Bitrix\Vibecodeconnector\Internal\Exception\InvalidEndpointUrlException;
 use Bitrix\Vibecodeconnector\Internal\Exception\PublicKeyFetchFailedException;
 use Bitrix\Vibecodeconnector\Internal\Exception\RegistrationFailedException;
 use Bitrix\Vibecodeconnector\Internal\Repository\Pairing\PairingRepository;
 use Bitrix\Vibecodeconnector\Internal\Service\Bot\BotService;
 use Bitrix\Vibecodeconnector\Internal\Service\Catalog\OpenApp\OpenAppSettings;
+use Bitrix\Vibecodeconnector\Internal\Service\Embed\EmbedCreateSettings;
 use Bitrix\Vibecodeconnector\Internal\Service\Diagnostic\CloudSharedKeyLog;
 use Bitrix\Vibecodeconnector\Internal\Service\Diagnostic\IncomingJwtLog;
 use Bitrix\Vibecodeconnector\Internal\Service\Endpoint\BaseEndpointProvider;
@@ -62,6 +65,7 @@ $availabilityService = ServiceLocator::getInstance()->get(AvailabilityService::c
 $permissionSourceSettings = ServiceLocator::getInstance()->get(PermissionSourceSettings::class);
 $permissionSourcePolicy = ServiceLocator::getInstance()->get(PermissionSourcePolicy::class);
 $openAppSettings = ServiceLocator::getInstance()->get(OpenAppSettings::class);
+$embedCreateSettings = ServiceLocator::getInstance()->get(EmbedCreateSettings::class);
 $pairingKeyRefresher = ServiceLocator::getInstance()->get(PairingKeyRefresher::class);
 $pairingSettings = ServiceLocator::getInstance()->get(PairingSettings::class);
 $cloudSharedKeyProvisioner = ServiceLocator::getInstance()->get(CloudSharedKeyProvisioner::class);
@@ -134,6 +138,15 @@ if (
 
 		$availabilityService->setEnabled($request->getPost('is_ready') !== null);
 		$openAppSettings->setOpenInIframeEnabled($request->getPost('open_app_in_iframe') !== null);
+		if ($request->getPost('cabinet_seamless_entry') !== null)
+		{
+			Feature::enable(CabinetSeamlessEntry::class);
+		}
+		else
+		{
+			Feature::disable(CabinetSeamlessEntry::class);
+		}
+		$embedCreateSettings->setEnabled($request->getPost('embed_create_in_iframe') !== null);
 
 		$permissionSourceSettings->setVibecodeSource($request->getPost('permission_source') !== null);
 		$ttlInput = trim((string)$request->getPost('pairing_max_ttl_seconds'));
@@ -359,6 +372,8 @@ $cloudSharedUrl = $cloudEndpointProvider->getCloudUrl();
 $cloudKeySource = $cloudKeySourceSettings->getSource();
 $isEnabled = $availabilityService->isEnabled();
 $isOpenAppInIframeEnabled = $openAppSettings->isOpenInIframeEnabled();
+$isCabinetSeamlessEntryEnabled = Feature::isEnabled(CabinetSeamlessEntry::class);
+$isEmbedCreateEnabled = $embedCreateSettings->isEnabled();
 $isRegistered = $registrationService->isRegistered();
 $isCloudSharedConfigured = $registrationService->isCloudSharedConfigured();
 $isCloudSharedAvailable = $registrationService->isCloudSharedAvailable();
@@ -488,6 +503,46 @@ $cloudSharedKeyLogUrl = $eventLogUrl(CloudSharedKeyLog::AUDIT_TYPE_ID);
 			>
 			<label for="vibecodeconnector_open_app_in_iframe">
 				<?= Loc::getMessage('VIBECODECONNECTOR_OPT_OPEN_APP_IN_IFRAME_HINT') ?>
+			</label>
+		</td>
+	</tr>
+	<tr>
+		<td style="width: 30%;">
+			<label for="vibecodeconnector_embed_create_in_iframe">
+				<?= Loc::getMessage('VIBECODECONNECTOR_OPT_EMBED_CREATE_IN_IFRAME') ?>:
+			</label>
+		</td>
+		<td style="width: 70%;">
+			<input
+				type="checkbox"
+				id="vibecodeconnector_embed_create_in_iframe"
+				name="embed_create_in_iframe"
+				value="Y"
+				<?= $isEmbedCreateEnabled ? 'checked' : '' ?>
+				<?= $moduleAccess >= 'W' ? '' : 'disabled' ?>
+			>
+			<label for="vibecodeconnector_embed_create_in_iframe">
+				<?= Loc::getMessage('VIBECODECONNECTOR_OPT_EMBED_CREATE_IN_IFRAME_HINT') ?>
+			</label>
+		</td>
+	</tr>
+	<tr>
+		<td style="width: 30%;">
+			<label for="vibecodeconnector_cabinet_seamless_entry">
+				<?= Loc::getMessage('VIBECODECONNECTOR_OPT_CABINET_SEAMLESS_ENTRY') ?>:
+			</label>
+		</td>
+		<td style="width: 70%;">
+			<input
+				type="checkbox"
+				id="vibecodeconnector_cabinet_seamless_entry"
+				name="cabinet_seamless_entry"
+				value="Y"
+				<?= $isCabinetSeamlessEntryEnabled ? 'checked' : '' ?>
+				<?= $moduleAccess >= 'W' ? '' : 'disabled' ?>
+			>
+			<label for="vibecodeconnector_cabinet_seamless_entry">
+				<?= Loc::getMessage('VIBECODECONNECTOR_OPT_CABINET_SEAMLESS_ENTRY_HINT') ?>
 			</label>
 		</td>
 	</tr>

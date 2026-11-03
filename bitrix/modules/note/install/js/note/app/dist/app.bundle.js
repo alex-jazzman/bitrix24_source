@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_designTokens_air, ui_iconSet_main, main_core, main_core_events, ui_vue3, note_sidebar, note_recyclebin, note_ui_themeContext, note_analytics, ui_notification, ui_buttons, ui_system_dialog, ui_vue3_router, ui_iconSet_api_vue, note_ui_assets, note_ui_loader, note_ui_railGeometry, note_editor, note_search, note_shared, note_archive, note_workspace) {
+(function (exports, ui_designTokens_air, ui_iconSet_main, main_core, main_core_events, ui_vue3, note_sidebar, note_recyclebin, note_ui_themeContext, note_analytics, ui_notification, ui_buttons, ui_system_dialog, ui_vue3_router, ui_iconSet_api_vue, note_ui_assets, note_ui_loader, note_ui_railGeometry, ui_vue3_components_button, note_workspace, note_editor, note_search, note_shared, note_archive) {
 	'use strict';
 
 	const NoteLayout = {
@@ -72,7 +72,7 @@ this.BX.Note = this.BX.Note || {};
 				scrollAnchorY: 0,
 				scrollRaf: 0,
 				onWindowScroll: null,
-				// [ALG-01] Panel component, resolved after the lazy load of note.ai-chat. Null until the
+				// Panel component, resolved after the lazy load of note.ai-chat. Null until the
 				// first intent to open, which is what keeps the extension (and the whole widget stack)
 				// off an untouched page.
 				aiChatPanelComponent: null,
@@ -80,11 +80,11 @@ this.BX.Note = this.BX.Note || {};
 				aiChatMounted: false,
 				// Last owner seen on EVENT-02, including our own emissions.
 				aiChatRailOwner: null,
-				// [ALG-02] Mode and applied width as reported by the panel. Until it exists the shell
+				// Mode and applied width as reported by the panel. Until it exists the shell
 				// answers the same question itself (`railGeometry`), because the rail has to be reserved in
 				// flow from the first frame of opening, long before the panel extension is loaded.
 				aiChatGeometry: null,
-				// [ALG-02] Live input of that own computation. clientWidth, not innerWidth: the latter
+				// Live input of that own computation. clientWidth, not innerWidth: the latter
 				// counts the scrollbar and would move the overlay threshold by its width.
 				viewportWidth: document.documentElement.clientWidth,
 				onAiChatToggleRequested: null,
@@ -173,7 +173,7 @@ this.BX.Note = this.BX.Note || {};
 				return this.aiChatEnabled === true && this.state.isMobile !== true;
 			},
 			aiChatLabel() {
-				return String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_OPEN') ?? '').replace('#NAME#', String(this.aiChatName ?? ''));
+				return String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_OPEN') ?? '').replace('#COPILOT_NAME#', String(this.aiChatName ?? ''));
 			},
 			aiChatOpen() {
 				return this.state.aiChatOpen === true;
@@ -184,7 +184,7 @@ this.BX.Note = this.BX.Note || {};
 				return this.aiChatOpen && !this.aiChatMounted;
 			},
 			/**
-			 * [EVENT-02] Width the current rail resident takes up **in flow** — what a neighbour has to
+			 * Width the current rail resident takes up **in flow** - what a neighbour has to
 			 * step around, not the panel's width as such.
 			 *
 			 * `null` on purpose when the rail belongs to someone else: consumers read the variable with a
@@ -199,7 +199,7 @@ this.BX.Note = this.BX.Note || {};
 				return this.railGeometry.mode === 'inline' ? `${this.railGeometry.width}px` : '0px';
 			},
 			/**
-			 * [EVENT-02] The rail width is being dragged right now. Published next to the width itself,
+			 * The rail width is being dragged right now. Published next to the width itself,
 			 * because a neighbour that animates towards `--note-rail-width` — the right thing while the
 			 * panel slides open — visibly lags behind the pointer during a gesture.
 			 */
@@ -207,7 +207,7 @@ this.BX.Note = this.BX.Note || {};
 				return this.aiChatRailOwner === note_sidebar.NoteRailOwner.AI_CHAT && this.aiChatGeometry?.dragging === true;
 			},
 			/**
-			 * [ALG-02] Effective geometry of the rail: the panel's answer when there is one, the shell's
+			 * Effective geometry of the rail: the panel's answer when there is one, the shell's
 			 * own otherwise. Same function and same inputs on both sides, so the handover from the
 			 * placeholder to the panel does not change the width.
 			 */
@@ -258,7 +258,7 @@ this.BX.Note = this.BX.Note || {};
 				});
 				main_core.Dom.prepend(glow, wrapper);
 			},
-			// [ALG-01] EVENT-01 listener. The shell owns isOpen, the indicator and the rail signal;
+			// EVENT-01 listener. The shell owns isOpen, the indicator and the rail signal;
 			// idempotent in both directions, because "close the closed" really does arrive — the panel
 			// itself asks to close through this same public entry point.
 			async handleAiChatToggleRequested(event) {
@@ -324,7 +324,7 @@ this.BX.Note = this.BX.Note || {};
 				}));
 			},
 			notifyAiChatFailure() {
-				const content = String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '').replace('#NAME#', String(this.aiChatName ?? '')).trim();
+				const content = String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '').replace('#COPILOT_NAME#', String(this.aiChatName ?? '')).trim();
 				if (!content) {
 					return;
 				}
@@ -562,8 +562,81 @@ this.BX.Note = this.BX.Note || {};
 
 	const HomePage = {
 		name: 'HomePage',
+		components: {
+			NoteWorkspaceEmptyStateComponent: note_workspace.NoteWorkspaceEmptyStateComponent,
+			UiButton: ui_vue3_components_button.Button
+		},
+		inject: {
+			sidebarActions: {
+				from: 'noteSidebarActions',
+				default: null
+			},
+			sidebarState: {
+				from: 'noteSidebarState',
+				default: null
+			}
+		},
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		computed: {
+			showEmptyState() {
+				const collections = this.sidebarState?.collections;
+				return Array.isArray(collections) && collections.length === 0 && this.sidebarState.collectionsLoading === false && this.sidebarState.collectionsHasNextPage === false;
+			},
+			canEditCollections() {
+				return Boolean(this.sidebarState?.permissions?.canEditCollections);
+			},
+			emptyStateText() {
+				return main_core.Loc.getMessage('NOTE_APP_EMPTY_COLLECTIONS_MSGVER_1') || '';
+			},
+			createCollectionText() {
+				return main_core.Loc.getMessage('NOTE_SIDEBAR_PROMPT_COLLECTION_NAME') || '';
+			},
+			sharedWithMeText() {
+				return main_core.Loc.getMessage('NOTE_SIDEBAR_SHARED_WITH_ME') || '';
+			},
+			sharedButtonStyle() {
+				return this.canEditCollections ? ui_vue3_components_button.AirButtonStyle.PLAIN_ACCENT : ui_vue3_components_button.AirButtonStyle.FILLED;
+			}
+		},
+		methods: {
+			onCreateCollection() {
+				if (!this.canEditCollections) {
+					return;
+				}
+				void this.sidebarActions?.createCollection?.();
+			},
+			onOpenShared() {
+				this.sidebarActions?.navigateToShared?.();
+			}
+		},
 		template: `
 		<div class="content-body">
+			<NoteWorkspaceEmptyStateComponent v-if="showEmptyState" :text="emptyStateText">
+				<div
+					v-if="canEditCollections"
+					data-testid="note-home-empty-create-collection"
+				>
+					<UiButton
+						:text="createCollectionText"
+						:size="ButtonSize.LARGE"
+						:style="AirButtonStyle.FILLED"
+						@click="onCreateCollection"
+					/>
+				</div>
+				<div data-testid="note-home-empty-open-shared">
+					<UiButton
+						:text="sharedWithMeText"
+						:size="ButtonSize.LARGE"
+						:style="sharedButtonStyle"
+						@click="onOpenShared"
+					/>
+				</div>
+			</NoteWorkspaceEmptyStateComponent>
 		</div>
 	`
 	};
@@ -575,6 +648,15 @@ this.BX.Note = this.BX.Note || {};
 	const ROUTE_NAME_RECYCLE_BIN = 'recyclebin';
 	const ROUTE_NAME_DOCUMENT = 'document';
 	const ROUTE_NAME_WORKSPACE = 'workspace';
+
+	function showDocumentUnavailableNotification()
+	{
+		const content = main_core.Loc.getMessage('NOTE_SIDEBAR_ERROR_DOCUMENT_NOT_FOUND') || '';
+		if (content !== '')
+		{
+			BX.UI.Notification.Center.notify({ content, position: 'top-right' });
+		}
+	}
 
 	const DocumentPage = {
 		name: 'DocumentPage',
@@ -633,15 +715,7 @@ this.BX.Note = this.BX.Note || {};
 		},
 		methods: {
 			onUnavailable() {
-				// Unified handler for inaccessible/missing documents: single toast + redirect home.
-				// Sidebar route-sync stays silent; editor feature also stops surfacing local toasts for these statuses.
-				const message = main_core.Loc.getMessage('NOTE_SIDEBAR_ERROR_DOCUMENT_NOT_FOUND') || '';
-				if (message !== '') {
-					BX.UI.Notification.Center.notify({
-						content: message,
-						position: 'top-right'
-					});
-				}
+				showDocumentUnavailableNotification();
 				this.$router.replace({
 					name: ROUTE_NAME_HOME
 				});
@@ -814,11 +888,6 @@ this.BX.Note = this.BX.Note || {};
 					name: ROUTE_NAME_HOME
 				});
 			},
-			onDeleted() {
-				this.$router.replace({
-					name: ROUTE_NAME_HOME
-				});
-			},
 			onNotFound() {
 				const message = main_core.Loc.getMessage('NOTE_WORKSPACE_NOT_FOUND') || '';
 				if (message !== '') {
@@ -837,7 +906,6 @@ this.BX.Note = this.BX.Note || {};
 			:collection-id="collectionId"
 			@open="onOpen"
 			@archived="onArchived"
-			@deleted="onDeleted"
 			@not-found="onNotFound"
 		/>
 	`
@@ -1210,12 +1278,291 @@ this.BX.Note = this.BX.Note || {};
 		}
 	}
 
+	const NAVIGATION_TIMEOUT_MS = 15000;
+
+	function normalizeHash(hash)
+	{
+		const value = main_core.Type.isString(hash) ? hash.trim() : '';
+		if (value === '' || value === '#')
+		{
+			return '';
+		}
+
+		return value.startsWith('#') ? value : `#${value}`;
+	}
+
+	class DocumentLinkNavigation
+	{
+		#resolver;
+		#chooseFullContext;
+		#push;
+		#notifyUnavailable;
+		#reportViewed;
+		#isNavigationFailure;
+		#timeoutMs;
+		#latestAttemptId = 0;
+		#activeAttempt = null;
+		#prepared = null;
+
+		constructor(options)
+		{
+			this.#resolver = options.resolver;
+			this.#chooseFullContext = options.chooseFullContext;
+			this.#push = options.push;
+			this.#notifyUnavailable = options.notifyUnavailable;
+			this.#reportViewed = options.reportViewed;
+			this.#isNavigationFailure = options.isNavigationFailure ?? ui_vue3_router.isNavigationFailure;
+			this.#timeoutMs = main_core.Type.isNumber(options.timeoutMs) && Number.isFinite(options.timeoutMs)
+				? Math.max(0, Number(options.timeoutMs))
+				: NAVIGATION_TIMEOUT_MS
+			;
+		}
+
+		async openInternalDocument(target)
+		{
+			const documentId = Number(target?.id);
+			if (!Number.isInteger(documentId) || documentId <= 0)
+			{
+				return 'rejected';
+			}
+
+			const hash = normalizeHash(target?.hash);
+			const attempt = this.#beginAttempt(documentId, hash);
+			const outcome = await this.#resolve(attempt);
+
+			if (outcome.status === 'cancelled')
+			{
+				return 'stale';
+			}
+
+			if (outcome.status === 'timeout')
+			{
+				this.#notifyUnavailable();
+
+				return 'rejected';
+			}
+
+			if (attempt.id !== this.#latestAttemptId)
+			{
+				return 'stale';
+			}
+
+			if (outcome.status === 'error' || outcome.result.status !== 'ready')
+			{
+				this.#notifyUnavailable();
+				this.#cancelAttemptIfCurrent(attempt.id);
+
+				return 'rejected';
+			}
+
+			if (!this.#activeAttempt || this.#activeAttempt.id !== attempt.id)
+			{
+				return 'stale';
+			}
+
+			this.#activeAttempt.phase = 'navigating';
+			this.#prepared = {
+				attemptId: attempt.id,
+				documentId,
+				hash,
+				result: outcome.result,
+			};
+
+			let navigationResult = null;
+			try
+			{
+				navigationResult = await this.#push({
+					name: 'document',
+					params: { id: documentId },
+					...(hash === '' ? {} : { hash }),
+				});
+			}
+			catch
+			{
+				this.#cancelAttemptIfCurrent(attempt.id);
+
+				return 'rejected';
+			}
+
+			if (this.#isNavigationFailure(navigationResult))
+			{
+				this.#cancelAttemptIfCurrent(attempt.id);
+
+				return 'rejected';
+			}
+
+			if (attempt.id !== this.#latestAttemptId)
+			{
+				return 'stale';
+			}
+
+			this.#reportViewed();
+			this.#clearAttempt(attempt.id);
+
+			return 'opened';
+		}
+
+		onRouteAfterEach(to, failure = null)
+		{
+			const attempt = this.#activeAttempt;
+			if (
+				!failure
+				&& attempt?.phase === 'navigating'
+				&& Number(to?.params?.id) === attempt.documentId
+				&& normalizeHash(to?.hash) === attempt.hash
+			)
+			{
+				return { kind: 'own_navigation', attemptId: attempt.id };
+			}
+
+			this.cancelActiveAttempt();
+
+			return { kind: 'foreign_or_failed_navigation', attemptId: null };
+		}
+
+		finalizeRouteSync(attemptId)
+		{
+			if (attemptId !== null && this.#prepared?.attemptId === attemptId)
+			{
+				this.#prepared = null;
+			}
+		}
+
+		consumePrepared(documentId, hash)
+		{
+			const prepared = this.#prepared;
+			if (
+				!prepared
+				|| prepared.attemptId !== this.#latestAttemptId
+				|| prepared.documentId !== Number(documentId)
+				|| prepared.hash !== normalizeHash(hash)
+			)
+			{
+				return null;
+			}
+
+			this.#prepared = null;
+
+			return prepared.result;
+		}
+
+		cancelActiveAttempt()
+		{
+			this.#latestAttemptId += 1;
+			this.#settleActiveAttempt({ status: 'cancelled' });
+			this.#activeAttempt = null;
+			this.#prepared = null;
+		}
+
+		#beginAttempt(documentId, hash)
+		{
+			this.cancelActiveAttempt();
+			const attempt = {
+				id: ++this.#latestAttemptId,
+				documentId,
+				hash,
+				phase: 'resolving',
+				timer: null,
+				settle: null,
+			};
+			this.#activeAttempt = attempt;
+
+			return attempt;
+		}
+
+		#resolve(attempt)
+		{
+			return new Promise((resolve) => {
+				const activeAttempt = this.#activeAttempt;
+				if (!activeAttempt || activeAttempt.id !== attempt.id)
+				{
+					resolve({ status: 'cancelled' });
+
+					return;
+				}
+
+				activeAttempt.settle = resolve;
+				activeAttempt.timer = setTimeout(() => {
+					if (this.#activeAttempt?.id !== attempt.id)
+					{
+						return;
+					}
+
+					this.#settleActiveAttempt({ status: 'timeout' });
+					this.#latestAttemptId += 1;
+					this.#activeAttempt = null;
+					this.#prepared = null;
+				}, this.#timeoutMs);
+
+				void this.#resolver
+					.resolve(attempt.documentId, {
+						fullContext: Boolean(this.#chooseFullContext(attempt.documentId)),
+					})
+					.then(
+						(result) => this.#settleAttempt(attempt.id, { status: 'resolved', result }),
+						() => this.#settleAttempt(attempt.id, { status: 'error' }),
+					)
+				;
+			});
+		}
+
+		#settleAttempt(attemptId, outcome)
+		{
+			if (this.#activeAttempt?.id === attemptId)
+			{
+				this.#settleActiveAttempt(outcome);
+			}
+		}
+
+		#settleActiveAttempt(outcome)
+		{
+			const attempt = this.#activeAttempt;
+			if (!attempt)
+			{
+				return;
+			}
+
+			if (attempt.timer !== null)
+			{
+				clearTimeout(attempt.timer);
+				attempt.timer = null;
+			}
+
+			const settle = attempt.settle;
+			attempt.settle = null;
+			settle?.(outcome);
+		}
+
+		#cancelAttemptIfCurrent(attemptId)
+		{
+			if (this.#activeAttempt?.id === attemptId)
+			{
+				this.cancelActiveAttempt();
+			}
+		}
+
+		#clearAttempt(attemptId)
+		{
+			if (this.#activeAttempt?.id === attemptId)
+			{
+				this.#settleActiveAttempt({ status: 'cancelled' });
+				this.#activeAttempt = null;
+			}
+
+			if (this.#prepared?.attemptId === attemptId)
+			{
+				this.#prepared = null;
+			}
+		}
+	}
+
 	class NoteApp {
 		#app = null;
 		#router = null;
 		#options = {};
 		#sidebarFeature = null;
 		#routeDocumentResolver = null;
+		#documentLinkNavigation = null;
 		#routeDocumentContext = null;
 		#removeRouteAfterEach = null;
 		#routeSyncId = 0;
@@ -1270,6 +1617,13 @@ this.BX.Note = this.BX.Note || {};
 			};
 			this.#router = createNoteRouter();
 			this.#routeDocumentResolver = new RouteDocumentResolver();
+			this.#documentLinkNavigation = new DocumentLinkNavigation({
+				resolver: this.#routeDocumentResolver,
+				chooseFullContext: documentId => !this.#isDocumentLoadedInSidebar(documentId),
+				push: route => this.#router.push(route),
+				notifyUnavailable: () => showDocumentUnavailableNotification(),
+				reportViewed: () => note_analytics.NoteAnalytics.documentViewed('document')
+			});
 			this.#routeDocumentContext = ui_vue3.reactive(this.#createRouteDocumentContext());
 			this.#sidebarFeature = note_sidebar.createSidebarFeature({
 				router: this.#router,
@@ -1288,7 +1642,7 @@ this.BX.Note = this.BX.Note || {};
 					workspace: ROUTE_NAME_WORKSPACE
 				},
 				sidebarOptions,
-				// [TPL-02] First page of the favorites block, server-rendered with the collections. Handed to
+				// First page of the favorites block, server-rendered with the collections. Handed to
 				// the feature rather than hydrated afterwards: the feature reads the first page itself the
 				// moment it is created, and a payload arriving later would come after that request.
 				initialFavorites: this.#extractInitialFavorites(this.#options.initialFavorites),
@@ -1336,6 +1690,9 @@ this.BX.Note = this.BX.Note || {};
 			// Same reason: the document page gates the shortcuts-help surfaces (button, `?`/`Cmd+/`
 			// listener, panel) on this flag. The editor keymap itself stays on regardless.
 			this.#app.provide('hotkeysEnabled', Boolean(this.#options.hotkeysEnabled));
+			// Same path again: the toolbar reads it to decide whether the file button opens a menu of
+			// sources at all. With the flag off the button behaves exactly as it does today.
+			this.#app.provide('diskAttachmentsEnabled', Boolean(this.#options.diskAttachmentsEnabled));
 			// DTO-01. Static server values, so they go the short way like the flags above instead of
 			// into reactive state: the verdict and the region-aware product name for the phrases.
 			this.#app.provide('aiChatEnabled', Boolean(this.#options.aiChatEnabled));
@@ -1429,6 +1786,7 @@ this.BX.Note = this.BX.Note || {};
 		}
 		destroy() {
 			this.#applyMobileClass(false);
+			this.#documentLinkNavigation?.cancelActiveAttempt();
 			if (main_core.Type.isFunction(this.#childrenWatchStop)) {
 				this.#childrenWatchStop();
 				this.#childrenWatchStop = null;
@@ -1458,6 +1816,7 @@ this.BX.Note = this.BX.Note || {};
 				this.#handleChildrenChanged = null;
 			}
 			this.#documentActions = null;
+			this.#documentLinkNavigation = null;
 			this.#routeDocumentResolver = null;
 			this.#routeDocumentContext = null;
 			this.#routeSyncId = 0;
@@ -1540,16 +1899,20 @@ this.BX.Note = this.BX.Note || {};
 				});
 				await this.#syncRouteState(true);
 				if (!main_core.Type.isFunction(this.#removeRouteAfterEach)) {
-					this.#removeRouteAfterEach = this.#router.afterEach((to, from) => {
+					this.#removeRouteAfterEach = this.#router.afterEach((to, from, failure) => {
 						this.#previousRouteName = String(from?.name || '');
+						const navigation = this.#documentLinkNavigation?.onRouteAfterEach(to, failure) ?? null;
 
 						// Hash-only navigation within the same document: skip resync so an anchor click
 						// doesn't refetch/remount the document. The editor scrolls via its own $route.hash watcher.
 						const sameRoute = to?.name === from?.name && String(to?.params?.id ?? '') === String(from?.params?.id ?? '');
 						if (sameRoute && to?.hash !== from?.hash) {
+							this.#documentLinkNavigation?.finalizeRouteSync(navigation?.attemptId ?? null);
 							return;
 						}
-						void this.#syncRouteState(false);
+						void this.#syncRouteState(false).finally(() => {
+							this.#documentLinkNavigation?.finalizeRouteSync(navigation?.attemptId ?? null);
+						});
 					});
 				}
 			} catch {
@@ -1655,10 +2018,12 @@ this.BX.Note = this.BX.Note || {};
 				errorMessage: '',
 				viewMode: this.#resolveViewMode()
 			});
+			const routeHash = this.#router.currentRoute?.value?.hash ?? '';
+			const prepared = this.#documentLinkNavigation?.consumePrepared(routeDocId, routeHash) ?? null;
 			const fullContext = !this.#isDocumentLoadedInSidebar(routeDocId);
-			const resolved = await this.#routeDocumentResolver.resolve(routeDocId, {
+			const resolved = prepared ?? (await this.#routeDocumentResolver.resolve(routeDocId, {
 				fullContext
-			});
+			}));
 			if (syncId !== this.#routeSyncId) {
 				return;
 			}
@@ -2086,6 +2451,9 @@ this.BX.Note = this.BX.Note || {};
 		}
 		#createDocumentActions() {
 			return {
+				openInternalDocument: (target = {}) => {
+					return this.#documentLinkNavigation?.openInternalDocument(target) ?? Promise.resolve('rejected');
+				},
 				archive: documentId => {
 					// Confirm (with the optional "with nested" checkbox) lives in the sidebar
 					// archiveDocument use-case, mirroring the delete action below.
@@ -2119,14 +2487,17 @@ this.BX.Note = this.BX.Note || {};
 			// Editor passes the freshest recycleBinId/isOrphan via hints — routeDocumentContext.document
 			// stays at its initial-load snapshot and is stale after a push-driven trash flip.
 			const recycleBinId = Number(hints?.recycleBinId) || Number(doc?.recycleBinId) || 0;
-			const isOrphan = typeof hints?.isOrphan === 'boolean' ? hints.isOrphan : Boolean(doc?.isOrphan);
+			const isOrphan = main_core.Type.isBoolean(hints?.isOrphan) ? hints.isOrphan : Boolean(doc?.isOrphan);
 			if (!doc || recycleBinId <= 0) {
 				return;
 			}
+			const recycleBinService = new note_recyclebin.RecycleBinService();
 			let targetCollectionId = null;
 			if (isOrphan) {
 				const result = await note_recyclebin.openOrphanRestorePopup({
-					documentTitle: String(doc.title || '')
+					documentTitle: String(doc.title || ''),
+					canCreateCollection: Boolean(this.#sidebarFeature?.state?.permissions?.canEditCollections),
+					onCreateCollection: name => this.#createCollectionForRestore(recycleBinService, name)
 				});
 				if (!result) {
 					return;
@@ -2135,7 +2506,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 			let restoredDocumentId = 0;
 			try {
-				const result = await new note_recyclebin.RecycleBinService().restoreDocument(recycleBinId, targetCollectionId);
+				const result = await recycleBinService.restoreDocument(recycleBinId, targetCollectionId);
 				restoredDocumentId = Number(result?.documentId) || 0;
 			} catch {
 				this.#notify(main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC') || '', 'error');
@@ -2163,6 +2534,14 @@ this.BX.Note = this.BX.Note || {};
 			void this.#router?.push?.({
 				name: ROUTE_NAME_RECYCLE_BIN
 			});
+		}
+		async #createCollectionForRestore(recycleBinService, name) {
+			try {
+				return await recycleBinService.createCollection(name);
+			} catch (error) {
+				this.#notify(error?.message || main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC') || '', 'error');
+				return null;
+			}
 		}
 		async #hardDeleteDocument(documentId, hints = {}) {
 			const doc = this.#resolveLoadedDocument(documentId);
@@ -2258,5 +2637,5 @@ this.BX.Note = this.BX.Note || {};
 
 	exports.NoteApp = NoteApp;
 
-})(this.BX.Note.App = this.BX.Note.App || {}, window, window, BX, BX.Event, BX.Vue3, BX.Note.Sidebar, BX.Note, BX.Note.Ui, BX.Note, BX.UI.Notification, BX.UI, BX.UI.System, BX.Vue3.VueRouter, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note.Editor, BX.Note, BX.Note, BX.Note, BX.Note);
+})(this.BX.Note.App = this.BX.Note.App || {}, window, window, BX, BX.Event, BX.Vue3, BX.Note.Sidebar, BX.Note, BX.Note.Ui, BX.Note, BX.UI.Notification, BX.UI, BX.UI.System, BX.Vue3.VueRouter, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Vue3.Components, BX.Note, BX.Note.Editor, BX.Note, BX.Note, BX.Note);
 //# sourceMappingURL=app.bundle.js.map

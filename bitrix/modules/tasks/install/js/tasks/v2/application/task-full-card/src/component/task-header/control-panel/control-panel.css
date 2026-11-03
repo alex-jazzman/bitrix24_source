@@ -1,9 +1,23 @@
+/* normalize */
+.tasks-full-card-header__control-panel-opener {
+	border: none;
+	background-color: transparent;
+	text-align: inherit;
+}
+/* normalize end */
+
 .tasks-full-card-header__control-panel-opener {
 	flex-shrink: 0;
 	margin: var(--margin-button);
 	padding: var(--padding-button);
 	line-height: 0;
 	cursor: pointer;
+}
+
+.tasks-full-card-header__control-panel-opener:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .tasks-full-card-header__control-panel-opener-icon {

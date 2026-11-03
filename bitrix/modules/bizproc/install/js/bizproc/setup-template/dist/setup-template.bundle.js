@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, pull_client, ui_vue3, main_core_events, ui_a11y, ui_entitySelector, bizproc_ragSelector, ui_uploader_tileWidget, ui_uploader_core, ui_datePicker, main_date, ui_switcher, ui_vue3_components_switcher) {
+(function (exports, main_core, pull_client, ui_vue3, main_core_events, ui_a11y, ui_bbcode_formatter, ui_iconSet_api_vue, ui_system_typography_vue, ui_entitySelector, bizproc_ragSelector, ui_uploader_tileWidget, ui_uploader_core, ui_datePicker, main_date, ui_switcher, ui_vue3_components_switcher) {
 	'use strict';
 
 	const ITEM_TYPES = Object.freeze({
@@ -26,6 +26,14 @@ this.BX = this.BX || {};
 		BOOL: 'bool',
 		BI_DASHBOARD: 'bi_dashboard'
 	});
+
+	// Keys of the value rule inside the settings of a constant: bounds of an integer, length limit of a string.
+	const VALUE_RULE_KEYS = Object.freeze({
+		ROOT: 'ValueRule',
+		MIN: 'Min',
+		MAX: 'Max',
+		MAX_LENGTH: 'MaxLength'
+	});
 	const TEMPLATE_SETUP_EVENT_NAME = {
 		SUCCESS: 'Bizproc.AiAgentsGrid.TemplateSetup:success'
 	};
@@ -35,6 +43,93 @@ this.BX = this.BX || {};
 		SETTINGS: 'o-settings',
 		STARS: 'o-ai-stars'
 	};
+
+	// Kinds of the value rule: an integer value is bounded by the value itself, a textual one by its length.
+	const VALUE_RULE_KINDS = Object.freeze({
+		BOUNDS: 'bounds',
+		LENGTH: 'length'
+	});
+	const VALUE_RULE_KIND_BY_CONSTANT_TYPE = new Map([[CONSTANT_TYPES.INT, VALUE_RULE_KINDS.BOUNDS], [CONSTANT_TYPES.STRING, VALUE_RULE_KINDS.LENGTH], [CONSTANT_TYPES.TEXT, VALUE_RULE_KINDS.LENGTH]]);
+
+	/**
+	 * The kind of value rule a constant type gets, or null for a type that gets no rule at all. The hint
+	 * under the field and the check of an entered value branch by this one answer, so a type that gains
+	 * or loses a rule is described here alone.
+	 */
+	function getValueRuleKind(constantType) {
+		return VALUE_RULE_KIND_BY_CONSTANT_TYPE.get(constantType) ?? null;
+	}
+
+	/**
+	 * A bound of the value rule (DTO-01). The template describes a bound as a number or as a decimal
+	 * string, and a missing bound is no bound at all: zero is a bound of its own. The hint under the
+	 * field and the check of an entered value read a bound the same way, so they read it here.
+	 */
+	function readRuleBound(rule, name) {
+		const bound = Number.parseInt(rule[name], 10);
+		return Number.isNaN(bound) ? null : bound;
+	}
+
+	/**
+	 * The nodes the html formatter of `ui` renders on its own, apart from the structural ones — `#root`,
+	 * `#text`, `#tab`, `#linebreak` — which carry the text itself rather than markup the author chose.
+	 * The set is written out because a formatter tells no one what it renders until it is built, while
+	 * the description needs that answer earlier: the formatters of a node are given to the constructor.
+	 */
+	const RENDERED_NODES = Object.freeze(['b', 'i', 'u', 's', 'p', 'list', '*', 'url', 'img', 'video', 'quote', 'code', 'spoiler', 'table', 'tr', 'td', 'th', 'user', 'department', 'project']);
+	const IMAGE_NODE = 'img';
+
+	/**
+	 * Renders a node as its own content: the children of a node are formatted and appended by the
+	 * formatter itself, so an empty fragment in place of the element leaves the text of the node where
+	 * it was written and builds nothing out of it.
+	 */
+	function createNodeAsItsContent(name) {
+		return new ui_bbcode_formatter.NodeFormatter({
+			name,
+			convert() {
+				return document.createDocumentFragment();
+			}
+		});
+	}
+
+	/**
+	 * A smiley is an image the formatter puts into the text on its own, so a surface that renders no
+	 * image node gets no smiley either: the reader sees the typing the author wrote, the way the editor
+	 * of the description shows it. Text inside a `code` node reaches the reader as it was written, which
+	 * is what the formatter of `ui` does with it in any case.
+	 */
+	function createTextWithoutSmileys() {
+		return new ui_bbcode_formatter.NodeFormatter({
+			name: '#text',
+			convert({
+				node
+			}) {
+				return document.createTextNode(node.toString({
+					encode: false
+				}));
+			}
+		});
+	}
+
+	/**
+	 * The editor of the description gives the author emphasis, lists and links, while the formatter of
+	 * the form renders everything BBCode can express: media makes the browser of every reader fetch a
+	 * url the author chose, a spoiler hides text behind a control nobody wrote, a mention builds a link
+	 * to a profile. Such markup reaches the column through import, the REST API and values stored before
+	 * the editor existed, so every node outside the set is given a formatter that renders it as its own
+	 * content — the reader sees the text and nothing is built out of it.
+	 *
+	 * These go to the html formatter of `ui` as its `formatters` option, which it reads after its own,
+	 * so for their nodes these are the formatters that answer.
+	 */
+	function createDescriptionNodeFormatters(allowedNodes) {
+		const formatters = RENDERED_NODES.filter(name => !allowedNodes.includes(name)).map(name => createNodeAsItsContent(name));
+		if (!allowedNodes.includes(IMAGE_NODE)) {
+			formatters.push(createTextWithoutSmileys());
+		}
+		return formatters;
+	}
 
 	// @vue/component
 	const ConstantTextual = {
@@ -647,6 +742,26 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const PROJECT_FIELD_STATE_DELETED = 'deleted';
+	function normalizeProjectValues(value) {
+		const values = main_core.Type.isArray(value) ? value : [value];
+		return values.map(item => String(item ?? '')).filter(item => main_core.Type.isStringFilled(item));
+	}
+	function getDeletedProjectIds(projectState) {
+		const projectIds = main_core.Type.isArray(projectState?.deletedValues) ? projectState.deletedValues : [projectState?.resolvedValue];
+		return normalizeProjectValues(projectIds);
+	}
+	function isDeletedProjectState(projectState) {
+		return projectState?.type === CONSTANT_TYPES.PROJECT && projectState?.state === PROJECT_FIELD_STATE_DELETED;
+	}
+	function isDeletedProjectSelected(projectState, value) {
+		if (!isDeletedProjectState(projectState)) {
+			return false;
+		}
+		const deletedProjectIds = getDeletedProjectIds(projectState);
+		return deletedProjectIds.length > 0 && normalizeProjectValues(value).some(projectId => deletedProjectIds.includes(projectId));
+	}
+
 	const ENTITY_TYPES$1 = Object.freeze({
 		PROJECT: 'project'
 	});
@@ -669,10 +784,30 @@ this.BX = this.BX || {};
 			}
 		},
 		emits: ['update:modelValue'],
+		data() {
+			return {
+				tagObserver: null
+			};
+		},
+		computed: {
+			projectState() {
+				return this.item.meta?.projectState ?? null;
+			},
+			isProjectDeleted() {
+				return isDeletedProjectSelected(this.projectState, this.modelValue);
+			},
+			deletedProjectIds() {
+				return getDeletedProjectIds(this.projectState);
+			},
+			projectDeletedTitle() {
+				return main_core.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_PROJECT_DELETED_VALUE') ?? '';
+			}
+		},
 		mounted() {
 			this.initializeSelector();
 		},
 		beforeUnmount() {
+			this.disconnectTagObserver();
 			if (this.tagSelector) {
 				this.tagSelector.getDialog().destroy();
 				this.tagSelector = null;
@@ -697,10 +832,8 @@ this.BX = this.BX || {};
 				return this.normalizeModelValues().map(value => [ENTITY_TYPES$1.PROJECT, value]);
 			},
 			normalizeModelValues() {
-				if (main_core.Type.isArray(this.modelValue)) {
-					return this.modelValue.map(v => Number(v)).filter(v => main_core.Type.isNumber(v));
-				}
-				return this.modelValue ? [Number(this.modelValue)].filter(v => main_core.Type.isNumber(v)) : [];
+				const values = main_core.Type.isArray(this.modelValue) ? this.modelValue : [this.modelValue];
+				return values.map(value => Number(value)).filter(value => Number.isFinite(value) && value > 0);
 			},
 			initializeSelector() {
 				this.tagSelector = new ui_entitySelector.TagSelector({
@@ -726,6 +859,45 @@ this.BX = this.BX || {};
 					}
 				});
 				this.tagSelector.renderTo(this.$refs.container);
+				this.syncDeletedProjectTag();
+				this.watchDeletedProjectTag();
+			},
+			syncDeletedProjectTag() {
+				if (!this.isProjectDeleted || !this.tagSelector) {
+					return;
+				}
+				const selectedProjectIds = new Set(this.normalizeModelValues().map(value => String(value)));
+				this.deletedProjectIds.filter(projectId => selectedProjectIds.has(projectId)).forEach(projectId => {
+					const tag = this.tagSelector.getTags().find(item => {
+						return item.getEntityId() === ENTITY_TYPES$1.PROJECT && String(item.getId()) === projectId;
+					}) ?? this.tagSelector.addTag({
+						id: Number(projectId),
+						entityId: ENTITY_TYPES$1.PROJECT,
+						title: this.projectDeletedTitle,
+						deselectable: false,
+						animate: false
+					});
+					if (tag && tag.getTitle() !== this.projectDeletedTitle) {
+						tag.setTitle(this.projectDeletedTitle);
+						tag.render();
+					}
+				});
+			},
+			watchDeletedProjectTag() {
+				if (!this.isProjectDeleted || !main_core.Type.isFunction(window.MutationObserver)) {
+					return;
+				}
+				this.tagObserver = new MutationObserver(this.syncDeletedProjectTag);
+				this.tagObserver.observe(this.$refs.container, {
+					childList: true,
+					subtree: true
+				});
+			},
+			disconnectTagObserver() {
+				if (this.tagObserver) {
+					this.tagObserver.disconnect();
+					this.tagObserver = null;
+				}
 			}
 		},
 		template: `
@@ -895,218 +1067,6 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const boundTimePickers = new WeakSet();
-	const REGEX_PATTERNS = {
-		TIME_FORMAT: /(\d{1,2}:\d{2})(?::\d{2})?/,
-		TIMEZONE_OFFSET: /\s\[[\d-]+]$/
-	};
-
-	// @vue/component
-	const ConstantTime = {
-		name: 'ConstantTime',
-		props: {
-			item: {
-				type: Object,
-				required: true
-			},
-			modelValue: {
-				type: String,
-				default: ''
-			},
-			disabled: {
-				type: Boolean,
-				default: false
-			},
-			labelledbyId: {
-				type: String,
-				default: ''
-			},
-			describedbyId: {
-				type: String,
-				default: ''
-			},
-			invalid: {
-				type: Boolean,
-				default: false
-			},
-			required: {
-				type: Boolean,
-				default: false
-			}
-		},
-		emits: ['update:modelValue'],
-		data() {
-			return {
-				timeValue: '',
-				timezone: '',
-				timezones: []
-			};
-		},
-		mounted() {
-			this.timezones = main_core.Extension.getSettings('bizproc.setup-template')?.timezones;
-			this.syncFromModel();
-		},
-		beforeUnmount() {
-			if (this.timePicker?.destroy) {
-				this.timePicker.destroy();
-				this.timePicker = null;
-			}
-		},
-		created() {
-			this.timePicker = null;
-		},
-		methods: {
-			syncFromModel() {
-				this.applyValueFromModule();
-				this.applyTimezoneFromModel();
-			},
-			getDefaultTimezone() {
-				return 'current';
-			},
-			applyValueFromModule() {
-				const model = this.modelValue;
-				this.timeValue = this.extractTimeValue(main_core.Type.isString(model) ? model : '');
-			},
-			applyTimezoneFromModel() {
-				const value = this.modelValue;
-				const timezoneOffsetRegex = /\s\[[\d-]+]$/;
-				const defaultValue = main_core.Type.isString(value) ? value : '';
-				const match = defaultValue.match(timezoneOffsetRegex);
-				const offset = (match?.[0] ?? '').replaceAll(/[\s[\]]/g, '');
-				const timezones = this.timezones ?? [];
-				this.timezone = timezones.find(zone => String(zone.offset) === offset)?.value ?? this.getDefaultTimezone();
-			},
-			extractTimeValue(value) {
-				if (!main_core.Type.isString(value)) {
-					return '';
-				}
-				const clean = value.replace(REGEX_PATTERNS.TIMEZONE_OFFSET, '');
-				const match = clean.match(REGEX_PATTERNS.TIME_FORMAT);
-				return match ? match[1] : '';
-			},
-			emitUpdate(value) {
-				this.$emit('update:modelValue', value);
-			},
-			onTimeChange(event) {
-				const raw = event?.target?.value ?? '';
-				const match = raw.match(REGEX_PATTERNS.TIME_FORMAT);
-				const time = match ? match[1] : raw;
-				this.timeValue = time;
-				this.emitUpdate(this.prepareEventData(time, this.timezone));
-			},
-			onTimezoneChange(event) {
-				const timezone = event?.target?.value ?? 0;
-				this.timezone = timezone;
-				this.applyValueFromModule();
-				this.emitUpdate(this.prepareEventData(this.timeValue, timezone));
-			},
-			onSelect() {
-				const input = this.$refs.timeInput;
-				const selectedDate = this.timePicker.getSelectedDate() || this.timePicker.getFocusDate();
-				if (!selectedDate) {
-					return;
-				}
-				const timeString = this.timePicker.formatTime(selectedDate);
-				if (timeString === this.timeValue) {
-					return;
-				}
-				const timezoneOffsetRegex = /\s\[[\d-]+]$/;
-				const rawValue = timeString;
-				const normalizedValue = main_core.Type.isString(rawValue) ? rawValue.replace(timezoneOffsetRegex, '') : rawValue;
-				this.timeValue = timeString;
-				this.emitUpdate(this.prepareEventData(normalizedValue, this.timezone));
-				input.value = timeString;
-			},
-			onTimeInputKeydown(event) {
-				if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-					event.preventDefault();
-					this.openTimePicker();
-				}
-			},
-			openTimePicker() {
-				if (this.disabled) {
-					return;
-				}
-				const input = this.$refs.timeInput;
-				if (!input) {
-					return;
-				}
-				if (!this.timePicker) {
-					this.timePicker = new ui_datePicker.DatePicker({
-						targetNode: input,
-						inputField: input,
-						type: 'time',
-						timePickerStyle: 'wheel',
-						amPmMode: false,
-						minuteStep: 5,
-						popupOptions: {
-							targetContainer: input.ownerDocument?.body || document.body
-						}
-					});
-				}
-				const timeView = this.timePicker.getPicker('time');
-				if (timeView?.subscribe && !boundTimePickers.has(this.timePicker)) {
-					// default DatePicker events do not work in the slider
-					timeView.subscribe('onSelect', () => {
-						setTimeout(this.onSelect, 0);
-					});
-					boundTimePickers.add(this.timePicker);
-				}
-				this.timePicker.show();
-			},
-			prepareEventData(time, timezone) {
-				let offset = timezone;
-				if (!main_core.Type.isNumber(timezone)) {
-					offset = this.timezones.find(zone => zone.value === timezone)?.offset ?? '0';
-				}
-				return `${time} [${offset}]`;
-			}
-		},
-		template: `
-		<div class="bizproc-setup-template__time-row">
-			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-				<input
-						ref="timeInput"
-						:value="timeValue"
-						type="text"
-						class="ui-ctl-element"
-						:disabled="disabled"
-						:aria-labelledby="labelledbyId || null"
-						:aria-describedby="describedbyId || null"
-						:aria-invalid="invalid ? 'true' : null"
-						:aria-required="required ? 'true' : null"
-						placeholder="HH:MM"
-						readonly
-						@change="onTimeChange"
-						@click="openTimePicker"
-						@keydown="onTimeInputKeydown"
-						style="cursor: pointer;"
-						data-test-id="bizproc-setup-template__form-time-value"
-				>
-			</div>
-			<div v-if="timezones.length > 0" class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-				<select
-						class="ui-ctl-element"
-						:value="timezone"
-						:disabled="disabled"
-						:aria-label="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_TIMEZONE')"
-						@change="onTimezoneChange"
-						data-test-id="bizproc-setup-template__form-time-timezone"
-				>
-					<option
-							v-for="zone in timezones"
-							:key="zone.value"
-							:value="zone.value"
-					>
-						{{ zone.text }}
-					</option>
-				</select>
-			</div>
-		</div>
-	`
-	};
-
 	const EXTENSION_NAME = 'bizproc.setup-template';
 
 	// Culture format codes of main.date: the only allowed source of date formats.
@@ -1255,12 +1215,17 @@ this.BX = this.BX || {};
 		return parsedDate === null ? null : ui_datePicker.createDate(parsedDate);
 	}
 
-	// A single date row: one value of the constant, whether the constant is multiple or not.
+	const boundTimePickers = new WeakSet();
+	const REGEX_PATTERNS = {
+		TIME_FORMAT: /(\d{1,2}:\d{2})(?::\d{2})?/,
+		TIMEZONE_OFFSET: /\s\[[\d-]+]$/
+	};
+
+	// A single time row: one value of the constant, whether the constant is multiple or not.
 	// @vue/component
-	const ConstantDateControl = {
-		name: 'ConstantDateControl',
+	const ConstantTimeControl = {
+		name: 'ConstantTimeControl',
 		props: {
-			/** @type ConstantItem */
 			item: {
 				type: Object,
 				required: true
@@ -1293,106 +1258,193 @@ this.BX = this.BX || {};
 		emits: ['update:modelValue'],
 		data() {
 			return {
-				pickedDate: null
+				timeValue: '',
+				timezone: '',
+				timezones: []
 			};
-		},
-		computed: {
-			dateText() {
-				return formatDate(this.pickedDate);
-			}
 		},
 		watch: {
 			modelValue() {
 				// The value may be replaced from outside: an edited default of the constant redraws the
-				// row. The echo of the value the row has just published is skipped, so the entered date
+				// row. The echo of the value the row has just published is skipped, so the entered time
 				// is never rebuilt under the user.
 				if (this.modelValue !== this.currentValue()) {
-					this.applyModelValue();
+					this.syncFromModel();
 				}
 			}
 		},
-		created() {
-			this.datePicker = null;
-			this.applyModelValue();
+		mounted() {
+			this.timezones = main_core.Extension.getSettings('bizproc.setup-template')?.timezones;
+			this.syncFromModel();
 		},
 		beforeUnmount() {
-			this.datePicker?.destroy();
-			this.datePicker = null;
+			if (this.timePicker?.destroy) {
+				this.timePicker.destroy();
+				this.timePicker = null;
+			}
+		},
+		created() {
+			this.timePicker = null;
 		},
 		methods: {
-			applyModelValue() {
-				// A date has no timezone control, but a value saved with one still has to show its date.
-				this.pickedDate = createDateFromText(parseValue(this.modelValue).text);
-				// The picker holds the date it was created with, so it is rebuilt on the next opening.
-				this.datePicker?.destroy();
-				this.datePicker = null;
+			syncFromModel() {
+				this.applyValueFromModule();
+				this.applyTimezoneFromModel();
 			},
-			handleInputKeydown(event) {
-				if (isPickerOpenKey(event)) {
-					event.preventDefault();
-					this.openDatePicker();
+			// The zone a row falls back to, as its select shows it: the keyword of the current user
+			// zone. The offset such a row serializes with is resolved by resolveTimezoneOffset().
+			getDefaultTimezone() {
+				return 'current';
+			},
+			applyValueFromModule() {
+				const model = this.modelValue;
+				this.timeValue = this.extractTimeValue(main_core.Type.isString(model) ? model : '');
+			},
+			applyTimezoneFromModel() {
+				const value = this.modelValue;
+				const timezoneOffsetRegex = /\s\[[\d-]+]$/;
+				const defaultValue = main_core.Type.isString(value) ? value : '';
+				const match = defaultValue.match(timezoneOffsetRegex);
+				const offset = (match?.[0] ?? '').replaceAll(/[\s[\]]/g, '');
+				const timezones = this.timezones ?? [];
+				this.timezone = timezones.find(zone => String(zone.offset) === offset)?.value ?? this.getDefaultTimezone();
+			},
+			extractTimeValue(value) {
+				if (!main_core.Type.isString(value)) {
+					return '';
 				}
+				const clean = value.replace(REGEX_PATTERNS.TIMEZONE_OFFSET, '');
+				const match = clean.match(REGEX_PATTERNS.TIME_FORMAT);
+				return match ? match[1] : '';
 			},
-			openDatePicker() {
-				if (this.disabled || !this.$refs.dateInput) {
+			currentValue() {
+				return this.prepareEventData(this.timeValue, this.timezone);
+			},
+			emitUpdate(value) {
+				this.$emit('update:modelValue', value);
+			},
+			onTimeChange(event) {
+				const raw = event?.target?.value ?? '';
+				const match = raw.match(REGEX_PATTERNS.TIME_FORMAT);
+				const time = match ? match[1] : raw;
+				this.timeValue = time;
+				this.emitUpdate(this.prepareEventData(time, this.timezone));
+			},
+			onTimezoneChange(event) {
+				const timezone = event?.target?.value ?? 0;
+				this.timezone = timezone;
+				this.applyValueFromModule();
+				this.emitUpdate(this.prepareEventData(this.timeValue, timezone));
+			},
+			onSelect() {
+				const input = this.$refs.timeInput;
+				const selectedDate = this.timePicker.getSelectedDate() || this.timePicker.getFocusDate();
+				if (!selectedDate) {
 					return;
 				}
-				if (this.datePicker === null) {
-					this.datePicker = createBoundPicker({
-						input: this.$refs.dateInput,
-						pickerId: 'day',
-						onSelect: this.handleDateSelect,
-						pickerOptions: {
-							type: 'date',
-							selectedDates: this.pickedDate === null ? [] : [this.pickedDate]
+				const timeString = this.timePicker.formatTime(selectedDate);
+				if (timeString === this.timeValue) {
+					return;
+				}
+				const timezoneOffsetRegex = /\s\[[\d-]+]$/;
+				const rawValue = timeString;
+				const normalizedValue = main_core.Type.isString(rawValue) ? rawValue.replace(timezoneOffsetRegex, '') : rawValue;
+				this.timeValue = timeString;
+				this.emitUpdate(this.prepareEventData(normalizedValue, this.timezone));
+				input.value = timeString;
+			},
+			onTimeInputKeydown(event) {
+				if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+					event.preventDefault();
+					this.openTimePicker();
+				}
+			},
+			openTimePicker() {
+				if (this.disabled) {
+					return;
+				}
+				const input = this.$refs.timeInput;
+				if (!input) {
+					return;
+				}
+				if (!this.timePicker) {
+					this.timePicker = new ui_datePicker.DatePicker({
+						targetNode: input,
+						inputField: input,
+						type: 'time',
+						timePickerStyle: 'wheel',
+						amPmMode: false,
+						minuteStep: 5,
+						popupOptions: {
+							targetContainer: input.ownerDocument?.body || document.body
 						}
 					});
 				}
-				this.datePicker.show();
-			},
-			handleDateSelect() {
-				// The callback is deferred, so by the time it runs the picker may be gone: the row was
-				// unmounted or the value was replaced from outside.
-				if (!this.datePicker) {
-					return;
+				const timeView = this.timePicker.getPicker('time');
+				if (timeView?.subscribe && !boundTimePickers.has(this.timePicker)) {
+					// default DatePicker events do not work in the slider
+					timeView.subscribe('onSelect', () => {
+						setTimeout(this.onSelect, 0);
+					});
+					boundTimePickers.add(this.timePicker);
 				}
-				const selectedDate = this.datePicker.getSelectedDate();
-				if (!main_core.Type.isDate(selectedDate)) {
-					return;
-				}
-				this.pickedDate = selectedDate;
-				this.emitValue();
+				this.timePicker.show();
 			},
-			currentValue() {
-				return serializeValue(this.pickedDate);
+			/**
+			 * The offset a zone of the list serializes with. A value carries a numeric offset only:
+			 * Bitrix\Bizproc\BaseType\Value\Time reads nothing else, and the rule of reading it off a
+			 * zone belongs to resolveNumericOffset() — the `time` field only picks the zone by its value.
+			 */
+			resolveTimezoneOffset(timezone) {
+				return resolveNumericOffset(this.timezones?.find(zone => zone.value === timezone));
 			},
-			emitValue() {
-				this.$emit('update:modelValue', this.currentValue());
+			prepareEventData(time, timezone) {
+				return `${time} [${this.resolveTimezoneOffset(timezone)}]`;
 			}
 		},
 		template: `
 		<div
-			class="bizproc-setup-template__date-row"
-			data-test-id="bizproc-setup-template__form-date-control"
+				class="bizproc-setup-template__time-row"
+				data-test-id="bizproc-setup-template__form-time-control"
 		>
-			<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100">
-				<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
+			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 				<input
-					ref="dateInput"
-					:value="dateText"
-					type="text"
-					class="ui-ctl-element"
-					:disabled="disabled"
-					:aria-labelledby="labelledbyId || null"
-					:aria-describedby="describedbyId || null"
-					:aria-invalid="invalid ? 'true' : null"
-					:aria-required="required ? 'true' : null"
-					:placeholder="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_DATE_PLACEHOLDER')"
-					readonly
-					data-test-id="bizproc-setup-template__form-date-value"
-					@click="openDatePicker"
-					@keydown="handleInputKeydown"
+						ref="timeInput"
+						:value="timeValue"
+						type="text"
+						class="ui-ctl-element"
+						:disabled="disabled"
+						:aria-labelledby="labelledbyId || null"
+						:aria-describedby="describedbyId || null"
+						:aria-invalid="invalid ? 'true' : null"
+						:aria-required="required ? 'true' : null"
+						placeholder="HH:MM"
+						readonly
+						@change="onTimeChange"
+						@click="openTimePicker"
+						@keydown="onTimeInputKeydown"
+						style="cursor: pointer;"
+						data-test-id="bizproc-setup-template__form-time-value"
 				>
+			</div>
+			<div v-if="timezones.length > 0" class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+				<select
+						class="ui-ctl-element"
+						:value="timezone"
+						:disabled="disabled"
+						:aria-label="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_TIMEZONE')"
+						@change="onTimezoneChange"
+						data-test-id="bizproc-setup-template__form-time-timezone"
+				>
+					<option
+							v-for="zone in timezones"
+							:key="zone.value"
+							:value="zone.value"
+					>
+						{{ zone.text }}
+					</option>
+				</select>
 			</div>
 		</div>
 	`
@@ -1534,6 +1586,208 @@ this.BX = this.BX || {};
 			>
 				{{ $Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_ADD_FIELD') }}
 			</button>
+		</div>
+	`
+	};
+
+	// Time field of the form: a single time row, or the list of rows of a multiple constant.
+	// @vue/component
+	const ConstantTime = {
+		name: 'ConstantTime',
+		components: {
+			ConstantTimeControl,
+			MultipleConstantField
+		},
+		props: {
+			/** @type ConstantItem */
+			item: {
+				type: Object,
+				required: true
+			},
+			modelValue: {
+				type: [String, Array],
+				default: ''
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			labelledbyId: {
+				type: String,
+				default: ''
+			},
+			describedbyId: {
+				type: String,
+				default: ''
+			},
+			invalid: {
+				type: Boolean,
+				default: false
+			},
+			required: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:modelValue'],
+		template: `
+		<MultipleConstantField
+			v-if="item.multiple"
+			:modelValue="modelValue"
+			testIdPrefix="bizproc-setup-template__form-time"
+			@update:modelValue="$emit('update:modelValue', $event)"
+		>
+			<template #control="{ value, update }">
+				<ConstantTimeControl v-bind="$props" :modelValue="value" @update:modelValue="update"/>
+			</template>
+		</MultipleConstantField>
+		<ConstantTimeControl
+			v-else
+			v-bind="$props"
+			@update:modelValue="$emit('update:modelValue', $event)"
+		/>
+	`
+	};
+
+	// A single date row: one value of the constant, whether the constant is multiple or not.
+	// @vue/component
+	const ConstantDateControl = {
+		name: 'ConstantDateControl',
+		props: {
+			/** @type ConstantItem */
+			item: {
+				type: Object,
+				required: true
+			},
+			modelValue: {
+				type: String,
+				default: ''
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			labelledbyId: {
+				type: String,
+				default: ''
+			},
+			describedbyId: {
+				type: String,
+				default: ''
+			},
+			invalid: {
+				type: Boolean,
+				default: false
+			},
+			required: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:modelValue'],
+		data() {
+			return {
+				pickedDate: null
+			};
+		},
+		computed: {
+			dateText() {
+				return formatDate(this.pickedDate);
+			}
+		},
+		watch: {
+			modelValue() {
+				// The value may be replaced from outside: an edited default of the constant redraws the
+				// row. The echo of the value the row has just published is skipped, so the entered date
+				// is never rebuilt under the user.
+				if (this.modelValue !== this.currentValue()) {
+					this.applyModelValue();
+				}
+			}
+		},
+		created() {
+			this.datePicker = null;
+			this.applyModelValue();
+		},
+		beforeUnmount() {
+			this.datePicker?.destroy();
+			this.datePicker = null;
+		},
+		methods: {
+			applyModelValue() {
+				// A date has no timezone control, but a value saved with one still has to show its date.
+				this.pickedDate = createDateFromText(parseValue(this.modelValue).text);
+				// The picker holds the date it was created with, so it is rebuilt on the next opening.
+				this.datePicker?.destroy();
+				this.datePicker = null;
+			},
+			handleInputKeydown(event) {
+				if (isPickerOpenKey(event)) {
+					event.preventDefault();
+					this.openDatePicker();
+				}
+			},
+			openDatePicker() {
+				if (this.disabled || !this.$refs.dateInput) {
+					return;
+				}
+				if (this.datePicker === null) {
+					this.datePicker = createBoundPicker({
+						input: this.$refs.dateInput,
+						pickerId: 'day',
+						onSelect: this.handleDateSelect,
+						pickerOptions: {
+							type: 'date',
+							selectedDates: this.pickedDate === null ? [] : [this.pickedDate]
+						}
+					});
+				}
+				this.datePicker.show();
+			},
+			handleDateSelect() {
+				// The callback is deferred, so by the time it runs the picker may be gone: the row was
+				// unmounted or the value was replaced from outside.
+				if (!this.datePicker) {
+					return;
+				}
+				const selectedDate = this.datePicker.getSelectedDate();
+				if (!main_core.Type.isDate(selectedDate)) {
+					return;
+				}
+				this.pickedDate = selectedDate;
+				this.emitValue();
+			},
+			currentValue() {
+				return serializeValue(this.pickedDate);
+			},
+			emitValue() {
+				this.$emit('update:modelValue', this.currentValue());
+			}
+		},
+		template: `
+		<div
+			class="bizproc-setup-template__date-row"
+			data-test-id="bizproc-setup-template__form-date-control"
+		>
+			<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100">
+				<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
+				<input
+					ref="dateInput"
+					:value="dateText"
+					type="text"
+					class="ui-ctl-element"
+					:disabled="disabled"
+					:aria-labelledby="labelledbyId || null"
+					:aria-describedby="describedbyId || null"
+					:aria-invalid="invalid ? 'true' : null"
+					:aria-required="required ? 'true' : null"
+					:placeholder="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_DATE_PLACEHOLDER')"
+					readonly
+					data-test-id="bizproc-setup-template__form-date-value"
+					@click="openDatePicker"
+					@keydown="handleInputKeydown"
+				>
+			</div>
 		</div>
 	`
 	};
@@ -2302,6 +2556,7 @@ this.BX = this.BX || {};
 	const ConstantComponent = {
 		name: 'ConstantComponent',
 		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
 			ConstantTextual,
 			ConstantSelect,
 			ConstantUser,
@@ -2314,7 +2569,8 @@ this.BX = this.BX || {};
 			ConstantDate,
 			ConstantDatetime,
 			ConstantBool,
-			ConstantBIDashboard
+			ConstantBIDashboard,
+			TextXs: ui_system_typography_vue.TextXs
 		},
 		props: {
 			/** @type ConstantItem */
@@ -2356,6 +2612,40 @@ this.BX = this.BX || {};
 			errorId() {
 				return `bizproc-setup-template-error-${this.item.id}`;
 			},
+			hintId() {
+				return `bizproc-setup-template-hint-${this.item.id}`;
+			},
+			valueRule() {
+				const rule = this.item.settings?.[VALUE_RULE_KEYS.ROOT];
+				return main_core.Type.isPlainObject(rule) && Object.keys(rule).length > 0 ? rule : null;
+			},
+			valueRuleHint() {
+				const rule = this.valueRule;
+				if (!rule) {
+					return '';
+				}
+				const kind = getValueRuleKind(this.item.constantType);
+				if (kind === VALUE_RULE_KINDS.BOUNDS) {
+					return this.getBoundsHint(rule);
+				}
+				if (kind === VALUE_RULE_KINDS.LENGTH) {
+					return this.getLengthHint(rule);
+				}
+				return '';
+			},
+			// The field takes both accompanying texts as one list of ids, so the hint joins the error
+			// text instead of asking every field component for a second prop. An id enters the list
+			// only once its node is rendered.
+			describedbyIds() {
+				const ids = [];
+				if (this.valueRuleHint !== '') {
+					ids.push(this.hintId);
+				}
+				if (this.error) {
+					ids.push(this.errorId);
+				}
+				return ids.length > 0 ? ids.join(' ') : null;
+			},
 			hasNativeControl() {
 				return [CONSTANT_TYPES.STRING, CONSTANT_TYPES.INT, CONSTANT_TYPES.TEXT, CONSTANT_TYPES.TIME, CONSTANT_TYPES.DATE, CONSTANT_TYPES.DATETIME].includes(this.item.constantType);
 			},
@@ -2366,6 +2656,18 @@ this.BX = this.BX || {};
 			// next to every switcher of the list, so the row has no label above the control.
 			hasSwitchControl() {
 				return this.item.constantType === CONSTANT_TYPES.BOOL;
+			},
+			isDeletedProject() {
+				return this.item.constantType === CONSTANT_TYPES.PROJECT && isDeletedProjectSelected(this.item.meta?.projectState, this.formData[this.item.id]);
+			},
+			deletedProjectIds() {
+				return getDeletedProjectIds(this.item.meta?.projectState);
+			},
+			projectDeletedHint() {
+				return main_core.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_PROJECT_DELETED_HINT') ?? '';
+			},
+			iconSet() {
+				return ui_iconSet_api_vue.Outline;
 			},
 			/**
 			 * Only a date and time field reports a time picked with no date, and a listener a field does
@@ -2381,9 +2683,10 @@ this.BX = this.BX || {};
 					}
 				};
 			},
-			// Associate the visible label, required state and error text with the
-			// native controls (text/textarea/int/time/date/datetime), with the select
-			// group container (role="group") and with the bool switch (role="switch").
+			// Associate the visible label, required state and accompanying texts
+			// (value rule hint, error) with the native controls
+			// (text/textarea/int/time/date/datetime), with the select group container
+			// (role="group") and with the bool switch (role="switch").
 			// Other library-backed fields keep their own markup.
 			fieldAccessibilityProps() {
 				if (!this.hasGroupControl && !this.hasNativeControl && !this.hasSwitchControl) {
@@ -2395,14 +2698,46 @@ this.BX = this.BX || {};
 				if (this.isRequired) {
 					props.required = true;
 				}
+				if (this.describedbyIds) {
+					props.describedbyId = this.describedbyIds;
+				}
 				if (this.error) {
-					props.describedbyId = this.errorId;
 					props.invalid = true;
 				}
 				return props;
 			}
 		},
 		methods: {
+			getBoundsHint(rule) {
+				const min = readRuleBound(rule, VALUE_RULE_KEYS.MIN);
+				const max = readRuleBound(rule, VALUE_RULE_KEYS.MAX);
+				if (min !== null && max !== null) {
+					return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALUE_RULE_HINT_RANGE', {
+						'#MIN#': min,
+						'#MAX#': max
+					});
+				}
+				if (min !== null) {
+					return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALUE_RULE_HINT_MIN', {
+						'#MIN#': min
+					});
+				}
+				if (max !== null) {
+					return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALUE_RULE_HINT_MAX', {
+						'#MAX#': max
+					});
+				}
+				return '';
+			},
+			getLengthHint(rule) {
+				const maxLength = readRuleBound(rule, VALUE_RULE_KEYS.MAX_LENGTH);
+				if (maxLength === null) {
+					return '';
+				}
+				return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALUE_RULE_HINT_MAX_LENGTH', {
+					'#LENGTH#': maxLength
+				});
+			},
 			getCurrentConstantValue() {
 				const currentValue = this.formData[this.item.id];
 				if (this.item.multiple) {
@@ -2431,15 +2766,35 @@ this.BX = this.BX || {};
 				class="ui-form-row"
 				:class="{ '--error': error }"
 				:aria-labelledby="hasSwitchControl ? null : labelId"
-				:aria-describedby="error ? errorId : null"
+				:aria-describedby="describedbyIds"
 				:data-test-id="'bizproc-setup-template__form-field-' + item.id"
 			>
 				<div
 					v-if="!hasSwitchControl"
-					:class="{ '--required': isRequired }"
+					:class="{ '--required': isRequired && !isDeletedProject }"
 					class="ui-form-label bizproc-setup-template__label"
 				>
-					<div :id="labelId" class="ui-ctl-label-text bizproc-setup-template__label-text">{{ item.name }}</div>
+					<div :id="labelId" class="ui-ctl-label-text bizproc-setup-template__label-text">
+						<span>{{ item.name }}</span>
+						<span
+							v-if="isDeletedProject && isRequired"
+							class="bizproc-setup-template__label-required-mark"
+						>*</span>
+						<span
+							v-if="isDeletedProject"
+							class="bizproc-setup-template__project-warning"
+							:title="projectDeletedHint"
+							:aria-label="projectDeletedHint"
+							role="img"
+							data-test-id="bizproc-setup-template__project-deleted-warning"
+						>
+							<BIcon
+								:name="iconSet.ALERT_ACCENT"
+								:size="16"
+								color="var(--ui-color-accent-main-warning)"
+							/>
+						</span>
+					</div>
 				</div>
 				<div class="ui-form-content">
 					<component
@@ -2450,7 +2805,19 @@ this.BX = this.BX || {};
 						v-bind="fieldAccessibilityProps"
 						v-on="fieldListeners"
 					/>
-					<div v-if="error" :id="errorId" class="bizproc-setup-template__error-text">
+					<TextXs
+						v-if="valueRuleHint"
+						:id="hintId"
+						tag="div"
+						className="bizproc-setup-template__hint-text"
+						data-testid="bizproc-setup-template-form-value-rule-hint"
+					>{{ valueRuleHint }}</TextXs>
+					<div
+						v-if="error"
+						:id="errorId"
+						class="bizproc-setup-template__error-text"
+						data-testid="bizproc-setup-template-form-error-text"
+					>
 						<div class="ui-icon-set --warning"></div>
 						{{ error }}
 					</div>
@@ -2611,13 +2978,28 @@ this.BX = this.BX || {};
 
 	const TOTAL_STEPS_COUNT = 2;
 	const BEFORE_SUBMIT_EVENT = 'Bizproc:SetupTemplate:beforeSubmit';
+
+	// The description editor gives the author emphasis, lists and links and nothing else (DTO-01), while
+	// the formatter renders everything BBCode can express. Naming the nodes of the editor keeps the two
+	// sides together: media, spoilers, code blocks and smileys reach the column through import, the REST
+	// API and values stored before the editor existed, and the form shows them as the text they are.
+	const DESCRIPTION_ALLOWED_NODES = Object.freeze(['b', 'i', 'u', 's', 'url', 'list', '*', 'p']);
+	const DESCRIPTION_FORMATTER_OPTIONS = Object.freeze({
+		formatters: createDescriptionNodeFormatters(DESCRIPTION_ALLOWED_NODES)
+	});
 	const FOCUSABLE_SELECTOR = 'input:not([type="hidden"]), textarea, select, button, [role="button"], [tabindex]:not([tabindex="-1"])';
 
 	// @vue/component
 	const ActivatorAppComponent = {
 		name: 'ActivatorAppComponent',
 		components: {
-			FormElement
+			FormElement,
+			// Loaded on demand: the html formatter drags code-parser, smiley, video-service and typography
+			// along, and this extension rides on the agents grid and the step editor, where the form is
+			// never mounted. The description block is the only user of it, and it is optional. The node
+			// formatters of the description are built here, so the formatter core it takes them from —
+			// with the model and the parser under it — is a dependency of this extension either way.
+			HtmlFormatterComponent: ui_vue3.BitrixVue.defineAsyncComponent('ui.bbcode.formatter.html-formatter', 'HtmlFormatterComponent')
 		},
 		provide() {
 			return {
@@ -2692,6 +3074,9 @@ this.BX = this.BX || {};
 			};
 		},
 		computed: {
+			descriptionFormatterOptions() {
+				return DESCRIPTION_FORMATTER_OPTIONS;
+			},
 			allConstants() {
 				return this.renderBlocks.flatMap(block => block.items).filter(item => item.itemType === ITEM_TYPES.CONSTANT);
 			},
@@ -2914,6 +3299,11 @@ this.BX = this.BX || {};
 						this.validationErrors[item.id] = this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_INT', {
 							'#FIELD_NAME#': item.name
 						});
+					} else {
+						const valueRuleError = this.getValueRuleError(item, value);
+						if (valueRuleError !== '') {
+							this.validationErrors[item.id] = valueRuleError;
+						}
 					}
 				});
 				return Object.keys(this.validationErrors).length === 0;
@@ -2929,6 +3319,88 @@ this.BX = this.BX || {};
 					return value.some(item => check(item));
 				}
 				return check(value);
+			},
+			/**
+			 * The value rule of the constant settings (DTO-01). It warns earlier than the server and does
+			 * not replace it. A multiple constant carries one message for the whole set: the error
+			 * mechanism addresses a constant, not a row of it.
+			 */
+			getValueRuleError(item, value) {
+				const rule = item.settings?.[VALUE_RULE_KEYS.ROOT];
+				if (!main_core.Type.isPlainObject(rule)) {
+					return '';
+				}
+				const values = main_core.Type.isArray(value) ? value : [value];
+				for (const single of values) {
+					const error = this.getSingleValueRuleError(item, rule, single);
+					if (error !== '') {
+						return error;
+					}
+				}
+				return '';
+			},
+			getSingleValueRuleError(item, rule, value) {
+				// An empty value is not checked against the rule: a required field is reported by its own
+				// check, and an optional one stays valid while empty.
+				if (this.isValueEmpty(value)) {
+					return '';
+				}
+				const kind = getValueRuleKind(item.constantType);
+				if (kind === VALUE_RULE_KINDS.BOUNDS) {
+					return this.getValueBoundsError(item, rule, value);
+				}
+				if (kind === VALUE_RULE_KINDS.LENGTH) {
+					return this.getValueLengthError(item, rule, value);
+				}
+				return '';
+			},
+			getValueBoundsError(item, rule, value) {
+				const number = Number(value);
+				// A value that is not a number at all is reported by the check of its own.
+				if (Number.isNaN(number)) {
+					return '';
+				}
+				const min = readRuleBound(rule, VALUE_RULE_KEYS.MIN);
+				if (min !== null && number < min) {
+					return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_VALUE_RULE_MIN', {
+						'#FIELD_NAME#': item.name,
+						'#MIN#': min
+					});
+				}
+				const max = readRuleBound(rule, VALUE_RULE_KEYS.MAX);
+				if (max !== null && number > max) {
+					return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_VALUE_RULE_MAX', {
+						'#FIELD_NAME#': item.name,
+						'#MAX#': max
+					});
+				}
+				return '';
+			},
+			getValueLengthError(item, rule, value) {
+				const maxLength = readRuleBound(rule, VALUE_RULE_KEYS.MAX_LENGTH);
+				if (maxLength === null) {
+					return '';
+				}
+
+				// The length in code units is never below the number of code points, so a value short in
+				// units needs no counting at all.
+				const text = String(value);
+				if (text.length <= maxLength) {
+					return '';
+				}
+
+				// The length is counted in Unicode code points, the way the server counts it: UTF-16 code
+				// units would disagree on composed characters and let through a value the server rejects.
+				// A code point takes at most two units, so the leading units able to hold the limit already
+				// tell whether the value is over it - the rest of the value is left alone.
+				const measured = text.slice(0, 2 * (maxLength + 1));
+				if ([...measured].length <= maxLength) {
+					return '';
+				}
+				return this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_VALUE_RULE_MAX_LENGTH', {
+					'#FIELD_NAME#': item.name,
+					'#LENGTH#': maxLength
+				});
 			},
 			proceedToNextStep() {
 				this.currentStep++;
@@ -3014,9 +3486,13 @@ this.BX = this.BX || {};
 							<div class="bizproc-setup-template__heading">
 								{{ templateName }}
 							</div>
-							<div class="bizproc-setup-template__subject">
-								{{ templateDescription }}
-							</div>
+							<HtmlFormatterComponent
+								v-if="templateDescription"
+								class="bizproc-setup-template__subject"
+								data-test-id="bizproc-setup-template__form-description"
+								:bbcode="templateDescription"
+								:options="descriptionFormatterOptions"
+							/>
 						</div>
 					</template>
 					<template v-else>
@@ -3205,5 +3681,5 @@ this.BX = this.BX || {};
 	exports.parseValue = parseValue;
 	exports.serializeValue = serializeValue;
 
-})(this.BX.Bizproc = this.BX.Bizproc || {}, BX, BX, BX.Vue3, BX.Event, BX.UI.Accessibility, BX.UI.EntitySelector, BX.Bizproc.RagSelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.DatePicker, BX.Main, BX.UI, BX.UI.Vue3.Components);
+})(this.BX.Bizproc = this.BX.Bizproc || {}, BX, BX, BX.Vue3, BX.Event, BX.UI.Accessibility, BX.UI.BBCode, BX.UI.IconSet, BX.UI.System.Typography.Vue, BX.UI.EntitySelector, BX.Bizproc.RagSelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.DatePicker, BX.Main, BX.UI, BX.UI.Vue3.Components);
 //# sourceMappingURL=setup-template.bundle.js.map

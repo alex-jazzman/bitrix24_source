@@ -95,7 +95,7 @@ export const CollabEmptyState = {
 	{
 		onCreateClick()
 		{
-			Analytics.getInstance().chatCreate.onCollabEmptyStateCreateClick();
+			Analytics.getInstance().chatCreate.onProjectEmptyStateCreateClick();
 			void Messenger.openChatCreation(CreatableChatType.collab);
 		},
 		loc(phraseCode: string): string

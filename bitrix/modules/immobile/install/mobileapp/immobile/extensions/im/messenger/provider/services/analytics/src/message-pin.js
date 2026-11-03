@@ -34,9 +34,10 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 			const pinsCounter = this.store.getters['messagesModel/pinModel/getPinsCounter'](chatId);
 			const type = pinsCounter > 1 ? Analytics.Type.multiplePins : Analytics.Type.singlePin;
 			const p3Value = `pinnedCount_${pinsCounter}`;
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.pinMessage)
 				.setType(type)
 				.setSection(Analytics.Section.chatWindow)
@@ -70,9 +71,10 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 
 			const pinsCounter = this.store.getters['messagesModel/pinModel/getPinsCounter'](chatId);
 			const type = pinsCounter ? Analytics.Type.selectedPin : Analytics.Type.singlePin;
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.unpinMessage)
 				.setType(type)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
@@ -104,9 +106,10 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				return;
 			}
 
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.openPinList)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
@@ -126,9 +129,10 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				return;
 			}
 
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.pinnedMessageLimitException)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;

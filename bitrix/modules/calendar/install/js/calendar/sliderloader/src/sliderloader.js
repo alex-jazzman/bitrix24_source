@@ -77,7 +77,7 @@ export class SliderLoader
 			this.extensionParams.entryDateFrom = options.entryDateFrom;
 		}
 
-		if (options.timezoneOffset)
+		if (options.timezoneOffset !== undefined && options.timezoneOffset !== null)
 		{
 			this.extensionParams.timezoneOffset = options.timezoneOffset;
 		}

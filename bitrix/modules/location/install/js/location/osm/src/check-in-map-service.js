@@ -5,6 +5,35 @@ import {
 import { Leaflet as L } from '../leaflet/src/leaflet';
 import { ClusteringManager } from './clustering-manager';
 
+// Smooth move of a placed marker (`animate: true`; `animateDuration` overrides). Deliberately shorter
+// than the gap between position fixes: the marker walks and then waits rather than lagging behind reality.
+// Hand-kept mirror of ANIMATION_CONFIG.easeTo in the MapLibre engine; engine-mirrored-constants.test.js guards it.
+export const MARKER_MOVE_DURATION_MS = 600;
+const MARKER_MOVE_EASING = (t) => t * (2 - t);
+
+// Minimum gap (ms) between two redraws of a line following a walking marker (~30 fps cap). The RAF loop
+// still ticks every frame, so only the line is throttled: it lags the marker by at most one frame, hidden
+// under the icon. Mirror of GROW_SOURCE_UPDATE_INTERVAL_MS in the MapLibre engine, guarded by the same test.
+export const FOLLOWER_UPDATE_INTERVAL_MS = 30;
+
+// A redraw rewrites the line whole, so a frame costs what the line is long: 0.012 ms at 30 vertices
+// against 0.18 ms at the ~1350 a tracked shift ends with. Past this many vertices the gap between
+// redraws grows with the line, the tip then lagging the marker by under a pixel at the zoom a route is watched at.
+const FOLLOWER_CHEAP_LINE_VERTICES = 300;
+const FOLLOWER_MAX_UPDATE_INTERVAL_MS = 120;
+
+/**
+ * Minimum gap (ms) between two redraws of a followed line of this many vertices. Mirrored in the
+ * MapLibre engine and held to it by the same test as the walk duration.
+ *
+ * @param {number} vertexCount
+ * @returns {number}
+ */
+export const followerUpdateIntervalMs = (vertexCount) => Math.min(
+	FOLLOWER_MAX_UPDATE_INTERVAL_MS,
+	FOLLOWER_UPDATE_INTERVAL_MS * Math.max(1, Math.ceil(vertexCount / FOLLOWER_CHEAP_LINE_VERTICES)),
+);
+
 export default class CheckInMapService extends CheckInMapServiceBase
 {
 	constructor(props)
@@ -150,6 +179,7 @@ export default class CheckInMapService extends CheckInMapServiceBase
 		// Dispose removes event listeners and cancels timeouts without touching the map.
 		// clearMarkers() then removes all markers (individual and cluster) from the map.
 		this.clustering.dispose();
+		this.#cancelAllMarkerAnimations();
 		this.clearMarkers();
 		this.clearLayers();
 
@@ -194,6 +224,11 @@ export default class CheckInMapService extends CheckInMapServiceBase
 				return;
 			}
 
+			if (this.#moveMarkerSmoothly(id, config))
+			{
+				return;
+			}
+
 			const leafletIcon = this.createDivIcon(
 				markerIcon.html,
 				markerIcon.className,
@@ -209,13 +244,19 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			});
 
 			marker.on('add', () => {
-				marker.getElement()?.setAttribute('testId', id);
+				const element = marker.getElement();
+				// Same value under both names: `testId` is the historical map attribute,
+				// `data-testid` is what Playwright's getByTestId() reads.
+				element?.setAttribute('testId', id);
+				element?.setAttribute('data-testid', id);
 			});
 
 			marker.on('click', () => {
 				this.sendEvent(CheckInMapEventType.MARKER_CLICKED, {
 					markerId: id,
-					coords,
+					// Read through the registry rather than the captured value: a marker moved by
+					// #moveMarkerSmoothly keeps its listener while its config is replaced.
+					coords: this.markerConfigs.get(id)?.coords ?? coords,
 				});
 			});
 
@@ -226,6 +267,8 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			// Remove old marker if exists
 			if (this.markers.has(id))
 			{
+				this.cancelMarkerAnimation(id);
+
 				const oldMarker = this.markers.get(id);
 				if (oldMarker && this.mapInstance)
 				{
@@ -272,13 +315,56 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			}
 
 			const { id, config } = layerData;
-			const { type, points, options } = config;
+			const { type, options } = config;
 			let layer;
+
+			// `appendPoints` carries the vertices a line has GROWN by instead of the whole line: a live
+			// tail grows by one vertex per fix, while the line it grows onto is the whole day of a tracked
+			// shift. A growth is never a layer of its own - what is not on the map has nothing to grow.
+			const growth = type === 'polyline' && Array.isArray(config.appendPoints)
+				? config.appendPoints
+				: null;
+			const grown = growth ? this.#layerGeometry(id) : null;
+			if (growth && !grown)
+			{
+				console.error('appendPoints has no layer of that id to grow', id);
+
+				return;
+			}
+
+			const points = growth ? [...grown, ...growth] : config.points;
+
+			// `followMarker` binds the final vertex of the line to the live position of that marker, so a
+			// tail can never be drawn ahead of the marker it belongs to. The points kept here stay the ones
+			// the caller sent - the tip is substituted only while a walk is running.
+			const followMarker = type === 'polyline' ? (config.followMarker ?? null) : null;
+			if (followMarker)
+			{
+				this.#layerFollowers.set(id, { markerId: followMarker, points });
+			}
+			else
+			{
+				this.#layerFollowers.delete(id);
+			}
+
+			// A growth carries no paint, so the line it grows is written in place rather than built anew:
+			// rebuilt from the vertices alone it would come back in the default stroke of the engine.
+			if (growth)
+			{
+				this.layers.get(id).setLatLngs(
+					followMarker ? this.#pathWithFollowedTip(points, this.#markerPosition(followMarker)) : points,
+				);
+
+				return;
+			}
 
 			switch (type)
 			{
 				case 'polyline':
-					layer = L.polyline(points, options);
+					layer = L.polyline(
+						followMarker ? this.#pathWithFollowedTip(points, this.#markerPosition(followMarker)) : points,
+						options,
+					);
 					break;
 				case 'polygon':
 					layer = L.polygon(points, options);
@@ -308,6 +394,7 @@ export default class CheckInMapService extends CheckInMapServiceBase
 
 	clearMarkers()
 	{
+		this.#cancelAllMarkerAnimations();
 		this.clustering.cancelPendingAnimations();
 		this.clustering.clearClusterMarkers();
 		this.markers.forEach((marker) => {
@@ -333,6 +420,8 @@ export default class CheckInMapService extends CheckInMapServiceBase
 		}
 
 		ids.forEach((id) => {
+			this.cancelMarkerAnimation(id);
+
 			const marker = this.markers.get(id);
 			if (marker && this.mapInstance)
 			{
@@ -367,6 +456,7 @@ export default class CheckInMapService extends CheckInMapServiceBase
 				this.mapInstance.removeLayer(layer);
 			}
 			this.layers.delete(id);
+			this.#layerFollowers.delete(id);
 		});
 	}
 
@@ -379,6 +469,7 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			}
 		});
 		this.layers.clear();
+		this.#layerFollowers.clear();
 	}
 
 	fitBounds(bounds, options = {})
@@ -397,13 +488,21 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			return;
 		}
 
+		this.#settleMarkerAnimations();
+
 		const rawPadding = options.padding || this.fitBoundsPadding;
 		const maxZoom = options.maxZoom === undefined ? this.fitBoundsMaxZoom : options.maxZoom;
 		const { paddingTopLeft, paddingBottomRight } = this.normalizePadding(rawPadding);
+		// One-off pixel shift of the framed points, mirroring MapLibre's `offset`: they end up at
+		// (viewport center + offset), so the center moves the same way but reversed.
+		const offset = Array.isArray(options.offset) ? L.point(options.offset) : L.point(0, 0);
+		// Some fits (e.g. centering on a single point) should not run the cluster merge/split
+		// transition, which hides markers for the duration of the flight and reads as a flicker.
+		const skipClusterTransition = options.skipClusterTransition === true;
 
 		this.clustering.suppressNextAnimation();
 
-		if (this.clustering.isEnabled)
+		if (this.clustering.isEnabled && !skipClusterTransition)
 		{
 			this.clustering.beginTransition();
 		}
@@ -416,7 +515,7 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			// padded viewport area rather than the middle of the full viewport.
 			const paddingOffset = paddingBottomRight.subtract(paddingTopLeft).divideBy(2);
 			const projected = this.mapInstance.project(L.latLng(bounds[0]), finalZoom);
-			const center = this.mapInstance.unproject(projected.add(paddingOffset), finalZoom);
+			const center = this.mapInstance.unproject(projected.add(paddingOffset).subtract(offset), finalZoom);
 
 			if (options.animate)
 			{
@@ -441,9 +540,12 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			return;
 		}
 
+		// Leaflet frames bounds at (their center + (paddingBottomRight - paddingTopLeft) / 2), so the shift
+		// is folded into the two paddings. Their sum is kept intact - that is what the fitted zoom is
+		// computed from, and only the framing is meant to move.
 		this.mapInstance.fitBounds(leafletBounds, {
-			paddingTopLeft,
-			paddingBottomRight,
+			paddingTopLeft: paddingTopLeft.add(offset),
+			paddingBottomRight: paddingBottomRight.subtract(offset),
 			maxZoom,
 			animate: options.animate === true,
 			duration: options.duration,
@@ -494,6 +596,8 @@ export default class CheckInMapService extends CheckInMapServiceBase
 
 			return;
 		}
+
+		this.#settleMarkerAnimations();
 
 		// Compute bounds from stable data sources — not from what is currently
 		// rendered on the map, since clustering and animations alter that.
@@ -608,6 +712,10 @@ export default class CheckInMapService extends CheckInMapServiceBase
 	 */
 	enableClustering(options = {})
 	{
+		// From here on the clustering manager owns marker positions, and it cannot stop the walks itself:
+		// enable() takes every marker off the map first. A marker folded into a cluster would otherwise
+		// keep walking off-map, writing the lines bound to it.
+		this.#cancelAllMarkerAnimations();
 		this.clustering.enable(options);
 	}
 
@@ -654,6 +762,317 @@ export default class CheckInMapService extends CheckInMapServiceBase
 	}
 
 	#fitToLayersInFlight = false;
+
+	// Running smooth marker moves, keyed by marker id. At most one per marker: a newer update for the
+	// same id supersedes the unfinished move and starts from wherever the marker currently is, so a
+	// fix arriving early never makes the marker jump. Each record: { rafId, position }.
+	#markerAnimations = new Map();
+
+	// Lines whose final vertex follows a marker (`followMarker` in the layer config), keyed by host
+	// layer id: { markerId, points }. `points` is the geometry as sent - the tip is substituted only
+	// while that marker is walking.
+	#layerFollowers = new Map();
+
+	/**
+	 * Reports whether the marker is currently gliding towards a new position.
+	 *
+	 * @param {string} id
+	 * @returns {boolean}
+	 */
+	isMarkerAnimating(id)
+	{
+		return this.#markerAnimations.has(id);
+	}
+
+	/**
+	 * Moves a placed marker to new coordinates instead of replacing it by id (`animate: true`). The instance is
+	 * reused, so an infinite CSS animation in the icon (the pulse of an active employee) keeps running. Only for
+	 * a marker on the map on its own; in a cluster the caller falls back to replace-by-id.
+	 *
+	 * @returns {boolean} true when the update has been handled here.
+	 */
+	#moveMarkerSmoothly(id, config)
+	{
+		const marker = this.markers.get(id);
+
+		if (config.animate !== true
+			|| !marker
+			|| !this.mapInstance
+			|| !this.mapInstance.hasLayer(marker))
+		{
+			return false;
+		}
+
+		const from = marker.getLatLng();
+		const to = L.latLng(config.coords);
+
+		this.#refreshMarkerIcon(marker, id, config.markerIcon);
+		marker.setZIndexOffset((config.zIndex ?? 0) * 10000);
+
+		this.markerConfigs.set(id, config);
+		this.markerOriginalLatLngs.set(id, to);
+
+		this.#animateMarkerMove(id, marker, from, to, config.animateDuration ?? MARKER_MOVE_DURATION_MS);
+
+		return true;
+	}
+
+	// Swaps the icon of a reused marker only when the new config actually draws something else -
+	// setIcon rebuilds the element, which would restart any CSS animation the icon runs.
+	#refreshMarkerIcon(marker, id, markerIcon)
+	{
+		const previous = this.markerConfigs.get(id)?.markerIcon;
+
+		if (previous && this.#sameIconConfig(previous, markerIcon))
+		{
+			return;
+		}
+
+		marker.setIcon(this.createDivIcon(
+			markerIcon.html,
+			markerIcon.className,
+			markerIcon.iconSize,
+			markerIcon.iconAnchor,
+		));
+
+		// setIcon replaces the element, and the 'add' event that stamps these does not fire again.
+		const element = marker.getElement();
+		element?.setAttribute('testId', id);
+		element?.setAttribute('data-testid', id);
+	}
+
+	/**
+	 * Whether two icon configs would paint an element the same way.
+	 *
+	 * `iconKey` (location.check-in, icon-key.js) identifies the source an icon was built from and wins
+	 * over the markup: generated html is not comparable. An avatar gets a fresh mask id on every build,
+	 * so the html of the live employee marker is never equal twice - compared by markup alone it would
+	 * be rebuilt on every fix, and the pulse it runs would restart with it. A key on one side only means
+	 * the icon changed its nature; ready-made html carries no key and is its own identity.
+	 */
+	#sameIconConfig(a, b)
+	{
+		if (a.iconKey !== undefined || b.iconKey !== undefined)
+		{
+			return a.iconKey === b.iconKey;
+		}
+
+		return a.html === b.html
+			&& (a.className ?? '') === (b.className ?? '')
+			&& String(a.iconSize) === String(b.iconSize)
+			&& String(a.iconAnchor) === String(b.iconAnchor);
+	}
+
+	// Glides the marker by interpolating its coordinate frame by frame, not by a CSS transform on the
+	// element: the marker stays geographically correct on every frame, so a camera move running at the same
+	// time (the map follows the live position) composes with it instead of dragging it behind.
+	#animateMarkerMove(id, marker, from, to, duration)
+	{
+		this.cancelMarkerAnimation(id);
+
+		const canAnimate = duration > 0
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+			&& typeof requestAnimationFrame === 'function'
+			&& !from.equals(to);
+
+		if (!canAnimate)
+		{
+			marker.setLatLng(to);
+			this.#drawFollowerLayers(id, to);
+
+			return;
+		}
+
+		const startedAt = this.#now();
+		const record = { rafId: 0, position: from };
+		this.#markerAnimations.set(id, record);
+
+		const followerInterval = this.#followerUpdateInterval(id);
+		let lastFollowerWriteAt = -Infinity;
+
+		const step = () => {
+			// Bail if the map is gone or a newer update for this marker superseded this move.
+			if (!this.mapInstance || this.#markerAnimations.get(id) !== record)
+			{
+				return;
+			}
+
+			const now = this.#now();
+			const progress = Math.min(1, (now - startedAt) / duration);
+
+			if (progress >= 1)
+			{
+				this.#markerAnimations.delete(id);
+				marker.setLatLng(to);
+				// The last write is never skipped: the followed line has to end on the exact geometry
+				// the caller sent, whatever the throttle did to the frames before it.
+				this.#drawFollowerLayers(id, to);
+
+				return;
+			}
+
+			const t = MARKER_MOVE_EASING(progress);
+			const position = L.latLng(
+				from.lat + (to.lat - from.lat) * t,
+				from.lng + (to.lng - from.lng) * t,
+			);
+			record.position = position;
+			marker.setLatLng(position);
+
+			if (now - lastFollowerWriteAt >= followerInterval)
+			{
+				this.#drawFollowerLayers(id, position);
+				lastFollowerWriteAt = now;
+			}
+
+			record.rafId = requestAnimationFrame(step);
+		};
+
+		record.rafId = requestAnimationFrame(step);
+	}
+
+	// How often the lines bound to this marker are redrawn while it walks. The longest one decides: they
+	// are all written from the same frame, so the frame costs what the longest costs. Read once per walk -
+	// the answer must not cost a pass over the layers on every frame.
+	#followerUpdateInterval(markerId)
+	{
+		let longest = 0;
+
+		this.#layerFollowers.forEach((follower) => {
+			if (follower.markerId === markerId && Array.isArray(follower.points))
+			{
+				longest = Math.max(longest, follower.points.length);
+			}
+		});
+
+		return followerUpdateIntervalMs(longest);
+	}
+
+	/**
+	 * Where the marker is drawn right now: the frame of a running move, its settled coordinate
+	 * otherwise. This is what a line bound with `followMarker` ends at.
+	 *
+	 * @param {string} markerId
+	 * @returns {object|null} L.LatLng
+	 */
+	#markerPosition(markerId)
+	{
+		const running = this.#markerAnimations.get(markerId);
+		if (running)
+		{
+			return running.position;
+		}
+
+		return this.markers.get(markerId)?.getLatLng() ?? null;
+	}
+
+	// The geometry a line holds, as the caller sent it, or null when there is no line of that id. A
+	// followed one is read off the copy kept for it: the polyline itself carries the frame of a running
+	// walk in place of its tip, and a growth laid onto that would nail the frame down as geometry.
+	#layerGeometry(id)
+	{
+		const layer = this.layers.get(id);
+		if (!(layer instanceof L.Polyline))
+		{
+			return null;
+		}
+
+		const followed = this.#layerFollowers.get(id);
+
+		return Array.isArray(followed?.points)
+			? followed.points
+			: layer.getLatLngs().map(({ lat, lng }) => [lat, lng]);
+	}
+
+	// The path a followed line is drawn with: the geometry as sent, its final vertex moved onto the
+	// marker. Never mutates the stored points - they stay the target the move ends on.
+	#pathWithFollowedTip(points, position)
+	{
+		if (!Array.isArray(points) || points.length === 0 || !position)
+		{
+			return points;
+		}
+
+		const drawn = points.slice(0, -1);
+		drawn.push(position);
+
+		return drawn;
+	}
+
+	// Writes every line bound to this marker with its tip on the given position. Called from the
+	// frames of the move itself, so the tip and the marker are one and the same coordinate of one
+	// and the same frame - there is no clock to keep in step with another.
+	#drawFollowerLayers(markerId, position)
+	{
+		this.#layerFollowers.forEach((follower, layerId) => {
+			if (follower.markerId !== markerId)
+			{
+				return;
+			}
+
+			const layer = this.layers.get(layerId);
+			if (layer instanceof L.Polyline)
+			{
+				layer.setLatLngs(this.#pathWithFollowedTip(follower.points, position));
+			}
+		});
+	}
+
+	cancelMarkerAnimation(id)
+	{
+		const record = this.#markerAnimations.get(id);
+		if (!record)
+		{
+			return;
+		}
+
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+		if (typeof cancelAnimationFrame === 'function')
+		{
+			cancelAnimationFrame(record.rafId);
+		}
+		this.#markerAnimations.delete(id);
+	}
+
+	/**
+	 * Ends every running walk on its destination. A camera fit frames the scene by the coordinates the
+	 * markers are walking TO (it is built from markerOriginalLatLngs), so a marker still on its way would
+	 * stand off the frame built for it - at the closest zoom, near the screen edge instead of the centre.
+	 */
+	#settleMarkerAnimations()
+	{
+		[...this.#markerAnimations.keys()].forEach((id) => {
+			this.cancelMarkerAnimation(id);
+
+			const marker = this.markers.get(id);
+			const target = this.markerOriginalLatLngs.get(id);
+			if (marker && target)
+			{
+				marker.setLatLng(target);
+				this.#drawFollowerLayers(id, target);
+			}
+		});
+	}
+
+	#cancelAllMarkerAnimations()
+	{
+		this.#markerAnimations.forEach((record) => {
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+			if (typeof cancelAnimationFrame === 'function')
+			{
+				cancelAnimationFrame(record.rafId);
+			}
+		});
+		this.#markerAnimations.clear();
+	}
+
+	#now()
+	{
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+		return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+			? performance.now()
+			: Date.now();
+	}
 
 	/**
 	 * Extends geographic bounds to cover the full visual footprint of every marker icon.

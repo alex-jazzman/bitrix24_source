@@ -1,4 +1,5 @@
-import { FocusNavigator } from 'ui.a11y';
+import { Loc } from 'main.core';
+import { FocusNavigator, LiveAnnouncer } from 'ui.a11y';
 import ListItem from './list-item';
 
 export default {
@@ -54,7 +55,19 @@ export default {
 				{
 					FocusNavigator.focusContainer(listContainer);
 				}
+
+				LiveAnnouncer.announce(this.getRevealedMessage(), 'polite');
 			});
+		},
+		getRevealedMessage()
+		{
+			const revealedCount = this.listItems.length - this.showMoreCnt;
+
+			return Loc.getMessagePlural(
+				'CRM_TIMELINE_ITEM_EXPANDABLE_LIST_REVEALED',
+				revealedCount,
+				{ '#COUNT#': revealedCount },
+			);
 		},
 		isItemVisible(index)
 		{

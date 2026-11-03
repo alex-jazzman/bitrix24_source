@@ -52,9 +52,18 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 				};
 			}
 
-			return runAction(RestMethod.imV2ChatMessageSend, {
-				data: messageAddParams,
-			});
+			if (Type.isPlainObject(options.contact))
+			{
+				messageAddParams.fields.contact = options.contact;
+			}
+
+			return runAction(
+				RestMethod.imV2ChatMessageSend,
+				{
+					data: messageAddParams,
+				},
+				Type.isPlainObject(options.contact) ? { maskDataKeysInLog: ['fields'] } : {},
+			);
 		}
 
 		like(options = {})

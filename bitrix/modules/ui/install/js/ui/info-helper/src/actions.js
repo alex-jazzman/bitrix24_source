@@ -1,7 +1,22 @@
-import { ajax, Extension, Uri } from 'main.core';
+import { ajax, Extension, Loc, Type, Uri } from 'main.core';
 import { sendData } from 'ui.analytics';
-import { FeaturePromotersRegistry } from 'ui.info-helper';
+import { Button, ButtonColor, CloseButton } from 'ui.buttons';
+import { MessageBox } from 'ui.dialogs.messagebox';
+import { FeaturePromotersRegistry } from './feature-promoters-registry';
 import { SliderProvider } from './providers/slider-provider';
+
+type DemoActivationErrorAction = {
+	title?: string,
+	code?: string,
+};
+
+type DemoActivationError = {
+	message: string,
+	customData?: {
+		title?: string,
+		action?: DemoActivationErrorAction,
+	},
+};
 
 export class Actions
 {
@@ -181,48 +196,115 @@ export class Actions
 		}
 	}
 
-	static activateDemoLicense(): void
+	static activateDemoLicense(): Promise<void>
 	{
-		ajax.runAction('ui.infoHelper.activateDemoLicense').then((response) => {
-			const slider = BX.SidePanel.Instance.getTopSlider();
-			const promoter = FeaturePromotersRegistry.getLastPromoter();
-			const provider = promoter?.getProvider();
+		return ajax.runAction('ui.infoHelper.activateDemoLicense').then(
+			(response) => Actions.#processDemoActivationResponse(response),
+			() => Actions.#processDemoActivationResponse({
+				data: {
+					success: 'N',
+					error: {
+						message: Loc.getMessage('UI_INFO_HELPER_DEMO_LICENSE_ACTIVATION_FAILED'),
+					},
+				},
+			}),
+		);
+	}
 
-			if (slider)
+	static #processDemoActivationResponse(response): void
+	{
+		Actions.#notifyDemoActivationResult(response);
+
+		if (response.data.success === 'N' && response.data.error)
+		{
+			Actions.showDemoActivationError(response.data.error);
+		}
+
+		if (response.data.success === 'Y')
+		{
+			BX.onCustomEvent('BX.UI.InfoHelper:onActivateDemoLicenseSuccess', {
+				result: response,
+			});
+
+			window.location.reload();
+		}
+	}
+
+	static #notifyDemoActivationResult(response): void
+	{
+		if (!BX.SidePanel.Instance.getTopSlider())
+		{
+			return;
+		}
+
+		const promoter = FeaturePromotersRegistry.getLastPromoter();
+		const provider = promoter?.getProvider();
+		const frame = (
+			provider instanceof SliderProvider
+			&& promoter?.getCode() === 'limit_demo'
+		)
+			? provider.getFrame()
+			: BX.UI.InfoHelper.sliderProviderForOldFormat?.getFrame()
+		;
+
+		frame?.contentWindow?.postMessage(
 			{
-				if (
-					provider instanceof SliderProvider
-					&& promoter.getCode() === 'limit_demo'
-				)
-				{
-					provider?.getFrame().contentWindow.postMessage(
-						{
-							action: 'onActivateDemoLicenseResult',
-							result: response,
-						},
-						'*',
-					);
-				}
-				else
-				{
-					BX.UI.InfoHelper.sliderProviderForOldFormat?.getFrame().contentWindow.postMessage(
-						{
-							action: 'onActivateDemoLicenseResult',
-							result: response,
-						},
-						'*',
-					);
-				}
-			}
+				action: 'onActivateDemoLicenseResult',
+				result: response,
+			},
+			'*',
+		);
+	}
 
-			if (response.data.success === 'Y')
-			{
-				BX.onCustomEvent('BX.UI.InfoHelper:onActivateDemoLicenseSuccess', {
-					result: response,
-				});
+	static showDemoActivationError(error: DemoActivationError): void
+	{
+		const action = error.customData?.action;
+		const hasAction = (
+			Type.isStringFilled(action?.title)
+			&& Type.isStringFilled(action?.code)
+		);
+		const buttons = hasAction
+			? [this.#getHelperButton(action.title, action.code), this.#getCloseButton()]
+			: [this.#getCloseButton(true)]
+		;
 
-				window.location.reload();
-			}
+		(new MessageBox({
+			useAirDesign: true,
+			message: error.message,
+			title: error.customData?.title,
+			buttons,
+			popupOptions: {
+				closeByEsc: true,
+				closeIcon: true,
+			},
+		})).show();
+	}
+
+	static #getCloseButton(primary: boolean = false): CloseButton
+	{
+		return new CloseButton({
+			color: primary ? ButtonColor.PRIMARY : ButtonColor.LINK,
+			useAirDesign: true,
+			wide: true,
+			events: {
+				click: (button) => {
+					button.getContext().close();
+				},
+			},
+		});
+	}
+
+	static #getHelperButton(title: string, code: string): Button
+	{
+		return new Button({
+			color: ButtonColor.PRIMARY,
+			text: title,
+			useAirDesign: true,
+			wide: true,
+			onclick: (button) => {
+				button.getContext().close();
+				top.BX.Helper.show(`redirect=detail&code=${code}`);
+			},
 		});
 	}
 

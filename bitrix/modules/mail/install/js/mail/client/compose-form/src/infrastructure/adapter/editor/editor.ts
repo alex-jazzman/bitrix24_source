@@ -9,6 +9,7 @@ import {
 	type ComposeEditorAdapter,
 	type EditorAdapterParams,
 	type EditorAttachment,
+	type EditorServerAttachment,
 	type EditorUnsubscribe,
 	type RestoredEditorAttachment,
 	EditorViewMode,
@@ -40,6 +41,8 @@ type HtmlEditorInstance = {
 	GetIframeDoc(): Document | null,
 	Focus(setToEnd?: boolean): void,
 	Parse(html: string, parseBxNodes?: boolean, format?: boolean): string,
+	AutoResizeSceleton?(): void,
+	ResizeSceleton?(...args: unknown[]): void,
 	selection: HtmlEditorSelection,
 	synchro: HtmlEditorSynchro,
 	iframeView?: {
@@ -83,8 +86,11 @@ type UploaderControl = {
 	getFiles(): UploaderFile[],
 	getUploader(): Uploader,
 	nextTick(): Promise<void>,
+	hide(): void,
 	showUploaderPanel(): void,
 	showDocumentPanel(): void,
+	subscribe(eventName: string, handler: (event: { getData(): { isOpen?: boolean } }) => void): void,
+	unsubscribe(eventName: string, handler: (event: { getData(): { isOpen?: boolean } }) => void): void,
 };
 
 type DiskUploaderGlobal = {
@@ -141,8 +147,11 @@ const ShowMode = 'justShow';
 const CopilotButtonSelector = '[data-id="copilot"]';
 const UploaderPanelSelector = '.disk-user-field-control';
 
+const UploaderPanelToggleEvent = 'onUploaderPanelToggle';
+const DocumentPanelToggleEvent = 'onDocumentPanelToggle';
 const BodyPlaceholderAttribute = 'placeholder';
 const BodyPlaceholderVisibleAttribute = 'data-mail-compose-placeholder-visible';
+const HeadHtmlMarkAttribute = 'data-mail-compose-head';
 
 const noop = (): void => {};
 
@@ -225,12 +234,19 @@ export class EditorAdapter implements ComposeEditorAdapter
 
 	#uploaderControlId: string;
 	#closeForm: () => void;
+	#headHtml: string;
+	#isUploaderPanelShown: boolean = false;
+	#isDocumentPanelShown: boolean = false;
+	#arePanelsFollowed: boolean = false;
 	#teardown: Set<EditorUnsubscribe> = new Set();
 	#systemNodeIds: Set<string>;
 	#systemNodeRegistrations: Map<string, number>;
 	#initialBody: string | null = null;
 	#isInitialBodySet: boolean = false;
+	#isReadOnly: boolean = false;
 	#isDestroyed: boolean = false;
+	#heightRecalcFrame: number = 0;
+	#lastBodyHeight: number = -1;
 
 	constructor(params: EditorAdapterParams)
 	{
@@ -241,6 +257,7 @@ export class EditorAdapter implements ComposeEditorAdapter
 			[...this.#systemNodeIds].map((nodeId: string): [string, number] => [nodeId, 1]),
 		);
 		this.#uploaderControlId = params.uploaderControlId ?? '';
+		this.#headHtml = params.headHtml ?? '';
 		// Set before the readiness is subscribed: a ready editor binds the keys inside this constructor.
 		this.#closeForm = params.closeForm ?? noop;
 		this.subscribeReady(this.#handleReady);
@@ -316,6 +333,13 @@ export class EditorAdapter implements ComposeEditorAdapter
 		this.#initialBody = html;
 
 		return this.#isReady() && this.#applyInitialBody();
+	}
+
+	setReadOnly(readOnly: boolean): boolean
+	{
+		this.#isReadOnly = readOnly;
+
+		return this.#applyReadOnly();
 	}
 
 	hasUserContent(): boolean
@@ -499,6 +523,84 @@ export class EditorAdapter implements ComposeEditorAdapter
 		return true;
 	}
 
+	async addFiles(files: EditorServerAttachment[]): Promise<string[] | null>
+	{
+		const control = this.#resolveUploaderControl();
+		if (!control)
+		{
+			return files.length === 0 ? [] : null;
+		}
+
+		if (files.length === 0)
+		{
+			return [];
+		}
+
+		const uploader = control.getUploader();
+		const existingFileIds = new Set(control.getFiles().map((file: UploaderFile): string => file.getId()));
+		const existingObjectIds = new Set(
+			control.getFiles()
+				.map((file: UploaderFile): number => Number(file.getCustomData('objectId')))
+				.filter((objectId: number): boolean => Number.isInteger(objectId) && objectId > 0),
+		);
+		const filesToAdd = files.filter((file: EditorServerAttachment): boolean => {
+			if (existingObjectIds.has(file.id) || existingFileIds.has(`n${file.id}`))
+			{
+				return false;
+			}
+
+			existingObjectIds.add(file.id);
+
+			return true;
+		});
+		if (filesToAdd.length === 0)
+		{
+			return [];
+		}
+
+		const requestedFileIds = new Set(filesToAdd.map((file: EditorServerAttachment): string => `n${file.id}`));
+		let addedFileIds: string[] = [];
+		let isAdditionComplete = false;
+
+		try
+		{
+			const addedFiles = uploader.addFiles(filesToAdd.map((file: EditorServerAttachment) => {
+				const id = `n${file.id}`;
+
+				/*
+				 * The object of Disk is named in the custom data on purpose. A file handed over with its name
+				 * and size is loaded without asking the server, so nobody fills that field in afterwards —
+				 * and the identity of the object is exactly what the letter of the schedule, the letter held
+				 * back by the undo window and the autosave of the draft read the attachment by.
+				 */
+				return { id, serverFileId: id, name: file.name, size: file.size, customData: { objectId: file.id } };
+			}));
+			addedFileIds = addedFiles
+				.map((file: UploaderFile): string => file.getId())
+				.filter((fileId: string): boolean => !existingFileIds.has(fileId));
+			await control.nextTick();
+			isAdditionComplete = addedFileIds.length === filesToAdd.length;
+		}
+		catch
+		{
+			isAdditionComplete = false;
+		}
+
+		if (isAdditionComplete)
+		{
+			return addedFileIds;
+		}
+
+		const partiallyAddedFileIds = control.getFiles()
+			.map((file: UploaderFile): string => file.getId())
+			.filter((fileId: string): boolean => !existingFileIds.has(fileId) && requestedFileIds.has(fileId));
+		new Set([...addedFileIds, ...partiallyAddedFileIds]).forEach((fileId: string): void => {
+			uploader.removeFile(fileId);
+		});
+
+		return null;
+	}
+
 	/**
 	 * The uploader control owns the whole attachment set. The inline image of the file goes out of the body on
 	 * its own: the integration of the uploader with the editor cleans those nodes, the ones of the quote too.
@@ -516,8 +618,11 @@ export class EditorAdapter implements ComposeEditorAdapter
 		return true;
 	}
 
-	/** The same panel the file button of the toolbar opens, and the only door to it. */
-	showUploader(): boolean
+	/**
+	 * The file action shows the panel and hides it again: the state is told by the control itself, so a
+	 * panel given way to the documents counts as closed and the next call brings it back.
+	 */
+	toggleUploader(): boolean
 	{
 		const control = this.#resolveUploaderControl();
 		if (!control)
@@ -525,10 +630,40 @@ export class EditorAdapter implements ComposeEditorAdapter
 			return false;
 		}
 
+		if (this.#isUploaderPanelShown)
+		{
+			control.hide();
+
+			return true;
+		}
+
 		control.showUploaderPanel();
 		this.#scrollPanelIntoView(control);
 
 		return true;
+	}
+
+	#followPanels(control: UploaderControl): void
+	{
+		if (this.#arePanelsFollowed)
+		{
+			return;
+		}
+
+		this.#arePanelsFollowed = true;
+		const followFiles = (event: { getData(): { isOpen?: boolean } }): void => {
+			this.#isUploaderPanelShown = event.getData().isOpen === true;
+		};
+
+		const followDocuments = (event: { getData(): { isOpen?: boolean } }): void => {
+			this.#isDocumentPanelShown = event.getData().isOpen === true;
+		};
+		control.subscribe(UploaderPanelToggleEvent, followFiles);
+		control.subscribe(DocumentPanelToggleEvent, followDocuments);
+		this.#teardown.add((): void => {
+			control.unsubscribe(UploaderPanelToggleEvent, followFiles);
+			control.unsubscribe(DocumentPanelToggleEvent, followDocuments);
+		});
 	}
 
 	/**
@@ -548,13 +683,23 @@ export class EditorAdapter implements ComposeEditorAdapter
 		return true;
 	}
 
-	/** The Disk control owns the document-service picker, so the new footer delegates the action to it. */
-	showCreateDocument(): boolean
+	/**
+	 * The Disk control owns the document-service picker, so the new footer delegates the action to it.
+	 * The action shows the panel and hides it again, the way the file action does.
+	 */
+	toggleCreateDocument(): boolean
 	{
 		const control = this.#resolveUploaderControl();
 		if (!control || !control.canCreateDocuments())
 		{
 			return false;
+		}
+
+		if (this.#isDocumentPanelShown)
+		{
+			control.hide();
+
+			return true;
 		}
 
 		control.showDocumentPanel();
@@ -569,6 +714,31 @@ export class EditorAdapter implements ComposeEditorAdapter
 		const parsed = this.#resolveEditor()?.Parse(html, true, false);
 
 		return Type.isString(parsed) ? parsed : null;
+	}
+
+	/**
+	 * Markup written into the body by hand goes in through the parser of the editor: a `<style>` block of its
+	 * own would otherwise rule the document the user writes in.
+	 */
+	parseForBody(html: string): string | null
+	{
+		const parsed = this.#resolveEditor()?.Parse(html);
+
+		return Type.isString(parsed) ? parsed : null;
+	}
+
+	/** A node written into the document directly stays unknown to the editor until the body is synced. */
+	syncBodyFromDocument(): boolean
+	{
+		const editor = this.#resolveEditor();
+		if (!editor)
+		{
+			return false;
+		}
+
+		editor.synchro.FullSyncFromIframe();
+
+		return true;
 	}
 
 	/**
@@ -679,10 +849,13 @@ export class EditorAdapter implements ComposeEditorAdapter
 				`body[${BodyPlaceholderVisibleAttribute}]::before {`,
 				`\tcontent: attr(${BodyPlaceholderAttribute});`,
 				'\tposition: absolute;',
-				'\tinset: 0 auto auto 0;',
+				'\tinset: 8px auto auto 0;',
 				'\tpointer-events: none;',
-				'\tcolor: var(--ui-color-base-4, #a8adb4);',
-				'\tfont: var(--ui-font-weight-normal, 400) var(--ui-font-size-md, 16px)/var(--ui-font-line-height-md, 22px) var(--ui-font-family-system, Arial, sans-serif);',
+				'\tcolor: var(--ui-color-base-4);',
+				'\tfont: var(--ui-font-size-md)/var(--ui-font-line-height-md) var(--ui-font-family-system);',
+				// The document of the letter carries typography of its own, and the invitation must not
+				// inherit its weight.
+				'\tfont-weight: var(--ui-font-weight-light) !important;',
 				'}',
 			].join('\n');
 			Dom.append(style, bodyDocument.head);
@@ -786,6 +959,11 @@ export class EditorAdapter implements ComposeEditorAdapter
 		}
 
 		this.#isDestroyed = true;
+		if (this.#heightRecalcFrame !== 0)
+		{
+			window.cancelAnimationFrame(this.#heightRecalcFrame);
+			this.#heightRecalcFrame = 0;
+		}
 		this.#teardown.forEach((unsubscribe: EditorUnsubscribe): void => {
 			unsubscribe();
 		});
@@ -802,9 +980,18 @@ export class EditorAdapter implements ComposeEditorAdapter
 			return;
 		}
 
-		this.#applyInitialBody();
-
 		const bodyDocument = this.#resolveEditor()?.GetIframeDoc();
+		if (bodyDocument)
+		{
+			// Ahead of the body: the letter is styled by tokens the document of the frame does not carry itself.
+			this.#injectHeadHtml(bodyDocument);
+		}
+
+		this.#applyInitialBody();
+		this.#applyReadOnly();
+		// The Disk control opens its panels on its own; followed from here, none of those moves is missed.
+		this.#resolveUploaderControl();
+
 		if (!bodyDocument)
 		{
 			return;
@@ -814,7 +1001,98 @@ export class EditorAdapter implements ComposeEditorAdapter
 		this.#track((): void => {
 			Event.unbind(bodyDocument, 'keydown', this.#handleBodyKeydown);
 		});
+
+		this.#followBodyHeight(bodyDocument);
 	};
+
+	#applyReadOnly(): boolean
+	{
+		const body = this.#resolveEditor()?.GetIframeDoc()?.body;
+		if (!body)
+		{
+			return false;
+		}
+
+		body.contentEditable = this.#isReadOnly ? 'false' : 'true';
+		if (this.#isReadOnly)
+		{
+			body.blur();
+		}
+
+		return true;
+	}
+
+	/**
+	 * Without a ceiling of its own the letter has no scrollbar of its own, and its height is kept by the
+	 * recalculation of the editor. That recalculation hangs on five events and knows no observer, so an
+	 * image that arrives later or a long answer of the assistant would leave the height behind. The body is
+	 * watched here instead. In this mode the editor also skips its own debounce and relays out the whole
+	 * form on each keystroke, so the resize is held to one per frame. The handlers of the editor were bound
+	 * to its recalculation by reference at its init, and a replacement of that method on the instance never
+	 * reaches them; the recalculation itself looks the resize up on the instance at every call, and that is
+	 * where the calls meet.
+	 */
+	#followBodyHeight(bodyDocument: Document): void
+	{
+		const editor = this.#resolveEditor();
+		const body = bodyDocument.body;
+		// An editor that answers no recalculation of its own is left to keep its height the way it does.
+		if (!editor?.AutoResizeSceleton || !editor.ResizeSceleton || !body)
+		{
+			return;
+		}
+
+		const resize = editor.ResizeSceleton;
+		editor.ResizeSceleton = (...args: unknown[]): void => {
+			// Explicit sizes come from the splitter and the restored state of the editor; they apply at once.
+			if (args.length > 0)
+			{
+				resize.call(editor, ...args);
+
+				return;
+			}
+
+			this.#scheduleResize((): void => {
+				resize.call(editor);
+			});
+		};
+		this.#track((): void => {
+			editor.ResizeSceleton = resize;
+		});
+
+		// The checks of the editor — expanded, hidden, empty — stay in force: the observer goes through them.
+		const observer = new ResizeObserver((): void => {
+			if (body.scrollHeight === this.#lastBodyHeight)
+			{
+				return;
+			}
+
+			this.#lastBodyHeight = body.scrollHeight;
+			editor.AutoResizeSceleton?.();
+		});
+		observer.observe(body);
+		this.#track((): void => {
+			observer.disconnect();
+		});
+	}
+
+	#scheduleResize(resize: () => void): void
+	{
+		if (this.#heightRecalcFrame !== 0)
+		{
+			return;
+		}
+
+		this.#heightRecalcFrame = window.requestAnimationFrame((): void => {
+			this.#heightRecalcFrame = 0;
+			if (this.#isDestroyed)
+			{
+				return;
+			}
+
+			resize();
+		});
+	}
 
 	/**
 	 * The panel is left through the handler of the form and not by closing the slider here: that handler is
@@ -831,6 +1109,25 @@ export class EditorAdapter implements ComposeEditorAdapter
 			this.#closeForm();
 		}
 	};
+
+	/**
+	 * The editor builds the document of the letter and loads into it only what it knows about, so the stylesheets
+	 * the form relies on go in here, once per document.
+	 */
+	#injectHeadHtml(bodyDocument: Document): void
+	{
+		if (this.#headHtml === '' || bodyDocument.head.querySelector(`[${HeadHtmlMarkAttribute}]`))
+		{
+			return;
+		}
+
+		const fragment = this.#createHtmlFragment(bodyDocument, this.#headHtml);
+		for (const node of fragment.children)
+		{
+			node.setAttribute(HeadHtmlMarkAttribute, '');
+		}
+		bodyDocument.head.append(fragment);
+	}
 
 	/** `main.post.form` reports readiness the moment the body exists, and a body not built takes no content. */
 	#isReady(): boolean
@@ -974,6 +1271,12 @@ export class EditorAdapter implements ComposeEditorAdapter
 		return (window as LegacyWindow).LHEPostForm?.getHandler(this.editorId) ?? null;
 	}
 
+	/**
+	 * The panels are followed from the first sight of the control — the readiness of the editor looks it up
+	 * for that — rather than from the first action of the footer: the Disk control opens the file panel on
+	 * its own — restoring the attachments of a draft, a paste from the clipboard, a video upload — and a
+	 * toggle that missed those events would show a panel already open instead of hiding it.
+	 */
 	#resolveUploaderControl(): UploaderControl | null
 	{
 		if (this.#uploaderControlId === '')
@@ -982,8 +1285,13 @@ export class EditorAdapter implements ComposeEditorAdapter
 		}
 
 		const uploaderApi = (BX as unknown as DiskUploaderGlobal).Disk?.Uploader?.UserFieldControl;
+		const control = uploaderApi?.getById(this.#uploaderControlId) ?? null;
+		if (control)
+		{
+			this.#followPanels(control);
+		}
 
-		return uploaderApi?.getById(this.#uploaderControlId) ?? null;
+		return control;
 	}
 
 	#resolveCopilotButton(): HTMLElement | null

@@ -26,7 +26,7 @@ export default class OnlyofficeExternalLinkItem extends BX.UI.Viewer.Item
 	{
 		super.setController(controller);
 
-		this.controller.preload = 0;
+		this.controller.maxParallelLoads = 1;
 	}
 
 	loadData ()

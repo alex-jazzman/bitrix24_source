@@ -58,7 +58,7 @@ export const Toolbar = defineComponent({
 	},
 
 	template: `
-		<div class="crm-ai-report-drawer__toolbar">
+		<div class="crm-ai-report-drawer__toolbar" data-testid="crm-ai-report-drawer-toolbar">
 			<div class="crm-ai-report-drawer__toolbar-left">
 				<Player v-if="hasRecord" :recordData="record" />
 				<InfoButton v-if="hasInfoPopup" :infoPopupData="infoPopup" />

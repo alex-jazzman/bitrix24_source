@@ -1,4 +1,6 @@
 .bx-im-emote-popup__container {
+	--im-emote-popup__footer_height: 48px;
+
 	border-radius: inherit;
 }
 
@@ -10,7 +12,7 @@
 	align-items: center;
 	gap: 8px;
 	width: 100%;
-	height: 48px;
+	height: var(--im-emote-popup__footer_height);
 	border-bottom-left-radius: inherit;
 	border-bottom-right-radius: inherit;
 	border-top: 1px solid var(--ui-color-divider-vibrant-less);

@@ -78,6 +78,10 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 		this._validators = null;
 		this._modeSwitch = null;
+		this._visualScrollAnchor = null;
+		this._visualScrollAnchorOperationId = 0;
+		this._isVisualScrollAnchorRestoring = false;
+		this._isVisualScrollAnchorNavigationPreserved = false;
 		this._delayedSaveHandle = 0;
 
 		this._isEmbedded = false;
@@ -122,6 +126,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		this._validationEnabled = true;
 
 	};
+	BX.UI.EntityEditor.visualScrollAnchorTimeout = 6000;
 	BX.UI.EntityEditor.prototype =
 	{
 		initialize: function(id, settings)
@@ -312,6 +317,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		initializeControlsEditMode: function()
 		{
+			this._clearVisualScrollAnchor();
 			var i, length;
 			for(i = 0, length = this._controls.length; i < length; i++)
 			{
@@ -551,6 +557,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		release: function()
 		{
+			this._clearVisualScrollAnchor();
 			for(var i = 0, length = this._controls.length; i < length; i++)
 			{
 				this._controls[i].clearLayout();
@@ -968,6 +975,40 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		{
 			return this._controls;
 		},
+		applyCreatedClientEntities: function(createdClientEntities)
+		{
+			// Hand the identity of clients created during a failed submit back to the control that
+			// produced them, so a resubmit reuses the client instead of creating a duplicate. Each
+			// record is routed only to the control whose field name matches its FIELD_NAME, so a
+			// client-field entity is not mistakenly consumed by the my-company control (and vice versa).
+			// Additive and error-path only; a record without FIELD_NAME (legacy payload) is offered to all.
+			var controls = this.getAllControls();
+			for(var i = 0, length = controls.length; i < length; i++)
+			{
+				var control = controls[i];
+				if(typeof control.processCreatedClientEntities !== "function")
+				{
+					continue;
+				}
+
+				var controlName = (typeof control.getName === "function") ? control.getName() : null;
+				var ownEntities = [];
+				for(var j = 0, count = createdClientEntities.length; j < count; j++)
+				{
+					var entity = createdClientEntities[j];
+					var fieldName = BX.prop.getString(entity, "FIELD_NAME", "");
+					if(fieldName === "" || controlName === null || fieldName === controlName)
+					{
+						ownEntities.push(entity);
+					}
+				}
+
+				if(ownEntities.length > 0)
+				{
+					control.processCreatedClientEntities(ownEntities);
+				}
+			}
+		},
 		getControlCount: function()
 		{
 			return this._controls.length;
@@ -1286,6 +1327,10 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		releaseActiveControls: function(options)
 		{
+			if (this._visualScrollAnchor && !this._visualScrollAnchor.restoreRequested)
+			{
+				this._clearVisualScrollAnchor();
+			}
 			//region Release Event
 			var eventArgs =
 				{
@@ -1760,8 +1805,398 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 			this.adjustButtons();
 		},
+		_getVisualScrollContainer: function(wrapper)
+		{
+			const doc = wrapper.ownerDocument;
+			for (let node = wrapper.parentElement; node; node = node.parentElement)
+			{
+				if (node === doc.scrollingElement)
+				{
+					break;
+				}
+				if (/^(auto|scroll|overlay)$/.test(doc.defaultView.getComputedStyle(node).overflowY)
+					&& node.scrollHeight > node.clientHeight)
+				{
+					return node;
+				}
+			}
+			return doc.scrollingElement;
+		},
+		_getVisualScrollAnchorOffset: function(wrapper, container)
+		{
+			const viewportTop = container === wrapper.ownerDocument.scrollingElement
+				? 0
+				: container.getBoundingClientRect().top + container.clientTop;
+			return wrapper.getBoundingClientRect().top - viewportTop;
+		},
+		_captureVisualScrollAnchor: function(control, options)
+		{
+			this._clearVisualScrollAnchor();
+			if (!BX.UI.EntityEditorModeOptions.check(options, BX.UI.EntityEditorModeOptions.individual)
+				|| control.getMode() !== BX.UI.EntityEditorMode.view
+				|| !control.canChangeMode(BX.UI.EntityEditorMode.edit))
+			{
+				return;
+			}
+			const wrapper = control.getWrapper();
+			if (!wrapper || !wrapper.isConnected)
+			{
+				return;
+			}
+			const container = this._getVisualScrollContainer(wrapper);
+			if (!container || !container.isConnected)
+			{
+				return;
+			}
+			this._visualScrollAnchor = {
+				controlId: control.getId(),
+				container: container,
+				topOffset: this._getVisualScrollAnchorOffset(wrapper, container),
+				operationId: this._visualScrollAnchorOperationId,
+				restoreRequested: false,
+				navigationArmed: false,
+				userScrolled: false,
+				lastScrollTop: container.scrollTop,
+				inputArmed: false,
+				scrollbarPointerActive: false,
+				inputFrame: 0,
+				restoreFrame: 0,
+				restoreTimeout: 0,
+				restoreObserver: null,
+				listeners: [],
+			};
+			this._wrapVisualScrollAnchorControlFocus(control);
+			this._bindVisualScrollAnchorEvents();
+		},
+		_wrapVisualScrollAnchorControlFocus: function(control)
+		{
+			const anchor = this._visualScrollAnchor;
+			if (!anchor || !BX.Type.isFunction(control.focus))
+			{
+				return;
+			}
+			const editor = this;
+			const focus = control.focus;
+			const wrappedFocus = function() {
+				editor._onVisualScrollAnchorNavigationRequested();
+
+				return focus.apply(this, arguments);
+			};
+			anchor.focusControl = control;
+			anchor.focus = focus;
+			anchor.focusIsOwn = Object.prototype.hasOwnProperty.call(control, 'focus');
+			anchor.wrappedFocus = wrappedFocus;
+			control.focus = wrappedFocus;
+		},
+		_restoreVisualScrollAnchorControlFocus: function(anchor)
+		{
+			const control = anchor.focusControl;
+			if (!control || control.focus !== anchor.wrappedFocus)
+			{
+				return;
+			}
+			if (anchor.focusIsOwn)
+			{
+				control.focus = anchor.focus;
+			}
+			else
+			{
+				delete control.focus;
+			}
+		},
+		_bindVisualScrollAnchorEvents: function()
+		{
+			const anchor = this._visualScrollAnchor;
+			const container = anchor.container;
+			const doc = container.ownerDocument;
+			const view = doc.defaultView;
+			const isDocument = container === doc.scrollingElement;
+			const bind = (target, name, handler) => {
+				target.addEventListener(name, handler, true);
+				anchor.listeners.push({ target: target, name: name, handler: handler });
+			};
+			const onScroll = () => {
+				if (this._visualScrollAnchor !== anchor || this._isVisualScrollAnchorRestoring)
+				{
+					return;
+				}
+				if (container.scrollTop !== anchor.lastScrollTop
+					&& (anchor.inputArmed || anchor.scrollbarPointerActive))
+				{
+					anchor.userScrolled = true;
+					this._updateVisualScrollAnchorOffset();
+					armInput();
+					return true;
+				}
+				anchor.lastScrollTop = container.scrollTop;
+				return false;
+			};
+			const armInput = () => {
+				anchor.inputArmed = true;
+				view.cancelAnimationFrame(anchor.inputFrame);
+				// Keyboard scrolling can start after the first pre-paint callback.
+				anchor.inputFrame = view.requestAnimationFrame(() => {
+					anchor.inputFrame = view.requestAnimationFrame(() => {
+						if (!onScroll())
+						{
+							anchor.inputArmed = false;
+							anchor.inputFrame = 0;
+						}
+					});
+				});
+			};
+			const onInput = (event) => {
+				if (!event.isTrusted || (!isDocument && !container.contains(event.target)))
+				{
+					return;
+				}
+				armInput();
+			};
+			bind(doc, 'wheel', onInput);
+			bind(doc, 'touchmove', onInput);
+			bind(doc, 'keydown', (event) => {
+				if (event.isTrusted && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key))
+				{
+					armInput();
+				}
+			});
+			bind(doc, view.PointerEvent ? 'pointerdown' : 'mousedown', (event) => {
+				if (!event.isTrusted || event.button !== 0)
+				{
+					return;
+				}
+				const rect = container.getBoundingClientRect();
+				const clientLeft = rect.left + container.clientLeft;
+				const inScrollbar = isDocument
+					? event.clientX >= doc.documentElement.clientWidth && event.clientX < view.innerWidth
+					: event.target === container
+						&& event.clientY >= rect.top && event.clientY <= rect.bottom
+						&& (event.clientX >= clientLeft + container.clientWidth && event.clientX < rect.right
+							|| event.clientX >= rect.left && event.clientX < clientLeft);
+				if (inScrollbar)
+				{
+					anchor.lastScrollTop = container.scrollTop;
+					anchor.scrollbarPointerActive = true;
+				}
+			});
+			const endPointer = () => {
+				onScroll();
+				anchor.scrollbarPointerActive = false;
+			};
+			bind(doc, view.PointerEvent ? 'pointerup' : 'mouseup', endPointer);
+			bind(doc, 'pointercancel', endPointer);
+			bind(view, 'blur', endPointer);
+			bind(isDocument ? view : container, 'scroll', (event) => {
+				if (event.target === container || (isDocument && event.target === doc))
+				{
+					onScroll();
+				}
+			});
+			bind(doc, 'focusin', (event) => {
+				const control = this.getControlById(anchor.controlId);
+				const wrapper = control && control.getWrapper();
+				const toolPanel = this._toolPanel && this._toolPanel._wrapper;
+				const dialog = this._confirmationCancelDialog;
+				const popup = dialog && dialog._popup && dialog._popup.getPopupContainer();
+				if ((anchor.scrollbarPointerActive && event.target === container)
+					|| (wrapper && wrapper.contains(event.target))
+					|| (toolPanel && toolPanel.contains(event.target))
+					|| (popup && popup.contains(event.target)))
+				{
+					return;
+				}
+				this._onVisualScrollAnchorNavigationRequested();
+			});
+		},
+		_onVisualScrollAnchorControlModeChange: function(control, mode)
+		{
+			const anchor = this._visualScrollAnchor;
+			if (anchor && anchor.navigationArmed
+				&& (mode === BX.UI.EntityEditorMode.edit
+					|| (control.getId() === anchor.controlId && !anchor.restoreRequested)))
+			{
+				this._clearVisualScrollAnchor();
+			}
+		},
+		_onVisualScrollAnchorNavigationRequested: function()
+		{
+			const anchor = this._visualScrollAnchor;
+			if (anchor && anchor.navigationArmed
+				&& !this._isVisualScrollAnchorRestoring && !this._isVisualScrollAnchorNavigationPreserved)
+			{
+				this._clearVisualScrollAnchor();
+			}
+		},
+		_runWithVisualScrollAnchorNavigationPreserved: function(callback)
+		{
+			const wasPreserved = this._isVisualScrollAnchorNavigationPreserved;
+			this._isVisualScrollAnchorNavigationPreserved = true;
+			try
+			{
+				return callback();
+			}
+			finally
+			{
+				this._isVisualScrollAnchorNavigationPreserved = wasPreserved;
+			}
+		},
+		_updateVisualScrollAnchorOffset: function()
+		{
+			const anchor = this._visualScrollAnchor;
+			const control = anchor && this.getControlById(anchor.controlId);
+			const wrapper = control && control.getWrapper();
+			if (wrapper && wrapper.isConnected && anchor.container.contains(wrapper))
+			{
+				anchor.topOffset = this._getVisualScrollAnchorOffset(wrapper, anchor.container);
+				anchor.lastScrollTop = anchor.container.scrollTop;
+			}
+		},
+		_requestVisualScrollAnchorRestore: function()
+		{
+			const anchor = this._visualScrollAnchor;
+			if (anchor)
+			{
+				if (anchor.userScrolled || (anchor.container.scrollTop !== anchor.lastScrollTop
+					&& (anchor.inputArmed || anchor.scrollbarPointerActive)))
+				{
+					this._updateVisualScrollAnchorOffset();
+				}
+				anchor.restoreRequested = true;
+			}
+		},
+		_scheduleVisualScrollAnchorRestore: function(promises, operationId)
+		{
+			const anchor = this._visualScrollAnchor;
+			if (!anchor || !anchor.restoreRequested || anchor.operationId !== operationId)
+			{
+				return;
+			}
+			const view = anchor.container.ownerDocument.defaultView;
+			const layoutPromise = Promise.all(promises.map((promise) => Promise.resolve(promise).catch(() => {})));
+			anchor.layoutPromise = layoutPromise;
+			anchor.layoutPending = true;
+			view.clearTimeout(anchor.restoreTimeout);
+			view.cancelAnimationFrame(anchor.restoreFrame);
+			anchor.restoreFrame = 0;
+			if (anchor.restoreObserver)
+			{
+				anchor.restoreObserver.disconnect();
+				anchor.restoreObserver = null;
+			}
+			anchor.restoreTimeout = view.setTimeout(() => {
+				if (this._visualScrollAnchor === anchor && this._visualScrollAnchorOperationId === operationId)
+				{
+					this._restoreVisualScrollAnchor(operationId, false);
+				}
+			}, BX.UI.EntityEditor.visualScrollAnchorTimeout);
+			const observeTarget = this.getContainer();
+			if (view.MutationObserver && observeTarget && observeTarget.isConnected)
+			{
+				anchor.restoreObserver = new view.MutationObserver(() => {
+					if (this._visualScrollAnchor !== anchor || !anchor.layoutPending
+						|| this._visualScrollAnchorOperationId !== operationId || anchor.restoreFrame !== 0)
+					{
+						return;
+					}
+					anchor.restoreFrame = view.requestAnimationFrame(() => {
+						anchor.restoreFrame = 0;
+						if (this._visualScrollAnchor === anchor && anchor.layoutPending
+							&& this._visualScrollAnchorOperationId === operationId)
+						{
+							this._restoreVisualScrollAnchor(operationId, true);
+						}
+					});
+				});
+				anchor.restoreObserver.observe(observeTarget, {
+					attributes: true,
+					childList: true,
+					characterData: true,
+					subtree: true,
+				});
+			}
+			this._restoreVisualScrollAnchor(operationId, true);
+			layoutPromise.then(() => {
+				if (this._visualScrollAnchor === anchor && anchor.layoutPromise === layoutPromise)
+				{
+					anchor.layoutPending = false;
+					if (anchor.restoreObserver)
+					{
+						anchor.restoreObserver.disconnect();
+						anchor.restoreObserver = null;
+					}
+					view.cancelAnimationFrame(anchor.restoreFrame);
+					anchor.restoreFrame = view.requestAnimationFrame(() => {
+						anchor.restoreFrame = 0;
+						if (this._visualScrollAnchor === anchor && anchor.layoutPromise === layoutPromise)
+						{
+							this._restoreVisualScrollAnchor(operationId, false);
+						}
+					});
+				}
+			});
+		},
+		_restoreVisualScrollAnchor: function(operationId, keepActive)
+		{
+			const anchor = this._visualScrollAnchor;
+			if (!anchor || !anchor.restoreRequested || operationId !== this._visualScrollAnchorOperationId)
+			{
+				return;
+			}
+			const control = this.getControlById(anchor.controlId);
+			const wrapper = control && control.getWrapper();
+			const container = anchor.container;
+			if (this._isReleased || !wrapper || !wrapper.isConnected || !container.isConnected
+				|| !container.contains(wrapper) || this._getVisualScrollContainer(wrapper) !== container
+				|| control.getMode() !== BX.UI.EntityEditorMode.view)
+			{
+				this._clearVisualScrollAnchor();
+				return;
+			}
+			try
+			{
+				this._isVisualScrollAnchorRestoring = true;
+				const delta = this._getVisualScrollAnchorOffset(wrapper, container) - anchor.topOffset;
+				if (delta !== 0)
+				{
+					container.scrollTop += delta;
+				}
+				anchor.lastScrollTop = container.scrollTop;
+			}
+			finally
+			{
+				this._isVisualScrollAnchorRestoring = false;
+				if (!keepActive)
+				{
+					this._clearVisualScrollAnchor();
+				}
+			}
+		},
+		_clearVisualScrollAnchor: function()
+		{
+			const anchor = this._visualScrollAnchor;
+			this._visualScrollAnchor = null;
+			this._visualScrollAnchorOperationId++;
+			if (!anchor)
+			{
+				return;
+			}
+			const view = anchor.container.ownerDocument.defaultView;
+			view.cancelAnimationFrame(anchor.inputFrame);
+			view.cancelAnimationFrame(anchor.restoreFrame);
+			view.clearTimeout(anchor.restoreTimeout);
+			if (anchor.restoreObserver)
+			{
+				anchor.restoreObserver.disconnect();
+			}
+			this._restoreVisualScrollAnchorControlFocus(anchor);
+			anchor.listeners.forEach((listener) => {
+				listener.target.removeEventListener(listener.name, listener.handler, true);
+			});
+		},
 		refreshLayout: function(options)
 		{
+			const operationId = this._visualScrollAnchorOperationId;
+			const layoutPromises = [];
 			var userFieldLoaders =
 				{
 					edit: BX.UI.EntityUserFieldLayoutLoader.create(
@@ -1799,13 +2234,14 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			{
 				if(userFieldLoaders.hasOwnProperty(key))
 				{
-					userFieldLoaders[key].runBatch();
+					layoutPromises.push(userFieldLoaders[key].runBatch());
 				}
 			}
 
 			this.adjustButtons();
 
 			BX.onCustomEvent(window, this.eventsNamespace + ":onRefreshLayout", [ this ]);
+			this._scheduleVisualScrollAnchorRestore(layoutPromises, operationId);
 		},
 		refreshViewModeLayout: function(options)
 		{
@@ -1855,6 +2291,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				}
 				else
 				{
+					this._clearVisualScrollAnchor();
 					control.setMode(mode, { options: options, notify: true });
 					control.refreshLayout();
 				}
@@ -1863,6 +2300,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			{
 				if(!BX.UI.EntityEditorModeOptions.check(options, BX.UI.EntityEditorModeOptions.exclusive))
 				{
+					this._captureVisualScrollAnchor(control, options);
 					control.setMode(BX.UI.EntityEditorMode.edit, { options: options, notify: true });
 					control.refreshLayout();
 				}
@@ -1881,15 +2319,21 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 					if(queuedControlQty > 0)
 					{
+						this._clearVisualScrollAnchor();
 						this._modeSwitch.getQueue().add(control, BX.UI.EntityEditorMode.edit, options);
 						this._modeSwitch.run();
 					}
 					else
 					{
+						this._captureVisualScrollAnchor(control, options);
 						control.setMode(BX.UI.EntityEditorMode.edit, { options: options, notify: true });
 						control.refreshLayout();
 					}
 				}
+			}
+			if (this._visualScrollAnchor)
+			{
+				this._visualScrollAnchor.navigationArmed = true;
 			}
 		},
 		switchToViewMode: function(options)
@@ -2217,6 +2661,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 			if(!this._isNew && !this.hasChangedControls() && !this.hasChangedControllers() && !this.isWaitingForInput())
 			{
+				this._requestVisualScrollAnchorRestore();
 				this._modeSwitch.reset();
 				this.releaseActiveControls();
 				this.refreshLayout({ reset: true });
@@ -2316,7 +2761,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 								var field = result.getTopmostField();
 								if(field)
 								{
-									field.focus();
+									this._runWithVisualScrollAnchorNavigationPreserved(() => field.focus());
 									var toolPanelOffset = 130;
 									window.scroll(window.pageXOffset, window.pageYOffset + toolPanelOffset);
 								}
@@ -2636,6 +3081,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		innerCancel: function()
 		{
+			this._requestVisualScrollAnchorRestore();
 			var i, length;
 			for(i = 0, length = this._controllers.length; i < length; i++)
 			{
@@ -2861,6 +3307,12 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			{
 				this.registerSaveAnalyticsEvent('error');
 
+				var createdClientEntities = BX.prop.getArray(result, "CREATED_CLIENT_ENTITIES", []);
+				if(createdClientEntities.length > 0)
+				{
+					this.applyCreatedClientEntities(createdClientEntities);
+				}
+
 				if(checkErrors)
 				{
 					var firstField = null;
@@ -2889,7 +3341,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 					if(firstField)
 					{
-						firstField.scrollAnimate();
+						this._runWithVisualScrollAnchorNavigationPreserved(() => firstField.scrollAnimate());
 					}
 
 					error = errorMessages.join("<br/>");
@@ -3030,6 +3482,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 			if (BX.Type.isStringFilled(redirectUrl))
 			{
+				this._clearVisualScrollAnchor();
 				// postpone redirect to next event loop cycle, so that analytics request is sent before this page closes
 				setTimeout(() => {
 					eventParams.redirectUrl = redirectUrl;
@@ -3075,6 +3528,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 						this._controllers[i].onAfterSave();
 					}
 
+					this._requestVisualScrollAnchorRestore();
 					if (this._modeSwitch.isRunning())
 					{
 						this._modeSwitch.complete();
@@ -4037,7 +4491,17 @@ if(typeof BX.UI.EntityEditorModeQueue === "undefined")
 				for(var i = 0; i < length; i++)
 				{
 					var item = this._items[i];
-					item["control"].setMode(item["mode"], { options: item["options"], notify: true });
+					const control = item.control;
+					const editor = control.getEditor();
+					if (item.mode === BX.UI.EntityEditorMode.edit && editor)
+					{
+						editor._captureVisualScrollAnchor(control, item.options);
+					}
+					control.setMode(item.mode, { options: item.options, notify: true });
+					if (editor && editor._visualScrollAnchor)
+					{
+						editor._visualScrollAnchor.navigationArmed = true;
+					}
 				}
 
 				return length;

@@ -18,7 +18,7 @@ $settings = \Bitrix\Landing\Hook\Page\Settings::getDataForSite(
 					<div class="landing-block-node-card col-sm g-brd-right--sm g-brd-gray-light-v4 g-mb-15 g-mb-0--sm" data-card-preset="link">
 						<div class="g-pa-10--lg">
 							<div class="landing-block-node-card-icon-container d-lg-inline-block g-valign-top g-color-primary g-mr-5 g-font-size-18 g-line-height-1">
-								<i class="landing-block-node-card-icon icon icon-screen-smartphone"></i>
+								<i class="landing-block-node-card-icon icon icon-screen-smartphone" aria-hidden="true"></i>
 							</div>
 							<div class="landing-block-node-card-text-container d-inline-block">
 								<div class="landing-block-node-card-title text-uppercase g-font-size-13">
@@ -36,7 +36,7 @@ $settings = \Bitrix\Landing\Hook\Page\Settings::getDataForSite(
 					<div class="landing-block-node-card col-sm g-brd-right--sm g-brd-gray-light-v4 g-mb-15 g-mb-0--sm" data-card-preset="text">
 						<div class="g-pa-10--lg">
 							<div class="landing-block-node-card-icon-container d-lg-inline-block g-valign-top g-color-primary g-mr-5 g-font-size-18 g-line-height-1">
-								<i class="landing-block-node-card-icon icon icon-clock"></i>
+								<i class="landing-block-node-card-icon icon icon-clock" aria-hidden="true"></i>
 							</div>
 							<div class="landing-block-node-card-text-container d-inline-block">
 								<div class="landing-block-node-card-title text-uppercase g-font-size-13">
@@ -52,7 +52,7 @@ $settings = \Bitrix\Landing\Hook\Page\Settings::getDataForSite(
 					<div class="landing-block-node-card col-sm g-brd-right--sm g-brd-gray-light-v4 g-mb-15 g-mb-0--sm" data-card-preset="link">
 						<div class="g-pa-10--lg">
 							<div class="landing-block-node-card-icon-container d-lg-inline-block g-valign-top g-color-primary g-mr-5 g-font-size-18 g-line-height-1">
-								<i class="landing-block-node-card-icon icon icon-envelope"></i>
+								<i class="landing-block-node-card-icon icon icon-envelope" aria-hidden="true"></i>
 							</div>
 							<div class="landing-block-node-card-text-container d-inline-block">
 								<div class="landing-block-node-card-title text-uppercase g-font-size-13">

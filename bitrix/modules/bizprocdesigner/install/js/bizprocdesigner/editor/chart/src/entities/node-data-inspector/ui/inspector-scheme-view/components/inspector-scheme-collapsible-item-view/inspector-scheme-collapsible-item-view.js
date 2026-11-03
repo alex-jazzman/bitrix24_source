@@ -4,6 +4,10 @@ import { Type } from 'main.core';
 import './style.css';
 import { InspectorViewItemTypeDict } from '../../../../constants';
 
+/**
+ * Header of a collapsible level of the scheme. Controls that belong to a node type go into the
+ * `header-controls` slot: a click inside it must not toggle the level.
+ */
 export const InspectorSchemeCollapsibleItemView = {
 	name: 'InspectorSchemeCollapsibleItemView',
 	emits: ['toggle'],
@@ -99,6 +103,13 @@ export const InspectorSchemeCollapsibleItemView = {
 				</div>
 				<span class="inspector-scheme-view__collapsible-item-title" :class="typeClass">{{ item.text }}</span>
 			</template>
+			<div
+				v-if="$slots['header-controls']"
+				class="inspector-scheme-view__collapsible-header__controls"
+				@click.stop
+			>
+				<slot name="header-controls" :item="item"/>
+			</div>
 		</div>
 	`,
 };

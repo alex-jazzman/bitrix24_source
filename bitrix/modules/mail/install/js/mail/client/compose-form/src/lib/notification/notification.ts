@@ -4,7 +4,12 @@ import { Page } from 'main.core';
 const AutoHideDelay = 2000;
 
 type NotificationCenter = {
-	notify(options: { content: string, autoHideDelay: number }): void,
+	notify(options: { content: string | Element, autoHideDelay: number, closeButton?: boolean }): void,
+};
+
+type NotifyPortalOptions = {
+	role?: 'alert' | 'status',
+	closeButton?: boolean,
 };
 
 type PortalWindow = Window & {
@@ -28,7 +33,37 @@ function getPortalNotificationCenter(): NotificationCenter | null
 	return portalWindow.BX?.UI?.Notification?.Center ?? null;
 }
 
-export function notifyPortal(text: string): void
+export function notifyPortal(text: string, options: NotifyPortalOptions = {}): void
 {
-	getPortalNotificationCenter()?.notify({ content: text, autoHideDelay: AutoHideDelay });
+	const center = getPortalNotificationCenter();
+	if (!center)
+	{
+		return;
+	}
+
+	const notification: { content: string | Element, autoHideDelay: number, closeButton?: boolean } = {
+		content: createContent(text, options.role),
+		autoHideDelay: AutoHideDelay,
+	};
+	if (options.closeButton !== undefined)
+	{
+		notification.closeButton = options.closeButton;
+	}
+
+	center.notify(notification);
+}
+
+function createContent(text: string, role?: NotifyPortalOptions['role']): string | Element
+{
+	if (!role)
+	{
+		return text;
+	}
+
+	const content = Page.getRootWindow().document.createElement('span');
+	content.setAttribute('role', role);
+	content.setAttribute('aria-atomic', 'true');
+	content.textContent = text;
+
+	return content;
 }

@@ -173,6 +173,11 @@
 	text-align: center;
 }
 
+/* base-3 stays under 4.5:1 on the page background, and an error has to be readable. */
+.note-workspace-page__empty-text--error {
+	color: var(--ui-color-base-2);
+}
+
 .note-workspace-about__empty .note-workspace-page__empty-text {
 	font-weight: var(--ui-font-weight-medium, 500);
 }

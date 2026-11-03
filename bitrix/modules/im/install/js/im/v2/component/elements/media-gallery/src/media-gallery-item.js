@@ -1,9 +1,10 @@
 import { Type } from 'main.core';
 import { Outline } from 'ui.icon-set.api.core';
 import { lazyload } from 'ui.vue3.directives.lazyload';
-import { FileType, FileViewerContext, FileStatus } from 'im.v2.const';
+import { FileType, FileViewerContext, FileStatus, Color } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
+import { IconButton } from 'im.v2.component.elements.icon-button';
 
 import './css/media-gallery-item.css';
 
@@ -13,7 +14,7 @@ const MAX_HEIGHT = 590;
 export const MediaGalleryItem = {
 	name: 'MediaGalleryItem',
 	directives: { lazyload },
-	components: { ProgressBar },
+	components: { ProgressBar, IconButton },
 	props: {
 		/** @type ImModelFile */
 		file: {
@@ -32,13 +33,31 @@ export const MediaGalleryItem = {
 			type: Boolean,
 			default: false,
 		},
+		allowCancel: {
+			type: Boolean,
+			default: true,
+		},
 		allowRemove: {
 			type: Boolean,
 			default: false,
 		},
+		removeButtonLabel: {
+			type: String,
+			default: '',
+		},
 		allowSorting: {
 			type: Boolean,
 			default: false,
+		},
+		gridNavigation: {
+			type: Boolean,
+			default: false,
+		},
+		// Opt-in id of the hint the consumer keeps for the Delete shortcut. Announced together with the
+		// shortcut itself, so a consumer that mounts the gallery without grid navigation gets neither.
+		describedById: {
+			type: String,
+			default: null,
 		},
 		viewerGroupBy: {
 			type: String || null,
@@ -58,6 +77,17 @@ export const MediaGalleryItem = {
 		};
 	},
 	computed: {
+		removeIconName: () => Outline.CROSS_L,
+		removeIconColor: () => Color.white,
+		removeButtonAriaLabel(): string
+		{
+			if (this.removeButtonLabel)
+			{
+				return this.removeButtonLabel.replace('#FILE_NAME#', () => this.file.name);
+			}
+
+			return this.file.name;
+		},
 		viewerAttributes(): Object
 		{
 			if (this.file.viewerAttrs)
@@ -136,12 +166,19 @@ export const MediaGalleryItem = {
 		},
 		hasImageGap(): boolean
 		{
+			const image = this.file.image;
+			// a raw file has no preview dimensions yet, a document never gets them: nothing to fill
+			if (!Type.isNumber(image?.width) || !Type.isNumber(image?.height))
+			{
+				return false;
+			}
+
 			const ratio: number = Math.min(
-				this.size.width / this.file.image.width,
-				this.size.height / this.file.image.height,
+				this.size.width / image.width,
+				this.size.height / image.height,
 			);
-			const imageWidth = this.file.image.width * ratio;
-			const imageHeight = this.file.image.height * ratio;
+			const imageWidth = image.width * ratio;
+			const imageHeight = image.height * ratio;
 
 			return (
 				Math.floor(this.size.width) > Math.floor(imageWidth)
@@ -267,8 +304,16 @@ export const MediaGalleryItem = {
 	},
 	template: `
 		<div
+			v-bind="viewerAttributes"
 			class="bx-im-elements-media-gallery__item"
 			:class="{'--without-preview': withoutPreview, ...this.draggableClasses}"
+			:role="gridNavigation ? 'gridcell' : null"
+			:aria-label="gridNavigation ? file.name : null"
+			:aria-keyshortcuts="gridNavigation ? 'Delete' : null"
+			:aria-describedby="gridNavigation ? describedById : null"
+			:data-testid="'im-media-gallery-item-' + file.id"
+			:data-id="file.id"
+			:tabindex="gridNavigation ? -1 : null"
 			@click="download"
 			:style="containerStyle"
 			@dragstart="onDragStart"
@@ -282,6 +327,7 @@ export const MediaGalleryItem = {
 			<div
 				class="bx-im-elements-media-gallery__item-drag"
 				v-if="allowSorting"
+				:aria-hidden="gridNavigation ? 'true' : null"
 				@mousedown="onMouseDown"
 			>
 				<div class="bx-im-elements-media-gallery__item-drag-icon"></div>
@@ -313,13 +359,26 @@ export const MediaGalleryItem = {
 					:style="blurStyle"
 				></div>
 				<div v-if="isVideo && showPlayIcon" class="bx-im-elements-media-gallery__item-play">
-					<div 
-						class="bx-im-elements-media-gallery__item-play-icon"
-						v-bind="viewerAttributes"
-					></div>
+					<div class="bx-im-elements-media-gallery__item-play-icon"></div>
 				</div>
 			</div>
-			<div v-if="allowRemove" class="bx-im-elements-media-gallery__item-remove" @click.stop="onRemoveClick">
+			<IconButton
+				v-if="allowRemove && gridNavigation"
+				class="bx-im-elements-media-gallery__item-remove"
+				data-testid="im-media-gallery-item-remove-btn"
+				:iconName="removeIconName"
+				:iconColor="removeIconColor"
+				:iconSize="20"
+				:label="removeButtonAriaLabel"
+				:tabindex="-1"
+				@click.stop="onRemoveClick"
+			/>
+			<div
+				v-else-if="allowRemove"
+				class="bx-im-elements-media-gallery__item-remove"
+				data-testid="im-media-gallery-item-remove-btn"
+				@click.stop="onRemoveClick"
+			>
 				<div class="bx-im-elements-media-gallery__item-remove-icon"></div>
 			</div>
 			<ProgressBar
@@ -328,12 +387,9 @@ export const MediaGalleryItem = {
 				:size="progressbarSize"
 				:handleStatus="getHandleStatus()"
 				:statusMap="getStatusMap()"
+				:allowCancel="allowCancel"
 				@cancelClick="onCancelClick"
 			/>
-			<div 
-				class="bx-im-elements-media-gallery__item-viewer-clickable-overlay"
-				v-bind="viewerAttributes"
-			></div>
 		</div>
 
 	`,

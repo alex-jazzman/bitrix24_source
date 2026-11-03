@@ -1,0 +1,58 @@
+.bx-im-slash-command-content__container {
+	max-height: 200px;
+	width: 100%;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+/* the list needs a definite height so the inner ScrollWithGradient (height: 100%) can scroll */
+.bx-im-slash-command-content__container.--list {
+	height: 200px;
+}
+
+.bx-im-slash-command-content__list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.bx-im-slash-command-content__footer {
+	flex-shrink: 0;
+}
+
+.bx-im-slash-command-content__state {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+	padding: 16px;
+}
+
+.bx-im-slash-command-content__state-text {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--ui-color-base-4);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bx-im-slash-command-content__esc-hint {
+	display: flex;
+	align-items: flex-end;
+	gap: 4px;
+	flex-shrink: 0;
+	padding: 0 12px 8px 12px;
+	user-select: none;
+}
+
+.bx-im-slash-command-content__esc-hint-key {
+	font: var(--im-font-size-3xs)/16px var(--im-font-family-system);
+	color: var(--im-color-palette-gray-80);
+}
+
+.bx-im-slash-command-content__esc-hint-description {
+	font: var(--im-font-size-3xs)/16px var(--im-font-family-system);
+	color: var(--im-color-palette-gray-50);
+}

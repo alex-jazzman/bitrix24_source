@@ -80,6 +80,11 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 
 	foreach ($userFields as $userField)
 	{
+		$isResourceBookingShownInFilter =
+			$userField['USER_TYPE_ID'] === 'resourcebooking'
+			&& $userField['SHOW_FILTER'] !== 'N'
+		;
+
 		if (
 			$userField['USER_TYPE_ID'] === 'resourcebooking' && $userField['MULTIPLE'] === 'Y'
 			|| $userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] === 'N'
@@ -88,7 +93,10 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 		{
 			if (
 				in_array($userField['FIELD_NAME'], $notAccessibleFields, true)
-				|| !$editorConfig->isFormFieldVisible($userField['FIELD_NAME'])
+				|| (
+					!$isResourceBookingShownInFilter
+					&& !$editorConfig->isFormFieldVisible($userField['FIELD_NAME'])
+				)
 			)
 			{
 				continue;

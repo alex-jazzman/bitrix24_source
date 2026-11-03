@@ -3,6 +3,9 @@
  */
 jn.define('user/theme', (require, exports, module) => {
 	const { Color } = require('tokens');
+	const { Feature } = require('feature');
+	const { NativeAppearanceBundleService } = require('settings-v2/services/native');
+	const { EventType } = require('settings-v2/const');
 
 	/**
 	 * @type {TextColors}
@@ -36,6 +39,62 @@ jn.define('user/theme', (require, exports, module) => {
 
 	/**
 	 * @public
+	 * @return {Promise<string|null>}
+	 */
+	async function resolveAppearanceTextColorMode()
+	{
+		if (!Feature.isAppearanceBundlesEnabled())
+		{
+			return null;
+		}
+
+		try
+		{
+			return await NativeAppearanceBundleService.getBackgroundTextColorMode();
+		}
+		catch (e)
+		{
+			console.error(e);
+
+			return null;
+		}
+	}
+
+	/**
+	 * @public
+	 * @param {UserTheme} theme
+	 * @param {string|null} textColorMode
+	 * @return {UserTheme}
+	 */
+	function applyAppearanceTextColorMode(theme, textColorMode)
+	{
+		return textColorMode ? { ...theme, id: textColorMode } : theme;
+	}
+
+	/**
+	 * @public
+	 * @param {function(): (string|null)} getCurrentTextColorMode
+	 * @param {function(string|null): void} onChange
+	 * @return {function(): void}
+	 */
+	function subscribeToAppearanceTextColorModeChange(getCurrentTextColorMode, onChange)
+	{
+		const handler = async () => {
+			const textColorMode = await resolveAppearanceTextColorMode();
+
+			if (textColorMode !== getCurrentTextColorMode())
+			{
+				onChange(textColorMode);
+			}
+		};
+
+		BX.addCustomEvent(EventType.changeAppearanceBundle, handler);
+
+		return () => BX.removeCustomEvent(EventType.changeAppearanceBundle, handler);
+	}
+
+	/**
+	 * @public
 	 * @param {UserTheme} theme
 	 * @return {boolean}
 	 */
@@ -51,5 +110,11 @@ jn.define('user/theme', (require, exports, module) => {
 		return baseThemeId === 'light';
 	}
 
-	module.exports = { getTextColorByTheme, isLightTheme };
+	module.exports = {
+		getTextColorByTheme,
+		isLightTheme,
+		resolveAppearanceTextColorMode,
+		applyAppearanceTextColorMode,
+		subscribeToAppearanceTextColorModeChange,
+	};
 });

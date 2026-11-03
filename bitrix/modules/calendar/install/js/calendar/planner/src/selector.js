@@ -2,6 +2,7 @@
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import {Util} from 'calendar.util';
 import {Type, Dom, Tag} from 'main.core';
+import { DateTimeFormat } from 'main.date';
 import { EventDragAndDrop } from 'calendar.ui.tools.draganddrop';
 
 export class Selector extends EventEmitter
@@ -13,6 +14,7 @@ export class Selector extends EventEmitter
 	currentFullDay = false;
 	useAnimation = true;
 	beforeBeginChange = false;
+	destroyed = false;
 
 	constructor(params = {})
 	{
@@ -200,6 +202,11 @@ export class Selector extends EventEmitter
 
 	show(from, to, params)
 	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
 		const animation = params.animation && this.useAnimation !== false;
 		const focus = params.focus === true;
 		const alignCenter = params.alignCenter !== false;
@@ -554,6 +561,36 @@ export class Selector extends EventEmitter
 		this.selectorIsResized = false;
 	}
 
+	destroy()
+	{
+		this.destroyed = true;
+
+		document.removeEventListener('pointermove', this.preventDefault, { passive:false });
+
+		clearInterval(this.scrollInterval);
+		this.scrollInterval = false;
+
+		clearTimeout(this.transitTimeout);
+		this.transitTimeout = null;
+		clearTimeout(this.shakeTimeout);
+		this.shakeTimeout = null;
+		clearTimeout(this.focusTimeout);
+		this.focusTimeout = null;
+		clearTimeout(this.selectorHideTimeout);
+		this.selectorHideTimeout = null;
+
+		if (this.animation)
+		{
+			this.animation.stop();
+			this.animation = null;
+		}
+
+		this.selectorIsDraged = false;
+		this.selectorIsResized = false;
+
+		Dom.removeClass(document.body, 'calendar-planner-unselectable');
+	}
+
 	preventDefault(e)
 	{
 		e.preventDefault();
@@ -814,7 +851,8 @@ export class Selector extends EventEmitter
 						this.focus(true, 300);
 					}
 
-					setTimeout(() => {
+					clearTimeout(this.transitTimeout);
+					this.transitTimeout = setTimeout(() => {
 						this.show(
 							this.currentDateFrom,
 							this.currentDateTo,
@@ -861,14 +899,14 @@ export class Selector extends EventEmitter
 			toDate = new Date(toDate.getTime() - 5 * 60 * 1000);
 			if (toDate.getDate() === fromDate.getDate())
 			{
-				selectorTitle.innerHTML = BX.date.format('d F, D', fromDate.getTime() / 1000);
+				selectorTitle.innerHTML = DateTimeFormat.format('d F, D', fromDate.getTime() / 1000);
 			}
 			else
 			{
 				selectorTitle.innerHTML =
-					BX.date.format('d F', fromDate.getTime() / 1000)
+					DateTimeFormat.format('d F', fromDate.getTime() / 1000)
 					+ ' - '
-					+ BX.date.format('d F', toDate.getTime() / 1000);
+					+ DateTimeFormat.format('d F', toDate.getTime() / 1000);
 			}
 		}
 		else

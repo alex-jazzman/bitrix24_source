@@ -49,6 +49,10 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_COMPANY'),
 			icon: Icon.COMPANY_SEND,
 		},
+		[ChatEntityType.vibecodeApp]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_VIBECODE_APP'),
+			icon: Icon.APPS,
+		},
 	});
 
 	const createSearchButton = ({ onClick, ...rest }) => ({

@@ -1,4 +1,8 @@
 .tasks-check-list-wrapper {
+	/* Shared by the row marker and the toolbar toggle, which live in different subtrees. */
+	--tasks-check-list-important-icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, var(--ui-color-accent-main-warning) 0%, var(--ui-color-accent-main-alert) 67.91%);
+
+	position: relative;
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -62,7 +66,19 @@
 }
 
 .tasks-check-list-close-icon {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	position: absolute;
+	width: 24px;
+	height: 24px;
+	line-height: 0;
 	cursor: pointer;
 	z-index: 3;
 	right: 24px;
@@ -83,6 +99,11 @@
 
 .tasks-check-list-close-icon:hover .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.tasks-check-list-close-icon:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .check-list-stub {
@@ -110,9 +131,10 @@
 }
 
 .check-list-stub-icon {
-	width: 424px;
-	height: 210px;
-	background: url("images/components/check-list/empty-stub.png") center / contain no-repeat;
+	width: 100%;
+	max-width: 424px;
+	aspect-ratio: 424 / 210;
+	background: url("images/components/check-list/empty-stub.webp") center / contain no-repeat;
 }
 
 .check-list-stub-btn {
@@ -160,6 +182,21 @@
 	margin-bottom: 0 !important;
 }
 
+.tasks-check-list-close-icon {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	line-height: 0;
+}
+
 .tasks-check-list-popup {
 	height: 100%;
 	box-sizing: border-box;
@@ -200,7 +237,7 @@
 .tasks-check-list-list {
 	display: flex;
 	align-items: center;
-	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	background: var(--ui-color-bg-content-secondary);
 	border-radius: 10px;
 }
 
@@ -214,7 +251,7 @@
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	background: var(--ui-color-bg-content-secondary);
 	border-radius: 10px;
 }
 
@@ -304,12 +341,21 @@
 	width: 100%;
 }
 
-.tasks-check-list-list-content-row.--stub {
+.tasks-check-list-list-content-row.--stub,
+.tasks-check-list-list-content-row.--footer {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
 	cursor: pointer;
 }
 
-.tasks-check-list-list-content-row.--footer {
-	cursor: pointer;
+.tasks-check-list-list-content-row.--stub:disabled {
+	cursor: default;
 }
 
 .tasks-check-list-list-content-btn {
@@ -352,6 +398,12 @@
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
+}
+
+.tasks-check-list-list-content-row.--stub:focus-visible,
+.tasks-check-list-list-content-row.--footer:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .check-list-widget-container {
@@ -463,6 +515,10 @@
 	gap: 3px
 }
 
+.check-list-widget-item-attach-users-print {
+	display: none;
+}
+
 .check-list-widget-item-attach-files {
 	display: flex;
 	flex-direction: column;
@@ -484,7 +540,7 @@
 
 @supports not selector(::-webkit-scrollbar) {
 	.check-list-widget-item-attach-files-list {
-		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-color: var(--ui-color-base-4) transparent;
 		scrollbar-width: thin;
 	}
 }
@@ -499,7 +555,7 @@
 }
 
 .check-list-widget-item-attach-files-list::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.11);
+	background: var(--ui-color-base-4);
 	border-radius: 5px;
 	cursor: pointer;
 	-webkit-transition: .2s;
@@ -554,7 +610,7 @@
 	left: 24px;
 	right: 24px;
 	height: 1px;
-	background: rgba(0, 0, 0, 0.04);
+	background: var(--ui-color-divider-default);
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.04);
 	pointer-events: none;
 }
@@ -641,6 +697,18 @@
 .check-list-widget-parent-item-main-action-actions .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
+}
+
+.check-list-widget-parent-item-action-btn {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
 }
 
 .check-list-widget-parent-item-empty {
@@ -750,12 +818,25 @@
 
 .check-list-widget-child-item-important .ui-icon-set {
 	--ui-icon-set__icon-size: 24px;
-	--ui-icon-set__icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
+	--ui-icon-set__icon-color: var(--tasks-check-list-important-icon-color);
 }
 
 .check-list-widget-child-item-action {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
 	cursor: pointer;
 	margin-top: 3px;
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+
+.check-list-widget-child-item:hover .check-list-widget-child-item-action,
+.check-list-widget-child-item:focus-within .check-list-widget-child-item-action {
+	opacity: 1;
 }
 
 .check-list-widget-child-item-action .ui-icon-set {
@@ -768,6 +849,14 @@
 }
 
 .check-list-widget-add-item {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+	color: inherit;
 	position: relative;
 	display: flex;
 	justify-content: flex-start;
@@ -805,12 +894,20 @@
 }
 
 .check-list-widget-group-completed-list {
+	appearance: none;
+	-webkit-appearance: none;
+	border: none;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
 	gap: 6px;
 	background: var(--ui-color-base-8);
-	padding-top: 9px;
+	padding: 9px 0 0;
 	border-radius: 18px;
 }
 
@@ -844,7 +941,7 @@
 .check-list-widget-drop-list {
 	width: 100%;
 	height: 84px;
-	background: white;
+	background: var(--ui-color-base-8);
 	border: 2px dashed var(--ui-color-accent-soft-blue-1);
 	border-radius: var(--ui-border-radius-2xl);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
@@ -852,7 +949,7 @@
 
 .check-list-widget-drop-item {
 	height: 60px;
-	background: white;
+	background: var(--ui-color-base-8);
 	border: 2px dashed var(--ui-color-accent-soft-blue-1);
 	border-radius: var(--ui-border-radius-2xl);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
@@ -884,6 +981,7 @@
 .ui-draggable--draggable .check-list-widget-child-item-action,
 .ui-draggable--draggable .check-list-widget-parent-item-empty,
 .ui-draggable--draggable .check-list-widget-parent-item-main-action-actions > :nth-child(2),
+.ui-draggable--draggable .check-list-widget-parent-item-action-btn.--close,
 .ui-draggable--draggable .check-list-widget-item-attach {
 	display: none;
 }
@@ -921,6 +1019,35 @@
 	margin-top: 1px;
 }
 
+.check-list-widget-child-item-action:focus-visible,
+.check-list-widget-add-item:focus-visible,
+.check-list-widget-parent-item-action-btn:focus-visible,
+.check-list-widget-group-completed-list:focus-visible,
+.check-list-widget-group-completed-list-action:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+@media print {
+	.tasks-full-card .check-list-widget-item-attach-users {
+		display: none;
+	}
+
+	.tasks-full-card .check-list-widget-item-attach-users-print {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		width: 100%;
+		color: var(--ui-color-base-1);
+	}
+
+	.tasks-full-card .check-list-widget-item-attach-users-print-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+}
+
 .tasks-check-list-formatting-layer {
 	width: 100%;
 	min-width: 0;
@@ -931,10 +1058,77 @@
 	font-family: inherit;
 	overflow: hidden;
 	display: -webkit-box;
-	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	text-overflow: ellipsis;
 	white-space: pre-wrap;
+}
+
+.tasks-check-list-formatting-layer-display:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.tasks-check-list-formatting-layer-display.--editable {
+	min-height: 1em;
+	cursor: text;
+}
+
+.tasks-check-list-formatting-layer-display.--editable.--empty::before {
+	color: var(--ui-color-base-4);
+	content: attr(data-placeholder);
+	pointer-events: none;
+}
+
+.tasks-check-list-formatting-layer-editor {
+	position: relative;
+	width: 100%;
+	min-height: 1em;
+}
+
+.tasks-check-list-formatting-layer-editor.--empty::before {
+	position: absolute;
+	inset: 0;
+	color: var(--ui-color-base-4);
+	content: attr(data-placeholder);
+	pointer-events: none;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor,
+.tasks-check-list-formatting-layer-editor .ui-text-editor-content,
+.tasks-check-list-formatting-layer-editor .ui-text-editor-editable {
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor {
+	--ui-text-editor-block-space-stack: 0;
+	--ui-text-editor-block-space-inline: 0;
+	--ui-text-editor-color-background: transparent;
+	--ui-text-editor-color-text: inherit;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor-scroller {
+	max-height: var(--check-list-editor-max-height);
+	overflow-y: auto;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor-editable {
+	padding: 0;
+	margin: 0;
+	line-height: inherit;
+	white-space: pre-wrap;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor__paragraph {
+	margin: 0;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	color: inherit;
 }
 
 .check-list-widget-checkbox {
@@ -946,14 +1140,43 @@
 	display: flex;
 	position: absolute;
 	left: 10px;
-	z-index: 2;
+	z-index: 4;
 	background: var(--ui-color-base-white-fixed);
+	height: 48px;
+	box-sizing: border-box;
 	padding: 8px 0;
 	border: 1px solid var(--ui-color-divider-default);
 	border-radius: 10px;
 	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.11);
 	justify-content: center;
 	align-items: center;
+}
+
+.check-list-widget-item-panel[data-placement="entity"] .check-list-widget-item-panel-section {
+	padding: 0 2px;
+}
+
+/* Every entity action is its own section, so the section divider would land between all icons. */
+.check-list-widget-item-panel[data-placement="entity"] .check-list-widget-item-panel-section:not(:last-child) {
+	border-right: none;
+}
+
+.check-list-widget-item-panel.--entity {
+	/* The panel is toggled through display, which no transition can follow -- an animation runs
+	   on every appearance instead. */
+	animation: tasks-check-list-item-panel-appear 140ms ease-out;
+}
+
+@keyframes tasks-check-list-item-panel-appear {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.check-list-widget-item-panel.--entity {
+		animation: none;
+	}
 }
 
 .check-list-widget-item-panel-section {
@@ -976,11 +1199,6 @@
 	gap: 6px;
 }
 
-.check-list-widget-item-panel-section.--formatting .check-list-widget-item-panel-section-item {
-	width: 30px;
-	height: 30px;
-}
-
 .check-list-widget-item-panel-section-separator {
 	width: 1px;
 	height: 20px;
@@ -995,7 +1213,11 @@
 }
 
 .check-list-widget-item-panel-section-item {
+	--tasks-check-list-panel-icon-color: var(--ui-color-design-plain-content-icon);
+
 	display: flex;
+	width: 30px;
+	height: 30px;
 	justify-content: center;
 	align-items: center;
 	background: none;
@@ -1013,12 +1235,19 @@
 }
 
 .check-list-widget-item-panel-section-item:hover {
+	--tasks-check-list-panel-icon-color: var(--ui-color-base-0);
+
 	opacity: 1;
 }
 
 .check-list-widget-item-panel-section-item.--active {
 	background-color: var(--ui-color-palette-blue-25, #d3f1fb);
 	opacity: 1;
+}
+
+/* The solid fire icon already reads as on, so it needs no plate under it. */
+.check-list-widget-item-panel-section-item.--important.--active {
+	background-color: transparent;
 }
 
 .check-list-widget-item-panel-section-item.--disabled {
@@ -1041,7 +1270,8 @@
 }
 
 .tasks-check-list-link-popup .ui-text-editor-link-form {
-	width: 300px;
+	width: 100%;
+	max-width: 300px;
 	display: flex;
 	align-items: center;
 	flex: 1;

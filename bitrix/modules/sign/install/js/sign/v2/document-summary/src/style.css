@@ -77,12 +77,6 @@
 	height: 32px;
 }
 
-.sign-document-summary__title-editor_help {
-	color: var(--color-3);
-	font-size: 13px;
-	margin: 2px 0 0 0;
-}
-
 .sign-document-summary__title-editor_ok-btn,
 .sign-document-summary__title-editor_discard-btn {
 	flex-shrink: 0;

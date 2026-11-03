@@ -191,6 +191,8 @@ class Controller extends Event
 
 	reset()
 	{
+		this.agreements.forEach((field) => field.resetAgreementNotice());
+
 		this.#fields.forEach((field) => {
 			field.reset();
 
@@ -223,6 +225,7 @@ class Controller extends Event
 
 		if (!this.valid())
 		{
+			this.#sendValidationError();
 			const firstInvalidField = this.#fields.find((field) => !field.valid());
 
 			if (firstInvalidField)
@@ -246,6 +249,12 @@ class Controller extends Event
 		{
 			this.yandexCaptcha.verify(() => this.submit());
 
+			return false;
+		}
+
+		const notices = this.agreements.map((field) => field.requestAgreementNotice());
+		if (notices.some((shown) => shown))
+		{
 			return false;
 		}
 
@@ -362,6 +371,23 @@ class Controller extends Event
 		return false;
 	}
 
+	#sendValidationError(): void
+	{
+		try
+		{
+			const request = this.analyticsHandler(
+				'error',
+				this.identification.id,
+				{ errorType: 'validation' },
+			);
+			request?.catch?.(() => null);
+		}
+		catch
+		{
+			// Telemetry must not block submission.
+		}
+	}
+
 	setValues(values: {[string]: string})
 	{
 		if (!values || typeof values !== 'object')
@@ -396,6 +422,12 @@ class Controller extends Event
 		if (typeof options.identification === 'object')
 		{
 			this.identification = options.identification;
+		}
+
+		// must be applied before setFields(): field components read it while building their own preview
+		if (typeof options.editMode === 'boolean')
+		{
+			this.editMode = options.editMode;
 		}
 
 		if (options.messages)
@@ -451,6 +483,7 @@ class Controller extends Event
 		}
 		if (Array.isArray(options.agreements))
 		{
+			this.agreements.forEach((field) => field.resetAgreementNotice());
 			this.agreements = [];
 			options.agreements.forEach(fieldOptions => {
 				fieldOptions.messages = this.messages;
@@ -743,6 +776,7 @@ class Controller extends Event
 
 	destroy()
 	{
+		this.agreements.forEach((field) => field.resetAgreementNotice());
 		this.emit(Type.EventTypes.destroy);
 		this.unsubscribeAll();
 		this.#vue.$destroy();

@@ -16,6 +16,7 @@ export type CatalogItem = {
 	counter: number | null,
 	isPinned: boolean,
 	isHidden: boolean,
+	isFavorite: boolean,
 	isMine: boolean,
 	isPublished: boolean,
 	isNew: boolean,
@@ -27,6 +28,10 @@ export type CatalogItem = {
 	ownerName: string | null,
 	kind: string,
 	chatId: number | null,
+	appChatId: number | null,
+	appChatAccessible: boolean,
+	appChatCreatable: boolean,
+	appChatWritingAllowed: boolean | null,
 };
 
 type ActionOptions = {
@@ -42,6 +47,8 @@ export class TabController
 	#config: TabConfig;
 	#pageSize: number;
 	#items: Array<CatalogItem> = [];
+	#pendingFavorites: Map<number, { request: Promise<void> | null, desired: boolean, settledAtLoad: number | null }> = new Map();
+	#loadSequence: number = 0;
 	#offset: number = 0;
 	#hasMore: boolean = true;
 	#loaded: boolean = false;
@@ -210,7 +217,53 @@ export class TabController
 			return item.isNew;
 		}
 
+		if (this.#state === CatalogState.Favorite)
+		{
+			return item.isFavorite || this.#pendingFavorites.get(item.id)?.request != null;
+		}
+
 		return !item.isHidden;
+	}
+
+	getPendingFavorite(itemId: number): Promise<void> | null
+	{
+		return this.#pendingFavorites.get(itemId)?.request ?? null;
+	}
+
+	trackPendingFavorite(itemId: number, request: Promise<void>, desired: boolean): void
+	{
+		this.#pendingFavorites.set(itemId, { request, desired, settledAtLoad: null });
+	}
+
+	settlePendingFavorite(itemId: number, value: boolean): void
+	{
+		this.#pendingFavorites.set(itemId, {
+			request: null,
+			desired: value,
+			settledAtLoad: this.#loadSequence,
+		});
+
+		const item = this.#items.find((row) => row.id === itemId);
+		if (item)
+		{
+			item.isFavorite = value;
+		}
+	}
+
+	#dropSettledFavorites(sequence: number): void
+	{
+		for (const [itemId, pending] of this.#pendingFavorites)
+		{
+			if (pending.settledAtLoad !== null && pending.settledAtLoad < sequence)
+			{
+				this.#pendingFavorites.delete(itemId);
+			}
+		}
+	}
+
+	hasItem(itemId: number): boolean
+	{
+		return this.#items.some((row) => row.id === itemId);
 	}
 
 	hasQuery(): boolean
@@ -254,6 +307,7 @@ export class TabController
 		this.#loading = true;
 		this.#failed = false;
 		const generation = this.#generation;
+		const sequence = ++this.#loadSequence;
 		try
 		{
 			const actionOptions = this.#config.paginated === false
@@ -270,6 +324,7 @@ export class TabController
 
 			this.#rememberViewSession(response?.data?.viewSession, sentSession);
 			this.#rememberNewAppsCount(response?.data?.newAppsCount);
+			this.#dropSettledFavorites(sequence);
 
 			const rawItems = response?.data?.items ?? [];
 			const newItems = rawItems.map((raw: any) => this.#mapItem(raw));
@@ -314,6 +369,7 @@ export class TabController
 		}
 
 		const generation = ++this.#generation;
+		const sequence = ++this.#loadSequence;
 		this.#loading = true;
 		this.#failed = false;
 		try
@@ -335,6 +391,7 @@ export class TabController
 			this.#rememberNewAppsCount(response?.data?.newAppsCount);
 
 			const rawItems = response?.data?.items ?? [];
+			this.#dropSettledFavorites(sequence);
 			this.#items = this.#dedupePage(rawItems.map((raw: any) => this.#mapItem(raw)));
 
 			if (this.#config.paginated === false)
@@ -356,7 +413,8 @@ export class TabController
 		}
 		catch (error)
 		{
-			if (generation === this.#generation)
+			const hasNothingToShow = !this.#loaded;
+			if (generation === this.#generation && hasNothingToShow)
 			{
 				this.#failed = true;
 			}
@@ -567,6 +625,7 @@ export class TabController
 			counter: Type.isNumber(raw?.counter) ? raw.counter : null,
 			isPinned: Boolean(raw?.isPinned),
 			isHidden: Boolean(raw?.isHidden),
+			isFavorite: this.#pendingFavorites.get(id)?.desired ?? Boolean(raw?.isFavorite),
 			isMine: Boolean(raw?.isMine),
 			isPublished: Boolean(raw?.isPublished),
 			isNew: Boolean(raw?.isNew),
@@ -575,6 +634,10 @@ export class TabController
 			ownerName: Type.isStringFilled(raw?.ownerName) ? raw.ownerName : null,
 			kind: Type.isString(raw?.kind) ? raw.kind : '',
 			chatId: this.#normalizeChatId(raw?.chatId),
+			appChatId: this.#normalizeChatId(raw?.appChatId),
+			appChatAccessible: Boolean(raw?.appChatAccessible),
+			appChatCreatable: Boolean(raw?.appChatCreatable),
+			appChatWritingAllowed: Type.isBoolean(raw?.appChatWritingAllowed) ? raw.appChatWritingAllowed : null,
 		};
 	}
 

@@ -1,5 +1,6 @@
-import { ContactsInput } from './contacts-input';
 import { Loc, Validation } from 'main.core';
+
+import { ContactsInput } from './contacts-input';
 
 export class EmailInput extends ContactsInput
 {
@@ -16,6 +17,16 @@ export class EmailInput extends ContactsInput
 	getPlaceholder(): string
 	{
 		return Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
+	}
+
+	getType(): string
+	{
+		return 'email';
+	}
+
+	getAutocomplete(): string
+	{
+		return 'email';
 	}
 
 	getValidationErrorMessage(): string

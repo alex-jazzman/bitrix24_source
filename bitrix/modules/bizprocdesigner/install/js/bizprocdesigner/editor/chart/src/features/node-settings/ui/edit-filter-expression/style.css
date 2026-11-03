@@ -1,41 +1,151 @@
 .editor-chart-node-settings-edit-filter-expression {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
 }
 
 .editor-chart-node-settings-edit-filter-expression__item {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: var(--ui-space-stack-2xs);
 }
 
 .editor-chart-node-settings-edit-filter-expression__label {
-	color: var(--ui-color-text-secondary, #525c69);
 	font-size: 13px;
-	line-height: 18px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
 }
 
+/* Box of the neighbouring dropdowns of the panel (edit-condition-expression): 34px control
+   instead of the 40px default of `--ui-field-size`, 8px radius instead of the 10px of `md`. */
+.editor-chart-node-settings-edit-filter-expression__source-selector.ui-ctl {
+	box-sizing: border-box;
+	width: 100%;
+	cursor: pointer;
+	--ui-field-size: 34px;
+}
+
+.editor-chart-node-settings-edit-filter-expression__source-selector.ui-ctl .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.editor-chart-node-settings-edit-filter-expression__source-selector.ui-ctl:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* The row turns horizontal only with a badge: a flex container would take the ellipsis the design system
+   gives a bare text node away from it. The distance to the badge is the `margin-left` of the badge itself,
+   so the row states no `gap` - the two together would double it. */
+.editor-chart-node-settings-edit-filter-expression__source-value.--with-badge {
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-node-settings-edit-filter-expression__source-title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Worn by the badge of the control and by the badge of a menu item alike, and the menu is drawn outside the
+   root of this component, so no ancestor of it may be part of the selector.
+
+   The look is the one the entity selector of `ui` gives its own plate (`.ui-selector-item-badge`): the
+   values are copied literally rather than taken from tokens, so that a plate naming a workplace is the
+   same plate the user already knows from the selectors of the product. The class of `ui` is private to it
+   and is not reused.
+
+   The line height is the one thing the plate of `ui` gets from the room it stands in rather than from
+   itself, and this room is a different one: the badge would inherit the 32px line of `div.ui-ctl-element`
+   in the control and the 36px line of an item in the menu. A line taller than the 14px box overflows it,
+   and an overflowing line is laid out from the start of the box instead of its centre - measured, the
+   text of the plate then sits below the box and `overflow: hidden` takes it off the screen entirely. */
+.editor-chart-node-settings-edit-filter-expression__badge {
+	/* The plate is the point of the row, so it is the title that shrinks first. */
+	flex: 0 0 auto;
+	overflow: hidden;
+	box-sizing: border-box;
+	align-content: center;
+	height: 14px;
+	max-width: 45%;
+	margin-left: 7px;
+	padding: 0 6px 1px;
+	border-radius: 10px;
+	background-color: rgba(47, 198, 246, .17);
+	color: #23a2ca;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 10px;
+	line-height: normal;
+}
+
+/* main.popup gives the text of an item a definite width under the cap of the menu, so the row takes all of
+   it and no more. The distance to the badge is the `margin-left` of the badge, the same as in the control. */
+.editor-chart-node-settings-edit-filter-expression__menu-item {
+	display: flex;
+	align-items: center;
+	max-width: 100%;
+}
+
+.editor-chart-node-settings-edit-filter-expression__menu-item-title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The panel hides every angle icon of the page with `display: none !important`
+   (common-settings-form), so a control that keeps its chevron has to outrank it. */
+.editor-chart-node-settings-edit-filter-expression__source-selector .ui-ctl-icon-angle.ui-ctl-after {
+	display: block !important;
+}
+
+/* The sides and the bottom belong to the inset of rule-construction.--filter; only the gap under
+   the source selector is our own - and it is a gap between the two, so it is set on the pair. With
+   a single source there is no selector to keep away from, and the divider above sets the distance. */
+.editor-chart-node-settings-edit-filter-expression__item + .editor-chart-node-settings-edit-filter-expression__condition-container {
+	margin-top: var(--ui-space-stack-xl);
+}
+
+/* The two rules below reach classes of the condition editor of `bizproc`, which is mounted into
+   this container. They are the look of this block alone - kept here, scoped to the container, so
+   the other consumers of that editor keep the appearance its own stylesheet gives them.
+   `bizproc-condition-group__description` is worn by the description of the root group and by the
+   description of the joiner of a nested one: both are left-aligned here on purpose, the block reads
+   its conditions as one column. */
+.editor-chart-node-settings-edit-filter-expression__condition-container .bizproc-condition-group__description {
+	text-align: left;
+}
+
+.editor-chart-node-settings-edit-filter-expression__condition-container .bizproc-condition-group__add {
+	color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+/* The vertical inset of the band stays its own and has to stay symmetric: `.ui-loader__container`
+   is absolute with `top/left: 50%` against this band, so only equal insets put the dots at the
+   centre of the room reserved for them. The band also has to stay the containing block of that
+   container - otherwise the dots are centred against an outer positioned ancestor. */
 .editor-chart-node-settings-edit-filter-expression__loader {
 	display: flex;
+	position: relative;
 	justify-content: center;
-	padding: 8px 0;
+	padding: var(--ui-space-inset-md2) 0;
+}
+
+/* Read-only source of a section not yet reached: it stands in place of the source selector, so it
+   is the same control box. The side insets are not ours - they belong to rule-construction.--filter,
+   the same way they do for the selector. */
+.editor-chart-node-settings-edit-filter-expression__preview .ui-ctl {
+	box-sizing: border-box;
+	width: 100%;
+	--ui-field-size: 34px;
 }
 
 .editor-chart-node-settings-edit-filter-expression__error {
 	color: var(--ui-color-background-on-alert);
 	font-size: 13px;
 	line-height: 18px;
-}
-
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label
-{
-	background: var(--ui-color-accent-main-warning);
-}
-
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__content
-{
-	border-radius: 8px;
-	border: 1px solid var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
 }

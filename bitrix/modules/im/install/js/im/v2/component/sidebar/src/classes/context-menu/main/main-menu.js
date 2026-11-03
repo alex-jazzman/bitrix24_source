@@ -1,7 +1,7 @@
 import { Loc } from 'main.core';
 import { MenuItemDesign, type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 
-import { ActionByRole, ActionByUserType, Layout, type ApplicationContext } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, ChatType, Layout, type ApplicationContext } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChatManager } from 'im.v2.lib.chat';
 import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
@@ -153,7 +153,8 @@ export class MainMenu extends RecentMenu
 
 	getEditItem(): ?MenuItemOptions
 	{
-		if (!this.#canUpdateChat())
+		const dialog: ImModelChat = Core.getStore().getters['chats/get'](this.context.dialogId, true);
+		if (dialog.type === ChatType.vibecodeApp || !this.#canUpdateChat())
 		{
 			return null;
 		}

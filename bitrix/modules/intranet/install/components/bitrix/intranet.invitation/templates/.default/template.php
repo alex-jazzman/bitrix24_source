@@ -46,6 +46,7 @@ Extension::load([
 	'ui.system.input',
 	'ui.type',
 	'ui.avatar',
+	'ui.a11y',
 ]);
 
 CJSCore::Init(['phone_number']);
@@ -57,6 +58,23 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') 
 //\Bitrix\UI\Toolbar\Facade\Toolbar::setTitle('title');
 $menuContainerId = 'invitation-form-menu-' . $this->randString();
 $contentContainerId = 'invitation-form-content-' . $this->randString();
+
+$prepareMenuItems = static function (array $items): array {
+	foreach ($items as $code => &$item)
+	{
+		$action = $item['ATTRIBUTES']['data-action'] ?? (string)$code;
+		$fragment = str_replace('_', '-', $action);
+
+		$item['ATTRIBUTES']['href'] = '#invitation-menu-' . $fragment;
+		$item['ATTRIBUTES']['data-testid'] = 'invitation-menu-item-' . $fragment;
+	}
+	unset($item);
+
+	return $items;
+};
+
+$menuItems = $prepareMenuItems($arResult['MENU_ITEMS']);
+$subMenuItems = $prepareMenuItems($arResult['SUB_MENU_ITEMS'] ?? []);
 
 $projectLimitFeatureId = Feature::PROJECTS_GROUPS;
 $isProjectLimitExceeded = !Feature::isFeatureEnabled($projectLimitFeatureId);
@@ -86,7 +104,7 @@ $APPLICATION->IncludeComponent(
 
 $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"ID" => $menuContainerId,
-	"ITEMS" => $arResult["MENU_ITEMS"],
+	"ITEMS" => $menuItems,
 	"TITLE" => Loc::getMessage("INTRANET_INVITE_DIALOG_TITLE"),
 	'USE_UI_TOOLBAR' => 'Y',
 ));
@@ -94,9 +112,13 @@ $this->SetViewTarget('left-panel');
 
 ?>
 <div class="invitation-department__menu-divider"></div>
-<ul id="invitation-department__sub-menu" class="ui-sidepanel-menu --menu-light-gray">
-	<?php if (isset($arResult['SUB_MENU_ITEMS'])): ?>
-		<?php foreach ($arResult["SUB_MENU_ITEMS"] as $item): ?>
+<ul
+	id="invitation-department__sub-menu"
+	class="ui-sidepanel-menu --menu-light-gray"
+	data-testid="invitation-menu-secondary"
+>
+	<?php if (!empty($subMenuItems)): ?>
+		<?php foreach ($subMenuItems as $item): ?>
 			<li class="ui-sidepanel-menu-item
 				<?php if (isset($item['SHOW_LOCKED']) && $item['SHOW_LOCKED'] === true): ?>--lock<?php endif; ?>">
 				<a
@@ -179,13 +201,32 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 }
 ?>
 
-<div data-id="<?= $contentContainerId ?>" class="popup-window-tabs-box">
-	<div class="ui-alert ui-alert-danger intranet-invitation-alert ui-text --sm" data-role="error-message" style="display: none;">
+<div
+	data-id="<?= $contentContainerId ?>"
+	data-testid="invitation-form-root"
+	class="popup-window-tabs-box"
+>
+	<div
+		class="ui-alert ui-alert-danger intranet-invitation-alert ui-text --sm"
+		data-role="error-message"
+		data-testid="invitation-message-bar-error"
+		style="display: none;"
+	>
 	</div>
-	<div class="ui-alert ui-alert-success" data-role="success-message" style="display: none;">
+	<div
+		class="ui-alert ui-alert-success"
+		data-role="success-message"
+		data-testid="invitation-message-bar-success"
+		role="status"
+		aria-live="polite"
+		style="display: none;"
+	>
 	</div>
 
-	<div class="popup-window-tabs-content popup-window-tabs-content-invite">
+	<div
+		class="popup-window-tabs-content popup-window-tabs-content-invite"
+		data-testid="invitation-form-page-container"
+	>
 	</div>
 </div>
 
@@ -239,7 +280,7 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 			canCurrentUserInvite: <?= $arResult['canCurrentUserInvite'] ? 'true' : 'false' ?>,
 			canCurrentUserCreateDepartment: <?= $arResult['canCurrentUserCreateDepartment'] ? 'true' : 'false' ?>,
 			useLocalEmailProgram: false,
-			leftMenuItems: <?= Json::encode(array_merge($arResult['MENU_ITEMS'], $arResult['SUB_MENU_ITEMS'] ?? [])); ?>,
+			leftMenuItems: <?= Json::encode(array_merge($menuItems, $subMenuItems)); ?>,
 		});
 	});
 </script>

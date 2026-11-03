@@ -1,0 +1,8 @@
+.disk-sharing-members-popup-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-sm);
+	margin-top: var(--ui-space-stack-2xl);
+}

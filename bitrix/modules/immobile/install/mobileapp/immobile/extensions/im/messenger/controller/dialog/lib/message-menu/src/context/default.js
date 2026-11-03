@@ -3,12 +3,14 @@
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default', (require, exports, module) => {
 	const { Type } = require('type');
+	const { PerfPoint } = require('debug/prism');
 	const { Loc } = require('im/messenger/loc');
 	const { Alert, confirmDestructiveAction } = require('alert');
 	const { Icon } = require('assets/icons');
 	const { isOnline } = require('device/connection');
 	const {
 		EventType,
+		ErrorType,
 		MessageMenuActionType,
 		PinCount,
 		BBCode,
@@ -22,10 +24,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { AiTaskIndicationManager } = require('im/messenger/controller/dialog/lib/ai-task-indication-manager');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { AiTaskRest } = require('im/messenger/provider/rest');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Color } = require('tokens');
 
@@ -41,6 +45,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 		CreateAction,
 		CreateEventAction,
 		CreateTaskAction,
+		CreateAiTaskAction,
 		ReplyAction,
 		ProfileAction,
 		EditAction,
@@ -80,6 +85,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 		maxPins = PinCount.max;
 
 		/**
+		 * @desc Guards against re-firing AI task creation while a request is in flight.
+		 * @type {boolean}
+		 */
+		#isAiTaskCreationInProgress = false;
+
+		/**
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
@@ -116,11 +127,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 						MessageMenuActionType.revote,
 						MessageMenuActionType.openVoteResult,
 						MessageMenuActionType.copy,
+						MessageMenuActionType.createAiTask,
 						MessageMenuActionType.edit,
 						MessageMenuActionType.downloadToDevice,
 						MessageMenuActionType.forward,
 						MessageMenuActionType.askCopilot,
-						MessageMenuActionType.createTask,
 						MessageMenuActionType.finishVote,
 						MessageMenuActionType.subscribe,
 						MessageMenuActionType.unsubscribe,
@@ -128,6 +139,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 							sectionId: MessageMenuSectionId.dialogMore,
 							nextMenuActionType: MessageMenuActionType.more,
 							children: [
+								MessageMenuActionType.createTask,
 								MessageMenuActionType.pin,
 								MessageMenuActionType.unpin,
 								MessageMenuActionType.copyLink,
@@ -198,6 +210,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 				[MessageMenuActionType.create]: this.addCreateAction.bind(this),
 				[MessageMenuActionType.createEvent]: this.addCreateEventAction.bind(this),
 				[MessageMenuActionType.createTask]: this.addCreateTaskAction.bind(this),
+				[MessageMenuActionType.createAiTask]: this.addCreateAiTaskAction.bind(this),
 				[MessageMenuActionType.reply]: this.addReplyAction.bind(this),
 				[MessageMenuActionType.profile]: this.addProfileAction.bind(this),
 				[MessageMenuActionType.edit]: this.addEditAction.bind(this),
@@ -232,6 +245,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 				[MessageMenuActionType.askCopilot]: this.onAskCopilot.bind(this),
 				[MessageMenuActionType.create]: this.onCreate.bind(this),
 				[MessageMenuActionType.createTask]: this.onCreateTask.bind(this),
+				[MessageMenuActionType.createAiTask]: this.onCreateAiTask.bind(this),
 				[MessageMenuActionType.createEvent]: this.onCreateEvent.bind(this),
 				[MessageMenuActionType.profile]: this.onProfile.bind(this),
 				[MessageMenuActionType.edit]: this.onEdit.bind(this),
@@ -428,6 +442,19 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 			if (actionHelper.isPossibleTaskCreate())
 			{
 				menu.addAction(CreateTaskAction, options);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuActionHelper} actionHelper
+		 * @param {object} [options]
+		 */
+		addCreateAiTaskAction(menu, actionHelper, options = {})
+		{
+			if (actionHelper.isPossibleAiTaskCreate())
+			{
+				menu.addAction(CreateAiTaskAction, options);
 			}
 		}
 
@@ -993,7 +1020,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 			{
 				const entityManager = new EntityManager(actionHelper.dialogModel.dialogId, this.store);
 
-				entityManager.createMeeting(actionHelper.messageModel.id);
+				entityManager.createMeeting(actionHelper.messageModel.id, { sendOpenAnalytics: false });
 			}
 			catch (error)
 			{
@@ -1039,6 +1066,140 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 			catch (error)
 			{
 				logger.log('onCreateTask.createTaskFomMessage.catch:', error);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuActionHelper} actionHelper
+		 * @param {MessageMenuActionHandlerParams} params
+		 */
+		onCreateAiTask(actionHelper, params)
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageModel = this.#getMessageModel(actionHelper.messageModel.id);
+			if (!messageModel || !Type.isNumber(messageModel.id))
+			{
+				return;
+			}
+
+			if (this.#isAiTaskCreationInProgress)
+			{
+				logger.log('DialogMessageContextMenu.onCreateAiTask: creation in progress, skip', messageModel.id);
+
+				return;
+			}
+
+			if (AiTaskIndicationManager.isOperationRunning(this.dialogLocator, messageModel.id))
+			{
+				logger.log('DialogMessageContextMenu.onCreateAiTask: indication active for anchor, skip', messageModel.id);
+
+				return;
+			}
+
+			logger.log('DialogMessageContextMenu.onCreateAiTask', messageModel.id);
+
+			// Started at the tap and closed on the frame: the whole wait between the two is one operation
+			// for the user, and the Server Create sub-point tells the request apart from everything else.
+			const point = new PerfPoint('IM AI Task Create', `message ${messageModel.id}`).start();
+
+			const isNestedSection = this.isNestedSection(params.sectionId, actionHelper);
+			AnalyticsService.getInstance().messageMenuAnalytics.sendMessageMenuCreateActionTap(
+				messageModel.id,
+				{
+					dialogId: actionHelper.dialogModel.dialogId,
+					isNestedSection,
+					...params,
+				},
+			);
+
+			this.#isAiTaskCreationInProgress = true;
+
+			point.startPoint('Server Create');
+
+			AiTaskRest.createByMessage({ messageId: messageModel.id })
+				.then(() => {
+					point.endPoint('Server Create', { status: 'success' });
+
+					this.#isAiTaskCreationInProgress = false;
+
+					point.startPoint('Indication Start');
+					this.#showAiTaskIndication(messageModel.id);
+					point.endPoint('Indication Start');
+					point.end();
+				})
+				.catch((errors) => {
+					point.endPoint('Server Create', { status: 'error' });
+
+					this.#isAiTaskCreationInProgress = false;
+					logger.error('DialogMessageContextMenu.onCreateAiTask.catch:', errors);
+					this.#showAiTaskRefusal(errors);
+
+					point.end();
+				})
+			;
+		}
+
+		/**
+		 * @desc Tells the refusals the user can act on apart from everything else. A slot already
+		 * taken by an operation over the same message is a state of the chat rather than a failure of
+		 * the tap, so it gets a plain toast instead of the red one.
+		 * @param {Array<{code: string}>} errors
+		 */
+		#showAiTaskRefusal(errors)
+		{
+			const codes = Array.isArray(errors) ? errors.map((error) => error?.code) : [];
+
+			// The transport stamps NETWORK_ERROR for any rejection with no parsed body -- a lost
+			// network, a timeout, a gateway page, the 401 of a closed guest session. Only the
+			// connection status tells the offline case apart from those, so both are checked here.
+			if (codes.includes(ErrorType.networkError) && !isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			if (codes.includes(ErrorType.aiTask.creationInProgress))
+			{
+				Notification.showToastWithParams({
+					message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_AI_TASK_ALREADY_CREATING'),
+				});
+
+				return;
+			}
+
+			if (codes.includes(ErrorType.aiTask.sourceNotSupported))
+			{
+				Notification.showErrorToast({
+					message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_AI_TASK_SOURCE_NOT_SUPPORTED'),
+				});
+
+				return;
+			}
+
+			Notification.showErrorToast();
+		}
+
+		/**
+		 * @param {number} anchor -- max message id of the creation request, used to correlate the pull event
+		 */
+		#showAiTaskIndication(anchor)
+		{
+			// A request out of a single message is its own set: the anchor is the only message of it.
+			const isRaised = AiTaskIndicationManager.startOnAvailableTrack(this.dialogLocator, {
+				anchor,
+				messageIds: [anchor],
+			});
+
+			if (!isRaised)
+			{
+				logger.log('DialogMessageContextMenu.showAiTaskIndication: the build has no track, skip', anchor);
 			}
 		}
 
@@ -1211,8 +1372,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 			}
 
 			const messageHelper = MessageHelper.createById(messageId);
-
-			if (!messageHelper.isWithFile && !messageHelper.hasBlockGallery)
+			if (!messageHelper)
 			{
 				return;
 			}
@@ -1221,13 +1381,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 
 			const isNestedSection = this.isNestedSection(sectionId, actionHelper);
 
-			void fileSaver({
+			this.#runSaver(fileSaver({
 				locator: this.dialogLocator,
 				dialogId: this.#getDialogId(),
 				messageHelper,
 				parentWidget,
 				isNestedSection,
-			}).save();
+			}));
 		}
 
 		/**
@@ -1242,16 +1402,40 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 				return;
 			}
 
+			const messageHelper = MessageHelper.createById(messageId);
+			if (!messageHelper)
+			{
+				return;
+			}
+
 			const { parentWidget = null, sectionId = null } = params;
 
 			const isNestedSection = this.isNestedSection(sectionId, actionHelper);
-			void diskSaver({
+
+			this.#runSaver(diskSaver({
 				locator: this.dialogLocator,
 				dialogId: this.#getDialogId(),
-				messageHelper: MessageHelper.createById(messageId),
+				messageHelper,
 				parentWidget,
 				isNestedSection,
-			}).save();
+			}));
+		}
+
+		/**
+		 * Whether there is anything to save is asked of the saver: it is the saver that knows the set
+		 * of the action. The media viewer offers both save actions with no check of its own, so a
+		 * message the set of which came out empty stops here and no empty save reaches the server.
+		 *
+		 * @param {BaseSaver} saver
+		 */
+		#runSaver(saver)
+		{
+			if (saver.getFiles().length === 0)
+			{
+				return;
+			}
+
+			void saver.save();
 		}
 
 		/**

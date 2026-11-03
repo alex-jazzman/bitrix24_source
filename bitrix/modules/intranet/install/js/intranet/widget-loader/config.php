@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.popup',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

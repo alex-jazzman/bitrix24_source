@@ -18,6 +18,27 @@
 	cursor: pointer;
 }
 
+/*
+ * The renameable title is a native button, so only the browser defaults are undone here; the layout
+ * still comes from the shared wrap rule above, which the static state uses unchanged. The width cap
+ * keeps the focus ring around the title itself instead of the whole width of the header info column,
+ * and it never narrows the control below its own content, so nothing truncates differently. The radius
+ * is the shape of that ring and nothing else - the button paints neither background nor border - and it
+ * comes from the shared messenger source for a control that is a run of text, so the title of a group
+ * chat and the title of a personal one are ringed alike.
+ */
+button.bx-im-elements-editable-chat-title__wrap {
+	appearance: none;
+	padding: 0;
+	border: 0;
+	max-width: max-content;
+	border-radius: var(--im-focus-ring__border-radius_text);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+}
+
 .bx-im-elements-editable-chat-title__container {
 	max-width: 100%;
 	min-width: 0;
@@ -31,12 +52,25 @@
 	height: 18px;
 }
 
+/*
+ * The pencil is always in the markup of the renameable title, and CSS alone decides whether it is seen:
+ * inserting it into the button while that button holds the focus makes WebKit abort the focus move of a
+ * `Tab`. Its box is the container above, so showing it moves no layout, and `visibility` keeps it out of
+ * hit testing and of the accessibility tree while it is hidden. The opacity is the intensity of the
+ * pencil, not its presence, so the 0.3s of the mouse-over stays exactly what it was.
+ */
 .bx-im-elements-editable-chat-title__edit-icon {
 	width: 100%;
 	height: 100%;
 	background-image: url('./images/edit.svg');
+	visibility: hidden;
 	opacity: 0.35;
-	transition: all 0.3s;
+	transition: opacity 0.3s;
+}
+
+button.bx-im-elements-editable-chat-title__wrap:hover .bx-im-elements-editable-chat-title__edit-icon,
+button.bx-im-elements-editable-chat-title__wrap:focus-visible .bx-im-elements-editable-chat-title__edit-icon {
+	visibility: visible;
 }
 
 .bx-im-elements-editable-chat-title__edit-icon:hover {
@@ -60,4 +94,12 @@
 	font: var(--im-font-size-lg)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	color: var(--im-elements-editable-chat-title__font-color_input);
+}
+
+/* Title input matches the typography of the regular title (isAirDesignEnabled flag). */
+.bx-im-messenger__scope.--air-design .bx-im-elements-editable-chat-title__input {
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
 }

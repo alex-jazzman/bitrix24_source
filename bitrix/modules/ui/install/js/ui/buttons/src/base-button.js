@@ -16,6 +16,59 @@ export type SetCounterOptions = {
 	position: 'left' | 'right',
 };
 
+type ButtonEventHandler = (event: MouseEvent) => void;
+
+const buttonEventHandlers: WeakMap<HTMLElement, Map<string, Set<ButtonEventHandler>>> = new WeakMap();
+
+export const bindButtonEvent = (node: HTMLElement, eventName: string, handler: ButtonEventHandler): void => {
+	let events = buttonEventHandlers.get(node);
+	if (!events)
+	{
+		events = new Map();
+		buttonEventHandlers.set(node, events);
+	}
+
+	let handlers = events.get(eventName);
+	if (!handlers)
+	{
+		handlers = new Set();
+		events.set(eventName, handlers);
+	}
+
+	handlers.add(handler);
+	Event.bind(node, eventName, handler);
+};
+
+export const unbindButtonEvent = (
+	node: HTMLElement,
+	eventName: string,
+	handler: ?ButtonEventHandler = null,
+): void => {
+	const events = buttonEventHandlers.get(node);
+	const handlers = events?.get(eventName);
+	if (!handlers)
+	{
+		return;
+	}
+
+	for (const listener of handler ? [handler] : handlers)
+	{
+		if (handlers.delete(listener))
+		{
+			Event.unbind(node, eventName, listener);
+		}
+	}
+
+	if (handlers.size === 0)
+	{
+		events.delete(eventName);
+	}
+	if (events.size === 0)
+	{
+		buttonEventHandlers.delete(node);
+	}
+};
+
 export default class BaseButton implements IButton
 {
 	#useAirDesign: boolean = false;
@@ -505,7 +558,7 @@ export default class BaseButton implements IButton
 		{
 			this.unbindEvent(eventName);
 			this.events[eventName] = fn;
-			Event.bind(this.getContainer(), eventName, this.#handleEvent);
+			bindButtonEvent(this.getContainer(), eventName, this.#handleEvent);
 		}
 
 		return this;
@@ -513,7 +566,7 @@ export default class BaseButton implements IButton
 
 	unbindEvent(eventName: string): this
 	{
-		Event.unbindAll(this.getContainer(), eventName);
+		unbindButtonEvent(this.getContainer(), eventName);
 		if (this.events[eventName])
 		{
 			delete this.events[eventName];

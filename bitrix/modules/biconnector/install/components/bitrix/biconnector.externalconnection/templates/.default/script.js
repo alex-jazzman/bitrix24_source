@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (main_core, main_core_events, main_popup, ui_buttons, ui_entitySelector, biconnector_datasetImportV2) {
+(function (main_core, main_core_events, main_popup, ui_buttons, ui_entitySelector, biconnector_datasetImportV2, biconnector_errorMessage) {
 	'use strict';
 
 	class ExternalConnectionForm {
@@ -202,7 +202,7 @@
 		#clearConnectionStatus() {
 			main_core.Dom.clean(this.#connectionStatusNode);
 		}
-		#updateConnectionStatus(succedeed, errorMessage) {
+		#updateConnectionStatus(succedeed, errorHtml) {
 			main_core.Dom.clean(this.#connectionStatusNode);
 			let status = null;
 			if (succedeed) {
@@ -213,11 +213,10 @@
 				</div>
 			`;
 			} else {
-				errorMessage = main_core.Text.encode(errorMessage);
 				status = main_core.Tag.render`
 				<div class="db-connection-error">
 					<div class="ui-icon-set --warning" style="--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: var(--ui-color-palette-red-60);"></div>
-					${errorMessage.replaceAll(/\s+/g, ' ')}
+					${errorHtml.replaceAll(/\s+/g, ' ')}
 				</div>
 			`;
 			}
@@ -246,7 +245,7 @@
 					this.#checkConnectButton.setState(null);
 					resolve(response);
 				}).catch(response => {
-					this.#updateConnectionStatus(false, response.errors[0].message);
+					this.#updateConnectionStatus(false, biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('EXTERNAL_CONNECTION_CHECK_FAILED_MSGVER_1')));
 					this.#checkConnectButton.setState(null);
 					reject();
 				});
@@ -259,31 +258,32 @@
 			if (this.#props.sourceFields.id) {
 				connectionValues.id = this.#props.sourceFields.id;
 			}
+			const onSaveFailed = () => {
+				saveButton.setWaiting(false);
+				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreationError');
+			};
 			this.#onCheckConnectClick().then(() => {
 				return main_core.ajax.runAction('biconnector.externalsource.source.save', {
 					data: {
 						data: connectionValues
 					}
-				});
-			}).then(response => {
-				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
-					connection: response.data.connection
-				});
-				if (this.#props.closeAfterCreate) {
-					this.#closeSlider();
-				} else {
-					this.#showSaveSuccessPopup(response.data.connection);
-					saveButton.setWaiting(false);
-				}
-			}).catch(response => {
-				saveButton.setWaiting(false);
-				if (response?.errors?.length > 0) {
-					BX.UI.Notification.Center.notify({
-						content: response.errors[0].message
+				}).then(response => {
+					BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
+						connection: response.data.connection
 					});
-				}
-				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreationError');
-			});
+					if (this.#props.closeAfterCreate) {
+						this.#closeSlider();
+					} else {
+						this.#showSaveSuccessPopup(response.data.connection);
+						saveButton.setWaiting(false);
+					}
+				}).catch(response => {
+					BX.UI.Notification.Center.notify({
+						content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('EXTERNAL_CONNECTION_SAVE_ERROR'))
+					});
+					onSaveFailed();
+				});
+			}, onSaveFailed);
 		}
 		#showSaveSuccessPopup(connection) {
 			let popup = null;
@@ -359,5 +359,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalConnectionForm = ExternalConnectionForm;
 
-})(BX, BX.Event, BX.Main, BX.UI, BX.UI.EntitySelector, BX.BIConnector.DatasetImportV2);
+})(BX, BX.Event, BX.Main, BX.UI, BX.UI.EntitySelector, BX.BIConnector.DatasetImportV2, BX.BIConnector);
 //# sourceMappingURL=script.js.map

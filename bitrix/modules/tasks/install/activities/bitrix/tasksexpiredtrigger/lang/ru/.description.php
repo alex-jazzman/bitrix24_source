@@ -5,5 +5,7 @@ $MESS['TASKS_EXPIRED_DESCR'] = 'Триггер срабатывает на из�
 $MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_ID'] = 'ID просроченной задачи';
 $MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_TITLE'] = 'Название просроченной задачи';
 $MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_CREATED_DATE'] = 'Дата постановки просроченной задачи';
+$MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_STATUS'] = 'Статус задачи';
+$MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_DEADLINE'] = 'Крайний срок задачи';
 $MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_RESPONSIBLE'] = 'Ответственный по задаче';
 $MESS['TASKS_EXPIRED_RETURN_FIELD_TASK_URL'] = 'Ссылка на задачу';

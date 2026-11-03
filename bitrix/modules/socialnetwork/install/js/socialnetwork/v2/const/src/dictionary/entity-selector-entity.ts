@@ -5,5 +5,6 @@ export const EntitySelectorEntity = Object.freeze({
 	MetaUser: 'meta-user',
 	Project: 'project',
 	ProjectTag: 'project-tag',
+	StructureNode: 'structure-node',
 	User: 'user',
 });

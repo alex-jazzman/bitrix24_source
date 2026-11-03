@@ -25,6 +25,10 @@ export const CheckListCheckbox = {
 			type: Boolean,
 			default: false,
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['click'],
 	template: `
@@ -33,6 +37,7 @@ export const CheckListCheckbox = {
 			:important
 			:disabled
 			:highlight
+			:ariaLabel
 			class="check-list-widget-checkbox"
 			@click="$emit('click', $event)"
 		/>

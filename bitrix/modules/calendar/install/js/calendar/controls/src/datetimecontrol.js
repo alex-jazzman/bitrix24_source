@@ -126,17 +126,22 @@ export class DateTimeControl extends EventEmitter
 
 	setValue(value = {})
 	{
-		this.DOM.fromDate.value = Util.formatDate(value.from);
-		this.DOM.toDate.value = Util.formatDate(value.to);
+		// Opt-in: when value.utc is set, from/to are UTC containers (wall-clock in UTC fields) and
+		// are formatted via UTC getters so a spring-forward gap wall-clock is not normalized away.
+		// Default off keeps compacteventform and other consumers (local containers) unchanged.
+		const utc = value.utc === true;
+		this.DOM.fromDate.value = Util.formatDate(value.from, utc);
+		this.DOM.toDate.value = Util.formatDate(value.to, utc);
 
-		this.DOM.fromTime.value = Util.formatTime(value.from);
-		this.DOM.toTime.value = Util.formatTime(value.to);
+		this.DOM.fromTime.value = Util.formatTime(value.from, null, utc);
+		this.DOM.toTime.value = Util.formatTime(value.to, null, utc);
 
-		const parsedFromTime = Util.parseTime(this.DOM.fromTime.value);
-		const parsedToTime = Util.parseTime(this.DOM.toTime.value);
+		const parsedFromTime = Util.parseTime(this.DOM.fromTime.value, utc);
+		const parsedToTime = Util.parseTime(this.DOM.toTime.value, utc);
 		this.fromMinutes = parsedFromTime.h * 60 + parsedFromTime.m;
 		this.toMinutes = parsedToTime.h * 60 + parsedToTime.m;
 
+		this.value = value;
 		this.updateTimePeriod();
 
 		if (this.inlineEditMode)
@@ -206,18 +211,29 @@ export class DateTimeControl extends EventEmitter
 				this.switchTimezone(true);
 			}
 		}
-		this.value = value;
 
 		this.handleFullDayChange();
 		this.emit('onSetValue');
+	}
+
+	isUtcMode(): boolean
+	{
+		return this.value?.utc === true;
+	}
+
+	getPreviousBoundaryForCurrentMode(boundary: 'from' | 'to'): ?Date
+	{
+		const value = this.value?.[boundary];
+
+		return this.isUtcMode() && Type.isDate(value) ? value : this[boundary];
 	}
 
 	updateTimePeriod()
 	{
 		this.from = this.getFrom();
 		this.to = this.getTo();
-		this.fromTimeControl.highlightValue(this.from);
-		this.toTimeControl.highlightValue(this.to);
+		this.fromTimeControl.highlightValue(this.from, this.isUtcMode());
+		this.toTimeControl.highlightValue(this.to, this.isUtcMode());
 		this.updateToTimeDurationHints();
 		this.initDatePicker();
 	}
@@ -226,7 +242,7 @@ export class DateTimeControl extends EventEmitter
 	{
 		this.#dateFromPicker ??= new DatePicker({
 			targetNode: this.DOM.fromDate,
-			selectedDates: [this.from.getTime()],
+			selectedDates: [this.getDatePickerValue(this.from)],
 			events: {
 				onSelect: this.#onDateFromSelected,
 			},
@@ -234,11 +250,21 @@ export class DateTimeControl extends EventEmitter
 
 		this.#dateToPicker ??= new DatePicker({
 			targetNode: this.DOM.toDate,
-			selectedDates: [this.to.getTime()],
+			selectedDates: [this.getDatePickerValue(this.to)],
 			events: {
 				onSelect: this.#onDateToSelected,
 			},
 		});
+	}
+
+	getDatePickerValue(date: Date): Date
+	{
+		if (!this.isUtcMode())
+		{
+			return date;
+		}
+
+		return Object.assign(new Date(date.getTime()), { __utc: true });
 	}
 
 	getFrom(): ?Date
@@ -253,7 +279,7 @@ export class DateTimeControl extends EventEmitter
 
 	getDateWithTime(date, minutes): ?Date
 	{
-		const parsedDate = Util.parseDate(date);
+		const parsedDate = Util.parseDate(date, this.isUtcMode());
 		if (!parsedDate)
 		{
 			return null;
@@ -270,6 +296,7 @@ export class DateTimeControl extends EventEmitter
 			toDate: this.DOM.toDate.value,
 			fromTime: this.DOM.fromTime.value,
 			toTime: this.DOM.toTime.value,
+			utc: this.isUtcMode(),
 			timezoneFrom: this.DOM.fromTz
 				? this.DOM.fromTz.dataset.value
 				: (this.value.timezoneFrom || this.value.timezoneName || null),
@@ -278,10 +305,10 @@ export class DateTimeControl extends EventEmitter
 				: (this.value.timezoneTo || this.value.timezoneName || null),
 		};
 
-		value.from = Util.parseDate(value.fromDate);
+		value.from = Util.parseDate(value.fromDate, value.utc);
 		if (Type.isDate(value.from))
 		{
-			value.to = Util.parseDate(value.toDate);
+			value.to = Util.parseDate(value.toDate, value.utc);
 			if (!Type.isDate(value.to))
 			{
 				value.to = value.from;
@@ -289,18 +316,34 @@ export class DateTimeControl extends EventEmitter
 
 			if (value.fullDay)
 			{
-				value.from.setHours(0, 0, 0);
-				value.to.setHours(0, 0, 0);
+				if (value.utc)
+				{
+					value.from.setUTCHours(0, 0, 0);
+					value.to.setUTCHours(0, 0, 0);
+				}
+				else
+				{
+					value.from.setHours(0, 0, 0);
+					value.to.setHours(0, 0, 0);
+				}
 			}
 			else
 			{
-				const fromTime = Util.parseTime(value.fromTime);
-				const toTime = Util.parseTime(value.toTime) || fromTime;
+				const fromTime = Util.parseTime(value.fromTime, value.utc);
+				const toTime = Util.parseTime(value.toTime, value.utc) || fromTime;
 
 				if (fromTime && toTime)
 				{
-					value.from.setHours(fromTime.h, fromTime.m, 0);
-					value.to.setHours(toTime.h, toTime.m, 0);
+					if (value.utc)
+					{
+						value.from.setUTCHours(fromTime.h, fromTime.m, 0);
+						value.to.setUTCHours(toTime.h, toTime.m, 0);
+					}
+					else
+					{
+						value.from.setHours(fromTime.h, fromTime.m, 0);
+						value.to.setHours(toTime.h, toTime.m, 0);
+					}
 				}
 			}
 		}
@@ -474,16 +517,18 @@ export class DateTimeControl extends EventEmitter
 	{
 		if (!this.getFrom())
 		{
-			this.DOM.fromDate.value = Util.formatDate(this.from.getTime());
+			this.DOM.fromDate.value = Util.formatDate(this.getPreviousBoundaryForCurrentMode('from'), this.isUtcMode());
 
 			return;
 		}
-		this.DOM.fromDate.value = Util.formatDate(this.getFrom());
+		this.DOM.fromDate.value = Util.formatDate(this.getFrom(), this.isUtcMode());
 
-		const difference = this.getFrom().getTime() - this.from.getTime();
+		const previousFrom = this.getPreviousBoundaryForCurrentMode('from');
+		const previousTo = this.getPreviousBoundaryForCurrentMode('to');
+		const difference = this.getFrom().getTime() - previousFrom.getTime();
 
-		this.DOM.toDate.value = Util.formatDate(this.to.getTime() + difference);
-		this.#dateToPicker.selectDate(this.to.getTime() + difference);
+		this.DOM.toDate.value = Util.formatDate(previousTo.getTime() + difference, this.isUtcMode());
+		this.#dateToPicker.selectDate(this.getDatePickerValue(new Date(previousTo.getTime() + difference)));
 
 		this.handleValueChange();
 	}
@@ -492,29 +537,38 @@ export class DateTimeControl extends EventEmitter
 	{
 		if (!this.getTo())
 		{
-			this.DOM.toDate.value = Util.formatDate(this.to.getTime());
+			this.DOM.toDate.value = Util.formatDate(this.getPreviousBoundaryForCurrentMode('to'), this.isUtcMode());
 
 			return;
 		}
-		this.DOM.toDate.value = Util.formatDate(this.getTo());
+		this.DOM.toDate.value = Util.formatDate(this.getTo(), this.isUtcMode());
 
-		const difference = Math.abs(this.to.getTime() - this.getTo().getTime());
+		const previousFrom = this.getPreviousBoundaryForCurrentMode('from');
+		const previousTo = this.getPreviousBoundaryForCurrentMode('to');
+		const difference = Math.abs(previousTo.getTime() - this.getTo().getTime());
 		const yearDuration = 1000 * 60 * 60 * 24 * 300;
 		if (difference > yearDuration)
 		{
-			const duration = this.to.getTime() - this.from.getTime();
-			const toDate = Util.parseDate(this.DOM.toDate.value);
-			toDate.setHours(this.to.getHours(), this.to.getMinutes(), 0, 0);
+			const duration = previousTo.getTime() - previousFrom.getTime();
+			const toDate = Util.parseDate(this.DOM.toDate.value, this.isUtcMode());
+			if (this.isUtcMode())
+			{
+				toDate.setUTCHours(previousTo.getUTCHours(), previousTo.getUTCMinutes(), 0, 0);
+			}
+			else
+			{
+				toDate.setHours(previousTo.getHours(), previousTo.getMinutes(), 0, 0);
+			}
 			const fromDate = new Date(toDate.getTime() - duration);
-			this.DOM.fromDate.value = Util.formatDate(fromDate);
-			this.#dateFromPicker.selectDate(toDate.getTime() - duration);
+			this.DOM.fromDate.value = Util.formatDate(fromDate, this.isUtcMode());
+			this.#dateFromPicker.selectDate(this.getDatePickerValue(new Date(toDate.getTime() - duration)));
 		}
 
 		if (this.getTo() < this.getFrom())
 		{
 			this.DOM.toDate.value = this.DOM.fromDate.value;
 			this.DOM.toTime.value = this.DOM.fromTime.value;
-			this.#dateToPicker.selectDate(this.from.getTime());
+			this.#dateToPicker.selectDate(this.getDatePickerValue(this.from));
 			this.toMinutes = this.getMinutesFromFormattedTime(this.DOM.toTime.value);
 		}
 		this.handleValueChange();
@@ -526,17 +580,17 @@ export class DateTimeControl extends EventEmitter
 
 		if (this.isIncorrectTimeValue(this.DOM.fromTime.value))
 		{
-			this.DOM.fromTime.value = Util.formatTime(this.from);
+			this.DOM.fromTime.value = Util.formatTime(this.getPreviousBoundaryForCurrentMode('from'), null, this.isUtcMode());
 		}
 		else
 		{
 			this.fromMinutes = dataValue ?? this.getMinutesFromFormattedTime(this.DOM.fromTime.value);
-			this.DOM.fromTime.value = Util.formatTime(this.getFrom());
+			this.DOM.fromTime.value = Util.formatTime(this.getFrom(), null, this.isUtcMode());
 		}
 
 		if (this.getTo())
 		{
-			const difference = this.getFrom().getTime() - this.from.getTime();
+			const difference = this.getFrom().getTime() - this.getPreviousBoundaryForCurrentMode('from').getTime();
 			this.toMinutes += difference / (60 * 1000);
 		}
 
@@ -549,21 +603,21 @@ export class DateTimeControl extends EventEmitter
 
 		if (this.isIncorrectTimeValue(this.DOM.toTime.value))
 		{
-			this.DOM.toTime.value = Util.formatTime(this.to);
+			this.DOM.toTime.value = Util.formatTime(this.getPreviousBoundaryForCurrentMode('to'), null, this.isUtcMode());
 		}
 		else
 		{
 			this.toMinutes = dataValue ?? this.getMinutesFromFormattedTime(this.DOM.toTime.value);
-			this.DOM.toTime.value = Util.formatTime(this.getTo());
+			this.DOM.toTime.value = Util.formatTime(this.getTo(), null, this.isUtcMode());
 		}
 
 		if (this.getTo() < this.getFrom())
 		{
-			const difference = this.getTo().getTime() - this.to.getTime();
+			const difference = this.getTo().getTime() - this.getPreviousBoundaryForCurrentMode('to').getTime();
 			this.fromMinutes += difference / (60 * 1000);
-			const newFromDate = new Date(this.from.getTime() + difference);
-			this.DOM.fromTime.value = Util.formatTime(newFromDate);
-			this.DOM.fromDate.value = Util.formatDate(newFromDate);
+			const newFromDate = new Date(this.getPreviousBoundaryForCurrentMode('from').getTime() + difference);
+			this.DOM.fromTime.value = Util.formatTime(newFromDate, null, this.isUtcMode());
+			this.DOM.fromDate.value = Util.formatDate(newFromDate, this.isUtcMode());
 		}
 
 		this.handleValueChange();
@@ -867,7 +921,20 @@ export class DateTimeControl extends EventEmitter
 
 	handleValueChange()
 	{
-		this.setValue({ from: this.getFrom(), to: this.getTo() });
+		const value = this.getValue();
+		const from = this.getFrom() ?? value.from;
+		const to = this.getTo() ?? value.to;
+
+		this.setValue({
+			...this.value,
+			timezoneName: undefined,
+			from,
+			to,
+			fullDay: value.fullDay,
+			utc: value.utc,
+			timezoneFrom: value.timezoneFrom,
+			timezoneTo: value.timezoneTo,
+		});
 		this.emit('onChange', new BaseEvent({ data: { value: this.getValue() } }));
 	}
 
@@ -878,6 +945,7 @@ export class DateTimeControl extends EventEmitter
 			this.DOM.toTime.value,
 			this.DOM.fromDate.value,
 			this.DOM.toDate.value,
+			this.isUtcMode(),
 		);
 	}
 
@@ -888,7 +956,7 @@ export class DateTimeControl extends EventEmitter
 
 	getMinutesFromFormattedTime(time)
 	{
-		const parsedTime = Util.parseTime(time);
+		const parsedTime = Util.parseTime(time, this.isUtcMode());
 
 		return parsedTime.h * 60 + parsedTime.m;
 	}

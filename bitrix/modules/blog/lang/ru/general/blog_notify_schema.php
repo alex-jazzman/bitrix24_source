@@ -1,5 +1,8 @@
 <?php
 
+$MESS['BLG_NS_PRODUCT_SOURCE_NAME'] = 'Блоги';
+$MESS['BLG_NS_PRODUCT_SOURCE_DESCRIPTION'] = 'Комментарии и упоминания в ленте';
+
 $MESS["BLG_NS"] = "Сообщения";
 $MESS["BLG_NS_MSGVER_2"] = "Сообщения в Ленте";
 $MESS["BLG_NS_POST_MSGVER_1"] = "Вам написали сообщение";

@@ -1,0 +1,78 @@
+.calendar-planner-limit-hint {
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	min-width: 0;
+	color: var(--ui-color-base-white-fixed);
+}
+
+/* The image includes transparent top and side margins. */
+.calendar-planner-limit-hint__icon {
+	flex-shrink: 0;
+	width: 98px;
+	height: 121px;
+	background: url(../images/calendar-mascot-sad.png) left bottom / contain no-repeat;
+}
+
+.calendar-planner-limit-hint__body {
+	flex: 1;
+	min-width: 0;
+	align-self: center;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-5xl) var(--ui-space-inset-lg) var(--ui-space-inset-xs);
+	overflow-wrap: anywhere;
+}
+
+.calendar-planner-limit-hint__title {
+	font: var(--ui-font-size-2xl)/var(--ui-typography-text-md-line-height) var(--ui-font-family-primary, var(--ui-font-family-system));
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.calendar-planner-limit-hint__text {
+	margin-top: var(--ui-space-stack-3xs);
+	font: var(--ui-typography-text-md-font-size)/var(--ui-typography-text-md-line-height) var(--ui-font-family-primary, var(--ui-font-family-system));
+}
+
+.calendar-planner-limit-hint__close {
+	position: absolute;
+	top: var(--ui-space-inset-xs);
+	right: var(--ui-space-inset-xs);
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 200ms ease;
+}
+
+.calendar-planner-limit-hint__close:hover {
+	opacity: 1;
+}
+
+.calendar-planner-limit-hint__close:focus-visible {
+	opacity: 1;
+	border-radius: 50%;
+	outline: 2px solid var(--ui-color-base-white-fixed);
+	outline-offset: 2px;
+}
+
+.calendar-planner-limit-hint__close::before,
+.calendar-planner-limit-hint__close::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 14px;
+	height: 2px;
+	border-radius: 1px;
+	background: var(--ui-color-base-white-fixed);
+}
+
+.calendar-planner-limit-hint__close::before {
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.calendar-planner-limit-hint__close::after {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}

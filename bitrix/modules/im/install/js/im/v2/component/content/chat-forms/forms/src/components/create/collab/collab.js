@@ -2,11 +2,20 @@ import { type JsonObject } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
-import { TitleInput, ChatAvatar, CreateChatHeading, TextareaInput, ButtonPanel, AutoDelete } from 'im.v2.component.content.chat-forms.elements';
+import {
+	TitleInput,
+	ChatAvatar,
+	CreateChatHeading,
+	TextareaInput,
+	ButtonPanel,
+	AutoDelete,
+	FieldRow,
+} from 'im.v2.component.content.chat-forms.elements';
 import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
 import { type CustomColorScheme } from 'im.v2.component.elements.button';
 import { EventType, Layout, Color, type OnLayoutChangeEvent } from 'im.v2.const';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { ChatService } from 'im.v2.provider.service.chat';
 
 import { DescriptionBanner } from './components/description-banner/description-banner';
@@ -24,6 +33,7 @@ export const CollabCreation = {
 		ButtonPanel,
 		RightsSection,
 		AutoDelete,
+		FieldRow,
 	},
 	data(): JsonObject
 	{
@@ -49,6 +59,18 @@ export const CollabCreation = {
 	},
 	computed: {
 		EmptyAvatarType: () => EmptyAvatarType,
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		descriptionLabel(): string
+		{
+			return this.loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE');
+		},
+		descriptionPlaceholder(): string
+		{
+			return this.loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER');
+		},
 		createButtonColorScheme(): CustomColorScheme
 		{
 			return {
@@ -182,8 +204,11 @@ export const CollabCreation = {
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
+	// In the air branch the caption of the description belongs to FieldRow, so the heading above the
+	// field is gone; BInput inside TextareaInput keeps its control private, so the field is named by
+	// the same text through ariaLabel. The container of the row owns the vertical rhythm in both branches.
 	template: `
-		<div class="bx-im-content-chat-forms__content --collab">
+		<div class="bx-im-content-chat-forms__content --collab" data-testid="im-chat-form-create-collab">
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar 
 					:avatarFile="avatarFile" 
@@ -194,11 +219,20 @@ export const CollabCreation = {
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_COLLAB_TITLE_PLACEHOLDER')" />
 			</div>
 			<DescriptionBanner />
-			<CreateChatHeading :text="loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE')" />
+			<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 			<div class="bx-im-content-chat-forms__description_container">
+				<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+					<TextareaInput
+						:ariaLabel="descriptionLabel"
+						:value="description"
+						:placeholder="descriptionPlaceholder"
+						@input="onDescriptionChange"
+					/>
+				</FieldRow>
 				<TextareaInput
+					v-else
 					:value="description"
-					:placeholder="loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER')"
+					:placeholder="descriptionPlaceholder"
 					:border="false"
 					@input="onDescriptionChange"
 				/>

@@ -22,6 +22,9 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 		 * @param {Object} props
 		 * @param {Array} props.users
 		 * @param {Function} [props.renderCustomDescription]
+		 * @param {Function} [props.renderBelowBlock]
+		 * @param {Function} [props.renderRightAction]
+		 * @param {Function} [props.onItemLongClick]
 		 * @param {Object} [props.layoutWidget]
 		 * @param {string} [props.title]
 		 * @param {string} [props.testId]
@@ -41,6 +44,9 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 		 * @param {string} [props.title]
 		 * @param {Object} [props.parentWidget=PageManager]
 		 * @param {Function} [props.renderCustomDescription]
+		 * @param {Function} [props.renderBelowBlock]
+		 * @param {Function} [props.renderRightAction]
+		 * @param {Function} [props.onItemLongClick]
 		 */
 		static openBottomSheet(props)
 		{
@@ -56,6 +62,9 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 						testId: (props.testId || ''),
 						parentWidget: layout,
 						renderCustomDescription: props.renderCustomDescription || null,
+						renderBelowBlock: props.renderBelowBlock || null,
+						renderRightAction: props.renderRightAction || null,
+						onItemLongClick: props.onItemLongClick || null,
 					});
 				},
 			});
@@ -78,5 +87,5 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { UserListManager, ListItem };
+	module.exports = { UserListManager, UserList, ListItem };
 });

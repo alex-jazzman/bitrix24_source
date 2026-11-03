@@ -2,6 +2,8 @@
  * @module crm/product-grid/components/product-pricing
  */
 jn.define('crm/product-grid/components/product-pricing', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { mergeImmutable } = require('utils/object');
@@ -268,7 +270,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 			const taxValueMessage = `${taxPercentMessage}, ${taxValue.formatted}`;
 
 			const style = {
-				fontSize: 12,
+				fontSize: Typography.text6.getValue().fontSize,
 				color: AppTheme.colors.base4,
 				textAlign: 'right',
 			};
@@ -469,11 +471,10 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 						paddingRight: 4,
 					},
 				},
-				Text({
+				Text3({
 					text: String(props.text),
 					style: {
 						color: AppTheme.colors.base3,
-						fontSize: 16,
 					},
 				}),
 			),

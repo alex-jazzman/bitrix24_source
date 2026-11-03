@@ -1,7 +1,7 @@
 .intranet-push-otp-connect-popup__reconnect-qr-placeholder-image {
 	width: 230px;
 	height: 230px;
-	background: url('./../images/qr-placeholder.png') no-repeat center;
+	background: url('./../images/qr-placeholder.webp') no-repeat center;
 	background-size: contain;
 	display: flex;
 	justify-content: center;
@@ -22,12 +22,12 @@
 .intranet-push-otp-connect-popup__reconnect-device-icon {
 	width: 20px;
 	height: 24px;
-	background: url('./../images/phone-ios.png') no-repeat center;
+	background: url('./../images/phone-ios.webp') no-repeat center;
 	background-size: contain;
 }
 
 .intranet-push-otp-connect-popup__reconnect-device-icon.--android {
-	background-image: url('./../images/phone-android.png');
+	background-image: url('./../images/phone-android.webp');
 }
 
 .intranet-push-otp-connect-popup__qr-icon {

@@ -42,6 +42,9 @@ $MESS['IM_LIB_CONFIRM_DELETE_COLLAB_V2_TITLE'] = "Удалить проект?";
 $MESS['IM_LIB_CONFIRM_DELETE_COLLAB_TEXT'] = "Коллаба удалится со всей историей общения. Восстановить коллабу будет нельзя";
 $MESS['IM_LIB_CONFIRM_DELETE_COLLAB_V2_TEXT'] = "Проект удалится со всей историей общения. Восстановить проект будет нельзя";
 $MESS['IM_LIB_CONFIRM_DELETE_MESSAGES_TITLE'] = "Удалить";
+$MESS['IM_LIB_CONFIRM_DELETE_EMPTY_MESSAGE_TITLE'] = "Удалить сообщение?";
+$MESS['IM_LIB_CONFIRM_DELETE_EMPTY_MESSAGE_TEXT'] = "Вы убрали все файлы и текст. Такое сообщение удалится из чата";
+$MESS['IM_LIB_CONFIRM_DELETE_EMPTY_MESSAGE_CONFIRM'] = "Да, удалить";
 
 $MESS['IM_LIB_DOWNLOAD_ALL_FILES_TITLE'] = "Проверьте настройки скачивания в браузере";
 $MESS['IM_LIB_DOWNLOAD_ALL_FILES_TEXT'] = "Чтобы сохранить несколько файлов одновременно, разрешите автоматическое скачивание в настройках вашего браузера. [helpdesk]Подробнее[/helpdesk]";

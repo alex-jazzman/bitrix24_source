@@ -1,3 +1,5 @@
+/* global Partial */
+
 import type { Store } from 'ui.vue3.vuex';
 import { Type } from 'main.core';
 
@@ -22,7 +24,7 @@ type ShowParticipantDialogParams = {
 	enableSearch?: boolean;
 	onSelect?: (userId: number) => void;
 	onDeselect?: (userId: number) => void;
-	onClose?: (userIds: number[]) => void;
+	onClose?: (userIds: number[]) => Promise<void> | void;
 };
 
 export class CheckListParticipantService
@@ -51,9 +53,26 @@ export class CheckListParticipantService
 			: []
 		;
 
-		const handleClose = (userIds: number[]): void => {
-			void this.#saveParticipants(params.items, params.type, userIds);
-			params.onClose?.(userIds);
+		// The dialog fires this callback without awaiting or catching it, and the callback is what
+		// unfreezes the item panel, so a failed save must neither skip the cleanup nor escape here.
+		const handleClose = async (userIds: number[]): Promise<void> => {
+			try
+			{
+				await this.#saveParticipants(params.items, params.type, userIds);
+			}
+			catch (error)
+			{
+				console.error('tasks: check-list participants save failed', error);
+			}
+
+			try
+			{
+				await params.onClose?.(userIds);
+			}
+			catch (error)
+			{
+				console.error('tasks: check-list participants dialog close failed', error);
+			}
 		};
 
 		void usersDialog.show({
@@ -122,6 +141,11 @@ export class CheckListParticipantService
 		}
 
 		return this.#dialog.isOpen();
+	}
+
+	getActiveListBoxId(): ?string
+	{
+		return this.#dialog?.getActiveTab?.()?.getListBoxId?.() ?? null;
 	}
 
 	closeDialog(): void

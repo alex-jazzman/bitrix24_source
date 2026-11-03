@@ -11,7 +11,7 @@ export default class SettingsCollection
 		}
 	}
 
-	get(path: string, defaultValue: any = null)
+	get(path: string, defaultValue: any = null): any
 	{
 		const convertedPath = convertPath(path);
 

@@ -13,7 +13,6 @@ $MESS["SBB_BASKET_ITEM_SIMILAR_P1"] = "You already have";
 $MESS["SBB_BASKET_ITEM_SIMILAR_P2"] = "this product in your cart. Quantity:";
 $MESS["SBB_BASKET_ITEM_SIMILAR_P3"] = "Merge products in one item, quantity:";
 $MESS["SBB_BASKET_ITEM_WARNING"] = "In your cart <a href=\"javascript:void(0)\" data-entity=\"basket-items-warning-count\"></a> with error.";
-$MESS["SBB_COUPON"] = "coupon";
 $MESS["SBB_COUPON_ENTER_MSGVER_1"] = "Enter your coupon code:";
 $MESS["SBB_DELAYED_ITEM"] = "saved for later";
 $MESS["SBB_DELAYED_ITEMS"] = "saved for later";

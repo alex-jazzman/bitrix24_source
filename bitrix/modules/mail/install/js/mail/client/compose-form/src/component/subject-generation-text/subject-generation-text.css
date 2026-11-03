@@ -1,0 +1,82 @@
+/*
+ * The phrase stands over the subject field, so it takes the whole box of the field and lets the pointer
+ * through to the input that keeps the focus underneath it. The naked design of the input draws its text
+ * with no horizontal padding of its own, so the two lines start at the same place.
+ */
+.mail-compose-subject-generation-text
+{
+	position: absolute;
+	top: 50%;
+	right: 0;
+	left: 0;
+	transform: translateY(-50%);
+	pointer-events: none;
+
+	/* the five stops and the angle of the mobile row, taken from the tokens of the BitrixGPT design */
+	background-image: linear-gradient(
+		90deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5)
+	);
+
+	/*
+	 * The ramp is drawn twice as wide as the field so the sweep below has somewhere to travel: the glyphs
+	 * stand over one half of it at a time and the other half slides under them.
+	 */
+	background-size: 200% 100%;
+	background-repeat: no-repeat;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+
+	/*
+	 * The glow of the mobile row: the third stop of the gradient at a quarter of its strength, no offset.
+	 * `drop-shadow` and not `text-shadow`, because a shadow of a glyph filled with a gradient is drawn
+	 * through the glyph itself, while this one traces its silhouette.
+	 */
+	filter: drop-shadow(
+		0 0 2.5px color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 24%, transparent)
+	);
+
+	animation: mail-compose-subject-generation-sweep 1200ms ease-in-out infinite alternate;
+}
+
+/*
+ * The wait is shown by the gradient running along the phrase, and by nothing else: `opacity` is the one
+ * property that lowers the contrast of the glyphs directly, so it is left out of the motion and the text
+ * is drawn at its full strength the whole time. The colours the sweep carries under the glyphs stay inside
+ * the ramp, which holds 3:1 of WCAG 1.4.3 for large scale text at every point of it.
+ *
+ * One direction takes 1200ms; `alternate` gives the full cycle of 2400ms and spares the eye the jump back
+ * a looping sweep would make.
+ */
+@keyframes mail-compose-subject-generation-sweep
+{
+	from
+	{
+		background-position: 0 0;
+	}
+
+	to
+	{
+		background-position: 100% 0;
+	}
+}
+
+/*
+ * A sweep is an animation the user may have asked the system to do without. The phrase then stands still,
+ * at full strength and over the whole ramp: the widened background belongs to the motion, so it goes away
+ * with it and leaves the plain gradient of the design behind.
+ */
+@media (prefers-reduced-motion: reduce)
+{
+	.mail-compose-subject-generation-text
+	{
+		background-size: 100% 100%;
+		animation: none;
+	}
+}

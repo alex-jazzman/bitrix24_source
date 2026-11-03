@@ -27,6 +27,15 @@ Main\UI\Extension::load([
 	'ui.fonts.opensans',
 ]);
 
+$leftPanelResizable = $arParams['LEFT_PANEL_RESIZABLE'];
+if (is_array($leftPanelResizable))
+{
+	Main\UI\Extension::load('ui.sidepanel.left-panel-resizer');
+	$leftPanelResizable['ACCESSIBLE_NAME'] = Main\Localization\Loc::getMessage(
+		'UI_SIDEPANEL_WRAPPER_LEFT_PANEL_RESIZER_ACCESSIBLE_NAME'
+	);
+}
+
 ?><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
 <head>
@@ -187,15 +196,29 @@ if (defined('AIR_SITE_TEMPLATE'))
 	$classes[] = '--air --ui-reset-bg-blur';
 }
 
+$wrapperTestIdAttribute = is_array($leftPanelResizable)
+	? ' data-testid="ui-sidepanel-wrapper-container"'
+	: ''
+;
+
 ?>
-<div class="<?=join(' ', $classes)?>"><?php
-		$APPLICATION->AddBufferContent(function() {
+<div class="<?=join(' ', $classes)?>"<?= $wrapperTestIdAttribute ?>><?php
+		$APPLICATION->AddBufferContent(function() use ($leftPanelResizable) {
 			$content = trim($GLOBALS['APPLICATION']->getViewContent('left-panel-before'));
 			$content .= trim($GLOBALS['APPLICATION']->getViewContent('left-panel'));
 			$content .= trim($GLOBALS['APPLICATION']->getViewContent('left-panel-after'));
 			if (!empty($content))
 			{
-				return '<div id="left-panel" class="ui-page-slider-left-panel">'.$content.'</div>';
+				$leftPanel = '<div id="left-panel" class="ui-page-slider-left-panel">' . $content . '</div>';
+				if (!is_array($leftPanelResizable))
+				{
+					return $leftPanel;
+				}
+
+				return $leftPanel
+					. '<div class="ui-page-slider-left-panel-resizer"'
+					. ' data-testid="ui-sidepanel-left-panel-resizer"></div>'
+				;
 			}
 
 			return '';
@@ -280,6 +303,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 					'selector' => $arParams['EDITABLE_TITLE_SELECTOR']
 				],
 				'notification' => $arParams['NOTIFICATION'],
+				'leftPanelResizable' => $leftPanelResizable,
 			]) ?>);
 		});
 	</script>

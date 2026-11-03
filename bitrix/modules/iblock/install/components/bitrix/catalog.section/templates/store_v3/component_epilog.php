@@ -21,6 +21,11 @@ $json = (
 
 if (!$json)
 {
+	if (\Bitrix\Main\Loader::includeModule('ui'))
+	{
+		\Bitrix\Main\UI\Extension::load(['ui.a11y', 'ui.design-tokens.air']);
+	}
+
 	if (!empty($templateData['TEMPLATE_LIBRARY']))
 	{
 		$loadCurrency = false;

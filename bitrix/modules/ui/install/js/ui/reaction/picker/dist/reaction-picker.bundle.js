@@ -107,6 +107,8 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	};
 	class ReactionPicker extends main_core_events.EventEmitter {
 		#target;
+		#alignTargetLeft;
+		#accessibilityTarget;
 		#popover = null;
 		#isShown;
 		#menuContainer;
@@ -144,6 +146,8 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 			super();
 			this.setEventNamespace('UI.ReactionPicker.V2');
 			this.#target = options.target;
+			this.#alignTargetLeft = options.alignTargetLeft === true;
+			this.#accessibilityTarget = options.accessibilityTarget === undefined ? this.#target instanceof HTMLElement ? this.#target : null : options.accessibilityTarget;
 			this.#allowedReactions = main_core.Type.isArrayFilled(options.reactions) ? options.reactions : null;
 			this.#priority = main_core.Type.isStringFilled(options.priorityReaction) ? options.priorityReaction : null;
 			this.#contextAction = main_core.Type.isPlainObject(options.contextAction) && main_core.Type.isStringFilled(options.contextAction.title) && main_core.Type.isFunction(options.contextAction.onClick) ? options.contextAction : null;
@@ -153,7 +157,8 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 			this.#isShown = false;
 			this.#reactions = [];
 			this.#ranking = new ReactionPickerRanking();
-			this.#restoreFocusTarget = () => this.#target instanceof HTMLElement ? this.#target : null;
+			// A callback returning null would let FocusTrap restore its previous focus instead.
+			this.#restoreFocusTarget = options.accessibilityTarget === null ? false : () => this.#accessibilityTarget;
 		}
 		show(options = {}) {
 			// A picker shown again inside the teardown window of hide() keeps the popover it
@@ -276,20 +281,40 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 			const elementRect = main_core.Dom.getPosition(target);
 			const popoverRect = main_core.Dom.getPosition(this.#popover);
 			let top = 0;
-			const isEnoughSpaceBelowTargetElement = this.#isEnoughSpaceBelowTargetElement();
-			if (isEnoughSpaceBelowTargetElement === false) {
-				top = elementRect.top - popoverRect.height - ReactionPicker.#offsetBetweenTargetElement;
-			} else if (this.#isEnoughSpaceAboveTargetElement()) {
-				top = elementRect.top - ReactionPicker.#minHeight - ReactionPicker.#offsetBetweenTargetElement;
-			} else if (isEnoughSpaceBelowTargetElement) {
-				top = elementRect.top + elementRect.height + ReactionPicker.#offsetBetweenTargetElement;
+			if (this.#alignTargetLeft) {
+				const topAboveTarget = elementRect.top - popoverRect.height - ReactionPicker.#offsetBetweenTargetElement;
+				const topBelowTarget = elementRect.bottom + ReactionPicker.#offsetBetweenTargetElement;
+				const viewportTop = window.scrollY;
+				const viewportBottom = window.scrollY + window.innerHeight;
+				const spaceAboveTarget = elementRect.top - viewportTop - ReactionPicker.#offsetBetweenTargetElement;
+				const spaceBelowTarget = viewportBottom - elementRect.bottom - ReactionPicker.#offsetBetweenTargetElement;
+				const fitsAboveTarget = spaceAboveTarget >= popoverRect.height;
+				const fitsBelowTarget = spaceBelowTarget >= popoverRect.height;
+				if (fitsAboveTarget) {
+					top = topAboveTarget;
+				} else if (fitsBelowTarget) {
+					top = topBelowTarget;
+				} else {
+					const preferredTop = spaceAboveTarget >= spaceBelowTarget ? topAboveTarget : topBelowTarget;
+					const maxTopWithinViewport = Math.max(viewportTop, viewportBottom - popoverRect.height);
+					top = Math.min(Math.max(preferredTop, viewportTop), maxTopWithinViewport);
+				}
+			} else {
+				const isEnoughSpaceBelowTargetElement = this.#isEnoughSpaceBelowTargetElement();
+				if (isEnoughSpaceBelowTargetElement === false) {
+					top = elementRect.top - popoverRect.height - ReactionPicker.#offsetBetweenTargetElement;
+				} else if (this.#isEnoughSpaceAboveTargetElement(ReactionPicker.#minHeight)) {
+					top = elementRect.top - ReactionPicker.#minHeight - ReactionPicker.#offsetBetweenTargetElement;
+				} else if (isEnoughSpaceBelowTargetElement) {
+					top = elementRect.top + elementRect.height + ReactionPicker.#offsetBetweenTargetElement;
+				}
 			}
-			let left = elementRect.left - 53;
+			let left = this.#alignTargetLeft ? elementRect.left : elementRect.left - 53;
 			const rightEdge = left + popoverRect.width;
-			const windowWidth = window.innerWidth;
+			const viewportRight = window.scrollX + window.innerWidth;
 			const rightPadding = 40;
-			if (rightEdge + rightPadding > windowWidth) {
-				left = windowWidth - popoverRect.width - rightPadding;
+			if (rightEdge + rightPadding > viewportRight) {
+				left = viewportRight - popoverRect.width - rightPadding;
 			}
 			main_core.Dom.style(this.#popover, {
 				top: `${top}px`,
@@ -597,7 +622,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 		#expand() {
 			main_core.Dom.addClass(this.#popover, '--expanded');
 			main_core.Dom.append(this.#renderReactionsList(this.#getReactionsNames().slice(ReactionPicker.#rowSize), true), this.#expandedListContainer);
-			if (this.#isEnoughSpaceBelowTargetElement() === false) {
+			if (this.#alignTargetLeft || this.#isEnoughSpaceBelowTargetElement() === false) {
 				this.adjustPosition();
 			}
 			this.emit(ReactionPickerEvents.expand, {
@@ -606,8 +631,8 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 		}
 
 		/**
-		 * A target given as coordinates has no element to speak for it, and an element that is not a
-		 * control of any kind has no state to be in: the picker is then a menu nothing announces.
+		 * Without an accessibility target, or with one that is not a control of any kind,
+		 * the picker is a menu nothing announces.
 		 */
 		#syncTargetMenuState(isExpanded) {
 			if (!this.#isMenuStateTarget()) {
@@ -617,7 +642,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 			this.#stampTargetAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 		}
 		#isMenuStateTarget() {
-			return this.#target instanceof HTMLElement && this.#target.matches(ReactionPicker.#menuStateTargetSelector);
+			return this.#accessibilityTarget instanceof HTMLElement && this.#accessibilityTarget.matches(ReactionPicker.#menuStateTargetSelector);
 		}
 
 		/**
@@ -629,9 +654,9 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 				this.#stampedTargetAttributes = new Map();
 			}
 			if (!this.#stampedTargetAttributes.has(name)) {
-				this.#stampedTargetAttributes.set(name, this.#target.getAttribute(name));
+				this.#stampedTargetAttributes.set(name, this.#accessibilityTarget.getAttribute(name));
 			}
-			main_core.Dom.attr(this.#target, name, value);
+			main_core.Dom.attr(this.#accessibilityTarget, name, value);
 		}
 
 		/**
@@ -640,7 +665,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 		 */
 		#clearTargetMenuState() {
 			this.#stampedTargetAttributes?.forEach((value, name) => {
-				main_core.Dom.attr(this.#target, name, value);
+				main_core.Dom.attr(this.#accessibilityTarget, name, value);
 			});
 			this.#stampedTargetAttributes = null;
 		}
@@ -655,7 +680,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 		 * picker is anchored to holds it - that is what a keyboard-driven opening looks like.
 		 */
 		#isOpenedFromFocusedTarget() {
-			return ui_a11y.FocusMonitor.Instance.getModalityTracker().getLastModality() === 'keyboard' && this.#target instanceof HTMLElement && this.#target.contains(document.activeElement);
+			return ui_a11y.FocusMonitor.Instance.getModalityTracker().getLastModality() === 'keyboard' && this.#accessibilityTarget instanceof HTMLElement && this.#accessibilityTarget.contains(document.activeElement);
 		}
 
 		/**
@@ -687,11 +712,12 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 		#isEnoughSpaceBelowTargetElement() {
 			const popoverRect = main_core.Dom.getPosition(this.#popover);
 			const targetRect = main_core.Dom.getPosition(this.#target);
-			return targetRect.bottom + popoverRect.height + ReactionPicker.#offsetBetweenTargetElement < window.innerHeight;
+			const viewportBottom = window.scrollY + window.innerHeight;
+			return targetRect.bottom + popoverRect.height + ReactionPicker.#offsetBetweenTargetElement < viewportBottom;
 		}
-		#isEnoughSpaceAboveTargetElement() {
+		#isEnoughSpaceAboveTargetElement(height) {
 			const elementRect = main_core.Dom.getPosition(this.#target);
-			return elementRect.top - ReactionPicker.#minHeight - window.scrollY - ReactionPicker.#offsetBetweenTargetElement > 0;
+			return elementRect.top - height - window.scrollY - ReactionPicker.#offsetBetweenTargetElement > 0;
 		}
 		#getReactionsNames() {
 			const rankedReactions = this.#ranking.getRankedReactionsNames();

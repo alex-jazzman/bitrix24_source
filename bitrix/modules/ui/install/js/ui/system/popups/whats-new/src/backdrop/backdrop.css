@@ -1,0 +1,28 @@
+/**
+ * The backdrop of the card: a stack of colour schemes, each of them four layers spread over the whole card
+ * under all of the content. This file owns where the layers lie and how soft they are; what they are painted
+ * with is composed from the geometry of the composition in TypeScript, because the brush of the moving
+ * effects paints the same spots from the same numbers. No colour is named here.
+ *
+ * Public CSS surface: none. The block is internal to ui.system.popups.whats-new.
+ */
+
+.ui-system-whats-new-backdrop,
+.ui-system-whats-new-backdrop__scheme,
+.ui-system-whats-new-backdrop__layer {
+	position: absolute;
+	inset: 0;
+	/* Every layer is decoration: the pointer goes through the whole backdrop to the content above it. */
+	pointer-events: none;
+}
+
+/* A layer of a scheme is drawn to the edge of the card, so the stack clips what leaves it. */
+.ui-system-whats-new-backdrop {
+	overflow: hidden;
+}
+
+/* The softness of a spot comes from its gradient; the blur token only strengthens it, and the portal zeroes
+   every blur token on an integrated graphics card - the composition stays readable without it. */
+.ui-system-whats-new-backdrop__layer.--glow {
+	filter: var(--ui-bg-blur-default);
+}

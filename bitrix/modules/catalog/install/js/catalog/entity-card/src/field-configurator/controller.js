@@ -151,7 +151,18 @@ export default class FieldConfiguratorController extends BX.UI.EntityEditorContr
 
 			let newType = null;
 			let schemeElement = null;
-			if (eventArgs.multiple === true)
+			const moneyFieldUpdate = this.prepareMoneyFieldUpdate(
+				currentField,
+				property,
+				section.getModel(),
+				eventArgs.multiple,
+			);
+			if (moneyFieldUpdate)
+			{
+				newType = moneyFieldUpdate.type;
+				schemeElement = moneyFieldUpdate.schemeElement;
+			}
+			else if (eventArgs.multiple === true)
 			{
 				if (currentField instanceof BX.UI.EntityEditorText)
 				{
@@ -187,7 +198,7 @@ export default class FieldConfiguratorController extends BX.UI.EntityEditorContr
 				{
 					newType = 'text';
 				}
-			schemeElement = currentField.getSchemeElement();
+			schemeElement ??= currentField.getSchemeElement();
 			if (
 				((currentField instanceof BX.UI.EntityEditorList) || (currentField instanceof BX.UI.EntityEditorMultiList))
 				&& property
@@ -232,6 +243,69 @@ export default class FieldConfiguratorController extends BX.UI.EntityEditorContr
 			});
 	}
 	/* eslint-enable */
+
+	prepareMoneyFieldUpdate(currentField, property, model, isMultiple): ?Object
+	{
+		const isMoneyField = (
+			currentField instanceof BX.UI.EntityEditorMoney
+			|| currentField instanceof BX.UI.EntityEditorMultiMoney
+		);
+		if (!property || !isMoneyField)
+		{
+			return null;
+		}
+
+		const currentIsMultiple = currentField instanceof BX.UI.EntityEditorMultiMoney;
+		if (currentIsMultiple === isMultiple)
+		{
+			return null;
+		}
+
+		const schemeElement = BX.UI.EntitySchemeElement.create(property);
+		const type = schemeElement.getType();
+		if (type !== 'money' && type !== 'multimoney')
+		{
+			return null;
+		}
+
+		const data = schemeElement.getData();
+		const fieldNames = [
+			schemeElement.getName(),
+			data.amount,
+			data.currency?.name ?? data.currencyCode,
+			data.formatted,
+			data.formattedWithCurrency,
+		];
+
+		for (const fieldName of fieldNames)
+		{
+			if (!fieldName || !model.hasField(fieldName))
+			{
+				continue;
+			}
+
+			const currentValue = model.getField(fieldName);
+			const nextValue = this.normalizeMoneyModelValue(currentValue, type);
+			model.setField(fieldName, nextValue, { enableNotification: false });
+		}
+
+		return { type, schemeElement };
+	}
+
+	normalizeMoneyModelValue(value, type)
+	{
+		if (type === 'money' && Type.isArray(value))
+		{
+			return value[0] ?? '';
+		}
+
+		if (type === 'multimoney' && !Type.isArray(value))
+		{
+			return Type.isNil(value) || value === '' ? [] : [value];
+		}
+
+		return value;
+	}
 
 	getFieldsForm(fields): Object
 	{

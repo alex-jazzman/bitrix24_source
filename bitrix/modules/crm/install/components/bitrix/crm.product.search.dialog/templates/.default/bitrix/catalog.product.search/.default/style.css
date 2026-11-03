@@ -117,7 +117,7 @@ table.bx-crm-interface-grid tr.bx-active td.bx-crm-sorted
 
 .crm-catalog-search-icon,
 .crm-catalog-search-clear {
-	background: url(images/catalog-popup-sprite.png) no-repeat 100px 100px;
+	background: url(images/catalog-popup-sprite.webp) no-repeat 100px 100px;
 	cursor: pointer;
 	height: 44px;
 	opacity: 0.7;
@@ -178,7 +178,7 @@ table.bx-crm-interface-grid tr.bx-active td.bx-crm-sorted
 }
 
 .crm-gds-item:before {
-	background: url(images/catalog-popup-sprite.png) no-repeat 100px 100px;
+	background: url(images/catalog-popup-sprite.webp) no-repeat 100px 100px;
 	content: '';
 	height: 14px;
 	left: -34px;
@@ -202,7 +202,7 @@ table.bx-crm-interface-grid tr.bx-active td.bx-crm-sorted
 }
 
 .crm-catalog .bx-crm-wf-section-name.tal {
-	background: url(images/catalog-popup-sprite.png) no-repeat left -316px;
+	background: url(images/catalog-popup-sprite.webp) no-repeat left -316px;
 	font-size: 13px;
 	height: 17px;
 	margin-top: 20px;

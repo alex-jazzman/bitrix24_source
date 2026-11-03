@@ -14,6 +14,7 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integration\BizProc\ListDocumentStateReader;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ContactSettings;
@@ -269,6 +270,9 @@ $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
 if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
+
+$arResult['ENABLE_GROUP_ACTIONS'] = (($arParams['ENABLE_GROUP_ACTIONS'] ?? 'N') === 'Y');
+
 if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
@@ -568,6 +572,12 @@ $arResult['HEADERS'] = array_merge(
 			'editable' => false,
 		],
 		array('id' => 'TYPE_ID', 'name' => GetMessage('CRM_COLUMN_TYPE'), 'sort' => 'type_id', 'type' => 'list', 'editable' => array('items' => CCrmStatus::GetStatusList('CONTACT_TYPE'))),
+		[
+			'id' => 'OPENED',
+			'name' => \CCrmContact::GetFieldCaption('OPENED'),
+			'sort' => false,
+			'default' => false,
+		],
 		array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
 		[
 			'id' => Crm\Item::FIELD_NAME_OBSERVERS,
@@ -619,7 +629,15 @@ $arResult['HEADERS'] = array_merge(
 	$arResult['HEADERS'],
 	array(
 		array('id' => 'COMMENTS', 'name' => GetMessage('CRM_COLUMN_COMMENTS'), 'sort' => false /**because of MSSQL**/, 'editable' => false),
-		array('id' => 'SOURCE_ID', 'name' => GetMessage('CRM_COLUMN_SOURCE'), 'sort' => 'source_id', 'type' => 'list', 'editable' => array('items' => CCrmStatus::GetStatusList('SOURCE'))),
+		array(
+			'id' => 'SOURCE_ID',
+			'name' => GetMessage('CRM_COLUMN_SOURCE'),
+			'sort' => 'source_id',
+			'type' => 'list',
+			'editable' => array(
+				'items' => Crm\Filter\SourceDataProvider::getListWithEmptyValue(),
+			),
+		),
 		array('id' => 'SOURCE_DESCRIPTION', 'name' => GetMessage('CRM_COLUMN_SOURCE_DESCRIPTION'), 'sort' => false /**because of MSSQL**/, 'editable' => false),
 		array('id' => 'EXPORT', 'name' => GetMessage('CRM_COLUMN_EXPORT_NEW'), 'type' => 'checkbox', 'type' => 'checkbox', 'editable' => true),
 		array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false, 'class' => 'username'),
@@ -747,6 +765,17 @@ unset($arHeader);
 if (!($isInExportMode && $isStExport && $isStExportRequisiteMultiline))
 {
 	$requisite->prepareEntityListHeaderFields($arResult['HEADERS']);
+	if (
+		\Bitrix\Main\Config\Feature::isEnabled(
+			\Bitrix\Crm\Public\Features\RequisiteGridSections::class
+		)
+	)
+	{
+		$requisiteCountryIds = Crm\EntityRequisite::prepareEntityListHeaderSections($arResult['HEADERS']);
+		$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+			->appendRequisiteGridSections($arResult['HEADERS_SECTIONS'], $requisiteCountryIds, $factory)
+		;
+	}
 }
 
 //endregion Headers initialization
@@ -1693,17 +1722,10 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['CONTACT']))
 		},
 		$arResult['CONTACT']);
 
-	$documentStates = CBPDocument::GetDocumentStates(
-		array('crm', 'CCrmDocumentContact', 'CONTACT'),
-		array('crm', 'CCrmDocumentContact', $entityIds)
+	$allDocumentStates = (new ListDocumentStateReader())->read(
+		['crm', 'CCrmDocumentContact', 'CONTACT'],
+		$entityIds,
 	);
-	foreach ($documentStates as $stateId => $documentState)
-	{
-		if (isset($documentState['DOCUMENT_ID']))
-		{
-			$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
-		}
-	}
 }
 
 $observersDataProvider->appendResult($arResult['CONTACT']);
@@ -1872,6 +1894,10 @@ foreach($arResult['CONTACT'] as &$arContact)
 		$typeID = isset($arContact['TYPE_ID']) ? $arContact['TYPE_ID'] : '';
 		$arContact['CONTACT_TYPE_NAME'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
 	}
+
+	$sourceID = $arContact['~SOURCE_ID'] ?? $arContact['SOURCE_ID'] ?? '';
+	$arContact['~SOURCE_ID'] = $sourceID;
+	$arContact['SOURCE_ID'] = $sourceID;
 
 	$arContact['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'],

@@ -26,7 +26,7 @@ BitrixVue.component('sale-payment_pay-components-payment_system-pay_system_list'
 	template: `
 		<div>
 <!--			<div class="page-section-title" v-if="title">{{ title }}</div>-->
-			<div class="order-payment-method-list">
+			<div class="order-payment-method-list" role="list" data-testid="sale-payment-system-list">
 				<slot>
 					<sale-payment_pay-components-payment_system-pay_system_row
 						v-for="paySystem in paySystems"

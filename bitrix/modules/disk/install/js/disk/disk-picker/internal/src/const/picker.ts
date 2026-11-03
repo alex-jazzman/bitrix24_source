@@ -27,6 +27,7 @@ export const StorageType = Object.freeze({
 	Group: 'group',
 	Project: 'project',
 	Collab: 'collab',
+	Im: 'im',
 });
 
 export const OrderField = Object.freeze({
@@ -54,6 +55,7 @@ export const FilePickerAction = Object.freeze({
 	ListChildren: 'disk.api.FilePicker.listChildren',
 	Search: 'disk.api.FilePicker.search',
 	ResolveSelection: 'disk.api.FilePicker.resolveSelection',
+	GetViewerAttributes: 'disk.api.FilePicker.getViewerAttributes',
 });
 
 // Server-side page-size envelope (Provider::DEFAULT_PAGE_SIZE / MAX_PAGE_SIZE).

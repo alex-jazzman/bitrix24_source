@@ -4,6 +4,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if (!CBXFeatures::IsFeatureEnabled('timeman') || !CModule::IncludeModule('timeman'))
 	return;
 
+$toolId = \Bitrix\Timeman\Integration\Intranet\Settings::TOOLS['worktime'];
+if (!(new \Bitrix\Timeman\Integration\Intranet\Settings())->isToolAvailable($toolId))
+{
+	$this->IncludeComponentTemplate('tool-disabled');
+
+	return;
+}
+
 // maybe we should cache GetAccess data?
 $arResult['arAccessUsers'] = CTimeMan::GetAccess();
 

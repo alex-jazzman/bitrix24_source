@@ -3,7 +3,7 @@
 import { Util } from 'calendar.util';
 import { Type, Event, Loc, Dom, Runtime, Text, Tag } from 'main.core';
 import { Entry, EntryManager } from 'calendar.entry';
-import { MeetingStatusControl, IntranetButton } from 'calendar.controls';
+import { MeetingStatusControl, IntranetButton, PlannerLimitHint } from 'calendar.controls';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Planner } from 'calendar.planner';
 import { BitrixVue } from 'ui.vue3';
@@ -26,6 +26,16 @@ export class EventViewForm
 	entityChanged = false;
 	LOAD_DELAY = 500;
 	app = null;
+	// Planner.update replaces accessibility, so partial responses are accumulated within a snapshot.
+	prevUserList = [];
+	loadedAccessibilityData = {};
+	allUsersAccessibilityLoaded = false;
+	currentPlannerData = null;
+	plannerRequestId = 0;
+	plannerLimitState = null;
+	plannerLimitHint = null;
+	plannerRevealTimeout = null;
+	destroyed = false;
 
 	constructor(options = {})
 	{
@@ -37,13 +47,15 @@ export class EventViewForm
 		this.entryId = options.entryId || null;
 		this.calendarContext = options.calendarContext || null;
 		this.entryDateFrom = options.entryDateFrom || null;
-		this.timezoneOffset = options.timezoneOffset || null;
+		this.timezoneOffset = options.timezoneOffset ?? null;
 		this.BX = Util.getBX();
 
 		this.sliderOnLoad = this.onLoadSlider.bind(this);
 		this.showUserListPopupBind = this.showUserListPopup.bind(this);
 		this.keyHandlerBind = this.keyHandler.bind(this);
 		this.destroyBind = this.destroy.bind(this);
+		this.reloadPlannerFromPullBind = this.reloadPlannerFromPull.bind(this);
+		this.handleToggleAttendeesListBind = this.handleToggleAttendeesList.bind(this);
 
 		this.loadPlannerDataDebounce = Runtime.debounce(this.loadPlannerData, this.LOAD_DELAY, this);
 
@@ -76,9 +88,23 @@ export class EventViewForm
 
 	destroy()
 	{
+		this.destroyed = true;
+		this.plannerRequestId += 1;
+
 		EventEmitter.unsubscribe(this.slider, 'SidePanel.Slider:onLoad', this.sliderOnLoad);
 		EventEmitter.unsubscribe(this.slider, 'SidePanel.Slider:onCloseComplete', this.destroyBind);
 		Event.unbind(document, 'keydown', this.keyHandlerBind);
+
+		if (this.planner)
+		{
+			this.planner.unsubscribe('onToggleAttendeesList', this.handleToggleAttendeesListBind);
+			this.planner.destroy();
+			this.planner = null;
+		}
+		clearTimeout(this.plannerRevealTimeout);
+		this.plannerRevealTimeout = null;
+		this.plannerLimitHint?.destroy();
+		this.plannerLimitHint = null;
 
 		if (this.app)
 		{
@@ -183,7 +209,8 @@ export class EventViewForm
 						// set vue component to slider
 						this.app = BitrixVue.createApp(ViewEventSlider, {
 							params,
-							reloadPlannerCallback: this.loadPlannerDataDebounce,
+							// Pull-driven planner reload goes through the inactive-tab guard.
+							reloadPlannerCallback: this.reloadPlannerFromPullBind,
 							showUserListPopupCallback: this.showUserListPopupBind,
 						});
 						this.app.mount(viewEventSliderRoot);
@@ -499,32 +526,128 @@ export class EventViewForm
 				: new Date(this.entry.to.getTime());
 		}
 
+		// Lazy accessibility load: when the user expands the attendees list, load the
+		// accessibility of the deferred attendees that was skipped on open.
+		this.planner.subscribe('onToggleAttendeesList', this.handleToggleAttendeesListBind);
+
 		this.planner.show();
 		this.planner.showLoader();
-		this.planner.setEntriesCount(this.attendees.length);
 
-		setTimeout(() => {
+		this.plannerRevealTimeout = setTimeout(() => {
 			if (this.DOM.plannerWrapOuter)
 			{
 				Dom.removeClass(this.DOM.plannerWrapOuter, 'hidden');
 			}
 		}, 500);
 
-		const plannerData = {
+		this.currentPlannerData = null;
+		const plannerData = this.getPlannerData();
+		this.currentPlannerData = plannerData;
+		this.plannerRequestId += 1;
+
+		// Lazy accessibility load: on open compute only the priority portion
+		// (the planner's initial visible rows), defer the rest.
+		// prevUserList is used more broadly than its original meaning ("already loaded"):
+		// here it also holds not-yet-loaded deferred users so the server skips them.
+		this.loadedAccessibilityData = {};
+		this.prevUserList = this.getDeferredUserIds(plannerData.entityList, plannerData.hostId);
+		this.allUsersAccessibilityLoaded = false;
+
+		this.loadPlannerDataDebounce(plannerData, this.plannerRequestId);
+	}
+
+	getPlannerData()
+	{
+		return this.currentPlannerData ?? {
 			entryId: this.entry.id || 0,
 			entryLocation: this.entry.data.LOCATION || '',
 			ownerId: this.ownerId,
 			hostId: this.entry.getMeetingHost(),
 			type: this.type,
 			entityList: this.entry.getAttendeesEntityList(),
+			attendeesProvided: 'Y',
 			dateFrom: Util.formatDate(this.entry.from.getTime() - Util.getDayLength() * 3),
 			dateTo: Util.formatDate(this.entry.to.getTime() + Util.getDayLength() * 10),
 			timezone: this.userTimezone,
 			location: this.entry.getLocation(),
 			entry: this.entry,
 		};
+	}
 
-		this.loadPlannerDataDebounce(plannerData);
+	handleToggleAttendeesList(event)
+	{
+		if (!(event instanceof BaseEvent))
+		{
+			return;
+		}
+
+		// Load the deferred accessibility only once, on the first expand.
+		// Re-expanding/collapsing must not trigger new requests.
+		if (event.getData().expanded !== true || this.allUsersAccessibilityLoaded)
+		{
+			return;
+		}
+
+		this.allUsersAccessibilityLoaded = true;
+		if (!this.prevUserList.some((id) => Type.isUndefined(this.loadedAccessibilityData[id])))
+		{
+			return;
+		}
+
+		// prevUserList currently holds both the deferred users (added on open so the server
+		// skips them) and the already-loaded priority users. Keep only the loaded ones, so
+		// this request computes the deferred attendees while not re-requesting the loaded ones.
+		this.prevUserList = this.prevUserList.filter((id) => !Type.isUndefined(this.loadedAccessibilityData[id]));
+
+		// Not debounced: this is an explicit user action, not a pull-driven reload, so it must
+		// not be delayed or coalesced with background reloads and is not subject to the tab guard.
+		this.loadPlannerData(this.getPlannerData());
+	}
+
+	reloadPlannerFromPull(plannerData)
+	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
+		this.plannerRequestId += 1;
+		this.currentPlannerData = plannerData;
+		this.loadedAccessibilityData = {};
+		this.prevUserList = this.allUsersAccessibilityLoaded
+			? []
+			: this.getDeferredUserIds(plannerData.entityList, plannerData.hostId);
+
+		this.loadPlannerDataDebounce(plannerData, this.plannerRequestId);
+	}
+
+	getDeferredUserIds(entityList, hostId)
+	{
+		if (!Type.isArray(entityList) || entityList.some((entity) => entity?.entityId !== 'user'))
+		{
+			return [];
+		}
+
+		const normalizedUserIds = entityList
+			.filter((entity) => /^[0-9]+$/.test(entity.id))
+			.map((entity) => Number(entity.id))
+			.filter((id) => Number.isSafeInteger(id) && id > 0)
+		;
+		const userIds = [...new Set(normalizedUserIds)];
+		const hostIndex = userIds.indexOf(Number(hostId));
+		if (hostIndex > 0)
+		{
+			userIds.unshift(...userIds.splice(hostIndex, 1));
+		}
+
+		// Planner shows all rows at the +1 boundary without offering expansion.
+		const initialLimit = this.planner.initialMinEntryRows;
+		if (userIds.length <= initialLimit + 1)
+		{
+			return [];
+		}
+
+		return userIds.slice(initialLimit);
 	}
 
 	showUserListPopup(node, userList)
@@ -755,40 +878,150 @@ export class EventViewForm
 		return this.DOM.plannerWrap && Dom.hasClass(this.DOM.plannerWrap, 'calendar-edit-planner-wrap-shown');
 	}
 
-	loadPlannerData(plannerData)
+	loadPlannerData(plannerData, expectedRequestId = this.plannerRequestId)
 	{
-		return new Promise((resolve) => {
-			this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
-				data: plannerData,
-			}).then(
-				(response) => {
-					this.planner.hideLoader();
-					this.planner.update(
-						response.data.entries,
-						response.data.accessibility,
-					);
+		if (this.destroyed || expectedRequestId !== this.plannerRequestId)
+		{
+			return Promise.resolve();
+		}
 
-					this.planner.updateSelector(
-						Util.adjustDateForTimezoneOffset(
-							plannerData.entry.from,
-							plannerData.entry.userTimezoneOffsetFrom,
-							plannerData.entry.fullDay,
-						),
-						Util.adjustDateForTimezoneOffset(
-							plannerData.entry.to,
-							plannerData.entry.userTimezoneOffsetTo,
-							plannerData.entry.fullDay,
-						),
+		const requestPrevUserList = this.prevUserList;
+		const requestId = (this.plannerRequestId += 1);
+
+		// BX.ajax.runAction returns BX.Promise without finally().
+		return Promise.resolve(this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
+			data: {
+				...plannerData,
+				attendeesProvided: 'Y',
+				// prevUserList contains ids of users whose accessibility the server should skip.
+				// The meeting room comes through a separate channel (location) and is not involved here.
+				prevUserList: requestPrevUserList,
+			},
+		})).then(
+			(response) => {
+				// Ignore a response that is not from the latest dispatched request.
+				if (requestId !== this.plannerRequestId)
+				{
+					return response;
+				}
+
+				const plannerLimitExceeded = this.applyPlannerLimitState(response.data);
+
+				// Merge accessibility into the accumulator without overwriting the previously loaded data.
+				for (const id in response.data.accessibility)
+				{
+					if (response.data.accessibility.hasOwnProperty(id))
+					{
+						this.loadedAccessibilityData[id] = response.data.accessibility[id];
+					}
+				}
+
+				// Rebuild the accumulator from this request's skip list plus the users just loaded,
+				// so it stays consistent regardless of concurrent paths.
+				if (Type.isArray(response.data.entries))
+				{
+					const knownUserIds = new Set(plannerLimitExceeded ? [] : requestPrevUserList);
+					response.data.entries.forEach((entry) => {
+						const userId = parseInt(entry.id, 10);
+						const hasAccessibility = this.loadedAccessibilityData[entry.id];
+						if (entry.type === 'user' && !knownUserIds.has(userId) && hasAccessibility)
+						{
+							knownUserIds.add(userId);
+						}
+					});
+					this.prevUserList = Array.from(knownUserIds);
+				}
+
+				this.planner.update(
+					response.data.entries,
+					this.loadedAccessibilityData,
+				);
+
+				this.planner.updateSelector(
+					Util.adjustDateForTimezoneOffset(
+						plannerData.entry.from,
+						plannerData.entry.userTimezoneOffsetFrom,
 						plannerData.entry.fullDay,
+					),
+					Util.adjustDateForTimezoneOffset(
+						plannerData.entry.to,
+						plannerData.entry.userTimezoneOffsetTo,
+						plannerData.entry.fullDay,
+					),
+					plannerData.entry.fullDay,
 
-					);
-					resolve(response);
-				},
-				(response) => {
-					resolve(response);
-				},
-			);
+				);
+
+				return response;
+			},
+			(response) => response,
+		).finally(() => {
+			if (requestId === this.plannerRequestId)
+			{
+				this.planner?.hideLoader();
+			}
 		});
+	}
+
+	applyPlannerLimitState(data): boolean
+	{
+		const exceeded = data.plannerLimitExceeded === true;
+		const wasExceeded = this.plannerLimitState?.exceeded ?? false;
+
+		this.plannerLimitState = {
+			exceeded,
+			maxPlannerUsers: parseInt(data.maxPlannerUsers, 10) || 0,
+			peopleCount: parseInt(data.plannerPeopleCount, 10) || 0,
+		};
+
+		if (exceeded)
+		{
+			this.loadedAccessibilityData = {};
+			this.prevUserList = [];
+		}
+
+		if (exceeded !== wasExceeded)
+		{
+			this.handlePlannerLimitStateChange(new BaseEvent({
+				data: { ...this.plannerLimitState },
+			}));
+		}
+
+		return exceeded;
+	}
+
+	handlePlannerLimitStateChange(event: BaseEvent): void
+	{
+		if (!this.plannerFeatureEnabled)
+		{
+			return;
+		}
+
+		const { exceeded, maxPlannerUsers } = event.getData();
+		if (exceeded)
+		{
+			this.getPlannerLimitHint(maxPlannerUsers)?.show();
+		}
+		else
+		{
+			this.plannerLimitHint?.close();
+		}
+	}
+
+	getPlannerLimitHint(maxPlannerUsers: number): PlannerLimitHint | null
+	{
+		if (!this.plannerLimitHint && this.DOM.plannerWrapOuter)
+		{
+			this.plannerLimitHint = new PlannerLimitHint({
+				bindElement: this.DOM.plannerWrapOuter,
+				targetContainer: this.DOM.content,
+				zIndex: this.zIndex,
+				maxPlannerUsers,
+			});
+		}
+		this.plannerLimitHint?.setMaxPlannerUsers(maxPlannerUsers);
+
+		return this.plannerLimitHint;
 	}
 
 	keyHandler(e)
@@ -872,12 +1105,18 @@ export class EventViewForm
 
 	handleEditButtonClick(): void
 	{
+		const timezoneOffset = Type.isStringFilled(this.userTimezone)
+			? -Util.getTimeZoneOffset(this.userTimezone, this.entry?.from) * 60
+			: this.timezoneOffset
+		;
+
 		this.BX.SidePanel.Instance.close(false, () => {
 			EntryManager.openEditSlider({
 				entry: this.entry,
 				type: this.type,
 				ownerId: this.ownerId,
 				userId: this.userId,
+				timezoneOffset,
 			});
 		});
 	}

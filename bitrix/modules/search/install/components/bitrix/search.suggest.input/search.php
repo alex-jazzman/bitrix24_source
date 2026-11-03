@@ -37,7 +37,7 @@ if (CModule::IncludeModule('search'))
 	}
 }
 
-echo CUtil::PhpToJSObject($arResult);
+echo \Bitrix\Main\Web\Json::encode($arResult);
 
 CMain::FinalActions();
 die();

@@ -7,9 +7,15 @@ import {
 } from '../../feature/attachment-reminder/attachment-reminder';
 import { useCloseComposeForm } from '../../feature/close-form/close-form';
 import { sendMessage } from '../../feature/send-message/send-message';
+import { scheduleMessage } from '../../feature/schedule-message/schedule-message';
 import { useComposeEditor } from '../../infrastructure/adapter/editor/editor';
 import { useLargeAttachmentGate } from '../../infrastructure/adapter/large-attachment/large-attachment';
-import { getReplySendFields, type RecipientFieldKind, useComposeState } from '../../model/compose/compose';
+import {
+	getReplySendFields,
+	getSelectedSenderIdentity,
+	type RecipientFieldKind,
+	useComposeState,
+} from '../../model/compose/compose';
 import { type ComposeState, type RecipientItemDto } from '../../model/compose/types';
 
 const FieldsTestId = 'mail-compose-send-fields';
@@ -17,12 +23,15 @@ const FieldsTestId = 'mail-compose-send-fields';
 /** Hidden field names the send action reads: plain form-names, the request is a serialised `<form>`. */
 const Field = Object.freeze({
 	From: 'data[from]',
+	SenderId: 'data[SENDER_ID]',
+	SenderMailboxId: 'data[SENDER_MAILBOX_ID]',
 	Subject: 'data[subject]',
 	Message: 'data[message]',
 	InReplyTo: 'data[IN_REPLY_TO]',
 	MailboxId: 'data[MAILBOX_ID]',
 	DraftId: 'data[draftId]',
 	DraftRevision: 'data[draftRevision]',
+	SaveAsTemplate: 'data[saveAsTemplate]',
 });
 
 /** One hidden field per recipient, in row order. */
@@ -74,8 +83,24 @@ function getReplyFields(state: ComposeState): MessageField[]
 	];
 }
 
+function getSenderIdentityFields(state: ComposeState): MessageField[]
+{
+	const identity = getSelectedSenderIdentity(state);
+	if (identity.mailboxId !== null)
+	{
+		return [{ name: Field.SenderMailboxId, value: String(identity.mailboxId) }];
+	}
+
+	if (identity.senderId !== null)
+	{
+		return [{ name: Field.SenderId, value: String(identity.senderId) }];
+	}
+
+	return [];
+}
+
 /**
- * The sender is the RFC address of the selected mailbox, exactly as the sender list carries it. Subject and
+ * The sender is the RFC address of the selected identity, exactly as the sender list carries it. Subject and
  * body are sent even when empty: the server answers for an empty message. The importance flag is not sent,
  * matching the previous screen.
  */
@@ -83,6 +108,7 @@ function getMessageFields(state: ComposeState, body: string): MessageField[]
 {
 	const fields = [
 		{ name: Field.From, value: state.selectedSender ?? '' },
+		...getSenderIdentityFields(state),
 		...getRecipientFields(state),
 		{ name: Field.Subject, value: state.subject },
 		{ name: Field.Message, value: body },
@@ -94,6 +120,11 @@ function getMessageFields(state: ComposeState, body: string): MessageField[]
 			{ name: Field.DraftId, value: String(state.draft.id) },
 			{ name: Field.DraftRevision, value: String(state.draft.revision) },
 		);
+	}
+
+	if (state.features.saveTemplate && state.saveAsTemplate)
+	{
+		fields.push({ name: Field.SaveAsTemplate, value: '1' });
 	}
 
 	return fields;
@@ -141,6 +172,19 @@ export const SendForm = defineComponent({
 				reminder: this.getReminder(),
 				largeAttachment: this.resolveLargeAttachmentGate(),
 				closeForm: this.closeForm,
+			});
+		},
+
+		schedule(payload: { scheduledAt: string, timezoneId: string }): void
+		{
+			void scheduleMessage({
+				formId: this.formId,
+				state: this.state,
+				editor: this.editor,
+				reminder: this.getReminder(),
+				largeAttachment: this.resolveLargeAttachmentGate(),
+				closeForm: this.closeForm,
+				...payload,
 			});
 		},
 

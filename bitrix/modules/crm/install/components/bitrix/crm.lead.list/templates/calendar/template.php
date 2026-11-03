@@ -188,10 +188,12 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
 					'ENTITY_ID' => $arLead['~ID'],
+					'ENTITY_TITLE' => $arLead['~TITLE'] ?? '',
 					'CURRENT_ID' => $arLead['~STATUS_ID'] ?? null,
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php',
 					'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'] ?? null,
-					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true)
+					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true),
+					'LAZY_LOAD_FINAL_TRANSITION' => true,
 				)
 			),
 			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? '',

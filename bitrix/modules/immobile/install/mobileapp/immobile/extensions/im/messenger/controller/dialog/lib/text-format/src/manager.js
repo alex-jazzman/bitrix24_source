@@ -117,6 +117,15 @@ jn.define('im/messenger/controller/dialog/lib/text-format/src/manager', (require
 			return this;
 		}
 
+		/**
+		 * @param {string} text
+		 * @returns {string}
+		 */
+		prepareDraftText(text)
+		{
+			return this.#formatter.repairWholeText(text);
+		}
+
 		#unsubscribeViewEvents()
 		{
 			this.#textField.off(EventType.dialog.textField.textActionTap, this.textActionTapHandler);

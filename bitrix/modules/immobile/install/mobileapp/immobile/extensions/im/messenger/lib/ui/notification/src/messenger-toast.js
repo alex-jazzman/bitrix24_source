@@ -43,6 +43,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		folderSorted: 'folderSorted',
 		folderSetChat: 'folderSetChat',
 		marketAppsEmpty: 'marketAppsEmpty',
+		aiTaskNotFound: 'aiTaskNotFound',
 	};
 
 	const ToastIconName = {
@@ -179,6 +180,10 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MARKET_APPS_EMPTY');
 		},
+		get aiTaskNotFound()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_AI_TASK_NOT_FOUND');
+		},
 	};
 
 	const ToastButtonText = {
@@ -248,6 +253,10 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 			offset: 50,
 			backgroundColor: Color.accentMainAlert.toHex(),
 		},
+		aiTaskNotFound: {
+			iconName: Icon.ALERT.getIconName(),
+			backgroundColor: Color.accentMainAlert.toHex(),
+		},
 	};
 
 	/**
@@ -312,9 +321,9 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 			}
 
 			const toastParams = {
-				message: params.message,
-				offset: params.offset || 75,
-				position: params.position || 'bottom',
+				...params,
+				offset: params.offset ?? 75,
+				position: params.position ?? 'bottom',
 			};
 
 			if (params.svg)
@@ -334,7 +343,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 				toastParams.backgroundColor = params.backgroundColor;
 			}
 
-			if (params.backgroundOpacity)
+			if (params.backgroundOpacity !== undefined)
 			{
 				toastParams.backgroundOpacity = params.backgroundOpacity;
 			}

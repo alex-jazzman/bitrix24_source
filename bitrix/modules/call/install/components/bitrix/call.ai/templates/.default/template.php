@@ -30,8 +30,8 @@ $track = !empty($arResult['RECORD']) ? $arResult['RECORD'] : null;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.tooltip',
-	'call.component.user-list',
-	'call.component.elements.audioplayer',
+	'call.legacy.component.user-list',
+	'call.legacy.component.elements.audioplayer',
 	'call.lib.analytics',
 ]);
 

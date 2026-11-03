@@ -8,19 +8,46 @@
  */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
 }
 
-\Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.icon-set.outline', 'ui.hint', 'ui.vue3']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.forms',
+	'ui.icon-set.outline',
+	'ui.hint',
+	'ui.vue3',
+	'intranet.login.password-requirements',
+]);
+
+$passwordRequirementsPolicy = null;
+if (is_array($arResult['GROUP_POLICY'] ?? null))
+{
+	$passwordRequirementsPolicy = [
+		'minPasswordSize' => (int)($arResult['GROUP_POLICY']['PASSWORD_LENGTH'] ?? 0),
+		'isUpperCaseRequired' => ($arResult['GROUP_POLICY']['PASSWORD_UPPERCASE'] ?? null) === 'Y',
+		'isLowerCaseRequired' => ($arResult['GROUP_POLICY']['PASSWORD_LOWERCASE'] ?? null) === 'Y',
+		'isDigitRequired' => ($arResult['GROUP_POLICY']['PASSWORD_DIGITS'] ?? null) === 'Y',
+		'isSpecialCharsRequired' => ($arResult['GROUP_POLICY']['PASSWORD_PUNCTUATION'] ?? null) === 'Y',
+		'specialChars' => \CUser::PASSWORD_SPECIAL_CHARS,
+	];
+}
 
 $isConfirmRegistrationBlockVisible = (
 	$arResult['USE_EMAIL_CONFIRMATION'] === 'Y'
 	&& is_array($arParams['AUTH_RESULT'])
 	&&  $arParams['AUTH_RESULT']['TYPE'] === 'OK'
 );
+$authResult = $arParams['~AUTH_RESULT'] ?? null;
+$hasExistingEmailError = is_array($authResult)
+	&& ($authResult['TYPE'] ?? null) === 'ERROR'
+	&& is_string($authResult['MESSAGE'] ?? null)
+	&& is_string($authResult['LOGIN_URL'] ?? null)
+	&& $authResult['LOGIN_URL'] !== ''
+;
 ?>
 
 <div class="intranet-island" data-role="register-container">
@@ -38,7 +65,12 @@ $isConfirmRegistrationBlockVisible = (
 
 	<template v-else>
 		<noindex>
-		<form method="post" action="<?=$arResult['AUTH_URL']?>" name="bform">
+		<form
+			method="post"
+			action="<?=$arResult['AUTH_URL']?>"
+			name="bform"
+			data-testid="intranet-registration-form"
+		>
 			<?php if ($arResult['BACKURL'] <> ''): ?>
 			<input type="hidden" name="backurl" value="<?=$arResult['BACKURL']?>" />
 			<?php endif ?>
@@ -56,7 +88,21 @@ $isConfirmRegistrationBlockVisible = (
 					<?=Loc::getMessage('INTRANET_AUTH_JOIN_TEXT')?>
 					<b><?=($arParams['HOST_NAME'] ?? '')?></b>
 				</h3>
-				<?php ShowMessage($arParams['~AUTH_RESULT']); ?> <!-- errors -->
+				<?php if ($hasExistingEmailError): ?>
+					<div class="intranet-login-error-block" id="USER_EMAIL_ERROR">
+						<span>
+							<?= htmlspecialcharsbx($authResult['MESSAGE'], ENT_COMPAT, false) ?>
+							<a
+								href="<?= htmlspecialcharsbx($authResult['LOGIN_URL']) ?>"
+								data-testid="user-registration-login-link"
+							>
+								<?= Loc::getMessage('INTRANET_AUTH_LINK') ?>
+							</a>
+						</span>
+					</div>
+				<?php else: ?>
+					<?php ShowMessage($arParams['~AUTH_RESULT']); ?>
+				<?php endif ?>
 				<div class="intranet-login-enter-form__login-wrapper">
 					<div v-show="isNameBlockVisible">
 						<h4 class="intranet-form-add-block__title">
@@ -70,12 +116,17 @@ $isConfirmRegistrationBlockVisible = (
 							<input
 								type="text"
 								name="USER_EMAIL"
+								id="USER_EMAIL"
 								placeholder="<?=Loc::getMessage('INTRANET_AUTH_EMAIL_PLACEHOLDER')?>"
 								maxlength="255"
 								value="<?=$arResult['USER_EMAIL']?>"
 								class="ui-ctl-element intranet-text-input__field"
 								@input="onEnterUserEmail($event.target.value)"
 								ref="modalInput"
+								<?php if ($hasExistingEmailError): ?>
+									aria-invalid="true"
+									aria-describedby="USER_EMAIL_ERROR"
+								<?php endif ?>
 								data-testid="user-email"
 							/>
 						</div>
@@ -158,6 +209,8 @@ $isConfirmRegistrationBlockVisible = (
 								maxlength="255"
 								value="<?=$arResult['USER_PASSWORD']?>"
 								class="ui-ctl-element intranet-text-input__field intranet-text-input__field--pass"
+								@input="onPasswordInput"
+								ref="passwordInput"
 								data-testid="user-password"
 							/>
 							<i
@@ -185,8 +238,12 @@ $isConfirmRegistrationBlockVisible = (
 						</div>
 						<div class="intranet-password-edit-form__indicators-wrapper">
 							<div class="intranet-password-indicators__indicator">
-								<div class="intranet-password-indicators__icon"></div>
-								<?=$arResult['GROUP_POLICY']['PASSWORD_REQUIREMENTS'];?>
+								<div
+									class="intranet-password-indicators__icon"
+									:class="{ 'intranet-password-indicators__icon--failed': isPasswordRequirementsInvalid }"
+									data-testid="bx-intranet-password-requirements-indicator"
+								></div>
+								<?=$arResult['GROUP_POLICY']['PASSWORD_REQUIREMENTS'] ?? '';?>
 							</div>
 						</div>
 
@@ -241,6 +298,7 @@ $isConfirmRegistrationBlockVisible = (
 					class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg"
 					:class="activeOrDisabledButtonClass"
 					type="submit"
+					data-testid="intranet-registration-submit"
 				>
 					<span class="intranet-text-btn__content-wrapper"><?=Loc::getMessage('INTRANET_AUTH_CONTINUE_BUTTON')?></span>
 					<div class="intranet-text-btn__spinner" v-show="isWaiting"></div>
@@ -261,6 +319,7 @@ $isConfirmRegistrationBlockVisible = (
 	BX.ready(() => {
 		const params = {
 			containerNode: document.querySelector("[data-role='register-container']"),
+			passwordRequirementsPolicy: <?=Json::encode($passwordRequirementsPolicy)?>,
 			isEmailRequired: '<?=$arResult['EMAIL_REQUIRED'] ? 'Y' : 'N'?>',
 			isConfirmRegistrationBlockVisible: '<?=$isConfirmRegistrationBlockVisible ? 'Y' : 'N'?>',
 			isCaptchaAvailable: '<?=($arResult['USE_CAPTCHA'] === 'Y' ? 'Y' : 'N')?>',

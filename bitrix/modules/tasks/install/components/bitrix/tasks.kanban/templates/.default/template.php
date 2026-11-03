@@ -85,6 +85,7 @@ CJSCore::Init([
 ]);
 Extension::load([
 	'tasks.kanban-sort',
+	'tasks.v2.lib.check-list-completion-prompt',
 	'ui.design-tokens',
 	'ui.notification',
 	'ui.dialogs.messagebox',
@@ -178,60 +179,114 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 	{
 		$showViewMode = ($isSprintView ? false : $showViewMode);
 	}
-	$menu = new Menu($menuId, $order);
-	$sortDesc = (new MenuItem())
-		->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().selectCustomOrder)')
-		->setType(MenuItem::TYPE_SUB)
-		->setOrder(MenuItem::SORT_DESC)
-		->setClassName($order === MenuItem::SORT_DESC ? $styleAccepted : $styleNone)
-		->setHtml(
-			'<span data-id=\'kanban-sort-desc\'>' . Loc::getMessage('TASKS_KANBAN_SORT_DESC') . '</span>'
-		);
+	if ($arResult['CAN_SORT_BY_FIELD'] ?? false)
+	{
+		$sortFields = [];
+		foreach (($arResult['SORT_FIELDS'] ?? []) as $sortFieldName)
+		{
+			$sortFieldTitle = (string)Loc::getMessage('TASKS_KANBAN_SORT_FIELD_' . $sortFieldName);
+			if ($sortFieldTitle === '')
+			{
+				continue;
+			}
 
-	$sortAsc = (new MenuItem())
-		->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().selectCustomOrder)')
-		->setType(MenuItem::TYPE_SUB)
-		->setOrder(MenuItem::SORT_ASC)
-		->setClassName($order === MenuItem::SORT_ASC ? $styleAccepted : $styleNone)
-		->setHtml(
-			'<span data-id=\'kanban-sort-asc\'>' . Loc::getMessage('TASKS_KANBAN_SORT_ASC') . '</span>'
-		);
+			$sortFields[] = [
+				'id' => $sortFieldName,
+				'title' => $sortFieldTitle,
+			];
+		}
 
-	$tasksTitle = (new MenuItem())
-		->setType(MenuItem::TYPE_SUB)
-		->setHtml('<b>' . Loc::getMessage('TASKS_KANBAN_NEW_TASKS_SORT_TITLE') . '</b>');
+		// where the axes are offered, the whole sort goes into a sub menu of its own: the extension
+		// tasks.kanban-sort builds it, php passes the state of the board only
+		$popupSortItems = [
+			[
+				'kanbanSort' => [
+					'order' => $order,
+					'field' => $arResult['SORT_FIELD'] ?? null,
+					'direction' => $arResult['SORT_DIRECTION'] ?? null,
+					'savedDirection' => $arResult['SAVED_SORT_DIRECTION'] ?? null,
+					'fields' => $sortFields,
+				],
+			],
+		];
+	}
+	else
+	{
+		$menu = new Menu($menuId, $order);
+		$sortDesc = (new MenuItem())
+			->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().selectCustomOrder)')
+			->setType(MenuItem::TYPE_SUB)
+			->setOrder(MenuItem::SORT_DESC)
+			->setClassName($order === MenuItem::SORT_DESC ? $styleAccepted : $styleNone)
+			->setHtml(
+				'<span data-id=\'kanban-sort-desc\' data-testid=\'tasks-kanban-sort-new-desc\' aria-label=\''
+				. htmlspecialcharsbx(Loc::getMessage('TASKS_KANBAN_A11Y_SORT_NEW_DESC'), ENT_QUOTES)
+				. '\'>'
+				. Loc::getMessage('TASKS_KANBAN_SORT_DESC')
+				. '</span>'
+			);
 
-	$sortTitle = (new MenuItem())
-		->setHtml('<b>' . Loc::getMessage('TASKS_KANBAN_SORT_TITLE') . '</b>');
+		$sortAsc = (new MenuItem())
+			->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().selectCustomOrder)')
+			->setType(MenuItem::TYPE_SUB)
+			->setOrder(MenuItem::SORT_ASC)
+			->setClassName($order === MenuItem::SORT_ASC ? $styleAccepted : $styleNone)
+			->setHtml(
+				'<span data-id=\'kanban-sort-asc\' data-testid=\'tasks-kanban-sort-new-asc\' aria-label=\''
+				. htmlspecialcharsbx(Loc::getMessage('TASKS_KANBAN_A11Y_SORT_NEW_ASC'), ENT_QUOTES)
+				. '\'>'
+				. Loc::getMessage('TASKS_KANBAN_SORT_ASC')
+				. '</span>'
+			);
 
-	$sortActual = (new MenuItem())
-		->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().disableCustomSort)')
-		->setOrder(MenuItem::SORT_ACTUAL)
-		->setClassName($order === MenuItem::SORT_ACTUAL ? $styleAccepted : $styleNone)
-		->setHtml(
-			Loc::getMessage('TASKS_KANBAN_SORT_ACTUAL')
-			. '<span class=\"menu-popup-item-sort-field-label\">'
-			. Loc::getMessage("TASKS_KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL")
-			. '</span>'
-		);
+		$tasksTitle = (new MenuItem())
+			->setType(MenuItem::TYPE_SUB)
+			->setFocusable(false)
+			->setHtml('<b>' . Loc::getMessage('TASKS_KANBAN_NEW_TASKS_SORT_TITLE') . '</b>');
 
-	$sortMy = (new MenuItem())
-		->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().enableCustomSort)')
-		->setClassName($menu->isCustomSort() ? $styleAccepted : $styleNone)
-		->addItem($tasksTitle)
-		->addItem($sortDesc)
-		->addItem($sortAsc)
-		->setHtml(Loc::getMessage('TASKS_KANBAN_SORT_MY_SORT'));
+		$sortTitle = (new MenuItem())
+			->setFocusable(false)
+			->setHtml('<b>' . Loc::getMessage('TASKS_KANBAN_SORT_TITLE') . '</b>');
 
-	$menu
-		->addItem($sortTitle)
-		->addItem($sortActual)
-		->addItem($sortMy)
-		->addItem($tasksTitle)
-		->addItem($sortDesc)
-		->addItem($sortAsc);
+		$sortActual = (new MenuItem())
+			->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().disableCustomSort)')
+			->setOrder(MenuItem::SORT_ACTUAL)
+			->setClassName($order === MenuItem::SORT_ACTUAL ? $styleAccepted : $styleNone)
+			->setHtml(
+				'<span data-testid=\'tasks-kanban-sort-order-actual\'>'
+				. Loc::getMessage('TASKS_KANBAN_SORT_ACTUAL')
+				. '</span>'
+				. '<span class=\"menu-popup-item-sort-field-label\">'
+				. Loc::getMessage("TASKS_KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL")
+				. '</span>'
+			);
 
-	$popupSortItems = $menu->toArray();
+		$sortMy = (new MenuItem())
+			->setOnClick('BX.delegate(BX.Tasks.KanbanSort.getInstance().enableCustomSort)')
+			->setClassName($menu->isCustomSort() ? $styleAccepted : $styleNone)
+			->setHtml(
+				'<span data-testid=\'tasks-kanban-sort-order-custom\'>'
+				. Loc::getMessage('TASKS_KANBAN_SORT_MY_SORT')
+				. '</span>'
+			);
+
+		$menu
+			->addItem($sortTitle)
+			->addItem($sortActual)
+			->addItem($sortMy);
+
+		$sortMy
+			->addItem($tasksTitle)
+			->addItem($sortDesc)
+			->addItem($sortAsc);
+
+		$menu
+			->addItem($tasksTitle)
+			->addItem($sortDesc)
+			->addItem($sortAsc);
+
+		$popupSortItems = $menu->toArray();
+	}
 
 
 	$APPLICATION->IncludeComponent(
@@ -423,6 +478,8 @@ else
 				params: ajaxParams,
 				gridId: "<?= CUtil::JSEscape($gridID)?>",
 				newTaskOrder: "<?= $arResult['NEW_TASKS_ORDER']?>",
+				sortField: <?= CUtil::PhpToJSObject($arResult['SORT_FIELD'] ?? null)?>,
+				sortDirection: <?= CUtil::PhpToJSObject($arResult['SORT_DIRECTION'] ?? null)?>,
 				setClientDate: <?= $arResult['NEED_SET_CLIENT_DATE'] ? 'true' : 'false'?>,
 				clientDate: '<?=CUtil::JSEscape($clientDate)?>',
 				clientTime: '<?=CUtil::JSEscape($clientTime)?>',
@@ -451,6 +508,8 @@ else
 			isCollab: '<?= $arResult['IS_COLLAB'] ? 'Y' : 'N' ?>',
 			networkEnabled: <?= MemberSelector::isNetworkEnabled() ? "true"
 				: "false"; ?>,
+			currentUserId: <?= (int)\Bitrix\Tasks\Util\User::getId() ?>,
+			isNewUser: <?= \Bitrix\Tasks\Onboarding\OnboardingFeature::isAvailable() && (new \Bitrix\Tasks\Promotion\NewUserSegment())->isNewUser((int)\Bitrix\Tasks\Util\User::getId()) ? 'true' : 'false' ?>,
 		});
 
 		Kanban.draw();
@@ -642,9 +701,26 @@ CJSCore::Init("spotlight");
 				});
 			});
 		<?php endif; ?>
+
+		<?php if ($arResult['SHOW_SORT_ONBOARDING'] ?? false): ?>
+			BX.Runtime.loadExtension('tasks.v2.component.onboarding.kanban-sort-popup').then((exports) => {
+				exports.KanbanSortPopup.show();
+			});
+		<?php endif; ?>
 	});
 
 	BX.message({
+		TASKS_KANBAN_COMPLETION_REFRESHING: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_REFRESHING')?>',
+		TASKS_KANBAN_COMPLETION_REFRESH_FAILED: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_REFRESH_FAILED')?>',
+		TASKS_KANBAN_COMPLETION_RELOAD: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_RELOAD')?>',
+		TASKS_KANBAN_COMPLETION_DONE: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_DONE')?>',
+		TASKS_KANBAN_COMPLETION_REVIEW: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_REVIEW')?>',
+		TASKS_KANBAN_COMPLETION_SAVED: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_SAVED')?>',
+		TASKS_KANBAN_COMPLETION_FAILED: '<?=GetMessageJS('TASKS_KANBAN_COMPLETION_FAILED')?>',
 		TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>',
+		TASKS_KANBAN_DEADLINELESS_HINT_TITLE: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_TITLE')?>',
+		TASKS_KANBAN_DEADLINELESS_HINT_TEXT: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_TEXT')?>',
+		TASKS_KANBAN_DEADLINELESS_HINT_CTA: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_CTA')?>',
+		TASKS_KANBAN_DEADLINELESS_HINT_CLOSE: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_CLOSE')?>',
 	});
 </script>

@@ -191,6 +191,34 @@ export class EntityStorage
 		return [...items.values()].find((item: Item) => item.getSourceId() === sourceId);
 	}
 
+	findRootItemIdsBySourceIds(sourceIds: Set<string>): Array<number | string>
+	{
+		if (sourceIds.size === 0)
+		{
+			return [];
+		}
+
+		const itemIds = new Set();
+		const collect = (entity) => {
+			entity.getItems().forEach((item: Item) => {
+				if (!item.isSubTask() && sourceIds.has(String(item.getSourceId())))
+				{
+					itemIds.add(item.getId());
+				}
+			});
+		};
+
+		collect(this.backlog);
+		this.sprints.forEach((sprint) => {
+			if (!sprint.isCompleted())
+			{
+				collect(sprint);
+			}
+		});
+
+		return [...itemIds];
+	}
+
 	findItemBySourceInFilteredCompletedSprints(sourceId: number): ?Item
 	{
 		let items = new Map();

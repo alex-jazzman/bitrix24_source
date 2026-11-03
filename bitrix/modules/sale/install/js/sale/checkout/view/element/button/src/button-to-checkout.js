@@ -23,8 +23,8 @@ BitrixVue.component('sale-checkout-view-element-button-shipping-button_to_checko
 	},
 	// language=Vue
 	template: `
-		<div class="checkout-order-status-btn-container" @click="clickAction">
-			<button :class="getObjectClass">{{localize.CHECKOUT_VIEW_ELEMENT_BUTTON_SHIPPING_NAME_NOW}}</button>
+		<div class="checkout-order-status-btn-container">
+			<button :class="getObjectClass" :aria-busy="ariaBusy" type="button" data-testid="sale-checkout-shipping-now-btn" @click="clickAction">{{localize.CHECKOUT_VIEW_ELEMENT_BUTTON_SHIPPING_NAME_NOW}}</button>
 		</div>
 	`
 });

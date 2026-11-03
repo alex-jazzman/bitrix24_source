@@ -31,51 +31,55 @@ export class RelationService
 
 		await Promise.all(this.#updatePromises);
 
-		const { tasks, ids, statuses } = await this.requestTasks(taskId, withIds);
+		return taskService.withStageSnapshot(async (snapshot) => {
+			const { tasks, ids, statuses } = await this.requestTasks(taskId, withIds);
 
-		if (withIds)
-		{
-			if (!hasUpdatePromises && ids.length === 0)
+			if (withIds)
 			{
-				void this.$store.dispatch(`${Model.Tasks}/setFieldFilled`, {
-					id: taskId,
-					fieldName: this.#meta.id,
-					isFilled: false,
-				});
+				if (!hasUpdatePromises && ids.length === 0)
+				{
+					void this.$store.dispatch(`${Model.Tasks}/setFieldFilled`, {
+						id: taskId,
+						fieldName: this.#meta.id,
+						isFilled: false,
+					});
+				}
+
+				this.#updateStoreRelationTasks(taskId, ids, false, statuses);
 			}
 
-			this.#updateStoreRelationTasks(taskId, ids, false, statuses);
-		}
+			tasks.forEach((taskDto: TaskDto): void => {
+				if (!taskService.hasStoreTask(taskDto.id, false))
+				{
+					void this.$store.dispatch(`${Model.Tasks}/addPartiallyLoaded`, taskDto.id);
+				}
 
-		tasks.forEach((taskDto: TaskDto): void => {
-			if (!taskService.hasStoreTask(taskDto.id, false))
-			{
-				void this.$store.dispatch(`${Model.Tasks}/addPartiallyLoaded`, taskDto.id);
-			}
+				taskService.extractTask({ ...taskDto, [this.#meta.relationToField]: taskId }, true, snapshot);
+			});
 
-			taskService.extractTask({ ...taskDto, [this.#meta.relationToField]: taskId });
+			return tasks;
 		});
-
-		return tasks;
 	}
 
 	async listByIds(taskId: TaskId, taskIds: number[]): Promise<TaskDto[]>
 	{
-		const tasks = await this.requestTasksByIds(taskId, taskIds);
+		return taskService.withStageSnapshot(async (snapshot) => {
+			const tasks = await this.requestTasksByIds(taskId, taskIds);
 
-		const newTaskIds = tasks.map(({ id }) => id);
-		this.#updateStoreRelationTasks(taskId, newTaskIds, true);
+			const newTaskIds = tasks.map(({ id }) => id);
+			this.#updateStoreRelationTasks(taskId, newTaskIds, true);
 
-		tasks.forEach((taskDto: TaskDto): void => {
-			if (!taskService.hasStoreTask(taskDto.id, false))
-			{
-				void this.$store.dispatch(`${Model.Tasks}/addPartiallyLoaded`, taskDto.id);
-			}
+			tasks.forEach((taskDto: TaskDto): void => {
+				if (!taskService.hasStoreTask(taskDto.id, false))
+				{
+					void this.$store.dispatch(`${Model.Tasks}/addPartiallyLoaded`, taskDto.id);
+				}
 
-			taskService.extractTask({ ...taskDto, [this.#meta.relationToField]: taskId });
+				taskService.extractTask({ ...taskDto, [this.#meta.relationToField]: taskId }, true, snapshot);
+			});
+
+			return tasks;
 		});
-
-		return tasks;
 	}
 
 	async getSubTaskIds(taskId: TaskId, taskIds: number[]): Promise<void>

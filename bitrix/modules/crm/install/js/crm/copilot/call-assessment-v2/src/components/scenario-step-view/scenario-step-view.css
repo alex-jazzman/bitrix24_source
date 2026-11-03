@@ -2,8 +2,8 @@
 	display: flex;
 	gap: var(--ui-space-inline-sm2);
 	align-items: flex-start;
-	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-sm2) var(--ui-space-inset-md) 11px;
-	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-lg);
+	border-radius: var(--ui-border-radius-3xl);
 	background: linear-gradient(265.76deg,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
@@ -47,6 +47,19 @@
 	color: var(--ui-color-base-0);
 }
 
+/* One step up the scale from the component's own size: HeadlineXs 15 → sm 17, TextXs 13 → sm 14. */
+.crm-call-assessment-v2-step-view__title.ui-headline.--xs {
+	font-size: var(--ui-headline-sm-font-size);
+	line-height: var(--ui-headline-sm-line-height);
+	letter-spacing: var(--ui-headline-sm-letter-spacing);
+}
+
 .crm-call-assessment-v2-step-view__description {
 	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-step-view__description.ui-text.--xs {
+	font-size: var(--ui-text-sm-font-size);
+	line-height: var(--ui-text-sm-line-height);
+	letter-spacing: var(--ui-text-sm-letter-spacing);
 }

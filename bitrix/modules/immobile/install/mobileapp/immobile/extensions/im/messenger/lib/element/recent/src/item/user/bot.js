@@ -32,7 +32,11 @@ jn.define('im/messenger/lib/element/recent/item/user/bot', (require, exports, mo
 
 			if (this.canHide())
 			{
-				this.actions.push(this.getHideAction());
+				const hideAction = this.getHideAction();
+				if (hideAction)
+				{
+					this.actions.push(hideAction);
+				}
 			}
 
 			return this;

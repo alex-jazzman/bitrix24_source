@@ -32,6 +32,10 @@ export const App = defineComponent({
 			type: Object as PropType<ViewData>,
 			required: true,
 		},
+		ownerTypeId: {
+			type: Number,
+			required: true,
+		},
 		shareLink: {
 			type: String,
 			default: null,
@@ -246,6 +250,7 @@ export const App = defineComponent({
 					:ref="(element) => setAnchoredBlockElement(assessmentBlock.blockId, element)"
 					:assessmentBlockData="assessmentBlock"
 					:assessmentSetting="viewData.assessmentSetting"
+					:ownerTypeId="ownerTypeId"
 					@showReassessmentPopup="handleShowReassessmentPopup"
 				/>
 				<TextBlock v-for="block in viewData.blocks"
@@ -253,10 +258,11 @@ export const App = defineComponent({
 					:id="block.blockId"
 					:ref="(element) => setAnchoredBlockElement(block.blockId, element)"
 					:blockData="block"
+					:ownerTypeId="ownerTypeId"
 				/>
 				<TrailingSpacerBlock />
 			</div>
-			<div class="crm-ai-report-drawer__ai-alert ui-typography-text-xs" v-html="viewData.aiDisclaimer" />
+			<div class="crm-ai-report-drawer__ai-alert ui-typography-text-xs" data-testid="crm-ai-report-drawer-disclaimer" v-html="viewData.aiDisclaimer" />
 		</div>
 	`,
 });

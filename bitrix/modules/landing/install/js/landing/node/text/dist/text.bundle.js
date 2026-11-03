@@ -704,6 +704,20 @@ this.BX.Landing = this.BX.Landing || {};
 					BX.Dom.removeClass(element, className);
 				});
 			});
+
+			// hints of the table editor (see TableEditor.addTitles) must not get to the published page
+			const setClassesWithEditorTitle = ['landing-table-th-select-all', 'landing-table-div-col-dnd', 'landing-table-col-resize', 'landing-table-col-add', 'landing-table-row-dnd', 'landing-table-row-add'];
+			setClassesWithEditorTitle.forEach(className => {
+				node.querySelectorAll(`.${className}`).forEach(element => {
+					element.removeAttribute('title');
+				});
+			});
+			node.querySelectorAll('[title-added]').forEach(element => {
+				element.removeAttribute('title-added');
+				if (element.getAttribute('title') === '') {
+					element.removeAttribute('title');
+				}
+			});
 			return node;
 		}
 		onBackspaceDown(event) {
@@ -745,7 +759,8 @@ this.BX.Landing = this.BX.Landing || {};
 			return Boolean(reg.test(text));
 		}
 		prepareToLink(text) {
-			return `<a class='g-bg-transparent' href='${text}' target='_blank'> ${text} </a>`;
+			// Zero-width space after the link moves the caret out of it, so further typing is not part of the link
+			return `<a class='g-bg-transparent' href='${text}' target='_blank'>${text}</a>&#8203;`;
 		}
 	}
 

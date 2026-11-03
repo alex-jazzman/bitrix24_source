@@ -104,6 +104,15 @@ export type SignatureHtmlEditor = {
 	getContent(): string,
 	insertHtml(html: string): void,
 	focus(): void,
+	saveBookmark(): SignatureHtmlEditorBookmark | null,
+	restoreBookmark(bookmark: SignatureHtmlEditorBookmark): boolean,
+	insertNodeAtBookmark(bookmark: SignatureHtmlEditorBookmark, node: HTMLElement): boolean,
+};
+
+declare const signatureHtmlEditorBookmark: unique symbol;
+
+export type SignatureHtmlEditorBookmark = {
+	readonly [signatureHtmlEditorBookmark]: true,
 };
 
 export type SignatureEditorContext = {
@@ -164,6 +173,7 @@ export type EditorPanels = {
 
 export type SignatureEditorOptions = EditorPanels & {
 	editorInstanceId: string,
+	initialContent?: string,
 	signatureId: number,
 	alertContainer: HTMLElement,
 	transport: SignatureTransport,

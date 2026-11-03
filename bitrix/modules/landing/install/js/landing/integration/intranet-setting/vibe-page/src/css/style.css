@@ -120,6 +120,16 @@
 	border: 1px solid #7e858b;
 }
 
+.intranet-settings__vibe-button-box .ui-btn:focus-visible {
+	/* the ring lies on the fill of the button, so it keeps the link accent ui.buttons draws it with:
+	   over the fill of a primary button the lighter accent stays below 3:1, while the icon buttons of
+	   the card sit on a light background and pass with it */
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	/* inset: .intranet-settings__vibe-content hides what leaves it and the row fills it from edge to
+	   edge, so an outward offset clips the ring of the first and of the last button of the row */
+	outline-offset: -2px;
+}
+
 .intranet-settings-btn-settings {
 	display: inline-flex;
 	justify-content: center;
@@ -138,6 +148,17 @@
 
 .intranet-settings-btn-settings:hover .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-60);
+}
+
+.intranet-settings-btn-settings:focus {
+	outline: none;
+}
+
+.intranet-settings-btn-settings:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	/* inset: the button closes the row that fills .intranet-settings__vibe-content, which hides what
+	   leaves it, so an outward offset clips the ring */
+	outline-offset: -2px;
 }
 
 .intranet-settings__vibe-title {
@@ -187,11 +208,37 @@
 	margin-left: 6px;
 	--ui-icon-set__icon-size: 21px;
 	--ui-icon-set__icon-color: var(--ui-color-palette-orange-40);
+	padding: 0;
+	border: none;
+	appearance: none;
 	cursor: pointer;
 }
 
 .intranet-settings__vibe-info-help.ui-icon-set:hover {
 	--ui-icon-set__icon-color: var(--ui-color-palette-orange-60);
+}
+
+.intranet-settings__vibe-info-help.ui-icon-set:focus {
+	outline: none;
+}
+
+.intranet-settings__vibe-info-help.ui-icon-set:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}
+
+/* keeps the text out of sight and inside the accessibility tree */
+.intranet-settings__vibe-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 .intranet-settings__vibe-info.--success {
@@ -230,6 +277,10 @@
 
 .intranet-settings__vibe-button-box .ui-icon-set.--lock {
 	margin: 0 0 0 4px;
+}
+
+.intranet-settings__vibe-button-box .ui-btn.--disabled {
+	--ui-btn-padding: 0 19px 0 44px;
 }
 
 .intranet-settings__vibe-popup .popup-window-titlebar-text,

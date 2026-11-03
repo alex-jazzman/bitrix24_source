@@ -5,4 +5,3 @@ $MESS["JS_VIEWER_DOCUMENT_ITEM_OPEN_DESCR_OFFICE365"] = "Для просмотр
 $MESS["JS_VIEWER_DOCUMENT_ITEM_OPEN_HELP_HINT_OFFICE365"] = "<a href=\"#\" onclick='top.BX.Helper.show(\"redirect=detail&code=9562101\");event.preventDefault();'>Подробнее</a> о работе с файлами через Office365.";
 $MESS["JS_VIEWER_DOCUMENT_ONLYOFFICE_SAVE_PROCESS"] = "Идёт сохранение документа: #name#";
 $MESS["JS_VIEWER_DOCUMENT_ONLYOFFICE_SAVED"] = "Документ #name# обновлён";
-?>

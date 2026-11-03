@@ -3,8 +3,8 @@ import {Cache, Dom, Tag, Type} from 'main.core';
 import {Loc} from 'landing.loc';
 import {ActionPanel} from 'landing.ui.component.actionpanel';
 import {FieldElement} from '../field-element/field-element';
-import FieldValueElement from '../field-value-element/field-value-element';
-import TypeSeparator from '../type-separator/type-separator';
+import { FieldValueElement } from '../field-value-element/field-value-element';
+import { TypeSeparator } from '../type-separator/type-separator';
 
 import './css/style.css';
 
@@ -16,7 +16,7 @@ type RuleEntryOptions = {
 	expressions: Array<FieldElement>,
 };
 
-export default class RuleEntry extends EventEmitter
+export class RuleEntry extends EventEmitter
 {
 	options: RuleEntryOptions;
 	conditions: Array<FieldElement | FieldValueElement> = [];
@@ -58,7 +58,7 @@ export default class RuleEntry extends EventEmitter
 		return this.cache.remember('expressionsLayout', () => {
 			return Tag.render`
 				<div class="landing-ui-rule-entry-expressions">
-					${this.getAddExpresionFieldLinkLayout()}
+					${this.getAddExpressionFieldLinkLayout()}
 				</div>
 			`;
 		});
@@ -299,7 +299,7 @@ export default class RuleEntry extends EventEmitter
 		});
 	}
 
-	getAddExpresionFieldLinkLayout(): HTMLDivElement
+	getAddExpressionFieldLinkLayout(): HTMLDivElement
 	{
 		return this.cache.remember('addExpressionFieldLinkLayout', () => {
 			return Tag.render`
@@ -379,7 +379,7 @@ export default class RuleEntry extends EventEmitter
 			// @todo: refactoring
 			void this.getLayout();
 
-			Dom.insertBefore(element.getLayout(), this.getAddExpresionFieldLinkLayout());
+			Dom.insertBefore(element.getLayout(), this.getAddExpressionFieldLinkLayout());
 
 			this.adjustExpressionFieldsZIndexes();
 		}

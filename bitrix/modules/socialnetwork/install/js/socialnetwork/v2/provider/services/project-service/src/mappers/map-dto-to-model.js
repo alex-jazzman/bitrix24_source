@@ -26,6 +26,7 @@ export function mapDtoToModel(projectDto: ProjectDto): ProjectModel
 		description: projectDto.description,
 		goal: projectDto.goal,
 		privacyType: projectDto.privacyType,
+		owner: projectDto.owner ?? null,
 		ownerId: projectDto.ownerId,
 		chatId: projectDto.chatId ?? null,
 		members: projectDto.members,

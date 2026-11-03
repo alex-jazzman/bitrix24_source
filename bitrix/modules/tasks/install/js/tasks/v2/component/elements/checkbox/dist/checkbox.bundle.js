@@ -28,6 +28,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			tag: {
 				type: String,
 				default: 'label'
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['click'],
@@ -52,6 +56,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				type="checkbox"
 				:checked="checked"
 				:disabled="disabled"
+				:aria-label="ariaLabel || null"
 				@click="handleClick"
 			>
 			<span

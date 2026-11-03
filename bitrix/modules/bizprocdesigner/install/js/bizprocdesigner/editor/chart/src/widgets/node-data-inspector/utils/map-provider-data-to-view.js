@@ -1,6 +1,8 @@
 import { Loc } from 'main.core';
+import { Feature, FeatureCode } from 'bizprocdesigner.feature';
 
-import { TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE } from '../../../shared/constants';
+import { PROPERTY_TYPES, TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE } from '../../../shared/constants';
+import { documentFieldsCache } from '../../../shared/utils/document-fields-cache';
 import {
 	type TemplateDataGeneralGroup,
 	type TemplateDataNodeGroup,
@@ -13,6 +15,7 @@ import {
 import { SchemeItemType, SchemeViewGroupConfig, SchemeViewGroupKey } from '../ui/node-data-inspector/const';
 import {
 	DataTypeLabelMap,
+	type InspectorViewFoundItemsItem,
 	type InspectorViewItemBase,
 	type InspectorViewItemData,
 	type InspectorViewItemType,
@@ -27,7 +30,7 @@ type NodeItem = {
 	type: InspectorViewItemType,
 	text: string,
 	icon: string,
-	items: Array<InspectorViewItemData>,
+	items: Array<InspectorViewItemData | InspectorViewFoundItemsItem>,
 	relatedPortsIds: Array<PortId>,
 };
 
@@ -41,6 +44,10 @@ const SchemeTemplateSectionTitle = Object.freeze({
 	CONSTANTS: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_ITEM_CONSTANTS'),
 	VARIABLES: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_ITEM_VARIABLES'),
 });
+
+// Suffix of the paired collection result of a filter, mirroring
+// `\Bitrix\Bizproc\Public\Activity\Mixins\NodeFilterResultProperties::FILTER_RESULT_ALL_SUFFIX`.
+const FILTER_RESULT_ALL_SUFFIX = '_all';
 
 const GroupPortLabels = {
 	INCOMING: Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_INPUT_TITLE'),
@@ -67,7 +74,7 @@ export function mapTemplateGroupsToView(items: {
 		? incomingNodes
 		: groupNodesByPort(incomingNodes, ports, GroupPortLabels.INCOMING);
 	const filterNodes = (Array.isArray(items?.filterItems) ? items.filterItems : [])
-		.map((group) => createNodeItem(group, lastValues))
+		.map((group) => createFilterNodeItem(group, lastValues))
 		.filter(Boolean)
 	;
 	const outgoingNodes = (Array.isArray(items?.outgoingItems) ? items.outgoingItems : [])
@@ -148,8 +155,20 @@ function getTemplateGroupTitle(type: ?string): string
 
 function createNodeItem(nodeGroup: TemplateDataNodeGroup, lastValues: ?LastValuesMap): NodeItem | null
 {
+	return buildNodeItem(nodeGroup, mapTemplateItems(nodeGroup?.items ?? [], lastValues));
+}
+
+function createFilterNodeItem(nodeGroup: TemplateDataNodeGroup, lastValues: ?LastValuesMap): NodeItem | null
+{
+	return buildNodeItem(nodeGroup, mapFilterResultItems(nodeGroup?.items ?? [], lastValues));
+}
+
+function buildNodeItem(
+	nodeGroup: TemplateDataNodeGroup,
+	dataItems: Array<InspectorViewItemData | InspectorViewFoundItemsItem>,
+): NodeItem | null
+{
 	const nodeTitle = nodeGroup?.name ?? '';
-	const dataItems = mapTemplateItems(nodeGroup?.items ?? [], lastValues);
 
 	if (!nodeTitle || dataItems.length === 0)
 	{
@@ -164,6 +183,108 @@ function createNodeItem(nodeGroup: TemplateDataNodeGroup, lastValues: ?LastValue
 		items: dataItems,
 		relatedPortsIds: nodeGroup?.relatedPortsIds ?? null,
 	};
+}
+
+/**
+ * The filter group is the only one built this way: the pair of filter result properties of a node - the
+ * first found document and the whole collection - collapses into a single found items node.
+ *
+ * Only while the last run values are available. Without them the node has no list to walk and no values
+ * to show, and the pair it replaces would be gone from the panel with nothing in its place: the two
+ * expressions of the filter result would stop being draggable at all.
+ */
+function mapFilterResultItems(
+	items: Array<Object>,
+	lastValues: ?LastValuesMap,
+): Array<InspectorViewItemData | InspectorViewFoundItemsItem>
+{
+	if (!Feature.instance().isAvailable(FeatureCode.lastRunValues))
+	{
+		return mapTemplateItems(items, lastValues);
+	}
+
+	const collectionIds = new Set(
+		items.filter((item) => isFilterResultCollection(item)).map((item) => item.id),
+	);
+
+	return items.flatMap((item) => {
+		const propertyId = item?.id ?? '';
+
+		// the first position is shown inside the found items node of its collection
+		if (collectionIds.has(`${propertyId}${FILTER_RESULT_ALL_SUFFIX}`))
+		{
+			return [];
+		}
+
+		if (collectionIds.has(propertyId))
+		{
+			return [createFoundItemsItem(item, findFirstItemProperty(items, propertyId))];
+		}
+
+		return mapTemplateItems([item], lastValues);
+	});
+}
+
+function isFilterResultCollection(item: Object): boolean
+{
+	const propertyId = item?.id ?? '';
+
+	return item?.type === PROPERTY_TYPES.DOCUMENT && propertyId.endsWith(FILTER_RESULT_ALL_SUFFIX);
+}
+
+function findFirstItemProperty(items: Array<Object>, collectionPropertyId: string): ?Object
+{
+	const firstItemPropertyId = collectionPropertyId.slice(0, -FILTER_RESULT_ALL_SUFFIX.length);
+
+	return items.find((item) => item?.id === firstItemPropertyId) ?? null;
+}
+
+function createFoundItemsItem(collectionProperty: Object, firstItemProperty: ?Object): InspectorViewFoundItemsItem
+{
+	const documentType = collectionProperty?.documentType ?? firstItemProperty?.documentType;
+	const fields = documentFieldsCache.get(documentType) ?? [];
+	const firstItemExpressionPrefix = makeFilterResultExpression(firstItemProperty);
+
+	return {
+		id: collectionProperty?.id ?? '',
+		type: SchemeItemType.FOUND_ITEMS,
+		// the caption of the selected item is not part of the text: it keys the render of the subtree
+		text: collectionProperty?.name ?? firstItemProperty?.name ?? '',
+		// collapsible before the list arrives, otherwise the chevron appears and goes as it loads
+		hasChildren: true,
+		collectionExpression: makeFilterResultExpression(collectionProperty),
+		firstItemExpressionPrefix,
+		// the schema cache is addressed by document type, so the node carries it: that is how the
+		// panel tells a refused schema from a document without fields
+		documentType,
+		fields,
+		// the leaves come from the schema cache, not from the provider snapshot: the snapshot is
+		// rebuilt on a node switch only, so a schema that arrived later would leave the node empty
+		items: mapTemplateItems(makeFieldItems(fields, firstItemExpressionPrefix), null),
+	};
+}
+
+function makeFieldItems(fields: Array<Object>, expressionPrefix: string): Array<Object>
+{
+	if (expressionPrefix === '')
+	{
+		return [];
+	}
+
+	return fields.map((field) => ({
+		id: field.fieldKey,
+		name: field.name,
+		computeValue: `${expressionPrefix.slice(0, -1)}.${field.fieldKey}}`,
+		type: field.type,
+	}));
+}
+
+function makeFilterResultExpression(property: ?Object): string
+{
+	const blockId = property?.blockId ?? '';
+	const propertyId = property?.id ?? '';
+
+	return blockId && propertyId ? `{=${blockId}:${propertyId}}` : '';
 }
 
 function createGroup(

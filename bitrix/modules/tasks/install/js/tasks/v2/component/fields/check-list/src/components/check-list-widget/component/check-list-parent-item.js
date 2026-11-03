@@ -1,7 +1,8 @@
 import { Event, Text } from 'main.core';
 
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
-import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
+import { BMenu } from 'ui.system.menu.vue';
+import { type MenuOptions, type MenuItemOptions } from 'ui.system.menu';
 import { BIcon, Actions, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.outline';
@@ -40,10 +41,17 @@ export const CheckListParentItem = {
 			type: Number,
 			required: true,
 		},
+		showCloseButton: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: [
 		'startGroupMode',
 		'openCheckList',
+		'panelTab',
+		'close',
+		'stickinessChange',
 	],
 	setup(): Object
 	{
@@ -65,7 +73,7 @@ export const CheckListParentItem = {
 		{
 			return {
 				id: `check-list-parent-item-action-menu-${Text.getRandom()}`,
-				bindElement: this.$refs.more.$el,
+				bindElement: this.$refs.more,
 				minWidth: 250,
 				offsetLeft: -100,
 				sections: [
@@ -285,6 +293,8 @@ export const CheckListParentItem = {
 			this.mutationObserver.disconnect();
 		}
 
+		this.$emit('stickinessChange', { id: this.id, isSticky: false });
+
 		if (this.setItemsRef)
 		{
 			this.setItemsRef(this.id, null);
@@ -301,6 +311,40 @@ export const CheckListParentItem = {
 			{
 				this.$emit('openCheckList', this.id);
 			}
+		},
+		handleIndent(): void
+		{
+			this.$emit('indent', this.id);
+		},
+		handleOutdent(): void
+		{
+			this.$emit('outdent', this.id);
+		},
+		handlePanelTab({ shiftKey }: { shiftKey: boolean }): void
+		{
+			if (shiftKey)
+			{
+				this.handleOutdent();
+			}
+			else
+			{
+				this.handleIndent();
+			}
+		},
+		handlePanelEntryTab(event: KeyboardEvent): void
+		{
+			if (
+				event.shiftKey
+				|| event.ctrlKey
+				|| event.metaKey
+				|| event.altKey
+				|| event.target !== this.$refs.item
+			)
+			{
+				return;
+			}
+
+			this.$emit('panelTab', { itemId: this.id, shiftKey: false, event });
 		},
 		handleMyFilter(checked: boolean): void
 		{
@@ -363,7 +407,14 @@ export const CheckListParentItem = {
 			const stickyRect = this.$refs.item.getBoundingClientRect();
 			const containerRect = this.scrollContainer.getBoundingClientRect();
 
-			this.isSticky = stickyRect.top <= (containerRect.top + stickyRect.height / 2);
+			const isSticky = stickyRect.top <= (containerRect.top + stickyRect.height / 2);
+			if (this.isSticky === isSticky)
+			{
+				return;
+			}
+
+			this.isSticky = isSticky;
+			this.$emit('stickinessChange', { id: this.id, isSticky });
 		},
 		showMenu(): void
 		{
@@ -429,7 +480,9 @@ export const CheckListParentItem = {
 	template: `
 		<div
 			ref="item"
+			tabindex="-1"
 			class="check-list-widget-parent-item print-no-before"
+			data-testid="tasks-check-list-parent-item"
 			:class="{
 				'--complete': completed,
 				'--collapsed': collapsed,
@@ -440,6 +493,7 @@ export const CheckListParentItem = {
 			:data-parent="id"
 			@mouseover="isHovered = true"
 			@mouseleave="isHovered = false"
+			@keydown.tab="handlePanelEntryTab"
 		>
 			<div class="check-list-widget-parent-item-label-container">
 				<div
@@ -452,11 +506,12 @@ export const CheckListParentItem = {
 					<BIcon v-if="canDragItem" :name="Outline.DRAG_L"/>
 				</div>
 				<div class="check-list-widget-item-icon">
-					<BIcon :name="itemIcon"/>
+					<BIcon :name="itemIcon" aria-hidden="true"/>
 				</div>
 			</div>
 			<div class="check-list-widget-parent-item-title-container">
 				<CheckListFormattingLayer
+					preserveShiftTab
 					ref="growingTextArea"
 					class="check-list-widget-parent-item-title"
 					:data-check-list-id="'check-list-parent-item-title-' + id"
@@ -467,6 +522,7 @@ export const CheckListParentItem = {
 					:linkColor
 					:fontSize
 					:lineHeight="20"
+					:maxLines="6"
 					:fontWeight="500"
 					@click="handleTextClick"
 					@linkClick="handleLinkClick"
@@ -476,19 +532,26 @@ export const CheckListParentItem = {
 					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
+					@indent="handleIndent"
+					@outdent="handleOutdent"
+					@panelTab="handlePanelTab"
 					@selectionChange="handleFormattingSelectionChange"
 				/>
 				<template v-if="hasAttachments">
 					<div class="check-list-widget-item-attach --parent">
 						<div v-if="hasUsers" class="check-list-widget-item-attach-users">
 							<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
-								<BIcon :name="Outline.GROUP"/>
+								<BIcon :name="Outline.GROUP" aria-hidden="true"/>
 								<UserAvatarList :users="accomplices"/>
 							</div>
 							<div v-if="hasAuditors" class="check-list-widget-item-attach-users-list">
-								<BIcon :name="Outline.OBSERVER"/>
+								<BIcon :name="Outline.OBSERVER" aria-hidden="true"/>
 								<UserAvatarList :users="auditors"/>
 							</div>
+						</div>
+						<div v-if="hasUsers" class="check-list-widget-item-attach-users-print">
+							<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-print-group">{{ accomplicesLabel }}</div>
+							<div v-if="hasAuditors" class="check-list-widget-item-attach-users-print-group">{{ auditorsLabel }}</div>
 						</div>
 					</div>
 				</template>
@@ -504,6 +567,7 @@ export const CheckListParentItem = {
 						color="var(--ui-color-accent-main-primary-alt)"
 						bgColor="var(--ui-color-base-7)"
 						:borderRadius="30"
+						aria-hidden="true"
 					/>
 				</div>
 			</div>
@@ -518,24 +582,65 @@ export const CheckListParentItem = {
 							v-if="!currentUserResponsible && numberMyItems > 0"
 							:init-user="currentUser"
 							:number="numberMyItems"
+							data-testid="tasks-check-list-parent-item-my-filter"
+							:aria-label="loc('TASKS_V2_CHECK_LIST_MY_FILTER_LABEL')"
 							v-model:checked="item.myFilterActive"
 						/>
 					</div>
 					<div class="check-list-widget-parent-item-main-action-actions print-ignore">
-						<BIcon 
-							:name="Outline.MORE_L"
-							:size="isPreview ? 20 : 24"
-							@click="showMenu"
+						<button
 							ref="more"
-						/>
-						<BIcon
-							:name="collapsed ? Outline.CHEVRON_DOWN_L : Outline.CHEVRON_TOP_L"
-							:size="isPreview ? 20 : 24"
+							type="button"
+							class="check-list-widget-parent-item-action-btn"
+							aria-haspopup="menu"
+							data-testid="tasks-check-list-parent-item-menu-btn"
+							:aria-expanded="isMenuShown ? 'true' : 'false'"
+							:aria-label="loc('TASKS_V2_CHECK_LIST_ACTIONS_MENU_LABEL')"
+							@click="showMenu"
+						>
+							<BIcon
+								:name="Outline.MORE_L"
+								:size="isPreview ? 20 : 24"
+								aria-hidden="true"
+							/>
+						</button>
+						<button
+							type="button"
+							class="check-list-widget-parent-item-action-btn"
+							:aria-expanded="collapsed ? 'false' : 'true'"
+							:aria-label="collapsed
+								? loc('TASKS_V2_CHECK_LIST_EXPAND_LABEL')
+								: loc('TASKS_V2_CHECK_LIST_COLLAPSE_LABEL')"
+							data-testid="tasks-check-list-parent-item-collapse-btn"
 							@click="toggleCollapse()"
-						/>
+						>
+							<BIcon
+								:name="collapsed ? Outline.CHEVRON_DOWN_L : Outline.CHEVRON_TOP_L"
+								:size="isPreview ? 20 : 24"
+								aria-hidden="true"
+							/>
+						</button>
+						<button
+							v-if="showCloseButton"
+							type="button"
+							class="check-list-widget-parent-item-action-btn --close"
+							data-testid="task-check-list-close-btn"
+							:aria-label="loc('TASKS_V2_CHECK_LIST_CLOSE_LABEL')"
+							@click="$emit('close')"
+						>
+							<BIcon
+								:name="Outline.CROSS_L"
+								:size="isPreview ? 20 : 24"
+								data-testid="tasks-check-list-close-btn"
+								aria-hidden="true"
+							/>
+						</button>
 					</div>
 				</div>
-				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty print-ignore"/>
+				<div
+					v-if="isSticky && !isPreview && !showCloseButton"
+					class="check-list-widget-parent-item-empty print-ignore"
+				/>
 			</div>
 			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		</div>

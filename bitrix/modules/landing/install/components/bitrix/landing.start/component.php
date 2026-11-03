@@ -8,6 +8,7 @@ use \Bitrix\Crm\WebForm\Preset;
 use \Bitrix\Landing\Rights;
 use \Bitrix\Landing\Block;
 use \Bitrix\Landing\Manager;
+use Bitrix\Landing\Site\PortalPreview;
 use Bitrix\Landing\Site\Type;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Application;
@@ -26,6 +27,56 @@ if (!Loader::includeModule('landing'))
 {
 	Showerror(Loc::getMessage('LANDING_CMP_MODULE_NOT_INSTALLED'));
 	return;
+}
+
+// Knowledge Base 1.0 retirement: if this base was converted into the note module,
+// redirect its public reader URL (/knowledge/<siteCode>/<pageCode>/) to the new note
+// knowledge base. This runs on the top-level page request (landing.start), not the
+// inner content iframe (landing.pub), so the whole page moves to note instead of
+// loading note inside the old KB chrome. Only the public reader path is touched
+// (TYPE=KNOWLEDGE, non-IFRAME); the /kb/ editor and other landing types fall through.
+// Only users who can view the target note collection are redirected - anonymous /
+// no-access readers keep the old page (KB 1.0 can be public, so a blind redirect
+// would push them into a note 403). The landing analog of wiki.show's note redirect.
+if (
+	($arParams['TYPE'] ?? '') === Type::SCOPE_CODE_KNOWLEDGE
+	&& (($_REQUEST['IFRAME'] ?? '') !== 'Y')
+)
+{
+	$noteReqPath = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+	$noteReqPath = (string)preg_replace('~^/mobile(?=/)~', '', $noteReqPath);
+	$noteSegments = [];
+	if (preg_match('~^/knowledge/(?<rest>[^?]*)~', $noteReqPath, $noteMatch))
+	{
+		$noteSegments = array_values(array_filter(
+			explode('/', $noteMatch['rest']),
+			static fn(string $s): bool => $s !== '',
+		));
+	}
+	// the URL is resolved first: note must not be loaded on the rest of the KNOWLEDGE
+	// scope (/kb/ sections, the /knowledge/ base list), where no redirect can happen
+	if (!empty($noteSegments) && Loader::includeModule('note'))
+	{
+		$noteLink = new \Bitrix\Note\Public\Provider\LandingImportLinkProvider();
+		$noteSiteCode = $noteSegments[0];
+		$noteCollectionId = $noteLink->resolveCollectionId($noteSiteCode);
+		if ($noteCollectionId !== null && $noteLink->currentUserCanView($noteCollectionId))
+		{
+			// The page is the LAST path segment; intermediate segments are landing
+			// folders that note flattens (mirrors LandingMentionTransformer). A single
+			// segment is the site root -> collection.
+			$notePageCode = count($noteSegments) > 1 ? $noteSegments[count($noteSegments) - 1] : '';
+			$noteDocumentId = $notePageCode !== ''
+				? $noteLink->resolveDocumentId($noteSiteCode, $notePageCode)
+				: null;
+
+			LocalRedirect(
+				$noteDocumentId !== null
+					? $noteLink->getDocumentUrl($noteDocumentId)
+					: $noteLink->getCollectionUrl($noteCollectionId)
+			);
+		}
+	}
 }
 
 // something about crm
@@ -102,6 +153,7 @@ $defaultUrlTemplates404 = array(
 	'landing_edit' => 'site/#site_show#/edit/#landing_edit#/',
 	'landing_design' => 'site/#site_show#/design/#landing_edit#/',
 	'landing_view' => 'site/#site_show#/view/#landing_edit#/',
+	'landing_preview' => 'site/#site_show#/preview/#landing_edit#/',
 	'landing_settings' => 'site/#site_show#/settings/#landing_edit#/',
 	'domains' => 'domains/',
 	'domain_edit' => 'domain/edit/#domain_edit#/',
@@ -129,6 +181,7 @@ $urlTpls = array(
 	'landing_edit' => array('landing_edit', 'site_show'),
 	'landing_design' => array('landing_edit', 'site_show'),
 	'landing_view' => array('landing_edit', 'site_show'),
+	'landing_preview' => array('landing_edit', 'site_show'),
 	'landing_settings' => array('landing_edit', 'site_show'),
 	'domains' => array(),
 	'domain_edit' => array('domain_edit'),
@@ -328,6 +381,45 @@ if ($arParams['SEF_MODE'] === 'Y')
 				'CONDITION' => $condition
 			]);
 			if ($componentPage === 'landing_view')
+			{
+				\localRedirect(Manager::getApplication()->getCurPage());
+			}
+		}
+	}
+	// the owner of the preview address takes the route of the section it runs in, so the store gets
+	// its own prefix; the route serves the public scopes only - stricter than landing_view above
+	if (
+		isset($arParams['PAGE_URL_LANDING_PREVIEW'])
+		&& Type::isPublicScope($arParams['TYPE'])
+	)
+	{
+		PortalPreview::setRoute($arParams['PAGE_URL_LANDING_PREVIEW'] ?: null);
+
+		$condition = $arParams['PAGE_URL_LANDING_PREVIEW'];
+		$condition = str_replace(
+			array('#site_show#', '#landing_edit#'),
+			'[\\d]+',
+			$condition
+		);
+		$condition = 'preg_match(\'#' . $condition . '#\', ' . '$GLOBALS[\'APPLICATION\']->GetCurPage(0))';
+		$res = SiteTemplateTable::getList([
+			'select' => [
+				'ID',
+			],
+			'filter' => [
+				'=SITE_ID' => SITE_ID,
+				'=CONDITION' => $condition,
+			],
+		]);
+		if (!$res->fetch())
+		{
+			SiteTemplateTable::add([
+				'TEMPLATE' => Manager::getTemplateId(SITE_ID),
+				'SITE_ID' => SITE_ID,
+				'SORT' => 500,
+				'CONDITION' => $condition
+			]);
+			if ($componentPage === 'landing_preview')
 			{
 				\localRedirect(Manager::getApplication()->getCurPage());
 			}

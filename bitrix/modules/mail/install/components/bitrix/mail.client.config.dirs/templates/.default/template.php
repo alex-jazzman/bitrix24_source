@@ -16,6 +16,9 @@ Extension::load([
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.sidepanel-content',
+	'ui.alerts',
+	'main.loader',
+	'mail.migration-state',
 ]);
 
 Asset::getInstance()->addJS('/bitrix/components/bitrix/mail.client.config.dirs/templates/.default/script.js');
@@ -32,8 +35,10 @@ $trash = isset($arResult['TRASH']) ? $arResult['TRASH'] : null;
 $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 ?>
 
-<form>
-	<div class="mail-connect mail-connect-slider">
+<form id="mail-config-dirs-form">
+	<div id="mail-config-dirs-loading" style="height: 100px;"></div>
+	<div id="mail-config-dirs-notice" class="ui-alert ui-alert-warning" style="display: none;" role="status" aria-atomic="true" hidden></div>
+	<div id="mail-config-dirs-content" class="mail-connect mail-connect-slider" style="visibility: hidden;">
 		<div class="ui-slider-section">
 			<div class="mail-config-dirs-title-block">
 				<div class="mail-config-dirs-title"><?php echo Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_SYNC') ?></div>
@@ -103,6 +108,7 @@ $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 			</div>
 		</div>
 
+	</div>
 	<div class="mail-connect-footer mail-connect-footer-fixed">
 		<div class="main-connect-form-error" id="mail_connect_form_error"></div>
 		<div class="mail-connect-footer-container">
@@ -110,19 +116,19 @@ $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 				class="ui-btn ui-btn-md ui-btn-success ui-btn-success mail-config-dirs-btn-save"
 				type="submit"
 				id="mail_connect_save_btn"
+				disabled
+				style="display: none;"
 			>
 				<?php echo Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_BTN_SAVE') ?>
 			</button>
 
-			<?php if (empty($_REQUEST['INIT'])): ?>
-				<button
-					class="ui-btn ui-btn-md ui-btn-link mail-config-dirs-btn-cancel"
-					type="button"
-					id="mail_connect_cancel_btn"
-				>
-					<?php echo Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL') ?>
-				</button>
-			<?php endif; ?>
+			<button
+				class="ui-btn ui-btn-md ui-btn-link mail-config-dirs-btn-cancel"
+				type="button"
+				id="mail_connect_cancel_btn"
+			>
+				<?php echo Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL') ?>
+			</button>
 		</div>
 	</div>
 </form>
@@ -150,6 +156,8 @@ $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 		});
 
 		new BX.Mail.Client.Config.Dirs.Form({
+			form: document.getElementById('mail-config-dirs-form'),
+			content: document.getElementById('mail-config-dirs-content'),
 			mailboxId: '<?php echo CUtil::JSEscape($mailboxId); ?>',
 			maxLevelDirs: <?php echo (int)$maxLevelDirs; ?>,
 			container: document.querySelector('.mail-config-dirs'),

@@ -60,6 +60,7 @@ elseif($arResult['userField']['SETTINGS']['DISPLAY'] === SectionType::DISPLAY_UI
 
 	$arResult['params'] = Json::encode([
 		'isMulti' => $isMultiple,
+		'enableSearch' => true,
 		'fieldName' => $arResult['userField']['FIELD_NAME'],
 	]);
 

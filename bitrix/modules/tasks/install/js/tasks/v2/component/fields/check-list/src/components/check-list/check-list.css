@@ -1,4 +1,8 @@
 .tasks-check-list-wrapper {
+	/* Shared by the row marker and the toolbar toggle, which live in different subtrees. */
+	--tasks-check-list-important-icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, var(--ui-color-accent-main-warning) 0%, var(--ui-color-accent-main-alert) 67.91%);
+
+	position: relative;
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -62,7 +66,19 @@
 }
 
 .tasks-check-list-close-icon {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	position: absolute;
+	width: 24px;
+	height: 24px;
+	line-height: 0;
 	cursor: pointer;
 	z-index: 3;
 	right: 24px;
@@ -83,6 +99,11 @@
 
 .tasks-check-list-close-icon:hover .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.tasks-check-list-close-icon:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .check-list-stub {
@@ -110,9 +131,10 @@
 }
 
 .check-list-stub-icon {
-	width: 424px;
-	height: 210px;
-	background: url('./empty-stub.png') center / contain no-repeat;
+	width: 100%;
+	max-width: 424px;
+	aspect-ratio: 424 / 210;
+	background: url('./empty-stub.webp') center / contain no-repeat;
 }
 
 .check-list-stub-btn {
@@ -158,4 +180,19 @@
 	opacity: 0;
 	height: 0;
 	margin-bottom: 0 !important;
+}
+
+.tasks-check-list-close-icon {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	line-height: 0;
 }

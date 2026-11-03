@@ -34,7 +34,7 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public
 		}
 	</style>
 	<div class="bx-extranet-404-container">
-		<div class="bx-extranet-404-image"><img src="images/404.png" alt=""></div>
+		<div class="bx-extranet-404-image"><img src="images/404.webp" alt=""></div>
 		<div class="bx-extranet-404-title"><?=GetMessage("EXTRANET_404_TITLE")?></div>
 		<div class="bx-extranet-404-description">
 			<?=GetMessage("EXTRANET_404_TEXT")?>

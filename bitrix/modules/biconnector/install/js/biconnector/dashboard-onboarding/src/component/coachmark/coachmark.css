@@ -1,0 +1,310 @@
+.biconnector-dashboard-onboarding-popup.popup-window
+{
+	background: transparent;
+	border: none;
+	box-shadow: none;
+}
+
+/**
+ * Box of the whole clipped surface: the card and the beak next to it. Safari intersects a clip
+ * path with the border box of the element it clips, so nothing the clip draws outside this box
+ * is painted - the strip for the beak is opened here as a padding, see Coachmark.
+ */
+.biconnector-dashboard-onboarding-wrapper
+{
+	position: relative;
+	width: min(420px, calc(100vw - 32px));
+}
+
+
+/**
+ * The card carries no fill of its own: the surface is painted by the water layer next to it,
+ * which reaches under the beak as well. A fill here would cover the whole splash.
+ */
+.biconnector-dashboard-onboarding
+{
+	position: relative;
+	display: flex;
+	isolation: isolate;
+	overflow: hidden;
+	width: 100%;
+	border-radius: var(--ui-border-radius-2xl);
+}
+
+/**
+ * Live water splash of the card: a canvas layer under the content, see WaterBackdrop.
+ */
+.biconnector-dashboard-onboarding__water
+{
+	position: absolute;
+	z-index: 0;
+	inset: 0;
+	/*
+	 * The canvas reaches PAD * SCALE past every edge: those fields are the wave absorber, not
+	 * something to look at, and clip-path already keeps the paint inside the card outline. Without
+	 * clipping here the canvas widens the document and adds horizontal scrolling to the page.
+	 */
+	overflow: clip;
+	/* Base fill of the whole surface: keeps the card readable if the canvas cannot start. */
+	background-color: var(--ui-color-accent-soft-element-blue);
+	pointer-events: none;
+}
+
+.biconnector-dashboard-onboarding__clip
+{
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+}
+
+.biconnector-dashboard-onboarding__water-canvas
+{
+	position: absolute;
+	display: block;
+	pointer-events: none;
+}
+
+.biconnector-dashboard-onboarding__visual
+{
+	position: relative;
+	z-index: 1;
+	overflow: hidden;
+	flex-shrink: 0;
+	align-self: stretch;
+	overflow: hidden;
+	width: 98px;
+}
+
+.biconnector-dashboard-onboarding__visual.--icon
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/**
+ * Crop window of the mascot: pinned to the bottom edge of the card, sized by the ratio of the
+ * frames. The image inside is taken out of the flow on purpose - an image of its own height
+ * makes WebKit size this box by the content instead of the ratio, and the window, pinned by its
+ * bottom, then rises and takes the mascot up with it.
+ */
+.biconnector-dashboard-onboarding__visual-inner
+{
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	overflow: hidden;
+	aspect-ratio: 294 / 354;
+}
+
+/**
+ * Mascots share one crop window; a figure framed differently carries a zoom and two shifts of
+ * its own, see StepImageFit.
+ *
+ * The shifts are a transform rather than margins on purpose. The window is pinned to the bottom
+ * of the card and takes its height from what is inside it, so a margin makes the window taller
+ * and the bottom pinning then lifts the mascot instead of lowering it - the figure ends up at
+ * the top of the card with the empty tail of its frame below.
+ */
+.biconnector-dashboard-onboarding__image
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	width: calc(100% * var(--biconnector-onboarding-mascot-scale, 1));
+	height: auto;
+	max-width: none;
+	transform: translate(
+		var(--biconnector-onboarding-mascot-shift-x, 0),
+		var(--biconnector-onboarding-mascot-shift-y, 0)
+	);
+}
+
+.biconnector-dashboard-onboarding__content
+{
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs2);
+	min-width: 0;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2) var(--ui-space-inset-md) var(--ui-space-inset-sm);
+}
+
+.biconnector-dashboard-onboarding__text
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+}
+
+.biconnector-dashboard-onboarding__title
+{
+	font-family: var(--ui-headline-sm-font-family);
+	font-size: var(--ui-headline-sm-font-size);
+	font-weight: var(--ui-headline-sm-font-weight);
+	line-height: var(--ui-headline-sm-line-height);
+	letter-spacing: var(--ui-headline-sm-letter-spacing);
+	color: var(--ui-color-design-filled-content);
+}
+
+.biconnector-dashboard-onboarding__description
+{
+	margin: 0;
+	font-family: var(--ui-text-sm-font-family);
+	font-size: var(--ui-text-sm-font-size);
+	font-weight: var(--ui-text-sm-font-weight);
+	line-height: var(--ui-text-sm-line-height);
+	letter-spacing: var(--ui-text-sm-letter-spacing);
+	color: var(--ui-color-design-filled-content);
+}
+
+.biconnector-dashboard-onboarding__footer
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding-top: var(--ui-space-stack-2xs2);
+}
+
+.biconnector-dashboard-onboarding__pagination
+{
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	min-width: 0;
+}
+
+.biconnector-dashboard-onboarding__arrow
+{
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--ui-color-design-filled-content-secondary);
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+.biconnector-dashboard-onboarding__arrow:not([aria-disabled="true"]):hover
+{
+	color: var(--ui-color-design-filled-content);
+}
+
+.biconnector-dashboard-onboarding__arrow[aria-disabled="true"]
+{
+	opacity: 0.4;
+	cursor: default;
+}
+
+.biconnector-dashboard-onboarding__counter
+{
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0 var(--ui-space-inset-2xs);
+	white-space: nowrap;
+	font-family: var(--ui-text-xs-font-family);
+	font-size: var(--ui-text-xs-font-size);
+	font-weight: var(--ui-text-xs-font-weight);
+	line-height: var(--ui-text-xs-line-height);
+	letter-spacing: var(--ui-text-xs-letter-spacing);
+	color: var(--ui-color-design-filled-content);
+}
+
+.biconnector-dashboard-onboarding__actions
+{
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	margin-left: auto;
+}
+
+/**
+ * Stands first in the markup - the way out of the card is worth reaching early from the
+ * keyboard - and is put back into the right top corner of the layout by the order.
+ */
+.biconnector-dashboard-onboarding__close-column
+{
+	position: relative;
+	z-index: 1;
+	order: 1;
+	flex-shrink: 0;
+	align-self: flex-start;
+	padding-top: var(--ui-space-inset-xs2);
+	padding-right: var(--ui-space-inset-2xs);
+}
+
+.biconnector-dashboard-onboarding__close
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--ui-color-design-filled-content);
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 200ms ease;
+}
+
+.biconnector-dashboard-onboarding__close:hover
+{
+	opacity: 1;
+}
+
+.biconnector-dashboard-onboarding__button
+{
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	height: 34px;
+	padding: 0 var(--ui-space-inset-sm2);
+	border: none;
+	border-radius: var(--ui-border-radius-md);
+	font-family: var(--ui-text-sm-font-family);
+	font-size: var(--ui-text-sm-font-size);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-text-sm-line-height);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 200ms ease, color 200ms ease;
+}
+
+.biconnector-dashboard-onboarding__button.--filled
+{
+	background-color: var(--ui-color-design-filled-bg);
+	color: var(--ui-color-base-white-fixed);
+}
+
+.biconnector-dashboard-onboarding__button.--filled:hover
+{
+	background-color: var(--ui-color-accent-main-primary-alt);
+}
+
+.biconnector-dashboard-onboarding__button.--plain
+{
+	background-color: var(--ui-color-design-plain-bg);
+	color: var(--ui-color-design-plain-content);
+}
+
+.biconnector-dashboard-onboarding__button.--plain:hover
+{
+	color: var(--ui-color-design-filled-content);
+}

@@ -2,24 +2,27 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/prolog.php';
 IncludeModuleLangFile(__FILE__);
-/** @global CMain $APPLICATION */
+/** @var CMain $APPLICATION */
 global $APPLICATION;
-/** @var CAdminMessage $message */
+/** @var CAdminMessage|null $message */
+/** @var \Bitrix\Main\HttpRequest $request */
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
 $searchDB = CDatabase::GetModuleConnection('search');
 
-$SEARCH_RIGHT = $APPLICATION->GetGroupRight('search');
+$SEARCH_RIGHT = CMain::GetGroupRight('search');
 if ($SEARCH_RIGHT == 'D')
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
 
-if ($Rebuild <> '')
+if ($request['Rebuild'] <> '')
 {
 	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php';
-	$NS = intval($NS) + 1;
+	$NS = intval($request['NS']) + 1;
 	$cCustomRank = new CSearchCustomRank;
 
-	if ($Next == '')
+	if ($request['Next'] == '')
 	{
 		$res = $cCustomRank->StartUpdate();
 	}
@@ -66,6 +69,8 @@ else
 {
 $sTableID = 'tbl_search';
 $oSort = new CAdminSorting($sTableID, 'ID', 'desc');
+$by = mb_strtoupper($oSort->getField());
+$order = mb_strtoupper($oSort->getOrder());
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $FilterArr = [
@@ -77,18 +82,22 @@ $FilterArr = [
 	'find_param1',
 ];
 
-$lAdmin->InitFilter($FilterArr);
+$currentFilter = $lAdmin->InitFilter($FilterArr);
+foreach ($FilterArr as $fieldName)
+{
+	$currentFilter[$fieldName] = ($currentFilter[$fieldName] ?? '');
+}
 
 $arFilter = [
-	'ID' => ($find != '' && $find_type == 'id' ? $find : $find_id),
-	'SITE_ID' => ($find_site_id == 'NOT_REF' ? '' : ($find != '' && $find_type == 'site_id' ? $find : $find_site_id)),
-	'MODULE_ID' => $find_module_id,
-	'PARAM1' => $find_param1,
+	'ID' => ($currentFilter['find'] != '' && $currentFilter['find_type'] == 'id' ? $currentFilter['find'] : $currentFilter['find_id']),
+	'SITE_ID' => ($currentFilter['find_site_id'] === 'NOT_REF' ? '' : ($currentFilter['find'] && $currentFilter['find_type'] === 'site_id' ? $currentFilter['find'] : $currentFilter['find_site_id'])),
+	'MODULE_ID' => $currentFilter['find_module_id'],
+	'PARAM1' => $currentFilter['find_param1'],
 ];
 
-if ($lAdmin->EditAction() && $SEARCH_RIGHT >= 'W' && is_array($FIELDS))
+if ($lAdmin->EditAction() && $SEARCH_RIGHT >= 'W' && is_array($request['FIELDS']))
 {
-	foreach ($FIELDS as $ID => $arFields)
+	foreach ($request['FIELDS'] as $ID => $arFields)
 	{
 		if (!$lAdmin->IsUpdated($ID))
 		{
@@ -97,14 +106,16 @@ if ($lAdmin->EditAction() && $SEARCH_RIGHT >= 'W' && is_array($FIELDS))
 
 		$searchDB->StartTransaction();
 		$ID = intval($ID);
-		$cData = new CSearchCustomRank;
-		if (($rsData = $cData->GetByID($ID)) && ($arData = $rsData->Fetch()))
+		$rsData = CSearchCustomRank::GetByID($ID);
+		$arData = $rsData->Fetch();
+		if ($arData)
 		{
 			foreach ($arFields as $key => $value)
 			{
 				$arData[$key] = $value;
 			}
 
+			$cData = new CSearchCustomRank;
 			if (!$cData->Update($ID, $arData))
 			{
 				$lAdmin->AddGroupError(GetMessage('customrank_edit_error') . $cData->LAST_ERROR, $ID);
@@ -127,8 +138,7 @@ if (($arID = $lAdmin->GroupAction()) && $SEARCH_RIGHT == 'W')
 {
 	if ($_REQUEST['action_target'] == 'selected')
 	{
-		$cData = new CSearchCustomRank;
-		$rsData = $cData->GetList([
+		$rsData = CSearchCustomRank::GetList([
 			$by => $order,
 		], $arFilter);
 		while ($arRes = $rsData->Fetch())
@@ -144,9 +154,8 @@ if (($arID = $lAdmin->GroupAction()) && $SEARCH_RIGHT == 'W')
 		}
 
 		$ID = intval($ID);
-		switch ($_REQUEST['action'])
+		if ($request['action'] === 'delete')
 		{
-		case 'delete':
 			@set_time_limit(0);
 			$searchDB->StartTransaction();
 			if (!CSearchCustomRank::Delete($ID))
@@ -158,13 +167,11 @@ if (($arID = $lAdmin->GroupAction()) && $SEARCH_RIGHT == 'W')
 			{
 				$searchDB->Commit();
 			}
-			break;
 		}
 	}
 }
 
-$cData = new CSearchCustomRank;
-$rsData = $cData->GetList([$by => $order], $arFilter);
+$rsData = CSearchCustomRank::GetList([$by => $order], $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage('customrank_rules')));
@@ -216,79 +223,80 @@ $lAdmin->AddHeaders([
 	],
 ]);
 
-while ($arRes = $rsData->NavNext(true, 'f_')):
-	$row = & $lAdmin->AddRow($f_ID, $arRes);
+while ($arRes = $rsData->GetNext())
+{
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
-	$row->AddEditField('SITE_ID', CLang::SelectBox('FIELDS[' . $f_ID . '][SITE_ID]', $f_SITE_ID, '' ,"BoxUpdateNew('param1'," . $f_ID . ')'));
-	$row->AddViewField('SITE_ID','[' . $f_SITE_ID . '] ' . htmlspecialcharsbx(CSearchCustomRank::__GetParam($lang, $f_SITE_ID)));
+	$row->AddEditField('SITE_ID', CLang::SelectBox('FIELDS[' . $arRes['ID'] . '][SITE_ID]', $arRes['SITE_ID'], '' ,"BoxUpdateNew('param1'," . $arRes['ID'] . ')'));
+	$row->AddViewField('SITE_ID','[' . $arRes['SITE_ID'] . '] ' . htmlspecialcharsbx(CSearchCustomRank::__GetParam(LANGUAGE_ID, $arRes['SITE_ID'])));
 
-	$row->AddSelectField('MODULE_ID',CSearchCustomRank::ModulesList(),['OnChange' => "BoxUpdateNew('param1'," . $f_ID . ')']);
+	$row->AddSelectField('MODULE_ID',CSearchCustomRank::ModulesList(),['OnChange' => "BoxUpdateNew('param1'," . $arRes['ID'] . ')']);
 
 	$strPARAM1 =
-		'<select name="FIELDS[' . $f_ID . '][PARAM1]" OnChange="BoxUpdateNew(\'param1\', ' . $f_ID . ')">'
+		'<select name="FIELDS[' . $arRes['ID'] . '][PARAM1]" OnChange="BoxUpdateNew(\'param1\', ' . $arRes['ID'] . ')">'
 		. '<option value="">' . GetMessage('customrank_no') . '</option>';
 
-	if ($f_MODULE_ID == 'iblock' && CModule::IncludeModule('iblock'))
+	if ($arRes['MODULE_ID'] == 'iblock' && CModule::IncludeModule('iblock'))
 	{
 		$rs = CIBlockType::GetList(['sort' => 'asc'], ['ACTIVE' => 'Y']);
 		while ($ar = $rs->Fetch())
 		{
-			if ($arIBType = CIBlockType::GetByIDLang($ar['ID'], LANG))
+			if ($arIBType = CIBlockType::GetByIDLang($ar['ID'], LANGUAGE_ID))
 			{
-				$strPARAM1 .= '<option value="' . htmlspecialcharsbx($ar['ID']) . '" ' . ($ar['ID'] == $f_PARAM1 ? ' selected' : '') . '>' . htmlspecialcharsbx('[' . $ar['ID'] . '] ' . $arIBType['~NAME']) . '</option>';
+				$strPARAM1 .= '<option value="' . htmlspecialcharsbx($ar['ID']) . '" ' . ($ar['ID'] == $arRes['PARAM1'] ? ' selected' : '') . '>' . htmlspecialcharsbx('[' . $ar['ID'] . '] ' . $arIBType['~NAME']) . '</option>';
 			}
 		}
 		$strPARAM1 .= '</select>';
 	}
-	elseif ($f_MODULE_ID == 'forum' && CModule::IncludeModule('forum'))
+	elseif ($arRes['MODULE_ID'] == 'forum' && CModule::IncludeModule('forum'))
 	{
-		$rs = CForumNew::GetList(['sort' => 'asc'], ['LID' => $f_SITE_ID]);
+		$rs = CForumNew::GetList(['sort' => 'asc'], ['LID' => $arRes['SITE_ID']]);
 		while ($ar = $rs->Fetch())
 		{
-			$strPARAM1 .= '<option value="' . htmlspecialcharsbx($ar['ID']) . '" ' . ($ar['ID'] == $f_PARAM1 ? ' selected' : '') . '>' . htmlspecialcharsbx('[' . $ar['ID'] . '] ' . $ar['NAME']) . '</option>';
+			$strPARAM1 .= '<option value="' . htmlspecialcharsbx($ar['ID']) . '" ' . ($ar['ID'] == $arRes['PARAM1'] ? ' selected' : '') . '>' . htmlspecialcharsbx('[' . $ar['ID'] . '] ' . $ar['NAME']) . '</option>';
 		}
 		$strPARAM1 .= '</select>';
 	}
 	else
 	{
-		$strPARAM1 = '&nbsp;<input type="hidden" name="FIELDS[' . $f_ID . '][PARAM1]" value="">';
+		$strPARAM1 = '&nbsp;<input type="hidden" name="FIELDS[' . $arRes['ID'] . '][PARAM1]" value="">';
 	}
 
-	$row->AddEditField('PARAM1', '<div id="PARAM1[' . $f_ID . ']_result_div">' . $strPARAM1 . '</div>');
+	$row->AddEditField('PARAM1', '<div id="PARAM1[' . $arRes['ID'] . ']_result_div">' . $strPARAM1 . '</div>');
 
-	$f_PARAM1_NAME = '[' . $f_PARAM1 . '] ' . CSearchCustomRank::__GetParam($lang, $f_SITE_ID, $f_MODULE_ID, $f_PARAM1);
-	$row->AddViewField('PARAM1',($f_PARAM1 == '' ? '&nbsp;' : $f_PARAM1_NAME));
+	$arRes['PARAM1_NAME'] = '[' . $arRes['PARAM1'] . '] ' . CSearchCustomRank::__GetParam(LANGUAGE_ID, $arRes['SITE_ID'], $arRes['MODULE_ID'], $arRes['PARAM1']);
+	$row->AddViewField('PARAM1',($arRes['PARAM1'] == '' ? '&nbsp;' : $arRes['PARAM1_NAME']));
 
 	$strPARAM2 =
-		'<select name="FIELDS[' . $f_ID . '][PARAM2]" OnChange="BoxUpdateNew(\'param2\', ' . $f_ID . ')">'
+		'<select name="FIELDS[' . $arRes['ID'] . '][PARAM2]" OnChange="BoxUpdateNew(\'param2\', ' . $arRes['ID'] . ')">'
 		. '<option value="">' . GetMessage('customrank_no') . '</option>';
 
-	if ($f_MODULE_ID == 'iblock' && CModule::IncludeModule('iblock'))
+	if ($arRes['MODULE_ID'] == 'iblock' && CModule::IncludeModule('iblock'))
 	{
-		$rs = CIBlock::GetList(['SORT' => 'ASC'],['TYPE' => $f_PARAM1,'LID' => $f_SITE_ID]);
+		$rs = CIBlock::GetList(['SORT' => 'ASC'],['TYPE' => $arRes['PARAM1'],'LID' => $arRes['SITE_ID']]);
 		while ($ar = $rs->Fetch())
 		{
-			$strPARAM2 .= '<option value="' . htmlspecialcharsbx($ar['ID']) . '" ' . ($ar['ID'] == $f_PARAM2 ? ' selected' : '') . '>' . htmlspecialcharsbx('[' . $ar['ID'] . '] ' . $ar['NAME']) . '</option>';
+			$strPARAM2 .= '<option value="' . htmlspecialcharsbx($ar['ID']) . '" ' . ($ar['ID'] == $arRes['PARAM2'] ? ' selected' : '') . '>' . htmlspecialcharsbx('[' . $ar['ID'] . '] ' . $ar['NAME']) . '</option>';
 		}
 		$strPARAM2 .= '</select>';
 	}
-	elseif ($f_MODULE_ID == 'forum' && CModule::IncludeModule('forum'))
+	elseif ($arRes['MODULE_ID'] == 'forum' && CModule::IncludeModule('forum'))
 	{
-		$strPARAM2 = '<input type="text" size=5 name="FIELDS[' . $f_ID . '][PARAM2]" value="">';
+		$strPARAM2 = '<input type="text" size=5 name="FIELDS[' . $arRes['ID'] . '][PARAM2]" value="">';
 	}
 	else
 	{
-		$strPARAM2 = '&nbsp;<input type="hidden" name="FIELDS[' . $f_ID . '][PARAM2]" value="">';
+		$strPARAM2 = '&nbsp;<input type="hidden" name="FIELDS[' . $arRes['ID'] . '][PARAM2]" value="">';
 	}
 
-	$row->AddEditField('PARAM2', '<div id="PARAM2[' . $f_ID . ']_result_div">' . $strPARAM2 . '</div>');
+	$row->AddEditField('PARAM2', '<div id="PARAM2[' . $arRes['ID'] . ']_result_div">' . $strPARAM2 . '</div>');
 
-	$f_PARAM2_NAME = '[' . $f_PARAM2 . '] ' . CSearchCustomRank::__GetParam($lang, $f_SITE_ID, $f_MODULE_ID, $f_PARAM1, $f_PARAM2);
-	$row->AddViewField('PARAM2',($f_PARAM2 == '' ? '&nbsp;' : $f_PARAM2_NAME));
+	$arRes['PARAM2_NAME'] = '[' . $arRes['PARAM2'] . '] ' . CSearchCustomRank::__GetParam(LANGUAGE_ID, $arRes['SITE_ID'], $arRes['MODULE_ID'], $arRes['PARAM1'], $arRes['PARAM2']);
+	$row->AddViewField('PARAM2',($arRes['PARAM2'] == '' ? '&nbsp;' : $arRes['PARAM2_NAME']));
 
 	$row->AddInputField('ITEM_ID', ['size' => 5]);
-	$f_ITEM_ID_NAME = '[' . $f_ITEM_ID . '] ' . CSearchCustomRank::__GetParam($lang, $f_SITE_ID, $f_MODULE_ID, $f_PARAM1, $f_PARAM2, $f_ITEM_ID);
-	$row->AddViewField('ITEM_ID',($f_ITEM_ID == '' ? '&nbsp;' : $f_ITEM_ID_NAME));
+	$arRes['ITEM_ID_NAME'] = '[' . $arRes['ITEM_ID'] . '] ' . CSearchCustomRank::__GetParam(LANGUAGE_ID, $arRes['SITE_ID'], $arRes['MODULE_ID'], $arRes['PARAM1'], $arRes['PARAM2'], $arRes['ITEM_ID']);
+	$row->AddViewField('ITEM_ID',($arRes['ITEM_ID'] == '' ? '&nbsp;' : $arRes['ITEM_ID_NAME']));
 
 	$row->AddInputField('RANK', ['size' => 5]);
 
@@ -297,19 +305,19 @@ while ($arRes = $rsData->NavNext(true, 'f_')):
 		'ICON' => 'edit',
 		'DEFAULT' => true,
 		'TEXT' => GetMessage('customrank_edit'),
-		'ACTION' => $lAdmin->ActionRedirect('search_customrank_edit.php?ID=' . $f_ID),
+		'ACTION' => $lAdmin->ActionRedirect('search_customrank_edit.php?ID=' . $arRes['ID']),
 	];
 	if ($SEARCH_RIGHT >= 'W')
 	{
 		$arActions[] = [
 			'ICON' => 'delete',
 			'TEXT' => GetMessage('customrank_delete'),
-			'ACTION' => "if(confirm('" . GetMessage('customrank_delete_confirm') . "')) " . $lAdmin->ActionDoGroup($f_ID, 'delete'),
+			'ACTION' => "if(confirm('" . GetMessage('customrank_delete_confirm') . "')) " . $lAdmin->ActionDoGroup($arRes['ID'], 'delete'),
 		];
 	}
 
 	$row->AddActions($arActions);
-endwhile;
+}
 
 
 $lAdmin->AddFooter([
@@ -329,7 +337,7 @@ $lAdmin->AddGroupActionTable([
 $aContext = [
 	[
 		'TEXT' => GetMessage('customrank_add'),
-		'LINK' => 'search_customrank_edit.php?lang=' . LANG,
+		'LINK' => 'search_customrank_edit.php?lang=' . LANGUAGE_ID,
 		'TITLE' => GetMessage('customrank_add_title'),
 		'ICON' => 'btn_new',
 	],
@@ -382,7 +390,7 @@ function DoNext()
 	}
 	if(newNS!=savedNS)
 	{
-		queryString='lang='+encodeURIComponent('<?php echo CUtil::JSEscape(LANG)?>');
+		queryString='lang='+encodeURIComponent('<?php echo CUtil::JSEscape(LANGUAGE_ID)?>');
 		if(savedNS!='start!')
 		{
 			queryString+='&Next=Y';
@@ -483,7 +491,7 @@ function BoxUpdateNew(step, id)
 <tr>
 	<td><b><?=GetMessage('customrank_find')?>:</b></td>
 	<td>
-		<input type="text" size="25" name="find" value="<?php echo htmlspecialcharsbx($find)?>" title="<?=GetMessage('customrank_find_title')?>">
+		<input type="text" size="25" name="find" value="<?php echo htmlspecialcharsbx($currentFilter['find'])?>" title="<?=GetMessage('customrank_find_title')?>">
 		<?php
 		$arr = [
 			'reference' => [
@@ -495,25 +503,25 @@ function BoxUpdateNew(step, id)
 				'id',
 			]
 		];
-		echo SelectBoxFromArray('find_type', $arr, $find_type, '', '');
+		echo SelectBoxFromArray('find_type', $arr, $currentFilter['find_type'], '', '');
 		?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage('customrank_id')?></td>
-	<td><input type="text" name="find_id" size="47" value="<?php echo htmlspecialcharsbx($find_id)?>"></td>
+	<td><input type="text" name="find_id" size="47" value="<?php echo htmlspecialcharsbx($currentFilter['find_id'])?>"></td>
 </tr>
 <tr>
 	<td><?=GetMessage('customrank_site')?></td>
-	<td><?php echo CLang::SelectBox('find_site_id', $find_site_id, GetMessage('customrank_all'));?></td>
+	<td><?php echo CLang::SelectBox('find_site_id', $currentFilter['find_site_id'], GetMessage('customrank_all'));?></td>
 </tr>
 <tr>
 	<td><?=GetMessage('customrank_module')?></td>
-	<td><?=CSearchCustomRank::ModulesSelectBox('find_module_id', $find_module_id, GetMessage('customrank_all'), '', '')?></td>
+	<td><?=CSearchCustomRank::ModulesSelectBox('find_module_id', $currentFilter['find_module_id'], GetMessage('customrank_all'), '', '')?></td>
 </tr>
 <tr>
 	<td><?=GetMessage('customrank_param1')?></td>
-	<td><input type="text" name="find_param1" size="47" value="<?php echo htmlspecialcharsbx($find_param1)?>"></td>
+	<td><input type="text" name="find_param1" size="47" value="<?php echo htmlspecialcharsbx($currentFilter['find_param1'])?>"></td>
 </tr>
 <?php
 $oFilter->Buttons(['table_id' => $sTableID,'url' => $APPLICATION->GetCurPage(),'form' => 'find_form']);

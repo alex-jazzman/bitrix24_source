@@ -1,4 +1,4 @@
-import { Text, Type } from 'main.core';
+import { Dom, Event, Text, Type } from 'main.core';
 import type { BaseEvent } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 
@@ -14,6 +14,9 @@ import { calendar } from 'tasks.v2.lib.calendar';
 import { timezone } from 'tasks.v2.lib.timezone';
 
 import './time-tracking-list-item-edit.css';
+
+const OPEN_KEYS = ['Enter', ' ', 'ArrowDown'];
+const VISIBLE_LABEL_SELECTOR = '.ui-system-input-label:not(.--error)';
 
 // @vue/component
 export const TimeTrackingListItemEdit = {
@@ -50,6 +53,7 @@ export const TimeTrackingListItemEdit = {
 			ButtonColor,
 			InputDesign,
 			Outline,
+			calendarPopupId: `tasks-time-tracking-list-popup-${Text.getRandom()}`,
 		};
 	},
 	data(): Object
@@ -137,6 +141,8 @@ export const TimeTrackingListItemEdit = {
 			{
 				this.datePicker.hide();
 			}
+
+			this.syncAria();
 		},
 	},
 	created(): void
@@ -150,19 +156,99 @@ export const TimeTrackingListItemEdit = {
 	mounted(): void
 	{
 		this.datePicker = this.createDatePicker();
+		this.syncAria();
+
+		// main.popup closes the sheet from a capture-phase keyup listener on the document,
+		// so an Escape that only dismisses the picker has to be claimed earlier: capture at
+		// the window always runs before capture at the document, whatever the bind order.
+		Event.bind(window, 'keyup', this.handleWindowKeyUp, true);
 	},
 	unmounted(): void
 	{
+		Event.unbind(window, 'keyup', this.handleWindowKeyUp, true);
 		this.datePicker?.destroy();
 	},
 	methods: {
+		syncAria(): void
+		{
+			this.syncDateTriggerAria();
+			this.nameSaveButton();
+		},
+		/**
+		 * The trigger is the input wrapper, not the inner input: BInput blurs the input
+		 * on focus in the clickable mode, so a tab stop on it swallows the focus.
+		 *
+		 * A combobox reads its value off the text of its own subtree, so the visible label
+		 * has to leave the accessibility tree: it would repeat the name in place of the
+		 * value. The input stays there - it always shows the date of the record, which is
+		 * exactly the value the role has to read.
+		 */
+		syncDateTriggerAria(): void
+		{
+			const trigger = this.$refs.calendarInput?.$el;
+			const input = trigger?.querySelector('input');
+			if (!input)
+			{
+				return;
+			}
+
+			Dom.attr(trigger, 'role', 'combobox');
+			Dom.attr(trigger, 'aria-label', this.loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_COLUMN_DATE'));
+			Dom.attr(trigger, 'aria-haspopup', 'dialog');
+			Dom.attr(trigger, 'aria-expanded', this.isCalendarShown ? 'true' : 'false');
+			Dom.attr(trigger, 'aria-controls', this.isCalendarShown ? this.calendarPopupId : null);
+			Dom.attr(trigger, 'tabindex', '0');
+			Dom.attr(trigger.querySelector(VISIBLE_LABEL_SELECTOR), 'aria-hidden', 'true');
+			Dom.attr(input, 'tabindex', '-1');
+		},
+		/**
+		 * ui.vue3.components.button renders its <button> imperatively through ui.buttons and
+		 * forwards no aria-* to it, so an icon-only button can only be named on the live node.
+		 */
+		nameSaveButton(): void
+		{
+			const button = this.$refs.editRow?.querySelector('.tasks-time-tracking-list-item-edit-save');
+			if (!button)
+			{
+				return;
+			}
+
+			Dom.attr(button, 'aria-label', this.loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_SAVE_ARIA_LABEL'));
+		},
+		handleCalendarKeydown(event: KeyboardEvent): void
+		{
+			if (!OPEN_KEYS.includes(event.key))
+			{
+				return;
+			}
+
+			// The open picker runs its own arrow navigation, so ArrowDown has nothing to move
+			// here: cancelling the page default would leave the key doing nothing at all.
+			if (this.isCalendarShown && event.key === 'ArrowDown')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.isCalendarShown = !this.isCalendarShown;
+		},
+		handleWindowKeyUp(event: KeyboardEvent): void
+		{
+			if (event.key !== 'Escape' || !this.isCalendarShown)
+			{
+				return;
+			}
+
+			event.stopImmediatePropagation();
+			this.isCalendarShown = false;
+		},
 		createDatePicker(): DatePicker
 		{
 			const selectedDateTs = this.localCreatedAt ? this.localCreatedAt.getTime() : null;
 
 			return new DatePicker({
 				popupOptions: {
-					id: `tasks-time-tracking-list-popup-${Text.getRandom()}`,
+					id: this.calendarPopupId,
 					bindElement: this.$refs.calendarInput.$el,
 					bindOptions: { forceBindPosition: true },
 					events: {
@@ -223,9 +309,9 @@ export const TimeTrackingListItemEdit = {
 		},
 	},
 	template: `
-		<div class="tasks-time-tracking-list-row">
+		<div class="tasks-time-tracking-list-row" data-testid="tasks-time-tracking-list-item-edit">
 			<div class="tasks-time-tracking-list-item-edit">
-				<div class="tasks-time-tracking-list-item-edit-time">
+				<div ref="editRow" class="tasks-time-tracking-list-item-edit-time">
 					<BInput
 						ref="calendarInput"
 						class="tasks-time-tracking-list-item-edit-time-calendar"
@@ -233,42 +319,60 @@ export const TimeTrackingListItemEdit = {
 						:design="InputDesign.LightGrey"
 						clickable
 						:label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_COLUMN_DATE')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_COLUMN_DATE')"
+						data-testid="tasks-time-tracking-date-input"
 						@click="isCalendarShown = !isCalendarShown"
+						@keydown="handleCalendarKeydown"
 					/>
 					<BInput
 						v-model="hours"
 						class="tasks-time-tracking-list-item-edit-time-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
 						:placeholder="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_INPUT_H')"
+						data-testid="task-time-tracking-edit-hours-input"
+						active
 					/>
 					<BInput
 						v-model="minutes"
 						class="tasks-time-tracking-list-item-edit-time-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						data-testid="tasks-time-tracking-minutes-input"
 						:placeholder="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_INPUT_M')"
 					/>
 					<UiButton
+						class="tasks-time-tracking-list-item-edit-save"
 						:leftIcon="Outline.CHECK_L"
 						:style="AirButtonStyle.FILLED"
 						:size="ButtonSize.SMALL"
 						@click="save"
 					/>
-					<BIcon
-						:name="Outline.CROSS_L"
-						hoverable
-						class="tasks-time-tracking-list-item-edit-close-icon"
+					<button
+						type="button"
+						class="tasks-time-tracking-list-item-edit-close"
+						:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_CANCEL_ARIA_LABEL')"
+						data-testid="tasks-time-tracking-cancel-btn"
 						@click="$emit('cancel')"
-					/>
+					>
+						<BIcon
+							:name="Outline.CROSS_L"
+							hoverable
+							class="tasks-time-tracking-list-item-edit-close-icon"
+							aria-hidden="true"
+						/>
+					</button>
 				</div>
 				<div class="tasks-time-tracking-list-item-edit-text">
 					<BInput
 						v-model="text"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_TEXT_ARIA_LABEL')"
 						:placeholder="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ITEM_EDIT_TEXT')"
 						:rowsQuantity="3"
-						active
 						resize="none"
+						data-testid="task-time-tracking-edit-comment-input"
 					/>
 				</div>
 			</div>

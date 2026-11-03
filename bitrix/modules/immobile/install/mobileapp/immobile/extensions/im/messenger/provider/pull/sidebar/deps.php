@@ -7,4 +7,8 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
 	],
+	'bundle' => [
+		'./src/collection-target',
+		'./src/pending-file',
+	],
 ];

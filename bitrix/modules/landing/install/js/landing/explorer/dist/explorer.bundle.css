@@ -4,7 +4,7 @@
 	list-style: none;
 	max-width: 100%;
 	height: 300px;
-	background-color: #eef2f4;
+	background-color: var(--ui-color-base-white-fixed);
 	overflow-y: auto;
 }
 
@@ -23,7 +23,7 @@
 
 .landing-site-selector-item:hover {
 	border-radius: 2px;
-	background: #e6e9eb;
+	background: var(--ui-color-bg-state-hover-default);
 }
 
 .landing-site-selector-item .ui-icon {
@@ -53,7 +53,7 @@
 
 .landing-site-selector-item-selected {
 	border-radius: 2px;
-	background: #d9dee1 !important;
+	background: var(--ui-color-bg-state-click-default) !important;
 }
 
 .landing-explorer-status {

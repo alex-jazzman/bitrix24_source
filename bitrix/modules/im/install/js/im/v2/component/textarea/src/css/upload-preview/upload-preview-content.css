@@ -1,22 +1,37 @@
 .bx-im-upload-preview__scope {
-	--im-upload-preview__color_title: var(--im-color-palette-gray-90);
 	--im-upload-preview__border-color_delimeter: #f1f2f3;
 	--im-upload-preview__border-color_message-input: var(--im-color-palette-gray-10);
 	--im-upload-preview__border-color_message-input-focused: var(--im-color-accent-blue);
 	--bx-im-elements-dynamic-gallery__item-cursor: default;
+	--bx-im-elements-dynamic-gallery__item-border-radius: var(--ui-border-radius-xs);
 }
 
 .bx-im-upload-preview__container {
 	display: flex;
 	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
 	box-sizing: border-box;
 	overflow: hidden;
 	width: 400px;
-	padding-bottom: 12px;
+	/* the window bounds the height: 40px go to the dialog header above this container, and
+	   16px to the gap that centering splits into 8px above and below */
+	max-height: calc(100vh - 56px);
+	padding: var(--ui-space-stack-sm) var(--ui-space-inset-md2) var(--ui-space-stack-lg);
 }
 
 .bx-im-upload-preview__container * {
 	box-sizing: border-box;
+}
+
+.bx-im-upload-preview__preview {
+	/* positioning context for the drop zone overlay, and the radius it is clipped by */
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-lg);
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
 }
 
 .bx-im-upload-preview__items-container {
@@ -25,19 +40,63 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	margin: 0 6px 0 12px;
+	flex: 1 1 auto;
+	min-height: 0;
+	/* balances the always reserved scrollbar gutter, so the media stays centered in the popup */
+	padding-left: 6px;
 }
 
-@media (max-height: 750px) {
-	.bx-im-upload-preview__items-container {
-		max-height: 400px;
-	}
+/* the edit left without attachments: the window stays open, so it says what happened */
+.bx-im-upload-preview__empty {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	/* the mockup gives the block the height of an attachment row, and no size token carries 44px */
+	min-height: 44px;
 }
 
-@media (max-height: 650px) {
-	.bx-im-upload-preview__items-container {
-		max-height: 300px;
-	}
+.bx-im-upload-preview__empty-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	min-width: 0;
+}
+
+/* the typography components pin their own colour, so both roles are restated on the texts */
+.bx-im-upload-preview__empty .bx-im-upload-preview__empty-title {
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-upload-preview__empty .bx-im-upload-preview__empty-hint {
+	color: var(--ui-color-base-4);
+}
+
+/* Keyboard-focus ring for a media tile - the roving stop of the media branch of the grid. Scoped to the
+   upload preview, so the shared media gallery keeps its markup and its looks untouched for its other
+   consumers. An inset outline would sit under the tile image (__item-source, z-index 1), so the ring is
+   drawn as an ::after overlay above both the image and the remove cross (z-index 20). Keyboard-only via
+   :focus-visible - no flash on click.
+   Two lines, not one: inside the tile the only neighbour of the ring is the preview itself, and a preview in
+   the colour of the focus token leaves nothing to see. The token keeps the outer band, on the border of the
+   preview, and the content background of the design system takes the band inside it, so the ring reads against
+   one of the two whatever the preview holds. The first layer is painted on top, hence the order: the other way
+   round the light line would sit next to the light background of the popup and the outer edge would be lost.
+   The width of the second band follows the token of the first, and its colour is a token rather than a literal
+   white, so both survive a change of the platform token and a dark theme. */
+.bx-im-upload-preview__items-container .bx-im-elements-media-gallery__item:focus-visible {
+	outline: none;
+}
+
+.bx-im-upload-preview__items-container .bx-im-elements-media-gallery__item:focus-visible::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	box-shadow:
+		inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-focus-outline),
+		inset 0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-bg-content-primary);
+	pointer-events: none;
+	z-index: 21;
 }
 
 .bx-im-upload-preview__upper-delimiter {
@@ -50,37 +109,57 @@
 	margin: 11px 20px 0;
 }
 
-.bx-im-upload-preview__control-form {
-	display: flex;
-	align-items: flex-end;
-	margin-top: 23px;
-}
-
-.bx-im-upload-preview__control-compress-image + .bx-im-upload-preview__control-form {
-	margin-top: 15px;
-}
-
 .bx-im-upload-preview__controls-container {
 	display: flex;
 	flex-direction: column;
-	margin: 0 12px;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bx-im-upload-preview__saving {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding-left: var(--ui-space-inset-3xs);
+}
+
+.bx-im-upload-preview__saving-text {
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-upload-preview__add-more {
+	display: flex;
+	/* the wrapper is the focus stop while the button inside is disabled, so it has to be the size of
+	   the button and not of the row: a ring around the whole row would point at nothing */
+	width: fit-content;
+	/* the radius of the S button of the design system, so the ring follows its corners */
+	border-radius: var(--ui-border-radius-sm);
+	padding-left: var(--ui-space-inset-3xs);
+}
+
+.bx-im-upload-preview__add-more:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bx-im-upload-preview__add-more-input {
+	display: none;
 }
 
 .bx-im-upload-preview__control-compress-image {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
-	margin: 23px 0 0 2px;
-	font: var(--im-font-size-md) var(--im-font-family-system);
-	color: var(--im-color-palette-gray-80);
+	gap: var(--ui-space-inline-xs);
+	/* its own 6px turn the 8px gap of the controls container into the 14px above and 18px below of the mockup */
+	padding: var(--ui-space-inset-2xs2) 0 var(--ui-space-inset-2xs2) var(--ui-space-inset-2xs2);
+}
+
+.bx-im-upload-preview__control-compress-image-label {
+	color: var(--ui-color-base-1);
+	cursor: pointer;
 	max-width: 360px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.bx-im-upload-preview__control-compress-image-checkbox {
-	margin-right: 8px;
-	margin-bottom: 1px;
 }
 
 .bx-im-upload-preview__controls-buttons {
@@ -103,20 +182,6 @@
 	border-radius: 32px;
 }
 
-.bx-im-upload-preview__scope .popup-window-titlebar {
-	height: 72px;
-	padding-top: 5px;
-}
-
-.bx-im-upload-preview__scope .popup-window-titlebar-text {
-	font-size: var(--ui-font-size-xl);
-	font-weight: var(--im-font-weight-semi-bold);
-	color: var(--im-upload-preview__color_title);
-	width: 100%;
-	padding-left: 20px;
-	text-align: center;
-}
-
 .bx-im-upload-preview__container .bx-im-elements-spinner__spinner {
 	margin-bottom: 0;
 }
@@ -132,15 +197,23 @@
 	color: var(--ui-color-palette-orange-90);
 	font-size: var(--im-font-size-sm);
 	padding: 4px 8px;
-	margin-top: 24px;
-	margin-bottom: 0;
+	margin: 0;
 	border-radius: var(--im-border-radius-xs);
 }
 
-.bx-im-upload-preview__controls-files-limit-message {
-	margin-top: var(--ui-space-inline-2xs);
+/* the same shape as the limit message, in the alert role: this one says the save is held back */
+.bx-im-upload-preview__controls-upload-error-message {
+	background-color: var(--ui-color-accent-soft-red-1);
+	display: flex;
+	align-items: center;
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--im-font-size-sm);
+	padding: 4px 8px;
+	margin: 0;
+	border-radius: var(--im-border-radius-xs);
 }
 
+.bx-im-upload-preview__controls-upload-error-message::before,
 .bx-im-upload-preview__controls-files-limit-message::before {
 	background-image: url("../images/upload-preview/alert-icon.svg");
 	display: inline-block;
@@ -150,18 +223,39 @@
 	margin-right: var(--im-space-inline-2xs);
 }
 
+/* The ERR-001 toast of the mockup, which is of an edit. A send keeps the plate it always had, the
+   yellow icon it shares with the limit message included. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview__controls-upload-error-message {
+	gap: var(--ui-space-inline-xs);
+	/* the mockup keeps the plate this tall even when the hint fits on one line, and no token is 44px */
+	min-height: 44px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-accent-soft-red-3);
+}
+
+/* the edit draws the icon as an element of the icon set, so the shared pseudo-element steps aside */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview__controls-upload-error-message::before {
+	content: none;
+}
+
+.bx-im-upload-preview__controls-upload-error-message-icon {
+	--ui-icon-set__icon-size: var(--ui-size-lg);
+	--ui-icon-set__icon-color: currentcolor;
+}
+
+/* the typography component pins its own colour, so the alert role is restated on the text itself */
+.bx-im-upload-preview__controls-upload-error-message .bx-im-upload-preview__controls-upload-error-message-text {
+	color: var(--ui-color-accent-main-alert);
+}
+
 .bx-im-upload-preview__message-text {
-	flex-grow: 1;
 	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	color: var(--im-textarea__font-color_primary);
 	outline: none;
 	resize: none;
 	border: none;
-	padding-left: 13px;
-	padding-top: 10px;
-	padding-right: 10px;
-	margin-top: 3px;
-	margin-right: 3px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-2xs) var(--ui-space-inset-2xs2) var(--ui-space-inset-3xs);
 }
 
 .bx-im-upload-preview__message-text:focus {
@@ -170,15 +264,39 @@
 
 .bx-im-upload-preview__message-text__wrapper {
 	display: flex;
-	flex-grow: 1;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
 	position: relative;
-	min-height: 46px;
-	max-height: 232px;
-	margin-right: 8px;
-	border-radius: 8px;
+	/* on top of the 8px gap of the controls container it makes the 12px the mockup keeps here */
+	margin-top: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs) var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
 	border: 1px solid var(--im-upload-preview__border-color_message-input);
-	padding-bottom: 19px;
+	border-radius: var(--ui-border-radius-lg);
 	overflow: hidden;
+}
+
+/* Keyboard-focus ring for the caption field, drawn on the wrapper, because the field itself is borderless
+   and the border the ring belongs to is the wrapper's. Which descendant holds the focus decides it, and the
+   wrapper has two focusable children - the field and the send button, which carries a ring of its own - so
+   :focus-within would light both at once. Selecting a parent by its descendant needs the relational
+   pseudo-class, which the browser targets of the repo do not reach (Firefox 115 against the 121 it landed
+   in), hence the class: the component sets it from the focus of the field alone.
+   :focus-visible is no use here either: on a text field the browser matches it for a mouse focus too, so the
+   ring would flash on a plain click. The keyboard-only part comes from the platform instead - ui.a11y
+   publishes the last input modality on the root element. The offset is the plain outward one of the platform,
+   not the inset the composer uses: there the input area fills a rounded clipping container, here nothing does.
+   The own overflow of the wrapper clips its descendants, never its own outline, no ancestor clips the ring
+   either, and an inset would give the ring a 10px corner inside the 12px rounding of the wrapper. */
+html[data-input-modality="keyboard"] .bx-im-upload-preview__message-text__wrapper.--focus-outline {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bx-im-upload-preview__message-text__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs);
 }
 
 .bx-im-upload-preview__message-text__drag-handle {
@@ -198,9 +316,6 @@
 }
 
 .bx-im-upload-preview__message-text__counter {
-	position: absolute;
-	bottom: 4px;
-	right: 17px;
 	font-size: var(--ui-font-size-sm);
 	color: var(--ui-color-palette-gray-50);
 }

@@ -1,17 +1,40 @@
-import './style.css';
-import { Tag, Cache, Dom, Event } from 'main.core';
+import { Cache, Dom, Event, Tag, Type } from 'main.core';
 import { Popup } from 'main.popup';
+import { LiveAnnouncer } from 'ui.a11y';
+import type { FocusTrapOptions } from 'ui.a11y';
+import './style.css';
+
+type WidgetLoaderOptions = {
+	id?: string,
+	bindElement?: HTMLElement,
+	bindOnClick?: boolean,
+	width?: number,
+	useAngle?: boolean,
+	className?: string,
+	offsetLeft?: number,
+	offsetTop?: number,
+	ariaLabel?: string,
+	ariaLabelledBy?: string,
+	ariaDescribedBy?: string,
+	focusTrap?: boolean | FocusTrapOptions,
+	loadingStatusText?: string,
+	testId?: string,
+};
 
 export class WidgetLoader
 {
 	#cache = new Cache.MemoryCache();
 
-	constructor(options = {})
+	constructor(options: WidgetLoaderOptions = {})
 	{
 		this.#setOptions(options);
-		Event.bind(this.#getOptions().bindElement, 'click', () => {
-			this.show();
-		});
+
+		if (this.#getOptions().bindOnClick !== false)
+		{
+			Event.bind(this.#getOptions().bindElement, 'click', () => {
+				this.show();
+			});
+		}
 	}
 
 	show(): void
@@ -21,43 +44,64 @@ export class WidgetLoader
 
 	clearBeforeInsertContent(): void
 	{
+		this.clearSkeleton();
+
+		const popupContainer = this.getPopup().getPopupContainer();
+		Dom.prepend(this.#cache.get('popup-content'), popupContainer);
+	}
+
+	clearSkeleton(): void
+	{
 		const popupContainer = this.getPopup().getPopupContainer();
 		Dom.removeClass(popupContainer, 'intranet-widget-skeleton__wrap');
+		this.#removeSkeleton();
+		this.clearLoadingState();
+	}
 
-		const selectors = [
-			'.intranet-widget-skeleton__row',
-			'.intranet-widget-skeleton__header',
-			'.intranet-widget-skeleton-avatar__header',
-			'.intranet-widget-skeleton__footer',
-		].join(', ');
+	setLoadingState(isLoading: boolean): void
+	{
+		Dom.attr(this.getPopup().getPopupContainer(), 'aria-busy', isLoading ? 'true' : null);
+	}
 
-		popupContainer.querySelectorAll(selectors).forEach((node) => Dom.remove(node));
-
-		Dom.prepend(this.#cache.get('popup-content'), popupContainer);
+	clearLoadingState(): void
+	{
+		this.setLoadingState(false);
 	}
 
 	getPopup(): Popup
 	{
 		return this.#cache.remember('popup', () => {
-			const offsetLeft = (-(this.#getOptions().width / 2)
-				+ (this.#getOptions().bindElement ? this.#getOptions().bindElement.offsetWidth / 2 : 0)
+			const options = this.#getOptions();
+			const offsetLeft = (-(options.width / 2)
+				+ (options.bindElement ? options.bindElement.offsetWidth / 2 : 0)
 				+ 40);
 			const popup = new Popup({
 				autoHide: true,
-				id: this.#getOptions().id ?? null,
-				bindElement: this.#getOptions().bindElement,
-				width: this.#getOptions().width,
-				useAngle: this.#getOptions().useAngle ?? true,
-				angle: this.#getOptions().useAngle ?? {
-					offset: (this.#getOptions().width / 2) - 16,
+				id: options.id ?? null,
+				bindElement: options.bindElement,
+				width: options.width,
+				useAngle: options.useAngle ?? true,
+				angle: options.useAngle ?? {
+					offset: (options.width / 2) - 16,
 				},
-				className: this.#getOptions().className ?? null,
+				className: options.className ?? null,
 				animation: 'fading-slide',
 				closeByEsc: true,
-				offsetLeft: this.#getOptions().offsetLeft ?? offsetLeft,
-				offsetTop: this.#getOptions().offsetTop ?? 3,
+				...(Type.isStringFilled(options.ariaLabel) ? { ariaLabel: options.ariaLabel } : {}),
+				...(Type.isStringFilled(options.ariaLabelledBy) ? { ariaLabelledBy: options.ariaLabelledBy } : {}),
+				...(Type.isStringFilled(options.ariaDescribedBy) ? { ariaDescribedBy: options.ariaDescribedBy } : {}),
+				...(Type.isBoolean(options.focusTrap) || Type.isPlainObject(options.focusTrap)
+					? { focusTrap: options.focusTrap }
+					: {}),
+				offsetLeft: options.offsetLeft ?? offsetLeft,
+				offsetTop: options.offsetTop ?? 3,
 			});
 			const container = popup.getPopupContainer();
+			if (Type.isStringFilled(options.testId))
+			{
+				Dom.attr(container, 'data-testid', options.testId);
+			}
+
 			this.#cache.set('popup-content', container.querySelector('.popup-window-content'));
 			Dom.remove(container.querySelector('.popup-window-content'));
 			Dom.addClass(container, 'intranet-widget-skeleton__wrap');
@@ -66,20 +110,22 @@ export class WidgetLoader
 		});
 	}
 
-	#setOptions(options): WidgetLoader
+	#setOptions(options: WidgetLoaderOptions): WidgetLoader
 	{
 		this.#cache.set('options', options);
 
 		return this;
 	}
 
-	#getOptions(): Object
+	#getOptions(): WidgetLoaderOptions
 	{
 		return this.#cache.get('options', {});
 	}
 
 	createSkeletonFromConfig(config = {}): WidgetLoader
 	{
+		this.#prepareSkeleton();
+
 		if (config.header)
 		{
 			this.addHeaderSkeleton();
@@ -119,6 +165,37 @@ export class WidgetLoader
 		}
 
 		return this;
+	}
+
+	#prepareSkeleton(): void
+	{
+		const popupContainer = this.getPopup().getPopupContainer();
+		this.#removeSkeleton();
+		Dom.remove(this.#cache.get('popup-content'));
+		Dom.addClass(popupContainer, 'intranet-widget-skeleton__wrap');
+		this.setLoadingState(true);
+
+		const statusText = this.#getOptions().loadingStatusText;
+		if (Type.isStringFilled(statusText))
+		{
+			LiveAnnouncer.announce(statusText);
+		}
+	}
+
+	#removeSkeleton(): void
+	{
+		const selectors = [
+			'.intranet-widget-skeleton__row',
+			'.intranet-widget-skeleton__header',
+			'.intranet-widget-skeleton-avatar__header',
+			'.intranet-widget-skeleton__footer',
+		].join(', ');
+
+		this.getPopup()
+			.getPopupContainer()
+			.querySelectorAll(selectors)
+			.forEach((node) => Dom.remove(node))
+		;
 	}
 
 	addItemSkeleton(height: number): WidgetLoader
@@ -173,7 +250,7 @@ export class WidgetLoader
 	#createHeaderSkeleton(): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-widget-skeleton__header">
+			<div class="intranet-widget-skeleton__header" aria-hidden="true">
 				<div class="intranet-widget-skeleton__line"></div>
 			</div>
 		`;
@@ -182,7 +259,7 @@ export class WidgetLoader
 	#createItemSkeleton(height: number): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-widget-skeleton__row">
+			<div class="intranet-widget-skeleton__row" aria-hidden="true">
 				<div style="height: ${height}px" class="intranet-widget-skeleton__item">
 					<div style="width: 24px;height: 24px;border-radius: 6px;margin-right: 12px;" class="intranet-widget-skeleton__cube"></div>
 					<div style="max-width: 130px;height: 10px;" class="intranet-widget-skeleton__line"></div>
@@ -195,7 +272,7 @@ export class WidgetLoader
 	#createColumnSplitItemSkeleton(height: number, count: number): HTMLElement
 	{
 		const wrapper = Tag.render`
-			<div class="intranet-widget-skeleton__row">
+			<div class="intranet-widget-skeleton__row" aria-hidden="true">
 				<div style="height: ${height}px" class="intranet-widget-skeleton__item --column"></div>
 			</div>
 		`;
@@ -218,7 +295,7 @@ export class WidgetLoader
 	#createSplitItemSkeleton(height: number): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-widget-skeleton__row">
+			<div class="intranet-widget-skeleton__row" aria-hidden="true">
 				<div style="height: ${height}px" class="intranet-widget-skeleton__item">
 					<div class="intranet-widget-skeleton__nested-item">
 						<div class="intranet-widget-skeleton__circle intranet-widget-skeleton-split-item__icon"></div>
@@ -238,17 +315,16 @@ export class WidgetLoader
 		}
 
 		return Tag.render`
-		<div class="intranet-widget-skeleton__footer">
-			${lines}
-		</div>
-	`;
+			<div class="intranet-widget-skeleton__footer" aria-hidden="true">
+				${lines}
+			</div>
+		`;
 	}
-
 
 	#createAvatarWidgetHeaderSkeleton(config: Object): HTMLElement
 	{
 		const wrapper = Tag.render`
-			<div class="intranet-widget-skeleton-avatar__header">
+			<div class="intranet-widget-skeleton-avatar__header" aria-hidden="true">
 				<div class="intranet-widget-skeleton-avatar__header-info">
 					<div class="intranet-widget-skeleton__circle --avatar intranet-widget-skeleton-avatar__avatar"></div>
 					<div class="intranet-widget-skeleton-avatar__user-info">
@@ -322,7 +398,7 @@ export class WidgetLoader
 	#createApplicationSectionSkeleton(): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-widget-skeleton__row">
+			<div class="intranet-widget-skeleton__row" aria-hidden="true">
 				<div class="intranet-widget-skeleton__item --column">
 					<div class="intranet-widget-skeleton__nested-item intranet-widget-skeleton-application-section__wrapper">
 						<i class="intranet-widget-skeleton-application-section__qr ui-icon-set --o-qr-code"></i>

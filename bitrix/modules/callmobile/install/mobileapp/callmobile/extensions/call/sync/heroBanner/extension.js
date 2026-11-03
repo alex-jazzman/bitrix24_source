@@ -80,7 +80,7 @@ jn.define('call/sync/heroBanner', (require, exports, module) => {
 					text: props.description,
 					numberOfLines: 2,
 					style: {
-						...Typography.text5.getStyle(),
+						...Typography.text6.getStyle(),
 						color: Color.baseWhiteFixed.toHex(),
 					},
 				}),

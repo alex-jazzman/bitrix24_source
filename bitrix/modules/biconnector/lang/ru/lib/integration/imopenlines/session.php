@@ -56,3 +56,4 @@ $MESS['IMOPENLINES_SESSION_FIELD_STATUS_VALUE_CLOSE'] = "Закрыт";
 $MESS['IMOPENLINES_SESSION_FIELD_STATUS_VALUE_SPAM'] = "Спам";
 $MESS['IMOPENLINES_SESSION_FIELD_STATUS_VALUE_DUPLICATE'] = "Дубликат";
 $MESS['IMOPENLINES_SESSION_FIELD_STATUS_VALUE_SILENTLY_CLOSE'] = "Закрыт без уведомления";
+$MESS['IMOPENLINES_SESSION_TABLE_DESCRIPTION_FULL'] = "Данные о диалогах открытых линий: источники и каналы обращений, клиенты, операторы, статусы, время ответа, длительность и оценки клиентов.";

@@ -2,6 +2,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
 import { RecentType, EventType, type RecentTypeItem } from 'im.v2.const';
+import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { type ImModelRecentItem, type ImModelMessage, type ImModelChat } from 'im.v2.model';
@@ -124,13 +125,13 @@ export class RecentPullHandler
 		const { dialogId } = params;
 		Logger.warn('RecentPullHandler: handleChatHide', params);
 		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](dialogId);
-		if (!recentItem)
+		if (recentItem)
 		{
-			return;
+			void Core.getStore().dispatch('recent/hide', { dialogId });
+			EventEmitter.emit(EventType.recent.closeNestedList, { dialogId });
 		}
 
-		void Core.getStore().dispatch('recent/hide', { dialogId });
-		EventEmitter.emit(EventType.recent.closeNestedList, { dialogId });
+		LayoutManager.getInstance().clearCurrentChat(dialogId);
 	}
 
 	handleChatUserLeave(params: ChatUserLeaveParams)

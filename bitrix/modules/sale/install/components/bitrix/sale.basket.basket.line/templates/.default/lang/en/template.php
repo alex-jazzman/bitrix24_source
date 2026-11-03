@@ -12,6 +12,7 @@ $MESS["TSB1_SUBSCRIBE"] = "Watch list";
 $MESS["TSB1_SUM"] = "Total";
 $MESS["TSB1_DELETE"] = "Delete";
 $MESS["TSB1_2ORDER"] = "Check out";
+$MESS['TSB1_CART_ARIA'] = 'Cart, #COUNT#';
 $MESS["TSB1_LOGIN"] = "Log In";
 $MESS["TSB1_LOGOUT"] = "Log Out";
 $MESS["TSB1_REGISTER"] = "Register";

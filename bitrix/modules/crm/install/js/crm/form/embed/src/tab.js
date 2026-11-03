@@ -27,7 +27,11 @@ export class Tab {
 		return Tag.render`
 			<div class="crm-form-embed__customization-info">
 				<div class="crm-form-embed__customization-info--avatar">
-					<img src="/bitrix/js/crm/images/crm-form-info-avatar.svg" alt="avatar">
+					<img
+						src="/bitrix/js/crm/images/crm-form-info-avatar.webp"
+						srcset="/bitrix/js/crm/images/crm-form-info-avatar.webp 1x, /bitrix/js/crm/images/crm-form-info-avatar@2x.webp 2x"
+						alt="avatar"
+					>
 				</div>
 				<div class="crm-form-embed__customization-info--text ${withoutFrame ? '--without-frame' : ''}">${text}</div>
 			</div>

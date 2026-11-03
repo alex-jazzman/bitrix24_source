@@ -2,6 +2,7 @@
  * @module crm/timeline/ui/banner
  */
 jn.define('crm/timeline/ui/banner', (require, exports, module) => {
+	const { Text4, Text5 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { mergeImmutable } = require('utils/object');
 
@@ -33,20 +34,18 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 						opacity: style.innerOpacity,
 					},
 				},
-				Text({
+				Text4({
 					text: String(title),
 					style: {
-						fontSize: 15,
 						fontWeight: '400',
 						color: AppTheme.colors.base0,
 						opacity: 0.94,
 						marginBottom: description ? 4 : 0,
 					},
 				}),
-				description && Text({
+				description && Text5({
 					text: String(description),
 					style: {
-						fontSize: 13,
 						fontWeight: '400',
 						color: AppTheme.colors.base3,
 					},

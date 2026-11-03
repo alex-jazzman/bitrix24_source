@@ -68,6 +68,11 @@ export const TodoEditorResponsibleUserSelector = {
 		},
 	},
 
+	beforeUnmount(): void
+	{
+		this.clearDeselectUserTimeout();
+	},
+
 	methods: {
 		onSelectUser(event: BaseEvent): void
 		{
@@ -84,14 +89,22 @@ export const TodoEditorResponsibleUserSelector = {
 			}
 		},
 
-		onDeselectUser(): void
+		onDeselectUser(event: BaseEvent): void
 		{
-			setTimeout(() => {
-				const selectedItems = this.userSelectorDialog.getSelectedItems();
+			const dialog = event.getData().item.getDialog();
+			this.clearDeselectUserTimeout();
+			this.deselectUserTimeoutId = setTimeout(() => {
+				this.deselectUserTimeoutId = null;
+				if (this.userSelectorDialog !== dialog)
+				{
+					return;
+				}
+
+				const selectedItems = dialog.getSelectedItems();
 				if (selectedItems.length === 0)
 				{
 					this.userAvatarUrl = this.imageUrl;
-					this.userSelectorDialog.hide();
+					dialog.hide();
 					this.$Bitrix.eventEmitter.emit(
 						Events.EVENT_RESPONSIBLE_USER_CHANGE,
 						{
@@ -100,6 +113,12 @@ export const TodoEditorResponsibleUserSelector = {
 					);
 				}
 			}, 100);
+		},
+
+		clearDeselectUserTimeout(): void
+		{
+			clearTimeout(this.deselectUserTimeoutId);
+			this.deselectUserTimeoutId = null;
 		},
 
 		showUserDialog(): void
@@ -111,18 +130,12 @@ export const TodoEditorResponsibleUserSelector = {
 
 		resetToDefault(): void
 		{
+			this.clearDeselectUserTimeout();
 			this.userAvatarUrl = this.imageUrl;
 			if (this.userSelectorDialog)
 			{
-				const defaultUserItem = this.userSelectorDialog.getItem({
-					id: this.userId,
-					entityId: 'user',
-				});
-
-				if (defaultUserItem)
-				{
-					defaultUserItem.select(true);
-				}
+				this.userSelectorDialog.destroy();
+				this.userSelectorDialog = null;
 			}
 		},
 
@@ -152,6 +165,7 @@ export const TodoEditorResponsibleUserSelector = {
 						['user', this.userId],
 					],
 					events: {
+						onDestroy: this.clearDeselectUserTimeout,
 						'Item:onSelect': this.onSelectUser,
 						'Item:onDeselect': this.onDeselectUser,
 					},

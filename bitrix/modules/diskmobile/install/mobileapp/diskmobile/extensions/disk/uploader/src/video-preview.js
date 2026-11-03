@@ -4,6 +4,10 @@
 jn.define('disk/uploader/src/video-preview', (require, exports, module) => {
 	const { Filesystem, Reader } = require('native/filesystem');
 
+	/**
+	 * @param {DiskUploadTask} task
+	 * @return {Promise<DiskUploadVideoPreviewPart>}
+	 */
 	const createVideoPreviewMiddleware = async (task) => {
 		if (isVideo(task) && task.previewUrl)
 		{
@@ -25,12 +29,20 @@ jn.define('disk/uploader/src/video-preview', (require, exports, module) => {
 		return {};
 	};
 
+	/**
+	 * @param {DiskUploadTask} task
+	 * @return {boolean}
+	 */
 	const isVideo = (task) => {
 		const type = (task.type ? String(task.type) : '').toLowerCase();
 
 		return type === 'mp4' || type === 'mov';
 	};
 
+	/**
+	 * @param {string} localUrl
+	 * @return {Promise<string>}
+	 */
 	const getFileContent = async (localUrl) => {
 		const file = await Filesystem.getFile(localUrl);
 

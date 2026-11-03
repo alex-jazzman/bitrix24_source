@@ -1,7 +1,11 @@
-import { BaseMainTool } from './base-main-tool';
-import { Event, Dom } from 'main.core';
+import { Dom, Event, Tag, Text } from 'main.core';
+import { PopupManager } from 'main.popup';
 import { SalaryVacationMenu } from 'humanresources.hcmlink.salary-vacation-menu';
+
 import { Analytics } from '../analytics';
+import { BaseMainTool } from './base-main-tool';
+
+const SALARY_VACATION_MENU_ID = 'hcmLink-vacation-salary-menu';
 
 export class SalaryVacationTool extends BaseMainTool
 {
@@ -13,14 +17,26 @@ export class SalaryVacationTool extends BaseMainTool
 	getLayout(): HTMLElement
 	{
 		const container = super.getLayout();
+		const button = this.getButton();
 
 		if (this.#getMenu().isHidden())
 		{
 			return null;
 		}
 
+		Dom.attr(button, {
+			'aria-haspopup': 'menu',
+			'aria-expanded': 'false',
+		});
+
 		if (this.#getMenu().isDisabled())
 		{
+			const description = this.#getDisabledDescription();
+			Dom.append(description, container);
+			Dom.attr(button, {
+				'aria-disabled': 'true',
+				'aria-describedby': description.id,
+			});
 			Dom.attr(container, 'data-hint', '');
 			Dom.attr(container, 'data-hint-interactivity', '');
 			Event.bind(container, 'mouseenter', () => {
@@ -39,16 +55,42 @@ export class SalaryVacationTool extends BaseMainTool
 			});
 		}
 
-		return super.getLayout();
+		return container;
 	}
 
 	onClick(): void
 	{
-		Analytics.send(Analytics.EVENT_CLICK_SALARY);
-		if (!this.#getMenu().isHidden() && !this.#getMenu().isDisabled())
+		if (this.#getMenu().isHidden() || this.#getMenu().isDisabled())
 		{
-			this.#getMenu().show(this.getLayout());
+			return;
 		}
+
+		Analytics.send(Analytics.EVENT_CLICK_SALARY);
+		this.#getMenu().show(this.getButton());
+		this.#syncMenuState();
+	}
+
+	#syncMenuState(): void
+	{
+		const popup = PopupManager.getPopupById(SALARY_VACATION_MENU_ID);
+		if (!popup)
+		{
+			return;
+		}
+
+		this.cache.remember('salaryMenuStateHandlers', () => {
+			popup.subscribe('onShow', () => {
+				Dom.attr(this.getButton(), 'aria-expanded', 'true');
+			});
+			popup.subscribe('onClose', () => {
+				Dom.attr(this.getButton(), 'aria-expanded', 'false');
+			});
+
+			return true;
+		});
+
+		Dom.attr(this.getButton(), 'aria-expanded', popup.isShown() ? 'true' : 'false');
+		Dom.attr(popup.getPopupContainer(), 'aria-label', this.getTitle());
 	}
 
 	#getMenu(): SalaryVacationMenu
@@ -58,7 +100,7 @@ export class SalaryVacationTool extends BaseMainTool
 		});
 	}
 
-	#getHintInstance(): Manager
+	#getHintInstance()
 	{
 		return this.cache.remember('hint', () => {
 			return BX.UI.Hint.createInstance({
@@ -66,6 +108,19 @@ export class SalaryVacationTool extends BaseMainTool
 					fixed: true,
 				},
 			});
+		});
+	}
+
+	#getDisabledDescription(): HTMLElement
+	{
+		return this.cache.remember('disabledDescription', () => {
+			const hintContainer = Tag.render`<div>${this.options.disabledHint}</div>`;
+
+			return Tag.render`
+				<visually-hidden id="intranet-avatar-widget-salary-vacation-disabled-description">
+					${Text.encode(hintContainer.textContent)}
+				</visually-hidden>
+			`;
 		});
 	}
 

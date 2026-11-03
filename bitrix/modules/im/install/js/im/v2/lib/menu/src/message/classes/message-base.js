@@ -4,7 +4,7 @@ import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { MenuItemDesign, type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu';
 
 import { Core } from 'im.v2.application.core';
-import { EventType, PlacementType, ActionByRole, PromoId, type ApplicationContext } from 'im.v2.const';
+import { EventType, PlacementType, ActionByRole, PromoId, MessageComponent, type ApplicationContext } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatManager } from 'im.v2.lib.chat';
@@ -20,6 +20,7 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { PromoManager } from 'im.v2.lib.promo';
 import { Utils } from 'im.v2.lib.utils';
 import { type ImModelMessage, type ImModelChat, type ImModelFile } from 'im.v2.model';
+import { AiTaskService } from 'im.v2.provider.service.ai-task';
 import { DiskService } from 'im.v2.provider.service.disk';
 import { MessageService } from 'im.v2.provider.service.message';
 
@@ -39,6 +40,27 @@ export const NestedMenuSectionCode = {
 	third: 'third',
 };
 
+// Where the item is declared by the list that builds it. `nested` alone does not mean the item is
+// rendered inside a submenu: a short nested list is flattened onto the top level.
+export const MenuItemPlacement = {
+	topLevel: 'top_level',
+	nested: 'nested',
+};
+
+type BuilderBlock = { type: string, fileIds?: number[], fileId?: number };
+
+const fileIdsFromList = (block: BuilderBlock): number[] => {
+	return Type.isArrayFilled(block.fileIds) ? block.fileIds : [];
+};
+
+// Builder block files are not duplicated in `message.files`, so the menu joins both sources
+// itself. One extractor per block type that carries files; other types contribute nothing.
+const FileIdsByBlockType = {
+	file: fileIdsFromList,
+	gallery: fileIdsFromList,
+	audio: (block: BuilderBlock): number[] => (Type.isNumber(block.fileId) ? [block.fileId] : []),
+};
+
 export class MessageMenu extends BaseMenu
 {
 	emitter: EventEmitter;
@@ -46,6 +68,8 @@ export class MessageMenu extends BaseMenu
 	diskService: DiskService;
 
 	maxPins: number = 20;
+
+	#areNestedItemsInSubMenu: boolean = false;
 
 	constructor(applicationContext: ApplicationContext)
 	{
@@ -79,7 +103,8 @@ export class MessageMenu extends BaseMenu
 			this.getDownloadFileItem(),
 			this.getForwardItem(),
 			this.getAskCopilotItem(),
-			this.getCreateTaskItem(),
+			this.getCreateAiTaskItem(),
+			this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
 		];
 
@@ -335,7 +360,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getCreateTaskItem(): ?MenuItemOptions
+	getCreateTaskItem(placement: string = MenuItemPlacement.topLevel): ?MenuItemOptions
 	{
 		if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isCurrentUserGuest())
 		{
@@ -346,10 +371,50 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_TASK_MSGVER_1'),
 			icon: OutlineIcons.TASK,
 			onClick: () => {
-				Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId);
+				Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId, {
+					isInNestedMenu: this.#isItemInNestedMenu(placement),
+				});
 
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createTaskForMessage(this.context.id);
+			},
+		};
+	}
+
+	isAiTaskFromMessageAvailable(): boolean
+	{
+		return FeatureManager.isFeatureAvailable(Feature.isAiTaskFromMessageAvailable);
+	}
+
+	getCreateAiTaskItem(): ?MenuItemOptions
+	{
+		if (!this.isAiTaskFromMessageAvailable())
+		{
+			return null;
+		}
+
+		if (
+			this.isDeletedMessage()
+			|| this.#isStickerMessage()
+			|| this.#isSystemMessage()
+			|| this.#isCurrentUserGuest()
+		)
+		{
+			return null;
+		}
+
+		const isBGPTv2 = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+
+		return {
+			title: Loc.getMessage('IM_LIB_MENU_CREATE_AI_TASK'),
+			icon: OutlineIcons.AI_STARS,
+			design: isBGPTv2 ? MenuItemDesign.BitrixGPT : MenuItemDesign.Copilot,
+			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onCreateAiTask(this.context.dialogId);
+
+				const messageId = this.context.id;
+				const chatId = this.context.chatId;
+				void (new AiTaskService()).createForMessage(messageId, { chatId });
 			},
 		};
 	}
@@ -498,27 +563,30 @@ export class MessageMenu extends BaseMenu
 
 	getDownloadFileItem(): ?MenuItemOptions
 	{
-		if (!Type.isArrayFilled(this.context.files))
+		const files = this.#getAvailableFiles();
+		if (!Type.isArrayFilled(files))
 		{
 			return null;
 		}
 
-		if (this.#isSingleFile())
+		if (files.length === 1)
 		{
-			return this.#getDownloadSingleFileItem();
+			return this.#getDownloadSingleFileItem(files[0]);
 		}
 
-		return this.#getDownloadSeveralFilesItem();
+		return this.#getDownloadSeveralFilesItem(files);
 	}
 
 	getSaveToDiskItem(): ?MenuItemOptions
 	{
-		if (!Type.isArrayFilled(this.context.files))
+		const files = this.#getAvailableFiles();
+		if (!Type.isArrayFilled(files))
 		{
 			return null;
 		}
 
-		const menuItemText = this.#isSingleFile()
+		const isSingleFile = files.length === 1;
+		const menuItemText = isSingleFile
 			? Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ON_DISK_MSGVER_1')
 			: Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ALL_ON_DISK');
 
@@ -531,8 +599,15 @@ export class MessageMenu extends BaseMenu
 					dialogId: this.context.dialogId,
 				});
 
-				await this.diskService.save(this.context.files);
-				Notifier.file.onDiskSaveComplete(this.#isSingleFile());
+				try
+				{
+					await this.diskService.save(files.map((file) => file.id));
+					Notifier.file.onDiskSaveComplete(isSingleFile);
+				}
+				catch
+				{
+					Notifier.onDefaultError();
+				}
 			}.bind(this),
 		};
 	}
@@ -540,7 +615,9 @@ export class MessageMenu extends BaseMenu
 	getAdditionalItems(): MenuItemOptions[]
 	{
 		const items = this.getNestedItems();
-		if (this.#needNestedMenu(items))
+		this.#areNestedItemsInSubMenu = this.#needNestedMenu(items);
+
+		if (this.#areNestedItemsInSubMenu)
 		{
 			return [{
 				title: Loc.getMessage('IM_DIALOG_CHAT_MENU_MORE'),
@@ -563,6 +640,7 @@ export class MessageMenu extends BaseMenu
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
+			this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null,
 			this.getCreateMeetingItem(),
 		];
 
@@ -601,7 +679,20 @@ export class MessageMenu extends BaseMenu
 
 	#isStickerMessage(): boolean
 	{
-		return this.store.getters['stickers/messages/isSticker'](this.context.id);
+		// A network sticker has no local pack, so it never gets a record in the sticker store.
+		return this.store.getters['stickers/messages/isSticker'](this.context.id)
+			|| this.context.componentId === MessageComponent.NetworkStickerMessage
+		;
+	}
+
+	#isSystemMessage(): boolean
+	{
+		return this.context.authorId === 0;
+	}
+
+	#isItemInNestedMenu(placement: string): boolean
+	{
+		return placement === MenuItemPlacement.nested && this.#areNestedItemsInSubMenu;
 	}
 
 	#needNestedMenu(additionalItems: MenuItemOptions[]): boolean
@@ -612,14 +703,35 @@ export class MessageMenu extends BaseMenu
 		return menuItems.length >= NESTED_MENU_MIN_ITEMS;
 	}
 
-	#getFirstFile(): ?ImModelFile
+	// Block files join the menu only under the option that renders the blocks themselves. With the
+	// option off the menu stays what it was before the blocks feature: plain attachments only.
+	#getBlockFileIds(): number[]
 	{
-		return this.store.getters['files/get'](this.context.files[0]);
+		if (!FeatureManager.isFeatureAvailable(Feature.isMessageFileAudioBlockAvailable))
+		{
+			return [];
+		}
+
+		const blocks: BuilderBlock[] = this.store.getters['messages/builder/getBlocks'](this.context.id) ?? [];
+
+		return blocks.flatMap((block) => FileIdsByBlockType[block.type]?.(block) ?? []);
 	}
 
-	#isSingleFile(): boolean
+	// Every file of the message: plain attachments plus the files of its builder blocks.
+	#allFileIds(): number[]
 	{
-		return this.context.files.length === 1;
+		const messageFileIds = Type.isArray(this.context.files) ? this.context.files : [];
+
+		return [...new Set([...messageFileIds, ...this.#getBlockFileIds()])];
+	}
+
+	// A block can point at a file the store has no model for (deleted, no access). Such a file is not
+	// rendered in the message either, so the file items are built from the resolved models only.
+	#getAvailableFiles(): ImModelFile[]
+	{
+		return this.#allFileIds()
+			.map((fileId) => this.store.getters['files/get'](fileId))
+			.filter((file) => file !== null);
 	}
 
 	async #onDelete()
@@ -655,10 +767,8 @@ export class MessageMenu extends BaseMenu
 		return false;
 	}
 
-	#getDownloadSingleFileItem(): MenuItemOptions
+	#getDownloadSingleFileItem(file: ImModelFile): MenuItemOptions
 	{
-		const file = this.#getFirstFile();
-
 		return {
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILE'),
 			icon: OutlineIcons.DOWNLOAD,
@@ -673,12 +783,8 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	#getDownloadSeveralFilesItem(): MenuItemOptions
+	#getDownloadSeveralFilesItem(files: ImModelFile[]): MenuItemOptions
 	{
-		const files: ImModelFile[] = this.context.files.map((fileId) => {
-			return this.store.getters['files/get'](fileId);
-		});
-
 		return {
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILES'),
 			icon: OutlineIcons.DOWNLOAD,

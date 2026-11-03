@@ -1,6 +1,12 @@
 // @flow
 
-import { type CallView } from 'call.lib.view-contract';
+import {
+	type BlockButtonsOptions,
+	type ButtonPopupKind,
+	type CallView,
+	type CallWindowNameTypeValue,
+	type CloudRecordInfoPopupOptions,
+} from 'call.lib.view-contract';
 import { type View } from './view';
 
 export class LegacyCallViewAdapter implements CallView
@@ -286,19 +292,24 @@ export class LegacyCallViewAdapter implements CallView
 		this.wrappedView.setButtonActive(buttonName, isActive);
 	}
 
+	setButtonPopupKind(buttonName: string, kind: ButtonPopupKind): void
+	{
+		this.wrappedView.setButtonPopupKind(buttonName, kind);
+	}
+
 	setButtonCounter(buttonName: string, counter: number): void
 	{
 		this.wrappedView.setButtonCounter(buttonName, counter);
 	}
 
-	blockButtons(buttons: string[]): void
+	blockButtons(buttons: string[], options?: BlockButtonsOptions): void
 	{
-		this.wrappedView.blockButtons(buttons);
+		this.wrappedView.blockButtons(buttons, options);
 	}
 
-	unblockButtons(buttons: string[]): void
+	unblockButtons(buttons: string[], options?: BlockButtonsOptions): void
 	{
-		this.wrappedView.unblockButtons(buttons);
+		this.wrappedView.unblockButtons(buttons, options);
 	}
 
 	blockAddUser(): void
@@ -311,24 +322,24 @@ export class LegacyCallViewAdapter implements CallView
 		this.wrappedView.unblockAddUser();
 	}
 
-	blockSwitchCamera(): void
+	blockSwitchCamera(options?: BlockButtonsOptions): void
 	{
-		this.wrappedView.blockSwitchCamera();
+		this.wrappedView.blockSwitchCamera(options);
 	}
 
-	unblockSwitchCamera(): void
+	unblockSwitchCamera(options?: BlockButtonsOptions): void
 	{
-		this.wrappedView.unblockSwitchCamera();
+		this.wrappedView.unblockSwitchCamera(options);
 	}
 
-	blockSwitchMicrophone(): void
+	blockSwitchMicrophone(options?: BlockButtonsOptions): void
 	{
-		this.wrappedView.blockSwitchMicrophone();
+		this.wrappedView.blockSwitchMicrophone(options);
 	}
 
-	unblockSwitchMicrophone(): void
+	unblockSwitchMicrophone(options?: BlockButtonsOptions): void
 	{
-		this.wrappedView.unblockSwitchMicrophone();
+		this.wrappedView.unblockSwitchMicrophone(options);
 	}
 
 	blockScreenSharing(): void
@@ -405,6 +416,26 @@ export class LegacyCallViewAdapter implements CallView
 		this.wrappedView.setTitle(title);
 	}
 
+	setAccessibleName(name: string, type: CallWindowNameTypeValue): void
+	{
+		this.wrappedView.setAccessibleName(name, type);
+	}
+
+	focusWindow(options?: {force?: boolean}): void
+	{
+		this.wrappedView.focusWindow(options);
+	}
+
+	releaseFocusBeforeHide(): boolean
+	{
+		return this.wrappedView.releaseFocusBeforeHide();
+	}
+
+	restoreFocusAfterHide(): void
+	{
+		this.wrappedView.restoreFocusAfterHide();
+	}
+
 	setMaxWidth(maxWidth: number | null): void
 	{
 		this.wrappedView.setMaxWidth(maxWidth);
@@ -433,6 +464,25 @@ export class LegacyCallViewAdapter implements CallView
 	toggleStatePictureInPictureCallWindow(isActive: boolean): void
 	{
 		this.wrappedView.toggleStatePictureInPictureCallWindow(isActive);
+	}
+
+	// endregion
+
+	// region Call environment
+
+	notifyConnectionLost(): void
+	{
+		this.wrappedView.notifyConnectionLost();
+	}
+
+	notifyBroadcastRightLost(): void
+	{
+		this.wrappedView.notifyBroadcastRightLost();
+	}
+
+	notifySpeechSignal(signal: {userId: number, local?: boolean}, speaking: boolean): void
+	{
+		this.wrappedView.notifySpeechSignal(signal, speaking);
 	}
 
 	// endregion
@@ -552,9 +602,13 @@ export class LegacyCallViewAdapter implements CallView
 		this.wrappedView.showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId);
 	}
 
-	showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled: boolean, callId: number): void
+	showCloudRecordInfoPopup(
+		isCloudRecordFeaturesEnabled: boolean,
+		callId: number,
+		options?: CloudRecordInfoPopupOptions,
+	): void
 	{
-		this.wrappedView.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
+		this.wrappedView.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId, options);
 	}
 
 	showCommonRecordMenuPopup(isDesktopRecord?: boolean): void
@@ -577,9 +631,9 @@ export class LegacyCallViewAdapter implements CallView
 		this.wrappedView.showCopilotErrorNotify(errorType);
 	}
 
-	showCopilotNotify(callId?: number, errorCode?: string): void
+	showCopilotNotify(callId?: number, errorCode?: string, notifyText?: string | null): void
 	{
-		this.wrappedView.showCopilotNotify(callId, errorCode);
+		this.wrappedView.showCopilotNotify(callId, errorCode, notifyText);
 	}
 
 	showCopilotResultNotify(): void

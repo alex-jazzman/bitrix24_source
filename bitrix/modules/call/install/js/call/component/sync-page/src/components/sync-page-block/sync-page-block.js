@@ -1,6 +1,6 @@
 import './sync-page-block.css';
 
-const VALID_SIZES = ['large', 'medium', 'small'];
+const VALID_SIZES = new Set(['large', 'medium', 'small']);
 const VALID_ACTION_TYPES = [
 	'start-call',
 	'join-meeting',
@@ -17,7 +17,7 @@ export const SyncPageBlock = {
 		size: {
 			type: String,
 			required: true,
-			validator: (value) => VALID_SIZES.includes(value),
+			validator: (value) => VALID_SIZES.has(value),
 		},
 		// block identifier emitted on click and routed in the service actionMap (required for every size)
 		actionType: {
@@ -41,6 +41,7 @@ export const SyncPageBlock = {
 		},
 		badge: {
 			type: String,
+			default: '',
 		},
 		disabled: {
 			type: Boolean,
@@ -77,6 +78,7 @@ export const SyncPageBlock = {
 			:tabindex="tabIndex"
 			:aria-disabled="disabled ? 'true' : null"
 			:aria-label="title"
+			:data-testid="'call-sync-page-block-' + actionType"
 			@click="onClick"
 			@keydown.enter="onClick"
 			@keydown.space.prevent="onClick"

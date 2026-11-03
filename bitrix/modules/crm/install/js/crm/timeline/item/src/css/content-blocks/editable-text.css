@@ -21,6 +21,71 @@
 	margin-right: 20px;
 }
 
+/*region Reflow: shrink the text block's spacing at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The block has 77px of horizontal spacing: padding-left 17 + padding-right 40 + margin-right 20.
+	On desktop this goes unnoticed; at narrow widths it eats up half of the available space.
+	Measured at a card area width of 241px: wrapper 169px, the text is left with 92px —
+	a word and a half per line.
+	Below the breakpoint we shrink the padding and drop the right margin: the text gets ~141px.
+	The rule comes before the --is-edit/--comment declarations, so their vertical
+	spacing is not affected — only the horizontal spacing changes here.
+
+	The 40px of padding-right were the reserve for three absolutely positioned buttons:
+	_edit-btn (right: 17px, an 18px icon — it takes up 17…35px from the right edge),
+	_clear-btn and _copy-btn (right: 9px). Shrinking the padding alone would run the text
+	under the pencil icon — the very 1.4.10 overlap this MR fixes elsewhere, and not an edge
+	case: in editable-description the pencil is shown in any view state, not only for long
+	texts. So below the breakpoint the buttons leave the absolute layer and join the flow,
+	the same way the deal's "actions" button does in todo-editor-v2: they line up in a row
+	at the top right, the content takes a row of its own, and no reserve is needed.
+	The buttons precede the content in the DOM, so in the flow they land above it, not below.
+	_collapse-btn keeps its absolute positioning: it is meant to sit astride the bottom edge,
+	on top of the ::after fade, and the text under it is already clipped by max-height and
+	reachable through the button itself. That is its design, not an overlap this rule created —
+	measured, it covers more of the content box at full width (6184px²) than below the
+	breakpoint (1390px²).
+	The rule that drops the buttons out of the absolute layer lives at the end of the file:
+	their position: absolute is declared below (lines ~102 and ~243) with the same specificity
+	(0,1,0), so placed here it would lose by source order — measured on the stand, the pencil
+	stayed absolute and kept a 705px² overlap with the text.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__editable-text {
+		--crm-timeline__editable-text_padding-left: 12px;
+		--crm-timeline__editable-text_padding-right: 16px;
+		margin-right: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.crm-timeline__editable-text_inner {
+		flex: 0 0 100%;
+	}
+}
+/*
+	Second trigger, same fix, added for consistency with the other reflow rules in this
+	extension - see layout/header/title.css and decisions.md (CRM Entity Card Split) for why
+	@media alone misses the CRM Entity Card Split handle narrowing the column, and how the
+	480px threshold / crm-entity-stream container name were chosen.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__editable-text {
+		--crm-timeline__editable-text_padding-left: 12px;
+		--crm-timeline__editable-text_padding-right: 16px;
+		margin-right: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.crm-timeline__editable-text_inner {
+		flex: 0 0 100%;
+	}
+}
+/*endregion*/
+
 .crm-timeline__editable-text.--is-edit,
 .crm-timeline__editable-text_wrapper.--comment .crm-timeline__editable-text {
 	--crm-timeline__editable-text_padding-top: 11px;
@@ -180,6 +245,22 @@
 	padding: 0;
 	border: none;
 	outline: none;
+	background: none; /* reset native button background (span -> button) */
+}
+
+/* Visible keyboard focus for the icon buttons and the collapse toggle (WCAG 2.4.7) */
+.crm-timeline__text_copy-btn:focus-visible,
+.crm-timeline__editable-text_clear-btn:focus-visible,
+.crm-timeline__editable-text_edit-btn:focus-visible,
+.crm-timeline__editable-text_text-edit-icon:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.crm-timeline__editable-text_collapse-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
 }
 
 .crm-timeline__editable-text_clear-btn,
@@ -267,3 +348,39 @@
 .crm-timeline__editable-text_action:first-child {
 	margin-right: 3px;
 }
+
+/*region Reflow: the text block's icon buttons join the flow (WCAG 2.1 AA, 1.4.10)*/
+/*
+	Must come after the position: absolute declarations of these buttons above — same
+	specificity (0,1,0), so source order decides. See the reasoning in the region near the
+	top of the file, where the rest of the narrow-width spacing is set.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__text_copy-btn,
+	.crm-timeline__editable-text_clear-btn,
+	.crm-timeline__editable-text_edit-btn {
+		position: static;
+		top: auto;
+		right: auto;
+		margin-left: 8px;
+	}
+}
+/*
+	Second trigger, same fix, added for consistency with the other reflow rules in this
+	extension - see layout/header/title.css and decisions.md (CRM Entity Card Split) for why
+	@media alone misses the CRM Entity Card Split handle narrowing the column, and how the
+	480px threshold / crm-entity-stream container name were chosen. Must stay after the
+	position: absolute declarations above for the same source-order reason as the @media
+	block right above it.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__text_copy-btn,
+	.crm-timeline__editable-text_clear-btn,
+	.crm-timeline__editable-text_edit-btn {
+		position: static;
+		top: auto;
+		right: auto;
+		margin-left: 8px;
+	}
+}
+/*endregion*/

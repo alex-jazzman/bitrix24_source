@@ -51,13 +51,16 @@ export const FRAME_COLOR_NAMES = {
 	PINK: 'pink',
 };
 
+// Consumed by the canvas map as the palette of its frames, the same way ICON_BG_COLORS is: the
+// literal written inside var() is what a theme leaving the token undeclared falls back to, and
+// without it every frame would collapse onto the neutral color of the map.
 export const FRAME_BG_COLORS = {
-	[FRAME_COLOR_NAMES.GREY]: 'var(--designer-bp-frame-grey-bg)',
-	[FRAME_COLOR_NAMES.ORANGE]: 'var(--designer-bp-frame-orange-bg)',
-	[FRAME_COLOR_NAMES.GREEN]: 'var(--designer-bp-frame-green-bg)',
-	[FRAME_COLOR_NAMES.BLUE]: 'var(--designer-bp-frame-blue-bg)',
-	[FRAME_COLOR_NAMES.PURPLE]: 'var(--designer-bp-frame-purple-bg)',
-	[FRAME_COLOR_NAMES.PINK]: 'var(--designer-bp-frame-pink-bg)',
+	[FRAME_COLOR_NAMES.GREY]: 'var(--designer-bp-frame-grey-bg, #F2F6F7)',
+	[FRAME_COLOR_NAMES.ORANGE]: 'var(--designer-bp-frame-orange-bg, #FCF8E8)',
+	[FRAME_COLOR_NAMES.GREEN]: 'var(--designer-bp-frame-green-bg, #DDFFEF)',
+	[FRAME_COLOR_NAMES.BLUE]: 'var(--designer-bp-frame-blue-bg, #E7F4FF)',
+	[FRAME_COLOR_NAMES.PURPLE]: 'var(--designer-bp-frame-purple-bg, #F6ECFF)',
+	[FRAME_COLOR_NAMES.PINK]: 'var(--designer-bp-frame-pink-bg, #FFE8E8)',
 };
 
 export const FRAME_BORDER_COLORS = {
@@ -71,18 +74,31 @@ export const FRAME_BORDER_COLORS = {
 
 export const BLOCK_TOAST_TYPES: { [string]: string } = Object.freeze({
 	ACTIVITY_PUBLIC_ERROR: 'activity-public-error',
+	// The summary of one insertion from the library: what was skipped and what is left to tune.
+	FRAGMENT_INSERT_OUTCOME: 'fragment-insert-outcome',
 });
 
+// Consumed by the canvas map as the palette of its blocks. The map resolves each reference
+// against the cascade, so the palette follows the theme; the literal written inside var() is
+// what a theme leaving the token undeclared falls back to.
 export const ICON_BG_COLORS: { [number]: string } = {
-	0: 'var(--designer-bp-ai-bg)',
-	1: 'var(--designer-bp-entities-bg)',
-	2: 'var(--designer-bp-employe-bg)',
-	3: 'var(--designer-bp-technical-bg)',
-	4: 'var(--designer-bp-communication-bg)',
-	5: 'var(--designer-bp-storage-bg)',
-	6: 'var(--designer-bp-afiliate-bg)',
-	7: 'var(--designer-bp-ai-bg)',
-	8: 'var(--designer-bp-ai-bg)',
+	0: 'var(--designer-bp-ai-bg, #ECDFFF)',
+	1: 'var(--designer-bp-entities-bg, #E5F1FF)',
+	2: 'var(--designer-bp-employe-bg, #FFEECC)',
+	3: 'var(--designer-bp-technical-bg, #EAEEF4)',
+	4: 'var(--designer-bp-communication-bg, #D8FFCB)',
+	5: 'var(--designer-bp-storage-bg, #E3F5ED)',
+	6: 'var(--designer-bp-afiliate-bg, #F2F8D8)',
+	7: 'var(--designer-bp-ai-bg, #ECDFFF)',
+	8: 'var(--designer-bp-ai-bg, #ECDFFF)',
 };
 
 export const BLOCK_TOP_CONTEXT_MENU_PREFIX_NAME = 'block_top_menu_';
+
+/**
+ * The graph in the editor was replaced by another one — a load, a reload, a version snapshot — so
+ * whatever was read from the previous graph belongs to no graph now.
+ */
+export const DIAGRAM_EVENTS: { [string]: string } = Object.freeze({
+	GRAPH_REPLACED: 'BizprocDesigner.Diagram.GraphReplaced',
+});

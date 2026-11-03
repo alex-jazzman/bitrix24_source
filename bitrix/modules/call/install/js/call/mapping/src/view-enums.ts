@@ -32,6 +32,7 @@ export const ViewEvent = Object.freeze({
 	onCommonRecordMenu: 'onCommonRecordMenu',
 	onPiPBodyClick: 'onPiPBodyClick',
 	onFullScreenChange: 'onFullScreenChange',
+	onPushToTalkShortPress: 'onPushToTalkShortPress',
 });
 
 export const ViewLayout = Object.freeze({

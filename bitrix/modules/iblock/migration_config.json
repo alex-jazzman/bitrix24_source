@@ -1,0 +1,16 @@
+{
+    "defaultTableName": "b_iblock",
+    "installDirectoriesMapping": {
+        "install/admin": "admin",
+        "install/components": "components",
+        "install/gadgets": "gadgets",
+        "install/images": "images/iblock",
+        "install/js": "js",
+        "install/panel": "panel",
+        "install/themes": "themes",
+        "install/tools": "tools"
+    },
+    "publicDirectoriesMapping": {
+        "install/public/bitrix": "bitrix"
+    }
+}

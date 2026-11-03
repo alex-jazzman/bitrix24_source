@@ -12,6 +12,7 @@ return [
 		'im.v2.application.core',
 		'im.v2.component.dialog.chat',
 		'im.v2.component.elements.hint',
+		'im.v2.component.message.elements',
 		'im.v2.const',
 		'im.v2.lib.analytics',
 		'im.v2.lib.confirm',
@@ -26,6 +27,10 @@ return [
 		'im.v2.provider.service.settings',
 		'main.core',
 		'ui.forms',
+		'ui.icon-set.api.vue',
+		'ui.reaction.item',
+		'ui.reaction.item.vue',
+		'ui.reaction.picker',
 	],
 	'skip_core' => false,
 ];

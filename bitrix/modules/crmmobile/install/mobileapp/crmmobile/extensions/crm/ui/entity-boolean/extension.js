@@ -2,6 +2,7 @@
  * @module crm/ui/entity-boolean
  */
 jn.define('crm/ui/entity-boolean', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { BooleanField } = require('layout/ui/fields/boolean');
 	const { TypeId } = require('crm/type');
@@ -97,10 +98,9 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 					},
 				},
 				this.renderImage(enable),
-				Text({
+				Text3({
 					style: {
 						color,
-						fontSize: 16,
 						flexShrink: 2,
 					},
 					text: enable ? text : disabledText || text,

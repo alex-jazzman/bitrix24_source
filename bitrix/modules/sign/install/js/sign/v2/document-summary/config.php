@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/document-summary.bundle.js',
 	'rel' => [
 		'main.core',
-		'sign.v2.api',
 		'main.core.events',
+		'sign.v2.api',
 	],
 	'skip_core' => false,
 ];

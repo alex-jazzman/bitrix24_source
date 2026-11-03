@@ -2,6 +2,14 @@ import { Loc } from 'main.core';
 
 import { applyCellInlineRules } from './inline-rules.js';
 import { MARKDOWN_TABLE_PATTERN, MARKDOWN_TABLE_GUARD_PREFIX, MARKDOWN_PLACEHOLDER_SUFFIX } from '../const.js';
+import { type BbTagProtector } from '../utils/bb-tag-protector.js';
+import { type UrlProtector } from '../utils/url-protector.js';
+
+type ConvertTablesOptions = {
+	mode?: string,
+	urlProtector?: ?UrlProtector,
+	bbTagProtector?: ?BbTagProtector,
+};
 
 // GFM allows one or more dashes per delimiter cell (`| - |` is valid), so accept `-+`
 // rather than `-{3,}`. Safe against false positives: this is only tested as the row
@@ -26,9 +34,7 @@ export class TableMarkerProtector
 	#nonce = '';
 	#pattern: RegExp;
 
-	// The per-render nonce makes the placeholder (####MD_TABLEGUARD_<nonce>_N####)
-	// unguessable, so restore() never expands a literal copy the sender typed — only the
-	// tables this instance actually stored (amplification-DoS defense; see utils/nonce.js).
+	// Placeholder: ####MD_TABLEGUARD_<nonce>_N####. Why it carries a nonce - utils/nonce.js.
 	constructor(nonce: string = '')
 	{
 		this.#nonce = nonce;
@@ -170,9 +176,9 @@ function defangCellTableTags(text: string): string
 		.replace(/(####MD_ESC_\d+####)(\/?(?:table|tr|th|td))]/gi, (match, esc, tag) => `${esc}\u200B${tag}]`);
 }
 
-function encodeCell(cell: string): string
+function encodeCell(cell: string, urlProtector: ?UrlProtector, bbTagProtector: ?BbTagProtector): string
 {
-	return defangCellTableTags(applyCellInlineRules(cell));
+	return defangCellTableTags(applyCellInlineRules(cell, { urlProtector, bbTagProtector }));
 }
 
 /**
@@ -184,15 +190,20 @@ function encodeCell(cell: string): string
  * no encodable chars).
  *
  * @param {{ headers: string[], rows: string[][] }} tableData
+ * @param {?UrlProtector} urlProtector - UrlProtector of the current render; null lets every cell
+ *   protect and restore its own URLs (convertTables passes null in the standalone mode)
+ * @param {?BbTagProtector} bbTagProtector - BbTagProtector of the current render, consulted by the
+ *   label acceptor of the cell link rule (createLinkLabelAcceptor)
  * @returns {string}
  */
-function encodeTableBb(tableData: Object): string
+function encodeTableBb(tableData: Object, urlProtector: ?UrlProtector, bbTagProtector: ?BbTagProtector): string
 {
 	const { headers, rows } = tableData;
 
-	const head = `[tr]${headers.map((cell) => `[th]${encodeCell(cell)}[/th]`).join('')}[/tr]`;
+	const encode = (cell: string): string => encodeCell(cell, urlProtector, bbTagProtector);
+	const head = `[tr]${headers.map((cell) => `[th]${encode(cell)}[/th]`).join('')}[/tr]`;
 	const body = rows
-		.map((cells) => `[tr]${cells.map((cell) => `[td]${encodeCell(cell)}[/td]`).join('')}[/tr]`)
+		.map((cells) => `[tr]${cells.map((cell) => `[td]${encode(cell)}[/td]`).join('')}[/tr]`)
 		.join('');
 
 	return `[table]${head}${body}[/table]`;
@@ -204,31 +215,37 @@ function encodeTableBb(tableData: Object): string
  * - simplify: a localized plain placeholder for preview surfaces.
  *
  * @param {{ headers: string[], rows: string[][] }} tableData
- * @param {object} options
+ * @param {ConvertTablesOptions} options
  * @param {string} options.mode
+ * @param {?UrlProtector} [options.urlProtector] - forwarded to encodeTableBb in the decode mode
+ * @param {?BbTagProtector} [options.bbTagProtector] - forwarded the same way
  * @returns {string}
  */
-function formatTable(tableData: Object, options: Object): string
+function formatTable(tableData: Object, options: ConvertTablesOptions): string
 {
 	if (options.mode === 'simplify')
 	{
 		return `[${Loc.getMessage('IM_PARSER_MARKDOWN_TABLE_PLACEHOLDER')}]`;
 	}
 
-	return encodeTableBb(tableData);
+	return encodeTableBb(tableData, options.urlProtector, options.bbTagProtector);
 }
 
 /**
  * Find and convert GFM tables in text to canonical [table] BB-code.
  *
  * @param {string} text
- * @param {object} [options]
+ * @param {ConvertTablesOptions} [options]
  * @param {string} [options.mode] - 'decode' or 'simplify'
+ * @param {?UrlProtector} [options.urlProtector] - UrlProtector of the current render, forwarded to
+ *   every cell; null lets each cell protect and restore its own URLs
+ * @param {?BbTagProtector} [options.bbTagProtector] - BbTagProtector of the current render,
+ *   forwarded the same way
  * @returns {string}
  */
-export function convertTables(text: string, options: Object = {}): string
+export function convertTables(text: string, options: ConvertTablesOptions = {}): string
 {
-	const { mode = 'decode' } = options;
+	const { mode = 'decode', urlProtector = null, bbTagProtector = null } = options;
 
 	// A GFM table is impossible without a pipe — skip the per-line scan otherwise.
 	if (!text.includes('|'))
@@ -245,7 +262,9 @@ export function convertTables(text: string, options: Object = {}): string
 		const table = tryParseTable(lines, i);
 		if (table)
 		{
-			result.push(formatTable({ headers: table.headers, rows: table.rows }, { mode }));
+			result.push(
+				formatTable({ headers: table.headers, rows: table.rows }, { mode, urlProtector, bbTagProtector }),
+			);
 			i = table.endIndex;
 		}
 		else

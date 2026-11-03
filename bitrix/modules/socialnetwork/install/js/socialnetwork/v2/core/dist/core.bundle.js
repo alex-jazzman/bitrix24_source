@@ -16,6 +16,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 			const {
 				action,
 				projectId,
+				currentUser,
 				publication,
 				scrollToStartupTool
 			} = params;
@@ -25,7 +26,12 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 			const optionsStoreProject = {
 				projectId: projectId || null,
 				publication,
-				notifications: notificationDefaults
+				notifications: notificationDefaults,
+				ownerId: isCreate ? currentUser?.id ?? settings.currentUserId : null,
+				owner: isCreate && currentUser ? {
+					name: currentUser.name,
+					image: currentUser.image
+				} : null
 			};
 			const optionsStoreInterface = {
 				...settings,

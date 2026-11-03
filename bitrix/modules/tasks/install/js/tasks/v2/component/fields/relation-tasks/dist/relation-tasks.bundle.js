@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, ui_vue3_vuex, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_system_menu_vue, ui_iconSet_actions, tasks_v2_core, tasks_v2_const, tasks_v2_component_taskList, tasks_v2_component_elements_hint, tasks_v2_lib_showLimit, tasks_v2_lib_idUtils, tasks_v2_provider_service_taskService, ui_system_chip_vue, tasks_v2_lib_fieldHighlighter) {
+(function (exports, ui_vue3_vuex, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_system_menu_vue, ui_iconSet_actions, tasks_v2_core, tasks_v2_const, tasks_v2_component_taskList, tasks_v2_component_elements_hint, tasks_v2_lib_showLimit, tasks_v2_lib_idUtils, tasks_v2_provider_service_taskService, main_core, ui_system_chip_vue, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_entitySelectorDialog) {
 	'use strict';
 
 	// @vue/component
@@ -87,12 +87,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			canOpenMore() {
 				return this.isEdit && (this.readonly || this.task[this.meta.containsField]);
 			},
+			addLabel() {
+				return this.meta.getHint(this.isTemplate);
+			},
 			readonly() {
 				return !this.task.rights[this.meta.right];
 			},
 			tooltip() {
 				return () => tasks_v2_component_elements_hint.tooltip({
-					text: this.meta.getHint(this.isTemplate),
+					text: this.addLabel,
 					popupOptions: {
 						offsetLeft: this.$refs.add.offsetWidth / 2
 					}
@@ -212,6 +215,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					featureId: this.featureId
 				});
 			},
+			handleMenuClose() {
+				this.isMenuShown = false;
+				this.$refs.settings?.focus();
+			},
 			async handleRemove(id) {
 				await this.meta.service.delete(this.taskId, [id]);
 			},
@@ -257,67 +264,72 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-id="meta.id"
 		>
 			<div class="tasks-field-relation-tasks-title">
-				<div
+				<component
+					:is="canOpenMore ? 'button' : 'div'"
+					:type="canOpenMore ? 'button' : null"
 					class="tasks-field-relation-tasks-main"
 					:class="{ '--readonly': !canOpenMore }"
+					:aria-haspopup="canOpenMore ? 'dialog' : null"
 					data-task-relation-open
 					@click="openMore"
 				>
-					<BIcon :name="meta.icon"/>
+					<BIcon :name="meta.icon" aria-hidden="true"/>
 					<TextMd accent>{{ text }}</TextMd>
-				</div>
+				</component>
 				<div class="tasks-field-results-title-actions">
-					<div
+					<button
 						v-if="useOptions && idsLoaded"
+						type="button"
 						class="tasks-field-relation-tasks-icon print-ignore"
 						ref="settings"
+						aria-haspopup="menu"
+						:aria-expanded="isMenuShown"
+						:aria-label="loc('TASKS_V2_RELATION_TASKS_SETTINGS_ARIA_LABEL')"
+						:data-task-relation-settings="meta.id"
+						@click="isMenuShown = true"
 					>
-						<BIcon 
-							:name="Outline.MORE_L"
-							hoverable
-							:data-task-relation-settings="meta.id"
-							@click="isMenuShown = true"
-						/>
-					</div>
-					<div
+						<BIcon :name="Outline.MORE_L" hoverable aria-hidden="true"/>
+					</button>
+					<button
 						v-if="!readonly && idsLoaded && !isLocked"
 						v-hint="tooltip"
+						type="button"
 						class="tasks-field-relation-tasks-icon print-ignore"
 						ref="add"
+						aria-haspopup="dialog"
+						aria-expanded="false"
+						:aria-label="addLabel"
+						:data-task-relation-add="meta.id"
+						@click="$emit('add', $refs.add)"
 					>
-						<BIcon
-							:name="Outline.PLUS_L"
-							hoverable
-							:data-task-relation-add="meta.id"
-							@click="$emit('add', $refs.add)"
-						/>
-					</div>
-					<div
+						<BIcon :name="Outline.PLUS_L" hoverable aria-hidden="true"/>
+					</button>
+					<button
 						v-else-if="isLocked"
+						type="button"
 						class="tasks-field-relation-tasks-icon --lock"
+						:aria-label="loc('TASKS_V2_RELATION_TASKS_LOCK_ARIA_LABEL')"
+						:data-task-relation-locked="meta.id"
+						@click="showLimit"
 					>
-						<BIcon
-							:name="Outline.LOCK_L"
-							hoverable
-							:data-task-relation-locked="meta.id"
-							@click="showLimit"
-						/>
-					</div>
+						<BIcon :name="Outline.LOCK_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</div>
-			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
-			<TaskList
-				v-if="task[meta.containsField]"
-				:ids
-				:loadingIds
-				:fields
-				:canOpenMore
-				:shouldShowSubTasksOption
-				:idsLoaded
-				:isTemplateEntities
-				@openMore="openMore"
-				@removeTask="handleRemove"
-			/>
+			<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
+			<div v-if="task[meta.containsField]" role="group" :aria-label="text">
+				<TaskList
+					:ids
+					:loadingIds
+					:fields
+					:canOpenMore
+					:shouldShowSubTasksOption
+					:idsLoaded
+					:isTemplateEntities
+					@openMore="openMore"
+					@removeTask="handleRemove"
+				/>
+			</div>
 		</div>
 	`
 	};
@@ -353,6 +365,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		emits: ['add'],
 		setup() {},
+		data() {
+			return {
+				isDialogShown: false
+			};
+		},
 		computed: {
 			count() {
 				return this.task[this.meta.idsField].length;
@@ -365,7 +382,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isSelected() {
 				return this.task.filledFields[this.meta.id];
+			},
+			ariaLabel() {
+				return this.meta.getChipTitle(this.isTemplate);
+			},
+			opensDialog() {
+				return !this.disabled && !this.isSelected && !this.isLocked;
 			}
+		},
+		watch: {
+			isDialogShown() {
+				this.syncAria();
+			},
+			opensDialog() {
+				this.syncAria();
+			},
+			disabled() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
 		},
 		methods: {
 			handleClick() {
@@ -382,10 +419,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					});
 					return;
 				}
-				this.$emit('add', this.$el);
+				this.isDialogShown = true;
+				this.$emit('add', this.$el, this.handleClose);
+			},
+			handleClose() {
+				this.isDialogShown = false;
+				tasks_v2_lib_entitySelectorDialog.restoreOpenerFocus(this.$el);
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(this.meta.id);
+			},
+			syncAria() {
+				const el = this.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+				main_core.Dom.attr(el, 'aria-label', this.ariaLabel);
+				main_core.Dom.attr(el, 'aria-disabled', this.disabled ? 'true' : null);
 			}
 		},
 		template: `
@@ -404,5 +457,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.RelationTasks = RelationTasks;
 	exports.RelationTasksChip = RelationTasksChip;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Vue3.Vuex, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.UI.System.Menu, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.UI.System.Chip.Vue, BX.Tasks.V2.Lib);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Vue3.Vuex, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.UI.System.Menu, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX, BX.UI.System.Chip.Vue, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib);
 //# sourceMappingURL=relation-tasks.bundle.js.map

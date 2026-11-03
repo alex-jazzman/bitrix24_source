@@ -21,5 +21,9 @@ export {
 	SUBSCRIPTION_MODE_SUBTREE,
 	SUBSCRIPTION_MODE_ALL,
 	SUBSCRIPTION_MODE_MUTED,
+	SHIPPED_SUBSCRIPTION_MODES,
+	isShippedSubscriptionMode,
+	hasShippedSubscriptionMode,
+	hasSubscriptionSurface,
 } from './subscription-api';
 export { createHistoryMessages } from './messages';

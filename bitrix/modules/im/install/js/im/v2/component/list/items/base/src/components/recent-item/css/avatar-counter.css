@@ -56,3 +56,41 @@
 	border-color: var(--im-color-accent-blue);
 	background-color: var(--ui-color-white-base);
 }
+
+/* New avatar counter color (isAirDesignEnabled flag). Each state is duplicated
+   under .--air-design to preserve muted/selected priority (adding an ancestor
+   raises specificity). */
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter.--with-unread::before {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter.--muted,
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter.--muted.--with-unread::before {
+	background-color: var(--ui-color-gray-40);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__avatar_counter {
+	color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-white-base);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__avatar_counter.--with-unread::before {
+	border-color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-white-base);
+}
+
+/* BCounter (ui.cnt) renders the numeric badge; the container stays only an absolute
+   positioner and host for the --with-unread dot. Specificity is higher than all
+   container background rules (including selected). */
+.bx-im-messenger__scope.--air-design
+	.bx-im-list-recent-item__wrap
+	.bx-im-list-recent-item__avatar_container
+	.bx-im-list-recent-item__avatar_counter.--air-counter {
+	min-width: 0;
+	padding: 0;
+	background-color: transparent;
+}

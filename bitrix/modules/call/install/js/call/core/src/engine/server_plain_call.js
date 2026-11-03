@@ -8,6 +8,11 @@ import {SimpleVAD} from './simple_vad';
 import {Hardware} from '../call_hardware';
 import Util from '../util';
 import {
+	IceEscalationAction,
+	decideConnectionStateAction,
+	decideIceConnectionStateAction,
+} from '../utils/ice-escalation-policy';
+import {
 	Call,
 	CALL_STATE,
 	MediaStreamsKinds,
@@ -19,7 +24,13 @@ import { CallLegacy } from '../call-api-legacy.js';
 import { CallStreamManager, STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
 import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
 import { CallSettingsManager } from 'call.lib.settings-manager';
-import { ReconnectTarget } from 'call.lib.reconnect-history';
+import {
+	ReconnectOutcome,
+	type ReconnectOutcomeType,
+	ReconnectTarget,
+	type ReconnectTargetType,
+} from 'call.lib.reconnect-history';
+import { toPeerUserId } from '../utils/to-peer-user-id';
 
 const ajaxActions = {
 	decline: 'call.Call.decline',
@@ -51,6 +62,8 @@ const signalingConnectionRefreshPeriod = 30000;
 const signalingWaitReplyPeriod = 10000;
 //var signalingWaitReplyPeriod = 5000;
 const reinvitePeriod = 5500;
+// Grace period before treating a stuck ICE 'disconnected' as a failure and escalating to the media server.
+const disconnectedGracePeriod = 2000;
 
 /**
  * Implements Call interface
@@ -300,9 +313,12 @@ export class ServerPlainCall extends AbstractCall
 			onReconnecting: (event) => {
 				this.#onCallReconnecting(event);
 			},
-			onReconnected: () =>
+			onReconnected: (e) =>
 			{
-				this.#onCallReconnected();
+				this.#onCallReconnected(ReconnectTarget.Peer, e?.userId);
+			},
+			onReconnectSeriesOutcome: (e) => {
+				this.#raisePeerSeriesOutcome(toPeerUserId(e.userId), e.outcome);
 			},
 			onUpdateLastUsedCameraId: () =>
 			{
@@ -481,21 +497,34 @@ export class ServerPlainCall extends AbstractCall
 	setUseMediaServer(useMediaServer)
 	{
 		clearTimeout(this.iceConnectionStateTimer);
+		let targetConnectionType;
 		if (useMediaServer && !this.useMediaServer)
 		{
-			this.#connectionType = ConnectionType.MediaServer;
+			targetConnectionType = ConnectionType.MediaServer;
 		}
 		else if (!useMediaServer && this.useMediaServer)
 		{
-			this.#connectionType = ConnectionType.PeerToPeer;
+			targetConnectionType = ConnectionType.PeerToPeer;
 		}
 		else
 		{
-			return;
+			return true;
 		}
+
+		// Announce the switch first. switchConnectionType is fire-and-forget over the signaling socket,
+		// so if the socket is already down the peer would never learn about the switch. Abort before
+		// destroying P2P to avoid a one-sided local latch; the caller retries instead.
+		if (this.CallApi && this.CallApi.switchConnectionType(targetConnectionType) === false)
+		{
+			return false;
+		}
+
+		this.#connectionType = targetConnectionType;
 
 		if (useMediaServer)
 		{
+			this.#raisePeerSeriesEscalated();
+
 			for (const peer of Object.values(this.peers))
 			{
 				peer._destroyPeerConnection();
@@ -506,10 +535,6 @@ export class ServerPlainCall extends AbstractCall
 			this.#releaseCameraPublishingHold();
 		}
 
-		if (this.CallApi)
-		{
-			this.CallApi.switchConnectionType(this.#connectionType);
-		}
 		this.#updateOutgoingTracks();
 
 		if (useMediaServer && this.CallApi && !Hardware.isMicrophoneMuted && this.CallApi.isAudioPublished())
@@ -526,6 +551,8 @@ export class ServerPlainCall extends AbstractCall
 		{
 			this.setRecorderState(RecorderStatus.PAUSED);
 		}
+
+		return true;
 	}
 
 	getCurrentMicrophoneId()
@@ -668,6 +695,13 @@ export class ServerPlainCall extends AbstractCall
 					{
 						this.isReconnecting = false;
 					}
+					// A join that took retries arrives as Connected: the SDK sends Reconnected only once
+					// the call has been established. Left open, the series of such a join would be
+					// continued by a real reconnect later in the call.
+					this.reconnectHistory.updateLastEntry({
+						target: ReconnectTarget.MediaServer,
+						isSuccessful: true,
+					});
 					this.CallApi.on('Failed', this.#onCallDisconnected);
 
 					this.state = CallState.Connected;
@@ -706,6 +740,71 @@ export class ServerPlainCall extends AbstractCall
 		});
 	};
 
+	/**
+	 * Kills a zombie media room whose call is already finished on the portal.
+	 * An empty room is invisible to the call controller until someone joins,
+	 * so the only reliable way to close it is to connect with a bare data
+	 * channel and ask the media server to close the whole room.
+	 */
+	destroyZombieRoom(): Promise<void>
+	{
+		return new Promise((resolve, reject) =>
+		{
+			let closeTimeout = null;
+			const finish = (error) =>
+			{
+				if (!closeTimeout)
+				{
+					return;
+				}
+				clearTimeout(closeTimeout);
+				closeTimeout = null;
+
+				if (this.CallApi)
+				{
+					try
+					{
+						// true asks the media server to close the whole room,
+						// false just disconnects a half-established session
+						this.CallApi.hangup(!error);
+					}
+					catch (hangupError)
+					{
+						this.log('Zombie room hangup error', hangupError);
+					}
+					this.CallApi.releaseGlobalSubscriptions?.();
+					this.CallApi = null;
+				}
+
+				error ? reject(error) : resolve();
+			};
+
+			closeTimeout = setTimeout(() => finish(new Error('Zombie room close timeout')), 5000);
+
+			try
+			{
+				this.CallApi = Util.canUseNewCallApi(this.connectionData.roomType)
+					? new Call(this.userId)
+					: new CallLegacy(this.userId);
+				this.CallApi.needToStopStreams = false;
+
+				this.CallApi.on('Connected', () => finish(null));
+				this.CallApi.on('Failed', (error) => finish(error || new Error('Zombie room connect failed')));
+
+				this.CallApi.connect({
+					roomId: this.uuid,
+					userId: this.userId,
+					autoSubscribe: false,
+					...this.connectionData,
+				});
+			}
+			catch (error)
+			{
+				finish(error);
+			}
+		});
+	}
+
 	bindCallEvents(): void
 	{
 		this.CallApi.on('ParticipantJoined', this.#onParticipantJoined);
@@ -727,7 +826,7 @@ export class ServerPlainCall extends AbstractCall
 		this.CallApi.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
 		this.CallApi.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
 		this.CallApi.on('Reconnecting', this.#onCallReconnecting);
-		this.CallApi.on('Reconnected', this.#onCallReconnected);
+		this.CallApi.on('Reconnected', this.#onSdkReconnected);
 		this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 		this.CallApi.on('Disconnected', this.#onCallDisconnected);
 		this.CallApi.on('CallStatsReceived', this.#onCallStatsReceived);
@@ -2116,6 +2215,14 @@ export class ServerPlainCall extends AbstractCall
 		{
 			if (this.instanceId != params.callInstanceId)
 			{
+				if (this.associatedEntity?.isDeviceScoped === true)
+				{
+					// Device-scoped (private 1-1 TYPE_INSTANT): self-decline from another device must not pull a
+					// still-ringing device out of the call — ending is driven solely
+					// by Call::finish (backend device-aware gate). Defense in depth.
+					return;
+				}
+
 				if (this.ready)
 				{
 					return;
@@ -2837,38 +2944,46 @@ export class ServerPlainCall extends AbstractCall
 		this.isReconnecting = true;
 		this._reconnectionEventCount++;
 		const data = Type.isObject(event) ? event : {};
+		// Only a peer forwards the participant it reconnects to, the SDK path carries no user id.
+		const isPeerTarget = data.userId !== undefined;
+		const target = isPeerTarget ? ReconnectTarget.Peer : ReconnectTarget.MediaServer;
+		const seriesUserId = isPeerTarget ? toPeerUserId(data.userId) : null;
 
-		if (data.userId !== undefined)
-		{
-			// Reconnecting from Provider (Peer)
-			this.reconnectHistory.startEntry(
-				data.reconnectionReason ?? null,
-				ReconnectTarget.Provider,
-				data.userId,
-			);
-		}
-		else
-		{
-			// Reconnecting from SDK
-			this.reconnectHistory.startEntry(data.reconnectionReason ?? null, ReconnectTarget.Sdk);
-		}
+		this.reconnectHistory.startEntry({
+			target,
+			userId: seriesUserId,
+			reason: data.reconnectionReason ?? null,
+		});
 
 		this.runCallback(CallEvent.onReconnecting, {
 			reconnectionEventCount: this._reconnectionEventCount,
 			reconnectionReason: data.reconnectionReason,
 			reconnectionReasonInfo: data.reconnectionReasonInfo,
+			reconnectionTarget: target,
+			userId: seriesUserId,
+			hasEverConnected: Boolean(data.hasEverConnected),
 		});
 	};
 
-	#onCallReconnected = (): void => {
+	#onSdkReconnected = (): void => {
+		this.#onCallReconnected(ReconnectTarget.MediaServer);
+	};
+
+	#onCallReconnected = (target: ReconnectTargetType, userId: ?number = null): void => {
 		if (this.CallApi.isConnected() || !this.#isAnyOneReconnecting())
 		{
 			this.isReconnecting = false;
 		}
 		this._reconnectionEventCount = 0;
-		this.reconnectHistory.updateLastEntry(ReconnectTarget.Sdk, !this.isReconnecting);
-		this.reconnectHistory.updateLastEntry(ReconnectTarget.Provider, !this.isReconnecting);
-		this.runCallback(CallEvent.onReconnected);
+
+		const isPeerTarget = target === ReconnectTarget.Peer;
+		const seriesUserId = isPeerTarget ? toPeerUserId(userId) : null;
+		// The peer callback answers for the connection that came back; only the SDK path has to ask
+		// the call, whose isReconnecting says nothing about a particular interlocutor.
+		const isSuccessful = isPeerTarget || !this.isReconnecting;
+
+		this.reconnectHistory.updateLastEntry({ target, userId: seriesUserId, isSuccessful });
+		this.runCallback(CallEvent.onReconnected, { reconnectionTarget: target, userId: seriesUserId });
 
 		if (this.useMediaServer)
 		{
@@ -2880,6 +2995,40 @@ export class ServerPlainCall extends AbstractCall
 			this.sendLocalRecordState({ action: this.commonRecordState.state, userId: this.userId }, true);
 		}
 	};
+
+	#raisePeerSeriesOutcome(userId: number | null, outcome: ReconnectOutcomeType): void
+	{
+		this.runCallback(CallEvent.onReconnectSeriesOutcome, {
+			reconnectionTarget: ReconnectTarget.Peer,
+			userId,
+			reconnectionOutcome: outcome,
+		});
+	}
+
+	/**
+	 * The switch to the media server tears down every peer connection for good, so the open series of
+	 * every interlocutor still in the call ends here. Two kinds of series are left alone: the one of an
+	 * interlocutor who has already left, because the switch tears down nothing of his and `escalated`
+	 * would drop a connection that never came back out of the failure count; and the one of the media
+	 * server, whose socket the switch does not touch.
+	 */
+	#raisePeerSeriesEscalated(): void
+	{
+		this.reconnectHistory.getOpenSeries()
+			.filter((series) => {
+				if (series.target !== ReconnectTarget.Peer)
+				{
+					return false;
+				}
+
+				// `ready` follows the signaling of an interlocutor rather than his ICE: it is already true
+				// while his connection has never come up, and false once he has left the call.
+				const { userId } = series;
+
+				return userId !== null && userId !== undefined && this.peers[userId]?.isReady() === true;
+			})
+			.forEach((series) => this.#raisePeerSeriesOutcome(series.userId, ReconnectOutcome.Escalated));
+	}
 
 	#onCallReconnectingFailed = (e, error) => {
 		this.runCallback(CallEvent.onReconnectingFailed, { error });
@@ -2970,6 +3119,11 @@ export class ServerPlainCall extends AbstractCall
 		}
 
 		this.#connectionType = connectionType;
+
+		if (connectionType === ConnectionType.MediaServer)
+		{
+			this.#raisePeerSeriesEscalated();
+		}
 
 		// A camera hold taken before the switch can no longer be released by the P2P negotiation it was
 		// waiting for, so drop it here as well.
@@ -3286,6 +3440,9 @@ class Peer
 			onNetworkProblem: Type.isFunction(params.onNetworkProblem) ? params.onNetworkProblem : BX.DoNothing,
 			onReconnecting: Type.isFunction(params.onReconnecting) ? params.onReconnecting : BX.DoNothing,
 			onReconnected: Type.isFunction(params.onReconnected) ? params.onReconnected : BX.DoNothing,
+			onReconnectSeriesOutcome: Type.isFunction(params.onReconnectSeriesOutcome)
+				? params.onReconnectSeriesOutcome
+				: BX.DoNothing,
 			onUpdateLastUsedCameraId: Type.isFunction(params.onUpdateLastUsedCameraId) ? params.onUpdateLastUsedCameraId : BX.DoNothing,
 		};
 
@@ -3301,8 +3458,10 @@ class Peer
 		this.connectionOfferReplyTimeout = null;
 		this.negotiationNeededReplyTimeout = null;
 		this.reconnectAfterDisconnectTimeout = null;
+		this.disconnectedGraceTimeout = null;
 
 		this.connectionAttempt = 0;
+		this.hasEverConnected = false;
 
 		this._outgoingVideoTrack = null;
 		Object.defineProperty(this, 'outgoingVideoTrack', {
@@ -3658,7 +3817,10 @@ class Peer
 		else
 		{
 			this.localStreams[tag] = this.call.getLocalStream(tag);
-			this.reconnect({ reconnectionReasonInfo: 'Reconnect by replaceMediaStream' });
+			this.reconnect({
+				reconnectionReason: 'PEER_MEDIA_STREAM_REPLACED',
+				reconnectionReasonInfo: 'Reconnect by replaceMediaStream',
+			});
 		}
 	}
 
@@ -4159,6 +4321,7 @@ class Peer
 		}
 
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
+		clearTimeout(this.disconnectedGraceTimeout);
 
 		this.log("User " + this.userId + ": Destroying peer connection " + this.peerConnectionId);
 		this.stopStatisticsGathering();
@@ -4223,19 +4386,31 @@ class Peer
 		{
 			this.isReconnecting = false;
 			this.connectionAttempt = 0;
-			this.callbacks.onReconnected();
+			this.hasEverConnected = true;
+			this.callbacks.onReconnected({ userId: this.userId });
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
 			this._updateTracksDebounced();
 		}
-		else if (this.peerConnection.connectionState === "failed")
+		else if (decideConnectionStateAction(this.peerConnection.connectionState) === IceEscalationAction.EscalateNow)
 		{
-			const logMessage = 'Peer connection failed. Trying to restore connection immediately';
-			this.log(logMessage);
+			clearTimeout(this.disconnectedGraceTimeout);
 
-			this.reconnect({
-				reconnectionReason: 'PEER_CONNECTION_FAILED',
-				reconnectionReasonInfo: logMessage,
-			});
+			// Terminal ICE failure: switch to the media server (SFU) and stay there for the rest of the
+			// call. The switch is announced through a fire-and-forget CallApi signal (switchConnectionType),
+			// so it only sticks while the socket is up. setUseMediaServer returns false if the socket
+			// closed in the race window between isConnected() and the actual send, in which case the peer
+			// was never notified and we must not latch one-sidedly.
+			if (this.call.CallApi?.isConnected() && this.call.setUseMediaServer(true))
+			{
+				this.log('Peer connection failed. Escalated to the media server');
+			}
+			else
+			{
+				// Signaling is down (or went down mid-switch): retry P2P instead (bounded by reconnect());
+				// once the socket is back, a repeated failure escalates.
+				this.log('Peer connection failed while signaling is down. Retrying instead of a one-sided escalation');
+				this.reconnect({ reconnectionReason: 'PEER_CONNECTION_FAILED_SIGNALING_DOWN' });
+			}
 		}
 		// else if (this.peerConnection.connectionState === "disconnected")
 		// {
@@ -4409,6 +4584,43 @@ class Peer
 
 		const state = this.peerConnection.iceConnectionState;
 		this.log(`User ${this.userId} #onPeerConnectionIceConnectionStateChange [ICE State]: ${state}`);
+
+		const action = decideIceConnectionStateAction(state);
+		if (action === IceEscalationAction.StartGrace)
+		{
+			// 'disconnected' often self-heals; give ICE a grace window before escalating to the SFU.
+			clearTimeout(this.disconnectedGraceTimeout);
+			const graceConnection = this.peerConnection;
+			const escalateOrWait = () =>
+			{
+				// Bail if the connection recovered, was rebuilt/destroyed, or already moved to the SFU.
+				if (
+					this.peerConnection !== graceConnection
+					|| this.peerConnection.iceConnectionState !== 'disconnected'
+					|| this.call.useMediaServer
+				)
+				{
+					return;
+				}
+
+				if (this.call.CallApi?.isConnected() && this.call.setUseMediaServer(true))
+				{
+					this.log('ICE disconnected grace expired. Escalated to the media server');
+				}
+				else
+				{
+					// Signaling socket is down (or closed mid-switch): escalating now would be a lost
+					// one-sided switch, and 'disconnected' won't re-emit on its own. Re-arm and escalate
+					// once the socket is back.
+					this.disconnectedGraceTimeout = setTimeout(escalateOrWait, disconnectedGracePeriod);
+				}
+			};
+			this.disconnectedGraceTimeout = setTimeout(escalateOrWait, disconnectedGracePeriod);
+		}
+		else if (action === IceEscalationAction.ClearGrace)
+		{
+			clearTimeout(this.disconnectedGraceTimeout);
+		}
 	};
 
 	#onVideoTrackMuted()
@@ -4499,14 +4711,20 @@ class Peer
 		const logMessage = `Did not receive connection answer for connection ${connectionId}`;
 		this.log(logMessage);
 		this.call.setPublishingState(MediaStreamsKinds.Camera, false);
-		this.reconnect({ reconnectionReasonInfo: logMessage });
+		this.reconnect({
+			reconnectionReason: 'PEER_OFFER_REPLY_TIMEOUT',
+			reconnectionReasonInfo: logMessage,
+		});
 	}
 
 	_onNegotiationNeededReplyTimeout()
 	{
 		const logMessage = 'Did not receive connection offer in time';
 		this.log(logMessage);
-		this.reconnect({ reconnectionReasonInfo: logMessage });
+		this.reconnect({
+			reconnectionReason: 'PEER_NEGOTIATION_REPLY_TIMEOUT',
+			reconnectionReasonInfo: logMessage,
+		});
 	}
 
 	setConnectionOffer(connectionId, sdp, trackList)
@@ -4581,7 +4799,10 @@ class Peer
 				const logMessage = `Could not create offer: ${this.failureReason}`;
 				this.log(logMessage);
 				Util.sendLog(`[call] ${logMessage}`);
-				this.reconnect({ reconnectionReasonInfo: logMessage });
+				this.reconnect({
+					reconnectionReason: 'PEER_OFFER_CREATE_FAILED',
+					reconnectionReasonInfo: logMessage,
+				});
 			})
 			.finally(() => {
 				this.isCreatingOffer = false;
@@ -4704,7 +4925,10 @@ class Peer
 				const logMessage = `Could not apply remote offer: ${this.failureReason}`;
 				this.log(logMessage);
 				Util.sendLog(`[call] ${logMessage}`);
-				this.reconnect({ reconnectionReasonInfo: logMessage });
+				this.reconnect({
+					reconnectionReason: 'PEER_OFFER_APPLY_FAILED',
+					reconnectionReasonInfo: logMessage,
+				});
 			})
 			.finally(() => {
 				this.pendingRemoteSdpDelay = false;
@@ -4784,7 +5008,10 @@ class Peer
 				const logMessage = `Could not apply remote answer: ${this.failureReason}`;
 				this.log(logMessage);
 				Util.sendLog(`[call] ${logMessage}`);
-				this.reconnect({ reconnectionReasonInfo: logMessage });
+				this.reconnect({
+					reconnectionReason: 'PEER_ANSWER_APPLY_FAILED',
+					reconnectionReasonInfo: logMessage,
+				});
 			})
 			.finally(() =>
 			{
@@ -4881,7 +5108,7 @@ class Peer
 		this.isReconnecting = true;
 		this.connectionAttempt++;
 		const maxConnectionAttempt = 3;
-		const connectionAttempt = this.call.CallApi?.isConnected() ? 0 : this.connectionAttempt;
+		const connectionAttempt = this.connectionAttempt;
 		this.pendingLocalOfferConfig = null;
 		this.isCreatingOffer = false;
 
@@ -4890,6 +5117,10 @@ class Peer
 			this.log('Error: Too many reconnection attempts, giving up');
 			this.failureReason = this.failureReason || 'Could not connect to user in time';
 			this.updateCalculatedState();
+			this.callbacks.onReconnectSeriesOutcome({
+				userId: this.userId,
+				outcome: this.hasEverConnected ? ReconnectOutcome.NotRecovered : ReconnectOutcome.NotConnected,
+			});
 
 			return;
 		}
@@ -4897,6 +5128,7 @@ class Peer
 		this.callbacks.onReconnecting({
 			...event,
 			userId: this.userId,
+			hasEverConnected: this.hasEverConnected,
 		});
 
 		this.log(`Trying to restore ICE connection. Attempt ${this.connectionAttempt}`);
@@ -4953,6 +5185,9 @@ class Peer
 
 		clearTimeout(this.signalingConnectionTimeout);
 		this.signalingConnectionTimeout = null;
+
+		clearTimeout(this.disconnectedGraceTimeout);
+		this.disconnectedGraceTimeout = null;
 
 		this.callbacks.onStateChanged = BX.DoNothing;
 		this.callbacks.onMediaReceived = BX.DoNothing;

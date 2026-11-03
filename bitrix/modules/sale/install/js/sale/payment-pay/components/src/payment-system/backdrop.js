@@ -1,31 +1,11 @@
 import { BitrixVue } from 'ui.vue';
-import { EventType } from 'sale.payment-pay.const';
-import { EventEmitter } from 'main.core.events';
+
+import { MixinPaymentDialog } from './dialog';
 
 BitrixVue.component('sale-payment_pay-components-payment_system-backdrop', {
-	props:['paySystem'],
-	data()
-	{
-		return {
-			isShow: true
-		}
-	},
-	// language=Vue
-	methods:
-		{
-			close()
-			{
-				this.isShow = false
-				EventEmitter.emit(EventType.payment.reset, {});
-			},
-		},
+	mixins: [MixinPaymentDialog],
 	computed:
 		{
-			localize()
-			{
-				return Object.freeze(
-					BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_'))
-			},
 			getObjectClass()
 			{
 				let result = [
@@ -50,9 +30,18 @@ BitrixVue.component('sale-payment_pay-components-payment_system-backdrop', {
 				return `background-image: url("${BX.util.htmlspecialchars(src)}")`;
 			}
 		},
+	// language=Vue
 	template: `
 		<div :class=getObjectClass>
-			<div class="checkout-basket-item-backdrop-wrapper js-backdrop-open-change-sku">
+			<div
+				class="checkout-basket-item-backdrop-wrapper js-backdrop-open-change-sku"
+				data-testid="sale-payment-backdrop"
+				role="dialog"
+				aria-modal="true"
+				:aria-label="dialogName"
+				ref="dialog"
+				@keydown.esc="close()"
+			>
 				<div class="checkout-basket-item-backdrop-overlay js-backdrop-open-change-sku"></div>
 				<div class="checkout-basket-item-backdrop-container js-backdrop-open-change-sku">
 					<div class="checkout-basket-item-detail-header justify-content-between align-items-center">
@@ -60,12 +49,12 @@ BitrixVue.component('sale-payment_pay-components-payment_system-backdrop', {
 							 class="checkout-basket-item-detail-swipe-btn-container">
 							<div class="checkout-basket-item-detail-swipe-btn"></div>
 						</div>
-						<div class="checkout-order-payment-close" @click="close()">{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_12 }}</div>
+						<button type="button" class="checkout-order-payment-close" data-testid="sale-payment-backdrop-close-btn" @click="close()">{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_12 }}</button>
 					</div>
 					<div class="checkout-basket-item-backdrop-inner">
 						<div class="checkout-basket-item-backdrop-main">
 							<div class="checkout-order-payment-title">
-								<div class="checkout-basket-pay-method-item-logo-block">
+								<div class="checkout-basket-pay-method-item-logo-block" aria-hidden="true">
 									<div
 										:style=logoStyle
 										class="checkout-basket-pay-method-logo"/>

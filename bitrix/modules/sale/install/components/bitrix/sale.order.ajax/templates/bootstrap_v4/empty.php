@@ -4,10 +4,8 @@ use Bitrix\Main\Localization\Loc;
 ?>
 
 <div class="bx-soa-empty-cart-container">
-	<div class="bx-soa-empty-cart-image">
-		<img src="" alt="">
-	</div>
-	<div class="bx-soa-empty-cart-text"><?=Loc::getMessage("EMPTY_BASKET_TITLE")?></div>
+	<div class="bx-soa-empty-cart-image"></div>
+	<div class="bx-soa-empty-cart-text" role="heading" aria-level="2"><?=Loc::getMessage("EMPTY_BASKET_TITLE")?></div>
 	<?
 	if (!empty($arParams['EMPTY_BASKET_HINT_PATH']))
 	{

@@ -120,7 +120,8 @@
 				type: params.type,
 				document_action: 'publishBlank',
 				primaryAction: 'publishBlank',
-				action: ''
+				action: '',
+				_uls: params.uls ?? '',
 			});
 
 			BX.Disk.ajaxPromise({
@@ -181,14 +182,22 @@
 			if (!url)
 			{
 				url = params.objectId? '/bitrix/tools/disk/document.php' : '/bitrix/tools/disk/uf.php';
-				url = BX.util.add_url_param(url, {
+
+				const urlParams = {
 					objectId: params.objectId,
 					attachedId: params.attachedObjectId,
 					service: 'l',
 					document_action: 'download',
 					primaryAction: 'download',
 					action: ''
-				});
+				};
+
+				if (BX.type.isStringFilled(params.uls))
+				{
+					urlParams._uls = params.uls;
+				}
+
+				url = BX.Uri.addParam(url, urlParams);
 			}
 
 			if (url.substring(0,1) === '/')

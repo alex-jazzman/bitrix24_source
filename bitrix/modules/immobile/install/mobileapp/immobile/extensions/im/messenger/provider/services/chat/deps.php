@@ -26,6 +26,7 @@ return [
 	],
 	'bundle' => [
 		'./src/bot',
+		'./src/command',
 		'./src/comments',
 		'./src/get',
 		'./src/create',

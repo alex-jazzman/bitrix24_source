@@ -5,6 +5,7 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Format\BBCode\Converter;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -66,8 +67,13 @@ function createUserCell(array $data): string
 
 function createNameCell(array $data): string
 {
+	// toPlainText() does not escape, unlike toHtml()
 	$descriptionHtml = !empty($data['description'])
-		? sprintf('<div class="%s">%s</div>', 'bizproc-template-processes-grid-description', htmlspecialcharsbx($data['description']))
+		? sprintf(
+			'<div class="%s">%s</div>',
+			'bizproc-template-processes-grid-description',
+			htmlspecialcharsbx(Converter::toPlainText((string)$data['description']))
+		)
 		: null;
 
 	$pilotHtml = !empty($data['pilotLabel'])
@@ -113,12 +119,12 @@ foreach ($templates as $row)
 		],
 		'actions' => [
 			[
-				'TEXT' => Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_DELETE_BUTTON_TEXT'),
-				'ONCLICK' => "BX.Bizproc.Component.TemplateProcesses.Instance.deleteTemplateAction({$row['ID']})",
-			],
-			[
 				'TEXT' => Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_EDIT_BUTTON_TEXT'),
 				'ONCLICK' => "BX.Bizproc.Component.TemplateProcesses.Instance.editTemplateAction({$row['ID']})",
+			],
+			[
+				'TEXT' => Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_DELETE_BUTTON_TEXT'),
+				'ONCLICK' => "BX.Bizproc.Component.TemplateProcesses.Instance.deleteTemplateAction({$row['ID']})",
 			],
 		],
 	];

@@ -139,6 +139,7 @@ export const UserListItem = {
 						@click="handleUserClick(user)"
 						:bx-tooltip-user-id="user.id"
 						bx-tooltip-context="b24"
+						bx-tooltip-mini-profile-direction="viewport"
 						:data-id="'hr-department-detail-content__user-' + user.id + '-item-name'"
 					>
 						{{ user.name }}

@@ -17,10 +17,15 @@ import { ParserLines } from '../functions/lines.js';
 import { ParserMention } from '../functions/mention.js';
 import { ParserQuote } from '../functions/quote.js';
 import { ParserUrl } from '../functions/url.js';
-import { getCore, getLogger, getConst, isMarkdownFeatureEnabled } from '../utils/core-proxy.js';
+import {
+	getCore,
+	getLogger,
+	getConst,
+	getUtils,
+	isMarkdownFeatureEnabled,
+	isVideoNoteCaptionFeatureEnabled,
+} from '../utils/core-proxy.js';
 import { type ParserConfig } from '../types/parser-config';
-
-const { FileType, FileIconType, AttachDescription } = getConst();
 
 type ResultRecentConfig = {
 	files: boolean | Object[],
@@ -270,6 +275,7 @@ const isAttach = (payload: TextPrefixPayload) => {
 };
 
 const getTextForFile = (rawText: string, files: boolean | Array): string => {
+	const { FileIconType } = getConst();
 	let preparedText = rawText;
 	if (Type.isArray(files) && files.length > 0)
 	{
@@ -284,6 +290,7 @@ const getTextForFile = (rawText: string, files: boolean | Array): string => {
 };
 
 const getTextForAttach = (text: string, attach: AttachType): string => {
+	const { AttachDescription } = getConst();
 	let attachDescription = extractAttachDescription(attach);
 
 	if (Type.isStringFilled(attachDescription))
@@ -326,19 +333,33 @@ const getTextForSticker = (): string => {
 	return `[${Loc.getMessage('IM_PARSER_ICON_TYPE_STICKER')}]`;
 };
 
-const getTextByFileType = (text: string, type: $Values<typeof FileIconType> = FileIconType.file): string => {
-	const iconText = Loc.getMessage(`IM_PARSER_ICON_TYPE_${type.toUpperCase()}`);
+const getTextByIconPhrase = (text: string, phraseCode: string, replacements: ?Object = null): string => {
+	return `[${Loc.getMessage(phraseCode, replacements)}] ${text}`.trim();
+};
 
-	return `[${iconText}] ${text}`.trim();
+const getTextByVoiceNote = (text: string): string => {
+	return getTextByIconPhrase(text, 'IM_PARSER_ICON_TYPE_VOICE_NOTE');
+};
+
+const getTextByFileType = (text: string, type: string = getConst().FileIconType.file): string => {
+	return getTextByIconPhrase(text, `IM_PARSER_ICON_TYPE_${type.toUpperCase()}`);
 };
 
 const getTextByFile = (text: string, files: Array<Object>): string => {
+	const { FileType, FileIconType } = getConst();
 	const [file] = files;
 
 	// todo: remove this hack after fix receiving messages with files on P&P
 	if (!file || !file.type)
 	{
 		return text;
+	}
+
+	// A voice note is told apart by its own flag, not by the file type: it lands in an audio or a
+	// video container depending on the recorder, and either one would give a wrong preview here.
+	if (file.isVoiceNote)
+	{
+		return getTextByVoiceNote(text);
 	}
 
 	const isGallery = files.every((item) => [FileIconType.image, FileIconType.video].includes(item.type));
@@ -356,6 +377,12 @@ const getTextByFile = (text: string, files: Array<Object>): string => {
 	if (file.type === FileType.audio)
 	{
 		return getTextByFileType(text, FileIconType.audio);
+	}
+
+	// A video note keeps FileType.video and has no own FileIconType entry, so pass its phrase explicitly.
+	if (file.isVideoNote && isVideoNoteCaptionFeatureEnabled())
+	{
+		return getTextByIconPhrase(text, 'IM_PARSER_ICON_TYPE_VIDEO_NOTE');
 	}
 
 	if (file.type === FileType.video)

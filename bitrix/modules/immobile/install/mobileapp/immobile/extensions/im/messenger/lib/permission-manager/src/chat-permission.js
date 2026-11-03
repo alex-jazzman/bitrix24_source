@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/permission-manager/chat-permission', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const {
 		UserRole,
@@ -86,6 +87,14 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		isCurrentUserGuest()
 		{
 			return MessengerParams.getUserInfo()?.type === UserType.guest;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		canHideChat()
+		{
+			return !this.isCurrentUserGuest();
 		}
 
 		/**
@@ -176,6 +185,33 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		canInviteGuests(dialogData)
 		{
 			return this.canPerformActionByRole(DialogActionType.manageGuestLink, dialogData);
+		}
+
+		/**
+		 * @desc Check is can link an org structure node to the chat. The action has no chat setting of
+		 * its own, so only the per-chat-type table decides. A chat type the server takes no nodes in
+		 * carries no row for the action at all, and a missing minimal role means "not available":
+		 * getRightByLowRole() would answer true to the owner on it, which the server then refuses.
+		 * That single reading is why canPerformActionByRole() is not used here: its #canByChatType()
+		 * reads a missing row as "allowed", and it is shared by every other action, which relies on it.
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		canLinkStructureNode(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType?.[DialogActionType.linkStructureNode];
+			if (Type.isUndefined(installedMinimalRole))
+			{
+				return false;
+			}
+
+			return this.getRightByLowRole(installedMinimalRole);
 		}
 
 		/**
@@ -659,6 +695,15 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		canPost(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			if (
+				Feature.isVibecodeAppChatSendPermissionAvailable
+				&& this.dialogData.type === DialogType.vibecodeApp
+				&& !this.#canByChatType(DialogActionType.send)
+			)
 			{
 				return false;
 			}

@@ -28,10 +28,17 @@
 	color: #67707c;
 }
 
+.crm-automated-solution-details-vibe-switcher:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .crm-automated-solution-details-slider-wrapper .ui-sidepanel-title {
 	overflow: visible;
 	white-space: nowrap;
 }
+
 .crm-automated-solution-details .crm-automated-solution-details-form-label-xs .ui-form-label {
 	margin-bottom: 9px;
 	font-size: 13px;
@@ -158,4 +165,3 @@
 .crm-type-ui-card-message-without-angle::after {
 	display: none;
 }
-

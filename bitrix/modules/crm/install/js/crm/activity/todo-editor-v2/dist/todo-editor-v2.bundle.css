@@ -6,6 +6,8 @@
 	box-sizing: border-box;
 	position: relative;
 	display: block;
+	container-type: inline-size;
+	container-name: crm-todo-editor;
 	background-color: var(--ui-color-background-primary, #fff);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica), 'Helvetica Neue');
 	border-radius: var(--crm-activity__todo-editor-v2-border-radius);
@@ -498,3 +500,171 @@
 	}
 }
 /* endregion*/
+
+/*region Reflow: the "actions" button stops overlapping the text (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The button is nailed down with absolute positioning (right: 8px, z-index: 10) on top of the input,
+	while the field reserves only padding-right: 16px for it against a button width of 93px.
+	At wide widths this is invisible: the placeholder is short and does not reach the button.
+	At narrow widths the text wraps onto two lines, spreads across the full width and runs
+	under the button — measured at a card width of 241px: 79x27px overlap.
+	Overlapping text is literal "loss of information" in the wording of 1.4.10.
+
+	The trigger is a container query on the editor itself, not a viewport media query.
+	The editor's own width is NOT monotonic in the card width: at the card's own 768px
+	breakpoint the card collapses to a single column and the stream gets wider. Card 769px
+	leaves the editor 311px - the narrowest of the whole sweep - while card 768px leaves it
+	670px. A viewport @media therefore switched to the narrow layout exactly where the editor
+	had twice the room, and stayed wide where it was tightest.
+	Sweep, card -> editor: 1280->609, 1024->459, 900->387, 800->329, 769->311, 768->670,
+	640->542, 459->361, 375->277, 320->222.
+
+	The threshold is the editor's own width, taken from the collision it exists to prevent:
+	with the absolute positioning in place the button reaches the deadline pill once the
+	editor drops below ~240px. Measured clearance between them: +7px at an editor width of
+	242px, -8px at 227px, and a 13x27px overlap at 222px. 250px keeps a small margin for a
+	longer date format.
+
+	The container is declared on the editor root rather than on the timeline stream because
+	the same editor is mounted into main.popup by crm.activity.adding-popup and
+	crm.activity.todo-create-notification; a stream-scoped container would never match there
+	and those two would silently lose the reflow.
+
+	Below the breakpoint we drop the absolute positioning: the button sits below the field, pinned to the right.
+	The button is the FIRST child of the editor, so simply making it static put it above the title
+	instead of below the field - a whole empty row over the heading. The editor is therefore a flex
+	column here and the button takes order: 1, which places it after the text editor (title, field and
+	the deadline row) without touching the markup; align-self keeps it on the right.
+	The --is-edit state is listed explicitly — there the button is positioned by its own
+	rule (bottom: 8px) with the same specificity (0,3,0), and without listing it
+	explicitly that rule would win by source order.
+*/
+@container crm-todo-editor (max-width: 250px) {
+	.crm-activity__todo-editor-v2_editor {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.crm-activity__todo-show-actions-popup-button,
+	.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-show-actions-popup-button {
+		position: static;
+		order: 1;
+		align-self: flex-end;
+		display: flex;
+		margin: 4px 0 2px;
+		top: auto;
+		right: auto;
+		bottom: auto;
+	}
+}
+/*endregion*/
+
+/*region Reflow: the planner header, placeholder and deadline fit a narrow card (WCAG 2.1 AA, 1.4.10)*/
+/*
+	Measured at a card width of 241px, all of these are the same failure - text that cannot be read:
+	- the title input shares the header row with the colour chip and the avatar and is squeezed to 72px;
+	- the placeholder "Что нужно сделать" needs 137px, while the editable box leaves 120px (16px of
+	  padding on each side), so it wraps onto a second line that the 50px scroller then clips 7px short;
+	- the deadline pill needs 185px against the 118px of its container and runs past the card edge;
+	- the actions button sits directly on the editor box with no air between them.
+
+	Below the breakpoint the title takes the whole header row, the horizontal padding drops to 6px so
+	the placeholder fits on one line (137px against 140px of room), and the button gets its 2px.
+	The pill is allowed to shrink and keeps an ellipsis as a safety net: the short deadline format is
+	chosen in the component, but a longer locale must not overflow the card either.
+	The margin-bottom repeats both selectors of the region above with the same specificity (0,3,0) and
+	comes after it, so source order decides - the same reasoning as everywhere else in this file.
+*/
+@container crm-todo-editor (max-width: 250px) {
+	.crm-activity__todo-editor-v2_header {
+		flex-wrap: wrap;
+		row-gap: 4px;
+	}
+
+	.crm-activity__todo-editor-v2_header .crm-activity__todo-editor-v2_input_control.--title {
+		flex: 1 1 100%;
+		margin-right: 0;
+	}
+
+	.crm-activity__todo-editor-v2_editor .ui-text-editor-editable {
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.crm-activity__todo-editor-v2_editor .ui-text-editor-placeholder {
+		left: 6px;
+		right: 6px;
+	}
+
+	.crm-activity__todo-show-actions-popup-button,
+	.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-show-actions-popup-button {
+		margin-bottom: 2px;
+	}
+
+	.crm-activity__todo-editor-v2_deadline {
+		max-width: 100%;
+		padding-left: 6px;
+	}
+
+	.crm-activity__todo-editor-v2_deadline .crm-activity__todo-editor-v2_deadline-pill {
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	.crm-activity__todo-editor-v2_deadline-text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	/*
+		The pill shares its row with the ping bell: 124px + 20px against 118px of room, so even the
+		short format lost its time to the ellipsis ("26 авг, 09:…"). The bell moves onto its own line
+		and the pill gives back the 6px it is still missing - 2px of padding on each side and 2px of
+		the icon margin. The time is the part of the deadline that must survive.
+
+		The row also has to stop giving a quarter of itself away. Outside this query the tools row
+		carries width: 75%, which is free at wide widths and costly at the narrow end: at an editor
+		width of 145px - card 241px, i.e. the real 320px viewport that 1.4.10 is measured at - the
+		footer is 143px and 75% of it leaves the row 107px. The remaining 36px are not spent on
+		anything: the tools container has exactly one child, this row, so the quarter is simply
+		dropped on the floor. The pill needed 8 of those 36 - the deadline text measured
+		scrollWidth 83 against clientWidth 75 and fell back to "23 сен, 16:…", losing the time.
+		Taking the whole row back gives the pill 117.5px and the text its full 83.5px.
+		Nothing above 250px is touched, and at an editor width of 224px the change moves only this
+		box (166.5px -> 222px): title, field, pill, bell and button all keep their exact geometry,
+		because every one of them is content-sized rather than stretched.
+		The ellipsis stays as the safety net it was meant to be - for a locale whose date is longer
+		than the row, not for the reference width itself.
+	*/
+	.crm-activity__todo-editor-v2_left_tools {
+		flex-wrap: wrap;
+		row-gap: 4px;
+		width: 100%;
+	}
+
+	.crm-activity__todo-editor-v2_deadline .crm-activity__todo-editor-v2_deadline-pill {
+		padding: 4px 6px 4px 4px;
+	}
+
+	.crm-activity__todo-editor-v2_deadline-icon {
+		margin-right: 2px;
+	}
+
+	/*
+		The ping selector carries an inline width: 100% from the component, and an inline style
+		cannot be outbid by a stylesheet rule at any specificity - only by !important. At 100% it
+		claims a whole flex line, so the wrap above pushed the bell off the date's row even where
+		the bell would have fitted: its only visible content is a 20x20 icon (min-content: 20px).
+		Releasing the width puts it back beside the date - 123px + 8px + 20px against 222px of room
+		at an editor width of 224px - and turns three stacked rows into two. The wrap stays as the
+		safety net for the widths where even 151px does not fit.
+	*/
+	.crm-activity__todo-editor-v2_ping_selector {
+		width: auto !important;
+		margin-left: 8px;
+	}
+}
+
+/*endregion*/

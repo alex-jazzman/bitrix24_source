@@ -18,6 +18,27 @@
 	gap: var(--ui-space-stack-xs);
 }
 
+.intranet-user-otp-security__section-button {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+	background: none;
+	border: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
+}
+
+.intranet-user-otp-security__section-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 4px;
+	border-radius: var(--ui-border-radius-sm);
+}
+
 .intranet-user-otp-list__section-row-header {
 	display: flex;
 	flex-wrap: wrap;

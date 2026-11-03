@@ -2,6 +2,7 @@ export type WidgetOptions = {
 	rootNode: string,
 	template: string,
 	style?: string,
+	frameTitle?: string,
 	demoData: {},
 	lang?: {},
 	blockId: number,

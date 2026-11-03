@@ -1,10 +1,36 @@
-import { Type, Dom, Event, Loc, Tag, Text } from 'main.core';
-import { CurrencyCore } from 'currency.currency-core';
+import { Type, Dom, Event, Loc, Runtime, Tag, Text } from 'main.core';
+import 'main.kanban';
 import { Loader } from 'main.loader';
 import { PopupManager } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
-import 'main.kanban';
+import { Hint } from 'ui.hint';
+
+import { CurrencyCore } from 'currency.currency-core';
+
+import { getStageTextColor } from 'crm.stage.color';
+
+import { applyStageTitleTextColor } from './stage-title-color';
+
+// Grace period that lets the pointer travel from the total onto the hint itself.
+const HIDDEN_SUM_HINT_CLOSE_DELAY = 300;
+let stageDescriptionTooltipLoadPromise = null;
+let stageDescriptionTooltipOwnerToken = null;
+
+function loadStageDescriptionTooltip()
+{
+	stageDescriptionTooltipLoadPromise ??= Runtime
+		.loadExtension('crm.stage.description-tooltip')
+		.then(({ StageDescriptionTooltip }) => new StageDescriptionTooltip())
+		.catch((error) => {
+			stageDescriptionTooltipLoadPromise = null;
+
+			throw error;
+		})
+	;
+
+	return stageDescriptionTooltipLoadPromise;
+}
 
 /**
  *
@@ -30,16 +56,32 @@ export class Column extends BX.Kanban.Column
 	quickFormCancelButtonInstance = null;
 	editorId = null;
 	editor = null;
+	quickFormPartialEditor = null;
 	loader = null;
 	isKeyMetaPressed = false;
 	clickStatus = null;
 	cancelEditHandler = null;
+	editModeSnapshot = null;
+	stageUpdateInProgress = false;
 	blockSize = 20;
 	canLoadMoreItems = true;
+	columnSumPopup = null;
+	hiddenSumHintCloseTimeout = null;
+	hiddenSumHintHandlers = null;
+	stageDescriptionTooltip = null;
+	stageDescriptionTooltipOwnerToken = {};
+	stageDescriptionTooltipRequestId = 0;
 
 	constructor(options)
 	{
 		super(options);
+		this.handleStageTitleMouseEnter = this.handleStageTitleMouseEnter.bind(this);
+		this.handleStageTitleMouseLeave = this.handleStageTitleMouseLeave.bind(this);
+		this.handleStageTitleFocusIn = this.handleStageTitleFocusIn.bind(this);
+		this.handleStageTitleFocusOut = this.handleStageTitleFocusOut.bind(this);
+		this.handleStageTitleMouseDown = this.handleStageTitleMouseDown.bind(this);
+		this.handleStageTitleClick = this.handleStageTitleClick.bind(this);
+		this.handleStageTitleKeyDown = this.handleStageTitleKeyDown.bind(this);
 	}
 
 	getSubTitle()
@@ -145,8 +187,215 @@ export class Column extends BX.Kanban.Column
 		}
 		else
 		{
-			return super.getAddColumnButton();
+			const button = super.getAddColumnButton();
+			this.makeColumnActionAccessible(
+				button,
+				Loc.getMessage('CRM_KANBAN_COLUMN_ADD_ARIA_LABEL', { '#NAME#': this.getName() || '' }),
+				(event) => this.handleAddColumnButtonClick(event),
+			);
+			button.setAttribute('data-testid', 'crm-kanban-column-add-stage-btn');
+
+			return button;
 		}
+	}
+
+	/**
+	 * The stage edit ("pencil") control: focusable button with a meaningful name
+	 * and keyboard activation, revealed on keyboard focus as well as hover.
+	 *
+	 * @returns {Element}
+	 */
+	getEditButton()
+	{
+		const button = super.getEditButton();
+		this.makeColumnActionAccessible(
+			button,
+			Loc.getMessage('CRM_KANBAN_COLUMN_EDIT_ARIA_LABEL', { '#NAME#': this.getName() || '' }),
+			() => this.switchToEditMode(),
+		);
+		button.setAttribute('data-testid', 'crm-kanban-column-edit-btn');
+
+		return button;
+	}
+
+	/**
+	 * Makes a column action (rendered as a clickable <div>) keyboard-operable and
+	 * nameable for assistive tech: adds button semantics, focusability and
+	 * Enter/Space activation. Controls that are only visible on hover are revealed
+	 * on keyboard focus by the :focus-visible rules of main.kanban.
+	 *
+	 * Semantics and handlers are set up once per node, while the name is written
+	 * on every call: the same node is handed back on later renders, and by then
+	 * the stage it is named after may have been renamed.
+	 *
+	 * @param {Element} node
+	 * @param {string} ariaLabel
+	 * @param {Function} onActivate
+	 */
+	makeColumnActionAccessible(node, ariaLabel, onActivate)
+	{
+		if (!Type.isDomNode(node))
+		{
+			return;
+		}
+
+		this.setActionAriaLabel(node, ariaLabel);
+
+		if (node.dataset.a11yEnhanced === 'true')
+		{
+			return;
+		}
+
+		node.dataset.a11yEnhanced = 'true';
+		node.setAttribute('role', 'button');
+		node.setAttribute('tabindex', '0');
+
+		Event.bind(node, 'keydown', (event) => {
+			if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+			{
+				event.preventDefault();
+				onActivate(event);
+			}
+		});
+	}
+
+	/**
+	 * @param {?Element} node
+	 * @param {string} ariaLabel
+	 */
+	setActionAriaLabel(node, ariaLabel)
+	{
+		if (!Type.isDomNode(node) || !Type.isStringFilled(ariaLabel))
+		{
+			return;
+		}
+
+		// Writing the same value again would make some screen readers announce the
+		// control anew, and the stage is redrawn on every card added or removed.
+		if (node.getAttribute('aria-label') !== ariaLabel)
+		{
+			node.setAttribute('aria-label', ariaLabel);
+		}
+	}
+
+	/**
+	 * The stage actions are named after the stage, and their nodes are created
+	 * once and reused: the title layout, the add-stage button and the compact
+	 * add-item button all survive a redraw. Renaming a stage therefore has to
+	 * rewrite their names explicitly, or a screen reader keeps announcing the old
+	 * one (WCAG 4.1.2). The name of the stage itself is rewritten by the base
+	 * render() through getColumnAriaLabel().
+	 *
+	 * @returns {Element}
+	 */
+	render()
+	{
+		const container = super.render();
+
+		this.refreshActionAriaLabels();
+
+		return container;
+	}
+
+	refreshActionAriaLabels()
+	{
+		const name = this.getName() || '';
+
+		this.setActionAriaLabel(
+			this.layout.editButton,
+			Loc.getMessage('CRM_KANBAN_COLUMN_EDIT_ARIA_LABEL', { '#NAME#': name }),
+		);
+		this.setActionAriaLabel(
+			this.layout.addColumnButton,
+			Loc.getMessage('CRM_KANBAN_COLUMN_ADD_ARIA_LABEL', { '#NAME#': name }),
+		);
+		this.refreshAddItemButtonAriaLabel();
+	}
+
+	/**
+	 * Makes the compact "add item" ("+") control keyboard-operable and, for the
+	 * icon-only variant, gives it a meaningful name.
+	 */
+	enhanceAddItemButtonAccessibility()
+	{
+		const node = this.layout.subTitleAddButton;
+		if (
+			!Type.isDomNode(node)
+			|| node.classList.contains('crm-kanban-column-add-item-button--dummy')
+		)
+		{
+			return;
+		}
+
+		this.refreshAddItemButtonAriaLabel();
+
+		if (node.dataset.a11yEnhanced === 'true')
+		{
+			return;
+		}
+
+		node.dataset.a11yEnhanced = 'true';
+		node.setAttribute('data-testid', 'crm-kanban-column-quick-add-btn');
+
+		// Native <a> add-buttons are already keyboard-operable; only the <div>
+		// variant needs button semantics and Enter/Space activation.
+		if (node.tagName === 'DIV')
+		{
+			node.setAttribute('role', 'button');
+			node.setAttribute('tabindex', '0');
+			Event.bind(node, 'keydown', (event) => {
+				if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+				{
+					event.preventDefault();
+					node.click();
+				}
+			});
+		}
+	}
+
+	/**
+	 * The icon-only variant of the "+" control is named after the stage; the
+	 * variant with a visible caption is already named by that caption, and an
+	 * author name would replace it in the name computation instead of adding to
+	 * it (WCAG 4.1.2).
+	 */
+	refreshAddItemButtonAriaLabel()
+	{
+		const node = this.layout.subTitleAddButton;
+		if (
+			!Type.isDomNode(node)
+			|| node.classList.contains('crm-kanban-column-add-item-button--dummy')
+			|| Type.isStringFilled(node.textContent.trim())
+		)
+		{
+			return;
+		}
+
+		this.setActionAriaLabel(
+			node,
+			Loc.getMessage('CRM_KANBAN_COLUMN_QUICK_ADD_ARIA_LABEL', { '#NAME#': this.getName() || '' }),
+		);
+	}
+
+	/**
+	 * Accessible name of the stage column. Overridable name hook: stage name
+	 * plus the number of cards, so a screen reader announces the stage without
+	 * relying on the visual counter.
+	 *
+	 * @returns {string}
+	 */
+	getColumnAriaLabel()
+	{
+		const name = this.getName() || '';
+
+		return Loc.getMessagePlural(
+			'CRM_KANBAN_COLUMN_ARIA_LABEL',
+			this.getTotal(),
+			{
+				'#NAME#': name,
+				'#COUNT#': this.getTotal(),
+			},
+		);
 	}
 
 	/**
@@ -378,10 +627,11 @@ export class Column extends BX.Kanban.Column
 		grid.ajax(
 			params,
 			(data) => {
-				this.prepareGridAfterItemsAdded(items, data);
+				this.prepareGridAfterItemsAdded(forSend, data);
 				this.registerAnalyticsChangeStageEvent(items, data);
 			},
 			(error) => {
+				void grid.loadNew(forSend, false, true, true, true);
 				grid.registerAnalyticsChangeStageEvent(items[0], this.getData().type, forSend, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR)
 				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 			}
@@ -582,13 +832,13 @@ export class Column extends BX.Kanban.Column
 				this.disabledAddButton();
 			}
 
-			const analyticsConfig = {
-				data: BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(entityType)
-					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN)
-					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_QUICK_BUTTON)
-					.buildData()
-				,
-			};
+			const eventData = BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(entityType)
+				.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN)
+				.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_QUICK_BUTTON)
+				.buildData()
+			;
+			const postFormAnalyticsData = { data: eventData };
+			const analyticsConfig = { data: [] };
 
 			if (isFactoryBasedApproach)
 			{
@@ -606,7 +856,8 @@ export class Column extends BX.Kanban.Column
 							'ENABLE_COMMON_CONFIGURATION_UPDATE': true,
 							'ENABLE_CONFIG_SCOPE_TOGGLE': true,
 							'ENABLE_SETTINGS_FOR_ALL': true,
-							'POST_FORM_ANALYTICS_DATA': analyticsConfig,
+							'POST_FORM_ANALYTICS_DATA': postFormAnalyticsData,
+							ANALYTICS_CONFIG: analyticsConfig,
 							'HOST_COLUMN_FOR_QUICK_EDITOR_ID': this.getId().toString(),
 						}
 					}
@@ -668,7 +919,8 @@ export class Column extends BX.Kanban.Column
 						ENABLE_FIELDS_CONTEXT_MENU: "N",
 						FIELDS: formFields,
 						CONTEXT: context,
-						POST_FORM_ANALYTICS_DATA: analyticsConfig,
+						POST_FORM_ANALYTICS_DATA: postFormAnalyticsData,
+						ANALYTICS_CONFIG: analyticsConfig,
 						HOST_COLUMN_FOR_QUICK_EDITOR_ID: this.getId().toString(),
 					},
 					(result) => {
@@ -829,7 +1081,10 @@ export class Column extends BX.Kanban.Column
 						);
 					}
 
-					if(this.editorOpen)
+					if(
+						this.editorOpen
+						&& this.isCurrentQuickFormEditorCreateEvent(entityData)
+					)
 					{
 						this.hideQuickEditorLoader();
 						entityData.isCancelled = true;
@@ -887,7 +1142,12 @@ export class Column extends BX.Kanban.Column
 			BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.closeQuickFormEditor.bind(this));
 			BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
 			//BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
-			BX.addCustomEvent(window, "onCrmEntityCreate", this.hideQuickFormEditor.bind(this));
+			BX.addCustomEvent(window, "onCrmEntityCreate", this.completeQuickFormEditor.bind(this));
+			BX.addCustomEvent(
+				window,
+				"Crm.QuickFormPartialEditorDialog.Close",
+				this.handleQuickFormPartialEditorClose.bind(this),
+			);
 			BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
 			BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", this.enabledAddButton.bind(this));
 			BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", () => {
@@ -943,6 +1203,16 @@ export class Column extends BX.Kanban.Column
 		var context = {};
 		context[this.getGrid().getTypeInfoParam('stageIdKey')] = this.id;
 		context['NOT_CHANGE_STATUS'] = 'Y';
+		context.PARAMS = {
+			CATEGORY_ID: gridData.params.CATEGORY_ID || 0,
+			VIEW_MODE: gridData.viewMode,
+		};
+
+		const eventData = BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(gridData.entityType)
+			.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN)
+			.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_FILL_REQUIRED_FIELDS_POPUP)
+			.buildData()
+		;
 
 		var settings = {
 			entityTypeId: gridData.entityTypeInt,
@@ -951,13 +1221,11 @@ export class Column extends BX.Kanban.Column
 			context: context,
 			values: [],
 			presetValues: presetValues,
-			analyticsConfig: {
-				data: BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(gridData.entityType)
-					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN)
-					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_FILL_REQUIRED_FIELDS_POPUP)
-					.buildData()
-				,
-			},
+			analyticsConfig: { data: [] },
+			postFormAnalyticsData: { data: eventData },
+			hostColumnForQuickEditorId: this.getId().toString(),
+			categoryId: (gridData.params.CATEGORY_ID || 0).toString(),
+			viewMode: gridData.viewMode,
 		};
 
 		if(this.getGrid().getTypeInfoParam('useFactoryBasedApproach'))
@@ -966,11 +1234,6 @@ export class Column extends BX.Kanban.Column
 			settings.isController = true;
 			settings.entityTypeName = gridData.entityType;
 			settings.stageId = this.getId();
-
-			if (gridData.params.CATEGORY_ID)
-			{
-				settings.categoryId = gridData.params.CATEGORY_ID;
-			}
 		}
 		else
 		{
@@ -986,9 +1249,72 @@ export class Column extends BX.Kanban.Column
 		this.quickFormPartialEditor.open();
 	}
 
+	handleQuickFormPartialEditorClose(sender)
+	{
+		if (sender === this.quickFormPartialEditor)
+		{
+			this.quickFormPartialEditor = null;
+		}
+	}
+
 	isEditorOpen()
 	{
 		return this.editorOpen;
+	}
+
+	completeQuickFormEditor(entityData = null)
+	{
+		if(
+			!this.editorOpen
+			|| !this.isCurrentQuickFormEditorCreateEvent(entityData)
+		)
+		{
+			return;
+		}
+
+		this.hideQuickEditorLoader();
+		this.enabledAddButton();
+		this.restoreQuickFormEntryPointFocus();
+		this.hideQuickFormEditor();
+		this.cleanEditor();
+	}
+
+	isCurrentQuickFormEditorCreateEvent(entityData)
+	{
+		if (!entityData)
+		{
+			return true;
+		}
+
+		const sender = entityData.sender;
+		if (sender === this.editor)
+		{
+			return true;
+		}
+
+		const partialEditor = this.quickFormPartialEditor?.getEditor?.();
+
+		return (
+			sender === partialEditor
+			&& this.quickFormPartialEditor?.isOpen?.() === true
+		);
+	}
+
+	restoreQuickFormEntryPointFocus()
+	{
+		const activeElement = document.activeElement;
+		if (this.editorNode?.contains?.(activeElement) !== true)
+		{
+			return;
+		}
+
+		const addItemButton = this.layout?.subTitleAddButton;
+		if (addItemButton?.isConnected !== true)
+		{
+			return;
+		}
+
+		addItemButton.focus?.();
 	}
 
 	showQuickEditorLoader()
@@ -1095,6 +1421,208 @@ export class Column extends BX.Kanban.Column
 	isBoundToDocument(target)
 	{
 		return !!target.closest('body');
+	}
+
+	renderTitle()
+	{
+		const title = super.renderTitle();
+		applyStageTitleTextColor(title, getStageTextColor(this.getColor()));
+		this.bindStageTooltipEvents();
+
+		return title;
+	}
+
+	addTitleHint(element)
+	{
+		this.clearDefaultStageTitleHint(element);
+	}
+
+	clearDefaultStageTitleHint(element)
+	{
+		const hintObject = element?.closest('.main-kanban-column-title-info');
+		if (!Type.isElementNode(hintObject))
+		{
+			return;
+		}
+
+		hintObject.removeAttribute('data-hint-init');
+		hintObject.removeAttribute('data-hint');
+		hintObject.removeAttribute('data-hint-no-icon');
+		Hint.hide(hintObject);
+	}
+
+	bindStageTooltipEvents()
+	{
+		const titleNode = this.layout?.info;
+		if (!Type.isElementNode(titleNode))
+		{
+			return;
+		}
+
+		this.clearDefaultStageTitleHint(titleNode);
+
+		Event.unbind(titleNode, 'mouseenter', this.handleStageTitleMouseEnter);
+		Event.unbind(titleNode, 'mouseleave', this.handleStageTitleMouseLeave);
+		Event.unbind(titleNode, 'focusin', this.handleStageTitleFocusIn);
+		Event.unbind(titleNode, 'focusout', this.handleStageTitleFocusOut);
+		Event.unbind(titleNode, 'mousedown', this.handleStageTitleMouseDown);
+		Event.unbind(titleNode, 'click', this.handleStageTitleClick);
+		Event.unbind(titleNode, 'keydown', this.handleStageTitleKeyDown);
+		titleNode.dataset.testid = `crm-kanban-stage-title-${this.getId()}`;
+
+		Event.bind(titleNode, 'mouseenter', this.handleStageTitleMouseEnter);
+		Event.bind(titleNode, 'mouseleave', this.handleStageTitleMouseLeave);
+		Event.bind(titleNode, 'focusin', this.handleStageTitleFocusIn);
+		Event.bind(titleNode, 'focusout', this.handleStageTitleFocusOut);
+		Event.bind(titleNode, 'mousedown', this.handleStageTitleMouseDown);
+		Event.bind(titleNode, 'click', this.handleStageTitleClick);
+		Event.bind(titleNode, 'keydown', this.handleStageTitleKeyDown);
+
+		if (this.isEditable())
+		{
+			titleNode.setAttribute('role', 'button');
+			titleNode.setAttribute('tabindex', '0');
+			titleNode.setAttribute('aria-haspopup', 'dialog');
+		}
+		else
+		{
+			titleNode.removeAttribute('role');
+			titleNode.removeAttribute('aria-haspopup');
+			if (
+				Type.isStringFilled(this.getData().description)
+				|| this.isStageTitleCropped()
+			)
+			{
+				titleNode.setAttribute('tabindex', '0');
+			}
+			else
+			{
+				titleNode.removeAttribute('tabindex');
+			}
+		}
+	}
+
+	handleStageTitleMouseEnter()
+	{
+		const grid = this.getGrid();
+		if (Type.isFunction(grid.isStageEditorOpenedFor) && grid.isStageEditorOpenedFor(this.getId()))
+		{
+			this.closeStageDescriptionTooltip();
+
+			return;
+		}
+
+		this.showStageDescriptionTooltip();
+	}
+
+	handleStageTitleMouseLeave()
+	{
+		this.stageDescriptionTooltipRequestId++;
+		if (stageDescriptionTooltipOwnerToken === this.stageDescriptionTooltipOwnerToken)
+		{
+			stageDescriptionTooltipOwnerToken = null;
+			this.stageDescriptionTooltip?.hide();
+		}
+	}
+
+	handleStageTitleFocusIn()
+	{
+		this.handleStageTitleMouseEnter();
+	}
+
+	handleStageTitleFocusOut()
+	{
+		this.handleStageTitleMouseLeave();
+	}
+
+	handleStageTitleMouseDown()
+	{
+		this.closeStageDescriptionTooltip();
+	}
+
+	handleStageTitleClick(event)
+	{
+		if (!this.isEditable() || event.target.closest('.main-kanban-column-edit'))
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.switchToEditMode();
+	}
+
+	handleStageTitleKeyDown(event)
+	{
+		if (!this.isEditable() || !['Enter', ' '].includes(event.key))
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.switchToEditMode();
+	}
+
+	async showStageDescriptionTooltip()
+	{
+		if (!Type.isStringFilled(this.getData().description) && !this.isStageTitleCropped())
+		{
+			this.closeStageDescriptionTooltip();
+
+			return;
+		}
+
+		const requestId = ++this.stageDescriptionTooltipRequestId;
+		let tooltip = null;
+		try
+		{
+			tooltip = await loadStageDescriptionTooltip();
+		}
+		catch
+		{
+			return;
+		}
+
+		if (requestId !== this.stageDescriptionTooltipRequestId)
+		{
+			return;
+		}
+
+		this.stageDescriptionTooltip = tooltip;
+		this.showLoadedStageDescriptionTooltip();
+	}
+
+	showLoadedStageDescriptionTooltip()
+	{
+		stageDescriptionTooltipOwnerToken = this.stageDescriptionTooltipOwnerToken;
+		this.stageDescriptionTooltip.show({
+			bindElement: this.getStageDescriptionTooltipBindElement(),
+			focusElement: this.layout.info,
+			name: this.getName(),
+			description: this.getData().description ?? '',
+			showName: this.isStageTitleCropped(),
+		});
+	}
+
+	getStageDescriptionTooltipBindElement(): HTMLElement
+	{
+		return Type.isElementNode(this.layout?.color) ? this.layout.color : this.layout.info;
+	}
+
+	isStageTitleCropped(): boolean
+	{
+		const titleText = this.layout?.nameInner;
+
+		return Type.isElementNode(titleText) && titleText.offsetWidth < titleText.scrollWidth;
+	}
+
+	closeStageDescriptionTooltip()
+	{
+		this.stageDescriptionTooltipRequestId++;
+		if (stageDescriptionTooltipOwnerToken === this.stageDescriptionTooltipOwnerToken)
+		{
+			stageDescriptionTooltipOwnerToken = null;
+			this.stageDescriptionTooltip?.hideImmediately();
+		}
 	}
 
 	/**
@@ -1392,6 +1920,8 @@ export class Column extends BX.Kanban.Column
 			]
 		});
 
+		this.enhanceAddItemButtonAccessibility();
+
 		return this.subtitleNode;
 	}
 
@@ -1407,6 +1937,9 @@ export class Column extends BX.Kanban.Column
 
 		if (isShowTotalPrice && !this.layout.subTitlePrice)
 		{
+			// The hint popup is bound to the total node, so it cannot outlive it.
+			this.destroyHiddenSumHint();
+
 			this.layout.subTitlePriceText = Tag.render`<span class="crm-kanban-total-price-total"></span>`;
 			this.layout.subTitlePrice = Tag.render`<div class="crm-kanban-total-price">`;
 
@@ -1414,27 +1947,151 @@ export class Column extends BX.Kanban.Column
 		}
 		else if (!isShowTotalPrice)
 		{
+			this.destroyHiddenSumHint();
+
 			this.layout.subTitlePrice = null;
+			this.layout.subTitlePriceText = null;
 		}
 
-		if (this.isHiddenTotalSum())
+		this.updateHiddenSumHint();
+	}
+
+	/**
+	 * The masked total is the trigger of the "sum is hidden" hint. WCAG 1.4.13
+	 * requires such content to be dismissible, hoverable and persistent, so the
+	 * hint opens on hover and on keyboard focus, closes on Escape, and survives
+	 * the pointer travelling from the trigger onto the hint itself. The hint text
+	 * is also the accessible name of the trigger, so a screen reader gets it
+	 * without opening anything - and for the same reason the trigger does not
+	 * point at the shown hint with aria-describedby, which would only repeat the
+	 * name as a description.
+	 */
+	updateHiddenSumHint()
+	{
+		const trigger = this.layout.subTitlePriceText;
+
+		this.unbindHiddenSumHintHandlers();
+
+		if (!Type.isDomNode(trigger))
 		{
-			const { subTitlePriceText } = this.layout;
-
-			Event.unbindAll(subTitlePriceText, 'mouseenter');
-			Event.unbindAll(subTitlePriceText, 'mouseleave');
-			Event.bind(subTitlePriceText, 'mouseenter', this.onSubTitlePriceMouseEnter.bind(this));
-			Event.bind(subTitlePriceText, 'mouseleave', this.onSubTitlePriceMouseLeave.bind(this));
+			return;
 		}
+
+		if (!this.isHiddenTotalSum())
+		{
+			this.closeHiddenSumHint();
+			['role', 'tabindex', 'aria-label', 'data-testid'].forEach((attribute) => {
+				trigger.removeAttribute(attribute);
+			});
+
+			return;
+		}
+
+		trigger.setAttribute('role', 'button');
+		trigger.setAttribute('tabindex', '0');
+		trigger.setAttribute('aria-label', Loc.getMessage('CRM_KANBAN_COLUMN_HIDDEN_SUM'));
+		trigger.setAttribute('data-testid', 'crm-kanban-column-hidden-sum-hint-btn');
+
+		// Handlers are kept so they can be removed one by one: unbindAll would also
+		// take down listeners of these events bound by anyone else.
+		this.hiddenSumHintHandlers = {
+			node: trigger,
+			events: {
+				mouseenter: this.onSubTitlePriceMouseEnter.bind(this),
+				mouseleave: this.onSubTitlePriceMouseLeave.bind(this),
+				focus: this.onSubTitlePriceFocus.bind(this),
+				blur: this.onSubTitlePriceBlur.bind(this),
+				keydown: this.onSubTitlePriceKeyDown.bind(this),
+			},
+		};
+
+		Object.entries(this.hiddenSumHintHandlers.events).forEach(([eventName, handler]) => {
+			Event.bind(trigger, eventName, handler);
+		});
+	}
+
+	unbindHiddenSumHintHandlers()
+	{
+		if (!this.hiddenSumHintHandlers)
+		{
+			return;
+		}
+
+		const { node, events } = this.hiddenSumHintHandlers;
+		Object.entries(events).forEach(([eventName, handler]) => {
+			Event.unbind(node, eventName, handler);
+		});
+
+		this.hiddenSumHintHandlers = null;
 	}
 
 	onSubTitlePriceMouseEnter()
 	{
+		this.showHiddenSumHint();
+	}
+
+	onSubTitlePriceMouseLeave()
+	{
+		this.scheduleHiddenSumHintClose();
+	}
+
+	onSubTitlePriceFocus()
+	{
+		this.showHiddenSumHint();
+	}
+
+	onSubTitlePriceBlur(event)
+	{
+		// The hint may legitimately take the focus (a screen reader user walking
+		// into its content), so leaving the trigger for the hint itself must not
+		// close it - otherwise focus bounces between the two.
+		const popupContainer = this.columnSumPopup?.getPopupContainer();
+		const nextTarget = event?.relatedTarget;
+		if (popupContainer && Type.isDomNode(nextTarget) && popupContainer.contains(nextTarget))
+		{
+			return;
+		}
+
+		this.closeHiddenSumHint();
+	}
+
+	onSubTitlePriceKeyDown(event)
+	{
+		if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar')
+		{
+			return;
+		}
+
+		event.preventDefault();
+
+		if (this.columnSumPopup?.isShown())
+		{
+			this.closeHiddenSumHint();
+		}
+		else
+		{
+			this.showHiddenSumHint();
+		}
+	}
+
+	getHiddenSumPopup()
+	{
+		if (this.columnSumPopup)
+		{
+			return this.columnSumPopup;
+		}
+
 		this.columnSumPopup = PopupManager.create(
 			this.getHideColumnSumPopupId(),
 			this.layout.subTitlePriceText,
 			{
 				autoHide: true,
+				closeByEsc: true,
+				role: 'tooltip',
+				// A tooltip must never pull the focus away from its trigger. The
+				// option has to be explicit: with the focus trap accessibility
+				// setting on, an omitted value means "trap enabled".
+				focusTrap: false,
 				angle: true,
 				animation: 'fading',
 				darkMode: true,
@@ -1450,17 +2107,66 @@ export class Column extends BX.Kanban.Column
 			}
 		);
 
-		this.columnSumPopup.show();
+		// Keeps the hint open while the pointer is on the hint itself.
+		const popupContainer = this.columnSumPopup.getPopupContainer();
+		Event.bind(popupContainer, 'mouseenter', this.cancelHiddenSumHintClose.bind(this));
+		Event.bind(popupContainer, 'mouseleave', this.scheduleHiddenSumHintClose.bind(this));
+
+		return this.columnSumPopup;
+	}
+
+	showHiddenSumHint()
+	{
+		this.cancelHiddenSumHintClose();
+		this.getHiddenSumPopup().show();
+	}
+
+	closeHiddenSumHint()
+	{
+		this.cancelHiddenSumHintClose();
+		this.columnSumPopup?.close();
+	}
+
+	scheduleHiddenSumHintClose()
+	{
+		this.cancelHiddenSumHintClose();
+		this.hiddenSumHintCloseTimeout = setTimeout(
+			() => this.closeHiddenSumHint(),
+			HIDDEN_SUM_HINT_CLOSE_DELAY,
+		);
+	}
+
+	cancelHiddenSumHintClose()
+	{
+		if (this.hiddenSumHintCloseTimeout)
+		{
+			clearTimeout(this.hiddenSumHintCloseTimeout);
+			this.hiddenSumHintCloseTimeout = null;
+		}
+	}
+
+	/**
+	 * Drops the hint entirely: the popup is bound to the total node and the close
+	 * timeout would otherwise fire after that node is gone.
+	 */
+	destroyHiddenSumHint()
+	{
+		this.cancelHiddenSumHintClose();
+		this.unbindHiddenSumHintHandlers();
+		this.columnSumPopup?.destroy();
+		this.columnSumPopup = null;
+	}
+
+	destroy()
+	{
+		this.destroyHiddenSumHint();
+
+		super.destroy();
 	}
 
 	getHideColumnSumPopupId()
 	{
 		return `kanban-column-${this.getId()}-hidden-sum-popup`;
-	}
-
-	onSubTitlePriceMouseLeave()
-	{
-		this.columnSumPopup.close();
 	}
 
 	renderSubTitlePrice()
@@ -1617,18 +2323,18 @@ export class Column extends BX.Kanban.Column
 	{
 		const gridData = this.getGridData();
 
-		if (gridData.rights?.canAddColumn)
+		if (gridData.rights?.areStagesEditable)
 		{
-			const newColumn = this.getGrid().addColumn({
-				id: "kanban-new-column-" + BX.util.getRandomString(5),
-				type: "BX.CRM.Kanban.DraftColumn",
-				canSort: false,
-				canAddItem: false,
-				droppable: false,
-				targetId: this.getGrid().getNextColumnSibling(this)
-			});
+			const grid = this.getGrid();
+			if (Type.isFunction(grid.openStageEditorForCreate))
+			{
+				event.preventDefault();
+				grid.openStageEditorForCreate(this);
 
-			newColumn.switchToEditMode();
+				return;
+			}
+
+			super.handleAddColumnButtonClick(event);
 		}
 		else if (gridData.isLockedEntity)
 		{
@@ -1642,10 +2348,24 @@ export class Column extends BX.Kanban.Column
 
 	switchToEditMode()
 	{
+		if (this.isStageUpdateInProgress())
+		{
+			return;
+		}
+
 		const gridData = this.getGridData();
 
-		if (gridData.rights?.canEditColumn)
+		if (gridData.rights?.areStagesEditable)
 		{
+			const grid = this.getGrid();
+			if (Type.isFunction(grid.openStageEditorForEdit))
+			{
+				grid.openStageEditorForEdit(this);
+
+				return;
+			}
+
+			this.saveEditModeSnapshot();
 			super.switchToEditMode();
 		}
 		else if (gridData.isLockedEntity)
@@ -1656,6 +2376,58 @@ export class Column extends BX.Kanban.Column
 		{
 			this.getGrid().accessNotify();
 		}
+	}
+
+	saveEditModeSnapshot()
+	{
+		this.editModeSnapshot = {
+			name: this.getName(),
+			color: this.getColor(),
+		};
+	}
+
+	getEditModeSnapshot()
+	{
+		return this.editModeSnapshot;
+	}
+
+	restoreEditModeSnapshot(snapshot)
+	{
+		if (!this.isCurrentEditModeSnapshot(snapshot))
+		{
+			return;
+		}
+
+		this.setName(snapshot.name);
+		this.setColor(snapshot.color);
+		this.colorChanged = false;
+		this.render();
+		this.clearEditModeSnapshot(snapshot);
+	}
+
+	clearEditModeSnapshot(snapshot)
+	{
+		if (!this.isCurrentEditModeSnapshot(snapshot))
+		{
+			return;
+		}
+
+		this.editModeSnapshot = null;
+	}
+
+	isCurrentEditModeSnapshot(snapshot)
+	{
+		return Type.isPlainObject(snapshot) && this.editModeSnapshot === snapshot;
+	}
+
+	isStageUpdateInProgress()
+	{
+		return this.stageUpdateInProgress === true;
+	}
+
+	setStageUpdateInProgress(value = true)
+	{
+		this.stageUpdateInProgress = value;
 	}
 
 	focusTextBox()
@@ -1801,6 +2573,14 @@ export class DraftColumn extends BX.Kanban.DraftColumn
 	constructor(options)
 	{
 		super(options);
+	}
+
+	renderTitle()
+	{
+		const title = super.renderTitle();
+		applyStageTitleTextColor(title, getStageTextColor(this.getColor()));
+
+		return title;
 	}
 
 	handleRemoveButtonClick(event)

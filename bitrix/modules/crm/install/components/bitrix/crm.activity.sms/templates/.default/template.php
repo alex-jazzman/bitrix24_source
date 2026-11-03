@@ -48,7 +48,7 @@ $statuses = $arResult['SMS_MESSAGE_STATUS_DESCRIPTIONS'];
 			</span>
 		</div>
 		<span>
-			<?=$arResult['activity']['DESCRIPTION_HTML']?>
+			<?=$arResult['SMS_DESCRIPTION_HTML']?>
 		</span>
 	</div>
 </div>

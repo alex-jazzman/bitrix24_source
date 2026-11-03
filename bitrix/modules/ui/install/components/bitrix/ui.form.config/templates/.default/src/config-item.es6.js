@@ -1,6 +1,5 @@
-import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Button } from 'ui.buttons';
+import { Dom, Loc, Tag, Text, Type } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog, type Item, type ItemId } from 'ui.entity-selector';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Config } from './config.es6';
@@ -37,7 +36,7 @@ export class ConfigItem extends EventEmitter
 		this.setEventNamespace('BX.Ui.Form');
 
 		this.#scopeId = (options.scopeId || null);
-		this.#members = (options.members || null);
+		this.#members = (options.members || {});
 		this.#node = BX(`ui-editor-config-${this.#scopeId}`);
 		this.#moduleId = (options.moduleId || null);
 		this.#config = Config;
@@ -74,6 +73,21 @@ export class ConfigItem extends EventEmitter
 				},
 				{
 					id: 'project',
+					options: {
+						closed: false,
+						siteId: BX.message('SITE_ID'),
+					},
+				},
+				{
+					id: 'project-access-codes',
+					searchable: false,
+					options: {
+						addAccessCodesTab: false,
+						fillAccessCodesTab: false,
+						fillRecentTab: false,
+						closed: false,
+						siteId: BX.message('SITE_ID'),
+					},
 				},
 				{
 					id: this.#useHumanResourcesModule ? 'structure-node' : 'department',
@@ -119,17 +133,17 @@ export class ConfigItem extends EventEmitter
 			Dom.clean(this.#node);
 		}
 
-		let shownMembers = this.#members;
+		let shownMembers = Object.entries(this.#members);
 		let notShownMembersCount = 0;
-		if (Object.values(this.#members).length > MAX_SHOWN_MEMBERS)
+		if (shownMembers.length > MAX_SHOWN_MEMBERS)
 		{
-			shownMembers = Object.values(this.#members).slice(0, MAX_SHOWN_MEMBERS);
+			shownMembers = shownMembers.slice(0, MAX_SHOWN_MEMBERS);
 
 			notShownMembersCount = Object.values(this.#members).length - MAX_SHOWN_MEMBERS;
 		}
 
-		Object.values(shownMembers).forEach((item) => {
-			Dom.append(this.#createMemberElement(item), this.#node);
+		shownMembers.forEach(([accessCode, item]) => {
+			Dom.append(this.#createMemberElement(item, accessCode), this.#node);
 		});
 
 		if (notShownMembersCount > 0)
@@ -140,11 +154,12 @@ export class ConfigItem extends EventEmitter
 		Dom.append(this.#createPlusButton(), this.#node);
 	}
 
-	#createMemberElement(member: Object): HTMLElement
+	#createMemberElement(member: Object, accessCode: ?string): HTMLElement
 	{
-		const children = (member.avatar
+		const iconClass = this.#getMemberIconClass(member, accessCode);
+		const children = (member.avatar && iconClass === 'ui-icon-common-user'
 			? Tag.render`<a href="${member.url}" class="ui-editor-config-item-avatar"  title="${Text.encode(member.name)}" style="background-image: url('${encodeURI(Text.encode(member.avatar))}')"></a>`
-			: Tag.render`<a href="${member.url}" class="ui-icon ui-icon-xs ui-icon-common-user" title="${Text.encode(member.name)}"><i></i></a>`
+			: Tag.render`<a href="${member.url}" class="ui-icon ui-icon-xs ${iconClass}" title="${Text.encode(member.name)}"><i></i></a>`
 		);
 
 		return Dom.create('div', {
@@ -157,6 +172,71 @@ export class ConfigItem extends EventEmitter
 		});
 	}
 
+	#getMemberIconClass(member: Object, accessCode: ?string): string
+	{
+		const memberType = Type.isStringFilled(member.type) ? member.type.toLowerCase() : '';
+		const normalizedAccessCode = Type.isStringFilled(member.accessCode) ? member.accessCode : (accessCode ?? '');
+
+		if (memberType === 'users')
+		{
+			return 'ui-icon-common-user';
+		}
+
+		if (/^(SNT|SNTR)\d+$/.test(normalizedAccessCode))
+		{
+			return 'ui-icon-common-company';
+		}
+
+		if (/^SG\d+(?:_[AEK])?$/.test(normalizedAccessCode))
+		{
+			return 'ui-icon-common-company';
+		}
+
+		if (/^(D|DR|SND|SNDR)\d+$/.test(normalizedAccessCode))
+		{
+			return 'ui-icon-common-company';
+		}
+
+		if (/^G\d+$/.test(normalizedAccessCode) || normalizedAccessCode.at(0) === 'A')
+		{
+			return 'ui-icon-common-user-group';
+		}
+
+		if (
+			memberType === 'groups'
+			|| memberType === 'usergroups'
+			|| memberType === 'site-groups'
+			|| memberType === 'user-groups'
+			|| memberType === 'structure-role'
+		)
+		{
+			return 'ui-icon-common-user-group';
+		}
+
+		if (
+			memberType === 'sonetgroups'
+			|| memberType === 'socnetgroup'
+			|| memberType === 'project'
+			|| memberType === 'project-access-codes'
+			|| memberType === 'structureteams'
+		)
+		{
+			return 'ui-icon-common-company';
+		}
+
+		if (
+			memberType === 'departments'
+			|| memberType === 'department'
+			|| memberType === 'intranet'
+			|| memberType === 'structuredepartments'
+			|| memberType === 'structure-node'
+		)
+		{
+			return 'ui-icon-common-company';
+		}
+
+		return 'ui-icon-common-user';
+	}
 	#createPlusButton(): HTMLElement
 	{
 		return Dom.create('div', {
@@ -276,9 +356,25 @@ export class ConfigItem extends EventEmitter
 			return ['site-groups', groupId];
 		}
 
+		if (/^SG(\d+)$/.test(accessCode))
+		{
+			const match = accessCode.match(/^SG(\d+)$/) || null;
+			const projectId = match ? match[1] : null;
+
+			return ['project', projectId];
+		}
+
 		if (accessCode.at(0) === 'A')
 		{
 			return ['user-groups', accessCode];
+		}
+
+		if (/^SG(\d+)$/.test(accessCode))
+		{
+			const match = accessCode.match(/^SG(\d+)$/) || null;
+			const projectId = match ? match[1] : null;
+
+			return ['project', projectId];
 		}
 
 		if (/^SG(\d+)_([AEK])$/.test(accessCode))
@@ -314,6 +410,11 @@ export class ConfigItem extends EventEmitter
 			return `U${item.id}`;
 		}
 
+		if (entityId === 'intranet')
+		{
+			return `DR${item.id}`;
+		}
+
 		if (entityId === 'department')
 		{
 			if (Type.isString(item.id) && item.id.endsWith(':F'))
@@ -342,6 +443,11 @@ export class ConfigItem extends EventEmitter
 			return `SNDR${item.id}`;
 		}
 
+		if (entityId === 'project' || entityId === 'socnetgroup')
+		{
+			return `SG${item.id}`;
+		}
+
 		if (entityId === 'site-groups')
 		{
 			return `G${item.id}`;
@@ -350,6 +456,11 @@ export class ConfigItem extends EventEmitter
 		if (entityId === 'user-groups')
 		{
 			return item.id;
+		}
+
+		if (entityId === 'project')
+		{
+			return `SG${item.id}`;
 		}
 
 		if (entityId === 'project-access-codes')

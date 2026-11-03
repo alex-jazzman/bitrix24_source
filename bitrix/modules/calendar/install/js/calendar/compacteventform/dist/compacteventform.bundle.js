@@ -26,6 +26,9 @@ this.BX = this.BX || {};
 		excludedUsers = [];
 		meetingStatusRequestInProgress = false;
 		meetingStatusRequestSeq = 0;
+		plannerLimitHint = null;
+		checkForChangesTimer = null;
+		openingGeneration = 0;
 		constructor(options = {}) {
 			super();
 			this.setEventNamespace('BX.Calendar.CompactEventForm');
@@ -36,14 +39,18 @@ this.BX = this.BX || {};
 			this.calendarContext = options.calendarContext || null;
 			this.ownerId = options.ownerId || this.userId;
 			this.isCollabUser = calendar_util.Util.getCalendarContext().isCollabUser || false;
-			this.checkForChangesDebounce = main_core.Runtime.debounce(this.checkForChanges, this.CHECK_CHANGES_DELAY, this);
+			this.checkForChangesDebounce = this.scheduleCheckForChanges.bind(this);
 			this.reloadEntryDataDebounce = main_core.Runtime.debounce(this.reloadEntryData, this.RELOAD_DATA_DELAY, this);
 			this.checkOutsideClickClose = this.checkOutsideClickClose.bind(this);
 			this.outsideMouseDownClose = this.outsideMouseDownClose.bind(this);
 			this.keyHandler = this.handleKeyPress.bind(this);
+			this.handlePlannerLimitStateChangeBind = this.handlePlannerLimitStateChange.bind(this);
 			this.lastUsedSaveOptions = {};
 		}
 		show(mode = CompactEventForm.EDIT_MODE, params = {}) {
+			this.openingGeneration++;
+			this.clearCheckForChangesTimer();
+			this.destroyPlannerLimitControls();
 			this.setParams(params);
 			this.setMode(mode);
 			this.state = this.STATE.READY;
@@ -159,14 +166,14 @@ this.BX = this.BX || {};
 				return;
 			}
 			const wasShown = this.isShown();
+			this.openingGeneration++;
+			this.clearCheckForChangesTimer();
 			this.displayed = false;
 			this.emit('onClose');
 			main_core.Event.unbind(document, 'mousedown', this.outsideMouseDownClose);
 			main_core.Event.unbind(document, 'mouseup', this.checkOutsideClickClose);
 			main_core.Event.unbind(document, 'keydown', this.keyHandler);
-			if (this.userPlannerSelector) {
-				this.userPlannerSelector.destroy();
-			}
+			this.destroyPlannerLimitControls();
 			if (this.popup) {
 				this.popup.destroy();
 			}
@@ -182,6 +189,15 @@ this.BX = this.BX || {};
 		// `fromPopup` skips the unsaved changes confirmation: a form that never opened has nothing to confirm
 		abortWithoutConfirm() {
 			this.close(true, true);
+		}
+		destroyPlannerLimitControls() {
+			if (this.userPlannerSelector) {
+				this.userPlannerSelector.unsubscribe('onPlannerLimitStateChange', this.handlePlannerLimitStateChangeBind);
+				this.userPlannerSelector.destroy();
+				this.userPlannerSelector = null;
+			}
+			this.plannerLimitHint?.destroy();
+			this.plannerLimitHint = null;
 		}
 		getPopupContentCalendar() {
 			this.DOM.wrap = main_core.Tag.render`<div class="calendar-add-popup-wrap" data-testid="calendar-compact-form">
@@ -399,23 +415,23 @@ this.BX = this.BX || {};
 				},
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: () => {
-						if (this.isNewEntry()) {
-							this.checkDataBeforeCloseMode = false;
-							this.close();
-						} else {
-							this.setFormValues();
-							if (this.userPlannerSelector) {
-								this.userPlannerSelector.destroy();
-							}
-							this.setMode(CompactEventForm.VIEW_MODE);
-							this.popup.setButtons(this.getButtons());
-						}
-					}
+					click: () => this.handleCloseButtonClick()
 				}
 			});
 			closeButton.button.setAttribute('data-role', 'closeButton');
 			return closeButton;
+		}
+		handleCloseButtonClick() {
+			if (this.isNewEntry()) {
+				this.checkDataBeforeCloseMode = false;
+				this.close();
+				return;
+			}
+			this.setFormValues();
+			this.userPlannerSelector?.reset();
+			this.plannerLimitHint?.close();
+			this.setMode(CompactEventForm.VIEW_MODE);
+			this.popup.setButtons(this.getButtons());
 		}
 		getFullFormButton() {
 			const fullFormButton = new BX.UI.Button({
@@ -661,11 +677,39 @@ this.BX = this.BX || {};
 			if (!this.isNewEntry() && this.getMode() === CompactEventForm.VIEW_MODE && this.formDataChanged()) {
 				this.setMode(CompactEventForm.EDIT_MODE);
 				this.popup.setButtons(this.getButtons());
+				if (this.userPlannerSelector) {
+					this.userPlannerSelector.resetPlannerLimitState();
+					if (this.userPlannerSelector.isPlannerDisplayed()) {
+						this.userPlannerSelector.refreshPlannerStateDebounce();
+					} else {
+						this.userPlannerSelector.checkBusyTime();
+					}
+				}
 			} else if (!this.isNewEntry() && this.getMode() === CompactEventForm.EDIT_MODE && !this.formDataChanged()) {
 				this.setMode(CompactEventForm.VIEW_MODE);
 				this.popup.setButtons(this.getButtons());
+				this.plannerLimitHint?.close();
+				this.userPlannerSelector?.resetPlannerLimitState();
 			}
 			this.emitOnChange();
+		}
+		scheduleCheckForChanges() {
+			this.clearCheckForChangesTimer();
+			const generation = this.openingGeneration;
+			const timerId = setTimeout(() => {
+				if (this.openingGeneration !== generation || this.checkForChangesTimer !== timerId) {
+					return;
+				}
+				this.checkForChangesTimer = null;
+				this.checkForChanges();
+			}, this.CHECK_CHANGES_DELAY);
+			this.checkForChangesTimer = timerId;
+		}
+		clearCheckForChangesTimer() {
+			if (this.checkForChangesTimer !== null) {
+				clearTimeout(this.checkForChangesTimer);
+				this.checkForChangesTimer = null;
+			}
 		}
 		updateEventNameInputTitle() {
 			if (this.isTitleOverflowing()) {
@@ -684,7 +728,10 @@ this.BX = this.BX || {};
 		checkLocationForm(event) {
 			if (!this.isCollabUser && event && event instanceof main_core_events.BaseEvent) {
 				const data = event.getData();
-				const usersCount = data.usersCount;
+				// the truncated planner renders the organizer only, so capacity
+				// must be checked against the full people count from the response
+				const limitState = this.userPlannerSelector?.getPlannerLimitState();
+				const usersCount = limitState?.exceeded ? Math.max(data.usersCount, limitState.peopleCount) : data.usersCount;
 				let locationCapacity = calendar_controls.Location.getCurrentCapacity() || 0;
 				if (this.locationSelector.value.type === undefined && locationCapacity) {
 					locationCapacity = 0;
@@ -1018,6 +1065,7 @@ this.BX = this.BX || {};
 				outerWrap: this.DOM.dateTimeWrap,
 				inlineEditMode: true
 			});
+			main_core.Event.bind(this.DOM.dateTimeWrap, 'click', this.handleDateTimeControlClick.bind(this));
 			this.dateTimeControl.subscribe('onSetValue', () => {
 				this.excludedUsers = [];
 			});
@@ -1052,6 +1100,12 @@ this.BX = this.BX || {};
 			});
 			return this.DOM.dateTimeWrap;
 		}
+		handleDateTimeControlClick() {
+			if (this.canDo('edit') && this.userPlannerSelector && !this.userPlannerSelector.isPlannerDisplayed()) {
+				this.userPlannerSelector.showPlanner();
+				this.userPlannerSelector.refreshPlannerStateDebounce();
+			}
+		}
 		getUserPlannerSelector() {
 			this.DOM.userPlannerSelectorOuterWrap = main_core.Tag.render`<div>
 			<div class="calendar-field-container calendar-field-container-members">
@@ -1059,9 +1113,16 @@ this.BX = this.BX || {};
 				<div class="calendar-field-block">
 					<div class="calendar-members-selected">
 						<span class="calendar-attendees-label"></span>
-						<span class="calendar-attendees-list" data-testid="calendar-compact-form-attendees"></span>
+						${this.DOM.attendeesList = main_core.Tag.render`
+							<span class="calendar-attendees-list" data-testid="calendar-compact-form-attendees"></span>
+						`}
 						<span class="calendar-members-more">${main_core.Loc.getMessage('EC_ATTENDEES_MORE')}</span>
-						<span class="calendar-members-change-link" data-testid="calendar-compact-form-attendees-change-link">${main_core.Loc.getMessage('EC_SEC_SLIDER_CHANGE')}</span>
+						${this.DOM.attendeesChangeLink = main_core.Tag.render`
+							<span
+								class="calendar-members-change-link"
+								data-testid="calendar-compact-form-attendees-change-link"
+							>${main_core.Loc.getMessage('EC_SEC_SLIDER_CHANGE')}</span>
+						`}
 					</div>
 				</div>`}
 				<span class="calendar-videocall-wrap calendar-videocall-hidden"></span>
@@ -1106,7 +1167,34 @@ this.BX = this.BX || {};
 			this.userPlannerSelector.subscribe('onDateChange', this.handlePlannerSelectorChanges.bind(this));
 			this.userPlannerSelector.subscribe('onNotifyChange', this.checkForChangesDebounce);
 			this.userPlannerSelector.subscribe('onUserCodesChange', this.checkForChangesDebounce);
+			this.userPlannerSelector.subscribe('onPlannerLimitStateChange', this.handlePlannerLimitStateChangeBind);
 			return this.DOM.userPlannerSelectorOuterWrap;
+		}
+		handlePlannerLimitStateChange(event) {
+			if (!this.isEditMode() || !this.plannerFeatureEnabled) {
+				return;
+			}
+			const {
+				exceeded,
+				maxPlannerUsers
+			} = event.getData();
+			if (exceeded) {
+				this.getPlannerLimitHint(maxPlannerUsers)?.show();
+			} else {
+				this.plannerLimitHint?.close();
+			}
+		}
+		getPlannerLimitHint(maxPlannerUsers) {
+			if (!this.plannerLimitHint && this.DOM.attendeesList) {
+				this.plannerLimitHint = new calendar_controls.PlannerLimitHint({
+					bindElement: this.DOM.attendeesList,
+					angleTarget: () => this.DOM.attendeesList.firstElementChild ?? this.DOM.attendeesChangeLink,
+					zIndex: this.zIndex + 20,
+					maxPlannerUsers
+				});
+			}
+			this.plannerLimitHint?.setMaxPlannerUsers(maxPlannerUsers);
+			return this.plannerLimitHint;
 		}
 		getRelationControl() {
 			this.DOM.relationWrap = null;

@@ -1,11 +1,17 @@
+import 'ui.design-tokens.air';
 import 'ui.forms';
+
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CreateChatSection } from '../section/section';
 import { RadioOption, type RadioOptionItem } from '../../elements/radio';
+import { FieldRow } from '../../elements/field-row/field-row';
+
+import './privacy-section.css';
 
 // @vue/component
 export const PrivacySection = {
-	components: { CreateChatSection, RadioOption },
+	components: { CreateChatSection, RadioOption, FieldRow },
 	props: {
 		withSearchOption: {
 			type: Boolean,
@@ -19,6 +25,14 @@ export const PrivacySection = {
 	emits: ['chatTypeChange'],
 	computed:
 	{
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		sectionTitle(): string
+		{
+			return this.loc('IM_CREATE_CHAT_PRIVACY_SECTION_V2');
+		},
 		privacyOptions(): RadioOptionItem[]
 		{
 			return [
@@ -48,14 +62,29 @@ export const PrivacySection = {
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
+	// The section holds a single field, so in air it is a field and not an accordion: the caption
+	// stays on the background of the form and the options get a card of their own. The group carries
+	// the row ids itself, the way the chat type field of the settings section does.
 	template: `
-		<CreateChatSection
-			name="privacy"
-			:title="loc('IM_CREATE_CHAT_PRIVACY_SECTION_V2')"
-			:alwaysOpened="true"
+		<FieldRow
+			v-if="isAirDesignEnabled"
+			name="privacy-type"
+			:label="sectionTitle"
+			class="bx-im-chat-forms-privacy"
+			v-slot="{ controlId, labelId }"
 		>
-			<div class="bx-im-content-create-chat__section_block">
-				<RadioOption :items="privacyOptions" @change="onTypeChange" />
+			<RadioOption
+				:id="controlId"
+				:aria-labelledby="labelId"
+				:items="privacyOptions"
+				class="bx-im-chat-forms-privacy__options"
+				name="privacy-type"
+				@change="onTypeChange"
+			/>
+		</FieldRow>
+		<CreateChatSection v-else name="privacy" :title="sectionTitle" alwaysOpened>
+			<div class="bx-im-content-create-chat__section_block" data-testid="field-privacy-type">
+				<RadioOption :items="privacyOptions" name="privacy-type" @change="onTypeChange" />
 			</div>
 		</CreateChatSection>
 	`,

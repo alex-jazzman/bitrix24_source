@@ -2,6 +2,7 @@
  * @module crm/document/details/loading-screen
  */
 jn.define('crm/document/details/loading-screen', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const { BitrixCloudLoader } = require('layout/ui/loaders/bitrix-cloud');
 	const { CrmDocumentDownloadLink } = require('crm/document/details/download-link');
 	const { Loc } = require('loc');
@@ -139,10 +140,9 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 						}
 					},
 				},
-				Text({
+				Text4({
 					text: Loc.getMessage('M_CRM_DOCUMENT_SHARED_PHRASES_LOADING'),
 					style: {
-						fontSize: 15,
 						color: AppTheme.colors.base4,
 						textAlign: 'center',
 					},
@@ -170,10 +170,9 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 						}
 					},
 				},
-				...lines.map((line) => Text({
+				...lines.map((line) => Text4({
 					text: line,
 					style: {
-						fontSize: 15,
 						color: AppTheme.colors.base4,
 						textAlign: 'center',
 					},

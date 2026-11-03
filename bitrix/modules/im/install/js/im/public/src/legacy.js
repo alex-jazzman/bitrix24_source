@@ -45,7 +45,7 @@ legacyMessenger.openVideoconfByUrl = function(link): boolean {
 	console.warn("Developer: method BXIM.openVideoconfByUrl is deprecated. Use method 'Messenger.openConference' from 'im.public' or 'im.public.iframe' extension.");
 
 	const Utils = Reflection.getClass('BX.Messenger.v2.Lib.Utils');
-	if (Utils && Type.isStringFilled(url) && !Utils.conference.isCurrentPortal(url))
+	if (Utils && Type.isStringFilled(link) && !Utils.conference.isCurrentPortal(link))
 	{
 		return false;
 	}

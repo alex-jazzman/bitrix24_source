@@ -102,10 +102,18 @@ export class Switchboard
 	 *
 	 * @param method the name of the method to call
 	 * @param args arguments that will be supplied. Must be serializable, no functions or other nonense.
+	 * @param signal aborting it rejects the call and stops waiting for the reply
 	 * @returns whatever is returned from the method
 	 */
-	get(method, args) {
+	get(method, args, { signal } = {}) {
 		return new Promise((resolve, reject) => {
+			if (signal?.aborted)
+			{
+				reject(new Error(`[${this.name}] Method "${method}" call was aborted`));
+
+				return;
+			}
+
 			// In order to "call a method" on the other side of the port,
 			// we will send a message with a unique id
 			const messageId = this.getNewMessageId();
@@ -117,6 +125,7 @@ export class Switchboard
 					return;
 				}
 				Event.unbind(this.port, 'message', listener);
+				Event.unbind(signal, 'abort', onAbort);
 				if (this.isReply(message))
 				{
 					resolve(message.result);
@@ -130,6 +139,12 @@ export class Switchboard
 					reject(new Error(errStr));
 				}
 			};
+
+			const onAbort = () => {
+				Event.unbind(this.port, 'message', listener);
+				reject(new Error(`[${this.name}] Method "${method}" call was aborted`));
+			};
+			Event.bind(signal, 'abort', onAbort, { once: true });
 			Event.bind(this.port, 'message', listener);
 			this.port.start();
 			const message = {

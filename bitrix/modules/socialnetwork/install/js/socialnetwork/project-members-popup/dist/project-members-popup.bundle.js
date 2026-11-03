@@ -1,11 +1,11 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_popup, main_loader) {
+(function (exports, main_core, main_popup, main_loader, ui_a11y) {
 	'use strict';
 
+	const POPUP_ID = 'workgroup-grid-members-popup-menu';
 	class ProjectMembersPopup {
 		#popup = null;
-		#isPopupShown = false;
 		#loader = null;
 		#groupId = 0;
 		#currentType = 'all';
@@ -16,6 +16,8 @@ this.BX = this.BX || {};
 		#isScrumPopup = false;
 		#componentName = '';
 		#signedParameters = '';
+		#tabsFocusZone = null;
+		#popupGeneration = 0;
 		constructor(options) {
 			this.#isScrumPopup = options?.popupType === 'scrum';
 			this.#componentName = options?.componentName || '';
@@ -24,19 +26,30 @@ this.BX = this.BX || {};
 			this.#paramName = options?.paramName || (this.#actionPrefix.includes('Scrum') ? 'scrumId' : this.#actionPrefix.includes('LegacyGroup') ? 'legacyGroupId' : 'projectId');
 		}
 		showPopup(groupId, routeConfig, bindNode, type = 'all') {
-			if (this.#isPopupShown) {
-				this.#popup.destroy();
+			const shouldFocusCurrentType = main_core.Type.isElementNode(bindNode) && bindNode.ownerDocument.activeElement === bindNode && bindNode.matches(':focus-visible');
+			const existingPopup = main_popup.PopupWindowManager.getPopupById(POPUP_ID);
+			if (existingPopup) {
+				existingPopup.getFocusTrap()?.setRestoreFocus(false);
+				existingPopup.destroy();
 			}
 			this.#groupId = groupId;
+			this.#popupGeneration++;
 			this.#routeConfig = main_core.Type.isPlainObject(routeConfig) ? routeConfig : null;
 			this.#resetPopupData();
 			this.#changeType(type, false);
-			this.#popup = main_popup.PopupWindowManager.create({
-				id: 'workgroup-grid-members-popup-menu',
+			const content = this.#renderContainer();
+			let popup = null;
+			popup = main_popup.PopupWindowManager.create({
+				id: POPUP_ID,
 				className: 'sonet-ui-members-popup',
 				bindElement: bindNode,
+				content,
+				ariaLabel: main_core.Loc.getMessage('SONET_PROJECT_MEMBERS_POPUP_TAB_MEMBERS') || '',
 				autoHide: true,
 				closeByEsc: true,
+				focusTrap: {
+					initialFocus: false
+				},
 				lightShadow: true,
 				bindOptions: {
 					position: 'bottom'
@@ -51,25 +64,56 @@ this.BX = this.BX || {};
 				},
 				events: {
 					onPopupDestroy: () => {
-						this.#loader = null;
-						this.#isPopupShown = false;
+						if (this.#popup === popup) {
+							this.#popupGeneration++;
+							this.#tabsFocusZone?.deactivate();
+							this.#tabsFocusZone = null;
+							this.#loader = null;
+							this.#popup = null;
+							this.#popupData = {};
+						}
+						bindNode.setAttribute('aria-expanded', 'false');
 					},
 					onPopupClose: () => {
-						this.#popup.destroy();
+						this.#configureFocusRestore(popup, bindNode);
+						popup.destroy();
 					},
 					onAfterPopupShow: () => {
-						this.#popup.contentContainer.appendChild(this.#renderContainer());
+						if (this.#popup !== popup) {
+							return;
+						}
+						this.#initTabsFocusZone(content);
 						this.#showLoader();
 						this.#loadUsers(groupId, type);
-						this.#isPopupShown = true;
+						bindNode.setAttribute('aria-expanded', 'true');
+						if (shouldFocusCurrentType) {
+							this.#getCurrentPopupData().tab.focus();
+						}
 					}
 				}
 			});
-			this.#bindScroll(groupId, type);
+			this.#popup = popup;
 			this.#popup.show();
+		}
+		#configureFocusRestore(popup, bindNode) {
+			const focusTrap = popup.getFocusTrap();
+			if (!focusTrap) {
+				return;
+			}
+			const popupContainer = popup.getPopupContainer();
+			const ownerDocument = popupContainer.ownerDocument;
+			const activeElement = ownerDocument.activeElement;
+			const shouldRestoreFocus = main_core.Type.isElementNode(bindNode) && bindNode.isConnected && bindNode.ownerDocument === ownerDocument && (activeElement === ownerDocument.body || popupContainer.contains(activeElement));
+			focusTrap.setRestoreFocus(shouldRestoreFocus ? bindNode : false);
 		}
 		#loadUsers(groupId, type) {
 			const popupData = this.#getCurrentPopupData();
+			if (popupData.isLoading) {
+				return;
+			}
+			const popupGeneration = this.#popupGeneration;
+			popupData.isLoading = true;
+			popupData.innerContainer.setAttribute('aria-busy', 'true');
 			const route = this.#getRouteConfig();
 			// Legacy scrum popup is the only source that already returns owner / scrum master / team roles.
 			const request = this.#isScrumPopup ? main_core.ajax.runAction('socialnetwork.api.workgroup.getGridPopupMembers', {
@@ -88,8 +132,8 @@ this.BX = this.BX || {};
 				}
 			});
 			request.then(response => {
-				if (this.#groupId !== groupId || this.#currentType !== type) {
-					this.#hideLoader();
+				if (this.#popupGeneration !== popupGeneration || this.#groupId !== groupId || this.#currentType !== type) {
+					this.#finishLoading(popupData, groupId, type, popupGeneration);
 					return;
 				}
 				const data = response.data || [];
@@ -100,8 +144,15 @@ this.BX = this.BX || {};
 					popupData.innerContainer.innerText = main_core.Loc.getMessage('SONET_PROJECT_MEMBERS_POPUP_EMPTY') || '';
 				}
 				popupData.currentPage++;
+				this.#finishLoading(popupData, groupId, type, popupGeneration);
+			}, () => this.#finishLoading(popupData, groupId, type, popupGeneration));
+		}
+		#finishLoading(popupData, groupId, type, popupGeneration) {
+			popupData.isLoading = false;
+			popupData.innerContainer.setAttribute('aria-busy', 'false');
+			if (this.#popupGeneration === popupGeneration && this.#groupId === groupId && this.#currentType === type) {
 				this.#hideLoader();
-			}, () => this.#hideLoader());
+			}
 		}
 		#renderUsers(users) {
 			if (this.#isScrumPopup && this.#currentType === 'scrumTeam') {
@@ -115,7 +166,12 @@ this.BX = this.BX || {};
 				}
 				popupData.renderedUsers.push(user.ID);
 				popupData.innerContainer.appendChild(main_core.Tag.render`
-					<a class="sonet-ui-members-popup-item" href="${user.HREF}" target="_blank">
+					<a
+						class="sonet-ui-members-popup-item"
+						href="${user.HREF}"
+						target="_blank"
+						data-testid="socialnetwork-project-members-user-${user.ID}"
+					>
 						${this.#renderAvatar(user)}
 						<span class="sonet-ui-members-popup-name">${user.FORMATTED_NAME}</span>
 					</a>
@@ -144,7 +200,12 @@ this.BX = this.BX || {};
 					return;
 				}
 				container.appendChild(main_core.Tag.render`
-					<a class="sonet-ui-members-popup-item" href="${user.HREF}" target="_blank">
+					<a
+						class="sonet-ui-members-popup-item"
+						href="${user.HREF}"
+						target="_blank"
+						data-testid="socialnetwork-project-members-user-${user.ID}-${user.ROLE}"
+					>
 						${this.#renderAvatar(user)}
 						<span class="sonet-ui-scrum-members-popup-name">${user.FORMATTED_NAME}</span>
 					</a>
@@ -191,48 +252,51 @@ this.BX = this.BX || {};
 		#renderAvatar(user) {
 			const avatarStyle = main_core.Type.isStringFilled(user.PHOTO) ? `style="background-image: url('${encodeURI(user.PHOTO)}')"` : '';
 			return main_core.Tag.render`
-			<span class="sonet-ui-members-popup-avatar-new">
-				<div class="ui-icon ui-icon-common-user sonet-ui-members-popup-avatar-img">
+			<span class="sonet-ui-members-popup-avatar-new" aria-hidden="true">
+				<span class="ui-icon ui-icon-common-user sonet-ui-members-popup-avatar-img">
 					<i ${avatarStyle}></i>
-				</div>
+				</span>
 				<span class="sonet-ui-members-popup-avatar-status-icon"></span>
 			</span>
 		`;
 		}
 		#renderContainer() {
+			const panels = Object.values(this.#popupData).map(({
+				innerContainer
+			}) => innerContainer);
 			if (this.#isScrumPopup) {
 				return main_core.Tag.render`
-				<span class="sonet-ui-members-popup-container">
-					<span class="sonet-ui-members-popup-head">
+				<div class="sonet-ui-members-popup-container" data-testid="socialnetwork-project-members-popup">
+					<div class="sonet-ui-members-popup-head" role="tablist" aria-orientation="horizontal" aria-label="${main_core.Loc.getMessage('SONET_PROJECT_MEMBERS_POPUP_TAB_MEMBERS') || ''}">
 						${this.#popupData.all.tab}
 						${this.#popupData.scrumTeam.tab}
 						${this.#popupData.members.tab}
-					</span>
-					<span class="sonet-ui-members-popup-body">
+					</div>
+					<div class="sonet-ui-members-popup-body">
 						<div class="sonet-ui-members-popup-content">
 							<div class="sonet-ui-members-popup-content-box">
-								${this.#getCurrentPopupData().innerContainer}
+								${panels}
 							</div>
 						</div>
-					</span>
-				</span>
+					</div>
+				</div>
 			`;
 			}
 			return main_core.Tag.render`
-			<span class="sonet-ui-members-popup-container">
-				<span class="sonet-ui-members-popup-head">
+			<div class="sonet-ui-members-popup-container" data-testid="socialnetwork-project-members-popup">
+				<div class="sonet-ui-members-popup-head" role="tablist" aria-orientation="horizontal" aria-label="${main_core.Loc.getMessage('SONET_PROJECT_MEMBERS_POPUP_TAB_MEMBERS') || ''}">
 					${this.#popupData.all.tab}
 					${this.#popupData.heads.tab}
 					${this.#popupData.members.tab}
-				</span>
-				<span class="sonet-ui-members-popup-body">
+				</div>
+				<div class="sonet-ui-members-popup-body">
 					<div class="sonet-ui-members-popup-content">
 						<div class="sonet-ui-members-popup-content-box">
-							${this.#getCurrentPopupData().innerContainer}
+							${panels}
 						</div>
 					</div>
-				</span>
-			</span>
+				</div>
+			</div>
 		`;
 		}
 		#bindScroll(groupId, type) {
@@ -249,19 +313,28 @@ this.BX = this.BX || {};
 			});
 		}
 		#changeType(newType, loadUsers = true) {
-			const oldType = this.#currentType;
-			this.#currentType = newType;
-			Object.values(this.#popupData).forEach(item => {
-				main_core.Dom.removeClass(item.tab, 'sonet-ui-members-popup-head-item-current');
-			});
-			main_core.Dom.addClass(this.#getCurrentPopupData().tab, 'sonet-ui-members-popup-head-item-current');
-			if (oldType && this.#popupData[oldType]) {
-				main_core.Dom.replace(this.#popupData[oldType].innerContainer, this.#getCurrentPopupData().innerContainer);
+			if (!this.#popupData[newType]) {
+				return;
 			}
-			if (loadUsers && this.#getCurrentPopupData().currentPage === 1) {
+			this.#currentType = newType;
+			const currentPopupData = this.#getCurrentPopupData();
+			Object.values(this.#popupData).forEach(item => {
+				const isSelected = item === currentPopupData;
+				main_core.Dom.toggleClass(item.tab, 'sonet-ui-members-popup-head-item-current', isSelected);
+				item.tab.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+				item.tab.tabIndex = isSelected ? 0 : -1;
+				item.innerContainer.hidden = !isSelected;
+			});
+			this.#tabsFocusZone?.refreshElements();
+			if (!loadUsers) {
+				return;
+			}
+			if (currentPopupData.currentPage === 1) {
 				this.#showLoader();
 				this.#loadUsers(this.#groupId, newType);
+				return;
 			}
+			this.#hideLoader();
 		}
 		#resetPopupData() {
 			if (this.#isScrumPopup) {
@@ -279,16 +352,52 @@ this.BX = this.BX || {};
 			};
 		}
 		#createTabData(title, type) {
+			const tabId = `workgroup-grid-members-popup-${this.#groupId}-${type}-tab`;
+			const panelId = `workgroup-grid-members-popup-${this.#groupId}-${type}-panel`;
 			return {
 				currentPage: 1,
+				isLoading: false,
 				renderedUsers: [],
 				tab: main_core.Tag.render`
-				<span class="sonet-ui-members-popup-head-item" onclick="${this.#changeType.bind(this, type)}">
+				<button
+					type="button"
+					class="sonet-ui-members-popup-head-item"
+					id="${tabId}"
+					role="tab"
+					aria-selected="false"
+					aria-controls="${panelId}"
+					tabindex="-1"
+					data-testid="socialnetwork-project-members-tab-${type}"
+					onclick="${this.#changeType.bind(this, type)}"
+				>
 					<span class="sonet-ui-members-popup-head-text">${title}</span>
-				</span>
+				</button>
 			`,
-				innerContainer: main_core.Tag.render`<div class="sonet-ui-members-popup-inner"></div>`
+				innerContainer: main_core.Tag.render`
+				<div
+					class="sonet-ui-members-popup-inner"
+					id="${panelId}"
+					role="tabpanel"
+					aria-labelledby="${tabId}"
+					aria-busy="false"
+					data-testid="socialnetwork-project-members-panel-${type}"
+				></div>
+			`
 			};
+		}
+		#initTabsFocusZone(container) {
+			const tabs = container.querySelector('.sonet-ui-members-popup-head');
+			if (!tabs) {
+				return;
+			}
+			this.#tabsFocusZone?.deactivate();
+			this.#tabsFocusZone = new ui_a11y.FocusZone(tabs, {
+				bindKeys: ui_a11y.FocusKeys.ArrowHorizontal | ui_a11y.FocusKeys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusableElementFilter: element => element.matches('[role="tab"]'),
+				tabbableOnly: false
+			});
+			this.#tabsFocusZone.activate();
 		}
 		#getCurrentPopupData() {
 			return this.#popupData[this.#currentType];
@@ -320,5 +429,5 @@ this.BX = this.BX || {};
 
 	exports.ProjectMembersPopup = ProjectMembersPopup;
 
-})(this.BX.Socialnetwork = this.BX.Socialnetwork || {}, BX, BX.Main, BX);
+})(this.BX.Socialnetwork = this.BX.Socialnetwork || {}, BX, BX.Main, BX, BX.UI.Accessibility);
 //# sourceMappingURL=project-members-popup.bundle.js.map

@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { type DocumentInitiatedType, type MemberStatusType, MemberRole, type MemberRoleType } from 'sign.type';
 import { post } from './request';
 import { TemplateApi } from './template/template-api';
@@ -6,21 +7,50 @@ import { SignersListApi } from './signers-list-api';
 import { PlaceholderApi } from './document/placeholder-api';
 import { MyDocumentsApi } from './document/my-documents-api';
 import { SafeFolderApi } from './document/safe-folder-api';
+import { ProcessApi } from './process/process-api';
 import type {
+	AddGroupDocumentsResponse,
 	B2eCompanyList,
 	BlockData,
 	Communication,
 	LoadedBlock,
 	LoadedDocumentData,
+	LoadedMember,
 	HcmLinkMultipleVacancyEmployeesLoadData,
 	EmployeeSaveData, HcmLinkNotMappedUsersData,
 	Restrictions,
+	ModifyInviteMessageRequest,
+	ModifyDocumentsInviteMessageRequest,
+	ModifyInviteMessageResponse,
+	CountMember,
+	SetupMember,
 } from './type';
-import { CountMember, SetupMember } from './type';
 
 export * from './type';
 export * from './template/type';
 export { BulkActionType } from './document/my-documents-api';
+export type {
+	AvailableProcess,
+	AvailableProcessListResponse,
+	DocumentProcess,
+	DocumentProcessResponse,
+	ProcessDocument,
+	ProcessDocumentsState,
+	ProcessLaunchGroup,
+	ProcessLaunchResponse,
+	ProcessParticipant,
+	ProcessRetryResponse,
+	ProcessStartField,
+	ProcessStartFieldsResponse,
+	ProcessStartMember,
+	ProcessStartParameters,
+	RunningProcess,
+	RunningProcessFilter,
+	RunningProcessFilterState,
+	RunningProcessGroupPage,
+	RunningProcessPage,
+	RunningProcessStatus,
+} from './process/type';
 
 export class Api
 {
@@ -30,6 +60,7 @@ export class Api
 	placeholder: PlaceholderApi = new PlaceholderApi();
 	myDocuments: MyDocumentsApi = new MyDocumentsApi();
 	safeFolder: SafeFolderApi = new SafeFolderApi();
+	process: ProcessApi = new ProcessApi();
 
 	#post(endpoint: string, data: Object | null = null, notifyError: boolean = true): $Call<typeof post>
 	{
@@ -232,7 +263,7 @@ export class Api
 		return this.#post('sign.api_v1.document.member.remove', { uid });
 	}
 
-	loadMembers(documentUid: string): Promise<Array<{ entityId: number; uid: string; }>>
+	loadMembers(documentUid: string): Promise<Array<LoadedMember>>
 	{
 		return this.#post('sign.api_v1.document.member.load', { documentUid });
 	}
@@ -269,6 +300,23 @@ export class Api
 			uid,
 			initiator,
 		});
+	}
+
+	modifyInviteMessage(uid: string, message: string | null): Promise<ModifyInviteMessageResponse>
+	{
+		const data: ModifyInviteMessageRequest = { uid, message };
+
+		return this.#post('sign.api_v1.document.modifyInviteMessage', data);
+	}
+
+	modifyInviteMessageForDocuments(
+		documentIds: Array<number>,
+		message: string | null,
+	): Promise<ModifyInviteMessageResponse>
+	{
+		const data: ModifyDocumentsInviteMessageRequest = { documentIds, message };
+
+		return this.#post('sign.api_v1.b2e.document.group.modifyInviteMessage', data);
 	}
 
 	modifyLanguageId(uid: string, langId: string): Promise
@@ -337,6 +385,23 @@ export class Api
 		});
 	}
 
+	/**
+	 * Whether the chosen signing method may be used by the chosen representative. Asked on the step of
+	 * the wizard where both are chosen, so that a refusal is shown while the person is on the screen;
+	 * the action that stores the parties makes the same check on its own.
+	 */
+	checkRepresentativeSigningMethod(
+		documentUid: string,
+		representativeId: number,
+		signingMethod: string,
+		representativeEntityType: string,
+	): Promise
+	{
+		return this.#post('sign.api_v1.document.member.checkRepresentativeSigningMethod', {
+			documentUid, representativeId, signingMethod, representativeEntityType,
+		});
+	}
+
 	syncB2eMembersWithDepartments(
 		documentUid: string,
 		currentParty: number,
@@ -351,7 +416,7 @@ export class Api
 	getUniqUserCountForMembers(
 		members: Array<CountMember>,
 		excludeRejected: boolean = true,
-	): Promise<{ count: number }>
+	): Promise<{ count: number, totalCount: number, excludedCount: number }>
 	{
 		return this.#post('sign.api_v1.document.member.getUniqSignersCount', {
 			members, excludeRejected,
@@ -514,6 +579,21 @@ export class Api
 		return this.#post('sign.api_v1.b2e.document.group.getFillAndStartProgress', { groupId });
 	}
 
+	async getDocumentGroupPlaceholderValidationStatus(groupId: number): Promise<{ ready: boolean }>
+	{
+		const result = await this.#post(
+			'sign.api_v1.b2e.document.group.getPlaceholderValidationStatus',
+			{ groupId },
+			false,
+		);
+		if (!Type.isBoolean(result?.ready))
+		{
+			throw result;
+		}
+
+		return result;
+	}
+
 	getMember(uid: string): Promise<{ id: number, uid: string, status: MemberStatusType }>
 	{
 		return this.#post('sign.api_v1.document.member.get', { uid });
@@ -522,6 +602,25 @@ export class Api
 	createDocumentsGroup(): Promise<{ groupId: number }>
 	{
 		return this.#post('sign.api_v1.b2e.document.group.create');
+	}
+
+	/**
+	 * Creates one document per uploaded file and attaches all of them to the group.
+	 * Partial success is a regular answer: check `items[].success`, not the whole call.
+	 * `hasPlaceholders` belongs to the whole batch: every blank of the call is created with it.
+	 * `initiatedByType` left as null means a document initiated by the company.
+	 */
+	addDocumentsToGroup(
+		files: string[],
+		groupId: number = 0,
+		hasPlaceholders: boolean = false,
+		initiatedByType: ?DocumentInitiatedType = null,
+	): Promise<AddGroupDocumentsResponse>
+	{
+		return this.#post(
+			'sign.api_v1.b2e.document.group.addDocuments',
+			{ files, groupId, hasPlaceholders, initiatedByType },
+		);
 	}
 
 	removeDocument(uid: string): Promise<Array>
@@ -548,9 +647,9 @@ export class Api
 		return this.#post('sign.api_v1.b2e.document.group.attach', { documentUid, groupId });
 	}
 
-	getDocumentListInGroup(groupId: string): Promise
+	getDocumentListInGroup(groupId: string, notifyError: boolean = true): Promise
 	{
-		return this.#post('sign.api_v1.b2e.document.group.documentList', { groupId });
+		return this.#post('sign.api_v1.b2e.document.group.documentList', { groupId }, notifyError);
 	}
 
 	changeTemplateVisibility(templateId: number, visibility: string): Promise<Object>

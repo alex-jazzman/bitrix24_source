@@ -12,6 +12,7 @@ import { DialogUtil } from './dialog';
 import { ConferenceUtil } from './conference';
 import { CallUtil } from './call';
 
+export { HotkeyOs } from './key';
 export const Utils = {
 	browser: BrowserUtil,
 	date: DateUtil,

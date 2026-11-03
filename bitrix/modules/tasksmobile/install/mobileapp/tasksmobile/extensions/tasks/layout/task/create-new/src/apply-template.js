@@ -211,8 +211,9 @@ jn.define('tasks/layout/task/create-new/src/apply-template', (require, exports, 
 		}
 
 		return {
+			// seed needs the V2 flat item list (checklistTree), not the counters (checklist)
 			...template,
-			checklist: template.checklistTree ?? template.checklist,
+			checklist: template.checklistTree ?? null,
 		};
 	}
 
@@ -244,11 +245,8 @@ jn.define('tasks/layout/task/create-new/src/apply-template', (require, exports, 
 			return;
 		}
 
-		checklistController.clearChecklists();
-		if (checklist)
-		{
-			checklistController.setChecklistTree(clone(checklist));
-		}
+		// checklist - V2 flat format; seedFromV2 replaces the entity
+		checklistController.seedFromV2(checklist);
 	}
 
 	function upsertEntitiesFromResponse({ groups, users })

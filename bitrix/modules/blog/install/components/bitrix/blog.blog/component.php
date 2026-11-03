@@ -557,14 +557,19 @@ if($arParams["BLOG_URL"] <> '')
 							$SORT,
 							$arFilter,
 							array(
-								"DATE_PUBLISH", "ID", "MAX" => "PERMS"
+								"DATE_PUBLISH", "ID", "AUTHOR_ID", "MAX" => "PERMS"
 							),
 							array("bDescPageNumbering"=>true, "nPageSize"=>$arParams["MESSAGE_COUNT"], "bShowAll" => false)
 						);
 						$postIds = [];
+						$postAuthorIds = [];
 						while($post = $dbPostIds->GetNext())
 						{
 							$postIds[] = $post['ID'];
+							if ((int)$post['AUTHOR_ID'] > 0)
+							{
+								$postAuthorIds[(int)$post['AUTHOR_ID']] = (int)$post['AUTHOR_ID'];
+							}
 						}
 //						save navchain
 						$arResult["NAV_STRING"] = $dbPostIds->GetPageNavString(
@@ -592,9 +597,7 @@ if($arParams["BLOG_URL"] <> '')
 
 							$blogUser = new \Bitrix\Blog\BlogUser($CACHE_TIME);
 							$blogUser->setBlogId($arBlog["ID"]);
-							$postsUsers = $blogUser->getUsers(
-								\Bitrix\Blog\BlogUser::getPostAuthorsIdsByBlogId($arBlog["ID"])
-							);
+							$postsUsers = $blogUser->getUsers($postAuthorIds);
 
 							while ($curPost = $dbPost->GetNext())
 							{

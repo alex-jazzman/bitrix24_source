@@ -2,6 +2,10 @@
 $MESS["INTRANET_USER_OTP_LIST_DESCRIPTION"] = "Ваши данные защищены. Мошенники не смогут войти, даже если узнают пароль. Мы не рекомендуем выключать защиту";
 $MESS["INTRANET_USER_OTP_LIST_DEVICES"] = "Доверенные устройства";
 $MESS["INTRANET_USER_OTP_LIST_DEVICES_DESCRIPTION"] = "Телефон или планшет с приложением, на котором вы подтверждаете вход";
+$MESS["INTRANET_USER_OTP_LIST_DEVICES_NOT_CONNECTED"] = "Не подключено";
+$MESS["INTRANET_USER_OTP_LIST_DEVICES_HINT_WITHOUT_CONNECT"] = "Подключите доверенное устройство, чтобы подтверждать вход в приложении";
+$MESS["INTRANET_USER_OTP_LIST_DEVICES_HINT_WITHOUT_CONNECT_FOREIGN"] = "У сотрудника не подключено доверенное устройство";
+$MESS["INTRANET_USER_OTP_LIST_CONNECT_DEVICE_BTN"] = "Подключить";
 $MESS["INTRANET_USER_OTP_LIST_SMS"] = "Код из СМС";
 $MESS["INTRANET_USER_OTP_LIST_EMAIL"] = "Код из e-mail";
 $MESS["INTRANET_USER_OTP_LIST_EMAIL_DESCRIPTION"] = "Код из e-mail для подтверждения входа, если нет доступа к приложению";

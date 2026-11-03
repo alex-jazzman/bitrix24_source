@@ -20,6 +20,11 @@ BitrixVue.component('sale-checkout-view-element-button-remove', {
 	},
 	// language=Vue
 	template: `
-		<span class="checkout-basket-item-remove-btn checkout-basket-desktop-only" @click="remove">{{localize.CHECKOUT_VIEW_ELEMENT_BUTTON_REMOVE_NAME}}</span>
+		<button
+			class="checkout-basket-item-remove-btn checkout-basket-desktop-only"
+			type="button"
+			data-testid="sale-checkout-remove-btn"
+			@click="remove"
+		>{{localize.CHECKOUT_VIEW_ELEMENT_BUTTON_REMOVE_NAME}}</button>
 	`
 });

@@ -23,3 +23,7 @@ $MESS['BICONNECTOR_SHARE_POPUP_PASSWORD_GENERATED'] = 'Пароль сгенер
 $MESS['BICONNECTOR_SHARE_POPUP_PASSWORD_TOO_SHORT'] = 'Минимум 8 символов';
 $MESS['BICONNECTOR_SHARE_POPUP_PASSWORD_TOO_LONG'] = 'Максимум 32 символа';
 $MESS['BICONNECTOR_SHARE_POPUP_FILTER_HINT'] = 'В режиме просмотра будут недоступны фильтры по структуре компании, бизнес-процессам и потокам';
+$MESS['BICONNECTOR_SHARE_POPUP_DISABLED_BY_ADMIN'] = 'Ссылка выключена администратором #NAME# — #DATE#';
+$MESS['BICONNECTOR_SHARE_POPUP_DISABLED_BY_ADMIN_NO_DATE'] = 'Ссылка выключена администратором #NAME#';
+$MESS['BICONNECTOR_SHARE_POPUP_ENABLE'] = 'Включить';
+$MESS['BICONNECTOR_SHARE_POPUP_BANNED'] = 'Публичные ссылки на отчёт запрещены в настройках отчёта';

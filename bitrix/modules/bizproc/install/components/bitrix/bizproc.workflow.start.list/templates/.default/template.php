@@ -4,9 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-?>
-<div id="bp-workflow-start-list-errors-container"></div>
-<?php
+
 \Bitrix\Main\UI\Extension::load([
 	'ui',
 	'ui.buttons',
@@ -22,7 +20,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 global $APPLICATION;
 ?>
-<section aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_GRID_ARIA_LABEL')) ?>">
+<section class="--ui-context-content-light" aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_GRID_ARIA_LABEL')) ?>">
+<div id="bp-workflow-start-list-errors-container"></div>
 <?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',

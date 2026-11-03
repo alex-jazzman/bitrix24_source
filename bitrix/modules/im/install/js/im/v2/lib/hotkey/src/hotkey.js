@@ -1,41 +1,33 @@
 import { Core } from 'im.v2.application.core';
-import { Settings } from 'im.v2.const';
+import { HotkeyCombination, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-
-const sendMessageCombinations = {
-	enterMode: ['Enter', 'NumpadEnter'],
-	ctrlEnterMode: ['Ctrl+Enter', 'Ctrl+NumpadEnter'],
-};
-// only for non-default hotkeys
-const newLineCombinations = {
-	enterMode: ['Ctrl+Enter'],
-	ctrlEnterMode: [],
-};
 
 export const isSendMessageCombination = (event: KeyboardEvent): boolean => {
 	return Utils.key.isExactCombination(event, getSendMessageCombination());
 };
 
 export const isNewLineCombination = (event: KeyboardEvent): boolean => {
-	return Utils.key.isExactCombination(event, getNewLineCombination());
+	if (!isSendByEnter())
+	{
+		return false;
+	}
+
+	return Utils.key.isExactCombination(event, HotkeyCombination.newLine.byCtrlEnter);
+};
+
+export const isTextDecorationCombination = (event: KeyboardEvent): boolean => {
+	return Utils.key.isExactCombination(event, Object.values(HotkeyCombination.textDecoration));
 };
 
 const getSendMessageCombination = (): string[] => {
-	const sendByEnter = Core.getStore().getters['application/settings/get'](Settings.hotkey.sendByEnter);
-	if (sendByEnter)
+	if (isSendByEnter())
 	{
-		return sendMessageCombinations.enterMode;
+		return HotkeyCombination.sendMessage.byEnter;
 	}
 
-	return sendMessageCombinations.ctrlEnterMode;
+	return HotkeyCombination.sendMessage.byCtrlEnter;
 };
 
-const getNewLineCombination = (): string[] => {
-	const sendByEnter = Core.getStore().getters['application/settings/get'](Settings.hotkey.sendByEnter);
-	if (sendByEnter)
-	{
-		return newLineCombinations.enterMode;
-	}
-
-	return newLineCombinations.ctrlEnterMode;
+const isSendByEnter = (): boolean => {
+	return Core.getStore().getters['application/settings/get'](Settings.hotkey.sendByEnter);
 };

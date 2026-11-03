@@ -51,6 +51,10 @@ export const NoteRecycleBinPageComponent = {
 		{
 			return Boolean(this.sidebarState?.isMobile);
 		},
+		canCreateCollection(): boolean
+		{
+			return Boolean(this.sidebarState?.permissions?.canEditCollections);
+		},
 		selectedCount(): number
 		{
 			return this.selection.count;
@@ -332,6 +336,8 @@ export const NoteRecycleBinPageComponent = {
 			{
 				target = await openOrphanRestorePopup({
 					bodyText: Loc.getMessage('NOTE_RECYCLEBIN_BULK_ORPHAN_TARGET_TEXT') || '',
+					canCreateCollection: this.canCreateCollection,
+					onCreateCollection: (name) => this.createCollectionForRestore(name),
 				});
 				if (!target)
 				{
@@ -378,6 +384,19 @@ export const NoteRecycleBinPageComponent = {
 				await this.loadPage(false);
 			}
 		},
+		async createCollectionForRestore(name: string): Promise<{ id: number, title: string } | null>
+		{
+			try
+			{
+				return await this.service.createCollection(name);
+			}
+			catch (error)
+			{
+				this.showErrorToast(error?.message || (Loc.getMessage('NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC') || ''));
+
+				return null;
+			}
+		},
 		async runHardDelete(): Promise<void>
 		{
 			if (this.allSelected)
@@ -394,7 +413,7 @@ export const NoteRecycleBinPageComponent = {
 				return;
 			}
 
-			// AC-032: reinforced confirm — hard delete is permanent and cannot be undone.
+			// reinforced confirm - hard delete is permanent and cannot be undone.
 			const confirmed = await this.confirm({
 				title: Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_TITLE') || '',
 				message: Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_MESSAGE') || '',
@@ -525,6 +544,8 @@ export const NoteRecycleBinPageComponent = {
 				const popupResult = await openBulkRestorePopup({
 					total: stats.total,
 					orphanCount: stats.orphanCount,
+					canCreateCollection: this.canCreateCollection,
+					onCreateCollection: (name) => this.createCollectionForRestore(name),
 				});
 				if (!popupResult.confirmed)
 				{

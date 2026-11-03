@@ -188,6 +188,35 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 				<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[SCENARIO_NAME]" value="<?=htmlspecialcharsbx($arResult['TEMPLATE_DATA']['SCENARIO'])?>" />
 			<?php endif?>
 
+			<?php
+			// The member selector posts its field on every save, so the saved composition is the rendered
+			// one. Members whose user record did not resolve are not rendered as chips; without these
+			// hidden fields they would be removed from the template on the next save. They are posted apart
+			// from the member field itself: class.php merges them back only when the field did not come back
+			// cleared by hand, otherwise a deliberate clear of the role would restore them.
+			foreach (($arResult['TEMPLATE_DATA']['UNRESOLVED_MEMBERS'] ?? []) as $memberField => $memberIds):
+				foreach ($memberIds as $memberId):
+					?>
+					<input
+						type="hidden"
+						name="<?=htmlspecialcharsbx($inputPrefix)?>[UNRESOLVED_MEMBERS][<?=htmlspecialcharsbx($memberField)?>][<?=(int)$memberId?>]"
+						value="<?=(int)$memberId?>"
+					/>
+					<?php
+				endforeach;
+			endforeach;
+
+			foreach (($arResult['TEMPLATE_DATA']['RENDERED_MEMBERS'] ?? []) as $memberField => $hasRenderedMembers):
+				?>
+				<input
+					type="hidden"
+					name="<?=htmlspecialcharsbx($inputPrefix)?>[RENDERED_MEMBERS][<?=htmlspecialcharsbx($memberField)?>]"
+					value="<?=$hasRenderedMembers ? 'Y' : 'N'?>"
+				/>
+				<?php
+			endforeach;
+			?>
+
 			<?php if($_REQUEST['IFRAME']):?>
 			<input type="hidden" name="IFRAME" value="<?=$_REQUEST['IFRAME']=='Y'?'Y':'N'?>" />
 			<?php endif?>

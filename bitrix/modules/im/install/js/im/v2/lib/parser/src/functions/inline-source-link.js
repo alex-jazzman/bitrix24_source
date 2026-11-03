@@ -1,73 +1,44 @@
-type TextSegment = { type: 'text', value: string };
-type SourceSegment = { type: 'source', id: string, text: string };
-
-type RegExpMatchArray =Array<string> & {
-	index: number,
-	input: string,
-	groups: ?{ [string]: string },
-};
-
-export type ParserInlineSourceLinkSegments = Array<TextSegment | SourceSegment>;
+import { Dom } from 'main.core';
 
 const SOURCE_REGEX = /\[source=(?<sourceId>\d+)](?<sourceText>.*?)\[\/source]/gi;
 
+const CONTAINER_CLASS = 'bx-im-message-source-item__container --ui-hoverable';
+const ELLIPSIS_CLASS = '--ellipsis';
+
 export const ParserInlineSourceLink = {
-	purify(text: string): string
+
+	/**
+	 * Replace each [source=N]...[/source] token with an inline source badge
+	 * carrying data-source-id. Input MUST be the output of Parser.decodeText /
+	 * decodeInlineText (already Text.encode'd HTML), so the token body is inlined
+	 * as-is: re-encoding here would double-escape it and break in-badge formatting.
+	 * Links inside the token body are flattened to their content: the badge itself
+	 * is the single click target (opens the source URL), so a nested <a> would
+	 * trigger a second navigation on the same click.
+	 *
+	 * @param {string} text
+	 * @returns {string}
+	 */
+	decode(text: string): string
 	{
-		return text.replaceAll(
-			SOURCE_REGEX,
-			(whole, sourceId, sourceText) => sourceText,
-		);
-	},
+		return text.replace(SOURCE_REGEX, (whole, sourceId, sourceText) => {
+			const inner = Dom.create({
+				tag: 'span',
+				attrs: { className: ELLIPSIS_CLASS },
+				html: sourceText,
+			});
 
-	getSegments(text: string): ParserInlineSourceLinkSegments
-	{
-		const result = [];
-		let lastIndex = 0;
+			inner.querySelectorAll('a').forEach((anchor) => anchor.replaceWith(...anchor.childNodes));
 
-		for (const match of text.matchAll(SOURCE_REGEX))
-		{
-			const hasTextBeforeSource = match.index > lastIndex;
-			if (hasTextBeforeSource)
-			{
-				const textSegment = getTextSegment(text, lastIndex, match.index);
-				if (textSegment)
-				{
-					result.push(textSegment);
-				}
-			}
-
-			result.push(getSourceSegment(match));
-
-			lastIndex = match.index + match[0].length;
-		}
-
-		const hasTrailingText = lastIndex < text.length;
-		if (hasTrailingText)
-		{
-			const segment = getTextSegment(text, lastIndex, text.length);
-			if (segment)
-			{
-				result.push(segment);
-			}
-		}
-
-		return result;
+			return Dom.create({
+				tag: 'span',
+				attrs: {
+					className: CONTAINER_CLASS,
+					'data-source-id': sourceId,
+					'data-testid': 'im-message-source-item',
+				},
+				html: inner.outerHTML,
+			}).outerHTML;
+		});
 	},
 };
-
-function getTextSegment(text: string, from: number, to: number): ?TextSegment
-{
-	const value = text.slice(from, to);
-	if (value.trim().length > 0)
-	{
-		return { type: 'text', value };
-	}
-
-	return null;
-}
-
-function getSourceSegment(match: RegExpMatchArray): SourceSegment
-{
-	return { type: 'source', id: match.groups.sourceId, text: match.groups.sourceText };
-}

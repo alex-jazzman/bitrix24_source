@@ -11,11 +11,13 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
-	const { getIsDemoAvailable, activateDemo } = require('layout/ui/plan-restriction/src/provider');
+	const { getIsDemoAvailable, activateDemo } = require('demo-activation/api');
+	const { requireLazy } = require('require-lazy');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { AnalyticsEvent } = require('analytics');
 	const { getMediumHeight } = require('utils/page-manager');
 	const { makeLibraryImagePath } = require('asset-manager');
+
 	const PlanId = {
 		PRO: 'PRO',
 	};
@@ -24,9 +26,6 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 	const BACKDROP_HEIGHT = 434;
 	const REDIRECT_URL = '/settings/license_all.php?utm_medium=b24_slider_mobile';
 
-	/**
-	 * @class PlanRestriction
-	 */
 	class PlanRestriction extends LayoutComponent
 	{
 		static getWidgetParams(props)
@@ -240,9 +239,7 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 					const isDemoAvailable = await activateDemo();
 					if (isDemoAvailable === false)
 					{
-						const { DemoActivationSuccess } = await requireLazy(
-							'layout/ui/plan-restriction/demo-activation-success',
-						);
+						const { DemoActivationSuccess } = await requireLazy('demo-activation/success');
 						DemoActivationSuccess.open(layout);
 					}
 				},

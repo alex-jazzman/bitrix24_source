@@ -1,5 +1,3 @@
-import { DurationFormat } from 'main.date';
-
 import { TextMd, Text2Xs } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
@@ -8,6 +6,8 @@ import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { SettingsLabel } from 'tasks.v2.component.elements.settings-label';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
+
+import { formatExpiredDuration } from './expired-duration-format';
 
 // @vue/component
 export const DeadlineDefaultView = {
@@ -72,7 +72,7 @@ export const DeadlineDefaultView = {
 			required: true,
 		},
 	},
-	emits: ['click', 'clear', 'keydown', 'settingsClick', 'update:isExceededHintShown'],
+	emits: ['click', 'clear', 'settingsClick', 'update:isExceededHintShown'],
 	computed: {
 		task(): TaskModel
 		{
@@ -95,12 +95,23 @@ export const DeadlineDefaultView = {
 		expiredFormatted(): string
 		{
 			return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
-				'#EXPIRED_DURATION#': new DurationFormat(this.expiredDuration).formatClosest(),
+				'#EXPIRED_DURATION#': formatExpiredDuration(this.expiredDuration),
 			});
 		},
 		hintBindElement(): HTMLElement
 		{
 			return this.$refs.deadlineIcon?.$el ?? this.$refs.deadline?.$el;
+		},
+		ariaLabel(): string
+		{
+			if (this.readonly)
+			{
+				return '';
+			}
+
+			return this.loc('TASKS_V2_DEADLINE_VALUE_ARIA_LABEL', {
+				'#VALUE#': this.deadlineFormatted,
+			});
 		},
 	},
 	methods: {
@@ -110,13 +121,14 @@ export const DeadlineDefaultView = {
 		},
 		focusDeadline(): void
 		{
-			this.$refs.deadline?.$el?.focus();
+			this.$refs.deadline?.$el?.querySelector('.b24-hover-pill-content')?.focus();
 		},
 	},
 	template: `
 		<div
 			class="tasks-field-deadline"
 			:class="{ '--expired': isExpired }"
+			data-testid="tasks-deadline"
 		>
 			<div class="tasks-field-deadline-inner">
 				<HoverPill
@@ -126,11 +138,15 @@ export const DeadlineDefaultView = {
 					:noOffset="false"
 					:active="isPopupShown"
 					:alert="isExpired"
+					:ariaLabel
+					:ariaHaspopup="readonly ? '' : 'dialog'"
+					:ariaExpanded="readonly ? null : isPopupShown"
+					:clearAriaLabel="loc('TASKS_V2_DEADLINE_CLEAR_ARIA_LABEL')"
 					@click="$emit('click')"
 					@clear="$emit('clear')"
-					@keydown="$emit('keydown', $event)"
 					@mouseover="$emit('update:isExceededHintShown', true)"
 					@mouseleave="$emit('update:isExceededHintShown', false)"
+					data-testid="tasks-deadline-field-btn"
 					ref="deadline"
 				>
 					<BIcon
@@ -154,11 +170,14 @@ export const DeadlineDefaultView = {
 				<div
 					v-if="!isFlowFilledOnAdd"
 					class="tasks-field-deadline-settings-label"
+					:class="{ '--visible': isHovered || isFieldHovered || isSettingsPopupShown }"
 					ref="settings"
 				>
 					<SettingsLabel
-						v-if="canChangeSettings && (isHovered || isFieldHovered || isSettingsPopupShown)"
+						v-if="canChangeSettings"
 						data-settings-label
+						data-testid="tasks-deadline-settings-btn"
+						:ariaLabel="loc('TASKS_V2_DEADLINE_SETTINGS_ARIA_LABEL')"
 						@click="$emit('settingsClick')"
 					/>
 				</div>

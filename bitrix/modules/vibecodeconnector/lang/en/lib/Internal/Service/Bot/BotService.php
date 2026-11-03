@@ -1,3 +1,3 @@
 <?php
-$MESS['VIBECODECONNECTOR_BOT_SERVICE_USER_NAME'] = 'Vibecode Bot';
-$MESS['VIBECODECONNECTOR_BOT_SERVICE_USER_WORK_POSITION'] = 'Bitrix24 Vibecode platform and apps assistant';
+$MESS["VIBECODECONNECTOR_BOT_SERVICE_USER_NAME"] = "Vibecode Bot";
+$MESS["VIBECODECONNECTOR_BOT_SERVICE_USER_WORK_POSITION"] = "Alaio Vibecode platform and apps assistant";

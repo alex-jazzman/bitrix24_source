@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Runtime } from 'main.core';
 import { type TaskListOptions } from 'tasks.v2.model.interface';
 
 import { mapGetters } from 'ui.vue3.vuex';
@@ -14,12 +14,14 @@ import { Model, TaskStatus, Analytics } from 'tasks.v2.const';
 import { Deadline } from 'tasks.v2.component.fields.deadline';
 import { Responsible } from 'tasks.v2.component.fields.responsible';
 import { idUtils } from 'tasks.v2.lib.id-utils';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { templateService } from 'tasks.v2.provider.service.template-service';
 import { statusService } from 'tasks.v2.provider.service.status-service';
 import { subTasksService } from 'tasks.v2.provider.service.relation-service';
-import { type CoreParams } from 'tasks.v2.core';
+import { Core, type CoreParams } from 'tasks.v2.core';
 import { type TaskModel, type TaskRights } from 'tasks.v2.model.tasks';
+import { onboardingBanners } from 'tasks.v2.lib.onboarding-banners';
 
 import { Gantt } from '../../field/gantt';
 import { TaskLineExpandToggle } from '../task-line-expand-toggle/task-line-expand-toggle';
@@ -29,6 +31,27 @@ import './task-line.css';
 const sectionStatus = 'sectionStatus';
 const sectionBase = 'sectionBase';
 const sectionRemove = 'sectionRemove';
+
+// SC-005: the hover popup extension is loaded lazily on the first qualifying hover —
+// only a new user hovering a self-owned deadlineless row ever needs it, so it must not
+// sit in the task-list rel and must not be built for every row. The promise is cached
+// module-wide so large lists load the extension at most once. On failure the cached
+// promise is dropped (and the error rethrown), so a rejected load is not memoized: a
+// later hover retries instead of re-awaiting a permanently rejected promise. The consumer
+// swallows the rejection, so a failed hover never surfaces as an unhandled rejection.
+let deadlinelessHintExtensionPromise = null;
+function loadDeadlinelessHint(): Promise<Object>
+{
+	deadlinelessHintExtensionPromise ??= Runtime
+		.loadExtension('tasks.v2.component.onboarding.deadlineless-hint')
+		.catch((error) => {
+			deadlinelessHintExtensionPromise = null;
+
+			throw error;
+		});
+
+	return deadlinelessHintExtensionPromise;
+}
 
 // @vue/component
 export const TaskLine = {
@@ -71,12 +94,15 @@ export const TaskLine = {
 	{
 		return {
 			Outline,
+			// SC-005 hover popup adapter; imperative, driven by this line.
+			deadlinelessHint: null,
 		};
 	},
 	data(): Object
 	{
 		return {
 			isMenuShown: false,
+			isHovered: false,
 		};
 	},
 	computed: {
@@ -90,6 +116,43 @@ export const TaskLine = {
 		isTemplate(): boolean
 		{
 			return idUtils.isTemplate(this.taskId);
+		},
+		// ALG-02 (NORMATIVE): mark (warning badge, see template + css) a deadlineless row
+		// owned by the current user, but only inside the «new user» onboarding segment.
+		// Derived from row data only — no closed state is stored (AC-023), no extra server
+		// fetch (ADR invariant).
+		isDeadlinelessOwnedHint(): boolean
+		{
+			if (this.isTemplate)
+			{
+				return false;
+			}
+
+			const isNewUser = onboardingBanners.isNewUser;
+			const currentUserId = Core.getParams().currentUser?.id;
+
+			return isNewUser
+				&& !this.task.deadlineTs // "No deadline"
+				&& Number(this.task.creatorId) === Number(currentUserId) // I am the creator
+				&& this.canChangeDeadline // the deadline must actually be settable on this row
+			;
+		},
+		// ALG-02 gate: the badge/hint + its OpenDeadlinePicker CTA must appear only when the
+		// user can really open the picker for this row. Mirrors the compact-mode `readonly`
+		// of the nested Deadline field (deadline.js): the field is read-only — and its CTA a
+		// no-op — without the `deadline` right or in a completed / supposedly-completed /
+		// deferred status. The deadline-change-limit and flow-auto-deadline branches of that
+		// `readonly` never apply here (the predicate already requires the current user to be
+		// the creator, and list rows are always saved tasks), so they are omitted.
+		canChangeDeadline(): boolean
+		{
+			const readonlyStatuses = [
+				TaskStatus.Completed,
+				TaskStatus.SupposedlyCompleted,
+				TaskStatus.Deferred,
+			];
+
+			return Boolean(this.task.rights?.deadline) && !readonlyStatuses.includes(this.task.status);
 		},
 		rights(): TaskRights
 		{
@@ -117,6 +180,8 @@ export const TaskLine = {
 				sections: this.menuSections,
 				items: this.menuItems,
 				targetContainer: document.body,
+				closeByEsc: true,
+				autoHide: true,
 			});
 		},
 		menuItems(): MenuItemOptions[]
@@ -240,8 +305,89 @@ export const TaskLine = {
 		{
 			return this.isSubTask ? Outline.CHEVRON_RIGHT_M : Outline.CHEVRON_DOWN_M;
 		},
+		menuLabel(): string
+		{
+			return this.isTemplate
+				? this.loc('TASKS_V2_TASK_LINE_TEMPLATE_MENU_ARIA_LABEL')
+				: this.loc('TASKS_V2_TASK_LINE_MENU_ARIA_LABEL')
+			;
+		},
+	},
+	beforeUnmount(): void
+	{
+		// Guards the async handleHintMouseEnter() continuation from creating a popup for a
+		// line that has already unmounted (list re-render while the extension was loading).
+		this.isUnmounted = true;
+		this.deadlinelessHint?.destroy();
+		this.deadlinelessHint = null;
 	},
 	methods: {
+		// SC-005: on the first qualifying hover, lazy-load the hover popup extension and
+		// show it. The isDeadlinelessOwnedHint predicate gates BEFORE any load, so only a
+		// new user's self-owned deadlineless row ever fetches the extension (RF2-7). The
+		// hover-intent close delay (300 ms) stays inside DeadlinelessHint.
+		async handleHintMouseEnter(): Promise<void>
+		{
+			if (!this.isDeadlinelessOwnedHint)
+			{
+				return;
+			}
+
+			this.isHovered = true;
+
+			if (this.deadlinelessHint)
+			{
+				this.deadlinelessHint.tryShow();
+
+				return;
+			}
+
+			// Best-effort: if the hover popup extension fails to load, silently skip
+			// (mirrors onboardingBanners.setViewed()); loadDeadlinelessHint() dropped the
+			// cached rejection so a later hover retries.
+			const hintModule = await loadDeadlinelessHint().catch(() => null);
+
+			// The cursor may have left (or the line unmounted) while loading: do not pop
+			// the hint if the load failed or the hover is no longer active.
+			if (!hintModule || this.isUnmounted || !this.isHovered)
+			{
+				return;
+			}
+
+			const { DeadlinelessHint } = hintModule;
+
+			// hover popup anchored to the deadline field cell (where the SC-005 badge lives),
+			// matching the kanban/grid surfaces; falls back to the title cell if the deadline
+			// column is hidden.
+			this.deadlinelessHint ??= new DeadlinelessHint(
+				this.taskId,
+				() => this.$refs.deadlineField ?? this.$refs.titleWrapper,
+				() => this.sendDeadlinelessHintAnalytics(Analytics.Event.ClickSuggestBanner),
+				() => this.sendDeadlinelessHintAnalytics(Analytics.Event.CloseSuggestBanner),
+			);
+			this.deadlinelessHint.tryShow();
+		},
+		handleHintMouseLeave(): void
+		{
+			this.isHovered = false;
+			this.deadlinelessHint?.scheduleClose();
+		},
+		// SC-005 events 1-2: the deadlineless hint is a notification, not a card banner, so it
+		// sends type=notification and no c_element. c_sub_section is fixed to `list` for the
+		// V2 list; c_section comes from the mount context (omitted when absent).
+		sendDeadlinelessHintAnalytics(event: string): void
+		{
+			analytics.sendBannerInteraction(
+				{
+					context: this.analytics?.context,
+					additionalContext: Analytics.SubSection.List,
+				},
+				{
+					event,
+					type: Analytics.Type.Notification,
+				},
+			);
+		},
 		getStartItem(): MenuItemOptions
 		{
 			return {
@@ -437,11 +583,19 @@ export const TaskLine = {
 				},
 			};
 		},
+		handleMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.$refs.moreIcon?.focus();
+		},
 	},
 	template: `
-		<div 
+		<div
 			class="tasks-task-line-title-container-wrapper"
 			:class="{ '--expanded': isExpanded }"
+			ref="titleWrapper"
+			@mouseenter="handleHintMouseEnter"
+			@mouseleave="handleHintMouseLeave"
 		>
 			<div v-if="isSubTask" class="tasks-task-line-side-icon" :class="sideIconClass"/>
 			<div 
@@ -467,6 +621,9 @@ export const TaskLine = {
 					v-if="showExpand"
 					:text="expandTitle"
 					:icon="expandIcon"
+					:ariaExpanded="isSubTask ? null : isExpanded"
+					:ariaHaspopup="isSubTask ? 'dialog' : ''"
+					:data-testid="isSubTask ? 'task-line-drill-btn' : 'task-line-expand-toggle'"
 					@click="$emit('toggleSubTasks')"
 				/>
 			</div>
@@ -481,9 +638,13 @@ export const TaskLine = {
 		<div
 			v-if="fields.has('deadline')"
 			class="tasks-task-line-field"
-			:class="{ '--expanded': isExpanded }"
+			:class="{ '--expanded': isExpanded, '--deadlineless-hint': isDeadlinelessOwnedHint }"
+			ref="deadlineField"
+			@mouseenter="handleHintMouseEnter"
+			@mouseleave="handleHintMouseLeave"
 		>
 			<Deadline :taskId :isTemplate compact/>
+			<div v-if="isDeadlinelessOwnedHint" class="tasks-task-line-deadlineless-badge" aria-hidden="true"/>
 		</div>
 		<div
 			v-if="fields.has('gantt')"
@@ -492,14 +653,20 @@ export const TaskLine = {
 		>
 			<Gantt :taskId/>
 		</div>
-		<div
+		<button
+			type="button"
 			class="tasks-task-line-more print-ignore"
+			data-testid="task-line-menu-btn"
+			:data-task-id="taskId"
 			:class="{ '--expanded': isExpanded }"
+			:aria-label="menuLabel"
+			aria-haspopup="menu"
+			:aria-expanded="isMenuShown"
 			@click="isMenuShown = true"
 			ref="moreIcon"
 		>
-			<BIcon :name="Outline.MORE_L" hoverable/>
-		</div>
-		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
+			<BIcon :name="Outline.MORE_L" hoverable aria-hidden="true"/>
+		</button>
+		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="handleMenuClose"/>
 	`,
 };

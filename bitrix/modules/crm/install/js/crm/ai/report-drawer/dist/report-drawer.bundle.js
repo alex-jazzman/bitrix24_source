@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, main_date, main_popup, main_sidepanel, crm_router, crm_timeline_tools, ui_buttons, ui_entitySelector, ui_system_typography_vue, crm_common, ui_vue3, ui_vue3_mixins_locMixin, crm_miniCard, ui_progressround, ui_vue3_components_button, ui_iconSet_api_core, crm_audioPlayer, ui_vue3_directives_hint, pull_queuemanager) {
+(function (exports, main_core, main_date, main_popup, main_sidepanel, crm_router, crm_integration_analytics, crm_timeline_tools, ui_analytics, ui_buttons, ui_entitySelector, ui_system_typography_vue, crm_common, ui_vue3, ui_vue3_mixins_locMixin, crm_miniCard, ui_progressround, ui_vue3_components_button, ui_iconSet_api_core, crm_audioPlayer, ui_vue3_directives_hint, ui_a11y, ui_system_tooltip, pull_queuemanager) {
 	'use strict';
 
 	const ManagerPopupContent = ui_vue3.defineComponent({
@@ -105,8 +105,11 @@ this.BX.Crm = this.BX.Crm || {};
 		#application = null;
 		#container = null;
 		#closeTimeoutId = null;
+		#popupId;
 		constructor(options) {
 			this.#options = options;
+			this.#popupId = `crm-ai-report-drawer-popup-${main_core.Text.getRandom()}`;
+			this.#configureTriggerAccessibility();
 			this.#bindEvents();
 		}
 		destroy() {
@@ -130,6 +133,21 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#application?.unmount();
 			this.#application = null;
 			this.#container = null;
+			if (this.#isClickTrigger()) {
+				this.#options.bindElement.removeAttribute('aria-haspopup');
+				this.#options.bindElement.removeAttribute('aria-expanded');
+				this.#options.bindElement.removeAttribute('aria-controls');
+			}
+		}
+		#configureTriggerAccessibility() {
+			if (!this.#isClickTrigger()) {
+				return;
+			}
+			main_core.Dom.attr(this.#options.bindElement, {
+				'aria-haspopup': this.#options.popupOptions.role === 'dialog' ? 'dialog' : 'true',
+				'aria-expanded': 'false',
+				'aria-controls': this.#popupId
+			});
 		}
 		#bindEvents() {
 			if (this.#isClickTrigger()) {
@@ -170,6 +188,21 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#cancelClosing();
 			this.#popup?.close();
 		};
+		#handlePopupShow = () => {
+			if (this.#isClickTrigger()) {
+				main_core.Dom.attr(this.#options.bindElement, 'aria-expanded', 'true');
+			}
+		};
+		#handlePopupClose = () => {
+			if (!this.#isClickTrigger()) {
+				return;
+			}
+			main_core.Dom.attr(this.#options.bindElement, 'aria-expanded', 'false');
+			const popupContainer = this.#popup?.getPopupContainer();
+			if (popupContainer?.contains(document.activeElement)) {
+				this.#options.bindElement.focus();
+			}
+		};
 		#shouldKeepPopupOpened(event) {
 			const nextTarget = event.relatedTarget;
 			if (!main_core.Type.isDomNode(nextTarget)) {
@@ -200,10 +233,14 @@ this.BX.Crm = this.BX.Crm || {};
 		#getPopup() {
 			if (this.#popup === null) {
 				this.#popup = new main_popup.Popup({
+					id: this.#popupId,
 					bindElement: this.#options.bindElement,
 					className: `${this.#options.popupOptions.className} ui-icon-set__scope`,
 					content: this.#getContainer(),
 					width: this.#options.popupOptions.width,
+					ariaLabel: this.#options.popupOptions.ariaLabel,
+					role: this.#options.popupOptions.role,
+					focusTrap: this.#options.popupOptions.focusTrap,
 					noAllPaddings: true,
 					autoHide: this.#options.popupOptions.autoHide ?? this.#isClickTrigger(),
 					closeByEsc: this.#options.popupOptions.closeByEsc ?? this.#isClickTrigger(),
@@ -215,6 +252,8 @@ this.BX.Crm = this.BX.Crm || {};
 					},
 					animation: 'fading-slide',
 					events: {
+						onShow: this.#handlePopupShow,
+						onClose: this.#handlePopupClose,
 						onDestroy: () => {
 							this.#cancelClosing();
 							this.#application?.unmount();
@@ -273,20 +312,24 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		methods: {
 			getCallSubtitleData() {
-				if (this.subtitleData.type === 'open-lines') {
+				if (this.subtitleData.type === 'open-lines' || this.subtitleData.type === 'email') {
 					return null;
 				}
 				return this.subtitleData.data;
 			},
-			getOpenLinesSubtitleData() {
-				if (this.subtitleData.type !== 'open-lines') {
+			getConversationSubtitleData() {
+				if (this.subtitleData.type !== 'open-lines' && this.subtitleData.type !== 'email') {
 					return null;
 				}
 				return this.subtitleData.data;
+			},
+			getConversationManagersData() {
+				const managers = this.getConversationSubtitleData()?.managers;
+				return Array.isArray(managers) ? managers : [];
 			},
 			getCurrentClientData() {
-				if (this.subtitleData.type === 'open-lines') {
-					return this.getOpenLinesSubtitleData()?.client ?? null;
+				if (this.subtitleData.type === 'open-lines' || this.subtitleData.type === 'email') {
+					return this.getConversationSubtitleData()?.client ?? null;
 				}
 				return this.getCallSubtitleData()?.client ?? null;
 			},
@@ -294,16 +337,16 @@ this.BX.Crm = this.BX.Crm || {};
 				return this.getCallSubtitleData()?.responsible ?? null;
 			},
 			getPrimaryManagerData() {
-				if (this.subtitleData.type === 'open-lines') {
-					return this.getOpenLinesSubtitleData()?.managers[0] ?? null;
+				if (this.subtitleData.type === 'open-lines' || this.subtitleData.type === 'email') {
+					return this.getConversationManagersData()[0] ?? null;
 				}
 				return this.getResponsibleData();
 			},
 			getAdditionalManagersData() {
-				if (this.subtitleData.type !== 'open-lines') {
+				if (this.subtitleData.type !== 'open-lines' && this.subtitleData.type !== 'email') {
 					return [];
 				}
-				return this.getOpenLinesSubtitleData()?.managers.slice(1) ?? [];
+				return this.getConversationManagersData().slice(1);
 			},
 			getClientLinkMarkup(client) {
 				if (!main_core.Type.isStringFilled(client.clientDetailsUrl)) {
@@ -311,6 +354,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<span
 						id="${CLIENT_LINK_ID}"
 						class="crm-ai-report-drawer__subtitle-highlight"
+						data-testid="crm-ai-report-drawer-subtitle-client-mini-card-trigger"
 					>
 						${main_core.Text.encode(client.clientName)}
 					</span>
@@ -321,6 +365,7 @@ this.BX.Crm = this.BX.Crm || {};
 					href="${client.clientDetailsUrl}"
 					id="${CLIENT_LINK_ID}"
 					class="crm-ai-report-drawer__subtitle-highlight"
+					data-testid="crm-ai-report-drawer-subtitle-client-link"
 				>
 					${main_core.Text.encode(client.clientName)}
 				</a>
@@ -338,6 +383,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<span
 						id="${MANAGER_LINK_ID}"
 						class="crm-ai-report-drawer__subtitle-highlight"
+						data-testid="crm-ai-report-drawer-subtitle-primary-manager-popup-trigger"
 					>
 						${main_core.Text.encode(responsible.responsibleName)}
 					</span>
@@ -348,6 +394,7 @@ this.BX.Crm = this.BX.Crm || {};
 					href="${responsible.responsibleProfileUrl}"
 					id="${MANAGER_LINK_ID}"
 					class="crm-ai-report-drawer__subtitle-highlight"
+					data-testid="crm-ai-report-drawer-subtitle-primary-manager-link"
 				>
 					${main_core.Text.encode(responsible.responsibleName)}
 				</a>
@@ -359,6 +406,9 @@ this.BX.Crm = this.BX.Crm || {};
 					type="button"
 					id="${MORE_MANAGERS_LINK_ID}"
 					class="crm-ai-report-drawer__subtitle-more-managers"
+					data-testid="crm-ai-report-drawer-subtitle-more-managers-button"
+					aria-haspopup="menu"
+					aria-expanded="false"
 				>
 			`.trim();
 			},
@@ -383,16 +433,46 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 				return this.renderCallSubtitle('CRM_AI_REPORT_DRAWER_HEADER_OUTGOING_CALL', data.client, data.responsible);
 			},
-			getOpenLinesSubtitle() {
-				const data = this.getOpenLinesSubtitleData();
+			getAdditionalManagersButtonMarkup(primaryManagerMarkup, additionalManagerCount, multipleManagersMessageCode) {
+				const stringElement = main_core.Loc.getMessage(multipleManagersMessageCode, {
+					'#CLIENT_NAME#': '',
+					'#MANAGER_NAME#': primaryManagerMarkup,
+					'#BUTTON_START#': this.getMoreManagersButtonOpenMarkup(),
+					'#BUTTON_END#': '</button>',
+					'#MANAGER_COUNT#': String(additionalManagerCount)
+				}) ?? '';
+				const element = main_core.Tag.render`<span>${stringElement}</span>`;
+				const button = element.querySelector(`#${MORE_MANAGERS_LINK_ID}`);
+				return button instanceof HTMLElement ? button.outerHTML : '';
+			},
+			getManagerGroupMarkup(primaryManager, additionalManagerCount, multipleManagersMessageCode) {
+				const primaryManagerMarkup = this.getManagerLinkMarkup(primaryManager);
+				if (additionalManagerCount <= 0) {
+					return primaryManagerMarkup;
+				}
+				return [primaryManagerMarkup, this.getAdditionalManagersButtonMarkup(primaryManagerMarkup, additionalManagerCount, multipleManagersMessageCode)].filter(part => main_core.Type.isStringFilled(part)).join(' ');
+			},
+			renderPartialConversationSubtitle(client, primaryManager, additionalManagerCount, multipleManagersMessageCode) {
+				const stringElement = [main_core.Type.isNil(client) ? '' : this.getClientMarkup(client), main_core.Type.isNil(primaryManager) ? '' : this.getManagerGroupMarkup(primaryManager, additionalManagerCount, multipleManagersMessageCode)].filter(part => main_core.Type.isStringFilled(part)).join(' ');
+				return main_core.Tag.render`<span>${stringElement}</span>`;
+			},
+			renderConversationSubtitle(singleManagerMessageCode, multipleManagersMessageCode) {
+				const data = this.getConversationSubtitleData();
 				if (main_core.Type.isNil(data)) {
 					return null;
 				}
-				const clientMarkup = this.getClientMarkup(data.client);
-				const primaryManager = data.managers[0];
+				const client = data.client;
+				const primaryManager = this.getPrimaryManagerData();
+				if (main_core.Type.isNil(client) && main_core.Type.isNil(primaryManager)) {
+					return null;
+				}
 				const additionalManagerCount = this.getAdditionalManagersData().length;
 				const hasAdditionalManagers = additionalManagerCount > 0;
-				const messageCode = hasAdditionalManagers ? 'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_MULTIPLE_MANAGERS' : 'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_SINGLE_MANAGER';
+				if (main_core.Type.isNil(client) || main_core.Type.isNil(primaryManager)) {
+					return this.renderPartialConversationSubtitle(client, primaryManager, additionalManagerCount, multipleManagersMessageCode);
+				}
+				const clientMarkup = this.getClientMarkup(client);
+				const messageCode = hasAdditionalManagers ? multipleManagersMessageCode : singleManagerMessageCode;
 				const stringElement = main_core.Loc.getMessage(messageCode, {
 					'#CLIENT_NAME#': clientMarkup,
 					'#MANAGER_NAME#': this.getManagerLinkMarkup(primaryManager),
@@ -401,6 +481,12 @@ this.BX.Crm = this.BX.Crm || {};
 					'#MANAGER_COUNT#': String(additionalManagerCount)
 				}) ?? '';
 				return main_core.Tag.render`<span>${stringElement}</span>`;
+			},
+			getOpenLinesSubtitle() {
+				return this.renderConversationSubtitle('CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_SINGLE_MANAGER', 'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_MULTIPLE_MANAGERS');
+			},
+			getEmailSubtitle() {
+				return this.renderConversationSubtitle('CRM_AI_REPORT_DRAWER_HEADER_EMAIL_SINGLE_MANAGER', 'CRM_AI_REPORT_DRAWER_HEADER_EMAIL_MULTIPLE_MANAGERS');
 			},
 			bindClientMiniCard() {
 				const clientNameContainer = this.$refs.subtitleSection.querySelector(`#${CLIENT_LINK_ID}`);
@@ -475,28 +561,17 @@ this.BX.Crm = this.BX.Crm || {};
 				this.destroyAdditionalManagerPopups();
 			},
 			renderMoreManagersMenuItem(manager) {
-				const itemContainer = main_core.Tag.render`<div class="crm-ai-report-drawer__managers-menu-item"></div>`;
+				const itemContainer = main_core.Tag.render`<span class="crm-ai-report-drawer__managers-menu-item"></span>`;
 				const avatarContainer = main_core.Tag.render`
 				<span class="ui-icon ui-icon-common-user crm-ai-report-drawer__managers-menu-item-avatar">
 					<i></i>
 				</span>
 			`;
-				const nameContainer = main_core.Type.isStringFilled(manager.responsibleProfileUrl) ? main_core.Tag.render`
-					<a
-						href="${manager.responsibleProfileUrl}"
-						class="crm-ai-report-drawer__managers-menu-item-link"
-						data-manager-id="${manager.responsibleId}"
-					>
-						${main_core.Text.encode(manager.responsibleName)}
-					</a>
-				` : main_core.Tag.render`
-					<span
-						class="crm-ai-report-drawer__managers-menu-item-link"
-						data-manager-id="${manager.responsibleId}"
-					>
-						${main_core.Text.encode(manager.responsibleName)}
-					</span>
-				`;
+				const nameContainer = main_core.Tag.render`
+				<span class="crm-ai-report-drawer__managers-menu-item-link">
+					${main_core.Text.encode(manager.responsibleName)}
+				</span>
+			`;
 				if (main_core.Type.isStringFilled(manager.responsibleAvatarUrl)) {
 					main_core.Dom.style(avatarContainer.querySelector('i'), 'background-image', `url('${encodeURI(main_core.Text.encode(manager.responsibleAvatarUrl))}')`);
 				}
@@ -530,7 +605,7 @@ this.BX.Crm = this.BX.Crm || {};
 				this.runtime.additionalManagerPopups = controllers;
 			},
 			bindMoreManagersMenu() {
-				if (this.subtitleData.type !== 'open-lines') {
+				if (this.subtitleData.type !== 'open-lines' && this.subtitleData.type !== 'email') {
 					return;
 				}
 				const moreManagersLinkContainer = this.getMoreManagersLinkContainer();
@@ -553,13 +628,18 @@ this.BX.Crm = this.BX.Crm || {};
 					},
 					items: managers.map(manager => ({
 						html: this.renderMoreManagersMenuItem(manager),
-						attrs: {},
+						href: main_core.Type.isStringFilled(manager.responsibleProfileUrl) ? manager.responsibleProfileUrl : undefined,
+						dataset: {
+							managerId: String(manager.responsibleId),
+							testid: `crm-ai-report-drawer-subtitle-additional-manager-link-${manager.responsibleId}`
+						},
 						onclick: () => {
 							menu.close();
 							return {};
 						}
 					}))
 				});
+				main_core.Dom.attr(moreManagersLinkContainer, 'aria-controls', menuId);
 				const popupContainer = menu.getPopupWindow().getPopupContainer();
 				main_core.Event.bind(popupContainer, 'mouseenter', () => {
 					this.cancelMoreManagersMenuClose();
@@ -569,14 +649,28 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 				menu.subscribe('onShow', () => {
 					this.cancelMoreManagersMenuClose();
+					main_core.Dom.attr(moreManagersLinkContainer, 'aria-expanded', 'true');
 					this.destroyAdditionalManagerPopups();
 					this.bindAdditionalManagerPopups(menu, managers);
 				});
 				menu.subscribe('onClose', () => {
 					this.cancelMoreManagersMenuClose();
+					main_core.Dom.attr(moreManagersLinkContainer, 'aria-expanded', 'false');
 					this.destroyAdditionalManagerPopups();
+					if (popupContainer.contains(document.activeElement)) {
+						moreManagersLinkContainer.focus();
+					}
 				});
 				this.runtime.moreManagersMenu = menu;
+				main_core.Event.bind(moreManagersLinkContainer, 'click', () => {
+					this.cancelMoreManagersMenuClose();
+					if (menu.getPopupWindow().isShown()) {
+						menu.close();
+					} else {
+						menu.show();
+						menu.getNavigation().focusFirst();
+					}
+				});
 				main_core.Event.bind(moreManagersLinkContainer, 'mouseenter', () => {
 					this.cancelMoreManagersMenuClose();
 					menu.show();
@@ -598,6 +692,9 @@ this.BX.Crm = this.BX.Crm || {};
 				case 'open-lines':
 					subtitleElement = this.getOpenLinesSubtitle();
 					break;
+				case 'email':
+					subtitleElement = this.getEmailSubtitle();
+					break;
 				default:
 					return;
 			}
@@ -614,9 +711,49 @@ this.BX.Crm = this.BX.Crm || {};
 			this.destroyMoreManagersMenu();
 		},
 		template: `
-		<span class="crm-ai-report-drawer__subtitle ui-typography-text-md" ref="subtitleSection" />
+		<span
+			class="crm-ai-report-drawer__subtitle ui-typography-text-md"
+			data-testid="crm-ai-report-drawer-subtitle"
+			ref="subtitleSection"
+		/>
 	`
 	});
+
+	function copyWithDocument(text) {
+		const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		const textarea = document.createElement('textarea');
+		textarea.value = text;
+		textarea.setAttribute('readonly', '');
+		textarea.style.position = 'fixed';
+		textarea.style.opacity = '0';
+		textarea.style.pointerEvents = 'none';
+		document.body.append(textarea);
+		textarea.select();
+		try {
+			return document.execCommand('copy');
+		} catch {
+			return false;
+		} finally {
+			textarea.remove();
+			if (previousFocus?.isConnected) {
+				previousFocus.focus({
+					preventScroll: true
+				});
+			}
+		}
+	}
+	async function copyToClipboard(text) {
+		if (!main_core.Type.isStringFilled(text)) {
+			return false;
+		}
+		if (window.isSecureContext && navigator.clipboard?.writeText) {
+			try {
+				await navigator.clipboard.writeText(text);
+				return true;
+			} catch {}
+		}
+		return copyWithDocument(text);
+	}
 
 	const SETTING_BUTTON_ID = {
 		CHOOSE_NEW_SCRIPT: 'choose-new-script',
@@ -746,7 +883,9 @@ this.BX.Crm = this.BX.Crm || {};
 					id: button.id,
 					delimiter: false,
 					className: settingMenuItemData.className,
-					attrs: {}
+					attrs: button.id === SETTING_BUTTON_ID.SHARE_SLIDER ? {
+						'data-testid': 'crm-ai-report-drawer-share-link'
+					} : {}
 				};
 			},
 			resetShareSliderText() {
@@ -759,37 +898,11 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 				menuItem?.setText(copiedText);
 			},
-			async copyShareLink(link) {
-				if (window.isSecureContext && navigator.clipboard?.writeText) {
-					try {
-						await navigator.clipboard.writeText(link);
-						return true;
-					} catch {}
-				}
-				return this.copyShareLinkWithDocument(link);
-			},
-			copyShareLinkWithDocument(link) {
-				const textarea = document.createElement('textarea');
-				textarea.value = link;
-				textarea.setAttribute('readonly', '');
-				textarea.style.position = 'fixed';
-				textarea.style.opacity = '0';
-				textarea.style.pointerEvents = 'none';
-				document.body.append(textarea);
-				textarea.select();
-				try {
-					return document.execCommand('copy');
-				} catch {
-					return false;
-				} finally {
-					textarea.remove();
-				}
-			},
 			async handleShareSliderClick(event, menuItem) {
 				if (!main_core.Type.isStringFilled(this.shareLink)) {
 					return {};
 				}
-				const isCopied = await this.copyShareLink(this.shareLink);
+				const isCopied = await copyToClipboard(this.shareLink);
 				if (isCopied) {
 					this.markShareSliderAsCopied(menuItem);
 				}
@@ -825,7 +938,7 @@ this.BX.Crm = this.BX.Crm || {};
 			main_popup.MenuManager.destroy(this.settingsMenuId);
 		},
 		template: `
-		<div ref="container" class="crm-ai-report-drawer__settings">
+		<div ref="container" class="crm-ai-report-drawer__settings" data-testid="crm-ai-report-drawer-settings-button">
 			<Button
 				:style="AirButtonStyle.OUTLINE_NO_ACCENT"
 				:size="ButtonSize.SMALL"
@@ -869,7 +982,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		template: `
-		<div class="crm-ai-report-drawer__header">
+		<div class="crm-ai-report-drawer__header" data-testid="crm-ai-report-drawer-header">
 			<div class="crm-ai-report-drawer__title-section">
 				<h3 class="crm-ai-report-drawer__title ui-typography-heading-h3">{{ title }}</h3>
 				<Subtitle v-if="hasSubtitle" :subtitleData="subtitle" />
@@ -1149,6 +1262,157 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	});
 
+	const EMAIL_ACTIVITY_PLANNER_SLIDER_URL = '/bitrix/components/bitrix/crm.activity.planner/slider.php';
+	const EMAIL_ACTIVITY_SLIDER_WIDTH = 1080;
+	const EmailInfoPopupContent = ui_vue3.defineComponent({
+		name: 'CrmAiReportDrawerEmailInfoPopupContent',
+		props: {
+			infoPopupData: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			entityFieldTitle() {
+				return main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_INFO_POPUP_EMAIL_ENTITY_TITLE') ?? '';
+			},
+			conversationStartedAtFieldTitle() {
+				return main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_INFO_POPUP_EMAIL_STARTED_AT_TITLE') ?? '';
+			},
+			lastAnalyzedAtFieldTitle() {
+				return main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_INFO_POPUP_EMAIL_LAST_ANALYZED_AT_TITLE') ?? '';
+			},
+			managersFieldTitle() {
+				return main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_INFO_POPUP_EMAIL_MANAGERS_TITLE') ?? '';
+			},
+			openEmailText() {
+				return main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_INFO_POPUP_EMAIL_OPEN') ?? '';
+			},
+			managers() {
+				return Array.isArray(this.infoPopupData.managers) ? this.infoPopupData.managers : [];
+			},
+			hasEntity() {
+				return !main_core.Type.isNil(this.infoPopupData.entity);
+			},
+			hasEntityLink() {
+				return main_core.Type.isStringFilled(this.infoPopupData.entity?.href);
+			},
+			hasConversationStartedAt() {
+				return main_core.Type.isStringFilled(this.infoPopupData.conversationStartedAt);
+			},
+			hasLastAnalyzedAt() {
+				return main_core.Type.isStringFilled(this.infoPopupData.lastAnalyzedAt);
+			},
+			hasManagers() {
+				return this.managers.length > 0;
+			},
+			hasEmailAction() {
+				const action = this.infoPopupData.activity?.action;
+				return action?.type === 'email-activity' && main_core.Type.isInteger(action.value) && action.value > 0;
+			},
+			entityIconStyle() {
+				const ownerTypeId = this.infoPopupData.entity?.ownerTypeId ?? 0;
+				return {
+					'--crm-ai-report-drawer__info-popup-field-icon-path': `var(${resolveEntityIconPath(ownerTypeId)})`
+				};
+			}
+		},
+		methods: {
+			handleEmailClick() {
+				const action = this.infoPopupData.activity?.action;
+				if (!this.hasEmailAction || action?.type !== 'email-activity') {
+					return;
+				}
+				this.openEmailActivity(action);
+			},
+			openEmailActivity(action) {
+				const uri = new main_core.Uri(EMAIL_ACTIVITY_PLANNER_SLIDER_URL);
+				uri.setQueryParam('site_id', main_core.Loc.getMessage('SITE_ID') ?? '');
+				uri.setQueryParam('action', 'view');
+				uri.setQueryParam('activity_id', String(action.value));
+				crm_router.Router.openSlider(uri.toString(), {
+					width: EMAIL_ACTIVITY_SLIDER_WIDTH
+				});
+			}
+		},
+		template: `
+		<div
+			class="crm-ai-report-drawer__info-popup"
+			data-testid="crm-ai-report-drawer-email-info-popup"
+		>
+			<div v-if="hasEntity" class="crm-ai-report-drawer__info-popup-field">
+				<div class="crm-ai-report-drawer__info-popup-field-title ui-typography-text-xs">
+					{{ entityFieldTitle }}
+				</div>
+				<div class="crm-ai-report-drawer__info-popup-field-value-wrapper">
+					<span
+						class="crm-ai-report-drawer__info-popup-field-icon --entity"
+						:style="entityIconStyle"
+					></span>
+					<a
+						v-if="hasEntityLink"
+						:href="infoPopupData.entity.href"
+						class="crm-ai-report-drawer__info-popup-field-value --accent ui-typography-text-md"
+						data-testid="crm-ai-report-drawer-email-entity-link"
+					>
+						{{ infoPopupData.entity.title }}
+					</a>
+					<span
+						v-else
+						class="crm-ai-report-drawer__info-popup-field-value ui-typography-text-md"
+					>
+						{{ infoPopupData.entity.title }}
+					</span>
+				</div>
+			</div>
+			<div v-if="hasConversationStartedAt" class="crm-ai-report-drawer__info-popup-field">
+				<div class="crm-ai-report-drawer__info-popup-field-title ui-typography-text-xs">
+					{{ conversationStartedAtFieldTitle }}
+				</div>
+				<span class="crm-ai-report-drawer__info-popup-field-value ui-typography-text-md">
+					{{ infoPopupData.conversationStartedAt }}
+				</span>
+			</div>
+			<div v-if="hasLastAnalyzedAt" class="crm-ai-report-drawer__info-popup-field">
+				<div class="crm-ai-report-drawer__info-popup-field-title ui-typography-text-xs">
+					{{ lastAnalyzedAtFieldTitle }}
+				</div>
+				<span class="crm-ai-report-drawer__info-popup-field-value ui-typography-text-md">
+					{{ infoPopupData.lastAnalyzedAt }}
+				</span>
+			</div>
+			<div v-if="hasManagers" class="crm-ai-report-drawer__info-popup-field">
+				<div class="crm-ai-report-drawer__info-popup-field-title ui-typography-text-xs">
+					{{ managersFieldTitle }}
+				</div>
+				<div class="crm-ai-report-drawer__info-popup-field-value ui-typography-text-md">
+					<div v-for="manager in managers" :key="manager.responsibleId">
+						<a
+							v-if="manager.responsibleProfileUrl"
+							:href="manager.responsibleProfileUrl"
+							class="crm-ai-report-drawer__info-popup-field-value --accent"
+							:data-testid="'crm-ai-report-drawer-email-manager-link-' + manager.responsibleId"
+						>
+							{{ manager.responsibleName }}
+						</a>
+						<span v-else>{{ manager.responsibleName }}</span>
+					</div>
+				</div>
+			</div>
+			<div v-if="hasEmailAction" class="crm-ai-report-drawer__info-popup-field">
+				<a
+					href="#"
+					data-testid="crm-ai-report-drawer-email-open-activity"
+					class="crm-ai-report-drawer__info-popup-field-value --accent ui-typography-text-md"
+					@click.prevent="handleEmailClick"
+				>
+					{{ openEmailText }}
+				</a>
+			</div>
+		</div>
+	`
+	});
+
 	const OpenLinesInfoPopupContent = ui_vue3.defineComponent({
 		name: 'CrmAiReportDrawerOpenLinesInfoPopupContent',
 		props: {
@@ -1247,6 +1511,31 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	});
 
+	const infoPopupTypeConfigs = {
+		call: {
+			trigger: 'hover',
+			messageCode: 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_CALL'
+		},
+		email: {
+			trigger: 'hover',
+			messageCode: 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_EMAIL'
+		},
+		'open-lines': {
+			trigger: 'hover',
+			messageCode: 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_OPEN_LINES'
+		}
+	};
+	function resolveInfoPopupTypeConfig(type) {
+		const config = infoPopupTypeConfigs[type];
+		if (!config) {
+			throw new Error(`Unsupported info popup type: ${type}`);
+		}
+		return config;
+	}
+	function resolveInfoPopupButtonMessageCode(type) {
+		return resolveInfoPopupTypeConfig(type).messageCode;
+	}
+
 	const InfoButton = ui_vue3.defineComponent({
 		name: 'InfoButton',
 		components: {
@@ -1265,21 +1554,40 @@ this.BX.Crm = this.BX.Crm || {};
 				if (!(bindElement instanceof HTMLElement)) {
 					return;
 				}
-				const popupComponent = props.infoPopupData.type === 'open-lines' ? OpenLinesInfoPopupContent : CallInfoPopupContent;
+				const button = bindElement.querySelector('button');
+				if (!(button instanceof HTMLButtonElement)) {
+					return;
+				}
+				const config = resolveInfoPopupTypeConfig(props.infoPopupData.type);
+				const ariaLabel = main_core.Loc.getMessage(config.messageCode) ?? '';
+				const component = {
+					call: CallInfoPopupContent,
+					email: EmailInfoPopupContent,
+					'open-lines': OpenLinesInfoPopupContent
+				}[props.infoPopupData.type];
 				popup = new PopupController({
-					bindElement,
-					trigger: 'hover',
-					component: popupComponent,
+					bindElement: button,
+					trigger: config.trigger,
+					component,
 					props: {
 						infoPopupData: props.infoPopupData
 					},
 					popupOptions: {
 						width: 320,
-						className: 'crm-ai-report-drawer__popup-wrapper --info'
+						className: 'crm-ai-report-drawer__popup-wrapper --info',
+						ariaLabel,
+						role: 'dialog',
+						closeByEsc: true,
+						focusTrap: config.trigger === 'click' ? {
+							initialFocus: 'first-tabbable',
+							restoreFocus: true
+						} : false
 					}
 				});
 			};
-			ui_vue3.onMounted(() => initPopup(container.value));
+			ui_vue3.onMounted(() => {
+				void ui_vue3.nextTick(() => initPopup(container.value));
+			});
 			ui_vue3.onBeforeUnmount(() => popup?.destroy());
 			return {
 				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
@@ -1291,18 +1599,23 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		computed: {
 			buttonText() {
-				const messageCode = this.infoPopupData.type === 'open-lines' ? 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_OPEN_LINES' : 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_CALL';
+				const messageCode = resolveInfoPopupButtonMessageCode(this.infoPopupData.type);
 				return main_core.Loc.getMessage(messageCode) ?? '';
 			}
 		},
 		template: `
-		<div class="crm-ai-report-drawer__toolbar-info-button" ref="container">
+		<div
+			class="crm-ai-report-drawer__toolbar-info-button"
+			data-testid="crm-ai-report-drawer-info-button"
+			ref="container"
+		>
 			<Button
 				:text="buttonText"
 				:style="AirButtonStyle.OUTLINE"
 				:size="ButtonSize.SMALL"
 				:leftIcon="Outline.INFO_CIRCLE"
 				class="ui-btn-round"
+				:dataset="{ testid: 'crm-ai-report-drawer-info-button-trigger' }"
 			/>
 		</div>
 	`
@@ -1468,7 +1781,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		template: `
-		<div class="crm-ai-report-drawer__toolbar">
+		<div class="crm-ai-report-drawer__toolbar" data-testid="crm-ai-report-drawer-toolbar">
 			<div class="crm-ai-report-drawer__toolbar-left">
 				<Player v-if="hasRecord" :recordData="record" />
 				<InfoButton v-if="hasInfoPopup" :infoPopupData="infoPopup" />
@@ -1503,6 +1816,11 @@ this.BX.Crm = this.BX.Crm || {};
 				required: true
 			}
 		},
+		computed: {
+			testIdPrefix() {
+				return String(this.$attrs['data-testid'] ?? '');
+			}
+		},
 		data() {
 			return {
 				isContentHidden: false,
@@ -1519,9 +1837,9 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		template: `
 		<div class="crm-ai-report-drawer__content-block crm-ai-report-drawer__failed-criteria-block --ui-context-content-light">
-			<div class="crm-ai-report-drawer__failed-criteria-block-header crm-ai-report-drawer__spoiler-toggle-trigger" @click="toggleContentSpoiler()">
+			<div class="crm-ai-report-drawer__failed-criteria-block-header crm-ai-report-drawer__spoiler-toggle-trigger" :data-testid="testIdPrefix + '-header'" @click="toggleContentSpoiler()">
 				<div class="crm-ai-report-drawer__failed-criteria-block-cross" />
-				<div class="crm-ai-report-drawer__failed-criteria-block-title ui-typography-text-lg ui-typography-text-bold">
+				<div class="crm-ai-report-drawer__failed-criteria-block-title ui-typography-text-lg ui-typography-text-bold" :data-testid="testIdPrefix + '-title'">
 					{{ title }}
 				</div>
 				<div class="crm-ai-report-drawer__spoiler-chevron" />
@@ -1534,15 +1852,15 @@ this.BX.Crm = this.BX.Crm || {};
 				]"
 			>
 				<div class="crm-ai-report-drawer__spoiler-content-inner">
-					<div class="crm-ai-report-drawer__failed-criteria-block-commentary ui-typography-text-lg">
+					<div class="crm-ai-report-drawer__failed-criteria-block-commentary ui-typography-text-lg" :data-testid="testIdPrefix + '-summary'">
 						{{ summary }}
 					</div>
-					<div class="crm-ai-report-drawer__failed-criteria-block-description ui-typography-text-md" @click="toggleConditionsSpoiler">
+					<div class="crm-ai-report-drawer__failed-criteria-block-description ui-typography-text-md" :data-testid="testIdPrefix + '-conditions-toggle'" @click="toggleConditionsSpoiler">
 						{{ loc('CRM_AI_REPORT_DRAWER_FAILED_CRITERIA_CONDITIONS_TITLE') }}
 						<span class="crm-ai-report-drawer__spoiler-chevron" />
 					</div>
-					<div :class="['crm-ai-report-drawer__spoiler-content', isConditionsHidden ? '--hidden' : '']">
-						<div class="crm crm-ai-report-drawer__spoiler-content-inner ui-typography-text-md">
+					<div :class="['crm-ai-report-drawer__spoiler-content', isConditionsHidden ? '--hidden' : '']" :data-testid="testIdPrefix + '-conditions-content'">
+						<div class="crm crm-ai-report-drawer__spoiler-content-inner ui-typography-text-md" :data-testid="testIdPrefix + '-conditions-text'">
 							{{ description }}
 						</div>
 					</div>
@@ -1654,6 +1972,151 @@ this.BX.Crm = this.BX.Crm || {};
 		return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), date).replaceAll('\\', '');
 	}
 
+	function heading(level, text) {
+		return '#'.repeat(level) + ' ' + text;
+	}
+	function criteriaSection(title, criteria) {
+		if (criteria.length === 0) {
+			return [];
+		}
+		const conditionsTitle = main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_FAILED_CRITERIA_CONDITIONS_TITLE') ?? '';
+		const parts = [heading(2, title)];
+		criteria.forEach(criterion => {
+			const criterionTitle = criterion.title?.trim() ?? '';
+			if (criterionTitle === '') {
+				return;
+			}
+			parts.push(heading(3, criterionTitle));
+			const summary = criterion.summary?.trim() ?? '';
+			if (summary !== '') {
+				parts.push(summary);
+			}
+			const description = criterion.description?.trim() ?? '';
+			if (description !== '' && description !== summary && conditionsTitle !== '') {
+				parts.push(`**${conditionsTitle}:** ${description}`);
+			}
+		});
+		return parts;
+	}
+	function buildAssessmentMarkdown(assessmentBlockData) {
+		const blocks = [];
+		const title = main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_ASSESSMENT_COPY_TITLE') ?? '';
+		if (title !== '') {
+			blocks.push(heading(1, title));
+		}
+		const summaryList = [];
+		const scriptName = assessmentBlockData.scriptName?.trim() ?? '';
+		if (scriptName !== '') {
+			const scriptLine = main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_ASSESSMENT_COPY_SCRIPT', {
+				'#SCRIPT_NAME#': scriptName
+			})?.trim() ?? '';
+			if (scriptLine !== '') {
+				summaryList.push(`- ${scriptLine}`);
+			}
+		}
+		if (main_core.Type.isNumber(assessmentBlockData.callScore)) {
+			const scoreLine = main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_ASSESSMENT_COPY_SCORE', {
+				'#SCORE#': String(Math.round(assessmentBlockData.callScore))
+			})?.trim() ?? '';
+			if (scoreLine !== '') {
+				summaryList.push(`- ${scoreLine}`);
+			}
+		}
+		if (summaryList.length > 0) {
+			blocks.push(summaryList.join('\n'));
+		}
+		const recommendation = assessmentBlockData.recommendation?.trim() ?? '';
+		const recommendationTitle = main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_ASSESSMENT_COPY_RECOMMENDATION') ?? '';
+		if (recommendation !== '' && recommendationTitle !== '') {
+			blocks.push(heading(2, recommendationTitle), recommendation);
+		}
+		const groups = [{
+			code: 'CRM_AI_REPORT_DRAWER_ASSESSMENT_COPY_FAILED_CRITERIA_TITLE',
+			criteria: assessmentBlockData.failedCriteria ?? []
+		}, {
+			code: 'CRM_AI_REPORT_DRAWER_ASSESSMENT_SUCCESS_CRITERIA_TITLE',
+			criteria: assessmentBlockData.successCriteria ?? []
+		}, {
+			code: 'CRM_AI_REPORT_DRAWER_ASSESSMENT_UNUSED_CRITERIA_TITLE',
+			criteria: assessmentBlockData.unusedCriteria ?? []
+		}];
+		groups.forEach(group => {
+			const groupTitle = main_core.Loc.getMessage(group.code, {
+				'#COUNT#': String(group.criteria.length)
+			})?.trim() ?? '';
+			if (groupTitle === '') {
+				return;
+			}
+			blocks.push(...criteriaSection(groupTitle, group.criteria));
+		});
+		return blocks.join('\n\n');
+	}
+
+	const VISIBLE_DURATION = 2000;
+	const activeInformers = new WeakMap();
+	function scheduleCleanup(target, tooltip) {
+		return setTimeout(() => {
+			activeInformers.delete(target);
+			tooltip.destroy();
+		}, VISIBLE_DURATION);
+	}
+	function showCopiedInformer(target) {
+		const text = main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_COPIED_INFORMER') ?? '';
+		if (!main_core.Type.isStringFilled(text)) {
+			return;
+		}
+		ui_a11y.LiveAnnouncer.announce(text);
+		if (!main_core.Type.isDomNode(target)) {
+			return;
+		}
+		const active = activeInformers.get(target);
+		if (active) {
+			clearTimeout(active.timeoutId);
+			active.timeoutId = scheduleCleanup(target, active.tooltip);
+			active.tooltip.show();
+			return;
+		}
+		const tooltip = new ui_system_tooltip.Tooltip({
+			target,
+			content: text,
+			position: ui_system_tooltip.TooltipPosition.Top,
+			trigger: ui_system_tooltip.TooltipTrigger.Manual
+		});
+		activeInformers.set(target, {
+			tooltip,
+			timeoutId: scheduleCleanup(target, tooltip)
+		});
+		tooltip.show();
+	}
+
+	function getEntitySection(ownerTypeId) {
+		if (!Number.isInteger(ownerTypeId)) {
+			return null;
+		}
+		const crmEntityType = BX.CrmEntityType;
+		if (!crmEntityType.isDefined(ownerTypeId)) {
+			return null;
+		}
+		const entityTypeName = crmEntityType.resolveName(ownerTypeId);
+		const section = crmEntityType.isDynamicTypeByName(entityTypeName) ? 'dynamic' : entityTypeName.toLowerCase();
+		return section;
+	}
+	function sendReaction(type, context, ownerTypeId) {
+		const section = getEntitySection(ownerTypeId);
+		ui_analytics.sendData({
+			tool: 'ai',
+			category: 'crm_operations',
+			event: 'add_reaction',
+			type,
+			...(section === null ? {} : {
+				c_section: section
+			}),
+			c_sub_section: 'details',
+			status: 'success',
+			p1: context
+		});
+	}
+
 	const Assessment = ui_vue3.defineComponent({
 		name: 'Assessment',
 		components: {
@@ -1673,6 +2136,10 @@ this.BX.Crm = this.BX.Crm || {};
 			assessmentSetting: {
 				type: Object,
 				default: null
+			},
+			ownerTypeId: {
+				type: Number,
+				required: true
 			}
 		},
 		emits: ['showReassessmentPopup'],
@@ -1685,6 +2152,9 @@ this.BX.Crm = this.BX.Crm || {};
 			};
 		},
 		computed: {
+			testIdPrefix() {
+				return `crm-ai-report-drawer-assessment-${this.assessmentBlockData.blockId}`;
+			},
 			chartColor() {
 				if (this.assessmentBlockData.callScore <= this.assessmentBlockData.lowerScoreBoundary) {
 					return ui_progressround.ProgressRound.Color.DANGER;
@@ -1702,6 +2172,12 @@ this.BX.Crm = this.BX.Crm || {};
 			},
 			assessmentDate() {
 				return formatAssessmentDate(this.assessmentBlockData.createdAt);
+			},
+			hasCreatedAt() {
+				return main_core.Type.isInteger(this.assessmentBlockData.createdAt) && this.assessmentBlockData.createdAt > 0;
+			},
+			createdAtText() {
+				return formatCreatedAt(this.assessmentBlockData.createdAt);
 			},
 			isHistory() {
 				return this.assessmentBlockData.isHistory && main_core.Type.isStringFilled(this.assessmentDate);
@@ -1763,10 +2239,24 @@ this.BX.Crm = this.BX.Crm || {};
 			return {
 				minimized: !this.assessmentBlockData.useInRating,
 				isCompletedCriteriaHidden: true,
-				isUnusedCriteriaHidden: true
+				isUnusedCriteriaHidden: true,
+				selectedReaction: null
 			};
 		},
 		methods: {
+			handleReactionClick(type) {
+				if (this.selectedReaction !== null) {
+					return;
+				}
+				this.selectedReaction = type;
+				sendReaction(type, 'call_scoring', this.ownerTypeId);
+			},
+			async copyAssessment(event) {
+				const icon = event.currentTarget;
+				if (await copyToClipboard(buildAssessmentMarkdown(this.assessmentBlockData))) {
+					showCopiedInformer(icon);
+				}
+			},
 			handleHowItWorksClick() {
 				const topWindow = window.top;
 				topWindow?.BX?.Helper?.show('redirect=detail&code=23240682');
@@ -1847,16 +2337,26 @@ this.BX.Crm = this.BX.Crm || {};
 			main_core.Dom.append(this.unusedCriteriaNameElement, this.$refs.unusedCriteriaNameSection);
 		},
 		template: `
-		<div :class="['crm-ai-report-drawer__content-block', 'crm-ai-report-drawer__assessment-block', '--ui-context-edge-dark', minimized ? '--minimized' : '']">
+		<div
+			:class="[
+				'crm-ai-report-drawer__content-block',
+				'crm-ai-report-drawer__assessment-block',
+				'--ui-context-edge-dark',
+				{ '--minimized': minimized },
+			]"
+			:data-testid="testIdPrefix"
+		>
 			<div
 				v-if="hasChevron"
 				class="crm-ai-report-drawer__content-block-assessment-header crm-ai-report-drawer__content-block-assessment-header--collapsible"
+				:data-testid="testIdPrefix + '-header'"
 			>
 				<div
 					class="crm-ai-report-drawer__content-block-assessment-header-main crm-ai-report-drawer__spoiler-toggle-trigger"
 					@click="toggleContentSpoiler"
+					:data-testid="testIdPrefix + '-collapse-toggle'"
 				>
-					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4">
+					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4" :data-testid="testIdPrefix + '-title'">
 						{{ headerTitle }}
 					</h4>
 					<div
@@ -1880,7 +2380,10 @@ this.BX.Crm = this.BX.Crm || {};
 						class="crm-ai-report-drawer__content-block-header-assessment-badge crm-ai-report-drawer__content-block-header-assessment-not-used-in-rating-badge"
 						@click="handleHowItWorksClick"
 					/>
-					<div class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg">
+					<div
+						class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg"
+						:data-testid="testIdPrefix + '-recommendation'"
+					>
 						{{ assessmentBlockData.recommendation }}
 					</div>
 				</div>
@@ -1888,9 +2391,10 @@ this.BX.Crm = this.BX.Crm || {};
 			<div
 				v-else
 				class="crm-ai-report-drawer__content-block-assessment-header"
+				:data-testid="testIdPrefix + '-header'"
 			>
 				<div class="crm-ai-report-drawer__content-block-assessment-header-text">
-					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4">
+					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4" :data-testid="testIdPrefix + '-title'">
 						{{ headerTitle }}
 					</h4>
 					<ScriptName
@@ -1908,7 +2412,10 @@ this.BX.Crm = this.BX.Crm || {};
 						class="crm-ai-report-drawer__content-block-header-assessment-badge crm-ai-report-drawer__content-block-header-assessment-script-updated-badge"
 						@click="handleShowReassessmentPopup"
 					/>
-					<div class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg">
+				<div
+					class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg"
+					:data-testid="testIdPrefix + '-recommendation'"
+				>
 						{{ assessmentBlockData.recommendation }}
 					</div>
 				</div>
@@ -1929,15 +2436,21 @@ this.BX.Crm = this.BX.Crm || {};
 						'crm-ai-report-drawer__spoiler-content',
 						minimized ? '--hidden' : '',
 					]"
+					:aria-hidden="minimized ? 'true' : 'false'"
+					:inert="minimized"
 				>
 					<div class="crm-ai-report-drawer__spoiler-content-inner">
-						<div class="crm-ai-report-drawer__content-block-assessment-criteria-failures-list">
+						<div
+						class="crm-ai-report-drawer__content-block-assessment-criteria-failures-list"
+						:data-testid="testIdPrefix + '-criteria-list'"
+						>
 							<FailedCriterion
 								v-for="(failedCriterion, index) in assessmentBlockData.failedCriteria"
 								:key="index"
 								:title="failedCriterion.title"
 								:description="failedCriterion.description"
 								:summary="failedCriterion.summary"
+								:data-testid="testIdPrefix + '-failed-criterion-' + index"
 							/>
 							<div class="crm-ai-report-drawer__content-block-assessment-criteria-footer --ui-context-content-light">
 								<div
@@ -1946,6 +2459,7 @@ this.BX.Crm = this.BX.Crm || {};
 										successCriteriaCount !== 0 ? 'crm-ai-report-drawer__spoiler-toggle-trigger' : '',
 									]"
 									@click="toggleCompletedCriteriaSpoiler(successCriteriaCount !== 0)"
+									:data-testid="testIdPrefix + '-success-toggle'"
 								>
 									<div class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title">
 										<span class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title-check" />
@@ -1965,6 +2479,7 @@ this.BX.Crm = this.BX.Crm || {};
 												:status="criterion.status"
 												:name="criterion.title"
 												:text="criterion.summary"
+												:data-testid="testIdPrefix + '-success-criterion-' + index"
 											/>
 										</div>
 									</div>
@@ -1976,6 +2491,7 @@ this.BX.Crm = this.BX.Crm || {};
 										unusedCriteriaCount !== 0 ? 'crm-ai-report-drawer__spoiler-toggle-trigger' : '',
 									]"
 									@click="toggleUnusedCriteriaSpoiler(unusedCriteriaCount !== 0)"
+									:data-testid="testIdPrefix + '-unused-toggle'"
 								>
 									<div class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title">
 										<span class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title-circle-minus" />
@@ -1995,11 +2511,63 @@ this.BX.Crm = this.BX.Crm || {};
 												:status="criterion.status"
 												:name="criterion.title"
 												:text="criterion.summary"
+												:data-testid="testIdPrefix + '-unused-criterion-' + index"
 											/>
 										</div>
 									</div>
 								</div>
 							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div
+				v-if="hasCreatedAt"
+				:class="['crm-ai-report-drawer__spoiler-content', minimized ? '--hidden' : '']"
+				:aria-hidden="minimized ? 'true' : 'false'"
+				:inert="minimized"
+			>
+				<div class="crm-ai-report-drawer__spoiler-content-inner">
+					<div class="crm-ai-report-drawer__content-block-footer" :data-testid="testIdPrefix + '-footer'">
+						<div class="crm-ai-report-drawer__content-block-actions">
+							<button
+								type="button"
+								class="crm-ai-report-drawer__content-block-action --copy"
+								:data-testid="testIdPrefix + '-copy-button'"
+								:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_COPY')"
+								@click="copyAssessment"
+							/>
+							<button
+								v-if="selectedReaction !== 'like'"
+								type="button"
+								:data-testid="testIdPrefix + '-dislike-button'"
+								:class="[
+									'crm-ai-report-drawer__content-block-action',
+									'--dislike',
+									{ '--selected': selectedReaction === 'dislike' },
+								]"
+								:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_DISLIKE')"
+								:aria-pressed="selectedReaction === 'dislike'"
+								:disabled="selectedReaction !== null"
+								@click="handleReactionClick('dislike')"
+							/>
+							<button
+								v-if="selectedReaction !== 'dislike'"
+								type="button"
+								:data-testid="testIdPrefix + '-like-button'"
+								:class="[
+									'crm-ai-report-drawer__content-block-action',
+									'--like',
+									{ '--selected': selectedReaction === 'like' },
+								]"
+								:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_LIKE')"
+								:aria-pressed="selectedReaction === 'like'"
+								:disabled="selectedReaction !== null"
+								@click="handleReactionClick('like')"
+							/>
+						</div>
+						<div class="crm-ai-report-drawer__content-block-date ui-typography-text-xs" :data-testid="testIdPrefix + '-date'">
+							{{ createdAtText }}
 						</div>
 					</div>
 				</div>
@@ -2011,6 +2579,10 @@ this.BX.Crm = this.BX.Crm || {};
 	const Search = ui_vue3.defineComponent({
 		name: 'Search',
 		props: {
+			testIdPrefix: {
+				type: String,
+				default: ''
+			},
 			searchArea: {
 				type: [HTMLElement, null],
 				required: true
@@ -2085,12 +2657,14 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		template: `
 		<div
-			class="crm-ai-report-drawer__content-block-header-search ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon"
+			class="crm-ai-report-drawer__content-block-header-search ui-ctl ui-ctl-sm ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon"
+			:data-testid="testIdPrefix ? testIdPrefix + '-search' : null"
 		>
 			<input
 				ref="searchInput"
 				type="text"
 				class="ui-ctl-element"
+				:data-testid="testIdPrefix ? testIdPrefix + '-search-input' : null"
 				:placeholder="loc('CRM_AI_REPORT_DRAWER_SEARCH_PLACEHOLDER')"
 				v-model="searchText"
 			>
@@ -2098,6 +2672,8 @@ this.BX.Crm = this.BX.Crm || {};
 				v-if="hasSearchText"
 				type="button"
 				class="ui-ctl-after ui-ctl-icon-clear"
+				:data-testid="testIdPrefix ? testIdPrefix + '-search-clear-button' : null"
+				:aria-label="loc('CRM_AI_REPORT_DRAWER_SEARCH_CLEAR')"
 				@click.stop.prevent="clearSearch"
 			/>
 			<span v-else class="ui-ctl-icon ui-ctl-icon-search ui-ctl-after"></span>
@@ -2111,6 +2687,10 @@ this.BX.Crm = this.BX.Crm || {};
 			Search
 		},
 		props: {
+			testIdPrefix: {
+				type: String,
+				required: true
+			},
 			title: {
 				type: String,
 				required: true
@@ -2133,8 +2713,11 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		data() {
+			const id = main_core.Text.getRandom();
 			return {
-				isMinimized: this.initiallyMinimized
+				isMinimized: this.initiallyMinimized,
+				contentId: `crm-ai-report-drawer-block-content-${id}`,
+				titleId: `crm-ai-report-drawer-block-title-${id}`
 			};
 		},
 		methods: {
@@ -2149,19 +2732,24 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		template: `
-		<div class="crm-ai-report-drawer__content-block --ui-context-content-light">
-				<div
-					:class="[
-						'crm-ai-report-drawer__content-block-header',
-						isMinimized ? '--minimized' : '',
-						'crm-ai-report-drawer__spoiler-toggle-trigger',
-					]"
-					@click="handleHeaderClick"
-				>
+		<div class="crm-ai-report-drawer__content-block --ui-context-content-light" :data-testid="testIdPrefix">
+			<div
+				:class="[
+					'crm-ai-report-drawer__content-block-header',
+					isMinimized ? '--minimized' : '',
+					'crm-ai-report-drawer__spoiler-toggle-trigger',
+				]"
+				@click="handleHeaderClick"
+				:data-testid="testIdPrefix + '-header'"
+			>
 				<div class="crm-ai-report-drawer__content-block-header-main">
 					<div class="crm-ai-report-drawer__content-block-header-title-block">
 						<span v-if="iconClass" :class="iconClass" />
-						<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4">
+						<h4
+							:id="titleId"
+							:data-testid="testIdPrefix + '-title'"
+							class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4"
+						>
 							{{ title }}
 						</h4>
 					</div>
@@ -2173,18 +2761,41 @@ this.BX.Crm = this.BX.Crm || {};
 					<div v-if="$slots.headerControls" class="crm-ai-report-drawer__content-block-header-control">
 						<slot name="headerControls" />
 					</div>
-					<Search v-show="!isMinimized && hasSearchArea" :searchArea="searchArea" />
-					<div class="crm-ai-report-drawer__spoiler-chevron" />
+					<Search
+						v-show="!isMinimized && hasSearchArea"
+						:searchArea="searchArea"
+						:testIdPrefix="testIdPrefix"
+					/>
+					<button
+						type="button"
+						class="crm-ai-report-drawer__spoiler-toggle-trigger"
+						:data-testid="testIdPrefix + '-spoiler-toggle'"
+						:aria-expanded="!isMinimized"
+						:aria-controls="contentId"
+						:aria-labelledby="titleId"
+						@click.stop="toggleContentSpoiler"
+					>
+						<span class="crm-ai-report-drawer__spoiler-chevron" aria-hidden="true" />
+					</button>
 				</div>
 			</div>
-			<div :class="['crm-ai-report-drawer__spoiler-content', isMinimized ? '--hidden' : '']">
+			<div
+				:id="contentId"
+				:class="['crm-ai-report-drawer__spoiler-content', isMinimized ? '--hidden' : '']"
+				:aria-hidden="isMinimized ? 'true' : 'false'"
+				:inert="isMinimized"
+				:data-testid="testIdPrefix + '-content'"
+			>
 				<div class="crm-ai-report-drawer__spoiler-content-inner">
 					<div v-if="$slots.contentMeta" class="crm-ai-report-drawer__content-block-content-meta">
 						<slot name="contentMeta" />
 					</div>
 					<div class="crm-ai-report-drawer__content-block-body ui-typography-text-lg">
 						<slot />
-						<div v-if="$slots.footer" class="crm-ai-report-drawer__content-block-footer">
+						<div v-if="$slots.contentNote" class="crm-ai-report-drawer__content-block-note">
+							<slot name="contentNote" />
+						</div>
+						<div v-if="$slots.footer" class="crm-ai-report-drawer__content-block-footer" :data-testid="testIdPrefix + '-footer-shell'">
 							<slot name="footer" />
 						</div>
 					</div>
@@ -2204,9 +2815,16 @@ this.BX.Crm = this.BX.Crm || {};
 			blockData: {
 				type: Object,
 				required: true
+			},
+			ownerTypeId: {
+				type: Number,
+				required: true
 			}
 		},
 		computed: {
+			testIdPrefix() {
+				return `crm-ai-report-drawer-text-block-${this.blockData.blockId}`;
+			},
 			hasAiLanguage() {
 				return main_core.Type.isStringFilled(this.blockData.aiLanguage?.trim());
 			},
@@ -2226,7 +2844,7 @@ this.BX.Crm = this.BX.Crm || {};
 				return 'crm-ai-report-drawer__content-block-header-transcription-icon';
 			},
 			textClass() {
-				return this.blockData.blockType === 'transcription' ? 'crm-ai-report-drawer__text-transcription' : '';
+				return this.blockData.blockType === 'transcription' || this.blockData.blockType === 'summary' && this.blockData.preserveWhitespace === true ? 'crm-ai-report-drawer__text-transcription' : '';
 			},
 			hasCreatedAt() {
 				return main_core.Type.isInteger(this.blockData.createdAt) && this.blockData.createdAt > 0;
@@ -2235,9 +2853,26 @@ this.BX.Crm = this.BX.Crm || {};
 				return formatCreatedAt(this.blockData.createdAt);
 			}
 		},
+		methods: {
+			handleReactionClick(type) {
+				if (this.selectedReaction !== null) {
+					return;
+				}
+				this.selectedReaction = type;
+				const context = this.blockData.blockType === 'legacyAssessment' ? 'call_scoring' : this.blockData.blockType;
+				sendReaction(type, context, this.ownerTypeId);
+			},
+			async copyText(event) {
+				const icon = event.currentTarget;
+				if (await copyToClipboard(this.blockData.text)) {
+					showCopiedInformer(icon);
+				}
+			}
+		},
 		data() {
 			return {
-				searchArea: null
+				searchArea: null,
+				selectedReaction: null
 			};
 		},
 		mounted() {
@@ -2249,6 +2884,8 @@ this.BX.Crm = this.BX.Crm || {};
 			:iconClass="iconClass"
 			:searchArea="searchArea"
 			:initiallyMinimized="blockData.minimized"
+			:testIdPrefix="testIdPrefix"
+			:data-testid="testIdPrefix"
 		>
 			<template v-if="legacyAssessmentData" #contentMeta>
 				<div class="crm-ai-report-drawer__content-block-legacy-assessment-script-section">
@@ -2261,17 +2898,57 @@ this.BX.Crm = this.BX.Crm || {};
 			</template>
 			<p
 				:class="textClass"
+				:data-testid="testIdPrefix + '-body'"
 				ref="textContainer"
 			>
 				{{ blockData.text }}
 			</p>
-			<template v-if="hasAiLanguage || hasCreatedAt" #footer>
+			<template v-if="hasAiLanguage" #contentNote>
 				<div
-					v-if="hasAiLanguage"
 					class="crm-ai-report-drawer__content-block-message ui-typography-text-sm"
+					:data-testid="testIdPrefix + '-content-note'"
 					v-html="blockData.aiLanguage"
 				/>
-				<div v-if="hasCreatedAt" class="crm-ai-report-drawer__content-block-date ui-typography-text-xs">
+			</template>
+			<template v-if="hasCreatedAt" #footer>
+				<div class="crm-ai-report-drawer__content-block-actions" :data-testid="testIdPrefix + '-footer'">
+					<button
+						type="button"
+						class="crm-ai-report-drawer__content-block-action --copy"
+						:data-testid="testIdPrefix + '-copy-button'"
+						:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_COPY')"
+						@click="copyText"
+					/>
+					<button
+						v-if="selectedReaction !== 'like'"
+						type="button"
+						:data-testid="testIdPrefix + '-dislike-button'"
+						:class="[
+							'crm-ai-report-drawer__content-block-action',
+							'--dislike',
+							{ '--selected': selectedReaction === 'dislike' },
+						]"
+						:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_DISLIKE')"
+						:aria-pressed="selectedReaction === 'dislike'"
+						:disabled="selectedReaction !== null"
+						@click="handleReactionClick('dislike')"
+					/>
+					<button
+						v-if="selectedReaction !== 'dislike'"
+						type="button"
+						:data-testid="testIdPrefix + '-like-button'"
+						:class="[
+							'crm-ai-report-drawer__content-block-action',
+							'--like',
+							{ '--selected': selectedReaction === 'like' },
+						]"
+						:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_LIKE')"
+						:aria-pressed="selectedReaction === 'like'"
+						:disabled="selectedReaction !== null"
+						@click="handleReactionClick('like')"
+					/>
+				</div>
+				<div class="crm-ai-report-drawer__content-block-date ui-typography-text-xs" :data-testid="testIdPrefix + '-date'">
 					{{ createdAtText }}
 				</div>
 			</template>
@@ -2367,6 +3044,10 @@ this.BX.Crm = this.BX.Crm || {};
 		props: {
 			viewData: {
 				type: Object,
+				required: true
+			},
+			ownerTypeId: {
+				type: Number,
 				required: true
 			},
 			shareLink: {
@@ -2516,6 +3197,7 @@ this.BX.Crm = this.BX.Crm || {};
 					:ref="(element) => setAnchoredBlockElement(assessmentBlock.blockId, element)"
 					:assessmentBlockData="assessmentBlock"
 					:assessmentSetting="viewData.assessmentSetting"
+					:ownerTypeId="ownerTypeId"
 					@showReassessmentPopup="handleShowReassessmentPopup"
 				/>
 				<TextBlock v-for="block in viewData.blocks"
@@ -2523,10 +3205,11 @@ this.BX.Crm = this.BX.Crm || {};
 					:id="block.blockId"
 					:ref="(element) => setAnchoredBlockElement(block.blockId, element)"
 					:blockData="block"
+					:ownerTypeId="ownerTypeId"
 				/>
 				<TrailingSpacerBlock />
 			</div>
-			<div class="crm-ai-report-drawer__ai-alert ui-typography-text-xs" v-html="viewData.aiDisclaimer" />
+			<div class="crm-ai-report-drawer__ai-alert ui-typography-text-xs" data-testid="crm-ai-report-drawer-disclaimer" v-html="viewData.aiDisclaimer" />
 		</div>
 	`
 	});
@@ -2566,6 +3249,10 @@ this.BX.Crm = this.BX.Crm || {};
 		SUMMARY_HISTORY: {
 			ajaxAction: 'crm.timeline.aireportdrawer.loadSummaryHistoryDrawer',
 			code: 'summary-history'
+		},
+		TRANSCRIPT: {
+			ajaxAction: 'crm.timeline.aireportdrawer.loadTranscriptDrawer',
+			code: 'transcript'
 		}
 	};
 	class ReportDrawer {
@@ -2662,6 +3349,8 @@ this.BX.Crm = this.BX.Crm || {};
 					return SCENARIO.CALL_ASSESSMENT.code;
 				case SCENARIO.SUMMARY_HISTORY.ajaxAction:
 					return SCENARIO.SUMMARY_HISTORY.code;
+				case SCENARIO.TRANSCRIPT.ajaxAction:
+					return SCENARIO.TRANSCRIPT.code;
 				default:
 					return null;
 			}
@@ -2673,6 +3362,7 @@ this.BX.Crm = this.BX.Crm || {};
 			this.app?.unmount();
 			this.app = ui_vue3.BitrixVue.createApp(App, {
 				viewData: data,
+				ownerTypeId: Number(this.params.drawerRequest.ownerTypeId),
 				shareLink: this.getSliderLink(),
 				onShowReassessmentPopup: this.onShowReassessmentPopup.bind(this),
 				onChooseNewScript: this.onChooseNewScript.bind(this)
@@ -2686,7 +3376,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			this.destroyConfirmationPopup();
 			this.destroyScriptSelectorDialog();
-			this.showConfirmationPopup(assessmentSetting);
+			this.showConfirmationPopup(assessmentSetting, crm_integration_analytics.Dictionary.ELEMENT_UPDATED_SCRIPT);
 		}
 		onChooseNewScript(bindElement) {
 			if (this.isDestroyed || this.isAssessmentInProgress || this.isReloading || !main_core.Type.isDomNode(bindElement)) {
@@ -2743,7 +3433,7 @@ this.BX.Crm = this.BX.Crm || {};
 			if (assessmentSetting === null || this.isDestroyed) {
 				return;
 			}
-			this.showConfirmationPopup(assessmentSetting);
+			this.showConfirmationPopup(assessmentSetting, crm_integration_analytics.Dictionary.ELEMENT_OTHER_SCRIPT);
 		}
 		prepareAssessmentSettingFromItem(item) {
 			const assessmentSettingsId = item.getId();
@@ -2762,7 +3452,7 @@ this.BX.Crm = this.BX.Crm || {};
 				shouldShowReassessmentBadge: currentAssessmentSetting.id === assessmentSettingsId ? currentAssessmentSetting.shouldShowReassessmentBadge : false
 			};
 		}
-		showConfirmationPopup(assessmentSetting) {
+		showConfirmationPopup(assessmentSetting, source) {
 			this.destroyConfirmationPopup();
 			const buttons = [new ui_buttons.Button({
 				text: main_core.Loc.getMessage('CRM_AI_REPORT_DRAWER_CONFIRM_SCRIPT_BUTTON_CONFIRM') ?? '',
@@ -2771,7 +3461,7 @@ this.BX.Crm = this.BX.Crm || {};
 				style: ui_buttons.AirButtonStyle.FILLED,
 				onclick: () => {
 					popup.close();
-					void this.doAssessment(assessmentSetting.id);
+					void this.doAssessment(assessmentSetting.id, source);
 					return {};
 				}
 			}), new ui_buttons.Button({
@@ -2839,7 +3529,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			return main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), date);
 		}
-		async doAssessment(assessmentSettingsId) {
+		async doAssessment(assessmentSettingsId, source) {
 			if (this.isDestroyed || this.isAssessmentInProgress) {
 				return;
 			}
@@ -2867,9 +3557,20 @@ this.BX.Crm = this.BX.Crm || {};
 					this.finishAssessmentWithError(response, 'ReportDrawer doAssessment failed');
 					return;
 				}
+				this.sendReassessmentAnalytics(activityId, assessmentSettingsId, source);
 				this.params.drawerRequest.jobId = main_core.Type.isInteger(response?.data?.jobId) ? response.data.jobId : null;
 			} catch (error) {
 				this.finishAssessmentWithError(error, 'ReportDrawer doAssessment error');
+			}
+		}
+		sendReassessmentAnalytics(activityId, assessmentSettingsId, source) {
+			try {
+				const data = crm_integration_analytics.Builder.CallAssessment.CallReassessmentEvent.createDefault(activityId, assessmentSettingsId, source).buildData();
+				if (data !== null) {
+					ui_analytics.sendData(data);
+				}
+			} catch (error) {
+				console.error('ReportDrawer call reassessment analytics error', error);
 			}
 		}
 		onCallScoringPull(params) {
@@ -3027,6 +3728,7 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		parseData(response) {
 			const data = response.data;
+			const isEmailReport = data.subtitle?.type === 'email' || data.infoPopup?.type === 'email';
 			return {
 				title: data.title ?? '',
 				subtitle: data.subtitle ?? null,
@@ -3035,14 +3737,29 @@ this.BX.Crm = this.BX.Crm || {};
 				infoPopup: data.infoPopup ?? null,
 				anchors: data.anchors ?? [],
 				assessmentBlocks: data.assessmentBlocks ?? [],
-				blocks: data.blocks ?? [],
+				blocks: this.parseBlocks(data, isEmailReport),
 				aiDisclaimer: data.aiDisclaimer ?? '',
 				assessmentSetting: data.assessmentSetting ?? null
 			};
+		}
+		parseBlocks(data, isEmailReport) {
+			const blocks = main_core.Type.isArray(data.blocks) ? data.blocks : [];
+			if (!isEmailReport) {
+				return blocks;
+			}
+			return blocks.map(block => {
+				if (!main_core.Type.isPlainObject(block) || block.blockType !== 'summary') {
+					return block;
+				}
+				return {
+					...block,
+					preserveWhitespace: true
+				};
+			});
 		}
 	}
 
 	exports.ReportDrawer = ReportDrawer;
 
-})(this.BX.Crm.AI = this.BX.Crm.AI || {}, BX, BX.Main, BX.Main, BX.SidePanel, BX.Crm, BX.Crm.Timeline, BX.UI, BX.UI.EntitySelector, BX.UI.System.Typography.Vue, BX, BX.Vue3, BX.Vue3.Mixins, BX.Crm, BX.UI, BX.Vue3.Components, BX.UI.IconSet, BX.Crm, BX.Vue3.Directives, BX.Pull);
+})(this.BX.Crm.AI = this.BX.Crm.AI || {}, BX, BX.Main, BX.Main, BX.SidePanel, BX.Crm, BX.Crm.Integration.Analytics, BX.Crm.Timeline, BX.UI.Analytics, BX.UI, BX.UI.EntitySelector, BX.UI.System.Typography.Vue, BX, BX.Vue3, BX.Vue3.Mixins, BX.Crm, BX.UI, BX.Vue3.Components, BX.UI.IconSet, BX.Crm, BX.Vue3.Directives, BX.UI.Accessibility, BX.UI.System.Tooltip, BX.Pull);
 //# sourceMappingURL=report-drawer.bundle.js.map

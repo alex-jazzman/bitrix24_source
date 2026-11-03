@@ -22,6 +22,7 @@ use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
 use Bitrix\Tasks\Internals\Log\LogFacade;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -37,6 +38,11 @@ use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Public\Provider\Params\TaskList\TaskListArrayFilter;
+use Bitrix\Tasks\V2\Public\Provider\Params\TaskList\TaskListParams;
+use Bitrix\Tasks\V2\Public\Provider\Params\TaskList\TaskListSelect;
+use Bitrix\Tasks\V2\Public\Provider\TaskProvider;
+use Bitrix\Main\Provider\Params\Pager;
 use Throwable;
 
 class TaskService implements Errorable
@@ -1086,7 +1092,39 @@ class TaskService implements Errorable
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
+	/**
+	 * Keeps a failure of a secondary scrum view out of the task save itself: the board and the plan are
+	 * rolled back together and the failure is logged, while the task stays written.
+	 *
+	 * The stage the placement wrote goes back into the fields of the ongoing save, because the write of
+	 * the stage itself raises no task update event: the automation of a column reads the fields of the
+	 * save the user started, on every entry point alike.
+	 */
 	public static function onAfterTaskAdd(int $taskId, array &$fields)
+	{
+		try
+		{
+			self::syncTaskAdd($taskId, $fields);
+		}
+		catch (Throwable $throwable)
+		{
+			self::logSyncFailure($throwable, 'add', $taskId);
+		}
+
+		try
+		{
+			if (self::isBoardPlacementExpectedOnAdd($fields))
+			{
+				self::applyBoardStage($taskId, $fields);
+			}
+		}
+		catch (Throwable $throwable)
+		{
+			self::logSyncFailure($throwable, 'applyBoardStage', $taskId);
+		}
+	}
+
+	private static function syncTaskAdd(int $taskId, array &$fields): void
 	{
 		if (!empty($fields['GROUP_ID']) && Loader::includeModule('socialnetwork'))
 		{
@@ -1134,6 +1172,40 @@ class TaskService implements Errorable
 
 	public static function onAfterTaskUpdate(int $taskId, array &$fields, ?array &$previousFields)
 	{
+		$updatedItems = [];
+		$groupsToResync = [];
+		try
+		{
+			self::syncTaskUpdate($taskId, $fields, $previousFields, $updatedItems, $groupsToResync);
+		}
+		catch (Throwable $throwable)
+		{
+			self::logSyncFailure($throwable, 'update', $taskId);
+		}
+
+		try
+		{
+			if (self::isBoardPlacementExpectedOnUpdate($fields, $previousFields))
+			{
+				self::applyBoardStage($taskId, $fields, $previousFields);
+			}
+		}
+		catch (Throwable $throwable)
+		{
+			self::logSyncFailure($throwable, 'applyBoardStage', $taskId);
+		}
+
+		self::sendDeferredScrumEvents($updatedItems, $groupsToResync, $taskId);
+	}
+
+	private static function syncTaskUpdate(
+		int $taskId,
+		array &$fields,
+		?array &$previousFields,
+		array &$updatedItems,
+		array &$groupsToResync,
+	): void
+	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
 			return;
@@ -1174,8 +1246,10 @@ class TaskService implements Errorable
 				{
 					(new CacheService($taskId, CacheService::ITEM_TASKS))->clean();
 
-					self::deleteScrumItem($taskId);
-					self::deleteFromKanban($taskId, $previousGroupId);
+					if (!self::deleteScrumPlacement($taskId, $previousGroupId))
+					{
+						return;
+					}
 				}
 
 				return;
@@ -1218,7 +1292,12 @@ class TaskService implements Errorable
 					$previousFieldsPart['PARENT_ID'] = $newParentId;
 				}
 
-				self::updateScrumItem($taskId, array_merge($previousFields, $previousFieldsPart));
+				self::updateScrumItem(
+					$taskId,
+					array_merge($previousFields, $previousFieldsPart),
+					$updatedItems,
+					$groupsToResync,
+				);
 			}
 		}
 
@@ -1279,26 +1358,30 @@ class TaskService implements Errorable
 		if ($isEpicChangeAction)
 		{
 			$itemService = new ItemService();
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 			$scrumItem = $itemService->getItemBySourceId($taskId);
 			$scrumItem->setEpicId($fields['EPIC']);
 
-			$itemService->changeItem($scrumItem, $pushService);
+			if ($itemService->changeItem($scrumItem))
+			{
+				$updatedItems[$scrumItem->getSourceId()] = $scrumItem;
+			}
 		}
 
 		$isParentChangeAction = ($newParentId && $newParentId !== $oldParentId);
 		if ($isParentChangeAction)
 		{
 			$itemService = new ItemService();
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 			if ($oldParentId)
 			{
 				$parentItem = $itemService->getItemBySourceId($oldParentId);
 				if (!$parentItem->isEmpty())
 				{
-					$itemService->changeItem($parentItem, $pushService);
+					if ($itemService->changeItem($parentItem))
+					{
+						$updatedItems[$parentItem->getSourceId()] = $parentItem;
+					}
 
 					(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
 				}
@@ -1309,20 +1392,30 @@ class TaskService implements Errorable
 				$parentItem = $itemService->getItemBySourceId($newParentId);
 				if (!$parentItem->isEmpty())
 				{
-					$itemService->changeItem($parentItem, $pushService);
+					if ($itemService->changeItem($parentItem))
+					{
+						$updatedItems[$parentItem->getSourceId()] = $parentItem;
+					}
 
 					(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
 				}
 			}
 
-			$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
+			$scrumItem = $itemService->getItemBySourceId($taskId);
+			if ($itemService->changeItem($scrumItem))
+			{
+				$updatedItems[$scrumItem->getSourceId()] = $scrumItem;
+			}
 		}
 
 		if (($isScrumFieldsUpdated || $isCompleteAction || $isRenewAction) && !$isParentChangeAction)
 		{
 			$itemService = new ItemService();
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-			$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
+			$scrumItem = $itemService->getItemBySourceId($taskId);
+			if ($itemService->changeItem($scrumItem))
+			{
+				$updatedItems[$scrumItem->getSourceId()] = $scrumItem;
+			}
 		}
 
 		if ($isRenewAction)
@@ -1344,10 +1437,18 @@ class TaskService implements Errorable
 					$parentEntity = $entityService->getEntityById($parentItem->getEntityId());
 					if ($parentEntity->getGroupId() === $currentGroupId)
 					{
-						$kanbanService = new KanbanService();
-						if ($kanbanService->isTaskInFinishStatus($parentEntity->getId(), $taskId))
+						$kanbanService = new KanbanService(true);
+						$isTaskInFinishStatus = $kanbanService->isTaskInFinishStatus(
+							$parentEntity->getId(),
+							$taskId,
+						);
+						if (
+							!self::logServiceErrors($kanbanService, $taskId, 'readKanban', $parentEntity->getId())
+							&& $isTaskInFinishStatus
+						)
 						{
 							$kanbanService->addTaskToNewStatus($parentEntity->getId(), $taskId);
+							self::logServiceErrors($kanbanService, $taskId, 'moveToNewStage', $parentEntity->getId());
 						}
 
 						$parentItem->getInfo()->setVisibilitySubtasks('Y');
@@ -1408,6 +1509,43 @@ class TaskService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TASK));
+		}
+
+		return [];
+	}
+
+	public function getResponsibles(array $taskIds): array
+	{
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
+		try
+		{
+			$params = new TaskListParams(
+				userId: 0,
+				pagination: new Pager(limit: count($taskIds)),
+				filter: new TaskListArrayFilter([['id', 'in', array_values($taskIds)]]),
+				select: new TaskListSelect(['id', 'responsibleId']),
+				skipAccessCheck: true,
+			);
+
+			$responsibles = [];
+			foreach ((new TaskProvider())->getList($params) as $task)
+			{
+				$responsibles[(int)$task->getId()] = [
+					'RESPONSIBLE_ID' => (int)($task->responsible?->getId() ?? 0),
+				];
+			}
+
+			return $responsibles;
+		}
+		catch (\Throwable $exception)
+		{
+			LogFacade::logThrowable($exception);
 			$message = $exception->getMessage().$exception->getTraceAsString();
 			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TASK));
 		}
@@ -1732,10 +1870,7 @@ class TaskService implements Errorable
 		$item = $itemService->getItemBySourceId($taskId);
 		if (!$itemService->getErrors() && $item->isEmpty())
 		{
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
 			$scrumItem = new ItemForm();
-
 			$createdBy = (($fields['CREATED_BY'] ?? null) ? $fields['CREATED_BY'] : $previousFields['CREATED_BY']);
 			$scrumItem->setCreatedBy($createdBy);
 			$scrumItem->setEntityId($entity->getId());
@@ -1750,19 +1885,61 @@ class TaskService implements Errorable
 				$scrumItem->setStoryPoints($fields['STORY_POINTS']);
 			}
 
-			$itemService->createTaskItem($scrumItem, $pushService);
-			if (!$itemService->getErrors() && $entity->isActiveSprint())
-			{
-				$kanbanService = new KanbanService();
-				if (!$kanbanService->isTaskInKanban($entity->getId(), $scrumItem->getSourceId()))
+			$kanbanService = new KanbanService(true, true);
+			$success = PlacementTransaction::run(function () use (
+				$entity,
+				$taskId,
+				$itemService,
+				$scrumItem,
+				$kanbanService,
+			): bool {
+				$itemService->createTaskItem($scrumItem);
+				if (self::logServiceErrors($itemService, $taskId, 'createItem'))
 				{
-					$kanbanService->addTasksToKanban($entity->getId(), [$scrumItem->getSourceId()]);
+					return false;
+				}
+
+				if ($entity->isActiveSprint())
+				{
+					$isTaskInKanban = $kanbanService->isTaskInKanban($entity->getId(), $taskId);
+					if (self::logServiceErrors($kanbanService, $taskId, 'readKanban', $entity->getId()))
+					{
+						return false;
+					}
+
+					if (
+						!$isTaskInKanban
+						&& !$kanbanService->addTasksToKanban($entity->getId(), [$taskId])
+					)
+					{
+						self::logServiceErrors($kanbanService, $taskId, 'addToKanban', $entity->getId());
+
+						return false;
+					}
+				}
+
+				return true;
+			});
+
+			if ($success)
+			{
+				$kanbanService->flushTaskStageUpdates();
+				self::logServiceErrors($kanbanService, $taskId, 'updateTaskStage', $entity->getId());
+
+				if (Loader::includeModule('pull'))
+				{
+					(new PushService())->sendAddItemEvent($scrumItem);
 				}
 			}
 		}
 	}
 
-	private static function updateScrumItem(int $taskId, $fields): void
+	private static function updateScrumItem(
+		int $taskId,
+		$fields,
+		array &$updatedItems,
+		array &$groupsToResync,
+	): void
 	{
 		$isActiveSprintItem = false;
 
@@ -1781,7 +1958,7 @@ class TaskService implements Errorable
 			}
 			if ($isActiveSprintItem)
 			{
-				self::updateItem($sprint, $taskId, $fields);
+				self::updateItem($sprint, $taskId, $fields, $updatedItems, $groupsToResync);
 			}
 		}
 
@@ -1791,51 +1968,444 @@ class TaskService implements Errorable
 			$backlog = $backlogService->getBacklogByGroupId($fields['GROUP_ID']);
 			if (!$backlogService->getErrors() && !$backlog->isEmpty())
 			{
-				self::updateItem($backlog, $taskId, $fields);
+				self::updateItem($backlog, $taskId, $fields, $updatedItems, $groupsToResync);
 			}
 		}
 	}
 
-	private static function updateItem(EntityForm $entity, int $taskId, $fields): void
+	private static function updateItem(
+		EntityForm $entity,
+		int $taskId,
+		$fields,
+		array &$updatedItems,
+		array &$groupsToResync,
+	): void
 	{
 		$itemService = new ItemService();
 		$scrumItem = $itemService->getItemBySourceId($taskId);
 		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
 		{
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-			$scrumItem->setEntityId($entity->getId());
-			$scrumItem->setSortFloat($itemService->getFirstItemSort($entity->getId()) / 2);
-			$scrumItem->setEpicId(0);
-			$scrumItem->setModifiedBy($fields['CHANGED_BY']);
-			$itemService->changeItem($scrumItem, $pushService);
-			if (!$itemService->getErrors() && $entity->isActiveSprint())
+			$previousGroupId = 0;
+			if ($scrumItem->getEntityId() !== $entity->getId())
 			{
-				$kanbanService = new KanbanService();
-				$kanbanService->addTasksToKanban($entity->getId(), [$scrumItem->getSourceId()]);
+				$previousEntityService = new EntityService();
+				$previousEntity = $previousEntityService->getEntityById($scrumItem->getEntityId());
+				if (!$previousEntityService->getErrors() && !$previousEntity->isEmpty())
+				{
+					$previousGroupId = $previousEntity->getGroupId();
+				}
+			}
+
+			$kanbanService = static::createDeferredKanbanService();
+			$success = PlacementTransaction::run(function () use (
+				$entity,
+				$taskId,
+				$fields,
+				$itemService,
+				$scrumItem,
+				$kanbanService,
+			): bool {
+				$previousEntityId = $scrumItem->getEntityId();
+				$previousActiveSprintId = 0;
+				$targetIsActiveSprint = $entity->isActiveSprint();
+
+				if ($previousEntityId !== $entity->getId())
+				{
+					$sprintService = new SprintService();
+					$sprint = $sprintService->getSprintById($previousEntityId);
+					if (self::logServiceErrors($sprintService, $taskId, 'readSprint', $previousEntityId))
+					{
+						return false;
+					}
+
+					if (!$sprint->isEmpty() && $sprint->isActiveSprint())
+					{
+						$previousActiveSprintId = $sprint->getId();
+						if (
+							$targetIsActiveSprint
+							&& !$kanbanService->removeTasksFromKanban($previousActiveSprintId, [$taskId], false)
+						)
+						{
+							self::logServiceErrors($kanbanService, $taskId, 'removeFromKanban', $previousActiveSprintId);
+
+							return false;
+						}
+					}
+				}
+
+				$scrumItem->setEntityId($entity->getId());
+				$scrumItem->setSortFloat($itemService->getFirstItemSort($entity->getId()) / 2);
+				$scrumItem->setEpicId(0);
+				$scrumItem->setModifiedBy($fields['CHANGED_BY']);
+				$itemService->changeItem($scrumItem);
+				if (self::logServiceErrors($itemService, $taskId, 'moveItem'))
+				{
+					return false;
+				}
+
+				if (
+					$previousActiveSprintId
+					&& !$targetIsActiveSprint
+					&& !$kanbanService->removeTasksFromKanban($previousActiveSprintId, [$taskId])
+				)
+				{
+					self::logServiceErrors($kanbanService, $taskId, 'removeFromKanban', $previousActiveSprintId);
+
+					return false;
+				}
+
+				if ($targetIsActiveSprint)
+				{
+					if (!$kanbanService->addTasksToKanban($entity->getId(), [$taskId]))
+					{
+						self::logServiceErrors($kanbanService, $taskId, 'addToKanban', $entity->getId());
+
+						return false;
+					}
+				}
+
+				return true;
+			});
+
+			if ($success)
+			{
+				$stageUpdateSucceeded = $kanbanService->flushTaskStageUpdates();
+				$hasStageErrors = self::logServiceErrors($kanbanService, $taskId, 'updateTaskStage', $entity->getId());
+				$stagePlacementConsistent = true;
+				if (!$stageUpdateSucceeded)
+				{
+					if (!$hasStageErrors)
+					{
+						self::logSyncFailure(
+							new \RuntimeException('Deferred Scrum task stage update failed'),
+							'updateTaskStage',
+							$taskId,
+						);
+					}
+
+					try
+					{
+						$stagePlacementConsistent = self::isTaskStagePlacementConsistent(
+							$taskId,
+							$entity,
+						);
+					}
+					catch (Throwable $throwable)
+					{
+						self::logSyncFailure($throwable, 'readTaskStageAfterFailure', $taskId);
+						$stagePlacementConsistent = false;
+					}
+				}
+
+				if (!$stagePlacementConsistent)
+				{
+					foreach (array_unique(array_filter([$previousGroupId, $entity->getGroupId()])) as $groupId)
+					{
+						$groupsToResync[$groupId] = true;
+					}
+				}
+				else
+				{
+					if ($previousGroupId > 0 && $previousGroupId !== $entity->getGroupId())
+					{
+						$groupsToResync[$previousGroupId] = true;
+						$groupsToResync[$entity->getGroupId()] = true;
+					}
+					$updatedItems[$scrumItem->getSourceId()] = $scrumItem;
+				}
 			}
 		}
 	}
 
-	private static function deleteScrumItem(int $taskId): void
+	protected static function createDeferredKanbanService(): KanbanService
 	{
-		$itemService = new ItemService();
-		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-		$scrumItem = $itemService->getItemBySourceId($taskId);
-		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+		return new KanbanService(true, true);
+	}
+
+	private static function isTaskStagePlacementConsistent(
+		int $taskId,
+		EntityForm $entity,
+	): bool
+	{
+		$task = \Bitrix\Tasks\Internals\TaskTable::getRow([
+			'select' => ['STAGE_ID'],
+			'filter' => ['=ID' => $taskId],
+		]);
+		if (!is_array($task))
 		{
-			$itemService->removeItem($scrumItem, $pushService);
+			return false;
+		}
+
+		$relations = \Bitrix\Tasks\Kanban\TaskStageTable::getList([
+			'select' => [
+				'STAGE_ID',
+				'ENTITY_ID' => 'STAGE.ENTITY_ID',
+				'ENTITY_TYPE' => 'STAGE.ENTITY_TYPE',
+			],
+			'filter' => ['=TASK_ID' => $taskId],
+		])->fetchAll();
+
+		$targetStages = [];
+		$sprintService = new SprintService();
+		foreach ($relations as $relation)
+		{
+			if ($relation['ENTITY_TYPE'] === null)
+			{
+				return false;
+			}
+			if ($relation['ENTITY_TYPE'] !== \Bitrix\Tasks\Kanban\StagesTable::WORK_MODE_ACTIVE_SPRINT)
+			{
+				continue;
+			}
+
+			$sprintId = (int)$relation['ENTITY_ID'];
+			if ($entity->isActiveSprint() && $sprintId === $entity->getId())
+			{
+				$targetStages[] = (int)$relation['STAGE_ID'];
+				continue;
+			}
+
+			$sprint = $sprintService->getSprintById($sprintId);
+			if ($sprintService->getErrors() || $sprint->isEmpty() || $sprint->isActiveSprint())
+			{
+				return false;
+			}
+		}
+
+		if (!$entity->isActiveSprint())
+		{
+			return (int)$task['STAGE_ID'] === 0;
+		}
+
+		return count($targetStages) === 1
+			&& (int)$task['STAGE_ID'] === $targetStages[0];
+	}
+
+	private static function sendDeferredScrumEvents(array $updatedItems, array $groupsToResync, int $taskId): void
+	{
+		if ((!$updatedItems && !$groupsToResync) || !Loader::includeModule('pull'))
+		{
+			return;
+		}
+
+		$pushService = new PushService();
+		foreach ($updatedItems as $item)
+		{
+			try
+			{
+				$pushService->sendUpdateItemEvent($item);
+			}
+			catch (Throwable $throwable)
+			{
+				self::logSyncFailure($throwable, 'sendItemUpdated', $taskId);
+			}
+		}
+
+		foreach (array_keys($groupsToResync) as $groupId)
+		{
+			try
+			{
+				$pushService->sendPlacementChangedEvent((int)$groupId);
+			}
+			catch (Throwable $throwable)
+			{
+				self::logSyncFailure($throwable, 'sendPlacementChanged', $taskId);
+			}
 		}
 	}
 
-	private static function deleteFromKanban(int $taskId, int $groupId): void
+	/**
+	 * A new subtask of a task that stands on the board of an active sprint takes a column of that board,
+	 * every other new task goes to the backlog and stays off the kanban.
+	 */
+	private static function isBoardPlacementExpectedOnAdd(array $fields): bool
+	{
+		return !empty($fields['PARENT_ID']) && self::isScrumGroup((int)($fields['GROUP_ID'] ?? 0));
+	}
+
+	/**
+	 * The placement of a task changes with the group it belongs to and with the two transitions of the
+	 * status the board reacts to; the condition of the group is the one the sync itself writes by.
+	 */
+	private static function isBoardPlacementExpectedOnUpdate(array $fields, ?array $previousFields): bool
+	{
+		if ($previousFields === null)
+		{
+			return false;
+		}
+
+		$newGroupId = (isset($fields['GROUP_ID']) ? (int)$fields['GROUP_ID'] : null);
+		$previousGroupId = (isset($previousFields['GROUP_ID']) ? (int)$previousFields['GROUP_ID'] : null);
+		$isGroupUpdateAction = (
+			($newGroupId && $newGroupId !== $previousGroupId)
+			|| ($newGroupId === 0 && $previousGroupId > 0)
+		);
+
+		$status = (int)($fields['STATUS'] ?? 0);
+		$previousStatus = (int)($previousFields['STATUS'] ?? 0);
+		$isCompleteAction = ($status === Status::COMPLETED && $previousStatus !== Status::COMPLETED);
+		$isRenewAction = (
+			$status === Status::PENDING
+			&& in_array($previousStatus, [Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED], true)
+		);
+
+		if (!$isGroupUpdateAction && !$isCompleteAction && !$isRenewAction)
+		{
+			return false;
+		}
+
+		return self::isScrumGroup((int)$newGroupId) || self::isScrumGroup((int)$previousGroupId);
+	}
+
+	private static function isScrumGroup(int $groupId): bool
+	{
+		if ($groupId <= 0 || !Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		$group = Workgroup::getById($groupId);
+
+		return $group && $group->isScrumProject();
+	}
+
+	private static function applyBoardStage(int $taskId, array &$fields, ?array $previousFields = null): void
+	{
+		try
+		{
+			$stageId = (int)(TaskTable::getRow([
+				'select' => ['STAGE_ID'],
+				'filter' => ['=ID' => $taskId],
+			])['STAGE_ID'] ?? 0);
+
+			if ($stageId !== (int)($previousFields['STAGE_ID'] ?? 0))
+			{
+				$fields['STAGE_ID'] = $stageId;
+			}
+		}
+		catch (Throwable $throwable)
+		{
+			self::logSyncFailure($throwable, 'readStage', $taskId);
+		}
+	}
+
+	private static function logSyncFailure(Throwable $throwable, string $operation, int $taskId): void
+	{
+		try
+		{
+			LogFacade::log([
+				'operation' => $operation,
+				'taskId' => $taskId,
+				'message' => $throwable->getMessage(),
+				'file' => $throwable->getFile(),
+				'line' => $throwable->getLine(),
+			], 'TASKS_SCRUM_SYNC');
+		}
+		catch (Throwable)
+		{
+		}
+	}
+
+	private static function logServiceErrors(
+		Errorable $service,
+		int $taskId,
+		string $operation,
+		int $sprintId = 0,
+	): bool
+	{
+		$errors = $service->getErrors();
+		if (empty($errors))
+		{
+			return false;
+		}
+
+		try
+		{
+			$context = [
+				'operation' => $operation,
+				'taskId' => $taskId,
+				'service' => $service::class,
+				'errors' => array_map(static fn (Error $error): string => $error->getMessage(), $errors),
+			];
+			if ($sprintId > 0)
+			{
+				$context['sprintId'] = $sprintId;
+			}
+
+			LogFacade::log($context, 'TASKS_SCRUM_SYNC');
+		}
+		catch (Throwable)
+		{
+		}
+
+		return true;
+	}
+
+	private static function deleteScrumItem(int $taskId, ?ItemForm &$removedItem = null): bool
+	{
+		$itemService = new ItemService();
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if (self::logServiceErrors($itemService, $taskId, 'readItem'))
+		{
+			return false;
+		}
+		if ($scrumItem->isEmpty())
+		{
+			return true;
+		}
+
+		$itemService->removeItem($scrumItem);
+		$removedItem = $scrumItem;
+
+		return !self::logServiceErrors($itemService, $taskId, 'removeItem');
+	}
+
+	private static function deleteScrumPlacement(int $taskId, int $groupId): bool
+	{
+		$removedItem = null;
+		$kanbanService = new KanbanService(true, true);
+		$success = PlacementTransaction::run(
+			static function () use ($taskId, $groupId, $kanbanService, &$removedItem): bool {
+				return self::deleteScrumItem($taskId, $removedItem)
+					&& self::deleteFromKanban($taskId, $groupId, $kanbanService);
+			},
+		);
+
+		if ($success)
+		{
+			$kanbanService->flushTaskStageUpdates();
+			self::logServiceErrors($kanbanService, $taskId, 'updateTaskStage');
+
+			if ($removedItem !== null && Loader::includeModule('pull'))
+			{
+				(new PushService())->sendRemoveItemEvent($removedItem);
+			}
+		}
+
+		return $success;
+	}
+
+	private static function deleteFromKanban(int $taskId, int $groupId, KanbanService $kanbanService): bool
 	{
 		$sprintService = new SprintService();
-		$kanbanService = new KanbanService();
-
 		$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+		if (self::logServiceErrors($sprintService, $taskId, 'readActiveSprint'))
+		{
+			return false;
+		}
+		if ($sprint->isEmpty() || !$sprint->isActiveSprint())
+		{
+			return true;
+		}
 
-		$kanbanService->removeTasksFromKanban($sprint->getId(), [$taskId]);
+		if (!$kanbanService->removeTasksFromKanban($sprint->getId(), [$taskId]))
+		{
+			self::logServiceErrors($kanbanService, $taskId, 'removeFromKanban', $sprint->getId());
+
+			return false;
+		}
+
+		return true;
 	}
 
 	private static function isTaskInActiveSprint(int $taskId, int $groupId): bool
@@ -1857,19 +2427,51 @@ class TaskService implements Errorable
 	{
 		$itemService = new ItemService();
 		$scrumItem = $itemService->getItemBySourceId($taskId);
-		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+		if (self::logServiceErrors($itemService, $taskId, 'readItem') || $scrumItem->isEmpty())
 		{
-			$sprintService = new SprintService();
-			$kanbanService = new KanbanService();
+			return;
+		}
 
-			$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+		$sprintService = new SprintService();
+		$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+		if (
+			self::logServiceErrors($sprintService, $taskId, 'readActiveSprint')
+			|| $sprint->isEmpty()
+			|| !$sprint->isActiveSprint()
+		)
+		{
+			return;
+		}
 
+		$kanbanService = new KanbanService(true, true);
+		$success = PlacementTransaction::run(function () use (
+			$itemService,
+			$scrumItem,
+			$sprint,
+			$taskId,
+			$kanbanService,
+		): bool {
 			$scrumItem->setEntityId($sprint->getId());
-
-			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-			$itemService->changeItem($scrumItem, $pushService);
+			$itemService->changeItem($scrumItem);
+			if (self::logServiceErrors($itemService, $taskId, 'moveItem'))
+			{
+				return false;
+			}
 
 			$kanbanService->addTaskToNewStatus($sprint->getId(), $scrumItem->getSourceId());
+
+			return !self::logServiceErrors($kanbanService, $taskId, 'moveToNewStage', $sprint->getId());
+		});
+
+		if ($success)
+		{
+			$kanbanService->flushTaskStageUpdates();
+			self::logServiceErrors($kanbanService, $taskId, 'updateTaskStage', $sprint->getId());
+
+			if (Loader::includeModule('pull'))
+			{
+				(new PushService())->sendUpdateItemEvent($scrumItem);
+			}
 		}
 	}
 
@@ -1889,10 +2491,18 @@ class TaskService implements Errorable
 					$sprint = $sprintService->getSprintById($scrumItem->getEntityId());
 					if ($sprint->isActiveSprint())
 					{
-						$kanbanService = new KanbanService();
-						if ($kanbanService->isTaskInFinishStatus($sprint->getId(), $scrumItem->getSourceId()))
+						$kanbanService = new KanbanService(true);
+						$isTaskInFinishStatus = $kanbanService->isTaskInFinishStatus(
+							$sprint->getId(),
+							$scrumItem->getSourceId(),
+						);
+						if (
+							!self::logServiceErrors($kanbanService, $taskId, 'readKanban', $sprint->getId())
+							&& $isTaskInFinishStatus
+						)
 						{
 							$kanbanService->addTaskToNewStatus($sprint->getId(), $scrumItem->getSourceId());
+							self::logServiceErrors($kanbanService, $taskId, 'moveToNewStage', $sprint->getId());
 						}
 					}
 					if ($sprint->isCompletedSprint())
@@ -1902,6 +2512,7 @@ class TaskService implements Errorable
 
 						$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 						$itemService->changeItem($scrumItem, $pushService);
+						self::logServiceErrors($itemService, $taskId, 'moveItem', $sprint->getId());
 					}
 				}
 			}
@@ -1922,10 +2533,20 @@ class TaskService implements Errorable
 		$isActiveSprintItem = ($sprint->getId() === $scrumItem->getEntityId());
 		if ($isActiveSprintItem)
 		{
-			$kanbanService = new KanbanService();
-			if (!$kanbanService->isTaskInFinishStatus($sprint->getId(), $scrumItem->getSourceId()))
+			$kanbanService = new KanbanService(true);
+			$isTaskInFinishStatus = $kanbanService->isTaskInFinishStatus(
+				$sprint->getId(),
+				$scrumItem->getSourceId(),
+			);
+			if (self::logServiceErrors($kanbanService, $taskId, 'readKanban', $sprint->getId()))
+			{
+				return;
+			}
+
+			if (!$isTaskInFinishStatus)
 			{
 				$kanbanService->addTaskToFinishStatus($sprint->getId(), $scrumItem->getSourceId());
+				self::logServiceErrors($kanbanService, $taskId, 'moveToFinishStage', $sprint->getId());
 			}
 		}
 	}

@@ -1,4 +1,7 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?
+use Bitrix\Crm\V2\Internal\Service\Currency\CurrencyMutationService;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -245,31 +248,39 @@ if(check_bitrix_sessid())
 
 		if($result)
 		{
-			if($currency['IS_ACCOUNTING_CURRENCY'] && $currencyID !== CCrmCurrency::GetAccountCurrencyID())
+			if(isset($_POST['ACCOUNTING']))
 			{
-				CCrmCurrency::SetAccountCurrencyID($currencyID);
-			}
-			elseif(!$currency['IS_ACCOUNTING_CURRENCY'] && $currencyID === CCrmCurrency::GetAccountCurrencyID())
-			{
-				CCrmCurrency::SetAccountCurrencyID(CCrmCurrency::GetBaseCurrencyID());
+				$accountingResult = (new CurrencyMutationService())->update(
+					$currencyID,
+					array('ACCOUNTING' => $currency['IS_ACCOUNTING_CURRENCY'] ? 'Y' : 'N')
+				);
+				if(!$accountingResult->isSuccess())
+				{
+					$arResult['ERROR'] = $accountingResult->getError()?->getMessage()
+						?? GetMessage('CRM_CURRENCY_UPDATE_UNKNOWN_ERROR');
+					$result = false;
+				}
 			}
 
-			if($currency['IS_INVOICE_CURRENCY'] && $currencyID !== CCrmCurrency::getInvoiceDefault())
+			if($result && $currency['IS_INVOICE_CURRENCY'] && $currencyID !== CCrmCurrency::getInvoiceDefault())
 			{
 				CCrmCurrency::setInvoiceDefault($currencyID);
 			}
 
-			LocalRedirect(
-				isset($_POST['apply'])
-					? CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_CURRENCY_EDIT'],
-					array('currency_id' => $currencyID)
-				)
-					: CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_CURRENCY_LIST'],
-					array('currency_id' => $currencyID)
-				)
-			);
+			if($result)
+			{
+				LocalRedirect(
+					isset($_POST['apply'])
+						? CComponentEngine::MakePathFromTemplate(
+						$arParams['PATH_TO_CURRENCY_EDIT'],
+						array('currency_id' => $currencyID)
+					)
+						: CComponentEngine::MakePathFromTemplate(
+						$arParams['PATH_TO_CURRENCY_LIST'],
+						array('currency_id' => $currencyID)
+					)
+				);
+			}
 		}
 	}
 	elseif ($_SERVER['REQUEST_METHOD'] == 'GET' &&  isset($_GET['delete']))

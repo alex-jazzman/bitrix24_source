@@ -1,4 +1,5 @@
 import { Outline } from 'ui.icon-set.api.core';
+import { type SectionConfig } from 'socialnetwork.v2.lib.event-sender';
 import { Feature, NavigationMode, type NavigationModeType } from './feature';
 
 export class Photo extends Feature
@@ -11,6 +12,11 @@ export class Photo extends Feature
 	getId(): string
 	{
 		return 'photo';
+	}
+
+	getAnalyticsConfig(): SectionConfig
+	{
+		return { tool: 'projects', category: 'project', event: 'open_section', cElement: 'photos_button' };
 	}
 
 	getNavigationMode(): NavigationModeType

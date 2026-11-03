@@ -13,6 +13,7 @@ export class SidebarStoreState
 			canEditGlobalPermissions: false,
 			canImport: false,
 			canImportWiki: false,
+			canImportLanding: false,
 			hasManageableCollection: false,
 		});
 		this.selectedCollectionId = ref(null);
@@ -75,10 +76,10 @@ export class SidebarStoreState
 		this.favoritesStaleToken = 0;
 		this.favoritesHasNextPage = ref(false);
 		this.favoritesCursor = ref(null);
-		// Server-side filter of the block. Deliberately not persisted (AC-059).
+		// Server-side filter of the block. Deliberately not persisted.
 		this.favoritesOnlyNotified = ref(false);
 		this.favoritesError = ref(null);
-		// [ERR-006] Which read failed. A failed next page is retried as a next page: re-reading the
+		// Which read failed. A failed next page is retried as a next page: re-reading the
 		// first one would throw away the rows already on screen and put the user back at the top.
 		this.favoritesErrorOnAppend = ref(false);
 		// Stars ask this index, keyed `entityType:entityId`, because they also live on objects that are
@@ -90,13 +91,13 @@ export class SidebarStoreState
 		this.favoritesRequest = null;
 
 		// [P2] Expansion space of the block, same keys. Deliberately separate from expandedDocs: the
-		// same document may be open here and closed in the tree (AC-040). Only the flags are separate -
+		// same document may be open here and closed in the tree. Only the flags are separate -
 		// the branches themselves are read from docsByParent / sharedDocsByParent, so a branch already
 		// loaded for the tree is not loaded again and an edit in the tree shows up here at once.
 		this.favoritesExpanded = reactive({});
 		// [P4] Coverage states (DTO-02) of the documents inside opened branches of the block, keyed by
 		// document id. Read with API-06 once per branch: the branch responses of the tree carry no
-		// notifications and must not - the tree itself draws no bells (AC-048).
+		// notifications and must not - the tree itself draws no bells.
 		this.favoritesCoverage = reactive({});
 		// Which branch each opened row reads, keyed the same way as favoritesExpanded:
 		// `{ collectionId, parentId, expandVia }`. A subscription on a knowledge base (or on a subtree)
@@ -108,7 +109,7 @@ export class SidebarStoreState
 		// first, and the popover of the row disables its options while one is on the wire.
 		this.favoritesNotifyPending = reactive({});
 		// Branch of a block row that failed to load, same keys. Kept per row so the failure stays
-		// inside the row it belongs to (ERR-005) instead of taking the whole block down.
+		// inside the row it belongs to instead of taking the whole block down.
 		this.favoritesBranchError = reactive({});
 	}
 }

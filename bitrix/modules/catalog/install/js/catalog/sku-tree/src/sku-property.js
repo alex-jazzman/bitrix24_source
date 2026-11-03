@@ -1,4 +1,4 @@
-import {Dom, Event, Tag, Text, Type} from 'main.core';
+import {Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {FocusZone, FocusKeys} from 'ui.a11y';
 import {SkuTree} from 'catalog.sku-tree';
@@ -149,6 +149,26 @@ export default class SkuProperty
 		{
 			Dom.attr(node, 'aria-label', propertyValue.NAME);
 		}
+		else
+		{
+			// No admin-entered name (e.g. a color swatch with only a picture): a picture
+			// radio then has no text content, so synthesize a name to satisfy 4.1.2.
+			Dom.attr(node, 'aria-label', this.#getValueFallbackName(propertyValue));
+		}
+	}
+
+	#getValueFallbackName(propertyValue): string
+	{
+		return Loc.getMessage('CATALOG_SKU_TREE_PROPERTY_VALUE_FALLBACK_NAME', {
+			'#ID#': propertyValue.ID,
+		});
+	}
+
+	#getPropertyName(): string
+	{
+		return Type.isStringFilled(this.property.NAME)
+			? this.property.NAME
+			: Loc.getMessage('CATALOG_SKU_TREE_PROPERTY_FALLBACK_NAME');
 	}
 
 	layout()
@@ -173,10 +193,15 @@ export default class SkuProperty
 			{
 				Dom.attr(this.skuList, 'aria-labelledby', titleId);
 			}
+			else
+			{
+				// radiogroup has no name-from-content: with an empty title, name the group directly.
+				Dom.attr(this.skuList, 'aria-label', this.#getPropertyName());
+			}
 		}
-		else if (hasName)
+		else
 		{
-			Dom.attr(this.skuList, 'aria-label', this.property.NAME);
+			Dom.attr(this.skuList, 'aria-label', this.#getPropertyName());
 		}
 
 		this.#activateFocusZone();

@@ -8,15 +8,13 @@ export class ButtonStateService extends EventEmitter
 	/**
 	 * @param {object} config
 	 * @param {*} config.viewPort
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, callStore })
+	constructor({ viewPort })
 	{
 		super();
 		this.setEventNamespace('BX.Call.ButtonStateService');
 
 		this.viewPort = viewPort;
-		this.callStore = callStore ?? null;
 	}
 
 	/**
@@ -286,11 +284,6 @@ export class ButtonStateService extends EventEmitter
 	setButtonActive(name, active)
 	{
 		this.viewPort.setButtonActive(name, active);
-
-		if (this.callStore)
-		{
-			this.callStore.setButtonState(name, { active });
-		}
 	}
 
 	/**
@@ -301,11 +294,6 @@ export class ButtonStateService extends EventEmitter
 	blockButtons(names)
 	{
 		this.viewPort.blockButtons(names);
-
-		if (this.callStore)
-		{
-			this.callStore.blockButtons(names);
-		}
 	}
 
 	/**
@@ -316,11 +304,6 @@ export class ButtonStateService extends EventEmitter
 	unblockButtons(names)
 	{
 		this.viewPort.unblockButtons(names);
-
-		if (this.callStore)
-		{
-			this.callStore.unblockButtons(names);
-		}
 	}
 
 	/**
@@ -332,11 +315,6 @@ export class ButtonStateService extends EventEmitter
 	setButtonCounter(name, counter)
 	{
 		this.viewPort.setButtonCounter(name, counter);
-
-		if (this.callStore)
-		{
-			this.callStore.setButtonState(name, { counter });
-		}
 	}
 
 	/**
@@ -344,7 +322,6 @@ export class ButtonStateService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
 		this.viewPort = null;
 	}
 }

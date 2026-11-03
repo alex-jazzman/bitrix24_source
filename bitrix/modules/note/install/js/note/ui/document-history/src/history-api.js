@@ -13,7 +13,7 @@ export function isRestoreDirtyWindowError(error: mixed): boolean
 
 export class HistoryApi
 {
-	// [API-02] Lazy body fetch — only called on click (version-preview), never in a list.
+	// Lazy body fetch - only called on click (version-preview), never in a list.
 	static async getVersion(
 		{ documentId, versionId }: { documentId: number, versionId: number },
 	): Promise<Object>
@@ -26,7 +26,7 @@ export class HistoryApi
 		});
 	}
 
-	// [API-03] Requires a prior compact() of the patch window — see the 409 retry flow in
+	// Requires a prior compact() of the patch window - see the 409 retry flow in
 	// VersionTimelineComponent.restoreCurrentVersion().
 	//
 	// `operationId` is the caller's name for this restore. The server does not store it - it echoes the
@@ -54,7 +54,7 @@ export class HistoryApi
 		return ajax.runAction('note.infrastructure.DocumentController.restoreVersion', { data });
 	}
 
-	// [API-04, P2.T4] Keyset feed page — role visibility is applied server-side before the
+	// Keyset feed page - role visibility is applied server-side before the
 	// `types` filter, the filter can only narrow it further (see FeedProvider). An empty
 	// `types` list is the server's own "select all"; the caller must NOT send [] when the user
 	// deselected everything (that reads as "all") — it short-circuits locally instead.
@@ -83,7 +83,7 @@ export class HistoryApi
 		return ajax.runAction('note.infrastructure.DocumentController.listFeed', { data });
 	}
 
-	// [API-06, P3.T3/T4] Server snapshot of "who viewed the document" — the views widget uses
+	// Server snapshot of "who viewed the document" - the views widget uses
 	// this as its base and overlays live awareness join/heartbeat events on top (see
 	// views-widget.js). No separate track call exists here on purpose: a view is recorded
 	// server-side as a side effect of the awareness `join` message (P3.T2), not by this read.

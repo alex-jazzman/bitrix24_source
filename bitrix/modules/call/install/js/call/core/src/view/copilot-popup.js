@@ -42,7 +42,7 @@ export class CopilotPopup
 
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
-					text: Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED'),
+					text: Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED_MSGVER_1'),
 				};
 			}
 
@@ -95,6 +95,7 @@ export class CopilotPopup
 			{
 				return {
 					props: { className: 'bx-call-copilot-popup__button turn_off' },
+					attrs: { 'data-testid': 'call-copilot-popup-turn-off-btn' },
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
 					events: {
 						click: () => {
@@ -144,6 +145,7 @@ export class CopilotPopup
 
 			return {
 				props: { className: 'bx-call-copilot-popup__button turn_on' },
+				attrs: { 'data-testid': 'call-copilot-popup-turn-on-btn' },
 				text: BX.message('CALL_COPILOT_POPUP_BUTTON_ENABLE'),
 				events: {
 					click: () => {
@@ -173,13 +175,13 @@ export class CopilotPopup
 								}),
 								Dom.create("div", {
 									props: { className: 'bx-call-copilot-popup__title-text' },
-									text: BX.message('CALL_COPILOT_POPUP_TITLE'),
+									text: BX.message('CALL_COPILOT_POPUP_TITLE_MSGVER_1'),
 								}),
 							],
 						}),
 						Dom.create("div", {
 							props: { className: 'bx-call-copilot-popup__description' },
-							text: BX.message('CALL_COPILOT_POPUP_LIST_TITLE'),
+							text: BX.message('CALL_COPILOT_POPUP_LIST_TITLE_MSGVER_1'),
 						}),
 						Dom.create("ul", {
 							props: { className: 'bx-call-copilot-popup__list' },

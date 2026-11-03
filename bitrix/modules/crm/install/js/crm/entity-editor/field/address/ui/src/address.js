@@ -1,6 +1,7 @@
 import {EntityEditorBaseAddressField} from "crm.entity-editor.field.address.base";
 import {Tag, Dom, Type} from "main.core";
 import {EventEmitter} from "main.core.events";
+import 'crm.entity-editor';
 import 'ui.entity-editor';
 
 export class EntityEditorUiAddressField extends BX.UI.EntityEditorField
@@ -139,7 +140,7 @@ export class EntityEditorUiAddressField extends BX.UI.EntityEditorField
 
 		if (this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if (this.isDragEnabled())

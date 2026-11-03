@@ -10,6 +10,9 @@ import {
 } from '../types';
 import { mapModelFeaturesToDto } from './features';
 
+type ProjectMembers = $PropertyType<ProjectModel, 'members'>;
+type ProjectMembersDto = $PropertyType<ProjectDto, 'members'>;
+
 export function mapModelToDto(project: ProjectModel): ProjectDto
 {
 	const dto: ProjectDto = {
@@ -19,8 +22,8 @@ export function mapModelToDto(project: ProjectModel): ProjectDto
 		goal: project.goal,
 		privacyType: project.privacyType,
 		ownerId: project.ownerId,
-		members: project.members,
-		moderatorMembers: project.moderators,
+		members: mapMembersToDto(project.members),
+		moderatorMembers: mapMembersToDto(project.moderators),
 		permissions: {
 			tasks: mapTaskPermissions(project.permissions.tasks),
 			blog: mapBlogPermissions(project.permissions.blog),
@@ -61,6 +64,15 @@ export function mapModelToDto(project: ProjectModel): ProjectDto
 	}
 
 	return dto;
+}
+
+function mapMembersToDto(members: ProjectMembers): ProjectMembersDto
+{
+	return members.map((member) => ({
+		id: member.id,
+		type: member.type,
+		withChildNodes: member.withChildNodes,
+	}));
 }
 
 function isNotificationsDirty(current: Object, initial: ?Object): boolean

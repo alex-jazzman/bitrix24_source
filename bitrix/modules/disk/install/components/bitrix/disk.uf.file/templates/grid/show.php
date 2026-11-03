@@ -320,6 +320,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					? $file['CREATED_BY']
 					: ''
 			);
+			$fileHref = $file['CAN_DOWNLOAD'] ? $file['DOWNLOAD_URL'] : 'javascript:void(0);';
 			?><div class="<?=$className?>">
 				<span id="lock-anchor-created-<?= $file['ID'] ?>-<?= $component->getComponentId() ?>" bx-tooltip-user-id="<?=$tooltipUserId?>" class="feed-con-file-icon feed-file-icon-<?=htmlspecialcharsbx($file['EXTENSION'])?> js-disk-locked-document-tooltip">
 				<? if($file['IS_LOCKED']) { ?>
@@ -327,7 +328,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 				<? } ?>
 				</span>
 				<span class="feed-com-file-name-wrap">
-					<a <?= ($file['FROM_EXTERNAL_SYSTEM'] && $file['CAN_UPDATE'])? 'style="color:#d9930a;"' : '' ?> target="_blank" href="<?=htmlspecialcharsbx($file['DOWNLOAD_URL'])?>"<?
+					<a <?= ($file['FROM_EXTERNAL_SYSTEM'] && $file['CAN_UPDATE'])? 'style="color:#d9930a;"' : '' ?> target="_blank" href="<?=htmlspecialcharsbx($fileHref)?>"<?
 						?> id="disk-attach-<?=$file['ID']?>"<?
 						?> class="feed-com-file-name" <?
 						?> title="<?=htmlspecialcharsbx($file['NAME'])?>" <?
@@ -384,13 +385,18 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									return e.preventDefault();
 								}},
 							<? } ?>
+							<? if($file['CAN_DOWNLOAD']){ ?>
 							{
 								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								attrs : {'data-testid': 'disk-uf-file-download-menu-item'},
 								html : '<span class="ui-icon-set --download-3"></span><span>' + BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC') + '</span>',
 								href : "<?=$file["DOWNLOAD_URL"]?>",
 								onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							,
+							<? } ?>
+							<? } ?>
+							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							{
 								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
 								html : '<span class="ui-icon-set --settings-2"></span><span>' + '<?= GetMessageJS("DISK_UF_FILE_SETTINGS_DOCS") ?>' + '</span>',
@@ -439,13 +445,15 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 
 	if(
 		$arResult['ENABLED_MOD_ZIP'] &&
+		$arResult['CAN_DOWNLOAD_ARCHIVE'] &&
+		$arResult['DOWNLOAD_ARCHIVE_URL'] &&
 		!empty($arResult['ATTACHED_IDS']) &&
 		count($arResult['ATTACHED_IDS']) > 1
 	)
 	{
 		?>
 		<div class="disk-uf-file-download-archive">
-			<a href="<?=$arResult['DOWNLOAD_ARCHIVE_URL']?>" class="disk-uf-file-download-archive-text"><?=GetMessage('WDUF_FILE_DOWNLOAD_ARCHIVE')?></a>
+			<a href="<?=$arResult['DOWNLOAD_ARCHIVE_URL']?>" class="disk-uf-file-download-archive-text" data-testid="disk-uf-file-download-archive-btn"><?=GetMessage('WDUF_FILE_DOWNLOAD_ARCHIVE')?></a>
 			<span class="disk-uf-file-download-archive-size">(<?=CFile::FormatSize($arResult['COMMON_SIZE'])?>)</span>
 		</div>
 		<?

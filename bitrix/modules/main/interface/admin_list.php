@@ -1031,7 +1031,7 @@ class CAdminList
 				switch ($field["view"]["type"])
 				{
 					case "checkbox":
-						if ($val=='Y')
+						if ($val == 'Y' || $row->arRes[$id] === true)
 						{
 							$val = htmlspecialcharsex(GetMessage("admin_lib_list_yes"));
 						}
@@ -1788,8 +1788,15 @@ class CAdminListRow
 
 		if (!empty($this->pList->arActions) || $this->pList->bCanBeEdited):
 			$check_id = RandString(5);
+			//the phrase naming a row is newer than the locales of the product: without the fallback the
+			//checkbox would be left with no name at all where the translation has not arrived yet
+			$check_title = GetMessage("admin_lib_list_check_row", ["#ID#" => $this->id]);
+			if ($check_title == '')
+			{
+				$check_title = GetMessage("admin_lib_list_check");
+			}
 ?>
-	<td class="adm-list-table-cell adm-list-table-checkbox adm-list-table-checkbox-hover<?=$this->bReadOnly? ' adm-list-table-checkbox-disabled':''?>"><input type="checkbox" class="adm-checkbox adm-designed-checkbox" name="ID[]" id="<?=$this->table_id."_".$this->id."_".$check_id;?>" value="<?=$this->id?>" autocomplete="off" title="<?=GetMessage("admin_lib_list_check")?>"<?=$this->bReadOnly? ' disabled="disabled"':''?><?=$this->bEditMode ? ' checked="checked" disabled="disabled"' : ''?> /><label class="adm-designed-checkbox-label adm-checkbox" for="<?=$this->table_id."_".$this->id."_".$check_id;?>"></label></td>
+	<td class="adm-list-table-cell adm-list-table-checkbox adm-list-table-checkbox-hover<?=$this->bReadOnly? ' adm-list-table-checkbox-disabled':''?>"><input type="checkbox" class="adm-checkbox adm-designed-checkbox" name="ID[]" id="<?=$this->table_id."_".$this->id."_".$check_id;?>" value="<?=$this->id?>" autocomplete="off" title="<?=htmlspecialcharsbx($check_title)?>"<?=$this->bReadOnly? ' disabled="disabled"':''?><?=$this->bEditMode ? ' checked="checked" disabled="disabled"' : ''?> /><label class="adm-designed-checkbox-label adm-checkbox" for="<?=$this->table_id."_".$this->id."_".$check_id;?>"></label></td>
 <?php
 		endif;
 

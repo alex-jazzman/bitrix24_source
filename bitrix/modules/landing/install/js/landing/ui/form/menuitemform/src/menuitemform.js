@@ -1,12 +1,14 @@
-import {Dom, Text, Type, Tag, Cache, Event} from 'main.core';
-import {Loc} from 'landing.loc';
-import {BaseForm} from 'landing.ui.form.baseform';
+import { Cache, Dom, Event, Tag, Text, Type } from 'main.core';
+import { Loc } from 'landing.loc';
+import { BaseForm } from 'landing.ui.form.baseform';
 import 'ui.fonts.opensans';
 import './css/style.css';
 
 const depthKey = Symbol('depth');
 const onHeaderClick = Symbol('onHeaderClick');
 const onTextChange = Symbol('onTextChange');
+const NBSP = '\u00A0';
+const NBSP_ENTITY_PATTERN = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
 
 /**
  * @memberOf BX.Landing.UI.Form
@@ -32,7 +34,7 @@ export class MenuItemForm extends BaseForm
 		const [firstField: BX.Landing.UI.Field.Link] = this.fields;
 		if (firstField)
 		{
-			const {text} = firstField.getValue();
+			const { text } = firstField.getValue();
 			this.setTitle(text);
 
 			Event.bind(firstField.input.input, 'input', this[onTextChange]);
@@ -60,14 +62,14 @@ export class MenuItemForm extends BaseForm
 		const [firstField: BX.Landing.UI.Field.Link] = this.fields;
 		if (firstField)
 		{
-			const {text} = firstField.getValue();
+			const { text } = firstField.getValue();
 			this.setTitle(text);
 		}
 	}
 
 	onRemoveButtonClick()
 	{
-		this.emit('remove', {form: this});
+		this.emit('remove', { form: this });
 		Dom.remove(this.layout);
 	}
 
@@ -85,7 +87,7 @@ export class MenuItemForm extends BaseForm
 
 	isFormShown(): boolean
 	{
-		return this.layout.classList.contains('landing-ui-form-menuitem-open');
+		return Dom.hasClass(this.layout, 'landing-ui-form-menuitem-open');
 	}
 
 	getDragButton(): HTMLDivElement
@@ -129,6 +131,7 @@ export class MenuItemForm extends BaseForm
 		return this.cache.remember('removeButton', () => {
 			const button = Tag.render`<div class="landing-ui-form-header-remove-button"></div>`;
 			Event.bind(button, 'click', this.onRemoveButtonClick);
+
 			return button;
 		});
 	}
@@ -148,8 +151,8 @@ export class MenuItemForm extends BaseForm
 	{
 		if (Type.isString(title) || Type.isNumber(title))
 		{
-			this.title = title;
-			this.getTitleLayout().innerText = Text.decode(title);
+			this.title = Text.decode(String(title)).replaceAll(NBSP_ENTITY_PATTERN, NBSP);
+			this.getTitleLayout().innerText = this.title;
 		}
 	}
 
@@ -169,6 +172,7 @@ export class MenuItemForm extends BaseForm
 	serialize()
 	{
 		const [firstField: BX.Landing.UI.Field.Link] = this.fields;
+
 		return firstField.getValue();
 	}
 }

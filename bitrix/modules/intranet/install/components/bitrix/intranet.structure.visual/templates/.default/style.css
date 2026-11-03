@@ -171,7 +171,7 @@
 .structure-designate-boss .structure-manager {display:none;}
 /*.structure-designate-boss .structure-boss-block {background-color:#fff; border:1px dashed; height:28px;}*/
 .structure-designate-text {background:#fff; border:1px dashed; color:#6c6c6c; display:none; font-size:11px; font-weight:var(--ui-font-weight-bold); height:22px; left:-2px; right:-2px; top:-1px; overflow:hidden; text-overflow:ellipsis; padding:7px 0 0 28px; position:absolute; white-space:nowrap;}
-.structure-designate-text i {background:url("images/structure_company_sprite.png") no-repeat 0 -152px; height:17px; display:block; position:absolute; width:17px;}
+.structure-designate-text i {background:url("images/structure_company_sprite.webp") no-repeat 0 -152px; height:17px; display:block; position:absolute; width:17px;}
 .structure-designate-boss .structure-add-boss-text {display:block;}
 .structure-designate-boss.structure-dept-third .structure-designate-text {border-color:#a4ca25;}
 .structure-designate-boss.structure-dept-first .structure-designate-text {border-color:#79afc5;}
@@ -423,10 +423,10 @@
 
 #bx_str_level2_table td {vertical-align: top;}
 
-td.bx-str-top {vertical-align: top; background-image: url('images/line_blue.png'); background-repeat: repeat-y; background-position: center center; padding: 0px 10px 20px 10px; background-position: center 60px;}
+td.bx-str-top {vertical-align: top; background-image: url('images/line_blue.webp'); background-repeat: repeat-y; background-position: center center; padding: 0px 10px 20px 10px; background-position: center 60px;}
 
 tr.bx-str-l2 td {
-    background-image: url('images/crossings_blue.png');
+    background-image: url('images/crossings_blue.webp');
     background-repeat: no-repeat;
     background-position: center top;
     padding-top: 20px;
@@ -434,11 +434,11 @@ tr.bx-str-l2 td {
 }
 
 tr.bx-str-l2 td.bx-str-first {
-    background-image: url('images/crossings_blue_left.png');
+    background-image: url('images/crossings_blue_left.webp');
     padding: 20px 10px 0 0;
 }
 tr.bx-str-l2 td.bx-str-last {
-    background-image: url('images/crossings_blue_right.png');
+    background-image: url('images/crossings_blue_right.webp');
     padding: 20px 0 0 10px;
 }
 
@@ -447,7 +447,7 @@ tr.bx-str-l3 td {
 }
 
 tr.bx-str-l3 td.bx-str-l3-connector {
-    background-image: url('images/crossings1_blue.png');
+    background-image: url('images/crossings1_blue.webp');
     background-repeat: no-repeat;
     background-position: 10px center;
     width: 31px;
@@ -459,14 +459,13 @@ tr.bx-str-l3 td.bx-str-l3-connector.bx-str-first {width: 21px; background-positi
 tr.bx-str-l3 td.bx-str-last.bx-str-first {background-position: -59px center}
 
 .bx-str-l2 td.bx-str-single {padding-top: 0px !important; background-image: none !important;}
-.bx-str-result tr.bx-str-l2 td {background-image: url('images/crossings_white.png');}
-.bx-str-result .bx-str-l2 td.bx-str-first {background-image: url('images/crossings_white_left.png');}
-.bx-str-result .bx-str-l2 td.bx-str-last {background-image: url('images/crossings_white_right.png');}
+.bx-str-result tr.bx-str-l2 td {background-image: url('images/crossings_white.webp');}
+.bx-str-result .bx-str-l2 td.bx-str-first {background-image: url('images/crossings_white_left.webp');}
+.bx-str-result .bx-str-l2 td.bx-str-last {background-image: url('images/crossings_white_right.webp');}
 
 
-.bx-str-stick {position: absolute; height: 13px; width: 2px; background-image: url('images/line_white.png');}
-.bx-str-result .bx-str-l3 td.bx-str-l3-connector {background-image: url('images/crossings1_white.png');}
-.bx-str-top, .bx-str-middle, .bx-str-l1-connector td {background-image: url('images/crossings1.gif'); background-repeat: no-repeat;}
+.bx-str-stick {position: absolute; height: 13px; width: 2px; background-image: url('images/line_white.webp');}
+.bx-str-result .bx-str-l3 td.bx-str-l3-connector {background-image: url('images/crossings1_white.webp');}
 
 .bx-str-middle {width: 24px; background-position: center center;}
 .bx-str-last .bx-str-middle {background-position: center -70px;}
@@ -477,7 +476,7 @@ tr.bx-str-l3 td.bx-str-last.bx-str-first {background-position: -59px center}
 .bx-str-right {text-align: left;}
 
 .bx-dark {position: absolute; top: 0px; left: 0px; right: 80px; bottom: 0px; border-radius: 5px; background-color: black; opacity: 0.5; filter:progid:DXImageTransform.Microsoft.Alpha(opacity=50);}
-.bx-dark-close {position: absolute; background-image: url('images/cross.png'); height: 14px; width: 14px; cursor: pointer; top: 5px; right: 5px;}
+.bx-dark-close {position: absolute; background-image: url('images/cross.webp'); height: 14px; width: 14px; cursor: pointer; top: 5px; right: 5px;}
 .bx-str-result table {position: relative; z-index: 50;}
 
 .bx-popup-head {border-bottom: solid 1px #DADADA;}

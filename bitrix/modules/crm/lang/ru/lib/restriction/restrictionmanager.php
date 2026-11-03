@@ -22,7 +22,7 @@ $MESS["CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2"] = "<div class=\"crm-history-tab-con
 		Битрикс24 ведет журнал всех просмотров и изменений в CRM. Включив Расширенную CRM, вы сможете посмотреть и восстановить данные, увидеть кто из сотрудников экспортировал, изменял или просматривал документ, начиная с момента создания вашего Битрикс24.
 	</div>
 	<div class=\"crm-history-tab-text\">Выглядеть это будет так:</div>
-	<img alt=\"Вкладка история\" class=\"crm-history-tab-img\" src=\"/bitrix/js/crm/images/history-ru.png?1\"/>
+	#HISTORY_IMAGE#
 	<div class=\"crm-history-tab-text\">
 		Добавьте историю и другие полезные возможности в свой Битрикс24! Расширенная CRM + Расширенная Телефония и другие полезные возможности доступны, начиная с тарифа \"Проект+\" за #TF_PRICE#.
 		<a target=\"_blank\" href=\"https://www.bitrix24.ru/pro/crm.php\">Узнать подробнее</a>
@@ -32,6 +32,7 @@ $MESS["CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2"] = "<div class=\"crm-history-tab-con
 		<span class=\"ui-btn ui-btn-lg ui-btn-light-border\" onclick=\"#DEMO_LICENSE_SCRIPT#\">Бесплатно на 30 дней</span>
 	</div>
 </div>";
+$MESS["CRM_RESTR_MGR_HX_VIEW_MSG_IMAGE_ALT"] = "Вкладка история";
 $MESS["CRM_RESTR_MGR_POPUP_TITLE"] = "Доступно только в расширенной CRM \"Битрикс24\"";
 $MESS["CRM_RESTR_MGR_POPUP_CONTENT_2"] = "Добавьте к своей CRM:
 <ul class=\"hide-features-list\">

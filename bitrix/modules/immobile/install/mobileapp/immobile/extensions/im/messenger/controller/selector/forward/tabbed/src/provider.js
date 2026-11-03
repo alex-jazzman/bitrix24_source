@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		ChatSearchProvider,
 		ChatSearchConfig,
 		RecentSectionLocalSearchStrategy,
+		DialogLocalSearchStrategy,
 		DefaultServerSearchStrategy,
 	} = require('im/messenger/lib/chat-search');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -41,6 +42,15 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 	};
 
 	/**
+	 * Tabs that pin the "Notes" (favorite) item on top when withFavorite is enabled.
+	 * ForwardTab.all mirrors web parity; ForwardTab.chats keeps its existing behavior.
+	 */
+	const FAVORITE_TABS = new Set([
+		ForwardTab.all,
+		ForwardTab.chats,
+	]);
+
+	/**
 	 * @class ForwardDialogSelectorProvider
 	 */
 	class ForwardDialogSelectorProvider extends BaseSelectorProvider
@@ -49,6 +59,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		 * @param {string} context
 		 * @param {Object} options
 		 * @param {boolean} [options.withFavorite=false]
+		 * @param {boolean} [options.allowMultipleSelection=false]
 		 */
 		constructor(context, options = {})
 		{
@@ -56,10 +67,19 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 
 			this.queryString = '';
 			this.items = [];
+			/**
+			 * @description Last list handed to the widget: the source of item positions for analytics
+			 * @type {Array}
+			 */
+			this.renderedItems = [];
 			this.withFavorite = options.withFavorite ?? false;
+			// iOS forbids selecting a row that carries a type: BXContactSourceView reports
+			// onItemSelected instead of adding the row to the selection and hides the checkbox,
+			// so rows must leave type empty whenever several recipients may be picked.
+			this.isMultipleSelection = options.allowMultipleSelection ?? false;
 
 			this.store = serviceLocator.get('core').getMessengerStore();
-			this.activeTab = ForwardTab.chats;
+			this.activeTab = ForwardTab.all;
 
 			/** @type {Set<string>} */
 			this.tabServerLoaded = new Set();
@@ -74,6 +94,23 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 			this.processedQuery = '';
 
 			this.logger = getLoggerWithContext('forward-dialog-selector-provider', this);
+		}
+
+		/**
+		 * @return {string}
+		 */
+		getActiveTab()
+		{
+			return this.activeTab;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {number} 1-based position in the rendered list, 0 when the item is not there
+		 */
+		getItemPosition(dialogId)
+		{
+			return this.renderedItems.findIndex((item) => String(item.id) === String(dialogId)) + 1;
 		}
 
 		/**
@@ -107,14 +144,35 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		{
 			this.#loadItemsFromStore();
 
-			if (!this.tabServerLoaded.has(this.activeTab))
+			if (SERVER_LOAD_SERVICE_BY_TAB[this.activeTab] && !this.tabServerLoaded.has(this.activeTab))
 			{
 				void this.#loadFromServerAndRefresh(this.activeTab);
 
 				return;
 			}
 
-			this.listener.onRecentResult(this.items, true);
+			this.#emitRecentResult(this.items);
+		}
+
+		/**
+		 * @private
+		 * @param {Array} items
+		 */
+		#emitRecentResult(items)
+		{
+			this.renderedItems = items;
+			this.listener.onRecentResult(items, true);
+		}
+
+		/**
+		 * @private
+		 * @param {Array} items
+		 * @param {boolean} cache
+		 */
+		#emitFetchResult(items, cache)
+		{
+			this.renderedItems = items;
+			this.listener.onFetchResult(items, cache);
 		}
 
 		/**
@@ -141,6 +199,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 			const chatTitle = ChatTitle.createFromDialogId(item.dialogId);
 
 			const title = chatTitle.getTitle({ useNotes: false }) ?? item.name;
+			const avatar = chatAvatar.getListItemAvatarProps();
 
 			return {
 				id: item.dialogId,
@@ -148,8 +207,9 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 				subtitle: chatTitle.getDescription(),
 				useLetterImage: false,
 				sectionCode: 'common',
-				avatar: chatAvatar.getListItemAvatarProps(),
-				type: 'info',
+				avatar,
+				imageUrl: avatar.uri,
+				type: this.isMultipleSelection ? null : 'info',
 				params: {
 					id: item.dialogId,
 					title,
@@ -169,7 +229,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 			if (currentQuery.length === 0)
 			{
 				this.processedQuery = '';
-				this.listener.onFetchResult(this.items, true);
+				this.#emitFetchResult(this.items, true);
 
 				return;
 			}
@@ -194,7 +254,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 
 			if (dialogs.length === 0 && !needSearchOnServer)
 			{
-				this.listener.onFetchResult([], true);
+				this.#emitFetchResult([], true);
 
 				return;
 			}
@@ -206,7 +266,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 				searchItems.push(this.getLoadingItem());
 			}
 
-			this.listener.onFetchResult(searchItems, true);
+			this.#emitFetchResult(searchItems, true);
 		};
 
 		/**
@@ -217,12 +277,12 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 
 			if (dialogs.length === 0)
 			{
-				this.listener.onFetchResult([], false);
+				this.#emitFetchResult([], false);
 
 				return;
 			}
 
-			this.listener.onFetchResult(this.prepareItemsForDrawing(dialogs), false);
+			this.#emitFetchResult(this.prepareItemsForDrawing(dialogs), false);
 		};
 
 		/**
@@ -268,15 +328,24 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		 */
 		getFavoriteItem()
 		{
+			const title = Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_FAVORITE_ITEM');
+			const uri = withCurrentDomain(`${ASSET_PATH}favorite_avatar.png`);
+
 			return {
 				id: env.userId,
-				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_FAVORITE_ITEM'),
+				title,
 				useLetterImage: false,
 				avatar: {
 					hideOutline: true,
-					uri: withCurrentDomain(`${ASSET_PATH}favorite_avatar.png`),
+					uri,
 				},
-				type: 'info',
+				imageUrl: uri,
+				type: this.isMultipleSelection ? null : 'info',
+				params: {
+					id: env.userId,
+					title,
+					type: 'dialog',
+				},
 			};
 		}
 
@@ -341,15 +410,22 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		{
 			const recentTab = forwardTabRegistry.get(tabId).recentTab;
 
+			const localStrategy = recentTab
+				? new RecentSectionLocalSearchStrategy({ section: recentTab, parentChatId: null })
+				: new DialogLocalSearchStrategy({ excludeGuests: true });
+
+			const searchOptions = { excludeGuests: true };
+			if (tabId === ForwardTab.all)
+			{
+				searchOptions.searchAllChats = true;
+			}
+
 			return new ChatSearchProvider({
-				localStrategy: new RecentSectionLocalSearchStrategy({
-					section: recentTab,
-					parentChatId: null,
-				}),
+				localStrategy,
 				serverStrategy: new DefaultServerSearchStrategy({
 					config: new ChatSearchConfig(null),
 					recentTab,
-					dynamicOptions: () => ({ excludeGuests: true }),
+					dynamicOptions: () => searchOptions,
 				}),
 				loadSearchProcessed: (itemIdList, needSearchOnServer) => {
 					if (this.activeTab !== tabId)
@@ -381,6 +457,11 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		#filterAvailableDialogs(dialogs, filter)
 		{
 			return dialogs.filter((dialog) => {
+				if (dialog.type === DialogType.videoconf || dialog.entityType === 'VIDEOCONF')
+				{
+					return false;
+				}
+
 				if (filter.dialogTypes && !filter.dialogTypes.includes(dialog.type))
 				{
 					return false;
@@ -424,7 +505,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 				const dialogs = this.#filterAvailableDialogs(allDialogs, config.filter);
 				const preparedItems = this.prepareItemsForDrawing(dialogs);
 
-				this.items = (this.activeTab === ForwardTab.chats && this.withFavorite)
+				this.items = (this.withFavorite && FAVORITE_TABS.has(this.activeTab))
 					? this.withFavoriteItem(preparedItems)
 					: preparedItems;
 			}
@@ -443,7 +524,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 		async #loadFromServerAndRefresh(tabId)
 		{
 			const currentItems = [...this.items];
-			this.listener.onRecentResult([...currentItems, this.getLoadingItem()], true);
+			this.#emitRecentResult([...currentItems, this.getLoadingItem()]);
 
 			try
 			{
@@ -467,7 +548,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 			if (this.activeTab === tabId)
 			{
 				this.#loadItemsFromStore();
-				this.listener.onRecentResult(this.items, true);
+				this.#emitRecentResult(this.items);
 			}
 		}
 

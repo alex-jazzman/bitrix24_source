@@ -244,3 +244,31 @@
 .crm-timeline__card-logo_add-icon.--icon-microphone > i {
 	mask-image: url('../../../images/common/crm_timeline__microphone.svg');
 }
+
+/*region Reflow: the corner badge shrinks with the logo (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The badge is a fixed 32px square pinned to the logo's corner. When the logo drops from 80px
+	to 60px at narrow widths (layout/body/logo.css) the badge keeps its size and takes over the
+	tile, so it steps down with it: 32 -> 28. The design-system token is kept rather than a raw
+	0.75 (which would be 24px) - 28 is the step the scale actually provides.
+
+	It lives here rather than next to the rest of the logo scaling because this file is imported
+	after logo.css (src/index.js) and its --add-icon-size declaration has the same specificity
+	(0,1,0) - from there the override would lose on source order.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-logo_add-icon {
+		--add-icon-size: var(--ui-size-2xl, 24px);
+	}
+}
+/*
+	Second trigger, same fix - the CRM Entity Card Split handle narrows the column without
+	changing the window, which @media cannot see. See layout/header/title.css and decisions.md
+	(CRM Entity Card Split) for the threshold and the container name.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-logo_add-icon {
+		--add-icon-size: var(--ui-size-2xl, 24px);
+	}
+}
+/*endregion*/

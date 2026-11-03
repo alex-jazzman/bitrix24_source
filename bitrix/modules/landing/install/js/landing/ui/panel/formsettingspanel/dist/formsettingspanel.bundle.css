@@ -2,15 +2,9 @@
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 21px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	align-items: center;
+	justify-content: center;
 	text-align: center;
 	padding-top: 40px;
 	padding-bottom: 40px;
@@ -52,12 +46,8 @@
 	position: absolute;
 	left: 20px;
 	bottom: 75px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 
 .landing-ui-panel-mode-transparent .landing-ui-expert-switcher {

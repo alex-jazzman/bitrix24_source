@@ -6,6 +6,7 @@ use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Document\OnlyOffice\Editor\ConfigBuilder;
 use Bitrix\Disk\Document\OnlyOffice\Filters\DocumentSessionCheck;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Disk\Internal\Service\DocumentPresence\PresenceService;
 use Bitrix\Disk\User;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Engine;
@@ -89,7 +90,59 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 					,
 				],
 			],
+			// The roster of the opening, the same one every editor shell shares
+			// ({@see \Bitrix\Disk\Internal\Service\DocumentPresence\PresenceService}): the signed
+			// presenceContext carries the binding, so no session parameter is asked for here.
+			'presenceEnter' => $this->getPresenceActionConfiguration(),
+			'presenceHeartbeat' => $this->getPresenceActionConfiguration(),
+			'presenceLeave' => $this->getPresenceActionConfiguration(),
 		];
+	}
+
+	public function presenceEnterAction(
+		PresenceService $presenceService,
+		string $presenceContext,
+		int $clientRevision = 0,
+		bool $isConfirming = false,
+	): ?array
+	{
+		return $this->handlePresenceAction(
+			$presenceService,
+			PresenceService::ACTION_ENTER,
+			$presenceContext,
+			$clientRevision,
+			$isConfirming,
+		);
+	}
+
+	public function presenceHeartbeatAction(
+		PresenceService $presenceService,
+		string $presenceContext,
+		int $clientRevision = 0,
+		bool $isConfirming = false,
+	): ?array
+	{
+		return $this->handlePresenceAction(
+			$presenceService,
+			PresenceService::ACTION_HEARTBEAT,
+			$presenceContext,
+			$clientRevision,
+			$isConfirming,
+		);
+	}
+
+	public function presenceLeaveAction(
+		PresenceService $presenceService,
+		string $presenceContext,
+		int $clientRevision = 0,
+	): ?array
+	{
+		return $this->handlePresenceAction(
+			$presenceService,
+			PresenceService::ACTION_LEAVE,
+			$presenceContext,
+			$clientRevision,
+		);
 	}
 
 	public function markAsStillWorkingSessionAction(Disk\Document\Models\DocumentSession $documentSession): ?array
@@ -193,5 +246,41 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 		$response->setContent($content);
 
 		return $response;
+	}
+
+	private function getPresenceActionConfiguration(): array
+	{
+		return [
+			'+prefilters' => [
+				new ActionFilter\CloseSession(),
+				new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+				new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
+			],
+		];
+	}
+
+	private function handlePresenceAction(
+		PresenceService $presenceService,
+		string $action,
+		string $presenceContext,
+		int $clientRevision,
+		bool $isConfirming = false,
+	): ?array
+	{
+		$result = $presenceService->handle(
+			$action,
+			$presenceContext,
+			(int)($this->getCurrentUser()?->getId() ?? 0),
+			$clientRevision,
+			$isConfirming,
+		);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return $result->getData();
 	}
 }

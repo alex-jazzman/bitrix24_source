@@ -10,24 +10,68 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 		employee: 'employee',
 	};
 
-	/**
-	 * @class UserEntity
-	 */
 	class UserEntity extends BaseEntity
 	{
+		/**
+		 * @param {NestedDepartmentUserEntityOptions} options
+		 */
+		constructor(options = {})
+		{
+			super();
+			/** @type {NestedDepartmentUserEntityOptions} */
+			this.options = options;
+		}
+
+		/**
+		 * @return {string}
+		 */
 		static getId()
 		{
 			return 'user';
 		}
 
-		getEntityOptions()
+		/**
+		 * @return {NestedDepartmentEntityDialog}
+		 */
+		getEntityForDialog()
 		{
+			const entity = super.getEntityForDialog();
+			if (!this.options.disableSearch)
+			{
+				return entity;
+			}
+
 			return {
-				emailUsers: true,
-				inviteEmployeeLink: false,
+				...entity,
+				dynamicSearch: false,
+				searchable: false,
+				options: {
+					...entity.options,
+					fillDialog: false,
+				},
 			};
 		}
 
+		/**
+		 * @return {NestedDepartmentDialogUserOptions}
+		 */
+		getEntityOptions()
+		{
+			const { userOptions = {}, ...options } = this.options;
+
+			return {
+				emailUsers: true,
+				inviteEmployeeLink: false,
+				...options,
+				...userOptions,
+			};
+		}
+
+		/**
+		 * @param {NestedDepartmentSelectorItem} item
+		 * @param {NestedDepartmentSelectorItem} initialEntity
+		 * @return {NestedDepartmentSelectorItem}
+		 */
 		prepareItemForDrawing(item, initialEntity)
 		{
 			const isEmployee = item.params?.entityType === ENTITY_TYPE.employee;
@@ -50,6 +94,10 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 			return this.getDefaultItemsStyles(item);
 		}
 
+		/**
+		 * @param {NestedDepartmentSelectorItem} item
+		 * @return {NestedDepartmentSelectorItem}
+		 */
 		getPreparedParamsForAvatar(item)
 		{
 			return {
@@ -61,6 +109,10 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 			};
 		}
 
+		/**
+		 * @param {NestedDepartmentSelectorItem} item
+		 * @return {NestedDepartmentSelectorItem}
+		 */
 		getDefaultItemsStyles(item)
 		{
 			return {
@@ -76,6 +128,12 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 			};
 		}
 
+		/**
+		 * @param {NestedDepartmentSelectorItem} item
+		 * @param {NestedDepartmentAvatarProps} avatar
+		 * @param {NestedDepartmentUserNameStyle} userNameStyle
+		 * @return {NestedDepartmentSelectorItem}
+		 */
 		getNonEmployeeStyles(item, avatar, userNameStyle)
 		{
 			return {

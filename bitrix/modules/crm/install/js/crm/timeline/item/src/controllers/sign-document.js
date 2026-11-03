@@ -1,5 +1,5 @@
 import { confirm } from 'crm.timeline.dialog';
-import { ajax as Ajax, Tag, Text, Loc } from 'main.core';
+import { ajax as Ajax, Tag, Text, Loc, Type } from 'main.core';
 import { Router } from 'crm.router';
 import { Base } from './base';
 import { ajax } from 'main.core';
@@ -69,6 +69,23 @@ export class SignDocument extends Base
 				},
 			});
 		}
+		else if (action === 'Activity:SignDocument:CopyUid')
+		{
+			this.#copyDocumentUid(actionData?.documentUid);
+		}
+	}
+
+	#copyDocumentUid(uid: ?string): void
+	{
+		if (!Type.isStringFilled(uid) || !BX.clipboard.copy(uid))
+		{
+			return;
+		}
+
+		UI.Notification.Center.notify({
+			content: Loc.getMessage('CRM_COMMON_ACTION_COPY_TO_CLIPBOARD_SUCCESS'),
+			autoHideDelay: 2000,
+		});
 	}
 
 	#deleteEntry(entryId): Promise

@@ -32,6 +32,137 @@ type PrivateStorage = {[key: string]: any};
 export const privateMap: WeakMap<PrivateMapKey, PrivateStorage> = new WeakMap();
 export const nameSymbol: Symbol = Symbol('name');
 
+/**
+ * Detaches one child of a node and returns the children it keeps. The list is returned rather than
+ * assigned here so that the node whose list it is stays the one that replaces it -- and a new list
+ * is built rather than the current one filtered in place, because replaceChild holds a reference to
+ * the current one as its snapshot.
+ */
+function childrenWithout(parentNode: BBCodeParentNode, target: BBCodeContentNode): Array<BBCodeContentNode>
+{
+	const keptChildren = [];
+
+	parentNode.children.forEach((node: BBCodeContentNode) => {
+		if (node === target)
+		{
+			node.setParent(null);
+		}
+		else
+		{
+			keptChildren.push(node);
+		}
+	});
+
+	return keptChildren;
+}
+
+/**
+ * The same for a whole batch of children, in one walk of the list. Takes the batch as an array
+ * instead of a list of arguments: spreading a batch of every child of a node hits the limit on the
+ * number of arguments of the engine, which is an order of magnitude lower than the number of
+ * children a document may hold.
+ */
+function childrenWithoutBatch(
+	parentNode: BBCodeParentNode,
+	nodes: Array<BBCodeContentNode>,
+): Array<BBCodeContentNode>
+{
+	// one node is the common case, through remove(), and a set of one costs more than it saves
+	if (nodes.length === 1)
+	{
+		return childrenWithout(parentNode, nodes[0]);
+	}
+
+	const targets: Set<BBCodeContentNode> = new Set(nodes);
+	const keptChildren = [];
+
+	parentNode.children.forEach((node: BBCodeContentNode) => {
+		if (targets.has(node))
+		{
+			node.setParent(null);
+		}
+		else
+		{
+			keptChildren.push(node);
+		}
+	});
+
+	return keptChildren;
+}
+
+/**
+ * Detaches a batch of nodes from their current parents, one call per parent instead of one per
+ * node: removing children one by one walks the whole child list of the parent every time, which
+ * costs a square of the batch size. The per-node remove() the callers still run afterwards fires
+ * only for a node passed twice in the same call, whose parent by then is the target node itself.
+ * The map is built on the first node that has a parent: most batches have none at all.
+ */
+export function detachFromParents(nodes: Array<BBCodeContentNode>)
+{
+	// a batch of one is the most common batch of all -- appending a single node -- and grouping it
+	// by parent would build a map to hold the one parent it already has
+	if (nodes.length === 1)
+	{
+		const parentNode: BBCodeParentNode | null = nodes[0].getParent();
+		if (parentNode)
+		{
+			parentNode.children = childrenWithout(parentNode, nodes[0]);
+		}
+
+		return;
+	}
+
+	let groups: ?Map<BBCodeParentNode, Array<BBCodeContentNode>> = null;
+
+	nodes.forEach((node: BBCodeContentNode) => {
+		const parentNode: BBCodeParentNode | null = node.getParent();
+		if (!parentNode)
+		{
+			return;
+		}
+
+		if (groups === null)
+		{
+			groups = new Map();
+		}
+
+		const group: ?Array<BBCodeContentNode> = groups.get(parentNode);
+		if (group)
+		{
+			group.push(node);
+		}
+		else
+		{
+			groups.set(parentNode, [node]);
+		}
+	});
+
+	if (groups === null)
+	{
+		return;
+	}
+
+	for (const [parentNode, group] of groups)
+	{
+		parentNode.children = childrenWithoutBatch(parentNode, group);
+	}
+}
+
+/**
+ * The place a node holds among the children of its parent, or the end of that list while the node
+ * is not in it. A node is parented before it is put into the list -- appendChild calls setParent
+ * first and pushes afterwards -- so a node that hoists its delayed children on mount looks for
+ * itself in a list it has yet to enter. Its place there is the end, where the push is about to put
+ * it. What the place must never be is -1: splice counts a negative index from the end of the list,
+ * which lands the children in a position that has nothing to do with the node.
+ */
+function positionInList(children: Array<BBCodeContentNode>, node: BBCodeNode): number
+{
+	const index: number = children.indexOf(node);
+
+	return index === -1 ? children.length : index;
+}
+
 export class BBCodeNode
 {
 	[nameSymbol]: string = '#unknown';
@@ -193,6 +324,15 @@ export class BBCodeNode
 	{
 		if (Type.isArray(children))
 		{
+			// the current children are detached before the list is dropped, not by appendChild
+			// afterwards: by then the grouped detach walks an empty list, finds none of them and
+			// leaves every one of them parented here, which costs appendChild a square again.
+			// Every one of them is a child of this node by definition, so grouping them by parent
+			// would build a map, a set and a copy of the list to arrive at the list itself
+			this.children.forEach((node: BBCodeContentNode) => {
+				node.setParent(null);
+			});
+
 			this.children = [];
 			this.appendChild(...children);
 		}
@@ -354,6 +494,8 @@ export class BBCodeNode
 	{
 		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 
+		detachFromParents(flattenedChildren);
+
 		flattenedChildren.forEach((node: BBCodeContentNode) => {
 			node.remove();
 			node.setParent(this);
@@ -364,6 +506,8 @@ export class BBCodeNode
 	prependChild(...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
 		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
+
+		detachFromParents(flattenedChildren);
 
 		flattenedChildren.forEach((node: BBCodeContentNode) => {
 			node.remove();
@@ -378,7 +522,7 @@ export class BBCodeNode
 		{
 			const parent: BBCodeContentNode = this.getParent();
 			const parentChildren: Array<BBCodeContentNode> = parent.getChildren();
-			const currentNodeIndex: number = parentChildren.indexOf(this);
+			const currentNodeIndex: number = positionInList(parentChildren, this);
 
 			const deleteCount: number = 0;
 			parentChildren.splice(currentNodeIndex, deleteCount, ...nodes);
@@ -393,9 +537,9 @@ export class BBCodeNode
 		{
 			const parent: BBCodeContentNode = this.getParent();
 			const parentChildren: Array<BBCodeContentNode> = parent.getChildren();
-			const currentNodeIndex: number = parentChildren.indexOf(this);
+			const currentNodeIndex: number = positionInList(parentChildren, this);
 
-			const startIndex: number = currentNodeIndex + 1;
+			const startIndex: number = Math.min(currentNodeIndex + 1, parentChildren.length);
 			const deleteCount: number = 0;
 			parentChildren.splice(startIndex, deleteCount, ...nodes);
 
@@ -431,36 +575,30 @@ export class BBCodeNode
 
 	removeChild(...children: Array<BBCodeContentNode>)
 	{
-		const filteredChildren = [];
-		this.children.forEach((node: BBCodeContentNode) => {
-			if (children.includes(node))
-			{
-				node.setParent(null);
-			}
-			else
-			{
-				filteredChildren.push(node);
-			}
-		});
-
-		this.children = filteredChildren;
+		this.children = childrenWithoutBatch(this, children);
 	}
 
 	replaceChild(targetNode: BBCodeContentNode, ...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
-		this.children = this.children.flatMap((node: BBCodeContentNode) => {
+		// the snapshot is taken before the detach: detaching an own child reassigns this.children
+		const snapshot: Array<BBCodeContentNode> = this.children;
+
+		this.children = snapshot.flatMap((node: BBCodeContentNode) => {
 			if (node === targetNode)
 			{
 				node.setParent(null);
 
+				// everything below happens only once the target is found: a replacement that does
+				// not happen must leave the new children with the parents they had
 				const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 
-				return flattenedChildren.map((child: BBCodeContentNode) => {
-					child.remove();
-					child.setParent(this);
+				detachFromParents(flattenedChildren);
 
-					return child;
+				flattenedChildren.forEach((child: BBCodeContentNode) => {
+					child.setParent(this);
 				});
+
+				return flattenedChildren;
 			}
 
 			return node;

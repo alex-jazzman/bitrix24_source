@@ -5,6 +5,8 @@
  * @var array $arResult
  */
 
+use Bitrix\Intranet\Integration\Templates\Air\CollaborationWebMenu;
+use Bitrix\Intranet\Internal\MainTool\AccessPolicy;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
@@ -19,20 +21,22 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 Main\Localization\Loc::loadMessages(__FILE__);
 use \Bitrix\Intranet\UI\LeftMenu;
 
-//Make some preparations. I do not know what it means.
-if ($presetId = \CUserOptions::GetOption("intranet", "left_menu_preset"))
+$isMainToolPickerEnabled = AccessPolicy::isFeatureEnabled();
+if (!$isMainToolPickerEnabled && ($presetId = \CUserOptions::GetOption("intranet", "left_menu_preset")))
 {
 	\CUserOptions::SetOption("intranet", "left_menu_preset_".SITE_ID, $presetId);
 	\CUserOptions::DeleteOption("intranet", "left_menu_preset", false, $USER->GetID());
 }
 //endregion
 
+$userId = \Bitrix\Intranet\CurrentUser::get()->getId();
 $defaultItems = $arResult;
 $menuUser = new LeftMenu\User();
-$menu = new LeftMenu\Menu($defaultItems, $menuUser);
+$menu = new LeftMenu\Menu($defaultItems, $menuUser, $userId);
 $isCollaber = Loader::includeModule('extranet')
-	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById(\Bitrix\Intranet\CurrentUser::get()->getId());
+	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($userId);
 $activePreset = LeftMenu\Preset\Manager::getPreset($isCollaber ? 'collab' : null);
+$effectiveMainToolState = LeftMenu\Preset\Manager::getEffectiveState(SITE_ID, (int)$userId);
 $menu->applyPreset($activePreset);
 $visibleItems = $menu->getVisibleItems();
 $firstPageChanger = ToolsManager::getInstance()->getFirstPageChanger();
@@ -53,7 +57,9 @@ $arResult = [
 	],
 	'IS_CUSTOM_PRESET_AVAILABLE' => LeftMenu\Preset\Custom::isAvailable(),
 	'CURRENT_PRESET_ID' => $activePreset->getCode(),
-	'PRESET_TOOLS_AVAILABILITY' => [
+	'IS_MAIN_TOOL_PICKER_ENABLED' => $isMainToolPickerEnabled,
+	'MAIN_TOOL_EFFECTIVE_STATE' => $effectiveMainToolState,
+	'PRESET_TOOLS_AVAILABILITY' => $isMainToolPickerEnabled ? [] : [
 		'crm' => ToolsManager::getInstance()->checkAvailabilityByToolId('crm'),
 		'tasks' => ToolsManager::getInstance()->checkAvailabilityByToolId('tasks'),
 		'sites' => ToolsManager::getInstance()->checkAvailabilityByToolId('sites'),
@@ -64,6 +70,23 @@ $arResult = [
 	'SHOW_SETTINGS_BUTTON' => ($arParams['SHOW_SETTINGS_BUTTON'] ?? 'Y') === 'Y'
 		&& $activePreset->getCode() !== 'collab',
 ];
+
+$collaborationMenuId = CollaborationWebMenu::getMenuId('collaboration');
+if ($collaborationMenuId !== null)
+{
+	$collapsibleItemIds = CollaborationWebMenu::getCollapsibleItemIds();
+
+	foreach (['show', 'hide'] as $visibility)
+	{
+		$arResult['ITEMS'][$visibility] = CollaborationWebMenu::prepareLeftMenuItems(
+			$arResult['ITEMS'][$visibility],
+			$collaborationMenuId,
+			SITE_DIR . 'online/',
+			SITE_DIR,
+			$collapsibleItemIds,
+		);
+	}
+}
 
 if ($arResult["IS_EXTRANET"] === false && count($defaultItems) > 0)
 {

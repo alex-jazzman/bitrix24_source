@@ -5,6 +5,7 @@ return [
 		'type',
 		'device/connection',
 		'haptics',
+		'assets/icons',
 		'layout/ui/feedback-form-opener',
 		'tokens',
 		'utils/function',

@@ -1,9 +1,8 @@
-import { Dom, Loc, Tag, Text, Type } from 'main.core';
-import { MemoryCache } from 'main.core.cache';
+import { Loc, Tag, Text, Type } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 import { FeatureStorage } from 'sign.feature-storage';
 import { DocumentInitiated, type DocumentInitiatedType, MemberRole, ProviderCode, type ProviderCodeType } from 'sign.type';
-import { Api, type SetupMember } from 'sign.v2.api';
+import { type AddGroupDocumentsItem, Api, type LoadedDocumentData, type SetupMember } from 'sign.v2.api';
 import type { ProviderSelectedEvent, CompanySelectedEvent } from 'sign.v2.b2e.company-selector';
 import { DocumentSend } from 'sign.v2.b2e.document-send';
 import { DocumentSetup } from 'sign.v2.b2e.document-setup';
@@ -20,9 +19,6 @@ import {
 	type SignOptionsConfig,
 	SignSettings,
 } from 'sign.v2.sign-settings';
-import { type SaveButton } from 'ui.buttons';
-import { Layout } from 'ui.sidepanel.layout';
-import { Uploader, UploaderEvent, type UploaderFile } from 'ui.uploader.core';
 import type { Metadata } from 'ui.wizard';
 import type { B2EFeatureConfig } from './type';
 import { EntityType } from 'sign.type';
@@ -46,18 +42,10 @@ type PartiesDetails = {
 	uid: string
 }
 
-const acceptedUploaderFileTypes: Set<string> = new Set([
-	'jpg',
-	'jpeg',
-	'png',
-	'pdf',
-	'doc',
-	'docx',
-	'rtf',
-	'odt',
-]);
-
 const createdTemplateUidSliderDataKey = 'signB2eDocumentActivityCreatedTemplateUid';
+
+// requests in flight while the wizard catches up with a batch: kept under the per-host connection limit
+const batchDocumentLoadLimit = 5;
 
 export class B2ESignSettings extends SignSettings
 {
@@ -68,9 +56,6 @@ export class B2ESignSettings extends SignSettings
 	documentSetup: DocumentSetup;
 	editedDocument: DocumentDetails | null;
 	#maxDocumentCount: boolean;
-	#cache: MemoryCache<any> = new MemoryCache();
-	#saveButton: SaveButton;
-	#isMultiDocumentSaveProcessGone: boolean = false;
 	#needSkipEditorStep: boolean;
 	#previewDocumentDropdown: SignDropdown | null = null;
 	#preventPreviewReady: boolean = false;
@@ -94,7 +79,7 @@ export class B2ESignSettings extends SignSettings
 		} = this.#prepareConfig(signOptions);
 		this.#fromRobot = Boolean(signOptions.fromRobot);
 
-		this.documentSetup = new DocumentSetup(blankSelectorConfig);
+		this.documentSetup = new DocumentSetup(blankSelectorConfig, () => this.groupId ?? 0);
 		this.documentSend = new DocumentSend(documentSendConfig);
 		this.#companyParty = new CompanyParty({
 			...blankSelectorConfig,
@@ -152,8 +137,13 @@ export class B2ESignSettings extends SignSettings
 		blankSelectorConfig.isOpenedAsFolder = isOpenedAsFolder;
 		blankSelectorConfig.initiatedByType = initiatedByType;
 		blankSelectorConfig.type = type;
+		blankSelectorConfig.batchUploadEnabled = FeatureStorage.isMultiDocumentLoadingEnabled()
+			&& FeatureStorage.isGroupSendingEnabled()
+			&& !isTemplateMode(documentMode)
+		;
 
 		documentSendConfig.documentMode = documentMode;
+		documentSendConfig.initiatedByType = initiatedByType;
 		documentSendConfig.isOpenedFromRobot = fromRobot;
 		documentSendConfig.templateFolderId = templateFolderId;
 
@@ -222,6 +212,13 @@ export class B2ESignSettings extends SignSettings
 			{
 				this.documentSetup.emit('addDocumentCompleted');
 			}
+		});
+		this.documentSetup.subscribe('batchDocumentsAdded', (event) => {
+			void this.#onBatchDocumentsAdded(event);
+		});
+		this.documentSetup.subscribe('batchAddMoreRequested', () => {
+			// synchronous chain from the popup button click: the file dialog needs the user gesture
+			this.documentSetup.blankSelector.browseBatchFiles();
 		});
 		this.documentSetup.subscribe('changeDocumentTitle', this.#onChangeDocumentTitle.bind(this));
 		this.documentSetup.subscribe('deleteDocument', ({ data }) => {
@@ -701,6 +698,19 @@ export class B2ESignSettings extends SignSettings
 		}
 	}
 
+	/**
+	 * The opposite of addInDocumentsGroupUids(): the order of the list is the order of the documents
+	 * in the group, so the entry is cut out and the rest keeps its places.
+	 */
+	#removeFromDocumentsGroupUids(uid: string): void
+	{
+		const index = this.documentsGroupUids.indexOf(uid);
+		if (index !== -1)
+		{
+			this.documentsGroupUids.splice(index, 1);
+		}
+	}
+
 	async #handleEditedDocument(documentData): Promise<void>
 	{
 		if (
@@ -963,6 +973,7 @@ export class B2ESignSettings extends SignSettings
 			entityId: companyId,
 			party: currentParty,
 			role: MemberRole.assignee,
+			signingMethod: representative.signingMethod,
 		};
 	}
 
@@ -1063,6 +1074,7 @@ export class B2ESignSettings extends SignSettings
 		const firstDocument = this.getFirstDocumentDataFromGroup();
 		const { entityId, representativeId, companyUid, companyEntityId, hcmLinkCompanyId } = firstDocument;
 		this.documentSend.documentData = this.documentsGroup;
+		this.documentSend.restoreSavedLanguage();
 
 		this.#disableDocumentSectionIfLimitReached();
 
@@ -1073,10 +1085,19 @@ export class B2ESignSettings extends SignSettings
 
 		const members = await this.#api.loadMembers(uid);
 
+		this.documentSend.hydrateReminderTypesFromMembers(members);
+
 		if (representativeId)
 		{
 			const memberEntityType = this.#getMemberEntityTypeByRole(members, MemberRole.assignee);
-			this.#companyParty.loadRepresentative(representativeId, memberEntityType);
+			const assignee = members.find(
+				(member: SetupMember): boolean => member.role === MemberRole.assignee,
+			);
+			this.#companyParty.loadRepresentative(
+				representativeId,
+				memberEntityType,
+				assignee?.signingMethod,
+			);
 		}
 
 		const parsedMembers = this.#parseMembers(members);
@@ -1129,11 +1150,6 @@ export class B2ESignSettings extends SignSettings
 			{
 				const layout = signSettings.documentSetup.layout;
 				SignSettingsItemCounter.numerate(layout);
-
-				if (!Type.isNull(signSettings.getAfterPreviewLayout()))
-				{
-					BX.show(signSettings.getAfterPreviewLayout());
-				}
 
 				return layout;
 			},
@@ -1190,11 +1206,6 @@ export class B2ESignSettings extends SignSettings
 				this.#processSetupData();
 				this.#disableDocumentSectionIfLimitReached();
 
-				if (!Type.isNull(this.getAfterPreviewLayout()))
-				{
-					BX.hide(this.getAfterPreviewLayout());
-				}
-
 				return true;
 			},
 		};
@@ -1246,6 +1257,10 @@ export class B2ESignSettings extends SignSettings
 						// eslint-disable-next-line no-await-in-loop
 						await this.#companyParty.save(uid);
 					}
+					// After the company is stored, so that the document already knows the provider the
+					// answer depends on, and before the step is left, so that the person who may not sign
+					// as the head is corrected on the screen where he was chosen.
+					await this.#companyParty.validateRepresentativeSigningMethod(this.#documentUid);
 					this.#regionalSettings.companyId = this.#companyParty.getSelectedCompanyId();
 					this.#regionalSettings.documentsGroup = this.documentsGroup;
 
@@ -1406,11 +1421,7 @@ export class B2ESignSettings extends SignSettings
 			{
 				const layout = signSettings.documentSend.getLayout();
 				SignSettingsItemCounter.numerate(layout);
-
-				if (!signSettings.documentSend.isDateTimeLimitSelectorValid())
-				{
-					signSettings.wizard.toggleBtnActiveState('complete', true);
-				}
+				signSettings.documentSend.refreshDateSignUntilBlocker();
 
 				return layout;
 			},
@@ -1455,11 +1466,6 @@ export class B2ESignSettings extends SignSettings
 	{
 		await super.init(uid, templateUid);
 		this.#setPreviewDocumentDropdownItems();
-
-		if (this.isEditMode() && !Type.isNull(this.getAfterPreviewLayout()))
-		{
-			BX.hide(this.getAfterPreviewLayout());
-		}
 
 		if (this.isEditMode())
 		{
@@ -1662,6 +1668,265 @@ export class B2ESignSettings extends SignSettings
 		}
 	}
 
+	/**
+	 * Batch documents are already created and attached to the group by the server, so the group
+	 * API is not called again here: only the wizard state catches up. Order of items repeats
+	 * the order of files chosen by the user.
+	 */
+	async #onBatchDocumentsAdded(event: BaseEvent): Promise<void>
+	{
+		const {
+			groupId,
+			items = [],
+			reservationToken = null,
+			resolveGroup = null,
+		} = event.getData() ?? {};
+		try
+		{
+			const groupAccepted = this.#adoptBatchGroupId(groupId);
+			resolveGroup?.(groupAccepted);
+			if (!groupAccepted)
+			{
+				this.#reportBatchDocumentsFailed(items.filter((item) => item.success === true));
+
+				return;
+			}
+
+			await this.#applyBatchDocuments(items, reservationToken);
+		}
+		finally
+		{
+			// A safety net for the paths that return before the counter is synchronised: releasing
+			// a token that is already gone does nothing.
+			this.documentSetup.releaseBatchReservation(reservationToken);
+		}
+	}
+
+	async #applyBatchDocuments(
+		items: Array<AddGroupDocumentsItem>,
+		reservationToken: ?number = null,
+	): Promise<void>
+	{
+		const successItems = items.filter((item) => item.success === true);
+		if (successItems.length === 0)
+		{
+			return;
+		}
+
+		const loadings = this.#loadBatchDocuments(successItems.map((item) => item.uid));
+		const failedItems = [];
+		let firstBatchDocument = null;
+		let previewRendering = null;
+		for (const [index, item] of successItems.entries())
+		{
+			// requests are already in flight; awaiting them by index keeps the order of the batch
+			// eslint-disable-next-line no-await-in-loop
+			const documentData = await loadings[index];
+			if (documentData === null)
+			{
+				failedItems.push(item);
+				continue;
+			}
+
+			try
+			{
+				// the placeholder flag is known to the server only: the blanks of a batch are
+				// created there and never reach the tiles of the blank selector
+				const documentDetails = {
+					...documentData,
+					groupId: this.groupId,
+					hasPlaceholders: item.hasPlaceholders === true,
+				};
+				this.documentsGroup.set(item.uid, documentDetails);
+				this.addInDocumentsGroupUids(item.uid);
+				this.documentSetup.renderDocumentBlock(documentDetails);
+				this.documentSetup.blankSelector.disableSelectedBlank(documentDetails.blankId);
+				if (firstBatchDocument === null)
+				{
+					firstBatchDocument = documentDetails;
+
+					// The dropdown selects documentSetup.setupData.uid, so setting it keeps the preview
+					// and the selected item on the same document even when the group already had documents.
+					this.documentSetup.setupData = documentDetails;
+
+					// the preview needs the first document only, so it starts without waiting for the rest.
+					// Batch documents already exist on the server, so their pages may be prepared before
+					// waitForPagesList() subscribes to blankIsReady.
+					// A failed preview must not stop the rest of the batch from reaching the wizard.
+					previewRendering = this.renderPages(documentDetails, true, false).catch(() => null);
+				}
+			}
+			catch
+			{
+				// the document did not make it into the wizard, so it must not stay in the group
+				// either: a row showing a failure while its document goes to the signing is worse
+				// than both. The rest of the batch is applied as usual.
+				this.documentsGroup.delete(item.uid);
+				this.#removeFromDocumentsGroupUids(item.uid);
+				failedItems.push(item);
+				if (firstBatchDocument?.uid === item.uid)
+				{
+					// the role of the first document goes to the next one that makes it through:
+					// it sets the preview and the selected item on a document of the group
+					firstBatchDocument = null;
+					previewRendering = null;
+				}
+			}
+		}
+
+		await this.#discardBatchDocuments(failedItems);
+		this.#reportBatchDocumentsFailed(failedItems);
+		this.documentSetup.documentCounters?.update(this.documentsGroup.size);
+		// The places of this commit are held by the counter from here on, so the reservation goes
+		// right away. Keeping it until the preview is ready would count these documents twice, and
+		// a selection made in the meantime would be rejected by a limit that is not reached.
+		this.documentSetup.releaseBatchReservation(reservationToken);
+		this.documentSend.setDocumentsBlock(this.documentsGroup);
+		this.#regionalSettings.documentsGroup = this.documentsGroup;
+		this.#disableDocumentSectionIfLimitReached();
+
+		if (firstBatchDocument === null)
+		{
+			return;
+		}
+
+		await previewRendering;
+
+		if (this.isGroupDocuments())
+		{
+			this.#setPreviewDocumentDropdownItems();
+		}
+
+		this.#togglePreviewDocumentDropdown();
+		this.#enableNextWhenPreviewReady();
+	}
+
+	/**
+	 * Takes the documents that never made it into the wizard off the group on the server.
+	 *
+	 * The wizard does not know about such a document, but the group does: configuring and the
+	 * progress of the sending walk the server composition of the group, so a document hidden from
+	 * the user would either be sent along with the rest or hold the completion of the process for
+	 * good. One repeat covers a removal that failed on the way.
+	 */
+	async #discardBatchDocuments(items: Array<AddGroupDocumentsItem>): Promise<void>
+	{
+		for (const item of items)
+		{
+			const uid = item.uid;
+			if (!Type.isStringFilled(uid))
+			{
+				continue;
+			}
+
+			try
+			{
+				// eslint-disable-next-line no-await-in-loop
+				await this.#api.removeDocument(uid);
+				continue;
+			}
+			catch
+			{
+				// a single repeat, right away
+			}
+
+			try
+			{
+				// eslint-disable-next-line no-await-in-loop
+				await this.#api.removeDocument(uid);
+			}
+			catch
+			{
+				// The document stays in the group of the server. Nothing else here can take it out,
+				// and hiding the failure would be worse: the row of the file reports it, and the
+				// document itself shows up in the process the next time the group is read.
+			}
+		}
+	}
+
+	/**
+	 * The documents exist on the server but never made it into the wizard, so they would silently
+	 * stay out of the sending: the rows of their files say so instead of showing them as uploaded.
+	 */
+	#reportBatchDocumentsFailed(items: Array<AddGroupDocumentsItem>): void
+	{
+		if (items.length === 0)
+		{
+			return;
+		}
+
+		this.documentSetup.failBatchDocuments(items.map((item) => String(item.fileId)));
+	}
+
+	/**
+	 * A group other than the current one means the documents of the answer belong elsewhere: taking
+	 * them into this wizard would leave them out of the sending, so they are refused instead.
+	 */
+	#adoptBatchGroupId(groupId: number): boolean
+	{
+		if (!Type.isNumber(groupId) || groupId <= 0)
+		{
+			return true;
+		}
+
+		if (Type.isNumber(this.groupId) && this.groupId > 0 && this.groupId !== groupId)
+		{
+			window.top.BX.UI.Notification.Center.notify({
+				content: Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_BATCH_GROUP_MISMATCH'),
+			});
+
+			return false;
+		}
+
+		this.groupId = groupId;
+
+		return true;
+	}
+
+	/**
+	 * Loads the documents of a batch with a limited number of requests in flight: request N waits
+	 * for request N - batchDocumentLoadLimit. A failed load resolves to null and never rejects,
+	 * so the caller applies the results by index without losing the rest of the batch.
+	 */
+	#loadBatchDocuments(uids: string[]): Array<Promise<LoadedDocumentData | null>>
+	{
+		const loadings: Array<Promise<LoadedDocumentData | null>> = [];
+		uids.forEach((uid: string, index: number) => {
+			const slot = index < batchDocumentLoadLimit
+				? Promise.resolve()
+				: loadings[index - batchDocumentLoadLimit]
+			;
+			loadings.push(slot.then(() => this.#loadBatchDocument(uid)));
+		});
+
+		return loadings;
+	}
+
+	/**
+	 * One repeat covers a load that failed on the way; after that the document is reported as
+	 * failed instead of being dropped from the batch without a trace.
+	 */
+	async #loadBatchDocument(uid: string): Promise<LoadedDocumentData | null>
+	{
+		try
+		{
+			return await this.#api.loadDocument(uid);
+		}
+		catch
+		{
+			// a single repeat, right away: the wizard is waiting for the document
+		}
+
+		try
+		{
+			return await this.#api.loadDocument(uid);
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
 	async #setDocumentInGroup(setupData: DocumentDetails): Promise<void>
 	{
 		if (this.documentSetup.blankIsNotSelected)
@@ -1737,243 +2002,6 @@ export class B2ESignSettings extends SignSettings
 		if (this.documentsGroup.size >= this.#maxDocumentCount)
 		{
 			this.documentSetup.setAvailabilityDocumentSection(false);
-		}
-	}
-
-	getAfterPreviewLayout(): HTMLElement | null
-	{
-		if (!this.isDocumentMode() || !FeatureStorage.isMultiDocumentLoadingEnabled())
-		{
-			return null;
-		}
-
-		return this.#cache.remember('beforePreviewLayout', () => Tag.render`
-			<button class="ui-btn ui-btn-light-border ui-btn-md" style="margin-top: 20px;" onclick="${() => this.#onBeforePreviewBtnClick()}">
-				${Loc.getMessage('SIGN_SETTINGS_B2E_BEFORE_PREVIEW')}
-			</button>
-		`);
-	}
-
-	#onBeforePreviewBtnClick(): void
-	{
-		// eslint-disable-next-line unicorn/no-this-assignment
-		const self = this;
-		BX.SidePanel.Instance.open('sign-settings:afterPreviewSidePanel', {
-			cacheable: false,
-			width: 750,
-			contentCallback: () => {
-				self.#resetAfterPreviewSidePanel();
-
-				return Layout.createContent({
-					extensions: ['ui.forms'],
-					title: Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_ADD_FILES_FOLDER_TITLE'),
-					content(): void
-					{
-						self.#getUploader();
-
-						return self.#getMultiDocumentAddSidePanelContent();
-					},
-					buttons({ cancelButton, SaveButton })
-					{
-						self.#saveButton = new SaveButton({
-							onclick: () => self.#onBeforePreviewSaveBtnClick(),
-						});
-
-						return [
-							self.#saveButton,
-						];
-					},
-				});
-			},
-			events: {
-				onClose: (event) => {
-					if (this.#isMultiDocumentSaveProcessGone)
-					{
-						event.denyAction();
-					}
-					this.#resetAfterPreviewSidePanel();
-				},
-			},
-		});
-	}
-
-	#getMultiDocumentAddSidePanelContent(): HTMLElement
-	{
-		return this.#cache.remember('multiDocumentAddSidePanelContent', () => Tag.render`
-			<div id="multiple-document-add-container" style="display: flex; flex-direction: column;">
-				<div style="flex-direction: row;">
-					${this.#getUploadFileFromDirButton().root}
-					${this.#getUploadFileButton()}
-				</div>
-			</div>
-		`);
-	}
-
-	#getUploader(): Uploader
-	{
-		return this.#cache.remember('uploader', () => {
-			return new Uploader({
-				id: 'sign-settings-uploader',
-				controller: 'sign.upload.blankUploadController',
-				acceptedFileTypes: [...acceptedUploaderFileTypes.values()].map((a) => `.${a}`),
-				multiple: true,
-				autoUpload: false,
-				maxFileSize: 52_428_800,
-				imageMaxFileSize: 10_485_760,
-				maxTotalFileSize: 52_428_800,
-				events: {
-					[UploaderEvent.BEFORE_FILES_ADD]: (event) => this.#onBeforeFilesAdd(event),
-					[UploaderEvent.FILE_ADD]: (event) => this.#onFileAdd(event.getData().file),
-					[UploaderEvent.UPLOAD_COMPLETE]: (event) => this.#onUploadComplete(event),
-				},
-			});
-		});
-	}
-
-	#resetAfterPreviewSidePanel(): void
-	{
-		this.#cache.delete('uploader');
-		this.#cache.delete('uploadButton');
-		this.#cache.delete('uploadFromDirButton');
-		this.#cache.delete('multiDocumentAddSidePanelContent');
-	}
-
-	#getUploadFileButton(): HTMLElement
-	{
-		return this.#cache.remember('uploadButton', () => {
-			const layout = Tag.render`
-				<div>
-					<button class="ui-btn ui-btn-light-border" style="margin-top: 15px;" onclick="${() => layout.fileInput.click()}">${Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_ADD_FILE')}</button>
-					<input ref="fileInput" hidden type="file" multiple ref="fileInput" onchange="${(event) => {
-							this.#onInputFileChange(event);
-							event.target.value = '';
-						}}"
-						accept="${[...acceptedUploaderFileTypes.values()].map((n) => `.${n}`).join(', ')}"
-					>
-				</div>
-			`;
-
-			return layout.root;
-		});
-	}
-
-	#getUploadFileFromDirButton(): { root: HTMLElement, fileInput: HTMLInputElement }
-	{
-		return this.#cache.remember('uploadFromDirButton', () => {
-			const layout = Tag.render`
-				<div>
-					<button class="ui-btn ui-btn-primary" style="margin-top: 15px;" onclick="${() => layout.fileInput.click()}">${Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_LOAD_FROM_DIRS')}</button>
-					<input hidden type="file" webkitdirectory multiple ref="fileInput" onchange="${(event) => {
-						this.#onInputFileChange(event);
-						event.target.value = '';
-					}}">
-				</div>
-			`;
-
-			return layout;
-		});
-	}
-
-	#onInputFileChange(event: Event): void
-	{
-		const target: HTMLInputElement = event.target;
-		const files = target.files;
-		const validatedFiles = [...files].filter((f: File) => acceptedUploaderFileTypes.has(
-			f.name.split('.').at(-1),
-		));
-		this.#getUploader().addFiles(validatedFiles);
-	}
-
-	#onFileAdd(file: UploaderFile): void
-	{
-		Dom.insertAfter(
-			Tag.render`<p style="color: #666">${Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_LOADED_FILE_NAME', { '#FILENAME#': Text.encode(file.getName()) })}</p>`,
-			this.#getUploadFileButton(),
-		);
-	}
-
-	#onBeforePreviewSaveBtnClick(): void
-	{
-		if (this.#getUploader().getFiles().length === 0)
-		{
-			alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_NO_FILES_SELECTED'));
-
-			return;
-		}
-
-		Dom.style(this.#getMultiDocumentAddSidePanelContent(), { opacity: 0.6, 'pointer-events': 'none' });
-		this.#isMultiDocumentSaveProcessGone = true;
-		this.#getUploader().start();
-		this.#saveButton.setClocking(true);
-	}
-
-	async #onUploadComplete(event: BaseEvent): void
-	{
-		const uploader = this.#getUploader();
-		for (const file of uploader.getFiles())
-		{
-			try
-			{
-				const blankId = await this.documentSetup.blankSelector.createBlankFromOuterUploaderFiles([file]);
-				this.documentSetup.blankSelector.selectBlank(blankId);
-				await this.setDocumentsGroup();
-			}
-			catch (e)
-			{
-				console.error(`Error while add file with name ${file.getName()}`, e);
-			}
-		}
-
-		Dom.style(this.#getMultiDocumentAddSidePanelContent(), { opacity: 1, 'pointer-events': 'auto' });
-		this.#isMultiDocumentSaveProcessGone = false;
-		this.#saveButton.setClocking(false);
-		BX.SidePanel.Instance.close();
-	}
-
-	#onBeforeFilesAdd(event: BaseEvent<{ files: Array<UploaderFile> }>): void
-	{
-		const uploaderConfig = {
-			maxFileSize: 52_428_800,
-			imageMaxFileSize: 10_485_760,
-			maxTotalFileSize: 52_428_800,
-		};
-		const data = event.getData();
-		const files: UploaderFile[] = data.files;
-		const uploader = this.#getUploader();
-		const allFilesWithNew: UploaderFile[] = [...files, ...uploader.getFiles()];
-
-		if ((allFilesWithNew.length + this.documentsGroup.size) > this.#maxDocumentCount)
-		{
-			alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_DOCUMENTS_COUNT_EXCEEDED_NOTICE'));
-			event.preventDefault();
-
-			return;
-		}
-
-		for (const file of files)
-		{
-			if (file.getSize() > uploaderConfig.maxFileSize)
-			{
-				alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_INVALID_FILE_SIZE'));
-				event.preventDefault();
-
-				return;
-			}
-
-			if (file.isImage() && file.getSize() > uploaderConfig.imageMaxFileSize)
-			{
-				alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_INVALID_IMAGE_FILE_SIZE'));
-				event.preventDefault();
-
-				return;
-			}
-		}
-
-		const totalFileSize = allFilesWithNew.reduce((acc, file) => acc + file.getSize(), 0);
-		if (totalFileSize > uploaderConfig.maxTotalFileSize)
-		{
-			alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_TOTAL_FILE_SIZE_EXCEEDED'));
-			event.preventDefault();
 		}
 	}
 

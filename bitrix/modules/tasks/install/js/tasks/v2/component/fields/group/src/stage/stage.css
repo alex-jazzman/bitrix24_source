@@ -1,6 +1,19 @@
+/* stage button reset */
 .tasks-field-group-stage {
-	--stage-color: #0075FF;
-	--stage-background: #E6F4FF;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: inherit;
+	font-family: inherit;
+	text-align: left;
+}
+/* stage button reset end */
+
+.tasks-field-group-stage {
+	--stage-color: var(--ui-color-accent-main-primary);
+	--stage-background: var(--ui-color-accent-soft-blue-2);
 
 	position: relative;
 	display: flex;
@@ -10,6 +23,12 @@
 	cursor: pointer;
 }
 
+.tasks-field-group-stage:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
 .tasks-field-group-stage.--readonly {
 	cursor: default;
 }
@@ -17,7 +36,7 @@
 .tasks-field-group-stage-text-container {
 	display: flex;
 	align-items: center;
-	min-width: 140px;
+	min-width: min(140px, 100%);
 	padding: 5px 0 5px 10px;
 	border-radius: 6px 0 0 6px;
 	background: var(--stage-background);

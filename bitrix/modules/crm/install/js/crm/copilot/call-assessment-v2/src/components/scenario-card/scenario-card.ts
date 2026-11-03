@@ -211,6 +211,7 @@ export const ScenarioCard = defineComponent({
 			<header v-if="isEditMode" class="crm-call-assessment-v2-scenario-card__header">
 				<div class="crm-call-assessment-v2-scenario-card__header-text">
 					<div class="crm-call-assessment-v2-scenario-card__heading-row">
+						<BIcon class="crm-call-assessment-v2-scenario-card__heading-icon" :name="Outline.CHATS" :size="24"/>
 						<HeadlineSm class="crm-call-assessment-v2-scenario-card__heading" tag="h2" accent>
 							{{ loc('CRM_CALL_ASSESSMENT_V2_CRITERIA_HEADING') }}
 						</HeadlineSm>

@@ -22,7 +22,7 @@ export type BlockDescriptor = {
 	type: NodeBlockType,
 	// surfaces to render on: 'rules' (Settings toolbar) and/or 'basic' (Basic tab)
 	surfaces: Array<'rules' | 'basic'>,
-	// sort order (stable for existing blocks: condition < action < filter < output)
+	// sort order of the Settings toolbar row: condition < action < output < filter
 	sort: number,
 	// how to add from the Settings toolbar (optional; absent means the block has no toolbar button)
 	toolbar?: {

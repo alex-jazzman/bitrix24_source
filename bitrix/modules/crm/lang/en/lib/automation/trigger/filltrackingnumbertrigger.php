@@ -4,5 +4,5 @@ $MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_DESCRIPTION"] = "Changes the stage w
 $MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_EVENT_DATE_TIME"] = "Tracking number entered date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_NAME"] = "Tracking number added";
 $MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_NAME_1"] = "Shipment ID was specified";
-$MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_NODE_DESCRIPTION"] = "Triggered after a Shipment ID was specified.";
+$MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_NODE_DESCRIPTION"] = 'Triggered after a Shipment ID is specified for an order shipment.';
 $MESS["CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_PROPERTY_SERVICE"] = "Delivery service";

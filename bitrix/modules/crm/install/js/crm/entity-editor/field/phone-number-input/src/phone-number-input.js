@@ -9,7 +9,7 @@ import './phone-number-input.css';
 
 const NAMESPACE = Reflection.namespace('BX.Crm');
 const FLAG_ICON_PATH = '/bitrix/js/crm/entity-selector/src/images/';
-const FLAG_ICON_EXT = 'png';
+const FLAG_ICON_EXT = 'webp';
 const FLAG_SIZE = 24;
 const PLUS_CHAR = '+';
 const GLOBAL_COUNTRY_CODE = 'XX';

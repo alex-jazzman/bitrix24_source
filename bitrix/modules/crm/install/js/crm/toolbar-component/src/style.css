@@ -32,3 +32,30 @@
 	width: 1.2em;
 	height: 1.2em;
 }
+
+.crm-toolbar-category-menu-item,
+.crm-toolbar-category-menu-item .menu-popup-item-text,
+.crm-toolbar-category-menu-item-content {
+	display: flex;
+	min-width: 0;
+	white-space: nowrap;
+}
+
+.crm-toolbar-category-menu-item .menu-popup-item-text,
+.crm-toolbar-category-menu-item-content {
+	flex: 1;
+	overflow: hidden;
+}
+
+.crm-toolbar-category-menu-item-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.crm-toolbar-category-menu-item-counter {
+	flex-shrink: 0;
+	white-space: nowrap;
+	margin-left: 6px;
+}

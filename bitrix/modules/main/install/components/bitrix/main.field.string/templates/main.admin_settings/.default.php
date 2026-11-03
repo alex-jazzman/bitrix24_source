@@ -9,18 +9,19 @@ use Bitrix\Main\Localization\Loc;
  * @var array $additionalParameters
  */
 $additionalParameters = $arResult['additionalParameters'];
+$defaultValueFieldId = 'main-field-string-default-value-' . $this->randString();
 ?>
 
 <tr>
-	<td><?= Loc::getMessage('USER_TYPE_STRING_DEFAULT_VALUE') ?>:</td>
+	<td><label for="<?= $defaultValueFieldId ?>"><?= Loc::getMessage('USER_TYPE_STRING_DEFAULT_VALUE') ?>:</label></td>
 	<td>
-		<input
-			type="text"
+		<textarea
+			id="<?= $defaultValueFieldId ?>"
 			name="<?= $additionalParameters['NAME'] ?>[DEFAULT_VALUE]"
-			size="20"
 			maxlength="225"
-			value="<?= $arResult['values']['defaultValue'] ?>"
+			rows="3"
 		>
+<?= $arResult['values']['defaultValue'] ?></textarea>
 	</td>
 </tr>
 <tr>

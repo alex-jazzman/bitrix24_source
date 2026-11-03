@@ -22,34 +22,114 @@
 	z-index: 1000;
 }
 
+/* The field arrives rather than blinking into place: it is hidden outright while closed, so a
+   transition has nothing to run on and the beat has to be an animation. It travels a few
+   pixels from the button it replaces — the only motion in the dialog that is allowed a
+   distance, because this element is positioned absolutely and moves nothing beside it. */
 .disk-picker__filter-host.--open {
 	display: flex;
+	animation: disk-picker-search-in var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+@keyframes disk-picker-search-in {
+	from {
+		opacity: 0;
+		transform: translateX(12px) scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker__filter-host.--open {
+		animation: none;
+	}
 }
 
 /*
  * The relocated standard filter keeps its own natural width (~240px) inside the
  * host, so its search field must be stretched to fill the slot. Scoped to the
  * picker's own host so page-level filters are untouched.
+ *
+ * It is also dressed as a control of this header rather than as a field of a page: the
+ * filter brings the light surface it has everywhere else, and on the glass that plate
+ * stood out as something borrowed. A film of white, the ring the buttons beside it carry
+ * and the corner of a medium button put it on the same surface as they are.
  */
+/* The field fills the slot and, just as important, is allowed to leave it: a flex item does not
+   shrink past its content unless it is told to, and the filter brings a chip, an input and two
+   glyphs of content. Without this the field kept its natural width whatever the slot measured,
+   and on a long path it ran over the buttons at the end of the header. */
 .disk-picker__filter-host .main-ui-filter-search {
 	flex-grow: 1;
 	width: 100%;
+	min-width: 0;
 	max-width: none;
+	overflow: hidden;
+}
+
+.disk-picker__filter-host .main-ui-filter-search-wrap {
+	min-width: 0;
+	overflow: hidden;
+}
+
+
+/* The fill is written against the filter's own air theme, which paints the field through a
+   selector of the same weight as ours and is loaded after us. */
+.disk-picker__filter-host .main-ui-filter-search.main-ui-filter-theme-air {
+	box-sizing: border-box;
+	padding: 0 var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-vibrant-less-more);
+	box-shadow: inset 0 0 0 var(--ui-border-width-thin) var(--ui-color-divider-vibrant-accent-more);
 }
 
 .disk-picker__filter-host .main-ui-filter-search-filter {
 	flex-grow: 1;
 	width: 100%;
+	min-width: 0;
+	color: var(--ui-color-base-1);
+}
+
+/* The placeholder keeps the weight it has on a light field: one step down from the text. */
+.disk-picker__filter-host .main-ui-filter-search-filter::placeholder {
+	color: var(--ui-color-base-3);
+}
+
+/* The glyphs of the field — the magnifier, the clear cross — are masks painted through
+   `background`, so their shade is set there and not with `color`. */
+.disk-picker__filter-host .main-ui-item-icon {
+	background: var(--ui-color-base-3);
+}
+
+.disk-picker__filter-host .main-ui-item-icon:hover {
+	background: var(--ui-color-base-1);
+}
+
+/* A chosen filter value is a chip inside the field: on the glass its light-blue plate read as
+   a second surface, so it takes the glass of the field, a step denser. */
+.disk-picker__filter-host .main-ui-filter-search-square {
+	background: var(--ui-color-bg-vibrant-default);
+	color: var(--ui-color-base-1);
 }
 
 /*
  * Shared thin scrollbar for every scrolling surface: the file list/table, the
  * source sidebar and the preview panel. Styled through the ::-webkit-scrollbar
- * pseudo-elements only. The standard `scrollbar-width`/`scrollbar-color` are
- * deliberately not set: in current Chrome, once `scrollbar-width` is present the
- * browser draws the native scrollbar and ignores the custom pseudo-element width,
- * colour and radius, so the two cannot be combined. The transparent border with
- * `background-clip: padding-box` insets the thumb into a floating pill.
+ * pseudo-elements. The standard `scrollbar-width`/`scrollbar-color` are set only in the
+ * branch for browsers without that pseudo-element (Firefox): in current Chrome, once
+ * `scrollbar-width` is present the browser draws the native scrollbar and ignores the
+ * custom pseudo-element width, colour and radius, so the two cannot be combined. The
+ * transparent border with `background-clip: padding-box` insets the thumb into a
+ * floating pill.
+ *
+ * With a hovering pointer the thumb is shown only while its surface is hovered, dragged or
+ * keyboard-focused; only its colour toggles, the bar keeps its width so content never shifts.
+ * The state is a custom property on the surface: Chromium restyles a custom scrollbar only when
+ * its owner's computed style changes, and a panel can set its own colour the same way.
  */
 .disk-picker-item-browser::-webkit-scrollbar,
 .disk-picker-source-sidebar__scroll::-webkit-scrollbar,
@@ -66,34 +146,60 @@
 
 .disk-picker-item-browser::-webkit-scrollbar-thumb,
 .disk-picker-source-sidebar__scroll::-webkit-scrollbar-thumb,
+/* The colour comes from the surface: a light grey step on the plate, a white film on the glass
+   of the sources. The hover state below keeps the hue and only gains density. */
 .disk-picker-preview-panel::-webkit-scrollbar-thumb {
-	background-color: var(--ui-color-base-5);
+	background-color: var(--disk-picker-scrollbar-thumb-state, var(--disk-picker-scrollbar-thumb));
 	background-clip: padding-box;
 	border: 2px solid transparent;
 	border-radius: 8px;
 }
 
+@media (hover: hover) {
+	.disk-picker-item-browser,
+	.disk-picker-source-sidebar__scroll,
+	.disk-picker-preview-panel {
+		--disk-picker-scrollbar-thumb-state: transparent;
+	}
+
+	/* `:active` keeps the thumb while it is dragged past the surface edge. */
+	.disk-picker-item-browser:hover,
+	.disk-picker-item-browser:focus-visible,
+	.disk-picker-item-browser:has(:focus-visible),
+	.disk-picker-item-browser:active,
+	.disk-picker-source-sidebar__scroll:hover,
+	.disk-picker-source-sidebar__scroll:focus-visible,
+	.disk-picker-source-sidebar__scroll:has(:focus-visible),
+	.disk-picker-source-sidebar__scroll:active,
+	.disk-picker-preview-panel:hover,
+	.disk-picker-preview-panel:focus-visible,
+	.disk-picker-preview-panel:has(:focus-visible),
+	.disk-picker-preview-panel:active {
+		--disk-picker-scrollbar-thumb-state: var(--disk-picker-scrollbar-thumb);
+	}
+}
+
 .disk-picker-item-browser::-webkit-scrollbar-thumb:hover,
 .disk-picker-source-sidebar__scroll::-webkit-scrollbar-thumb:hover,
 .disk-picker-preview-panel::-webkit-scrollbar-thumb:hover {
-	background-color: var(--ui-color-base-4);
+	background-color: var(--disk-picker-scrollbar-thumb-hover);
 }
 
-.disk-picker-skeleton__sidebar-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: var(--ui-space-inline-xs);
-	padding: 0 var(--ui-space-inset-xs);
-	height: 36px;
+/* Firefox: the bar keeps its system shape and reserved width; the same state toggles its colour. */
+@supports not selector(::-webkit-scrollbar) {
+	.disk-picker-item-browser,
+	.disk-picker-source-sidebar__scroll,
+	.disk-picker-preview-panel {
+		scrollbar-width: thin;
+		scrollbar-color: var(--disk-picker-scrollbar-thumb-state, var(--disk-picker-scrollbar-thumb)) transparent;
+	}
 }
 
-.disk-picker-skeleton__sidebar-row:first-child {
-	height: 44px;
-}
-
+/* The same side inset the list has, so the placeholders start where the rows and the group
+   labels will: in the loaded dialog that inset lives on the scrolling item-browser, which the
+   skeleton does not render. */
 .disk-picker-skeleton__group-title {
-	padding: 0 var(--ui-space-inset-xs);
+	padding: 0 var(--ui-space-inset-lg);
 	margin-top: var(--ui-space-stack-md);
 	margin-bottom: var(--ui-space-stack-xs);
 }
@@ -116,7 +222,7 @@
 	flex-direction: row;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
-	padding: 0 var(--ui-space-inset-xs);
+	padding: 0 var(--ui-space-inset-lg);
 	height: 44px;
 }
 
@@ -139,61 +245,322 @@
 	max-width: 240px;
 }
 
+.disk-picker-skeleton__footer-actions {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+/* Registered so that getComputedStyle() returns a resolved length even when the advance is
+   written with calc() or var(): readMetrics() in lib/metrics parses that value as px. */
+@property --disk-picker-list-row-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-group-title-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-table-row-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-source-row-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-source-group-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+/* The popup shell is created by the outer disk.disk-picker extension, which builds no CSS of
+   its own, so the ground of the dialog lives here: this bundle is always loaded before the
+   popup is shown. The 1.4px ring has no token yet (between thin 1px and medium 1.5px), so it
+   waits as a local value. */
+.disk-picker-popup {
+	/* main.popup owns the shell's fill, shadow, border and radius through these variables, and
+	   its own rules would override plain declarations here — so they are cleared through the
+	   variables it reads and the ground is painted below. */
+	--popup-window-background-color: transparent;
+	--popup-window-box-shadow: none;
+	--popup-window-border: none;
+	/* Four past the largest step of the scale: the dialog is wider than anything the scale was
+	   drawn for, and at 20 its corners read as sharp against that width. */
+	--popup-window-border-radius: 24px;
+
+	box-sizing: border-box;
+	position: relative;
+	/* The ground of the dialog is the portal's own wallpaper, in the blurred copy the theme
+	   publishes for exactly this: a picture behind glass, the way the reference concept is built.
+	   There the background is a photograph and the panels blur it with a backdrop filter; here
+	   the blur has already been applied to the file, so the panels only have to lie on it.
+
+	   The theme variable is read through a local one so that a portal without a theme picture
+	   falls back to `none` and the sweep below shows instead: `var()` with no fallback would
+	   make the whole declaration invalid and leave the dialog with no ground at all. The sweep
+	   is the same one the move and copy dialog carries. */
+	--disk-picker-ground: var(--air-theme-bg-image-blurred, none);
+
+	/* The picture and the tint over it are laid by the layer below, which can be blurred; this
+	   sweep is what shows on a portal whose theme carries no picture at all. It repeats the
+	   tint's own hues, so a portal without a picture reads as the same surface. */
+	background-image: linear-gradient(291deg, rgba(12, 36, 120, 0.5) 15.73%, rgba(26, 58, 140, 0.5) 97.4%);
+	overflow: hidden;
+}
+
+/* The picture, softened past what the theme's own blurred copy gives: at the size the dialog
+   shows it, its shapes still read as a photograph, and the eye went to them instead of to the
+   files. It lives on a layer of its own because `filter` would otherwise take the whole dialog
+   with it, and it is laid out past the edges — a blur thins the pixels at the boundary, and
+   without the overhang the window would carry a pale rim. The shell clips it back. */
+.disk-picker-popup::before {
+	content: '';
+	position: absolute;
+	inset: -10%;
+	z-index: -1;
+	/* The tint rides on this layer too: a pseudo-element with a negative z-index paints over the
+	   background of its own element, so a tint left on the shell would have ended up under the
+	   picture rather than over it. Blurring it costs nothing — it is a flat sweep. */
+	background-image:
+		linear-gradient(291deg, rgba(12, 36, 120, 0.55) 15.73%, rgba(26, 58, 140, 0.55) 97.4%),
+		var(--disk-picker-ground);
+	background-size: auto, cover;
+	background-position: 0 0, center;
+	background-repeat: no-repeat, no-repeat;
+	filter: blur(24px);
+	pointer-events: none;
+}
+
+/* Same ring as the icon avatars: drawn over the glass rather than in the element's edge,
+   where it sank into the backdrop. The overlay carries the gradient and a mask cuts its
+   middle out, leaving the 1px circle. */
+.disk-picker-popup::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-divider-vibrant-accent) 0%,
+		var(--ui-color-divider-vibrant-accent-alt) 50%,
+		var(--ui-color-divider-vibrant-accent) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	pointer-events: none;
+}
+
+/* One curve and one beat for everything that moves in the dialog: picking a disk, opening a
+   folder, switching the view and choosing a file all settle at the same pace, which is what
+   makes the motion read as one interface rather than as several. Out fast, in slow.
+
+   Declared on the application root as well as on the layout: the relocated search field is a
+   node of the root, outside the layout, and the showcase page mounts the layout without a root
+   around it — so either one alone would leave a surface without the values. */
+.disk-picker__root,
+/* The advance of every virtualised row — its own height plus the air below it — lives here and
+   nowhere else. The virtual scroll counts these numbers in item-browser.ts and source-sidebar.ts,
+   which read them back off this element, and the rows themselves derive their heights from the
+   same declarations below: one source, so a row can no longer grow in the stylesheet while the
+   scroll keeps counting the old number. */
 .disk-picker-layout {
+	--disk-picker-list-row-advance: 48px;
+	--disk-picker-list-row-gap: var(--ui-space-stack-xs);
+	--disk-picker-group-title-advance: 36px;
+	--disk-picker-table-row-advance: 48px;
+	--disk-picker-source-row-advance: 48px;
+	--disk-picker-source-row-gap: var(--ui-space-stack-2xs);
+	--disk-picker-source-group-advance: 46px;
+	/* The focus ring of a row is drawn outside it, so the scrolling box has to end this much
+	   below the last row — otherwise the ring of a row at the bottom edge is cut. */
+	--disk-picker-focus-ring-width: 2px;
+
+	--disk-picker-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+	--disk-picker-duration-press: 160ms;
+	--disk-picker-duration-state: 240ms;
+	--disk-picker-duration-swap: 300ms;
+}
+
+/* The layout no longer paints its own surface: an opaque fill would hide the glass. */
+.disk-picker-layout {
+	/* The scrollbar thumb of the light surfaces — the list and the preview — painted in
+	   application/app.css. A light grey step of the base scale: white was invisible on the plate,
+	   which is itself near-white, and ink read as a bar pinned across it. The sources panel is
+	   dark and overrides both values for itself, below. */
+	--disk-picker-scrollbar-thumb: var(--ui-color-base-5);
+	--disk-picker-scrollbar-thumb-hover: var(--ui-color-base-4);
+
+	/* Both scrolling columns end in the same fade instead of a cut edge, so the shape is
+	   declared once on their common ancestor and used by the list and the source list
+	   alike. It lives here rather than on the popup shell, so the layout also fades when
+	   it is mounted without one, as the showcase page does. */
+	--disk-picker-fade-out-bottom: linear-gradient(
+		180deg,
+		#000 0%,
+		#000 calc(100% - 32px),
+		transparent 100%
+	);
+
 	display: grid;
 	grid-template-columns: 210px minmax(0, 1fr);
+	/* The header is a row of the frame rather than the top of the plate: it carries the path and
+	   the controls and stands on the glass, while the plate below holds the list alone. */
+	grid-template-rows: auto minmax(0, 1fr);
 	width: 100%;
 	height: 100%;
 	border-radius: var(--ui-border-radius-2xl);
-	background: var(--ui-color-bg-content-primary);
+	background: transparent;
 	overflow: hidden;
+}
+
+/* The same steps, resolved again inside the edge context of the sources: declared on the layout
+   they would inherit the grey of the light plate, which disappears on the glass. */
+.disk-picker-source-sidebar__scroll {
+	--disk-picker-scrollbar-thumb: var(--ui-color-base-5);
+	--disk-picker-scrollbar-thumb-hover: var(--ui-color-base-4);
 }
 
 .disk-picker-layout__sidebar {
+	grid-row: 1 / span 2;
 	display: flex;
 	flex-direction: column;
 	padding: var(--ui-space-inset-sm);
-	background: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-3xl);
+	/* The panel keeps the popup's edge-dark context rather than nesting content-light: it is
+	   a translucent surface over the same glass, so its fill and states come from the edge
+	   scale and its text reads light like the rest of the dialog.
+
+	   The panel carries neither fill nor outline of its own: the sources stand on the ground of
+	   the dialog itself, which is one surface across the whole window. A film and a hairline of
+	   its own — the way the reference concept builds its columns — made the panel a separate
+	   pane laid over that ground, and the seam between the two was the thing the eye caught
+	   first. No blur either: the ground is a picture the theme has already blurred. */
+	box-sizing: border-box;
+	position: relative;
 	overflow: hidden;
 }
 
+/* The whole right side is one surface: the design lifts the header, the list, the preview and
+   the footer together off the glass onto a plate of its own, while the sources on the left stay
+   on the glass itself. */
 .disk-picker-layout__workarea {
+	box-sizing: border-box;
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
-	height: 100%;
+	/* Air on the three free sides: without a gap of its own the plate stood right against the
+	   disks and the edges of the frame. */
+	margin: 0 var(--ui-space-inset-sm) var(--ui-space-inset-sm) var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-2xl);
+	/* A veil of white rather than a sheet of it: the plate keeps a little of the ground behind
+	   the dialog, so it belongs to the window instead of sitting on it. It is a sweep along the
+	   same 291deg the shell runs, thinner where the ground is dark and denser where it is light;
+	   both stops are steps of the vibrant scale.
+
+	   The picture visible through this sweep is the theme's pre-blurred copy, so the plate keeps
+	   its glass character without sampling live page content behind the modal stack. */
+	background: linear-gradient(
+		291deg,
+		var(--ui-color-bg-vibrant-default) 15.73%,
+		var(--ui-color-bg-vibrant-accent) 97.4%
+	);
 	overflow: hidden;
 }
 
+/* The rule over the footer is a gradient, not a flat line: at the ends it is a trace of white,
+   in the middle a step of the base scale, so the line gathers where the content is and dissolves
+   at the edges of the plate. A `border` takes no gradient, so it is a one-pixel background on a
+   pseudo-element pinned to the edge. The header needs none any more: it stands on the glass, and
+   what separates it from the list is the edge of the plate itself. */
+.disk-picker-layout__footer {
+	position: relative;
+}
+
+.disk-picker-layout__footer::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-accent);
+	pointer-events: none;
+}
+
+.disk-picker-layout__footer::before {
+	top: 0;
+}
+/* The path and the controls stand on the glass, with no surface of their own. The inset matches
+   the plate's own gap below, so the path starts on the same vertical as the plate's edge. */
 .disk-picker-layout__header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--ui-space-inset-sm) var(--ui-space-inset-lg);
-	border-bottom: 1px solid var(--ui-color-divider-default);
+	min-width: 0;
+	padding: var(--ui-space-inset-sm);
 }
 
+/* The preview keeps its width and the list takes the slack: a fixed list made every
+   window resize land on the preview and pushed it past the dialog edge. The preview takes 30
+   more than it used to and the list gives them up: a file is judged by what the panel shows,
+   and its minimum falls by the same 30, so the pair still fits the narrowest dialog. */
 .disk-picker-layout__body {
 	display: grid;
-	grid-template-columns: 488px minmax(0, 1fr);
+	grid-template-columns: minmax(330px, 1fr) 312px;
 	flex-grow: 1;
 	min-height: 0;
 }
 
 /* The list padding lives on the scrolling item-browser so its scrollbar spans the
-   full list height, flush to the edge, with no vertical offset. */
+   full list height, flush to the edge, with no vertical offset.
+
+   The fade sits on this wrapper rather than on the scrolling browser inside it: a mask on
+   the scroller itself would travel with the rows and the last one would never come out of
+   it. Bottom only — the top edge carries the sticky table head, which a fade would eat. */
 .disk-picker-layout__list {
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 	overflow: hidden;
+	-webkit-mask-image: var(--disk-picker-fade-out-bottom);
+	mask-image: var(--disk-picker-fade-out-bottom);
 }
 
+/* The rule left of the preview is the same grey hairline as the ones under the header and over
+   the footer, turned on its end. */
 .disk-picker-layout__preview {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
-	border-left: 1px solid var(--ui-color-divider-default);
+}
+
+.disk-picker-layout__preview::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-accent);
+	pointer-events: none;
+	z-index: 1;
 }
 
 /* Table mode: the list spans the whole body, the preview column is removed. */
@@ -205,8 +572,24 @@
 	display: none;
 }
 
-/* On a narrow window the preview yields to the list; the footer stays reachable. */
-@media (max-width: 720px) {
+/* Nothing in the list — an empty folder, a search without matches, a failed load — leaves the
+   preview nothing to describe, and the plate belongs to the message of the list alone. */
+.disk-picker-layout.--no-preview .disk-picker-layout__body {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* On a narrow window the sidebar collapses to an icon rail so the dialog keeps fitting.
+   Padding stays as it is, so the rail leaves 56px for icons and clipped group titles. */
+@media (max-width: 999px) {
+	.disk-picker-layout {
+		grid-template-columns: 80px minmax(0, 1fr);
+	}
+}
+
+/* On a narrow window the preview yields to the list; the footer stays reachable. The
+   threshold covers the narrowest dialog that still fits rail + list minimum + preview
+   (80 + 330 + 312 = 722 plus the viewport margins), so no width is left overflowing. */
+@media (max-width: 760px) {
 	.disk-picker-layout__body {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -222,9 +605,42 @@
 	justify-content: flex-end;
 	gap: var(--ui-space-inline-sm);
 	padding: var(--ui-space-inset-sm) var(--ui-space-inset-lg);
-	border-top: 1px solid var(--ui-color-divider-default);
 }
 
+.disk-picker-source-row-skeleton {
+	/* The real row is a button, and a button is border-box by default: without this the inset
+	   below would be added to the height and the skeleton would stand 12px taller than the row
+	   it stands for. */
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* Matches the real source row so the list does not jump when data replaces it. */
+	height: 44px;
+	padding: var(--ui-space-inset-xs);
+	flex-shrink: 0;
+}
+
+.disk-picker-source-row-skeleton__line {
+	display: flex;
+	min-width: 0;
+}
+
+/* On the collapsed rail the title line has no room; the circle alone marks a pending row. */
+@media (max-width: 999px) {
+	.disk-picker-source-row-skeleton {
+		justify-content: center;
+		padding: var(--ui-space-inset-2xs);
+	}
+
+	.disk-picker-source-row-skeleton__line {
+		display: none;
+	}
+}
+
+/* The fade sits on this wrapper and not on the scrolling child below it: a mask on the
+   scroller would move with the rows and never let the last one clear it. */
 .disk-picker-source-sidebar {
 	display: flex;
 	flex-direction: column;
@@ -233,6 +649,8 @@
 	height: 100%;
 	min-height: 0;
 	overflow: hidden;
+	-webkit-mask-image: var(--disk-picker-fade-out-bottom);
+	mask-image: var(--disk-picker-fade-out-bottom);
 }
 
 .disk-picker-source-sidebar__scroll {
@@ -253,12 +671,24 @@
 	gap: var(--ui-space-stack-2xs);
 }
 
+/* The top padding separates one group from the disks above it, the bottom one holds the heading
+   off its own disks, and the whole block is the advance declared in picker-layout.css — the one
+   the virtual scroll counts. It is padding rather than margin so that the row occupies exactly
+   that advance and nothing of it can collapse. */
 .disk-picker-source-sidebar__group-title {
 	display: flex;
 	align-items: center;
-	height: 28px;
-	padding: 0 var(--ui-space-inset-xs);
-	color: var(--ui-color-base-4);
+	box-sizing: border-box;
+	height: var(--disk-picker-source-group-advance);
+	padding:
+		var(--ui-space-stack-sm)
+		var(--ui-space-inset-xs)
+		var(--ui-space-stack-2xs2);
+	color: var(--ui-color-base-5);
+}
+
+.disk-picker-source-sidebar__group-title-short {
+	display: none;
 }
 
 .disk-picker-source-sidebar__item {
@@ -267,30 +697,87 @@
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
 	width: 100%;
-	height: 40px;
+	/* Height and gap are derived from the advance declared in picker-layout.css, the number the
+	   virtual scroll counts. The air is a margin rather than a gap on the list, because a gap
+	   would also apply to the virtual spacer and push the computed offsets out of step with the
+	   rendered rows. */
+	box-sizing: border-box;
+	height: calc(var(--disk-picker-source-row-advance) - var(--disk-picker-source-row-gap));
+	margin-bottom: var(--disk-picker-source-row-gap);
 	flex-shrink: 0;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-xs);
 	border: none;
-	border-radius: var(--ui-border-radius-sm);
+	border-radius: var(--ui-border-radius-xl);
 	background: none;
 	cursor: pointer;
 	text-align: left;
-	transition: background-color 200ms ease;
+	transition:
+		background-color var(--disk-picker-duration-state) var(--disk-picker-ease),
+		transform var(--disk-picker-duration-press) var(--disk-picker-ease);
 }
 
+/* The lighter of the two hover fills: the overlay step resolves to a fifth of black on the
+   light panel, which read as a press rather than a hover. */
 .disk-picker-source-sidebar__item:hover {
 	background: var(--ui-color-bg-state-hover-default);
 }
 
+/* The picked source is a film over the glass rather than a plate on it: the panel is
+   translucent, so a solid fill would cut a hole in the dialog. The name keeps the shade of
+   its neighbours — the fill and the ring below are what mark the row. */
 .disk-picker-source-sidebar__item.--active {
-	background: var(--ui-color-bg-state-hover-default);
+	position: relative;
+	background: var(--ui-color-bg-vibrant-less);
+}
+
+/* The ring runs the corners as one gradient rather than as four edge colours: at full
+   strength along the top, gone by the far corner and back to a trace along the left, so the
+   row reads as lit from above the way the avatars' rings do. Per-side colours could not do
+   that — they change in steps at the corners, and the 14deg tilt of the rounded corner shows
+   every step. The whole ring is then taken to half strength, the weight it has in the design.
+
+   Drawn over the fill and cut out by a mask, not set in the element's edge: a border would
+   add 2px to the row, and the row advance feeds the virtual scroll — it would
+   drift by a row's worth every screen. */
+.disk-picker-source-sidebar__item.--active::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		160deg,
+		var(--ui-color-base-white-fixed) 0%,
+		transparent 55%,
+		var(--ui-color-base-6) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	opacity: 0.5;
+	pointer-events: none;
 }
 
 .disk-picker-source-sidebar__item:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
+	/* White, because the rail stands on dark glass, and inside the row rather than outside it:
+	   the rail scrolls, and an outward ring would be cut at its edges. */
+	outline: 2px solid var(--ui-color-base-white-fixed);
 	outline-offset: -2px;
 }
 
+/* The picked disk already carries a pale ring of its own along the same edge, and a focus ring
+   drawn over it merged with it. On this row the focus steps inward, so the fill of the row shows
+   between the two lines and the focus reads as the inner one. */
+.disk-picker-source-sidebar__item.--active:focus-visible {
+	outline-offset: -5px;
+}
+
+/* Solid white, not a step of the scale: in this context base-3 is white at seven tenths, and
+   over the picture behind the dialog the names came out washed. base-1 is the same white at
+   full strength. */
 .disk-picker-source-sidebar__name {
 	min-width: 0;
 	overflow: hidden;
@@ -300,17 +787,121 @@
 }
 
 .disk-picker-source-sidebar__avatar {
-	flex: 0 0 24px;
-	width: 24px;
-	height: 24px;
+	flex: 0 0 var(--ui-size-2xl);
+	width: var(--ui-size-2xl);
+	height: var(--ui-size-2xl);
 }
 
-.disk-picker-source-sidebar__personal-avatar {
-	display: block;
-	width: 24px;
-	height: 24px;
+/* Recent and the personal disk have no avatar of their own: the glyph sits in an
+   avatar-sized circle so the list keeps one column of round marks. */
+.disk-picker-source-sidebar__icon-avatar {
+	/* The glyph is a mask over `background`, so its colour variable takes a gradient. The
+	   circle under it is a filled surface with its own blue gradient in every theme, so the
+	   glyph takes the content colours of a filled design, fading to its secondary step. */
+	--ui-icon-set__icon-color: linear-gradient(
+		180deg,
+		var(--ui-color-design-filled-content-icon) 0%,
+		var(--ui-color-design-filled-content-secondary) 100%
+	);
+
+	box-sizing: border-box;
+	position: relative;
+	display: flex;
+	flex: 0 0 var(--ui-size-2xl);
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-2xl);
+	height: var(--ui-size-2xl);
 	border-radius: var(--ui-border-radius-circle);
-	background: url("data:image/png;base64,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") center / cover no-repeat;
+	background: var(--disk-picker-icon-avatar-fill);
+}
+
+/* The ring is drawn over the fill, not inside the element's edge: in the edge it sank
+   into the gradient underneath. The overlay is filled with the ring gradient and has its
+   middle cut out by a mask, so only the 1px circle remains. The 140deg tilt is the one
+   the Marta avatar uses for its own ring. */
+.disk-picker-source-sidebar__icon-avatar::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-divider-vibrant-default-alt) 0%,
+		var(--ui-color-divider-vibrant-less-alt) 50%,
+		var(--ui-color-divider-vibrant-default-alt) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	pointer-events: none;
+}
+
+/* The palette has no dark turquoise yet, so the lower stop stays a literal until the
+   design system ships a token for it. The upper stop is --ui-color-accent-brand-blue. */
+.disk-picker-source-sidebar__icon-avatar.--recent {
+	--disk-picker-icon-avatar-bottom: #0AAEC7;
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-accent-brand-blue) 0%,
+		var(--disk-picker-icon-avatar-bottom) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--personal {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-accent-main-primary-alt-2) 0%,
+		var(--ui-color-blue-80) 100%
+	);
+}
+
+/* Tints for lettered avatars, built on the same light-to-dark pair as the personal disk.
+   The design system carries four hue scales, so there are four tints; resolveAvatarTint
+   in lib/source-avatar picks one by storage id, so keep TINT_COUNT in step. Blue comes
+   last and on a lighter upper stop, to stay distinct from the personal disk above. */
+.disk-picker-source-sidebar__icon-avatar.--tint-1 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-green-50) 0%,
+		var(--ui-color-green-80) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--tint-2 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-orange-50) 0%,
+		var(--ui-color-orange-80) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--tint-3 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-red-50) 0%,
+		var(--ui-color-red-80) 100%
+	);
+}
+
+.disk-picker-source-sidebar__icon-avatar.--tint-4 {
+	--disk-picker-icon-avatar-fill: linear-gradient(
+		180deg,
+		var(--ui-color-blue-50) 0%,
+		var(--ui-color-blue-70) 100%
+	);
+}
+
+/* Fixed white for the same reason as the glyph above: the contextual whites are
+   translucent and the gradient would wash the letters out. */
+.disk-picker-source-sidebar__initials {
+	color: var(--ui-color-base-white-fixed);
+	-webkit-user-select: none;
+	        user-select: none;
 }
 
 .disk-picker-source-sidebar__error {
@@ -320,6 +911,21 @@
 	gap: var(--ui-space-stack-2xs);
 	padding: var(--ui-space-inset-xs);
 	color: var(--ui-color-base-3);
+}
+
+.disk-picker-source-sidebar__error.--page {
+	align-items: center;
+}
+
+.disk-picker-source-sidebar__skeleton {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+}
+
+.disk-picker-source-sidebar__sentinel {
+	height: 1px;
+	flex-shrink: 0;
 }
 
 .disk-picker-source-sidebar__retry {
@@ -335,13 +941,81 @@
 }
 
 .disk-picker-source-sidebar__retry:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline: 2px solid var(--ui-color-accent-main-link);
 	outline-offset: 2px;
 }
 
 .disk-picker-source-sidebar__retry:disabled {
 	opacity: 0.4;
 	cursor: default;
+}
+
+/* Collapsed rail on a narrow window: icons and avatars only. Row and group heights feed
+   the virtual scroll, so they stay as they are and only horizontal content changes. */
+@media (max-width: 999px) {
+	.disk-picker-source-sidebar__item {
+		position: relative;
+		justify-content: center;
+	}
+
+	/* The name leaves the layout but stays in the accessibility tree. */
+	.disk-picker-source-sidebar__name {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	/* The rail swaps the group title for its short form and drops the inset, so the whole
+	   56px of the rail goes to the text. */
+	.disk-picker-source-sidebar__group-title {
+		padding: 0;
+	}
+
+	.disk-picker-source-sidebar__group-title-full {
+		display: none;
+	}
+
+	.disk-picker-source-sidebar__group-title-short {
+		display: inline;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+}
+
+/* A disk answers the press like a file row does, and its film fades in over the same beat, so
+   moving between disks reads as one motion with the list that follows it. */
+.disk-picker-source-sidebar__item:active {
+	transform: scale(0.99);
+}
+
+.disk-picker-source-sidebar__item.--active::after {
+	animation: disk-picker-source-pick var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+@keyframes disk-picker-source-pick {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 0.5;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-source-sidebar__item,
+	.disk-picker-source-sidebar__item:active {
+		transform: none;
+		transition: background-color var(--disk-picker-duration-state) ease;
+	}
+
+	.disk-picker-source-sidebar__item.--active::after {
+		animation: none;
+	}
 }
 
 .disk-picker-toolbar {
@@ -364,8 +1038,13 @@
  * (right of the breadcrumbs) can take the remaining space; the breadcrumbs stay
  * visible and clickable and shrink through their own ellipsis if the path is wide.
  */
+/* With the search open the path is the thing that gives way: it keeps at most a third of the
+   row and shortens through its own ellipsis. Without a ceiling a long path pushed the field
+   past the slot and the field ran over the buttons at the end of the row. */
 .disk-picker-toolbar__title.--search-open {
 	flex-grow: 0;
+	flex-shrink: 1;
+	max-width: 33%;
 }
 
 .disk-picker-toolbar__title-text {
@@ -386,72 +1065,92 @@
 	align-self: stretch;
 }
 
-.disk-picker-toolbar__search-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+/* The buttons keep the corner their size gives them: at ButtonSize.MEDIUM the design
+   system resolves --ui-btn-radius to --ui-border-radius-md, and the view group below is
+   spelled with the same token so the two neighbours share one arc. Overriding the property
+   from here would not work anyway — the design system sets it through `.ui-btn.--air
+   .ui-btn-md`, which outweighs a single class.
+
+   None of them carries a fill: on the glass a tinted plate under a glyph read as a solid blue
+   chip, and three of them in a row made the header the loudest thing in the dialog. What marks
+   a button is the ring around it and, in the view group, which of the two glyphs is lit. No
+   fill is cleared here: PLAIN_NO_ACCENT, the style these controls take, carries none — both its
+   background and its stroke tokens are fully transparent, and the design system works out the
+   hover and the press from them on its own. */
+.disk-picker-toolbar__button {
 	flex-shrink: 0;
-	width: 34px;
-	height: 34px;
-	border: 1px solid var(--ui-color-divider-default);
-	border-radius: var(--ui-border-radius-sm);
-	background: var(--ui-color-bg-content-primary);
-	color: var(--ui-color-base-70);
-	cursor: pointer;
-	transition: background-color 200ms ease;
 }
 
-.disk-picker-toolbar__search-button:hover {
-	background: var(--ui-color-bg-state-hover-default);
+/* The search button stands in a wrapper of its own, so the ring is drawn on our element and
+   not on a pseudo-element of the design-system button. */
+.disk-picker-toolbar__search {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+	border-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-toolbar__search-button:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+/* The ring of the search, and of the view group below: the same one the disk avatars carry —
+   lit from the top-left corner, gone by the middle, back as a trace at the far end. Drawn over
+   the control rather than in its edge, where it would add to the size of the button, and cut
+   hollow by a mask so only the line remains. */
+.disk-picker-toolbar__search::after,
+.disk-picker-toolbar__view-toggle::after {
+	content: '';
+	/* The mask cuts the middle out through `padding`, so the padding has to lie inside. */
+	box-sizing: border-box;
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-bg-vibrant-accent) 0%,
+		var(--ui-color-divider-vibrant-default) 55%,
+		var(--ui-color-divider-vibrant-accent-more) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	pointer-events: none;
 }
 
+/* The two view buttons stand in one ring rather than each in its own: they are a single
+   control with two states, and two rings side by side read as two separate buttons. What tells
+   the modes apart inside it is the colour of the glyphs and the hairline between them. */
 .disk-picker-toolbar__view-toggle {
+	position: relative;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	gap: var(--ui-space-inline-3xs);
 	flex-shrink: 0;
+	/* No inset of its own: the group is as tall as the buttons in it, which is what keeps its
+	   ring level with the search button's ring beside it. With an inset the group stood 38 to
+	   the search button's 34 and the two rings sat at different heights. */
+	padding: 0;
+	/* The same token the medium button resolves to, not a pill: the group is the search
+	   button's neighbour and has to repeat its corner. The group is taller by its own
+	   inset, so an equal radius reads as the same arc rather than a rounder one. */
+	border-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-toolbar__view-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 34px;
-	height: 34px;
-	border: 1px solid var(--ui-color-divider-default);
-	background: var(--ui-color-bg-content-primary);
-	color: var(--ui-color-base-70);
-	cursor: pointer;
-	transition: background-color 200ms ease;
-}
-
-.disk-picker-toolbar__view-button.--active {
-	color: var(--ui-color-accent-main-primary);
-}
-
-.disk-picker-toolbar__view-button:first-child {
-	border-radius: var(--ui-border-radius-sm) 0 0 var(--ui-border-radius-sm);
-}
-
-.disk-picker-toolbar__view-button:last-child {
-	border-radius: 0 var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0;
-	border-left: none;
-}
-
-.disk-picker-toolbar__view-button.--active {
-	background: var(--ui-color-bg-state-hover-default);
+/* The hairline between the two modes: a flat line, not the fading gradient it once was. */
+.disk-picker-toolbar__view-divider {
+	flex-shrink: 0;
+	width: var(--ui-border-width-thin);
+	height: var(--ui-size-md);
+	background: var(--ui-color-divider-vibrant-accent-more);
 }
 
 .disk-picker-breadcrumbs {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--ui-space-inline-2xs);
+	gap: var(--ui-space-inline-2xs2);
 	min-width: 0;
 	overflow: hidden;
 }
@@ -467,6 +1166,7 @@
 	cursor: pointer;
 	color: var(--ui-color-base-3);
 	white-space: nowrap;
+	flex: 0 2 auto;
 	transition: color 200ms ease;
 }
 
@@ -475,7 +1175,8 @@
 }
 
 .disk-picker-breadcrumbs__link:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline: 2px solid var(--ui-color-accent-main-link);
+	/* The breadcrumbs clip what overflows them, so the ring is drawn inside the link. */
 	outline-offset: -2px;
 	border-radius: var(--ui-border-radius-3xs);
 }
@@ -486,10 +1187,12 @@
 	color: var(--ui-color-base-3);
 }
 
-/* Width-bounded, ellipsised name — full text lives in the title attribute. */
+/* A name takes the width it needs and gives it up only when the row runs out: no bound of its
+   own, so a short path in a wide header is spelled out in full. Full text stays in the title
+   attribute for the case where the row does run out. */
 .disk-picker-breadcrumbs__label {
 	display: block;
-	max-width: 140px;
+	min-width: 0;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -500,9 +1203,12 @@
 	color: var(--ui-color-base-3);
 }
 
+/* The folder the user is in is the last to give way: ancestors above shrink twice as fast, so
+   the name that says where you are survives longest. */
 .disk-picker-breadcrumbs__current {
 	display: block;
-	max-width: 140px;
+	flex: 0 1 auto;
+	min-width: 0;
 	color: var(--ui-color-base-1);
 	white-space: nowrap;
 	overflow: hidden;
@@ -510,12 +1216,146 @@
 }
 
 .disk-picker-item-browser {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 	height: 100%;
-	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm) 0;
+	/* One inset on three sides, so the list stands in the plate evenly. Below the last row the
+	   list still ends in the width of a focus ring: the ring is drawn outside the row, and a row
+	   scrolled flush against the bottom edge had it cut. */
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm) var(--disk-picker-focus-ring-width);
+	/* Vertical only: the list never scrolls sideways, and clipping that axis is what lets the
+	   rows travel horizontally when a folder opens without the travel becoming something to
+	   scroll. */
+	overflow-x: hidden;
 	overflow-y: auto;
+}
+
+/* The air above the column names belongs to the head and not to this box: a padding here is
+   above the sticky row, so rows passing under it showed in that strip and the fill of the head
+   started below the top of the plate. The head carries the same amount as its own inset. */
+.disk-picker-item-browser.--table {
+	padding-top: 0;
+}
+
+/* A change of disk, of folder or of view replaces everything on screen at once, and the swap
+   is what the eye follows: the rows arrive one after another, each growing the last fraction
+   into its place. The travel is on the rows and never on the box around them — that box is the
+   scrolling container with the sticky table head, and moving it fought the scroll reset and
+   read as a twitch.
+
+   The rows grow rather than rise: a row shifted down reaches past the bottom of the scrolling
+   box and gives it something to scroll, so a scrollbar flashed for the length of the animation
+   on lists that have none. A row scaled below its own size stays inside its box, and the
+   scrollable height never changes.
+
+   The stagger is short and capped: eight steps of 30ms, after which every remaining row uses
+   the last delay. A list of forty rows must not take a second to settle, and beyond the first
+   screenful the delay would only be waiting. */
+@keyframes disk-picker-content-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.disk-picker-item-browser.--switching > *:not(.disk-picker-item-browser__status) {
+	animation: disk-picker-content-in var(--disk-picker-duration-swap) var(--disk-picker-ease) both;
+}
+
+/* The table is a single child of the box, so the stagger has to reach inside it and take the
+   rows themselves; the list has its rows as children already. Both are driven by the same
+   keyframes and the same delays below.
+
+   The delays count positions among siblings, and the table puts a spacer row before the first
+   visible one once the list has been scrolled. That spacer never exists while this animation
+   runs — a swap resets the list to its top — so the count is the one the eye sees. */
+.disk-picker-item-browser.--switching .disk-picker-item-table__row {
+	animation: disk-picker-content-in var(--disk-picker-duration-swap) var(--disk-picker-ease) both;
+}
+
+.disk-picker-item-browser.--switching > *:nth-child(2),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(1) { animation-delay: 0ms; }
+.disk-picker-item-browser.--switching > *:nth-child(3),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(2) { animation-delay: 30ms; }
+.disk-picker-item-browser.--switching > *:nth-child(4),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(3) { animation-delay: 60ms; }
+.disk-picker-item-browser.--switching > *:nth-child(5),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(4) { animation-delay: 90ms; }
+.disk-picker-item-browser.--switching > *:nth-child(6),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(5) { animation-delay: 120ms; }
+.disk-picker-item-browser.--switching > *:nth-child(7),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(6) { animation-delay: 150ms; }
+.disk-picker-item-browser.--switching > *:nth-child(8),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(7) { animation-delay: 180ms; }
+.disk-picker-item-browser.--switching > *:nth-child(n + 9),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(n + 8) { animation-delay: 210ms; }
+
+/* A step along the path has a direction, and the rows come from the side it points to: into a
+   folder they arrive from the right, back out of it from the left. It is the same beat as the
+   plain swap, only the shape of the entrance differs — a change of disk or of view has no
+   direction and keeps the growing one above. */
+@keyframes disk-picker-content-in-forward {
+	from {
+		opacity: 0;
+		transform: translateX(24px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes disk-picker-content-in-back {
+	from {
+		opacity: 0;
+		transform: translateX(-24px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.disk-picker-item-browser.--switch-forward > *:not(.disk-picker-item-browser__status),
+.disk-picker-item-browser.--switch-forward .disk-picker-item-table__row {
+	animation-name: disk-picker-content-in-forward;
+}
+
+.disk-picker-item-browser.--switch-back > *:not(.disk-picker-item-browser__status),
+.disk-picker-item-browser.--switch-back .disk-picker-item-table__row {
+	animation-name: disk-picker-content-in-back;
+}
+
+/* The swap still happens, it simply arrives without the motion. */
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-item-browser.--switching > *,
+	.disk-picker-item-browser.--switching .disk-picker-item-table__row {
+		animation: none;
+	}
+}
+
+.disk-picker-item-browser.--navigation-blocked > :not(.disk-picker-item-browser__status, .disk-picker-item-browser__loading-overlay) {
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.disk-picker-item-browser__loading-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	display: flex;
+	align-items: stretch;
+	justify-content: stretch;
+	cursor: wait;
 }
 
 .disk-picker-item-browser__status {
@@ -533,10 +1373,19 @@
 .disk-picker-item-browser__group-title {
 	display: flex;
 	align-items: center;
-	flex: 0 0 28px;
-	height: 28px;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
-	color: var(--ui-color-base-4);
+	/* The whole advance, padding included: the virtual scroll counts this row as one block. */
+	box-sizing: border-box;
+	flex: 0 0 var(--disk-picker-group-title-advance);
+	height: var(--disk-picker-group-title-advance);
+	padding: var(--ui-space-inset-2xs) 0;
+	color: var(--ui-color-base-3);
+}
+
+/* The placeholder rows stand exactly where the real ones will: the list's own inset is on the
+   scrolling box, so this column only has to be a column. */
+.disk-picker-item-browser__skeleton {
+	display: flex;
+	flex-direction: column;
 }
 
 .disk-picker-item-browser__spacer {
@@ -571,6 +1420,33 @@
 	color: var(--ui-color-accent-main-primary);
 }
 
+/* Keyboard focus on the Retry, and on the box itself when a loading or empty state leaves it
+   as the only thing in the group to land on. */
+.disk-picker-item-browser__retry:focus-visible,
+.disk-picker-item-browser:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* The same box the loaded row has: 8 of inset around a 24 icon makes the 40 of height, and
+   the gap below is the row advance the virtual scroll counts. Keeping them equal is what stops
+   the list from shifting when the rows it stands for take its place. */
+.disk-picker-item-row-skeleton {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	flex-shrink: 0;
+	width: 100%;
+	margin-bottom: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-lg);
+	/* The loaded row carries no fill either: while the list is on the way, the placeholders
+	   inside the box are the only thing that shows. */
+	background: none;
+}
+
 .disk-picker-empty-state {
 	display: flex;
 	flex-direction: column;
@@ -580,33 +1456,81 @@
 	height: 100%;
 	padding: var(--ui-space-inset-2xl) var(--ui-space-inset-lg);
 	text-align: center;
-	color: var(--ui-color-base-70);
+	color: var(--ui-color-base-2);
 }
 
+/* The glyph is a mask over `background`, so its shade comes from the icon set's own variable
+   — a plain `color` never reached it, and the mark stayed near-black on the blue glass. */
 .disk-picker-empty-state__icon {
-	color: var(--ui-color-base-50);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+/* Module artwork instead of a glyph: the design system carries no three-dimensional set,
+   so the asset is ours and each variant names its own file. */
+.disk-picker-empty-state__graphic {
+	flex: none;
+	width: 100px;
+	height: 100px;
+}
+
+.disk-picker-empty-state__graphic.--folder {
+	background: url("images/image/blue-folder.webp") center / contain no-repeat;
+}
+
+.disk-picker-empty-state__graphic.--no-file {
+	background: url("images/image/no-file.webp") center / contain no-repeat;
+}
+
+.disk-picker-empty-state__graphic.--no-results {
+	background: url("data:image/webp;base64,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") center / contain no-repeat;
 }
 
 .disk-picker-empty-state__title {
-	color: var(--ui-color-base-80);
+	color: var(--ui-color-base-1);
 }
 
+/* The action is a design-system button now: as a bare link in the accent blue it all but
+   vanished against the blue glass behind it. The component brings its own fill, states and
+   focus ring, so nothing is styled here beyond keeping it from stretching. */
 .disk-picker-empty-state__action {
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: var(--ui-color-accent-main-primary);
-	cursor: pointer;
+	flex: none;
 }
 
-.disk-picker-empty-state__action:hover {
-	text-decoration: underline;
+/* A button takes no button inside it: the row and the preview eye are siblings in this
+   wrapper, which carries the row states and the hover. */
+.disk-picker-item-row-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	/* Height and gap both come from the advance declared in picker-layout.css, which is also
+	   what the virtual scroll counts. */
+	flex-shrink: 0;
+	box-sizing: border-box;
+	height: calc(var(--disk-picker-list-row-advance) - var(--disk-picker-list-row-gap));
+	margin-bottom: var(--disk-picker-list-row-gap);
 }
 
-.disk-picker-empty-state__action:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 2px;
-	border-radius: var(--ui-border-radius-2xs);
+/* Out of the flow, over the room the row reserves with padding-right below. */
+.disk-picker-item-row-wrap .disk-picker-preview-button {
+	position: absolute;
+	top: 50%;
+	right: var(--ui-space-inset-2xs2);
+	transform: translateY(-50%);
+}
+
+/* Hidden only where a pointer can bring it back: a screen that never hovers would keep a
+   transparent button over the row and take the tap that belongs to the row itself.
+   The focus is only the one the browser itself shows, i.e. one the keyboard brought there:
+   a preview started by the pointer must not leave the eye lit on a row nobody is over. */
+@media (hover: hover) {
+	.disk-picker-item-row-wrap .disk-picker-preview-button {
+		opacity: 0;
+	}
+
+	.disk-picker-item-row-wrap:hover .disk-picker-preview-button,
+	.disk-picker-item-row-wrap:has(:focus-visible) .disk-picker-preview-button {
+		opacity: 1;
+	}
 }
 
 .disk-picker-item-row {
@@ -615,34 +1539,53 @@
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
 	width: 100%;
-	height: 44px;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-xs);
+	/* Room the eye stands in. */
+	padding-right: var(--ui-space-inset-5xl);
 	border: none;
-	border-radius: var(--ui-border-radius-sm);
+	border-radius: var(--ui-border-radius-md);
+	/* At rest the row paints nothing: the plate under it is the surface, and a card under every
+	   file made the list a second sheet laid over the first. What tells the rows apart is the air
+	   between them. The table row repeats this. */
 	background: none;
 	cursor: pointer;
 	text-align: left;
 	-webkit-user-select: none;
 	        user-select: none;
-	transition: background-color 200ms ease;
+	transition:
+		background-color var(--disk-picker-duration-state) var(--disk-picker-ease),
+		transform var(--disk-picker-duration-press) var(--disk-picker-ease);
 }
 
-.disk-picker-item-row:hover {
-	background: var(--ui-color-bg-state-hover-default);
+.disk-picker-item-row-wrap:hover .disk-picker-item-row,
+.disk-picker-item-row-wrap.--active .disk-picker-item-row {
+	background: var(--ui-color-bg-content-primary);
 }
 
-.disk-picker-item-row.--active {
-	background: var(--ui-color-bg-state-hover-default);
+.disk-picker-item-row-wrap.--selected .disk-picker-item-row {
+	animation: disk-picker-row-pick var(--disk-picker-duration-state) var(--disk-picker-ease);
+	/* The one filled surface of the list: a picked file is the answer the dialog exists for, so
+	   it takes the accent flat rather than as a sweep across the row. */
+	background: var(--ui-color-accent-main-primary);
 }
 
-.disk-picker-item-row.--selected {
-	background: var(--ui-color-accent-soft-blue-2);
+/* The filled background carries its own content colour. */
+.disk-picker-item-row-wrap.--selected .disk-picker-item-row__name {
+	color: var(--ui-color-design-filled-content);
 }
 
-/* Focus is visible and distinct from selection: an outline, not a fill. */
+/* The ring the design system draws on its own controls: outside the element, and a step darker
+   than the accent. Inside the element and in the accent itself it disappeared on a picked row,
+   which is filled with that very accent. */
 .disk-picker-item-row:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* On the picked row the accent ring would sink into the accent fill, so the ring takes the
+   content colour of a filled surface - the one the name on that row already uses. */
+.disk-picker-item-row.--selected:focus-visible {
+	outline-color: var(--ui-color-design-filled-content);
 }
 
 .disk-picker-item-row__name {
@@ -653,10 +1596,153 @@
 	color: var(--ui-color-base-1);
 }
 
+.disk-picker-item-row:active {
+	transform: scale(0.99);
+}
+
+@keyframes disk-picker-row-pick {
+	from {
+		transform: scale(0.985);
+	}
+
+	to {
+		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-item-row,
+	.disk-picker-item-row:active,
+	.disk-picker-item-row-wrap.--selected .disk-picker-item-row {
+		transform: none;
+		animation: none;
+		transition: background-color var(--disk-picker-duration-state) ease;
+	}
+}
+
+/* The icon holds the size it was asked for and never gives it up: as a flex item next to a
+   name it defaults to yielding, so a long file name squeezed the thumbnail out of square. */
+.disk-picker-disk-icon {
+	position: relative;
+	flex: none;
+	overflow: hidden;
+}
+
+.disk-picker-disk-icon__preview {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--ui-border-radius-xs);
+	object-fit: cover;
+}
+
+/* Where the thumbnail is the subject rather than a marker beside a name, it is shown whole
+   and sized to its own proportion: filling the square would crop the picture, which is right
+   for a 24px row icon and wrong for a card the size of a preview. Sizing the element to the
+   picture also gives the corner something to follow — set on a box wider than the image, a
+   radius rounds the empty margins instead.
+
+   The rule hangs on the surrounding block and not on a modifier of this component: the
+   vanilla icon rebuilds the node it is rendered into, so a class handed down from the Vue
+   wrapper does not survive on the root. */
+.disk-picker-preview-panel__fan .disk-picker-disk-icon__preview {
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 100%;
+	margin: auto;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+/* The placeholder covers the tile whole, over the type glyph beneath it. */
+.disk-picker-disk-icon__placeholder {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+}
+
+/* Wherever a thumbnail arrives it is the whole of the icon, and the type glyph beneath it
+   steps aside: the image has corners of its own and does not cover the square edge to edge, so
+   the glyph showed through the rounding — and in the preview panel, where the picture is fitted
+   to its own proportion, through the margins as well. */
+.disk-picker-disk-icon.--with-preview > *:not(.disk-picker-disk-icon__preview) {
+	visibility: hidden;
+}
+
+/* The outline frames a thumbnail cropped to a square, where it reads as the card's edge. A
+   fitted picture ends wherever its proportion ends, so the ring no longer follows anything
+   and hangs around the empty box instead. */
+.disk-picker-preview-panel__fan .disk-picker-disk-icon.--with-preview::after {
+	display: none;
+}
+
+/* The outline belongs to the thumbnail only, never to a type glyph, so the wrapper carries
+   the --with-preview flag set alongside the image. An image is a replaced element and grows
+   no pseudo-elements of its own, hence the ring on the wrapper: gradient over the fill,
+   middle cut out by a mask. border-image would not follow the 6px corners. */
+.disk-picker-disk-icon.--with-preview::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: var(--ui-border-radius-xs);
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-base-7) 0%,
+		transparent 50%,
+		var(--ui-color-base-7) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	pointer-events: none;
+}
+
+/* The wrapper is what the hosts lay out and what carries the hint: the design-system
+   button renders outside the Vue tree and takes neither a class nor a title of its own.
+   It holds no size - the button inside brings its own from ButtonSize - and no fill:
+   the row or the panel under it is the surface. */
+.disk-picker-preview-button {
+	display: flex;
+	align-items: center;
+	flex: none;
+	/* The list and the table fade the button in on hover and on focus; the panel keeps it
+	   on. The duration lives with them, the travel is the same everywhere. */
+	transition: opacity var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+/* A square, not a lozenge: a collapsed small button is wider than it is tall, and the film it
+   takes on hover showed that shape. The wrapper is the square — as tall as the button — and
+   clips the film to it; the glyph stays centred because the button overflows both sides alike.
+   The clip hides the button's own focus outline, so the wrapper draws the ring instead. */
+.disk-picker-preview-button {
+	justify-content: center;
+	width: var(--ui-size-2xl);
+	height: var(--ui-size-2xl);
+	border-radius: var(--ui-border-radius-sm);
+	overflow: hidden;
+}
+
+.disk-picker-preview-button:has(:focus-visible) {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
 .disk-picker-item-table {
 	width: 100%;
 	table-layout: fixed;
-	border-collapse: collapse;
+	/* A table row takes neither margin nor flex gap, so the air between rows is border-spacing;
+	   row height plus it is the advance declared in picker-layout.css, which the virtual scroll
+	   counts. */
+	border-collapse: separate;
+	border-spacing: 0 var(--disk-picker-list-row-gap);
+	/* border-spacing also lays a gap above the first row; the table is pulled up by it. */
+	margin-top: calc(-1 * var(--disk-picker-list-row-gap));
 }
 
 .disk-picker-item-table col.--size {
@@ -667,44 +1753,119 @@
 	width: 160px;
 }
 
+/* Held by the colgroup, not by what stands in it: a row without a previewable file leaves
+   the same gap and the columns beside it never move. */
+.disk-picker-item-table col.--preview {
+	width: 48px;
+}
+
 .disk-picker-item-table__head {
-	border-bottom: 1px solid var(--ui-color-divider-default);
-	color: var(--ui-color-base-70);
 	position: sticky;
-	top: calc(0px - var(--ui-space-inset-sm));
-	background: var(--ui-color-bg-content-primary);
+	top: 0;
+	background: transparent;
 	z-index: 1;
+	transition: background-color var(--disk-picker-duration-state) var(--disk-picker-ease);
 }
 
+/* The head separates itself only once rows pass underneath. The fill goes on the cells and not
+   on the row: the row is what is stuck, and a sticky `tr` paints no background of its own —
+   the names travelled under a head that stayed clear. The blur stays on the row, where it
+   works. */
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head {
+	-webkit-backdrop-filter: blur(3px);
+	        backdrop-filter: blur(3px);
+}
+
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head .disk-picker-item-table__cell {
+	background: var(--ui-color-bg-content-primary);
+}
+
+/* The fill runs to the edges of the plate, not to the edges of the table: the list inset lives
+   on the scrolling box, so the table stands an inset short of them and the names travelling under
+   the head showed in those two strips. A shadow with no blur and no offset beyond the side it
+   extends is the fill itself, carried past the table — the cells cannot be widened without
+   moving the columns. */
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head .disk-picker-item-table__cell:first-child {
+	box-shadow: calc(-1 * var(--ui-space-inset-sm)) 0 0 var(--ui-color-bg-content-primary);
+}
+
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head .disk-picker-item-table__cell:last-child {
+	box-shadow: var(--ui-space-inset-sm) 0 0 var(--ui-color-bg-content-primary);
+}
+
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head-label {
+	color: var(--ui-color-base-1);
+}
+
+.disk-picker-item-table__head-label {
+	color: var(--ui-color-base-3);
+	transition: color var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+/* The row paints nothing itself, but the radius stays on it: an outline follows the radius
+   of the element it is set on, and the focus ring sits on the row. */
 .disk-picker-item-table__row {
-	height: 45px;
+	height: calc(var(--disk-picker-table-row-advance) - var(--disk-picker-list-row-gap));
 	border: none;
+	border-radius: var(--ui-border-radius-md);
 	cursor: pointer;
-	transition: background-color 150ms ease;
 }
 
-.disk-picker-item-table__row:hover {
-	background: var(--ui-color-bg-state-hover-default);
+/* A table row takes no border-radius, so the outer corners live on the cells. Like the list
+   row, a cell paints nothing until the row is pointed at. */
+.disk-picker-item-table__row .disk-picker-item-table__cell {
+	background: none;
+	transition: background-color var(--disk-picker-duration-state) var(--disk-picker-ease);
 }
 
-.disk-picker-item-table__row.--selected {
-	background: var(--ui-color-accent-soft-blue-1);
+.disk-picker-item-table__row .disk-picker-item-table__cell:first-child {
+	border-top-left-radius: var(--ui-border-radius-md);
+	border-bottom-left-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-item-table__row:focus-within {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+.disk-picker-item-table__row .disk-picker-item-table__cell:last-child {
+	border-top-right-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-item-table__row.--active {
-	box-shadow: inset 2px 0 0 var(--ui-color-accent-main-primary);
+.disk-picker-item-table__row:hover .disk-picker-item-table__cell {
+	background: var(--ui-color-bg-content-primary);
+}
+
+/* The fill goes on the cells, not on the row: WebKit does not always paint the background of
+   a `tr`, and a picked row then showed its white text on the bare plate. The cells stand edge
+   to edge, so the flat fill still reads as one bar, with the outer corners on the end cells. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__cell {
+	background: var(--ui-color-accent-main-primary);
+}
+
+/* The name column takes whatever the fixed columns leave, so its edge usually falls between
+   pixels and both cells antialias it, letting the plate show through as a hairline. Each cell
+   but the last carries its fill a pixel under its neighbour to close that seam. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__cell:not(:last-child) {
+	box-shadow: 1px 0 0 var(--ui-color-accent-main-primary);
+}
+
+/* The typography components carry their own colour, so a rule on the cell would never
+   reach the text. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__name {
+	color: var(--ui-color-design-filled-content);
+}
+
+.disk-picker-item-table__row.--selected .disk-picker-item-table__value {
+	color: var(--ui-color-design-filled-content-secondary);
+}
+
+.disk-picker-item-table__row.--active:not(.--selected) .disk-picker-item-table__cell {
+	background: var(--ui-color-bg-content-primary);
 }
 
 .disk-picker-item-table__cell {
 	min-width: 0;
 	box-sizing: border-box;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-sm);
-	color: var(--ui-color-base-90);
+	/* The inset the list row uses, so a name does not shift when the views are switched. */
+	padding: var(--ui-space-inset-xs);
+	color: var(--ui-color-base-1);
 	text-align: left;
 }
 
@@ -722,15 +1883,69 @@
 	background: none;
 	text-align: left;
 	cursor: inherit;
+	transition: transform var(--disk-picker-duration-press) var(--disk-picker-ease);
 }
 
+/* On the button rather than the row: a table row takes no transform of its own. */
+.disk-picker-item-table__row:active .disk-picker-item-table__action {
+	transform: scale(0.99);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-item-table__row:active .disk-picker-item-table__action {
+		transform: none;
+	}
+}
+
+/* Focus is marked on the control, not on the row: an element carries a single outline, and a
+   ring on the row would override the fill of the selection. */
 .disk-picker-item-table__action:focus {
 	outline: none;
 }
 
+.disk-picker-item-table__action:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* On a picked row the ring lies on the accent it is a shade of, and the two ran together. There
+   the ring takes the content colour of a filled surface — the colour the row's own text has. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__action:focus-visible {
+	outline-color: var(--ui-color-design-filled-content);
+}
+
 .disk-picker-item-table__cell.--size,
 .disk-picker-item-table__cell.--added {
-	color: var(--ui-color-base-60);
+	color: var(--ui-color-base-3);
+}
+
+/* The button stands at the right edge of the row, so only the outer inset stays. Its own height
+   is what the row would otherwise be measured by — 28 of button against 24 of icon in the name
+   cell — so the vertical inset here is a step smaller and the row keeps the 40 the list row has;
+   the row advance in picker-layout.css counts on it. */
+.disk-picker-item-table__cell.--preview {
+	padding-top: var(--ui-space-inset-2xs2);
+	padding-bottom: var(--ui-space-inset-2xs2);
+	padding-left: 0;
+}
+
+/* The square itself goes to the end of the cell; inside it the button stays centred. */
+.disk-picker-item-table__cell.--preview .disk-picker-preview-button {
+	margin-left: auto;
+}
+
+/* Same rule as the list row: hidden only where a pointer can bring it back, on hover and
+   on a focus the browser itself shows. */
+@media (hover: hover) {
+	.disk-picker-item-table__row .disk-picker-preview-button {
+		opacity: 0;
+	}
+
+	.disk-picker-item-table__row:hover .disk-picker-preview-button,
+	.disk-picker-item-table__row:has(:focus-visible) .disk-picker-preview-button {
+		opacity: 1;
+	}
 }
 
 .disk-picker-item-table__name {
@@ -739,12 +1954,12 @@
 	white-space: nowrap;
 }
 
+/* Until the list is scrolled the head carries nothing: the plate shows through it. The inset
+   above holds the names off the header rule — it lives here rather than on the scrolling box,
+   so that the fill of a stuck head reaches the top of the plate with nothing above it. */
 .disk-picker-item-table__head .disk-picker-item-table__cell {
-	color: var(--ui-color-base-0);
-}
-
-.disk-picker-item-table__head .ui-text {
-	color: var(--ui-color-base-0);
+	padding-top: var(--ui-space-inset-md);
+	background: none;
 }
 
 .disk-picker-preview-panel {
@@ -755,23 +1970,30 @@
 	width: 100%;
 	height: 100%;
 	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	/* No wash of its own: the preview is part of the plate and stands on its surface directly. */
 	overflow-y: auto;
 }
 
+/* The empty state grows into the free height instead of claiming 100% of it: the panel's
+   own padding is added on top of a percentage height, so the block overflowed the column
+   and its centre sat above the visible one. As a flex child it measures what is left. */
 .disk-picker-preview-panel__empty {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: var(--ui-space-stack-md);
-	height: 100%;
+	flex: 1;
+	min-height: 0;
 }
 
 .disk-picker-preview-panel__empty-graphic {
 	flex: none;
-	width: 120px;
-	height: 120px;
-	background: url("images/image/no-file.png") center / 120px 120px no-repeat;
+	width: 100px;
+	height: 100px;
+	/* `contain` and not a pair of pixel sizes: the artwork is not guaranteed to be square, and a
+	   fixed pair squashed it to the box instead of fitting it. */
+	background: url("images/image/no-file.webp") center / contain no-repeat;
 }
 
 .disk-picker-preview-panel__empty-hint {
@@ -781,40 +2003,14 @@
 	gap: var(--ui-space-stack-2xs);
 	max-width: 360px;
 	text-align: center;
+}
+
+/* The colour goes on the typography components themselves, not on the block around them:
+   they carry their own, and a rule on the wrapper never reaches the text. A step down the
+   white scale — the hint explains the empty panel and should not compete with the file names
+   in the list beside it. */
+.disk-picker-preview-panel__empty-hint-text {
 	color: var(--ui-color-base-3);
-}
-
-.disk-picker-preview-panel__multi-hint {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--ui-space-stack-2xs);
-}
-
-.disk-picker-preview-panel__multi-hint-action {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--ui-space-inline-2xs);
-}
-
-.disk-picker-preview-panel__multi-hint-action kbd {
-	box-sizing: border-box;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
-	border: 0;
-	border-radius: var(--ui-border-radius-xs);
-	background: var(--ui-color-base-7);
-	color: inherit;
-	font: inherit;
-	text-align: center;
-}
-
-.disk-picker-preview-panel__click {
-	flex: none;
-	width: 17px;
-	height: 24px;
-	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAmCAYAAADa8osYAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAAuRJREFUeAHtl91Lk1Ecx3/nPGua01hoviTREgQhMCuKgshVIhUF3neh0lXZRbsxvHEbEVYUC6KMblz/gV5YUIYZRTVJayEYge9zVtt6YlvgXs7pnDM29sxtTrd5te/FtmfnPL/P+Z2X5/n+EKSRyTKgxSF/B6K4mWLaBBR0sUYEc4iiOQpkaJtKGuwxXJlLFwulBIT/WVjgjmTtbedbYDUQAIfzFyw7V8DlkQEjsEoSNqcCrgHdvPO4jUpkACjSQgp1Xb6kuHa5/4Bt0g6z80syEGTuvXH1QeI9kgJy/5GRAjxh/GJIo6OHGhXXJSXbob5OB0VF6uIFx/LZ060XYfTV8FhSkMhEQNZXIiiq6soK2FFWCjPzi/pTLRf+jo4Mf4y2Yf5hsvTrqEQtkAM11NfBiWOHWWRq7GNxFSAcJkbFjspSB/Y3QG1NpTYUogMxEM8m1e7KRkcONrKwVH/r7tMmAcJBooc8qLamimcFIRpsEyCEUTvkSburq1gmqFmAWHo6yJMqynfy6YtMXS43QaKK1Gr+pY2Atkgq2IRev/2QUb8Aex4qQGWlGtiIHM6fGfULBIJK0JmTx8V2zLX4gAafj4jfW7ZGBVABVAAVQMlAzNp6fT7Ih1YjT29ZgBCgL7/dMuRD3MHy+AJEKRmbnV+EfIgZSSCUfhUgogpavT5/xu+YTMXjuZn5V4ex8OHYZDDIzEA8G5/8BrnUu0+fRYXR0xOpLsSuo6rgdTYCOVewcVZZuDweWQpic/S/iPdmWSFEOm0TdrBPfYdsNP1jBmwTbMAUzNFsuGLVxOjLF9P61nNoYcmpRwht6tVun5qGN+9tQAmYjd3Xbse3rS3E7j1k5Qu2lGk0uky9BF94Pu2OlRVeiBl6u7usiX2Sl5Z9/TqkCpvYGWjnDmnf3j2wq1zL3FJprA8/5Pz8zS4sgtfrj5SWbE3ip2tdUDwQS0TP/bmwzonFMrBimZIh4tdYTabOtKf+P3OMJqclhDREAAAAAElFTkSuQmCC") center / contain no-repeat;
 }
 
 .disk-picker-preview-panel__single,
@@ -824,32 +2020,90 @@
 	gap: var(--ui-space-stack-md);
 }
 
+/* No card under the content: a picture and a format icon alike stand on the glass, which is
+   what the design shows. The fill that used to be here read as a slab the moment the image
+   stopped filling it edge to edge. */
 .disk-picker-preview-panel__thumb {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	height: 154px;
 	border-radius: var(--ui-border-radius-lg);
-	background: var(--ui-color-bg-content-primary);
 	overflow: hidden;
 }
 
+/* The placeholder holds the card's shape while the picture travels: on a slow connection the
+   panel used to stand empty between the click and the image. It fills the box, so nothing
+   moves when the picture takes its place.
+
+   This one keeps the light context and stays grey, unlike the placeholders in the list: the
+   panel is the palest surface of the dialog, and white on it read as nothing at all. */
+.disk-picker-preview-panel__thumb-skeleton {
+	/* A block and not a flex row: the skeleton takes its width from a percentage, and as a flex
+	   item it would have measured itself against its own content and come out empty. */
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* The corner belongs to the picture, not to the box around it: the picture is fitted whole,
+   so it reaches the edge on one axis only, and a corner clipped by the container rounded
+   just that pair of sides and left the other two square. */
 .disk-picker-preview-panel__image {
 	max-width: 100%;
 	max-height: 100%;
+	border-radius: var(--ui-border-radius-lg);
 	object-fit: contain;
 }
 
+/* The cards overlap instead of standing in a row: the selection is one stack, and the file
+   picked last is the one the panel describes. The stack is built with negative margins in
+   source order, so the newest card is painted last and needs no z-index of its own. */
 .disk-picker-preview-panel__fan {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	gap: var(--ui-space-inline-2xs);
+	position: relative;
 	height: 154px;
 }
 
-.disk-picker-preview-panel__name,
+/* Every card is pinned to the same centre and leans out from under the one in front, so the
+   stack stays put wherever it is: laid out in flow, the row grew to the left with each new
+   card and the whole group drifted off the panel's axis. Depth is read off the lean and the
+   strength together, and the transition carries a card between those steps as the selection
+   grows rather than snapping it into place. */
+.disk-picker-preview-panel__fan-thumb {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 250ms ease, opacity 250ms ease;
+}
+
+/* Counted from the end: the last card is the front of the stack, whatever the depth. It
+   stands straight, and the ones behind lean to either side of it. */
+.disk-picker-preview-panel__fan-thumb:nth-last-child(1) {
+	transform: translate(-50%, -50%);
+	opacity: 1;
+}
+
+.disk-picker-preview-panel__fan-thumb:nth-last-child(2) {
+	transform: translate(calc(-50% - 14px), -50%) rotate(-8deg);
+	opacity: 0.6;
+}
+
+.disk-picker-preview-panel__fan-thumb:nth-last-child(3) {
+	transform: translate(calc(-50% + 14px), -50%) rotate(8deg);
+	opacity: 0.35;
+}
+
+/* The stack still reads without the movement — the tilt and the fade do the work — so the
+   transition is the only thing dropped for those who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-preview-panel__fan-thumb {
+		transition: none;
+	}
+}
+
 .disk-picker-preview-panel__multi-title {
 	min-width: 0;
 	overflow: hidden;
@@ -858,11 +2112,56 @@
 	color: var(--ui-color-base-1);
 }
 
-.disk-picker-preview-panel__props {
+/* The file name wraps onto a second line and is ellipsised only after it: a long name
+   is worth two lines here, unlike the single-line rows of the list. */
+/* The name and the format are one block: the column between them would otherwise put the
+   panel's own stack between the two lines, and the format belongs to the name. */
+.disk-picker-preview-panel__title {
 	display: flex;
 	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	min-width: 0;
 }
 
+.disk-picker-preview-panel__format {
+	color: var(--ui-color-base-3);
+}
+
+.disk-picker-preview-panel__name {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	min-width: 0;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	color: var(--ui-color-base-1);
+}
+
+/* Every group of properties opens with the same rule the dialog uses for its header and
+   footer, so a group is always cut off from the title above it: one flat grey divider, and a
+   one-pixel line on a pseudo-element because a `border` would sit inside the padding. */
+.disk-picker-preview-panel__props {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	padding-top: var(--ui-space-stack-md);
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+.disk-picker-preview-panel__props::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-accent);
+	pointer-events: none;
+}
+
+/* The rows are told apart by their spacing, not by a rule under each one: a line per row
+   turned the panel into a ledger, while the design keeps the list open. */
 .disk-picker-preview-panel__prop {
 	display: flex;
 	flex-direction: row;
@@ -870,11 +2169,12 @@
 	justify-content: space-between;
 	gap: var(--ui-space-inline-sm);
 	min-height: 26px;
-	border-bottom: 1px solid var(--ui-color-divider-default);
 }
 
+/* The label yields to its value: both sat on the same step and the row read as one even
+   phrase, where the design puts the weight on what the value says. */
 .disk-picker-preview-panel__prop-label {
-	color: var(--ui-color-base-2);
+	color: var(--ui-color-base-3);
 }
 
 .disk-picker-preview-panel__prop-value {
@@ -882,14 +2182,66 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	color: var(--ui-color-base-2);
+	color: var(--ui-color-base-1);
 }
 
+/* The panel replaces its whole content when the state changes — empty to one file, one file to
+   many — and without a beat of its own that replacement passed unnoticed. Each state carries a
+   key, so Vue builds a new node and the fade runs again. Opacity only: the panel scrolls, and
+   travel here would fight the scrollbar the way it did in the list.
+
+   The key of the many-files state names the state and not the count: keyed by the count, the
+   block was rebuilt on every added file, and the fan's cards — which slide and turn into their
+   new places by their own transitions — arrived already in position with nothing to see. */
+@keyframes disk-picker-preview-in {
+	from {
+		opacity: 0.4;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.disk-picker-preview-panel__empty,
+.disk-picker-preview-panel__multi,
+.disk-picker-preview-panel__single {
+	animation: disk-picker-preview-in var(--disk-picker-duration-swap) var(--disk-picker-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-preview-panel__empty,
+	.disk-picker-preview-panel__multi,
+	.disk-picker-preview-panel__single {
+		animation: none;
+	}
+}
+
+/* Two groups: the set on the left, the actions on the right. The actions are pushed right by
+   their own margin rather than by the space between the groups, so emptying the set — which
+   takes the chip off the footer — leaves confirm and cancel where they stood. */
 .disk-picker-selection-footer {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: flex-end;
 	gap: var(--ui-space-inline-sm);
 	width: 100%;
+}
+
+/* The set itself is a design-system button; this element only holds the hint. The native title
+   sits on the wrapper because the button takes no title of its own, and the tooltip a button
+   raises from its own text was too loud for this one and lost in Firefox from the second hover
+   on. */
+.disk-picker-selection-footer__chip {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.disk-picker-selection-footer__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex: none;
+	margin-left: auto;
 }

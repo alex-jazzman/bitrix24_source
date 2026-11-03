@@ -1,4 +1,5 @@
 import { Dom, Text, Type } from 'main.core';
+import { defineComponent } from 'ui.vue3';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 
 const URL_REGEXP = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])/;
@@ -30,8 +31,7 @@ const LINK_MATCHERS = [
 
 import './growing-text-area.css';
 
-// @vue/component
-export const GrowingTextArea = {
+export const GrowingTextArea = defineComponent({
 	name: 'GrowingTextArea',
 	directives: { hint },
 	props: {
@@ -63,9 +63,25 @@ export const GrowingTextArea = {
 			type: Number,
 			default: 29,
 		},
+		maxLines: {
+			type: Number,
+			default: 3,
+		},
 		readonly: {
 			type: Boolean,
 			default: false,
+		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+		ariaDescribedby: {
+			type: String,
+			default: '',
+		},
+		editButtonLabel: {
+			type: String,
+			default: '',
 		},
 	},
 	emits: [
@@ -93,6 +109,28 @@ export const GrowingTextArea = {
 		isDisplay(): boolean
 		{
 			return !this.isEmpty && !this.focus && (this.overflowing || this.hasLinks);
+		},
+		hasEditButton(): boolean
+		{
+			return !this.readonly && this.hasLinks && Type.isStringFilled(this.editButtonLabel);
+		},
+		displayRole(): ?string
+		{
+			if (this.readonly || this.hasLinks)
+			{
+				return null;
+			}
+
+			return 'button';
+		},
+		displayAriaLabel(): ?string
+		{
+			if (this.displayRole !== 'button')
+			{
+				return null;
+			}
+
+			return this.ariaLabel || null;
 		},
 		linkMatches(): Array<Object>
 		{
@@ -259,14 +297,14 @@ export const GrowingTextArea = {
 
 			if (textarea)
 			{
-				const maxHeight = this.lineHeight * 3;
+				const maxHeight = this.lineHeight * this.maxLines;
 
 				return textarea.scrollHeight > maxHeight;
 			}
 
 			if (display)
 			{
-				return display.offsetHeight >= 60;
+				return display.offsetHeight >= this.lineHeight * this.maxLines;
 			}
 
 			return false;
@@ -281,7 +319,7 @@ export const GrowingTextArea = {
 
 			Dom.style(textarea, 'height', 'auto');
 
-			const maxHeight = this.lineHeight * 3;
+			const maxHeight = this.lineHeight * this.maxLines;
 			const height = Math.min(textarea.scrollHeight, maxHeight);
 
 			this.overflowing = this.isOverflowing();
@@ -353,8 +391,21 @@ export const GrowingTextArea = {
 			{
 				this.$emit('linkClick', event);
 			}
-			else
+			else if (!this.focus)
 			{
+				this.focusTextarea();
+			}
+		},
+		handleDisplayKeyDown(event: KeyboardEvent): void
+		{
+			if (event.target?.closest?.('.b24-growing-text-area-link'))
+			{
+				return;
+			}
+
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
 				this.focusTextarea();
 			}
 		},
@@ -385,7 +436,27 @@ export const GrowingTextArea = {
 			{
 				event.target.blur();
 				event.stopPropagation();
+
+				if (this.hasEditButton)
+				{
+					this.returnFocusToEditTrigger();
+				}
 			}
+		},
+		returnFocusToEditTrigger(): void
+		{
+			requestAnimationFrame(() => {
+				if (document.activeElement !== document.body)
+				{
+					return;
+				}
+
+				const editTrigger = this.$refs.editTrigger;
+				if (editTrigger?.isConnected)
+				{
+					editTrigger.focus();
+				}
+			});
 		},
 		async handleFocus(event?: FocusEvent): Promise<void>
 		{
@@ -434,27 +505,45 @@ export const GrowingTextArea = {
 	},
 	template: `
 		<div class="b24-growing-text-area" :class="{ '--readonly': readonly }">
+			<button
+				ref="editTrigger"
+				v-if="isDisplay && hasEditButton"
+				type="button"
+				class="b24-growing-text-area-edit-trigger"
+				data-testid="tasks-growing-text-area-edit-trigger"
+				:aria-label="editButtonLabel"
+				@click="focusTextarea"
+			></button>
 			<div
 				ref="display"
 				v-if="isDisplay"
 				v-hint="tooltip"
 				class="b24-growing-text-area-display print-display-block"
+				data-testid="tasks-growing-text-area-display"
+				:role="displayRole"
+				:tabindex="hasEditButton || readonly ? null : 0"
+				:aria-label="displayAriaLabel"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
+					'-webkit-line-clamp': maxLines,
 				}"
 				@click="handleDisplayClick"
+				@keydown="handleDisplayKeyDown"
 			>
 				<span v-html="displayHtml"/>
 			</div>
 			<textarea
 				v-else
 				class="b24-growing-text-area-edit"
+				data-testid="tasks-growing-text-area-input"
 				rows="1"
 				:value="modelValue"
 				:placeholder
+				:aria-label="ariaLabel || null"
+				:aria-describedby="ariaDescribedby || null"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
@@ -470,4 +559,4 @@ export const GrowingTextArea = {
 			>{{ modelValue }}</textarea>
 		</div>
 	`,
-};
+});

@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.v2.component.message.default',
+		'im.v2.component.message.file',
 	],
 	'skip_core' => true,
 ];

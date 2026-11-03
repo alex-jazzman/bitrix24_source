@@ -16,8 +16,10 @@ $migration->table('b_rest_event')->create(function (\Bitrix\Main\UpdateSystem\Mi
 	$columns->varchar('CONNECTOR_ID', 255)->default('');
 	$columns->int('INTEGRATION_ID');
 	$columns->varchar('OPTIONS', 1024);
+	$columns->text('JSON_OPTIONS');
+	$columns->tinyInt('VERSION')->notNull()->default(1);
 	$table->addPrimaryKey('ID');
-	$table->addUniqueIndex('ux_b_rest_event_app_event', ['APP_ID', 'EVENT_NAME(50)', 'EVENT_HANDLER(180)', 'USER_ID', 'CONNECTOR_ID(70)']);
+	$table->addUniqueIndex('ux_b_rest_event_with_version', ['APP_ID', 'EVENT_NAME(50)', 'EVENT_HANDLER(180)', 'USER_ID', 'CONNECTOR_ID(70)', 'VERSION']);
 	$table->addIndex('ix_b_rest_event_event_name', ['EVENT_NAME']);
 });
 
@@ -46,6 +48,7 @@ $migration->table('b_rest_app')->create(function (\Bitrix\Main\UpdateSystem\Migr
 	$columns->char('USER_INSTALL', 1)->default('N');
 	$columns->datetime('DATE_CREATE')->defaultCurrentTimestamp();
 	$columns->datetime('DATE_INSTALL')->defaultCurrentTimestamp();
+	$columns->varchar('INSTALL_COMPLETION_MODE', 16)->notNull()->default('deferred');
 	$table->addPrimaryKey('ID');
 	$table->addUniqueIndex('ux_b_rest_app1', ['CLIENT_ID']);
 });
@@ -143,8 +146,15 @@ $migration->table('b_rest_placement')->create(function (\Bitrix\Main\UpdateSyste
 	$columns->datetime('DATE_CREATE')->defaultCurrentTimestamp();
 	$columns->varchar('ADDITIONAL', 255);
 	$columns->varchar('OPTIONS', 2048);
+	$columns->varchar('MODULE_ID', 50)->default('rest');
+	$columns->varchar('ENTITY_TYPE', 50)->default('app');
+	$columns->varchar('ENTITY_ID', 50);
 	$table->addPrimaryKey('ID');
 	$table->addUniqueIndex('ux_b_rest_placement1', ['APP_ID', 'PLACEMENT(100)', 'PLACEMENT_HANDLER(200)']);
+	$table->addUniqueIndex(
+		'ux_b_rest_placement_owner_entity',
+		['MODULE_ID', 'ENTITY_TYPE', 'ENTITY_ID', 'PLACEMENT', 'PLACEMENT_HANDLER'],
+	);
 	$table->addIndex('ix_b_rest_placement3', ['PLACEMENT(100)', 'ADDITIONAL(100)']);
 	$table->addIndex('ix_b_rest_placement4', ['PLACEMENT', 'USER_ID']);
 });
@@ -378,6 +388,22 @@ $migration->table('b_rest_app_scope_request_state')->create(function (\Bitrix\Ma
 	$table->addPrimaryKey('ID');
 	$table->addIndex('ix_b_rest_app_scope_request_state_request', ['REQUEST_ID']);
 });
+
+$migration->table('b_rest_embedding_access')
+	->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+		$columns = $table->addColumn();
+		$columns->int('ID')->notNull()->autoincrement();
+		$columns->int('EMBEDDING_ID')->notNull();
+		$columns->varchar('ACCESS_CODE', 100)->notNull();
+		$table->addPrimaryKey('ID');
+		$table->addIndex('ix_b_rest_embedding_access_embedding', ['EMBEDDING_ID']);
+		$table->addUniqueIndex(
+			'ux_b_rest_embedding_access_code_embedding',
+			['ACCESS_CODE', 'EMBEDDING_ID'],
+		);
+	})
+;
+
 $migration->table('b_rest_deferred_batch')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$table->addId();
 	$addColumn = $table->addColumn();

@@ -62,10 +62,22 @@ jn.define('im/messenger/controller/guest-introduction', (require, exports, modul
 				isSubmitting: false,
 			};
 
+			this.identifyResult = null;
+
 			this.props.parentWidget.on(EventType.view.close, () => {
+				const payload = { dialogId: this.props.dialogId };
+				if (this.identifyResult?.user)
+				{
+					payload.user = this.identifyResult.user;
+				}
+				if (this.identifyResult?.userToken)
+				{
+					payload.userToken = this.identifyResult.userToken;
+				}
+
 				BX.postComponentEvent(
 					EventType.callManager.guestIdentified,
-					[{ dialogId: this.props.dialogId }],
+					[payload],
 					'calls',
 				);
 				MessengerParams.disableRequestGuestName();
@@ -158,7 +170,7 @@ jn.define('im/messenger/controller/guest-introduction', (require, exports, modul
 
 			try
 			{
-				await runAction(RestMethod.imV2GuestSetName, {
+				this.identifyResult = await runAction(RestMethod.imV2GuestSetName, {
 					data: { name },
 				});
 			}

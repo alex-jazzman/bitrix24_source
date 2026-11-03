@@ -3,14 +3,19 @@
  */
 jn.define('mail/dialog', (require, exports, module) => {
 	const { requireLazy } = require('require-lazy');
+	const { PerfPoint } = require('debug/prism');
 
 	const CONNECTING_MAIL_TYPE = 'CONNECTING_MAIL';
+	const CREATE_MAILBOX_CHOICE_TYPE = 'CREATE_MAILBOX_CHOICE';
+	const CREATE_MAILBOX_FINAL = 'CREATE_MAILBOX_FINAL';
 	const CONNECTING_MAIL_TYPE_FINAL = 'CONNECTING_MAIL_FINAL';
 	const CONNECTING_MAIL_CRM_TYPE = 'CONNECTING_MAIL_CRM';
 	const CONNECTION_MAIL_TYPE_FORBIDDEN = 'CONNECTION_MAIL_TYPE_FORBIDDEN';
 	const MAIL_TYPE_LOST_MESSAGE_TYPE = 'MAIL_TYPE_LOST_MESSAGE';
 	const MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED = 'QUANTITY_LIMIT_EXCEEDED';
 	const PROVIDER_RESTRICTION_TYPE = 'PROVIDER_RESTRICTION';
+	const MIGRATION_NOTICE_TYPE = 'MIGRATION_NOTICE';
+	const MIGRATION_ANNOUNCEMENT_TYPE = 'MIGRATION_ANNOUNCEMENT';
 
 	/**
 	 * @class MailDialog
@@ -68,6 +73,26 @@ jn.define('mail/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @function CREATE_MAILBOX_CHOICE_TYPE
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get CREATE_MAILBOX_CHOICE_TYPE()
+		{
+			return CREATE_MAILBOX_CHOICE_TYPE;
+		}
+
+		/**
+		 * @function CREATE_MAILBOX_FINAL
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get CREATE_MAILBOX_FINAL()
+		{
+			return CREATE_MAILBOX_FINAL;
+		}
+
+		/**
 		 * @function CONNECTING_MAIL_CRM_TYPE
 		 * @returns {string}
 		 * @constructor
@@ -85,6 +110,26 @@ jn.define('mail/dialog', (require, exports, module) => {
 		static get PROVIDER_RESTRICTION()
 		{
 			return PROVIDER_RESTRICTION_TYPE;
+		}
+
+		/**
+		 * @function MIGRATION_NOTICE
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get MIGRATION_NOTICE()
+		{
+			return MIGRATION_NOTICE_TYPE;
+		}
+
+		/**
+		 * @function MIGRATION_ANNOUNCEMENT
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get MIGRATION_ANNOUNCEMENT()
+		{
+			return MIGRATION_ANNOUNCEMENT_TYPE;
 		}
 
 		static getWidgetParams()
@@ -150,6 +195,14 @@ jn.define('mail/dialog', (require, exports, module) => {
 					path: 'dialog/banners/connectingmail',
 					component: 'ConnectingMail',
 				},
+				[MailDialog.CREATE_MAILBOX_CHOICE_TYPE]: {
+					path: 'dialog/banners/createbitrixmailbox',
+					component: 'CreateBitrixMailbox',
+				},
+				[MailDialog.CREATE_MAILBOX_FINAL]: {
+					path: 'dialog/banners/createbitrixmailboxfinal',
+					component: 'CreateBitrixMailboxFinal',
+				},
 				[MailDialog.CONNECTING_MAIL_CRM_TYPE]: {
 					path: 'dialog/banners/connectingmail',
 					component: 'ConnectingMail',
@@ -161,6 +214,14 @@ jn.define('mail/dialog', (require, exports, module) => {
 				[MailDialog.PROVIDER_RESTRICTION]: {
 					path: 'dialog/banners/providerrestriction',
 					component: 'ProviderRestriction',
+				},
+				[MailDialog.MIGRATION_NOTICE]: {
+					path: 'dialog/banners/migrationnotice',
+					component: 'MigrationNotice',
+				},
+				[MailDialog.MIGRATION_ANNOUNCEMENT]: {
+					path: 'dialog/banners/announcement',
+					component: 'MigrationAnnouncement',
 				},
 				[MailDialog.MAIL_TYPE_LOST_MESSAGE_TYPE]: {
 					path: 'dialog/banners/lostmessage',
@@ -174,19 +235,36 @@ jn.define('mail/dialog', (require, exports, module) => {
 
 			if (config)
 			{
+				// what a person waits through between asking for a message and reading it: the bundle of
+				// the message, the request a message makes before it may be drawn, and the native widget
+				const perfPoint = new PerfPoint('Mail Dialog Open', redefinedType).start();
+
+				perfPoint.startPoint('Import Extension');
 				jn.import(`mail:${config.path}`)
 					.then(async () => {
+						perfPoint.endPoint('Import Extension');
+
 						const {
 							[config.component]: BannerComponent,
 						} = require(`mail/${config.path}`);
 
-						const preFetched = typeof BannerComponent.preFetch === 'function'
-							? await BannerComponent.preFetch(props)
-							: {}
-						;
+						let preFetched = {};
+						if (typeof BannerComponent.preFetch === 'function')
+						{
+							perfPoint.startPoint('PreFetch');
+							try
+							{
+								preFetched = await BannerComponent.preFetch(props);
+							}
+							finally
+							{
+								perfPoint.endPoint('PreFetch');
+							}
+						}
 
 						if (parentWidget)
 						{
+							perfPoint.startPoint('Open Widget');
 							parentWidget.openWidget('layout', MailDialog.getWidgetParams())
 								.then((widget) => {
 									const component = new BannerComponent({
@@ -197,10 +275,19 @@ jn.define('mail/dialog', (require, exports, module) => {
 										...preFetched,
 									});
 									widget.showComponent(component);
+									perfPoint.endPoint('Open Widget');
+									perfPoint.end();
 								})
-								.catch(console.error);
+								.catch((error) => {
+									perfPoint.endPoint('Open Widget');
+									perfPoint.end();
+									console.error(error);
+								});
+
+							return;
 						}
-						else if (layoutWidget)
+
+						if (layoutWidget)
 						{
 							const component = new BannerComponent({
 								...props,
@@ -213,8 +300,14 @@ jn.define('mail/dialog', (require, exports, module) => {
 							layoutWidget.setRightButtons([]);
 							layoutWidget.showComponent(component);
 						}
+
+						perfPoint.end();
 					})
-					.catch(console.error);
+					.catch((error) => {
+						perfPoint.endPoint('Import Extension');
+						perfPoint.end();
+						console.error(error);
+					});
 			}
 			else
 			{

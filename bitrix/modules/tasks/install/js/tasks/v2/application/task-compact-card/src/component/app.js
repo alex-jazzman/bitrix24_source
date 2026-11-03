@@ -102,6 +102,7 @@ export const App = {
 			taskId: this.id,
 			openingFullCard: false,
 			isCheckListPopupShown: false,
+			checkListId: 0,
 			creationError: false,
 			popupCount: 0,
 		};
@@ -269,7 +270,13 @@ export const App = {
 		{
 			const checklists = this.checklist;
 
-			const [id, error] = await taskService.add({ task: this.task, view: true });
+			const [id, error] = await taskService.add({
+				task: this.task,
+				view: true,
+				// SC-003 (AC-013): report the marker set by the deadline field when
+				// the user set the deadline themselves during this create session.
+				deadlineManuallySet: this.task.deadlineManuallySet === true,
+			});
 
 			if (!id)
 			{
@@ -427,13 +434,15 @@ export const App = {
 				animate,
 			});
 		},
-		showCheckListPopup(): void
+		showCheckListPopup(checkListId: number | string = 0): void
 		{
+			this.checkListId = checkListId;
 			this.isCheckListPopupShown = true;
 		},
 		closeCheckListPopup(): void
 		{
 			this.isCheckListPopupShown = false;
+			this.checkListId = 0;
 		},
 		subscribeEvents(): void
 		{
@@ -490,12 +499,6 @@ export const App = {
 					>
 						<FieldTitle :disabled="isCheckListPopupShown"/>
 						<Importance/>
-						<BIcon
-							class="tasks-compact-card-fields-close"
-							:name="Outline.CROSS_L"
-							data-task-button-id="close"
-							@click="close"
-						/>
 					</div>
 					<DescriptionInline ref="description"/>
 					<div class="tasks-compact-card-fields-list">
@@ -504,6 +507,7 @@ export const App = {
 					<CheckList
 						v-if="isCheckListPopupShown"
 						isAutonomous
+						:checkListId
 						@show="handleShowingPopup"
 						@close="handleHidingPopup(); closeCheckListPopup();"
 						@resize="handleResizingPopup"
@@ -540,6 +544,15 @@ export const App = {
 						<FullCardButton v-model:isOpening="openingFullCard"/>
 					</div>
 				</div>
+				<button
+					type="button"
+					class="tasks-compact-card-fields-close"
+					:aria-label="loc('TASKS_V2_TCC_CLOSE_BTN')"
+					data-task-button-id="close"
+					@click="close"
+				>
+					<BIcon :name="Outline.CROSS_L" aria-hidden="true"/>
+				</button>
 			</div>
 			<DropZone
 				v-if="isDiskModuleInstalled && !isCheckListPopupShown"

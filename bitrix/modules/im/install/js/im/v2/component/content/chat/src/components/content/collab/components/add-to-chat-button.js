@@ -3,6 +3,7 @@ import { CloseIconSize } from 'main.popup';
 import { Tooltip } from 'ui.dialogs.tooltip';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
+import { HeaderAction, HeaderActionShape, HeaderControlKey } from 'im.v2.component.content.elements';
 import { AddToCollab } from 'im.v2.component.entity-selector';
 import { PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -29,7 +30,7 @@ const PromoMessages = {
 // @vue/component
 export const AddToChatButton = {
 	name: 'AddToChatButton',
-	components: { AddToCollab, BIcon },
+	components: { AddToCollab, BIcon, HeaderAction },
 	props:
 	{
 		dialogId: {
@@ -48,6 +49,8 @@ export const AddToChatButton = {
 	{
 		Outline: () => Outline,
 		ICON_SIZE: () => ICON_SIZE,
+		HeaderActionShape: () => HeaderActionShape,
+		HeaderControlKey: () => HeaderControlKey,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -92,7 +95,7 @@ export const AddToChatButton = {
 		showMembersNotInvitedPromo(promoId: $Values<typeof PromoId>, promoParams: PromoParams): Promise<void>
 		{
 			const tooltip = new Tooltip({
-				bindElement: this.$refs['add-members'],
+				bindElement: this.getPopupBindElement(),
 				content: this.renderTooltipContent(promoId),
 				minWidth: 410,
 				popupOptions: {
@@ -117,25 +120,37 @@ export const AddToChatButton = {
 
 			return tooltipContent.render();
 		},
+		// The popup and the promo tooltip bind to the native control, and the ref of a component gives
+		// its instance.
+		getPopupBindElement(): HTMLElement | Object
+		{
+			return this.$refs['add-members']?.$el ?? {};
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
+	// The surface behind the action is the selector dialog of the entity selector, not a disclosure of
+	// this button, so it announces the type it opens and reports no expanded state of its own.
+	// language=Vue
 	template: `
-		<div
+		<HeaderAction
+			:controlKey="HeaderControlKey.addToChat"
+			aria-haspopup="dialog"
+			:shape="HeaderActionShape.circle"
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 			:class="iconClasses"
 			class="bx-im-collab-header__add-people-icon"
 			data-testid="im-collab-header-add-btn"
-			@click="openAddToChatPopup"
 			ref="add-members"
+			@click="openAddToChatPopup"
 		>
 			<BIcon :name="Outline.ADD_PERSON" :size="ICON_SIZE" />
-		</div>
+		</HeaderAction>
 		<AddToCollab
 			v-if="showAddToChatPopup"
-			:bindElement="$refs['add-members'] ?? {}"
+			:bindElement="getPopupBindElement()"
 			:dialogId="dialogId"
 			:popupConfig="{ offsetTop: 25, offsetLeft: -300 }"
 			@close="closeAddToChatPopup"

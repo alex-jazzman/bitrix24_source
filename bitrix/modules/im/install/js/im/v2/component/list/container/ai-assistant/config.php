@@ -20,6 +20,7 @@ return [
 		'im.v2.lib.permission',
 		'im.v2.provider.service.copilot',
 		'ui.icon-set.api.vue',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

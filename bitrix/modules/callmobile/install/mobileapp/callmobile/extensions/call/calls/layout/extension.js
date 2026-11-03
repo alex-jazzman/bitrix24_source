@@ -5,11 +5,14 @@
 jn.define('call/calls/layout', (require, exports, module) => {
 	include('Calls');
 
+	const layoutExtensionData = (jnExtensionData ? jnExtensionData.get('call:calls/layout') : null) || {};
+	BX.message(layoutExtensionData.PHRASES || {});
+
 	const { BottomSheet } = require('bottom-sheet');
 	const { UserRegistry, UserModel } = require('call/calls/users');
-	const { GridUserCount, StreamQuality } = require('call/const');
+	const { GridUserCount, StreamQuality, MediaStreamKind } = require('call/const');
 	const Icons = require('icons/icons').Icons;
-	const { Color, Corner, Indent } = require('tokens');
+	const { Color, Corner, Component, Indent } = require('tokens');
 	const { CallStatus } = require('call/const');
 	const { CallMenu } = require('call/calls/menu');
 	const { CopilotDrawer } = require('call/calls/layout/copilot-drawer');
@@ -18,8 +21,16 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	const { CallSettingsManager } = require('call/settings-manager');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
+	const { Text3 } = require('ui-system/typography/text');
 	const { Avatar, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
 	const Utils = require('src/util');
+	const {
+		deriveLayoutMode,
+		deriveSpotlightPeriod,
+		deriveReconnectSnapshot,
+		deriveScreenshareReconciliation,
+		describeScreenshareReconciliation,
+	} = require('src/view-mode');
 	const MobileUtils = require('utils/function');
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/layout/`;
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
@@ -427,6 +438,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		PrivateChatButtonClick: 'privateChatButtonClick',
 		AnswerButtonClick: 'answerButtonClick',
 		HangupButtonClick: 'hangupButtonClick',
+		FinishForAllButtonClick: 'finishForAllButtonClick',
 		DeclineButtonClick: 'declineButtonClick',
 		BodyClick: 'bodyClick',
 		ReplaceCamera: 'replaceCamera',
@@ -445,7 +457,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	const INACTIVITY_TIMEOUT = 5000;
 	// Debounce window for the grid re-sort + re-render (#updateUserInfo). A burst of per-stream
 	// setVideoStream calls on mass join/reconnect otherwise triggers one full rankUsers re-sort
-	// and re-render of every card per arriving stream (≈100 on a 100-user join). Trailing debounce
+	// and re-render of every card per arriving stream (~100 on a 100-user join). Trailing debounce
 	// collapses both rapid bursts and irregularly-spaced arrivals; UPDATE_USER_INFO_MAX_WAIT caps
 	// the deferral so a continuous stream of arrivals can't starve the grid update.
 	const UPDATE_USER_INFO_DEBOUNCE = 250;
@@ -463,6 +475,81 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	};
 
 	const GRIDVIEW_VERSION = '5.6.300';
+
+	const FINISH_FOR_ALL_MENU_WIDTH = 251;
+
+	/**
+	 * Anchored menu card shown over the hangup button (Figma node 3528-110217): a pill with the
+	 * destructive "finish for all" action on the left and a circle-cross close control on the right.
+	 *
+	 * @class FinishForAllMenu
+	 * @param {object} props
+	 * @param {string} props.testId
+	 * @param {function} props.onSelect finish the call for everyone
+	 * @param {function} props.onClose dismiss the menu without finishing
+	 */
+	class FinishForAllMenu extends LayoutComponent
+	{
+		render()
+		{
+			// The native Spotlight host stretches its outermost component to the full available width
+			// on iOS, so the fixed pill width only survives on a nested view. This transparent row keeps
+			// the pill hugged to the hangup button (rightmost control); the Spotlight pointer is anchored
+			// to the target, so it stays under the pill. On Android the wrapper hugs content — no change.
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						justifyContent: 'flex-end',
+						alignItems: 'flex-end',
+					},
+				},
+				View(
+					{
+						style: {
+							width: FINISH_FOR_ALL_MENU_WIDTH,
+							borderRadius: Component.popupCorner.toNumber(),
+							backgroundColor: Color.bgContentPrimary.toHex(),
+							flexDirection: 'row',
+							alignItems: 'center',
+						},
+					},
+					View(
+						{
+							testId: this.props.testId,
+							onClick: () => this.props.onSelect(),
+							style: {
+								flex: 1,
+								paddingLeft: Indent.XL2.toNumber(),
+								paddingVertical: Indent.XL.toNumber(),
+							},
+						},
+						Text3({
+							text: BX.message('MOBILE_CALL_MENU_FINISH_FOR_ALL'),
+							color: Color.accentMainAlert,
+							numberOfLines: 1,
+							ellipsize: 'end',
+						}),
+					),
+					View(
+						{
+							testId: `${this.props.testId}Close`,
+							onClick: () => this.props.onClose(),
+							style: {
+								paddingLeft: Indent.M.toNumber(),
+								paddingRight: Indent.L.toNumber(),
+							},
+						},
+						IconView({
+							icon: Icon.CIRCLE_CROSS,
+							color: Color.accentMainAlert,
+							size: 28,
+						}),
+					),
+				),
+			);
+		}
+	}
 
 	class CallLayout extends LayoutComponent
 	{
@@ -496,6 +583,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				: INACTIVITY_TIMEOUT;
 
 			this.useGridView = CallSettingsManager.gridViewEnabled && Utils.isGridViewSupported();
+			// Availability gate: server flag only. The feature is pure JS (adds nothing native),
+			// so no native capability check is needed - same as the Copilot button.
+			this.viewToggleAvailable = CallSettingsManager.viewToggleEnabled;
 			this.viewableIds = [];
 
 			this.state = {
@@ -547,11 +637,20 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				connectionType: 1,
 				isReconnecting: false,
 				cameraBlocked: false,
+				// Ephemeral "force grid" flag (P2). NOT persisted. Subordinate to hasSource in ALG-01:
+				// when there is no spotlight source it has no effect. Reset on period edges is P3.
+				manualGrid: false,
 			};
 
-			// Instance field, NOT state — setState is async in JN, and reading the timer
+			// Machine field for the spotlight-period automaton (ALG-02, P3): presence of a
+			// spotlight source at the last settle point. Instance field, NOT state - the edge
+			// comparison must read/write it synchronously (setState is async in JN) and it never
+			// drives UI. Seeded from the initial layout so the first settle sees no false edge.
+			this.prevHasSource = this.#currentMode().hasSource;
+
+			// Instance field, NOT state - setState is async in JN, and reading the timer
 			// handle through state caused stale clearTimeout and a flood of duplicate
-			// setTimeouts that all fired (panelVisible:false × 51 observed on stand).
+			// setTimeouts that all fired (panelVisible:false x 51 observed on stand).
 			this.inactivityTimer = null;
 
 			this.isDestroyed = false;
@@ -568,7 +667,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.updateUserInfoDeferredSince = 0;
 
 			// Debounce state for updateDisplayedUsers (same window). Collapses the per-user
-			// re-render on a live mass-join (≈50 onCallUserJoined → setUserState → render).
+			// re-render on a live mass-join (~50 onCallUserJoined -> setUserState -> render).
 			this.displayedUsersTimer = null;
 			this.displayedUsersDeferredSince = 0;
 
@@ -591,6 +690,25 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		componentDidMount()
 		{
 			this.emit(EventName.CallLayoutMounted);
+		}
+
+		/**
+		 * Reconnect-edge reconciliation for the spotlight-period automaton (ALG-02, ERR-006).
+		 * While reconnecting, the automaton holds the period on a transient source drop (the
+		 * `isReconnecting` branch keeps `prevHasSource`/`manualGrid`); nothing re-runs the settle
+		 * when the reconnect ENDS. If the source vanished for good mid-reconnect, the marker would
+		 * stay latched and the next new period could open in grid instead of auto-featured. Run one
+		 * explicit settle on the falling edge `isReconnecting: true -> false`, now that the
+		 * connection is live and `hasSource` reflects reality (the controller reconciles the
+		 * screenshare map against the server snapshot via `reconcileScreenshareAfterReconnect`
+		 * before clearing the flag, so a source that vanished mid-outage is already gone here).
+		 */
+		componentDidUpdate(prevProps, prevState)
+		{
+			if (prevState.isReconnecting && !this.state.isReconnecting)
+			{
+				this.#settleSpotlightPeriod();
+			}
 		}
 
 		setUserStates(userStates)
@@ -783,8 +901,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			// Non-batched callers (controller.onCallUserNameUpdate, onSetCurrentUser) rely on
 			// the final empty setState to flush in-place UserModel mutations to UI. Skip when
-			// nothing actually changed — controller calls setUserData 10+ times on call start
-			// for profile loading; without the guard each fired a no-op setState (53× observed).
+			// nothing actually changed - controller calls setUserData 10+ times on call start
+			// for profile loading; without the guard each fired a no-op setState (53x observed).
 			if (changed && !skipUpdate)
 			{
 				this.flushForceRender();
@@ -956,7 +1074,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			this.setState(stateUpdate);
 			// Use the router (toggleSubscriptionRemoteVideo) instead of toggleSubscriptionRemoteVideoGrid
-			// directly — the router selects between grid-view (viewable-based, with viewableIds) and
+			// directly - the router selects between grid-view (viewable-based, with viewableIds) and
 			// page-based subscription depending on useGridView. Calling Grid directly here skipped the
 			// grid-view branch on call start.
 			this.toggleSubscriptionRemoteVideo();
@@ -972,7 +1090,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		// seed for every participant on call start) AND a cross-tick stream (per-bot mic-state
 		// arriving as separate onCallUserMicrophoneState events on a live mass-join) into one
 		// setState per quiet window. A lone runtime mute/unmute renders after the debounce
-		// window — imperceptible for a remote participant's mic icon.
+		// window - imperceptible for a remote participant's mic icon.
 		flushForceRender()
 		{
 			const now = Date.now();
@@ -1114,6 +1232,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.setCentralUser(userId);
 			this.setState({
 				pinnedUserId: userId,
+			}, () => {
+				// Pin axis of the spotlight-period automaton (ALG-02): pinnedUserId is fresh
+				// only in the setState callback, so the hasSource edge is settled here.
+				this.#settleSpotlightPeriod();
 			});
 		}
 
@@ -1133,6 +1255,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.setCentralUser(this.getPresenterUserId());
 			this.setState({
 				pinnedUserId: 0,
+			}, () => {
+				// Pin axis of the spotlight-period automaton (ALG-02): settled in the callback.
+				this.#settleSpotlightPeriod();
 			});
 		}
 
@@ -1413,8 +1538,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				// Guard: skip setState when none of the values changed.
 				// Without this guard, setUserState called from controller for already-Connected
 				// users (or other transitions where status stays 'call' and floor-request stays
-				// empty) fires ~50 no-op setStates per session — each cascading to N×UserCard +
-				// N×NameBadge re-renders.
+				// empty) fires ~50 no-op setStates per session - each cascading to NxUserCard +
+				// NxNameBadge re-renders.
 				const nextFloorRequestUsers = this.getFloorRequestUsers(3);
 				const nextFloorRequestSelf = this.userRegistry.get(env.userId).floorRequestState;
 				const prevFloorRequestUsers = this.state.floorRequestUsers;
@@ -1537,8 +1662,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		// Trailing-debounced (same window as #updateUserInfo). The only caller is setUserState,
 		// which mutates the user model + state synchronously BEFORE this render call, so deferring
-		// the render introduces no race. On a live mass-join (≈50 onCallUserJoined events, each
-		// triggering setUserState→updateDisplayedUsers) this collapses the per-user re-render of
+		// the render introduces no race. On a live mass-join (~50 onCallUserJoined events, each
+		// triggering setUserState->updateDisplayedUsers) this collapses the per-user re-render of
 		// the whole growing list into one render per quiet window instead of one per join.
 		updateDisplayedUsers()
 		{
@@ -1678,7 +1803,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}
 
 				user.microphoneState = isMicrophoneOn;
-				// Coalesced force-render — NameBadge picks up the in-place mutation. Batched so
+				// Coalesced force-render - NameBadge picks up the in-place mutation. Batched so
 				// the call-start native seed (mic state for every user) costs one re-render.
 				this.flushForceRender();
 			}
@@ -1766,6 +1891,275 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.toggleSubscriptionRemoteVideo();
 		}
 
+		/**
+		 * Live binding of the canonical layout-mode derive (ALG-01) to the current state.
+		 * The single decision point for "is there a spotlight source", "which source wins"
+		 * and "which view is rendered". Every layout consumer (render, ranker, subscription
+		 * policy) reads from here instead of recomputing presence independently.
+		 *
+		 * `manualGrid` comes from the ephemeral state flag (P2): when true, an active source
+		 * still yields `effectiveView === 'grid'` (subordinate to `hasSource` per ALG-01).
+		 *
+		 * @returns {{ hasSource: boolean, spotlightSource: ('none'|'pin'|'screenshare'), effectiveView: ('grid'|'featured') }}
+		 */
+		#currentMode()
+		{
+			return deriveLayoutMode({
+				screenshareCount: this.screenshareStreams.size,
+				pinnedUserId: this.state.pinnedUserId,
+				manualGrid: this.state.manualGrid,
+			});
+		}
+
+		/**
+		 * View-toggle button props (TPL-01) for CallTopPanel. Reads the single derive (ALG-01),
+		 * never recomputes presence. The button shows only under the availability gate AND when a
+		 * spotlight source exists; its icon reflects the target view (featured now -> offer grid).
+		 *
+		 * @returns {{ showViewToggle: boolean, viewToggleTargetsGrid: boolean, viewToggleDisabled: boolean, onViewToggleClick: function }}
+		 */
+		#viewToggleProps()
+		{
+			const { hasSource, effectiveView } = this.#currentMode();
+
+			return {
+				// The two-user layout always renders the priority stream and ignores manualGrid,
+				// so the toggle would be visually inert there - gate it out (DTO-01 / TPL-01).
+				showViewToggle: this.viewToggleAvailable && hasSource && this.getDisplayedUserCount() !== 2,
+				viewToggleTargetsGrid: effectiveView === 'featured',
+				// Held-but-inert during reconnect (toggleManualView no-ops): dim so the tap is not "stuck".
+				viewToggleDisabled: this.state.isReconnecting,
+				onViewToggleClick: () => this.toggleManualView(),
+			};
+		}
+
+		/**
+		 * Spotlight-period automaton (ALG-02, P3). Reads the live presence (ALG-01 `hasSource`)
+		 * and the reconnect flag, runs the pure transition against the `prevHasSource` marker,
+		 * and applies its two effects: clear the manual "force grid" flag on a period edge and
+		 * advance the marker. Edge-triggered - a call with `hasSource` unchanged vs `prevHasSource`
+		 * is a no-op, so it is safe to invoke from every hasSource-mutating path (screenshare via
+		 * `#flushUserInfo`, pin via the pin/unpin handlers). Must run only where state is settled:
+		 * `screenshareStreams` is synchronous, but `pinnedUserId` is fresh only in the setState
+		 * callback, so pin callers invoke this from there.
+		 */
+		#settleSpotlightPeriod()
+		{
+			const { hasSource } = this.#currentMode();
+
+			const { resetManualGrid, nextPrevHasSource } = deriveSpotlightPeriod({
+				prevHasSource: this.prevHasSource,
+				hasSource,
+				isReconnecting: this.state.isReconnecting,
+			});
+
+			this.prevHasSource = nextPrevHasSource;
+
+			// Only touch state on a real change: when manualGrid is already false (no manual
+			// toggle happened - e.g. the button is absent under the availability gate) this is a
+			// no-op, keeping the automaton invisible to the legacy call flow. The callback lets
+			// the video subscription policy follow the restored view, mirroring toggleManualView.
+			if (resetManualGrid && this.state.manualGrid)
+			{
+				if (hasSource)
+				{
+					// Opening edge: the view actually flips grid -> featured, so refresh
+					// subscriptions. Reset stale viewability first so the first-page
+					// fallback covers the freshly shown layout.
+					this.viewableIds = [];
+
+					this.setState({ manualGrid: false }, () => {
+						this.toggleSubscriptionRemoteVideo();
+					});
+				}
+				else
+				{
+					// Closing edge: the view is already grid (hasSource is false) and the
+					// source-removal path has already recomputed subscriptions. Just drop
+					// the manual flag - a second resubscribe here would be a redundant
+					// quadratic pass that also flashes the fallback page.
+					this.setState({ manualGrid: false });
+				}
+			}
+		}
+
+		/**
+		 * Returns the set of user ids that actually fit on screen right now ("on screen now").
+		 *
+		 * This is pure viewport geometry (who is rendered), independent of the subscription state:
+		 * - pin / screenshare (priority): the pinned user plus screenshare publishers; in GridView
+		 *   the `viewableIds` (no first-page fallback, like the pin branch of the toggle methods),
+		 *   in the legacy grid the active page ids (`activeIds`);
+		 * - GridView (not pin/screenshare): `effectiveViewableIds` = `viewableIds`, with the same
+		 *   empty-`viewableIds` fallback to the first page before the first native
+		 *   `onViewableItemsChanged`, capped at `MAX_VISIBLE_STREAMS`;
+		 * - legacy grid: the rendered page window (`renderedUser`) via `scrollManager.getCurrentGridPage()`.
+		 *
+		 * Ids are normalized to `Number` and de-duplicated.
+		 *
+		 * @returns {Set<number>}
+		 */
+		#getOnScreenUserIds()
+		{
+			const onScreen = new Set();
+
+			const addId = (rawId) => {
+				const id = Number(rawId);
+				if (!Number.isNaN(id))
+				{
+					onScreen.add(id);
+				}
+			};
+
+			if (!this.state || !this.state.displayedUsers)
+			{
+				return onScreen;
+			}
+
+			if (!this.state.isAppActive)
+			{
+				return onScreen;   // app backgrounded → nobody is on screen (mirrors toggle methods setting isShowVideo:false when !isAppActive)
+			}
+
+			const MAX_VISIBLE_STREAMS = GridUserCount.fullFirstPageCount;
+			const isPinMode = this.state.pinnedUserId !== 0;
+			const hasScreenshare = (this.getDisplayedUsers().some((item) => item.data.screenState) && this.screenshareStreams.size !== 0)
+				|| (this.screenshareStreams.size !== 0 && this.state.screenshareOnEnter === null);
+
+			if (isPinMode || hasScreenshare)
+			{
+				if (isPinMode && this.state.pinnedUserId)
+				{
+					addId(this.state.pinnedUserId);
+				}
+
+				for (const [userId] of this.screenshareStreams)
+				{
+					addId(userId);
+				}
+
+				if (this.useGridView)
+				{
+					const viewableIds = Array.isArray(this.viewableIds) ? this.viewableIds : [];
+					viewableIds.slice(0, MAX_VISIBLE_STREAMS).forEach(addId);
+				}
+				else
+				{
+					this.activeIds.forEach(addId);
+				}
+
+				return onScreen;
+			}
+
+			if (this.useGridView)
+			{
+				const ids = this.state.displayedUsers.map((user) => user.id);
+				const viewableIds = Array.isArray(this.viewableIds) ? this.viewableIds : [];
+
+				// Same fallback as toggleSubscriptionRemoteVideoForGridView: until the first native
+				// onViewableItemsChanged (viewableIds empty) treat the first page as visible.
+				const effectiveViewableIds = viewableIds.length === 0
+					? ids.slice(0, MAX_VISIBLE_STREAMS)
+					: viewableIds;
+
+				effectiveViewableIds.slice(0, MAX_VISIBLE_STREAMS).forEach(addId);
+
+				return onScreen;
+			}
+
+			// Legacy grid: the rendered page window.
+			const actualDisplayedUsers = this.getDisplayedUsers();
+			const displayedUserCount = actualDisplayedUsers.length;
+			const currentGridPage = this.scrollManager.getCurrentGridPage();
+
+			actualDisplayedUsers.forEach((user, displayedIndex) => {
+				const renderedUser = displayedIndex < GridUserCount.fullFirstPageCount * currentGridPage
+					&& displayedIndex >= GridUserCount.fullFirstPageCount * (currentGridPage - 1);
+
+				if (renderedUser || displayedUserCount <= GridUserCount.fullFirstPageCount)
+				{
+					addId(user.id);
+				}
+			});
+
+			return onScreen;
+		}
+
+		/**
+		 * Returns a per-user snapshot of the users currently on screen, carrying the grid's own
+		 * subscription fields, so a transport-side consumer (NQE auto-quality) can cap quality
+		 * against what the grid actually asked for without re-deriving anything itself.
+		 *
+		 * It is the intersection of two authoritative sources, kept strictly separated:
+		 * - WHO is returned is decided by the viewport set `#getOnScreenUserIds()` (geometry), NOT by
+		 *   the `isShowVideo` subscription flag;
+		 * - the fields `{ quality, isShowVideo }` are taken from the grid's last computed
+		 *   subscription list (`this.state.toggleListPrev`, assigned as the full pre-diff list by the
+		 *   toggle-subscription methods) reduced by id: `quality` = max over the numeric StreamQuality
+		 *   enum (low=1 < medium=2 < high=3), `isShowVideo` = OR.
+		 *
+		 * Ids are normalized to `Number` and de-duplicated. Returns an empty array before the grid
+		 * computed its first subscription (`toggleListPrev` empty) or when nothing is on screen.
+		 *
+		 * @returns {Array<{id: number, quality: number, isShowVideo: boolean}>}
+		 */
+		getVisibleUsers()
+		{
+			const toggleListPrev = this.state && Array.isArray(this.state.toggleListPrev)
+				? this.state.toggleListPrev
+				: [];
+
+			if (toggleListPrev.length === 0)
+			{
+				return [];
+			}
+
+			const onScreen = this.#getOnScreenUserIds();
+			if (onScreen.size === 0)
+			{
+				return [];
+			}
+
+			const reduced = new Map();
+
+			toggleListPrev.forEach((entry) => {
+				if (!entry)
+				{
+					return;
+				}
+
+				const id = Number(entry.id);
+				if (Number.isNaN(id))
+				{
+					return;
+				}
+
+				const quality = Number(entry.quality);
+				const isShowVideo = entry.isShowVideo === true;
+
+				const existing = reduced.get(id);
+				if (existing)
+				{
+					if (!Number.isNaN(quality))
+					{
+						existing.quality = Math.max(existing.quality, quality);
+					}
+					existing.isShowVideo = existing.isShowVideo || isShowVideo;
+				}
+				else
+				{
+					reduced.set(id, {
+						id,
+						quality: Number.isNaN(quality) ? StreamQuality.low : quality,
+						isShowVideo,
+					});
+				}
+			});
+
+			// Intersection: fields from toggleListPrev, membership decided by the viewport set.
+			return Array.from(reduced.values()).filter((entry) => onScreen.has(entry.id));
+		}
+
 		toggleSubscriptionRemoteVideoGrid()
 		{
 			if (!this.state.displayedUsers)
@@ -1785,9 +2179,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			const displayedUserCount = actualDisplayedUsers.length;
 			const currentGridPage = this.scrollManager.getCurrentGridPage();
-			const isPinMode = this.state.pinnedUserId !== 0;
-			const hasScreenshare = (actualDisplayedUsers.some((item) => item.data.screenState) && this.screenshareStreams.size !== 0)
-				|| (this.screenshareStreams.size !== 0 && this.state.screenshareOnEnter === null);
+			// Video subscriptions follow the VIEW (ALG-01): the source is promoted to `high`
+			// only in `featured`. Presence comes from the single derive, not a local formula.
+			const { effectiveView } = this.#currentMode();
+			const isFeatured = effectiveView === 'featured';
 
 			const checkNecessityAddUser = (newState) => {
 				const currentUser = this.state.toggleListPrev.find((user) => user.id === newState.id);
@@ -1824,7 +2219,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					&& displayedIndex >= GridUserCount.fullFirstPageCount * (currentGridPage - 1);
 				const isActiveUser = userModel.talking;
 
-				if (!hasScreenshare && !isPinMode)
+				if (!isFeatured)
 				{
 					if (renderedUser || displayedUserCount <= GridUserCount.fullFirstPageCount)
 					{
@@ -1852,7 +2247,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					}
 				}
 
-			if (hasScreenshare || isPinMode)
+			if (isFeatured)
 			{
 				if (this.screenshareStreams.has(String(id)) || this.screenshareStreams.has(id))
 				{
@@ -1863,7 +2258,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					});
 					return;
 				}
-				if (isPinMode && id === this.state.pinnedUserId)
+				if (this.state.pinnedUserId !== 0 && id === this.state.pinnedUserId)
 				{
 					toggleList.push({
 						id,
@@ -1920,9 +2315,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			const toggleList = [];
 
-			const isPinMode = this.state.pinnedUserId !== 0;
-			const hasScreenshare = (this.getDisplayedUsers().some((item) => item.data.screenState) && this.screenshareStreams.size !== 0)
-				|| (this.screenshareStreams.size !== 0 && this.state.screenshareOnEnter === null);
+			// Video subscriptions follow the VIEW (ALG-01): the source is promoted to `high`
+			// only in `featured`. Presence comes from the single derive, not a local formula.
+			const { effectiveView } = this.#currentMode();
+			const isFeatured = effectiveView === 'featured';
 
 			const checkNecessityAddUser = (newState) => {
 				const currentUser = this.state.toggleListPrev.find((user) => user.id === newState.id);
@@ -1939,10 +2335,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			// Native GridView emits onViewableItemsChanged with a 500ms debounce, and may not
 			// emit it at all on small lists. Until the first event, treat the users that fit
-			// into the first page viewport as visible. Skip the fallback in pin/screenshare
-			// mode where the visible row is smaller (rows: 1) and a separate subscription
+			// into the first page viewport as visible. Skip the fallback in the featured view
+			// where the visible row is smaller (rows: 1) and a separate subscription
 			// branch already covers the pinned/screenshare user.
-			const effectiveViewableIds = viewableIds.length === 0 && !isPinMode && !hasScreenshare
+			const effectiveViewableIds = viewableIds.length === 0 && !isFeatured
 				? ids.slice(0, MAX_VISIBLE_STREAMS)
 				: viewableIds;
 			const visibleSet = new Set(effectiveViewableIds.slice(0, MAX_VISIBLE_STREAMS));
@@ -1968,7 +2364,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				const isVisible = visibleSet.has(id);
 				const isActiveUser = userModel.talking;
 
-				if (!hasScreenshare && !isPinMode)
+				if (!isFeatured)
 				{
 					if (isVisible)
 					{
@@ -1998,7 +2394,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					}
 				}
 
-			if (hasScreenshare || isPinMode)
+			if (isFeatured)
 			{
 				if (this.screenshareStreams.has(String(id)))
 				{
@@ -2009,7 +2405,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					});
 					return;
 				}
-				if (isPinMode && id === this.state.pinnedUserId)
+				if (this.state.pinnedUserId !== 0 && id === this.state.pinnedUserId)
 				{
 					toggleList.push({
 						id,
@@ -2187,7 +2583,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			if (now - this.updateUserInfoDeferredSince >= UPDATE_USER_INFO_MAX_WAIT)
 			{
-				// maxWait reached — flush now so a continuous burst can't starve the grid
+				// maxWait reached - flush now so a continuous burst can't starve the grid
 				this.#flushUserInfo();
 				return;
 			}
@@ -2219,6 +2615,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 
 			this.toggleSubscriptionRemoteVideo();
+
+			// Screenshare axis of the spotlight-period automaton (ALG-02): screenshareStreams
+			// is settled here (this is the single collapse point after stream changes), so the
+			// hasSource edge for screenshare start/stop is detected at this settled point.
+			this.#settleSpotlightPeriod();
 		}
 
 		getProperStream(stream)
@@ -2464,6 +2865,43 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			)
 		}
 
+		renderConnectingOverlay()
+		{
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						width: '100%',
+						height: '100%',
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'center',
+						alignItems: 'center',
+						backgroundColor: '#99000000',
+					},
+					clickable: false,
+				},
+				Loader({
+					style: {
+						width: 24,
+						height: 24,
+					},
+					tintColor: '#fff',
+					animating: true,
+					size: 'small',
+				}),
+				Text({
+					style: {
+						marginTop: 8,
+						fontSize: 13,
+						color: '#ffffff',
+						textAlign: 'center',
+					},
+					text: BX.message('MOBILE_CALL_LAYOUT_GRID_CONNECTING'),
+				}),
+			);
+		}
+
 		getScreenshareLayout()
 		{
 			if (this.getIsLandscapeOrientation())
@@ -2630,8 +3068,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderCenterGrid()
 		{
-			const hasScreenshare = (this.getDisplayedUsers().some((item) => item.data.screenState) && this.screenshareStreams.size !== 0)
-				|| (this.screenshareStreams.size !== 0 && this.state.screenshareOnEnter === null);
+			// Featured-slot content reads the SOURCE axis (ALG-01): screenshare wins over pin.
+			// The featured surface is shown ONLY when the VIEW axis is featured; manual grid
+			// (effectiveView === 'grid' with an active source) falls through to the plain grid.
+			const { spotlightSource, effectiveView } = this.#currentMode();
+			const isFeatured = effectiveView === 'featured';
 
 			const paddingVertical = {
 				paddingTop: 5,
@@ -2655,8 +3096,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						});
 					},
 				},
-				hasScreenshare ? this.getScreenshareLayout()
-					: (this.state.pinnedUserId
+				(isFeatured && spotlightSource === 'screenshare') ? this.getScreenshareLayout()
+					: (isFeatured && spotlightSource === 'pin')
 						? this.renderPinLayout()
 						: (this.useGridView && this.getDisplayedUserCount() >= 7)
 								? this.getMainGridViewGrid()
@@ -2679,8 +3120,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 									},
 									onLongTap: (userId) => this.pinUserInGrid(userId),
 									onReplaceCamera: () => this.emit(EventName.ReplaceCamera),
-								})
-					),
+								}),
 			);
 		}
 
@@ -2796,7 +3236,31 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			// TODO: ???
 			const firstWithVideo = users.findIndex(user => user.cameraState);
 
-			if (!!this.state.pinnedUserId)
+			// The ranker is a pure ordering function; the mode register comes from the single
+			// derive (ALG-01). Priority is screenshare > pin; the branch bodies (D10 fixed
+			// horizon) are unchanged. The carousel branches are additionally gated on the
+			// rendered view: under manual grid a source still exists but effectiveView is
+			// 'grid' (the featured carousel is hidden), so those branches - and their carousel
+			// resubscription (resubscribeForUserScroll) - are skipped and ranking falls through
+			// to the plain grid path instead of doing a wasted slot swap and resubscribe.
+			const { spotlightSource, effectiveView } = this.#currentMode();
+
+			if (effectiveView === 'featured' && spotlightSource === 'screenshare')
+			{
+				// Compare like with like: talkingUser is an array index, activeScreenId is the
+				// screensharing owner's userId. Skip the swap only when the talker IS the
+				// presenter (already spotlighted); otherwise promote the talker into a slot.
+				if (talkingUser !== -1 && users[talkingUser].id !== Number(this.state.activeScreenId))
+				{
+					[users[talkingUser], users[1]] = [users[1], users[talkingUser]];
+				}
+				setTimeout(() => {
+					this.resubscribeForUserScroll();
+				});
+				return users;
+			}
+
+			if (effectiveView === 'featured' && spotlightSource === 'pin')
 			{
 				const talkingIndex = users.findIndex(user => user.talking === true);
 				if (talkingIndex === -1 || talkingIndex < this.state.userScrollUserPerPage - 1)
@@ -2805,18 +3269,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}
 
 				[users[talkingIndex], users[1]] = [users[1], users[talkingIndex]];
-				setTimeout(() => {
-					this.resubscribeForUserScroll();
-				});
-				return users;
-			}
-
-			if (this.state.activeScreenId !== null)
-			{
-				if (talkingUser !== -1 && talkingUser !== this.state.activeScreenId)
-				{
-					[users[talkingUser], users[1]] = [users[1], users[talkingUser]];
-				}
 				setTimeout(() => {
 					this.resubscribeForUserScroll();
 				});
@@ -2886,7 +3338,31 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const talkingUser = users.findIndex(user => user.talking);
 			const firstWithVideo = users.findIndex(user => user.cameraState);
 
-			if (!!this.state.pinnedUserId)
+			// The ranker is a pure ordering function; the mode register comes from the single
+			// derive (ALG-01). Priority is screenshare > pin; the branch bodies (D10 fixed
+			// horizon) are unchanged. The carousel branches are additionally gated on the
+			// rendered view: under manual grid a source still exists but effectiveView is
+			// 'grid' (the featured carousel is hidden), so those branches - and their carousel
+			// resubscription (resubscribeForUserScroll) - are skipped and ranking falls through
+			// to the plain grid path instead of doing a wasted slot swap and resubscribe.
+			const { spotlightSource, effectiveView } = this.#currentMode();
+
+			if (effectiveView === 'featured' && spotlightSource === 'screenshare')
+			{
+				// Compare like with like: talkingUser is an array index, activeScreenId is the
+				// screensharing owner's userId. Skip the swap only when the talker IS the
+				// presenter (already spotlighted); otherwise promote the talker into a slot.
+				if (talkingUser !== -1 && users[talkingUser].id !== Number(this.state.activeScreenId))
+				{
+					[users[talkingUser], users[1]] = [users[1], users[talkingUser]];
+				}
+				setTimeout(() => {
+					this.resubscribeForUserScroll();
+				});
+				return users;
+			}
+
+			if (effectiveView === 'featured' && spotlightSource === 'pin')
 			{
 				const talkingIndex = users.findIndex(user => user.talking === true);
 				if (talkingIndex === -1 || talkingIndex < this.state.userScrollUserPerPage - 1)
@@ -2895,18 +3371,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}
 
 				[users[talkingIndex], users[1]] = [users[1], users[talkingIndex]];
-				setTimeout(() => {
-					this.resubscribeForUserScroll();
-				});
-				return users;
-			}
-
-			if (this.state.activeScreenId !== null)
-			{
-				if (talkingUser !== -1 && talkingUser !== this.state.activeScreenId)
-				{
-					[users[talkingUser], users[1]] = [users[1], users[talkingUser]];
-				}
 				setTimeout(() => {
 					this.resubscribeForUserScroll();
 				});
@@ -3018,12 +3482,38 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			this.setState({
 				pinnedUserId: id,
+			}, () => {
+				// Pin axis of the spotlight-period automaton (ALG-02): settled in the callback.
+				this.#settleSpotlightPeriod();
 			});
 		}
 
 		unpinUserInGrid()
 		{
 			this.setState({ pinnedUserId: 0 }, () => {
+				this.toggleSubscriptionRemoteVideo();
+				// Pin axis of the spotlight-period automaton (ALG-02): settled in the callback.
+				this.#settleSpotlightPeriod();
+			});
+		}
+
+		/**
+		 * Toggle the ephemeral manualGrid flag (P2.T1). Only switches the view - pin/screenshare
+		 * are NOT cleared. Reconnect guard mirrors pinUserInGrid. The setState callback restarts
+		 * subscriptions so the video policy follows the new effectiveView with no media reconnect;
+		 * setState itself triggers the re-render.
+		 */
+		toggleManualView()
+		{
+			if (this.state.isReconnecting)
+			{
+				return;
+			}
+
+			// Reset stale viewability so the first-page fallback covers the freshly shown grid.
+			this.viewableIds = [];
+
+			this.setState({ manualGrid: !this.state.manualGrid }, () => {
 				this.toggleSubscriptionRemoteVideo();
 			});
 		}
@@ -3091,7 +3581,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					Avatar({
 						testId: 'scrollItem-avatar',
 						uri: this.userRegistry.get(item.data.id).avatar,
-						name: BX.utils.html.htmlDecode(item.data.name),
+						name: Utils.htmlDecode(item.data.name),
 						size: 90,
 						backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id]?.color),
 					}),
@@ -3200,7 +3690,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 									Avatar({
 										testId: 'pinnedUser-avatar',
 										uri: this.userRegistry.get(this.state.pinnedUserId).avatar,
-										name: BX.utils.html.htmlDecode(this.userRegistry.get(this.state.pinnedUserId).name),
+										name: Utils.htmlDecode(this.userRegistry.get(this.state.pinnedUserId).name),
 										size: 180,
 										backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[this.state.pinnedUserId].color),
 									}),
@@ -3224,22 +3714,102 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			)
 		}
 
+		/**
+		 * Mirror a `screenshareStreams` membership onto the user model. Keys carry whatever
+		 * `setVideoStream` received (number from one provider path, string from another), while
+		 * `userRegistry` is looked up numerically - and `get()` returns null for a user who has
+		 * already left the call, so the write always needs a guard.
+		 *
+		 * @param {number|string} key `screenshareStreams` key
+		 * @param {boolean} screenState
+		 */
+		#applyScreenState(key, screenState)
+		{
+			const userModel = this.userRegistry.get(Number(key));
+			if (userModel)
+			{
+				userModel.screenState = screenState;
+			}
+		}
+
 		checkIsScreenshareOnEnter()
 		{
 			if(this.state.screenshareOnEnter === null)
 			{
-				for (const [userId] of this.screenshareStreams) {
-					this.userRegistry.get(Number(userId)).screenState = true;
+				for (const [key] of this.screenshareStreams) {
+					this.#applyScreenState(key, true);
 				}
 				this.state.screenshareOnEnter = false;
 			}
 		}
 
-		checkScreenshareAfterReconnect()
+		/**
+		 * Reconcile `screenshareStreams` with the authoritative server snapshot on the reconnect
+		 * edge (ALG-03).
+		 *
+		 * Must run BEFORE `isReconnecting` is cleared, because clearing the flag is what closes the
+		 * period: the map is pruned synchronously here, so the `componentDidUpdate` settle that
+		 * fires on the falling edge `true -> false` reads an already-clean map and computes
+		 * `hasSource: false` (ALG-02). The `#updateUserInfo()` below does NOT settle in time - it
+		 * is debounced by UPDATE_USER_INFO_DEBOUNCE and its `#flushUserInfo` lands long after the
+		 * flag is down; it only re-ranks, re-renders and re-subscribes.
+		 *
+		 * "No data" is not "nobody is sharing": a payload without a participant list, and a
+		 * participant reported without track info, both leave the entry in `keptKeys`, so a
+		 * reconnect on a provider that does not deliver the snapshot keeps a live screenshare
+		 * alive (MT-19 steps 1-2). Kept entries also get `screenState` re-asserted, which is what
+		 * the method did unconditionally before the snapshot existed.
+		 *
+		 * Removing entries here is a source removal that never went through `setVideoStream`, so
+		 * the same collapse point is invoked explicitly (`#updateUserInfo` -> re-rank, re-render,
+		 * re-subscribe). `viewableIds` is reset first, exactly like `toggleManualView` /
+		 * `unpinUser` do: the ids left from the featured carousel (rows: 1) describe a different
+		 * composition than the grid we fall back to, and keeping them would leave tiles without
+		 * video until the user actually scrolls (MT-21 / MT-22 defect class).
+		 *
+		 * `localUserId` pins down the ALG-03 invariant "the snapshot never describes the local user"
+		 * - see `deriveScreenshareReconciliation`.
+		 *
+		 * @param {*} participantsSnapshot raw `participantsSnapshot` of the onReconnected payload;
+		 *   undefined on providers that do not publish it
+		 */
+		reconcileScreenshareAfterReconnect(participantsSnapshot)
 		{
-			for (const [userId] of this.screenshareStreams) {
-				this.userRegistry.get(Number(userId)).screenState = true;
+			const screenshareKeys = [...this.screenshareStreams.keys()];
+			const snapshot = deriveReconnectSnapshot({
+				participantsSnapshot,
+				screenTrackSource: MediaStreamKind.Screen,
+			});
+			const { staleKeys, keptKeys } = deriveScreenshareReconciliation({
+				screenshareKeys,
+				snapshot,
+				localUserId: Number(env.userId),
+			});
+
+			// Permanent diagnostic: exactly one line per reconnect, never from render. Without it,
+			// "the snapshot never arrives, so nothing is ever reconciled" and "the scenario did not
+			// reproduce" look identical on a stand - see `describeScreenshareReconciliation`.
+			CallUtil.log(describeScreenshareReconciliation({
+				participantsSnapshot,
+				snapshot,
+				screenshareKeys,
+				staleKeys,
+			}));
+
+			keptKeys.forEach((key) => this.#applyScreenState(key, true));
+
+			if (staleKeys.length === 0)
+			{
+				return;
 			}
+
+			staleKeys.forEach((key) => {
+				this.screenshareStreams.delete(key);
+				this.#applyScreenState(key, false);
+			});
+
+			this.viewableIds = [];
+			this.#updateUserInfo();
 		}
 
 		renderScreenshareLayoutLandscape()
@@ -3289,7 +3859,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const topOffset = device.screen.safeArea.top + commonOffset;
 			// The bottom carousel container is sized to 20% of the center grid height
 			// (see getScreenshareGridViewGrid + the wrapper View below), so the tile
-			// side must also be based on 20% — otherwise tiles overflow the container
+			// side must also be based on 20% - otherwise tiles overflow the container
 			// and the native GridView ends up scrolling vertically.
 			const size = this.getIsLandscapeOrientation()
 				? (this.state.gridContainerWidth * 0.22 - 5.0 - device.screen.safeArea.right)
@@ -3342,8 +3912,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		getScreenshareList()
 		{
+			// Build the list from the same predicate the layout derive uses -
+			// screenshareStreams membership - not from UserModel.screenState.
+			// onUserScreenState(false) clears screenState before the media stream is
+			// removed, so a screenState filter would empty this list while the derive
+			// (screenshareStreams.size > 0) still renders the featured view; renderSlider
+			// then reads screenshareList[0].id on an empty array when activeScreenId is null.
 			return Array.from(this.screenshareStreams.keys())
-				.filter(id => this.userRegistry.get(id)?.screenState)
 				.map(id => ({ id: id }))
 				.reverse();
 		}
@@ -3440,7 +4015,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 								paddingRight: 10,
 								color: '#fff',
 							},
-							text: `Экран ${this.userRegistry.get(item.id).name}`,
+							text: BX.message('MOBILE_CALL_LAYOUT_USER_SCREEN').replace('#NAME#', this.userRegistry.get(item.id).name),
 						}),
 					),
 					View(
@@ -3850,10 +4425,59 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 		}
 
+		// Native widget layer is hidden on chat-open (fold) and shown on return (unfold).
+		// On Android RecyclerView does NOT restore its data adapter after the hide/show
+		// cycle - the grid stays visually empty until the app is restarted (Mantis 250774).
+		// On iOS UICollectionView keeps rendered items correctly, so the bug does not
+		// reproduce there.
+		//
+		// A plain setState({}) or re-instantiating GridViewGrid does not help: the JN VDOM
+		// diff sees the same render slot and does not force a full native re-mount. The
+		// only way to achieve a real native re-mount is to make JN traverse a DIFFERENT
+		// render branch and come back. We flip status to 'connecting' (renderIncoming /
+		// renderOutgoing instead of renderGrid), give native ~500 ms to process the
+		// transition, then restore the original status. JN diff between the two render
+		// trees produces a full unmount+mount of the grid.
+		//
+		// The `_foldRefreshInProgress` guard protects against re-entry: `CallController.unfold`
+		// invokes `onReturnFromFold` once, but if the procedure is triggered again (e.g. a
+		// second fold cycle before the timers finish) the second call is skipped so we do
+		// not capture the transient `status='connecting'` as `originalStatus`.
+		//
+		// componentDidMount in GridViewGrid additionally kicks `forceUpdateVisibleRows`
+		// with 50/150/400/800 ms delays - this ensures native GridView receives data once
+		// the ref has been established.
+		//
+		// The F1/F2 perf skip-logic is untouched: this procedure only fires on return
+		// from fold.
+		onReturnFromFold()
+		{
+			if (this._foldRefreshInProgress)
+			{
+				return;
+			}
+			this._foldRefreshInProgress = true;
+
+			const originalStatus = this.state.status;
+			this.mainGridViewGrid = null;
+			this.pinGridViewGrid = null;
+			this.screenshareGridViewGrid = null;
+
+			this.setState({ status: 'connecting' }, () => {
+				setTimeout(() => {
+					this.setState({ status: originalStatus }, () => {
+						setTimeout(() => {
+							this._foldRefreshInProgress = false;
+						}, 200);
+					});
+				}, 500);
+			});
+		}
+
 		renderIncoming()
 		{
-			// `onLayout: this.redraw()` removed — it caused a feedback loop:
-			// onLayout → setState({}) → re-render → onLayout → ... (53+ empty setState calls observed).
+			// `onLayout: this.redraw()` removed - it caused a feedback loop:
+			// onLayout -> setState({}) -> re-render -> onLayout -> ... (53+ empty setState calls observed).
 			return View(
 				{
 					style: {
@@ -3910,6 +4534,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				recordState: this.state.recordState,
 				showCopilot,
 				copilotEnabled: this.state.copilotEnabled,
+				...this.#viewToggleProps(),
 				showFullHeader,
 				onClick: props.onClick,
 				onChatClick: () => this.emit(EventName.ChatButtonClick),
@@ -3936,6 +4561,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				isGroupCall: this.state.isGroupCall,
 				showCopilot,
 				copilotEnabled: this.state.copilotEnabled,
+				...this.#viewToggleProps(),
 				showFullHeader: true,
 				onClick: props.onClick,
 				onChatClick: () => this.emit(EventName.ChatButtonClick),
@@ -3946,7 +4572,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderOutgoing()
 		{
-			// `onLayout: this.redraw()` removed — see renderIncoming() for rationale (feedback loop).
+			// `onLayout: this.redraw()` removed - see renderIncoming() for rationale (feedback loop).
 			return View(
 				{
 					style: {
@@ -4065,6 +4691,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 				areTwoUsers && shouldShowStream && this.renderRemoteStreamByPriority(),
 				areTwoUsers && shouldShowAvatar && renderRemoteUserAvatar,
+				areTwoUsers && this.isReconnecting() && this.renderConnectingOverlay(),
 				!areTwoUsers && this.renderCenterGrid(),
 				areTwoUsers && Boolean(this.state.localStream) && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
 				this.renderOverlay(this.renderGridTop(topParams)),
@@ -4240,6 +4867,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					() => {
 						buttonCallback(EventName.HangupButtonClick);
 					},
+					'callsButtonHangup',
+					{
+						onLongClick: () => this.handleHangupLongClick(),
+						ref: (ref) => {
+							this.finishForAllButtonRef = ref;
+						},
+					},
 				),
 			);
 		}
@@ -4297,12 +4931,17 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				{
 					testId: testId || '',
 					onClick: click,
+					onLongClick: block.onLongClick || undefined,
+					ref: block.ref || undefined,
 					style,
 				},
 				View(
 					{},
 					Image({
-						onClick: click,
+						// When the button also handles long-press, keep the icon passive so the gesture
+						// reaches the root View's onLongClick instead of being swallowed here; the root
+						// View's onClick still handles the normal tap.
+						onClick: block.onLongClick ? undefined : click,
 						style: styles.bottomButtonImage,
 						svg: { content: block.value ? block.icon : svgContent },
 						resizeMode: 'center',
@@ -4333,6 +4972,70 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		isFloorRequestButtonVisible()
 		{
 			return this.state.isGroupCall && this.state.status === 'call';
+		}
+
+		isFinishForAllMenuAvailable()
+		{
+			return CallSettingsManager.finishForAllEnabled
+				&& this.state.isGroupCall
+				&& this.state.status === 'call';
+		}
+
+		handleHangupLongClick()
+		{
+			if (!this.isFinishForAllMenuAvailable())
+			{
+				return;
+			}
+
+			this.showFinishForAllMenu();
+		}
+
+		showFinishForAllMenu()
+		{
+			if (this.finishForAllSpotlight)
+			{
+				return;
+			}
+
+			if (!this.finishForAllButtonRef)
+			{
+				return;
+			}
+
+			// Keep the bottom panel (and thus the anchor button) mounted while the menu is open:
+			// otherwise the pending inactivity timer would hide the panel and drop the Spotlight anchor.
+			clearTimeout(this.inactivityTimer);
+			this.inactivityTimer = null;
+
+			const spotlight = dialogs.createSpotlight();
+			this.finishForAllSpotlight = spotlight;
+			spotlight.setTarget(this.finishForAllButtonRef, {
+				type: 'rectangle',
+				disableHideByOutsideClick: true,
+			});
+			spotlight.setComponent(
+				new FinishForAllMenu({
+					testId: 'callsMenuFinishForAll',
+					onSelect: () => {
+						spotlight.hide();
+						this.emit(EventName.FinishForAllButtonClick);
+					},
+					onClose: () => {
+						spotlight.hide();
+					},
+				}),
+				{},
+			);
+			spotlight.setHandler((eventName) => {
+				if (eventName === 'onHide')
+				{
+					this.finishForAllSpotlight = null;
+					// Resume the inactivity auto-hide once the menu is dismissed.
+					this.state.status === 'call' && this.hideUIAfterInactivity();
+				}
+			});
+			spotlight.show();
 		}
 
 		getBottomMargin()
@@ -4645,8 +5348,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			AhaMoment.show({
 				targetRef: this.ahaMomentButtonRef,
 				testId: 'copilotAha',
-				title: BX.message('MOBILE_CALL_COPILOT_TITLE'),
-				description: BX.message('MOBILE_CALL_COPILOT_MESSAGE'),
+				title: BX.message('MOBILE_CALL_COPILOT_TITLE_MSGVER_1'),
+				description: BX.message('MOBILE_CALL_COPILOT_MESSAGE_MSGVER_1'),
 				buttonText: BX.message('MOBILE_CALL_GOT_IT'),
 				image: Image(
 					{
@@ -4719,6 +5422,12 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			}
 			this.videoStreams = null;
 			this.state = {};
+
+			if (this.finishForAllSpotlight)
+			{
+				this.finishForAllSpotlight.hide();
+				this.finishForAllSpotlight = null;
+			}
 
 			this.emit(EventName.Destroy);
 		}

@@ -27,13 +27,54 @@ if (!$projectProvider->isProject($groupId))
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $isFrame = $request->get('IFRAME') === 'Y';
+if ($isFrame && ($allowProjectNavigationInFrame ?? false) !== true)
+{
+	return false;
+}
+
+$isRestricted = !Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS, $groupId)
+	&& !Feature::canTurnOnTrial(Feature::PROJECTS_GROUPS)
+;
+
+if ($isFrame)
+{
+	if (!$isRestricted)
+	{
+		Extension::load('im.public');
+	}
+
+	?>
+	<script>
+		top.BX.ready(function() {
+			const navigateToProject = () => {
+				<?php if ($isRestricted): ?>
+				top.BX.UI.FeaturePromotersRegistry
+					.getPromoter({ featureId: 'socialnetwork_projects_groups' })
+					.show()
+				;
+				<?php else: ?>
+				top.BX.Messenger.v2.Lib.Messenger.openCollab('sg<?= $groupId ?>');
+				<?php endif ?>
+			};
+			const slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+			if (slider && slider.close(true, navigateToProject))
+			{
+				return;
+			}
+
+			navigateToProject();
+		});
+	</script>
+	<?php
+
+	return true;
+}
+
 if (!$isFrame)
 {
 	$APPLICATION->SetTitle('');
 	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
 	Toolbar::deleteFavoriteStar();
-
-	$isRestricted = !Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS) && !Feature::canTurnOnTrial(Feature::PROJECTS_GROUPS);
 
 	if ($isRestricted)
 	{
@@ -50,7 +91,7 @@ if (!$isFrame)
 
 	Extension::load('im.public');
 
-	$pathToList = Path::get('workgroups_page')
+	$pathToList = Path::get('workgroups_page');
 
 	?>
 	<script>

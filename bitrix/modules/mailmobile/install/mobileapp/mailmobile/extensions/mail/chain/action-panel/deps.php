@@ -2,9 +2,12 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'utils/function',
 		'layout/pure-component',
-        'tokens',
-    ],
+		'layout/ui/scroll-view',
+		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/blocks/switcher',
+		'ui-system/typography/text',
+		'utils/function',
+	],
 ];

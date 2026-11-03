@@ -38,6 +38,12 @@ type Agreement = {
 	id: number;
 	checked: boolean;
 	required: boolean;
+	acceptBySubmit: boolean;
+	acceptBySubmitAllowed?: boolean;
+	isPersonalDataAgreement?: boolean;
+	agreementNoticeAllowed?: boolean;
+	agreementNoticeEnabled?: boolean;
+	agreementNoticeText?: string;
 };
 
 type Agreements = {

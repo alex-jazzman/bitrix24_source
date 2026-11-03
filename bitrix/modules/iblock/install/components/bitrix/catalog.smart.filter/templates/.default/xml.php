@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 echo '<'.'?xml version="1.0" encoding="utf-8" ?'.'>';
 
@@ -31,9 +35,9 @@ else
 >
 	<title><?echo $arResult["SECTION_TITLE"]?></title>
 	<description><?echo $arResult["SECTION_DESCRIPTION"]?></description>
-	<rootUrl><?echo CHTTP::urn2uri("/");?></rootUrl>
+	<rootUrl><?echo (new Uri("/"))->toAbsolute();?></rootUrl>
 	<resource>
-		<fixed name="<?echo CHTTP::urn2uri($arResult["FORM_ACTION"]);?>"/>
+		<fixed name="<?echo (new Uri($arResult["FORM_ACTION"]))->toAbsolute();?>"/>
 	</resource>
 	<filters>
 	<constant key="Y">

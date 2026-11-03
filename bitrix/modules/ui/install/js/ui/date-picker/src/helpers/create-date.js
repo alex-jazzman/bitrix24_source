@@ -1,6 +1,10 @@
+// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 import { Type } from 'main.core';
 import { type DateLike } from '../date-picker-options';
 import { convertToDbFormat } from './convert-to-db-format';
+import { createUtcDate } from './create-utc-date';
 import { parseDate } from './parse-date';
 
 export function createDate(value: DateLike, formatDate: string = null): Date | null
@@ -34,13 +38,12 @@ export function createDate(value: DateLike, formatDate: string = null): Date | n
 
 function createUTC(date: Date): Date
 {
-	return new Date(Date.UTC(
+	return createUtcDate(
 		date.getFullYear(),
 		date.getMonth(),
 		date.getDate(),
 		date.getHours(),
 		date.getMinutes(),
 		date.getSeconds(),
-		0,
-	));
+	);
 }

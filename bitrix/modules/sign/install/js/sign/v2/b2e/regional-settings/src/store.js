@@ -19,11 +19,20 @@ export type RegionalSettingsStoreState = {
 	currentDocumentUid: string | null,
 	documentsGroup: Map<string, DocumentDetails>,
 	previewUrlList: Map<string, string>,
+	previewUrlLoadQueue: Array<string>,
+	previewUrlLoadWorkerCount: number,
+	previewUrlLoadAttempts: Map<string, number>,
 };
 
 export type RegionalSettingsStoreInitOptions = {
 	documentTypeList: Array<{ id: string, title: string }>
 }
+
+// preview generation shares php-fpm workers with the signing service, so keep the pool small
+const previewUrlLoadWorkerLimit = 2;
+// A failed request is repeated, but only so many times: a document whose preview keeps failing must
+// not send the queue round in circles for the rest of the session.
+const previewUrlLoadAttemptLimit = 2;
 
 export const DefaultDocumentSettings: DocumentSettings = {
 	date: {
@@ -56,6 +65,9 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 		documentSettingsMap: new Map(),
 		documentsGroup: new Map(),
 		previewUrlList: new Map(),
+		previewUrlLoadQueue: [],
+		previewUrlLoadWorkerCount: 0,
+		previewUrlLoadAttempts: new Map(),
 	}),
 	getters: {
 		currentDocumentSettings(state): DocumentSettings
@@ -214,6 +226,48 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 				...settings,
 			});
 		},
+		requestDocumentPreviewUrls(uidList: Array<string>): void
+		{
+			for (const uid of uidList)
+			{
+				if (
+					this.previewUrlList.has(uid)
+					|| this.previewUrlLoadQueue.includes(uid)
+					|| (this.previewUrlLoadAttempts.get(uid) ?? 0) >= previewUrlLoadAttemptLimit
+				)
+				{
+					continue;
+				}
+
+				this.previewUrlLoadQueue.push(uid);
+			}
+
+			while (
+				this.previewUrlLoadWorkerCount < previewUrlLoadWorkerLimit
+				&& this.previewUrlLoadWorkerCount < this.previewUrlLoadQueue.length
+			)
+			{
+				this.previewUrlLoadWorkerCount++;
+				void this.loadNextDocumentPreviewUrl();
+			}
+		},
+		async loadNextDocumentPreviewUrl(): Promise<void>
+		{
+			const uid = this.previewUrlLoadQueue.shift();
+			if (uid === undefined)
+			{
+				this.previewUrlLoadWorkerCount--;
+
+				return;
+			}
+
+			if (this.documentsGroup.has(uid))
+			{
+				await this.loadDocumentPreviewUrl(uid);
+			}
+
+			await this.loadNextDocumentPreviewUrl();
+		},
 		async loadDocumentPreviewUrl(uid: string): Promise<void>
 		{
 			if (this.previewUrlList.has(uid))
@@ -221,9 +275,26 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 				return;
 			}
 
+			// the empty value marks a request in flight: it keeps a second one from starting
 			this.previewUrlList.set(uid, '');
-			const data = await new Api().getDocumentPreviewUrl(uid);
-			this.previewUrlList.set(uid, data?.url ?? '');
+			this.previewUrlLoadAttempts.set(uid, (this.previewUrlLoadAttempts.get(uid) ?? 0) + 1);
+
+			try
+			{
+				const data = await new Api().getDocumentPreviewUrl(uid);
+				this.previewUrlList.set(uid, data?.url ?? '');
+			}
+			catch
+			{
+				// The mark of the request in flight goes with it, and the uid gets back in line:
+				// otherwise it would never be asked for again and the document would stay without
+				// a preview until the page is reloaded. The attempt limit ends the line.
+				this.previewUrlList.delete(uid);
+				if ((this.previewUrlLoadAttempts.get(uid) ?? 0) < previewUrlLoadAttemptLimit)
+				{
+					this.previewUrlLoadQueue.push(uid);
+				}
+			}
 		},
 		setDocumentSettings(uid: string, settings: DocumentSettings): void
 		{

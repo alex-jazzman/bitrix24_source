@@ -48,6 +48,12 @@ function buildBaseAttributes(config: NodeConfig): Object
 		fileId: {
 			default: null,
 		},
+		// Disk object behind the attachment, filled instead of fileId when the file was picked from
+		// Disk rather than uploaded here. Exactly one of the two is set; that choice decides both how
+		// the node resolves and which token it serializes into. A node with neither is invalid.
+		diskObjectId: {
+			default: null,
+		},
 		documentId: {
 			default: null,
 		},
@@ -65,6 +71,9 @@ function buildBaseAttributes(config: NodeConfig): Object
 		unavailable: {
 			default: false,
 		},
+		// NOTE: what the server says about a Disk file — name, size, links, trash state — is NOT a
+		// node attribute. It is per-reader data and lives in DiskAttachmentStore; the node view merges
+		// it in when it draws. Putting it here would share one reader's answer with every co-editor.
 		// Rendered width as a percentage of the container (image resize), >0..100, fractional
 		// allowed (0.01% steps). null = natural size. Persisted in markdown as `width=N` (bare
 		// number = percent).
@@ -183,6 +192,7 @@ export class FileAssetNodeFactory
 						class: config.className,
 						contenteditable: 'false',
 						'data-file-id': node.attrs.fileId || '',
+						'data-disk-object-id': node.attrs.diskObjectId || '',
 						'data-document-id': node.attrs.documentId || '',
 						'data-download-url': node.attrs.downloadUrl || '',
 						'data-show-url': node.attrs.showUrl || '',
@@ -195,9 +205,11 @@ export class FileAssetNodeFactory
 			{
 				return {
 					nodeViewComponent: config.nodeViewComponent || null,
-					defaultTypeMessage: config.defaultTypeMessage,
 					// Injected for image replace (see media-extensions/registry). null for file/video.
 					uploadService: null,
+					// Disk attachments resolve per reader, outside the shared model — the node view
+					// needs the document to look its data up (see DiskAttachmentStore).
+					getDocumentId: () => 0,
 					// Enables resize/align/float-stacking for this node type (image, video).
 					resizable: config.resizable === true,
 				};
@@ -213,6 +225,7 @@ export class FileAssetNodeFactory
 					className: config.className,
 					inline: isInline,
 					uploadService: this.options.uploadService,
+					getDocumentId: this.options.getDocumentId,
 				});
 			},
 			addProseMirrorPlugins()
@@ -258,18 +271,24 @@ export class FileAssetNodeFactory
 			addCommands: createCommandFactory(config),
 			renderMarkdown(node)
 			{
-				const fileId = Number(node?.attrs?.fileId);
-				if (!Number.isInteger(fileId) || fileId <= 0)
-				{
-					return '';
-				}
-
 				// width is a percentage (>0..100, fractional allowed); serialize as a bare number.
 				const width = Number(node?.attrs?.width);
 				const widthAttr = (Number.isFinite(width) && width > 0 && width <= 100) ? ` width=${width}` : '';
 
 				const align = node?.attrs?.align;
 				const alignAttr = (align === 'left' || align === 'right') ? ` align=${align}` : '';
+
+				const diskObjectId = Number(node?.attrs?.diskObjectId);
+				if (Number.isInteger(diskObjectId) && diskObjectId > 0)
+				{
+					return `[[disk ${config.assetType} objectId=${diskObjectId}${widthAttr}${alignAttr}]]`;
+				}
+
+				const fileId = Number(node?.attrs?.fileId);
+				if (!Number.isInteger(fileId) || fileId <= 0)
+				{
+					return '';
+				}
 
 				return `[[${config.assetType} fileId=${fileId}${widthAttr}${alignAttr}]]`;
 			},

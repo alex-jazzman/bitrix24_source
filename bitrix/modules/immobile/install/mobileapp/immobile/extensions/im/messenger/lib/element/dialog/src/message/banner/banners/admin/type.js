@@ -7,6 +7,7 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/type
 	const Await = Object.freeze({
 		fireRequest: 'fireRequest',
 		transferRequest: 'transferRequest',
+		selfDeleteRequest: 'selfDeleteRequest',
 	});
 
 	const Success = Object.freeze({

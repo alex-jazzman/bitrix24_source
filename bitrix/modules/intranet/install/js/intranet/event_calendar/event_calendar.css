@@ -565,7 +565,7 @@ div.bxec-dialog td.bxec-edit-ed-cont, div.bxec-dialog td.bxec-view-d-cont {paddi
 
 /* PLANNER */
 a.bxex-planner-link{text-decoration: none; margin-left: 10px !important; font-weight: bold !important; white-space:nowrap; display: inline !important; outline: none;}
-a.bxex-planner-link img{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -3px 0; width: 16px; height: 14px; border-width: 0 !important; margin: 0 3px -1px 0;}
+a.bxex-planner-link img{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -3px 0; width: 16px; height: 14px; border-width: 0 !important; margin: 0 3px -1px 0;}
 
 div.bxec-plan-cont {width: 100%; height: 100%; border: 1px solid #B2B2B2;}
 div.bxec-plan-top-cont{width: 100%;height: 55px;padding: 3px;}
@@ -604,19 +604,19 @@ table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-day{background: url(/b
 table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.hol-day{background: url(/bitrix/images/intranet/event_calendar/planner/day_title_bg_hol.gif) -1px 10px  repeat-x;}
 table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-hol-day{background: url(/bitrix/images/intranet/event_calendar/planner/day_title_bg_hol.gif) -1px 5px  repeat-x;}
 
-tr.bxec-plan-grid-day-row td img.day-t-left{width: 3px; height: 27px; background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -25px 10px; float: left; position: relative; left: -1px;}
-tr.bxec-plan-grid-day-row td img.day-t-right{width: 3px; height: 27px; background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -30px 10px; float: right;}
+tr.bxec-plan-grid-day-row td img.day-t-left{width: 3px; height: 27px; background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -25px 10px; float: left; position: relative; left: -1px;}
+tr.bxec-plan-grid-day-row td img.day-t-right{width: 3px; height: 27px; background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -30px 10px; float: right;}
 table.bxec-iehack tr.bxec-plan-grid-day-row td img.day-t-left{left: -3px !important;}
 table.bxec-iehack tr.bxec-plan-grid-day-row td img.day-t-right{position: relative !important; right: -4px !important;}
 
-tr.bxec-plan-grid-day-row td.cur-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -25px 5px;}
-tr.bxec-plan-grid-day-row td.cur-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -30px 5px;}
+tr.bxec-plan-grid-day-row td.cur-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -25px 5px;}
+tr.bxec-plan-grid-day-row td.cur-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -30px 5px;}
 
-tr.bxec-plan-grid-day-row td.hol-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -36px 10px;}
-tr.bxec-plan-grid-day-row td.hol-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -41px 10px;}
+tr.bxec-plan-grid-day-row td.hol-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -36px 10px;}
+tr.bxec-plan-grid-day-row td.hol-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -41px 10px;}
 
-tr.bxec-plan-grid-day-row td.cur-hol-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -36px 5px;}
-tr.bxec-plan-grid-day-row td.cur-hol-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -41px 5px;}
+tr.bxec-plan-grid-day-row td.cur-hol-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -36px 5px;}
+tr.bxec-plan-grid-day-row td.cur-hol-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -41px 5px;}
 
 
 table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-day div,table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-hol-day div{margin-top: 8px; font-weight: bold;}
@@ -648,7 +648,7 @@ table.bxec-grid-bg-tbl tr.bxecpl-s3 td div {background-image: url(/bitrix/images
 
 a.bxex-ex-link-del img{background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -80px -49px; width: 12px; height: 12px; border-width: 0 !important; margin: 0 3px -1px 0;}
 td.bxecp-user-icon, td.bxecp-user-icon-q{width: 20px;}
-td.bxecp-user-icon img, td.bxecp-user-icon-q img{background-image: url(/bitrix/images/intranet/event_calendar/iconkit2.png); width: 18px; height: 18px; border-width: 0 !important; cursor: pointer;}
+td.bxecp-user-icon img, td.bxecp-user-icon-q img{background-image: url(/bitrix/images/intranet/event_calendar/iconkit2.webp); width: 18px; height: 18px; border-width: 0 !important; cursor: pointer;}
 td.bxecp-user-icon img{background-position: -2px -26px;}
 td.bxecp-user-icon-q img{background-position: -23px -26px;}
 
@@ -663,7 +663,7 @@ div.bxecp-selection img.bxecp-sel-right{right: 0; background: url(/bitrix/images
 div.bxecp-sel-deny img.bxecp-sel-left{background: url(/bitrix/images/intranet/event_calendar/planner/sel_busy_left.gif) repeat-y !important;}
 div.bxecp-sel-deny img.bxecp-sel-right{background: url(/bitrix/images/intranet/event_calendar/planner/sel_busy_right.gif) repeat-y !important;}
 
-div.bxecp-selection img.bxecp-sel-mover{width: 12px; height: 15px; position: absolute; top: 0; left: 0; cursor: move; background: url(/bitrix/images/intranet/event_calendar/iconkit2.png)  -4px -76px}
+div.bxecp-selection img.bxecp-sel-mover{width: 12px; height: 15px; position: absolute; top: 0; left: 0; cursor: move; background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp)  -4px -76px}
 
 div.bxec-gacc-cont{position: absolute; width: 1px; height: 1px; top: 0; left: 0;}
 div.bxec-gacc-el{position: absolute; height: 19px; background-color: #dfc726; z-index: 150;}
@@ -673,7 +673,7 @@ div.bxec-gacc-quest{background-color: #FFDF77 !important;}
 div.bxec-gacc-absent{background-color: #FF8C27 !important; z-index: 160 !important;}
 
 
-img.bxecpl-lock-dur{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -48px -16px; width: 18px; height: 18px; border-width: 0; cursor: pointer;display:block;float:left;margin: 2px 0 0 2px;}
+img.bxecpl-lock-dur{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) -48px -16px; width: 18px; height: 18px; border-width: 0; cursor: pointer;display:block;float:left;margin: 2px 0 0 2px;}
 
 img.icon-hover{background-color:#DBE3F2; border:1px solid #AEB6C2 !important; margin: 1px 0 0 1px !important;}
 img.bxecpl-lock-pushed{background-color:#DBE3F2; border:1px solid #AEB6C2 !important; margin: 1px 0 0 1px !important; background-position: -46px 2px !important;}
@@ -688,7 +688,7 @@ a.bxec-pl-link {text-decoration:none; font-size: 12px !important; font-weight: n
 div.bxec-planner-leg-cont{width: 200px;height: 50px;border: 1px solid red;display: none;}
 div.bxec-planner-legend{}
 
-div.bxecpl-loc-cont input{background:url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat right -43px transparent ; padding-right: 14px;}
+div.bxecpl-loc-cont input{background:url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat right -43px transparent ; padding-right: 14px;}
 div.bxecpl-loc-cont input.ec-label{color: #808080;}
 div.bxecpl-loc-cont input.ec-no-rm{color: #000 !important; background: transparent !important;}
 
@@ -701,7 +701,7 @@ div.bxecpl-loc-popup div.bxecplloc-over a.bxecplloc-view{display: block !importa
 
 table.bxec-user-list tr.bxec-mr-title td{background:#FFF url(/bitrix/images/intranet/event_calendar/planner/title_bg.gif) repeat-x 0 0; height: 40px; padding: 20px 0 0 10px;  color: #052635; font-weight: bold;}
 
-td.bxecp-mr-icon img{background:url(/bitrix/images/intranet/event_calendar/iconkit2.png) #fff no-repeat -66px 2px; width: 18px; height: 18px;}
+td.bxecp-mr-icon img{background:url(/bitrix/images/intranet/event_calendar/iconkit2.webp) #fff no-repeat -66px 2px; width: 18px; height: 18px;}
 
 div.bxecpl-mr-stub {position: absolute; left: 0; height: 39px; z-index: 5; background:#FFF url(/bitrix/images/intranet/event_calendar/days_title_bg.gif) repeat-x scroll 0 0;}
 div.bxec-empty-list{color:#D3D3D3;font-size:12px;position:absolute;left:10px; top:10px; z-index:10; display: none;}
@@ -736,7 +736,7 @@ div.bxec-user-con div.content {border:1px solid #B2B2B2 !important;}
 
 div.bxec-user-con div.title {background: #D8E3E8 !important; height:22px !important; padding-top:5px !important;}
 div.bxec-user-con div.title td.title-text {font-size:12px !important; font-weight:bold !important; color: #052635 !important; padding:1px 3px 3px 16px !important; cursor:default !important; vertical-align:top !important; text-align: left !important;}
-div.bxec-user-con a.close {background: url(/bitrix/components/bitrix/intranet.event_calendar/templates/.default/images/iconkit.gif) -88px 0px !important; height:15px!important; width:16px!important; margin: 0 !important;}
+div.bxec-user-con a.close {background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -88px 0px !important; height:15px!important; width:16px!important; margin: 0 !important;}
 
 div.bx-clock-div{z-index: 600!important;}
 div.search-popup{z-index: 2500!important;}
@@ -750,27 +750,27 @@ div.search-popup{z-index: 2500!important;}
 /* Banner with big beauty icons*/
 div.bxec-banner{border: 1px solid #DEDEDE; width: 334px; height: 127px; position: relative;}
 div.bxec-banner-elem{border: 0px solid black; width: 110px; height: 65px; display: inline-block; float: left;}
-div.bxec-banner div.bxec-banner-icon{width: 53px; height: 57px; background-image: url(/bitrix/images/intranet/event_calendar/iconkit2.png); border: 0px dashed black; margin: 5px 0 5px 20px;}
+div.bxec-banner div.bxec-banner-icon{width: 53px; height: 57px; background-image: url(/bitrix/images/intranet/event_calendar/iconkit2.webp); border: 0px dashed black; margin: 5px 0 5px 20px;}
 div.bxec-banner div.bxec-ban-exch div.bxec-banner-icon{margin: 5px 0 5px 30px!important;}
 div.bxec-ban-outlook div.bxec-banner-icon{background-position: -100px -61px;}
 div.bxec-ban-mobile div.bxec-banner-icon{background-position: -50px -62px;}
 div.bxec-ban-exch{width: 130px!important;}
 div.bxec-ban-exch div.bxec-banner-icon{background-position: 3px -63px;}
 div.bxec-ban-exch div.bxec-banner-text{cursor: default!important;}
-div.bxec-banner div.bxec-banner-text{height: 60px; background: url(/bitrix/images/intranet/event_calendar/ban-bg.png) repeat-x; position: relative; top: 0; left: 0; cursor: pointer;}
+div.bxec-banner div.bxec-banner-text{height: 60px; background: url(/bitrix/images/intranet/event_calendar/ban-bg.webp) repeat-x; position: relative; top: 0; left: 0; cursor: pointer;}
 div.bxec-banner div.bxec-banner-text div{font-family: verdana!important; font-size: 11px!important; text-align: center; margin: 0 15px 0 0;}
-div.bxec-banner div.bxec-ban-over{background: url(/bitrix/images/intranet/event_calendar/ban-bg-over.png) repeat-x!important;}
+div.bxec-banner div.bxec-ban-over{background: url(/bitrix/images/intranet/event_calendar/ban-bg-over.webp) repeat-x!important;}
 div.bxec-ban-outlook div.bxec-banner-text div{padding: 15px 0px;}
 div.bxec-ban-mobile div.bxec-banner-text div{padding: 10px 0px;}
 div.bxec-ban-exch div.bxec-banner-text div{padding: 9px 5px 0; margin: 0!important;}
 
 div.bxec-banner-status-ok, div.bxec-banner-status-warn{width:14px; height: 14px; display: block; position: absolute; top: 44px; right: 36px;}
-div.bxec-banner-status-ok{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -93px -1px;}
-div.bxec-banner-status-warn{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -114px -1px;}
+div.bxec-banner-status-ok{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat -93px -1px;}
+div.bxec-banner-status-warn{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat -114px -1px;}
 
-div.bxec-banner-sep {background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -154px -61px; width:2px; height: 60px; display: inline-block; float: left;margin: 67px 0 0 0!important;}
+div.bxec-banner-sep {background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat -154px -61px; width:2px; height: 60px; display: inline-block; float: left;margin: 67px 0 0 0!important;}
 div.bxec-ban-arrow {background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) no-repeat -284px -72px transparent; width:14px; height: 10px; right: 3px; top: 23px; position: absolute; padding: 0!important; margin: 0!important;}
-div.bxec-banner div.bxec-close{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -136px -4px transparent;   cursor: pointer; height: 9px; position: absolute; right: 4px; top: 3px; width: 11px;}
+div.bxec-banner div.bxec-close{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat -136px -4px transparent;   cursor: pointer; height: 9px; position: absolute; right: 4px; top: 3px; width: 11px;}
 div.bxec-ban-popup{background: #fff;border: 1px solid #B2B2B2; z-index:100; display: none;top:21px;}
 div.bxec-ban-popup div{white-space: nowrap!important; padding: 3px 0 2px 8px; margin: 2px; cursor: pointer!important;}
 div.bxec-ban-popup div.bxec-over{background-color: #F2F8D6!important; color: #000000!important;}
@@ -825,8 +825,8 @@ div.bxec-dav-list div.bxec-dav-item-deleted a.bxec-dav-col{display: none!importa
 div.bxec-dav-list div.bxec-dav-item-deleted a.bxec-dav-del{display: none!important;}
 input.bxec-dav-no-change{color: #808080!important; font-style:italic!important;}
 img.bxec-dav-item-status{height: 14px; width: 14px; margin: 1px 5px -3px 0; background: red; visibility: hidden;}
-img.bxec-dav-ok{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -93px -2px; visibility: visible;}
-img.bxec-dav-error{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -114px -2px; visibility: visible;}
+img.bxec-dav-ok{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat -93px -2px; visibility: visible;}
+img.bxec-dav-error{background: url(/bitrix/images/intranet/event_calendar/iconkit2.webp) no-repeat -114px -2px; visibility: visible;}
 
 div.bxec-caldav-title{font-family: verdana; font-size: 11px; margin: 10px 0 5px 5px!important; color: #3C3C3C!important;}
 div.bxec-dav-notice{background-color: #FEFDEA!important; border: 1px solid #D7D6BA; padding: 4px 10px!important; margin: 0 8px!important; line-height: 15px!important; font-size: 11px!important; font-family: Verdana!important;}

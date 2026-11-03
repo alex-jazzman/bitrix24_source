@@ -55,15 +55,10 @@ export const CollabNestedDefaultList = {
 				return true;
 			}
 
-			const currentChat: ImModelChat = this.$store.getters['chats/get'](currentDialogId, true);
-			const isNestedChatOpen = currentChat.parentChatId === this.parentChatId;
-			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-			if (isNestedChatOpen)
-			{
-				return false;
-			}
+			// A chat the client has not loaded yet is not this list's to replace.
+			const currentChat: ?ImModelChat = this.$store.getters['chats/get'](currentDialogId);
 
-			return true;
+			return currentChat ? currentChat.parentChatId !== this.parentChatId : false;
 		},
 		onParentItemClick()
 		{

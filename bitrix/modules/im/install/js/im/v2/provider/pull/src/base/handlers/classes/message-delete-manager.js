@@ -6,6 +6,7 @@ import { EventType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { Notifier } from 'im.v2.lib.notifier';
+import { PlaybackService } from 'im.v2.lib.playback';
 
 import {
 	type MessageDeletePreparedParams,
@@ -36,6 +37,8 @@ export class MessageDeleteManager
 				replyId: 0,
 			},
 		});
+
+		this.#stopPlayback(params.id);
 	}
 
 	deleteMessageComplete(params: MessageDeleteCompletePreparedParams)
@@ -58,11 +61,18 @@ export class MessageDeleteManager
 			dialogId: params.dialogId,
 			fields: dialogUpdateFields,
 		});
+
+		this.#stopPlayback(params.id);
 	}
 
 	#stopWriting(dialogId: number, userId: number)
 	{
 		InputActionListener.getInstance().stopAction({ dialogId, userId });
+	}
+
+	#stopPlayback(messageId: number)
+	{
+		PlaybackService.getInstanceIfCreated()?.handleMessageDeleted(messageId);
 	}
 
 	#closeChannelComments(params: MessageDeleteCompletePreparedParams)

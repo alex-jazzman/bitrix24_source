@@ -2,7 +2,7 @@ import { type EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { RecentType } from 'im.v2.const';
+import { HotkeyCombination, RecentType } from 'im.v2.const';
 import 'im.v2.css.tokens';
 import 'im.v2.css.classes';
 import { RecentMenu } from 'im.v2.lib.menu';
@@ -67,7 +67,7 @@ export const RecentList = {
 		},
 		onRightClick(item, event)
 		{
-			if (Utils.key.isCombination(event, 'Alt+Shift'))
+			if (Utils.key.isCombination(event, HotkeyCombination.list.skipContextMenu))
 			{
 				return;
 			}

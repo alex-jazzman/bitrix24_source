@@ -1,7 +1,8 @@
+import { Loc, ajax as Ajax } from 'main.core';
+import { AirButtonStyle, Button } from 'ui.buttons';
+import { formatFileName, showAirMessageBox } from 'disk.air-message-box';
+import { Options as GridOptions } from '../options';
 import Item from './item';
-import { MessageBox } from 'ui.dialogs.messagebox';
-import {Loc, ajax as Ajax} from "main.core";
-import {Options as GridOptions} from "../options";
 
 export default class ItemDelete extends Item
 {
@@ -22,34 +23,45 @@ export default class ItemDelete extends Item
 	{
 		this.emit('close');
 
-		MessageBox.show({
+		showAirMessageBox({
 			title: Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_TITLE'),
-			message: Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_MESSAGE', {
-				'#NAME#': this.object.name,
-			}),
-			modal: true,
-			buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-			okCaption: Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON'),
-			onOk: this.handleClickDelete.bind(this),
+			message: formatFileName(Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_MESSAGE'), this.object.name),
+			className: 'disk-air-message-box-equal-buttons',
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+
+				return [
+					new Button({
+						text: Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON'),
+						useAirDesign: true,
+						style: AirButtonStyle.FILLED,
+						onclick: (button) => {
+							button.setWaiting(true);
+							this.deleteObject(messageBox, button);
+						},
+					}),
+					cancelButton,
+				];
+			},
 		});
 	}
 
-	handleClickDelete(): boolean
+	// BX.Promise does not pass fulfillment down the chain, so the outcome is handled in a single then().
+	deleteObject(messageBox, button): Promise
 	{
-		Ajax.runAction('disk.api.commonActions.markDeleted', {
+		return Ajax.runAction('disk.api.commonActions.markDeleted', {
 			analyticsLabel: 'folder.list.dd',
 			data: {
-				objectId: this.object.id
-			}
-		}).then((response) => {
-			if (response.status === 'success')
-			{
-				const commonGrid = GridOptions.getCommonGrid();
-				commonGrid.removeItemById(this.trackedObjectId);
-			}
+				objectId: this.object.id,
+			},
+		}).then(() => {
+			messageBox.close();
+			GridOptions.getCommonGrid().removeItemById(this.trackedObjectId);
+		}, () => {
+			button.setWaiting(false);
 		});
-
-		return true;
 	}
 
 	static detect(itemData)
@@ -57,4 +69,3 @@ export default class ItemDelete extends Item
 		return itemData['id'] === 'delete';
 	}
 }
-

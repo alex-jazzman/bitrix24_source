@@ -396,7 +396,7 @@
 .crm-widget-title-edit:after {
 	content: '';
 	position: absolute;
-	background: url(images/sprite.png) no-repeat 0 -16px;
+	background: url(images/sprite.webp) no-repeat 0 -16px;
 	width: 12px;
 	height: 12px;
 	top: -2px;
@@ -842,7 +842,7 @@ span.crm-widget-rating-result {
 	vertical-align: middle;
 	width: 22px;
 	height: 22px;
-	background: url(images/sprite.png) no-repeat 0 -31px;
+	background: url(images/sprite.webp) no-repeat 0 -31px;
 }
 
 .crm-filter-wrap .bx-filter-main-table {
@@ -1180,7 +1180,7 @@ span.crm-widget-rating-result {
 	font-size: 16px;
 	width: 17px;
 	height: 13px;
-	background: url(images/sprite.png) no-repeat 0 -62px;
+	background: url(images/sprite.webp) no-repeat 0 -62px;
 }
 
 .action-container .select-container {
@@ -1259,13 +1259,13 @@ span.crm-widget-rating-result {
 }
 
 .field-title-button-bucket:after {
-	background: url(images/sprite.png) no-repeat -34px 0;
+	background: url(images/sprite.webp) no-repeat -34px 0;
 }
 
 .field-title-button-close:after {
 	width: 8px;
 	height: 8px;
-	background: url(images/sprite.png) no-repeat -39px -51px;
+	background: url(images/sprite.webp) no-repeat -39px -51px;
 }
 
 .field-title-title {
@@ -1386,7 +1386,7 @@ span.crm-widget-rating-result {
 	position: absolute;
 	width: 14px;
 	height: 14px;
-	background: url(images/sprite.png) no-repeat -34px -35px;
+	background: url(images/sprite.webp) no-repeat -34px -35px;
 	left: 0;
 	right: 0;
 	top: 0;
@@ -1418,7 +1418,7 @@ span.crm-widget-rating-result {
 	position: absolute;
 	width: 14px;
 	height: 14px;
-	background: url(images/sprite.png) no-repeat -34px -16px;
+	background: url(images/sprite.webp) no-repeat -34px -16px;
 	left: 0;
 	right: 0;
 	top: 0;
@@ -1536,7 +1536,7 @@ div.field-container-period {
 	top: 0;
 	bottom: 0;
 	margin: auto;
-	background: url(images/sprite.png) no-repeat -19px -53px;
+	background: url(images/sprite.webp) no-repeat -19px -53px;
 	width: 11px;
 	height: 7px;
 	display: inline-block;
@@ -1696,7 +1696,7 @@ div.field-container-period {
 .subtraction .symbol.symbol-persent:before {
 	display: block;
 	content: '';
-	background: url(images/sprite.png) no-repeat -21px -62px;
+	background: url(images/sprite.webp) no-repeat -21px -62px;
 	width: 17px;
 	height: 13px;
 }

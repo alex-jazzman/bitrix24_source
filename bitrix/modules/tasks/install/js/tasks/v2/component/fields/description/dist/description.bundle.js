@@ -3,11 +3,11 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, ui_textEditor, ui_vue3_components_button, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_provider_service_fileService, tasks_v2_component_entityText, main_core_events, tasks_v2_const, ui_dialogs_messagebox, tasks_v2_provider_service_taskService, tasks_v2_lib_promotion, tasks_v2_component_tasksPopupButtonQuote, tasks_v2_lib_analytics, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_component_elements_bottomSheet, tasks_v2_component_dropZone) {
+(function (exports, main_core, ui_textEditor, ui_vue3_components_button, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_provider_service_fileService, tasks_v2_component_entityText, main_core_events, tasks_v2_const, ui_a11y, ui_dialogs_messagebox, tasks_v2_provider_service_taskService, tasks_v2_lib_promotion, tasks_v2_component_tasksPopupButtonQuote, tasks_v2_lib_analytics, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_component_elements_bottomSheet, tasks_v2_component_dropZone) {
 	'use strict';
 
-	const emitAddCheckListDebounced = main_core.Runtime.debounce((component, checklistString) => {
-		component.$emit('addCheckList', checklistString);
+	const emitAddCheckListDebounced = main_core.Runtime.debounce((component, payload) => {
+		component.$emit('addCheckList', payload);
 	}, 500);
 
 	// @vue/component
@@ -57,8 +57,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					this.handleCloseWithCheckList(checklistString);
 				}
 			},
-			handleCloseWithCheckList(checklistString) {
-				emitAddCheckListDebounced(this, checklistString);
+			handleCloseWithCheckList(payload) {
+				// The AI path passes a string, the button path an object; normalize to one payload shape.
+				emitAddCheckListDebounced(this, tasks_v2_const.normalizeAddCheckListFromTextPayload(payload));
 			},
 			async handleBaasError(errorResult, bindElement) {
 				const {
@@ -77,6 +78,36 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			}
 		}
+	};
+
+	// @vue/component
+	const EditorActionsToolbar = {
+		props: {
+			ariaLabel: {
+				type: String,
+				default: ''
+			}
+		},
+		mounted() {
+			this.focusZone = new ui_a11y.FocusZone(this.$refs.toolbar, {
+				bindKeys: ui_a11y.FocusKeys.ArrowHorizontal | ui_a11y.FocusKeys.HomeAndEnd
+			});
+			this.focusZone.activate();
+		},
+		beforeUnmount() {
+			this.focusZone?.deactivate();
+			this.focusZone = null;
+		},
+		methods: {
+			refreshElements() {
+				this.focusZone?.refreshElements();
+			}
+		},
+		template: `
+		<div ref="toolbar" role="toolbar" :aria-label="ariaLabel || null">
+			<slot/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -131,6 +162,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			BIcon: ui_iconSet_api_vue.BIcon,
 			UiButton: ui_vue3_components_button.Button,
 			CheckList,
+			EditorActionsToolbar,
 			CopilotButton: tasks_v2_component_entityText.CopilotButton,
 			AttachButton: tasks_v2_component_entityText.AttachButton,
 			MentionButton: tasks_v2_component_entityText.MentionButton,
@@ -198,16 +230,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<div class="tasks-card-description-title">
 					{{ loc('TASKS_V2_CHANGE_DESCRIPTION') }}
 				</div>
-				<BIcon
-					:name="Outline.CROSS_L"
-					hoverable
-					class="tasks-card-description-field-icon"
+				<button
+					type="button"
+					class="tasks-card-description-header-close"
+					:aria-label="loc('TASKS_V2_DESCRIPTION_SHEET_CLOSE_ARIA_LABEL')"
 					@click="handleClose"
-				/>
+				>
+					<BIcon
+						:name="Outline.CROSS_L"
+						hoverable
+						class="tasks-card-description-field-icon"
+						aria-hidden="true"
+					/>
+				</button>
 			</div>
 			<div class="tasks-card-description-editor-wrapper" id="descriptionTextAreaDestination"/>
 			<div v-if="!readonly" class="tasks-card-description-editor-footer" ref="descriptionActions">
-				<div class="tasks-card-description-action-list">
+				<EditorActionsToolbar class="tasks-card-description-action-list">
 					<AttachButton v-if="isDiskModuleInstalled" :fileService/>
 					<MentionButton :editor/>
 					<BulletListButton :editor/>
@@ -220,7 +259,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						:loading="isAiCommandProcessing"
 						@click="handleCheckListButtonClick"
 					/>
-				</div>
+				</EditorActionsToolbar>
 				<div class="tasks-card-description-footer-buttons">
 					<UiButton
 						:text="loc('TASKS_V2_DESCRIPTION_BUTTON_SAVE')"
@@ -252,8 +291,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
+		computed: {
+			ariaLabel() {
+				const base = this.loc('TASKS_V2_DESCRIPTION_ARIA_LABEL');
+				if (this.filesCount) {
+					return `${base}, ${this.loc('TASKS_V2_DESCRIPTION_FILES_COUNT', {
+					'#COUNT#': String(this.filesCount)
+				})}`;
+				}
+				return base;
+			}
+		},
 		template: `
-		<div class="tasks-card-change-description-mini-btn print-ignore">
+		<button
+			type="button"
+			class="tasks-card-change-description-mini-btn print-ignore"
+			:aria-label="ariaLabel"
+		>
 			<div class="tasks-full-card-field-container --small-vertical-padding">
 				<div class="tasks-card-change-description" :class="{ '--no-hover': filesCount }">
 					<template v-if="filesCount">
@@ -261,6 +315,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							:name="Outline.ATTACH"
 							:size="20"
 							class="tasks-card-description-field-icon-link"
+							aria-hidden="true"
 						/>
 						<div class="tasks-card-change-description-mini-text-files">
 							{{ loc('TASKS_V2_DESCRIPTION_FILES_COUNT', { '#COUNT#': String(filesCount) }) }}
@@ -275,11 +330,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							:size="20"
 							hoverable
 							class="tasks-card-description-field-icon"
+							aria-hidden="true"
 						/>
 					</template>
 				</div>
 			</div>
-		</div>
+		</button>
 	`
 	};
 
@@ -307,6 +363,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		name: 'TaskDescriptionMiniForm',
 		components: {
 			CheckList,
+			EditorActionsToolbar,
 			CopilotButton: tasks_v2_component_entityText.CopilotButton,
 			AttachButton: tasks_v2_component_entityText.AttachButton,
 			MentionButton: tasks_v2_component_entityText.MentionButton,
@@ -437,7 +494,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</Teleport>
 				<div class="tasks-card-description-footer-container">
 					<div class="tasks-card-description-footer">
-						<div class="tasks-card-description-action-list">
+						<EditorActionsToolbar class="tasks-card-description-action-list">
 							<AttachButton v-if="isDiskModuleInstalled" :fileService/>
 							<MentionButton :editor/>
 							<BulletListButton :editor/>
@@ -450,7 +507,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 								:loading="isAiCommandProcessing"
 								@click="handleCheckListButtonClick"
 							/>
-						</div>
+						</EditorActionsToolbar>
 						<div
 							class="tasks-card-description-footer-buttons"
 							ref="fullDescriptionArea"
@@ -465,7 +522,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	};
 
 	const TYPES_QUOTE_ACTIONS = {
-		MESSAGE: tasks_v2_component_tasksPopupButtonQuote.TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE};
+		MESSAGE: tasks_v2_component_tasksPopupButtonQuote.TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE,
+		CHECKLIST: 'TYPE_QUOTE_ACTION_CHECKLIST'
+	};
 
 	// @vue/component
 	const DescriptionPreview = {
@@ -503,7 +562,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			return {
 				elementAnchorQuote: null,
 				elementScrollContainerQuote: null,
-				opened: false
+				opened: false,
+				quoteButtonKey: 0
 			};
 		},
 		computed: {
@@ -516,24 +576,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			filesCount() {
 				return this.files.length;
 			},
-			// TODO: add checklist option for actions menu when they are approved
 			actionsQuote() {
 				const actionQuoteMessage = {
 					type: TYPES_QUOTE_ACTIONS.MESSAGE,
 					chatId: this.task.chatId
 				};
-				// const actionQuoteChecklist = {
-				// 	type: TYPES_QUOTE_ACTIONS.CHECKLIST,
-				// 	icon: Outline.MOVE_TO_CHECKLIST,
-				// };
-
-				return [actionQuoteMessage];
+				const actionQuoteChecklist = this.task.rights.checklistAdd && {
+					type: TYPES_QUOTE_ACTIONS.CHECKLIST,
+					icon: ui_iconSet_api_vue.Outline.MOVE_TO_CHECKLIST,
+					// Keep the panel open as the picker's anchor; it closes on CheckListAddFromTextResolved.
+					isClosingPrevented: true
+				};
+				return [actionQuoteMessage, actionQuoteChecklist].filter(Boolean);
 			},
 			widgetOptions() {
 				return {
 					isEmbedded: true,
 					withControlPanel: false,
 					canCreateDocuments: false,
+					viewMode: this.readonly ? 'list' : 'tile',
 					tileWidgetOptions: {
 						compact: true,
 						hideDropArea: true,
@@ -548,6 +609,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		mounted() {
 			this.elementAnchorQuote = this.$refs.collapsible.$el.parentNode?.querySelector('.tasks-card-entity-collapsible-text');
 			this.elementScrollContainerQuote = this.elementAnchorQuote?.closest('.tasks-full-card-content');
+			this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.CheckListAddFromTextResolved, this.handleCheckListAddResolved);
+		},
+		beforeUnmount() {
+			this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.CheckListAddFromTextResolved, this.handleCheckListAddResolved);
 		},
 		methods: {
 			editButtonClick() {
@@ -576,10 +641,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					});
 				}
 			},
-			handleClickButtonQuote(dataQuote) {}
+			handleClickButtonQuote(dataQuote) {
+				if (dataQuote.type !== TYPES_QUOTE_ACTIONS.CHECKLIST) {
+					return;
+				}
+
+				// Live button node (the panel stays open); fall back to the description container.
+				const anchor = dataQuote.event?.currentTarget ?? this.elementAnchorQuote;
+				this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.AddCheckListFromText, {
+					text: dataQuote.quote,
+					anchor
+				});
+			},
+			handleCheckListAddResolved() {
+				// Bump the key to remount and reset the panel, which keeps isOpened internally.
+				this.quoteButtonKey += 1;
+			}
 		},
 		template: `
-		<div class="tasks-full-card-field-container print-no-box-shadow">
+		<div class="tasks-full-card-field-container print-no-box-shadow" data-testid="tasks-description-preview">
 			<EntityCollapsibleText
 				ref="collapsible"
 				:content="taskDescription"
@@ -588,6 +668,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				showFilesIndicator
 				:maxHeight="300"
 				stickyFooter
+				enableClickToExpand
+				:editButtonLabel="loc('TASKS_V2_DESCRIPTION_EDIT_LABEL')"
 				v-model:opened="opened"
 				@update:opened="updateOpened"
 				@editButtonClick="editButtonClick"
@@ -596,6 +678,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					v-if="opened && filesCount"
 					class="tasks-card-description-editor-files --read-only print-ignore"
 					:class="{ '--with-description': taskDescription.length > 0 }"
+					data-testid="task-description-files"
 					ref="filesWrapper"
 				>
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
@@ -604,6 +687,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		</div>
 		<TasksPopupButtonQuote
 			v-if="elementAnchorQuote"
+			:key="quoteButtonKey"
 			:isQuoteTrimmed="true"
 			:elementAnchor="elementAnchorQuote"
 			:elementScrollContainer="elementScrollContainerQuote"
@@ -664,6 +748,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:padding="0"
 			:popupPadding="0"
 			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_DESCRIPTION_TITLE')"
 			:uniqueKey
 			@close="$emit('close')"
 		>
@@ -725,7 +810,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isSaving: false,
 				enableSaveButton: false,
 				hasFilesChanges: false,
-				files: this.fileService.getFiles()
+				files: this.fileService.getFiles(),
+				trigger: null
 			};
 		},
 		computed: {
@@ -783,16 +869,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			this.updateChecksum();
 			this.fileService.subscribe('onFileRemove', this.onFileRemove);
 			this.fileService.subscribe('onFilesDetachComplete', this.reloadTaskOnFileRemove);
+			this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.CheckListAddFromTextResolved, this.handleCheckListAddResolved);
 		},
 		beforeUnmount() {
 			this.fileService.unsubscribe('onFileRemove', this.onFileRemove);
 			this.fileService.unsubscribe('onFilesDetachComplete', this.reloadTaskOnFileRemove);
+			this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.CheckListAddFromTextResolved, this.handleCheckListAddResolved);
 		},
 		methods: {
 			expandDescription() {
+				this.captureTrigger();
 				this.setSheetShown(true);
 			},
 			openEditMode() {
+				this.captureTrigger();
 				if (this.editor && this.hasChanges() && !this.isSaving) {
 					this.entityTextEditor.setEditorText(this.taskDescription);
 				}
@@ -808,10 +898,38 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				await this.handleSave();
 				this.setSheetShown(false);
+				await this.restoreTriggerFocus();
 			},
-			async addCheckListFromSheet(checklistString) {
-				await this.closeEditMode();
-				this.addCheckList(checklistString);
+			captureTrigger() {
+				const active = document.activeElement;
+				this.trigger = active && active !== document.body ? active : null;
+			},
+			async restoreTriggerFocus() {
+				const trigger = this.trigger;
+				this.trigger = null;
+				if (trigger === null) {
+					return;
+				}
+				await this.$nextTick();
+				if (document.body.contains(trigger)) {
+					ui_a11y.FocusNavigator.restoreFocus(trigger);
+					return;
+				}
+				ui_a11y.FocusNavigator.restoreFocus(this.getLiveTrigger());
+			},
+			getLiveTrigger() {
+				return this.$refs.field?.querySelector('.tasks-card-entity-collapsible-edit-button, .tasks-card-change-description-mini-btn') ?? null;
+			},
+			addCheckListFromSheet(payload) {
+				// Don't close the form yet: a picker may still appear. Close on CheckListAddFromTextResolved.
+				this.addCheckList(payload);
+			},
+			async handleCheckListAddResolved() {
+				// Close the floating toolbar now the action finished; it stayed open as the picker's anchor.
+				this.entityTextEditor.closeFloatingToolbar();
+				if (this.isSheetShown) {
+					await this.closeEditMode();
+				}
 			},
 			async handleTextChanges() {
 				if (this.isEdit) {
@@ -824,12 +942,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					await this.save();
 				}
 			},
-			async addCheckListFromMiniForm(checklistString) {
+			async addCheckListFromMiniForm(payload) {
 				await this.handleTextChanges();
-				this.addCheckList(checklistString);
+				this.addCheckList(payload);
 			},
-			addCheckList(checklistString) {
-				this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.AddCheckListFromText, checklistString);
+			addCheckList(payload) {
+				// anchor is optional: without it the receiver creates a new checklist.
+				this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.AddCheckListFromText, payload);
 			},
 			handleFilesChanges() {
 				if (!this.isSheetShown) {
@@ -921,6 +1040,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		template: `
 		<div
 			v-if="shouldShowDescriptionField"
+			ref="field"
 			class="tasks-card-description-field"
 			:data-task-id="taskId"
 			:data-task-field-id="'description'"
@@ -1076,5 +1196,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DescriptionInline = DescriptionInline;
 	exports.DescriptionSheet = DescriptionSheet;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.UI.TextEditor, BX.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component, BX.Event, BX.Tasks.V2.Const, BX.UI.Dialogs, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib.Promotion, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.UI.TextEditor, BX.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component, BX.Event, BX.Tasks.V2.Const, BX.UI.Accessibility, BX.UI.Dialogs, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib.Promotion, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component);
 //# sourceMappingURL=description.bundle.js.map

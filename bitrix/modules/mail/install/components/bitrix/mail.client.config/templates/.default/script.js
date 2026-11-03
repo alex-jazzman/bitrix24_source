@@ -181,6 +181,589 @@ BX.MailClientConfig.Edit = {
 		this.initConnectionRequestSelector();
 		this.initShareAccessSelector();
 		this.initCrmQueueSelector();
+		this.initMigrationSettings(params);
+	},
+
+	initMigrationSettings(params)
+	{
+		this.settingsDisposed = false;
+		if (this.isNewMailbox)
+		{
+			return;
+		}
+
+		this.mailboxId = params.mailboxId;
+		this.formError = params.formError;
+		this.settingsForm = BX('mail_connect_form');
+		this.settingsReady = false;
+		this.connectionSettingsReady = false;
+		this.settingsSaving = false;
+		this.settingsRequest = 0;
+		this.settingsRefreshRevision = null;
+		this.settingsRetryTimer = null;
+		this.settingsRetryAttempts = 0;
+		this.settingsRefreshFailed = false;
+		this.migrationActive = null;
+		this.settingsVersion = 0;
+		this.connectionStructure = null;
+		this.settingsFields = {};
+		Array.from(this.settingsForm.elements).forEach((field) => {
+			const name = field.name.match(/^fields\[([^\]]+)\]$/)?.[1];
+			if (name)
+			{
+				this.settingsFields[name] = field;
+			}
+		});
+		this.renderedServiceId = this.settingsFields.service_id.value;
+		this.generalSettingsBaseline = this.readGeneralSettings();
+		this.connectionBlocks = Array.from(document.querySelectorAll('[data-mail-connection-settings]')).map((node) => {
+			const placeholder = document.createComment('mail-connection-settings');
+			node.before(placeholder);
+
+			return { node, placeholder };
+		});
+		this.settingsLoader = new BX.Loader({ target: this.settingsForm.parentNode });
+		this.settingsLoader.show();
+		this.setConnectionSettingsVisible(false);
+		this.settingsUnloadHandler = this.disposeMigrationSettings.bind(this);
+		BX.bind(window, 'pagehide', this.settingsUnloadHandler);
+		this.settingsRecoveryHandler = () => {
+			if (this.settingsRefreshFailed && !this.settingsDisposed)
+			{
+				this.settingsRetryAttempts = 0;
+				this.refreshConnectionSettings();
+			}
+		};
+		BX.bind(window, 'online', this.settingsRecoveryHandler);
+		BX.bind(window, 'focus', this.settingsRecoveryHandler);
+		this.migrationState = BX.Mail.getMigrationState(this.mailboxId);
+		this.unsubscribeMigration = this.migrationState.subscribe((change) => {
+			this.handleMigrationSettingsStatus(change.active);
+		});
+		this.migrationState.initialize().then(() => {
+			if (!this.settingsDisposed && this.migrationState.isInitialized())
+			{
+				this.handleMigrationSettingsStatus(this.migrationState.isActive());
+			}
+		});
+	},
+
+	isConnectionSettingsLocked()
+	{
+		return this.settingsDisposed === true || (!this.isNewMailbox && (
+			!this.settingsReady || !this.connectionSettingsReady || this.migrationActive
+		));
+	},
+
+	handleMigrationSettingsStatus(active)
+	{
+		if (this.settingsDisposed || !this.migrationState.isInitialized())
+		{
+			return;
+		}
+
+		const previousActive = this.migrationActive;
+		this.migrationActive = active;
+		if (active)
+		{
+			this.connectionSettingsReady = false;
+			this.setConnectionSettingsVisible(false);
+			if (previousActive !== true)
+			{
+				this.settingsRequest++;
+				this.settingsRefreshRevision = null;
+			}
+			if (this.settingsReady)
+			{
+				this.renderSettingsAvailability();
+
+				return;
+			}
+		}
+		else if (previousActive === false && this.connectionSettingsReady)
+		{
+			return;
+		}
+
+		this.connectionSettingsReady = false;
+		this.setConnectionSettingsVisible(false);
+		this.refreshConnectionSettings();
+	},
+
+	refreshConnectionSettings()
+	{
+		const revision = this.migrationState.getRevision();
+		if (this.settingsRefreshRevision === revision)
+		{
+			return;
+		}
+
+		clearTimeout(this.settingsRetryTimer);
+		this.settingsRetryTimer = null;
+		this.settingsRefreshRevision = revision;
+		const request = ++this.settingsRequest;
+		BX.ajax.runAction('mail.api.mailboxconnecting.getMailbox', {
+			data: { mailboxId: this.mailboxId },
+		}).then((response) => {
+			if (!this.isCurrentSettingsRequest(request, revision))
+			{
+				return;
+			}
+
+			const data = response.data;
+			if (!data?.imap || !data.smtp || !data.service
+				|| !Number.isInteger(data.imap.serviceId) || typeof data.imap.email !== 'string')
+			{
+				throw new Error(this.formError);
+			}
+			if (this.requiresConnectionReload(data))
+			{
+				this.disposeMigrationSettings();
+				window.location.reload();
+
+				return;
+			}
+			this.applyConnectionSettings(data);
+			this.connectionSettingsBaseline = this.readConnectionSettings();
+			this.sourceGeneration = {};
+			if (Object.prototype.hasOwnProperty.call(data, 'sourceGenerationId') && (
+				data.sourceGenerationId === null
+				|| (Number.isInteger(data.sourceGenerationId) && data.sourceGenerationId >= 0)
+			))
+			{
+				this.sourceGeneration.expectedSourceGenerationId = data.sourceGenerationId;
+			}
+			this.settingsRefreshFailed = false;
+			this.settingsRetryAttempts = 0;
+			this.settingsVersion++;
+			this.settingsReady = true;
+			this.connectionSettingsReady = !this.migrationActive && data.migrationActive !== true;
+			BX('mail_connect_form_error').textContent = '';
+			this.renderSettingsAvailability();
+		}).catch((error) => {
+			if (this.isCurrentSettingsRequest(request, revision))
+			{
+				this.settingsRefreshFailed = true;
+				this.settingsLoader?.destroy();
+				this.settingsLoader = null;
+				this.showSettingsError(error);
+				if (this.settingsRetryAttempts < 3)
+				{
+					this.settingsRetryAttempts++;
+					this.settingsRetryTimer = setTimeout(() => {
+						this.settingsRetryTimer = null;
+						if (this.isCurrentSettingsRequest(request, revision))
+						{
+							this.refreshConnectionSettings();
+						}
+					}, 5000 * this.settingsRetryAttempts);
+				}
+			}
+		}).finally(() => {
+			if (!this.settingsDisposed && request === this.settingsRequest)
+			{
+				this.settingsRefreshRevision = null;
+			}
+		});
+	},
+
+	isCurrentSettingsRequest(request, revision)
+	{
+		return !this.settingsDisposed && request === this.settingsRequest
+			&& revision === this.migrationState.getRevision();
+	},
+
+	setConnectionSettingsVisible(visible)
+	{
+		this.connectionBlocks.forEach(({ node, placeholder }) => {
+			if (visible)
+			{
+				placeholder.after(node);
+			}
+			else
+			{
+				node.remove();
+			}
+		});
+		if (!visible)
+		{
+			this.ownerSelector?.getDialog().hide();
+			this.onConnectionSettingsHidden?.();
+			this.oauthErrorTour?.close();
+		}
+	},
+
+	renderSettingsAvailability()
+	{
+		this.settingsForm.style.visibility = this.settingsReady ? '' : 'hidden';
+		if (this.settingsReady)
+		{
+			this.settingsLoader?.destroy();
+			this.settingsLoader = null;
+		}
+		this.setConnectionSettingsVisible(!this.isConnectionSettingsLocked());
+		if (!this.isConnectionSettingsLocked() && this.onConnectionSettingsReady)
+		{
+			const onReady = this.onConnectionSettingsReady;
+			this.onConnectionSettingsReady = null;
+			onReady();
+		}
+		const notice = BX('mail-migration-settings-notice');
+		notice.textContent = '';
+		notice.hidden = !this.settingsReady || !this.isConnectionSettingsLocked();
+		if (!notice.hidden)
+		{
+			const alert = new BX.UI.Alert({
+				text: BX.message('MAIL_MIGRATION_CREDENTIALS_LOCKED'),
+				color: BX.UI.Alert.Color.WARNING,
+			});
+			notice.append(alert.getContainer());
+		}
+		BX('mail_connect_save_btn').disabled = !this.settingsReady || this.settingsSaving;
+		const disconnect = this.connectionBlocks.find(({ node }) => node.id === 'mail_connect_disconnect_btn')?.node;
+		if (disconnect)
+		{
+			disconnect.style.display = '';
+		}
+	},
+
+	requiresConnectionReload(data)
+	{
+		const structure = JSON.stringify([
+			data.imap.serviceId,
+			data.imap.isOAuth,
+			data.imap.oauthUid,
+			data.service.oauthSmtpEnabled,
+			data.service.smtpServer,
+			data.service.smtpLoginAsImap,
+			data.service.smtpPasswordAsImap,
+		]);
+		const changed = String(data.imap.serviceId) !== this.renderedServiceId
+			|| (this.connectionStructure !== null && structure !== this.connectionStructure);
+		this.connectionStructure ??= structure;
+
+		return changed && !this.migrationActive && data.migrationActive !== true;
+	},
+
+	applyConnectionSettings(data)
+	{
+		const imap = data.imap;
+		const smtp = data.smtp;
+		const values = {
+			service_id: imap.serviceId,
+			email: imap.email,
+			server_imap: imap.server,
+			port_imap: imap.port,
+			login_imap: imap.login,
+			ssl_imap: imap.ssl === 'Y' || imap.ssl === 'S',
+			oauth_uid: imap.oauthUid || '',
+			oauth_mode: imap.isOAuth ? 'S' : 'N',
+			server_smtp: smtp.server,
+			port_smtp: smtp.port,
+			login_smtp: smtp.login,
+			ssl_smtp: smtp.ssl === 'Y',
+			use_smtp: smtp.enabled === 'Y',
+			use_limit_smtp: smtp.useLimit,
+			limit_smtp: smtp.limit ?? '',
+			upload_outgoing: !data.denyUpload,
+			user_principal_name: smtp.login,
+			owner_id: `U${data.userId}`,
+		};
+		Object.entries(values).forEach(([name, value]) => {
+			const field = this.settingsFields[name];
+			if (field)
+			{
+				if (field.type === 'checkbox')
+				{
+					field.checked = Boolean(value);
+				}
+				else
+				{
+					field.value = value ?? '';
+				}
+			}
+		});
+		['pass_imap', 'pass_smtp'].forEach((name) => {
+			const field = this.settingsFields[name];
+			if (field)
+			{
+				field.value = field.getAttribute('data-placeholder') || '';
+				field.__filled = field.value.length > 0;
+			}
+		});
+		const emailNode = this.settingsForm.querySelector('.mail-connect-mailbox-name');
+		if (emailNode)
+		{
+			emailNode.textContent = imap.email;
+		}
+		const oauthBlock = this.connectionBlocks.find(({ node }) => {
+			return node.querySelector('#mail_connect_mb_oauth_status_email');
+		})?.node;
+		if (oauthBlock)
+		{
+			oauthBlock.querySelector('#mail_connect_mb_oauth_status_email').textContent = imap.email;
+			const image = oauthBlock.querySelector('#mail_connect_mb_oauth_status_image');
+			if (this.settingsVersion > 0)
+			{
+				image.textContent = imap.email.slice(0, 1).toUpperCase();
+				image.style.backgroundImage = '';
+			}
+		}
+		if (this.settingsFields.limit_smtp)
+		{
+			this.settingsFields.limit_smtp.disabled = !smtp.useLimit;
+		}
+		this.smtpSwitcher?.check(smtp.enabled === 'Y', false);
+		const smtpBlock = this.connectionBlocks.find(({ node }) => node.id === 'mail-connect-smtp-fields')?.node;
+		if (smtpBlock)
+		{
+			const smtpForm = smtpBlock.querySelector('#mail_connect_mb_server_smtp_form');
+			if (smtpForm)
+			{
+				smtpForm.style.display = smtp.enabled === 'Y' ? '' : 'none';
+			}
+			smtpBlock.style.display = smtp.enabled === 'Y' ? '' : 'none';
+		}
+	},
+
+	readConnectionSettings()
+	{
+		const snapshot = {};
+		[
+			'email', 'service_id', 'server_imap', 'port_imap', 'login_imap', 'ssl_imap', 'pass_imap',
+			'oauth_uid', 'oauth_mode', 'user_principal_name', 'use_smtp', 'server_smtp', 'port_smtp',
+			'login_smtp', 'ssl_smtp', 'pass_smtp', 'use_limit_smtp', 'limit_smtp', 'upload_outgoing', 'owner_id',
+		].forEach((name) => {
+			const field = this.settingsFields[name];
+			if (!field)
+			{
+				return;
+			}
+			if (field.type === 'checkbox')
+			{
+				const checkedValue = ['use_smtp', 'upload_outgoing'].includes(name) ? '1' : 'Y';
+				snapshot[name] = field.checked ? checkedValue : 'N';
+				if (name === 'use_smtp' && !field.checked)
+				{
+					snapshot[name] = '';
+				}
+			}
+			else
+			{
+				snapshot[name] = field.value === field.getAttribute('data-placeholder') ? '' : field.value;
+			}
+		});
+
+		return snapshot;
+	},
+
+	readGeneralSettings()
+	{
+		const snapshot = {};
+		const fields = this.settingsFields;
+		const mappings = { name: 'mailboxName', link: 'link', sender: 'senderName', use_sender_name: 'useSenderName' };
+		Object.entries(mappings).forEach(([name, key]) => {
+			if (fields[name])
+			{
+				snapshot[key] = fields[name].type === 'checkbox' ? fields[name].checked : fields[name].value;
+			}
+		});
+		if (fields.ical_access)
+		{
+			snapshot.iCalAccess = fields.ical_access.checked;
+		}
+		if (fields.share_access && !this.isShareAccessLocked && !this.isForbiddenToShare)
+		{
+			snapshot.shareAccess = [...new Set(JSON.parse(fields.share_access.value || '[]'))].sort();
+		}
+		if (this.crm.integrationAvailable && !this.canEditCrmOptions)
+		{
+			snapshot['crmOptions.enabled'] = fields.use_crm.checked;
+			const config = 'crmOptions.config.';
+			['in', 'out'].forEach((direction) => {
+				snapshot[`${config}crm_new_entity_${direction}`] = fields[`crm_allow_entity_${direction}`].checked
+					? fields[`crm_entity_${direction}`].value : '';
+			});
+			snapshot[`${config}crm_lead_source`] = fields.crm_lead_source.value;
+			snapshot[`${config}crm_lead_resp`] = JSON.parse(fields.crm_queue.value || '[]')
+				.map((code) => Number(String(code).replace(/^U/, '')));
+			snapshot[`${config}crm_new_lead_for`] = fields.crm_new_lead_for.value.split(/[\r\n,;]+/)
+				.map((value) => value.trim()).filter(Boolean);
+			snapshot[`${config}crm_public`] = fields.crm_public.checked;
+			snapshot[`${config}crm_vcf`] = fields.crm_vcf.checked;
+			if (fields.crm_sync_old && fields.crm_max_age)
+			{
+				snapshot[`${config}crm_sync_days`] = fields.crm_sync_old.checked
+					? Number(fields.crm_max_age.value) : null;
+			}
+		}
+
+		return snapshot;
+	},
+
+	buildGeneralSettingsPatch(snapshot)
+	{
+		const patch = {};
+		Object.entries(snapshot).forEach(([path, value]) => {
+			if (JSON.stringify(value) === JSON.stringify(this.generalSettingsBaseline[path]))
+			{
+				return;
+			}
+			const keys = path.split('.');
+			let target = patch;
+			keys.slice(0, -1).forEach((key) => {
+				target[key] ??= {};
+				target = target[key];
+			});
+			target[keys[keys.length - 1]] = value;
+		});
+
+		return patch;
+	},
+
+	saveSettings(validateConnection, onSaved)
+	{
+		if (this.settingsDisposed || !this.settingsReady || this.settingsSaving)
+		{
+			return;
+		}
+		const general = this.readGeneralSettings();
+		const patch = this.buildGeneralSettingsPatch(general);
+		const connection = this.readConnectionSettings();
+		const connectionChanges = {};
+		if (!this.isConnectionSettingsLocked())
+		{
+			Object.entries(connection).forEach(([name, value]) => {
+				if (value !== this.connectionSettingsBaseline[name])
+				{
+					connectionChanges[name] = value;
+				}
+			});
+		}
+		const hasConnectionChanges = Object.keys(connectionChanges).length > 0;
+		if (!hasConnectionChanges && Object.keys(patch).length === 0)
+		{
+			return;
+		}
+		if (hasConnectionChanges && !validateConnection())
+		{
+			return;
+		}
+
+		const version = this.settingsVersion;
+		const revision = this.migrationState.getRevision();
+		let request;
+		this.settingsSaving = true;
+		BX('mail_connect_form_error').textContent = '';
+		BX.addClass(BX('mail_connect_save_btn'), 'ui-btn-wait');
+		this.renderSettingsAvailability();
+		if (hasConnectionChanges)
+		{
+			if (connectionChanges.oauth_mode === 'Y')
+			{
+				connectionChanges.oauth_uid = connection.oauth_uid;
+			}
+			request = BX.ajax.runComponentAction('bitrix:mail.client.config', 'save', {
+				mode: 'class',
+				method: 'POST',
+				json: {
+					fields: {
+						site_id: this.settingsFields.site_id.value,
+						mailbox_id: this.mailboxId,
+						...connectionChanges,
+						...patch,
+					},
+					...this.sourceGeneration,
+				},
+			});
+		}
+		else
+		{
+			request = BX.ajax.runAction('mail.api.mailboxconnecting.updateGeneralSettings', {
+				method: 'POST',
+				json: { mailboxId: this.mailboxId, patch },
+			});
+		}
+		request.then((response) => {
+			if (this.settingsDisposed)
+			{
+				return;
+			}
+			this.generalSettingsBaseline = general;
+			if (hasConnectionChanges && version === this.settingsVersion)
+			{
+				this.connectionSettingsBaseline = connection;
+			}
+			this.sendAnalyticsData('success');
+			const unchanged = Object.keys(this.buildGeneralSettingsPatch(this.readGeneralSettings())).length === 0;
+			const connectionUnchanged = this.isConnectionSettingsLocked()
+				|| JSON.stringify(connection) === JSON.stringify(this.readConnectionSettings());
+			if (unchanged && connectionUnchanged && version === this.settingsVersion
+				&& (!hasConnectionChanges || revision === this.migrationState.getRevision()))
+			{
+				onSaved(response.data?.id || this.mailboxId);
+			}
+		}).catch((error) => {
+			if (!this.settingsDisposed)
+			{
+				this.sendAnalyticsData('error');
+				this.showSettingsError(error);
+			}
+		}).finally(() => {
+			if (!this.settingsDisposed)
+			{
+				this.settingsSaving = false;
+				BX.removeClass(BX('mail_connect_save_btn'), 'ui-btn-wait');
+				this.renderSettingsAvailability();
+			}
+		});
+	},
+
+	showSettingsError(error)
+	{
+		const message = error?.errors?.[0]?.message || this.formError;
+		const alert = new BX.UI.Alert({
+			text: BX.util.htmlspecialchars(message),
+			inline: true,
+			closeBtn: true,
+			color: BX.UI.Alert.Color.DANGER,
+		});
+		const container = BX('mail_connect_form_error');
+		container.textContent = '';
+		container.append(alert.getContainer());
+	},
+
+	disposeMigrationSettings()
+	{
+		if (this.settingsDisposed)
+		{
+			return;
+		}
+		this.settingsDisposed = true;
+		clearTimeout(this.settingsRetryTimer);
+		this.settingsRetryTimer = null;
+		if (this.settingsRecoveryHandler)
+		{
+			BX.unbind(window, 'online', this.settingsRecoveryHandler);
+			BX.unbind(window, 'focus', this.settingsRecoveryHandler);
+			this.settingsRecoveryHandler = null;
+		}
+		this.settingsRequest++;
+		this.unsubscribeMigration?.();
+		this.unsubscribeMigration = null;
+		if (this.settingsOauthHandler)
+		{
+			BX.removeCustomEvent('OnMailOAuthBCompleted', this.settingsOauthHandler);
+			this.settingsOauthHandler = null;
+		}
+		this.settingsLoader?.destroy();
+		this.settingsLoader = null;
+		this.onConnectionSettingsHidden?.();
+		this.smtpSwitcher?.destroy();
+		if (this.settingsUnloadHandler)
+		{
+			BX.unbind(window, 'pagehide', this.settingsUnloadHandler);
+		}
 	},
 
 	singleselect: function(input)
@@ -283,7 +866,10 @@ BX.MailClientConfig.Edit = {
 		const hideBlock = () => {
 			BX.Dom.hide(blockItemsNode);
 			BX.Dom.addClass(blockTitleNode, 'mail-connect-title-hidden-block');
-			BX.Dom.removeClass(sectionBlockNode, 'mail-connect-section-block');
+			if (sectionBlockId !== 'mail-connect-section-smtp-block')
+			{
+				BX.Dom.removeClass(sectionBlockNode, 'mail-connect-section-block');
+			}
 		};
 
 		const showBlock = () => {
@@ -316,6 +902,11 @@ BX.MailClientConfig.Edit = {
 				},
 			},
 		});
+
+		if (switcherNodeId === 'mail-connect-smtp-settings-title')
+		{
+			this.smtpSwitcher = switcher;
+		}
 
 		if (!isSwitcherChecked)
 		{
@@ -363,6 +954,11 @@ BX.MailClientConfig.Edit = {
 
 	showOauthAuthorizationBlock()
 	{
+		if (BX.MailClientConfig.Edit.isConnectionSettingsLocked())
+		{
+			return;
+		}
+
 		var form = BX('mail_connect_form');
 		var oauthFieldError = BX('mail-client-config-email-oauth-field-error');
 		var oauthFieldSuccess = BX('mail-client-config-email-oauth-field-success');

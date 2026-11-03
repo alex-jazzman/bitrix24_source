@@ -8,11 +8,10 @@ return [
 	'css' => 'dist/variablesfield.bundle.css',
 	'js' => 'dist/variablesfield.bundle.js',
 	'rel' => [
+		'landing.pageobject',
 		'landing.ui.field.textfield',
 		'main.core',
-		'landing.ui.button.basebutton',
 		'main.popup',
-		'landing.pageobject',
 	],
 	'skip_core' => false,
 ];

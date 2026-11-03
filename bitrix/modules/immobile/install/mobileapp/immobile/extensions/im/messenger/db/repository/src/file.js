@@ -7,10 +7,16 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 	const {
 		FileTable,
 	} = require('im/messenger/db/table/file');
+	const { MessageTable } = require('im/messenger/db/table/message');
+	const { TranscriptTable } = require('im/messenger/db/table/transcript');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const {
 		FileStatus,
 	} = require('im/messenger/const');
+
+	const logger = getLogger('repository--file');
 
 	/**
 	 * @class FileRepository
@@ -20,6 +26,8 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		constructor()
 		{
 			this.fileTable = new FileTable();
+			this.messageTable = new MessageTable();
+			this.transcriptTable = new TranscriptTable();
 		}
 
 		/**
@@ -30,6 +38,72 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 			return this.fileTable.delete({
 				chatId,
 			});
+		}
+
+		/**
+		 * Deletes the files no message of the local database references any more, together with their
+		 * transcripts. The model does not propagate deletion to the database - the delete router of
+		 * FileWriter is empty - so a file dropped from a message composition is cleaned up here.
+		 *
+		 * @param {Array<number|string>} idList files to check, e.g. dropped from a message composition
+		 * @param {number} messageId the message they were dropped from: its own row is not a reference
+		 * @return {Promise<Array<number>>} the files actually deleted: no other message references them
+		 * any more and their rows are gone from the database
+		 */
+		async deleteUnusedByIdList(idList, messageId)
+		{
+			const candidateIdList = this.#prepareIdList(idList);
+			// the read-only mode makes Table drop the deletion silently, so there is nothing to report
+			if (
+				!Feature.isLocalStorageEnabled
+				|| Feature.isLocalStorageReadOnlyModeEnable
+				|| !Type.isArrayFilled(candidateIdList)
+			)
+			{
+				return [];
+			}
+
+			// without the reference list there is no way to tell a dropped file from a shared one
+			const usedIdSet = await this.#getUsedIdSet(candidateIdList, messageId)
+				.catch((error) => {
+					logger.error(`${this.constructor.name}: messageTable.executeSql error: `, error);
+
+					return null;
+				})
+			;
+			if (!usedIdSet)
+			{
+				return [];
+			}
+
+			const idListToDelete = candidateIdList.filter((fileId) => !usedIdSet.has(fileId));
+			if (!Type.isArrayFilled(idListToDelete))
+			{
+				return [];
+			}
+
+			let isFileListDeleted = true;
+			try
+			{
+				await this.fileTable.deleteByIdList(idListToDelete);
+			}
+			catch (error)
+			{
+				isFileListDeleted = false;
+				logger.error(`${this.constructor.name}: fileTable.deleteByIdList error: `, error);
+			}
+
+			try
+			{
+				await this.transcriptTable.deleteByIdList(idListToDelete);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}: transcriptTable.deleteByIdList error: `, error);
+			}
+
+			// the caller cleans the model by this list: a file still stored must not appear in it
+			return isFileListDeleted ? idListToDelete : [];
 		}
 
 		async saveFromModel(fileList)
@@ -206,6 +280,79 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		validatePushFile(file)
 		{
 			return this.validateRestFile(file);
+		}
+
+		/**
+		 * @param {Array<number>} candidateIdList
+		 * @param {number} messageId
+		 * @return {Promise<Set<number>>}
+		 */
+		async #getUsedIdSet(candidateIdList, messageId)
+		{
+			const usedIdSet = new Set();
+
+			const selectResult = await this.messageTable.executeSql({
+				query: `
+					SELECT files
+					FROM ${this.messageTable.getName()}
+					WHERE id != ? AND (${this.#createFileIdMatchCondition(candidateIdList)})
+				`,
+				values: [
+					messageId,
+					...candidateIdList.map((fileId) => `%,${fileId},%`),
+				],
+			});
+
+			if (!Type.isArrayFilled(selectResult?.rows))
+			{
+				return usedIdSet;
+			}
+
+			this.messageTable.prepareListResult(selectResult).items.forEach((message) => {
+				this.#prepareIdList(message.files).forEach((fileId) => usedIdSet.add(fileId));
+			});
+
+			return usedIdSet;
+		}
+
+		/**
+		 * The files column keeps a JSON array whose ids come either as numbers or as strings, so the
+		 * array text is flattened to `,id,id,` and a single id is looked up inside it.
+		 *
+		 * @param {Array<number>} idList
+		 * @return {string}
+		 */
+		#createFileIdMatchCondition(idList)
+		{
+			return idList
+				.map(() => `
+					REPLACE(REPLACE(REPLACE(files, '"', ''), '[', ','), ']', ',') LIKE ?
+				`)
+				.join(' OR ')
+			;
+		}
+
+		/**
+		 * @param {Array<number|string>} idList
+		 * @return {Array<number>}
+		 */
+		#prepareIdList(idList)
+		{
+			if (!Type.isArrayFilled(idList))
+			{
+				return [];
+			}
+
+			const preparedIdList = [];
+			idList.forEach((fileId) => {
+				const preparedId = Number.parseInt(fileId, 10);
+				if (!Number.isNaN(preparedId))
+				{
+					preparedIdList.push(preparedId);
+				}
+			});
+
+			return preparedIdList;
 		}
 	}
 

@@ -13,10 +13,12 @@ return [
 		'im.v2.const',
 		'im.v2.lib.channel',
 		'im.v2.lib.menu',
+		'im.v2.lib.message',
 		'im.v2.lib.parser',
 		'im.v2.lib.permission',
 		'im.v2.lib.utils',
 		'main.core',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

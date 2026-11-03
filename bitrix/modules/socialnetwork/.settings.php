@@ -2,6 +2,7 @@
 
 return [
 	'controllers' => require __DIR__ . '/config/controllers.php',
+	'rest' => require __DIR__ . '/config/rest.php',
 	'ui.selector' => require __DIR__ . '/config/selector.php',
 	'ui.entity-selector' => require __DIR__ . '/config/entity-selector.php',
 	'services' => require __DIR__ . '/config/services.php',

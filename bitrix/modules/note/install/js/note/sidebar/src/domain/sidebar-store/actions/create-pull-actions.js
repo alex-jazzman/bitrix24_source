@@ -11,6 +11,7 @@ const PullCommand = Object.freeze({
 	DOCUMENT_RESTORE: 'documentRestore',
 	DOCUMENT_DELETE: 'documentDelete',
 	DOCUMENT_HARD_DELETE: 'documentHardDelete',
+	DOCUMENT_MENTION_TARGET_CHANGED: 'documentMentionTargetChanged',
 	COLLECTION_CREATE: 'collectionCreate',
 	COLLECTION_UPDATE: 'collectionUpdate',
 	COLLECTION_MOVE: 'collectionMove',
@@ -20,11 +21,11 @@ const PullCommand = Object.freeze({
 	COLLECTION_CAPABILITIES: 'collectionCapabilities',
 	COLLECTION_LIST_INVALIDATED: 'collectionListInvalidated',
 	DOCUMENT_ACCESS_CASCADE: 'documentAccessCascade',
-	// [EVENT-01] Personal channel: the composition of the favorites block.
+	// Personal channel: the composition of the favorites block.
 	FAVORITE_ADD: 'favoriteAdd',
 	FAVORITE_REMOVE: 'favoriteRemove',
 	FAVORITE_MOVE: 'favoriteMove',
-	// [EVENT-02] Personal channel: the notification state of an object of the block.
+	// Personal channel: the notification state of an object of the block.
 	SUBSCRIPTION_SET: 'subscriptionSet',
 	SUBSCRIPTION_REMOVE: 'subscriptionRemove',
 });

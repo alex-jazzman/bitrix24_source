@@ -1,14 +1,9 @@
 import { BitrixVueComponentProps } from 'ui.vue3';
+import { Vue, AlertDesign } from 'ui.system.alert';
 import { ImportSettings } from '../../../../../lib/model/import-settings';
 
-import 'ui.system.alert';
-import { TemporaryAlert, TemporarySystemDesign } from '../../../../layout';
-
 import './requisite-hint-set.css';
-
-// todo: Remove after adding dependency on ui 26.200.0
-const AlertComponent = BX?.UI?.System?.Alert?.Vue?.Alert || TemporaryAlert;
-const AlertDesignEnum = BX?.UI?.System?.Alert?.AlertDesign || TemporarySystemDesign;
+import settingsImage from './settings.webp';
 
 export const RequisiteHintSet: BitrixVueComponentProps = {
 	name: 'RequisiteHintSet',
@@ -21,13 +16,13 @@ export const RequisiteHintSet: BitrixVueComponentProps = {
 	},
 
 	components: {
-		Alert: AlertComponent,
+		Alert: Vue.Alert,
 	},
 
 	data(): Object
 	{
 		return {
-			AlertDesignEnum,
+			AlertDesignEnum: AlertDesign,
 		};
 	},
 
@@ -155,7 +150,7 @@ export const RequisiteHintSet: BitrixVueComponentProps = {
 			<Alert
 				:design="AlertDesignEnum.tinted"
 				:hasCloseButton="false"
-				leftImage="/bitrix/js/crm/item/import/dist/images/settings.png"
+				leftImage="${settingsImage}"
 			>
 				<div class="crm-item-import__requisite-help-hint-group-list">
 					<div class="crm-item-import__requisite-help-hint-group-item">

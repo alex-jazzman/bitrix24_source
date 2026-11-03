@@ -17,6 +17,7 @@ use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\V2\Internal\Entity\Analytics;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Web\Uri;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
@@ -156,15 +157,16 @@ $calendarId = 'TaskCalendarList'.rand();
 $taskColor = '#FFA900';
 $selectedField = false;
 
-$uri = new \Bitrix\Main\Web\Uri(\Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest()->getRequestUri());
+$uri = new Uri(\Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest()->getRequestUri());
 $uri->deleteParams(\Bitrix\Main\HttpRequest::getSystemParameters());
 $uri->addParams(['sessid' => bitrix_sessid()]);
 $requestUri = $uri->getUri();
 
 $viewTaskPath = str_replace(['#user_id#', '#action#', '#group_id#'], [$arParams["USER_ID"], 'view', $arParams['GROUP_ID']], $arPaths['PATH_TO_TASKS_TASK']);
-$editTaskPath = str_replace(['#user_id#', '#action#', '#task_id#', '#group_id#'], [$arParams["USER_ID"], 'edit', 0, $arParams['GROUP_ID']],
-$arPaths['PATH_TO_TASKS_TASK']);
-$editTaskPath = CHTTP::urlAddParams($editTaskPath, ['DEADLINE' => '#DEADLINE#']);
+
+$editTaskPath = str_replace(['#user_id#', '#action#', '#task_id#', '#group_id#'], [$arParams["USER_ID"], 'edit', 0, $arParams['GROUP_ID']], $arPaths['PATH_TO_TASKS_TASK']);
+$editTaskPath = (string)(new Uri($editTaskPath))->addParams(['DEADLINE' => '__DEADLINE__']);
+$editTaskPath = str_replace('__DEADLINE__', '#DEADLINE#', $editTaskPath);
 
 $tasksSliderRegexp = str_replace(array('#user_id#', '#action#'), array($arParams["USER_ID"], 'edit'), $arPaths['PATH_TO_TASKS_TASK']);
 $tasksSliderRegexp = preg_replace("/#task_id#/i", "(\\\\\d+)", $tasksSliderRegexp).'.*';

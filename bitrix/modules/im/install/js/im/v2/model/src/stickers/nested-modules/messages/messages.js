@@ -58,6 +58,10 @@ export class StickerMessagesModel extends BuilderModel
 					});
 				});
 			},
+			/** @function stickers/messages/delete */
+			delete: (store: Store, payload: { messageId: number | string }) => {
+				store.commit('delete', payload.messageId);
+			},
 			/** @function stickers/messages/updateWithId */
 			updateWithId: (store: Store, payload: { oldId: string, newId: number }) => {
 				const { oldId, newId } = payload;

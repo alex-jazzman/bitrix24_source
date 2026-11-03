@@ -1,10 +1,10 @@
 import './resizable-block.css';
+import '../placement-feedback/placement-feedback.css';
 import {
 	toValue,
 	toRefs,
 	useTemplateRef,
 	computed,
-	watch,
 	onMounted,
 	onUnmounted,
 } from 'ui.vue3';
@@ -12,8 +12,15 @@ import {
 	useMoveableBlock,
 	useResizableBlock,
 	useBlockState,
-	useHighlightedBlocks,
 } from '../../composables';
+import { BLOCK_INDEXES } from '../../constants';
+
+const RESIZABLE_BLOCK_CLASS_NAMES = {
+	base: 'ui-block-diagram-resizable-block',
+	placementFeedback: 'ui-block-diagram-placement-feedback',
+	displaced: '--displaced',
+	placementRefused: '--placement-refused',
+};
 
 // @vue/component
 export const ResizableBlock = {
@@ -32,31 +39,38 @@ export const ResizableBlock = {
 			type: Number,
 			default: 100,
 		},
-		highlighted: {
-			type: Boolean,
-			default: false,
+		canStartMove: {
+			type: Function,
+			default: null,
 		},
 	},
 	setup(props): {...}
 	{
-		const { block, minWidth, minHeight } = toRefs(props);
+		const { block, minWidth, minHeight, canStartMove } = toRefs(props);
 		const blockRef = useTemplateRef('blockEl');
 		const {
 			isHiglitedBlock,
+			isDisplacedBlock,
+			isPlacementRefusedBlock,
 			isDisabled,
+			blockZindex,
 			onMountedBlock,
 			onUnmountedBlock,
 		} = useBlockState({
 			block,
 			blockRef,
+			// The backdrop is a background, so it keeps its own resting step instead of following
+			// hover and selection. The stylesheet states the same value for a consumer that mounts
+			// this component outside the canvas.
+			restingZIndex: BLOCK_INDEXES.BACKDROP,
 		});
-		const highlightedBlocks = useHighlightedBlocks();
 		const {
 			isDragged,
 			blockPositionStyle,
 		} = useMoveableBlock(
 			blockRef,
 			block,
+			{ canStartMove },
 		);
 		const {
 			isResize,
@@ -82,27 +96,18 @@ export const ResizableBlock = {
 			return {
 				...toValue(blockPositionStyle),
 				...toValue(sizeBlockStyle),
+				zIndex: toValue(blockZindex),
 			};
 		});
 
-		watch(isResize, (resizeStatus) => {
-			if (resizeStatus)
-			{
-				highlightedBlocks.clear();
-				highlightedBlocks.add(props.block.id);
-			}
-		});
-
-		watch(() => props.highlighted, (value) => {
-			if (value)
-			{
-				highlightedBlocks.add(props.block.id);
-			}
-			else
-			{
-				highlightedBlocks.remove(props.block.id);
-			}
-		});
+		// The rule moves a backdrop as readily as a node, so the backdrop shows the same feedback:
+		// without it a corrected backdrop would just jump aside with nothing said to the eye.
+		const blockClassNames = computed(() => ({
+			[RESIZABLE_BLOCK_CLASS_NAMES.base]: true,
+			[RESIZABLE_BLOCK_CLASS_NAMES.placementFeedback]: true,
+			[RESIZABLE_BLOCK_CLASS_NAMES.displaced]: toValue(isDisplacedBlock),
+			[RESIZABLE_BLOCK_CLASS_NAMES.placementRefused]: toValue(isPlacementRefusedBlock),
+		}));
 
 		onMounted(() => {
 			onMountedBlock();
@@ -114,28 +119,23 @@ export const ResizableBlock = {
 			onUnmountedResizableBlock();
 		});
 
-		function onMouseDownSelectBlock(): void
-		{
-			highlightedBlocks.clear();
-			highlightedBlocks.add(props.block.id);
-		}
-
 		return {
 			isHiglitedBlock,
+			isDisplacedBlock,
+			isPlacementRefusedBlock,
 			isDisabled,
 			isResize,
 			isDragged,
+			blockClassNames,
 			blockStyle,
 			blockDimensions,
-			onMouseDownSelectBlock,
 		};
 	},
 	template: `
 		<div
 			:style="blockStyle"
 			ref="blockEl"
-			class="ui-block-diagram-resizable-block"
-			@mousedown="onMouseDownSelectBlock"
+			:class="blockClassNames"
 		>
 			<div class="ui-block-diagram-resizable-block__container">
 				<div
@@ -177,6 +177,8 @@ export const ResizableBlock = {
 					:isDragged="isDragged"
 					:isResize="isResize"
 					:isDisabled="isDisabled"
+					:isDisplaced="isDisplacedBlock"
+					:isPlacementRefused="isPlacementRefusedBlock"
 					:width="blockDimensions.width"
 					:height="blockDimensions.height"
 				/>

@@ -20,6 +20,11 @@ export const Await = Object.freeze({
 	byEmployeeInviteReviewer: 'byEmployeeInviteReviewer',
 	byEmployeeInviteEmployee: 'byEmployeeInviteEmployee',
 	byEmployeeSignedByEmployee: 'byEmployeeSignedByEmployee',
+	byEmployeeReceivedByCompany: 'byEmployeeReceivedByCompany',
+
+	// KEDO annulment (STAGE-01): the annulment mark is cleared, signing is valid again
+	annulmentCanceledToEmployee: 'annulmentCanceledToEmployee',
+	annulmentCanceledToInitiator: 'annulmentCanceledToInitiator',
 });
 
 export const Success = Object.freeze({
@@ -30,6 +35,7 @@ export const Success = Object.freeze({
 	doneFromAssignee: 'doneFromAssignee',
 	doneFromEditor: 'doneFromEditor',
 	doneFromReviewer: 'doneFromReviewer',
+	doneEmployeeReceivedByCompany: 'doneEmployeeReceivedByCompany',
 
 	// initiated by employee
 	byEmployeeDoneEmployee: 'byEmployeeDoneEmployee',
@@ -69,6 +75,11 @@ export const Failure = Object.freeze({
 	stoppedToEmployeeF: 'stoppedToEmployeeF',
 	signingError: 'signingError',
 	repeatSigning: 'repeatSigning',
+	documentPreparationFailed: 'documentPreparationFailed',
+
+	// KEDO annulment (STAGE-01)
+	documentAnnulledToEmployee: 'documentAnnulledToEmployee',
+	documentAnnulledToInitiator: 'documentAnnulledToInitiator',
 
 	// initiated by employee
 	byEmployeeStoppedToEmployee: 'byEmployeeStoppedToEmployee',

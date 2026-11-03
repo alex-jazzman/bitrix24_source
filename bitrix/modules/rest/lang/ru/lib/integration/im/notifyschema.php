@@ -1,5 +1,8 @@
 <?php
 
+$MESS['REST_NOTIFY_SCHEMA_PRODUCT_SOURCE_NAME'] = 'REST API';
+$MESS['REST_NOTIFY_SCHEMA_PRODUCT_SOURCE_DESCRIPTION'] = 'Системные интеграции и роботы';
+
 $MESS['REST_NOTIFY_SCHEMA_BLOCK_TITLE'] = 'Маркетплейс';
 $MESS['REST_NOTIFY_SCHEMA_APP_INSTALL'] = 'Установлено новое приложение';
 $MESS['REST_NOTIFY_SCHEMA_APP_INSTALL_REQUEST'] = 'Запрос на установку приложения';

@@ -463,6 +463,11 @@
 	cursor: pointer;
 }
 
+.landing-ui-field-color-preset-item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
 .landing-ui-field-color-preset.landing-ui-field-color-preset-preview-mode {
 	margin: 2px;
 }

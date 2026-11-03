@@ -23,6 +23,34 @@ elseif (($arResult["FatalError"] ?? '') <> '')
 }
 else
 {
+	// The "~" fields printed below arrive escaped exactly once and are output as is:
+	// ~USER_NAME_FORMATTED from CUser::FormatName() with $bHTMLSpec = true, ~GROUP_NAME from
+	// CSocNetGroup::GetByID(). The avatar path is different: it goes into a CSS string, where the
+	// htmlspecialcharsEx() of CDBResult::GetNext() is not enough, since it keeps a bare "&" and
+	// entities like &apos; or &#41; would close url('...'). So the HTML layer is undone first,
+	// then everything able to break the CSS string is percent-encoded, then the attribute is escaped.
+	$avatarBackgroundStyle = static function (mixed $image): string
+	{
+		$src = (is_array($image) ? (string)($image["src"] ?? "") : "");
+		if ($src === "")
+		{
+			return "";
+		}
+
+		$src = strtr(htmlspecialcharsback($src), array(
+			"'" => "%27",
+			"\"" => "%22",
+			"(" => "%28",
+			")" => "%29",
+			"\\" => "%5C",
+			"\n" => "%0A",
+			"\r" => "%0D",
+			"\t" => "%09",
+		));
+
+		return "background: url('" . htmlspecialcharsbx($src) . "') no-repeat 0 0;";
+	};
+
 	CUtil::InitJSCore(array("popup"));
 	if(!empty($arResult["ErrorMessage"]))
 	{
@@ -88,24 +116,25 @@ else
 					<td class="invite-list-img">
 						<div class="invite-active-block">
 							<? if ($arRequest["EVENT_TYPE"] == "INVITE_USER"): ?>
-								<span class="invite-list-img-image" style="<?=(is_array($arRequest["USER_PERSONAL_PHOTO_IMG"]) && $arRequest["USER_PERSONAL_PHOTO_IMG"]["src"] <> '' ? "background: url('".$arRequest["USER_PERSONAL_PHOTO_IMG"]["src"]."') no-repeat 0 0;" : "")?>"></span>
+								<span class="invite-list-img-image" style="<?=$avatarBackgroundStyle($arRequest["USER_PERSONAL_PHOTO_IMG"] ?? null)?>"></span>
 							<? else: ?>
-								<span class="invite-list-img-image" style="<?=(is_array($arRequest["GROUP_IMG"]) && $arRequest["GROUP_IMG"]["src"] <> '' ? "background: url('".$arRequest["GROUP_IMG"]["src"]."') no-repeat 0 0;" : "")?>"></span>
+								<span class="invite-list-img-image" style="<?=$avatarBackgroundStyle($arRequest["GROUP_IMG"] ?? null)?>"></span>
 							<? endif; ?>
 						</div>
 					</td>
 
 					<td class="invite-list-name">
+						<? /* "~" fields: single escaping layer, see the note at the top of the else branch */ ?>
 						<div class="invite-active-block">
 						<? if ($arRequest["EVENT_TYPE"] == "INVITE_USER"): ?>
 							<? if ($arRequest["SHOW_PROFILE_LINK"]): ?>
-								<a href="<?=htmlspecialcharsback($arRequest["USER_PROFILE_URL"])?>" class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["USER_NAME_FORMATTED"]?></a>
+								<a href="<?=$arRequest["USER_PROFILE_URL"]?>" class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["~USER_NAME_FORMATTED"]?></a>
 							<? else: ?>
-								<span class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["USER_NAME_FORMATTED"]?></span>
+								<span class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["~USER_NAME_FORMATTED"]?></span>
 							<? endif; ?>
 							</div>
 						<? else: ?>
-							<a href="<?=htmlspecialcharsback($arRequest["GROUP_URL"])?>" class="invite-user-link"><?=$arRequest["GROUP_NAME"]?></a>
+							<a href="<?=$arRequest["GROUP_URL"]?>" class="invite-user-link"><?=$arRequest["~GROUP_NAME"]?></a>
 						<? endif; ?>
 					</td>
 					<td class="invite-list-message"><div class="invite-active-block"><?=htmlspecialcharsback($arRequest["MESSAGE"])?><br /><i><?=$arRequest["DATE_CREATE"]?></i></div></td>
@@ -173,23 +202,24 @@ else
 					<td class="invite-list-img">
 						<div class="invite-active-block">
 							<? if ($arRequest["EVENT_TYPE"] == "INVITE_USER"): ?>
-								<span class="invite-list-img-image" style="<?=(is_array($arRequest["USER_PERSONAL_PHOTO_IMG"]) && $arRequest["USER_PERSONAL_PHOTO_IMG"]["src"] <> '' ? "background: url('".$arRequest["USER_PERSONAL_PHOTO_IMG"]["src"]."') no-repeat 0 0;" : "")?>"></span>
+								<span class="invite-list-img-image" style="<?=$avatarBackgroundStyle($arRequest["USER_PERSONAL_PHOTO_IMG"] ?? null)?>"></span>
 							<? else: ?>
-								<span class="invite-list-img-image" style="<?=(is_array($arRequest["GROUP_IMG"]) && $arRequest["GROUP_IMG"]["src"] <> '' ? "background: url('".$arRequest["GROUP_IMG"]["src"]."') no-repeat 0 0;" : "")?>"></span>
+								<span class="invite-list-img-image" style="<?=$avatarBackgroundStyle($arRequest["GROUP_IMG"] ?? null)?>"></span>
 							<? endif; ?>
 						</div>
 					</td>
 					<td class="invite-list-name">
+						<? /* "~" fields: single escaping layer, see the note at the top of the else branch */ ?>
 						<div class="invite-active-block">
 						<? if ($arRequest["EVENT_TYPE"] == "INVITE_USER"): ?>
 							<? if ($arRequest["SHOW_PROFILE_LINK"]): ?>
-								<a href="<?=htmlspecialcharsback($arRequest["USER_PROFILE_URL"])?>" class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["USER_NAME_FORMATTED"]?></a>
+								<a href="<?=$arRequest["USER_PROFILE_URL"]?>" class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["~USER_NAME_FORMATTED"]?></a>
 							<? else: ?>
-								<span class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["USER_NAME_FORMATTED"]?></span>
+								<span class="invite-user-link" bx-tooltip-user-id="<?=$arRequest["USER_ID"]?>"><?=$arRequest["~USER_NAME_FORMATTED"]?></span>
 							<? endif; ?>
 							</div>
 						<? else: ?>
-							<a href="<?=htmlspecialcharsback($arRequest["GROUP_URL"])?>" class="invite-user-link"><?=$arRequest["GROUP_NAME"]?></a>
+							<a href="<?=$arRequest["GROUP_URL"]?>" class="invite-user-link"><?=$arRequest["~GROUP_NAME"]?></a>
 						<? endif; ?>
 					</td>
 					<td class="invite-list-message"><div class="invite-active-block"><?=htmlspecialcharsback($arRequest["MESSAGE"])?><br /><i><?=$arRequest["DATE_CREATE"]?></i></div></td>

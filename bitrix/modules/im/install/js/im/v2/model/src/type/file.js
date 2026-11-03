@@ -27,12 +27,18 @@ export type File = {
 	size: number,
 	image: null | boolean | {width: number, height: number},
 	status: string,
+	validationError: ?string,
 	progress: number,
 	urlPreview: string,
+	mediaUrl?: {
+		preview?: { [size: number]: string },
+	},
 	urlDownload: string,
 	urlShow: string,
 	viewerAttrs: ?ViewerAttributes,
 	isVideoNote: boolean,
+	isVoiceNote: boolean,
+	duration: ?number, // seconds, fixed on send; null for files sent before the field appeared
 };
 
 export type Transcription = {

@@ -22,6 +22,13 @@ $request = $context->getRequest();
 Loc::loadMessages(__DIR__ . '/template.php');
 
 $templatePage = $this->getTemplatePage();
+// the preview is a closed document of the public page under the CSP sandbox: neither the slider
+// footer nor the shop menu controller belongs in it, and the latter throws on top.window there
+if ($templatePage === 'landing_preview')
+{
+	return;
+}
+
 $disableFrame = in_array($templatePage, [
 	'landing_view',
 	'vibe_edit',
@@ -46,7 +53,6 @@ if ($arParams['SHOW_MENU'] != 'Y')
 {
 	return;
 }
-
 if (
 	Type::getCurrentScopeId() === null
 	&& $templatePage !== 'landing_view'

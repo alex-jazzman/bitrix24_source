@@ -12,6 +12,7 @@ return [
 		'tasks.v2.component.elements.hint',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
+		'ui.vue3',
 		'ui.vue3.directives.hint',
 	],
 	'skip_core' => true,

@@ -2,6 +2,7 @@
  * @module crm/entity-detail/component/aha-moments-manager/go-to-chat
  */
 jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require, exports, module) => {
+	const { Text3, Text4 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { cross } = require('assets/common');
@@ -184,18 +185,16 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 									alignItems: 'flex-start',
 								},
 							},
-							Text({
+							Text3({
 								style: {
-									fontSize: 16,
 									fontWeight: '500',
 									color: AppTheme.colors.base1,
 									paddingBottom: 5,
 								},
 								text: Loc.getMessage('M_CRM_DETAIL_AHA_GO2CHAT_TITLE'),
 							}),
-							Text({
+							Text4({
 								style: {
-									fontSize: 14,
 									color: AppTheme.colors.base2,
 									lineHeightMultiple: 1.2,
 								},

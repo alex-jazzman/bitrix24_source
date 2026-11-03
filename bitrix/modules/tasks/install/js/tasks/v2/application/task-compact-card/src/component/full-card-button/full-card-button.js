@@ -1,4 +1,4 @@
-import { Event, Type } from 'main.core';
+import { Dom, Event, Text, Type } from 'main.core';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 
 import { Core } from 'tasks.v2.core';
@@ -45,6 +45,7 @@ export const FullCardButton = {
 			hintBindElement: null,
 			showAuditorsHint: false,
 			auditorsHintBindElement: null,
+			reasonId: `tasks-compact-card-full-button-reason-${Text.getRandom()}`,
 		};
 	},
 	computed: {
@@ -81,11 +82,22 @@ export const FullCardButton = {
 					forceTop: true,
 					position: 'top',
 				},
+				focusTrap: {
+					initialFocus: false,
+				},
 			};
+		},
+	},
+	watch: {
+		isDisabled(): void
+		{
+			this.syncAria();
 		},
 	},
 	mounted()
 	{
+		this.syncAria();
+
 		// Show auditors hint if auditorsIds is not empty
 		if (this.hasAuditors && ahaMoments.shouldShow(Option.AhaAuditorsInCompactFormPopup))
 		{
@@ -96,6 +108,10 @@ export const FullCardButton = {
 				this.showAuditorsHint = true;
 			});
 		}
+	},
+	beforeUnmount()
+	{
+		this.dismissHint();
 	},
 	methods: {
 		handleClick(): void
@@ -112,6 +128,21 @@ export const FullCardButton = {
 			{
 				this.openFullCard();
 			}
+		},
+		syncAria(): void
+		{
+			const button = this.$refs.fullCardButtonContainer?.querySelector('.tasks-compact-card-full-button');
+			if (!button)
+			{
+				return;
+			}
+
+			Dom.attr(button, 'aria-disabled', this.isDisabled ? 'true' : null);
+			Dom.attr(button, 'aria-describedby', this.isDisabled ? this.reasonId : null);
+
+			// ui.buttons styles the disabled look via [disabled]/.ui-btn-disabled. We keep the
+			// button in tab order (no native disabled), so drive the visual state by the class.
+			Dom.toggleClass(button, 'ui-btn-disabled', this.isDisabled);
 		},
 		highlightFiles(): void
 		{
@@ -135,13 +166,32 @@ export const FullCardButton = {
 		},
 		showHint(): void
 		{
-			const removeHighlight = () => {
-				this.isHintShown = false;
-				Event.unbind(window, 'keydown', removeHighlight);
+			this.dismissHint();
+
+			// Esc is intentionally excluded here: on keyup main.popup's checkEscPressed
+			// closes the top popup (the hint) by z-index, leaving the shell open; a second
+			// Esc closes the shell. Other keys dismiss the hint (preserved behavior).
+			this.onHintKeyDown = (event: KeyboardEvent): void => {
+				if (event.key === 'Escape')
+				{
+					return;
+				}
+
+				this.dismissHint();
 			};
-			Event.bind(window, 'keydown', removeHighlight);
+			Event.bind(window, 'keydown', this.onHintKeyDown);
 
 			this.isHintShown = true;
+		},
+		dismissHint(): void
+		{
+			if (this.onHintKeyDown)
+			{
+				Event.unbind(window, 'keydown', this.onHintKeyDown);
+				this.onHintKeyDown = null;
+			}
+
+			this.isHintShown = false;
 		},
 		openFullCard(): void
 		{
@@ -191,7 +241,6 @@ export const FullCardButton = {
 			ref="fullCardButtonContainer"
 			class="tasks-compact-card-full-button-container"
 			:class="{ '--disabled': isDisabled }"
-			@click="handleClick"
 		>
 			<UiButton
 				class="tasks-compact-card-full-button"
@@ -200,34 +249,36 @@ export const FullCardButton = {
 				:style="AirButtonStyle.PLAIN_NO_ACCENT"
 				:loading="isOpening"
 				:dataset="{taskButtonId: 'full'}"
-				:disabled="isDisabled"
+				@click="handleClick"
 			/>
+			<span :id="reasonId" class="tasks-compact-card-vh">{{ loc('TASKS_V2_TCC_FULL_CARD_DISABLED_REASON') }}</span>
 			<Hint
 				v-if="showAuditorsHint"
 				:bindElement="auditorsHintBindElement"
 				@close="closeAuditorsHint"
 				:options="auditorsHintOptions"
 			>
-				<div class="tasks-compact-card-full-button-auditors-hint">
+				<div class="tasks-compact-card-full-button-auditors-hint --ui-context-edge-dark">
 					<div class="tasks-compact-card-full-button-auditors-hint-title">
 						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_TITLE') }}
 					</div>
 					<div class="tasks-compact-card-full-button-auditors-hint-content">
 						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_CONTENT') }}
 					</div>
-					<div
+					<button
+						type="button"
 						class="tasks-compact-card-full-button-auditors-hint-link"
 						@click.stop="handleAuditorsHintLinkClick"
 					>
 						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN') }}
-					</div>
+					</button>
 				</div>
 			</Hint>
 		</div>
 		<Hint
 			v-if="isHintShown"
 			:bindElement="hintBindElement"
-			@close="isHintShown = false"
+			@close="dismissHint"
 		>
 			{{ loc('TASKS_V2_TCC_FILE_IS_UPLOADING') }}
 		</Hint>

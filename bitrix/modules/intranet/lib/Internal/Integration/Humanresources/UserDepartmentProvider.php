@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Bitrix\Intranet\Internal\Integration\Humanresources;
 
+use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Internals\Service\Container as HumanResourcesContainer;
+use Bitrix\HumanResources\Public\Service\Container as PublicHrContainer;
+use Bitrix\HumanResources\Service\Container as HrContainer;
+use Bitrix\HumanResources\Type\MemberEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Intranet\Entity\Collection\DepartmentCollection;
 use Bitrix\Main\Loader;
 
@@ -51,6 +56,53 @@ final class UserDepartmentProvider
 			$nodeIdsData['userNodeIdMap'],
 			$this->getDepartmentMapByNodeIds($nodeIdsData['nodeIds']),
 		);
+	}
+
+	public function hasDepartmentMembership(int $userId): bool
+	{
+		if (!$this->isAvailable)
+		{
+			throw new \RuntimeException('Human resources module is unavailable');
+		}
+
+		return !HrContainer::getNodeMemberRepository()
+			->findAllByEntityIdAndEntityTypeAndNodeType(
+				entityId: $userId,
+				entityType: MemberEntityType::USER,
+				nodeType: NodeEntityType::DEPARTMENT,
+				limit: 1,
+				activeFilter: NodeActiveFilter::ALL,
+			)
+			->empty()
+		;
+	}
+
+	public function hasExactEmployeeDepartments(int $userId, array $departmentIds): bool
+	{
+		$members = PublicHrContainer::getNodeMemberService()->findAllByEntityIds(
+			[$userId],
+			nodeActiveFilter: NodeActiveFilter::ALL,
+		);
+		$employeeRoleId = HrContainer::getRoleHelperService()->getEmployeeRoleId();
+		if ($employeeRoleId === null)
+		{
+			return false;
+		}
+
+		$actualIds = [];
+		foreach ($members as $member)
+		{
+			$roleIds = array_map('intval', $member->roles ?? []);
+			if ($member->active !== true || $roleIds !== [$employeeRoleId])
+			{
+				return false;
+			}
+			$actualIds[] = $member->nodeId;
+		}
+		sort($actualIds);
+		sort($departmentIds);
+
+		return $actualIds === $departmentIds;
 	}
 
 	private function normalizeUserIds(array $userIds): array

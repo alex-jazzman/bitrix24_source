@@ -4,10 +4,10 @@
 jn.define('user-profile', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
-	const { Color } = require('tokens');
-	const { Icon } = require('assets/icons');
 	const { TabType } = require('user-profile/const');
 	const { NotifyManager } = require('notify-manager');
+	const { Presentation } = require('in-app-url/presentation');
+	const { WidgetPresenter } = require('in-app-url/widget-presenter');
 	const {
 		getInitialTabs,
 		prepareParams,
@@ -24,79 +24,6 @@ jn.define('user-profile', (require, exports, module) => {
 	{
 		static isOpening = false;
 
-		static #buildTabsWidgetOptions(items)
-		{
-			return {
-				titleParams: {
-					text: Loc.getMessage('M_PROFILE_TITLE'),
-				},
-				grabTitle: false,
-				modal: true,
-				leftButtons: [
-					{
-						type: Icon.CHEVRON_DOWN.getIconName(),
-						color: Color.base4.toHex(),
-						isCloseButton: true,
-					},
-				],
-				tabs: {
-					items,
-				},
-				backgroundLayout: {
-					mode: 'fixedHeight',
-					resizeMode: 'cover',
-				},
-			};
-		}
-
-		static #buildTabsComponentParams(items, params)
-		{
-			return {
-				// eslint-disable-next-line no-undef
-				scriptPath: availableComponents['user-profile-tabs'].publicUrl,
-				componentCode: 'user-profile-tabs',
-				canOpenInDefault: true,
-				rootWidget: {
-					name: 'tabs',
-					settings: {
-						objectName: 'tabs',
-						title: Loc.getMessage('M_PROFILE_TITLE'),
-						grabTitle: false,
-						modal: true,
-						leftButtons: [
-							{
-								type: Icon.CHEVRON_DOWN.getIconName(),
-								color: Color.base4.toHex(),
-								isCloseButton: true,
-							},
-						],
-						tabs: {
-							items,
-						},
-						backgroundLayout: {
-							mode: 'fixedHeight',
-							resizeMode: 'cover',
-						},
-					},
-				},
-				params,
-			};
-		}
-
-		static #openTabsComponent(parentWidget, items, params)
-		{
-			PageManager.openComponent(
-				'JSStackComponent',
-				UserProfile.#buildTabsComponentParams(items, params),
-				parentWidget,
-			);
-		}
-
-		static #openTabsWidget(parentWidget, items)
-		{
-			return parentWidget.openWidget('tabs', UserProfile.#buildTabsWidgetOptions(items));
-		}
-
 		static async #loadPreparedTabs(options)
 		{
 			await NotifyManager.showLoadingIndicator();
@@ -110,47 +37,59 @@ jn.define('user-profile', (require, exports, module) => {
 			}
 		}
 
-		static #openTabsWidgetAndInit(parentWidget, items, ownerId, params, initTabs)
+		static #buildTabsOpener({ parentWidget, items, presentation })
 		{
-			return new Promise((resolve) => {
-				UserProfile.#openTabsWidget(parentWidget, items)
-					.then((widget) => {
-						bindEvents(widget, ownerId);
-						initTabs(widget, params);
-						resolve(widget);
-					})
-					.catch(console.error)
-				;
-			});
+			return new WidgetPresenter()
+				.setPresentation(presentation)
+				.setParentWidget(parentWidget)
+				.setTitle(Loc.getMessage('M_PROFILE_TITLE'))
+				.setCanOpenInDefault(true)
+				.setTabs(
+					items,
+					{
+						backgroundLayout: {
+							mode: 'fixedHeight',
+							resizeMode: 'cover',
+						},
+						grabTitle: false,
+					},
+				);
 		}
 
-		static #openTabs({ parentWidget, items, ownerId, params, openInComponent, initTabs })
+		static #openTabsComponent({ parentWidget, items, ownerId, params, presentation })
 		{
-			if (openInComponent)
-			{
-				UserProfile.#openTabsComponent(parentWidget, items, {
-					ownerId,
-					params,
-				});
+			return UserProfile.#buildTabsOpener({ parentWidget, items, presentation })
+				.setComponentName('user-profile-tabs', {
+					componentParams: { ownerId, params },
+				})
+				.open();
+		}
 
-				return null;
-			}
+		static #openTabsWidget({ parentWidget, items, ownerId, params, initTabs, presentation })
+		{
+			return UserProfile.#buildTabsOpener({ parentWidget, items, presentation })
+				.onReady((widget) => {
+					bindEvents(widget, ownerId);
+					initTabs(widget, params);
+				})
+				.open();
+		}
 
-			return UserProfile.#openTabsWidgetAndInit(parentWidget, items, ownerId, params, initTabs);
+		static #openTabs({ parentWidget, items, ownerId, params, openInComponent, initTabs, presentation })
+		{
+			return openInComponent
+				? UserProfile.#openTabsComponent({ parentWidget, items, ownerId, params, presentation })
+				: UserProfile.#openTabsWidget({ parentWidget, items, ownerId, params, initTabs, presentation });
 		}
 
 		/**
-		 * @param {Object} params
-		 * @param {number} [params.ownerId=env.userId]
-		 * @param {string} [params.selectedTabId=TabType.COMMON]
-		 * @param {boolean} [params.openInComponent=false]
-		 * @param {string} [params.analyticsSection='']
-		 * @param {PageManager} [params.parentWidget=PageManager]
+		 * @param {UserProfileOpenParams} [params]
 		 */
 		static async open({
 			ownerId = env.userId,
 			selectedTabId = TabType.COMMON,
 			openInComponent = false,
+			presentation = null,
 			parentWidget = PageManager,
 			analyticsSection = '',
 		} = {})
@@ -165,6 +104,9 @@ jn.define('user-profile', (require, exports, module) => {
 				return null;
 			}
 			UserProfile.isOpening = true;
+
+			const preparedPresentation = Presentation.resolve(presentation, Presentation.MODAL);
+			const shouldOpenInComponent = presentation?.isModal?.() ?? openInComponent;
 
 			try
 			{
@@ -187,8 +129,9 @@ jn.define('user-profile', (require, exports, module) => {
 						items: preparedTabs,
 						ownerId,
 						params: preparedParams,
-						openInComponent,
+						openInComponent: shouldOpenInComponent,
 						initTabs: initTabNestedWidgetsStatic,
+						presentation: preparedPresentation,
 					});
 				}
 
@@ -204,8 +147,9 @@ jn.define('user-profile', (require, exports, module) => {
 					items: initialTabs,
 					ownerId,
 					params,
-					openInComponent,
+					openInComponent: shouldOpenInComponent,
 					initTabs: initTabNestedWidgets,
+					presentation: preparedPresentation,
 				});
 			}
 			finally

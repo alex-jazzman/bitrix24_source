@@ -76,6 +76,18 @@ export type Field = {
 	values: Map<string, string>;
 };
 
+export type AutofillConflict = {
+	fieldId: string,
+	code: 'ambiguous_source' | 'target_not_empty',
+	sourceBlockIds: Array<string>,
+};
+
+export type RelationAutofillResult = {
+	autofillMap: Record<string, string>,
+	autofillRequiredFields?: Array<string>,
+	autofillConflicts?: Array<AutofillConflict>,
+};
+
 export type ActionDictEntry = {
 	id: string,
 	title: string,
@@ -152,6 +164,7 @@ export type NodeSettings = {
 	fields: Map<string, Field>;
 	actions: Map<ActionDictEntry['id'], ActionDictEntry>;
 	fixedDocumentType: Array | null;
+	fixedDocumentTypeSigned: string | null;
 	relationAction: ?ActionDictEntry;
 	filterSupported: boolean;
 	availableBlocks?: AvailableBlocks,

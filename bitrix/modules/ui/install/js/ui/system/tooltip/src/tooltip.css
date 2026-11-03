@@ -1,0 +1,92 @@
+/**
+ * Public CSS surface: the block class .ui-system-tooltip on the node of the bubble, and nothing besides.
+ * The look of the tooltip belongs to the extension - the place of use tunes none of it, so everything else
+ * here is an implementation detail and may change.
+ *
+ * The colour of the pointer is written nowhere: ui.system.popover reads it off the computed background of
+ * the bubble on every cycle, so the fill below paints both. Hence the background may never be transparent.
+ */
+
+.ui-system-tooltip {
+	max-width: 400px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-accent-soft-element-blue);
+	color: var(--ui-color-on-primary-alt);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+
+	/* The bubble holds the cursor: moved onto it, the tooltip stays on the screen - the accessibility
+	   checklist asks for exactly that. Reachable by the cursor it may be, a fragment to copy from it is
+	   not, so its text stays unselectable. */
+	pointer-events: auto;
+	user-select: none;
+
+	/* A word longer than the whole bubble breaks instead of pushing it past the ceiling of the width. */
+	overflow-wrap: break-word;
+
+	/* A text content keeps the breaks it was written with: a "\n" in the string of a hint is a break the
+	   place of use meant, and that is how a hint has been read here for as long as there have been hints.
+	   Runs of spaces collapse as they always did - this differs from the usual value in the breaks alone. */
+	white-space: pre-line;
+
+	/* ui.system.popover caps its root by the space left around the element, and the bubble follows that cap
+	   down as a flex item of it - the content inside the bubble does not. Left to overflow, a long text or a
+	   tall node of the place of use is drawn past the blue and out of the window, which is the one thing the
+	   cap was there to prevent.
+
+	   Cut off and not scrolled. A scrollable box here would be one nobody could reach: the bubble carries no
+	   tabindex by contract and takes no focus, so the keyboard has no way into it, and the wheel is the only
+	   way left - which is exactly the case WCAG 2.1.1 speaks against. The text is unselectable besides, so
+	   there is nothing to be had from the part below the fold anyway. A hint that does not fit the screen is
+	   too long for a hint. */
+	overflow: hidden;
+}
+
+/* The rule above is about the text of the bubble and about nothing else. A node inside it - the element
+   content and the node the Vue wrapper renders into among the rest - carries markup, where the breaks of the
+   source stand for nothing and a break is written as a tag; left to inherit, they would turn the way a
+   template happens to be indented into the way the hint reads. */
+.ui-system-tooltip > * {
+	white-space: normal;
+}
+
+/* The one node the rule above lets through, and the Vue wrapper is what marks it: a text given as the "text"
+   prop is a string content of the family like any other, and the wrapper has nowhere to draw it but a node of
+   its own. Without this the breaks of that string would be the only ones in the family to stand for nothing.
+   A slot the consumer fills carries no node of this class and goes on reading as markup. */
+.ui-system-tooltip .ui-system-tooltip__text {
+	white-space: pre-line;
+}
+
+/* ui.system.popover takes the arrow off altogether once the side it stands along is shorter than the figure
+   itself, so each side needs a floor under the measurement the arrow is laid along: the height on the
+   vertical sides, the width on the horizontal ones. Without them the pointer goes missing on a tooltip that
+   is merely small - a single line is shorter than the figure, and a couple of narrow glyphs are narrower.
+   The floor is read off the primitive rather than written here as a number, so the two cannot drift apart;
+   the literal is the fallback for the case the variable is gone. */
+.ui-system-popover[data-position="left"] .ui-system-tooltip,
+.ui-system-popover[data-position="right"] .ui-system-tooltip {
+	min-height: var(--ui-popover-pointer-width, 36px);
+
+	/* A separate declaration on purpose. The block formatting context has to stay: as a flex or a grid
+	   container the bubble sizes its content by itself and a word too long for the ceiling of the width stops
+	   breaking. Where align-content on a block box is not supported yet, the rule falls away and the text
+	   stands at the top of a taller bubble - the pointer, which is what this is about, is there either way.
+
+	   The centring meets the cut of the block above only where there is room to centre in, and content taller
+	   than the bubble leaves none: both engines then stand it at the top instead of hanging it over both ends,
+	   so the first line - the one always worth reading - stays inside the cut. Hence no safe keyword: it would
+	   buy nothing here and take the whole declaration down where it is not understood. */
+	align-content: center;
+}
+
+/* No centring to match on this axis: text-align would take the whole width of the block, and every tooltip
+   of several lines would be centred along with the rare narrow one. The place left over stands after a text
+   too short to fill the floor - a couple of glyphs - and that is the cheaper of the two looks. */
+.ui-system-popover[data-position="top"] .ui-system-tooltip,
+.ui-system-popover[data-position="bottom"] .ui-system-tooltip {
+	min-width: var(--ui-popover-pointer-width, 36px);
+}

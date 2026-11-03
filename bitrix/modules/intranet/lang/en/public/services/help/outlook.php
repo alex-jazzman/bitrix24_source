@@ -55,7 +55,7 @@ manual copying! Fast to create, easy to manage! <a name='useful'></a></p>
   <table style='BORDER-COLLAPSE: collapse' border='0' cellspacing='1' cellpadding='1'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook.png', 600, 413, 'Adding an employee')\"><img title='Adding an employee' border='0' alt='Adding an employee' src='#SITE#images/en/docs/outlook_sm.png' width='300' height='207' /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook.webp', 600, 413, 'Adding an employee')\"><img title='Adding an employee' border='0' alt='Adding an employee' src='#SITE#images/en/docs/outlook_sm.webp' width='300' height='207' /> </a>
             <br />
           </div>
 
@@ -75,7 +75,7 @@ from the portal. Only the portal administrator can do that.</p>
 employee or company calendars. Try to synchronize right now! Open a calendar
 page, select <b> Connect To Outlook</b> in the action menu and start synchronization:</p>
 
-<div align='center'><img src='#SITE#images/en/docs/outlook_1.png'  />
+<div align='center'><img src='#SITE#images/en/docs/outlook_1.webp'  />
 <br><i> Connect To Outlook</i></div>
 
 <p>Pay no attention to MS Outlook message boxes: most of them are just
@@ -85,7 +85,7 @@ outlook?&quot;</b> message - click <b>Yes</b> without hesitation. The two-way MS
 Outlook integration fully conforms to Microsoft specifications and standards which
 guarantees an absolutely smooth operation.</p>
 
-<div align='center'><img src='#SITE#images/en/docs/outlook_2_sm.png' />
+<div align='center'><img src='#SITE#images/en/docs/outlook_2_sm.webp' />
   <br />
 </div>
 
@@ -96,7 +96,7 @@ provide a description to your calendar:</p>
   <table style='BORDER-COLLAPSE: collapse' border='0' cellspacing='1' cellpadding='1'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_3.png', 509, 449, 'Calendar description')\"><img title='Calendar description' border='0' alt='Calendar description' src='#SITE#images/en/docs/outlook_3_sm.png' /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_3.webp', 509, 449, 'Calendar description')\"><img title='Calendar description' border='0' alt='Calendar description' src='#SITE#images/en/docs/outlook_3_sm.webp' /> </a>
             <br />
           </div>
 
@@ -117,7 +117,7 @@ connect and synchronize calendars, and be in the thick of things!</p>
   <table style='BORDER-COLLAPSE: collapse' border='0' cellspacing='1' cellpadding='1'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_4.png', 709, 575, 'Calendar has been added to Outlook!')\"><img title='Calendar has been added to Outlook!' border='0' alt='Calendar has been added to Outlook!' src='#SITE#images/en/docs/outlook_4_sm.png'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_4.webp', 709, 575, 'Calendar has been added to Outlook!')\"><img title='Calendar has been added to Outlook!' border='0' alt='Calendar has been added to Outlook!' src='#SITE#images/en/docs/outlook_4_sm.webp'  /> </a>
             <br />
           </div>
 
@@ -137,7 +137,7 @@ like the portal calendar!</p>
   <table style='BORDER-COLLAPSE: collapse' border='0' cellspacing='1' cellpadding='1'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_5.png', 709, 575, 'Export calendar(s) to Outlook')\"><img title='Export calendar(s) to Outlook' border='0' alt='Export calendar(s) to Outlook' src='#SITE#images/en/docs/outlook_5_sm.png'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_5.webp', 709, 575, 'Export calendar(s) to Outlook')\"><img title='Export calendar(s) to Outlook' border='0' alt='Export calendar(s) to Outlook' src='#SITE#images/en/docs/outlook_5_sm.webp'  /> </a>
             <br />
           </div>
 
@@ -162,17 +162,17 @@ Outlook calendar - you will see it appear in the portal calendar! Do it now:</p>
 
 Now see the new event added to the MS Outlook calendar.
 
-<div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_6.png',650,500,'New Event')\"> <img height='192' border='0' width='250' src='#SITE#images/en/docs/outlook_6_sm.png' title='Click to Enlarge' style='cursor: pointer;' /></a></p>
+<div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_6.webp',650,500,'New Event')\"> <img height='192' border='0' width='250' src='#SITE#images/en/docs/outlook_6_sm.webp' title='Click to Enlarge' style='cursor: pointer;' /></a></p>
   </div>
 <p class='a1'><a name='sinhr'></a>You don't need to bother about synchronizing
 your MS Outlook calendars with the portal calendars. This task is performed
 automatically along with the Outlook e-mail check. The bottom right
 corner of the Outlook window will show the synchronization progress.</p>
 
-<p class='a1' align='center'><img src='#SITE#images/en/docs/outlook_8.png' /></p>
+<p class='a1' align='center'><img src='#SITE#images/en/docs/outlook_8.webp' /></p>
 <p>The following picture shows the same event in the portal calendar:</p>
 
-<div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_9.png',452,272,'New Event in the Calendar')\"> <img height='150' border='0' width='249' src='#SITE#images/en/docs/outlook_9_sm.png' title='Click to Enlarge' style='cursor: pointer;' /></a></div>
+<div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_9.webp',452,272,'New Event in the Calendar')\"> <img height='150' border='0' width='249' src='#SITE#images/en/docs/outlook_9_sm.webp' title='Click to Enlarge' style='cursor: pointer;' /></a></div>
 
 <p>You can edit and delete events in the MS Outlook and portal calendars in the
 same way. Any changes made on one side will be reflected on the other side.</p>
@@ -183,7 +183,7 @@ same way. Any changes made on one side will be reflected on the other side.</p>
 automated and does not require your assistance.</p>
 
 <div align='center'>
-  <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_13.png', 600, 413, 'Synchronize personal tasks')\"><img title='Synchronize personal tasks' border='0' alt='Synchronize personal tasks' src='#SITE#images/en/docs/outlook_13_sm.png' width='400' height='276' /> </a>
+  <div align='center'><a href=\"javascript:ShowImg('#SITE#images/en/docs/big/outlook_13.webp', 600, 413, 'Synchronize personal tasks')\"><img title='Synchronize personal tasks' border='0' alt='Synchronize personal tasks' src='#SITE#images/en/docs/outlook_13_sm.webp' width='400' height='276' /> </a>
     <br />
   </div>
   <div align='center'><i>Synchronizing personal tasks</i>

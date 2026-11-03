@@ -1,0 +1,80 @@
+/* The icon holds the size it was asked for and never gives it up: as a flex item next to a
+   name it defaults to yielding, so a long file name squeezed the thumbnail out of square. */
+.disk-picker-disk-icon {
+	position: relative;
+	flex: none;
+	overflow: hidden;
+}
+
+.disk-picker-disk-icon__preview {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--ui-border-radius-xs);
+	object-fit: cover;
+}
+
+/* Where the thumbnail is the subject rather than a marker beside a name, it is shown whole
+   and sized to its own proportion: filling the square would crop the picture, which is right
+   for a 24px row icon and wrong for a card the size of a preview. Sizing the element to the
+   picture also gives the corner something to follow — set on a box wider than the image, a
+   radius rounds the empty margins instead.
+
+   The rule hangs on the surrounding block and not on a modifier of this component: the
+   vanilla icon rebuilds the node it is rendered into, so a class handed down from the Vue
+   wrapper does not survive on the root. */
+.disk-picker-preview-panel__fan .disk-picker-disk-icon__preview {
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 100%;
+	margin: auto;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+/* The placeholder covers the tile whole, over the type glyph beneath it. */
+.disk-picker-disk-icon__placeholder {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+}
+
+/* Wherever a thumbnail arrives it is the whole of the icon, and the type glyph beneath it
+   steps aside: the image has corners of its own and does not cover the square edge to edge, so
+   the glyph showed through the rounding — and in the preview panel, where the picture is fitted
+   to its own proportion, through the margins as well. */
+.disk-picker-disk-icon.--with-preview > *:not(.disk-picker-disk-icon__preview) {
+	visibility: hidden;
+}
+
+/* The outline frames a thumbnail cropped to a square, where it reads as the card's edge. A
+   fitted picture ends wherever its proportion ends, so the ring no longer follows anything
+   and hangs around the empty box instead. */
+.disk-picker-preview-panel__fan .disk-picker-disk-icon.--with-preview::after {
+	display: none;
+}
+
+/* The outline belongs to the thumbnail only, never to a type glyph, so the wrapper carries
+   the --with-preview flag set alongside the image. An image is a replaced element and grows
+   no pseudo-elements of its own, hence the ring on the wrapper: gradient over the fill,
+   middle cut out by a mask. border-image would not follow the 6px corners. */
+.disk-picker-disk-icon.--with-preview::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: var(--ui-border-radius-xs);
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-base-7) 0%,
+		transparent 50%,
+		var(--ui-color-base-7) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+}

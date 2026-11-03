@@ -45,3 +45,6 @@ $MESS['CRM_CALL_ASSESSMENT_V2_CREATE_LOADING_TEXT'] = '#COPILOT_NAME# созда
 $MESS['CRM_CALL_ASSESSMENT_V2_CREATE_LOAD_GENERATED_ERROR'] = 'Не удалось загрузить скрипт, попробуйте обновить страницу';
 
 $MESS['CRM_CALL_ASSESSMENT_V2_EDITABLE_TITLE_EDIT'] = 'Изменить название';
+$MESS['CRM_CALL_ASSESSMENT_V2_HINT_DESCRIPTION'] = 'Менеджер увидит этот текст во время звонка. Подсказка не влияет на оценку.';
+$MESS['CRM_CALL_ASSESSMENT_V2_HINT_HEADING'] = 'Подсказка для звонка';
+$MESS['CRM_CALL_ASSESSMENT_V2_HINT_TOGGLE'] = 'Добавить подсказку';

@@ -764,6 +764,28 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 		getPreparedActionParams(props = null)
 		{
 			const { actionParams = {} } = (props || this.props);
+
+			this.applyStageParams(actionParams);
+
+			if (this.filter)
+			{
+				set(actionParams, 'loadItems.extra.filter', this.filter);
+				set(actionParams, 'loadItems.extra.filterParams.FILTER_PRESET_ID', this.filter.getPresetId());
+			}
+
+			return actionParams;
+		}
+
+		/**
+		 * Stage of the column being shown. It belongs to the view whoever brings the rest of the
+		 * request: a column asks for the items of its own stage either way.
+		 *
+		 * @private
+		 * @param {Object} actionParams
+		 * @return {Object} the same object, for the caller to go on with
+		 */
+		applyStageParams(actionParams)
+		{
 			const stage = this.getActiveStage();
 			const statusId = stage ? stage.statusId : null;
 
@@ -775,12 +797,6 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 			if (!stage)
 			{
 				delete actionParams.loadItems.extra.filterParams.stageId;
-			}
-
-			if (this.filter)
-			{
-				set(actionParams, 'loadItems.extra.filter', this.filter);
-				set(actionParams, 'loadItems.extra.filterParams.FILTER_PRESET_ID', this.filter.getPresetId());
 			}
 
 			return actionParams;
@@ -851,6 +867,9 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				menuButtons,
 				skipUseCache,
 				forcedShowSkeleton,
+				// the conditions of the request are the business of the screen: a screen that brings
+				// its own params has already put them there
+				actionParams: params.actionParams ?? null,
 			};
 
 			this.reloadStatefulList(reloadParams, () => {
@@ -879,10 +898,17 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				return;
 			}
 
-			const useCache = (params.skipUseCache ? false : this.canUseCache());
+			// params of their own mean conditions of their own, and the cache holds the answer the
+			// previous ones got
+			const skipUseCache = (params.skipUseCache || Boolean(params.actionParams));
+			const useCache = (skipUseCache ? false : this.canUseCache());
 
 			const initialStateParams = {
-				actionParams: this.getPreparedActionParams(),
+				actionParams: (
+					params.actionParams
+						? this.applyStageParams(params.actionParams)
+						: this.getPreparedActionParams()
+				),
 				itemParams: this.getPreparedItemParams(),
 				forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', !useCache),
 				force: BX.prop.getBoolean(params, 'force', false),

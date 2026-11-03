@@ -155,7 +155,7 @@ this.BX = this.BX || {};
 	}
 
 	function hslToRgb(hsl) {
-	  // todo: a little not equal with reverce conversion :-/
+	  // todo: a little not equal with reverse conversion :-/
 	  // todo: f.e. hsl(73.53.50) it 166,195,60 and #a5c33c,
 	  // todo: but in reverse #a5c33c => 165,195,60
 	  // todo: because we save ColorValue in hsl can be some differences

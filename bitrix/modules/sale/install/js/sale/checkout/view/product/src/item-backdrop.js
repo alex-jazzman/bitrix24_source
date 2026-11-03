@@ -4,16 +4,36 @@ import { MixinProductItemEdit } from 'sale.checkout.view.mixins';
 import 'sale.checkout.view.element.button'
 import 'sale.checkout.view.element.input';
 
+import { MixinItemDialog } from './dialog';
+import { changeVariationButton } from './focus';
+
 import './price'
 import './props-list'
 import './item-warning-list'
 
 BitrixVue.component('sale-checkout-view-product-item_backdrop', {
-	props: ['item', 'index', 'error'],
-	mixins:[MixinProductItemEdit],
+	props: ['item', 'error'],
+	mixins:[MixinProductItemEdit, MixinItemDialog],
+	computed:
+	{
+		dialogInitiator()
+		{
+			return changeVariationButton;
+		},
+	},
 	// language=Vue
 	template: `
-		<div class="checkout-basket-item-backdrop-wrapper js-backdrop-open-change-sku" style="">
+		<div
+			class="checkout-basket-item-backdrop-wrapper js-backdrop-open-change-sku"
+			style=""
+			data-testid="sale-checkout-variation-dialog"
+			role="dialog"
+			aria-modal="true"
+			:aria-labelledby="dialogHeadingId"
+			:inert="!opened"
+			ref="dialog"
+			@keydown.esc="requestDialogClose"
+		>
 			<sale-checkout-view-element-button-backdrop_overlay_close class="js-backdrop-open-change-sku" :index="this.index"/>
 			<div class="checkout-basket-item-backdrop-container js-backdrop-open-change-sku">
 				<div class="checkout-basket-item-detail-header justify-content-between align-items-center">
@@ -24,11 +44,11 @@ BitrixVue.component('sale-checkout-view-product-item_backdrop', {
 					<div class="checkout-basket-item-backdrop-inner">
 					<div class="checkout-basket-item-backdrop-main">
 						<div class="checkout-basket-item-head">
-							<a :href="item.product.detailPageUrl" class="checkout-basket-item-image-block">
+							<a :href="item.product.detailPageUrl" class="checkout-basket-item-image-block" tabindex="-1" aria-hidden="true">
 								<img :src="getSrc" :alt="item.name" class="checkout-basket-item-image">
 							</a>
-							<h2 class="checkout-basket-item-name-block">
-								<a :href="item.product.detailPageUrl" class="checkout-basket-item-name-text">{{item.name}}</a>
+							<h2 class="checkout-basket-item-name-block" :id="dialogHeadingId">
+								<a :href="item.product.detailPageUrl" class="checkout-basket-item-name-text" data-testid="sale-checkout-backdrop-product-link">{{item.name}}</a>
 							</h2>
 						</div>
 						<div class="checkout-basket-item-info-container" v-if="hasProps() || hasSkyTree()">
@@ -45,8 +65,8 @@ BitrixVue.component('sale-checkout-view-product-item_backdrop', {
 								<div class="checkout-item-quantity-field-container">
 									<slot name="button-minus" />
 									<div class="checkout-item-quantity-field-block">
-										<sale-checkout-view-element-input-product_item_quantity :item="item" :index="index"/>
-										<div class="checkout-item-quantity-field">{{item.quantity}}</div>
+										<sale-checkout-view-element-input-product_item_quantity :item="item" :index="index" data-testid="sale-checkout-backdrop-quantity-input"/>
+										<div class="checkout-item-quantity-field" aria-hidden="true">{{item.quantity}}</div>
 									</div>
 									<slot name="button-plus" />
 									<slot name="quantity-description" />

@@ -105,6 +105,8 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			containsChecklist: false,
 			storyPoints: '',
 			epicId: 0,
+			canCreateEpic: false,
+			canUpdateScrumFields: false,
 			accomplicesIds: [],
 			auditorsIds: [],
 			tags: [],

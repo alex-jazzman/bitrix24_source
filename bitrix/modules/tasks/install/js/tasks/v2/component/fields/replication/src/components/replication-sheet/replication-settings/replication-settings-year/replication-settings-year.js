@@ -80,7 +80,11 @@ export const ReplicationSettingsYear = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-sheet__stack">
+		<div
+			class="tasks-field-replication-sheet__stack"
+			role="radiogroup"
+			:aria-label="loc('TASKS_V2_REPLICATION_YEARLY_RADIOGROUP_ARIA_LABEL')"
+		>
 			<ReplicationSettingsYearAbsoluteDate
 				v-model:yearlyType="yearlyType"
 				:yearlyDayNumber="replicateParams.yearlyDayNum || 1"

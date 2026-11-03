@@ -93,8 +93,8 @@
 	top: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-start.png) 1x,
-			url(../images/year-results-bg-start@2x.png) 2x
+			url(../images/year-results-bg-start.webp) 1x,
+			url(../images/year-results-bg-start@2x.webp) 2x
 	);
 	height: 391px;
 	width: 127px;
@@ -117,8 +117,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-base.png) 1x,
-			url(../images/year-results-character-base@2x.png) 2x
+			url(../images/year-results-character-base.webp) 1x,
+			url(../images/year-results-character-base@2x.webp) 2x
 	);
 	height: 506px;
 	width: 450px;
@@ -139,8 +139,8 @@
 	position: absolute;
 	bottom: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-heart.png) 1x,
-			url(../images/year-results-bg-heart@2x.png) 2x
+			url(../images/year-results-bg-heart.webp) 1x,
+			url(../images/year-results-bg-heart@2x.webp) 2x
 	);
 	height: 417px;
 	width: 450px;
@@ -151,8 +151,8 @@
 	position: absolute;
 	bottom: 0;
 	background-image: image-set(
-			url(../images/year-results-character-reaction.png) 1x,
-			url(../images/year-results-character-reaction@2x.png) 2x
+			url(../images/year-results-character-reaction.webp) 1x,
+			url(../images/year-results-character-reaction@2x.webp) 2x
 	);
 	height: 463px;
 	width: 450px;
@@ -173,8 +173,8 @@
 	bottom: 0;
 	left: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-blue-spiral.png) 1x,
-			url(../images/year-results-bg-blue-spiral@2x.png) 2x
+			url(../images/year-results-bg-blue-spiral.webp) 1x,
+			url(../images/year-results-bg-blue-spiral@2x.webp) 2x
 	);
 	height: 471px;
 	width: 450px;
@@ -185,8 +185,8 @@
 	position: absolute;
 	bottom: 0;
 	background-image: image-set(
-			url(../images/year-results-character-deal.png) 1x,
-			url(../images/year-results-character-deal@2x.png) 2x
+			url(../images/year-results-character-deal.webp) 1x,
+			url(../images/year-results-character-deal@2x.webp) 2x
 	);
 	height: 536px;
 	width: 450px;
@@ -208,8 +208,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-check-mark.png) 1x,
-			url(../images/year-results-bg-check-mark@2x.png) 2x
+			url(../images/year-results-bg-check-mark.webp) 1x,
+			url(../images/year-results-bg-check-mark@2x.webp) 2x
 	);
 	height: 430px;
 	width: 448px;
@@ -221,8 +221,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-task.png) 1x,
-			url(../images/year-results-character-task@2x.png) 2x
+			url(../images/year-results-character-task.webp) 1x,
+			url(../images/year-results-character-task@2x.webp) 2x
 	);
 	height: 534px;
 	width: 450px;
@@ -234,8 +234,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-chat.png) 1x,
-			url(../images/year-results-bg-chat@2x.png) 2x
+			url(../images/year-results-bg-chat.webp) 1x,
+			url(../images/year-results-bg-chat@2x.webp) 2x
 	);
 	height: 338px;
 	width: 450px;
@@ -247,8 +247,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-message.png) 1x,
-			url(../images/year-results-character-message@2x.png) 2x
+			url(../images/year-results-character-message.webp) 1x,
+			url(../images/year-results-character-message@2x.webp) 2x
 	);
 	height: 508px;
 	width: 450px;
@@ -270,8 +270,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-meatball.png) 1x,
-			url(../images/year-results-bg-meatball@2x.png) 2x
+			url(../images/year-results-bg-meatball.webp) 1x,
+			url(../images/year-results-bg-meatball@2x.webp) 2x
 	);
 	height: 351px;
 	width: 450px;
@@ -283,8 +283,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-board.png) 1x,
-			url(../images/year-results-character-board@2x.png) 2x
+			url(../images/year-results-character-board.webp) 1x,
+			url(../images/year-results-character-board@2x.webp) 2x
 	);
 	height: 502px;
 	width: 450px;
@@ -306,8 +306,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-spiral.png) 1x,
-			url(../images/year-results-bg-spiral@2x.png) 2x
+			url(../images/year-results-bg-spiral.webp) 1x,
+			url(../images/year-results-bg-spiral@2x.webp) 2x
 	);
 	height: 537px;
 	width: 450px;
@@ -319,8 +319,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-workflow.png) 1x,
-			url(../images/year-results-character-workflow@2x.png) 2x
+			url(../images/year-results-character-workflow.webp) 1x,
+			url(../images/year-results-character-workflow@2x.webp) 2x
 	);
 	height: 502px;
 	width: 450px;
@@ -341,8 +341,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-cursor-pink.png) 1x,
-			url(../images/year-results-bg-cursor-pink@2x.png) 2x
+			url(../images/year-results-bg-cursor-pink.webp) 1x,
+			url(../images/year-results-bg-cursor-pink@2x.webp) 2x
 	);
 	height: 341px;
 	width: 450px;
@@ -354,8 +354,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-site.png) 1x,
-			url(../images/year-results-character-site@2x.png) 2x
+			url(../images/year-results-character-site.webp) 1x,
+			url(../images/year-results-character-site@2x.webp) 2x
 	);
 	height: 479px;
 	width: 450px;
@@ -377,8 +377,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-green-ball.png) 1x,
-			url(../images/year-results-bg-green-ball@2x.png) 2x
+			url(../images/year-results-bg-green-ball.webp) 1x,
+			url(../images/year-results-bg-green-ball@2x.webp) 2x
 	);
 	height: 381px;
 	width: 410px;
@@ -390,8 +390,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-collab.png) 1x,
-			url(../images/year-results-character-collab@2x.png) 2x
+			url(../images/year-results-character-collab.webp) 1x,
+			url(../images/year-results-character-collab@2x.webp) 2x
 	);
 	height: 493px;
 	width: 450px;
@@ -413,8 +413,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-pink-bell.png) 1x,
-			url(../images/year-results-bg-pink-bell@2x.png) 2x
+			url(../images/year-results-bg-pink-bell.webp) 1x,
+			url(../images/year-results-bg-pink-bell@2x.webp) 2x
 	);
 	height: 423px;
 	width: 353px;
@@ -426,8 +426,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-channel.png) 1x,
-			url(../images/year-results-character-channel@2x.png) 2x
+			url(../images/year-results-character-channel.webp) 1x,
+			url(../images/year-results-character-channel@2x.webp) 2x
 	);
 	height: 512px;
 	width: 450px;
@@ -449,8 +449,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-pink-star.png) 1x,
-			url(../images/year-results-bg-pink-star@2x.png) 2x
+			url(../images/year-results-bg-pink-star.webp) 1x,
+			url(../images/year-results-bg-pink-star@2x.webp) 2x
 	);
 	height: 571px;
 	width: 450px;
@@ -462,8 +462,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-copilot.png) 1x,
-			url(../images/year-results-character-copilot@2x.png) 2x
+			url(../images/year-results-character-copilot.webp) 1x,
+			url(../images/year-results-character-copilot@2x.webp) 2x
 	);
 	height: 508px;
 	width: 450px;
@@ -475,8 +475,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-bg-cursor.png) 1x,
-			url(../images/year-results-bg-cursor@2x.png) 2x
+			url(../images/year-results-bg-cursor.webp) 1x,
+			url(../images/year-results-bg-cursor@2x.webp) 2x
 	);
 	height: 471px;
 	width: 450px;
@@ -488,8 +488,8 @@
 	bottom: 0;
 	right: 0;
 	background-image: image-set(
-			url(../images/year-results-character-checkin.png) 1x,
-			url(../images/year-results-character-checkin@2x.png) 2x
+			url(../images/year-results-character-checkin.webp) 1x,
+			url(../images/year-results-character-checkin@2x.webp) 2x
 	);
 	height: 548px;
 	width: 450px;
@@ -590,7 +590,7 @@
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: unset;
-	background-image: url(../images/year-results-logo-white.png);
+	background-image: url(../images/year-results-logo-white.webp);
 }
 
 .intranet-year-results-popup__slide--screenshot.intranet-year-results-popup__slide--task .intranet-year-results-popup__logo,
@@ -600,7 +600,7 @@
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: unset;
-	background-image: url(../images/year-results-logo-dark.png);
+	background-image: url(../images/year-results-logo-dark.webp);
 }
 
 .intranet-year-results-popup__slide-footer {

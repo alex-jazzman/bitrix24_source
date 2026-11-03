@@ -24,13 +24,21 @@ var TaskListPopup = function(popupId, popupClassName, title, items, params)
 	this.popupWindow = null;
 	this.currentTask = null;
 	this.tasksData = {};
-	this.itemList = [];
+	this.itemNodes = [];
+	this.itemsContainerNode = null;
+	this.focusZone = null;
+	this.focusReturnPending = false;
+	this.focusReturnSuppressed = false;
 };
 
 TaskListPopup.prototype.show = function(taskId, bindElement, currentValues, params)
 {
 	if (this.popupWindow !== null)
+	{
+		this.focusReturnSuppressed = true;
 		this.popupWindow.close();
+		this.focusReturnSuppressed = false;
+	}
 
 	this.currentTask = this.__getTask(taskId, bindElement, currentValues, params);
 	if (this.currentTask === null)
@@ -44,18 +52,25 @@ TaskListPopup.prototype.show = function(taskId, bindElement, currentValues, para
 	this.__redrawList();
 
 	this.popupWindow.show();
+
+	if (this.focusZone !== null)
+		this.focusZone.activate();
+
+	var entryItemNode = this.__getEntryItemNode();
+	if (entryItemNode !== null)
+		entryItemNode.focus();
 };
 
 TaskListPopup.prototype.__createLayout = function()
 {
-	var items = [];
 	for (var i = 0; i < this.items.length; i++)
 	{
 		var item = this.items[i];
 		var domElement = BX.create(
-			"a",
+			"button",
 			{
-				props : { className: "task-popup-list-item" },
+				props : { className: "task-popup-list-item", type: "button" },
+				attrs : { role : "menuitemradio", "aria-checked" : "false" },
 				events : {
 					click : BX.proxy(this.__onItemClick, {obj : this, listItem : item })
 				},
@@ -70,30 +85,54 @@ TaskListPopup.prototype.__createLayout = function()
 
 		BX.data(domElement, 'item', item);
 
-		this.itemList[item.id] = domElement;
-		items.push(domElement);
+		this.itemNodes.push(domElement);
 	}
 
-	this.popupWindow = BX.PopupWindowManager.create("bx-task-" + this.popupId + "-popup", this.currentTask.bindElement, {
-			autoHide : true,
-			offsetTop : 1,
-			lightShadow : true,
-			closeByEsc: true,
-			events : {
-				onPopupClose : BX.proxy(this.__onPopupClose, this)
-			},
-			content : (this.popupWindowContent = BX.create(
-				"div",
-				{
-					props : { className: "task-" + this.popupClassName + "-popup" },
-					children : [
-							BX.create("div", { props: { className: "task-" + this.popupClassName +"-popup-title" }, text : this.title } ),
-							BX.create("div", { props : { className : "popup-window-hr" }, children : [ BX.create("i", {}) ]}),
-							BX.create("div", { props: { className: "task-popup-list-list" }, children :  items } )
-					]
-				}
-			))
-	});
+	var popupWindowId = "bx-task-" + this.popupId + "-popup";
+	var titleId = popupWindowId + "-title";
+
+	var popupOptions = {
+		role : "menu",
+		autoHide : true,
+		offsetTop : 1,
+		lightShadow : true,
+		closeByEsc: true,
+		events : {
+			onPopupClose : BX.proxy(this.__onPopupClose, this),
+			onPopupAfterClose : BX.proxy(this.__onPopupAfterClose, this)
+		},
+		content : (this.popupWindowContent = BX.create(
+			"div",
+			{
+				props : { className: "task-" + this.popupClassName + "-popup" },
+				attrs : { role : "presentation" },
+				events : {
+					keydown : BX.proxy(this.__onPopupContentKeyDown, this)
+				},
+				children : [
+						BX.create("div", { props: { className: "task-" + this.popupClassName +"-popup-title" }, attrs : { id : titleId, role : "presentation" }, text : this.title } ),
+						BX.create("div", { props : { className : "popup-window-hr" }, attrs : { role : "presentation" }, children : [ BX.create("i", {}) ]}),
+						(this.itemsContainerNode = BX.create("div", { props: { className: "task-popup-list-list" }, attrs : { role : "presentation" }, children :  this.itemNodes } ))
+				]
+			}
+		))
+	};
+
+	if (BX.type.isNotEmptyString(this.title))
+		popupOptions.ariaLabelledBy = titleId;
+	else
+		popupOptions.ariaLabel = BX.message("TASKS_POPUP_LIST_TITLE_FALLBACK");
+
+	this.popupWindow = BX.PopupWindowManager.create(popupWindowId, this.currentTask.bindElement, popupOptions);
+
+	if (BX.UI && BX.UI.Accessibility && BX.UI.Accessibility.FocusZone)
+	{
+		this.focusZone = new BX.UI.Accessibility.FocusZone(this.itemsContainerNode, {
+			bindKeys : BX.UI.Accessibility.FocusKeys.ArrowVertical | BX.UI.Accessibility.FocusKeys.HomeAndEnd,
+			focusOutBehavior : "wrap",
+			focusInStrategy : BX.proxy(this.__getEntryItemNode, this)
+		});
+	}
 };
 
 TaskListPopup.prototype.__redrawList = function()
@@ -103,18 +142,30 @@ TaskListPopup.prototype.__redrawList = function()
 
 TaskListPopup.prototype.__selectItem = function(itemId)
 {
-	BX.Tasks.each(this.itemList, function(item, id){
-		var obj = BX.data(item, 'item');
+	for (var i = 0; i < this.itemNodes.length; i++)
+	{
+		var itemNode = this.itemNodes[i];
+		var item = BX.data(itemNode, 'item');
+		var isSelected = String(item.id) === String(itemId) || Boolean(item.values && item.values[itemId]);
 
-		if(obj.id == itemId || (typeof obj.values != 'undefined' && obj.values[itemId]))
-		{
-			BX.addClass(item, "task-popup-list-item-selected");
-		}
+		itemNode.setAttribute("aria-checked", isSelected ? "true" : "false");
+
+		if (isSelected)
+			BX.addClass(itemNode, "task-popup-list-item-selected");
 		else
-		{
-			BX.removeClass(item, "task-popup-list-item-selected");
-		}
-	}.bind(this));
+			BX.removeClass(itemNode, "task-popup-list-item-selected");
+	}
+};
+
+TaskListPopup.prototype.__getEntryItemNode = function()
+{
+	for (var i = 0; i < this.itemNodes.length; i++)
+	{
+		if (this.itemNodes[i].getAttribute("aria-checked") === "true")
+			return this.itemNodes[i];
+	}
+
+	return this.itemNodes.length > 0 ? this.itemNodes[0] : null;
 };
 
 TaskListPopup.prototype.__getTask = function(taskId, bindElement, currentValues, params)
@@ -159,8 +210,6 @@ TaskListPopup.prototype.__getTask = function(taskId, bindElement, currentValues,
 
 TaskListPopup.prototype.__onItemClick = function(event)
 {
-	this.obj.popupWindow.close();
-
 	if (this.obj.currentTask.listValue != this.listItem.id)
 	{
 		this.obj.currentTask.listValue = this.listItem.id;
@@ -169,13 +218,55 @@ TaskListPopup.prototype.__onItemClick = function(event)
 			this.obj.currentTask.onPopupChange();
 	}
 
+	this.obj.popupWindow.close();
+
+	BX.PreventDefault(event);
+};
+
+TaskListPopup.prototype.__onPopupContentKeyDown = function(event)
+{
+	if (event.key !== "Tab")
+		return;
+
+	this.popupWindow.close();
+
 	BX.PreventDefault(event);
 };
 
 TaskListPopup.prototype.__onPopupClose = function(popupWindow)
 {
+	this.focusReturnPending = this.__isFocusReturnNeeded();
+
+	if (this.focusZone !== null)
+		this.focusZone.deactivate();
+
 	if (this.currentTask.onPopupClose)
 		this.currentTask.onPopupClose();
+};
+
+// The focus is returned here and not in __onPopupClose: the focus trap deactivates between
+// the two events, restoring the focus on its own, and would win over an earlier call.
+TaskListPopup.prototype.__onPopupAfterClose = function(popupWindow)
+{
+	if (!this.focusReturnPending)
+		return;
+
+	this.focusReturnPending = false;
+	this.currentTask.bindElement.focus();
+};
+
+TaskListPopup.prototype.__isFocusReturnNeeded = function()
+{
+	if (this.focusReturnSuppressed)
+		return false;
+
+	var activeElement = document.activeElement;
+	var focusIsLost = !activeElement
+		|| activeElement === document.body
+		|| activeElement === document.documentElement
+		|| activeElement.tabIndex < 0;
+
+	return focusIsLost || this.popupWindow.getPopupContainer().contains(activeElement);
 };
 
 /* ===================================================Priority Popup ===============================================================*/

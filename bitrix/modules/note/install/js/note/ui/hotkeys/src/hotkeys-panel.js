@@ -7,7 +7,7 @@ import { getMarkdownReference } from './markdown-reference';
 import { formatShortcut } from './format-shortcut';
 import './style.css';
 
-// Presentation order of hotkey groups (AC-010). A group present in the descriptor but missing
+// Presentation order of hotkey groups. A group present in the descriptor but missing
 // here simply isn't rendered — keep in sync with the descriptor's `group` values.
 const GROUP_ORDER = ['format', 'headings', 'lists', 'blocks', 'align', 'insert', 'history', 'global'];
 
@@ -35,6 +35,13 @@ export const HotkeysPanelComponent = {
 			type: Boolean,
 			default: false,
 		},
+		// Features the portal has switched on. A shortcut tied to a feature outside this list is left
+		// out: the panel is a promise that the combo does something, and for a feature that is off it
+		// would not.
+		features: {
+			type: Array,
+			default: () => [],
+		},
 	},
 	emits: ['close'],
 	data()
@@ -59,7 +66,9 @@ export const HotkeysPanelComponent = {
 		// Hotkey groups in presentation order; each carries its localized title and rendered rows.
 		comboGroups(): Array<Object>
 		{
-			const descriptor = getHotkeyDescriptor();
+			const descriptor = getHotkeyDescriptor()
+				.filter((item) => item.feature === null || this.features.includes(item.feature))
+			;
 
 			return GROUP_ORDER
 				.map((group) => {

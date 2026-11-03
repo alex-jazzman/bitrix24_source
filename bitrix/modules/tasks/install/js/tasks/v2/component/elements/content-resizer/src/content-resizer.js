@@ -41,6 +41,6 @@ export const ContentResizer = {
 		},
 	},
 	template: `
-		<div class="b24-content-resizer" @mousedown.left="startResize"/>
+		<div class="b24-content-resizer" aria-hidden="true" @mousedown.left="startResize"/>
 	`,
 };

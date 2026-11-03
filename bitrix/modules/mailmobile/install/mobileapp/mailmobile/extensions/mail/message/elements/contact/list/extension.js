@@ -2,7 +2,8 @@
  * @module mail/message/elements/contact/list
  */
 jn.define('mail/message/elements/contact/list', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color, Indent } = require('tokens');
+	const { Text5 } = require('ui-system/typography/text');
 	const { ContactCard } = require('mail/message/elements/contact/card');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -26,12 +27,11 @@ jn.define('mail/message/elements/contact/list', (require, exports, module) => {
 
 			if (title)
 			{
-				titleFiled = Text({
+				titleFiled = Text5({
+					testId: `${testId}-title`,
+					color: Color.base4,
 					style: {
-						paddingRight: 3,
-						fontWeight: '400',
-						fontSize: 13,
-						color: AppTheme.colors.base4,
+						paddingRight: Indent.XS.toNumber(),
 					},
 					text: title,
 				});

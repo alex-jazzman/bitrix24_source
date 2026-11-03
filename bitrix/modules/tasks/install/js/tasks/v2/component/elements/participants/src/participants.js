@@ -24,6 +24,7 @@ import { More } from './more/more';
 import './participants.css';
 
 const maxUsers = 4;
+const hintActionPlaceholder = /\[\/?action]/g;
 
 // @vue/component
 export const Participants = {
@@ -112,6 +113,26 @@ export const Participants = {
 			type: [Boolean, String],
 			default: false,
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+		userAriaLabelTemplate: {
+			type: String,
+			default: '',
+		},
+		addAriaLabel: {
+			type: String,
+			default: '',
+		},
+		ariaHaspopup: {
+			type: String,
+			default: '',
+		},
+		clearAriaLabel: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['update', 'hintClick', 'absenceLoaded'],
 	setup(): Object
@@ -127,6 +148,8 @@ export const Participants = {
 			isMoreShown: false,
 			isHintShown: false,
 			isHovered: false,
+			isFocusWithin: false,
+			returnFocusElement: null,
 		};
 	},
 	computed: {
@@ -156,8 +179,18 @@ export const Participants = {
 				maxWidth: 300,
 				maxHeight: 300,
 				offsetTop: 8,
+				focusTrap: true,
+				closeByEsc: true,
+				ariaLabel: this.loc('TASKS_V2_USERS_MORE_POPUP_ARIA_LABEL'),
 				targetContainer: document.body,
 			});
+		},
+		hintOptions(): PopupOptions
+		{
+			return {
+				focusTrap: { initialFocus: false },
+				ariaLabel: this.hintText.replaceAll(hintActionPlaceholder, ''),
+			};
 		},
 		bodyUserIds(): number[]
 		{
@@ -245,6 +278,8 @@ export const Participants = {
 				return;
 			}
 
+			this.returnFocusElement = document.activeElement;
+
 			if (this.withHint)
 			{
 				this.isHintShown = true;
@@ -265,7 +300,7 @@ export const Participants = {
 				isMultiple: !this.single && (!this.multipleOnPlus || plus),
 			});
 		},
-		handleDialogClose(userIds: number[], items: UserDialogItem[]): void
+		async handleDialogClose(userIds: number[], items: UserDialogItem[]): Promise<void>
 		{
 			this.isDialogShown = false;
 			if (usersDialog.getDialog().isLoaded())
@@ -276,6 +311,28 @@ export const Participants = {
 				{
 					void this.loadUsersAbsenceInfo(items);
 				}
+			}
+
+			await this.focusTrigger();
+		},
+		async focusTrigger(): Promise<void>
+		{
+			const captured = this.returnFocusElement;
+			this.returnFocusElement = null;
+
+			await this.$nextTick();
+
+			if (captured?.isConnected)
+			{
+				captured.focus?.();
+
+				return;
+			}
+
+			const trigger = this.$refs.root?.querySelector('.b24-hover-pill-content');
+			if (trigger?.isConnected)
+			{
+				trigger.focus();
 			}
 		},
 		getUserIds(items: UserDialogItem[]): number[]
@@ -306,9 +363,41 @@ export const Participants = {
 
 			return idsFiltered;
 		},
-		removeUser(userId: number): void
+		async removeUser(userId: number): Promise<void>
 		{
+			const remover = document.activeElement?.closest?.('.b24-hover-pill-remover') ?? null;
+			const list = remover?.closest('.tasks-field-users') ?? null;
+			const index = list ? [...list.querySelectorAll('.b24-hover-pill-remover')].indexOf(remover) : 0;
+
 			this.updateUsers(this.userIds.filter((id) => id !== userId));
+
+			await this.focusAfterRemove(list, index);
+		},
+		async removeAll(): Promise<void>
+		{
+			this.updateUsers([]);
+
+			await this.focusAfterRemove(null, 0);
+		},
+		async focusAfterRemove(list: ?HTMLElement, index: number): Promise<void>
+		{
+			await this.$nextTick();
+
+			const removers = list?.isConnected ? [...list.querySelectorAll('.b24-hover-pill-remover')] : [];
+			const neighbour = removers[index] ?? removers.at(-1);
+			if (neighbour)
+			{
+				neighbour.focus();
+
+				return;
+			}
+
+			const root = this.$refs.root;
+			const trigger = root?.querySelector('.b24-field-hover-button, .b24-hover-pill-content');
+			if (trigger?.isConnected)
+			{
+				trigger.focus();
+			}
 		},
 		updateUsers(userIds: number[]): void
 		{
@@ -339,15 +428,31 @@ export const Participants = {
 		},
 	},
 	template: `
-		<div v-bind="dataset" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
+		<div
+			ref="root"
+			v-bind="dataset"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
+			@focusin="isFocusWithin = true"
+			@focusout="isFocusWithin = false"
+		>
 			<FieldAdd
 				v-if="userCount === 0"
 				:icon="Outline.PERSON"
+				:ariaLabel="addAriaLabel || ariaLabel"
+				:ariaHaspopup
+				:ariaExpanded="ariaLabel ? isDialogShown : null"
 				:isLocked
 				@click="showDialog"
 			/>
 			<div v-else-if="inline && userCount > 1 || avatarOnly" class="tasks-field-users-inline">
-				<HoverPill compact @click="handleClick">
+				<HoverPill
+					compact
+					:ariaLabel
+					:ariaHaspopup
+					:ariaExpanded="ariaLabel ? isDialogShown : null"
+					@click="handleClick"
+				>
 					<template v-for="userId in bodyUserIds" :key="userId">
 						<UserLabel class="tasks-field-user --inline" :user="getUser(userId)" avatarOnly/>
 					</template>
@@ -357,15 +462,18 @@ export const Participants = {
 					:withRemove
 					inline
 					@showMore="handleMore"
-					@removeAll="updateUsers([])"
+					@removeAll="removeAll"
 				/>
 			</div>
 			<div v-else>
 				<FieldHoverButton
 					v-if="canAdd && !inline"
 					:icon="Outline.PLUS_L"
-					:isVisible="isDialogShown || isHovered"
+					:isVisible="isDialogShown || isHovered || isFocusWithin"
 					:isLocked
+					:ariaLabel
+					:ariaHaspopup
+					:ariaExpanded="ariaLabel ? isDialogShown : null"
 					@click="showDialog(true)"
 				/>
 				<Users
@@ -379,6 +487,11 @@ export const Participants = {
 					:inline
 					:showMenu
 					:forceEdit
+					:ariaLabel
+					:userAriaLabelTemplate
+					:ariaHaspopup
+					:ariaExpanded="ariaLabel ? isDialogShown : null"
+					:clearAriaLabel
 					@edit="showDialog"
 					@remove="removeUser"
 				>
@@ -390,7 +503,7 @@ export const Participants = {
 					:count="moreUserIds.length"
 					:withRemove
 					@showMore="handleMore"
-					@removeAll="updateUsers([])"
+					@removeAll="removeAll"
 				/>
 			</div>
 			<div ref="anchor"/>
@@ -406,6 +519,7 @@ export const Participants = {
 				:single
 				:showMenu
 				:forceEdit
+				:clearAriaLabel
 				fromPopup
 				@edit="showDialog"
 				@remove="removeUser"
@@ -415,7 +529,7 @@ export const Participants = {
 				</template>
 			</Users>
 		</Popup>
-		<Hint v-if="isHintShown" :bindElement="$refs.anchor" @close="closeHint">
+		<Hint v-if="isHintShown" :bindElement="$refs.anchor" :options="hintOptions" @close="closeHint">
 			<RichLoc class="tasks-field-users-hint" :text="hintText" placeholder="[action]">
 				<template #action="{ text }">
 					<span @click="handleHintClick">{{ text }}</span>

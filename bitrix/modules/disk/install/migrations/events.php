@@ -48,6 +48,7 @@ $event
 	->register('bizproc', 'onGetDocumentType', \Bitrix\Disk\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentType\GetDocumentTypes::class, 'onGetDocumentType')
 	->register('main', 'OnAfterUserLogout', \Bitrix\Disk\Internal\Integration\Main\EventHandlers\OnAfterUserLogoutEventHandler::class, 'handle')
 	->register('disk', 'deletingCustomServer', '\Bitrix\Disk\Internal\EventHandlers\RestrictDeleteCustomServerHandler', 'handle')
+	->register('disk', 'onAfterDeleteFile', Bitrix\Disk\Document\Flipchart\Comment\EventHandler\BoardDeletedHandler::class, 'handle')
 ;
 
 if ($mode === \Bitrix\Main\UpdateSystem\Migration\DatabaseUpdateMode::ModuleInstall)

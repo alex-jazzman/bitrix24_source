@@ -8,7 +8,7 @@ import {type FormOptions} from 'crm.form.type';
 import {MessageCard} from 'landing.ui.card.messagecard';
 import {Integration} from 'crm.form.integration';
 
-export default class VkContent extends ContentWrapper
+export class VkContent extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -86,3 +86,4 @@ export default class VkContent extends ContentWrapper
 		return this.options.formOptions.integration.cases.filter(data => data.providerCode === 'vkontakte')[0] || null;
 	}
 }
+export { VkContent as Content };

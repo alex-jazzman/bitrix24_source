@@ -1,8 +1,26 @@
 <?php
 $MESS["IM_FOLDER_SYSTEM_DEFAULT"] = "Чаты";
+$MESS["IM_FOLDER_SYSTEM_DEFAULT_DESCRIPTION"] = "Все чаты, каналы и коллабы";
+$MESS["IM_FOLDER_SYSTEM_DEFAULT_DESCRIPTION_V2"] = "Все чаты, каналы и проекты";
 $MESS["IM_FOLDER_SYSTEM_TASKS"] = "Чаты задач";
-$MESS["IM_FOLDER_SYSTEM_COPILOT"] = "BitrixGPT";
+$MESS["IM_FOLDER_SYSTEM_TASKS_MSGVER_1"] = "Задачи";
+$MESS["IM_FOLDER_SYSTEM_TASKS_DESCRIPTION"] = "Чаты задач, в которых вы участвуете";
+$MESS["IM_FOLDER_SYSTEM_COPILOT_MSGVER_1"] = "#COPILOT_NAME#";
+$MESS["IM_FOLDER_SYSTEM_COPILOT_DESCRIPTION"] = "Чаты с AI";
 $MESS["IM_FOLDER_SYSTEM_OPEN_CHANNEL"] = "Каналы";
+$MESS["IM_FOLDER_SYSTEM_OPEN_CHANNEL_DESCRIPTION"] = "Открытые каналы компании";
 $MESS["IM_FOLDER_SYSTEM_COLLABS"] = "Коллабы";
+$MESS["IM_FOLDER_SYSTEM_COLLABS_DESCRIPTION"] = "Коллабы, в которых вы участвуете";
 $MESS["IM_FOLDER_SYSTEM_PROJECTS"] = "Проекты";
+$MESS["IM_FOLDER_SYSTEM_PROJECTS_DESCRIPTION"] = "Проекты, в которых вы участвуете";
 $MESS["IM_FOLDER_SYSTEM_OPENLINES"] = "Линии";
+$MESS["IM_FOLDER_SYSTEM_OPENLINES_DESCRIPTION"] = "Чаты с клиентами";
+$MESS["IM_FOLDER_SYSTEM_VIBECODE_APP"] = "Вайбкод";
+$MESS["IM_FOLDER_SYSTEM_ALL"] = "Все";
+$MESS["IM_FOLDER_SYSTEM_ALL_DESCRIPTION"] = "Чаты из всех папок";
+$MESS["IM_FOLDER_SYSTEM_CHAT"] = "Чаты";
+$MESS["IM_FOLDER_SYSTEM_CHANNEL"] = "Каналы";
+$MESS["IM_FOLDER_SYSTEM_CHANNEL_DESCRIPTION"] = "Каналы, на которые вы подписаны";
+$MESS["IM_FOLDER_SYSTEM_TASKS_ROOT"] = "Задачи";
+$MESS["IM_FOLDER_SYSTEM_TASKS_ROOT_DESCRIPTION"] = "Чаты задач, в которых вы участвуете";
+$MESS['IM_FOLDER_SYSTEM_VIBECODE_APP_DESCRIPTION'] = 'Чаты приложений, к которым есть доступ';

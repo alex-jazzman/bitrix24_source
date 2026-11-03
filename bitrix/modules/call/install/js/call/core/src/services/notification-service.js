@@ -1,14 +1,14 @@
-import { Text, Loc, Dom, Runtime } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Text, Loc, Dom, Runtime, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Button } from 'ui.buttons';
 import { Center as NotificationCenter } from 'ui.notification';
 
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 
-import { CallHint } from '../call_hint_popup';
+import { CallHint, CallHintScenario } from '../view/call-hint';
 import Util from '../util';
 import { StartCallErrorCode, DisconnectReason } from '../engine';
+import { getRoomSettingsPhrase, getUserMediaFailurePhrase } from './notification-phrases';
 
 const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
 
@@ -19,30 +19,38 @@ const CLIENT_UNCLASSIFIED_ERROR_CODE = 'CLIENT_UNCLASSIFIED';
 /**
  * Manages in-call notification popups and hint overlays (mute, network, VPN, unsupported, etc.).
  */
-export class NotificationService extends EventEmitter
+export class NotificationService
 {
 	#callControlPanelOpen = false;
+
+	// Both live next to `allowMutePopup` and only guard the push-to-talk trigger: the hint is offered
+	// once per call, and not at all once the user has managed to hold the key. Nothing is stored
+	// beyond the lifetime of the service.
+	#pushToTalkHintShown = false;
+	#pushToTalkUsed = false;
 
 	/**
 	 * @param {object} config
 	 * @param {*} config.viewPort
 	 * @param {HTMLElement} config.container
-	 * @param {*} [config.callStore]
+	 * @param {Function} [config.onAskSpeakButtonClicked] - `() => void`, the floor-request hint button
+	 * @param {Function} [config.onUnmuteMicButtonClicked] - `() => void`, the mute hint unmute button
 	 */
-	constructor({ viewPort, container, callStore })
+	constructor({ viewPort, container, onAskSpeakButtonClicked, onUnmuteMicButtonClicked })
 	{
-		super();
-		this.setEventNamespace('BX.Call.NotificationService');
-
 		this.viewPort = viewPort;
 		this.container = container;
-		this.callStore = callStore ?? null;
+		this.callbacks = {
+			onAskSpeakButtonClicked,
+			onUnmuteMicButtonClicked,
+		};
 
 		this.mutePopup = null;
 		this.riseYouHandToTalkPopup = null;
 		this.allowMutePopup = true;
 
 		this.reconnectionBalloon = null;
+		this.localRecordStartFailedBalloon = null;
 		this.remoteVideoMutedBalloon = null;
 		this.mediaDevicesResetStateHintBalloon = null;
 
@@ -66,7 +74,7 @@ export class NotificationService extends EventEmitter
 	 */
 	showNotification(notificationText, actions = [])
 	{
-		NotificationCenter.notify({
+		this.#notify({
 			content: Text.encode(notificationText),
 			position: 'top-right',
 			autoHideDelay: 5000,
@@ -76,15 +84,45 @@ export class NotificationService extends EventEmitter
 	}
 
 	/**
+	 * Shows the refused local record start. The balloon has no auto hide: a lost record matters
+	 * too much to disappear on its own, so the user closes it. A repeated refusal replaces the
+	 * previous balloon instead of stacking one more on top of it.
+	 */
+	showLocalRecordStartFailed()
+	{
+		this.closeLocalRecordStartFailedBalloon();
+
+		this.localRecordStartFailedBalloon = this.#notify({
+			content: Text.encode(Loc.getMessage('CALL_ERROR_LOCAL_RECORD_START_FAILED')),
+			position: 'top-right',
+			autoHide: false,
+			closeButton: true,
+		});
+	}
+
+	/**
+	 * Closes the refused local record start balloon if it is open.
+	 */
+	closeLocalRecordStartFailedBalloon()
+	{
+		if (this.localRecordStartFailedBalloon)
+		{
+			this.localRecordStartFailedBalloon.close();
+			this.localRecordStartFailedBalloon = null;
+		}
+	}
+
+	/**
 	 * Shows the microphone-muted hint popup near the given element.
 	 *
 	 * @param {HTMLElement|null} bindElement - resolved by the controller; null when call is folded
+	 * @returns {boolean} whether the hint was shown; the mutual exclusions can turn the show down
 	 */
 	showMicMutedNotification(bindElement)
 	{
 		if (this.riseYouHandToTalkPopup || !Util.havePermissionToBroadcast('mic'))
 		{
-			return;
+			return false;
 		}
 
 		if (this.mutePopup)
@@ -93,19 +131,54 @@ export class NotificationService extends EventEmitter
 			this.mutePopup = null;
 		}
 
-		this.mutePopup = new CallHint({
+		// the callback belongs to this very hint: a stale one must not drop a newer popup
+		const hint = CallHint.notification({
+			scenario: CallHintScenario.MicMuted,
 			callFolded: !bindElement,
 			bindElement,
 			targetContainer: this.container,
 			icon: 'mic-off',
-			buttons: [this.#createUnmuteButton()],
+			showSpaceHint: true,
+			buttons: [this.#createUnmuteButton(() => hint.close())],
 			onClose: () => {
 				this.allowMutePopup = false;
-				this.mutePopup.destroy();
-				this.mutePopup = null;
+
+				if (this.mutePopup === hint)
+				{
+					this.mutePopup = null;
+				}
 			},
 		});
-		this.mutePopup.show();
+
+		this.mutePopup = hint;
+		hint.show();
+
+		return true;
+	}
+
+	/**
+	 * Second trigger of the same hint: a short press that led to nothing, so the hold threshold is
+	 * explained right where the user has just tried and failed.
+	 *
+	 * @param {HTMLElement|null} bindElement - resolved by the controller; null when call is folded
+	 */
+	showPushToTalkHint(bindElement)
+	{
+		if (this.#pushToTalkHintShown || this.#pushToTalkUsed)
+		{
+			return;
+		}
+
+		// the single show per call is spent on a hint that appeared, not on one the exclusions dropped
+		this.#pushToTalkHintShown = this.showMicMutedNotification(bindElement);
+	}
+
+	/**
+	 * Push-to-talk has opened the microphone, so there is nothing left to explain.
+	 */
+	onPushToTalkUsed()
+	{
+		this.#pushToTalkUsed = true;
 	}
 
 	/**
@@ -133,7 +206,8 @@ export class NotificationService extends EventEmitter
 			this.mutePopup = null;
 		}
 
-		this.riseYouHandToTalkPopup = new CallHint({
+		const hint = CallHint.notification({
+			scenario: CallHintScenario.FloorRequest,
 			callFolded: !params.bindElement,
 			bindElement: params.bindElement,
 			targetContainer: this.container,
@@ -141,22 +215,28 @@ export class NotificationService extends EventEmitter
 			showAngle: false,
 			initiatorName: params.initiatorName,
 			customClassName: 'bx-call-view-popup-call-hint-rise-hand-to-talk',
-			autoCloseDelay: 30 * 60 * 1000,
 			customRender() {
-				const handRaiseContentElement = BX.Dom.create('div', {
+				// the phrase carries layout placeholders, so it becomes markup first and takes the name
+				// only afterwards
+				const markup = Loc.getMessage('CALL_ADMIN_PROHIBITED_TURN_ON_PARTICIPANTS_MICROPHONES_HINT', {
+					'[hint-label]': '<div class="bx-call-view-popup-call-hint-text" data-testid="call-hint-text">',
+					'[/hint-label]': '</div>',
+					'#RISE_HAND_ICON#':
+						'<div class="ui-btn bx-call-view-popup-call-hint-hand-raise-icon"'
+						+ ' data-testid="call-hint-hand-raise-icon"></div>',
+					'[label-or]': '<div class="bx-call-view-popup-call-hint-hand-raise-or-label">',
+					'[/label-or]': '</div>',
+					'#REQUEST_NOW_BUTTON#':
+						'<div class = "bx-call-view-popup-call-hint-button-placeholder"></div>',
+				});
+
+				const handRaiseContentElement = Dom.create('div', {
 					props: { className: 'bx-call-view-popup-call-hint-rise-block' },
+					attrs: { 'data-testid': 'call-hint-message' },
 					children: [
-						Loc.getMessage('CALL_ADMIN_PROHIBITED_TURN_ON_PARTICIPANTS_MICROPHONES_HINT', {
-							'#INITIATOR_NAME#': this.initiatorName,
-							'[hint-label]': '<div class="bx-call-view-popup-call-hint-text">',
-							'[/hint-label]': '</div>',
-							'#RISE_HAND_ICON#':
-								'<div class="ui-btn bx-call-view-popup-call-hint-hand-raise-icon"></div>',
-							'[label-or]': '<div class="bx-call-view-popup-call-hint-hand-raise-or-label">',
-							'[/label-or]': '</div>',
-							'#REQUEST_NOW_BUTTON#':
-								'<div class = "bx-call-view-popup-call-hint-button-placeholder"></div>',
-						}),
+						// a replacer function, so a placeholder or a $-pattern the user put in their own
+						// name stays text instead of turning into markup
+						markup.replaceAll('#INITIATOR_NAME#', () => Text.encode(this.initiatorName)),
 					],
 				});
 
@@ -169,19 +249,19 @@ export class NotificationService extends EventEmitter
 			},
 			buttons: [],
 			onClose: () => {
-				this.riseYouHandToTalkPopup = null;
-			},
-			onAskSpeakButtonClicked: () => {
-				this.emit('NotificationService::onAskSpeakButtonClicked');
-
-				if (this.riseYouHandToTalkPopup)
+				if (this.riseYouHandToTalkPopup === hint)
 				{
-					this.riseYouHandToTalkPopup.close();
 					this.riseYouHandToTalkPopup = null;
 				}
 			},
+			onAskSpeakButtonClicked: () => {
+				this.callbacks?.onAskSpeakButtonClicked?.();
+				hint.close();
+			},
 		});
-		this.riseYouHandToTalkPopup.show();
+
+		this.riseYouHandToTalkPopup = hint;
+		hint.show();
 	}
 
 	/**
@@ -196,19 +276,25 @@ export class NotificationService extends EventEmitter
 			return;
 		}
 
-		this.mutePopup = new CallHint({
+		const hint = CallHint.notification({
+			scenario: CallHintScenario.AutoMicMute,
 			callFolded: !bindElement,
 			bindElement,
 			targetContainer: this.container,
-			title: Text.encode(BX.message('IM_CALL_MIC_AUTO_MUTED')),
+			title: Text.encode(Loc.getMessage('IM_CALL_MIC_AUTO_MUTED')),
 			icon: 'mic-off',
-			buttons: [this.#createUnmuteButton()],
+			showSpaceHint: true,
+			buttons: [this.#createUnmuteButton(() => hint.close())],
 			onClose: () => {
-				this.mutePopup.destroy();
-				this.mutePopup = null;
+				if (this.mutePopup === hint)
+				{
+					this.mutePopup = null;
+				}
 			},
 		});
-		this.mutePopup.show();
+
+		this.mutePopup = hint;
+		hint.show();
 	}
 
 	/**
@@ -218,7 +304,7 @@ export class NotificationService extends EventEmitter
 	{
 		if (this.viewPort)
 		{
-			NotificationCenter.notify({
+			this.#notify({
 				content: Text.encode(Loc.getMessage('CALL_MESSAGE_VPN_IS_ACTIVE')),
 				position: 'top-right',
 				autoHideDelay: 10000,
@@ -235,14 +321,14 @@ export class NotificationService extends EventEmitter
 	 */
 	showNetworkProblemNotification(notificationText)
 	{
-		NotificationCenter.notify({
+		this.#notify({
 			content: Text.encode(notificationText),
 			position: 'top-right',
 			autoHideDelay: 5000,
 			closeButton: true,
 			actions: [
 				{
-					title: BX.message('IM_M_CALL_HELP'),
+					title: Loc.getMessage('IM_M_CALL_HELP'),
 					events: {
 						click: (event, balloon) => {
 							top.BX.Helper.show('redirect=detail&code=12723718');
@@ -259,15 +345,12 @@ export class NotificationService extends EventEmitter
 	 */
 	showUnsupportedNotification()
 	{
-		let messageBox;
-
-		if (DesktopApi.isDesktop())
-		{
-			messageBox = new MessageBox({
-				message: BX.message('IM_CALL_DESKTOP_TOO_OLD'),
+		const messageBox = DesktopApi.isDesktop()
+			? new MessageBox({
+				message: Loc.getMessage('IM_CALL_DESKTOP_TOO_OLD'),
 				buttons: MessageBoxButtons.OK_CANCEL,
-				okCaption: BX.message('IM_M_CALL_BTN_UPDATE'),
-				cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
+				okCaption: Loc.getMessage('IM_M_CALL_BTN_UPDATE'),
+				cancelCaption: Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
 				onOk: async () => {
 					const { DesktopDownload } = await Runtime.loadExtension('intranet.desktop-download');
 					const url = DesktopDownload.getLinkForCurrentUser();
@@ -275,22 +358,18 @@ export class NotificationService extends EventEmitter
 
 					return true;
 				},
-			});
-		}
-		else
-		{
-			messageBox = new MessageBox({
-				message: BX.message('IM_CALL_WEBRTC_USE_CHROME_OR_DESKTOP'),
+			})
+			: new MessageBox({
+				message: Loc.getMessage('IM_CALL_WEBRTC_USE_CHROME_OR_DESKTOP'),
 				buttons: MessageBoxButtons.OK_CANCEL,
-				okCaption: BX.message('IM_CALL_DETAILS'),
-				cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
+				okCaption: Loc.getMessage('IM_CALL_DETAILS'),
+				cancelCaption: Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
 				onOk: () => {
 					top.BX.Helper.show('redirect=detail&code=11387752');
 
 					return true;
 				},
 			});
-		}
 
 		messageBox.show();
 	}
@@ -334,33 +413,47 @@ export class NotificationService extends EventEmitter
 	}
 
 	/**
-	 * Returns user model from viewPort.userRegistry with fallback to callStore.
+	 * Tells whether two participant ids name the same user.
+	 * An id reaches the service as a number from the engine and as its string form from the media
+	 * server, so both sides go to a number before they meet. A nil id is the one value a number
+	 * cannot carry: it names the same user only as another nil one.
+	 *
+	 * @param {string|number|null|undefined} left
+	 * @param {string|number|null|undefined} right
+	 * @returns {boolean}
+	 */
+	#isSameUser(left, right)
+	{
+		if (Type.isNil(left) || Type.isNil(right))
+		{
+			return Type.isNil(left) && Type.isNil(right);
+		}
+
+		return Number(left) === Number(right);
+	}
+
+	/**
+	 * Returns user model from viewPort.userRegistry.
 	 *
 	 * @param {string|number} userId
 	 * @returns {object|null}
 	 */
 	#getUserModel(userId)
 	{
-		const registryModel = this.viewPort.userRegistry?.get(userId) ?? null;
-		if (registryModel)
-		{
-			return registryModel;
-		}
+		return this.viewPort.userRegistry?.get(userId) ?? null;
+	}
 
-		const storeUser = this.callStore?.users?.[userId] ?? null;
-		if (storeUser)
-		{
-			return {
-				name: storeUser.name || '',
-				avatar: storeUser.avatar || '',
-				data: {
-					name: storeUser.name || '',
-					gender: storeUser.gender || 'M',
-				},
-			};
-		}
-
-		return null;
+	/**
+	 * The only point where the service reaches the platform notification centre.
+	 * Options go through untouched, the balloon comes back untouched: every default, every
+	 * stored reference and the balloon offset stay with the caller that owns them.
+	 *
+	 * @param {object} options
+	 * @returns {object} the balloon the centre returns
+	 */
+	#notify(options)
+	{
+		return NotificationCenter.notify(options);
 	}
 
 	/**
@@ -389,7 +482,7 @@ export class NotificationService extends EventEmitter
 			balloonClassName += 'bx-call-control-notification-allow ';
 		}
 
-		NotificationCenter.notify({
+		this.#notify({
 			content: params.content,
 			position: 'top-right',
 			autoHideDelay: 8000,
@@ -398,18 +491,19 @@ export class NotificationService extends EventEmitter
 			render() {
 				const actions = this.getActions().map((action) => action.getContainer());
 
-				return BX.create('div', {
+				return Dom.create('div', {
 					props: {
 						className: balloonClassName,
 					},
+					attrs: { 'data-testid': 'call-notification-moderation' },
 					children: [
-						BX.create('div', {
+						Dom.create('div', {
 							props: {
 								className: 'ui-notification-balloon-message',
 							},
 							html: this.getContent(),
 						}),
-						BX.create('div', {
+						Dom.create('div', {
 							props: {
 								className: 'ui-notification-balloon-actions',
 							},
@@ -469,7 +563,7 @@ export class NotificationService extends EventEmitter
 		const targetUserModel = this.#getUserModel(data.toUserId);
 		const initiatorGender = initiatorUserModel?.data?.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M';
 
-		if (data.toUserId == currentUserId)
+		if (this.#isSameUser(data.toUserId, currentUserId))
 		{
 			switch (data.track.type)
 			{
@@ -492,10 +586,14 @@ export class NotificationService extends EventEmitter
 
 					break;
 				}
-			// No default
+
+				// an unknown stream type leaves the phrase key empty, and so it stays
+				default: {
+					break;
+				}
 			}
 		}
-		else if (data.fromUserId == currentUserId)
+		else if (this.#isSameUser(data.fromUserId, currentUserId))
 		{
 			switch (data.track.type)
 			{
@@ -518,7 +616,10 @@ export class NotificationService extends EventEmitter
 
 					break;
 				}
-			// No default
+
+				default: {
+					break;
+				}
 			}
 		}
 		else
@@ -544,20 +645,21 @@ export class NotificationService extends EventEmitter
 
 					break;
 				}
-			// No default
+
+				default: {
+					break;
+				}
 			}
 		}
 
-		const content =			`<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
-			 contentIcon
-			 }-muted"></div>${
-			 Text.encode(
-				Util.getCustomMessage(contentPhrase, {
-					gender: initiatorGender,
-					initiator_name: initiatorUserModel?.data?.name || '',
-					target_name: targetUserModel?.data?.name || '',
-				}),
-			)}`;
+		const phrase = Util.getCustomMessage(contentPhrase, {
+			gender: initiatorGender,
+			initiator_name: initiatorUserModel?.data?.name || '',
+			target_name: targetUserModel?.data?.name || '',
+		});
+
+		const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
+			contentIcon}-muted"></div>${Text.encode(phrase)}`;
 
 		this.createCallControlNotify({ content, isAllow: false });
 	}
@@ -590,15 +692,13 @@ export class NotificationService extends EventEmitter
 			screenshare: 'CALL_USER_TURNED_OFF_SCREENSHARE_FOR_ALL_MSGVER_1',
 		};
 
-		const content =			`<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
-			 iconClass
-			 }-muted"></div>${
-			 Text.encode(
-				Util.getCustomMessage(phraseMap[type], {
-					gender,
-					name: userModel?.data?.name || '',
-				}),
-			)}`;
+		const phrase = Util.getCustomMessage(phraseMap[type], {
+			gender,
+			name: userModel?.data?.name || '',
+		});
+
+		const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
+			iconClass}-muted"></div>${Text.encode(phrase)}`;
 
 		this.createCallControlNotify({ content, isAllow: false });
 	}
@@ -617,10 +717,13 @@ export class NotificationService extends EventEmitter
 			2: 'CALL_YOU_TURNED_OFF_SCREENSHARE_FOR_ALL_MSGVER_1',
 		};
 
+		// reading through hasMessage: getMessage writes an empty string into the dictionary on a miss
+		const phraseKey = typesOfMuteMessage[event.data.track.type];
+
 		const content =	`<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
 			typesOfMute[event.data.track.type]
 			}-muted"></div>${
-			Text.encode(BX.message[typesOfMuteMessage[event.data.track.type]] || '')}`;
+			Text.encode(Loc.hasMessage(phraseKey) ? Loc.getMessage(phraseKey) : '')}`;
 
 		this.createCallControlNotify({ content, isAllow: false });
 	}
@@ -628,10 +731,13 @@ export class NotificationService extends EventEmitter
 	/**
 	 * Shows a notification when user's speak permission changes (allow/deny floor request response).
 	 *
+	 * Unlike its neighbours, this one takes no currentUserId: nothing here ever read it. Which
+	 * participant the event is addressed to is decided on the media server side and is not
+	 * checked in this repository.
+	 *
 	 * @param {object} data - event.data (fromUserId, allow, toUserId)
-	 * @param {number} currentUserId
 	 */
-	showPermissionsChangedNotification(data, currentUserId)
+	showPermissionsChangedNotification(data)
 	{
 		if (!this.viewPort)
 		{
@@ -659,11 +765,6 @@ export class NotificationService extends EventEmitter
 		{
 			this.createCallControlNotify({ content, isAllow: data.allow });
 		}
-
-		if (this.callStore)
-		{
-			this.callStore.addNotification('permissionToSpeak', { userId: data.toUserId, allow: data.allow });
-		}
 	}
 
 	/**
@@ -676,7 +777,7 @@ export class NotificationService extends EventEmitter
 	 */
 	getRoleChangedNotificationContent(data, currentUserId)
 	{
-		if (data.toUserId != currentUserId)
+		if (!this.#isSameUser(data.toUserId, currentUserId))
 		{
 			return null;
 		}
@@ -685,12 +786,12 @@ export class NotificationService extends EventEmitter
 
 		if (newRole === Util.UsersRoles.ADMIN || newRole === Util.UsersRoles.MANAGER)
 		{
-			return BX.message('CALL_YOU_HAVE_BEEN_APPOINTED_AS_ADMIN');
+			return Loc.getMessage('CALL_YOU_HAVE_BEEN_APPOINTED_AS_ADMIN');
 		}
 
 		if (newRole === Util.UsersRoles.USER)
 		{
-			return BX.message('CALL_YOU_HAVE_BEEN_APPOINTED_AS_USER');
+			return Loc.getMessage('CALL_YOU_HAVE_BEEN_APPOINTED_AS_USER');
 		}
 
 		return null;
@@ -701,107 +802,56 @@ export class NotificationService extends EventEmitter
 	 *
 	 * @param {object} data - event.data (eft, act, fromUserId)
 	 * @param {number} currentUserId
+	 * @returns {{ isAllow: boolean, initiatorName: string }|undefined} what both controllers read:
+	 *   whether the change allows and who made it; undefined on the early exit, which shows nothing
 	 */
 	showRoomSettingsChangedNotification(data, currentUserId)
 	{
 		if (!this.viewPort)
 		{
-			return;
+			// spelled out for consistent-return: the early exit gives the controllers no result, and
+			// that is the contract
+			// eslint-disable-next-line unicorn/no-useless-undefined
+			return undefined;
 		}
-
-		const typesOfMute = { audio: 'mic', video: 'cam', screen_share: 'screenshare' };
-		let content = '';
-		let isAllow = false;
 
 		const initiatorUserModel = this.#getUserModel(data.fromUserId);
 		const initiatorGender = initiatorUserModel?.data?.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M';
+		const isOwnInitiator = this.#isSameUser(data.fromUserId, currentUserId);
 
-		if (data.eft === true)
+		const { phraseKey, iconSuffix, isAllow, usesGenderChannel } = getRoomSettingsPhrase({
+			eft: data.eft,
+			act: data.act,
+			isOwnInitiator,
+			initiatorGender,
+		});
+
+		// the skew between the two branches is kept as is: my own change closes the hint whatever the
+		// device, an administrator's closes it for the microphone alone
+		if (isAllow && (isOwnInitiator || data.act === 'audio'))
 		{
-			if (data.fromUserId == currentUserId)
-			{
-				const typesOfMuteMessage = {
-					audio: 'CALL_YOU_PROHIBITED_MIC_FOR_ALL_BY_SETTINGS',
-					video: 'CALL_YOU_PROHIBITED_CAM_FOR_ALL_BY_SETTINGS',
-					screen_share: 'CALL_YOU_PROHIBITED_SCREENSHARE_FOR_ALL_BY_SETTINGS',
-				};
-
-				content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
-					typesOfMute[data.act]
-					}-muted"></div>${
-					Text.encode(BX.message[typesOfMuteMessage[data.act]] || '')}`;
-			}
-			else
-			{
-				const typesOfMuteMessage = {
-					audio: 'CALL_ADMIN_PROHIBITED_MIC_FOR_ALL_BY_SETTINGS',
-					video: 'CALL_ADMIN_PROHIBITED_CAM_FOR_ALL_BY_SETTINGS',
-					screen_share: 'CALL_ADMIN_PROHIBITED_SCREENSHARE_FOR_ALL_BY_SETTINGS',
-				};
-
-				const contentPhrase = `${typesOfMuteMessage[data.act]}_${initiatorGender}`;
-
-				content =					`<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
-					 typesOfMute[data.act]
-					 }-muted"></div>${
-					 Text.encode(
-						Util.getCustomMessage(contentPhrase, {
-							gender: initiatorGender,
-							initiator_name: initiatorUserModel?.data?.name || '',
-						}),
-					)}`;
-			}
-		}
-		else
-		{
-			isAllow = true;
-
-			if (data.fromUserId == currentUserId)
-			{
-				this.closeRiseYouHandToTalkPopup();
-
-				const typesOfMuteMessage = {
-					audio: 'CALL_YOU_ALLOWED_MIC_FOR_ALL_BY_SETTINGS',
-					video: 'CALL_YOU_ALLOWED_CAM_FOR_ALL_BY_SETTINGS',
-					screen_share: 'CALL_YOU_ALLOWED_SCREENSHARE_FOR_ALL_BY_SETTINGS',
-				};
-
-				content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
-					typesOfMute[data.act]
-					}-unmuted"></div>${
-					Text.encode(BX.message[typesOfMuteMessage[data.act]] || '')}`;
-			}
-			else
-			{
-				const typesOfMuteMessage = {
-					audio: 'CALL_ADMIN_ALLOWED_MIC_FOR_ALL_BY_SETTINGS',
-					video: 'CALL_ADMIN_ALLOWED_CAM_FOR_ALL_BY_SETTINGS',
-					screen_share: 'CALL_ADMIN_ALLOWED_SCREENSHARE_FOR_ALL_BY_SETTINGS',
-				};
-
-				const contentPhrase = `${typesOfMuteMessage[data.act]}_${initiatorGender}`;
-
-				content =					`<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
-					 typesOfMute[data.act]
-					 }-unmuted"></div>${
-					 Text.encode(
-						Util.getCustomMessage(contentPhrase, {
-							gender: initiatorGender,
-							initiator_name: initiatorUserModel?.data?.name || '',
-						}),
-					)}`;
-
-				if (data.act === 'audio')
-				{
-					this.closeRiseYouHandToTalkPopup();
-				}
-			}
+			this.closeRiseYouHandToTalkPopup();
 		}
 
-		if (content)
+		let phrase = '';
+
+		if (usesGenderChannel)
 		{
-			this.createCallControlNotify({ content, isAllow });
+			phrase = Util.getCustomMessage(phraseKey, {
+				gender: initiatorGender,
+				initiator_name: initiatorUserModel?.data?.name || '',
+			});
 		}
+		// reading through hasMessage: getMessage writes an empty string into the dictionary on a miss
+		else if (Loc.hasMessage(phraseKey))
+		{
+			phrase = Loc.getMessage(phraseKey);
+		}
+
+		const content = `<div class="bx-call-view-participants-control-stream-notify-icon bx-call-view-${
+			iconSuffix}"></div>${Text.encode(phrase)}`;
+
+		this.createCallControlNotify({ content, isAllow });
 
 		return { isAllow, initiatorName: initiatorUserModel?.data?.name || '' };
 	}
@@ -810,7 +860,6 @@ export class NotificationService extends EventEmitter
 	 * Shows a popup notifying that the local user has just joined a call room.
 	 *
 	 * @param {object} config
-	 * @param {boolean} config.isAuto - whether the user was auto-joined
 	 * @param {boolean} config.isSpeaker - whether the user joined as speaker
 	 * @param {number[]} config.userIdList - list of user IDs in the room
 	 * @param {number} config.localUserId - local user ID (to exclude from name list)
@@ -826,84 +875,83 @@ export class NotificationService extends EventEmitter
 			return;
 		}
 
-		const { isAuto, isSpeaker, userIdList, localUserId, isFolded, bindElement, externalContainer, onLeaveRoom } =			config;
+		const { isSpeaker, userIdList, localUserId, isFolded, bindElement, externalContainer, onLeaveRoom } = config;
 
-		let title;
+		const otherUserIds = userIdList.filter((userId) => !this.#isSameUser(userId, localUserId));
 
-		if (isAuto)
-		{
-			const userNames = userIdList
-				.filter((userId) => userId != localUserId)
-				.map((userId) => {
-					const userModel = this.#getUserModel(userId);
+		const userNames = otherUserIds.map((userId) => {
+			const userModel = this.#getUserModel(userId);
 
-					return userModel?.name || '';
-				});
+			return userModel?.name || '';
+		});
 
-			const usersInRoom = userNames.join(', ');
+		const usersInRoom = userNames.join(', ');
 
-			if (isSpeaker)
-			{
-				title = BX.Text.encode(
-					BX.message('IM_CALL_ROOM_JOINED_AUTO_SPEAKER').replace('#PARTICIPANTS_LIST#', usersInRoom),
-				);
-			}
-			else
-			{
-				title = BX.Text.encode(
-					BX.message('IM_CALL_ROOM_JOINED_AUTO').replace('#PARTICIPANTS_LIST#', usersInRoom),
-				);
-				title += `<p>${BX.Text.encode(BX.message('IM_CALL_ROOM_JOINED_P2'))}</p>`;
-			}
-		}
-		else
-		{
-			title = `${BX.message('IM_CALL_ROOM_JOINED_MANUALLY')}<p>${BX.message('IM_CALL_ROOM_JOINED_P2')}</p>`;
-		}
+		// the live region cuts the announcement off at 160 characters, and a roster of names passes
+		// that on the third participant: the announcement counts them, the shown text still lists them
+		const announceText = Loc.getMessage(
+			isSpeaker ? 'CALL_HINT_ROOM_JOINED_ANNOUNCE_SPEAKER' : 'CALL_HINT_ROOM_JOINED_ANNOUNCE',
+			{ '#COUNT#': otherUserIds.length },
+		);
 
-		this.roomJoinedPopup = new CallHint({
+		const roomJoinedPhrase = Text.encode(
+			Loc.getMessage(isSpeaker ? 'IM_CALL_ROOM_JOINED_AUTO_SPEAKER' : 'IM_CALL_ROOM_JOINED_AUTO')
+				.replace('#PARTICIPANTS_LIST#', () => usersInRoom),
+		);
+
+		// the speaker gets the phrase alone, everyone else gets a second paragraph after it
+		const title = isSpeaker
+			? roomJoinedPhrase
+			: `${roomJoinedPhrase}<p>${Text.encode(Loc.getMessage('IM_CALL_ROOM_JOINED_P2'))}</p>`;
+
+		const hint = CallHint.dialog({
+			scenario: CallHintScenario.RoomJoined,
 			callFolded: isFolded,
 			bindElement,
 			targetContainer: isFolded ? externalContainer : this.container,
 			title,
+			announceText,
 			buttonsLayout: 'bottom',
-			autoCloseDelay: 0,
 			buttons: [
 				new Button({
 					baseClass: 'ui-btn',
-					text: BX.message('IM_CALL_ROOM_JOINED_UNDERSTOOD'),
+					text: Loc.getMessage('IM_CALL_ROOM_JOINED_UNDERSTOOD'),
 					size: Button.Size.EXTRA_SMALL,
 					color: Button.Color.LIGHT_BORDER,
 					noCaps: true,
 					round: true,
+					dataset: { testid: 'call-hint-room-joined-understood-btn' },
 					events: {
-						click: () => {
-							this.roomJoinedPopup.destroy();
-							this.roomJoinedPopup = null;
-						},
+						// the buttons are the most common way out of the dialog, so they close it the
+						// same way Escape does - otherwise focus is left behind in <body>
+						click: () => hint.close(),
 					},
 				}),
 				new Button({
-					text: BX.message('IM_CALL_ROOM_WRONG_ROOM'),
+					text: Loc.getMessage('IM_CALL_ROOM_WRONG_ROOM'),
 					size: Button.Size.EXTRA_SMALL,
 					color: Button.Color.LINK,
 					noCaps: true,
 					round: true,
+					dataset: { testid: 'call-hint-room-joined-leave-btn' },
 					events: {
 						click: () => {
-							this.roomJoinedPopup.destroy();
-							this.roomJoinedPopup = null;
+							hint.close();
 							onLeaveRoom();
 						},
 					},
 				}),
 			],
 			onClose: () => {
-				this.roomJoinedPopup.destroy();
-				this.roomJoinedPopup = null;
+				if (this.roomJoinedPopup === hint)
+				{
+					this.roomJoinedPopup = null;
+				}
 			},
 		});
-		this.roomJoinedPopup.show();
+
+		this.roomJoinedPopup = hint;
+		hint.show();
 	}
 
 	/**
@@ -924,22 +972,26 @@ export class NotificationService extends EventEmitter
 
 		const { fromUserId, isFolded, bindElement, externalContainer } = config;
 		const userModel = this.#getUserModel(fromUserId);
-		const title = BX.message('IM_CALL_ROOM_MIC_TAKEN_FROM').replace('#USER_NAME#', userModel?.name || '');
+		const title = Loc.getMessage('IM_CALL_ROOM_MIC_TAKEN_FROM').replace('#USER_NAME#', () => userModel?.name || '');
 
-		this.micTakenFromPopup = new CallHint({
+		const hint = CallHint.notification({
+			scenario: CallHintScenario.MicTakenFrom,
 			callFolded: isFolded,
 			bindElement,
 			targetContainer: isFolded ? externalContainer : this.container,
-			title: BX.Text.encode(title),
+			title: Text.encode(title),
 			buttonsLayout: 'right',
-			autoCloseDelay: 5000,
 			buttons: [],
 			onClose: () => {
-				this.micTakenFromPopup.destroy();
-				this.micTakenFromPopup = null;
+				if (this.micTakenFromPopup === hint)
+				{
+					this.micTakenFromPopup = null;
+				}
 			},
 		});
-		this.micTakenFromPopup.show();
+
+		this.micTakenFromPopup = hint;
+		hint.show();
 	}
 
 	/**
@@ -961,20 +1013,26 @@ export class NotificationService extends EventEmitter
 		const { byUserId, isFolded, bindElement, externalContainer } = config;
 		const userModel = this.#getUserModel(byUserId);
 
-		this.micTakenByPopup = new CallHint({
+		const hint = CallHint.notification({
+			scenario: CallHintScenario.MicTakenBy,
 			callFolded: isFolded,
 			bindElement,
 			targetContainer: isFolded ? externalContainer : this.container,
-			title: BX.Text.encode(BX.message('IM_CALL_ROOM_MIC_TAKEN_BY').replace('#USER_NAME#', userModel?.name || '')),
+			title: Text.encode(
+				Loc.getMessage('IM_CALL_ROOM_MIC_TAKEN_BY').replace('#USER_NAME#', () => userModel?.name || ''),
+			),
 			buttonsLayout: 'right',
-			autoCloseDelay: 5000,
 			buttons: [],
 			onClose: () => {
-				this.micTakenByPopup.destroy();
-				this.micTakenByPopup = null;
+				if (this.micTakenByPopup === hint)
+				{
+					this.micTakenByPopup = null;
+				}
 			},
 		});
-		this.micTakenByPopup.show();
+
+		this.micTakenByPopup = hint;
+		hint.show();
 	}
 
 	/**
@@ -1010,26 +1068,25 @@ export class NotificationService extends EventEmitter
 	/**
 	 * Creates the unmute button shown inside the mute hint popup.
 	 *
-	 * @returns {BX.UI.Button}
+	 * @param {Function} closeHint - closes the hint this button belongs to
+	 * @returns {Button}
 	 */
-	#createUnmuteButton()
+	#createUnmuteButton(closeHint)
 	{
-		return new BX.UI.Button({
+		return new Button({
 			baseClass: 'ui-btn bx-call-view-popup-call-hint-unmute',
-			text: BX.message('IM_CALL_UNMUTE_MIC'),
-			size: BX.UI.Button.Size.EXTRA_SMALL,
-			color: BX.UI.Button.Color.LIGHT_BORDER,
+			text: Loc.getMessage('IM_CALL_UNMUTE_MIC'),
+			size: Button.Size.EXTRA_SMALL,
+			color: Button.Color.LIGHT_BORDER,
 			noCaps: true,
 			round: true,
+			dataset: { testid: 'call-hint-unmute-btn' },
 			events: {
 				click: () => {
-					this.emit('NotificationService::onUnmuteMicButtonClicked');
-
-					if (this.mutePopup)
-					{
-						this.mutePopup.destroy();
-						this.mutePopup = null;
-					}
+					this.callbacks?.onUnmuteMicButtonClicked?.();
+					// closing rather than destroying: destroy() sends no close event, so the owner
+					// would never learn about it and the focus of the pressed button would land in body
+					closeHint();
 				},
 			},
 		});
@@ -1093,7 +1150,7 @@ export class NotificationService extends EventEmitter
 				{
 					errorMessage = Loc.getMessage('IM_CALL_ERROR_AUTHORIZATION');
 				}
-				else if (errorCode == 403)
+				else if (Number(errorCode) === 403)
 				{
 					errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
 				}
@@ -1118,8 +1175,8 @@ export class NotificationService extends EventEmitter
 			return;
 		}
 
-		this.reconnectionBalloon = NotificationCenter.notify({
-			content: Text.encode(BX.message('IM_CALL_RECONNECTING')),
+		this.reconnectionBalloon = this.#notify({
+			content: Text.encode(Loc.getMessage('IM_CALL_RECONNECTING')),
 			autoHide: false,
 			position: 'top-right',
 			closeButton: false,
@@ -1133,8 +1190,8 @@ export class NotificationService extends EventEmitter
 	 */
 	showSpeakerToggleNotification(isMuted)
 	{
-		NotificationCenter.notify({
-			content: BX.message(isMuted ? 'IM_M_CALL_MUTE_SPEAKERS_OFF' : 'IM_M_CALL_MUTE_SPEAKERS_ON'),
+		this.#notify({
+			content: Loc.getMessage(isMuted ? 'IM_M_CALL_MUTE_SPEAKERS_OFF' : 'IM_M_CALL_MUTE_SPEAKERS_ON'),
 			position: 'top-right',
 			autoHideDelay: 3000,
 			closeButton: true,
@@ -1149,12 +1206,12 @@ export class NotificationService extends EventEmitter
 	 */
 	handleTransferRoomSpeaker({ event, userId, isFolded, bindElement, externalContainer })
 	{
-		const isSpeaker = event.speaker == userId;
+		const isSpeaker = this.#isSameUser(event.speaker, userId);
 		const initiatorUserModel = this.#getUserModel(event.initiator);
 
 		if (isSpeaker)
 		{
-			if (event.initiator == userId)
+			if (this.#isSameUser(event.initiator, userId))
 			{
 				this.showMicTakenFromPopup({
 					fromUserId: event.previousSpeaker,
@@ -1198,8 +1255,8 @@ export class NotificationService extends EventEmitter
 
 		if (!isVideoShown)
 		{
-			this.remoteVideoMutedBalloon = NotificationCenter.notify({
-				content: Text.encode(BX.message('IM_M_CALL_REMOTE_PARTICIPANTS_VIDEO_MUTED')),
+			this.remoteVideoMutedBalloon = this.#notify({
+				content: Text.encode(Loc.getMessage('IM_M_CALL_REMOTE_PARTICIPANTS_VIDEO_MUTED')),
 				autoHide: false,
 				position: 'top-right',
 				closeButton: false,
@@ -1241,8 +1298,8 @@ export class NotificationService extends EventEmitter
 			return;
 		}
 
-		this.mediaDevicesResetStateHintBalloon = NotificationCenter.notify({
-			content: Text.encode(BX.message('CALL_MEDIA_DEVICES_RESET_STATE_HINT')),
+		this.mediaDevicesResetStateHintBalloon = this.#notify({
+			content: Text.encode(Loc.getMessage('CALL_MEDIA_DEVICES_RESET_STATE_HINT')),
 			autoHide: false,
 			position: 'top-right',
 			closeButton: true,
@@ -1273,9 +1330,9 @@ export class NotificationService extends EventEmitter
 			return;
 		}
 
-		NotificationCenter.notify({
+		this.#notify({
 			content:
-				`${BX.message('IM_CALL_DEVICES_DETACHED')
+				`${Loc.getMessage('IM_CALL_DEVICES_DETACHED')
 				}<br><ul>${
 				removedDevices.map((deviceInfo) => {
 					return `<li>${Text.encode(deviceInfo.label)}`;
@@ -1286,7 +1343,7 @@ export class NotificationService extends EventEmitter
 			closeButton: true,
 			actions: [
 				{
-					title: BX.message('IM_CALL_DEVICES_CLOSE'),
+					title: Loc.getMessage('IM_CALL_DEVICES_CLOSE'),
 					events: {
 						click: (event, balloon) => {
 							balloon.close();
@@ -1307,52 +1364,15 @@ export class NotificationService extends EventEmitter
 	 */
 	showGetUserMediaFailedNotification(data)
 	{
-		let contentPhrase = '';
-
-		if (data.error.name === 'PermissionDeniedError' || data.error.name === 'NotAllowedError')
-		{
-			if (data.options.audio && data.options.video)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC_AND_CAM';
-			}
-			else if (data.options.audio && !data.options.video)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC';
-			}
-			else if (data.options.video && !data.options.audio)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_ALLOW_CAM';
-			}
-		}
-		else if (data.error.name === 'OverconstrainedError')
-		{
-			if (data.options.audio && !data.options.video)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_MIC';
-			}
-			else if (data.options.video && !data.options.audio)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_CAM';
-			}
-		}
-		else if (
-			data.error.name === 'NotReadableError'
-			|| (data.error.name === 'AbortError' && data.error.message === 'Starting videoinput failed')
-		)
-		{
-			if (data.options.audio && !data.options.video)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_MIC_IN_USE';
-			}
-			else if (data.options.video && !data.options.audio)
-			{
-				contentPhrase = 'CALL_DEVICE_ACCESS_DENIED_CAM_IN_USE';
-			}
-		}
+		const contentPhrase = getUserMediaFailurePhrase({
+			errorName: data.error.name,
+			errorMessage: data.error.message,
+			options: data.options,
+		});
 
 		if (contentPhrase)
 		{
-			NotificationCenter.notify({
+			this.#notify({
 				content: Text.encode(Loc.getMessage(contentPhrase)),
 				position: 'top-right',
 				closeButton: true,
@@ -1362,7 +1382,7 @@ export class NotificationService extends EventEmitter
 
 	showLinkCopiedNotification(message, width = 400)
 	{
-		NotificationCenter.notify({
+		this.#notify({
 			content: message,
 			autoHideDelay: 4000,
 			width,
@@ -1373,7 +1393,7 @@ export class NotificationService extends EventEmitter
 	 * Shows a notification when a remote user's call state changes to Declined, Failed, or Busy.
 	 * Fetches user data asynchronously before showing the notification.
 	 *
-	 * @param {string} messageKey - BX.message key for the notification text
+	 * @param {string} messageKey - Loc message key for the notification text
 	 * @param {string|number} callId - call id to look up user data
 	 * @param {string|number} userId - user id
 	 * @param {string} [defaultGender='M'] - fallback gender for localization
@@ -1394,7 +1414,7 @@ export class NotificationService extends EventEmitter
 				return;
 			}
 
-			entry.balloon = NotificationCenter.notify({
+			entry.balloon = this.#notify({
 				content: Text.encode(Util.getCustomMessage(messageKey, {
 					gender: userData.gender || defaultGender,
 					name: userData.name,
@@ -1406,7 +1426,8 @@ export class NotificationService extends EventEmitter
 		}
 		catch (error)
 		{
-			console.warn('not found userData:', error);
+			console.error('[Call] Failed to fetch user data for a call state notification', error);
+
 			if (this.userCallStateBalloons.get(userId) === entry)
 			{
 				this.userCallStateBalloons.delete(userId);
@@ -1435,7 +1456,7 @@ export class NotificationService extends EventEmitter
 			{
 				entry.balloon.close();
 			}
-			catch (error)
+			catch
 			{
 				// Balloon already auto-hidden — ignore.
 			}
@@ -1448,8 +1469,6 @@ export class NotificationService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
-
 		this.closeMutePopup();
 		this.closeRiseYouHandToTalkPopup();
 
@@ -1472,10 +1491,12 @@ export class NotificationService extends EventEmitter
 		}
 
 		this.closeReconnectingBalloon();
+		this.closeLocalRecordStartFailedBalloon();
 		this.closeRemoteVideoMutedBalloon();
 		this.closeMediaDevicesResetStateHint();
 
 		this.viewPort = null;
 		this.container = null;
+		this.callbacks = null;
 	}
 }

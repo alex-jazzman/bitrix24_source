@@ -1,20 +1,5 @@
 .task-interface-toolbar {
-	--white: rgba(255,255,255,1);
-	--white_alpha_15: rgba(255,255,255,.15);
-	--white_alpha_30: rgba(255,255,255,.3);
 	--white_alpha_40: rgba(255,255,255,.4);
-	--white_alpha_50: rgba(255,255,255,.5);
-	--white_alpha_80: rgba(255,255,255,.8);
-
-	--green: rgba(187,237,33,1);
-	--red: rgba(229,73,89,1);
-
-	--graphite: rgba(82,92,105,1);
-	--graphite_alpha_08: rgba(82,92,105,.08);
-	--graphite_alpha_30: rgba(82,92,105,.3);
-	--graphite_alpha_40: rgba(82,92,105,.4);
-	--graphite_alpha_50: rgba(82,92,105,.5);
-	--graphite_alpha_80: rgba(82,92,105,.8);
 }
 
 .tasks-pagetitle-view .ui-side-panel-wrap-below {
@@ -68,11 +53,11 @@
 }
 
 .task-interface-btn-toolbar.--robots:not(.--air):active {
-	border-color: #9fa4ab;
+	border-color: var(--ui-color-base-4);
 }
 
 .bitrix24-light-theme .task-interface-btn-toolbar.--robots:not(.--air):active {
-	border-color: #9fa4ab;
+	border-color: var(--ui-color-base-4);
 }
 
 @media screen and (max-width: 1920px) {
@@ -303,7 +288,7 @@
 
 	.bitrix24-default-theme .bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn:not(.--air),
 	.bitrix24-dark-theme .bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn:not(.--air) {
-		border: 1px solid rgba(0, 0, 0, .06);
+		border: 1px solid var(--ui-color-divider-vibrant-default);
 	}
 
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .ui-btn-menu:before {
@@ -393,7 +378,7 @@
 		height: 24px;
 		padding: 0;
 		overflow: hidden;
-		border: 1px solid #c6cdd3;
+		border: 1px solid var(--ui-color-base-5);
 	}
 
 	.bitrix24-dark-theme .ui-slider-page .task-interface-toolbar--item--3 .intranet-binding-menu-btn:not(.--air) {

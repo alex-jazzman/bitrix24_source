@@ -33,6 +33,7 @@ Asset::getInstance()->addString(
 Asset::getInstance()->addString(
 	'<meta property="og:url" content="' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] . '" />',
 );
+// PNG is intentional: external Open Graph consumers do not reliably support WebP.
 Asset::getInstance()->addString(
 	'<meta property="og:image" content="' . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/bitrix/images/intranet/annual-summary/rich.png" />',
 );

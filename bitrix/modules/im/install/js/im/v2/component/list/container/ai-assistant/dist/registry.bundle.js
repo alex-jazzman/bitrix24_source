@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_public, im_v2_component_list_items_copilot, im_v2_const, im_v2_lib_analytics, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_logger, im_v2_lib_permission, im_v2_provider_service_copilot, ui_iconSet_api_vue, im_v2_component_elements_loader) {
+(function (exports, ui_vue3, im_public, im_v2_component_list_items_copilot, im_v2_const, im_v2_lib_analytics, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_logger, im_v2_lib_permission, im_v2_provider_service_copilot, ui_iconSet_api_vue, im_v2_component_elements_loader) {
 	'use strict';
 
 	// @vue/component
@@ -34,14 +34,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		methods: {
 			loc(phrase) {
 				return this.$Bitrix.Loc.getMessage(phrase);
+			},
+			handleActivationKeydown(event) {
+				if (event.target !== event.currentTarget) {
+					return;
+				}
+				if (event.key === 'Enter' || event.key === ' ') {
+					// Synthesize the native click so keyboard and mouse share the same @click guard.
+					event.preventDefault();
+					this.$el.click();
+				}
 			}
 		},
 		template: `
 		<div
 			class="bx-im-ai-assistant-create-chat-button__scope bx-im-ai-assistant-create-chat-button"
 			:class="{ '--legacy': isLegacyStyles, '--loading': !isLegacyStyles && isCreating }"
+			data-testid="im-create-chat-button-ai-assistant"
+			role="button"
+			tabindex="0"
+			:aria-label="loc('IM_LIST_CONTAINER_AI_ASSISTANT_NEW_CHAT')"
 			:title="loc('IM_LIST_CONTAINER_AI_ASSISTANT_NEW_CHAT')"
 			@click="!isCreating && $emit('newChat')"
+			@keydown="handleActivationKeydown"
 		>
 			<Spinner
 				v-if="isCreating"
@@ -63,6 +78,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		components: {
 			CopilotList: im_v2_component_list_items_copilot.CopilotList,
 			AiAssistantCreateChatButton
+		},
+		provide() {
+			return {
+				avatarsOnly: ui_vue3.computed(() => this.avatarsOnly)
+			};
+		},
+		props: {
+			avatarsOnly: {
+				type: Boolean,
+				default: false
+			}
 		},
 		emits: ['selectChat'],
 		data() {
@@ -144,5 +170,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AiAssistantCreateChatButton = AiAssistantCreateChatButton;
 	exports.AiAssistantListContainer = AiAssistantListContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.IconSet, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Vue3, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.IconSet, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=registry.bundle.js.map

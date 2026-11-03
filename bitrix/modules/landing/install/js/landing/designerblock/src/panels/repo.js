@@ -20,4 +20,9 @@ export class RepoManager
 	{
 		this.panel.show().then();
 	}
+
+	destroy()
+	{
+		this.panel.destroy();
+	}
 }

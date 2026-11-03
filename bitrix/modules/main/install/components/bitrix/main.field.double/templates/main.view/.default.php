@@ -2,6 +2,8 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Text\HtmlFilter;
+
 /**
  * @var DoubleUfComponent $component
  * @var array $arResult
@@ -15,13 +17,14 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 		?>
 		<span class="fields integer field-item">
 			<?php
+			$value = HtmlFilter::encode($item['value']);
 			if(!empty($item['href']))
 			{
-				print "<a href=\"{$item['href']}\">{$item['value']}</a>";
+				print "<a href=\"{$item['href']}\">{$value}</a>";
 			}
 			else
 			{
-				print $item['value'];
+				print $value;
 			}
 			?>
 		</span>

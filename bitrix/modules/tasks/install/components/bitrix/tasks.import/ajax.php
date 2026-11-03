@@ -9,6 +9,7 @@ use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Import\PersonNameFormatter;
 use Bitrix\Tasks\Manager\Task;
 use Bitrix\Tasks\Util\Error\Collection;
@@ -137,6 +138,18 @@ class TasksImportAjaxController extends Main\Engine\Controller
 	 */
 	public function startImportAction($importParameters): AjaxJson
 	{
+		if (!Main\Loader::includeModule('tasks'))
+		{
+			$this->errorCollection[] = new Main\Error(Loc::getMessage('TASKS_IMPORT_ERRORS_MODULE_TASKS_NOT_INCLUDED'));
+			return AjaxJson::createError($this->errorCollection);
+		}
+
+		if (!Access\TaskAccessController::can((int)$this->getCurrentUser()->getId(), Access\ActionDictionary::ACTION_TASK_IMPORT))
+		{
+			$this->errorCollection[] = new Main\Error(Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'));
+			return AjaxJson::createError($this->errorCollection);
+		}
+
 		$tmpFilePath = CTempFile::GetDirectoryName(2, 'tasks');
 
 		if ($this->checkPrimaryErrors($importParameters['FILE_HASH'], $tmpFilePath))

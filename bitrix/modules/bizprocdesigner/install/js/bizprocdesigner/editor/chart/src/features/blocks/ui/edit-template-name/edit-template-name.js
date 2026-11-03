@@ -39,7 +39,10 @@ export const EditTemplateName = {
 					: this.loc('BIZPROCDESIGNER_EDITOR_DEFAULT_TITLE')
 				;
 
-				this.applyTemplateMetadata({
+				// A setter cannot wait for the server, and it does not have to: the title on the
+				// screen is the one from the store, and the store puts the new name there only
+				// once the server has accepted it.
+				void this.applyTemplateMetadata({
 					NAME: templateName,
 				});
 			},

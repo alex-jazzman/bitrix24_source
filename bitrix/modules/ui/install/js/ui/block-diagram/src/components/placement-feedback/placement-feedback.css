@@ -1,0 +1,72 @@
+/* The answer of the no-overlap rule, worn by every wrapper the canvas positions - a node and a
+   backdrop alike, since the rule moves both. Outline, not border or transform: the wrapper's
+   transform belongs to the canvas camera, and an outline adds nothing to the layout box. The
+   wrapper has no look of its own, so the shape comes from a variable the consumer may set; the
+   duration comes from the canvas root, which publishes the timer that owns the state. */
+.ui-block-diagram-placement-feedback.--displaced,
+.ui-block-diagram-placement-feedback.--placement-refused {
+    border-radius: var(--ui-block-diagram-block-radius, var(--ui-border-radius-md));
+    outline: var(--ui-border-width-thick) solid var(--ui-block-diagram-placement-outline-color);
+    outline-offset: var(--ui-space-inset-2xs);
+}
+
+/* Position corrected: the block has already moved, so the outline only points at where it went. */
+.ui-block-diagram-placement-feedback.--displaced {
+    --ui-block-diagram-placement-outline-color: var(--ui-color-accent-main-warning);
+
+    animation: ui-block-diagram-placement-displaced
+        var(--ui-block-diagram-displaced-duration, 900ms) ease-out forwards;
+}
+
+/* No room found: the block stayed where it was. Told apart from a correction by more than the
+   colour - it blinks twice instead of fading once, so the two answers differ without relying on
+   colour alone. */
+.ui-block-diagram-placement-feedback.--placement-refused {
+    --ui-block-diagram-placement-outline-color: var(--ui-color-accent-main-alert);
+
+    animation: ui-block-diagram-placement-refused
+        var(--ui-block-diagram-displaced-duration, 900ms) ease-out forwards;
+}
+
+@keyframes ui-block-diagram-placement-displaced {
+    0% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    60% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    100% {
+        outline-color: transparent;
+    }
+}
+
+@keyframes ui-block-diagram-placement-refused {
+    0% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    30% {
+        outline-color: transparent;
+    }
+
+    45% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    75% {
+        outline-color: var(--ui-block-diagram-placement-outline-color);
+    }
+
+    100% {
+        outline-color: transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ui-block-diagram-placement-feedback.--displaced,
+    .ui-block-diagram-placement-feedback.--placement-refused {
+        animation: none;
+    }
+}

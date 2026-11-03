@@ -8,7 +8,11 @@ export const BirthdayPlaceholder = {
 		},
 	},
 	template: `
-		<span class="bx-im-list-recent-item__balloon_container --birthday" :title="loc('IM_LIST_RECENT_BIRTHDAY')">
+		<span
+			class="bx-im-list-recent-item__balloon_container --birthday"
+			:title="loc('IM_LIST_RECENT_BIRTHDAY')"
+			data-testid="im-recent-item-birthday-balloon"
+		>
 			<span class="bx-im-list-recent-item__balloon">
 				{{ loc('IM_LIST_RECENT_BIRTHDAY') }}
 			</span>

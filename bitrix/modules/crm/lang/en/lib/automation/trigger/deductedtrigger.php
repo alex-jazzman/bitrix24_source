@@ -3,4 +3,4 @@ $MESS["CRM_AUTOMATION_TRIGGER_DEDUCTED_DESCRIPTION"] = "Changes the stage after 
 $MESS["CRM_AUTOMATION_TRIGGER_DEDUCTED_EVENT_DATE_TIME"] = "Product shipped date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_DEDUCTED_NAME"] = "Shipment";
 $MESS["CRM_AUTOMATION_TRIGGER_DEDUCTED_NAME_1"] = "Product was shipped";
-$MESS["CRM_AUTOMATION_TRIGGER_DEDUCTED_NODE_DESCRIPTION"] = "Triggered after Product was shipped.";
+$MESS["CRM_AUTOMATION_TRIGGER_DEDUCTED_NODE_DESCRIPTION"] = 'Triggered after products in an order are shipped.';

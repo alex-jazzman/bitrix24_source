@@ -65,7 +65,12 @@ export const Members = {
 	template: `
 		<div ref="container" class="ui-access-rights-v2-members-container" @click="handleClick">
 			<div v-if="userGroup.members.size > 0" class='ui-access-rights-v2-members'>
-				<SingleMember v-for="[accessCode, member] in shownMembers" :key="accessCode" :member="member"/>
+				<SingleMember
+					v-for="[accessCode, member] in shownMembers"
+					:key="accessCode"
+					:access-code="accessCode"
+					:member="member"
+				/>
 				<span v-if="notShownMembersCount > 0" class="ui-access-rights-v2-members-more">
 					+ {{ notShownMembersCount }}
 				</span>

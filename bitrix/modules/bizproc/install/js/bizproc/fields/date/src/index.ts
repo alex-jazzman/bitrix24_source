@@ -6,12 +6,10 @@ import 'main.date';
 import './style.css';
 
 import { Tag, Text, Loc, Type, Event, Dom, Extension } from 'main.core';
-import { BaseField, FieldRegistry, type RenderedControl } from 'bizproc.fields';
+import { BaseField, FieldRegistry, isExpressionValue, type RenderedControl } from 'bizproc.fields';
 import { DatePicker } from 'ui.date-picker';
 
 const NUMERIC_OFFSET: RegExp = /^-?\d+$/;
-// A bizproc expression ({=Source:Field}, {{...}}, {{=...}}, = ...) is not a date.
-const EXPRESSION_VALUE: RegExp = /^\s*[={]/;
 const TIMEZONE_SETTINGS_ID: string = 'bizproc.fields.date';
 const ROW_SELECTOR: string = '.bizproc-fields-date-row';
 const VALUE_INPUT_SELECTOR: string = '.bizproc-fields-date__input';
@@ -61,6 +59,9 @@ class DateField extends BaseField
 			blockClass: 'bizproc-fields-date',
 			value: dateValue,
 			nonEditable: true,
+			// The input shows one date and nothing is typed into it, so an inserted expression
+			// takes the place of that date instead of being appended to it.
+			writeOver: true,
 			rowNodes: [this.#renderTimezone(offset)],
 		});
 
@@ -234,7 +235,7 @@ class DateField extends BaseField
 
 		// An expression is stored verbatim, the zone never becomes part of it - the same
 		// rule the backend follows in Date::extractValue.
-		if (!Type.isStringFilled(value) || EXPRESSION_VALUE.test(value))
+		if (!Type.isStringFilled(value) || isExpressionValue(value))
 		{
 			return value;
 		}

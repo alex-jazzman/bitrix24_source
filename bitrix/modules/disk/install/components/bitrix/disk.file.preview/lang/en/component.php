@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["FILE_PREVIEW_TITLE"] = "File";
+$MESS['FILE_PREVIEW_INFO_TABLE_LABEL'] = 'File details';
 $MESS["FILE_PREVIEW_SIZE"] = "Size";
 $MESS["FILE_PREVIEW_UPDATED"] = "Updated";
 ?>

@@ -9,6 +9,7 @@ export default class ItemShareSection extends Item
 		super(objectId, itemData);
 		this.data['dataset'] = (this.data['dataset'] || {});
 		this.data['dataset']['preventCloseContextMenu'] = true;
+		this.data.dataset.testid = 'disk-documents-menu-share-section';
 	}
 
 	static detect(itemData)

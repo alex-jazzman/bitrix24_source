@@ -1,5 +1,5 @@
-import {TextInputInline, Checker, Selector, UserSelector, FieldFactory} from 'ui.form-elements.view';
-import {Loc, Event, Tag, Type} from 'main.core';
+import {TextInput, TextInputInline, Checker, Selector, UserSelector, FieldFactory} from 'ui.form-elements.view';
+import {Loc, Event, Tag, Type, Text} from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
@@ -38,6 +38,11 @@ export class CommunicationPage extends BaseSettingsPage
 
 		let diskSection = this.#buildDiskSection();
 		diskSection.renderTo(contentNode);
+
+		if (BX.UI.Hint)
+		{
+			BX.UI.Hint.init(contentNode);
+		}
 	}
 
 	#buildNewsFeedSection(): SettingsSection
@@ -197,6 +202,12 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(chatWithGuestsField, settingsSection);
 		}
 
+		if (this.hasValue('video_note_download_available'))
+		{
+			let videoNoteDownloadField = new Checker(this.getValue('video_note_download_available'));
+			CommunicationPage.addToSectionHelper(videoNoteDownloadField, settingsSection);
+		}
+
 		if (this.hasValue('general_chat_message_admin_rights'))
 		{
 			let adminMessageField = new Checker(this.getValue('general_chat_message_admin_rights'));
@@ -354,6 +365,13 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(unifiedLinkDefaultAccessLevelSelector, settingsSection);
 		}
 
+		if (this.hasValue('DISK_UNIFIED_LINK_FOLDER_DEFAULT_ACCESS_LEVEL'))
+		{
+			const unifiedLinkFolderDefaultAccessLevelSelector = new Selector(this.getValue('DISK_UNIFIED_LINK_FOLDER_DEFAULT_ACCESS_LEVEL'));
+
+			CommunicationPage.addToSectionHelper(unifiedLinkFolderDefaultAccessLevelSelector, settingsSection);
+		}
+
 		if (this.hasValue('DISK_LIMIT_PER_FILE'))
 		{
 			const messageNode = Tag.render`<span>${Loc.getMessage(
@@ -394,6 +412,24 @@ export class CommunicationPage extends BaseSettingsPage
 			}
 
 			CommunicationPage.addToSectionHelper(fileLimitField, settingsSection, fileLimitRow);
+		}
+
+		if (this.hasValue('DISK_SECONDS_TO_JOIN_VERSION'))
+		{
+			const versionJoinOptions = this.getValue('DISK_SECONDS_TO_JOIN_VERSION');
+			const versionJoinLabel = versionJoinOptions.label
+				?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SECONDS_TO_JOIN_VERSION');
+			const versionJoinHint = versionJoinOptions.hintTitle;
+			const versionJoinField = new TextInput({
+				inputName: versionJoinOptions.inputName,
+				label: versionJoinHint
+					? `${versionJoinLabel} <span data-hint="${Text.encode(versionJoinHint)}" class="intranet-settings__ui-hint"></span>`
+					: versionJoinLabel,
+				value: versionJoinOptions.value,
+				type: 'number',
+			});
+
+			CommunicationPage.addToSectionHelper(versionJoinField, settingsSection);
 		}
 
 		new SettingsRow({

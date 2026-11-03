@@ -1946,19 +1946,23 @@ this.BX.Crm = this.BX.Crm || {};
 	 */
 	class ProgressBarRepository {
 		#container;
+		#gridId;
 		#storage = new Map();
-		constructor(container) {
+		constructor(container, gridId = '') {
 			if (!main_core.Type.isElementNode(container)) {
 				throw new TypeError('expected element node');
 			}
 			this.#container = container;
+			this.#gridId = gridId;
 		}
 		getOrCreateProgressBarContainer(id) {
-			const fullId = ProgressBarRepository.getFullId(id);
+			const fullId = this.#getFullId(id);
 			if (this.#storage.has(fullId)) {
 				return this.#storage.get(fullId);
 			}
-			let progressBarContainer = this.#container.querySelector(`div#${fullId}`);
+
+			// grid id comes from the page and may contain characters unsafe for a selector
+			let progressBarContainer = this.#container.querySelector(`div#${CSS.escape(fullId)}`);
 			if (!progressBarContainer) {
 				progressBarContainer = main_core.Tag.render`<div id="${fullId}"></div>`;
 				main_core.Dom.append(progressBarContainer, this.#container);
@@ -1966,8 +1970,9 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#storage.set(fullId, progressBarContainer);
 			return progressBarContainer;
 		}
-		static getFullId(id) {
-			return `crm-autorun-progress-bar-${id}`;
+		#getFullId(id) {
+			const suffix = main_core.Type.isStringFilled(this.#gridId) ? `${this.#gridId}-${id}` : id;
+			return `crm-autorun-progress-bar-${suffix}`;
 		}
 	}
 

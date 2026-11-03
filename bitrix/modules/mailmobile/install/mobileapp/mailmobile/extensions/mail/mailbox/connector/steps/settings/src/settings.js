@@ -4,7 +4,7 @@
 jn.define('mail/mailbox/connector/steps/settings/src/settings', (require, exports, module) => {
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
-	const { Color } = require('tokens');
+	const { Color, Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { SettingsLayout } = require('mail/mailbox/settings');
 	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
@@ -33,6 +33,7 @@ jn.define('mail/mailbox/connector/steps/settings/src/settings', (require, export
 				isEnabled: true,
 				title: {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_SETTINGS_STEP_TITLE'),
+					style: Typography.text3Accent.getStyle(),
 				},
 				number: 3,
 				count: 3,

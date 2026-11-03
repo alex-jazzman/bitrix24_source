@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
-		'sale.checkout.view.element.input',
 		'main.core',
-		'ui.vue',
 		'sale.checkout.const',
+		'sale.checkout.view.element.input',
 		'sale.checkout.view.property',
+		'ui.vue',
 	],
 	'skip_core' => false,
 ];

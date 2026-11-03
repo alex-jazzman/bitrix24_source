@@ -65,6 +65,8 @@ export class Epic extends EventEmitter
 		this.listData = null;
 		this.filterData = null;
 		this.filter = null;
+		this.filterSlider = null;
+		this.filterInitialization = null;
 
 		this.editorHandler = null;
 
@@ -238,12 +240,25 @@ export class Epic extends EventEmitter
 					});
 				},
 				events: {
-					onLoad: (event) => {
-						this.onLoadFilter(event);
-						this.onLoadList(event);
+					onOpen: (event) => {
+						this.filterSlider = event.getSlider();
+						this.filterInitialization = null;
 					},
-					onClose: () => {
-						this.filter?.release();
+					onLoad: this.onLoadFilter.bind(this),
+					onClose: (event) => {
+						if (this.filterSlider === event.getSlider())
+						{
+							this.filterSlider = null;
+							this.filterInitialization = null;
+							const filter = this.filter;
+							this.filter = null;
+
+							return filter?.release().catch((response) => {
+								this.requestSender.showErrorAlert(response);
+							});
+						}
+
+						return null;
 					},
 				}
 			}
@@ -653,25 +668,66 @@ export class Epic extends EventEmitter
 
 	onLoadFilter(event)
 	{
-		this.sidePanel = event.getSlider();
-
-		const filterContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-filter');
-
-		if (this.filterData?.html)
+		const slider = event.getSlider();
+		if (this.filterSlider !== slider || !slider.isOpen() || !this.filterData?.html)
 		{
-			Runtime.html(filterContainer, this.filterData.html)
-				.then(() => {
-					this.filter = new Filter({
-						filterId: this.filterId,
-					})
-				})
-			;
+			return Promise.resolve();
 		}
+
+		if (this.filterInitialization)
+		{
+			return this.filterInitialization;
+		}
+
+		const { html, assets = {} } = this.filterData;
+		const filterContainer = slider.getContainer().querySelector('.tasks-scrum-epic-filter');
+
+		const isCurrentSlider = () => this.filterSlider === slider
+			&& slider.isOpen()
+			&& this.filterInitialization === initialization;
+
+		const initialization = new Promise((resolve, reject) => {
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+			BX.load([...(assets.js || []), ...(assets.css || [])], resolve, document, reject);
+		})
+			.then(() => {
+				if (isCurrentSlider())
+				{
+					return Runtime.html(filterContainer, html);
+				}
+
+				return null;
+			})
+			.then(() => {
+				if (isCurrentSlider())
+				{
+					this.filter = new Filter({ filterId: this.filterId });
+
+					return this.onLoadList(event);
+				}
+
+				return null;
+			})
+			.catch((response) => {
+				if (isCurrentSlider())
+				{
+					this.requestSender.showErrorAlert(response ?? {
+						errors: [{ message: Loc.getMessage('TSE_ERROR_POPUP_TITLE') }],
+					});
+				}
+			})
+		;
+
+		this.filterInitialization = initialization;
+
+		return initialization;
 	}
 
 	onLoadList(event)
 	{
-		this.sidePanel = event.getSlider();
+		const slider = event.getSlider();
+		const initialization = this.filterInitialization;
+		this.sidePanel = slider;
 
 		const listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-list');
 
@@ -687,13 +743,24 @@ export class Epic extends EventEmitter
 		}
 		else
 		{
-			Runtime.html(listContainer, this.listData.html)
+			return Runtime.html(listContainer, this.listData.html)
 				.then(() => {
+					if (
+						this.filterSlider !== slider
+						|| this.filterInitialization !== initialization
+						|| !slider.isOpen()
+					)
+					{
+						return;
+					}
+
 					EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
 					this.prepareTagsList(listContainer);
 				})
 			;
 		}
+
+		return Promise.resolve();
 	}
 
 	onLoadTasksList(event)

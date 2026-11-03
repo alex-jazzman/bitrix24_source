@@ -6,6 +6,10 @@ jn.define('im/messenger/lib/parser/markdown/utils/escape-handler', (require, exp
 	const ESCAPE_PATTERN = /\\([!#()*+.>[\\\]_`{|}~\-])/g;
 	// Derived from the same constants used to protect, so the protect/restore pair can never drift.
 	const ESCAPE_PLACEHOLDER_PATTERN = new RegExp(`${MARKDOWN_ESCAPE_PREFIX}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+	// The bare shape of the same marker, handed out by placeholderPattern below: capture-free and not
+	// global, so a consumer can embed it in a pattern of its own without inheriting a group or a
+	// lastIndex (table-rules fences protector placeholders inside a canonical table payload).
+	const PLACEHOLDER_SHAPE = new RegExp(`${MARKDOWN_ESCAPE_PREFIX}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}`);
 
 	// Emphasis delimiters are the only escapes that also show up inside symbol art like the
 	// shrug ¯\_(ツ)_/¯. When such a delimiter sits between two "art" characters (non-word AND
@@ -136,6 +140,16 @@ jn.define('im/messenger/lib/parser/markdown/utils/escape-handler', (require, exp
 	{
 		#escapes = [];
 
+		/**
+		 * The shape of the placeholder protect() emits, for a consumer that has to recognize one.
+		 *
+		 * @returns {RegExp}
+		 */
+		get placeholderPattern()
+		{
+			return PLACEHOLDER_SHAPE;
+		}
+
 		protect(text)
 		{
 			this.#escapes = [];
@@ -154,7 +168,16 @@ jn.define('im/messenger/lib/parser/markdown/utils/escape-handler', (require, exp
 			});
 		}
 
-		restore(text)
+		/**
+		 * Put the escaped characters back into a fragment WITHOUT consuming the storage: a rule that has
+		 * to decide on the final text of a value needs them early (a URL, whose scheme is checked and
+		 * whose brackets are encoded before the tag is written), while the whole-text restore below
+		 * still has to run for everything else.
+		 *
+		 * @param {string} text
+		 * @returns {string}
+		 */
+		resolve(text)
 		{
 			if (this.#escapes.length === 0)
 			{
@@ -162,12 +185,18 @@ jn.define('im/messenger/lib/parser/markdown/utils/escape-handler', (require, exp
 			}
 
 			const escapes = this.#escapes;
-			const result = text.replaceAll(
+
+			return text.replaceAll(
 				ESCAPE_PLACEHOLDER_PATTERN,
 				// A user-typed literal "####MD_ESC_N####" (or out-of-range index) has no stored
 				// char — leave the marker untouched instead of emitting the string "undefined".
 				(match, index) => escapes[Number(index)] ?? match,
 			);
+		}
+
+		restore(text)
+		{
+			const result = this.resolve(text);
 
 			this.#escapes = [];
 

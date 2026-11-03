@@ -6,7 +6,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { AnalyticsEvent } = require('analytics');
 	const { magnifierWithMenuAndDot } = require('assets/common');
-	const { EmptyScreen } = require('layout/ui/empty-screen');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { PureComponent } = require('layout/pure-component');
 	const { ViewMode } = require('layout/ui/simple-list/view-mode');
@@ -28,8 +28,16 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		getActionToConversion,
 	} = require('crm/entity-actions');
 	const { Filter } = require('layout/ui/kanban/filter');
+	const { requireLazy } = require('require-lazy');
+	const { ComponentHelper } = require('helpers/component');
+	const { Uuid } = require('utils/uuid');
 	const { PullManager, TypePull } = require('crm/entity-tab/pull-manager');
 	const { TypeSort, ItemsSortManager } = require('crm/entity-tab/sort');
+	const { ItemViewType, ItemsViewManager } = require('crm/entity-tab/view-manager');
+	const { EntityTabPresetFilterMode } = require('crm/entity-tab/filter-mode/preset');
+	const { EntityTabUnifiedFilterMode } = require('crm/entity-tab/filter-mode/unified');
+	const { EntityTabEvent } = require('crm/entity-tab/events');
+	const { UnifiedFiltersFeature } = require('crm/entity-tab/unified-filters-feature');
 	const { TypeFactory } = require('crm/entity-tab/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { ActivityCountersStoreManager } = require('crm/state-storage');
@@ -54,6 +62,34 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		fetchStageCounters,
 	} = require('crm/statemanager/redux/slices/stage-counters');
 	const { debounce } = require('utils/function');
+
+	/**
+	 * The mode of every CRM list, read once when the extension is loaded: the tab is constructed on
+	 * every render of `crm.tabs`, so a read there would hit the storage - and the network behind it -
+	 * on every counter push and every tab switch.
+	 *
+	 * A mounted tab refreshes it against the server (see `syncUnifiedFiltersMode`), so every tab
+	 * built after that starts in the mode the portal is actually in.
+	 */
+	let unifiedFiltersEnabled = UnifiedFiltersFeature.isEnabled();
+
+	/**
+	 * Conditions a counter of the tab stands for. Both filters ask it - the legacy one writes them into
+	 * its own state, the unified one adds them to the payload of the request - and a counter meaning
+	 * one thing in one mode and another in the other is a defect with two homes.
+	 *
+	 * The value of the counter is passed in rather than read here: the two callers name it differently
+	 * (`id` against `typeId`), and the request each of them builds stays exactly as it was.
+	 *
+	 * @param {{code: string, excludeUsers?: boolean}} counter
+	 * @param {string|number} counterValue
+	 * @return {Object}
+	 */
+	const buildCounterFields = ({ code, excludeUsers }, counterValue) => ({
+		ASSIGNED_BY_ID: [excludeUsers ? ASSIGNED_WITH_OTHER_USERS : env.userId],
+		// @todo remove after creating view mode Activity in the mobile
+		ACTIVITY_COUNTER: [code === 'my_pending' ? '2' : counterValue],
+	});
 
 	const PULL_MODULE_ID = 'crm';
 	const PULL_EVENT_NAME_ITEM_UPDATED = 'ITEMUPDATED';
@@ -132,7 +168,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			/** @type {Filter} */
 			this.filter = new Filter(this.getDefaultPresetId());
 
+			// the mode is read once for the whole screen: this constructor runs on every render of
+			// the tabs, and asking the storage (or the server) there would do it on every one
+			/** @type {EntityTabFilterMode} */
+			this.filterMode = this.createFilterMode(unifiedFiltersEnabled);
+			this.selectedCounterCode = null;
+
 			this.initItemsSortManager(props);
+			this.initItemsViewManager(props);
 
 			this.deleteItemConfirm = this.deleteItemConfirmHandler.bind(this);
 			this.onSearchHandler = this.onSearch.bind(this);
@@ -140,6 +183,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.showSearchBarHandler = this.showSearchBar.bind(this);
 			this.updateEntityTypesHandler = this.updateEntityTypes.bind(this);
 			this.onSetSortTypeHandler = this.onSetSortType.bind(this);
+			this.onSetViewTypeHandler = this.onSetViewType.bind(this);
+			this.toggleViewTypeHandler = this.toggleViewType.bind(this);
 			this.onSelectedCategory = this.onSelectedCategoryHandler.bind(this);
 			this.onCategoryDelete = this.onCategoryDeleteHandler.bind(this);
 			this.onCategoryClose = this.onCategoryCloseHandler.bind(this);
@@ -168,6 +213,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.entityTypes = nextProps.entityTypes;
 
 			this.initItemsSortManager(nextProps);
+			this.initItemsViewManager(nextProps);
 
 			const entityType = this.getEntityType(nextProps.entityTypeId);
 
@@ -180,6 +226,20 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			{
 				this.entityTypeName = nextProps.entityTypeName;
 				this.state.categoryId = this.getCurrentCategoryId();
+				// A list without stages changes tabs right here and never reaches
+				// `initAfterCategoryChange()`, the place the filter is told the new address of the
+				// list. The filter is addressed by that address, so without this call the drawer keeps
+				// the fields and the presets of the tab it was opened on: the filter of the contacts
+				// answering for the list of the companies.
+				this.filterMode.setContext({
+					entityTypeName: this.entityTypeName,
+					categoryId: this.getCategoryId() ?? 0,
+				});
+				// the counters belong to the list that offered them, and `initAfterCategoryChange()` -
+				// the branch below - gives them back for that reason. Kept here the new tab would be
+				// asked with the conditions of the counter of the previous one, while its own "---"
+				// menu shows that counter unchecked
+				this.selectedCounterCode = null;
 
 				return;
 			}
@@ -215,6 +275,103 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * The filter of the tab, in the only place the mode is weighed. In the unified mode the tab
+		 * starts with the stand-in of the filter, and the drawer with its form and controls is loaded
+		 * when the user first opens it.
+		 *
+		 * @param {boolean} unified
+		 * @return {EntityTabFilterMode}
+		 */
+		createFilterMode(unified)
+		{
+			const getSearchProps = () => this.props;
+
+			if (!unified)
+			{
+				return new EntityTabPresetFilterMode({
+					getFilter: () => this.filter,
+					get searchBarId()
+					{
+						return getSearchProps().searchBarId;
+					},
+					get searchRef()
+					{
+						return getSearchProps().searchRef;
+					},
+					getTabPresetId: () => this.getCurrentEntityType()?.data?.presetId,
+					onCounterSearch: (params) => this.setCounterFilter(params),
+					onPresetSearch: (params) => this.setPresetFilter(params),
+				});
+			}
+
+			return new EntityTabUnifiedFilterMode({
+				entityTypeName: this.entityTypeName,
+				categoryId: this.getCategoryId() ?? 0,
+				get searchBarId()
+				{
+					return getSearchProps().searchBarId;
+				},
+				getLayout: () => this.props.layout,
+				// the sorting section is offered only where the list is ordered - deals, for now
+				getSortManager: () => (this.itemsSortManager?.isSupported() ? this.itemsSortManager : null),
+				getCounterFields: () => this.getSelectedCounterFields(),
+				hasSelectedCounter: () => this.selectedCounterCode !== null,
+				getView: () => this.getView(),
+				getCrmMode: () => this.props.crmMode,
+				onApply: () => this.onUnifiedFilterApply(),
+				onSearchApplied: (params) => this.reload(this.getReloadParamsByFilter(params)),
+			});
+		}
+
+		/**
+		 * The mode the screen started in is the one mirrored on the device, and a start right after the
+		 * flag was switched has nothing mirrored yet - the answer of the server arrives when the list is
+		 * already drawn. The screen switches modes itself then, instead of waiting for the next start of
+		 * the application.
+		 */
+		syncUnifiedFiltersMode()
+		{
+			UnifiedFiltersFeature.resolve()
+				.then((enabled) => {
+					// the mode of this tab and not the module-wide flag: several tabs are mounted at once
+					// and wait on one answer, so the first of them would otherwise move the flag and leave
+					// the rest reading it as their own state - with the legacy filter still in place
+					if (enabled === this.isUnifiedFilters())
+					{
+						unifiedFiltersEnabled = enabled;
+
+						return;
+					}
+
+					unifiedFiltersEnabled = enabled;
+					this.filterMode = this.createFilterMode(enabled);
+					this.props.onFilterModeChange?.(this);
+
+					// the request of the list carries the filter, and the two modes fill it differently,
+					// so the list is asked again together with the buttons of the navigation bar
+					this.reload(this.getReloadParamsByFilter());
+				})
+				.catch(console.error);
+		}
+
+		/**
+		 * The mode this tab is in, read off the filter it actually holds. The module-wide flag says what
+		 * a tab built now would start in, and the two differ for a tab built before the answer of the
+		 * server arrived.
+		 *
+		 * @return {boolean}
+		 */
+		isUnifiedFilters()
+		{
+			return this.filterMode instanceof EntityTabUnifiedFilterMode;
+		}
+
+		onUnifiedFilterApply()
+		{
+			this.reload(this.getReloadParamsByFilter());
+		}
+
 		initItemsSortManager(props)
 		{
 			/** @type {ItemsSortManager} */
@@ -224,13 +381,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			);
 		}
 
+		initItemsViewManager(props)
+		{
+			/** @type {ItemsViewManager} */
+			this.itemsViewManager = ItemsViewManager.createFromEntityTypeObject(
+				this.getEntityTypeByName(props.entityTypeName),
+				props.actions.setViewType,
+			);
+		}
+
 		componentDidMount()
 		{
-			BX.addCustomEvent('UI.SearchBar::onSearch', this.onSearchHandler);
-			BX.addCustomEvent('UI.SearchBar::onSearchHide', this.onSearchHideHandler);
-			BX.addCustomEvent('Crm.CategoryList::onSelectedCategory', this.onSelectedCategory);
-			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onCategoryDelete);
-			BX.addCustomEvent('Crm.CategoryDetail::onClose', this.onCategoryClose);
+			this.props.onFilterModeChange?.(this);
+			this.syncUnifiedFiltersMode();
+
+			BX.addCustomEvent(EntityTabEvent.SEARCH, this.onSearchHandler);
+			BX.addCustomEvent(EntityTabEvent.SEARCH_HIDE, this.onSearchHideHandler);
+			BX.addCustomEvent(EntityTabEvent.CATEGORY_SELECTED, this.onSelectedCategory);
+			BX.addCustomEvent(EntityTabEvent.CATEGORY_DELETED, this.onCategoryDelete);
+			BX.addCustomEvent(EntityTabEvent.CATEGORY_CLOSED, this.onCategoryClose);
 
 			ActivityCountersStoreManager
 				.subscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler);
@@ -261,12 +430,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				this.unsubscribeFromStore();
 			}
 
-			BX.removeCustomEvent('UI.SearchBar::onSearch', this.onSearchHandler);
-			BX.removeCustomEvent('UI.SearchBar::onSearchHide', this.onSearchHideHandler);
+			BX.removeCustomEvent(EntityTabEvent.SEARCH, this.onSearchHandler);
+			BX.removeCustomEvent(EntityTabEvent.SEARCH_HIDE, this.onSearchHideHandler);
 
-			BX.removeCustomEvent('Crm.CategoryList::onSelectedCategory', this.onSelectedCategory);
-			BX.removeCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onCategoryDelete);
-			BX.removeCustomEvent('Crm.CategoryDetail::onClose', this.onCategoryClose);
+			BX.removeCustomEvent(EntityTabEvent.CATEGORY_SELECTED, this.onSelectedCategory);
+			BX.removeCustomEvent(EntityTabEvent.CATEGORY_DELETED, this.onCategoryDelete);
+			BX.removeCustomEvent(EntityTabEvent.CATEGORY_CLOSED, this.onCategoryClose);
 
 			ActivityCountersStoreManager
 				.unsubscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler);
@@ -277,6 +446,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.updateEntityTypeData({
 				sortType,
 			}, () => {
+				this.reload({
+					skipFillSlides: true,
+					skipUseCache: true,
+					updateToolbarColumnId: false,
+					skipInitCounters: true,
+					force: true,
+					initMenu: true,
+				});
+			});
+		}
+
+		toggleViewType()
+		{
+			void this.itemsViewManager.setViewType(this.onSetViewTypeHandler);
+		}
+
+		onSetViewType(viewType)
+		{
+			this.updateEntityTypeViewType(viewType, () => {
 				this.reload({
 					skipFillSlides: true,
 					skipUseCache: true,
@@ -300,13 +488,26 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {string} viewType
+		 * @param {Function|null} callback
+		 */
+		updateEntityTypeViewType(viewType, callback = null)
+		{
+			if (this.props.updateEntityTypeViewType)
+			{
+				this.props.updateEntityTypeViewType(this.props.entityTypeId, viewType, callback);
+			}
+		}
+
 		updateEntityTypes()
 		{
 			const counters = ActivityCountersStoreManager.getCounters();
 
 			let needChangeSearchIcon = false;
 			this.entityTypes.forEach((entityType) => {
-				entityType.data.counters.forEach((counter) => {
+				for (const counter of entityType.data.counters)
+				{
 					if (
 						counters[counter.code] >= 0
 						&& counters[counter.code] !== counter.value
@@ -322,7 +523,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 						counter.value = counters[counter.code];
 					}
-				});
+				}
 			});
 
 			if (needChangeSearchIcon)
@@ -352,7 +553,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		onSearch(params)
 		{
-			const { searchBarId, data, isCancel, counter } = params;
+			const { searchBarId, data, isCancel, counter, text } = params;
 
 			if (searchBarId !== this.props.searchBarId)
 			{
@@ -361,19 +562,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			this.state.searchButtonBackgroundColor = data?.background || null;
 
-			if (isCancel)
-			{
-				this.filter.unsetWasShown();
-			}
-
-			if (counter && counter.code)
-			{
-				this.setCounterFilter(params);
-
-				return;
-			}
-
-			this.setPresetFilter(params);
+			this.filterMode.applySearch({ text, isCancel, counter, params });
 		}
 
 		onSearchHide({ searchBarId })
@@ -406,42 +595,20 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		setCounterFilter(params)
 		{
-			const { id, code, excludeUsers } = params.counter;
-			const { text } = params;
+			const { counter, text } = params;
+			const { id, code } = counter;
 
 			if (this.filter.isChecked(code) && this.filter.getSearchString() === text)
 			{
 				this.filter.clear();
 			}
-
-			// @todo remove after creating view mode Activity in the mobile
-			else if (code === 'my_pending')
-			{
-				const assignedById = excludeUsers ? ASSIGNED_WITH_OTHER_USERS : env.userId;
-
-				this.filter.set({
-					counterId: code,
-					presetId: 'tmp_filter',
-					currentFilterId: code,
-					tmpFields: {
-						ASSIGNED_BY_ID: [assignedById],
-						ACTIVITY_COUNTER: ['2'],
-					},
-					search: text,
-				});
-			}
 			else
 			{
-				const assignedById = excludeUsers ? ASSIGNED_WITH_OTHER_USERS : env.userId;
-
 				this.filter.set({
 					counterId: code,
 					presetId: 'tmp_filter',
 					currentFilterId: code,
-					tmpFields: {
-						ASSIGNED_BY_ID: [assignedById],
-						ACTIVITY_COUNTER: [id],
-					},
+					tmpFields: buildCounterFields(counter, id),
 					search: text,
 				});
 			}
@@ -472,6 +639,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				menuButtons: this.getMenuButtons(),
 				force: true,
 				filterCancelled: isCancel,
+				// the conditions of the unified filter travel in the payload of the request, and the list
+				// keeps the payload it was built with (`StatefulList.getInitialState`). Without a fresh
+				// one the reload asks the server with the conditions of the previous state, so what the
+				// user has just applied never reaches it. The legacy filter is left alone: it hands its
+				// state to the list by its own path.
+				...(this.filterMode.needsFreshActionParams() ? { actionParams: this.prepareActionParams() } : {}),
 			};
 		}
 
@@ -487,6 +660,28 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				style: {
 					backgroundColor: AppTheme.colors.bgNavigation,
 					flex: 1,
+				},
+			};
+		}
+
+		/**
+		 * Compact view keeps the list background white, the default list background is grey
+		 */
+		getListDeepMergeStyles()
+		{
+			if (!this.itemsViewManager.isCompactView())
+			{
+				return null;
+			}
+
+			const backgroundColor = AppTheme.colors.bgContentPrimary;
+
+			return {
+				wrapper: {
+					backgroundColor,
+				},
+				container: {
+					backgroundColor,
 				},
 			};
 		}
@@ -515,13 +710,89 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			return [
 				...actions,
+				...this.getCounterMenuActions(),
 				...entity.getMenuActions(),
 			];
+		}
+
+		/**
+		 * Counters of the list. In the legacy mode `SearchLayout` scrolls them together with the
+		 * presets; that row does not exist any more, so they move to the "---" menu - the place
+		 * the task lists already keep theirs (Q-005).
+		 *
+		 * They stay a mechanism of their own rather than becoming filter fields: a counter is a
+		 * shortcut with a value on it, and the drawer knows nothing about either.
+		 *
+		 * @return {Array}
+		 */
+		getCounterMenuActions()
+		{
+			if (!this.filterMode.hasCounterMenu())
+			{
+				return [];
+			}
+
+			return this.getCounters().map((counter) => ({
+				id: `counter-${counter.code}`,
+				testId: `crm-entity-tab-counter-${counter.code}`,
+				title: counter.title,
+				checked: this.selectedCounterCode === counter.code,
+				showCheckedIcon: true,
+				sectionCode: 'counters',
+				sectionTitle: Loc.getMessage('M_CRM_ENTITY_TAB_COUNTERS_SECTION'),
+				counterValue: counter.showValue ? counter.value : null,
+				onItemSelected: () => this.selectCounter(counter),
+			}));
+		}
+
+		/**
+		 * A second tap on the selected counter clears it, the same way the counter chips behaved.
+		 *
+		 * The conditions of a counter travel next to the conditions of the filter, so the mode is given
+		 * the chance to read what it needs first: applied over a filter that has read no state of the
+		 * list, a counter is written into the storage of the user alone (see prepareCounter).
+		 *
+		 * @param {Object} counter
+		 */
+		selectCounter(counter)
+		{
+			const isSelected = (this.selectedCounterCode === counter.code);
+			const previousCounterCode = this.selectedCounterCode;
+
+			this.selectedCounterCode = (isSelected ? null : counter.code);
+
+			// a filter that read no state answers with no conditions, so the request would write the
+			// fields of the counter alone into the storage of the user and take with them the conditions
+			// the web filter left there. The choice goes back instead, and the list is left under what
+			// it already shows
+			const takeTheChoiceBack = () => {
+				this.selectedCounterCode = previousCounterCode;
+			};
+
+			this.filterMode.prepareCounter()
+				.then((isStateRead) => (isStateRead
+					? this.reload(this.getReloadParamsByFilter())
+					: takeTheChoiceBack()))
+				.catch((error) => {
+					console.error(error);
+					takeTheChoiceBack();
+				});
 		}
 
 		getMenuButtons()
 		{
 			const buttons = [];
+
+			if (this.itemsViewManager.isCompactViewAvailable())
+			{
+				const viewIcon = (this.itemsViewManager.isCompactView() ? Icon.KANBAN : Icon.BULLETED_LIST);
+
+				buttons.push({
+					type: viewIcon.getIconName(),
+					badgeCode: 'kanban_compact_view',
+					callback: this.toggleViewTypeHandler,
+				});
+			}
 
 			if (this.canUseChangeCategory())
 			{
@@ -532,12 +803,15 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				});
 			}
 
-			buttons.push({
-				type: Icon.SEARCH.getIconName(),
-				badgeCode: 'search',
-				callback: this.showSearchBarHandler,
-				accent: Boolean(this.state.searchButtonBackgroundColor),
-			});
+			buttons.push(
+				{
+					type: Icon.SEARCH.getIconName(),
+					badgeCode: 'search',
+					callback: this.showSearchBarHandler,
+					accent: Boolean(this.state.searchButtonBackgroundColor),
+				},
+				...this.filterMode.getMenuButtons(),
+			);
 
 			return buttons;
 		}
@@ -560,39 +834,34 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		showSearchBar()
 		{
-			const entityType = this.getCurrentEntityType();
-
-			let presetId = this.filter.getPresetId();
-			if (!presetId && !this.filter.isActive())
-			{
-				presetId = entityType.data.presetId;
-			}
-
-			const counterId = this.filter.getCounterId();
-			if (counterId)
-			{
-				presetId = null;
-			}
-
-			this.filter.set({
-				presetId,
-				counterId,
-				search: this.filter.getSearchString(),
-			}).setWasShown();
-
-			BX.postComponentEvent('UI.SearchBar::show', [
-				{
-					presetId,
-					counterId,
-					search: this.filter.getSearchString(),
-					searchBarId: this.props.searchBarId,
-				},
-			]);
+			this.filterMode.showSearchBar();
 		}
 
 		/**
 		 * @returns {Object}
 		 */
+		getVoiceContext()
+		{
+			const { extra = {} } = this.prepareActionParams().loadItems;
+
+			return {
+				module: 'crm',
+				screen: 'crm.entity.list',
+				entityTypeId: this.props.entityTypeId,
+				entityTypeName: this.props.entityTypeName,
+				categoryId: this.getCategoryId(),
+				view: this.getView(),
+				stageId: this.getViewComponent()?.getActiveStageId?.(),
+				filter: {
+					search: extra.filter?.search ?? extra.search ?? '',
+					presetId: extra.filterParams?.FILTER_PRESET_ID,
+					counterId: this.selectedCounterCode ?? extra.filter?.counterId,
+					fields: extra.filter?.tmpFields,
+					conditions: extra.filterParams,
+				},
+			};
+		}
+
 		prepareActionParams()
 		{
 			const actionParams = clone(this.props.actionParams);
@@ -605,31 +874,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				actionParams.loadItems.extra.filterParams.CATEGORY_ID = categoryId;
 			}
 
-			const entityType = this.getCurrentEntityType();
-			const { presetId } = entityType.data;
+			return this.filterMode.applyActionParams(actionParams);
+		}
 
-			if (this.filter.hasSearchText())
+		/**
+		 * Conditions a selected counter stands for. Derived from the selection rather than stored
+		 * beside it: two fields describing one choice drift apart on the first path that resets
+		 * only one of them.
+		 *
+		 * @return {Object}
+		 */
+		getSelectedCounterFields()
+		{
+			const counter = this.getCounters().find(({ code }) => code === this.selectedCounterCode);
+			if (!counter)
 			{
-				actionParams.loadItems.extra.search = this.filter.getSearchString();
-			}
-
-			if (this.filter.getPresetId())
-			{
-				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = this.filter.getPresetId();
-				actionParams.loadItems.extra.filter = this.filter.getData();
-			}
-			else if (this.filter.isActive())
-			{
-				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = this.filter.getEmptyFilterPresetId();
-			}
-			else
-			{
-				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = (
-					presetId || this.filter.getEmptyFilterPresetId()
-				);
+				return {};
 			}
 
-			return actionParams;
+			return buildCounterFields(counter, String(counter.typeId));
 		}
 
 		/**
@@ -637,20 +900,17 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		 */
 		isActiveSearch()
 		{
-			const { searchRef } = this.props;
-
-			return Boolean(this.filter.isActive()
-				|| this.filter.hasSearchText()
-				|| this.filter.hasSelectedNotDefaultPreset(searchRef));
+			return this.filterMode.isActive();
 		}
 
 		/**
-		 * @return {EmptyScreen}
+		 * @returns {StatusBlock}
 		 */
 		getEmptyListComponent()
 		{
-			return new EmptyScreen({
+			return StatusBlock({
 				...this.getEmptyScreenProps(),
+				emptyScreen: true,
 				onRefresh: this.onEmptyScreenRefresh,
 			});
 		}
@@ -720,8 +980,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			return {
 				moduleId: PULL_MODULE_ID,
 				callback: (data, context) => {
-					console.log('handle pull', data, context);
-
 					return new Promise((resolve, reject) => {
 						if (this.isNeedProcessPull(data, context))
 						{
@@ -741,18 +999,16 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 								&& !this.isCurrentStage(item.data.columnId)
 							)
 							{
-								let action;
+								const action = this.isAllStagesDisplayed() ? 'update' : 'delete';
 
 								// update columnId in AllStages column
-								if (this.isAllStagesDisplayed())
+								if (action === 'update')
 								{
-									action = 'update';
 									this.updateItemColumn(item.id, item.data.columnId);
 								}
 								// or delete item from current (not AllStages) column
 								else
 								{
-									action = 'delete';
 									this.getViewComponent().deleteItemFromStatefulList(item.id);
 								}
 
@@ -887,12 +1143,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 						}
 						else
 						{
-							item.eventName = this.getPreparedItemEventName(item.eventName);
-							if (data[item.eventName] === undefined)
+							const preparedItem = { ...item, eventName: this.getPreparedItemEventName(item.eventName) };
+							if (data[preparedItem.eventName] === undefined)
 							{
-								data[item.eventName] = [];
+								data[preparedItem.eventName] = [];
 							}
-							data[item.eventName].push(item);
+							data[preparedItem.eventName].push(preparedItem);
 						}
 					});
 
@@ -933,7 +1189,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			if (eventName.indexOf('ITEM') === 0)
 			{
-				eventName = eventName.replace('ITEM', '');
+				return eventName.replace('ITEM', '');
 			}
 
 			return eventName;
@@ -1106,14 +1362,16 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			componentParams = componentParams || {};
 			titleParams = titleParams || {};
+			const widgetCode = `crm-entity-details-${Uuid.getV4()}`;
 
 			ComponentHelper.openLayout({
 				name: 'crm:crm.entity.details',
 				componentParams: {
-					payload: componentParams,
+					payload: { ...componentParams, widgetCode },
 				},
 				widgetParams: {
 					titleParams,
+					code: widgetCode,
 				},
 			});
 		}
@@ -1295,10 +1553,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				title: conversionTitle,
 				svgIcon: conversionSvg,
 				canUseConversion,
+				canCreateFromClient,
 				onAction,
 			} = getActionToConversion();
 
-			if (canUseConversion(entityTypeId))
+			const isClientCreation = canCreateFromClient(entityTypeId);
+			if (canUseConversion(entityTypeId) || (isClientCreation && permissions.read))
 			{
 				let conversionMenuItem = {
 					id: conversionId,
@@ -1327,8 +1587,35 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					},
 					icon: conversionSvg,
 					onDisableClick: this.showForbiddenActionNotification.bind(this),
-					isDisabled: !canUpdate,
+					isDisabled: !isClientCreation && !canUpdate,
 				};
+
+				if (isClientCreation)
+				{
+					conversionMenuItem.onClickCallback = (action, entityId, { ensureMenuClosed, parentWidget }) => {
+						const isSavedEntity = entityId > 0;
+						if (!isSavedEntity)
+						{
+							return;
+						}
+
+						ensureMenuClosed(async () => {
+							try
+							{
+								const analytics = this.getAnalytics()
+									.setEvent('entity_add_open')
+									.setElement('element_context_menu');
+								const callback = await onAction({ entityId, entityTypeId, parentWidget, analytics });
+								await callback();
+							}
+							catch (error)
+							{
+								NotifyManager.showDefaultError();
+								console.error(error);
+							}
+						});
+					};
+				}
 
 				if (!restrictions.conversion)
 				{
@@ -1640,9 +1927,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			const desiredCategoryId = category ? category.categoryId : null;
 
-			const promise = this.category ? new Promise((resolve) => {
-				this.setIsLoading().then(resolve);
-			}) : Promise.resolve();
+			const promise = this.category ? this.setIsLoading() : Promise.resolve();
 
 			promise
 				.then(() => this.trySetCurrentCategory(category))
@@ -1738,14 +2023,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			this.categoryChangeAttempts = 0;
 
-			showNotice = showNotice
+			const needShowNotice = showNotice
 				|| (
 					categoryFromStorage
 					&& desiredCategoryId
 					&& categoryFromStorage.categoryId !== desiredCategoryId
 				);
 
-			if (showNotice)
+			if (needShowNotice)
 			{
 				this.showChangeToAvailableCategoryNotice(categoryFromStorage.name);
 			}
@@ -1776,6 +2061,11 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		initAfterCategoryChange(category, data)
 		{
 			this.filter = new Filter(this.getDefaultPresetId());
+			this.filterMode.setContext({
+				entityTypeName: this.entityTypeName,
+				categoryId: this.getCategoryId() ?? 0,
+			});
+			this.selectedCounterCode = null;
 			this.category = category;
 			this.floatingButtonMenu = null;
 			let needInitMenu = true;
@@ -2006,8 +2296,16 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		getCacheName()
 		{
 			const categoryId = this.getCategoryId() || -1;
+			const cacheName = `${this.props.cacheName}.${categoryId}`;
+			const viewType = this.itemsViewManager.getViewType();
 
-			return `${this.props.cacheName}.${categoryId}`;
+			// default view keeps the original cache name, so enabled feature alone does not drop existing caches
+			if (viewType === ItemViewType.Default)
+			{
+				return cacheName;
+			}
+
+			return `${cacheName}.${viewType}`;
 		}
 
 		changeCategoryIfViewNotFound()
@@ -2037,5 +2335,5 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{}
 	}
 
-	module.exports = { EntityTab, TypePull };
+	module.exports = { EntityTab, TypePull, TypeSort };
 });

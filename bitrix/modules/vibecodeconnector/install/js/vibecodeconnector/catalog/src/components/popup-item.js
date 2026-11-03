@@ -1,28 +1,42 @@
-import { ajax, Event, Loc, Tag, Text } from 'main.core';
+import { ajax, Event, Loc, Tag, Text, Type } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { Center as NotificationCenter } from 'ui.notification';
 import { Menu } from 'ui.system.menu';
 import { Text as UiText, Headline } from 'ui.system.typography';
-import { Messenger } from 'im.public';
 
 import { type TabConfig } from '../catalog';
 import { type CatalogItem } from '../tab-controller';
 import { sendCatalogAnalytics } from '../utils/analytics';
 import { renderItemCounter } from '../utils/counter.js';
 import { renderIcon } from '../utils/icons.js';
-import { hasCatalogAppOpenTarget, openCatalogApp, openUrl, type OpenAppTarget } from '../utils/links';
-import { CatalogPopupItemPinButton } from './popup-item-pin-button';
+import {
+	hasCatalogAppOpenTarget,
+	openCatalogApp,
+	openCatalogChat,
+	openUrl,
+	type OpenAppTarget,
+} from '../utils/links';
+import { isItemClickOpensChatEnabled } from '../utils/settings';
+import { CatalogPopupItemFavoriteButton, type FavoriteRequestRegistry } from './popup-item-favorite-button';
+import { CatalogPopupItemPinAction } from './popup-item-pin-action';
 import { CatalogPopupItemHideAction } from './popup-item-hide-action';
+import { CatalogPopupItemCreateChatAction } from './popup-item-create-chat-action';
 import { CatalogPopupItemDeleteAction } from './popup-item-delete-action';
 import { CatalogPopupItemRenameAction } from './popup-item-rename-action';
 import { CatalogPopupItemShareAction } from './popup-item-share-action';
 
 const KIND_APPLICATION = 'application';
-const KIND_BOT = 'bot';
 
 const CATALOG_OPENED_EVENT = 'im:vibe-code-catalog:opened';
 
+const RECORD_OPEN_ACTION = 'vibecodeconnector.Catalog.recordOpen';
+
+const OPEN_CHAT_ACTION = 'vibecodeconnector.Catalog.openChat';
+
 type CatalogPopupItemCallbacks = {
 	onPinToggled?: () => void,
+	onFavoriteToggled?: (committed: boolean) => void,
+	favoriteRequests?: FavoriteRequestRegistry,
 	onHiddenToggled?: () => void,
 	onHiddenCommitted?: () => void,
 	onRenamed?: () => void,
@@ -34,8 +48,10 @@ type CatalogPopupItemCallbacks = {
 export class CatalogPopupItem
 {
 	#item: CatalogItem;
-	#pinButton: CatalogPopupItemPinButton;
+	#favoriteButton: CatalogPopupItemFavoriteButton;
+	#pinAction: CatalogPopupItemPinAction;
 	#hideAction: CatalogPopupItemHideAction;
+	#createChatAction: CatalogPopupItemCreateChatAction;
 	#deleteAction: CatalogPopupItemDeleteAction;
 	#renameAction: CatalogPopupItemRenameAction;
 	#shareAction: CatalogPopupItemShareAction;
@@ -44,18 +60,28 @@ export class CatalogPopupItem
 	#node: HTMLElement | null = null;
 	#newBadgeNode: HTMLElement | null = null;
 	#actionMenu: ?Menu = null;
+	#clickOpensChat: boolean;
+	#chatOpening: boolean = false;
 
 	constructor(item: CatalogItem, tab: TabConfig | null = null, callbacks: CatalogPopupItemCallbacks = {})
 	{
 		this.#item = item;
 		this.#callbacks = callbacks;
+		this.#clickOpensChat = isItemClickOpensChatEnabled();
 		this.#showHiddenBadge = callbacks.showHiddenBadge === true;
-		this.#pinButton = new CatalogPopupItemPinButton(item, tab, {
+		this.#favoriteButton = new CatalogPopupItemFavoriteButton(item, tab, {
+			onFavoriteToggled: callbacks.onFavoriteToggled,
+			favoriteRequests: callbacks.favoriteRequests,
+		});
+		this.#pinAction = new CatalogPopupItemPinAction(item, tab, {
 			onPinToggled: callbacks.onPinToggled,
 		});
 		this.#hideAction = new CatalogPopupItemHideAction(item, tab, {
 			onHiddenToggled: callbacks.onHiddenToggled,
 			onHiddenCommitted: callbacks.onHiddenCommitted,
+		});
+		this.#createChatAction = new CatalogPopupItemCreateChatAction(item, {
+			onChatOpen: callbacks.onChatOpen,
 		});
 		this.#deleteAction = new CatalogPopupItemDeleteAction(item, tab);
 		this.#renameAction = new CatalogPopupItemRenameAction(item, tab, {
@@ -102,6 +128,17 @@ export class CatalogPopupItem
 				</span>
 			`
 			: '';
+		const pinnedMarkNode = this.#item.isPinned === true
+			? Tag.render`
+				<span
+					class="vibecode-catalog__item-pinned-mark"
+					data-testid="vibecode-catalog-item-pinned-mark"
+					role="img"
+					title="${Loc.getMessage('VIBECODECONNECTOR_CATALOG_BADGE_PINNED')}"
+					aria-label="${Loc.getMessage('VIBECODECONNECTOR_CATALOG_BADGE_PINNED')}"
+				>${renderIcon('s-pin', 14)}</span>
+			`
+			: '';
 		const showNewBadge = this.#item.isNew === true && this.#item.isOpened !== true;
 		const newBadgeNode = showNewBadge
 			? Tag.render`
@@ -112,10 +149,10 @@ export class CatalogPopupItem
 			: '';
 		this.#newBadgeNode = showNewBadge ? newBadgeNode : null;
 		const actionButtonNode = this.#renderActionButton();
-		const pinButtonNode = this.#pinButton.render();
-		const actionControlsNode = (pinButtonNode || actionButtonNode) && Tag.render`
+		const favoriteButtonNode = this.#favoriteButton.render();
+		const actionControlsNode = (favoriteButtonNode || actionButtonNode) && Tag.render`
 			<div class="vibecode-catalog__item-action-button-wrap">
-				${pinButtonNode}
+				${favoriteButtonNode}
 				${actionButtonNode}
 			</div>
 		`;
@@ -130,6 +167,7 @@ export class CatalogPopupItem
 				<div class="vibecode-catalog__item-content">
 					<div class="vibecode-catalog__item-title-row">
 						${titleNode}
+						${pinnedMarkNode}
 						${hiddenBadgeNode}
 						${newBadgeNode}
 					</div>
@@ -153,7 +191,7 @@ export class CatalogPopupItem
 
 	#hasOpenTarget(): boolean
 	{
-		if (this.#isBotWithChat())
+		if (this.#clickOpensChat && this.#hasAppChat())
 		{
 			return true;
 		}
@@ -166,23 +204,31 @@ export class CatalogPopupItem
 		return this.#item.kind === KIND_APPLICATION;
 	}
 
-	#isBotWithChat(): boolean
+	#hasAppChat(): boolean
 	{
-		return this.#item.kind === KIND_BOT && this.#item.chatId !== null;
+		return Type.isNumber(this.#item.appChatId) && this.#item.appChatId > 0;
 	}
 
 	#recordOpen(): void
 	{
-		const wasNew = this.#item.isNew === true && this.#item.isOpened !== true;
+		const wasNew = this.#isNewUnopened();
 		this.#markOpened();
-		ajax.runAction('vibecodeconnector.Catalog.recordOpen', { data: { catalogItemId: this.#item.id } })
-			.then(() => {
-				if (wasNew)
-				{
-					EventEmitter.emit(CATALOG_OPENED_EVENT, { catalogItemId: this.#item.id });
-				}
-			})
+		ajax.runAction(RECORD_OPEN_ACTION, { data: { catalogItemId: this.#item.id } })
+			.then(() => this.#emitOpened(wasNew))
 			.catch(console.error);
+	}
+
+	#isNewUnopened(): boolean
+	{
+		return this.#item.isNew === true && this.#item.isOpened !== true;
+	}
+
+	#emitOpened(wasNew: boolean): void
+	{
+		if (wasNew)
+		{
+			EventEmitter.emit(CATALOG_OPENED_EVENT, { catalogItemId: this.#item.id });
+		}
 	}
 
 	// the badge goes, the isNew flag stays: the New slice is filtered by it, and the item must
@@ -206,18 +252,53 @@ export class CatalogPopupItem
 
 	#openTarget(): void
 	{
-		this.#recordOpen();
-
-		if (this.#isBotWithChat())
+		if (this.#clickOpensChat && this.#hasAppChat())
 		{
-			void Messenger.openChat(String(this.#item.chatId));
-			// the chat opens on the page behind the modal catalog, which would block it
-			this.#callbacks.onChatOpen?.();
+			this.#openAppChat();
 
 			return;
 		}
 
+		this.#recordOpen();
+
 		openCatalogApp(this.#buildOpenAppTarget());
+	}
+
+	#openAppChat(): void
+	{
+		if (this.#chatOpening)
+		{
+			return;
+		}
+
+		if (this.#item.appChatAccessible !== true)
+		{
+			this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+
+			return;
+		}
+
+		this.#chatOpening = true;
+		void openCatalogChat(this.#item.appChatId)
+			.then((opened) => {
+				if (!opened)
+				{
+					this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+
+					return;
+				}
+
+				this.#recordOpen();
+				this.#callbacks.onChatOpen?.();
+			})
+			.finally(() => {
+				this.#chatOpening = false;
+			});
+	}
+
+	#notify(messageId: string): void
+	{
+		NotificationCenter.notify({ content: Loc.getMessage(messageId) });
 	}
 
 	#buildOpenAppTarget(): OpenAppTarget
@@ -231,7 +312,71 @@ export class CatalogPopupItem
 			ownerId: this.#item.ownerId,
 			ownerName: this.#item.ownerName,
 			isMine: this.#item.isMine === true,
+			iconUrl: this.#item.iconUrl,
+			color: this.#item.color,
 		};
+	}
+
+	#getAppChatMenuItem(): ?{ title: string, onClick: () => void }
+	{
+		if (this.#clickOpensChat || !this.#hasAppChat() || this.#item.appChatAccessible !== true)
+		{
+			return null;
+		}
+
+		return {
+			title: Loc.getMessage('VIBECODECONNECTOR_CATALOG_MENU_OPEN_APP_CHAT'),
+			onClick: () => {
+				sendCatalogAnalytics({ event: 'open_app', c_section: 'item' });
+				void this.#openAppChatThroughEndpoint();
+			},
+		};
+	}
+
+	async #openAppChatThroughEndpoint(): Promise<void>
+	{
+		if (this.#chatOpening)
+		{
+			return;
+		}
+
+		this.#chatOpening = true;
+
+		try
+		{
+			const response = await ajax.runAction(OPEN_CHAT_ACTION, { data: { catalogItemId: this.#item.id } });
+			const chatId = Text.toInteger(response?.data?.chatId);
+
+			if (response?.data?.ok !== true || chatId <= 0)
+			{
+				this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+
+				return;
+			}
+
+			this.#item.appChatId = chatId;
+
+			const opened = await openCatalogChat(chatId);
+
+			if (!opened)
+			{
+				this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+
+				return;
+			}
+
+			this.#recordOpen();
+			this.#callbacks.onChatOpen?.();
+		}
+		catch (error)
+		{
+			this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+			console.error('[vibecodeconnector.catalog] failed to open the app chat', this.#item.id, error);
+		}
+		finally
+		{
+			this.#chatOpening = false;
+		}
 	}
 
 	#getActionMenuItems(trigger: HTMLElement): Array<{
@@ -241,6 +386,19 @@ export class CatalogPopupItem
 	}>
 	{
 		const items = [];
+		const appChatMenuItem = this.#getAppChatMenuItem();
+
+		if (appChatMenuItem)
+		{
+			items.push(appChatMenuItem);
+		}
+
+		const createChatMenuItem = this.#createChatAction.getMenuItem();
+
+		if (createChatMenuItem)
+		{
+			items.push(createChatMenuItem);
+		}
 
 		if (this.#item.editUrl !== null && this.#item.isMine === true)
 		{
@@ -264,7 +422,7 @@ export class CatalogPopupItem
 			items.push(renameMenuItem);
 		}
 
-		const pinMenuItem = this.#pinButton.getMenuItem();
+		const pinMenuItem = this.#pinAction.getMenuItem();
 
 		if (pinMenuItem)
 		{

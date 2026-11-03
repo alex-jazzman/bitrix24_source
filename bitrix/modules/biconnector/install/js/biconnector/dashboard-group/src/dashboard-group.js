@@ -1,19 +1,25 @@
 import { EventEmitter } from 'main.core.events';
-import { Popup } from 'main.popup';
-import { Loc } from 'main.core';
+import { Popup, PopupManager } from 'main.popup';
 import { BitrixVue } from 'ui.vue3';
 import { Store } from './store';
 import { App } from './app';
+import { GROUP_POPUP_ID } from './const';
 import { type Group, GroupAppParams, GroupAppState, GroupType } from './type';
 
 export class DashboardGroup
 {
 	static open(appParams: GroupAppParams = {})
 	{
+		// The popup is not cacheable, so it exists only while it is open.
+		if (PopupManager.isPopupExists(GROUP_POPUP_ID))
+		{
+			return;
+		}
+
 		const app = this.getApp(appParams);
 
 		const popup = new Popup({
-			id: 'biconnector-dashboard-group',
+			id: GROUP_POPUP_ID,
 			width: 800,
 			height: 560,
 			overlay: true,

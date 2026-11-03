@@ -5,6 +5,7 @@ return [
 		'loc',
 		'rest',
 		'toast',
+		'type',
 		'feature',
 		'utils/url',
 	],

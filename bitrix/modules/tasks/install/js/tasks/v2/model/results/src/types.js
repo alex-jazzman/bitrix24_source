@@ -20,4 +20,5 @@ export type ResultModel = {
 		remove: boolean,
 	},
 	files: FileDto[],
+	archiveLink: ?string,
 };

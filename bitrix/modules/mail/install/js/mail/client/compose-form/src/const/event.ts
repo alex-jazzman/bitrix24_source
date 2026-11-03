@@ -11,12 +11,16 @@ export const ComposeFormEvent = Object.freeze({
 } as const);
 
 /**
- * Messages posted to the sliders above the form. The identifier must not be renamed: it is matched as a
- * literal in `mail.client.message.list/templates/.default/user-interface-manager.js`, which reloads the
- * sent folder on it.
+ * Messages the form posts down to the pages it was opened over. The identifiers must not be renamed: they are
+ * matched as literals in the list of the letters — `MessageCreated` in
+ * `mail.client.message.list/templates/.default/user-interface-manager.js`, which reloads the sent folder on
+ * it, and `ScheduledMessageSaved` in the `src/js/list.es6.js` of the same template, which rereads the
+ * section of the scheduled letters.
  */
 export const SliderMessage = Object.freeze({
 	MessageCreated: 'Mail.Client.MessageCreatedSuccess',
+	/** A letter was put on the schedule or the letter already on it was changed. */
+	ScheduledMessageSaved: 'Mail.Client.ScheduledMessageSaved',
 } as const);
 
 export type ComposeFormEventPayload = {

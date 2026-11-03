@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/service/pagination/common', (require, exports, module) => {
 	const { throttle } = require('utils/function');
+	const { isOnline } = require('device/connection');
 	const { EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
@@ -59,6 +60,13 @@ jn.define('im/messenger/controller/recent/service/pagination/common', (require, 
 		setFirstPageData(source, { hasMore, nextPage, lastItem })
 		{
 			this.state.update(source, { hasMore, nextPage, lastItem });
+
+			// The database cursor is a position in the general history, and a filtered page is not one.
+			if (this.#isFilterActive())
+			{
+				return;
+			}
+
 			if (this.recentLocator.has('database-load'))
 			{
 				this.recentLocator.get('database-load').setLastItem(lastItem);
@@ -121,9 +129,30 @@ jn.define('im/messenger/controller/recent/service/pagination/common', (require, 
 			}
 		};
 
+		#isFilterActive()
+		{
+			return this.recentLocator.has('filter') && this.recentLocator.get('filter').hasSelectedFilter();
+		}
+
+		// The database cannot select unread rows, so in filter mode its pages are discarded anyway.
+		// It is skipped only while the server can actually answer: offline it is the only way to go deeper.
+		#shouldSkipDatabase()
+		{
+			return this.#isFilterActive() && isOnline();
+		}
+
 		#shouldLoad()
 		{
-			return this.state.hasMore() && !this.state.isLoading();
+			if (this.state.isLoading())
+			{
+				return false;
+			}
+
+			// A skipped source does not vote, otherwise the loader would hang on "database has more".
+			return this.#shouldSkipDatabase()
+				? this.state.hasMore(PaginationState.SERVER_SOURCE)
+				: this.state.hasMore()
+			;
 		}
 
 		async #loadNextPage()
@@ -135,7 +164,7 @@ jn.define('im/messenger/controller/recent/service/pagination/common', (require, 
 				return;
 			}
 
-			if (this.state.canLoad(PaginationState.DATABASE_SOURCE))
+			if (!this.#shouldSkipDatabase() && this.state.canLoad(PaginationState.DATABASE_SOURCE))
 			{
 				await this.#loadFromDatabase();
 			}

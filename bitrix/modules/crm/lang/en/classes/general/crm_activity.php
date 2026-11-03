@@ -74,6 +74,7 @@ $MESS["CRM_ACTIVITY_FIELD_DEADLINE"] = "Deadline";
 $MESS["CRM_ACTIVITY_FIELD_END_TIME"] = "End date and time";
 $MESS["CRM_ACTIVITY_FIELD_LAST_UPDATED"] = "Modified on";
 $MESS["CRM_ACTIVITY_FIELD_START_DATE"] = "Start date and time";
+$MESS["CRM_ACTIVITY_FIELD_START_TIME"] = "Start date and time";
 $MESS["CRM_ACTIVITY_FILE_ADD_CALL"] = "File attached to phone call \"#NAME#\"";
 $MESS["CRM_ACTIVITY_FILE_ADD_EMAIL"] = "File attached to e-mail \"#NAME#\"";
 $MESS["CRM_ACTIVITY_FILE_ADD_MEETING"] = "File attached to meeting \"#NAME#\"";

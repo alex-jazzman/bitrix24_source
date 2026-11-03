@@ -1206,8 +1206,8 @@
 	margin-left: 4px;
 }
 
-.ui-tag-selector-container-readonly .ui-tag-selector-add-button,
-.ui-tag-selector-container-readonly .ui-tag-selector-create-button {
+.ui-tag-selector-outer-container.ui-tag-selector-container-readonly .ui-tag-selector-add-button,
+.ui-tag-selector-outer-container.ui-tag-selector-container-readonly .ui-tag-selector-create-button {
 	display: none;
 }
 

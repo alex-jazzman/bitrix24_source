@@ -13,3 +13,30 @@
 .bx-rating-icon {
 	fill: var(--primary)
 }
+
+button.bx-rating-icon-container {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+}
+
+/* the ring of the page (4px outside the control) would cover the next star: the star gets a thinner one
+   that fits into the 3px gap, the negative margins keep the stars where they stood */
+.bx-rating button.bx-rating-icon-container {
+	margin: -1px 2px -1px -1px;
+	padding: 1px;
+	line-height: 0;
+	vertical-align: middle;
+}
+
+.bx-rating button.bx-rating-icon-container:last-child { margin-right: -1px; }
+
+.bx-rating button.bx-rating-icon-container[role="radio"]:focus-visible {
+	position: relative;
+	z-index: 1;
+	outline: 1px solid #fff;
+	outline-offset: -1px;
+	box-shadow: 0 0 0 2px #333;
+}

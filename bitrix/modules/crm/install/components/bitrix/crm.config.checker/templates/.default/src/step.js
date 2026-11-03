@@ -1,4 +1,4 @@
-import { Tag, Type } from "main.core";
+import { Dom, Tag, Text, Type } from "main.core";
 import { EventEmitter } from 'main.core.events';
 
 export default class Step {
@@ -87,21 +87,28 @@ export default class Step {
 		}
 		this.nodeMain.setAttribute(this.statusAttributeName, status);
 	}
-	setError()
+	setError({data: errors})
 	{
-		this.node.innerHTML = "Some error was occurred.";
+		const messages = (Type.isArray(errors) ? errors : [])
+			.filter((error) => Type.isPlainObject(error) && Type.isStringFilled(error.message))
+			.map((error) => error.message);
+		const text = messages.length > 0 ? messages.join(" ") : "Some error was occurred.";
+
+		Dom.clean(this.node);
+		Dom.append(
+			Tag.render`<span class="crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected">${Text.encode(text)}</span>`,
+			this.node
+		);
+		this.adjustInfoBlockHeight();
 	}
 	adjustInfoBlock(errors:Object, notes:Object)
 	{
-		let child = this.node.lastChild;
-		while (child)
-		{
-			this.node.removeChild(child);
-			child = this.node.lastChild;
-		}
-
+		Dom.clean(this.node);
 		this.parseErrors(errors, notes);
-
+		this.adjustInfoBlockHeight();
+	}
+	adjustInfoBlockHeight()
+	{
 		if (this.node.hasChildNodes())
 		{
 			Tag.style(this.node.parentNode)`

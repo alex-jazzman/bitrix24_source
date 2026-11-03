@@ -227,7 +227,6 @@ this.BX = this.BX || {};
 		emits: ['uploadAvatarFile', 'removeAvatarFile', 'selectAvatar', 'generateAvatar'],
 		data() {
 			return {
-				uploader: null,
 				isDraggingFile: false
 			};
 		},
@@ -266,7 +265,7 @@ this.BX = this.BX || {};
 			removeUploadedFile() {
 				const files = this.uploader.getFiles();
 				if (files.length > 0) {
-					ui_vue3.toRaw(this.uploader).removeFiles();
+					this.uploader.removeFiles();
 					this.$emit('removeAvatarFile');
 				}
 				this.$refs.uploaderContainer.click();
@@ -285,7 +284,6 @@ this.BX = this.BX || {};
 				multiple: false,
 				events: {
 					[ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
-						this.uploadedFile = event.getData().file;
 						this.$emit('uploadAvatarFile', event.getData().file);
 						this.$refs.uploaderContainer.blur();
 					},
@@ -762,9 +760,6 @@ this.BX = this.BX || {};
 			},
 			handleAvatarFileRemove() {
 				this.$emit('removeAvatarFile');
-			},
-			handleAvatarFileLoad(file) {
-				this.$emit('loadAvatarFile', file);
 			}
 		},
 		mounted() {
@@ -793,7 +788,6 @@ this.BX = this.BX || {};
 											:avatar-url="avatar"
 											@upload-avatar-file="handleAvatarFileUpload"
 											@remove-avatar-file="handleAvatarFileRemove"
-											@load-avatar-file="handleAvatarFileLoad"
 										/>
 									</div>
 									<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
@@ -976,6 +970,11 @@ this.BX = this.BX || {};
 			RoleMasterWarning,
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
+		setup() {
+			return {
+				uploadedAvatarFile: ui_vue3.shallowRef(null)
+			};
+		},
 		props: {
 			id: {
 				type: String,
@@ -1003,7 +1002,6 @@ this.BX = this.BX || {};
 				roleAvatarUrl: this.avatarUrl,
 				roleDescription: this.description,
 				roleItemsWithAccess: this.itemsWithAccess.length > 0 ? this.itemsWithAccess : [['user', currentUserId]],
-				uploadedAvatarFile: null,
 				roleSavingStatus: RoleSavingStatus.NONE
 			};
 		},
@@ -1110,14 +1108,11 @@ this.BX = this.BX || {};
 				return this.uploadedAvatarFile.getBinary();
 			},
 			handleAvatarFileUpload(file) {
-				this.uploadedAvatarFile = file;
+				this.uploadedAvatarFile = ui_vue3.toRaw(file);
 			},
 			handleAvatarFileRemove() {
 				this.uploadedAvatarFile = null;
 				this.roleAvatar = null;
-			},
-			handleAvatarFileLoad(file) {
-				this.uploadedAvatarFile = ui_vue3.toRaw(file);
 			},
 			closeMaster() {
 				main_core_events.EventEmitter.emit('AI.RoleMasterApp:Close');
@@ -1156,7 +1151,6 @@ this.BX = this.BX || {};
 					:undeselected-items-with-access="undeselectedItemsWithAccess"
 					@upload-avatar-file="handleAvatarFileUpload"
 					@remove-avatar-file="handleAvatarFileRemove"
-					@load-avatar-file="handleAvatarFileLoad"
 					@update:name="roleName = $event"
 					@update:description="roleDescription = $event"
 					@update:avatar="roleAvatar = $event"

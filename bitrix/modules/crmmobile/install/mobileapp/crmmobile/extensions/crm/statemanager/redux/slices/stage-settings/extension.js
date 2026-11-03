@@ -18,6 +18,11 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 		prepareTunnelsBeforeSave,
 		selectItemsByIds: selectTunnelsEntities,
 	} = require('crm/statemanager/redux/slices/tunnels');
+	const {
+		buildStageUpdateFields,
+		hasRequestedTunnels,
+		writableStageFields,
+	} = require('crm/statemanager/redux/slices/stage-settings/request');
 
 	const reducerName = 'crm:stage';
 	const adapter = createEntityAdapter({});
@@ -33,6 +38,12 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 		selectById,
 		(stage) => stage?.statusId,
 	);
+
+	const readStageTunnels = (state, stageId) => {
+		const { tunnels } = selectById(state, stageId) || {};
+
+		return Object.values(selectTunnelsEntities(state, tunnels || []));
+	};
 
 	const createCrmStage = createAsyncThunk(
 		`${reducerName}/createCrmStage`,
@@ -72,33 +83,28 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 	const updateCrmStage = createAsyncThunk(
 		`${reducerName}/updateCrmStage`,
 		async (
-			{ entityTypeId, fields, kanbanSettingsId },
+			{ entityTypeId, fields, categoryId, kanbanSettingsId, permissions },
 			{ rejectWithValue, getState },
 		) => {
 			try
 			{
-				const {
-					tunnels: tunnelsIds,
-				} = selectById(getState(), fields.id) || [];
-				const tunnelsBeforeUpdate = Object.values(selectTunnelsEntities(getState(), tunnelsIds));
+				// a part the caller may not write is dropped before anything else reads the change:
+				// the request, the tunnel state below and the reducers all speak of what was written
+				const writableFields = writableStageFields(fields, permissions);
 
-				let tunnels = [];
-				let preparedTunnels = [];
-				if (fields.tunnels)
-				{
-					tunnels = fields.tunnels;
-					preparedTunnels = prepareTunnelsBeforeSave(fields.tunnels);
-				}
-				else
-				{
-					tunnels = tunnelsBeforeUpdate;
-					preparedTunnels = prepareTunnelsBeforeSave(tunnelsBeforeUpdate);
-				}
+				// the tunnel state is only read when the request carries tunnels: an update that
+				// leaves them out says nothing about them, and the reducers keep what they have
+				const requestedTunnels = hasRequestedTunnels(writableFields);
+				const tunnels = requestedTunnels ? writableFields.tunnels : undefined;
+				const tunnelsBeforeUpdate = requestedTunnels
+					? readStageTunnels(getState(), writableFields.id)
+					: undefined;
 
-				const response = await StageAjax.update(entityTypeId, {
-					...fields,
-					tunnels: preparedTunnels,
-				});
+				const response = await StageAjax.update(
+					entityTypeId,
+					categoryId,
+					buildStageUpdateFields(writableFields, prepareTunnelsBeforeSave),
+				);
 
 				if (response.status !== 'success')
 				{
@@ -109,7 +115,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 
 				return {
 					...response,
-					fields,
+					fields: writableFields,
 					kanbanSettingsId,
 					tunnels,
 					tunnelsBeforeUpdate,
@@ -127,12 +133,12 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 	const deleteCrmStage = createAsyncThunk(
 		`${reducerName}/deleteCrmStage`,
 		async (
-			{ entityTypeId, statusId, id, kanbanSettingsId, semantics },
+			{ entityTypeId, statusId, id, categoryId, kanbanSettingsId, semantics },
 			{ rejectWithValue },
 		) => {
 			try
 			{
-				const response = await StageAjax.delete(entityTypeId, statusId);
+				const response = await StageAjax.delete(entityTypeId, categoryId, statusId);
 
 				if (response.status !== 'success')
 				{
@@ -233,12 +239,6 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 					} = action.payload;
 					state.status = status;
 
-					let tunnelsIds = [];
-					if (Array.isArray(tunnels))
-					{
-						tunnelsIds = tunnels.map(({ id }) => id);
-					}
-
 					const stage = state.entities[fields.id];
 
 					if (stage)
@@ -246,7 +246,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 						adapter.upsertOne(state, {
 							...stage,
 							...fields,
-							tunnels: tunnelsIds || stage.tunnels,
+							tunnels: Array.isArray(tunnels) ? tunnels.map(({ id }) => id) : stage.tunnels,
 						});
 					}
 				})

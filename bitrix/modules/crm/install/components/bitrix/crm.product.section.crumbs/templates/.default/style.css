@@ -15,7 +15,7 @@
 	position: relative;
 	top: -1px;
 	opacity:.7;
-	background:url(images/sprite.png) no-repeat center -1082px;
+	background:url(images/sprite.webp) no-repeat center -1082px;
 }
 .bx-crm-interface-product-section-crumbs-item-container-arrow:hover{
 	opacity:.9;
@@ -119,5 +119,5 @@
 	cursor:pointer;
 	vertical-align:middle;
 	opacity:1;
-	background:url(images/sprite.png) no-repeat 0 -85px ;
+	background:url(images/sprite.webp) no-repeat 0 -85px ;
 }

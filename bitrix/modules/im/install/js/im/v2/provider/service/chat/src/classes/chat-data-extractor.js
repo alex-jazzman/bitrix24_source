@@ -12,6 +12,7 @@ import {
 	type RawPin,
 	type RawReaction,
 	type RawCopilot,
+	type RawCopilotGenerationState,
 	type RawMessagesAutoDeleteConfig,
 	type RawStickerMessage,
 } from 'im.v2.provider.service.types';
@@ -173,6 +174,11 @@ export class ChatDataExtractor
 	getCopilot(): RawCopilot
 	{
 		return this.#restResult.copilot;
+	}
+
+	getCopilotGenerationState(): ?RawCopilotGenerationState
+	{
+		return this.#restResult.chat.copilotGenerationState ?? null;
 	}
 
 	getAutoDeleteConfig(): RawMessagesAutoDeleteConfig[]

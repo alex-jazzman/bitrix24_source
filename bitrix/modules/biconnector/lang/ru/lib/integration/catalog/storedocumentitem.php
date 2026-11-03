@@ -12,4 +12,4 @@ $MESS['CATALOG_STORE_DOCUMENT_ITEM_FIELD_STORE_TO_FULL'] = 'Идентифика
 $MESS['CATALOG_STORE_DOCUMENT_ITEM_FIELD_AMOUNT'] = 'Количество товара';
 $MESS['CATALOG_STORE_DOCUMENT_ITEM_FIELD_PURCHASING_PRICE'] = 'Закупочная цена';
 $MESS['CATALOG_STORE_DOCUMENT_ITEM_FIELD_PRICE'] = 'Цена продажи';
-$MESS['CATALOG_STORE_DOCUMENT_ITEM_TABLE_DESCRIPTION_FULL'] = 'Набор содержит данные о товарах в складских документах.';
+$MESS['CATALOG_STORE_DOCUMENT_ITEM_TABLE_DESCRIPTION_FULL_MSGVER_1'] = "Данные о товарных позициях складских документов: товары, количество, закупочные и продажные цены, склады списания и поступления.";

@@ -413,6 +413,42 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			});
 		}
 
+		#isDraftDropped = false;
+
+		#initialChecklistSize = 0;
+
+		/**
+		 * @private
+		 * @return {number}
+		 */
+		#getChecklistSize = () => {
+			const { completed = 0, uncompleted = 0 } = this.checklistController?.getReduxData() ?? {};
+
+			return completed + uncompleted;
+		};
+
+		/**
+		 * The draft checklist lives in the store until the task is created, so a form abandoned without
+		 * saving must not leave it behind. init() rebuilds the controller on every save, so a saved
+		 * form leaves an empty context here and only an abandoned draft is really dropped.
+		 *
+		 * Bound to the closing confirmation, not to the widget hide events: a native image picker
+		 * opened over the form fires those too - see isShowImagePickerOpen in layout/ui/fields/file -
+		 * and the draft would be wiped while the user is still filling the form.
+		 *
+		 * @private
+		 * @return {void}
+		 */
+		#dropAbandonedDraft = () => {
+			if (this.#isDraftDropped)
+			{
+				return;
+			}
+
+			this.#isDraftDropped = true;
+			this.checklistController?.clearChecklists();
+		};
+
 		async doFinalInitAction()
 		{
 			this.layoutWidget.on('preventDismiss', () => this.showConfirmOnFormClosing());
@@ -531,12 +567,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				this.initialTaskData[field.fieldName] = { ...field };
 			});
 
-			this.checklistController = new ChecklistController({
-				taskId: undefined,
+			const checklistControllerProps = {
+				// redux: the controller needs entityId - the task guid (the checklist lives under it in the store).
+				taskId: this.guid,
 				userId: this.userId,
 				groupId: this.task.group?.id || 0,
 				inLayout: false,
-				hideCompleted: false,
 				parentWidget: this.layoutWidget,
 				diskConfig: {
 					folderId: this.diskFolderId,
@@ -550,6 +586,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					this.extraFieldsFormRef
 						?.getCompactField(Fields.CHECKLIST)
 						?.triggerChange({ completed, uncompleted });
+					// a checklist-only form is still a changed form: keep the dismiss guard in sync
+					this.handlePreventBottomSheetDismiss();
 					const hasUploadingFiles = controller.hasUploadingFiles();
 					if (this.state.checklistFilesLoading !== hasUploadingFiles)
 					{
@@ -558,13 +596,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						});
 					}
 				},
-			});
+			};
 
-			this.checklistController.setChecklists({
-				checklistsTree: this.sourceTaskData?.checklist,
-				checklistsFlatTree: initialTaskData?.checklistFlatTree,
-				clear: true,
-			});
+			this.checklistController = new ChecklistController(checklistControllerProps);
+
+			// task copy: sourceTaskData.checklist is the V2 flat format
+			this.checklistController.seedFromV2(this.sourceTaskData?.checklist);
+			this.#initialChecklistSize = this.#getChecklistSize();
 		}
 
 		refreshBottomPanel()
@@ -648,7 +686,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					{
 						testId: this.#getTestId('Root-loading'),
 					},
-					new LoadingScreenComponent({ showAirStyle: true }));
+					new LoadingScreenComponent({ showAirStyle: true }),
+				);
 			}
 
 			return View(
@@ -719,8 +758,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						this.refreshBottomPanel();
 						this.handlePreventBottomSheetDismiss();
 					},
-					onSubmitEditing: () => {
-					},
+					onSubmitEditing: () => {},
 				}),
 			);
 		}
@@ -1324,7 +1362,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 								if (template.checklist)
 								{
-									this.checklistController.setChecklistTree(template.checklist);
+									// template.checklist - V2 flat format
+									this.checklistController.seedFromV2(template.checklist);
 								}
 							}
 
@@ -1491,6 +1530,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				|| this.task.endDatePlan !== this.initialTaskData.endDatePlan
 				|| this.task.allowTimeTracking !== this.initialTaskData.allowTimeTracking
 				|| this.task.timeEstimate !== this.initialTaskData.timeEstimate
+				|| this.#getChecklistSize() !== this.#initialChecklistSize
 				|| this.#hasUserFieldsChanged()
 			);
 		}
@@ -1531,7 +1571,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				hasSaveAndClose: false,
 				title: Loc.getMessage('TASKSMOBILE_TASK_CREATE_CANCEL_ALERT_TITLE'),
 				description: Loc.getMessage('TASKSMOBILE_TASK_CREATE_CANCEL_ALERT_DESCRIPTION'),
-				onClose: () => this.layoutWidget.close(),
+				onClose: () => {
+					this.#dropAbandonedDraft();
+					this.layoutWidget.close();
+				},
 			});
 		}
 
@@ -1574,6 +1617,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					});
 				}
 
+				// capture the controller before this.init() below (init recreates this.checklistController)
+				const checklistController = this.checklistController;
+
 				dispatch(
 					create({
 						taskId: this.guid,
@@ -1594,18 +1640,25 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							analyticsLabelParams.forEach((label) => {
 								new AnalyticsEvent(label).setStatus('error').send();
 							});
+
+							return;
 						}
-						else
+
+						// slices rebind entityId guid->realId on create; switch the controller to the real id
+						const realTaskId = payload.data?.task?.id;
+						analyticsLabelParams.forEach((label) => {
+							const analyticsEvent = new AnalyticsEvent(label).setStatus('success');
+							if (realTaskId)
+							{
+								analyticsEvent.setP1(`taskId_${realTaskId}`);
+							}
+							analyticsEvent.send();
+						});
+
+						if (realTaskId)
 						{
-							const createdTaskId = payload.data?.task?.id;
-							analyticsLabelParams.forEach((label) => {
-								const analyticsEvent = new AnalyticsEvent(label).setStatus('success');
-								if (createdTaskId)
-								{
-									analyticsEvent.setP1(`taskId_${createdTaskId}`);
-								}
-								analyticsEvent.send();
-							});
+							checklistController.setTaskId(realTaskId);
+							void checklistController.handleOnSave();
 						}
 					})
 					.catch(console.error)
@@ -1746,7 +1799,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 				checklist: { completed, uncompleted },
 				checklistDetails,
-				checklistFlatTree: this.checklistController.getChecklistFlatTree(),
+				// the tree lives in the checklist slices; no need to duplicate it here
 
 				startDatePlan: this.task.startDatePlan,
 				endDatePlan: this.task.endDatePlan,
@@ -1784,7 +1837,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				IM_CHAT_ID: this.task.imChatId,
 				IM_MESSAGE_ID: this.task.imMessageId,
 				UF_MAIL_MESSAGE: this.task.mailMessageId,
-				CHECKLIST: this.checklistController.getChecklistRequestData(),
+				// checklist is saved separately (V2), not via Task.add
 				START_DATE_PLAN: this.task.startDatePlan ? this.convertDateFromUnixToISOString(this.task.startDatePlan) : '',
 				END_DATE_PLAN: this.task.endDatePlan ? this.convertDateFromUnixToISOString(this.task.endDatePlan) : '',
 				ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N'),

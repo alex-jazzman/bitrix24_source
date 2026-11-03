@@ -6,6 +6,7 @@ import { type TabConfig } from '../catalog';
 import { type CatalogItem } from '../tab-controller';
 import { MY_TAB_ID } from '../constants';
 import { openUrl } from '../utils/links';
+import { getCatalogBrand } from '../utils/settings';
 
 type CatalogPopupItemDeleteMenuItem = {
 	title: string,
@@ -45,9 +46,12 @@ export class CatalogPopupItemDeleteAction
 
 	#confirmDelete(): void
 	{
+		const deleteDialogTextMessageId = getCatalogBrand() === 'alaio'
+			? 'VIBECODECONNECTOR_CATALOG_DELETE_DIALOG_TEXT_ALAIO'
+			: 'VIBECODECONNECTOR_CATALOG_DELETE_DIALOG_TEXT_BITRIX24';
 		const content = Tag.render`
 			<div class="vibecode-catalog__delete-dialog ui-text --sm" data-testid="vibecode-catalog-delete-dialog">
-				${Loc.getMessage('VIBECODECONNECTOR_CATALOG_DELETE_DIALOG_TEXT')}
+				${Loc.getMessage(deleteDialogTextMessageId)}
 			</div>
 		`;
 

@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/growing-text-area.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.vue3',
 		'ui.vue3.directives.hint',
 	],
 	'skip_core' => false,

@@ -145,6 +145,11 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_NO_HEA
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_NO_HEAD'] = 'Руководитель отдела пока не назначен, отчёты будет получать вышестоящий руководитель ';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_NO_DEPUTY'] = 'Заместитель руководителя отдела пока не назначен, отчёты будет получать вышестоящий руководитель ';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EMPTY'] = 'Отчёты будет получать вышестоящий руководитель';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORT_HAS_HEAD_NO_DEPUTY'] = 'Заместитель руководителя команды пока не назначен, отчёты будет получать руководитель команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORT_NO_HEAD_HAS_DEPUTY'] = 'Руководитель команды пока не назначен, отчёты будет получать заместитель руководителя команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORT_NO_HEAD_NO_DEPUTY'] = 'Руководитель команды и его заместитель пока не назначены, отчёты будет получать вышестоящий руководитель';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORT_NO_HEAD'] = 'Руководитель команды пока не назначен, отчёты будет получать вышестоящий руководитель';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORT_NO_DEPUTY'] = 'Заместитель руководителя команды пока не назначен, отчёты будет получать вышестоящий руководитель';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_TITLE'] = 'Кто подтверждает рабочие отчёты';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет подтверждать рабочие отчёты участников команды <b>#DEPARTMENT_NAME#</b>';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORTS_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет подтверждать рабочие отчёты сотрудников отдела';

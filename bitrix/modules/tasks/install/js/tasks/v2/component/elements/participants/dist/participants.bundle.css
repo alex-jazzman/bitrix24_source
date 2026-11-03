@@ -24,13 +24,13 @@
 
 @supports not selector(::-webkit-scrollbar) {
 	.tasks-field-users {
-		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-color: color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 11%, transparent) transparent;
 		scrollbar-width: thin;
 	}
 }
 
 .tasks-field-users::-webkit-scrollbar {
-	background-color: rgba(0, 0, 0, 0);
+	background-color: transparent;
 	width: var(--scrollbar-width);
 }
 
@@ -39,7 +39,7 @@
 }
 
 .tasks-field-users::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.11);
+	background: color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 11%, transparent);
 	border-radius: 5px;
 	cursor: pointer;
 	-webkit-transition: .2s;
@@ -48,7 +48,7 @@
 
 .tasks-field-user.--inline {
 	z-index: 1;
-	outline: 2px solid #fff;
+	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
 	border-radius: 1in;
 }
 
@@ -66,6 +66,32 @@
 	border-color: rgba(var(--ui-color-palette-white-base-rgb), 0.8);
 }
 
+/* A box of its own is what makes the link focusable: Chromium never focuses a
+   display:contents element, so the pill would stay keyboard-inoperable. min-width keeps
+   the name ellipsis working when the pill is narrower than the content. */
+.tasks-field-user-profile-link {
+	display: inline-flex;
+	min-width: 0;
+	color: inherit;
+	text-decoration: none;
+}
+
+/* The link lives inside .b24-hover-pill-content, whose overflow:hidden would clip a
+   descendant outline. Draw the keyboard-focus ring on the pill root instead - it has no
+   clip and hosts the pill's own focus ring already. */
+.b24-hover-pill:has(.tasks-field-user-profile-link:focus-visible) {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* Where the ring above is drawn it replaces the browser ring on the link, so focus is
+   marked once. Engines without :has() skip this block and keep the native ring. */
+@supports selector(:has(*)) {
+	.tasks-field-user-profile-link:focus-visible {
+		outline: none;
+	}
+}
+
 .tasks-field-users-footer {
 	display: flex;
 	margin-top: 8px;
@@ -77,10 +103,29 @@
 	margin: 0 0 0 6px;
 }
 
+/* users more button reset */
+.tasks-field-users-more {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+/* users more button reset end */
+
 .tasks-field-users-more {
 	color: var(--ui-color-base-4);
 	font-size: var(--ui-font-size-md);
 	cursor: pointer;
+}
+
+.tasks-field-users-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-users-more:hover {

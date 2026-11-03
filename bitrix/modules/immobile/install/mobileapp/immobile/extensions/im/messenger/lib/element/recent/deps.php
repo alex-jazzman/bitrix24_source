@@ -15,6 +15,7 @@ return [
 		'im:lib/theme',
 		'im:messenger/const',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/folder-eligibility',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/element/chat-title',

@@ -71,17 +71,13 @@ class currency extends CModule
 
 	function InstallDB()
 	{
-		global $DB, $APPLICATION;
-		$connection = Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 
-		if (!$DB->TableExists('b_catalog_currency'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/currency/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if ($this->errors !== false)
-		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode("", $this->errors));
 			return false;
 		}
@@ -90,67 +86,26 @@ class currency extends CModule
 
 		self::installCurrencies();
 
-		$eventManager = Main\EventManager::getInstance();
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockPropertyBuildList', 'currency',
-			'\Bitrix\Currency\Integration\IblockMoneyProperty', 'getUserTypeDescription');
-		$eventManager->registerEventHandlerCompatible('main', 'OnUserTypeBuildList', 'currency',
-			'\Bitrix\Currency\UserField\Money', 'getUserTypeDescription');
-		$eventManager->registerEventHandler(
-			'main',
-			'OnAfterLanguageAdd',
-			'currency',
-			'\Bitrix\Currency\CurrencyLangTable',
-			'onLanguageAddHandler',
-		);
-		$eventManager->registerEventHandler(
-			'main',
-			'\Bitrix\Main\Localization\Language::OnAfterAdd',
-			'currency',
-			'\Bitrix\Currency\CurrencyLangTable',
-			'onLanguageAddHandler',
-		);
-
 		return true;
 	}
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $APPLICATION;
-		$connection = Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 		if (Loader::includeModule('currency'))
 			CurrencyManager::clearCurrencyCache();
-		if (!isset($arParams["savedata"]) || $arParams["savedata"] != "Y")
+
+		$dropTables = !isset($arParams["savedata"]) || $arParams["savedata"] != "Y";
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/currency/install/db/".$connection->getType()."/uninstall.sql");
-			if($this->errors !== false)
-			{
-				$APPLICATION->ThrowException(implode('', $this->errors));
-				return false;
-			}
+			$this->errors = $migrationResult->getErrorMessages();
+			$APPLICATION->ThrowException(implode('', $this->errors));
+			return false;
 		}
 
-		$eventManager = Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockPropertyBuildList', 'currency',
-			'\Bitrix\Currency\Integration\IblockMoneyProperty', 'getUserTypeDescription');
-		$eventManager->unRegisterEventHandler('main', 'OnUserTypeBuildList', 'currency',
-			'\Bitrix\Currency\UserField\Money', 'getUserTypeDescription');
-		$eventManager->unRegisterEventHandler(
-			'main',
-			'OnAfterLanguageAdd',
-			'currency',
-			'\Bitrix\Currency\CurrencyLangTable',
-			'onLanguageAddHandler',
-		);
-		$eventManager->unRegisterEventHandler(
-			'main',
-			'\Bitrix\Main\Localization\Language::OnAfterAdd',
-			'currency',
-			'\Bitrix\Currency\CurrencyLangTable',
-			'onLanguageAddHandler',
-		);
-
-		CAgent::RemoveModuleAgents('currency');
 		ModuleManager::unRegisterModule('currency');
 
 		return true;

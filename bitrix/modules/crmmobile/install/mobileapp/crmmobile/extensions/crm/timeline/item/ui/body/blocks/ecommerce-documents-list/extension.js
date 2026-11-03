@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/ecommerce-documents-list
  */
 jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require, exports, module) => {
+	const { Text4, Text7 } = require('ui-system/typography/text');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
@@ -85,16 +86,14 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 						marginBottom: 3,
 					},
 				},
-				Text({
+				Text4({
 					style: {
-						fontSize: 14,
 						color: AppTheme.colors.base3,
 					},
 					text: title,
 				}),
-				Text({
+				Text4({
 					style: {
-						fontSize: 14,
 						color: AppTheme.colors.base1,
 						fontWeight: AmountFontWeight,
 					},
@@ -280,21 +279,17 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 								},
 								onClick,
 							},
-							Text({
+							Text4({
 								style: {
 									color: AppTheme.colors.accentMainLinks,
-									fontSize: 14,
-									lineHeight: 16,
 									width: '100%',
 								},
 								ellipsize: 'end',
 								text: documentDescription,
 							}),
-							Text({
+							Text4({
 								style: {
 									color: AppTheme.colors.accentMainLinks,
-									fontSize: 14,
-									lineHeight: 16,
 									width: '100%',
 								},
 								ellipsize: 'end',
@@ -313,10 +308,9 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 									marginLeft: 10,
 								},
 							},
-							Text({
+							Text7({
 								style: {
 									color: AppTheme.colors.accentSoftElementGreen1,
-									fontSize: 9,
 									fontWeight: '700',
 								},
 								text: labelText.toLocaleUpperCase(env.languageId),

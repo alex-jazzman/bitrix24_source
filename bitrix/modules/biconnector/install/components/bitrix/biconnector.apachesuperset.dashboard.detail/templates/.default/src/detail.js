@@ -7,7 +7,7 @@ export class Detail
 {
 	static create(config: DetailConfig): DetailInstance
 	{
-		new DetailInstance(config);
+		return new DetailInstance(config);
 	}
 
 	static createSkeleton(config: SkeletonConfig): Skeleton

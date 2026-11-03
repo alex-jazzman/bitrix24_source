@@ -20,12 +20,48 @@
 	transition: background-color 0.3s linear;
 }
 
+/**
+ * Invisible but focusable: the field keeps the native Tab stop, and Enter or Space open the system
+ * dialog. It covers the whole zone and keeps its pointer events, unlike the same field in the tile
+ * widget: there the label is stretched over the drop box and catches the click, while here the
+ * label is only the title of the zone and in SMALL and TINY it is hidden altogether. A drop is
+ * still handled by the container - its drop handler cancels the default action, so the files never
+ * land in the field itself.
+ */
+.ui-uploader-stack-drop-input {
+	position: absolute;
+	inset: 0;
+	/* the icon of the zone is translucent, so it makes a stacking context of its own and would
+	   otherwise cover the field and swallow the click in the middle of the zone */
+	z-index: 1;
+	padding: 0;
+	margin: 0;
+	opacity: 0;
+	border: 0;
+	cursor: pointer;
+}
+
+/**
+ * The field itself carries opacity 0, and a fully transparent element draws no outline, so the ring
+ * of the zone is drawn on its content instead. The content is stretched over the whole zone for
+ * exactly that reason: a ring around the text alone reads as a cropped one, and the ring has to
+ * repeat the dashed frame of the zone. The label carries no ring either - in SMALL and TINY it is
+ * hidden and the ring would be invisible there.
+ */
+.ui-uploader-stack-drop-input:focus-visible + .ui-uploader-stack-drop-area-content {
+	outline: 2px solid var(--ui-color-accent-brand-blue);
+	outline-offset: -2px;
+}
+
 .ui-uploader-stack-drop-area-content {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	min-width: 100%;
+	position: absolute;
+	inset: 0;
+	/* the same radius as the zone, or the corners of the ring would cut its dashed frame */
+	border-radius: 6px;
 }
 
 .ui-uploader-stack-drop-area-icon {

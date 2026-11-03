@@ -1,4 +1,12 @@
 import { ajax, Type } from 'main.core';
+// eslint-disable-next-line @bitrix24/bitrix24-rules/need-alias -- Runtime extension initializes BX.PULL.
+import 'pull.client';
+/* eslint-disable
+	@bitrix24/bitrix24-rules/need-alias,
+	@bitrix24/bitrix24-rules/prefer-inline-type-imports
+-- Keep runtime initialization separate from the type-only import. */
+import { type PullClient } from 'pull.client';
+/* eslint-enable @bitrix24/bitrix24-rules/need-alias, @bitrix24/bitrix24-rules/prefer-inline-type-imports */
 import {
 	type MigrationPublicStatus,
 	type MigrationStateChange,
@@ -11,6 +19,7 @@ const StatusBatchSize = 100;
 const ActiveStatuses = new Set<MigrationPublicStatus>([
 	'running',
 	'waiting',
+	'manual_waiting',
 	'switching',
 	'blocked',
 	'cancelling',
@@ -30,6 +39,7 @@ type StatusRequest = {
 
 let pendingStatusRequests = new Map<number, StatusRequest[]>();
 let statusBatchScheduled = false;
+const watchConsumers = new Map<number, number>();
 
 async function requestStatusChunk(ids: number[]): Promise<{ ids: number[], statuses: Record<string, unknown> }>
 {
@@ -37,10 +47,9 @@ async function requestStatusChunk(ids: number[]): Promise<{ ids: number[], statu
 		data: { mailboxIds: ids },
 	});
 
-	return {
-		ids,
-		statuses: response?.data?.statuses ?? {},
-	};
+	const statuses = response?.data?.statuses ?? {};
+
+	return { ids, statuses };
 }
 
 function requestStatus(mailboxId: number): Promise<unknown>
@@ -155,10 +164,12 @@ export class MigrationState
 	#initialization: Promise<MigrationStatusDto> | null = null;
 	#initialized = false;
 	#fingerprint = '';
+	#revision = 0;
 	#pullRevision = 0;
 	#retryTimer: ReturnType<typeof setTimeout> | null = null;
 	#retryAttempts = 0;
 	#destroyed = false;
+	#watching = false;
 	#onUnused: (state: MigrationState) => void;
 
 	constructor(mailboxId: number, onUnused: (state: MigrationState) => void = (): void => {})
@@ -176,7 +187,7 @@ export class MigrationState
 
 	initialize(): Promise<MigrationStatusDto>
 	{
-		if (this.#initialized)
+		if (this.#destroyed || this.#initialized)
 		{
 			return Promise.resolve(this.#status);
 		}
@@ -193,17 +204,25 @@ export class MigrationState
 				return this.#status;
 			}
 
-			if (pullRevision === this.#pullRevision)
+			if (pullRevision === this.#pullRevision && !this.#apply(status, 'initial'))
 			{
-				this.#apply(status ?? createHiddenStatus(this.#mailboxId), 'initial');
+				throw new Error(`Migration status for mailbox ${this.#mailboxId} is invalid.`);
 			}
-			this.#initialized = true;
-			this.#retryAttempts = 0;
-			this.#clearRetry();
+
+			if (!this.#destroyed && !this.#watching)
+			{
+				const consumers = watchConsumers.get(this.#mailboxId) ?? 0;
+				watchConsumers.set(this.#mailboxId, consumers + 1);
+				this.#watching = true;
+				if (consumers === 0)
+				{
+					(BX as typeof BX & { PULL: PullClient }).PULL.extendWatch(`mail_mailbox_migration_${this.#mailboxId}`);
+				}
+			}
 
 			return this.#status;
 		}).catch((): MigrationStatusDto => {
-			if (!this.#destroyed)
+			if (!this.#destroyed && !this.#initialized)
 			{
 				this.#scheduleRetry();
 			}
@@ -232,15 +251,25 @@ export class MigrationState
 		return this.#initialized;
 	}
 
+	getRevision(): number
+	{
+		return this.#revision;
+	}
+
 	subscribe(listener: MigrationStateListener): () => void
 	{
+		if (this.#destroyed)
+		{
+			return (): void => {};
+		}
+
 		this.#listeners.add(listener);
 		this.#listenerSubscriptions.set(listener, (this.#listenerSubscriptions.get(listener) ?? 0) + 1);
 		this.#subscriptionCount++;
 		let subscribed = true;
 
 		return (): void => {
-			if (!subscribed)
+			if (!subscribed || this.#destroyed)
 			{
 				return;
 			}
@@ -270,6 +299,20 @@ export class MigrationState
 	destroy(): void
 	{
 		this.#destroyed = true;
+		if (this.#watching)
+		{
+			this.#watching = false;
+			const consumers = (watchConsumers.get(this.#mailboxId) ?? 1) - 1;
+			if (consumers === 0)
+			{
+				watchConsumers.delete(this.#mailboxId);
+				(BX as typeof BX & { PULL: PullClient }).PULL.clearWatch(`mail_mailbox_migration_${this.#mailboxId}`);
+			}
+			else
+			{
+				watchConsumers.set(this.#mailboxId, consumers);
+			}
+		}
 		this.#clearRetry();
 		this.#listeners.clear();
 		this.#listenerSubscriptions.clear();
@@ -278,12 +321,9 @@ export class MigrationState
 
 	applyPull(payload: unknown): void
 	{
-		if (!this.#destroyed && this.#apply(payload, 'pull'))
+		if (!this.#destroyed)
 		{
-			this.#pullRevision++;
-			this.#initialized = true;
-			this.#retryAttempts = 0;
-			this.#clearRetry();
+			this.#apply(payload, 'pull');
 		}
 	}
 
@@ -296,7 +336,22 @@ export class MigrationState
 		}
 
 		const fingerprint = this.#getFingerprint(status);
-		if (fingerprint === this.#fingerprint)
+		const changed = fingerprint !== this.#fingerprint;
+		const recovered = !this.#initialized && this.#retryAttempts > 0;
+		if (changed || !this.#initialized)
+		{
+			this.#revision++;
+		}
+
+		if (source === 'pull')
+		{
+			this.#pullRevision++;
+		}
+		this.#initialized = true;
+		this.#retryAttempts = 0;
+		this.#clearRetry();
+
+		if (!changed && !recovered)
 		{
 			if (source === 'pull' && status.visibility === 'terminal' && status.status === 'done')
 			{
@@ -311,19 +366,12 @@ export class MigrationState
 				return true;
 			}
 
-			return false;
+			return true;
 		}
 
 		const previousActive = this.#active;
 		this.#status = status;
 		this.#fingerprint = fingerprint;
-
-		if (status.visibility === 'hidden')
-		{
-			this.#active = false;
-
-			return true;
-		}
 
 		const active = status.visibility === 'active';
 		if (active)
@@ -332,9 +380,10 @@ export class MigrationState
 		}
 
 		const change: MigrationStateChange = { status: { ...status }, active, previousActive, source };
+		const revision = this.#revision;
 		this.#listeners.forEach((listener): void => listener(change));
 
-		if (!active)
+		if (!active && revision === this.#revision)
 		{
 			this.#active = false;
 		}

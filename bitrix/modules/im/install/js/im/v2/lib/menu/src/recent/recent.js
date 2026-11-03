@@ -13,10 +13,9 @@ import {
 	UserType,
 	ActionByUserType,
 	UserRole,
-	FolderType,
 	type ApplicationContext,
 } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
+import { Analytics, AnalyticsSubSection } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
@@ -205,14 +204,18 @@ export class RecentMenu extends BaseMenu
 			return null;
 		}
 
-		const { chatId }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
+		const { chatId, type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
 		if (!chatId)
 		{
 			return null;
 		}
 
-		const personalFolders: ImModelFolder[] = this.store.getters['recent/folders/getList']
-			.filter((folder) => folder.type === FolderType.personal);
+		if (!FolderManager.canChatBeInFolder(type))
+		{
+			return null;
+		}
+
+		const personalFolders: ImModelFolder[] = this.store.getters['recent/folders/getPersonalList'];
 
 		const items = personalFolders.length === 0
 			? [this.#getCreateFolderMenuItem()]
@@ -574,6 +577,8 @@ export class RecentMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_LIB_MENU_CREATE_FOLDER'),
 			onClick: () => {
+				Analytics.getInstance().folder.onClickCreateFolder();
+
 				FolderManager.startCreation();
 				this.menuInstance.close();
 			},
@@ -620,6 +625,11 @@ export class RecentMenu extends BaseMenu
 		return {
 			title: folder.title,
 			onClick: () => {
+				Analytics.getInstance().folder.onAddToFolder({
+					dialogId: this.context.dialogId,
+					subSection: AnalyticsSubSection.recentContextMenu,
+				});
+
 				void (new FolderService()).addChats(folder.id, [{ chatId, dialogId: this.context.dialogId }]);
 				this.menuInstance.close();
 			},

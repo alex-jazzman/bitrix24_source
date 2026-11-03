@@ -3,8 +3,22 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, main_date, main_core_events, ui_notificationManager, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_taskSettingsPopup, tasks_v2_component_elements_settingsLabel, tasks_v2_component_elements_hint, tasks_v2_component_elements_hoverPill, tasks_v2_lib_idUtils, tasks_v2_lib_calendar, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_heightTransition, tasks_v2_provider_service_deadlineService, tasks_v2_provider_service_taskService, ui_system_chip_vue, ui_vue3_components_popup, ui_vue3_vuex, ui_datePicker, tasks_v2_lib_timezone, tasks_v2_lib_analytics, ui_system_input_vue, ui_vue3_components_button, ui_forms, tasks_v2_component_elements_questionMark, tasks_v2_component_elements_duration) {
+(function (exports, main_core, main_date, main_core_events, ui_vue3, ui_notificationManager, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_taskSettingsPopup, tasks_v2_component_elements_settingsLabel, tasks_v2_component_elements_hint, tasks_v2_component_elements_hoverPill, tasks_v2_lib_idUtils, tasks_v2_lib_calendar, tasks_v2_lib_deadlineRules, tasks_v2_lib_analytics, tasks_v2_lib_onboardingBanners, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_heightTransition, tasks_v2_provider_service_taskService, ui_system_chip_vue, ui_vue3_components_popup, ui_datePicker, tasks_v2_lib_timezone, ui_system_input_vue, ui_vue3_components_button, ui_forms, tasks_v2_component_elements_questionMark, tasks_v2_component_elements_duration) {
 	'use strict';
+
+	const unitDurations$2 = main_date.DurationFormat.getUnitDurations();
+	const taskDeadlineMonthDuration = 30 * unitDurations$2.d;
+	function formatExpiredDuration(duration) {
+		const absoluteDuration = Math.abs(duration);
+		const durationFormat = new main_date.DurationFormat(absoluteDuration);
+		if (absoluteDuration < taskDeadlineMonthDuration || durationFormat.years > 0) {
+			return durationFormat.formatClosest();
+		}
+		const months = Math.floor(absoluteDuration / taskDeadlineMonthDuration);
+		return new main_date.DurationFormat(months * unitDurations$2.m).format({
+			format: 'm'
+		});
+	}
 
 	// @vue/component
 	const DeadlineDefaultView = {
@@ -69,7 +83,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				required: true
 			}
 		},
-		emits: ['click', 'clear', 'keydown', 'settingsClick', 'update:isExceededHintShown'],
+		emits: ['click', 'clear', 'settingsClick', 'update:isExceededHintShown'],
 		computed: {
 			task() {
 				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
@@ -86,11 +100,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			expiredFormatted() {
 				return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
-					'#EXPIRED_DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
+					'#EXPIRED_DURATION#': formatExpiredDuration(this.expiredDuration)
 				});
 			},
 			hintBindElement() {
 				return this.$refs.deadlineIcon?.$el ?? this.$refs.deadline?.$el;
+			},
+			ariaLabel() {
+				if (this.readonly) {
+					return '';
+				}
+				return this.loc('TASKS_V2_DEADLINE_VALUE_ARIA_LABEL', {
+					'#VALUE#': this.deadlineFormatted
+				});
 			}
 		},
 		methods: {
@@ -98,13 +120,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return this.hintBindElement;
 			},
 			focusDeadline() {
-				this.$refs.deadline?.$el?.focus();
+				this.$refs.deadline?.$el?.querySelector('.b24-hover-pill-content')?.focus();
 			}
 		},
 		template: `
 		<div
 			class="tasks-field-deadline"
 			:class="{ '--expired': isExpired }"
+			data-testid="tasks-deadline"
 		>
 			<div class="tasks-field-deadline-inner">
 				<HoverPill
@@ -114,11 +137,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:noOffset="false"
 					:active="isPopupShown"
 					:alert="isExpired"
+					:ariaLabel
+					:ariaHaspopup="readonly ? '' : 'dialog'"
+					:ariaExpanded="readonly ? null : isPopupShown"
+					:clearAriaLabel="loc('TASKS_V2_DEADLINE_CLEAR_ARIA_LABEL')"
 					@click="$emit('click')"
 					@clear="$emit('clear')"
-					@keydown="$emit('keydown', $event)"
 					@mouseover="$emit('update:isExceededHintShown', true)"
 					@mouseleave="$emit('update:isExceededHintShown', false)"
+					data-testid="tasks-deadline-field-btn"
 					ref="deadline"
 				>
 					<BIcon
@@ -142,11 +169,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<div
 					v-if="!isFlowFilledOnAdd"
 					class="tasks-field-deadline-settings-label"
+					:class="{ '--visible': isHovered || isFieldHovered || isSettingsPopupShown }"
 					ref="settings"
 				>
 					<SettingsLabel
-						v-if="canChangeSettings && (isHovered || isFieldHovered || isSettingsPopupShown)"
+						v-if="canChangeSettings"
 						data-settings-label
+						data-testid="tasks-deadline-settings-btn"
+						:ariaLabel="loc('TASKS_V2_DEADLINE_SETTINGS_ARIA_LABEL')"
 						@click="$emit('settingsClick')"
 					/>
 				</div>
@@ -189,9 +219,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			deadlineTs: {
 				type: Number,
 				default: null
+			},
+			isPopupShown: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['keydown', 'update:isExceededHintShown'],
+		emits: ['click', 'update:isExceededHintShown'],
 		setup() {
 			return {
 				ChipSize: ui_system_chip_vue.ChipSize,
@@ -272,28 +306,67 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			hintBindElement() {
 				return this.$refs.deadline;
+			},
+			ariaLabel() {
+				return this.loc('TASKS_V2_DEADLINE_VALUE_ARIA_LABEL', {
+					'#VALUE#': this.text
+				});
 			}
+		},
+		watch: {
+			isPopupShown() {
+				this.syncAria();
+			},
+			readonly() {
+				this.syncAria();
+			},
+			text() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
 		},
 		methods: {
 			focusDeadline() {
-				this.$refs.deadline.focus();
+				this.$refs.chip?.$el?.focus();
 			},
 			getHintBindElement() {
 				return this.hintBindElement;
+			},
+			handleKeydown(event) {
+				if (this.readonly || event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.$emit('click');
+			},
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				const isTrigger = !this.readonly;
+				main_core.Dom.attr(el, 'role', isTrigger ? 'button' : null);
+				main_core.Dom.attr(el, 'aria-haspopup', isTrigger ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', isTrigger ? String(this.isPopupShown) : null);
+				main_core.Dom.attr(el, 'aria-label', isTrigger ? this.ariaLabel : null);
 			}
 		},
 		template: `
 		<div
 			class="tasks-field-deadline-chip"
 			:class="{ '--read-only': readonly }"
-			@keydown="$emit('keydown', $event)"
 			ref="deadline"
+			@keydown="handleKeydown"
 		>
 			<Chip
 				:size="ChipSize.Sm"
 				:text
 				:design
 				rounded
+				ref="chip"
+				@click="$emit('click')"
 			/>
 		</div>
 	`
@@ -306,7 +379,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		inject: {
 			analytics: {},
-			cardType: {}
+			cardType: {},
+			analyticsSubSection: {
+				default: tasks_v2_const.Analytics.SubSection.TaskCard
+			}
 		},
 		props: {
 			taskId: {
@@ -331,26 +407,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			};
 		},
 		computed: {
-			...ui_vue3_vuex.mapGetters({
-				currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
-			}),
 			task() {
 				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
 			},
-			isEdit() {
-				return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
-			},
-			isCreator() {
-				return this.currentUserId === this.task.creatorId;
-			},
-			isAdmin() {
-				return tasks_v2_core.Core.getParams().rights.user.admin;
-			},
-			canChangeDeadlineWithoutLimitation() {
-				return !this.isEdit || this.isCreator || this.task.rights.edit || this.isAdmin;
-			},
 			maxDeadlineDate() {
-				if (this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChangeDate) {
+				if (tasks_v2_lib_deadlineRules.deadlineRules.canChangeWithoutLimitation(this.taskId) || !this.task.maxDeadlineChangeDate) {
 					return null;
 				}
 				const dateFormat = main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
@@ -405,6 +466,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return this.loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_DATE_HINT', {
 					'#DATE#': date
 				});
+			},
+			limitReasonId() {
+				return `tasks-deadline-preset-limit-${this.taskId}`;
 			}
 		},
 		created() {
@@ -430,7 +494,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							const compareDate = ui_datePicker.createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 							return compareDate > this.maxDeadlineDate;
 						},
-						textColor: '#DFE0E3'
+						textColor: 'var(--ui-color-base-6)'
 					});
 				}
 				const picker = new ui_datePicker.DatePicker({
@@ -518,6 +582,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				tasks_v2_lib_analytics.analytics.sendDeadlineSet(this.analytics, {
 					element,
 					cardType: this.cardType,
+					subSection: this.analyticsSubSection,
 					taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
 					viewersCount: this.task.auditorsIds?.length ?? 0,
 					coexecutorsCount: this.task.accomplicesIds?.length ?? 0
@@ -558,18 +623,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			</div>
 			<div class="tasks-field-deadline-presets">
 				<template v-for="(preset, key) of presets" :key>
-					<div
+					<button
+						type="button"
 						:data-task-preset-id="preset.id"
 						:class="['tasks-field-deadline-preset', { '--disabled': preset.disabled }]"
+						:aria-disabled="preset.disabled ? 'true' : null"
+						:aria-describedby="preset.disabled && limitHintText ? limitReasonId : null"
 						@click="selectPresetDate(preset.timestamp, preset.disabled)"
 						@mouseenter="focusDate(preset.timestamp, preset.disabled, $event)"
 						@mouseleave="focusDate(null, preset.disabled, $event)"
 					>
 						<div class="tasks-field-deadline-preset-title">{{ preset.title }}</div>
 						<div class="tasks-field-deadline-preset-date">{{ preset.formatted }}</div>
-					</div>
+					</button>
 				</template>
 			</div>
+			<span v-if="limitHintText" :id="limitReasonId" class="tasks-field-deadline-preset-limit-reason">{{ limitHintText }}</span>
 			<div v-if="false" class="tasks-field-deadline-settings">
 			</div>
 			<Hint
@@ -622,7 +691,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					padding: 24,
 					offsetTop: 5,
 					offsetLeft: -100,
-					targetContainer: document.body
+					targetContainer: document.body,
+					focusTrap: true,
+					closeByEsc: true,
+					ariaLabel: this.loc('TASKS_V2_DEADLINE_ARIA_LABEL')
 				};
 				if (this.coordinates?.x) {
 					const bindElementRect = this.bindElement.getBoundingClientRect();
@@ -690,8 +762,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					width: 472,
 					height: 324,
 					offsetLeft: -24,
-					targetContainer: document.body
+					targetContainer: document.body,
+					focusTrap: true,
+					closeByEsc: true,
+					ariaLabelledBy: this.titleId
 				};
+			},
+			titleId() {
+				return `tasks-deadline-change-reason-title-${this.taskId}`;
 			},
 			reason: {
 				get() {
@@ -717,15 +795,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		template: `
 		<Popup :options @close="handleClose">
 			<div class="tasks-deadline-change-reason-popup-header">
-				<div class="tasks-deadline-change-reason-popup-title">
+				<div :id="titleId" class="tasks-deadline-change-reason-popup-title">
 					{{ loc('TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_TITLE') }}
 				</div>
-				<BIcon
-					:name="Outline.CROSS_L"
-					hoverable
-					class="tasks-deadline-change-reason-popup-close-icon"
+				<button
+					type="button"
+					class="tasks-deadline-change-reason-popup-close"
+					:aria-label="loc('TASKS_V2_DEADLINE_CHANGE_REASON_CLOSE_ARIA_LABEL')"
 					@click="handleClose"
-				/>
+				>
+					<BIcon
+						:name="Outline.CROSS_L"
+						hoverable
+						class="tasks-deadline-change-reason-popup-close-icon"
+						aria-hidden="true"
+					/>
+				</button>
 			</div>
 			<div class="tasks-deadline-change-reason-popup-content">
 				<div class="tasks-deadline-change-reason-popup-message">
@@ -880,6 +965,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<Duration
 			v-model="duration"
 			:label="loc('TASKS_V2_DEADLINE_AFTER_CUSTOM')"
+			:unitAriaLabel="loc('TASKS_V2_DEADLINE_AFTER_DURATION_UNIT_ARIA_LABEL')"
 			:matchesWorkTime="task?.matchesWorkTime"
 			@menuShown="freeze"
 			@menuHidden="unfreeze"
@@ -920,7 +1006,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					width: 300,
 					padding: 24,
 					offsetTop: 5,
-					targetContainer: document.body
+					targetContainer: document.body,
+					focusTrap: true,
+					closeByEsc: true,
+					ariaLabel: this.loc('TASKS_V2_DEADLINE_ARIA_LABEL')
 				};
 			}
 		},
@@ -948,6 +1037,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	const unitDurations = main_date.DurationFormat.getUnitDurations();
 
+	// SC-003: the aha popup UI (popup + css + image asset) is loaded lazily — only a new
+	// user past the counter threshold ever sees it, so the heavy extension must not sit in
+	// the hot deadline field's rel. The promise is cached module-wide so many mounted
+	// deadline fields load the extension at most once. On failure the cached promise is
+	// dropped (and the error rethrown), so a rejected load is not memoized: a later trigger
+	// retries instead of re-awaiting a permanently rejected promise. Consumers swallow the
+	// rejection, so it never surfaces as an unhandled rejection.
+	let deadlineAhaExtensionPromise = null;
+	function loadDeadlineAha() {
+		deadlineAhaExtensionPromise ??= main_core.Runtime.loadExtension('tasks.v2.component.onboarding.deadline-aha').catch(error => {
+			deadlineAhaExtensionPromise = null;
+			throw error;
+		});
+		return deadlineAhaExtensionPromise;
+	}
+
+	// SC-001: carries the banner's async-load failure from DeadlineBanner.onError (which has
+	// no component instance in scope) to the Deadline field's errorCaptured() below. The
+	// acquireSlot() mutex guarantees at most one banner load is ever in flight, so a single
+	// module-scoped slot needs no per-instance keying.
+	let deadlineBannerLoadError = null;
+
 	// @vue/component
 	const Deadline = {
 		components: {
@@ -962,10 +1073,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel,
 			TaskSettingsPopup: tasks_v2_component_taskSettingsPopup.TaskSettingsPopup,
 			DeadlineDefaultView,
-			DeadlineChipView
+			DeadlineChipView,
+			// SC-001: inline onboarding banner loaded lazily so its extension (popup/css/
+			// asset) stays out of the hot deadline field's rel; it renders only once the
+			// v-if gate below arms it for a new user (a rare truthy -> falsy deadline change).
+			// Built with a raw async component (not BitrixVue.defineAsyncComponent, whose loader
+			// swallows load failures) so a failed chunk load reaches onError and frees the
+			// onboarding slot the watcher grabbed — otherwise the mutex would suppress
+			// SC-002/SC-003 for the whole card session.
+			DeadlineBanner: ui_vue3.defineAsyncComponent({
+				loader: () => main_core.Runtime.loadExtension('tasks.v2.component.onboarding.deadline-banner').then(exports => exports.DeadlineBanner),
+				onError(error, retry, fail) {
+					// The banner chunk failed to load: the async component will never mount and
+					// the user can never dismiss it. Release the shared onboarding slot so the
+					// mutex stops suppressing SC-002/SC-003 (best-effort, mirrors
+					// onboardingBanners.setViewed()). fail() settles the wrapper (nulls Vue's
+					// cached request so a later card retries) and routes the error to the
+					// Deadline field's errorCaptured(), which disarms this instance's banner.
+					tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('deadline');
+					deadlineBannerLoadError = error;
+					fail(error);
+				}
+			})
 		},
 		directives: {
 			hint: ui_vue3_directives_hint.hint
+		},
+		inject: {
+			analytics: {},
+			cardType: {}
 		},
 		props: {
 			taskId: {
@@ -993,7 +1129,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		setup() {
 			return {
 				deadlineMeta,
-				DeadlineState: tasks_v2_const.DeadlineState
+				DeadlineState: tasks_v2_const.DeadlineState,
+				deadlineAha: null
 			};
 		},
 		data() {
@@ -1005,6 +1142,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isExceededHintShown: false,
 				isChangeReasonPopupShown: false,
 				isDeadlineDeniedHintShown: false,
+				isDeadlineOnboardingShown: false,
 				dateTs: null,
 				externalBindElement: null,
 				coordinates: null,
@@ -1024,7 +1162,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
 			},
 			taskDeadline() {
-				return this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs;
+				return tasks_v2_lib_deadlineRules.deadlineRules.getCurrentDeadline(this.taskId);
 			},
 			deadlineTs() {
 				return this.dateTs ?? this.taskDeadline;
@@ -1049,7 +1187,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				if (this.isExpired && this.compact) {
 					return this.loc('TASKS_V2_TASK_LIST_DEADLINE_EXPIRED', {
-						'#DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
+						'#DURATION#': formatExpiredDuration(this.expiredDuration)
 					});
 				}
 				return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
@@ -1076,23 +1214,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (this.isCompactReadonly) {
 					return true;
 				}
-				return !this.task.rights.deadline || this.exceededChangeCount || this.isFlowFilledOnAdd;
+				return !tasks_v2_lib_deadlineRules.deadlineRules.canChange(this.taskId) || this.isFlowFilledOnAdd;
 			},
 			isCompactReadonly() {
 				return this.compact && [tasks_v2_const.TaskStatus.Completed, tasks_v2_const.TaskStatus.SupposedlyCompleted, tasks_v2_const.TaskStatus.Deferred].includes(this.taskStatus);
 			},
-			canChangeDeadlineWithoutLimitation() {
-				const isCreator = tasks_v2_core.Core.getParams().currentUser.id === this.task.creatorId;
-				return !this.isEdit || isCreator || this.task.rights.edit || tasks_v2_core.Core.getParams().rights.user.admin;
-			},
-			requireChangeReason() {
-				return this.task.requireDeadlineChangeReason && !this.canChangeDeadlineWithoutLimitation;
-			},
 			exceededChangeCount() {
-				if (this.isTemplate || this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChanges) {
-					return false;
-				}
-				return this.task.deadlineChangeCount >= this.task.maxDeadlineChanges;
+				return tasks_v2_lib_deadlineRules.deadlineRules.isChangeCountExceeded(this.taskId);
 			},
 			canChangeTooltip() {
 				if (this.isCompactReadonly) {
@@ -1123,6 +1251,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					this.recalculateDeadlineAfterFromPresets();
 				}
 				this.$emit('isSettingsPopupShown', value);
+			},
+			// SC-001: react to deadline changes.
+			'task.deadlineTs': function watchTaskDeadlineTs(value, oldValue) {
+				// The same component is mounted in compact mode inside V2 list rows
+				// (task-line); the inline banner is designed for the card layout only.
+				// readonly is excluded too: the banner CTA runs handleClick() -> showPopup() only
+				// when !readonly, so arming it in a readonly field would be a no-op that still holds
+				// the shared onboarding slot.
+				if (this.isTemplate || this.compact || this.readonly) {
+					return;
+				}
+				if (!value && oldValue) {
+					// SC-001 / ALG-01: show inline banner when deadline becomes empty.
+					if (!this.isDeadlineOnboardingShown && tasks_v2_lib_onboardingBanners.onboardingBanners.shouldShow('deadline') && tasks_v2_lib_onboardingBanners.onboardingBanners.acquireSlot('deadline')) {
+						this.isDeadlineOnboardingShown = true;
+					}
+				} else if (value && this.isDeadlineOnboardingShown) {
+					// AC-004: hide banner when deadline is actually set.
+					this.isDeadlineOnboardingShown = false;
+					tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('deadline');
+				}
 			}
 		},
 		mounted() {
@@ -1131,6 +1280,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.nowTs = Date.now();
 			}, 1000);
 			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
+
+			// SC-003 (AC-013): show aha popup on the new-task create form only. The
+			// !isTemplate && !isEdit && !readonly gate stays here — before any load/allocation —
+			// so edit rows, templates and readonly states (e.g. a flow with an auto deadline)
+			// never touch the aha extension (RF2-8). Readonly is excluded because the CTA runs
+			// handleClick() -> showPopup() only when !readonly, so the aha popup there would be a no-op.
+			if (!this.isTemplate && !this.isEdit && !this.readonly) {
+				void this.tryShowDeadlineAha();
+			}
 		},
 		created() {
 			this.showErrorDebounce = main_core.Runtime.debounce(this.showError, 300);
@@ -1142,15 +1300,120 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			tasks_v2_lib_heightTransition.heightTransition.animate(this.$refs.container);
 		},
 		beforeUnmount() {
+			// Guards the async tryShowDeadlineAha() continuation from creating a popup for a
+			// component that has already unmounted (create form closed while loading).
+			this.isUnmounted = true;
 			clearInterval(this.nowTsInterval);
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
+
+			// SC-001: release slot if banner is still shown (e.g. component unmounted before user closed it).
+			if (this.isDeadlineOnboardingShown) {
+				tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('deadline');
+				this.isDeadlineOnboardingShown = false;
+			}
+
+			// SC-003: destroy aha popup (releases slot internally if still shown).
+			this.deadlineAha?.destroy();
+			this.deadlineAha = null;
+		},
+		// SC-001: the async banner failed to load (its slot was already freed in
+		// DeadlineBanner.onError). Disarm this instance's banner and stop the error here
+		// (return false) so it does not reach the global handler. Identity-matched against the
+		// banner load error so unrelated descendant errors keep propagating (return true).
+		errorCaptured(error) {
+			const isBannerLoadError = error === deadlineBannerLoadError;
+			if (isBannerLoadError) {
+				deadlineBannerLoadError = null;
+				this.isDeadlineOnboardingShown = false;
+			}
+			return !isBannerLoadError;
 		},
 		methods: {
+			// AC-003: user closed the SC-001 inline banner via × button.
+			onDeadlineOnboardingClose() {
+				tasks_v2_lib_analytics.analytics.sendBannerInteraction(this.analytics, {
+					event: tasks_v2_const.Analytics.Event.CloseSuggestBanner,
+					element: tasks_v2_const.Analytics.Element.Deadline,
+					cardType: this.cardType
+				});
+				tasks_v2_lib_onboardingBanners.onboardingBanners.setViewed('deadline');
+				this.isDeadlineOnboardingShown = false;
+				tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('deadline');
+			},
+			// SC-001 CTA: user clicked the title → open deadline picker only.
+			// Banner is hidden only after deadline is actually set (AC-004), not here.
+			onDeadlineOnboardingAction() {
+				tasks_v2_lib_analytics.analytics.sendBannerInteraction(this.analytics, {
+					event: tasks_v2_const.Analytics.Event.ClickSuggestBanner,
+					element: tasks_v2_const.Analytics.Element.Deadline,
+					cardType: this.cardType
+				});
+				this.handleClick();
+			},
+			// SC-003: lazy-load the aha popup extension, then show it. The lightweight
+			// shouldShow() gate runs BEFORE the load so the heavy extension is fetched only
+			// for the rare qualifying new user; the slot mutex and its re-check stay inside
+			// DeadlineAha.tryShow() so the show sequencing (AC-016) is unchanged.
+			async tryShowDeadlineAha() {
+				if (!tasks_v2_lib_onboardingBanners.onboardingBanners.shouldShow('deadlineAha')) {
+					return;
+				}
+
+				// SC-003: skip the aha when the auto deadline is off (defaultDeadlineInSeconds <= 0) —
+				// its text ("a deadline of #DAYS# days is set automatically") would read "0 days".
+				// Gate BEFORE loadDeadlineAha() so the heavy aha extension is never fetched in that
+				// case; the getter comes from the already-loaded core (Model.Interface), not the aha
+				// extension, so it is safe to read here. The slot mutex and setViewed live inside
+				// DeadlineAha.tryShow(), so returning here does not burn the one-shot viewed state:
+				// the popup can still show once the auto deadline is enabled.
+				const secondsInDay = 86400;
+				const deadlineUserOption = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Interface}/deadlineUserOption`];
+				if (!(Number(deadlineUserOption?.defaultDeadlineInSeconds) > 0)) {
+					return;
+				}
+
+				// Best-effort: if the aha popup extension fails to load, silently skip the show
+				// (mirrors onboardingBanners.setViewed()); loadDeadlineAha() dropped the cached
+				// rejection so a later trigger retries.
+				const ahaModule = await loadDeadlineAha().catch(() => null);
+				if (!ahaModule || this.isUnmounted) {
+					return;
+				}
+				const {
+					DeadlineAha
+				} = ahaModule;
+
+				// SC-003: feed the real default-deadline duration into the aha text
+				// (#DAYS# + plural) instead of a hardcoded number.
+				const defaultDeadlineDays = Math.round((Number(deadlineUserOption?.defaultDeadlineInSeconds) || 0) / secondsInDay);
+				this.deadlineAha = new DeadlineAha(this.taskId, () => this.hintBindElement,
+				// SC-003 CTA: open the default-deadline settings (not the one-off picker for this
+				// task) — the popup text promises the deadline is saved for new tasks, which is
+				// what TaskSettingsPopup + handleSave persist.
+				() => {
+					tasks_v2_lib_analytics.analytics.sendBannerInteraction(this.analytics, {
+						event: tasks_v2_const.Analytics.Event.ClickSuggestBanner,
+						element: tasks_v2_const.Analytics.Element.Refresh,
+						cardType: this.cardType
+					});
+					this.isSettingsPopupShown = true;
+				},
+				// SC-003: genuine close (× / outside click / drag / destroy). DeadlineAha routes
+				// the CTA path away from this callback, so one interaction sends exactly one event.
+				() => {
+					tasks_v2_lib_analytics.analytics.sendBannerInteraction(this.analytics, {
+						event: tasks_v2_const.Analytics.Event.CloseSuggestBanner,
+						element: tasks_v2_const.Analytics.Element.Refresh,
+						cardType: this.cardType
+					});
+				}, defaultDeadlineDays);
+				this.deadlineAha.tryShow();
+			},
 			handleOpenDeadlinePickerEvent(event) {
 				const {
 					taskId
 				} = event.getData();
-				if (Number(taskId) === Number(this.taskId)) {
+				if (String(taskId) === String(this.taskId)) {
 					setTimeout(() => {
 						tasks_v2_lib_fieldHighlighter.fieldHighlighter.scrollToField(deadlineMeta.id);
 						if (!this.readonly) {
@@ -1178,7 +1441,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.isPopupShown = true;
 			},
 			handleCrossClick() {
-				if (this.requireChangeReason) {
+				if (tasks_v2_lib_deadlineRules.deadlineRules.requiresChangeReason(this.taskId)) {
 					this.isChangeReasonPopupShown = true;
 					this.saveCallback = this.clearDeadline;
 				} else {
@@ -1186,7 +1449,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			},
 			handleClose() {
-				if (this.requireChangeReason && this.dateTs && this.dateTs !== this.taskDeadline) {
+				// A single close is reported twice: once by the popup content and once by main.popup,
+				// which fires onPopupClose when the unmounted wrapper destroys the instance. By the
+				// second one the save may have already reset dateTs, and an empty dateTs reads as
+				// "no deadline" for a template — that is what used to clear a just picked deadline.
+				if (!this.isPopupShown) {
+					return;
+				}
+				if (tasks_v2_lib_deadlineRules.deadlineRules.requiresChangeReason(this.taskId) && this.dateTs && this.dateTs !== this.taskDeadline) {
 					this.isChangeReasonPopupShown = true;
 					this.saveCallback = this.saveDeadline;
 				} else {
@@ -1202,47 +1472,53 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				await this.saveCallback();
 				this.saveCallback = null;
 			},
-			handleKeydown(event) {
-				if (event.key === 'Enter' && !(event.ctrlKey || event.metaKey)) {
-					void this.handleClick();
-				}
-			},
 			async saveDeadline() {
-				if (this.requireChangeReason && this.changeReason.trim() === '') {
+				const result = await tasks_v2_lib_deadlineRules.deadlineRules.saveDeadline(this.taskId, {
+					deadlineTs: this.dateTs,
+					changeReason: this.changeReason,
+					deadlineManuallySet: this.resolveDeadlineManuallySet(this.dateTs)
+				});
+				if (result.status === tasks_v2_lib_deadlineRules.DeadlineSaveStatus.ReasonRequired) {
 					this.dateTs = this.taskDeadline;
 					return;
 				}
-				if (this.dateTs) {
-					await this.setDeadline(this.dateTs);
-				}
-				if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges) {
-					void tasks_v2_provider_service_deadlineService.deadlineService.updateDeadlineChangeCount(this.task.id);
-				}
+				this.handleSaveResult(result);
 			},
 			async clearDeadline() {
-				if (this.requireChangeReason && this.changeReason.trim() === '') {
+				const result = await tasks_v2_lib_deadlineRules.deadlineRules.clearDeadline(this.taskId, {
+					changeReason: this.changeReason,
+					deadlineManuallySet: this.resolveDeadlineManuallySet(0)
+				});
+				if (result.status === tasks_v2_lib_deadlineRules.DeadlineSaveStatus.ReasonRequired) {
 					return;
 				}
-				await this.setDeadline(0);
+				this.handleSaveResult(result);
+				await this.$nextTick();
+				this.$refs.deadlineView?.focusDeadline();
 			},
-			async setDeadline(dateTs) {
-				if (this.isTemplate) {
-					await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-						deadlineAfter: dateTs
-					});
-				} else {
-					tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(true);
-					const result = await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-						deadlineTs: dateTs,
-						deadlineChangeReason: this.changeReason
-					});
-					tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
-					if (result[tasks_v2_const.Endpoint.TaskDeadlineUpdate]?.length) {
-						const error = result[tasks_v2_const.Endpoint.TaskDeadlineUpdate][0];
-						this.showErrorDebounce(error);
-					}
+			handleSaveResult(result) {
+				if (result.status === tasks_v2_lib_deadlineRules.DeadlineSaveStatus.Failed) {
+					this.showErrorDebounce(result.errors?.[0]);
 				}
-				this.dateTs = null;
+				if (result.status !== tasks_v2_lib_deadlineRules.DeadlineSaveStatus.Skipped || this.dateTs === this.taskDeadline) {
+					this.dateTs = null;
+				}
+			},
+			// SC-003 (AC-013): record that the user set the deadline through the field while
+			// creating a task. Read by the create form's addTask() and forwarded to OnTaskAdd as
+			// the manual-deadline marker, so an accepted default auto deadline is not mistaken for
+			// a manual one. A cleared deadline (dateTs === 0) is not manual. Only relevant during
+			// creation; edit flows never read it, so the field is omitted (not just falsy) for them.
+			resolveDeadlineManuallySet(dateTs) {
+				if (this.isEdit) {
+					return undefined;
+				}
+
+				// Do not treat the calendar closing on the unchanged auto deadline as a manual set:
+				// the flag is true only for a real non-empty change — dateTs > 0 and it differs from
+				// the pre-update this.taskDeadline. Once manual it stays manual, so a later no-op
+				// close does not demote it back to auto.
+				return dateTs > 0 && (this.task.deadlineManuallySet === true || dateTs !== this.taskDeadline);
 			},
 			recalculateDeadlineAfterFromPresets() {
 				if (!this.selectedPreset) {
@@ -1250,7 +1526,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				this.dateTs = this.calculateDayDuration() * this.selectedPreset.multiplier;
 				void this.saveDeadline();
-				this.$refs.deadline?.$el?.focus();
+				this.$refs.deadlineView?.focusDeadline();
 			},
 			calculateDayDuration() {
 				return this.task?.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations.d;
@@ -1298,8 +1574,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:deadlineTs
 				:isFlowFilledOnAdd
 				:isTemplate
+				:isPopupShown
 				@click="handleClick"
-				@keydown="handleKeydown"
 				ref="deadlineView"
 			/>
 			<DeadlineDefaultView
@@ -1320,12 +1596,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:isSettingsPopupShown
 				@click="handleClick"
 				@clear="handleCrossClick"
-				@keydown="handleKeydown"
 				@settingsClick="isSettingsPopupShown = true"
 				@update:isExceededHintShown="isExceededHintShown = $event"
 				ref="deadlineView"
 			/>
 		</div>
+		<DeadlineBanner
+			v-if="!compact && isDeadlineOnboardingShown"
+			@close="onDeadlineOnboardingClose"
+			@action="onDeadlineOnboardingAction"
+		/>
 		<DeadlinePopup
 			v-if="!isTemplate && isPopupShown"
 			v-model:deadlineTs="dateTs"
@@ -1383,8 +1663,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	exports.Deadline = Deadline;
 	exports.DeadlineAfterPopup = DeadlineAfterPopup;
+	exports.DeadlineChangeReasonPopup = DeadlineChangeReasonPopup;
 	exports.DeadlinePopup = DeadlinePopup;
 	exports.deadlineMeta = deadlineMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Main, BX.Event, BX.UI.NotificationManager, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.UI.System.Chip.Vue, BX.UI.Vue3.Components, BX.Vue3.Vuex, BX.UI.DatePicker, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.UI.System.Input.Vue, BX.Vue3.Components, BX, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Main, BX.Event, BX.Vue3, BX.UI.NotificationManager, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.UI.System.Chip.Vue, BX.UI.Vue3.Components, BX.UI.DatePicker, BX.Tasks.V2.Lib, BX.UI.System.Input.Vue, BX.Vue3.Components, BX, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements);
 //# sourceMappingURL=deadline.bundle.js.map

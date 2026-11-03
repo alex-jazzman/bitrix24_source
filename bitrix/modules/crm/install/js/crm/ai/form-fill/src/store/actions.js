@@ -245,7 +245,7 @@ export default {
 
 	async applyAllAiFields({ dispatch, getters })
 	{
-		for (const field: ConflictField of getters.conflictFields)
+		for (const field: ConflictField of getters.conflictFieldsInEditor)
 		{
 			if (field.isAiValuesUsed)
 			{
@@ -257,7 +257,7 @@ export default {
 
 	revertAllAiFields({ dispatch, getters })
 	{
-		for (const field: ConflictField of getters.conflictFields)
+		for (const field: ConflictField of getters.conflictFieldsInEditor)
 		{
 			if (!field.isAiValuesUsed)
 			{

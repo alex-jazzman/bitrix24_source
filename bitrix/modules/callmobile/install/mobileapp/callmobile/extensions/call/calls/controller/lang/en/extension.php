@@ -48,6 +48,7 @@ $MESS["MOBILE_CALL_ALREADY_JOINED"] = "You cannot connect to the call from multi
 $MESS["MOBILE_CALL_APP_REQUIRED"] = "Application is required";
 $MESS["MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED"] = "Cannot join the call because it has ended.";
 $MESS["MOBILE_CALL_ERROR"] = "Error";
+$MESS["MOBILE_CALL_FINISH_FOR_ALL_ERROR"] = "Could not end the call for all participants. Please try again.";
 $MESS["MOBILE_CALL_INTERNAL_ERROR"] = "Internal application error. Error code: #ERROR_CODE#";
 $MESS["MOBILE_CALL_JOIN_GROUP_CALL"] = "Connect to group call";
 $MESS["MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED"] = "Open Bitrix24 on the web in your browser to join this call.";

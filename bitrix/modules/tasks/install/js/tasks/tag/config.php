@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/tag.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.sidepanel.layout',
 		'main.core.events',
 		'ui.notification',
+		'ui.sidepanel.layout',
 	],
 	'skip_core' => false,
 ];

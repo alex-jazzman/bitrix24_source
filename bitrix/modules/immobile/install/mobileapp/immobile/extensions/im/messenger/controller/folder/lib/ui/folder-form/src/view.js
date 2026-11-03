@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/folder/lib/ui/folder-form/view', (require, ex
 	const { Color } = require('tokens');
 	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('im/messenger/loc');
+	const { getMaxChatsPerFolder, getMaxFolderTitleLength } = require('im/messenger/const');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { FolderLoadableButton } = require('im/messenger/controller/folder/lib/ui/loadable-button');
@@ -13,8 +14,7 @@ jn.define('im/messenger/controller/folder/lib/ui/folder-form/view', (require, ex
 	const { MessengerIcon, IconType } = require('im/messenger/assets/icon');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const MAX_CHATS_PER_FOLDER = 50;
-
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	/**
 	 * @class FolderFormView
 	 *
@@ -25,7 +25,8 @@ jn.define('im/messenger/controller/folder/lib/ui/folder-form/view', (require, ex
 	 * @param {boolean} [props.showRemoveChats=true] - show remove buttons on chat items
 	 * @param {string} [props.initialTitle=''] - initial folder title
 	 * @param {string[]} [props.initialChatIds=[]] - initial dialogIds
-	 * @param {number} [props.maxTitleLength=30] - title length limit
+	 * @param {number} [props.maxChatCount] - chat count limit
+	 * @param {number} [props.maxTitleLength] - title length limit
 	 * @param {Function} props.onSubmit - ({ title, chatIds }) => void
 	 * @param {Function} props.onAddChats - (currentChatIds, callback) => void
 	 * @param {object} props.layoutWidget
@@ -110,7 +111,12 @@ jn.define('im/messenger/controller/folder/lib/ui/folder-form/view', (require, ex
 
 		get maxChatCount()
 		{
-			return this.props.maxChatCount || MAX_CHATS_PER_FOLDER;
+			return this.props.maxChatCount ?? getMaxChatsPerFolder();
+		}
+
+		get maxTitleLength()
+		{
+			return this.props.maxTitleLength ?? getMaxFolderTitleLength();
 		}
 
 		render()
@@ -171,7 +177,7 @@ jn.define('im/messenger/controller/folder/lib/ui/folder-form/view', (require, ex
 								color: Theme.colors.base1,
 							},
 							value: this.state.title,
-							maxLength: this.props.maxTitleLength || 30,
+							maxLength: this.maxTitleLength,
 							placeholder: Loc.getMessage('IMMOBILE_FOLDER_FORM_TITLE_PLACEHOLDER'),
 							placeholderTextColor: Theme.colors.base4,
 							onChangeText: (text) => {
@@ -297,9 +303,13 @@ jn.define('im/messenger/controller/folder/lib/ui/folder-form/view', (require, ex
 
 		showChatLimitToast()
 		{
+			AnalyticsService.getInstance().sendChatLimitException();
+
 			Notification.showErrorToast(
 				{
-					message: Loc.getMessage('IMMOBILE_FOLDER_FORM_ERROR_CHATS_LIMIT'),
+					message: Loc.getMessage('IMMOBILE_FOLDER_FORM_ERROR_CHATS_LIMIT', {
+						'#LIMIT#': this.maxChatCount,
+					}),
 				},
 				this.props.layoutWidget,
 			);

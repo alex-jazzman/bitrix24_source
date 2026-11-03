@@ -8,7 +8,7 @@
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: var(--ui-space-inline-md);
-	padding-bottom: var(--ui-space-stack-lg);
+	padding-bottom: var(--ui-space-stack-md);
 }
 
 .crm-call-assessment-v2-scenario-card__header-text {
@@ -25,12 +25,23 @@
 	gap: var(--ui-space-inline-2xs);
 }
 
+.crm-call-assessment-v2-scenario-card__heading-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
+}
+
 .crm-call-assessment-v2-scenario-card__heading {
-	color: var(--ui-color-base-0);
-	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-scenario-card__heading.ui-headline.--accent {
+	font-weight: var(--ui-headline-sm-font-weight);
 }
 
 .crm-call-assessment-v2-scenario-card__heading-info {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+
 	color: var(--ui-color-design-outline-content);
 	margin-top: 2px;
 }
@@ -47,7 +58,7 @@
 .crm-call-assessment-v2-scenario-card__list {
 	display: flex;
 	flex-direction: column;
-	gap: 19px;
+	gap: 10px;
 	position: relative;
 }
 

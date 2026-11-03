@@ -343,6 +343,15 @@ export class Call extends CopilotBase
 			return;
 		}
 
+		void Router.Instance.openAiReportDrawerOrLegacy(
+			'transcript',
+			payload,
+			() => this.#openLegacyTranscriptResult(payload),
+		);
+	}
+
+	async #openLegacyTranscriptResult(payload: Object): void
+	{
 		Runtime.loadExtension('crm.ai.call').then((exports) => {
 			const transcription = new exports.Call.Transcription({
 				activityId: payload?.activityId,
@@ -358,7 +367,11 @@ export class Call extends CopilotBase
 
 	#showCopilotSummary(item: ConfigurableItem, actionData: Object): void
 	{
-		void this.openCopilotSummaryPopup(actionData, ActivityProvider.call);
+		void Router.Instance.openAiReportDrawerOrLegacy(
+			'summary-history',
+			actionData,
+			() => this.openCopilotSummaryPopup(actionData, ActivityProvider.call),
+		);
 	}
 	// endregion
 

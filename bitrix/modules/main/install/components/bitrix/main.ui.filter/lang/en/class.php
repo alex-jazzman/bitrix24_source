@@ -1,6 +1,6 @@
 <?
 $MESS["MAIN_UI_FILTER__AFTER"] = "After";
-$MESS["MAIN_UI_FILTER__AND"] = "and";
+$MESS["MAIN_UI_FILTER__AND_MORE"] = "and #N# more";
 $MESS["MAIN_UI_FILTER__BEFORE"] = "Before";
 $MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL"] = "Set for all";
 $MESS["MAIN_UI_FILTER__CONFIRM_MESSAGE_FOR_ALL"] = "This action will update filter preferences for all users. <br>Existing saved filters and fields will be changed as well.";
@@ -17,7 +17,6 @@ $MESS["MAIN_UI_FILTER__FILTER_ID_NOT_SET"] = "The required parameter FILTER_ID i
 $MESS["MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET"] = "Default filter";
 $MESS["MAIN_UI_FILTER__LAST_MONTH"] = "Last month";
 $MESS["MAIN_UI_FILTER__LAST_WEEK"] = "Last week";
-$MESS["MAIN_UI_FILTER__MORE"] = "more";
 $MESS["MAIN_UI_FILTER__NO"] = "No";
 $MESS["MAIN_UI_FILTER__NONE"] = "Any date";
 $MESS["MAIN_UI_FILTER__NOT_SET"] = "Not specified";

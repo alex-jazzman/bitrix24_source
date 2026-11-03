@@ -681,6 +681,16 @@ body.--user-dragging .bizproc-setuptemplateactivity-draggable-wrapper:hover .ui-
 
 
 
+.bizproc-setuptemplateactivity-value-rule {
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+}
+
+.bizproc-setuptemplateactivity-value-rule__field {
+	flex: 1 1 0%;
+	min-width: 0;
+}
+
 .bizproc-setuptemplateactivity-constant-value-datetime {
 	display: flex;
 	flex-direction: column;

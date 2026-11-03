@@ -46,6 +46,11 @@
 	background: var(--ui-color-accent-main-primary);
 }
 
+.tasks-card-checkbox input:focus-visible + span {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .tasks-card-checkbox input:checked + span::after {
 	content: '';
 	position: absolute;

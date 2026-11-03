@@ -1,5 +1,10 @@
 <?php
 $MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_ACTION_AREA_OBJECT_MISMATCH"] = "The selected area or object is not available for this action.";
+$MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_ACTION_NOT_IN_CATALOG"] = "Action \"#NAME#\" is not available for these settings.";
+$MESS['BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_BAD_DOCUMENT'] = 'Workflow element value for action "#NAME#" is incorrect.';
+$MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_BASE_SETTINGS_DUPLICATE"] = "Only one \"General settings\" block is allowed.";
 $MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_BLOCK_NOT_ALLOWED_ON_PORT"] = "Block \"#BLOCK#\" cannot be used in link rules.";
+$MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_BLOCK_NOT_AVAILABLE"] = "Block \"#BLOCK#\" is not available for these settings.";
 $MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_NO_ACTIVITY"] = "Action \"#NAME#\" was not found.";
 $MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_NO_HANDLE_DOCUMENT"] = "Action \"#NAME#\" requires workflow element.";
+$MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_PAYLOAD_TYPE_MISMATCH"] = "Action data \"#ACTUAL#\" does not match the selected action \"#DECLARED#\".";

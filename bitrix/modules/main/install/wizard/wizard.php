@@ -811,6 +811,12 @@ class RequirementStep extends CWizardStep
 			return false;
 		}
 
+		if (!function_exists("token_get_all"))
+		{
+			$this->SetError(GetMessage("SC_NO_TOKENIZER_LIB_ER"));
+			return false;
+		}
+
 		if (!function_exists("openssl_encrypt"))
 		{
 			$this->SetError(GetMessage("SC_NO_OPENSSL_LIB_ER"));
@@ -1237,6 +1243,21 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 			<td valign="top">' . GetMessage("SC_SETTED") . '</td>
 			<td valign="top">
 					' . (function_exists("hash") ? $this->ShowResult(GetMessage("SC_SETTED"), "OK") : $this->ShowResult(GetMessage("SC_NOT_SETTED"), "ERROR")) . '
+			</td>
+		</tr>';
+
+		$this->content .= '
+		<tr>
+			<td valign="top">
+				<a href="http://php.net/manual/en/book.tokenizer.php" target="_blank">Tokenizer</a>
+			</td>
+			<td valign="top">' . GetMessage("SC_SETTED") . '</td>
+			<td valign="top">
+					' . (
+						function_exists("token_get_all")
+							? $this->ShowResult(GetMessage("SC_SETTED"), "OK")
+							: $this->ShowResult(GetMessage("SC_NOT_SETTED"), "ERROR")
+					) . '
 			</td>
 		</tr>';
 

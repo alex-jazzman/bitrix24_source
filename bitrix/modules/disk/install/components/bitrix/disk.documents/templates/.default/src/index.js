@@ -61,14 +61,18 @@ BX.ready(() => {
 		});
 	}
 
-	if (document.querySelector('#disk-documents-control-panel'))
+	const controlPanel = document.querySelector('#disk-documents-control-panel');
+	if (controlPanel)
 	{
 		const ears = new Ears({
-			container: document.querySelector('#disk-documents-control-panel'),
+			container: controlPanel,
 			noScrollbar: false,
 			className: 'disk-documents-ears'
 		});
 		ears.init();
+
+		// Ears refresh themselves on container scroll only, so a resize would leave them stale.
+		new ResizeObserver(() => ears.toggleEars()).observe(controlPanel);
 	}
 
 	const func = (id, uploader) => {

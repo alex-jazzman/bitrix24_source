@@ -75,4 +75,6 @@ export class Registry
 	}
 }
 
-export default new Registry();
+const registry: Registry = new Registry();
+
+export default registry;

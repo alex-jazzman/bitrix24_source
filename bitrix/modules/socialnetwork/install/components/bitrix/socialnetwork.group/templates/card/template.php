@@ -487,7 +487,11 @@ else
 						$moderatorsTitle = Loc::getMessage('SONET_C6_CARD_MODERATORS_SECTION_TITLE_PROJECT');
 					}
 
-					$logoMode = (count($arResult['Moderators']['List']) <= $arParams['USER_LIMIT']);
+					$moderatorsCount = (int)($arResult['Moderators']['Count'] ?? 0);
+					$logoMode = (
+						$moderatorsCount <= $arParams['USER_LIMIT']
+						&& count($arResult['Moderators']['List']) >= $moderatorsCount
+					);
 
 					$classList = [
 						'socialnetwork-group-slider-member-box',
@@ -503,7 +507,7 @@ else
 					}
 
 					?>
-					<div class="<?= implode(' ', $classList) ?>">
+					<div class="<?= implode(' ', $classList) ?>" data-testid="group-card-moderators">
 						<div class="socialnetwork-group-slider-member-position"><?= $moderatorsTitle?></div>
 						<?php
 						ob_start();
@@ -543,12 +547,12 @@ else
 								$counter++;
 							}
 
-							if (!$logoMode)
+							if ($moderatorsCount > $counter)
 							{
 								?>
-								<div class="socialnetwork-group-slider-member-team-count">
+								<div class="socialnetwork-group-slider-member-team-count" data-testid="group-card-members-counter">
 									<span>+</span>
-									<?= (count($arResult['Moderators']['List']) - $arParams['USER_LIMIT']) ?>
+									<?= ($moderatorsCount - $counter) ?>
 								</div>
 								<?php
 							}
@@ -599,6 +603,8 @@ else
 						$membersTitle = Loc::getMessage('SONET_C6_CARD_MEMBERS_SECTION_TITLE_PROJECT');
 					}
 
+					$membersCount = (int)($arResult['Members']['Count'] ?? 0);
+
 					$logoMode = (
 						(count($arResult['Members']['List']) <= $arParams['USER_LIMIT'])
 						&& false
@@ -617,7 +623,7 @@ else
 					}
 
 					?>
-					<div class="<?= implode(' ', $classList) ?>">
+					<div class="<?= implode(' ', $classList) ?>" data-testid="group-card-members">
 						<div class="socialnetwork-group-slider-member-position"><?= $membersTitle ?></div>
 						<?php
 						ob_start();
@@ -657,12 +663,12 @@ else
 								$counter++;
 							}
 
-							if (count($arResult['Members']['List']) > $arParams['USER_LIMIT'])
+							if ($membersCount > $counter)
 							{
 								?>
-								<div class="socialnetwork-group-slider-member-team-count">
+								<div class="socialnetwork-group-slider-member-team-count" data-testid="group-card-members-counter">
 									<span>+</span>
-									<?= (count($arResult['Members']['List']) - $arParams['USER_LIMIT']) ?>
+									<?= ($membersCount - $counter) ?>
 								</div>
 								<?php
 							}

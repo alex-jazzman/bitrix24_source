@@ -10,8 +10,8 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 		CopilotButtonType,
 	} = require('im/messenger/const');
 	const { Color } = require('im/messenger/const');
-	const { Color: ColorTokens } = require('tokens');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
 	const { ActionButtons } = require('im/messenger/lib/element/dialog/message/element/actions/action-buttons');
 
@@ -27,12 +27,14 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 			/** @type {CopilotMessageCopilotData|{}} */
 			this.copilot = {};
-			const dialogHelper = DialogHelper.createByDialogId(options.dialogId);
+			const dialogId = options.dialogId;
+			const messageId = modelMessage.id;
+			const dialogHelper = DialogHelper.createByDialogId(dialogId);
 			const canBeQuoted = Boolean(dialogHelper && !dialogHelper.isCopilot);
 
 			this
 				.setButtons()
-				.setActions()
+				.setActions(dialogId, messageId)
 				.setFootNote()
 				.setCanBeQuoted(canBeQuoted)
 				.setCanBeChecked(true)
@@ -75,11 +77,18 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 			return this;
 		}
 
-
-		setActions()
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {number} messageId
+		 */
+		setActions(dialogId, messageId)
 		{
+			const store = serviceLocator.get('core').getStore();
+			const vote = store.getters['dialoguesModel/copilotModel/getVoteByMessageId'](dialogId, Number(messageId));
+
 			this.actions = ActionButtons.create({
-				tint: ColorTokens.chatOtherCopilot2.toHex(),
+				isLiked: vote?.like,
+				isDisliked: vote?.dislike,
 			}).toMessageFormat();
 
 			return this;

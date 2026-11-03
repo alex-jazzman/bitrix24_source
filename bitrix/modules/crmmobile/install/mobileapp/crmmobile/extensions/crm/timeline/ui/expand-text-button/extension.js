@@ -2,6 +2,7 @@
  * @module crm/timeline/ui/expand-text-button
  */
 jn.define('crm/timeline/ui/expand-text-button', (require, exports, module) => {
+	const { Text5 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const ExpandTextButton = ({ onClick, backgroundColor, text }) => View(
 		{
@@ -28,11 +29,10 @@ jn.define('crm/timeline/ui/expand-text-button', (require, exports, module) => {
 					minWidth: 140,
 				},
 			},
-			Text({
+			Text5({
 				text,
 				style: {
 					color: AppTheme.colors.base3,
-					fontSize: 13,
 					textAlign: 'center',
 				},
 			}),

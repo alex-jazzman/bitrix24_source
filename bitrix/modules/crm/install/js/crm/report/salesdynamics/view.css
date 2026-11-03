@@ -30,6 +30,8 @@
 .crm-report-sales-dynamics-modal-main {}
 .crm-report-sales-dynamics-modal-content {
 	display: flex;
+	flex-wrap: wrap;
+	column-gap: 20px;
 	padding: 0 0 18px 0;
 	align-items: baseline;
 	justify-content: space-between;
@@ -43,7 +45,6 @@
 .crm-report-sales-dynamics-modal-percent-value {
 	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
-	margin-left: 20px;
 }
 
 .crm-report-sales-dynamics-modal-percent-value.red {

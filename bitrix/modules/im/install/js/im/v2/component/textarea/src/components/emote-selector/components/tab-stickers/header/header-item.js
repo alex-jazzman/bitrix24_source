@@ -43,20 +43,26 @@ export const HeaderItem = {
 		},
 	},
 	template: `
-		<div 
+		<button
+			type="button"
+			tabindex="-1"
 			:title="packName"
-			:class="{'--active': this.isActive}" 
-			class="bx-im-stickers-header__item" 
+			:aria-label="packName"
+			:aria-current="isActive ? 'true' : null"
+			:class="{'--active': this.isActive}"
+			class="bx-im-stickers-header__item --focus-visible"
 		>
 			<BIcon
 				v-if="isRecentPack"
 				:name="OutlineIcons.CLOCK"
+				:aria-hidden="true"
 			/>
 			<BIcon
 				v-else-if="!packCover"
 				:name="OutlineIcons.STICKER"
+				:aria-hidden="true"
 			/>
 			<img v-else :src="packCover" alt="" loading="lazy" draggable="false" />
-		</div>
+		</button>
 	`,
 };

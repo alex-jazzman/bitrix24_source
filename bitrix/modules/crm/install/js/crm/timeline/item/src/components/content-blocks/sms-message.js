@@ -1,3 +1,5 @@
+import { Text } from 'main.core';
+
 export const SmsMessage = {
 	props: {
 		text: {
@@ -9,7 +11,9 @@ export const SmsMessage = {
 	computed: {
 		messageHtml(): string
 		{
-			return BX.util.htmlspecialchars(this.text).replace(/\r\n|\r|\n/g, '<br/>');
+			return Text.encode(this.text)
+				.replace(/\r\n|\r|\n/g, '<br/>')
+			;
 		}
 	},
 	template: `
@@ -18,4 +22,4 @@ export const SmsMessage = {
 			<span v-if="messageHtml" v-html="messageHtml"></span>
 		</div>
 	`
-}
+};

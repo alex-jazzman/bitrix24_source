@@ -22,7 +22,8 @@ $MESS['M_CRM_ENTITY_TAB_COLUMN_EMPTY_DYNAMIC_DESCRIPTION'] = 'Чтобы при�
 
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_COMMON'] = 'Здесь будут ваши элементы';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_LEAD'] = 'Здесь будут ваши лиды';
-$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_DEAL'] = 'Здесь будут ваши сделки';
+$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_DEAL_MSGVER_1'] = 'У вас нет сделок';
+$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_DEAL_ADMIN'] = 'Создайте первую сделку';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_COMPANY'] = 'Здесь будут ваши компании';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_CONTACT'] = 'Здесь будут ваши клиенты';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_SMART_INVOICE'] = 'Здесь будут ваши счета';
@@ -50,7 +51,11 @@ $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_DYNAMIC'] = 'элемент';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_SEND_TO_CLIENTS'] = 'Создавайте #MANY_ENTITY_TYPE_TITLE# и отправляйте их клиентам любым удобным способом';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_ROBOTS'] = 'Создавайте #MANY_ENTITY_TYPE_TITLE# вручную или настройте роботов для автоматического создания';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION'] = 'Подключите [COLOR="#2066b0"][URL="#URL#"]каналы коммуникаций[/URL][/COLOR], чтобы создавать #MANY_ENTITY_TYPE_TITLE# автоматически или создайте #SINGLE_ENTITY_TYPE_TITLE# вручную';
+$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DEAL_DESCRIPTION'] = 'Создавайте сделки и отслеживайте их движение по воронке продаж';
 $MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE'] = 'Центр коммуникаций';
+$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_FEATURE_1'] = "Контроль всех этапов продаж — от первого контакта до оплаты";
+$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_FEATURE_2'] = "Вся история общения с клиентом сохраняется в CRM";
+$MESS['M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_FEATURE_3'] = "Автоматизация работы с клиентами";
 
 $MESS['M_CRM_ENTITY_TAB_SEARCH_EMPTY_COMMON_TITLE2'] = 'Элементы не найдены';
 $MESS['M_CRM_ENTITY_TAB_SEARCH_EMPTY_LEAD_TITLE2'] = 'Лиды не найдены';
@@ -63,7 +68,6 @@ $MESS['M_CRM_ENTITY_TAB_SEARCH_EMPTY_DYNAMIC_TITLE2'] = 'Элементы не �
 
 $MESS['M_CRM_ENTITY_TAB_SEARCH_EMPTY_DESCRIPTION'] = 'Попробуйте сбросить значения в фильтре или изменить запрос поиска';
 $MESS['M_CRM_ENTITY_TAB_SEARCH_WITH_TWO_OR_MORE_CATEGORIES_EMPTY_DEAL_DESCRIPTION2'] = 'Измените запрос поиска или попробуйте найти нужные сделки в других воронках';
-
 $MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_COMMON'] = 'Элементы на этой стадии не соответствуют выбранным фильтрам';
 $MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_LEAD'] = 'Лиды на этой стадии не соответствуют выбранным фильтрам';
 $MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_DEAL'] = 'Сделки на этой стадии не соответствуют выбранным фильтрам';

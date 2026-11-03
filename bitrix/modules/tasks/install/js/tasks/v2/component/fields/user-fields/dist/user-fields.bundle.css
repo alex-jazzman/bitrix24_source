@@ -1,7 +1,21 @@
+/* button reset */
+.tasks-field-user-fields-title,
+.tasks-field-user-fields-footer-fill {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* button reset end */
+
 .tasks-field-user-fields {
 	display: flex;
 	flex-direction: column;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 1px var(--ui-color-area-box-shadow-default-color);
 	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
 	border-radius: var(--ui-border-radius-md);
 }
@@ -22,6 +36,15 @@
 
 .tasks-field-user-fields-title.--border-radius {
 	border-radius: var(--ui-border-radius-md);
+}
+
+.tasks-field-user-fields-title:not(.--readonly):hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.tasks-field-user-fields-title:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -2px;
 }
 
 .tasks-field-user-fields-title.--readonly {
@@ -52,6 +75,12 @@
 	align-items: center;
 }
 
+.tasks-field-user-fields-footer-fill:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-field-user-fields-footer-fill-text {
 	color: var(--ui-color-accent-main-primary);
 }
@@ -59,6 +88,10 @@
 .tasks-field-user-fields-footer-fill-icon {
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 	--ui-icon-set__icon-size: 18px;
+}
+
+.ui-chip[data-task-chip-id="userFields"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }
 
 .tasks-user-field {

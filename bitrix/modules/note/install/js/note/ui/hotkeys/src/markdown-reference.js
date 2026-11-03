@@ -11,7 +11,7 @@
 //     round-trip through the markdown parser (paste / import / REST), never live input. That group
 //     carries `hintKey` — the panel renders a ui.hint "?" spelling this out.
 // Token shapes mirror the editor tokenizers: note-asset-tokenizer.js → [[image|video|file fileId=N]],
-// mention-type-registry.js → @{user|document|collection|task:id}.
+// mention-type-registry.js → @{user|document|collection|task|diskfolder:id}.
 const MARKDOWN_GROUPS = Object.freeze([
 	Object.freeze({
 		titleKey: 'NOTE_HOTKEYS_MD_GROUP_BLOCKS',
@@ -37,7 +37,7 @@ const MARKDOWN_GROUPS = Object.freeze([
 		]),
 	}),
 	Object.freeze({
-		titleKey: 'NOTE_HOTKEYS_MD_GROUP_ENTITIES',
+		titleKey: 'NOTE_HOTKEYS_MD_GROUP_INSERTS',
 		hintKey: 'NOTE_HOTKEYS_MD_ENTITIES_HINT',
 		rows: Object.freeze([
 			Object.freeze({ labelKey: 'NOTE_HOTKEYS_MD_IMAGE', syntax: '[[image fileId=N]]' }),
@@ -47,6 +47,8 @@ const MARKDOWN_GROUPS = Object.freeze([
 			Object.freeze({ labelKey: 'NOTE_HOTKEYS_MD_MENTION_DOCUMENT', syntax: '@{document:id}' }),
 			Object.freeze({ labelKey: 'NOTE_HOTKEYS_MD_MENTION_COLLECTION', syntax: '@{collection:id}' }),
 			Object.freeze({ labelKey: 'NOTE_HOTKEYS_MD_MENTION_TASK', syntax: '@{task:id}' }),
+			Object.freeze({ labelKey: 'NOTE_HOTKEYS_MD_MENTION_DISKFOLDER', syntax: '@{diskfolder:id}' }),
+			Object.freeze({ labelKey: 'NOTE_HOTKEYS_MD_DATE', syntax: '[[date 2026-09-03]]' }),
 		]),
 	}),
 ]);

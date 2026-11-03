@@ -4,16 +4,30 @@ this.BX = this.BX || {};
 	'use strict';
 
 	const BACKGROUND_COLOR = 'd3d7dc';
+	const FINAL_STAGE_FIXED_ENTITY_TYPE_NAMES = new Set(['QUOTE', 'SMART_INVOICE']);
+	class StageTransitionCancelledError extends Error {
+		code = 'CRM_STAGE_TRANSITION_CANCELLED';
+		constructor() {
+			super('Stage transition was cancelled');
+			this.name = 'StageTransitionCancelledError';
+		}
+	}
 	class ItemDetailsComponent {
 		categoryId = null;
 		permissionChecker = null;
 		receiversJSONString = '';
 		targetUpdateStage = null;
 		stageBeforeUpdate = null;
+		stageUpdateResolve = null;
+		stageUpdateReject = null;
+		isFinalTransitionOpen = false;
+		finalTransition = null;
+		finalTransitionExtensionPromise = null;
 		constructor(params) {
 			if (main_core.Type.isPlainObject(params)) {
 				this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
 				this.entityTypeName = params.entityTypeName;
+				this.entityTypeCaption = params.entityTypeCaption;
 				this.id = main_core.Text.toInteger(params.id);
 				if (BX.Crm.PartialEditorDialog && params.serviceUrl) {
 					this.partialEditorId = 'partial_editor_' + this.entityTypeId + '_' + this.id;
@@ -173,24 +187,29 @@ this.BX = this.BX || {};
 			if (!this.stages) {
 				return;
 			}
-			const flowStagesData = this.prepareStageFlowStagesData();
 			const stageFlowContainer = document.querySelector('[data-role="stageflow-wrap"]');
 			if (!stageFlowContainer) {
 				return;
 			}
+			if (!this.stageflowChart) {
+				this.initLoadedStageFlow(crm_itemDetailsComponent_stageFlow.Chart, stageFlowContainer);
+			}
+		}
+		initLoadedStageFlow(StageFlowChart, stageFlowContainer) {
+			const flowStagesData = this.prepareStageFlowStagesData();
 			const chartParams = {
 				backgroundColor: BACKGROUND_COLOR,
 				currentStage: this.currentStageId,
 				isActive: this.isStageFlowActive === true,
 				onStageChange: this.onStageChange.bind(this),
 				labels: {
-					finalStageName: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME'),
+					finalStageName: this.getFinalStageName(),
 					finalStagePopupTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP'),
 					finalStagePopupFail: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP_FAIL'),
 					finalStageSelectorTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR')
 				}
 			};
-			this.stageflowChart = new crm_itemDetailsComponent_stageFlow.Chart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isStageUpdating.bind(this), main_core.Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300), this.isNew(), this.entityTypeId);
+			this.stageflowChart = new StageFlowChart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isStageUpdating.bind(this), main_core.Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300), this.openFinalTransition.bind(this), this.isNew(), this.entityTypeId);
 			main_core.Dom.append(this.stageflowChart.render(), stageFlowContainer);
 		}
 		prepareStageFlowStagesData() {
@@ -218,6 +237,22 @@ this.BX = this.BX || {};
 			}
 			main_core_events.EventEmitter.subscribe('BX.Crm.ItemDetailsComponent:onClickRecurringExpose', this.handleRecurringExpose.bind(this));
 		}
+		getFinalStageName() {
+			const entityTypeName = main_core.Type.isStringFilled(this.entityTypeName) ? this.entityTypeName.toUpperCase() : '';
+			let suffix = '';
+			if (FINAL_STAGE_FIXED_ENTITY_TYPE_NAMES.has(entityTypeName)) {
+				suffix = entityTypeName;
+			} else if (entityTypeName.startsWith('DYNAMIC_')) {
+				suffix = 'DYNAMIC';
+			}
+			if (suffix !== '') {
+				const message = main_core.Loc.getMessage(`CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME_${suffix}`);
+				if (main_core.Type.isStringFilled(message)) {
+					return message;
+				}
+			}
+			return main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME') ?? '';
+		}
 		initPull() {
 			const Pull = BX.PULL;
 			if (!Pull) {
@@ -235,12 +270,17 @@ this.BX = this.BX || {};
 						return;
 					}
 					const columnId = params.item.data.columnId;
-					if (this.stageflowChart?.isActive) {
-						const currentStage = this.getStageById(this.stageflowChart.currentStage);
+					if (this.stageflowChart?.isActive || !this.stageflowChart && this.isStageFlowActive === true) {
+						const currentStageId = this.stageflowChart?.currentStage ?? this.currentStageId;
+						const currentStage = this.getStageById(currentStageId);
 						if (currentStage?.statusId !== columnId) {
 							const newStage = this.getStageByStatusId(columnId);
 							if (newStage) {
-								this.updateStage(newStage);
+								if (this.stageflowChart) {
+									this.updateStage(newStage);
+								} else {
+									this.currentStageId = newStage.getId();
+								}
 							}
 						}
 					}
@@ -292,11 +332,17 @@ this.BX = this.BX || {};
 				console.error('Wrong stage');
 				return;
 			}
+			void this.moveToStage(stage).catch(() => {});
+		}
+		moveToStage(stage, options = {}) {
+			const isOptimistic = options.optimistic !== false;
 			this.prepareAnalyticsData(stage);
-			this.stageBeforeUpdate = this.getStageById(this.currentStageId);
-			this.setStageToFlowChart(stage);
+			this.stageBeforeUpdate = this.getCurrentStage();
+			if (isOptimistic) {
+				this.setStageToFlowChart(stage);
+			}
 			this.startStageUpdateProgress(stage);
-			main_core.ajax.runAction('crm.controller.item.update', {
+			return main_core.ajax.runAction('crm.controller.item.update', {
 				analyticsLabel: 'crmItemDetailsMoveItem',
 				data: {
 					entityTypeId: this.entityTypeId,
@@ -325,49 +371,185 @@ this.BX = this.BX || {};
 				}
 				this.stageBeforeUpdate = null;
 				this.updateStage(stage);
+				return stage;
 			}).catch(response => {
 				this.stopStageUpdateProgress();
-				if (this.stageBeforeUpdate !== null) {
-					this.setStageToFlowChart(this.stageBeforeUpdate);
-					this.stageBeforeUpdate = null;
-				}
 				if (!this.partialEditorId) {
+					this.restoreStageBeforeUpdate();
 					this.showErrorsFromResponse(response);
-					return;
+					throw response;
 				}
-				const requiredFields = [];
-				response.errors.forEach(({
-					code,
-					customData
-				}) => {
-					if (code === 'CRM_FIELD_ERROR_REQUIRED' && customData.fieldName) {
-						requiredFields.push(customData.fieldName);
-					}
-				});
+				const requiredFields = this.getRequiredFieldsFromResponse(response);
 				if (requiredFields.length > 0) {
-					BX.Crm.PartialEditorDialog.close(this.partialEditorId);
-					this.partialEntityEditor = BX.Crm.PartialEditorDialog.create(this.partialEditorId, {
-						title: BX.prop.getString(this.messages, "partialEditorTitle", "Please fill in all required fields"),
-						entityTypeName: this.entityTypeName,
-						entityTypeId: this.entityTypeId,
-						entityId: this.id,
-						fieldNames: requiredFields,
-						helpData: null,
-						context: this.editorContext || null,
-						isController: true,
-						stageId: stage.getStatusId()
-					});
-					this.bindPartialEntityEditorEvents();
-					this.partialEntityEditor.open();
+					return this.openPartialEntityEditor(stage, requiredFields);
 				} else {
+					this.restoreStageBeforeUpdate();
 					this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
 					this.showErrorsFromResponse(response);
+					throw response;
 				}
 			});
 		}
+		openFinalTransition() {
+			if (this.isProgress || this.isFinalTransitionOpen) {
+				return;
+			}
+			if (!this.getCurrentStage() || !this.stages.some(stage => stage.isSuccess())) {
+				return;
+			}
+			this.isFinalTransitionOpen = true;
+			this.loadFinalTransitionExtension().then(FinalTransition => {
+				if (!FinalTransition) {
+					this.isFinalTransitionOpen = false;
+					return;
+				}
+				this.openLoadedFinalTransition(FinalTransition);
+			});
+		}
+		loadFinalTransitionExtension() {
+			this.finalTransitionExtensionPromise ??= main_core.Runtime.loadExtension('crm.stage.final-transition').then(exports => {
+				return main_core.Type.isFunction(exports?.FinalTransition?.open) ? exports.FinalTransition : null;
+			}).catch(() => {
+				this.finalTransitionExtensionPromise = null;
+				return null;
+			});
+			return this.finalTransitionExtensionPromise;
+		}
+		openLoadedFinalTransition(FinalTransition) {
+			const currentStage = this.getCurrentStage();
+			const successStage = this.stages.find(stage => stage.isSuccess());
+			if (!this.isFinalTransitionOpen || !currentStage || !successStage) {
+				this.isFinalTransitionOpen = false;
+				return;
+			}
+			this.finalTransition = FinalTransition.open({
+				currentStage: currentStage.getData(),
+				successStage: successStage.getData(),
+				failureStages: this.getFailureStagesData(),
+				entityTitle: this.getEntityTitle(),
+				entityTextContext: {
+					entityTypeId: this.entityTypeId,
+					entityTypeName: this.entityTypeName,
+					entityTypeCaption: this.entityTypeCaption
+				},
+				onMoveToStage: statusId => {
+					return this.moveToStageByStatusId(statusId).then(stage => {
+						this.isFinalTransitionOpen = false;
+						this.finalTransition = null;
+						return stage;
+					});
+				},
+				isMoveCancelled: error => error instanceof StageTransitionCancelledError,
+				canMoveToStage: statusId => {
+					return this.permissionChecker?.isHasPermissionToMove(currentStage.getStatusId(), statusId) ?? false;
+				},
+				onMovePermissionDenied: () => {
+					this.permissionChecker?.showMissPermissionError();
+				},
+				onUndo: (previousStatusId, targetStatusId) => {
+					if (this.isProgress || this.getCurrentStage()?.getStatusId() !== targetStatusId) {
+						return Promise.reject(new StageTransitionCancelledError());
+					}
+					return this.moveToStageByStatusId(previousStatusId);
+				},
+				onClose: () => {
+					this.isFinalTransitionOpen = false;
+					this.finalTransition = null;
+					this.stageflowChart.restoreCurrentStageView();
+				},
+				analytics: this.analyticsData ?? {}
+			});
+		}
+		moveToStageByStatusId(statusId) {
+			const stage = this.getStageByStatusId(statusId);
+			if (!stage) {
+				return Promise.reject(new Error('Wrong stage'));
+			}
+			return this.moveToStage(stage, {
+				optimistic: false
+			}).then(updatedStage => {
+				return updatedStage.getData();
+			});
+		}
+		getFailureStagesData() {
+			return this.stages.filter(stage => stage.isFailure()).map(stage => stage.getData());
+		}
+		getCurrentStage() {
+			return this.getStageById(this.stageflowChart?.currentStage ?? this.currentStageId);
+		}
+		getEntityTitle() {
+			const model = this.getEditor()?.getModel?.();
+			const title = model?.getField?.('TITLE', '');
+			return main_core.Type.isStringFilled(title) ? title : '';
+		}
+		getRequiredFieldsFromResponse(response) {
+			const requiredFields = [];
+			const errors = main_core.Type.isArray(response?.errors) ? response.errors : [];
+			errors.forEach(({
+				code,
+				customData
+			}) => {
+				if (code === 'CRM_FIELD_ERROR_REQUIRED' && main_core.Type.isStringFilled(customData?.fieldName)) {
+					requiredFields.push(customData.fieldName);
+				}
+			});
+			return requiredFields;
+		}
+		openPartialEntityEditor(stage, requiredFields) {
+			if (!this.partialEditorId) {
+				return Promise.reject(new Error('Partial editor is not configured'));
+			}
+			this.finalTransition?.close();
+			this.finalTransition = null;
+			BX.Crm.PartialEditorDialog.close(this.partialEditorId);
+			this.partialEntityEditor = BX.Crm.PartialEditorDialog.create(this.partialEditorId, {
+				title: BX.prop.getString(this.messages, "partialEditorTitle", "Please fill in all required fields"),
+				entityTypeName: this.entityTypeName,
+				entityTypeId: this.entityTypeId,
+				entityId: this.id,
+				fieldNames: requiredFields,
+				helpData: null,
+				context: this.editorContext || null,
+				isController: true,
+				stageId: stage.getStatusId()
+			});
+			const stageUpdatePromise = new Promise((resolve, reject) => {
+				this.stageUpdateResolve = resolve;
+				this.stageUpdateReject = reject;
+			});
+			this.bindPartialEntityEditorEvents();
+			this.partialEntityEditor.open();
+			return stageUpdatePromise;
+		}
+		resolveStageUpdate(stage) {
+			this.stageUpdateResolve?.(stage);
+			this.clearStageUpdatePromise();
+		}
+		rejectStageUpdate(error) {
+			this.stageUpdateReject?.(error);
+			this.clearStageUpdatePromise();
+		}
+		clearStageUpdatePromise() {
+			this.stageUpdateResolve = null;
+			this.stageUpdateReject = null;
+		}
+		restoreStageBeforeUpdate() {
+			if (this.stageBeforeUpdate === null) {
+				return;
+			}
+			this.setStageToFlowChart(this.stageBeforeUpdate);
+			this.currentStageId = this.stageBeforeUpdate.getId();
+			this.stageBeforeUpdate = null;
+		}
 		updateStage(stage) {
+			const finalTransitionToast = ui_notification.UI.Notification.Center.getBalloonById('crm-stage-final-transition-toast');
+			const toastTargetStatusId = finalTransitionToast?.getData().finalTransitionTargetStatusId;
+			if (toastTargetStatusId !== stage.getStatusId()) {
+				finalTransitionToast?.close();
+			}
 			const currentStage = this.getStageById(this.stageflowChart.currentStage);
 			this.setStageToFlowChart(stage);
+			this.currentStageId = stage.getId();
 			main_core_events.EventEmitter.emit('BX.Crm.ItemDetailsComponent:onStageChange', {
 				entityTypeId: this.entityTypeId,
 				id: this.id,
@@ -476,33 +658,53 @@ this.BX = this.BX || {};
 			starter.showTemplatesMenu(event.data.button.button);
 		}
 		handleClosePartialEntityEditor(event) {
+			const data = event.getData();
+			if (!main_core.Type.isArray(data) || data[0] !== this.partialEntityEditor) {
+				return;
+			}
 			this.unBindPartialEntityEditorEvents();
 			this.stopProgress();
-			const data = event.getData();
-			if (main_core.Type.isArray(data) && data.length === 2) {
+			if (data.length === 2) {
 				const parameters = data[1];
 				if (parameters.isCancelled) {
+					this.restoreStageBeforeUpdate();
 					this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
+					this.rejectStageUpdate(new StageTransitionCancelledError());
 					return;
 				}
 				const stage = this.getStageByStatusId(parameters.stageId);
 				if (!stage) {
+					this.restoreStageBeforeUpdate();
 					this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
+					this.rejectStageUpdate(parameters);
 					return;
 				}
 				this.updateStage(stage);
+				this.stageBeforeUpdate = null;
 				this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_SUCCESS);
+				this.resolveStageUpdate(stage);
+				return;
 			}
+			this.restoreStageBeforeUpdate();
+			this.rejectStageUpdate(data);
 		}
 		handleErrorPartialEntityEditor(event) {
+			const data = event.getData();
+			if (!main_core.Type.isArray(data) || data[0] !== this.partialEntityEditor) {
+				return;
+			}
 			this.unBindPartialEntityEditorEvents();
 			this.stopProgress();
-			const data = event.getData();
-			if (main_core.Type.isArray(data) && data[1] && main_core.Type.isArray(data[1].errors)) {
+			if (data[1] && main_core.Type.isArray(data[1].errors)) {
+				this.restoreStageBeforeUpdate();
 				this.showErrorsFromResponse({
 					errors: data[1].errors
 				});
+				this.rejectStageUpdate(data[1]);
+				return;
 			}
+			this.restoreStageBeforeUpdate();
+			this.rejectStageUpdate(data);
 		}
 		handleUserFieldCreationUrlClick(event) {
 			const data = event.getData();

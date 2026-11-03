@@ -11,8 +11,6 @@ import { RequiredMark } from './required-mark/required-mark';
 import { SettingsSection } from './settings-section/settings-section';
 import { Table } from './table/table';
 
-import { Alert as TemporaryAlert, AlertDesign as TemporarySystemDesign } from './system/alert/alert';
-
 export {
 	Alert,
 	DownloadAlert,
@@ -25,8 +23,6 @@ export {
 	Table,
 	ErrorMessage,
 	Delimiter,
-	TemporaryAlert,
-	TemporarySystemDesign,
 };
 
 export * from './settings-control/index';

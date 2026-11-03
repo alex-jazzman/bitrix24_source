@@ -3,6 +3,7 @@
  * */
 
 jn.define('bizproc/workflow/timeline', (require, exports, module) => {
+	/* global DateFormatter, InAppNotifier */
 	const AppTheme = require('apptheme');
 	const { cross, documents, union, clock, flag } = require('bizproc/workflow/timeline/icons');
 	const { Skeleton } = require('bizproc/workflow/timeline/skeleton');
@@ -27,7 +28,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 	const { mergeImmutable } = require('utils/object');
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
-	const { openNativeViewer } = require('utils/file');
+	const { getMimeType, getNativeViewerMediaType, openNativeViewer } = require('utils/file');
 	const { NotifyManager } = require('notify-manager');
 	const { roundSeconds } = require('bizproc/helper/duration');
 	const { WorkflowResult } = require('bizproc/workflow/result');
@@ -88,7 +89,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				.then((timelineData) => {
 					this.setState({ timelineData });
 				})
-				.catch((err) => console.warn(err));
+				.catch((err) => console.error(err));
 		}
 
 		get workflowId()
@@ -413,7 +414,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				if (Type.isNil(file.error))
 				{
 					openNativeViewer({
-						fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
+						fileType: getNativeViewerMediaType(getMimeType(file.type, file.name)),
 						url: file.url,
 						name: file.name,
 					});
@@ -476,7 +477,6 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		 *
 		 * @return {View[]}
 		 */
-		// eslint-disable-next-line max-lines-per-function
 		renderTasks()
 		{
 			if (!this.timelineData.tasks || this.timelineData.tasks.length === 0)
@@ -913,7 +913,6 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		 * }} options
 		 * @return {object}
 		 */
-		// eslint-disable-next-line max-lines-per-function
 		renderStep({
 			wrapperOptions = { showBorders: false },
 			counterOptions = {},
@@ -923,23 +922,16 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				testId: titleTestId,
 			} = {},
 			header = {},
-			content = [],
+			content: contentProp = [],
 			users = [],
 			shouldHideUsers = false,
 			usersTestId,
-			additionalContent,
-			footer,
+			additionalContent: additionalContentProp,
+			footer: footerProp,
 		} = {})
 		{
-			if (!Type.isArray(additionalContent))
-			{
-				additionalContent = [];
-			}
-
-			if (!Type.isArray(content))
-			{
-				content = [];
-			}
+			const content = Type.isArray(contentProp) ? contentProp : [];
+			const additionalContent = Type.isArray(additionalContentProp) ? additionalContentProp : [];
 
 			const subtitleProps = {
 				title: Type.isString(header.title) ? header.title : null,
@@ -948,12 +940,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				icon: Type.isStringFilled(header.icon) ? header.icon : null,
 			};
 
-			if (Type.isString(footer))
-			{
-				footer = {
-					text: footer,
-				};
-			}
+			const footer = Type.isString(footerProp) ? { text: footerProp } : footerProp;
 
 			const hasTitleButton = Type.isObjectLike(titleButton);
 

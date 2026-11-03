@@ -78,6 +78,15 @@ export class FormSettingsPanel extends BasePresetPanel
 
 	adjustActionsPanels = false;
 	#phoneDoesntVerifiedResponseCode = 'PHONE_NOT_VERIFIED';
+	#formSession = 0;
+	#formChangeQueue = Promise.resolve();
+	#latestPrepareByContent = new WeakMap();
+	#contentRequest = 0;
+	#latestNoticePreviewToken = null;
+	#noticePreviewSequence = 0;
+	#contentTimer = null;
+	#currentContent = null;
+	#previewTimer = null;
 
 	constructor()
 	{
@@ -88,6 +97,7 @@ export class FormSettingsPanel extends BasePresetPanel
 		this.lsCache = new Cache.LocalStorageCache();
 
 		Dom.addClass(this.layout, 'landing-ui-panel-form-settings');
+		Dom.attr(this.layout, 'data-testid', 'landing-formsettings-panel');
 
 		this.subscribe('onCancel', () => {
 			BX.onCustomEvent(this, 'BX.Landing.Block:onFormSettingsClose', [this.getCurrentBlock().id]);
@@ -100,7 +110,14 @@ export class FormSettingsPanel extends BasePresetPanel
 			const {dictionary} = Env.getInstance().getOptions().formEditorData;
 
 			const preparedSidebarButtons = dictionary.sidebarButtons.map((buttonOptions) => {
-				return new SidebarButton({...buttonOptions, child: true});
+				return new SidebarButton({
+					...buttonOptions,
+					child: true,
+					attrs: {
+						...buttonOptions.attrs,
+						'data-testid': `landing-formsettings-section-${buttonOptions.id}`,
+					},
+				});
 			});
 			this.setSidebarButtons(preparedSidebarButtons);
 
@@ -350,7 +367,14 @@ export class FormSettingsPanel extends BasePresetPanel
 			const {dictionary} = editorData;
 
 			const preparedSidebarButtons = dictionary.sidebarButtons.map((buttonOptions) => {
-				return new SidebarButton({...buttonOptions, child: true});
+				return new SidebarButton({
+					...buttonOptions,
+					child: true,
+					attrs: {
+						...buttonOptions.attrs,
+						'data-testid': `landing-formsettings-section-${buttonOptions.id}`,
+					},
+				});
 			});
 			this.setSidebarButtons(preparedSidebarButtons);
 
@@ -377,6 +401,7 @@ export class FormSettingsPanel extends BasePresetPanel
 			}
 
 			this.setFormOptions(currentOptions);
+			this.adjustCrmFormIdentification(currentOptions);
 			this.setFormDictionary(editorData.dictionary);
 
 			return Promise.resolve();
@@ -419,6 +444,7 @@ export class FormSettingsPanel extends BasePresetPanel
 				}
 
 				this.setFormOptions(currentOptions);
+				this.adjustCrmFormIdentification(currentOptions);
 			});
 
 		const formDictionary = FormClient.getInstance()
@@ -427,7 +453,14 @@ export class FormSettingsPanel extends BasePresetPanel
 				this.setFormDictionary(dictionary);
 
 				const preparedSidebarButtons = dictionary.sidebarButtons.map((buttonOptions) => {
-					return new SidebarButton({...buttonOptions, child: true});
+					return new SidebarButton({
+						...buttonOptions,
+						child: true,
+						attrs: {
+							...buttonOptions.attrs,
+							'data-testid': `landing-formsettings-section-${buttonOptions.id}`,
+						},
+					});
 				});
 				this.setSidebarButtons(preparedSidebarButtons);
 
@@ -498,6 +531,11 @@ export class FormSettingsPanel extends BasePresetPanel
 		},
 	): Promise<any>
 	{
+		this.#cancelPreview();
+		this.#formSession += 1;
+		this.#formChangeQueue = Promise.resolve();
+		Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
+
 		if (!this.layout.parentNode)
 		{
 			this.enableToggleMode();
@@ -771,6 +809,18 @@ export class FormSettingsPanel extends BasePresetPanel
 		return Runtime.clone(this.cache.get('formOptions') || {});
 	}
 
+	adjustCrmFormIdentification(formOptions: FormOptions): void
+	{
+		const form = this.getCrmForm();
+		if (form && Type.isPlainObject(formOptions.identification))
+		{
+			form.adjust({
+				...Runtime.clone(formOptions.data),
+				identification: formOptions.identification,
+			});
+		}
+	}
+
 	setFormDictionary(dictionary: FormDictionary)
 	{
 		this.cache.set('formDictionary', dictionary);
@@ -824,14 +874,50 @@ export class FormSettingsPanel extends BasePresetPanel
 		return null;
 	}
 
-	onChange(event: BaseEvent)
+	onChange(event: BaseEvent): Promise<void>
 	{
+		const formSession = this.#formSession;
+		const contentRequest = this.#contentRequest;
 		const eventData = event.getData();
-		const eventTargetValue = event.getTarget().getValue();
+		const content = event.getTarget();
+		const capturedValue = content.getValue();
+		const noticePreviewToken = eventData.debouncePreview && eventData.skipPrepare
+			? { formSession, sequence: ++this.#noticePreviewSequence }
+			: null;
+		const eventTargetValue = noticePreviewToken
+			? Promise.resolve(capturedValue).then((value) => {
+				if (
+					Type.isPlainObject(value)
+					&& formSession === this.#formSession
+					&& (
+						this.#latestNoticePreviewToken?.formSession !== formSession
+						|| this.#latestNoticePreviewToken.sequence < noticePreviewToken.sequence
+					)
+				)
+				{
+					this.#latestNoticePreviewToken = noticePreviewToken;
+				}
 
-		Promise
-			.resolve(eventTargetValue)
-			.then((value) => {
+				return value;
+			})
+			: capturedValue;
+		const prepareToken = eventData.skipPrepare ? null : {};
+		if (prepareToken)
+		{
+			this.#latestPrepareByContent.set(content, prepareToken);
+		}
+
+		const formChange = Promise
+			.all([this.#formChangeQueue.catch(() => undefined), eventTargetValue])
+			.then(([, value]) => {
+				if (
+					formSession !== this.#formSession
+					|| (prepareToken && this.#latestPrepareByContent.get(content) !== prepareToken)
+				)
+				{
+					return;
+				}
+
 				if (eventData.skipPrepare)
 				{
 					const formOptions = this.getFormOptions();
@@ -973,9 +1059,13 @@ export class FormSettingsPanel extends BasePresetPanel
 				return FormClient.getInstance()
 					.prepareOptions(this.getFormOptions(), value)
 					.then(result => {
-						if (value.agreements)
+						if (Type.isArray(value.agreements))
 						{
-							result.data = Runtime.merge(result.data, value);
+							result.data.agreements = value.agreements
+								.map((agreement) => result.data.agreements.find((item) => {
+									return String(item.id) === String(agreement.id);
+								}))
+								.filter(Boolean);
 						}
 
 						if (value.integration)
@@ -994,12 +1084,61 @@ export class FormSettingsPanel extends BasePresetPanel
 					});
 			})
 			.then((result) => {
-				BX.Landing.UI.Panel.Top
-					.getInstance()
-					.setFormName(result.name);
+				if (!result || formSession !== this.#formSession)
+				{
+					return;
+				}
+
 				this.setFormOptions(result);
-				this.getCrmForm().adjust(Runtime.clone(result.data));
+				if (eventData.debouncePreview)
+				{
+					if (noticePreviewToken && noticePreviewToken !== this.#latestNoticePreviewToken)
+					{
+						return;
+					}
+
+					if (contentRequest !== this.#contentRequest)
+					{
+						this.#cancelPreview();
+						this.#updatePreview(result);
+						return;
+					}
+
+					this.#cancelPreview();
+					this.#previewTimer = setTimeout(() => this.#flushPreview(), 300);
+				}
+				else
+				{
+					this.#cancelPreview();
+					this.#updatePreview(result);
+				}
 			});
+
+		this.#formChangeQueue = formChange;
+		return formChange;
+	}
+
+	#updatePreview(options: FormOptions)
+	{
+		BX.Landing.UI.Panel.Top
+			.getInstance()
+			.setFormName(options.name);
+		this.getCrmForm().adjust(Runtime.clone(options.data));
+	}
+
+	#cancelPreview()
+	{
+		clearTimeout(this.#previewTimer);
+		this.#previewTimer = null;
+	}
+
+	#flushPreview()
+	{
+		if (this.#previewTimer !== null)
+		{
+			this.#cancelPreview();
+			this.#updatePreview(this.getFormOptions());
+		}
 	}
 
 	static sanitize(value: any): any
@@ -1041,6 +1180,7 @@ export class FormSettingsPanel extends BasePresetPanel
 
 	getContent(id: string): Promise<ContentWrapper>
 	{
+		const contentRequest = this.#contentRequest;
 		const currentButton = this.getSidebarButtons().find((button) => {
 			return id === button.options.id;
 		});
@@ -1052,11 +1192,16 @@ export class FormSettingsPanel extends BasePresetPanel
 			return rootWindow.BX.Runtime
 				.loadExtension(extension)
 				.then((exports) => {
-					return exports.default;
+					return exports.Content;
 				});
 		});
 
 		return contentExtension.then((ContentWrapperClass) => {
+			if (contentRequest !== this.#contentRequest)
+			{
+				return null;
+			}
+
 			if (Type.isFunction(ContentWrapperClass))
 			{
 				return new ContentWrapperClass({
@@ -1410,8 +1555,9 @@ export class FormSettingsPanel extends BasePresetPanel
 		});
 	}
 
-	onSaveClick()
+	async onSaveClick(): Promise<void>
 	{
+		const formSession = this.#formSession;
 		const dictionary = this.getFormDictionary();
 
 		BX.onCustomEvent(this, 'BX.Landing.Block:onFormSave', [this.getCurrentBlock().id]);
@@ -1444,6 +1590,32 @@ export class FormSettingsPanel extends BasePresetPanel
 
 		Dom.addClass(this.getSaveButton().layout, 'ui-btn-wait');
 
+		try
+		{
+			let formChanges: Promise<void>;
+			do
+			{
+				formChanges = this.#formChangeQueue;
+				await formChanges;
+			}
+			while (formSession === this.#formSession && formChanges !== this.#formChangeQueue);
+		}
+		catch (errors)
+		{
+			if (formSession === this.#formSession)
+			{
+				this.#onSaveError(errors);
+			}
+
+			return;
+		}
+
+		if (formSession !== this.#formSession)
+		{
+			return;
+		}
+
+		this.#flushPreview();
 		this.getNotSynchronizedFields()
 			.then((result) => {
 				if (Type.isPlainObject(result.sync))
@@ -1467,6 +1639,11 @@ export class FormSettingsPanel extends BasePresetPanel
 				return true;
 			})
 			.then((isConfirmed) => {
+				if (formSession !== this.#formSession)
+				{
+					return;
+				}
+
 				if (isConfirmed)
 				{
 					const uri = new Uri(window.top.location.toString());
@@ -1493,6 +1670,7 @@ export class FormSettingsPanel extends BasePresetPanel
 
 							this.setFormOptions(result);
 							this.setInitialFormOptions(result);
+							this.adjustCrmFormIdentification(result);
 							FormClient.getInstance().resetCache(result.id);
 							Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 
@@ -1532,39 +1710,7 @@ export class FormSettingsPanel extends BasePresetPanel
 								void this.hide();
 							}
 						})
-						.catch((errors) => {
-							if (Type.isArrayFilled(errors))
-							{
-								if (this.#isPhoneValidationError(errors))
-								{
-									this.#showPhoneVerifySlider()
-								}
-								else
-								{
-									const errorMessage = errors
-										.map((item) => {
-											return Text.encode(item.message);
-										})
-										.join('<br><br>');
-
-									const errorAlert = this.getErrorAlert();
-									errorAlert.setMessage(errorMessage);
-									errorAlert.show();
-								}
-							}
-							else
-							{
-								const rootWindow = PageObject.getRootWindow();
-								rootWindow.BX.UI.Dialogs.MessageBox.show({
-									message: Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
-									title: Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
-									buttons: MessageBoxButtons.OK,
-									useAirDesign: true,
-								});
-							}
-
-							Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
-						});
+						.catch((errors) => this.#onSaveError(errors));
 
 					if (this.useBlockDesign() && this.isCrmFormPage())
 					{
@@ -1576,6 +1722,41 @@ export class FormSettingsPanel extends BasePresetPanel
 					Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 				}
 			});
+	}
+
+	#onSaveError(errors: ResponseErrors | Error): void
+	{
+		if (Type.isArrayFilled(errors))
+		{
+			if (this.#isPhoneValidationError(errors))
+			{
+				this.#showPhoneVerifySlider();
+			}
+			else
+			{
+				const errorMessage = errors
+					.map((item) => {
+						return Text.encode(item.message);
+					})
+					.join('<br><br>');
+
+				const errorAlert = this.getErrorAlert();
+				errorAlert.setMessage(errorMessage);
+				errorAlert.show();
+			}
+		}
+		else
+		{
+			const rootWindow = PageObject.getRootWindow();
+			rootWindow.BX.UI.Dialogs.MessageBox.show({
+				message: Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
+				title: Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
+				buttons: MessageBoxButtons.OK,
+				useAirDesign: true,
+			});
+		}
+
+		Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 	}
 
 	#isPhoneValidationError(errors: ResponseErrors): boolean
@@ -1637,6 +1818,7 @@ export class FormSettingsPanel extends BasePresetPanel
 
 	onCancelClick()
 	{
+		this.#cancelPreview();
 		const initialFormOptions = this.getInitialFormOptions();
 		this.getCrmForm().adjust(initialFormOptions.data);
 		BX.Landing.UI.Panel.Top
@@ -1648,6 +1830,11 @@ export class FormSettingsPanel extends BasePresetPanel
 
 	hide(): Promise<*>
 	{
+		this.#cancelPreview();
+		this.#formSession += 1;
+		this.#formChangeQueue = Promise.resolve();
+		Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
+		this.clearContent();
 		const editorWindow = PageObject.getEditorWindow();
 		Dom.removeClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
 		const rootWindow = PageObject.getRootWindow();
@@ -1659,13 +1846,58 @@ export class FormSettingsPanel extends BasePresetPanel
 	onSidebarButtonClick(event: BaseEvent)
 	{
 		const target = event.getTarget();
+		this.#flushPreview();
+		this.clearContent();
 		if (target.options.id === 'design')
 		{
 			this.onFormDesignButtonClick();
 		}
 		else
 		{
-			super.onSidebarButtonClick(event);
+			const contentRequest = this.#contentRequest;
+			const activeButton = this.sidebarButtons.getActive();
+			if (activeButton)
+			{
+				activeButton.deactivate();
+			}
+
+			target.activate();
+			Dom.addClass(this.content, 'landing-ui-panel-base-preset-fade');
+			this.showContentLoader();
+			void this.getContent(target.id).then((content) => {
+				if (contentRequest !== this.#contentRequest)
+				{
+					content?.destroy?.();
+					return;
+				}
+
+				this.#currentContent = content;
+				this.#contentTimer = setTimeout(() => {
+					Dom.removeClass(this.content, 'landing-ui-panel-base-preset-fade');
+					this.hideContentLoader();
+					if (content)
+					{
+						content.subscribe('onChange', this.onChange);
+						Dom.append(content.getLayout(), this.content);
+					}
+				}, 300);
+			});
 		}
+	}
+
+	clearContent()
+	{
+		this.#cancelPreview();
+		this.#contentRequest += 1;
+		clearTimeout(this.#contentTimer);
+		Dom.removeClass(this.content, 'landing-ui-panel-base-preset-fade');
+		if (this.#currentContent)
+		{
+			this.#currentContent.unsubscribe('onChange', this.onChange);
+			this.#currentContent.destroy?.();
+			this.#currentContent = null;
+		}
+
+		super.clearContent();
 	}
 }

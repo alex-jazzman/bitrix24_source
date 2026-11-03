@@ -1,10 +1,18 @@
 .crm-mini-card__show-more {
+	appearance: none;
+	background: none;
+	border: none;
+	border-bottom: 1px dashed rgba(130, 139, 149, .28);
+	padding: 0;
+	margin: 0;
+	font-family: inherit;
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-md);
 	line-height: 19px;
 	letter-spacing: var(--ui-letter-spacing-l);
-	border-bottom: 1px dashed rgba(130, 139, 149, .28);
-	color: var(--ui-color-base-3);
+	color: var(--ui-color-base-2);
+	text-align: left;
+	text-decoration: none;
 	cursor: pointer;
 	align-self: baseline;
 
@@ -13,4 +21,14 @@
 
 .crm-mini-card__show-more:hover {
 	border-bottom: 1px dashed rgba(130, 139, 149, .7);
+}
+
+/* Visible keyboard focus indicator, consistent with the board. */
+.crm-mini-card__show-more:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+
+.crm-mini-card__show-more:focus:not(:focus-visible) {
+	outline: none;
 }

@@ -10,16 +10,24 @@ this.BX = this.BX || {};
 		#isAdmin = false;
 		#isRequisite = false;
 		#isMainPageAvailable = false;
+		#ariaLabel = '';
 		#node = false;
 		constructor(params) {
 			this.#isBitrix24 = params['isBitrix24'];
 			this.#isAdmin = params['isAdmin'];
 			this.#isRequisite = params['isRequisite'];
 			this.#isMainPageAvailable = params['isMainPageAvailable'];
+			this.#ariaLabel = params['ariaLabel'];
 		}
 		showOnce(node) {
 			this.#node = node;
 			const popup = this.#getWidgetLoader().getPopup();
+			popup.subscribe('onShow', () => {
+				this.#updateAriaExpanded(true);
+			});
+			popup.subscribe('onClose', () => {
+				this.#updateAriaExpanded(false);
+			});
 			popup.show();
 			const popupContainer = popup.getPopupContainer();
 			if (popupContainer.getBoundingClientRect().left < 30) {
@@ -27,9 +35,17 @@ this.BX = this.BX || {};
 			}
 			(typeof BX.Intranet.SettingsWidget !== 'undefined' ? Promise.resolve() : this.#load()).then(() => {
 				if (typeof BX.Intranet.SettingsWidget !== 'undefined') {
-					BX.Intranet.SettingsWidget.bindAndShow(node);
+					const settingsWidget = BX.Intranet.SettingsWidget.bind(node);
+					if (settingsWidget && popup.isShown()) {
+						settingsWidget.show(node);
+					}
 				}
 			});
+		}
+		#updateAriaExpanded(expanded) {
+			if (this.#node) {
+				main_core.Dom.attr(this.#node, 'aria-expanded', expanded);
+			}
 		}
 		#getWidgetLoader() {
 			if (this.#widgetLoader) {
@@ -38,7 +54,12 @@ this.BX = this.BX || {};
 			const widgetLoader = new intranet_widgetLoader.WidgetLoader({
 				id: "bx-settings-header-popup",
 				bindElement: this.#node,
-				width: 374
+				width: 374,
+				ariaLabel: this.#ariaLabel,
+				focusTrap: {
+					initialFocus: 'container'
+				},
+				testId: 'settings-widget-popup'
 			});
 			widgetLoader.addHeaderSkeleton();
 			if (this.#isRequisite) {

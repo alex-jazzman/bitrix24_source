@@ -62,6 +62,8 @@ export const ResultRequiredAha = {
 				minWidth: popupWidth,
 				maxWidth: popupWidth,
 				padding: 0,
+				ariaLabel: title,
+				focusTrap: { initialFocus: false },
 			}"
 			@close="$emit('close')"
 		>
@@ -77,6 +79,7 @@ export const ResultRequiredAha = {
 							:style="AirButtonStyle.TINTED"
 							:leftIcon="Outline.PLUS_L"
 							:wide="false"
+							:dataset="{ testid: 'tasks-result-required-aha-add-btn' }"
 							@click="$emit('addResult')"
 						/>
 					</div>

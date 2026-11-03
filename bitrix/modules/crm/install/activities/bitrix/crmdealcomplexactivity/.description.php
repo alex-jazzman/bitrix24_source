@@ -40,7 +40,7 @@ if (method_exists(BlockAvailability::class, 'legacyDefault'))
 
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_DEAL_NAME') ?? '',
-	description: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION') ?? '',
+	description: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_DEAL_DESCRIPTION_1') ?? '',
 	type: [
 		ActivityType::NODE->value,
 	],
@@ -112,6 +112,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 800,
 				),
 				new Bitrix\Bizproc\Activity\Dto\Complex\NodeAction(
+					activityCode: 'crmcreaterequisiteactivity',
+					sort: 850,
+				),
+				new Bitrix\Bizproc\Activity\Dto\Complex\NodeAction(
 					activityCode: 'crmcopydealactivity',
 					sort: 900,
 				),
@@ -133,6 +137,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 1100,
 				),
 				new Bitrix\Bizproc\Activity\Dto\Complex\NodeAction(
+					activityCode: 'crmgetproductrowactivity',
+					sort: 1150,
+				),
+				new Bitrix\Bizproc\Activity\Dto\Complex\NodeAction(
 					activityCode: 'crmremoveproductrow',
 					sort: 1200,
 				),
@@ -144,6 +152,7 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		),
 	)
-	->setAdditionalResult(['FilterReturnPropertiesMap'])
+	->setAdditionalResult(['FilterReturnPropertiesMap', 'RelationReturnPropertiesMap'])
+	->set('PROPERTIES', ['BaseSettingsAction' => 'setfieldactivity'])
 	->toArray()
 ;

@@ -9,6 +9,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+if (!Loader::includeModule('socialnetwork'))
+{
+	return [];
+}
+
 $langAdditional = [
 	'PUSH_EVENT_MAIN_USER_COUNTER' => 'user_counter',
 	'PUSH_EVENT_WORKGROUP_ADD' => PushEventDictionary::EVENT_WORKGROUP_ADD,

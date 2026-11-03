@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports, main_core, main_core_cache, main_popup, sign_featureStorage, sign_type, sign_v2_api, sign_v2_b2e_documentBlock, sign_v2_b2e_documentCounters, sign_v2_b2e_signDropdown, sign_v2_documentSetup, sign_v2_helper, sign_v2_signSettings, ui_uploader_core, main_core_events) {
+(function (exports, main_core, main_core_cache, main_core_events, main_popup, sign_featureStorage, sign_type, sign_v2_api, sign_v2_b2e_documentBlock, sign_v2_b2e_documentCounters, sign_v2_b2e_signDropdown, sign_v2_documentSetup, sign_v2_helper, sign_v2_signSettings, ui_uploader_core) {
 	'use strict';
 
 	class EditorIntegration {
@@ -135,7 +135,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		#editorFlowPending = false;
 		#editorIntegration;
 		#blockEditorUnavailableHintPopup = null;
-		constructor(blankSelectorConfig) {
+		#batchUploadService = null;
+		// one load of the batch upload extension shared by every selection
+		#batchUploadReady = null;
+		#batchUploadPopup = null;
+		#batchMaxFileSize = null;
+		// Documents a finished commit created: the counter of the wizard learns about them only once
+		// their blocks are rendered, and until then they still hold their place in the limit. Every
+		// commit holds its places under a token of its own, so overlapping handlers of two commits
+		// release exactly their own places instead of the whole reserve.
+		#batchReservations = new Map();
+		#lastBatchReservationToken = 0;
+		#sliderCloseHandler = null;
+		// The documents group belongs to the wizard, which creates it on several paths: reading it
+		// through the owner keeps a single source instead of a copy every path has to remember.
+		#resolveDocumentsGroupId;
+		constructor(blankSelectorConfig, resolveDocumentsGroupId) {
 			super(blankSelectorConfig);
 			const {
 				region,
@@ -143,8 +158,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				isOpenedFromRobot,
 				isOpenedFromTemplateFolder,
 				isOpenedAsFolder,
-				initiatedByType
+				initiatedByType,
+				uploaderOptions
 			} = blankSelectorConfig;
+			this.#resolveDocumentsGroupId = resolveDocumentsGroupId;
+			this.#batchMaxFileSize = this.#readMaxFileSize(uploaderOptions);
 			this.#api = new sign_v2_api.Api();
 			this.#editorIntegration = new EditorIntegration(this.#api, this.#applyNewBlank.bind(this), () => {
 				this.#editorFlowPending = false;
@@ -170,6 +188,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			/>
 		`;
 			this.#initiatedByType = initiatedByType;
+			// the selector checks a new selection against the batch, which is owned here
+			this.blankSelector.setBatchStateResolver(() => this.#getBatchState());
 			this.#disableDocumentInputs();
 			this.#init();
 		}
@@ -186,6 +206,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			sign_v2_helper.Hint.create(this.layout);
 			this.#subscribeOnEvents();
 		}
+
+		/**
+		 * The per-file size limit belongs to the portal; without it the uploader default applies.
+		 */
+		#readMaxFileSize(uploaderOptions) {
+			const maxFileSize = parseInt(uploaderOptions?.maxFileSize, 10);
+			return main_core.Type.isInteger(maxFileSize) && maxFileSize > 0 ? maxFileSize : null;
+		}
 		#getSenderDocumentTypes() {
 			if (this.#isOpenedFromTemplateFolder || this.#isOpenedAsFolder) {
 				return [sign_type.DocumentInitiated.company];
@@ -197,9 +225,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			blankSelector.subscribe(blankSelector.events.toggleSelection, this.#onBlankSelectorToggleSelection.bind(this));
 			blankSelector.subscribe(blankSelector.events.addFile, this.#onBlankSelectorAddFile.bind(this));
 			blankSelector.subscribe(blankSelector.events.beforeAddFileSuccessfully, this.#onBlankSelectorBeforeAddFile.bind(this));
+			blankSelector.subscribe(blankSelector.events.batchSelected, this.#onBlankSelectorBatchSelected.bind(this));
 			if (!this.isTemplateMode() && sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
-				this.documentCounters.subscribe('limitNotExceeded', this.#refreshDocumentLimitState.bind(this));
-				this.documentCounters.subscribe('limitExceeded', this.#refreshDocumentLimitState.bind(this));
+				this.documentCounters.subscribe('limitNotExceeded', this.#onDocumentCountChange.bind(this));
+				this.documentCounters.subscribe('limitExceeded', this.#onDocumentCountChange.bind(this));
 			}
 		}
 		#onBlankSelectorBeforeAddFile(event) {
@@ -207,6 +236,272 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				files = []
 			} = event.getData() ?? {};
 			this.#expectedAddFileCount = files.length;
+		}
+
+		/**
+		 * The step owns the lifetime of the batch, the service owns its state.
+		 */
+		async #onBlankSelectorBatchSelected(event) {
+			const {
+				files = [],
+				hasPlaceholders = false
+			} = event.getData() ?? {};
+			if (files.length === 0) {
+				return;
+			}
+			await this.#initBatchUpload();
+			this.#batchUploadPopup.show();
+			// the tile the files came from decides the mode, and the service keeps it per file
+			this.#batchUploadService.addFiles(files, this.getDocumentLimitLeft(), hasPlaceholders);
+		}
+
+		/**
+		 * The window of the batch mode is loaded on the first selection of several files and not with
+		 * the wizard: a static import together with the `rel` entry of the extension would put its JS
+		 * and CSS into every opening of the wizard, and most of them attach a single file.
+		 *
+		 * The classes come from the result of the load, not from the namespace: the batch extension
+		 * shares BX.Sign.V2.B2e with this one, and a namespace read right after the load depends on the
+		 * order the packed bundles ran in. Memoised, so several selections share one load.
+		 */
+		#initBatchUpload() {
+			this.#batchUploadReady ??= this.#createBatchUpload();
+			return this.#batchUploadReady;
+		}
+		async #createBatchUpload() {
+			const {
+				BatchUploadPopup,
+				BatchUploadService
+			} = await main_core.Runtime.loadExtension('sign.v2.b2e.batch-upload');
+			if (this.#batchUploadService !== null) {
+				return;
+			}
+			this.#batchUploadService = new BatchUploadService({
+				limitTotal: this.#b2eDocumentLimitCount,
+				acceptedFileTypes: sign_v2_b2e_documentBlock.getAllowedReplaceExtensions(false).map(extension => `.${extension}`),
+				maxFileSize: this.#batchMaxFileSize,
+				resolveLimitLeft: () => this.getDocumentLimitLeft()
+			});
+			this.#batchUploadService.subscribe(BatchUploadService.events.allUploaded, event => {
+				const {
+					fileIds = [],
+					hasPlaceholders = false
+				} = event.getData() ?? {};
+				void this.#commitBatch(fileIds, hasPlaceholders);
+			});
+			this.#batchUploadPopup = new BatchUploadPopup({
+				service: this.#batchUploadService,
+				limitTotal: this.#b2eDocumentLimitCount,
+				resolveLimitLeft: () => this.getDocumentLimitLeft()
+			});
+			this.#batchUploadPopup.subscribe(BatchUploadPopup.events.addMore, () => this.emit('batchAddMoreRequested'));
+			this.#batchUploadPopup.subscribe(BatchUploadPopup.events.close, () => this.#onBatchUploadPopupClose());
+			this.#subscribeOnSliderClose();
+		}
+
+		/**
+		 * Nothing of the batch is on its way any more, so the layer has nothing left to do: keeping the
+		 * uploader, the Vue app and the popup node alive would only pile them up on the next batch.
+		 */
+		#onBatchUploadPopupClose() {
+			if (this.#batchUploadService?.hasPending() === true) {
+				return;
+			}
+			this.destroyBatchUpload();
+		}
+
+		/**
+		 * The wizard lives in a slider: once it is closed, an unfinished upload would keep creating
+		 * documents behind the back of a user who has already left. An inner slider - the editor, the
+		 * template list - closes while the wizard stays open, so only the last one counts.
+		 */
+		#subscribeOnSliderClose() {
+			if (this.#sliderCloseHandler !== null) {
+				return;
+			}
+			this.#sliderCloseHandler = () => {
+				if ((BX.SidePanel?.Instance?.getTopSlider() ?? null) !== null) {
+					return;
+				}
+				this.destroyBatchUpload();
+			};
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', this.#sliderCloseHandler);
+		}
+		#unsubscribeFromSliderClose() {
+			if (this.#sliderCloseHandler === null) {
+				return;
+			}
+			main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onCloseComplete', this.#sliderCloseHandler);
+			this.#sliderCloseHandler = null;
+		}
+
+		/**
+		 * One call per batch: the server creates a document per file and returns a per-file outcome,
+		 * which is the source of truth for the final status of every file.
+		 */
+		async #commitBatch(fileIds, hasPlaceholders) {
+			if (fileIds.length === 0) {
+				return;
+			}
+			const batchUploadService = this.#batchUploadService;
+			if (batchUploadService === null) {
+				return;
+			}
+			const isCancelled = () => this.#batchUploadService !== batchUploadService;
+			const waitBeforeReconciliationRetry = () => new Promise(resolve => setTimeout(resolve, 1000));
+			let response;
+			try {
+				response = await this.#api.addDocumentsToGroup(fileIds, this.#resolveDocumentsGroupId(), hasPlaceholders, this.#initiatedByType);
+			} catch {
+				if (isCancelled()) {
+					return;
+				}
+				batchUploadService.applyCommitFailure();
+				this.#notifyBatchCommitError();
+				return;
+			}
+			let items = response.items ?? [];
+			if (isCancelled()) {
+				return;
+			}
+			// The owner must adopt the group before finishing this commit can start a deferred one.
+			if (!this.#emitBatchDocumentsAdded(response.groupId, [])) {
+				batchUploadService.applyServerItems(batchUploadService.getVerifiedServerItems(items, []));
+				return;
+			}
+			while (!isCancelled()) {
+				try {
+					// eslint-disable-next-line no-await-in-loop
+					const ready = await sign_v2_signSettings.waitForGroupPlaceholderValidation(this.#api, response.groupId, {
+						isCancelled,
+						maxAttempts: 1
+					});
+					if (isCancelled()) {
+						return;
+					}
+					if (!ready) {
+						// eslint-disable-next-line no-await-in-loop
+						await waitBeforeReconciliationRetry();
+						continue;
+					}
+
+					// eslint-disable-next-line no-await-in-loop
+					const documents = await this.#api.getDocumentListInGroup(response.groupId, false);
+					if (isCancelled()) {
+						return;
+					}
+					items = batchUploadService.getVerifiedServerItems(items, documents.map(document => document.uid)) ?? items;
+					break;
+				} catch {
+					if (isCancelled()) {
+						return;
+					}
+
+					// eslint-disable-next-line no-await-in-loop
+					await waitBeforeReconciliationRetry();
+				}
+			}
+			if (isCancelled()) {
+				return;
+			}
+			const reservationToken = this.#reserveCreatedDocuments(items);
+			// The owner receives the verified result before finishing the commit can start a deferred one.
+			const groupAccepted = this.#emitBatchDocumentsAdded(response.groupId, items, reservationToken);
+			if (!isCancelled() && groupAccepted) {
+				batchUploadService.applyServerItems(items);
+			} else if (!isCancelled()) {
+				batchUploadService.applyServerItems(batchUploadService.getVerifiedServerItems(items, []));
+			}
+		}
+		#emitBatchDocumentsAdded(groupId, items, reservationToken = null) {
+			let groupAccepted = false;
+			this.emit('batchDocumentsAdded', {
+				groupId,
+				items,
+				reservationToken,
+				resolveGroup: accepted => {
+					groupAccepted = accepted;
+				}
+			});
+			return groupAccepted;
+		}
+		#notifyBatchCommitError() {
+			window.top.BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('SIGN_V2_B2E_DOCUMENT_SETUP_BATCH_COMMIT_ERROR')
+			});
+		}
+
+		/**
+		 * The documents of these files were created by the server, but never reached the wizard: the
+		 * rows of the upload window must show a failure instead of the uploaded look.
+		 */
+		failBatchDocuments(serverFileIds) {
+			this.#batchUploadService?.applyDocumentFailure(serverFileIds);
+		}
+		getDocumentLimitLeft() {
+			const currentCount = this.documentCounters?.getCount() ?? 0;
+			// the counter knows only documents that already exist, but files still in the batch
+			// are on their way to becoming documents and hold their place in the limit too
+			const pendingCount = this.#batchUploadService?.getPendingCount() ?? 0;
+			return Math.max(this.#b2eDocumentLimitCount - currentCount - pendingCount - this.#getReservedDocumentCount(), 0);
+		}
+		#getReservedDocumentCount() {
+			let reservedCount = 0;
+			this.#batchReservations.forEach(count => {
+				reservedCount += count;
+			});
+			return reservedCount;
+		}
+
+		/**
+		 * A document exists for every successful file of the outcome, so it takes its place in the limit
+		 * right away. The places are held under a token: the owner of the wizard state releases exactly
+		 * the places of the commit it has finished with.
+		 */
+		#reserveCreatedDocuments(items) {
+			const createdCount = items.filter(item => item.success === true).length;
+			if (!this.documentCounters || createdCount === 0) {
+				return null;
+			}
+			this.#lastBatchReservationToken++;
+			this.#batchReservations.set(this.#lastBatchReservationToken, createdCount);
+			return this.#lastBatchReservationToken;
+		}
+
+		/**
+		 * Called by the owner of the wizard state once the documents of the commit are in the group:
+		 * their places are held by the counter from now on.
+		 */
+		releaseBatchReservation(token) {
+			if (!main_core.Type.isNumber(token) || !this.#batchReservations.delete(token)) {
+				return;
+			}
+			this.#batchUploadPopup?.refreshLimitLeft();
+			this.#refreshDocumentLimitState();
+		}
+		#onDocumentCountChange() {
+			this.#batchUploadPopup?.refreshLimitLeft();
+			this.#refreshDocumentLimitState();
+		}
+
+		/**
+		 * The state of the batch, as the blank selector sees it: a new selection joins a running batch
+		 * and goes to the server together with it, so both facts belong to a selection check.
+		 */
+		#getBatchState() {
+			return {
+				isActive: this.#batchUploadService !== null,
+				totalSize: this.#batchUploadService?.getPendingSize() ?? 0
+			};
+		}
+		destroyBatchUpload() {
+			this.#batchUploadReady = null;
+			this.#unsubscribeFromSliderClose();
+			this.#batchReservations.clear();
+			this.#batchUploadPopup?.destroy();
+			this.#batchUploadPopup = null;
+			this.#batchUploadService?.destroy();
+			this.#batchUploadService = null;
 		}
 		#refreshDocumentLimitState() {
 			if (!this.documentCounters) {
@@ -903,5 +1198,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.DocumentSetup = DocumentSetup;
 
-})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Cache, BX.Main, BX.Sign, BX.Sign, BX.Sign.V2, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.UI.Uploader, BX.Event);
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Cache, BX.Event, BX.Main, BX.Sign, BX.Sign, BX.Sign.V2, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.UI.Uploader);
 //# sourceMappingURL=document-setup.bundle.js.map

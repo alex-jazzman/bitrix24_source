@@ -1,0 +1,4 @@
+<?php
+$MESS['CRM_COPILOT_CALL_HINT_NAVIGATION_ARIA_LABEL'] = 'Call script view';
+$MESS['CRM_COPILOT_CALL_HINT_TAB_HINT'] = 'Call hint';
+$MESS['CRM_COPILOT_CALL_HINT_TAB_RULES'] = 'Conversation rules';

@@ -16,7 +16,7 @@ import type3Icon from './images/type3.svg';
 import './css/style.css';
 import {RefillActionPagesField} from "./internal/action-pages/refill-action-pages";
 
-export default class ActionsContent extends ContentWrapper
+export class ActionsContent extends ContentWrapper
 {
 	#fieldsWithWarningStatus: Set<string> = new Set();
 	constructor(options)
@@ -406,3 +406,5 @@ export default class ActionsContent extends ContentWrapper
 		selection.addRange(range);
 	}
 }
+
+export { ActionsContent as Content };

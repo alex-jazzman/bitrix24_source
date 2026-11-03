@@ -8,12 +8,14 @@ import {
 	ButtonPanel,
 	CreateChatHeading,
 	TextareaInput,
+	FieldRow,
 	ChatMemberDiffManager,
 } from 'im.v2.component.content.chat-forms.elements';
 import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
 import { type CustomColorScheme } from 'im.v2.component.elements.button';
 import { Color } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat, type ImModelCollabInfo } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
@@ -30,6 +32,7 @@ export const CollabUpdating = {
 			ButtonPanel,
 			CreateChatHeading,
 			RightsSection,
+			FieldRow,
 		},
 	props:
 		{
@@ -57,6 +60,18 @@ export const CollabUpdating = {
 	},
 	computed: {
 		EmptyAvatarType: () => EmptyAvatarType,
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		descriptionLabel(): string
+		{
+			return this.loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE');
+		},
+		descriptionPlaceholder(): string
+		{
+			return this.loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER');
+		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -181,7 +196,7 @@ export const CollabUpdating = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat-forms__content --collab">
+		<div class="bx-im-content-chat-forms__content --collab" data-testid="im-chat-form-update-collab">
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar
 					:avatarFile="avatarFile"
@@ -192,11 +207,20 @@ export const CollabUpdating = {
 				/>
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_COLLAB_TITLE_PLACEHOLDER')" />
 			</div>
-			<CreateChatHeading :text="loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE')" />
+			<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 			<div class="bx-im-content-chat-forms__description_container">
+				<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+					<TextareaInput
+						:ariaLabel="descriptionLabel"
+						:value="description"
+						:placeholder="descriptionPlaceholder"
+						@input="onDescriptionChange"
+					/>
+				</FieldRow>
 				<TextareaInput
+					v-else
 					:value="description"
-					:placeholder="loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER')"
+					:placeholder="descriptionPlaceholder"
 					:border="false"
 					@input="onDescriptionChange"
 				/>

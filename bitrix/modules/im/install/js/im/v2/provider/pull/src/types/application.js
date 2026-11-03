@@ -1,3 +1,3 @@
 export type ApplicationOpenChatParams = {
-	dialogId: number
+	dialogId: string | number
 };

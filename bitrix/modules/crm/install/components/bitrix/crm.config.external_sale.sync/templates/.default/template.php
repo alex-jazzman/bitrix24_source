@@ -9,17 +9,23 @@ else
 	if ($arResult["ErrorMessage"] <> '')
 		ShowError($arResult["ErrorMessage"]);
 
+	$navigationLinkAttributes = ($arParams['IS_SETTINGS_HUB'] ?? null) === true
+		? ' data-slider-ignore-autobinding="true" target="_self"'
+		: '';
+
 	$arButtons = array(
 		array(
 			"TEXT"=>GetMessage("BPWC_WNCT_2LIST"),
 			"TITLE"=>GetMessage("BPWC_WNCT_2LIST"),
 			"LINK"=>$arResult["PATH_TO_INDEX"],
+			'LINK_PARAM' => 'data-testid="crm-config-external-sale-sync-list-button"' . $navigationLinkAttributes,
 			"ICON"=>"btn-list",
 		),
 		array(
 			"TEXT"=>GetMessage("BPWC_WNCT_2EDIT"),
 			"TITLE"=>GetMessage("BPWC_WNCT_2EDIT"),
 			"LINK"=>$arResult["PATH_TO_EDIT"],
+			'LINK_PARAM' => 'data-testid="crm-config-external-sale-sync-edit-button"' . $navigationLinkAttributes,
 			"ICON"=>"btn-edit",
 		),
 	);

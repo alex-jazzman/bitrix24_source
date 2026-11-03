@@ -1,5 +1,12 @@
 import Type from '../../type';
 
+export type EventStoreRecord = {
+	eventsMap: Map<any, any>,
+	onceMap: Map<any, any>,
+	maxListeners: number,
+	eventsMaxListeners: Map<any, any>,
+};
+
 export default class EventStore
 {
 	defaultMaxListeners: number;
@@ -10,7 +17,7 @@ export default class EventStore
 		this.defaultMaxListeners = Type.isNumber(options.defaultMaxListeners) ? options.defaultMaxListeners : 10;
 	}
 
-	add(target: Object, options: { maxListeners?: number } = {})
+	add(target: Object, options: { maxListeners?: number } = {}): EventStoreRecord
 	{
 		const record = this.getRecordScheme();
 		if (Type.isNumber(options.maxListeners))
@@ -23,22 +30,22 @@ export default class EventStore
 		return record;
 	}
 
-	get(target: Object)
+	get(target: Object): EventStoreRecord | undefined
 	{
 		return this.eventStore.get(target);
 	}
 
-	getOrAdd(target: Object, options: { maxListeners?: number } = {})
+	getOrAdd(target: Object, options: { maxListeners?: number } = {}): EventStoreRecord
 	{
 		return this.get(target) || this.add(target, options);
 	}
 
-	delete(context: any)
+	delete(context: any): void
 	{
 		this.eventStore.delete(context);
 	}
 
-	getRecordScheme()
+	getRecordScheme(): EventStoreRecord
 	{
 		return {
 			eventsMap: new Map(),
@@ -48,7 +55,7 @@ export default class EventStore
 		};
 	}
 
-	getDefaultMaxListeners()
+	getDefaultMaxListeners(): number
 	{
 		return this.defaultMaxListeners;
 	}

@@ -6,7 +6,10 @@ import { RolesDialogHeaderWithHint } from './roles-dialog-header-with-hint';
 
 import '../css/roles-dialog-content-header.css';
 
-export function getRolesDialogContentHeader(States: StatesType, analytic: RolesDialogAnalytics): Object
+export function getRolesDialogContentHeader(
+	States: StatesType,
+	analytic: RolesDialogAnalytics,
+): Object
 {
 	const sendSearchAnalyticLabel = (searchQuery: ?string) => {
 		analytic.sendSearchLabel(searchQuery);

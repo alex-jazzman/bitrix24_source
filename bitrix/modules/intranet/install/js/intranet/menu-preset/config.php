@@ -4,8 +4,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Intranet\Internal\MainTool\AccessPolicy;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+
+$settings = [];
+if (Loader::includeModule('intranet') && AccessPolicy::isFeatureEnabled())
+{
+	$settings['isMainToolPickerEnabled'] = true;
+}
 
 $presetData = [
 	'CRM_PRESET_AVAILABLE' => Loader::includeModule('crm') && CCrmPerms::IsAccessEnabled(),
@@ -44,15 +51,25 @@ if (
 	$presetData['SITES_PRESET_AVAILABLE'] = true;
 }
 
+$settings['presetData'] = $presetData;
+
 return [
 	'css' => 'dist/menu-preset.bundle.css',
 	'js' => 'dist/menu-preset.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
+		'main.popup',
+		'ui.a11y',
+		'ui.system.radiobutton',
+		'ui.system.typography.vue',
 		'ui.vue3',
+		'ui.vue3.components.button',
+		'ui.vue3.components.hint',
+		'ui.vue3.components.rich-loc',
+		'ui.vue3.components.switcher',
+		'ui.vue3.mixins.loc-mixin',
 	],
 	'skip_core' => false,
-	'settings' => [
-		'presetData' => $presetData
-	]
+	'settings' => $settings
 ];

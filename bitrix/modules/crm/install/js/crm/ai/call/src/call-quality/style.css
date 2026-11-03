@@ -122,7 +122,7 @@
 }
 
 .call-quality__compliance__container.--empty-state .call-quality__compliance {
-	background: url('./images/empty-state-stars.png') center center no-repeat;
+	background: url('./images/empty-state-stars.webp') center center no-repeat;
 }
 
 .call-quality__compliance__container.--empty-state .call-quality__compliance:hover {
@@ -134,7 +134,7 @@
 	display: flex;
 	align-items: center;
 	flex-direction: row;
-	background: url('./images/stars.png') center center no-repeat;
+	background: url('./images/stars.webp') center center no-repeat;
 }
 
 .call-quality__compliance:hover {

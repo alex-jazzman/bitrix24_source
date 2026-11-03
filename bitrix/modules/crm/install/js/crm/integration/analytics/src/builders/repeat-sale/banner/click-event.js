@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { Dictionary } from '../../../dictionary';
 import { filterOutNilValues, getCrmMode } from '../../../helpers';
 import type { RepeatSaleBannerClickEvent } from '../../../types';
@@ -12,6 +13,7 @@ export class ClickEvent
 	#subSection: RepeatSaleBannerClickEvent['c_sub_section'] = Dictionary.SUB_SECTION_KANBAN;
 	#element: RepeatSaleBannerClickEvent['c_element'];
 	#period: number;
+	#enableMode: RepeatSaleBannerClickEvent['p4'];
 
 	static createDefault(
 		type: RepeatSaleBannerClickEvent['type'],
@@ -40,6 +42,13 @@ export class ClickEvent
 		return this;
 	}
 
+	setEnableMode(mode: 'manual' | 'auto-after-close'): ClickEvent
+	{
+		this.#enableMode = `enable-mode-${mode}`;
+
+		return this;
+	}
+
 	setSection(section: RepeatSaleBannerClickEvent['c_section']): ClickEvent
 	{
 		this.#section = section;
@@ -58,7 +67,10 @@ export class ClickEvent
 			c_sub_section: this.#subSection,
 			c_element: this.#element,
 			p1: getCrmMode(),
-			p3: this.#period ? `period_${this.#period}` : null,
+			// The default view of the widget is the 30-day period, and its id is zero: the period of an
+			// event is told by whether it was set, not by its value being truthy.
+			p3: Type.isNumber(this.#period) ? `period_${this.#period}` : null,
+			p4: this.#enableMode,
 		});
 	}
 }

@@ -1,3 +1,5 @@
+import { type DocumentField } from '../../../shared/types';
+
 import { InspectorViewItemGroupColorDict, InspectorViewItemTypeDict } from '../constants';
 
 export type InspectorViewItemType = $Values<InspectorViewItemTypeDict>;
@@ -27,7 +29,23 @@ export type InspectorViewItemData = {
 	exampleValueMoreCount?: number,
 };
 
-export type InspectorViewItem = InspectorViewItemData | InspectorViewItemBase;
+/**
+ * Found items node of the filter group. Fields of the selected item live in `items` because the panel
+ * search descends by it, and the caption of that item stays out of `text`, which keys the render.
+ */
+export type InspectorViewFoundItemsItem = {
+	type: InspectorViewItemType,
+	id: string,
+	text: string,
+	hasChildren: boolean,
+	collectionExpression: string,
+	firstItemExpressionPrefix: string,
+	documentType?: string | Array<string>,
+	fields: Array<DocumentField>,
+	items: Array<InspectorViewItemData>,
+};
+
+export type InspectorViewItem = InspectorViewItemData | InspectorViewItemBase | InspectorViewFoundItemsItem;
 
 export type SelectedGridViewGroup = {
 	id: string,

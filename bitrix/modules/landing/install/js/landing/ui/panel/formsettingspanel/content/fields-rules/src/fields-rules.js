@@ -5,12 +5,12 @@ import {ActionPanel} from 'landing.ui.component.actionpanel';
 import {RadioButtonField} from 'landing.ui.field.radiobuttonfield';
 import {FormSettingsForm} from 'landing.ui.form.formsettingsform';
 import {BaseEvent} from 'main.core.events';
-import RuleType from './rule-type';
-import RuleGroup from './internal/rule-group/rule-group';
+import { RuleType } from './rule-type';
+import { RuleGroup } from './internal/rule-group/rule-group';
 
 import './css/style.css';
 
-export default class FieldsRules extends ContentWrapper
+export class FieldsRules extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -177,3 +177,5 @@ export default class FieldsRules extends ContentWrapper
 		};
 	}
 }
+
+export { FieldsRules as Content };

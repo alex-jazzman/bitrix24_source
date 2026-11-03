@@ -4,6 +4,55 @@ this.BX.Call = this.BX.Call || {};
 (function (exports, main_core) {
 	'use strict';
 
+	class ContextProviderRegistry {
+		#providers = [];
+		registerProvider(provider) {
+			if (this.#providers.includes(provider)) {
+				return;
+			}
+			this.#providers.push(provider);
+		}
+		unregisterProvider(provider) {
+			this.#providers = this.#providers.filter(registered => registered !== provider);
+		}
+		getContext() {
+			for (const provider of this.#providers) {
+				const context = this.#safeCall(() => this.#pickAllowedFields(provider())) ?? {};
+				if (this.#hasFilledField(context)) {
+					return context;
+				}
+			}
+			return {};
+		}
+		#safeCall(read) {
+			try {
+				return read();
+			} catch {
+				return null;
+			}
+		}
+		#pickAllowedFields(context) {
+			const allowed = {};
+			if (!context) {
+				return allowed;
+			}
+			if (main_core.Type.isString(context.roomId)) {
+				allowed.roomId = context.roomId;
+			}
+			if (main_core.Type.isNumber(context.callId)) {
+				allowed.callId = context.callId;
+			}
+			if (main_core.Type.isNumber(context.chatId)) {
+				allowed.chatId = context.chatId;
+			}
+			return allowed;
+		}
+		#hasFilledField(context) {
+			return Object.values(context).some(value => value !== undefined && value !== null && value !== '');
+		}
+	}
+	const CallLogContextRegistry = new ContextProviderRegistry();
+
 	class CallSettings {
 		#accidentLogSendIntervalSecs = 0;
 		#accidentLogGroupMaxAgeSecs = 0;
@@ -13,8 +62,9 @@ this.BX.Call = this.BX.Call || {};
 		#plainCallFollowUpEnabled = false;
 		#plainCallCloudRecordingEnabled = false;
 		constructor() {
-			if (main_core.Extension.getSettings('call.core').call) {
-				this.setup(main_core.Extension.getSettings('call.core').call);
+			const callSettings = main_core.Extension.getSettings('call.core').get('call');
+			if (callSettings) {
+				this.setup(callSettings);
 			}
 		}
 		setup(settings) {
@@ -93,6 +143,7 @@ this.BX.Call = this.BX.Call || {};
 	});
 
 	exports.AccidentLogStorageKeys = AccidentLogStorageKeys;
+	exports.CallLogContextRegistry = CallLogContextRegistry;
 	exports.CallSettingsManager = CallSettingsManager;
 
 })(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX);

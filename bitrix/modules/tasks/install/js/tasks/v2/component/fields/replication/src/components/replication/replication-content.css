@@ -37,6 +37,21 @@
 	gap: var(--ui-space-inline-2xs);
 }
 
+/* content control button reset */
+.tasks-replication-content-element {
+	padding: 0;
+	font: inherit;
+	background-color: transparent;
+	border: none;
+}
+/* content control button reset end */
+
+.tasks-replication-content-element:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-replication-content-element-text {
 	color: var(--ui-color-base-4);
 }

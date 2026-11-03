@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/parser/const', (require, exports, module) => {
 
 	const MARKDOWN_PLACEHOLDER_SUFFIX = '####';
 	const MARKDOWN_CODE_PREFIX = '####MD_CODE_';
+	const MARKDOWN_TABLE_PREFIX = '####MD_TABLE_';
 	const MARKDOWN_ESCAPE_PREFIX = '####MD_ESC_';
 	const MARKDOWN_INLINE_CODE_PREFIX = '####MD_INLINE_';
 	const MARKDOWN_MENTION_PREFIX = '####MD_MENTION_';
@@ -16,6 +17,7 @@ jn.define('im/messenger/lib/parser/const', (require, exports, module) => {
 		NEW_LINE,
 		MARKDOWN_PLACEHOLDER_SUFFIX,
 		MARKDOWN_CODE_PREFIX,
+		MARKDOWN_TABLE_PREFIX,
 		MARKDOWN_ESCAPE_PREFIX,
 		MARKDOWN_INLINE_CODE_PREFIX,
 		MARKDOWN_MENTION_PREFIX,

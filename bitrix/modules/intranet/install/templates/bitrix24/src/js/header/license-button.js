@@ -1,7 +1,8 @@
-import { ajax, Event, Runtime, Type } from 'main.core';
+import { ajax, Event, Loc, Runtime, Type } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Counter, CounterColor, CounterStyle } from 'ui.cnt';
+import { LiveAnnouncer } from 'ui.a11y';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 
 import { LicenseWidget as Bitrix24LicenseWidget } from 'bitrix24.license-widget';
@@ -10,6 +11,7 @@ import { WidgetLoader } from 'intranet.widget-loader';
 import { PULL } from 'pull.client';
 
 type LicenseButtonOptions = {
+	messages: { [key: string]: string },
 	counters: {
 		awaitingPayment: number,
 		failedPayment: number,
@@ -43,13 +45,16 @@ export class LicenseButton
 	static #options: LicenseButtonOptions;
 	static #buttonWrapper: HTMLElement;
 	static #button: HTMLElement;
+	static #ordersCount: ?number = null;
 	static #cache: BaseCache<any> = new MemoryCache();
 
 	static init(options: LicenseButtonOptions): void
 	{
+		Loc.setMessage(options.messages);
 		this.#options = options;
 		this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
 		this.#button = this.#buttonWrapper.querySelector('button');
+		this.#ordersCount = null;
 		this.#setEventHandlers(this.#button);
 
 		if (this.#options.isCloud)
@@ -157,6 +162,11 @@ export class LicenseButton
 				bindElement: this.#buttonWrapper,
 				width: 385,
 				id: 'bx-license-header-popup',
+				ariaLabel: Loc.getMessage('INTRANET_LICENSE_WIDGET_DIALOG_LABEL'),
+				focusTrap: {
+					initialFocus: 'container',
+					restoreFocus: () => this.#button,
+				},
 			});
 
 			const popup = loader.getPopup();
@@ -220,7 +230,22 @@ export class LicenseButton
 
 	static #setCounterValue(personalTotalCount: number, commonTotalCount: number, highlightIntegrator: number = 0)
 	{
-		const value = personalTotalCount + commonTotalCount + highlightIntegrator;
+		const ordersCount = personalTotalCount + commonTotalCount;
+		const value = ordersCount + highlightIntegrator;
+		const previousOrdersCount = this.#ordersCount;
+
+		this.#ordersCount = ordersCount;
+		this.#updateAccessibleName(ordersCount, highlightIntegrator);
+
+		if (!Type.isNil(previousOrdersCount) && previousOrdersCount !== ordersCount)
+		{
+			LiveAnnouncer.announce(
+				Loc.getMessage('INTRANET_LICENSE_WIDGET_ORDERS_COUNT', {
+					'#COUNT#': ordersCount,
+				}),
+				'polite',
+			);
+		}
 
 		if (value < 1)
 		{
@@ -233,6 +258,32 @@ export class LicenseButton
 			this.#getCounter().update(value);
 			this.#getCounter().renderTo(this.#getCounterWrapper());
 		}
+	}
+
+	static #updateAccessibleName(ordersCount: number = 0, highlightIntegrator: number = 0): void
+	{
+		const tariffName = this.#button.querySelector('.air-header-button__text')?.textContent?.trim() ?? '';
+		const labelParts = [
+			Loc.getMessage('INTRANET_LICENSE_WIDGET_TRIGGER_LABEL', {
+				'#TARIFF#': tariffName,
+			}),
+		];
+
+		if (this.#options.isCloud)
+		{
+			labelParts.push(
+				Loc.getMessage('INTRANET_LICENSE_WIDGET_ORDERS_COUNT', {
+					'#COUNT#': ordersCount,
+				}),
+			);
+
+			if (highlightIntegrator > 0)
+			{
+				labelParts.push(Loc.getMessage('INTRANET_LICENSE_WIDGET_INTEGRATOR_NOTICE'));
+			}
+		}
+
+		this.#button.setAttribute('aria-label', labelParts.filter(Type.isStringFilled).join('. '));
 	}
 
 	static #setEventHandlers(licenseButton: HTMLElement): void
@@ -317,7 +368,11 @@ export class LicenseButton
 				this.#options.counters.failedPayment = params.orders.failedPayment;
 			}
 
-			this.#setCounterValue(this.#options.personalTotalCount, params.commonTotalCount);
+			this.#setCounterValue(
+				this.#options.personalTotalCount,
+				params.commonTotalCount,
+				this.#options.counters.highlightIntegrator,
+			);
 		}
 		else if (params.scope === 'personal')
 		{
@@ -329,7 +384,11 @@ export class LicenseButton
 				this.#options.counters.inCheckout = params.orders.inCheckout;
 			}
 
-			this.#setCounterValue(params.personalTotalCount, this.#options.commonTotalCount);
+			this.#setCounterValue(
+				params.personalTotalCount,
+				this.#options.commonTotalCount,
+				this.#options.counters.highlightIntegrator,
+			);
 		}
 
 		this.#emitOrdersUpdate();

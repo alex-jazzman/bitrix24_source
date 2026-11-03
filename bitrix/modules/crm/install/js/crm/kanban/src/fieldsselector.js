@@ -75,6 +75,9 @@ export default class FieldsSelector
 			overlay: true,
 			draggable: true,
 			closeByEsc: true,
+			// Modal field-selection editor: trap focus. Its accessible
+			// name comes from titleBar (main.popup mirrors it into aria-label).
+			focusTrap: true,
 			contentColor: 'white',
 			maxHeight: window.innerHeight - 50,
 			events: {
@@ -87,6 +90,7 @@ export default class FieldsSelector
 				new SaveButton({
 					color: Button.Color.PRIMARY,
 					state: this.fields ? '' : Button.State.DISABLED,
+					dataset: { testid: 'crm-kanban-fields-selector-save-btn' },
 					onclick: () =>
 					{
 						const selectedFields =
@@ -110,6 +114,7 @@ export default class FieldsSelector
 					}
 				}),
 				new CancelButton({
+					dataset: { testid: 'crm-kanban-fields-selector-cancel-btn' },
 					onclick: () =>
 					{
 						this.popup.close();
@@ -167,7 +172,7 @@ export default class FieldsSelector
 	{
 		const sectionsWithFields = this.distributeFieldsBySections(this.fields);
 
-		const container = Tag.render`<div class="crm-kanban-popup-field"></div>`;
+		const container = Tag.render`<div class="crm-kanban-popup-field" data-testid="crm-kanban-fields-selector"></div>`;
 
 		const headerWrapper = Tag.render`
 			<div class="crm-kanban-popup-field-search-header-wrapper">
@@ -223,6 +228,7 @@ export default class FieldsSelector
 										name="${Text.encode(field.NAME)}"
 										class="crm-kanban-popup-field-item-input"
 										data-label="${encodedLabel}"
+										data-testid="crm-kanban-fields-selector-field-${Text.encode(field.NAME)}"
 										${this.selectedFields.indexOf(field.NAME) >= 0 ? 'checked' : ''}
 										onclick="${this.onFieldClick.bind(this)}"
 									/>
@@ -316,7 +322,11 @@ export default class FieldsSelector
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon">
 						<div class="ui-ctl-before ui-ctl-icon-search"></div>
 						<button class="ui-ctl-after ui-ctl-icon-clear"></button>
-						<input type="text" class="ui-ctl-element crm-kanban-popup-field-search-section-input">
+						<input
+							type="text"
+							class="ui-ctl-element crm-kanban-popup-field-search-section-input"
+							data-testid="crm-kanban-fields-selector-search"
+						>
 					</div>
 				</div>
 			</div>

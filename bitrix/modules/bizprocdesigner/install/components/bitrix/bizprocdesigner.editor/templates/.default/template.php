@@ -51,6 +51,9 @@ $loadActivityCss = static function (ActivityDescription $activity, string $fileN
 Extension::load([
 	'bizprocdesigner.editor.chart',
 	'ui.design-tokens',
+	// style.css of this template takes a color from the air tokens, so the page states that
+	// source instead of leaning on whichever extension happens to pull it in.
+	'ui.design-tokens.air',
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.icons',
@@ -139,6 +142,10 @@ foreach ($allActivities as $description)
 			initTemplateId: <?= Json::encode($arResult['templateId'] ?? null) ?>,
 			initDocumentType: <?= Json::encode($arResult['documentType'] ?? null) ?>,
 			initStartTrigger: <?= Json::encode($arResult['startTrigger'] ?? null) ?>,
+			initCanPublish: <?= Json::encode((bool)($arResult['canPublish'] ?? false)) ?>,
+			initCopilotOptions: <?= Json::encode($arResult['initCopilotOptions'] ?? null) ?>,
+			initHotkeys: <?= Json::encode($arResult['initHotkeys'] ?? null) ?>,
+			initNoteId: <?= Json::encode($arResult['noteId'] ?? null) ?>,
 		};
 
 		App.mount('bizprocdesigner-editor', rootProps);

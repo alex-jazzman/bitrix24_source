@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_lib_feature, main_core, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_copilot, im_v2_lib_helpdesk, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_utils, im_v2_const, im_v2_lib_analytics, ui_iconSet_api_vue, im_v2_application_core, im_v2_lib_feedback, im_v2_lib_logger, im_v2_lib_rest) {
+(function (exports, im_v2_lib_feature, main_core, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_copilot, im_v2_lib_helpdesk, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_utils, im_v2_const, im_v2_lib_analytics, im_v2_lib_rest, ui_iconSet_api_vue, im_v2_application_core, im_v2_lib_feedback, im_v2_lib_logger) {
 	'use strict';
 
 	// @vue/component
@@ -12,6 +12,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		components: {
 			AuthorTitle: im_v2_component_message_elements.AuthorTitle,
 			BaseMessage: im_v2_component_message_base.BaseMessage,
+			BuilderContent: im_v2_component_message_elements.BuilderContent,
+			MessageKeyboard: im_v2_component_message_elements.MessageKeyboard,
 			ReactionList: im_v2_component_message_elements.ReactionList,
 			MessageStatus: im_v2_component_message_elements.MessageStatus,
 			TextContent: im_v2_component_message_elements.TextContent
@@ -36,6 +38,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			formattedText() {
 				return im_v2_lib_parser.Parser.decodeMessage(this.item);
+			},
+			hasBuilderBlocks() {
+				return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+			},
+			hasKeyboard() {
+				return this.message.keyboard.length > 0;
 			},
 			canSetReactions() {
 				return main_core.Type.isNumber(this.message.id);
@@ -75,7 +83,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-message-default__container bx-im-message-copilot-answer__container" :class="{'--error': isError}">
 				<AuthorTitle v-if="withTitle" :item="item" />
 				<div class="bx-im-message-default-content__container bx-im-message-default-content__scope">
-					<TextContent :text="formattedText" />
+					<BuilderContent v-if="hasBuilderBlocks" :item="item" :dialogId="dialogId" />
+					<TextContent v-else :text="formattedText" />
 					<ReactionList
 						v-if="canSetReactions"
 						:messageId="message.id"
@@ -105,6 +114,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<MessageStatus :item="message" />
 				</div>
 			</div>
+			<template #after-message v-if="hasKeyboard">
+				<MessageKeyboard :item="message" :dialogId="dialogId" />
+			</template>
 		</BaseMessage>
 	`
 	};
@@ -384,7 +396,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.item;
 			},
 			isError() {
-				return this.message.componentParams?.copilotError === true;
+				return this.copilotManager.isErrorMessage(this.message.id);
+			},
+			isFooterAvailable() {
+				return this.copilotManager.isMessageFooterAvailable(this.message.id);
+			},
+			isContextMenuAvailable() {
+				return !this.copilotManager.isProcessingMessage(this.message.id);
+			},
+			isThinking() {
+				const blocks = this.$store.getters['messages/builder/getBlocks'](this.message.id);
+				return blocks.some(block => block.type === 'aiAssistantSearch');
+			},
+			isGenerationActive() {
+				return im_v2_lib_copilot.isCopilotGenerationActive(this.message, this.$store);
+			},
+			isActionsAvailable() {
+				return !this.isGenerationActive && this.isContextMenuAvailable;
 			},
 			hasKeyboard() {
 				return this.message.keyboard.length > 0;
@@ -392,6 +420,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			suggestsCount() {
 				return this.message.keyboard.filter(button => button.type === im_v2_const.KeyboardButtonType.button).length;
 			}
+		},
+		created() {
+			this.copilotManager = new im_v2_lib_copilot.CopilotManager();
 		},
 		mounted() {
 			if (this.hasKeyboard) {
@@ -421,21 +452,38 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onSuggestedPromptClick() {
 				im_v2_lib_analytics.Analytics.getInstance().copilot.onClickSuggestedPrompt(this.dialogId, this.suggestsCount);
 			},
+			onRegenerate() {
+				void im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2CopilotMessageRegenerate, {
+					data: {
+						messageId: this.message.id
+					}
+				});
+			},
 			loc(phraseCode, replacements = {}) {
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
 		template: `
-		<BaseMessage :item="item" :dialogId="dialogId" :withError="isError" class="bx-im-message-ai-assistant-v2-base-message__container">
+		<BaseMessage
+			:item="item"
+			:dialogId="dialogId"
+			:withError="isError"
+			:withContextMenu="isActionsAvailable"
+			:withReactions="isActionsAvailable"
+			class="bx-im-message-ai-assistant-v2-base-message__container"
+			:class="{'--thinking': isThinking}"
+		>
+			<div v-if="isThinking" class="bx-im-message-ai-assistant-v2-answer__glow"></div>
 			<div class="bx-im-message-default__container bx-im-message-ai-assistant-v2-answer__container" :class="{'--error': isError}">
 				<AuthorTitle :item="item" />
 				<div class="bx-im-message-default-content__container bx-im-message-default-content__scope">
-					<DefaultMessageContent 
-						:item="item" 
-						:dialogId="dialogId" 
-						:withAttach="false" 
+					<DefaultMessageContent
+						:item="item"
+						:dialogId="dialogId"
+						:withAttach="false"
 						:withMessageStatus="false"
 						:withBuilder="true"
+						:withReactions="isActionsAvailable"
 					/>
 					<div v-if="isError" class="bx-im-message-default-content__bottom-panel">
 						<div class="bx-im-message-default-content__status-container">
@@ -444,7 +492,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</div>
 				</div>
 			</div>
-			<BottomPanel v-if="!isError" :message="message" :dialogId="dialogId" />
+			<BottomPanel v-if="isFooterAvailable" :message="message" :dialogId="dialogId" class="bx-im-message-ai-assistant-v2-answer__bottom-panel" @regenerate="onRegenerate" />
 			<template #after-message v-if="hasKeyboard">
 				<MessageKeyboard :item="message" :dialogId="dialogId" @click="onSuggestedPromptClick" />
 			</template>
@@ -496,5 +544,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotMessage = CopilotMessage;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=copilot-answer.bundle.js.map

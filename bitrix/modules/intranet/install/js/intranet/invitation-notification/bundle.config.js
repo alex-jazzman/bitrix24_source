@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/invitation-notification.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

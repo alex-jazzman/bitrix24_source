@@ -1,8 +1,11 @@
 import { Type } from 'main.core';
 
+import { type ImModelCopilotGreeting } from 'im.v2.model';
+
 import { CopilotTextarea } from '../../../../../content/copilot/components/textarea';
 
 import { AiAssistantSuggestion, AiAssistantSuggestionDesign } from './suggestion';
+import { GreetingSelector } from './greeting-selector';
 
 import './css/empty-state-view.css';
 
@@ -22,7 +25,17 @@ export const AiAssistantEmptyStateView = {
 			type: String,
 			default: '',
 		},
+		withDraft: {
+			/** @type boolean | { draftDialogId: string } */
+			type: [Boolean, Object],
+			default: false,
+		},
 		withTextArea: {
+			type: Boolean,
+			default: false,
+		},
+		// pass-through only: this view serves both the messenger and the embeddable widget
+		withKeyboardNavigation: {
 			type: Boolean,
 			default: false,
 		},
@@ -38,17 +51,36 @@ export const AiAssistantEmptyStateView = {
 			type: Object,
 			default: null,
 		},
+		allowBeforeSendOnUninitedTemp: {
+			type: Boolean,
+			default: false,
+		},
 		isFileUploadEnabled: {
 			type: Boolean,
 			default: false,
 		},
+		heightConfig: {
+			/** @type {{ storageKey?: string, minHeight?: number }} */
+			type: Object,
+			default: undefined,
+		},
 	},
 	emits: ['selectSuggestion'],
+	data(): { greeting: string }
+	{
+		return {
+			greeting: '',
+		};
+	},
 	computed:
 	{
-		title(): string
+		greetingPool(): ImModelCopilotGreeting[]
 		{
-			return this.$Bitrix.Loc.getMessage('IM_CONTENT_AI_ASSISTANT_EMPTY_STATE_TITLE');
+			return this.$store.getters['copilot/getGreetings'];
+		},
+		greetingWeekHolidays(): number[]
+		{
+			return this.$store.getters['copilot/getGreetingWeekHolidays'];
 		},
 		normalizedSuggestions(): SuggestionItem[]
 		{
@@ -56,6 +88,11 @@ export const AiAssistantEmptyStateView = {
 				.map((item) => (Type.isString(item) ? { text: item } : item))
 				.filter((item) => item && item.text && item.text.length > 0);
 		},
+	},
+	created(): void
+	{
+		// re-selected on every mount of the empty state (local browser time)
+		this.greeting = new GreetingSelector(this.greetingPool, { weekHolidays: this.greetingWeekHolidays }).select();
 	},
 	methods:
 	{
@@ -65,15 +102,18 @@ export const AiAssistantEmptyStateView = {
 		},
 	},
 	template: `
-		<div class="bx-im-ai-assistant-empty-state-view bx-im-ai-assistant-empty-state-view__scope">
-			<div v-if="title" class="bx-im-ai-assistant-empty-state-view__title">{{ title }}</div>
+		<div class="bx-im-ai-assistant-empty-state-view bx-im-ai-assistant-empty-state-view__scope" data-testid="im-ai-assistant-empty-state">
+			<div v-if="greeting" class="bx-im-ai-assistant-empty-state-view__title" data-testid="im-ai-assistant-empty-state-greeting">{{ greeting }}</div>
 			<div v-if="withTextArea" class="bx-im-ai-assistant-empty-state-view__textarea">
 				<CopilotTextarea
 					:dialogId="dialogId"
 					:disabled="disabled"
-					:withDraft="false"
+					:withDraft="withDraft"
 					:deferredDialogPromise="deferredDialogPromise"
+					:allowBeforeSendOnUninitedTemp="allowBeforeSendOnUninitedTemp"
 					:isFileUploadEnabled="isFileUploadEnabled"
+					:heightConfig="heightConfig"
+					:withKeyboardNavigation="withKeyboardNavigation"
 				/>
 			</div>
 			<div
@@ -85,6 +125,7 @@ export const AiAssistantEmptyStateView = {
 					:key="index"
 					:text="item.text"
 					:design="suggestionDesign"
+					data-testid="im-ai-assistant-empty-state-suggestion"
 					@click="onChipClick(item)"
 				/>
 			</div>

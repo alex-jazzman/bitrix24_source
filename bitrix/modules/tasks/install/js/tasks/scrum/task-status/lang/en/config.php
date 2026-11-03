@@ -1,5 +1,9 @@
 <?php
 $MESS["TST_ERROR_POPUP_TITLE"] = "There was an error";
+$MESS["TST_PARENT_CHECKLIST_COMPLETE_BUTTON"] = "Complete task";
+$MESS["TST_PARENT_CHECKLIST_COMPLETE_SUBTITLE"] = "All subtasks have been completed, but there are checklist items that remain unfinished. Make sure everything is ready.";
+$MESS["TST_PARENT_CHECKLIST_COMPLETE_TITLE"] = "Complete parent task \"[titleLink]#name#[/titleLink]\"";
+$MESS["TST_PARENT_CHECKLIST_CONTINUE_BUTTON"] = "Not yet";
 $MESS["TST_PARENT_COMPLETE_CANCEL_CAPTION"] = "Cancel";
 $MESS["TST_PARENT_COMPLETE_MESSAGE"] = "All subtasks of parent task \"<b>#name#</b>\" have been completed.<br><br>Do you want to complete the parent task \"<b>#name#</b>\" or continue working on it?";
 $MESS["TST_PARENT_COMPLETE_NOTIFY"] = "Parent task has been completed successfully.";

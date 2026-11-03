@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/file/selector', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { FileField } = require('layout/ui/fields/file');
 	const { FileAttachment } = require('layout/ui/file-attachment');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
@@ -116,12 +116,12 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 
 			PageManager.openWidget('layout', {
 				modal: true,
-				backgroundColor: AppTheme.colors.bgSecondary,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
 					onlyMediumPosition: false,
 					showOnTop: files.length > 12,
 					mediumPositionHeight: 450,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					navigationBarColor: Color.bgSecondary.toHex(),
 					swipeAllowed: true,
 					swipeContentAllowed: false,
 					horizontalSwipeAllowed: false,
@@ -131,7 +131,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 					layout: widget,
 					...options,
 				}));
-			});
+			}).catch(console.error);
 		}
 
 		render()
@@ -141,14 +141,14 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgSecondary,
+						backgroundColor: Color.bgSecondary.toHex(),
 					},
 					resizableByKeyboard: true,
 				},
 				View(
 					{
 						style: {
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 							flexDirection: 'column',
 							flex: 1,
 							borderTopLeftRadius: 12,
@@ -185,8 +185,8 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 						controller: this.getProps().controller,
 					},
 					readOnly: false,
-					onChange: (files) => {
-						files = Array.isArray(files) ? files : [];
+					onChange: (nextFiles) => {
+						const files = Array.isArray(nextFiles) ? nextFiles : [];
 						const prevFilesCount = this.state.files.length;
 
 						this.setState({ files }, () => {
@@ -222,34 +222,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 				attachments: this.fileFieldRef.getFilesInfo(this.fileFieldRef.getValue()),
 				layoutWidget: this.layout,
 				onDeleteAttachmentItem: (index) => this.onDeleteFile(index),
-				styles: {
-					wrapper: {
-						marginBottom: 12,
-						marginHorizontal: 3,
-						paddingRight: 9,
-					},
-					imagePreview: {
-						width: imageSize,
-						height: imageSize,
-					},
-					imageOutline: (hasError) => ({
-						position: 'absolute',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
-						borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.bgSeparatorPrimary,
-						backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
-						borderWidth: 1,
-						opacity: hasError ? 0.5 : 0.08,
-						borderRadius: 6,
-					}),
-					deleteButtonWrapper: {
-						width: 18,
-						height: 18,
-						right: 0,
-					},
-				},
+				previewSize: imageSize,
 				showName: true,
 				showAddButton: true,
 				onAddButtonClick: () => this.onAddButtonClick(),

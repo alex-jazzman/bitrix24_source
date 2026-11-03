@@ -11,7 +11,7 @@ return [
 		'landing.backend',
 		'landing.loc',
 		'main.core',
-		'main.popup',
+		'ui.design-tokens.air',
 		'ui.dialogs.messagebox',
 		'ui.icons.disk',
 	],

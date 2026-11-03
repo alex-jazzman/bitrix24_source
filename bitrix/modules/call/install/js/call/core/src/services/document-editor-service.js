@@ -28,9 +28,8 @@ export class DocumentEditorService extends EventEmitter
 	 * @param {*} config.resizeObserver
 	 * @param {*} config.messengerFacade
 	 * @param {number} [config.minViewWidth=250] - minimum width of the call view when the editor sidebar is open
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, container, resizeObserver, messengerFacade, minViewWidth = 250, callStore })
+	constructor({ viewPort, container, resizeObserver, messengerFacade, minViewWidth = 250 })
 	{
 		super();
 		this.setEventNamespace('BX.Call.DocumentEditorService');
@@ -40,7 +39,6 @@ export class DocumentEditorService extends EventEmitter
 		this.resizeObserver = resizeObserver;
 		this.messengerFacade = messengerFacade;
 		this.minViewWidth = minViewWidth;
-		this.callStore = callStore ?? null;
 
 		this.sidebar = null;
 		this.docEditor = null;
@@ -471,8 +469,6 @@ export class DocumentEditorService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
-
 		this.closeDocumentEditor();
 
 		if (this.documentsMenu)

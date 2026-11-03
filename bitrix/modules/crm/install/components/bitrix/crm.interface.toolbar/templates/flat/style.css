@@ -48,7 +48,7 @@ div.bx-crm-interface-toolbar{
 			transition:opacity .2s cubic-bezier(.000, .465, .750, .750);
 	vertical-align:middle;
 	opacity:.8;
-	background:url(images/sprite2.png) no-repeat;
+	background:url(images/sprite2.webp) no-repeat;
 }
 .bx-crm-interface-toolbar .bx-crm-context-button:hover  .bx-crm-context-button-icon,
 .bx-crm-interface-toolbar .bx-crm-context-button.active .bx-crm-context-button-icon{
@@ -100,10 +100,10 @@ div.bx-crm-interface-toolbar{
 
 /*Popup menu*/
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-crm-product-import {
-	background:url(images/sprite2.png) no-repeat -78px -211px !important;
+	background:url(images/sprite2.webp) no-repeat -78px -211px !important;
 	opacity: .8;
 }
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-crm-product-export {
-	background:url(images/sprite2.png) no-repeat -78px -319px !important;
+	background:url(images/sprite2.webp) no-repeat -78px -319px !important;
 	opacity: .8;
 }

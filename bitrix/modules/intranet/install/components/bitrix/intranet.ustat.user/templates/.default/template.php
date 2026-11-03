@@ -87,7 +87,7 @@ AmCharts.ready(function () {
 	graph2.bulletBorderColor = '#aee5f5';
 	graph2.bulletBorderThickness = 2;
 	graph2.bulletBorderAlpha = 1;
-	graph2.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-blue.png?1407');
+	graph2.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-blue.webp?1407');
 	graph2.lineColor = '#aee5f5';
 	graph2.balloonText = '<?=CUtil::JSEscape(str_replace("\n", " ", htmlspecialcharsbx($arResult['USERS_INFO'][$arParams['USER_ID']]['FULL_NAME'])))?>: [[value]]';
 	chart.addGraph(graph2);
@@ -102,7 +102,7 @@ AmCharts.ready(function () {
 	graph3.bulletBorderColor = '#aeb6c1';
 	graph3.bulletBorderThickness = 2;
 	graph3.bulletBorderAlpha = 1;
-	graph3.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-gray.png?1407');
+	graph3.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-gray.webp?1407');
 	graph3.lineColor = '#aeb6c1';
 	graph3.balloonText = '<?=GetMessageJS('INTRANET_USTAT_USER_GRAPH_DEPT', array('%DEPT%' => htmlspecialcharsbx($arResult['DEPARTMENT_TITLE'])))?>: [[value]]';
 
@@ -118,7 +118,7 @@ AmCharts.ready(function () {
 	graph4.bulletBorderColor = '#90b506';
 	graph4.bulletBorderThickness = 2;
 	graph4.bulletBorderAlpha = 1;
-	graph4.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-green.png?1407');
+	graph4.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-green.webp?1407');
 	graph4.lineColor = '#90b506';
 	graph4.balloonText = '<?=GetMessageJS('INTRANET_USTAT_USER_GRAPH_COMPANY')?>: [[value]]';
 	chart.addGraph(graph4);
@@ -135,7 +135,7 @@ AmCharts.ready(function () {
 	graph5.bulletBorderColor = '#d57a20';
 	graph5.bulletBorderThickness = 2;
 	graph5.bulletBorderAlpha = 1;
-	graph5.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-brown.png?1407');
+	graph5.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-brown.webp?1407');
 	graph5.lineColor = '#d57a20';
 	graph5.balloonText = '<?=GetMessageJS('INTRANET_USTAT_USER_GRAPH_ME')?>: [[value]]';
 	chart.addGraph(graph5);
@@ -765,21 +765,21 @@ var pulse_loading = {
 	{
 		var img,
 			img_list_src = [
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-close-btn.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-grey.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-blue.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sidebar-percent-bg.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-grey.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-blue.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-big.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-normal.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-bg.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-shadow.png',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-close-btn.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-grey.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-blue.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sidebar-percent-bg.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-grey.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-blue.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-big.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-normal.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-bg.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-shadow.webp',
 				'/bitrix/components/bitrix/intranet.ustat/images/pulse-involve-strip.gif',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-dark-grey.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bg.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sprite.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-main-bg.png'
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-dark-grey.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bg.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sprite.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-main-bg.webp'
 			];
 
 		var div = BX.create('div',{

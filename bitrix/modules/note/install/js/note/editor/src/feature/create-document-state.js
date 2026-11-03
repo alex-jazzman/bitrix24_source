@@ -64,7 +64,7 @@ export function createDocumentState(): Object
 		// to ViewsWidgetComponent so it can skip its own getViews call on mount (see type.js's
 		// DocumentViewsSnapshot).
 		initialViews: null,
-		// [DTO-01] Backlinks counter bundled with the document bootstrap — handed down to
+		// Backlinks counter bundled with the document bootstrap - handed down to
 		// BacklinksWidgetComponent so it can skip its own count request on mount (see type.js's
 		// DocumentBacklinksSnapshot).
 		initialBacklinks: null,
@@ -72,13 +72,13 @@ export function createDocumentState(): Object
 		// document bootstrap, handed down to ActivityLineComponent's chip (see type.js's
 		// DocumentLastChange).
 		lastChange: null,
-		// [P8.T5] ISO-8601 creation timestamp from the bootstrap payload — the activity-line chip
+		// ISO-8601 creation timestamp from the bootstrap payload - the activity-line chip
 		// falls back to "Created <date>" when there is no last-change info to show.
 		createdAt: null,
 		// Bell state bundled with the document bootstrap, handed down to SubscriptionBellComponent
 		// so it skips its own getState request on mount.
 		initialSubscription: null,
-		// [TPL-01] "In favorites" flag bundled with the document bootstrap, handed down to the
+		// "In favorites" flag bundled with the document bootstrap, handed down to the
 		// activity-line star. `null` means the bootstrap reported nothing, so the star keeps reading
 		// the sidebar store alone.
 		initialFavorite: null,

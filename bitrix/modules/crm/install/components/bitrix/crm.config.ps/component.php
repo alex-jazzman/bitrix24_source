@@ -1,6 +1,8 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -35,7 +37,27 @@ $arDefaultUrlTemplates404 = array(
 	'ps_edit' => 'edit/#ps_id#/',
 );
 
-if ($arParams['SEF_MODE'] === 'Y')
+if (!empty($arParams['SETTINGS_HUB_URL']))
+{
+	$componentPage = match ($arParams['MODE'] ?? 'list')
+	{
+		'add' => 'ps_add',
+		'edit' => 'ps_edit',
+		default => 'ps_list',
+	};
+	$arVariables = ['ps_id' => (int)($arParams['PS_ID'] ?? 0)];
+	$arVariableAliases = [];
+
+	$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+	$arResult['PATH_TO_PS_LIST'] = $url->getUri();
+	$addUrl = clone $url;
+	$addUrl->addParams(['add' => '']);
+	$arResult['PATH_TO_PS_ADD'] = $addUrl->getUri();
+	$editUrl = clone $url;
+	$editUrl->addParams(['edit' => '']);
+	$arResult['PATH_TO_PS_EDIT'] = $editUrl->getUri() . '&ps_id=#ps_id#';
+}
+elseif ($arParams['SEF_MODE'] === 'Y')
 {
 	$arDefaultVariableAliases404 = array();
 	$arComponentVariables = array('ps_id');
@@ -74,6 +96,10 @@ else
 	if (isset($_REQUEST['edit']))
 	{
 		$componentPage = 'ps_edit';
+	}
+	elseif (isset($_REQUEST['add']))
+	{
+		$componentPage = 'ps_add';
 	}
 
 	$curPage = $APPLICATION->GetCurPage();

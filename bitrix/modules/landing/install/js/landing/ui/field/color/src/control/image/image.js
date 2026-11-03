@@ -178,7 +178,7 @@ export default class Image extends BaseControl
 
 	getValue(): ?BgImageValue
 	{
-		// todo: get size and attachement from controls
+		// todo: get size and attachment from controls
 		return this.cache.remember('value', () => {
 			const imgValue = this.imgField.getValue();
 			const url = imgValue.src;
@@ -222,7 +222,7 @@ export default class Image extends BaseControl
 			if (value === null)
 			{
 				this.imgField.setValue({src: ''}, true);
-				// todo: what set size and attachement?
+				// todo: what set size and attachment?
 			}
 			else
 			{

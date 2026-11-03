@@ -37,6 +37,7 @@ $MESS["LANDING_TPL_ERROR_DOMAIN_EXIST"] = "This domain already exists";
 $MESS["LANDING_TPL_ERROR_DOMAIN_EXIST_DELETED"] = "This domain already exists, but it was assigned to a site currently in the Recycle Bin. Please unassign the site first, then try again.";
 $MESS["LANDING_TPL_ERROR_DOMAIN_INCORRECT"] = "The domain name you specified is incorrect.";
 // TEMPORARY: pending translator review
+$MESS['LANDING_TPL_ERROR_DOMAIN_NOT_ASCII'] = 'The subdomain can only contain Latin letters, numbers and hyphens.';
 $MESS["LANDING_TPL_ERROR_DOMAIN_PROCESSING"] = "Could not check the address. Please try again later";
 $MESS["LANDING_TPL_ERROR_DOMAIN_WRONG_DOMAIN_LEVEL"] = "Domain name has to have at least two parts separated by a dot.";
 $MESS["LANDING_TPL_ERROR_DOMAIN_WRONG_LENGTH"] = "Domain name is too long";

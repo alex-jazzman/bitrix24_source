@@ -32,7 +32,7 @@
 	width: 40px;
 	height: 40px;
 	margin: 0 5px 0 -45px;
-	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-25.png?v2');
+	background: url('/bitrix/js/crm/images/crm-control-panel-sprite-25.webp');
 	background-position: center -3868px;
 }
 
@@ -200,7 +200,7 @@
 	min-height: 35px;
 	max-height: 35px;
 	margin: -3px 0 0 -15px;
-	background: url('/bitrix/components/bitrix/crm.entity.tree/templates/.default/images/sprite.png') no-repeat #fff;
+	background: url('/bitrix/components/bitrix/crm.entity.tree/templates/.default/images/sprite.webp') no-repeat #fff;
 	border: 1px solid #80868e;
 	background-position: center -326px;
 	-webkit-border-radius: 100%;
@@ -237,7 +237,7 @@
 	top: -7px;
 	width: 30px;
 	height: 30px;
-	background: url(/bitrix/components/bitrix/crm.entity.tree/templates/.default/images/sprite.png?v2) no-repeat;
+	background: url(/bitrix/components/bitrix/crm.entity.tree/templates/.default/images/sprite.webp) no-repeat;
 }
 
 .crm-doc-cart-title-sentence:before		{background-position: 0 -90px}
@@ -430,7 +430,7 @@
 	background-position: center center;
 	background-repeat: no-repeat;
 	margin: 0 7px 0 0;
-	/*background: url(/bitrix/components/bitrix/crm.entity.tree/templates/.default/images/sprite.png?v2) no-repeat;*/
+	/*background: url(/bitrix/components/bitrix/crm.entity.tree/templates/.default/images/sprite.webp) no-repeat;*/
 }
 
 .crm-doc-droplist-item:after {

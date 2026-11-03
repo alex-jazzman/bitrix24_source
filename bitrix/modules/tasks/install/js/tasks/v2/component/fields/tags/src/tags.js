@@ -102,6 +102,7 @@ export const Tags = {
 	template: `
 		<div
 			class="tasks-field-tags"
+			data-testid="tasks-tags"
 			:class="{ '--empty': !isFilled }"
 			:data-task-id="taskId"
 			:data-task-field-id="tagsMeta.id"
@@ -109,21 +110,40 @@ export const Tags = {
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
-			<FieldHoverButton 
+			<FieldHoverButton
 				v-if="isAddActive"
 				:icon="Outline.PLUS_L"
-				:isVisible="isAddVisible" 
+				:isVisible="isAddVisible"
+				:ariaLabel="loc('TASKS_V2_TAGS_ADD_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isDialogShown"
+				data-testid="tasks-tags-add-hover-btn"
 				@click="handleClick"
 			/>
 			<template v-for="tag in tags" :key="tag">
 				<div class="tasks-field-tag print-background-white">
 					<TextMd>{{ tag }}</TextMd>
-					<div v-if="!readonly" class="tasks-field-tag-cross" @click.capture.stop="handleCrossClick(tag)">
-						<BIcon :name="Outline.CROSS_L" hoverable/>
-					</div>
+					<button
+						v-if="!readonly"
+						type="button"
+						class="tasks-field-tag-cross"
+						:aria-label="loc('TASKS_V2_TAGS_REMOVE_ARIA_LABEL', { '#TAG#': tag })"
+						data-testid="tasks-tags-remove-btn"
+						@click.capture.stop="handleCrossClick(tag)"
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</template>
-			<FieldAdd v-if="!isFilled" :icon="Outline.TAG" @click="handleClick"/>
+			<FieldAdd
+				v-if="!isFilled"
+				:icon="Outline.TAG"
+				:ariaLabel="loc('TASKS_V2_TAGS_ADD_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isDialogShown"
+				data-testid="tasks-tags-add-btn"
+				@click="handleClick"
+			/>
 			<div class="tasks-field-tags-anchor" ref="anchor"/>
 		</div>
 	`,

@@ -3387,6 +3387,7 @@ this.BX.Crm = this.BX.Crm || {};
 			this._extraUserCounter = null;
 			this.isLoading = false;
 			this._openChatHandler = BX.delegate(this.onOpenChat, this);
+			this._keydownHandler = BX.delegate(this.onKeyDown, this);
 		}
 		doInitialize() {
 			this._data = BX.prop.getObject(this._settings, "data", {});
@@ -3513,6 +3514,11 @@ this.BX.Crm = this.BX.Crm || {};
 				this.renderInvitation();
 			}
 			BX.bind(this._contentWrapper, "click", this._openChatHandler);
+			// The whole wrapper is click-to-open; expose it to the keyboard as a button.
+			// Accessible name comes from its text content ("invite" message / summary).
+			this._contentWrapper.setAttribute("tabindex", "0");
+			this._contentWrapper.setAttribute("role", "button");
+			BX.bind(this._contentWrapper, "keydown", this._keydownHandler);
 			BX.addCustomEvent("onPullEvent-im", this.onChatEvent.bind(this));
 		}
 		refreshLayout() {
@@ -3724,6 +3730,12 @@ this.BX.Crm = this.BX.Crm || {};
 					main_core.Dom.removeClass(this._contentWrapper, 'crm-entity-chat-loading');
 					this.isLoading = false;
 				}
+			}
+		}
+		onKeyDown(e) {
+			if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+				e.preventDefault();
+				this.onOpenChat(e);
 			}
 		}
 		onOpenChat(e) {
@@ -7419,7 +7431,7 @@ this.BX.Crm = this.BX.Crm || {};
 					attrs: {
 						href: "#"
 					},
-					html: this.cutOffText(BX.prop.getString(entityData, "DESCRIPTION_RAW"), 128)
+					text: this.cutOffText(BX.prop.getString(entityData, "DESCRIPTION_RAW"), 128)
 				});
 				BX.bind(link, "click", this._headerClickHandler);
 				return [link];

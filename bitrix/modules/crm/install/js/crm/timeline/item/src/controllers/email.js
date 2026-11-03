@@ -1,4 +1,5 @@
 import { ActivityProvider } from 'crm.ai.call';
+import { Router } from 'crm.router';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { Loc, Runtime, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
@@ -92,6 +93,11 @@ export class Email extends CopilotBase
 		{
 			void this.#showCopilotSummary(item, actionData);
 		}
+
+		if (action === 'Email::ShowCopilotSummaryDrawer' && actionData)
+		{
+			void this.#showCopilotSummaryDrawer(actionData);
+		}
 	}
 
 	getContentBlockComponents(Item: ConfigurableItem): Object
@@ -158,6 +164,32 @@ export class Email extends CopilotBase
 		}
 
 		this.#copilotSummaryMenu.show();
+	}
+
+	#showCopilotSummaryDrawer(actionData: Object): void
+	{
+		if (!Email.#isCopilotSummaryDrawerActionData(actionData))
+		{
+			return;
+		}
+
+		void Router.Instance.openAiReportDrawer('summary-history', actionData);
+	}
+
+	static #isCopilotSummaryDrawerActionData(actionData: Object): boolean
+	{
+		return Type.isPlainObject(actionData)
+			&& Type.isInteger(actionData.activityId)
+			&& actionData.activityId > 0
+			&& Type.isInteger(actionData.ownerTypeId)
+			&& actionData.ownerTypeId > 0
+			&& Type.isInteger(actionData.ownerId)
+			&& actionData.ownerId > 0
+			&& (
+				Type.isNil(actionData.jobId)
+				|| (Type.isInteger(actionData.jobId) && actionData.jobId > 0)
+			)
+		;
 	}
 
 	#viewActivity(id): void

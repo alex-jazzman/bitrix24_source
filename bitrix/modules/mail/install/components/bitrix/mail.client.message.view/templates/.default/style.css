@@ -1108,3 +1108,7 @@
 	border-radius: 10px;
 }
 /* endregion */
+
+.mail-msg-send-error {
+	margin-bottom: var(--ui-space-stack-md);
+}

@@ -63,6 +63,8 @@ return [
 		'utils/validation',
 		'tasks:app-rating-client',
 		'tasks:checklist',
+		'tasks:checklist/enum',
+		'tasks:statemanager/redux/slices/checklists/observers/stats-observer',
 		'tasks:disk',
 		'tasks:enum',
 		'tasks:fields/restriction',

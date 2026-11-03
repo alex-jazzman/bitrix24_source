@@ -33,6 +33,10 @@ foreach ($dialog->getMap()['DynamicEntitiesFields']['Map'] as $entityTypeId => $
 
 <div hidden>
 	<?= $dialog->renderFieldControl($dialog->getMap()['OnlyDynamicEntities']) ?>
+	<?= $dialog->renderFieldControl(
+		$dialog->getMap()['DynamicTypeScope'],
+		$dialog->getCurrentValue('dynamic_type_scope')
+	) ?>
 </div>
 
 <script>

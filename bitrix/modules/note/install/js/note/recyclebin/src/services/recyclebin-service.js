@@ -1,4 +1,5 @@
 import { ajax, Type } from 'main.core';
+import { NoteAnalytics } from 'note.analytics';
 
 const ACTION_LIST = 'note.infrastructure.RecycleBinController.list';
 const ACTION_STATS = 'note.infrastructure.RecycleBinController.getStats';
@@ -8,6 +9,13 @@ const ACTION_HARD_DELETE = 'note.infrastructure.RecycleBinController.hardDeleteD
 const ACTION_EMPTY = 'note.infrastructure.RecycleBinController.empty';
 const ACTION_RESTORE_MANY = 'note.infrastructure.RecycleBinController.restoreMany';
 const ACTION_HARD_DELETE_MANY = 'note.infrastructure.RecycleBinController.hardDeleteMany';
+const ACTION_CREATE_COLLECTION = 'note.infrastructure.CollectionController.create';
+const RESTORE_PICKER_CREATE_STATS = {
+	admin: 1,
+	reductorsCount: 0,
+	viewersCount: 0,
+	customCount: 0,
+};
 
 export const ORPHAN_TARGET_REQUIRED_CODE = 'NOTE_RECYCLE_BIN_ORPHAN_TARGET_REQUIRED';
 
@@ -61,6 +69,37 @@ export class RecycleBinServiceError extends Error
 
 export class RecycleBinService
 {
+	async createCollection(name: string): Promise<{ id: number, title: string } | null>
+	{
+		try
+		{
+			const response = await ajax.runAction(ACTION_CREATE_COLLECTION, {
+				data: { name, position: 0 },
+			});
+			const collection = Type.isPlainObject(response?.data) ? response.data : {};
+			const id = Number(collection.id);
+			if (!Number.isInteger(id) || id <= 0)
+			{
+				NoteAnalytics.collectionCreated(RESTORE_PICKER_CREATE_STATS, false);
+
+				return null;
+			}
+
+			NoteAnalytics.collectionCreated(RESTORE_PICKER_CREATE_STATS, true);
+
+			return {
+				id,
+				title: String(collection.name || name),
+			};
+		}
+		catch (error)
+		{
+			NoteAnalytics.collectionCreated(RESTORE_PICKER_CREATE_STATS, false);
+
+			throw this.#toServiceError(error);
+		}
+	}
+
 	async list({ limit = 50, afterCursor = null }: { limit?: number, afterCursor?: ?Object } = {}): Promise<TrashedListResult>
 	{
 		try

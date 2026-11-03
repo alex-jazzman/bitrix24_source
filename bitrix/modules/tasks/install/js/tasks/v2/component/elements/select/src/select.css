@@ -1,0 +1,5 @@
+.tasks-select [role="combobox"]:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}

@@ -30,12 +30,16 @@ export const TasksCloserEmbedded = {
 	},
 	template: `
 		<button
+			type="button"
 			class="tasks-closer-embedded"
+			data-testid="task-full-card-header-close-btn"
+			:aria-label="loc('TASKS_V2_TASK_FULL_CARD_CLOSE')"
 			@click="handleClickCloser"
 		>
 			<BIcon
 				:name="Outline.CROSS_L"
 				class="tasks-closer-embedded__icon"
+				aria-hidden="true"
 				hoverable
 			/>
 		</button>

@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
-		'main.core',
-		'sale.checkout.lib',
 		'currency.currency-core',
-		'ui.vue',
-		'sale.checkout.view.element.button',
+		'main.core',
 		'sale.checkout.const',
+		'sale.checkout.lib',
+		'sale.checkout.view.element.button',
+		'ui.vue',
 	],
 	'skip_core' => false,
 ];

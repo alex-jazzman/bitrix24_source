@@ -25,6 +25,8 @@ $arResult['AUTH_OTP_LINK'] = $APPLICATION->GetCurPageParam('', ['help']);
 $arResult['CAN_LOGIN_BY_SMS'] = false;
 $arResult['CAN_LOGIN_BY_EMAIL'] = false;
 $arResult['IS_RECOVERY_CODES_ENABLED'] = false;
+$arResult['IS_DEVICE_CONNECT_SKIPPED'] = false;
+$arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] = false;
 $arResult['USER_MASKED_AUTH_PHONE_NUMBER'] = null;
 $arResult['USER_MASKED_AUTH_EMAIL'] = null;
 $arResult['HELP_BUTTON_CONFIG_BY_STEP'] = [
@@ -53,6 +55,7 @@ if ($mobilePush->isDefault())
 }
 $arResult['RECOVERY_CODES_HELP_LINK'] = '';
 $arResult['USER_DEVICE'] = [];
+$arResult['USER_DATA'] = null;
 $arResult['ERROR_MESSAGE'] = (
 	!empty($arParams['~AUTH_RESULT']['MESSAGE'])
 	&& $arParams['~AUTH_RESULT']['TYPE'] === 'ERROR'
@@ -70,6 +73,7 @@ if (Loader::includeModule('intranet'))
 		if ($user)
 		{
 			$personalOtp = new PersonalOtp($user);
+			$arResult['IS_DEVICE_CONNECT_SKIPPED'] = $personalOtp->isDeviceConnectSkipped();
 			$arResult['CAN_LOGIN_BY_SMS'] = (new VerifyPhoneService($user))->canLoginBySms();
 			$arResult['CAN_LOGIN_BY_EMAIL'] = (new VerifyEmailService($user))->canLoginByEmail();
 			$userAuthPhoneNumber = $user->getAuthPhoneNumber();
@@ -85,23 +89,31 @@ if (Loader::includeModule('intranet'))
 				$arResult['USER_MASKED_AUTH_EMAIL'] = (new Email($userBackupEmail))->getMaskedEmail();
 			}
 
-			$mobilePush = PersonalMobilePush::createByUser($user);
-			$deviceInfo = $mobilePush->getDeviceInfo();
-			$arResult['USER_DEVICE'] = [
-				'icon' => in_array(strtolower($deviceInfo['platform']), ['android', 'ios']) ? strtolower($deviceInfo['platform']) : 'unknown',
-				'model' => $deviceInfo['displayModel'] ?? '',
-			];
+			if (!$arResult['IS_DEVICE_CONNECT_SKIPPED'])
+			{
+				$deviceInfo = PersonalMobilePush::createByUser($user)->getDeviceInfo();
+				$platform = strtolower((string)($deviceInfo['platform'] ?? ''));
+				$arResult['USER_DEVICE'] = [
+					'icon' => in_array($platform, ['android', 'ios'], true) ? $platform : 'unknown',
+					'model' => $deviceInfo['displayModel'] ?? '',
+				];
+			}
 			$arResult['SIGNED_USER_ID'] = (new OtpSigner())->signUserId($user->getId());
 			$arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] = $personalOtp->canSendRequestRecoverAccess();
 		}
 
 		$arResult['IS_RECOVERY_CODES_ENABLED'] = (new OtpSettings())->isRecoveredCodesEnabled();
 
-		$arResult['CURRENT_STEP'] = 'push';
+		$arResult['CURRENT_STEP'] = $arResult['IS_DEVICE_CONNECT_SKIPPED']
+			? 'alternative'
+			: 'push';
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 		$currentStep = $request->getPost('CURRENT_STEP');
+		$allowedSteps = $arResult['IS_DEVICE_CONNECT_SKIPPED']
+			? ['sms', 'email', 'recoveryCodes']
+			: ['push', 'sms', 'email', 'recoveryCodes', 'applicationOfflineCode'];
 
-		if (in_array($currentStep, ['push', 'sms', 'email', 'recoveryCodes', 'applicationOfflineCode']))
+		if (in_array($currentStep, $allowedSteps, true))
 		{
 			$arResult['CURRENT_STEP'] = $currentStep;
 		}

@@ -1,0 +1,63 @@
+.bx-im-list-recent-item__open-app {
+	--im-list-recent-item__background-color_counter: #00ade3;
+	--im-list-recent-item__background-color_muted: var(--im-color-palette-gray-40);
+	--im-list-recent-item__border-color_unread: var(--im-list-recent-item__background-color);
+	--im-list-recent-item__border-color_unread-hover: var(--im-list-recent-item__background-color_hover);
+
+	align-self: center;
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	height: 28px;
+	margin-left: 8px;
+	padding: 0 12px;
+	box-sizing: border-box;
+	border-radius: 14px;
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--im-color-palette-white-base);
+	font: 14px/18px var(--im-font-family-system);
+	white-space: nowrap;
+	text-decoration: none;
+}
+
+.bx-im-list-recent-item__open-app_unread-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	display: block;
+	box-sizing: border-box;
+	width: 10px;
+	height: 10px;
+	border: 2px solid var(--im-list-recent-item__border-color_unread);
+	border-radius: 50%;
+	background-color: var(--im-list-recent-item__background-color_counter);
+}
+
+.bx-im-list-recent-item__open-app_unread-badge.--muted {
+	background-color: var(--im-list-recent-item__background-color_muted);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__open-app {
+	--im-list-recent-item__background-color_counter: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-list-recent-item__wrap:hover .bx-im-list-recent-item__open-app_unread-badge {
+	border-color: var(--im-list-recent-item__border-color_unread-hover);
+}
+
+.bx-im-list-recent-item__open-app:hover {
+	background-color: var(--ui-color-accent-main-primary-alt);
+	color: var(--im-color-palette-white-base);
+	text-decoration: none;
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__open-app {
+	background-color: var(--im-color-palette-white-base);
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__open-app_unread-badge {
+	border-color: var(--im-list-recent-item__background-color_selected);
+	background-color: var(--im-color-palette-white-base);
+}

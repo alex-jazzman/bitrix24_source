@@ -1,12 +1,12 @@
 <?php
-$MESS["NOTE_APP_AI_CHAT_MOUNT_ERROR"] = "Could not open \"#NAME#\". Please try again.";
-$MESS["NOTE_APP_AI_CHAT_OPEN"] = "Open #NAME#";
+$MESS["NOTE_APP_AI_CHAT_MOUNT_ERROR"] = "Could not open \"#COPILOT_NAME#\". Please try again.";
+$MESS["NOTE_APP_AI_CHAT_OPEN"] = "Open #COPILOT_NAME#";
 $MESS["NOTE_APP_ARCHIVE"] = "Move to archive";
 $MESS["NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT"] = "The article will be moved to archive. Proceed?";
 $MESS["NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT_TITLE"] = "Move article to archive";
-$MESS['NOTE_APP_EMPTY_COLLECTIONS'] = 'No knowledge bases available.';
+$MESS['NOTE_APP_EMPTY_COLLECTIONS_MSGVER_1'] = 'No spaces here yet.';
 $MESS["NOTE_APP_HARD_DELETE_CONFIRM_CANCEL"] = "Cancel";
-$MESS["NOTE_APP_HARD_DELETE_CONFIRM_MESSAGE"] = "The article \"#TITLE#\" will be deleted permanently.";
+$MESS["NOTE_APP_HARD_DELETE_CONFIRM_MESSAGE"] = 'You will not be able to restore the article "#TITLE#".';
 $MESS["NOTE_APP_HARD_DELETE_CONFIRM_OK"] = "Delete";
 $MESS["NOTE_APP_HARD_DELETE_CONFIRM_TITLE"] = "Delete article";
 $MESS["NOTE_SIDEBAR_ARCHIVE"] = "Archive";
@@ -15,10 +15,8 @@ $MESS["NOTE_SIDEBAR_BRAND_NAME"] = "Bitrix";
 $MESS["NOTE_SIDEBAR_BRAND_SUFFIX"] = "24";
 $MESS["NOTE_SIDEBAR_CANCEL"] = "Cancel";
 $MESS["NOTE_SIDEBAR_COLLECTIONS"] = "Spaces";
-$MESS["NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION"] = "All articles in the space will be moved to the Recycle Bin for 30 days. The space will be deleted permanently. Proceed?";
 $MESS["NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_MSGVER_1"] = "All articles will be moved to the Recycle Bin for 30 days. Proceed?";
 $MESS["NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_TITLE"] = "Delete space";
-$MESS["NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT"] = "The article will be moved to the Recycle Bin. After the 30-day retention period, it will be wiped permanently. Proceed?";
 $MESS["NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_MSGVER_1"] = "The article will be moved to the Recycle Bin for 30 days. Proceed?";
 $MESS["NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_TITLE"] = "Delete article";
 $MESS["NOTE_SIDEBAR_CREATE_DOCUMENT"] = "New article";

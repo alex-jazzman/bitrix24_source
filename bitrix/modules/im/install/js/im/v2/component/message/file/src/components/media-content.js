@@ -55,9 +55,7 @@ export const MediaContent = {
 		},
 		files(): Array<ImModelFile>
 		{
-			return this.message.files.map((fileId) => {
-				return this.$store.getters['files/get'](fileId);
-			});
+			return this.$store.getters['messages/getMessageFiles'](this.message.id);
 		},
 		filesCount(): number
 		{
@@ -79,9 +77,15 @@ export const MediaContent = {
 		{
 			return this.message.attach.length > 0;
 		},
+		hasBuilderBlocks(): boolean
+		{
+			return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+		},
+		// Kept in step with MediaMessage.showBottomContainer: whatever puts content into the bubble
+		// footer takes the status with it, otherwise the overlay status would be a second one.
 		onlyMedia(): boolean
 		{
-			return !this.hasText && !this.hasAttach;
+			return !this.hasText && !this.hasAttach && !this.hasBuilderBlocks;
 		},
 		isSingleVideo(): boolean
 		{

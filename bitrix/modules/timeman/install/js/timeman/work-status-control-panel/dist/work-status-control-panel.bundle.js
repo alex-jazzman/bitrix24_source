@@ -523,8 +523,8 @@ this.BX = this.BX || {};
 					pauseMs: 0
 				};
 			}
-			if (canOpen === 'REOPEN') {
-				// A reopened closed day shows only persisted values:
+			if (canOpen === 'REOPEN' || canOpen === '') {
+				// A finished closed day shows only persisted values:
 				// worked time is RECORDED_DURATION, the break is accumulated leaks.
 				return {
 					workingDayMs: durationMs,
@@ -532,7 +532,7 @@ this.BX = this.BX || {};
 				};
 			}
 
-			// Closed and not reopenable: no live timer, values stay at zero.
+			// Unknown action: no live timer, values stay at zero.
 			return {
 				workingDayMs: 0,
 				pauseMs: 0

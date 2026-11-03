@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'entity-ready',
-		'im/messenger/lib/di/service-locator',
+		'im:messenger/lib/di/service-locator',
 		'statemanager/vuex',
 		'statemanager/vuex-manager',
 		'utils/object',
@@ -12,6 +12,7 @@ return [
 		'im:messenger/db/repository',
 		'im:messenger/db/table-schema',
 		'im:messenger/db/update',
+		'im:messenger/lib/database-epoch',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',

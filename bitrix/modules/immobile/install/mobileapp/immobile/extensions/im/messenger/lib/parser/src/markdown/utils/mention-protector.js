@@ -20,8 +20,9 @@ jn.define('im/messenger/lib/parser/markdown/utils/mention-protector', (require, 
 	class MentionProtector
 	{
 		#mentions = [];
-		#nonce = '';
+		#placeholderPrefix = '';
 		#pattern;
+		#placeholderShape;
 
 		constructor()
 		{
@@ -29,8 +30,25 @@ jn.define('im/messenger/lib/parser/markdown/utils/mention-protector', (require, 
 			// the placeholder stops a sender from typing a literal placeholder copy and having
 			// the stored mention replicated into it on restore (amplification DoS). Mirrors the
 			// web parser's createMarkdownNonce.
-			this.#nonce = Math.random().toString(36).slice(2, 12) || 'n';
-			this.#pattern = new RegExp(`${MARKDOWN_MENTION_PREFIX}${this.#nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+			const nonce = Math.random().toString(36).slice(2, 12) || 'n';
+
+			// Single definition of the placeholder form: the marker #addMention emits, the pattern
+			// restore() reads and the shape placeholderPattern hands out are all built from it, so the
+			// nonce alphabet and the separator before the index stay known to this class alone.
+			this.#placeholderPrefix = `${MARKDOWN_MENTION_PREFIX}${nonce}_`;
+			this.#pattern = new RegExp(`${this.#placeholderPrefix}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+			this.#placeholderShape = new RegExp(`${this.#placeholderPrefix}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}`);
+		}
+
+		/**
+		 * The shape of the placeholder protect() emits, for a consumer that has to recognize one:
+		 * capture-free and not global, so it can be embedded in a pattern of its own.
+		 *
+		 * @returns {RegExp}
+		 */
+		get placeholderPattern()
+		{
+			return this.#placeholderShape;
 		}
 
 		protect(text)
@@ -68,7 +86,7 @@ jn.define('im/messenger/lib/parser/markdown/utils/mention-protector', (require, 
 			const index = this.#mentions.length;
 			this.#mentions.push(mention);
 
-			return `${MARKDOWN_MENTION_PREFIX}${this.#nonce}_${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+			return `${this.#placeholderPrefix}${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
 		}
 	}
 

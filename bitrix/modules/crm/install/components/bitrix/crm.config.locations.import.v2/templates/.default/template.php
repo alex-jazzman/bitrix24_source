@@ -11,7 +11,19 @@ global $APPLICATION;
 	$APPLICATION->RestartBuffer();
 	while (@ob_end_clean());
 	?>
-	<script>(window.BX||top.BX)['file-async-loader']['<?=$arResult['FILE_UPLOAD_ID']?>'].<?=(empty($arResult['ERRORS']['FATAL']) ? 'uploadSuccess' : 'uploadFail')?>();</script>
+	<script>
+		var loaderId = '<?=CUtil::JSEscape($arResult['FILE_UPLOAD_ID'])?>';
+		var loaderWindow = parent.window;
+		if (
+			!loaderWindow.BX
+			|| !loaderWindow.BX['file-async-loader']
+			|| !loaderWindow.BX['file-async-loader'][loaderId]
+		)
+		{
+			loaderWindow = top.window;
+		}
+		loaderWindow.BX['file-async-loader'][loaderId].<?=(empty($arResult['ERRORS']['FATAL']) ? 'uploadSuccess' : 'uploadFail')?>();
+	</script>
 	<?die();?>
 <?endif?>
 
@@ -45,7 +57,7 @@ Loc::loadMessages(__FILE__);
 	$APPLICATION->AddHeadScript('/bitrix/js/sale/core_ui_fileasyncloader.js');
 	?>
 
-	<div id="location-import">
+	<div id="location-import" data-testid="crm-locations-import-form">
 
 		<div class="bx-sli-note" style="max-width: 250px">
 
@@ -70,7 +82,15 @@ Loc::loadMessages(__FILE__);
 		<div class="bx-ui-loc-i-progressbar bx-sli-progressbar">
 
 			<div class="bx-import-progressbar">
-				<div style="width: 500px;" class="instal-progress-bar-outer">
+				<div
+					style="width: 500px;"
+					class="instal-progress-bar-outer bx-ui-loc-i-import-progressbar"
+					role="progressbar"
+					aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SALE_SLI_IMPORT_PROGRESS'))?>"
+					aria-valuemin="0"
+					aria-valuemax="100"
+					aria-valuenow="0"
+				>
 					<div class="instal-progress-bar-alignment">
 						<div style="width: 0px;" class="instal-progress-bar-inner adm-progress-bar-inner">
 							<div style="width: 500px;" class="instal-progress-bar-inner-text"><span class="bx-ui-loc-i-percents">0</span>%</div>
@@ -79,7 +99,7 @@ Loc::loadMessages(__FILE__);
 					</div>
 				</div>
 
-				<div class="bx-import-pb-statusbar">
+				<div class="bx-import-pb-statusbar" role="status" aria-live="polite" aria-atomic="true">
 					<?=Loc::getMessage('SALE_SLI_STATUS')?>: <span class="bx-ui-loc-i-loader"></span>&nbsp;<span class="bx-ui-loc-i-status-text"><?=Loc::getMessage('SALE_SLI_STAGE_INITIAL')?></span>
 				</div>
 			</div>
@@ -119,9 +139,9 @@ Loc::loadMessages(__FILE__);
 		ob_start();
 		?>
 			<?php if ($allowRemote): ?>
-				<label><input type="radio" name="SOURCE" value="remote" checked class="bx-ui-loc-i-option" /><?=Loc::getMessage('SALE_SLI_SOURCE_REMOTE')?></label><br />
+				<label><input type="radio" name="SOURCE" value="remote" checked class="bx-ui-loc-i-option" data-testid="crm-locations-import-source-remote" /><?=Loc::getMessage('SALE_SLI_SOURCE_REMOTE')?></label><br />
 			<?php endif; ?>
-			<label><input type="radio" name="SOURCE" value="file" <?= $allowRemote ? '' : 'checked' ?> class="bx-ui-loc-i-option" /><?=Loc::getMessage('SALE_SLI_SOURCE_FILE')?></label></label>
+			<label><input type="radio" name="SOURCE" value="file" <?= $allowRemote ? '' : 'checked' ?> class="bx-ui-loc-i-option" data-testid="crm-locations-import-source-file" /><?=Loc::getMessage('SALE_SLI_SOURCE_FILE')?></label></label>
 		<?
 		$customHtml = ob_get_contents();
 		ob_end_clean();
@@ -141,7 +161,8 @@ Loc::loadMessages(__FILE__);
 		?>
 			<div class="bx-ui-loc-i-userfile">
 				<div class="bx-ui-file-async-loader-input">
-					<input type="file" name="IMPORT_FILE" />
+					<label class="bx-ui-loc-i-visually-hidden" for="location-import-file"><?=Loc::getMessage('SALE_SLI_IMPORT_FILE_LABEL')?></label>
+					<input type="file" id="location-import-file" name="IMPORT_FILE" data-testid="crm-locations-import-file" />
 				</div>
 				<div class="bx-ui-file-async-loader-success">
 					<?=Loc::getMessage('SALE_SLI_FILE_UPLOADED')?> <a href="javascript:void(0)" class="bx-ui-file-async-loader-retry"><?=Loc::getMessage('SALE_SLI_RELOAD_FILE')?></a>
@@ -185,7 +206,12 @@ Loc::loadMessages(__FILE__);
 				<?ob_start();?>
 
 				<div class="adm-loc-i-tree-node bx-ui-item-tree-node">
-					<a href="javascript:void(0)" class="adm-loc-i-selector-arrow {{EXPANDER_CLASS}}"></a>
+					<button
+						type="button"
+						class="adm-loc-i-selector-arrow {{EXPANDER_CLASS}}"
+						aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SALE_SLI_EXPAND_LOCATION_SET'))?>"
+						aria-expanded="false"
+					></button>
 					<label class="adm-loc-orig-label">
 						<input type="checkbox" value="{{CODE}}" name="{{INPUT_NAME}}" class="bx-ui-item-tree-checkbox" />
 						{{NAME}}
@@ -308,7 +334,8 @@ Loc::loadMessages(__FILE__);
 
 		ob_start();
 		?>
-			<select name="DEPTH_LIMIT" class="bx-ui-loc-i-option">
+			<label class="bx-ui-loc-i-visually-hidden" for="location-import-depth-limit"><?=Loc::getMessage('SALE_SLI_LOAD_LOCATIONS_TILL_INCLUSIVELY')?></label>
+			<select id="location-import-depth-limit" name="DEPTH_LIMIT" class="bx-ui-loc-i-option">
 				<option value="">-- <?=Loc::getMessage('SALE_SLI_DONT_LIMIT_LOCATION_DEPTH')?></option>
 				<?foreach($arResult['TYPE_LEVELS'] as $id => $level):?>
 					<option value="<?=$id?>"<?=($level['DEFAULT']? ' selected': '')?>><?=htmlspecialcharsbx($level['NAMES'])?></option>
@@ -400,7 +427,8 @@ Loc::loadMessages(__FILE__);
 
 		ob_start();
 		?>
-			<input type="text" name="TIME_LIMIT" value="20" class="bx-ui-loc-i-option" />
+			<label class="bx-ui-loc-i-visually-hidden" for="location-import-time-limit"><?=Loc::getMessage('SALE_SLI_AP_TIMELIMIT')?></label>
+			<input type="text" id="location-import-time-limit" name="TIME_LIMIT" value="20" class="bx-ui-loc-i-option" />
 		<?
 		$customHtml = ob_get_contents();
 		ob_end_clean();
@@ -436,9 +464,9 @@ Loc::loadMessages(__FILE__);
 
 		ob_start();
 		?>
-			<form action="<?=$arResult['URLS']['IMPORT']?>" method="post" class="bx-ui-loc-i-delete-all-form">
+			<form action="<?=$arResult['URLS']['IMPORT']?>" method="post" class="bx-ui-loc-i-delete-all-form" data-testid="crm-locations-import-cleanup-form">
 				<div class="adm-btn-wrapper">
-					<input type="submit" value="<?=Loc::getMessage('SALE_SLI_REMOVE_ALL')?>" class="adm-btn-save bx-ui-loc-i-delete-all" />
+					<input type="submit" value="<?=Loc::getMessage('SALE_SLI_REMOVE_ALL')?>" class="adm-btn-save bx-ui-loc-i-delete-all" data-testid="crm-locations-import-cleanup-submit" />
 					<input type="hidden" name="DROP_ALL" value="1" />
 					<div class="adm-btn-load-img-green"></div>
 				</div>
@@ -459,7 +487,7 @@ Loc::loadMessages(__FILE__);
 		ob_start();
 		?>
 
-		<input type="submit" class="adm-btn-save bx-ui-loc-i-button-start" value="<?=Loc::getMessage('SALE_SLI_START')?>">
+		<input type="submit" class="adm-btn-save bx-ui-loc-i-button-start" value="<?=Loc::getMessage('SALE_SLI_START')?>" data-testid="crm-locations-import-start">
 
 		<?
 		$formCustomHtml = ob_get_contents();
@@ -488,17 +516,18 @@ Loc::loadMessages(__FILE__);
 	</div>
 
 	<script>
-		BX.crmLocationsImportInstance = new BX.Crm.component.config.locations.import(<?=CUtil::PhpToJSObject(array(
+		window.BX = window.BX || top.BX;
+		var locationImportOptions = <?=CUtil::PhpToJSObject(array(
 
 			// common
 			'url' => $arResult['URLS']['IMPORT_AJAX'],
 			'pageUrl' => $arResult['URLS']['IMPORT'],
-			'scope' => 'location-import',
 			'defaultState' => $allowRemote ? 'remote' : 'file',
 			'ajaxFlag' => 'AJAX_CALL',
 			'importId' => rand(99, 999),
 			'firstImport' => !!$arResult['FIRST_IMPORT'],
 			'statistics' => array('TOTAL' => array('CNT' => (isset($arResult['STATISTICS']['TOTAL']) ? intval($arResult['STATISTICS']['TOTAL']['CNT']) : 0))),
+			'tabListLabel' => Loc::getMessage('SALE_SLI_TABS_LABEL'),
 
 			'messages' => array(
 				'start' => Loc::getMessage('SALE_SLI_START'),
@@ -506,6 +535,8 @@ Loc::loadMessages(__FILE__);
 				'stopping' => Loc::getMessage('SALE_SLI_STOPPING'),
 				'selectItems' => Loc::getMessage('SALE_SLI_CHECK_ITEMS_AND_PROCEED', array('#START#' => Loc::getMessage('SALE_SLI_START'))),
 				'uploadFile' => Loc::getMessage('SALE_SLI_UPLOAD_FILE_AND_PROCEED', array('#START#' => Loc::getMessage('SALE_SLI_START'))),
+				'expandLocationSet' => Loc::getMessage('SALE_SLI_EXPAND_LOCATION_SET'),
+				'collapseLocationSet' => Loc::getMessage('SALE_SLI_COLLAPSE_LOCATION_SET'),
 
 				'error_occured' => Loc::getMessage('SALE_SLI_ERROR'),
 
@@ -526,7 +557,9 @@ Loc::loadMessages(__FILE__);
 				'stage_DROP_INDEXES' => Loc::getMessage('SALE_SLI_DROP_INDEXES'),
 			)
 
-		), false, false, true)?>);
+		), false, false, true)?>;
+		locationImportOptions.scope = document.getElementById('location-import');
+		BX.crmLocationsImportInstance = new BX.Crm.component.config.locations.import(locationImportOptions);
 	</script>
 
 	<div class="bx-sli-note">

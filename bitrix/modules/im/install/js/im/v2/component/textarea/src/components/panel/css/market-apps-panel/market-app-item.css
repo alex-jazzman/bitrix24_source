@@ -24,6 +24,11 @@
 	cursor: pointer;
 }
 
+.bx-im-market-app-item__container.--opened {
+	background: var(--im-market-app-item__background-color_item);
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary);
+}
+
 .bx-im-market-app-item__icon-container {
 	width: 28px;
 	height: 28px;

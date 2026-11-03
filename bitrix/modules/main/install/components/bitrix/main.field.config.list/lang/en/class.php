@@ -1,5 +1,7 @@
-<?
+<?php
 $MESS["MAIN_FIELD_CONFIG_LIST_BOOLEAN_NO"] = "No";
 $MESS["MAIN_FIELD_CONFIG_LIST_BOOLEAN_YES"] = "Yes";
 $MESS["MAIN_FIELD_CONFIG_LIST_DETAIL_TITLE"] = "Field settings";
-?>
+$MESS['MAIN_FIELD_CONFIG_LIST_DELETE_CONFIRM'] = 'Are you sure you want to delete the selected fields? All data will be lost.';
+$MESS['MAIN_FIELD_CONFIG_LIST_DELETE_SUCCESS'] = 'Fields deleted';
+$MESS['MAIN_FIELD_CONFIG_LIST_ACTION_PANEL_DELETE'] = 'Delete';

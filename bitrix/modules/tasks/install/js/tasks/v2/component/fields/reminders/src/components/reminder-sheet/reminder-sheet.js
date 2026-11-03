@@ -19,10 +19,19 @@ export const ReminderSheet = {
 		},
 	},
 	emits: ['close'],
+	computed: {
+		title(): string
+		{
+			return this.reminderId
+				? this.loc('TASKS_V2_REMINDERS_UPDATE_SHEET')
+				: this.loc('TASKS_V2_REMINDERS_ADD_SHEET');
+		},
+	},
 	template: `
-		<BottomSheet :sheetBindProps @close="$emit('close')">
+		<BottomSheet :sheetBindProps :ariaLabel="title" @close="$emit('close')">
 			<ReminderSheetContent
 				:reminderId
+				:title
 				:close="() => $emit('close')"
 			/>
 		</BottomSheet>

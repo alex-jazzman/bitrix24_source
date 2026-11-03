@@ -7,7 +7,7 @@ import {BaseEvent} from 'main.core.events';
 import {FormSettingsForm} from 'landing.ui.form.formsettingsform';
 import { Dom, Text, Type } from 'main.core';
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
-import StageField from './internal/stagefield/stagefield';
+import { StageField } from './internal/stagefield/stagefield';
 import { SchemeManager } from 'landing.ui.panel.formsettingspanel.content.crm.schememanager';
 
 import './css/style.css';
@@ -24,7 +24,7 @@ type CrmField = {
 	items: Array<{ID: any, VALUE: any}>,
 };
 
-export default class CrmContent extends ContentWrapper
+export class CrmContent extends ContentWrapper
 {
 	#schemeManager: SchemeManager;
 
@@ -154,7 +154,7 @@ export default class CrmContent extends ContentWrapper
 	{
 		return this.cache.remember('type6header', () => {
 			return new HeaderCard({
-				title: Loc.getMessage('LANDING_FORM_SETTINGS_CRM_TYPE_6').replace('&nbsp;', ' '),
+				title: Loc.getMessage('LANDING_FORM_SETTINGS_CRM_TYPE_310').replace('&nbsp;', ' '),
 				level: 2,
 			});
 		});
@@ -873,3 +873,4 @@ export default class CrmContent extends ContentWrapper
 		};
 	}
 }
+export { CrmContent as Content };

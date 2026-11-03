@@ -43,12 +43,6 @@ export const TimeTrackingListItemView = {
 			Outline,
 		};
 	},
-	data(): Object
-	{
-		return {
-			isItemHovered: false,
-		};
-	},
 	computed: {
 		elapsedTime(): ElapsedTimeModel
 		{
@@ -98,11 +92,7 @@ export const TimeTrackingListItemView = {
 		},
 	},
 	template: `
-		<div
-			class="tasks-time-tracking-list-row --item"
-			@mouseover="isItemHovered = true"
-			@mouseleave="isItemHovered = false"
-		>
+		<div class="tasks-time-tracking-list-row --item" data-testid="tasks-time-tracking-list-item">
 			<div class="tasks-time-tracking-list-item-view">
 				<div class="tasks-time-tracking-list-item-view-time">
 					<div class="tasks-time-tracking-list-column --date">
@@ -114,21 +104,29 @@ export const TimeTrackingListItemView = {
 					<div class="tasks-time-tracking-list-column --author">
 						<UserLabel :user="author"/>
 					</div>
-					<div
-						class="tasks-time-tracking-list-column --action"
-					>
-						<div
-							v-if="isItemHovered && elapsedTime.rights.edit && isEdit"
-							ref="edit" @click="$emit('edit')"
+					<div class="tasks-time-tracking-list-column --action">
+						<button
+							v-if="elapsedTime.rights.edit && isEdit"
+							ref="edit"
+							type="button"
+							class="tasks-time-tracking-list-action"
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ACTION_EDIT')"
+							data-testid="tasks-time-tracking-edit-btn"
+							@click="$emit('edit')"
 						>
-							<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable/>
-						</div>
-						<div
-							v-if="isItemHovered && elapsedTime.rights.remove && isEdit"
-							ref="remove" @click="$emit('remove')"
+							<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable aria-hidden="true"/>
+						</button>
+						<button
+							v-if="elapsedTime.rights.remove && isEdit"
+							ref="remove"
+							type="button"
+							class="tasks-time-tracking-list-action"
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_ACTION_REMOVE')"
+							data-testid="tasks-time-tracking-remove-btn"
+							@click="$emit('remove')"
 						>
-							<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable/>
-						</div>
+							<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable aria-hidden="true"/>
+						</button>
 					</div>
 				</div>
 				<div v-if="this.elapsedTime.text" class="tasks-time-tracking-list-item-view-text">

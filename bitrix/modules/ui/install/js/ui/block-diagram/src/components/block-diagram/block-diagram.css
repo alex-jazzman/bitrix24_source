@@ -4,6 +4,14 @@
 	cursor: default;
 }
 
+/* The canvas takes the focus itself, so it draws the ring of the design system like every other
+   control of the extension. The offset goes inward: a consumer that clips its overflow would cut an
+   outward ring off, and the canvas fills the space its consumer gives it. */
+.ui-block-diagram:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .ui-block-diagram.--grabbing {
 	cursor: grabbing !important;
 }

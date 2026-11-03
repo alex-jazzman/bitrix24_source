@@ -4,7 +4,8 @@
 jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
-	const { RestMethod, UserType } = require('im/messenger/const');
+	const { EventType, NavigationTabId, Promo, RestMethod, UserType } = require('im/messenger/const');
+	const { triggerNewProjectsPromo } = require('new-projects-promo/trigger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
@@ -14,6 +15,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { SendingService } = require('im/messenger/provider/services/sending');
 	const { SyncService } = require('im/messenger/provider/services/sync');
 	const { ReadMessageService } = require('im/messenger/provider/services/read');
+	const { DefaultReactionService } = require('im/messenger/provider/services/settings');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { Promotion, PromotionTriggerManager } = require('im/messenger/lib/promotion');
@@ -48,7 +50,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger/application/lib/update-notifier');
 	const { PerfPoint } = require('debug/prism');
 
-	const mobileRevision = 26; // sync with im/lib/revision.php. TODO: move value to some config?
+	const mobileRevision = 29; // sync with im/lib/revision.php. TODO: move value to some config?
 
 	/**
 	 * @class Messenger
@@ -65,11 +67,14 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.subscriptionManager = serviceLocator.get('subscription-manager');
 			/** @type {boolean} */
 			this.isGuestMode = false;
+
+			this.onNavigationTabChanged = this.onNavigationTabChanged.bind(this);
 		}
 
 		destructor()
 		{
 			this.logger.log('destructor');
+			BX.removeCustomEvent(EventType.navigation.tabChanged, this.onNavigationTabChanged);
 
 			try
 			{
@@ -92,13 +97,88 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.initPerfPoint = new PerfPoint('messenger-init', 'startup').start();
 			serviceLocator.add('messenger-init-perf-point', this.initPerfPoint);
 
+			// closed by the render service on its first native setItems with a non-empty list; the
+			// cache snapshot reaches the list through the same service
+			this.initPerfPoint.startPoint('first-items');
+			// closed by the refresher at the point where the runtime readiness signal is published
+			this.initPerfPoint.startPoint('ready');
+			// closed by the refresher when the startup completes. Kept apart from `ready`: the
+			// readiness signal is published before the synchronization, so `ready` no longer covers
+			// the whole startup
+			this.initPerfPoint.startPoint('startup-complete');
+
 			await this.initBeforeViewLoaded();
-			await waitViewLoaded();
-			await this.initAfterViewLoaded();
+
+			this.initPerfPoint.startPoint('view-loaded-wait');
+			try
+			{
+				await waitViewLoaded();
+			}
+			finally
+			{
+				this.initPerfPoint.endPoint('view-loaded-wait');
+			}
+
+			this.initPerfPoint.startPoint('after-view-loaded');
+			try
+			{
+				await this.initAfterViewLoaded();
+			}
+			finally
+			{
+				this.initPerfPoint.endPoint('after-view-loaded');
+			}
 
 			await this.refresher.refreshOnStartup();
 
 			this.logger.log('init complete');
+		}
+
+		/**
+		 * @param {string} key
+		 * @param {function(): Promise<*>} step
+		 * @return {Promise<void>}
+		 */
+		async #measureInitStep(key, step)
+		{
+			this.initPerfPoint?.startPoint(key);
+
+			try
+			{
+				await step();
+			}
+			catch (error)
+			{
+				this.initPerfPoint?.endPoint(key, { error: error?.message });
+
+				throw error;
+			}
+
+			this.initPerfPoint?.endPoint(key);
+		}
+
+		/**
+		 * @desc Same as #measureInitStep for synchronous steps: awaiting them would insert a microtask
+		 * boundary between the steps of the chain and change the order of the startup.
+		 * @param {string} key
+		 * @param {function(): void} step
+		 */
+		#measureInitStepSync(key, step)
+		{
+			this.initPerfPoint?.startPoint(key);
+
+			try
+			{
+				step();
+			}
+			catch (error)
+			{
+				this.initPerfPoint?.endPoint(key, { error: error?.message });
+
+				throw error;
+			}
+
+			this.initPerfPoint?.endPoint(key);
 		}
 
 		async initBeforeViewLoaded()
@@ -107,19 +187,23 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			try
 			{
-				await this.initCore();
-				await this.initCountersUpdateSystem();
-				await this.initFolderLauncher();
-				this.initPushManager();
-				await this.pushManager.fillDatabaseFromPush();
-				this.initServices();
-				this.initNavigationManager();
-				this.initRevisionChecker();
-				this.initPlanLimitsUpdater();
-				this.initRefresher();
-				await this.initCurrentUser();
-				await this.initQueueRequests();
-				await this.initCopilotUser();
+				await this.#measureInitStep('core-init', () => this.initCore());
+				await this.#measureInitStep('counters-restore', () => this.initCountersUpdateSystem());
+				await this.#measureInitStep('folder-launcher', () => this.initFolderLauncher());
+				this.#measureInitStepSync('push-manager-init', () => this.initPushManager());
+				await this.#measureInitStep('push-database-fill', () => this.pushManager.fillDatabaseFromPush());
+				this.#measureInitStepSync('services-init', () => this.initServices());
+				if (Feature.isDefaultReactionAvailable)
+				{
+					await this.#measureInitStep('default-reaction-init', () => this.initDefaultReaction());
+				}
+				this.#measureInitStepSync('navigation-manager-init', () => this.initNavigationManager());
+				this.#measureInitStepSync('revision-checker-init', () => this.initRevisionChecker());
+				this.#measureInitStepSync('plan-limits-updater-init', () => this.initPlanLimitsUpdater());
+				this.#measureInitStepSync('refresher-init', () => this.initRefresher());
+				await this.#measureInitStep('current-user', () => this.initCurrentUser());
+				await this.#measureInitStep('queue-requests', () => this.initQueueRequests());
+				await this.#measureInitStep('copilot-user', () => this.initCopilotUser());
 			}
 			catch (error)
 			{
@@ -206,6 +290,9 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			serviceLocator.add('connection-service', this.connectionService);
 			this.subscriptionManager.register(this.connectionService);
 
+			this.defaultReactionService = new DefaultReactionService();
+			serviceLocator.add('default-reaction-service', this.defaultReactionService);
+
 			this.syncService = new SyncService();
 			serviceLocator.add('sync-service', this.syncService);
 			this.subscriptionManager.register(this.syncService);
@@ -229,6 +316,25 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			this.chatDeletionManager = new ChatDeletionManager();
 			serviceLocator.add('chat-deletion-manager', this.chatDeletionManager);
+		}
+
+		/**
+		 * @desc Restores the main reaction once per cold start: instantly from the local cache,
+		 * then refreshed from the server without blocking boot. Runs here rather
+		 * than on each dialog open, so the model holds the reaction before any dialog is shown.
+		 * @return {Promise<void>}
+		 */
+		async initDefaultReaction()
+		{
+			await this.defaultReactionService.hydrateFromCache().catch((error) => this.logger.error(
+				'initDefaultReaction.hydrateFromCache.catch:',
+				error,
+			));
+
+			void this.defaultReactionService.fetchFromServer().catch((error) => this.logger.error(
+				'initDefaultReaction.fetchFromServer.catch:',
+				error,
+			));
 		}
 
 		initNavigationManager()
@@ -347,6 +453,26 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.headerManager.redrawRightButtonsIfNeeded(currentTabId);
 			this.headerManager.redrawLeftButtonsIfNeeded(currentTabId);
 			this.tabCounters.update();
+
+			if (currentTabId === NavigationTabId.collab)
+			{
+				triggerNewProjectsPromo();
+			}
+
+			BX.removeCustomEvent(EventType.navigation.tabChanged, this.onNavigationTabChanged);
+			BX.addCustomEvent(EventType.navigation.tabChanged, this.onNavigationTabChanged);
+		}
+
+		/**
+		 * @param {{ currentTabId: string }} event
+		 * @return {void}
+		 */
+		onNavigationTabChanged({ currentTabId })
+		{
+			if (currentTabId === NavigationTabId.collab)
+			{
+				triggerNewProjectsPromo();
+			}
 		}
 
 		initPullHandlers()
@@ -379,6 +505,12 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			{
 				this.promotionTriggerManager.setTabTasksTrigger();
 			}
+
+			// the tab list and the promo collection arrive later, so the pending queue holds the request
+			this.promotion.addToPromoQueue({
+				promoId: Promo.folderAllOnboarding,
+				callback: this.promotion.showFolderAllOnboardingPromotion,
+			});
 		}
 
 		/* region debug getters */

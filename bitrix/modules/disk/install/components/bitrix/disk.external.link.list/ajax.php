@@ -1,7 +1,9 @@
 <?php
 use Bitrix\Disk\ExternalLink;
 use Bitrix\Disk\File;
+use Bitrix\Disk\Internal\Service\ExternalLink\ExternalLinkAccessService;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 
 define('STOP_STATISTICS', true);
@@ -27,6 +29,15 @@ Loc::loadMessages(__FILE__);
 class DiskExternalLinkListAjaxController extends \Bitrix\Disk\Internals\Controller
 {
 	const ERROR_COULD_NOT_FIND_OBJECT = 'DISK_ELLAC_22001';
+
+	protected ExternalLinkAccessService $externalLinkAccessService;
+
+	public function __construct()
+	{
+		parent::__construct();
+
+		$this->externalLinkAccessService = ServiceLocator::getInstance()->get(ExternalLinkAccessService::class);
+	}
 
 	protected function listActions()
 	{
@@ -57,10 +68,11 @@ class DiskExternalLinkListAjaxController extends \Bitrix\Disk\Internals\Controll
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
-		$extLinks = $file->getExternalLinks(array(
+		// the link belongs to the real object, a shortcut has none of its own
+		$extLinks = ExternalLink::getModelList(array(
 			'filter' => array(
 				'ID' => (int)$this->request->getPost('externalId'),
-				'OBJECT_ID' => $file->getId(),
+				'OBJECT_ID' => $file->getRealObjectId(),
 				'TYPE' => \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_MANUAL,
 				'IS_EXPIRED' => false,
 			),
@@ -75,6 +87,11 @@ class DiskExternalLinkListAjaxController extends \Bitrix\Disk\Internals\Controll
 		/** @var File $file */
 		/** @var ExternalLink $extLink */
 		list($file, $extLink) = $this->getFileAndExternalLink();
+		if($extLink && !$this->externalLinkAccessService->canManageExternalLink($file))
+		{
+			$this->sendJsonAccessDeniedResponse();
+		}
+
 		if(!$extLink || $extLink->delete())
 		{
 			$this->sendJsonSuccessResponse();

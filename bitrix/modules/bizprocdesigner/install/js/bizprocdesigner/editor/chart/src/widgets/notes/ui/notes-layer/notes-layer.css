@@ -1,0 +1,10 @@
+/*
+ * The layer covers the whole area of the canvas, so it may not take the pointer: the schema below has
+ * to stay workable. Only the markers take it back (note-marker.css).
+ */
+.editor-chart-notes-layer {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}

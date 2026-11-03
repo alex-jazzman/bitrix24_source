@@ -25,6 +25,7 @@ $MESS["MAIL_OPTIONS_SAVE_ATTACHMENTS"] = "Save message attachments in database";
 $MESS["MAIL_OPTIONS_SAVE_SRC"] = "Save incoming e-mail messages in database";
 $MESS["MAIL_OPTIONS_SYNC_OLD_LIMIT"] = "Emails storage limit in days (0 - unlimited)";
 $MESS["MAIL_OPTIONS_TIMEOUT"] = "Connection timeout (minutes):";
+$MESS['MAIL_OPTIONS_UNLIMITED_MAIL_SYNC_PERIOD'] = 'Allow syncing full email history';
 $MESS["MAIL_OPT_CONFIRM"] = "The current command line was not saved. Run the server using the old command line?";
 $MESS["MAIL_OPT_ERR"] = "Error:";
 $MESS["MAIL_OPT_ERR_CON"] = "Connection error.";

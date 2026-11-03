@@ -110,6 +110,11 @@ else
 					$result = $arCompany['IS_MY_COMPANY'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
 					break;
 				}
+				case 'OPENED':
+				{
+					$result = ($arCompany['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+					break;
+				}
 				default:
 				{
 					if(isset($arResult['COMPANY_UF'][$i]) && isset($arResult['COMPANY_UF'][$i][$headerID]))

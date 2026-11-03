@@ -1,5 +1,8 @@
 import { Extension, Type } from 'main.core';
 
+export { CallLogContextRegistry } from './call-log-context';
+export type { CallLogContext } from './call-log-context';
+
 export type CallSettingsType = {
 	jwtCallsEnabled?: boolean;
 	plainCallsUseJwt?: boolean;
@@ -21,9 +24,10 @@ class CallSettings
 	#plainCallCloudRecordingEnabled = false;
 	constructor()
 	{
-		if (Extension.getSettings('call.core').call)
+		const callSettings = Extension.getSettings('call.core').get('call');
+		if (callSettings)
 		{
-			this.setup(Extension.getSettings('call.core').call);
+			this.setup(callSettings);
 		}
 	}
 

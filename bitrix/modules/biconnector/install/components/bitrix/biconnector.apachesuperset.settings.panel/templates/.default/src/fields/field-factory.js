@@ -1,10 +1,7 @@
 import { EventEmitter } from 'main.core.events';
 import type { BaseEvent } from 'main.core.events';
 
-import {
-	DashboardDateFilterField,
-	DashboardGroupsField,
-} from './entities/index';
+import { DashboardGroupsField, DashboardShareSettingField } from './entities/index';
 
 export class FieldFactory
 {
@@ -20,10 +17,10 @@ export class FieldFactory
 	{
 		switch (type)
 		{
-			case 'dashboardTimePeriod':
-				return DashboardDateFilterField.create(controlId, settings);
 			case 'dashboardGroupsSelector':
 				return DashboardGroupsField.create(controlId, settings);
+			case 'dashboardShareSetting':
+				return DashboardShareSettingField.create(controlId, settings);
 			default:
 				return null;
 		}

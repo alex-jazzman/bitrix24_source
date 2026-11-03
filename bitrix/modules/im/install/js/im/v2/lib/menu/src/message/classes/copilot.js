@@ -18,6 +18,7 @@ export class CopilotMessageMenu extends MessageMenu
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getForwardItem(),
+			this.getCreateAiTaskItem(),
 			this.getSendFeedbackItem(),
 		];
 

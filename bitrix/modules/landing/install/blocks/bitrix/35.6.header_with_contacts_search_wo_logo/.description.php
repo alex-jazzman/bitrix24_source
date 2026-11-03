@@ -67,4 +67,7 @@ return [
 			'type' => 'color',
 		],
 	],
+	'assets' => [
+		'ext' => ['ui.design-tokens.air'],
+	],
 ];

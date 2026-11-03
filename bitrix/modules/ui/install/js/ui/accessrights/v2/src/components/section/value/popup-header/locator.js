@@ -1,50 +1,68 @@
-import { Icon as SectionIcon } from '../../icon';
+import { BIcon } from 'ui.icon-set.api.vue';
 import '../../../../css/value/popup-header/locator.css';
 
 export const Locator = {
 	name: 'Locator',
-	components: { SectionIcon },
-	props: {
-		maxWidth: {
-			type: Number,
-			// same as value popup width
-			default: 430,
-		},
-	},
+	components: { BIcon },
 	inject: ['section', 'right'],
 	computed: {
-		rightOrGroupTitle(): string {
+		parentRight(): ?Object {
 			if (!this.right.group)
+			{
+				return null;
+			}
+
+			return this.section.rights.get(this.right.group) ?? null;
+		},
+		rightTitleText(): string {
+			if (!this.parentRight)
 			{
 				return this.right.title;
 			}
 
-			const groupHead = this.section.rights.get(this.right.group);
+			return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RIGHT_TITLE_WITH_PARENT', {
+				'#PARENT#': this.parentRight.title,
+				'#RIGHT#': this.right.title,
+			});
+		},
+		titleParts(): { before: string, after: string } {
+			const template = this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RIGHTS_TO');
+			const [before = '', after = ''] = template.split('#RIGHT#');
 
-			return groupHead?.title;
+			return { before, after };
+		},
+		sectionText(): string {
+			if (this.section.sectionSubTitle)
+			{
+				return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SECTION_TITLE_WITH_SUBTITLE', {
+					'#TITLE#': this.section.sectionTitle,
+					'#SUBTITLE#': this.section.sectionSubTitle,
+				});
+			}
+
+			return this.section.sectionTitle;
+		},
+		iconColor(): string {
+			return 'var(--ui-color-design-outline-content-label)';
 		},
 	},
 	template: `
-		<div class="ui-access-rights-v2-cell-popup-header-locator" :style="{
-			maxWidth: maxWidth + 'px',
-		}">
-			<SectionIcon/>
-			<span
-				class="ui-access-rights-v2-text-ellipsis"
-				:title="section.sectionTitle"
-			>{{ section.sectionTitle }}</span>
-			<span
-				v-if="section.sectionSubTitle" 
-				class="ui-access-rights-v2-text-ellipsis"
-				:title="section.sectionSubTitle"
-				style="margin-left: 5px; color: var(--ui-color-palette-gray-70);"
-			>{{ section.sectionSubTitle }}</span>
-			<div class="ui-icon-set --chevron-right ui-access-rights-v2-cell-popup-header-chevron"></div>
-			<template v-if="rightOrGroupTitle !== right.title">
-				<span class="ui-access-rights-v2-text-ellipsis" :title="right.title">{{ right.title }}</span>
-				<div class="ui-icon-set --chevron-right ui-access-rights-v2-cell-popup-header-chevron"></div>
-			</template>
-			<span class="ui-access-rights-v2-text-ellipsis" :title="rightOrGroupTitle">{{ rightOrGroupTitle }}</span>
+		<div class="ui-access-rights-v2-cell-popup-header-locator">
+			<p class="ui-access-rights-v2-cell-popup-header-title">
+				<span>{{ titleParts.before }}</span><span class="ui-access-rights-v2-cell-popup-header-title-right" :title="rightTitleText">{{ rightTitleText }}</span><span>{{ titleParts.after }}</span>
+			</p>
+			<div class="ui-access-rights-v2-cell-popup-header-section">
+				<BIcon
+					v-if="section.sectionIcon"
+					:name="section.sectionIcon.type"
+					:color="iconColor"
+					:size="18"
+				/>
+				<span
+					class="ui-access-rights-v2-text-ellipsis ui-access-rights-v2-cell-popup-header-section-title"
+					:title="sectionText"
+				>{{ sectionText }}</span>
+			</div>
 		</div>
 	`,
 };

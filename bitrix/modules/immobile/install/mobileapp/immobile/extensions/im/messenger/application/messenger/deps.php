@@ -46,7 +46,9 @@ return [
 		'im:messenger/provider/services/queue',
 		'im:messenger/provider/services/read',
 		'im:messenger/provider/services/sending',
+		'im:messenger/provider/services/settings',
 		'im:messenger/provider/services/sync',
 		'debug/prism',
+		'new-projects-promo/trigger',
 	],
 ];

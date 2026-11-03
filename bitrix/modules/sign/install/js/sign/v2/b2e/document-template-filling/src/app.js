@@ -1,5 +1,6 @@
-import { Extension, Loc } from 'main.core';
+import { Dom, Extension, Loc, Text } from 'main.core';
 import { Timezone } from 'main.date';
+import { FeatureStorage } from 'sign.feature-storage';
 import { ProviderCode } from 'sign.type';
 import { type LoadedDocumentData } from 'sign.v2.api';
 import type { DocumentSettings } from 'sign.v2.b2e.sign-settings-templates';
@@ -8,6 +9,7 @@ import {
 	useDocumentTemplateFillingStore,
 } from 'sign.v2.b2e.sign-settings-templates';
 import { DateSelector, LocMixin } from 'sign.v2.b2e.vue-util';
+import { BInput } from 'ui.system.input.vue';
 import { mapState } from 'ui.vue3.pinia';
 import { DocumentPreviewList } from '../../vue-util/src/components/document-preview-list/document-preview-list';
 import { DocumentPreview } from '../../vue-util/src/components/document-preview/document-preview';
@@ -20,16 +22,55 @@ const ExternalSourceType = {
 };
 const defaultSigningDateMonth = 3;
 
+// UX hint only, the actual limit is enforced by the server
+const inviteMessageMaxLength = 2000;
+const inviteMessageRowsQuantity = 4;
+
+// The counter and the length error describe the field, but BInput has no props for that, so the
+// attributes are wired here, on the textarea it renders. The error itself is announced by the
+// block's own live region: the error node of BInput is created together with its text, and a live
+// region announces only the changes that happen after it is already in the DOM.
+function describeInviteMessageField(
+	element: HTMLElement,
+	binding: { value: { describedBy: string, isInvalid: boolean } },
+): void
+{
+	Dom.attr(element.querySelector('textarea'), {
+		'aria-describedby': binding.value.describedBy,
+		'aria-invalid': binding.value.isInvalid ? 'true' : null,
+	});
+}
+
 // @vue/component
 export const DocumentFillingApp = {
 	name: 'DocumentFillingApp',
 	components: {
+		BInput,
 		DateSelector,
 		DocumentPreview,
 		Switcher,
 		DocumentPreviewList,
 	},
+	directives: {
+		describedby: {
+			mounted: describeInviteMessageField,
+			updated: describeInviteMessageField,
+		},
+	},
 	mixins: [LocMixin],
+	setup(): Object
+	{
+		const counterId = `sign-b2e-document-filling-message-counter-${Text.getRandom()}`;
+		const errorId = `sign-b2e-document-filling-message-error-${Text.getRandom()}`;
+
+		return {
+			inviteMessageMaxLength,
+			inviteMessageRowsQuantity,
+			inviteMessageCounterId: counterId,
+			inviteMessageErrorId: errorId,
+			inviteMessageDescribedBy: `${counterId} ${errorId}`,
+		};
+	},
 	data(): {
 		isApplySettingsForAll: boolean,
 		commonSettings: DocumentSettings,
@@ -83,6 +124,41 @@ export const DocumentFillingApp = {
 		switcherAllHint(): string
 		{
 			return this.ruRegionFieldsVisible ? this.loc('SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_HINT') : '';
+		},
+		// The type of initiator is not checked here as it is in the single-document wizard: a batch
+		// registers documents with onlyInitiatedByType: COMPANY, so it never carries an employee-
+		// initiated document (Controllers\V1\B2e\Document\Template::registerDocumentsAction).
+		isInviteMessageVisible(): boolean
+		{
+			return FeatureStorage.isDocumentMessageEnabled();
+		},
+		inviteMessage: {
+			get(): string
+			{
+				return mapState(useDocumentTemplateFillingStore, ['inviteMessage']).inviteMessage();
+			},
+			set(value: string): void
+			{
+				useDocumentTemplateFillingStore().setInviteMessage(value);
+			},
+		},
+		inviteMessageLength(): number
+		{
+			// the counter shows the length the limit is checked against, so it never reports an error
+			// on a message the server accepts
+			return [...this.inviteMessage.trim()].length;
+		},
+		isInviteMessageTooLong(): boolean
+		{
+			return this.inviteMessageLength > inviteMessageMaxLength;
+		},
+		inviteMessageError(): string
+		{
+			return this.isInviteMessageTooLong
+				? this.loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_LENGTH_ERROR', {
+					'#MAX_LENGTH#': inviteMessageMaxLength,
+				})
+				: '';
 		},
 	},
 	watch: {
@@ -315,12 +391,14 @@ export const DocumentFillingApp = {
 		},
 		validate(): boolean
 		{
+			const isInviteMessageValid = !this.isInviteMessageTooLong;
+
 			if (this.isApplySettingsForAll)
 			{
 				const value = this.commonSettings.registrationNumber;
 				this.isValid = Boolean(value) && value.trim() !== '';
 
-				return this.isValid;
+				return this.isValid && isInviteMessageValid;
 			}
 
 			this.isValid = true;
@@ -337,7 +415,7 @@ export const DocumentFillingApp = {
 				}
 			}
 
-			return this.isValid;
+			return this.isValid && isInviteMessageValid;
 		},
 		convertFromUTCtoUserDate(dateInUTC: Date): Date
 		{
@@ -548,5 +626,40 @@ export const DocumentFillingApp = {
 				</div>
 			</div>
 		</template>
+
+		<div
+			v-if="isInviteMessageVisible"
+			class="sign-b2e-document-filling__item sign-b2e-document-filling__message"
+			data-testid="sign-document-filling-message"
+		>
+			<span class="sign-b2e-document-filling__item-text">
+				{{ loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_TITLE') }}
+			</span>
+			<BInput
+				v-model="inviteMessage"
+				v-describedby="{ describedBy: inviteMessageDescribedBy, isInvalid: isInviteMessageTooLong }"
+				:aria-label="loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_TITLE')"
+				:placeholder="loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_PLACEHOLDER')"
+				:error="inviteMessageError"
+				:rows-quantity="inviteMessageRowsQuantity"
+				data-testid="sign-document-filling-message-field"
+				resize="vertical"
+				stretched
+			/>
+			<div
+				:id="inviteMessageCounterId"
+				class="sign-b2e-document-filling__message-counter"
+				:class="{ '--error': isInviteMessageTooLong }"
+				data-testid="sign-document-filling-message-counter"
+			>
+				{{ inviteMessageLength }}/{{ inviteMessageMaxLength }}
+			</div>
+			<div
+				:id="inviteMessageErrorId"
+				class="sign-b2e-document-filling__message-error"
+				role="alert"
+				data-testid="sign-document-filling-message-error"
+			>{{ inviteMessageError }}</div>
+		</div>
 	`,
 };

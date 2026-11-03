@@ -1,6 +1,7 @@
 import { ajax, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { EventType } from 'sale.payment-pay.const';
+import { UserConsentPopupAccessibility } from 'sale.user-consent-a11y';
 import { BitrixVue } from 'ui.vue';
 
 BitrixVue.component('salescenter-payment_pay-components-payment_system-user_consent', {
@@ -34,7 +35,12 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-user_cons
 		},
 	},
 	mounted() {
+		this.consentAccessibility = null;
 		this.loadBlockHtml();
+	},
+	beforeDestroy() {
+		this.consentAccessibility?.destroy();
+		this.consentAccessibility = null;
 	},
 	methods: {
 		loadBlockHtml() {
@@ -73,6 +79,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-user_cons
 				const wrapper = this.$refs.consentDiv;
 				wrapper.appendChild(Tag.render`<div>${html}</div>`);
 				BX.UserConsent.loadAll(wrapper);
+				this.consentAccessibility = UserConsentPopupAccessibility.install();
 				const controls = BX.UserConsent.getItems();
 				controls.forEach((control) => {
 					EventEmitter.subscribe(control, BX.UserConsent.events.afterAccepted, (event) => {
@@ -87,7 +94,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-user_cons
 	},
 	// language=Vue
 	template: `
-		<div class="salescenter-user-consent-list">
+		<div class="salescenter-user-consent-list" data-testid="salescenter-payment-consent">
 			<div ref="consentDiv"/>
 		</div>
 	`,

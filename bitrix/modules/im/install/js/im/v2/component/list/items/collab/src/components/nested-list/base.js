@@ -1,11 +1,13 @@
 import { type JsonObject } from 'main.core';
 import { type BaseEvent, type EventEmitter } from 'main.core.events';
+import { markRaw } from 'ui.vue3';
 
 import { RecentType } from 'im.v2.const';
 import { BaseRecentList } from 'im.v2.component.list.items.base';
+import { ActiveCallList } from 'im.v2.component.list.items.elements.active-call-list';
 import { CreateChatStatus } from 'im.v2.component.list.items.elements.create-chat-status';
 import { DraftManager } from 'im.v2.lib.draft';
-import { type ImModelRecentItem } from 'im.v2.model';
+import { type ImModelCallItem, type ImModelRecentItem } from 'im.v2.model';
 import { TaskRecentService, CalendarRecentService, CopilotRecentV2Service, type BaseRecentService } from 'im.v2.provider.service.recent';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Notifier } from 'im.v2.lib.notifier';
@@ -26,7 +28,7 @@ export const ServiceByRecentType = {
 // @vue/component
 export const BaseCollabNestedList = {
 	name: 'BaseCollabNestedList',
-	components: { CollabNestedEmptyState, BaseRecentList, CreateChatStatus },
+	components: { ActiveCallList, CollabNestedEmptyState, BaseRecentList, CreateChatStatus },
 	props: {
 		parentChatId: {
 			type: Number,
@@ -52,6 +54,7 @@ export const BaseCollabNestedList = {
 			isLoading: false,
 			isLoadingNextPage: false,
 			firstPageLoaded: false,
+			listIsScrolled: false,
 			isCreatingChat: false,
 		};
 	},
@@ -72,7 +75,7 @@ export const BaseCollabNestedList = {
 	{
 		this.initCreateChatManager();
 
-		this.contextMenuManager = new CollabNestedRecentMenu({ emitter: this.getEmitter() });
+		this.contextMenuManager = markRaw(new CollabNestedRecentMenu({ emitter: this.getEmitter() }));
 
 		await this.loadInitialItems();
 		void DraftManager.getInstance().initDraftHistory();
@@ -99,6 +102,10 @@ export const BaseCollabNestedList = {
 			this.firstPageLoaded = true;
 			this.isLoading = false;
 		},
+		onListScroll(isScrolled: boolean)
+		{
+			this.listIsScrolled = isScrolled;
+		},
 		async onLoadNextPage()
 		{
 			if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad())
@@ -113,6 +120,10 @@ export const BaseCollabNestedList = {
 		onSelectChat(dialogId: string)
 		{
 			this.$emit('selectChat', dialogId);
+		},
+		onCallClick({ item }: { item: ImModelCallItem })
+		{
+			this.onSelectChat(item.dialogId);
 		},
 		onItemRightClick(payload: { item: ImModelRecentItem, event: PointerEvent })
 		{
@@ -181,11 +192,20 @@ export const BaseCollabNestedList = {
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList
+					:listIsScrolled="listIsScrolled"
+					:parentChatId="parentChatId"
+					@onCallClick="onCallClick"
+				/>
+			</template>
 			<template #before-list>
 				<slot name="fixed-chats"></slot>
 				<CreateChatStatus v-if="showCreationStatus" :allowedTypes="[creatableChatType]" />

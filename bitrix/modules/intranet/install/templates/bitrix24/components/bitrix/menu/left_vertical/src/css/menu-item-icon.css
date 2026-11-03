@@ -238,7 +238,8 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/boards.svg");
 }
 
-.menu-teamwork.menu-item-group .menu-item-icon {
+.menu-teamwork.menu-item-group .menu-item-icon,
+.menu-teamwork[data-collaboration-menu="Y"] .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/teamwork.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/teamwork.svg");
 }

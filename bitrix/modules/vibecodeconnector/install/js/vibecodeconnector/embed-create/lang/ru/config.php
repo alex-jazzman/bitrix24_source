@@ -1,0 +1,6 @@
+<?php
+
+$MESS['VIBECODECONNECTOR_CATALOG_CREATE_TITLE'] = 'Создание в Битрикс24.Вайбкод';
+$MESS['VIBECODECONNECTOR_CATALOG_CREATE_APPLICATION'] = 'Приложение';
+$MESS['VIBECODECONNECTOR_CATALOG_CREATE_AGENT'] = 'Агент Hermes';
+$MESS['VIBECODECONNECTOR_CATALOG_EMBED_CREATE_LOAD_ERROR'] = 'Не удалось загрузить создание. Попробуйте ещё раз.';

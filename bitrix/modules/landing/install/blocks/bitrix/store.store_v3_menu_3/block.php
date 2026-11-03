@@ -11,7 +11,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 ?>
 <header class="landing-block u-header u-header--sticky u-header--relative g-z-index-9999 g-height-auto g-bg-white u-shadow-v41--header--lg">
 	<div class="container u-header__section u-header__section--light g-transition-0_3 g-py-30--lg g-py-20">
-		<nav class="navbar g-pa-0 u-navbar-color-gray-dark-v1 u-navbar-color-gray-dark-v1--hover flex-nowrap">
+		<nav
+			class="navbar g-pa-0 u-navbar-color-gray-dark-v1 u-navbar-color-gray-dark-v1--hover flex-nowrap"
+			role="presentation"
+		>
 			<div class="landing-block-node-title-container order-1 d-flex w-100 align-items-center g-overflow-hidden g-font-weight-700 g-letter-spacing-0_5 text-uppercase">
 				<a
 					class="landing-block-node-title g-font-size-20 g-font-size-25--lg g-line-height-1 g-text-decoration-none--hover g-nowrap g-text-overflow-ellipsis g-overflow-hidden"
@@ -26,6 +29,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					class="landing-block-node-phone g-px-25 d-flex align-items-center"
 					href="tel:#crmPhoneTitle1"
 					data-page-url="#system_mainpage"
+					aria-label="MESS[LNDBLCK_STOREMENUV3_3_PHONE_LABEL]"
 				>
 					<span class="d-block">
 						<svg width="23" height="26" viewBox="0 0 23 26" fill="none" xmlns="http://www.w3.org/2000/svg">

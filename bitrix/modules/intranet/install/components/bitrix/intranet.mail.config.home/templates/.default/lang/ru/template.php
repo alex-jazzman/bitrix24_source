@@ -16,8 +16,8 @@ $MESS["INTR_MAIL_IMAP_TITLE"] = "Почтовые сервисы";
 $MESS["INTR_MAIL_IMAP_DESCR_CRM"] = "Подключите свой почтовый ящик и включите Email-трекер, чтобы вся переписка с клиентами незаметно сохранялась в CRM.<br><br>Почту можно подключить без CRM &mdash; Битрикс24 покажет вам счетчик новых писем.";
 $MESS["INTR_MAIL_IMAP_DESCR_MAILBOX"] = "У вас подключен ящик <b>#EMAIL#</b>.";
 $MESS["INTR_MAIL_IMAP_DESCR_MAILBOX_UN"] = "У вас подключен внешний почтовый ящик.";
-$MESS["INTR_MAIL_IMAP_DESCR_ICONS"] = "icon-list-color.png";
-$MESS["INTR_MAIL_IMAP_DESCR_ICONS_CL"] = "icon-list-colorless.png";
+$MESS["INTR_MAIL_IMAP_DESCR_ICONS"] = "icon-list-color.webp";
+$MESS["INTR_MAIL_IMAP_DESCR_ICONS_CL"] = "icon-list-colorless.webp";
 $MESS["INTR_MAIL_SERVICETYPE_CHOOSE"] = "Подключить";
 $MESS["INTR_MAIL_SERVICETYPE_SETUP"] = "Настроить";
 $MESS["INTR_MAIL_DOMAIN_HELP"] = "Если ваш домен еще не настроен для работы в Яндекс.Почте для домена, выполните следующие действия:
@@ -170,4 +170,3 @@ $MESS["MAIL_MAIL_CRM_LICENSE_DESCR_AGE"] = "На вашем тарифном п�
 $MESS["INTR_MAIL_CRM_PRECONNECT"] = "Завершите подключение почтового ящика к CRM";
 $MESS["INTR_MAIL_ERROR_EXT"] = "Подробнее";
 $MESS["INTR_MAIL_DOMAIN_LICENSE_DESCR"] = "Подключение своего почтового домена недоступно на вашем тарифном плане. Возможность доступна, начиная с тарифа \"Проект+\".";
-?>

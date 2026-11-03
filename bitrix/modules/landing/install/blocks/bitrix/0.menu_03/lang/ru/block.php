@@ -1,0 +1,2 @@
+<?php
+$MESS['LANDING_BLOCK_0_MENU_03_TOGGLER_LABEL'] = 'Меню';

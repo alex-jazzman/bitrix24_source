@@ -211,7 +211,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				...(params.context ? {
 					c_section: params.context
 				} : {}),
-				c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
+				c_sub_section: options?.subSection ?? tasks_v2_const.Analytics.SubSection.TaskCard,
 				c_element: options.element,
 				status: tasks_v2_const.Analytics.Status.Success,
 				...(options.taskId ? {
@@ -219,6 +219,27 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				} : {}),
 				p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 				p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
+			});
+		}
+		sendBannerInteraction(params, options) {
+			this.#sendData({
+				event: options.event,
+				// Card banners (events 3-8) derive the type from the card. The notification hint
+				// (events 1-2) has no card, so it passes a fixed `type` that wins over the derivation.
+				type: options.type ?? this.#getTypeFromCardType(options.cardType),
+				...(params.context ? {
+					c_section: params.context
+				} : {}),
+				...(params.additionalContext ? {
+					c_sub_section: params.additionalContext
+				} : {}),
+				// The notification hint carries no element, so `c_element` is omitted when unset.
+				...(options.element ? {
+					c_element: options.element
+				} : {}),
+				...(options.status ? {
+					status: options.status
+				} : {})
 			});
 		}
 		#sendRoleChange(params, options) {

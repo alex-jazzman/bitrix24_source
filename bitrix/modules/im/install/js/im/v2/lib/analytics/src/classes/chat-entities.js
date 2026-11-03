@@ -1,12 +1,11 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType } from 'im.v2.const';
 
-import { AnalyticsEvent, AnalyticsTool, AnalyticsSection } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool, AnalyticsSection } from '../const';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
-import { getCollabId } from '../helpers/get-collab-id';
+import { getProjectId } from '../helpers/get-collab-id';
 import { getUserType } from '../helpers/get-user-type';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -55,26 +54,35 @@ export class ChatEntities
 			dialogId,
 			event: AnalyticsEvent.clickCreatePoll,
 			section: AnalyticsSection.chatTextarea,
+			includeChatLabels: true,
 		});
 	}
 
-	#onClick({ dialogId, event, section }): void
+	// includeChatLabels adds where the click happened - p4 projectId_ and p5 chatId_. Only
+	// click_create_poll still reports them; click_create_task / click_create_event report
+	// neither, at any entry point.
+	#onClick({ dialogId, event, section, includeChatLabels = false }): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event,
 			c_section: section,
 			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
-			p5: `chatId_${chat.chatId}`,
 		};
 
-		if (chat.type === ChatType.collab)
+		if (includeChatLabels)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			params.p5 = `chatId_${chat.chatId}`;
+
+			const projectId = params.category === AnalyticsCategory.collab ? getProjectId(chat) : null;
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);

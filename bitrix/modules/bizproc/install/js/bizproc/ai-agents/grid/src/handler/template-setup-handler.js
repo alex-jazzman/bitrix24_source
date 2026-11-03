@@ -43,6 +43,7 @@ export class TemplateSetupHandler
 		}
 
 		rowHelper.update(row, updatedTemplateRow.columns);
+		rowHelper.updateActions(row, updatedTemplateRow.actions);
 		rowHelper.markAsLoaded(row);
 		rowHelper.highlight(row);
 	}

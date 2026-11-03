@@ -34,6 +34,7 @@ if (!$arResult['isExternal'])
 
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
+$this->getComponent()->addJsRouter($this);
 
 Extension::load([
 	'ui.tilegrid',
@@ -107,6 +108,25 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 			isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>,
 		};
 		(new BX.Crm.TypeListComponent(params)).init();
+
+		const url = new URL(window.location.href);
+		const urlParams = url.searchParams;
+		const entityTypeId = parseInt(urlParams.get('entityTypeId'), 10);
+		if (urlParams.get('openTypeDetailSlider') === 'Y' && entityTypeId > 0)
+		{
+			const typeDetailQueryParams = {};
+			if (urlParams.has('c_sub_section'))
+			{
+				typeDetailQueryParams.c_sub_section = urlParams.get('c_sub_section');
+			}
+
+			BX.Crm.Router.Instance.openTypeDetail(entityTypeId, null, typeDetailQueryParams);
+
+			urlParams.delete('entityTypeId');
+			urlParams.delete('openTypeDetailSlider');
+			urlParams.delete('c_sub_section');
+			window.history.replaceState({}, '', url.toString());
+		}
     });
 </script>
 

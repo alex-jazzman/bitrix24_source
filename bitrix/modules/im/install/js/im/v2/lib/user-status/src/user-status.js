@@ -1,8 +1,9 @@
 import { Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
+import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-import { LegacyRecentService } from 'im.v2.provider.service.recent';
 
 import type { ImModelUser } from 'im.v2.model';
 
@@ -15,7 +16,9 @@ export class UserStatusManager
 	static #instance: UserStatusManager;
 
 	#absentList: Set<UserId> = new Set();
+	#absentCheckTimeout: number | null = null;
 	#absentCheckInterval: number | null = null;
+	#birthdayLoadTimeout: number | null = null;
 	#birthdayLoadInterval: number | null = null;
 
 	static getInstance(): UserStatusManager
@@ -55,9 +58,13 @@ export class UserStatusManager
 	clear(): void
 	{
 		this.#absentList = new Set();
-		clearTimeout(this.#absentCheckInterval);
+		clearTimeout(this.#absentCheckTimeout);
+		clearInterval(this.#absentCheckInterval);
+		this.#absentCheckTimeout = null;
 		this.#absentCheckInterval = null;
-		clearTimeout(this.#birthdayLoadInterval);
+		clearTimeout(this.#birthdayLoadTimeout);
+		clearInterval(this.#birthdayLoadInterval);
+		this.#birthdayLoadTimeout = null;
 		this.#birthdayLoadInterval = null;
 	}
 
@@ -80,14 +87,15 @@ export class UserStatusManager
 	#startAbsentCheckInterval(userId: number): void
 	{
 		this.#absentList.add(userId);
-		if (this.#absentCheckInterval)
+		if (this.#absentCheckTimeout || this.#absentCheckInterval)
 		{
 			return;
 		}
 
-		this.#absentCheckInterval = setTimeout(() => {
+		this.#absentCheckTimeout = setTimeout(() => {
+			this.#absentCheckTimeout = null;
 			this.#checkAbsentList();
-			setInterval(() => {
+			this.#absentCheckInterval = setInterval(() => {
 				this.#checkAbsentList();
 			}, DAY);
 		}, Utils.date.getTimeToNextMidnight());
@@ -119,17 +127,27 @@ export class UserStatusManager
 		}
 	}
 
+	/**
+	 * Birthday marks belong to the day they were computed for. Which recent list is on screen the
+	 * status library does not know, so it announces the new day and the list reloads itself.
+	 */
+	#emitDayChanged()
+	{
+		EventEmitter.emit(EventType.recent.dayChanged);
+	}
+
 	#startBirthdayLoadInterval()
 	{
-		if (this.#birthdayLoadInterval)
+		if (this.#birthdayLoadTimeout || this.#birthdayLoadInterval)
 		{
 			return;
 		}
 
-		this.#birthdayLoadInterval = setTimeout(() => {
-			void LegacyRecentService.getInstance().loadFirstPage();
-			setInterval(() => {
-				void LegacyRecentService.getInstance().loadFirstPage();
+		this.#birthdayLoadTimeout = setTimeout(() => {
+			this.#birthdayLoadTimeout = null;
+			this.#emitDayChanged();
+			this.#birthdayLoadInterval = setInterval(() => {
+				this.#emitDayChanged();
 			}, DAY);
 		}, Utils.date.getTimeToNextMidnight());
 	}

@@ -10,30 +10,6 @@ type DeleteBlockIconBtnSetup = {
 	onDeleteBlock: () => Promise<void>;
 };
 
-type BeginSaveRun = () => number;
-type PublicDraft = () => Promise<boolean>;
-type UpdateStatus = (isSaved: boolean, runId: number) => void;
-
-async function tryPublicDraft(
-	beginSaveRun: BeginSaveRun,
-	publicDraft: PublicDraft,
-	updateStatus: UpdateStatus,
-): Promise<void>
-{
-	// Reserved before the request: a save started after this one owns the status, so a late
-	// answer here must not overwrite it.
-	const runId = beginSaveRun();
-	try
-	{
-		const isSaved = await publicDraft();
-		updateStatus(isSaved, runId);
-	}
-	catch
-	{
-		updateStatus(false, runId);
-	}
-}
-
 // @vue/component
 export const DeleteBlockIconBtn = {
 	name: 'DeleteBlockIconBtn',
@@ -59,18 +35,22 @@ export const DeleteBlockIconBtn = {
 	setup(props, { emit }): DeleteBlockIconBtnSetup
 	{
 		const { deleteBlockById } = useBlockDiagram();
-		const { beginSaveRun, publicDraft, updateStatus } = useDiagramStore();
+		const diagramStore = useDiagramStore();
+		const { saveDraftWithStatus } = diagramStore;
 
+		// The button reaches further than the top menu the lock hides: the header of the settings
+		// panel keeps it, and the panel opens over a version being viewed. Deletion is refused here,
+		// where every button of the kind goes through, rather than by each place that shows one.
 		async function onDeleteBlock(): Promise<void>
 		{
-			if (props.disabled)
+			if (props.disabled || diagramStore.isWriteLocked)
 			{
 				return;
 			}
 
 			deleteBlockById(props.blockId);
 			emit('deletedBlock', props.blockId);
-			await tryPublicDraft(beginSaveRun, publicDraft, updateStatus);
+			await saveDraftWithStatus();
 		}
 
 		return {

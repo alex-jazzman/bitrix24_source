@@ -10,13 +10,8 @@ jn.define('ui-system/blocks/badges/button', (require, exports, module) => {
 	const { BadgeButtonSize } = require('ui-system/blocks/badges/button/src/size-enum');
 
 	/**
-	 * @function BadgeButton
-	 * @param {Object} props
-	 * @param {string} props.testId
-	 * @param {string} props.icon
-	 * @param {boolean} [props.stroke]
-	 * @param {BadgeButtonDesign} [props.design]
-	 * @param {BadgeButtonSize} [props.size]
+	 * @param {BadgeButtonProps} props
+	 * @return {View|null}
 	 */
 	const BadgeButton = (props = {}) => {
 		PropTypes.validate(BadgeButton.propTypes, props, 'BadgeButton');
@@ -32,13 +27,13 @@ jn.define('ui-system/blocks/badges/button', (require, exports, module) => {
 
 		if (!BadgeButtonDesign.has(design))
 		{
-			console.warn('BadgeButton: button design not selected');
+			console.error('BadgeButton: button design not selected');
 
 			return null;
 		}
 
 		const buttonDesign = BadgeButtonDesign.resolve(design, BadgeButtonDesign.GREY);
-		const buttonSize = BadgeButtonSize.resolve(size, BadgeButtonSize.NORMAL);
+		const buttonSize = BadgeButtonSize.resolve(size, BadgeButtonSize.M);
 		const backgroundSize = buttonSize.getBackgroundSize();
 		const iconSize = buttonSize.getIconSize();
 		const outlineIcon = Icon.resolve(icon, Icon.CROSS);
@@ -75,14 +70,16 @@ jn.define('ui-system/blocks/badges/button', (require, exports, module) => {
 
 	BadgeButton.defaultProps = {
 		icon: null,
+		design: BadgeButtonDesign.GREY,
+		size: BadgeButtonSize.M,
 		stroke: true,
 	};
 
 	BadgeButton.propTypes = {
 		testId: PropTypes.string.isRequired,
-		design: PropTypes.object.isRequired,
-		icon: PropTypes.object,
-		size: PropTypes.object,
+		design: PropTypes.instanceOf(BadgeButtonDesign),
+		icon: PropTypes.instanceOf(Icon),
+		size: PropTypes.instanceOf(BadgeButtonSize),
 		stroke: PropTypes.bool,
 	};
 

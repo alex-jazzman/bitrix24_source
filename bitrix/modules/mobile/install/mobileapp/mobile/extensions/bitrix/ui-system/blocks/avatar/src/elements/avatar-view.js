@@ -2,15 +2,21 @@
  * @module ui-system/blocks/avatar/src/elements/avatar-view
  */
 
+// Avatar is an ambient native element, like View and Text; unlike them it is missing
+// from the shared mobile eslint preset, so it is declared here.
+/* global Avatar */
 jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { isFunction } = require('utils/object');
 	const { withCurrentDomain } = require('utils/url');
-	const { isNil } = require('utils/type');
+	const { isNil, isNotEmptyString } = require('utils/type');
 	const { isEmpty, omitBy } = require('utils/object');
 	const { Component, Corner, Color } = require('tokens');
+	const { PropTypes } = require('utils/validation');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { PureComponent } = require('layout/pure-component');
+	const { EmptyAvatar } = require('ui-system/blocks/avatar/src/enums/empty-avatar');
+	const { commonDefaultProps } = require('ui-system/blocks/avatar/src/defaults');
 	const { getFirstLetters } = require('layout/ui/user/empty-avatar');
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
 	const { AvatarAccentType } = require('ui-system/blocks/avatar/src/enums/accent-type');
@@ -19,32 +25,13 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 	const { AvatarNativePlaceholderType } = require('ui-system/blocks/avatar/src/enums/native-placeholder-type');
 
 	/**
-	 * 	@typedef AvatarViewProps
-	 * 	@property {string} testId
-	 * 	@property {string | number} id
-	 * 	@property {Object} [forwardRef]
-	 * 	@property {number} [size=32]
-	 * 	@property {number} [outline]
-	 * 	@property {number} [backBorderWidth]
-	 * 	@property {string} [name]
-	 * 	@property {string} [uri]
-	 * 	@property {string} [emptyAvatar]
-	 * 	@property {AvatarEntityType} [entityType]
-	 * 	@property {AvatarShape} [shape=AvatarShape.CIRCLE]
-	 * 	@property {boolean} [accent=false]
-	 * 	@property {AvatarAccentGradient} [accentGradient]
-	 * 	@property {AvatarAccentType} [accentType]
-	 * 	@property {Array} [accentGradientColors]
-	 * 	@property {boolean} [useLetterImage=true]
-	 * 	@property {boolean} [withRedux=true]
-	 * 	@property {Color} [backgroundColor=Color.bgSecondary]
-	 * 	@property {Object} [style={}]
-	 * 	@property {Function} [onClick]
-	 *
-	 * @class AvatarView
+	 * @extends {PureComponent<AvatarViewProps>}
 	 */
 	class AvatarView extends PureComponent
 	{
+		/**
+		 * @param {AvatarViewProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -52,6 +39,11 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			this.handleForwardRef = this.handleForwardRef.bind(this);
 		}
 
+		/**
+		 * @param {boolean} rounded
+		 * @param {number} size
+		 * @return {number}
+		 */
 		static resolveBorderRadius(rounded, size)
 		{
 			if (rounded)
@@ -77,6 +69,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return Corner.L.toNumber();
 		}
 
+		/**
+		 * @return {AvatarNativeRef}
+		 */
 		render()
 		{
 			if (this.shouldRenderOutline())
@@ -87,11 +82,17 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return this.renderAvatar();
 		}
 
+		/**
+		 * @return {AvatarNativeRef}
+		 */
 		renderAvatar()
 		{
 			return Avatar(this.getAvatarProps());
 		}
 
+		/**
+		 * @return {AvatarNativeParams}
+		 */
 		getAvatarProps()
 		{
 			const avatarProps = {
@@ -112,6 +113,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 
 		/**
 		 * @public
+		 * @return {AvatarNativeParams}
 		 */
 		getAvatarNativeProps()
 		{
@@ -130,7 +132,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		}
 
 		/**
-		 * @returns {Object}
+		 * @return {AvatarNativeAccentParams}
 		 */
 		#getAccent()
 		{
@@ -149,7 +151,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		}
 
 		/**
-		 * @returns {Color}
+		 * @return {string | undefined}
 		 */
 		#getAccentColor()
 		{
@@ -158,6 +160,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return accentColor?.toHex();
 		}
 
+		/**
+		 * @return {AvatarNativePlaceholderParams}
+		 */
 		getPlaceholder()
 		{
 			const placeholderType = this.getPlaceholderType();
@@ -174,6 +179,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return placeholderParams;
 		}
 
+		/**
+		 * @return {AvatarNativeSvgParams}
+		 */
 		getPlaceholderSvgParams()
 		{
 			const icon = this.getIcon();
@@ -191,6 +199,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return placeholderSvgParams;
 		}
 
+		/**
+		 * @return {AvatarNativeSvgParams | null}
+		 */
 		getIconParams()
 		{
 			const icon = this.getIcon();
@@ -216,6 +227,10 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			};
 		}
 
+		/**
+		 * @param {AvatarNativeRef} avatar
+		 * @return {AvatarNativeRef}
+		 */
 		renderOutlineWrapper(avatar)
 		{
 			const size = this.getSize();
@@ -236,6 +251,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			);
 		}
 
+		/**
+		 * @return {number}
+		 */
 		getUserId()
 		{
 			const { id } = this.props;
@@ -243,6 +261,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return Number(id) || 0;
 		}
 
+		/**
+		 * @return {Partial<ElementStyle>}
+		 */
 		getStyle()
 		{
 			const { style } = this.props;
@@ -250,6 +271,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return style || {};
 		}
 
+		/**
+		 * @return {Partial<ElementStyle>}
+		 */
 		getContainerStyle()
 		{
 			const size = this.getSize();
@@ -262,7 +286,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		}
 
 		/**
-		 * @returns {AvatarShape}
+		 * @return {AvatarShape}
 		 */
 		getShape()
 		{
@@ -271,6 +295,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return AvatarShape.resolve(shape, AvatarShape.CIRCLE);
 		}
 
+		/**
+		 * @return {string | undefined}
+		 */
 		getUserName()
 		{
 			const { name } = this.props;
@@ -278,6 +305,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return name;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getTestId()
 		{
 			const { testId } = this.props;
@@ -301,6 +331,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return testIds.filter(Boolean).join('-');
 		}
 
+		/**
+		 * @return {string | null}
+		 */
 		getUri()
 		{
 			const { uri } = this.props;
@@ -308,6 +341,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return this.hasUri() ? encodeURI(withCurrentDomain(uri)) : null;
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		hasUri()
 		{
 			const { uri } = this.props;
@@ -315,11 +351,17 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return Boolean(uri);
 		}
 
+		/**
+		 * @return {number}
+		 */
 		getBorderRadius()
 		{
 			return AvatarView.resolveBorderRadius(this.getShape().isCircle(), this.getSize());
 		}
 
+		/**
+		 * @return {number}
+		 */
 		getSize()
 		{
 			const { size } = this.props;
@@ -333,6 +375,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			onClick?.({ id: this.getUserId() });
 		};
 
+		/**
+		 * @return {string | null}
+		 */
 		getBackgroundColor()
 		{
 			const { backgroundColor } = this.props;
@@ -345,6 +390,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return null;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getOutlineColor()
 		{
 			const { style } = this.props;
@@ -352,6 +400,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return style?.backgroundColor || Color.bgSecondary.toHex();
 		}
 
+		/**
+		 * @return {AvatarColorGradient | null}
+		 */
 		#getAccentColorGradient()
 		{
 			const { accentGradientColors } = this.props;
@@ -373,7 +424,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		}
 
 		/**
-		 * @returns {AvatarAccentGradient}
+		 * @return {string | null}
 		 */
 		getAvatarAccentGradient()
 		{
@@ -387,12 +438,15 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return null;
 		}
 
+		/**
+		 * @return {AvatarNativeSvgParams}
+		 */
 		getEmptyAvatar()
 		{
 			const { emptyAvatar } = this.getPlaceholderParams();
 
 			const svgParams = {
-				uri: emptyAvatar === 'string'
+				uri: isNotEmptyString(emptyAvatar)
 					? emptyAvatar
 					: makeLibraryImagePath(emptyAvatar?.uri, 'empty-avatar'),
 			};
@@ -405,6 +459,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return svgParams;
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		isAccent()
 		{
 			const { accent } = this.props;
@@ -412,6 +469,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return Boolean(accent);
 		}
 
+		/**
+		 * @return {boolean | string} the first letters when they are to be drawn, a falsy value otherwise
+		 */
 		isUseLetterImage()
 		{
 			const { useLetterImage } = this.props;
@@ -419,6 +479,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return Boolean(useLetterImage) && this.getFirstLetters();
 		}
 
+		/**
+		 * @return {AvatarNativePlaceholderType}
+		 */
 		getPlaceholderType()
 		{
 			if (this.isUseLetterImage())
@@ -429,11 +492,17 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return AvatarNativePlaceholderType.SVG;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getFirstLetters()
 		{
 			return getFirstLetters(this.getUserName());
 		}
 
+		/**
+		 * @return {Icon | undefined}
+		 */
 		getIcon()
 		{
 			const { icon } = this.props;
@@ -441,6 +510,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return icon;
 		}
 
+		/**
+		 * @return {number | null}
+		 */
 		getOutline()
 		{
 			const { outline } = this.props;
@@ -448,6 +520,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return outline;
 		}
 
+		/**
+		 * @return {AvatarPlaceholder}
+		 */
 		getPlaceholderParams()
 		{
 			const { placeholder } = this.props;
@@ -455,6 +530,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return placeholder;
 		}
 
+		/**
+		 * @return {{ backgroundColor?: string }}
+		 */
 		getPlaceholderBackgroundColorParams()
 		{
 			const backgroundColor = this.getBackgroundColor();
@@ -481,6 +559,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return {};
 		}
 
+		/**
+		 * @return {string | null}
+		 */
 		getPlaceholderBackgroundColor()
 		{
 			const { backgroundColor } = this.getPlaceholderParams();
@@ -493,11 +574,18 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return null;
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		shouldRenderOutline()
 		{
 			return this.getOutline() > 0;
 		}
 
+		/**
+		 * @param {AvatarNativeRef} ref
+		 * @return {void}
+		 */
 		handleForwardRef(ref)
 		{
 			const { forwardRef } = this.props;
@@ -505,6 +593,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			forwardRef?.(ref);
 		}
 
+		/**
+		 * @return {number | null}
+		 */
 		getBackBorderWidth()
 		{
 			const { backBorderWidth } = this.props;
@@ -513,7 +604,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		}
 
 		/**
-		 * @returns {string}
+		 * @return {string}
 		 */
 		#getAccentType()
 		{
@@ -522,6 +613,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return AvatarAccentType.resolve(accentType, AvatarAccentType.BLUE).getValue();
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		#hasOnClick()
 		{
 			const { onClick } = this.props;
@@ -529,6 +623,42 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return isFunction(onClick);
 		}
 	}
+
+	// the view declares only what it reads: entityType and emptyAvatar are resolved by the
+	// wrapper into placeholder, and withRedux never leaves the wrapper
+	AvatarView.defaultProps = commonDefaultProps;
+
+	AvatarView.propTypes = {
+		testId: PropTypes.string.isRequired,
+		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+		uri: PropTypes.string,
+		name: PropTypes.string,
+		size: PropTypes.number,
+		outline: PropTypes.number,
+		backBorderWidth: PropTypes.number,
+		shape: PropTypes.instanceOf(AvatarShape),
+		accent: PropTypes.bool,
+		accentType: PropTypes.instanceOf(AvatarAccentType),
+		accentColor: PropTypes.instanceOf(Color),
+		accentGradient: PropTypes.instanceOf(AvatarAccentGradient),
+		accentGradientColors: PropTypes.arrayOf(PropTypes.string),
+		backgroundColor: PropTypes.instanceOf(Color),
+		useLetterImage: PropTypes.bool,
+		icon: PropTypes.object,
+		placeholder: PropTypes.shape({
+			emptyAvatar: PropTypes.oneOfType([
+				PropTypes.string,
+				PropTypes.shape({
+					uri: PropTypes.string,
+					named: PropTypes.instanceOf(EmptyAvatar),
+				}),
+			]),
+			backgroundColor: PropTypes.instanceOf(Color),
+		}),
+		style: PropTypes.object,
+		forwardRef: PropTypes.func,
+		onClick: PropTypes.func,
+	};
 
 	module.exports = {
 		AvatarView,

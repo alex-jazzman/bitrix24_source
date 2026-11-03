@@ -7,7 +7,7 @@ import {HeaderCard} from 'landing.ui.card.headercard';
 import {TextField} from 'landing.ui.field.textfield';
 import {MessageCard} from 'landing.ui.card.messagecard';
 
-export default class Callback extends ContentWrapper
+export class Callback extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -129,3 +129,4 @@ export default class Callback extends ContentWrapper
 		this.emit('onChange', {...event.getData(), skipPrepare: true});
 	}
 }
+export { Callback as Content };

@@ -41,10 +41,20 @@
 .tasks-projects-text {
 	display: inline-block;
 	max-width: 100%;
-	color: #525C69;
+	color: var(--ui-color-base-2);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.main-grid-cell-content-action-pin.main-grid-cell-content-action-by-hover:focus {
+	opacity: 1;
+}
+
+.main-grid-cell-content-action-pin:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	border-radius: 4px;
 }
 
 .tasks-projects-counter {
@@ -59,7 +69,7 @@
 	position: relative;
 	display: inline-block;
 	margin-left: 65px;
-	color: #525c69;
+	color: var(--ui-color-base-2);
 	padding-right: 17px;
 }
 
@@ -81,6 +91,16 @@
 
 .tasks-projects-user-list-container {
     cursor: pointer;
+}
+
+.tasks-projects-user-list-container.tasks-grid-control {
+	-webkit-appearance: none;
+	appearance: none;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	text-align: inherit;
+	background: none;
 }
 
 .tasks-projects-user-list {
@@ -142,6 +162,15 @@
 
 .tasks-projects-user-list--green .tasks-projects-user-crown {
 	display: block;
+}
+
+.tasks-projects-badge-join.tasks-grid-control,
+.tasks-projects-badge-accept.tasks-grid-control,
+.tasks-projects-badge-cancel.tasks-grid-control {
+	-webkit-appearance: none;
+	appearance: none;
+	font: inherit;
+	text-align: inherit;
 }
 
 .ui-label.tasks-projects-badge-join {
@@ -335,16 +364,28 @@
 }
 
 .tasks-projects-members-popup .tasks-projects-members-popup-head-item {
+    -webkit-appearance: none;
+    appearance: none;
     display: flex;
     align-items: center;
     margin: 0 11px 0 0;
+    padding: 0;
     height: 35px;
+    border: 0;
     border-bottom: 2px solid transparent;
+    background: none;
     font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-    color: #525C69;
+    color: var(--ui-color-base-2);
+    text-align: inherit;
     transition: all .3s;
     white-space: nowrap;
     cursor: pointer;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head-item:focus-visible {
+    outline: 1px solid var(--ui-color-accent-main-link);
+    outline-offset: var(--ui-focus-outline-offset-inset);
+    border-radius: 4px;
 }
 
 .tasks-projects-members-popup .tasks-projects-members-popup-head-item:hover {
@@ -472,7 +513,7 @@
     flex-basis: 0;
     padding-left: 6px;
     max-width: 130px;
-    height: 15px;
+    min-height: 15px;
     color: #656365;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -493,7 +534,7 @@
     cursor: auto;
     padding: 10px 0 9px 0;
     font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-    color: #525C69;
+    color: var(--ui-color-base-2);
     border-bottom: 1px solid #D8D8D8;
     margin: 0 8px 9px 8px;
     max-width: 190px;
@@ -582,7 +623,7 @@
 	flex-wrap: wrap;
 	font-size: 12px;
 	line-height: 29px;
-	color: #a8adb4;
+	color: var(--ui-color-base-4);
 }
 
 .tasks-scrum__transfer--info-systems-item {
@@ -632,7 +673,7 @@
 	flex-basis: 0;
 	padding-left: 6px;
 	max-width: 200px;
-	height: 15px;
+	min-height: 15px;
 	color: #656365;
 	overflow: hidden;
 	text-overflow: ellipsis;

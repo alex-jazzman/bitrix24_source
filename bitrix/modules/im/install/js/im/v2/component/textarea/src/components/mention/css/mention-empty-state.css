@@ -1,5 +1,6 @@
 .bx-im-mention-empty-state__scope {
 	--im-mention-empty-state__color_title: var(--ui-color-palette-gray-50, #a8adb4);
+	--im-mention-empty-state__color_action: var(--ui-color-accent-main-link);
 }
 
 .bx-im-mention-empty-state__container {
@@ -12,13 +13,27 @@
 	padding: 0 2px;
 }
 
-.bx-im-mention-empty-state__title {
+.bx-im-mention-empty-state__title,
+.bx-im-mention-empty-state__action {
 	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-normal);
-	color: var(--im-mention-empty-state__color_title);
 	white-space: nowrap;
+}
+
+.bx-im-mention-empty-state__title {
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	color: var(--im-mention-empty-state__color_title);
+}
+
+.bx-im-mention-empty-state__action {
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--im-mention-empty-state__color_action);
+	cursor: pointer;
 }
 
 .bx-im-mention-empty-state__icon {

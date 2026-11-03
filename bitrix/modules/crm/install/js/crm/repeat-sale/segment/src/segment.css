@@ -12,7 +12,7 @@
 }
 
 .crm-repeat-sale__segment-section.--main {
-	background: url('../images/bg.png') no-repeat calc(100% - 23px) 24px var(--ui-color-palette-white-base);
+	background: url('../images/bg.webp') no-repeat calc(100% - 23px) 24px var(--ui-color-palette-white-base);
 	min-height: 140px;
 	padding: 23px 285px 45px 25px;
 }
@@ -101,7 +101,7 @@
 	align-items: flex-start;
 	border-radius: 20px;
 	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.02), 0 5px 16px 0 rgba(0, 0, 0, 0.03);
-	background: #E6F4FF url('../images/copilot.png') no-repeat 12px 12px;
+	background: #E6F4FF url('../images/copilot.webp') no-repeat 12px 12px;
 	padding: 11px 17px 17px 63px;
 }
 

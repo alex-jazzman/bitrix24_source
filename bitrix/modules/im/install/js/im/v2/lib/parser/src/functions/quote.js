@@ -5,8 +5,6 @@ import { type ApplicationContext } from 'im.v2.const';
 import { getUtils, getConst } from '../utils/core-proxy';
 import { ParserUtils } from '../utils/utils';
 
-const { EventType } = getConst();
-
 const QUOTE_SIGN = '&gt;&gt;';
 const NO_CONTEXT_TAG = 'none';
 const PREVIEW_LINE_LIMIT = 4;
@@ -192,6 +190,7 @@ export const ParserQuote = {
 		const [dialogId, messageId] = target.dataset.context.split('/');
 
 		const { emitter } = context;
+		const { EventType } = getConst();
 		emitter.emit(EventType.dialog.goToMessageContext, {
 			messageId: Number.parseInt(messageId, 10),
 			dialogId: dialogId.toString(),

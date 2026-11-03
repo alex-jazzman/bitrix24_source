@@ -41,6 +41,8 @@ export const CheckListPopup = {
 				padding: 0,
 				autoHide: true,
 				closeByEsc: true,
+				focusTrap: true,
+				ariaLabel: this.loc('TASKS_V2_CHECK_LIST_POPUP_LABEL'),
 				overlay: {
 					backgroundColor: 'transparent',
 				},
@@ -92,6 +94,10 @@ export const CheckListPopup = {
 		Event.unbind(window, 'resize', this.resize);
 	},
 	methods: {
+		setClosingByEsc(enabled: boolean): void
+		{
+			this.$refs.childComponent?.getPopupInstance()?.setClosingByEsc(enabled);
+		},
 		resize(): void
 		{
 			const popupInstance = this.$refs.childComponent?.getPopupInstance();

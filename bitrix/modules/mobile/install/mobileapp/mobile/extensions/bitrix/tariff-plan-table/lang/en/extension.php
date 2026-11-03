@@ -1,0 +1,2 @@
+<?php
+$MESS['TARIFF_PLAN_TABLE_WINDOW_TITLE'] = 'Plans';

@@ -115,7 +115,6 @@
 
 .tasks-wizard__step_fade {
 	z-index: 999;
-	position: -webkit-sticky;
 	position: sticky;
 	bottom: 0;
 	height: var(--step-fade-height);

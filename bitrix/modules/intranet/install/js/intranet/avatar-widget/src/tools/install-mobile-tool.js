@@ -9,9 +9,11 @@ export class InstallMobileTool extends BaseSecondaryTool
 		return '--o-mobile';
 	}
 
-	onClick(): void
+	onClick(event: MouseEvent): void
 	{
 		Analytics.send(Analytics.EVENT_CLICK_INSTALL_MOBILE_APP);
-		EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick');
+		EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', {
+			focusTarget: event.currentTarget,
+		});
 	}
 }

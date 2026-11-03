@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
+	const { unique } = require('utils/array');
 
 	const {
 		FileType,
@@ -22,6 +23,24 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 	const logger = getLogger('helpers--message');
 
+	// Leading synthetic reply-quote block (54-dash delimiters) injected by Dialog.validateQuote /
+	// ReplyManager. Kept in sync with QUOTE_DELIMITER in controller/dialog/lib/reply-manager.
+	const LEADING_REPLY_QUOTE_REGEX = /^-{54}\r?\n[\s\S]*?\r?\n-{54}\r?\n?/;
+
+	/**
+	 * @param {GalleryBlockElementType|FileBlockElementType} element
+	 * @return {Array<number>}
+	 */
+	const fileIdsFromList = (element) => (Type.isArrayFilled(element.fileIds) ? element.fileIds : []);
+
+	// One extractor per block element type that carries files; a type absent from the map
+	// contributes nothing. An element without its file field behaves as an empty one.
+	const FileIdsByBlockElementType = Object.freeze({
+		[BlockElementType.gallery]: fileIdsFromList,
+		[BlockElementType.file]: fileIdsFromList,
+		[BlockElementType.audio]: (element) => (Type.isNil(element.fileId) ? [] : [element.fileId]),
+	});
+
 	/**
 	 * MessageHelper is a utility class that encapsulates logic for analyzing a message model
 	 * and provides boolean methods to determine the presence of specific characteristics or types.
@@ -39,6 +58,8 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		messageModel;
 		/** @type {Array<FilesModelState>} */
 		filesModel;
+		/** @type {Array<FilesModelState>} */
+		blockFilesModel;
 		/** @type {VoteModelState} */
 		voteModel;
 
@@ -396,6 +417,22 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.isImage || this.isVideo || this.isMediaGallery;
 		}
 
+		/**
+		 * @desc Text without the leading synthetic reply-quote block, so a reply is classified
+		 * by its own body rather than by the injected quote. Non-reply text is untouched.
+		 * @return {string}
+		 */
+		getTextWithoutLeadingReplyQuote()
+		{
+			const messageText = this.messageModel.text;
+			if (!this.messageModel.params?.replyId || !Type.isStringFilled(messageText))
+			{
+				return messageText;
+			}
+
+			return messageText.replace(LEADING_REPLY_QUOTE_REGEX, '');
+		}
+
 		get isEmojiOnly()
 		{
 			if (!this.isText)
@@ -403,7 +440,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			const messageText = this.messageModel.text;
+			const messageText = this.getTextWithoutLeadingReplyQuote();
 			const text = messageText.replaceAll(emojiRegex, '');
 
 			return text.replaceAll(/\s/g, '').length === 0;
@@ -416,7 +453,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			const messageText = this.messageModel.text;
+			const messageText = this.getTextWithoutLeadingReplyQuote();
 			const smileManager = SmileManager.getInstance();
 			if (Object.values(smileManager.getSmiles()).length === 0)
 			{
@@ -440,9 +477,28 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.getComponentId() === MessageComponent.aiAssistant && Feature.isAiAssistantMessageSupported;
 		}
 
+		get isAiAssistantSourceResponse()
+		{
+			return this.getComponentId() === MessageComponent.aiAssistant
+				&& (
+					this.isBlock
+					|| this.messageModel.params?.COMPONENT_PARAMS?.aiAssistantSourceResponse === true
+				);
+		}
+
 		get isCopilot()
 		{
 			return this.getComponentId() === MessageComponent.copilot;
+		}
+
+		/**
+		 * @desc Transient BitrixGPT "thinking" placeholder: a copilot message flagged
+		 * with copilotProcess in COMPONENT_PARAMS. Symmetric to the copilotError read.
+		 * @return {boolean}
+		 */
+		get isCopilotProcess()
+		{
+			return this.isCopilot && this.messageModel.params?.COMPONENT_PARAMS?.copilotProcess === true;
 		}
 
 		/**
@@ -507,6 +563,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		}
 
 		/**
+		 * Files of the gallery blocks of the message: the media viewer and the gallery of the block
+		 * message read them. The gallery ships before the file and audio blocks, so
+		 * `Feature.isMessageFileAudioBlockAvailable` does not close it: turning the option off must
+		 * return what the feature changed, not break what worked before it.
+		 *
 		 * @return {Array<FilesModelState>}
 		 */
 		getBlockMediaFiles()
@@ -518,11 +579,195 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 			const fileIds = this.blockModel.elements
 				.filter((block) => block.type === BlockElementType.gallery)
-				.flatMap((block) => block.fileIds ?? []);
+				.flatMap((block) => MessageHelper.getBlockElementFileIds(block));
 
-			return fileIds
-				.map((fileId) => this.#store.getters['filesModel/getById'](Number(fileId)))
+			return this.getBlockFilesByIds(fileIds);
+		}
+
+		/**
+		 * All files of the message: its own attachments and the files of its blocks. The server does
+		 * not duplicate block file ids into `message.files`, so an action over the whole message
+		 * joins both sources itself.
+		 *
+		 * @return {Array<FilesModelState>}
+		 */
+		getAllFiles()
+		{
+			const blockFiles = this.getBlockFiles();
+			if (blockFiles.length === 0)
+			{
+				return this.files;
+			}
+
+			const ownFileIds = new Set(this.files.map((file) => Number(file.id)));
+
+			return [...this.files, ...blockFiles.filter((file) => !ownFileIds.has(Number(file.id)))];
+		}
+
+		/**
+		 * Files of the blocks of the message. The option that renders the file and audio blocks closes
+		 * the whole set, gallery files included: before the feature no consumer of it reached them.
+		 * Rendering the gallery goes through `getBlockMediaFiles()`, which stays open.
+		 *
+		 * @return {Array<FilesModelState>}
+		 */
+		getBlockFiles()
+		{
+			if (!Feature.isMessageFileAudioBlockAvailable || !this.isBlock)
+			{
+				return [];
+			}
+
+			this.blockFilesModel ??= this.getBlockFilesByIds(
+				this.blockModel.elements.flatMap((element) => MessageHelper.getBlockElementFileIds(element)),
+			);
+
+			return this.blockFilesModel;
+		}
+
+		/**
+		 * Files of a single block element by its own id (native calls the element id `blockId`).
+		 *
+		 * @param {string} elementId
+		 * @return {Array<FilesModelState>}
+		 */
+		getBlockFilesByElementId(elementId)
+		{
+			if (!Feature.isMessageFileAudioBlockAvailable || !this.isBlock)
+			{
+				return [];
+			}
+
+			const element = this.blockModel.elements.find((item) => String(item.id) === String(elementId));
+			if (!element)
+			{
+				return [];
+			}
+
+			return this.getBlockFilesByIds(MessageHelper.getBlockElementFileIds(element));
+		}
+
+		/**
+		 * Chat-file ids a block element owns, as numbers: the server sends an id both as a number
+		 * and as a string.
+		 *
+		 * @param {BaseBlockElementType} [element]
+		 * @return {Array<number>}
+		 */
+		static getBlockElementFileIds(element)
+		{
+			const fileIds = FileIdsByBlockElementType[element?.type]?.(element) ?? [];
+
+			return fileIds.filter((fileId) => !Type.isNil(fileId)).map(Number);
+		}
+
+		/**
+		 * Chat-file models of the given ids, in the same order and one model per file: every path to
+		 * the files of a block resolves them here, so a repeated id gives one tile of the container
+		 * and one place in the count of its download caption. An id without a model in the store is
+		 * skipped: a file that has not arrived must not turn into an empty tile of the block.
+		 *
+		 * @param {Array<number|string>} fileIds
+		 * @return {Array<FilesModelState>}
+		 */
+		getBlockFilesByIds(fileIds)
+		{
+			if (!Type.isArrayFilled(fileIds))
+			{
+				return [];
+			}
+
+			const uniqueFileIds = unique(fileIds.filter((fileId) => !Type.isNil(fileId)).map(Number));
+
+			return uniqueFileIds
+				.map((fileId) => this.#store.getters['filesModel/getById'](fileId))
 				.filter(Boolean);
+		}
+
+		/**
+		 * Resolves the file a message plays. A builder message keeps its files in the block model, so
+		 * the audio element of the block is the second source: it is closed by the option that renders
+		 * the audio block, and a file that is not audio itself keeps the message out of the autoplay
+		 * queue instead of stopping it on a track no view can play.
+		 *
+		 * The store is an argument: every dialog audio player owns the store it reads.
+		 *
+		 * @param {MessengerCoreStore} store
+		 * @param {MessagesModelState} message
+		 * @param {number|string|null} [preferredFileId]
+		 * @return {FilesModelState|null}
+		 */
+		static resolveAudioFile(store, message, preferredFileId = null)
+		{
+			if (!Type.isNil(preferredFileId))
+			{
+				const preferredId = Number(preferredFileId);
+				const isMessageFile = message.files?.some((fileId) => Number(fileId) === preferredId) ?? false;
+				const isBlockFile = MessageHelper.isAudioBlockFile(store, message, preferredId);
+				if (!isMessageFile && !isBlockFile)
+				{
+					return null;
+				}
+
+				const preferredFile = store.getters['filesModel/getById'](preferredId);
+
+				return preferredFile?.type === FileType.audio ? preferredFile : null;
+			}
+
+			const messageFileId = message.files?.[0];
+			if (messageFileId)
+			{
+				const messageFile = store.getters['filesModel/getById'](messageFileId);
+				if (messageFile?.type === FileType.audio)
+				{
+					return messageFile;
+				}
+			}
+
+			if (!Feature.isMessageFileAudioBlockAvailable)
+			{
+				return null;
+			}
+
+			const audioFileId = MessageHelper.getAudioBlockFileId(store, message);
+			if (!audioFileId)
+			{
+				return null;
+			}
+
+			const blockFile = store.getters['filesModel/getById'](audioFileId);
+
+			return blockFile?.type === FileType.audio ? blockFile : null;
+		}
+
+		/**
+		 * @param {MessengerCoreStore} store
+		 * @param {MessagesModelState} message
+		 * @return {number|null}
+		 */
+		static getAudioBlockFileId(store, message)
+		{
+			if (!Feature.isMessageFileAudioBlockAvailable)
+			{
+				return null;
+			}
+
+			const block = store.getters['messagesModel/blockModel/getByMessageId'](message.id);
+			const audioElement = block?.elements?.find((element) => element.type === BlockElementType.audio);
+			const [audioFileId] = MessageHelper.getBlockElementFileIds(audioElement);
+
+			return audioFileId ?? null;
+		}
+
+		/**
+		 * @param {MessengerCoreStore} store
+		 * @param {MessagesModelState} message
+		 * @param {number|string} fileId
+		 * @return {boolean}
+		 */
+		static isAudioBlockFile(store, message, fileId)
+		{
+			return MessageHelper.getAudioBlockFileId(store, message) === Number(fileId);
 		}
 
 		/**

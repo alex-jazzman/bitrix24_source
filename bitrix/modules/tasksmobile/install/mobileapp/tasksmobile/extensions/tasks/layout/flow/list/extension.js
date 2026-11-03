@@ -307,6 +307,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 				(new RunActionExecutor('tasksmobile.Flow.disableShowFlowsFeatureInfoFlagInDB'))
 					.setHandler(handler)
 					.call(true)
+					.catch(console.error)
 				;
 			});
 		}

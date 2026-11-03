@@ -7,7 +7,7 @@ export type MoveDocumentsPopupResult = {
 } | null;
 
 // Q-1 default: only the target collection is chosen; documents land at the collection root (parentId=null).
-// Resolves null on cancel/close; the page keeps the current selection on null (ERR-004).
+// Resolves null on cancel/close; the page keeps the current selection on null.
 export function openMoveDocumentsPopup(): Promise<MoveDocumentsPopupResult>
 {
 	return openCollectionPicker({

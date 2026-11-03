@@ -1,13 +1,17 @@
 <?php
+$MESS["TASKS_V2_DATE_PLAN_ADD_ARIA_LABEL"] = "Add time planning";
 $MESS["TASKS_V2_DATE_PLAN_ALLOW_CHANGE"] = "Assignee can edit start and due dates";
 $MESS["TASKS_V2_DATE_PLAN_ALLOW_CHANGE_TEMPLATE"] = "Assignee can change task duration and start date";
+$MESS["TASKS_V2_DATE_PLAN_ARIA_LABEL"] = "Time planning";
 $MESS["TASKS_V2_DATE_PLAN_BUTTON_SAVE"] = "Save";
 $MESS["TASKS_V2_DATE_PLAN_DESCRIPTION"] = "Select the start and due dates for this task. As an alternative to selecting the dates, you can specify the planned duration of the task.";
 $MESS["TASKS_V2_DATE_PLAN_DESCRIPTION_TEMPLATE"] = "Specify when your task will start and what time the completion should take.";
 $MESS["TASKS_V2_DATE_PLAN_DURATION"] = "Duration:";
+$MESS["TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL"] = "Duration unit";
 $MESS["TASKS_V2_DATE_PLAN_END"] = "Due date:";
 $MESS["TASKS_V2_DATE_PLAN_FIELD_END"] = "Due date:";
 $MESS["TASKS_V2_DATE_PLAN_FIELD_START"] = "Start date:";
+$MESS["TASKS_V2_DATE_PLAN_LOCK_ARIA_DESCRIPTION"] = "Available on other plans";
 $MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME"] = "Use subtask's start and due dates";
 $MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT"] = "This task's start and due dates will sync with subtask's dates.";
 $MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE"] = "Defined by subtasks";
@@ -15,6 +19,7 @@ $MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME"] = "Skip weekends";
 $MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT"] = "The start and due dates will be adjusted if they fall on a weekend or a holiday.";
 $MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT_TEMPLATE"] = "Start date and duration will be adjusted if they fall on a weekend or a holiday.";
 $MESS["TASKS_V2_DATE_PLAN_NO_SUBTASKS_HINT"] = "This task does not have any subtasks yet. Once it does, this task's dates will be adjusted accordingly.";
+$MESS["TASKS_V2_DATE_PLAN_SHEET_CLOSE_ARIA_LABEL"] = "Close";
 $MESS["TASKS_V2_DATE_PLAN_START"] = "Start date:";
 $MESS["TASKS_V2_DATE_PLAN_START_AFTER"] = "Start task in:";
 $MESS["TASKS_V2_DATE_PLAN_TITLE"] = "Time planning:";

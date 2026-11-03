@@ -1,5 +1,8 @@
 (() => {
 	const require = (ext) => jn.require(ext);
+
+	BX.message(result.PHRASES || {});
+
 	const {
 		Button,
 		ButtonSize,
@@ -100,7 +103,7 @@
 
 			this.tabs = new Map([
 				[BX.message('CALL_COMPONENT_ABOUT'), { ref: null, isActive: true, name: 'about' }],
-				[BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS'), { ref: null, isActive: false, name: 'efficiency' }],
+				[BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_MSGVER_1'), { ref: null, isActive: false, name: 'efficiency' }],
 				[BX.message('CALL_COMPONENT_AGREEMENTS'), { ref: null, isActive: false, name: 'agreements' }],
 				[BX.message('CALL_COMPONENT_INSIGHTS'), { ref: null, isActive: false, name: 'insights' }],
 				[BX.message('CALL_COMPONENT_SUMMARY'), { ref: null, isActive: false, name: 'summary' }],
@@ -388,13 +391,13 @@
 					},
 					ref: (ref) => {
 						this.copilotScoreBlockRef = ref;
-						this.tabs.set(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS'), { ...this.tabs.get(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS')), ref: this.copilotScoreBlockRef });
+						this.tabs.set(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_MSGVER_1'), { ...this.tabs.get(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_MSGVER_1')), ref: this.copilotScoreBlockRef });
 					},
 					onLayout: (params) => {
 						this.positions['efficiency'] = { y: params.y, height: params.height };
 					},
 				},
-				this.renderTitle(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS')),
+				this.renderTitle(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_MSGVER_1')),
 				View(
 					{
 						style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between' },
@@ -892,7 +895,7 @@
 						this.summaryPlayerRef = ref;
 					},
 					trackUrl,
-					trackTitle: BX.message('CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE'),
+					trackTitle: BX.message('CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE_MSGVER_1'),
 				})),
 				BBCodeText({
 					onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
@@ -982,7 +985,7 @@
 						this.transcribationPlayerRef = ref;
 					},
 					trackUrl,
-					trackTitle: BX.message('CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE'),
+					trackTitle: BX.message('CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE_MSGVER_1'),
 				})),
 				timeLine,
 			);

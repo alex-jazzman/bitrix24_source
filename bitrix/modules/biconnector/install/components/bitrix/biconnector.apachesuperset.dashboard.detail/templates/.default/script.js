@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
 this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
-(function (exports, main_core, main_core_events, main_popup, main_loader, main_date, biconnector_apacheSupersetDashboardManager, biconnector_apacheSupersetEmbeddedLoader, biconnector_apacheSupersetAnalytics, biconnector_apacheSupersetFeedbackForm, ui_entitySelector, biconnector_ahaMoment, biconnector_sharePopup, sidepanel, ui_iconSet_outline, ui_lottie, biconnector_apacheSupersetDashboardSkeleton) {
+(function (exports, main_core, main_core_events, main_popup, main_loader, main_date, biconnector_apacheSupersetDashboardManager, biconnector_apacheSupersetEmbeddedLoader, biconnector_apacheSupersetAnalytics, biconnector_apacheSupersetFeedbackForm, ui_entitySelector, biconnector_errorMessage, biconnector_ahaMoment, biconnector_sharePopup, biconnector_aiDigestSetup, sidepanel, ui_iconSet_outline, ui_lottie, biconnector_apacheSupersetDashboardSkeleton) {
 	'use strict';
 
 	class ChatSelector {
@@ -91,9 +91,8 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 				this.#sendInProgress = false;
 			}).catch(response => {
 				this.#dialog.hideLoader();
-				console.error(response);
 				BX.UI.Notification.Center.notify({
-					content: response.errors[0].message,
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_ERROR')),
 					stack: notificationStack
 				});
 				biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('share', 'dashboard_share', {
@@ -151,23 +150,44 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	const COMPACT_HEADER_CLASS = 'dashboard-header--compact';
 	const MEASURING_HEADER_CLASS = 'dashboard-header--measuring';
 	const HEADER_FIT_SAFETY = 8;
+	const ONBOARDING_EXTENSION = 'biconnector.dashboard-onboarding';
+	// Mirrors OnboardingMode.None of the onboarding extension, which is not loaded to read it.
+	const ONBOARDING_MODE_NONE = 'none';
+	const EMBED_READY_EVENT = 'biconnector:dashboard-embed-ready';
+	const EMBED_ERROR_EVENT = 'biconnector:dashboard-embed-error';
+	const SHARE_SETTING_CHANGE_EVENT = 'BIConnector.ShareSetting:onChange';
 	class DetailInstance {
 		#dashboardManager;
 		#dashboardNode;
 		#frameNode;
 		#embeddedParams;
 		#embeddedLoader;
+		#embeddedBridge = null;
 		#embeddedDebugMode;
+		#isEmbedReady = false;
+		#embedAttempt = 0;
 		#canExport;
 		#canEdit;
+		#lockWarningDismissed = false;
 		#canShare;
 		#shareData;
+		#isShareBanned;
+		#shareMenu;
+		#digestSetup;
+		#chartAnalysisConfig;
+		#chartAnalysisSession = null;
 		#moreMenu;
 		#infoAhaMoment;
 		#infoAhaMomentOptions;
 		#dashboardSavedEventName;
 		#onDashboardSavedHandler;
+		#onShareSettingChangeHandler;
 		#sharePopup;
+		#dashboardOnboardingConfig;
+		#dashboardOnboarding;
+		#dashboardOnboardingPromise;
+		#agentConnection;
+		#agentConnectionLoadPromise = null;
 		#compactHintAbort;
 		#headerNode;
 		#headerTitleText;
@@ -187,14 +207,20 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			this.#canEdit = config.canEdit === 'Y';
 			this.#canShare = config.canShare === 'Y';
 			this.#shareData = config.shareData ?? null;
+			this.#isShareBanned = config.isShareBanned === 'Y';
+			this.#digestSetup = config.digestSetup ?? null;
+			this.#chartAnalysisConfig = config.chartAnalysis ?? null;
 			this.#embeddedParams = config.dashboardEmbeddedParams;
 			this.#embeddedDebugMode = config.embeddedDebugMode;
 			this.#infoAhaMomentOptions = config.infoAhaMoment ?? null;
 			this.#dashboardSavedEventName = 'BIConnector.CreateForm:onDashboardSaved';
 			this.#onDashboardSavedHandler = this.#onDashboardSaved.bind(this);
+			this.#onShareSettingChangeHandler = this.#onShareSettingChange.bind(this);
 			this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
+			this.#dashboardOnboardingConfig = main_core.Type.isPlainObject(config.dashboardOnboarding) ? config.dashboardOnboarding : null;
 			this.#subscribeEvents();
 			this.#initHeaderButtons();
+			this.#initAgentConnection(config);
 			if (!BX.BIConnector.LimitLockPopup) {
 				this.#initFrame(this.#embeddedParams);
 			}
@@ -214,11 +240,14 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			const eventBus = this.#getEventBus();
 			if (main_core.Type.isFunction(eventBus?.unsubscribe)) {
 				eventBus.unsubscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+				eventBus.unsubscribe(SHARE_SETTING_CHANGE_EVENT, this.#onShareSettingChangeHandler);
 			}
 			if (main_core.Type.isFunction(eventBus?.subscribe)) {
 				eventBus.subscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+				eventBus.subscribe(SHARE_SETTING_CHANGE_EVENT, this.#onShareSettingChangeHandler);
 			}
 			main_core_events.EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', event => {
+				this.#embeddedBridge = null;
 				main_core.Dom.clean(this.#frameNode);
 				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 					container: this.#frameNode,
@@ -227,12 +256,22 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			});
 			main_core_events.EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', event => {
 				main_core.Dom.clean(this.#frameNode);
+				// The onboarding is decided per page load for one certain report: its steps and
+				// rights come from the server config of that report. The selector replaces the
+				// report without a reload, so the orchestrator is dropped instead of being reused -
+				// otherwise the tour would keep pointing at the previous report and the menu would
+				// offer to replay it. The next page load decides the onboarding anew.
+				this.#dashboardOnboarding?.destroy();
+				this.#dashboardOnboarding = null;
+				this.#dashboardOnboardingConfig = null;
+				this.#dashboardOnboardingPromise = null;
 				this.#embeddedParams = event.data.credentials;
 				this.#canEdit = this.#embeddedParams.canEdit;
 				this.#canExport = this.#embeddedParams.canExport;
 				this.#updateTitle(this.#embeddedParams.title);
 				this.#canShare = this.#embeddedParams.canShare ?? false;
 				this.#shareData = this.#embeddedParams.shareData ?? null;
+				this.#isShareBanned = this.#embeddedParams.isShareBanned === true;
 				this.#sharePopup = null;
 				let historyUrl = this.#embeddedParams.embeddedUrl;
 				this.#initFrame(this.#embeddedParams);
@@ -248,6 +287,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 				this.#initHeaderButtons();
 			});
 			main_core_events.EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', event => {
+				this.#lockWarningDismissed = true;
 				this.#initFrame(this.#embeddedParams);
 				this.#initHeaderButtons();
 			});
@@ -280,6 +320,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			const eventBus = this.#getEventBus();
 			if (main_core.Type.isFunction(eventBus?.unsubscribe)) {
 				eventBus.unsubscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+				eventBus.unsubscribe(SHARE_SETTING_CHANGE_EVENT, this.#onShareSettingChangeHandler);
 			}
 		}
 		#onDashboardSaved(event) {
@@ -306,12 +347,34 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 				titleNode.setAttribute('title', title);
 			}
 		}
+
+		/**
+		 * Readable embedding state for subscribers appearing after the event: events are not buffered.
+		 */
+		isEmbedReady() {
+			return this.#isEmbedReady;
+		}
+
+		/**
+		 * The report card hint is older than any announcement and keeps the surface to itself.
+		 */
+		isInfoHintShown() {
+			return this.#infoAhaMoment?.isShown === true;
+		}
 		#initFrame(embeddedParams) {
+			// selecting another report re-runs the embedding, so the state starts over
+			this.#isEmbedReady = false;
+			// A hung attempt keeps running after another report replaces it, so every attempt is
+			// numbered: only the current one is allowed to touch the frame and the ready state.
+			++this.#embedAttempt;
+			this.#embeddedBridge = null;
+			this.#destroyChartAnalysis();
 			if (!embeddedParams.uuid || !embeddedParams.supersetDomain) {
 				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 					container: this.#frameNode,
 					supersetStatus: 'ERROR'
 				});
+				main_core_events.EventEmitter.emit(EMBED_ERROR_EVENT, {});
 				return;
 			}
 			const dashboardParams = {
@@ -335,14 +398,71 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 					urlParams: embeddedParams.urlParams ?? {}
 				}
 			};
-			this.#embeddedLoader = new biconnector_apacheSupersetEmbeddedLoader.ApacheSupersetEmbeddedLoader(dashboardParams);
-			this.#embeddedLoader.embedDashboard().catch(() => {
-				main_core.Dom.clean(this.#frameNode);
-				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
-					container: this.#frameNode,
-					supersetStatus: 'ERROR'
-				});
+			const embeddedLoader = new biconnector_apacheSupersetEmbeddedLoader.ApacheSupersetEmbeddedLoader(dashboardParams);
+			this.#embeddedLoader = embeddedLoader;
+			embeddedLoader.embedDashboard().then(bridge => {
+				// a frame of the report the user has already left must not answer for the current one
+				if (this.#embeddedLoader === embeddedLoader) {
+					this.#embeddedBridge = bridge;
+					this.#attachChartAnalysis(embeddedLoader, embeddedParams);
+				}
+				this.#onEmbedReady();
+			}).catch(() => this.#onEmbedError());
+		}
+		#onEmbedReady() {
+			this.#isEmbedReady = true;
+			main_core_events.EventEmitter.emit(EMBED_READY_EVENT, {});
+			this.#startDashboardOnboarding();
+		}
+		#onEmbedError() {
+			this.#isEmbedReady = false;
+			this.#embeddedBridge = null;
+			this.#destroyChartAnalysis();
+			main_core.Dom.clean(this.#frameNode);
+			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+				container: this.#frameNode,
+				supersetStatus: 'ERROR'
 			});
+			main_core_events.EventEmitter.emit(EMBED_ERROR_EVENT, {});
+
+			// A silent Superset gets no tour - the onboarding itself decides that by the embed
+			// state. The empty-draft card does not depend on the embed, so this path still starts it.
+			this.#startDashboardOnboarding();
+		}
+
+		// The server checked the chart analysis gate for the report of the page only, so another report opened
+		// without a reload stays without it.
+		#attachChartAnalysis(embeddedLoader, embeddedParams) {
+			const config = this.#chartAnalysisConfig;
+			const launcher = BX.BIConnector?.BitrixGptLauncher?.getInstance?.() ?? null;
+			if (!config || main_core.Text.toInteger(embeddedParams.id) !== main_core.Text.toInteger(config.dashboardId) || !launcher) {
+				return;
+			}
+			main_core.Runtime.loadExtension('biconnector.chart-analysis').then(extension => {
+				if (this.#embeddedLoader !== embeddedLoader || !main_core.Type.isFunction(extension.ChartAnalysis?.attach)) {
+					return null;
+				}
+				return extension.ChartAnalysis.attach({
+					loader: embeddedLoader,
+					launcher,
+					config
+				});
+			}).then(session => {
+				if (!session) {
+					return;
+				}
+				if (this.#embeddedLoader === embeddedLoader) {
+					this.#chartAnalysisSession = session;
+				} else {
+					session.destroy();
+				}
+			}).catch(error => {
+				console.error('BIConnector: chart analysis is not available', error);
+			});
+		}
+		#destroyChartAnalysis() {
+			this.#chartAnalysisSession?.destroy();
+			this.#chartAnalysisSession = null;
 		}
 		#initHeaderButtons() {
 			this.#initMoreMenu();
@@ -350,6 +470,56 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			this.#initInfoButton();
 			this.#initAdaptiveHeader();
 			this.#initCompactHints();
+		}
+
+		// Raised once and outside #initHeaderButtons(): the connection is portal-wide, not report-wide, so
+		// switching the report neither raises a second facade nor asks the server anything. The page of the
+		// report reaches the server for this action not once: whoever may not connect learns it from the popup,
+		// which tells the refusal of the server in its own screen.
+		#initAgentConnection(config) {
+			const button = this.#dashboardNode.querySelector('.dashboard-header-buttons-connect-agent');
+			if (config.mcpBiConnection !== true || !button) {
+				return;
+			}
+			main_core.Event.bind(button, 'click', () => {
+				void this.#showAgentConnection(button);
+			});
+		}
+		async #showAgentConnection(button) {
+			let agentConnection = null;
+			try {
+				agentConnection = await this.#loadAgentConnection(button);
+			} catch {
+				return;
+			}
+			if (main_core.Type.isFunction(agentConnection?.show)) {
+				agentConnection.show();
+			}
+		}
+
+		// The extension carries the catalogue of the operations in its own settings, so the loading of it is
+		// what builds the catalogue on the server - at the press of the action and never at the drawing of the
+		// page.
+		#loadAgentConnection(button) {
+			if (this.#agentConnection) {
+				return Promise.resolve(this.#agentConnection);
+			}
+			if (this.#agentConnectionLoadPromise) {
+				return this.#agentConnectionLoadPromise;
+			}
+			this.#agentConnectionLoadPromise = main_core.Runtime.loadExtension('biconnector.ai-agent-connection').then(extension => {
+				const AgentConnection = extension.AiAgentConnection;
+				if (!main_core.Type.isFunction(AgentConnection)) {
+					return null;
+				}
+				this.#agentConnection = new AgentConnection({
+					anchor: button
+				});
+				return this.#agentConnection;
+			}).finally(() => {
+				this.#agentConnectionLoadPromise = null;
+			});
+			return this.#agentConnectionLoadPromise;
 		}
 		#initAdaptiveHeader() {
 			const header = this.#dashboardNode.querySelector('.dashboard-header');
@@ -485,6 +655,47 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 				});
 			});
 		}
+
+		/**
+		 * The onboarding bundle is fetched on demand: the tour starts after the embed is ready and
+		 * the restart item plays it after a click, so nothing here belongs to the first render. The
+		 * promise is kept so a click during the fetch reuses it instead of asking for a second copy.
+		 */
+		#getDashboardOnboarding() {
+			if (!main_core.Type.isPlainObject(this.#dashboardOnboardingConfig)) {
+				return Promise.resolve(null);
+			}
+			this.#dashboardOnboardingPromise ??= main_core.Runtime.loadExtension(ONBOARDING_EXTENSION).then(({
+				DashboardOnboarding
+			}) => {
+				// The header selector can replace the report while the bundle is on its way, and
+				// the config that arrived with the page is then no longer the one on the screen.
+				if (!main_core.Type.isPlainObject(this.#dashboardOnboardingConfig)) {
+					return null;
+				}
+				this.#dashboardOnboarding ??= new DashboardOnboarding({
+					config: this.#dashboardOnboardingConfig,
+					frameNode: this.#frameNode,
+					isEmbedReady: () => this.isEmbedReady(),
+					onEditRequested: () => {
+						this.#onEditButtonClick();
+					}
+				});
+				return this.#dashboardOnboarding;
+			});
+			return this.#dashboardOnboardingPromise;
+		}
+		#startDashboardOnboarding() {
+			if (this.#dashboardOnboardingConfig?.mode === ONBOARDING_MODE_NONE) {
+				return;
+			}
+
+			// A broken hint must not affect the report itself.
+			this.#getDashboardOnboarding().then(onboarding => onboarding?.start()).catch(() => {});
+		}
+		#restartDashboardOnboarding() {
+			this.#getDashboardOnboarding().then(onboarding => onboarding?.restart()).catch(() => {});
+		}
 		#onEditButtonClick() {
 			const dashboardInfo = {
 				id: this.#embeddedParams.id,
@@ -538,28 +749,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			main_core.Event.unbindAll(shareButton);
 			const menuItems = [];
 			if (this.#canShare) {
-				menuItems.push({
-					id: 'share-link',
-					title: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'),
-					html: main_core.Tag.render`
-					<span class="dashboard-detail-menu-item">
-						<span class="dashboard-detail-menu-item-content">
-							<span class="dashboard-detail-menu-item-title">
-								${main_core.Text.encode(main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'))}
-							</span>
-							<span class="dashboard-detail-menu-item-description">
-								${main_core.Text.encode(main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_DESCRIPTION'))}
-							</span>
-						</span>
-			
-						<span class="ui-icon-set --o-link dashboard-detail-menu-item-icon"></span>
-					</span>`,
-					className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
-					onclick: (event, menuItem) => {
-						menuItem.menuWindow.close();
-						this.#showSharePopup();
-					}
-				});
+				menuItems.push(this.#getShareLinkMenuItem());
 			}
 			menuItems.push({
 				id: 'share-screenshot',
@@ -630,6 +820,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 					});
 				}
 			});
+			this.#shareMenu?.destroy();
 			const shareMenu = new main_popup.Menu({
 				closeByEsc: false,
 				closeIcon: false,
@@ -639,17 +830,57 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 				},
 				bindElement: shareButton,
 				events: {
-					onShow: event => this.#alignMenuPopupToArrow(shareButton, event.getTarget())
+					onShow: event => {
+						this.#alignMenuPopupToArrow(shareButton, event.getTarget());
+						BX.UI.Hint?.init(event.getTarget().getPopupContainer());
+					}
 				},
 				autoHide: true,
 				items: menuItems
 			});
+			this.#shareMenu = shareMenu;
 			main_core.Event.bind(shareButton, 'click', () => {
 				shareMenu.show();
 				biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('share', 'click_share', {
 					type: this.#embeddedParams.type.toLowerCase()
 				});
 			});
+		}
+		#getShareLinkMenuItem() {
+			const bannedHint = main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_BANNED_HINT');
+			return {
+				id: 'share-link',
+				dataset: {
+					testId: 'share-link'
+				},
+				disabled: this.#isShareBanned,
+				attrs: this.#isShareBanned ? {
+					'data-hint': bannedHint,
+					'data-hint-no-icon': ''
+				} : null,
+				title: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'),
+				html: main_core.Tag.render`
+				<span class="dashboard-detail-menu-item">
+					<span class="dashboard-detail-menu-item-content">
+						<span class="dashboard-detail-menu-item-title">
+							${main_core.Text.encode(main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'))}
+						</span>
+						<span class="dashboard-detail-menu-item-description">
+							${main_core.Text.encode(main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_DESCRIPTION'))}
+						</span>
+					</span>
+
+					<span class="ui-icon-set --o-link dashboard-detail-menu-item-icon"></span>
+				</span>`,
+				className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
+				onclick: (event, menuItem) => {
+					if (menuItem.isDisabled()) {
+						return;
+					}
+					menuItem.menuWindow.close();
+					this.#showSharePopup();
+				}
+			};
 		}
 		#showSharePopup() {
 			if (!this.#sharePopup) {
@@ -669,6 +900,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 			const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
 			if (this.#moreMenu) {
 				main_core.Event.unbindAll(moreButton);
+				this.#moreMenu.destroy();
 			}
 			this.#moreMenu = new main_popup.Menu({
 				closeByEsc: false,
@@ -796,7 +1028,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 		// eslint-disable-next-line max-lines-per-function
 		#getMoreMenuItems() {
 			const result = [];
-			if (this.#canEdit && !BX.BIConnector.LimitLockPopup) {
+			if (this.#canEdit && (!BX.BIConnector.LimitLockPopup || this.#lockWarningDismissed)) {
 				result.push({
 					id: 'edit_dashboard',
 					title: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT_MSGVER_1'),
@@ -807,6 +1039,24 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 					className: 'menu-popup-no-icon',
 					onclick: () => {
 						this.#onEditButtonClick();
+					}
+				});
+			}
+			if (this.#digestSetup && ['ready', 'subscription_required'].includes(this.#digestSetup.availability.state)) {
+				result.push({
+					id: 'configure_digest',
+					title: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_CONFIGURE_DIGEST'),
+					html: main_core.Tag.render`<span class="dashboard-detail-menu-item" data-testid="dashboard-configure-digest">
+					<span>${main_core.Text.encode(main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_CONFIGURE_DIGEST'))}</span>
+					<span class="ui-icon-set --o-file-with-clock dashboard-detail-menu-item-icon"></span>
+					</span>`,
+					className: 'menu-popup-no-icon',
+					onclick: () => {
+						void biconnector_aiDigestSetup.AiDigestSetup.open({
+							dashboardId: this.#embeddedParams.id,
+							availability: this.#digestSetup.availability,
+							bridge: this.#embeddedBridge
+						});
 					}
 				});
 			}
@@ -847,6 +1097,26 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 					biconnector_apacheSupersetFeedbackForm.ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
 				}
 			});
+			if (this.#dashboardOnboardingConfig?.canRestart === true) {
+				result.push({
+					id: 'restart_onboarding',
+					title: main_core.Loc.getMessage('BICONNECTOR_DASHBOARD_ONBOARDING_RESTART_MENU_ITEM'),
+					html: main_core.Tag.render`
+					<span
+						class="dashboard-detail-menu-item"
+						data-testid="biconnector-report-detail-restart-onboarding-item"
+					>
+						<span>${main_core.Text.encode(main_core.Loc.getMessage('BICONNECTOR_DASHBOARD_ONBOARDING_RESTART_MENU_ITEM'))}</span>
+						<span class="ui-icon-set --o-question dashboard-detail-menu-item-icon"></span>
+					</span>
+				`,
+					className: 'menu-popup-no-icon',
+					onclick: (event, menuItem) => {
+						menuItem.menuWindow.close();
+						this.#restartDashboardOnboarding();
+					}
+				});
+			}
 			if (this.#canExport) {
 				result.push({
 					id: 'export',
@@ -865,6 +1135,35 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 				});
 			}
 			return result;
+		}
+		#onShareSettingChange(event) {
+			const {
+				dashboardId,
+				isBanned
+			} = event.getData();
+			if (main_core.Text.toInteger(dashboardId) !== main_core.Text.toInteger(this.#embeddedParams.id)) {
+				return;
+			}
+			this.#applyShareBanState(isBanned === true);
+			this.#initShareButton();
+		}
+
+		// The ban switches off the own link too, so the next popup must start from the disabled state.
+		#applyShareBanState(isBanned) {
+			this.#isShareBanned = isBanned;
+			this.#sharePopup?.hide();
+			this.#sharePopup = null;
+			if (!this.#shareData) {
+				return;
+			}
+			this.#shareData = {
+				...this.#shareData,
+				isBanned,
+				...(isBanned && {
+					isActive: false,
+					disabledByAdmin: null
+				})
+			};
 		}
 		#downloadFile(base64Data, fileName, fileType) {
 			const byteCharacters = atob(base64Data);
@@ -9907,7 +10206,10 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 		}
 		#getUnavailableSupersetHint() {
 			return main_core.Tag.render`
-			<div class="biconnector-dashboard__hint biconnector-dashboard__hint__unavailable">
+			<div
+				class="biconnector-dashboard__hint biconnector-dashboard__hint__unavailable"
+				data-testid="biconnector-dashboard-detail-unavailable-hint"
+			>
 				<div class="biconnector-dashboard__error__logo-wrapper">
 					${this.#getErrorLogo()}
 				</div>
@@ -9949,7 +10251,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 
 	class Detail {
 		static create(config) {
-			new DetailInstance(config);
+			return new DetailInstance(config);
 		}
 		static createSkeleton(config) {
 			new Skeleton(config);
@@ -9958,4 +10260,4 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 
 	exports.Detail = Detail;
 
-})(this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperset.Dashboard || {}, BX, BX.Event, BX.Main, BX, BX.Main, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI.EntitySelector, BX.BIConnector, BX.BIConnector, BX, window, BX.UI, BX.BIConnector);
+})(this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperset.Dashboard || {}, BX, BX.Event, BX.Main, BX, BX.Main, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI.EntitySelector, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX, window, BX.UI, BX.BIConnector);

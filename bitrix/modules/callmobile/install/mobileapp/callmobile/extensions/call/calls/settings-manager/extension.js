@@ -13,10 +13,28 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			this.callBalancerUrl = BX.componentParameters.get('callBalancerUrl');
 			this.optionsForTestingEnabled = BX.componentParameters.get('optionsForTestingEnabled');
 			this.gridViewEnabled = BX.componentParameters.get('gridViewEnabled');
+			this.finishForAllEnabled = BX.componentParameters.get('finishForAllEnabled', false);
+			this.viewToggleEnabled = BX.componentParameters.get('viewToggleEnabled');
 			this.mobileCallUIVisibilityTimer = BX.componentParameters.get('mobileCallUIVisibilityTimer');
 			this.callInvitePeriod = BX.componentParameters.get('callInvitePeriod');
 			this.isLargeMobileCallEnabled = BX.componentParameters.get('isLargeMobileCallEnabled');
 			this.syncCallInvitePeriod = BX.componentParameters.get('syncCallInvitePeriod');
+			this.autoBalanceEnabled = BX.componentParameters.get('autoBalanceEnabled');
+			this.nqeDowngradeWindowSec = BX.componentParameters.get('nqeDowngradeWindowSec');
+			this.nqeUpgradeWindowSec = BX.componentParameters.get('nqeUpgradeWindowSec');
+			this.nqeWarmupSec = BX.componentParameters.get('nqeWarmupSec');
+			this.nqeHighDowngradePacketsLostPct = BX.componentParameters.get('nqeHighDowngradePacketsLostPct');
+			this.nqeHighDowngradeRttMs = BX.componentParameters.get('nqeHighDowngradeRttMs');
+			this.nqeHighDowngradeJitterMs = BX.componentParameters.get('nqeHighDowngradeJitterMs');
+			this.nqeMedDowngradePacketsLostPct = BX.componentParameters.get('nqeMedDowngradePacketsLostPct');
+			this.nqeMedDowngradeRttMs = BX.componentParameters.get('nqeMedDowngradeRttMs');
+			this.nqeMedDowngradeJitterMs = BX.componentParameters.get('nqeMedDowngradeJitterMs');
+			this.nqeMedUpgradePacketsLostPct = BX.componentParameters.get('nqeMedUpgradePacketsLostPct');
+			this.nqeMedUpgradeRttMs = BX.componentParameters.get('nqeMedUpgradeRttMs');
+			this.nqeMedUpgradeJitterMs = BX.componentParameters.get('nqeMedUpgradeJitterMs');
+			this.nqeLowUpgradePacketsLostPct = BX.componentParameters.get('nqeLowUpgradePacketsLostPct');
+			this.nqeLowUpgradeRttMs = BX.componentParameters.get('nqeLowUpgradeRttMs');
+			this.nqeLowUpgradeJitterMs = BX.componentParameters.get('nqeLowUpgradeJitterMs');
 		}
 
 		/**
@@ -59,6 +77,16 @@ jn.define('call/settings-manager', (require, exports, module) => {
 				this.gridViewEnabled = settings.gridViewEnabled;
 			}
 
+			if (settings.finishForAllEnabled !== undefined)
+			{
+				this.finishForAllEnabled = settings.finishForAllEnabled;
+			}
+
+			if (settings.viewToggleEnabled !== undefined)
+			{
+				this.viewToggleEnabled = settings.viewToggleEnabled;
+			}
+
 			if (settings.mobileCallUIVisibilityTimer !== undefined)
 			{
 				this.mobileCallUIVisibilityTimer = settings.mobileCallUIVisibilityTimer;
@@ -77,6 +105,11 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			if (settings.syncCallInvitePeriod !== undefined)
 			{
 				this.syncCallInvitePeriod = settings.syncCallInvitePeriod;
+			}
+
+			if (settings.autoBalanceEnabled !== undefined)
+			{
+				this.autoBalanceEnabled = settings.autoBalanceEnabled;
 			}
 		}
 
@@ -188,6 +221,32 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {boolean}
+		 */
+		get finishForAllEnabled()
+		{
+			return this._finishForAllEnabled;
+		}
+
+		/**
+		 * @param {boolean} flag
+		 */
+		set finishForAllEnabled(flag)
+		{
+			this._finishForAllEnabled = flag;
+		}
+
+		set viewToggleEnabled(flag)
+		{
+			this._viewToggleEnabled = flag;
+		}
+
+		get viewToggleEnabled()
+		{
+			return this._viewToggleEnabled;
+		}
+
+		/**
 		 * @return {string}
 		 */
 		get callBalancerUrl()
@@ -259,6 +318,16 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			const client = BXClient?.getInstance?.();
 
 			return Boolean(client) && 'startCall' in client;
+		}
+
+		/**
+		 * Checks if auto-balance feature is available (server-side gating only)
+		 * @return {boolean}
+		 */
+		isAutoBalanceAvailable()
+		{
+			// Check server-side flag only
+			return this.autoBalanceEnabled === true;
 		}
 	}
 

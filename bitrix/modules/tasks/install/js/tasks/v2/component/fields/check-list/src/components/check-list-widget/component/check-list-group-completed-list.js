@@ -32,16 +32,16 @@ export const CheckListGroupCompletedList = {
 		},
 	},
 	template: `
-		<div class="check-list-widget-group-completed-list">
+		<button type="button" class="check-list-widget-group-completed-list" data-testid="tasks-check-list-group-completed-btn">
 			<div class="check-list-widget-group-completed-list-icon">
-				<BIcon :name="Outline.CHECK_L"/>
+				<BIcon :name="Outline.CHECK_L" aria-hidden="true"/>
 			</div>
 			<div class="check-list-widget-group-completed-list-title">
 				{{ completedParentsLabel }}
 			</div>
 			<div class="check-list-widget-group-completed-list-action print-ignore">
-				<BIcon :name="Actions.CHEVRON_RIGHT"/>
+				<BIcon :name="Actions.CHEVRON_RIGHT" aria-hidden="true"/>
 			</div>
-		</div>
+		</button>
 	`,
 };

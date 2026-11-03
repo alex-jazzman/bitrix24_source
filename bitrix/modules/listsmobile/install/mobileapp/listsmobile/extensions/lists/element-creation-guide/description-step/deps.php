@@ -9,8 +9,12 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
+		'alert',
 		'notify-manager',
+		'qrauth/utils',
 		'in-app-url',
+		'tokens',
+		'ui-system/typography/text',
 		'utils/random',
 		'utils/skeleton',
 

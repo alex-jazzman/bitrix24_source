@@ -67,6 +67,9 @@ export class ConfigurationPage extends BaseSettingsPage
 		const biconnectorSettingsSection = this.#buildBIConnectorSettingsSection();
 		biconnectorSettingsSection?.renderTo(contentNode);
 
+		let closingDocumentsSection = this.#buildClosingDocumentsSection();
+		closingDocumentsSection?.renderTo(contentNode);
+
 		let additionalSettingsSection = this.#buildAdditionalSettingsSection();
 		additionalSettingsSection?.renderTo(contentNode);
 
@@ -591,6 +594,61 @@ export class ConfigurationPage extends BaseSettingsPage
 		// 	});
 		// 	ConfigurationPage.addToSectionHelper(showSettingsAllUsers, settingsSection, showSettingsAllUsersRow);
 		// }
+
+		return settingsSection;
+	}
+
+	#buildClosingDocumentsSection(): ?SettingsSection
+	{
+		if (
+			!this.hasValue('sectionClosingDocuments')
+			|| !this.hasValue('closingDocumentsAllEmployees')
+			|| !this.hasValue('closingDocumentsAudience')
+		)
+		{
+			return;
+		}
+
+		const section = new Section(this.getValue('sectionClosingDocuments'));
+		const settingsSection = new SettingsSection({
+			section,
+			parent: this,
+		});
+		const closingDocuments = new Checker(this.getValue('closingDocumentsAllEmployees'));
+		const closingDocumentsAudience = FieldFactory.createUserSelector({
+			...this.getValue('closingDocumentsAudience'),
+			enableAll: false,
+			enableDepartments: true,
+		});
+		const closingDocumentsRow = new Row({
+			content: closingDocuments.render(),
+		});
+		const closingDocumentsAudienceRow = new Row({
+			content: closingDocumentsAudience.render(),
+			isHidden: closingDocuments.isChecked(),
+		});
+
+		for (const row of [
+			closingDocumentsRow,
+			closingDocumentsAudienceRow,
+		])
+		{
+			new SettingsRow({
+				row,
+				parent: settingsSection,
+			});
+		}
+
+		EventEmitter.subscribe(closingDocuments.switcher, 'toggled', () => {
+			if (closingDocuments.isChecked())
+			{
+				closingDocumentsAudienceRow.hide();
+
+				return;
+			}
+
+			closingDocumentsAudienceRow.show();
+		});
 
 		return settingsSection;
 	}

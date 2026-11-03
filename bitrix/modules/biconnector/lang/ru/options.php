@@ -1,6 +1,7 @@
 <?php
 
 $MESS["BIC_OPTIONS_GDS_DEPLOYMENT_ID"] = "Идентификатор развертывания коннектора Google Datastudio";
+$MESS["BIC_OPTIONS_BI_BUILDER_CONCURRENCY_LIMIT"] = "Максимальное число одновременных BI-запросов (по умолчанию — 3, не больше 10)";
 $MESS["BIC_OPTIONS_EXPORT_ROW_LIMIT"] = "Лимит выгружаемых строк (0 — без ограничений)";
 $MESS["BIC_OPTIONS_EXPORT_ROW_LIMIT_HINT"] = "Высокое значение лимита или его отсутствие могут потребовать увеличения ресурсов, выделяемых для BI Конструктора. По умолчанию - 1000000 строк";
 $MESS["BIC_TAB_SUPERSET"] = "BI Конструктор";
@@ -20,8 +21,6 @@ $MESS["BIC_SUPERSET_CHECK_VERSION"] = "Проверить";
 $MESS["BIC_SUPERSET_VERSION_LOADING"] = "Проверка...";
 $MESS["BIC_SUPERSET_VERSION_ERROR"] = "Не удалось получить версию";
 $MESS["BIC_SUPERSET_VERSION_NO_SERVER"] = "Сервер BI Конструктора не настроен";
-$MESS["BIC_SUPERSET_MODE_SWITCH_CONFIRM_MSGVER_1"] = "Переключить BI Конструктор в облачный режим? Отчёты и данные на собственном сервере будут удалены, и перенести их в облачный BI Конструктор не получится";
-$MESS["BIC_SUPERSET_MODE_SWITCH_CONFIRM_SELFHOSTED"] = "Переключить BI Конструктор на собственный сервер? Отчёты и данные облачного BI Конструктора будут удалены, и перенести их на собственный сервер не получится";
 $MESS["BIC_SUPERSET_JWT_PUBLIC_KEY"] = "Публичный ключ JWT";
 $MESS["BIC_SUPERSET_JWT_PUBLIC_KEY_HINT"] = "Публичный ключ автоматически отправляется в BI Конструктор при сохранении настроек. Если не работает авторизация при редактировании отчёта, нажмите «Обновить».";
 $MESS["BIC_SUPERSET_JWT_REGENERATE"] = "Обновить";
@@ -44,6 +43,22 @@ $MESS["BIC_SELFHOST_LICENSE_BANNER_RENEWAL"] = "Чтобы продолжить 
 $MESS["BIC_SELFHOST_LICENSE_BANNER_RENEWAL_NO_URL"] = "Чтобы продолжить использовать BI Конструктор на собственном сервере, продлите расширение лицензии";
 $MESS["BIC_SELFHOST_LICENSE_BANNER_GRACE"] = "Расширение для BI Конструктора на собственном сервере закончилось #DATE#";
 $MESS["BIC_SELFHOST_LICENSE_BANNER_GRACE_BLOCK"] = "Продлите расширение для лицензии до #BLOCK_DATE#, или BI Конструктор будет заблокирован: отчёты станут недоступны, а передача данных на ваш сервер аналитики прекратится";
+$MESS['BIC_PORTAL_HEALTHCHECK_TAB'] = 'Проверка подключения';
+$MESS['BIC_PORTAL_HEALTHCHECK_TAB_TITLE'] = 'Проверка подключения к BI Конструктору';
 $MESS["BIC_SELFHOST_LICENSE_BANNER_EXPIRED"] = "BI Конструктор заблокирован: расширение лицензии закончилось #DATE#";
 $MESS["BIC_SELFHOST_LICENSE_BANNER_EXPIRED_RENEWAL"] = "Чтобы снова использовать BI Конструктор на собственном сервере, <a href=\"#PURCHASE_URL#\" target=\"_blank\">оформите заявку</a> на продление расширения";
 $MESS["BIC_SELFHOST_LICENSE_BANNER_EXPIRED_RENEWAL_NO_URL"] = "Чтобы снова использовать BI Конструктор на собственном сервере, продлите расширение лицензии";
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_CANCEL'] = 'Отмена';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_INTRO_CLOUD'] = 'Данные BI Конструктора на собственном сервере будут удалены:';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_INTRO_SELFHOSTED'] = 'Данные облачного BI Конструктора будут удалены:';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_ACCESS'] = 'права доступа и группы доступа к отчётам;';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_DASHBOARDS'] = 'отчёты и установленные из Маркета приложения отчётов;';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_DATASET_APPS'] = 'приложения-датасеты из Маркета;';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_EXTERNAL_SOURCES'] = 'внешние подключения и датасеты вместе с загруженными таблицами;';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_TAGS'] = 'теги отчётов;';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_USERS'] = 'пользователи BI Конструктора, настройки фильтров и закреплённые отчёты.';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_OUTRO_CLOUD'] = 'Восстановить их или перенести в облачный BI Конструктор не получится';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_OUTRO_SELFHOSTED'] = 'Восстановить их или перенести на собственный сервер не получится';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_SWITCH'] = 'Переключить';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_TITLE_CLOUD'] = 'Переключить BI Конструктор в облачный режим?';
+$MESS['BIC_SUPERSET_MODE_SWITCH_DIALOG_TITLE_SELFHOSTED'] = 'Переключить BI Конструктор на собственный сервер?';

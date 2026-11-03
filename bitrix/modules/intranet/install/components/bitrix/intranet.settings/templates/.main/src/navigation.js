@@ -1,5 +1,5 @@
 import { EventEmitter } from 'main.core.events';
-import {Dom, Type} from 'main.core';
+import { Event, Type } from 'main.core';
 import {
 	AscendingOpeningVisitor,
 	BaseSettingsElement,
@@ -12,8 +12,8 @@ import {
 	TabsField,
 } from 'ui.form-elements.field';
 import { SiteTitleField } from './fields/site-title-field';
-import { Settings } from './settings';
 import {SiteTitle24Field} from "./fields/site-title-24-field";
+import { type Settings } from './settings';
 
 export class Navigation
 {
@@ -26,34 +26,13 @@ export class Navigation
 		this.#settings = settings;
 		EventEmitter.subscribe('BX.Intranet.SettingsNavigation:onMove', (event) => {
 			const {page, fieldName} = event.data;
-			if (this.getCurrentPage()?.getType() === page)
-			{
-				this.moveTo(this.getCurrentPage(), fieldName);
-
-				return;
-			}
-
-			const pageObj = this.getPageByType(page);
-
-			if (!pageObj?.hasData())
-			{
-				EventEmitter.subscribeOnce('BX.Intranet.Settings:onPageComplete',(event) => {
-					if (event.data.page.hasContent())
-					{
-						this.moveTo(event.data.page, fieldName);
-					}
-				});
-			}
-
-
-			EventEmitter.subscribeOnce('BX.Intranet.Settings:onAfterShowPage',(event) => {
-				if (event.data.page.hasContent())
-				{
-					this.moveTo(event.data.page, fieldName);
-				}
+			this.#settings.show(page, {
+				userInitiated: true,
+				focusTarget: {
+					type: 'field',
+					fieldName,
+				},
 			});
-
-			this.#settings.show(page);
 		});
 	}
 
@@ -108,32 +87,32 @@ export class Navigation
 
 	findByFieldName(rootNode: BaseSettingsElement, fieldName: string): ?SettingsField
 	{
-		const node = RecursiveFilteringVisitor.startFrom(rootNode, (node) => {
+		const node = RecursiveFilteringVisitor.startFrom(rootNode, (fieldElement) => {
 			if (
-				node instanceof SettingsSection
-				&& node.getSectionView().getId() === fieldName
+				fieldElement instanceof SettingsSection
+				&& fieldElement.getSectionView().getId() === fieldName
 			)
 			{
 				return true;
 			}
 			if (
-				node instanceof TabField
-				&& node.getFieldView().getId() === fieldName
+				fieldElement instanceof TabField
+				&& fieldElement.getFieldView().getId() === fieldName
 			)
 			{
 				return true;
 			}
 
-			return ((node instanceof SettingsField
-				|| node instanceof SiteTitleField
-					|| node instanceof SiteTitle24Field)
-			&& (node.getFieldView().getName() === fieldName || node.getFieldView().getId() === fieldName))
+			return ((fieldElement instanceof SettingsField
+				|| fieldElement instanceof SiteTitleField
+					|| fieldElement instanceof SiteTitle24Field)
+			&& (fieldElement.getFieldView().getName() === fieldName || fieldElement.getFieldView().getId() === fieldName))
 		});
 
 		return node.shift() ?? null;
 	}
 
-	scrollToNode(node: SettingsField): void
+	scrollToNode(node: BaseSettingsElement): void
 	{
 		const element = node.render();
 		const headerOffset = 45;
@@ -146,39 +125,162 @@ export class Navigation
 		});
 	}
 
-	moveTo(element: BaseSettingsPage, fieldName: string): void
+	moveTo(element: BaseSettingsPage, fieldName: string, shouldFocus: boolean = false): boolean
 	{
+		if (!Type.isStringFilled(fieldName))
+		{
+			return false;
+		}
+
 		const fieldNode = this.findByFieldName(element, fieldName);
 		if (Type.isNil(fieldNode))
 		{
-			return;
+			return false;
 		}
 
 		let isColored = false;
-		AscendingOpeningVisitor.startFrom(fieldNode, (element) => {
-			if (element instanceof SettingsRow)
+		AscendingOpeningVisitor.startFrom(fieldNode, (ancestorElement) => {
+			if (ancestorElement instanceof SettingsRow)
 			{
-				element.getRowView().show();
+				ancestorElement.getRowView().show();
 			}
-			else if (element instanceof SettingsSection)
+			else if (ancestorElement instanceof SettingsSection)
 			{
-				element.getSectionView().toggle(true, false);
+				ancestorElement.getSectionView().toggle(true, false);
 			}
-			else if (element instanceof TabField)
+			else if (ancestorElement instanceof TabField)
 			{
-				const tabs = element.getParentElement();
+				const tabs = ancestorElement.getParentElement();
 
 				if (tabs instanceof TabsField)
 				{
-					tabs.activateTab(element, false);
+					tabs.activateTab(ancestorElement, false);
 				}
 			}
 
 			if (!isColored)
 			{
-				isColored = element.highlight();
+				isColored = ancestorElement.highlight();
 			}
 		});
 		this.scrollToNode(fieldNode);
+
+		if (shouldFocus)
+		{
+			return this.#focusElement(this.#getFocusNode(fieldNode));
+		}
+
+		return true;
+	}
+
+	focusPageTitle(page: BaseSettingsPage): boolean
+	{
+		return this.#focusElement(page.getPage().querySelector('.intranet-settings__page-header'));
+	}
+
+	focusNode(node: ?HTMLElement): boolean
+	{
+		return this.#focusElement(node);
+	}
+
+	#getFocusNode(element: BaseSettingsElement): ?HTMLElement
+	{
+		if (
+			element instanceof SettingsField
+			|| element instanceof SiteTitleField
+			|| element instanceof SiteTitle24Field
+		)
+		{
+			const inputNode = element.getFieldView()?.getInputNode?.();
+			const focusableNode = this.#findFocusableNode(inputNode);
+
+			return focusableNode || inputNode || element.render();
+		}
+
+		if (element instanceof SettingsSection)
+		{
+			const sectionNode = element.getSectionView().render();
+
+			return sectionNode.querySelector('.ui-section__title, h2, h3') || sectionNode;
+		}
+
+		if (element instanceof TabField)
+		{
+			return element.getFieldView().getHeader();
+		}
+
+		return element.render();
+	}
+
+	#findFocusableNode(node: ?HTMLElement): ?HTMLElement
+	{
+		if (!Type.isDomNode(node))
+		{
+			return null;
+		}
+
+		return node.matches?.('input:not([type="hidden"]), textarea, select, button, a[href], [tabindex]')
+			? node
+			: node.querySelector('input:not([type="hidden"]), textarea, select, button, a[href], [tabindex]')
+		;
+	}
+
+	#focusElement(node: ?HTMLElement): boolean
+	{
+		if (!this.#isAvailableFocusTarget(node))
+		{
+			return false;
+		}
+
+		const hadTabIndex = node.hasAttribute('tabindex');
+		const previousTabIndex = node.getAttribute('tabindex');
+		const needsTemporaryTabIndex = !this.#isNaturallyFocusable(node);
+
+		if (needsTemporaryTabIndex)
+		{
+			node.setAttribute('tabindex', '-1');
+		}
+
+		node.focus({ preventScroll: true });
+		const isFocused = document.activeElement === node || node.contains(document.activeElement);
+
+		if (!hadTabIndex && needsTemporaryTabIndex)
+		{
+			if (isFocused)
+			{
+				const removeTemporaryTabIndex = () => {
+					Event.unbind(node, 'blur', removeTemporaryTabIndex);
+					node.removeAttribute('tabindex');
+				};
+
+				Event.bind(node, 'blur', removeTemporaryTabIndex);
+			}
+			else
+			{
+				node.removeAttribute('tabindex');
+			}
+		}
+		else if (previousTabIndex !== null)
+		{
+			node.setAttribute('tabindex', previousTabIndex);
+		}
+
+		return isFocused;
+	}
+
+	#isAvailableFocusTarget(node: ?HTMLElement): boolean
+	{
+		return Type.isDomNode(node)
+			&& node.isConnected
+			&& node.closest('[inert]') === null
+			&& !node.hasAttribute('disabled')
+			&& node.getAttribute('aria-disabled') !== 'true'
+			&& Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length > 0)
+		;
+	}
+
+	#isNaturallyFocusable(node: HTMLElement): boolean
+	{
+		return node.matches('input:not([type="hidden"]), textarea, select, button, a[href], [tabindex]');
 	}
 }

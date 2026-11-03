@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports, module) => {
 	const { throttle, debounce } = require('utils/function');
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DraftType } = require('im/messenger/const');
 	const { ObjectUtils, AsyncQueue } = require('im/messenger/lib/utils');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -11,19 +10,22 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 	class DraftManager
 	{
 		/**
+		 * @param {MessengerStore} store
 		 * @param {DialogView} view
 		 * @param {ReplyManager} replyManager
 		 * @param {string|number} dialogId
+		 * @param {(text: string) => string} prepareDraftText
 		 * @param {boolean} initWithExternalForward
 		 */
-		constructor({ view, replyManager, dialogId, initWithExternalForward })
+		constructor({ store, view, replyManager, dialogId, prepareDraftText, initWithExternalForward })
 		{
 			this.logger = getLoggerWithContext('dialog--draft-manager', this);
 
-			this.store = serviceLocator.get('core').getStore();
+			this.store = store;
 			this.view = view;
 			this.dialogId = dialogId;
 			this.replyManager = replyManager;
+			this.prepareDraftText = prepareDraftText;
 			this.initWithExternalForward = initWithExternalForward;
 
 			this.saveDraftThrottled = throttle(this.saveDraft, 3000, this);
@@ -42,12 +44,14 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 
 		start()
 		{
-			const draft = this.store.getters['draftModel/getById'](this.dialogId);
+			const sourceDraft = this.store.getters['draftModel/getById'](this.dialogId);
 
-			if (!draft)
+			if (!sourceDraft)
 			{
 				return;
 			}
+			const draft = this.prepareDraft(sourceDraft);
+			const isDraftRepaired = draft !== sourceDraft;
 
 			const draftMessage = {
 				id: draft.messageId,
@@ -61,6 +65,11 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 			if (!ObjectUtils.isStringFullSpace(draft.text))
 			{
 				this.view.setInput(draft.text);
+			}
+
+			if (isDraftRepaired && !this.initWithExternalForward)
+			{
+				void this.saveRepairedDraft(draft);
 			}
 
 			switch (draft.type)
@@ -84,6 +93,46 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 					break;
 				}
 			}
+		}
+
+		/**
+		 * @param {DraftModelState} draft
+		 * @returns {DraftModelState}
+		 */
+		prepareDraft(draft)
+		{
+			try
+			{
+				const text = this.prepareDraftText(draft.text);
+				if (text !== draft.text)
+				{
+					return { ...draft, text };
+				}
+			}
+			catch (error)
+			{
+				this.logger.error('start: draft repair failed');
+			}
+
+			return draft;
+		}
+
+		/**
+		 * @param {DraftModelState} draft
+		 * @returns {Promise<void>}
+		 */
+		saveRepairedDraft(draft)
+		{
+			return this.queue.enqueue(async () => {
+				try
+				{
+					await this.setRepairedDraftInStore(draft);
+				}
+				catch (error)
+				{
+					this.logger.error('start: repaired draft save failed');
+				}
+			});
 		}
 
 		changeTextHandler(message)
@@ -207,6 +256,15 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 		async setInStore(draft)
 		{
 			await this.store.dispatch('draftModel/set', draft);
+			await this.updateRecent();
+		}
+
+		/**
+		 * @returns {Promise}
+		 */
+		async setRepairedDraftInStore(draft)
+		{
+			await this.store.dispatch('draftModel/setPreservingLastActivityDate', draft);
 			await this.updateRecent();
 		}
 

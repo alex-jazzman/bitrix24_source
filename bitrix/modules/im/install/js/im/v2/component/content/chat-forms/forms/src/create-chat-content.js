@@ -1,5 +1,7 @@
 import { type BitrixVueComponentProps } from 'ui.vue3';
 
+import 'ui.design-tokens.air';
+
 import { ChatType, type ChatTypeItem } from 'im.v2.const';
 import { CreatableChatType } from 'im.v2.lib.create-chat';
 

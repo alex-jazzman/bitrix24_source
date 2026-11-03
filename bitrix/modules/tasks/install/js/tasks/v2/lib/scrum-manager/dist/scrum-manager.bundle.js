@@ -24,7 +24,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				parentTaskId: this.#params.parentId,
 				taskId: this.#params.taskId,
 				action: 'complete',
-				performActionOnParentTask: true
+				performActionOnParentTask: true,
+				completeWithChecklist: true
 			});
 			this.#isParentScrumTask ??= await this.#taskStatus.isParentScrumTask(this.#params.parentId);
 			if (!this.#isParentScrumTask) {
@@ -46,7 +47,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				parentTaskId: this.#params.parentId,
 				taskId: this.#params.taskId,
 				action: 'complete',
-				performActionOnParentTask: true
+				performActionOnParentTask: true,
+				completeWithChecklist: true
 			});
 			this.#isParentScrumTask ??= await this.#taskStatus.isParentScrumTask(this.#params.parentId);
 			if (this.#isParentScrumTask) {

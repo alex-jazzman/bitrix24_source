@@ -2,6 +2,13 @@
 
 "use strict";
 
+/**
+ * The accessibility hooks of the card (getFocusableNode, refreshAriaLabel,
+ * getItemAriaLabel, keyboard handling of the card container) are covered by
+ * unit tests in crm/install/js/crm/kanban/tests/unit/. See the note at the top
+ * of grid.js for why the tests live in another module and how to run them.
+ */
+
 BX.namespace("BX.Kanban");
 
 /**
@@ -39,6 +46,9 @@ BX.Kanban.Item = function(options)
 		checkbox: null,
 		cursor: null
 	};
+
+	/** @var {Element|null} the container the card semantics are already applied to **/
+	this.semanticContainer = null;
 
 	/** @var {Element} **/
 	this.dragElement = null;
@@ -168,8 +178,137 @@ BX.Kanban.Item.prototype =
 		}
 		bodyContainer.appendChild(this.render());
 
+		this.ensureContainerSemantics();
+		this.refreshAriaLabel();
+
 		this.toggleDragging();
 
+		return this.getContainer();
+	},
+
+	/**
+	 * Applies the card semantics to the container: the list item role, the place
+	 * of the card in the board roving tabindex and the handlers of selection by
+	 * mouse and by keyboard.
+	 *
+	 * The semantics are applied here and not while the container is built, because
+	 * a domain wrapper is free to build the container itself, and then it knows
+	 * nothing about the role, the focus order or the keys of the board. Every card
+	 * goes through renderLayout(), so the wrapper gets an accessible card without
+	 * repeating any of this (WCAG 1.3.1, 2.1.1).
+	 *
+	 * A card is rendered many times over its life, so nothing done here may be
+	 * undone by a redraw: the handlers are bound once per container node, and the
+	 * tabindex is written only when the container carries none -- the board may
+	 * have moved the single entry point of the lane onto this card, and resetting
+	 * it would take the lane out of the Tab order.
+	 */
+	ensureContainerSemantics: function()
+	{
+		var container = this.getContainer();
+
+		if (!container.hasAttribute("tabindex"))
+		{
+			container.setAttribute("tabindex", "-1");
+		}
+
+		if (this.semanticContainer === container)
+		{
+			return;
+		}
+
+		this.semanticContainer = container;
+
+		container.setAttribute("role", "listitem");
+
+		BX.bind(container, "click", this.handleContainerClick.bind(this));
+		BX.bind(container, "keydown", this.handleContainerKeydown.bind(this));
+	},
+
+	/**
+	 * Writes the accessible name on the node that takes focus. The name is built
+	 * from the card data, so it is rewritten both on a full redraw and after the
+	 * card is updated in place, otherwise a screen reader keeps announcing the
+	 * data the card was drawn with (WCAG 4.1.2).
+	 */
+	refreshAriaLabel: function()
+	{
+		var focusableNode = this.getFocusableNode();
+		var container = this.getContainer();
+		if (focusableNode !== container)
+		{
+			// The focus node can change between renders (a domain wrapper may show
+			// or hide its interactive node), so the name never stays on two nodes.
+			container.removeAttribute("aria-label");
+		}
+
+		var label = this.getItemAriaLabel();
+		if (!label)
+		{
+			// Without a name from the domain layer the card is named by its own
+			// content: an author aria-label would replace that content in the
+			// name computation instead of adding to it (WCAG 4.1.2).
+			focusableNode.removeAttribute("aria-label");
+
+			return;
+		}
+
+		// A move redraws the card and then updates it in place, so the same name
+		// can be written twice; rewriting it with the same value would make some
+		// screen readers announce the card again.
+		if (focusableNode.getAttribute("aria-label") !== label)
+		{
+			focusableNode.setAttribute("aria-label", label);
+		}
+	},
+
+	/**
+	 * Accessible name of the card (aria-label). Overridable name hook.
+	 * The base layer leaves it empty on purpose: a card drawn by a domain wrapper
+	 * is named by the text it renders, and only a wrapper that knows the entity
+	 * can name it better than its own content.
+	 *
+	 * @returns {string}
+	 */
+	getItemAriaLabel: function()
+	{
+		return "";
+	},
+
+	/**
+	 * Activates the card from the keyboard (Enter/Space), reusing the existing
+	 * open handler. By default it triggers the card's primary link (the same
+	 * element a mouse click/dblclick opens).
+	 */
+	activate: function()
+	{
+		var link = this.getActivationLink();
+		if (link)
+		{
+			link.click();
+		}
+	},
+
+	/**
+	 * Primary interactive element used to open the card. Overridable.
+	 *
+	 * @returns {Element|null}
+	 */
+	getActivationLink: function()
+	{
+		return this.getContainer().querySelector("a[href]");
+	},
+
+	/**
+	 * Node that takes keyboard focus for this card: the board roving tabindex,
+	 * focus() and the accessible name are applied to it. The card container is
+	 * a list item, so domain wrappers that render an interactive node inside the
+	 * card override this and keep the list structure intact.
+	 *
+	 * @returns {Element}
+	 */
+	getFocusableNode: function()
+	{
 		return this.getContainer();
 	},
 
@@ -188,20 +327,13 @@ BX.Kanban.Item.prototype =
 				className: "main-kanban-item",
 				"data-id": this.getId(),
 				"data-type": "item",
-				"data-element": "kanban-element"
+				"data-element": "kanban-element",
+				"data-testid": "kanban-item-" + this.getId()
 			},
 			children: [
 				this.getDragTarget(),
 				this.getBodyContainer()
-			],
-			events: {
-				click: function() {
-					if(this.getGrid().isMultiSelect())
-					{
-						this.adjustSelection();
-					}
-				}.bind(this)
-			}
+			]
 		});
 
 		if(this.grid.firstRenderComplete && !this.draftContainer)
@@ -216,6 +348,77 @@ BX.Kanban.Item.prototype =
 	},
 
 	handleClick: function() {},
+
+	/**
+	 * Selection of the card by mouse: a click anywhere on the card toggles its
+	 * selection while the board is in multiselect.
+	 */
+	handleContainerClick: function()
+	{
+		if(this.getGrid().isMultiSelect())
+		{
+			this.adjustSelection();
+		}
+	},
+
+	/**
+	 * Keyboard entry into card multiselect: Space toggles the card's
+	 * selection when the card itself is focused and the board supports
+	 * multiselect. Enter is intentionally left to the board keyboard navigation
+	 * (which opens the card), so open and select do not conflict.
+	 *
+	 * On a board without multiselect the event is deliberately let through and
+	 * Space opens the card, the same as Enter. There is nothing to select there,
+	 * so leaving Space inert would only scroll the page under the focused card;
+	 * a card that answers both keys the way a button does is the lesser
+	 * surprise. The fork is per board, not per card: within one board Space
+	 * always means the same thing.
+	 *
+	 * @param {KeyboardEvent} event
+	 */
+	handleContainerKeydown: function(event)
+	{
+		// Only when the card focus node itself holds focus: never hijack Space
+		// from another control (link, input) inside the card.
+		if (event.target !== this.getFocusableNode())
+		{
+			return;
+		}
+
+		if (event.key === " " || event.key === "Spacebar" || event.key === "Space")
+		{
+			if (!this.isSelectionAvailable())
+			{
+				return;
+			}
+
+			// Prevent page scroll and stop the board-level Enter/Space open handler.
+			event.preventDefault();
+			event.stopPropagation();
+
+			this.toggleSelection();
+		}
+	},
+
+	/**
+	 * Whether the card can be selected with the keyboard. Overridable so domain
+	 * wrappers can apply their own rule.
+	 *
+	 * @returns {boolean}
+	 */
+	isSelectionAvailable: function()
+	{
+		return this.getGrid().isMultiSelect();
+	},
+
+	/**
+	 * Toggles the card selection. Overridable so domain wrappers can route it
+	 * through their own selection flow.
+	 */
+	toggleSelection: function()
+	{
+		this.adjustSelection();
+	},
 
 	adjustSelection: function()
 	{

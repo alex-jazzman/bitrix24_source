@@ -1,9 +1,9 @@
-import { CompactActiveCallList as CompactActiveCallListOriginal } from 'call.component.compact-active-call-list';
+import { CompactActiveCallList as CompactActiveCallListOriginal } from 'call.widget.compact-active-call-list';
 
-import type { BitrixVueComponentProps } from 'ui.vue3';
+import { defineComponent, type BitrixVueComponentProps } from 'ui.vue3';
 
 // @vue/component
-export const CompactActiveCallList = {
+export const CompactActiveCallList = defineComponent({
 	name: 'CompactActiveCallList',
 	emits: ['click'],
 	computed:
@@ -16,4 +16,4 @@ export const CompactActiveCallList = {
 	template: `
 		<component v-if="componentToRender" :is="componentToRender"  @click="$emit('click', $event)" />
 	`,
-};
+});

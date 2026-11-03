@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_INTEGRATION_LANDING_VIBE_START_PAGE_TITLE'] = 'Главная страница';

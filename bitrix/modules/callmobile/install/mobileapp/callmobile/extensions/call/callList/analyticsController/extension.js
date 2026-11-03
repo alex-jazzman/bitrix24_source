@@ -20,15 +20,15 @@ jn.define('call/callList/analyticsController', (require, exports, module) => {
 
 	function getCallType(item)
 	{
+		if (item.chatType === 'videoconf')
+		{
+			return Analytics.AnalyticsType.videoconf;
+		}
+
 		const dialogIdRaw = String(item.dialogId || '');
 		const isGroup = dialogIdRaw.startsWith('chat') || item.chatType === 'group';
 
-		if (isGroup)
-		{
-			return Analytics.AnalyticsType.group;
-		}
-
-		return Analytics.AnalyticsType.private;
+		return isGroup ? Analytics.AnalyticsType.group : Analytics.AnalyticsType.private;
 	}
 
 	class CallListAnalyticsController
@@ -191,5 +191,5 @@ jn.define('call/callList/analyticsController', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { CallListAnalyticsController };
+	module.exports = { CallListAnalyticsController, getCallType };
 });

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, main_core_cache, main_core_events, main_popup, ui_vue3, ui_iconSet_api_vue, ui_vue3_components_button, ui_iconSet_outline, ui_iconSet_solid, ui_vue3_components_avatar, humanresources_companyStructure_public, ui_vue3_components_menu, ui_vue3_components_richMenu, ui_vue3_directives_hint, ui_iconSet_api_core, main_date, ui_notification) {
+(function (exports, main_core, main_core_cache, main_core_events, main_popup, ui_vue3, ui_iconSet_api_vue, ui_vue3_components_button, ui_iconSet_main, ui_iconSet_outline, ui_iconSet_solid, ui_vue3_components_avatar, humanresources_companyStructure_public, ui_vue3_components_menu, ui_vue3_components_richMenu, ui_vue3_directives_hint, ui_iconSet_api_core, main_date, ui_notification) {
 	'use strict';
 
 	class Backend {
@@ -21,8 +21,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	const InitialParamDict = {
-		RightSideExpand: 'right-side-expand'
+		RightSideExpand: 'right-side-expand',
+		RightSideView: 'right-side-view'
 	};
+	const RightSideViewDict = Object.freeze({
+		Structure: 'structure',
+		Map: 'map'
+	});
 	const prefix = 'intranet-user-mini-profile';
 	class InitialParamService {
 		// eslint-disable-next-line flowtype/require-return-type
@@ -200,6 +205,99 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`
 	};
 
+	// @vue/mixin
+	const LocMixin = {
+		methods: {
+			loc(code, replacements = null) {
+				return main_core.Loc.getMessage(code, replacements);
+			},
+			locPlural(code, value, replacements = null) {
+				return main_core.Loc.getMessagePlural(code, value, replacements);
+			}
+		}
+	};
+
+	const LocationBlockExtension = 'stafftrack.profile-location-block';
+	const LocationViewState = Object.freeze({
+		Loading: 'loading',
+		Drawing: 'drawing',
+		Ready: 'ready',
+		Empty: 'empty',
+		Error: 'error'
+	});
+
+	// @vue/component
+	const LocationView = {
+		name: 'LocationView',
+		mixins: [LocMixin],
+		props: {
+			userId: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['render', 'empty'],
+		data() {
+			return {
+				state: LocationViewState.Loading
+			};
+		},
+		computed: {
+			isLoading() {
+				return this.state === LocationViewState.Loading;
+			},
+			isError() {
+				return this.state === LocationViewState.Error;
+			},
+			errorText() {
+				return this.loc('INTRANET_USER_MINI_PROFILE_LOCATION_LOAD_ERROR');
+			}
+		},
+		mounted() {
+			void this.renderLocationBlock();
+		},
+		methods: {
+			async renderLocationBlock() {
+				this.state = await this.drawLocationBlock();
+				if (this.state === LocationViewState.Empty) {
+					this.$emit('empty');
+				}
+				this.$emit('render');
+			},
+			async drawLocationBlock() {
+				const exports = await main_core.Runtime.loadExtension(LocationBlockExtension).catch(() => null);
+				const ProfileLocationBlock = exports?.ProfileLocationBlock;
+				if (!ProfileLocationBlock) {
+					return LocationViewState.Error;
+				}
+				this.state = LocationViewState.Drawing;
+				try {
+					const isDrawn = await new ProfileLocationBlock(this.$el, {
+						employeeId: this.userId
+					}).render();
+					return isDrawn ? LocationViewState.Ready : LocationViewState.Empty;
+				} catch {
+					return LocationViewState.Error;
+				}
+			}
+		},
+		template: `
+		<div data-test-id="usermp_location-view">
+			<div v-if="isLoading"
+				class="intranet-user-mini-profile__location-view-placeholder"
+				data-test-id="usermp_location-view-placeholder"
+			>
+				<div class="intranet-user-mini-profile__location-view-placeholder-title"></div>
+				<div class="intranet-user-mini-profile__location-view-placeholder-snapshot"></div>
+			</div>
+			<div v-if="isError"
+				class="intranet-user-mini-profile__location-view-error"
+				data-test-id="usermp_location-view-error"
+			>{{ errorText }}</div>
+		</div>
+	`
+	};
+
 	const ButtonMixin = {
 		components: {
 			Button: ui_vue3_components_button.Button
@@ -217,18 +315,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 			set: () => ui_iconSet_api_vue.Set,
 			outlineSet: () => ui_iconSet_api_vue.Outline,
 			solidSet: () => ui_iconSet_api_vue.Solid
-		}
-	};
-
-	// @vue/mixin
-	const LocMixin = {
-		methods: {
-			loc(code, replacements = null) {
-				return main_core.Loc.getMessage(code, replacements);
-			},
-			locPlural(code, value, replacements = null) {
-				return main_core.Loc.getMessagePlural(code, value, replacements);
-			}
 		}
 	};
 
@@ -1257,9 +1343,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 			canChat: {
 				type: Boolean,
 				default: false
+			},
+			isShowMapButton: {
+				type: Boolean,
+				default: false
+			},
+			isMapView: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['expand'],
+		emits: ['expand', 'toggleView'],
 		data() {
 			return {
 				isShowCallMenu: false
@@ -1438,12 +1532,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 				</template>
 			</div>
-			<div v-if="isShowExpand"
-				class="intranet-user-mini-profile__expand"
-				data-test-id="usermp_expand-button"
-				@click="() => $emit('expand')"
-			>
-				<BIcon :name="!isExpanded ? outlineSet.OPEN_CHAT : outlineSet.CLOSE_CHAT"/>
+			<div class="intranet-user-mini-profile__header-actions">
+				<div v-if="isShowMapButton"
+					class="intranet-user-mini-profile__header-action"
+					:class="{ '--active': isMapView }"
+					data-test-id="usermp_map-button"
+					@click="() => $emit('toggleView')"
+				>
+					<BIcon :name="set.PERSON_LOCATION"/>
+				</div>
+				<div v-if="isShowExpand"
+					class="intranet-user-mini-profile__header-action"
+					data-test-id="usermp_expand-button"
+					@click="() => $emit('expand')"
+				>
+					<BIcon :name="!isExpanded ? outlineSet.OPEN_CHAT : outlineSet.CLOSE_CHAT"/>
+				</div>
 			</div>
 			<div class="intranet-user-mini-profile__base-info__role">
 				<UserRole 
@@ -1913,7 +2017,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			StructureViewList,
 			CollapseTransition,
 			ErrorState,
-			LoaderTransition
+			LoaderTransition,
+			LocationView
 		},
 		props: {
 			popup: {
@@ -1934,7 +2039,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				isLoading: false,
 				isExpanded: true,
 				isExpandBlocked: false,
-				backendData: null
+				backendData: null,
+				rightSideView: RightSideViewDict.Structure,
+				isLocationBlockEmpty: false
 			};
 		},
 		computed: {
@@ -1981,8 +2088,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 			isSystemUser() {
 				return this.backendData?.baseInfo?.isSystemUser === true;
 			},
+			hasLocationBlock() {
+				return this.backendData?.isLocationAvailable === true;
+			},
+			hasLocationView() {
+				return this.hasLocationBlock && !this.isLocationBlockEmpty;
+			},
+			canShowRightSide() {
+				return (this.canShowDepartments || this.hasLocationView) && !this.isSystemUser;
+			},
+			isMapView() {
+				return this.rightSideView === RightSideViewDict.Map;
+			},
 			isShowStructure() {
-				return this.canShowDepartments && this.isExpanded && !this.isSystemUser;
+				return this.canShowDepartments && this.isExpanded && !this.isSystemUser && !this.isMapView;
+			},
+			isShowLocation() {
+				return this.hasLocationView && this.isExpanded && !this.isSystemUser && this.isMapView;
+			},
+			isShowRightSide() {
+				return this.isShowStructure || this.isShowLocation;
 			},
 			isShowInlineStructure() {
 				return this.canShowDepartments && this.isSystemUser;
@@ -1994,6 +2119,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				void Backend.load(this.userId).then(data => {
 					this.backendData = data;
 					this.isLoaded = true;
+					this.applyInitialRightSideView();
 				}).catch(errorCode => {
 					if (errorCode === 'ACCESS_DENIED') {
 						this.errorType = ErrorStateDict.AccessDenied;
@@ -2021,6 +2147,43 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.$nextTick(() => {
 					this.adjustPopup();
 				});
+			},
+			applyInitialRightSideView() {
+				const savedView = InitialParamService.getValue(InitialParamDict.RightSideView);
+				this.rightSideView = this.isRightSideViewAvailable(savedView) ? savedView : this.getAvailableRightSideView();
+			},
+			isRightSideViewAvailable(view) {
+				if (view === RightSideViewDict.Map) {
+					return this.hasLocationView;
+				}
+				if (view === RightSideViewDict.Structure) {
+					return this.canShowDepartments;
+				}
+				return false;
+			},
+			getAvailableRightSideView() {
+				return this.canShowDepartments ? RightSideViewDict.Structure : RightSideViewDict.Map;
+			},
+			onToggleRightSideView() {
+				const nextView = this.isMapView ? RightSideViewDict.Structure : RightSideViewDict.Map;
+				if (!this.isRightSideViewAvailable(nextView)) {
+					return;
+				}
+				this.rightSideView = nextView;
+				InitialParamService.save(InitialParamDict.RightSideView, nextView);
+				if (!this.isExpanded) {
+					this.onExpand();
+					return;
+				}
+				this.$nextTick(() => {
+					this.adjustPopup();
+				});
+			},
+			onLocationBlockEmpty() {
+				this.isLocationBlockEmpty = true;
+				if (this.canShowDepartments) {
+					this.rightSideView = RightSideViewDict.Structure;
+				}
 			},
 			adjustPopup() {
 				this.popup?.adjustPosition();
@@ -2066,10 +2229,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 							<UserBaseInfo
 								:userId="userId"
 								:info="backendData.baseInfo"
-								:isShowExpand="canShowDepartments && !isSystemUser"
+								:isShowExpand="canShowRightSide"
+								:isShowMapButton="hasLocationView && !isSystemUser"
+								:isMapView="isMapView"
 								:isExpanded="isExpanded"
 								:canChat="canChat"
 								@expand="onExpand"
+								@toggleView="onToggleRightSideView"
 							/>
 							<template v-if="backendData.detailInfo">
 								<Divider style="margin-top: 18px; margin-bottom: 14px"/>
@@ -2090,16 +2256,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 								/>
 							</template>
 						</div>
-						<div v-if="isShowStructure" 
+						<div v-if="isShowRightSide"
 							class="intranet-user-mini-profile-wrapper__content__right-wrapper"
 							data-test-id="usermp_structure-wrapper"
 						>
 							<Divider isVertical style="margin: 0 18px"/>
 							<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
-								<StructureViewList
+								<StructureViewList v-if="isShowStructure"
 									:structure="backendData.structure"
 									:user="getUserData()"
 									data-test-id="usermp_structure-view-list"
+								/>
+								<LocationView v-else-if="isShowLocation"
+									:userId="userId"
+									@empty="onLocationBlockEmpty"
+									@render="() => this.adjustPopup()"
 								/>
 							</div>
 						</div>
@@ -2246,6 +2417,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#cache = new main_core_cache.MemoryCache();
 		#tracking;
 		#app = null;
+		#popupDirection = null;
 		#closeHandler = null;
 		constructor(options) {
 			this.#options = options;
@@ -2265,9 +2437,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		show() {
 			this.#createAppIfNeed();
-			this.#getPopup().show();
+			const popup = this.#getPopup();
+			if (!popup.isShown()) {
+				this.#popupDirection = null;
+			}
+			popup.show();
 		}
 		close() {
+			this.#popupDirection = null;
 			this.#getPopup().close();
 			main_popup.PopupManager.getPopups().filter(popup => popup.isShown() && popup.getId().includes(PopupPrefixId)).forEach(popup => {
 				popup.close();
@@ -2278,10 +2455,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return;
 			}
 			const popup = this.#getPopup();
+			this.#popupDirection = null;
 			popup.close();
 			popup.setBindElement(element);
 			this.#tracking.setBindElement(element);
 			this.#options.bindElement = element;
+		}
+		setDirection(direction) {
+			if (this.#options.direction === direction) {
+				return;
+			}
+			this.#options.direction = direction;
+			this.#popupDirection = null;
+			const popup = this.#getPopup();
+			if (popup.isShown()) {
+				popup.adjustPosition();
+			}
 		}
 		getBindElement() {
 			return this.#options.bindElement;
@@ -2303,21 +2492,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 					animation: 'fading',
 					bindOptions: this.#getBindOptions()
 				});
-				this.#enforceViewportDirection(popup);
+				this.#interceptAdjustPosition(popup);
 				return popup;
 			});
 		}
 
-		// In viewport mode the popup is repositioned by the Vue component on data load
-		// and on right-side expand/collapse via popup.adjustPosition(). Override it so the
-		// direction is always recomputed from the current anchor position — this keeps the
-		// chosen side stable across those re-adjustments instead of falling back to content height.
-		#enforceViewportDirection(popup) {
-			if (this.#options.direction !== MiniProfileDirection.Viewport) {
-				return;
-			}
+		// the direction is read on every call: an anchor may ask for another one after the popup has been created
+		#interceptAdjustPosition(popup) {
 			const adjustPosition = popup.adjustPosition.bind(popup);
-			popup.adjustPosition = () => adjustPosition(this.#getBindOptions());
+			popup.adjustPosition = targetOptions => {
+				if (this.#options.direction !== MiniProfileDirection.Viewport) {
+					// own bind options, otherwise the popup keeps the side the viewport branch has left in them
+					adjustPosition(targetOptions ?? this.#getBindOptions());
+					return;
+				}
+				const bindOptions = this.#getBindOptions();
+				bindOptions.position = this.#popupDirection ?? bindOptions.position;
+				adjustPosition(bindOptions);
+				if (popup.isShown() && this.#popupDirection === null) {
+					this.#popupDirection = popup.isBottomAngle() ? 'top' : 'bottom';
+				}
+			};
 		}
 		#getBindOptions() {
 			const defaultOptions = {
@@ -2378,7 +2573,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 		static create(options) {
 			const {
 				id,
-				bindElement
+				bindElement,
+				direction
 			} = options;
 
 			// If other widget was already binded to element, we need to unbind it
@@ -2397,6 +2593,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					this.#instanceByBindElementMap.delete(previousBindElement);
 					instance.setBindElement(bindElement);
 				}
+				instance.setDirection(direction);
 				this.#instanceByBindElementMap.set(bindElement, instance);
 				return instance;
 			}
@@ -2409,5 +2606,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.UserMiniProfileManager = UserMiniProfileManager;
 
-})(this.BX.Intranet.User = this.BX.Intranet.User || {}, BX, BX.Cache, BX.Event, BX.Main, BX.Vue3, BX.UI.IconSet, BX.Vue3.Components, window, window, BX.UI.Vue3.Components, BX.Humanresources.CompanyStructure, BX.UI.Vue3.Components, BX.UI.Vue3.Components, BX.Vue3.Directives, BX.UI.IconSet, BX.Main, BX.UI.Notification);
+})(this.BX.Intranet.User = this.BX.Intranet.User || {}, BX, BX.Cache, BX.Event, BX.Main, BX.Vue3, BX.UI.IconSet, BX.Vue3.Components, window, window, window, BX.UI.Vue3.Components, BX.Humanresources.CompanyStructure, BX.UI.Vue3.Components, BX.UI.Vue3.Components, BX.Vue3.Directives, BX.UI.IconSet, BX.Main, BX.UI.Notification);
 //# sourceMappingURL=user-mini-profile.bundle.js.map

@@ -40,6 +40,8 @@ $isRenamedIntegrator = \Bitrix\Intranet\Public\Service\IntegratorService::create
 	'intranet.transfer-to-intranet',
 	'intranet.push-otp.menu',
 	'intranet.fire-employee-wizard',
+	'intranet.user.department-popup',
+	'intranet.fire-system-user-wizard',
 ]);
 
 CJSCore::Init("loader");
@@ -163,7 +165,7 @@ if (
 						$classList[] = 'intranet-user-profile-rank-item-pointer';
 					}
 					?>
-					<div class="<?= implode(' ', $classList) ?>" data-role="user-profile-actions-button">
+					<div class="<?= implode(' ', $classList) ?>" data-role="user-profile-actions-button" data-testid="intranet-user-profile-actions-button">
 						<span>
 							<?php
 								if ($arResult['User']['STATUS'] === 'integrator' && $isRenamedIntegrator)
@@ -335,6 +337,18 @@ if (
 			?>
 		</div>
 		<?php
+		if (\Bitrix\Intranet\Internal\Integration\StaffTrack\EmployeeOfficeCard::isAvailable())
+		{
+			$APPLICATION->IncludeComponent(
+				"bitrix:stafftrack.employee.office.card",
+				"",
+				[
+					"USER_ID" => $arResult["User"]["ID"],
+					"VIEWER_ID" => $arResult["CurrentUser"]["ID"],
+				]
+			);
+		}
+
 		if ($arResult["IsOwnProfile"] && $arResult["User"]["STATUS"] !== "email")
 		{
 			?>
@@ -616,8 +630,15 @@ if (
 							foreach ($arResult["User"]["MANAGERS"] as $manager)
 							{
 								$i++;
+								$attributes = (
+									$i > 4
+										? ' style="display: none" data-role="user-profile-item"'
+										: ''
+								);
 								?>
-								<a class="intranet-user-profile-grid-item" href="<?=$manager["LINK"]?>">
+								<a class="intranet-user-profile-grid-item" href="<?=$manager["LINK"]?>"
+									<?= $attributes ?>
+								>
 									<?php
 									$style = (
 										isset($manager["PHOTO"]) && !empty($manager["PHOTO"])
@@ -977,6 +998,7 @@ if ($arResult["adminRightsRestricted"])
 		isSessionAdmin: "<?=($arResult["User"]["IS_SESSION_ADMIN"] ?? null) ? "Y" : "N"?>",
 		showSonetAdmin: "<?=$arResult["User"]["SHOW_SONET_ADMIN"] ? "Y" : "N"?>",
 		isExtranetUser: "<?=$arResult["User"]["IS_EXTRANET"] ? "Y" : "N"?>",
+		isVisitor: '<?= ($arResult['User']['IS_VISITOR'] ?? null) ? 'Y' : 'N' ?>',
 		isCurrentUserIntegrator: "<?=$arResult["IS_CURRENT_USER_INTEGRATOR"] ? "Y" : "N"?>",
 		languageId: "<?=LANGUAGE_ID?>",
 		siteId: "<?=SITE_ID?>",

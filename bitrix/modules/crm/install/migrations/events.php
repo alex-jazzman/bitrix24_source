@@ -122,6 +122,9 @@ $event
 	->register('im', 'OnChatUserAddEntityTypeCrm', '\Bitrix\Crm\Integration\Im\Chat', 'onAddChatUser')
 	->register('im', 'OnAfterMessagesAdd', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterMessagesAdd')
 	->register('im', 'OnAfterChatRead', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterChatRead')
+	->register('im', 'OnRegisterExternalChatTypes', \Bitrix\Crm\V2\Internal\Integration\Im\SyncChatType::class, 'onRegisterType')
+	->register('im', 'OnFilterUsersByAccessExternalChatCrmSync', \Bitrix\Crm\V2\Internal\Integration\Im\SyncChatType::class, 'onFilterUsersByAccess')
+	->register('im', 'OnBeforeUsersAddExternalChatCrmSync', \Bitrix\Crm\V2\Internal\Integration\Im\SyncChatType::class, 'onBeforeUsersAdd')
 	->register('main', 'OnUISelectorGetProviderByEntityType', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType')
 	->register('main', 'OnUISelectorBeforeSave', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorBeforeSave')
 	->register('main', 'OnUISelectorFillLastDestination', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination')
@@ -175,6 +178,12 @@ $event
 	->register('sale', 'onSalePsInitiatePayError', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsInitiatePayError')
 	->register('intranet', 'onBuildBindingMenu', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu')
 	->register('intranet', 'onBuildBindingMap', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMap')
+	->register(
+		'intranet',
+		'onInitSummaryProviders',
+		\Bitrix\Crm\Integration\Intranet\AnnualSummary\EventHandler::class,
+		'onInitClosedDealsSummaryProvider',
+	)
 	->register('main', 'onGetUserFieldTypeFactory', '\Bitrix\Crm\Service\EventHandler', 'onGetUserFieldTypeFactory')
 	->register('messageservice', 'OnMessageSuccessfullySent', '\Bitrix\Crm\Activity\Provider\Sms', 'onMessageSent')
 	->register('messageservice', 'OnMessageSuccessfullySent', '\Bitrix\Crm\Activity\Provider\WhatsApp', 'onMessageSent')
@@ -270,6 +279,12 @@ $event
 		'onSiteFormFilled',
 		\Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\Vk\WebFormFillHandler::class,
 		'handle',
+	)
+	->register(
+		'main',
+		'OnAfterUserTypeDelete',
+		\Bitrix\Crm\V2\Infrastructure\EventHandler\Ai\UserFieldLifecycleHandler::class,
+		'onAfterUserTypeDelete',
 	)
 ;
 

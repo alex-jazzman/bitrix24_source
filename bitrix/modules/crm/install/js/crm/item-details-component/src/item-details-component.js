@@ -8,16 +8,17 @@ import type { StageModelData } from 'crm.stage-model';
 import { StageModel } from 'crm.stage-model';
 import { PermissionChecker as StagePermissionChecker } from 'crm.stage.permission-checker';
 import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Text, Type, Uri } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
-import { StageFlow } from 'ui.stageflow';
 import './item-details-component.css';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
 	entityTypeName: string,
+	entityTypeCaption: string,
 	serviceUrl: string,
 	id: number,
 	categoryId?: number,
@@ -39,11 +40,24 @@ export type ItemDetailsComponentParams = {
 };
 
 const BACKGROUND_COLOR = 'd3d7dc';
+const FINAL_STAGE_FIXED_ENTITY_TYPE_NAMES = new Set(['QUOTE', 'SMART_INVOICE']);
+
+class StageTransitionCancelledError extends Error
+{
+	code: string = 'CRM_STAGE_TRANSITION_CANCELLED';
+
+	constructor()
+	{
+		super('Stage transition was cancelled');
+		this.name = 'StageTransitionCancelledError';
+	}
+}
 
 export class ItemDetailsComponent
 {
 	entityTypeId: number;
 	entityTypeName: string;
+	entityTypeCaption: string;
 	id: number;
 	categoryId: ?number = null;
 	categories: ?CategoryModelData[];
@@ -68,8 +82,13 @@ export class ItemDetailsComponent
 	receiversJSONString: string = '';
 	targetUpdateStage: ?StageModel = null;
 	stageBeforeUpdate: ?StageModel = null;
+	stageUpdateResolve: ?(stage: StageModel) => void = null;
+	stageUpdateReject: ?(error: mixed) => void = null;
 	categorySelectorTarget: ?string;
 	analyticsData: ?Object;
+	isFinalTransitionOpen: boolean = false;
+	finalTransition: ?Object = null;
+	finalTransitionExtensionPromise: ?Promise = null;
 
 	constructor(params: ItemDetailsComponentParams): void
 	{
@@ -77,6 +96,7 @@ export class ItemDetailsComponent
 		{
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
 			this.entityTypeName = params.entityTypeName;
+			this.entityTypeCaption = params.entityTypeCaption;
 			this.id = Text.toInteger(params.id);
 			if (BX.Crm.PartialEditorDialog && params.serviceUrl)
 			{
@@ -305,33 +325,42 @@ export class ItemDetailsComponent
 			return;
 		}
 
-		const flowStagesData = this.prepareStageFlowStagesData();
 		const stageFlowContainer = document.querySelector('[data-role="stageflow-wrap"]');
 		if (!stageFlowContainer)
 		{
 			return;
 		}
 
+		if (!this.stageflowChart)
+		{
+			this.initLoadedStageFlow(ItemDetailsChart, stageFlowContainer);
+		}
+	}
+
+	initLoadedStageFlow(StageFlowChart, stageFlowContainer: HTMLElement): void
+	{
+		const flowStagesData = this.prepareStageFlowStagesData();
 		const chartParams = {
 			backgroundColor: BACKGROUND_COLOR,
 			currentStage: this.currentStageId,
 			isActive: this.isStageFlowActive === true,
 			onStageChange: this.onStageChange.bind(this),
 			labels: {
-				finalStageName: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME'),
+				finalStageName: this.getFinalStageName(),
 				finalStagePopupTitle: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP'),
 				finalStagePopupFail: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP_FAIL'),
 				finalStageSelectorTitle: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR'),
 			},
 		};
 
-		this.stageflowChart = new ItemDetailsChart(
+		this.stageflowChart = new StageFlowChart(
 			chartParams,
 			flowStagesData,
 			this.permissionChecker,
 			this.getStageById.bind(this),
 			this.isStageUpdating.bind(this),
 			Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300),
+			this.openFinalTransition.bind(this),
 			this.isNew(),
 			this.entityTypeId
 		);
@@ -381,6 +410,34 @@ export class ItemDetailsComponent
 		);
 	}
 
+	getFinalStageName(): string
+	{
+		const entityTypeName = Type.isStringFilled(this.entityTypeName)
+			? this.entityTypeName.toUpperCase()
+			: ''
+		;
+		let suffix = '';
+		if (FINAL_STAGE_FIXED_ENTITY_TYPE_NAMES.has(entityTypeName))
+		{
+			suffix = entityTypeName;
+		}
+		else if (entityTypeName.startsWith('DYNAMIC_'))
+		{
+			suffix = 'DYNAMIC';
+		}
+
+		if (suffix !== '')
+		{
+			const message = Loc.getMessage(`CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME_${suffix}`);
+			if (Type.isStringFilled(message))
+			{
+				return message;
+			}
+		}
+
+		return Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME') ?? '';
+	}
+
 	initPull()
 	{
 		const Pull = BX.PULL;
@@ -406,15 +463,23 @@ export class ItemDetailsComponent
 				}
 
 				const columnId = params.item.data.columnId;
-				if (this.stageflowChart?.isActive)
+				if (this.stageflowChart?.isActive || (!this.stageflowChart && this.isStageFlowActive === true))
 				{
-					const currentStage = this.getStageById(this.stageflowChart.currentStage);
+					const currentStageId = this.stageflowChart?.currentStage ?? this.currentStageId;
+					const currentStage = this.getStageById(currentStageId);
 					if (currentStage?.statusId !== columnId)
 					{
 						const newStage = this.getStageByStatusId(columnId);
 						if (newStage)
 						{
-							this.updateStage(newStage);
+							if (this.stageflowChart)
+							{
+								this.updateStage(newStage);
+							}
+							else
+							{
+								this.currentStageId = newStage.getId();
+							}
 						}
 					}
 				}
@@ -483,7 +548,7 @@ export class ItemDetailsComponent
 		EventEmitter.unsubscribe('Crm.PartialEditorDialog.Error', this.handleErrorPartialEntityEditor);
 	}
 
-	onStageChange(stageFlowStage: StageFlow.Stage)
+	onStageChange(stageFlowStage)
 	{
 		if(this.isProgress)
 		{
@@ -496,13 +561,24 @@ export class ItemDetailsComponent
 			return;
 		}
 
+		void this.moveToStage(stage).catch(() => {});
+	}
+
+	moveToStage(stage: StageModel, options: { optimistic?: boolean } = {}): Promise<StageModel>
+	{
+		const isOptimistic = options.optimistic !== false;
+
 		this.prepareAnalyticsData(stage);
 
-		this.stageBeforeUpdate = this.getStageById(this.currentStageId);
-		this.setStageToFlowChart(stage);
+		this.stageBeforeUpdate = this.getCurrentStage();
+		if (isOptimistic)
+		{
+			this.setStageToFlowChart(stage);
+		}
 
 		this.startStageUpdateProgress(stage);
-		Ajax.runAction('crm.controller.item.update', {
+
+		return Ajax.runAction('crm.controller.item.update', {
 			analyticsLabel: 'crmItemDetailsMoveItem',
 			data: {
 				entityTypeId: this.entityTypeId,
@@ -536,63 +612,264 @@ export class ItemDetailsComponent
 
 			this.stageBeforeUpdate = null;
 			this.updateStage(stage);
+			return stage;
 		}).catch((response) => {
 			this.stopStageUpdateProgress();
 
-			if (this.stageBeforeUpdate !== null)
-			{
-				this.setStageToFlowChart(this.stageBeforeUpdate);
-				this.stageBeforeUpdate = null;
-			}
-
 			if (!this.partialEditorId)
 			{
+				this.restoreStageBeforeUpdate();
 				this.showErrorsFromResponse(response);
-				return;
+				throw response;
 			}
 
-			const requiredFields = [];
-			response.errors.forEach(({code, customData}) => {
-				if (code === 'CRM_FIELD_ERROR_REQUIRED' && customData.fieldName)
-				{
-					requiredFields.push(customData.fieldName);
-				}
-			});
+			const requiredFields = this.getRequiredFieldsFromResponse(response);
 
 			if(requiredFields.length > 0)
 			{
-				BX.Crm.PartialEditorDialog.close(this.partialEditorId);
-
-				this.partialEntityEditor = BX.Crm.PartialEditorDialog.create(
-					this.partialEditorId,
-					{
-						title: BX.prop.getString(this.messages, "partialEditorTitle", "Please fill in all required fields"),
-						entityTypeName: this.entityTypeName,
-						entityTypeId: this.entityTypeId,
-						entityId: this.id,
-						fieldNames: requiredFields,
-						helpData: null,
-						context: this.editorContext || null,
-						isController: true,
-						stageId: stage.getStatusId(),
-					}
-				);
-
-				this.bindPartialEntityEditorEvents();
-				this.partialEntityEditor.open();
+				return this.openPartialEntityEditor(stage, requiredFields);
 			}
 			else
 			{
+				this.restoreStageBeforeUpdate();
 				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
 				this.showErrorsFromResponse(response);
+				throw response;
 			}
 		})
 	}
 
+	openFinalTransition(): void
+	{
+		if (this.isProgress || this.isFinalTransitionOpen)
+		{
+			return;
+		}
+
+		if (!this.getCurrentStage() || !this.stages.some((stage: StageModel) => stage.isSuccess()))
+		{
+			return;
+		}
+		this.isFinalTransitionOpen = true;
+
+		this.loadFinalTransitionExtension().then((FinalTransition) => {
+			if (!FinalTransition)
+			{
+				this.isFinalTransitionOpen = false;
+
+				return;
+			}
+
+			this.openLoadedFinalTransition(FinalTransition);
+		});
+	}
+
+	loadFinalTransitionExtension(): Promise
+	{
+		this.finalTransitionExtensionPromise ??= Runtime.loadExtension('crm.stage.final-transition')
+			.then((exports) => {
+				return Type.isFunction(exports?.FinalTransition?.open) ? exports.FinalTransition : null;
+			})
+			.catch(() => {
+				this.finalTransitionExtensionPromise = null;
+
+				return null;
+			})
+		;
+
+		return this.finalTransitionExtensionPromise;
+	}
+
+	openLoadedFinalTransition(FinalTransition: Object): void
+	{
+		const currentStage = this.getCurrentStage();
+		const successStage = this.stages.find((stage: StageModel) => stage.isSuccess());
+
+		if (!this.isFinalTransitionOpen || !currentStage || !successStage)
+		{
+			this.isFinalTransitionOpen = false;
+
+			return;
+		}
+
+		this.finalTransition = FinalTransition.open({
+			currentStage: currentStage.getData(),
+			successStage: successStage.getData(),
+			failureStages: this.getFailureStagesData(),
+			entityTitle: this.getEntityTitle(),
+			entityTextContext: {
+				entityTypeId: this.entityTypeId,
+				entityTypeName: this.entityTypeName,
+				entityTypeCaption: this.entityTypeCaption,
+			},
+			onMoveToStage: (statusId: string) => {
+				return this.moveToStageByStatusId(statusId).then((stage) => {
+					this.isFinalTransitionOpen = false;
+					this.finalTransition = null;
+
+					return stage;
+				});
+			},
+			isMoveCancelled: (error: mixed) => error instanceof StageTransitionCancelledError,
+			canMoveToStage: (statusId: string) => {
+				return this.permissionChecker?.isHasPermissionToMove(
+					currentStage.getStatusId(),
+					statusId,
+				) ?? false;
+			},
+			onMovePermissionDenied: () => {
+				this.permissionChecker?.showMissPermissionError();
+			},
+			onUndo: (previousStatusId: string, targetStatusId: string) => {
+				if (
+					this.isProgress
+					|| this.getCurrentStage()?.getStatusId() !== targetStatusId
+				)
+				{
+					return Promise.reject(new StageTransitionCancelledError());
+				}
+
+				return this.moveToStageByStatusId(previousStatusId);
+			},
+			onClose: () => {
+				this.isFinalTransitionOpen = false;
+				this.finalTransition = null;
+				this.stageflowChart.restoreCurrentStageView();
+			},
+			analytics: this.analyticsData ?? {},
+		})
+		;
+	}
+
+	moveToStageByStatusId(statusId: string): Promise<StageModelData>
+	{
+		const stage = this.getStageByStatusId(statusId);
+		if (!stage)
+		{
+			return Promise.reject(new Error('Wrong stage'));
+		}
+
+		return this.moveToStage(stage, { optimistic: false }).then((updatedStage: StageModel) => {
+			return updatedStage.getData();
+		});
+	}
+
+	getFailureStagesData(): StageModelData[]
+	{
+		return this.stages
+			.filter((stage: StageModel) => stage.isFailure())
+			.map((stage: StageModel) => stage.getData())
+		;
+	}
+
+	getCurrentStage(): ?StageModel
+	{
+		return this.getStageById(this.stageflowChart?.currentStage ?? this.currentStageId);
+	}
+
+	getEntityTitle(): string
+	{
+		const model = this.getEditor()?.getModel?.();
+		const title = model?.getField?.('TITLE', '');
+
+		return Type.isStringFilled(title) ? title : '';
+	}
+
+	getRequiredFieldsFromResponse(response): string[]
+	{
+		const requiredFields = [];
+		const errors = Type.isArray(response?.errors) ? response.errors : [];
+
+		errors.forEach(({ code, customData }) => {
+			if (code === 'CRM_FIELD_ERROR_REQUIRED' && Type.isStringFilled(customData?.fieldName))
+			{
+				requiredFields.push(customData.fieldName);
+			}
+		});
+
+		return requiredFields;
+	}
+
+	openPartialEntityEditor(stage: StageModel, requiredFields: string[]): Promise<StageModel>
+	{
+		if (!this.partialEditorId)
+		{
+			return Promise.reject(new Error('Partial editor is not configured'));
+		}
+
+		this.finalTransition?.close();
+		this.finalTransition = null;
+
+		BX.Crm.PartialEditorDialog.close(this.partialEditorId);
+
+		this.partialEntityEditor = BX.Crm.PartialEditorDialog.create(
+			this.partialEditorId,
+			{
+				title: BX.prop.getString(this.messages, "partialEditorTitle", "Please fill in all required fields"),
+				entityTypeName: this.entityTypeName,
+				entityTypeId: this.entityTypeId,
+				entityId: this.id,
+				fieldNames: requiredFields,
+				helpData: null,
+				context: this.editorContext || null,
+				isController: true,
+				stageId: stage.getStatusId(),
+			}
+		);
+
+		const stageUpdatePromise: Promise<StageModel> = new Promise((resolve, reject) => {
+			this.stageUpdateResolve = resolve;
+			this.stageUpdateReject = reject;
+		});
+
+		this.bindPartialEntityEditorEvents();
+		this.partialEntityEditor.open();
+
+		return stageUpdatePromise;
+	}
+
+	resolveStageUpdate(stage: StageModel): void
+	{
+		this.stageUpdateResolve?.(stage);
+		this.clearStageUpdatePromise();
+	}
+
+	rejectStageUpdate(error: mixed): void
+	{
+		this.stageUpdateReject?.(error);
+		this.clearStageUpdatePromise();
+	}
+
+	clearStageUpdatePromise(): void
+	{
+		this.stageUpdateResolve = null;
+		this.stageUpdateReject = null;
+	}
+
+	restoreStageBeforeUpdate(): void
+	{
+		if (this.stageBeforeUpdate === null)
+		{
+			return;
+		}
+
+		this.setStageToFlowChart(this.stageBeforeUpdate);
+		this.currentStageId = this.stageBeforeUpdate.getId();
+		this.stageBeforeUpdate = null;
+	}
+
 	updateStage(stage: StageModel)
 	{
+		const finalTransitionToast = UI.Notification.Center.getBalloonById('crm-stage-final-transition-toast');
+		const toastTargetStatusId = finalTransitionToast?.getData().finalTransitionTargetStatusId;
+		if (toastTargetStatusId !== stage.getStatusId())
+		{
+			finalTransitionToast?.close();
+		}
+
 		const currentStage = this.getStageById(this.stageflowChart.currentStage);
 		this.setStageToFlowChart(stage);
+		this.currentStageId = stage.getId();
 		EventEmitter.emit(
 			'BX.Crm.ItemDetailsComponent:onStageChange',
 			{
@@ -736,44 +1013,72 @@ export class ItemDetailsComponent
 
 	handleClosePartialEntityEditor(event: BaseEvent)
 	{
+		const data = event.getData();
+		if (!Type.isArray(data) || data[0] !== this.partialEntityEditor)
+		{
+			return;
+		}
+
 		this.unBindPartialEntityEditorEvents();
 		this.stopProgress();
 
-		const data = event.getData();
-		if(Type.isArray(data) && data.length === 2)
+		if (data.length === 2)
 		{
 			const parameters = data[1];
 
-			if(parameters.isCancelled)
+			if (parameters.isCancelled)
 			{
+				this.restoreStageBeforeUpdate();
 				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
+				this.rejectStageUpdate(new StageTransitionCancelledError());
 
 				return;
 			}
 
 			const stage = this.getStageByStatusId(parameters.stageId);
-			if(!stage)
+			if (!stage)
 			{
+				this.restoreStageBeforeUpdate();
 				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
+				this.rejectStageUpdate(parameters);
 
 				return;
 			}
 			this.updateStage(stage);
+			this.stageBeforeUpdate = null;
 			this.sendAnalyticsData(Dictionary.STATUS_SUCCESS);
+			this.resolveStageUpdate(stage);
+
+			return;
 		}
+
+		this.restoreStageBeforeUpdate();
+		this.rejectStageUpdate(data);
 	}
 
 	handleErrorPartialEntityEditor(event: BaseEvent)
 	{
+		const data = event.getData();
+		if (!Type.isArray(data) || data[0] !== this.partialEntityEditor)
+		{
+			return;
+		}
+
 		this.unBindPartialEntityEditorEvents();
 
 		this.stopProgress();
 
-		const data = event.getData();
-		if(Type.isArray(data) && data[1] && Type.isArray(data[1].errors))
+		if (data[1] && Type.isArray(data[1].errors))
 		{
-			this.showErrorsFromResponse({errors: data[1].errors});
+			this.restoreStageBeforeUpdate();
+			this.showErrorsFromResponse({ errors: data[1].errors });
+			this.rejectStageUpdate(data[1]);
+
+			return;
 		}
+
+		this.restoreStageBeforeUpdate();
+		this.rejectStageUpdate(data);
 	}
 
 	handleUserFieldCreationUrlClick(event: BaseEvent)

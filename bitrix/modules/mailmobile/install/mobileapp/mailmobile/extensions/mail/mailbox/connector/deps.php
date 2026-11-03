@@ -15,6 +15,7 @@ return [
 		'mail:mailbox/connector/steps/imap',
 		'mail:mailbox/connector/steps/oauth',
 		'mail:mailbox/connector/steps/settings',
+		'mail:mailbox/connector/steps/create-mailbox',
 		'layout/ui/wizard/step',
 		'notify-manager',
 		'haptics',

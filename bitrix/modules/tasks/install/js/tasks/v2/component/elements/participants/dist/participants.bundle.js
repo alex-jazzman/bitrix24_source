@@ -6,6 +6,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 (function (exports, ui_vue3_components_popup, ui_vue3_components_richLoc, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_elements_hoverPill, tasks_v2_component_elements_fieldHoverButton, tasks_v2_component_elements_fieldAdd, tasks_v2_component_elements_hint, tasks_v2_component_elements_userLabel, tasks_v2_lib_showLimit, tasks_v2_lib_idUtils, tasks_v2_lib_userSelectorDialog, tasks_v2_component_absencePopup, tasks_v2_provider_service_userService, main_core_events, ui_system_menu_vue) {
 	'use strict';
 
+	const userNamePlaceholder = '#VALUE#';
+
 	// @vue/component
 	const User = {
 		name: 'TaskUser',
@@ -38,18 +40,77 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			forceEdit: {
 				type: Boolean,
 				default: false
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
+			userAriaLabelTemplate: {
+				type: String,
+				default: ''
+			},
+			ariaHaspopup: {
+				type: String,
+				default: ''
+			},
+			ariaExpanded: {
+				type: Boolean,
+				default: null
+			},
+			clearAriaLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['edit', 'remove'],
 		data() {
 			return {
-				isMenuShown: false
+				isMenuShown: false,
+				hasExternalItems: false
 			};
 		},
+		created() {
+			this.refreshExternalItems();
+		},
 		computed: {
+			isViewTrigger() {
+				return !this.canAdd && !this.forceEdit && this.withMenu;
+			},
+			triggerAriaLabel() {
+				if (this.canAdd || this.forceEdit) {
+					if (this.userAriaLabelTemplate && this.user?.name) {
+						return this.userAriaLabelTemplate.replace(userNamePlaceholder, this.user.name);
+					}
+					return this.withUserName(this.ariaLabel);
+				}
+				return this.isViewTrigger ? this.user?.name ?? '' : '';
+			},
+			triggerAriaHaspopup() {
+				if (this.isViewTrigger) {
+					return this.hasExternalItems ? 'menu' : '';
+				}
+				return this.triggerAriaLabel ? this.ariaHaspopup : '';
+			},
+			triggerAriaExpanded() {
+				if (this.isViewTrigger) {
+					return this.hasExternalItems ? this.isMenuShown : null;
+				}
+				return this.triggerAriaLabel ? this.ariaExpanded : null;
+			},
 			user() {
 				return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.userId);
 			},
+			clearLabel() {
+				return this.withUserName(this.clearAriaLabel);
+			},
+			isProfileLink() {
+				return !this.canAdd && !this.forceEdit && !this.withMenu;
+			},
+			profileUrl() {
+				return tasks_v2_provider_service_userService.userService.getUrl(this.userId);
+			}
+		},
+		methods: {
 			menuOptions() {
 				return {
 					id: 'tasks-field-users-menu',
@@ -60,19 +121,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						title: this.loc('TASKS_V2_USERS_VIEW'),
 						icon: ui_iconSet_api_vue.Outline.PERSON,
 						onClick: this.openProfile
-					}, ...this.additionalItems]
+					}, ...this.readExternalItems()]
 				};
 			},
-			additionalItems() {
+			readExternalItems() {
 				return main_core_events.EventEmitter.emit(tasks_v2_const.EventName.UserMenuExternalItems, {
 					taskId: this.taskId,
 					userId: this.userId
 				}).filter(value => Boolean(value)).flat();
-			}
-		},
-		methods: {
+			},
+			// Other modules answer this event only after their own async init, which lands well after
+			// the card is rendered, so the answer is re-read on every approach instead of being frozen.
+			refreshExternalItems() {
+				this.hasExternalItems = this.readExternalItems().length > 0;
+			},
+			withUserName(label) {
+				if (label === '' || !this.user?.name) {
+					return label;
+				}
+				return `${label}, ${this.user.name}`;
+			},
 			handleClick() {
-				if (this.withMenu && this.additionalItems.length > 0) {
+				this.refreshExternalItems();
+				if (this.withMenu && this.hasExternalItems) {
 					this.isMenuShown = true;
 					return;
 				}
@@ -87,10 +158,33 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<HoverPill ref="user" :withClear @clear="$emit('remove')" @click="handleClick">
-			<UserLabel :user/>
+		<HoverPill
+			ref="user"
+			data-testid="task-participant-pill"
+			:data-user-id="userId"
+			:withClear
+			:withFocusableContent="isProfileLink"
+			:ariaLabel="triggerAriaLabel"
+			:ariaHaspopup="triggerAriaHaspopup"
+			:ariaExpanded="triggerAriaExpanded"
+			:clearAriaLabel="clearLabel"
+			@clear="$emit('remove')"
+			@click="handleClick"
+			@mouseenter="refreshExternalItems"
+			@focusin="refreshExternalItems"
+		>
+			<a
+				v-if="isProfileLink"
+				:href="profileUrl"
+				class="tasks-field-user-profile-link"
+				data-testid="task-participant-profile-link"
+				@click.prevent.stop="openProfile"
+			>
+				<UserLabel :user/>
+			</a>
+			<UserLabel v-else :user/>
 		</HoverPill>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
 		<slot :getUserEl="() => $refs.user?.$el" :user="user"/>
 	`
 	};
@@ -145,6 +239,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			fromPopup: {
 				type: Boolean,
 				default: false
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
+			userAriaLabelTemplate: {
+				type: String,
+				default: ''
+			},
+			ariaHaspopup: {
+				type: String,
+				default: ''
+			},
+			ariaExpanded: {
+				type: Boolean,
+				default: null
+			},
+			clearAriaLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['edit', 'remove'],
@@ -168,7 +282,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:forceEdit
 					:canAdd="canAdd && single"
 					:withClear="!single && !inline && (canRemove || userId === removableUserId)"
+					:clearAriaLabel
 					:withMenu="showMenu && isEdit && (canRemove || removableUserId === userId)"
+					:ariaLabel
+					:userAriaLabelTemplate
+					:ariaHaspopup
+					:ariaExpanded
+					:clearAriaLabel
 					@edit="$emit('edit')"
 					@remove="$emit('remove', userId)"
 				>
@@ -207,17 +327,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<div v-if="count || withRemove" :class="['tasks-field-users-footer', { '--inline': inline }]">
-			<div v-if="count" class="tasks-field-users-more" @click="$emit('showMore')">
+			<button v-if="count" type="button" class="tasks-field-users-more" @click="$emit('showMore')">
 				{{ moreFormatted }}
-			</div>
-			<div v-if="withRemove" class="tasks-field-users-more --remove" @click="$emit('removeAll')">
+			</button>
+			<button v-if="withRemove" type="button" class="tasks-field-users-more --remove" @click="$emit('removeAll')">
 				{{ loc('TASKS_V2_USERS_REMOVE_ALL') }}
-			</div>
+			</button>
 		</div>
 	`
 	};
 
 	const maxUsers = 4;
+	const hintActionPlaceholder = /\[\/?action]/g;
 
 	// @vue/component
 	const Participants = {
@@ -305,6 +426,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			warnAboutAbsence: {
 				type: [Boolean, String],
 				default: false
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
+			userAriaLabelTemplate: {
+				type: String,
+				default: ''
+			},
+			addAriaLabel: {
+				type: String,
+				default: ''
+			},
+			ariaHaspopup: {
+				type: String,
+				default: ''
+			},
+			clearAriaLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['update', 'hintClick', 'absenceLoaded'],
@@ -318,7 +459,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isDialogShown: false,
 				isMoreShown: false,
 				isHintShown: false,
-				isHovered: false
+				isHovered: false,
+				isFocusWithin: false,
+				returnFocusElement: null
 			};
 		},
 		computed: {
@@ -342,8 +485,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					maxWidth: 300,
 					maxHeight: 300,
 					offsetTop: 8,
+					focusTrap: true,
+					closeByEsc: true,
+					ariaLabel: this.loc('TASKS_V2_USERS_MORE_POPUP_ARIA_LABEL'),
 					targetContainer: document.body
 				});
+			},
+			hintOptions() {
+				return {
+					focusTrap: {
+						initialFocus: false
+					},
+					ariaLabel: this.hintText.replaceAll(hintActionPlaceholder, '')
+				};
 			},
 			bodyUserIds() {
 				return this.userIds.slice(0, maxUsers);
@@ -404,6 +558,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					});
 					return;
 				}
+				this.returnFocusElement = document.activeElement;
 				if (this.withHint) {
 					this.isHintShown = true;
 					this.hintPromise = new Resolvable();
@@ -420,13 +575,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					isMultiple: !this.single && (!this.multipleOnPlus || plus)
 				});
 			},
-			handleDialogClose(userIds, items) {
+			async handleDialogClose(userIds, items) {
 				this.isDialogShown = false;
 				if (tasks_v2_lib_userSelectorDialog.usersDialog.getDialog().isLoaded()) {
 					this.updateUsers(this.getUserIds(items));
 					if (this.warnAboutAbsence) {
 						void this.loadUsersAbsenceInfo(items);
 					}
+				}
+				await this.focusTrigger();
+			},
+			async focusTrigger() {
+				const captured = this.returnFocusElement;
+				this.returnFocusElement = null;
+				await this.$nextTick();
+				if (captured?.isConnected) {
+					captured.focus?.();
+					return;
+				}
+				const trigger = this.$refs.root?.querySelector('.b24-hover-pill-content');
+				if (trigger?.isConnected) {
+					trigger.focus();
 				}
 			},
 			getUserIds(items) {
@@ -451,8 +620,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				const idsFiltered = ids.filter(id => typeof id === 'number');
 				return idsFiltered;
 			},
-			removeUser(userId) {
+			async removeUser(userId) {
+				const remover = document.activeElement?.closest?.('.b24-hover-pill-remover') ?? null;
+				const list = remover?.closest('.tasks-field-users') ?? null;
+				const index = list ? [...list.querySelectorAll('.b24-hover-pill-remover')].indexOf(remover) : 0;
 				this.updateUsers(this.userIds.filter(id => id !== userId));
+				await this.focusAfterRemove(list, index);
+			},
+			async removeAll() {
+				this.updateUsers([]);
+				await this.focusAfterRemove(null, 0);
+			},
+			async focusAfterRemove(list, index) {
+				await this.$nextTick();
+				const removers = list?.isConnected ? [...list.querySelectorAll('.b24-hover-pill-remover')] : [];
+				const neighbour = removers[index] ?? removers.at(-1);
+				if (neighbour) {
+					neighbour.focus();
+					return;
+				}
+				const root = this.$refs.root;
+				const trigger = root?.querySelector('.b24-field-hover-button, .b24-hover-pill-content');
+				if (trigger?.isConnected) {
+					trigger.focus();
+				}
 			},
 			updateUsers(userIds) {
 				this.$emit('update', userIds);
@@ -474,15 +665,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div v-bind="dataset" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
+		<div
+			ref="root"
+			v-bind="dataset"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
+			@focusin="isFocusWithin = true"
+			@focusout="isFocusWithin = false"
+		>
 			<FieldAdd
 				v-if="userCount === 0"
 				:icon="Outline.PERSON"
+				:ariaLabel="addAriaLabel || ariaLabel"
+				:ariaHaspopup
+				:ariaExpanded="ariaLabel ? isDialogShown : null"
 				:isLocked
 				@click="showDialog"
 			/>
 			<div v-else-if="inline && userCount > 1 || avatarOnly" class="tasks-field-users-inline">
-				<HoverPill compact @click="handleClick">
+				<HoverPill
+					compact
+					:ariaLabel
+					:ariaHaspopup
+					:ariaExpanded="ariaLabel ? isDialogShown : null"
+					@click="handleClick"
+				>
 					<template v-for="userId in bodyUserIds" :key="userId">
 						<UserLabel class="tasks-field-user --inline" :user="getUser(userId)" avatarOnly/>
 					</template>
@@ -492,15 +699,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:withRemove
 					inline
 					@showMore="handleMore"
-					@removeAll="updateUsers([])"
+					@removeAll="removeAll"
 				/>
 			</div>
 			<div v-else>
 				<FieldHoverButton
 					v-if="canAdd && !inline"
 					:icon="Outline.PLUS_L"
-					:isVisible="isDialogShown || isHovered"
+					:isVisible="isDialogShown || isHovered || isFocusWithin"
 					:isLocked
+					:ariaLabel
+					:ariaHaspopup
+					:ariaExpanded="ariaLabel ? isDialogShown : null"
 					@click="showDialog(true)"
 				/>
 				<Users
@@ -514,6 +724,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:inline
 					:showMenu
 					:forceEdit
+					:ariaLabel
+					:userAriaLabelTemplate
+					:ariaHaspopup
+					:ariaExpanded="ariaLabel ? isDialogShown : null"
+					:clearAriaLabel
 					@edit="showDialog"
 					@remove="removeUser"
 				>
@@ -525,7 +740,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:count="moreUserIds.length"
 					:withRemove
 					@showMore="handleMore"
-					@removeAll="updateUsers([])"
+					@removeAll="removeAll"
 				/>
 			</div>
 			<div ref="anchor"/>
@@ -541,6 +756,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:single
 				:showMenu
 				:forceEdit
+				:clearAriaLabel
 				fromPopup
 				@edit="showDialog"
 				@remove="removeUser"
@@ -550,7 +766,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</template>
 			</Users>
 		</Popup>
-		<Hint v-if="isHintShown" :bindElement="$refs.anchor" @close="closeHint">
+		<Hint v-if="isHintShown" :bindElement="$refs.anchor" :options="hintOptions" @close="closeHint">
 			<RichLoc class="tasks-field-users-hint" :text="hintText" placeholder="[action]">
 				<template #action="{ text }">
 					<span @click="handleHintClick">{{ text }}</span>

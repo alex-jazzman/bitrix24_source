@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, ui_vue3, im_v2_component_list_container_elements_createChatButton, im_v2_component_list_container_elements_createChatPromo, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_items_collab, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_collab, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_logger, im_v2_lib_permission, im_v2_lib_promo, im_v2_component_list_container_elements_listSlider, main_core_events, im_v2_lib_utils, ui_system_highlighter, im_v2_component_elements_avatar, im_v2_lib_chat, im_v2_application_core, im_v2_lib_layout, ui_iconSet_api_vue, main_loader, im_v2_component_elements_popup, im_v2_component_entitySelector, ui_iconSet_api_core, ui_system_menu, im_v2_lib_menu, im_v2_lib_entityCreator, im_v2_lib_copilot, im_v2_provider_service_copilot, im_public, ui_infoHelper, im_v2_component_elements_scrollWithGradient, im_v2_component_list_container_elements_navigationSection, im_v2_component_elements_listLoadingState) {
+(function (exports, main_core, ui_vue3, im_v2_component_list_container_elements_createChatButton, im_v2_component_list_container_elements_createChatPromo, im_v2_component_list_container_elements_filterRow, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_items_collab, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_collab, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_logger, im_v2_lib_permission, im_v2_lib_promo, im_v2_component_list_container_elements_listSlider, im_v2_lib_a11y, im_v2_lib_utils, main_core_events, ui_system_highlighter, im_v2_component_elements_avatar, im_v2_lib_chat, im_v2_application_core, im_v2_lib_layout, ui_iconSet_api_vue, im_v2_css_classes, main_loader, im_v2_component_elements_popup, im_v2_lib_menu, im_v2_component_entitySelector, ui_iconSet_api_core, ui_system_menu, im_v2_lib_entityCreator, im_v2_lib_copilot, im_v2_provider_service_copilot, im_public, ui_infoHelper, im_v2_component_elements_scrollWithGradient, im_v2_component_list_container_elements_navigationSection, im_v2_component_elements_listLoadingState) {
 	'use strict';
 
 	// @vue/component
@@ -13,6 +13,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			CollabList: im_v2_component_list_items_collab.CollabList,
 			CreateChatPromo: im_v2_component_list_container_elements_createChatPromo.CreateChatPromo,
 			CreateChatButton: im_v2_component_list_container_elements_createChatButton.CreateChatButton,
+			FilterRow: im_v2_component_list_container_elements_filterRow.FilterRow,
 			HeaderMenu: im_v2_component_list_container_elements_headerMenu.HeaderMenu,
 			CollabUnreadList: im_v2_component_list_items_collab.CollabUnreadList,
 			ChatSearchInput: im_v2_component_search.ChatSearchInput,
@@ -32,6 +33,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		emits: ['selectChat'],
 		data() {
 			return {
+				searchAreaId: main_core.Text.getRandom(),
 				searchMode: false,
 				searchQuery: '',
 				isSearchLoading: false,
@@ -56,6 +58,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			searchInputText() {
 				return im_v2_lib_collab.CollabManager.getSearchInputText();
+			},
+			isShellNavigationAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatShellNavigationWebAvailable);
+			},
+			filterMode() {
+				return this.unreadMode ? im_v2_component_list_container_elements_filterRow.FilterMode.unread : im_v2_component_list_container_elements_filterRow.FilterMode.all;
+			},
+			unreadCounter() {
+				return this.$store.getters['counters/getTotalCollabCounter'];
 			}
 		},
 		created() {
@@ -113,6 +124,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onToggleUnreadMode() {
 				this.unreadMode = !this.unreadMode;
 			},
+			onChangeFilterMode(mode) {
+				this.unreadMode = mode === im_v2_component_list_container_elements_filterRow.FilterMode.unread;
+				if (this.unreadMode) {
+					im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenProjectTabUnreadMode(im_v2_lib_analytics.AnalyticsSection.filterRow);
+				}
+			},
 			async showCollabAiPromo() {
 				if (!im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.collabAi)) {
 					return;
@@ -125,9 +142,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-list-container-collab__container" ref="collab-container">
-			<div class="bx-im-list-container-collab__header_container">
+		<div class="bx-im-list-container-collab__container" data-testid="im-list-collab" ref="collab-container">
+			<!-- In the compact collab peek the header is occluded by the drawer; keep it out of the tab order (mouse there is moot). -->
+			<div
+				class="bx-im-list-container-collab__header_container"
+				:class="{ '--with-filter-row': isShellNavigationAvailable }"
+				:inert="avatarsOnly || null"
+			>
 				<HeaderMenu
+					v-if="!isShellNavigationAvailable"
 					:unreadMode="unreadMode"
 					:recentSection="RecentType.collab"
 					@toggleUnreadMode="onToggleUnreadMode"
@@ -137,6 +160,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:searchMode="searchMode"
 						:isLoading="searchMode && isSearchLoading"
 						:placeholder="searchInputText"
+						:activateOnEnter="true"
+						:searchAreaId="searchAreaId"
 						@openSearch="onOpenSearch"
 						@closeSearch="onCloseSearch"
 						@updateSearch="onUpdateSearch"
@@ -148,6 +173,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:class="createIconClass"
 				/>
 			</div>
+			<FilterRow
+				v-if="isShellNavigationAvailable"
+				:mode="filterMode"
+				:counter="unreadCounter"
+				:readAllSection="RecentType.collab"
+				:inert="avatarsOnly || null"
+				:aria-hidden="avatarsOnly ? 'true' : null"
+				@changeMode="onChangeFilterMode"
+			/>
 			<div class="bx-im-list-container-collab__elements_container">
 				<div class="bx-im-list-container-collab__elements">
 					<RecentSearch
@@ -156,6 +190,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:query="searchQuery"
 						:showUsersCarousel="false"
 						:recentSectionType="RecentType.collab"
+						:withKeyboardNavigation="true"
+						:searchAreaId="searchAreaId"
 						@loading="onSearchLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
@@ -301,8 +337,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline
 		},
+		methods: {
+			handleActivationKeydown(event) {
+				// Only the button itself reacts; keydowns bubbling up from nested controls stay with them.
+				if (event.target !== event.currentTarget) {
+					return;
+				}
+				if (event.key === 'Enter' || event.key === ' ') {
+					// Synthesize the native click the mouse path uses: the parent binds @click, which falls
+					// through to this root element, so keyboard and mouse share one handler.
+					event.preventDefault();
+					this.$el.click();
+				}
+			}
+		},
 		template: `
-		<div class="bx-im-nested-list-collab-card__button --ui-context-content-light" :class="{'--with-icon': withIcon}">
+		<div
+			class="bx-im-nested-list-collab-card__button --ui-context-content-light --focus-visible"
+			:class="{'--with-icon': withIcon}"
+			role="button"
+			tabindex="0"
+			:aria-label="title"
+			@keydown="handleActivationKeydown"
+		>
 			<div v-if="withIcon" class="bx-im-nested-list-collab-card__button_more">
 				<CardButtonLoader v-if="isLoading" />
 				<BIcon
@@ -387,6 +444,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<CollabCardButton
 				v-for="({title, counter, url}, type) in buttonConfig"
 				:key="type"
+				:data-testid="'im-collab-card-button-' + type"
 				:title="title"
 				:counter="counter"
 				@click="openEntitySlider(url)"
@@ -396,6 +454,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:isLoading="isFeatureMenuLoading"
 					:title="loc('IM_LIST_CONTAINER_COLLAB_CARD_BUTTON_MORE')"
 					:withIcon="true"
+					data-testid="im-collab-card-button-more"
 					@click="onMoreClick"
 				/>
 			</div>
@@ -525,10 +584,30 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		methods: {
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			handleActivationKeydown(event) {
+				// Only the button itself reacts; keydowns bubbling up from nested controls stay with them.
+				if (event.target !== event.currentTarget) {
+					return;
+				}
+				if (event.key === 'Enter' || event.key === ' ') {
+					// Synthesize the native click the mouse path uses: the parent binds @click, which falls
+					// through to this root element, so keyboard and mouse share one handler.
+					event.preventDefault();
+					this.$el.click();
+				}
 			}
 		},
 		template: `
-		<div class="bx-im-collab-card-new-tab__container --ui-context-content-light" :title="loc('IM_LIST_CONTAINER_COLLAB_CARD_BUTTON_NEW_TAB_TITLE')">
+		<div
+			class="bx-im-collab-card-new-tab__container --ui-context-content-light --focus-visible"
+			data-testid="im-collab-card-new-tab-button"
+			role="button"
+			tabindex="0"
+			:aria-label="loc('IM_LIST_CONTAINER_COLLAB_CARD_BUTTON_NEW_TAB_TITLE')"
+			:title="loc('IM_LIST_CONTAINER_COLLAB_CARD_BUTTON_NEW_TAB_TITLE')"
+			@keydown="handleActivationKeydown"
+		>
 			<BIcon :name="OutlineIcons.OPEN_NEW" :hoverable="true" class="bx-im-collab-card-new-tab__icon" />
 		</div>
 	`
@@ -659,6 +738,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				title: main_core.Loc.getMessage('IM_LIST_CONTAINER_COLLAB_CREATE_TASK_MSGVER_1'),
 				icon: ui_iconSet_api_core.Outline.TASK,
 				onClick: () => {
+					im_v2_lib_analytics.Analytics.getInstance().projectTab.onCreateTaskClick();
 					new im_v2_lib_entityCreator.EntityCreator().openCollabTaskCreationForm(this.context.collabId);
 				}
 			};
@@ -668,6 +748,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				title: main_core.Loc.getMessage('IM_LIST_CONTAINER_COLLAB_CREATE_MEETING_MSGVER_1'),
 				icon: ui_iconSet_api_core.Outline.CALENDAR_WITH_SLOTS,
 				onClick: () => {
+					im_v2_lib_analytics.Analytics.getInstance().projectTab.onCreateEventClick();
 					void new im_v2_lib_entityCreator.EntityCreator().openCollabMeetingCreationSlider(this.context.collabId);
 				}
 			};
@@ -677,6 +758,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				title: main_core.Loc.getMessage('IM_LIST_CONTAINER_COLLAB_CREATE_CHAT_MSGVER_1'),
 				icon: ui_iconSet_api_core.Outline.CHATS,
 				onClick: () => {
+					im_v2_lib_analytics.Analytics.getInstance().projectTab.onCreateChatClick();
 					if (im_v2_lib_createChat.CreateChatManager.getInstance().isCreationLayoutActive(im_v2_lib_createChat.CreatableChatType.collabChat)) {
 						return;
 					}
@@ -698,6 +780,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				icon: ui_iconSet_api_core.Outline.BITRIX_GPT,
 				design: ui_system_menu.MenuItemDesign.BitrixGPT,
 				onClick: async () => {
+					im_v2_lib_analytics.Analytics.getInstance().projectTab.onCreateChatClick(im_v2_const.ChatType.copilot);
 					const newDialogId = await new im_v2_provider_service_copilot.CopilotChatService().createDefaultChat(this.context.parentChatId);
 					void im_public.Messenger.openChat(newDialogId);
 				}
@@ -814,13 +897,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isSearchLoading: {
 				type: Boolean,
 				required: true
+			},
+			searchAreaId: {
+				type: String,
+				default: null
 			}
 		},
 		emits: ['openSearch', 'closeSearch', 'updateSearch', 'toggleUnreadMode'],
 		data() {
 			return {
 				showCreateChatPromo: false,
-				showAttachToCollabV2Popup: false
+				showAttachToCollabV2Popup: false,
+				isCreateMenuOpen: false
 			};
 		},
 		computed: {
@@ -852,9 +940,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		mounted() {
 			this.contextMenuManager = new CreateMenu();
 			this.contextMenuManager.subscribe(CreateMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+			this.contextMenuManager.subscribe(im_v2_lib_menu.BaseMenu.events.close, this.onCreateMenuClose);
 		},
 		beforeUnmount() {
 			this.contextMenuManager.unsubscribe(CreateMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+			this.contextMenuManager.unsubscribe(im_v2_lib_menu.BaseMenu.events.close, this.onCreateMenuClose);
 			this.contextMenuManager.destroy();
 		},
 		methods: {
@@ -871,7 +961,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					parentChatId: this.parentChatId,
 					collabId: this.collabId
 				};
+				this.isCreateMenuOpen = true;
 				this.contextMenuManager.openMenu(context, event.currentTarget);
+			},
+			onCreateMenuClose() {
+				this.isCreateMenuOpen = false;
 			},
 			onCloseCreateChatPromo() {
 				this.promoManager.onCloseCreateChatPromo();
@@ -887,6 +981,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:searchMode="searchMode"
 					:isLoading="searchMode && isSearchLoading"
 					:placeholder="loc('IM_LIST_CONTAINER_COLLAB_NESTED_SEARCH_INPUT_PLACEHOLDER')"
+					:activateOnEnter="true"
+					:searchAreaId="searchAreaId"
 					@openSearch="$emit('openSearch')"
 					@closeSearch="$emit('closeSearch')"
 					@updateSearch="$emit('updateSearch', $event)"
@@ -900,7 +996,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				@toggleUnreadMode="$emit('toggleUnreadMode')"
 			/>
 			<div :class="createChatClasses" class="bx-im-nested-list-collab__subheader_create-button" ref="create-chat-button">
-				<CreateChatButton v-if="canCreateEntities" @click="onCreateClick" />
+				<CreateChatButton
+					v-if="canCreateEntities"
+					aria-haspopup="menu"
+					:aria-expanded="isCreateMenuOpen"
+					@click="onCreateClick"
+				/>
 			</div>
 			<CreateChatPromo v-if="showCreateChatPromo" :bindElement="$refs['create-chat-button']" @close="onCloseCreateChatPromo" />
 			<AttachToCollabV2
@@ -976,7 +1077,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:text="getTitle()"
 						:isSelected="currentSection === type"
 						:counter="getSectionCounter(type)"
-						@click="onSelectSection(type)"
+						:data-testid="'im-navigation-section-' + type"
+						@activate="onSelectSection(type)"
 					/>
 				</div>
 			</div>
@@ -1058,6 +1160,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		emits: ['selectChat', 'close'],
 		data() {
 			return {
+				searchAreaId: main_core.Text.getRandom(),
 				searchMode: false,
 				searchQuery: '',
 				isSearchLoading: false,
@@ -1069,6 +1172,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			RecentType: () => im_v2_const.RecentType,
 			layout() {
 				return this.$store.getters['application/getLayout'];
+			},
+			chatEntityId() {
+				return this.layout.entityId;
+			},
+			layoutName() {
+				return this.layout.name;
 			},
 			listComponent() {
 				const matchingItem = CollabSectionConfig[this.currentSection];
@@ -1095,6 +1204,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		watch: {
+			// This list and the chat of its collab are opened by one and the same action, and a search the collab
+			// was entered from is owed the focus back only once the last of the two is gone. So the promise made
+			// to that search is held here for as long as this list shows that collab.
+			parentChatId: {
+				immediate: true,
+				handler(newParentChatId, oldParentChatId) {
+					if (oldParentChatId) {
+						// Switching to another collab reuses this container: the promise of the collab it showed
+						// before is over, and nothing is left of that walk to hand the focus to.
+						this.releaseFocusHandoffOfNestedList(oldParentChatId);
+					}
+					im_v2_lib_a11y.holdKeyboardFocusHandoffForNestedList({
+						layoutName: this.layoutName,
+						dialogId: im_v2_lib_utils.Utils.dialog.buildChatDialogId(newParentChatId)
+					});
+				}
+			},
 			isParentChatLoaded: {
 				immediate: true,
 				handler(isLoaded) {
@@ -1102,6 +1228,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						return;
 					}
 					this.getPromoManager().init();
+				}
+			},
+			chatEntityId(newEntityId, oldEntityId) {
+				// The open collab chat was exited (entity id cleared) while this nested list stays
+				// open. Keyboard focus would be stranded on <body>, so move it onto the list.
+				const chatWasExited = !newEntityId && Boolean(oldEntityId);
+				if (chatWasExited) {
+					this.focusNestedListAfterChatExit(oldEntityId);
 				}
 			}
 		},
@@ -1113,6 +1247,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		beforeUnmount() {
 			this.promoManager?.stop();
 			main_core.Event.unbind(document, 'mousedown', this.onDocumentClick);
+
+			// Every way out of this list ends here - Esc, the close control, a section change, a collab deleted
+			// under the user - so this is the one place that can tell the walk is over.
+			this.returnFocusToSearchAfterClose();
 		},
 		methods: {
 			initCurrentRecentSection() {
@@ -1159,9 +1297,84 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				this.currentSection = selectedSection;
 				this.unreadMode = false;
+				im_v2_lib_analytics.Analytics.getInstance().projectTab.onSelectSection(selectedSection);
 			},
 			onToggleUnreadMode() {
 				this.unreadMode = !this.unreadMode;
+			},
+			focusNestedListAfterChatExit(exitedDialogId) {
+				// A chat entered from the search of this header with the keyboard owes the focus back to the search
+				// itself, and that promise outranks the row: the user walked in from the search, not from the list.
+				const isFocusOwedToSearch = im_v2_lib_a11y.isKeyboardFocusHandoffPending({
+					searchAreaId: this.searchAreaId,
+					layoutName: this.layoutName,
+					dialogId: exitedDialogId
+				});
+
+				// Search owns its own focus; only take over when a plain list is on screen and no popup holds
+				// focus. Wait a tick so the list is settled before focusing the row.
+				if (isFocusOwedToSearch || this.searchMode || !this.canMoveFocus()) {
+					return;
+				}
+				void this.$nextTick(() => {
+					this.focusExitedChatRow(exitedDialogId);
+				});
+			},
+			focusExitedChatRow(exitedDialogId) {
+				const list = this.unreadMode ? this.$refs.sectionUnreadList : this.$refs.sectionList;
+				const listEl = list?.$el;
+				if (!listEl) {
+					return false;
+				}
+
+				// Return focus to the row of the chat that was just open (mirrors the main recent list, whose
+				// roving entry stays on the active row), not the first row. Fall back to the first row when
+				// that chat is no longer present in the current section.
+				const exitedRow = exitedDialogId ? listEl.querySelector(`[data-id="${exitedDialogId}"]`) : null;
+				const targetRow = exitedRow?.isConnected ? exitedRow : listEl.querySelector('[data-id]');
+				if (!targetRow?.isConnected) {
+					return false;
+				}
+				targetRow.focus();
+				return true;
+			},
+			canMoveFocus() {
+				// Do not steal focus from a popup/menu that currently owns it (active focus trap).
+				return !im_v2_lib_a11y.isFocusOwnedByPopup();
+			},
+			returnFocusToSearchAfterClose() {
+				const searchAreaId = this.releaseFocusHandoffOfNestedList(this.parentChatId);
+
+				// A chat is open under this list: it was asked for after the walk and owns the focus, so the
+				// promise ends here without a handover.
+				if (!searchAreaId || this.chatEntityId) {
+					return;
+				}
+
+				// This list is unmounted here, but its element stays on screen for the closing animation and the
+				// row the focus was left on still holds it. The search only takes a focus nobody holds, so the
+				// list gives up the one it is about to lose together with its own DOM.
+				this.dropFocusHeldInside();
+
+				// The search owns the element that takes the focus; all it needs from here is the moment.
+				this.getEmitter().emit(im_v2_const.EventType.search.returnFocusToSearch, {
+					searchAreaId
+				});
+			},
+			dropFocusHeldInside() {
+				const focused = document.activeElement;
+				if (focused && this.$refs.slider?.$el?.contains(focused)) {
+					focused.blur();
+				}
+			},
+			releaseFocusHandoffOfNestedList(parentChatId) {
+				return im_v2_lib_a11y.releaseKeyboardFocusHandoffFromNestedList({
+					layoutName: this.layoutName,
+					dialogId: im_v2_lib_utils.Utils.dialog.buildChatDialogId(parentChatId)
+				});
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
 			},
 			getPromoManager() {
 				if (!this.promoManager) {
@@ -1179,6 +1392,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:parentChatId="parentChatId"
 					:searchMode="searchMode"
 					:isSearchLoading="isSearchLoading"
+					:searchAreaId="searchAreaId"
 					@openSearch="onOpenSearch"
 					@closeSearch="onCloseSearch"
 					@updateSearch="onUpdateSearch"
@@ -1207,6 +1421,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:parentChatId="parentChatId"
 					:showUsersCarousel="false"
 					:recentSectionType="RecentType.collabDefault"
+					:withKeyboardNavigation="true"
+					:searchAreaId="searchAreaId"
 					@loading="onSearchLoading"
 					@openItem="onOpenSearchItem"
 					@closeSearch="onCloseSearch"
@@ -1214,6 +1430,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<KeepAlive v-show="!searchMode && !unreadMode">
 					<component
 						:is="listComponent"
+						ref="sectionList"
 						:parentChatId="parentChatId"
 						@selectChat="$emit('selectChat', $event)"
 						@loadError="$emit('close')"
@@ -1222,6 +1439,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<component
 					v-if="unreadMode"
 					:is="listUnreadComponent"
+					ref="sectionUnreadList"
 					:parentChatId="parentChatId"
 					@selectChat="$emit('selectChat', $event)"
 					@loadError="$emit('close')"
@@ -1284,5 +1502,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.CollabNestedListContainer = CollabNestedListContainer;
 	exports.NestedListLoadingState = NestedListLoadingState;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Event, BX.Messenger.v2.Lib, BX.UI.System, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.UI.IconSet, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.EntitySelector, BX.UI.IconSet, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Event, BX.UI.System, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Css, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.EntitySelector, BX.UI.IconSet, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=registry.bundle.js.map

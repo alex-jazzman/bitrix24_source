@@ -6,12 +6,44 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const AppTheme = require('apptheme');
 
+	// Bridged from the webview page mobile/settings on b24:form:send:success.
+	const FEEDBACK_SEND_SUCCESS_EVENT = 'app-feedback:onFeedbackSendSuccess';
+
+	// One-shot handlers keyed by senderPage + formId, so a form dismissed
+	// without submit does not leave a listener that fires on a later success.
+	const sendSuccessHandlers = new Map();
+
+	const subscribeToSendSuccess = (senderPage, formId, onSendSuccess) => {
+		const key = `${senderPage}:${formId}`;
+
+		const staleHandler = sendSuccessHandlers.get(key);
+		if (staleHandler)
+		{
+			BX.removeCustomEvent(FEEDBACK_SEND_SUCCESS_EVENT, staleHandler);
+		}
+
+		const handler = (payload = {}) => {
+			if (String(payload.senderPage) !== String(senderPage) || String(payload.formId) !== String(formId))
+			{
+				return;
+			}
+
+			BX.removeCustomEvent(FEEDBACK_SEND_SUCCESS_EVENT, handler);
+			sendSuccessHandlers.delete(key);
+			onSendSuccess(payload);
+		};
+
+		sendSuccessHandlers.set(key, handler);
+		BX.addCustomEvent(FEEDBACK_SEND_SUCCESS_EVENT, handler);
+	};
+
 	class FeedbackForm
 	{
 		/**
 		 * @param {Object} props
 		 * @param {string} [props.formId]
 		 * @param {string} [props.senderPage]
+		 * @param {Function} [props.onSendSuccess] called once the form is submitted successfully
 		 */
 		constructor(props)
 		{
@@ -24,6 +56,7 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 
 			this.senderPage = props.senderPage ?? '';
 			this.extraHiddenFields = props.extraHiddenFields ?? {};
+			this.onSendSuccess = typeof props.onSendSuccess === 'function' ? props.onSendSuccess : null;
 		}
 
 		/**
@@ -59,6 +92,11 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 				backdrop = null,
 				title = Loc.getMessage('FEEDBACK_FORM_TITLE'),
 			} = params;
+
+			if (this.onSendSuccess)
+			{
+				subscribeToSendSuccess(this.senderPage, this.formId, this.onSendSuccess);
+			}
 
 			PageManager.openPage({
 				backgroundColor: Color.bgSecondary.toHex(),

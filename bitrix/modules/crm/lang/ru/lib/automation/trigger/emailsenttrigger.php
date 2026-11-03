@@ -4,5 +4,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_SENT_NAME'] = 'Письмо отправле
 $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_SENT_NAME_1'] = 'Отследить отправку письма клиенту';
 $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_SENT_DESCRIPTION'] = 'Меняет стадию после того, как менеджер отправил клиенту письмо';
 
-$MESS['CRM_AUTOMATION_TRIGGER_EMAIL_SENT_NODE_DESCRIPTION'] = 'Запускает процесс после того, как менеджер отправил клиенту письмо';
+$MESS['CRM_AUTOMATION_TRIGGER_EMAIL_SENT_NODE_DESCRIPTION'] = 'Запускает процесс после отправки письма клиенту';
 $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_SENT_EVENT_DATE_TIME'] = 'Дата и время отправки письма';

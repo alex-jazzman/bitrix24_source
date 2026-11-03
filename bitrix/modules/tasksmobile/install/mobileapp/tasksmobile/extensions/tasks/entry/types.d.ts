@@ -2,6 +2,14 @@ import { PageManager } from '../../../../../../../mobile/dev/janative/api';
 
 type AnalyticsLabel = Record<string, string | number>;
 
+export type PresentationLike = {
+	isModal(): boolean,
+	getModalSettings(): {
+		modal: boolean,
+		leftButtons: Array<{ type: string, color: string, isCloseButton: boolean }>,
+	},
+};
+
 export type OpenTaskData = {
 	id?: string | number,
 	taskId?: string | number,
@@ -15,6 +23,7 @@ export type OpenTaskParams = {
 	view?: string,
 	kanbanOwnerId?: number,
 	projectId?: number | null,
+	presentation?: PresentationLike,
 };
 
 export type OpenEfficiencyData = {
@@ -70,6 +79,7 @@ export type OpenTaskListData = {
 	ownerId?: number,
 	getProjectData?: boolean,
 	analyticsLabel?: AnalyticsLabel,
+	presentation?: PresentationLike,
 };
 
 export type TaskCreationDataGroupDto = {

@@ -13,6 +13,7 @@ jn.define('statemanager/redux/slices/tariff-plan-restrictions/thunk', (require, 
 				.setHandler(resolve)
 				.setSkipDuplicateRequests()
 				.call(false)
+				.catch(console.error)
 			;
 		}),
 	);

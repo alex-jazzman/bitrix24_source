@@ -1,4 +1,3 @@
-import { RecentType } from 'im.v2.const';
 import { UnreadModeManager } from 'im.v2.lib.unread-mode';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { Core } from 'im.v2.application.core';
@@ -19,7 +18,7 @@ export class RecentHeaderMenu extends BaseRecentHeaderMenu
 	{
 		Analytics.getInstance().recentHeaderMenu.onReadAllChats();
 
-		UnreadModeManager.removeClosedChats(RecentType.default);
+		UnreadModeManager.removeAllClosedChats();
 
 		(new ChatService()).readAll();
 	}

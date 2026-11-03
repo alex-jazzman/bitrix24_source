@@ -1,16 +1,16 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_ears,ui_designTokens,ui_vue3,market_ratingReview) {
+(function (exports, ui_ears, main_core, ui_designTokens, ui_vue3, market_ratingReview) {
 	'use strict';
 
 	const Stars = {
-	  props: ['rating'],
-	  methods: {
-	    isActiveStar: function (currentStar, rating) {
-	      return currentStar <= parseInt(rating, 10);
-	    }
-	  },
-	  template: `
+		props: ['rating'],
+		methods: {
+			isActiveStar: function (currentStar, rating) {
+				return currentStar <= parseInt(rating, 10);
+			}
+		},
+		template: `
 		<div class="market-detail__feedback-item_stars-container --feedback">
 			<svg class="market-rating__app-rating_star"
 				 :class="{'--active': isActiveStar(1, rating)}"
@@ -42,43 +42,45 @@ this.BX = this.BX || {};
 	};
 
 	const RatingItem = {
-	  components: {
-	    Stars
-	  },
-	  props: ['review'],
-	  data() {
-	    return {};
-	  },
-	  computed: {
-	    activeReview: function () {
-	      return '';
-	    },
-	    getReviewText: function () {
-	      return this.review.REVIEW_TEXT_SHORT ? this.review.REVIEW_TEXT_SHORT + '...' : this.review.REVIEW_TEXT_FULL;
-	    },
-	    getAnswerText: function () {
-	      return this.review.REVIEW_ANSWER_TEXT_SHORT ? this.review.REVIEW_ANSWER_TEXT_SHORT + '...' : this.review.REVIEW_ANSWER_TEXT_FULL;
-	    }
-	  },
-	  mounted() {
-	    setTimeout(() => this.$refs.marketReviewItem.removeAttribute('data-role'), 3000);
-	  },
-	  methods: {
-	    showFullReview: function () {
-	      new BX.Main.Popup({
-	        content: this.$refs.marketFullReview,
-	        overlay: true,
-	        closeIcon: true,
-	        autoHide: true,
-	        closeByEsc: true,
-	        width: 492,
-	        borderRadius: 12,
-	        padding: 17,
-	        className: 'market-popup__full-review'
-	      }).show();
-	    }
-	  },
-	  template: `
+		components: {
+			Stars
+		},
+		props: ['review'],
+		data() {
+			return {};
+		},
+		computed: {
+			activeReview: function () {
+				return '';
+			},
+			getReviewText: function () {
+				const text = this.review.REVIEW_TEXT_SHORT ? this.review.REVIEW_TEXT_SHORT + '...' : this.review.REVIEW_TEXT_FULL;
+				return main_core.Text.decode(text.replace(/&#039;/g, '&#39;'));
+			},
+			getAnswerText: function () {
+				const text = this.review.REVIEW_ANSWER_TEXT_SHORT ? this.review.REVIEW_ANSWER_TEXT_SHORT + '...' : this.review.REVIEW_ANSWER_TEXT_FULL;
+				return main_core.Text.decode(text.replace(/&#039;/g, '&#39;'));
+			}
+		},
+		mounted() {
+			setTimeout(() => this.$refs.marketReviewItem.removeAttribute('data-role'), 3000);
+		},
+		methods: {
+			showFullReview: function () {
+				new BX.Main.Popup({
+					content: this.$refs.marketFullReview,
+					overlay: true,
+					closeIcon: true,
+					autoHide: true,
+					closeByEsc: true,
+					width: 492,
+					borderRadius: 12,
+					padding: 17,
+					className: 'market-popup__full-review'
+				}).show();
+			}
+		},
+		template: `
 		<!-- data-role="ui-ears-active" -->
 		<div class="market-detail__feedback-item"
 			 :data-role="activeReview"
@@ -126,8 +128,8 @@ this.BX = this.BX || {};
 					<div class="market-detail__feedback-item_text">
 						{{ getReviewText }}
 						<span class="market-detail__feedback-item_link-btn"
-							  v-if="review.REVIEW_TEXT_SHORT"
-							  @click="showFullReview"
+								v-if="review.REVIEW_TEXT_SHORT"
+								@click="showFullReview"
 						>{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_REVIEW_MORE') }}</span>
 					</div>
 					<template v-if="review.REVIEW_ANSWER_TEXT_FULL">
@@ -138,8 +140,8 @@ this.BX = this.BX || {};
 						<div class="market-detail__feedback-item_text">
 							{{ getAnswerText }}
 							<span class="market-detail__feedback-item_link-btn"
-								  v-if="review.REVIEW_ANSWER_TEXT_SHORT"
-								  @click="showFullReview"
+									v-if="review.REVIEW_ANSWER_TEXT_SHORT"
+									@click="showFullReview"
 							>{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_REVIEW_MORE') }}</span>
 						</div>
 					</template>
@@ -211,132 +213,132 @@ this.BX = this.BX || {};
 	};
 
 	const Rating = {
-	  components: {
-	    RatingItem
-	  },
-	  props: ['appInfo', 'isSite', 'showNoAccessInstallButton'],
-	  data() {
-	    return {
-	      application: {},
-	      needInstallBeforeAdd: true,
-	      ratingClickState: false,
-	      // клик по звёздам, когда не установлено
-	      feedbackBlock: null,
-	      // блок с отзывами, чтобы прикрутить уши для прокрутки
-	      reviewPopup: null
-	    };
-	  },
-	  beforeMount() {
-	    this.application = this.appInfo;
-	    this.needInstallBeforeAdd = this.isSite !== true;
-	  },
-	  computed: {
-	    canReview: function () {
-	      return this.application.REVIEWS.CAN_REVIEW === 'Y';
-	    },
-	    appWasInstalled: function () {
-	      return this.application.WAS_INSTALLED && this.application.WAS_INSTALLED === 'Y';
-	    },
-	    showInstallState: function () {
-	      return this.needInstallBeforeAdd && !this.appWasInstalled && !this.countReviews;
-	    },
-	    canRatingClick: function () {
-	      return this.canReview && !this.sendingReview;
-	    },
-	    countReviews: function () {
-	      return parseInt(this.application.REVIEWS.RATING.COUNT, 10);
-	    },
-	    totalRating: function () {
-	      if (this.application.REVIEWS.RATING && this.application.REVIEWS.RATING.RATING) {
-	        return this.application.REVIEWS.RATING.RATING;
-	      }
-	      return 0;
-	    }
-	  },
-	  mounted() {
-	    this.feedbackBlock = this.$refs.marketFeedback;
-	    if (this.feedbackBlock) {
-	      new ui_ears.Ears({
-	        container: this.feedbackBlock,
-	        smallSize: true,
-	        noScrollbar: true
-	      }).init();
-	    }
-	  },
-	  beforeUnmount() {
-	    this.cancelAddingReviewClick();
-	  },
-	  methods: {
-	    scrollToUserReview: function () {
-	      window.scrollTo({
-	        top: this.feedbackBlock.getBoundingClientRect().top,
-	        behavior: 'smooth'
-	      });
-	    },
-	    ratingClick: function () {
-	      this.ratingClickState = true;
-	      setTimeout(() => this.ratingClickState = false, 2000);
-	    },
-	    isActiveStar: function (currentStar, rating) {
-	      return currentStar <= parseInt(rating, 10);
-	    },
-	    addingReviewClick() {
-	      if (this.reviewPopup) {
-	        return;
-	      }
-	      const popupContainer = document.createElement('div');
-	      this.reviewPopup = ui_vue3.BitrixVue.createApp(market_ratingReview.RatingReview, {
-	        appInfo: this.appInfo,
-	        isSite: this.isSite,
-	        onSuccess: event => {
-	          this.successReviewHandler(event);
-	        },
-	        onClose: () => {
-	          this.cancelAddingReviewClick();
-	        }
-	      });
-	      this.reviewPopup.mount(popupContainer);
-	    },
-	    cancelAddingReviewClick() {
-	      if (this.reviewPopup) {
-	        this.reviewPopup.unmount();
-	        this.reviewPopup = null;
-	      }
-	    },
-	    showNotify(text) {
-	      BX.UI.Notification.Center.notify({
-	        content: text,
-	        position: BX.UI.Notification.Position.BOTTOM_LEFT
-	      });
-	    },
-	    getCountStars: function (star) {
-	      if (!this.application.REVIEWS.RATING || !this.application.REVIEWS.RATING.RATING_DETAIL) {
-	        return 0;
-	      }
-	      if (this.application.REVIEWS.RATING.RATING_DETAIL[star]) {
-	        return this.application.REVIEWS.RATING.RATING_DETAIL[star];
-	      }
-	      return 0;
-	    },
-	    getStarWidth: function (star) {
-	      if (this.getCountStars(star) === 0 || !this.countReviews) {
-	        return '0%';
-	      }
-	      return this.getCountStars(star) / this.countReviews * 100 + '%';
-	    },
-	    successReviewHandler: function (data) {
-	      if (data && data.hasOwnProperty('can_review')) {
-	        this.application.REVIEWS.CAN_REVIEW = data.can_review;
-	      }
-	      if (data && data.hasOwnProperty('review_info') && BX.Type.isArray(this.application.REVIEWS.ITEMS)) {
-	        this.application.REVIEWS.ITEMS.unshift(data.review_info);
-	      }
-	      if (data && data.hasOwnProperty('rating') && data.rating.hasOwnProperty('RATING_DETAIL')) {
-	        this.application.REVIEWS.RATING = data.rating;
-	      }
-	    }
-	  },
-	  template: `
+		components: {
+			RatingItem
+		},
+		props: ['appInfo', 'isSite', 'showNoAccessInstallButton'],
+		data() {
+			return {
+				application: {},
+				needInstallBeforeAdd: true,
+				ratingClickState: false,
+				// клик по звёздам, когда не установлено
+				feedbackBlock: null,
+				// блок с отзывами, чтобы прикрутить уши для прокрутки
+				reviewPopup: null
+			};
+		},
+		beforeMount() {
+			this.application = this.appInfo;
+			this.needInstallBeforeAdd = this.isSite !== true;
+		},
+		computed: {
+			canReview: function () {
+				return this.application.REVIEWS.CAN_REVIEW === 'Y';
+			},
+			appWasInstalled: function () {
+				return this.application.WAS_INSTALLED && this.application.WAS_INSTALLED === 'Y';
+			},
+			showInstallState: function () {
+				return this.needInstallBeforeAdd && !this.appWasInstalled && !this.countReviews;
+			},
+			canRatingClick: function () {
+				return this.canReview && !this.sendingReview;
+			},
+			countReviews: function () {
+				return parseInt(this.application.REVIEWS.RATING.COUNT, 10);
+			},
+			totalRating: function () {
+				if (this.application.REVIEWS.RATING && this.application.REVIEWS.RATING.RATING) {
+					return this.application.REVIEWS.RATING.RATING;
+				}
+				return 0;
+			}
+		},
+		mounted() {
+			this.feedbackBlock = this.$refs.marketFeedback;
+			if (this.feedbackBlock) {
+				new ui_ears.Ears({
+					container: this.feedbackBlock,
+					smallSize: true,
+					noScrollbar: true
+				}).init();
+			}
+		},
+		beforeUnmount() {
+			this.cancelAddingReviewClick();
+		},
+		methods: {
+			scrollToUserReview: function () {
+				window.scrollTo({
+					top: this.feedbackBlock.getBoundingClientRect().top,
+					behavior: 'smooth'
+				});
+			},
+			ratingClick: function () {
+				this.ratingClickState = true;
+				setTimeout(() => this.ratingClickState = false, 2000);
+			},
+			isActiveStar: function (currentStar, rating) {
+				return currentStar <= parseInt(rating, 10);
+			},
+			addingReviewClick() {
+				if (this.reviewPopup) {
+					return;
+				}
+				const popupContainer = document.createElement('div');
+				this.reviewPopup = ui_vue3.BitrixVue.createApp(market_ratingReview.RatingReview, {
+					appInfo: this.appInfo,
+					isSite: this.isSite,
+					onSuccess: event => {
+						this.successReviewHandler(event);
+					},
+					onClose: () => {
+						this.cancelAddingReviewClick();
+					}
+				});
+				this.reviewPopup.mount(popupContainer);
+			},
+			cancelAddingReviewClick() {
+				if (this.reviewPopup) {
+					this.reviewPopup.unmount();
+					this.reviewPopup = null;
+				}
+			},
+			showNotify(text) {
+				BX.UI.Notification.Center.notify({
+					content: text,
+					position: BX.UI.Notification.Position.BOTTOM_LEFT
+				});
+			},
+			getCountStars: function (star) {
+				if (!this.application.REVIEWS.RATING || !this.application.REVIEWS.RATING.RATING_DETAIL) {
+					return 0;
+				}
+				if (this.application.REVIEWS.RATING.RATING_DETAIL[star]) {
+					return this.application.REVIEWS.RATING.RATING_DETAIL[star];
+				}
+				return 0;
+			},
+			getStarWidth: function (star) {
+				if (this.getCountStars(star) === 0 || !this.countReviews) {
+					return '0%';
+				}
+				return this.getCountStars(star) / this.countReviews * 100 + '%';
+			},
+			successReviewHandler: function (data) {
+				if (data && data.hasOwnProperty('can_review')) {
+					this.application.REVIEWS.CAN_REVIEW = data.can_review;
+				}
+				if (data && data.hasOwnProperty('review_info') && BX.Type.isArray(this.application.REVIEWS.ITEMS)) {
+					this.application.REVIEWS.ITEMS.unshift(data.review_info);
+				}
+				if (data && data.hasOwnProperty('rating') && data.rating.hasOwnProperty('RATING_DETAIL')) {
+					this.application.REVIEWS.RATING = data.rating;
+				}
+			}
+		},
+		template: `
 		<div class="market-detail__app-rating-info">
 			<div class="market-detail__app-rating-info_container">
 				<div class="market-detail__app-rating-info_stars-block">
@@ -483,8 +485,8 @@ this.BX = this.BX || {};
 								<svg width="79" height="78" viewBox="0 0 79 78" fill="none"
 									 xmlns="http://www.w3.org/2000/svg">
 									<path fill-rule="evenodd" clip-rule="evenodd"
-										  d="M21.3519 39C20.0466 39 18.868 39.7809 18.3591 40.9828L13.5 52.4588H65.5L60.6409 40.9828C60.132 39.7809 58.9534 39 57.6481 39H56.092L59.3331 47.502C59.7385 48.5657 58.953 49.7059 57.8146 49.7059H20.9232C19.7679 49.7059 18.9816 48.5343 19.4194 47.4652L22.8852 39H21.3519ZM65.5 52.4588H13.5V61.7502C13.5 63.5451 14.9551 65.0002 16.75 65.0002H62.25C64.0449 65.0002 65.5 63.5451 65.5 61.7502V52.4588ZM55.75 61.3298C57.5449 61.3298 59 59.9016 59 58.1399C59 56.3781 57.5449 54.95 55.75 54.95C53.9551 54.95 52.5 56.3781 52.5 58.1399C52.5 59.9016 53.9551 61.3298 55.75 61.3298Z"
-										  fill="#D5D7DB"/>
+											d="M21.3519 39C20.0466 39 18.868 39.7809 18.3591 40.9828L13.5 52.4588H65.5L60.6409 40.9828C60.132 39.7809 58.9534 39 57.6481 39H56.092L59.3331 47.502C59.7385 48.5657 58.953 49.7059 57.8146 49.7059H20.9232C19.7679 49.7059 18.9816 48.5343 19.4194 47.4652L22.8852 39H21.3519ZM65.5 52.4588H13.5V61.7502C13.5 63.5451 14.9551 65.0002 16.75 65.0002H62.25C64.0449 65.0002 65.5 63.5451 65.5 61.7502V52.4588ZM55.75 61.3298C57.5449 61.3298 59 59.9016 59 58.1399C59 56.3781 57.5449 54.95 55.75 54.95C53.9551 54.95 52.5 56.3781 52.5 58.1399C52.5 59.9016 53.9551 61.3298 55.75 61.3298Z"
+											fill="#D5D7DB"/>
 									<path
 										d="M41 16.25C41 15.4216 40.3284 14.75 39.5 14.75C38.6716 14.75 38 15.4216 38 16.25L41 16.25ZM38.4393 43.3107C39.0251 43.8964 39.9749 43.8964 40.5607 43.3107L50.1066 33.7647C50.6924 33.1789 50.6924 32.2292 50.1066 31.6434C49.5208 31.0576 48.5711 31.0576 47.9853 31.6434L39.5 40.1287L31.0147 31.6434C30.4289 31.0576 29.4792 31.0576 28.8934 31.6434C28.3076 32.2292 28.3076 33.1789 28.8934 33.7647L38.4393 43.3107ZM38 16.25L38 42.25L41 42.25L41 16.25L38 16.25Z"
 										fill="#D5D7DB"/>
@@ -514,12 +516,12 @@ this.BX = this.BX || {};
 											<svg width="25" height="24" viewBox="0 0 25 24" fill="none"
 												 xmlns="http://www.w3.org/2000/svg">
 												<path fill-rule="evenodd" clip-rule="evenodd"
-													  d="M13.5 6H11.5V11H6.5V13H11.5V18H13.5V13H18.5V11H13.5V6Z"
-													  fill="#559BE6"/>
+														d="M13.5 6H11.5V11H6.5V13H11.5V18H13.5V13H18.5V11H13.5V6Z"
+														fill="#559BE6"/>
 											</svg>
 										</span>
 									<span class="market-detail__app-rating_add-feedback-btn-text"
-										  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW')"
+											v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW')"
 									></span>
 								</div>
 
@@ -538,4 +540,4 @@ this.BX = this.BX || {};
 
 	exports.Rating = Rating;
 
-}((this.BX.Market = this.BX.Market || {}),BX.UI,BX,BX.Vue3,BX.Market));
+})(this.BX.Market = this.BX.Market || {}, BX.UI, BX, window, BX.Vue3, BX.Market);

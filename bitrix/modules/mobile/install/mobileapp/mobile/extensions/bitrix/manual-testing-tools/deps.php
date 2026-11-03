@@ -10,6 +10,7 @@ return [
 		'utils/function',
 		'app-rating-manager/manual-testing-tool',
 		'onboarding/testing-tool',
+		'stafftrack:check-in-v3/map-testing-tool',
 		'ui-system/layout/box',
 		'tokens',
 		'ui-system/blocks/icon',

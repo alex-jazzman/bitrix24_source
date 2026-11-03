@@ -12,6 +12,7 @@ jn.define('tasks/layout/dod', (require, exports, module) => {
 	const { Area } = require('ui-system/layout/area');
 	const { BottomSheet } = require('bottom-sheet');
 	const { ChecklistController } = require('tasks/checklist');
+	const { ChecklistEntityType } = require('tasks/checklist/enum');
 	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { makeLibraryImagePath } = require('asset-manager');
@@ -147,10 +148,18 @@ jn.define('tasks/layout/dod', (require, exports, module) => {
 
 		#saveDod()
 		{
+			const items = this.checklistController.getDodRequestData();
+
+			// null = the checklist can't be saved; don't pass incomplete data to saveList
+			if (items === null)
+			{
+				return null;
+			}
+
 			const data = {
 				taskId: this.#getTaskId(),
 				typeId: this.#getSelectedTypeId(),
-				items: this.checklistController.getChecklistRequestData(),
+				items,
 			};
 
 			return (new RunActionExecutor(
@@ -181,25 +190,28 @@ jn.define('tasks/layout/dod', (require, exports, module) => {
 				? params
 				: { ...this.state, ...params };
 
-			const checklistTree = this.#getSelectedDodTree(initParams);
+			const selectedDodTree = this.#getSelectedDodTree(initParams);
 
-			if (!checklistTree)
+			if (!selectedDodTree)
 			{
 				return;
 			}
 
 			this.checklistController = new ChecklistController({
+				// DoD is a separate store entity ('dod'), isolated from task checklists; saved in bulk via #saveDod
+				entityType: ChecklistEntityType.DOD.getValue(),
 				userId,
-				checklistTree,
 				taskId: this.#getTaskId(),
 				groupId: this.#getGroupId(),
 				inLayout: false,
-				hideCompleted: false,
 				hideMoreMenu: true,
 				autoCompleteItem: false,
 				parentWidget: this.parentWidget,
 				onChange: this.#handleOnChange,
 			});
+
+			// getDodTree returns a V2 flat list (see Controller/Dod), seed canonically.
+			this.checklistController.seedFromV2(selectedDodTree.items);
 		}
 
 		#handleOnChange = () => {
@@ -344,7 +356,7 @@ jn.define('tasks/layout/dod', (require, exports, module) => {
 			};
 
 			complete();
-			this.#saveDod();
+			void this.#saveDod();
 		};
 
 		async #changeDodChecklist()
@@ -357,13 +369,14 @@ jn.define('tasks/layout/dod', (require, exports, module) => {
 			if (!this.#isLoadedDodTree(typeId))
 			{
 				const { dodTrees, dodTreeIds } = this.state;
-				const dodChecklist = await this.#fetchDodChecklist(typeId);
+				// getDodTree returns a V2 flat LIST - store it under items, not spread.
+				const dodChecklistItems = await this.#fetchDodChecklist(typeId);
 
 				state = {
 					...state,
 					loading: false,
 					dodTreeIds: [...dodTreeIds, Number(typeId)],
-					dodTrees: [...dodTrees, { ...dodChecklist, typeId }],
+					dodTrees: [...dodTrees, { items: dodChecklistItems, typeId }],
 				};
 			}
 

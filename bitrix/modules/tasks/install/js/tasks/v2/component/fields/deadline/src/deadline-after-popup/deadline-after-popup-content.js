@@ -127,6 +127,7 @@ export const DeadlineAfterPopupContent = {
 		<Duration
 			v-model="duration"
 			:label="loc('TASKS_V2_DEADLINE_AFTER_CUSTOM')"
+			:unitAriaLabel="loc('TASKS_V2_DEADLINE_AFTER_DURATION_UNIT_ARIA_LABEL')"
 			:matchesWorkTime="task?.matchesWorkTime"
 			@menuShown="freeze"
 			@menuHidden="unfreeze"

@@ -6,8 +6,8 @@ import { type DraftLargeAttachment } from 'mail.client.large-attachment';
 import { BodyNodePrefix } from '../../const';
 import { ComposeFormEvent } from '../../const/event';
 import { type ComposeEditorAdapter } from '../../infrastructure/adapter/editor/types';
-import { getSelectedSender } from '../../model/compose/compose';
-import { type ComposeState, type RecipientItemDto } from '../../model/compose/types';
+import { getSelectedSender, selectSender } from '../../model/compose/compose';
+import { type ComposeState, type RecipientItemDto, type SenderDto } from '../../model/compose/types';
 
 type DraftRecipient = {
 	name: string,
@@ -28,7 +28,7 @@ const AddressBookAvatar = '/bitrix/images/mail/entity_provider_icons/addressbook
 
 type ComposeSnapshot = {
 	clientId: string,
-	sender: { name: string, email: string } | null,
+	sender: { name: string, email: string, mailboxId?: number | null } | null,
 	to: DraftRecipient[],
 	cc: DraftRecipient[],
 	bcc: DraftRecipient[],
@@ -67,6 +67,26 @@ export const DraftBridgeEvent = Object.freeze({
 	BeforeSubmit: 'BX.Mail.Client.ComposeForm:beforeSubmit',
 	SubmitAjaxSuccess: 'BX.Mail.Client.ComposeForm:submitAjaxSuccess',
 });
+
+/**
+ * The caller side of the bridge, kept beside the names it announces: the draft listeners of the form get
+ * their chance to finish before the letter leaves it, because a save advances the very revision the request
+ * must name. Nothing is awaited when no listener holds anything — a form without a draft submits in one step.
+ */
+export function getDraftWait(eventName: string, formId: string): Promise<void> | null
+{
+	const pending: Promise<void>[] = [];
+	EventEmitter.emit(eventName, {
+		formId,
+		data: {
+			waitUntil: (promise: Promise<void>): void => {
+				pending.push(promise);
+			},
+		},
+	});
+
+	return pending.length > 0 ? Promise.all(pending).then((): void => {}) : null;
+}
 
 export class DraftComposeAdapter
 {
@@ -113,7 +133,7 @@ export class DraftComposeAdapter
 
 		return {
 			clientId: state.draft.clientId,
-			sender: sender ? { name: sender.name, email: sender.email } : null,
+			sender: sender ? { name: sender.name, email: sender.email, mailboxId: toMailboxId(sender.mailboxId) } : null,
 			to: state.recipients.to.map((item): DraftRecipient => toDraftRecipient(item)),
 			cc: state.recipients.cc.map((item): DraftRecipient => toDraftRecipient(item)),
 			bcc: state.recipients.bcc.map((item): DraftRecipient => toDraftRecipient(item)),
@@ -143,8 +163,8 @@ export class DraftComposeAdapter
 			return;
 		}
 
-		const selectedSender = resolveSender(this.#params.state, snapshot.sender);
-		if (snapshot.sender && !selectedSender)
+		const restoredSender = resolveSender(this.#params.state, snapshot.sender);
+		if (snapshot.sender && !restoredSender)
 		{
 			throw new Error('Draft sender is unavailable.');
 		}
@@ -155,7 +175,15 @@ export class DraftComposeAdapter
 		}
 
 		const state = this.#params.state;
-		state.selectedSender = selectedSender;
+		if (restoredSender)
+		{
+			selectSender(state, restoredSender);
+		}
+		else
+		{
+			state.selectedSender = null;
+		}
+
 		state.recipients.to = snapshot.to.map((recipient) => toRecipientItem(recipient));
 		state.recipients.cc = snapshot.cc.map((recipient) => toRecipientItem(recipient));
 		state.recipients.bcc = snapshot.bcc.map((recipient) => toRecipientItem(recipient));
@@ -399,6 +427,7 @@ export class DraftComposeAdapter
 	setDraftRestoreFailed(failed: boolean): void
 	{
 		this.#params.state.draft.restoreFailed = failed;
+		this.#params.editor.setReadOnly(failed);
 	}
 
 	showError(message: string): void
@@ -523,17 +552,38 @@ function toRecipientItem(recipient: DraftRecipient): RecipientItemDto
 	};
 }
 
+function toMailboxId(value: number | string | null | undefined): number | null
+{
+	const mailboxId = Number(value ?? 0);
+
+	return Number.isFinite(mailboxId) && mailboxId > 0 ? mailboxId : null;
+}
+
+/**
+ * The mailbox saved with the draft wins over the address: two connections of one address share the
+ * `formated` string, so the address alone would restore the draft on the first of them.
+ */
 function resolveSender(
 	state: ComposeState,
 	sender: ComposeSnapshot['sender'],
-): string | null
+): SenderDto | null
 {
 	if (!sender)
 	{
 		return null;
 	}
 
+	const mailboxId = toMailboxId(sender.mailboxId);
+	if (mailboxId !== null)
+	{
+		const byMailbox = state.senders.find((item) => toMailboxId(item.mailboxId) === mailboxId);
+		if (byMailbox)
+		{
+			return byMailbox;
+		}
+	}
+
 	const email = sender.email.trim().toLowerCase();
 
-	return state.senders.find((item) => item.email.trim().toLowerCase() === email)?.formated ?? null;
+	return state.senders.find((item) => item.email.trim().toLowerCase() === email) ?? null;
 }

@@ -1,24 +1,19 @@
 .tasks-field-replication {
 	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
 	border-radius: var(--ui-border-radius-md);
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 1px var(--ui-color-area-box-shadow-default-color);
 }
 
 .tasks-field-replication-content-wrapper {
 	background: var(--ui-color-base-8);
 	padding: var(--ui-space-inset-md2);
 	border-radius: var(--ui-border-radius-md);
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 1px var(--ui-color-area-box-shadow-default-color);
 	cursor: pointer;
 }
 
 .tasks-field-replication-content-wrapper.--readonly {
 	cursor: default;
-}
-
-.tasks-full-card-field-container-replication {
-	background-color: rgba(255, 255, 255, 0.44) !important;
-	border-radius: var(--ui-border-radius-md);
 }
 
 .tasks-field-replication-history {
@@ -29,6 +24,26 @@
 	min-height: 40px;
 	padding: 8px 16px;
 	cursor: pointer;
+}
+
+/* history button reset */
+.tasks-field-replication-history {
+	width: 100%;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	border: none;
+}
+/* history button reset end */
+
+.tasks-field-replication-history:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.ui-chip[data-task-chip-id="replication"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }
 
 .tasks-field-replication-history-title {

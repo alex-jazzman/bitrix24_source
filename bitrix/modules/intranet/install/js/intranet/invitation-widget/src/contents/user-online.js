@@ -1,6 +1,7 @@
-import { Content } from "./content";
-import { Tag, ajax, Runtime, Dom } from "main.core";
-import { Loader } from "main.loader";
+import { ajax, Dom, Runtime, Tag } from 'main.core';
+import { Loader } from 'main.loader';
+
+import { Content } from './content';
 
 export class UserOnlineContent extends Content
 {
@@ -10,33 +11,44 @@ export class UserOnlineContent extends Content
 			return new Loader({
 				size: 45,
 			});
-		})
+		});
 	}
 
-	getComponentContent(): HTMLElement {
+	getComponentContent(): HTMLElement
+	{
 		return this.cache.remember('component-content', () => {
 			const contentContainer = Tag.render`
 				<div data-role="invitation-widget-ustat-online" class="invitation-widget-ustat-online"/>
 			`;
 
+			Dom.attr(contentContainer, 'aria-busy', 'true');
 			this.getLoader().show(contentContainer);
-
-			ajax.runAction("intranet.invitationwidget.getUserOnlineComponent").then((response) => {
-				this.getLoader().hide();
-				const assets = response.data.assets;
-				BX.load([...assets['css'], ...assets['js']], () => {
-					Runtime.html(null, [...assets['string']].join('\n'), {useAdjacentHTML: true})
-						.then(() => {
-							Runtime.html(contentContainer, response.data.html).then(() => {
-								this.getLoader().destroy();
-							});
-						})
-					;
-				});
-			});
+			this.#loadComponentContent(contentContainer).catch(() => Dom.clean(contentContainer));
 
 			return contentContainer;
 		});
+	}
+
+	async #loadComponentContent(contentContainer: HTMLElement): Promise<void>
+	{
+		try
+		{
+			const response = await ajax.runAction('intranet.invitationwidget.getUserOnlineComponent');
+			const assets = response.data.assets;
+
+			await new Promise((resolve) => {
+				BX.load([...assets.css, ...assets.js], resolve);
+			});
+			await Runtime.html(null, [...assets.string].join('\n'), { useAdjacentHTML: true });
+			await Runtime.html(contentContainer, response.data.html);
+		}
+		finally
+		{
+			Dom.attr(contentContainer, 'aria-busy', 'false');
+			this.getLoader().hide();
+			this.getLoader().destroy();
+			this.cache.delete('loader');
+		}
 	}
 
 	getLayout(): HTMLDivElement

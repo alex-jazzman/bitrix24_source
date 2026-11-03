@@ -727,6 +727,25 @@ a {
 	outline-offset: 2px;
 }
 
+/* The rest of the block is built of native controls, and the ring the browser draws on them is
+   switched off by the styles around them. The shape is the one of the corner above: a keyboard user
+   walking the block has to be shown the same mark everywhere in it. */
+.landing-cookies-work-modes-item input[type="radio"]:focus-visible,
+.landing-form-cookies-color:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* The list of agreements is drawn by bitrix:main.userconsent.selector, and that template sets
+   `outline: none` on it, so the ring has to be given back from the wrapper landing prints it in.
+   Both places printing the block are named: the cookies block of the site settings and the
+   agreements row of the catalog ones, which this file styles too. */
+.landing-form-cookies-inner .main-user-consent-selector-block-input-item:focus-visible,
+#row_userconsent .main-user-consent-selector-block-input-item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
 .landing-form-row-robots .ui-ctl-textarea,
 .landing-form-row-headblock .ui-ctl-textarea,
 .landing-form-row-cssblock .ui-ctl-textarea {

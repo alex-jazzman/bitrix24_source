@@ -24,6 +24,7 @@ $config = [
 		'tasks.v2.lib.promotion',
 		'tasks.v2.provider.service.file-service',
 		'tasks.v2.provider.service.task-service',
+		'ui.a11y',
 		'ui.dialogs.messagebox',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',

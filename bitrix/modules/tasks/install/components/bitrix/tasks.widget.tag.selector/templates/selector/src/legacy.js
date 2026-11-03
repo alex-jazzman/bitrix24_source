@@ -332,33 +332,6 @@ BX.namespace('Tasks.Component');
 
 
 
-				var showAddButton = function()
-				{
-					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
-					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
-					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
-				};
-
-				var hideAddButton = function()
-				{
-					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
-					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
-					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
-				};
-
-				var onSearch = function(event)
-				{
-					var dialog = event.getTarget();
-					var query = event.getData().query;
-					if (query.trim() !== '')
-					{
-						showAddButton();
-					}
-					else
-					{
-						hideAddButton();
-					}
-				};
 				var showAlert = function(className, error) {
 					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
 
@@ -370,10 +343,10 @@ BX.namespace('Tasks.Component');
 					var alert = document.createElement('div');
 					alert.className = className;
 					alert.innerHTML = `
-						<div class='ui-alert ui-alert-xs ui-alert-danger'  
+						<div class='ui-alert ui-alert-xs ui-alert-danger'
 							<span class='ui-alert-message'>
 								${error}
-							</span> 
+							</span>
 						</div>
 					`;
 				dialog.getFooterContainer().before(alert);
@@ -431,72 +404,69 @@ BX.namespace('Tasks.Component');
 						});
 					}
 
-					var events = ['click', 'keydown'];
-					var handler = function(event) {
-						if (event.type === 'keydown')
+				};
+				var createTag = function() {
+					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+					if (!dialog)
+					{
+						return;
+					}
+
+					var newTag = dialog.getTagSelectorQuery();
+					if (newTag.trim() === '')
+					{
+						return;
+					}
+
+					return BX.ajax.runComponentAction('bitrix:tasks.tag.list', 'addTag', {
+						mode: 'class',
+						data: {
+							newTag: newTag,
+							taskId: taskId,
+							groupId: groupId,
+						},
+					}).then(function(response) {
+						if (response.data.success)
 						{
-							if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13))
+							const item = dialog.addItem({
+								id: newTag,
+								entityId: 'task-tag',
+								title: newTag,
+								sort: 1,
+								badges: [
+									{
+										title: response.data.owner,
+									},
+								],
+							});
+
+							dialog.getTab('all').getRootNode().addItem(item);
+							item.select();
+							dialog.clearSearch();
+							var footer = dialog.getFooter();
+							if (footer && typeof footer.setSearchQuery === 'function')
 							{
-								return;
+								footer.setSearchQuery('');
 							}
-						}
-
-						var newTag = dialog.getTagSelectorQuery();
-						if (newTag.trim() === '')
-						{
-							return;
-						}
-
-						BX.ajax.runComponentAction('bitrix:tasks.tag.list', 'addTag', {
-							mode: 'class',
-							data: {
-								newTag: newTag,
-								taskId: taskId,
-								groupId: groupId,
-							},
-						}).then(function(response) {
-							if (response.data.success)
-							{
-								const item = dialog.addItem({
-									id: newTag,
-									entityId: 'task-tag',
-									title: newTag,
-									sort: 1,
-									badges: [
-										{
-											title: response.data.owner,
-										},
-									],
-								});
-
-								dialog.getTab('all').getRootNode().addItem(item);
-								item.select();
-								dialog.clearSearch();
-							}
-							else
-							{
-								var alertClass = 'tasks-selector-add-tag-already-exists-alert';
-								showAlert(alertClass, response.data.error);
-								var removeAlert = function() {
-									var notification = dialog.getContainer().querySelector(`div.${alertClass}`);
-									notification && notification.remove();
-								};
-								setTimeout(removeAlert, 2000);
-							}
-						});
-					};
-
-					events.forEach(function(ev) {
-						if (ev === 'click')
-						{
-							dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
-								.addEventListener(ev, handler);
 						}
 						else
 						{
-							dialog.getContainer().addEventListener(ev, handler);
+							var alertClass = 'tasks-selector-add-tag-already-exists-alert';
+							showAlert(alertClass, response.data.error);
+							var removeAlert = function() {
+								var notification = dialog.getContainer().querySelector(`div.${alertClass}`);
+								notification && notification.remove();
+							};
+							setTimeout(removeAlert, 2000);
 						}
 					});
+				};
+				var syncFooterSearch = function(event) {
+					var footer = event.getTarget().getFooter();
+					if (footer && typeof footer.setSearchQuery === 'function')
+					{
+						footer.setSearchQuery(event.getData().query);
+					}
 				};
 				var getTargetContainer = function()
 				{
@@ -542,6 +512,7 @@ BX.namespace('Tasks.Component');
 					footerOptions: {
 						taskId: this.opts.taskId,
 						groupId: this.opts.groupId,
+						onCreateTag: createTag,
 					},
 					clearUnavailableItems: true,
 					events: {
@@ -550,7 +521,7 @@ BX.namespace('Tasks.Component');
 							onTagsLoad(event);
 						}.bind(this),
 						'onSearch': function(event) {
-							onSearch(event);
+							syncFooterSearch(event);
 						}.bind(this),
 						'Item:onSelect': function(event) {
 							this.opts.dialogCallback && this.onTagsChange(event);

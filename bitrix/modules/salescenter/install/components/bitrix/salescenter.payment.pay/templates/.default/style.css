@@ -53,7 +53,7 @@
 
 .order-payment-title {
 	margin-bottom: 6px;
-	color: rgba(172, 172, 180, 0.78);
+	color: var(--ui-color-base-2);
 	font: 13px/17px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -88,7 +88,7 @@
 }
 
 .order-payment-price {
-	color: rgba(44, 44, 54, 0.6);
+	color: var(--ui-color-base-2);
 	white-space: nowrap;
 	font: 14px/17px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -173,8 +173,8 @@
 .btn.order-payment-method-item-button:hover,
 .btn.order-payment-method-item-button:focus,
 .btn.order-payment-method-item-button:active {
-	background-color: #00ae34 !important;
-	--theme-color-primary: #00ae34;
+	background-color: #008929 !important;
+	--theme-color-primary: #008929;
 }
 
 
@@ -185,10 +185,16 @@
 	font-size: 15px !important;
 	line-height: 18px !important;
 	text-transform: uppercase;
-	color: #55a8ff;
+	color: var(--ui-color-accent-main-link);
 }
 
-.btn.info-mode:hover { color: #fff; }
+.btn.info-mode:hover {
+	color: color-mix(in srgb, var(--ui-color-accent-main-link) 100%,
+		var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+}
+
+/* the darkened link fails the contrast on the dark backdrop, so hover stays white */
+.bx-dark .btn.info-mode:hover { color: var(--ui-color-base-white-fixed); }
 
 .bx-dark .order-payment-method-item-button.info-mode { color: #55a8ff; }
 
@@ -225,7 +231,7 @@
 .order-payment-method-description .order-payment-method-description-text {
 	padding: 0 15px 15px;
 	position: relative;
-	color: #94949e;
+	color: var(--ui-color-base-2);
 }
 
 .bx-dark .order-payment-method-description-text { color: #d3d3d3; }
@@ -258,33 +264,46 @@
 	background-color: transparent;
 }
 
+/* the halo of the site template ring is lost on this backdrop, so the ring goes inside in the dark tone */
+.bx-dark .btn:focus-visible,
+.bx-dark .form-control:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-2, #CACBCC);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: none;
+}
+
+/* the ring lies on the fill of the pay button, where only the white line keeps the contrast */
+.bx-dark .btn.order-payment-method-item-button:focus-visible {
+	outline-color: var(--ui-color-base-white-fixed, #fff);
+}
+
 .bx-dark .form-control {
 	color: #fff;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .bx-dark .form-control::-moz-placeholder {
-	color: rgba(255, 255, 255, 0.3);
+	color: var(--ui-color-base-3);
 	transition: 170ms linear all;
 }
 
 .bx-dark .form-control:-ms-input-placeholder {
-	color: rgba(255, 255, 255, 0.3);
+	color: var(--ui-color-base-3);
 	transition: 170ms linear all;
 }
 
 .bx-dark .form-control:-moz-placeholder {
-	color: rgba(255, 255, 255, 0.3);
+	color: var(--ui-color-base-3);
 	transition: 170ms linear all;
 }
 
 .bx-dark .form-control::-webkit-input-placeholder {
-	color: rgba(255, 255, 255, 0.3);
+	color: var(--ui-color-base-3);
 	transition: 170ms linear all;
 }
 
 a.check-link {
-	color: rgb(83, 173, 235);
+	color: var(--ui-color-accent-main-link);
 	text-decoration: underline;
 }
 
@@ -297,6 +316,23 @@ a.check-link:hover { text-decoration: none; }
 
 .bx-dark a.check-link:hover { text-decoration: none; }
 
+/* the link colour of the dark context fails the contrast on the gray backdrop */
+.gray-theme a.check-link { color: var(--ui-color-base-3); }
+
+/* room for the focus ring off the glyphs; the negative margin keeps the text in place */
+a.check-link:focus-visible {
+	padding: 2px 3px;
+	margin: 0 -3px;
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: none;
+}
+
+.bx-dark a.check-link:focus-visible,
+.gray-theme a.check-link:focus-visible {
+	outline-color: var(--ui-color-base-2, #CACBCC);
+}
+
 .bx-dark .check-print {
 	color: rgba(172, 172, 180, 0.79);
 }
@@ -307,7 +343,7 @@ a.check-link:hover { text-decoration: none; }
 }
 
 .order-payment-pay-system-name {
-	color: #8f9297;
+	color: var(--ui-color-base-2);
 	font-size: 21px;
 }
 
@@ -326,7 +362,7 @@ a.check-link:hover { text-decoration: none; }
 	content: '';
 	width: 12px;
 	height: 12px;
-	border: 1px solid #fff;
+	border: 1px solid var(--ui-color-base-white-fixed);
 	border-right-color: transparent;
 	border-radius: 50%;
 	position: absolute;
@@ -382,7 +418,7 @@ a.check-link:hover { text-decoration: none; }
 
 .gray-theme fieldset input {
 	color: #ffffff;
-	border: 1px solid rgba(255, 255, 255, 0.2);
+	border: 1px solid var(--ui-color-base-4);
 	border-radius: 4px;
 	padding: 20px 10px;
 	font-size: 15px;
@@ -392,7 +428,7 @@ a.check-link:hover { text-decoration: none; }
 
 .gray-theme fieldset input:focus {
 	color: #ffffff;
-	border: 1px solid rgba(255, 255, 255, 0.5);
+	border: 1px solid var(--ui-color-base-2);
 	background: none;
 }
 
@@ -471,7 +507,21 @@ a.check-link:hover { text-decoration: none; }
 
 .gray-theme .order-payment-method-item-button:hover,
 .gray-theme .btn:hover {
-	background: #348856 !important;
+	background: #2A6E46 !important;
+}
+
+/* the ring goes inside, since the root of the payment app clips; the `:focus` rule above would swap
+   the fill of the theme for one where the ring fails the contrast */
+.gray-theme .order-payment-method-item-button:focus-visible {
+	background: #326446 !important;
+}
+
+.gray-theme .btn:focus-visible,
+.gray-theme fieldset input:focus-visible,
+.gray-theme .form-control:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-2, #CACBCC);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: none;
 }
 
 .gray-theme .order-pay-method-item-container {

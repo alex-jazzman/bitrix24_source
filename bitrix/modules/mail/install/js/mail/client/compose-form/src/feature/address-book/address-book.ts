@@ -410,9 +410,10 @@ function bindContactSlider(
 		}
 	}
 
-	function handleSliderClosed(event: SliderEvent): void
+	function handleSliderClosed(event: BaseEvent<[SliderEvent]>): void
 	{
-		if (event.getSlider()?.getUrl() === sliderUrl)
+		const sliderEvent = event.getData()?.[0];
+		if (sliderEvent?.getSlider()?.getUrl() === sliderUrl)
 		{
 			release();
 		}
@@ -434,7 +435,7 @@ function bindContactSlider(
 	}
 
 	eventEmitter.subscribe(ContactSavedEvent, handleContactSaved);
-	eventEmitter.subscribe(SliderClosedEvent, handleSliderClosed, { compatMode: true });
+	eventEmitter.subscribe(SliderClosedEvent, handleSliderClosed);
 }
 
 function bindDialogLifecycle(dialog: Dialog, onDestroy?: () => void): DialogLifecycle | null

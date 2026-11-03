@@ -16,13 +16,20 @@ final class AgentBlockSettingValidator
 	public function __construct(
 		?AgentSettingNameValidator $nameValidator = null,
 		?AgentSettingValueValidator $valueValidator = null,
+		?ValidationContext $context = null,
 	)
 	{
 		$this->nameValidator = $nameValidator ?? new AgentSettingNameValidator();
-		$this->valueValidator = $valueValidator ?? new AgentSettingValueValidator();
+		$this->valueValidator = $valueValidator ?? new AgentSettingValueValidator($context);
 	}
 
-	public function validate(mixed $setting, string $path, ?BlockTypeDetail $blockTypeDetail): Result
+	public function validate(
+		mixed $setting,
+		string $path,
+		?BlockTypeDetail $blockTypeDetail,
+		?string $blockType = null,
+		?string $presetId = null,
+	): Result
 	{
 		$this->validSetting = null;
 
@@ -33,12 +40,12 @@ final class AgentBlockSettingValidator
 
 		$result = new Result();
 		$name = $setting['name'] ?? null;
-		$nameValidateResult = $this->nameValidator->validate($name, $path, $blockTypeDetail);
+		$value = $setting['value'] ?? null;
+		$nameValidateResult = $this->nameValidator->validate($name, $value, $path, $blockTypeDetail);
 		$result->addErrors($nameValidateResult->getErrors());
 		$settingConfig = $this->nameValidator->getSetting();
 
-		$value = $setting['value'] ?? null;
-		$valueValidateResult = $this->valueValidator->validate($value, $path, $settingConfig);
+		$valueValidateResult = $this->valueValidator->validate($value, $path, $settingConfig, $blockType, $presetId);
 		$result->addErrors($valueValidateResult->getErrors());
 
 		if ($nameValidateResult->isSuccess()

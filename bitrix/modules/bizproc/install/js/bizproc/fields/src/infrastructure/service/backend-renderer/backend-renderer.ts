@@ -3,16 +3,20 @@ import { EventEmitter } from 'main.core.events';
 import { type Property, type ManagerOptions, type RenderModeValue } from '../../../const/type';
 import { RenderMode, EventName, BackendForm } from '../../../const/const';
 import { insertWhereNodeWas } from '../../../lib/node-position/node-position';
-import { isSelectable } from '../../../lib/property/property';
-import type { SelectionContext, SelectionDecorator, SelectionProvider } from '../../../model/selection/selection';
+import { isSelectionAllowed } from '../../../lib/property/property';
+import { isWriteTarget } from '../../../lib/write-target/write-target';
+import type { SelectionContext, SelectionProvider } from '../../../model/selection/selection';
 
 /**
  * Value insertion handed in by the application layer: this layer may not import the domain
- * at runtime, so both the strategy and the decorator arrive as parameters.
+ * at runtime, so the strategy and the rule saying whether it applies to a property both arrive
+ * as parameters. `canApply` is canApplySelectionDecorator() alone, and not the whole of
+ * BaseField.decoratesSelection(): the render-mode half of that answer is carried by the markup
+ * here, which prints `inline-selector-target` only under $allowSelection.
  */
 export type BackendRendererSelection = {
 	provider: SelectionProvider,
-	applyDecorator: SelectionDecorator,
+	canApply: (property: Property) => boolean,
 };
 
 type PendingItem = {
@@ -25,6 +29,23 @@ type PendingItem = {
 };
 
 const CHUNK_SIZE = 100;
+
+/**
+ * The insert button the server prints beside a control it rendered with selection allowed
+ * (Base::renderControlSelectorButton). It carries a data-role like every other node of that
+ * markup, so the traversal below would hand it to the provider and stand a second insert button
+ * next to the one already there. The server button works on its own - decorating it would give
+ * the field a server layer this feature deliberately does not have.
+ */
+const SERVER_SELECTOR_BUTTON_ROLE = 'bp-selector-button';
+
+/**
+ * The role the value node of the field carries in both server and designer markup. It is the one
+ * role naming a node an inserted value may be written into: the others - a user selector, a menu,
+ * an entity selector, a condition group - mark widgets of their own, whose inner inputs belong to
+ * those widgets and hold no value of the field.
+ */
+const INLINE_SELECTOR_TARGET_ROLE = 'inline-selector-target';
 
 export class BackendRenderer
 {
@@ -154,17 +175,15 @@ export class BackendRenderer
 	{
 		const controlsData = chunk.map((item) =>
 		{
-			const isPublicMode = this.#isPublicMode(item);
+			const renderMode = this.#resolveRenderMode(item);
 
 			return {
 				property: item.property,
 				params: {
 					Field: { Field: item.fieldName, Form: BackendForm.Sfa },
 					Value: (item.value ?? ''),
-					Als: Type.isUndefined(item.property.AllowSelection)
-						? (isPublicMode ? 0 : 1)
-						: Number(isSelectable(item.property)),
-					RenderMode: isPublicMode ? 'public' : 'designer',
+					Als: Number(isSelectionAllowed(item.property, renderMode)),
+					RenderMode: renderMode === RenderMode.Public ? 'public' : 'designer',
 				},
 			};
 		});
@@ -221,12 +240,7 @@ export class BackendRenderer
 								.then(() =>
 								{
 									Dom.attr(item.placeholderNode, 'aria-busy', null);
-									this.#initSelectors(
-										item.placeholderNode,
-										item.property,
-										documentType,
-										this.#isPublicMode(item),
-									);
+									this.#initSelectors(item, documentType);
 								})
 								// The placeholder was cleaned before Runtime.html ran, so a script or
 								// extension that fails to load leaves it empty: without marking it the
@@ -240,7 +254,7 @@ export class BackendRenderer
 					else
 					{
 						Dom.attr(item.placeholderNode, 'aria-busy', null);
-						this.#initSelectors(item.placeholderNode, item.property, documentType, this.#isPublicMode(item));
+						this.#initSelectors(item, documentType);
 					}
 				});
 
@@ -258,11 +272,9 @@ export class BackendRenderer
 	 * the field's own parameter, and the default fills the gap. A field rendered here answers the
 	 * caller the same as one the registry knows - see FieldManager.renderField.
 	 */
-	#isPublicMode(item: PendingItem): boolean
+	#resolveRenderMode(item: PendingItem): RenderModeValue
 	{
-		const renderMode = this.#options.renderMode ?? item.renderMode ?? RenderMode.NewDesigner;
-
-		return renderMode === RenderMode.Public;
+		return this.#options.renderMode ?? item.renderMode ?? RenderMode.NewDesigner;
 	}
 
 	#markChunkError(items: PendingItem[]): void
@@ -280,40 +292,40 @@ export class BackendRenderer
 		});
 	}
 
-	#initSelectors(
-		containerNode: HTMLElement,
-		property: Property,
-		documentType: string[],
-		isPublicMode: boolean,
-	): void
+	/**
+	 * One traversal for both render modes. The placeholder itself is never decorated: it is the
+	 * node renderCollection() already handed to the caller, and replacing it would leave that
+	 * caller holding one detached from the document. The value node inside it carries
+	 * `inline-selector-target` in both server and designer markup, so the decoration goes there.
+	 *
+	 * A property the provider does not take is left alone, the same answer the decorator gives a
+	 * registered type: a provider refusing a type here would otherwise be walked past its refusal.
+	 *
+	 * The node an inserted value may be written into is named per node, as a registered type names
+	 * it: the value node of the markup and no other role (see INLINE_SELECTOR_TARGET_ROLE).
+	 *
+	 * The whole queued item goes in and not the nodes alone: the name the field is rendered under
+	 * travels to the provider with every decoration of it, as it does from a registered type. The
+	 * document type stays a parameter of its own - it is resolved per request, not per field.
+	 */
+	#initSelectors(item: PendingItem, documentType: string[]): void
 	{
 		const selection = this.#selection;
+		const { fieldName, property, placeholderNode } = item;
 
-		if (Type.isNull(selection) || !selection.provider.isAvailable())
+		if (Type.isNull(selection) || !selection.canApply(property))
 		{
 			return;
 		}
 
-		const { provider, applyDecorator } = selection;
+		const { provider } = selection;
 
 		const context: SelectionContext = {
+			fieldName,
 			documentType: documentType.length > 0 ? documentType : undefined,
 		};
 
-		const childControlNodes = containerNode.querySelectorAll<HTMLElement>('[data-role]');
-
-		if (isPublicMode)
-		{
-			// The placeholder is the whole control here, so it is both root and value node. The
-			// returned pair is not spliced back: the placeholder is the node renderCollection()
-			// handed to the caller, and replacing it would leave that caller holding a detached one.
-			applyDecorator({root: containerNode, valueNode: containerNode}, property, provider, context);
-
-			return;
-		}
-
-		childControlNodes.forEach((node) =>
-		{
+		placeholderNode.querySelectorAll<HTMLElement>('[data-role]').forEach((node) => {
 			// Taken before the provider runs: a provider that wraps the node by moving it leaves
 			// nothing at this position to splice the decoration in against afterwards.
 			const parent = node.parentElement;
@@ -325,7 +337,17 @@ export class BackendRenderer
 			}
 
 			const role = Dom.attr(node, 'data-role') ?? '';
-			const decorated = provider.decorateByRole(role, node, property, context);
+
+			if (role === SERVER_SELECTOR_BUTTON_ROLE)
+			{
+				return;
+			}
+
+			const nodeContext = role === INLINE_SELECTOR_TARGET_ROLE && isWriteTarget(node)
+				? { ...context, writeTarget: node }
+				: context;
+
+			const decorated = provider.decorateByRole(role, node, property, nodeContext);
 
 			if (decorated === node)
 			{

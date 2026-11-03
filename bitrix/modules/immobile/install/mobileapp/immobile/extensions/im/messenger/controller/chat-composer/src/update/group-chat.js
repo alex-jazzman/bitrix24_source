@@ -11,7 +11,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 	const { NestedDepartmentSelector } = require('selector/widget/entity/tree-selectors/nested-department-selector');
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
-	const { WidgetTitleParamsType, DialogType } = require('im/messenger/const');
+	const { WidgetTitleParamsType, DialogType, EntitySelectorContext } = require('im/messenger/const');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -235,7 +235,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 				'layout',
 				{
 					titleParams: {
-						text: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_MANAGERS_TITLE'),
+						text: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_MANAGERS_TITLE_MSGVER_1'),
 						type: titleType,
 					},
 				},
@@ -350,7 +350,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 				},
 				canUseRecent: false,
 				provider: {
-					context: 'IMMOBILE_UPDATE_GROUP_CHAT_PARTICIPANT',
+					context: EntitySelectorContext.chatMembers,
 					options: {
 						useLettersForEmptyAvatar: true,
 						allowFlatDepartments: true,

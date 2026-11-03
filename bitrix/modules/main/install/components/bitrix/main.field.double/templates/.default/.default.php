@@ -3,9 +3,12 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 /**
+ * @var DoubleUfComponent $component
  * @var array $arResult
  */
 
+$component = $this->getComponent();
+$precision = (int)($arResult['userField']['SETTINGS']['PRECISION'] ?? 0);
 $isFirst = true;
 foreach($arResult['value'] as $value)
 {
@@ -14,5 +17,5 @@ foreach($arResult['value'] as $value)
 		print '<br>';
 	}
 	$isFirst = false;
-	print ((isset($value) && $value !== '') ? (double)$value : '');
+	print $component->formatValue($value, $precision);
 }

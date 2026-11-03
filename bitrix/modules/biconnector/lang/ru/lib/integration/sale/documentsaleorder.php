@@ -15,4 +15,4 @@ $MESS['SALE_DOCUMENT_SALEORDER_FIELD_CURRENCY'] = 'Валюта документ
 $MESS['SALE_DOCUMENT_SALEORDER_FIELD_RESPONSIBLE_ID'] = 'ID ответственного';
 $MESS['SALE_DOCUMENT_SALEORDER_FIELD_RESPONSIBLE_NAME'] = 'Имя ответственного';
 $MESS['SALE_DOCUMENT_SALEORDER_FIELD_RESPONSIBLE'] = 'ID и имя ответственного';
-$MESS['SALE_DOCUMENT_SALEORDER_TABLE_DESCRIPTION_FULL'] = 'Набор содержит данные о документах реализации.';
+$MESS['SALE_DOCUMENT_SALEORDER_TABLE_DESCRIPTION_FULL_MSGVER_1'] = "Данные о документах реализации: даты создания и изменения, доставка, отгрузка, валюта и ответственные.";

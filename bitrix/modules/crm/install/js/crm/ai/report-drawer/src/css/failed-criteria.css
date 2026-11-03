@@ -3,7 +3,7 @@
 		calc(24px + var(--ui-space-inset-2xs2, 6px));
 	display: flex;
 	flex-direction: column;
-	padding: var(--ui-space-inset-lg2, 22px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-xl, 24px);
+	padding: var(--ui-space-inset-md2, 18px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-md, 16px);
 }
 
 .crm-ai-report-drawer__failed-criteria-block-header {
@@ -30,7 +30,7 @@
 }
 
 .crm-ai-report-drawer__failed-criteria-block-ai-analysis {
-	margin-top: var(--ui-space-stack-xs, 8px);
+	margin-top: var(--ui-space-stack-2xs, 4px);
 	padding-left: var(--crm-ai-report-drawer__failed-criteria-header-offset);
 	box-sizing: border-box;
 }
@@ -43,4 +43,8 @@
 	color: var(--ui-color-base-3);
 	cursor: pointer;
 	width: fit-content;
+}
+
+.crm-ai-report-drawer__failed-criteria-block-description + .crm-ai-report-drawer__spoiler-content:not(.--hidden) {
+	margin-top: var(--ui-space-stack-xs, 8px);
 }

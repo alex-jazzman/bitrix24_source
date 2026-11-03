@@ -16,7 +16,7 @@
 	font-size: 0;
 	opacity: .5;
 	cursor: pointer;
-	transition: opacity .3s ease;
+	transition: opacity .3s ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .sale-personal-profile-list-close-button:hover { opacity: 1; }
@@ -28,3 +28,21 @@
 	border-right: 1px solid #dee2e7;
 	vertical-align: middle;
 }
+
+/*region Focus ring*/
+/* One dark band outside the link instead of the white band the landing store theme draws inside it and
+ * its halo: the links of a profile. The arrows of the sorting are left out of the order of Tab and take no ring.
+ * The weight outruns `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the theme,
+ * whose stylesheet comes later. */
+.table-responsive > table.table.table-hover a[href]:not([tabindex="-1"]):focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The translucent cross would pale the ring: the focused one is opaque, as the hovered one, at once. */
+.table-responsive > table.table.table-hover a.sale-personal-profile-list-close-button[href]:focus-visible {
+	opacity: 1;
+	transition: none;
+}
+/*endregion*/

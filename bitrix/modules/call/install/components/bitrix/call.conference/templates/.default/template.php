@@ -28,6 +28,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 		userCount: '<?=$arResult['USER_COUNT']?>',
 		startupErrorCode: '<?=$arResult['STARTUP_ERROR_CODE']?>',
 		isIntranetOrExtranet: '<?=$arResult['IS_INTRANET_OR_EXTRANET']?>',
+		hasCustomName: <?=$arResult['HAS_CUSTOM_NAME'] === null ? 'null' : ($arResult['HAS_CUSTOM_NAME'] ? 'true' : 'false')?>,
 		language: '<?=$arResult['LANGUAGE']?>',
 		passwordRequired: '<?=$arResult['PASSWORD_REQUIRED']?>',
 		conferenceId: '<?=$arResult['CONFERENCE_ID']?>',

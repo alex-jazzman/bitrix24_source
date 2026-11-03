@@ -1,3 +1,5 @@
+import { Text, Type } from 'main.core';
+
 import { CheckboxListOption } from './option';
 
 export const CheckboxListCategory = {
@@ -14,10 +16,27 @@ export const CheckboxListCategory = {
 
 	emits: [
 		'onToggleOption',
+		'onEditModeChange',
 	],
 
 	components: {
 		CheckboxListOption,
+	},
+
+	setup(): Object
+	{
+		return {
+			titleId: `ui-checkbox-list-category-${Text.getRandom().toLowerCase()}`,
+		};
+	},
+
+	computed: {
+		// A group role without a name is worse than no role at all, so both the role and the
+		// association appear only when the category actually renders a non-empty title.
+		hasTitle(): boolean
+		{
+			return Type.isStringFilled(this.category?.title);
+		},
 	},
 
 	methods: {
@@ -32,6 +51,13 @@ export const CheckboxListCategory = {
 		{
 			this.$emit('onToggleOption', event);
 		},
+		// byKey travels with the event: the dialog hands the closing by Escape back at once when a
+		// mouse ended the edit, and waits for a keyup when a key did. Dropping it here made every
+		// exit look like one made by mouse.
+		onEditModeChange(isEditing: boolean, byKey: boolean = false)
+		{
+			this.$emit('onEditModeChange', isEditing, byKey);
+		},
 	},
 
 	template: `
@@ -39,11 +65,13 @@ export const CheckboxListCategory = {
 			v-if="options.length > 0 || !isActiveSearch"
 			class="ui-checkbox-list__category"
 		>
-			<div v-if="category" class="ui-checkbox-list__categories-title">
+			<div v-if="category" :id="titleId" class="ui-checkbox-list__categories-title">
 				{{ category.title }}
 			</div>
-			<div 
+			<div
 				class="ui-checkbox-list__options"
+				:role="hasTitle ? 'group' : null"
+				:aria-labelledby="hasTitle ? titleId : null"
 				:style="{ 'column-count': columnCount }"
 			>
 				<div
@@ -59,6 +87,7 @@ export const CheckboxListCategory = {
 						:isEditable="isEditableOptionsTitle"
 						:ref="setRef"
 						@onToggleOption="onToggleOption"
+						@onEditModeChange="onEditModeChange"
 					/>
 				</div>
 			</div>

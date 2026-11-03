@@ -1,4 +1,5 @@
 {
+    "defaultTableName": "b_mobile_tab_preset",
     "installDirectoriesMapping": {
         "install/components": "components",
         "install/images": "images",

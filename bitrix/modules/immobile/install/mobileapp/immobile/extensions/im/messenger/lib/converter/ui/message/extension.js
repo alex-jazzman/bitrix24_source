@@ -41,15 +41,38 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 
 			try
 			{
-				return messageTypeRules.find((rule) => rule.isSuitable(messageHelper))
-					.create(modelMessage, options)
-				;
+				return this.#findRule(messageHelper).create(modelMessage, options);
 			}
 			catch (error)
 			{
 				Logger.error('MessageUiConverter.createMessage catch error:', error);
 
 				return new EmptyMessage(modelMessage);
+			}
+		}
+
+		/**
+		 * @desc Type of the rule the stored message is drawn by, one of MessageType.
+		 * @param {number|string} messageId
+		 * @return {string|null} null when the store has no such message or the rule lookup fails
+		 */
+		getMessageTypeById(messageId)
+		{
+			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](messageId);
+			if (Type.isNil(modelMessage.id))
+			{
+				return null;
+			}
+
+			try
+			{
+				return this.#findRule(MessageHelper.createByModel(modelMessage)).type;
+			}
+			catch (error)
+			{
+				Logger.error('MessageUiConverter.getMessageTypeById catch error:', error);
+
+				return null;
 			}
 		}
 
@@ -168,6 +191,15 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			options.dialogId = dialog.dialogId;
 
 			return options;
+		}
+
+		/**
+		 * @param {MessageHelper|null} messageHelper
+		 * @return {MessageTypeRule}
+		 */
+		#findRule(messageHelper)
+		{
+			return messageTypeRules.find((rule) => rule.isSuitable(messageHelper));
 		}
 	}
 

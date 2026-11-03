@@ -19,3 +19,76 @@
 .bx-im-chat-forms-auto-delete__toggle {
 	margin-top: 2px;
 }
+
+/* Air auto delete */
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-auto-delete__container {
+	flex-direction: column;
+	gap: 0;
+}
+
+/* The height matches the icon box of the dropdown chevron, so the line keeps its height when the
+   status is replaced by the dropdown. */
+.bx-im-chat-forms-auto-delete__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 24px;
+}
+
+/* Height of the reference caption line: it sets the rhythm the period line below follows. */
+.bx-im-chat-forms-auto-delete__row.--caption {
+	min-height: 28px;
+}
+
+.bx-im-chat-forms-auto-delete__switcher,
+.bx-im-chat-forms-auto-delete__spacer {
+	flex: 0 0 auto;
+	min-width: 2em;
+}
+
+.bx-im-chat-forms-auto-delete__switcher {
+	display: inline-flex;
+	align-items: center;
+	height: var(--ui-size-lg);
+	border-radius: var(--ui-border-radius-pill);
+}
+
+.bx-im-chat-forms-auto-delete__switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bx-im-chat-forms-auto-delete__caption {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bx-im-chat-forms-auto-delete__status {
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-chat-forms-auto-delete__delay {
+	display: flex;
+	align-items: center;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-auto-delete__delay:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bx-im-chat-forms-auto-delete__chevron {
+	transition: transform 150ms ease;
+}
+
+.bx-im-chat-forms-auto-delete__chevron.--open {
+	transform: rotate(180deg);
+}
+/* End air auto delete */

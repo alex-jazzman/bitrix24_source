@@ -9,6 +9,8 @@ return [
 	'js' => 'dist/create-chat-button.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'im.v2.css.classes',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

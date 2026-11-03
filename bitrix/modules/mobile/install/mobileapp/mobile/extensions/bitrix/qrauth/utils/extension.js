@@ -39,7 +39,7 @@ jn.define('qrauth/utils', (require, exports, module) => {
 			}
 			else
 			{
-				reject(new Error(Loc.getMessage('WRONG_QR')));
+				reject(new Error(Loc.getMessage('WRONG_QR_MSGVER_1')));
 			}
 		});
 	}

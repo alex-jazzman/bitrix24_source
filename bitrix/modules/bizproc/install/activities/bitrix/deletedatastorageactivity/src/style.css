@@ -66,10 +66,6 @@ input[type="text"][data-role="inline-selector-target"] {
 	background-position: 202px -152px;
 }
 
-#row_filter_fields .node-settings-edit-caption {
-	display: none;
-}
-
 .bizproc-automation-popup-settings-title {
 	font-size: 13px;
 	line-height: normal;

@@ -347,6 +347,11 @@ ClearVars("a_");
 $res = CMailFilter::GetFilterList();
 while($ar = $res->ExtractFields("a_"))
 {
+	if (isset($ar['MANUAL_ADD']) && $ar['MANUAL_ADD'] === false)
+	{
+		continue;
+	}
+
 	$arSubMenu[] = array(
 	"TEXT"	=> $a_NAME,
 	"ACTION"	=> "window.location='/bitrix/admin/mail_filter_edit.php?filter_type=".$a_ID."&lang=".LANG."';"

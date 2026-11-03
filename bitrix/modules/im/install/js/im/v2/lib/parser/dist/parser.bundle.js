@@ -5,13 +5,54 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports, main_core, im_public, im_v2_lib_desktopApi) {
 	'use strict';
 
+	const NEW_LINE = '\n';
+
+	// Head and tail shared by every markdown placeholder. The per-kind prefixes below are built
+	// from them, and so is the guard that has to recognize a placeholder of ANY kind
+	// (renderPlaceholderPattern in rules/inline-rules.js) - renaming here must not leave that
+	// guard matching the old shape.
+	const MARKDOWN_PLACEHOLDER_PREFIX = '####MD';
 	const MARKDOWN_PLACEHOLDER_SUFFIX = '####';
-	const MARKDOWN_CODE_PREFIX = '####MD_CODE_';
-	const MARKDOWN_ESCAPE_PREFIX = '####MD_ESC_';
-	const MARKDOWN_INLINE_CODE_PREFIX = '####MD_INLINE_';
-	const MARKDOWN_MENTION_PREFIX = '####MD_MENTION_';
-	const MARKDOWN_TABLE_GUARD_PREFIX = '####MD_TABLEGUARD_';
-	const MARKDOWN_LIST_TAG_PREFIX = '####MDLISTTAG';
+	const MARKDOWN_CODE_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_CODE_`;
+	const MARKDOWN_ESCAPE_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_ESC_`;
+	const MARKDOWN_INLINE_CODE_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_INLINE_`;
+	const MARKDOWN_MENTION_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_MENTION_`;
+	const MARKDOWN_URL_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_URL_`;
+	const MARKDOWN_BB_TAG_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_BBTAG_`;
+	const MARKDOWN_TABLE_GUARD_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}_TABLEGUARD_`;
+	// The odd one out: no second underscore and no nonce.
+	const MARKDOWN_LIST_TAG_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}LISTTAG`;
+
+	// Not a placeholder of the render: the mask BbTagProtector lays over an inline code span for
+	// the length of its own scan (####MDSPAN<nonce>-<index>####). It carries no '[', ']', '`', '*'
+	// or '_', so no tag pattern can read it as markup, and it never leaves protect().
+	const MARKDOWN_CODE_SPAN_MASK_PREFIX = `${MARKDOWN_PLACEHOLDER_PREFIX}SPAN`;
+
+	// The inline code spans, longest fence first. protectInlineCode (rules/inline-rules.js) stores
+	// them and BbTagProtector masks them before it looks for ready tags, so a tag typed inside a
+	// span is never taken for a live one; both read the grammar from here. Global patterns shared
+	// by two callers: use them through replaceAll only, which resets lastIndex.
+	const MARKDOWN_INLINE_CODE_TRIPLE_PATTERN = /```(.+?)```/g;
+	const MARKDOWN_INLINE_CODE_DOUBLE_PATTERN = /``(.+?)``/g;
+	const MARKDOWN_INLINE_CODE_SINGLE_PATTERN = /`([^`]+)`/g;
+	const MARKDOWN_INLINE_CODE_SPAN_PATTERNS = [MARKDOWN_INLINE_CODE_TRIPLE_PATTERN, MARKDOWN_INLINE_CODE_DOUBLE_PATTERN, MARKDOWN_INLINE_CODE_SINGLE_PATTERN];
+
+	// Ceiling for the link/image destination scan (destination + optional title + the skipped
+	// spaces around it), counted in source characters from the "](" prefix. Well above any real
+	// URL (OAuth-redirect and tracking links run past 2000 chars) yet bounded, so a crafted
+	// message cannot make the scanner walk the whole text from every "](" - a boundary test pins
+	// the value.
+	const MAX_URL_SCAN_LENGTH = 8192;
+
+	// Characters a backslash can escape inside a destination: the pair `\X` yields a literal X
+	// that takes no part in paren balancing or in the <...> boundaries.
+	//
+	// Only '<' is listed, and the reason is the stage order, not the grammar. EscapeHandler runs
+	// first (MarkdownConverter.#protectBase) and turns every pair it owns into a placeholder, so a
+	// backslash before one of its characters never reaches this scan; '<' is the one destination
+	// character outside its set (escape-handler.js). Listing the others here would be dead weight
+	// that reads as live logic. Revisit the moment escape protection stops running first.
+	const ESCAPABLE_CHARS = ['<'];
 
 	// Code/inline-code/table placeholders carry a per-render nonce
 	// (####MD_CODE_<nonce>_<index>####, see createMarkdownNonce) so a sender cannot type a
@@ -27,17 +68,184 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// global font/url decoders (NestedTagHandler.cutTableTag), so cells render once.
 	const MARKDOWN_TABLE_PATTERN = /\[table][\s\S]*?\[\/table]/gi;
 
+	// BB-code tags that already carry a URL when the text reaches the converter: the server wraps
+	// every bare URL in [URL]...[/URL], and a reply quotes a message through MarkdownConverter.simplify,
+	// so the reply text arrives with ready [URL=...]...[/URL] / [img ...]...[/img] blocks. What must not
+	// be reparsed is the URL they carry: an emphasis run inside a destination (...*%2527*...) grows an
+	// [i] tag INSIDE the tag and tears it apart, which is what dropped the beginning of the URL in a
+	// quoted metrika link.
+	//
+	// Five places encode "the server wraps a URL in [URL]...[/URL]", each with a DIFFERENT rule, on
+	// purpose: this file rejects a ready block anywhere in the text; link-boundary-scanner.js reads the
+	// tags as zero-width tokens inside a destination; stripUrlBBWrapper (inline-rules.js) strips a pair
+	// only when it wraps the destination whole; on the render side ParserUrl (functions/url.js) makes an
+	// anchor and ParserImage (functions/image.js) takes the wrapper off a src. Changing one of them does
+	// not change the rest - walk the list before assuming otherwise.
+	//
+	// These two forms hold the URL as their CONTENT, so the whole block is stored as one unit. Either
+	// may wrap the other ([img size=small][url]src[/url][/img] and [URL][img]src[/img][/URL]), which is
+	// what #addTag has to expand for.
+	const BB_URL_CONTENT_PATTERNS = [/\[img(?:\s[^\][\n]*)?](?:(?!\[img)[\s\S])*?\[\/img]/gi, /\[URL](?:(?!\[URL)[\s\S])*?\[\/URL]/gi];
+
+	// [URL=...]text[/URL] holds the URL in its ATTRIBUTE, and `text` is the visible link text: ordinary
+	// Markdown that the inline rules must still convert ([URL=x]**bold**[/URL] stays bold). Only the
+	// opening and closing tags are stored, the text between them is left in place. An opener with no
+	// closer is not a tag pair and goes to the ordinary rules, as before.
+	//
+	// `[\s\S]` and not `.`: the text of such a tag may span lines (validateLabel does not stop at a
+	// newline, so simplify can build one), and the attribute of a two-line tag needs the same
+	// protection as a one-line one. Linearity does not rest on that stop: the `(?!\[opener)` guard of
+	// every pattern bounds its lazy scan at the next same-tag opener.
+	//
+	// The attribute admits a bracketed query parameter ("?a[0]=x", the form ParserUrl reassembles
+	// on render) as one balanced [...] group per '[': a group is bounded by its own ']' and may not
+	// open a tag, so an unclosed '[' still fails the opener where it stands and a run of malformed
+	// openers stays O(n) instead of rescanning the tail from every one of them.
+	const BB_URL_ATTRIBUTE_PATTERN = /(\[URL=(?:[^\][\n]|\[(?!\/?URL)[^\][\n]*])*])((?:(?!\[URL)[\s\S])*?)(\[\/URL])/gi;
+
+	// A tag that opens a Markdown destination is left alone: applyLink unwraps such a
+	// [URL]...[/URL] (stripUrlBBWrapper) and hands the bare destination to UrlProtector, so
+	// protecting it here would nail the wrapper into the href instead.
+	const DESTINATION_PREFIX = '](';
+	function opensDestination(source, offset) {
+		return source.startsWith(DESTINATION_PREFIX, offset - DESTINATION_PREFIX.length);
+	}
+	class BbTagProtector {
+		#tags = [];
+		#spans = [];
+		#nonce = '';
+		#pattern;
+		#probePattern;
+		#maskPattern;
+
+		// Placeholder: ####MD_BBTAG_<nonce>_<index>####. Why it carries a nonce - utils/nonce.js.
+		constructor(nonce = '') {
+			this.#nonce = nonce;
+			const placeholder = `${MARKDOWN_BB_TAG_PREFIX}${nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+			this.#pattern = new RegExp(placeholder, 'g');
+			// Non-global twin for containsPlaceholder: .test() on the global pattern would carry
+			// lastIndex from call to call and start skipping matches.
+			this.#probePattern = new RegExp(placeholder);
+			this.#maskPattern = new RegExp(`${MARKDOWN_CODE_SPAN_MASK_PREFIX}${nonce}-(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+		}
+
+		// A tag typed inside an inline code span is code, not a tag: the span is stored later, by
+		// protectInlineCode, which would find the pair already replaced and put it back live inside
+		// the [icode]. The spans are masked for the length of the scan (the offsets opensDestination
+		// reads are taken on the same masked text) and lifted from the result and the stored tags.
+		// Accepted boundary: spans are read on the raw text of the whole message, while protectInlineCode
+		// reads a cell or item after EscapeHandler, so unpaired backticks around a wrapped address
+		// (neighbouring cells, an escaped backtick before the tag) can close a span here and not there.
+		protect(text) {
+			this.#tags = [];
+			let masked = this.#maskCodeSpans(text);
+			for (const pattern of BB_URL_CONTENT_PATTERNS) {
+				masked = masked.replaceAll(pattern, (match, offset, source) => {
+					if (opensDestination(source, offset)) {
+						return match;
+					}
+					return this.#addTag(match);
+				});
+			}
+			masked = masked.replaceAll(BB_URL_ATTRIBUTE_PATTERN, (match, opener, linkText, closer, offset, source) => {
+				if (opensDestination(source, offset)) {
+					return match;
+				}
+				return `${this.#addTag(opener)}${linkText}${this.#addTag(closer)}`;
+			});
+			return this.#unmaskCodeSpans(masked);
+		}
+		restore(text) {
+			const result = this.#expand(text);
+			this.#tags = [];
+			return result;
+		}
+
+		// Whether a fragment carries a tag this instance is holding. The full placeholder format
+		// with the per-render nonce is compared, never a bare "MD_BBTAG" substring, so a literal
+		// marker the sender typed is not taken for a protected tag (same rule as #expand).
+		// The link/image rules use it to reject a label built around a hidden tag.
+		containsPlaceholder(text) {
+			return this.#tags.length > 0 && this.#probePattern.test(text);
+		}
+
+		// The value is expanded before it is stored: a tag matched later may hold the placeholder of
+		// one matched earlier (nesting of the two content forms), and a stored value that still
+		// carried a placeholder would never be expanded by the single-pass restore.
+		#addTag(tag) {
+			const index = this.#tags.length;
+			this.#tags.push(this.#expand(tag));
+			return `${MARKDOWN_BB_TAG_PREFIX}${this.#nonce}_${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+		}
+		#expand(text) {
+			if (this.#tags.length === 0) {
+				return text;
+			}
+			const tags = this.#tags;
+			return text.replaceAll(this.#pattern, (match, index) => {
+				const tag = tags[Number(index)];
+
+				// Unknown index = a marker the sender typed, not one we stored (utils/nonce.js).
+				return tag === undefined ? match : tag;
+			});
+		}
+
+		// Mask: ####MDSPAN<nonce>-<index>#### (const.js). The masked span is stored expanded, as
+		// #addTag does with a tag: the patterns run longest fence first, so a shorter fence handled
+		// later can wrap the mask of a longer one (``a ```b``` c``), and a single pass lifts only the
+		// outer mask.
+		#maskCodeSpans(text) {
+			this.#spans = [];
+			if (!text.includes('`')) {
+				return text;
+			}
+			let masked = text;
+			for (const pattern of MARKDOWN_INLINE_CODE_SPAN_PATTERNS) {
+				masked = masked.replaceAll(pattern, span => {
+					const index = this.#spans.length;
+					this.#spans.push(this.#unmask(span));
+					return `${MARKDOWN_CODE_SPAN_MASK_PREFIX}${this.#nonce}-${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+				});
+			}
+			return masked;
+		}
+
+		// The content patterns store a block whole, a span inside it included, so the stored tags
+		// are unmasked along with the text.
+		#unmaskCodeSpans(text) {
+			if (this.#spans.length === 0) {
+				return text;
+			}
+			this.#tags = this.#tags.map(tag => this.#unmask(tag));
+			const result = this.#unmask(text);
+			this.#spans = [];
+			return result;
+		}
+		#unmask(text) {
+			if (this.#spans.length === 0) {
+				return text;
+			}
+			const spans = this.#spans;
+			return text.replaceAll(this.#maskPattern, (match, index) => spans[Number(index)] ?? match);
+		}
+	}
+
+	const BACKTICK = '`';
+	const TILDE = '~';
+	const FENCE_MIN_LENGTH = 3;
+	const LOOSE_FENCE_OPENING = BACKTICK.repeat(FENCE_MIN_LENGTH);
 	class CodeProtector {
 		#blocks = [];
 		#nonce = '';
 		#pattern;
+		#placeholderDetector;
 
-		// The per-render nonce makes the placeholder (####MD_CODE_<nonce>_N####) unguessable, so
-		// restore() never expands a literal copy the sender typed — only the blocks this instance
-		// actually stored (amplification-DoS defense; see utils/nonce.js).
+		// Placeholder: ####MD_CODE_<nonce>_N####. Why it carries a nonce - utils/nonce.js.
 		constructor(nonce = '') {
 			this.#nonce = nonce;
-			this.#pattern = new RegExp(`${MARKDOWN_CODE_PREFIX}${nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+			const placeholder = `${MARKDOWN_CODE_PREFIX}${nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+			this.#pattern = new RegExp(placeholder, 'g');
+			this.#placeholderDetector = new RegExp(placeholder);
 		}
 		protect(text, options = {}) {
 			this.#blocks = [];
@@ -48,30 +256,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 
 			// Fenced code blocks: ```lang\n...\n``` or ~~~lang\n...\n~~~
-			text = text.replaceAll(/^(`{3,})([^\n]*)\n([\S\s]*?)^\1/gm, (match, fence, lang, code) => {
-				return this.#addBlock(code);
-			});
-			text = text.replaceAll(/^(~{3,})([^\n]*)\n([\S\s]*?)^\1/gm, (match, fence, lang, code) => {
-				return this.#addBlock(code);
-			});
+			text = this.#protectStrictFences(text, BACKTICK);
+			text = this.#protectStrictFences(text, TILDE);
 			if (options.looseFence) {
-				// Inline-only "loose" fenced code (decodeInline path only). The strict pattern above
-				// needs the closing fence at line start; a pasted multi-line block whose closing ```
-				// sits mid-line (e.g. ```Foo\nbar\nbaz```: rest) slips past it and would otherwise fall
-				// through to the single-backtick inline rule and fragment into orphaned backticks plus
-				// per-line inline-code boxes. Here a 3+ backtick pair whose content spans newlines is
-				// captured whole as ONE [code] block; text after the closing fence stays outside it.
-				// Gated to inline-only so the full message path (#convert) keeps its existing behavior.
-				text = text.replaceAll(/(`{3,})([\S\s]*?)\1/g, (match, fence, code) => {
-					if (!code.includes('\n')) {
-						return match;
-					}
-					return this.#addBlock(code);
-				});
+				text = this.#protectLooseFences(text);
 			}
 
 			// Indented code blocks: line starting with 4 spaces or tab, preceded by empty line
 			text = text.replaceAll(/(^|\n)\n((?:(?: {4}|\t).+(?:\n|$))+)/g, (match, prefix, block) => {
+				// The whole run is held back, not just the line carrying the placeholder: splitting it
+				// would render one indented block as two code boxes around a bare line, and de-indenting
+				// that line would expose it to the heading/quote/rule block rules. The indent staying
+				// visible is the price of keeping both the text and the block it already holds intact.
+				if (this.#holdsPlaceholder(block)) {
+					return match;
+				}
 				const code = block.replaceAll(/^(?: {4}|\t)/gm, '');
 				return `${prefix}\n${this.#addBlock(code)}`;
 			});
@@ -85,9 +284,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const result = text.replaceAll(this.#pattern, (match, index) => {
 				const block = blocks[Number(index)];
 
-				// A user-typed literal "####MD_CODE_N####" (or an out-of-range index)
-				// has no stored block — leave the marker untouched instead of emitting
-				// [code]undefined[/code] or duplicating an unrelated block.
+				// Unknown index = a marker the sender typed, not one we stored (utils/nonce.js).
 				return block === undefined ? match : `[code]${block}[/code]`;
 			});
 			this.#blocks = [];
@@ -97,6 +294,155 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const index = this.#blocks.length;
 			this.#blocks.push(code.replace(/\n$/, ''));
 			return `${MARKDOWN_CODE_PREFIX}${this.#nonce}_${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+		}
+
+		// Both fence forms are scanned instead of matched with /^(`{3,})([^\n]*)\n([\S\s]*?)^\1/gm.
+		// A backreference to a series of variable length makes the engine retry every opening length
+		// over the whole text, which is quadratic: a message of 12000 backticks cost 0.3 s per render,
+		// and every message of every chat goes through this method.
+		#protectStrictFences(text, fenceChar) {
+			let result = '';
+			let position = 0;
+			let lineStart = 0;
+			while (lineStart !== -1 && lineStart < text.length) {
+				const openLength = CodeProtector.#fenceEnd(text, lineStart, fenceChar) - lineStart;
+				if (openLength < FENCE_MIN_LENGTH) {
+					lineStart = CodeProtector.#nextLineStart(text, lineStart);
+					continue;
+				}
+
+				// The code starts on the line below the opening fence, so the rest of the opening line
+				// (the language marker) is dropped together with the fence itself.
+				const codeStart = CodeProtector.#nextLineStart(text, lineStart);
+				if (codeStart === -1) {
+					break;
+				}
+				const closing = CodeProtector.#findClosingLine(text, codeStart, openLength, fenceChar);
+				if (closing === null) {
+					// No line below opens with a fence at all, so no later opening can be closed either.
+					break;
+				}
+				result += text.slice(position, lineStart);
+				result += this.#addBlock(text.slice(codeStart, closing.start));
+				position = closing.start + closing.length;
+				lineStart = CodeProtector.#nextLineStart(text, position);
+			}
+			return result + text.slice(position);
+		}
+
+		// "Loose" fenced code, enabled by both markdown paths (#convert and decodeInline). The strict
+		// pass above needs the closing fence at line start; a pasted multi-line block whose closing ```
+		// sits mid-line (e.g. ```Foo\nbar\nbaz```: rest) slips past it and would otherwise fall through
+		// to the single-backtick inline rule and fragment into orphaned backticks plus per-line
+		// inline-code boxes. Here a 3+ backtick pair whose content spans newlines is captured whole as
+		// ONE [code] block; text after the closing fence stays outside it. A single-line span has no
+		// newline and keeps its inline-code rendering.
+		#protectLooseFences(text) {
+			let result = '';
+			let position = 0;
+			while (position < text.length) {
+				const openStart = text.indexOf(LOOSE_FENCE_OPENING, position);
+				if (openStart === -1) {
+					break;
+				}
+				const openEnd = CodeProtector.#fenceEnd(text, openStart, BACKTICK);
+				const closing = CodeProtector.#findClosingFence(text, openEnd, openEnd - openStart);
+				if (closing === null) {
+					result += text.slice(position, openEnd);
+					position = openEnd;
+					continue;
+				}
+
+				// A trimmed fence leaves the extra backticks of the opening series inside the code.
+				const code = text.slice(openStart + closing.length, closing.start);
+				const spanEnd = closing.start + closing.length;
+				const isBlock = code.includes(NEW_LINE) && !this.#holdsPlaceholder(code);
+				result += text.slice(position, openStart);
+				result += isBlock ? this.#addBlock(code) : text.slice(openStart, spanEnd);
+				position = spanEnd;
+			}
+			return result + text.slice(position);
+		}
+
+		// A span that already carries a placeholder of this instance is never stored as a block:
+		// restore() runs over the text once, so a placeholder kept inside a block would reach the user
+		// verbatim and the code it stands for would be lost. Only the full per-render format counts —
+		// a bare "####MD_CODE_" typed by the sender is ordinary code and must stay convertible.
+		#holdsPlaceholder(code) {
+			return this.#placeholderDetector.test(code);
+		}
+
+		// The closing series must open a line and be at least as long as the opening one. When no line
+		// below is that long, the opening series is trimmed to the longest one there is - the greedy
+		// group of the old pattern did the same by backtracking to a shorter fence.
+		static #findClosingLine(text, from, openLength, fenceChar) {
+			let lineStart = from;
+			let longestStart = -1;
+			let longestLength = 0;
+			while (lineStart !== -1 && lineStart < text.length) {
+				const length = CodeProtector.#fenceEnd(text, lineStart, fenceChar) - lineStart;
+				if (length >= openLength) {
+					return {
+						start: lineStart,
+						length: openLength
+					};
+				}
+				if (length > longestLength) {
+					longestStart = lineStart;
+					longestLength = length;
+				}
+				lineStart = CodeProtector.#nextLineStart(text, lineStart);
+			}
+			return longestLength < FENCE_MIN_LENGTH ? null : {
+				start: longestStart,
+				length: longestLength
+			};
+		}
+
+		// Same rule for a loose fence, which may close anywhere rather than at a line start. Trimming
+		// stops halfway through the opening series: a fence shorter than what it leaves behind would be
+		// closed by that leftover right away and capture nothing.
+		static #findClosingFence(text, from, openLength) {
+			let index = from;
+			let longestStart = -1;
+			let longestLength = 0;
+			while (index < text.length) {
+				const start = text.indexOf(BACKTICK, index);
+				if (start === -1) {
+					break;
+				}
+				const end = CodeProtector.#fenceEnd(text, start, BACKTICK);
+				const length = end - start;
+				if (length >= openLength) {
+					return {
+						start,
+						length: openLength
+					};
+				}
+				if (length > longestLength) {
+					longestStart = start;
+					longestLength = length;
+				}
+				index = end;
+			}
+			if (longestLength < FENCE_MIN_LENGTH || longestLength <= openLength - longestLength) {
+				return null;
+			}
+			return {
+				start: longestStart,
+				length: longestLength
+			};
+		}
+		static #fenceEnd(text, start, fenceChar) {
+			let end = start;
+			while (end < text.length && text[end] === fenceChar) {
+				end++;
+			}
+			return end;
+		}
+		static #nextLineStart(text, from) {
+			const lineEnd = text.indexOf(NEW_LINE, from);
+			return lineEnd === -1 ? -1 : lineEnd + 1;
 		}
 	}
 
@@ -174,15 +520,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return `${MARKDOWN_ESCAPE_PREFIX}${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
 			});
 		}
-		restore(text) {
+
+		/**
+		 * Expand the placeholders of a fragment WITHOUT consuming the storage: the image rule needs
+		 * the escapes of a label back before toMarkdownInertToken encodes the alt out of restore's
+		 * reach, while the rest of the text is still restored by the final restore() below.
+		 *
+		 * @param {string} text
+		 * @return {string}
+		 */
+		expand(text) {
 			if (this.#escapes.length === 0) {
 				return text;
 			}
 			const escapes = this.#escapes;
-			const result = text.replaceAll(ESCAPE_PLACEHOLDER_PATTERN,
+			return text.replaceAll(ESCAPE_PLACEHOLDER_PATTERN,
 			// A user-typed literal "####MD_ESC_N####" (or an out-of-range index) has no
 			// stored char — leave the marker untouched instead of emitting "undefined".
 			(match, index) => escapes[Number(index)] ?? match);
+		}
+		restore(text) {
+			const result = this.expand(text);
 			this.#escapes = [];
 			return result;
 		}
@@ -228,6 +586,46 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const index = this.#mentions.length;
 			this.#mentions.push(mention);
 			return `${MARKDOWN_MENTION_PREFIX}${this.#nonce}_${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+		}
+	}
+
+	// Hides a link/image destination behind a placeholder for the span of the inline rules, then
+	// restores it byte-for-byte. Without it a URL carrying Markdown-significant characters
+	// (`*`, `_`, balanced parens, percent-escapes) is reparsed by the bold/italic/link rules that
+	// run after applyImage/applyLink and corrupted before it reaches the [URL=...]/[img] tag.
+	//
+	// Unlike MentionProtector.protect (one call over the whole text), protect() here is invoked
+	// once per matched destination and appends to the instance store; restore() expands every
+	// placeholder of this instance and clears it. One instance is shared across a whole converter
+	// call (full inline pass + table cells + list items) and restored once, after applyHtmlRules.
+	class UrlProtector {
+		#urls = [];
+		#nonce = '';
+		#pattern;
+
+		// Placeholder: ####MD_URL_<nonce>_<index>####. Why it carries a nonce - utils/nonce.js.
+		constructor(nonce = '') {
+			this.#nonce = nonce;
+			this.#pattern = new RegExp(`${MARKDOWN_URL_PREFIX}${nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+		}
+		protect(url) {
+			const index = this.#urls.length;
+			this.#urls.push(url);
+			return `${MARKDOWN_URL_PREFIX}${this.#nonce}_${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
+		}
+		restore(text) {
+			if (this.#urls.length === 0) {
+				return text;
+			}
+			const urls = this.#urls;
+			const result = text.replaceAll(this.#pattern, (match, index) => {
+				const url = urls[Number(index)];
+
+				// Unknown index = a marker the sender typed, not one we stored (utils/nonce.js).
+				return url === undefined ? match : url;
+			});
+			this.#urls = [];
+			return result;
 		}
 	}
 
@@ -471,6 +869,474 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return encodeURIComponent(value).replaceAll(/[!'()*_~]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
 	}
 
+	// Finds where the destination of a Markdown link / image ends, starting right after the "]("
+	// prefix. Replaces the destination group of the old LINK_PATTERN/IMAGE_PATTERN regexes, which
+	// only knew one level of balanced parens and kept the <...> wrapper in the href.
+	//
+	// The grammar is normative, not a local implementation choice: the mobile copy of the parser still
+	// runs the old regex and is to be ported to this one verbatim (separate task), so a divergence is a
+	// parity defect. It is written down in
+	// im/.ai/knowledge-base/notes/features/markdown-link-boundary-grammar.md and pinned by the
+	// "link boundary" / "server [URL] wrapper" describe blocks of test/functions/markdown.test.js -
+	// those two are checked, this comment is not, so they win on any disagreement.
+	//
+	// Anything the grammar rejects means "this is not a link": the caller falls back to plain text.
+	// `resume` is how far the scan got; the caller re-enters the region behind it only within its
+	// re-read budget (see replaceLinkLike), or a run of "](" turns the pass quadratic.
+
+	// The tags of the server wrapper as the source spells them, empty until each is met (an empty
+	// openTag means the destination is not wrapped at all).
+
+	// A step of the destination loop also yields what the href takes from it - one literal character
+	// for an escape pair, nothing for the zero-width tags of the wrapper.
+
+	// The stop class of the plain form is the \s of the old regex (space, tab, NBSP, Unicode
+	// spaces) - property escapes are avoided on purpose, the Android runtime of the port has none.
+	const WHITESPACE_PATTERN = /\s/;
+
+	// The server rewrites a bare url standing inside "(...)" into a BB anchor, cutting it at the
+	// FIRST ')' and pulling an optional title along: "[t](url "hint")" comes back from Im\Text::parse
+	// as "[t]([URL]url "hint"[/URL])", and "[t](a/(b))" as "[t]([URL]a/(b[/URL]))" - the wrapper covers
+	// a prefix of the destination and its tail stands outside. Both tags are therefore read as
+	// zero-width tokens: the scan steps over them and grades the characters around the cut as one
+	// stream, which is what makes parens, escaping and titles survive the echo. An opener with no
+	// closer before the ')' is as broken as an unclosed title - the fragment stays plain text.
+	const URL_TAG_OPEN = '[url]';
+	const URL_TAG_CLOSE = '[/url]';
+
+	// What a title may stand behind: an address the renderer really turns into an anchor. ParserUrl
+	// hands the destination to getUtils().text.checkUrl, which takes a leading '/' or one of the
+	// schemes below - compared with startsWith, so the case matters there as it does here - and
+	// nothing else, "www." included. Converting a fragment the renderer will not link ("[t](literally
+	// "a quote")") drops its tail from the message instead of linking it. The list is copied and not
+	// called on purpose: the scan keeps no runtime dependency of its own, so the port can take it as
+	// it stands.
+	const URL_LIKE_PATTERN = /^(?:\/|https?:|ftp:|file:|tel:|callto:|mailto:|skype:|viber:)/;
+
+	/**
+	 * @param {string} text
+	 * @param {number} openPos - first character after "]("
+	 * @return {LinkDestinationScan}
+	 */
+	function scanLinkDestination(text, openPos) {
+		if (text[openPos] === '<') {
+			return scanAngle(text, openPos + 1, openPos);
+		}
+		return scanPlain(text, openPos);
+	}
+
+	/**
+	 * The plain form: parens of any depth, closed by the ')' that brings the depth back to zero or
+	 * handed over to the title scan by the first whitespace. The tags of the server wrapper are
+	 * stepped over wherever they stand (see URL_TAG_OPEN).
+	 *
+	 * @param {string} text
+	 * @param {number} openPos
+	 * @return {LinkDestinationScan}
+	 */
+	function scanPlain(text, openPos) {
+		let wrapper = openWrapper(text, openPos);
+		let i = openPos + wrapper.openTag.length;
+		let depth = 0;
+		let href = '';
+		while (i < text.length) {
+			if (exceedsScanLimit(i, openPos)) {
+				return fail(i);
+			}
+			const step = readTransparentStep(text, i, wrapper);
+			if (step !== null) {
+				href += step.char;
+				i = step.next;
+				wrapper = step.wrapper;
+				continue;
+			}
+			const char = text[i];
+			if (char === '\n') {
+				return fail(i);
+			}
+			if (WHITESPACE_PATTERN.test(char)) {
+				// An open '(' can no longer balance once the destination has ended - not a link,
+				// like the newline above (the old regex required balanced parens here too).
+				if (depth > 0) {
+					return fail(i);
+				}
+				return endDestinationAtSpace(text, i, href, openPos, wrapper);
+			}
+			if (char === ')' && depth === 0) {
+				return closeDestination(href, i, wrapper);
+			}
+			depth = nextParenDepth(char, depth);
+			href += char;
+			i += 1;
+		}
+		return fail(i);
+	}
+
+	/**
+	 * @param {string} text
+	 * @param {number} spacePos
+	 * @param {string} href
+	 * @param {number} openPos
+	 * @param {ServerWrapper} wrapper
+	 * @return {LinkDestinationScan}
+	 */
+	function endDestinationAtSpace(text, spacePos, href, openPos, wrapper) {
+		// A title with no destination in front of it ("[t]( \"x\")") is not a link.
+		if (href === '') {
+			return fail(spacePos);
+		}
+		return scanTitleThenClose(text, spacePos, href, openPos, wrapper);
+	}
+
+	/**
+	 * The ')' that brings the paren depth back to zero ends the plain form - unless the wrapper the
+	 * server opened has not been closed before it: an opener with no closer is as broken as an
+	 * unclosed title, and the fragment carrying it stays plain text.
+	 *
+	 * @param {string} href
+	 * @param {number} closePos
+	 * @param {ServerWrapper} wrapper
+	 * @return {LinkDestinationScan}
+	 */
+	function closeDestination(href, closePos, wrapper) {
+		if (isWrapperPending(wrapper)) {
+			return fail(closePos);
+		}
+		return {
+			href: restoreWrapper(wrapper, href),
+			titleDropped: false,
+			end: closePos
+		};
+	}
+
+	/**
+	 * @return {number} the paren depth after `char`; the ')' that closes the destination is taken by
+	 *   the caller and never reaches here
+	 */
+	function nextParenDepth(char, depth) {
+		if (char === '(') {
+			return depth + 1;
+		}
+		return char === ')' ? depth - 1 : depth;
+	}
+
+	/**
+	 * The <...> form: an explicit wrapper that lets a destination carry spaces.
+	 *
+	 * @param {string} text
+	 * @param {number} start - first character after '<'
+	 * @param {number} openPos
+	 * @return {LinkDestinationScan}
+	 */
+	function scanAngle(text, start, openPos) {
+		// Im\Text::parse leaves the <...> form alone, so a "[url]" written inside it is the sender's
+		// own text and takes no part in the scan: nothing is ever stepped over here, and the wrapper
+		// comes back from readEscapePair the way it went in. The form survives because parse runs with
+		// allow['HTML'] = 'Y' - '<' is never escaped to "&lt;", so the "&lt;"..."&gt;" boundary pair
+		// (textparser.php:450) never fires, and the general autolink pattern (textparser.php:466) takes
+		// only a wordSeparator character (textparser.php:102) before the scheme.
+		const wrapper = noWrapper();
+		let i = start;
+		let href = '';
+		while (i < text.length) {
+			if (exceedsScanLimit(i, openPos)) {
+				return fail(i);
+			}
+			const escape = readEscapePair(text, i, wrapper);
+			if (escape !== null) {
+				href += escape.char;
+				i = escape.next;
+				continue;
+			}
+			const char = text[i];
+			if (char === '\n' || char === '<') {
+				return fail(i);
+			}
+			if (char === '>') {
+				// An empty wrapper ("[t](<>)") is an empty href, like the empty plain form.
+				return scanTitleThenClose(text, i + 1, href, openPos, wrapper);
+			}
+			href += char;
+			i += 1;
+		}
+		return fail(i);
+	}
+
+	/**
+	 * Tail of both forms: optional title in quotes, then the closing ')'. The title is only skipped -
+	 * it is never carried into the tag - and the server wrapper is stepped over here as well, since
+	 * the cut may fall anywhere between the destination and the ')'.
+	 *
+	 * @param {string} text
+	 * @param {number} start
+	 * @param {string} href
+	 * @param {number} openPos
+	 * @param {ServerWrapper} wrapper
+	 * @return {LinkDestinationScan}
+	 */
+	function scanTitleThenClose(text, start, href, openPos, wrapper) {
+		let tail = skipTail(text, start, openPos, wrapper);
+		if (exceedsScanLimit(tail.next, openPos)) {
+			return fail(tail.next);
+		}
+
+		// A title, unlike a destination, is ordinary text: when the fragment turns out not to be a
+		// link the caller has to re-read it from the opening quote, or a valid link standing inside
+		// an unclosed title is lost with it. Resuming there keeps the pass linear - every retry
+		// starts after the previous one, and a title scan ends at the next quote of the same kind.
+		let resume = tail.next;
+		if (text[tail.next] === '"' || text[tail.next] === "'") {
+			resume = tail.next + 1;
+			const title = skipQuotedTitle(text, tail.next, openPos, tail.wrapper);
+			if (title === null) {
+				return fail(resume);
+			}
+			if (!URL_LIKE_PATTERN.test(href)) {
+				return fail(resume);
+			}
+			tail = skipTail(text, title.next, openPos, title.wrapper);
+			if (exceedsScanLimit(tail.next, openPos)) {
+				return fail(resume);
+			}
+		}
+
+		// text[tail.next] is undefined at the end of the text - no ')', so not a link; neither is a
+		// wrapper the server opened and never closed.
+		if (text[tail.next] === ')' && !isWrapperPending(tail.wrapper)) {
+			return {
+				href: restoreWrapper(tail.wrapper, href),
+				titleDropped: true,
+				end: tail.next
+			};
+		}
+		return fail(resume);
+	}
+
+	/**
+	 * @param {string} text
+	 * @param {number} quotePos - index of the opening quote
+	 * @param {number} openPos
+	 * @param {ServerWrapper} wrapper
+	 * @return {?WrapperStep} `next` - first index after the closing quote; null when the title does
+	 *   not close on this line or the scan ceiling is reached
+	 */
+	function skipQuotedTitle(text, quotePos, openPos, wrapper) {
+		const quote = text[quotePos];
+		let i = quotePos + 1;
+		let current = wrapper;
+		while (!exceedsScanLimit(i, openPos) && i < text.length && text[i] !== '\n') {
+			const tag = readWrapperClose(text, i, current);
+			if (tag !== null) {
+				i = tag.next;
+				current = tag.wrapper;
+				continue;
+			}
+			const escape = readTitleEscapePair(text, i, quote, current);
+			if (escape !== null) {
+				i = escape.next;
+				current = escape.wrapper;
+				continue;
+			}
+			if (text[i] === quote) {
+				return {
+					next: i + 1,
+					wrapper: current
+				};
+			}
+			i += 1;
+		}
+		return null;
+	}
+
+	/**
+	 * An escaped quote of the same kind (and an escaped backslash) does not close the title. The pair
+	 * is read through the closing tag of the server wrapper the way readEscapePair reads it inside a
+	 * destination, or a cut falling between the backslash and the quote would close the title on a
+	 * quote the sender escaped.
+	 *
+	 * @return {?WrapperStep} `next` - first index after the pair
+	 */
+	function readTitleEscapePair(text, i, quote, wrapper) {
+		if (text[i] !== '\\') {
+			return null;
+		}
+		const afterBackslash = readWrapperClose(text, i + 1, wrapper) ?? {
+			next: i + 1,
+			wrapper
+		};
+		const charPos = afterBackslash.next;
+		if (text[charPos] !== quote && text[charPos] !== '\\') {
+			return null;
+		}
+		return {
+			next: charPos + 1,
+			wrapper: afterBackslash.wrapper
+		};
+	}
+
+	/**
+	 * Skips what may stand between the parts of the tail: spaces, tabs and the closing tag of the
+	 * server wrapper, in whatever order the cut left them.
+	 *
+	 * The space class here is NARROWER than the destination stop class: only space and tab, so an
+	 * NBSP between the destination and the title keeps the fragment plain text.
+	 *
+	 * @return {WrapperStep} `next` - first index of anything else; stops at the scan ceiling, which
+	 *   the caller re-checks
+	 */
+	function skipTail(text, start, openPos, wrapper) {
+		let i = start;
+		let current = wrapper;
+		while (!exceedsScanLimit(i, openPos)) {
+			if (text[i] === ' ' || text[i] === '\t') {
+				i += 1;
+				continue;
+			}
+			const tag = readWrapperClose(text, i, current);
+			if (tag === null) {
+				break;
+			}
+			i = tag.next;
+			current = tag.wrapper;
+		}
+		return {
+			next: i,
+			wrapper: current
+		};
+	}
+	function noWrapper() {
+		return {
+			openTag: '',
+			closeTag: ''
+		};
+	}
+
+	/**
+	 * The server wrapper only ever opens the destination (Im\Text::parse rewrites the url standing
+	 * right after the "]("), so a "[url]" written anywhere else is the sender's own text and stays in
+	 * the href as such. The tag is kept as the source spells it, case included: what comes back has to
+	 * read as one wrapper to stripUrlBBWrapper and to the image renderer.
+	 *
+	 * @param {string} text
+	 * @param {number} openPos
+	 * @return {ServerWrapper}
+	 */
+	function openWrapper(text, openPos) {
+		if (!matchesTag(text, openPos, URL_TAG_OPEN)) {
+			return noWrapper();
+		}
+		return {
+			openTag: text.slice(openPos, openPos + URL_TAG_OPEN.length),
+			closeTag: ''
+		};
+	}
+	function isWrapperPending(wrapper) {
+		return wrapper.openTag !== '' && wrapper.closeTag === '';
+	}
+
+	/**
+	 * Reads the closing tag of the server wrapper standing at `i`, keeping it as the source spells it.
+	 * The step is offered, not applied: the escape readers take it only once a real pair turns out to
+	 * stand behind the tag (readEscapePair, readTitleEscapePair).
+	 *
+	 * @return {?WrapperStep} null when no tag stands at `i` - the case every character of the
+	 *   destination goes through, so it costs no object of its own
+	 */
+	function readWrapperClose(text, i, wrapper) {
+		if (!isWrapperPending(wrapper) || !matchesTag(text, i, URL_TAG_CLOSE)) {
+			return null;
+		}
+		return {
+			next: i + URL_TAG_CLOSE.length,
+			wrapper: {
+				openTag: wrapper.openTag,
+				closeTag: text.slice(i, i + URL_TAG_CLOSE.length)
+			}
+		};
+	}
+
+	/**
+	 * The destination as the sender wrote it, with the wrapper put back around it whole. The rules
+	 * downstream keep the policy they have for a wrapper the server did not cut: applyLink unwraps it
+	 * (stripUrlBBWrapper), an image keeps it in the src (ParserImage.decodeImageBbCode takes it off).
+	 */
+	function restoreWrapper(wrapper, href) {
+		return `${wrapper.openTag}${href}${wrapper.closeTag}`;
+	}
+
+	/**
+	 * The two things the destination loop reads without grading them: the closing tag of the server
+	 * wrapper, which is zero-width, and an escape pair, which stands for a single literal character.
+	 *
+	 * @return {?DestinationStep} null when the character at `i` is for the loop itself to grade
+	 */
+	function readTransparentStep(text, i, wrapper) {
+		const tag = readWrapperClose(text, i, wrapper);
+		if (tag !== null) {
+			return {
+				char: '',
+				next: tag.next,
+				wrapper: tag.wrapper
+			};
+		}
+		return readEscapePair(text, i, wrapper);
+	}
+
+	/**
+	 * The escape pair starting at `i`, or null when this backslash escapes nothing. The server may cut
+	 * the pair in two ("foo\[/URL])bar" for "foo\)bar"), so the closing tag standing between the
+	 * backslash and the character it escapes is looked past - and the step over it is taken only when
+	 * a real pair turns out to be there, which is why the tag travels back in the return value.
+	 *
+	 * @return {?DestinationStep} `next` - first index after the pair
+	 */
+	function readEscapePair(text, i, wrapper) {
+		if (text[i] !== '\\') {
+			return null;
+		}
+		const afterBackslash = readWrapperClose(text, i + 1, wrapper) ?? {
+			next: i + 1,
+			wrapper
+		};
+		const charPos = afterBackslash.next;
+		if (!ESCAPABLE_CHARS.includes(text[charPos])) {
+			return null;
+		}
+		return {
+			char: text[charPos],
+			next: charPos + 1,
+			wrapper: afterBackslash.wrapper
+		};
+	}
+
+	/**
+	 * @param {string} text
+	 * @param {number} pos
+	 * @param {string} tag - lower-case tag to compare against; the source keeps its own case
+	 * @return {boolean}
+	 */
+	function matchesTag(text, pos, tag) {
+		// The first character is compared before slicing: this runs on every step of the destination
+		// loop, where a slice per character would be pure waste.
+		return text[pos] === tag[0] && text.slice(pos, pos + tag.length).toLowerCase() === tag;
+	}
+	function exceedsScanLimit(i, openPos) {
+		return i - openPos > MAX_URL_SCAN_LENGTH;
+	}
+	function fail(resume) {
+		return {
+			fail: true,
+			resume
+		};
+	}
+
+	// The link text / image alt taken from validateLabel, `start` being the index the caller cuts at.
+
+	// Shared contract of the label acceptors (createLinkLabelAcceptor): the label to build the tag
+	// from, or null to reject the fragment.
+
+	// Hides a scanned destination behind a placeholder (createDestinationProtector).
+
 	// Default render size for Markdown images. The web image renderer
 	// (ParserImage.decodeImageBbCode) only renders `[img]` BB-code that carries a
 	// valid size (small|medium|large); without it the tag is defanged and no <img>
@@ -491,10 +1357,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const BOLD_UNDERSCORE_PATTERN = new RegExp(`_{2}([^_](?:[^_\n]*[^_])?)_{2}(?!${WORD_CHAR})`, 'g');
 	const ITALIC_UNDERSCORE_PATTERN = new RegExp(`_([^\\s_](?:[^_\n]*[^\\s_])?)_(?!${WORD_CHAR})`, 'g');
 
-	// The inline-code placeholder carries a per-render nonce (####MD_INLINE_<nonce>_N####), so
-	// the restore/placeholder-only patterns depend on it and are built per call rather than
-	// hoisted — a sender cannot type a literal placeholder copy and have the stored span
-	// replicated into it on restore (amplification-DoS defense; see utils/nonce.js).
+	// Placeholder: ####MD_INLINE_<nonce>_N#### (why a nonce - utils/nonce.js). It varies per render,
+	// so these patterns are built per call instead of hoisted.
 	function inlineCodeRestorePattern(nonce) {
 		return new RegExp(`${MARKDOWN_INLINE_CODE_PREFIX}${nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
 	}
@@ -502,24 +1366,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return new RegExp(`^\\s*(?:${MARKDOWN_INLINE_CODE_PREFIX}${nonce}_\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}\\s*)+$`);
 	}
 
-	// Hoisted literal regexes (asterisk/strikethrough/image/link/autolink variants).
-	// These are plain literals with no template dependency; hoisting avoids recompiling
-	// them on every call. All are reused with replaceAll (no shared lastIndex hazard).
+	// Hoisted for the same reason as the underscore patterns above; these carry no template dependency.
 	const ASTERISK_BOLD_ITALIC_PATTERN = /\*{3}(.+?)\*{3}/g;
 	const ASTERISK_BOLD_PATTERN = /\*{2}(.+?)\*{2}/g;
 	const ASTERISK_ITALIC_PATTERN = /\*([^\s*](?:.*?[^\s*])?)\*/g;
 	const STRIKETHROUGH_PATTERN = /~~(.+?)~~/g;
-	// The URL group allows one level of balanced parens so links like
-	// `(https://ru.wikipedia.org/wiki/Foo_(bar))` are captured whole instead of being cut
-	// at the first ')'.
-	// Link text / image alt are bounded ({0,500}/{1,500}) so a crafted run of unmatched "["
-	// followed by "](" can't drive the matcher into quadratic backtracking (a real link
-	// text / alt is never that long). With the "](" guard in applyLink/applyImage this keeps
-	// the link pass effectively linear; see the client-side DoS finding.
-	const IMAGE_PATTERN = /!\[([^\]]{0,500})]\(([^\s()]*(?:\([^\s()]*\)[^\s()]*)*)\)/g;
-	const LINK_PATTERN = /\[([^\]]{1,500})]\(([^\s()]*(?:\([^\s()]*\)[^\s()]*)*)\)/g;
 	const AUTOLINK_URL_PATTERN = /<(https?:\/\/[^>]+)>/g;
 	const AUTOLINK_EMAIL_PATTERN = /<([\w%+.-]+@[\d.A-Za-z-]+\.[A-Za-z]{2,})>/g;
+
+	// Longest link text / image alt the label validator walks back over - the {1,500}/{0,500}
+	// bound of the former LINK_PATTERN/IMAGE_PATTERN (a real link text / alt is never that long).
+	const MAX_LABEL_LENGTH = 500;
 
 	/**
 	 * @param {string} text
@@ -531,22 +1388,49 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	/**
+	 * Per-render state the converter hands to the inline pass. Named rather than positional: as
+	 * arguments these were five interchangeable nulls, and a swapped pair raised nothing - the pass
+	 * simply stopped seeing the protector it was given.
+	 */
+
+	/**
+	 * The cell pass takes only the two protectors of InlineRulesContext: it restores its own inline
+	 * code and renders no images, so a deferred storage, nonce or escape handler has nothing to do here.
+	 */
+
+	/**
 	 * Applies inline Markdown rules to text, converting to BB-code equivalents.
 	 *
 	 * Assumes code blocks are already replaced with ####MD_CODE_N#### placeholders
 	 * and escape sequences with ####MD_ESC_N#### placeholders.
 	 *
 	 * @param {string} text
+	 * @param {InlineRulesContext} [context] - empty for a standalone call, which then owns every
+	 *   protect/restore of the pass itself
 	 * @return {string}
 	 */
-	function applyInlineRules(text, deferredCodeStorage = null, nonce = null) {
+	function applyInlineRules(text, context = {}) {
+		const {
+			deferredCodeStorage = null,
+			nonce = null,
+			urlProtector = null,
+			bbTagProtector = null,
+			escapeHandler = null
+		} = context;
 		const inlineCodeBlocks = deferredCodeStorage ?? [];
 		// When the converter defers restore it passes its own per-render nonce so protect here
 		// and its later restoreInlineCode share it; the standalone path makes its own.
 		const codeNonce = nonce ?? createMarkdownNonce();
+		// The converter passes its per-render UrlProtector and restores it once, after
+		// applyHtmlRules; a standalone call makes its own and restores it here.
+		const protector = urlProtector ?? new UrlProtector(codeNonce);
+		const protectDestination = createDestinationProtector(protector, inlineCodeBlocks, codeNonce);
+		const expandEscapes = createEscapeExpander(escapeHandler);
+		const acceptLinkLabel = createLinkLabelAcceptor(bbTagProtector);
+		const acceptImageLabel = createImageLabelAcceptor(acceptLinkLabel, codeNonce, expandEscapes);
 		text = protectInlineCode(text, inlineCodeBlocks, codeNonce);
-		text = applyImage(text);
-		text = applyLink(text);
+		text = applyImage(text, protectDestination, acceptImageLabel);
+		text = applyLink(text, protectDestination, acceptLinkLabel);
 		text = applyBoldItalic(text);
 		text = applyBold(text);
 		text = applyItalic(text);
@@ -556,25 +1440,42 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		if (deferredCodeStorage === null) {
 			text = restoreInlineCode(text, inlineCodeBlocks, codeNonce);
 		}
+		if (urlProtector === null) {
+			text = protector.restore(text);
+		}
 		return text;
 	}
 
 	/**
-	 * Inline rules for table cells (web): the full single-line inline set — inline code,
-	 * bold / italic / strikethrough, links and autolinks. Inline code is protected first so
-	 * its content stays literal; images are intentionally left out so a cell never grows into
-	 * a block <img>. The resulting BB-code is rendered by ParserTable.decodeCell.
+	 * Inline rules for table cells (web). Inline code is protected first so its content stays
+	 * literal; images are intentionally left out so a cell never grows into a block <img>. The
+	 * resulting BB-code is rendered by ParserTable.decodeCell.
 	 *
 	 * @param {string} text
+	 * @param {CellInlineRulesContext} [context] - the converter's per-render protectors: urlProtector
+	 *   is restored once after applyHtmlRules, bbTagProtector is consulted by the label acceptor
+	 *   (see createLinkLabelAcceptor); empty for a standalone call, which then protects and restores
+	 *   its own URLs
 	 * @return {string}
 	 */
-	function applyCellInlineRules(text) {
+	function applyCellInlineRules(text, context = {}) {
+		const {
+			urlProtector = null,
+			bbTagProtector = null
+		} = context;
 		const inlineCodeBlocks = [];
 		// Self-contained protect→restore on one cell's content, so a fresh per-call nonce is
 		// enough to keep the inline-code placeholder unguessable to the sender.
 		const codeNonce = createMarkdownNonce();
+		// The converter passes its per-render UrlProtector and restores it once, after
+		// applyHtmlRules - a URL restored here would be re-parsed by the inline rules that run on
+		// list-item content after convertLists (ListTagProtector hides only the [list]/[*] tags,
+		// not the content). A standalone call makes its own and restores it before returning.
+		const protector = urlProtector ?? new UrlProtector(codeNonce);
+		const protectDestination = createDestinationProtector(protector, inlineCodeBlocks, codeNonce);
+		const acceptLinkLabel = createLinkLabelAcceptor(bbTagProtector);
 		text = protectInlineCode(text, inlineCodeBlocks, codeNonce);
-		text = applyLink(text);
+		text = applyLink(text, protectDestination, acceptLinkLabel);
 		text = applyBoldItalic(text);
 		text = applyBold(text);
 		text = applyItalic(text);
@@ -582,6 +1483,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		text = applyAutolinkUrl(text);
 		text = applyAutolinkEmail(text);
 		text = restoreInlineCode(text, inlineCodeBlocks, codeNonce);
+		if (urlProtector === null) {
+			text = protector.restore(text);
+		}
 		return text;
 	}
 
@@ -600,14 +1504,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		const makePlaceholder = index => `${MARKDOWN_INLINE_CODE_PREFIX}${nonce}_${index}${MARKDOWN_PLACEHOLDER_SUFFIX}`;
 
 		// Triple backticks first: ```code```
-		text = text.replaceAll(/```(.+?)```/g, (match, code) => {
+		text = text.replaceAll(MARKDOWN_INLINE_CODE_TRIPLE_PATTERN, (match, code) => {
 			const index = storage.length;
 			storage.push(code.trim());
 			return makePlaceholder(index);
 		});
 
 		// Double backticks: ``code``
-		text = text.replaceAll(/``(.+?)``/g, (match, code) => {
+		text = text.replaceAll(MARKDOWN_INLINE_CODE_DOUBLE_PATTERN, (match, code) => {
 			if (placeholderOnly.test(code)) {
 				return match;
 			}
@@ -617,7 +1521,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		});
 
 		// Single backticks: `code`
-		text = text.replaceAll(/`([^`]+)`/g, (match, code) => {
+		text = text.replaceAll(MARKDOWN_INLINE_CODE_SINGLE_PATTERN, (match, code) => {
 			if (placeholderOnly.test(code)) {
 				return match;
 			}
@@ -658,6 +1562,108 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	/**
+	 * Wraps UrlProtector.protect for the link / image rules. The destination is captured while the
+	 * inline-code spans are still placeholders, so a backtick fragment written inside "](...)"
+	 * ([t](`x`)) is swallowed whole by the destination. The inline-code storage dies before the URL is
+	 * restored - a cell restores its own inside applyCellInlineRules, the full pass in the converter -
+	 * so the marker is expanded here, at capture, or it reaches the href as raw text.
+	 *
+	 * @param {UrlProtector} protector
+	 * @param {string[]} storage - inline-code storage of the current pass
+	 * @param {string} nonce
+	 * @return {DestinationProtector}
+	 */
+	function createDestinationProtector(protector, storage, nonce) {
+		return url => {
+			return protector.protect(restoreInlineCode(url, storage, nonce));
+		};
+	}
+
+	/**
+	 * Rejects a label holding a tag hidden by BbTagProtector: every protected tag carries a ']'
+	 * ([url]...[/url], [img ...]...[/img], [URL=...]), which the ']' walk in validateLabel used to
+	 * reject - the placeholder standing in for it has none. Unwrapping instead is not an option: the
+	 * label would then carry the raw BB tag.
+	 *
+	 * @param {?BbTagProtector} protector - null when nothing is protected (standalone calls)
+	 * @return {LabelAcceptor} null rejects; '' is an accepted label ("![](url)" is a valid image),
+	 *   so never test the result by truthiness
+	 */
+	function createLinkLabelAcceptor(protector) {
+		if (protector === null) {
+			return label => label;
+		}
+		return label => protector.containsPlaceholder(label) ? null : label;
+	}
+
+	/**
+	 * Placeholder of ANY protector of the current render, matched by its full format. The
+	 * nonce-carrying protectors share the render nonce (converter.js), so one alternative covers them
+	 * all; the escape and list-tag placeholders carry no nonce, so a literal copy is indistinguishable
+	 * from a real one - their own restore() expands it either way.
+	 *
+	 * @param {string} nonce - nonce of the current render
+	 * @return {RegExp} non-global on purpose: .test() must not carry lastIndex between labels
+	 */
+	function renderPlaceholderPattern(nonce) {
+		return new RegExp([`${MARKDOWN_PLACEHOLDER_PREFIX}_[A-Z]+_${nonce}_\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}`, `${MARKDOWN_ESCAPE_PREFIX}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}`, `${MARKDOWN_LIST_TAG_PREFIX}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}`].join('|'));
+	}
+
+	/**
+	 * Expands the escape placeholders of an image label back into their characters. The same move
+	 * createDestinationProtector makes for inline code, and for the same reason: the alt is emitted
+	 * through toMarkdownInertToken, past which no restore() reaches, so an escape left as a marker
+	 * would be nailed into the attribute - and rejecting the label instead would drop the image of
+	 * every generated message that escapes a dot or an underscore (`![Fig\. 1](u)`), which master
+	 * rendered. Expanding is safe where unwrapping a structural placeholder is not: an escape always
+	 * stands for one ordinary character, and the alt is encoded whole afterwards.
+	 *
+	 * The storage is NOT consumed (EscapeHandler.expand), so the rest of the text is still restored
+	 * by the converter at the end of the pass.
+	 *
+	 * @param {?EscapeHandler} handler - null when nothing is protected (standalone calls)
+	 * @return {EscapeExpander}
+	 */
+	function createEscapeExpander(handler) {
+		if (handler === null) {
+			return label => label;
+		}
+		return label => handler.expand(label);
+	}
+
+	/**
+	 * Label acceptor for the image rule - a superset of the link one. The alt is emitted through
+	 * toMarkdownInertToken, which percent-encodes whatever it is given
+	 * (####MD_INLINE_... -> %23%23%23%23MD%5FINLINE%5F...), so a placeholder that lands there is out
+	 * of reach of every restore() and travels into the DOM attribute as is - read out by a screen
+	 * reader, and with the block it stood for (a table, a list, a code span) lost from the message.
+	 * A label carrying a placeholder of ANY protector of this render is therefore not an image label.
+	 * The one kind that is expanded instead of rejected is the escape (createEscapeExpander): it
+	 * stands for an ordinary character, so the alt comes out as the sender wrote it.
+	 *
+	 * The link rule deliberately keeps the narrow BB-tag rule: its label stays raw inside
+	 * [URL=...]...[/URL], where the ordinary restore does reach it, so there is nothing to leak -
+	 * while rejecting there would turn everyday labels into plain text ([`code`](u), or the escaped
+	 * punctuation a Copilot answer is full of, [Fig\. 1](u)).
+	 *
+	 * @param {LabelAcceptor} acceptLinkLabel - the link acceptor, kept as the first check
+	 * @param {string} nonce - nonce of the current render
+	 * @param {EscapeExpander} expandEscapes - applied before the placeholder test
+	 * @return {LabelAcceptor} what it accepts is the EXPANDED label
+	 */
+	function createImageLabelAcceptor(acceptLinkLabel, nonce, expandEscapes) {
+		const placeholderPattern = renderPlaceholderPattern(nonce);
+		return label => {
+			const linkLabel = acceptLinkLabel(label);
+			if (linkLabel === null) {
+				return null;
+			}
+			const expandedLabel = expandEscapes(linkLabel);
+			return placeholderPattern.test(expandedLabel) ? null : expandedLabel;
+		};
+	}
+
+	/**
 	 * Image: ![alt](url) → [img size=<default> alt=<token>]url[/img]
 	 *
 	 * A default `size` is always emitted so the web renderer takes the <img> render
@@ -671,21 +1677,122 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	 * by Text.encode (< > & " '), no newlines, and nothing that could break the
 	 * `[img ...]url[/img]` BB delimiters. image.js decodes the token back to the
 	 * original alt and assigns it as a DOM attribute (decodeImageBbCode).
+	 *
+	 * That encoding is why the acceptor here is the strict one (createImageLabelAcceptor).
 	 */
-	function applyImage(text) {
-		// A Markdown image always contains "](" — without it the pattern cannot match, so
-		// bail early. This also caps cost: a crafted run of unmatched "[" (no "](") can drive
-		// the [^\]]+ alternation into quadratic backtracking, a reachable client-side DoS.
+	function applyImage(text, protectDestination, acceptLabel) {
+		// A Markdown image always contains "](" - without it there is nothing to scan, so bail
+		// early. This is also the outer cost cap of the pass (see the DoS finding).
 		if (!text.includes('](')) {
 			return text;
 		}
-		return text.replaceAll(IMAGE_PATTERN, (match, alt, url) => {
+		return replaceLinkLike(text, true, acceptLabel, (alt, url) => {
 			const altToken = toMarkdownInertToken(alt);
+			// The image URL is NOT unwrapped ([url]...[/url] stripping is link-only); protect the raw
+			// destination so its Markdown-significant chars survive the inline rules that follow.
+			const protectedUrl = protectDestination(url);
 			if (altToken === '') {
-				return `[img size=${MARKDOWN_IMAGE_DEFAULT_SIZE}]${url}[/img]`;
+				return `[img size=${MARKDOWN_IMAGE_DEFAULT_SIZE}]${protectedUrl}[/img]`;
 			}
-			return `[img size=${MARKDOWN_IMAGE_DEFAULT_SIZE} alt=${altToken}]${url}[/img]`;
+			return `[img size=${MARKDOWN_IMAGE_DEFAULT_SIZE} alt=${altToken}]${protectedUrl}[/img]`;
 		});
+	}
+
+	/**
+	 * Shared driver of the link and image rules: find a "](" prefix, validate the label in
+	 * front of it, then let the boundary scanner decide where the destination ends.
+	 *
+	 * Linearity requirement: a failed scan may hold a valid "](" inside the region it walked
+	 * (an unclosed <...> form swallows the rest of the line), so the search re-enters the
+	 * region to give every candidate its own try - but only while the re-read debt of the pass
+	 * stays within the text length. Past that budget the search resumes at the point the
+	 * scanner reports (`resume`), never earlier: the total work stays O(text), where re-reading
+	 * a flood of "[a](" from every one of them would cost seconds (a hangable client).
+	 *
+	 * @param {string} text
+	 * @param {boolean} isImage - image labels require a '!' right before '[', links forbid it
+	 * @param {LabelAcceptor} acceptLabel - createLinkLabelAcceptor for a link, the stricter
+	 *   createImageLabelAcceptor for an image. What it returns is what buildTag is given - the raw
+	 *   label for a link, the expanded one for an image.
+	 * @param {LinkTagBuilder} buildTag
+	 * @return {string}
+	 */
+	function replaceLinkLike(text, isImage, acceptLabel, buildTag) {
+		let searchPos = 0;
+		// Everything before this index is already in `result` - the label of the next match may
+		// not reach back into it (String.replaceAll never re-matched consumed text either).
+		let emittedTo = 0;
+		let result = '';
+		// Characters failed scans have left re-readable so far (the linearity requirement above).
+		let rescanDebt = 0;
+		for (;;) {
+			const prefixPos = text.indexOf('](', searchPos);
+			if (prefixPos === -1) {
+				break;
+			}
+			const label = validateLabel(text, prefixPos, isImage, emittedTo, acceptLabel);
+			if (label === null) {
+				searchPos = prefixPos + 2;
+				continue;
+			}
+			const scan = scanLinkDestination(text, prefixPos + 2);
+			if (scan.fail === true) {
+				const scanEnd = Math.max(scan.resume, prefixPos + 2);
+				rescanDebt += scanEnd - (prefixPos + 2);
+				searchPos = rescanDebt > text.length ? scanEnd : prefixPos + 2;
+				continue;
+			}
+			result += text.slice(emittedTo, label.start) + buildTag(label.text, scan.href);
+			emittedTo = scan.end + 1;
+			searchPos = emittedTo;
+		}
+		return result + text.slice(emittedTo);
+	}
+
+	/**
+	 * Validate the link text / image alt that ends at the "](" prefix: walk back to the
+	 * opening '[' over at most MAX_LABEL_LENGTH characters. A ']' on the way means the
+	 * fragment is not a label; a link text must not be empty ({1,500}), an alt may be
+	 * ({0,500}); a placeholder the caller's acceptor rejects disqualifies it as well - a
+	 * protected BB tag carried a ']' of its own (see createLinkLabelAcceptor), and an image
+	 * alt takes no placeholder at all (see createImageLabelAcceptor).
+	 *
+	 * @param {string} text
+	 * @param {number} prefixPos - index of the "](" prefix
+	 * @param {boolean} isImage
+	 * @param {number} minPos - lower bound of the walk (start of the not yet emitted text)
+	 * @param {LabelAcceptor} acceptLabel
+	 * @return {?LinkLabel} null when this is not a label; `text` is what the acceptor returned, not
+	 *   the raw slice; `start` includes the '!' of an image, so the caller drops it together with
+	 *   the label
+	 */
+	function validateLabel(text, prefixPos, isImage, minPos, acceptLabel) {
+		const lowestStart = Math.max(minPos, prefixPos - MAX_LABEL_LENGTH - 1);
+		for (let i = prefixPos - 1; i >= lowestStart; i--) {
+			if (text[i] === ']') {
+				return null;
+			}
+			if (text[i] !== '[') {
+				continue;
+			}
+			const hasBang = i > minPos && text[i - 1] === '!';
+			if (hasBang !== isImage) {
+				return null;
+			}
+			const label = text.slice(i + 1, prefixPos);
+			if (!isImage && label === '') {
+				return null;
+			}
+			const acceptedLabel = acceptLabel(label);
+			if (acceptedLabel === null) {
+				return null;
+			}
+			return {
+				start: isImage ? i - 1 : i,
+				text: acceptedLabel
+			};
+		}
+		return null;
 	}
 
 	/**
@@ -772,9 +1879,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	/**
-	 * Strip server-added [URL]...[/URL] wrapper from a URL value.
-	 * Server auto-wraps bare URLs in BB-code before client receives the message,
-	 * e.g. `(https://google.com)` becomes `([URL]https://google.com[/URL])`.
+	 * Strip the server-added [URL]...[/URL] wrapper from a URL value. Im\Text::parse auto-wraps bare
+	 * URLs before the client receives the message: `(https://google.com)` arrives as
+	 * `([URL]https://google.com[/URL])`. The scanner hands the destination back with the pair around
+	 * it whole (restoreWrapper), so one unwrapping rule serves every shape.
+	 *
 	 * @param {string} url
 	 * @returns {string}
 	 */
@@ -786,20 +1895,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	 * Link: [text](url) → [URL=url]text[/URL]
 	 * Must not match images (preceded by !)
 	 */
-	function applyLink(text) {
-		// A Markdown link always contains "](" — without it the pattern cannot match, so bail
-		// early. This also caps cost: a crafted run of unmatched "[" (no "](") can drive the
-		// [^\]]+ alternation into quadratic backtracking — a client-side DoS reachable from
+	function applyLink(text, protectDestination, acceptLabel) {
+		// A Markdown link always contains "](" - without it there is nothing to scan, so bail
+		// early. This is also the outer cost cap of the pass: a client-side DoS reachable from
 		// MarkdownConverter.decode before Text.encode.
 		if (!text.includes('](')) {
 			return text;
 		}
-		return text.replaceAll(LINK_PATTERN, (match, linkText, url, offset, sourceText) => {
-			if (offset > 0 && sourceText[offset - 1] === '!') {
-				return match;
-			}
-			url = stripUrlBBWrapper(url);
-			return `[URL=${url}]${linkText}[/URL]`;
+		return replaceLinkLike(text, false, acceptLabel, (linkText, url) => {
+			// Protect the destination after unwrapping so its Markdown-significant chars survive
+			// the bold/italic/strike/autolink rules that follow; restored byte-for-byte later.
+			return `[URL=${protectDestination(stripUrlBBWrapper(url))}]${linkText}[/URL]`;
 		});
 	}
 
@@ -959,12 +2065,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return decoded.join('');
 	}
 
-	const LIST_ITEM_PATTERN = /^([ \t]*)([*+-]|\d+\.)[ \t]+(.*)$/;
-	const HAS_LIST_ITEM_PATTERN = /^[ \t]*(?:[*+-]|\d+\.)[ \t]+/m;
+	// A line opening with a long number ("255502. test") is an order id, a phone or a
+	// contract number, not a list: turning it into <ol start=...> moves the number into the
+	// marker, which then does not fit the list indent and looks truncated. Real chat lists
+	// start small, so a marker that OPENS a list is capped at three digits ("1." to "999.").
+	// The cap applies to the start of a list only - the lines startsNewList() answers yes for.
+	// Inside an already open list a marker of any length is just the next item ("998./999./1000."
+	// is one list), because only the first number is kept: the browser numbers the rest itself
+	// from <ol start>. The <ol> indent (parser.css) is therefore sized for "999.", the widest
+	// marker accepted as the START of a list; a long list started near the cap ("999." plus
+	// MAX_LIST_ITEMS items reaches "1198.") can still outgrow that indent - an accepted
+	// limitation, not a guarantee.
+	// Exported because that indent is the other half of the cap and lives in a file this one
+	// cannot see: the stylesheet declares the digit count it was measured for, and
+	// test/functions/markdown-list-indent.test.js holds the two against each other.
+	const MAX_ORDERED_MARKER_DIGITS = 3;
+	// The capped source answers "can a list START here?" - it backs the opening-marker test, the
+	// "is there any list line?" probe and the pipeline fast-path (MARKDOWN_TRIGGER in
+	// ../converter.js), which can therefore never disagree on where a list may begin. The
+	// per-line parse is deliberately uncapped: it also has to see continuation markers.
+	const ORDERED_MARKER_SOURCE = `\\d{1,${MAX_ORDERED_MARKER_DIGITS}}\\.`;
+	const LIST_ITEM_PATTERN = /^([\t ]*)([*+-]|\d+\.)[\t ]+(.*)$/;
+	const OPENING_ORDERED_MARKER_PATTERN = new RegExp(`^${ORDERED_MARKER_SOURCE}$`);
+	const HAS_LIST_ITEM_PATTERN = new RegExp(`^[ \\t]*(?:[*+-]|${ORDERED_MARKER_SOURCE})[ \\t]+`, 'm');
 	const MAX_RULE_LENGTH = 20;
-	// Cap parsed items symmetric to the render cap (functions/list.js MAX_LIST_ITEMS) so a
-	// crafted [list] with thousands of [*] doesn't burn applyCellInlineRules on items that
-	// ParserList.decodeList will never render.
+	// Largest number of items one emitted [list] may carry, symmetric to the render cap
+	// (functions/list.js MAX_LIST_ITEMS): a longer run is split into sibling [list] blocks, so
+	// every parsed item lands in a list ParserList.decodeList actually draws. The split is done
+	// on OUTPUT (convertLists), after the whole run of list lines is parsed as one list - a
+	// technical chunk must not look like a place where the user started a new list, or the item
+	// behind it would be re-tested against the opening digit cap and fall out as plain text.
 	const MAX_LIST_ITEMS$1 = 200;
 
 	// Structural list tags ([list]/[list=1]/[/list]/[*]) are hidden behind inert
@@ -1028,10 +2158,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	/**
+	 * Read one line as a list item. Its marker is reported in three parts, because the callers
+	 * need different ones: `ordered` is the list type the item belongs to (tryParseList places it
+	 * by that and `indent`), `canOpen` says whether such a marker may begin a list at all, and
+	 * `start` is the number buildList puts on <ol start> when the item is the first of one.
+	 *
 	 * @param {string} line
-	 * @returns {{ indent: number, ordered: boolean, content: string } | null}
+	 * @param {?UrlProtector} [urlProtector] - UrlProtector of the current render; null lets
+	 *   applyCellInlineRules protect and restore the URLs of the item on its own
+	 * @param {?BbTagProtector} [bbTagProtector] - BbTagProtector of the current render, consulted by
+	 *   the label acceptor of the item link rule (createLinkLabelAcceptor)
+	 * @returns {{
+	 *     indent: number, ordered: boolean, canOpen: boolean, start: number | null, content: string
+	 * } | null}
 	 */
-	function parseListItem(line) {
+	function parseListItem(line, urlProtector = null, bbTagProtector = null) {
 		if (isHorizontalRule(line)) {
 			return null;
 		}
@@ -1044,9 +2185,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return {
 			indent: normalizeIndent(match[1]),
 			ordered,
+			// Whether this marker may START a list; a bullet always may (see the digit cap above).
+			canOpen: !ordered || OPENING_ORDERED_MARKER_PATTERN.test(marker),
 			// First item's number seeds <ol start> (CommonMark: later item numbers are ignored).
 			start: ordered ? parseInt(marker, 10) : null,
-			content: defangListTags(applyCellInlineRules(match[3]))
+			content: defangListTags(applyCellInlineRules(match[3], {
+				urlProtector,
+				bbTagProtector
+			}))
 		};
 	}
 
@@ -1066,10 +2212,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		// Carry a non-default start (e.g. a list beginning at "5.") on the list tag so the
 		// decoder can emit <ol start="5">. A start of 1 stays the canonical bare [list=1].
 		let bbcode = ordered ? '[list=1]' : '[list]';
-		// Only carry a start we can round-trip as plain digits: Number.isSafeInteger rejects
-		// values >= 2^53 whose String() form is either imprecise or exponential ("1e+21"),
-		// which would leak as raw BB (no `start=\d+` regex matches it). Such an absurd start
-		// degrades to bare [list=1] (renders from 1) rather than breaking the list.
+		// The MAX_LIST_ITEMS split (convertLists) hands the next chunk a continuation item, whose
+		// number is not capped, so `first` is not always an opening marker. Only carry a start we
+		// can round-trip as plain digits: Number.isSafeInteger rejects values >= 2^53 whose String()
+		// form is either imprecise or exponential ("1e+21"), which would leak as raw BB (no
+		// `start=\d+` regex matches it). Such an absurd start degrades to bare [list=1] rather than
+		// breaking the list.
 		if (ordered && Number.isSafeInteger(first.start) && first.start !== 1) {
 			bbcode = `[list=1 start=${first.start}]`;
 		}
@@ -1096,28 +2244,89 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	/**
+	 * Whether this item STARTS a list instead of continuing an open one - which is exactly where
+	 * the opening digit cap has to be paid. Three cases, and buildList splits the output at the
+	 * same three: nothing is open yet, the item is deeper than every open level, or its marker
+	 * type differs from the level it lands on (CommonMark: an ordered item cannot extend a bullet
+	 * list and vice versa, so the type change begins a new list of its own).
+	 *
+	 * @param {Array<Object>} openLevels
+	 * @param {Object} item
+	 * @returns {boolean}
+	 */
+	function startsNewList(openLevels, item) {
+		const level = openLevels.at(-1);
+		return !level || item.indent > level.indent || item.ordered !== level.ordered;
+	}
+
+	/**
+	 * Close every level the item is too shallow to belong to.
+	 *
+	 * @param {Array<Object>} openLevels
+	 * @param {Object} item
+	 */
+	function closeDeeperLevels(openLevels, item) {
+		while (openLevels.length > 0 && openLevels.at(-1).indent > item.indent) {
+			openLevels.pop();
+		}
+	}
+
+	/**
+	 * Put the level this item opens on the stack. A deeper item nests one inside the open levels;
+	 * a type change replaces the level it happens on, since the list open there has just ended.
+	 *
+	 * @param {Array<Object>} openLevels
+	 * @param {Object} item
+	 */
+	function openLevel(openLevels, item) {
+		if (openLevels.length > 0 && openLevels.at(-1).indent === item.indent) {
+			openLevels.pop();
+		}
+		openLevels.push({
+			indent: item.indent,
+			ordered: item.ordered
+		});
+	}
+
+	/**
+	 * Parse one uninterrupted run of list lines. The run is bounded by the text only: item
+	 * count is capped when the output is built (MAX_LIST_ITEMS in convertLists), so the list
+	 * stays open here for as long as the user kept writing it.
+	 *
+	 * Line by line: an item that only continues an open level is taken as is, while an item that
+	 * starts a list (startsNewList) is taken only if its marker may open one - otherwise the run
+	 * ends there and the line stays plain text.
+	 *
 	 * @param {string[]} lines
 	 * @param {number} startIndex
-	 * @returns {{ bbcode: string, endIndex: number } | null}
+	 * @param {?UrlProtector} [urlProtector] - UrlProtector of the current render, forwarded to every
+	 *   item the run parses
+	 * @param {?BbTagProtector} [bbTagProtector] - BbTagProtector of the current render, forwarded the
+	 *   same way
+	 * @returns {{ items: Array<Object>, endIndex: number } | null}
 	 */
-	function tryParseList(lines, startIndex) {
-		if (!parseListItem(lines[startIndex])) {
-			return null;
-		}
-
-		// Stop at MAX_LIST_ITEMS so the list ENDS here: convertLists then re-parses any further
-		// list lines as the next [list] block. This caps the size of a single list without
-		// dropping items — an earlier "consume the rest but skip them" cap silently lost every
-		// item past the limit.
+	function tryParseList(lines, startIndex, urlProtector = null, bbTagProtector = null) {
 		const items = [];
+		// The list levels open at this point, innermost last: indent and marker type of each.
+		const openLevels = [];
 		let i = startIndex;
-		while (i < lines.length && items.length < MAX_LIST_ITEMS$1) {
-			const item = parseListItem(lines[i]);
+		while (i < lines.length) {
+			const item = parseListItem(lines[i], urlProtector, bbTagProtector);
 			if (!item) {
 				break;
 			}
+			closeDeeperLevels(openLevels, item);
+			if (startsNewList(openLevels, item)) {
+				if (!item.canOpen) {
+					break;
+				}
+				openLevel(openLevels, item);
+			}
 			items.push(item);
 			i++;
+		}
+		if (items.length === 0) {
+			return null;
 		}
 		return {
 			items,
@@ -1162,13 +2371,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	 * protected with the rest of the structure by ListTagProtector.
 	 *
 	 * @param {string} text
-	 * @param {object} [options]
+	 * @param {ConvertListsOptions} [options]
 	 * @param {string} [options.mode] - 'decode' or 'simplify'
+	 * @param {?UrlProtector} [options.urlProtector] - UrlProtector of the current render, forwarded to
+	 *   every item; null lets each item protect and restore its own URLs
+	 * @param {?BbTagProtector} [options.bbTagProtector] - BbTagProtector of the current render,
+	 *   forwarded the same way
 	 * @returns {string}
 	 */
 	function convertLists(text, options = {}) {
 		const {
-			mode = 'decode'
+			mode = 'decode',
+			urlProtector = null,
+			bbTagProtector = null
 		} = options;
 		if (!HAS_LIST_ITEM_PATTERN.test(text)) {
 			return text;
@@ -1177,9 +2392,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		const result = [];
 		let i = 0;
 		while (i < lines.length) {
-			const list = tryParseList(lines, i);
+			const list = tryParseList(lines, i, urlProtector, bbTagProtector);
 			if (list) {
-				result.push(formatList(list.items, mode));
+				// One entry per chunk: the entries are joined by '\n' below, so a split run reads
+				// as consecutive list blocks, exactly as a run of separate lists would.
+				for (let start = 0; start < list.items.length; start += MAX_LIST_ITEMS$1) {
+					result.push(formatList(list.items.slice(start, start + MAX_LIST_ITEMS$1), mode));
+				}
 				i = list.endIndex;
 			} else {
 				result.push(lines[i]);
@@ -1211,9 +2430,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#nonce = '';
 		#pattern;
 
-		// The per-render nonce makes the placeholder (####MD_TABLEGUARD_<nonce>_N####)
-		// unguessable, so restore() never expands a literal copy the sender typed — only the
-		// tables this instance actually stored (amplification-DoS defense; see utils/nonce.js).
+		// Placeholder: ####MD_TABLEGUARD_<nonce>_N####. Why it carries a nonce - utils/nonce.js.
 		constructor(nonce = '') {
 			this.#nonce = nonce;
 			this.#pattern = new RegExp(`${MARKDOWN_TABLE_GUARD_PREFIX}${nonce}_(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
@@ -1321,8 +2538,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		// escapeHandler.restore would later re-form a real [/td] and break the cell.
 		return text.replace(/\[(\/?(?:table|tr|th|td))]/gi, (match, tag) => `[\u200B${tag}]`).replace(/(####MD_ESC_\d+####)(\/?(?:table|tr|th|td))]/gi, (match, esc, tag) => `${esc}\u200B${tag}]`);
 	}
-	function encodeCell(cell) {
-		return defangCellTableTags(applyCellInlineRules(cell));
+	function encodeCell(cell, urlProtector, bbTagProtector) {
+		return defangCellTableTags(applyCellInlineRules(cell, {
+			urlProtector,
+			bbTagProtector
+		}));
 	}
 
 	/**
@@ -1334,15 +2554,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	 * no encodable chars).
 	 *
 	 * @param {{ headers: string[], rows: string[][] }} tableData
+	 * @param {?UrlProtector} urlProtector - UrlProtector of the current render; null lets every cell
+	 *   protect and restore its own URLs (convertTables passes null in the standalone mode)
+	 * @param {?BbTagProtector} bbTagProtector - BbTagProtector of the current render, consulted by the
+	 *   label acceptor of the cell link rule (createLinkLabelAcceptor)
 	 * @returns {string}
 	 */
-	function encodeTableBb(tableData) {
+	function encodeTableBb(tableData, urlProtector, bbTagProtector) {
 		const {
 			headers,
 			rows
 		} = tableData;
-		const head = `[tr]${headers.map(cell => `[th]${encodeCell(cell)}[/th]`).join('')}[/tr]`;
-		const body = rows.map(cells => `[tr]${cells.map(cell => `[td]${encodeCell(cell)}[/td]`).join('')}[/tr]`).join('');
+		const encode = cell => encodeCell(cell, urlProtector, bbTagProtector);
+		const head = `[tr]${headers.map(cell => `[th]${encode(cell)}[/th]`).join('')}[/tr]`;
+		const body = rows.map(cells => `[tr]${cells.map(cell => `[td]${encode(cell)}[/td]`).join('')}[/tr]`).join('');
 		return `[table]${head}${body}[/table]`;
 	}
 
@@ -1352,28 +2577,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	 * - simplify: a localized plain placeholder for preview surfaces.
 	 *
 	 * @param {{ headers: string[], rows: string[][] }} tableData
-	 * @param {object} options
+	 * @param {ConvertTablesOptions} options
 	 * @param {string} options.mode
+	 * @param {?UrlProtector} [options.urlProtector] - forwarded to encodeTableBb in the decode mode
+	 * @param {?BbTagProtector} [options.bbTagProtector] - forwarded the same way
 	 * @returns {string}
 	 */
 	function formatTable(tableData, options) {
 		if (options.mode === 'simplify') {
 			return `[${main_core.Loc.getMessage('IM_PARSER_MARKDOWN_TABLE_PLACEHOLDER')}]`;
 		}
-		return encodeTableBb(tableData);
+		return encodeTableBb(tableData, options.urlProtector, options.bbTagProtector);
 	}
 
 	/**
 	 * Find and convert GFM tables in text to canonical [table] BB-code.
 	 *
 	 * @param {string} text
-	 * @param {object} [options]
+	 * @param {ConvertTablesOptions} [options]
 	 * @param {string} [options.mode] - 'decode' or 'simplify'
+	 * @param {?UrlProtector} [options.urlProtector] - UrlProtector of the current render, forwarded to
+	 *   every cell; null lets each cell protect and restore its own URLs
+	 * @param {?BbTagProtector} [options.bbTagProtector] - BbTagProtector of the current render,
+	 *   forwarded the same way
 	 * @returns {string}
 	 */
 	function convertTables(text, options = {}) {
 		const {
-			mode = 'decode'
+			mode = 'decode',
+			urlProtector = null,
+			bbTagProtector = null
 		} = options;
 
 		// A GFM table is impossible without a pipe — skip the per-line scan otherwise.
@@ -1390,7 +2623,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					headers: table.headers,
 					rows: table.rows
 				}, {
-					mode
+					mode,
+					urlProtector,
+					bbTagProtector
 				}));
 				i = table.endIndex;
 			} else {
@@ -1406,50 +2641,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// ([USER=…], [URL=…], [DISK=…]) which has no Markdown to convert. Instead each real shape
 	// is matched precisely: link/image via "](", setext-H1 via "={3}", list bullets/ordered
 	// markers via the line-anchored alternation, rules/setext-H2/table separators via "-{3}".
-	const MARKDOWN_TRIGGER = /[\t!#&*+<>\\_`|~]|\]\(|^[ \t]*(?:-|\d+\.)[ \t]|-{3}|={3}/m;
+	// The ordered branch reuses ORDERED_MARKER_SOURCE, so this probe cannot let through a
+	// marker convertLists would refuse anyway.
+	const MARKDOWN_TRIGGER = new RegExp(`[\\t!#&*+<>\\\\_\`|~]|\\]\\(|^[ \\t]*(?:-|${ORDERED_MARKER_SOURCE})[ \\t]|-{3}|={3}`, 'm');
 	class MarkdownConverter {
-		/**
-		 * Apply the base placeholder protectors (code -> mention -> escape). The single
-		 * source of truth for the protect order shared by #convert and decodeInline.
-		 *
-		 * @param {string} text
-		 * @param {{codeProtector: CodeProtector, mentionProtector: MentionProtector, escapeHandler: EscapeHandler}} protectors
-		 * @param {{ looseFence?: boolean }} [options] Forwarded to CodeProtector.protect; looseFence is
-		 *   inline-only (decodeInline) and captures multi-line "loose" fenced code as one [code] block.
-		 * @returns {string}
-		 */
-		static #protectBase(text, protectors, options = {}) {
-			const {
-				codeProtector,
-				mentionProtector,
-				escapeHandler
-			} = protectors;
-			text = codeProtector.protect(text, options);
-			text = mentionProtector.protect(text);
-			text = escapeHandler.protect(text);
-			return text;
-		}
-
-		/**
-		 * Restore the base placeholder protectors in LIFO order (escape -> mention -> code).
-		 * Mirror of #protectBase, shared by #convert and decodeInline.
-		 *
-		 * @param {string} text
-		 * @param {{codeProtector: CodeProtector, mentionProtector: MentionProtector, escapeHandler: EscapeHandler}} protectors
-		 * @returns {string}
-		 */
-		static #restoreBase(text, protectors) {
-			const {
-				codeProtector,
-				mentionProtector,
-				escapeHandler
-			} = protectors;
-			text = escapeHandler.restore(text);
-			text = mentionProtector.restore(text);
-			text = codeProtector.restore(text);
-			return text;
-		}
-
 		/**
 		 * Convert Markdown to BB-codes for full message rendering.
 		 *
@@ -1475,63 +2670,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 
 		/**
-		 * Convert Markdown to BB-codes keeping only inline markup: bold / italic /
-		 * strikethrough, links, autolinks and inline code. Block constructs whose
-		 * meaning comes from a leading line marker (lists, tables, headings, quotes,
-		 * rules) are NOT produced - their markers stay literal text. Images are left
-		 * out too (applyCellInlineRules), so a `![alt](url)` never grows into a block
-		 * <img>.
-		 *
-		 * Code blocks are the deliberate exception: fenced (```/~~~, including the
-		 * "loose" multi-line form whose closing fence sits mid-line), indented and
-		 * legacy [code]...[/code] are INTENTIONALLY rendered as one block code box
-		 * (bx-im-message-content-code), never as inline code. This mirrors the legacy
-		 * [code] behavior and keeps a pasted multi-line block from fragmenting into
-		 * orphaned backticks + per-line inline boxes. Single/double/triple-backtick
-		 * single-line spans stay inline code as before.
-		 *
-		 * Used for list items / table cells / headings / quotes / rules content of the
-		 * Copilot rich-answer constructor (Parser.decodeInlineText).
-		 *
-		 * @param {string} text
-		 * @returns {string}
-		 */
-		static decodeInline(text) {
-			if (!main_core.Type.isStringFilled(text)) {
-				return '';
-			}
-			if (!MARKDOWN_TRIGGER.test(text)) {
-				return text;
-			}
-			const nonce = createMarkdownNonce();
-			const escapeHandler = new EscapeHandler();
-			const codeProtector = new CodeProtector(nonce);
-			const mentionProtector = new MentionProtector(nonce);
-			const protectors = {
-				codeProtector,
-				mentionProtector,
-				escapeHandler
-			};
-			text = MarkdownConverter.#protectBase(text, protectors, {
-				looseFence: true
-			});
-
-			// Inline-only: no block rules and no table/list protectors. applyCellInlineRules
-			// runs its own self-contained inline-code protect->restore (no images), so the
-			// restored [icode] is in place BEFORE applyHtmlRules. This order is deliberate:
-			// it reproduces the table-cell precedent (#convert -> convertTables ->
-			// applyCellInlineRules, whose [icode] also reaches the global applyHtmlRules already
-			// restored), NOT the full non-cell path (applyInlineRules defers restoreInlineCode
-			// until AFTER applyHtmlRules). Consequence: whitelist HTML inside inline code (<b> etc.)
-			// is converted by applyHtmlRules; non-whitelist HTML (<script>) is left inert and gets
-			// escaped by the downstream Text.encode - no XSS either way.
-			text = applyCellInlineRules(text);
-			text = applyHtmlRules(text);
-			text = MarkdownConverter.#restoreBase(text, protectors);
-			return text;
-		}
-
-		/**
 		 * @param {string} text
 		 * @param {object} tableOptions
 		 * @returns {string}
@@ -1552,26 +2690,181 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const escapeHandler = new EscapeHandler();
 			const codeProtector = new CodeProtector(nonce);
 			const mentionProtector = new MentionProtector(nonce);
+			const bbTagProtector = new BbTagProtector(nonce);
 			const tableMarkerProtector = new TableMarkerProtector(nonce);
 			const listTagProtector = new ListTagProtector();
+			const urlProtector = new UrlProtector(nonce);
 			const protectors = {
 				codeProtector,
 				mentionProtector,
+				bbTagProtector,
 				escapeHandler
 			};
-			text = MarkdownConverter.#protectBase(text, protectors);
-			text = convertTables(text, tableOptions);
-			text = convertLists(text, tableOptions);
+			text = MarkdownConverter.#protectBase(text, protectors, {
+				looseFence: true
+			});
+
+			// One UrlProtector for the whole call: cell links (convertTables/convertLists) and the
+			// full inline pass share it, so every destination is restored at the single point below.
+			// The BbTagProtector rides along the same path: its placeholders live in cell content
+			// too, and the label acceptors of the link/image rules have to recognize them there as well.
+			text = convertTables(text, {
+				...tableOptions,
+				urlProtector,
+				bbTagProtector
+			});
+			text = convertLists(text, {
+				...tableOptions,
+				urlProtector,
+				bbTagProtector
+			});
 			text = tableMarkerProtector.protect(text);
 			text = listTagProtector.protect(text);
 			text = applyBlockRules(text);
 			const inlineCodeBlocks = [];
-			text = applyInlineRules(text, inlineCodeBlocks, nonce);
+			// escapeHandler rides along for the image rule alone: the alt is encoded past the reach of
+			// the restore below, so the escapes of a label are expanded there instead (createEscapeExpander).
+			text = applyInlineRules(text, {
+				deferredCodeStorage: inlineCodeBlocks,
+				nonce,
+				urlProtector,
+				bbTagProtector,
+				escapeHandler
+			});
 			text = applyHtmlRules(text);
 			text = restoreInlineCode(text, inlineCodeBlocks, nonce);
 			text = listTagProtector.restore(text);
 			text = tableMarkerProtector.restore(text);
+
+			// Restore URLs AFTER the table is un-stashed (a cell's placeholder lives inside the
+			// hidden [table]) and BEFORE #restoreBase (the URL may hold escape placeholders).
+			text = urlProtector.restore(text);
 			text = MarkdownConverter.#restoreBase(text, protectors);
+			return text;
+		}
+
+		/**
+		 * Convert Markdown to BB-codes keeping only inline markup: bold / italic /
+		 * strikethrough, links, autolinks and inline code. Block constructs whose
+		 * meaning comes from a leading line marker (lists, tables, headings, quotes,
+		 * rules) are NOT produced - their markers stay literal text. Images are left
+		 * out too (applyCellInlineRules), so a `![alt](url)` never grows into a block
+		 * <img>.
+		 *
+		 * Code blocks are the deliberate exception: fenced (```/~~~, including the
+		 * "loose" multi-line form whose closing fence sits mid-line - protected on
+		 * both paths, see #convert), indented and legacy [code]...[/code] are
+		 * INTENTIONALLY rendered as one block code box (bx-im-message-content-code),
+		 * never as inline code. This mirrors the legacy [code] behavior and keeps a
+		 * pasted multi-line block from fragmenting into orphaned backticks + per-line
+		 * inline boxes. Single/double/triple-backtick single-line spans stay inline
+		 * code as before.
+		 *
+		 * Used for list items / table cells / headings / quotes / rules content of the
+		 * Copilot rich-answer constructor (Parser.decodeInlineText).
+		 *
+		 * @param {string} text
+		 * @returns {string}
+		 */
+		static decodeInline(text) {
+			if (!main_core.Type.isStringFilled(text)) {
+				return '';
+			}
+			if (!MARKDOWN_TRIGGER.test(text)) {
+				return text;
+			}
+			const nonce = createMarkdownNonce();
+			const escapeHandler = new EscapeHandler();
+			const codeProtector = new CodeProtector(nonce);
+			const mentionProtector = new MentionProtector(nonce);
+			const bbTagProtector = new BbTagProtector(nonce);
+			const urlProtector = new UrlProtector(nonce);
+			const protectors = {
+				codeProtector,
+				mentionProtector,
+				bbTagProtector,
+				escapeHandler
+			};
+			text = MarkdownConverter.#protectBase(text, protectors, {
+				looseFence: true
+			});
+
+			// Inline-only: no block rules and no table/list protectors. applyCellInlineRules
+			// runs its own self-contained inline-code protect->restore (no images), so the
+			// restored [icode] is in place BEFORE applyHtmlRules. This order is deliberate:
+			// it reproduces the table-cell precedent (#convert -> convertTables ->
+			// applyCellInlineRules, whose [icode] also reaches the global applyHtmlRules already
+			// restored), NOT the full non-cell path (applyInlineRules defers restoreInlineCode
+			// until AFTER applyHtmlRules). Consequence: whitelist HTML inside inline code (<b> etc.)
+			// is converted by applyHtmlRules; non-whitelist HTML (<script>) is left inert and gets
+			// escaped by the downstream Text.encode - no XSS either way.
+			text = applyCellInlineRules(text, {
+				urlProtector,
+				bbTagProtector
+			});
+			text = applyHtmlRules(text);
+
+			// Single restore point, after applyHtmlRules and before #restoreBase (the URL may hold
+			// escape placeholders): the destination stays a placeholder through the inline/html
+			// rules and returns byte-for-byte here.
+			text = urlProtector.restore(text);
+			text = MarkdownConverter.#restoreBase(text, protectors);
+			return text;
+		}
+
+		/**
+		 * Apply the base placeholder protectors (code -> mention -> BB-tag -> escape). The single
+		 * source of truth for the protect order shared by #convert and decodeInline.
+		 *
+		 * Code goes first so a [URL]/[img] typed inside [code] stays literal; mentions go before the
+		 * BB-tag protector so MentionProtector keeps matching whole containers, and a [URL] nested in
+		 * a mention is carried inside the stored mention instead of being stored twice.
+		 *
+		 * @param {string} text
+		 * @param {{codeProtector: CodeProtector, mentionProtector: MentionProtector, bbTagProtector: BbTagProtector, escapeHandler: EscapeHandler}} protectors
+		 * @param {{ looseFence?: boolean }} [options] Forwarded to CodeProtector.protect; looseFence
+		 *   captures multi-line "loose" fenced code as one [code] block. Both #convert and decodeInline
+		 *   enable it, so the two paths render such a block identically.
+		 * @returns {string}
+		 */
+		static #protectBase(text, protectors, options = {}) {
+			const {
+				codeProtector,
+				mentionProtector,
+				bbTagProtector,
+				escapeHandler
+			} = protectors;
+			text = codeProtector.protect(text, options);
+			text = mentionProtector.protect(text);
+			text = bbTagProtector.protect(text);
+			text = escapeHandler.protect(text);
+			return text;
+		}
+
+		/**
+		 * Restore the base placeholder protectors in LIFO order (escape -> BB-tag -> mention -> code).
+		 * Mirror of #protectBase, shared by #convert and decodeInline.
+		 *
+		 * @param {string} text
+		 * @param {{
+		 *     codeProtector: CodeProtector,
+		 *     mentionProtector: MentionProtector,
+		 *     bbTagProtector: BbTagProtector,
+		 *     escapeHandler: EscapeHandler,
+		 * }} protectors
+		 * @returns {string}
+		 */
+		static #restoreBase(text, protectors) {
+			const {
+				codeProtector,
+				mentionProtector,
+				bbTagProtector,
+				escapeHandler
+			} = protectors;
+			text = escapeHandler.restore(text);
+			text = bbTagProtector.restore(text);
+			text = mentionProtector.restore(text);
+			text = codeProtector.restore(text);
 			return text;
 		}
 	}
@@ -1584,6 +2877,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const resolveNamespace = () => {
 		const messenger = BX.Messenger ?? {};
 		return (v2 ? messenger.v2 : messenger.Embedding) ?? messenger.v2 ?? messenger.Embedding ?? {};
+	};
+
+	// Read feature flags straight from the Core application data the parser already reaches for
+	// everything else, instead of pulling the heavier im.v2.lib.feature extension into every parser
+	// consumer just for a boolean (FeatureManager.isFeatureAvailable resolves the same featureOptions value).
+	const isFeatureOptionEnabled = featureName => {
+		const applicationData = CoreProxy.getCore().getApplicationData?.() ?? {};
+		const {
+			featureOptions = {}
+		} = applicationData;
+		return featureOptions[featureName] ?? false;
 	};
 	const CoreProxy = {
 		getCore() {
@@ -1608,16 +2912,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return CoreProxy.getCore().getStore().getters['application/getOption']('bigSmileEnable');
 		},
-		// Read the Markdown feature flag straight from the Core application data the
-		// parser already reaches for everything else, instead of pulling the heavier
-		// im.v2.lib.feature extension into every parser consumer just for this boolean
-		// (FeatureManager.isFeatureAvailable resolves the same featureOptions value).
 		isMarkdownFeatureEnabled() {
-			const applicationData = CoreProxy.getCore().getApplicationData?.() ?? {};
-			const {
-				featureOptions = {}
-			} = applicationData;
-			return featureOptions.isMarkdownAvailable ?? false;
+			return isFeatureOptionEnabled('isMarkdownAvailable');
+		},
+		isVideoNoteCaptionFeatureEnabled() {
+			return isFeatureOptionEnabled('isVideoNoteCaptionAvailable');
 		}
 	};
 	const getCore = () => CoreProxy.getCore();
@@ -1627,6 +2926,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const getSmileManager = () => CoreProxy.getSmileManager();
 	const getBigSmileOption = () => CoreProxy.getBigSmileOption();
 	const isMarkdownFeatureEnabled = () => CoreProxy.isMarkdownFeatureEnabled();
+	const isVideoNoteCaptionFeatureEnabled = () => CoreProxy.isVideoNoteCaptionFeatureEnabled();
 
 	const RECURSIVE_LIMIT = 10;
 	const ParserUtils = {
@@ -2097,9 +3397,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		});
 	};
 
-	const {
-		EventType: EventType$2
-	} = getConst();
 	const ActionType = {
 		put: 'put',
 		send: 'send'
@@ -2185,6 +3482,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const {
 				emitter
 			} = context;
+			const {
+				EventType
+			} = getConst();
 			const element = event.target;
 			const messageId = getMessageIdForClickElement(element);
 			const dialogId = getDialogIdByMessageId(messageId) ?? '';
@@ -2195,7 +3495,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (!textToInsert) {
 					return;
 				}
-				emitter.emit(EventType$2.textarea.insertText, {
+				emitter.emit(EventType.textarea.insertText, {
 					text: textToInsert,
 					dialogId
 				});
@@ -2206,7 +3506,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (!textToSend) {
 					return;
 				}
-				emitter.emit(EventType$2.textarea.sendMessage, {
+				emitter.emit(EventType.textarea.sendMessage, {
 					text: textToSend,
 					dialogId
 				});
@@ -2253,11 +3553,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
-	const {
-		MessageMentionType: MessageMentionType$2
-	} = getConst();
 	const ParserCall = {
 		decode(text) {
+			const {
+				MessageMentionType
+			} = getConst();
 			let result = text;
 			result = result.replaceAll(/\[call(?:=([\d #()+./-]+))?](.+?)\[\/call]/gi, (whole, number, text) => {
 				if (!text) {
@@ -2275,7 +3575,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					tag: 'span',
 					attrs: {
 						className: 'bx-im-mention',
-						'data-type': MessageMentionType$2.call,
+						'data-type': getConst().MessageMentionType.call,
 						'data-destination': destination
 					},
 					text: main_core.Text.decode(text)
@@ -2366,31 +3666,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
-	const {
-		EventType: EventType$1,
-		MessageMentionType: MessageMentionType$1,
-		SidebarDetailBlock,
-		SpecialMentionDialogId: SpecialMentionDialogId$1,
-		ChatType
-	} = getConst();
 	const MENTION_CSS_CLASS = 'bx-im-mention';
 	class MentionHandler {
-		#handlersByMentionType = {
-			[MessageMentionType$1.user]: dataset => this.#handleChat(dataset),
-			[MessageMentionType$1.chat]: dataset => this.#handleChat(dataset),
-			[MessageMentionType$1.lines]: dataset => this.#handleLines(dataset),
-			[MessageMentionType$1.context]: dataset => this.#handleContext(dataset),
-			[MessageMentionType$1.call]: dataset => this.#handleCall(dataset)
-		};
-		#handlersByDialogId = {
-			[this.#getCopilotBotDialogId()]: () => this.#handleCopilot(),
-			[SpecialMentionDialogId$1.allParticipants]: () => this.#handleAllParticipants()
-		};
+		#handlersByMentionType;
+		#handlersByDialogId;
 		constructor(context) {
 			const {
 				emitter
 			} = context;
 			this.emitter = emitter;
+			const {
+				MessageMentionType,
+				SpecialMentionDialogId
+			} = getConst();
+			this.#handlersByMentionType = {
+				[MessageMentionType.user]: dataset => this.#handleChat(dataset),
+				[MessageMentionType.chat]: dataset => this.#handleChat(dataset),
+				[MessageMentionType.lines]: dataset => this.#handleLines(dataset),
+				[MessageMentionType.context]: dataset => this.#handleContext(dataset),
+				[MessageMentionType.call]: dataset => this.#handleCall(dataset)
+			};
+			this.#handlersByDialogId = {
+				[this.#getCopilotBotDialogId()]: () => this.#handleCopilot(),
+				[SpecialMentionDialogId.allParticipants]: () => this.#handleAllParticipants()
+			};
 		}
 		handleClick(event) {
 			if (!main_core.Dom.hasClass(event.target, MENTION_CSS_CLASS)) {
@@ -2426,8 +3725,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		}
 		#handleContext(dataset) {
+			const {
+				EventType
+			} = getConst();
 			const messageId = Number.parseInt(dataset.messageId, 10);
-			this.emitter.emit(EventType$1.dialog.goToMessageContext, {
+			this.emitter.emit(EventType.dialog.goToMessageContext, {
 				messageId,
 				dialogId: dataset.dialogId
 			});
@@ -2440,6 +3742,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#handleAllParticipants() {
 			const {
+				EventType,
+				ChatType,
+				SidebarDetailBlock
+			} = getConst();
+			const {
 				entityId
 			} = getCore().getStore().getters['application/getLayout'];
 			const {
@@ -2451,20 +3758,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (type === ChatType.user) {
 				return;
 			}
-			this.emitter.emit(EventType$1.sidebar.open, {
+			this.emitter.emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.members,
 				dialogId: entityId
 			});
 		}
 	}
 
-	const {
-		UserType,
-		MessageMentionType,
-		SpecialMentionDialogId = {}
-	} = getConst();
-	const SpecialMentionHandlers = {
-		[SpecialMentionDialogId.allParticipants]: userName => ParserMention.renderAllParticipantsMention(userName)
+	let specialMentionHandlers = null;
+	const getSpecialMentionHandlers = () => {
+		if (specialMentionHandlers === null) {
+			const {
+				SpecialMentionDialogId = {}
+			} = getConst();
+			specialMentionHandlers = {
+				[SpecialMentionDialogId.allParticipants]: userName => ParserMention.renderAllParticipantsMention(userName)
+			};
+		}
+		return specialMentionHandlers;
 	};
 	const MENTION_BASE_CLASS = 'bx-im-mention';
 	const MentionModifier = {
@@ -2473,9 +3784,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 	const ParserMention = {
 		decode(text) {
+			const specialMentionHandlers = getSpecialMentionHandlers();
+			const {
+				UserType,
+				MessageMentionType
+			} = getConst();
 			text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
-				if (SpecialMentionHandlers[userId]) {
-					return SpecialMentionHandlers[userId](userName);
+				if (specialMentionHandlers[userId]) {
+					return specialMentionHandlers[userId](userName);
 				}
 				userId = Number.parseInt(userId, 10);
 				if (!main_core.Type.isNumber(userId) || userId === 0) {
@@ -2595,6 +3911,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			mentionHandler.handleClick(event);
 		},
 		renderAllParticipantsMention(userName) {
+			const {
+				MessageMentionType,
+				SpecialMentionDialogId = {}
+			} = getConst();
 			const className = `${MENTION_BASE_CLASS} ${MentionModifier.highlight}`;
 			return main_core.Dom.create({
 				tag: 'span',
@@ -2608,9 +3928,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
-	const {
-		EventType
-	} = getConst();
 	const QUOTE_SIGN = '&gt;&gt;';
 	const NO_CONTEXT_TAG = 'none';
 	const PREVIEW_LINE_LIMIT = 4;
@@ -2749,6 +4066,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const {
 				emitter
 			} = context;
+			const {
+				EventType
+			} = getConst();
 			emitter.emit(EventType.dialog.goToMessageContext, {
 				messageId: Number.parseInt(messageId, 10),
 				dialogId: dialogId.toString()
@@ -2961,11 +4281,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
-	const {
-		FileType,
-		FileIconType,
-		AttachDescription
-	} = getConst();
 	const Purifier = {
 		purifyMessage(message) {
 			const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
@@ -3165,6 +4480,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return attach === true || main_core.Type.isArrayFilled(attach) || main_core.Type.isStringFilled(attach);
 	};
 	const getTextForFile = (rawText, files) => {
+		const {
+			FileIconType
+		} = getConst();
 		let preparedText = rawText;
 		if (main_core.Type.isArray(files) && files.length > 0) {
 			preparedText = getTextByFile(rawText, files);
@@ -3174,6 +4492,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return preparedText.trim();
 	};
 	const getTextForAttach = (text, attach) => {
+		const {
+			AttachDescription
+		} = getConst();
 		let attachDescription = extractAttachDescription(attach);
 		if (main_core.Type.isStringFilled(attachDescription)) {
 			const shouldSkipDescription = attachDescription === AttachDescription.skipMessage;
@@ -3201,16 +4522,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const getTextForSticker = () => {
 		return `[${main_core.Loc.getMessage('IM_PARSER_ICON_TYPE_STICKER')}]`;
 	};
-	const getTextByFileType = (text, type = FileIconType.file) => {
-		const iconText = main_core.Loc.getMessage(`IM_PARSER_ICON_TYPE_${type.toUpperCase()}`);
-		return `[${iconText}] ${text}`.trim();
+	const getTextByIconPhrase = (text, phraseCode, replacements = null) => {
+		return `[${main_core.Loc.getMessage(phraseCode, replacements)}] ${text}`.trim();
+	};
+	const getTextByVoiceNote = text => {
+		return getTextByIconPhrase(text, 'IM_PARSER_ICON_TYPE_VOICE_NOTE');
+	};
+	const getTextByFileType = (text, type = getConst().FileIconType.file) => {
+		return getTextByIconPhrase(text, `IM_PARSER_ICON_TYPE_${type.toUpperCase()}`);
 	};
 	const getTextByFile = (text, files) => {
+		const {
+			FileType,
+			FileIconType
+		} = getConst();
 		const [file] = files;
 
 		// todo: remove this hack after fix receiving messages with files on P&P
 		if (!file || !file.type) {
 			return text;
+		}
+
+		// A voice note is told apart by its own flag, not by the file type: it lands in an audio or a
+		// video container depending on the recorder, and either one would give a wrong preview here.
+		if (file.isVoiceNote) {
+			return getTextByVoiceNote(text);
 		}
 		const isGallery = files.every(item => [FileIconType.image, FileIconType.video].includes(item.type));
 		if (file.type === FileType.image && files.length === 1) {
@@ -3221,6 +4557,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		if (file.type === FileType.audio) {
 			return getTextByFileType(text, FileIconType.audio);
+		}
+
+		// A video note keeps FileType.video and has no own FileIconType entry, so pass its phrase explicitly.
+		if (file.isVideoNote && isVideoNoteCaptionFeatureEnabled()) {
+			return getTextByIconPhrase(text, 'IM_PARSER_ICON_TYPE_VIDEO_NOTE');
 		}
 		if (file.type === FileType.video) {
 			return getTextByFileType(text, FileIconType.video);
@@ -3363,7 +4704,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// cannot leave a literal BB-code tail once the 100-pass guard trips. The pattern
 	// is used only with String.replace (lastIndex is reset by replace), and the loop
 	// guard uses a separate non-global .test() regex, so there is no shared-state hazard.
-	const INNERMOST_LIST_PATTERN = /\[(list(?:=1)?(?:\s+start=\d+)?)]((?:(?!\[list)[\s\S])*?)\[\/list]/gi;
+	//
+	// The optional trailing break is part of the block, and the asymmetry is deliberate.
+	// AFTER: a list opens a line of its own, so a break typed right behind [/list]
+	// would draw an empty line instead of merely ending one — the pattern swallows
+	// exactly one, turning K source breaks into K-1 blank lines. BEFORE: nothing is
+	// done, a break in front only ends the previous paragraph and belongs to it.
+	// Both spellings are matched: a break re-serialized through outerHTML comes back
+	// as '<br>', which is what the reply-quote container does (quote.js), and a
+	// pattern knowing only '<br />' would not reach inside it.
+	const INNERMOST_LIST_PATTERN = /\[(list(?:=1)?(?:\s+start=\d+)?)]((?:(?!\[list)[\s\S])*?)\[\/list](?:<br ?\/?>)?/gi;
 	const ParserList = {
 		/**
 		 * Render canonical [list]/[list=1] BB-code (produced by the Markdown
@@ -3437,7 +4787,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// (cutTableTag). Cell text is therefore already Text.encode'd; the only
 	// un-decoded things left inside a cell are the inline tags ([b]/[i]/[s]/[url])
 	// the converter allowed there — decoded here and inserted as innerHTML.
-	const TABLE_PATTERN = /\[table]([\s\S]*?)\[\/table]/gi;
+	//
+	// The optional trailing break is part of the block, same rule as for [list] and
+	// with the same deliberate asymmetry: a table opens a line of its own, so it
+	// swallows exactly one break behind itself (K source breaks -> K-1 blank lines),
+	// while a break in front is left alone — it ends the previous paragraph. Both
+	// spellings are matched, see the reasoning at INNERMOST_LIST_PATTERN (list.js).
+	const TABLE_PATTERN = /\[table]([\s\S]*?)\[\/table](?:<br ?\/?>)?/gi;
 	const ROW_PATTERN = /\[tr]([\s\S]*?)\[\/tr]/gi;
 	const CELL_PATTERN = /\[(th|td)]([\s\S]*?)\[\/(?:th|td)]/gi;
 	const ParserTable = {
@@ -3801,19 +5157,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 				text = ParserList.decodeList(text);
 				text = ParserHeading.decodeHeading(text);
-
-				// A list keeps a single blank line's worth of spacing from adjacent content, like
-				// tables below: collapse 2+ adjacent <br> down to one. (Lists no longer carry the
-				// large typography margins that once justified dropping every <br>, so stripping
-				// them all would glue a following paragraph straight onto the list.)
-				text = text.replace(/(<\/(?:ul|ol)>)(?:<br \/>){2,}/gi, '$1<br />');
-				text = text.replace(/(?:<br \/>){2,}(<(?:ul|ol)\b)/gi, '<br />$1');
-
-				// Tables keep a SINGLE blank line's worth of spacing — like plain text — never a
-				// double one: collapse 2+ adjacent <br> down to one (headings/rules strip their
-				// own in decodeHeading).
-				text = text.replace(/(<\/table><\/div>)(?:<br \/>){2,}/gi, '$1<br />');
-				text = text.replace(/(?:<br \/>){2,}(<div class="bx-im-message-content-table")/gi, '<br />$1');
 			}
 			text = NestedTagHandler.recoverCodeTag(text);
 			text = ParserQuote.decodeCode(text);
@@ -3825,51 +5168,43 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const SOURCE_REGEX = /\[source=(?<sourceId>\d+)](?<sourceText>.*?)\[\/source]/gi;
+	const CONTAINER_CLASS = 'bx-im-message-source-item__container --ui-hoverable';
+	const ELLIPSIS_CLASS = '--ellipsis';
 	const ParserInlineSourceLink = {
-		purify(text) {
-			return text.replaceAll(SOURCE_REGEX, (whole, sourceId, sourceText) => sourceText);
-		},
-		getSegments(text) {
-			const result = [];
-			let lastIndex = 0;
-			for (const match of text.matchAll(SOURCE_REGEX)) {
-				const hasTextBeforeSource = match.index > lastIndex;
-				if (hasTextBeforeSource) {
-					const textSegment = getTextSegment(text, lastIndex, match.index);
-					if (textSegment) {
-						result.push(textSegment);
-					}
-				}
-				result.push(getSourceSegment(match));
-				lastIndex = match.index + match[0].length;
-			}
-			const hasTrailingText = lastIndex < text.length;
-			if (hasTrailingText) {
-				const segment = getTextSegment(text, lastIndex, text.length);
-				if (segment) {
-					result.push(segment);
-				}
-			}
-			return result;
+		/**
+		 * Replace each [source=N]...[/source] token with an inline source badge
+		 * carrying data-source-id. Input MUST be the output of Parser.decodeText /
+		 * decodeInlineText (already Text.encode'd HTML), so the token body is inlined
+		 * as-is: re-encoding here would double-escape it and break in-badge formatting.
+		 * Links inside the token body are flattened to their content: the badge itself
+		 * is the single click target (opens the source URL), so a nested <a> would
+		 * trigger a second navigation on the same click.
+		 *
+		 * @param {string} text
+		 * @returns {string}
+		 */
+		decode(text) {
+			return text.replace(SOURCE_REGEX, (whole, sourceId, sourceText) => {
+				const inner = main_core.Dom.create({
+					tag: 'span',
+					attrs: {
+						className: ELLIPSIS_CLASS
+					},
+					html: sourceText
+				});
+				inner.querySelectorAll('a').forEach(anchor => anchor.replaceWith(...anchor.childNodes));
+				return main_core.Dom.create({
+					tag: 'span',
+					attrs: {
+						className: CONTAINER_CLASS,
+						'data-source-id': sourceId,
+						'data-testid': 'im-message-source-item'
+					},
+					html: inner.outerHTML
+				}).outerHTML;
+			});
 		}
 	};
-	function getTextSegment(text, from, to) {
-		const value = text.slice(from, to);
-		if (value.trim().length > 0) {
-			return {
-				type: 'text',
-				value
-			};
-		}
-		return null;
-	}
-	function getSourceSegment(match) {
-		return {
-			type: 'source',
-			id: match.groups.sourceId,
-			text: match.groups.sourceText
-		};
-	}
 
 	const Parser = {
 		purify: config => Purifier.purify(config),
@@ -3886,6 +5221,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		decodeHtml: text => Decoder.decodeHtml(text),
 		decodeSmile: (text, options) => Decoder.decodeSmile(text, options),
 		decodeSmileForLegacyCore: (text, options) => Decoder.decodeSmileForLegacyCore(text, options),
+		getContactPreviewText(message, includeCaption = false) {
+			const componentParams = message.componentParams;
+			if (!componentParams) {
+				return null;
+			}
+			const firstName = main_core.Type.isStringFilled(componentParams.firstName) ? componentParams.firstName.trim() : '';
+			const lastName = main_core.Type.isStringFilled(componentParams.lastName) ? componentParams.lastName.trim() : '';
+			const phone = main_core.Type.isArrayFilled(componentParams.phones) && main_core.Type.isString(componentParams.phones[0]) ? componentParams.phones[0].trim() : '';
+			const name = [lastName, firstName].filter(Boolean).join(' ');
+			const previewText = [name, phone].filter(Boolean).join('\n');
+			if (!includeCaption || previewText === '') {
+				return previewText;
+			}
+			const cardLine = name === '' ? phone : `${name}, ${phone}`;
+			const cardLineSuffix = `\n${cardLine}`;
+			const caption = message.text?.endsWith(cardLineSuffix) ? message.text.slice(0, -cardLineSuffix.length) : '';
+			return [caption, previewText].filter(Boolean).join('\n');
+		},
 		prepareQuote(message, quoteText = '') {
 			const {
 				id,
@@ -3954,8 +5307,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		getContextCodeFromForwardId(forwardId) {
 			return ParserUtils.getFinalContextTag(forwardId);
 		},
-		getInlineSourceLinkSegments(text) {
-			return ParserInlineSourceLink.getSegments(text);
+		/**
+		 * Decode [source=N]...[/source] tokens into inline source badges.
+		 * Input MUST already be encoded HTML (output of decodeText / decodeInlineText),
+		 * never raw user text: the result goes to v-html unescaped (XSS).
+		 * See ParserInlineSourceLink.decode.
+		 *
+		 * @param {string} text
+		 * @returns {string}
+		 */
+		decodeInlineSourceLinks(text) {
+			return ParserInlineSourceLink.decode(text);
 		}
 	};
 

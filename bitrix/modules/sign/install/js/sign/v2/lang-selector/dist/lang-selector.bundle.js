@@ -1,109 +1,91 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,ui_buttons,sign_v2_api) {
+(function (exports, main_core, ui_buttons, sign_v2_api) {
 	'use strict';
 
-	let _ = t => t,
-	  _t;
-	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
-	var _langs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("langs");
-	var _langButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("langButton");
-	var _region = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("region");
-	var _documentUids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUids");
-	var _getLanguageItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLanguageItems");
-	var _getLanguageButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLanguageButton");
-	var _changeLang = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeLang");
 	class LangSelector {
-	  constructor(region, langs) {
-	    Object.defineProperty(this, _changeLang, {
-	      value: _changeLang2
-	    });
-	    Object.defineProperty(this, _getLanguageButton, {
-	      value: _getLanguageButton2
-	    });
-	    Object.defineProperty(this, _getLanguageItems, {
-	      value: _getLanguageItems2
-	    });
-	    Object.defineProperty(this, _api, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _langs, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _langButton, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _region, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _documentUids, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] = region;
-	    babelHelpers.classPrivateFieldLooseBase(this, _langs)[_langs] = langs;
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentUids)[_documentUids] = [];
-	    babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton] = babelHelpers.classPrivateFieldLooseBase(this, _getLanguageButton)[_getLanguageButton]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
-	  }
-	  getLayout() {
-	    return main_core.Tag.render(_t || (_t = _`
+		#api;
+		#langs;
+		#langButton;
+		#region;
+		#documentUids;
+		#isLangChosenByUser = false;
+		constructor(region, langs) {
+			this.#region = region;
+			this.#langs = langs;
+			this.#documentUids = [];
+			this.#langButton = this.#getLanguageButton();
+			this.#api = new sign_v2_api.Api();
+		}
+		getLayout() {
+			return main_core.Tag.render`
 			<div class="sign-lang-selector">
 				<span class="sign-lang-selector__label">
-					${0}
+					${main_core.Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_LABEL_MSGVER_1')}
 				</span>
-				${0}
+				${this.#langButton.getContainer()}
 			</div>
-		`), main_core.Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_LABEL_MSGVER_1'), babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton].getContainer());
-	  }
-	  setDocumentUids(uids) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentUids)[_documentUids] = uids;
-	  }
-	}
-	function _getLanguageItems2() {
-	  const onItemClick = function (event) {
-	    const id = event.currentTarget.getAttribute('data-lang-id');
-	    babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton].menuWindow.close();
-	    babelHelpers.classPrivateFieldLooseBase(this, _changeLang)[_changeLang](id);
-	    babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton].setText(babelHelpers.classPrivateFieldLooseBase(this, _langs)[_langs][id].NAME);
-	  }.bind(this);
-	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _langs)[_langs]).map(lang => {
-	    return {
-	      text: lang[1].NAME,
-	      onclick: onItemClick,
-	      dataset: {
-	        langId: lang[0]
-	      }
-	    };
-	  });
-	}
-	function _getLanguageButton2() {
-	  var _babelHelpers$classPr;
-	  return new ui_buttons.Button({
-	    text: ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _langs)[_langs][babelHelpers.classPrivateFieldLooseBase(this, _region)[_region]]) == null ? void 0 : _babelHelpers$classPr.NAME) || main_core.Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_BUTTON_TITLE'),
-	    dropdown: true,
-	    closeByEsc: true,
-	    autoHide: true,
-	    autoClose: true,
-	    color: BX.UI.Button.Color.LIGHT,
-	    size: BX.UI.Button.Size.SMALL,
-	    menu: {
-	      items: babelHelpers.classPrivateFieldLooseBase(this, _getLanguageItems)[_getLanguageItems]()
-	    },
-	    className: 'sign-lang-selector__language-button'
-	  });
-	}
-	async function _changeLang2(langId) {
-	  const promises = babelHelpers.classPrivateFieldLooseBase(this, _documentUids)[_documentUids].map(uid => babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyLanguageId(uid, langId));
-	  await Promise.all(promises);
+		`;
+		}
+		#getLanguageItems() {
+			const onItemClick = function (event) {
+				const id = event.currentTarget.getAttribute('data-lang-id');
+				this.#langButton.menuWindow.close();
+				this.#isLangChosenByUser = true;
+				this.#changeLang(id);
+				this.#langButton.setText(this.#langs[id].NAME);
+			}.bind(this);
+			return Object.entries(this.#langs).map(lang => {
+				return {
+					text: lang[1].NAME,
+					onclick: onItemClick,
+					dataset: {
+						langId: lang[0]
+					}
+				};
+			});
+		}
+		#getLanguageButton() {
+			return new ui_buttons.Button({
+				text: this.#langs[this.#region]?.NAME || main_core.Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_BUTTON_TITLE'),
+				dropdown: true,
+				closeByEsc: true,
+				autoHide: true,
+				autoClose: true,
+				color: BX.UI.Button.Color.LIGHT,
+				size: BX.UI.Button.Size.SMALL,
+				menu: {
+					items: this.#getLanguageItems()
+				},
+				className: 'sign-lang-selector__language-button'
+			});
+		}
+
+		// The document keeps the language it was saved with, so a wizard opened on it must show that
+		// language instead of the portal region default. Only the displayed language is restored: the
+		// document already carries it, and a write would be a change the user did not make. A language
+		// the user has already picked here is never restored over: that choice is the newer one.
+		setLangId(langId) {
+			if (this.#isLangChosenByUser) {
+				return;
+			}
+			const langName = this.#langs?.[langId]?.NAME;
+			if (!langName) {
+				return;
+			}
+			this.#langButton.setText(langName);
+		}
+		async #changeLang(langId) {
+			const promises = this.#documentUids.map(uid => this.#api.modifyLanguageId(uid, langId));
+			await Promise.all(promises);
+		}
+		setDocumentUids(uids) {
+			this.#documentUids = uids;
+		}
 	}
 
 	exports.LangSelector = LangSelector;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.UI,BX.Sign.V2));
+})(this.BX.Sign.V2 = this.BX.Sign.V2 || {}, BX, BX.UI, BX.Sign.V2);
 //# sourceMappingURL=lang-selector.bundle.js.map

@@ -5,6 +5,8 @@ jn.define('im/messenger/provider/services/analytics/messenger', (require, export
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics } = require('im/messenger/const');
 
+	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
+
 	/**
 	 * @class Messenger
 	 */
@@ -18,7 +20,7 @@ jn.define('im/messenger/provider/services/analytics/messenger', (require, export
 					.setTool(Analytics.Tool.im)
 					.setCategory(Analytics.Category.messenger)
 					.setEvent(Analytics.Event.openCreateMenu)
-					.setSection(Analytics.Section.chatTab)
+					.setSection(AnalyticsHelper.getFolderSectionCode())
 				;
 
 				analytics.send();

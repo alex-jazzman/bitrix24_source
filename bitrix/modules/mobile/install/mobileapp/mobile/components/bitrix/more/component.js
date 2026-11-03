@@ -500,9 +500,4 @@
 	};
 
 	BX.onCustomEvent('onMenuLoaded', [this.result]);
-	/**
-	 * @var {MobileIntent} mobileIntent
-	 */
-	const mobileIntent = jn.require('intent');
-	mobileIntent.execute();
 }).bind(this)();

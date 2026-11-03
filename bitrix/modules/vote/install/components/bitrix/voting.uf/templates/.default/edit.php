@@ -9,6 +9,7 @@ foreach ($arResult["ATTACHES"] as $attach)
 		array(
 			"bVarsFromForm" => $arParams["bVarsFromForm"],
 			"CHANNEL_ID" => $arParams["arUserField"]["SETTINGS"]["CHANNEL_ID"],
+			"PERMISSION" => 4,
 			"MULTIPLE" => $arParams["arUserField"]["MULTIPLE"],
 			"INPUT_NAME" => $arParams["arUserField"]["FIELD_NAME"]."_".$attach["ID"],
 			"INPUT_VALUE" => $attach["VOTE_ID"]
@@ -26,6 +27,7 @@ if ($arParams["arUserField"]["MULTIPLE"] == "Y" || empty($arResult["ATTACHES"]))
 		array(
 			"bVarsFromForm" => $arParams["bVarsFromForm"],
 			"CHANNEL_ID" => $arParams["arUserField"]["SETTINGS"]["CHANNEL_ID"],
+			"PERMISSION" => 4,
 			"MULTIPLE" => $arParams["arUserField"]["MULTIPLE"],
 			"INPUT_NAME" => $arParams["arUserField"]["FIELD_NAME"]."_n0",
 			"INPUT_VALUE" => 0

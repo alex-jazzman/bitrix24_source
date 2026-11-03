@@ -84,6 +84,7 @@ this.BX.UI = this.BX.UI || {};
 		#closeTimeout;
 		#subMenuHovered;
 		#subMenuOutdated = false;
+		#appliedDatasetKeys = [];
 		constructor(options, callbacks) {
 			this.#options = {
 				...defaultItemOptions,
@@ -130,6 +131,7 @@ this.BX.UI = this.BX.UI || {};
 			</div>
 		`;
 			this.#applyAccessibilityAttributes();
+			this.#applyDataset();
 			return this.#element;
 		}
 		isDisabled() {
@@ -160,6 +162,32 @@ this.BX.UI = this.BX.UI || {};
 				// tariff hint, a "why is this off" popup).
 				action.setAttribute('aria-disabled', 'true');
 			}
+		}
+		#applyDataset() {
+			if (this.#options.uiButtonOptions) {
+				// The action node belongs to ui.buttons, which applies its own
+				// uiButtonOptions.dataset; the menu never writes over it.
+				return;
+			}
+			const dataset = main_core.Type.isPlainObject(this.#options.dataset) ? {
+				...this.#options.dataset
+			} : {};
+			if (main_core.Type.isStringFilled(this.#options.id) && !('testid' in dataset)) {
+				dataset.testid = this.#options.id;
+			}
+			const map = this.#action.dataset;
+
+			// The previous generation's keys must not leak through, same as the ARIA
+			// states in #refreshElement.
+			this.#appliedDatasetKeys.forEach(key => delete map[key]);
+			this.#appliedDatasetKeys = [];
+			Object.entries(dataset).forEach(([key, value]) => {
+				if (main_core.Type.isNil(value)) {
+					return;
+				}
+				map[key] = value;
+				this.#appliedDatasetKeys.push(key);
+			});
 		}
 		#handleClick = () => {
 			this.#options.onClick?.();
@@ -209,6 +237,7 @@ this.BX.UI = this.BX.UI || {};
 			if (this.#subMenu?.getPopup()?.isShown()) {
 				this.#action.setAttribute('aria-expanded', 'true');
 			}
+			this.#applyDataset();
 		}
 		showSubMenu = (options = {}) => {
 			if (this.isDisabled()) {
@@ -578,6 +607,7 @@ this.BX.UI = this.BX.UI || {};
 		#onOpenSubMenu;
 		#onItemFocusMoved;
 		#isFocusInsideMenu;
+		#finishShowAnimation;
 		#focusZone;
 		#lastPointerPosition = null;
 		#scrolledUntil = 0;
@@ -604,6 +634,7 @@ this.BX.UI = this.BX.UI || {};
 			this.#onOpenSubMenu = options.onOpenSubMenu;
 			this.#onItemFocusMoved = options.onItemFocusMoved;
 			this.#isFocusInsideMenu = options.isFocusInsideMenu;
+			this.#finishShowAnimation = options.finishShowAnimation ?? null;
 			this.#focusZone = new ui_a11y.FocusZone(this.#itemsContainer, {
 				bindKeys: ui_a11y.FocusKeys.ArrowVertical | ui_a11y.FocusKeys.HomeAndEnd | ui_a11y.FocusKeys.PageUpDown,
 				focusOutBehavior: 'wrap',
@@ -755,6 +786,10 @@ this.BX.UI = this.BX.UI || {};
 			// The key belongs to the menu either way: an empty menu must not scroll the
 			// page (and the popup along with the bind element) behind itself.
 			event.preventDefault();
+
+			// A popup still fading in is transparent, and a transparent item is invisible to
+			// the lookup below: the menu is asked to end its opening animation first.
+			this.#finishShowAnimation?.();
 			const target = event.key === 'ArrowUp' || event.key === 'End' || event.key === 'PageDown' ? this.#getLastItem() : this.#getFirstItem();
 			if (target) {
 				target.focus({
@@ -927,6 +962,11 @@ this.BX.UI = this.BX.UI || {};
 			event.preventDefault();
 			this.#typeaheadBuffer += char;
 			this.#restartTypeaheadTimer();
+
+			// The letter is already in the buffer, and the buffer outlives the fade: a search
+			// over the transparent (hence invisible) items would lose this letter and the
+			// next one with it, as a prefix nothing matches.
+			this.#finishShowAnimation?.();
 			const match = this.#findTypeaheadMatch();
 			if (match) {
 				// The modality tracker treats any non-modifier key as keyboard input,
@@ -1010,8 +1050,13 @@ this.BX.UI = this.BX.UI || {};
 		// state on destroy.
 		#stampedTrigger = null;
 		#openedViaKeyboard = false;
+		// The show in flight, carrying the modality of the show that started it: a repeated
+		// show() inside the window overwrites #openedViaKeyboard while Popup.show() no-ops,
+		// so the late #onPopupAfterShow of this show has nothing else to judge by.
+		#showWindow = null;
 		#focusOrigin = null;
 		#destroyed = false;
+		#adjustingPositionTree = false;
 		constructor(options) {
 			const defaultOptions = {
 				noAllPaddings: true,
@@ -1033,6 +1078,26 @@ this.BX.UI = this.BX.UI || {};
 		}
 		getPopupContainer() {
 			return this.#popup.getPopupContainer();
+		}
+		adjustPositionTree() {
+			this.#adjustPositionTree(() => this.#popup.adjustPosition());
+		}
+		#adjustPositionTree(adjustPosition) {
+			if (this.#adjustingPositionTree || this.#destroyed || !this.#popup?.isShown() || this.#popup.isDestroyed()) {
+				return;
+			}
+			this.#adjustingPositionTree = true;
+			try {
+				adjustPosition();
+				if (this.#destroyed || !this.#popup.isShown() || this.#popup.isDestroyed()) {
+					return;
+				}
+				this.#items.forEach(item => {
+					item.getSubMenu()?.#adjustPositionTree(item.adjustSubMenu);
+				});
+			} finally {
+				this.#adjustingPositionTree = false;
+			}
 		}
 		show(bindElement, options = {}) {
 			if (this.#destroyed || this.#popup?.isDestroyed()) {
@@ -1057,6 +1122,7 @@ this.BX.UI = this.BX.UI || {};
 				// every event, the menu intercepts included.
 				events: [{
 					onShow: this.#onPopupShow,
+					onAfterShow: this.#onPopupAfterShow,
 					onClose: this.#onPopupClose,
 					onDestroy: this.#onPopupDestroy,
 					onBeforeAdjustPosition: this.#onBeforeAdjustPosition
@@ -1074,9 +1140,9 @@ this.BX.UI = this.BX.UI || {};
 			this.#syncMenuName();
 			// Where the focus came from, before the menu takes it (see #getRestoreTarget).
 			this.#rememberFocusOrigin();
-			// The expanded state and the opening focus belong to #onPopupShow: Popup.show()
-			// no-ops while the popup is still shown (a closing animation, a repeated show),
-			// and the trigger must not report a menu that never appeared.
+			// The expanded state and the opening focus belong to the popup show events:
+			// Popup.show() no-ops while the popup is still shown (a closing animation, a
+			// repeated show), and the trigger must not report a menu that never appeared.
 			this.#popup.show();
 		}
 		static #resolveTrigger(bindElement) {
@@ -1141,31 +1207,106 @@ this.BX.UI = this.BX.UI || {};
 				this.#focusOrigin = active;
 			}
 		}
-		#applyOpeningFocus() {
+
+		/**
+		 * The focus enters the popup as soon as it appears, a submenu opened by hover aside:
+		 * the keys of the opening animation belong to the menu and not to the page under it,
+		 * and the trigger cannot re-open the menu on Enter. An animated popup is transparent
+		 * until onAfterShow, and a transparent item counts as invisible for every focus
+		 * lookup, so the item is focused there (#applyOpeningFocus) — and right here when
+		 * there is no animation to sit through.
+		 */
+		#applyEntryFocus(openedViaKeyboard) {
 			if (this.#options.focusTrap === false || this.#isTrapOptionOverridden('initialFocus')) {
 				return;
 			}
 
-			// A hover-opened submenu must not move focus at all; a keyboard open — including
-			// a repeated one (APG: ArrowRight on an expanded parent) — focuses the item.
-			if (!this.#openedViaKeyboard) {
-				if (!this.#options.parentItem) {
-					this.getPopupContainer().focus({
-						preventScroll: true
-					});
-				}
+			// A submenu opened by hover does not move the focus at all: the pointer has not
+			// asked for the level below.
+			if (this.#options.parentItem && !openedViaKeyboard) {
+				return;
+			}
+			if (openedViaKeyboard && !this.#options.animation) {
+				// onAfterShow lands in this very frame, so the container step would only add
+				// a focus / blur pair for the consumer and a spare role="menu" announcement
+				// on the way to the item.
+				this.#focusOpeningTarget();
+				return;
+			}
+			this.getPopupContainer().focus({
+				preventScroll: true
+			});
+		}
+		#applyOpeningFocus(openedViaKeyboard) {
+			if (this.#options.focusTrap === false || this.#isTrapOptionOverridden('initialFocus')) {
 				return;
 			}
 
+			// Only a keyboard open focuses the item, a repeated one included (APG: ArrowRight
+			// on an expanded parent); a pointer open keeps the focus where #applyEntryFocus
+			// left it.
+			if (!openedViaKeyboard) {
+				return;
+			}
+
+			// The item is owed the focus only while the focus still sits at the entry point:
+			// the popup container (#applyEntryFocus), or the parent item a submenu is entered
+			// from. Anywhere else the focus is already claimed — by the key that got ahead of
+			// the animation, or by a consumer moving it in its own onShow — and a late
+			// onAfterShow must not overrule that.
+			if (!this.#hasEntryPointFocus()) {
+				return;
+			}
+			this.#focusOpeningTarget();
+		}
+		#focusOpeningTarget() {
 			// The container is the fallback entry point: without focus inside the popup no
 			// menu key ever reaches it.
 			(this.#keyboard?.getInitialFocusTarget() ?? this.getPopupContainer()).focus({
 				preventScroll: true
 			});
 		}
+		#hasEntryPointFocus() {
+			const active = ui_a11y.FocusNavigator.getActiveElement();
+			const parentItem = this.#options.parentItem;
+			if (main_core.Type.isDomNode(parentItem) && parentItem.contains(active)) {
+				return true;
+			}
+
+			// Lost focus (a consumer onShow removed the node it had focused) counts as free:
+			// nothing owns it, and an open menu has to be reachable from the keyboard.
+			return active === this.#getLiveContainer() || ui_a11y.FocusNavigator.isFocusLost();
+		}
 		#isTrapOptionOverridden(key) {
 			return main_core.Type.isPlainObject(this.#options.focusTrap) && key in this.#options.focusTrap;
 		}
+
+		/**
+		 * A menu asked for a key has to be navigable at once, and a transparent popup has
+		 * nothing to navigate: opacity 0 counts as invisible, so every item lookup comes back
+		 * empty until the opening animation ends. The animation is jumped to its end rather
+		 * than waited out, which costs that one key press its remaining frames of fading and
+		 * buys the arrows working from the first press. A menu nobody types into fades in as
+		 * before, and a consumer without an animation has nothing to finish here.
+		 *
+		 * Every animation of the container is ended, not the opening one alone: the show
+		 * class is a consumer option and carries no keyframes name to match on. That is only
+		 * fair inside the show window, where the appearance is the one animation running by
+		 * the menu's own doing; outside it the container may carry an animation of the
+		 * consumer, and a letter is no reason to cut it short.
+		 */
+		#finishShowAnimation = () => {
+			if (!this.#showWindow) {
+				return;
+			}
+			this.#getLiveContainer()?.getAnimations().forEach(animation => {
+				try {
+					animation.finish();
+				} catch {
+					// An animation with no end time cannot be finished; the rest still can.
+				}
+			});
+		};
 		#createKeyboard() {
 			return new MenuKeyboard({
 				itemsContainer: this.#itemsContainer,
@@ -1178,7 +1319,8 @@ this.BX.UI = this.BX.UI || {};
 				onItemFocusMoved: this.#closeSubMenusExceptFocused,
 				// Hover may take focus only from within this menu's own tree — never from
 				// another popup that happens to be open with focus inside it.
-				isFocusInsideMenu: () => this.#hasTreeFocus()
+				isFocusInsideMenu: () => this.#hasTreeFocus(),
+				finishShowAnimation: this.#finishShowAnimation
 			});
 		}
 		#hasTreeFocus() {
@@ -1190,7 +1332,10 @@ this.BX.UI = this.BX.UI || {};
 			// Focus on a part of the tree the menu itself moves focus across: an item of
 			// any level, or the parent item this level hangs from. The popup's own controls
 			// (a rich header, a title bar field) are deliberately left out — the menu never
-			// takes focus away from them.
+			// takes focus away from them. The popup container of a level is left out on
+			// purpose too: hover on the level above must not pull the focus out of a level
+			// still fading in (#treeContainsNode does count it — node membership in the tree
+			// is a different question).
 			const parentItem = this.#options.parentItem;
 			const active = ui_a11y.FocusNavigator.getActiveElement();
 			if (main_core.Type.isDomNode(parentItem) && parentItem.contains(active)) {
@@ -1236,7 +1381,7 @@ this.BX.UI = this.BX.UI || {};
 				viaKeyboard: true
 			});
 			if (wasNavigable) {
-				openLevel.#applyOpeningFocus();
+				openLevel.#applyOpeningFocus(true);
 			}
 		};
 		#getInputModality() {
@@ -1641,11 +1786,20 @@ this.BX.UI = this.BX.UI || {};
 			}));
 		}
 		#onPopupShow = () => {
+			this.#showWindow = {
+				openedViaKeyboard: this.#openedViaKeyboard
+			};
 			this.#keyboard?.activate();
 			this.#syncTriggerExpanded(true);
-			this.#applyOpeningFocus();
+			this.#applyEntryFocus(this.#showWindow.openedViaKeyboard);
+		};
+		#onPopupAfterShow = () => {
+			const showWindow = this.#showWindow;
+			this.#showWindow = null;
+			this.#applyOpeningFocus(showWindow?.openedViaKeyboard === true);
 		};
 		#onPopupClose = () => {
+			this.#showWindow = null;
 			this.#restoreFocusOnClose();
 			this.#keyboard?.deactivate();
 			this.#items.forEach(item => item.closeSubMenu());
@@ -1655,6 +1809,9 @@ this.BX.UI = this.BX.UI || {};
 			this.destroy();
 		};
 		#onBeforeAdjustPosition = () => {
+			if (this.#adjustingPositionTree) {
+				return;
+			}
 			this.#items.forEach(item => item.adjustSubMenu());
 		};
 		#prepareItems(itemsOptions) {

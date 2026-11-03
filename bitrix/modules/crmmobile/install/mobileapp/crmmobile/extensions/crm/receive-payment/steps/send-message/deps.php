@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'ui-system/typography/text',
+		'tokens',
 		'qrauth',
 		'apptheme',
 		'analytics-label',

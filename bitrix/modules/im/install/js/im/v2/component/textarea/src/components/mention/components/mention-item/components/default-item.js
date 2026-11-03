@@ -1,20 +1,22 @@
 import { Text } from 'main.core';
 
-import { Core } from 'im.v2.application.core';
 import { ChatTitleWithHighlighting } from 'im.v2.component.elements.chat-title';
-import { ActionByRole, ActionByUserType, ChatType } from 'im.v2.const';
+import { ChatType } from 'im.v2.const';
 import { highlightText } from 'im.v2.lib.text-highlighter';
-import { PermissionManager } from 'im.v2.lib.permission';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat } from 'im.v2.model';
 
 import { MentionItem } from './mention-item';
 import { AddToChatDropdown } from './add-to-chat-dropdown';
+import { canAddToChat } from '../../../helpers/can-add-to-chat';
 import { type MentionItemType } from '../../../mention-content';
 
 // @vue/component
 export const DefaultItem = {
 	name: 'DefaultMentionItem',
 	components: { ChatTitleWithHighlighting, MentionItem, AddToChatDropdown },
+	// Provided by the composer that owns the field: one set of ids per composer, see `createMentionGridIds`.
+	inject: ['mentionGridIds'],
 	props: {
 		item: {
 			type: Object,
@@ -23,6 +25,14 @@ export const DefaultItem = {
 		selected: {
 			type: Boolean,
 			default: false,
+		},
+		index: {
+			type: Number,
+			required: true,
+		},
+		activeColumn: {
+			type: Number,
+			default: 0,
 		},
 		query: {
 			type: String,
@@ -38,17 +48,9 @@ export const DefaultItem = {
 		},
 	},
 	computed: {
-		dialog(): ImModelChat
-		{
-			return this.getDialog(this.dialogId);
-		},
 		itemDialog(): ImModelChat
 		{
 			return this.getDialog(this.item.id);
-		},
-		isChatUser(): boolean
-		{
-			return this.dialog.type === ChatType.user;
 		},
 		isItemUser(): boolean
 		{
@@ -62,38 +64,40 @@ export const DefaultItem = {
 		{
 			return this.item;
 		},
-		isCurrentUserGuest(): boolean
+		nameCellId(): string
 		{
-			return this.$store.getters['users/isGuest'](Core.getUserId());
+			return this.mentionGridIds.getCellId(this.index, 0);
 		},
-		isGuestItem(): boolean
+		actionCellId(): string
 		{
-			if (!this.isItemUser)
-			{
-				return false;
-			}
-
-			return this.$store.getters['users/isGuest'](this.currentItem.id);
+			return this.mentionGridIds.getCellId(this.index, 1);
+		},
+		actionButtonId(): string
+		{
+			return this.mentionGridIds.getActionButtonId(this.index);
+		},
+		// The two cells of the row light one at a time: while the action column is active the row keeps no
+		// highlight of its own, or the keyboard position would read as two places at once.
+		nameCellActive(): boolean
+		{
+			return this.selected && this.activeColumn === 0;
+		},
+		actionCellActive(): boolean
+		{
+			return this.selected && this.activeColumn === 1;
+		},
+		isAddingUserByMentionAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAddingUserByMentionAvailable);
 		},
 		canAddToChat(): boolean
 		{
-			if (this.isCurrentUserGuest || this.isGuestItem)
+			if (this.isParticipant || !this.isAddingUserByMentionAvailable || !this.isItemUser)
 			{
 				return false;
 			}
 
-			if (!this.isItemUser || this.isParticipant)
-			{
-				return false;
-			}
-
-			const canCreateChat = PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createChat);
-			if (this.isChatUser && !canCreateChat)
-			{
-				return false;
-			}
-
-			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.extend, this.dialogId);
+			return canAddToChat(this.dialogId, this.currentItem.id);
 		},
 	},
 	methods: {
@@ -104,24 +108,47 @@ export const DefaultItem = {
 	},
 	template: `
 		<div
-			:class="{'--selected': selected}"
+			:class="{'--selected': nameCellActive}"
 			class="bx-im-mention-item__container bx-im-mention-item__scope"
+			role="row"
 		>
-			<MentionItem :id="currentItem.id">
-				<template #title>
-					<ChatTitleWithHighlighting
-						:dialogId="currentItem.id"
-						:textToHighlight="query"
-						:text="currentItem.title"
-						class="bx-im-mention-item__title"
-					/>
-				</template>
-				<template #subtitle>
-					<div v-if="isItemUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
-					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
-				</template>
-			</MentionItem>
-			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" :searchQuery="query" />
+			<div :id="nameCellId" role="gridcell" class="bx-im-mention-item__name-cell">
+				<MentionItem :id="currentItem.id">
+					<template #title>
+						<ChatTitleWithHighlighting
+							:dialogId="currentItem.id"
+							:textToHighlight="query"
+							:text="currentItem.title"
+							class="bx-im-mention-item__title"
+							data-testid="im-mention-item-title"
+						/>
+					</template>
+					<template #subtitle>
+						<div
+							v-if="isItemUser"
+							class="bx-im-mention-item__subtitle"
+							:title="currentItem.subtitle"
+							v-html="subtitleWithHighlighting"
+						></div>
+						<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
+					</template>
+				</MentionItem>
+			</div>
+			<div
+				v-if="canAddToChat"
+				:id="actionCellId"
+				role="gridcell"
+				class="bx-im-mention-item__action-cell"
+				:class="{'--active': actionCellActive}"
+				data-testid="im-textarea-mention-item-action-cell"
+			>
+				<AddToChatDropdown
+					:buttonId="actionButtonId"
+					:dialogId="dialogId"
+					:userId="currentItem.id"
+					:searchQuery="query"
+				/>
+			</div>
 		</div>
 	`,
 };

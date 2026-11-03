@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Icon } = require('assets/icons');
+	const { MessageMenuActionType } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { EntityManager } = require('im/messenger/controller/dialog/lib/entity-manager');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
@@ -127,8 +128,10 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 		{
 			Logger.log(`${this.constructor.name}.onClickActionCalendar`);
 
+			this.#sendCreateActionAnalytics(MessageMenuActionType.createEvent);
+
 			this.closePromise.then(() => {
-				void this.entityManager.createMeeting(this.messageData.id);
+				void this.entityManager.createMeeting(this.messageData.id, { sendOpenAnalytics: false });
 			})
 				.catch((error) => Logger.log(`${this.constructor.name}.onClickActionCalendar.closePromise.catch:`, error));
 		}
@@ -137,10 +140,36 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 		{
 			Logger.log(`${this.constructor.name}.onClickActionTask`);
 
+			this.#sendCreateActionAnalytics(MessageMenuActionType.createTask);
+
 			this.closePromise.then(() => {
 				this.entityManager.createTaskFomMessage(this.messageData);
 			})
 				.catch((error) => Logger.log(`${this.constructor.name}.onClickActionTask.closePromise.catch:`, error));
+		}
+
+		/**
+		 * This submenu replaces the direct createTask/createEvent items of the multilevel menu,
+		 * so it reports the same label; the entity creation itself stays silent.
+		 * @param {string} actionId
+		 */
+		#sendCreateActionAnalytics(actionId)
+		{
+			try
+			{
+				AnalyticsService.getInstance().messageMenuAnalytics.sendMessageMenuCreateActionTap(
+					this.messageData.id,
+					{
+						dialogId: this.dialogId,
+						actionId,
+						isNestedSection: true,
+					},
+				);
+			}
+			catch (error)
+			{
+				Logger.error(`${this.constructor.name}.sendCreateActionAnalytics.catch:`, error);
+			}
 		}
 	}
 

@@ -1,0 +1,1 @@
+export { CallVideo } from './component';

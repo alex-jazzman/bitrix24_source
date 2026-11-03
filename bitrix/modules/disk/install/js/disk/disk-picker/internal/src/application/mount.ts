@@ -3,9 +3,13 @@ import { BitrixVue } from 'ui.vue3';
 import { createPinia, disposePinia, getActivePinia, setActivePinia } from 'ui.vue3.pinia';
 
 import { loadInitialStage } from '../feature/load-initial-stage/load-initial-stage';
+import { resetRowActivation } from '../feature/row-activation/row-activation';
+import { resetSelectLimitNotice } from '../feature/toggle-selection/toggle-selection';
 import { ObjectTypeFilter } from '../const/picker';
 import { type NormalizedFilterValues } from '../const/types';
 import { MainUiFilterAdapter } from '../infrastructure/filter/main-ui-filter-adapter';
+import { resetPreviews } from '../lib/preview-load-queue/preview-load-queue';
+import { clearFolderPages } from '../model/item/folder-page-cache';
 import { useSessionStore } from '../model/session/session';
 import { type PickerConstraints, type SessionCallbacks } from '../model/session/types';
 
@@ -50,6 +54,10 @@ export function mountPickerApp(container: HTMLElement, props: { [key: string]: a
 	return {
 		unmount(): void
 		{
+			clearFolderPages();
+			resetPreviews();
+			resetRowActivation();
+			resetSelectLimitNotice();
 			filterAdapter?.dispose();
 			filterAdapter = null;
 			app.unmount();
@@ -62,6 +70,8 @@ export function mountPickerApp(container: HTMLElement, props: { [key: string]: a
 		start(options: SessionStartOptions): void
 		{
 			setActivePinia(pinia);
+			clearFolderPages();
+			resetPreviews();
 
 			const adapter = new MainUiFilterAdapter(options.filterId, pinia, options.callbacks, options.restoredFilter);
 			filterAdapter = adapter;
@@ -94,9 +104,16 @@ export function mountPickerApp(container: HTMLElement, props: { [key: string]: a
 		notifyClosing(): void
 		{
 			setActivePinia(pinia);
+			clearFolderPages();
+			resetPreviews();
+			resetRowActivation();
+			resetSelectLimitNotice();
 			filterAdapter?.dispose();
 			filterAdapter = null;
-			useSessionStore().invalidateRequests();
+			const session = useSessionStore();
+			session.setNavigationPending(false);
+			session.setLoading(false);
+			session.invalidateRequests();
 		},
 	};
 }

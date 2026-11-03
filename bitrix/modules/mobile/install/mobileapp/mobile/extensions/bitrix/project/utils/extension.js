@@ -351,7 +351,7 @@
 					placeholder: WorkgroupUtil.getProjectTitleAvatarPlaceholderParams(item.params),
 					...WorkgroupUtil.getProjectTitleAvatarParams(item.params),
 				},
-				userLargeTitleMode: true,
+				useLargeTitleMode: true,
 			};
 		}
 

@@ -184,7 +184,7 @@ COption::SetOptionString("main", "~new_license17_5_sign", "Y");
 
 if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 {
-	COption::SetOptionString("bizproc", "limit_simultaneous_processes", 2);
+	COption::SetOptionString("bizproc", "limit_simultaneous_processes", 10);
 	COption::SetOptionString("bitrix24", "admin_limits_enabled", "Y");
 	COption::SetOptionString("bitrix24", "absence_limits_enabled", "Y");
 	COption::SetOptionString("bitrix24", "business_tools_available", "N");

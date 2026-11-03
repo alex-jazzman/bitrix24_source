@@ -8,7 +8,7 @@ type MigrationStatusDto = {
 
 type MigrationVisibility = 'hidden' | 'active' | 'terminal';
 
-type MigrationPublicStatus = 'running' | 'waiting' | 'switching' | 'blocked' | 'cancelling' | 'done' | 'cancelled' | null;
+type MigrationPublicStatus = 'running' | 'waiting' | 'manual_waiting' | 'switching' | 'blocked' | 'cancelling' | 'done' | 'cancelled' | null;
 
 type MigrationStateListener = (change: MigrationStateChange) => void;
 
@@ -28,6 +28,7 @@ declare namespace BX.Mail {
 		getStatus(): MigrationStatusDto;
 		isActive(): boolean;
 		isInitialized(): boolean;
+		getRevision(): number;
 		subscribe(listener: MigrationStateListener): () => void;
 		destroy(): void;
 		applyPull(payload: unknown): void;

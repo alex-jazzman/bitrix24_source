@@ -6,5 +6,9 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/const',
 		'im:messenger/controller/sidebar-v2/const',
+		'im:messenger/provider/pull/sidebar',
+	],
+	'bundle' => [
+		'./src/query',
 	],
 ];

@@ -24,7 +24,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					edit: true,
 					remove: true
 				},
-				files: []
+				files: [],
+				archiveLink: null
 			};
 		}
 	}

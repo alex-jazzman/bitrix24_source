@@ -45,7 +45,7 @@ export const PlaceholderTabs = {
 				class="sign-placeholders-tab"
 				:class="{ 'sign-placeholders-tab--active': currentTab === tab.type }"
 				@click="switchTab(tab.type)"
-				:data-test-id="getTabDataTestId(tab.type)"
+				:data-testid="getTabDataTestId(tab.type)"
 			>
 				{{ loc(tab.locKey) }}
 			</div>

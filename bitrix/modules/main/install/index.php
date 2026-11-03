@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Service\GeoIp;
 use Bitrix\Main\ModuleTable;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Type\Callback;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -204,20 +205,20 @@ class main extends CModule
 		COption::SetOptionString("main", "secure_logout", "Y");
 
 		$nextDay = time() + 86400;
-		CAgent::AddAgent("CCaptchaAgent::DeleteOldCaptcha(3600);", "main", "N", 3600);
+		CAgent::AddAgent(new Callback([CCaptchaAgent::class, 'DeleteOldCaptcha'], [3600]), "main", "N", 3600);
 		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bitrix24'))
 		{
-			CAgent::AddAgent("CSiteCheckerTest::CommonTest();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:00:00', $nextDay)), 'FULL'));
+			CAgent::AddAgent(new Callback([CSiteCheckerTest::class, 'CommonTest']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:00:00', $nextDay)), 'FULL'));
 		}
-		CAgent::AddAgent("CEvent::CleanUpAgent();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:10:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent("CUser::CleanUpHitAuthAgent();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:15:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent("CUndo::CleanUpOld();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:20:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent('CUserCounter::DeleteOld();', "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:25:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent('\\Bitrix\\Main\\UI\\Viewer\\FilePreviewTable::deleteOldAgent();', 'main', "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:30:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent("CUser::AuthActionsCleanUpAgent();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:15:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent("CUser::CleanUpAgent();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:20:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent("CUser::DeactivateAgent();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:25:00', $nextDay)), 'FULL'));
-		CAgent::AddAgent("CEventLog::CleanUpAgent();", "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:30:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CEvent::class, 'CleanUpAgent']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:10:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CUser::class, 'CleanUpHitAuthAgent']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:15:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CUndo::class, 'CleanUpOld']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:20:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CUserCounter::class, 'DeleteOld']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:25:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([\Bitrix\Main\UI\Viewer\FilePreviewTable::class, 'deleteOldAgent']), 'main', "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:30:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CUser::class, 'AuthActionsCleanUpAgent']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:15:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CUser::class, 'CleanUpAgent']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:20:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CUser::class, 'DeactivateAgent']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:25:00', $nextDay)), 'FULL'));
+		CAgent::AddAgent(new Callback([CEventLog::class, 'CleanUpAgent']), "main", "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 04:30:00', $nextDay)), 'FULL'));
 
 		self::InstallDesktop();
 

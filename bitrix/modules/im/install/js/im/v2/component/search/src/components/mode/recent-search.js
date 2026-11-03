@@ -29,6 +29,14 @@ export const RecentSearch = {
 			type: Boolean,
 			default: true,
 		},
+		withKeyboardNavigation: {
+			type: Boolean,
+			default: false,
+		},
+		searchAreaId: {
+			type: String,
+			default: null,
+		},
 		recentSectionType: {
 			type: String || null,
 			default: RecentType.default,
@@ -133,7 +141,7 @@ export const RecentSearch = {
 			}
 
 			this.sendSearchResultAnalytics();
-			Analytics.getInstance().recentSearch.onStart(this.layoutName);
+			Analytics.getInstance().recentSearch.onStart(this.layoutName, this.parentChatId);
 		},
 		cleanSearchResult()
 		{
@@ -162,12 +170,12 @@ export const RecentSearch = {
 		{
 			if (this.searchResult.length === 0)
 			{
-				Analytics.getInstance().recentSearch.onShowNotFoundResult(this.layoutName);
+				Analytics.getInstance().recentSearch.onShowNotFoundResult(this.layoutName, this.parentChatId);
 
 				return;
 			}
 
-			Analytics.getInstance().recentSearch.onShowSuccessResult(this.layoutName);
+			Analytics.getInstance().recentSearch.onShowSuccessResult(this.layoutName, this.parentChatId);
 		},
 		stopLoader()
 		{
@@ -219,6 +227,9 @@ export const RecentSearch = {
 			:isRecentLoading="isRecentLoading"
 			:query="query"
 			:showUsersCarousel="showUsersCarousel"
+			:withKeyboardNavigation="withKeyboardNavigation"
+			:searchAreaId="searchAreaId"
+			:parentChatId="parentChatId"
 			@clickItem="onClickItem"
 			@openItem="onOpenItem"
 			@closeSearch="onCloseSearch"

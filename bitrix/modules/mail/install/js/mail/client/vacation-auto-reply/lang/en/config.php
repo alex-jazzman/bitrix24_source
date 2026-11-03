@@ -1,0 +1,20 @@
+<?php
+$MESS['MAIL_VACATION_AUTO_REPLY_ACTIVE_LABEL'] = 'Enable vacation auto-reply';
+$MESS['MAIL_VACATION_AUTO_REPLY_BODY_LABEL'] = 'Auto-reply message';
+$MESS['MAIL_VACATION_AUTO_REPLY_EXCLUSIONS_HINT'] = 'Auto-reply is not sent to mailing lists or automatic notifications. Each sender receives it once per period.';
+$MESS['MAIL_VACATION_AUTO_REPLY_LOAD_ERROR'] = 'Could not load auto-reply settings.';
+$MESS['MAIL_VACATION_AUTO_REPLY_MAILBOX_LABEL'] = 'Mailbox';
+$MESS['MAIL_VACATION_AUTO_REPLY_MAILBOX_LIST'] = 'Go to mailbox list';
+$MESS['MAIL_VACATION_AUTO_REPLY_MAILBOX_PLACEHOLDER'] = 'Select a mailbox';
+$MESS['MAIL_VACATION_AUTO_REPLY_NO_MAILBOX'] = 'No connected mailbox is available for auto-reply setup.';
+$MESS['MAIL_VACATION_AUTO_REPLY_PERIOD_END_LABEL'] = 'End date';
+$MESS['MAIL_VACATION_AUTO_REPLY_PERIOD_FORMAT_HINT'] = 'Enter date and time in this format: #EXAMPLE#';
+$MESS['MAIL_VACATION_AUTO_REPLY_PERIOD_HINT'] = 'Time is shown in the #TIMEZONE# time zone.';
+$MESS['MAIL_VACATION_AUTO_REPLY_PERIOD_START_LABEL'] = 'Start date';
+$MESS['MAIL_VACATION_AUTO_REPLY_READONLY'] = 'This setting is read-only. Only the mailbox owner can change its auto-reply.';
+$MESS['MAIL_VACATION_AUTO_REPLY_RETRY'] = 'Try again';
+$MESS['MAIL_VACATION_AUTO_REPLY_SAVED'] = 'Auto-reply settings have been saved.';
+$MESS['MAIL_VACATION_AUTO_REPLY_SAVE_FAILED'] = 'Could not save auto-reply settings.';
+$MESS['MAIL_VACATION_AUTO_REPLY_SAVE_INVALID'] = 'Check that all fields are filled in correctly.';
+$MESS['MAIL_VACATION_AUTO_REPLY_SAVE_WAIT'] = 'Wait until the auto-reply settings finish loading.';
+$MESS['MAIL_VACATION_AUTO_REPLY_SIGNATURE_HINT'] = 'The active signature of the selected mailbox is added to the auto-reply. If no signature is configured, the auto-reply is still sent.';

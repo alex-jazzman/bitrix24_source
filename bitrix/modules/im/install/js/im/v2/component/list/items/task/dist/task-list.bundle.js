@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_component_list_items_elements_emptyState, im_v2_lib_unreadMode) {
+(function (exports, ui_vue3, im_v2_component_list_items_base, im_v2_component_list_items_elements_activeCallList, im_v2_const, im_v2_lib_draft, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_component_list_items_elements_emptyState, im_v2_lib_unreadMode) {
 	'use strict';
 
 	class TaskRecentMenu extends im_v2_lib_menu.RecentMenu {
@@ -39,6 +39,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const TaskUnreadList = {
 		name: 'TaskUnreadList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			BaseRecentItem: im_v2_component_list_items_base.BaseRecentItem,
 			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
@@ -48,7 +49,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -59,9 +61,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		async created() {
-			this.contextMenuManager = new TaskRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new TaskRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			this.clearCollection();
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
@@ -95,6 +97,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.firstPageLoaded = true;
 				this.isLoading = false;
 			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
+			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getTaskUnreadService().hasMoreItemsToLoad()) {
 					return;
@@ -105,6 +110,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onSelectChat(dialogId) {
 				this.$emit('selectChat', dialogId);
+			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
 			},
 			onItemRightClick(payload) {
 				const {
@@ -145,12 +155,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 			data-test-id="im_container-recent__unread-list"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<RecentEmptyState 
 					:title="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_TITLE_MSGVER_1')"
@@ -165,6 +180,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const TaskList = {
 		name: 'TaskList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			EmptyState,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList
 		},
@@ -173,7 +189,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -184,9 +201,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		async created() {
-			this.contextMenuManager = new TaskRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new TaskRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 		},
@@ -202,6 +219,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				await this.getRecentService().loadFirstPage();
 				this.firstPageLoaded = true;
 				this.isLoading = false;
+			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
 			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
@@ -232,6 +252,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onCloseMenu() {
 				this.contextMenuManager.close();
 			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
+			},
 			getRecentService() {
 				if (!this.service) {
 					this.service = new im_v2_provider_service_recent.TaskRecentService({
@@ -252,11 +277,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<EmptyState />
 			</template>
@@ -267,5 +297,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.TaskList = TaskList;
 	exports.TaskUnreadList = TaskUnreadList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib);
 //# sourceMappingURL=task-list.bundle.js.map

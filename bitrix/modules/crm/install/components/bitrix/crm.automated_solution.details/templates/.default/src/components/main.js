@@ -16,6 +16,7 @@ export const Main = {
 	},
 	props: {
 		initialActiveTabId: String,
+		readOnly: Boolean,
 	},
 	data(): Object
 	{
@@ -77,6 +78,11 @@ export const Main = {
 		analyticsBuilder(): Builder.Automation.AutomatedSolution.CreateEvent | Builder.Automation.AutomatedSolution.EditEvent
 		{
 			return createSaveAnalyticsBuilder(this.$store);
+		},
+
+		shouldCloseOnSave(): boolean
+		{
+			return this.$store.state.shouldCloseOnSave;
 		},
 	},
 
@@ -141,7 +147,16 @@ export const Main = {
 					// don't register cancel event when this slider closes
 					this.isCancelEventAlreadyRegistered = true;
 
-					this.$Bitrix.Application.get().closeSliderOrRedirect();
+					if (this.shouldCloseOnSave)
+					{
+						this.$Bitrix.Application.get().closeSliderOrRedirect();
+					}
+					else
+					{
+						this.$Bitrix.Application.get().reloadWithNewUri(
+							this.$store.state.automatedSolution.id,
+						);
+					}
 				})
 				.catch(() => {
 					sendAnalyticsData(
@@ -288,7 +303,10 @@ export const Main = {
 						<span class="ui-alert-close-btn" @click="hideError(error)"></span>
 					</template>
 				</div>
-				<CommonTab v-show="tabs.common"/>
+				<CommonTab
+					v-show="tabs.common"
+					:read-only="readOnly"
+				/>
 				<TypesTab v-show="tabs.types"/>
 			</form>
 		</div>

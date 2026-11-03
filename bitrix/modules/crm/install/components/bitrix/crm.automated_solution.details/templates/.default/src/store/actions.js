@@ -27,10 +27,17 @@ export default {
 		store.commit('removeTypeId', typeId);
 	},
 
+	setIsVibeEnabled: (store, isVibeEnabled: boolean): void => {
+		store.commit('setIsVibeEnabled', isVibeEnabled);
+	},
+
 	save: (store): Promise<void, string[]> => {
 		let savePromise: ?Promise = null;
 
+		const wasVibeEnabled = store.state.automatedSolutionOrigIsVibeEnabled;
 		const fields = Runtime.clone(store.state.automatedSolution);
+		const isVibeSettingsPending = wasVibeEnabled === false && fields.isVibeEnabled === true;
+		store.commit('setIsVibeSettingsPending', isVibeSettingsPending);
 		if (fields.typeIds.length <= 0)
 		{
 			// we cant send an empty array in form data
@@ -57,14 +64,26 @@ export default {
 
 		return savePromise
 			.then(({ data }) => {
+				const shouldReload = (
+					wasVibeEnabled === false
+					&& data.automatedSolution.isVibeEnabled === true
+				);
+
 				store.dispatch('setState', {
 					automatedSolution: data.automatedSolution,
+					shouldCloseOnSave: !shouldReload,
 				});
 				emitUpdateEventToOutsideWorld(data.automatedSolution);
 			})
 			.catch((response) => {
+				store.commit('setIsVibeSettingsPending', false);
 				// eslint-disable-next-line no-console
 				console.warn('could not save automated solution', { response, state: Runtime.clone(store.state) });
+
+				if (response.data?.automatedSolution)
+				{
+					store.commit('restoreAutomatedSolution', response.data.automatedSolution);
+				}
 
 				const { errors } = response;
 

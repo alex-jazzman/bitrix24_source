@@ -16,8 +16,14 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 
 	const CANCEL_TASK_REGION_WIDTH = 68;
 
+	/**
+	 * @extends {LayoutComponent<DiskUploaderFileRowProps, DiskUploaderFileRowState>}
+	 */
 	class DiskUploaderFileRow extends LayoutComponent
 	{
+		/**
+		 * @param {DiskUploaderFileRowProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -32,6 +38,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			};
 		}
 
+		/**
+		 * @param {DiskUploaderFileRowProps} props
+		 */
 		componentWillReceiveProps(props)
 		{
 			this.state = {
@@ -43,8 +52,8 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @param {number} byteSent
-		 * @param {number} byteTotal
+		 * @param {DiskUploadProgress} progress
+		 * @return {void}
 		 */
 		setProgress({ byteSent, byteTotal })
 		{
@@ -65,11 +74,19 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {string} suffix
+		 * @return {string}
+		 */
 		#getTestId(suffix)
 		{
 			return `disk-uploader-file-row-${suffix}`;
 		}
 
+		/**
+		 * @param {DiskUploadStatus} status
+		 * @return {boolean}
+		 */
 		#isStatus(status)
 		{
 			const currentStatus = this.state.status ?? UploadStatus.PROGRESS;
@@ -95,6 +112,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View}
+		 */
 		#renderPreview()
 		{
 			const ext = getExtension(this.props.name);
@@ -128,6 +148,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View}
+		 */
 		#renderNameWithProgress()
 		{
 			return View(
@@ -173,6 +196,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View|null}
+		 */
 		#renderRemoveTaskButton()
 		{
 			if (this.#isStatus(UploadStatus.PROGRESS))
@@ -204,6 +230,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View|null}
+		 */
 		#renderLoader()
 		{
 			if (!this.#isStatus(UploadStatus.PROGRESS))
@@ -233,6 +262,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View|null}
+		 */
 		#renderRetryButton()
 		{
 			const canRetry = this.#isStatus(UploadStatus.ERROR) || this.#isStatus(UploadStatus.CANCELED);
@@ -257,6 +289,9 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {void}
+		 */
 		#onRowClick()
 		{
 			const { status } = this.state;

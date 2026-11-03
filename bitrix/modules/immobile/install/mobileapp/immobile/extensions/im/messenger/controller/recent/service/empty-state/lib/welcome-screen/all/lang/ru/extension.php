@@ -1,0 +1,5 @@
+<?php
+
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_ALL_TITLE'] = 'Чатов пока нет';
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_ALL_TEXT'] = 'Создайте чат или напишите коллеге';
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_ALL_BUTTON'] = 'Создать чат';

@@ -6,7 +6,7 @@ import {Loc} from 'landing.loc';
 
 import './css/style.css';
 
-export default class FieldActionPanel extends EventEmitter
+export class FieldActionPanel extends EventEmitter
 {
 	cache = new Cache.MemoryCache();
 

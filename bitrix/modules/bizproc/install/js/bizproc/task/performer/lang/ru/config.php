@@ -1,0 +1,36 @@
+<?php
+
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_DONE_PLURAL_0'] = 'Выполнено #COUNT# задание';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_DONE_PLURAL_1'] = 'Выполнено #COUNT# задания';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_DONE_PLURAL_2'] = 'Выполнено #COUNT# заданий';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SKIPPED_PLURAL_0'] = 'Пропущено #COUNT# задание';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SKIPPED_PLURAL_1'] = 'Пропущено #COUNT# задания';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SKIPPED_PLURAL_2'] = 'Пропущено #COUNT# заданий';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_REMAINING_PLURAL_0'] = 'Осталось #COUNT# задание';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_REMAINING_PLURAL_1'] = 'Осталось #COUNT# задания';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_REMAINING_PLURAL_2'] = 'Осталось #COUNT# заданий';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_PLURAL_0'] = 'Выполнено #COUNT# задание из #TOTAL#';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_PLURAL_1'] = 'Выполнено #COUNT# задания из #TOTAL#';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_PLURAL_2'] = 'Выполнено #COUNT# заданий из #TOTAL#';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_NONE'] = 'Ни одно задание не выполнено';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_INTERRUPTED_PLURAL_0'] = 'Работа с заданиями прервана. Выполнено #COUNT# задание из #TOTAL#';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_INTERRUPTED_PLURAL_1'] = 'Работа с заданиями прервана. Выполнено #COUNT# задания из #TOTAL#';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_INTERRUPTED_PLURAL_2'] = 'Работа с заданиями прервана. Выполнено #COUNT# заданий из #TOTAL#';
+$MESS['BIZPROC_JS_TASK_PERFORMER_NOTIFIER_SUMMARY_INTERRUPTED_NONE'] = 'Работа с заданиями прервана, ни одно задание не выполнено';
+$MESS['BIZPROC_JS_TASK_PERFORMER_REQUEST_ERROR'] = 'Не удалось выполнить задания. Попробуйте ещё раз';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_TITLE'] = 'Есть похожие процессы';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_COUNT_PLURAL_0'] = 'Ещё #COUNT# процесс ждёт такого же решения';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_COUNT_PLURAL_1'] = 'Ещё #COUNT# процесса ждут такого же решения';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_COUNT_PLURAL_2'] = 'Ещё #COUNT# процессов ждут такого же решения';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_HINT'] = 'Не нужно открывать каждый процесс — примените решение сразу ко всем похожим';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_APPLY_TO_ALL'] = 'Применить для всех';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_ONE_BY_ONE'] = 'Открывать по очереди';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_SHOW_LIST'] = 'Показать похожие процессы';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_LIST_TITLE'] = 'Похожие процессы';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_LIST_APPLY'] = 'Применить для выбранных';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_LIST_ONE_BY_ONE'] = 'Открывать по очереди';
+$MESS['BIZPROC_JS_TASK_PERFORMER_SIMILAR_LIST_TASK'] = 'Задание';
+$MESS['BIZPROC_JS_TASK_PERFORMER_EXIT_CONFIRM_TITLE'] = 'Выйти из групповых действий?';
+$MESS['BIZPROC_JS_TASK_PERFORMER_EXIT_CONFIRM_TEXT'] = 'Вы вернётесь к общему списку процессов. Уже выполненные задания останутся выполненными';
+$MESS['BIZPROC_JS_TASK_PERFORMER_EXIT_CONFIRM_EXIT'] = 'Да, выйти';
+$MESS['BIZPROC_JS_TASK_PERFORMER_EXIT_CONFIRM_STAY'] = 'Остаться';

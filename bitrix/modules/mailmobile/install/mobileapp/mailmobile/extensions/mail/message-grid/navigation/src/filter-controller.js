@@ -4,6 +4,7 @@
 jn.define('mail/message-grid/navigation/src/filter-controller', (require, exports, module) => {
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
 	const { MessageGridFilter } = require('mail/message-grid/navigation/src/filter');
+	const { LABEL } = require('mail/folder/virtual/src/keys');
 
 	class MessageGridFilterController
 	{
@@ -21,6 +22,18 @@ jn.define('mail/message-grid/navigation/src/filter-controller', (require, export
 			return this.filter.getActionParams();
 		}
 
+		/**
+		 * The label the request currently carries. The observers report the state of the store, which
+		 * may already be ahead of the filter, so the caller compares the two instead of guessing the
+		 * order the store notified its subscribers in.
+		 *
+		 * @returns {number|null}
+		 */
+		getLabelId()
+		{
+			return this.filter.getLabelId();
+		}
+
 		syncFolderPath(folderPath)
 		{
 			this.filter.setFolderPath(folderPath);
@@ -32,6 +45,7 @@ jn.define('mail/message-grid/navigation/src/filter-controller', (require, export
 				folderPath: null,
 				mailboxId: Number(mailboxId),
 				virtualFolderKey: null,
+				labelId: null,
 			});
 
 			return { shouldReload: true };
@@ -39,7 +53,7 @@ jn.define('mail/message-grid/navigation/src/filter-controller', (require, export
 
 		handleFolderSelection(folder)
 		{
-			this.#applyUpdates({ folderPath: folder.path, virtualFolderKey: null });
+			this.#applyUpdates({ folderPath: folder.path, virtualFolderKey: null, labelId: null });
 
 			return {
 				activeTabId: this.#resolveActiveTabIdByFolder(folder),
@@ -52,6 +66,19 @@ jn.define('mail/message-grid/navigation/src/filter-controller', (require, export
 			this.#applyUpdates({
 				virtualFolderKey,
 				folderPath: null,
+				labelId: null,
+				tabId: MessageGridFilter.tabType.allIncome,
+			});
+
+			return { shouldReload: true };
+		}
+
+		handleLabelSelection(labelId)
+		{
+			this.#applyUpdates({
+				virtualFolderKey: LABEL,
+				labelId,
+				folderPath: null,
 				tabId: MessageGridFilter.tabType.allIncome,
 			});
 
@@ -60,6 +87,17 @@ jn.define('mail/message-grid/navigation/src/filter-controller', (require, export
 
 		handleTabSelection({ tabId, currentFolder, inboxFolder, outcomeFolder })
 		{
+			// A label gathers messages of the whole mailbox, so the server drops the sent-folder filter
+			// in this mode. Applying the tab anyway would leave the whole label under the title
+			// «Отправленные», so the selection goes back to the tab of all incoming messages.
+			if (tabId === MessageGridFilter.tabType.sent && !this.filter.isSentTabAvailable())
+			{
+				return {
+					activeTabId: MessageGridFilter.tabType.allIncome,
+					shouldReload: false,
+				};
+			}
+
 			if (this.filter.getVirtualFolderKey() !== null)
 			{
 				this.#applyUpdates({ tabId });

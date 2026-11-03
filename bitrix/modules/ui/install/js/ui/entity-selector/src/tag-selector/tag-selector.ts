@@ -555,12 +555,14 @@ export class TagSelector extends EventEmitter
 	{
 		this.textBoxVisible = true;
 		Dom.removeClass(this.getTextBox(), 'ui-tag-selector-item-hidden');
+		this.focusZone?.refreshElements();
 	}
 
 	hideTextBox(): void
 	{
 		this.textBoxVisible = false;
 		Dom.addClass(this.getTextBox(), 'ui-tag-selector-item-hidden');
+		this.focusZone?.refreshElements();
 	}
 
 	tryAutoHideTextBox()
@@ -874,12 +876,14 @@ export class TagSelector extends EventEmitter
 	{
 		this.addButtonVisible = true;
 		Dom.removeClass(this.getAddButton(), 'ui-tag-selector-item-hidden');
+		this.focusZone?.refreshElements();
 	}
 
 	hideAddButton(): void
 	{
 		this.addButtonVisible = false;
 		Dom.addClass(this.getAddButton(), 'ui-tag-selector-item-hidden');
+		this.focusZone?.refreshElements();
 	}
 
 	getCreateButton(): HTMLElement

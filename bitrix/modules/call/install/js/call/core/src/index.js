@@ -1,9 +1,7 @@
 import { applyHacks } from './hacks';
-import { BackgroundDialog } from './dialogs/background_dialog';
-import { IncomingNotificationContent } from './dialogs/incoming_notification';
-import { NotificationConferenceContent } from './dialogs/conference_notification';
+import { BackgroundDialog } from 'call.lib.background-dialog';
 import { FloatingScreenShare, FloatingScreenShareContent } from './floating_screenshare';
-import { CallHint } from './call_hint_popup';
+import { CallHint } from './view/call-hint';
 import { CallController } from './controller';
 import {
 	CallEngine,
@@ -29,15 +27,14 @@ import { CopilotNotify, CopilotNotifyType } from './view/copilot-notify';
 import { CopilotPopup } from './view/copilot-popup';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
 import { WebScreenSharePopup } from './web_screenshare_popup';
-import { UserListPopup } from 'call.component.user-list-popup';
-import { UserList } from 'call.component.user-list';
+import { UserListPopup } from 'call.legacy.component.user-list-popup';
+import { UserList } from 'call.legacy.component.user-list';
 import { CallCloudRecord, CallCommonRecordType, CallCommonRecordState } from './call_common_record';
 import { STREAM_QUALITY, LOCAL_STREAM_QUALITY_HEIGHT } from './stream_quality';
 import { UnsupportedBrowserFeatures } from './engine/unsupported_features_in_browsers';
 import { LayoutService } from './services/layout-service';
 import { ButtonStateService } from './services/button-state-service';
 import { NotificationService } from './services/notification-service';
-import { PromoService } from './services/promo-service';
 import { DocumentEditorService } from './services/document-editor-service';
 import { PictureInPictureService } from './services/picture-in-picture-service';
 import { RecordingUiService } from './services/recording-ui-service';
@@ -46,8 +43,9 @@ import { FloatingWindowService } from './services/floating-window-service';
 import { FeedbackUiService } from './services/feedback-ui-service';
 import { HangupOptionsUiService } from './services/hangup-options-ui-service';
 import { MediaStreamRegistry } from 'call.lib.media-registry';
+import { CALL_PHONE_SVG } from './icons.js';
 import { getUnknownErrorType } from './utils/get-unknown-error-type';
-import { sendPendingAccidentLogs } from './send-pending-accident-logs';
+import { ReconnectSeriesReporter } from './utils/reconnect-series-reporter';
 
 import 'loader';
 import 'resize_observer';
@@ -57,7 +55,6 @@ import 'ui.hint';
 import 'voximplant';
 
 applyHacks();
-sendPendingAccidentLogs();
 
 export {
 	JoinResponseError,
@@ -73,8 +70,6 @@ export {
 	DisconnectReason,
 	FloatingScreenShare,
 	FloatingScreenShareContent,
-	IncomingNotificationContent,
-	NotificationConferenceContent,
 	Hardware,
 	Provider,
 	CallType as Type,
@@ -103,7 +98,6 @@ export {
 	LayoutService,
 	ButtonStateService,
 	NotificationService,
-	PromoService,
 	DocumentEditorService,
 	PictureInPictureService,
 	RecordingUiService,
@@ -112,7 +106,9 @@ export {
 	FeedbackUiService,
 	HangupOptionsUiService,
 	MediaStreamRegistry,
+	CALL_PHONE_SVG,
 	getUnknownErrorType,
+	ReconnectSeriesReporter,
 };
 
 export type { CallView };

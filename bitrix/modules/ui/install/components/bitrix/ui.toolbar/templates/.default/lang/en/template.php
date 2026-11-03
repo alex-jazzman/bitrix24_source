@@ -9,3 +9,7 @@ $MESS["UI_TOOLBAR_ITEM_WAS_ADDED_TO_LEFT"] = "Page was added<br/>to left menu";
 $MESS["UI_TOOLBAR_ITEM_WAS_DELETED_FROM_LEFT"] = "Page was removed<br/>from left menu";
 $MESS["UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE"] = "Page is already in left menu";
 $MESS["UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR"] = "Page cannot  be removed from left menu";
+$MESS['UI_TOOLBAR_CANCEL_TITLE_EDIT_BUTTON'] = 'Cancel';
+$MESS['UI_TOOLBAR_EDIT_TITLE_BUTTON'] = 'Edit page title';
+$MESS['UI_TOOLBAR_EDIT_TITLE_INPUT_LABEL'] = 'Page title';
+$MESS['UI_TOOLBAR_SAVE_TITLE_BUTTON'] = 'Save';

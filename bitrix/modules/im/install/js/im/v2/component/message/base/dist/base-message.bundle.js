@@ -3,17 +3,32 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_v2_application_core, im_v2_component_message_elements, im_v2_const, im_v2_lib_channel, im_v2_lib_menu, im_v2_lib_parser, im_v2_lib_permission, im_v2_lib_utils) {
+(function (exports, main_core, ui_vue3, im_v2_application_core, im_v2_component_message_elements, im_v2_const, im_v2_lib_channel, im_v2_lib_menu, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_permission, im_v2_lib_utils) {
 	'use strict';
 
 	// @vue/component
 	const BaseMessage = {
 		name: 'BaseMessage',
 		components: {
+			AiTaskIndication: im_v2_component_message_elements.AiTaskIndication,
 			ContextMenu: im_v2_component_message_elements.ContextMenu,
 			RetryButton: im_v2_component_message_elements.RetryButton,
 			MessageKeyboard: im_v2_component_message_elements.MessageKeyboard,
 			ReactionSelector: im_v2_component_message_elements.ReactionSelector
+		},
+		/*
+		 * The layout of a running indication, for the content slotted into this body. The bubble layout
+		 * hands its caption to the time row of the message, and that row belongs to the content, not to
+		 * this component - so the placement is answered here, where the layout is already known, and
+		 * read there. Lazy on purpose: the computed is only evaluated by a content that asks for it, and
+		 * it then reuses the very gate the `v-if` below already paid for.
+		 */
+		provide() {
+			return {
+				[im_v2_component_message_elements.AiTaskIndicationLayoutKey]: ui_vue3.computed(() => {
+					return this.hasAiTaskIndication ? this.aiTaskIndicationLayout : null;
+				})
+			};
 		},
 		props: {
 			item: {
@@ -45,6 +60,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				default: true
 			},
 			withError: {
+				type: Boolean,
+				default: false
+			},
+			/**
+			 * The body renders a media frame (a photo, a video, a gallery) rather than plain content.
+			 * Only the host knows it, and the AI-task indication needs it: a frame with a caption keeps
+			 * a bubble around itself, but its light belongs over the graphics, not under them.
+			 */
+			withMediaFrame: {
 				type: Boolean,
 				default: false
 			}
@@ -95,8 +119,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			bodyClasses() {
 				return {
 					'--transparent': this.isTransparentBackground,
-					'--no-angle': !this.showMessageAngle
+					'--no-angle': !this.showMessageAngle,
+					'--ai-task-underlay': this.hasAiTaskUnderlay
 				};
+			},
+			/**
+			 * The bubble carries the AI-task layer under its own content; media and the round player
+			 * carry it over the graphics, which is what a positioned layer does by default.
+			 */
+			hasAiTaskUnderlay() {
+				return this.hasAiTaskIndication && this.aiTaskIndicationLayout === im_v2_component_message_elements.AiTaskIndicationLayout.bubble;
 			},
 			isTransparentBackground() {
 				if (!this.withBackground) {
@@ -107,17 +139,37 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				return this.isSystemMessage;
 			},
-			showRetryButton() {
-				return this.withRetryButton && this.isSelfMessage && this.hasError;
+			hasAiTaskIndication() {
+				return im_v2_component_message_elements.hasAiTaskIndication(this.$store, this.message);
 			},
+			aiTaskIndicationLayout() {
+				if (!this.isTransparentBackground) {
+					// A frame with a caption: a bubble on the outside, opaque graphics on the inside.
+					return this.withMediaFrame ? im_v2_component_message_elements.AiTaskIndicationLayout.mediaCaption : im_v2_component_message_elements.AiTaskIndicationLayout.bubble;
+				}
+
+				// Only reached behind the gate above (`v-if` compiles to a ternary), so the round-player
+				// check is not paid for by every message of the list.
+				const isVideoNote = this.$store.getters['messages/isVideoNote'](this.message.id);
+				return isVideoNote ? im_v2_component_message_elements.AiTaskIndicationLayout.round : im_v2_component_message_elements.AiTaskIndicationLayout.media;
+			},
+			showRetryButton() {
+				return this.withRetryButton && this.isSelfMessage && this.hasError && !this.message.notDelivered;
+			},
+			// Deliberately checks the send error alone, not the combined error signal: a message that
+			// failed to send has no server-side id, so its menu is meaningless, while a message
+			// undelivered by timeout does exist on the server and keeps its actions (as it did in v1).
 			showContextMenu() {
-				return this.withContextMenu && !this.hasError && this.canOpenContextMenu;
+				return this.withContextMenu && !this.hasSendError && this.canOpenContextMenu;
 			},
 			canOpenContextMenu() {
 				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.openMessageMenu, this.dialogId);
 			},
 			hasError() {
-				return this.withError || this.message.error;
+				return this.withError || im_v2_lib_message.messageHasError(this.message);
+			},
+			hasSendError() {
+				return this.withError || Boolean(this.message.error);
 			}
 		},
 		methods: {
@@ -163,7 +215,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-message-base__wrap bx-im-message-base__scope" :class="containerClasses" :data-id="message.id">
+		<div class="bx-im-message-base__wrap bx-im-message-base__scope" :class="containerClasses" :data-id="message.id" data-testid="im-message-base-root">
 			<div
 				class="bx-im-message-base__container" 
 				@click="onContainerClick"
@@ -177,10 +229,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<slot name="before-message"></slot>
 						<div class="bx-im-message-base__body" :class="bodyClasses">
 							<slot></slot>
+							<!-- Both nodes of the indication belong to the body: the decor layer takes its geometry and radius -->
+							<AiTaskIndication
+								v-if="hasAiTaskIndication"
+								:message="message"
+								:layout="aiTaskIndicationLayout"
+							/>
 							<ReactionSelector v-if="withReactions" :messageId="message.id" />
 						</div>
 					</div>
-					<RetryButton v-if="showRetryButton" :message="message" :dialogId="dialogId"/>
+					<RetryButton v-if="showRetryButton" :message="message" :dialogId="dialogId" data-testid="im-message-retry-button"/>
 					<ContextMenu
 						v-else
 						:showContextMenu="showContextMenu"
@@ -205,5 +263,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.BaseMessage = BaseMessage;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Vue3, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=base-message.bundle.js.map

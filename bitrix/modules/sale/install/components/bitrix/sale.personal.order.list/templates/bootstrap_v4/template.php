@@ -16,6 +16,10 @@ use Bitrix\Main\Page\Asset;
 Asset::getInstance()->addJs("/bitrix/components/bitrix/sale.order.payment.change/templates/bootstrap_v4/script.js");
 Asset::getInstance()->addCss("/bitrix/components/bitrix/sale.order.payment.change/templates/bootstrap_v4/style.css");
 CJSCore::Init(array('clipboard', 'fx'));
+if (Main\Loader::includeModule('ui'))
+{
+	Main\UI\Extension::load('ui.a11y');
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -146,7 +150,7 @@ else
 			}
 			?>
 			<div class="row mx-0 sale-order-list-title-container">
-				<h3 class="col mb-1 mt-1">
+				<h3 class="col mb-1 mt-1" id="sale-order-list-order-<?= (int)$order['ORDER']['ID'] ?>" tabindex="-1">
 					<?=Loc::getMessage('SPOL_TPL_ORDER')?>
 					<?=Loc::getMessage('SPOL_TPL_NUMBER_SIGN').$order['ORDER']['ACCOUNT_NUMBER']?>
 					<?=Loc::getMessage('SPOL_TPL_FROM_DATE')?>
@@ -283,7 +287,7 @@ else
 										if ($payment['PAID'] !== 'Y' && $order['ORDER']['LOCK_CHANGE_PAYSYSTEM'] !== 'Y')
 										{
 											?>
-											<a href="#" class="sale-order-list-change-payment" id="<?= htmlspecialcharsbx($payment['ACCOUNT_NUMBER']) ?>"><?= Loc::getMessage('SPOL_TPL_CHANGE_PAY_TYPE') ?></a>
+											<a href="#" class="sale-order-list-change-payment" id="sale-order-list-change-payment-<?= (int)$payment['ID'] ?>" data-payment-account="<?= htmlspecialcharsbx($payment['ACCOUNT_NUMBER']) ?>"><?= Loc::getMessage('SPOL_TPL_CHANGE_PAY_TYPE') ?></a>
 											<?
 										}
 										if ($order['ORDER']['IS_ALLOW_PAY'] == 'N' && $payment['PAID'] !== 'Y')
@@ -303,7 +307,7 @@ else
 										{
 											?>
 											<div class="col-sm-auto sale-order-list-button-container">
-												<a class="btn btn-primary disabled"><?=Loc::getMessage('SPOL_TPL_PAY')?></a>
+												<a class="btn btn-primary disabled" role="button" aria-disabled="true" tabindex="0"><?=Loc::getMessage('SPOL_TPL_PAY')?></a>
 											</div>
 											<?
 										}
@@ -327,7 +331,12 @@ else
 									?>
 								</div>
 							</div>
-							<div class="col sale-order-list-inner-row-template">
+							<div
+								class="col sale-order-list-inner-row-template"
+								tabindex="-1"
+								role="group"
+								aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPOL_PAYMENT_FORM_ARIA', ['#BILL#' => $payment['ACCOUNT_NUMBER']])) ?>"
+							>
 								<a class="sale-order-list-cancel-payment" href="">
 									<i class="fa fa-long-arrow-left"></i> <?=Loc::getMessage('SPOL_CANCEL_PAYMENT')?>
 								</a>
@@ -426,7 +435,12 @@ else
 										<div class="mb-1 sale-order-list-shipment-item">
 											<span class="sale-order-list-shipment-id-name"><?=Loc::getMessage('SPOL_TPL_POSTID')?>:</span>
 											<span class="sale-order-list-shipment-id"><?=htmlspecialcharsbx($shipment['TRACKING_NUMBER'])?></span>
-											<span class="sale-order-list-shipment-id-icon"></span>
+											<span
+												class="sale-order-list-shipment-id-icon"
+												role="button"
+												tabindex="0"
+												aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPOL_COPY_TRACKING_ARIA', ['#NUMBER#' => $shipment['TRACKING_NUMBER']])) ?>"
+											></span>
 										</div>
 										<?
 									}
@@ -583,8 +597,10 @@ else
 			"returnUrl" => CUtil::JSEscape($arResult["RETURN_URL"]),
 		);
 		$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
+		$messages = Loc::loadLanguageFile(__FILE__);
 		?>
 		<script>
+			BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 			BX.Sale.PersonalOrderComponent.PersonalOrderList.init(<?=$javascriptParams?>);
 		</script>
 		<?

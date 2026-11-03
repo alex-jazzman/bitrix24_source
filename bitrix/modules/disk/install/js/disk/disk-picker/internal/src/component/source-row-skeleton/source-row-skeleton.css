@@ -1,0 +1,31 @@
+.disk-picker-source-row-skeleton {
+	/* The real row is a button, and a button is border-box by default: without this the inset
+	   below would be added to the height and the skeleton would stand 12px taller than the row
+	   it stands for. */
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* Matches the real source row so the list does not jump when data replaces it. */
+	height: 44px;
+	padding: var(--ui-space-inset-xs);
+	flex-shrink: 0;
+}
+
+.disk-picker-source-row-skeleton__line {
+	display: flex;
+	min-width: 0;
+}
+
+/* On the collapsed rail the title line has no room; the circle alone marks a pending row. */
+@media (max-width: 999px) {
+	.disk-picker-source-row-skeleton {
+		justify-content: center;
+		padding: var(--ui-space-inset-2xs);
+	}
+
+	.disk-picker-source-row-skeleton__line {
+		display: none;
+	}
+}

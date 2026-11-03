@@ -22,6 +22,35 @@ jn.define('im/messenger/controller/recent/service/render/dummy', (require, expor
 			return false;
 		}
 
+		hasItemPending(id)
+		{
+			this.logger.log('hasItemPending: return false');
+
+			return false;
+		}
+
+		beginCoalescingScope(scopeId)
+		{
+			this.logger.log(`beginCoalescingScope: scopeId = ${scopeId}`);
+		}
+
+		endCoalescingScope(scopeId)
+		{
+			this.logger.log(`endCoalescingScope: scopeId = ${scopeId}`);
+		}
+
+		isCoalescing()
+		{
+			this.logger.log('isCoalescing: return false');
+
+			return false;
+		}
+
+		markCompositionChanged()
+		{
+			this.logger.log('markCompositionChanged');
+		}
+
 		setItems(itemList, options)
 		{
 			this.logger.log('setItems', itemList, options);
@@ -64,9 +93,9 @@ jn.define('im/messenger/controller/recent/service/render/dummy', (require, expor
 			this.logger.log(`hideLoader: section = ${section}`);
 		}
 
-		renderInstant()
+		renderInstant(options)
 		{
-			this.logger.log('renderInstant');
+			this.logger.log('renderInstant', options);
 		}
 
 		executeAfterRender(callback)
@@ -79,6 +108,33 @@ jn.define('im/messenger/controller/recent/service/render/dummy', (require, expor
 			this.logger.log('getItemCollectionSize');
 
 			return 0;
+		}
+
+		/**
+		 * @return {RenderStats}
+		 */
+		getRenderStats()
+		{
+			this.logger.log('getRenderStats: return zeroes');
+
+			return {
+				setItemsToNative: 0,
+				addItemsToNative: 0,
+				updateItemsToNative: 0,
+				removeFromNative: 0,
+				queuePasses: 0,
+				forcedPasses: 0,
+				compositionForcedPasses: 0,
+				scopeFinalPasses: 0,
+				markedPasses: 0,
+				skippedIdenticalSetItems: 0,
+				compositionSignals: 0,
+			};
+		}
+
+		resetRenderStats()
+		{
+			this.logger.log('resetRenderStats');
 		}
 
 		subscribeEvents()

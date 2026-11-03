@@ -102,7 +102,7 @@ table.title-search-result td.title-search-separator
 
 div.title-search-fader {
 	display:none;
-	background-image: url('images/fader.png');
+	background-image: url('images/fader.webp');
 	background-position: right top;
 	background-repeat: repeat-y;
 	position:absolute;

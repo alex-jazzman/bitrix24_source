@@ -1,11 +1,11 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType } from 'im.v2.const';
 
-import { AnalyticsEvent, AnalyticsTool, AnalyticsSubSection, AnalyticsSection } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
-import { getCollabId } from '../helpers/get-collab-id';
+import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool, AnalyticsSubSection, AnalyticsSection } from '../const';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
+import { getProjectId } from '../helpers/get-collab-id';
 import { getUserType } from '../helpers/get-user-type';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -18,17 +18,21 @@ export class ChatEdit
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.clickEdit,
 			c_section: AnalyticsSection.sidebar,
 			c_sub_section: AnalyticsSubSection.contextMenu,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p5: `chatId_${chat.chatId}`,
 		};
 
-		if (chat.type === ChatType.collab)
+		if (params.category === AnalyticsCategory.collab)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);
@@ -40,17 +44,21 @@ export class ChatEdit
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			c_section: AnalyticsSection.editor,
 			event: AnalyticsEvent.submitEdit,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 			p5: `chatId_${chat.chatId}`,
 		};
 
-		if (chat.type === ChatType.collab)
+		if (params.category === AnalyticsCategory.collab)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);

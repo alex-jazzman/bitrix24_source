@@ -5,11 +5,13 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
-	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
+	const { Checkbox, CheckboxShape } = require('ui-system/form/checkbox');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { selectedItemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { Item } = require('im/messenger/lib/ui/base/item/item');
 	const { Theme } = require('im/lib/theme');
+
+	const CHECKBOX_SIZE = 24;
 
 	class SelectedItem extends Item
 	{
@@ -135,10 +137,14 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 								backgroundOpacity: this.state.selected ? 0.6 : 1,
 							},
 						},
-						new CheckBox({
+						new Checkbox({
+							testId: `im-selected-item-checkbox-${this.props.data.id}`,
 							checked: this.state.selected,
-							disabled: this.props.disabled,
-							onClick: () => this.toggleSelect(),
+							disabled: this.state.disabled,
+							size: CHECKBOX_SIZE,
+							shape: CheckboxShape?.CIRCLE,
+							// the row above already handles the tap and calls toggleSelect
+							useState: false,
 						}),
 					),
 				),

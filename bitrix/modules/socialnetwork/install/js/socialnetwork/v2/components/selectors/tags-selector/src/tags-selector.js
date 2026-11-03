@@ -5,6 +5,8 @@ import { TagSelector, type Item, type DialogOptions, type TagSelectorOptions } f
 
 import { EntitySelectorEntity } from 'socialnetwork.v2.const';
 
+import { normalizeTags } from './normalize-tags';
+
 export type TagsSelectorOptions = {
 	context: string;
 	groupId: string | number;
@@ -81,11 +83,10 @@ export class TagsSelector
 	{
 		return new Promise((resolve) => {
 			const { searchQuery } = event.getData();
-			const name = searchQuery.getQuery().toLowerCase();
 			const dialog = event.getTarget();
 
 			setTimeout(() => {
-				const tagsList = name.split(',');
+				const tagsList = normalizeTags(searchQuery.getQuery());
 
 				tagsList.forEach((tag) => {
 					const item = dialog.addItem({

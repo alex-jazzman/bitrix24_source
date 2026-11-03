@@ -59,7 +59,7 @@ CJSCore::RegisterExt('event_calendar', array(
 		$basePath.'calendar.css',
 		'/bitrix/components/bitrix/calendar.grid/templates/.default/style.css'
 	),
-	'rel' => array('ajax', 'window', 'popup', 'access', 'date', 'viewer', 'socnetlogdest', 'dnd')
+	'rel' => array('ajax', 'window', 'popup', 'access', 'date', 'viewer', 'socnetlogdest', 'dnd', 'calendar.analytics')
 ));
 
 CJSCore::RegisterExt('calendar_planner', array(

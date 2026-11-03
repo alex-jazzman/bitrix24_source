@@ -308,6 +308,19 @@ if ($permissionButton->canShow())
 	$interfaceToolbarButtons[] = $permissionButton->toInterfaceToolbarButton();
 }
 
+if ($arResult['CAN_VIEW_USER_CONSENTS'])
+{
+	$interfaceToolbarButtons[] = [
+		'ID' => 'user-consents',
+		'DATASET' => ['testid' => 'crm-webform-list-consents-menu-item'],
+		'TEXT' => Loc::getMessage('CRM_WEBFORM_LIST_USER_CONSENTS'),
+		'TITLE' => Loc::getMessage('CRM_WEBFORM_LIST_USER_CONSENTS_TITLE'),
+		'LINK' => SITE_DIR . 'settings/configs/userconsent/consents/0/',
+		'HANDLER' => 'BX.Crm.Router.Instance.closeSettingsMenu',
+		'IS_SETTINGS_BUTTON' => true,
+	];
+}
+
 if ($arResult['PERM_CAN_EDIT'])
 {
 	$attributes = [
@@ -435,7 +448,7 @@ if ($arResult['PERM_CAN_EDIT'])
 }
 
 ?>
-<div class="crm-webform-list-wrapper">
+<div class="crm-webform-list-wrapper" data-testid="crm-webform-list-root">
 	<?php
 
 	global $APPLICATION;

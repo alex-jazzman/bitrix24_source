@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, ui_vue3, ui_vue3_vuex, pull_client, rest_client, im_v2_application_launch, im_v2_model, im_v2_provider_pull, imopenlines_v2_lib_launchResources) {
+(function (exports, main_core, ui_vue3, ui_vue3_vuex, pull_client, rest_client, ui_designTokens_air, im_v2_application_launch, im_v2_model, im_v2_provider_pull, imopenlines_v2_lib_launchResources) {
 	'use strict';
 
 	class CoreApplication {
@@ -128,7 +128,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#restClient = BX.rest;
 		}
 		async #initStorage() {
-			const builder = ui_vue3_vuex.Builder.init().addModel(im_v2_model.ApplicationModel.create()).addModel(im_v2_model.MessagesModel.create()).addModel(im_v2_model.ChatsModel.create()).addModel(im_v2_model.FilesModel.create()).addModel(im_v2_model.UsersModel.create()).addModel(im_v2_model.RecentModel.create()).addModel(im_v2_model.CountersModel.create()).addModel(im_v2_model.NotificationsModel.create()).addModel(im_v2_model.SidebarModel.create()).addModel(im_v2_model.MarketModel.create()).addModel(im_v2_model.CopilotModel.create()).addModel(im_v2_model.StickersModel.create()).addModel(im_v2_model.AiAssistantModel.create());
+			const builder = ui_vue3_vuex.Builder.init().addModel(im_v2_model.ApplicationModel.create()).addModel(im_v2_model.MessagesModel.create()).addModel(im_v2_model.ChatsModel.create()).addModel(im_v2_model.FilesModel.create()).addModel(im_v2_model.UsersModel.create()).addModel(im_v2_model.RecentModel.create()).addModel(im_v2_model.CountersModel.create()).addModel(im_v2_model.NotificationsModel.create()).addModel(im_v2_model.SidebarModel.create()).addModel(im_v2_model.MarketModel.create()).addModel(im_v2_model.CopilotModel.create()).addModel(im_v2_model.StickersModel.create()).addModel(im_v2_model.AiAssistantModel.create()).addModel(im_v2_model.AiTaskModel.create()).addModel(im_v2_model.CommandsModel.create());
 			if (imopenlines_v2_lib_launchResources.OpenLinesLaunchResources) {
 				imopenlines_v2_lib_launchResources.OpenLinesLaunchResources.models.forEach(model => {
 					builder.addModel(model.create());
@@ -176,5 +176,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Core = Core;
 	exports.CoreApplication = CoreApplication;
-})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX??{}, BX?.Vue3??{}, BX?.Vue3?.Vuex??{}, BX??{}, BX??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Model??{}, BX?.Messenger?.v2?.Provider?.Pull??{}, BX?.OpenLines?.v2?.Lib??{});;
+})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX??{}, BX?.Vue3??{}, BX?.Vue3?.Vuex??{}, BX??{}, BX??{}, window??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Model??{}, BX?.Messenger?.v2?.Provider?.Pull??{}, BX?.OpenLines?.v2?.Lib??{});;
 //# sourceMappingURL=core.bundle.js.map

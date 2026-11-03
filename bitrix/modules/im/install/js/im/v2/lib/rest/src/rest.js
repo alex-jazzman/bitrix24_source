@@ -1,4 +1,4 @@
-import { ajax } from 'main.core';
+import { ajax, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
@@ -6,34 +6,48 @@ import { Core } from 'im.v2.application.core';
 
 import { prepareRequestData } from './helpers/prepare-request-data';
 import { needRetryRequest, getErrorConfig, hasInvalidAuthError } from './helpers/handle-errors';
-import { type RunActionConfig, type RunActionResult, type RunActionResponse } from './types/run-action';
+import {
+	type RunActionConfig,
+	type RunActionError,
+	type RunActionResult,
+	type RunActionResponse,
+} from './types/run-action';
 import { type BatchQuery } from './types/call-batch';
 
 export type { RunActionError } from './types/run-action';
 export type { CallBatchError } from './types/call-batch';
 
-let retryCounter = null;
-
 export const runAction = (action: string, config: RunActionConfig = {}): Promise<RunActionResponse> => {
 	const preparedConfig = { ...config, data: prepareRequestData(config.data) };
 
-	return new Promise((resolve, reject) => {
-		ajax.runAction(action, preparedConfig).then((response: RunActionResult) => {
-			retryCounter = null;
+	return runActionWithRetries(action, preparedConfig);
+};
 
+const runActionWithRetries = (
+	action: string,
+	config: RunActionConfig,
+	retriesLeft: ?number = null,
+): Promise<RunActionResponse> => {
+	return new Promise((resolve, reject) => {
+		ajax.runAction(action, config).then((response: RunActionResult) => {
 			return resolve(response.data);
 		}).catch((response: RunActionResult) => {
-			if (retryCounter === 0)
+			const errors = Type.isArray(response?.errors)
+				? response.errors.filter((error) => Type.isObject(error))
+				: []
+			;
+
+			if (retriesLeft === 0)
 			{
-				return reject(response.errors);
+				return reject(errors);
 			}
 
-			if (needRetryRequest(response.errors))
+			if (needRetryRequest(errors))
 			{
-				return handleErrors(action, preparedConfig, response);
+				return resolve(handleErrors(action, config, errors, retriesLeft));
 			}
 
-			return reject(response.errors);
+			return reject(errors);
 		});
 	});
 };
@@ -69,30 +83,25 @@ export const callBatch = (query: BatchQuery): Promise<{[method: string]: any}> =
 const handleErrors = async (
 	action: string,
 	config: RunActionConfig,
-	response: RunActionResult,
-): Promise<RunActionResult> => {
-	const errorConfig = getErrorConfig(response.errors);
+	errors: RunActionError[],
+	retriesLeft: ?number,
+): Promise<RunActionResponse> => {
+	const errorConfig = getErrorConfig(errors);
+	const nextRetriesLeft = (retriesLeft ?? errorConfig.retryCount) - 1;
 
-	if (!retryCounter)
+	if (hasInvalidAuthError(errors))
 	{
-		retryCounter = errorConfig.retryCount;
-	}
-
-	retryCounter--;
-
-	if (hasInvalidAuthError(response.errors))
-	{
-		await EventEmitter.emitAsync(EventType.request.onAuthError, { errors: response.errors });
+		await EventEmitter.emitAsync(EventType.request.onAuthError, { errors });
 	}
 
 	if (errorConfig.timeout)
 	{
 		return new Promise((resolve) => {
 			setTimeout(() => {
-				resolve(runAction(action, config));
+				resolve(runActionWithRetries(action, config, nextRetriesLeft));
 			}, errorConfig.timeout);
 		});
 	}
 
-	return runAction(action, config);
+	return runActionWithRetries(action, config, nextRetriesLeft);
 };

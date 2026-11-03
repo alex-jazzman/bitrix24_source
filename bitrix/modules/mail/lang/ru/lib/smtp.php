@@ -9,4 +9,5 @@ $MESS['MAIL_SMTP_ERR_CAPABILITY'] = 'Ошибка получения списк�
 $MESS['MAIL_SMTP_ERR_AUTH'] = 'Ошибка авторизации';
 $MESS['MAIL_SMTP_ERR_AUTH_MECH'] = 'Сервер не поддерживает необходимый механизм авторизации';
 $MESS['MAIL_SMTP_ERR_REJECTED'] = 'Подключение отклонено';
+$MESS['MAIL_SMTP_ERR_AUTH_OAUTH'] = 'Не удалось получить разрешение на отправку писем';
 $MESS['MAIL_SMTP_ERR_COMMAND_REJECTED'] = 'Команда отклонена';

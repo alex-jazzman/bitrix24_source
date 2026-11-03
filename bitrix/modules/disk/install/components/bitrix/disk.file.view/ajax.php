@@ -3,6 +3,7 @@ use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
 use Bitrix\Disk\File;
+use Bitrix\Disk\Internal\Service\ExternalLink\ExternalLinkAccessService;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ExternalLinkTable;
 use Bitrix\Disk\Public\Provider\ExternalLinkProvider;
@@ -40,12 +41,14 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 	const ERROR_COULD_NOT_UPDATE_FILE          = 'DISK_FLAC_22006';
 
 	protected ExternalLinkProvider $externalLinkProvider;
+	protected ExternalLinkAccessService $externalLinkAccessService;
 
 	public function __construct()
 	{
 		parent::__construct();
 
 		$this->externalLinkProvider = ServiceLocator::getInstance()->get(ExternalLinkProvider::class);
+		$this->externalLinkAccessService = ServiceLocator::getInstance()->get(ExternalLinkAccessService::class);
 	}
 
 	protected function listActions()
@@ -99,7 +102,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonAccessDeniedResponse();
 		}
 
-		return $this->externalLinkProvider->getForUse($file->getRealObjectId());
+		return array($file, $this->externalLinkProvider->getForUse($file->getRealObjectId()));
 	}
 
 	protected function processActionDisableExternalLink()
@@ -107,6 +110,11 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 		/** @var File $file */
 		/** @var ExternalLink $extLink */
 		list($file, $extLink) = $this->getFileAndExternalLink();
+		if($extLink && !$this->externalLinkAccessService->canManageExternalLink($file))
+		{
+			$this->sendJsonAccessDeniedResponse();
+		}
+
 		if(!$extLink || $extLink->delete())
 		{
 			$this->sendJsonSuccessResponse();
@@ -163,6 +171,11 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 		list($file, $extLink) = $this->getFileAndExternalLink();
 		if(!$extLink)
 		{
+			if(!$this->externalLinkAccessService->canManageExternalLink($file))
+			{
+				$this->sendJsonAccessDeniedResponse();
+			}
+
 			$extLink = $file->getRealObject()->addExternalLink(array(
 				'CREATED_BY' => $this->getUser()->getId(),
 				'TYPE' => ExternalLinkTable::TYPE_MANUAL,
@@ -204,7 +217,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 		}
 
 		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
-		if(!$file->canRestore($securityContext))
+		if(!$file->canManageVersions($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
@@ -237,7 +250,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 		}
 
 		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
-		if(!$file->canDelete($securityContext) || !$file->canRestore($securityContext))
+		if(!$file->canManageVersions($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}

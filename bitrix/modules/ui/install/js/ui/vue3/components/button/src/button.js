@@ -164,15 +164,27 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			this.button?.setDisabled(!disabled);
 			this.button?.setDisabled(Boolean(disabled));
 		},
-		loading: {
-			handler(loading): void
+		loading(loading): void
+		{
+			if (loading === this.button?.isWaiting())
 			{
-				if (loading !== this.button?.isWaiting())
+				return;
+			}
+
+			this.button?.setWaiting(loading);
+
+			if (!loading)
+			{
+				// setWaiting(false) drops the disabled attribute and clears the state slot it shared with
+				// waiting, so both props are applied again: their own watchers stay silent while the props
+				// themselves have not changed.
+				this.button?.setDisabled(Boolean(this.disabled));
+
+				if (!this.disabled)
 				{
-					this.button?.setWaiting(loading);
+					this.button?.setState(this.state);
 				}
-			},
-			immediate: true,
+			}
 		},
 		leftIcon(icon): void
 		{
@@ -313,7 +325,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		{
 			button.setLeftCounter({
 				value: this.leftCounterValue,
-				color: this.leftCounterColor,
+				style: this.leftCounterColor,
 			});
 		}
 		else
@@ -325,13 +337,20 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		{
 			button.setRightCounter({
 				value: this.rightCounterValue,
-				color: this.rightCounterColor,
+				style: this.rightCounterColor,
 			});
 		}
 
 		if (this.shimmer)
 		{
 			button.startShimmer();
+		}
+
+		// Option watchers run before created(), so a button mounted with loading already on
+		// would never reach setWaiting() — the initial state belongs here, next to the others.
+		if (this.loading)
+		{
+			button.setWaiting(true);
 		}
 
 		this.button = button;

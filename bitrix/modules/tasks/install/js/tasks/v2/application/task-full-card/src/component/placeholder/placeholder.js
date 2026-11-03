@@ -67,7 +67,7 @@ export const Placeholder = {
 		<div class="tasks-full-card-placeholder">
 			<div class="tasks-full-card-placeholder__content">
 				<div v-if="imgSrc" class="tasks-full-card-placeholder__img-container">
-					<img :src="imgSrc" alt="noAccess" class="tasks-full-card-placeholder__img"/>
+					<img :src="imgSrc" alt="" class="tasks-full-card-placeholder__img"/>
 				</div>
 				<HeadlineMd v-if="head" class="tasks-full-card-placeholder__head">{{ head }}</HeadlineMd>
 				<TextLg v-if="description" class="tasks-full-card-placeholder__descr">{{ description }}</TextLg>

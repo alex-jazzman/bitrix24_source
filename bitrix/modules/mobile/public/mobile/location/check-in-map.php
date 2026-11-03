@@ -13,6 +13,11 @@ Extension::load([
 ]);
 
 ?>
+	<?php if (($_GET['introHold'] ?? '') === 'Y'): ?>
+	<!-- The host's intro cover opens on black; painting the page black from its very first frame
+	     keeps whatever peeks around the cover part of the clip instead of a white blink. -->
+	<style>html, body { background: #000; }</style>
+	<?php endif; ?>
 	<div id="check-in-map" style="height: 100%; width: 100%;"></div>
 	<script>
 		const { CheckInMap } = BX.Location.CheckIn;

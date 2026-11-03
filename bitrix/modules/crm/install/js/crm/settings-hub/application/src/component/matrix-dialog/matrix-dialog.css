@@ -1,0 +1,97 @@
+.crm-settings-hub-application-matrix-dialog {
+	width: 480px;
+	max-width: calc(100vw - 2 * var(--ui-space-inline-md));
+	box-sizing: border-box;
+	padding: 0;
+}
+
+.crm-settings-hub-application__matrix {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px;
+}
+
+.crm-settings-hub-application__matrix-header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-right: 24px;
+}
+
+.crm-settings-hub-application__matrix-title {
+	color: var(--ui-color-base-0);
+	font-size: 20px;
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	line-height: 26px;
+	letter-spacing: -0.2px;
+}
+
+.crm-settings-hub-application__matrix-subtitle {
+	color: var(--ui-color-base-4);
+	font-size: 14px;
+	line-height: 19px;
+}
+
+.crm-settings-hub-application__matrix-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 52vh;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-base-6) transparent;
+	scrollbar-gutter: stable;
+}
+
+.crm-settings-hub-application__matrix-list::-webkit-scrollbar {
+	width: var(--ui-size-2xs);
+}
+
+.crm-settings-hub-application__matrix-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.crm-settings-hub-application__matrix-list::-webkit-scrollbar-thumb {
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-base-6);
+}
+
+.crm-settings-hub-application__matrix-list::-webkit-scrollbar-thumb:hover {
+	background: var(--ui-color-base-5);
+}
+
+.crm-settings-hub-application__matrix-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 0;
+	cursor: default;
+}
+
+.crm-settings-hub-application__matrix-check {
+	width: 18px;
+	height: 18px;
+	accent-color: var(--ui-color-accent-main-primary);
+}
+
+.crm-settings-hub-application__matrix-check:disabled {
+	opacity: 1;
+}
+
+.crm-settings-hub-application__matrix-name {
+	color: var(--ui-color-base-1);
+	font-size: 15px;
+	line-height: 20px;
+}
+
+.crm-settings-hub-application__matrix-empty {
+	color: var(--ui-color-base-4);
+	font-size: 14px;
+	line-height: 19px;
+}
+
+.crm-settings-hub-application__matrix-actions {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+}

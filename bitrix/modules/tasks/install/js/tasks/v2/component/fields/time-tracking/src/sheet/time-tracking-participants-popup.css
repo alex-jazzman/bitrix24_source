@@ -8,6 +8,7 @@
 
 .tasks-time-tracking-list-users.--popup {
 	overflow: auto;
+	width: auto;
 	gap: 10px;
 	font-size: var(--ui-font-size-lg);
 	--scrollbar-width: 5px;
@@ -18,13 +19,13 @@
 
 @supports not selector(::-webkit-scrollbar) {
 	.tasks-time-tracking-list-users.--popup {
-		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-color: var(--ui-color-base-6) transparent;
 		scrollbar-width: thin;
 	}
 }
 
 .tasks-time-tracking-list-users.--popup::-webkit-scrollbar {
-	background-color: rgba(0, 0, 0, 0);
+	background-color: transparent;
 	width: var(--scrollbar-width);
 }
 
@@ -33,7 +34,7 @@
 }
 
 .tasks-time-tracking-list-users.--popup::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.11);
+	background: var(--ui-color-base-6);
 	border-radius: 5px;
 	cursor: pointer;
 	transition: .2s;
@@ -53,11 +54,11 @@
 }
 
 .tasks-time-tracking-list-user.--email {
-	--text-color: #ca8600;
+	--text-color: var(--ui-color-accent-soft-element-orange);
 }
 
 .tasks-time-tracking-list-user.--extranet {
-	--text-color: #ca8600;
+	--text-color: var(--ui-color-accent-soft-element-orange);
 }
 
 .tasks-time-tracking-list-user-inner {

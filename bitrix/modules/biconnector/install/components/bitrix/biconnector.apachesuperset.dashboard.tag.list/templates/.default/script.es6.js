@@ -1,3 +1,4 @@
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { EditableColumnManager } from 'biconnector.grid.editable-columns';
 import { Loc, Reflection, Text, ajax as Ajax } from 'main.core';
 import { UI } from 'ui.notification';
@@ -56,16 +57,6 @@ class SupersetDashboardTagGridManager
 		return this.#grid;
 	}
 
-	#notifyErrors(errors: Array): void
-	{
-		if (errors[0] && errors[0].message)
-		{
-			BX.UI.Notification.Center.notify({
-				content: Text.encode(errors[0].message),
-			});
-		}
-	}
-
 	deleteTag(tagId: number): void
 	{
 		const grid = this.getGrid();
@@ -106,10 +97,12 @@ class SupersetDashboardTagGridManager
 				});
 			})
 			.catch((response) => {
-				if (response.errors)
-				{
-					this.#notifyErrors(response.errors);
-				}
+				UI.Notification.Center.notify({
+					content: resolveErrorHtml(
+						response,
+						Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_ERROR'),
+					),
+				});
 			})
 		;
 	}

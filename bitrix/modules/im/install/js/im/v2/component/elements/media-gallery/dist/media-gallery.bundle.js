@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, ui_iconSet_api_core, ui_vue3_directives_lazyload, im_v2_const, im_v2_lib_utils, im_v2_component_elements_progressbar) {
+(function (exports, main_core, ui_iconSet_api_core, ui_vue3_directives_lazyload, im_v2_const, im_v2_lib_utils, im_v2_component_elements_progressbar, im_v2_component_elements_iconButton) {
 	'use strict';
 
 	const MAX_HEIGHT = 590;
@@ -15,7 +15,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			lazyload: ui_vue3_directives_lazyload.lazyload
 		},
 		components: {
-			ProgressBar: im_v2_component_elements_progressbar.ProgressBar
+			ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
+			IconButton: im_v2_component_elements_iconButton.IconButton
 		},
 		props: {
 			/** @type ImModelFile */
@@ -35,13 +36,31 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Boolean,
 				default: false
 			},
+			allowCancel: {
+				type: Boolean,
+				default: true
+			},
 			allowRemove: {
 				type: Boolean,
 				default: false
 			},
+			removeButtonLabel: {
+				type: String,
+				default: ''
+			},
 			allowSorting: {
 				type: Boolean,
 				default: false
+			},
+			gridNavigation: {
+				type: Boolean,
+				default: false
+			},
+			// Opt-in id of the hint the consumer keeps for the Delete shortcut. Announced together with the
+			// shortcut itself, so a consumer that mounts the gallery without grid navigation gets neither.
+			describedById: {
+				type: String,
+				default: null
 			},
 			viewerGroupBy: {
 				type: String || null,
@@ -60,6 +79,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
+			removeIconName: () => ui_iconSet_api_core.Outline.CROSS_L,
+			removeIconColor: () => im_v2_const.Color.white,
+			removeButtonAriaLabel() {
+				if (this.removeButtonLabel) {
+					return this.removeButtonLabel.replace('#FILE_NAME#', () => this.file.name);
+				}
+				return this.file.name;
+			},
 			viewerAttributes() {
 				if (this.file.viewerAttrs) {
 					return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
@@ -119,9 +146,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				};
 			},
 			hasImageGap() {
-				const ratio = Math.min(this.size.width / this.file.image.width, this.size.height / this.file.image.height);
-				const imageWidth = this.file.image.width * ratio;
-				const imageHeight = this.file.image.height * ratio;
+				const image = this.file.image;
+				// a raw file has no preview dimensions yet, a document never gets them: nothing to fill
+				if (!main_core.Type.isNumber(image?.width) || !main_core.Type.isNumber(image?.height)) {
+					return false;
+				}
+				const ratio = Math.min(this.size.width / image.width, this.size.height / image.height);
+				const imageWidth = image.width * ratio;
+				const imageHeight = image.height * ratio;
 				return Math.floor(this.size.width) > Math.floor(imageWidth) || Math.floor(this.size.height) > Math.floor(imageHeight);
 			},
 			useBlur() {
@@ -223,8 +255,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div
+			v-bind="viewerAttributes"
 			class="bx-im-elements-media-gallery__item"
 			:class="{'--without-preview': withoutPreview, ...this.draggableClasses}"
+			:role="gridNavigation ? 'gridcell' : null"
+			:aria-label="gridNavigation ? file.name : null"
+			:aria-keyshortcuts="gridNavigation ? 'Delete' : null"
+			:aria-describedby="gridNavigation ? describedById : null"
+			:data-testid="'im-media-gallery-item-' + file.id"
+			:data-id="file.id"
+			:tabindex="gridNavigation ? -1 : null"
 			@click="download"
 			:style="containerStyle"
 			@dragstart="onDragStart"
@@ -238,6 +278,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div
 				class="bx-im-elements-media-gallery__item-drag"
 				v-if="allowSorting"
+				:aria-hidden="gridNavigation ? 'true' : null"
 				@mousedown="onMouseDown"
 			>
 				<div class="bx-im-elements-media-gallery__item-drag-icon"></div>
@@ -269,13 +310,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:style="blurStyle"
 				></div>
 				<div v-if="isVideo && showPlayIcon" class="bx-im-elements-media-gallery__item-play">
-					<div 
-						class="bx-im-elements-media-gallery__item-play-icon"
-						v-bind="viewerAttributes"
-					></div>
+					<div class="bx-im-elements-media-gallery__item-play-icon"></div>
 				</div>
 			</div>
-			<div v-if="allowRemove" class="bx-im-elements-media-gallery__item-remove" @click.stop="onRemoveClick">
+			<IconButton
+				v-if="allowRemove && gridNavigation"
+				class="bx-im-elements-media-gallery__item-remove"
+				data-testid="im-media-gallery-item-remove-btn"
+				:iconName="removeIconName"
+				:iconColor="removeIconColor"
+				:iconSize="20"
+				:label="removeButtonAriaLabel"
+				:tabindex="-1"
+				@click.stop="onRemoveClick"
+			/>
+			<div
+				v-else-if="allowRemove"
+				class="bx-im-elements-media-gallery__item-remove"
+				data-testid="im-media-gallery-item-remove-btn"
+				@click.stop="onRemoveClick"
+			>
 				<div class="bx-im-elements-media-gallery__item-remove-icon"></div>
 			</div>
 			<ProgressBar
@@ -284,12 +338,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:size="progressbarSize"
 				:handleStatus="getHandleStatus()"
 				:statusMap="getStatusMap()"
+				:allowCancel="allowCancel"
 				@cancelClick="onCancelClick"
 			/>
-			<div 
-				class="bx-im-elements-media-gallery__item-viewer-clickable-overlay"
-				v-bind="viewerAttributes"
-			></div>
 		</div>
 
 	`
@@ -322,13 +373,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Boolean,
 				default: false
 			},
+			removeItemLabel: {
+				type: String,
+				default: ''
+			},
 			allowSorting: {
 				type: Boolean,
 				default: false
 			},
+			gridNavigation: {
+				type: Boolean,
+				default: false
+			},
+			describedById: {
+				type: String,
+				default: null
+			},
 			handleLoading: {
 				type: Boolean,
 				default: false
+			},
+			allowCancelItem: {
+				type: Boolean,
+				default: true
 			},
 			width: {
 				type: Number,
@@ -424,15 +491,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-elements-media-gallery__row">
+		<div class="bx-im-elements-media-gallery__row" :role="gridNavigation ? 'row' : null">
 			<MediaGalleryItem
 				v-for="(file, index) in files"
 				:key="file.id"
 				:file="file"
 				:size="sizes[index]"
 				:allowRemove="allowRemoveItem"
+				:removeButtonLabel="removeItemLabel"
 				:allowSorting="allowSorting"
+				:gridNavigation="gridNavigation"
+				:describedById="describedById"
 				:handleLoading="handleLoading"
+				:allowCancel="allowCancelItem"
 				:highlightDropzonePosition="getHighlightDropzonePosition(file)"
 				viewerGroupBy="viewerGroupBy"
 				@remove="onRemove"
@@ -475,13 +546,33 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Boolean,
 				default: false
 			},
+			removeItemLabel: {
+				type: String,
+				default: ''
+			},
 			allowSorting: {
 				type: Boolean,
 				default: false
 			},
+			// Opt-in ARIA grid roving (row/gridcell + focusable tiles) for consumers that drive it with a
+			// FocusZone. Off by default, so the feed and message builder galleries keep their plain markup.
+			gridNavigation: {
+				type: Boolean,
+				default: false
+			},
+			// id of the hint about the Delete shortcut, kept by the consumer that drives the grid
+			describedById: {
+				type: String,
+				default: null
+			},
 			handleLoading: {
 				type: Boolean,
 				default: false
+			},
+			// an upload nobody may stop leaves the loader of an item telling the progress and nothing more
+			allowCancelItem: {
+				type: Boolean,
+				default: true
 			},
 			width: {
 				type: Number,
@@ -534,13 +625,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-elements-media-gallery">
+		<div class="bx-im-elements-media-gallery" :role="gridNavigation ? 'presentation' : null">
 			<MediaGalleryRow
 				v-for="(row) in rows"
 				:files="row"
 				:allowRemoveItem="allowRemoveItem"
+				:removeItemLabel="removeItemLabel"
 				:allowSorting="allowSorting"
+				:gridNavigation="gridNavigation"
+				:describedById="describedById"
 				:handleLoading="handleLoading"
+				:allowCancelItem="allowCancelItem"
 				:width="width"
 				:highlightDropzone="highlightDropzone"
 				@remove="onRemoveItem"
@@ -559,5 +654,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MediaGalleryItem = MediaGalleryItem;
 	exports.MediaGalleryRow = MediaGalleryRow;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX.UI.IconSet, BX.Vue3.Directives, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX.UI.IconSet, BX.Vue3.Directives, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=media-gallery.bundle.js.map

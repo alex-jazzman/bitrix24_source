@@ -22,3 +22,4 @@ $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL"] = "Disabling review upon co
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL_YES"] = "Enabling review upon completion requirement. Group action will stop if you close this browser tab or window.";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_UNMUTE"] = "Unmuting tasks...";
 $MESS["TASKS_GRID_GROUP_ACTION_NONE"] = "No action selected.";
+$MESS['TASKS_GRID_GROUP_ACTION_NAME_BINDCRM'] = 'Binding tasks to CRM item. Group action will stop if you close this browser tab or window.';

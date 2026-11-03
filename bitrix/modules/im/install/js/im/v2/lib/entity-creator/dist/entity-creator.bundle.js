@@ -5,6 +5,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports, main_core, main_core_events, calendar_sliderloader, im_v2_application_core, im_v2_const, im_v2_lib_rest) {
 	'use strict';
 
+	// mirrors AnalyticsSection of im.v2.lib.analytics, which keeps the dictionary internal
+	const TaskAnalyticsSection = Object.freeze({
+		chat: 'chat',
+		taskChats: 'chat_tasks'
+	});
 	class EntityCreator {
 		#chatId = 0;
 		#restClient;
@@ -14,7 +19,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#chatId = chatId;
 		}
 		openCollabTaskCreationForm(collabId) {
-			this.openTaskCreationForm({
+			void this.openTaskCreationForm({
 				groupId: collabId
 			});
 		}
@@ -24,10 +29,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				ownerId: collabId
 			});
 		}
-		openTaskCreationForm(additionalParams = {}) {
-			this.#openTaskV2Card({
+		openTaskCreationFormInTaskChats() {
+			return this.openTaskCreationForm({}, TaskAnalyticsSection.taskChats);
+		}
+		openTaskCreationForm(additionalParams = {}, section = TaskAnalyticsSection.chat) {
+			return this.#openTaskV2Card({
 				analytics: {
-					context: 'chat',
+					context: section,
 					element: 'create_button'
 				},
 				...additionalParams

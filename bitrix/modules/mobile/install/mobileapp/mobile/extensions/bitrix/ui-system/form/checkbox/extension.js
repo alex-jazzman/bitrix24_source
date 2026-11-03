@@ -2,26 +2,17 @@
  * @module ui-system/form/checkbox
  */
 jn.define('ui-system/form/checkbox', (require, exports, module) => {
-	const { Corner, Color } = require('tokens');
+	const { Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { CheckboxShape } = require('ui-system/form/checkbox/src/shape');
 
 	const DEFAULT_COLOR = Color.accentMainPrimary;
 	const DISABLED_COLOR = Color.base7;
 	const DEFAULT_SIZE = 20;
 
 	/**
-	 * @typedef CheckboxProps
-	 * @property {string} testId
-	 * @property {number} size
-	 * @property {boolean} [checked]
-	 * @property {boolean} [disabled]
-	 * @property {boolean} [useState]
-	 * @property {boolean} [indeterminate]
-	 * @property {Color} [background]
-	 * @property {Function} [onClick]
-	 *
-	 * @class Checkbox
+	 * @extends {LayoutComponent<CheckboxProps, CheckboxState>}
 	 */
 	class Checkbox extends LayoutComponent
 	{
@@ -36,11 +27,17 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			this.handleOnClick = this.handleOnClick.bind(this);
 		}
 
+		/**
+		 * @param {CheckboxProps} props
+		 */
 		componentWillReceiveProps(props)
 		{
 			this.initializeState(props);
 		}
 
+		/**
+		 * @param {CheckboxProps} [props]
+		 */
 		initializeState(props = {})
 		{
 			const { checked } = props;
@@ -103,6 +100,9 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @return {Promise<void>}
+		 */
 		checked()
 		{
 			const { checked } = this.state;
@@ -135,9 +135,12 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			return color;
 		}
 
+		/**
+		 * @return {ElementStyle}
+		 */
 		getStyle()
 		{
-			const { indeterminate, size = DEFAULT_SIZE } = this.props;
+			const { indeterminate, size = DEFAULT_SIZE, shape } = this.props;
 			const { checked } = this.state;
 
 			const style = {
@@ -145,7 +148,8 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 				justifyContent: 'center',
 				width: size,
 				height: size,
-				borderRadius: Corner.XS.toNumber(),
+				// the story panel clears a dictionary prop to null, which no default covers
+				borderRadius: (shape || CheckboxShape.SQUARE).getBorderRadius(),
 			};
 
 			if (indeterminate)
@@ -169,6 +173,9 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			return style;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		#getTestId()
 		{
 			const { testId } = this.props;
@@ -186,6 +193,7 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		background: Color.accentMainPrimary,
 		useState: true,
 		indeterminate: false,
+		shape: CheckboxShape.SQUARE,
 	};
 
 	Checkbox.propTypes = {
@@ -196,8 +204,9 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		background: PropTypes.object,
 		useState: PropTypes.bool,
 		indeterminate: PropTypes.bool,
+		shape: PropTypes.object,
 		onClick: PropTypes.func,
 	};
 
-	module.exports = { Checkbox };
+	module.exports = { Checkbox, CheckboxShape };
 });

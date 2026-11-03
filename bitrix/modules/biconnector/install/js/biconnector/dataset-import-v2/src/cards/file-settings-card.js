@@ -20,7 +20,7 @@ export const FileSettingsCard = {
 	},
 	computed:
 	{
-		...mapGetters(['isEditMode', 'hasPreview']),
+		...mapGetters(['isEditMode', 'isLockedByRights', 'hasPreview', 'isUploading']),
 		fileProperties()
 		{
 			return this.$store.state.config.fileProperties;
@@ -41,9 +41,17 @@ export const FileSettingsCard = {
 			get() { return Boolean(this.fileProperties.firstLineHeader); },
 			set(value) { this.$store.commit('setFileProperties', { firstLineHeader: value }); },
 		},
+		showDataFormats()
+		{
+			return this.isCsv && !this.isLockedByRights;
+		},
 		isParsingOptionsEditable()
 		{
 			return !this.isEditMode || Boolean(this.fileProperties.fileToken);
+		},
+		isCardDisabled()
+		{
+			return !this.hasPreview && (!this.fileProperties.fileToken || Boolean(this.isUploading));
 		},
 	},
 	methods:
@@ -68,11 +76,11 @@ export const FileSettingsCard = {
 			id="file-settings"
 			:title="titleMessage"
 			icon-class="--o-file-settings"
-			:disabled="!hasPreview"
+			:disabled="isCardDisabled"
 		>
 			<template #header-extra>
 				<button
-					v-if="isCsv"
+					v-if="showDataFormats"
 					type="button"
 					class="biconnector-dataset-import-v2-card__header-link ui-typography-text-sm"
 					@click="openDataFormats"

@@ -12,6 +12,14 @@
 	cursor: pointer;
 }
 
+.bx-im-player-timeline__container.--stretched {
+	width: 100%;
+}
+
+.bx-im-player-timeline__container.--stretched .bx-im-player-timeline__wave {
+	background-repeat: repeat-x;
+}
+
 .bx-im-player-timeline__wave {
 	width: 100%;
 	height: 100%;

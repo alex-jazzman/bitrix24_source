@@ -1,5 +1,78 @@
 import { DesktopApi as ImDesktopApi, DesktopFeature as ImDesktopFeature } from 'im.v2.lib.desktop-api';
 
+// region Type definitions
+
+/**
+ * Desktop topmost window reference.
+ * Returned by createTopmostWindow() in the desktop environment.
+ * Type annotation in im module says `boolean`, but the runtime
+ * returns a window proxy object when running inside BXDesktop.
+ */
+export interface DesktopWindow
+{
+	BXDesktopWindow: {
+		ExecuteCommand: (command: string) => void;
+		SetProperty?: (name: string, value: Record<string, unknown>) => void;
+	};
+}
+
+export interface DesktopApiInterface
+{
+	// Lifecycle
+	isDesktop: () => boolean;
+
+	// Common
+	prepareResourcePath: (path: string) => string;
+	isBlur: () => boolean;
+	getLimitationBackground: () => unknown;
+	handleLimitationBackground: () => void;
+	openArticle: (articleKey: string) => void;
+	isFeatureSupportedInVersion: (version: number, featureCode: string) => boolean;
+
+	// Events
+	subscribe: (eventName: string, handler: Function) => void;
+	unsubscribe: (eventName: string, handler: Function) => void;
+	emit: (eventName: string, params?: unknown[]) => void;
+	emitToMainWindow: (eventName: string, params?: unknown[]) => void;
+
+	// Window
+	isChatWindow: () => boolean;
+	activateWindow: () => void;
+	changeTab: (tabId: string) => void;
+	closeWindow: () => void;
+	findWindow: (name: string) => unknown;
+	showBrowserWindow: () => void;
+	hideLoader: () => void;
+	createWindow: (name: string, callback: Function) => void;
+	createTopmostWindow: (htmlContent: string) => DesktopWindow;
+	setWindowPosition: (params: { x?: number; y?: number; width?: number; height?: number }) => void;
+	prepareHtml: (html: string, js: string) => string;
+
+	// Version & Features
+	getApiVersion: () => number;
+	isFeatureSupported: (feature: string) => boolean;
+	isFeatureEnabled: (feature: string) => boolean;
+	handlePortalTabActivation: () => void;
+	shouldActivateTabWithChatPage: () => boolean;
+	setTabWithChatPageActive: () => void;
+
+	// Call Background & Mask
+	getBackgroundImage: () => unknown;
+	setCallBackground: (background: unknown) => void;
+	getCallMask: () => unknown;
+	setCallMask: (mask: unknown) => void;
+	setCallMaskLoadHandlers: (handlers: unknown) => void;
+
+	// Settings
+	getCameraSmoothingStatus: () => boolean;
+	setCameraSmoothingStatus: (status: boolean) => void;
+
+	// Logger
+	writeToLogFile: (...args: unknown[]) => void;
+}
+
+// endregion Type definitions
+
 const desktopApiMethods = {
 	// Lifecycle
 	isDesktop: ImDesktopApi.isDesktop,
@@ -54,8 +127,8 @@ const desktopApiMethods = {
 	writeToLogFile: ImDesktopApi.writeToLogFile,
 };
 
-export const DesktopApi = new Proxy(desktopApiMethods, {
-	get(target, property)
+export const DesktopApi: DesktopApiInterface = new Proxy(desktopApiMethods as unknown as DesktopApiInterface, {
+	get(target: DesktopApiInterface, property: string | symbol): unknown
 	{
 		if (Reflect.has(target, property))
 		{

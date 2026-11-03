@@ -78,16 +78,16 @@
 .dnd-add-dragged-item:active,
 .catalog-preset-shem:focus,
 .catalog-preset-shem:active{cursor: grabbing;cursor: -webkit-grabbing;}
-.catalog-preset-shem-1  {background-image: url(images/preset-1.png);}
-.catalog-preset-shem-2  {background-image: url(images/preset-2.png);}
-.catalog-preset-shem-3  {background-image: url(images/preset-3.png);}
-.catalog-preset-shem-4  {background-image: url(images/preset-4.png);}
-.catalog-preset-shem-4-1{background-image: url(images/preset-4-1.png);}
-.catalog-preset-shem-1-4{background-image: url(images/preset-1-4.png);}
-.catalog-preset-shem-6  {background-image: url(images/preset-6.png);}
-.catalog-preset-shem-6-1{background-image: url(images/preset-6-1.png);}
-.catalog-preset-shem-1-6{background-image: url(images/preset-1-6.png);}
-.catalog-preset-shem-line{background-image: url(images/preset-line.png);}
+.catalog-preset-shem-1  {background-image: url(images/preset-1.webp);}
+.catalog-preset-shem-2  {background-image: url(images/preset-2.webp);}
+.catalog-preset-shem-3  {background-image: url(images/preset-3.webp);}
+.catalog-preset-shem-4  {background-image: url(images/preset-4.webp);}
+.catalog-preset-shem-4-1{background-image: url(images/preset-4-1.webp);}
+.catalog-preset-shem-1-4{background-image: url(images/preset-1-4.webp);}
+.catalog-preset-shem-6  {background-image: url(images/preset-6.webp);}
+.catalog-preset-shem-6-1{background-image: url(images/preset-6-1.webp);}
+.catalog-preset-shem-1-6{background-image: url(images/preset-1-6.webp);}
+.catalog-preset-shem-line{background-image: url(images/preset-line.webp);}
 
 .catalog-preset-bigdata-control{text-align: right !important;}
 .catalog-preset-shem-bigdata{

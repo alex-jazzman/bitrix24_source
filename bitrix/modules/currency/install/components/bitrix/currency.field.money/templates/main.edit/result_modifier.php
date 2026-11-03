@@ -21,6 +21,9 @@ Extension::load([
 ]);
 
 $arResult['currencies'] = CurrencyManager::getInstalledCurrencies();
+$defaultCurrency = $arResult['userField']['SETTINGS']['DEFAULT_CURRENCY']
+	?? CurrencyManager::getBaseCurrency();
+$arResult['defaultCurrency'] = $defaultCurrency;
 
 $i = 0;
 $asset = Asset::getInstance();
@@ -36,7 +39,7 @@ foreach ($arResult['value'] as $key => $rawValue)
 	$arResult['value'][$key] = [
 		'value' => $rawValue,
 		'currentValue' => $explode[0],
-		'currentCurrency' => $explode[1],
+		'currentCurrency' => $explode[1] !== '' ? $explode[1] : $defaultCurrency,
 	];
 	unset($explode);
 
@@ -64,3 +67,4 @@ foreach ($arResult['value'] as $key => $rawValue)
 }
 
 unset($asset);
+unset($defaultCurrency);

@@ -42,7 +42,15 @@ jn.define('intranet/statemanager/redux/slices/employees/model/user', (require, e
 
 			preparedUser.department = Object.fromEntries(
 				Object.entries(preparedUser.department)
-					.map(([key, value]) => [key, value.replaceAll('&quot;', '\'')]),
+					.map(([key, value]) => [
+						key,
+						value
+							.replaceAll('&#039;', '\'')
+							.replaceAll('&quot;', '"')
+							.replaceAll('&lt;', '<')
+							.replaceAll('&gt;', '>')
+							.replaceAll('&amp;', '&'),
+					]),
 			);
 
 			return preparedUser;

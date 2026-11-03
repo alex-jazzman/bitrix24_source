@@ -8,6 +8,9 @@ export class Counters
 	shortcuts = [];
 	#name;
 	selectedDirectory;
+	// a cross-folder section keeps its own number, named by the section it belongs to
+	sectionCounters = {};
+	activeSection = null;
 
 	constructor(name,selectedDirectory)
 	{
@@ -57,9 +60,33 @@ export class Counters
 			this.selectedDirectory = name;
 		}
 
-		let resultCounters = {};
-		resultCounters[this.selectedDirectory] = this.getCounter(this.selectedDirectory);
-		this.sendCounterUpdateEvent(resultCounters);
+		this.#sendCountersUpdate();
+	}
+
+	setSectionCounter(section, count)
+	{
+		this.sectionCounters[section] = Number(count);
+		this.#sendCountersUpdate();
+	}
+
+	setActiveSection(section)
+	{
+		this.activeSection = section ?? null;
+		this.#sendCountersUpdate();
+	}
+
+	// the number of a section and the section itself are one state for the panel, so they are
+	// set together and the screen redraws once
+	setSectionState(section, count, active)
+	{
+		this.sectionCounters[section] = Number(count);
+		this.activeSection = active ? section : null;
+		this.#sendCountersUpdate();
+	}
+
+	#sendCountersUpdate()
+	{
+		this.sendCounterUpdateEvent({ ...this.counters });
 	}
 
 	setShortcut(shortcutName,name)
@@ -284,6 +311,9 @@ export class Counters
 				selectedDirectory: this.selectedDirectory,
 				name: this.getName(),
 				total: this.getTotalCounter(),
+				// read here rather than at the call, so every update carries the current section state
+				sections: this.sectionCounters,
+				activeSection: this.activeSection,
 			}
 		});
 

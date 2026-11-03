@@ -29,7 +29,7 @@
 	flex: 1 1 auto;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--ui-space-stack-lg);
 	padding: 12px var(--ui-space-inset-xl) var(--ui-space-inset-xl);
 	min-height: 0;
 	overflow-y: auto;
@@ -54,9 +54,9 @@
 .crm-call-assessment-v2__card {
 	display: flex;
 	flex-direction: column;
-	gap: 11px;
+	gap: var(--ui-space-stack-sm);
 	padding: var(--ui-space-inset-xl);
 	background: var(--ui-color-bg-content-primary);
-	border-radius: var(--ui-border-radius-2xl);
-	box-shadow: 0 1px 2px var(--ui-color-area-box-shadow-secondary-color);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
 }

@@ -116,7 +116,7 @@ class Tooltip
 		return ownerDocument.body;
 	}
 
-	show(element: HTMLElement, params: HintParams): void
+	show(element: HTMLElement, params: HintParams, onClose: ?Function = null): void
 	{
 		this.hide(false);
 
@@ -140,6 +140,7 @@ class Tooltip
 			`,
 			darkMode: true,
 			autoHide: true,
+			closeByEsc: true,
 			cacheable: false,
 			focusTrap: false,
 			animation: 'fading',
@@ -155,6 +156,10 @@ class Tooltip
 		};
 
 		this.#popup = new Popup(popupOptions);
+		if (onClose)
+		{
+			this.#popup.subscribe('onClose', onClose);
+		}
 		this.#popup.show();
 		this.#fixPopupAngle(bindElement);
 
@@ -176,10 +181,11 @@ class Tooltip
 	{
 		if (isInteractive)
 		{
+			const popup = this.#popup;
 			setTimeout(() => {
-				if (this.#popup && this.#popup.getPopupContainer() && !(this.#cursorOnPopup))
+				if (popup && popup.getPopupContainer() && !(this.#cursorOnPopup))
 				{
-					this.#popup.close();
+					popup.close();
 				}
 			}, 100);
 		}

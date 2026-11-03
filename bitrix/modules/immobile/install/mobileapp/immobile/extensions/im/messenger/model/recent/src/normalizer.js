@@ -89,21 +89,23 @@ jn.define('im/messenger/model/recent/normalizer', (require, exports, module) => 
 
 		if (Type.isPlainObject(fields.invited))
 		{
+			// the folder tail sends camelCase, the legacy list path sends snake_case
 			result.invitation = {
 				isActive: true,
-				originator: fields.invited.originator_id,
-				canResend: fields.invited.can_resend,
+				originator: fields.invited.originatorId ?? fields.invited.originator_id,
+				canResend: fields.invited.canResend ?? fields.invited.can_resend,
 			};
 			result.options.defaultUserRecord = true;
 		}
 		else if (fields.invited === false)
 		{
+			// Every row of the tail carries the flag, so a cleared invitation says nothing about the row
+			// being a person without a conversation: that marker comes from options.defaultUserRecord.
 			result.invitation = {
 				isActive: false,
 				originator: 0,
 				canResend: false,
 			};
-			result.options.defaultUserRecord = true;
 		}
 		else if (Type.isPlainObject(fields.invitation))
 		{

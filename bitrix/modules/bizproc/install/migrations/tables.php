@@ -497,8 +497,19 @@ $migration->table('b_bp_workflow_template_draft')->create(function (\Bitrix\Main
 	$columns->int('STATUS')->notNull()->default('0');
 	$columns->int('USER_ID')->notNull();
 	$columns->datetime('CREATED')->notNull();
+	$columns->int('REVISION')->notNull()->default(0);
 	$table->addIndex('ix_bp_wf_draft_template', ['TEMPLATE_ID']);
 	$table->addIndex('ix_bp_wf_draft_user', ['USER_ID']);
+});
+
+$migration->table('b_bp_workflow_template_lock')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('TEMPLATE_ID')->notNull();
+	$columns->int('USER_ID')->notNull();
+	$columns->datetime('ACQUIRED_AT')->notNull();
+	$columns->datetime('EXPIRES_AT')->notNull();
+	$table->addUniqueIndex('ux_bp_workflow_template_lock_template', ['TEMPLATE_ID']);
 });
 
 $migration->table('b_bp_workflow_template_change')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -512,9 +523,19 @@ $migration->table('b_bp_workflow_template_change')->create(function (\Bitrix\Mai
 	$columns->tinyInt('PUBLICATION_TYPE');
 	$columns->mediumBlob('SNAPSHOT');
 	$columns->datetime('TEMPLATE_MODIFIED');
+	$columns->tinyInt('AUTHOR_TYPE')->notNull()->default('1');
+	$columns->varchar('AI_TOOL', 50);
+	$columns->int('INITIATOR_USER_ID');
+	$columns->varchar('REQUEST_SOURCE', 20);
+	$columns->mediumBlob('CHANGES');
+	$columns->mediumBlob('CHANGES_SUMMARY');
+	// The cleanup passes by the events keeping a version body, and a blob tells nothing to an index:
+	// the scalar mirror of SNAPSHOT is what the pass of the cleanup is read through.
+	$columns->char('HAS_SNAPSHOT', 1)->notNull()->default('N');
 	$table->addUniqueIndex('ux_bp_wf_tpl_change_version', ['TEMPLATE_ID', 'VERSION_NUMBER']);
 	$table->addIndex('ix_bp_wf_tpl_change_event_pub', ['TEMPLATE_ID', 'EVENT_TYPE', 'PUBLICATION_TYPE']);
 	$table->addIndex('ix_bp_wf_tpl_change_created', ['TEMPLATE_ID', 'CREATED']);
+	$table->addIndex('ix_bp_wf_tpl_change_expired', ['HAS_SNAPSHOT', 'CREATED']);
 });
 
 $migration->table('b_bp_workflow_template_pilot')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -540,6 +561,43 @@ $migration->table('b_bp_workflow_template_pilot_access')->create(function (\Bitr
 	// The mirrored pair: reading the audience of a version, and checking a member by their codes
 	$table->addUniqueIndex('ux_bp_wf_pilot_access_code', ['PILOT_ID', 'ACCESS_CODE']);
 	$table->addIndex('ix_bp_wf_pilot_access_code_pilot', ['ACCESS_CODE', 'PILOT_ID']);
+});
+
+$migration->table('b_bp_workflow_template_note')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('TEMPLATE_ID')->notNull();
+	$columns->int('AUTHOR_ID')->notNull();
+	// N - a node, C - a link between nodes, F - a free point of the canvas
+	$columns->char('ANCHOR_TYPE', 1)->notNull();
+	$columns->varchar('ANCHOR_NODE_ID', 128);
+	$columns->varchar('ANCHOR_SOURCE_BLOCK_ID', 128);
+	$columns->varchar('ANCHOR_SOURCE_PORT_ID', 128);
+	$columns->varchar('ANCHOR_TARGET_BLOCK_ID', 128);
+	$columns->varchar('ANCHOR_TARGET_PORT_ID', 128);
+	// The offset carries the note along with a moved node, the absolute point leaves it where it was
+	// once the node is gone: neither of the two answers both.
+	$columns->int('OFFSET_X')->notNull()->default('0');
+	$columns->int('OFFSET_Y')->notNull()->default('0');
+	$columns->int('POSITION_X')->notNull();
+	$columns->int('POSITION_Y')->notNull();
+	$columns->datetime('CREATED')->notNull();
+	$table->addIndex('IX_BP_WORKFLOW_TEMPLATE_NOTE_TEMPLATE', ['TEMPLATE_ID']);
+});
+
+$migration->table('b_bp_workflow_template_note_message')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('NOTE_ID')->notNull();
+	$columns->int('AUTHOR_ID')->notNull();
+	$columns->text('MESSAGE')->notNull();
+	// An edit is matched against the revision it was started from, so a message changed meanwhile is
+	// refused instead of being silently overwritten.
+	$columns->int('REVISION')->notNull()->default('1');
+	$columns->datetime('CREATED')->notNull();
+	$columns->datetime('MODIFIED');
+	// The discussion is read in the order it was written, hence ID beside the note
+	$table->addIndex('IX_BP_WORKFLOW_TEMPLATE_NOTE_MESSAGE_NOTE', ['NOTE_ID', 'ID']);
 });
 
 $migration->table('b_bp_task_archive')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -879,6 +937,29 @@ $migration->table('b_bp_managed_agent_resource')->create(function (\Bitrix\Main\
 	$table->addUniqueIndex('ux_bp_ma_resource_identity', ['INSTANCE_ID', 'TYPE', 'RESOURCE_ID']);
 	$table->addIndex('ix_bp_ma_resource_cleanup', ['INSTANCE_ID', 'TYPE', 'ID']);
 	$table->addIndex('ix_bp_ma_resource_lookup', ['TYPE', 'RESOURCE_ID']);
+});
+
+$migration->table('b_bp_workflow_template_fragment')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->varchar('NAME', 255)->notNull();
+	$columns->int('AUTHOR_ID')->notNull();
+	// Y - available to everyone, N - to the author only. Opening the personal fragment of an inactive
+	// author is decided on reading and never rewrites this column.
+	$columns->char('IS_SHARED', 1)->notNull()->default('Y');
+	// The number of nodes: the only thing the list tells about the content of a fragment, and the only
+	// reason not to unpack the envelope per row of the answer. The document type and the format number
+	// live inside the envelope.
+	$columns->int('NODE_COUNT')->notNull()->default('0');
+	$columns->mediumBlob('FRAGMENT')->notNull();
+	$columns->int('UPDATED_BY');
+	$columns->datetime('CREATED')->notNull();
+	$columns->datetime('MODIFIED');
+	// The two branches of the visibility predicate, each with its own ordering: shared fragments and own
+	// ones. The third branch (the author is inactive) is not served by an index - its condition stands on
+	// the joined b_user, and that is the price of the shape chosen to open the fragments of the dismissed.
+	$table->addIndex('IX_BP_WORKFLOW_TEMPLATE_FRAGMENT_SHARED_CREATED', ['IS_SHARED', 'CREATED']);
+	$table->addIndex('IX_BP_WORKFLOW_TEMPLATE_FRAGMENT_AUTHOR_CREATED', ['AUTHOR_ID', 'CREATED']);
 });
 
 // The registry is asked about on the creation and on the completion path of every workflow of the portal, so

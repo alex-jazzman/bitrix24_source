@@ -7,7 +7,7 @@ const lsKey = {
 	defaultSpeaker: 'bx-im-settings-default-speaker',
 };
 
-const Events = {
+export const HardwareEvents = {
 	initialized: 'initialized',
 	deviceChanged: 'deviceChange',
 };
@@ -29,7 +29,7 @@ const getSelectableDeviceIds = (deviceMap: Record<string, string>): string[] => 
 
 export class HardwareManager extends EventEmitter
 {
-	Events = Events;
+	Events = HardwareEvents;
 
 	initialized = false;
 	updating = false;
@@ -73,7 +73,7 @@ export class HardwareManager extends EventEmitter
 					);
 					this.initialized = true;
 					this.initPromise = null;
-					this.emit(Events.initialized, {});
+					this.emit(HardwareEvents.initialized, {});
 					resolve();
 				})
 				.catch((e) => {
@@ -383,7 +383,7 @@ export class HardwareManager extends EventEmitter
 
 			if (!shouldSkipDeviceChangedEvent)
 			{
-				this.emit(Events.deviceChanged, {
+				this.emit(HardwareEvents.deviceChanged, {
 					added: addedDevices,
 					removed: removedDevices,
 				});

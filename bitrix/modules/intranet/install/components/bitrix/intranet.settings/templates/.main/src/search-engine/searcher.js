@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { DataSource } from './data-source';
 
@@ -7,12 +7,14 @@ export class Searcher
 	static STATE_READY = 'ready';
 	static STATE_WAIT = 'wait';
 	static STATE_NOT_FOUND = 'not_found';
+	static STATE_ERROR = 'error';
 
 	#query: string;
 	#minSymbol: number;
 	#dataSource: DataSource;
 	#result: Array;
-	#state: string; // ready | wait;
+	#requestId: number = 0;
+	#lastEvent: ?Object = null;
 
 	constructor(dataSource: DataSource, minSymbol: number = 3)
 	{
@@ -23,40 +25,89 @@ export class Searcher
 		this.#dataSource = dataSource;
 		this.#minSymbol = minSymbol;
 		this.#result = [];
-		this.#state = 'ready';
 	}
 
 	find(query: string)
 	{
+		const requestId = this.#nextRequestId();
+
 		if (query.length < this.#minSymbol)
 		{
+			this.reset(requestId);
+
 			return;
 		}
+
 		this.#query = query;
-		this.changeState(Searcher.STATE_WAIT);
+		this.#result = [];
+		this.changeState(Searcher.STATE_WAIT, { requestId, query });
 		this.#dataSource
 			.fetch(this.#query)
 			.then(
-				this.resolve.bind(this),
-				this.reject.bind(this),
+				(response) => this.resolve(response, requestId),
+				(response) => this.reject(response, requestId),
 			);
 	}
 
-	changeState(state: string)
+	invalidate(query: string): void
 	{
-		if (this.#state === state)
+		const requestId = this.#nextRequestId();
+
+		this.#query = query;
+		this.#result = [];
+		this.changeState(Searcher.STATE_READY, {
+			requestId,
+			query,
+			reset: true,
+		});
+	}
+
+	#nextRequestId(): number
+	{
+		this.#requestId += 1;
+
+		return this.#requestId;
+	}
+
+	changeState(state: string, payload: Object = {})
+	{
+		const eventData = {
+			state,
+			requestId: payload.requestId ?? this.#requestId,
+			query: payload.query ?? this.#query,
+			resultCount: this.#getResultCount(),
+			reset: payload.reset === true,
+		};
+
+		if (this.#isSameEvent(eventData))
 		{
 			return;
 		}
 
-		this.#state = state;
+		this.#lastEvent = eventData;
 		EventEmitter.emit(
 			EventEmitter.GLOBAL_TARGET,
-			'BX.Intranet.Settings:searchChangeState', {
-				state: this.#state,
-			},
+			'BX.Intranet.Settings:searchChangeState',
+			eventData,
 		);
 
+	}
+
+	#isSameEvent(eventData: Object): boolean
+	{
+		return this.#lastEvent?.state === eventData.state
+			&& this.#lastEvent?.requestId === eventData.requestId
+			&& this.#lastEvent?.query === eventData.query
+			&& this.#lastEvent?.resultCount === eventData.resultCount
+			&& this.#lastEvent?.reset === eventData.reset
+		;
+	}
+
+	#getResultCount(): number
+	{
+		return this.#result.reduce((count, group) => {
+			return count + (Array.isArray(group.options) ? group.options.length : 0);
+		}, 0);
 	}
 
 	getMinSymbol(): number
@@ -64,23 +115,45 @@ export class Searcher
 		return this.#minSymbol;
 	}
 
-	resolve(response)
+	resolve(response, requestId: number)
 	{
-		this.#result = response.data;
+		if (requestId !== this.#requestId)
+		{
+			return;
+		}
 
-		this.changeState(this.#result.length > 0 ? Searcher.STATE_READY : Searcher.STATE_NOT_FOUND);
+		this.#result = Array.isArray(response.data) ? response.data : [];
+
+		this.changeState(this.#getResultCount() > 0 ? Searcher.STATE_READY : Searcher.STATE_NOT_FOUND, { requestId });
 	}
 
-	reject(response)
+	reject(response, requestId: number)
 	{
+		if (requestId !== this.#requestId)
+		{
+			return;
+		}
+
 		this.#result = [];
 
-		this.changeState(Searcher.STATE_READY);
+		this.changeState(Searcher.STATE_ERROR, { requestId });
 	}
 
 	getResult(): Array
 	{
 		return this.#result;
+	}
+
+	reset(requestId?: number): void
+	{
+		const actualRequestId = Type.isNumber(requestId) ? requestId : this.#nextRequestId();
+
+		this.#query = '';
+		this.#result = [];
+		this.changeState(Searcher.STATE_READY, {
+			requestId: actualRequestId,
+			reset: true,
+		});
 	}
 
 	getOthers()

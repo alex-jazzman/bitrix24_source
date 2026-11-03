@@ -32,6 +32,21 @@ class OpenResultAction extends BaseAction
 		this.#emitOpenResultEvent(payload);
 	}
 
+	isTooltipOnly(payload: ActionPayload): boolean
+	{
+		return !this.#hasResult(payload);
+	}
+
+	isReady(payload: ActionPayload): boolean
+	{
+		const task = taskService.getStoreTask(payload.taskId);
+
+		return (
+			taskService.hasStoreTask(payload.taskId, false)
+			&& (!task.containsResults || task.results.length > 0)
+		);
+	}
+
 	#hasResult(payload: ActionPayload): boolean
 	{
 		const { entityId, taskId } = payload;

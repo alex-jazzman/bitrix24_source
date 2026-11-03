@@ -1,13 +1,21 @@
 import { BitrixVue } from 'ui.vue';
 import { ajax, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+
 import { EventType, Component, RestMethod } from 'sale.checkout.const';
+import { UserConsentPopupAccessibility } from 'sale.user-consent-a11y';
 
 BitrixVue.component('sale-checkout-view-user_consent', {
 	props: ['item'],
 	mounted()
 	{
+		this.consentAccessibility = null;
 		this.getBlockHtml();
+	},
+	beforeDestroy()
+	{
+		this.consentAccessibility?.destroy();
+		this.consentAccessibility = null;
 	},
 	methods:
 	{
@@ -46,6 +54,7 @@ BitrixVue.component('sale-checkout-view-user_consent', {
 							wrapper.appendChild(Tag.render`<div>${consent}</div>`);
 
 							BX.UserConsent.loadAll(wrapper);
+							this.consentAccessibility = UserConsentPopupAccessibility.install();
 							const controls = BX.UserConsent && BX.UserConsent.getItems();
 							controls.forEach((control) => {
 								EventEmitter.subscribe(
@@ -72,7 +81,7 @@ BitrixVue.component('sale-checkout-view-user_consent', {
 	},
 	// language=Vue
 	template: `
-		 <div class="checkout-basket-section checkout-basket-section-consent">
+		 <div class="checkout-basket-section checkout-basket-section-consent" data-testid="sale-checkout-consent">
 		<div ref="consentDiv"/>
 		    </div>
 	`,

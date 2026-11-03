@@ -1,2 +1,2 @@
 <?php
-$MESS['AVATAR_WIDGET_ARIA'] = "Профиль";
+$MESS['AVATAR_WIDGET_ARIA'] = 'Профиль';

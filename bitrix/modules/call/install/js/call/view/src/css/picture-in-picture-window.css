@@ -47,27 +47,46 @@ body:has(.bx-call-picture-in-picture-window) {
 	background: linear-gradient(179.28deg, rgba(16, 23, 39, 0) 4.42%, rgba(16, 23, 39, 0.34) 22.09%, rgba(16, 23, 39, 0.72) 51.56%, #101727 89.93%);
 	align-items: flex-start;
 
+	/* visibility: hidden is not used here: it would drop the buttons out of the tab order,
+	   and then no focus could ever reach the panel to reveal it */
 	transform: translate3d(0, 100%, 0);
 	backface-visibility: hidden;
 	opacity: 0;
-	visibility: hidden;
 	pointer-events: none;
 
 	transition:
 		transform .5s ease,
-		opacity .5s ease,
-		visibility 0s linear .5s;
+		opacity .5s ease;
 	will-change: transform, opacity;
 	contain: paint;
 }
 
+/* the popup of the floor requests list is mounted outside this root, so once the focus
+ * enters it the root stops matching :has(:focus-visible): its owner marks the root instead.
+ *
+ * The mark of a running push-to-talk hold is written on the root of the document by
+ * `call.lib.push-to-talk` (HOLD_INDICATION_ATTRIBUTE): a microphone the mode opened is invisible
+ * in this window otherwise, and the panel is the only place that shows it. The gradient darkening
+ * the bottom of the window for the length of the hold is the price of it */
+[data-bx-call-push-to-talk-hold] .bx-call-picture-in-picture-window__actions,
 .bx-call-picture-in-picture-window:hover .bx-call-picture-in-picture-window__actions,
-.bx-call-picture-in-picture-window_min .bx-call-picture-in-picture-window__actions {
+.bx-call-picture-in-picture-window_min .bx-call-picture-in-picture-window__actions,
+.bx-call-picture-in-picture-window_popup-open .bx-call-picture-in-picture-window__actions {
 	transform: translate3d(0, 0, 0);
 	opacity: 1;
-	visibility: visible;
 	pointer-events: auto;
-	transition-delay: 0s, 0s, 0s;
+}
+
+@supports selector(:has(*)) {
+	/* :focus-visible and not :focus-within, because Chromium focuses a <button> on a mouse click too,
+	   and the panel would stay pinned over the participant card after every click.
+	   Zero duration: a button must not receive the focus while it is still sliding in */
+	.bx-call-picture-in-picture-window:has(:focus-visible) .bx-call-picture-in-picture-window__actions {
+		transform: translate3d(0, 0, 0);
+		opacity: 1;
+		pointer-events: auto;
+		transition-duration: 0s;
+	}
 }
 
 .bx-call-picture-in-picture-window__notifications {
@@ -104,6 +123,9 @@ body:has(.bx-call-picture-in-picture-window) {
 }
 
 .bx-call-picture-in-picture-window__floor-requests {
+	appearance: none;
+	border: 0;
+	cursor: pointer;
 	border-radius: 6px;
 	padding: 4px 8px 5px 5px;
 	position: absolute;
@@ -138,7 +160,9 @@ body:has(.bx-call-picture-in-picture-window) {
 }
 
 @supports selector(:has(*)) {
-	.bx-call-picture-in-picture-window:has(.bx-call-view-floor-request-notification) .bx-call-picture-in-picture-window__floor-requests {
+	/* an open list is the moment the user works with the counter: hiding it would drop the button
+	   out of the tab order and take the focus with it */
+	.bx-call-picture-in-picture-window:has(.bx-call-view-floor-request-notification):not(.bx-call-picture-in-picture-window_popup-open) .bx-call-picture-in-picture-window__floor-requests {
 		visibility: hidden;
 	}
 }
@@ -157,6 +181,9 @@ body:has(.bx-call-picture-in-picture-window) {
 	font-size: 13px;
 	line-height: 17px;
 	padding: 14px 12px;
+	/* the template became a real list, and the defaults of the browser come with it */
+	margin: 0;
+	list-style: none;
 }
 
 .bx-call-picture-in-picture-window__floor-request-item {

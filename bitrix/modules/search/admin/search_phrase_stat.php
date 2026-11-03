@@ -2,12 +2,12 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/prolog.php';
 IncludeModuleLangFile(__FILE__);
-/** @global CMain $APPLICATION */
+/** @var CMain $APPLICATION */
 global $APPLICATION;
-/** @var CAdminMessage $message */
+/** @var CAdminMessage|null $message */
 $searchDB = CDatabase::GetModuleConnection('search');
 
-$SEARCH_RIGHT = $APPLICATION->GetGroupRight('search');
+$SEARCH_RIGHT = CMain::GetGroupRight('search');
 if ($SEARCH_RIGHT == 'D')
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
@@ -15,6 +15,8 @@ if ($SEARCH_RIGHT == 'D')
 
 $sTableID = 'tbl_search_phrase_list';
 $oSort = new CAdminSorting($sTableID, 'COUNT', 'DESC');
+$by = mb_strtoupper($oSort->getField());
+$order = mb_strtoupper($oSort->getOrder());
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $ref = $ref_id = [];
@@ -37,57 +39,62 @@ $arFilterFields = [
 	'find_url_to_404',
 ];
 
-$lAdmin->InitFilter($arFilterFields);
+$currentFilter = $lAdmin->InitFilter($arFilterFields);
+foreach ($arFilterFields as $fieldName)
+{
+	$currentFilter[$fieldName] = ($currentFilter[$fieldName] ?? '');
+}
+
 if ($lAdmin->IsDefaultFilter())
 {
 	$sdate = time();
 	$sdate = mktime(0, 0, 0, date('m', $sdate), date('d', $sdate) - 1, date('Y', $sdate));
-	$find_date1 = ConvertTimeStamp($sdate);
+	$currentFilter['find_date1'] = ConvertTimeStamp($sdate);
 }
 
 $arFilter = [];
 
 if ($_REQUEST['find_id_exact_match'] == 'Y')
 {
-	$arFilter['=ID'] = $find_id;
+	$arFilter['=ID'] = $currentFilter['find_id'];
 }
 else
 {
-	$arFilter['ID'] = $find_id;
+	$arFilter['ID'] = $currentFilter['find_id'];
 }
 
-$arFilter['>=TIMESTAMP_X'] = $find_date1;
-$arFilter['<=TIMESTAMP_X'] = $find_date2 && search_isShortDate($find_date2) ? ConvertTimeStamp(AddTime(MakeTimeStamp($find_date2), 1, 'D'), 'FULL') : $find_date2;
-$arFilter['=SITE_ID'] = $find_site_id;
+$arFilter['>=TIMESTAMP_X'] = $currentFilter['find_date1'];
+$arFilter['<=TIMESTAMP_X'] = $currentFilter['find_date2'] && search_isShortDate($currentFilter['find_date2']) ? ConvertTimeStamp(AddTime(MakeTimeStamp($currentFilter['find_date2']), 1, 'D'), 'FULL') : $currentFilter['find_date2'];
+$arFilter['=SITE_ID'] = $currentFilter['find_site_id'];
 
 if ($_REQUEST['find_phrase_exact_match'] == 'Y')
 {
-	$arFilter['=PHRASE'] = $find_phrase;
+	$arFilter['=PHRASE'] = $currentFilter['find_phrase'];
 }
 else
 {
-	$arFilter['PHRASE'] = $find_phrase;
+	$arFilter['PHRASE'] = $currentFilter['find_phrase'];
 }
 
 if ($_REQUEST['find_stat_sess_id_exact_match'] == 'Y')
 {
-	$arFilter['=STAT_SESS_ID'] = $find_stat_sess_id;
+	$arFilter['=STAT_SESS_ID'] = $currentFilter['find_stat_sess_id'];
 }
 else
 {
-	$arFilter['STAT_SESS_ID'] = $find_stat_sess_id;
+	$arFilter['STAT_SESS_ID'] = $currentFilter['find_stat_sess_id'];
 }
 
 if ($_REQUEST['find_url_to_exact_match'] == 'Y')
 {
-	$arFilter['=URL_TO'] = $find_url_to;
+	$arFilter['=URL_TO'] = $currentFilter['find_url_to'];
 }
 else
 {
-	$arFilter['URL_TO'] = $find_url_to;
+	$arFilter['URL_TO'] = $currentFilter['find_url_to'];
 }
 
-$arFilter['=URL_TO_404'] = $find_url_to_404;
+$arFilter['=URL_TO_404'] = $currentFilter['find_url_to_404'];
 
 foreach ($arFilter as $key => $value)
 {
@@ -118,9 +125,9 @@ $rsData->NavStart();
 // navigation setup
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage('SEARCH_PHS_PHRASES')));
 
-while ($arRes = $rsData->NavNext(true, 'f_'))
+while ($arRes = $rsData->GetNext())
 {
-	$row = & $lAdmin->AddRow($f_ID, $arRes);
+	$row = & $lAdmin->AddRow($arRes['ID'], $arRes);
 }
 
 $lAdmin->AddFooter([
@@ -160,30 +167,30 @@ $oFilter->Begin();
 ?>
 <tr>
 	<td nowrap><b><?php echo GetMessage('SEARCH_PHS_PHRASE')?>:</b></td>
-	<td><input type="text" name="find_phrase" size="47" value="<?php echo htmlspecialcharsbx($find_phrase)?>"></td>
+	<td><input type="text" name="find_phrase" size="47" value="<?php echo htmlspecialcharsbx($currentFilter['find_phrase'])?>"></td>
 </tr>
 <tr>
 	<td><?php echo GetMessage('SEARCH_PHS_ID')?>:</td>
-	<td><input type="text" name="find_id" size="47" value="<?php echo htmlspecialcharsbx($find_id)?>"></td>
+	<td><input type="text" name="find_id" size="47" value="<?php echo htmlspecialcharsbx($currentFilter['find_id'])?>"></td>
 </tr>
 <tr>
 	<td width="0%" nowrap><?php echo GetMessage('SEARCH_PHS_DATE')?>:</td>
-	<td width="0%" nowrap><?php echo CalendarPeriod('find_date1', $find_date1, 'find_date2', $find_date2, 'form1','Y')?></td>
+	<td width="0%" nowrap><?php echo CalendarPeriod('find_date1', $currentFilter['find_date1'], 'find_date2', $currentFilter['find_date2'], 'form1','Y')?></td>
 </tr>
 <tr>
 	<td><?php echo GetMessage('SEARCH_PHS_SITE_ID')?>:</td>
-	<td><?php echo SelectBoxFromArray('find_site_id', $arSiteDropdown, $find_site_id, GetMessage('SEARCH_PHS_SITE'));?></td>
+	<td><?php echo SelectBoxFromArray('find_site_id', $arSiteDropdown, $currentFilter['find_site_id'], GetMessage('SEARCH_PHS_SITE'));?></td>
 </tr>
 
 <tr>
 	<td nowrap><?php echo GetMessage('SEARCH_PHS_URL_TO')?></td>
 	<td><?php
-		echo SelectBoxFromArray('find_url_to_404', ['reference' => [GetMessage('MAIN_YES'), GetMessage('MAIN_NO')], 'reference_id' => ['Y','N']], htmlspecialcharsbx($find_url_to_404), GetMessage('SEARCH_PHS_404'));
-	?>&nbsp;<input type="text" name="find_url_to" size="33" value="<?php echo htmlspecialcharsbx($find_url_to)?>"></td>
+		echo SelectBoxFromArray('find_url_to_404', ['reference' => [GetMessage('MAIN_YES'), GetMessage('MAIN_NO')], 'reference_id' => ['Y','N']], htmlspecialcharsbx($currentFilter['find_url_to_404']), GetMessage('SEARCH_PHS_404'));
+	?>&nbsp;<input type="text" name="find_url_to" size="33" value="<?php echo htmlspecialcharsbx($currentFilter['find_url_to'])?>"></td>
 </tr>
 <tr>
 	<td nowrap><?php echo GetMessage('SEARCH_PHS_STAT_SESS_ID')?></td>
-	<td><input type="text" name="find_stat_sess_id" size="47" value="<?php echo htmlspecialcharsbx($find_stat_sess_id)?>"></td>
+	<td><input type="text" name="find_stat_sess_id" size="47" value="<?php echo htmlspecialcharsbx($currentFilter['find_stat_sess_id'])?>"></td>
 </tr>
 
 <?php

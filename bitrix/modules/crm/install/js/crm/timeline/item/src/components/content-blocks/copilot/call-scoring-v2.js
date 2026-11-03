@@ -1,5 +1,7 @@
+import { Builder } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
 import { Text, Type } from 'main.core';
+import { sendData } from 'ui.analytics';
 import { ProgressRound } from 'ui.progressround';
 
 import { Action } from '../../../action';
@@ -115,6 +117,15 @@ export const CallScoringV2 = {
 				return;
 			}
 
+			const data = Builder.CallAssessment.OpenScriptEvent
+				.createDefault(assessmentSettingsId)
+				.buildData()
+			;
+			if (data)
+			{
+				sendData(data);
+			}
+
 			Router.Instance.openCallAssessmentSlider(assessmentSettingsId);
 		},
 
@@ -122,7 +133,27 @@ export const CallScoringV2 = {
 		{
 			if (Type.isObject(this.action))
 			{
+				this.sendOpenCallScoreAnalytics();
 				void (new Action(this.action)).execute(this);
+			}
+		},
+
+		sendOpenCallScoreAnalytics(): void
+		{
+			const params = this.action?.actionParams;
+			if (!Type.isPlainObject(params))
+			{
+				return;
+			}
+
+			const data = Builder.CallAssessment.OpenCallScoreEvent
+				.createDefault(params.activityId)
+				.setCallAssessmentId(params.assessmentSettingsId)
+				.buildData()
+			;
+			if (data)
+			{
+				sendData(data);
 			}
 		},
 	},

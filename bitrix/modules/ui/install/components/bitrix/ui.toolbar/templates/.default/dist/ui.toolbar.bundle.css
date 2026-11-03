@@ -349,6 +349,57 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-70);
 }
 
+/*region Reflow: toolbar wrapping at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The buttons block is declared flex-shrink: 0 and the title flex-shrink: 1, so at narrow
+	widths the buttons hold their width and squeeze the title down to almost nothing.
+	Below the breakpoint we allow wrapping: the title takes its own row, the buttons the following ones.
+	Measurements and rejected options — BRIEF-crm-entity-card-adaptivity-2026-07-22.
+*/
+@media (max-width: 768px) {
+	.ui-toolbar {
+		flex-wrap: wrap;
+	}
+
+	.ui-toolbar .ui-toolbar-title-box {
+		flex-basis: 100%;
+		max-width: 100%;
+	}
+
+	.ui-toolbar-right-buttons,
+	.ui-toolbar-after-title-buttons {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
+
+	/*
+		flex-basis is required: because of flex-shrink: 0 the block would otherwise hold the width
+		of its content, and the internal wrapping would not trigger.
+	*/
+	.ui-toolbar-right-buttons {
+		flex-basis: 100%;
+		max-width: 100%;
+		margin-left: 0;
+		padding-left: 0;
+	}
+
+	/*
+		The buttons are declared flex-shrink: 1 and min-width: auto, so instead of wrapping
+		they shrink below their content, and with overflow-x: visible the label is painted over
+		the neighboring button — loss of information. Forbidding the shrink pushes the button onto
+		the next row; max-width guards against a label longer than the row.
+
+		Left unfixed deliberately: the longest label overflows its own box
+		by 9px. The height is set in ui.buttons — a separate scope and owner.
+	*/
+	.ui-toolbar-right-buttons > *,
+	.ui-toolbar-after-title-buttons > * {
+		flex-shrink: 0;
+		max-width: 100%;
+	}
+}
+/*endregion*/
+
 .ui-toolbar.--air {
 	width: 100%;
 	padding: 0;
@@ -496,3 +547,20 @@
 .ui-toolbar.--air .ui-toolbar-title-box + .ui-toolbar-after-title-buttons {
 	margin-left: 0;
 }
+
+/*region Reflow: row spacing for wrapped buttons (WCAG 2.1 AA, 1.4.10)*/
+/*
+	In AIR the button blocks are given gap: 0 12px — that is, the row spacing is zero.
+	When the buttons wrap onto several rows below the breakpoint, the rows stick together.
+	We set row-gap here rather than in style.css: air.css is imported second and, at
+	equal specificity, would override the rule from the base file.
+*/
+@media (max-width: 768px) {
+	.ui-toolbar.--air .ui-toolbar-right-buttons,
+	.ui-toolbar.--air .ui-toolbar-after-title-buttons,
+	.ui-toolbar.--air.--multiline-title .ui-toolbar-right-buttons,
+	.ui-toolbar.--air.--multiline-title .ui-toolbar-after-title-buttons {
+		row-gap: 8px;
+	}
+}
+/*endregion*/

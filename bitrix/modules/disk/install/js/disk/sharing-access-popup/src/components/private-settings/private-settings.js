@@ -14,6 +14,7 @@ import { PrivateAccessFullSettingsSwitcher } from './private-full-settings-switc
 import { PrivateAccessCheckout } from './private-access-checkout';
 import { AccessCopyLink } from '../copy-link';
 import { helpDesk } from '../../utils/help-desk';
+import { mergeMembersDraft } from '../../utils/members-draft';
 
 const extensionSettings = Extension.getSettings('disk.sharing-access-popup');
 const membersAccessDisableReasons = extensionSettings.get('membersAccessDisableReasons', {});
@@ -49,6 +50,8 @@ function getMembersDraftByIdFromAccessRights(accessRights)
 			entityId: member.entityId,
 			title: member.name,
 			avatar: member.avatar,
+			memberType: member.memberType ?? null,
+			ownAvatar: member.ownAvatar ?? null,
 			right: member.right,
 			maxTaskName,
 			readOnly,
@@ -61,6 +64,16 @@ function getMembersDraftByIdFromAccessRights(accessRights)
 function stringifyBoolean(value)
 {
 	return String(value === true);
+}
+
+function getAvailableAccessLevelIds(unifiedLink)
+{
+	if (!Array.isArray(unifiedLink?.availableAccessLevels))
+	{
+		return [];
+	}
+
+	return unifiedLink.availableAccessLevels.map((accessLevel) => accessLevel.value);
 }
 
 // @vue/component
@@ -78,13 +91,13 @@ export const SharingAccessPrivateSettings = {
 		accessRights: { type: Object, default: null },
 		objectId: { type: [Number, String], required: true },
 		entityType: { type: String, default: 'FILE' },
+		// called directly instead of an event: saving may outlive the block on a tab switch
+		reloadAccessRights: { type: Function, required: true },
 	},
-	emits: ['reloadAccessRights'],
 	data() {
 		return {
 			isChangeSettings: false,
 			selectedAccessId: 'D',
-			accessItems: ACCESS_PRIVATE_SELECT_ITEMS,
 			isAccessRightsSaving: false,
 			isActiveFullSettings: false,
 			isDownload: false,
@@ -118,6 +131,20 @@ export const SharingAccessPrivateSettings = {
 		numberEmployees()
 		{
 			return this.memberItems.length;
+		},
+		accessItems()
+		{
+			const unifiedLink = this.accessRights?.membersAccess?.unifiedLink;
+			const availableAccessLevelIds = getAvailableAccessLevelIds(unifiedLink);
+
+			if (availableAccessLevelIds.length === 0)
+			{
+				return ACCESS_PRIVATE_SELECT_ITEMS;
+			}
+
+			const items = ACCESS_PRIVATE_SELECT_ITEMS.filter((item) => availableAccessLevelIds.includes(item.id));
+
+			return items.length > 0 ? items : ACCESS_PRIVATE_SELECT_ITEMS;
 		},
 	},
 	watch: {
@@ -162,11 +189,16 @@ export const SharingAccessPrivateSettings = {
 		syncUnifiedLink(next)
 		{
 			const currentAccessLevel = next?.membersAccess?.unifiedLink?.currentAccessLevel;
+			const fallbackAccessLevel = this.accessItems[0]?.id ?? 'D';
 
 			if (currentAccessLevel && this.accessItems.some((item) => item.id === currentAccessLevel))
 			{
 				this.selectedAccessId = currentAccessLevel;
+
+				return;
 			}
+
+			this.selectedAccessId = fallbackAccessLevel;
 		},
 		syncMembers(next)
 		{
@@ -219,29 +251,14 @@ export const SharingAccessPrivateSettings = {
 			const owner = this.accessRights?.membersAccess?.owner ?? {};
 			const savedMembersById = getMembersDraftByIdFromAccessRights(this.accessRights);
 			const maxTaskName = owner.maxTaskName ?? DEFAULT_MAX_TASK_NAME;
-			const nextDraftById = {};
 
-			items.forEach((item) => {
-				const existing = sourceMembersById[item.entityId] ?? savedMembersById[item.entityId];
-
-				nextDraftById[item.entityId] = {
-					entityId: item.entityId,
-					title: item.title,
-					avatar: item.avatar,
-					right: existing?.right ?? getDefaultTaskName(maxTaskName),
-					maxTaskName: existing?.maxTaskName ?? maxTaskName,
-					readOnly: existing?.readOnly ?? false,
-				};
-			});
-
-			Object.values({ ...savedMembersById, ...sourceMembersById }).forEach((member) => {
-				if (member.readOnly && !nextDraftById[member.entityId])
-				{
-					nextDraftById[member.entityId] = member;
-				}
-			});
-
-			return nextDraftById;
+			return mergeMembersDraft(
+				items,
+				sourceMembersById,
+				savedMembersById,
+				maxTaskName,
+				getDefaultTaskName(maxTaskName),
+			);
 		},
 		buildEntityToNewShared(unifiedAccessLevel = this.selectedAccessId)
 		{
@@ -286,7 +303,7 @@ export const SharingAccessPrivateSettings = {
 					this.buildSavePayload(unifiedAccessLevel),
 				);
 
-				this.$emit('reloadAccessRights');
+				this.reloadAccessRights();
 			}
 			catch (error)
 			{
@@ -420,26 +437,32 @@ export const SharingAccessPrivateSettings = {
 		},
 	},
 	template: `
-		<div class="access-private-block__wrapper">
-			<PrivateAccessDescription
-				:isChangeSettings="isChangeSettings"
-				:entityType="entityType"
-				:selectedAccessId="selectedAccessId"
-				:numberEmployees="numberEmployees"
-				:canChangeRights="canChangeRights"
-				:isSettingsBlocked="isSettingsBlocked"
-				@changeSettings="toggleSettings"
-				@blockedSettings="handleBlockedPrivateSettings"
-			/>
-			<PrivateAccessSelect
-				v-if="isChangeSettings"
-				:items="accessItems"
-				variant="private"
-				:selectedId="selectedAccessId"
-				@select="onAccessRights"
+		<div>
+			<div class="access-private-block__wrapper" data-testid="disk-sharing-access-private-block">
+				<PrivateAccessDescription
+					:isChangeSettings="isChangeSettings"
+					:entityType="entityType"
+					:selectedAccessId="selectedAccessId"
+					:numberEmployees="numberEmployees"
+					:canChangeRights="canChangeRights"
+					:isSettingsBlocked="isSettingsBlocked"
+					@changeSettings="toggleSettings"
+					@blockedSettings="handleBlockedPrivateSettings"
+				/>
+				<PrivateAccessSelect
+					v-if="isChangeSettings"
+					:items="accessItems"
+					variant="private"
+					:selectedId="selectedAccessId"
+					data-testid="disk-sharing-access-private-rights"
+					@select="onAccessRights"
 				/>
 			</div>
-			<div v-if="isChangeSettings" class="access-private-full-settings__wrapper">
+			<div
+				v-if="isChangeSettings"
+				class="access-private-full-settings__wrapper"
+				data-testid="disk-sharing-access-private-extended-settings"
+			>
 				<PrivateAccessFullSettingsSwitcher
 					:isActive="isActiveFullSettings"
 					@toggle="onFullSettingsToggle"
@@ -460,8 +483,9 @@ export const SharingAccessPrivateSettings = {
 					/>
 				</div>
 			</div>
-		<div class="access-private-block__copy-link-wrapper">
-			<AccessCopyLink :link="getLink" />
+			<div v-if="getLink" class="access-private-block__copy-link-wrapper" data-testid="disk-sharing-access-copy-link">
+				<AccessCopyLink :link="getLink" />
+			</div>
 		</div>
 	`,
 };

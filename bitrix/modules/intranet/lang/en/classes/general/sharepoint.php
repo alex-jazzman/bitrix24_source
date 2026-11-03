@@ -28,4 +28,4 @@ $MESS["SP_ERROR_MODULE_NOT_INSTALLED"] = "The module is not installed.";
 $MESS["SP_ERROR_CLASS_NOT_EXISTS"] = "The handler class does not exist.";
 $MESS["SP_ERROR_MAX_ERRORS"] = "Exceeded maximum possible service errors.";
 $MESS["SP_ERROR_METHOD_NOT_EXISTS"] = "The client #CLASS# does not support the method #METHOD#.";
-?>
+$MESS['SP_ERROR_SERVER_NOT_ALLOWED'] = 'The SharePoint server is not on the allowlist.';

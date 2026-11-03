@@ -15,8 +15,10 @@ declare interface JNChatActionPanel extends JNChatBaseClassInterface<ActionPanel
 	off<T extends keyof ActionPanelEvents>(eventName: T, handler: ActionPanelEvents[T]): void;
 	once<T extends keyof ActionPanelEvents>(eventName: T, handler: ActionPanelEvents[T]): void;
 
-	show(titleData: object, buttons: Array<ActionPanelButton>): Promise<void>;
+	show(titleData: object, buttons: Array<ActionPanelButton>, moreButton?: ActionPanelButton | null): Promise<void>;
 	hide(animated: boolean): Promise<void>;
+	// Optional: builds without the native "more" button of the action panel do not export it.
+	hideMoreButton?(): Promise<void>;
 	setTitle(title: object): Promise<void>;
 	setButtons(buttons: Array<ActionPanelButton>): Promise<void>;
 }

@@ -325,6 +325,11 @@ div.ui-side-panel-wrap-title-container.ui-side-panel-wrap-title-align-right-cont
 	width: 100%;
 }
 
+.ui-slider-page.--left-panel-resizable .ui-page-slider-left-panel {
+	flex: 0 0 auto;
+	max-width: none;
+}
+
 .ui-page-slider-wrapper .ui-page-slider-left-panel:empty {
 	display: none;
 }

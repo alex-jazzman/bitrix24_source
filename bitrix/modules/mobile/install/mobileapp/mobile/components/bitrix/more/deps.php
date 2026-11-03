@@ -8,7 +8,6 @@ return [
 		'helpers/component',
 		'menu/spotlight',
 		'qrauth/utils',
-		'intent/handlers',
 		'utils/function',
 
 		'navigator/more-tab',

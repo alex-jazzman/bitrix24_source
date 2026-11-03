@@ -1,6 +1,8 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\UI\Buttons;
@@ -24,6 +26,10 @@ $menuBtn = new Buttons\Button([
 ]);
 $menuBtn->addClass('ui-btn-themes webform-cogwheel');
 $menuBtn->addAttribute('id', 'tasks-popupMenuOptions');
+$menuBtn->addAttribute('data-testid', 'tasks-filter-settings-btn');
+$menuBtn->addAttribute('aria-label', Loc::getMessage('TASKS_FILTER_OPTIONS_BTN_ARIA_LABEL'));
+$menuBtn->addAttribute('aria-haspopup', 'menu');
+$menuBtn->addAttribute('aria-expanded', 'false');
 
 Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 
@@ -39,6 +45,20 @@ $disabledDeadlineMenuScopes = [
 		var menuItemsOptions = [];
 		var columnId = '<?= $arParams['SORT_FIELD'] ?? "" ?>';
 		var columnDir = '<?= $arParams['SORT_FIELD_DIR'] ?? "" ?>';
+
+		// a line that opens the menu separates nothing: the block it belongs to is simply absent here
+		function pushDelimiter()
+		{
+			if (menuItemsOptions.length === 0)
+			{
+				return;
+			}
+
+			menuItemsOptions.push({
+				tabId: 'popupMenuOptions',
+				delimiter: true
+			});
+		}
 
 		BX.addCustomEvent('BX.Main.grid:sort', function(column, grid) {
 			if (BX.type.isNotEmptyString(column.sort_by))
@@ -173,10 +193,7 @@ $disabledDeadlineMenuScopes = [
 
 		<?php if($arParams['SHOW_USER_SORT'] == 'Y'):?>
 
-		menuItemsOptions.push({
-			tabId: "popupMenuOptions",
-			delimiter: true
-		});
+		pushDelimiter();
 
 		<?php
 		$sortFields = \Bitrix\Tasks\Ui\Controls\Column::getFieldsWithMessages('TASKS_BTN_SORT_');
@@ -309,10 +326,7 @@ $disabledDeadlineMenuScopes = [
 
 		<?php if (!in_array((string)($arParams['SCOPE'] ?? ''), $disabledDeadlineMenuScopes)): ?>
 
-		menuItemsOptions.push({
-			tabId: 'popupMenuOptions',
-			delimiter: true,
-		});
+		pushDelimiter();
 
 		const deadlineMenu = new BX.Tasks.Deadline.Menu();
 		menuItemsOptions.push(...deadlineMenu.menuItems);
@@ -321,10 +335,7 @@ $disabledDeadlineMenuScopes = [
 
 		<?php if($arParams['USE_EXPORT'] == 'Y'):?>
 
-		menuItemsOptions.push({
-			tabId: "popupMenuOptions",
-			delimiter: true
-		});
+		pushDelimiter();
 
 		<?php if(TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT)): ?>
 		menuItemsOptions.push({
@@ -387,6 +398,10 @@ $disabledDeadlineMenuScopes = [
 
 		<?if (!empty($arParams['POPUP_MENU_ITEMS'])):?>
 		<?foreach ($arParams['POPUP_MENU_ITEMS'] as $menuItem):?>
+		<?php if (!empty($menuItem['kanbanSort'])):?>
+		// the sort of the kanban is a menu of its own: the board passes its state, the extension builds the items
+		menuItemsOptions.push(new BX.Tasks.KanbanSortMenu(<?= Json::encode($menuItem['kanbanSort'])?>).menuItem);
+		<?php else:?>
 		menuItemsOptions.push({
 			tabId: "<?= isset($menuItem['tabId']) ? $menuItem['tabId'] : ''?>",
 			text: "<?= isset($menuItem['text']) ? $menuItem['text'] : ''?>",
@@ -394,8 +409,13 @@ $disabledDeadlineMenuScopes = [
 			href: "<?= isset($menuItem['href']) ? $menuItem['href'] : ''?>",
 			className: "<?= isset($menuItem['className']) ? $menuItem['className'] : ''?>",
 			onclick: <?= isset($menuItem['onclick']) ? $menuItem['onclick'] : '""'?>,
-			params: <?= isset($menuItem['params']) ? $menuItem['params'] : '{}'?>
+			<?php if (!empty($menuItem['delimiter'])):?>delimiter: true,<?php endif;?>
+			params: <?= isset($menuItem['params']) ? $menuItem['params'] : '{}'?>,
+			<?php if (isset($menuItem['focusable'])):?>
+			focusable: <?= $menuItem['focusable'] ? 'true' : 'false'?>,
+			<?php endif;?>
 		});
+		<?php endif;?>
 		<?endforeach;?>
 		<?endif;?>
 
@@ -404,6 +424,10 @@ $disabledDeadlineMenuScopes = [
 			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN,
 			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_TIMELINE,
 			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_PERSONAL,
+		];
+		$leftAlignedMenuScopes = [
+			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_PERSONAL,
+			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_TIMELINE,
 		];
 		$scope = (string)($arParams['SCOPE'] ?? '');
 		$sprintId = (int)($arParams['ACTIVE_SPRINT_ID'] ?? 0);
@@ -414,6 +438,13 @@ $disabledDeadlineMenuScopes = [
 				&& $sprintId > 0
 			)
 		): ?>
+
+		<?php if (in_array($scope, $leftAlignedMenuScopes, true)): ?>
+
+		pushDelimiter();
+
+		<?php endif;?>
+
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW')?>',
@@ -424,6 +455,28 @@ $disabledDeadlineMenuScopes = [
 		})
 		<?php endif;?>
 
+		<?php if (in_array($scope, $leftAlignedMenuScopes, true)): ?>
+
+		// no root item of this menu is a switch, so the icon slot only shifts the text away from the left edge
+		menuItemsOptions.forEach(function(item) {
+			var className = item.className;
+
+			if (
+				item.delimiter
+				|| !BX.type.isNotEmptyString(className)
+				|| className.indexOf('menu-popup-item-none') < 0
+				|| className.indexOf('menu-popup-item-accept') >= 0
+				|| className.indexOf('menu-popup-no-icon') >= 0
+			)
+			{
+				return;
+			}
+
+			item.className = className + ' menu-popup-no-icon';
+		});
+
+		<?php endif;?>
+
 		const angle = <?= ($arResult['relationToId'] ?? 0) ? 'false' : 'true' ?>;
 
 		var buttonRect = BX("tasks-popupMenuOptions").getBoundingClientRect();
@@ -432,8 +485,19 @@ $disabledDeadlineMenuScopes = [
 			bindElement: BX("tasks-popupMenuOptions"),
 			items: menuItemsOptions,
 			closeByEsc: true,
+			// focusTrap is set explicitly: left to the environment gate, the menu takes no
+			// focus at all on a customer portal
+			focusTrap: true,
 			offsetLeft: buttonRect.width / 2,
 			angle,
+			events: {
+				onShow: function() {
+					BX("tasks-popupMenuOptions").setAttribute("aria-expanded", "true");
+				},
+				onClose: function() {
+					BX("tasks-popupMenuOptions").setAttribute("aria-expanded", "false");
+				},
+			},
 		});
 
 		BX.bind(BX("tasks-popupMenuOptions"), "click", BX.delegate(function() {

@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/directorymenu.bundle.js',
 	'rel' => [
 		'mail.favorites-filter-state',
+		'mail.migration-state',
 		'main.core',
 		'main.core.events',
 		'ui.design-tokens',

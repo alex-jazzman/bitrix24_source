@@ -13,6 +13,13 @@ interface GroupedLog extends LogEntry {
 
 type SnapshotErrorReporter = (error: unknown, message: string) => void;
 
+type CallLogContextFields = {
+	roomId?: string;
+	callId?: number;
+	chatId?: number;
+	source?: string;
+};
+
 declare namespace BX.Call.Lib {
 	const accidentLogger: AccidentManager;
 
@@ -33,7 +40,13 @@ declare namespace BX.Call.Lib {
 		get isSending(): boolean;
 		set isSending(value: boolean);
 		sendingLoop(): Promise<void>;
-		addLog(error?: Error | null, message?: string): Promise<void>;
+		/**
+		 * @param {?Error} error the error itself, when there is one
+		 * @param {string} message text of the entry
+		 * @param {string} source subsystem the entry comes from, so that entries of different subsystems
+		 *   with the same message stay apart. Known values: 'copilot_record'. Empty means unset.
+		 */
+		addLog(error?: Error | null, message?: string, source?: string): Promise<void>;
 		handleBeforeUnload(): Promise<void>;
 		chunks<T>(arr: T[], size: number): Generator<T[]>;
 		destroy(): void;
@@ -81,7 +94,7 @@ declare namespace BX.Call.Lib {
 		 */
 		constructor(userId: string);
 		get sessionId(): string;
-		createLogEntry(error: Error | null, message: string): Promise<LogEntry>;
+		createLogEntry(error: Error | null, message: string, callContext?: CallLogContextFields): Promise<LogEntry>;
 		destroy(): void;
 	}
 }

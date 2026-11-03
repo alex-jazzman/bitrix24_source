@@ -14,6 +14,17 @@
 	overflow: visible;
 }
 
+/* the long selector outweighs the one-line ellipsis rules of ui.accessrights.v2 without !important */
+.ui-page-slider-wrapper-hr.--premissions .ui-access-rights-v2-column-item .ui-access-rights-v2-column-item-text-link,
+.ui-page-slider-wrapper-hr.--premissions .ui-access-rights-v2-column-item .ui-access-rights-v2-column-item-text-link > * {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	white-space: normal;
+}
+
 .ui-icon-set.--administrator {
 	--ui-icon-set__icon-path: url("/bitrix/components/bitrix/humanresources.config.permissions/templates/.default/images/administrator.svg");
 }

@@ -10,7 +10,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		[im_v2_const.ActionByRole.setReaction]: im_v2_const.UserRole.member,
 		[im_v2_const.ActionByRole.openMessageMenu]: im_v2_const.UserRole.member,
 		[im_v2_const.ActionByRole.openAvatarMenu]: im_v2_const.UserRole.member,
-		[im_v2_const.ActionByRole.openSidebarMenu]: im_v2_const.UserRole.member,
 		[im_v2_const.ActionByRole.subscribeToComments]: im_v2_const.UserRole.member,
 		[im_v2_const.ActionByRole.openComments]: im_v2_const.UserRole.guest,
 		[im_v2_const.ActionByRole.openSidebar]: im_v2_const.UserRole.guest

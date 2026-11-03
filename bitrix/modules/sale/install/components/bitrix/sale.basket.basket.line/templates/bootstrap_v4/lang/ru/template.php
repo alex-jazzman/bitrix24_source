@@ -1,6 +1,7 @@
 <?
 $MESS ['TSB1_YOUR_CART'] = "Ваша корзина";
 $MESS ['TSB1_CART'] = "Корзина";
+$MESS ['TSB1_CART_ARIA'] = "Корзина, #COUNT#";
 $MESS ['TSB1_TOTAL_PRICE'] = "на сумму";
 $MESS ['TSB1_PERSONAL'] = "Персональный раздел";
 $MESS ['TSB1_LOGIN'] = "Войти";

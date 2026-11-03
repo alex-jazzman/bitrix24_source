@@ -110,7 +110,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			</span>
 		`;
 			this.#ui.select.button = main_core.Tag.render`
-			<button class="ui-btn ui-btn-success ui-btn-xs ui-btn-round">
+			<button
+				class="ui-btn ui-btn-success ui-btn-xs ui-btn-round"
+				data-testid="sign-b2e-representative-selector-select"
+			>
 				${main_core.Loc.getMessage('SIGN_PARTIES_REPRESENTATIVE_SELECT_BUTTON')}
 			</button>
 		`;
@@ -257,7 +260,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			dialog.subscribeOnce('onLoad', () => {
 				const userItems = dialog.items.get(entityType);
 				const userItem = userItems.get(`${representativeId}`);
-				userItem.select();
+				userItem.select(true);
+				this.#userSelector.setPreselectedEntityList([{
+					id: userItem.id,
+					type: userItem.entityId
+				}]);
 				this.#showItem(userItem);
 			});
 			dialog.load();

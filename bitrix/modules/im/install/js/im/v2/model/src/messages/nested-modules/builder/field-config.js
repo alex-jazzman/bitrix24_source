@@ -103,6 +103,12 @@ export const blocksBuilderFieldsConfig: FieldsConfig = [
 		formatFunction: (target) => formatFieldsWithConfig(target, foldFieldsConfig),
 	},
 	{
+		fieldName: 'progress',
+		targetFieldName: 'progress',
+		checkFunction: Type.isPlainObject,
+		formatFunction: (target) => formatFieldsWithConfig(target, progressFieldsConfig),
+	},
+	{
 		fieldName: 'buttons',
 		targetFieldName: 'buttons',
 		checkFunction: Type.isArray,
@@ -127,6 +133,34 @@ export const blocksBuilderFieldsConfig: FieldsConfig = [
 		targetFieldName: 'fileIds',
 		checkFunction: Type.isArray,
 	},
+	{
+		fieldName: 'fileId',
+		targetFieldName: 'fileId',
+		checkFunction: Type.isNumber,
+	},
+	{
+		fieldName: 'label',
+		targetFieldName: 'label',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'placeholder',
+		targetFieldName: 'placeholder',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'disabled',
+		targetFieldName: 'disabled',
+		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'options',
+		targetFieldName: 'options',
+		checkFunction: Type.isArray,
+		formatFunction: (target) => {
+			return target.map((option) => formatFieldsWithConfig(option, formFieldOptionFieldsConfig));
+		},
+	},
 ];
 
 const iconFieldsConfig: FieldsConfig = [
@@ -142,7 +176,25 @@ const iconFieldsConfig: FieldsConfig = [
 	},
 ];
 
+const formFieldOptionFieldsConfig: FieldsConfig = [
+	{
+		fieldName: 'id',
+		targetFieldName: 'id',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'label',
+		targetFieldName: 'label',
+		checkFunction: Type.isString,
+	},
+];
+
 const buttonFieldsConfig: FieldsConfig = [
+	{
+		fieldName: 'id',
+		targetFieldName: 'id',
+		checkFunction: isNumberOrString,
+	},
 	{
 		fieldName: 'type',
 		targetFieldName: 'type',
@@ -172,6 +224,11 @@ const buttonFieldsConfig: FieldsConfig = [
 		fieldName: 'actionParams',
 		targetFieldName: 'actionParams',
 		checkFunction: Type.isPlainObject,
+	},
+	{
+		fieldName: 'disabled',
+		targetFieldName: 'disabled',
+		checkFunction: Type.isBoolean,
 	},
 ];
 
@@ -211,6 +268,19 @@ const foldFieldsConfig: FieldsConfig = [
 	{
 		fieldName: 'title',
 		targetFieldName: 'title',
+		checkFunction: Type.isString,
+	},
+];
+
+const progressFieldsConfig: FieldsConfig = [
+	{
+		fieldName: 'value',
+		targetFieldName: 'value',
+		checkFunction: Type.isNumber,
+	},
+	{
+		fieldName: 'colorToken',
+		targetFieldName: 'colorToken',
 		checkFunction: Type.isString,
 	},
 ];

@@ -3,7 +3,8 @@
  */
 jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { cross, pen } = require('assets/common');
+	const { Color } = require('tokens');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { AddButton } = require('layout/ui/buttons/add-button');
 	const { BaseMultipleField } = require('layout/ui/fields/base-multiple');
 	const { titleIcons } = require('layout/ui/fields/multiple-combined/title-icons');
@@ -12,6 +13,9 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 	const { stringify } = require('utils/string');
 
 	const THROTTLE_INTERVAL = Application.getPlatform() === 'ios' ? 250 : 500;
+	// the registry glyph fills about two thirds of its box, so 18 reproduces the 12 px pen
+	const EDIT_ICON_SIZE = 18;
+	const DELETE_ICON_SIZE = 24;
 
 	/**
 	 * @class MultipleCombinedField
@@ -136,14 +140,11 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 							}
 						},
 					},
-					Image({
-						style: {
-							width: 12,
-							height: 12,
-						},
-						svg: {
-							content: pen(),
-						},
+					IconView({
+						testId: 'MultipleCombinedFieldEdit_icon',
+						icon: Icon.EDIT,
+						size: EDIT_ICON_SIZE,
+						color: Color.base3,
 					}),
 				);
 			}
@@ -210,13 +211,11 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 					style: this.styles.addOrDeleteFieldButtonWrapper,
 					onClick: () => this.handleDeleteButtonClick(index),
 				},
-				Image({
-					tintColor: AppTheme.colors.base3,
-					style: this.styles.buttonContainer,
-					resizeMode: 'cover',
-					svg: {
-						content: cross(),
-					},
+				IconView({
+					testId: `MultipleCombinedFieldDelete_${index}_icon`,
+					icon: Icon.CROSS,
+					size: DELETE_ICON_SIZE,
+					color: Color.base3,
 				}),
 			);
 		}
@@ -295,10 +294,6 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 					color: AppTheme.colors.base4,
 					marginTop: 4,
 					paddingBottom: 6,
-				},
-				buttonContainer: {
-					width: 24,
-					height: 24,
 				},
 				addButton: {
 					text: {

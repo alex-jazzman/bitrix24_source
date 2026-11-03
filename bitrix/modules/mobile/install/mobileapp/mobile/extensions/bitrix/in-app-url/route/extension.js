@@ -13,16 +13,17 @@ jn.define('in-app-url/route', (require, exports, module) => {
 		#name = '';
 		#routes = [];
 		#handler = null;
+		#externalUrlAllowed = false;
 
 		/**
 		 * @param {RouteProps} props
 		 */
-		constructor({ pattern, handler, routes })
+		constructor({ pattern, handler, params, routes })
 		{
 			this.pattern = pattern;
 			this.#handler = handler;
 			this.#name = '';
-			this.#routes = this.#createRoutesList(routes, pattern);
+			this.#routes = this.#createRoutesList(routes, pattern, params);
 		}
 
 		handler(handler)
@@ -48,6 +49,29 @@ jn.define('in-app-url/route', (require, exports, module) => {
 		hasName(name)
 		{
 			return this.#name === name;
+		}
+
+		/**
+		 * Declares that the route intercepts links physically living outside the portal domain,
+		 * such as the public wrappers of portal links. Only such routes are matched against an
+		 * external URL, every other route stays limited to the portal domain.
+		 * @public
+		 * @return {Route}
+		 */
+		allowExternalUrl()
+		{
+			this.#externalUrlAllowed = true;
+
+			return this;
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		isExternalUrlAllowed()
+		{
+			return this.#externalUrlAllowed;
 		}
 
 		/**
@@ -133,7 +157,8 @@ jn.define('in-app-url/route', (require, exports, module) => {
 			}
 
 			return this.#handler(
-				pathParams,
+				// params declared for the matched pattern let a shared handler tell its routes apart
+				{ ...route.params, ...pathParams },
 				{
 					context,
 					url: urlString,
@@ -192,13 +217,13 @@ jn.define('in-app-url/route', (require, exports, module) => {
 		 * @param {Array<RouteOptions>} routesList
 		 * @param {string} pattern
 		 */
-		#createRoutesList(routesList, pattern)
+		#createRoutesList(routesList, pattern, params)
 		{
 			const routes = Array.isArray(routesList) && routesList.length > 0 ? routesList : [];
 
 			if (pattern)
 			{
-				routes.push({ pattern });
+				routes.push({ pattern, params });
 			}
 
 			return routes;

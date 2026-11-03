@@ -11,7 +11,13 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	const { getEntityMessage } = require('crm/loc');
 	const { Loc } = require('loc');
 	const { UIMenuType } = require('layout/ui/menu');
-	const { getActionToCopyEntity, getActionToChangePipeline, getActionToShare } = require('crm/entity-actions');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const {
+		getActionToCopyEntity,
+		getActionToChangePipeline,
+		getActionToShare,
+		getActionToConversion,
+	} = require('crm/entity-actions');
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component/smart-activity-menu-item');
 	const { CrmDocumentList } = require('crm/document/list');
 	const { getPaymentAutomationMenuItem } = require('crm/entity-detail/component/payment-automation-menu-item');
@@ -56,6 +62,15 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 			const canUpdate = BX.prop.getBoolean(permissions, 'update', false);
 			const canDelete = BX.prop.getBoolean(permissions, 'delete', false);
 			const canExclude = BX.prop.getBoolean(permissions, 'exclude', false);
+			const clientCreationAction = getActionToConversion();
+			if (
+				entityId > 0
+				&& BX.prop.getBoolean(permissions, 'read', false)
+				&& clientCreationAction.canCreateFromClient(entityTypeId)
+			)
+			{
+				result.push(getCreateFromClient(detailCard, clientCreationAction));
+			}
 
 			if (isDocumentGenerationEnabled)
 			{
@@ -276,6 +291,42 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 			disable: !canCreate,
 			sectionCode: 'additional',
 			onItemSelected: () => onAction({ entityTypeId, entityId, categoryId, analytics }),
+		};
+	};
+
+	const getCreateFromClient = (detailCard, action) => {
+		const { entityTypeId, entityId, restrictions = {} } = detailCard.getComponentParams();
+		const { id, title, onAction } = action;
+
+		return {
+			id,
+			title,
+			icon: restrictions.conversion ? Icon.COPY : Icon.LOCK,
+			sort: 200,
+			sectionCode: 'top',
+			onItemSelected: async () => {
+				try
+				{
+					if (!restrictions.conversion)
+					{
+						PlanRestriction.open({ title }, layout);
+
+						return;
+					}
+
+					const analytics = new AnalyticsEvent(detailCard.getAnalyticsParams())
+						.setEvent('entity_add_open')
+						.setSubSection('element_card')
+						.setElement('top_context_menu');
+					const callback = await onAction({ entityTypeId, entityId, parentWidget: layout, analytics });
+					await callback();
+				}
+				catch (error)
+				{
+					NotifyManager.showDefaultError();
+					console.error(error);
+				}
+			},
 		};
 	};
 

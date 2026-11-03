@@ -30,7 +30,7 @@ jn.define('navigator/more-tab/meta', (require, exports, module) => {
 
 	module.exports = {
 		NOTIFICATION_EVENTS,
-		SUBSCRIPTION_EVENTS,
 		NAVIGATION_EVENTS,
+		SUBSCRIPTION_EVENTS,
 	};
 });

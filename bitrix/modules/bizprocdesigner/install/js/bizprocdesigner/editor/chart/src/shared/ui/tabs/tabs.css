@@ -3,17 +3,17 @@
 	align-items: center;
 	gap: 24px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
-	margin: 0;
-	padding: 0;
 }
 
 .editor-chart-tabs_tab {
+	font: inherit;
 	font-size: 15px;
 	line-height: 20px;
 	color: var(--ui-color-base-3);
-	padding-bottom: 12px;
+	background: none;
+	border: 0;
+	padding: 0 0 12px;
 	border-bottom: 2px solid transparent;
-	list-style-type: none;
 	cursor: pointer;
 }
 

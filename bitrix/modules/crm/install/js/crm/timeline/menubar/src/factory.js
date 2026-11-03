@@ -14,6 +14,7 @@ import RestPlacementWithLayout from './items/restplacement/withlayout';
 import RestPlacementWithSlider from './items/restplacement/withslider';
 import Sharing from './items/sharing';
 import Message from './items/sms/message';
+import Sync from './items/sync/sync';
 import Task from './items/task';
 import ToDo from './items/todo/todo';
 import Visit from './items/visit';
@@ -75,6 +76,9 @@ export default class Factory
 				break;
 			case 'booking':
 				item = new Booking();
+				break;
+			case 'sync':
+				item = new Sync();
 				break;
 			default:
 				item = null;

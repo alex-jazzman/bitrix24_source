@@ -7,26 +7,41 @@ export class MembersPopup
 	constructor(options)
 	{
 		this.signedParameters = options.signedParameters;
+		this.popupVersion = 0;
+		this.scrollHandlers = new WeakMap();
 	}
 
 	show(groupId, bindNode, type = 'all')
 	{
-		if (this.isPopupShown)
+		const shouldFocusCurrentType = (
+			Type.isElementNode(bindNode)
+			&& bindNode.ownerDocument.activeElement === bindNode
+			&& bindNode.matches(':focus-visible')
+		);
+
+		if (this.popup && !this.popup.isDestroyed())
 		{
+			this.popup.getFocusTrap()?.setRestoreFocus(false);
 			this.popup.destroy();
 		}
 
 		this.groupId = groupId;
+		this.popupVersion++;
 
 		this.resetPopupData();
 		this.changeType(type, false);
+		const popupData = this.popupData;
 
-		this.popup = PopupWindowManager.create({
+		const popup = PopupWindowManager.create({
 			id: 'projects-members-popup-menu',
 			className: 'tasks-projects-members-popup',
 			bindElement: bindNode,
 			autoHide: true,
 			closeByEsc: true,
+			ariaLabel: this.getPopupAriaLabel(),
+			focusTrap: {
+				initialFocus: false,
+			},
 			lightShadow: true,
 			bindOptions: {
 				position: 'bottom',
@@ -41,93 +56,195 @@ export class MembersPopup
 			},
 			events: {
 				onPopupDestroy: () => {
-					this.loader = null;
-					this.isPopupShown = false;
+					this.unbindPopupScrolls(popupData);
+					if (this.popup === popup)
+					{
+						this.popupVersion++;
+						this.loader = null;
+						this.isPopupShown = false;
+						this.popup = null;
+					}
 				},
 				onPopupClose: () => {
-					this.popup.destroy();
+					this.configureFocusRestore(popup, bindNode);
+					popup.destroy();
 				},
-				onAfterPopupShow: (popup) => {
+				onAfterPopupShow: () => {
 					popup.contentContainer.appendChild(this.renderContainer());
 
 					this.showLoader();
 					this.showUsers(groupId, type);
 
 					this.isPopupShown = true;
+
+					if (shouldFocusCurrentType)
+					{
+						this.getCurrentPopupData().tab.focus();
+					}
 				},
 			},
 		});
+		this.popup = popup;
 		this.popupScroll(groupId, type);
-		this.popup.show();
+		popup.show();
+	}
+
+	configureFocusRestore(popup, bindNode)
+	{
+		const focusTrap = popup.getFocusTrap();
+		if (!focusTrap)
+		{
+			return;
+		}
+
+		const popupContainer = popup.getPopupContainer();
+		const ownerDocument = popupContainer.ownerDocument;
+		const activeElement = ownerDocument.activeElement;
+		const shouldRestoreFocus = (
+			Type.isElementNode(bindNode)
+			&& bindNode.isConnected
+			&& bindNode.ownerDocument === ownerDocument
+			&& (
+				activeElement === ownerDocument.body
+				|| popupContainer.contains(activeElement)
+			)
+		);
+
+		focusTrap.setRestoreFocus(shouldRestoreFocus ? bindNode : false);
+	}
+
+	getPopupAriaLabel()
+	{
+		return Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_ARIA_LABEL');
 	}
 
 	renderContainer()
 	{
 		return Tag.render`
-			<span class="tasks-projects-members-popup-container">
-				<span class="tasks-projects-members-popup-head">
+			<div class="tasks-projects-members-popup-container">
+				<div class="tasks-projects-members-popup-head">
 					${this.popupData.all.tab}
 					${this.popupData.heads.tab}
 					${this.popupData.members.tab}
-				</span>
-				<span class="tasks-projects-members-popup-body">
+				</div>
+				<div class="tasks-projects-members-popup-body">
 					<div class="tasks-projects-members-popup-content">
 						<div class="tasks-projects-members-popup-content-box">
 							${this.getCurrentPopupData().innerContainer}
 						</div>
 					</div>
-				</span>
-			</span>
+				</div>
+			</div>
 		`;
 	}
 
 	popupScroll(groupId, type)
 	{
-		if (!BX.type.isDomNode(this.getCurrentPopupData().innerContainer))
+		const popupData = this.popupData[type];
+		if (
+			!Type.isDomNode(popupData?.innerContainer)
+			|| !popupData.hasMore
+			|| this.scrollHandlers.has(popupData.innerContainer)
+		)
 		{
 			return;
 		}
 
-		Event.bind(this.getCurrentPopupData().innerContainer, 'scroll', (event) => {
+		const scrollHandler = (event) => {
 			const area = event.target;
 			if (area.scrollTop > (area.scrollHeight - area.offsetHeight) / 1.5)
 			{
+				this.unbindPopupScroll(popupData);
 				this.showUsers(groupId, type);
-				Event.unbindAll(this.getCurrentPopupData().innerContainer);
 			}
-		});
-	};
+		};
+		this.scrollHandlers.set(popupData.innerContainer, scrollHandler);
+		Event.bind(popupData.innerContainer, 'scroll', scrollHandler);
+	}
+
+	unbindPopupScroll(popupData)
+	{
+		const scrollHandler = this.scrollHandlers.get(popupData?.innerContainer);
+		if (!scrollHandler)
+		{
+			return;
+		}
+
+		Event.unbind(popupData.innerContainer, 'scroll', scrollHandler);
+		this.scrollHandlers.delete(popupData.innerContainer);
+	}
+
+	unbindPopupScrolls(popupData)
+	{
+		Object.values(popupData).forEach((item) => this.unbindPopupScroll(item));
+	}
 
 	showUsers(groupId, type)
 	{
-		BX.ajax.runComponentAction('bitrix:tasks.projects', 'getPopupMembers', {
+		const popupData = this.popupData[type];
+		if (
+			!popupData
+			|| !popupData.hasMore
+			|| popupData.isLoading
+			|| this.groupId !== groupId
+			|| this.currentType !== type
+		)
+		{
+			return null;
+		}
+
+		popupData.isLoading = true;
+		const popupVersion = this.popupVersion;
+
+		return BX.ajax.runComponentAction('bitrix:tasks.projects', 'getPopupMembers', {
 			mode: 'class',
 			data: {
 				groupId,
 				type,
-				page: this.getCurrentPopupData().currentPage,
+				page: popupData.currentPage,
 			},
 			signedParameters: this.signedParameters,
 		}).then(
 			(response) => {
-				if (this.groupId !== groupId || this.currentType !== type)
+				popupData.isLoading = false;
+				if (
+					this.popupVersion !== popupVersion
+					|| this.groupId !== groupId
+					|| this.currentType !== type
+				)
 				{
-					this.hideLoader();
 					return;
 				}
+
 				if (response.data.length > 0)
 				{
 					this.renderUsers(response.data);
 					this.popupScroll(groupId, this.currentType);
 				}
-				else if (!this.getCurrentPopupData().innerContainer.hasChildNodes())
+				else
 				{
-					this.getCurrentPopupData().innerContainer.innerText = Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY');
+					popupData.hasMore = false;
+					this.unbindPopupScroll(popupData);
+					if (!this.getCurrentPopupData().innerContainer.hasChildNodes())
+					{
+						this.getCurrentPopupData().innerContainer.innerText = Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY');
+					}
 				}
-				this.getCurrentPopupData().currentPage++;
+				popupData.currentPage++;
 				this.hideLoader();
 			},
-			() => this.hideLoader()
+			() => {
+				popupData.isLoading = false;
+				if (
+					this.popupVersion === popupVersion
+					&& this.groupId === groupId
+					&& this.currentType === type
+				)
+				{
+					this.hideLoader();
+					this.popupScroll(groupId, type);
+				}
+			},
 		);
 	}
 
@@ -143,10 +260,10 @@ export class MembersPopup
 			this.getCurrentPopupData().innerContainer.appendChild(
 				Tag.render`
 					<a class="tasks-projects-members-popup-item" href="${user['HREF']}" target="_blank">
-						<span class="tasks-projects-members-popup-avatar-new">
+						<div class="tasks-projects-members-popup-avatar-new">
 							${this.getAvatar(user)}
 							<span class="tasks-projects-members-popup-avatar-status-icon"></span>
-						</span>
+						</div>
 						<span class="tasks-projects-members-popup-name">${user['FORMATTED_NAME']}</span>
 					</a>
 				`
@@ -199,19 +316,43 @@ export class MembersPopup
 
 		Object.values(this.popupData).forEach((item) => {
 			Dom.removeClass(item.tab, 'tasks-projects-members-popup-head-item-current');
+			Dom.attr(item.tab, 'aria-pressed', 'false');
 		});
 		Dom.addClass(this.getCurrentPopupData().tab, 'tasks-projects-members-popup-head-item-current');
+		Dom.attr(this.getCurrentPopupData().tab, 'aria-pressed', 'true');
 
-		if (oldType)
+		if (oldType && oldType !== newType)
 		{
 			Dom.replace(this.popupData[oldType].innerContainer, this.getCurrentPopupData().innerContainer);
 		}
 
-		if (loadUsers && this.getCurrentPopupData().currentPage === 1)
+		if (loadUsers && oldType !== newType)
 		{
-			this.showLoader();
-			this.showUsers(this.groupId, newType);
+			if (this.getCurrentPopupData().currentPage === 1)
+			{
+				this.showLoader();
+				this.showUsers(this.groupId, newType);
+			}
+			else
+			{
+				this.hideLoader();
+				this.popupScroll(this.groupId, newType);
+			}
 		}
+	}
+
+	renderTypeButton(type, messageCode)
+	{
+		return Tag.render`
+			<button
+				type="button"
+				class="tasks-projects-members-popup-head-item"
+				aria-pressed="false"
+				onclick="${this.changeType.bind(this, type)}"
+			>
+				<span class="tasks-projects-members-popup-head-text">${Loc.getMessage(messageCode)}</span>
+			</button>
+		`;
 	}
 
 	resetPopupData()
@@ -219,38 +360,26 @@ export class MembersPopup
 		this.popupData = {
 			all: {
 				currentPage: 1,
+				hasMore: true,
+				isLoading: false,
 				renderedUsers: [],
-				tab: Tag.render`
-					<span class="tasks-projects-members-popup-head-item" onclick="${this.changeType.bind(this, 'all')}">
-						<span class="tasks-projects-members-popup-head-text">
-							${Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL')}
-						</span>
-					</span>
-				`,
+				tab: this.renderTypeButton('all', 'TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL'),
 				innerContainer: Tag.render`<div class="tasks-projects-members-popup-inner"></div>`,
 			},
 			heads: {
 				currentPage: 1,
+				hasMore: true,
+				isLoading: false,
 				renderedUsers: [],
-				tab: Tag.render`
-					<span class="tasks-projects-members-popup-head-item" onclick="${this.changeType.bind(this, 'heads')}">
-						<span class="tasks-projects-members-popup-head-text">
-							${Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS')}
-						</span>
-					</span>
-				`,
+				tab: this.renderTypeButton('heads', 'TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS'),
 				innerContainer: Tag.render`<div class="tasks-projects-members-popup-inner"></div>`,
 			},
 			members: {
 				currentPage: 1,
+				hasMore: true,
+				isLoading: false,
 				renderedUsers: [],
-				tab: Tag.render`
-					<span class="tasks-projects-members-popup-head-item" onclick="${this.changeType.bind(this, 'members')}">
-						<span class="tasks-projects-members-popup-head-text">
-							${Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS')}
-						</span>
-					</span>
-				`,
+				tab: this.renderTypeButton('members', 'TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS'),
 				innerContainer: Tag.render`<div class="tasks-projects-members-popup-inner"></div>`,
 			},
 		};

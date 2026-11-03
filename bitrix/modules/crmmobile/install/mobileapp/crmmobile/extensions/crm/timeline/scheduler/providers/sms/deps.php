@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'tokens',
 		'loc',
 		'type',
 		'haptics',

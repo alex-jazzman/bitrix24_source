@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/agreements.bundle.css',
 	'js' => 'dist/agreements.bundle.js',
 	'rel' => [
-		'main.core',
 		'landing.loc',
 		'landing.ui.card.headercard',
 		'landing.ui.card.messagecard',
-		'landing.ui.form.formsettingsform',
 		'landing.ui.field.agreementslist',
+		'landing.ui.form.formsettingsform',
 		'landing.ui.panel.basepresetpanel',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

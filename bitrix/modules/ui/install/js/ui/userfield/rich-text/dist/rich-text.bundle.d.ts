@@ -6,6 +6,7 @@ type TextEditorExports = {
 type EditorOptions = {
 	toolbar: string[];
 	placeholder: string;
+	ariaLabel: string;
 	minHeight: number;
 	copilot?: CopilotConfig;
 };

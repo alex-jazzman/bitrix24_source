@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_ACTIVITY_OBJECT_TASK"] = "Task";
 $MESS["TASKS_UTA_CATEGORY"] = "Tasks";
 $MESS["TASKS_UTA_DESC"] = "Edit task";
 $MESS["TASKS_UTA_DESC_1"] = "Modifies the specified task or adds specified data to it.";

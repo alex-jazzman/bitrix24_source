@@ -3,6 +3,8 @@ import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { ErrorCollection } from 'ui.form-elements.field';
 import { FirstAdminGuard } from 'bitrix24.first-admin-guard';
 import { FireEmployeeWizard, MoveWebhookRequest } from 'intranet.fire-employee-wizard';
+import { FireSystemUserWizard, type FireWizardConfigDto } from 'intranet.fire-system-user-wizard';
+import { showFireConfigFailure } from './fire-config-failure';
 
 export type SetSortType = {
 	menuId: ?string,
@@ -14,6 +16,10 @@ export type SetSortType = {
 export type SetFilterType = {
 	gridId: string,
 	filter: Object,
+}
+
+export type FireActionOptionsType = {
+	disableIntegrations?: boolean,
 }
 
 export class GridManager
@@ -186,6 +192,7 @@ export class GridManager
 		action: string,
 		userFullName: ?string,
 		currentUserId: ?number,
+		requiresDepartmentSelection?: boolean,
 	}): void
 	{
 		const userId = params.userId ?? null;
@@ -201,20 +208,38 @@ export class GridManager
 			this.#grid.getLoader().show();
 			this.runFireWizard(userId).then((response) => {
 				this.#grid.getLoader().hide();
-				const wizard = new FireEmployeeWizard({
-					...response.data,
-					onConfirm: (data) => {
-						MoveWebhookRequest.send(userId, data).then(() => {
-							this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, () => {
-								this.executeUserAction(userId, action, data);
-							});
-						}).catch((error) => console.warn(error));
-					},
-				});
-				wizard.show();
+				this.showFireWizard(userId, action, params, response.data);
+			}).catch(() => {
+				this.#grid.getLoader().hide();
+				showFireConfigFailure();
+			});
+		}
+		else if (action === 'restore' && params.requiresDepartmentSelection)
+		{
+			this.#grid.getLoader().show();
+			ajax.runAction('intranet.v2.User.getVisitorData', {
+				data: {
+					userId,
+				},
+			}).then((response) => {
+				if (Type.isObjectLike(response.data))
+				{
+					return this.loadUserDepartmentPopup(userId, action, response.data).then(() => {
+						this.#grid.getLoader().hide();
+					});
+				}
+
+				this.#grid.getLoader().hide();
+
+				return null;
 			}).catch((response) => {
 				this.#grid.getLoader().hide();
-				console.warn(response);
+				const errors = response.errors?.map((error) => error.message) ?? [];
+
+				if (errors.length > 0)
+				{
+					ErrorCollection.showSystemError(errors.join('<br>'));
+				}
 			});
 		}
 		else
@@ -223,6 +248,48 @@ export class GridManager
 				this.executeUserAction(userId, action);
 			});
 		}
+	}
+
+	loadUserDepartmentPopup(userId, action, data)
+	{
+		return Runtime.loadExtension('intranet.user.department-popup').then((exports) => {
+			const departmentPopup = new exports.UserDepartmentPopup({
+				...data,
+				userType: 'visitor',
+				sendButtonCallback: (departmentIds) => this.executeUserAction(userId, action, { departmentIds }),
+			});
+			departmentPopup.show();
+		});
+	}
+
+	showFireWizard(
+		userId: number,
+		action: string,
+		params: { userFullName: ?string, currentUserId: ?number },
+		config: FireWizardConfigDto,
+	): void
+	{
+		const fireWithFirstAdminGuard = (options: FireActionOptionsType) => {
+			this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, () => {
+				this.executeUserAction(userId, action, options);
+			});
+		};
+
+		FireSystemUserWizard.showForConfig(config, {
+			onConfirm: () => {
+				fireWithFirstAdminGuard({ disableIntegrations: true });
+			},
+			onFallback: () => {
+				new FireEmployeeWizard({
+					...config,
+					onConfirm: (data) => {
+						MoveWebhookRequest.send(userId, data).then(() => {
+							fireWithFirstAdminGuard(data);
+						}).catch((error) => console.warn(error));
+					},
+				}).show();
+			},
+		});
 	}
 
 	handleFirstAdminFireSingle(
@@ -242,7 +309,9 @@ export class GridManager
 		this.checkIfFirstAdmin(userId).then((isFirstAdmin) => {
 			if (!isFirstAdmin)
 			{
-				throw new Error('User is not first admin');
+				fallbackAction();
+
+				return;
 			}
 			const guard = new FirstAdminGuard(
 				userFullName || '',
@@ -292,7 +361,7 @@ export class GridManager
 			});
 	}
 
-	executeUserAction(userId: number, action: string, options = {}): void
+	executeUserAction(userId: number, action: string, options: FireActionOptionsType = {}): void
 	{
 		this.createHandlerByAction(action).call(this, userId, action, options);
 	}
@@ -311,13 +380,14 @@ export class GridManager
 		});
 	}
 
-	executeFireAction(userId: number, action: string): void
+	executeFireAction(userId: number, action: string, options: FireActionOptionsType = {}): void
 	{
 		const row = this.#grid.getRows().getById(userId);
 		row?.stateLoad();
 		ajax.runAction(`intranet.v2.User.${action}`, {
 			data: {
 				userId,
+				disableIntegrations: options.disableIntegrations === true,
 			},
 		}).then(() => {
 			row?.update();
@@ -331,15 +401,22 @@ export class GridManager
 		});
 	}
 
-	executeRestoreAction(userId: number, action: string): void
+	executeRestoreAction(userId: number, action: string, options = {}): void
 	{
 		const row = this.#grid.getRows().getById(userId);
 		row?.stateLoad();
 
+		const data = {
+			userId,
+		};
+
+		if (Type.isArray(options?.departmentIds))
+		{
+			data.departmentIds = options.departmentIds;
+		}
+
 		ajax.runAction('intranet.v2.User.restore', {
-			data: {
-				userId,
-			},
+			data,
 		}).then(() => {
 			row?.update();
 		}).catch((response) => {

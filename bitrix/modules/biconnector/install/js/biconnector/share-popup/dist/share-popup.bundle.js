@@ -1,8 +1,30 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_system_dialog, ui_system_input, ui_buttons, ui_datePicker, biconnector_apacheSupersetAnalytics) {
+(function (exports, main_core, main_core_events, main_date, ui_system_dialog, ui_system_input, ui_buttons, ui_datePicker, ui_notification, biconnector_apacheSupersetAnalytics, biconnector_errorMessage) {
 	'use strict';
 
+	const DISABLED_BY_ADMIN_COMMAND = 'shareDisabledByAdmin';
+	/**
+	 * Calls back when a controller switches off the current user's link to the dashboard.
+	 * Returns the unsubscribe function.
+	 */
+	function subscribeToAdminDisable(dashboardId, callback) {
+		const handler = event => {
+			const [command, params] = event.getData() ?? [];
+			if (command !== DISABLED_BY_ADMIN_COMMAND || Number(params?.dashboardId) !== dashboardId) {
+				return;
+			}
+			callback({
+				isBanned: params.isBanned === true,
+				disabledByAdmin: params.disabledByAdmin ?? null
+			});
+		};
+		main_core_events.EventEmitter.subscribe('onPullEvent-biconnector', handler);
+		return () => main_core_events.EventEmitter.unsubscribe('onPullEvent-biconnector', handler);
+	}
+
+	const ERROR_SHARE_FORBIDDEN = 'share_forbidden';
+	const ERROR_SHARE_DISABLED_BY_ADMIN = 'share_disabled_by_admin';
 	class SharePopup {
 		#dialog;
 		#dashboardId;
@@ -15,6 +37,9 @@ this.BX = this.BX || {};
 		#formNode;
 		#hintNode;
 		#footerNode;
+		#adminStatusNode;
+		#adminStatusTextNode;
+		#enableButton;
 		#iconWrapper;
 		#iconNode;
 		#dateInput;
@@ -31,6 +56,9 @@ this.BX = this.BX || {};
 		#type = '';
 		#analyticsElement = '';
 		#dashboardTitle = '';
+		#disabledByAdmin = null;
+		#isBanned = false;
+		#unsubscribeAdminDisable = null;
 		constructor(options = {}) {
 			this.#dashboardId = options.dashboardId;
 			this.#dashboardTitle = options.dashboardTitle ?? '';
@@ -38,6 +66,8 @@ this.BX = this.BX || {};
 			this.#embeddedLoader = options.embeddedLoader ?? null;
 			this.#urlParams = options.urlParams ?? null;
 			this.#shareData = options.initialShareData ?? null;
+			this.#disabledByAdmin = this.#shareData?.disabledByAdmin ?? null;
+			this.#isBanned = this.#shareData?.isBanned === true;
 			this.#type = options.type ?? '';
 			this.#analyticsElement = options.analyticsElement ?? '';
 		}
@@ -70,19 +100,15 @@ this.BX = this.BX || {};
 				hasHorizontalPadding: false,
 				events: {
 					onHide: () => {
-						if (!this.#isEnabled) {
-							this.#savedPassword = '';
-							this.#selectedDate = null;
-							this.#wasEverActivated = false;
-							this.#deleteOwnShare();
-						} else if (!this.#validatePassword()) {
-							this.#savedPassword = this.#passwordInput.getValue();
-						}
+						this.#savedPassword = this.#passwordInput.getValue();
 						this.#dialog = null;
+						this.#unsubscribeAdminDisable?.();
+						this.#unsubscribeAdminDisable = null;
 					}
 				}
 			});
 			this.#dialog.show();
+			this.#unsubscribeAdminDisable ??= subscribeToAdminDisable(this.#dashboardId, disable => this.#applyAdminDisable(disable));
 		}
 		#applyShareData() {
 			if (!this.#shareData) {
@@ -93,10 +119,9 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.#isApplyingInitialData = true;
-			if (this.#shareData.isActive) {
-				this.#isEnabled = true;
-				this.#wasEverActivated = true;
-			}
+			this.#isEnabled = this.#shareData.isActive === true;
+			// A stored link keeps its password and date, so switching it on again is a plain activation
+			this.#wasEverActivated = main_core.Type.isStringFilled(this.#shareData.password);
 			if (this.#shareData.password) {
 				this.#savedPassword = this.#shareData.password;
 			}
@@ -167,12 +192,13 @@ this.BX = this.BX || {};
 		`;
 			return main_core.Tag.render`
 			<div class="biconnector-share-popup" style="
-				--share-popup-icon: url('${this.#getImagePath('link-icon.png')}');
+				--share-popup-icon: url('${this.#getImagePath('link-icon.webp')}');
 			">
 				${this.#renderHeader()}
 				<div class="biconnector-share-popup__card">
 					<div class="biconnector-share-popup__toggle-section">
 						${this.#renderToggleRow()}
+						${this.#renderAdminStatus()}
 					</div>
 					<div class="biconnector-share-popup__body">
 						<div class="biconnector-share-popup__content">
@@ -217,6 +243,97 @@ this.BX = this.BX || {};
 				</span>
 			</div>
 		`;
+		}
+		#renderAdminStatus() {
+			this.#adminStatusTextNode = main_core.Tag.render`<div class="biconnector-share-popup__admin-status-text"></div>`;
+			this.#enableButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ENABLE'),
+				size: ui_buttons.ButtonSize.SMALL,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				useAirDesign: true,
+				className: 'biconnector-share-popup__admin-status-enable',
+				onclick: () => this.#enableFromAdminStatus()
+			});
+			this.#adminStatusNode = main_core.Tag.render`
+			<div class="biconnector-share-popup__admin-status --hidden">
+				${this.#adminStatusTextNode}
+				${this.#enableButton.render()}
+			</div>
+		`;
+			return this.#adminStatusNode;
+		}
+		#getAdminStatusText() {
+			if (this.#isBanned) {
+				return main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_BANNED');
+			}
+			if (!this.#disabledByAdmin) {
+				return '';
+			}
+			const {
+				name,
+				dateTimestamp
+			} = this.#disabledByAdmin;
+			if (!dateTimestamp) {
+				return main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_DISABLED_BY_ADMIN_NO_DATE', {
+					'#NAME#': name
+				});
+			}
+			return main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_DISABLED_BY_ADMIN', {
+				'#NAME#': name,
+				'#DATE#': main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT'), dateTimestamp)
+			});
+		}
+		#enableFromAdminStatus() {
+			this.#toggleInput.checked = true;
+			this.#handleToggleChange();
+		}
+		#onShareEnabled() {
+			this.#disabledByAdmin = null;
+		}
+		#applyAdminDisable({
+			isBanned,
+			disabledByAdmin
+		}) {
+			if (this.#passwordDebounceTimer) {
+				clearTimeout(this.#passwordDebounceTimer);
+				this.#passwordDebounceTimer = null;
+			}
+			const wasEnabled = this.#isEnabled;
+			this.#isEnabled = false;
+			this.#isBanned = this.#isBanned || isBanned;
+			this.#disabledByAdmin = disabledByAdmin ?? this.#disabledByAdmin;
+			if (this.#toggleInput) {
+				this.#toggleInput.checked = false;
+				this.#updateState();
+			}
+			if (wasEnabled) {
+				main_core_events.EventEmitter.emit('BIConnector.SharePopup:onShareDeactivated', {
+					dashboardId: this.#dashboardId
+				});
+			}
+		}
+
+		/**
+		 * A save that met a link switched off by an administrator or a ban shows it as the pull event would.
+		 */
+		#applyAdminRejection(response) {
+			const errors = main_core.Type.isArray(response?.errors) ? response.errors : [];
+			const disabledError = errors.find(error => error?.code === ERROR_SHARE_DISABLED_BY_ADMIN);
+			if (disabledError) {
+				this.#applyAdminDisable({
+					isBanned: false,
+					disabledByAdmin: disabledError.customData?.disabledByAdmin ?? null
+				});
+				return true;
+			}
+			if (errors.some(error => error?.code === ERROR_SHARE_FORBIDDEN)) {
+				this.#applyAdminDisable({
+					isBanned: true,
+					disabledByAdmin: null
+				});
+				return true;
+			}
+			return false;
 		}
 		#renderDateField() {
 			this.#dateInput = new ui_system_input.Input({
@@ -295,7 +412,7 @@ this.BX = this.BX || {};
 			this.#passwordInput.setValue(password);
 			this.#passwordInput.setError('');
 			this.#copyButton.setDisabled(false);
-			BX.UI.Notification.Center.notify({
+			ui_notification.Center.notify({
 				content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_PASSWORD_GENERATED')
 			});
 			if (this.#isEnabled && this.#wasEverActivated) {
@@ -332,13 +449,14 @@ this.BX = this.BX || {};
 					urlParameterValues: this.#urlParams
 				}
 			}).then(() => {
+				this.#onShareEnabled();
 				this.#sendAnalytics('activate_public_link', {
 					status: 'success'
 				});
 				main_core_events.EventEmitter.emit('BIConnector.SharePopup:onShareActivated', {
 					dashboardId: this.#dashboardId
 				});
-			}).catch(() => {
+			}).catch(response => {
 				this.#sendAnalytics('activate_public_link', {
 					status: 'error'
 				});
@@ -347,8 +465,8 @@ this.BX = this.BX || {};
 				this.#toggleInput.checked = false;
 				this.#isEnabled = false;
 				this.#updateState();
-				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE')
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE'))
 				});
 			});
 		}
@@ -364,7 +482,7 @@ this.BX = this.BX || {};
 				main_core_events.EventEmitter.emit('BIConnector.SharePopup:onShareDeactivated', {
 					dashboardId: this.#dashboardId
 				});
-			}).catch(() => {
+			}).catch(response => {
 				this.#sendAnalytics('activate_public_link', {
 					status: 'error'
 				});
@@ -373,19 +491,17 @@ this.BX = this.BX || {};
 				this.#toggleInput.checked = true;
 				this.#isEnabled = true;
 				this.#updateState();
-				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_DEACTIVATE')
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_DEACTIVATE'))
 				});
 			});
 		}
-		#deleteOwnShare() {
-			BX.ajax.runAction('biconnector.dashboard.deleteOwnShare', {
-				data: {
-					id: this.#dashboardId
-				}
-			});
-		}
 		#updateState() {
+			const showAdminStatus = !this.#isEnabled && (this.#disabledByAdmin !== null || this.#isBanned);
+			main_core.Dom.toggleClass(this.#adminStatusNode, '--hidden', !showAdminStatus);
+			this.#adminStatusTextNode.textContent = this.#getAdminStatusText();
+			main_core.Dom.toggleClass(this.#enableButton.getContainer(), '--hidden', this.#isBanned);
+			this.#toggleInput.disabled = this.#isBanned && !this.#isEnabled;
 			if (this.#isEnabled) {
 				this.#descriptionNode.textContent = main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ENABLED_DESC').replaceAll('[nbsp]', '\u00A0');
 				main_core.Dom.removeClass(this.#formNode, 'biconnector-share-popup__form--hidden');
@@ -515,22 +631,23 @@ this.BX = this.BX || {};
 				}
 			}).then(() => {
 				this.#wasEverActivated = true;
+				this.#onShareEnabled();
 				this.#sendAnalytics('activate_public_link', {
 					status: 'success'
 				});
 				main_core_events.EventEmitter.emit('BIConnector.SharePopup:onShareActivated', {
 					dashboardId: this.#dashboardId
 				});
-			}).catch(() => {
-				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE')
+			}).catch(response => {
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE'))
 				});
 			});
 		}
 		#autoSaveChanges() {
 			const password = this.#passwordInput.getValue();
 			const dateEnd = this.#selectedDate ? this.#formatDateForServer(this.#selectedDate) : '';
-			if (!password || this.#validatePassword() !== null) {
+			if (!this.#isEnabled || !password || this.#validatePassword() !== null) {
 				return;
 			}
 			BX.ajax.runAction('biconnector.dashboard.createShare', {
@@ -539,11 +656,15 @@ this.BX = this.BX || {};
 					password,
 					dateEnd,
 					externalFilterValuesJson: null,
-					urlParameterValues: this.#urlParams
+					urlParameterValues: this.#urlParams,
+					autoSave: 'Y'
 				}
-			}).then(() => {}).catch(() => {
-				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_SAVE')
+			}).then(() => {}).catch(response => {
+				if (this.#applyAdminRejection(response)) {
+					return;
+				}
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_SAVE'))
 				});
 			});
 		}
@@ -577,13 +698,16 @@ this.BX = this.BX || {};
 					password,
 					dateEnd: this.#selectedDate ? this.#formatDateForServer(this.#selectedDate) : '',
 					externalFilterValuesJson: externalFilterValues ? JSON.stringify(externalFilterValues) : null,
-					urlParameterValues: this.#urlParams
+					urlParameterValues: this.#urlParams,
+					// Copying a link already on is not a request to switch it on again.
+					autoSave: this.#wasEverActivated ? 'Y' : 'N'
 				}
 			}).then(response => {
 				this.#copyButton.setWaiting(false);
 
 				// Mark as activated after first successful save
 				this.#wasEverActivated = true;
+				this.#onShareEnabled();
 				const shareUrl = response.data.url;
 				this.#copyToClipboard(shareUrl);
 				this.#sendAnalytics('copy_link', {
@@ -593,13 +717,16 @@ this.BX = this.BX || {};
 				main_core_events.EventEmitter.emit('BIConnector.SharePopup:onShareActivated', {
 					dashboardId: this.#dashboardId
 				});
-			}).catch(() => {
+			}).catch(response => {
 				this.#copyButton.setWaiting(false);
 				this.#sendAnalytics('copy_link', {
 					status: 'error'
 				});
-				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE')
+				if (this.#applyAdminRejection(response)) {
+					return;
+				}
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE'))
 				});
 			});
 		}
@@ -625,12 +752,12 @@ this.BX = this.BX || {};
 			} catch {} finally {
 				document.body.removeChild(textArea);
 			}
-			BX.UI.Notification.Center.notify({
+			ui_notification.Center.notify({
 				content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_ERROR')
 			});
 		}
 		#showCopySuccess() {
-			BX.UI.Notification.Center.notify({
+			ui_notification.Center.notify({
 				content: main_core.Loc.getMessage('BICONNECTOR_SHARE_POPUP_LINK_COPIED')
 			});
 		}
@@ -641,4 +768,4 @@ this.BX = this.BX || {};
 
 	exports.SharePopup = SharePopup;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.UI.System, BX.UI.System.Input, BX.UI, BX.UI.DatePicker, BX.BIConnector);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.UI.System.Input, BX.UI, BX.UI.DatePicker, BX.UI.Notification, BX.BIConnector, BX.BIConnector);

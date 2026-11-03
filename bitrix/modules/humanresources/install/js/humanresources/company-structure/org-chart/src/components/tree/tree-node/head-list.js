@@ -267,7 +267,9 @@ export const HeadList = {
 					<span
 						:bx-tooltip-user-id="item.id"
 						bx-tooltip-context="b24"
+						bx-tooltip-mini-profile-direction="viewport"
 						class="humanresources-tree__node_head-name"
+						:data-test-id="'hr-company-structure_org-chart-tree__node-' + type + '-name-' + item.id"
 						@click.stop="handleUserClick(item.url)"
 					>
 						{{ item.name }}

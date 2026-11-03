@@ -129,7 +129,7 @@ foreach ($data as $key => $item)
 			break;
 
 		case Actions::GRID_SET_COLUMN_SIZES:
-			$options->setColumnsSizes($item["expand"] ?? 1, $item['sizes'] ?? []);
+			$options->setColumnsSizes($item["expand"] ?? 1, $item['sizes'] ?? [], (array)($item['resized'] ?? []));
 			break;
 
 		case Actions::GRID_SET_PAGE_SIZE:

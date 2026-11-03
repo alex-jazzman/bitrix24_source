@@ -1,4 +1,4 @@
-import { Runtime, Type } from 'main.core';
+import { Dom, Event, Runtime, Text, Type } from 'main.core';
 
 import { DatePicker, DatePickerEvent } from 'ui.date-picker';
 import { Notifier } from 'ui.notification-manager';
@@ -25,6 +25,17 @@ import { DatePlanSwitcher } from './components/date-plan-switcher';
 import './date-plan.css';
 
 const MAX_INT = 2 ** 31;
+const OPEN_KEYS = ['Enter', ' ', 'ArrowDown'];
+const VISIBLE_LABEL_SELECTOR = '.ui-system-input-label:not(.--error)';
+
+type Trigger = {
+	ref: string,
+	label: string,
+	inputValue: string,
+	isOpen: boolean,
+	disabled: boolean,
+	open: () => void,
+};
 
 // @vue/component
 export const DatePlanSheet = {
@@ -59,6 +70,7 @@ export const DatePlanSheet = {
 			ButtonSize,
 			ButtonColor,
 			wasEmpty: false,
+			pickerPopupId: `tasks-date-plan-picker-${Text.getRandom()}`,
 		};
 	},
 	data(): Object
@@ -212,6 +224,42 @@ export const DatePlanSheet = {
 
 			return this.loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT');
 		},
+		isDisabled(): boolean
+		{
+			return this.inputDesign === InputDesign.Disabled;
+		},
+		triggers(): Trigger[]
+		{
+			return [
+				{
+					ref: 'start',
+					label: this.loc('TASKS_V2_DATE_PLAN_START'),
+					inputValue: this.formatDate(this.startTs),
+					isOpen: this.isPickerShown && !this.isEndPicker,
+					disabled: this.isDisabled,
+					open: (): void => this.handleDateClick({ currentTarget: this.triggerEl('start') }, { isEnd: false }),
+				},
+				{
+					ref: 'end',
+					label: this.loc('TASKS_V2_DATE_PLAN_END'),
+					inputValue: this.formatDate(this.endTs),
+					isOpen: this.isPickerShown && this.isEndPicker,
+					disabled: this.isDisabled,
+					open: (): void => this.handleDateClick({ currentTarget: this.triggerEl('end') }, { isEnd: true }),
+				},
+			];
+		},
+	},
+	watch: {
+		// The sheet body renders through a slot, so the component's own updated() hook
+		// is not guaranteed to run; a post-flush watcher syncs after the DOM settles.
+		triggers: {
+			handler(): void
+			{
+				this.syncAria();
+			},
+			flush: 'post',
+		},
 	},
 	created(): void
 	{
@@ -221,7 +269,93 @@ export const DatePlanSheet = {
 		this.templateDuration = this.task.endDatePlanAfter - this.task.startDatePlanAfter;
 		this.showErrorDebounced = Runtime.debounce(this.showError, 300, this);
 	},
+	mounted(): void
+	{
+		this.syncAria();
+
+		// main.popup closes the sheet from a capture-phase keyup listener on the document,
+		// so an Escape that only dismisses the picker has to be claimed earlier: capture at
+		// the window always runs before capture at the document, whatever the bind order.
+		Event.bind(window, 'keyup', this.handleWindowKeyUp, true);
+	},
+	beforeUnmount(): void
+	{
+		Event.unbind(window, 'keyup', this.handleWindowKeyUp, true);
+	},
 	methods: {
+		triggerEl(ref: string): ?HTMLElement
+		{
+			return this.$refs[ref]?.$el;
+		},
+		/**
+		 * The trigger is the input wrapper, not the inner input: BInput blurs the input
+		 * on focus in the clickable mode, so a tab stop on it swallows the focus.
+		 *
+		 * A combobox reads its value off the text of its own subtree, so whatever is not
+		 * the value has to leave the accessibility tree: the visible label would repeat
+		 * the name in place of the value, and a date input showing nothing adds its name
+		 * on top of that. A disabled input is out of the tab order natively.
+		 */
+		syncAria(): void
+		{
+			for (const trigger: Trigger of this.triggers)
+			{
+				const node = this.triggerEl(trigger.ref);
+				const input = node?.querySelector('input');
+				if (!input)
+				{
+					continue;
+				}
+
+				Dom.attr(node, 'role', 'combobox');
+				Dom.attr(node, 'aria-label', trigger.label);
+				Dom.attr(node, 'aria-haspopup', 'dialog');
+				Dom.attr(node, 'aria-expanded', trigger.isOpen ? 'true' : 'false');
+				Dom.attr(node, 'aria-controls', trigger.isOpen ? this.pickerPopupId : null);
+				Dom.attr(node, 'aria-disabled', trigger.disabled ? 'true' : null);
+				Dom.attr(node, 'tabindex', trigger.disabled ? null : '0');
+				Dom.attr(node.querySelector(VISIBLE_LABEL_SELECTOR), 'aria-hidden', 'true');
+				Dom.attr(input, 'tabindex', trigger.disabled ? null : '-1');
+				Dom.attr(input, 'aria-hidden', trigger.inputValue ? null : 'true');
+			}
+		},
+		handleKeydown(event: KeyboardEvent, ref: string): void
+		{
+			if (this.isDisabled || !OPEN_KEYS.includes(event.key))
+			{
+				return;
+			}
+
+			const trigger = this.triggers.find((item: Trigger) => item.ref === ref);
+
+			// The open picker runs its own arrow navigation, so ArrowDown has nothing to move
+			// here: cancelling the page default would leave the key doing nothing at all.
+			if (trigger.isOpen && event.key === 'ArrowDown')
+			{
+				return;
+			}
+
+			event.preventDefault();
+
+			if (trigger.isOpen)
+			{
+				this.getDatePicker().hide();
+
+				return;
+			}
+
+			trigger.open();
+		},
+		handleWindowKeyUp(event: KeyboardEvent): void
+		{
+			if (event.key !== 'Escape' || !this.isPickerShown)
+			{
+				return;
+			}
+
+			event.stopImmediatePropagation();
+			this.getDatePicker().hide();
+		},
 		clearStart(): void
 		{
 			this.duration = 0;
@@ -263,6 +397,7 @@ export const DatePlanSheet = {
 					},
 				},
 				popupOptions: {
+					id: this.pickerPopupId,
 					animation: 'fading',
 					targetContainer: this.sheetBindProps.getTargetContainer(),
 				},
@@ -464,11 +599,23 @@ export const DatePlanSheet = {
 		},
 	},
 	template: `
-		<BottomSheet :sheetBindProps @close="close">
-			<div class="tasks-field-date-plan-sheet">
+		<BottomSheet
+			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_DATE_PLAN_TITLE_SHEET')"
+			@close="close"
+		>
+			<div class="tasks-field-date-plan-sheet" data-testid="tasks-date-plan-sheet">
 				<div class="tasks-field-date-plan-header">
 					<HeadlineMd>{{ loc('TASKS_V2_DATE_PLAN_TITLE_SHEET') }}</HeadlineMd>
-					<BIcon class="tasks-field-date-plan-close" :name="Outline.CROSS_L" hoverable @click="close"/>
+					<button
+						type="button"
+						class="tasks-field-date-plan-close"
+						:aria-label="loc('TASKS_V2_DATE_PLAN_SHEET_CLOSE_ARIA_LABEL')"
+						data-testid="tasks-date-plan-sheet-close-btn"
+						@click="close"
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 				<TextSm class="tasks-field-date-plan-description">{{ description }}</TextSm>
 				<div class="tasks-field-date-plan-fields">
@@ -477,12 +624,16 @@ export const DatePlanSheet = {
 							v-model="startDatePlanAfter"
 							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_START_AFTER')"
+							:unitAriaLabel="loc('TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL')"
+							data-testid="tasks-date-plan-start-after-duration"
 							:design="inputDesign"
 						/>
 						<Duration
 							v-model="templateDuration"
 							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_DURATION')"
+							:unitAriaLabel="loc('TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL')"
+							data-testid="tasks-date-plan-template-duration"
 							:design="inputDesign"
 						/>
 					</template>
@@ -490,31 +641,41 @@ export const DatePlanSheet = {
 						<BInput
 							:modelValue="formatDate(startTs)"
 							:label="loc('TASKS_V2_DATE_PLAN_START')"
+							:ariaLabel="loc('TASKS_V2_DATE_PLAN_START')"
 							:design="inputDesign"
 							:icon="Outline.CALENDAR_WITH_SLOTS"
 							:withClear="Boolean(startTs)"
 							clickable
 							:active="isPickerShown && !isEndPicker"
 							:data-task-plan-start="startTs"
+							ref="start"
+							data-testid="tasks-date-plan-start-input"
 							@clear="clearStart"
 							@click="handleDateClick($event, { isEnd: false })"
+							@keydown="handleKeydown($event, 'start')"
 						/>
 						<BInput
 							:modelValue="formatDate(endTs)"
 							:label="loc('TASKS_V2_DATE_PLAN_END')"
+							:ariaLabel="loc('TASKS_V2_DATE_PLAN_END')"
 							:design="inputDesign"
 							:icon="Outline.CALENDAR_WITH_SLOTS"
 							:withClear="Boolean(endTs)"
 							clickable
 							:active="isPickerShown && isEndPicker"
 							:data-task-plan-end="endTs"
+							ref="end"
+							data-testid="tasks-date-plan-end-input"
 							@clear="clearEnd"
 							@click="handleDateClick($event, { isEnd: true })"
+							@keydown="handleKeydown($event, 'end')"
 						/>
 						<Duration
 							v-model="duration"
 							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_DURATION')"
+							:unitAriaLabel="loc('TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL')"
+							data-testid="tasks-date-plan-duration"
 							:design="inputDesign"
 							:error="maxDurationReached ? ' ' : null"
 							:maxValue="Infinity"
@@ -528,12 +689,14 @@ export const DatePlanSheet = {
 						v-if="task.rights.edit"
 						v-model="allowsChangeDatePlan"
 						:text="allowChangeText"
+						data-testid="tasks-date-plan-allow-change-switcher"
 					/>
 					<DatePlanSwitcher
 						v-model="matchesWorkTime"
 						:text="loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME')"
 						:hint="matchWorkTimeHint"
 						:lock="isMatchesWorkTimeLocked"
+						data-testid="tasks-date-plan-match-work-time-switcher"
 					/>
 					<DatePlanSwitcher
 						v-if="!isTemplate"
@@ -541,9 +704,10 @@ export const DatePlanSheet = {
 						:text="loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME')"
 						:hint="loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT')"
 						:lock="isMatchesSubTasksTimeLocked"
+						data-testid="tasks-date-plan-match-subtasks-switcher"
 					/>
 				</div>
-				<div class="tasks-field-date-plan-footer">
+				<div class="tasks-field-date-plan-footer" data-testid="tasks-date-plan-sheet-footer">
 					<UiButton
 						:text="loc('TASKS_V2_DATE_PLAN_BUTTON_SAVE')"
 						:size="ButtonSize.MEDIUM"

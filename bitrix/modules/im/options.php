@@ -79,6 +79,7 @@ if($_POST['Update'].$_GET['RestoreDefaults'] <> '' && check_bitrix_sessid() && $
 		COption::RemoveOption("im", "general_chat_message_leave");
 		COption::RemoveOption("im", "chat_message_start");
 		COption::RemoveOption("im", "contact_list_birthday");
+		COption::RemoveOption("im", "voice_message_recording_available");
 
 		foreach($arSites as $site)
 		{
@@ -178,6 +179,7 @@ if($_POST['Update'].$_GET['RestoreDefaults'] <> '' && check_bitrix_sessid() && $
 		COption::SetOptionString("im", "start_chat_message", $_POST['START_CHAT_MESSAGE']);
 		COption::SetOptionString("im", "color_enable", $_POST['COLOR_ENABLE']);
 		COption::SetOptionString("im", "open_chat_enable", $_POST['OPEN_CHAT_ENABLE']);
+		COption::SetOptionString("im", "voice_message_recording_available", isset($_POST['VOICE_MESSAGE_RECORDING_AVAILABLE'])? 'Y': 'N');
 
 		if (IsModuleInstalled('intranet'))
 		{
@@ -294,6 +296,15 @@ $arReference = Array(
 	<tr>
 		<td class="adm-detail-content-cell-l" width="40%"><?=Loc::getMessage("IM_OPEN_CHAT_ENABLE")?>:</td>
 		<td class="adm-detail-content-cell-r" width="60%"><input type="checkbox" name="OPEN_CHAT_ENABLE" <?=(COption::GetOptionString("im", 'open_chat_enable')?'checked="checked"' :'')?>></td>
+	</tr>
+	<tr>
+		<td class="adm-detail-content-cell-l" width="40%"><?=Loc::getMessage("IM_VOICE_MESSAGE_RECORDING_AVAILABLE")?>:</td>
+		<td class="adm-detail-content-cell-r" width="60%">
+			<input type="checkbox" name="VOICE_MESSAGE_RECORDING_AVAILABLE" value="Y" <?=(COption::GetOptionString("im", 'voice_message_recording_available', 'N') === 'Y'? 'checked="checked"': '')?>>
+			<?if(!\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps()):?>
+			<div class="adm-info-message-text"><?=Loc::getMessage("IM_VOICE_MESSAGE_RECORDING_HTTPS_REQUIRED")?></div>
+			<?endif;?>
+		</td>
 	</tr>
 	<?if(IsModuleInstalled('intranet')):?>
 	<tr>

@@ -3,10 +3,25 @@ import { AllScripts as AllScriptsButton, ALL_SCRIPTS_URL } from './button/all-sc
 import { Prompt } from './prompt';
 import { CriteriaList } from './criteria-list';
 import { ScriptSelector } from './script-selector';
+import { Runtime } from 'main.core';
+import { defineAsyncComponent } from 'ui.vue3';
 import { mapGetters } from 'ui.vue3.vuex';
 import { EmptyState } from './empty-state';
 
 import '../styles/main.css';
+
+let callHintPreference = null;
+const HintView = defineAsyncComponent(async () => {
+	const {
+		HintView: LoadedHintView,
+		Preference,
+		PreferenceOptionName,
+	} = await Runtime.loadExtension('crm.copilot.call-hint');
+
+	callHintPreference = new Preference(PreferenceOptionName.Call);
+
+	return LoadedHintView;
+});
 
 export const Main = {
 	name: 'Main',
@@ -18,9 +33,17 @@ export const Main = {
 		UpdateScriptButton,
 		AllScriptsButton,
 		EmptyState,
+		HintView,
 	},
 
-	computed: mapGetters(['hasAvailableSelectorItems', 'isCallScoringV2Enabled']),
+	computed: mapGetters([
+		'hasAvailableSelectorItems',
+		'isCallScoringV2Enabled',
+		'callAssessmentPrompt',
+		'callAssessmentIsHintEnabled',
+		'callAssessmentHasHint',
+		'hintViewMode',
+	]),
 
 	methods: {
 		emptyStateTitle(): string
@@ -36,13 +59,38 @@ export const Main = {
 
 			return message;
 		},
+
+		handleHintViewSelect(mode: string): void
+		{
+			this.$store.commit('setHintViewMode', mode);
+			callHintPreference?.save(mode);
+		},
 	},
 
 	template: `
-		<div class="crm-copilot__call-card-replacement">
-			<div v-if="hasAvailableSelectorItems" class="crm-copilot__call-card-replacement-content">
+		<div
+			class="crm-copilot__call-card-replacement"
+			data-testid="crm-copilot-call-card-replacement"
+		>
+			<div
+				v-if="hasAvailableSelectorItems"
+				class="crm-copilot__call-card-replacement-content"
+				data-testid="crm-copilot-call-card-replacement-content"
+			>
 				<ScriptSelector />
-				<CriteriaList v-if="isCallScoringV2Enabled" />
+				<HintView
+					v-if="isCallScoringV2Enabled && callAssessmentHasHint"
+					:prompt="callAssessmentPrompt"
+					:isHintEnabled="callAssessmentIsHintEnabled"
+					:hasHint="callAssessmentHasHint"
+					:mode="hintViewMode"
+					@select="handleHintViewSelect"
+				>
+					<template #rules>
+						<CriteriaList />
+					</template>
+				</HintView>
+				<CriteriaList v-else-if="isCallScoringV2Enabled" />
 				<Prompt v-else />
 			</div>
 			<EmptyState

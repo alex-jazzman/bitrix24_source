@@ -1,22 +1,26 @@
-/* Token colors are kept here as well: the preview must not depend on the stylesheet of the veneer,
-   which lives in the features layer. */
+/* Colours of the groups come from `design-tokens.css`: the preview and the veneer paint a token alike,
+   and the palette of the chips is defined in one place for both. */
 .editor-chart-readable-expression-text .bxr-tok {
 	padding: 0 6px;
 	border-radius: 6px;
-	background: var(--ui-color-base-7);
-	color: var(--ui-color-base-1);
+	background: var(--designer-bp-token-bg);
+	color: var(--designer-bp-token-text);
 	white-space: nowrap;
 }
 
 .editor-chart-readable-expression-text .bxr-tok.bxr-node {
-	background: var(--ui-color-accent-soft-green-2);
+	background: var(--designer-bp-token-inbound-bg);
 }
 
 .editor-chart-readable-expression-text .bxr-tok.bxr-global {
-	background: var(--ui-color-accent-soft-blue-2);
+	background: var(--designer-bp-token-global-bg);
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-filter {
+	background: var(--designer-bp-token-filter-bg);
 }
 
 .editor-chart-readable-expression-text .bxr-tok.bxr-unknown {
-	background: var(--ui-color-accent-soft-red-2);
-	color: var(--ui-color-accent-soft-element-red);
+	background: var(--designer-bp-token-unknown-bg);
+	color: var(--designer-bp-token-unknown-text);
 }

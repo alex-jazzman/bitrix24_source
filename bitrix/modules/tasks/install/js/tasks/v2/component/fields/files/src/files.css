@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	position: relative;
+	--tasks-field-files-collapsed-max-height: 155px;
 }
 
 .tasks-field-files-title {
@@ -13,7 +14,29 @@
 	display: flex;
 	flex: 1;
 	align-items: center;
+}
+
+.tasks-field-files-main.--interactive {
 	cursor: pointer;
+}
+
+/* files main button reset */
+.tasks-field-files-main {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+}
+/* files main button reset end */
+
+.tasks-field-files-main:focus-visible,
+.tasks-field-files-toggle:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-files-main .ui-icon-set {
@@ -22,8 +45,46 @@
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
-.tasks-field-files-add-container {
+.tasks-field-files-actions {
+	display: flex;
 	align-items: center;
+	margin-left: auto;
+	gap: var(--ui-space-inline-xs, 8px);
+}
+
+.tasks-field-files-add-container {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-field-files-view-switcher {
+	display: flex;
+	align-items: center;
+}
+
+/* view switcher button reset */
+.tasks-field-files-view-switcher-button {
+	display: inline-flex;
+	align-items: center;
+	appearance: none;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* view switcher button reset end */
+
+/* The focus ring lives on the button, not on the icon: .ui-icon-set is drawn through
+   a mask, and a mask clips the outline of its own element away. */
+.tasks-field-files-view-switcher-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.tasks-field-files-view-switcher-icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .tasks-field-files-text {
@@ -42,23 +103,22 @@
 	cursor: pointer;
 }
 
-.tasks-field-files-close {
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
-}
-
-.tasks-field-files-sheet {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-}
-
-.tasks-field-files-header {
-	display: flex;
-	justify-content: space-between;
+/* files add button reset */
+.tasks-field-files-add-button {
+	display: inline-flex;
 	align-items: center;
-	padding-top: var(--ui-space-stack-md2);
-	padding-bottom: var(--ui-space-inline-md);
-	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+	appearance: none;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* files add button reset end */
+
+.tasks-field-files-add-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-files-title {
@@ -66,66 +126,57 @@
 	font-weight: var(--ui-font-weight-medium);
 }
 
-.tasks-field-files-header .ui-icon-set {
-	opacity: 0.7;
-	cursor: pointer;
-}
-
-.tasks-field-files-header .ui-icon-set:hover {
-	opacity: 1;
-}
-
 .tasks-field-files-list {
 	overflow: auto;
-	margin: 15px 0;
+	margin: 11px -4px;
+	padding: 4px;
 }
 
 .tasks-field-files-list.--card {
-	max-height: 90px;
-	overflow-y: hidden;
+	position: relative;
 	margin: 15px 0 0;
+	overflow: visible;
 }
 
-.tasks-field-files-footer {
+.tasks-field-files-list.--card.--collapsed {
+	max-height: var(--tasks-field-files-collapsed-max-height);
+	overflow: clip;
+}
+
+.tasks-field-files-list.--card.--collapsed::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 20px;
+	pointer-events: none;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--ui-color-bg-content-primary) 100%);
+}
+
+.tasks-field-files-bottom {
 	display: flex;
 	align-items: center;
-	margin-top: auto;
-	padding-top: var(--ui-space-inline-xl);
-	padding-right: 4px;
-	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 	justify-content: flex-end;
+	margin-top: var(--ui-space-stack-xs);
 }
 
-.tasks-field-files-footer.--with-archive {
+.tasks-field-files-bottom.--with-archive {
 	justify-content: space-between;
 }
 
-.tasks-field-files-more-button {
-	position: absolute;
-	bottom: 0;
-	right: 0;
+.tasks-field-files-toggle {
 	cursor: pointer;
 	font-size: var(--ui-font-size-md);
 	line-height: var(--ui-typography-line-height);
-	z-index: 2;
-}
-
-.tasks-field-files-more-button-text {
 	color: var(--ui-color-accent-main-link);
 }
 
-.tasks-field-files-shadow {
-	position: relative;
-	pointer-events: none;
-	z-index: 1;
+/* Download archive button: normal font weight for the label */
+[data-task-files-download-archive] .ui-btn.tasks-files-download-archive-button {
+	font-weight: var(--ui-font-weight-normal);
 }
 
-.tasks-field-files-shadow-white {
-	position: absolute;
-	height: 110px;
-	width: 40%;
-	flex-shrink: 0;
-	background: linear-gradient(90deg, rgba(255, 255, 255, 0.00) 11.84%, rgba(255, 255, 255, 1) 79.41%);
-	bottom: 0;
-	right: 0;
+.ui-chip[data-task-chip-id="fileIds"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }

@@ -295,7 +295,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 		getManagerCountSubtitle(managerCounter)
 		{
 			return Loc.getMessagePlural(
-				'IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_MANAGERS_SUBTITLE',
+				'IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_MANAGERS_SUBTITLE_MSGVER_1',
 				managerCounter,
 				{
 					'#COUNT#': managerCounter,

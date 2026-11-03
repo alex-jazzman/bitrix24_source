@@ -1,0 +1,2 @@
+<?php
+$MESS['SIGN_INTEGRATION_CRM_PROCESS_TYPE_TITLE'] = 'HR workflows';

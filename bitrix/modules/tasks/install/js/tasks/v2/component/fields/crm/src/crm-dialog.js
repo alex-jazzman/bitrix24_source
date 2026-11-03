@@ -12,6 +12,7 @@ type Params = {
 	targetNode: HTMLElement,
 	taskId: TaskId,
 	onClose: Function,
+	onUpdate?: Function,
 };
 
 const dialogs: { [taskId: TaskId]: EntitySelectorDialog } = {};
@@ -20,21 +21,22 @@ export const crmDialog = new class
 {
 	#taskId: TaskId;
 	#onClose: Function | null;
+	#onUpdate: Function | null;
 
 	fillDialog(taskId: TaskId): void
 	{
 		this.#taskId = taskId;
 
-		this.#fillDialog(this.#ids);
+		this.#syncSelectedItems();
 	}
 
 	show(params: Params): void
 	{
 		this.#taskId = params.taskId;
 		this.#onClose = params.onClose;
+		this.#onUpdate = params.onUpdate;
 
-		this.#fillDialog(this.#ids);
-		this.#dialog.selectItemsByIds(this.#items);
+		this.#syncSelectedItems();
 		this.#dialog.showTo(params.targetNode);
 	}
 
@@ -78,27 +80,39 @@ export const crmDialog = new class
 			})),
 			preselectedItems: this.#items,
 			events: {
-				onLoad: this.#fillStore,
+				onLoad: (): void => {
+					this.#syncSelectedItems();
+					void this.#fillStore();
+				},
 			},
 			popupOptions: {
 				events: {
-					onClose: async (): Promise<void> => {
-						if (!this.#dialog.isLoaded())
-						{
-							return;
-						}
-
-						const items = await this.#fillStore();
-
-						const crmItemIds = items.map(({ id }) => id);
-						void taskService.update(this.#taskId, { crmItemIds });
-
-						this.#onClose?.();
-					},
+					onClose: this.#handleClose,
 				},
 			},
 		});
 	}
+
+	#handleClose = async (): Promise<void> => {
+		try
+		{
+			if (!this.#dialog.isLoaded())
+			{
+				return;
+			}
+
+			const items = await this.#fillStore();
+
+			const crmItemIds = items.map(({ id }) => id);
+			void taskService.update(this.#taskId, { crmItemIds });
+
+			this.#onUpdate?.();
+		}
+		finally
+		{
+			this.#onClose?.();
+		}
+	};
 
 	#fillStore = async (): Promise<CrmItemModel[]> => {
 		const crmItems = this.#dialog.getSelectedItems().map((item: Item) => this.#mapItemToModel(item));
@@ -108,6 +122,12 @@ export const crmDialog = new class
 		return crmItems;
 	};
 
+	#syncSelectedItems(): void
+	{
+		this.#fillDialog(this.#ids);
+		this.#dialog.selectItemsByIds(this.#items);
+	}
+
 	#fillDialog(ids: string[]): void
 	{
 		if (!this.#dialog.isLoaded())
@@ -116,7 +136,7 @@ export const crmDialog = new class
 		}
 
 		const itemIds = new Set(this.#dialog.getItems().map((it) => CrmMappers.mapId(it.getEntityId(), it.getId())));
-		ids.forEach((crmItemId: number) => {
+		ids.forEach((crmItemId: string) => {
 			const [entityId, id] = CrmMappers.splitId(crmItemId);
 
 			if (itemIds.has(crmItemId))
@@ -127,6 +147,10 @@ export const crmDialog = new class
 			}
 
 			const crmItem: CrmItemModel = Core.getStore().getters[`${Model.CrmItems}/getById`](crmItemId);
+			if (!crmItem)
+			{
+				return;
+			}
 
 			this.#dialog.addItem({
 				id,

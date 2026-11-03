@@ -2,7 +2,6 @@
  * @module layout/ui/detail-card
  */
 jn.define('layout/ui/detail-card', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Alert, confirmClosing, confirmDestructiveAction } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
 	const { EventEmitter } = require('event-emitter');
@@ -21,6 +20,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { qrauth } = require('qrauth/utils');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { requireLazy } = require('require-lazy');
+	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
 
 	const CACHE_ID = 'DETAIL_CARD';
 	const TAB_HEADER_HEIGHT = 50;
@@ -284,10 +285,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		{
 			return [
 				{
-					// type: 'cross',
-					svg: {
-						content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
-					},
+					type: Icon.CHEVRON_DOWN.getIconName(),
+					color: Color.base4.toHex(),
 					callback: this.handleExitFromEntity,
 				},
 			];
@@ -306,7 +305,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						name: this.getSaveButtonTitle(),
 						type: 'text',
 						badgeCode: 'save_entity',
-						color: this.isLoading ? AppTheme.colors.accentSoftBlue1 : AppTheme.colors.accentMainLinks,
+						color: this.isLoading ? Color.accentSoftBlue1.toHex() : Color.accentMainLinks.toHex(),
 						callback: this.handleSave,
 					});
 				}
@@ -587,12 +586,12 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			return TabView({
 				style: {
 					height: TAB_HEADER_HEIGHT,
-					backgroundColor: AppTheme.realColors.bgNavigation,
+					backgroundColor: Color.bgNavigation.toHex(),
 				},
 				params: {
 					styles: {
 						tabTitle: {
-							underlineColor: AppTheme.colors.accentExtraDarkblue,
+							underlineColor: Color.accentExtraDarkblue.toHex(),
 						},
 					},
 					items: this.availableTabs.map((tab) => this.prepareTabViewItem(tab)),
@@ -1887,7 +1886,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				{
 					resizableByKeyboard: true,
 					style: {
-						backgroundColor: AppTheme.colors.bgPrimary,
+						backgroundColor: Color.bgPrimary.toHex(),
 					},
 				},
 				this.renderTabHeader(),

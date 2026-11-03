@@ -1,7 +1,7 @@
-import { Loc } from 'main.core';
 import 'ui.notification';
 import { NoteDocumentPageComponent } from 'note.editor';
 import { ROUTE_NAME_HOME } from '../router/route-names';
+import { showDocumentUnavailableNotification } from '../app/document-unavailable-notification.ts';
 
 export const DocumentPage = {
 	name: 'DocumentPage',
@@ -69,13 +69,7 @@ export const DocumentPage = {
 	methods: {
 		onUnavailable(): void
 		{
-			// Unified handler for inaccessible/missing documents: single toast + redirect home.
-			// Sidebar route-sync stays silent; editor feature also stops surfacing local toasts for these statuses.
-			const message = Loc.getMessage('NOTE_SIDEBAR_ERROR_DOCUMENT_NOT_FOUND') || '';
-			if (message !== '')
-			{
-				BX.UI.Notification.Center.notify({ content: message, position: 'top-right' });
-			}
+			showDocumentUnavailableNotification();
 			this.$router.replace({ name: ROUTE_NAME_HOME });
 		},
 	},

@@ -219,6 +219,7 @@
 							{
 								attrs: {
 									id: "CONFIGURATION_ACCEPT_CLEAR_ALL",
+									'data-testid': 'rest-configuration-import-clear-all',
 									type: "checkbox",
 									name: 'ACCEPT_CLEAR_ALL',
 									value: 'Y'
@@ -249,6 +250,9 @@
 				message: message,
 				modal: true,
 				bindElement: startBtn,
+				popupOptions: {
+					id: 'rest-configuration-import-confirm',
+				},
 				buttons: [
 					btnConfirm,
 					new BX.UI.Button({

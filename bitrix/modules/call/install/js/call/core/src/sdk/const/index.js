@@ -124,6 +124,8 @@ export const MONITORING_EVENTS_NAME_LIST = {
 	HIGH_PACKET_LOSS_SEND: 'webrtc_high_packet_loss_send',
 	HIGH_PACKET_LOSS_RECEIVE: 'webrtc_high_packet_loss_receive',
 	CPU_ISSUES: 'webrtc_cpu_issues',
+	AUTO_QUALITY_DEGRADED: 'webrtc_auto_quality_degraded',
+	AUTO_QUALITY_IMPROVED: 'webrtc_auto_quality_improved',
 	NETWORK_ISSUES: 'webrtc_network_issues',
 	NETWORK_LATENCY_MS: 'webrtc_network_latency_ms',
 	PEER_CONNECTION_REFUSED: 'webrtc_peer_connection_refused',

@@ -31,6 +31,8 @@ const Event = Object.freeze({
 	TimeEntryCreate: 'time_entry_create',
 	DescriptionEdit: 'description_edit',
 	DescriptionExpand: 'description_expand',
+	CloseSuggestBanner: 'close_suggest_banner',
+	ClickSuggestBanner: 'click_suggest_banner',
 });
 
 const Type = Object.freeze({
@@ -38,6 +40,7 @@ const Type = Object.freeze({
 	Task: 'task',
 	Auto: 'auto',
 	Manual: 'manual',
+	Notification: 'notification',
 });
 
 const Section = Object.freeze({
@@ -57,6 +60,8 @@ const SubSection = Object.freeze({
 	TemplatesCard: 'templates_card',
 	MyFiles: 'my_files',
 	Bitrix24Files: 'bitrix24_files',
+	List: 'list',
+	Deadline: 'deadline',
 });
 
 const Element = Object.freeze({
@@ -86,6 +91,9 @@ const Element = Object.freeze({
 	ViewerButton: 'viewer_button',
 	AddResult: 'add_result',
 	ChatContextMenu: 'chat_context_menu',
+	Deadline: 'deadline',
+	Executor: 'executor',
+	Refresh: 'refresh',
 });
 
 const Status = Object.freeze({

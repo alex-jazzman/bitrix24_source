@@ -8,7 +8,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	class StateService {
 		async set(state) {
-			await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskStateSet, {
+			return tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskStateSet, {
 				state
 			});
 		}

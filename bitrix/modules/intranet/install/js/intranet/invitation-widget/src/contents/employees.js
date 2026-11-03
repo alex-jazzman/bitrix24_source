@@ -1,7 +1,11 @@
 import { Counter } from 'ui.cnt';
 import { Content } from "./content";
 import { Analytics } from '../analytics';
-import { Tag, Loc, ajax, Text, Type } from 'main.core';
+import { Tag, Loc, ajax, Text, Type, Dom } from 'main.core';
+import {
+	destroyAccessibleCounter,
+	updateCounterAccessibleName,
+} from 'intranet.invitation-widget-counter';
 import type { EmployeesContentOptions } from "../types/options";
 import type { ConfigContent } from "../types/content";
 import { Menu } from "main.popup";
@@ -30,29 +34,47 @@ export class EmployeesContent extends Content
 	{
 		return this.cache.remember('layout', () => {
 			return Tag.render`
-				<div data-id="bx-invitation-widget-content-employees" class="intranet-invitation-widget-item intranet-invitation-widget-item--emp ${this.getOptions().isLimit ? 'intranet-invitation-widget-item--emp-alert' : null}">
+				<div
+					data-id="bx-invitation-widget-content-employees"
+					class="intranet-invitation-widget-item intranet-invitation-widget-item--emp ${this.getOptions().isLimit ? 'intranet-invitation-widget-item--emp-alert' : null}"
+					data-testid="intranet-invitation-widget-employees"
+				>
 					<div class="intranet-invitation-widget-inner">
 						<div class="intranet-invitation-widget-content">
-							<div class="intranet-invitation-widget-item-content">
-								<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-progress ${this.getOptions().isLimit ? 'intranet-invitation-widget-item-progress--crit' : 'intranet-invitation-widget-item-progress--full'}"/>
-								<div class="intranet-invitation-widget-employees">
-									<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-name">
-										<span style="margin-right: 2px;">
-											${Loc.getMessage('INTRANET_INVITATION_WIDGET_EMPLOYEES')}
-										</span>
-									</div>
-									<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-num">
-										${this.getOptions().users.currentUserCountMessage}
+							<a
+								class="intranet-invitation-widget-employees-link"
+								href="${this.getOptions().userListLink}"
+								onclick="${this.showUserList()}"
+								onfocus="${() => this.#setFocusHighlight(true)}"
+								onblur="${() => this.#setFocusHighlight(false)}"
+								data-testid="intranet-invitation-widget-employees-list"
+							>
+								<div class="intranet-invitation-widget-item-content">
+									<div class="intranet-invitation-widget-item-progress ${this.getOptions().isLimit ? 'intranet-invitation-widget-item-progress--crit' : 'intranet-invitation-widget-item-progress--full'}"/>
+									<div class="intranet-invitation-widget-employees">
+										<div class="intranet-invitation-widget-item-name">
+											<span style="margin-right: 2px;">
+												${Loc.getMessage('INTRANET_INVITATION_WIDGET_EMPLOYEES')}
+											</span>
+										</div>
+										<div class="intranet-invitation-widget-item-num">
+											${this.getOptions().users.currentUserCountMessage}
+										</div>
 									</div>
 								</div>
-							</div>
-							${this.getDetail()}
+								${this.getDetail()}
+							</a>
 							${this.getOptions().isAdmin ? this.getSelectorRights() : null}
 						</div>
 					</div>
 				</div>
 			`;
 		});
+	}
+
+	#setFocusHighlight(focused: boolean): void
+	{
+		Dom.toggleClass(this.getLayout().parentElement, 'intranet-invitation-widget-employees-focus', focused);
 	}
 
 	#showCounter(): void
@@ -77,7 +99,9 @@ export class EmployeesContent extends Content
 				return;
 			}
 
-			this.#getCounter().update(value);
+			const counter = this.#getCounter();
+			counter.update(value);
+			updateCounterAccessibleName(counter, value);
 			this.getOptions().invitationCounter = value;
 
 			if (value > 0)
@@ -86,7 +110,7 @@ export class EmployeesContent extends Content
 			}
 			else
 			{
-				this.#getCounter().destroy();
+				destroyAccessibleCounter(counter);
 				this.cache.delete('counter');
 			}
 		}
@@ -95,10 +119,14 @@ export class EmployeesContent extends Content
 	#getCounter(): Counter
 	{
 		return this.cache.remember('counter', () => {
-			return new Counter({
-				value: Number(this.getOptions().invitationCounter),
+			const value = Number(this.getOptions().invitationCounter);
+			const counter = new Counter({
+				value,
 				color: Counter.Color.DANGER,
 			});
+			updateCounterAccessibleName(counter, value);
+
+			return counter;
 		});
 	}
 
@@ -128,7 +156,7 @@ export class EmployeesContent extends Content
 			}
 
 			return Tag.render`
-				<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-detail">
+				<div class="intranet-invitation-widget-item-detail">
 					<span class="intranet-invitation-widget-item-link-text">
 						${content}
 					</span>
@@ -142,21 +170,28 @@ export class EmployeesContent extends Content
 		return this.cache.remember('showUserList', () => {
 			return () => {
 				Analytics.send(Analytics.EVENT_OPEN_USER_LIST);
-				document.location.href = '/company/';
 			};
 		});
 	}
 
-	getSelectorRights(): HTMLDivElement
+	getSelectorRights(): HTMLButtonElement
 	{
 		return this.cache.remember('selector-rights', () => {
 			const showMenu = (e) => {
 				e.stopPropagation();
-				this.getRightsMenu(e.target).toggle();
-			}
+				this.getRightsMenu(e.currentTarget).toggle();
+			};
 
 			const button = Tag.render`
-				<div onclick="${showMenu}" class="intranet-invitation-widget-item-menu"></div>
+				<button
+					class="intranet-invitation-widget-item-menu"
+					type="button"
+					aria-label="${Loc.getMessage('INTRANET_INVITATION_WIDGET_SETTING_BUTTON_LABEL')}"
+					aria-haspopup="menu"
+					aria-expanded="false"
+					onclick="${showMenu}"
+					data-testid="intranet-invitation-widget-employees-settings"
+				></button>
 			`;
 
 			this.subscribe('right-selected', (event) => {
@@ -185,6 +220,7 @@ export class EmployeesContent extends Content
 				className: 'license-right-popup-men',
 				events: {
 					onPopupShow: (popup) => {
+						element.setAttribute('aria-expanded', 'true');
 						EventEmitter.emit(
 							EventEmitter.GLOBAL_TARGET,
 							this.getEventNamespace() + ':showRightMenu',
@@ -196,6 +232,7 @@ export class EmployeesContent extends Content
 						);
 					},
 					onPopupClose: (popup) => {
+						element.setAttribute('aria-expanded', 'false');
 						EventEmitter.emit(
 							EventEmitter.GLOBAL_TARGET,
 							this.getEventNamespace() + ':closeRightMenu',

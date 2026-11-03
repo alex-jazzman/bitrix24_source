@@ -1,0 +1,20 @@
+.bx-im-sidebar-collab-v2-info__container {
+	--sonet-project-info-link-color: var(--im-color-accent-blue);
+
+	margin-bottom: 20px;
+}
+
+.bx-im-sidebar-collab-v2-info__skeleton {
+	height: 214px;
+	background: url('./images/collab-v2-info.svg') no-repeat top left / 100% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-sidebar-collab-v2-info__skeleton {
+		background-image: url('./images/collab-v2-info-reduced-motion.svg');
+	}
+}
+
+.bx-im-sidebar-collab-v2-info__content {
+	min-width: 0;
+}

@@ -41,33 +41,47 @@ if (isset($arResult['CLOSE_SLIDER']) && $arResult['CLOSE_SLIDER'] === true)
 
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
 
+$navigationAttributes = ($arParams['IS_SETTINGS_HUB'] ?? false) === true
+	? ' target="_self" data-slider-ignore-autobinding="true"'
+	: '';
+
 $arToolbarButtons = Array();
 $arToolbarButtons[] = array(
 	"TEXT"=>GetMessage("CRM_FE_TOOLBAR_FIELDS"),
 	"TITLE"=>GetMessage("CRM_FE_TOOLBAR_FIELDS_TITLE"),
 	"LINK"=>$arResult["FIELDS_LIST_URL"],
 	"ICON"=>"btn-view-fields",
+	'LINK_PARAM' => 'data-testid="crm-config-fields-edit-list-button"' . $navigationAttributes,
 );
 if (!$arResult["NEW_FIELD"])
 {
-	$arToolbarButtons[] = array(
-		"TEXT"=>GetMessage("CRM_FE_TOOLBAR_ADD"),
-		"TITLE"=>GetMessage("CRM_FE_TOOLBAR_ADD_TITLE"),
-		"LINK"=>$arResult["FIELD_ADD_URL"],
-		"ICON"=>"btn-add-field",
-	);
-	$arToolbarButtons[] = array(
-		"SEPARATOR"=>"Y",
-	);
-	$arToolbarButtons[] = array(
-		"TEXT"=>GetMessage("CRM_FE_TOOLBAR_DELETE"),
-		"TITLE"=>GetMessage("CRM_FE_TOOLBAR_DELETE_TITLE"),
-		"LINK"=>"javascript:jsDelete('".CUtil::JSEscape("form_".$arResult["FORM_ID"])."', '".GetMessage("CRM_FE_TOOLBAR_DELETE_WARNING")."')",
-		"ICON"=>"btn-delete-field",
-	);
-	$arToolbarButtons[] = array(
-		"SEPARATOR"=>"Y",
-	);
+	if ($arResult["CAN_MANAGE_FIELDS"])
+	{
+		$arToolbarButtons[] = array(
+			"TEXT"=>GetMessage("CRM_FE_TOOLBAR_ADD"),
+			"TITLE"=>GetMessage("CRM_FE_TOOLBAR_ADD_TITLE"),
+			"LINK"=>$arResult["FIELD_ADD_URL"],
+			"ICON"=>"btn-add-field",
+			"LINK_PARAM"=>'data-testid="crm-config-fields-edit-add-btn"' . $navigationAttributes,
+		);
+		$arToolbarButtons[] = array(
+			"SEPARATOR"=>"Y",
+		);
+	}
+
+	if ($arResult["CAN_DELETE_FIELDS"])
+	{
+		$arToolbarButtons[] = array(
+			"TEXT"=>GetMessage("CRM_FE_TOOLBAR_DELETE"),
+			"TITLE"=>GetMessage("CRM_FE_TOOLBAR_DELETE_TITLE"),
+			"LINK"=>"javascript:jsDelete('".CUtil::JSEscape("form_".$arResult["FORM_ID"])."', '".GetMessage("CRM_FE_TOOLBAR_DELETE_WARNING")."')",
+			"ICON"=>"btn-delete-field",
+			"LINK_PARAM"=>'data-testid="crm-config-fields-edit-delete-btn"' . $navigationAttributes,
+		);
+		$arToolbarButtons[] = array(
+			"SEPARATOR"=>"Y",
+		);
+	}
 }
 
 

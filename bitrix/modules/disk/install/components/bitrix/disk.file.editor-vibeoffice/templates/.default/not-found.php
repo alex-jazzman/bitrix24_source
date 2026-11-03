@@ -8,7 +8,6 @@
 /** @var BaseComponent $component */
 
 use Bitrix\Disk\Internals\BaseComponent;
-use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
@@ -29,16 +28,10 @@ Extension::load([
 $containerId = 'not-found-file-' . $this->randString();
 $headerText = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_HEADER_MODE_VIEW');
 
-$headerLogoClass = '';
-if (Context::getCurrent()->getLanguage() !== 'ru')
-{
-	$headerLogoClass = 'disk-fe-office-header-logo--eng';
-}
 ?>
 <div data-id="<?= $containerId ?>-wrapper">
 	<div class="disk-fe-office-header">
 		<div class="disk-fe-office-header-left">
-			<a href="<?= $arResult['HEADER_LOGO_LINK'] ?? '' ?>" class="disk-fe-office-header-logo <?= $headerLogoClass ?>" target="_blank"></a>
 			<div class="disk-fe-office-header-mode">
 				<span class="disk-fe-office-header-mode-text"><?= $headerText ?></span>
 			</div>

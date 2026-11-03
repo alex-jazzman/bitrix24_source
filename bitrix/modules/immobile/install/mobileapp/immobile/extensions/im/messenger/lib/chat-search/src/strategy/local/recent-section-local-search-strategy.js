@@ -2,8 +2,12 @@
  * @module im/messenger/lib/chat-search/src/strategy/local/recent-section-local-search-strategy
  */
 jn.define('im/messenger/lib/chat-search/src/strategy/local/recent-section-local-search-strategy', (require, exports, module) => {
+	const { PerfPoint } = require('debug/prism');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const {
+		CopilotDefaultTitleSearch,
+	} = require('im/messenger/lib/chat-search/src/strategy/local/copilot-default-title-search');
 
 	/**
 	 * @class RecentSectionLocalSearchStrategy
@@ -34,10 +38,63 @@ jn.define('im/messenger/lib/chat-search/src/strategy/local/recent-section-local-
 		 */
 		async search(searchOptions)
 		{
-			const items = await this.#searchInLocalDb(searchOptions);
-			void await this.#setChatsToStorage(items);
+			const point = new PerfPoint('recent-section-search-db', this.section).start();
 
-			return items.map((item) => String(item.id));
+			try
+			{
+				point.startPoint('search-query');
+				const items = await this.#searchInLocalDb(searchOptions);
+				point.endPoint('search-query', { itemsCount: items.length });
+
+				point.startPoint('model-seed');
+				void await this.#setChatsToStorage(items);
+				point.endPoint('model-seed');
+
+				const ids = items.map((item) => String(item.id));
+
+				point.startPoint('copilot-default-titles');
+				const withCopilotDefaults = await this.#addCopilotDefaultTitles(ids, searchOptions);
+				point.endPoint('copilot-default-titles', { itemsCount: withCopilotDefaults.length - ids.length });
+
+				return withCopilotDefaults;
+			}
+			catch (error)
+			{
+				// closes the phase that was open when it failed; an already closed key is a no-op
+				point.endPoint('search-query', { error });
+				point.endPoint('model-seed', { error });
+				point.endPoint('copilot-default-titles', { error });
+
+				throw error;
+			}
+			finally
+			{
+				point.end();
+			}
+		}
+
+		/**
+		 * The chats of the section the text query cannot reach: those shown under the name of the
+		 * assistant instead of their stored title. Only the copilot section has such chats, and only a
+		 * query that looks like that name brings them.
+		 *
+		 * @param {Array<string>} ids
+		 * @param {Partial<SearchOptions>} searchOptions
+		 * @return {Promise<Array<string>>}
+		 */
+		async #addCopilotDefaultTitles(ids, searchOptions)
+		{
+			if (!CopilotDefaultTitleSearch.isInScope(this.section))
+			{
+				return ids;
+			}
+
+			const copilotIds = await CopilotDefaultTitleSearch.search({
+				searchText: searchOptions.searchText,
+				parentChatId: this.parentChatId,
+			});
+
+			return copilotIds.length === 0 ? ids : [...new Set([...ids, ...copilotIds])];
 		}
 
 		/**

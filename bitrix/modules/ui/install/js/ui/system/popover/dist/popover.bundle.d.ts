@@ -181,4 +181,6 @@ declare namespace BX.UI.System.Popover {
 	const POINTER_PROTRUSION: number;
 
 	const POINTER_WIDTH: number;
+
+	const BUBBLE_ATTRIBUTE: string;
 }

@@ -30,16 +30,21 @@ use Bitrix\Main\Engine\Response\Converter;
 
 use Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateSection;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Internal\Access\Permission\PermissionDictionary;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\Filter\AiAgentsFilter;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\Filter\AiAgentsFilterSettings;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\Service\TemplateBotUsageService;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\Settings\AiAgentsSettings;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\Visibility\HiddenAiAgentsRegistry;
 use Bitrix\Bizproc\Internal\Repository\WorkflowTemplate\Query\LaunchedCopyQuery;
+use Bitrix\Bizproc\Internal\Service\AiAgentGrid\Upgrade\UpgradeFeatureToggle;
 use Bitrix\Bizproc\Internal\Service\AiAgentGrid\Version\UpgradeAvailabilityService;
 use Bitrix\Bizproc\Internal\Service\SetupTemplate\SetupTemplateService;
+use Bitrix\Bizproc\Public\Provider\WorkflowTemplate\AiAgentProvider;
+use Bitrix\Bizproc\Public\Service\TemplateAccessService;
 use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable;
 use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateSectionTable;
+use CBPWorkflowTemplateUser;
 
 
 /**
@@ -55,20 +60,27 @@ class AiAgentsGridHelper
 	private UpgradeAvailabilityService $upgradeAvailabilityService;
 	private TemplateBotUsageService $templateBotUsageService;
 	private SetupTemplateService $setupTemplateService;
+	private AiAgentProvider $aiAgentProvider;
+	private TemplateAccessService $templateAccessService;
 
 	public function __construct(
 		?HiddenAiAgentsRegistry $hiddenAiAgents = null,
 		?UpgradeAvailabilityService $upgradeAvailabilityService = null,
 		?TemplateBotUsageService $templateBotUsageService = null,
 		?SetupTemplateService $setupTemplateService = null,
+		?AiAgentProvider $aiAgentProvider = null,
+		?TemplateAccessService $templateAccessService = null,
 	)
 	{
 		$this->navParamName = self::GRID_ID . '_nav';
 		$this->hiddenAiAgents = $hiddenAiAgents ?? ServiceLocator::getInstance()->get(HiddenAiAgentsRegistry::class);
 		$this->upgradeAvailabilityService = $upgradeAvailabilityService ?? new UpgradeAvailabilityService();
-		$this->templateBotUsageService =
-			$templateBotUsageService ?? ServiceLocator::getInstance()->get(TemplateBotUsageService::class);
+		$this->templateBotUsageService
+			= $templateBotUsageService ?? ServiceLocator::getInstance()->get(TemplateBotUsageService::class);
 		$this->setupTemplateService = $setupTemplateService ?? new SetupTemplateService();
+		// The very instance the row actions ask for the transfer right, so the page warmup below reaches them.
+		$this->aiAgentProvider = $aiAgentProvider ?? ServiceLocator::getInstance()->get(AiAgentProvider::class);
+		$this->templateAccessService = $templateAccessService ?? new TemplateAccessService();
 
 		Loader::requireModule('humanresources');
 	}
@@ -396,18 +408,60 @@ class AiAgentsGridHelper
 			$templateChatsMap,
 		);
 
+		$this->warmupTemplateEditRights($templateIds);
+		$this->warmupTransferRights($templateIds);
+
 		return $this->attachVersionAvailabilityToTemplates($enriched);
 	}
 
 	/**
-	 * Enriches launched copies with DTO-01 upgrade/customization fields
-	 * (hasNewVersion, isCustomized, currentVersionLabel, newVersionLabel).
+	 * @param list<int> $templateIds
+	 */
+	private function warmupTemplateEditRights(array $templateIds): void
+	{
+		$currentUser = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+
+		$this->templateAccessService->warmupAuthorshipForPermission(
+			$templateIds,
+			PermissionDictionary::BIZPROC_TEMPLATE_EDIT,
+			(int)$currentUser->getId(),
+		);
+	}
+
+	/**
+	 * Batch-warms the transfer-ownership predicate for the whole page up front, so the per-row
+	 * ChangeOwnerAction reads it from the provider instead of asking the database one to three times per
+	 * launched copy (grid hot-path N+1, NFR P95). Same reason and same place as preloadOriginSettings()
+	 * below; the acting user comes from server-side state, exactly as the row action resolves it.
+	 *
+	 * @param list<int> $templateIds
+	 */
+	private function warmupTransferRights(array $templateIds): void
+	{
+		$currentUser = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+
+		$this->aiAgentProvider->warmupTransferRights($templateIds, (int)$currentUser->getId());
+	}
+
+	/**
+	 * Enriches launched copies with the DTO-01 fields the version cell and the upgrade action read
+	 * off the row: hasNewVersion, isCustomized, isComparable, hasSystemOrigin, currentVersionLabel,
+	 * newVersionLabel.
+	 *
+	 * Both readers of those fields are closed by the same flag, so a disabled feature skips the
+	 * whole enrichment here rather than at the call sites: the decision stays in one place, and a
+	 * future caller cannot walk around it. Every reader takes the fields as optional.
 	 *
 	 * @param array $templates
 	 * @return array
 	 */
 	private function attachVersionAvailabilityToTemplates(array $templates): array
 	{
+		if (!UpgradeFeatureToggle::isEnabled())
+		{
+			return $templates;
+		}
+
 		// Batch-load ORIGIN_SYSTEM_CODE/VERSION for the whole page in a single query up front, so
 		// the per-row getAvailabilityForRow() below reads them from the service cache instead of
 		// issuing two settings lookups per launched copy (grid hot-path N+1, NFR P95).
@@ -415,8 +469,7 @@ class AiAgentsGridHelper
 
 		foreach ($templates as &$template)
 		{
-			$availability = $this->upgradeAvailabilityService->getAvailabilityForRow($template);
-			$template += $availability->toArray();
+			$template += $this->upgradeAvailabilityService->getAvailabilityForRow($template)->toArray();
 		}
 		unset($template);
 

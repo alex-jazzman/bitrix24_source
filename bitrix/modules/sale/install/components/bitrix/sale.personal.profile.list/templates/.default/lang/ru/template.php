@@ -8,6 +8,8 @@ $MESS ['SALE_DETAIL'] = "Изменить";
 $MESS ['SALE_DELETE'] = "Удалить";
 $MESS ['SALE_DETAIL_DESCR'] = "Изменить профиль";
 $MESS ['SALE_DELETE_DESCR'] = "Удалить профиль";
+$MESS["STPPL_DETAIL_ARIA"]="Изменить профиль #NAME#";
+$MESS["STPPL_DELETE_ARIA"]="Удалить профиль #NAME#";
 $MESS["STPPL_DELETE_CONFIRM"]="Вы уверены, что хотите удалить этот профиль?";
 $MESS["STPPL_EMPTY_PROFILE_LIST"]="Список профилей пуст";
 ?>

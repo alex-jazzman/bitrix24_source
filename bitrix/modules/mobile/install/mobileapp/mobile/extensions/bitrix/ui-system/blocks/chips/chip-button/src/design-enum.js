@@ -20,8 +20,13 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.accentSoftBorderBlue.toHex(),
+				borderColor: Color.accentSoftBlue1.toHex(),
+				backgroundColor: Color.bgPrimary,
 				color: Color.accentMainPrimary,
+			},
+			[ChipButtonMode.TINTED]: {
+				backgroundColor: Color.accentSoftBlue2,
+				color: Color.accentMainLink,
 			},
 		});
 
@@ -32,7 +37,8 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.accentSoftBorderGreen.toHex(),
+				borderColor: Color.accentSoftGreen1.toHex(),
+				backgroundColor: Color.bgPrimary,
 				color: Color.accentMainSuccess,
 			},
 		});
@@ -44,7 +50,8 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.accentSoftBorderRed.toHex(),
+				borderColor: Color.accentSoftRed1.toHex(),
+				backgroundColor: Color.bgPrimary,
 				color: Color.accentMainAlert,
 			},
 		});
@@ -56,7 +63,8 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.base5.toHex(),
+				borderColor: Color.base6.toHex(),
+				backgroundColor: Color.bgPrimary,
 				color: Color.base1,
 			},
 		});
@@ -68,7 +76,8 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.base5.toHex(),
+				borderColor: Color.bgSeparatorPrimary.toHex(),
+				backgroundColor: Color.bgPrimary,
 				color: Color.base3,
 			},
 		});
@@ -76,17 +85,46 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 		static #DISABLED = new ChipButtonDesign('GREY', {
 			[ChipButtonMode.SOLID]: {
 				backgroundColor: Color.base7,
-				color: Color.baseWhiteFixed,
+				color: Color.base8,
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
 				borderColor: Color.base6.toHex(),
+				backgroundColor: Color.bgPrimary,
 				color: Color.base6,
 			},
 		});
 
 		static BITRIX_GPT = new ChipButtonDesign('BITRIX_GPT', {
 			[ChipButtonMode.SOLID]: {
+				backgroundColorGradient: {
+					colors: [
+						Color.bgBitrixGptGradient5.toHex(),
+						Color.bgBitrixGptGradient4.toHex(),
+						Color.bgBitrixGptGradient3.toHex(),
+						Color.bgBitrixGptGradient2.toHex(),
+						Color.bgBitrixGptGradient1.toHex(),
+					],
+					angle: 264,
+				},
+				color: Color.baseWhiteFixed,
+			},
+			[ChipButtonMode.OUTLINE]: {
+				borderWidth: 1,
+				borderColor: Color.bgBitrixGptLineGradient2.toHex(),
+				backgroundColor: Color.bgPrimary,
+				colorGradient: {
+					colors: [
+						Color.bgBitrixGptGradient5,
+						Color.bgBitrixGptGradient4,
+						Color.bgBitrixGptGradient3,
+						Color.bgBitrixGptGradient2,
+						Color.bgBitrixGptGradient1,
+					],
+					angle: 264,
+				},
+			},
+			[ChipButtonMode.TINTED]: {
 				backgroundColorGradient: {
 					start: Color.bgBitrixGptLightGradient4.toHex(),
 					middle: Color.bgBitrixGptLightGradient3.toHex(),
@@ -95,27 +133,13 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 				},
 				colorGradient: {
 					colors: [
-						Color.bgBitrixGptGradient7,
+						Color.bgBitrixGptGradient5,
 						Color.bgBitrixGptGradient4,
 						Color.bgBitrixGptGradient3,
 						Color.bgBitrixGptGradient2,
 						Color.bgBitrixGptGradient1,
 					],
-					angle: 225,
-				},
-			},
-			[ChipButtonMode.OUTLINE]: {
-				borderWidth: 1,
-				borderColor: Color.bgBitrixGptLineGradient2.toHex(),
-				colorGradient: {
-					colors: [
-						Color.bgBitrixGptGradient7,
-						Color.bgBitrixGptGradient4,
-						Color.bgBitrixGptGradient3,
-						Color.bgBitrixGptGradient2,
-						Color.bgBitrixGptGradient1,
-					],
-					angle: 225,
+					angle: 264,
 				},
 			},
 		});
@@ -129,7 +153,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 		{
 			const chipMode = ChipButtonMode.resolve(mode, ChipButtonMode.SOLID);
 
-			return this.getValue()[chipMode.getValue()];
+			return this.getValue()[chipMode.getValue()] ?? {};
 		}
 	}
 

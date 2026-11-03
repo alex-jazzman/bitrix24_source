@@ -69,6 +69,66 @@
 	height: 16px;
 }
 
+/* Air forms layout */
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__container {
+	--bx-im-content-chat-forms__background-color_container: var(--ui-color-bg-content-tertiary);
+}
+
+/* The bottom inset reserves room for the absolutely positioned button panel plus the air the body keeps
+   above itself, and it is built of the same terms the panel is: a large button and the two insets
+   button-panel.css of the elements extension puts around it. The panel pins no height of its own, so the
+   terms are repeated here rather than read from it — the size of a button is declared on the button
+   (.ui-btn.--air), which is a descendant of the body and out of its reach. The unit test of the form
+   layout measures the panel and holds the two together.
+   Collab v2 is excluded: it mounts a foreign app with its own layout. */
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__content:not(.--collab-v2) {
+	padding-top: var(--ui-space-inset-xl);
+	padding-right: var(--ui-space-inset-xl2);
+	padding-bottom: calc(38px + (2 * var(--ui-space-inset-md2)) + var(--ui-space-inset-xl));
+	padding-left: var(--ui-space-inset-xl2);
+}
+
+/* The body of the form is a flex column with a scroll of its own, so a block left shrinkable
+   swallows the overflow of the whole form instead of letting it scroll: it loses the height of its
+   content and the content spills over the block below. Collab v2 is excluded for the reason above. */
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__content:not(.--collab-v2) > * {
+	flex-shrink: 0;
+}
+
+/* Wins over the legacy and per-type rules above by specificity: in air every block of the form body
+   keeps the same rhythm. Sections bring their own margin from the elements extension. */
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__header,
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__members_container,
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__description_container {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* The air description field is a self-sizing three-row BInput, so a fixed row height would clip it. */
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__description_container {
+	height: auto;
+	min-height: 0;
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__header {
+	gap: var(--ui-space-inline-md);
+}
+
+/* This is the only form where auto delete comes on its own and not inside a section, so here the
+   line draws the card of the blocks around it and keeps the rhythm of the form body. Only the direct
+   child is addressed: in the other forms auto delete arrives inside a section, which is a card
+   already, and a card inside a card is not what the form asks for. */
+.bx-im-messenger__scope.--air-design .bx-im-content-chat-forms__content.--collab
+	> .bx-im-chat-forms-auto-delete__container {
+	margin-bottom: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+/* End air forms layout */
+
 .bx-im-create-collab-description-banner__container {
 	--im-create-collab-description-banner__background-color_content: var(--im-color-collab-20);
 	--im-create-collab-description-banner__background-color_border: var(--im-color-collab-60);
@@ -135,6 +195,12 @@
 	cursor: pointer;
 }
 
+.bx-im-create-collab-description-banner__link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .bx-im-create-collab-description-banner__link:hover {
 	color: var(--im-create-collab-description-banner__text-color_link-hover);
 	text-decoration-color: var(--im-create-collab-description-banner__text-color_link-underline-hover);
@@ -147,6 +213,39 @@
 .bx-im-create-collab-description-banner__link.--dashed {
 	text-decoration-style: dashed;
 }
+
+/* Air banner */
+/* The card keeps its shape: air only re-points the custom properties of the block at air tokens
+   (the legacy im tokens carry the very same colours) and puts the paddings on the spacing scale.
+   The underline of a link follows the colour of the link itself instead of a translucent copy. */
+.bx-im-messenger__scope.--air-design .bx-im-create-collab-description-banner__container {
+	--im-create-collab-description-banner__background-color_content: var(--ui-color-collab-bg-content-2);
+	--im-create-collab-description-banner__background-color_border: var(--ui-color-collab-accent-primary);
+	--im-create-collab-description-banner__text-color_link: var(--ui-color-collab-accent-primary-alt);
+	--im-create-collab-description-banner__text-color_link-hover: var(--ui-color-collab-element-1);
+	--im-create-collab-description-banner__text-color_link-underline: currentColor;
+	--im-create-collab-description-banner__text-color_link-underline-hover: currentColor;
+
+	margin-bottom: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xl);
+	border-radius: var(--ui-border-radius-xs);
+}
+
+/* The two rules below are scoped to the card on purpose: the typography components reset the margin
+   and set the colour with a single class of their own, so a single class here would tie with them
+   and the outcome would depend on the load order of the stylesheets. */
+.bx-im-create-collab-description-banner__container .bx-im-chat-forms-collab-banner__title {
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bx-im-create-collab-description-banner__container .bx-im-chat-forms-collab-banner__text {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-chat-forms-collab-banner__text + .bx-im-chat-forms-collab-banner__text {
+	margin-top: var(--ui-space-stack-sm);
+}
+/* End air banner */
 .bx-im-create-collab-chat-description-banner__container {
 	position: relative;
 	width: 100%;
@@ -193,3 +292,43 @@
 	top: 8px;
 	cursor: pointer;
 }
+
+/* Air banner */
+/* The gradient, the border and the illustration stay as they are: they already sit on air tokens.
+   Air retunes the spacing and the radius of the card and adopts the rhythm of the form body. */
+.bx-im-messenger__scope.--air-design .bx-im-create-collab-chat-description-banner__container {
+	margin-bottom: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+}
+
+/* Both rules below are scoped to the card on purpose: the typography components reset the margin
+   and set the colour with a single class of their own, so a single class here would win by load
+   order alone. The illustration takes the right side of the card, so the text keeps clear of it. */
+.bx-im-create-collab-chat-description-banner__container .bx-im-chat-forms-collab-chat-banner__title {
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
+.bx-im-create-collab-chat-description-banner__container .bx-im-chat-forms-collab-chat-banner__text {
+	max-width: 75%;
+	color: var(--ui-color-base-2);
+	white-space: pre-line;
+}
+
+.bx-im-chat-forms-collab-chat-banner__close {
+	display: flex;
+	position: absolute;
+	top: var(--ui-space-inset-xs);
+	right: var(--ui-space-inset-xs);
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-collab-chat-banner__close:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+/* End air banner */

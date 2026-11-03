@@ -16,6 +16,7 @@ return [
 		'crm:entity-actions/change-crm-mode',
 		'crm:entity-actions/conversion',
 		'crm:statemanager/redux/slices/kanban-settings',
+		'event-emitter',
 	],
 	'bundle' => [
 		'./change-pipeline',

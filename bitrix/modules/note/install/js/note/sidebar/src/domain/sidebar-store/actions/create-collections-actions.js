@@ -497,7 +497,7 @@ export class SidebarCollectionActions
 		}
 	}
 
-	async loadCollections(append: boolean = false): Promise<void>
+	async loadCollections(append: boolean = false): Promise<boolean>
 	{
 		this.#state.collectionsLoading.value = true;
 
@@ -516,10 +516,14 @@ export class SidebarCollectionActions
 			);
 			this.#state.collectionsCursor.value = response.nextCursor;
 			this.#state.collectionsHasNextPage.value = response.hasNextPage;
+
+			return true;
 		}
 		catch (error)
 		{
 			this.#setError(error?.message || 'Collections loading failed');
+
+			return false;
 		}
 		finally
 		{

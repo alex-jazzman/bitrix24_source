@@ -1,8 +1,9 @@
 import { LineLoader } from 'im.v2.component.elements.loader';
 import { EditableChatTitle } from 'im.v2.component.elements.chat-title';
 import { FadeAnimation } from 'im.v2.component.animation';
+import { PhraseByLinkType, hasEntityLink } from 'im.v2.component.elements.entity-link';
 
-import { EntityLink } from '../entity-link/entity-link';
+import { EntityControl } from '../entity-control/entity-control';
 import { UserCounter } from './user-counter';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -10,7 +11,7 @@ import type { ImModelChat } from 'im.v2.model';
 // @vue/component
 export const GroupChatTitle = {
 	name: 'GroupChatTitle',
-	components: { EditableChatTitle, EntityLink, LineLoader, FadeAnimation, UserCounter },
+	components: { EditableChatTitle, EntityControl, LineLoader, FadeAnimation, UserCounter },
 	inject: ['withSidebar'],
 	props:
 	{
@@ -30,16 +31,17 @@ export const GroupChatTitle = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		hasEntityLink(): boolean
+		showEntityLink(): boolean
 		{
-			return this.withEntityLink && Boolean(this.dialog.entityLink?.url);
+			return this.withEntityLink && hasEntityLink(this.dialog);
 		},
-	},
-	methods:
-	{
-		loc(phraseCode: string): string
+		entityText(): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return PhraseByLinkType[this.dialog.entityLink?.type] ?? PhraseByLinkType.default;
+		},
+		entityUrl(): string
+		{
+			return this.dialog.entityLink?.url ?? '';
 		},
 	},
 	template: `
@@ -50,7 +52,12 @@ export const GroupChatTitle = {
 				<div v-if="dialog.inited" class="bx-im-chat-header__subtitle_container">
 					<UserCounter :dialogId="dialogId" />
 					<slot name="after-user-counter">
-						<EntityLink v-if="hasEntityLink" :dialogId="dialogId" />
+						<EntityControl
+							v-if="showEntityLink"
+							:text="entityText"
+							:url="entityUrl"
+							data-testid="im-chat-header-entity-btn"
+						/>
 					</slot>
 				</div>
 			</FadeAnimation>

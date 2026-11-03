@@ -1,0 +1,45 @@
+.biconnector-table-group-title-editor {
+	display: flex;
+	flex: 1;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.biconnector-table-group-title-editor__name {
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-md);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.biconnector-table-group-title-editor__input {
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	background: transparent;
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-md);
+	outline: none;
+}
+
+.biconnector-table-group-title-editor__input::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.biconnector-table-group-title-editor__input:focus {
+	border-bottom-color: var(--ui-color-accent-main-primary);
+}
+
+.biconnector-table-group-title-editor__edit-icon {
+	cursor: pointer;
+}

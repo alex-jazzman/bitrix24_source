@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/block/handler
  */
 jn.define('im/messenger/lib/element/dialog/message/block/handler', (require, exports, module) => {
-	const { EventType } = require('im/messenger/const');
+	const { EventType, BlockButtonType, BlockElementType } = require('im/messenger/const');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const { inAppUrl } = require('in-app-url');
@@ -53,14 +53,26 @@ jn.define('im/messenger/lib/element/dialog/message/block/handler', (require, exp
 		}
 
 		/**
+		 * Handles a tap on a builder block button (EVENT-03, variant B).
+		 * The native side collects the form state locally and sends it
+		 * as a single event on the submit tap; JS never sees intermediate input.
+		 *
 		 * @param {string} messageId
 		 * @param {string} elementId - native calls this "blockId"
 		 * @param {string} buttonId
+		 * @param {Record<string, string | Array<string>>} [values] - form field values by stable field id;
+		 * present only for a form submit tap, absent for other buttons and older native versions
 		 * @return {void}
 		 */
-		messageBuilderButtonTap(messageId, elementId, buttonId)
+		messageBuilderButtonTap(messageId, elementId, buttonId, values)
 		{
-			logger.log(`${this.constructor.name}.messageBuilderButtonTap`, messageId, elementId, buttonId);
+			logger.log(
+				`${this.constructor.name}.messageBuilderButtonTap`,
+				messageId,
+				elementId,
+				buttonId,
+				{ valueFieldIds: Object.keys(values ?? {}) },
+			);
 
 			const message = this.getMessageModel(messageId);
 			if (!message.id)
@@ -76,6 +88,17 @@ jn.define('im/messenger/lib/element/dialog/message/block/handler', (require, exp
 				return;
 			}
 
+			if (button.type === BlockButtonType.requestButton && !this.#isFormElementButton(message, elementId))
+			{
+				logger.warn(
+					'messageBuilderButtonTap: request button outside a form element is ignored',
+					elementId,
+					buttonId,
+				);
+
+				return;
+			}
+
 			try
 			{
 				const metaData = BlockConfiguration.getButtonMetaData(messageId, button);
@@ -86,7 +109,20 @@ jn.define('im/messenger/lib/element/dialog/message/block/handler', (require, exp
 					return;
 				}
 
-				metaData.callback({ messageId, dialogLocator: this.dialogLocator });
+				const result = metaData.callback({
+					messageId,
+					dialogLocator: this.dialogLocator,
+					elementId,
+					buttonId,
+					values,
+				});
+
+				if (result instanceof Promise)
+				{
+					result.catch((error) => {
+						logger.error('messageBuilderButtonTap callback error', error);
+					});
+				}
 			}
 			catch (error)
 			{
@@ -194,6 +230,24 @@ jn.define('im/messenger/lib/element/dialog/message/block/handler', (require, exp
 		}
 
 		/**
+		 * A request button submits the form to the server, so it is allowed
+		 * only inside a `form` element (deny-by-default): a tap on a request
+		 * button of any other element must be ignored without a network call.
+		 *
+		 * @param {MessagesModelState} message
+		 * @param {string} elementId - native calls this "blockId"
+		 * @return {boolean}
+		 */
+		#isFormElementButton(message, elementId)
+		{
+			const element = message.block?.elements?.find((item) => String(item.id) === String(elementId));
+
+			return element?.type === BlockElementType.form;
+		}
+
+		/**
+		 * Resolves the tapped button by its stable server id (ALG-01).
+		 *
 		 * @param {MessagesModelState} message
 		 * @param {string} elementId - native calls this "blockId"
 		 * @param {string} buttonId
@@ -213,14 +267,18 @@ jn.define('im/messenger/lib/element/dialog/message/block/handler', (require, exp
 				return null;
 			}
 
-			for (let rowIndex = 0; rowIndex < element.buttons.length; rowIndex++)
+			for (const row of element.buttons)
 			{
-				const row = element.buttons[rowIndex];
-				for (let buttonIndex = 0; buttonIndex < row.length; buttonIndex++)
+				if (!Array.isArray(row))
 				{
-					if (`${elementId}-${rowIndex}-${buttonIndex}` === String(buttonId))
+					continue;
+				}
+
+				for (const button of row)
+				{
+					if (String(button.id) === String(buttonId))
 					{
-						return row[buttonIndex];
+						return button;
 					}
 				}
 			}

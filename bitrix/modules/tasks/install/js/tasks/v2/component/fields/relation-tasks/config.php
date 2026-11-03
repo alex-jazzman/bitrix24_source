@@ -8,11 +8,12 @@ return [
 	'css' => 'dist/relation-tasks.bundle.css',
 	'js' => 'dist/relation-tasks.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'tasks.v2.component.elements.hint',
 		'tasks.v2.component.task-list',
 		'tasks.v2.const',
 		'tasks.v2.core',
+		'tasks.v2.lib.entity-selector-dialog',
 		'tasks.v2.lib.field-highlighter',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.lib.show-limit',
@@ -25,5 +26,5 @@ return [
 		'ui.vue3.directives.hint',
 		'ui.vue3.vuex',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

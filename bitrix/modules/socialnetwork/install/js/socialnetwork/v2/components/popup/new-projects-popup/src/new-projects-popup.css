@@ -227,7 +227,10 @@
 	background-repeat: no-repeat;
 	background-position: center center;
 	background-size: contain;
-	background-image: url('images/zephirus-with-hexagon-project-avatar.png');
+	background-image: image-set(
+		url('images/zephirus-with-hexagon-project-avatar.webp') 1x,
+		url('images/zephirus-with-hexagon-project-avatar@2x.webp') 2x
+	);
 
 	/*workaround for detailed rendering*/
 	transform: translate3d(0, 0, 0);

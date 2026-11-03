@@ -26,3 +26,4 @@ $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_CLIENT_MAKE_ORDER"] = "Клиент офо
 $MESS["SALESCENTER_IMOPMANAGER_EMPTY_COMPILATION_LINK"] = "Не указана ссылка на подборку";
 $MESS["SALESCENTER_IMOPMANAGER_COMPILATION_MESSAGE_PREVIEW"] = "Ваша персональная подборка товаров. Будут вопросы - пишите нам в чат! #LINK#";
 $MESS["SALESCENTER_IMOPMANAGER_COMPILATION_MESSAGE_TOP"] = "Ваша персональная подборка товаров.";
+$MESS["SALESCENTER_IMOPMANAGER_SESSION_ACCESS_DENIED"] = "Нет доступа к диалогу Открытых линий";

@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		'im:messenger/lib/feature',
+		'im:messenger/assets',
 	],
 ];

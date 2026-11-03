@@ -64,6 +64,13 @@ else
 
 	$tabControl->Begin();
 	$tabControl->BeginNextTab();
+
+	// template description is stored as BBCode
+	$templateDescription = (string)$arWorkflowState["TEMPLATE_DESCRIPTION"];
+	if (\Bitrix\Main\Loader::includeModule('ui'))
+	{
+		$templateDescription = \Bitrix\UI\Format\BBCode\Converter::toPlainText($templateDescription);
+	}
 	?>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_NAME") ?>:</td>
@@ -71,7 +78,7 @@ else
 		</tr>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_DESCRIPTION") ?>:</td>
-			<td width="50%" valign="top"><?= htmlspecialcharsbx($arWorkflowState["TEMPLATE_DESCRIPTION"]) ?></td>
+			<td width="50%" valign="top"><?= htmlspecialcharsbx($templateDescription) ?></td>
 		</tr>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_ID") ?>:</td>

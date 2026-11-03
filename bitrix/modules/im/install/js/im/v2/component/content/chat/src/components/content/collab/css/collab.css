@@ -1,7 +1,7 @@
 /*
  * Add-members icon (collab header): glyph rendered via DS BIcon (Outline.ADD_PERSON). The colour is
  * driven by the icon-set "--ui-icon-set__icon-color" variable. Neutral states are aligned with the
- * shared header "--ds-icon" (resting base-4, hover base-3, active accent) — the resting state was
+ * shared header "--ds-icon" (resting base-4, hover base-3, active accent). The resting state was
  * migrated from the previous mask-based base-2 @ opacity 0.35 to base-4 @ opacity 1. The guest branch
  * (--with-guest) keeps its collab-accent colours.
  */
@@ -42,4 +42,8 @@
 	--im-pulse-animation__border-color_ring: var(--im-color-collab-40);
 
 	margin-right: 12px;
+}
+
+.bx-im-collab-header__container.--air .bx-im-collab-header__add-to-chat {
+	margin-right: 0;
 }

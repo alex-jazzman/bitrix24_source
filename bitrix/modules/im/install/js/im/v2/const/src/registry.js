@@ -1,8 +1,24 @@
 export { RestMethod } from './rest';
-export { EventType } from './events';
+export { EventType, DateNavigationJumpOutcome, DateNavigationJumpTimeout } from './events';
 export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment, DialogIdChatPrefix, TempAiAssistantPrefix } from './chat';
-export { CopilotRole } from './copilot';
-export { FileStatus, FileType, FileIconType, FileViewerContext, AudioPlaybackRate, AudioPlaybackState, PlaylistScope } from './file';
+export {
+	CopilotRole,
+	CopilotGenerationStatus,
+	CopilotMcpSelectionStatus,
+	AiAssistantSearchBlockName,
+	CopilotSimpleReasoningPlanField,
+	CopilotSimpleReasoningStalePlanLimit,
+} from './copilot';
+export {
+	FileStatus,
+	FileType,
+	FileIconType,
+	FileViewerContext,
+	AudioPlaybackRate,
+	AudioPlaybackState,
+	PlaylistScope,
+	PlaybackTrackState,
+} from './file';
 export {
 	MessageType,
 	MessageComponent,
@@ -13,6 +29,7 @@ export {
 	FakeDraftMessagePrefix,
 	AutoDeleteDelay,
 } from './message';
+export { DeliveryTimeout } from './delivery';
 export { RecentCallStatus, RecentType } from './recent';
 export { NotificationTypesCodes, NotificationSettingsMode } from './notification';
 export { Layout } from './layout';
@@ -22,6 +39,7 @@ export { SidebarDetailBlock, SidebarFileGroups, SidebarFileTabGroups, SidebarMai
 export { Color, ColorToken } from './color';
 export { AttachType, AttachDescription } from './attach';
 export { KeyboardButtonType, KeyboardButtonAction, KeyboardButtonDisplay, KeyboardButtonContext } from './keyboard';
+export { HotkeyCombination } from './hotkey';
 export { DesktopBxLink, LegacyDesktopBxLink, DesktopBroadcastAction, WINDOW_ACTIVATION_DELAY } from './desktop';
 export { LocalStorageKey } from './local-storage';
 export { PlacementType } from './market';
@@ -33,7 +51,7 @@ export { ActionByRole, ChatActionGroup, ActionByUserType } from './chat-action';
 export { BotType, RawBotType, BotCode, BotCommand } from './bot';
 export { Path } from './path';
 export { GetParameter } from './get-params';
-export { TextareaPanelType } from './textarea';
+export { TextareaPanelType, TextareaTarget } from './textarea';
 export { ChatEntityLinkType } from './chat-entity-link';
 export { MultidialogStatus } from './multidialog';
 export { SliderCode } from './slider-code';
@@ -47,9 +65,11 @@ export { DataAttribute } from './data-attributе';
 export { StickerPackType, StickerType } from './sticker';
 export { TabId } from './tab';
 export { SelectorEntity } from './entity-selector';
-export { MessageBuilderPlainColorToken, MessageBuilderBackgroundPlainToken, MessageBuilderGradientColorToken } from './message-builder';
+export { MessageBuilderPlainColorToken, MessageBuilderBackgroundPlainToken, MessageBuilderGradientColorToken, FormFieldType, AiAssistantThinkingBlockId } from './message-builder';
 export { ParentChatScope } from './parent-chat-scope';
-export { FolderType } from './folder';
+export { FolderType, SystemFolderCode } from './folder';
+export { AiTaskStatus, AiTaskContentType } from './ai-task';
+export type { AiTaskStatusValue, AiTaskContentTypeValue } from './ai-task';
 
 export type {
 	OnLayoutChangeEvent,
@@ -79,6 +99,7 @@ export type { RawSettings, RawNotificationSettingsBlock, NotificationSettingsBlo
 
 export type { SidebarMainPanelBlockType } from './sidebar';
 export type { LayoutType } from './layout';
+export type { NavigationMenuItemType } from './navigation';
 export type { RecentTypeItem } from './recent';
 export type { ApplicationContext } from './application';
 export type { ChatTypeItem } from './chat';
@@ -97,12 +118,19 @@ export type {
 	CardBlockType,
 	EventButtonBlockType,
 	LinkButtonBlockType,
+	RequestButtonBlockType,
 	AnyButtonBlock,
 	GalleryBlockType,
+	FileBlockType,
+	AudioBlockType,
+	FormBlockType,
+	FormFieldBlockType,
+	FormFieldOption,
 	AnyBlockType,
 } from './message-builder';
 
+export type { CopilotSimpleReasoningPlan, CopilotSimpleReasoningStep } from './copilot';
 export type { SelectorEntityItem } from './entity-selector';
-export type { FolderTypeItem } from './folder';
+export type { FolderTypeItem, SystemFolderCodeItem } from './folder';
 export type { ParentChatIdType } from './parent-chat-scope';
 export type { OpenCollabOptions } from './collab';

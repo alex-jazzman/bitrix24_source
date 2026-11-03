@@ -2,11 +2,14 @@
  * @module crm/entity-detail/toolbar/content/templates/single-action
  */
 jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const AppTheme = require('apptheme');
+	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
+	const { IconView } = require('ui-system/blocks/icon');
 	const { ToolbarContentTemplateBase } = require('crm/entity-detail/toolbar/content/templates/base');
 
 	const { mergeImmutable } = require('utils/object');
-	const { bigCross } = require('assets/common');
 	const { Loc } = require('loc');
 
 	/**
@@ -149,19 +152,20 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 					style: this.styles.rightIconWrapper,
 					clickable: false,
 				},
-				ImageButton({
+				IconView({
+					testId: 'ToolbarSingleActionHide_icon',
 					resizeMode: 'contain',
-					style: this.styles.rightIcon,
+					icon: Icon.CROSS,
+					size: HIDE_ICON_SIZE,
+					color: Color.base3,
 					onClick: this.state.visible && onHide,
-					svg: {
-						content: bigCross(AppTheme.colors.base3),
-					},
 				}),
 			);
 		}
 	}
 
 	const ICON_SIZE = 26;
+	const HIDE_ICON_SIZE = 24;
 	const HEIGHT = 60;
 	const defaultStyles = {
 		icon: {
@@ -222,16 +226,16 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 			backgroundColor: grey ? AppTheme.colors.base6 : AppTheme.colors.accentBrandBlue,
 		}),
 		title: {
-			fontSize: 15,
+			fontSize: Typography.text4.getValue().fontSize,
 			fontWeight: '500',
 		},
 		subtitle: {
-			fontSize: 12,
+			fontSize: Typography.text6.getValue().fontSize,
 			fontWeight: '500',
 			color: AppTheme.colors.base4,
 		},
 		openButton: {
-			fontSize: 15,
+			fontSize: Typography.text4.getValue().fontSize,
 			fontWeight: '500',
 			color: AppTheme.colors.baseWhiteFixed,
 			backgroundColor: AppTheme.colors.accentMainPrimary,

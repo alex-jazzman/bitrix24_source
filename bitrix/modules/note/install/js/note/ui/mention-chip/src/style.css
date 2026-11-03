@@ -212,6 +212,18 @@
 	background-color: color-mix(in srgb, var(--mention-chip-color) 7%, var(--ui-color-bg-content-primary, #fff));
 }
 
+.note-mention-chip--unavailable.note-mention-chip--activatable {
+	cursor: pointer;
+}
+
+.note-mention-chip--unavailable.note-mention-chip--activatable:hover {
+	background-color: color-mix(in srgb, var(--mention-chip-color) 13%, var(--ui-color-bg-content-primary, #fff));
+}
+
+.note-mention-chip--unavailable.note-mention-chip--pending {
+	cursor: progress;
+}
+
 .note-mention-chip--unavailable .note-mention-chip__label {
 	color: var(--ui-color-text-secondary);
 }

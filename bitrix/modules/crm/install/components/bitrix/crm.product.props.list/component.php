@@ -39,6 +39,10 @@ $arParams['PATH_TO_PRODUCTPROPS_LIST'] = CrmCheckPath('PATH_TO_PRODUCTPROPS_LIST
 $arParams['PATH_TO_PRODUCTPROPS_ADD'] = CrmCheckPath('PATH_TO_PRODUCTPROPS_ADD', $arParams['PATH_TO_PRODUCTPROPS_ADD'], '?add');
 $arParams['PATH_TO_PRODUCTPROPS_EDIT'] = CrmCheckPath('PATH_TO_PRODUCTPROPS_EDIT', $arParams['PATH_TO_PRODUCTPROPS_EDIT'], '?prop_id=#prop_id#&edit');
 
+$listUrl = ($arParams['IS_SETTINGS_HUB'] ?? false) === true
+	? $arParams['PATH_TO_PRODUCTPROPS_LIST']
+	: $APPLICATION->GetCurPage();
+
 $arResult['GRID_ID'] = 'CRM_PRODUCTPROPS_LIST';
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
 $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
@@ -149,7 +153,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 	if(preg_match('/^crm_err_/', $errorID) === 1)
 	{
 		if(!isset($_SESSION[$errorID]))
-			LocalRedirect($APPLICATION->GetCurPage());
+			LocalRedirect($listUrl);
 
 		$errorMsg = strval($_SESSION[$errorID]);
 		unset($_SESSION[$errorID]);
@@ -268,13 +272,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 		$errorID = uniqid('crm_err_');
 		$_SESSION[$errorID] = $errorMsg;
 
-		LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->addParams(array('error' => $errorID)));
+		LocalRedirect((string)(new Uri($listUrl))->addParams(['error' => $errorID]));
 	}
 	else
 	{
 		if(!isset($_POST['AJAX_CALL']))
 		{
-			LocalRedirect($APPLICATION->GetCurPage());
+			LocalRedirect($listUrl);
 		}
 	}
 
@@ -298,13 +302,13 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 		$errorID = uniqid('crm_err_');
 		$_SESSION[$errorID] = $errorMsg;
 
-		LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->addParams(array('error' => $errorID)));
+		LocalRedirect((string)(new Uri($listUrl))->addParams(['error' => $errorID]));
 	}
 	else
 	{
 		if(!isset($_POST['AJAX_CALL']))
 		{
-			LocalRedirect($APPLICATION->GetCurPage());
+			LocalRedirect($listUrl);
 		}
 	}
 

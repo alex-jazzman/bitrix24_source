@@ -36,6 +36,7 @@ foreach($arResult['VERSIONS'] as $version)
 			? $version['CREATED_BY']
 			: ''
 	);
+	$versionHref = $version['CAN_DOWNLOAD'] ? $version['DOWNLOAD_URL'] : 'javascript:void(0);';
 ?>
 <div id="disk-attach-<?=$version['ID'] . $arResult['UID']?>" class="feed-com-files diskuf-files-entity">
 	<div class="feed-com-files-title"><?= $title ?></div>
@@ -47,7 +48,7 @@ foreach($arResult['VERSIONS'] as $version)
 				<? } ?>
 				</span>
 				<span class="feed-com-file-name-wrap">
-					<a <?= ($version['FROM_EXTERNAL_SYSTEM'] && $version['CAN_UPDATE'])? 'style="color:#d9930a;"' : '' ?> target="_blank" href="<?=htmlspecialcharsbx($version['DOWNLOAD_URL'])?>"<?
+					<a <?= ($version['FROM_EXTERNAL_SYSTEM'] && $version['CAN_UPDATE'])? 'style="color:#d9930a;"' : '' ?> target="_blank" href="<?=htmlspecialcharsbx($versionHref)?>"<?
 						?> id="disk-attach-<?=$version['ID'] . '-' . $version['GLOBAL_CONTENT_VERSION'] ?>"<?
 						?> class="feed-com-file-name" <?
 						?> title="<?=htmlspecialcharsbx($version['NAME'])?>" <?
@@ -64,15 +65,6 @@ foreach($arResult['VERSIONS'] as $version)
 								BX.PopupMenu.currentItem.popupWindow.close();
 								return e.preventDefault();
 							}},
-							<? if($version['EDITABLE'] && $version['CAN_UPDATE'] && (!$version['IS_LOCKED'] || $version['IS_LOCKED_BY_SELF'])){ ?>
-							{text : BX.message('JS_CORE_VIEWER_EDIT'), className : "bx-viewer-popup-item item-edit", href : "#", onclick: function(e){
-								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$version['ID'] . '-' . $version['GLOBAL_CONTENT_VERSION'] ?>"), 'edit', {
-								modalWindow: BX.Disk.openBlankDocumentPopup()
-							});
-								BX.PopupMenu.currentItem.popupWindow.close();
-								return e.preventDefault();
-							}},
-							<? } ?>
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							{text : BX.message('JS_CORE_VIEWER_SAVE_TO_OWN_FILES_MSGVER_1'), className : "bx-viewer-popup-item item-b24", href : "#", onclick: function(e){
 								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$version['ID'] . '-' . $version['GLOBAL_CONTENT_VERSION'] ?>"), 'copyToMe');
@@ -87,9 +79,13 @@ foreach($arResult['VERSIONS'] as $version)
 								return e.preventDefault();
 							}},
 							<? } ?>
-							{text : BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC'), className : "bx-viewer-popup-item item-download", href : "<?=$version["DOWNLOAD_URL"]?>", onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
+							<? if($version['CAN_DOWNLOAD']){ ?>
+							{text : BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC'), className : "bx-viewer-popup-item item-download", attrs : {'data-testid': 'disk-uf-version-download-menu-item'}, href : "<?=$version["DOWNLOAD_URL"]?>", onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							,
+							<? } ?>
+							<? } ?>
+							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							{text : '<?= GetMessageJS('DISK_UF_FILE_SETTINGS_DOCS') ?>', className : "bx-viewer-popup-item item-setting", href : "#", onclick: function(e){
 								BX.Disk.InformationPopups.openWindowForSelectDocumentService({viewInUf: true});
 								BX.PopupMenu.currentItem.popupWindow.close();

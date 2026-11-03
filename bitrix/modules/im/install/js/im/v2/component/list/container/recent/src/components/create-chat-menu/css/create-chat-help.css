@@ -18,6 +18,12 @@
 	cursor: pointer;
 }
 
+/* Round the focus ring so it follows the control instead of a square outline;
+   the shared .--focus-visible sets no border-radius. */
+.bx-im-messenger__scope .bx-im-create-chat-help__content.--focus-visible:focus-visible {
+	border-radius: var(--ui-border-radius-sm);
+}
+
 .bx-im-create-chat-help__icon {
 	width: 19px;
 	height: 19px;

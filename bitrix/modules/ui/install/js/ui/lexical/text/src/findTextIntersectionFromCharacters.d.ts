@@ -5,13 +5,14 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import { RootNode, TextNode } from 'ui.lexical.core';
+import { type RootNode, type TextNode } from 'ui.lexical.core';
 /**
  * Finds a TextNode with a size larger than targetCharacters and returns
  * the node along with the remaining length of the text.
  * @param root - The RootNode.
  * @param targetCharacters - The number of characters whose TextNode must be larger than.
  * @returns The TextNode and the intersections offset, or null if no TextNode is found.
+ * @deprecated $findTextIntersectionFromCharacters has never worked correctly and will be removed
  */
 export declare function $findTextIntersectionFromCharacters(root: RootNode, targetCharacters: number): null | {
     node: TextNode;

@@ -1,11 +1,13 @@
-import { Tag, Extension, Loc, Event } from 'main.core';
-import { PopupWindowManager } from 'main.popup';
+import { Extension, Loc, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Button, CloseButton } from 'ui.buttons';
+import { PopupWindowManager, type Popup } from 'main.popup';
 import { sendData } from 'ui.analytics';
+import { Launcher } from 'ui.auto-launch';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
-import './style.css';
+import { Button, CloseButton } from 'ui.buttons';
 import 'ui.fonts.montserrat';
+
+import './style.css';
 
 type PopupPosition = {
 	minHeight: number,
@@ -20,7 +22,7 @@ export class MobilePopup extends EventEmitter
 	#isTablet: boolean = false;
 	#continueInMobileBrowserClicked: boolean = false;
 	#continueInTabletBrowserClicked: boolean = false;
-	#collabId: ?int = null;
+	#collabId: ?number = null;
 	#isCollaber: boolean = false;
 	#isMobileContinueButton: boolean = false;
 	#isTabletContinueButton: boolean = false;
@@ -77,7 +79,6 @@ export class MobilePopup extends EventEmitter
 				minWidth: this.#position.minWidth,
 				minHeight: this.#position.minHeight,
 				content: this.#getContent(),
-				//disableScroll: true,
 				padding: 0,
 				offsetTop: this.#position.offsetTop,
 				offsetLeft: this.#position.offsetLeft,
@@ -85,6 +86,8 @@ export class MobilePopup extends EventEmitter
 				events: {
 					onClose: () => {
 						this.emit('onClose');
+					},
+					onAfterClose: () => {
 						onDone();
 					},
 				},
@@ -92,21 +95,46 @@ export class MobilePopup extends EventEmitter
 		);
 	}
 
-	show(): void
+	show(): Promise<boolean>
 	{
-		if (
-			(this.#isTablet && this.#continueInTabletBrowserClicked)
-			|| (!this.#isTablet && this.#continueInMobileBrowserClicked)
-		)
-		{
-			return;
-		}
+		return new Promise((resolve, reject) => {
+			if (
+				(this.#isTablet && this.#continueInTabletBrowserClicked)
+				|| (!this.#isTablet && this.#continueInMobileBrowserClicked)
+			)
+			{
+				resolve(true);
 
-		BannerDispatcher.high.toQueue((onDone) => {
-			this.#calculatePopupPosition();
-			this.#popup ??= this.#createPopup(onDone);
-			this.#popup?.show();
-			document.body.scrollIntoView();
+				return;
+			}
+
+			const resolveOnBlockedSurface = () => {
+				const canShowOnTop = Launcher.canShowOnTop();
+				if (!canShowOnTop)
+				{
+					resolve(false);
+				}
+
+				return canShowOnTop;
+			};
+
+			BannerDispatcher.high.toQueue((onDone) => {
+				try
+				{
+					this.#calculatePopupPosition();
+					this.#popup ??= this.#createPopup(onDone);
+					this.#popup?.show();
+					document.body.scrollIntoView();
+					resolve(true);
+				}
+				catch (error)
+				{
+					reject(error);
+					setTimeout(onDone);
+				}
+			}, {
+				forceShowOnTop: resolveOnBlockedSurface,
+			});
 		});
 	}
 

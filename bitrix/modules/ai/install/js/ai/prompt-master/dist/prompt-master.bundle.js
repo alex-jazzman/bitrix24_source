@@ -1,7 +1,18 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, main_popup, ui_vue3, ui_iconSet_api_vue, ui_iconSet_api_core, ui_buttons, ui_vue3_directives_hint, main_loader, ui_vue3_components_hint, ui_alerts, ui_iconSet_main, ui_iconSet_crm, ui_entitySelector, ui_hint, ui_analytics) {
+(function (exports, main_core, main_popup, ui_analytics, main_core_events, ui_vue3, ui_iconSet_api_vue, ui_iconSet_api_core, ui_buttons, ui_vue3_directives_hint, main_loader, ui_vue3_components_hint, ui_alerts, ui_iconSet_main, ui_iconSet_crm, ui_entitySelector) {
 	'use strict';
+
+	const PROMPT_MASTER_POPUP_ID = 'prompt-master-popup';
+	const syncPromptMasterOverlay = () => {
+		const popup = main_popup.PopupManager.getPopupById(PROMPT_MASTER_POPUP_ID);
+		if (!popup?.isShown() || !popup.hasOverlay()) {
+			return;
+		}
+		popup.hideOverlay();
+		popup.resizeOverlay();
+		popup.showOverlay();
+	};
 
 	const promptTypes = [{
 		id: 'DEFAULT',
@@ -724,7 +735,7 @@ this.BX = this.BX || {};
 			},
 			initIconsPopup() {
 				const bindElementPosition = main_core.Dom.getPosition(this.$el);
-				this.popup = new main_popup.Popup({
+				this.popup = ui_vue3.markRaw(new main_popup.Popup({
 					content: this.getPopupContent(),
 					bindElement: {
 						top: bindElementPosition.bottom,
@@ -740,16 +751,22 @@ this.BX = this.BX || {};
 						position: 'top'
 					},
 					events: {
+						onAfterShow: this.handleIconsPopupVisibilityChange,
 						onPopupClose: () => {
 							this.isPopupShown = false;
 							this.popup = null;
-						}
+						},
+						onAfterClose: this.handleIconsPopupVisibilityChange
 					}
-				});
+				}));
+			},
+			handleIconsPopupVisibilityChange() {
+				syncPromptMasterOverlay();
 			},
 			getPopupContent() {
 				const container = main_core.Tag.render`<div class="ai__prompt-master-icon-selector_popup-content"></div>`;
-				availablePromptIcons.forEach(iconCode => {
+				const promptIcons = availablePromptIcons.includes(this.selectedIcon) ? [this.selectedIcon, ...availablePromptIcons.filter(iconCode => iconCode !== this.selectedIcon)] : availablePromptIcons;
+				promptIcons.forEach(iconCode => {
 					const icon = new ui_iconSet_api_core.Icon({
 						icon: iconCode,
 						size: 24
@@ -948,6 +965,8 @@ this.BX = this.BX || {};
 					preselectedItems: this.preselectedItems,
 					undeselectedItems: this.undeselectedItems,
 					events: {
+						onShow: this.handleUserSelectorDialogVisibilityChange,
+						onHide: this.handleUserSelectorDialogVisibilityChange,
 						'Item:onSelect': event => {
 							this.selectItem(event.getData().item);
 						},
@@ -960,6 +979,9 @@ this.BX = this.BX || {};
 						}
 					}
 				});
+			},
+			handleUserSelectorDialogVisibilityChange() {
+				syncPromptMasterOverlay();
 			},
 			showUserSelector() {
 				const dialog = this.getUserSelectorDialog();
@@ -1191,6 +1213,8 @@ this.BX = this.BX || {};
 							id: 'prompt-category'
 						}],
 						events: {
+							onShow: this.handleCategoriesDialogVisibilityChange,
+							onHide: this.handleCategoriesDialogVisibilityChange,
 							'Item:onSelect': event => {
 								this.selectCategory(event.getData().item);
 							},
@@ -1202,6 +1226,9 @@ this.BX = this.BX || {};
 				});
 				tagSelector.renderTo(this.$el);
 				return tagSelector;
+			},
+			handleCategoriesDialogVisibilityChange() {
+				syncPromptMasterOverlay();
 			}
 		},
 		async mounted() {
@@ -1939,7 +1966,7 @@ this.BX = this.BX || {};
 			promptMaster.subscribe(PromptMasterEvents.SAVE_SUCCESS, this.#successPromptSavingHandler);
 			promptMaster.subscribe(PromptMasterEvents.CLOSE_MASTER, this.#closeMasterHandler);
 			return new main_popup.Popup({
-				id: 'prompt-master-popup',
+				id: PROMPT_MASTER_POPUP_ID,
 				content: promptMaster.render(),
 				width: 360,
 				cacheable: false,
@@ -2008,5 +2035,5 @@ this.BX = this.BX || {};
 	exports.PromptMasterPopup = PromptMasterPopup;
 	exports.PromptMasterPopupEvents = PromptMasterPopupEvents;
 
-})(this.BX.AI = this.BX.AI || {}, BX, BX.Event, BX.Main, BX.Vue3, BX.UI.IconSet, BX.UI.IconSet, BX.UI, BX.Vue3.Directives, BX, BX.Vue3.Components, BX.UI, window, window, BX.UI.EntitySelector, BX.UI, BX.UI.Analytics);
+})(this.BX.AI = this.BX.AI || {}, BX, BX.Main, BX.UI.Analytics, BX.Event, BX.Vue3, BX.UI.IconSet, BX.UI.IconSet, BX.UI, BX.Vue3.Directives, BX, BX.Vue3.Components, BX.UI, window, window, BX.UI.EntitySelector);
 //# sourceMappingURL=prompt-master.bundle.js.map

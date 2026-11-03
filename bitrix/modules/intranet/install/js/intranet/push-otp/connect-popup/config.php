@@ -18,7 +18,6 @@ return [
 	'js' => 'dist/connect-popup.bundle.js',
 	'rel' => [
 		'intranet.design-tokens',
-		'intranet.push-otp.connect-popup',
 		'main.core',
 		'main.core.cache',
 		'main.core.events',

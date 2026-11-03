@@ -71,6 +71,14 @@ export class StickerService
 		return this.#requestItems();
 	}
 
+	// The answer loadNextPage short-circuits on, for callers that have to decide before asking. A consumer
+	// that shows a loading state around the call needs it: otherwise it flashes the state for a request
+	// that never happens.
+	hasMorePages(): boolean
+	{
+		return this.#hasMore;
+	}
+
 	async loadPack({ id, type }: ImModelStickerPackIdentifier): Promise
 	{
 		const hasPack = Core.getStore().getters['stickers/packs/hasPack']({ id, type });

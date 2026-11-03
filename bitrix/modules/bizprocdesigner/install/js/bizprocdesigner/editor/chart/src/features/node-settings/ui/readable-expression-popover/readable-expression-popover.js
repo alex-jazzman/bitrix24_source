@@ -7,19 +7,23 @@ import { UI } from 'ui.notification';
 import {
 	type ExpressionRefToken,
 	TOKEN_PATH_SEPARATOR,
+	expressionTokenFixedReference,
 	expressionTokenLabel,
+	expressionTokenUnresolvedHint,
 	isSourceBlockOnDiagram,
 } from '../../../../entities/node-settings/utils/readable-expressions';
 
 import './style.css';
 
 export const READABLE_EXPRESSION_SHOW_SOURCE_EVENT = 'BizprocDesigner.ReadableExpressions.ShowSource';
+export const READABLE_EXPRESSION_FIX_KEY_EVENT = 'BizprocDesigner.ReadableExpressions.FixKey';
 
 const POPUP_ID = 'bizprocdesigner-readable-expression-popover';
 const CONTENT_TESTID = 'bizprocdesigner-readable-expression-popover-content';
 const COPY_TESTID = 'bizprocdesigner-readable-expression-popover-copy';
 const SHOW_SOURCE_TESTID = 'bizprocdesigner-readable-expression-popover-show-source';
-const COPY_NOTIFICATION_DELAY = 2000;
+const FIX_KEY_TESTID = 'bizprocdesigner-readable-expression-popover-fix-key';
+const NOTIFICATION_DELAY = 2000;
 
 let activePopup: ?Popup = null;
 let activeAnchor: ?HTMLElement = null;
@@ -43,7 +47,11 @@ export function closeReadableExpressionPopoverIn(container: ?Node): void
 	}
 }
 
-export function openReadableExpressionPopover(token: ExpressionRefToken, anchor: HTMLElement): void
+export function openReadableExpressionPopover(
+	token: ExpressionRefToken,
+	anchor: HTMLElement,
+	fieldId: string = '',
+): void
 {
 	const isRepeatedClick = activeAnchor === anchor;
 	closeReadableExpressionPopover();
@@ -57,7 +65,7 @@ export function openReadableExpressionPopover(token: ExpressionRefToken, anchor:
 		id: POPUP_ID,
 		bindElement: anchor,
 		content: renderContent(token),
-		buttons: createButtons(token),
+		buttons: createButtons(token, fieldId),
 		className: 'bizprocdesigner-readable-expression-popover',
 		targetContainer: document.body,
 		autoHide: true,
@@ -72,9 +80,14 @@ export function openReadableExpressionPopover(token: ExpressionRefToken, anchor:
 		cacheable: false,
 		angle: true,
 		padding: 0,
-		// A click on the token itself must toggle the popover: auto-hide would close it before the
-		// token handler runs, and the reopen right after would look like the token does nothing.
-		autoHideHandler: (event: MouseEvent): boolean => !anchor.contains(event.target),
+		// The handler replaces the containment check of the popup rather than adding to it, so both
+		// exemptions are its own. The popup itself: a click inside it - selecting the code to copy it
+		// by hand - closes nothing. The token: a click on it must toggle the popover, while auto-hide
+		// would close it before the token handler runs, and the reopen right after would look like the
+		// token does nothing.
+		autoHideHandler: (event: MouseEvent): boolean => {
+			return !anchor.contains(event.target) && !popup.getPopupContainer().contains(event.target);
+		},
 		events: {
 			onPopupClose: (): void => {
 				forget(popup);
@@ -101,19 +114,23 @@ function renderContent(token: ExpressionRefToken): HTMLElement
 {
 	return Tag.render`
 		<div class="bizprocdesigner-readable-expression-popover__content" data-testid="${CONTENT_TESTID}">
-			${token.unknown ? renderUnknownNotice() : ''}
+			${renderUnresolvedNotice(token)}
 			${renderRows(token)}
 			<div class="bizprocdesigner-readable-expression-popover__code">${Text.encode(token.raw)}</div>
 		</div>
 	`;
 }
 
-function renderUnknownNotice(): HTMLElement
+function renderUnresolvedNotice(token: ExpressionRefToken): HTMLElement | string
 {
-	const text = Loc.getMessage('BIZPROCDESIGNER_EDITOR_READABLE_EXPRESSIONS_UNKNOWN') ?? '';
+	const hint = expressionTokenUnresolvedHint(token);
+	if (hint === null)
+	{
+		return '';
+	}
 
 	return Tag.render`
-		<div class="bizprocdesigner-readable-expression-popover__unknown">${Text.encode(text)}</div>
+		<div class="bizprocdesigner-readable-expression-popover__unknown">${Text.encode(hint)}</div>
 	`;
 }
 
@@ -136,7 +153,7 @@ function renderRows(token: ExpressionRefToken): Array<HTMLElement>
 	;
 }
 
-function createButtons(token: ExpressionRefToken): Array<Button>
+function createButtons(token: ExpressionRefToken, fieldId: string): Array<Button>
 {
 	const buttons = [];
 
@@ -164,16 +181,48 @@ function createButtons(token: ExpressionRefToken): Array<Button>
 		}));
 	}
 
+	// The popover writes nothing into the field itself: it names the reference and the
+	// spelling the server resolves, and the veneer of the field it was opened for does the writing.
+	const fixedRaw = expressionTokenFixedReference(token);
+	if (
+		Type.isStringFilled(fixedRaw)
+		&& Type.isStringFilled(fieldId)
+		&& Number.isInteger(token.start)
+		&& Number.isInteger(token.end)
+	)
+	{
+		buttons.push(new Button({
+			text: Loc.getMessage('BIZPROCDESIGNER_EDITOR_READABLE_EXPRESSIONS_POPOVER_FIX_KEY') ?? '',
+			size: ButtonSize.EXTRA_SMALL,
+			color: ButtonColor.LIGHT_BORDER,
+			dataset: { testid: FIX_KEY_TESTID },
+			onclick: (): void => fixKey(fieldId, token, fixedRaw),
+		}));
+	}
+
 	return buttons;
 }
 
 function copyCode(raw: string): void
 {
 	BX.clipboard?.copy(raw);
+	notify('BIZPROCDESIGNER_EDITOR_READABLE_EXPRESSIONS_COPIED');
+}
 
+/**
+ * Whether the fixed spelling got written is known to the layer that writes it, so the notice of the
+ * fix is raised from there, not on the click.
+ */
+export function notifyKeyFixed(): void
+{
+	notify('BIZPROCDESIGNER_EDITOR_READABLE_EXPRESSIONS_KEY_FIXED');
+}
+
+function notify(messageId: string): void
+{
 	UI.Notification.Center.notify({
-		content: Loc.getMessage('BIZPROCDESIGNER_EDITOR_READABLE_EXPRESSIONS_COPIED') ?? '',
-		autoHideDelay: COPY_NOTIFICATION_DELAY,
+		content: Loc.getMessage(messageId) ?? '',
+		autoHideDelay: NOTIFICATION_DELAY,
 	});
 }
 
@@ -181,4 +230,16 @@ function showSource(blockId: string): void
 {
 	closeReadableExpressionPopover();
 	EventEmitter.emit(READABLE_EXPRESSION_SHOW_SOURCE_EVENT, { blockId });
+}
+
+function fixKey(fieldId: string, token: ExpressionRefToken, fixed: string): void
+{
+	closeReadableExpressionPopover();
+	EventEmitter.emit(READABLE_EXPRESSION_FIX_KEY_EVENT, {
+		fieldId,
+		start: token.start,
+		end: token.end,
+		original: token.raw,
+		fixed,
+	});
 }

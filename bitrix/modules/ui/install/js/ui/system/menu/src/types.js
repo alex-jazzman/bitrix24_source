@@ -1,6 +1,6 @@
-import type { PopupOptions } from 'main.popup';
-import type { CounterOptions } from 'ui.cnt';
-import type { ButtonOptions } from 'ui.buttons';
+import { type PopupOptions } from 'main.popup';
+import { type CounterOptions } from 'ui.cnt';
+import { type ButtonOptions } from 'ui.buttons';
 
 export type MenuOptions = PopupOptions & {
 	/**
@@ -44,7 +44,23 @@ export type MenuOptions = PopupOptions & {
 };
 
 export type MenuItemOptions = {
-	id: string,
+	/**
+	 * Identifies the item for `updateItems()` reconciliation and becomes its
+	 * `data-testid`, unless `dataset` carries its own `testid` key. Only a
+	 * non-empty string becomes a label: an empty id still reconciles the item,
+	 * but has to be labelled through `dataset`.
+	 */
+	id?: string,
+	/**
+	 * `data-*` attributes for the item action node: `{ testid: 'save' }` renders
+	 * `data-testid="save"`, `testid: null` leaves the item unlabelled. Ignored for
+	 * an item rendered through `uiButtonOptions`; label that one via its dataset.
+	 *
+	 * A key is a `dataset` (`DOMStringMap`) key, not an attribute name: `itemIndex`
+	 * renders `data-item-index`. A key that is not a valid one, the natural
+	 * `'item-index'` first of all, throws and aborts the render of the whole menu.
+	 */
+	dataset?: { [key: string]: string | number | null },
 	sectionCode: string,
 	design: 'default' | 'accent-1' | 'accent-2' | 'alert' | 'copilot' | 'disabled',
 	/**

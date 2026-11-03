@@ -39,11 +39,23 @@ this.BX = this.BX || {};
 			}
 		},
 		methods: {
-			handleClick() {
+			isKeyboardActivation(originalEvent) {
+				if (originalEvent instanceof KeyboardEvent) {
+					return true;
+				}
+				if (originalEvent instanceof MouseEvent) {
+					return originalEvent.detail === 0;
+				}
+				return document.activeElement?.matches(':focus-visible') === true;
+			},
+			handleClick(originalEvent = null) {
+				if (this.groupData.disabled) {
+					return;
+				}
 				if (this.groupData.deselectable) {
-					this.$emit(!this.groupData.selected ? 'selected' : 'unselected', this.groupData);
+					this.$emit(!this.groupData.selected ? 'selected' : 'unselected', this.groupData, this.isKeyboardActivation(originalEvent));
 				} else if (!this.groupData.selected) {
-					this.$emit('selected', this.groupData);
+					this.$emit('selected', this.groupData, this.isKeyboardActivation(originalEvent));
 				}
 			}
 		},
@@ -52,13 +64,22 @@ this.BX = this.BX || {};
 			<li
 				:class="{
 					'ui-entity-catalog__menu_item': true,
+					'--native-action': true,
 					'--active': groupData.selected,
 					'--disabled': groupData.disabled,
 				}"
-				@click="handleClick"
 			>
-				<span class="ui-entity-catalog__menu_item-icon" v-if="hasIcon" v-html="groupData.icon"/>
-				<span class="ui-entity-catalog__menu_item-text">{{ groupData.name }}</span>
+				<button
+					type="button"
+					data-testid="entity-catalog-group-action"
+					class="ui-entity-catalog__menu_item-button"
+					:disabled="groupData.disabled"
+					:aria-current="groupData.selected ? 'true' : null"
+					@click="handleClick"
+				>
+					<span class="ui-entity-catalog__menu_item-icon" v-if="hasIcon" v-html="groupData.icon"/>
+					<span class="ui-entity-catalog__menu_item-text">{{ groupData.name }}</span>
+				</button>
 				<span
 					v-if="getCounterValue !== null"
 					class="ui-entity-catalog__menu_item-entity-count"
@@ -105,11 +126,11 @@ this.BX = this.BX || {};
 			}
 		},
 		methods: {
-			handleGroupSelected(group) {
-				this.$emit('groupSelected', group);
+			handleGroupSelected(group, activatedByKeyboard = false) {
+				this.$emit('groupSelected', group, activatedByKeyboard);
 			},
-			handleGroupUnselected(group) {
-				this.$emit('groupUnselected', group);
+			handleGroupUnselected(group, activatedByKeyboard = false) {
+				this.$emit('groupUnselected', group, activatedByKeyboard);
 			}
 		},
 		template: `
@@ -191,6 +212,9 @@ this.BX = this.BX || {};
 			}
 		},
 		computed: {
+			groupsRegionName() {
+				return main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_GROUPS_ARIA');
+			},
 			processedGroups() {
 				const selectedGroupId = this.searching ? null : this.selectedGroup ? this.selectedGroup.id : null;
 				const groupsClone = BX.Runtime.clone(this.groups);
@@ -208,9 +232,29 @@ this.BX = this.BX || {};
 				return this.processedGroups.map(list => list.filter(g => !g.isHeaderGroup)).filter(list => list.length > 0);
 			}
 		},
+		data() {
+			return {
+				groupsScrollable: false
+			};
+		},
+		mounted() {
+			this.updateScrollableRegion();
+			this.groupsResizeObserver = new ResizeObserver(() => this.updateScrollableRegion());
+			this.groupsResizeObserver.observe(this.$refs.groupsContent);
+		},
+		updated() {
+			this.updateScrollableRegion();
+		},
+		beforeUnmount() {
+			this.groupsResizeObserver?.disconnect();
+		},
 		methods: {
-			handleGroupSelected(group) {
-				this.$emit('groupSelected', group);
+			updateScrollableRegion() {
+				const content = this.$refs.groupsContent;
+				this.groupsScrollable = content && content.scrollHeight > content.clientHeight;
+			},
+			handleGroupSelected(group, activatedByKeyboard = false) {
+				this.$emit('groupSelected', group, activatedByKeyboard);
 			},
 			handleGroupUnselected() {
 				this.$emit('groupSelected', null);
@@ -239,7 +283,14 @@ this.BX = this.BX || {};
 					</template>
 				</GroupList>
 			</div>
-			<div class="ui-entity-catalog__main-groups-content">
+			<div
+				class="ui-entity-catalog__main-groups-content"
+				data-testid="entity-catalog-groups-region"
+				ref="groupsContent"
+				role="region"
+				:aria-label="groupsRegionName"
+				:tabindex="groupsScrollable ? 0 : undefined"
+			>
 				<GroupList
 					:groups="mainLists"
 					@groupSelected="handleGroupSelected"
@@ -309,14 +360,17 @@ this.BX = this.BX || {};
 		computed: {
 			buttonText() {
 				return main_core.Type.isStringFilled(this.buttonData.text) ? this.buttonData.text : main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_ITEM_DEFAULT_BUTTON_TEXT');
+			},
+			buttonAriaLabel() {
+				return main_core.Type.isStringFilled(this.buttonData.ariaLabel) ? this.buttonData.ariaLabel : null;
 			}
 		},
 		methods: {
-			handleButtonClick(pointerEvent) {
+			handleButtonClick(originalEvent) {
 				const event = new main_core_events.BaseEvent({
 					data: {
 						eventData: this.eventData,
-						originalEvent: pointerEvent
+						originalEvent
 					}
 				});
 				if (main_core.Type.isFunction(this.buttonData.action)) {
@@ -326,11 +380,14 @@ this.BX = this.BX || {};
 		},
 		template: `
 		<div class="ui-entity-catalog__option-btn-block">
-			<div 
+			<button
+				type="button"
+				data-testid="entity-catalog-item-action"
 				class="ui-entity-catalog__btn"
 				:class="{'--lock': buttonData.locked}"
+				:aria-label="buttonAriaLabel"
 				@click="handleButtonClick"
-			>{{buttonText}}</div>
+			>{{buttonText}}</button>
 		</div>
 	`
 	};
@@ -467,6 +524,10 @@ this.BX = this.BX || {};
 			}
 		},
 		computed: {
+			itemsRegionName() {
+				const regionName = main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_ITEMS_ARIA');
+				return main_core.Type.isStringFilled(this.group?.name) ? `${this.group.name}. ${regionName}` : regionName;
+			},
 			...ui_vue3_pinia.mapState(useGlobalState, ['filtersApplied', 'shouldShowWelcomeStub']),
 			showAdvice() {
 				return this.group && main_core.Type.isStringFilled(this.group.adviceTitle) && !this.searching;
@@ -494,6 +555,34 @@ this.BX = this.BX || {};
 				return this.showAdvice && this.items.length <= 0;
 			}
 		},
+		data() {
+			return {
+				contentScrollable: false
+			};
+		},
+		mounted() {
+			this.updateScrollableRegion();
+			this.contentResizeObserver = new ResizeObserver(() => this.updateScrollableRegion());
+			this.contentResizeObserver.observe(this.$refs.content);
+		},
+		updated() {
+			this.updateScrollableRegion();
+		},
+		beforeUnmount() {
+			this.contentResizeObserver?.disconnect();
+		},
+		methods: {
+			focusContent() {
+				const content = this.$refs.content;
+				content?.focus({
+					preventScroll: true
+				});
+			},
+			updateScrollableRegion() {
+				const content = this.$refs.content;
+				this.contentScrollable = content && content.scrollHeight > content.clientHeight;
+			}
+		},
 		beforeUpdate() {
 			this.$refs.content.scrollTop = 0;
 		},
@@ -506,7 +595,14 @@ this.BX = this.BX || {};
 
 			<hr class="ui-entity-catalog__main-separator" v-if="showSeparator">
 
-			<div class="ui-entity-catalog__main-content-body" ref="content">
+			<div
+				class="ui-entity-catalog__main-content-body"
+				data-testid="entity-catalog-items-region"
+				ref="content"
+				role="region"
+				:aria-label="itemsRegionName"
+				:tabindex="contentScrollable ? 0 : -1"
+			>
 				<slot name="main-content-welcome-stub" v-if="showWelcomeStub"/>
 				<slot name="main-content-no-selected-group-stub" v-else-if="showNoSelectedGroupStub"/>
 				<slot name="main-content-filter-stub" v-if="showFiltersStub">
@@ -537,6 +633,7 @@ this.BX = this.BX || {};
 	`
 	};
 
+	let menuSequence = 0;
 	const TitleBarFilter = {
 		emits: ['onApplyFilters'],
 		name: 'ui-entity-catalog-titlebar-filter',
@@ -553,21 +650,53 @@ this.BX = this.BX || {};
 		data() {
 			return {
 				appliedFilters: this.getAppliedFilters(),
-				allFilters: this.filters
+				allFilters: this.filters,
+				menuOpen: false,
+				activeMenuId: '',
+				filterOpenLabel: main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_FILTER_OPEN_ARIA')
 			};
 		},
 		methods: {
-			showMenu() {
-				main_popup.MenuManager.create({
-					id: 'ui-entity-catalog-titlebar-filter-menu',
+			showMenu(event) {
+				const openedWithKeyboard = event.detail === 0;
+				const menuId = `ui-entity-catalog-titlebar-filter-menu-${++menuSequence}`;
+				this.activeMenuId = menuId;
+				const menu = main_popup.MenuManager.create({
+					id: menuId,
 					bindElement: this.$el,
 					minWidth: 271,
 					autoHide: true,
 					contentColor: 'white',
 					draggable: false,
 					cacheable: false,
+					focusTrap: {
+						initialFocus: 'container'
+					},
 					items: this.getItems()
-				}).show();
+				});
+				menu.subscribe('onShow', () => {
+					if (this.activeMenuId !== menuId) {
+						return;
+					}
+					this.menuOpen = true;
+					if (openedWithKeyboard) {
+						menu.getNavigation().focusFirst();
+					}
+				});
+				menu.subscribe('onClose', () => {
+					if (this.activeMenuId !== menuId) {
+						return;
+					}
+					this.menuOpen = false;
+					this.activeMenuId = '';
+					if (openedWithKeyboard) {
+						this.$el?.focus({
+							preventScroll: true
+						});
+					}
+				});
+				menu.show();
+				return menu;
 			},
 			getItems() {
 				const items = [];
@@ -644,13 +773,18 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div 
+		<button
+			type="button"
+			data-testid="entity-catalog-filter-open"
 			:class="{
 				'ui-entity-catalog__titlebar_btn-filter': true,
 				'--active': Object.keys(appliedFilters).length > 0
 			}"
-			@click="showMenu">
-		</div>
+			aria-haspopup="menu"
+			:aria-expanded="menuOpen"
+			:aria-label="filterOpenLabel"
+			@click="showMenu"
+		></button>
 	`
 	};
 
@@ -662,7 +796,11 @@ this.BX = this.BX || {};
 				opened: false,
 				debounceSearchHandler: null,
 				queryString: '',
-				showClearSearch: false
+				showClearSearch: false,
+				searchOpenLabel: main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_SEARCH_OPEN_ARIA'),
+				searchClearLabel: main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_SEARCH_CLEAR_ARIA'),
+				searchInputLabel: main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_SEARCH_INPUT_ARIA'),
+				searchPlaceholder: main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_GROUP_LIST_SEARCH_PLACEHOLDER')
 			};
 		},
 		watch: {
@@ -694,23 +832,34 @@ this.BX = this.BX || {};
 				if (this.showClearSearch) {
 					this.$refs['search-input'].value = '';
 					this.onSearch('');
+					this.$refs['search-input'].focus();
 				}
 			}
 		},
 		template: `
-		<div class="ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-round" @click.once="openSearch">
-			<a 
-				:class="{
-					'ui-ctl-after': true,
-					'ui-ctl-icon-search': !showClearSearch,
-					'ui-ctl-icon-clear': showClearSearch
-				}"
+		<div class="ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-round">
+			<button
+				v-if="!opened"
+				type="button"
+				class="ui-ctl-after ui-ctl-icon-search"
+				data-testid="entity-catalog-search-open"
+				:aria-label="searchOpenLabel"
+				@click="openSearch"
+			></button>
+			<button
+				v-if="showClearSearch"
+				type="button"
+				class="ui-ctl-after ui-ctl-icon-clear"
+				data-testid="entity-catalog-search-clear"
+				:aria-label="searchClearLabel"
 				@click="clearSearch"
-			/>
+			></button>
 			<input
 				type="text"
 				class="ui-ctl-element ui-ctl-textbox"
-				placeholder="${main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_GROUP_LIST_SEARCH_PLACEHOLDER')}"
+				data-testid="entity-catalog-search-input"
+				:placeholder="searchPlaceholder"
+				:aria-label="searchInputLabel"
 				ref="search-input"
 				v-if="opened"
 				@input="debounceSearchHandler"
@@ -851,11 +1000,14 @@ this.BX = this.BX || {};
 				});
 				return this.groups.map(groupList => groupList.filter(group => group.isHeaderGroup === true || groupIdsWithItems.has(String(group.id)))).filter(groupList => groupList.length > 0);
 			},
-			handleGroupSelected(group) {
+			handleGroupSelected(group, activatedByKeyboard = false) {
 				this.searching = false;
 				this.$refs.search?.clearSearch();
 				this.selectedGroupId = group ? group.id : null;
 				this.selectedGroup = group ?? null;
+				if (group && activatedByKeyboard) {
+					this.$nextTick(() => this.$refs.mainContent?.focusContent());
+				}
 			},
 			onSearch(event) {
 				const queryString = event.getData().queryString.toLowerCase();
@@ -935,6 +1087,7 @@ this.BX = this.BX || {};
 				</template>
 			</MainGroups>
 			<MainContent
+				ref="mainContent"
 				:items="itemsBySelectedGroupId"
 				:items-to-show="computedShownItems"
 				:group="selectedGroup"
@@ -1387,6 +1540,7 @@ this.BX = this.BX || {};
 		#getDefaultPopupOptions() {
 			return {
 				className: 'ui-catalog-popup ui-entity-catalog__scope',
+				ariaLabel: this.#popupTitle.trim().length > 0 ? this.#popupTitle : main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_DIALOG_ARIA'),
 				titleBar: this.#getPopupTitleBar(),
 				noAllPaddings: true,
 				closeByEsc: true,
@@ -1411,6 +1565,8 @@ this.BX = this.BX || {};
 						<button
 							type="button"
 							class="ui-entity-catalog-popup-close-icon"
+							data-testid="entity-catalog-popup-close"
+							aria-label="${main_core.Loc.getMessage('UI_JS_ENTITY_CATALOG_CLOSE_ARIA')}"
 							onclick="${this.#handleClose.bind(this)}"
 							onmousedown="${this.#handleMouseDown.bind(this)}"
 						></button>

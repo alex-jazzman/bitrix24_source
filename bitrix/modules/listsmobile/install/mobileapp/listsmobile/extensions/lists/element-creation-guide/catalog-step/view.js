@@ -4,6 +4,8 @@
 jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Text2, Text5 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
 	const { AnalyticsEvent } = require('analytics');
 	const { EventEmitter } = require('event-emitter');
 	const { Random } = require('utils/random');
@@ -122,12 +124,10 @@ jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, m
 						flexDirection: 'row',
 					},
 				},
-				Text({
+				Text2({
 					text: item.title,
+					color: Color.base1,
 					style: {
-						fontSize: 18,
-						fontWeight: '400',
-						color: AppTheme.colors.base1,
 						flexGrow: 1,
 						flexShrink: 1,
 					},
@@ -164,13 +164,12 @@ jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, m
 						justifyContent: 'flex-end',
 					},
 				},
-				Text({
+				Text5({
 					text: item.formattedTime,
+					accent: true,
+					color: Color.base4,
 					style: {
 						flexShrink: 1,
-						fontWeight: '500',
-						fontSize: 14,
-						color: AppTheme.colors.base4,
 					},
 					numberOfLines: 1,
 					ellipsize: 'end',

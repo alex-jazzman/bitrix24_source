@@ -1,0 +1,25 @@
+<?php
+$MESS['M_INTRANET_SELF_DELETE_BTN_CANCEL'] = 'Cancel';
+$MESS['M_INTRANET_SELF_DELETE_ERROR_DESCRIPTION'] = 'Could not load data. Check your internet connection and try again.';
+$MESS['M_INTRANET_SELF_DELETE_ERROR_RETRY'] = 'Try again';
+$MESS['M_INTRANET_SELF_DELETE_ERROR_TITLE'] = 'Network error';
+$MESS['M_INTRANET_SELF_DELETE_GO_TO_WEB_TITLE'] = 'Bitrix24 settings';
+$MESS['M_INTRANET_SELF_DELETE_PAID_LICENSE_BTN_HELP'] = 'How to transfer privileges';
+$MESS['M_INTRANET_SELF_DELETE_PAID_LICENSE_DESC_1'] = 'You are currently the only administrator of this Bitrix24.';
+$MESS['M_INTRANET_SELF_DELETE_PAID_LICENSE_DESC_WITH_EMAIL'] = 'Before deleting your profile, transfer your administrator privileges to another employee or contact us at #EMAIL#.';
+$MESS['M_INTRANET_SELF_DELETE_PAID_LICENSE_HEADING'] = 'Transfer your administrator privileges';
+$MESS['M_INTRANET_SELF_DELETE_PORTAL_DELETE_BTN_SETTINGS'] = 'Open Bitrix24 settings';
+$MESS['M_INTRANET_SELF_DELETE_PORTAL_DELETE_DESC_1'] = 'You are currently the only employee in this Bitrix24.';
+$MESS['M_INTRANET_SELF_DELETE_PORTAL_DELETE_DESC_2'] = 'Your entire Bitrix24 will be deleted along with your profile. It cannot be restored.';
+$MESS['M_INTRANET_SELF_DELETE_REQUEST_CHAT_BTN_CREATE'] = 'Create chat';
+$MESS['M_INTRANET_SELF_DELETE_REQUEST_CHAT_DESC_1'] = 'Only your Bitrix24 administrator can delete your profile.';
+$MESS['M_INTRANET_SELF_DELETE_REQUEST_CHAT_DESC_2'] = 'To send a request, create a chat with the administrator. If your dismissal needs approval, add your supervisor to the chat.';
+$MESS['M_INTRANET_SELF_DELETE_REQUEST_CHAT_ERROR_DESCRIPTION'] = 'Could not create a chat. Check your internet connection and try again.';
+$MESS['M_INTRANET_SELF_DELETE_REQUEST_CHAT_HEADING'] = 'Delete profile';
+$MESS['M_INTRANET_SELF_DELETE_REQUEST_CHAT_SELECTOR_TITLE'] = 'Select participants';
+$MESS['M_INTRANET_SELF_DELETE_SCREEN_TITLE'] = 'Delete profile';
+$MESS['M_INTRANET_SELF_DELETE_TRANSFER_RIGHTS_FREE_BTN_HELP'] = 'How to transfer privileges';
+$MESS['M_INTRANET_SELF_DELETE_TRANSFER_RIGHTS_FREE_BTN_SETTINGS'] = 'Delete profile';
+$MESS['M_INTRANET_SELF_DELETE_TRANSFER_RIGHTS_FREE_DESC_1'] = 'You are currently the only administrator of this Bitrix24.';
+$MESS['M_INTRANET_SELF_DELETE_TRANSFER_RIGHTS_FREE_DESC_2'] = 'Before deleting your profile, transfer your administrator privileges to another employee. If there is no one to transfer them to, you can only delete your profile along with your entire Bitrix24.';
+$MESS['M_INTRANET_SELF_DELETE_TRANSFER_RIGHTS_FREE_HEADING'] = 'You cannot delete your profile';

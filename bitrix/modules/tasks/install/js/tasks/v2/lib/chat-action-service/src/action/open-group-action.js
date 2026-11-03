@@ -34,6 +34,16 @@ class OpenGroupAction extends BaseAction
 		await this.#openGroup(payload);
 	}
 
+	isTooltipOnly(payload: ActionPayload): boolean
+	{
+		return !this.#isLinkedToCurrentTask(payload);
+	}
+
+	isReady(payload: ActionPayload): boolean
+	{
+		return taskService.hasStoreTask(payload.taskId, false);
+	}
+
 	#isLinkedToCurrentTask(payload: ActionPayload): boolean
 	{
 		const { entityId, taskId } = payload;

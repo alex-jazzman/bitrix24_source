@@ -18,6 +18,7 @@ return [
 		'im:messenger/lib/permission-manager',
 		'im:messenger/loc',
 		'im:messenger/controller/attach-chat/flow',
+		'im:messenger/provider/services/analytics',
 		'im:messenger/provider/services/chat',
 	],
 	'bundle' => [

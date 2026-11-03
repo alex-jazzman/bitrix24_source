@@ -1,0 +1,5 @@
+.biconnector-dashboard-onboarding__frame-target {
+	position: absolute;
+	z-index: 0;
+	pointer-events: none;
+}

@@ -1,0 +1,113 @@
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Call = this.BX.Call || {};
+this.BX.Call.Legacy = this.BX.Call.Legacy || {};
+(function (exports, call_legacy_component_elements, call_legacy_component_userListPopup) {
+	'use strict';
+
+	// @vue/component
+	const UserList = {
+		name: 'UserList',
+		components: {
+			CallLoader: call_legacy_component_elements.CallLoader,
+			UserListPopup: call_legacy_component_userListPopup.UserListPopup
+		},
+		props: {
+			usersData: {
+				type: Array,
+				required: true
+			},
+			loading: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			withBorder: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			withIcon: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		data() {
+			return {
+				hasError: false,
+				isLoadingUsers: false,
+				showPopup: false
+			};
+		},
+		computed: {
+			isLoading() {
+				return this.loading || this.isLoadingUsers;
+			},
+			displayedUsers() {
+				const maxDisplayCount = 5;
+				const usersToShow = this.usersData.slice(0, maxDisplayCount);
+				const remainingCount = this.usersData.length - maxDisplayCount;
+				if (remainingCount > 0) {
+					usersToShow.push({
+						remainingCount
+					});
+				}
+				return usersToShow;
+			}
+		},
+		methods: {
+			backgroundStyle(user) {
+				return {
+					backgroundColor: user.color
+				};
+			},
+			showUsersPopup() {
+				this.showPopup = true;
+			},
+			onClosePopup() {
+				this.showPopup = false;
+			}
+		},
+		template: `
+		<div
+			class="bx-call-user-list-component bx-call-user-list-component-scope"
+			:class="{ '--border': this.withBorder }"
+			ref="users-popup-bind"
+			@click="showUsersPopup"
+		>
+			<template v-if="!isLoading && !hasError">
+				<div v-if="withIcon" class="bx-call-user-list-component__icon"></div>
+				<div  v-for="user in displayedUsers" :key="user.id || 'remaining'" class="bx-call-user-list-component__user-item">
+					<img
+						v-if="user.avatar"
+						:src="user.avatar"
+						:alt="user.name"
+						class="bx-call-user-list-component__user-avatar"
+						:class="{ '--border': this.withBorder }"
+						draggable="false"
+					/>
+					<div v-else-if="user.name" class="bx-call-user-list-component__user-avatar --icon" :style="backgroundStyle(user)"></div>
+
+					<div v-else class="bx-call-user-list-component__user-avatar --more">
+						+{{ user.remainingCount }}
+					</div>
+				</div>
+			</template>
+
+			<UserListPopup
+				v-if="showPopup"
+				:bindElement="$refs['users-popup-bind']"
+				:loading="isLoading"
+				:usersData="usersData"
+				@close="onClosePopup"
+			/>
+			<CallLoader v-else-if="isLoading" :isLight="true" />
+		</div>
+	`
+	};
+
+	exports.UserList = UserList;
+
+})(this.BX.Call.Legacy.Component = this.BX.Call.Legacy.Component || {}, BX.Call.Legacy.Component.Elements, BX.Call.Legacy.Component);
+//# sourceMappingURL=user-list.bundle.js.map

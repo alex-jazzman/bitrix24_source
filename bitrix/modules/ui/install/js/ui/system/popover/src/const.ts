@@ -70,3 +70,9 @@ export const POINTER_PROTRUSION: number = POINTER_DEPTH - POINTER_OVERLAP;
 
 // Width of the same figure, the one that runs along the popover side.
 export const POINTER_WIDTH: number = 36;
+
+// Marks the node of the consumer as the bubble of a popover: the address popover.css writes the layout
+// defaults to. An attribute and not a class - the node stays free of classes of the extension. Public,
+// because a Vue wrapper over a class of the family protects the attribute from a binding of the consumer,
+// and one name in one place is what keeps that protection on the very attribute the class writes.
+export const BUBBLE_ATTRIBUTE: string = 'data-ui-system-popover-bubble';

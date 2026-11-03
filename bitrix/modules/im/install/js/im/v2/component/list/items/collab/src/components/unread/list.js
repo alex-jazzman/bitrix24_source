@@ -1,11 +1,13 @@
 import { type JsonObject } from 'main.core';
 import { type BaseEvent, type EventEmitter } from 'main.core.events';
+import { markRaw } from 'ui.vue3';
 
 import { BaseRecentList } from 'im.v2.component.list.items.base';
+import { ActiveCallList } from 'im.v2.component.list.items.elements.active-call-list';
 import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
 import { EventType, RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
-import { type ImModelRecentItem } from 'im.v2.model';
+import { type ImModelCallItem, type ImModelRecentItem } from 'im.v2.model';
 import { UnreadModeManager } from 'im.v2.lib.unread-mode';
 
 import { CollabRecentMenu } from '../../classes/context-menu';
@@ -14,7 +16,7 @@ import { CollabService } from '../../classes/services/collab.js';
 // @vue/component
 export const CollabUnreadList = {
 	name: 'CollabUnreadList',
-	components: { BaseRecentList, RecentEmptyState },
+	components: { ActiveCallList, BaseRecentList, RecentEmptyState },
 	emits: ['selectChat'],
 	data(): JsonObject
 	{
@@ -22,6 +24,7 @@ export const CollabUnreadList = {
 			isLoading: false,
 			isLoadingNextPage: false,
 			firstPageLoaded: false,
+			listIsScrolled: false,
 		};
 	},
 	computed: {
@@ -32,7 +35,7 @@ export const CollabUnreadList = {
 	},
 	async created()
 	{
-		this.contextMenuManager = new CollabRecentMenu({ emitter: this.getEmitter() });
+		this.contextMenuManager = markRaw(new CollabRecentMenu({ emitter: this.getEmitter() }));
 
 		this.clearCollection();
 		await this.loadInitialItems();
@@ -72,6 +75,10 @@ export const CollabUnreadList = {
 			this.firstPageLoaded = true;
 			this.isLoading = false;
 		},
+		onListScroll(isScrolled: boolean)
+		{
+			this.listIsScrolled = isScrolled;
+		},
 		async onLoadNextPage()
 		{
 			if (this.isLoadingNextPage || !this.getCollabUnreadService().hasMoreItemsToLoad())
@@ -86,6 +93,10 @@ export const CollabUnreadList = {
 		onSelectChat(dialogId: string)
 		{
 			this.$emit('selectChat', dialogId);
+		},
+		onCallClick({ item }: { item: ImModelCallItem })
+		{
+			this.onSelectChat(item.dialogId);
 		},
 		onItemRightClick(payload: { item: ImModelRecentItem, event: PointerEvent })
 		{
@@ -129,12 +140,17 @@ export const CollabUnreadList = {
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 			data-test-id="im_container-recent__unread-list"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<RecentEmptyState 
 					:title="loc('IM_LIST_COLLAB_UNREAD_EMPTY_STATE_TITLE')" 

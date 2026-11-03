@@ -1,0 +1,240 @@
+.vibecode-catalog-open-app {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	background: var(--ui-color-bg-content-primary);
+}
+
+.vibecode-catalog-open-app__header {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	min-width: 0;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-lg);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.vibecode-catalog-open-app__header .vibecode-catalog-open-app__restart-button {
+	align-self: center;
+	margin: 0;
+}
+
+.vibecode-catalog-open-app__identity {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	min-width: 0;
+	margin-right: auto;
+}
+
+.vibecode-catalog-open-app__identity-text {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	min-width: 0;
+}
+
+.vibecode-catalog-open-app__icon-slot {
+	display: flex;
+	position: relative;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 32px;
+	width: 32px;
+	height: 32px;
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--vibecode-catalog-open-app-icon-background, var(--ui-color-accent-main-primary));
+	overflow: hidden;
+}
+
+.vibecode-catalog-open-app__icon {
+	display: block;
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--ui-border-radius-sm);
+	object-fit: cover;
+	opacity: 0;
+}
+
+.vibecode-catalog-open-app__icon.--loaded {
+	opacity: 1;
+}
+
+.vibecode-catalog-open-app.--fullscreen .vibecode-catalog-open-app__header {
+	display: none;
+}
+
+.vibecode-catalog-open-app__title {
+	flex: 0 1 auto;
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vibecode-catalog-open-app__author {
+	flex: 0 1 auto;
+	color: var(--ui-color-base-3);
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: color 200ms ease;
+}
+
+.vibecode-catalog-open-app__author:hover {
+	color: var(--ui-color-base-2);
+}
+
+.vibecode-catalog-open-app__author:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.vibecode-catalog-open-app__body {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.vibecode-catalog-open-app__content {
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+
+.vibecode-catalog-open-app__loader {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	background: var(--ui-color-bg-content-primary) url(../images/bg-blackhole-B-poster.webp) center / cover no-repeat;
+}
+
+.vibecode-catalog-open-app__loader-video {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.vibecode-catalog-open-app__loader-softener {
+	position: absolute;
+	inset: 0;
+	background: var(--ui-color-bg-state-hover-default-overlay);
+	backdrop-filter: blur(4px);
+}
+
+.vibecode-catalog-open-app__loader-brand {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: min(360px, 84vw);
+	height: min(42px, 9.8vw);
+	margin: auto;
+	opacity: 0;
+	filter: blur(16px);
+	transform: scale(0.97);
+	animation: vibecode-catalog-open-app-brand-reveal 900ms ease-out both;
+}
+
+.vibecode-catalog-open-app__loader-brand.--alaio {
+	width: min(393px, 84vw);
+	height: min(70px, 14.96vw);
+}
+
+.vibecode-catalog-open-app__loader-brand-logo {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.vibecode-catalog-open-app__loader-brand-shine {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		transparent 35%,
+		var(--ui-color-base-white-fixed) 50%,
+		transparent 65%,
+		transparent 100%
+	);
+	background-repeat: no-repeat;
+	background-size: 35% 100%;
+	background-position: -55% center;
+	mask: url('/bitrix/js/vibecodeconnector/open-app-loader/images/logo.svg') center / contain no-repeat;
+	-webkit-mask: url('/bitrix/js/vibecodeconnector/open-app-loader/images/logo.svg') center / contain no-repeat;
+	animation: vibecode-catalog-open-app-brand-shimmer 2.3s ease-in-out 1s infinite;
+}
+
+.vibecode-catalog-open-app__loader-brand.--alaio .vibecode-catalog-open-app__loader-brand-shine {
+	mask-image: url('/bitrix/js/vibecodeconnector/open-app-loader/images/logo-alaio.svg');
+	-webkit-mask-image: url('/bitrix/js/vibecodeconnector/open-app-loader/images/logo-alaio.svg');
+}
+
+@keyframes vibecode-catalog-open-app-brand-reveal {
+	to {
+		opacity: 1;
+		filter: blur(0);
+		transform: scale(1);
+	}
+}
+
+@keyframes vibecode-catalog-open-app-brand-shimmer {
+	from {
+		background-position: -55% center;
+	}
+
+	55%, 100% {
+		background-position: 155% center;
+	}
+}
+
+.vibecode-catalog-open-app__loader.--hidden {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.vibecode-catalog-open-app__loader-video {
+		display: none;
+	}
+
+	.vibecode-catalog-open-app__loader-brand {
+		animation: none;
+		opacity: 1;
+		filter: none;
+		transform: scale(1);
+	}
+
+	.vibecode-catalog-open-app__loader-brand-shine {
+		animation: none;
+		display: none;
+	}
+}
+
+.vibecode-catalog-open-app__error {
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg);
+	color: var(--ui-color-base-2);
+}
+
+.vibecode-catalog-open-app__visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

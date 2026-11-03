@@ -92,6 +92,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			hasMenuItems() {
 				return this.menuItems.length > 0;
 			},
+			ariaLabel() {
+				return this.hasMenuItems ? this.loc('TASKS_V2_STATUS_VALUE_ARIA_LABEL', {
+					'#STATUS#': this.statusFormatted
+				}) : '';
+			},
 			tooltip() {
 				return () => tasks_v2_component_elements_hint.tooltip({
 					text: this.statusAtFormatted,
@@ -199,6 +204,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		template: `
 		<div
 			class="tasks-field-status"
+			data-testid="tasks-status"
 			:data-task-id="taskId"
 			:data-task-field-id="statusMeta.id"
 			:data-task-field-value="task.status"
@@ -209,10 +215,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				v-hint="tooltip"
 				:active="isMenuShown"
 				:readonly="!hasMenuItems"
+				:ariaLabel
+				:ariaHaspopup="hasMenuItems ? 'menu' : ''"
+				:ariaExpanded="hasMenuItems ? isMenuShown : null"
+				data-testid="tasks-status-btn"
 				@click="handleClick"
 				ref="clickable"
 			>
-				<BIcon class="tasks-field-status-icon" :name="icon"/>
+				<BIcon class="tasks-field-status-icon" :name="icon" aria-hidden="true"/>
 				<div class="tasks-field-status-text">{{ statusFormatted }}</div>
 			</HoverPill>
 			<div ref="needsControl" class="tasks-field-status-control" v-hint="controlTooltip">
@@ -220,6 +230,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					v-if="task.needsControl"
 					class="tasks-field-status-control-icon"
 					:name="Outline.CHECK_DEFERRED"
+					role="img"
+					:aria-label="loc('TASKS_V2_STATUS_NEEDS_CONTROL_HINT')"
 				/>
 			</div>
 		</div>

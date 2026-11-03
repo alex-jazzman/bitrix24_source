@@ -33,7 +33,7 @@ export function createSidebarRootState({ store, uiState, dragState, getRouteDocu
 		hasManageableCollection: hasManageableCollection.value,
 	}));
 
-	// [TPL-02] Everything the favorites block and the stars are allowed to read.
+	// Everything the favorites block and the stars are allowed to read.
 	const favorites = {
 		get items() { return store.state.favorites.value; },
 		// Whether the block itself stands open, as opposed to `isExpanded` below, which answers for a row.
@@ -55,7 +55,7 @@ export function createSidebarRootState({ store, uiState, dragState, getRouteDocu
 		get dragItem() { return dragState.favoriteItem; },
 		get dropTarget() { return dragState.favoriteTarget; },
 		isExpanded: (entityType, entityId) => store.queries.isFavoriteExpanded(entityType, entityId),
-		// [DTO-02] Notification state of a row of the block or of a document inside one of its branches,
+		// Notification state of a row of the block or of a document inside one of its branches,
 		// and whether a write on it is still on the wire.
 		notifyOf: (entityType, entityId) => store.queries.favoriteNotify(entityType, entityId),
 		isNotifyPending: (entityType, entityId) => store.queries.isFavoriteNotifyPending(entityType, entityId),

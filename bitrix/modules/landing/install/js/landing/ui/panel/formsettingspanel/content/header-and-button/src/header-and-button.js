@@ -8,7 +8,7 @@ import {ContentWrapper} from 'landing.ui.panel.basepresetpanel';
 import 'helper';
 import headerAndButtonsIcon from './images/header-and-buttons-message-icon.svg';
 
-export default class HeaderAndButtonContent extends ContentWrapper
+export class HeaderAndButtonContent extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -133,3 +133,4 @@ export default class HeaderAndButtonContent extends ContentWrapper
 		this.emit('onChange', {...event.getData(), skipPrepare: true});
 	}
 }
+export { HeaderAndButtonContent as Content };

@@ -23,6 +23,7 @@ while($zr = $z->Fetch())
 	$ar = array();
 	$ar["ID"] = intval($zr["ID"]);
 	$ar["NAME"] = htmlspecialcharsbx($zr["NAME"]);
+	$ar["~NAME"] = $zr["NAME"];
 	$arGROUPS[] = $ar;
 }
 
@@ -41,8 +42,85 @@ if (!function_exists("__GroupRightsShowRow"))
 
 		$titleCol = bitrix_sessid_post()."<b>".GetMessage("MAIN_BY_DEFAULT")."</b>";
 
-		__GroupRightsShowRow($titleCol, false, 0, $ar, $GROUP_DEFAULT_RIGHT, $site_id_tmp, $arRightsUseSites, $arSites, false);
+		__GroupRightsShowRow(
+			$titleCol, false, 0, $ar, $GROUP_DEFAULT_RIGHT, $site_id_tmp, $arRightsUseSites, $arSites, false,
+			GetMessage("group_rights_default")
+		);
 
+	}
+
+	//the phrases naming the controls are newer than the locales of the product, and an attribute holding
+	//an empty name is worse than no attribute at all: it suppresses the other sources of the name and
+	//leaves the control nameless. So nothing is printed until the phrase of the column has arrived, and
+	//a subject alone is never printed either: it names a row and says nothing about the column
+	function __GroupRightsNameAttribute($attribute, $messageId, $rowSubject = '')
+	{
+		$label = GetMessage($messageId);
+		if ($label == '')
+		{
+			return '';
+		}
+
+		//the name goes into an attribute value, so it is escaped here: subjects arrive as plain text
+		$name = htmlspecialcharsbx($rowSubject <> '' ? $label.': '.$rowSubject : $label);
+
+		return ' '.$attribute.'="'.$name.'"';
+	}
+
+	//the array of the sites is built by the page including the block, and SelectBoxFromArray(), which
+	//used to print this select, answered either spelling of the keys and an array carrying neither
+	function __GroupRightsSiteReference($arSites, $key)
+	{
+		foreach ([$key, strtoupper($key)] as $name)
+		{
+			if (isset($arSites[$name]) && is_array($arSites[$name]))
+			{
+				return $arSites[$name];
+			}
+		}
+
+		return [];
+	}
+
+	function __GroupRightsSiteSelect($arSites, $site_id_tmp, $rowSubject = '')
+	{
+		$box = '<select class="typeselect" style="width: 150px;" name="SITES[]"'.
+			__GroupRightsNameAttribute("aria-label", "group_rights_site_label", $rowSubject).'>'.
+			'<option value="">'.GetMessage("group_rights_sites_all").'</option>';
+
+		$siteNames = __GroupRightsSiteReference($arSites, "reference");
+		$siteIds = __GroupRightsSiteReference($arSites, "reference_id");
+
+		foreach ($siteNames as $i => $siteName)
+		{
+			if (!isset($siteIds[$i]))
+			{
+				continue;
+			}
+
+			$box .= '<option value="'.htmlspecialcharsbx($siteIds[$i]).'"'.
+				(strcasecmp($siteIds[$i], (string)$site_id_tmp) == 0 ? ' selected' : '').'>'.
+				htmlspecialcharsbx($siteName).'</option>';
+		}
+
+		return $box.'</select>';
+	}
+
+	//a row is printed once per site of the portal, so on a portal of several sites the site is the only
+	//thing telling the rows of one group apart; the subject reaches the attribute as plain text and is
+	//escaped where the attribute is built, so the raw spelling of the name of the site is what travels
+	function __GroupRightsRowSubject($rowSubject, $arSites, $site_id_tmp)
+	{
+		if ($rowSubject == '' || $site_id_tmp == '')
+		{
+			return $rowSubject;
+		}
+
+		$siteIds = __GroupRightsSiteReference($arSites, "reference_id");
+		$siteNames = __GroupRightsSiteReference($arSites, "~reference");
+		$i = array_search($site_id_tmp, $siteIds, true);
+
+		return $rowSubject.', '.($i !== false && isset($siteNames[$i]) ? $siteNames[$i] : $site_id_tmp);
 	}
 
 	function __GetGroupRight($module_id, $groupID, $site_id_tmp, $arSites, $arGROUPS)
@@ -105,17 +183,23 @@ if (!function_exists("__GroupRightsShowRow"))
 
 		$titleCol = $value["NAME"]." [<a title=\"".GetMessage("MAIN_USER_GROUP_TITLE")."\" href=\"/bitrix/admin/group_edit.php?ID=".$value["ID"]."&amp;lang=".LANGUAGE_ID."\">".$value["ID"]."</a>]:".(($value["ID"]==1 && $md->SHOW_SUPER_ADMIN_GROUP_RIGHTS=="Y") ? "<br><small>".GetMessage("MAIN_SUPER_ADMIN_RIGHTS_COMMENT")."</small>" : "");
 
-		__GroupRightsShowRow($titleCol, $value["ID"], $value["ID"], $ar, $v, $site_id_tmp, $arRightsUseSites, $arSites, true);
+		__GroupRightsShowRow(
+			$titleCol, $value["ID"], $value["ID"], $ar, $v, $site_id_tmp, $arRightsUseSites, $arSites, true,
+			$value["~NAME"].' ['.intval($value["ID"]).']'
+		);
 	}
 
-	function __GroupRightsShowRow($titleCol, $groupID, $group_id, $ar, $v, $site_id_tmp, $arRightsUseSites, $arSites, $useDefault = true)
+	function __GroupRightsShowRow($titleCol, $groupID, $group_id, $ar, $v, $site_id_tmp, $arRightsUseSites, $arSites, $useDefault = true, $rowSubject = '')
 	{
+		$rowSubject = __GroupRightsRowSubject($rowSubject, $arSites, $site_id_tmp);
 		?><tr>
 			<td width="40%"><?=$titleCol?></td>
 			<td width="40%"><?php
 			echo '<input type="hidden" name="GROUPS[]" value="'.$group_id.'">';
 
-			$strReturnBox = '<select class="typeselect" name="RIGHTS[]" onchange="__GroupRightsChangeSite(this)" >';
+			$strReturnBox = '<select class="typeselect" name="RIGHTS[]"'.
+				__GroupRightsNameAttribute("aria-label", "group_rights_right_label", $rowSubject).
+				' onchange="__GroupRightsChangeSite(this)" >';
 
 			$ref = $ar["reference"];
 			$ref_id = $ar["reference_id"];
@@ -137,9 +221,16 @@ if (!function_exists("__GroupRightsShowRow"))
 
 			echo $strReturnBox.'</select>';
 			?></td><td width="20%"><span style="display: <?=(in_array($v, $arRightsUseSites) ? "inline-block" : "none")?>;"><?php
-				echo SelectBoxFromArray("SITES[]", $arSites, htmlspecialcharsbx($site_id_tmp), GetMessage("group_rights_sites_all"), "class='typeselect' style='width: 150px;'");
+				echo __GroupRightsSiteSelect($arSites, $site_id_tmp, $rowSubject);
 			?></span></td>
-			<td width="0%"><a href="javascript:void(0)" onClick="__GroupRightsDeleteRow(this)"><img src="/bitrix/themes/.default/images/actions/delete_button.gif" border="0" width="20" height="20" alt=""></a></td>
+			<td width="0%"><a href="javascript:void(0)"
+				role="button"
+				class="adm-group-rights-delete"<?=__GroupRightsNameAttribute("title", "group_rights_delete")?>
+				onClick="__GroupRightsDeleteRow(this)"
+				onKeyDown="if (event.key === ' ') { event.preventDefault(); this.click(); }"><img
+					src="/bitrix/themes/.default/images/actions/delete_button.gif"
+					border="0" width="20" height="20"
+					alt=""></a></td>
 		</tr><?php
 	}
 
@@ -157,6 +248,9 @@ while ($arSite = $rsSites->GetNext())
 {
 	$arSites["reference_id"][] = $arSite["ID"];
 	$arSites["reference"][] = "[".$arSite["ID"]."] ".$arSite["NAME"];
+	//GetNext() escapes NAME and keeps the raw spelling under the tilde; the names of the rows are plain
+	//text, so they are built from the latter
+	$arSites["~reference"][] = "[".$arSite["ID"]."] ".$arSite["~NAME"];
 }
 
 if (method_exists($md, "GetModuleRightList"))
@@ -196,9 +290,28 @@ echo "<script>\n".
 	"}\n".
 
 	"if ('__GroupRightsDeleteRow' != typeof window.noFunc) { \n".
+		//the row holds the focus while it is being removed, so the focus is handed over before BX.remove
 		"function __GroupRightsDeleteRow(el)\n".
 		"{\n".
-			"BX.remove(BX.findParent(el, {'tag': 'tr'}));\n".
+			"var row = BX.findParent(el, {'tag': 'tr'});\n".
+			"if (!row) { \n".
+				"return false;\n".
+			"}\n".
+			"var target = null;\n".
+			"for (var next = row.nextElementSibling; next && !target; next = next.nextElementSibling) { \n".
+				"target = next.querySelector('.adm-group-rights-delete');\n".
+			"}\n".
+			"for (var prev = row.previousElementSibling; prev && !target; prev = prev.previousElementSibling) { \n".
+				"target = prev.querySelector('.adm-group-rights-delete');\n".
+			"}\n".
+			"if (!target) { \n".
+				"var table = BX.findParent(row, {'tag': 'table'});\n".
+				"target = table ? table.querySelector('.adm-group-rights-add') : null;\n".
+			"}\n".
+			"if (target) { \n".
+				"target.focus();\n".
+			"}\n".
+			"BX.remove(row);\n".
 			"return false;\n".
 		"}\n".
 	"}\n".
@@ -285,7 +398,7 @@ foreach($arGROUPS as $value)
 	}
 }
 ?><tr>
-	<td><select style="width:300px" onchange="settingsSetGroupID(this)" name="GROUPS[]">
+	<td><select style="width:300px" onchange="settingsSetGroupID(this)" name="GROUPS[]"<?=__GroupRightsNameAttribute("aria-label", "group_rights_group_label")?>>
 		<option value=""><?= GetMessage("group_rights_select")?></option>
 		<option value="0"><?= GetMessage("group_rights_default")?></option>
 		<?php
@@ -297,7 +410,8 @@ foreach($arGROUPS as $value)
 		?>
 	</select></td>
 	<td><?php
-		$strReturnBox = '<select class="typeselect" name="RIGHTS[]">';
+		$strReturnBox = '<select class="typeselect" name="RIGHTS[]"'.
+			__GroupRightsNameAttribute("aria-label", "group_rights_right_label").'>';
 
 		$ref = $ar["reference"];
 		$ref_id = $ar["reference_id"];
@@ -317,7 +431,7 @@ foreach($arGROUPS as $value)
 		echo $strReturnBox.'</select>';
 	?></td>
 	<td width="20%"><span style="display: none;"><?php
-		echo SelectBoxFromArray("SITES[]", $arSites, "", GetMessage("group_rights_sites_all"), "class='typeselect' style='width: 150px;'");
+		echo __GroupRightsSiteSelect($arSites, "");
 	?></span></td>
 	<td width="0%"></td>
 </tr>
@@ -326,6 +440,65 @@ foreach($arGROUPS as $value)
 	<td style="padding-bottom:10px;">
 <script>
 
+//the table of the tab the block is printed into is a form layout, not tabular data; it is addressed
+//by the class of its own so that a table of a module around the block keeps its semantics
+(function(script)
+{
+	if (!script)
+	{
+		return;
+	}
+
+	var table = script.closest("table.adm-detail-content-table");
+	if (table)
+	{
+		table.setAttribute("role", "presentation");
+	}
+})(document.currentScript);
+
+//a row added on the page is a copy of the row that adds one, the names of its controls included, so
+//the rows repeat the name of their column and nothing else; the chosen group is the subject that tells
+//them apart, the very one the server prints into the rows it renders
+function __GroupRightsNameControl(control, subject)
+{
+	if (!control)
+	{
+		return;
+	}
+
+	if (typeof control.dataset.rightsColumn === 'undefined')
+	{
+		control.dataset.rightsColumn = control.getAttribute('aria-label') || '';
+	}
+
+	var column = control.dataset.rightsColumn;
+	if (column === '')
+	{
+		//the server printed no name for the column, so there is no name to keep the subject in either:
+		//an attribute holding a subject alone, or nothing at all, would only leave the control nameless
+		control.removeAttribute('aria-label');
+		return;
+	}
+
+	control.setAttribute('aria-label', subject === '' ? column : column + ': ' + subject);
+}
+
+function __GroupRightsNameRowControls(tableRow)
+{
+	//a selector of a group is what a row added on the page has and a row printed by the server has not:
+	//the latter carries its subject from the server and must keep it
+	var selGroup = BX.findChild(tableRow.cells[0], { 'tag': 'select'}, true);
+	if (!selGroup)
+	{
+		return;
+	}
+
+	var subject = selGroup.value !== '' ? selGroup.options[selGroup.selectedIndex].text : '';
+
+	__GroupRightsNameControl(BX.findChild(tableRow.cells[1], { 'tag': 'select'}, true), subject);
+	__GroupRightsNameControl(BX.findChild(tableRow.cells[2], { 'tag': 'select'}, true), subject);
+}
+
 function settingsSetGroupID(el)
 {
 	var tableRow = BX.findParent(el, { 'tag': 'tr'});
@@ -333,6 +506,8 @@ function settingsSetGroupID(el)
 	var selGroup = BX.findChild(tableRow.cells[0], {'tag': 'select'}, true);
 	var selSite = BX.findChild(tableRow.cells[2], {'tag': 'select'}, true);
 	var number = selGroup.selectedIndex;
+
+	__GroupRightsNameRowControls(tableRow);
 
 	RightsRowNew = new BX.CRightsRowNew({'row': tableRow});
 	BX.bind(sel, "change", BX.delegate(RightsRowNew.ChangeSite, RightsRowNew));
@@ -358,9 +533,15 @@ function settingsAddRights(a)
 	selSiteSpan = BX.findChild(tableRow.cells[2], { 'tag': 'span'}, true);
 	selSiteSpan.style.display = "none";
 
+	//the row is cloned from one that may already carry a group, and the selectors above are reset: the
+	//names go back with them, otherwise the new row is announced under the group of the row it came from
+	__GroupRightsNameRowControls(tableRow);
+
 	RightsRowNew = new BX.CRightsRowNew({'row': tableRow});
 
 	BX.bind(selRights, "change", BX.delegate(RightsRowNew.ChangeSite, RightsRowNew));
+
+	selGroups.focus();
 }
 
 BX.CRightsRowNew = function(arParams)
@@ -392,7 +573,7 @@ BX.CRightsRowNew.prototype.ChangeSite = function()
 }
 
 </script>
-		<a href="javascript:void(0)" onclick="settingsAddRights(this)" hidefocus="true" class="adm-btn"><?= GetMessage("group_rights_add")?></a>
+		<a href="javascript:void(0)" onclick="settingsAddRights(this)" hidefocus="true" class="adm-btn adm-group-rights-add"><?= GetMessage("group_rights_add")?></a>
 	</td>
 	<td></td>
 	<td></td>

@@ -5,7 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import { DOMConversionMap, DOMExportOutput, EditorConfig, ElementNode, LexicalEditor, LexicalNode, NodeKey, SerializedElementNode, Spread } from 'ui.lexical.core';
+import { type DOMExportOutput, type EditorConfig, ElementNode, type LexicalEditor, type LexicalNode, type LexicalUpdateJSON, type NodeKey, type SerializedElementNode, type Spread } from 'ui.lexical.core';
+import { type ListItemNode } from '.';
 export type SerializedListNode = Spread<{
     listType: ListType;
     start: number;
@@ -21,24 +22,41 @@ export declare class ListNode extends ElementNode {
     __start: number;
     /** @internal */
     __listType: ListType;
-    static getType(): string;
-    static clone(node: ListNode): ListNode;
-    constructor(listType: ListType, start: number, key?: NodeKey);
+    /** @internal */
+    $config(): import("ui.lexical.core").BaseStaticNodeConfig & {
+        readonly list?: {
+            readonly $transform: (node: ListNode) => void;
+            readonly extends: typeof ElementNode;
+            readonly importDOM: import("ui.lexical.core").DOMConversionMap<HTMLElement>;
+        } | undefined;
+    } & import("ui.lexical.core").StaticNodeTypeAccessor<"list"> & import("ui.lexical.core").StaticNodeConfigAccessor<{
+        readonly $transform: (node: ListNode) => void;
+        readonly extends: typeof ElementNode;
+        readonly importDOM: import("ui.lexical.core").DOMConversionMap<HTMLElement>;
+    }>;
+    constructor(listType?: ListType, start?: number, key?: NodeKey);
+    afterCloneFrom(prevNode: this): void;
     getTag(): ListNodeTagType;
-    setListType(type: ListType): void;
+    setListType(type: ListType): this;
     getListType(): ListType;
     getStart(): number;
+    setStart(start: number): this;
     createDOM(config: EditorConfig, _editor?: LexicalEditor): HTMLElement;
-    updateDOM(prevNode: ListNode, dom: HTMLElement, config: EditorConfig): boolean;
-    static transform(): (node: LexicalNode) => void;
-    static importDOM(): DOMConversionMap | null;
-    static importJSON(serializedNode: SerializedListNode): ListNode;
+    updateDOM(prevNode: this, dom: HTMLElement, config: EditorConfig): boolean;
+    updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedListNode>): this;
     exportDOM(editor: LexicalEditor): DOMExportOutput;
     exportJSON(): SerializedListNode;
     canBeEmpty(): false;
     canIndent(): false;
-    append(...nodesToAppend: LexicalNode[]): this;
+    splice(start: number, deleteCount: number, nodesToInsert: LexicalNode[]): this;
     extractWithChild(child: LexicalNode): boolean;
+    /**
+     * Create an appropriate ListItemNode to be a child of this ListNode,
+     * {@link $createListItemNode} is the default implementation.
+     *
+     * @returns A new ListItemNode.
+     */
+    createListItemNode(): ListItemNode;
 }
 /**
  * Creates a ListNode of listType.
@@ -46,7 +64,7 @@ export declare class ListNode extends ElementNode {
  * @param start - Where an ordered list starts its count, start = 1 if left undefined.
  * @returns The new ListNode
  */
-export declare function $createListNode(listType: ListType, start?: number): ListNode;
+export declare function $createListNode(listType?: ListType, start?: number): ListNode;
 /**
  * Checks to see if the node is a ListNode.
  * @param node - The node to be checked.

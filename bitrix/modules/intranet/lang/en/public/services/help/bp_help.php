@@ -47,7 +47,7 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
   for the simplest workflow scheme. However, real projects in the real world will usually
   require adding custom statuses. Custom statuses can be created by a
   portal administrator or by persons given permissions to create statuses.</p>
- <img border='1' title='Documents and statuses' alt='Documents and statuses' src='#SITE#images/en/bp/1.png' />
+ <img border='1' title='Documents and statuses' alt='Documents and statuses' src='#SITE#images/en/bp/1.webp' />
   <p>The <b> Workflow</b> module supports the assigning of persons responsible for
   moving a document from one status to another, as well as letting you list persons permitted to edit a
   document while it is in a given status. The module can keep the historical versions of a copies of document
@@ -111,7 +111,7 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
   document. Any sequential process usually includes several actions between the
   start and end points.</p>
 
-  <p><img border='1' alt='Example: simple linear process' title='Example: simple linear process' src='#SITE#images/en/bp/2.png' /></p>
+  <p><img border='1' alt='Example: simple linear process' title='Example: simple linear process' src='#SITE#images/en/bp/2.webp' /></p>
 
   <h2>State-driven Business Process</h2>
 
@@ -126,7 +126,7 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
   a sequential process, but it opens wide possibilities to automate information
   processing. A typical scheme for such processes consists of several statuses
   which in turn include actions and status change conditions. </p>
- <img border='1' alt='Example: process with statuses' title='Example: process with statuses' src='#SITE#images/en/bp/3.png' />
+ <img border='1' alt='Example: process with statuses' title='Example: process with statuses' src='#SITE#images/en/bp/3.webp' />
   <p>Each action in a status is usually a finite sequential process.</p>
 
   <h1> <a name='tipical'></a>Typical Business Processes</h1>
@@ -161,11 +161,11 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
 
   <p>Recommended when employees are to familiarize themselves with a document. </p>
   You can view the business processes (standard and user-defined) related to a
-  certain document type by clicking <img src='#SITE#images/en/bp/4.png' alt='Business processes button' title='Business processes button' />
+  certain document type by clicking <img src='#SITE#images/en/bp/4.webp' alt='Business processes button' title='Business processes button' />
   ,which will open the <b>Business Process Templates</b> page where you can edit
   existing and create new processes.
   <p>
- <img border='1' src='#SITE#images/en/bp/11.png' alt='Business processes page' title='Business processes page' />
+ <img border='1' src='#SITE#images/en/bp/11.webp' alt='Business processes page' title='Business processes page' />
   <h1><a name='work'></a>Creating a Business Process</h1>
 
   <p>To create and edit business processes, you will need the special visual
@@ -181,14 +181,14 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
   process parameters are data that can be accessed in any command, action or
   condition. Having the parameters defined you can proceed and create the
   process.</p>
- <img border='1' title='Setting process parameters' alt='Setting process parameters' src='#SITE#images/en/bp/6.png' />
+ <img border='1' title='Setting process parameters' alt='Setting process parameters' src='#SITE#images/en/bp/6.webp' />
 
   <h2>Creating a Status-Driven Process</h2>
 
   <p>First of all, create and configure the required statuses using the Add State button. Then, create
   commands for each status. Each command represents a separate sequential
   process.</p>
-   <img border='1' src='#SITE#images/en/bp/7.png' alt='Assigning actions in statuses' title='Assigning actions in statuses' />
+   <img border='1' src='#SITE#images/en/bp/7.webp' alt='Assigning actions in statuses' title='Assigning actions in statuses' />
 
   <h2>Creating a Sequential Process </h2>
 
@@ -198,7 +198,7 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
   <p>The visual editor uses the popular drag-and-drop technique to add
   actions. Having added a command, configure its parameters. Each command has a
   unique parameters dialog.</p>
- <img border='1' title='Adding actions in the visual editor' alt='Adding actions in the visual editor' src='#SITE#images/en/bp/8.png' />
+ <img border='1' title='Adding actions in the visual editor' alt='Adding actions in the visual editor' src='#SITE#images/en/bp/8.webp' />
   <h1><a name='perfomance'></a>Running a Business Process</h1>
 
   <p>Acreated (or existing) business process can be run manually or
@@ -209,10 +209,10 @@ $MESS["SERVICES_INFO"] = "<div> Contents:
   <p>To run a business process on a specific document, select the <b>New
   Business Process </b>command in the document action menu and select the
   required business process in the list.</p>
- <img border='1' src='#SITE#images/en/bp/5.png' alt='Launching a business process for a document' title='Launching a business process for a document' />
+ <img border='1' src='#SITE#images/en/bp/5.webp' alt='Launching a business process for a document' title='Launching a business process for a document' />
   <p>When a business process parameters window opens, specify the parameters and
   click <b>Start</b>.</p>
- <img border='1' title='Setting up a business process' alt='Setting up a business process' src='#SITE#images/en/bp/9.png' />
+ <img border='1' title='Setting up a business process' alt='Setting up a business process' src='#SITE#images/en/bp/9.webp' />
   <p>If a business process provides notification options, a notification will be sent to an employee when the process arrives at a point where the given employee must perform some action.   To view and perform the assigned tasks, the person can
   open the <b>Business Processes </b>tab on their personal page. </p>
  </div>

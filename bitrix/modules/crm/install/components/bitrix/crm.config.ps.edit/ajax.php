@@ -9,6 +9,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 $arReturn = array();
 
 Loc::loadMessages(__FILE__);
+Loc::loadMessages(__DIR__ . '/component.php');
 
 if (!CModule::IncludeModule('crm'))
 	$arReturn['ERROR'][] = Loc::getMessage('CRM_PS_MODULE_NOT_INSTALLED');
@@ -17,6 +18,7 @@ global $APPLICATION, $USER;
 
 if(!isset($arReturn['ERROR']))
 {
+	$metadataProvider = new \Bitrix\Crm\V2\Internal\Service\PaySystem\HandlerMetadataProvider();
 	$bCrmWritePerm = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 	if($USER->IsAuthorized() && check_bitrix_sessid() && $bCrmWritePerm)
@@ -31,19 +33,16 @@ if(!isset($arReturn['ERROR']))
 		{
 			case 'get_fields':
 
-				$ID = preg_replace("/[^a-zA-Z0-9_-]/", '', $ID);
-
-				$arReturn['FIELDS'] = CCrmPaySystem::getPSCorrespondence($ID, $psMode);
-
-				$path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($ID);
-				if (\Bitrix\Main\IO\File::isFileExists(\Bitrix\Main\Application::getDocumentRoot().$path.'/.description.php'))
+				$metadataResult = $metadataProvider->get(['ACTION_FILE' => $ID, 'PS_MODE' => $psMode]);
+				if (!$metadataResult->isSuccess())
 				{
-					require \Bitrix\Main\Application::getDocumentRoot().$path.'/.description.php';
-					if (isset($data))
-						$arReturn["NAME"] = $data['NAME'];
-					elseif (isset($psTitle))
-						$arReturn["NAME"] = $psTitle;
+					$arReturn['ERROR'] = Loc::getMessage('CRM_PS_NO_SCRIPT');
+					break;
 				}
+				$metadata = $metadataResult->getData();
+				$ID = $metadata['handler']->getCode();
+				$arReturn['FIELDS'] = CCrmPaySystem::getPSCorrespondence($ID, $psMode);
+				$arReturn['NAME'] = $metadata['description']['NAME'] ?? '';
 
 				foreach ($arReturn['FIELDS'] as $code => $data)
 				{
@@ -61,7 +60,9 @@ if(!isset($arReturn['ERROR']))
 						}
 					}
 
-					$map = \Bitrix\Sale\BusinessValue::getMapping($code);
+					$map = \Bitrix\Sale\BusinessValue::getMapping($code, null, null, [
+						'MATCH' => \Bitrix\Sale\BusinessValue::MATCH_EXACT | \Bitrix\Sale\BusinessValue::MATCH_COMMON,
+					]);
 					if ($map === null)
 						continue;
 
@@ -89,20 +90,9 @@ if(!isset($arReturn['ERROR']))
 
 				$arReturn['GROUP_LIST'] = \Bitrix\Sale\BusinessValue::getGroups();
 
-				/** @var PaySystem\BaseServiceHandler $className */
-				$className = PaySystem\Manager::getClassNameFromPath($ID);
-				if (!class_exists($className))
+				$handlerModeList = $metadata['modes'];
+				if ($metadata['handler']->getClassName() !== null)
 				{
-					$path = PaySystem\Manager::getPathToHandlerFolder($ID);
-					$fullPath = \Bitrix\Main\Application::getDocumentRoot().$path.'/handler.php';
-					if ($path && \Bitrix\Main\IO\File::isFileExists($fullPath))
-						require_once $fullPath;
-				}
-
-				$handlerModeList = array();
-				if (class_exists($className))
-				{
-					$handlerModeList = $className::getHandlerModeList();
 					if ($handlerModeList)
 					{
 						$arReturn['PS_MODE_LIST'] = $handlerModeList;
@@ -138,9 +128,6 @@ if(!isset($arReturn['ERROR']))
 					}
 				}
 
-				$service = new \Bitrix\Sale\PaySystem\Service(
-					array('ACTION_FILE' => CCrmPaySystem::getActionHandler($ID))
-				);
 
 				$arParamsTemplate = array();
 				foreach ($arReturn['FIELDS'] as $fieldId => $field)
@@ -149,14 +136,14 @@ if(!isset($arReturn['ERROR']))
 							$arParamsTemplate[$fieldId] = $field['VALUE'];
 				}
 
-				$arParamsTemplate = array_merge($arParamsTemplate, $service->getDemoParams());
-				$service->setTemplateMode(\Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
-				$service->setTemplateParams($arParamsTemplate);
-				if (mb_strpos($service->getField('ACTION_FILE'), 'bill') !== false || mb_strpos($service->getField('ACTION_FILE'), 'quote') !== false)
+				$preview = $metadataProvider->preview(
+					['ACTION_FILE' => $ID, 'PS_MODE' => $psMode, 'PERSON_TYPE_ID' => $personTypeId],
+					$arParamsTemplate,
+					'ps_edit_get_fields',
+				);
+				if ($preview->isSuccess())
 				{
-					$payment = PaySystem\Manager::getPaymentObjectByData(array('PERSON_TYPE_ID' => $personTypeId));
-					$result = $service->showTemplate($payment, 'template');
-					$arReturn['TEMPLATE'] = $result->getTemplate();
+					$arReturn['TEMPLATE'] = $preview->getData()['content'];
 				}
 
 				break;
@@ -167,9 +154,14 @@ if(!isset($arReturn['ERROR']))
 				$request = $context->getRequest();
 				$formData = $request->get('formData');
 
-				if (isset($formData['data']["ACTION_FILE"]))
+				$metadataResult = $metadataProvider->get([
+					'ACTION_FILE' => $formData['data']['ACTION_FILE'] ?? null,
+					'PS_MODE' => $formData['data']['PS_MODE'] ?? null,
+				]);
+				if (!$metadataResult->isSuccess())
 				{
-					$formData['data']["ACTION_FILE"] = preg_replace("/[^a-zA-Z0-9_-]/", '', $formData['data']["ACTION_FILE"]);
+					$arReturn['ERROR'] = Loc::getMessage('CRM_PS_NO_SCRIPT');
+					break;
 				}
 
 				$arPsActFields = CCrmPaySystem::getPSCorrespondence($formData['data']["ACTION_FILE"], $formData['data']['PS_MODE'] ?? null);
@@ -224,22 +216,21 @@ if(!isset($arReturn['ERROR']))
 					}
 				}
 
-				$service = new \Bitrix\Sale\PaySystem\Service(array(
-						'ID' => $formData['data']["ps_id"],
-						'ACTION_FILE' => CCrmPaySystem::getActionHandler($formData['data']["ACTION_FILE"])
-					)
-				);
-
-				if (mb_strpos($service->getField('ACTION_FILE'), 'bill') !== false || mb_strpos($service->getField('ACTION_FILE'), 'quote') !== false)
+				$preview = $metadataProvider->preview([
+					'ID' => $formData['data']['ps_id'],
+					'ACTION_FILE' => $formData['data']['ACTION_FILE'],
+					'PERSON_TYPE_ID' => $formData['data']['PERSON_TYPE_ID'],
+					'PS_MODE' => $formData['data']['PS_MODE'] ?? null,
+				], $arActParams, 'ps_edit_refresh_template');
+				if ($preview->isSuccess())
 				{
-					$arParamsTemplate = array_merge($service->getDemoParams(), $arActParams);
-					$service->setTemplateMode(\Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
-					$service->setTemplateParams($arParamsTemplate);
-					$payment = PaySystem\Manager::getPaymentObjectByData(array('PERSON_TYPE_ID' => $formData['data']['PERSON_TYPE_ID']));
-					$result = $service->showTemplate($payment, 'template');
-
-					$arReturn['TEMPLATE'] = $result->getTemplate();
+					$arReturn['TEMPLATE'] = $preview->getData()['content'];
 				}
+				else
+				{
+					$arReturn['ERROR'] = Loc::getMessage('CRM_PS_NO_SCRIPT');
+				}
+
 				break;
 			case 'get_private_key':
 				if (\Bitrix\Main\Loader::includeModule('sale'))
@@ -250,7 +241,7 @@ if(!isset($arReturn['ERROR']))
 						$personTypeList = \Bitrix\Sale\PaySystem\Manager::getPersonTypeIdList($paySystemId);
 						$personTypeId = array_shift($personTypeList);
 
-						$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$paySystemId, $personTypeId);
+						$shopId = $metadataProvider->getValueById((int)$paySystemId, 'YANDEX_INVOICE_SHOP_ID', (int)$personTypeId);
 						if ($shopId <> '')
 						{
 							$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);

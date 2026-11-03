@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_taskList, tasks_v2_component_elements_hint, tasks_v2_provider_service_relationService, tasks_v2_lib_idUtils, tasks_v2_const, main_core, tasks_v2_lib_entitySelectorDialog, tasks_v2_lib_relationError, tasks_v2_provider_service_taskService, ui_system_chip_vue, tasks_v2_lib_fieldHighlighter) {
+(function (exports, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_taskList, tasks_v2_component_elements_hint, tasks_v2_provider_service_relationService, tasks_v2_lib_entitySelectorDialog, tasks_v2_lib_idUtils, tasks_v2_const, main_core, tasks_v2_lib_relationError, tasks_v2_provider_service_taskService, ui_system_chip_vue, tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const parentTaskMeta = Object.freeze({
@@ -14,12 +14,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const parentTaskDialog = new class {
 		#taskId;
 		#withTemplates;
-		#onUpdate;
+		#onClose;
 		#templateEntity;
 		show(params) {
 			this.#taskId = params.taskId;
 			this.#withTemplates = params.withTemplates ?? true;
-			this.#onUpdate = params.onClose;
+			this.#onClose = params.onClose;
 			this.#dialog.selectItemsByIds(this.#items);
 			this.#dialog.showTo(params.targetNode);
 			this.#updateTemplatesVisibility();
@@ -53,6 +53,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					onLoad: this.#updateTemplatesVisibility,
 					'Item:onSelect': onItemChange,
 					'Item:onDeselect': onItemChange
+				},
+				popupOptions: {
+					events: {
+						onClose: () => {
+							this.#onClose?.();
+						}
+					}
 				}
 			});
 		}
@@ -63,9 +70,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			const error = await tasks_v2_provider_service_relationService.subTasksService.setParent(this.#taskId, selectedTaskId);
 			if (error) {
 				void tasks_v2_lib_relationError.relationError.setTaskId(this.#taskId).showError(error, tasks_v2_const.TaskField.Parent);
-				return;
 			}
-			this.#onUpdate?.();
 		}
 		#updateTemplatesVisibility = () => {
 			if (!this.#isTemplate || !this.#dialog.isLoaded()) {
@@ -130,6 +135,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				subTasksService: tasks_v2_provider_service_relationService.subTasksService
 			};
 		},
+		data() {
+			return {
+				isDialogShown: false
+			};
+		},
 		computed: {
 			parentId() {
 				return this.task.parentId;
@@ -143,11 +153,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				return this.loc('TASKS_V2_PARENT_TASK_TITLE');
 			},
+			addLabel() {
+				return this.loc('TASKS_V2_PARENT_TASK_SELECT');
+			},
 			tooltip() {
 				return () => tasks_v2_component_elements_hint.tooltip({
-					text: this.loc('TASKS_V2_PARENT_TASK_SELECT'),
+					text: this.addLabel,
 					popupOptions: {
-						offsetLeft: this.$refs.add.$el.offsetWidth / 2
+						offsetLeft: this.$refs.add.offsetWidth / 2
 					}
 				});
 			}
@@ -164,11 +177,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		methods: {
 			handleEditClick() {
+				this.isDialogShown = true;
 				parentTaskDialog.show({
-					targetNode: this.$refs.add.$el,
+					targetNode: this.$refs.add,
 					taskId: this.taskId,
-					withTemplates: !this.task.replicate && !this.task.isForNewUser
+					withTemplates: !this.task.replicate && !this.task.isForNewUser,
+					onClose: this.handleDialogClose
 				});
+			},
+			handleDialogClose() {
+				this.isDialogShown = false;
+				tasks_v2_lib_entitySelectorDialog.restoreOpenerFocus(this.$refs.add);
 			},
 			async handleRemoveParentTask() {
 				await tasks_v2_provider_service_relationService.subTasksService.setParent(this.taskId, 0);
@@ -178,27 +197,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<div class="tasks-field-parent-task print-no-box-shadow" :data-task-id="taskId" :data-task-field-id="parentTaskMeta.id">
 			<div class="tasks-field-parent-task-title">
 				<div class="tasks-field-parent-task-main" :class="{ '--readonly': true }">
-					<BIcon :name="Outline.SUBTASK"/>
+					<BIcon :name="Outline.SUBTASK" aria-hidden="true"/>
 					<TextMd accent>{{ title }}</TextMd>
 				</div>
 				<div v-if="task.rights.edit" v-hint="tooltip" class="tasks-field-parent-task-edit-container print-ignore">
-					<BIcon
+					<button
+						type="button"
 						class="tasks-field-parent-task-icon"
-						:name="Outline.PLUS_L"
-						hoverable
+						aria-haspopup="dialog"
+						:aria-expanded="isDialogShown"
+						:aria-label="addLabel"
 						:data-task-relation-add="parentTaskMeta.id"
 						ref="add"
 						@click="handleEditClick"
-					/>
+					>
+						<BIcon :name="Outline.PLUS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</div>
-			<TaskList
-				v-if="hasParent"
-				:ids="hasParent ? [parentId] : []"
-				:loadingIds="!subTasksService.hasStoreTask(parentId) ? [parentId] : []"
-				:shouldShowSubTasksOption="false"
-				@removeTask="handleRemoveParentTask"
-			/>
+			<div v-if="hasParent" role="group" :aria-label="title">
+				<TaskList
+					:ids="hasParent ? [parentId] : []"
+					:loadingIds="!subTasksService.hasStoreTask(parentId) ? [parentId] : []"
+					:shouldShowSubTasksOption="false"
+					@removeTask="handleRemoveParentTask"
+				/>
+			</div>
 		</div>
 	`
 	};
@@ -218,6 +242,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
+		data() {
+			return {
+				isDialogShown: false
+			};
+		},
 		computed: {
 			text() {
 				if (tasks_v2_lib_idUtils.idUtils.isTemplate(this.task.parentId)) {
@@ -230,7 +259,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isSelected() {
 				return this.task.filledFields[parentTaskMeta.id];
+			},
+			opensDialog() {
+				return !this.isSelected;
 			}
+		},
+		watch: {
+			isDialogShown() {
+				this.syncAria();
+			},
+			opensDialog() {
+				this.syncAria();
+			},
+			text() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
 		},
 		methods: {
 			handleClick() {
@@ -238,15 +284,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					this.highlightField();
 					return;
 				}
+				this.isDialogShown = true;
 				parentTaskDialog.show({
-					targetNode: this.$el,
+					targetNode: this.$refs.chip.$el,
 					taskId: this.taskId,
-					onUpdate: this.highlightField,
-					withTemplates: !this.task.replicate && !this.task.isForNewUser
+					withTemplates: !this.task.replicate && !this.task.isForNewUser,
+					onClose: this.handleDialogClose
 				});
+			},
+			handleDialogClose() {
+				this.isDialogShown = false;
+				tasks_v2_lib_entitySelectorDialog.restoreOpenerFocus(this.$refs.chip?.$el);
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(parentTaskMeta.id);
+			},
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+				main_core.Dom.attr(el, 'aria-label', this.text);
 			}
 		},
 		template: `
@@ -267,5 +328,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.ParentTaskChip = ParentTaskChip;
 	exports.parentTaskMeta = parentTaskMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.Tasks.V2.Const, BX, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.UI.System.Chip.Vue, BX.Tasks.V2.Lib);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Const, BX, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.UI.System.Chip.Vue, BX.Tasks.V2.Lib);
 //# sourceMappingURL=parent-task.bundle.js.map

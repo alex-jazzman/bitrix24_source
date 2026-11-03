@@ -1,6 +1,8 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -42,7 +44,27 @@ $arDefaultUrlTemplates404 = array(
 	'productprops_edit' => 'edit/#prop_id#/',
 );
 
-if ($arParams['SEF_MODE'] === 'Y')
+if (!empty($arParams['SETTINGS_HUB_URL']))
+{
+	$componentPage = match ($arParams['MODE'] ?? 'list')
+	{
+		'add' => 'productprops_add',
+		'edit' => 'productprops_edit',
+		default => 'productprops_list',
+	};
+	$arVariables = ['prop_id' => (int)($arParams['PROP_ID'] ?? 0)];
+	$arVariableAliases = [];
+
+	$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+	$arResult['PATH_TO_PRODUCTPROPS_LIST'] = $url->getUri();
+	$addUrl = clone $url;
+	$addUrl->addParams(['add' => '']);
+	$arResult['PATH_TO_PRODUCTPROPS_ADD'] = $addUrl->getUri();
+	$editUrl = clone $url;
+	$editUrl->addParams(['edit' => '']);
+	$arResult['PATH_TO_PRODUCTPROPS_EDIT'] = $editUrl->getUri() . '&prop_id=#prop_id#';
+}
+elseif ($arParams['SEF_MODE'] === 'Y')
 {
 	$arDefaultVariableAliases404 = array();
 	$arComponentVariables = array('prop_id');
@@ -81,6 +103,10 @@ else
 	if (isset($_REQUEST['edit']))
 	{
 		$componentPage = 'productprops_edit';
+	}
+	elseif (isset($_REQUEST['add']))
+	{
+		$componentPage = 'productprops_add';
 	}
 
 	$curPage = $APPLICATION->GetCurPage();

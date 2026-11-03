@@ -2234,9 +2234,13 @@ import { Presets } from './presets';
 			!!this.getSaveForAllCheckbox() && (this.getSaveForAllCheckbox().checked = null);
 		},
 
+		// A grid can be rebuilt in place: its consumer destroys the instance and inits a new
+		// one over fresh markup under the same container id. The filter always takes the
+		// latest one - a destroyed instance has lost its listeners, so the update it
+		// announces after a reload reaches neither the live grid nor anybody else.
 		_onGridReady: function(grid)
 		{
-			if (!this.grid && grid.getContainerId() === this.getParam('GRID_ID'))
+			if (grid.getContainerId() === this.getParam('GRID_ID'))
 			{
 				this.grid = grid;
 			}
@@ -3572,7 +3576,7 @@ import { Presets } from './presets';
 
 			this.saveRestoreFilter();
 			this.disableAddPreset();
-			this.disableEdit();
+			this.disableEditWithoutApply();
 
 			if (!applyPresetId)
 			{
@@ -4179,6 +4183,17 @@ import { Presets } from './presets';
 		 */
 		disableEdit: function()
 		{
+			this.disableEditWithoutApply();
+			this.applyFilter(null, true);
+		},
+
+
+		/**
+		 * Leaves edit mode without reloading the grid. Callers that follow up with their own
+		 * reload use it: a second one races the first and leaves the grid half updated.
+		 */
+		disableEditWithoutApply: function()
+		{
 			var Preset = this.getPreset();
 			var presets = Preset.getPresets();
 
@@ -4204,7 +4219,6 @@ import { Presets } from './presets';
 			BX.removeClass(this.getSidebarControlsContainer(), this.settings.classDisabled);
 			this.editablePresets = null;
 			this.isEditEnabledState = false;
-			this.applyFilter(null, true);
 		},
 
 

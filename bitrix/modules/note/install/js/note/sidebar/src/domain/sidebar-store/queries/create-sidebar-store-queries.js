@@ -222,7 +222,7 @@ export class SidebarStoreQueries
 		return collections.find((collection) => Number(collection.id) === normalizedId) || null;
 	}
 
-	// [TPL-02] The star of any row. Two sources feed the answer: the index the block keeps (loaded
+	// The star of any row. Two sources feed the answer: the index the block keeps (loaded
 	// pages, optimistic toggles, pull events) and, for objects no loaded page mentions, the isFavorite
 	// flag the server puts on the entity itself (TPL-01). The index wins - it is the fresher of the two.
 	isFavorite(entityType: string, entityId: number): boolean
@@ -253,7 +253,7 @@ export class SidebarStoreQueries
 		return this.#state.favoritesExpanded[favoriteExpandKey(entityType, entityId)] === true;
 	}
 
-	// [DTO-02] Notification state of one object. A row of the block answers from the list it came
+	// Notification state of one object. A row of the block answers from the list it came
 	// with; a document nested in an opened branch answers from the coverage map (API-06). Objects
 	// neither the list nor an opened branch mentions have no state - and no bell.
 	favoriteNotify(entityType: string, entityId: number): Object | null
@@ -278,7 +278,7 @@ export class SidebarStoreQueries
 		return this.#state.favoritesNotifyPending[favoriteKey(entityType, Number(entityId))] === true;
 	}
 
-	// [ERR-005] The failure of a branch belongs to the PLACE that opened it, so it is asked for by the
+	// The failure of a branch belongs to the PLACE that opened it, so it is asked for by the
 	// same key the loader wrote it under - scope included (see favoriteExpandKey). Asked without the
 	// scope, the failure of a nested branch was never found and its row stood open over nothing.
 	favoriteBranchError(entityType: string, entityId: number, scope: string = ''): string | null

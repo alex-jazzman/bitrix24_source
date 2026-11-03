@@ -1,0 +1,35 @@
+/*
+ * The quote is moved out of the bubble in this state and becomes a direct child of the content
+ * column, so its limit has to be set by the same selector form as the shared 460px rule
+ * (reply-preview.css): a single class loses on specificity. 260px matches the round player width:
+ * capped at the circle the quote neither widens the column nor grows with the bubble when the
+ * caption is long, so its own width never sizes the message column.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote.bx-im-captioned-video-note__quote {
+	max-width: 260px;
+}
+
+/*
+ * Duplicated on purpose from video-note.css: the header is a sibling of the circle, not a part of
+ * it, so it cannot travel with the shared circle styles, and every view that renders the header
+ * declares the same spacing in its own file.
+ */
+.bx-im-video-note__header_container {
+	margin-bottom: 4px;
+}
+
+/*
+ * Captioned state: the circle lives in the content column right above the caption bubble, and the
+ * column is as wide as that bubble. Without hugging its content the flex stretch would widen the
+ * container beyond the circle, and the progress bar (absolutely positioned at 100% of the
+ * container) would stop being centered on the circle.
+ */
+.bx-im-message-base__content-main > .bx-im-video-note__container {
+	align-self: flex-start;
+	margin-bottom: 4px;
+}
+
+/* The caption is the only content of the bubble, so it carries the whole body padding itself */
+.bx-im-captioned-video-note__default-message-container {
+	padding: var(--im-message-base__padding_body);
+}

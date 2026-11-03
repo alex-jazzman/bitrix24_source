@@ -2,10 +2,14 @@
 	margin-top: 19px;
 }
 
+.editor-chart-data-views-section__body {
+	display: flex;
+	flex-direction: column;
+}
+
 .editor-chart-data-views-section__list {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: 12px;
 }
 
 .editor-chart-data-views-section__columns {
@@ -137,4 +141,29 @@
 
 .editor-chart-data-views-section__add .ui-icon-set {
 	--ui-icon-set__icon-color: currentColor;
+}
+
+.editor-chart-data-views-section__empty {
+	position: relative;
+	display: flex;
+	min-height: 120px;
+	align-items: center;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-lg);
+	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-secondary);
+	overflow: hidden;
+}
+
+.editor-chart-data-views-section__empty.--hidden {
+	visibility: hidden;
+}
+
+.editor-chart-data-views-section__empty .editor-chart-circuit-backdrop {
+	transform: translate(-64%, -50%);
+}
+
+.editor-chart-data-views-section__empty-text {
+	position: relative;
+	color: var(--ui-color-base-1);
 }

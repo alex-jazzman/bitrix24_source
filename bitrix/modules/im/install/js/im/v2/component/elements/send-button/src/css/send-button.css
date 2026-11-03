@@ -1,8 +1,18 @@
 .bx-im-elements-send-button {
-	--im-textarea__background-color_send-button: #00ace3;
+	--im-textarea__background-color_send-button: var(--ui-color-accent-main-primary);
 	--im-textarea__background-color_send-button-channel: var(--im-color-accent-turquoise);
 	--im-textarea__background-color_send-button-copilot: var(--im-color-palette-copilot-primary);
 
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	color: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	width: 36px;
 	height: 36px;
 	background-color: var(--im-textarea__background-color_send-button);
@@ -15,14 +25,6 @@
 	flex-shrink: 0;
 }
 
-.bx-im-elements-send-button.--edit {
-	background-image: url('./images/check.svg');
-}
-
-.bx-im-elements-send-button.--disabled {
-	background-image: url('./images/send-inactive.svg');
-}
-
 .bx-im-elements-send-button.--channel,
 .bx-im-elements-send-button.--openChannel,
 .bx-im-elements-send-button.--generalChannel {
@@ -31,6 +33,21 @@
 
 .bx-im-elements-send-button.--copilot {
 	background-color: var(--im-textarea__background-color_send-button-copilot);
+}
+
+/* stands after the colours of the chat types so that a button nobody can press looks the same in every
+   chat. The icons are white, and the disabled background of the design system is a light grey that would
+   swallow them: the inactive colour of the palette is the one they stay visible on */
+.bx-im-elements-send-button.--disabled {
+	background-color: var(--ui-color-base-4);
+	background-image: url('./images/send-inactive.svg');
+}
+
+/* the second selector outweighs `--disabled`: a save that cannot be pressed yet is still a save,
+   and its check must not turn into the arrow of a send */
+.bx-im-elements-send-button.--edit,
+.bx-im-elements-send-button.--edit.--disabled {
+	background-image: url('./images/check.svg');
 }
 
 .bx-im-elements-send-button.--copilot-2026 {
@@ -51,4 +68,22 @@
 
 .bx-im-elements-send-button.--copilot-2026.--disabled {
 	background-image: url('./images/send-inactive.svg'), var(--im-send-button__gradient);
+}
+
+.bx-im-elements-send-button.--stop {
+	background-image: url('./images/stop.svg');
+}
+
+.bx-im-elements-send-button.--copilot-2026.--stop {
+	background-image: url('./images/stop.svg'), var(--im-send-button__gradient);
+}
+
+/* the last word on the icon: while the request travels the circle holds the spinner and nothing else */
+.bx-im-elements-send-button.--loading {
+	background-image: none;
+	cursor: default;
+}
+
+.bx-im-elements-send-button.--copilot-2026.--loading {
+	background-image: var(--im-send-button__gradient);
 }

@@ -1,0 +1,16 @@
+.disk-sharing-members-popup-member {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: 0 var(--ui-space-inset-xs2);
+	color: var(--ui-color-base-1);
+}
+
+.disk-sharing-members-popup-member__name {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.disk-sharing-members-popup-member__right {
+	color: var(--ui-color-base-3);
+}

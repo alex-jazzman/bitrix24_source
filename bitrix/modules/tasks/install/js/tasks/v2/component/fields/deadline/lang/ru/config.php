@@ -1,6 +1,11 @@
 <?php
 
 $MESS['TASKS_V2_DEADLINE_TITLE'] = 'Крайний срок';
+$MESS['TASKS_V2_DEADLINE_ARIA_LABEL'] = 'Крайний срок';
+$MESS['TASKS_V2_DEADLINE_VALUE_ARIA_LABEL'] = 'Крайний срок: #VALUE#';
+$MESS['TASKS_V2_DEADLINE_CLEAR_ARIA_LABEL'] = 'Очистить срок';
+$MESS['TASKS_V2_DEADLINE_SETTINGS_ARIA_LABEL'] = 'Настройки срока';
+$MESS['TASKS_V2_DEADLINE_CHANGE_REASON_CLOSE_ARIA_LABEL'] = 'Закрыть';
 $MESS['TASKS_V2_DEADLINE_EMPTY'] = 'Без срока';
 $MESS['TASKS_V2_DEADLINE_AUTO'] = 'Устанавливается автоматически';
 $MESS['TASKS_V2_DEADLINE_SELECT'] = 'Выбрать';
@@ -16,6 +21,7 @@ $MESS['TASKS_V2_DEADLINE_TWO_WEEKS'] = '2 недели';
 $MESS['TASKS_V2_DEADLINE_AFTER_TEXT'] = 'Укажите, какой крайний срок устанавливать в новых задачах';
 $MESS['TASKS_V2_DEADLINE_AFTER_HINT'] = 'Выбранный крайний срок будет автоматически установлен во все новые задачи в момент создания';
 $MESS['TASKS_V2_DEADLINE_AFTER_CUSTOM'] = 'Свой вариант';
+$MESS['TASKS_V2_DEADLINE_AFTER_DURATION_UNIT_ARIA_LABEL'] = 'Единица измерения длительности';
 $MESS['TASKS_V2_DEADLINE_CAN_CHANGE_HINT'] = 'Постановщик запретил менять крайний срок в этой задаче';
 $MESS['TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_1'] = 'Постановщик ограничил количество изменений крайнего срока.';
 $MESS['TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_2'] = 'Срок больше нельзя изменить';

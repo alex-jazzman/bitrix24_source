@@ -120,8 +120,8 @@ this.BX.Socialnetwork.V2.Provider = this.BX.Socialnetwork.V2.Provider || {};
 			goal: project.goal,
 			privacyType: project.privacyType,
 			ownerId: project.ownerId,
-			members: project.members,
-			moderatorMembers: project.moderators,
+			members: mapMembersToDto(project.members),
+			moderatorMembers: mapMembersToDto(project.moderators),
 			permissions: {
 				tasks: mapTaskPermissions(project.permissions.tasks),
 				blog: mapBlogPermissions(project.permissions.blog),
@@ -157,6 +157,13 @@ this.BX.Socialnetwork.V2.Provider = this.BX.Socialnetwork.V2.Provider || {};
 			dto.notifications = notificationPayload;
 		}
 		return dto;
+	}
+	function mapMembersToDto(members) {
+		return members.map(member => ({
+			id: member.id,
+			type: member.type,
+			withChildNodes: member.withChildNodes
+		}));
 	}
 	function isNotificationsDirty(current, initial) {
 		if (!initial) {
@@ -245,6 +252,7 @@ this.BX.Socialnetwork.V2.Provider = this.BX.Socialnetwork.V2.Provider || {};
 			description: projectDto.description,
 			goal: projectDto.goal,
 			privacyType: projectDto.privacyType,
+			owner: projectDto.owner ?? null,
 			ownerId: projectDto.ownerId,
 			chatId: projectDto.chatId ?? null,
 			members: projectDto.members,
@@ -389,6 +397,7 @@ this.BX.Socialnetwork.V2.Provider = this.BX.Socialnetwork.V2.Provider || {};
 
 	exports.AccessRightsService = AccessRightsService;
 	exports.ProjectService = ProjectService;
+	exports.mapDtoToggleableFeatures = mapDtoToggleableFeatures;
 	exports.projectService = projectService;
 
 })(this.BX.Socialnetwork.V2.Provider.Services = this.BX.Socialnetwork.V2.Provider.Services || {}, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Lib, BX, BX.Socialnetwork.V2.Model);

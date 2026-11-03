@@ -25,6 +25,7 @@ $MESS["MOBILE_CALL_LAYOUT_LIKE"] = "Нравится";
 $MESS["MOBILE_CALL_LAYOUT_PARTICIPANTS"] = "Участники: #COUNT#";
 $MESS["MOBILE_CALL_LAYOUT_CURRENT_PRESENTER"] = "Текущий докладчик";
 $MESS["MOBILE_CALL_LAYOUT_PINNED_USER"] = "Закрепленный пользователь";
+$MESS["MOBILE_CALL_LAYOUT_USER_SCREEN"] = "Экран #NAME#";
 
 $MESS["MOBILE_CALL_MENU_WANT_TO_SAY"] = "Хочу сказать";
 $MESS["MOBILE_CALL_MENU_PARTICIPANTS_LIST"] = "Список участников";
@@ -37,26 +38,25 @@ $MESS["MOBILE_CALL_MENU_PIN"] = "Закрепить";
 $MESS["MOBILE_CALL_MENU_UNPIN"] = "Открепить";
 $MESS["MOBILE_CALL_MENU_PARTICIPANTS"] = "Участники: #COUNT#";
 $MESS["MOBILE_CALL_MENU_PARTICIPANTS_VIDEOCONFERENCE"] = "Видеоконференция";
+$MESS["MOBILE_CALL_MENU_FINISH_FOR_ALL"] = "Завершить для всех";
 
 $MESS["MOBILE_CALL_SOUND_PHONE"] = "Телефон";
 $MESS["MOBILE_CALL_SOUND_SPEAKER"] = "Громкая связь";
 $MESS["MOBILE_CALL_SOUND_BLUETOOTH"] = "Наушники Bluetooth";
 $MESS["MOBILE_CALL_SOUND_WIRED"] = "Наушники";
 $MESS["MOBILE_CALL_SOUND_NONE"] = "Неизвестное устройство";
-
 $MESS["MOBILE_CALL_SOUND_BUTTON_PHONE_MSGVER_1"] = "телефон";
 $MESS["MOBILE_CALL_SOUND_BUTTON_SPEAKER_MSGVER_1"] = "динамик";
 $MESS["MOBILE_CALL_SOUND_BUTTON_BLUETOOTH_MSGVER_1"] = "bluetooth";
 $MESS["MOBILE_CALL_SOUND_BUTTON_WIRED_MSGVER_1"] = "наушники";
-
 $MESS["MOBILE_CALL_USER_PAUSED_VIDEO"] = "#NAME# приостановил(а) видео";
 $MESS["MOBILE_CALL_USER_NUM_FROM_TOTAL"] = "#USER_NUM# из #TOTAL_COUNT#";
 $MESS["MOBILE_CALL_JUMP_TO_PRESENTER"] = "Перейти к говорящему";
-$MESS["MOBILE_CALL_COPILOT_TITLE"] = "BitrixGPT подключился к звонку";
-$MESS["MOBILE_CALL_COPILOT_MESSAGE"] = "Он зафиксирует все договорённости и посоветует, что учесть в следующий раз";
+$MESS["MOBILE_CALL_COPILOT_TITLE"] = "BitrixGPT подключился к звонку"; /** @deprecated */
+$MESS["MOBILE_CALL_COPILOT_MESSAGE"] = "Он зафиксирует все договорённости и посоветует, что учесть в следующий раз"; /** @deprecated */
 $MESS["MOBILE_CALL_GOT_IT"] = "Понятно";
-$MESS["MOBILE_CALL_COPILOT_DRAWER_TITLE"] = "BitrixGPT Follow-Up";
-$MESS["MOBILE_CALL_COPILOT_DRAWER_MESSAGE"] = "BitrixGPT поможет проводить встречи с пользой. Проанализирует звонок, выделит главное и пришлёт в чат:";
+$MESS["MOBILE_CALL_COPILOT_DRAWER_TITLE"] = "BitrixGPT Follow-Up"; /** @deprecated */
+$MESS["MOBILE_CALL_COPILOT_DRAWER_MESSAGE"] = "BitrixGPT поможет проводить встречи с пользой. Проанализирует звонок, выделит главное и пришлёт в чат:"; /** @deprecated */
 $MESS["MOBILE_CALL_COPILOT_DRAWER_POINT_1"] = "Итоги встречи";
 $MESS["MOBILE_CALL_COPILOT_DRAWER_POINT_2"] = "Договорённости";
 $MESS["MOBILE_CALL_COPILOT_DRAWER_POINT_3"] = "Рекомендации и оценку";
@@ -71,8 +71,11 @@ $MESS["MOBILE_CALL_INVITATION_NOT_ACCEPTED"] = "Приглашение не пр
 $MESS["MOBILE_CALL_EXTRANET_USER"] = "Внешний пользователь";
 $MESS["MOBILE_CALL_EMPLOYEE"] = "Сотрудник";
 $MESS["MOBILE_CALL_RECORD"] = "идёт запись";
-
 $MESS["MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_MICROPHONE_M"] = "#FIRST_NAME# отключил микрофон";
 $MESS["MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_MICROPHONE_F"] = "#FIRST_NAME# отключила микрофон";
 $MESS["MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_CAMERA_M"] = "#FIRST_NAME# отключил камеру";
 $MESS["MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_CAMERA_F"] = "#FIRST_NAME# отключила камеру";
+$MESS["MOBILE_CALL_COPILOT_TITLE_MSGVER_1"] = "#COPILOT_NAME# подключился к звонку";
+$MESS["MOBILE_CALL_COPILOT_MESSAGE_MSGVER_1"] = "Он зафиксирует все договорённости и посоветует, что учесть в следующий раз";
+$MESS["MOBILE_CALL_COPILOT_DRAWER_TITLE_MSGVER_1"] = "#COPILOT_NAME# follow-up";
+$MESS["MOBILE_CALL_COPILOT_DRAWER_MESSAGE_MSGVER_1"] = "#COPILOT_NAME# поможет проводить встречи с пользой. Проанализирует звонок, выделит главное и пришлёт в чат:";

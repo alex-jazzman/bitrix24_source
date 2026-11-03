@@ -53,6 +53,7 @@ export default class SettingsPopup
 				noAllPaddings: true,
 				bindOptions: {forceBindPosition: true},
 				closeByEsc: true,
+				ariaLabel: Loc.getMessage('CRM_ENTITY_PL_SETTINGS_BUTTON_ARIA') ?? undefined,
 				// own looped focus trap: the card lives in a sidepanel whose trap would otherwise
 				// steal Tab out of this non-modal popup. Passing an object opts the popup's trap in
 				// regardless of the global setting; initialFocus true focuses the first tabbable

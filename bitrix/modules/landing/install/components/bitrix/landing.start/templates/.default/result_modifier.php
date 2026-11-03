@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 /** @var \CMain $APPLICATION */
 
 use Bitrix\Landing\Integration\AiAssistant\Service\AiSiteChatAvailabilityService;
+use Bitrix\Landing\Integration\AiAssistant\Service\PresetSitesEmptyStateService;
 use Bitrix\Landing\Metrika;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -25,6 +26,7 @@ if ($request->get('IFRAME') !== 'Y' && $context->getServer()->getRequestMethod()
 		'sites',
 		'site_show',
 		'landing_view',
+		'landing_preview',
 		'roles',
 		'role_edit',
 		'notes',
@@ -61,6 +63,12 @@ if ($request->get('IFRAME') !== 'Y' && $context->getServer()->getRequestMethod()
 		localRedirect($redirect);
 	}
 }
+// the preview is a document of the public page (landing.pub under the CSP sandbox): the assets and
+// the panels of the section have no place there, as on /pub/site/ before
+if ($this->getPageName() === 'landing_preview')
+{
+	return;
+}
 if ($session->has('LANDING_OPEN_SIDE_PANEL'))
 {
 	?>
@@ -90,9 +98,22 @@ Loc::loadMessages(__DIR__ . '/template.php');
 \Bitrix\Main\UI\Extension::load(['ajax', 'landing_master', 'bitrix24.phoneverify']);
 
 $arResult['AI_SITE_CHAT_AVAILABLE'] = true;
+$arResult['PRESET_SITES_EMPTY_STATE'] = false;
+$arResult['PRESET_SITES_EMPTY_STATE_REMAINING'] = 0;
 if ($arParams['TYPE'] === 'PAGE')
 {
 	$arResult['AI_SITE_CHAT_AVAILABLE'] = (new AiSiteChatAvailabilityService())->isSitesAiChatPotentiallyAvailable();
+
+	// Only the sites list renders the placeholder: landing.sites is included from template.php of
+	// this template, and that page keeps the default name because the list has no page file of its
+	// own. The AI probe above is already the answer of the last gate, so the service does not repeat
+	// it in the same hit.
+	if ($this->getPageName() === 'template')
+	{
+		$emptyStateStatus = (new PresetSitesEmptyStateService())->getStatus($arResult['AI_SITE_CHAT_AVAILABLE']);
+		$arResult['PRESET_SITES_EMPTY_STATE'] = $emptyStateStatus->isActual();
+		$arResult['PRESET_SITES_EMPTY_STATE_REMAINING'] = $emptyStateStatus->getRemainingSeconds();
+	}
 }
 
 ob_start();
@@ -334,6 +355,11 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 	);
 
 	unset($settingsLink);
+}
+
+if (!empty($arResult['AGREEMENT']))
+{
+	\Bitrix\Main\UI\Extension::load('ui.dialogs.messagebox');
 }
 
 include __DIR__ . '/popups/agreement.php';

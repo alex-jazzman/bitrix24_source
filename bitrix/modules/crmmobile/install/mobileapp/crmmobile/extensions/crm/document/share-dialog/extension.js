@@ -2,6 +2,8 @@
  * @module crm/document/share-dialog
  */
 jn.define('crm/document/share-dialog', (require, exports, module) => {
+	const { Text1, Text5 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { FadeView } = require('animation/components/fade-view');
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
@@ -196,7 +198,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 					title: {
 						text: Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_SYSTEM_SHARE_TITLE'),
 						color: AppTheme.colors.base1,
-						fontSize: 16,
+						fontSize: Typography.text3.getValue().fontSize,
 					},
 					subtitle: {
 						text: Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_SYSTEM_SHARE_SUBTITLE'),
@@ -223,7 +225,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 					title: {
 						text: Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_SIGN_TITLE'),
 						color: AppTheme.colors.base1,
-						fontSize: 16,
+						fontSize: Typography.text3.getValue().fontSize,
 					},
 					subtitle: {
 						text: Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_SIGN_SUBTITLE'),
@@ -298,22 +300,22 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 							flexGrow: 1,
 						},
 					},
-					Text({
+					Text1({
 						text: title.text || title,
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: {
 							color: title.color || AppTheme.colors.base1,
-							fontSize: title.fontSize || 18,
+							fontSize: title.fontSize || Typography.text1.getValue().fontSize,
 						},
 					}),
-					subtitle && Text({
+					subtitle && Text5({
 						text: subtitle.text || subtitle,
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: {
 							color: subtitle.color || AppTheme.colors.base2,
-							fontSize: subtitle.fontSize || 13,
+							fontSize: subtitle.fontSize || Typography.text5.getValue().fontSize,
 						},
 					}),
 				),
@@ -392,6 +394,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 					owner: {
 						ownerId: this.props.entityId,
 						ownerType: Type.resolveNameById(this.props.entityTypeId),
+						ownerTypeId: this.props.entityTypeId,
 					},
 				}, {}, this.layoutWidget);
 			}).catch(console.error);

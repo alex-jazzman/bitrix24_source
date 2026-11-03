@@ -68,7 +68,7 @@ export class Easing
 		}
 	}
 
-	animateProgress()
+	animateProgress(): void
 	{
 		this.#animate();
 	}

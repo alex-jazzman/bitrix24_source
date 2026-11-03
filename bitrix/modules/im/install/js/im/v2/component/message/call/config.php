@@ -9,8 +9,9 @@ return [
 	'js' => 'dist/call-message.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'call.component.call-message',
+		'call.widget.call-message',
 		'im.v2.component.message.default',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

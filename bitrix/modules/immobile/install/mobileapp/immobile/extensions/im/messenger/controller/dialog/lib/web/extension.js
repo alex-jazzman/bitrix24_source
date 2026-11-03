@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { NavigationHelper } = require('im/messenger/controller/navigation/helper');
 	const { PushHandler } = require('im/messenger/provider/push');
 	const { OpenLinesRest } = require('im/messenger/provider/rest');
 
@@ -57,7 +58,17 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 
 			PageManager.openWebComponent(pageParams);
 
-			this.changeTabTo(NavigationTabId.chats);
+			// The legacy dialog leaves the user in the main section, whichever tab plays
+			// that role on this portal: 'chats' is not always among the rendered tabs.
+			const mainTabId = NavigationHelper.resolveInitialTabId();
+			if (mainTabId)
+			{
+				this.changeTabTo(mainTabId);
+			}
+			else
+			{
+				logger.warn('WebDialog.open: no available tab to switch to');
+			}
 
 			return true;
 		}

@@ -4,17 +4,20 @@
 jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
-	const AppTheme = require('apptheme');
 	const { NotifyManager } = require('notify-manager');
 	const { EntitySvg } = require('crm/assets/entity');
 	const { getEntityMessage } = require('crm/loc');
 	const { Type } = require('crm/type');
 	const { Type: CoreType } = require('type');
 	const { mergeImmutable } = require('utils/object');
+	const { WidgetPresenter } = require('in-app-url/widget-presenter');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { CrmMode } = require('crm/crm-mode');
 	const { CaseName } = require('crm/onboarding');
 	const { TypeId } = require('crm/type');
+	const { Color } = require('tokens');
+	const { Presentation } = require('in-app-url/presentation');
+	const { Uuid } = require('utils/uuid');
 
 	const CACHE_TTL = 60 * 60 * 4; // 4 hours
 	const CACHE_VERSION = 2;
@@ -23,21 +26,12 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	let inMemoryEntities = null;
 	let inMemoryTtl = null;
 
-	/**
-	 * @class EntityDetailOpener
-	 */
 	class EntityDetailOpener
 	{
 		/**
 		 * @public
-		 * @param {Object} payload
-		 * @param {Number} payload.entityTypeId
-		 * @param {Number?} payload.entityId
-		 * @param {Number?} payload.categoryId
-		 * @param {Object} widgetParams
-		 * @param {Object|AnalyticsEvent?} analytics
-		 * @param parentWidget
-		 * @param canOpenInDefault
+		 * @param {EntityDetailOpenerParams} params
+		 * @param {PerfPoint} [perfPoint]
 		 */
 		static open({
 			payload,
@@ -45,17 +39,17 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			parentWidget = null,
 			canOpenInDefault = false,
 			analytics = {},
-		})
+			presentation = null,
+		}, perfPoint = null)
 		{
-			widgetParams = mergeImmutable(this.getModalWidgetParams(), widgetParams);
+			const { entityTypeId, categoryId } = payload;
+			const resolvedPresentation = Presentation.resolve(presentation, Presentation.MODAL);
+			const widgetCode = `crm-entity-details-${Uuid.getV4()}`;
 
-			const { entityTypeId, entityId, categoryId } = payload;
-
-			this
+			let openingPromise = this
 				.checkAvailability(entityTypeId, categoryId)
 				.then(() => this.prepareAnalytics(analytics, entityTypeId))
 				.then((preparedAnalytics) => {
-					widgetParams.titleParams = this.prepareTitleParams(payload, widgetParams.titleParams);
 					const analyticsEvent = preparedAnalytics.getEvent();
 					if (analyticsEvent === 'entity_add_open'
 						|| analyticsEvent === 'entity_copy_open')
@@ -68,11 +62,15 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 						);
 					}
 
-					ComponentHelper.openLayout(
-						{
-							name: 'crm:crm.entity.details',
+					const presenter = new WidgetPresenter()
+						.setPresentation(resolvedPresentation)
+						.setParentWidget(parentWidget)
+						.setCanOpenInDefault(canOpenInDefault)
+						.setWidgetSettings({ ...widgetParams, code: widgetCode })
+						.setTitleParams(this.prepareTitleParams(payload, widgetParams.titleParams))
+						.setComponentName('crm:crm.entity.details', {
 							componentParams: {
-								payload,
+								payload: { ...payload, widgetCode },
 								analytics: preparedAnalytics,
 								context: {
 									source: 'entity-detail-opener',
@@ -80,21 +78,27 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 									necessaryEntityTypeId: TypeId.Deal,
 								},
 							},
-							widgetParams: {
-								...this.getModalWidgetParams(),
-								...widgetParams,
-								titleParams: this.prepareTitleParams(payload, widgetParams.titleParams),
-							},
-							canOpenInDefault,
-						},
-						parentWidget,
-					);
-				})
-				.catch((error) => {
-					console.error(error);
-					this.showAlert(error, entityTypeId);
+						});
+
+					if (resolvedPresentation.isModal())
+					{
+						presenter.setBackgroundColor(Color.bgSecondary);
+					}
+
+					return presenter.open();
 				})
 			;
+
+			if (perfPoint)
+			{
+				perfPoint.start();
+				openingPromise = openingPromise.finally(() => perfPoint.end());
+			}
+
+			openingPromise.catch((error) => {
+				console.error(error);
+				this.showAlert(error, entityTypeId);
+			});
 		}
 
 		static async prepareAnalytics(analytics, entityTypeId)
@@ -106,27 +110,6 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 				.setCategory('entity_operations')
 				.setType(Type.getTypeForAnalytics(entityTypeId))
 				.setP1(`crmMode_${crmMode.toLowerCase()}`);
-		}
-
-		/**
-		 * @private
-		 * @internal
-		 */
-		static getModalWidgetParams()
-		{
-			return {
-				modal: true,
-				backgroundColor: AppTheme.colors.bgSecondary,
-				leftButtons: [
-					{
-						// type: 'cross',
-						svg: {
-							content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
-						},
-						isCloseButton: true,
-					},
-				],
-			};
 		}
 
 		/**
@@ -240,7 +223,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 
 			const entityTitleParams = {
 				useLargeTitleMode: false,
-				detailTextColor: AppTheme.colors.base4,
+				detailTextColor: Color.base4.toHex(),
 			};
 
 			if (entityId)
@@ -316,18 +299,17 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 							this.loadEntities(
 								true,
 								{ [entityTypeId]: categoryId },
-							)
-								.then(() => {
-									entity = this.findEntityType(entityTypeId);
-									if (entity)
-									{
-										this.resolveEntity(entity, resolve, reject);
-									}
-									else
-									{
-										reject();
-									}
-								}).catch(console.error);
+							).then(() => {
+								entity = this.findEntityType(entityTypeId);
+								if (entity)
+								{
+									this.resolveEntity(entity, resolve, reject);
+								}
+								else
+								{
+									reject();
+								}
+							}).catch(console.error);
 						}
 						else if (entity)
 						{
@@ -370,13 +352,13 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
 					'crmmobile.EntityDetails.getAvailableEntityTypes',
-					{ json: { categories } },
-				)
-					.then(({ data }) => {
-						this.updateStorage(data);
-						resolve();
-					})
-					.catch(reject)
+					{
+						json: { categories },
+					},
+				).then(({ data }) => {
+					this.updateStorage(data);
+					resolve();
+				}).catch(reject)
 				;
 			});
 		}

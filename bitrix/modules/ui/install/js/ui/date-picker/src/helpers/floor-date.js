@@ -1,3 +1,6 @@
+// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 import { addDate } from './add-date';
 import { cloneDate } from './clone-date';
 
@@ -35,7 +38,8 @@ export function floorDate(date, unit, firstWeekDay): Date
 			newDate.setUTCMilliseconds(0);
 			break;
 		case 'year':
-			newDate = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+			newDate.setUTCFullYear(date.getUTCFullYear(), 0, 1);
+			newDate.setUTCHours(0, 0, 0, 0);
 			break;
 		case 'quarter': {
 			newDate.setUTCHours(0, 0, 0, 0);

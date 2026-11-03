@@ -1,0 +1,6 @@
+<?php
+$MESS["M_TIMEMAN_WORK_DAY_ACTION_CONTINUE"] = "Resume working day";
+$MESS["M_TIMEMAN_WORK_DAY_ACTION_PAUSE"] = "Take a break";
+$MESS["M_TIMEMAN_WORK_DAY_ACTION_REOPEN"] = "Clock in again";
+$MESS["M_TIMEMAN_WORK_DAY_ACTION_START"] = "Clock in";
+$MESS["M_TIMEMAN_WORK_DAY_ACTION_STOP"] = "Clock out";

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, ui_iconSet_api_vue, im_v2_application_core, im_v2_const, im_v2_lib_feature, ui_vue3, im_v2_lib_textHighlighter, im_v2_lib_copilot, im_v2_lib_escManager, im_v2_lib_permission) {
+(function (exports, main_core, ui_iconSet_api_vue, im_v2_application_core, im_v2_const, im_v2_lib_feature, ui_vue3, im_v2_lib_textHighlighter, im_v2_lib_copilot, im_v2_css_classes, im_v2_lib_escManager, im_v2_lib_permission) {
 	'use strict';
 
 	const DialogSpecialType = {
@@ -398,7 +398,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isEditing: false,
 				inputWidth: 0,
-				showEditIcon: false,
 				chatTitle: ''
 			};
 		},
@@ -408,6 +407,32 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			canBeRenamed() {
 				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.rename, this.dialogId);
+			},
+			showTitleButton() {
+				return this.canBeRenamed && !this.isEditing;
+			},
+			// The title itself reads as a name, so the button says what activating it does - and keeps the
+			// name, otherwise the walk would announce the action without telling which chat it renames.
+			// The marks of the title travel with it: the button hides its own content, so a state drawn as
+			// an icon has no other way into the accessibility tree.
+			renameLabel() {
+				const rename = this.loc('IM_CHAT_TITLE_RENAME_ARIA', {
+					'#TITLE#': this.dialog.name
+				});
+				return [rename, ...this.titleStates].join(', ');
+			},
+			titleStates() {
+				const states = [];
+				if (this.dialog.isMuted) {
+					states.push(this.loc('IM_CHAT_TITLE_MUTED_ARIA'));
+				}
+				if (this.isAutoDeleteEnabled) {
+					states.push(this.loc('IM_CHAT_TITLE_AUTO_DELETE_ARIA'));
+				}
+				return states;
+			},
+			isAutoDeleteEnabled() {
+				return this.$store.getters['chats/autoDelete/isEnabled'](this.dialog.chatId);
 			},
 			inputStyle() {
 				return {
@@ -430,6 +455,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.chatTitle = this.dialog.name;
 		},
 		methods: {
+			// ALG-02: the native button activates on Enter and Space by itself, so entering the edit mode has
+			// a single entry point and needs no key handler of its own.
 			async onTitleClick() {
 				if (!this.canBeRenamed) {
 					return;
@@ -439,6 +466,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				await this.$nextTick();
 				this.$refs.titleInput.focus();
 			},
+			/**
+			 * The single exit of the editor, idempotent by the edit flag, so one gesture submits once.
+			 *
+			 * It is also the whole of ALG-02 for `Tab` and `Shift+Tab`, and those keys get no handler on
+			 * purpose: the browser has already picked the next stop from the focused field, and closing the
+			 * editor inside `keydown` would take that starting point away before the default action runs.
+			 * The blur of the real focus move saves instead - Vue updates asynchronously, so the field is
+			 * still in the document while the browser moves on, and nothing here places the focus itself.
+			 */
 			onNewTitleSubmit() {
 				if (!this.isEditing) {
 					return;
@@ -450,44 +486,84 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				this.$emit('newTitleSubmit', this.chatTitle);
 			},
+			// ALG-02: Enter saves and hands the focus back to the button it came from. The submit itself is
+			// idempotent, so the blur of the field being unmounted adds no second event.
+			onInputEnter() {
+				this.onNewTitleSubmit();
+				void this.focusTitleButton();
+			},
+			// ALG-02: Escape restores the title the chat had, closes the editor and returns the focus. The
+			// `handled` answer is what stops the rest of the Esc chain, so the chat itself stays open.
 			onBeforeEscape() {
 				if (!this.isEditing) {
 					return im_v2_lib_escManager.EscEventAction.ignored;
 				}
-				this.isEditing = false;
-				this.showEditIcon = false;
 				this.chatTitle = this.dialog.name;
+				this.isEditing = false;
+				void this.focusTitleButton();
 				return im_v2_lib_escManager.EscEventAction.handled;
+			},
+			async focusTitleButton() {
+				await this.$nextTick();
+				this.$refs.titleButton?.focus();
 			},
 			getEmitter() {
 				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
+		/**
+		 * The pencil stands in the markup of the button from the start and is revealed by CSS - on `:hover`
+		 * and on `:focus-visible` - instead of being inserted and removed by handlers of the focus. WebKit
+		 * aborts the focus move of a `Tab` when the element that is losing the focus rebuilds its own content
+		 * at that moment, and the walk was left standing on the title (measured on the stand, 2026-08-27).
+		 * The pencil stays out of the accessibility tree and out of the walk either way.
+		 */
+		// language=Vue
 		template: `
-		<div
-			v-if="!isEditing"
+		<button
+			v-if="showTitleButton"
+			ref="titleButton"
+			type="button"
+			tabindex="0"
+			:aria-label="renameLabel"
 			@click="onTitleClick"
-			@mouseover="showEditIcon = true"
-			@mouseleave="showEditIcon = false"
+			class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__wrap
+				--can-rename --focus-visible"
+			data-testid="im-chat-title-rename-btn"
+		>
+			<div class="bx-im-elements-editable-chat-title__container" aria-hidden="true">
+				<ChatTitle :dialogId="dialogId" :withMute="true" :withAutoDelete="true" />
+			</div>
+			<div class="bx-im-elements-editable-chat-title__edit-icon_container" aria-hidden="true">
+				<div class="bx-im-elements-editable-chat-title__edit-icon"></div>
+			</div>
+		</button>
+		<div
+			v-else-if="!isEditing"
 			class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__wrap"
-			:class="{'--can-rename': canBeRenamed}"
 		>
 			<div class="bx-im-elements-editable-chat-title__container">
 				<ChatTitle :dialogId="dialogId" :withMute="true" :withAutoDelete="true" />
 			</div>
-			<div class="bx-im-elements-editable-chat-title__edit-icon_container">
-				<div v-if="showEditIcon && canBeRenamed" class="bx-im-elements-editable-chat-title__edit-icon"></div>
-			</div>
+			<div class="bx-im-elements-editable-chat-title__edit-icon_container"></div>
 		</div>
-		<div v-else class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__input_container">
+		<div
+			v-else
+			class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__input_container"
+		>
 			<input
 				v-model="chatTitle"
 				:style="inputStyle"
+				:aria-label="loc('IM_CHAT_TITLE_RENAME_INPUT_ARIA')"
 				@focus="$event.target.select()"
 				@blur="onNewTitleSubmit"
-				@keyup.enter="onNewTitleSubmit"
+				@keydown.enter.prevent="onInputEnter"
 				type="text"
 				class="bx-im-elements-editable-chat-title__input"
+				data-testid="im-chat-title-input"
 				ref="titleInput"
 			/>
 		</div>
@@ -500,5 +576,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.EditableChatTitle = EditableChatTitle;
 	exports.MessageAuthorTitle = MessageAuthorTitle;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Vue3, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Vue3, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

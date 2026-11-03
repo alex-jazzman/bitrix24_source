@@ -59,32 +59,53 @@ Extension::load([
 Toolbar::deleteFavoriteStar();
 
 $isSystem = ($arParams['sourceId'] === 'system');
+$datasetProperties = $arResult['initialData']['config']['datasetProperties'] ?? [];
+$canEdit = (bool)($datasetProperties['canEdit'] ?? true);
+$canExport = (bool)($datasetProperties['canExport'] ?? true);
 $saveButtonText = Loc::getMessage('DATASET_IMPORT_V2_SAVE_BUTTON_CREATE');
+
+$getReadonlyChip = static fn(string $text, string $hint): string =>
+	'<span class="biconnector-dataset-import-v2-readonly-chip">'
+	. '<span class="biconnector-dataset-import-v2-readonly-chip__text">' . htmlspecialcharsbx($text) . '</span>'
+	. '<span data-hint="' . htmlspecialcharsbx($hint) . '" data-hint-outline></span>'
+	. '</span>'
+;
+
 if ($isSystem)
 {
-	$systemTitle = $arResult['initialData']['config']['datasetProperties']['name'] ?? '';
+	$systemName = (string)($arResult['initialData']['config']['datasetProperties']['name'] ?? '');
+	$systemDisplayName = (string)($arResult['initialData']['config']['datasetProperties']['displayName'] ?? '');
+	$systemTitle = $systemName;
+	if ($systemDisplayName !== '' && $systemDisplayName !== $systemName)
+	{
+		$systemTitle = $systemDisplayName . ' (' . $systemName . ')';
+	}
 	$APPLICATION->SetTitle($systemTitle !== '' ? $systemTitle : Loc::getMessage('DATASET_IMPORT_TITLE_MSGVER_1'));
 
-	$readonlyChip = '<span class="biconnector-dataset-import-v2-readonly-chip">'
-		. '<span class="biconnector-dataset-import-v2-readonly-chip__text">'
-		. htmlspecialcharsbx(Loc::getMessage('DATASET_IMPORT_V2_SYSTEM_READONLY_CHIP'))
-		. '</span>'
-		. '<span data-hint="' . htmlspecialcharsbx(Loc::getMessage('DATASET_IMPORT_V2_SYSTEM_READONLY_HINT')) . '" data-hint-outline></span>'
-		. '</span>'
-	;
-	Toolbar::addAfterTitleHtml($readonlyChip);
+	Toolbar::addAfterTitleHtml($getReadonlyChip(
+		(string)Loc::getMessage('DATASET_IMPORT_V2_SYSTEM_READONLY_CHIP'),
+		(string)Loc::getMessage('DATASET_IMPORT_V2_SYSTEM_READONLY_HINT'),
+	));
 }
 elseif ($arParams['datasetId'])
 {
 	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_EDIT_TITLE_MSGVER_1'));
 	$saveButtonText = Loc::getMessage('DATASET_IMPORT_V2_SAVE_BUTTON_EDIT');
+
+	if (!$canEdit)
+	{
+		Toolbar::addAfterTitleHtml($getReadonlyChip(
+			(string)Loc::getMessage('DATASET_IMPORT_V2_TABLE_READONLY_CHIP'),
+			(string)Loc::getMessage('DATASET_IMPORT_V2_TABLE_READONLY_HINT'),
+		));
+	}
 }
 else
 {
 	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_TITLE_MSGVER_1'));
 }
 
-if ($arParams['sourceId'] === 'csv' && $arParams['datasetId'] > 0)
+if ($arParams['sourceId'] === 'csv' && $arParams['datasetId'] > 0 && $canExport)
 {
 	Toolbar::addButton(
 		new Buttons\Button([
@@ -100,7 +121,7 @@ if ($arParams['sourceId'] === 'csv' && $arParams['datasetId'] > 0)
 	);
 }
 
-if (!$isSystem)
+if (!$isSystem && $canEdit)
 {
 	Toolbar::addButton(
 		new Buttons\Button([

@@ -9,4 +9,7 @@ return [
 		'statemanager/redux/connect',
 		'crm:statemanager/redux/slices/stage-settings',
 	],
+	'bundle' => [
+		'./permissions',
+	],
 ];

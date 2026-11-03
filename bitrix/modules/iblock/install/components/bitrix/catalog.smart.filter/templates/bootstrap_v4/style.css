@@ -18,10 +18,19 @@
 
 .smart-filter-parameters-box { position: relative; }
 
-.smart-filter-parameters-box-title {
+/* Scoped by the filter: `[type="button"]` of the reboot is as specific as a class and wins by order. */
+.smart-filter .smart-filter-parameters-box-title {
+	appearance: none;
+	margin: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	width: 100%;
 	position: relative;
 	display: inline-block;
-	padding-bottom: 7px;
+	padding: 0 0 7px;
 	font-size: 13px;
 }
 
@@ -148,6 +157,20 @@
 
 /*endregion*/
 
+/* Text and fields for the keyboard and the reader alone. Not `display: none`, `visibility: hidden`
+ * or opacity: each of them takes a field out of the document, so it cannot be focused. */
+.smart-filter-a11y-text {
+	position: absolute;
+	margin: -1px;
+	border: 0;
+	padding: 0;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	white-space: nowrap;
+	clip-path: inset(50%);
+}
+
 .smart-filter-block {
 	display: none;
 	box-sizing: content-box;
@@ -212,9 +235,13 @@
 	font-size: 11px;
 }
 
+/* Secondary text next to the black of the ends: #6b8086 was 4.15 on the white of the filter.
+ *
+ * Every token below carries its light-context value as the fallback, because the template does not
+ * load the design tokens itself. On a page that declares them, the token follows the theme. */
 .smart-filter-slider-ruler.p2 span,
 .smart-filter-slider-ruler.p3 span,
-.smart-filter-slider-ruler.p4 span { color: #6b8086; }
+.smart-filter-slider-ruler.p4 span { color: var(--ui-color-base-2, #525C69); }
 
 .smart-filter-slider-range { z-index: 50; }
 
@@ -297,12 +324,41 @@
 	position: relative;
 	display: block;
 	margin: 0;
-	padding: 0 29px 0 10px;
+	padding: 0;
 	width: 100%;
 	height: 29px;
 	border: none;
 	border-radius: 2px;
 	background: #fff;
+}
+
+/* The inset moved from the block to the button, so the whole width of the frame stays a place to
+ * press. Scoped by the filter: `[type="button"]` of the reboot is as specific as a class. */
+.smart-filter .smart-filter-dropdown-opener {
+	appearance: none;
+	display: block;
+	margin: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	padding: 0 29px 0 10px;
+	width: 100%;
+}
+
+.smart-filter-dropdown-opener .smart-filter-dropdown-text { display: block; }
+
+/* A field of a list is named by its row, and the rows live inside the list. While the list is closed
+ * there is nothing on the page to name the field with, so it is taken out of the document
+ * altogether: left merely clipped away it would stand in the tree as a value with no name at all.
+ * It comes back, clipped but focusable, for as long as the list is open. */
+.smart-filter-dropdown-value {
+	display: none;
+}
+
+.smart-filter-dropdown-block.smart-filter-dropdown-open .smart-filter-dropdown-value {
+	display: block;
 }
 
 .smart-filter-dropdown-text {
@@ -392,6 +448,18 @@
 
 .smart-filter-dropdown-popup ul li .smart-filter-dropdown-text { padding-left: 5px;}
 
+/* The row of a value hangs in the popup while the list is open, too far for a rule on the
+ * neighbour of the field, so the class is written by the handler of its focus.
+ *
+ * The picture and the name of a row start at its very edge, so a band inside the row would lie over
+ * them. The band goes round the row at a distance instead: the clipping of the row cuts its content
+ * and not its own outline, and the gap between two rows and the padding of the popup hold the band
+ * with room to spare. */
+.smart-filter-dropdown-popup ul li label.bx-focus {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: 3px;
+}
+
 /*endregion */
 
 /* region TAGS */
@@ -465,6 +533,25 @@
 .smart-filter-checkbox-label.bx-active .smart-filter-checkbox-btn,
 .smart-filter-checkbox-label.bx-active .smart-filter-checkbox-btn,
 .smart-filter-checkbox-text-label.bx-active .smart-filter-checkbox-btn { border-color: var(--primary); }
+
+/* The field is clipped away and shows no ring of its own, so the ring is drawn on what the visitor
+ * reads as the control: the square alone where the value is a colour, the whole row where a name
+ * stands next to it. The square is positioned and would paint over an outline of the label, so the
+ * ring is a pseudo-element laid over it. */
+.smart-filter-input-group-checkbox-pictures-text .smart-filter-checkbox-label { position: relative; }
+
+.smart-filter-input-group-checkbox-pictures input:focus-visible + .smart-filter-checkbox-label .smart-filter-checkbox-btn::after,
+.smart-filter-input-group-checkbox-pictures-text input:focus-visible + .smart-filter-checkbox-label::after {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width, 2px) var(--ui-color-base-white-fixed, #FFFFFF);
+	content: "";
+	pointer-events: none;
+}
+
 .smart-filter-checkbox-text,
 .smart-filter-dropdown-text { font-size: 14px; }
 
@@ -472,6 +559,25 @@
 .smart-filter-dropdown-label.disabled .smart-filter-dropdown-text,
 .smart-filter-checkbox-text-label.disabled .smart-filter-checkbox-text,
 .smart-filter-input-group-checkbox-list.disabled .smart-filter-checkbox-text { color: #6c6c6c; }
+
+/* A value the recount switches off is marked with `aria-disabled` and keeps the native attribute
+ * off, so that it stays a stop of the keyboard walk and holds the focus standing on it. The branches
+ * whose value is drawn as a picture or a swatch say so through the class above; the two whose value
+ * is a plain field — the checkboxes and the radio buttons — said it through the native attribute
+ * alone, and with the attribute gone a switched-off value looked available and answered no press.
+ *
+ * What is written out here is the pallor the stand gives such a field natively, measured on it and
+ * not invented: `ui.bootstrap4` fades the field and the text beside it by half, and the bootstrap of
+ * the page paints the text of a disabled field the muted grey. The cursor does not enter into it —
+ * the text of these two branches carries none either way. */
+.smart-filter-input-group-checkbox-list .form-check-input[aria-disabled="true"],
+.smart-filter-param-label .smart-filter-input-checkbox input[aria-disabled="true"] { opacity: .5; }
+
+.smart-filter-input-group-checkbox-list .form-check-input[aria-disabled="true"] ~ .form-check-label,
+.smart-filter-param-label .smart-filter-input-checkbox input[aria-disabled="true"] ~ .smart-filter-param-text {
+	color: #6c757d;
+	opacity: .5;
+}
 
 .smart-filter-checkbox-label.disabled .smart-filter-checkbox-btn,
 .smart-filter-checkbox-text-label.disabled .smart-filter-checkbox-btn {
@@ -744,6 +850,11 @@
 
 .smart-filter-popup-result.left { right: 103%; }
 
+.smart-filter-popup-result.in-flow {
+	position: static;
+	margin-top: 0;
+}
+
 .smart-filter-horizontal .smart-filter-popup-result {
 	position: relative;
 	right: auto;
@@ -785,3 +896,82 @@
 
 	.smart-filter-popup-result .arrow { display: none; }
 }
+
+/*region Focus ring*/
+/* One band of the dark tone outside the box of the control, as on the cards of the catalog: the theme
+ * of the landing store draws a white band inside the box, over the content, and a halo around it. The
+ * weight of 0,3,0 and more outruns `.btn:focus-visible` (0,2,0), `a:focus-visible` (0,1,1) and
+ * `.block-wrapper button:focus-visible` (0,2,1) of the theme, which is included after this file. */
+.smart-filter .smart-filter-dropdown-opener:focus-visible,
+.smart-filter .smart-filter-input-container .form-control:focus-visible,
+.smart-filter .smart-filter-input-group-checkbox-list .form-check-input:focus-visible,
+.smart-filter .smart-filter-button-box .btn:focus-visible,
+.smart-filter .smart-filter-popup-result a:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* ui.bootstrap4 marks a focused checkbox with a pale shadow of its own blue, too faint to find the
+ * focus by; the band above takes its place, and a click leaves no shadow either. */
+.smart-filter .smart-filter-input-group-checkbox-list .form-check-input:focus { box-shadow: none; }
+
+/* The values of a group begin right at the lower edge of its header, so a band outside the header
+ * would lie over them, and a band inside it would cross the first letter of the name, which starts
+ * at the very edge of the box. The band is a pseudo-element: outside the box above and at the sides,
+ * inside it below, in the space the header keeps under the name. It is raised off the lower edge by
+ * the space the line keeps under the letters, so the name stands as far from the lower band as from
+ * the upper one. */
+.smart-filter .smart-filter-parameters-box-title:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.smart-filter .smart-filter-parameters-box-title:focus-visible::after {
+	--smart-filter-ring-outset: calc(-1 * (var(--ui-focus-outline-offset, 2px) + var(--ui-focus-outline-width, 2px)));
+	position: absolute;
+	top: var(--smart-filter-ring-outset);
+	right: var(--smart-filter-ring-outset);
+	bottom: 3px;
+	left: var(--smart-filter-ring-outset);
+	border: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	content: "";
+	pointer-events: none;
+}
+
+/* A colour of the row takes a tabindex from the walk of the arrows, and the theme rings every focused
+ * node with one (0,4,0). The field is a clipped pixel and its ring is drawn on the square instead. */
+.smart-filter .smart-filter-input-group-checkbox-pictures input.smart-filter-a11y-text[tabindex]:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+/* The theme animates everything its buttons own over a fifth of a second, and the bootstrap of the
+ * fields their shadow, the ring with them: a ring that fades in cannot be followed. The zero sits in
+ * the rule of the resting state, so the ring also leaves a control at once. */
+.smart-filter .smart-filter-button-box .btn {
+	transition: color 200ms, background-color 200ms, border-color 200ms, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.smart-filter .smart-filter-input-container .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.smart-filter .smart-filter-input-group-checkbox-list .form-check-input {
+	transition: background-color .15s ease-in-out, background-position .15s ease-in-out, border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* ui.bootstrap4, loaded by the search of the header, paints the button of its own blue on focus, and
+ * the theme overrides every state of the button but that one. The theme colours are put back. */
+.smart-filter .smart-filter-button-box .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+
+.smart-filter .smart-filter-button-box .btn.btn-primary:focus:hover,
+.smart-filter .smart-filter-button-box .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}
+
+/*endregion*/

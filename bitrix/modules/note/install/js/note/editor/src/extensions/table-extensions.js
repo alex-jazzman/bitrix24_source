@@ -8,9 +8,14 @@ import {
 import { columnResizing, tableEditing } from 'prosemirror-tables';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { ySyncPluginKey } from '@tiptap/y-tiptap';
-import { escapeInlineText, sharedMarked } from './shared-marked';
+import { escapeTableCellPlainPipes, sharedMarked } from './shared-marked';
 import { findValidEnrichedAssetMatches, parseAllEnrichedAssets } from './attachments/enriched-asset-parser';
 import { findNoteAssetMatches, isEscapedAt } from './attachments/note-asset-parser';
+import {
+	findTableAtSelection,
+	isTableAlignment,
+	normalizeTableAlignment,
+} from '../utils/table-alignment';
 
 // prosemirror-tables sizes a table to the sum of its column widths ONLY when every
 // column carries an explicit width (its `fixedWidth` path). Otherwise the table
@@ -21,6 +26,7 @@ import { findNoteAssetMatches, isEscapedAt } from './attachments/note-asset-pars
 // (which scrolls) instead of stealing from its neighbours, and cells keep wrapping.
 const tableColwidthKey = new PluginKey('noteTableColwidthDefaults');
 const MIN_COLUMN_WIDTH = 25;
+const TABLE_ALIGNMENT_MARKER = /^<!--\s*b24-note-table-align:([^\s>]+)\s*-->/;
 // border-collapse paints the outer cell borders ~1px beyond the table box, so a
 // column-width sum equal to the wrapper overflows it by a hairline. Reserve it.
 const TABLE_BORDER_ALLOWANCE = 2;
@@ -398,6 +404,14 @@ function excludeContainedRanges(ranges: AssetRange[], containers: AssetRange[]):
 	});
 }
 
+// The shared instance is what carries the module's tokenizers, and a Lexer built from it keeps them
+// only when it is given the instance defaults. MarkdownManager does that itself since 3.30.5; the
+// lexers the module builds for a table cell have to do it here.
+function createCellLexer(): Object
+{
+	return new sharedMarked.Lexer(sharedMarked.defaults);
+}
+
 function mergeAssetRanges(rawText: string, referenceLinks): AssetRange[]
 {
 	const escapedAssetRanges = [
@@ -454,7 +468,7 @@ function mergeAssetRanges(rawText: string, referenceLinks): AssetRange[]
 	];
 	const markedCell = replaceTableCellAssetsWithMarkers(rawText, mergedRanges);
 	const visibleMarkers: Set<string> = new Set();
-	const lexer = new sharedMarked.Lexer();
+	const lexer = createCellLexer();
 	lexer.tokens.links = referenceLinks;
 	findVisibleAssetMarkers(
 		lexer.inlineTokens(markedCell.markdown),
@@ -789,42 +803,130 @@ function splitInlineContentAtAssets(inlineContent, assetByMarker: Map<string, st
 	return blocks;
 }
 
-function buildCellChildren(cell, h)
+const CELL_BLOCK_BREAK_AT_RE = /^<br\s*\/?>/i;
+// Only a cap on the slice the match is tried on. The library writes `<br>`, but a body written
+// outside the editor - REST, an import from Outline or a wiki - carries `<br />` with whatever
+// spacing its author used.
+const CELL_BLOCK_BREAK_MAX_LENGTH = 16;
+
+// Cuts a stored cell at the `<br>` tags the library wrote for its block boundaries, and only at
+// those. A `<br>` the author typed into a code span is content, not a boundary: @tiptap/markdown
+// returns text under a code mark verbatim - no HTML encoding, no escaping - so it reaches the row
+// as a literal tag. Reading it as a boundary tore the span into two paragraphs and turned its
+// backticks into text. Plain text cannot reach here as a literal tag: outside code the serializer
+// encodes it as `&lt;br&gt;`.
+function splitCellAtBreakTags(text: string): string[]
 {
-	// Defensive access: fall back gracefully if marked internal API changes
-	const cellText = (cell && typeof cell === 'object' && 'text' in cell) ? cell.text : '';
-	const rawText = cellText.replaceAll(TABLE_CELL_LINE_SEPARATOR, ' ');
-	const tokens = (cell && typeof cell === 'object' && 'tokens' in cell) ? cell.tokens : [];
-	if (!rawText.includes('fileId='))
+	const parts = [];
+	let current = '';
+	let offset = 0;
+
+	while (offset < text.length)
 	{
-		if (!rawText.includes('\\') && cellText === rawText)
+		const char = text[offset];
+
+		if (char === '\\')
 		{
-			return [{ type: 'paragraph', content: h.parseInline(tokens) }];
+			current += text.slice(offset, offset + 2);
+			offset += 2;
+			continue;
 		}
 
-		const lexer = new sharedMarked.Lexer();
+		if (char === '`')
+		{
+			let fenceEnd = offset;
+			while (text[fenceEnd] === '`')
+			{
+				fenceEnd += 1;
+			}
+			const fence = text.slice(offset, fenceEnd);
+			const closing = text.indexOf(fence, fenceEnd);
+			if (closing === -1)
+			{
+				// Backticks with no pair are ordinary characters, the way marked reads them - taking
+				// them for a span that runs to the end of the cell would hide every block boundary
+				// after them.
+				current += fence;
+				offset = fenceEnd;
+				continue;
+			}
+
+			const end = closing + fence.length;
+			current += text.slice(offset, end);
+			offset = end;
+			continue;
+		}
+
+		if (char === '<')
+		{
+			const tag = CELL_BLOCK_BREAK_AT_RE.exec(text.slice(offset, offset + CELL_BLOCK_BREAK_MAX_LENGTH));
+			if (tag !== null)
+			{
+				parts.push(current);
+				current = '';
+				offset += tag[0].length;
+				continue;
+			}
+		}
+
+		current += char;
+		offset += 1;
+	}
+
+	parts.push(current);
+
+	return parts;
+}
+
+function trimEdgeEmptyParts(parts: string[]): string[]
+{
+	let start = 0;
+	let end = parts.length;
+	while (start < end && parts[start] === '')
+	{
+		start += 1;
+	}
+	while (end > start && parts[end - 1] === '')
+	{
+		end -= 1;
+	}
+
+	return parts.slice(start, end);
+}
+
+// Where the blocks of one cell begin and end.
+//
+// Since 3.30.5 the library writes `<br>` for every line break inside a cell - both a break the user
+// typed and the boundary between two blocks of the cell - because a real newline would split the
+// markdown row. So `<br>` is read back as that same boundary: each part becomes a block of its own.
+// Left as text it would be re-escaped to `&lt;br&gt;` on the next save and grow with every one; a
+// literal `<br>` a user typed is stored as `&lt;br&gt;` and never reaches this split.
+function buildCellBlocks(rawText: string, tokens: Object[], h, parsedTokens: ?Object[]): Object[]
+{
+	if (!rawText.includes('fileId='))
+	{
+		if (parsedTokens)
+		{
+			return [{ type: 'paragraph', content: h.parseInline(parsedTokens) }];
+		}
+
+		const lexer = createCellLexer();
 		lexer.tokens.links = collectReferenceLinks(tokens);
 
-		return [{
-			type: 'paragraph',
-			content: h.parseInline(lexer.inlineTokens(rawText)),
-		}];
+		return [{ type: 'paragraph', content: h.parseInline(lexer.inlineTokens(rawText)) }];
 	}
 
 	const referenceLinks = collectReferenceLinks(tokens);
 	const assetRanges = mergeAssetRanges(rawText, referenceLinks);
 	if (assetRanges.length === 0)
 	{
-		const lexer = new sharedMarked.Lexer();
+		const lexer = createCellLexer();
 		lexer.tokens.links = referenceLinks;
 
-		return [{
-			type: 'paragraph',
-			content: h.parseInline(lexer.inlineTokens(rawText)),
-		}];
+		return [{ type: 'paragraph', content: h.parseInline(lexer.inlineTokens(rawText)) }];
 	}
 
-	const lexer = new sharedMarked.Lexer();
+	const lexer = createCellLexer();
 	lexer.tokens.links = referenceLinks;
 	const markedCell = replaceTableCellAssetsWithMarkers(rawText, assetRanges);
 	const inlineContent = h.parseInline(lexer.inlineTokens(markedCell.markdown));
@@ -833,14 +935,142 @@ function buildCellChildren(cell, h)
 	return children.length > 0 ? children : [{ type: 'paragraph', content: [] }];
 }
 
+function buildCellChildren(cell, h, textOverride = null)
+{
+	// Defensive access: fall back gracefully if marked internal API changes
+	const hasTextOverride = typeof textOverride === 'string';
+	const cellText = hasTextOverride
+		? textOverride
+		: ((cell && typeof cell === 'object' && 'text' in cell) ? cell.text : '')
+	;
+	const rawText = cellText.replaceAll(TABLE_CELL_LINE_SEPARATOR, ' ');
+	const tokens = (cell && typeof cell === 'object' && 'tokens' in cell) ? cell.tokens : [];
+
+	const parts = splitCellAtBreakTags(rawText);
+	if (parts.length > 1)
+	{
+		// An empty part between two breaks is an empty block of the cell, not nothing: dropping it
+		// glued the blocks around it together and the next save stored the cell without it. Only the
+		// edges of the split are dropped - there a leading or trailing break means no block at all.
+		const inner = trimEdgeEmptyParts(parts.map((part) => part.trim()));
+		const blocks = inner.flatMap((part) => (part === ''
+			? [{ type: 'paragraph', content: [] }]
+			: buildCellBlocks(part, tokens, h, null)
+		));
+
+		return blocks.length > 0 ? blocks : [{ type: 'paragraph', content: [] }];
+	}
+
+	// The fast path is only valid for the cell as a whole: `tokens` were lexed for the whole cell
+	// text, so a part of a split cell must go through the lexer instead.
+	// An overridden text is a slice of the cell, so its `tokens` do not match it either.
+	const alreadyParsed = (!hasTextOverride && !rawText.includes('\\') && cellText === rawText)
+		? tokens
+		: null
+	;
+
+	return buildCellBlocks(rawText, tokens, h, alreadyParsed);
+}
+
+function parseTableAlignment(header): { alignment: string, firstHeaderText: ?string }
+{
+	const firstCell = Array.isArray(header) ? header[0] : null;
+	const text = (firstCell && typeof firstCell === 'object' && typeof firstCell.text === 'string')
+		? firstCell.text
+		: ''
+	;
+	const marker = TABLE_ALIGNMENT_MARKER.exec(text);
+	if (!marker)
+	{
+		return { alignment: 'left', firstHeaderText: null };
+	}
+
+	return {
+		alignment: normalizeTableAlignment(marker[1]),
+		firstHeaderText: text.slice(marker[0].length),
+	};
+}
+
+function applyTableAlignmentToView(view: Object, node: Object): void
+{
+	const alignment = normalizeTableAlignment(node.attrs.alignment);
+
+	view.table.classList.remove(
+		'note-editor-table--align-left',
+		'note-editor-table--align-center',
+		'note-editor-table--align-right',
+	);
+	view.table.classList.add(`note-editor-table--align-${alignment}`);
+	view.table.setAttribute('data-table-alignment', alignment);
+}
+
 const CustomTable = Table.extend({
+	addAttributes()
+	{
+		return {
+			...this.parent?.(),
+			alignment: {
+				default: 'left',
+				parseHTML: (element) => normalizeTableAlignment(element.getAttribute('data-table-alignment')),
+				renderHTML: (attrs) => {
+					const alignment = normalizeTableAlignment(attrs.alignment);
+
+					return {
+						class: `note-editor-table--align-${alignment}`,
+						'data-table-alignment': alignment,
+					};
+				},
+			},
+		};
+	},
+	addCommands()
+	{
+		return {
+			...this.parent?.(),
+			setTableAlignment: (alignment: string) => ({ state, dispatch }) => {
+				if (!isTableAlignment(alignment))
+				{
+					return false;
+				}
+
+				const table = findTableAtSelection(state.selection);
+				if (!table)
+				{
+					return false;
+				}
+
+				if (dispatch)
+				{
+					dispatch(state.tr.setNodeMarkup(table.pos, undefined, {
+						...table.node.attrs,
+						alignment,
+					}));
+				}
+
+				return true;
+			},
+		};
+	},
 	addNodeView()
 	{
 		return ({ node }) => {
 			const View = this.options.View;
 			const cellMinWidth = this.options.cellMinWidth;
+			const view = new View(node, cellMinWidth);
+			const update = view.update.bind(view);
 
-			return new View(node, cellMinWidth);
+			applyTableAlignmentToView(view, node);
+			view.update = (nextNode) => {
+				const updated = update(nextNode);
+				if (updated)
+				{
+					applyTableAlignmentToView(view, nextNode);
+				}
+
+				return updated;
+			};
+
+			return view;
 		};
 	},
 	addProseMirrorPlugins()
@@ -869,12 +1099,30 @@ const CustomTable = Table.extend({
 	parseMarkdown(token, h)
 	{
 		const rows = [];
+		const header = Array.isArray(token.header) ? token.header : [];
+		const { alignment, firstHeaderText } = parseTableAlignment(header);
 
-		if (token.header)
+		// GFM requires a header row, but imported content tables (e.g. landing card lists) carry a
+		// deliberately blank header so no label row is shown. Rendering an all-empty <th> row just
+		// adds a stray empty line at the top, so skip it - but only when there are body rows to keep
+		// the table non-empty; a header-only table falls back to showing the (blank) header.
+		const hasBody = Array.isArray(token.rows) && token.rows.length > 0;
+		const headerIsBlank = header.length > 0
+			&& header.every((cell) => {
+				const text = (cell && typeof cell === 'object' && typeof cell.text === 'string') ? cell.text : '';
+
+				return text.trim() === '';
+			});
+
+		if (header.length > 0 && !(headerIsBlank && hasBody))
 		{
 			const headerCells = [];
-			token.header.forEach((cell) => {
-				headerCells.push(h.createNode('tableHeader', {}, buildCellChildren(cell, h)));
+			header.forEach((cell, index) => {
+				headerCells.push(h.createNode('tableHeader', {}, buildCellChildren(
+					cell,
+					h,
+					index === 0 ? firstHeaderText : null,
+				)));
 			});
 			rows.push(h.createNode('tableRow', {}, headerCells));
 		}
@@ -890,14 +1138,31 @@ const CustomTable = Table.extend({
 			});
 		}
 
-		return h.createNode('table', undefined, rows);
+		return h.createNode('table', { alignment }, rows);
 	},
 	renderMarkdown(node, h): string
 	{
-		return renderTableToMarkdown(
-			{ ...node, content: escapeInlineText(node.content) },
-			h,
-			{ cellLineSeparator: ' ' },
+		// The bar is escaped in what the library rendered for a cell, not in the table markup it
+		// writes around it: wrapping the whole result would escape the cell separators too, and the
+		// table would come back as a single paragraph. `renderChildren` is the seam that carries
+		// cell content and nothing else.
+		const cellRenderer = Object.create(h);
+		cellRenderer.renderChildren = (child) => escapeTableCellPlainPipes(h.renderChildren(child));
+
+		// '\n' rather than ' ': since 3.30.5 the library splits the rendered cell on this separator
+		// and turns every resulting line break into `<br>`, so a separator of ' ' would put a `<br>`
+		// in place of every space in the cell.
+		const markdown = renderTableToMarkdown(node, cellRenderer, { cellLineSeparator: '\n' });
+		const alignment = normalizeTableAlignment(node.attrs?.alignment);
+
+		if (alignment === 'left')
+		{
+			return markdown;
+		}
+
+		return markdown.replace(
+			/^(\n*\|[\t ]*)/,
+			`$1<!-- b24-note-table-align:${alignment} -->`,
 		);
 	},
 });

@@ -1,6 +1,8 @@
 <?php
 /** @var array $arResult */
 
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 global $USER;
@@ -22,8 +24,8 @@ if (\Bitrix\Im\Settings::isLegacyChatActivated())
 \Bitrix\Main\UI\Extension::load('helper');
 
 $helpUrl = \Bitrix\UI\Util::getHelpdeskUrl(true) . "/widget2/";
-$helpUrl = CHTTP::urlAddParams($helpUrl, [
-	"url" => urlencode("https://" . $_SERVER["HTTP_HOST"] . $APPLICATION->GetCurPageParam()),
+$helpUrl = (string)(new Uri($helpUrl))->addParams([
+	"url" => "https://" . $_SERVER["HTTP_HOST"] . $APPLICATION->GetCurPageParam(),
 	"user_id" => $USER->GetID(),
 	"is_cloud" => IsModuleInstalled('bitrix24') ? "1" : "0",
 	"action" => "open",

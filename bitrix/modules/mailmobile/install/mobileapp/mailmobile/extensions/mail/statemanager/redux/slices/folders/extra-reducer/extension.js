@@ -33,5 +33,18 @@ jn.define('mail/statemanager/redux/slices/folders/extra-reducer', (require, expo
 		}
 	};
 
-	module.exports = { adjustFolderUnreadCounters };
+	/**
+	 * The label mode lives as long as the server says the domain is on: a gone flag takes the list
+	 * back to all messages instead of leaving it on a folder that no longer exists for the client.
+	 */
+	const applyLabelsAvailability = (state, labelsAvailable) => {
+		state.labelsAvailable = labelsAvailable === true;
+
+		if (!state.labelsAvailable && state.currentVirtualFolderKey === 'label')
+		{
+			state.currentVirtualFolderKey = 'all_messages';
+		}
+	};
+
+	module.exports = { adjustFolderUnreadCounters, applyLabelsAvailability };
 });

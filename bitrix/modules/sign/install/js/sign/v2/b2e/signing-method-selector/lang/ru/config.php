@@ -1,0 +1,5 @@
+<?php
+
+$MESS['SIGN_V2_B2E_SIGNING_METHOD_SELECTOR_TITLE'] = 'Способ подписи представителя';
+$MESS['SIGN_V2_B2E_SIGNING_METHOD_SELECTOR_VALUE_UKEP'] = 'УКЭП';
+$MESS['SIGN_V2_B2E_SIGNING_METHOD_SELECTOR_VALUE_GOSKEY'] = 'Госключ (УКЭП для Гендиректора)';

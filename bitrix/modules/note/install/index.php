@@ -112,6 +112,13 @@ class note extends CModule
 		{
 			\Bitrix\Note\Internal\Access\Install\AccessInstaller::install();
 
+			// Before the welcome content, so that the head the cursors are parked at is the one the
+			// portal had before the install - the same baseline the updater writes. Nothing of the
+			// welcome content is stepped over by that order: it is written straight through the
+			// repositories and records no journal event at all, and an article that has only just
+			// appeared has no subscribers to deliver to in any case.
+			(new \Bitrix\Note\Internal\Setup\NotificationCursorInstaller())->install();
+
 			if ($freshSchema)
 			{
 				(new \Bitrix\Note\Internal\Setup\WelcomeContentInstaller())->install();

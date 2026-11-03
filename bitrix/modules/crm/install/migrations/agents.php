@@ -1,6 +1,10 @@
 <?php
 
+use Bitrix\Crm\WebForm\Telemetry\AttemptCleanupAgent;
+
 $agent = \Bitrix\Main\UpdateSystem\Migration::getInstance()->agent();
+
+$agent->add([AttemptCleanupAgent::class, 'run'], 86400);
 
 $agent->add('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 3600,);
 
@@ -22,7 +26,7 @@ $agent->add('Bitrix\Crm\Agent\Activity\LightCounterAgent::run();', 60);
 
 \Bitrix\Crm\Update\RemoveDuplicatingMultifieldsStepper::bindOnCrmModuleInstall();
 
-\Bitrix\Crm\Update\Timeline\BindCreatedBackfillStepper::bindOnCrmModuleInstall();
+\Bitrix\Crm\Agent\Timeline\BindCreatedBackfillAgent::register();
 
 $agent->add("Bitrix\\Crm\\Agent\\Activity\\PingAgent::run();", 60);
 $agent->add('Bitrix\Crm\Agent\Badge\RemoveOldEntityBadgesAgent::run();', 60);

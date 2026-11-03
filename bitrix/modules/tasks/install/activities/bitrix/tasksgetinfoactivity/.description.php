@@ -40,6 +40,23 @@ $arActivityDescription = (new ActivityDescription(
 			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_TASKS_TITLES_BB_LIST'),
 			'TYPE' => FieldType::TEXT,
 		],
+		'TASKS_BLOCK_ITEMS_JSON' => [
+			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_TASKS_BLOCK_ITEMS_JSON'),
+			'TYPE' => FieldType::TEXT,
+		],
+		'TASK_IDS' => [
+			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_TASK_IDS'),
+			'TYPE' => FieldType::INT,
+			'MULTIPLE' => true,
+		],
+		'TASKS_INFO_HAS_MORE' => [
+			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_HAS_MORE'),
+			'TYPE' => FieldType::BOOL,
+		],
+		'Succeeded' => [
+			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_SUCCEEDED'),
+			'TYPE' => FieldType::BOOL,
+		],
 	])
 	->setIcon(Outline::TASK->name)
 	->setColorIndex(ActivityColorIndex::BLUE->value)

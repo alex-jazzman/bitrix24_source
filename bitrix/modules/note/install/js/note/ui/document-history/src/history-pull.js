@@ -10,7 +10,7 @@ import { PullClient } from 'pull.client';
 const HISTORY_PUSH_COMMAND = 'documentHistoryEvent';
 const HISTORY_PULL_TAG_PREFIX = 'NOTE_DOC_HISTORY_';
 
-// [EVENT-02] Subscription lifecycle of the current user, pushed on their personal channel. Only
+// Subscription lifecycle of the current user, pushed on their personal channel. Only
 // these two commands are routed; anything else is dropped before a consumer sees it.
 const SUBSCRIPTION_PUSH_COMMANDS = Object.freeze(['subscriptionSet', 'subscriptionRemove']);
 const SUBSCRIPTION_SCOPE_DOCUMENT = 'document';
@@ -60,8 +60,8 @@ export function subscribeDocumentHistory(documentId: number, onEvent: (event: Ob
 	};
 }
 
-// [EVENT-02] Subscribes to the subscription commands that can concern one document - its own row and
-// anything that may cover it from above (AC-052). `onChange({ command, mode })` carries the direct mode
+// Subscribes to the subscription commands that can concern one document - its own row and
+// anything that may cover it from above. `onChange({ command, mode })` carries the direct mode
 // of the change; the effective state of the document also depends on coverage, so a consumer re-reads
 // rather than adopting it blindly - which is why the filter errs towards passing a change through.
 // Returns a disposer. Safe to call before BX.PULL exists (no-op disposer). No per-document tag here:

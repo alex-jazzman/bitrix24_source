@@ -288,9 +288,10 @@ export const DocumentListItem = {
 			// Stateless component: emit the intended toggle relative to the current prop; the page owns selection
 			this.emitSelectToggle();
 
-			// Drop focus only for pointer input: otherwise a deselect that exits selection mode leaves
-			// the hover checkbox pinned open via :focus-within after the pointer moves away. Keyboard
-			// users must keep focus so multi-select stays operable (WCAG 2.4.3).
+			// Drop focus only for pointer input: a deselect that exits selection mode collapses the
+			// checkbox back to `width: 0` (see document-list.css), and a pointer click leaves no
+			// `:focus-visible` to hold it open, so the focus would sit on an invisible element.
+			// Keyboard users must keep focus so multi-select stays operable (WCAG 2.4.3).
 			const pointerDriven = this.pointerToggle;
 			this.pointerToggle = false;
 			if (!pointerDriven)
@@ -363,9 +364,13 @@ export const DocumentListItem = {
 			return DateTimeFormat.format(phpFormat, ts);
 		},
 	},
+	// The card root is out of the tab order but focusable: DocumentList parks the focus here when the
+	// paging retry unmounts the button it was pressed on, and a click on a child with nothing
+	// focusable of its own lands here too - which is why the hover-select rule asks for
+	// `:focus-visible` and not `:focus-within` (see document-list.css).
 	// language=Vue
 	template: `
-		<div :class="rootClass" @click="onCardClick">
+		<div :class="rootClass" tabindex="-1" @click="onCardClick">
 			<div class="note-document-card__header">
 				<label
 					v-if="showSelectBox"

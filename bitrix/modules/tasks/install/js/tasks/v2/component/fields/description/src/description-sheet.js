@@ -66,6 +66,7 @@ export const DescriptionSheet = {
 			:padding="0"
 			:popupPadding="0"
 			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_DESCRIPTION_TITLE')"
 			:uniqueKey
 			@close="$emit('close')"
 		>

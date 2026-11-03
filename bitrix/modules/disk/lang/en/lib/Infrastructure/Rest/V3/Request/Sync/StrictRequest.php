@@ -1,0 +1,19 @@
+<?php
+$MESS['DISK_SYNC_REQUEST_CHECK_MODE_AMBIGUOUS'] = 'The request specifies both "objectIds" and "scopeRootId". Leave one check mode: the object ID list "objectIds" or the scope root "scopeRootId".';
+$MESS['DISK_SYNC_REQUEST_CHECK_MODE_MISSING'] = 'The request does not specify a check mode. Pass one parameter: the object ID list "objectIds" or the scope root "scopeRootId".';
+$MESS['DISK_SYNC_REQUEST_CHECK_TOKEN_OTHER_SCOPE'] = 'The check token was issued for a different scope.';
+$MESS['DISK_SYNC_REQUEST_DOWNLOAD_ID_REQUIRED'] = 'The download ID is missing. Pass it unchanged from the object card.';
+$MESS['DISK_SYNC_REQUEST_HISTORY_DEPTH_INVALID'] = 'History depth is invalid. Specify an integer number of days greater than zero.';
+$MESS['DISK_SYNC_REQUEST_LIMIT_INVALID'] = 'Page size is invalid. Specify an integer greater than zero.';
+$MESS['DISK_SYNC_REQUEST_LIMIT_NOT_APPLICABLE'] = 'Page size applies only when checking by scope.';
+$MESS['DISK_SYNC_REQUEST_LIMIT_TOO_LARGE'] = 'Page size exceeds #MAX#. Specify a value no greater than #MAX#.';
+$MESS['DISK_SYNC_REQUEST_OBJECT_IDS_INVALID'] = 'Pass a non-empty list of positive object IDs.';
+$MESS['DISK_SYNC_REQUEST_OBJECT_IDS_TOO_MANY'] = 'Pass no more than #MAX# IDs per request.';
+$MESS['DISK_SYNC_REQUEST_PAGINATION_INVALID'] = 'Pagination parameters were not passed as an object. Pass them as an object.';
+$MESS['DISK_SYNC_REQUEST_PARAMETER_REQUIRED'] = 'The required parameter "#PARAMETER#" is missing. Add it to the request.';
+$MESS['DISK_SYNC_REQUEST_POLL_INTERVAL_OUT_OF_BOUNDS'] = 'Planned polling interval is outside the #MIN# to #MAX# second range. Specify a value within the limits returned by disk.sync.capabilities.get.';
+$MESS['DISK_SYNC_REQUEST_SCOPE_ROOT_INVALID'] = 'Specify a positive scope root ID.';
+$MESS['DISK_SYNC_REQUEST_SECTIONS_INVALID'] = 'The section list is empty or has an invalid format. Pass a non-empty list of section names.';
+$MESS['DISK_SYNC_REQUEST_SECTION_UNAVAILABLE'] = 'Section "#SECTION#" is declared in the schema but is not available in this Bitrix24. Get the list of available sections from disk.sync.capabilities.get.';
+$MESS['DISK_SYNC_REQUEST_SECTION_UNKNOWN'] = 'Section "#SECTION#" is not declared in the schema. Check the name.';
+$MESS['DISK_SYNC_REQUEST_UNKNOWN_PARAMETER'] = 'The "#PARAMETER#" parameter is not supported. Check the name or remove it from the request.';

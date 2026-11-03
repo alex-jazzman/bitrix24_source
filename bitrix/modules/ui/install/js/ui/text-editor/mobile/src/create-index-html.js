@@ -1,3 +1,4 @@
+/* global require, __dirname -- build-time rollup plugin, runs in Node */
 const path = require('path');
 const fs = require('fs/promises');
 const { writeFile, mkdir } = require('node:fs/promises');
@@ -41,9 +42,7 @@ async function getPageContent(url)
 			throw new Error(`HTTP ошибка: ${response.status}`);
 		}
 
-		const html = await response.text();
-
-		return html;
+		return await response.text();
 	}
 	catch (error)
 	{

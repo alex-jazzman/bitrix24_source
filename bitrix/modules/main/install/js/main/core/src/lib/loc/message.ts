@@ -16,7 +16,7 @@ const message = function(value: MessageParam): string | boolean | void
 	{
 		if (Type.isNil(message[value]))
 		{
-			(EventEmitter as any).emit('onBXMessageNotFound', new BaseEvent({ compatData: [value] }));
+			EventEmitter.emit('onBXMessageNotFound', new BaseEvent({ compatData: [value] }));
 
 			if (Type.isNil(message[value]))
 			{

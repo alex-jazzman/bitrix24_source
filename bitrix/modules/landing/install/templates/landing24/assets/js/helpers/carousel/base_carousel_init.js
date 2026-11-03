@@ -20,6 +20,36 @@
 		BX.Landing.SliderHelper.destroy(event);
 	});
 
+	BX.addCustomEvent("BX.Landing.Block:Node:update", function (event)
+	{
+		syncSlideOriginalBackground(event.node);
+	});
+
+	/**
+	 * Slick restores the style saved on init (originalStyling) when the slider is destroyed,
+	 * so a new background image of a slide node has to be saved there as well.
+	 * The browser parses the saved declarations, so a data URI with ";" inside stays intact.
+	 * @param {?HTMLElement} node
+	 */
+	function syncSlideOriginalBackground(node)
+	{
+		if (!node || !node.classList || !node.classList.contains('slick-slide'))
+		{
+			return;
+		}
+
+		var savedStyle = $(node).data('originalStyling');
+		if (typeof savedStyle !== 'string')
+		{
+			return;
+		}
+
+		var saved = document.createElement('div');
+		saved.style.cssText = savedStyle;
+		saved.style.backgroundImage = node.style.backgroundImage;
+		$(node).data('originalStyling', saved.style.cssText);
+	}
+
 	BX.addCustomEvent("BX.Landing.Block:Node:update", BX.debounce(function (event)
 	{
 		if(!BX.Landing.SliderHelper.isEditorEnable())

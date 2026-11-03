@@ -17,6 +17,9 @@ jn.define('layout/ui/user-list/src/list', (require, exports, module) => {
 	 * @property {string} testId
 	 * @property {PageManager} [parentWidget]
 	 * @property {UserListParams[]} users
+	 * @property {Function} [renderBelowBlock]
+	 * @property {Function} [renderRightAction]
+	 * @property {Function} [onItemLongClick]
 	 *
 	 * @class UserList
 	 */
@@ -62,6 +65,9 @@ jn.define('layout/ui/user-list/src/list', (require, exports, module) => {
 				parentWidget: this.props.parentWidget,
 				workPosition: this.props.workPosition,
 				renderCustomDescription: this.props.renderCustomDescription,
+				renderBelowBlock: this.props.renderBelowBlock,
+				renderRightAction: this.props.renderRightAction,
+				onItemLongClick: this.props.onItemLongClick,
 			});
 		}
 

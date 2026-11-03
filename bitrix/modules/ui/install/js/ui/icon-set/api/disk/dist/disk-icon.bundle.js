@@ -415,11 +415,11 @@ this.BX.UI.IconSet.Api = this.BX.UI.IconSet.Api || {};
 		}
 		#validateOptions(options) {
 			let isValid = true;
-			if (main_core.Type.isUndefined(options.type) !== false && !this.#isExistingIconType(options.type)) {
+			if (main_core.Type.isUndefined(options.type) === false && !this.#isExistingIconType(options.type)) {
 				console.warn(`DiskIcon: Type "${options.type}" is not supported`);
 				isValid = false;
 			}
-			if (options.responsive === false && main_core.Type.isUndefined(options.size) !== false && (!main_core.Type.isNumber(options.size) || options.size <= 0)) {
+			if (options.responsive === false && main_core.Type.isUndefined(options.size) === false && (!main_core.Type.isNumber(options.size) || options.size <= 0)) {
 				console.warn('DiskIcon: size must be the positive number');
 				isValid = false;
 			}
@@ -427,15 +427,15 @@ this.BX.UI.IconSet.Api = this.BX.UI.IconSet.Api || {};
 				console.warn('DiskIcon: previewUrl must be a string or null');
 				isValid = false;
 			}
-			if (main_core.Type.isUndefined(options.alt) !== false && !main_core.Type.isString(options.alt)) {
+			if (main_core.Type.isUndefined(options.alt) === false && !main_core.Type.isString(options.alt)) {
 				console.warn('DiskIcon: alt must be a string');
 				isValid = false;
 			}
-			if (main_core.Type.isUndefined(options.title) !== false && !main_core.Type.isString(options.title)) {
+			if (main_core.Type.isUndefined(options.title) === false && !main_core.Type.isString(options.title)) {
 				console.warn('DiskIcon: title must be a string');
 				isValid = false;
 			}
-			if (main_core.Type.isUndefined(options.responsive) !== false && !main_core.Type.isBoolean(options.responsive)) {
+			if (main_core.Type.isUndefined(options.responsive) === false && !main_core.Type.isBoolean(options.responsive)) {
 				console.warn('DiskIcon: responsive must be a boolean');
 				isValid = false;
 			}

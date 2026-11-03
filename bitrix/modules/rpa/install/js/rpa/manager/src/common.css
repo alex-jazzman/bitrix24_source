@@ -2,6 +2,10 @@
 	padding-right: 12px;
 }
 
+.ui-toolbar-filter-buttons > .ui-btn.ui-toolbar-btn-dropdown + .ui-btn.ui-btn-icon-setting {
+	margin-left: var(--ui-space-inline-sm);
+}
+
 .rpa-automation-block {
 	background: #fff;
 	padding: 13px 0 29px;
@@ -152,6 +156,10 @@
 .rpa-edit-robot {
 	display: flex;
 	padding-bottom: 50px;
+}
+
+html:has(.rpa-edit-robot .ui-sidepanel-sidebar-air-template) {
+	scrollbar-gutter: stable;
 }
 
 .rpa-edit-robot-head {
@@ -452,6 +460,14 @@
 
 .rpa-edit-robot .ui-sidepanel-sidebar {
 	margin-top: -3px;
+}
+
+.rpa-edit-robot:has(.ui-sidepanel-sidebar-air-template) .rpa-edit-robot-menu {
+	flex: 0 0 240px;
+}
+
+.rpa-edit-robot .ui-sidepanel-sidebar-air-template .ui-sidepanel-menu {
+	margin-left: -14px;
 }
 
 .rpa-edit-robot .ui-sidepanel-menu-link, .rpa-edit-robot .ui-sidepanel-submenu-link {

@@ -4,6 +4,7 @@
 jn.define('crm/category-list', (require, exports, module) => {
 	const { CategoryListItem } = require('crm/category-list/item');
 	const { CategorySelectActions } = require('crm/category-list/actions');
+	const { canCreateFunnel, canOpenFunnelSettings } = require('crm/category-list/permissions');
 	const { Color, Corner } = require('tokens');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 
@@ -41,13 +42,20 @@ jn.define('crm/category-list', (require, exports, module) => {
 			this.floatingActionButton = new FloatingActionButton({
 				testId: 'category-list-create-category-button',
 				layout: this.props.layout,
+				getVoiceContext: () => ({
+					module: 'crm',
+					screen: 'crm.category.list',
+					widgetCode: this.props.widgetCode,
+					entityTypeId: this.entityTypeId,
+					categoryId: this.state.currentCategoryId,
+				}),
 				onClick: () => this.onCreateCategory(),
 			});
 		}
 
 		componentDidMount()
 		{
-			if (!this.isReadOnly() && this.canUserEditCategory())
+			if (!this.isReadOnly() && canCreateFunnel(this.props))
 			{
 				this.floatingActionButton.show();
 			}
@@ -58,7 +66,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 			this.state.categories = BX.prop.getArray(props, 'categories', []);
 			this.state.currentCategoryId = props.currentCategoryId;
 
-			if (props.readOnly || !props.canUserEditCategory)
+			if (props.readOnly || !canCreateFunnel(props))
 			{
 				this.floatingActionButton.hide();
 			}
@@ -120,7 +128,8 @@ jn.define('crm/category-list', (require, exports, module) => {
 		renderCategory(category, isLast)
 		{
 			const { showCounters, showTunnels } = this.props;
-			const canUserEditCategory = this.canUserEditCategory();
+			// the pencil of an item leads to the funnel settings screen, and asks nothing else
+			const canUserEditCategory = canOpenFunnelSettings(category, this.canUserEditCategory());
 
 			return new CategoryListItem({
 				entityTypeId: this.entityTypeId,

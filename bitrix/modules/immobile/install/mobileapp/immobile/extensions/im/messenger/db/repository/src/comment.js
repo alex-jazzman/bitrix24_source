@@ -2,6 +2,7 @@
  * @module im/messenger/db/repository/comment
  */
 jn.define('im/messenger/db/repository/comment', (require, exports, module) => {
+	const { Type } = require('type');
 
 	const { CommentTable } = require('im/messenger/db/table');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -31,6 +32,29 @@ jn.define('im/messenger/db/repository/comment', (require, exports, module) => {
 				const commentToAdd = this.commentTable.validate(relationCommentInfo);
 
 				commentListToAdd.push(commentToAdd);
+			});
+
+			return this.commentTable.add(commentListToAdd, true);
+		}
+
+		/**
+		 * @param {Array<RestCommentInfo>} commentInfoList
+		 * @return {Promise<{lastInsertId: number, columns: *[], changes: number, rows: *[], errors: Error[]}|void>}
+		 */
+		async saveFromRest(commentInfoList)
+		{
+			const commentListToAdd = [];
+			commentInfoList.forEach((commentInfo) => {
+				// the row is written whole, so a cell without the parent chat would break
+				// the reading by parent chat at a cold start
+				if (!Type.isNumber(commentInfo.parentChatId) || commentInfo.parentChatId <= 0)
+				{
+					logger.warn(`${this.constructor.name}.saveFromRest: cell without parent chat`, commentInfo);
+
+					return;
+				}
+
+				commentListToAdd.push(this.commentTable.validate(this.#convertRestToTableFormat(commentInfo)));
 			});
 
 			return this.commentTable.add(commentListToAdd, true);
@@ -67,6 +91,33 @@ jn.define('im/messenger/db/repository/comment', (require, exports, module) => {
 			return this.commentTable.delete({
 				parentChatId,
 			});
+		}
+
+		/**
+		 * @param {RestCommentInfo} commentInfo
+		 * @return {RelationCommentInfo}
+		 */
+		#convertRestToTableFormat(commentInfo)
+		{
+			/** @type {RelationCommentInfo} */
+			const row = {
+				commentChatId: commentInfo.chatId,
+				parentMessageId: commentInfo.messageId,
+				parentChatId: commentInfo.parentChatId,
+			};
+
+			// an absent value differs from a zero: the plate of a row without data looks as it does today
+			if (Type.isNumber(commentInfo.messageCount))
+			{
+				row.messageCount = commentInfo.messageCount;
+			}
+
+			if (Type.isArray(commentInfo.lastUserIds))
+			{
+				row.lastUserIds = commentInfo.lastUserIds;
+			}
+
+			return row;
 		}
 	}
 

@@ -26,6 +26,7 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 						isWithAnotherResultsEmptyState: true,
 					}),
 					completeTask: () => Entry.completeTask({ userId, taskId }),
+					addObserver: () => Entry.addTaskObserver({ taskId, entityId }),
 					default: () => Entry.openTask({ taskId }, { analyticsLabel }),
 				};
 
@@ -35,12 +36,12 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 
 		inAppUrl.register(
 			'/company/personal/user/:userId/tasks/task/view/:taskId/',
-			async ({ taskId }) => {
+			async ({ taskId }, { context }) => {
 				const { Entry } = await requireLazy('tasks:entry');
 
 				const analyticsLabel = getAnalyticsData();
 
-				Entry.openTask({ taskId }, { analyticsLabel });
+				Entry.openTask({ taskId }, { analyticsLabel, presentation: context?.presentation });
 			},
 		).name('tasks:task:openForUser');
 
@@ -62,6 +63,7 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 						isWithAnotherResultsEmptyState: true,
 					}),
 					completeTask: () => Entry.completeTask({ userId, taskId }),
+					addObserver: () => Entry.addTaskObserver({ taskId, entityId }),
 					default: () => Entry.openTask({ taskId }, { analyticsLabel }),
 				};
 
@@ -71,12 +73,12 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 
 		inAppUrl.register(
 			'/workgroups/group/:groupId/tasks/task/view/:taskId/',
-			async ({ taskId }) => {
+			async ({ taskId }, { context }) => {
 				const { Entry } = await requireLazy('tasks:entry');
 
 				const analyticsLabel = getAnalyticsData();
 
-				Entry.openTask({ taskId }, { analyticsLabel });
+				Entry.openTask({ taskId }, { analyticsLabel, presentation: context?.presentation });
 			},
 		).name('tasks:task:openForGroup');
 

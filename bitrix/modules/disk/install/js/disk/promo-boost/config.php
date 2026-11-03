@@ -19,6 +19,9 @@ return [
 	'js' => 'dist/promo-boost.bundle.js',
 	'rel' => [
 		'ui.design-tokens',
+		'ui.buttons',
+		'ui.icon-set.api.core',
+		'ui.icon-set.solid',
 		'disk.onlyoffice-session-restrictions',
 		'main.core',
 	],

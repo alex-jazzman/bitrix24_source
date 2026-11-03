@@ -22,6 +22,7 @@
 			this.userId = params.userId || '';
 			this.userStatus = params.userStatus || '';
 			this.isCollaber = params.isCollaber === 'Y';
+			this.isVisitor = params.isVisitor === 'Y';
 			this.userFullName = params.userFullName || '';
 			this.userPhoto = params.userPhoto || '';
 			this.isIntegratorUser = params.isIntegratorUser === 'Y';
@@ -95,10 +96,10 @@
 				}
 
 				const managerMoreButton = BX('intranet-user-profile-manages-more');
-				if (BX.type.isDomNode(subordinateMoreButton))
+				if (BX.type.isDomNode(managerMoreButton))
 				{
 					BX.bind(managerMoreButton, 'click', () => {
-						this.loadMoreUsers(managerMoreButton);
+						this.loadMoreUsers(managerMoreButton, true);
 					});
 				}
 
@@ -113,7 +114,7 @@
 					bottomContainer.appendChild(cardButtonLink);
 				}
 
-				BX.addCustomEvent("BX.UI.EntityEditorAjax:onSubmit", BX.proxy((fields) => {
+				BX.addCustomEvent('BX.UI.EntityEditorAjax:onSubmit', BX.proxy((fields) => {
 					this.userFullName = fields.FULL_NAME;
 				}, this));
 			});
@@ -230,11 +231,14 @@
 						return editor;
 					}.bind(this);
 
-					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', () => { getEditor().show('camera');
+					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', () => {
+						getEditor().show('camera');
 					});
-					BX.bind(BX('intranet-user-profile-photo-file'), 'click', () => { getEditor().show('file');
+					BX.bind(BX('intranet-user-profile-photo-file'), 'click', () => {
+						getEditor().show('file');
 					});
-					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', () => { getEditor().show('mask');
+					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', () => {
+						getEditor().show('mask');
 					});
 				}
 				else
@@ -269,7 +273,10 @@
 				});
 			}
 
-			if (this.userStatus === 'admin' && this.canEditProfile && !this.isOwnProfile)
+			const canTakeAdminRights = this.userStatus === 'admin'
+				|| (this.userStatus === 'integrator' && this.isUserFirstAdmin);
+
+			if (canTakeAdminRights && this.canEditProfile && !this.isOwnProfile)
 			{
 				menuItems.push({
 					text: BX.message('INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS'),
@@ -340,15 +347,7 @@
 							const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 							BX.Intranet.FireWizardConfigProvider.fetch(this.userId).then((response) => {
 								this.hideLoader({ loader });
-								const wizard = new BX.Intranet.FireEmployeeWizard({
-									...response.data,
-									onConfirm: (data) => {
-										BX.Intranet.MoveWebhookRequest.send(this.userId, data)
-											.then(this.prepareFire.bind(this))
-											.catch((error) => console.warn(error));
-									},
-								});
-								wizard.show();
+								this.showFireWizard(response.data);
 							}).catch(() => {
 								this.hideLoader({ loader });
 							});
@@ -364,7 +363,21 @@
 					className: 'menu-popup-no-icon',
 					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_HIRE_CONFIRM'), this.hireUser.bind(this));
+						if (this.isVisitor)
+						{
+							const restoreDpPopup = new BX.Intranet.User.UserDepartmentPopup({
+								userType: 'visitor',
+								userName: this.userFullName,
+								userPhoto: this.userPhoto,
+								rootDepartment: this.rootDepartment,
+								sendButtonCallback: this.hireUser.bind(this),
+							});
+							restoreDpPopup.show();
+						}
+						else
+						{
+							this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_HIRE_CONFIRM'), this.hireUser.bind(this));
+						}
 					}, this),
 				});
 			}
@@ -494,11 +507,15 @@
 				menuItems.push(menuItem.getProfileItem());
 			}
 
-			if (!this.isOwnProfile && this.otp?.canEdit && this.otp?.canSetLegacyOtpAllowed)
+			if (this.otp?.canEdit && this.otp?.canSetLegacyOtpAllowed)
 			{
 				menuItems.push({
+					id: 'legacy-otp-allow',
 					text: BX.message('INTRANET_USER_PROFILE_LEGACY_OTP_ALLOW'),
 					className: 'menu-popup-no-icon',
+					attrs: {
+						'data-testid': 'intranet-user-profile-legacy-otp-allow',
+					},
 					onclick: () => {
 						BX.PopupMenu.getMenuById('user-profile-action-popup').destroy();
 						BX.ajax.runAction('intranet.v2.Otp.setLegacyOtpAllowed', {
@@ -514,11 +531,15 @@
 				});
 			}
 
-			if (!this.isOwnProfile && this.otp?.canEdit && this.otp?.isLegacyOtpAllowed)
+			if (this.otp?.canEdit && this.otp?.isLegacyOtpAllowed)
 			{
 				menuItems.push({
+					id: 'legacy-otp-disallow',
 					text: BX.message('INTRANET_USER_PROFILE_LEGACY_OTP_DISALLOW'),
 					className: 'menu-popup-no-icon',
+					attrs: {
+						'data-testid': 'intranet-user-profile-legacy-otp-disallow',
+					},
 					onclick: () => {
 						BX.PopupMenu.getMenuById('user-profile-action-popup').destroy();
 						BX.ajax.runAction('intranet.v2.Otp.setLegacyOtpAllowed', {
@@ -805,7 +826,7 @@
 			}).show();
 		},
 
-		loadMoreUsers(button)
+		loadMoreUsers(button, revealAll = false)
 		{
 			if (!BX.type.isDomNode(button))
 			{
@@ -816,19 +837,21 @@
 
 			const items = block.querySelectorAll("[data-role='user-profile-item']");
 			const itemsLength = items.length;
-			for (let i = 0; i < 4 && i < itemsLength; i++)
+			const itemsToReveal = revealAll ? itemsLength : Math.min(4, itemsLength);
+			for (let i = 0; i < itemsToReveal; i++)
 			{
 				items[i].style.display = 'inline-block';
 				items[i].setAttribute('data-role', '');
 			}
 
-			if (itemsLength - 4 <= 0)
+			const hiddenItemsLength = itemsLength - itemsToReveal;
+			if (hiddenItemsLength <= 0)
 			{
 				button.style.display = 'none';
 			}
 			else
 			{
-				BX.findChild(button).innerHTML = itemsLength - 4;
+				BX.findChild(button).innerHTML = hiddenItemsLength;
 			}
 		},
 
@@ -1033,7 +1056,26 @@
 			);
 		},
 
-		prepareFire() {
+		showFireWizard(config)
+		{
+			BX.Intranet.FireSystemUserWizard.showForConfig(config, {
+				onConfirm: () => {
+					this.prepareFire(true);
+				},
+				onFallback: () => {
+					new BX.Intranet.FireEmployeeWizard({
+						...config,
+						onConfirm: (data) => {
+							BX.Intranet.MoveWebhookRequest.send(this.userId, data)
+								.then(() => this.prepareFire())
+								.catch((error) => console.warn(error));
+						},
+					}).show();
+				},
+			});
+		},
+
+		prepareFire(disableIntegrations = false) {
 			return this.handleFirstAdminAction(
 				'bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest',
 				'INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT',
@@ -1041,7 +1083,7 @@
 					userId: Number(this.currentUserId),
 					toUser: Number(this.userId),
 				}),
-				() => this.fireUser(),
+				() => this.fireUser(disableIntegrations),
 			);
 		},
 
@@ -1067,13 +1109,14 @@
 			});
 		},
 
-		fireUser()
+		fireUser(disableIntegrations = false)
 		{
 			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
 			BX.ajax.runAction('intranet.v2.User.fire', {
 				data: {
 					userId: this.userId,
+					disableIntegrations: disableIntegrations === true,
 				},
 			}).then((response) => {
 				if (response.data === true)
@@ -1094,14 +1137,21 @@
 			});
 		},
 
-		hireUser()
+		hireUser(departmentIds)
 		{
 			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
+			const data = {
+				userId: this.userId,
+			};
+
+			if (Array.isArray(departmentIds))
+			{
+				data.departmentIds = departmentIds;
+			}
+
 			BX.ajax.runAction('intranet.v2.User.restore', {
-				data: {
-					userId: this.userId,
-				},
+				data,
 			}).then((response) => {
 				if (response.data === true)
 				{

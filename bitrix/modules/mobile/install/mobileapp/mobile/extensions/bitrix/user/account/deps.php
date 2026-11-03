@@ -3,8 +3,10 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'utils/color',
+		'feature-flag',
+		'loc',
 		'qrauth/utils',
-		'loc'
+		'require-lazy',
+		'utils/color',
 	],
 ];

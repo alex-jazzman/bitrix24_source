@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
-(function (exports, main_core, ui_avatar, socialnetwork_projectMembersPopup, socialnetwork_v2_application_deleteProjectPopup) {
+(function (exports, main_core, ui_avatar, ui_a11y, socialnetwork_projectMembersPopup, socialnetwork_v2_application_deleteProjectPopup, socialnetwork_v2_lib_eventSender) {
 	'use strict';
 
 	const HEXAGON_CLASS_MAP = {
@@ -12,6 +12,7 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 	const PROJECT_COLORS = ['#B15EF5', '#1F86FF', '#FAA72C', '#F85E9E', '#02BB9A'];
 	const AVATAR_SIZE = 22;
 	const GRID_RELOAD_DELAY = 300;
+	const GRID_FOCUS_RESTORE_FRAME_LIMIT = 4;
 	const SOCIALNETWORK_SHARED_LIFECYCLE_PULL_COMMANDS = ['workgroup_add', 'workgroup_update', 'workgroup_delete', 'workgroup_user_add', 'workgroup_user_update', 'workgroup_user_delete', 'workgroup_convert'];
 	const SOCIALNETWORK_PERSONAL_PREFERENCE_PULL_COMMANDS = ['workgroup_favorites_changed'];
 	const SOCIALNETWORK_PIN_PULL_COMMANDS = ['workgroup_pin_changed'];
@@ -44,8 +45,36 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 		hover: 'main-grid-cell-content-action-by-hover',
 		pin: 'main-grid-cell-content-action-pin'
 	};
+	const HOVER_HIDDEN_PIN_SELECTOR = `.${PIN_CLASS.pin}.${PIN_CLASS.hover}`;
+	const supportsCheckVisibility = main_core.Type.isFunction(window.Element?.prototype?.checkVisibility);
+	function isHoverHiddenPinFocusable(element) {
+		if (!element.matches(HOVER_HIDDEN_PIN_SELECTOR) || !element.isConnected || element.closest('[inert]') || !element.matches(ui_a11y.FocusNavigator.FOCUSABLE_SELECTOR) || ui_a11y.InteractivityChecker.hasNegativeTabIndex(element) || ui_a11y.InteractivityChecker.isDisabled(element)) {
+			return false;
+		}
+		if (supportsCheckVisibility) {
+			return element.checkVisibility({
+				visibilityProperty: true,
+				opacityProperty: false
+			});
+		}
+		const hasGeometry = element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0;
+		return hasGeometry && getComputedStyle(element).visibility === 'visible';
+	}
 	const PIN_MODES = new Set(['', 'user_groups', 'tasks_project', 'tasks_scrum']);
 	const TASK_REALTIME_STRATEGIES = new Set(['none', 'reload_only', 'self_narrow']);
+	const ROW_NAME_SELECTOR = ['.socialnetwork-project-list-name-link', '.socialnetwork-project-list-name-container > span:last-child'].join(', ');
+	const FOCUS_CONTROL_SELECTORS = {
+		primaryLink: '.socialnetwork-project-list-name-link',
+		pin: '.main-grid-cell-content-action-pin',
+		checkbox: '.main-grid-row-checkbox',
+		actions: '.main-grid-row-action-button',
+		members: '.sonet-ui-grid-user-list-container',
+		join: '.sonet-ui-grid-join',
+		accept: '.sonet-ui-grid-badge-accept',
+		cancel: '.sonet-ui-grid-badge-cancel',
+		tag: '.main-grid-tag[role="button"]',
+		addTag: '.main-grid-tag-add[role="button"]'
+	};
 	function getProjectBaseColor(title) {
 		let hash = 0;
 		for (let i = 0; i < title.length; i++) {
@@ -75,11 +104,18 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 		static #realtimeUiContext = DEFAULT_REALTIME_UI_CONTEXT;
 		static #tasksProjectCounterQueue = new Map();
 		static #tasksProjectCounterTimeout = null;
+		static #tracker = null;
+		static #pendingFocusState = null;
+		static #focusRestoreRetryCancel = null;
+		static #gridUpdateSubscribed = false;
+		static #rowActionPopupByControl = new WeakMap();
 		static init(gridId, options) {
+			this.#cancelFocusRestoreRetry();
 			this.#gridId = gridId;
 			this.#filterId = options?.filterId || '';
 			this.#grid = BX.Main.gridManager.getInstanceById(gridId);
 			this.#actionPrefix = options?.actionPrefix || 'socialnetwork.v2.Project';
+			this.#tracker = new socialnetwork_v2_lib_eventSender.ProjectAnalytics();
 			this.#entityParam = options?.entityParam || 'projectId';
 			this.#pinMode = this.#normalizePinMode(options?.pinMode);
 			this.#taskRealtimeStrategy = this.#normalizeTaskRealtimeStrategy(options);
@@ -103,6 +139,8 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			requestAnimationFrame(() => {
 				this.#initAvatars();
 				this.#initJoinButtons();
+				this.#initRowActionControls();
+				this.#initAccessibleTagControls();
 			});
 		}
 		static getById(gridId) {
@@ -266,6 +304,17 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			}
 		}
 		static #rowArchiveAction(action, entityId, routeConfig, route, archiveMap) {
+			const trackerMethodByAction = {
+				addToArchive: 'trackArchive',
+				removeFromArchive: 'trackUnarchive'
+			};
+			const isProjectAction = route.actionPrefix === 'socialnetwork.v2.Project';
+			const trackResult = status => {
+				if (!isProjectAction) {
+					return;
+				}
+				this.#tracker[trackerMethodByAction[action]](entityId, status);
+			};
 			BX.ajax.runAction(`${route.actionPrefix}.setArchive`, {
 				json: {
 					...this.#getEntityPayload(entityId, routeConfig),
@@ -276,6 +325,7 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 				BX.UI.Notification.Center.notify({
 					content: main_core.Loc.getMessage(messageKey)
 				});
+				trackResult('success');
 				this.reloadGrid();
 			}).catch(response => {
 				if (response?.errors?.[0]?.message) {
@@ -283,6 +333,7 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 						content: response.errors[0].message
 					});
 				}
+				trackResult('error');
 			});
 		}
 		static #rowFavoriteAction(entityId, routeConfig, route) {
@@ -353,9 +404,15 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 				if (isDeleted === true) {
 					this.reloadGrid();
 				}
+				if (entityType === 'collab' && isDeleted !== null) {
+					this.#tracker.trackDelete(entityId, isDeleted ? 'success' : 'error');
+				}
 			});
 		}
-		static defaultRowAction(viewUrl) {
+		static defaultRowAction(viewUrl, entityId = null, entityType = null) {
+			if (main_core.Type.isNumber(entityId) && main_core.Type.isStringFilled(entityType)) {
+				this.notifyOpenProject(entityId, entityType);
+			}
 			if (!main_core.Type.isStringFilled(viewUrl)) {
 				return;
 			}
@@ -364,6 +421,12 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 				return;
 			}
 			window.location.href = viewUrl;
+		}
+		static notifyOpenProject(entityId, entityType) {
+			if (entityType !== 'collab') {
+				return;
+			}
+			this.#tracker.trackView(entityId);
 		}
 		static convertToCollab(entityId) {
 			main_core.Runtime.loadExtension('socialnetwork.collab.converter').then(exports => {
@@ -401,6 +464,12 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 				routeConfig,
 				event: currentEvent
 			} = this.#splitRouteAndEvent(routeConfigOrEvent, event);
+			const {
+				button
+			} = currentEvent.getData();
+			if (!main_core.Type.isElementNode(button)) {
+				return;
+			}
 			main_core.Runtime.loadExtension('socialnetwork.entity-selector').then(exports => {
 				const onTagsChange = changeEvent => {
 					const dialog = changeEvent.getTarget();
@@ -420,7 +489,7 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 					Footer
 				} = exports;
 				const dialog = new Dialog({
-					targetNode: currentEvent.getData().button,
+					targetNode: button,
 					enableSearch: true,
 					width: 350,
 					height: 400,
@@ -445,6 +514,12 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 						tagCreationLabel: true
 					},
 					events: {
+						onShow: () => {
+							button.setAttribute('aria-expanded', 'true');
+						},
+						onHide: () => {
+							button.setAttribute('aria-expanded', 'false');
+						},
 						'Search:onItemCreateAsync': createEvent => {
 							return new Promise(resolve => {
 								const {
@@ -476,7 +551,23 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 
 		// --- Pin ---
 
-		static changePin(groupId, routeConfigOrEvent, event = null) {
+		static onPinKeyDown(groupId, routeConfigOrEvent, event = null, keyboardEvent = null) {
+			const {
+				routeConfig,
+				event: currentEvent
+			} = this.#splitRouteAndEvent(routeConfigOrEvent, event);
+			const currentKeyboardEvent = routeConfig ? keyboardEvent : event;
+			const {
+				button
+			} = currentEvent.getData();
+			if (!main_core.Type.isElementNode(button) || currentKeyboardEvent?.target !== currentKeyboardEvent?.currentTarget || currentKeyboardEvent?.currentTarget !== button || currentKeyboardEvent?.repeat || currentKeyboardEvent?.key !== 'Enter' && currentKeyboardEvent?.key !== ' ') {
+				return;
+			}
+			currentKeyboardEvent.preventDefault();
+			currentKeyboardEvent.stopPropagation();
+			void this.changePin(groupId, routeConfig ?? currentEvent, routeConfig ? currentEvent : null);
+		}
+		static async changePin(groupId, routeConfigOrEvent, event = null) {
 			const {
 				routeConfig,
 				event: currentEvent
@@ -484,28 +575,49 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			const {
 				button
 			} = currentEvent.getData();
+			if (!main_core.Type.isElementNode(button) || button.dataset.pinPending === 'true') {
+				return;
+			}
 			const route = this.#getRouteConfig(routeConfig);
-			BX.ajax.runAction(`${route.actionPrefix}.changePin`, {
-				json: {
-					...this.#getEntityPayload(groupId, routeConfig),
-					mode: this.#pinMode
-				}
-			}).then(response => {
+			button.dataset.pinPending = 'true';
+			button.setAttribute('aria-disabled', 'true');
+			try {
+				const response = await Promise.resolve(BX.ajax.runAction(`${route.actionPrefix}.changePin`, {
+					json: {
+						...this.#getEntityPayload(groupId, routeConfig),
+						mode: this.#pinMode
+					}
+				}));
 				const pinned = response?.data?.pinned;
-				if (pinned) {
-					main_core.Dom.addClass(button, PIN_CLASS.active);
-					main_core.Dom.removeClass(button, PIN_CLASS.hover);
-				} else {
-					main_core.Dom.removeClass(button, PIN_CLASS.active);
-					main_core.Dom.addClass(button, PIN_CLASS.hover);
-				}
-			}).catch(response => {
-				if (response?.errors?.[0]?.message) {
+				this.#updatePinState(button, Boolean(pinned));
+				ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessage(pinned ? 'SOCIALNETWORK_PROJECT_LIST_A11Y_PIN_SUCCESS' : 'SOCIALNETWORK_PROJECT_LIST_A11Y_UNPIN_SUCCESS') || '');
+			} catch (response) {
+				const errorMessage = response?.errors?.[0]?.message || main_core.Loc.getMessage('SOCIALNETWORK_PROJECT_LIST_A11Y_PIN_ERROR') || '';
+				if (errorMessage) {
 					BX.UI.Notification.Center.notify({
-						content: response.errors[0].message
+						content: errorMessage
 					});
+					ui_a11y.LiveAnnouncer.announce(errorMessage, 'assertive');
 				}
-			});
+			} finally {
+				delete button.dataset.pinPending;
+				button.removeAttribute('aria-disabled');
+			}
+		}
+		static #updatePinState(button, isPinned) {
+			if (isPinned) {
+				main_core.Dom.addClass(button, PIN_CLASS.active);
+				main_core.Dom.removeClass(button, PIN_CLASS.hover);
+			} else {
+				main_core.Dom.removeClass(button, PIN_CLASS.active);
+				main_core.Dom.addClass(button, PIN_CLASS.hover);
+			}
+			const label = isPinned ? button.dataset.unpinLabel : button.dataset.pinLabel;
+			button.setAttribute('aria-pressed', isPinned ? 'true' : 'false');
+			if (main_core.Type.isStringFilled(label)) {
+				button.setAttribute('aria-label', label);
+				button.setAttribute('title', label);
+			}
 		}
 
 		// --- Grid ---
@@ -514,6 +626,7 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			if (!this.#grid) {
 				return;
 			}
+			this.#setPendingFocusState(this.#captureFocusedRowState(), true);
 			if (main_core.Type.isFunction(this.#grid.reloadTable)) {
 				this.#grid.reloadTable('POST', {
 					apply_filter: 'Y'
@@ -817,6 +930,9 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			if (row && !main_core.Type.isUndefined(rowData.counters) && main_core.Type.isFunction(row.setCounters)) {
 				row.setCounters(rowData.counters);
 			}
+			if (row) {
+				this.#initRowActionControls(row.getNode?.());
+			}
 			this.#trimTaskGridOverflow(rowId);
 			this.#highlightTaskGridRow(rowId, params?.highlightParams);
 		}
@@ -825,6 +941,7 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			if (!row) {
 				return;
 			}
+			const focusState = this.#captureFocusedRowState(rowId);
 			if (!main_core.Type.isUndefined(rowData.columns)) {
 				row.setCellsContent(rowData.columns);
 			}
@@ -840,6 +957,9 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			this.#grid?.getRows?.()?.reset?.();
 			this.#moveTaskGridRow(rowId, params?.moveParams);
 			this.#highlightTaskGridRow(rowId, params?.highlightParams);
+			this.#initRowActionControls(row.getNode?.());
+			this.#initAccessibleTagControls(row.getNode?.());
+			this.#restoreFocusedRowState(focusState);
 		}
 		static #moveTaskGridRow(rowId, params = null) {
 			const rowBefore = this.#normalizePositiveInteger(params?.rowBefore);
@@ -897,6 +1017,10 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			if (!this.#getGridRowById(rowId)) {
 				return;
 			}
+			const focusState = this.#captureFocusedRowState(rowId);
+			if (focusState) {
+				this.#setPendingFocusState(focusState, true);
+			}
 			this.#grid?.removeRow?.(rowId);
 		}
 		static #getLastVisibleRowId() {
@@ -909,6 +1033,8 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			requestAnimationFrame(() => {
 				this.#initAvatars();
 				this.#initJoinButtons();
+				this.#initRowActionControls();
+				this.#initAccessibleTagControls();
 				this.#colorPinnedRows();
 			});
 		}
@@ -951,11 +1077,413 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 			}, GRID_RELOAD_DELAY);
 		}
 		static #subscribeGridUpdate() {
-			BX.addCustomEvent(window, 'Grid::updated', () => {
+			if (this.#gridUpdateSubscribed) {
+				return;
+			}
+			this.#gridUpdateSubscribed = true;
+			BX.addCustomEvent(window, 'BX.Main.Grid:onBeforeReload', grid => {
+				if (grid && this.#grid && grid !== this.#grid) {
+					return;
+				}
+				if (this.#pendingFocusState?.focusTracker?.isValid === false) {
+					this.#setPendingFocusState(null);
+					return;
+				}
+				const focusState = this.#captureFocusedRowState();
+				if (focusState) {
+					this.#setPendingFocusState(focusState);
+				}
+			});
+			BX.addCustomEvent(window, 'Grid::updated', grid => {
+				if (grid && this.#grid && grid !== this.#grid) {
+					return;
+				}
 				this.#initAvatars();
 				this.#initJoinButtons();
+				this.#initRowActionControls();
+				this.#initAccessibleTagControls();
 				this.#colorPinnedRows();
+				this.#restorePendingFocus();
 			});
+		}
+		static #captureFocusedRowState(rowId = null) {
+			const activeElement = ui_a11y.FocusNavigator.getActiveElement();
+			if (!main_core.Type.isElementNode(activeElement)) {
+				return null;
+			}
+			const rowNode = rowId ? this.#getGridRowById(rowId)?.getNode?.() : activeElement.closest('.main-grid-row[data-id]');
+			if (!main_core.Type.isElementNode(rowNode) || !rowNode.contains(activeElement)) {
+				return null;
+			}
+			const normalizedRowId = this.#normalizePositiveInteger(rowId || rowNode.dataset.id);
+			if (normalizedRowId <= 0) {
+				return null;
+			}
+			const controlType = Object.keys(FOCUS_CONTROL_SELECTORS).find(type => {
+				return activeElement.matches(FOCUS_CONTROL_SELECTORS[type]);
+			});
+			const controls = controlType ? Array.from(rowNode.querySelectorAll(FOCUS_CONTROL_SELECTORS[controlType])) : [];
+			const visibleRowIds = this.#getVisibleRowIds();
+			const rowIndex = visibleRowIds.indexOf(normalizedRowId);
+			return {
+				rowId: normalizedRowId,
+				rowNode,
+				controlType,
+				controlIndex: Math.max(0, controls.indexOf(activeElement)),
+				nearbyRowIds: rowIndex >= 0 ? {
+					next: visibleRowIds.slice(rowIndex + 1),
+					previous: visibleRowIds.slice(0, rowIndex).reverse()
+				} : {
+					next: [],
+					previous: []
+				}
+			};
+		}
+		static #restorePendingFocus() {
+			this.#cancelFocusRestoreRetry();
+			const focusState = this.#pendingFocusState;
+			this.#pendingFocusState = null;
+			if (!focusState || focusState.focusTracker?.isValid === false) {
+				return;
+			}
+			focusState.focusTracker?.stop();
+			if (!this.#restoreFocusedRowState(focusState)) {
+				const gridContainer = this.#getAnimatedGridContainer();
+				if (gridContainer) {
+					this.#scheduleFocusRestoreRetry(focusState, gridContainer);
+				}
+			}
+		}
+		static #setPendingFocusState(focusState, trackDeparture = false) {
+			this.#cancelFocusRestoreRetry();
+			this.#pendingFocusState?.focusTracker?.stop();
+			this.#pendingFocusState = focusState;
+			if (trackDeparture && focusState) {
+				focusState.focusTracker = this.#trackFocusDeparture(focusState);
+			}
+		}
+		static #cancelFocusRestoreRetry() {
+			const cancel = this.#focusRestoreRetryCancel;
+			this.#focusRestoreRetryCancel = null;
+			cancel?.();
+		}
+		static #getAnimatedGridContainer() {
+			const gridContainer = this.#grid?.getContainer?.();
+			const ownerWindow = gridContainer?.ownerDocument?.defaultView;
+			if (!main_core.Type.isElementNode(gridContainer) || !gridContainer.isConnected || !main_core.Dom.hasClass(gridContainer, 'main-grid-load-animation') || ownerWindow?.getComputedStyle(gridContainer).visibility !== 'hidden') {
+				return null;
+			}
+			return gridContainer;
+		}
+		static #getGridFocusRoot(ownerDocument, gridContainer) {
+			const pageFocusRoot = ownerDocument.querySelector('[data-focus-root]') || ownerDocument.querySelector('main');
+			return main_core.Type.isElementNode(pageFocusRoot) && pageFocusRoot.contains(gridContainer) ? pageFocusRoot : null;
+		}
+		static #scheduleFocusRestoreRetry(focusState, gridContainer) {
+			this.#cancelFocusRestoreRetry();
+			const ownerDocument = focusState.rowNode.ownerDocument;
+			const ownerWindow = ownerDocument.defaultView;
+			if (!ownerWindow) {
+				return;
+			}
+			const grid = this.#grid;
+			const allowedActiveElement = this.#getGridFocusRoot(ownerDocument, gridContainer);
+			const captureOptions = {
+				capture: true
+			};
+			let frameId = null;
+			let frameCount = 0;
+			let isActive = true;
+			const cancel = () => {
+				if (!isActive) {
+					return;
+				}
+				isActive = false;
+				if (frameId !== null) {
+					ownerWindow.cancelAnimationFrame(frameId);
+				}
+				main_core.Event.unbind(ownerDocument, 'focusin', onFocusIn, captureOptions);
+				main_core.Event.unbind(ownerDocument, 'pointerdown', cancel, captureOptions);
+				main_core.Event.unbind(ownerDocument, 'keydown', cancel, captureOptions);
+				main_core.Event.unbind(ownerDocument, 'visibilitychange', onVisibilityChange);
+				main_core.Event.unbind(ownerWindow, 'blur', cancel);
+				if (this.#focusRestoreRetryCancel === cancel) {
+					this.#focusRestoreRetryCancel = null;
+				}
+			};
+			const onFocusIn = event => {
+				if (event.target !== allowedActiveElement) {
+					cancel();
+				}
+			};
+			const onVisibilityChange = () => {
+				if (ownerDocument.visibilityState === 'hidden') {
+					cancel();
+				}
+			};
+			const retry = () => {
+				frameId = null;
+				if (!isActive) {
+					return;
+				}
+				if (this.#grid !== grid || !gridContainer.isConnected) {
+					cancel();
+					return;
+				}
+				const activeElement = ownerDocument.activeElement;
+				if (activeElement !== ownerDocument.body && activeElement !== allowedActiveElement) {
+					cancel();
+					return;
+				}
+				frameCount++;
+				if (this.#restoreFocusedRowState(focusState, {
+					allowedActiveElement,
+					exactControlOnly: frameCount < GRID_FOCUS_RESTORE_FRAME_LIMIT
+				})) {
+					cancel();
+					return;
+				}
+				if (!isActive) {
+					return;
+				}
+				if (frameCount >= GRID_FOCUS_RESTORE_FRAME_LIMIT) {
+					cancel();
+					return;
+				}
+				frameId = ownerWindow.requestAnimationFrame(retry);
+			};
+			main_core.Event.bind(ownerDocument, 'focusin', onFocusIn, captureOptions);
+			main_core.Event.bind(ownerDocument, 'pointerdown', cancel, captureOptions);
+			main_core.Event.bind(ownerDocument, 'keydown', cancel, captureOptions);
+			main_core.Event.bind(ownerDocument, 'visibilitychange', onVisibilityChange);
+			main_core.Event.bind(ownerWindow, 'blur', cancel);
+			this.#focusRestoreRetryCancel = cancel;
+			frameId = ownerWindow.requestAnimationFrame(retry);
+		}
+		static #trackFocusDeparture(focusState) {
+			const ownerDocument = focusState.rowNode.ownerDocument;
+			const ownerWindow = ownerDocument.defaultView;
+			const captureOptions = {
+				capture: true
+			};
+			const focusTracker = {
+				isValid: true,
+				stop: () => {}
+			};
+			let isTracking = true;
+			let trackingTimeout = null;
+			const invalidate = () => {
+				focusTracker.isValid = false;
+				focusTracker.stop();
+			};
+			const onFocusOut = event => {
+				const nextTarget = event.relatedTarget;
+				if (main_core.Type.isElementNode(nextTarget) && !focusState.rowNode.contains(nextTarget)) {
+					invalidate();
+				} else if (nextTarget === null) {
+					queueMicrotask(() => {
+						if (isTracking && focusState.rowNode.isConnected && ownerDocument.activeElement === ownerDocument.body) {
+							invalidate();
+						}
+					});
+				}
+			};
+			const onOutsideInteraction = event => {
+				if (!main_core.Type.isDomNode(event.target) || !focusState.rowNode.contains(event.target)) {
+					invalidate();
+				}
+			};
+			const onWindowBlur = () => invalidate();
+			focusTracker.stop = () => {
+				if (!isTracking) {
+					return;
+				}
+				isTracking = false;
+				main_core.Event.unbind(focusState.rowNode, 'focusout', onFocusOut, captureOptions);
+				main_core.Event.unbind(ownerDocument, 'focusin', onOutsideInteraction, captureOptions);
+				main_core.Event.unbind(ownerDocument, 'pointerdown', onOutsideInteraction, captureOptions);
+				if (ownerWindow) {
+					main_core.Event.unbind(ownerWindow, 'blur', onWindowBlur);
+				}
+				clearTimeout(trackingTimeout);
+			};
+			main_core.Event.bind(focusState.rowNode, 'focusout', onFocusOut, captureOptions);
+			main_core.Event.bind(ownerDocument, 'focusin', onOutsideInteraction, captureOptions);
+			main_core.Event.bind(ownerDocument, 'pointerdown', onOutsideInteraction, captureOptions);
+			if (ownerWindow) {
+				main_core.Event.bind(ownerWindow, 'blur', onWindowBlur);
+			}
+			trackingTimeout = setTimeout(() => {
+				invalidate();
+				if (this.#pendingFocusState === focusState) {
+					this.#pendingFocusState = null;
+				}
+			}, 60000);
+			return focusTracker;
+		}
+		static #restoreFocusedRowState(focusState, options = {}) {
+			if (!focusState) {
+				return false;
+			}
+			const {
+				allowedActiveElement = null,
+				exactControlOnly = false
+			} = options;
+			const ownerDocument = focusState.rowNode.ownerDocument;
+			if (ownerDocument.activeElement !== ownerDocument.body && ownerDocument.activeElement !== allowedActiveElement) {
+				return false;
+			}
+			const rowNode = this.#getGridRowById(focusState.rowId)?.getNode?.();
+			if (main_core.Type.isElementNode(rowNode)) {
+				const equivalentControls = focusState.controlType ? rowNode.querySelectorAll(FOCUS_CONTROL_SELECTORS[focusState.controlType]) : [];
+				const equivalentCandidates = [equivalentControls[focusState.controlIndex], equivalentControls[0]];
+				if (exactControlOnly) {
+					return this.#focusFirst(equivalentCandidates, {
+						allowHoverHiddenPin: true
+					});
+				}
+				return this.#focusFirst([...equivalentCandidates, rowNode.querySelector(FOCUS_CONTROL_SELECTORS.primaryLink)], {
+					allowHoverHiddenPin: true
+				});
+			}
+			if (exactControlOnly) {
+				return false;
+			}
+			const nearbyPrimaryLinks = [];
+			const maxDistance = Math.max(focusState.nearbyRowIds.next.length, focusState.nearbyRowIds.previous.length);
+			for (let distance = 0; distance < maxDistance; distance++) {
+				nearbyPrimaryLinks.push(this.#getVisibleRowPrimaryLink(focusState.nearbyRowIds.next[distance]), this.#getVisibleRowPrimaryLink(focusState.nearbyRowIds.previous[distance]));
+			}
+			const container = this.#grid?.getContainer?.();
+			const focusRestored = this.#focusFirst([...nearbyPrimaryLinks, container?.querySelector('.main-grid-row-head .main-grid-row-checkbox'), () => {
+				if (!main_core.Type.isElementNode(container)) {
+					return null;
+				}
+				container.tabIndex = -1;
+				return container;
+			}]);
+			if (focusRestored) {
+				ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessage('SOCIALNETWORK_PROJECT_LIST_A11Y_ROW_REMOVED') || '');
+			}
+			return focusRestored;
+		}
+		static #getVisibleRowPrimaryLink(rowId) {
+			if (!rowId) {
+				return null;
+			}
+			const rowNode = this.#getGridRowById(rowId)?.getNode?.();
+			return main_core.Type.isElementNode(rowNode) ? rowNode.querySelector(FOCUS_CONTROL_SELECTORS.primaryLink) : null;
+		}
+		static #focusFirst(candidates, options = {}) {
+			const {
+				allowHoverHiddenPin = false
+			} = options;
+			for (const candidate of candidates) {
+				const element = main_core.Type.isFunction(candidate) ? candidate() : candidate;
+				if (!main_core.Type.isElementNode(element) || !ui_a11y.InteractivityChecker.isFocusable(element) && !(allowHoverHiddenPin && isHoverHiddenPinFocusable(element))) {
+					continue;
+				}
+				ui_a11y.FocusNavigator.restoreFocus(element, {
+					preventScroll: true
+				});
+				if (element.ownerDocument.activeElement === element && (ui_a11y.InteractivityChecker.isFocusable(element) || allowHoverHiddenPin && isHoverHiddenPinFocusable(element))) {
+					return true;
+				}
+			}
+			return false;
+		}
+		static #initAccessibleTagControls(root = null) {
+			const container = root || this.#grid?.getContainer() || document;
+			container.querySelectorAll('.main-grid-tag, .main-grid-tag-add').forEach((button, index) => {
+				if (main_core.Dom.hasClass(button, 'main-grid-tag-add') && main_core.Event.getEventListeners(button, 'click').length < 2) {
+					return;
+				}
+				button.setAttribute('role', 'button');
+				button.tabIndex = 0;
+				const rowId = this.#normalizePositiveInteger(button.closest('.main-grid-row[data-id]')?.dataset.id);
+				if (main_core.Dom.hasClass(button, 'main-grid-tag-add')) {
+					button.setAttribute('aria-label', main_core.Loc.getMessage('SOCIALNETWORK_PROJECT_LIST_A11Y_ADD_TAG') || '');
+					button.setAttribute('aria-haspopup', 'dialog');
+					button.setAttribute('aria-expanded', button.getAttribute('aria-expanded') || 'false');
+					if (rowId > 0) {
+						button.dataset.testid = `socialnetwork-project-list-add-tag-${rowId}`;
+					}
+				} else if (rowId > 0) {
+					button.dataset.testid = `socialnetwork-project-list-tag-${rowId}-${index}`;
+				}
+				if (button.dataset.a11yKeyboardBound === 'true') {
+					return;
+				}
+				button.dataset.a11yKeyboardBound = 'true';
+				button.addEventListener('keydown', event => {
+					if (event.target !== event.currentTarget || event.repeat || event.key !== 'Enter' && event.key !== ' ') {
+						return;
+					}
+					event.preventDefault();
+					event.stopPropagation();
+					button.click();
+				});
+			});
+		}
+		static #initRowActionControls(root = null) {
+			const container = root || this.#grid?.getContainer() || document;
+			container.querySelectorAll(FOCUS_CONTROL_SELECTORS.actions).forEach(button => {
+				const control = button;
+				const popupWindow = this.#rowActionPopupByControl.get(control);
+				control.setAttribute('role', 'button');
+				control.setAttribute('tabindex', '0');
+				control.setAttribute('aria-haspopup', 'menu');
+				control.setAttribute('aria-expanded', popupWindow?.isShown?.() ? 'true' : 'false');
+				const row = control.closest('.main-grid-row[data-id]');
+				const projectName = row?.querySelector(ROW_NAME_SELECTOR)?.textContent?.trim();
+				if (main_core.Type.isStringFilled(projectName)) {
+					const label = main_core.Loc.getMessage('SOCIALNETWORK_PROJECT_LIST_A11Y_ROW_ACTIONS', {
+						'#PROJECT_NAME#': projectName
+					});
+					if (main_core.Type.isStringFilled(label)) {
+						control.setAttribute('aria-label', label);
+					}
+				}
+				if (control.dataset.a11yKeyboardBound === 'true') {
+					return;
+				}
+				control.dataset.a11yKeyboardBound = 'true';
+				main_core.Event.bind(control, 'keydown', event => {
+					const activateOnEnter = !control.matches('a[href]') && event.key === 'Enter';
+					const activateOnSpace = event.key === ' ';
+					if (event.target !== event.currentTarget || event.repeat || !activateOnEnter && !activateOnSpace) {
+						return;
+					}
+					event.preventDefault();
+					event.stopPropagation();
+					control.click();
+				});
+				main_core.Event.bind(control, 'click', () => {
+					requestAnimationFrame(() => this.#syncRowActionMenuState(control));
+				});
+			});
+		}
+		static #syncRowActionMenuState(control) {
+			const row = this.#grid?.getRows?.()?.get?.(control);
+			if (!row || !main_core.Type.isFunction(row.getActionsMenu)) {
+				control.setAttribute('aria-expanded', 'false');
+				return;
+			}
+			const popupWindow = row.getActionsMenu()?.popupWindow;
+			if (!popupWindow) {
+				control.setAttribute('aria-expanded', 'false');
+				return;
+			}
+			if (this.#rowActionPopupByControl.get(control) !== popupWindow) {
+				popupWindow.subscribe('onShow', () => {
+					control.setAttribute('aria-expanded', 'true');
+				});
+				popupWindow.subscribe('onClose', () => {
+					control.setAttribute('aria-expanded', 'false');
+				});
+				this.#rowActionPopupByControl.set(control, popupWindow);
+			}
+			control.setAttribute('aria-expanded', popupWindow.isShown() ? 'true' : 'false');
 		}
 		static #initJoinButtons() {
 			const container = this.#grid?.getContainer() || document;
@@ -1041,5 +1569,5 @@ this.BX.Socialnetwork.Project = this.BX.Socialnetwork.Project || {};
 
 	exports.Controller = Controller;
 
-})(this.BX.Socialnetwork.Project.List = this.BX.Socialnetwork.Project.List || {}, BX, BX.UI, BX.Socialnetwork, BX.Socialnetwork.V2.Application);
+})(this.BX.Socialnetwork.Project.List = this.BX.Socialnetwork.Project.List || {}, BX, BX.UI, BX.UI.Accessibility, BX.Socialnetwork, BX.Socialnetwork.V2.Application, BX.Socialnetwork.V2.Lib);
 //# sourceMappingURL=script.js.map

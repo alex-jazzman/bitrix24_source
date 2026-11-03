@@ -187,12 +187,31 @@
 	animation: borderview 0.5s;
 }
 
+/* The keyboard focus opens the card as the hover does; a click inside it leaves the card to the pointer. */
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_container {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	z-index: 990;
+	border: 1px solid #d3d3d3;
+	border-radius: 3px;
+	background: #fff;
+	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .18);
+	-webkit-animation: borderview 0.5s;
+	animation: borderview 0.5s;
+}
+
 @media (min-width: 960px) {
 	.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_container { padding: 0 25px 15px }
+
+	.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_container { padding: 0 25px 15px }
 }
 
 @media (max-width: 960px) {
 	.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_container { padding: 0 15px 15px }
+
+	.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_container { padding: 0 15px 15px }
 }
 
 @keyframes borderview {
@@ -228,6 +247,11 @@
 }
 
 .bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_title {
+	overflow: auto;
+	height: auto !important;
+}
+
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_title {
 	overflow: auto;
 	height: auto !important;
 }
@@ -279,6 +303,8 @@
 
 @media (max-width: 479px) {
 	.bx-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_controls { height: auto }
+
+	.bx-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_controls { height: auto }
 }
 
 .bx_item_list_you_looked_horizontal .bx_catalog_item_controls .bx_catalog_item_controls_blockone {
@@ -328,6 +354,8 @@
 .bx-touch .bx_item_list_you_looked_horizontal .bx_catalog_item_controls,
 .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_controls { opacity: 1 }
 
+.bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_controls { opacity: 1 }
+
 .bx_item_list_you_looked_horizontal .bx_cnt_desc {
 	position: absolute;
 	top: 2px;
@@ -372,7 +400,19 @@
 	animation: rotateimgfirst 0.5s;
 }
 
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.double:has(:focus-visible) .bx_catalog_item_images {
+	opacity: 0;
+	-webkit-animation: rotateimgfirst 0.5s;
+	animation: rotateimgfirst 0.5s;
+}
+
 .bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.double:hover .bx_catalog_item_images_double {
+	opacity: 1;
+	-webkit-animation: rotateimglast 0.5s;
+	animation: rotateimglast 0.5s;
+}
+
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.double:has(:focus-visible) .bx_catalog_item_images_double {
 	opacity: 1;
 	-webkit-animation: rotateimglast 0.5s;
 	animation: rotateimglast 0.5s;
@@ -406,9 +446,21 @@
 .bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_articul,
 .bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_scu { display: block }
 
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_controls,
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_articul,
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_scu { display: block }
+
+/* Between two stops of a Tab press nothing in the card is focused: the class the script keeps while the
+ * keyboard focus is inside holds the controls shown, or the next one, hidden for that moment, refuses the focus. */
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.bx_catalog_item_keyboard_focus .bx_catalog_item_controls,
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.bx_catalog_item_keyboard_focus .bx_catalog_item_articul,
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.bx_catalog_item_keyboard_focus .bx_catalog_item_scu { display: block }
+
 .bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_scu { padding-top: 10px }
 
 .bx_item_list_you_looked_horizontal .bx_catalog_item:hover .bx_catalog_item_scu > div { margin: 0 auto }
+
+.bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_scu > div { margin: 0 auto }
 
 .bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_controls.touch,
 .bx-touch .bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_controls.no_touch { display: none !important; }
@@ -691,9 +743,10 @@
 	width: 100%;
 }
 
+/* One row of values of the same height: the tallest value, wrapped, sets it for the row. */
 .bx_item_list_you_looked_horizontal .bx_item_detail_size ul {
 	position: relative;
-	display: block;
+	display: flex;
 	margin: 0;
 	padding: 0;
 	width: 100%;
@@ -702,41 +755,38 @@
 
 .bx-touch .bx_item_list_you_looked_horizontal .bx_item_detail_size .bx_size { overflow-x: auto; }
 
-.bx_item_list_you_looked_horizontal .bx_item_detail_size ul {
-	position: relative;
-	display: block;
-	margin: 0;
-	padding: 0;
-	width: 100%;
-	white-space: nowrap;
-}
-
 .bx-touch .bx_item_list_you_looked_horizontal .bx_item_detail_size .bx_size ul { margin-left: 0 !important; }
 
 .bx_item_list_you_looked_horizontal .bx_item_detail_size ul li {
 	position: relative;
-	display: block;
-	float: left;
+	display: flex;
+	flex: none;
 	box-sizing: border-box;
-	height: 25px;
+	min-height: 25px;
 }
 
+/* The value is read in full: the box is narrow, so a long one wraps inside instead of being cut. */
 .bx_item_list_you_looked_horizontal .bx_item_detail_size ul li .cnt {
-	position: absolute;
-	top: 0;
-	right: 2px;
-	bottom: 2px;
-	left: 2px;
-	display: block;
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
 	overflow: hidden;
+	margin: 0 2px 2px;
+	padding: 2px 0;
+	min-width: 0;
+	min-height: 23px;
 	border: 1px solid #c0cfda;
 	background: #fff;
 	color: #3f3f3f;
 	text-align: center;
 	text-decoration: none;
+	white-space: normal;
+	overflow-wrap: anywhere;
 	font-weight: normal;
 	font-size: 10px;
-	line-height: 22px;
+	line-height: 12px;
 	cursor: pointer;
 }
 
@@ -1100,3 +1150,97 @@
 }
 
 .catalog-product-subscribe-list-close-item:hover:after { opacity: 1; }
+/*region Focus ring*/
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later: every stop of a card lies in its container. The buttons of
+ * the forms of the code and of the access a guest gets are found under the root the template prints
+ * with its id, written as an attribute; the one of the notice popup, which the page appends to its
+ * body, under the id the script gives the popup. */
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container a:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container button:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container input:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container select:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container textarea:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container [tabindex]:not([tabindex="-1"]):focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container [role="button"]:focus-visible,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container [role="radio"]:focus-visible,
+[id="catalog-subscriber-identification-form"] form .btn.btn-primary[type="submit"]:focus-visible,
+.popup-window[id^="CatalogSectionBasket_"] .popup-window-buttons .btn.btn-primary[role="button"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The window of the ribbon clips whatever is drawn outside a value, so the ring of a value runs
+ * along the inner edge of its visible box. */
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .bx_catalog_item_scu li[role="radio"]:focus-visible {
+	outline-width: 0;
+	box-shadow: none;
+}
+
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .bx_catalog_item_scu li[role="radio"]:focus-visible .cnt {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: calc(-1 * var(--ui-focus-outline-width, 2px));
+}
+
+/* The opened title scrolls, and a scrolling box cuts the ring of its link. */
+.bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_title:has(a:focus-visible) {
+	overflow: visible;
+}
+
+/* The opened card fades its first picture out, the ring with it: the focused picture stays. */
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item.double:has(:focus-visible) .bx_catalog_item_images:focus-visible {
+	opacity: 1;
+	-webkit-animation: none;
+	animation: none;
+}
+
+/* The opened card has no padding above its picture, so the ring outside the picture would stand above the
+ * card: the focused picture gives the room of the ring from its top and keeps its height. */
+.bx-no-touch .bx_item_list_you_looked_horizontal .bx_catalog_item:has(:focus-visible) .bx_catalog_item_images:focus-visible {
+	margin-top: calc(var(--ui-focus-outline-offset, 2px) + var(--ui-focus-outline-width, 2px));
+	padding-top: calc(135% - var(--ui-focus-outline-offset, 2px) - var(--ui-focus-outline-width, 2px));
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. */
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn,
+[id="catalog-subscriber-identification-form"] form .btn.btn-primary[type="submit"],
+.popup-window[id^="CatalogSectionBasket_"] .popup-window-buttons .btn.btn-primary[role="button"] {
+	transition: all .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button, and the theme repaints the text of a focused link. The resting colours are put back, and
+ * the hovered ones over a hovered or pressed focused button. */
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn.btn-primary:focus,
+[id="catalog-subscriber-identification-form"] form .btn.btn-primary[type="submit"]:focus,
+.popup-window[id^="CatalogSectionBasket_"] .popup-window-buttons .btn.btn-primary[role="button"]:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn.btn-primary:focus:hover,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn.btn-primary:focus:active,
+[id="catalog-subscriber-identification-form"] form .btn.btn-primary[type="submit"]:focus:hover,
+[id="catalog-subscriber-identification-form"] form .btn.btn-primary[type="submit"]:focus:active,
+.popup-window[id^="CatalogSectionBasket_"] .popup-window-buttons .btn.btn-primary[role="button"]:focus:hover,
+.popup-window[id^="CatalogSectionBasket_"] .popup-window-buttons .btn.btn-primary[role="button"]:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+	color: #fff;
+}
+
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn.btn-link:focus {
+	color: #007bff;
+	text-decoration: none;
+}
+
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn.btn-link:focus:hover,
+.bx_item_list_you_looked_horizontal .bx_catalog_item .bx_catalog_item_container .btn.btn-link:focus:active {
+	color: #0056b3;
+	text-decoration: underline;
+}
+/*endregion*/

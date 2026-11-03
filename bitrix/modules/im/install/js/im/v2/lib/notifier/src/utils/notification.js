@@ -1,4 +1,5 @@
 import 'ui.notification';
+import { type Balloon } from 'ui.notification';
 
 export type NotificationAction = {
 	title: string,
@@ -11,6 +12,11 @@ type NotificationParams = {
 	id?: string,
 };
 
-export const showNotification = (text: string, params: NotificationParams): void => {
-	BX.UI.Notification.Center.notify({ content: text, blinkOnUpdate: false, ...params });
+export const showNotification = (
+	content: string | HTMLElement,
+	params: NotificationParams = {},
+): Balloon => {
+	const balloon = BX.UI.Notification.Center.notify({ content, blinkOnUpdate: false, ...params });
+
+	return balloon ?? BX.UI.Notification.Center.getBalloonById(params.id);
 };

@@ -14,41 +14,9 @@
 	padding: 0 !important;
 }
 
-.ui-ctl-dropdown-range-group {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-ms-flex-wrap: nowrap;
-	flex-wrap: nowrap;
-	-webkit-box-flex: 1;
-	flex-grow: 1;
-	margin-top: 10px;
-}
-
 .biconnector-superset-delete-superset-button-block {
 	display: flex;
 	flex-direction: row-reverse;
-}
-
-.ui-ctl-dropdown-range-line {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: inline-flex;
-	margin: 0 12px;
-	width: 10px;
-	height: 75%;
-}
-
-.ui-ctl-dropdown-range-line-item {
-	margin: auto;
-	width: 7px;
-	height: 1px;
-	background: #7d7d7d;
-}
-
-.ui-ctl-dropdown-range-group .ui-ctl-datetime {
-	max-width: calc(300px + var(--icon-width-before) + var(--icon-width-after));
-	width: calc(280px + var(--icon-width-before) + var(--icon-width-after));
 }
 
 .biconnector-superset-settings-panel-range__hint {
@@ -86,6 +54,21 @@
 
 .biconnector-superset-settings-panel-editor__wrapper .ui-entity-editor-section-content {
 	padding: 15px 0 0;
+}
+
+/* The public links block draws its own section header, so the untitled section needs no top gap. */
+.biconnector-superset-settings-panel-editor__wrapper
+.ui-entity-editor-section-edit[data-cid="DASHBOARD_SHARE_SETTING"]
+.ui-entity-editor-section-content {
+	padding-top: 0;
+}
+
+/* Same look as the hints of the other sections. */
+.ui-entity-editor-section-edit[data-cid="DASHBOARD_SHARE_SETTING"] .biconnector-share-setting__description {
+	margin-top: 17px;
+	padding: 10px;
+	color: #828b95;
+	font-size: 14px;
 }
 
 .biconnector-superset-settings-panel-editor__wrapper .ui-entity-editor-section-edit {
@@ -170,16 +153,8 @@
 	line-height: normal;
 }
 
-.biconnector-superset-settings-panel-range__line-container {
-	justify-content: flex-end;
-}
-
 .ui-entity-editor-content-block .ui-tag-selector-outer-container {
 	border-radius: var(--ui-border-radius-3xs);
-}
-
-.ui-ctl-dropdown-range-group .ui-ctl-bottom {
-	margin-top: 0;
 }
 
 .ui-tag-selector-outer-container.ui-ctl-element,

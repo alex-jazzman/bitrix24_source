@@ -1,6 +1,8 @@
-import {Tag, Event, Dom, Loc} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Tag, Event, Dom, Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Button } from 'ui.buttons';
 import 'ui.notification';
+
 import { A11y } from './a11y';
 
 export default class PopupHelper
@@ -22,9 +24,14 @@ export default class PopupHelper
 		this.$containerSecondStep = null;
 		this.$containerQr = null;
 		this.$containerQrimage = null;
+		this.$containerQrButton = null;
+		this.$containerNotPublishedPublishButton = null;
+		this.$containerNotPublishedOpenButton = null;
 		this.$containerInputUrl = null;
 		this.$containerCopyLink = null;
 		this.$containerTestOrder = null;
+		this.$containerOpenCRMFirstStep = null;
+		this.$containerOpenCRMSecondStep = null;
 		this.focusTrap = null;
 		this.focusTrapPromise = null;
 		this.isShown = false;
@@ -105,6 +112,7 @@ export default class PopupHelper
 			;
 
 			this.getContainer().setAttribute('aria-label', label);
+
 			return;
 		}
 
@@ -114,6 +122,7 @@ export default class PopupHelper
 				'aria-label',
 				this.notPublishedText ? this.notPublishedText.title : Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_TITLE'),
 			);
+
 			return;
 		}
 
@@ -130,6 +139,7 @@ export default class PopupHelper
 		if (this.focusTrap)
 		{
 			this.focusTrap.activate({ initialFocus: true });
+
 			return;
 		}
 
@@ -167,8 +177,8 @@ export default class PopupHelper
 
 		if (
 			ev.target.closest('.landing-sites__popup')
-			|| ev.target.closest('.landing-sites__container-link-' + this.id)
-			|| ev.target.closest('.landing-sites__status-' + this.id)
+			|| ev.target.closest(`.landing-sites__container-link-${this.id}`)
+			|| ev.target.closest(`.landing-sites__status-${this.id}`)
 		)
 		{
 			return;
@@ -240,7 +250,7 @@ export default class PopupHelper
 				{
 					isCopied = document.execCommand('copy');
 				}
-				catch (error)
+				catch
 				{
 					isCopied = false;
 				}
@@ -252,6 +262,7 @@ export default class PopupHelper
 						autoHideDelay: 2000,
 					});
 					A11y.announce(Loc.getMessage('LANDING_SITE_TILE_POPUP_COPY_LINK_COMPLETE'));
+
 					return;
 				}
 
@@ -264,7 +275,7 @@ export default class PopupHelper
 
 	getContainerQrImage()
 	{
-		let node = Tag.render`
+		const node = Tag.render`
 			<div class="landing-sites__popup-image"></div>
 		`;
 
@@ -277,11 +288,34 @@ export default class PopupHelper
 		return node;
 	}
 
+	getContainerQrButton()
+	{
+		const isShop = this.indexEditUrl.startsWith('/shop/');
+		const popupButtonText = isShop ? Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SHOP') : Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SITE');
+		if (!this.$containerQrButton)
+		{
+			const openQrButton = new Button({
+				text: popupButtonText,
+				useAirDesign: true,
+				tag: Button.Tag.LINK,
+				link: this.fullUrl,
+				props: {
+					target: '_blank',
+					rel: 'noopener',
+				},
+				style: Button.AirStyle.OUTLINE,
+			});
+			this.$containerQrButton = openQrButton.getContainer();
+		}
+
+		return this.$containerQrButton;
+	}
+
 	getContainerQr()
 	{
 		if (!this.$containerQr)
 		{
-			let closeIcon = Tag.render`
+			const closeIcon = Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-close"
@@ -291,7 +325,6 @@ export default class PopupHelper
 			Event.bind(closeIcon, 'click', this.hide.bind(this));
 			const isShop = this.indexEditUrl.startsWith('/shop/');
 			const popupText = isShop ? Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_3') : Loc.getMessage('LANDING_SITE_TILE_POPUP_SITE_TEXT');
-			const popupButtonText = isShop ? Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SHOP') : Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SITE');
 
 			this.$containerQr = Tag.render`
 				<div class="landing-sites__popup-container --qr">
@@ -302,10 +335,8 @@ export default class PopupHelper
 								${popupText}
 							</div>
 							${this.getContainerQrImage()}
-							<div class="landing-sites__popup-buttons">
-								<a href="${this.fullUrl}" target="_blank" class="ui-btn ui-btn-light-border ui-btn-round">
-									${popupButtonText}
-								</a>
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
+								${this.getContainerQrButton()}
 							</div>
 						</div>
 						<div class="landing-sites__popup-bottom">
@@ -327,23 +358,70 @@ export default class PopupHelper
 	{
 		if (!this.$containerTestOrder)
 		{
-			this.$containerTestOrder = Tag.render`
-				<button type="button" class="ui-btn ui-btn-success ui-btn-round">
-					${Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')}
-				</button>
-			`;
+			const testOrderButton = new Button({
+				text: Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER'),
+				useAirDesign: true,
+				style: Button.AirStyle.FILLED,
+				props: {
+					type: 'button',
+				},
+			});
 
+			this.$containerTestOrder = testOrderButton.getContainer();
 			Event.bind(this.$containerTestOrder, 'click', this.showSecondStep.bind(this));
 		}
 
 		return this.$containerTestOrder;
 	}
 
+	createContainerOpenCRM()
+	{
+		if (!this.$containerOpenCRMFirstStep)
+		{
+			const openCRMFirstStepButton = new Button({
+				text: Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM'),
+				className: 'landing-sites__popup-crm-button',
+				useAirDesign: true,
+				tag: Button.Tag.LINK,
+				link: this.ordersUrl,
+				style: Button.AirStyle.OUTLINE,
+			});
+			this.$containerOpenCRMFirstStep = openCRMFirstStepButton.getContainer();
+		}
+
+		if (!this.$containerOpenCRMSecondStep)
+		{
+			const openCRMSecondStepButton = new Button({
+				text: Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM'),
+				className: 'landing-sites__popup-crm-button',
+				useAirDesign: true,
+				tag: Button.Tag.LINK,
+				link: this.ordersUrl,
+				style: Button.AirStyle.OUTLINE,
+			});
+			this.$containerOpenCRMSecondStep = openCRMSecondStepButton.getContainer();
+		}
+	}
+
+	getContainerOpenCRMFirstStep()
+	{
+		this.createContainerOpenCRM();
+
+		return this.$containerOpenCRMFirstStep;
+	}
+
+	getContainerOpenCRMSecondStep()
+	{
+		this.createContainerOpenCRM();
+
+		return this.$containerOpenCRMSecondStep;
+	}
+
 	getContainerFirstStep()
 	{
 		if (!this.$containerFirstStep)
 		{
-			let closeIcon = Tag.render`
+			const closeIcon = Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-close"
@@ -354,23 +432,21 @@ export default class PopupHelper
 
 			this.$containerFirstStep = Tag.render`
 				<div class="landing-sites__popup-container">
-					${closeIcon}
 					<div class="landing-sites__popup-wrapper">
 						<div class="landing-sites__popup-title">
 							<span class="landing-sites__popup-title-text">
 								${Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')}
 							</span>
+							${closeIcon}
 						</div>
 						<div class="landing-sites__popup-content">
 							<div class="landing-sites__popup-text">
 								${Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_TEXT')}
 							</div>
 							<div class="landing-sites__popup-image --first-order"></div>
-							<div class="landing-sites__popup-buttons">
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
 								${this.getContainerTestOrder()}
-								<a href="${this.ordersUrl}" class="ui-btn ui-btn-light-border ui-btn-round">
-									${Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM')}
-								</a>
+								${this.getContainerOpenCRMFirstStep()}
 							</div>
 						</div>
 					</div>
@@ -385,14 +461,14 @@ export default class PopupHelper
 	{
 		if (!this.$containerSecondStep)
 		{
-			let closeIcon = Tag.render`
+			const closeIcon = Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-close"
 					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_CLOSE')}"
 				></button>
 			`;
-			let prevIcon = Tag.render`
+			const prevIcon = Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-prev"
@@ -405,22 +481,20 @@ export default class PopupHelper
 
 			this.$containerSecondStep = Tag.render`
 				<div class="landing-sites__popup-container --hide-left">
-					${closeIcon}
-					${prevIcon}
 					<div class="landing-sites__popup-wrapper">
 						<div class="landing-sites__popup-title">
+							${prevIcon}
 							<span class="landing-sites__popup-title-text">${Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER')}</span>
+							${closeIcon}
 						</div>
-						<div class="landing-sites__popup-content">
+						<div class="landing-sites__popup-content --popup-second-step">
 							<div class="landing-sites__popup-text">
 								<div class="landing-sites__popup-text --list"><span>1</span> ${Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_1')}</div>
 								<div class="landing-sites__popup-text --list"><span>2</span> ${Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_2')}</div>
 							</div>
 							${this.getContainerQrImage()}
-							<div class="landing-sites__popup-buttons">
-								<a href="${this.ordersUrl}" class="ui-btn ui-btn-success ui-btn-round">
-									${Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM')}
-								</a>
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
+								${this.getContainerOpenCRMSecondStep()}
 							</div>
 						</div>
 					</div>
@@ -429,6 +503,63 @@ export default class PopupHelper
 		}
 
 		return this.$containerSecondStep;
+	}
+
+	getContainerNotPublishedPublishButton()
+	{
+		if (!this.$containerNotPublishedPublishButton)
+		{
+			const restriction = this.itemObj.error?.publication;
+			const isShop1c = this.itemObj.access.publication === false
+				&& restriction?.code === 'shop1c';
+
+			const options = {
+				text: Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH'),
+				useAirDesign: true,
+				style: Button.AirStyle.FILLED,
+			};
+
+			if (isShop1c)
+			{
+				options.disabled = true;
+				options.state = Button.State.DISABLED;
+				options.icon = Button.Icon.LOCK;
+				options.dataset = {
+					hint: `${restriction.hint}<br><a href="${restriction.url}">${restriction.link}</a>`,
+					hintNoIcon: 'Y',
+					hintHtml: 'Y',
+					hintInteractivity: 'Y',
+				};
+			}
+			else
+			{
+				options.onclick = () => {
+					this.itemObj.markUserPublicationAction();
+					EventEmitter.emit('BX.Landing.SiteTile:publish', this.itemObj);
+					this.hide();
+				};
+			}
+
+			const publishButton = new Button(options);
+			this.$containerNotPublishedPublishButton = publishButton.getContainer();
+		}
+
+		return this.$containerNotPublishedPublishButton;
+	}
+
+	getContainerNotPublishedOpenButton()
+	{
+		if (!this.$containerNotPublishedOpenButton)
+		{
+			const openButton = new Button({
+				text: Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_OPEN'),
+				useAirDesign: true,
+				style: Button.AirStyle.OUTLINE,
+			});
+			this.$containerNotPublishedOpenButton = openButton.getContainer();
+		}
+
+		return this.$containerNotPublishedOpenButton;
 	}
 
 	getContainerNotPublished()
@@ -443,55 +574,9 @@ export default class PopupHelper
 				></button>
 			`;
 			Event.bind(closeIcon, 'click', this.hide.bind(this));
-
-			let buttPublish = Tag.render`
-				<button type="button" class="ui-btn ui-btn-success ui-btn-round">
-					${Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH')}
-				</button>
-			`;
-			if (
-				this.itemObj.access.publication === false
-				&& this.itemObj.error.publication
-			)
-			{
-				const code = this.itemObj.error.publication.code || '';
-				const hint = this.itemObj.error.publication.hint || '';
-				const url = this.itemObj.error.publication.url || '';
-				const link = this.itemObj.error.publication.link || '';
-				if (code === 'shop1c')
-				{
-					buttPublish = Tag.render`
-					<button 
-						type="button"
-						class="ui-btn ui-btn-success ui-btn-round ui-btn-disabled ui-btn-icon-lock"
-						aria-disabled="true"
-						data-hint="${hint}<br><a href='${url}'>${link}</a>"
-						data-hint-no-icon
-						data-hint-html
-						data-hint-interactivity
-					>
-						${Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH')}
-					</button>
-				`;
-				}
-			}
-			if (buttPublish.getAttribute('aria-disabled') !== 'true')
-			{
-				Event.bind(buttPublish, 'click', () =>
-				{
-					this.itemObj.markUserPublicationAction();
-					EventEmitter.emit('BX.Landing.SiteTile:publish', this.itemObj);
-					this.hide();
-				});
-			}
-
-			const buttOpen = Tag.render`
-				<button type="button" class="ui-btn ui-btn-light-border ui-btn-round">
-					${Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_OPEN')}
-				</button>
-			`;
-			Event.bind(buttOpen, 'click', () =>
-			{
+			const buttPublish = this.getContainerNotPublishedPublishButton();
+			const buttOpen = this.getContainerNotPublishedOpenButton();
+			Event.bind(buttOpen, 'click', () => {
 				if (this.indexEditUrl)
 				{
 					Dom.addClass(buttOpen, 'ui-btn-wait');
@@ -512,7 +597,7 @@ export default class PopupHelper
 							<div class="landing-sites__popup-text">
 								${this.notPublishedText ? this.notPublishedText.message : 'message'}
 							</div>
-							<div class="landing-sites__popup-buttons">
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
 								${buttPublish}
 								${buttOpen}
 							</div>

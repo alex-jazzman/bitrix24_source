@@ -24,5 +24,8 @@ return [
 		'./src/shared-link/model',
 		'./src/shared-link/normalizer',
 		'./src/shared-link/default-element',
+		'./src/project-info/model',
+		'./src/project-info/validator',
+		'./src/project-info/default-element',
 	],
 ];

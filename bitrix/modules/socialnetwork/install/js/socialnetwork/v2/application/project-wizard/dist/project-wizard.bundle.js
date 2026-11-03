@@ -2,15 +2,29 @@
 this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
-(function (exports, main_core, ui_vue3, ui_vue3_mixins_locMixin, socialnetwork_v2_core, socialnetwork_v2_const, socialnetwork_v2_model_interface, ui_vue3_pinia, ui_notificationManager, socialnetwork_v2_model_project, socialnetwork_v2_features_project_getProjectFeature, socialnetwork_v2_provider_services_projectService, socialnetwork_v2_components_elements_uiLoader, socialnetwork_v2_components_elements_uiAvatarProject, ui_a11y, socialnetwork_v2_components_elements_uiGrowingTextArea, socialnetwork_v2_components_elements_uiHint, socialnetwork_v2_components_banners_newProjectBanner, ui_system_menu_vue, ui_system_typography_vue, socialnetwork_v2_components_elements_uiCheckbox, socialnetwork_v2_components_elements_uiField, socialnetwork_v2_components_elements_uiTextarea, socialnetwork_v2_components_selectors_usersSelector, ui_system_radiobutton, ui_iconSet_api_core, ui_system_input_vue, ui_iconSet_api_vue, ui_iconSet_solid, ui_vue3_components_switcher, ui_switcher, socialnetwork_v2_components_elements_uiAccordion, ui_vue3_components_button, ui_infoHelper, ui_iconSet_outline, socialnetwork_v2_components_elements_uiSelect, socialnetwork_v2_components_elements_uiDivider, ui_datePicker, socialnetwork_v2_lib_calendar, socialnetwork_v2_lib_timezone, socialnetwork_v2_components_selectors_tagsSelector, socialnetwork_v2_components_elements_uiSwitcherField, socialnetwork_v2_components_popup_autoDeletePopup, socialnetwork_v2_features_project_createProjectFeature, socialnetwork_v2_features_project_updateProjectFeature, socialnetwork_v2_features_project_copyProjectFeature) {
+(function (exports, main_core, ui_vue3, ui_vue3_mixins_locMixin, socialnetwork_v2_core, socialnetwork_v2_const, socialnetwork_v2_model_interface, ui_vue3_pinia, ui_notificationManager, socialnetwork_v2_model_project, socialnetwork_v2_features_project_getProjectFeature, socialnetwork_v2_provider_services_projectService, socialnetwork_v2_components_elements_uiLoader, socialnetwork_v2_components_elements_uiAvatarProject, ui_a11y, socialnetwork_v2_components_elements_uiGrowingTextArea, socialnetwork_v2_components_elements_uiHint, socialnetwork_v2_components_banners_newProjectBanner, ui_system_menu_vue, ui_system_typography_vue, socialnetwork_v2_components_elements_uiCheckbox, socialnetwork_v2_components_elements_uiField, socialnetwork_v2_components_elements_uiTextarea, socialnetwork_v2_components_selectors_usersSelector, ui_system_radiobutton, ui_iconSet_api_core, ui_system_input_vue, ui_iconSet_api_vue, ui_iconSet_solid, ui_switcher, socialnetwork_v2_components_elements_accessibleSwitcher, socialnetwork_v2_components_elements_uiAccordion, ui_vue3_components_button, ui_infoHelper, ui_iconSet_outline, socialnetwork_v2_components_elements_uiSelect, socialnetwork_v2_components_elements_uiDivider, ui_datePicker, socialnetwork_v2_lib_calendar, socialnetwork_v2_lib_timezone, socialnetwork_v2_components_selectors_tagsSelector, socialnetwork_v2_components_elements_uiSwitcherField, socialnetwork_v2_components_popup_autoDeletePopup, socialnetwork_v2_features_project_createProjectFeature, socialnetwork_v2_features_project_updateProjectFeature, socialnetwork_v2_features_project_copyProjectFeature, socialnetwork_v2_lib_eventSender) {
 	'use strict';
 
+	/**
+	 * Legacy tools a project which does not exist yet may still be switched on in the wizard.
+	 * The server answers with the toggles of a project id, and a project being created has none,
+	 * so the portal answers for the create form in the settings of `socialnetwork.v2.core`. The
+	 * policy stays on the server alone: a tool this portal does not offer is not listed there, and
+	 * create would refuse its state anyway.
+	 */
+	function getToggleableFeaturesOnCreate() {
+		return socialnetwork_v2_provider_services_projectService.mapDtoToggleableFeatures(socialnetwork_v2_core.Core.getSettings()?.toggleableFeaturesOnCreate);
+	}
 	class GetDefaultData {
 		static async getDefaultData() {
 			const projectStore = socialnetwork_v2_model_project.useProjectStore();
 			const defaultPermissions = await socialnetwork_v2_provider_services_projectService.AccessRightsService.getDefaultPermissions();
 			projectStore.patchProject({
-				defaultPermissions: ui_vue3.markRaw(defaultPermissions)
+				defaultPermissions: ui_vue3.markRaw(defaultPermissions),
+				// An existing project has been asked about its own toggles already — its answer stays.
+				...(projectStore.id > 0 ? {} : {
+					toggleableFeatures: getToggleableFeaturesOnCreate()
+				})
 			});
 		}
 	}
@@ -34,7 +48,10 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			loading: Boolean
 		},
 		template: `
-		<div class="socialnetwork--project-wizard">
+		<div
+			class="socialnetwork--project-wizard"
+			data-testid="socialnetwork-project-wizard"
+		>
 			<div class="socialnetwork--project-wizard-main">
 				<UiLoader v-if="loading" :show="loading"/>
 				<div v-else ref="body" class="socialnetwork--project-wizard-body">
@@ -135,7 +152,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				'socialnetwork--project-title-wrapper',
 				{
 					'--keyboard-focus': keyboardFocus,
-						'socialnetwork--project--field-highlight': validation.title.invalid,
+					'socialnetwork--project--field-highlight': validation.title.invalid,
 					'socialnetwork--project--field-highlight__error': validation.title.uniq,
 				}
 			]"
@@ -145,9 +162,10 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				ref="growing"
 				:fontSize="25"
 				class="socialnetwork--project-title"
+				data-testid="socialnetwork-project-wizard-title"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_TITLE_PLACEHOLDER')"
-					@focus="onFieldFocus"
-					@blur="onFieldBlur"
+				@focus="onFieldFocus"
+				@blur="onFieldBlur"
 			/>
 		</div>
 		<UiHint
@@ -509,6 +527,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			<UiTextarea
 				v-model.trim="goal"
 				:id="inputId"
+				data-testid="socialnetwork-project-wizard-goal"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_GOAL_PLACEHOLDER')"
 				:disabled
 			/>
@@ -544,12 +563,72 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			<UiTextarea
 				v-model.trim="description"
 				:id="inputId"
+				data-testid="socialnetwork-project-wizard-description"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_DESCRIPTION_PLACEHOLDER')"
 				:disabled
 			/>
 		</UiField>
 	`
 	};
+
+	const DEPARTMENT_TAG_TEXT_COLOR = 'var(--ui-color-base-2, #525c69)';
+	function mapProjectMemberToItemOptions(member) {
+		if (isValidDepartmentSelectorItem(member)) {
+			return {
+				...member.selectorItem,
+				tagOptions: {
+					...member.selectorItem.tagOptions,
+					textColor: DEPARTMENT_TAG_TEXT_COLOR
+				}
+			};
+		}
+		const itemOptions = {
+			id: member.id,
+			entityId: member.type,
+			title: main_core.Type.isStringFilled(member.name) ? member.name : main_core.Loc.getMessage('SONET_EXT_PROJECT_WIZARD_HIDDEN_USER')
+		};
+		if (main_core.Type.isStringFilled(member.image?.src)) {
+			itemOptions.avatar = member.image.src;
+		}
+		return itemOptions;
+	}
+	function mapItemToProjectMember(item) {
+		const itemId = item.getId();
+		const entityId = item.getEntityId();
+		const avatar = item.getAvatar();
+		const member = {
+			id: main_core.Type.isNumber(itemId) ? itemId : parseInt(itemId, 10),
+			type: entityId,
+			withChildNodes: entityId === socialnetwork_v2_const.EntitySelectorEntity.Department && main_core.Type.isNumber(itemId),
+			name: item.getTitle(),
+			image: main_core.Type.isStringFilled(avatar) ? {
+				src: avatar
+			} : null
+		};
+		if (entityId === socialnetwork_v2_const.EntitySelectorEntity.Department) {
+			member.selectorItem = buildDepartmentSelectorItem(item);
+		}
+		return member;
+	}
+	function isValidDepartmentSelectorItem(member) {
+		if (member.type !== socialnetwork_v2_const.EntitySelectorEntity.Department || !main_core.Type.isPlainObject(member.selectorItem)) {
+			return false;
+		}
+		const expectedId = member.withChildNodes === false ? `${member.id}:F` : member.id;
+		const title = member.selectorItem.title;
+		return member.selectorItem.entityId === socialnetwork_v2_const.EntitySelectorEntity.Department && member.selectorItem.id === expectedId && (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title));
+	}
+	function buildDepartmentSelectorItem(item) {
+		const result = {
+			id: item.getId(),
+			entityId: item.getEntityId(),
+			title: item.getTitle()
+		};
+		if (main_core.Type.isStringFilled(item.getAvatar())) {
+			result.avatar = item.getAvatar();
+		}
+		return result;
+	}
 
 	// @vue/component
 	const OwnerField = {
@@ -563,7 +642,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			}
 		},
 		computed: {
-			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['ownerId'])
+			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['ownerId', 'owner']),
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isActionUpdate'])
 		},
 		mounted() {
 			this.selector = this.createSelector();
@@ -576,16 +656,31 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			createSelector() {
 				return new socialnetwork_v2_components_selectors_usersSelector.UsersSelector({
 					context: 'socialnetworkProjectWizardOwner',
+					controlId: 'sonet-project-wizard-owner',
+					ariaLabelledBy: 'sonet-project-wizard-owner-label',
 					multiple: false,
-					preselectedIds: main_core.Type.isNil(this.ownerId) ? [] : [this.ownerId],
+					preselectedIds: [],
+					selectedItems: this.getSelectedItems(),
+					intranetUsersOnly: !this.isActionUpdate && socialnetwork_v2_core.Core.getSettings().isExtranetConfigured === false,
 					targetContainer: this.getTargetContainer(),
-					onSelect: userId => {
-						this.select(userId);
+					onSelect: (userId, item) => {
+						this.select(item);
 					},
-					onDeselect: userId => {
-						this.deselect(userId);
+					onDeselect: (userId, item) => {
+						this.deselect(item);
 					}
 				});
+			},
+			getSelectedItems() {
+				if (main_core.Type.isNil(this.ownerId)) {
+					return [];
+				}
+				return [mapProjectMemberToItemOptions({
+					id: this.ownerId,
+					type: socialnetwork_v2_const.EntitySelectorEntity.User,
+					name: this.owner?.name,
+					image: this.owner?.image
+				})];
 			},
 			getTargetContainer() {
 				return this.getWizardBodyContainer() ?? document.body;
@@ -597,17 +692,24 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				this.selector.destroy();
 				this.selector = null;
 			},
-			select(userId) {
-				this.ownerId = userId;
+			select(item) {
+				const member = mapItemToProjectMember(item);
+				this.ownerId = member.id;
+				this.owner = {
+					name: member.name,
+					image: member.image
+				};
 			},
-			deselect(userId) {
-				if (this.ownerId === userId) {
+			deselect(item) {
+				if (this.ownerId === mapItemToProjectMember(item).id) {
 					this.ownerId = null;
+					this.owner = null;
 				}
 			}
 		},
 		template: `
 		<UiField
+			data-testid="project-wizard-owner-field"
 			:label="loc('SONET_EXT_PROJECT_WIZARD_OWNER_LABEL')"
 			labelFor="sonet-project-wizard-owner"
 		>
@@ -631,7 +733,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			}
 		},
 		computed: {
-			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['moderators'])
+			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['moderators']),
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isActionUpdate'])
 		},
 		mounted() {
 			this.selector = this.createSelector();
@@ -644,16 +747,23 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			createSelector() {
 				return new socialnetwork_v2_components_selectors_usersSelector.UsersSelector({
 					context: 'socialnetworkProjectWizardModerators',
+					controlId: 'sonet-project-wizard-moderators',
+					ariaLabelledBy: 'sonet-project-wizard-moderators-label',
 					multiple: true,
-					preselectedItems: (this.moderators || []).map(m => [m.type, m.id]),
+					preselectedItems: [],
+					selectedItems: this.getSelectedItems(),
+					intranetUsersOnly: !this.isActionUpdate && socialnetwork_v2_core.Core.getSettings().isExtranetConfigured === false,
 					targetContainer: this.getTargetContainer(),
-					onSelect: userId => {
-						this.select(userId);
+					onSelect: (userId, item) => {
+						this.select(item);
 					},
-					onDeselect: userId => {
-						this.deselect(userId);
+					onDeselect: (userId, item) => {
+						this.deselect(item);
 					}
 				});
+			},
+			getSelectedItems() {
+				return (this.moderators || []).filter(moderator => moderator.type === socialnetwork_v2_const.EntitySelectorEntity.User).map(moderator => mapProjectMemberToItemOptions(moderator));
 			},
 			getTargetContainer() {
 				return this.getWizardBodyContainer() ?? document.body;
@@ -665,21 +775,21 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				this.selector.destroy();
 				this.selector = null;
 			},
-			select(userId) {
-				if (this.moderators.some(m => m.id === userId)) {
+			select(item) {
+				const member = mapItemToProjectMember(item);
+				if (this.moderators.some(moderator => moderator.id === member.id && moderator.type === member.type)) {
 					return;
 				}
-				this.moderators.push({
-					id: userId,
-					type: socialnetwork_v2_const.EntitySelectorEntity.User
-				});
+				this.moderators.push(member);
 			},
-			deselect(userId) {
-				this.moderators = this.moderators.filter(m => m.id !== userId);
+			deselect(item) {
+				const member = mapItemToProjectMember(item);
+				this.moderators = this.moderators.filter(moderator => !(moderator.id === member.id && moderator.type === member.type));
 			}
 		},
 		template: `
 		<UiField
+			data-testid="project-wizard-moderators-field"
 			:label="loc('SONET_EXT_PROJECT_WIZARD_MODERATORS_LABEL')"
 			labelFor="sonet-project-wizard-moderators"
 			:hint="loc('SONET_EXT_PROJECT_WIZARD_MODERATORS_HINT')"
@@ -692,6 +802,16 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	`
 	};
 
+	// selector encodes the scope of an org structure node in its id: the suffix means employees only
+	const FLAT_NODE_SUFFIX = ':F';
+
+	// the org structure provider reports the type of a node in the custom data of its item
+	const NODE_ENTITY_TYPE_KEY = 'nodeEntityType';
+
+	// selector entities and member types are independent contracts, so every pair is spelled out here
+	const MEMBER_TYPE_BY_ENTITY_ID = new Map([[socialnetwork_v2_const.EntitySelectorEntity.User, socialnetwork_v2_const.ProjectMemberType.User], [socialnetwork_v2_const.EntitySelectorEntity.Department, socialnetwork_v2_const.ProjectMemberType.Department]]);
+	const ENTITY_ID_BY_MEMBER_TYPE = new Map([[socialnetwork_v2_const.ProjectMemberType.User, socialnetwork_v2_const.EntitySelectorEntity.User], [socialnetwork_v2_const.ProjectMemberType.Department, socialnetwork_v2_const.EntitySelectorEntity.Department], [socialnetwork_v2_const.ProjectMemberType.Team, socialnetwork_v2_const.EntitySelectorEntity.StructureNode]]);
+	const MEMBER_TYPE_BY_NODE_ENTITY_TYPE = new Map([[socialnetwork_v2_const.StructureNodeEntityType.Department, socialnetwork_v2_const.ProjectMemberType.Department], [socialnetwork_v2_const.StructureNodeEntityType.Team, socialnetwork_v2_const.ProjectMemberType.Team]]);
 	// @vue/component
 	const MembersField = {
 		name: 'ProjectWizardMembersField',
@@ -704,7 +824,14 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			}
 		},
 		computed: {
-			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['members'])
+			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['members']),
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isActionUpdate']),
+			inputId() {
+				return 'sonet-project-wizard-members';
+			},
+			inputLabel() {
+				return this.loc('SONET_EXT_PROJECT_WIZARD_MEMBERS_LABEL');
+			}
 		},
 		mounted() {
 			this.selector = this.createSelector();
@@ -715,27 +842,47 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		},
 		methods: {
 			createSelector() {
-				return new socialnetwork_v2_components_selectors_usersSelector.UsersSelector({
+				return new socialnetwork_v2_components_selectors_usersSelector.UsersSelector(this.getSelectorOptions());
+			},
+			getSelectorOptions() {
+				return {
 					context: 'socialnetworkProjectWizardMembers',
 					multiple: true,
 					preselectedItems: this.getPreselectedMembers(),
-					entities: [socialnetwork_v2_const.EntitySelectorEntity.Department],
+					selectedItems: this.getSelectedMembers(),
+					entities: [socialnetwork_v2_const.EntitySelectorEntity.Department, socialnetwork_v2_const.EntitySelectorEntity.StructureNode],
+					isTeamsAvailable: this.isTeamsAvailable(),
+					intranetUsersOnly: !this.isActionUpdate && socialnetwork_v2_core.Core.getSettings().isExtranetConfigured === false,
 					targetContainer: this.getTargetContainer(),
+					inputId: this.inputId,
+					inputLabel: this.inputLabel,
+					// UiField builds the id of its label from labelFor, so both sides stay in step
+					ariaLabelledBy: `${this.inputId}-label`,
 					onSelect: (userId, item) => {
-						this.select(item.getId(), item.getEntityId());
+						this.select(item.getId(), item.getEntityId(), this.getNodeEntityType(item), item);
 					},
 					onDeselect: (userId, item) => {
-						this.deselect(item.getId(), item.getEntityId());
+						this.deselect(item.getId(), item.getEntityId(), this.getNodeEntityType(item));
 					}
-				});
+				};
+			},
+			isTeamsAvailable() {
+				return socialnetwork_v2_core.Core.getSettings().isTeamsAvailable === true;
 			},
 			getTargetContainer() {
 				return this.getWizardBodyContainer() ?? document.body;
 			},
 			getPreselectedMembers() {
-				return this.members.map(p => {
-					return [p.type, this.boxingDepartmentId(p.id, p.type, p.withChildNodes)];
+				return this.members.filter(member => !this.isRenderedFromStore(member)).map(member => {
+					return [this.getEntityId(member.type), this.packMemberId(member)];
 				});
+			},
+			getSelectedMembers() {
+				return this.members.filter(member => this.isRenderedFromStore(member)).map(member => mapProjectMemberToItemOptions(member));
+			},
+			// a team never carries a selector item of its own, so the org structure provider resolves it
+			isRenderedFromStore(member) {
+				return member.type === socialnetwork_v2_const.ProjectMemberType.User || isValidDepartmentSelectorItem(member);
 			},
 			mountSelector() {
 				this.selector.renderTo(this.$refs.membersSelector);
@@ -744,43 +891,75 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				this.selector.destroy();
 				this.selector = null;
 			},
-			select(id, type) {
-				const userId = this.unboxingDepartmentId(id, type);
-				const withChildNodes = this.isWithChildNodes(id, type);
-				if (this.members.some(p => p.id === userId && p.type === type && (p.withChildNodes ?? false) === withChildNodes)) {
+			select(value, entityId, nodeEntityType, item = null) {
+				const member = this.unpackMember(value, entityId, nodeEntityType, item);
+				if (this.members.some(current => this.isSameMember(current, member))) {
 					return;
 				}
-				this.members.push({
-					id: userId,
-					type,
-					withChildNodes
-				});
+				this.members.push(member);
 			},
-			isWithChildNodes(id, type) {
-				return type === socialnetwork_v2_const.EntitySelectorEntity.Department && main_core.Type.isNumber(id);
+			deselect(value, entityId, nodeEntityType) {
+				const member = this.unpackMember(value, entityId, nodeEntityType);
+				this.members = this.members.filter(current => !this.isSameMember(current, member));
 			},
-			deselect(id, type) {
-				const userId = this.unboxingDepartmentId(id, type);
-				const withChildNodes = this.isWithChildNodes(id, type);
-				this.members = this.members.filter(p => !(p.id === userId && p.type === type && (p.withChildNodes ?? false) === withChildNodes));
-			},
-			boxingDepartmentId(id, type, withChildNodes) {
-				if (type !== socialnetwork_v2_const.EntitySelectorEntity.Department) {
-					return id;
+			packMemberId(member) {
+				if (member.type === socialnetwork_v2_const.ProjectMemberType.User) {
+					return member.id;
 				}
-				return withChildNodes ? id : `${id}:F`;
+				return member.withChildNodes ? member.id : `${member.id}${FLAT_NODE_SUFFIX}`;
 			},
-			unboxingDepartmentId(id, type) {
-				return type === socialnetwork_v2_const.EntitySelectorEntity.Department && main_core.Type.isStringFilled(id) && id.split(':')?.[1] === 'F' ? parseInt(id, 10) : id;
+			unpackMember(value, entityId, nodeEntityType, item = null) {
+				const type = this.getMemberType(entityId, nodeEntityType);
+				const isNode = type !== socialnetwork_v2_const.ProjectMemberType.User;
+				const isFlatNode = main_core.Type.isStringFilled(value) && value.endsWith(FLAT_NODE_SUFFIX);
+				return {
+					id: isNode ? main_core.Text.toInteger(value) : value,
+					type,
+					withChildNodes: isNode ? !isFlatNode : false,
+					...(item === null ? {} : this.getDisplayData(item))
+				};
+			},
+			// what the selector already showed, so a remount rebuilds the tag without asking the provider
+			getDisplayData(item) {
+				const {
+					name,
+					image,
+					selectorItem
+				} = mapItemToProjectMember(item);
+				return {
+					name,
+					image,
+					...(selectorItem ? {
+						selectorItem
+					} : {})
+				};
+			},
+			isSameMember(member, other) {
+				return member.id === other.id && member.type === other.type && (member.withChildNodes ?? false) === (other.withChildNodes ?? false);
+			},
+			getNodeEntityType(item) {
+				return item.getCustomData?.().get(NODE_ENTITY_TYPE_KEY) ?? null;
+			},
+			getMemberType(entityId, nodeEntityType) {
+				if (entityId === socialnetwork_v2_const.EntitySelectorEntity.StructureNode) {
+					// teams are the only node type this step asks the provider for
+					return MEMBER_TYPE_BY_NODE_ENTITY_TYPE.get(nodeEntityType) ?? socialnetwork_v2_const.ProjectMemberType.Team;
+				}
+				return MEMBER_TYPE_BY_ENTITY_ID.get(entityId) ?? entityId;
+			},
+			getEntityId(memberType) {
+				return ENTITY_ID_BY_MEMBER_TYPE.get(memberType) ?? memberType;
 			}
 		},
 		template: `
 		<UiField
-			:label="loc('SONET_EXT_PROJECT_WIZARD_MEMBERS_LABEL')"
-			labelFor="sonet-project-wizard-members"
+			data-testid="project-wizard-members-field"
+			:label="inputLabel"
+			:labelFor="inputId"
 		>
 			<div
 				ref="membersSelector"
+				data-testid="socialnetwork-project-wizard-members"
 				class="sonet--project-wizard--user-selector-wrapper --none-border-outer-container"
 			></div>
 		</UiField>
@@ -1030,12 +1209,11 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	`
 	};
 
-	const toggleableFeatureIds = Object.freeze(['forum', 'wiki', 'photo', 'groupLists', 'landingKnowledge']);
+	const toggleableFeatureIds = Object.freeze(['forum', 'wiki', 'photo', 'landingKnowledge']);
 	const toggleableFeatureLabels = Object.freeze({
 		forum: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_FORUM_LABEL_MSGVER_1',
 		wiki: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_WIKI_LABEL',
 		photo: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_PHOTO_LABEL',
-		groupLists: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_GROUP_LISTS_LABEL',
 		landingKnowledge: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_LANDING_KNOWLEDGE_LABEL'
 	});
 
@@ -1047,7 +1225,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			TextSm: ui_system_typography_vue.TextSm,
 			UiAccordion: socialnetwork_v2_components_elements_uiAccordion.UiAccordion,
 			UiAccordionItem: socialnetwork_v2_components_elements_uiAccordion.UiAccordionItem,
-			UiSwitcher: ui_vue3_components_switcher.Switcher
+			AccessibleSwitcher: socialnetwork_v2_components_elements_accessibleSwitcher.AccessibleSwitcher
 		},
 		setup() {
 			return {
@@ -1079,7 +1257,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_project.useProjectStore, ['updateFeature'])
 		},
 		template: `
-		<UiAccordion v-model:value="tabIndex">
+		<UiAccordion v-if="items.length > 0" v-model:value="tabIndex">
 			<UiAccordionItem
 				:value="1"
 				:title="loc('SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_TITLE')"
@@ -1099,11 +1277,12 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 							:key="item.id"
 							class="sonet--project-wizard--legacy-tools-item"
 						>
-							<UiSwitcher
-								:isChecked="Boolean(features[item.id])"
+							<AccessibleSwitcher
+								:modelValue="Boolean(features[item.id])"
+								:ariaLabel="item.label"
+								:data-testid="'project-legacy-tools-toggle-' + item.id"
 								:options="switcherOptions"
-								@check="updateFeature(item.id, true)"
-								@uncheck="updateFeature(item.id, false)"
+								@update:modelValue="updateFeature(item.id, $event)"
 							/>
 							<TextMd>
 								{{ item.label }}
@@ -1286,7 +1465,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		},
 		computed: {
 			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, ['permissions', 'defaultPermissions']),
-			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isAccessRestricted']),
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isAccessRestricted', 'isActionCreate']),
 			groups() {
 				return AccessRightsMeta;
 			},
@@ -1297,8 +1476,17 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				return this.defaultPermissions !== null;
 			}
 		},
+		watch: {
+			tabIndex(newValue, oldValue) {
+				// Remember the expansion for the project_create_finish analytics snapshot (access_rights_state).
+				if (newValue === 1 && oldValue !== 1 && this.isActionCreate) {
+					this.markAccessRightsExpanded();
+				}
+			}
+		},
 		methods: {
 			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_project.useProjectStore, ['updatePermission']),
+			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_interface.useInterfaceStore, ['markAccessRightsExpanded']),
 			resetAccessRights() {
 				ResetAccessRights.execute();
 			},
@@ -1849,10 +2037,39 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			<AutoDeleteMessagePopup
 				v-if="shownPopup"
 				:delay="messagesAutoDeleteDelay"
+				:targetContainer
 				@change="onAutoDeleteDelayChange"
 				@close="closeAutoDeleteMessageDelayPopup"
 			/>
 		</div>
+	`
+	};
+
+	// @vue/component
+	const ListsField = {
+		name: 'ListsField',
+		components: {
+			UiSwitcherField: socialnetwork_v2_components_elements_uiSwitcherField.UiSwitcherField
+		},
+		computed: {
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, ['features']),
+			value() {
+				return Boolean(this.features.groupLists);
+			}
+		},
+		methods: {
+			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_project.useProjectStore, ['updateFeature']),
+			onUpdate(value) {
+				this.updateFeature('groupLists', value);
+			}
+		},
+		template: `
+		<UiSwitcherField
+			:modelValue="value"
+			:label="loc('SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_GROUP_LISTS_LABEL')"
+			data-testid="project-additional-settings-toggle-groupLists"
+			@update:modelValue="onUpdate"
+		/>
 	`
 	};
 
@@ -1882,6 +2099,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			ProjectDatesField,
 			ProjectTagsField,
 			AutoRemoveField,
+			ListsField,
 			PublicationField,
 			UiDivider: socialnetwork_v2_components_elements_uiDivider.UiDivider
 		},
@@ -1897,7 +2115,18 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		},
 		computed: {
 			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isActionCreate']),
-			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, ['publication'])
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, ['publication', 'id', 'toggleableFeatures'])
+		},
+		watch: {
+			tabIndex(newValue, oldValue) {
+				// Remember the expansion for the project_create_finish analytics snapshot (additional_settings_state).
+				if (newValue === 1 && oldValue !== 1 && this.isActionCreate) {
+					this.markAdditionalSettingsExpanded();
+				}
+			}
+		},
+		methods: {
+			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_interface.useInterfaceStore, ['markAdditionalSettingsExpanded'])
 		},
 		template: `
 		<UiAccordion v-model:value="tabIndex">
@@ -1912,6 +2141,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					<ProjectTagsField/>
 					<UiDivider/>
 					<AutoRemoveField/>
+					<ListsField v-if="toggleableFeatures.includes('groupLists')"/>
 					<PublicationField v-if="!isActionCreate && publication"/>
 				</div>
 			</UiAccordionItem>
@@ -1980,7 +2210,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		},
 		setup() {
 			return {
-				ButtonSize: ui_vue3_components_button.ButtonSize
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				tracker: new socialnetwork_v2_lib_eventSender.ProjectAnalytics()
 			};
 		},
 		data() {
@@ -2006,6 +2237,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			async createProject() {
 				const createProjectFeature = new socialnetwork_v2_features_project_createProjectFeature.CreateProjectFeature();
 				const createdProject = await createProjectFeature.create();
+				this.trackCreateFinish(createdProject);
 				if (createdProject) {
 					main_core.Event.EventEmitter.emit(socialnetwork_v2_const.EventName.SaveProjectWizard, {
 						id: createdProject.id,
@@ -2013,6 +2245,49 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 						chatId: createdProject.chatId
 					});
 				}
+			},
+			trackCreateFinish(createdProject) {
+				const projectStore = socialnetwork_v2_model_project.useProjectStore();
+				const interfaceStore = socialnetwork_v2_model_interface.useInterfaceStore();
+				const members = projectStore.members ?? [];
+				const defaultPermissions = projectStore.defaultPermissions;
+				const permissions = projectStore.permissions;
+				const normalizeProject = project => {
+					if (!project) {
+						return project;
+					}
+					const {
+						messagesAutoDeleteDelay: _,
+						...rest
+					} = project;
+					return rest;
+				};
+				const permissionsWithoutDelay = {
+					...permissions,
+					project: normalizeProject(permissions?.project)
+				};
+				const defaultPermissionsWithoutDelay = defaultPermissions ? {
+					...defaultPermissions,
+					project: normalizeProject(defaultPermissions?.project)
+				} : null;
+				const accessRightsState = defaultPermissionsWithoutDelay ? JSON.stringify(permissionsWithoutDelay) !== JSON.stringify(defaultPermissionsWithoutDelay) ? 1 : 0 : 0;
+				const normalizeDelay = delay => delay === '' || delay === null || delay === undefined ? 0 : Number(delay);
+				const defaultDelay = normalizeDelay(defaultPermissions?.project?.messagesAutoDeleteDelay);
+				const currentDelay = normalizeDelay(permissions?.project?.messagesAutoDeleteDelay);
+				const additionalSettingsAutoDelete = currentDelay !== defaultDelay ? 1 : 0;
+				const dates = projectStore.dates;
+				const additionalSettingsCalendar = dates?.startTs || dates?.finishTs ? 1 : 0;
+				this.tracker.trackCreateFinish(createdProject?.id ?? 0, createdProject ? 'success' : 'error', {
+					ownerChange: projectStore.ownerId !== interfaceStore.currentUserId ? 1 : 0,
+					moderators: (projectStore.moderators ?? []).length,
+					participants: members.filter(m => m.type === socialnetwork_v2_const.EntitySelectorEntity.User).length,
+					departments: members.filter(m => m.type === socialnetwork_v2_const.EntitySelectorEntity.Department).length,
+					projectType: projectStore.privacyType === 'closed' ? 'closed' : 'open',
+					mainTool: projectStore.baseFeatureId ?? '',
+					accessRightsState,
+					additionalSettingsCalendar,
+					additionalSettingsAutoDelete
+				});
 			},
 			async updateProject() {
 				const updateProjectFeature = new socialnetwork_v2_features_project_updateProjectFeature.UpdateProjectFeature();
@@ -2067,6 +2342,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			:size="ButtonSize.LARGE"
 			:text="title"
 			:loading="fetching"
+			:dataset="{ testid: 'socialnetwork-project-wizard-submit' }"
 			@click="handleClickSubmit"
 		/>
 	`
@@ -2094,7 +2370,9 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		<div class="socialnetwork--project-wizard-footer">
 			<ScnButtonSubmitProject />
 			<UiButton
+				:dataset="{ testid: 'socialnetwork-project-wizard-cancel' }"
 				:text="loc('SONET_EXT_PROJECT_WIZARD_CANCEL_BUTTON')"
+				:dataset="{ testid: 'socialnetwork-project-wizard-cancel' }"
 				:size="ButtonSize.LARGE"
 				:style="AirButtonStyle.PLAIN"
 				@click="close"
@@ -2118,23 +2396,19 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			ProjectWizardFooter
 		},
 		computed: {
-			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['currentUserId', 'isActionCreate', 'isActionUpdate', 'isActionCopy', 'scrollToStartupTool']),
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['isActionCreate', 'isActionUpdate', 'isActionCopy', 'scrollToStartupTool']),
 			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_interface.useInterfaceStore, ['loading']),
 			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, {
 				id: 'id'
 			})
 		},
 		created() {
-			this.patchProject({
-				ownerId: this.currentUserId
-			});
 			void this.initWizard();
 		},
 		beforeUnmount() {
 			clearTimeout(this._highlightTimer);
 		},
 		methods: {
-			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_project.useProjectStore, ['patchProject']),
 			async initWizard() {
 				this.loading = true;
 				this._scrollDone = false;
@@ -2211,10 +2485,14 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 
 	let pendingStartupToolScroll = false;
 	let projectsTrialBannerProposed = false;
+	let activeMountContainer = null;
 	class ProjectWizard {
 		#params;
-		#application;
-		#slider;
+		#application = null;
+		#slider = null;
+		#container = null;
+		#generation = 0;
+		#mountingPromise = null;
 		#boundSave = null;
 		#boundClose = null;
 		constructor(params) {
@@ -2227,63 +2505,140 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			return Object.fromEntries(Object.entries(params).filter(([, value]) => !main_core.Type.isUndefined(value)));
 		}
 		show(options = {}) {
+			let generation = null;
+			let slider = null;
+			let container = null;
 			BX.SidePanel.Instance.open('socialnetwork-project-wizard-panel', {
-				contentCallback: async slider => {
-					return this.mount(slider);
-				},
+				title: this.#getSliderTitle(),
+				...options,
 				cacheable: false,
-				events: {
-					onClose: () => this.unmount()
+				contentCallback: async currentSlider => {
+					const mountingPromise = this.mount(currentSlider);
+					if (this.#slider === currentSlider) {
+						generation = this.#generation;
+						slider = this.#slider;
+						container = this.#container;
+					}
+					return mountingPromise;
 				},
-				...options
+				events: {
+					...options.events,
+					onClose: event => {
+						this.#unmount(generation, slider, container);
+						if (main_core.Type.isFunction(options.events?.onClose)) {
+							options.events.onClose(event);
+						}
+					}
+				}
 			});
 		}
+		#getSliderTitle() {
+			if (socialnetwork_v2_model_interface.isCreateProjectWizardAction(this.#params.action)) {
+				return main_core.Loc.getMessage('SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_CREATE');
+			}
+			if (this.#params.action === socialnetwork_v2_model_interface.TYPES_PROJECT_WIZARD_ACTION.COPY) {
+				return main_core.Loc.getMessage('SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_COPY');
+			}
+			return main_core.Loc.getMessage('SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_UPDATE');
+		}
 		async mount(slider) {
+			const currentSlider = slider ?? null;
+			const container = slider ? slider.getContentContainer() : this.#params.container;
+			if (!main_core.Type.isDomNode(container)) {
+				throw new Error('The container for mounting the program is not set.');
+			}
+			if (this.#owns(this.#generation, currentSlider, container)) {
+				// Slider.reload() cleans the cached content container, so the mounted application is
+				// already gone from the DOM while the ownership key still matches.
+				if (this.#application && container.firstChild !== null) {
+					return Promise.resolve();
+				}
+				if (this.#mountingPromise) {
+					return this.#mountingPromise;
+				}
+			}
+
+			// The request must survive the early returns above: it is consumed by the mount that
+			// actually creates the application and reads the params.
 			if (pendingStartupToolScroll) {
 				pendingStartupToolScroll = false;
 				this.#params.scrollToStartupTool = true;
 			}
-			if (slider) {
-				if (slider.isOpen()) {
+			this.unmount();
+			const generation = ++this.#generation;
+			this.#slider = currentSlider;
+			this.#container = container;
+			const mountingPromise = Promise.resolve().then(async () => {
+				if (!this.#owns(generation, currentSlider, container)) {
 					return;
 				}
-				this.#slider = slider;
-				this.#params.container = slider.getContentContainer();
-			}
-			if (!main_core.Type.isDomNode(this.#params.container)) {
-				throw new Error('The container for mounting the program is not set.');
-			}
-			this.#application = await this.#mountApplication(this.#params.container);
-			this.#subscribe();
+				try {
+					const currentUser = await this.#loadCurrentUser();
+					if (!this.#owns(generation, currentSlider, container)) {
+						return;
+					}
+					const application = this.#mountApplication(container, currentUser);
+					if (!this.#owns(generation, currentSlider, container)) {
+						application.unmount();
+						return;
+					}
+					this.#application = application;
+					this.#subscribe(generation, currentSlider, container);
+				} catch (error) {
+					this.#unmount(generation, currentSlider, container);
+					throw error;
+				} finally {
+					if (this.#generation === generation && this.#mountingPromise === mountingPromise) {
+						this.#mountingPromise = null;
+					}
+				}
+			});
+			this.#mountingPromise = mountingPromise;
+			return mountingPromise;
 		}
 		unmount() {
-			this.#unmountApplication();
-			this.#unsubscribe();
+			this.#unmount(this.#generation, this.#slider, this.#container);
 		}
-		#subscribe() {
-			this.#boundClose = this.#close.bind(this);
-			this.#boundSave = this.#save.bind(this);
+		#owns(generation, slider, container) {
+			return this.#generation === generation && this.#slider === slider && this.#container === container;
+		}
+
+		// Save and Close events are global and carry no mount identity, so only the latest live
+		// mount in the window may react to them.
+		#isEventTarget(generation, slider, container) {
+			return activeMountContainer === container && this.#owns(generation, slider, container);
+		}
+		#subscribe(generation, slider, container) {
+			activeMountContainer = container;
+			this.#boundClose = () => this.#close(generation, slider, container);
+			this.#boundSave = event => this.#save(event, generation, slider, container);
 			main_core.Event.EventEmitter.subscribe(socialnetwork_v2_const.EventName.CloseProjectWizard, this.#boundClose);
 			main_core.Event.EventEmitter.subscribe(socialnetwork_v2_const.EventName.SaveProjectWizard, this.#boundSave);
 		}
 		#unsubscribe() {
-			if (main_core.Type.isFunction(this.#boundClose)) {
+			if (this.#boundClose !== null) {
 				main_core.Event.EventEmitter.unsubscribe(socialnetwork_v2_const.EventName.CloseProjectWizard, this.#boundClose);
+				this.#boundClose = null;
 			}
-			if (main_core.Type.isFunction(this.#boundSave)) {
+			if (this.#boundSave !== null) {
 				main_core.Event.EventEmitter.unsubscribe(socialnetwork_v2_const.EventName.SaveProjectWizard, this.#boundSave);
+				this.#boundSave = null;
 			}
-			this.#boundClose = null;
-			this.#boundSave = null;
 		}
-		#close() {
+		#close(generation, slider, container) {
+			if (!this.#isEventTarget(generation, slider, container)) {
+				return;
+			}
 			if (main_core.Type.isFunction(this.#params.onCancel)) {
 				this.#params.onCancel();
 			}
-			this.#slider?.close();
-			this.unmount();
+			slider?.close();
+			this.#unmount(generation, slider, container);
 		}
-		#save(event) {
+		#save(event, generation, slider, container) {
+			if (!this.#isEventTarget(generation, slider, container)) {
+				return;
+			}
 			if (main_core.Type.isFunction(this.#params.onSave)) {
 				this.#params.onSave({
 					id: event.data.id,
@@ -2291,8 +2646,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					chatId: event.data.chatId
 				});
 			}
-			this.#slider?.close();
-			this.unmount();
+			slider?.close();
+			this.#unmount(generation, slider, container);
 			this.#proposeProjectsTrial();
 		}
 		#proposeProjectsTrial() {
@@ -2306,22 +2661,51 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				projectsTrialBannerProposed = false;
 			});
 		}
-		async #mountApplication(container) {
+		#mountApplication(container, currentUser) {
 			const application = ui_vue3.BitrixVue.createApp(App);
 			application.mixin(ui_vue3_mixins_locMixin.locMixin);
 			// @chef-ignore
 			application.use(socialnetwork_v2_core.Core.createStore());
-			socialnetwork_v2_core.Core.initStores(this.#params);
-			application.mount(container);
+			socialnetwork_v2_core.Core.initStores({
+				...this.#params,
+				currentUser
+			});
+			try {
+				application.mount(container);
+			} catch (error) {
+				application.unmount();
+				throw error;
+			}
 			return application;
 		}
-		#unmountApplication() {
-			this.#application?.unmount();
+		async #loadCurrentUser() {
+			if (!socialnetwork_v2_model_interface.isCreateProjectWizardAction(this.#params.action)) {
+				return null;
+			}
+			const {
+				getCurrentUserSettings
+			} = await main_core.Runtime.loadExtension('socialnetwork.v2.current-user');
+			return getCurrentUserSettings();
+		}
+		#unmount(generation, slider, container) {
+			if (generation === null || !this.#owns(generation, slider, container)) {
+				return;
+			}
+			const application = this.#application;
+			this.#generation++;
 			this.#application = null;
+			this.#mountingPromise = null;
+			this.#slider = null;
+			this.#container = null;
+			if (activeMountContainer === container) {
+				activeMountContainer = null;
+			}
+			this.#unsubscribe();
+			application?.unmount();
 		}
 	}
 
 	exports.ProjectWizard = ProjectWizard;
 
-})(this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {}, BX, BX.Vue3, BX.Vue3.Mixins, BX.Socialnetwork.V2, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Vue3.Pinia, BX.UI.NotificationManager, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Provider.Services, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.Accessibility, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Banners, BX.UI.System.Menu, BX.UI.System.Typography.Vue, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Selectors, BX.UI.System.RadioButton, BX.UI.IconSet, BX.UI.System.Input.Vue, BX.UI.IconSet, window, BX.UI.Vue3.Components, BX.UI, BX.Socialnetwork.V2.Components.Elements, BX.Vue3.Components, BX.UI, window, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.DatePicker, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Components.Selectors, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Popup, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project);
+})(this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {}, BX, BX.Vue3, BX.Vue3.Mixins, BX.Socialnetwork.V2, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Vue3.Pinia, BX.UI.NotificationManager, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Provider.Services, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.Accessibility, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Banners, BX.UI.System.Menu, BX.UI.System.Typography.Vue, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Selectors, BX.UI.System.RadioButton, BX.UI.IconSet, BX.UI.System.Input.Vue, BX.UI.IconSet, window, BX.UI, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Vue3.Components, BX.UI, window, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.DatePicker, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Components.Selectors, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Popup, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Lib);
 //# sourceMappingURL=project-wizard.bundle.js.map

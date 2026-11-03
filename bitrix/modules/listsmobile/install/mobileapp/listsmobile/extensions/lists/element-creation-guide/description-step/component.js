@@ -26,6 +26,7 @@ jn.define('lists/element-creation-guide/description-step/component', (require, e
 			this.sign = '';
 			this.hasFieldsToRender = true;
 			this.isConstantsTuned = false;
+			this.canUserTuneConstants = false;
 			this.isLoading = false;
 
 			this.uid = props.uid || Random.getString();
@@ -60,6 +61,7 @@ jn.define('lists/element-creation-guide/description-step/component', (require, e
 				.then((response) => {
 					this.hasFieldsToRender = response.data.hasFieldsToRender;
 					this.isConstantsTuned = response.data.isConstantsTuned;
+					this.canUserTuneConstants = response.data.canUserTuneConstants === true;
 					this.sign = response.data.signedIBlockIdAndElementId;
 					description = response.data.description || '';
 				})
@@ -84,6 +86,7 @@ jn.define('lists/element-creation-guide/description-step/component', (require, e
 								hasFieldsToRender: this.hasFieldsToRender,
 								sign: this.sign,
 								isConstantsTuned: this.isConstantsTuned,
+								canUserTuneConstants: this.canUserTuneConstants,
 								hasErrors,
 							},
 						],

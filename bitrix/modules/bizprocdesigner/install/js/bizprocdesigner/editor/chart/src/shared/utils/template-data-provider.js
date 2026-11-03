@@ -24,7 +24,7 @@ export type TemplateDataSnapshot = {
 
 // The property a node saves its filter results under, mirroring
 // `\Bitrix\Bizproc\Public\Activity\Mixins\NodeFilterResultProperties::FILTER_RETURN_PROPERTIES_MAP`.
-const FILTER_RETURN_PROPERTIES_MAP = 'FilterReturnPropertiesMap';
+export const FILTER_RETURN_PROPERTIES_MAP = 'FilterReturnPropertiesMap';
 
 type DocumentTypeItem = {
 	type: string,
@@ -155,7 +155,7 @@ export class TemplateDataProvider extends EventEmitter
 			const outputPortId = `o${Properties.OutputNames[outputName]}`;
 			const [activityName] = outputName.split(':');
 			const activity = Children.find((child) => child.Name === activityName);
-			const templateDataNodeGroup = this.#createTemplateDataNodeGroup(block, activity);
+			const templateDataNodeGroup = this.#createTemplateDataNodeGroup(block, activity, activity?.Name ?? block.id);
 			if (templateDataNodeGroup)
 			{
 				acc.push({
@@ -211,7 +211,11 @@ export class TemplateDataProvider extends EventEmitter
 		return Type.isPlainObject(propertiesMap) ? new Set(Object.keys(propertiesMap)) : new Set();
 	}
 
-	#createTemplateDataNodeGroup(block: Block, activity): TemplateDataNodeGroup | null
+	#createTemplateDataNodeGroup(
+		block: Block,
+		activity,
+		expressionSourceId: string = block.id,
+	): TemplateDataNodeGroup | null
 	{
 		const properties = activity?.ReturnProperties ?? [];
 
@@ -220,7 +224,11 @@ export class TemplateDataProvider extends EventEmitter
 			return null;
 		}
 
-		const items = properties
+		const orderedProperties = [
+			...properties.filter((property) => property?.Type !== PROPERTY_TYPES.DOCUMENT),
+			...properties.filter((property) => property?.Type === PROPERTY_TYPES.DOCUMENT),
+		];
+		const items = orderedProperties
 			.map((property) => {
 				const propertyId = property?.Id ?? '';
 				const propertyName = property?.Name ?? propertyId;
@@ -234,13 +242,19 @@ export class TemplateDataProvider extends EventEmitter
 
 				if (property?.Type === PROPERTY_TYPES.DOCUMENT)
 				{
-					return this.#processDocumentProperty(block, property, resolvedPropertyId, propertyName);
+					return this.#processDocumentProperty(
+						block,
+						expressionSourceId,
+						property,
+						resolvedPropertyId,
+						propertyName,
+					);
 				}
 
 				return {
 					id: resolvedPropertyId,
 					name: propertyName,
-					computeValue: this.#makeComputeValue(block.id, resolvedPropertyId),
+					computeValue: this.#makeComputeValue(expressionSourceId, resolvedPropertyId),
 					type: property?.Type ?? TEMPLATE_DEFAULT_DATA_TYPE,
 				};
 			})
@@ -260,6 +274,7 @@ export class TemplateDataProvider extends EventEmitter
 
 	#processDocumentProperty(
 		block: Block,
+		expressionSourceId: string,
 		property: Object,
 		resolvedPropertyId: string,
 		propertyName: string,
@@ -268,16 +283,19 @@ export class TemplateDataProvider extends EventEmitter
 		const cachedFields = documentFieldsCache.get(property.Default);
 
 		return {
+			id: resolvedPropertyId,
 			name: propertyName,
 			type: PROPERTY_TYPES.DOCUMENT,
 			documentType: property.Default,
 			blockId: block.id,
-			resolvedPropertyId,
 			items: cachedFields
 				? cachedFields.map((field) => ({
 					id: field.fieldKey,
 					name: field.name,
-					computeValue: this.#makeComputeValue(block.id, `${resolvedPropertyId}.${field.fieldKey}`),
+					computeValue: this.#makeComputeValue(
+						expressionSourceId,
+						`${resolvedPropertyId}.${field.fieldKey}`,
+					),
 					type: field.type,
 				}))
 				: [],

@@ -1,7 +1,6 @@
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { FolderType, RecentType } from 'im.v2.const';
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { FolderType } from 'im.v2.const';
 import { type ImModelFolder } from 'im.v2.model';
 
 import '../css/folder-list-settings-item.css';
@@ -27,72 +26,79 @@ export const FolderListSettingsItem = {
 		{
 			return this.folder.type === FolderType.personal;
 		},
+		isComposite(): boolean
+		{
+			return this.$store.getters['recent/folders/isComposite'](this.folder.id);
+		},
 		subtitle(): string
 		{
+			// One line for every personal folder: it describes this surface, not the folder, so the
+			// server does not send it.
 			if (this.isPersonal)
 			{
 				return this.loc('IM_MESSENGER_FOLDER_LIST_PERSONAL_ITEM_SUBTITLE');
 			}
 
-			const phraseCode = this.getSystemSubtitlePhraseCode();
-
-			return phraseCode ? this.loc(phraseCode) : '';
+			return this.folder.description ?? '';
+		},
+		// The list holds a menu button on every row it lets the user act on, so the name of the button
+		// carries the folder: without it the rows are told apart by nothing at all on a screen reader.
+		menuAriaLabel(): string
+		{
+			return this.loc('IM_MESSENGER_FOLDER_LIST_ITEM_MENU_ARIA_LABEL', { '#TITLE#': this.folder.title });
 		},
 	},
 	methods: {
-		getSystemSubtitlePhraseCode(): string
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
-			const isCollabV2Available = FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
-
-			const phraseCodeByRecentType = {
-				[RecentType.default]: isCollabV2Available
-					? 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_ALL_V2'
-					: 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_ALL',
-				[RecentType.taskComments]: 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_TASKS',
-				[RecentType.copilot]: 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_COPILOT',
-				[RecentType.openChannel]: 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_CHANNELS',
-				[RecentType.collab]: isCollabV2Available
-					? 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_COLLAB_V2'
-					: 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_COLLAB',
-				[RecentType.openlines]: 'IM_MESSENGER_FOLDER_LIST_SUBTITLE_OPENLINES',
-			};
-
-			return phraseCodeByRecentType[this.folder.code] ?? '';
-		},
-		loc(phraseCode: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `
-		<div class="bx-im-folder-list-item__container" :data-folder-id="folder.id" data-testid="folder-list-settings-item">
+		<div
+			class="bx-im-folder-list-item__container"
+			role="listitem"
+			:data-folder-id="folder.id"
+			:data-folder-code="folder.code || null"
+			data-testid="folder-list-settings-item"
+		>
 			<BIcon
 				:name="OutlineIcons.DRAG_XS"
 				:hoverable="true"
 				class="bx-im-folder-list-item__handle-icon"
+				data-testid="folder-list-settings-item-handle"
 			/>
 			<div class="bx-im-folder-list-item__text">
-				<div class="bx-im-folder-list-item__title --ellipsis" :title="folder.title">
+				<div
+					class="bx-im-folder-list-item__title --ellipsis"
+					:title="folder.title"
+					data-testid="folder-list-settings-item-title"
+				>
 					{{ folder.title }}
 				</div>
-				<div class="bx-im-folder-list-item__subtitle --ellipsis" :title="subtitle">
+				<div
+					class="bx-im-folder-list-item__subtitle --ellipsis"
+					:title="subtitle"
+					data-testid="folder-list-settings-item-subtitle"
+				>
 					{{ subtitle }}
 				</div>
-				<button
-					v-if="isPersonal"
-					type="button"
-					class="bx-im-folder-list-item__menu-button"
-					aria-haspopup="menu"
-					data-testid="folder-list-settings-item-menu-btn"
-					@click="$emit('menuClick', $event)"
-				>
-					<BIcon
-						:name="OutlineIcons.MORE_L"
-						:hoverable="true"
-						class="bx-im-folder-list-item__menu-icon"
-					/>
-				</button>
 			</div>
+			<button
+				v-if="isPersonal || isComposite"
+				type="button"
+				class="bx-im-folder-list-item__menu-button --focus-visible"
+				aria-haspopup="menu"
+				:aria-label="menuAriaLabel"
+				data-testid="folder-list-settings-item-menu-btn"
+				@click="$emit('menuClick', $event.currentTarget)"
+			>
+				<BIcon
+					:name="OutlineIcons.MORE_L"
+					:hoverable="true"
+					class="bx-im-folder-list-item__menu-icon"
+				/>
+			</button>
 		</div>
 	`,
 };

@@ -1,6 +1,7 @@
-import { Loc, Tag } from 'main.core';
+import { Dom, Loc, Tag, Type } from 'main.core';
 import { CloseIconSize, Popup } from 'main.popup';
 import { Button, ButtonState, AirButtonStyle } from 'ui.buttons';
+import { FocusNavigator } from 'ui.a11y';
 import { InvitationInput } from 'intranet.invitation-input';
 import DepartmentControl from 'intranet.department-control';
 import { Transport } from '../transport';
@@ -18,6 +19,7 @@ export class InviteEmailPopup
 	#inviteType: InviteType;
 	#analytics: Analytics;
 	#transport: Transport;
+	#initiator: ?HTMLElement = null;
 
 	constructor(options)
 	{
@@ -29,7 +31,11 @@ export class InviteEmailPopup
 
 	show(): void
 	{
-		this.#getPopup().show();
+		this.#initiator = FocusNavigator.getActiveElement();
+
+		const popup = this.#getPopup();
+		popup.getFocusTrap()?.setRestoreFocus(() => this.#initiator);
+		popup.show();
 	}
 
 	#getInput(): InvitationInput
@@ -37,6 +43,7 @@ export class InviteEmailPopup
 		this.#input ??= new InvitationInput({
 			id: 'invite-page-popup-invitation-input',
 			inputType: this.#inviteType,
+			showErrorBeforeSubmit: true,
 			onReadySave: this.onReadySaveInputHandler.bind(this),
 			onUnreadySave: this.onUnreadySaveInputHandler.bind(this),
 			placeholder: this.#getPlaceholder(),
@@ -61,20 +68,37 @@ export class InviteEmailPopup
 
 	#getPopup(): Popup
 	{
-		this.#popup ??= new Popup({
-			content: this.#getPopupContent(),
-			id: 'email-invitation-email',
-			className: 'email-invitation-container',
-			closeIcon: true,
-			autoHide: false,
-			closeByEsc: true,
-			width: 515,
-			closeIconSize: CloseIconSize.LARGE,
-			padding: 0,
-			overlay: {
-				backgroundColor: 'rgba(0, 32, 78, 0.46)',
-			},
-		});
+		if (!this.#popup)
+		{
+			this.#popup = new Popup({
+				content: this.#getPopupContent(),
+				id: 'email-invitation-email',
+				className: 'email-invitation-container',
+				ariaLabel: Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE'),
+				focusTrap: {
+					initialFocus: () => this.#getInput().getTagSelector().getTextBox(),
+					restoreFocus: () => this.#initiator,
+				},
+				closeIcon: true,
+				autoHide: false,
+				closeByEsc: true,
+				width: 515,
+				closeIconSize: CloseIconSize.LARGE,
+				padding: 0,
+				overlay: {
+					backgroundColor: 'rgba(0, 32, 78, 0.46)',
+				},
+			});
+			this.#popup.getPopupContainer().dataset.testid = 'invitation-email-popup';
+			const closeButton = this.#popup.getPopupContainer().querySelector('.popup-window-close-icon');
+			if (Type.isDomNode(closeButton))
+			{
+				Dom.attr(closeButton, {
+					'aria-label': Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_CLOSE'),
+					'data-testid': 'invitation-email-popup-close-button',
+				});
+			}
+		}
 
 		return this.#popup;
 	}
@@ -82,7 +106,7 @@ export class InviteEmailPopup
 	#getPopupContent(): HTMLElement
 	{
 		return Tag.render`
-			<div class="intranet-invitation-popup">
+			<div class="intranet-invitation-popup" data-testid="invitation-email-popup-content">
 				<div class="intranet-invitation-popup__title">
 					<span class="ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE')}</span>
 				</div>
@@ -90,7 +114,7 @@ export class InviteEmailPopup
 					<p class="intranet-invitation-description ui-text --sm">
 						${Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION_MSGVER_1')}
 					</p>
-					<div class="email-popup-container__input">
+					<div class="email-popup-container__input" data-testid="invitation-email-popup-input">
 						${this.#getInput().render()}
 					</div>
 				</div>
@@ -119,6 +143,9 @@ export class InviteEmailPopup
 			state: ButtonState.DISABLED,
 			style: AirButtonStyle.FILLED,
 			useAirDesign: true,
+			dataset: {
+				testid: 'invitation-email-popup-send-button',
+			},
 			onclick: () => {
 				if (this.#sendButton.getState() === ButtonState.WAITING)
 				{
@@ -140,10 +167,16 @@ export class InviteEmailPopup
 							EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
 						}
 
+						const hasFiredUsers = response.data?.firedUserList?.length > 0;
+						if (hasFiredUsers)
+						{
+							this.#getPopup().getFocusTrap()?.setRestoreFocus(false);
+						}
+
 						this.#getPopup().close();
 						this.#sendButton.setState(null);
 
-						if (response.data?.firedUserList && response.data?.firedUserList.length > 0)
+						if (hasFiredUsers)
 						{
 							(new RestoreFiredUsersPopup({
 								userList: response.data.firedUserList,
@@ -151,11 +184,16 @@ export class InviteEmailPopup
 								transport: this.#transport,
 								departmentIds,
 								workgroupIds,
+								restoreFocusElement: this.#initiator,
 							})).show();
 						}
 					})
 					.catch(() => {
 						this.#sendButton.setState(null);
+						FocusNavigator.focusTarget(
+							this.#getInput().getTagSelector().getTextBox(),
+							{ focusVisible: true },
+						);
 					});
 			},
 		});
@@ -170,6 +208,9 @@ export class InviteEmailPopup
 			text: Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL'),
 			useAirDesign: true,
 			style: AirButtonStyle.OUTLINE,
+			dataset: {
+				testid: 'invitation-email-popup-cancel-button',
+			},
 			onclick: () => this.#getPopup().close(),
 		});
 	}

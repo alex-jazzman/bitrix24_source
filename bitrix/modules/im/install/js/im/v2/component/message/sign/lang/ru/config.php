@@ -50,6 +50,14 @@ $MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_SIGNED_EMPLOYEE_TITLE"] = "Документ �
 $MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_SIGNED_EMPLOYEE_DESCRIPTION"] = "Вы подписали и отправили документ #DOCUMENT_NAME#. Когда компания завершит работу с документом, вы получите уведомление";
 $MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_SIGNED_EMPLOYEE_BUTTON_TEXT"] = "Открыть документ";
 
+$MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE"] = "Документ получен";
+$MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION"] = "#USER_LINK# получил(а) документ #DOCUMENT_NAME#. Когда компания завершит работу с документом, вы получите уведомление";
+$MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT"] = "Открыть документ";
+
+$MESS["IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE"] = "Документ подписан";
+$MESS["IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан и доступен в вашем профиле в разделе Мои документы. #USER_LINK# получил(а) подписанный документ";
+$MESS["IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT"] = "Открыть документ";
+
 $MESS["IM_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_TITLE"] = "Документ отправлен на подпись";
 $MESS["IM_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION"] = "Документ #DOCUMENT_NAME#. отправлен на подпись. Когда документ подпишут все стороны, он появится в файлах коллабы";
 
@@ -85,6 +93,8 @@ $MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_DONE_EMPLOYEE_BUTTON_TEXT"] = "Открыть
 
 $MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_DONE_COMPANY_TITLE"] = "Документ утверждён";
 $MESS["IM_MESSAGE_SIGN_BY_EMPLOYEE_DONE_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# от сотрудника #INITIATOR_LINK# утверждён и находится в Сейфе компании";
+
+$MESS["IM_MESSAGE_SIGN_USER_MESSAGE_HEADER"] = "Сообщение по документу";
 
 $MESS["IM_MESSAGE_SIGN_REFUSED_COMPANY_TITLE"] = "Отказ от подписания";
 $MESS["IM_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# не подписан";
@@ -130,6 +140,26 @@ $MESS["IM_MESSAGE_SIGN_DOCUMENT_CANCELLED_TITLE"] = "Подписание док
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_CANCELLED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписания";
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_CANCELLED_BUTTON_TEXT"] = "К процессу подписания";
 
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_TITLE"] = "Документ аннулирован";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_DESCRIPTION"] = "#INITIATOR_LINK# аннулировал ваше подписание документа #DOCUMENT_NAME#";
+
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_TITLE_PLURAL_0"] = "Подписание аннулировано";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_TITLE_PLURAL_1"] = "Подписания аннулированы";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_TITLE_PLURAL_2"] = "Подписания аннулированы";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_DESCRIPTION_PLURAL_0"] = "#INITIATOR_LINK# аннулировал подписание документа #DOCUMENT_NAME#";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_DESCRIPTION_PLURAL_1"] = "#INITIATOR_LINK# аннулировал #COUNT# подписания документа #DOCUMENT_NAME#";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_DESCRIPTION_PLURAL_2"] = "#INITIATOR_LINK# аннулировал #COUNT# подписаний документа #DOCUMENT_NAME#";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_BUTTON_TEXT"] = "К процессу подписания";
+
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_TITLE"] = "Аннулирование документа отменено";
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_DESCRIPTION"] = "#INITIATOR_LINK# отменил аннулирование вашего подписания для документа #DOCUMENT_NAME#. Отметка «Аннулировано» снята, статус документа снова «Подписано»";
+
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_TITLE"] = "Аннулирование отменено";
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_DESCRIPTION_PLURAL_0"] = "#INITIATOR_LINK# снял отметку «Аннулировано» с подписания для документа #DOCUMENT_NAME#. Статус подписания снова «Подписано»";
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_DESCRIPTION_PLURAL_1"] = "#INITIATOR_LINK# снял #COUNT# отметки «Аннулировано» для документа #DOCUMENT_NAME#. Статус подписаний снова «Подписано»";
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_DESCRIPTION_PLURAL_2"] = "#INITIATOR_LINK# снял #COUNT# отметок «Аннулировано» для документа #DOCUMENT_NAME#. Статус подписаний снова «Подписано»";
+$MESS["IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_BUTTON_TEXT"] = "К процессу подписания";
+
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_TITLE"] = "Подписание документа отменено";
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_DESCRIPTION"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
@@ -152,5 +182,9 @@ $MESS["IM_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_BUTTON_TEXT"] = "К процесс
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_REPEAT_TITLE"] = "Подпишите документ повторно";
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_REPEAT_DESCRIPTION"] = "Некоторые сотрудники не смогли подписать документ #DOCUMENT_NAME#. Подпишите документ ещё раз, после этого он снова будет отправлен сотрудникам";
 $MESS["IM_MESSAGE_SIGN_DOCUMENT_REPEAT_BUTTON_TEXT"] = "Подписать повторно";
+
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_TITLE"] = "Не удалось подготовить документ к подписанию";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписания";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_BUTTON_TEXT"] = "К процессу подписания";
 
 $MESS["IM_MESSAGE_SIGN_SIDEPANEL_BTN_SIGN"] = "Подпись";

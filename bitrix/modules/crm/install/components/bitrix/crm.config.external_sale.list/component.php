@@ -29,6 +29,10 @@ if ($arParams["PATH_TO_SYNC"] == '')
 $arResult["FatalErrorMessage"] = "";
 $arResult["ErrorMessage"] = "";
 
+$syncLinkAttributes = ($arParams['IS_SETTINGS_HUB'] ?? null) === true
+	? ' data-slider-ignore-autobinding="true"'
+	: '';
+
 $arResult["PATH_TO_INDEX"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_INDEX"], array());
 $arResult["PATH_TO_EDIT"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_EDIT"], array("id" => 0));
 
@@ -136,18 +140,23 @@ if ($arResult["FatalErrorMessage"] == '')
 			"MESSAGE" => "",
 		);
 		if (intval($arRecord["MODIFICATION_LABEL"]) == 0)
-			$aCols["MESSAGE"] .= '<font class="errortext">'.GetMessage("BPWC_WLC_NEED_FIRST_SYNC1").'</font><br /><a href="'.$path2Sync.'" target="_self">'.GetMessage("BPWC_WLC_NEED_FIRST_SYNC1_DO").'</a><br />';
+		{
+			$aCols['MESSAGE'] .= '<font class="errortext">' . GetMessage('BPWC_WLC_NEED_FIRST_SYNC1')
+				. '</font><br /><a href="' . htmlspecialcharsbx($path2Sync) . '" target="_self"'
+				. ' data-testid="crm-config-external-sale-list-first-sync-link-' . (int)$arRecord['ID'] . '"'
+				. $syncLinkAttributes . '>' . GetMessage('BPWC_WLC_NEED_FIRST_SYNC1_DO') . '</a><br />';
+		}
 		if ($arRecord["LAST_STATUS"] != "" && mb_strtolower(mb_substr($arRecord["LAST_STATUS"], 0, mb_strlen("success"))) != "success")
 			$aCols["MESSAGE"] .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC3").$arRecord["LAST_STATUS"];
 		if ($aCols["MESSAGE"] == "")
 			$aCols["MESSAGE"] .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC2");
 
 		$aActions = array(
-			array("ICONCLASS"=>"", "DEFAULT" => false, "TEXT"=>GetMessage("BPWC_WLC_SYNC"), "ONCLICK"=>"window.location='".$path2Sync."';"),
+			array("ICONCLASS"=>"", "DEFAULT" => false, "TEXT"=>GetMessage("BPWC_WLC_SYNC"), "ONCLICK"=>"window.location='".CUtil::JSEscape($path2Sync)."';"),
 			array("SEPARATOR"=>true),
 			array("ICONCLASS"=>"", "DEFAULT" => false, "TEXT"=>GetMessage("BPWC_WLC_CHECK"), "ONCLICK"=>"window.location='".$APPLICATION->GetCurPageParam("check_id=".$arRecord["ID"], array("sessid", "check_id", "delete_id", "sync_id"))."';"),
 			array("SEPARATOR"=>true),
-			array("ICONCLASS"=>"edit", "DEFAULT" => true, "TEXT"=>GetMessage("BPWC_WLC_NOT_DETAIL"), "ONCLICK"=>"window.location='".$path2Edit."';"),
+			array("ICONCLASS"=>"edit", "DEFAULT" => true, "TEXT"=>GetMessage("BPWC_WLC_NOT_DETAIL"), "ONCLICK"=>"window.location='".CUtil::JSEscape($path2Edit)."';"),
 			array("ICONCLASS"=>"delete", "TEXT"=>GetMessage("JHGFDC_STOP"), "ONCLICK"=>"if(confirm('".GetMessage("JHGFDC_STOP_ALT")."')) window.location='".$APPLICATION->GetCurPageParam("delete_id=".$arRecord["ID"]."&".bitrix_sessid_get(), array("sessid", "delete_id", "check_id", "sync_id"))."';")
 		);
 

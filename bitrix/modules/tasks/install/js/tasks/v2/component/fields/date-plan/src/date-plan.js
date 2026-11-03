@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { Outline } from 'ui.icon-set.api.core';
 
 import { FieldList } from 'tasks.v2.component.elements.field-list';
@@ -57,6 +58,9 @@ export const DatePlan = {
 					return [{
 						title: datePlanMeta.title,
 						component: DatePlanContent,
+						props: {
+							isSheetShown: this.isSheetShown,
+						},
 					}];
 				}
 
@@ -87,6 +91,9 @@ export const DatePlan = {
 				return [{
 					title: datePlanMeta.title,
 					component: DatePlanContent,
+					props: {
+						isSheetShown: this.isSheetShown,
+					},
 				}];
 			}
 
@@ -120,14 +127,39 @@ export const DatePlan = {
 		{
 			return !this.task.rights.datePlan;
 		},
+		dependsOnSubTasks(): boolean
+		{
+			return !this.isTemplate && Boolean(this.task.matchesSubTasksTime);
+		},
+		isEditActive(): boolean
+		{
+			return !this.readonly && (!this.isEmpty || this.dependsOnSubTasks);
+		},
 	},
 	methods: {
-		handleClick(): void
+		handleClick(event: MouseEvent): void
 		{
 			if (!this.readonly)
 			{
+				this.getOpener(event)?.focus({ preventScroll: true });
 				this.setSheetShown(true);
 			}
+		},
+		getOpener(event: MouseEvent): ?HTMLElement
+		{
+			if (Type.isElementNode(event.target))
+			{
+				const eventTrigger = event.target.closest('button, [role="button"]');
+				if (eventTrigger && this.$refs.container?.contains(eventTrigger))
+				{
+					return eventTrigger;
+				}
+			}
+
+			return this.$refs.editButton?.$el
+				?? this.$refs.field?.querySelector('button, [role="button"]')
+				?? null
+			;
 		},
 		setSheetShown(isShown: boolean): void
 		{
@@ -136,17 +168,25 @@ export const DatePlan = {
 	},
 	template: `
 		<div
+			ref="container"
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
 			<FieldHoverButton
-				v-if="!readonly && !isEmpty"
+				v-if="isEditActive"
+				ref="editButton"
 				:icon="Outline.EDIT_L"
-				:isVisible="isHovered"
+				:isVisible="isHovered || isSheetShown"
+				:ariaLabel="loc('TASKS_V2_DATE_PLAN_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isSheetShown"
+				data-testid="tasks-date-plan-edit-btn"
 				@click="handleClick"
 			/>
 			<div
+				ref="field"
 				class="tasks-field-date-plan"
+				data-testid="tasks-date-plan"
 				:class="{ '--readonly': readonly }"
 				:data-task-id="taskId"
 				:data-task-field-id="datePlanMeta.id"

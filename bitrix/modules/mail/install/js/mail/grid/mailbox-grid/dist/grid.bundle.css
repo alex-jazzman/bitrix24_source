@@ -51,6 +51,15 @@
 	gap: 7px;
 }
 
+.mailbox-grid_last-sync-status-container {
+	display: flex;
+	gap: 7px;
+}
+
+.mailbox-grid_last-sync-status-container[hidden] {
+	display: none;
+}
+
 .mailbox-grid_last-sync-button {
 	background-color: var(--ui-color-gray-50);
 	height: 20px;
@@ -166,6 +175,13 @@
 	background-size: 75%;
 	background-position: center;
 	background-repeat: no-repeat;
+}
+
+/* The icons of the other services come with ui.mail.provider-showcase, which the page loads next to
+   this grid. Our own mail hosting is hidden from that showcase, so its icon is drawn here, off the
+   same file the service row is shown by elsewhere. */
+.mail-provider-mailhost-img {
+	background-image: url('/bitrix/images/mail/mailservice-icon/post-mailhost-icon.svg');
 }
 
 .mailbox-grid_action-field-container

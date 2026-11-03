@@ -1,5 +1,6 @@
 import { EventEmitter } from 'main.core.events';
 import { EventType } from 'sale.payment-pay.const';
+import { UserConsentPopupAccessibility } from 'sale.user-consent-a11y';
 
 export class UserConsent
 {
@@ -84,6 +85,10 @@ export class UserConsent
 	askUserToPerform(callback): void
 	{
 		this.setCallback(callback);
+
+		// the consent dialog is opened by the main module, and only this side knows what was pressed
+		UserConsentPopupAccessibility.setInitiator(document.activeElement);
+
 		if (!this.isAvailable())
 		{
 			this.runCallback();

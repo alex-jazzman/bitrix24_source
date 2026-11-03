@@ -1,4 +1,6 @@
 import { Tag } from 'main.core';
+import { type Counter } from 'ui.cnt';
+
 import { BaseTool } from './base-tool';
 
 export class BaseMainTool extends BaseTool
@@ -6,13 +8,16 @@ export class BaseMainTool extends BaseTool
 	getLayout(): HTMLElement
 	{
 		return this.cache.remember('layout', () => {
+			const titleId = `intranet-avatar-widget-main-tool-${this.getId()}-title`;
+
 			return Tag.render`
-				<div data-testid="bx-avatar-widget-main-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-main-tool__wrapper">
-					<div class="intranet-avatar-widget-main-tool-icon__wrapper">
-						${this.getIconElement()}
-						${this.#getCounterWrapper()}
-					</div>
-					<div class="intranet-avatar-widget-main-tool__title">
+				<div
+					data-testid="bx-avatar-widget-main-tool-${this.getId()}"
+					class="intranet-avatar-widget-main-tool__wrapper"
+					onclick="${this.#onWrapperClick.bind(this)}"
+				>
+					${this.getButton()}
+					<div id="${titleId}" class="intranet-avatar-widget-main-tool__title">
 						${this.getTitle()}
 					</div>
 				</div>
@@ -20,10 +25,36 @@ export class BaseMainTool extends BaseTool
 		});
 	}
 
+	#onWrapperClick(event: MouseEvent): void
+	{
+		const button = this.getButton();
+		if (button.contains(event.target))
+		{
+			return;
+		}
+
+		button.click();
+	}
+
+	getButton(): HTMLElement
+	{
+		return this.cache.remember('button', () => {
+			const titleId = `intranet-avatar-widget-main-tool-${this.getId()}-title`;
+			const counterId = `intranet-avatar-widget-main-tool-${this.getId()}-counter`;
+
+			return Tag.render`
+				<button type="button" aria-labelledby="${titleId} ${counterId}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-main-tool-icon__wrapper">
+					${this.getIconElement()}
+					${this.#getCounterWrapper(counterId)}
+				</button>
+			`;
+		});
+	}
+
 	getIconElement(): HTMLElement
 	{
 		return this.cache.remember('icon', () => {
-			return Tag.render`<i class="ui-icon-set ${this.getIconClass()} intranet-avatar-widget-main-tool__icon"/>`;
+			return Tag.render`<i aria-hidden="true" class="ui-icon-set ${this.getIconClass()} intranet-avatar-widget-main-tool__icon"/>`;
 		});
 	}
 
@@ -37,13 +68,13 @@ export class BaseMainTool extends BaseTool
 		return '';
 	}
 
-	#getCounterWrapper(): ?HTMLElement
+	#getCounterWrapper(id: string): ?HTMLElement
 	{
 		return this.cache.remember('counterWrapper', () => {
 			const counter = this.getCounter();
 
 			return Tag.render`
-				<div class="intranet-avatar-widget-main-tool__counter-wrapper">
+				<div id="${id}" class="intranet-avatar-widget-main-tool__counter-wrapper">
 					${counter?.render()}
 				</div>
 			`;

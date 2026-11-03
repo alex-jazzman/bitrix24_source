@@ -20,3 +20,27 @@
 	font-weight: var(--im-font-weight-medium);
 	color: var(--im-comments-header-follow__font-color);
 }
+
+/* Follow pill: spacing to the icons is set by the base header, so drop margin-right. */
+.bx-im-comments-header-follow__container.--air {
+	height: auto;
+	margin-right: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-3xs) var(--ui-space-inset-3xs) var(--ui-space-inset-xs2);
+	border: 1px solid var(--ui-color-base-7);
+	/* --ui-border-radius-4xl (32px) is missing from ui.design-tokens.css, so provide a fallback */
+	border-radius: var(--ui-border-radius-4xl, 32px);
+}
+
+.bx-im-comments-header-follow__container.--air .bx-im-comments-header-follow__text {
+	font-size: var(--ui-font-size-xs);
+	line-height: 15px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-3);
+}
+
+/* Switcher root is an inline <a> wrapping an inline-block .ui-switcher; the
+   inline box leaves a baseline gap that lifts the toggle. display:flex drops
+   the baseline so the <a> matches the switcher height and centers on the text. */
+.bx-im-comments-header-follow__container.--air .bx-im-comments-header-follow__switcher {
+	display: flex;
+}

@@ -36,14 +36,20 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 
 			this.isMatchWorkTime = isMatchWorkTime;
 
-			this.startDatePlan = startDatePlan ?? null;
-			this.endDatePlan = endDatePlan ?? null;
+			this.startDatePlan = Number.isFinite(startDatePlan) ? startDatePlan : null;
+			this.endDatePlan = Number.isFinite(endDatePlan) ? endDatePlan : null;
 			this.duration = this.calculateDuration();
+			this.durationTypeValue = null;
 			this.onFixDate = onFixDate;
 		}
 
 		fixDate(date)
 		{
+			if (!Number.isFinite(date))
+			{
+				return date;
+			}
+
 			if (this.isMatchWorkTime && !this.calendar.isWorkTime(new Date(date * 1000)))
 			{
 				this.onFixDate?.();
@@ -59,6 +65,11 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 			if (this.startDatePlan === null || this.endDatePlan === null)
 			{
 				return 0;
+			}
+
+			if (!Number.isFinite(this.startDatePlan) || !Number.isFinite(this.endDatePlan))
+			{
+				return null;
 			}
 
 			if (this.isMatchWorkTime)
@@ -95,6 +106,11 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 
 		get durationType()
 		{
+			if (this.duration === 0 && this.durationTypeValue)
+			{
+				return this.durationTypeValue;
+			}
+
 			return this.getDurationTypeByDuration(this.duration);
 		}
 
@@ -105,27 +121,60 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 
 		setIsMatchWorkTime(isMatchWorkTime)
 		{
+			const oldDurationType = this.durationType;
+			const oldDurationValue = this.durationValue;
+			const newDuration = oldDurationValue === null
+				? null
+				: oldDurationValue * this.getMultiplier(oldDurationType, isMatchWorkTime);
+
+			if (
+				oldDurationValue !== null
+				&& (!Number.isFinite(newDuration) || newDuration < 0 || newDuration >= MAX_DURATION)
+			)
+			{
+				return;
+			}
+
 			this.isMatchWorkTime = isMatchWorkTime;
+
+			if (
+				!Number.isFinite(this.startDatePlan)
+				|| !Number.isFinite(this.endDatePlan)
+				|| oldDurationValue === null
+			)
+			{
+				return;
+			}
+
+			if (oldDurationValue === 0)
+			{
+				this.updateStartDatePlan(this.startDatePlan);
+				this.duration = 0;
+				this.durationTypeValue = oldDurationType;
+
+				return;
+			}
+
+			this.updateStartDatePlan(this.startDatePlan);
+			this.duration = newDuration;
+
 			if (this.isMatchWorkTime)
 			{
-				const oldDurationValue = this.durationValue;
-				const oldDurationType = this.durationType;
-				this.updateStartDatePlan(this.startDatePlan);
-				if (this.endDatePlan)
-				{
-					this.updateDurationType(oldDurationType);
-					this.updateDurationValue(oldDurationValue);
-				}
+				this.endDatePlan = Math.floor(this.calendar.calculateEndDate(
+					new Date(this.startDatePlan * 1000),
+					this.duration * 1000,
+				) / 1000);
+				this.onFixDate?.();
 			}
 			else
 			{
-				this.endDatePlan = this.startDatePlan + this.durationValue * this.getMultiplier(this.durationType);
+				this.endDatePlan = this.startDatePlan + this.duration;
 			}
 		}
 
 		updateStartDatePlan(newStartDatePlan)
 		{
-			if (newStartDatePlan && (!Type.isNumber(newStartDatePlan)))
+			if (newStartDatePlan !== null && newStartDatePlan !== undefined && !Number.isFinite(newStartDatePlan))
 			{
 				return;
 			}
@@ -162,7 +211,7 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 
 		updateEndDatePlan(newEndDatePlan)
 		{
-			if (newEndDatePlan && !Type.isNumber(newEndDatePlan))
+			if (newEndDatePlan !== null && newEndDatePlan !== undefined && !Number.isFinite(newEndDatePlan))
 			{
 				return;
 			}
@@ -216,6 +265,11 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 			if (!newDurationType || !validDurationTypes.includes(newDurationType))
 			{
 				return;
+			}
+
+			if (this.duration === 0)
+			{
+				this.durationTypeValue = newDurationType;
 			}
 
 			if (!this.endDatePlan || !this.startDatePlan)
@@ -292,12 +346,12 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 			return DatesResolver.durationType.minutes;
 		}
 
-		getMultiplier(durationType)
+		getMultiplier(durationType, isMatchWorkTime = this.isMatchWorkTime)
 		{
 			switch (durationType)
 			{
 				case DatesResolver.durationType.days:
-					return this.isMatchWorkTime ? Math.floor(this.calendar.getWorkDayDuration() / 1000) : ONE_DAY_IN_SECONDS;
+					return isMatchWorkTime ? Math.floor(this.calendar.getWorkDayDuration() / 1000) : ONE_DAY_IN_SECONDS;
 
 				case DatesResolver.durationType.hours:
 					return ONE_HOUR_IN_SECONDS;

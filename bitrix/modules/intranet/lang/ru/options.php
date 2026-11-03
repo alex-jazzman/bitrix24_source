@@ -144,5 +144,9 @@ $MESS["INTR_OPTION_MAIL_ALLOW_YES"] = "да";
 $MESS["INTR_OPTION_MAIL_CHECK_PERIOD"] = "Периодичность проверки в минутах";
 $MESS["INTR_OPT_OTHER"] = "Другие настройки";
 $MESS["INTR_OPTION_BLOCK_NEW_USER_LF"] = "Выключить добавление в живую ленту записи о принятии на работу нового сотрудника";
+$MESS['INTR_OPTION_SHAREPOINT_ALLOWLIST'] = 'Разрешённые серверы SharePoint';
+$MESS['INTR_OPTION_SHAREPOINT_ALLOWLIST_ERROR'] = 'Не удалось сохранить список разрешённых серверов: #ERROR#';
+$MESS['INTR_OPTION_SHAREPOINT_ALLOWLIST_HINT'] = 'Укажите по одному адресу в формате scheme://host[:port] в каждой строке.';
 $MESS["INTR_OPTION_VACATION_TYPES"] = "Какие типы отсутствий считаются отпуском";
-?>
+$MESS['INTR_SETTINGS_SHAREPOINT'] = 'SharePoint';
+$MESS['INTR_SETTINGS_SHAREPOINT_TITLE'] = 'Настройки подключения к SharePoint';

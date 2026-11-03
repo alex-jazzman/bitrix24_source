@@ -28,7 +28,8 @@ $component = $this->getComponent();
 			<?php else: ?>
 				<textarea
 					<?= $component->getHtmlBuilder()->buildTagAttributes($value['attrList']) ?>
-				><?= HtmlFilter::encode($value['attrList']['value']) ?></textarea>
+				>
+<?= HtmlFilter::encode($value['attrList']['value']) ?></textarea>
 			<?php endif; ?>
 		</span>
 		<?php

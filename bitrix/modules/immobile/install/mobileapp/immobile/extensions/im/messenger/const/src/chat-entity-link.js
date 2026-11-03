@@ -12,6 +12,7 @@ jn.define('im/messenger/const/src/chat-entity-link', (require, exports, module) 
 		lead: 'LEAD',
 		dynamic: 'DYNAMIC',
 		company: 'COMPANY',
+		vibecodeApp: 'VIBECODE_APP',
 	});
 
 	module.exports = {

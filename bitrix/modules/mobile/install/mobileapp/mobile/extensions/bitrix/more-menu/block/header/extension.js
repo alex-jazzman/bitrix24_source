@@ -9,8 +9,18 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 	const { Card, CardDesign, CardCorner } = require('ui-system/layout/card');
 	const { PropTypes } = require('utils/validation');
 	const { createTestIdGenerator } = require('utils/test');
+	const { MoreMenuAnalytics } = require('more-menu/analytics');
 
-	const { WorkTime } = require('more-menu/block/header/worktime');
+	let WorkdayPanel;
+	try
+	{
+		({ WorkdayPanel } = require('timeman/layout/workday-panel'));
+	}
+	catch (error)
+	{
+		console.error(error);
+	}
+
 	const { CheckIn } = require('more-menu/block/header/check-in');
 	const { UserCard } = require('more-menu/block/header/user-card');
 
@@ -23,14 +33,12 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 		 * @param {object} props
 		 * @param {string} props.testId
 		 * @param {object} props.currentShift
-		 * @param {object} props.workTime
 		 * @param {number} props.userId
 		 * @param {object} props.currentTheme
 		 * @param {boolean} props.canOpenProfile
 		 * @param {boolean} props.canEditProfile
 		 * @param {boolean} props.canUseTimeMan
 		 * @param {boolean} props.canUseCheckIn
-		 * @param {boolean} props.canManageWorkTimeOnMobile
 		 */
 		constructor(props)
 		{
@@ -39,6 +47,56 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 			this.getTestId = createTestIdGenerator({
 				prefix: props.testId,
 			});
+
+			this.handleTabsSelected = null;
+
+			this.handleWorkdayPanelMount = this.handleWorkdayPanelMount.bind(this);
+			this.handleWorkdayPanelUnmount = this.handleWorkdayPanelUnmount.bind(this);
+			this.handleStartWorkDay = this.handleStartWorkDay.bind(this);
+			this.handleResumeWorkDay = this.handleResumeWorkDay.bind(this);
+			this.handlePauseWorkDay = this.handlePauseWorkDay.bind(this);
+			this.handleFinishWorkDay = this.handleFinishWorkDay.bind(this);
+		}
+
+		handleStartWorkDay()
+		{
+			MoreMenuAnalytics.sendStartWorkDay();
+		}
+
+		handleResumeWorkDay()
+		{
+			MoreMenuAnalytics.sendResumeWorkDay();
+		}
+
+		handlePauseWorkDay()
+		{
+			MoreMenuAnalytics.sendPauseWorkDay();
+		}
+
+		handleFinishWorkDay()
+		{
+			MoreMenuAnalytics.sendFinishWorkDay();
+		}
+
+		handleWorkdayPanelMount({ refetch })
+		{
+			this.handleTabsSelected = (tabId) => {
+				if (tabId === 'menu')
+				{
+					refetch();
+				}
+			};
+
+			BX.addCustomEvent('onTabsSelected', this.handleTabsSelected);
+		}
+
+		handleWorkdayPanelUnmount()
+		{
+			if (this.handleTabsSelected)
+			{
+				BX.removeCustomEvent('onTabsSelected', this.handleTabsSelected);
+				this.handleTabsSelected = null;
+			}
 		}
 
 		render()
@@ -49,9 +107,7 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 				canUseTimeMan,
 				currentShift,
 				userId,
-				workTime,
 				currentTheme,
-				canManageWorkTimeOnMobile,
 				isNewCheckInEnabled,
 			} = this.props;
 
@@ -82,10 +138,14 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 						border: true,
 						design: CardDesign.PRIMARY,
 					},
-					canUseTimeMan && new WorkTime({
+					canUseTimeMan && WorkdayPanel && WorkdayPanel({
 						testId: this.getTestId('work-time'),
-						workTime,
-						canManageWorkTimeOnMobile,
+						onComponentMount: this.handleWorkdayPanelMount,
+						onComponentWillUnmount: this.handleWorkdayPanelUnmount,
+						onStartWorkDay: this.handleStartWorkDay,
+						onResumeWorkDay: this.handleResumeWorkDay,
+						onPauseWorkDay: this.handlePauseWorkDay,
+						onFinishWorkDay: this.handleFinishWorkDay,
 					}),
 					this.shouldShowCheckIn() && canUseTimeMan && this.renderSeparator(),
 					this.shouldShowCheckIn() && new CheckIn({
@@ -122,14 +182,12 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 	MoreMenuHeader.propTypes = {
 		testId: PropTypes.string.isRequired,
 		currentShift: PropTypes.object,
-		workTime: PropTypes.object,
 		userId: PropTypes.number,
 		currentTheme: PropTypes.object,
 
 		canEditProfile: PropTypes.bool,
 		canUseTimeMan: PropTypes.bool,
 		canUseCheckIn: PropTypes.bool,
-		canManageWorkTimeOnMobile: PropTypes.bool,
 	};
 
 	module.exports = {

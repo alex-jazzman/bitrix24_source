@@ -39,8 +39,9 @@ $arParams['PATH_TO_VAT_LIST'] = CrmCheckPath('PATH_TO_VAT_LIST', $arParams['PATH
 $arParams['PATH_TO_VAT_SHOW'] = CrmCheckPath('PATH_TO_VAT_SHOW', $arParams['PATH_TO_VAT_SHOW'], '?vat_id=#vat_id#&show');
 $arParams['PATH_TO_VAT_EDIT'] = CrmCheckPath('PATH_TO_VAT_EDIT', $arParams['PATH_TO_VAT_EDIT'], '?vat_id=#vat_id#&edit');
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 $vatID = isset($arParams['VAT_ID']) ? intval($arParams['VAT_ID']) : 0;
-if($vatID <= 0)
+if (!$isSettingsHub && $vatID <= 0)
 {
 	$vatIDParName = isset($arParams['VAT_ID_PAR_NAME']) ? intval($arParams['VAT_ID_PAR_NAME']) : 0;
 
@@ -83,12 +84,15 @@ if(check_bitrix_sessid())
 {
 	if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])))
 	{
-		$vatID = (int)($_POST['vat_id'] ?? 0);
-
+		if (!$isSettingsHub)
+		{
+			$vatID = (int)($_POST['vat_id'] ?? 0);
+			if ($vatID <= 0 && isset($_POST['ID']))
+			{
+				$vatID = intval(trim($_POST['ID']));
+			}
+		}
 		$fields = array();
-
-		if( $vatID <= 0 && isset($_POST['ID']))
-			$vatID = intval(trim($_POST['ID']));
 
 		if(isset($_POST['SORT']))
 		{

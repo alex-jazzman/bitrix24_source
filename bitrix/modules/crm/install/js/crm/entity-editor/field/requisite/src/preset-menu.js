@@ -50,7 +50,9 @@ export class PresetMenu extends EventEmitter
 			);
 		}
 
-		MenuManager.show(
+		// Scroll keeping and the keyboard-only focus trap both live in the helper: this extension
+		// already declares ui.entity-editor among its dependencies.
+		BX.UI.EntityEditorControl.showMenuKeepingScroll(
 			this.menuId,
 			bindElement,
 			menu,

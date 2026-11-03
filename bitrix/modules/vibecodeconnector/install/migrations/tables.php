@@ -1,14 +1,19 @@
 <?php
 
 $migration = \Bitrix\Main\UpdateSystem\Migration::getInstance();
+$context = $migration->context();
 
-$migration->table('b_vibecodeconnector_catalog')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+$catalogTableName = 'b_vibecodeconnector_catalog';
+$catalogTable = $migration->table($catalogTableName);
+$catalogTable->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
 	$columns->int('ID')->notNull()->autoincrement();
 	$columns->int('ICON_FILE_ID');
 	$columns->varchar('TITLE', 255)->notNull();
 	$columns->int('CHAT_ID');
+	$columns->int('MESSENGER_CHAT_ID');
 	$columns->varchar('EXTERNAL_ID', 255);
+	$columns->char('APP_IDENTITY_HASH', 64);
 	$columns->text('DESCRIPTION');
 	$columns->varchar('TYPE', 50)->notNull();
 	$columns->varchar('EDIT_URL', 512);
@@ -20,12 +25,24 @@ $migration->table('b_vibecodeconnector_catalog')->create(function (\Bitrix\Main\
 	$columns->varchar('COLOR', 7)->notNull();
 	$columns->varchar('PAIRING_ISS', 255);
 	$columns->datetime('DEACTIVATED_AT');
+	$columns->int('LAST_RELEASE_VERSION');
+	$columns->int('APP_CHAT_SYNC_REVISION')->notNull()->default('0');
+	$columns->int('APP_CHAT_SYNCED_REVISION')->notNull()->default('0');
+	$columns->int('APP_CHAT_TEARDOWN_PENDING');
+	$columns->int('APP_CHAT_SYNC_PENDING');
+	$columns->int('APP_CHAT_WELCOME_MESSAGE_ID');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('ix_vcc_catalog_owner', ['OWNER_ID']);
 	$table->addIndex('ix_vcc_catalog_access_type', ['ACCESS_TYPE']);
 	$table->addIndex('ix_vcc_catalog_owner_access_type', ['OWNER_ID', 'ACCESS_TYPE']);
 	$table->addIndex('ix_vcc_catalog_created_at', ['CREATED_AT']);
 	$table->addIndex('ix_vcc_catalog_pairing_iss', ['PAIRING_ISS']);
+	$table->addIndex('ix_vcc_catalog_external_id', ['EXTERNAL_ID']);
+	$table->addIndex('ix_vibecodeconnector_catalog_view_url', ['VIEW_URL(191)']);
+	$table->addUniqueIndex('ux_vcc_catalog_app_identity', ['APP_IDENTITY_HASH']);
+	$table->addIndex('ix_vcc_catalog_messenger_chat_id', ['MESSENGER_CHAT_ID']);
+	$table->addIndex('ix_vcc_catalog_chat_teardown', ['APP_CHAT_TEARDOWN_PENDING', 'ID']);
+	$table->addIndex('ix_vcc_catalog_chat_sync_type', ['APP_CHAT_SYNC_PENDING', 'TYPE', 'ID']);
 });
 
 $migration->table('b_vibecodeconnector_catalog_pin')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -37,6 +54,18 @@ $migration->table('b_vibecodeconnector_catalog_pin')->create(function (\Bitrix\M
 	$table->addPrimaryKey('ID');
 	$table->addUniqueIndex('ux_vcc_catalog_pin_user_item', ['USER_ID', 'CATALOG_ITEM_ID']);
 	$table->addIndex('ix_vcc_catalog_pin_user_pinned_at', ['USER_ID', 'PINNED_AT']);
+});
+
+$migration->table('b_vibecodeconnector_catalog_user')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('USER_ID')->notNull();
+	$columns->int('CATALOG_ITEM_ID')->notNull();
+	$columns->datetime('LEFT_AT');
+	$columns->datetime('ARRIVAL_PENDING_AT');
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('ux_vibecodeconnector_catalog_user_user_item', ['USER_ID', 'CATALOG_ITEM_ID']);
+	$table->addIndex('ix_vibecodeconnector_catalog_user_item_left', ['CATALOG_ITEM_ID', 'LEFT_AT']);
 });
 
 $migration->table('b_vibecodeconnector_catalog_last_opened')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -88,6 +117,17 @@ $migration->table('b_vibecodeconnector_catalog_hidden')->create(function (\Bitri
 	$table->addPrimaryKey('ID');
 	$table->addUniqueIndex('ux_vcc_catalog_hidden_user_item', ['USER_ID', 'CATALOG_ITEM_ID']);
 	$table->addIndex('ix_vcc_catalog_hidden_item', ['CATALOG_ITEM_ID']);
+});
+
+$migration->table('b_vibecodeconnector_catalog_favorite')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('USER_ID')->notNull();
+	$columns->int('CATALOG_ITEM_ID')->notNull();
+	$columns->datetime('FAVORITED_AT')->notNull();
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('ux_vcc_catalog_favorite_user_item', ['USER_ID', 'CATALOG_ITEM_ID']);
+	$table->addIndex('ix_vcc_catalog_favorite_item', ['CATALOG_ITEM_ID']);
 });
 
 $migration->table('b_vibecodeconnector_user')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) use ($migration) {

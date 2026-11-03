@@ -12,6 +12,7 @@ return [
 		'im.v2.const',
 		'im.v2.lib.feature',
 		'im.v2.lib.theme',
+		'im.v2.lib.utils',
 		'main.core',
 	],
 	'skip_core' => false,

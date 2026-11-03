@@ -8,11 +8,30 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 	const { MessengerInitRestMethod, DialogType, NavigationTabId, RecentFilterId } = require('im/messenger/const');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { DateHelper } = require('im/messenger/lib/helper');
 	const { RecentRest } = require('im/messenger/provider/rest');
 	const { ShareDialogCache } = require('im/messenger/cache');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
 	const { PaginationState } = require('im/messenger/controller/recent/service/pagination/lib/state');
 	const { ServerLoadUtils } = require('im/messenger/controller/recent/service/server-load/lib/utils');
+
+	// The module default stays off, and that is what bounds the write radius: the forward selector and
+	// the chat selector for an attachment build this service directly, on the section of the main list,
+	// with no filter service and no request context - flipping this constant would enable the pass
+	// there too. The chats tab enables it through `convergenceEnabled` in its config props instead.
+	// Before this constant may be turned on, two things still have to hold: the refresh handler is
+	// guaranteed to process the response of its own request, and the journal of the pass has been read
+	// on an account with open lines, task chats and hidden dialog types - there an absent element means
+	// "invisible for this slice", not "gone".
+	const IS_CONVERGENCE_ENABLED = false;
+
+	// The tab lists none of these types and the server page carries none of them either, so their
+	// rows are never candidates. Mirrors the database filter of the chats tab config.
+	const CONVERGENCE_EXCEPT_DIALOG_TYPES = [DialogType.lines, DialogType.comment, DialogType.tasksTask];
+
+	// With boundary = null the stale set can be the whole section, so the journal keeps only a head
+	// of it; its size travels in the `removed` field of the same record.
+	const CONVERGENCE_LOG_STALE_IDS_LIMIT = 20;
 
 	/**
 	 * @implements {IServerLoadService}
@@ -20,6 +39,16 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 	 */
 	class ChatServerLoadService extends BaseRecentService
 	{
+		/**
+		 * Context each init request went out with, keyed by the response that request produced.
+		 * Convergence keys off it, so it belongs to the response and not to the service: two first-page
+		 * requests overlap as soon as the filter is switched twice, and nothing serializes, dedupes or
+		 * cancels them, so the response of the first lands after the options of the second are built.
+		 *
+		 * @type {WeakMap<object, ServerLoadRequestContext>}
+		 */
+		#requestContextByInitResult = new WeakMap();
+
 		/**
 		 * @param {RecentLocator} recentLocator
 		 * @param {string} serviceId
@@ -64,6 +93,23 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		}
 
 		/**
+		 * Ties the context of a request to the very response it produced, so the convergence
+		 * precondition reads the filter of the page it is given and never the filter of the request
+		 * built last. Called by the owner of the request right before it hands the response over; not
+		 * part of `IServerLoadService`, because only this service keys off the context.
+		 *
+		 * @param {immobileTabChatsLoadResultV2} initResult
+		 * @param {ServerLoadRequestContext|null} context
+		 */
+		bindInitResultContext(initResult, context)
+		{
+			if (Type.isPlainObject(initResult) && Type.isPlainObject(context))
+			{
+				this.#requestContextByInitResult.set(initResult, context);
+			}
+		}
+
+		/**
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
@@ -85,6 +131,14 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		get renderService()
 		{
 			return this.recentLocator.get('render') ?? null;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isConvergenceEnabled()
+		{
+			return this.props.convergenceEnabled ?? IS_CONVERGENCE_ENABLED;
 		}
 
 		/**
@@ -200,7 +254,9 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 			try
 			{
-				await this.processResult(initResult.chatsList, true);
+				const requestContext = this.#requestContextByInitResult.get(initResult) ?? null;
+
+				await this.processResult(initResult.chatsList, true, requestContext);
 				this.setPaginationState(initResult.chatsList);
 			}
 			catch (error)
@@ -212,9 +268,10 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		/**
 		 * @param {immobileTabChatsLoadResultChatsList|imV2RecentChatsResult} recentData
 		 * @param {boolean} [firstPage]
+		 * @param {ServerLoadRequestContext|null} [requestContext] context the page was requested with
 		 * @return {Promise<void>}
 		 */
-		async processResult(recentData, firstPage = false)
+		async processResult(recentData, firstPage = false, requestContext = null)
 		{
 			if (!recentData || !Type.isArray(recentData.items))
 			{
@@ -257,16 +314,235 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 				const section = this.recentLocator.get('recentSection');
 				const dialogIds = modelData.recent.map((item) => String(item.id));
+				// The response asserts membership in this tab's section only: the sections a dialog has
+				// on nested levels and in folders come from sync and pull, so they must survive here.
 				await serviceLocator.get('core').getRepository().recent
 					.ensureSectionForDialogIds(dialogIds, section);
 
 				this.#saveShareDialogCache();
 				this.showLoaderByRestResult(recentData);
+
+				if (firstPage)
+				{
+					await this.#convergeLocalStateWithServerPage(recentData, section, requestContext);
+				}
 			}
 			catch (error)
 			{
 				this.logger.error('processResult: dispatch failed', error);
 			}
+		}
+
+		/**
+		 * Brings the local rows of the responding slice to the state of the first-page response: rows
+		 * the window covers and the response misses are deleted, rows present in the response get its
+		 * pinned flag, and rows the response misses lose theirs. Runs only when the switch is on.
+		 *
+		 * @param {immobileTabChatsLoadResultChatsList|imV2RecentChatsResult} recentData
+		 * @param {string} section
+		 * @param {ServerLoadRequestContext|null} requestContext
+		 * @return {Promise<void>}
+		 */
+		async #convergeLocalStateWithServerPage(recentData, section, requestContext)
+		{
+			if (!this.isConvergenceEnabled)
+			{
+				this.logger.info('recent-convergence', {
+					section,
+					parentChatId: this.recentLocator.get('parentChatId') ?? null,
+					skipped: 'the convergence is disabled',
+				});
+
+				return;
+			}
+
+			const filteredPageReason = this.#getFilteredPageReason(requestContext);
+			if (filteredPageReason)
+			{
+				this.logger.info('recent-convergence', {
+					section,
+					parentChatId: this.recentLocator.get('parentChatId') ?? null,
+					skipped: filteredPageReason,
+				});
+
+				return;
+			}
+
+			if (!Type.isArrayFilled(recentData.items))
+			{
+				return;
+			}
+
+			try
+			{
+				const hasMorePages = Boolean(recentData.hasMorePages || recentData.hasMore);
+				const boundary = hasMorePages ? this.#resolveCursorActivityDate(recentData.items) : null;
+				if (hasMorePages && !boundary)
+				{
+					this.logger.warn('convergeLocalStateWithServerPage: a page with a tail carries no cursor date');
+
+					return;
+				}
+
+				const parentChatId = this.recentLocator.get('parentChatId') ?? null;
+				const repository = serviceLocator.get('core').getRepository().recent;
+				// the read is narrowed to the rows a verdict can be reached about: with a tail the page
+				// says nothing about the section beyond its window, so the whole section is read only
+				// when the server confirmed there is no next page
+				const rows = await repository.getSectionRowStates({
+					section,
+					parentChatId,
+					exceptDialogTypes: CONVERGENCE_EXCEPT_DIALOG_TYPES,
+					boundary,
+					dialogIds: recentData.items.map((item) => String(item.id)),
+				});
+
+				const { staleIds, pinnedIds, unpinnedIds } = this.#splitSectionRows(rows, recentData.items, boundary);
+
+				this.logger.info('recent-convergence', {
+					section,
+					parentChatId,
+					boundary: boundary?.toISOString() ?? null,
+					rows: rows.length,
+					removed: staleIds.length,
+					staleIds: staleIds.slice(0, CONVERGENCE_LOG_STALE_IDS_LIMIT),
+					pinned: pinnedIds.length,
+					unpinned: unpinnedIds.length,
+					convergenceEnabled: this.isConvergenceEnabled,
+				});
+
+				await Promise.all([
+					repository.setPinnedByIds(pinnedIds, true),
+					repository.setPinnedByIds(unpinnedIds, false),
+				]);
+
+				await repository.deleteByIds(staleIds);
+			}
+			catch (error)
+			{
+				this.logger.error('convergeLocalStateWithServerPage failed', error);
+			}
+		}
+
+		/**
+		 * Convergence reads the local slice with no filter applied, so it may only be run against a
+		 * response that covers that whole slice. A filtered page is not such a response: the unread
+		 * filter drops every read chat, pinned ones included, and their absence would be read as "no
+		 * longer pinned" and as a deletion candidate. A page asserts nothing about what it never listed.
+		 *
+		 * @param {ServerLoadRequestContext|null} requestContext
+		 * @return {string|null} why the page is filtered, null when it covers the slice
+		 */
+		#getFilteredPageReason(requestContext)
+		{
+			const requestFilterId = requestContext?.currentFilterId;
+			if (Type.isStringFilled(requestFilterId) && requestFilterId !== RecentFilterId.all)
+			{
+				return `the page was requested with the filter ${requestFilterId}`;
+			}
+
+			// the request may have gone out unfiltered and the filter been applied while it flew
+			if (this.filterService?.hasSelectedFilter())
+			{
+				return 'a filter is applied to the tab';
+			}
+
+			return null;
+		}
+
+		/**
+		 * The window boundary is the cursor of the next page: the activity date of the last item in
+		 * server order, the very one `getRestListOptions` sends back. Not the minimum of the response
+		 * dates - the page comes sorted pinned first, so a pinned chat with old activity would drop
+		 * the boundary below the cursor and pull rows of the next page into the window.
+		 *
+		 * @param {Array<RecentItemData>} items
+		 * @return {Date|null}
+		 */
+		#resolveCursorActivityDate(items)
+		{
+			const cursorItem = ServerLoadUtils.getLastItem(items, this.logger);
+
+			return DateHelper.cast(cursorItem?.date_last_activity ?? cursorItem?.message?.date, null);
+		}
+
+		/**
+		 * @param {Array<{id: string, pinned: boolean, lastActivityDate: Date|null}>} rows
+		 * @param {Array<RecentItemData>} items
+		 * @param {Date|null} boundary
+		 * @return {{staleIds: Array<string>, pinnedIds: Array<string>, unpinnedIds: Array<string>}}
+		 */
+		#splitSectionRows(rows, items, boundary)
+		{
+			const serverIds = new Set();
+			const serverPinnedById = new Map();
+			items.forEach((item) => {
+				const dialogId = String(item.id);
+				serverIds.add(dialogId);
+
+				if (Type.isBoolean(item.pinned))
+				{
+					serverPinnedById.set(dialogId, item.pinned);
+				}
+			});
+
+			const staleIds = [];
+			const pinnedIds = [];
+			const unpinnedIds = [];
+
+			rows.forEach(({ id, pinned, lastActivityDate }) => {
+				if (!serverIds.has(id))
+				{
+					// Every pinned chat is in the first page, so absence from the response asserts
+					// "no longer pinned" - but not "gone": the row may have moved to the next page by
+					// date, and only the window decides whether it still exists.
+					if (pinned)
+					{
+						unpinnedIds.push(id);
+					}
+
+					if (this.#isInsideWindow(lastActivityDate, boundary))
+					{
+						staleIds.push(id);
+					}
+
+					return;
+				}
+
+				if (!serverPinnedById.has(id) || serverPinnedById.get(id) === pinned)
+				{
+					return;
+				}
+
+				if (serverPinnedById.get(id))
+				{
+					pinnedIds.push(id);
+				}
+				else
+				{
+					unpinnedIds.push(id);
+				}
+			});
+
+			return { staleIds, pinnedIds, unpinnedIds };
+		}
+
+		/**
+		 * A row exactly on the boundary stays outside the window: equality is read in favour of
+		 * keeping the row.
+		 *
+		 * @param {Date|null} lastActivityDate
+		 * @param {Date|null} boundary null covers the whole section
+		 * @return {boolean}
+		 */
+		#isInsideWindow(lastActivityDate, boundary)
+		{
+			if (!boundary)
+			{
+				return true;
+			}
+
+			return Boolean(lastActivityDate) && lastActivityDate.getTime() > boundary.getTime();
 		}
 
 		/**

@@ -1,5 +1,5 @@
 import { Dom, Type, Event, Loc, Runtime, Tag, Text } from 'main.core';
-import { Popup } from 'main.popup';
+import { Popup, Menu } from 'main.popup';
 import { Button, CancelButton } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
@@ -7,11 +7,20 @@ import { Condition } from '../condition/condition';
 import { ConditionGroup } from '../condition/condition-group';
 import { Operator } from '../operator/operator';
 import { ConditionContext, SimpleConditionContext } from '../context/condition-context';
-import { serializeConditionValue, isMultiValueOperator } from '../condition/condition-value-serializer';
+import {
+	adaptValueToOperator,
+	isMultiValueOperator,
+	isValuelessOperator,
+	serializeConditionValue,
+} from '../condition/condition-value-serializer';
+import { ConditionFieldSelector } from './condition-field-selector';
+import { ConditionViewMode, normalizeConditionViewMode, renderRemoveIcon } from './condition-view-renderer';
 import type { ConditionSelectorOptions } from './types';
 
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
+
+const OPERATOR_MENU_MAX_HEIGHT = 320;
 
 export class ConditionSelector extends EventEmitter
 {
@@ -30,6 +39,9 @@ export class ConditionSelector extends EventEmitter
 	fieldNode: ?HTMLElement;
 	joinerNode: ?HTMLElement;
 	labelNode: ?HTMLElement;
+	fieldEditorNode: ?HTMLElement;
+	operatorEditorNode: ?HTMLElement;
+	valueEditorNode: ?HTMLElement;
 	valueNode: ?HTMLElement;
 	#valueNode2: ?HTMLElement = null;
 
@@ -37,6 +49,9 @@ export class ConditionSelector extends EventEmitter
 	fieldDialog: ?Object;
 	#selectedField;
 	#customSelectorFn: ?Function = null;
+	#viewMode: string = ConditionViewMode.Legacy;
+	#fieldSelector: ?ConditionFieldSelector = null;
+	#operatorMenu: ?Menu = null;
 
 	constructor(condition, options: ?ConditionSelectorOptions)
 	{
@@ -72,6 +87,7 @@ export class ConditionSelector extends EventEmitter
 			this.#showValuesSelector = options.showValuesSelector ?? true;
 			this.#customSelectorFn = options.customSelectorFn;
 			this.#context = options.context;
+			this.#viewMode = normalizeConditionViewMode(options.viewMode);
 		}
 
 		if (!(this.#context instanceof ConditionContext))
@@ -90,21 +106,38 @@ export class ConditionSelector extends EventEmitter
 		return this.#joiner;
 	}
 
+	setJoiner(joiner: string)
+	{
+		if (joiner !== ConditionGroup.JOINER.And && joiner !== ConditionGroup.JOINER.Or)
+		{
+			return;
+		}
+
+		this.#joiner = joiner;
+		if (this.joinerNode)
+		{
+			this.joinerNode.value = this.#joiner;
+		}
+
+		this.emit('onChange', new BaseEvent({ data: { conditionSelector: this } }));
+	}
+
 	createNode()
+	{
+		if (this.#viewMode === ConditionViewMode.New)
+		{
+			return this.#createNewNode();
+		}
+
+		return this.#createLegacyNode();
+	}
+
+	#createLegacyNode()
 	{
 		const conditionValueNode = this.#createValueNode(
 			serializeConditionValue(this.#condition.operator, this.#condition.value),
 		);
-
-		const conditionValueNode2 = (
-			this.#condition.operator === Operator.BETWEEN
-				? this.#createValueNode(
-					Type.isArrayFilled(this.#condition.value) && this.#condition.value.length > 1
-						? this.#condition.value[1]
-						: '',
-				)
-				: ''
-		);
+		const conditionValueNode2 = this.#createSecondValueNode();
 
 		const {
 			root,
@@ -135,7 +168,7 @@ export class ConditionSelector extends EventEmitter
 					/>
 					${conditionValueNode}
 					${conditionValueNode2}
-					<div class="bizproc-automation-popup-settings__condition-item_draggable">
+					<div class="bizproc-automation-popup-settings__condition-item_draggable" data-testid="bp-condition-drag">
 						<div class="ui-icon-set --more-points"></div>
 					</div>
 					<div
@@ -161,6 +194,174 @@ export class ConditionSelector extends EventEmitter
 		this.bindLabelNode();
 
 		return this.node;
+	}
+
+	#createNewNode()
+	{
+		const conditionValueNode = this.#createValueNode(
+			serializeConditionValue(this.#condition.operator, this.#condition.value),
+		);
+		const conditionValueNode2 = this.#createSecondValueNode();
+		const valueRow = this.#createNewValueRow();
+		const {
+			root,
+			conditionObjectNode,
+			conditionFieldNode,
+			conditionOperatorNode,
+			conditionJoinerNode,
+			fieldEditorNode,
+			operatorEditorNode,
+			labelNode,
+			removeButtonNode,
+		} = Tag.render`
+			<div class="bizproc-condition-row ui-draggable--item" data-testid="bp-condition-row">
+				<input ref="conditionObjectNode" type="hidden" name="${Text.encode(`${this.#fieldPrefix}object[]`)}" value="${Text.encode(this.#condition.object)}" />
+				<input ref="conditionFieldNode" type="hidden" name="${Text.encode(`${this.#fieldPrefix}field[]`)}" value="${Text.encode(this.#condition.field)}" />
+				<input ref="conditionOperatorNode" type="hidden" name="${Text.encode(`${this.#fieldPrefix}operator[]`)}" value="${Text.encode(this.#condition.operator)}" />
+				<input ref="conditionJoinerNode" type="hidden" name="${Text.encode(`${this.#fieldPrefix}joiner[]`)}" value="${Text.encode(this.#joiner)}" />
+				${conditionValueNode}
+				${conditionValueNode2}
+				<div class="bizproc-condition-row__field">
+					<span class="bizproc-condition-row__field-label" data-testid="bp-condition-field-label">
+						${Text.encode(Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_FIELD'))}
+					</span>
+					<div ref="fieldEditorNode" class="bizproc-condition-row__field-control ui-ctl ui-ctl-after-icon ui-ctl-dropdown" data-testid="bp-condition-field-control"></div>
+				</div>
+				<div class="bizproc-condition-row__operator">
+					<span class="bizproc-condition-row__operator-label" data-testid="bp-condition-operator-label">
+						${Text.encode(Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_OPERATOR'))}
+					</span>
+					<button ref="operatorEditorNode" type="button" class="bizproc-condition-row__operator-control" data-testid="bp-condition-operator-control"></button>
+				</div>
+				${valueRow}
+				<button ref="labelNode" type="button" class="bizproc-condition-row__editor" data-testid="bp-condition-row-label"></button>
+				<button ref="removeButtonNode" type="button" class="bizproc-condition-row__remove" data-testid="bp-condition-remove" aria-label="${Text.encode(Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_REMOVE_ARIA_LABEL'))}">${renderRemoveIcon()}</button>
+			</div>
+		`;
+		this.node = root;
+		this.objectNode = conditionObjectNode;
+		this.fieldNode = conditionFieldNode;
+		this.operatorNode = conditionOperatorNode;
+		this.joinerNode = conditionJoinerNode;
+		this.valueNode = conditionValueNode;
+		this.#valueNode2 = conditionValueNode2 === '' ? null : conditionValueNode2;
+		this.fieldEditorNode = fieldEditorNode;
+		this.operatorEditorNode = operatorEditorNode;
+		this.labelNode = labelNode;
+		this.setLabelText();
+		this.bindLabelNode();
+		Event.bind(fieldEditorNode, 'click', this.onInlineFieldClick.bind(this));
+		Event.bind(operatorEditorNode, 'click', this.onInlineOperatorClick.bind(this));
+		Event.bind(removeButtonNode, 'click', this.removeCondition.bind(this));
+
+		return this.node;
+	}
+
+	#createNewValueRow(): HTMLElement | string
+	{
+		if (isValuelessOperator(this.#condition.operator))
+		{
+			return '';
+		}
+
+		const { root, valueEditorNode } = Tag.render`
+			<div class="bizproc-condition-row__value">
+				<span class="bizproc-condition-row__value-label" data-testid="bp-condition-value-label">
+					${Text.encode(Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_VALUE'))}
+				</span>
+				<div ref="valueEditorNode" class="bizproc-condition-row__value-control" data-testid="bp-condition-value-control"></div>
+			</div>
+		`;
+		this.valueEditorNode = valueEditorNode;
+
+		// A control the registry has no local renderer for is drawn by the server and lands here
+		// after the row is built, so the row - not the inputs - carries the handlers, and the
+		// inputs are read at event time. Capture: `blur` does not bubble, and the host writes its
+		// own value with a `change` that does not bubble either.
+		const saveValue = () => this.#saveValue(valueEditorNode);
+		Event.bind(valueEditorNode, 'change', saveValue, true);
+		Event.bind(valueEditorNode, 'blur', saveValue, true);
+
+		return root;
+	}
+
+	// Only the fields the control was asked to name carry the value. Everything else it renders -
+	// the "..." button of the value selector, printable `_text` companions, the timezone of a
+	// datetime - must stay out, or the last node in the container becomes the saved value.
+	#getValueInputs(valueEditorNode: HTMLElement): Array<HTMLElement>
+	{
+		const name = `${this.#fieldPrefix}value`;
+
+		return [...valueEditorNode.querySelectorAll(`[name="${name}"], [name="${name}[]"]`)];
+	}
+
+	#saveValue(valueEditorNode: HTMLElement)
+	{
+		// A row replaced by an operator change keeps its handlers until it is dropped.
+		if (!this.#condition || valueEditorNode !== this.valueEditorNode)
+		{
+			return;
+		}
+
+		const valueInputs = this.#getValueInputs(valueEditorNode);
+		if (valueInputs.length === 0)
+		{
+			return;
+		}
+
+		const lastInput = valueInputs[valueInputs.length - 1];
+		let value = lastInput.value;
+		if (this.#condition.operator === Operator.BETWEEN && valueInputs.length > 1)
+		{
+			value = [valueInputs[0].value, valueInputs[1].value];
+		}
+		else if (isMultiValueOperator(this.#condition.operator) && lastInput.multiple)
+		{
+			value = [...lastInput.selectedOptions].map((option) => option.value);
+		}
+
+		// Bound to both `change` and `blur`, so one edit gets here more than once; each pass
+		// re-serializes the whole group for the host, so a pass without a new value is skipped.
+		if (this.#isCurrentValue(value))
+		{
+			return;
+		}
+
+		// setValue('') collapses '=' / '!=' into the empty operators: keep the chosen one.
+		const currentOperator = this.#condition.operator;
+		this.#condition.setValue(value);
+		this.#condition.setOperator(currentOperator);
+		this.updateValueNode();
+		this.emit('onChange', new BaseEvent({ data: { conditionSelector: this } }));
+	}
+
+	// Compared as read from the control: a BETWEEN pair and a multi-select list have to differ
+	// element by element, which the single-slot serialization of the transport cannot express.
+	#isCurrentValue(value): boolean
+	{
+		return JSON.stringify(value ?? '') === JSON.stringify(this.#condition.value ?? '');
+	}
+
+	// BETWEEN is transported as two consecutive value slots (see ConditionGroup.createFromForm),
+	// so a row that carries it renders both from the start - one slot would take the value of the
+	// next row for its second end.
+	#createSecondValueNode(): HTMLElement | string
+	{
+		if (this.#condition.operator !== Operator.BETWEEN)
+		{
+			return '';
+		}
+
+		return this.#createValueNode(this.#getSecondValue());
+	}
+
+	// Only a pair carries a second end: until both ends are filled the value is a plain string,
+	// and indexing that puts its second character into the slot.
+	#getSecondValue(): string
+	{
+		const value = this.#condition.value;
+
+		return Type.isArrayFilled(value) && value.length > 1 ? value[1] : '';
 	}
 
 	#createValueNode(value: string): HTMLElement
@@ -252,12 +453,37 @@ export class ConditionSelector extends EventEmitter
 		}
 
 		Dom.clean(this.labelNode);
+		if (this.#viewMode === ConditionViewMode.New)
+		{
+			const field = this.getField(this.#condition.object, this.#condition.field);
+			Dom.clean(this.fieldEditorNode);
+			Dom.append(
+				Tag.render`
+					<div class="ui-ctl-element bizproc-condition-row__field-control-text">
+						${Text.encode(field?.Name || this.#condition.field || Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_FIELD_NOT_SELECTED'))}
+					</div>
+				`,
+				this.fieldEditorNode,
+			);
+			Dom.append(Tag.render`<span class="ui-ctl-after ui-ctl-icon-angle" aria-hidden="true"></span>`, this.fieldEditorNode);
+			Dom.clean(this.operatorEditorNode);
+			Dom.append(
+				Tag.render`<span class="bizproc-condition-row__operator-control-text">${Text.encode(this.getOperatorLabel(this.#condition.operator))}</span>`,
+				this.operatorEditorNode,
+			);
+			Dom.append(Tag.render`<span class="bizproc-condition-row__control-chevron" aria-hidden="true"></span>`, this.operatorEditorNode);
+			this.#renderValueEditor(field);
+
+			return;
+		}
+
+		const textClass = 'bizproc-automation-popup-settings__condition-text';
 
 		if (this.#condition.field === '')
 		{
 			Dom.append(
 				Tag.render`
-					<span class="bizproc-automation-popup-settings__condition-text">
+					<span class="${textClass}">
 						${Text.encode(this.getOperatorLabel(Operator.EMPTY))}
 					</span>
 				`,
@@ -270,12 +496,12 @@ export class ConditionSelector extends EventEmitter
 			const valueLabel = this.#getValueLabel(field, this.labelNode);
 
 			Dom.append(
-				Tag.render`<span class="bizproc-automation-popup-settings__condition-text">${Text.encode(field.Name)}</span>`,
+				Tag.render`<span class="${textClass}">${Text.encode(field.Name)}</span>`,
 				this.labelNode,
 			);
 			Dom.append(
 				Tag.render`
-					<span class="bizproc-automation-popup-settings__condition-text">
+					<span class="${textClass}">
 						${Text.encode(this.getOperatorLabel(this.#condition.operator))}
 					</span>
 				`,
@@ -285,7 +511,7 @@ export class ConditionSelector extends EventEmitter
 			if (valueLabel)
 			{
 				Dom.append(
-					Tag.render`<span data-role="value-label" class="bizproc-automation-popup-settings__condition-text">${Text.encode(valueLabel)}</span>`,
+					Tag.render`<span data-role="value-label" class="${textClass}">${Text.encode(valueLabel)}</span>`,
 					this.labelNode,
 				);
 			}
@@ -337,6 +563,155 @@ export class ConditionSelector extends EventEmitter
 		this.showPopup();
 	}
 
+	onInlineFieldClick()
+	{
+		if (this.#fieldSelector?.isOpen())
+		{
+			this.#fieldSelector.destroy();
+			this.#fieldSelector = null;
+
+			return;
+		}
+
+		const fields = this.filterFields();
+		this.#fieldSelector?.destroy();
+
+		const fieldSelector = new ConditionFieldSelector(fields, this.fieldEditorNode, (field) => {
+			if (
+				this.#fieldSelector !== fieldSelector
+				|| !field
+				|| !this.#condition
+				|| !this.fieldEditorNode?.isConnected
+			)
+			{
+				return;
+			}
+
+			this.#fieldSelector = null;
+			this.#condition.setObject(field.ObjectId);
+			this.#condition.setField(field.Id);
+			const operators = this.getOperators(field.Type, field.Multiple);
+			const nextOperator = operators[this.#condition.operator] ? this.#condition.operator : Operator.EQUAL;
+			this.#condition.setValue('');
+			// setValue('') collapses '=' / '!=' into the empty operators, so restore the intended one.
+			this.#condition.setOperator(nextOperator);
+			// Data first, painting last: the value control belongs to the host and may fail to
+			// render, and a failed repaint must not leave the transport on the previous field.
+			this.updateValueNode();
+			this.emit('onChange', new BaseEvent({ data: { conditionSelector: this } }));
+			this.#refreshNewValueRow();
+			this.setLabelText();
+		});
+		this.#fieldSelector = fieldSelector;
+		fieldSelector.show().catch((error) => console.error(error));
+	}
+
+	onInlineOperatorClick()
+	{
+		const field = this.getField(this.#condition.object, this.#condition.field);
+		if (!field || !this.operatorEditorNode)
+		{
+			return;
+		}
+
+		const operatorList = this.getOperators(field.Type, field.Multiple);
+		// Esc, a click outside or a repeated click on the control only close the popup, and a
+		// closed popup stays in the manager registry holding this row - so the previous menu
+		// goes before a new one is built.
+		this.#destroyOperatorMenu();
+		this.#operatorMenu = new Menu({
+			id: `bp-condition-operator-menu-${Text.getRandom()}`,
+			bindElement: this.operatorEditorNode,
+			maxHeight: OPERATOR_MENU_MAX_HEIGHT,
+			items: Object.entries(operatorList).map(([operator, label]) => ({
+				// MenuItem escapes only ["'<>] for the `text` option and leaves `&` alone on purpose
+				// (`encodeSafe` in main/install/js/main/popup/src/menu/menu-item.ts), then renders the
+				// result as html - so the two encoders compose instead of escaping twice, and an
+				// entity sequence written inside the label survives to the user.
+				text: Text.encode(label),
+				dataset: { testid: `bp-condition-operator-item-${operator}` },
+				onclick: () => {
+					this.#destroyOperatorMenu();
+					// The value was entered under the previous operator: the new one gets it in its own
+					// shape, or none at all. setValue() collapses '=' / '!=' into the empty operators,
+					// so the picked operator is set after it.
+					this.#condition.setValue(adaptValueToOperator(operator, this.#condition.value));
+					this.#condition.setOperator(operator);
+					if (this.operatorNode)
+					{
+						this.operatorNode.value = operator;
+					}
+
+					// Same order as on a field change: transport and consumer before the repaint.
+					this.updateValueNode();
+					this.emit('onChange', new BaseEvent({ data: { conditionSelector: this } }));
+					this.#refreshNewValueRow();
+					this.setLabelText();
+				},
+			})),
+		});
+		this.#operatorMenu.show();
+	}
+
+	#destroyOperatorMenu()
+	{
+		if (this.#operatorMenu)
+		{
+			this.#operatorMenu.close();
+			this.#operatorMenu.destroy();
+			this.#operatorMenu = null;
+		}
+	}
+
+	// The value is a live control, like the fields of an action construction: it is rendered at once,
+	// keeps its own value selector working and never swaps between a caption and an editor.
+	#renderValueEditor(field: ?Object)
+	{
+		if (!this.valueEditorNode)
+		{
+			return;
+		}
+
+		Dom.clean(this.valueEditorNode);
+		if (!field)
+		{
+			return;
+		}
+
+		Dom.append(
+			this.#getValueNode(field, this.#condition.value, this.#condition.operator),
+			this.valueEditorNode,
+		);
+	}
+
+	#refreshNewValueRow()
+	{
+		if (this.#viewMode !== ConditionViewMode.New || !this.node)
+		{
+			return;
+		}
+
+		const currentRow = this.node.querySelector('.bizproc-condition-row__value');
+		const nextRow = this.#createNewValueRow();
+		if (currentRow && nextRow === '')
+		{
+			Dom.remove(currentRow);
+			this.valueEditorNode = null;
+
+			return;
+		}
+		if (!currentRow && nextRow !== '')
+		{
+			this.operatorEditorNode.parentNode.after(nextRow);
+
+			return;
+		}
+		if (currentRow && nextRow !== '')
+		{
+			Dom.replace(currentRow, nextRow);
+		}
+	}
+
 	showPopup()
 	{
 		if (this.popup)
@@ -383,7 +758,7 @@ export class ConditionSelector extends EventEmitter
 		}
 
 		const { root: form, operatorWrapper } = Tag.render`
-			<form class="bizproc-automation-popup-select-block">
+			<form class="bizproc-automation-popup-select-block" data-testid="bp-condition-form">
 				<div class="bizproc-automation-popup-settings">${fieldSelectLabel}</div>
 				<div ref="operatorWrapper" class="bizproc-automation-popup-settings">${operatorSelect}</div>
 				${valueWrapper}
@@ -406,6 +781,7 @@ export class ConditionSelector extends EventEmitter
 				new Button({
 					color: Button.Color.PRIMARY,
 					text: Loc.getMessage('BIZPROC_JS_AUTOMATION_CHOOSE_BUTTON_CAPS'),
+					dataset: { testid: 'bp-condition-choose' },
 					onclick: () => {
 						this.#condition.setObject(objectSelect.value);
 						this.#condition.setField(fieldSelect.value);
@@ -446,11 +822,13 @@ export class ConditionSelector extends EventEmitter
 							this.#condition.setValue(input ? input.value : '');
 						}
 						this.updateValueNode();
+						this.emit('onChange', new BaseEvent({ data: { conditionSelector: this } }));
 						this.popup.close();
 					},
 				}),
 				new CancelButton({
 					text: Loc.getMessage('BIZPROC_JS_AUTOMATION_CANCEL_BUTTON_CAPS'),
+					dataset: { testid: 'bp-condition-cancel' },
 					onclick: () => {
 						this.popup.close();
 					},
@@ -530,7 +908,7 @@ export class ConditionSelector extends EventEmitter
 
 			if (this.#condition.operator === Operator.BETWEEN)
 			{
-				const value2 = this.#condition.value[1] || '';
+				const value2 = this.#getSecondValue();
 				if (this.#valueNode2)
 				{
 					this.#valueNode2.value = value2;
@@ -817,11 +1195,17 @@ export class ConditionSelector extends EventEmitter
 	removeCondition(event: Event)
 	{
 		this.emit('onRemoveConditionClick', new BaseEvent({ data: { conditionSelector: this } }));
+		this.#fieldSelector?.destroy();
+		this.#fieldSelector = null;
+		this.#destroyOperatorMenu();
 
 		this.#condition = null;
 		Dom.remove(this.node);
 
 		this.labelNode = null;
+		this.fieldEditorNode = null;
+		this.operatorEditorNode = null;
+		this.valueEditorNode = null;
 		this.fieldNode = null;
 		this.operatorNode = null;
 		this.valueNode = null;
@@ -836,6 +1220,10 @@ export class ConditionSelector extends EventEmitter
 
 	destroy()
 	{
+		this.#fieldSelector?.destroy();
+		this.#fieldSelector = null;
+		this.#destroyOperatorMenu();
+
 		if (this.popup)
 		{
 			this.popup.close();

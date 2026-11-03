@@ -121,15 +121,15 @@
 .landing-ui-field-link-url-grid-left {
 	width: 156px;
 }
-.landing-ui-field-link-url-grid-left.grid-dissallow {
+.landing-ui-field-link-url-grid-left.grid-disallow {
 	pointer-events: none;
 	width: 150px;
 }
 
-.grid-dissallow .landing-ui-field-input {
+.grid-disallow .landing-ui-field-input {
 	width: 100% !important;
 }
-.grid-dissallow .landing-ui-field-input:after {
+.grid-disallow .landing-ui-field-input:after {
 	display: none;
 }
 

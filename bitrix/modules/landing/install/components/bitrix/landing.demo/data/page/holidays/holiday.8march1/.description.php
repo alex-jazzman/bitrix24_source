@@ -101,7 +101,7 @@ return [
 					<h2 class="landing-block-node-card-title g-line-height-1_2 g-font-weight-700 g-color-white g-mb-10 g-mb-15--md g-font-cormorant-infant g-text-transform-none g-font-size-180 g-font-size-90--md"><span style="font-style: italic; color: rgb(255, 255, 255);">Meet this holiday with sweets! </span></h2>
 					<div class="landing-block-node-card-subtitle text-uppercase g-line-height-1 g-font-weight-700 g-font-size-20 g-color-white g-mb-40 g-mb-50--md">Happy woman day!</div>
 					<img class="landing-block-node-card-photo g-width-130 g-height-130 g-brd-around g-brd-10 g-brd-white g-rounded-50x mx-auto g-mb-20 g-mb-25--md" src="https://cdn.bitrix24.site/bitrix/images/landing/business/500x500/img33.jpg" alt="" data-fileid="-1" />
-					<p class="landing-block-node-card-name text-uppercase g-line-height-1 g-font-weight-700 g-font-size-20 g-color-white g-mb-10 g-mb-15--md">Wide choise of chocolate sweets</p>
+					<p class="landing-block-node-card-name text-uppercase g-line-height-1 g-font-weight-700 g-font-size-20 g-color-white g-mb-10 g-mb-15--md">Wide choice of chocolate sweets</p>
 					<div class="landing-block-node-card-text g-line-height-1_1 g-font-weight-100 g-color-white g-mb-10 g-mb-20--md"><p><span style="color: rgb(245, 245, 245);">Sed feugiat porttitor nunc, non dignissim ipsum vestibulum in.</span></p></div>
 					<div class="landing-block-node-card-price text-uppercase g-font-weight-700 g-font-size-16 g-color-primary mb-0">from $55</div>
 				</div>

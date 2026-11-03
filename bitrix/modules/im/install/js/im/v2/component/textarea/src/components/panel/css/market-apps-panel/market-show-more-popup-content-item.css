@@ -5,8 +5,8 @@
 }
 
 .bx-im-market-show-more-popup-content-item__container {
-	height: 32px;
-	padding: 8px;
+	min-height: 40px;
+	padding: 4px 8px;
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -16,6 +16,11 @@
 .bx-im-market-show-more-popup-content-item__container:hover {
 	background: var(--im-market-show-more-popup-content-item__background-color_item);
 	cursor: pointer;
+}
+
+.bx-im-market-show-more-popup-content-item__container.--opened {
+	background: var(--im-market-show-more-popup-content-item__background-color_item);
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary);
 }
 
 .bx-im-market-show-more-popup-content-item__icon-container {

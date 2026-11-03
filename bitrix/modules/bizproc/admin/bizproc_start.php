@@ -4,11 +4,13 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/prolog.php");
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Api\Request\WorkflowTemplateService\PrepareStartParametersRequest;
 use Bitrix\Bizproc\Api\Service\WorkflowTemplateService;
 use Bitrix\Bizproc\Internal\Service\Pilot\StartFormParameters;
 use Bitrix\Bizproc\Starter\Enum\ManualStartSurface;
+use Bitrix\UI\Format\BBCode\Converter;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -215,6 +217,14 @@ else
 
 	CAdminMessage::ShowMessage($errorMessage);
 
+	// template description is stored as BBCode; "~" fields hold values not escaped by GetNext()
+	$toPlainDescription = static function ($description): string
+	{
+		$description = (string)$description;
+
+		return Loader::includeModule('ui') ? Converter::toPlainText($description) : $description;
+	};
+
 	if ($showMode == "StartWorkflowSuccess")
 	{
 		?>
@@ -262,7 +272,7 @@ else
 			<tr>
 				<td class="adm-detail-valign-top"><?= GetMessage("BPABS_DESCRIPTION") ?>:</td>
 				<td>
-					<?= $arWorkflowTemplates[$workflowTemplateId]["DESCRIPTION"] ?>
+					<?= htmlspecialcharsbx($toPlainDescription($arWorkflowTemplates[$workflowTemplateId]["~DESCRIPTION"])) ?>
 				</td>
 			</tr>
 			<?endif?>
@@ -316,7 +326,7 @@ else
 				<tr>
 					<td colspan="2">
 						<a href="<?= $arWorkflowTemplate["URL"] ?>"><?= $arWorkflowTemplate["NAME"] ?></a><br>
-						<?= $arWorkflowTemplate["DESCRIPTION"] ?><br><br>
+						<?= htmlspecialcharsbx($toPlainDescription($arWorkflowTemplate["~DESCRIPTION"])) ?><br><br>
 					</td>
 				</tr>
 				<?

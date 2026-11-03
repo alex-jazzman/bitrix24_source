@@ -37,6 +37,18 @@
 	letter-spacing: var(--call-participants-permission-popup__control-buttons-label-text-letter-spacing);
 }
 
+/* native <button> reset for a11y; base rule below restores background, font, padding, flex */
+.bx-call-view-participants-control-stream-button {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	margin: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+}
+
 .bx-call-view-participants-control-stream-button {
 	margin-right: 8px;
 	cursor: pointer;
@@ -62,6 +74,11 @@
 	background: #FDFDFD33;
 }
 
+.bx-call-view-participants-control-stream-button:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
 .bx-call-participants-permission-popup__control-buttons {
 	display: flex;
 	flex-wrap: wrap;
@@ -74,6 +91,7 @@
 .bx-call-view-participants-control-stream-button-action {
 	color: var(--call-participants-permission-popup__control-button-text-color);
 	margin-top: 9px;
+	display: block;
 }
 
 .bx-call-view-participants-control-stream-button-icon {
@@ -146,6 +164,20 @@
 	background: var(--call-participants-permission-popup__top-list-switch-disable-background-color);
 }
 
+/* native <button> reset for a11y; width/box-sizing keep it full-row, base rule below sets flex layout, padding, color */
+.bx-call-participants-permission-popup__permissions-title-wrapper {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 100%;
+	box-sizing: border-box;
+	border: none;
+	background: none;
+	margin: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+}
+
 .bx-call-participants-permission-popup__permissions-title-wrapper {
 	display: flex;
 	flex-direction: row;
@@ -155,6 +187,11 @@
 	margin-bottom: 10px;
 	cursor: pointer;
 	color: var(--call-participants-permission-popup__top-list-title-text-color);
+}
+
+.bx-call-participants-permission-popup__permissions-title-wrapper:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-call-participants-permission-popup__permissions-wrapper {
@@ -174,15 +211,20 @@
 	overflow: hidden;
 	transform: scaleY(0);
 	transform-origin: top;
-	transition: transform 0.26s ease;
+	/* hide after the collapse animation so switchers leave the tab order when collapsed */
+	visibility: hidden;
+	transition: transform 0.26s ease, visibility 0s linear 0.26s;
 	height: 0;
 	margin-top: 13px;
 }
 
 .bx-call-participants-permission-popup__permissions-wrapper.permissions-uncollapsed .bx-call-participants-permission-popup__permissions {
 	transform: scaleY(1);
+	visibility: visible;
+	transition: transform 0.26s ease, visibility 0s;
 	height: auto;
-	padding: 0 18px 0 17px;
+	/* top room so the first switcher's focus ring is not clipped by overflow:hidden */
+	padding: 3px 18px 0 17px;
 }
 
 .bx-call-participants-permission-popup__permissions-title-arrow {
@@ -220,6 +262,11 @@
 .bx-call-view-participants-permissions-switch .ui-switcher-size-sm.ui-switcher {
 	width: 27px;
 	height: 14px;
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-call-view-participants-permissions-switch .ui-switcher-size-sm .ui-switcher-cursor {

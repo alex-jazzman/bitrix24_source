@@ -8,15 +8,13 @@ export class PictureInPictureService extends EventEmitter
 	/**
 	 * @param {object} config
 	 * @param {*} config.viewPort
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, callStore })
+	constructor({ viewPort })
 	{
 		super();
 		this.setEventNamespace('BX.Call.PictureInPictureService');
 
 		this.viewPort = viewPort;
-		this.callStore = callStore ?? null;
 		this.pictureInPictureDebounceForOpen = null;
 		this.isFileChooserActive = false;
 	}
@@ -113,7 +111,6 @@ export class PictureInPictureService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
 		clearTimeout(this.pictureInPictureDebounceForOpen);
 		this.pictureInPictureDebounceForOpen = null;
 		this.viewPort = null;

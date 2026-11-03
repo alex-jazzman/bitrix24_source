@@ -19,9 +19,11 @@ use Bitrix\Main\Security\Random;
 			'bitrix:currency.money.input',
 			'',
 			[
-				'CONTROL_ID' => $arResult['userField']['FIELD_NAME'] . '_' . Random::getString(5),
+				'CONTROL_ID' => ($arResult['userField']['FIELD_NAME'] ?? 'SETTINGS') . '_' . Random::getString(5),
 				'FIELD_NAME' => $arResult['additionalParameters']['NAME']. '[DEFAULT_VALUE]',
+				'FIELD_NAME_CURRENCY' => $arResult['additionalParameters']['NAME']. '[DEFAULT_CURRENCY]',
 				'VALUE' => $arResult['value'],
+				'CURRENCY' => $arResult['currency'],
 				'EXTENDED_CURRENCY_SELECTOR' => 'Y',
 			],
 			null,

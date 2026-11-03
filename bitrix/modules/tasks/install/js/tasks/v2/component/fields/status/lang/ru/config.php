@@ -1,6 +1,7 @@
 <?php
 
 $MESS['TASKS_V2_STATUS_TITLE'] = 'Статус';
+$MESS['TASKS_V2_STATUS_VALUE_ARIA_LABEL'] = 'Статус задачи: #STATUS#';
 $MESS['TASKS_V2_STATUS_PENDING'] = 'Ждёт выполнения';
 $MESS['TASKS_V2_STATUS_IN_PROGRESS'] = 'Выполняется';
 $MESS['TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_MSGVER_1'] = 'Ждёт контроля';

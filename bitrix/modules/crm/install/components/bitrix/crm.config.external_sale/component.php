@@ -48,6 +48,9 @@ $componentPage = "";
 
 $arComponentVariables = array("page", "id", "sessid", "saveajax");
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? null) === true;
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+
 if ($_REQUEST["auth"]=="Y" && $USER->IsAuthorized())
 	LocalRedirect($APPLICATION->GetCurPageParam("", array("login", "logout", "register", "forgot_password", "change_password", "backurl", "auth")));
 
@@ -82,7 +85,36 @@ $APPLICATION->IncludeComponent(
 );
 ob_end_clean();
 
-if ($arParams["SEF_MODE"] == "Y")
+if ($isSettingsHub)
+{
+	$componentPage = $arParams['PAGE'] ?? 'index';
+	if (!in_array($componentPage, ['index', 'edit', 'sync'], true))
+	{
+		$componentPage = 'index';
+	}
+	$arVariables = [
+		'page' => $componentPage,
+		'id' => $arParams['ID'] ?? 0,
+	];
+	$arVariableAliases = ['page' => 'page', 'id' => 'id'];
+	CComponentEngine::InitComponentVariables(false, ['sessid', 'saveajax'], [], $arVariables);
+
+	foreach (['index', 'edit', 'sync'] as $page)
+	{
+		$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+		$url->addParams([
+			'page' => $page,
+			'IFRAME' => 'Y',
+			'IFRAME_TYPE' => 'SIDE_SLIDER',
+		]);
+		$arResult['PATH_TO_' . mb_strtoupper($page)] = $url->getUri();
+		if ($page !== 'index')
+		{
+			$arResult['PATH_TO_' . mb_strtoupper($page)] .= '&id=#id#';
+		}
+	}
+}
+elseif ($arParams["SEF_MODE"] == "Y")
 {
 	$arVariables = array();
 

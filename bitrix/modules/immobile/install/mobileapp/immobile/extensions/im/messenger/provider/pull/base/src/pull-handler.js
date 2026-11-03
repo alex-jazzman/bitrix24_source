@@ -30,6 +30,9 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 		 * @param {PullExtraParams} extra
 		 * @param {object} options
 		 * @param {boolean|undefined} options.ignoreServerTimeAgoCheck
+		 * @param {boolean|undefined} options.ignoreSyncInterception keeps the event during a
+		 *   sync/reconnect. Use only for events the sync never reloads, otherwise the event would be
+		 *   applied on top of a sync snapshot that overwrites it. The staleness guard still applies.
 		 * @return boolean
 		 */
 		interceptEvent(extra, options = {})
@@ -37,6 +40,11 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 			if (!options.ignoreServerTimeAgoCheck && extra.server_time_ago > 30)
 			{
 				return true;
+			}
+
+			if (options.ignoreSyncInterception)
+			{
+				return false;
 			}
 
 			const syncService = this.getSyncService();

@@ -751,6 +751,23 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			return this.getItemsCount() === 0;
 		}
 
+		isFloatingButtonAccent()
+		{
+			const { isFloatingButtonAccent, isRefreshing } = this.props;
+
+			if (typeof isFloatingButtonAccent === 'undefined')
+			{
+				return isRefreshing ? false : this.isEmptyList();
+			}
+
+			if (typeof isFloatingButtonAccent === 'function')
+			{
+				return Boolean(isFloatingButtonAccent());
+			}
+
+			return Boolean(isFloatingButtonAccent);
+		}
+
 		getItemsCount()
 		{
 			return this.currentIdsOrder.length;
@@ -863,7 +880,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				testId: `${this.testId}_ADD_BTN`,
 				onClick: onFloatingButtonClick,
 				onLongClick: onFloatingButtonLongClick,
-				accent: this.isEmptyList(),
+				accentByDefault: this.isFloatingButtonAccent(),
 				layout,
 			});
 

@@ -6,6 +6,14 @@
 	overflow: hidden;
 }
 
+/* The header clips overflow (overflow: hidden above), and the shared .--focus-visible
+   uses a positive outline-offset, so a focus ring on a control at the header edge (the
+   create-chat button) is cut off. Draw the ring inside instead - same inset-offset approach
+   as the recent-item row. Higher specificity than the shared rule, which stays untouched. */
+.bx-im-messenger__scope .bx-im-nested-list-collab__header .--focus-visible:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .bx-im-nested-list-collab__search {
 	flex-grow: 1;
 	margin-right: 8px;

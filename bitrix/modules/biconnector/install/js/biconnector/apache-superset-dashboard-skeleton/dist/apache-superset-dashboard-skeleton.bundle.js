@@ -132392,7 +132392,7 @@ this.BX = this.BX || {};
 	class SkeletonRenderer {
 		static render(container) {
 			if (!container) {
-				return;
+				return null;
 			}
 			const animationBox = main_core.Tag.render`
 			<div class="biconnector-dashboard__animation_box"></div>
@@ -132418,6 +132418,7 @@ this.BX = this.BX || {};
 			</div>
 		`;
 			main_core.Dom.append(skeletonNode, container);
+			return animation;
 		}
 	}
 

@@ -12,6 +12,69 @@
 	min-width: 0;
 }
 
+.mail-compose-template-picker__template-item
+{
+	position: relative;
+}
+
+.mail-compose-template-picker__template-apply
+{
+	padding-right: 100px;
+}
+
+[data-testid^='mail-template-picker-preview-']:not(.mail-compose-template-picker__template-preview)
+{
+	display: none;
+}
+
+.mail-compose-template-picker__template-preview
+{
+	position: absolute;
+	top: var(--ui-space-inset-xs);
+	right: var(--pmenu-cell-padding-LR);
+	width: auto;
+	min-height: auto;
+	padding: 0;
+	color: var(--ui-color-accent-main-primary);
+	text-decoration-line: underline;
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-accent-main-link-underline);
+	text-underline-offset: 3px;
+}
+
+/*
+ * A pointer able to hover names the row it stands over, so the item shows itself there and nowhere else.
+ * A touch names nothing: hidden, the item would hand every touch of its area to the apply button spanning
+ * the row underneath it and apply the template instead of showing it. `hover` speaks of the primary pointer
+ * alone, so it calls a laptop with a touch screen a hovering device and hides the item there all the same:
+ * a coarse pointer anywhere among the ones available - what `any-pointer` answers for - keeps it in sight.
+ */
+@media (hover: hover) and (not (any-pointer: coarse))
+{
+	.mail-compose-template-picker__template-preview
+	{
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.mail-compose-template-picker__template-item:hover .mail-compose-template-picker__template-preview,
+	.mail-compose-template-picker__template-preview:focus-visible
+	{
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+
+.mail-compose-template-picker__template-preview .ui-popup-menu-item-header
+{
+	padding: 0;
+}
+
+.mail-compose-template-picker__template-preview .ui-popup-menu-item-title-text
+{
+	color: inherit;
+}
+
 /*
  * Card of all the templates: a fixed search over a list that scrolls. The card holds no horizontal
  * padding of its own, so a row spans it whole and keeps the inset of a menu cell by itself; everything
@@ -198,5 +261,5 @@
 
 .mail-compose-template-apply__error
 {
-	color: var(--ui-color-text-alert);
+	color: var(--ui-color-accent-main-alert);
 }

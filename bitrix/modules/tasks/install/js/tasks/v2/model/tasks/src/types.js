@@ -67,6 +67,8 @@ export type TaskModel = {
 	stageId: number,
 	storyPoints: string,
 	epicId: number,
+	canCreateEpic: boolean,
+	canUpdateScrumFields: boolean,
 	flowId: number,
 	status: Status,
 	statusChangedTs: string,

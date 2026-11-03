@@ -48,9 +48,17 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 			// eslint-disable-next-line no-param-reassign
 			value = stringify(value);
 
+			const saveHandler = this.field.getConfig().onSave;
+			if (typeof saveHandler === 'function')
+			{
+				return saveHandler(value, files);
+			}
+
 			this.field.debouncedChangeValues(value, files);
 
 			this.setState({ value });
+
+			return null;
 		}
 
 		/**
@@ -71,11 +79,13 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 
 		render()
 		{
+			const config = this.field.getConfig();
+			const bbCodeEditorParams = this.field.getBBCodeTextEditorParams(this.value);
 			const plainTextFormatter = new PlainTextFormatter();
 			const plainAst = plainTextFormatter.format({
 				source: this.value,
 				data: {
-					files: this.field.getConfig().fileField?.value ?? [],
+					files: config.fileField?.value ?? [],
 				},
 			});
 
@@ -113,7 +123,10 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 							title: this.field.getTitleText(),
 							textAreaStyle: descriptionStyle(),
 							useBBCodeEditor: true,
-							bbCodeEditorParams: this.field.getBBCodeTextEditorParams(this.value),
+							useNativeTextEditor: config.useNativeTextEditor === true,
+							bbCodeEditorParams,
+							nativeTextEditorParams: config.nativeTextEditorParams,
+							parentWidget: bbCodeEditorParams.parentWidget,
 						},
 						externalStyles: {
 							paddingLeft: 0,

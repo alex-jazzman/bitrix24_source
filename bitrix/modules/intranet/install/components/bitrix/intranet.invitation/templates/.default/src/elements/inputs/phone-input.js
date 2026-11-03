@@ -1,7 +1,7 @@
-import { Input, InputDesign } from 'ui.system.input';
-import { ContactsInput } from './contacts-input';
 import { Loc } from 'main.core';
+
 import { PhoneValidator } from '../../phone-validator';
+import { ContactsInput } from './contacts-input';
 
 export class PhoneInput extends ContactsInput
 {
@@ -18,6 +18,16 @@ export class PhoneInput extends ContactsInput
 	getPlaceholder(): string
 	{
 		return Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_PHONE');
+	}
+
+	getType(): string
+	{
+		return 'tel';
+	}
+
+	getAutocomplete(): string
+	{
+		return 'tel';
 	}
 
 	getValidationErrorMessage(): string

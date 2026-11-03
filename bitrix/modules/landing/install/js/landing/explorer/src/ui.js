@@ -1,4 +1,4 @@
-import { Loc, Tag, Text} from 'main.core';
+import { Loc, Tag, Text } from 'main.core';
 
 export type DataType = {
 	ID: number,
@@ -18,38 +18,42 @@ export class ExplorerUI
 {
 	static getLoader(): HTMLElement
 	{
-		return Tag.render`<div class="landing-explorer-loader">
-			<div class="main-ui-loader">
-				<svg class="main-ui-loader-svg" viewBox="25 25 50 50">
-					<circle class="main-ui-loader-svg-circle" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
-				</svg>
-			</div>
-		</div>`;
+		return Tag.render`
+			<div class="landing-explorer-loader">
+						<div class="main-ui-loader">
+							<svg class="main-ui-loader-svg" viewBox="25 25 50 50">
+								<circle class="main-ui-loader-svg-circle" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
+							</svg>
+						</div>
+					</div>
+		`;
 	}
 
-	static getActionButton(title: string, hadnler: () => {}): BX.UI.Button
+	static getActionButton(title: string, handler: () => {}): BX.UI.Button
 	{
 		return new BX.UI.Button({
 			id: 'landing-explorer-action',
 			size: BX.UI.Button.Size.MEDIUM,
-			color: BX.UI.Button.Color.SUCCESS,
+			useAirDesign: true,
+			style: BX.UI.Button.AirStyle.FILLED,
 			text: title,
 			events: {
-				click: hadnler
-			}
+				click: handler,
+			},
 		});
 	}
 
-	static getCancelButton(hadnler: () => {}): BX.UI.Button
+	static getCancelButton(handler: () => {}): BX.UI.Button
 	{
 		return new BX.UI.Button({
 			id: 'landing-explorer-cancel',
 			size: BX.UI.Button.Size.MEDIUM,
-			color: BX.UI.Button.Color.LINK,
+			useAirDesign: true,
+			style: BX.UI.Button.AirStyle.OUTLINE,
 			text: Loc.getMessage('LANDING_EXT_EXPLORER_BUTTON_CANCEL'),
 			events: {
-				click: hadnler
-			}
+				click: handler,
+			},
 		});
 	}
 

@@ -334,6 +334,7 @@
 		#form = null;
 		#categoryRow = null;
 		#categoryCell = null;
+		#categoryControlMultiple = null;
 		#reactionMode = null;
 		#radioButtonExtension = null;
 		#onDocumentChangeHandler = null;
@@ -355,6 +356,7 @@
 			this.#form = form;
 			this.#categoryRow = form.querySelector('#row_categoryId');
 			this.#categoryCell = this.#categoryRow?.querySelector('.field-row > div') ?? this.#categoryRow?.querySelector('td:last-child');
+			this.#rememberCategoryControlMode();
 			this.#bindEvents();
 			this.#syncCategoryRowVisibility();
 			setTimeout(() => this.#syncCategoryRowVisibility());
@@ -381,7 +383,7 @@
 			}
 		}
 		#getCurrentCategorySelect() {
-			return this.#categoryCell?.querySelector('select[name="categoryId"]');
+			return this.#categoryCell?.querySelector('select[name="categoryId"], select[name="categoryId[]"]');
 		}
 		#resetCategorySelection() {
 			const selectElement = this.#getCurrentCategorySelect();
@@ -412,13 +414,25 @@
 			}
 		}
 		#createCategoryProperty(options) {
+			this.#rememberCategoryControlMode();
 			return {
 				Type: 'select',
 				FieldName: 'categoryId',
+				Multiple: this.#categoryControlMultiple === true,
 				Options: options,
 				Required: false,
 				AllowSelection: false
 			};
+		}
+		#rememberCategoryControlMode() {
+			if (main_core.Type.isBoolean(this.#categoryControlMultiple)) {
+				return;
+			}
+			const select = this.#getCurrentCategorySelect();
+			if (!select) {
+				return;
+			}
+			this.#categoryControlMultiple = select.multiple || select.name === 'categoryId[]';
 		}
 		#renderCategoryControl(options) {
 			if (!this.#categoryCell) {
@@ -444,15 +458,17 @@
 			const {
 				item
 			} = event.getData();
-			main_core.ajax.runAction('bizproc.activity.request', {
-				data: {
-					documentType: ['bizproc', 'Bitrix\\Bizproc\\Public\\Entity\\Document\\Workflow', 'WORKFLOW'],
-					activity: 'CrmEntityFieldChangedTrigger',
-					params: {
-						document: item.id,
-						form_name: 'document'
-					}
+			const requestData = {
+				documentType: ['bizproc', 'Bitrix\\Bizproc\\Public\\Entity\\Document\\Workflow', 'WORKFLOW'],
+				activity: 'CrmEntityFieldChangedTrigger',
+				params: {
+					document: item.id,
+					form_name: 'document'
 				}
+			};
+			main_core.ajax.runAction('bizproc.activity.request', {
+				// The Nodes editor names its template: the server grants the request by the right on it.
+				data: main_core.Reflection.getClass('BX.Bizproc.EditorTemplateContext')?.appendTo(requestData) ?? requestData
 			}).then(response => {
 				const data = response.data;
 				if (!main_core.Type.isPlainObject(data)) {
@@ -473,6 +489,7 @@
 			this.#form = null;
 			this.#categoryRow = null;
 			this.#categoryCell = null;
+			this.#categoryControlMultiple = null;
 			this.#reactionMode?.destroy();
 			this.#reactionMode = null;
 			main_core.Event.EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:Item:onSelect', this.#onDocumentChangeHandler);

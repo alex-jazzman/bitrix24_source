@@ -6,6 +6,7 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
+	const { VoteResult } = require('im/messenger/controller/vote/result');
 	const { clearDatabaseHandler } = require('im/messenger/lib/clear-database-handler');
 	const { ComponentRequestHandler } = require('im/messenger/application/lib/component-request-handler');
 
@@ -46,6 +47,7 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 			this.getOpenLineParamsHandler = this.getOpenLineParamsHandler.bind(this);
 			this.notificationOpenHandler = this.notificationOpenHandler.bind(this);
 			this.executeInComponentRequestHandler = this.executeInComponentRequestHandler.bind(this);
+			this.openVoteResultHandler = this.openVoteResultHandler.bind(this);
 		}
 
 		subscribeEvents()
@@ -56,6 +58,7 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 			BX.addCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
 			BX.addCustomEvent(EventType.notification.open, this.notificationOpenHandler);
 			BX.addCustomEvent(EventType.messenger.api.executeInComponentRequest, this.executeInComponentRequestHandler);
+			BX.addCustomEvent(EventType.messenger.openVoteResult, this.openVoteResultHandler);
 		}
 
 		unsubscribeEvents()
@@ -66,6 +69,7 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 			BX.removeCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
 			BX.removeCustomEvent(EventType.notification.open, this.notificationOpenHandler);
 			BX.removeCustomEvent(EventType.messenger.api.executeInComponentRequest, this.executeInComponentRequestHandler);
+			BX.removeCustomEvent(EventType.messenger.openVoteResult, this.openVoteResultHandler);
 		}
 
 		/**
@@ -122,6 +126,18 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 				tabCounters.setNotificationCounters(params.newCounter);
 				tabCounters.update();
 			}
+		}
+
+		/**
+		 * A vote result link carries the attach id only: the screen loads the vote by it itself.
+		 *
+		 * @param {{signedAttachId: string}} options
+		 */
+		openVoteResultHandler({ signedAttachId } = {})
+		{
+			this.logger.log('openVoteResultHandler:', signedAttachId);
+
+			VoteResult.open({ signedAttachId });
 		}
 
 		/**

@@ -9,6 +9,7 @@ export {
 	POINTER_DEPTH,
 	POINTER_PROTRUSION,
 	POINTER_WIDTH,
+	BUBBLE_ATTRIBUTE,
 } from './const';
 export type {
 	PopoverOptions,

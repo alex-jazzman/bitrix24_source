@@ -5,7 +5,6 @@ export const MinimalRoleForAction = {
 	[ActionByRole.setReaction]: UserRole.member,
 	[ActionByRole.openMessageMenu]: UserRole.member,
 	[ActionByRole.openAvatarMenu]: UserRole.member,
-	[ActionByRole.openSidebarMenu]: UserRole.member,
 	[ActionByRole.subscribeToComments]: UserRole.member,
 
 	[ActionByRole.openComments]: UserRole.guest,

@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/chart.bundle.js',
 	namespace: 'BX.Bizprocdesigner.Editor',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

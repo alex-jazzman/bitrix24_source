@@ -21,6 +21,10 @@ export const AutoDeleteMessagePopup = {
 			type: Number,
 			default: AutoDeleteMessageDelay.Off,
 		},
+		targetContainer: {
+			type: HTMLElement,
+			default: () => document.body,
+		},
 	},
 	emits: ['close', 'change'],
 	setup(): Object
@@ -45,7 +49,7 @@ export const AutoDeleteMessagePopup = {
 				height: 390,
 				width: 400,
 				closeIcon: true,
-				targetContainer: document.body,
+				targetContainer: this.targetContainer,
 				fixed: true,
 				padding: 0,
 				autoHide: true,

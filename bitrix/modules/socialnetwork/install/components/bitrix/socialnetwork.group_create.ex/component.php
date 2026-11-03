@@ -19,6 +19,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
+use Bitrix\Socialnetwork\Collab\Control\ExternalMembershipValidator;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Text\Emoji;
@@ -215,7 +216,7 @@ else
 		'scrum' => false,
 	];
 
-	if (($arResult['TAB'] ?? '') !== 'invite')
+	if (($arResult['TAB'] ?? '') !== 'invite' || $arParams['GROUP_ID'] > 0)
 	{
 		if ($arParams["GROUP_ID"] <= 0)
 		{
@@ -228,7 +229,7 @@ else
 		}
 		elseif (
 			empty($errorMessage)
-			&& !\Bitrix\Socialnetwork\Helper\Workgroup\Access::canUpdate([
+			&& !\Bitrix\Socialnetwork\Helper\Workgroup\Access::canModify([
 				'groupId' => $arParams['GROUP_ID'],
 			])
 		)
@@ -258,6 +259,17 @@ else
 			&& check_bitrix_sessid()
 		)
 		{
+			$preflight = ExternalMembershipValidator::validateFields(
+				(int)$arParams['GROUP_ID'],
+				$_POST,
+			);
+			if (!$preflight->isSuccess())
+			{
+				ShowError(implode('; ', $preflight->getErrorMessages()));
+
+				return;
+			}
+
 			$moderatorIdList = [];
 			$ownerId = (int)(
 				isset($arResult['POST']['OWNER_ID'])
@@ -644,6 +656,16 @@ else
 						$arResult["POST"]["USER_IDS"] = $arUserIDs;
 					}
 				}
+			}
+
+			$preflight = ExternalMembershipValidator::validateFields(
+				(int)$arParams['GROUP_ID'], $_POST, $arUserIDs ?? [],
+			);
+			if (!$preflight->isSuccess())
+			{
+				ShowError(implode('; ', $preflight->getErrorMessages()));
+
+				return;
 			}
 
 			$bFirstStepSuccess = false;

@@ -34,6 +34,7 @@ type Params = {
 	groupId?: number,
 	pathToDefaultRedirect?: string,
 	pathToGroupRedirect?: string,
+	preselectedRecipients?: Array<string>,
 }
 
 export type PostFormData = {
@@ -59,6 +60,7 @@ export class PostForm extends EventEmitter
 {
 	#postId: number;
 	#groupId: number;
+	#preselectedRecipients: ?Array<string>;
 
 	#isShownPostTitle: boolean;
 
@@ -102,6 +104,12 @@ export class PostForm extends EventEmitter
 			Type.isInteger(parseInt(params.groupId, 10))
 				? parseInt(params.groupId, 10)
 				: 0
+		);
+
+		this.#preselectedRecipients = (
+			Type.isArray(params.preselectedRecipients)
+				? params.preselectedRecipients.filter((code) => Type.isStringFilled(code))
+				: null
 		);
 
 		this.#formId = `blogPostForm_${Text.getRandom().toLowerCase()}`;
@@ -149,12 +157,19 @@ export class PostForm extends EventEmitter
 
 	#init(): Promise
 	{
-		return ajax.runAction('socialnetwork.api.livefeed.blogpost.getPostFormInitData', {
-			data: {
-				postId: this.#postId,
-				groupId: this.#groupId,
-			},
-		})
+		const data = {
+			postId: this.#postId,
+			groupId: this.#groupId,
+		};
+
+		if (this.#preselectedRecipients !== null)
+		{
+			// the codes travel as JSON: an empty array does not survive form encoding, while an
+			// empty recipient set must stay distinguishable from an absent parameter
+			data.preselectedRecipients = JSON.stringify(this.#preselectedRecipients);
+		}
+
+		return ajax.runAction('socialnetwork.api.livefeed.blogpost.getPostFormInitData', { data })
 			.then((response: AjaxResponse) => {
 				this.#initData = response.data;
 
@@ -452,7 +467,7 @@ export class PostForm extends EventEmitter
 	#renderRecipientSelector(): HTMLElement
 	{
 		this.#recipientSelector = Tag.render`
-			<div class="sn-post-form__discussion-row"></div>
+			<div class="sn-post-form__discussion-row --recipients"></div>
 		`;
 
 		return this.#recipientSelector;

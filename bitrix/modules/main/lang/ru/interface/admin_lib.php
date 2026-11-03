@@ -43,6 +43,7 @@ $MESS["admin_lib_list_actions"] = "- действия -";
 $MESS["admin_lib_list_apply"] = "Применить";
 $MESS["admin_lib_list_double_click"] = "Двойной щелчок -";
 $MESS["admin_lib_list_check"] = "Отметить/Снять отметку";
+$MESS["admin_lib_list_check_row"] = "Отметить/Снять отметку, запись #ID#";
 $MESS["admin_lib_list_actions_title"] = "Действия";
 $MESS["admin_lib_list_all_title"] = "Всего";
 $MESS["admin_lib_list_show_row_count_title"] = "Показать количество";

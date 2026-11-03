@@ -24,6 +24,21 @@ export type SearchResults = {
 	items: Array<CatalogMenuItem>,
 }
 
+function normalizeSearchText(text: string): string
+{
+	return text.toLowerCase().replaceAll('ё', 'е');
+}
+
+/**
+ * Identity of a palette card: its activity type together with the preset of it, since one activity
+ * shows up as many cards - one per preset - and a node names the very card it came from by both.
+ * A card without a preset keeps the bare type, so an absent preset is never taken for an empty one.
+ */
+function catalogCardKey(type: string, presetId: ?string): string
+{
+	return presetId === null || presetId === undefined ? type : `${type}@${presetId}`;
+}
+
 export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 	state: (): CatalogState => ({
 		groups: [],
@@ -75,20 +90,18 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 			return state.canSearch && !state.isShowFoundedGroupItems;
 		},
 		searchResults: (state: CatalogState): SearchResults => {
-			const preSearchText = state.searchText.toLowerCase();
+			const preSearchText = normalizeSearchText(state.searchText);
 
 			const foundedGroups = state.groups
 				.filter((group) => {
-					return group.title
-						.toLowerCase()
-						.includes(preSearchText);
+					return normalizeSearchText(group.title).includes(preSearchText);
 				});
 
 			const foundedItems = [
 				...new Map(
 					state.groups
 						.flatMap((group) => group.items
-							.filter((item) => item.title.toLowerCase().includes(preSearchText))
+							.filter((item) => normalizeSearchText(item.title).includes(preSearchText))
 							.map((item) => {
 								const key = item.presetId
 									? `${item.id}_${item.presetId}`
@@ -112,24 +125,72 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 
 			return groups.length + items.length;
 		},
-		// An activity kept out of the palette (deprecated, groupless) has no card here at all, so its
-		// nodes get their title from the server instead - pass it as fallbackTitle.
-		getDefaultTitle: (state: CatalogState) => (
-			activity: ?{ Type: string, PresetId?: ?string },
-			fallbackTitle: ?string = '',
-		): string => {
-			if (!activity?.Type)
+		/**
+		 * The palette indexed by card identity, built once per catalog and read by everyone who has to
+		 * name the card a node came from. The readers sit on the render path of the panel, where walking
+		 * all the cards of the palette - 227 of them on a portal with a few smart processes - once per
+		 * row is the whole cost of the answer.
+		 *
+		 * The first card of a key wins, which is the card the linear search these readers used to do
+		 * returned.
+		 */
+		cardByKey: (state: CatalogState): Map<string, CatalogMenuItem> => {
+			const cards = new Map();
+			for (const group of state.groups)
 			{
-				return '';
+				for (const item of group.items ?? [])
+				{
+					const key = catalogCardKey(item.id, item.presetId);
+					if (!cards.has(key))
+					{
+						cards.set(key, item);
+					}
+				}
 			}
 
-			const cardTitle = state.groups
-				.flatMap((group) => group.items ?? [])
-				.find((item) => item.id === activity.Type
-					&& (item.presetId ?? null) === (activity.PresetId ?? null))
-				?.title ?? '';
+			return cards;
+		},
+		/**
+		 * Properties a node carries out of the palette: those of the card it was dropped from, a preset
+		 * of it included (NodeCatalogItemDtoFactory). They say which node this is - which trigger, which
+		 * entity, which tool - and not what anyone has set up in it, so a reader of the settings of a
+		 * node has to tell them from the values the user filled in.
+		 *
+		 * Empty for a node whose card is not in the palette (deprecated, groupless) and while the
+		 * catalog is still loading: then nothing is told apart, which is the answer this getter gave
+		 * before the palette arrived anyway.
+		 */
+		getCatalogProperties(): (activity: ?{ Type: string, PresetId?: ?string }) => Object {
+			return (activity: ?{ Type: string, PresetId?: ?string }): Object => {
+				if (!activity?.Type)
+				{
+					return {};
+				}
 
-			return cardTitle || (fallbackTitle ?? '');
+				const card = this.cardByKey.get(catalogCardKey(activity.Type, activity.PresetId));
+
+				return card?.properties ?? {};
+			};
+		},
+		// An activity kept out of the palette (deprecated, groupless) has no card here at all, so its
+		// nodes get their title from the server instead - pass it as fallbackTitle.
+		getDefaultTitle(): (activity: ?{ Type: string, PresetId?: ?string }, fallbackTitle: ?string) => string {
+			return (
+				activity: ?{ Type: string, PresetId?: ?string },
+				fallbackTitle: ?string = '',
+			): string => {
+				if (!activity?.Type)
+				{
+					return '';
+				}
+
+				const cardTitle = this.cardByKey
+					.get(catalogCardKey(activity.Type, activity.PresetId))
+					?.title ?? ''
+				;
+
+				return cardTitle || (fallbackTitle ?? '');
+			};
 		},
 	},
 	actions: {
@@ -165,6 +226,12 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 			{
 				this.isExpandedCatalog = false;
 			}
+		},
+		// Unconditional, unlike the two above: they answer the pointer, and there a pinned catalog
+		// must not follow it. Pinning says what the panel looks like outright, by either path.
+		setExpandedCatalog(value: boolean): void
+		{
+			this.isExpandedCatalog = value;
 		},
 		clearSearchText(): void
 		{

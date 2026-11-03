@@ -2,6 +2,7 @@
  * @module crm/crm-mode/wizard/layouts/conversion/blocks/stage
  */
 jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { TypeId } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
@@ -83,9 +84,8 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 							content: EntitySvg.dealInverted(AppTheme.colors.accentExtraPurple),
 						},
 					}),
-					Text({
+					Text3({
 						style: {
-							fontSize: 16,
 							color: AppTheme.colors.base1,
 						},
 						text: getEntityMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION', TypeId.Deal),
@@ -135,9 +135,8 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 								flexShrink: 2,
 							},
 						},
-						Text({
+						Text3({
 							style: {
-								fontSize: 16,
 								flexShrink: 2,
 								marginRight: 2,
 								color: AppTheme.colors.base1,

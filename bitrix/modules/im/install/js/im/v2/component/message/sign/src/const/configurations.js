@@ -164,10 +164,40 @@ export const metaData = {
 			color: ButtonColor.PrimaryBorder,
 		},
 	},
+	[Await.byEmployeeReceivedByCompany]: {
+		title: Loc.getMessage('IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION'),
+		button: {
+			text: Loc.getMessage('IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT'),
+			callback: ({ user, document }) => {
+				goToPrimaryLink(document, true);
+			},
+			color: ButtonColor.PrimaryBorder,
+		},
+	},
 	[Await.inviteB2bDocumentSigning]: {
 		title: Loc.getMessage('IM_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_TITLE'),
 		description: Loc.getMessage('IM_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION'),
 		button: null,
+	},
+	[Await.annulmentCanceledToEmployee]: {
+		title: Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_DESCRIPTION'),
+	},
+	[Await.annulmentCanceledToInitiator]: {
+		title: Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_TITLE'),
+		description: (annulledCount) => Loc.getMessagePlural(
+			'IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_DESCRIPTION',
+			annulledCount,
+			{ '#COUNT#': annulledCount },
+		),
+		button: {
+			text: Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_BUTTON_TEXT'),
+			callback: ({ user, document }) => {
+				goToPrimaryLink(document, true);
+			},
+			color: ButtonColor.Primary,
+		},
 	},
 	[Success.doneCompany]: {
 		title: Loc.getMessage('IM_MESSAGE_SIGN_DONE_COMPANY_TITLE_MSGVER_1'),
@@ -216,6 +246,17 @@ export const metaData = {
 		title: Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_TITLE'),
 		description: Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION_MSGVER_1'),
 		button: null,
+	},
+	[Success.doneEmployeeReceivedByCompany]: {
+		title: Loc.getMessage('IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION'),
+		button: {
+			text: Loc.getMessage('IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT'),
+			callback: ({ user, document }) => {
+				goToPrimaryLink(document, true);
+			},
+			color: ButtonColor.PrimaryBorder,
+		},
 	},
 	[Success.doneB2bDocumentSigning]: {
 		title: Loc.getMessage('IM_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_TITLE'),
@@ -484,6 +525,28 @@ export const metaData = {
 			color: ButtonColor.Primary,
 		},
 	},
+	[Failure.documentAnnulledToEmployee]: {
+		title: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_DESCRIPTION'),
+	},
+	[Failure.documentAnnulledToInitiator]: {
+		title: (annulledCount) => Loc.getMessagePlural(
+			'IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_TITLE',
+			annulledCount,
+		),
+		description: (annulledCount) => Loc.getMessagePlural(
+			'IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_DESCRIPTION',
+			annulledCount,
+			{ '#COUNT#': annulledCount },
+		),
+		button: {
+			text: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_BUTTON_TEXT'),
+			callback: ({ user, document }) => {
+				goToPrimaryLink(document, true);
+			},
+			color: ButtonColor.Primary,
+		},
+	},
 	[Failure.signingError]: {
 		title: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_TITLE'),
 		description: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_DESCRIPTION'),
@@ -500,6 +563,17 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_REPEAT_DESCRIPTION'),
 		button: {
 			text: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_REPEAT_BUTTON_TEXT'),
+			callback: ({ user, document }) => {
+				goToPrimaryLink(document, true);
+			},
+			color: ButtonColor.Primary,
+		},
+	},
+	[Failure.documentPreparationFailed]: {
+		title: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_DESCRIPTION'),
+		button: {
+			text: Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_BUTTON_TEXT'),
 			callback: ({ user, document }) => {
 				goToPrimaryLink(document, true);
 			},

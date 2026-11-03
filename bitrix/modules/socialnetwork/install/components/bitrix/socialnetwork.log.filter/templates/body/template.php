@@ -1,6 +1,11 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\UI\Extension;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+Extension::load(['intranet.old-interface.intranet-common']);
 
 if (!is_array($arResult["PresetFilters"]) &&
 	!(array_key_exists("SHOW_SETTINGS_LINK", $arParams) && $arParams["SHOW_SETTINGS_LINK"] == "Y"))
@@ -21,8 +26,8 @@ if (!is_array($arResult["PageParamsToClear"]))
 	$arResult["PageParamsToClear"] = array();
 }
 
-$postFormUrl = isset($arResult['PostFormUrl']) ? $arResult['PostFormUrl'] : '';
-$actionUrl = isset($arResult['ActionUrl']) ? $arResult['ActionUrl'] : '';
+$postFormUrl = $arResult['PostFormUrl'] ?? '';
+$actionUrl = $arResult['ActionUrl'] ?? '';
 
 if ($arResult["MODE"] == "AJAX")
 {
@@ -30,10 +35,10 @@ if ($arResult["MODE"] == "AJAX")
 	$APPLICATION->RestartBuffer();
 	$createdByID = isset($_REQUEST["flt_created_by_id"]) ? intval($_REQUEST["flt_created_by_id"]) : 0;
 	$enableComments = isset($_REQUEST["flt_comments"]) && $_REQUEST["flt_comments"] == "Y";
-	$dateType = isset($_REQUEST["flt_date_datesel"]) ? $_REQUEST["flt_date_datesel"] : "";
-	$dateDays = isset($_REQUEST["flt_date_days"]) ? $_REQUEST["flt_date_days"] : "";
-	$dateFrom = isset($_REQUEST["flt_date_from"]) ? $_REQUEST["flt_date_from"] : "";
-	$dateTo = isset($_REQUEST["flt_date_to"]) ? $_REQUEST["flt_date_to"] : "";
+	$dateType = $_REQUEST["flt_date_datesel"] ?? "";
+	$dateDays = $_REQUEST["flt_date_days"] ?? "";
+	$dateFrom = $_REQUEST["flt_date_from"] ?? "";
+	$dateTo = $_REQUEST["flt_date_to"] ?? "";
 	?><div id="sonet-log-filter" class="sonet-log-filter-block">
 		<div class="filter-block-title sonet-log-filter-title"><?=GetMessage("SONET_C30_T_FILTER_TITLE")?></div>
 		<form method="GET" name="log_filter" target="_self" action="<?=$postFormUrl !== '' ? $postFormUrl: POST_FORM_ACTION_URI?>">
@@ -195,7 +200,10 @@ else
 								$buttonNameTop = $arPresetFilter["NAME"];
 
 							$href = $actionUrl !== "" ? $actionUrl : $GLOBALS["APPLICATION"]->GetCurPage();
-							$href = CHTTP::urlAddParams(CHTTP::urlDeleteParams($href, array_merge($arResult["PageParamsToClear"], array("preset_filter_top_id"))), array("preset_filter_top_id"=>$preset_filter_top_id));
+							$href = (string)(new Uri($href))
+								->deleteParams($arResult["PageParamsToClear"])
+								->addParams(["preset_filter_top_id" => $preset_filter_top_id])
+							;
 
 							?>{ 
 								text : "<?=$arPresetFilter["NAME"]?>", 
@@ -235,7 +243,10 @@ else
 							$urlParams['preset_filter_top_id'] = $arResult["PresetFilterTopActive"];
 						}
 
-						$href = CHTTP::urlAddParams(CHTTP::urlDeleteParams($href, array_merge($arResult["PageParamsToClear"], [ 'preset_filter_top_id', 'preset_filter_id' ])), $urlParams);
+						$href = (string)(new Uri($href))
+							->deleteParams(array_merge($arResult["PageParamsToClear"], ['preset_filter_top_id']))
+							->addParams($urlParams)
+						;
 						if ($arResult["PresetFilterActive"] === $preset_filter_id)
 						{
 							$buttonName = $arPresetFilter["NAME"];
@@ -344,9 +355,4 @@ else
 
 	
 	?></span><?
-	
-
-
-
 }
-?>

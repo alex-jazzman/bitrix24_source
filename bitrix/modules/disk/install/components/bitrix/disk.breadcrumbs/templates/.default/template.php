@@ -33,7 +33,7 @@ unset($item);
 	{
 	?>
 		<div class="disk-breadcrumbs-item js-disk-breadcrumbs-folder" data-object-id="<?= $crumb['ID'] ?>" data-object-name="<?= $crumb['NAME'] ?>" data-is-root="<?= $crumb['ID'] == $arResult['BREADCRUMBS_ROOT']['ID']? 1 : '' ?>" data-object-parent-path="<?= $component->encodeUrn($crumb['LINK']) ?>">
-			<a class="disk-breadcrumbs-item-title js-disk-breadcrumbs-folder-link" href="<?= $crumb['ENCODED_LINK'] ?>" data-object-id="<?= $crumb['ID'] ?>"><?= $crumb['NAME'] ?></a>
+			<a class="disk-breadcrumbs-item-title js-disk-breadcrumbs-folder-link" href="<?= $crumb['ENCODED_LINK'] ?>" data-object-id="<?= $crumb['ID'] ?>" data-unique-code="<?= htmlspecialcharsbx($crumb['UNIQUE_CODE'] ?? '') ?>" data-uls="<?= htmlspecialcharsbx($crumb['ULS'] ?? '') ?>"><?= $crumb['NAME'] ?></a>
 			<span class="disk-breadcrumbs-item-arrow js-disk-breadcrumbs-arrow"></span>
 		</div>
 	<?

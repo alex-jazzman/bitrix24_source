@@ -221,4 +221,4 @@ export class LocalStorage
 	}
 }
 
-export const localStorage = new LocalStorage();
+export const localStorage: LocalStorage = new LocalStorage();

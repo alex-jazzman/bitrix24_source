@@ -60,4 +60,5 @@ $MESS["BUYER_ROW_LAST_ORDER_DATE"] = "Дата последнего заказа
 $MESS["BUYER_F_LAST_ORDER_DATE"] = "Дата последнего заказа";
 $MESS["BUYER_ORDERS_LID"] = "Заказы сайта";
 $MESS["BUYER_ADD_USER"] = "Добавить покупателя";
+$MESS['BUYER_ROW_BUYER_NOT_FOUND'] = 'Пользователь не найден';
 ?>

@@ -10,6 +10,7 @@ use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Call\Integration\AI\CallAISettings;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -29,10 +30,12 @@ $isExcluded = !Loader::includeModule('call')
 	|| Option::get('bizproc', 'bitrix_ai_day_plan_available', 'N') === 'N'
 ;
 
+$copilotNameReplace = ['#COPILOT_NAME#' => CallAISettings::getCopilotName()];
+
 $arActivityDescription =
 	(new ActivityDescription(
-		Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_NAME') ?? '',
-		Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_DESCRIPTION') ?? '',
+		Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_NAME_MSGVER_1', $copilotNameReplace) ?? '',
+		Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_DESCRIPTION_MSGVER_1', $copilotNameReplace) ?? '',
 		[ActivityType::NODE->value]
 	))
 		->setClass('CallGetFollowUpActivity')
@@ -42,7 +45,7 @@ $arActivityDescription =
 		->setExcluded($isExcluded)
 		->setReturn([
 			'FollowUp' => [
-				'NAME' => Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_RETURN_FOLLOWUPS'),
+				'NAME' => Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_RETURN_FOLLOWUPS_MSGVER_1', $copilotNameReplace),
 				'TYPE' => FieldType::STRING,
 			],
 			'ErrorMessage' => [
@@ -50,7 +53,7 @@ $arActivityDescription =
 				'TYPE' => FieldType::STRING,
 			],
 			'FollowUpCount' => [
-				'NAME' => Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_RETURN_FOLLOWUP_COUNT'),
+				'NAME' => Loc::getMessage('CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_RETURN_FOLLOWUP_COUNT_MSGVER_1', $copilotNameReplace),
 				'TYPE' => FieldType::INT,
 			],
 		])

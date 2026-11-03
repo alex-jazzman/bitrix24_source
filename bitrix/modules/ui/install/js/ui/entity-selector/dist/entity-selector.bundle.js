@@ -4314,12 +4314,14 @@ this.BX.UI = this.BX.UI || {};
 			value: function showTextBox() {
 				this.textBoxVisible = true;
 				main_core.Dom.removeClass(this.getTextBox(), 'ui-tag-selector-item-hidden');
+				this.focusZone?.refreshElements();
 			}
 		}, {
 			key: "hideTextBox",
 			value: function hideTextBox() {
 				this.textBoxVisible = false;
 				main_core.Dom.addClass(this.getTextBox(), 'ui-tag-selector-item-hidden');
+				this.focusZone?.refreshElements();
 			}
 		}, {
 			key: "tryAutoHideTextBox",
@@ -4589,12 +4591,14 @@ this.BX.UI = this.BX.UI || {};
 			value: function showAddButton() {
 				this.addButtonVisible = true;
 				main_core.Dom.removeClass(this.getAddButton(), 'ui-tag-selector-item-hidden');
+				this.focusZone?.refreshElements();
 			}
 		}, {
 			key: "hideAddButton",
 			value: function hideAddButton() {
 				this.addButtonVisible = false;
 				main_core.Dom.addClass(this.getAddButton(), 'ui-tag-selector-item-hidden');
+				this.focusZone?.refreshElements();
 			}
 		}, {
 			key: "getCreateButton",
@@ -4718,6 +4722,7 @@ this.BX.UI = this.BX.UI || {};
 		lockedTab = null;
 		enabled = false;
 		#focusZone = null;
+		#isKeyHandled = false;
 		static keyMap = {
 			Down: 'ArrowDown',
 			Up: 'ArrowUp',
@@ -4909,8 +4914,9 @@ this.BX.UI = this.BX.UI || {};
 			}
 			const handler = this[`handle${keyName}Press`];
 			if (handler) {
+				this.#isKeyHandled = false;
 				handler.call(this, event);
-				if (keyName !== 'Tab') {
+				if (this.#isKeyHandled && keyName !== 'Tab') {
 					this.lockTab();
 				}
 			}
@@ -4932,6 +4938,7 @@ this.BX.UI = this.BX.UI || {};
 				this.focusOnNode(firstNode);
 			}
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 		handleArrowUpPress(event) {
 			if (this.getActiveNode()) {
@@ -4947,6 +4954,7 @@ this.BX.UI = this.BX.UI || {};
 				this.focusOnNode(lastNode);
 			}
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 		handleArrowRightPress(event) {
 			const activeNode = this.getActiveNode();
@@ -4954,6 +4962,7 @@ this.BX.UI = this.BX.UI || {};
 				activeNode.expand();
 			}
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 		handleArrowLeftPress(event) {
 			const activeNode = this.getActiveNode();
@@ -4963,11 +4972,13 @@ this.BX.UI = this.BX.UI || {};
 			if (activeNode.isOpen()) {
 				activeNode.collapse();
 				event.preventDefault();
+				this.#isKeyHandled = true;
 			} else {
 				const parentNode = activeNode.getParentNode();
 				if (parentNode && !parentNode.isRoot()) {
 					this.focusOnNode(parentNode);
 					event.preventDefault();
+					this.#isKeyHandled = true;
 				}
 			}
 		}
@@ -4977,6 +4988,7 @@ this.BX.UI = this.BX.UI || {};
 				activeNode.click();
 			}
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 		handleSpacePress(event) {
 			const activeNode = this.getActiveNode();
@@ -4985,6 +4997,7 @@ this.BX.UI = this.BX.UI || {};
 					activeNode.click();
 				}
 				event.preventDefault();
+				this.#isKeyHandled = true;
 			}
 		}
 		handleTabPress(event) {
@@ -4995,6 +5008,7 @@ this.BX.UI = this.BX.UI || {};
 					ui_a11y.FocusNavigator.focusFirst(this.getDialog().getContainer());
 				}
 				event.preventDefault();
+				this.#isKeyHandled = true;
 			}
 		}
 	}
@@ -6213,6 +6227,7 @@ this.BX.UI = this.BX.UI || {};
 				if (this.destroyed) {
 					return;
 				}
+				this.saveRecentItems();
 				this.destroyed = true;
 				this.emit('onDestroy');
 				this.disconnectTabOverlapping();

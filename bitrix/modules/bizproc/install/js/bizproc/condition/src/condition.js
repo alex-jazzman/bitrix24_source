@@ -10,4 +10,5 @@ export { DelayIntervalSelector } from './date/delay-interval-selector';
 export { InlineTimeSelector } from './date/inline-time-selector';
 export { ConditionSelector } from './selectors/condition-selector';
 export { ConditionGroupSelector } from './selectors/condition-group-selector';
+export { ConditionViewMode } from './selectors/condition-view-renderer';
 export { decorateConditionGroupField, getMountedConditionGroupField } from './mount/condition-group-field';

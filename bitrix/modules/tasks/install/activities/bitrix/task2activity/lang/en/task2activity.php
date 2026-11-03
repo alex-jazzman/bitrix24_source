@@ -1,6 +1,16 @@
 <?php
 $MESS["BPCDA_FIELD_REQUIED"] = "The field '#FIELD#' is required.";
+$MESS['BPSA_CHECK_LISTS_COUNT_ERROR'] = 'The action cannot contain more than #LIMIT# checklists.';
+$MESS['BPSA_CHECK_LISTS_COUNT_LIMITED'] = 'Only the first #LIMIT# checklists have been created in the task. Checklists not created: #COUNT#.';
+$MESS['BPSA_CHECK_LIST_ADD_ERROR_MSGVER_1'] = 'Could not create checklist #LIST_NUMBER#.';
+$MESS['BPSA_CHECK_LIST_FORM_ERROR'] = 'Could not save the checklists. Refresh the page and try again.';
 $MESS["BPSA_CHECK_LIST_ITEMS"] = "Checklist";
+$MESS["BPSA_CHECK_LIST_ITEMS_COUNT_ERROR"] = "A checklist cannot contain more than #LIMIT# items.";
+$MESS['BPSA_CHECK_LIST_ITEMS_COUNT_LIMITED_MSGVER_1'] = 'Only the first #LIMIT# items have been added to checklist #LIST_NUMBER#. Items not added: #COUNT#.';
+$MESS['BPSA_CHECK_LIST_ITEM_ADD_ERROR_MSGVER_1'] = 'Could not add item #NUMBER# to checklist #LIST_NUMBER#.';
+$MESS["BPSA_CHECK_LIST_ITEM_LENGTH_ERROR"] = "Item text length must not exceed #LIMIT# characters.";
+$MESS['BPSA_CHECK_LIST_TITLE'] = 'Checklist #NUMBER#';
+$MESS['BPSA_CHECK_LIST_TITLE_LENGTH_ERROR'] = 'Shorten the checklist name to #LIMIT# characters or fewer.';
 $MESS["BPSA_CREATED_BY_ERROR"] = "Task creator not specified.";
 $MESS["BPSA_CYCLING_ERROR_1"] = "Task was not created because one or more activities may cause infinite recursion.";
 $MESS["BPSA_TRACK_CLOSED"] = "Task completed on #DATE#";

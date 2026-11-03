@@ -1,0 +1,20 @@
+<?php
+$MESS["INTRANET_SELF_DELETE_POPUP_ADD_PARTICIPANT"] = "Select administrators";
+$MESS["INTRANET_SELF_DELETE_POPUP_BUTTON_CONTINUE"] = "Continue";
+$MESS["INTRANET_SELF_DELETE_POPUP_BUTTON_CREATE_CHAT"] = "Create chat";
+$MESS["INTRANET_SELF_DELETE_POPUP_BUTTON_OPEN_SETTINGS"] = "Open settings";
+$MESS["INTRANET_SELF_DELETE_POPUP_BUTTON_TRANSFER_RIGHTS"] = "How to transfer privileges";
+$MESS["INTRANET_SELF_DELETE_POPUP_CANCEL"] = "Cancel";
+$MESS["INTRANET_SELF_DELETE_POPUP_CHAT_CARD_DESCRIPTION"] = "You can add your supervisor to the chat to approve the deletion.";
+$MESS["INTRANET_SELF_DELETE_POPUP_CHAT_CARD_TITLE"] = "Chat with administrator";
+$MESS["INTRANET_SELF_DELETE_POPUP_CREATE_CHAT_ERROR"] = "Could not create the chat. Please try again.";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_FREE_LICENSE_FIRST"] = "You are currently the only administrator of this Bitrix24.";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_FREE_LICENSE_SECOND"] = "To delete your profile, transfer the administrator privileges to another employee or delete the entire Bitrix24. You can do this in the settings.";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_LAST_ADMIN"] = "You are currently the only employee in this Bitrix24.";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_LAST_ADMIN_PORTAL_DELETE"] = "The entire Bitrix24 will be deleted together with your profile and cannot be restored.";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_PAID_LICENSE_FIRST"] = "You are currently the only administrator of this Bitrix24.";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_PAID_LICENSE_SECOND"] = "To delete your profile, first transfer the administrator privileges to another employee or contact us at [EMAIL][/EMAIL].";
+$MESS["INTRANET_SELF_DELETE_POPUP_MESSAGE_REQUEST_CHAT"] = "Only your Bitrix24 administrator can delete your profile. Create a chat, and a message with your request will be sent automatically.";
+$MESS["INTRANET_SELF_DELETE_POPUP_TITLE_CANNOT_DELETE"] = "Profile cannot be deleted";
+$MESS["INTRANET_SELF_DELETE_POPUP_TITLE_PROFILE_DELETE"] = "Delete profile";
+$MESS["INTRANET_SELF_DELETE_POPUP_TITLE_TRANSFER_RIGHTS"] = "Transfer your administrator privileges";

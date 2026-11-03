@@ -101,7 +101,8 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/thunk/src/data-provide
 			{
 				new RunActionExecutor(endpoint, getAddStagePreparedParams(addStageParams))
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+					.catch(console.error);
 			}
 		});
 	}
@@ -118,7 +119,8 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/thunk/src/data-provide
 			{
 				new RunActionExecutor(endpoint, getDeleteStagePreparedParams(deleteStageParams))
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+					.catch(console.error);
 			}
 		});
 	}
@@ -135,7 +137,8 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/thunk/src/data-provide
 			{
 				new RunActionExecutor(endpoint, getUpdateStagePreparedParams(updateStageParams))
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+					.catch(console.error);
 			}
 		});
 	}

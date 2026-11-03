@@ -1,5 +1,8 @@
-import { Sorter } from 'crm.kanban.sort';
 import { Type } from 'main.core';
+
+import { Sorter } from 'crm.kanban.sort';
+
+import { getStageTargetColumn, normalizeStageRealSorts } from './stage-editor-placement';
 import { ViewMode } from './viewmode';
 
 export default class PullOperation
@@ -73,6 +76,20 @@ export default class PullOperation
 		if (action === 'addItem')
 		{
 			this.addItem();
+
+			return;
+		}
+
+		if (action === 'addStage')
+		{
+			this.addStage();
+
+			return;
+		}
+
+		if (action === 'updateStage')
+		{
+			this.updateStage();
 		}
 	}
 
@@ -194,5 +211,77 @@ export default class PullOperation
 		}
 
 		this.grid.addItem(params.item);
+	}
+
+	addStage(): void
+	{
+		const params = this.getActionParams();
+		const stage = params.stage;
+		if (!Type.isPlainObject(stage) || this.grid.getColumn(stage.id))
+		{
+			return;
+		}
+
+		const targetColumn = getStageTargetColumn(stage, this.grid.getColumns());
+		this.grid.addColumn({
+			...this.#getStageColumnOptions(stage),
+			targetId: targetColumn?.getId(),
+		});
+		normalizeStageRealSorts(this.grid.getColumns());
+	}
+
+	updateStage(): void
+	{
+		const params = this.getActionParams();
+		const stage = params.stage;
+		if (!Type.isPlainObject(stage))
+		{
+			return;
+		}
+
+		const column = this.grid.getColumn(stage.id);
+		if (!column)
+		{
+			return;
+		}
+
+		if (Type.isFunction(column.closeStageDescriptionTooltip))
+		{
+			column.closeStageDescriptionTooltip();
+		}
+
+		const stageOptions = this.#getStageColumnOptions(stage, column.getData());
+		this.grid.updateColumn(column, stageOptions);
+		BX.onCustomEvent('Crm.Stage.DescriptionChanged', [{
+			entityType: this.grid.getData().entityType,
+			categoryId: this.grid.getData().params?.CATEGORY_ID ?? 0,
+			stageId: stage.id,
+			description: stageOptions.data.description,
+		}]);
+		this.grid.moveColumn(
+			column,
+			getStageTargetColumn(stage, this.grid.getColumns(), column),
+		);
+		normalizeStageRealSorts(this.grid.getColumns());
+	}
+
+	#getStageColumnOptions(stage: Object, currentData: Object = {}): Object
+	{
+		const description = Type.isString(stage.description)
+			? stage.description
+			: Type.isString(currentData.description) ? currentData.description : ''
+		;
+
+		return {
+			id: stage.id,
+			name: stage.name,
+			color: stage.color,
+			data: {
+				...stage,
+				description,
+				type: stage.type ?? stage.TYPE,
+				sort: parseInt(stage.sort, 10),
+			},
+		};
 	}
 }

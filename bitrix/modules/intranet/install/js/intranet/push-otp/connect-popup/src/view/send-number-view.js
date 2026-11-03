@@ -1,11 +1,12 @@
-import { Dom, Loc, Reflection, Tag, Type, Text } from 'main.core';
-import { BaseCache, MemoryCache } from 'main.core.cache';
-import { AirButtonStyle, BaseButton, Button } from 'ui.buttons';
-import { BaseView } from './base-view';
+import { Browser, Dom, Loc, Reflection, Tag, Text, Type } from 'main.core';
+import { type BaseCache, MemoryCache } from 'main.core.cache';
+import { AirButtonStyle, type BaseButton, Button } from 'ui.buttons';
+import { BaseView, MOBILE_POPUP_WIDTH } from './base-view';
 import { PhoneFormatter } from 'ui.type';
 import './css/send-number.css';
 import 'main.phonenumber';
 import { Analytics } from '../analytics';
+import { createFinishButton, createSwitchChannelButton } from './switch-channel-button';
 
 export class SendNumberView extends BaseView
 {
@@ -19,6 +20,14 @@ export class SendNumberView extends BaseView
 	#skipButton: Button;
 	#titleContainer: HTMLElement;
 	#errorContainer: HTMLElement;
+	#isMobile: boolean;
+	#onContactConfirmed: (flowId: ?string) => Promise;
+	#isSkippingDeviceConnectProvider: () => boolean;
+	#flowIdProvider: () => ?string;
+	#canSwitchChannelProvider: () => boolean;
+	#switchChannelButton: Button;
+	#canFinishProvider: () => boolean;
+	#finishButton: Button;
 
 	constructor(options)
 	{
@@ -27,6 +36,22 @@ export class SendNumberView extends BaseView
 		this.#phoneNumber = Type.isString(options.phoneNumber) ? PhoneFormatter.formatValue(options.phoneNumber) : '';
 		this.#isPhoneNumberConfirmed = options.isPhoneNumberConfirmed === true;
 		this.#changeClicked = false;
+		this.#isMobile = Browser.isMobile();
+		this.#onContactConfirmed = Type.isFunction(options.onContactConfirmed)
+			? options.onContactConfirmed
+			: () => Promise.resolve();
+		this.#isSkippingDeviceConnectProvider = Type.isFunction(options.isSkippingDeviceConnectProvider)
+			? options.isSkippingDeviceConnectProvider
+			: () => options.hideSkipButton === true;
+		this.#flowIdProvider = options.flowIdProvider || (() => null);
+		this.#canSwitchChannelProvider = Type.isFunction(options.canSwitchChannelProvider)
+			? options.canSwitchChannelProvider
+			: () => false;
+		this.#switchChannelButton = createSwitchChannelButton(this, 'email');
+		this.#canFinishProvider = Type.isFunction(options.canFinishProvider)
+			? options.canFinishProvider
+			: () => false;
+		this.#finishButton = createFinishButton(this, (errors) => this.#setError(errors), options.onFinish);
 		this.#sendButton = this.#createSendBtn();
 		this.#skipButton = SendNumberView.createSkipAddPhoneNumberButton(this);
 		this.#titleContainer = Tag.render`
@@ -126,6 +151,11 @@ export class SendNumberView extends BaseView
 	render(): HTMLElement
 	{
 		return this.#container.remember('view', () => {
+			if (this.#isMobile)
+			{
+				return this.#renderMobileView();
+			}
+
 			const shouldShowInput = this.#forceChangeMode || !Type.isStringFilled(this.#phoneNumber);
 
 			return Tag.render`
@@ -142,12 +172,49 @@ export class SendNumberView extends BaseView
 						<div class="intranet-push-otp-connect-popup__view-phone-number-phone"></div>
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
-						${this.#skipButton.render()}
+						${this.#renderSecondaryButton()}
 						${this.#sendButton.render()}
 					</div>
 				</div>
 			`;
 		});
+	}
+
+	getPopupWidth(): ?number
+	{
+		return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+	}
+
+	#renderMobileView(): HTMLElement
+	{
+		const shouldShowInput = this.#forceChangeMode || !Type.isStringFilled(this.#phoneNumber);
+
+		return Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div><div class="intranet-push-otp-connect-popup__popup-title">${this.#renderTitle()}</div>${this.renderStepIndicators()}</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_DESC')}</div>
+				<div class="intranet-push-otp-connect-popup__view-connect-container --mobile --phone">
+					${shouldShowInput ? this.#renderInputPhoneNumber() : this.#renderCurrentPhoneNumber()}
+					<div class="intranet-push-otp-connect-popup__view-phone-number-phone"></div>
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">${this.#renderSecondaryButton()}${this.#sendButton.render()}</div>
+			</div>
+		`;
+	}
+
+	#renderSecondaryButton(): string | HTMLElement
+	{
+		if (this.#isSkippingDeviceConnectProvider())
+		{
+			if (this.#canFinishProvider())
+			{
+				return this.#finishButton.render();
+			}
+
+			return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
+		}
+
+		return this.#skipButton.render();
 	}
 
 	#createSendBtn(): BaseButton
@@ -164,17 +231,28 @@ export class SendNumberView extends BaseView
 					return;
 				}
 				this.#cleanError();
-				if (!this.#changeClicked && this.#isPhoneNumberConfirmed && !this.#forceChangeMode)
+				if (
+					!this.#isSkippingDeviceConnectProvider()
+					&& !this.#changeClicked
+					&& this.#isPhoneNumberConfirmed
+					&& !this.#forceChangeMode
+				)
 				{
-					this.emit(
-						'onNextView',
-						{
-							viewCode: 'success',
-							options: {
-								phoneNumber: this.#phoneNumber,
-							},
-						},
-					);
+					button.setWaiting(true);
+					this.#onContactConfirmed(this.#flowIdProvider())
+						.then(() => {
+							this.emit(
+								'onNextView',
+								{
+									viewCode: 'success',
+									options: {
+										phoneNumber: this.#phoneNumber,
+									},
+								},
+							);
+						})
+						.catch((response) => this.#setError(response?.errors ?? []))
+						.finally(() => button.setWaiting(false));
 
 					return;
 				}
@@ -194,6 +272,7 @@ export class SendNumberView extends BaseView
 			method: 'POST',
 			data: {
 				signedUserId: this.#signedUserId,
+				flowId: this.#flowIdProvider(),
 				phoneNumber: this.#phoneNumber,
 			},
 		}).then((response) => {
@@ -242,6 +321,12 @@ export class SendNumberView extends BaseView
 	{
 		Analytics.sendEvent(Analytics.SHOW_INPUT_PHONE);
 		this.render().querySelector('input')?.focus();
+	}
+
+	afterDismiss(option: Object): void
+	{
+		this.#container.delete('view');
+		Dom.clean(this.#errorContainer);
 	}
 
 	setForceChangeMode(force: boolean): void

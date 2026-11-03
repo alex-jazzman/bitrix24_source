@@ -39,6 +39,15 @@ $arResult['TAX_FORM_ID'] = isset($arParams['TAX_FORM_ID']) ? $arParams['TAX_FORM
 $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
 $arResult['TAX_ID'] = isset($arParams['TAX_ID']) ? $arParams['TAX_ID'] : 0;
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+if ($isSettingsHub)
+{
+	$redirectUri = new Uri($arParams['PATH_TO_TAXRATE_LIST']);
+	$redirectUri->addParams([
+		$arResult['TAX_FORM_ID'] . '_active_tab' => 'tab_rateslist',
+	]);
+}
+
 $arResult['HEADERS'] = array(
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'ID', 'default' => false, 'editable' => false),
 	array('id' => 'VALUE', 'name' => GetMessage('CRM_COLUMN_VALUE').' %', 'sort' => 'VALUE', 'default' => true, 'editable' => true),
@@ -114,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 
 	if(!isset($_POST['AJAX_CALL']))
 	{
-		LocalRedirect($APPLICATION->GetCurPage());
+		LocalRedirect($isSettingsHub ? $redirectUri->getUri() : $APPLICATION->GetCurPage());
 	}
 }
 elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_GET['action_'.$arResult['GRID_ID']]))
@@ -131,7 +140,13 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 	}
 
 	if (!isset($_GET['AJAX_CALL']))
-		LocalRedirect($bInternal ? '?'.$arParams['TAX_FORM_ID'].'_active_tab=tab_props' : '');
+	{
+		LocalRedirect(
+			$isSettingsHub
+				? $redirectUri->getUri()
+				: ($bInternal ? '?' . $arParams['TAX_FORM_ID'] . '_active_tab=tab_props' : ''),
+		);
+	}
 }
 
 $gridOptions = new CCrmGridOptions($arResult['GRID_ID']);

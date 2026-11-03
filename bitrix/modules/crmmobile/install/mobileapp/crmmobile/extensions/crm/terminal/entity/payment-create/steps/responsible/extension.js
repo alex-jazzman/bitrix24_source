@@ -2,6 +2,7 @@
  * @module crm/terminal/entity/payment-create/steps/responsible
  */
 jn.define('crm/terminal/entity/payment-create/steps/responsible', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { Loc } = require('loc');
@@ -74,10 +75,9 @@ jn.define('crm/terminal/entity/payment-create/steps/responsible', (require, expo
 						onChange: this.onChangeResponsible,
 					},
 				),
-				Text({
+				Text6({
 					style: {
 						color: AppTheme.colors.base4,
-						fontSize: 12,
 						marginBottom: 8,
 					},
 					text: Loc.getMessage('M_CRM_TL_EPC_RESPONSIBLE_STEP_DESCRIPTION'),

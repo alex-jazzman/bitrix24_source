@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BICONNECTORMOBILE_ANALYTICS_TAB_TITLE'] = 'Аналитика';

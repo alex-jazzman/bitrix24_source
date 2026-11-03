@@ -57,6 +57,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 	}
 
+	const ProjectEntityId = 'project';
 	class EntitySelector {
 		static selectors = null;
 		#containerId;
@@ -122,11 +123,105 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				return;
 			}
 			this.#selector.dialog.subscribe('Item:onSelect', event => {
-				this.#updateInputValues();
+				this.#handleItemSelect(event);
 			});
 			this.#selector.dialog.subscribe('Item:onDeselect', event => {
 				this.#updateInputValues();
 			});
+			if (this.#isProjectSelector()) {
+				this.#selector.dialog.subscribe('Tab:onSelect', () => {
+					this.#addSelectedProjectItemsToProjectTabs();
+				});
+			}
+		}
+		#isProjectSelector() {
+			const entities = main_core.Type.isArray(this.#config.dialogOptions?.entities) ? this.#config.dialogOptions.entities : [];
+			return this.#config.entity?.id === ProjectEntityId || entities.some(entity => entity.id === ProjectEntityId) || this.#getDialogEntityId() === ProjectEntityId;
+		}
+		#handleItemSelect(event) {
+			const item = this.#getEventItem(event);
+			if (this.#isProjectSelector() && this.#isProjectItem(item)) {
+				this.#addProjectItemToProjectTabs(item);
+			}
+			this.#updateInputValues();
+		}
+		#getEventItem(event) {
+			if (!event || !main_core.Type.isFunction(event.getData)) {
+				return null;
+			}
+			const data = event.getData();
+			return main_core.Type.isObjectLike(data) && this.#isProjectItem(data.item) ? data.item : null;
+		}
+		#addSelectedProjectItemsToProjectTabs() {
+			const dialog = this.#selector?.getDialog();
+			if (!dialog) {
+				return;
+			}
+			dialog.getSelectedItems().filter(item => this.#isProjectItem(item)).forEach(item => this.#addProjectItemToProjectTabs(item));
+		}
+		#addProjectItemToProjectTabs(item) {
+			const tabIds = this.#getProjectTabIds();
+			if (tabIds.length === 0) {
+				return;
+			}
+			if (main_core.Type.isFunction(item.getSort) && main_core.Type.isFunction(item.setSort) && item.getSort() === null) {
+				item.setSort(2);
+			}
+			this.#addProjectItemToTabs(item, tabIds);
+		}
+		#isProjectItem(item) {
+			if (!item || !main_core.Type.isFunction(item.getEntityId)) {
+				return false;
+			}
+			return item.getEntityId() === ProjectEntityId;
+		}
+		#addProjectItemToTabs(item, tabIds) {
+			const dialog = this.#selector?.getDialog();
+			if (!dialog) {
+				return;
+			}
+			tabIds.forEach(tabId => {
+				if (this.#hasProjectItemNode(item, tabId)) {
+					return;
+				}
+				const tab = dialog.getTab(tabId);
+				if (tab) {
+					tab.getRootNode().addItem(item);
+				}
+			});
+		}
+		#hasProjectItemNode(item, tabId) {
+			return [...item.getNodes()].some(node => {
+				return node.getTab().getId() === tabId;
+			});
+		}
+		#getProjectTabIds() {
+			if (!this.#selector) {
+				return [];
+			}
+			const dialog = this.#selector.getDialog();
+			if (!dialog) {
+				return [];
+			}
+			const tabs = [dialog.getTab(ProjectEntityId), dialog.getTab('projects')];
+			const tabIds = [];
+			tabs.forEach(tab => {
+				const tabId = tab ? tab.getId() : null;
+				if (main_core.Type.isStringFilled(tabId) && !tabIds.includes(tabId)) {
+					tabIds.push(tabId);
+				}
+			});
+			return tabIds;
+		}
+		#getDialogEntityId() {
+			if (!this.#selector?.dialog) {
+				return '';
+			}
+			const entity = this.#selector.dialog.getEntities()[0];
+			if (!entity) {
+				return '';
+			}
+			return entity.id || (main_core.Type.isFunction(entity.getId) ? entity.getId() : '');
 		}
 		#updateInputValues() {
 			if (!this.#selector) {

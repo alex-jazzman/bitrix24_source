@@ -183,6 +183,20 @@ export class DocumentService
 		});
 	}
 
+	// One request per document, never one per node: an article can carry dozens of attachments and
+	// each of them costs Disk a permission check.
+	static async resolveDiskAttachments(
+		{ documentId, objectIds }: { documentId: number, objectIds: number[] },
+	): Promise<Object>
+	{
+		return ajax.runAction('note.infrastructure.FileController.resolveDiskAttachmentsBatch', {
+			data: {
+				documentId: Number(documentId),
+				objectIds,
+			},
+		});
+	}
+
 	static async finalizeFileSnapshot(
 		{ documentId, referencedFileIds = [] }: FinalizeParams,
 	): Promise<Object>

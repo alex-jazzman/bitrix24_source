@@ -5,6 +5,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 (function (exports, main_core, ui_vue3, ui_vue3_pinia, sign_v2_b2e_vueUtil, main_date, sign_v2_api, ui_vue3_components_hint, main_popup, ui_vue3_components_switcher, ui_switcher, sign_v2_b2e_hcmLinkCompanySelector, crm_router, main_core_events) {
 	'use strict';
 
+	// preview generation shares php-fpm workers with the signing service, so keep the pool small
+	const previewUrlLoadWorkerLimit = 2;
+	// A failed request is repeated, but only so many times: a document whose preview keeps failing must
+	// not send the queue round in circles for the rest of the session.
+	const previewUrlLoadAttemptLimit = 2;
 	const DefaultDocumentSettings = {
 		date: {
 			sourceType: 'manual',
@@ -34,7 +39,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			},
 			documentSettingsMap: new Map(),
 			documentsGroup: new Map(),
-			previewUrlList: new Map()
+			previewUrlList: new Map(),
+			previewUrlLoadQueue: [],
+			previewUrlLoadWorkerCount: 0,
+			previewUrlLoadAttempts: new Map()
 		}),
 		getters: {
 			currentDocumentSettings(state) {
@@ -159,13 +167,49 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 					...settings
 				});
 			},
+			requestDocumentPreviewUrls(uidList) {
+				for (const uid of uidList) {
+					if (this.previewUrlList.has(uid) || this.previewUrlLoadQueue.includes(uid) || (this.previewUrlLoadAttempts.get(uid) ?? 0) >= previewUrlLoadAttemptLimit) {
+						continue;
+					}
+					this.previewUrlLoadQueue.push(uid);
+				}
+				while (this.previewUrlLoadWorkerCount < previewUrlLoadWorkerLimit && this.previewUrlLoadWorkerCount < this.previewUrlLoadQueue.length) {
+					this.previewUrlLoadWorkerCount++;
+					void this.loadNextDocumentPreviewUrl();
+				}
+			},
+			async loadNextDocumentPreviewUrl() {
+				const uid = this.previewUrlLoadQueue.shift();
+				if (uid === undefined) {
+					this.previewUrlLoadWorkerCount--;
+					return;
+				}
+				if (this.documentsGroup.has(uid)) {
+					await this.loadDocumentPreviewUrl(uid);
+				}
+				await this.loadNextDocumentPreviewUrl();
+			},
 			async loadDocumentPreviewUrl(uid) {
 				if (this.previewUrlList.has(uid)) {
 					return;
 				}
+
+				// the empty value marks a request in flight: it keeps a second one from starting
 				this.previewUrlList.set(uid, '');
-				const data = await new sign_v2_api.Api().getDocumentPreviewUrl(uid);
-				this.previewUrlList.set(uid, data?.url ?? '');
+				this.previewUrlLoadAttempts.set(uid, (this.previewUrlLoadAttempts.get(uid) ?? 0) + 1);
+				try {
+					const data = await new sign_v2_api.Api().getDocumentPreviewUrl(uid);
+					this.previewUrlList.set(uid, data?.url ?? '');
+				} catch {
+					// The mark of the request in flight goes with it, and the uid gets back in line:
+					// otherwise it would never be asked for again and the document would stay without
+					// a preview until the page is reloaded. The attempt limit ends the line.
+					this.previewUrlList.delete(uid);
+					if ((this.previewUrlLoadAttempts.get(uid) ?? 0) < previewUrlLoadAttemptLimit) {
+						this.previewUrlLoadQueue.push(uid);
+					}
+				}
 			},
 			setDocumentSettings(uid, settings) {
 				if (!uid) {
@@ -1291,6 +1335,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				if (newVal < 2) {
 					this.isApplySettingsForAll = false;
 				}
+			},
+			documentsGroup: {
+				handler() {
+					this.requestMissingPreviewUrls();
+				},
+				deep: true,
+				immediate: true
 			}
 		},
 		created() {
@@ -1324,11 +1375,16 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				if (documentDetails.previewUrl) {
 					return documentDetails.previewUrl;
 				}
-				useRegionalSettingsStore().loadDocumentPreviewUrl(uid);
-				if (!this.previewUrlList.has(uid)) {
-					return null;
+				return this.previewUrlList.get(uid) ?? null;
+			},
+			requestMissingPreviewUrls() {
+				const uidList = [];
+				for (const [uid, documentDetails] of this.documentsGroup) {
+					if (!documentDetails.previewUrl) {
+						uidList.push(uid);
+					}
 				}
-				return this.previewUrlList.get(uid);
+				useRegionalSettingsStore().requestDocumentPreviewUrls(uidList);
 			},
 			getDocumentTitle(uid) {
 				const documentDetails = this.getDocumentDetails(uid);

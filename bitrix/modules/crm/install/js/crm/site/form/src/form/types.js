@@ -141,6 +141,9 @@ type Options = {
 	language: ?string;
 	visible: ?boolean;
 	editMode: ?boolean;
+	agreementNoticeSupported: ?boolean;
+	agreementNoticeTextMaxLength: ?number;
+	acceptBySubmitEnabled: ?boolean;
 	title: ?string;
 	desc: ?string;
 	buttonCaption: ?string;

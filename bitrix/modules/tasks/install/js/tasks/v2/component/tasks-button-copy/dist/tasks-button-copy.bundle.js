@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports, ui_notificationManager, ui_iconSet_api_vue) {
+(function (exports, main_core, ui_notificationManager, ui_iconSet_api_vue) {
 	'use strict';
 
 	// @vue/component
@@ -23,11 +23,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			notification: {
 				type: String,
 				default: ''
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		setup() {
 			return {
 				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				descriptionId: `tasks-button-copy-description-${main_core.Text.getRandom()}`
 			};
 		},
 		computed: {
@@ -73,15 +82,27 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			}
 		},
 		template: `
-		<button class="tasks-button-copy" @click="handleClickButton">
+		<button
+			type="button"
+			class="tasks-button-copy"
+			data-testid="tasks-button-copy"
+			:aria-describedby="ariaLabel ? descriptionId : null"
+			@click="handleClickButton"
+		>
 			<span v-if="name" class="tasks-button-copy__text tasks-button-copy__text_name print-font-color-base-1">{{ name }}</span>
 			<span v-if="value" class="tasks-button-copy__text tasks-button-copy__text_value print-font-color-base-1">{{ value }}</span>
-			<BIcon class="tasks-button-copy__icon print-ignore" :name="Outline.COPY" />
+			<BIcon class="tasks-button-copy__icon print-ignore" :name="Outline.COPY" aria-hidden="true" />
+			<span
+				v-if="ariaLabel"
+				:id="descriptionId"
+				class="tasks-button-copy__description"
+				aria-hidden="true"
+			>{{ ariaLabel }}</span>
 		</button>
 	`
 	};
 
 	exports.TasksButtonCopy = TasksButtonCopy;
 
-})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX.UI.NotificationManager, BX.UI.IconSet);
+})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX, BX.UI.NotificationManager, BX.UI.IconSet);
 //# sourceMappingURL=tasks-button-copy.bundle.js.map

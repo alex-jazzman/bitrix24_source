@@ -27,7 +27,7 @@ export const DatePlanDuration = {
 	},
 	template: `
 		<div>
-			<HoverPill textOnly :readonly>
+			<HoverPill textOnly :readonly :withTabStop="false">
 				<div>{{ calendar.formatDuration(dateTs, matchWorkTime) }}</div>
 			</HoverPill>
 		</div>

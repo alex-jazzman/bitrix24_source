@@ -137,7 +137,7 @@ $hasInfoBanner = !empty($arResult['ProfileView']['hasInfoBanner']);
 				<div class="intranet-user-profile-system-user-note__body">
 					<img
 						class="intranet-user-profile-system-user-note__image"
-						src="<?= htmlspecialcharsbx($templateFolder) ?>/images/system-user-banner.png"
+						src="<?= htmlspecialcharsbx($templateFolder) ?>/images/system-user-banner.webp"
 						alt=""
 					>
 					<div class="intranet-user-profile-system-user-note__content">

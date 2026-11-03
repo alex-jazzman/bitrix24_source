@@ -1,8 +1,11 @@
-import { Tag, Dom, Event } from 'main.core';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Icon } from 'ui.icon-set.api.core';
-import { availablePromptIcons } from '../helpers/available-prompt-icons';
+import { Dom, Event, Tag } from 'main.core';
 import { Popup } from 'main.popup';
+import { Icon } from 'ui.icon-set.api.core';
+import { BIcon } from 'ui.icon-set.api.vue';
+import { markRaw } from 'ui.vue3';
+
+import { availablePromptIcons } from '../helpers/available-prompt-icons';
+import { syncPromptMasterOverlay } from '../helpers/prompt-master-overlay';
 
 import '../css/prompt-master-icon-selector.css';
 
@@ -63,7 +66,7 @@ export const PromptMasterIconSelector = {
 		{
 			const bindElementPosition = Dom.getPosition(this.$el);
 
-			this.popup = new Popup({
+			this.popup = markRaw(new Popup({
 				content: this.getPopupContent(),
 				bindElement: {
 					top: bindElementPosition.bottom,
@@ -79,17 +82,27 @@ export const PromptMasterIconSelector = {
 					position: 'top',
 				},
 				events: {
+					onAfterShow: this.handleIconsPopupVisibilityChange,
 					onPopupClose: () => {
 						this.isPopupShown = false;
 						this.popup = null;
 					},
+					onAfterClose: this.handleIconsPopupVisibilityChange,
 				},
-			});
+			}));
+		},
+		handleIconsPopupVisibilityChange(): void
+		{
+			syncPromptMasterOverlay();
 		},
 		getPopupContent(): HTMLElement {
 			const container = Tag.render`<div class="ai__prompt-master-icon-selector_popup-content"></div>`;
+			const promptIcons = availablePromptIcons.includes(this.selectedIcon)
+				? [this.selectedIcon, ...availablePromptIcons.filter((iconCode) => iconCode !== this.selectedIcon)]
+				: availablePromptIcons
+			;
 
-			availablePromptIcons.forEach((iconCode) => {
+			promptIcons.forEach((iconCode) => {
 				const icon = new Icon({
 					icon: iconCode,
 					size: 24,

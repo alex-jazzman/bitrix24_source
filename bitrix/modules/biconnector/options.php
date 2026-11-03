@@ -3,8 +3,10 @@
 /** @var CUser $USER */
 /** @var array $biconnector_default_option */
 
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\BIConnector\Integration\Superset\SelfHostedConnectionService;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
+use Bitrix\BIConnector\Internal\Services\Concurrency\QuerySlotManager;
 use Bitrix\BIConnector\Superset\Logger\Logger;
 use Bitrix\BIConnector\Superset\Selfhost\License\LicenseLinks;
 use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedAvailability;
@@ -19,6 +21,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
+use Bitrix\Main\UI\Extension;
 
 $module_id = 'biconnector';
 $canRead = $canWrite = $USER->IsAdmin();
@@ -35,6 +38,16 @@ if ($canWrite || $canRead)
 		['gds_deployment_id', Loc::getMessage('BIC_OPTIONS_GDS_DEPLOYMENT_ID'), ['text', '70']],
 	];
 
+	$isConcurrencyLimitVisible =
+		Option::get($module_id, 'bi_builder_load_protection', 'N') === 'Y'
+		&& SupersetHostMode::isSelfHosted()
+	;
+
+	if ($isConcurrencyLimitVisible)
+	{
+		$allOptions[] = ['bi_builder_concurrency_limit', Loc::getMessage('BIC_OPTIONS_BI_BUILDER_CONCURRENCY_LIMIT'), ['text', '20']];
+	}
+
 	$isBoxed = !ModuleManager::isModuleInstalled('bitrix24');
 
 	// Offered only where the connection is sold, but kept visible for a portal already switched to the local mode
@@ -46,6 +59,11 @@ if ($canWrite || $canRead)
 			SupersetHostMode::checkSelfHostedRegion()->isSuccess()
 			|| SupersetHostMode::isSelfHosted()
 		)
+	;
+	$isPortalHealthcheckTabVisible =
+		$isBoxed
+		&& SupersetHostMode::isCloud()
+		&& Feature::isPortalHealthcheckEnabled()
 	;
 
 	$settingsTabs = [
@@ -62,6 +80,15 @@ if ($canWrite || $canRead)
 			'DIV' => 'edit_superset',
 			'TAB' => Loc::getMessage('BIC_TAB_SUPERSET'),
 			'TITLE' => Loc::getMessage('BIC_TAB_SUPERSET_TITLE'),
+		];
+	}
+
+	if ($isPortalHealthcheckTabVisible)
+	{
+		$settingsTabs[] = [
+			'DIV' => 'edit_portal_healthcheck',
+			'TAB' => Loc::getMessage('BIC_PORTAL_HEALTHCHECK_TAB'),
+			'TITLE' => Loc::getMessage('BIC_PORTAL_HEALTHCHECK_TAB_TITLE'),
 		];
 	}
 
@@ -158,6 +185,11 @@ if ($canWrite || $canRead)
 			if ($option[2][0] === 'checkbox' && $val !== 'Y')
 			{
 				$val = 'N';
+			}
+
+			if ($name === 'bi_builder_concurrency_limit' && $val !== '')
+			{
+				$val = (string)min(max((int)$val, 1), QuerySlotManager::MAX_SLOT_COUNT);
 			}
 
 			if ($val === $biconnector_default_option[$name])
@@ -336,6 +368,11 @@ if ($canWrite || $canRead)
 		}
 	}
 
+	if ($isPortalHealthcheckTabVisible)
+	{
+		Extension::load('biconnector.portal-healthcheck');
+	}
+
 	?>
 	<style>
 		/* A message box of the admin panel is an inline block, so it is centred by the cell, while its own
@@ -384,6 +421,8 @@ if ($canWrite || $canRead)
 	if ($isSelfHostedTabVisible)
 	{
 		$tabControl->BeginNextTab();
+		// The dialog brings no buttons of its own: ui.buttons is not among its dependencies.
+		Extension::load(['ui.system.dialog', 'ui.buttons']);
 
 		$currentMode = SupersetHostMode::getMode();
 		$isSupersetModeRefused = !$supersetModeResult->isSuccess();
@@ -711,6 +750,37 @@ if ($canWrite || $canRead)
 		<?php
 	}
 
+	if ($isPortalHealthcheckTabVisible)
+	{
+		$tabControl->BeginNextTab();
+		?>
+		<tr>
+			<td colspan="2">
+				<div id="biconnector-portal-healthcheck-root"></div>
+				<script>
+					BX.ready(() => {
+						// The check polls the server, so it starts only when its tab is shown for the first time.
+						const tab = document.getElementById('edit_portal_healthcheck');
+						const mountOnceVisible = () => {
+							if (getComputedStyle(tab).display === 'none')
+							{
+								return;
+							}
+
+							BX.removeCustomEvent('onAdminTabsChange', mountOnceVisible);
+							BX.BIConnector.PortalHealthcheck.mount({
+								rootElement: document.getElementById('biconnector-portal-healthcheck-root'),
+							});
+						};
+						BX.addCustomEvent('onAdminTabsChange', mountOnceVisible);
+						mountOnceVisible();
+					});
+				</script>
+			</td>
+		</tr>
+		<?php
+	}
+
 	if ($canWrite)
 	{
 		$tabControl->BeginNextTab();
@@ -731,23 +801,124 @@ if ($canWrite || $canRead)
 	<?php if ($isSelfHostedTabVisible): ?>
 	<script>
 	var bicOriginalMode = '<?= CUtil::JSEscape($currentMode) ?>';
-	// Each direction names the data it destroys: only the switch to the local mode loses the cloud BI data.
-	var bicModeSwitchConfirmToSelfhosted = '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_CONFIRM_SELFHOSTED')) ?>';
-	var bicModeSwitchConfirmToCloud = '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_CONFIRM_MSGVER_1')) ?>';
+	// Each direction names the data it destroys: the switch deletes the BI data of the mode being left.
+	var bicModeSwitchTexts = {
+		selfhosted: {
+			title: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_TITLE_SELFHOSTED')) ?>',
+			intro: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_INTRO_SELFHOSTED')) ?>',
+			outro: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_OUTRO_SELFHOSTED')) ?>'
+		},
+		cloud: {
+			title: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_TITLE_CLOUD')) ?>',
+			intro: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_INTRO_CLOUD')) ?>',
+			outro: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_OUTRO_CLOUD')) ?>'
+		},
+		items: [
+			'<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_DASHBOARDS')) ?>',
+			'<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_DATASET_APPS')) ?>',
+			'<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_EXTERNAL_SOURCES')) ?>',
+			'<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_TAGS')) ?>',
+			'<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_ACCESS')) ?>',
+			'<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_ITEM_USERS')) ?>'
+		],
+		switchButton: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_SWITCH')) ?>',
+		cancelButton: '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_DIALOG_CANCEL')) ?>'
+	};
+	var bicModeSwitchDialog = null;
 
 	function bicOnModeChange(radio, showSelfhosted)
 	{
+		// One question at a time: a keyboard arrow on the radio group under the open window would stack a second one.
+		if (bicModeSwitchDialog !== null)
+		{
+			return;
+		}
+
 		if (radio.value !== bicOriginalMode)
 		{
-			var confirmMessage = showSelfhosted ? bicModeSwitchConfirmToSelfhosted : bicModeSwitchConfirmToCloud;
-			if (!confirm(confirmMessage))
-			{
-				document.querySelector('input[name="superset_mode"][value="' + bicOriginalMode + '"]').checked = true;
-				return;
-			}
-			document.getElementById('superset_mode_confirmed').value = 'Y';
+			bicAskModeSwitch(radio, showSelfhosted);
+
+			return;
 		}
+
 		bicToggleSupersetSettings(showSelfhosted);
+	}
+
+	function bicAskModeSwitch(radio, showSelfhosted)
+	{
+		// The window does not block the page: until the red button, the form must not carry an earlier yes.
+		document.getElementById('superset_mode_confirmed').value = 'N';
+		var texts = showSelfhosted ? bicModeSwitchTexts.selfhosted : bicModeSwitchTexts.cloud;
+		var Text = BX.UI.System.Typography.Text;
+		var isConfirmed = false;
+		var chosen = null;
+
+		var list = BX.Dom.create('ul', {
+			style: { margin: '12px 0', paddingLeft: '24px', listStyleType: 'disc' },
+			children: bicModeSwitchTexts.items.map(function(item) {
+				return Text.render(item, { size: 'md', tag: 'li' });
+			})
+		});
+
+		var switchButton = new BX.UI.Button({
+			text: bicModeSwitchTexts.switchButton,
+			useAirDesign: true,
+			style: BX.UI.AirButtonStyle.FILLED_ALERT,
+			size: BX.UI.ButtonSize.LARGE,
+			onclick: function() {
+				isConfirmed = true;
+				bicModeSwitchDialog.hide();
+			}
+		});
+		var cancelButton = new BX.UI.Button({
+			text: bicModeSwitchTexts.cancelButton,
+			useAirDesign: true,
+			style: BX.UI.AirButtonStyle.OUTLINE,
+			size: BX.UI.ButtonSize.LARGE,
+			onclick: function() {
+				bicModeSwitchDialog.hide();
+			}
+		});
+		BX.Dom.attr(switchButton.getContainer(), 'data-testid', 'biconnector-selfhost-mode-switch-confirm-btn');
+		BX.Dom.attr(cancelButton.getContainer(), 'data-testid', 'biconnector-selfhost-mode-switch-cancel-btn');
+
+		bicModeSwitchDialog = new BX.UI.System.Dialog({
+			title: texts.title,
+			content: BX.Dom.create('div', {
+				attrs: { 'data-testid': 'biconnector-selfhost-mode-switch-dialog' },
+				children: [
+					Text.render(texts.intro, { size: 'md', tag: 'p' }),
+					list,
+					Text.render(texts.outro, { size: 'md', tag: 'p' })
+				]
+			}),
+			width: 560,
+			hasOverlay: true,
+			centerButtons: [switchButton, cancelButton],
+			events: {
+				// Every way out ends here, the red button included: only it leaves the new mode chosen.
+				onHide: function() {
+					bicModeSwitchDialog = null;
+					chosen = isConfirmed
+						? radio
+						: document.querySelector('input[name="superset_mode"][value="' + bicOriginalMode + '"]');
+					chosen.checked = true;
+					if (isConfirmed)
+					{
+						document.getElementById('superset_mode_confirmed').value = 'Y';
+						bicToggleSupersetSettings(showSelfhosted);
+					}
+				},
+				// With the focus trap on, the window gives the focus back to the radio it was opened from,
+				// which may be the one left unchosen.
+				onAfterHide: function() {
+					chosen.focus();
+				}
+			}
+		});
+		bicModeSwitchDialog.show();
+		// The no gets the keyboard: what is asked about cannot be taken back.
+		cancelButton.getContainer().focus();
 	}
 
 	function bicToggleSupersetSettings(show)

@@ -1,27 +1,13 @@
 import { confirm } from 'crm.timeline.dialog';
 import { Router } from 'crm.router';
-import { ajax, Dom, Loc, Runtime, Tag, Text } from 'main.core';
-import type { FeatureResolver } from 'sign.feature-resolver';
-import type { Api } from 'sign.v2.api';
+import { ajax, Dom, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { UI } from 'ui.notification';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
+import { createSignApiLoader } from './sign-api-loader';
 import 'ui.buttons';
 
-let featureResolver: FeatureResolver | null = null;
-let api: Api | null = null;
-Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async (exports) => {
-	if (exports?.Api && exports?.FeatureResolver)
-	{
-		featureResolver = exports?.FeatureResolver.instance();
-		api = new exports.Api();
-	}
-}).catch((errors) => {
-	UI.Notification.Center.notify({
-		content: errors[0].message,
-		autoHideDelay: 5000,
-	});
-});
+const loadSignApi = createSignApiLoader();
 
 export class SignB2eDocument extends Base
 {
@@ -66,10 +52,9 @@ export class SignB2eDocument extends Base
 		}
 		else if ((action === 'SignB2eDocument:CreateDocumentChat' || action === 'Activity:SignB2eDocument:CreateDocumentChat') && documentId > 0)
 		{
-			if (featureResolver && featureResolver.released('createDocumentChat'))
-			{
-				this.#createDocumentChat(actionData);
-			}
+			// the server adds the chat button only when the feature is released;
+			// a failure is already reported by the sign api loader or by sign.v2.api itself
+			this.#createDocumentChat(actionData).catch(() => {});
 		}
 		else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0)
 		{
@@ -110,6 +95,23 @@ export class SignB2eDocument extends Base
 		{
 			this.#modifyDateSignUntil(item, actionData, animationCallbacks);
 		}
+		else if (action === 'Activity:SignB2eDocument:CopyUid')
+		{
+			this.#copyDocumentUid(actionData?.documentUid);
+		}
+	}
+
+	#copyDocumentUid(uid: ?string): void
+	{
+		if (!Type.isStringFilled(uid) || !BX.clipboard.copy(uid))
+		{
+			return;
+		}
+
+		UI.Notification.Center.notify({
+			content: Loc.getMessage('CRM_COMMON_ACTION_COPY_TO_CLIPBOARD_SUCCESS'),
+			autoHideDelay: 2000,
+		});
 	}
 
 	#cancelWithConfirm(documentUid: string): void
@@ -283,16 +285,14 @@ export class SignB2eDocument extends Base
 
 	async #createDocumentChat({ chatType, documentId }: { chatType: number, documentId: number }): void
 	{
-		if (api && featureResolver && featureResolver.released('createDocumentChat'))
-		{
-			const chatId = (await api.createDocumentChat(chatType, documentId)).chatId;
+		const api = await loadSignApi();
+		const chatId = (await api.createDocumentChat(chatType, documentId)).chatId;
 
-			Runtime.loadExtension('im.public.iframe').then((exports: Object) => {
-				exports.Messenger.openChat(`chat${chatId}`);
-			}).catch((exception) => {
-				console.error('Error loading "im.public.iframe":', exception);
-			});
-		}
+		Runtime.loadExtension('im.public.iframe').then((exports: Object) => {
+			exports.Messenger.openChat(`chat${chatId}`);
+		}).catch((exception) => {
+			console.error('Error loading "im.public.iframe":', exception);
+		});
 	}
 
 	#resendDocument({ documentId, recipientHash }, animationCallbacks): Promise
@@ -379,6 +379,7 @@ export class SignB2eDocument extends Base
 
 		try
 		{
+			const api = await loadSignApi();
 			await api.modifyDateSignUntil(uid, valueTs);
 		}
 		catch

@@ -203,7 +203,12 @@ export default class Footer extends DefaultFooter
 		const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 
 		return Tag.render`
-			<span class="${className}" onclick="${this.handleInviteEmployeeClick.bind(this)}">${text}</span>
+			<button
+				type="button"
+				tabindex="0"
+				class="${className}" 
+				onclick="${this.handleInviteEmployeeClick.bind(this)}"
+			>${text}</button>
 		`;
 	}
 
@@ -212,7 +217,12 @@ export default class Footer extends DefaultFooter
 		const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 
 		return Tag.render`
-			<span class="${className}" onclick="${this.handleInviteGuestClick.bind(this)}">${text}</span>
+			<button
+				type="button"
+				tabindex="0" 
+				class="${className}" 
+				onclick="${this.handleInviteGuestClick.bind(this)}"
+			>${text}</button>
 		`;
 	}
 
@@ -221,10 +231,12 @@ export default class Footer extends DefaultFooter
 		const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 
 		return Tag.render`
-			<span
+			<button
+				type="button"
+				tabindex="0"
 				class="${className}"
 				onclick="${(event) => this.handleLockedClick(event, featureId)}"
-			>${text}</span>
+			>${text}</button>
 		`;
 	}
 
@@ -233,7 +245,12 @@ export default class Footer extends DefaultFooter
 		const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 
 		return Tag.render`
-			<span class="${className}" onclick="${this.handleCreateProjectClick.bind(this)}">${text}</span>
+			<button 
+				type="button"
+				tabindex="0" 
+				class="${className}" 
+				onclick="${this.handleCreateProjectClick.bind(this)}"
+			>${text}</button>
 		`;
 	}
 
@@ -242,10 +259,12 @@ export default class Footer extends DefaultFooter
 		const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 
 		return Tag.render`
-			<span
+			<button
+				type="button"
+				tabindex="0"
 				class="${className}"
 				onclick="${(event) => this.handleLockedClick(event, featureId)}"
-			>${text}</span>
+			>${text}</button>
 		`;
 	}
 
@@ -357,7 +376,11 @@ export default class Footer extends DefaultFooter
 	{
 		if (this.features.isNewProjectsOn)
 		{
-			Messenger.openChatCreation('collab');
+			Messenger.openChatCreation('collab', {
+				onCreate: ({ id, name }) => {
+					this.addProjects([{ id, entityId: 'project', title: name }]);
+				},
+			});
 
 			return;
 		}

@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -571,18 +570,24 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 		'id' => 'CREATED_BY_ID',
 		'name' => GetMessage('CRM_COLUMN_CREATED_BY_ID'),
 		'default' => true,
-		'type' => 'dest_selector',
+		'type' => 'entity_selector',
 		'params' => array(
-			'context' => 'CRM_EVENT_FILTER_CREATED_BY_ID',
 			'multiple' => 'N',
-			'contextCode' => 'U',
-			'enableAll' => 'N',
-			'enableSonetgroups' => 'N',
-			'allowEmailInvitation' => 'N',
-			'allowSearchEmailUsers' => 'N',
-			'departmentSelectDisable' => 'Y',
-			'isNumeric' => 'Y',
-			'prefix' => 'U',
+			'dialogOptions' => [
+				'height' => 200,
+				'context' => 'CRM_EVENT_FILTER_CREATED_BY_ID',
+				'entities' => [
+					[
+						'id' => 'user',
+						'options' => [
+							'inviteEmployeeLink' => false,
+							'intranetUsersOnly' => true,
+						],
+					],
+				],
+				'showAvatars' => true,
+				'dropdownMode' => false,
+			],
 		)
 	);
 	$arResult['FILTER'][] = array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'default' => true, 'type' => 'date');
@@ -592,7 +597,7 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 	$arResult['FILTER_PRESETS'] = array(
 		'filter_change_today' => array('name' => GetMessage('CRM_PRESET_CREATE_TODAY'), 'fields' => array('DATE_CREATE_datesel' => 'today')),
 		'filter_change_yesterday' => array('name' => GetMessage('CRM_PRESET_CREATE_YESTERDAY'), 'fields' => array('DATE_CREATE_datesel' => 'yesterday')),
-		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CREATE_MY'), 'fields' => array('CREATED_BY_ID' => $currentUserID, 'CREATED_BY_ID_name' => $currentUserName))
+		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CREATE_MY'), 'fields' => array('CREATED_BY_ID' => $currentUserID, 'CREATED_BY_ID_label' => $currentUserName))
 	);
 }
 
@@ -864,8 +869,8 @@ foreach ($loadedItems as $loadedItemId)
 	}
 	else
 	{
-		$arEvent['EVENT_TEXT_1'] = TextHelper::convertHtmlToText($arEvent['~EVENT_TEXT_1'], true);
-		$arEvent['EVENT_TEXT_2'] = TextHelper::convertHtmlToText($arEvent['~EVENT_TEXT_2'], true);
+		$arEvent['EVENT_TEXT_1'] = $this->prepareEventTextForDescription($arEvent['~EVENT_TEXT_1']);
+		$arEvent['EVENT_TEXT_2'] = $this->prepareEventTextForDescription($arEvent['~EVENT_TEXT_2']);
 	}
 
 	$arEvent['EVENT_DESC'] = $this->compileEventDesc($arEvent);

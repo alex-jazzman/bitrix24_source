@@ -20,7 +20,7 @@ $presets = [
 	[
 		'ID' => 'automatedSolution',
 		'NAME' => Loc::getMessage('BP_CRM_CRM_AUTOMATED_SOLUTION_START_TRIGGER_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_CRM_AUTOMATED_SOLUTION_START_TRIGGER_DESCR'),
+		'DESCRIPTION' => Loc::getMessage('BP_CRM_CRM_AUTOMATED_SOLUTION_START_TRIGGER_DESCR_1'),
 		'PROPERTIES' => [
 			'onlyAutomatedSolution' => 'Y',
 		],
@@ -32,7 +32,7 @@ $presets = [
 	[
 		'ID' => 'smart',
 		'NAME' => Loc::getMessage('BP_CRM_CRM_SMART_START_TRIGGER_NAME') ?? '',
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_CRM_SMART_START_TRIGGER_DESCR') ?? '',
+		'DESCRIPTION' => Loc::getMessage('BP_CRM_CRM_SMART_START_TRIGGER_DESCR_1') ?? '',
 		'PROPERTIES' => [
 			'onlyAutomatedSolution' => 'N',
 		],

@@ -106,3 +106,101 @@
 	background: transparent url("data:image/svg+xml,%3Csvg width='14' height='16' viewBox='-2 0 14 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.69156 11.7445V13.4908H5.30837V11.7445C5.05944 11.5416 4.90008 11.2317 4.90008 10.8842C4.90008 10.273 5.39254 9.77758 5.99999 9.77758C6.60739 9.77758 7.09986 10.273 7.09986 10.8842C7.09986 11.2317 6.94054 11.5416 6.69156 11.7445ZM2.98877 4.64992C2.98877 2.9766 4.33698 1.62012 6.00004 1.62012C7.66314 1.62012 9.01134 2.9766 9.01134 4.64992V7.21112H2.98877V4.64992ZM10.6027 7.21073V4.64953C10.6027 2.09188 8.54197 0.0185547 5.99998 0.0185547C3.45803 0.0185547 1.39731 2.09188 1.39731 4.64953V7.21073H0.5C0.223857 7.21073 0 7.43459 0 7.71073V15.4812C0 15.7574 0.223858 15.9812 0.5 15.9812H11.5C11.7761 15.9812 12 15.7574 12 15.4812V7.71073C12 7.43459 11.7761 7.21073 11.5 7.21073H10.6027Z' fill='%23525C69'/%3E%3C/svg%3E%0A") no-repeat;
 }
 /* ---------------------------------------- split button menu ---------------------------------------- */
+
+/*region Reflow: the footer row breaks only when it has to (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The footer keeps the icon menu (note, three dots) and the action buttons in one non-wrapping row.
+	Measured at a card width of 241px: the menu took 78px and the buttons were left with 77px against
+	the 126px each of them needs, so "Запланировать дело" read as "Запланир…".
+
+	Below the breakpoint both keep their natural width and the row breaks only when it has to:
+
+	  no buttons / one button   one line - buttons left, icons right
+	  two buttons               buttons keep their line, icons drop below - the buttons need 290 of the
+	                            365 available and the menu 92, so 382 does not fit
+	  three buttons             the buttons box outgrows the line on its own, wraps internally, and the
+	                            menu goes under it
+
+	That covers the 241px case the region was opened for - there the buttons alone outgrow the row, so
+	the menu ends up on its own line anyway - without spending a row when nothing is crowded.
+
+	An earlier take gave both boxes flex: 1 1 100% instead, which pinned the menu to a row of its own
+	for good: it measured 351px wide even when it needed 78, so a single "Закрепить" sat alone above an
+	empty stretch with the icons underneath. That is what the report was about.
+
+	wrap-reverse, not wrap: the parent is flex-direction: row-reverse and the menu comes first in the
+	DOM, so with plain wrap the menu would take the first line and sit above the buttons. Reversing the
+	cross axis puts the buttons back on top and keeps the icons right-aligned.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-action {
+		flex-wrap: wrap-reverse;
+		row-gap: 6px;
+	}
+
+	/*
+		flex-grow stays on, as in the base rule. The line break is decided by the flex base size, which
+		width: auto keeps tied to what the buttons actually measure, but once the line is settled the box
+		has to take the space that is left: the parent is row-reverse, so a shrink-wrapped box gets packed
+		against the right edge and the buttons drift away from the left margin they line up with
+		everywhere else. Growing puts the box back across the row, and its own flex-start keeps the
+		buttons at the left - whether it shares the line with the icons or has the line to itself.
+	*/
+	.crm-timeline__card-action_buttons {
+		width: auto;
+		flex: 1 1 auto;
+	}
+
+	.crm-timeline__card-action_menu {
+		flex: 0 0 auto;
+	}
+
+	/*
+		The 50% cap has to go with it. It is measured against the buttons box, which no longer spans the
+		whole row, so it tightened from 174px to 137px and clipped "Запланировать дело" (171px) - the
+		truncation this breakpoint exists to avoid. Without the cap the buttons take the width their
+		labels need and wrap inside the box when the row runs out.
+	*/
+	.crm-timeline__card-action-btn {
+		max-width: none;
+	}
+}
+/*
+	Second trigger, same fix - see layout/header/title.css and decisions.md for why @media alone misses
+	the CRM Entity Card Split handle narrowing the column, and how the 480px threshold and the
+	crm-entity-stream container name were chosen.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-action {
+		flex-wrap: wrap-reverse;
+		row-gap: 6px;
+	}
+
+	/*
+		flex-grow stays on, as in the base rule. The line break is decided by the flex base size, which
+		width: auto keeps tied to what the buttons actually measure, but once the line is settled the box
+		has to take the space that is left: the parent is row-reverse, so a shrink-wrapped box gets packed
+		against the right edge and the buttons drift away from the left margin they line up with
+		everywhere else. Growing puts the box back across the row, and its own flex-start keeps the
+		buttons at the left - whether it shares the line with the icons or has the line to itself.
+	*/
+	.crm-timeline__card-action_buttons {
+		width: auto;
+		flex: 1 1 auto;
+	}
+
+	.crm-timeline__card-action_menu {
+		flex: 0 0 auto;
+	}
+
+	/*
+		The 50% cap has to go with it. It is measured against the buttons box, which no longer spans the
+		whole row, so it tightened from 174px to 137px and clipped "Запланировать дело" (171px) - the
+		truncation this breakpoint exists to avoid. Without the cap the buttons take the width their
+		labels need and wrap inside the box when the row runs out.
+	*/
+	.crm-timeline__card-action-btn {
+		max-width: none;
+	}
+}
+/*endregion*/

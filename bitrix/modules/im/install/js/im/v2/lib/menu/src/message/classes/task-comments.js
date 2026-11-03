@@ -1,6 +1,6 @@
-import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
+import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+import { MessageMenu, MenuItemPlacement, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
 export class TaskCommentsMessageMenu extends MessageMenu
 {
@@ -11,8 +11,10 @@ export class TaskCommentsMessageMenu extends MessageMenu
 			this.getCopyItem(),
 			this.getEditItem(),
 			this.getDownloadFileItem(),
+			this.getForwardItem(),
 			this.getAskCopilotItem(),
-			this.getCreateTaskItem(),
+			this.getCreateAiTaskItem(),
+			this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(),
 			this.getAddResultItem(),
 			this.getRemoveResultItem(),
 			...this.getAdditionalItems(),
@@ -20,6 +22,7 @@ export class TaskCommentsMessageMenu extends MessageMenu
 
 		const secondGroupItems = [
 			this.getDeleteItem(),
+			this.getSelectItem(),
 		];
 
 		return [
@@ -36,6 +39,7 @@ export class TaskCommentsMessageMenu extends MessageMenu
 			this.getCopyFileItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
+			this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null,
 			this.getCreateMeetingItem(),
 		];
 

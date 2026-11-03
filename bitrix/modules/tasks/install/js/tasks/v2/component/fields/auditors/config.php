@@ -12,6 +12,7 @@ return [
 		'tasks.v2.const',
 		'tasks.v2.core',
 		'tasks.v2.lib.analytics',
+		'tasks.v2.lib.entity-selector-dialog',
 		'tasks.v2.lib.field-highlighter',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.lib.show-limit',

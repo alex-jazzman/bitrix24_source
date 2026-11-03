@@ -26,6 +26,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			title: '',
 			description: '',
 			goal: '',
+			owner: null,
 			ownerId: null,
 			chatId: null,
 			members: [],
@@ -94,10 +95,14 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			init({
 				projectId,
 				publication,
-				notifications
+				notifications,
+				ownerId,
+				owner
 			}) {
 				this.id = projectId;
 				this.publication = publication;
+				this.ownerId = ownerId ?? null;
+				this.owner = owner ? structuredClone(owner) : null;
 				if (notifications !== undefined) {
 					this.notifications = notifications ? structuredClone(notifications) : notifications;
 					this.notificationsInitial = notifications ? structuredClone(notifications) : notifications;

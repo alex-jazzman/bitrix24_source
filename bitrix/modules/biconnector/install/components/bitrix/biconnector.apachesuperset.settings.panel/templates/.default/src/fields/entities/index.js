@@ -1,7 +1,7 @@
-import { DashboardDateFilterField } from './dashboard-date-filter-field';
 import { DashboardGroupsField } from './dashboard-groups-field';
+import { DashboardShareSettingField } from './dashboard-share-setting-field';
 
 export {
-	DashboardDateFilterField,
 	DashboardGroupsField,
+	DashboardShareSettingField,
 };

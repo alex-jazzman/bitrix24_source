@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="row no-gutters justify-content-between align-items-center text-center">
 			<div class="col">
-			<h3 class="landing-block-node-title text-left">
+			<h3 class="landing-block-node-title text-left" aria-level="1">
 				#crmCompanyTitle
 			</h3>
 			</div>

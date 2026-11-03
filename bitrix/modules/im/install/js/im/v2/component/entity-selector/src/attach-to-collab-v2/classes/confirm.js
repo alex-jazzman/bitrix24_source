@@ -6,8 +6,9 @@ import { Dialog, type DialogOptions } from 'ui.system.dialog';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { Core } from 'im.v2.application.core';
 import { type ImModelChat } from 'im.v2.model';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { Layout, RecentType, type RecentTypeItem, EventType } from 'im.v2.const';
+import { RecentType, type RecentTypeItem, EventType } from 'im.v2.const';
 
 const EVENT_NAMESPACE = 'BX.Messenger.v2.Component.AttachToCollabV2Confirm';
 
@@ -149,7 +150,7 @@ export class AttachToCollabV2Confirm extends EventEmitter
 		EventEmitter.emit(EventType.recent.openNestedList, { parentDialogId });
 
 		void LayoutManager.getInstance().setLayout({
-			name: Layout.chat,
+			...FolderManager.getRegularChatsLayout(),
 			entityId: dialogId,
 		});
 	}

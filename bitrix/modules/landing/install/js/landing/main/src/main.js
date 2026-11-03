@@ -17,17 +17,25 @@ import isEmpty from './internal/is-empty';
 
 BX.Landing.getMode = () => 'edit';
 
-function getBlocksGridRows(grid: HTMLElement): Array<Array<HTMLElement>>
+// Semantics of the "Add block" panel: the cards container is a list of block
+// cards. The container role, the card role, the FocusZone filter and the focus
+// outline selector in landing.ui.card.basecard must all agree on these values.
+const BLOCKS_LIST_ROLE = 'list';
+const BLOCK_CARD_ROLE = 'listitem';
+
+// The list is laid out in several columns, and the rows it is cut into here are
+// the visual ones - the reading order of the list itself stays linear.
+function getBlocksListRows(list: HTMLElement): Array<Array<HTMLElement>>
 {
-	const cells = [...grid.querySelectorAll('[role="gridcell"]')]
-		.filter((cell) => cell.offsetParent !== null);
+	const cards = [...list.querySelectorAll(`[role="${BLOCK_CARD_ROLE}"]`)]
+		.filter((card) => card.offsetParent !== null);
 
 	const rows = [];
 	let currentTop = null;
 	let currentRow = null;
 
-	cells.forEach((cell) => {
-		const top = Math.round(cell.getBoundingClientRect().top);
+	cards.forEach((card) => {
+		const top = Math.round(card.getBoundingClientRect().top);
 		if (currentRow === null || Math.abs(top - currentTop) > 2)
 		{
 			currentRow = [];
@@ -35,25 +43,25 @@ function getBlocksGridRows(grid: HTMLElement): Array<Array<HTMLElement>>
 			currentTop = top;
 		}
 
-		currentRow.push(cell);
+		currentRow.push(card);
 	});
 
 	return rows;
 }
 
-// 2D roving for the blocks grid: ArrowUp/Down move by visual row keeping the
-// column; ArrowLeft/Right (and Home/End) fall back to FocusZone linear order.
-function createBlocksGridNavigator(grid: HTMLElement)
+// 2D roving over the multi-column layout: ArrowUp/Down move by visual row keeping
+// the column; ArrowLeft/Right (and Home/End) fall back to FocusZone linear order.
+function createBlocksListNavigator(list: HTMLElement)
 {
-	// Cache the computed row layout to avoid re-measuring every gridcell on each
-	// arrow step. The set/order of cells changes on category switch, add/remove,
+	// Cache the computed row layout to avoid re-measuring every card on each
+	// arrow step. The set/order of cards changes on category switch, add/remove,
 	// reorder and DnD (all childList mutations); a resize can reflow the column
 	// count. Both drop the cache so the next step recomputes from live geometry.
 	let rowsCache = null;
 	const invalidateRowsCache = () => {
 		rowsCache = null;
 	};
-	new MutationObserver(invalidateRowsCache).observe(grid, {
+	new MutationObserver(invalidateRowsCache).observe(list, {
 		childList: true,
 		subtree: true,
 	});
@@ -67,7 +75,7 @@ function createBlocksGridNavigator(grid: HTMLElement)
 
 		if (rowsCache === null)
 		{
-			rowsCache = getBlocksGridRows(grid);
+			rowsCache = getBlocksListRows(list);
 		}
 
 		const rows = rowsCache;
@@ -714,12 +722,18 @@ export class Main extends EventEmitter
 			className: 'landing-ui-panel-block-list',
 			scrollAnimation: true,
 		});
-
-		Dom.attr(panel.content, {
-			'role': 'grid',
-			'aria-label': Loc.getMessage('LANDING_BLOCKS_LIST_GRID_LABEL'),
+		panel.getFocusTrapOptions = () => ({
+			...Content.prototype.getFocusTrapOptions.call(panel),
+			initialFocus: 'container',
 		});
-		this.setupBlocksGridFocusZone(panel.content);
+
+		// Stable hooks for e2e tests. The panel is built once per editor, so a single set of
+		// ids is enough: the layout is the panel itself, the content is the container of the
+		// cards - the one that carries the list role while it holds them.
+		Dom.attr(panel.layout, 'data-testid', 'landing-blocks-panel');
+		Dom.attr(panel.content, 'data-testid', 'landing-blocks-panel-list');
+
+		this.setupBlocksListFocusZone(panel.content);
 
 		panel.subscribe('onCancel', () => {
 			this.enableAddBlockButtons();
@@ -739,48 +753,48 @@ export class Main extends EventEmitter
 			}
 		});
 
-		panel.appendSidebarButton(
-			new BX.Landing.UI.Button.SidebarButton('feedback_button', {
-				className: 'landing-ui-button-sidebar-feedback',
-				text: Loc.getMessage('LANDING_BLOCKS_LIST_FEEDBACK_BUTTON'),
-				onClick: this.showFeedbackForm.bind(this),
-			}),
-		);
+		const feedbackButton = new BX.Landing.UI.Button.SidebarButton('feedback_button', {
+			className: 'landing-ui-button-sidebar-feedback',
+			text: Loc.getMessage('LANDING_BLOCKS_LIST_FEEDBACK_BUTTON'),
+			onClick: this.showFeedbackForm.bind(this),
+		});
+		Dom.attr(feedbackButton.layout, 'data-testid', 'landing-blocks-panel-feedback-btn');
+		panel.appendSidebarButton(feedbackButton);
 
 		return panel;
 	}
 
-	// Roving-tabindex composite over the block cards grid: a single Tab stop
-	// enters the grid, arrow keys move between gridcells. The FocusZone manages
-	// only the cards (role="gridcell"); nested badge/remove buttons stay outside
-	// the roving set and remain reachable within the focused cell. Card add/remove
-	// on category switch is tracked by the FocusZone MutationObserver.
-	setupBlocksGridFocusZone(grid: HTMLElement): Promise
+	// Roving-tabindex composite over the block cards: a single Tab stop enters the
+	// list, arrow keys move between cards. The FocusZone manages only the cards
+	// (role="listitem"); nested badge/remove buttons stay outside the roving set
+	// and remain reachable within the focused card. Card add/remove on category
+	// switch is tracked by the FocusZone MutationObserver.
+	setupBlocksListFocusZone(list: HTMLElement): Promise
 	{
-		if (this.blocksGridFocusZone)
+		if (this.blocksListFocusZone)
 		{
-			return this.blocksGridFocusZone;
+			return this.blocksListFocusZone;
 		}
 
-		this.blocksGridFocusZone = A11y.load()
+		this.blocksListFocusZone = A11y.load()
 			.then(({ FocusZone }) => {
-				const focusZone = new FocusZone(grid, {
+				const focusZone = new FocusZone(list, {
 					focusInStrategy: 'first',
-					focusableElementFilter: (element) => element.getAttribute('role') === 'gridcell',
-					getNextFocusable: createBlocksGridNavigator(grid),
+					focusableElementFilter: (element) => element.getAttribute('role') === BLOCK_CARD_ROLE,
+					getNextFocusable: createBlocksListNavigator(list),
 				});
 				focusZone.activate();
 
 				return focusZone;
 			})
 			.catch((error) => {
-				this.blocksGridFocusZone = null;
-				console.warn('Failed to init blocks grid focus zone', error);
+				this.blocksListFocusZone = null;
+				console.warn('Failed to init blocks list focus zone', error);
 
 				return null;
 			});
 
-		return this.blocksGridFocusZone;
+		return this.blocksListFocusZone;
 	}
 
 
@@ -863,12 +877,18 @@ export class Main extends EventEmitter
 	 */
 	createBlockPanelSidebarButton(category, options)
 	{
-		return new BX.Landing.UI.Button.SidebarButton(category, {
+		const button = new BX.Landing.UI.Button.SidebarButton(category, {
 			text: options.name,
 			child: !options.separator,
 			className: options.new ? 'landing-ui-new-section' : '',
 			onClick: this.onBlocksListCategoryChange.bind(this, category),
 		});
+
+		// The category a button stands for is already on it as `data-id`, so the hook is the
+		// same for all of them: a test picks the one it needs by that id.
+		Dom.attr(button.layout, 'data-testid', 'landing-blocks-panel-category-btn');
+
+		return button;
 	}
 
 	/**
@@ -951,6 +971,30 @@ export class Main extends EventEmitter
 	 * @param {string} category - Category id
 	 */
 	async onBlocksListCategoryChange(category)
+	{
+		await this.renderBlocksListCategory(category);
+		this.updateBlocksListSemantics();
+	}
+
+	// The list role requires the container to own nothing but list items, so the
+	// role and its label live on the container only while it holds block cards:
+	// an empty category shows the empty state instead and stays role-less.
+	updateBlocksListSemantics()
+	{
+		const content = this.getBlocksPanelContent();
+		const hasCards = content.querySelector(`[role="${BLOCK_CARD_ROLE}"]`) !== null;
+
+		Dom.attr(content, {
+			'role': hasCards ? BLOCKS_LIST_ROLE : null,
+			'aria-label': hasCards ? Loc.getMessage('LANDING_BLOCKS_LIST_GRID_LABEL') : null,
+		});
+	}
+
+	/**
+	 * Renders cards of the blocks list category
+	 * @param {string} category - Category id
+	 */
+	async renderBlocksListCategory(category)
 	{
 		this.currentCategory = category;
 
@@ -1565,7 +1609,7 @@ export class Main extends EventEmitter
 			isNew: block.new === true,
 			onClick: this.onAddBlock.bind(this, blockKey),
 			currentCategory: block.currentCategory,
-			role: 'gridcell',
+			role: BLOCK_CARD_ROLE,
 			useFavouriteBadge: true,
 			isFavorite: Array.isArray(this.favouriteBlocks) && this.favouriteBlocks.includes(blockKey),
 		});
@@ -1574,10 +1618,14 @@ export class Main extends EventEmitter
 	createFavouriteCategoryEmptyState()
 	{
 		return Tag.render`
-			<div class="landing-favourite-category-empty-state text-center">
+			<div
+				class="landing-favourite-category-empty-state text-center"
+				data-testid="landing-blocks-panel-empty-state"
+			>
 				<img 
 					class="landing-favourite-category-empty-state--image" 
 					src="/bitrix/images/landing/empty-favourite.webp"
+					alt=""
 					style="margin-bottom: 14px;"
 				/>
 				<p 

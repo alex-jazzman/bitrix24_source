@@ -2,8 +2,9 @@
  * @module im/messenger/lib/open-chat-create
  */
 jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
-	const { NavigationTabId } = require('im/messenger/const');
+	const { Analytics, NavigationTabId } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { CreateChannel } = require('im/messenger/controller/chat-composer');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { isProjectsGroupsRestricted, showProjectsGroupsRestrictionIfNeeded } = require('im/messenger/lib/plan-limit');
@@ -66,6 +67,8 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 
 	function openChannelCreate()
 	{
+		sendStartCreation(Analytics.Category.channel, Analytics.Type.channel);
+
 		const createChannel = new CreateChannel();
 		void createChannel.open();
 	}
@@ -79,10 +82,23 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 				return showProjectsGroupsRestrictionIfNeeded();
 			}
 
+			sendStartCreation(Analytics.Category.project, Analytics.Type.Tab.project);
+
 			return ProjectCreateManager.open();
 		}
 
+		sendStartCreation(Analytics.Category.collab, Analytics.Type.collab);
+
 		return serviceLocator.get('dialog-creator').createCollab();
+	}
+
+	/**
+	 * @param {string} category
+	 * @param {string} type
+	 */
+	function sendStartCreation(category, type)
+	{
+		AnalyticsService.getInstance().sendStartCreation({ category, type });
 	}
 
 	module.exports = {

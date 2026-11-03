@@ -25,7 +25,9 @@ BX.Main.MenuManager.create();
 
 import { Reflection } from 'main.core';
 import 'ui.design-tokens';
+import 'ui.design-tokens.air';
 import 'ui.fonts.opensans';
+import 'ui.icon-set.outline';
 
 import { Menu } from './menu/menu';
 import { MenuItem } from './menu/menu-item';

@@ -61,6 +61,9 @@ return [
 					);
 				},
 			],
+			'intranet.service.otp.scenario' => [
+				'className' => \Bitrix\Intranet\Public\Service\Otp\OtpScenarioService::class,
+			],
 			'intranet.repository.iblock.department' => [
 				'className' => \Bitrix\Intranet\Repository\IblockDepartmentRepository::class,
 			],
@@ -87,6 +90,14 @@ return [
 			'intranet.service.invitation.token' => [
 				'className' => \Bitrix\Intranet\Service\InviteTokenService::class,
 			],
+			'intranet.service.invitation.email-rate-limiter' => [
+				'constructor' => static fn() => new \Bitrix\Intranet\Internal\Service\Invitation\InvitationEmailRateLimiter(
+					\Bitrix\Main\DI\ServiceLocator::getInstance()->get(
+						\Bitrix\Main\Data\Storage\PersistentStorageInterface::class,
+					),
+					\Bitrix\Main\Application::getConnection(),
+				),
+			],
 			'intranet.repository.user' => [
 				'className' => \Bitrix\Intranet\Repository\UserRepository::class,
 			],
@@ -103,6 +114,9 @@ return [
 					'departmentService' => new \Bitrix\Intranet\Integration\HumanResources\Department(),
 					'teamService' => new \Bitrix\Intranet\Internal\Integration\Humanresources\TeamRepository(),
 				],
+			],
+			'intranet.service.user.self-delete' => [
+				'className' => \Bitrix\Intranet\Public\Service\User\SelfDeleteService::class,
 			],
 			'intranet.service.invite.status' => [
 				'className' => \Bitrix\Intranet\Service\InviteStatusService::class

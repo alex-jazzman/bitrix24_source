@@ -6,20 +6,18 @@
 	justify-content: space-between;
 }
 
-.bx-im-mention-popup-content__container > :only-child {
-	margin-top: auto;
-}
-
 .bx-im-mention-popup-content__loader {
 	display: flex;
 	justify-content: center;
 	height: 52px;
 }
 
+/* No clip of its own: the keyboard ring of a row reaches 4px out of that row, and the room for it above the
+   first row and below the last one is the vertical margin of the list, which lies outside a clip. Rows are
+   still clipped sideways, by the scrolling container. */
 .bx-im-mention-popup-content__items {
 	padding: 0 4px 0 6px;
 	margin: 6px 0;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
 }

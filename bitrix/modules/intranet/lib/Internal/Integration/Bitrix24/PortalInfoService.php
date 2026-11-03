@@ -16,6 +16,11 @@ class PortalInfoService
 		$this->isModuleIncluded = Loader::includeModule('bitrix24');
 	}
 
+	public function getPortalZone(): string
+	{
+		return $this->isModuleIncluded ? (string)\CBitrix24::getPortalZone() : '';
+	}
+
 	public function getCreationDateTime(): ?DateTime
 	{
 		if (!$this->isModuleIncluded)

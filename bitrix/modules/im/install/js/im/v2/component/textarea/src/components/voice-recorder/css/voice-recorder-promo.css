@@ -1,0 +1,16 @@
+.bx-im-voice-recorder-promo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	/* the close cross of the popup stands in the top right corner, and the text stops before it */
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xl) var(--ui-space-inset-sm) var(--ui-space-inset-sm);
+	color: var(--ui-color-base-0);
+}
+
+.bx-im-voice-recorder-promo__text {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-voice-recorder-promo-popup.popup-window .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+}

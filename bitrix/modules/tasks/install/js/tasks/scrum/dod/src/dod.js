@@ -14,7 +14,8 @@ type Params = {
 	view: 'settings' | 'list',
 	groupId: number,
 	taskId?: number,
-	skipNotifications?: boolean
+	skipNotifications?: boolean,
+	skipErrorAlert?: boolean,
 }
 
 export class Dod extends EventEmitter
@@ -29,6 +30,7 @@ export class Dod extends EventEmitter
 
 		this.groupId = parseInt(params.groupId, 10);
 		this.taskId = parseInt(params.taskId, 10);
+		this.skipErrorAlert = params.skipErrorAlert === true;
 
 		// eslint-disable-next-line unicorn/no-abusive-eslint-disable
 		this.sidePanelManager = BX.SidePanel.Instance;
@@ -78,7 +80,12 @@ export class Dod extends EventEmitter
 				return response.data;
 			})
 			.catch((response) => {
-				this.requestSender.showErrorAlert(response);
+				if (!this.skipErrorAlert)
+				{
+					this.requestSender.showErrorAlert(response);
+				}
+
+				throw response;
 			})
 		;
 	}

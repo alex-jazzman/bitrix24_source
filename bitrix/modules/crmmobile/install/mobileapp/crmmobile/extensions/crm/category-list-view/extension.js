@@ -4,6 +4,8 @@
 jn.define('crm/category-list-view', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { throttle } = require('utils/function');
+	const { requireLazy } = require('require-lazy');
+	const { Uuid } = require('utils/uuid');
 	const { NotifyManager } = require('notify-manager');
 	const { NavigationLoader } = require('navigation-loader');
 	const { PureComponent } = require('layout/pure-component');
@@ -21,6 +23,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		selectRestrictions,
 		selectByEntityTypeId,
 		selectCanUserEditCategory,
+		selectCanCreateCategory,
 		createCrmKanban,
 		selectIsFetchedList,
 	} = require('crm/statemanager/redux/slices/kanban-settings');
@@ -54,17 +57,19 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 		static open(props, widgetParams = {}, parentWidget = PageManager)
 		{
-			return new Promise((resolve) => {
+			return new Promise((resolve, reject) => {
 				const { selectAction } = props;
+				const widgetCode = `crm-category-list-${Uuid.getV4()}`;
 				parentWidget
-					.openWidget('layout', CategoryListView.getWidgetParams(selectAction))
+					.openWidget('layout', { ...CategoryListView.getWidgetParams(selectAction), code: widgetCode })
 					.then((layout) => {
 						layout.enableNavigationBarBorder(false);
-						layout.showComponent(connect(mapStateToProps, mapDispatchToProps)(this)({ layout, ...props }));
+						layout.showComponent(connect(mapStateToProps, mapDispatchToProps)(this)({ ...props, layout, widgetCode }));
 						resolve(layout);
 					})
 					.catch((error) => {
 						console.error(error);
+						reject(error);
 					});
 			});
 		}
@@ -104,7 +109,12 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 		get kanbanSettingsList()
 		{
-			return BX.prop.getArray(this.props, 'kanbanSettingsList', []);
+			const categories = BX.prop.getArray(this.props, 'kanbanSettingsList', []);
+			const { allowedCategoryIds } = this.props;
+
+			return Array.isArray(allowedCategoryIds)
+				? categories.filter((category) => allowedCategoryIds.includes(category.categoryId))
+				: categories;
 		}
 
 		get restrictions()
@@ -115,6 +125,18 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		get canUserEditCategory()
 		{
 			return BX.prop.getBoolean(this.props, 'canUserEditCategory', false);
+		}
+
+		/**
+		 * The capability is read as it came: `null` states that the payload carries none, which is
+		 * not the same answer as a refusal, and only `crm/category-list/permissions` decides what
+		 * to do with either.
+		 *
+		 * @return {Boolean|null}
+		 */
+		get canCreateCategory()
+		{
+			return BX.prop.get(this.props, 'canCreateCategory', null);
 		}
 
 		get isFetchedList()
@@ -183,7 +205,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				needSaveCurrentCategoryId,
 				selectAction,
 				onSelectCategory,
-				enableSelect, disabledCategoryIds, uid,
+				enableSelect, disabledCategoryIds, uid, widgetCode,
 			} = this.props;
 
 			let currentCategory = this.kanbanSettingsList.find((category) => category.categoryId === currentCategoryId);
@@ -194,6 +216,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			}
 
 			return new CategoryList({
+				widgetCode,
 				entityTypeId,
 				currentCategoryId: currentCategory && currentCategory.categoryId,
 				needSaveCurrentCategoryId,
@@ -201,6 +224,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				onCreateCategory: this.createCategoryHandler,
 				onEditCategory: this.editCategoryHandler,
 				canUserEditCategory: this.canUserEditCategory,
+				canCreateCategory: this.canCreateCategory,
 				canUserAddCategory: !this.hasCategoryLimitRestriction(),
 				readOnly,
 				selectAction,
@@ -339,6 +363,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			kanbanSettingsList: selectByEntityTypeId(state, entityTypeId),
 			restrictions: selectRestrictions(state),
 			canUserEditCategory: selectCanUserEditCategory(state),
+			canCreateCategory: selectCanCreateCategory(state),
 			isFetchedList: selectIsFetchedList(state, entityTypeId),
 		};
 	};

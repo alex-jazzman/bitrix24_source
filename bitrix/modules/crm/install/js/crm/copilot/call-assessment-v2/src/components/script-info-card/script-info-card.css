@@ -4,6 +4,10 @@
 	gap: 10px;
 }
 
+.crm-call-assessment-v2-info-card:empty {
+	display: none;
+}
+
 .crm-call-assessment-v2-info-card__title-row {
 	display: flex;
 	align-items: center;
@@ -43,7 +47,7 @@
 	gap: var(--ui-space-inline-2xs);
 	padding: 0 var(--ui-space-inset-sm) 0 var(--ui-space-inset-sm);
 	border-radius: var(--ui-border-radius-sm);
-	color: var(--ui-color-design-outline-content);
+	color: var(--ui-color-base-1);
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-regular);
 	line-height: 20px;
@@ -67,6 +71,11 @@
 	padding-left: 0;
 }
 
+/* The first chip starts on the left edge of the card text, under the title icon and the description. */
+.crm-call-assessment-v2-info-card__info-chip:first-child {
+	padding-left: 0;
+}
+
 .crm-call-assessment-v2-info-card__info-chip-text {
 	display: inline-flex;
 	align-items: center;
@@ -78,6 +87,10 @@
 	-webkit-background-clip: text;
 	background-clip: text;
 	-webkit-text-fill-color: transparent;
+}
+
+.crm-call-assessment-v2-info-card__info-chip-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
 .crm-call-assessment-v2-info-card__info-chip-icon.--gradient {

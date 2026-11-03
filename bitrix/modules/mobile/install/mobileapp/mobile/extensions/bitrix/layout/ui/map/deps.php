@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'apptheme',
 		'assets/icons',
+		'layout/ui/map/background',
 		'tokens',
 		'type',
 		'ui-system/blocks/chips/chip-button',

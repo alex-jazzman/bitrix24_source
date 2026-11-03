@@ -60,7 +60,14 @@ export const DeadlineChangeReasonPopup = {
 				height: 324,
 				offsetLeft: -24,
 				targetContainer: document.body,
+				focusTrap: true,
+				closeByEsc: true,
+				ariaLabelledBy: this.titleId,
 			};
+		},
+		titleId(): string
+		{
+			return `tasks-deadline-change-reason-title-${this.taskId}`;
 		},
 		reason: {
 			get(): string
@@ -93,15 +100,22 @@ export const DeadlineChangeReasonPopup = {
 	template: `
 		<Popup :options @close="handleClose">
 			<div class="tasks-deadline-change-reason-popup-header">
-				<div class="tasks-deadline-change-reason-popup-title">
+				<div :id="titleId" class="tasks-deadline-change-reason-popup-title">
 					{{ loc('TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_TITLE') }}
 				</div>
-				<BIcon
-					:name="Outline.CROSS_L"
-					hoverable
-					class="tasks-deadline-change-reason-popup-close-icon"
+				<button
+					type="button"
+					class="tasks-deadline-change-reason-popup-close"
+					:aria-label="loc('TASKS_V2_DEADLINE_CHANGE_REASON_CLOSE_ARIA_LABEL')"
 					@click="handleClose"
-				/>
+				>
+					<BIcon
+						:name="Outline.CROSS_L"
+						hoverable
+						class="tasks-deadline-change-reason-popup-close-icon"
+						aria-hidden="true"
+					/>
+				</button>
 			</div>
 			<div class="tasks-deadline-change-reason-popup-content">
 				<div class="tasks-deadline-change-reason-popup-message">

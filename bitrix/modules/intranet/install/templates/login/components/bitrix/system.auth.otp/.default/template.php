@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
@@ -65,6 +66,25 @@ elseif (isset($_GET['help']) && $_GET['help'] === 'Y')
 }
 else
 {
+	$errorMessage = (string)($arResult['ERROR_MESSAGE'] ?? '');
+	$showPushOtpFailureDetails = false;
+	$incorrectOtpMessage = (string)Loc::getMessage('USER_LOGIN_OTP_INCORRECT');
+	$request = Context::getCurrent()->getRequest();
+	$isAutomaticPushOtp = ($arResult['CURRENT_STEP'] ?? null) === 'push'
+		|| $request->getPost('OTP_SOURCE') === 'push';
+	if (
+		$errorMessage !== ''
+		&& $incorrectOtpMessage !== ''
+		&& str_starts_with($errorMessage, $incorrectOtpMessage)
+		&& $arResult['USE_PUSH_OTP']
+		&& $isAutomaticPushOtp
+		&& $request->getPost('TYPE') === 'OTP'
+		&& empty($arResult['CAPTCHA_CODE'])
+	)
+	{
+		$showPushOtpFailureDetails = true;
+	}
+	$currentStep = $showPushOtpFailureDetails ? 'push' : ($arResult['CURRENT_STEP'] ?? '');
 ?>
 <div class="intranet-island__otp <?= $arResult['USE_PUSH_OTP'] ? '--push' : '' ?>" data-role="otp-container">
 
@@ -80,29 +100,30 @@ else
 		const params = {
 			signedUserId: '<?= $arResult['SIGNED_USER_ID'] ?? '' ?>',
 			containerNode: document.querySelector("[data-role='otp-container']"),
-			authUrl: '<?= $arResult['AUTH_URL'] ?>',
+			authUrl: <?= \Bitrix\Main\Web\Json::encode($arResult['~AUTH_URL']) ?>,
 			authOtpHelpLink: '<?= CUtil::JSUrlEscape($arResult['AUTH_OTP_HELP_LINK']) ?>',
 			helpButtonConfigByStep: <?= \Bitrix\Main\Web\Json::encode($arResult['HELP_BUTTON_CONFIG_BY_STEP']) ?>,
-			authLoginUrl: '<?= CUtil::JSUrlEscape($arResult["AUTH_LOGIN_URL"]) ?>',
+			authLoginUrl: <?= \Bitrix\Main\Web\Json::encode($arResult['~AUTH_LOGIN_URL']) ?>,
 			rememberOtp: <?= $arResult['REMEMBER_OTP'] ? 'true' : 'false' ?>,
 			captchaCode: '<?= $arResult['CAPTCHA_CODE'] ?? '' ?>',
-			notShowLinks: <?= isset($arResult['NOT_SHOW_LINKS']) && $arResult['NOT_SHOW_LINKS'] ? 'true' : 'false' ?>,
-			isBitrix24: <?= IsModuleInstalled('bitrix24') ? 'true' : 'false' ?>,
+			notShowLinks: <?= $arParams['NOT_SHOW_LINKS'] === 'Y' ? 'true' : 'false' ?>,
 			<?php if ($arResult['USE_PUSH_OTP']): ?>
 			pushOtpConfig: <?= \Bitrix\Main\Web\Json::encode($arResult['PUSH_OTP']) ?>,
 			canLoginBySms: <?= $arResult['CAN_LOGIN_BY_SMS'] ? 'true' : 'false' ?>,
 			canLoginByEmail: <?= $arResult['CAN_LOGIN_BY_EMAIL'] ? 'true' : 'false' ?>,
 			isRecoveryCodesEnabled: <?= $arResult['IS_RECOVERY_CODES_ENABLED'] ? 'true' : 'false' ?>,
+			isDeviceConnectSkipped: <?= $arResult['IS_DEVICE_CONNECT_SKIPPED'] ? 'true' : 'false' ?>,
 			maskedUserAuthPhoneNumber: '<?= $arResult['USER_MASKED_AUTH_PHONE_NUMBER'] ?? '' ?>',
 			maskedUserAuthEmail: '<?= $arResult['USER_MASKED_AUTH_EMAIL'] ?? '' ?>',
-			currentStep: '<?= $arResult['CURRENT_STEP'] ?>',
+			currentStep: '<?= $currentStep ?>',
 			recoveryCodesHelpLink: '<?= $arResult['RECOVERY_CODES_HELP_LINK'] ?>',
 			userDevice: <?= \Bitrix\Main\Web\Json::encode($arResult['USER_DEVICE']) ?>,
 			<?php else: ?>
 			userData: <?= \Bitrix\Main\Web\Json::encode($arResult['USER_DATA']) ?>,
 			accountChangeUrl: '<?= CUtil::JSUrlEscape($arResult['ACCOUNT_CHANGE_URL']) ?>',
 			<?php endif; ?>
-			errorMessage: '<?= CUtil::JSescape($arResult['ERROR_MESSAGE']) ?>',
+			showPushOtpFailureDetails: <?= $showPushOtpFailureDetails ? 'true' : 'false' ?>,
+			errorMessage: '<?= CUtil::JSescape($errorMessage) ?>',
 			canSendRequestRecoverAccess: <?= $arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] ? 'true' : 'false' ?>,
 			userId: <?= (int)($arResult['USER_ID'] ?? 0) ?>,
 		};

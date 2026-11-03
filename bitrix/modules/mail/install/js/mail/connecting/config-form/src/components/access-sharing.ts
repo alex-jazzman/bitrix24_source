@@ -1,6 +1,6 @@
-import { defineComponent, markRaw } from 'ui.vue3';
+import { defineComponent, markRaw, type PropType } from 'ui.vue3';
 import { Loc } from 'main.core';
-import { TagSelector } from 'ui.entity-selector';
+import { type ItemOptions, TagSelector } from 'ui.entity-selector';
 import { HeadlineSm } from 'ui.system.typography.vue';
 import { BIcon, Set as IconSet } from 'ui.icon-set.api.vue';
 
@@ -16,6 +16,16 @@ import { loc } from '../utils/loc';
 
 type SelectorDialog = {
 	destroy(): void;
+	getItem(item: { id: string | number; entityId: string }): SelectorDialogItem | null;
+	removeItem(item: SelectorDialogItem): SelectorDialogItem | null;
+};
+
+type SelectorDialogItem = {
+	isHidden(): boolean;
+};
+
+type SelectorTagEvent = {
+	getData(): { tag: SelectorTag };
 };
 
 type AccessSelectorInstance = {
@@ -25,6 +35,23 @@ type AccessSelectorInstance = {
 	lock(): void;
 	unlock(): void;
 };
+
+export type AccessUser = {
+	id: number;
+	title: string;
+	imageUrl: string | null;
+};
+
+export function getAccessUserSelectorItems(users: AccessUser[]): ItemOptions[]
+{
+	return users.map((user: AccessUser): ItemOptions => ({
+		entityId: 'user',
+		id: user.id,
+		title: user.title,
+		...(user.imageUrl ? { avatar: user.imageUrl } : {}),
+		hidden: true,
+	}));
+}
 
 function resolvePopupTargetContainer(element: Element | null | undefined): HTMLElement
 {
@@ -36,6 +63,13 @@ export const AccessSharing = defineComponent({
 	name: 'access-sharing',
 
 	components: { HeadlineSm, BIcon },
+
+	props: {
+		users: {
+			type: Array as PropType<AccessUser[]>,
+			default: () => [],
+		},
+	},
 
 	setup()
 	{
@@ -117,6 +151,7 @@ export const AccessSharing = defineComponent({
 			multiple: true,
 			dialogOptions: {
 				targetNode: selectorContainer as HTMLElement,
+				items: getAccessUserSelectorItems(this.users),
 				popupOptions: {
 					targetContainer: resolvePopupTargetContainer(selectorContainer),
 				},
@@ -147,7 +182,7 @@ export const AccessSharing = defineComponent({
 			},
 			events: {
 				onAfterTagAdd: () => this.updateAccess(),
-				onAfterTagRemove: () => this.updateAccess(),
+				onAfterTagRemove: (event: SelectorTagEvent) => this.handleTagRemove(event),
 			},
 		})) as AccessSelectorInstance;
 		this.selectorInstance.renderTo(this.$refs.selectorContainer as Element | undefined);
@@ -175,6 +210,20 @@ export const AccessSharing = defineComponent({
 	},
 
 	methods: {
+		handleTagRemove(event: SelectorTagEvent): void
+		{
+			const tag = event.getData().tag;
+			const dialog = this.selectorInstance?.getDialog();
+			const item = dialog?.getItem({ id: tag.getId(), entityId: tag.getEntityId() });
+
+			if (item?.isHidden())
+			{
+				dialog?.removeItem(item);
+			}
+
+			this.updateAccess();
+		},
+
 		updateAccess(): void
 		{
 			if (!this.selectorInstance)

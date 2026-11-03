@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -13,8 +12,7 @@ class ListsMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = \Bitrix\ListsMobile\Workspace::class;
+	public array $errors = [];
 
 	public function __construct()
 	{
@@ -35,32 +33,32 @@ class ListsMobile extends CModule
 	{
 		ModuleManager::registerModule($this->MODULE_ID);
 
-		$eventManager = EventManager::getInstance();
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
+			return false;
+		}
 
 		return true;
 	}
 
 	public function uninstallDB($arParams = [])
 	{
-		$eventManager = EventManager::getInstance();
+		$dropTables = false;
 
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function installFiles()

@@ -289,7 +289,7 @@ class Analytics extends Common
 		$analyticsEvent = new AnalyticsEvent(
 			$event,
 			self::TOOL,
-			self::CATEGORY,
+			self::TASK_CATEGORY,
 		);
 
 		$this->sendAnalytics(

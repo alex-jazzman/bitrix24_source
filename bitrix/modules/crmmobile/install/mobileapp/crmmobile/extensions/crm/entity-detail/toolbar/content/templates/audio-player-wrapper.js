@@ -2,6 +2,7 @@
  * @module crm/entity-detail/toolbar/content/templates/audio-player-wrapper
  */
 jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (require, exports, module) => {
+	const { Text4, Text6 } = require('ui-system/typography/text');
 	const { EventEmitter } = require('event-emitter');
 	const AppTheme = require('apptheme');
 	const { throttle, debounce } = require('utils/function');
@@ -365,10 +366,9 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 					},
 					clickable: false,
 				},
-				Text({
+				Text4({
 					style: {
 						color: AppTheme.colors.base0,
-						fontSize: 15,
 					},
 					numberOfLines: 1,
 					ellipsize: 'end',
@@ -381,10 +381,9 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 						},
 						clickable: false,
 					},
-					Text({
+					Text6({
 						style: {
 							color: this.state.play ? AppTheme.colors.accentBrandBlue : AppTheme.colors.base4,
-							fontSize: 12,
 							minWidth: this.currentTimeWidth,
 							textAlign: 'right',
 						},
@@ -393,10 +392,9 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 							this.currentTimeWidth = Math.max(this.currentTimeWidth, width);
 						},
 					}),
-					Text({
+					Text6({
 						style: {
 							color: AppTheme.colors.base4,
-							fontSize: 12,
 						},
 						text: ` / ${this.convertSecondsToTime(this.state.duration)}`,
 					}),

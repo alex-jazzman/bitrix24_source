@@ -29,8 +29,16 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager');
 	const { InputActionListener } = require('im/messenger/provider/pull/lib/input-action-listener');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const AUTO_TASK_STATUS_NOT_FOUND_CLEAR_DELAY = 3000;
+
+	// An auto-task status gets a window of its own instead of the 30 seconds every other event of the
+	// messenger is held to (`BasePullHandler.interceptEvent`): the operation regularly runs longer than
+	// that, and a terminal status dropped as stale leaves the indication to the watchdog instead of the
+	// outcome. Mirrors STALE_THRESHOLD_SECONDS of the web (`im.v2.provider.pull/base/handlers/ai`) and
+	// the watchdog of the indication manager, which has to be the same window.
+	const AI_TASK_STATUS_STALE_THRESHOLD_SECONDS = 90;
 
 	/**
 	 * @class MessagePullHandler
@@ -109,7 +117,28 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 
 			this.logger.info('handleMessageUpdate:', params);
 
+			// #updateMessage checks this as well, but the check has to happen before #setFiles:
+			// it preloads previews into the native cache, useless work for a message we do not have
+			const message = this.getMessage(params.id);
+			if (!message)
+			{
+				return;
+			}
+
+			// the composition the update is applied over: after #updateMessage it is lost
+			const previousFileIdList = message.files;
+
+			// ORDER INVARIANT: file entities must reach the model strictly BEFORE the message update.
+			// The dialog is subscribed to the message model and not to the file model, so a file
+			// arriving after its message never triggers a redraw. Do not reorder these calls.
+			if (params.files)
+			{
+				await this.#setFiles(params);
+			}
+
 			await this.#updateMessage(params);
+
+			await this.#deleteDroppedFiles(params, previousFileIdList);
 		}
 
 		/**
@@ -138,6 +167,10 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 					messageCount: params.params.CHAT_MESSAGE,
 				});
 			}
+
+			// The plan of a BitrixGPT placeholder comes and goes through the params of the message, so
+			// the manager reads it from the model itself.
+			this.#getCopilotReasoningManager(params.chatId)?.syncMessage(params.id);
 		}
 
 		/**
@@ -152,6 +185,9 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			}
 
 			this.logger.info('handleMessageDeleteV2:', params, extra);
+
+			const reasoningManager = this.#getCopilotReasoningManager(params.chatId);
+			params.messages.forEach((message) => reasoningManager?.stopMessage(message.id));
 
 			const fullDeletedMessageList = params.messages.filter((message) => message.completelyDeleted);
 			const updateMessageList = params.messages.filter((message) => !message.completelyDeleted);
@@ -510,21 +546,53 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		 */
 		async handleAutoTaskStatus(params, extra)
 		{
-			if (this.interceptEvent(extra))
+			if (this.#isAutoTaskStatusStale(extra))
+			{
+				return;
+			}
+
+			// The staleness of this event has just been judged by its own window, so the base check is
+			// asked for the sync interception alone.
+			if (this.interceptEvent(extra, { ignoreServerTimeAgoCheck: true }))
 			{
 				return;
 			}
 
 			this.logger.info('handleAutoTaskStatus:', params);
 
-			const dialogHelper = DialogHelper.createByChatId(params.chatId);
-			if (dialogHelper?.isChannel)
+			// The channel cut-off needs a chat to look at, and the event may carry none: chatId is null
+			// exactly on the terminal refusal, when the source message was hard-deleted before the model
+			// answered. Dropping such an event would hand the indication over to the watchdog instead of
+			// the refusal frame, so an event without a chat goes on to the anchor correlation below.
+			if (params.chatId)
 			{
-				this.logger.warn('handleAutoTaskStatus skipped by message from channel:', params);
+				const dialogHelper = DialogHelper.createByChatId(params.chatId);
+				if (dialogHelper?.isChannel)
+				{
+					this.logger.warn('handleAutoTaskStatus skipped by message from channel:', params);
+
+					return;
+				}
+			}
+
+			// The operation of the per-message track is correlated by the anchor before any chat check:
+			// the manager lives in the locator of its own dialog and its active anchor is unique, while
+			// the event that carries the outcome may have no chat to compare at all.
+			if (this.#handleAutoTaskIndicationStatus(params))
+			{
+				return;
+			}
+
+			if (!params.chatId)
+			{
+				this.logger.log('handleAutoTaskStatus skipped: chatless event outside a tracked operation', params);
 
 				return;
 			}
 
+			// The legacy per-bubble visual state serves every event the indication manager did not take:
+			// a build without the message-level indication, or a dialog of the event that is not open.
+			// It is the track that draws the automatic task made out of a voice or a video note.
 			try
 			{
 				const payloadParams = {
@@ -559,6 +627,120 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 
 				await this.store.dispatch('messagesModel/updateVisualState', payloadParams);
 			}
+		}
+
+		/**
+		 * @desc Whether the status arrived too late for its outcome to be worth drawing. The window is
+		 * the one of the AI task and not the shared one, so the age is judged here.
+		 * @param {PullExtraParams} extra
+		 * @return {boolean}
+		 */
+		#isAutoTaskStatusStale(extra)
+		{
+			return (
+				Type.isNumber(extra?.server_time_ago)
+				&& extra.server_time_ago > AI_TASK_STATUS_STALE_THRESHOLD_SECONDS
+			);
+		}
+
+		/**
+		 * @desc Per-message indication track: the frame of the operation is drawn around the source
+		 * messages themselves. Once the dialog of the event has a manager, the event is served by it and
+		 * by nothing else - whether the manager applies the status, adopts it as an operation of its own
+		 * (the automatic task of a voice or a video note is announced by pull alone) or drops it as an
+		 * event it has nowhere to put. A dropped event goes no further either: the legacy visual state
+		 * would otherwise light the message the manager has just refused to draw a frame around.
+		 * @param {MessagePullHandleAutoTaskStatus} params
+		 * @return {boolean} whether the event belongs to the indication track
+		 */
+		#handleAutoTaskIndicationStatus(params)
+		{
+			const aiTaskIndicationManager = this.#getAiTaskIndicationManager(params.chatId, params.messageId);
+			if (!aiTaskIndicationManager)
+			{
+				return false;
+			}
+
+			// The flag comes with the completion status only; every other status has no such key at all,
+			// and its absence means an ordinary outcome - hence the strict comparison instead of a cast.
+			const isApplied = aiTaskIndicationManager.applyStatus(
+				params.status,
+				params.messageId,
+				params.isPartial === true,
+			);
+
+			this.logger.log('#handleAutoTaskIndicationStatus:', params, { isApplied });
+
+			return true;
+		}
+
+		/**
+		 * @desc Indication manager that owns the event. Several dialogs may be open at once - comments, a
+		 * nested chat, a chat by link - so the stack is walked instead of taking the topmost dialog: an
+		 * addressed event goes to the manager of its own chat, while the terminal refusal carries no chat
+		 * at all and the anchor of the tracked operation stays the only handle. Absent on builds without
+		 * the native indication capability, where the legacy visual state stays the only track.
+		 * @param {?number} chatId
+		 * @param {number} anchor
+		 * @return {?AiTaskIndicationManager}
+		 */
+		#getAiTaskIndicationManager(chatId, anchor)
+		{
+			const dialogManager = serviceLocator.get('dialog-manager');
+			if (!dialogManager)
+			{
+				return null;
+			}
+
+			let index = 0;
+			let dialog = dialogManager.getOpenDialogByIndex(index);
+			while (dialog)
+			{
+				const manager = dialog.locator?.get('ai-task-indication-manager') ?? null;
+				const isManagerOfEvent = chatId
+					? Number(dialog.getChatId()) === Number(chatId)
+					: manager?.isActive(anchor) === true;
+
+				if (isManagerOfEvent)
+				{
+					return manager;
+				}
+
+				index += 1;
+				dialog = dialogManager.getOpenDialogByIndex(index);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @desc Several dialogs may be open at once - comments, a nested chat, a chat by link - so the
+		 * fact goes to the manager of this chat and not to the manager of the topmost dialog.
+		 * @param {number} chatId
+		 * @return {?CopilotReasoningManager}
+		 */
+		#getCopilotReasoningManager(chatId)
+		{
+			const dialogManager = serviceLocator.get('dialog-manager');
+			if (!dialogManager)
+			{
+				return null;
+			}
+
+			let index = 0;
+			let dialog = dialogManager.getOpenDialogByIndex(index);
+			while (dialog)
+			{
+				if (Number(dialog.getChatId()) === Number(chatId))
+				{
+					return dialog.locator?.get('copilot-reasoning-manager') ?? null;
+				}
+
+				index += 1;
+				dialog = dialogManager.getOpenDialogByIndex(index);
+			}
+
+			return null;
 		}
 
 		/**
@@ -651,6 +833,32 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		getDialog(dialogId)
 		{
 			return this.store.getters['dialoguesModel/getById'](dialogId);
+		}
+
+		/**
+		 * An event never carries the name of the discussion a fragment was forwarded from: the server
+		 * resolves that name only when the feed is read. Blanking the name belongs to a feed read alone,
+		 * so an event arriving without it keeps the name the client already has.
+		 *
+		 * @param {MessageId} storedMessageId
+		 * @param {RawMessage} message
+		 * @return {RawMessage}
+		 */
+		withKnownForwardTitle(storedMessageId, message)
+		{
+			if (!Type.isPlainObject(message.forward) || Type.isStringFilled(message.forward.chatTitle))
+			{
+				return message;
+			}
+
+			const storedMessage = this.store.getters['messagesModel/getById'](storedMessageId);
+			const knownTitle = storedMessage?.forward?.chatTitle;
+			if (!Type.isStringFilled(knownTitle))
+			{
+				return message;
+			}
+
+			return { ...message, forward: { ...message.forward, chatTitle: knownTitle } };
 		}
 
 		/**
@@ -1191,7 +1399,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		}
 
 		/**
-		 * @param {MessageAddParams|MessagePullHandlerPinAddParams} params
+		 * @param {MessageAddParams|MessagePullHandlerPinAddParams|MessagePullHandlerUpdateParams} params
 		 * @return {Promise<any>}
 		 */
 		async #setFiles(params)
@@ -1386,7 +1594,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 				{
 					await this.store.dispatch('messagesModel/update', {
 						id,
-						fields: params.message,
+						fields: this.withKnownForwardTitle(id, params.message),
 					});
 				}
 				catch (error)
@@ -1408,7 +1616,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 				{
 					await this.store.dispatch('messagesModel/updateWithId', {
 						id: templateId,
-						fields: params.message,
+						fields: this.withKnownForwardTitle(templateId, params.message),
 					});
 				}
 				catch (error)
@@ -1610,7 +1818,95 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 					params,
 					block,
 				},
+				// the event carries the text of the server in full, so an empty one is a removed text of any
+				// message and not a partial update; a text absent altogether is still dropped by the validator
+				allowEmptyText: true,
 			});
+		}
+
+		/**
+		 * A file dropped from the composition stays in the model and in the local database on its own:
+		 * the delete router of FileWriter is empty, so the repository is asked for the cleanup and the
+		 * model drops only what the local database no longer keeps for any other message.
+		 *
+		 * @param {MessagePullHandlerUpdateParams} params
+		 * @param {Array<number|string>} previousFileIdList
+		 */
+		async #deleteDroppedFiles(params, previousFileIdList)
+		{
+			// no row of such a chat reaches the local database, so the reference check would report the
+			// file unused for lack of data and drop the entity of a file another message still shows
+			if (!DialogHelper.createByChatId(params.chatId)?.isLocalStorageSupported)
+			{
+				return;
+			}
+
+			const droppedIdList = this.#getDroppedFileIdList(previousFileIdList, params.params?.FILE_ID);
+			if (!Type.isArrayFilled(droppedIdList))
+			{
+				return;
+			}
+
+			// two updates of one message interleave here: the row of the local database is written by a
+			// writer of its own and lags behind, which is why the reference check skips the row of this
+			// very message - and with it the composition a newer update has already brought back. The
+			// model is written synchronously, so what it holds right now is what tells the two apart
+			const restoredIdSet = this.#getCompositionOfTheModel(params.id);
+			const idListToCleanUp = droppedIdList.filter((fileId) => !restoredIdSet.has(fileId));
+			if (!Type.isArrayFilled(idListToCleanUp))
+			{
+				return;
+			}
+
+			const deletedIdList = await serviceLocator.get('core').getRepository().file
+				.deleteUnusedByIdList(idListToCleanUp, params.id)
+			;
+
+			await Promise.all(
+				deletedIdList.map((fileId) => this.store.dispatch('filesModel/delete', { id: fileId })),
+			);
+		}
+
+		/**
+		 * An update without a composition is not an empty composition: the whole list has to be known
+		 * to tell what was dropped from it.
+		 *
+		 * @param {Array<number|string>} previousFileIdList
+		 * @param {Array<number|string>} [currentFileIdList]
+		 * @return {Array<number>}
+		 */
+		#getDroppedFileIdList(previousFileIdList, currentFileIdList)
+		{
+			if (!Type.isArrayFilled(previousFileIdList) || !Type.isArray(currentFileIdList))
+			{
+				return [];
+			}
+
+			const currentIdSet = new Set(currentFileIdList.map((fileId) => Number.parseInt(fileId, 10)));
+
+			return previousFileIdList
+				.map((fileId) => Number.parseInt(fileId, 10))
+				.filter((fileId) => !Number.isNaN(fileId) && !currentIdSet.has(fileId))
+			;
+		}
+
+		/**
+		 * Composition the model holds at this very moment. The model keeps the identifiers of the files
+		 * as they came - the update by pull writes strings, the local database gives numbers back - so
+		 * the set is built of numbers, as the list of the dropped ones is.
+		 *
+		 * @param {MessageId} messageId
+		 * @return {Set<number>}
+		 */
+		#getCompositionOfTheModel(messageId)
+		{
+			const fileIdList = this.getMessage(messageId)?.files ?? [];
+
+			return new Set(
+				fileIdList
+					.map((fileId) => Number.parseInt(fileId, 10))
+					.filter((fileId) => !Number.isNaN(fileId)),
+			);
 		}
 
 		/**
@@ -1781,14 +2077,35 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 				return;
 			}
 
+			// The param is set only in auto-task info messages (TaskService::fillParams), so its presence
+			// is a sufficient trigger. The message is no longer system: since 2026-05 the backend sends it
+			// on behalf of the source message author, so checking message.system === 'Y' would never match.
 			const autoTaskTriggerMessageId = Number(message.params.AI_TASK_TRIGGER_MESSAGE_ID);
 			if (
-				message.system === 'Y'
-				&& Type.isNumber(autoTaskTriggerMessageId)
+				Type.isNumber(autoTaskTriggerMessageId)
 				&& !Number.isNaN(autoTaskTriggerMessageId)
 			)
 			{
 				this.logger.log('#checkMessageParams: this message is trigger ai task final');
+
+				// The card ends the whole operation, not the anchor alone: in multiselect a per-message wipe
+				// would leave the rest of the set lit with nothing to take it down, and the set is known to
+				// the manager only. The card does not always arrive, so this is a shortcut of the terminal
+				// frame timeout of the manager, never a replacement for it.
+				const aiTaskIndicationManager = this.#getAiTaskIndicationManager(
+					message.chatId,
+					autoTaskTriggerMessageId,
+				);
+				if (aiTaskIndicationManager?.isActive(autoTaskTriggerMessageId))
+				{
+					// The manager writes the switch-off frame itself and wipes the subfields a moment later, so
+					// the legacy clear below must not run over it: committed in the same tick it would be the
+					// state the redraw reads, and the native side would never receive the frame that stops the
+					// animation. The clear stays for the old track, where nothing else takes the state down.
+					aiTaskIndicationManager.finish();
+
+					return;
+				}
 
 				const payloadParams = {
 					id: autoTaskTriggerMessageId,

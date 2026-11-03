@@ -2,6 +2,7 @@
  * @module crm/terminal/payment-pay/components/payment-result/button
  */
 jn.define('crm/terminal/payment-pay/components/payment-result/button', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { mergeImmutable } = require('utils/object');
@@ -62,7 +63,7 @@ jn.define('crm/terminal/payment-pay/components/payment-result/button', (require,
 		},
 		buttonText: {
 			color: AppTheme.colors.baseWhiteFixed,
-			fontSize: 17,
+			fontSize: Typography.text2.getValue().fontSize,
 			fontWeight: '500',
 		},
 	};

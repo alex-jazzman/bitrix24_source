@@ -20,7 +20,10 @@ export class CardHint
 		}
 
 		this.#container = Tag.render`
-			<div class="biconnector-settings-card-hint">
+			<div
+				class="biconnector-settings-card-hint"
+				data-testid="biconnector-settings-card-hint"
+			>
 				<span class="biconnector-settings-card-hint__text">
 					${Text.encode(this.#options.text)}
 				</span>
@@ -30,7 +33,10 @@ export class CardHint
 		if (this.#options.link)
 		{
 			const link = Tag.render`
-				<a class="biconnector-settings-card-hint__link">
+				<a
+					class="biconnector-settings-card-hint__link"
+					data-testid="biconnector-settings-card-hint-link"
+				>
 					${Text.encode(this.#options.link.text)}
 				</a>
 			`;

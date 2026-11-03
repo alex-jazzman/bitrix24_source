@@ -3,8 +3,10 @@
  */
 jn.define('im/in-app-url/routes', (require, exports, module) => {
 	const { Type } = require('type');
+	const { requireLazy } = require('require-lazy');
 	const { NotifyManager } = require('notify-manager');
 	const { Haptics } = require('haptics');
+	const { openPortalPage } = require('in-app-url/portal-page');
 	const { Loc } = require('im/messenger/loc');
 	const { joinBySharingLink } = require('im/in-app-url/routes/src/sharing-link-handler');
 
@@ -21,6 +23,25 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 
 	const checkIsMessengerComponent = () => {
 		return BX.componentParameters.get('COMPONENT_CODE', '') === ComponentCode.imMessenger;
+	};
+
+	/**
+	 * VoteResult resolves its data only inside the messenger component, so a link from elsewhere
+	 * goes to the portal page instead of hanging on a spinner.
+	 *
+	 * @param {?string} signedAttachId
+	 * @param {?Object} context
+	 * @param {?string} url
+	 */
+	const openVoteResult = (signedAttachId, context, url) => {
+		if (!Type.isStringFilled(signedAttachId) || !checkIsMessengerComponent())
+		{
+			return openPortalPage(url, context);
+		}
+
+		MessengerEmitter.emit(EventType.messenger.openVoteResult, { signedAttachId });
+
+		return null;
 	};
 
 	/**
@@ -143,7 +164,6 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 
 		openLinePromise
 			.catch((error) => {
-				// eslint-disable-next-line no-console
 				console.error(error);
 
 				Haptics.notifyFailure();
@@ -394,21 +414,12 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			({ articleCode }) => helpdesk.openHelpArticle(articleCode, 'helpdesk'),
 		).name('im:helpdesk');
 
-		inAppUrl.register(
-			'/bitrix/components/bitrix/voting.attached.result/slider.php\\?signedAttachId=',
-			(_, { queryParams = {} }) => {
-				MessengerEmitter.emit(
-					EventType.messenger.openVoteResult,
-					{ signedAttachId: queryParams.signedAttachId },
-				);
-			},
-		).name('im:vote:result:open');
-
-		inAppUrl.register('/vote-result/:signedAttachId', (params) => {
-			MessengerEmitter.emit(
-				EventType.messenger.openVoteResult,
-				params,
-			);
-		}).name('im:vote:result:open');
+		inAppUrl
+			.addRoute('/bitrix/components/bitrix/voting.attached.result/slider.php\\?signedAttachId=')
+			.addRoute('/vote-result/:signedAttachId')
+			.handler(({ signedAttachId }, { queryParams = {}, context, url }) => (
+				openVoteResult(signedAttachId ?? queryParams.signedAttachId, context, url)
+			))
+			.name('im:vote:result:open');
 	};
 });

@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import { TextNode } from 'ui.lexical.core';
+import type { TextNode } from 'ui.lexical.core';
 export type TextNodeWithOffset = {
     node: TextNode;
     offset: number;

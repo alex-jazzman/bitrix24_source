@@ -1,5 +1,6 @@
 import { Loc, Type, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { InteractivityChecker } from 'ui.a11y';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 
 import { mapGetters } from 'ui.vue3.vuex';
@@ -21,6 +22,8 @@ import { stateService } from 'tasks.v2.provider.service.state-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { resultsMeta } from './results-meta';
+import { captureFocusTrigger, restoreFocusTrigger } from './lib/results-focus';
+import { waitForStableRect, type StableRectWait } from './lib/wait-for-stable-rect';
 import { ResultCardItem } from './components/result/result-card-item';
 import { ResultRequiredAha } from './components/result-required-aha/result-required-aha';
 import { ResultListSheet } from './components/result-list-sheet/result-list-sheet';
@@ -58,6 +61,10 @@ export const Results = {
 			type: Boolean,
 			default: false,
 		},
+		isAnySheetShown: {
+			type: Boolean,
+			default: false,
+		},
 		sheetBindProps: {
 			type: Object,
 			required: true,
@@ -79,6 +86,7 @@ export const Results = {
 			showCreatorResultHint: false,
 			showResponsibleResultHint: false,
 			sheetResultId: 0,
+			sheetFocusTrigger: null,
 		};
 	},
 	computed: {
@@ -144,7 +152,7 @@ export const Results = {
 			return {
 				id: `result-field-menu-${Text.getRandom()}`,
 				bindOptions: { forceBindPosition: true },
-				bindElement: this.$refs.moreIcon.$el,
+				bindElement: this.$refs.moreIcon,
 				targetContainer: document.body,
 				minWidth: 240,
 				offsetLeft: -100,
@@ -221,6 +229,12 @@ export const Results = {
 	},
 	async created(): void
 	{
+		this.responsibleHintRequestId = 0;
+		this.responsibleHintRectWait = null;
+		this.responsibleHintTimeoutId = null;
+		this.ownsResponsibleAhaMoment = false;
+		this.isUnmounted = false;
+
 		if (!this.isEdit || !this.containsResults)
 		{
 			return;
@@ -248,6 +262,12 @@ export const Results = {
 	},
 	beforeUnmount(): void
 	{
+		this.isUnmounted = true;
+		this.responsibleHintRequestId++;
+		clearTimeout(this.responsibleHintTimeoutId);
+		this.cancelResponsibleHintRectWait();
+		this.releaseResponsibleAhaMoment();
+
 		EventEmitter.unsubscribe(EventName.ResultAdded, this.handleHighlightFieldAfterEdit);
 		EventEmitter.unsubscribe(EventName.ResultUpdated, this.handleHighlightFieldAfterEdit);
 		EventEmitter.unsubscribe(EventName.RequiredResultsMissing, this.showResponsibleHint);
@@ -290,7 +310,7 @@ export const Results = {
 			{
 				void showLimit({
 					code: `limit_${this.featureId}`,
-					bindElement: this.$refs.moreIcon.$el,
+					bindElement: this.$refs.moreIcon,
 					analytics: {
 						type: 'limit_tasks_status_summary',
 					},
@@ -353,11 +373,19 @@ export const Results = {
 			)
 			{
 				ahaMoments.setActive(Option.AhaRequiredResultResponsiblePopup);
+				this.ownsResponsibleAhaMoment = true;
 
-				setTimeout((): void => {
+				this.responsibleHintTimeoutId = setTimeout(async (): Promise<void> => {
+					this.responsibleHintTimeoutId = null;
+
 					const event = new BaseEvent({ data: { taskId: this.taskId } });
 
-					this.showResponsibleHint(event);
+					await this.showResponsibleHint(event);
+
+					if (!this.showResponsibleResultHint)
+					{
+						this.releaseResponsibleAhaMoment();
+					}
 				}, 2000);
 			}
 		},
@@ -366,17 +394,74 @@ export const Results = {
 			this.showCreatorResultHint = true;
 			this.highlightField();
 		},
-		showResponsibleHint(event: BaseEvent): void
+		async showResponsibleHint(event: BaseEvent): Promise<void>
 		{
 			const { taskId } = event.getData();
 
-			if (this.taskId !== taskId)
+			if (this.taskId !== taskId || this.isUnmounted || this.showResponsibleResultHint)
+			{
+				return;
+			}
+
+			const requestId = ++this.responsibleHintRequestId;
+			this.cancelResponsibleHintRectWait();
+
+			await this.$nextTick();
+
+			if (!this.isResponsibleHintRequestAlive(requestId))
+			{
+				return;
+			}
+
+			const resultsContainer = this.$refs.resultsContainer;
+			if (!Type.isElementNode(resultsContainer) || !resultsContainer.isConnected)
+			{
+				return;
+			}
+
+			const rectWait = waitForStableRect(resultsContainer);
+			this.responsibleHintRectWait = rectWait;
+
+			const isRectStable = await rectWait.promise;
+			if (this.responsibleHintRectWait === rectWait)
+			{
+				this.responsibleHintRectWait = null;
+			}
+
+			if (
+				!isRectStable
+				|| !this.isResponsibleHintRequestAlive(requestId)
+				|| this.$refs.resultsContainer !== resultsContainer
+			)
 			{
 				return;
 			}
 
 			this.showResponsibleResultHint = true;
 			this.highlightField();
+		},
+		isResponsibleHintRequestAlive(requestId: number): boolean
+		{
+			return !this.isUnmounted && this.responsibleHintRequestId === requestId;
+		},
+		cancelResponsibleHintRectWait(): void
+		{
+			const rectWait: StableRectWait | null = this.responsibleHintRectWait;
+
+			this.responsibleHintRectWait = null;
+			rectWait?.cancel();
+		},
+		releaseResponsibleAhaMoment(): void
+		{
+			// Only the instance that took the global aha slot may give it back: a stuck slot
+			// suppresses every other aha moment on the page.
+			if (!this.ownsResponsibleAhaMoment)
+			{
+				return;
+			}
+
+			this.ownsResponsibleAhaMoment = false;
+			ahaMoments.setInactive(Option.AhaRequiredResultResponsiblePopup);
 		},
 		handleHighlightFieldAfterEdit(event: BaseEvent): void
 		{
@@ -400,6 +485,8 @@ export const Results = {
 			ahaMoments.setInactive(Option.AhaRequiredResultCreatorPopup);
 
 			ahaMoments.setShown(Option.AhaRequiredResultCreatorPopup);
+
+			this.focusFieldTrigger();
 		},
 		handleResponsibleHintClose(): void
 		{
@@ -409,12 +496,26 @@ export const Results = {
 			}
 
 			this.showResponsibleResultHint = false;
+			this.ownsResponsibleAhaMoment = false;
 			ahaMoments.setInactive(Option.AhaRequiredResultResponsiblePopup);
 
 			if (ahaMoments.shouldShow(Option.AhaRequiredResultResponsiblePopup))
 			{
 				ahaMoments.setShown(Option.AhaRequiredResultResponsiblePopup);
 			}
+
+			this.focusFieldTrigger();
+		},
+		focusFieldTrigger(): void
+		{
+			const candidates = [...(this.$refs.resultsContainer?.querySelectorAll('button, a') ?? [])];
+
+			candidates.find((node: HTMLElement) => InteractivityChecker.isFocusable(node))?.focus();
+		},
+		handleFieldMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.$refs.moreIcon?.focus();
 		},
 		handleOpenResultFromMessage(event: BaseEvent): void
 		{
@@ -440,13 +541,27 @@ export const Results = {
 		},
 		openEditSheet(resultId: ResultId): void
 		{
+			this.sheetFocusTrigger = captureFocusTrigger();
 			this.sheetResultId = resultId;
 			this.setSheetShown(true);
 		},
 		openResultSheet(resultId: ResultId): void
 		{
+			this.sheetFocusTrigger = captureFocusTrigger();
 			this.sheetResultId = resultId;
 			this.setListSheetShown(true);
+		},
+		handleEditSheetClose(): void
+		{
+			this.setSheetShown(false);
+			restoreFocusTrigger(this.sheetFocusTrigger);
+			this.sheetFocusTrigger = null;
+		},
+		handleListSheetClose(): void
+		{
+			this.setListSheetShown(false);
+			restoreFocusTrigger(this.sheetFocusTrigger);
+			this.sheetFocusTrigger = null;
 		},
 		setSheetShown(isShown: boolean): void
 		{
@@ -460,22 +575,27 @@ export const Results = {
 	template: `
 		<div
 			class="tasks-field-results print-no-box-shadow"
+			data-testid="tasks-results"
 			:data-task-id="taskId"
+			role="group"
+			:aria-label="resultsMeta.title"
+			ref="resultsContainer"
 		>
 			<template v-if="lastResultId">
-				<div ref="resultsContainer">
-					<ResultCardItem
-						:resultId="lastResultId"
-						@titleClick="openResultSheet"
-						@add="openAddResultSheet"
-						@edit="openEditSheet"
-						@highlightField="highlightField"
-					/>
-				</div>
+				<ResultCardItem
+					:resultId="lastResultId"
+					:isAnySheetShown
+					@titleClick="openResultSheet"
+					@add="openAddResultSheet"
+					@edit="openEditSheet"
+					@highlightField="highlightField"
+				/>
 				<div class="tasks-field-results-more-container">
-					<div
+					<button
 						v-if="showMore"
+						type="button"
 						class="tasks-field-results-more"
+						data-testid="tasks-results-more-btn"
 						@click="openMore"
 					>
 						<div class="tasks-field-results-more-text">{{ moreText }}</div>
@@ -483,10 +603,13 @@ export const Results = {
 							class="tasks-field-results-title-icon --auto-left print-ignore"
 							:name="Outline.CHEVRON_RIGHT_L"
 							hoverable
+							aria-hidden="true"
 						/>
-					</div>
-					<div
+					</button>
+					<button
+						type="button"
 						class="tasks-field-results-more print-ignore"
+						data-testid="tasks-results-add-more-btn"
 						:class="{ '--border': showMore }"
 						@click="openAddResultSheet"
 					>
@@ -495,8 +618,9 @@ export const Results = {
 							class="tasks-field-results-title-icon --auto-left"
 							:name="Outline.PLUS_L"
 							hoverable
+							aria-hidden="true"
 						/>
-					</div>
+					</button>
 				</div>
 			</template>
 			<template v-else>
@@ -504,56 +628,74 @@ export const Results = {
 					class="tasks-field-results-empty-container"
 					:data-task-field-id="resultsMeta.id"
 					data-field-container
-					ref="resultsContainer"
 				>
 					<div
 						class="tasks-field-results-title"
 						:class="{ '--non-clickable': isTemplate }"
-						@click="handleTitleClick"
 					>
-						<div
-							v-if="isLoading"
+						<button
+							type="button"
 							class="tasks-field-results-title-main"
+							data-testid="tasks-results-title-btn"
+							:disabled="isTemplate"
+							@click="handleTitleClick"
 						>
-							<BIcon :name="Animated.LOADER_WAIT"/>
-							<TextMd accent>{{ loc('TASKS_V2_RESULT_TITLE_LOADING') }}</TextMd>
-						</div>
-						<div
-							v-else
-							class="tasks-field-results-title-main"
-						>
-							<BIcon :name="Outline.WINDOW_FLAG"/>
-							<TextMd accent>{{ emptyResultTitle }}</TextMd>
-						</div>
+							<template v-if="isLoading">
+								<BIcon :name="Animated.LOADER_WAIT" aria-hidden="true"/>
+								<TextMd accent>{{ loc('TASKS_V2_RESULT_TITLE_LOADING') }}</TextMd>
+							</template>
+							<template v-else>
+								<BIcon :name="Outline.WINDOW_FLAG" aria-hidden="true"/>
+								<TextMd accent>{{ emptyResultTitle }}</TextMd>
+							</template>
+						</button>
 						<div class="tasks-field-results-title-actions print-ignore">
-							<BIcon
+							<button
 								v-if="showMoreIcon"
-								class="tasks-field-results-title-icon"
-								:name="Outline.MORE_L"
-								hoverable
+								type="button"
+								class="tasks-field-results-icon-button"
+								aria-haspopup="menu"
+								data-testid="tasks-results-menu-btn"
+								:aria-expanded="isMenuShown ? 'true' : 'false'"
+								:aria-label="loc('TASKS_V2_RESULT_FIELD_MENU_LABEL')"
 								ref="moreIcon"
 								@click.stop="isMenuShown = true"
-							/>
-							<BIcon
+							>
+								<BIcon
+									class="tasks-field-results-title-icon"
+									:name="Outline.MORE_L"
+									hoverable
+									aria-hidden="true"
+								/>
+							</button>
+							<button
 								v-else
-								class="tasks-field-results-title-icon"
-								:name="Outline.PLUS_L"
-								hoverable
+								type="button"
+								class="tasks-field-results-icon-button"
+								:aria-label="loc('TASKS_V2_RESULT_ADD')"
 								:data-task-results-add="resultsMeta.id"
+								data-testid="tasks-results-add-btn"
 								@click.stop="openAddResultSheet"
-							/>
+							>
+								<BIcon
+									class="tasks-field-results-title-icon"
+									:name="Outline.PLUS_L"
+									hoverable
+									aria-hidden="true"
+								/>
+							</button>
 						</div>
 					</div>
 					<BMenu
 						v-if="isMenuShown"
 						:options="menuOptions"
-						@close="isMenuShown = false"
+						@close="handleFieldMenuClose"
 					/>
 				</div>
 				<Hint
 					v-if="showCreatorResultHint"
 					:bindElement="$refs.resultsContainer"
-					:options="{ closeIcon: true }"
+					:options="{ closeIcon: true, ariaLabel: loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_CREATOR') }"
 					@close="handleCreatorHintClose"
 				>
 					{{ loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_CREATOR') }}
@@ -572,13 +714,13 @@ export const Results = {
 			v-if="isSheetShown"
 			:resultId="sheetResultId"
 			:sheetBindProps
-			@close="setSheetShown(false)"
+			@close="handleEditSheetClose"
 		/>
 		<ResultListSheet
 			v-if="isListSheetShown"
 			:resultId="sheetResultId"
 			:sheetBindProps
-			@close="setListSheetShown(false)"
+			@close="handleListSheetClose"
 		/>
 	`,
 };

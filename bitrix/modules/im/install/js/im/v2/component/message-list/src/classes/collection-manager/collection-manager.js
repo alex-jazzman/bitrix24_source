@@ -9,6 +9,9 @@ import type { ImModelMessage, ImModelChat } from 'im.v2.model';
 
 export type DateGroupItem = {
 	dateTitle: string,
+	// the day of the group as Y-m-d in the user's own day boundaries: the source of the date for the
+	// divider entry into the calendar and the address of the highlight
+	date: string,
 	items: DateGroupItemType,
 };
 
@@ -93,7 +96,7 @@ export class CollectionManager
 			const dateTitle = this.dateManager.getDateTitle(message.date);
 			if (!collection.hasDateTitle(dateTitle))
 			{
-				collection.addDateGroup(dateTitle);
+				collection.addDateGroup(dateTitle, this.dateManager.getLocalShortDate(message.date));
 			}
 
 			if (message.id === this.markedMessageId)

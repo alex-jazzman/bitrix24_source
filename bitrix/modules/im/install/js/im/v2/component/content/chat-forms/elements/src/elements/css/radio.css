@@ -43,3 +43,39 @@
 	font: var(--im-content-create-chat-radio__font_subtitle);
 	color: var(--im-content-create-chat-radio__font-color_subtitle);
 }
+
+.bx-im-chat-forms-radio {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.bx-im-chat-forms-radio__option {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs2);
+	cursor: pointer;
+}
+
+/* Keeps the control on the first line of the caption next to it. */
+.bx-im-chat-forms-radio__control {
+	padding: 3px 0;
+}
+
+.bx-im-chat-forms-radio__text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.bx-im-chat-forms-radio__title {
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-radio__option.--selected .bx-im-chat-forms-radio__title {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-chat-forms-radio__subtitle {
+	color: var(--ui-color-base-3);
+}

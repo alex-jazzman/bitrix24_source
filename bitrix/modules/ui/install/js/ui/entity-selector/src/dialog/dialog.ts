@@ -284,6 +284,8 @@ export class Dialog extends EventEmitter
 			return;
 		}
 
+		this.saveRecentItems();
+
 		this.destroyed = true;
 
 		this.emit('onDestroy');

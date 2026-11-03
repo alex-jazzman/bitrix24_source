@@ -33,6 +33,15 @@
 	opacity: 0;
 }
 
+/* Draw the focus ring inside the row. The shared .--focus-visible rule uses a positive
+   outline-offset; the scroll container (overflow-y: scroll) clips it and the next row's
+   :before separator overlaps its bottom edge. An inset offset keeps the whole ring visible
+   on first/last/middle rows. Higher specificity than the shared rule in im.v2.css.classes,
+   which stays untouched (it is shared with menu items and the create-chat trigger). */
+.bx-im-messenger__scope .bx-im-list-recent-item__wrap.--focus-visible:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .bx-im-list-recent-item__container {
 	display: flex;
 	height: 70px;

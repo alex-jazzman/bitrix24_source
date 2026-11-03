@@ -392,15 +392,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-stickers-add-sticker-button__container" @click="onUpdatePackClick">
-			<div class="bx-im-stickers-add-sticker-button__button">
-				<BIcon
-					:name="OutlineIcons.PLUS_L"
-					:title="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT')"
-				/>
-			</div>
-			<StickerPackForm v-if="showPackForm" :pack="pack" @close="onPackFormClose" />
+		<div role="gridcell" class="bx-im-stickers-add-sticker-button__cell">
+			<button
+				type="button"
+				class="bx-im-stickers-add-sticker-button__container --focus-visible"
+				tabindex="-1"
+				aria-haspopup="dialog"
+				:aria-label="loc('IM_STICKER_PACK_ADD_STICKER_ARIA')"
+				data-testid="im-sticker-add-sticker-btn"
+				@click="onUpdatePackClick"
+				@keydown.enter.prevent="onUpdatePackClick"
+				@keydown.space.prevent="onUpdatePackClick"
+			>
+				<span class="bx-im-stickers-add-sticker-button__button">
+					<BIcon :name="OutlineIcons.PLUS_L" :aria-hidden="true" />
+				</span>
+			</button>
 		</div>
+		<StickerPackForm v-if="showPackForm" :pack="pack" @close="onPackFormClose" />
 	`
 	};
 
@@ -411,19 +420,51 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			sticker: {
 				type: Object,
 				required: true
+			},
+			// The sticker itself carries no text, so the name comes from the surface around it.
+			label: {
+				type: String,
+				default: ''
 			}
 		},
 		computed: {
 			stickerItem() {
 				return this.sticker;
+			},
+			// A label comes only from the emote popup grid, where the item is a gridcell wrapping the button
+			// its roving focus lands on. Without a label there is no grid around it - the pack popup of a
+			// sticker message - and the item keeps its plain markup.
+			isGridCell() {
+				return this.label !== '';
 			}
 		},
 		template: `
 		<div
+			v-if="isGridCell"
 			:data-sticker-id="stickerItem.id"
 			:data-sticker-pack-id="stickerItem.packId"
 			:data-sticker-pack-type="stickerItem.packType"
+			role="gridcell"
 			class="bx-im-sticker-item__container"
+			data-testid="im-sticker-item"
+		>
+			<button
+				type="button"
+				class="bx-im-sticker-item__button --focus-visible"
+				tabindex="-1"
+				:aria-label="label"
+				data-testid="im-sticker-item-btn"
+			>
+				<img :src="stickerItem.uri" alt="" loading="lazy" draggable="false" />
+			</button>
+		</div>
+		<div
+			v-else
+			:data-sticker-id="stickerItem.id"
+			:data-sticker-pack-id="stickerItem.packId"
+			:data-sticker-pack-type="stickerItem.packType"
+			class="bx-im-sticker-item__container --focus-visible"
+			data-testid="im-sticker-item"
 		>
 			<img :src="stickerItem.uri" alt="" loading="lazy" draggable="false" />
 		</div>
@@ -613,6 +654,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	// Fixed grid width: exactly four cells per row, whatever the popup width. The add-sticker cell counts
+	// as a member too, so it flows into the last row of stickers instead of starting a row of its own.
+	const COLUMNS = 4;
 	// @vue/component
 	const PackStickers = {
 		name: 'PackStickers',
@@ -621,7 +665,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			AddStickerButton,
 			StickerPreview
 		},
-		inject: ['disableAutoHide', 'enableAutoHide'],
+		inject: {
+			disableAutoHide: 'disableAutoHide',
+			enableAutoHide: 'enableAutoHide',
+			// Provided by a surface that lays the stickers out as a grid: only there does a cell need a name
+			// of its own. The pack popup of a sticker message provides nothing.
+			buildStickerLabel: {
+				default: null
+			}
+		},
 		props: {
 			pack: {
 				type: Object,
@@ -632,7 +684,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: true
 			}
 		},
-		emits: ['clickSticker', 'openContextMenuSticker'],
+		emits: ['clickSticker', 'openContextMenuSticker', 'stickerKeydown'],
 		data() {
 			return {
 				previewSticker: null
@@ -662,6 +714,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					return false;
 				}
 				return this.pack.type === im_v2_const.StickerPackType.custom && this.pack.authorId === im_v2_application_core.Core.getUserId();
+			},
+			// The label provider doubles as the grid gate: with it the stickers are laid out as real rows, and
+			// StickerItem reads the same label to become a gridcell.
+			isGridContext() {
+				return this.buildStickerLabel !== null;
+			},
+			rows() {
+				const cells = this.stickers.map((sticker, index) => {
+					return {
+						type: 'sticker',
+						key: this.getStickerUniqueKey(sticker),
+						sticker,
+						label: this.getStickerLabel(index)
+					};
+				});
+				if (this.canAddStickers) {
+					cells.push({
+						type: 'add',
+						key: 'add-sticker-button'
+					});
+				}
+				const rows = [];
+				for (let index = 0; index < cells.length; index += COLUMNS) {
+					rows.push(cells.slice(index, index + COLUMNS));
+				}
+				return rows;
 			}
 		},
 		beforeUnmount() {
@@ -670,6 +748,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		methods: {
 			getStickerUniqueKey(sticker) {
 				return `${sticker.packId}:${sticker.packType}:${sticker.id}`;
+			},
+			getStickerLabel(index) {
+				if (this.buildStickerLabel === null) {
+					return '';
+				}
+				return this.buildStickerLabel(this.pack.name, index + 1);
 			},
 			onMouseDown(event, sticker) {
 				this.subscribeToPreviewManager();
@@ -698,8 +782,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				this.enableAutoHide();
 				this.unsubscribeFromPreviewManager();
 			},
+			// Keyboard activation goes through the very same event: the surface around the grid decides what
+			// picking a sticker means - sending it from the emote popup, opening its menu from a message.
 			onClickSticker(event, sticker) {
 				this.$emit('clickSticker', {
+					event,
+					sticker
+				});
+			},
+			// The raw key press, for the same reason: which combination opens the menu of a sticker is known to
+			// the surface that owns that menu, not to the grid.
+			onStickerKeydown(event, sticker) {
+				this.$emit('stickerKeydown', {
 					event,
 					sticker
 				});
@@ -709,16 +803,39 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-pack-stickers__container">
-			<StickerItem
-				v-for="sticker in stickers"
-				:key="getStickerUniqueKey(sticker)"
-				:sticker="sticker"
-				@click="onClickSticker($event, sticker)"
-				@mousedown="onMouseDown($event, sticker)"
-				@contextmenu.prevent="$emit('openContextMenuSticker', { event: $event, sticker })"
-			/>
-			<AddStickerButton v-if="canAddStickers" :pack="pack" />
+		<div class="bx-im-pack-stickers__container" data-testid="im-sticker-pack-stickers">
+			<template v-if="isGridContext">
+				<div
+					v-for="(row, rowIndex) in rows"
+					:key="rowIndex"
+					class="bx-im-pack-stickers__row"
+					role="row"
+				>
+					<template v-for="cell in row" :key="cell.key">
+						<StickerItem
+							v-if="cell.type === 'sticker'"
+							:sticker="cell.sticker"
+							:label="cell.label"
+							@click="onClickSticker($event, cell.sticker)"
+							@mousedown="onMouseDown($event, cell.sticker)"
+							@keydown="onStickerKeydown($event, cell.sticker)"
+							@contextmenu.prevent="$emit('openContextMenuSticker', { event: $event, sticker: cell.sticker })"
+						/>
+						<AddStickerButton v-else :pack="pack" />
+					</template>
+				</div>
+			</template>
+			<template v-else>
+				<StickerItem
+					v-for="sticker in stickers"
+					:key="getStickerUniqueKey(sticker)"
+					:sticker="sticker"
+					@click="onClickSticker($event, sticker)"
+					@mousedown="onMouseDown($event, sticker)"
+					@contextmenu.prevent="$emit('openContextMenuSticker', { event: $event, sticker })"
+				/>
+				<AddStickerButton v-if="canAddStickers" :pack="pack" />
+			</template>
 			<StickerPreview
 				v-if="previewSticker"
 				:sticker="previewSticker"

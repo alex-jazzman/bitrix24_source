@@ -1,0 +1,7 @@
+.bx-im-add-to-chat-footer__container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+}

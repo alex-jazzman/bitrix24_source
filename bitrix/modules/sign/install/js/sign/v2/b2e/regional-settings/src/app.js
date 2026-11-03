@@ -141,6 +141,14 @@ export const RegionalSettingsApp = {
 				this.isApplySettingsForAll = false;
 			}
 		},
+		documentsGroup: {
+			handler(): void
+			{
+				this.requestMissingPreviewUrls();
+			},
+			deep: true,
+			immediate: true,
+		},
 	},
 	created(): void
 	{
@@ -188,14 +196,20 @@ export const RegionalSettingsApp = {
 				return documentDetails.previewUrl;
 			}
 
-			useRegionalSettingsStore().loadDocumentPreviewUrl(uid);
-
-			if (!this.previewUrlList.has(uid))
+			return this.previewUrlList.get(uid) ?? null;
+		},
+		requestMissingPreviewUrls(): void
+		{
+			const uidList = [];
+			for (const [uid, documentDetails] of this.documentsGroup)
 			{
-				return null;
+				if (!documentDetails.previewUrl)
+				{
+					uidList.push(uid);
+				}
 			}
 
-			return this.previewUrlList.get(uid);
+			useRegionalSettingsStore().requestDocumentPreviewUrls(uidList);
 		},
 		getDocumentTitle(uid: string): string
 		{

@@ -30,7 +30,21 @@ $arActivityDescription = [
 			'DESCRIPTION' => Loc::getMessage('CRM_CDA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE'),
 			'PROPERTIES' => [
 				'OnlyDynamicEntities' => 'Y',
-			]
+			],
+		],
+		[
+			'ID' => 'dynamicCrm',
+			'PROPERTIES' => [
+				'OnlyDynamicEntities' => 'Y',
+				'DynamicTypeScope' => 'crm',
+			],
+		],
+		[
+			'ID' => 'dynamicAutomatedSolution',
+			'PROPERTIES' => [
+				'OnlyDynamicEntities' => 'Y',
+				'DynamicTypeScope' => 'automatedSolution',
+			],
 		],
 	],
 	'FILTER' => [
@@ -43,6 +57,10 @@ $arActivityDescription = [
 		'ItemId' => [
 			'NAME' => Loc::getMessage('CRM_CDA_RETURN_ITEM_ID_1'),
 			'TYPE' => 'int',
+		],
+		'ItemIdentifier' => [
+			'NAME' => Loc::getMessage('CRM_CDA_RETURN_ITEM_IDENTIFIER'),
+			'TYPE' => 'crm',
 		],
 		'ErrorMessage' => [
 			'NAME' => Loc::getMessage('CRM_CDA_RETURN_ERROR_MESSAGE'),

@@ -72,11 +72,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				events: {
 					onAfterPopupShow: () => {
 						this.#trackInteractions();
-						im_v2_lib_analytics.Analytics.getInstance().bitrixGptAgentPromo.onBannerView();
+						im_v2_lib_analytics.Analytics.getInstance().bitrixGptAgentPromo.onPopupView();
 						void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.bitrixGptAgent);
 					},
 					onPopupClose: () => {
-						im_v2_lib_analytics.Analytics.getInstance().bitrixGptAgentPromo.onBannerClose();
+						im_v2_lib_analytics.Analytics.getInstance().bitrixGptAgentPromo.onPopupClose();
 					},
 					onPopupDestroy: () => {
 						this.#untrackInteractions();

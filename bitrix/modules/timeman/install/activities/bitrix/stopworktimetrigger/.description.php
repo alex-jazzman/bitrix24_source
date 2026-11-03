@@ -8,7 +8,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 if (
-	!enum_exists('\Bitrix\Bizproc\Activity\Enum\ActivityColorIndex')
+	!class_exists(\Bitrix\Bizproc\Activity\ActivityDescription::class)
+	|| !enum_exists(\Bitrix\Bizproc\Activity\Enum\ActivityType::class)
+	|| !enum_exists(\Bitrix\Bizproc\Activity\Enum\ActivityGroup::class)
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityType::tryFrom('trigger') === null
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityGroup::tryFrom('starter') === null
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityGroup::tryFrom('team_management') === null
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityGroup::tryFrom('hr') === null
+	|| !enum_exists('\Bitrix\Bizproc\Activity\Enum\ActivityColorIndex')
 	|| \Bitrix\Bizproc\Activity\Enum\ActivityColorIndex::tryFrom(2) === null
 	|| !enum_exists('\Bitrix\Ui\Public\Enum\IconSet\Outline')
 	|| \Bitrix\Ui\Public\Enum\IconSet\Outline::tryFrom('o-timer') === null
@@ -28,11 +35,15 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription
 	= (new ActivityDescription(
 		(string)Loc::getMessage('STOP_WORK_TIME_NAME'),
-		(string)Loc::getMessage('STOP_WORK_TIME_DESCR'),
+		(string)Loc::getMessage('STOP_WORK_TIME_DESCR_MSGVER_1'),
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('StopWorkTimeTrigger')
-		->setGroups([ActivityGroup::STARTER->value])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::TEAM_MANAGEMENT->value,
+			ActivityGroup::HR->value,
+		])
 		->setReturn([
 			'USER' => [
 				'Name' => (string)Loc::getMessage('STOP_WORK_TIME_TRIGGER_RETURN_FIELD_USER'),
@@ -48,6 +59,10 @@ $arActivityDescription
 			],
 			'WORKDAY_START' => [
 				'Name' => (string)Loc::getMessage('STOP_WORK_TIME_TRIGGER_RETURN_FIELD_WORKDAY_START'),
+				'Type' => FieldType::DATETIME,
+			],
+			'WORKDAY_END' => [
+				'Name' => (string)Loc::getMessage('STOP_WORK_TIME_TRIGGER_RETURN_FIELD_WORKDAY_END'),
 				'Type' => FieldType::DATETIME,
 			],
 		])

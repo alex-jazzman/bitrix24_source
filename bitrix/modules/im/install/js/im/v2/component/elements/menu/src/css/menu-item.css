@@ -35,6 +35,24 @@
 	cursor: pointer;
 }
 
+/* Focus ring follows the rounded content card, not the square container, and is
+   drawn inside the item so the popup edge (padding: 0) does not clip it. */
+.bx-im-messenger__scope .bx-im-menu-item__container.--focus-visible:focus-visible {
+	outline: none;
+}
+
+.bx-im-messenger__scope .bx-im-menu-item__container.--focus-visible:focus-visible .bx-im-menu-item__content {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+/* When the item carries interactive after-content, the content itself is the button and
+   draws its own focus ring (the container is a plain group and is not focusable). */
+.bx-im-messenger__scope .bx-im-menu-item__content.--focus-visible:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .bx-im-menu-item__text-content {
 	width: 100%;
 }

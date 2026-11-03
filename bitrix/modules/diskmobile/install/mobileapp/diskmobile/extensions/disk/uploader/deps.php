@@ -4,7 +4,9 @@ return [
 	'extensions' => [
 		'alert',
 		'loc',
-		'rest',
+		// BX.ajax appears only for whoever requires rest; the view commits and rolls back uploads with it
+		'rest', // @keep
+		'type',
 		'tokens',
 		'bottom-sheet',
 		'utils/uuid',
@@ -22,6 +24,7 @@ return [
 		'layout/ui/loaders/spinner',
 		'assets/icons',
 		'disk:enum',
+		'disk:opener/unified-link/rest',
 	],
 	'bundle' => [
 		'./src/config',

@@ -24,6 +24,7 @@ declare type DialogStoredData = {
 	entityId: string,
 	entityLink: {
 		type?: string,
+		id?: string,
 		url?: string,
 	},
 	dateCreate: Date | null,

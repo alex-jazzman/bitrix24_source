@@ -121,7 +121,14 @@ if($arResult["ID"] <> '')
 												<?
 											}
 											?>
-											<span class="btn btn-primary" data-add-type=<?=$property["TYPE"]?> data-add-name="<?=$name?>[]"><?=Loc::getMessage('SPPD_ADD')?></span>
+											<span
+												class="btn btn-primary input-add-multiple"
+												role="button"
+												tabindex="0"
+												aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPPD_ADD_ARIA', ['#PROPERTY#' => $property['NAME']])) ?>"
+												data-add-type="<?=$property["TYPE"]?>"
+												data-add-name="<?=$name?>[]"
+											><?=Loc::getMessage('SPPD_ADD')?></span>
 											<?
 										}
 										else
@@ -269,6 +276,9 @@ if($arResult["ID"] <> '')
 													);
 												}
 												?><span class="btn btn-primary btn-md input-add-multiple"
+													role="button"
+													tabindex="0"
+													aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPPD_ADD_ARIA', ['#PROPERTY#' => $property['NAME']])) ?>"
 													data-add-type="<?=$property["TYPE"]?>"
 													data-add-name="<?=$name?>"
 													data-add-last-key="<?=$code?>"
@@ -325,7 +335,10 @@ if($arResult["ID"] <> '')
 							{
 								$multiple = ($property["MULTIPLE"] === "Y") ? "multiple" : '';
 								$profileFiles = is_array($currentValue) ? $currentValue : array($currentValue);
-								if (count($currentValue) > 0)
+								?>
+								<div class="sale-personal-profile-detail-property-file">
+								<?
+								if (is_array($currentValue) && count($currentValue) > 0)
 								{
 									?>
 									<input type="hidden" name="<?=$name?>_del" class="profile-property-input-delete-file">
@@ -375,10 +388,26 @@ if($arResult["ID"] <> '')
 											<span class="sale-personal-profile-detail-load-file-info">
 												<?=Loc::getMessage('SPPD_FILE_NOT_SELECTED')?>
 											</span>
-											<?=CFile::InputFile($name."[]", 20, null, false, 0, "IMAGE", "class='btn sale-personal-profile-detail-input-file' ".$multiple)?>
+											<?=CFile::InputFile(
+												$name."[]",
+												20,
+												null,
+												false,
+												0,
+												"IMAGE",
+												'class="btn sale-personal-profile-detail-input-file" id="sppd-property-'.$key.'"'
+													.' aria-label="'.htmlspecialcharsbx(Loc::getMessage('SPPD_SELECT_FILE_ARIA', ['#PROPERTY#' => $property['NAME']])).'" '
+													.$multiple
+											)?>
 										</label>
-										<span class="sale-personal-profile-detail-load-file-cancel sale-personal-profile-hide"></span>
+										<span
+											class="sale-personal-profile-detail-load-file-cancel sale-personal-profile-hide"
+											role="button"
+											tabindex="0"
+											aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPPD_CANCEL_FILE_ARIA', ['#PROPERTY#' => $property['NAME']])) ?>"
+										></span>
 									</div>
+								</div>
 								</div>
 								<?
 							}
@@ -445,12 +474,10 @@ if($arResult["ID"] <> '')
 		"ajaxUrl" => CUtil::JSEscape($this->__component->GetPath().'/ajax.php'),
 	);
 	$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
+	$messages = Loc::loadLanguageFile(__FILE__);
 	?>
 	<script>
-		BX.message({
-			SPPD_FILE_COUNT: '<?=Loc::getMessage('SPPD_FILE_COUNT')?>',
-			SPPD_FILE_NOT_SELECTED: '<?=Loc::getMessage('SPPD_FILE_NOT_SELECTED')?>'
-		});
+		BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 		BX.Sale.PersonalProfileComponent.PersonalProfileDetail.init(<?=$javascriptParams?>);
 	</script>
 	<?

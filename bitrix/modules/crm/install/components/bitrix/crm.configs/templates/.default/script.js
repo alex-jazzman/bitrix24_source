@@ -4,6 +4,16 @@ BX.CrmConfigClass = (function ()
 	{
 		this.randomString = parameters.randomString;
 		this.tabs = parameters.tabs;
+		this.currencyLink = document.querySelector('[data-role="crm-configs-currency-link"]');
+		if (this.currencyLink)
+		{
+			BX.bind(this.currencyLink, 'click', BX.delegate(this.onCurrencyClick, this));
+		}
+		this.dealCategory = document.querySelector('.js-crm-config-deal-category');
+		if (this.dealCategory)
+		{
+			BX.bind(this.dealCategory, 'click', BX.delegate(this.onDealCategoryClick, this));
+		}
 		this.numeratorQuote = document.querySelector('.js-numerator-quote');
 		if (this.numeratorQuote)
 		{
@@ -44,6 +54,37 @@ BX.CrmConfigClass = (function ()
 				}
 			}
 		}.bind(this)));
+	};
+
+	CrmConfigClass.prototype.onCurrencyClick = function (event)
+	{
+		event.preventDefault();
+		var url = event.currentTarget.getAttribute('href');
+		BX.SidePanel.Instance.open(url, {cacheable: false});
+	};
+
+	CrmConfigClass.prototype.onDealCategoryClick = function (event)
+	{
+		if (
+			event.button !== 0
+			|| event.ctrlKey
+			|| event.metaKey
+			|| event.shiftKey
+			|| event.altKey
+		)
+		{
+			return;
+		}
+
+		event.preventDefault();
+		BX.SidePanel.Instance.open(
+			event.currentTarget.getAttribute('href'),
+			{
+				cacheable: false,
+				customLeftBoundary: 40,
+				allowChangeHistory: false,
+			}
+		);
 	};
 
 	CrmConfigClass.prototype.onNumeratorClick = function (event)

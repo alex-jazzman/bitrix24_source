@@ -11,7 +11,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 
 if (!Loader::includeModule('sign'))
 {
@@ -61,6 +61,7 @@ foreach ($dialog->getMap() as $fieldId => $field): ?>
 				$renderMode = in_array($fieldId, [
 					CBPSignB2EDocumentActivity::PARAM_EMPLOYEE,
 					CBPSignB2EDocumentActivity::PARAM_FILE,
+					CBPSignB2EDocumentActivity::PARAM_MESSAGE,
 				], true)
 					? FieldType::RENDER_MODE_DESIGNER
 					: FieldType::RENDER_MODE_PUBLIC

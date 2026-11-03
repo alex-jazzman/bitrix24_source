@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_lib_collab, im_v2_component_list_items_elements_emptyState, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_lib_unreadMode, im_v2_component_list_items_elements_createChatStatus, im_v2_lib_createChat, im_v2_lib_notifier, im_v2_application_core, main_core, im_v2_lib_copilot, main_core_events, im_v2_lib_utils) {
+(function (exports, ui_vue3, im_v2_component_list_items_base, im_v2_component_list_items_elements_activeCallList, im_v2_const, im_v2_lib_draft, im_v2_lib_collab, im_v2_component_list_items_elements_emptyState, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_lib_unreadMode, im_v2_component_list_items_elements_createChatStatus, im_v2_lib_createChat, im_v2_lib_notifier, im_v2_application_core, main_core, im_v2_lib_copilot, main_core_events, im_v2_lib_utils) {
 	'use strict';
 
 	class CollabService extends im_v2_provider_service_recent.BaseRecentService {
@@ -22,6 +22,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const CollabUnreadList = {
 		name: 'CollabUnreadList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 		},
@@ -30,7 +31,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -41,9 +43,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		async created() {
-			this.contextMenuManager = new CollabRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new CollabRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			this.clearCollection();
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
@@ -77,6 +79,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.firstPageLoaded = true;
 				this.isLoading = false;
 			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
+			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getCollabUnreadService().hasMoreItemsToLoad()) {
 					return;
@@ -87,6 +92,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onSelectChat(dialogId) {
 				this.$emit('selectChat', dialogId);
+			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
 			},
 			onItemRightClick(payload) {
 				const {
@@ -126,12 +136,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 			data-test-id="im_container-recent__unread-list"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<RecentEmptyState 
 					:title="loc('IM_LIST_COLLAB_UNREAD_EMPTY_STATE_TITLE')" 
@@ -146,6 +161,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const CollabList = {
 		name: 'CollabList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 		},
@@ -154,7 +170,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -172,9 +189,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		async created() {
-			this.contextMenuManager = new CollabRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new CollabRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 		},
@@ -190,6 +207,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				await this.getRecentService().loadFirstPage();
 				this.firstPageLoaded = true;
 				this.isLoading = false;
+			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
 			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
@@ -220,6 +240,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onCloseMenu() {
 				this.contextMenuManager.close();
 			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
+			},
 			getRecentService() {
 				if (!this.service) {
 					this.service = new CollabService();
@@ -235,11 +260,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<RecentEmptyState 
 					:title="emptyStateTitle"
@@ -371,6 +401,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const BaseCollabNestedList = {
 		name: 'BaseCollabNestedList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			CollabNestedEmptyState,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			CreateChatStatus: im_v2_component_list_items_elements_createChatStatus.CreateChatStatus
@@ -399,6 +430,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				isLoading: false,
 				isLoadingNextPage: false,
 				firstPageLoaded: false,
+				listIsScrolled: false,
 				isCreatingChat: false
 			};
 		},
@@ -415,9 +447,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		async created() {
 			this.initCreateChatManager();
-			this.contextMenuManager = new CollabNestedRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new CollabNestedRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 		},
@@ -438,6 +470,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.firstPageLoaded = true;
 				this.isLoading = false;
 			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
+			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
 					return;
@@ -448,6 +483,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onSelectChat(dialogId) {
 				this.$emit('selectChat', dialogId);
+			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
 			},
 			onItemRightClick(payload) {
 				const {
@@ -501,11 +541,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList
+					:listIsScrolled="listIsScrolled"
+					:parentChatId="parentChatId"
+					@onCallClick="onCallClick"
+				/>
+			</template>
 			<template #before-list>
 				<slot name="fixed-chats"></slot>
 				<CreateChatStatus v-if="showCreationStatus" :allowedTypes="[creatableChatType]" />
@@ -573,9 +622,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.contextMenuManager = new FixedParentRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new FixedParentRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
+		},
+		beforeUnmount() {
+			this.contextMenuManager.destroy();
 		},
 		methods: {
 			onRightClick(event) {
@@ -589,6 +641,31 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					top: event.pageY
 				});
 			},
+			// The row of the project chat is pinned here precisely because it is not in the collection of
+			// the section, so the list-wide row keydown handler finds no item for it and drops the
+			// keystroke. This row answers for its own keyboard, the way the create-chat draft row does.
+			handleActivationKeydown(event) {
+				// Only the row itself reacts; keydowns bubbling up from nested content stay with them.
+				if (event.target !== event.currentTarget) {
+					return;
+				}
+				if (im_v2_lib_utils.Utils.key.isCombination(event, im_v2_const.HotkeyCombination.list.contextMenu)) {
+					// The same menu as a right click, anchored to the focused row instead of cursor
+					// coordinates; preventDefault stops the browser's native menu.
+					event.preventDefault();
+					this.contextMenuManager.openMenuFromKeyboard({
+						dialogId: this.parentRecentItem.dialogId,
+						recentItem: this.parentRecentItem
+					}, event.currentTarget);
+					return;
+				}
+				if (event.key === 'Enter' || event.key === ' ') {
+					// Synthesize the native click the mouse path uses: the list binds @click, which falls
+					// through to the root of this component, so keyboard and mouse share one handler.
+					event.preventDefault();
+					event.currentTarget.click();
+				}
+			},
 			getEmitter() {
 				return this.$Bitrix.eventEmitter;
 			}
@@ -601,6 +678,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:withChildrenCounter="false"
 				:forceOwnMessage="true"
 				@click.right="onRightClick"
+				@keydown="handleActivationKeydown"
 			/>
 		</FixedItemContainer>
 	`
@@ -647,13 +725,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (!currentDialogId) {
 					return true;
 				}
-				const currentChat = this.$store.getters['chats/get'](currentDialogId, true);
-				const isNestedChatOpen = currentChat.parentChatId === this.parentChatId;
-				// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-				if (isNestedChatOpen) {
-					return false;
-				}
-				return true;
+
+				// A chat the client has not loaded yet is not this list's to replace.
+				const currentChat = this.$store.getters['chats/get'](currentDialogId);
+				return currentChat ? currentChat.parentChatId !== this.parentChatId : false;
 			},
 			onParentItemClick() {
 				this.selectParentChat();
@@ -743,6 +818,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const BaseCollabNestedUnreadList = {
 		name: 'BaseCollabNestedUnreadList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 		},
@@ -765,7 +841,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -777,9 +854,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		async created() {
-			this.contextMenuManager = new CollabNestedRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new CollabNestedRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			this.clearCollection();
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
@@ -808,6 +885,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.firstPageLoaded = true;
 				this.isLoading = false;
 			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
+			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getUnreadRecentService().hasMoreItemsToLoad()) {
 					return;
@@ -818,6 +898,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onSelectChat(dialogId) {
 				this.$emit('selectChat', dialogId);
+			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
 			},
 			onItemRightClick(payload) {
 				const {
@@ -869,12 +954,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 			data-test-id="im_container-recent__unread-list"
 		>
+			<template #before-scroll>
+				<ActiveCallList
+					:listIsScrolled="listIsScrolled"
+					:parentChatId="parentChatId"
+					@onCallClick="onCallClick"
+				/>
+			</template>
 			<template #before-list>
 				<slot name="fixed-chats"></slot>
 			</template>
@@ -1021,5 +1115,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.CollabNestedTaskUnreadList = CollabNestedTaskUnreadList;
 	exports.CollabUnreadList = CollabUnreadList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

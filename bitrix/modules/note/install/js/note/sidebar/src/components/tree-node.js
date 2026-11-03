@@ -46,14 +46,14 @@ export const TreeNode = {
 		hasNextChildren: { type: Function, required: true },
 		canEditDocument: { type: Function, required: true },
 		canManageDocument: { type: Function, required: true },
-		// [TPL-02] The star of the row: state and toggle both belong to the store, the row only asks.
+		// The star of the row: state and toggle both belong to the store, the row only asks.
 		isDocumentFavorite: { type: Function, required: true },
 		toggleDocumentFavorite: { type: Function, required: true },
-		// [P4.T5] The bell of a row drawn inside the favorites block: its coverage state (DTO-02) and
-		// the one gesture it offers. Absent in the tree - the tree draws no bells at all (AC-048).
+		// The bell of a row drawn inside the favorites block: its coverage state (DTO-02) and
+		// the one gesture it offers. Absent in the tree - the tree draws no bells at all.
 		notifyStateOf: { type: Function, default: null },
 		toggleNotify: { type: Function, default: null },
-		// [ERR-005] The failure of the branch THIS row opened, asked for in the block's own space. Absent
+		// The failure of the branch THIS row opened, asked for in the block's own space. Absent
 		// in the tree: there a branch that fails to arrive is reported by the section, not by the row.
 		branchErrorOf: { type: Function, default: null },
 		messages: { type: Object, required: true },
@@ -244,7 +244,7 @@ export const TreeNode = {
 		{
 			return this.isDocumentFavorite(this.doc) === true;
 		},
-		// [DTO-02] Coverage of this document, as the block read it for the whole branch at once.
+		// Coverage of this document, as the block read it for the whole branch at once.
 		notifyState(): Object | null
 		{
 			if (!this.isFavoritesContext || typeof this.notifyStateOf !== 'function')
@@ -266,7 +266,7 @@ export const TreeNode = {
 		{
 			return this.notifyState?.muted === true && this.notifyState?.inherited === true;
 		},
-		// [AC-048] A bell appears where it has something to say: notifications reach this document,
+		// A bell appears where it has something to say: notifications reach this document,
 		// they are muted on it, or the document is in the list itself. Nowhere else.
 		hasNotifyBell(): boolean
 		{
@@ -599,7 +599,7 @@ export const TreeNode = {
 				</span>
 				<span v-if="!isRenaming" class="tree-actions-anchor">
 					<span class="tree-actions">
-						<!-- [P4.T5] The bell of a row of the block: filled where notifications arrive,
+						<!-- The bell of a row of the block: filled where notifications arrive,
 						     struck through where they are muted. A row with neither draws nothing and holds
 						     no room - exactly like the "create child" button of the tree, so a row of the
 						     block lays out identically to the same row in the tree. -->
@@ -697,7 +697,7 @@ export const TreeNode = {
 				<li v-if="isLoadingChildren(doc.collectionId, doc.id)" class="sidebar-muted">
 					<SidebarLoader :level="level + 1" />
 				</li>
-				<!-- [ERR-005] The failure of a nested branch stays in the row that opened it, with the same
+				<!-- The failure of a nested branch stays in the row that opened it, with the same
 				     second attempt a top-level row of the block offers. -->
 				<li
 					v-if="branchError !== null"

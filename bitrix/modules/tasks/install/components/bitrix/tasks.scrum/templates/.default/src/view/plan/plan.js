@@ -179,6 +179,7 @@ export class Plan extends View
 			filter: this.filter,
 			requestSender: this.requestSender,
 			entityStorage: this.entityStorage,
+			entityCounters: this.entityCounters,
 			planBuilder: this.planBuilder,
 			pageSize: this.pageSize
 		});
@@ -208,7 +209,8 @@ export class Plan extends View
 			tagSearcher: this.tagSearcher,
 			itemMover: this.itemMover,
 			currentUserId: this.getCurrentUserId(),
-			groupId: this.getCurrentGroupId()
+			groupId: this.getCurrentGroupId(),
+			requestPlacementResync: (force) => this.requestPlacementResync(force),
 		});
 		this.pullEpic = new PullEpic({
 			requestSender: this.requestSender,
@@ -314,6 +316,11 @@ export class Plan extends View
 				;
 				this.requestSender.showErrorAlert(response);
 			});
+	}
+
+	requestPlacementResync(force: boolean = true)
+	{
+		this.filterHandler.requestResync(force);
 	}
 
 	subscribeToPull()
@@ -458,7 +465,7 @@ export class Plan extends View
 		}
 	}
 
-	onDocumentClick(event)
+	onDocumentClick(event: MouseEvent)
 	{
 		event = event || window.event;
 
@@ -467,7 +474,7 @@ export class Plan extends View
 			this.searchItems.stop();
 		}
 
-		if (this.diskManager && !this.diskManager.isClickInside(event.target))
+		if (this.diskManager && !this.diskManager.isClickInside(event))
 		{
 			this.diskManager.closeAttachmentMenu();
 			this.diskManager = null;
@@ -1547,7 +1554,12 @@ export class Plan extends View
 							Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TASKS'),
 							(messageBox) => {
 								messageBox.close();
-								this.removeGroupItems(entity).then(() => {
+								this.removeGroupItems(entity).then((removed) => {
+									if (!removed)
+									{
+										return;
+									}
+
 									entity.getGroupModeItems().forEach((groupModeItem: Item) => {
 										entity.removeItem(groupModeItem);
 										this.deactivateGroupMode(entity, groupModeItem);
@@ -1887,18 +1899,35 @@ export class Plan extends View
 	removeGroupItems(entity: Entity): Promise
 	{
 		const itemIds = [];
+		let hasParentTask = false;
 
 		entity.getGroupModeItems().forEach((groupModeItem: Item) => {
 
 			itemIds.push(groupModeItem.getId());
+			if (groupModeItem.isParentTask())
+			{
+				hasParentTask = true;
+			}
 
 			this.pullItem.addIdToSkipRemoving(groupModeItem.getId());
 		});
 
 		return this.requestSender.removeItems({
 			itemIds,
-		}).catch((response) => {
-			this.requestSender.showErrorAlert(response);
+		}).then(
+			() => {
+				this.requestPlacementResync(hasParentTask);
+
+				return true;
+			},
+			(response) => {
+				this.requestPlacementResync();
+				this.requestSender.showErrorAlert(response);
+
+				return false;
+			},
+		).finally(() => {
+			itemIds.forEach((itemId) => this.pullItem.cleanSkipRemove(itemId));
 		});
 	}
 

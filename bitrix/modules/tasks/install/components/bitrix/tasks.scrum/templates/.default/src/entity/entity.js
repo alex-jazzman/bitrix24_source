@@ -248,27 +248,55 @@ export class Entity extends EventEmitter
 
 	removeItem(item: Item)
 	{
-		if (this.items.has(item.getId()))
-		{
-			this.items.delete(item.getId());
+		this.removeItems([item]);
+	}
 
-			item.unsubscribeAll();
-
-			[...this.items.values()].map((item) => {
-				this.setItemMoveActivity(item);
-			});
-
-			if (item.isParentTask())
+	removeItems(items: Array<Item>, removeNodes: boolean = false): number
+	{
+		const itemsToRemove = new Map();
+		const rootsToRemove = [];
+		const collect = (item: Item) => {
+			if (!this.items.has(item.getId()) || itemsToRemove.has(item.getId()))
 			{
-				item.getSubTasks().getList().forEach((item: Item) => {
-					this.removeItem(item);
-				});
+				return;
 			}
 
-			this.pageNumberItems = 1;
+			itemsToRemove.set(item.getId(), item);
+			if (item.isParentTask())
+			{
+				item.getSubTasks().getList().forEach(collect);
+			}
+		};
 
-			this.adjustListItemsWidth();
+		items.forEach((item: Item) => {
+			if (this.items.has(item.getId()) && !itemsToRemove.has(item.getId()))
+			{
+				rootsToRemove.push(item);
+				collect(item);
+			}
+		});
+
+		if (itemsToRemove.size === 0)
+		{
+			return 0;
 		}
+
+		itemsToRemove.forEach((item: Item) => {
+			this.items.delete(item.getId());
+			item.unsubscribeAll();
+		});
+		this.items.forEach((item: Item) => this.setItemMoveActivity(item));
+
+		if (removeNodes)
+		{
+			this.setNumberTasks(Math.max(0, this.numberTasks - itemsToRemove.size));
+			rootsToRemove.forEach((item: Item) => item.removeYourself());
+		}
+
+		this.pageNumberItems = 1;
+		this.adjustListItemsWidth();
+
+		return itemsToRemove.size;
 	}
 
 	appendItemToList(item: Item)

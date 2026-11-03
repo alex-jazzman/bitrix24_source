@@ -15,6 +15,7 @@ return [
 		'main.popup',
 		'ui.buttons',
 		'ui.design-tokens',
+		'ui.design-tokens.air',
 		'ui.fonts.opensans',
 		'ui.layout-form',
 		'ui.switcher',

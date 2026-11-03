@@ -21,6 +21,12 @@ this.BX.Crm = this.BX.Crm || {};
 		setName(name) {
 			this.data.name = name;
 		}
+		getDescription() {
+			return this.data.description ?? '';
+		}
+		setDescription(description) {
+			this.data.description = description;
+		}
 		getEntityId() {
 			return this.data.entityId;
 		}

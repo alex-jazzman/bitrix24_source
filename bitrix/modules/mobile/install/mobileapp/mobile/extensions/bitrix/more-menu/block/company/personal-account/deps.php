@@ -11,17 +11,21 @@ return [
 		'ui-system/blocks/icon',
 		'ui-system/typography/text',
 		'ui-system/form/inputs/input',
-		'ui-system/form/inputs/string',
+		'ui-system/form/inputs/otp',
 		'ui-system/form/buttons/button',
 
 		'layout/ui/step-progress-bar',
 		'layout/ui/loaders/spinner',
 
+		'more-menu/block/company/card-border',
+
 		'bottom-sheet',
 		'toast',
 
 		'rest/run-action-executor',
-		'pull/client/events',
+		// ./src/pull/pull-handler waits for the push through the `BX.PULL` global, and this is the
+		// extension that installs it: no `require` names it, so the entry needs the marker to stay.
+		'pull/client/events', //@keep
 
 		'utils/validation',
 		'utils/test',

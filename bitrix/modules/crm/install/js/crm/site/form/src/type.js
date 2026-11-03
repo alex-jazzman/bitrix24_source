@@ -6,6 +6,7 @@ type B24Options = {
 	lang: string;
 	address: string;
 	sign: string;
+	telemetrySign: string;
 	entities: Array;
 	data: Form.Options;
 	usedBySiteButton: boolean;

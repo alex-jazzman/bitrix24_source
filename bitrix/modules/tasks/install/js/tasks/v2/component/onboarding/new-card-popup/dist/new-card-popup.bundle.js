@@ -150,7 +150,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			return '/bitrix/js/tasks/v2/component/onboarding/new-card-popup/src/preview.webm';
 		}
 		getCosmozephPath() {
-			return '/bitrix/js/tasks/v2/component/onboarding/new-card-popup/src/cosmozeph.png';
+			return '/bitrix/js/tasks/v2/component/onboarding/new-card-popup/src/cosmozeph.webp';
 		}
 		getFeatures() {
 			return [{

@@ -9,7 +9,7 @@ $allForms = FeedbackFormProvider::getFormConfig($_REQUEST["formId"]);
 $currentFormData = FeedbackFormProvider::getFormData($_REQUEST["formId"]);
 $hiddenFields = FeedbackFormProvider::getHiddenFieldsParams($_REQUEST['hiddenFields']);
 
-if (Loader::includeModule('ui'))
+if (Loader::includeModule('ui') && $currentFormData !== null)
 {
 	global $APPLICATION;
 	$APPLICATION->IncludeComponent(
@@ -41,6 +41,10 @@ if (Loader::includeModule('ui'))
 		window.addEventListener('b24:form:send:success', function(event) {
 			let form = event.detail.object;
 			if (Number(form.identification.id) === <?= $currentFormData['formId'] ?>) {
+				BXMobileApp.Events.postToComponent('app-feedback:onFeedbackSendSuccess', [{
+					formId: '<?= CUtil::JSEscape((string)($_REQUEST['formId'] ?? '')) ?>',
+					senderPage: '<?= CUtil::JSEscape((string)($hiddenFields['sender_page'] ?? '')) ?>',
+				}]);
 				setTimeout(() => {
 					app.closeModalDialog({ drop: true });
 				}, 1000);

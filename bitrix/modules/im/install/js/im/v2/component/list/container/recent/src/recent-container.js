@@ -1,13 +1,16 @@
-import { Event, type JsonObject } from 'main.core';
+import { Event, Text, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { computed } from 'ui.vue3';
 
 import { RecentList, RecentUnreadList } from 'im.v2.component.list.items.recent';
 import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
-import { Layout, EventType, RecentType, type LayoutType } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
+import { EventType, RecentType, type LayoutType } from 'im.v2.const';
+import { Analytics, AnalyticsSection } from 'im.v2.lib.analytics';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { FolderManager } from 'im.v2.lib.folder';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelLayout } from 'im.v2.model';
+import { FilterRow, FilterMode, type FilterModeItem } from 'im.v2.component.list.container.elements.filter-row';
 import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 import { VibeCodeCatalogButton } from 'im.v2.component.list.container.elements.vibe-code-catalog-button';
 
@@ -24,6 +27,7 @@ export const RecentListContainer = {
 		HeaderMenu,
 		CreateChatMenu,
 		ChatSearchInput,
+		FilterRow,
 		RecentList,
 		RecentSearch,
 		RecentUnreadList,
@@ -45,6 +49,7 @@ export const RecentListContainer = {
 	data(): JsonObject
 	{
 		return {
+			searchAreaId: Text.getRandom(),
 			searchMode: false,
 			unreadMode: false,
 			searchQuery: '',
@@ -61,6 +66,18 @@ export const RecentListContainer = {
 		{
 			return this.layout.name;
 		},
+		isShellNavigationAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isChatShellNavigationWebAvailable);
+		},
+		filterMode(): FilterModeItem
+		{
+			return this.unreadMode ? FilterMode.unread : FilterMode.all;
+		},
+		unreadCounter(): number
+		{
+			return this.$store.getters['counters/getTotalChatCounter'];
+		},
 	},
 	created()
 	{
@@ -75,9 +92,15 @@ export const RecentListContainer = {
 		Event.unbind(document, 'mousedown', this.onDocumentClick);
 	},
 	methods: {
+		// This container is mounted not only in the chats layout: it also stands on the left in
+		// notifications, in the chat and folder forms, in project copying and in the conference. The
+		// emitted name goes straight into setLayout, so a hardcoded chats layout would drop the user
+		// into a hidden section. Those layouts now pick their list by the same rule, so this line
+		// serves the rollback branch alone - with the All folder in place the list is the one of the
+		// All folder and it carries its own layout name.
 		onSelectChat(dialogId)
 		{
-			this.$emit('selectChat', { layoutName: Layout.chat, dialogId });
+			this.$emit('selectChat', { layoutName: FolderManager.getRegularChatsLayout().name, dialogId });
 		},
 		onOpenSearch()
 		{
@@ -127,20 +150,36 @@ export const RecentListContainer = {
 		{
 			this.unreadMode = !this.unreadMode;
 		},
+		onChangeFilterMode(mode: FilterModeItem)
+		{
+			this.unreadMode = mode === FilterMode.unread;
+			if (this.unreadMode)
+			{
+				Analytics.getInstance().recentHeaderMenu.onOpenUnreadMode(AnalyticsSection.filterRow);
+			}
+		},
 	},
 	template: `
-		<div class="bx-im-list-container-recent__scope bx-im-list-container-recent__container" ref="recent-container">
-			<div class="bx-im-list-container-recent__header_container">
+		<div class="bx-im-list-container-recent__scope bx-im-list-container-recent__container" data-testid="im-list-recent" ref="recent-container">
+			<!-- In the compact collab peek the header is occluded by the drawer; keep it out of the tab order (mouse there is moot). -->
+			<div
+				class="bx-im-list-container-recent__header_container"
+				:class="{ '--with-filter-row': isShellNavigationAvailable }"
+				:inert="avatarsOnly || null"
+			>
 				<VibeCodeCatalogButton />
 				<HeaderMenu
+					v-if="!isShellNavigationAvailable"
 					:unreadMode="unreadMode"
 					:recentSection="RecentType.default"
 					@toggleUnreadMode="onToggleUnreadMode"
 				/>
 				<div class="bx-im-list-container-recent__search-input_container">
-					<ChatSearchInput 
-						:searchMode="searchMode" 
+					<ChatSearchInput
+						:searchMode="searchMode"
 						:isLoading="searchMode && isSearchLoading"
+						:activateOnEnter="true"
+						:searchAreaId="searchAreaId"
 						@openSearch="onOpenSearch"
 						@closeSearch="onCloseRecentSearch"
 						@updateSearch="onUpdateSearch"
@@ -148,12 +187,23 @@ export const RecentListContainer = {
 				</div>
 				<CreateChatMenu />
 			</div>
+			<FilterRow
+				v-if="isShellNavigationAvailable"
+				:mode="filterMode"
+				:counter="unreadCounter"
+				:readAllSection="RecentType.default"
+				:inert="avatarsOnly || null"
+				:aria-hidden="avatarsOnly ? 'true' : null"
+				@changeMode="onChangeFilterMode"
+			/>
 			<div class="bx-im-list-container-recent__elements_container">
 				<div class="bx-im-list-container-recent__elements">
 					<RecentSearch
 						v-show="searchMode" 
 						:searchMode="searchMode"
 						:query="searchQuery"
+						:withKeyboardNavigation="true"
+						:searchAreaId="searchAreaId"
 						@loading="onSearchLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"

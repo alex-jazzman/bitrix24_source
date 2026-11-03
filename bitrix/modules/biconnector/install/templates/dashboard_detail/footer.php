@@ -21,7 +21,7 @@ $helperInitParams = [
 	'isNewHelpdesk' => Main\Config\Option::get('intranet', 'isNewHelpdesk', 'N') === 'Y' ? 'Y' : 'N',
 ];
 
-$bitrixGptIsAvailable = Main\Loader::includeModule('biconnector') && BitrixGptChat::isAvailable();
+$bitrixGptIsAvailable = Main\Loader::includeModule('biconnector') && BitrixGptChat::isAvailableOnCurrentPage();
 $bitrixGptInitiallyOpen = false;
 $bitrixGptName = '';
 if ($bitrixGptIsAvailable)

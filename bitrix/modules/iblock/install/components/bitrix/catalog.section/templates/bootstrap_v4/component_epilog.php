@@ -55,3 +55,10 @@ if ($request->isAjaxRequest() && ($request->get('action') === 'showMore' || $req
 		'epilogue' => $epilogue,
 	));
 }
+else
+{
+	if (\Bitrix\Main\Loader::includeModule('ui'))
+	{
+		\Bitrix\Main\UI\Extension::load(['ui.a11y', 'ui.design-tokens.air']);
+	}
+}

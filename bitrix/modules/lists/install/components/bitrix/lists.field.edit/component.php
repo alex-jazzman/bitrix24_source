@@ -160,6 +160,23 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 			"SETTINGS" => $_POST["SETTINGS"],
 		);
 
+		if(
+			($arField["TYPE"] == "S:Date" || $arField["TYPE"] == "S:DateTime")
+			&& is_array($arField["DEFAULT_VALUE"])
+		)
+		{
+			$defaultValue = '';
+			foreach($arField["DEFAULT_VALUE"] as $value)
+			{
+				if($value !== '')
+				{
+					$defaultValue = $value;
+					break;
+				}
+			}
+			$arField["DEFAULT_VALUE"] = $defaultValue;
+		}
+
 		if (isset($arField["SETTINGS"]["ADD_READ_ONLY_FIELD"]) && $arField["SETTINGS"]["ADD_READ_ONLY_FIELD"] == "Y")
 		{
 			switch ($arField["TYPE"])
@@ -195,14 +212,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 		}
 		elseif($arField["TYPE"] == "S:Date")
 		{
-			if(!empty($arField["DEFAULT_VALUE"]) && !CheckDateTime($arField["DEFAULT_VALUE"], FORMAT_DATE))
+			if($arField["DEFAULT_VALUE"] !== '' && !CheckDateTime($arField["DEFAULT_VALUE"], FORMAT_DATE))
 			{
 				$strError = GetMessage("CC_BLFE_INVALID_DEFAULT_VALUE")."<br>";
 			}
 		}
 		elseif($arField["TYPE"] == "S:DateTime")
 		{
-			if(!empty($arField["DEFAULT_VALUE"]) && !CheckDateTime($arField["DEFAULT_VALUE"]))
+			if($arField["DEFAULT_VALUE"] !== '' && !CheckDateTime($arField["DEFAULT_VALUE"]))
 			{
 				$strError = GetMessage("CC_BLFE_INVALID_DEFAULT_VALUE")."<br>";
 			}

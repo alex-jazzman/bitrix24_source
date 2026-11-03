@@ -9,4 +9,3 @@ $MESS["DISK_AGGREGATOR_TITLE_NETWORK_DRIVE"] = "Сетевой диск";
 $MESS["DISK_AGGREGATOR_TITLE_NETWORK_DRIVE_DESCR_MODAL"] = "Используйте следующий адрес для подключения";
 $MESS["DISK_AGGREGATOR_BTN_CLOSE"] = "Закрыть";
 $MESS["DISK_AGGREGATOR_CREATE_STORAGE"] = "Добавить хранилище";
-?>

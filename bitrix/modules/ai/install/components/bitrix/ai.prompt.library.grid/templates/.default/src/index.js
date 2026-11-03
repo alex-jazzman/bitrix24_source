@@ -1,13 +1,14 @@
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 import { type BannerDispatcher as BannerDispatcherType } from 'ui.banner-dispatcher';
 import { PopupCategoriesRenderer } from './popup-categories-renderer';
 import { SharesListRenderer } from './shares-list-renderer';
 import { PopupWithLoader } from './popup-with-loader';
 import { ajax, bind, Runtime, Loc, Event, Dom, Text } from 'main.core';
 import { showNotification, wrapTextToHtmlWithWordBreak } from './helpers';
+import { getMultipleActionNotificationMessage } from './multiple-action-notification';
 import { sendData } from 'ui.analytics';
 import { type Guide as GuideType } from 'ui.tour';
-import type { PromptMasterPopupOptions } from 'ai.prompt-master';
+import { type PromptMasterPopupOptions } from 'ai.prompt-master';
 
 type CategoryWithTranslate = {
 	name: string;
@@ -386,50 +387,21 @@ export class Controller
 		const action = this.#grid.getActionsPanel().getPanel().querySelector('#action-menu span').dataset.value;
 
 		const actionWithoutQuotes = action.replaceAll('"', '');
-
-		const message = this.#getNotificationMessageForMassAction(actionWithoutQuotes);
+		const selectedPromptIds = this.#grid.getRows().getSelectedIds();
+		const promptName = selectedPromptIds.length === 1
+			? this.#grid.getRows().getById(selectedPromptIds[0])?.getDataset().promptName
+			: null;
+		const message = getMultipleActionNotificationMessage(
+			actionWithoutQuotes,
+			promptName,
+		);
 
 		this.#sendRowAction(actionWithoutQuotes, {
-			selectedSharePromptsCodes: this.#grid.getRows().getSelectedIds(),
+			selectedSharePromptsCodes: selectedPromptIds,
 			page: this.#getCurrentPage(),
 		}, () => {
 			showNotification(message);
 		});
-	}
-
-	static #getNotificationMessageForMassAction(actionName: string): string
-	{
-		switch (actionName)
-		{
-			case 'multiple-activate':
-			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTIVATE');
-			}
-
-			case 'multiple-deactivate':
-			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_DEACTIVATE');
-			}
-
-			case 'multiple-show-for-me':
-			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW_MSGVER_1', {
-					'#COPILOT_NAME#': this.#getCopilotName(),
-				});
-			}
-
-			case 'multiple-hide-from-me':
-			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE_MSGVER_1', {
-					'#COPILOT_NAME#': this.#getCopilotName(),
-				});
-			}
-
-			default:
-			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTION_DEFAULT');
-			}
-		}
 	}
 
 	static init(gridId: string, isShowTour: boolean = false)

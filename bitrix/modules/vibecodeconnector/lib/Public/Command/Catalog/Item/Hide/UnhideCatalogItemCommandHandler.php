@@ -9,6 +9,7 @@ use Bitrix\Vibecodeconnector\Internal\Exception\CatalogItemNotFoundException;
 use Bitrix\Vibecodeconnector\Internal\Integration\Main\AccessCodes;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\CatalogItemRepository;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\HiddenRepository;
+use Bitrix\Vibecodeconnector\Internal\Service\Catalog\NewApps\NewAppsCountCache;
 
 final class UnhideCatalogItemCommandHandler
 {
@@ -16,6 +17,7 @@ final class UnhideCatalogItemCommandHandler
 		private readonly CatalogItemRepository $itemRepository = new CatalogItemRepository(),
 		private readonly HiddenRepository $hiddenRepository = new HiddenRepository(),
 		private readonly AccessCodes $accessCodes = new AccessCodes(),
+		private readonly NewAppsCountCache $newAppsCountCache = new NewAppsCountCache(),
 	)
 	{
 	}
@@ -37,5 +39,7 @@ final class UnhideCatalogItemCommandHandler
 		}
 
 		$this->hiddenRepository->delete($command->userId, $command->catalogItemId);
+
+		$this->newAppsCountCache->forget($command->userId);
 	}
 }

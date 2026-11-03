@@ -49,6 +49,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					parentChatId
 				});
 			});
+		},
+		removeAllClosedChats() {
+			const entries = im_v2_application_core.Core.getStore().getters['recent/getUnreadIndexEntries']();
+			entries.forEach(({
+				recentSection,
+				dialogId,
+				parentChatId
+			}) => {
+				if (im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId)) {
+					return;
+				}
+				this.removeDialogIdBySections({
+					recentSections: [recentSection],
+					dialogId,
+					parentChatId
+				});
+			});
 		}
 	};
 	function hasChatCounter(chatId) {

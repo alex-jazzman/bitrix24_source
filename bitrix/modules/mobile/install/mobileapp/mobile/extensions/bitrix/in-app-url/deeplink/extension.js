@@ -2,7 +2,7 @@
  * @module in-app-url/deeplink
  */
 jn.define('in-app-url/deeplink', (require, exports, module) => {
-	const { inAppUrl } = require('in-app-url');
+	const { inAppUrl, Presentation } = require('in-app-url');
 	const { isValidAuthUrl, openExternalAuth } = require('qrauth/utils');
 
 	/**
@@ -27,6 +27,8 @@ jn.define('in-app-url/deeplink', (require, exports, module) => {
 		{
 			inAppUrl.open(url, {
 				...data,
+				presentation: Presentation.MODAL,
+				// @deprecated use context.presentation; kept for backward compatibility with legacy handlers
 				deeplink: true,
 			});
 		}

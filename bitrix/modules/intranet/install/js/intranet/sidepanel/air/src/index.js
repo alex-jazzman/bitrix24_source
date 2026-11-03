@@ -40,6 +40,9 @@ SliderManager.registerSliderClass(
 				'.side-panel-toolbar',
 				'#im-chat-menu',
 				'#app__right-panel',
+				// The docked uploader outlives the page it was started from and keeps running
+				// while a slider is open, so it has to stay reachable like the bars above it.
+				'.disk-docked-uploader',
 			],
 			looped: false,
 		},

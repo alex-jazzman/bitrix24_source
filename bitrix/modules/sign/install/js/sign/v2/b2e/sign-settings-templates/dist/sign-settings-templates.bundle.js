@@ -12,7 +12,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			createdDocuments: [],
 			sendProgress: 0,
 			configured: false,
-			ruRegionFieldsVisible: false
+			ruRegionFieldsVisible: false,
+			inviteMessage: ''
 		}),
 		actions: {
 			setDocuments(documents) {
@@ -32,6 +33,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			},
 			setRuRegionFieldsVisible(value) {
 				this.ruRegionFieldsVisible = value;
+			},
+			setInviteMessage(value) {
+				this.inviteMessage = value;
 			},
 			removeDocument(uid) {
 				this.setDocuments(this.documents.filter(doc => doc.uid !== uid));
@@ -60,6 +64,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		#container = null;
 		#confirmPopup = null;
 		#region;
+		// The text the created documents carry on the server. Nothing is read back from them: they are
+		// created by this wizard from templates and start without a message (inviteMessage is not
+		// copied to a document made from a template), and the slider builds the wizard anew on every
+		// open, so the documents of a previous send are never the documents of this one.
+		#storedInviteMessage = '';
 		constructor(templateIds = [], sliderUrl = '', options = null) {
 			this.#region = main_core.Extension.getSettings('sign.v2.b2e.sign-settings-templates').get('region');
 			this.#templateIds = templateIds;
@@ -124,6 +133,16 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				await this.#updateDocumentSettings(templateCreatedDocument.document, documentSettings);
 			}
 		}
+		async #saveInviteMessage() {
+			const message = useDocumentTemplateFillingStore().inviteMessage.trim();
+			// only a difference from the text the documents carry is written: an emptied field clears
+			// the stored text, and a field left as it was costs no request
+			if (message === this.#storedInviteMessage) {
+				return;
+			}
+			await this.#api.modifyInviteMessageForDocuments(this.#getCreatedDocumentIds(), message === '' ? null : message);
+			this.#storedInviteMessage = message;
+		}
 		async #updateDocumentSettings(document, settings) {
 			const uid = document.uid;
 			if (this.#isRuRegionFieldsVisible() && settings.registrationNumber.length > 0 && document.externalIdSourceType !== 'hcmlink') {
@@ -151,6 +170,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 						this.#showSendLayout();
 						await this.#createDocumentsAndSaveToStorageIfNotCreated();
 						await this.#updateCreatedDocumentsSettings();
+						// the message must be stored before configure, otherwise invitations are sent without it
+						await this.#saveInviteMessage();
 						await this.#documentUserParty.syncMembers();
 						await this.#waitAllIntegrationMapped();
 						await this.#waitAllIntegrationEmployeesSelected();
@@ -250,8 +271,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			}
 		}
 		async #waitForFillAndStartComplete() {
-			const createdDocuments = useDocumentTemplateFillingStore().createdDocuments;
-			const ids = createdDocuments.map(value => value.document.id);
+			const ids = this.#getCreatedDocumentIds();
 			let completed = false;
 			while (!completed) {
 				// eslint-disable-next-line no-await-in-loop
@@ -402,6 +422,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			const store = useDocumentTemplateFillingStore();
 			const createdDocuments = store.createdDocuments;
 			return createdDocuments.map(value => value.document.uid);
+		}
+		#getCreatedDocumentIds() {
+			const store = useDocumentTemplateFillingStore();
+			const createdDocuments = store.createdDocuments;
+			return createdDocuments.map(value => value.document.id);
 		}
 		#waitEmployeeSelect(integration) {
 			return new Promise((resolve, reject) => {

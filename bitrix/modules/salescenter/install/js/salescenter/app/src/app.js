@@ -9,7 +9,7 @@ import { Button } from 'ui.buttons';
 import { PhoneVerify } from 'bitrix24.phoneverify';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
-import 'ui.notification';
+import { UI } from 'ui.notification';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Vue } from 'ui.vue';
 import { VuexBuilder } from 'ui.vue.vuex';
@@ -355,7 +355,14 @@ export class App
 
 								this.$root.$app.getLoader().hide();
 							}
-						}.bind(this));
+						}.bind(this), () => {
+							this.componentKey += 1;
+							this.$root.$app.getLoader().hide();
+
+							UI.Notification.Center.notify({
+								content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
+							});
+						});
 					},
 					initOrderSelector()
 					{

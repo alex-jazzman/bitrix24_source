@@ -1,6 +1,8 @@
 import { Loc, Tag } from 'main.core';
 import { Dialog as SystemDialog } from 'ui.system.dialog';
 import { Text as TypographyText } from 'ui.system.typography';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { Center as NotificationCenter } from 'ui.notification';
 import './css/loading-popup.css';
 
 type LoadingPopupOptions = {
@@ -63,10 +65,10 @@ export class LoadingPopup
 					this.#callbacks.onFail();
 				}
 			})
-			.catch(() => {
+			.catch((response) => {
 				this.#hideLoadingPopup();
-				BX.UI.Notification.Center.notify({
-					content: this.#errorMessage,
+				NotificationCenter.notify({
+					content: resolveErrorHtml(response, this.#errorMessage),
 				});
 			});
 	}
@@ -112,7 +114,7 @@ export class LoadingPopup
 				<div class="biconnector-loading-popup-spinner-wrapper">
 					<img
 						class="biconnector-loading-popup-spinner"
-						src="/bitrix/js/biconnector/loading-popup/src/images/spinner.png"
+						src="/bitrix/js/biconnector/loading-popup/src/images/spinner.webp"
 						alt="Loading"
 					/>
 				</div>

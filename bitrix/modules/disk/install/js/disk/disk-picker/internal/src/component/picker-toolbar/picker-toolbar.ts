@@ -1,10 +1,16 @@
 import { Loc } from 'main.core';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import { defineComponent } from 'ui.vue3';
-import { TextSm } from 'ui.system.typography.vue';
+import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
+import { HeadlineSm } from 'ui.system.typography.vue';
 
 import { StageType, ViewMode } from '../../const/picker';
 import { type ViewModeValue } from '../../const/types';
+import {
+	isTextEntryTarget,
+	listFocusableControls,
+	moveHorizontalFocus,
+} from '../../lib/composite-navigation/composite-navigation';
 import { useSessionStore } from '../../model/session/session';
 import { useSourceStore } from '../../model/source/source';
 import { Breadcrumbs } from '../breadcrumbs/breadcrumbs';
@@ -16,16 +22,22 @@ import './picker-toolbar.css';
 // right. The view mode is a presentation parameter and does not change the feed,
 // the query or the filters. The search itself is owned by the standard filter; the
 // button only toggles the shared `searchOpen` state the App reacts to.
+// For the keyboard the row is one group: Tab enters at one point, Left/Right walk the
+// controls without wrapping; with the search open its input, hosted by the App, is that point.
 export const PickerToolbar = defineComponent({
 	name: 'DiskPickerToolbar',
 	components: {
 		Breadcrumbs,
-		BIcon,
-		TextSm,
+		HeadlineSm,
+		UiButton,
 	},
 	setup(): Object
 	{
-		return { ViewMode, Outline };
+		return { ViewMode, Outline, AirButtonStyle, ButtonSize };
+	},
+	data(): { lastFocused: HTMLElement | null }
+	{
+		return { lastFocused: null };
 	},
 	computed: {
 		viewMode(): ViewModeValue
@@ -64,55 +76,108 @@ export const PickerToolbar = defineComponent({
 		{
 			useSessionStore().setViewMode(mode);
 		},
+		// The two design system styles are what tell the modes apart: the accented one paints
+		// the current mode, the plain one leaves the other grey. Nothing is repainted here.
+		viewButtonStyle(mode: ViewModeValue): string
+		{
+			return this.viewMode === mode ? AirButtonStyle.PLAIN_ACCENT : AirButtonStyle.PLAIN_NO_ACCENT;
+		},
 		openSearch(): void
 		{
 			useSessionStore().setSearchOpen(true);
 		},
+		handleCompositeFocus(event: FocusEvent): void
+		{
+			this.lastFocused = event.target instanceof HTMLElement ? event.target : null;
+		},
+		handleCompositeKeydown(event: KeyboardEvent): void
+		{
+			if ((event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') || isTextEntryTarget(event.target))
+			{
+				return;
+			}
+
+			if (moveHorizontalFocus(this.$el as HTMLElement, event.key))
+			{
+				event.preventDefault();
+			}
+		},
+		// Entry point for Tab: the control focused last if still there, else the first one.
+		focusEntry(): boolean
+		{
+			const root = this.$el as HTMLElement | undefined;
+			if (!root || this.searchOpen)
+			{
+				return false;
+			}
+
+			const controls = listFocusableControls(root);
+			const target = this.lastFocused !== null && controls.includes(this.lastFocused)
+				? this.lastFocused
+				: controls[0];
+			target?.focus();
+
+			return target !== undefined;
+		},
 	},
 	template: `
-		<div class="disk-picker-toolbar" data-testid="universal-disk-picker-header">
+		<div
+			class="disk-picker-toolbar"
+			data-disk-picker-group="header"
+			data-testid="universal-disk-picker-header"
+			@focusin="handleCompositeFocus"
+			@keydown="handleCompositeKeydown"
+		>
 			<div class="disk-picker-toolbar__title" :class="{ '--search-open': searchOpen }">
 				<Breadcrumbs v-if="hasBreadcrumbs"/>
-				<TextSm v-else class="disk-picker-toolbar__title-text" :title="fallbackTitle">{{ fallbackTitle }}</TextSm>
+				<HeadlineSm
+					v-else
+					class="disk-picker-toolbar__title-text"
+					:title="fallbackTitle"
+				>{{ fallbackTitle }}</HeadlineSm>
 			</div>
-			<button
-				v-if="!searchOpen"
-				type="button"
-				class="disk-picker-toolbar__search-button"
-				:aria-label="loc('DISK_PICKER_SEARCH_OPEN')"
-				data-testid="universal-disk-picker-search-btn"
-				@click="openSearch"
-			>
-				<BIcon :name="Outline.SEARCH" :size="20"/>
-			</button>
+			<span v-if="!searchOpen" class="disk-picker-toolbar__search">
+				<UiButton
+					class="disk-picker-toolbar__button"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.PLAIN_NO_ACCENT"
+					:leftIcon="Outline.SEARCH"
+					:aria-label="loc('DISK_PICKER_SEARCH_OPEN')"
+					:dataset="{ testid: 'universal-disk-picker-search-btn' }"
+					@click="openSearch"
+				/>
+			</span>
 			<div
 				v-else
 				class="disk-picker-toolbar__search-slot"
 				data-disk-picker-search-slot
 			></div>
 			<div class="disk-picker-toolbar__view-toggle" role="group" :aria-label="loc('DISK_PICKER_VIEW_TOGGLE')">
-				<button
-					type="button"
-					class="disk-picker-toolbar__view-button"
-					:class="{ '--active': viewMode === ViewMode.List }"
+				<UiButton
+					class="disk-picker-toolbar__button"
+					:class="{ '--view-active': viewMode === ViewMode.List }"
+					:size="ButtonSize.MEDIUM"
+					:style="viewButtonStyle(ViewMode.List)"
+					:leftIcon="Outline.LIST_VIEWER"
+					removeRightCorners
 					:aria-pressed="viewMode === ViewMode.List"
 					:aria-label="loc('DISK_PICKER_VIEW_LIST')"
-					data-testid="universal-disk-picker-view-list"
+					:dataset="{ testid: 'universal-disk-picker-view-list' }"
 					@click="setViewMode(ViewMode.List)"
-				>
-					<BIcon :name="Outline.LIST_VIEWER" :size="22"/>
-				</button>
-				<button
-					type="button"
-					class="disk-picker-toolbar__view-button"
-					:class="{ '--active': viewMode === ViewMode.Table }"
+				/>
+				<span class="disk-picker-toolbar__view-divider" aria-hidden="true"></span>
+				<UiButton
+					class="disk-picker-toolbar__button"
+					:class="{ '--view-active': viewMode === ViewMode.Table }"
+					:size="ButtonSize.MEDIUM"
+					:style="viewButtonStyle(ViewMode.Table)"
+					:leftIcon="Outline.BULLETED_LIST"
+					removeLeftCorners
 					:aria-pressed="viewMode === ViewMode.Table"
 					:aria-label="loc('DISK_PICKER_VIEW_TABLE')"
-					data-testid="universal-disk-picker-view-table"
+					:dataset="{ testid: 'universal-disk-picker-view-table' }"
 					@click="setViewMode(ViewMode.Table)"
-				>
-					<BIcon :name="Outline.BULLETED_LIST" :size="22"/>
-				</button>
+				/>
 			</div>
 		</div>
 	`,

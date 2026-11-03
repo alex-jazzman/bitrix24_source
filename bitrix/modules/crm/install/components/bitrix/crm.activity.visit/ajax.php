@@ -69,14 +69,6 @@ switch ($action)
 			)
 		);
 		break;
-	case 'SEARCH_SOCIAL':
-		$APPLICATION->IncludeComponent('bitrix:crm.activity.visit',
-			'.default',
-			array(
-				'ACTION' => 'SOCIAL',
-			)
-		);
-		break;
 	case 'LOAD_SELECTOR':
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.entity.selector.ajax',

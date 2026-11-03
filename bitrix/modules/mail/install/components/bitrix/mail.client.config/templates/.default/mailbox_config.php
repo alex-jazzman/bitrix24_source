@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 /** @var CAllMain $APPLICATION */
 
+use Bitrix\Mail\Helper\Config\Feature;
 use Bitrix\Mail\Helper\LicenseManager;
 use Bitrix\Mail\Helper\MailAccess;
 use Bitrix\Mail\Helper\Mailbox\MailboxSettingsConfig;
@@ -163,6 +164,7 @@ $initialData = [
 		'isSmtpAvailable' => !empty($arParams['IS_SMTP_AVAILABLE']),
 		'isCrmAvailable' => !empty($arParams['CRM_AVAILABLE']),
 		'isCalendarAvailable' => !empty($arParams['IS_CALENDAR_AVAILABLE']),
+		'isAvatarAvailable' => Feature::isMailboxAvatarAvailable(),
 		'syncOldLimit' => LicenseManager::getSyncOldLimit(),
 		'sharedMailboxLimit' => $sharedMailboxLimit,
 		'sharedMailboxLimitReached' => !empty($arResult['FORBIDDEN_TO_SHARE_MAILBOX']),

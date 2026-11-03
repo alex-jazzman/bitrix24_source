@@ -41,8 +41,32 @@ export type RecentWidgetItemContextMenu = {
 	items: Array<RecentWidgetItemContextMenuItem>,
 }
 
+export type RecentWidgetItemButtonCustomStyle = {
+	backgroundColor?: string,
+	textColor?: string,
+	borderColor?: string,
+	borderWidth?: number,
+	leftIconColor?: string,
+	rightIconColor?: string,
+}
+
+export type RecentWidgetItemButton = {
+	id?: string,
+	text?: string,
+	size: 's' | 'm',
+	design: string,
+	mode: string,
+	viewId?: string,
+	dropdown?: boolean,
+	rounded?: boolean,
+	iconName?: string,
+	imageUrl?: string,
+	customStyle?: RecentWidgetItemButtonCustomStyle,
+}
+
 export type RecentWidgetItem = {
 	actions: Array<RecentWidgetItemAction>,
+	button?: RecentWidgetItemButton,
 	contextMenu?: RecentWidgetItemContextMenu | null,
 	avatar: AvatarDetail,
 	backgroundColor: string,

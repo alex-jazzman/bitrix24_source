@@ -42,6 +42,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class PromoManager {
 		static #instance;
 		#promoList;
+		#claimedPromos = [];
 		static getInstance() {
 			if (!this.#instance) {
 				this.#instance = new this();
@@ -60,7 +61,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		needToShow(promoId, promoParams = {}) {
 			const promo = new Promo(promoId, promoParams);
-			return Boolean(this.#get(promo));
+			return Boolean(this.#get(promo)) && !this.#hasClaimed(promo);
+		}
+		confirmShown(promoId, promoParams = {}) {
+			const promo = new Promo(promoId, promoParams);
+			if (!this.#get(promo) || this.#hasClaimed(promo)) {
+				return false;
+			}
+			this.#claimedPromos.push(promo);
+			this.#remove(promo);
+			void PromoService.markAsWatched(promo);
+			return true;
 		}
 		async markAsWatched(promoId, promoParams = {}) {
 			const promo = new Promo(promoId, promoParams);
@@ -72,7 +83,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		onPromotionUpdated(params) {
 			const deletedPromotions = params.deletedPromotions.map(promoData => Promo.createFromRawPromoData(promoData));
 			this.#removeByPromotionList(deletedPromotions);
-			const addedPromotions = params.addedPromotions.map(promoData => Promo.createFromRawPromoData(promoData));
+			const addedPromotions = params.addedPromotions.map(promoData => Promo.createFromRawPromoData(promoData)).filter(promo => !this.#hasClaimed(promo));
 			this.#promoList = [...this.#promoList, ...addedPromotions];
 		}
 		#init(promoList) {
@@ -80,6 +91,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#get(promo) {
 			return this.#promoList.find(item => item.isEqual(promo));
+		}
+		#hasClaimed(promo) {
+			return this.#claimedPromos.some(claimedPromo => claimedPromo.isEqual(promo));
 		}
 		#remove(promo) {
 			this.#promoList = this.#promoList.filter(item => !item.isEqual(promo));

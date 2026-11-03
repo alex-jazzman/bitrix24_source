@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/connect-popup.bundle.js',
 	namespace: 'BX.Intranet.PushOtp',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

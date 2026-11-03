@@ -1,0 +1,64 @@
+/**
+ * Public CSS surface: the block class ui-system-hint together with the size modifiers --md / --lg / --xl and
+ * the --filled one. The bubble is on none of those lists - it belongs to ui.system.tooltip, and nothing of
+ * its look is repeated here.
+ */
+
+.ui-system-hint {
+	/* Colour of the glyph, written on the button and read by the icon inside it: the custom property is the
+	   contract of the icon API, so no class of ui.icon-set is named here. The change of it is carried over by
+	   the transition the icon draws itself with. */
+	--ui-icon-set__icon-color: var(--ui-color-design-plain-content-icon-secondary);
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+.ui-system-hint:hover,
+.ui-system-hint:focus-visible {
+	--ui-icon-set__icon-color: var(--ui-color-design-plain-content-icon);
+}
+
+/* A ring around a round glyph: the radius follows the figure and is no decision of the design, so it takes no
+   token of the radius scale and the extension keeps to the air set alone. */
+.ui-system-hint:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: 50%;
+}
+
+/* region SIZE */
+
+/* The scale of the legacy ui.hint, kept as it stands: the outline glyph is drawn lighter and narrower than
+   the filled one, so each of the two carries a scale of its own and the pair reads the same at a glance. The
+   size reaches the glyph through the very custom property the icon API reads. */
+.ui-system-hint.--md {
+	--ui-icon-set__icon-size: 16px;
+}
+
+.ui-system-hint.--lg {
+	--ui-icon-set__icon-size: 19px;
+}
+
+.ui-system-hint.--xl {
+	--ui-icon-set__icon-size: 24px;
+}
+
+.ui-system-hint.--filled.--md {
+	--ui-icon-set__icon-size: 17px;
+}
+
+.ui-system-hint.--filled.--lg {
+	--ui-icon-set__icon-size: 21px;
+}
+
+.ui-system-hint.--filled.--xl {
+	--ui-icon-set__icon-size: 26px;
+}
+
+/* endregion */

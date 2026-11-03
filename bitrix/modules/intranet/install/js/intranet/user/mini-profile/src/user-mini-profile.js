@@ -1,13 +1,14 @@
 import { Tag, Dom } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { EventEmitter } from 'main.core.events';
-import { Popup, PopupManager } from 'main.popup';
+import { Popup, PopupManager, type PopupTargetOptions } from 'main.popup';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 
 import { UserMiniProfileComponent } from './components/app';
 import { MiniProfileDirection } from './type';
 import type { UserMiniProfileOptions } from './type';
 import { resolveViewportDirection } from './lib/resolve-popup-direction';
+import type { PopupVerticalPosition } from './lib/resolve-popup-direction';
 import { Tracking } from './utils/tracking';
 
 import 'ui.design-tokens';
@@ -24,6 +25,7 @@ export class UserMiniProfile
 	#tracking: Tracking;
 
 	#app: VueCreateAppResult | null = null;
+	#popupDirection: ?PopupVerticalPosition = null;
 
 	#closeHandler: () => void = null;
 
@@ -53,11 +55,19 @@ export class UserMiniProfile
 	show(): void
 	{
 		this.#createAppIfNeed();
-		this.#getPopup().show();
+
+		const popup = this.#getPopup();
+		if (!popup.isShown())
+		{
+			this.#popupDirection = null;
+		}
+
+		popup.show();
 	}
 
 	close(): void
 	{
+		this.#popupDirection = null;
 		this.#getPopup().close();
 
 		PopupManager.getPopups()
@@ -76,11 +86,29 @@ export class UserMiniProfile
 		}
 
 		const popup = this.#getPopup();
+		this.#popupDirection = null;
 		popup.close();
 		popup.setBindElement(element);
 		this.#tracking.setBindElement(element);
 
 		this.#options.bindElement = element;
+	}
+
+	setDirection(direction: ?string): void
+	{
+		if (this.#options.direction === direction)
+		{
+			return;
+		}
+
+		this.#options.direction = direction;
+		this.#popupDirection = null;
+
+		const popup = this.#getPopup();
+		if (popup.isShown())
+		{
+			popup.adjustPosition();
+		}
 	}
 
 	getBindElement(): ?HTMLElement
@@ -107,25 +135,35 @@ export class UserMiniProfile
 				bindOptions: this.#getBindOptions(),
 			});
 
-			this.#enforceViewportDirection(popup);
+			this.#interceptAdjustPosition(popup);
 
 			return popup;
 		});
 	}
 
-	// In viewport mode the popup is repositioned by the Vue component on data load
-	// and on right-side expand/collapse via popup.adjustPosition(). Override it so the
-	// direction is always recomputed from the current anchor position — this keeps the
-	// chosen side stable across those re-adjustments instead of falling back to content height.
-	#enforceViewportDirection(popup: Popup): void
+	// the direction is read on every call: an anchor may ask for another one after the popup has been created
+	#interceptAdjustPosition(popup: Popup): void
 	{
-		if (this.#options.direction !== MiniProfileDirection.Viewport)
-		{
-			return;
-		}
-
 		const adjustPosition = popup.adjustPosition.bind(popup);
-		popup.adjustPosition = () => adjustPosition(this.#getBindOptions());
+		popup.adjustPosition = (targetOptions?: PopupTargetOptions) => {
+			if (this.#options.direction !== MiniProfileDirection.Viewport)
+			{
+				// own bind options, otherwise the popup keeps the side the viewport branch has left in them
+				adjustPosition(targetOptions ?? this.#getBindOptions());
+
+				return;
+			}
+
+			const bindOptions = this.#getBindOptions();
+			bindOptions.position = this.#popupDirection ?? bindOptions.position;
+
+			adjustPosition(bindOptions);
+
+			if (popup.isShown() && this.#popupDirection === null)
+			{
+				this.#popupDirection = popup.isBottomAngle() ? 'top' : 'bottom';
+			}
+		};
 	}
 
 	#getBindOptions(): Object

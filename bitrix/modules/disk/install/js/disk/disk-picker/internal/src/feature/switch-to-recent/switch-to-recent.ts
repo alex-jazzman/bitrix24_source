@@ -8,16 +8,16 @@ import { useItemStore } from '../../model/item/item';
 import { useSelectionStore } from '../../model/selection/selection';
 import { useSessionStore } from '../../model/session/session';
 import { type PickerFeed } from '../../model/session/types';
-import { type FeedDeps } from '../open-folder/open-folder';
+import { type FeedDeps, releaseNavigationHold } from '../open-folder/open-folder';
 
 const RECENT_FEED: PickerFeed = { stageType: StageType.Recent, storageId: null, folderId: null };
 
 // Returns the picker to the recent feed. `changeFeed` cannot be reused: it
 // rejects a feed with null storage/folder ids, which the recent stage always has.
-// The reset mirrors a feed change (drop rows, active item, breadcrumbs, selection
-// and the visible FIND with a suppressed apply), then loads the bounded recent
-// snapshot and applies the current user filters locally, exactly like the start
-// stage.
+// The reset mirrors a feed change (drop rows, active item, breadcrumbs and the
+// visible FIND with a suppressed apply), then loads the bounded recent snapshot
+// and applies the current user filters locally, exactly like the start stage. The
+// picked set belongs to the picker session and survives the feed change.
 export async function switchToRecent(deps: FeedDeps): Promise<void>
 {
 	const session = useSessionStore();
@@ -28,10 +28,11 @@ export async function switchToRecent(deps: FeedDeps): Promise<void>
 		return;
 	}
 
+	releaseNavigationHold();
 	const token = session.nextRequestToken();
 	session.setLoading(true);
 	session.setFeed(RECENT_FEED);
-	useSelectionStore().clear();
+	useSelectionStore().setActive(null);
 	deps.suppressFilterFind();
 	session.setFilterFind('');
 	session.resetSearchQuery();
@@ -46,6 +47,7 @@ export async function switchToRecent(deps: FeedDeps): Promise<void>
 			initialStage: { type: StageType.Recent, storageId: null, folderId: null },
 			filters: { objectTypeFilter: ObjectTypeFilter.All, fileTypeFilters: [] },
 			allowedFileTypes: session.constraints.allowedFileTypes,
+			page: 1,
 			pageSize: PageSize.Recent,
 			signedConfig: session.constraints.signedConfig,
 		});

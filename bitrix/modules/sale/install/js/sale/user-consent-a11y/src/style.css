@@ -1,0 +1,17 @@
+/* the popup of `main` is rendered into body, outside our roots; its text box clips, so the ring goes
+   inside, and `:focus-visible` outweighs the `outline: none` of `main` */
+.main-user-consent-request-popup-header:focus-visible,
+.main-user-consent-request-popup-button:focus-visible,
+.main-user-consent-request-popup-text:focus-visible
+{
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/* the dialog moves the focus by script, which matches `:focus-visible` for a pointer too */
+html[data-input-modality="pointer"] .main-user-consent-request-popup-header:focus-visible,
+html[data-input-modality="pointer"] .main-user-consent-request-popup-button:focus-visible,
+html[data-input-modality="pointer"] .main-user-consent-request-popup-text:focus-visible
+{
+	outline: none;
+}

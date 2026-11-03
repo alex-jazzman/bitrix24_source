@@ -1,11 +1,9 @@
 import { alert, confirm } from 'crm.timeline.dialog';
 import {ajax as Ajax, Loc, Tag, Text, Type, Uri} from 'main.core';
-import { DateTimeFormat } from "main.date";
 import { type ActionAnimationCallbacks, type ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
 import { ActionType } from "../action";
 import { Router } from "crm.router";
-import { DatetimeConverter } from "crm.timeline.tools";
 import { UI } from 'ui.notification';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
@@ -26,7 +24,6 @@ export class Document extends Base
 		return (
 			item.getType() === 'Document'
 			|| item.getType() === 'DocumentViewed'
-			|| item.getType() === 'Activity:Document'
 		);
 	}
 
@@ -60,11 +57,6 @@ export class Document extends Base
 		{
 			this.#openDocument(documentId);
 		}
-		else if (action === (ACTION_NAMESPACE + 'CopyPublicLink'))
-		{
-			// todo block button while loading
-			this.#copyPublicLink(documentId, actionData?.publicUrl);
-		}
 		else if (action === (ACTION_NAMESPACE + 'Print'))
 		{
 			this.#printDocument(actionData?.printUrl, animationCallbacks, item);
@@ -76,14 +68,6 @@ export class Document extends Base
 		else if (action === (ACTION_NAMESPACE + 'DownloadDocx'))
 		{
 			this.#downloadDocx(actionData?.docxUrl);
-		}
-		else if (action === (ACTION_NAMESPACE + 'UpdateTitle'))
-		{
-			this.#updateTitle(documentId, actionData?.value);
-		}
-		else if (action === (ACTION_NAMESPACE + 'UpdateCreateDate'))
-		{
-			this.#updateCreateDate(documentId, actionData?.value);
 		}
 		else if (action === (ACTION_NAMESPACE + 'ConvertDeal'))
 		{
@@ -122,74 +106,6 @@ export class Document extends Base
 	#openDocument(documentId: number): void
 	{
 		Router.Instance.openDocumentSlider(documentId);
-	}
-
-	async #copyPublicLink(documentId: number, publicUrl: ?string): Promise<void>
-	{
-		if (!Type.isStringFilled(publicUrl))
-		{
-			try
-			{
-				publicUrl = await this.#createPublicUrl(documentId);
-			}
-			catch (error)
-			{
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-				alert({
-					content: Tag.render`<div>${Text.encode(error.message)}</div>`,
-				});
-
-				return;
-			}
-		}
-
-		const isSuccess = BX.clipboard.copy(publicUrl);
-		if (isSuccess)
-		{
-			UI.Notification.Center.notify({
-				content: Loc.getMessage('CRM_TIMELINE_ITEM_LINK_IS_COPIED'),
-				autoHideDelay: 5000,
-			});
-		}
-		else
-		{
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-			alert({
-				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR')}</div>`,
-			});
-		}
-	}
-
-	async #createPublicUrl(documentId: number): Promise<string, Error>
-	{
-		let response: {data: {publicUrl: string}};
-		try
-		{
-			response = await Ajax.runAction(
-				'crm.documentgenerator.document.enablePublicUrl',
-				{
-					analyticsLabel: 'enablePublicUrl',
-					data: {
-						status: 1,
-						id: documentId,
-					}
-				}
-			);
-		}
-		catch (responseWithError)
-		{
-			console.error(responseWithError);
-
-			throw new Error(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR'));
-		}
-
-		const publicUrl = response.data.publicUrl;
-		if (!Type.isStringFilled(publicUrl))
-		{
-			throw new Error(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR'));
-		}
-
-		return publicUrl;
 	}
 
 	#printDocument(printUrl: ?string, animationCallbacks: ?ActionAnimationCallbacks, item: ConfigurableItem): void
@@ -233,74 +149,6 @@ export class Document extends Base
 		else
 		{
 			console.error('Docx download url is not found. This should be an impossible case, something went wrong');
-		}
-	}
-
-	async #updateTitle(documentId: number, value: ?string): Promise<void>
-	{
-		let response: {data: {document?: {values?: {DocumentTitle?: string}}}};
-		try
-		{
-			response = await Ajax.runAction('crm.documentgenerator.document.update', {
-				data: {
-					id: documentId,
-					values: {
-						DocumentTitle: value,
-					},
-				},
-			});
-		}
-		catch (responseWithError)
-		{
-			console.error(responseWithError);
-
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-			alert({
-				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`,
-			});
-
-			return;
-		}
-
-		const newTitle = response.data.document?.values?.DocumentTitle;
-		if (newTitle !== value)
-		{
-			console.error("Updated document title without errors, but for some reason title from the backend doesn't match sent value");
-		}
-	}
-
-	async #updateCreateDate(documentId: number, value: ?Date): Promise<void>
-	{
-		const valueInSiteFormat = DateTimeFormat.format(DatetimeConverter.getSiteDateFormat(), value);
-
-		let response: {data: {document?: {values?: {DocumentCreateTime?: string}}}};
-		try
-		{
-			response = await Ajax.runAction('crm.documentgenerator.document.update', {
-				data: {
-					id: documentId,
-					values: {
-						DocumentCreateTime: valueInSiteFormat,
-					},
-				},
-			});
-		}
-		catch (responseWithError)
-		{
-			console.error(responseWithError);
-
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-			alert({
-				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`,
-			});
-
-			return;
-		}
-
-		const newCreateDate = response.data.document?.values?.DocumentCreateTime;
-		if (valueInSiteFormat !== newCreateDate)
-		{
-			console.error("Updated document create date without errors, but for some reason date from the backend doesn't match sent value");
 		}
 	}
 

@@ -1,4 +1,4 @@
-import { Event, ajax, Dom, Type } from 'main.core';
+import { Event, ajax, Dom, Type, Reflection } from 'main.core';
 import type { BaseEvent } from 'main.core.events';
 
 export class CrmEntityCreateTriggerRenderer
@@ -6,6 +6,7 @@ export class CrmEntityCreateTriggerRenderer
 	#form: HTMLFormElement = null;
 	#categoryRow: HTMLElement = null;
 	#categoryCell: HTMLElement = null;
+	#categoryControlMultiple: ?boolean = null;
 	#onDocumentChangeHandler: Function = null;
 	#onDocumentDeselectHandler: Function = null;
 
@@ -20,6 +21,7 @@ export class CrmEntityCreateTriggerRenderer
 		this.#form = form;
 		this.#categoryRow = form.querySelector('#row_categoryId');
 		this.#categoryCell = this.#categoryRow?.querySelector('.field-row > div') ?? this.#categoryRow?.querySelector('td:last-child');
+		this.#rememberCategoryControlMode();
 		this.#bindEvents();
 		this.#syncCategoryRowVisibility();
 		setTimeout(() => this.#syncCategoryRowVisibility());
@@ -33,7 +35,7 @@ export class CrmEntityCreateTriggerRenderer
 
 	#getCurrentCategorySelect(): ?HTMLSelectElement
 	{
-		return this.#categoryCell?.querySelector('select[name="categoryId"]');
+		return this.#categoryCell?.querySelector('select[name="categoryId"], select[name="categoryId[]"]');
 	}
 
 	#getCurrentDocumentValue(): string
@@ -88,13 +90,32 @@ export class CrmEntityCreateTriggerRenderer
 
 	#createCategoryProperty(options: {[key: string]: string}): Object
 	{
+		this.#rememberCategoryControlMode();
+
 		return {
 			Type: 'select',
 			FieldName: 'categoryId',
+			Multiple: this.#categoryControlMultiple === true,
 			Options: options,
 			Required: false,
 			AllowSelection: false,
 		};
+	}
+
+	#rememberCategoryControlMode(): void
+	{
+		if (Type.isBoolean(this.#categoryControlMultiple))
+		{
+			return;
+		}
+
+		const select = this.#getCurrentCategorySelect();
+		if (!select)
+		{
+			return;
+		}
+
+		this.#categoryControlMultiple = select.multiple || select.name === 'categoryId[]';
 	}
 
 	#renderCategoryControl(options: {[key: string]: string}): void
@@ -133,15 +154,17 @@ export class CrmEntityCreateTriggerRenderer
 		}
 
 		const { item } = event.getData();
+		const requestData = {
+			documentType: ['bizproc', 'Bitrix\\Bizproc\\Public\\Entity\\Document\\Workflow', 'WORKFLOW'],
+			activity: 'CrmEntityCreateTrigger',
+			params: { document: item.id, form_name: 'document' },
+		};
 
 		ajax.runAction(
 			'bizproc.activity.request',
 			{
-				data: {
-					documentType: ['bizproc', 'Bitrix\\Bizproc\\Public\\Entity\\Document\\Workflow', 'WORKFLOW'],
-					activity: 'CrmEntityCreateTrigger',
-					params: { document: item.id, form_name: 'document' },
-				},
+				// The Nodes editor names its template: the server grants the request by the right on it.
+				data: Reflection.getClass('BX.Bizproc.EditorTemplateContext')?.appendTo(requestData) ?? requestData,
 			},
 		).then((response) => {
 			const data = response.data;
@@ -169,6 +192,7 @@ export class CrmEntityCreateTriggerRenderer
 		this.#form = null;
 		this.#categoryRow = null;
 		this.#categoryCell = null;
+		this.#categoryControlMultiple = null;
 		Event.EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:Item:onSelect', this.#onDocumentChangeHandler);
 		Event.EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:Item:onDeselect', this.#onDocumentDeselectHandler);
 	}

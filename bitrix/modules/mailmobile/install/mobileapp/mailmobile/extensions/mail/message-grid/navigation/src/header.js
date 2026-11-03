@@ -10,7 +10,9 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 	const {
 		getNameByKey: getVirtualFolderNameByKey,
 		getCounterByKey: getVirtualFolderCounterByKey,
+		LABEL,
 	} = require('mail/folder/virtual');
+	const { selectCurrentLabel } = require('mail/statemanager/redux/slices/labels/selector');
 	const store = require('statemanager/redux/store');
 	const { Loc } = require('loc');
 
@@ -24,6 +26,8 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 			tabs = null,
 			getRightButtons = () => [],
 			getLeftButtons = () => [],
+			isDraftMode = () => false,
+			getDraftSelectedCount = () => 0,
 			setFloatingButtonVisibility = () => {},
 		} = {})
 		{
@@ -34,6 +38,8 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 			this.tabs = tabs;
 			this.getRightButtons = getRightButtons;
 			this.getLeftButtons = getLeftButtons;
+			this.isDraftMode = isDraftMode;
+			this.getDraftSelectedCount = getDraftSelectedCount;
 			this.setFloatingButtonVisibility = setFloatingButtonVisibility;
 		}
 
@@ -89,10 +95,19 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 		{
 			const currentState = store.getState();
 			const virtualFolderKey = selectCurrentVirtualFolderKey(currentState);
-			const unreadCounter = virtualFolderKey !== null
-				? getVirtualFolderCounterByKey(virtualFolderKey, currentState)
-				: selectCurrentFolderCounter(currentState)
-			;
+			let unreadCounter;
+			if (virtualFolderKey === LABEL)
+			{
+				unreadCounter = selectCurrentLabel(currentState)?.unread ?? null;
+			}
+			else if (virtualFolderKey !== null)
+			{
+				unreadCounter = getVirtualFolderCounterByKey(virtualFolderKey, currentState);
+			}
+			else
+			{
+				unreadCounter = selectCurrentFolderCounter(currentState);
+			}
 			this.tabs?.updateUnreadCounter(unreadCounter);
 			this.parentWidget.setTitle(this.#getTitleParams(currentState, isRegularMode));
 		}
@@ -102,11 +117,12 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 			const currentFolder = selectCurrentFolder(currentState);
 			const currentMailbox = selectCurrentMailbox(currentState);
 			const virtualFolderKey = selectCurrentVirtualFolderKey(currentState);
-			const titleText = virtualFolderKey !== null
-				? getVirtualFolderNameByKey(virtualFolderKey)
-				: currentFolder?.name ?? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TITLE')
+			const isDraftMode = this.isDraftMode();
+			const titleText = isDraftMode
+				? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_DRAFTS_TITLE')
+				: this.#resolveListTitle(currentState, virtualFolderKey, currentFolder)
 			;
-			const avatar = this.#getAvatar(currentMailbox);
+			const avatar = isDraftMode ? null : this.#getAvatar(currentMailbox);
 
 			if (MobileFeature.isNativeBottomPanelApiSupported())
 			{
@@ -122,6 +138,23 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 				avatar: isRegularMode ? avatar : null,
 				type: isRegularMode ? 'section' : 'wizard',
 			};
+		}
+
+		#resolveListTitle(currentState, virtualFolderKey, currentFolder)
+		{
+			if (virtualFolderKey === LABEL)
+			{
+				return selectCurrentLabel(currentState)?.name
+					?? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TITLE')
+				;
+			}
+
+			if (virtualFolderKey !== null)
+			{
+				return getVirtualFolderNameByKey(virtualFolderKey);
+			}
+
+			return currentFolder?.name ?? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TITLE');
 		}
 
 		#getAvatar(currentMailbox)
@@ -145,7 +178,10 @@ jn.define('mail/message-grid/navigation/src/header', (require, exports, module) 
 
 		#getMultiSelectModeTitle(currentState)
 		{
-			const selectedCount = selectSelectedCount(currentState);
+			const selectedCount = this.isDraftMode()
+				? this.getDraftSelectedCount()
+				: selectSelectedCount(currentState)
+			;
 
 			return Loc.getMessage(
 				this.#getPluralizationKey(selectedCount),

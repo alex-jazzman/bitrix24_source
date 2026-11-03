@@ -38,7 +38,10 @@ export function createLinkSelectionDecorationPlugin(): Object
 				}
 
 				return DecorationSet.create(transaction.doc, [
-					Decoration.inline(from, to, { class: 'note-editor-link-selection-retained' }),
+					Decoration.inline(from, to, {
+						class: 'note-editor-link-selection-retained',
+						'data-testid': 'note-editor-link-selection-retained',
+					}),
 				]);
 			},
 		},

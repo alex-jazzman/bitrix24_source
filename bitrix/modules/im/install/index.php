@@ -337,7 +337,6 @@ class im extends \CModule
 		$eventManager->unRegisterEventHandler("main", "OnProlog", "main", "", "", "/modules/im/ajax_hit.php");
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestRestAuth', 'onRestCheckAuth');
 		$eventManager->unRegisterEventHandler('main', 'OnApplicationsBuildList', 'main', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationsBuildList', 'modules/im/lib/V2/Guest/Auth/GuestApplication.php');
-
 		$this->UnInstallUserFields($arParams);
 
 		\Bitrix\Main\ModuleManager::unRegisterModule("im");

@@ -1,4 +1,5 @@
 <?php
+
 $MESS["DISK_EXT_LINK_TITLE"] = "Скачать файл";
 $MESS["DISK_EXT_LINK_FOLDER_TITLE"] = "Скачать папку";
 $MESS["DISK_EXT_LINK_B24"] = "Битрикс<span>24</span>";
@@ -21,6 +22,12 @@ $MESS["DISK_EXT_LINK_PASSWORD_PLACEHOLDER"] = "Пароль";
 $MESS["DISK_EXT_LINK_PASSWORD_ARIA_LABEL"] = "Пароль для доступа к документу";
 $MESS["DISK_EXT_LINK_PASSWORD_WRONG"] = "Неверный пароль";
 $MESS["DISK_EXT_LINK_PASSWORD_ERROR"] = "Не удалось проверить пароль. Попробуйте ещё раз";
+$MESS["DISK_EXT_LINK_CAPTCHA_LABEL"] = "Код с картинки";
+$MESS["DISK_EXT_LINK_CAPTCHA_PLACEHOLDER"] = "Символы на изображении";
+$MESS["DISK_EXT_LINK_CAPTCHA_ARIA_LABEL"] = "Код с картинки";
+$MESS["DISK_EXT_LINK_CAPTCHA_IMAGE_ALT"] = "Картинка с кодом";
+$MESS["DISK_EXT_LINK_CAPTCHA_REQUIRED"] = "Введите код с картинки";
+$MESS["DISK_EXT_LINK_CAPTCHA_INVALID"] = "Неверный код с картинки";
 $MESS["DISK_EXT_LINK_OPEN_GRAPH_MADE_BY_B24"] = "Общий доступ к файлу предоставлен через Битрикс24";
 $MESS["DISK_EXT_LINK_OPEN_FOLDER_GRAPH_MADE_BY_B24"] = "Общий доступ к папке предоставлен через Битрикс24";
 $MESS["DISK_LABEL_GRID_TOTAL"] = "Всего";

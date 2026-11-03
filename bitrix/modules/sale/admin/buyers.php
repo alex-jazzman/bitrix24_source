@@ -1,5 +1,9 @@
 <?php
 use Bitrix\Main\Loader;
+use Bitrix\Main\Provider\Params\Pager;
+use Bitrix\Sale\Public\Provider\BuyerProvider;
+use Bitrix\Sale\Public\Provider\Params\BuyerFilter;
+use Bitrix\Sale\Public\Provider\Params\BuyerSort;
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 Loader::includeModule('sale');
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/prolog.php");
@@ -54,7 +58,7 @@ while ($arGroups = $dbGroups->Fetch())
 	$arUsersGroups[] = $arGroups;
 
 $sTableID = "tbl_sale_buyers";
-$oSort = new CAdminUiSorting($sTableID, "LAST_LOGIN", "desc");
+$oSort = new CAdminUiSorting($sTableID, "LAST_ORDER_DATE", "desc");
 global $by, $order;
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
@@ -90,8 +94,7 @@ $filterFields = array(
 	array(
 		"id" => "USER_ID",
 		"name" => GetMessage('BUYER_F_ID'),
-		"type" => "custom_entity",
-		"selector" => array("type" => "user"),
+		"type" => "number",
 		"filterable" => ""
 	),
 	array(
@@ -181,43 +184,6 @@ $lAdmin->setFilterPresets($filterPresets);
 
 $lAdmin->AddFilter($filterFields, $arFilter);
 
-if (isset($arFilter["BUYER"]) && $arFilter["BUYER"] <> '')
-{
-	$nameSearch = trim($arFilter["BUYER"]);
-	$searchFilter = \Bitrix\Main\UserUtils::getAdminSearchFilter([
-		'FIND' => $nameSearch
-	]);
-
-	$renameUserFields = function ($fields) use (&$renameUserFields)
-	{
-		$result = [];
-		foreach ($fields as $key => $value)
-		{
-			if (is_array($value))
-			{
-				$result[$key] = $renameUserFields($value);
-			}
-			else
-			{
-				if (mb_strpos($key, 'INDEX') !== false)
-				{
-					$key = str_replace('INDEX', 'USER.INDEX', $key);
-				}
-				elseif ($key !== 'LOGIC')
-				{
-					$namePosition = mb_strpos($key, preg_replace('/^\W+/', '', $key));
-					$key = mb_substr($key, 0, $namePosition)."USER.".mb_substr($key, $namePosition);
-				}
-				$result[$key] = $value;
-			}
-		}
-		return $result;
-	};
-
-	$arFilter = array_merge($arFilter, $renameUserFields($searchFilter));
-	unset($arFilter["BUYER"]);
-}
-
 $arSitesShop = array();
 foreach ($arSites as $key => $val)
 {
@@ -249,219 +215,101 @@ $arHeaders = array(
 $lAdmin->AddHeaders($arHeaders);
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
-$userFields = [
-	'DATE_REGISTER', 'LOGIN', 'EMAIL', 'NAME', 'LAST_NAME', 'SECOND_NAME',
-	'PERSONAL_PHONE', 'LAST_LOGIN', 'PERSONAL_BIRTHDAY'
-];
-$orderFields = ['SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'];
+$buyerProvider = new BuyerProvider();
 
-$userIdList = [];
+$navyParams = CDBResult::GetNavParams(CAdminUiResult::GetNavSize($sTableID));
+$navyParams['PAGEN'] = max(1, (int)$navyParams['PAGEN']);
+$navyParams['SIZEN'] = max(1, (int)$navyParams['SIZEN']);
+// The export takes the whole list and so does the classic list asked to show all of it; the public
+// mode has always shown a page at a time.
+$wholeList = !$publicMode && ($lAdmin->isExportMode() || $navyParams['SHOW_ALL']);
 
-if ($publicMode && \Bitrix\Main\Loader::includeModule('crm'))
+// The field «Buyer» of the filter, which also takes the quick search string, is matched against the
+// buyer in either mode.
+$buyerFilter = new BuyerFilter($arFilter, (string)($arFilter['BUYER'] ?? ''));
+$defaultSort = [BuyerSort::DEFAULT_FIELD => BuyerSort::DEFAULT_DIRECTION];
+$excludedUserId = 0;
+$shopGroupId = 0;
+
+if ($publicMode && Loader::includeModule('crm'))
 {
 	$gridOptions = new \Bitrix\Main\Grid\Options($sTableID);
-	$sorting = $gridOptions->getSorting(['sort' => ['NAME' => 'ASC']]);
+	$sorting = $gridOptions->getSorting(['sort' => $defaultSort]);
 
-	$by = key($sorting['sort']);
-	$order = mb_strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
-
-	$sortByUserField = isset($by) && in_array($by, $userFields);
-
-	if ($sortByUserField)
-	{
-		$userBy = $by;
-	}
-	elseif ($by === 'USER_ID')
-	{
-		$userBy = 'ID';
-	}
-	else
-	{
-		$userBy = 'NAME';
-	}
-
-	$filter = [
-		'!=ID' => \Bitrix\Crm\Order\Manager::getAnonymousUserID(),
-		'=GROUP.GROUP_ID' => \Bitrix\Crm\Order\BuyerGroup::getSystemGroupId(),
-	];
-
-	$filterOptions = new \Bitrix\Main\UI\Filter\Options($sTableID);
-	$searchString = $filterOptions->getSearchString();
-
-	if ($searchString !== '')
-	{
-		$searchFields = ['FIND' => $searchString];
-		$filter = array_merge(\Bitrix\Main\UserUtils::getAdminSearchFilter($searchFields), $filter);
-	}
-
-	foreach ($arFilter as $key => $searchValue)
-	{
-		if (mb_strpos($key, 'USER.') === 0 || mb_strpos($key, '%USER.') === 0 || mb_strpos($key, '*USER.') === 0)
-		{
-			$field = str_replace('USER.', '', $key);
-			$filter[$field] = $searchValue;
-		}
-	}
-
-	$gridColumns = $gridOptions->getUsedColumns();
-	$selectColumns = array_merge($gridColumns, ['ID', 'EXTERNAL_AUTH_ID']);
-	$selectColumns = array_intersect($selectColumns, array_keys(\Bitrix\Main\UserTable::getEntity()->getFields()));
-
-	$navyParams = CDBResult::GetNavParams(CAdminUiResult::GetNavSize($sTableID));
-	$navyParams['PAGEN'] = (int)$navyParams['PAGEN'];
-	$navyParams['SIZEN'] = (int)$navyParams['SIZEN'];
-
-	$groupReference = new \Bitrix\Main\Entity\ReferenceField(
-		'GROUP',
-		'\Bitrix\Main\UserGroupTable',
-		['=ref.USER_ID' => 'this.ID'],
-		['join_type' => 'LEFT']
-	);
-
-	$query = (new \Bitrix\Main\Entity\Query(\Bitrix\Main\UserTable::getEntity()))
-		->registerRuntimeField('', $groupReference)
-		->addFilter('!=ID', \Bitrix\Crm\Order\Manager::getAnonymousUserID())
-		->addFilter('=GROUP.GROUP_ID', \Bitrix\Crm\Order\BuyerGroup::getSystemGroupId())
-		->countTotal(true);
-
-	$totalCount = $query->exec()->getCount();
-
-	if ($totalCount > 0)
-	{
-		$totalPages = ceil($totalCount / $navyParams['SIZEN']);
-
-		if ($navyParams['PAGEN'] > $totalPages)
-		{
-			$navyParams['PAGEN'] = $totalPages;
-		}
-
-		$navLimit = $navyParams['SIZEN'];
-		$navOffset = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
-	}
-	else
-	{
-		$totalPages = 0;
-		$navyParams['PAGEN'] = 1;
-		$navLimit = $navyParams['SIZEN'];
-		$navOffset = 0;
-	}
-
-	$buyersData = \Bitrix\Main\UserTable::getList([
-		'select' => $selectColumns,
-		'filter' => $filter,
-		'order' => [$userBy => $order],
-		'offset' => $navOffset,
-		'limit' => $navLimit,
-		'runtime' => [$groupReference],
-	]);
-	while ($user = $buyersData->Fetch())
-	{
-		$userIdList[] = $user['ID'];
-	}
-
-	$sortByOrderField = isset($by) && in_array($by, $orderFields);
-
-	if ($sortByOrderField)
-	{
-		$order = [$by => $order];
-	}
-	else
-	{
-		$order = ['ID' => 'ASC'];
-	}
-
-	$dbUsersOrderData = \Bitrix\Sale\BuyerStatistic::getList([
-		'filter' => [
-			'USER_ID' => $userIdList
-		],
-		'order' => $order
-	])->fetchAll();
-	$dbUsersOrderData = array_column($dbUsersOrderData, null, 'USER_ID');
-
-	if ($sortByOrderField)
-	{
-		$userIdList = array_unique(array_merge(array_keys($dbUsersOrderData), $userIdList));
-	}
-
-	$userOrderData = [];
-
-	$defaultUsersOrderData = array_fill_keys($userIdList, [
-		'SUM_PAID' => 0,
-		'COUNT_FULL_PAID_ORDER' => 0,
-		'COUNT_PART_PAID_ORDER' => 0,
-		'CURRENCY' => Bitrix\Sale\Internals\SiteCurrencyTable::getSiteCurrency(SITE_ID),
-	]);
-
-	foreach ($defaultUsersOrderData as $userId => $userData)
-	{
-		$userOrderData[$userId] = isset($dbUsersOrderData[$userId]) ? array_merge($userData, $dbUsersOrderData[$userId]) : $userData;
-	}
+	$buyerSort = new BuyerSort($sorting['sort']);
+	$excludedUserId = (int)\Bitrix\Crm\Order\Manager::getAnonymousUserID();
+	// The public list is made of the shop buyers group: a buyer added from it is listed before the
+	// first order, with zeros.
+	$shopGroupId = (int)\Bitrix\Crm\Order\BuyerGroup::getSystemGroupId();
 }
 else
 {
-	$buyersFilter = [];
-	$buyersFilter['filter'] = $arFilter;
-	$buyersFilter['select'] = array('LID', 'CURRENCY');
-
-	foreach ($arVisibleColumns as $column)
-	{
-		if ($column === 'BUYER')
-		{
-			$buyersFilter['select'][] = "USER_ID";
-			$buyersFilter['select']['NAME'] = "USER.NAME";
-			$buyersFilter['select']['LAST_NAME'] = "USER.LAST_NAME";
-			$buyersFilter['select']['EMAIL'] = "USER.EMAIL";
-		}
-		elseif (in_array($column, $userFields))
-		{
-			$columnUserName = "USER.".$column;
-			$buyersFilter['select'][$column] = $columnUserName;
-		}
-		elseif ($column === 'COUNT_ORDER')
-		{
-			$buyersFilter['select'][] = 'COUNT_FULL_PAID_ORDER';
-		}
-		elseif ($column !== 'GROUPS_ID')
-		{
-			$buyersFilter['select'][] = $column;
-		}
-	}
-
-	$order = isset($order) ? $order : "ASC";
-	if (in_array($by, $userFields))
-	{
-		$by = "USER.$by";
-	}
-	elseif ($by === 'COUNT_ORDER')
+	if ($by === 'COUNT_ORDER')
 	{
 		$by = 'COUNT_FULL_PAID_ORDER';
 	}
-	else
-	{
-		$by = "USER.NAME";
-	}
-	$buyersFilter['order'] = array($by => $order);
 
-	$buyersData = \Bitrix\Sale\BuyerStatistic::getList($buyersFilter);
-
-	while($buyer = $buyersData->fetch())
-	{
-		$userIdList[] = $buyer['USER_ID'];
-	}
+	$buyerSort = new BuyerSort(is_string($by) && $by !== '' ? [$by => (string)$order] : $defaultSort);
 }
 
-if (!empty($userIdList) && is_array($userIdList))
+$pager = null;
+if (!$wholeList)
+{
+	// The count takes the same conditions as the rows, so the navigation follows the filter.
+	$totalCount = $buyerProvider->countBuyers($buyerFilter, $excludedUserId, $shopGroupId);
+	// A page past the end of the list, left over from a wider filter, is taken for its last page.
+	$totalPages = (int)ceil($totalCount / $navyParams['SIZEN']);
+	$navyParams['PAGEN'] = max(1, min($navyParams['PAGEN'], $totalPages));
+	$pager = (new Pager($navyParams['SIZEN']))->setPage($navyParams['PAGEN']);
+}
+$buyers = $buyerProvider->getBuyers($buyerFilter, $buyerSort, $pager, $excludedUserId, $shopGroupId);
+
+$userIdList = $buyers->getUserIds();
+
+// A row is the statistic of the buyer on one site in one currency: a buyer who has paid in two
+// currencies is two rows, each keyed by its own id and signed with its own currency. A buyer of the
+// public list who has paid for nothing is one row without statistic, keyed by the buyer and shown
+// with the currency and the site of the page, as the list has always shown such a buyer.
+$defaultSiteId = defined('SITE_ID') ? SITE_ID : '';
+$defaultCurrency = Bitrix\Sale\Internals\SiteCurrencyTable::getSiteCurrency($defaultSiteId);
+$buyerRows = [];
+foreach ($buyers as $buyer)
+{
+	$buyerRows[] = [
+		'ID' => $buyer->id > 0 ? (string)$buyer->id : 'buyer-' . $buyer->userId,
+		'USER_ID' => $buyer->userId,
+		'LOGIN' => $buyer->login,
+		'NAME' => $buyer->name,
+		'LAST_NAME' => $buyer->lastName,
+		'SECOND_NAME' => $buyer->secondName,
+		'EMAIL' => $buyer->email,
+		'PERSONAL_PHONE' => $buyer->personalPhone,
+		'LAST_LOGIN' => $buyer->lastLogin,
+		'DATE_REGISTER' => $buyer->dateRegister,
+		'EXTERNAL_AUTH_ID' => $buyer->externalAuthId,
+		'SUM_PAID' => $buyer->sumPaid,
+		'COUNT_FULL_PAID_ORDER' => $buyer->countFullPaidOrder,
+		'COUNT_PART_PAID_ORDER' => $buyer->countPartPaidOrder,
+		'LAST_ORDER_DATE' => $buyer->lastOrderDate,
+		'CURRENCY' => $buyer->currency !== '' ? $buyer->currency : $defaultCurrency,
+		'LID' => $buyer->siteId !== '' ? $buyer->siteId : $defaultSiteId,
+	];
+}
+
+if (!empty($userIdList))
 {
 	$buyerNames = GetFormatedUserName($userIdList, false, !$publicMode);
 }
 
-$resultUsersList = new CAdminUiResult($buyersData, $sTableID);
+$resultUsersList = new CAdminUiResult(null, $sTableID);
+$resultUsersList->InitFromArray($buyerRows);
 
-if (isset($navyParams, $navLimit))
+if ($pager !== null)
 {
-	$resultUsersList->NavStart($navLimit, $navyParams['SHOW_ALL'], $navyParams['PAGEN']);
+	// The rows are the page already: the navigation is told the size of the whole list instead.
+	$resultUsersList->NavStart($pager->getLimit(), $navyParams['SHOW_ALL'], $navyParams['PAGEN']);
 	$resultUsersList->NavRecordCount = $totalCount;
-	$resultUsersList->NavPageCount = $totalPages;
+	$resultUsersList->NavPageCount = $totalCount > 0 ? (int)ceil($totalCount / $pager->getLimit()) : 0;
 	$resultUsersList->NavPageNomer = $navyParams['PAGEN'];
 }
 else
@@ -475,12 +323,7 @@ $isCrmInstalled = IsModuleInstalled('crm');
 
 while ($arBuyers = $resultUsersList->Fetch())
 {
-	$userId = isset($arBuyers["USER_ID"]) ? $arBuyers["USER_ID"] : $arBuyers["ID"];
-
-	if (isset($userOrderData[$userId]))
-	{
-		$arBuyers += $userOrderData[$userId];
-	}
+	$userId = $arBuyers['USER_ID'];
 
 	$profileUrl = $selfFolderUrl."sale_buyers_profile.php?USER_ID=".$userId."&lang=".LANGUAGE_ID;
 	$profileUrl = $adminSidePanelHelper->editUrlToPublicPage($profileUrl);
@@ -499,7 +342,7 @@ while ($arBuyers = $resultUsersList->Fetch())
 		$editUrl = '/shop/buyer/'.$userId.'/edit/';
 	}
 
-	$row =& $lAdmin->AddRow($userId, $arBuyers, $profileUrl, GetMessage("BUYER_SUB_ACTION_PROFILE"));
+	$row =& $lAdmin->AddRow($arBuyers['ID'], $arBuyers, $profileUrl, GetMessage("BUYER_SUB_ACTION_PROFILE"));
 
 	$profile = '<a href="'.$profileUrl.'">'.$userId.'</a>';
 	$row->AddField("USER_ID", $profile);
@@ -522,25 +365,12 @@ while ($arBuyers = $resultUsersList->Fetch())
 
 	if (in_array("LID", $arVisibleColumns))
 	{
-		$buyerLidId = null;
-		if (isset($arBuyers['LID']))
-		{
-			$buyerLidId = $arBuyers['LID'];
-		}
-		else if (isset($userOrderData[$userId]))
-		{
-			$buyerLidId = $userOrderData[$userId]['LID'] ?? null;
-		}
-		else if (defined('SITE_ID'))
-		{
-			$buyerLidId = SITE_ID;
-		}
-
-		$row->AddField('LID', htmlspecialcharsbx((string)($arSites[$buyerLidId]['NAME'] ?? '')));
+		$row->AddField('LID', htmlspecialcharsbx((string)($arSites[$arBuyers['LID']]['NAME'] ?? '')));
 	}
 
 	/*BUYER*/
-	$fieldBuyer = $buyerNames[$userId];
+	// A statistic row may outlive its buyer record: the list keeps the row and says so in place of the name.
+	$fieldBuyer = $buyerNames[$userId] ?? GetMessage('BUYER_ROW_BUYER_NOT_FOUND');
 	$row->AddField("BUYER", $fieldBuyer);
 
 	$arActions = array();

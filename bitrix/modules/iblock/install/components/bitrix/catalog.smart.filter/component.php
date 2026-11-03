@@ -14,6 +14,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Iblock\SectionPropertyTable;
 use Bitrix\Iblock\PropertyIndex\Storage;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\HttpRequest;
 
 if(!Loader::includeModule('iblock'))
 {
@@ -261,7 +263,7 @@ if($this->StartResultCache(false, array('v11', $preFilter, ($arParams["CACHE_GRO
 			CTimeZone::Enable();
 
 			$arSelect = array("ID", "IBLOCK_ID");
-			foreach($arResult["PRICES"] as &$value)
+			foreach($arResult["PRICES"] as $value)
 			{
 				if (!$value['CAN_VIEW'] && !$value['CAN_BUY'])
 					continue;
@@ -888,10 +890,7 @@ if ($arParams["SEF_MODE"] == "Y")
 	$arResult["JS_FILTER_PARAMS"]["SEF_DEL_FILTER_URL"] = $this->makeSmartUrl($url, false);
 }
 
-$uri = new \Bitrix\Main\Web\Uri($this->request->getRequestUri());
-$uri->deleteParams(\Bitrix\Main\HttpRequest::getSystemParameters());
-$pageURL = $uri->GetUri();
-$paramsToDelete = array("set_filter", "del_filter", "ajax", "bxajaxid", "AJAX_CALL", "mode");
+$paramsToDelete = ["set_filter", "del_filter", "ajax", "bxajaxid", "AJAX_CALL", "mode"];
 foreach($arResult["ITEMS"] as $PID => $arItem)
 {
 	foreach($arItem["VALUES"] as $key => $ar)
@@ -903,18 +902,19 @@ foreach($arResult["ITEMS"] as $PID => $arItem)
 		}
 	}
 }
+$paramsToDelete = array_merge($paramsToDelete, HttpRequest::getSystemParameters());
 
-$clearURL = CHTTP::urlDeleteParams($pageURL, $paramsToDelete, array("delete_system_params" => true));
+$clearURL = (new Uri($this->request->getRequestUri()))
+	->deleteParams($paramsToDelete)
+;
 
 if (($arResult["JS_FILTER_PARAMS"]["SEF_SET_FILTER_URL"] ?? ''))
 {
 	$arResult["FILTER_URL"] = $arResult["JS_FILTER_PARAMS"]["SEF_SET_FILTER_URL"];
-	$arResult["FILTER_AJAX_URL"] = htmlspecialcharsbx(CHTTP::urlAddParams($arResult["FILTER_URL"], array(
-		"bxajaxid" => ($_GET["bxajaxid"] ?? ''),
-	), array(
-		"skip_empty" => true,
-		"encode" => true,
-	)));
+	$arResult["FILTER_AJAX_URL"] = htmlspecialcharsbx(
+		(string)(new Uri($arResult["FILTER_URL"]))
+			->addParams(["bxajaxid" => $_GET["bxajaxid"] ?? ''])
+	);
 	$arResult["SEF_SET_FILTER_URL"] = $arResult["JS_FILTER_PARAMS"]["SEF_SET_FILTER_URL"];
 	$arResult["SEF_DEL_FILTER_URL"] = $arResult["JS_FILTER_PARAMS"]["SEF_DEL_FILTER_URL"];
 }
@@ -942,17 +942,9 @@ else
 		}
 	}
 
-	$arResult["FILTER_URL"] = htmlspecialcharsbx(CHTTP::urlAddParams($clearURL, $paramsToAdd, array(
-		"skip_empty" => true,
-		"encode" => true,
-	)));
+	$arResult["FILTER_URL"] = htmlspecialcharsbx((string)(clone $clearURL)->addParams($paramsToAdd));
 
-	$arResult["FILTER_AJAX_URL"] = htmlspecialcharsbx(CHTTP::urlAddParams($clearURL, $paramsToAdd + array(
-		"bxajaxid" => ($_GET["bxajaxid"] ?? ''),
-	), array(
-		"skip_empty" => true,
-		"encode" => true,
-	)));
+	$arResult["FILTER_AJAX_URL"] = htmlspecialcharsbx((string)(clone $clearURL)->addParams($paramsToAdd + ["bxajaxid" => $_GET["bxajaxid"] ?? '']));
 }
 
 if(isset($_REQUEST["ajax"]) && $_REQUEST["ajax"] === "y")
@@ -964,7 +956,7 @@ if(isset($_REQUEST["ajax"]) && $_REQUEST["ajax"] === "y")
 	{
 		$arFilter = CProductQueryBuilder::convertOldFilter($arFilter);
 	}
-	$arResult["ELEMENT_COUNT"] = CIBlockElement::GetList(array(), $arFilter, array(), false);
+	$arResult["ELEMENT_COUNT"] = CIBlockElement::GetList(array(), $arFilter, array());
 
 	if (isset($_GET["bxajaxid"]))
 	{
@@ -1026,7 +1018,7 @@ $arSkip = array(
 	"AJAX_CALL" => true,
 );
 
-$arResult["FORM_ACTION"] = $clearURL;
+$arResult["FORM_ACTION"] = (string)$clearURL;
 $arResult["HIDDEN"] = array();
 foreach(array_merge($_GET, $_POST) as $key => $value)
 {
@@ -1050,9 +1042,12 @@ if (
 	&& ($arResult["SECTION"]["RIGHT_MARGIN"] - $arResult["SECTION"]["LEFT_MARGIN"]) === 1
 )
 {
-	$exportUrl = CHTTP::urlAddParams($clearURL, array("mode" => "xml"));
+	$exportUrl = (clone $clearURL)
+		->addParams(["mode" => "xml"])
+		->toAbsolute()
+	;
 	$APPLICATION->AddHeadString('<meta property="ya:interaction" content="XML_FORM" />');
-	$APPLICATION->AddHeadString('<meta property="ya:interaction:url" content="'.CHTTP::urn2uri($exportUrl).'" />');
+	$APPLICATION->AddHeadString('<meta property="ya:interaction:url" content="' . $exportUrl . '" />');
 }
 
 if ($arParams["XML_EXPORT"] === "Y" && ($_REQUEST["mode"] ?? '') === "xml")

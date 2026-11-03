@@ -155,7 +155,7 @@ export const App = {
 			{
 				void loadPromise.then((): void => {
 					void this.$nextTick((): void => {
-						this.editor?.focus();
+						this.editor?.focus(null, { defaultSelection: 'rootEnd' });
 					});
 				});
 			}
@@ -222,7 +222,7 @@ export const App = {
 		{
 			this.commentEditMode = true;
 			this.$nextTick((): void => {
-				this.editor?.focus();
+				this.editor?.focus(null, { defaultSelection: 'rootEnd' });
 			});
 		},
 

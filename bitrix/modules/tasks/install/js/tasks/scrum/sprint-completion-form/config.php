@@ -8,14 +8,14 @@ return [
 	'css' => 'dist/sprint.completion.form.bundle.css',
 	'js' => 'dist/sprint.completion.form.bundle.js',
 	'rel' => [
-		'main.core.events',
-		'ui.sidepanel.layout',
-		'ui.confetti',
 		'main.core',
-		'ui.dialogs.messagebox',
+		'main.core.events',
+		'ui.confetti',
 		'ui.design-tokens',
+		'ui.dialogs.messagebox',
 		'ui.fonts.opensans',
 		'ui.hint',
+		'ui.sidepanel.layout',
 	],
 	'skip_core' => false,
 ];

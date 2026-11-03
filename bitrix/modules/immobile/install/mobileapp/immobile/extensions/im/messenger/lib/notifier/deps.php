@@ -7,6 +7,7 @@ return [
 		'im:chat/utils',
 		'im:lib/theme',
 		'im:messenger/const',
+		'im:messenger/controller/recent/service/lib/folder-composition',
 		'im:messenger/controller/recent/manager',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/emitter',

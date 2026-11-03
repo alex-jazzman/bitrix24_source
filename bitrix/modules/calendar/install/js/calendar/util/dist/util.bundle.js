@@ -8,11 +8,12 @@ this.BX = this.BX || {};
 		static PLANNER_WATCH_LIST = [];
 		static REQUEST_ID_LIST = [];
 		static accessNames = {};
-		static parseTime(str) {
-			const date = Util.parseDate1(`${main_date.DateTimeFormat.format(Util.getDateFormat(), new Date())} ${str}`, false);
+		static #timeZoneFormatters = new Map();
+		static parseTime(str, utc = false) {
+			const date = Util.parseDate1(`${main_date.DateTimeFormat.format(Util.getDateFormat(), new Date())} ${str}`, false, undefined, utc);
 			return date ? {
-				h: date.getHours(),
-				m: date.getMinutes()
+				h: utc ? date.getUTCHours() : date.getHours(),
+				m: utc ? date.getUTCMinutes() : date.getMinutes()
 			} : date;
 		}
 		static getTimeRounded(date) {
@@ -21,7 +22,7 @@ this.BX = this.BX || {};
 		static parseDate(str, bUTC, formatDate, formatDatetime) {
 			return BX.parseDate(str, bUTC, formatDate, formatDatetime);
 		}
-		static parseDate1(str, format, trimSeconds) {
+		static parseDate1(str, format, trimSeconds, bUTC = false) {
 			let i;
 			let cnt;
 			let k;
@@ -77,7 +78,13 @@ this.BX = this.BX || {};
 				}
 				if (aResult.DD > 0 && aResult.MM > 0 && aResult.YYYY > 0) {
 					const d = new Date();
-					{
+					if (bUTC) {
+						d.setUTCDate(1);
+						d.setUTCFullYear(aResult.YYYY);
+						d.setUTCMonth(aResult.MM - 1);
+						d.setUTCDate(aResult.DD);
+						d.setUTCHours(0, 0, 0);
+					} else {
 						d.setDate(1);
 						d.setFullYear(aResult.YYYY);
 						d.setMonth(aResult.MM - 1);
@@ -99,7 +106,9 @@ this.BX = this.BX || {};
 						if (isNaN(aResult.SS)) {
 							aResult.SS = 0;
 						}
-						{
+						if (bUTC) {
+							d.setUTCHours(aResult.HH, aResult.MI, aResult.SS);
+						} else {
 							d.setHours(aResult.HH, aResult.MI, aResult.SS);
 						}
 					}
@@ -108,7 +117,7 @@ this.BX = this.BX || {};
 			}
 			return null;
 		}
-		static formatTime(hours, minutes) {
+		static formatTime(hours, minutes, utc = false) {
 			let day;
 			if (main_core.Type.isDate(hours)) {
 				day = hours;
@@ -116,13 +125,13 @@ this.BX = this.BX || {};
 				day = new Date();
 				day.setHours(hours, minutes, 0);
 			}
-			return main_date.DateTimeFormat.format(Util.getTimeFormatShort(), day.getTime() / 1000);
+			return main_date.DateTimeFormat.format(Util.getTimeFormatShort(), day.getTime() / 1000, null, utc);
 		}
-		static formatDate(timestamp) {
+		static formatDate(timestamp, utc = false) {
 			if (main_core.Type.isDate(timestamp)) {
 				timestamp = timestamp.getTime();
 			}
-			return main_date.DateTimeFormat.format(Util.getDateFormat(), timestamp / 1000);
+			return main_date.DateTimeFormat.format(Util.getDateFormat(), timestamp / 1000, null, utc);
 		}
 		static formatDateTime(timestamp) {
 			if (main_core.Type.isDate(timestamp)) {
@@ -576,6 +585,63 @@ this.BX = this.BX || {};
 				timeZone: 'UTC'
 			})).getTime();
 			return parseInt((timeInUTC - timeInTimezone) / 60000);
+		}
+		static getTimeZoneOffsetForInstant(timeZone, date = new Date()) {
+			try {
+				// Constructing the formatter dominates this call, and the option set is fixed, so the
+				// zone name is a complete cache key. An invalid zone throws here and never gets cached.
+				let formatter = Util.#timeZoneFormatters.get(timeZone);
+				if (!formatter) {
+					formatter = new Intl.DateTimeFormat('en-US', {
+						timeZone,
+						hourCycle: 'h23',
+						year: 'numeric',
+						month: '2-digit',
+						day: '2-digit',
+						hour: '2-digit',
+						minute: '2-digit',
+						second: '2-digit'
+					});
+					Util.#timeZoneFormatters.set(timeZone, formatter);
+				}
+				const parts = {};
+				for (const part of formatter.formatToParts(date)) {
+					parts[part.type] = part.value;
+				}
+				let hour = parseInt(parts.hour, 10);
+				if (hour === 24) {
+					hour = 0;
+				}
+				const asUTC = Date.UTC(parseInt(parts.year, 10), parseInt(parts.month, 10) - 1, parseInt(parts.day, 10), hour, parseInt(parts.minute, 10), parseInt(parts.second, 10));
+				return -Math.round((asUTC - date.getTime()) / 60000);
+			} catch {
+				return 0;
+			}
+		}
+		static getTimeZoneOffsetForWallClock(timeZone, wallClockDate = new Date()) {
+			if (!main_core.Type.isDate(wallClockDate)) {
+				return this.getTimeZoneOffsetForInstant(timeZone, new Date());
+			}
+			const wallClockUtcTs = Date.UTC(wallClockDate.getFullYear(), wallClockDate.getMonth(), wallClockDate.getDate(), wallClockDate.getHours(), wallClockDate.getMinutes(), wallClockDate.getSeconds());
+			const offset = this.getTimeZoneOffsetForInstant(timeZone, new Date(wallClockUtcTs));
+			const adjusted = this.getTimeZoneOffsetForInstant(timeZone, new Date(wallClockUtcTs + offset * 60000));
+			if (adjusted === offset) {
+				return offset;
+			}
+			const confirmed = this.getTimeZoneOffsetForInstant(timeZone, new Date(wallClockUtcTs + adjusted * 60000));
+			if (confirmed === adjusted) {
+				return adjusted;
+			}
+
+			// Nonexistent wall-clock time (spring-forward gap): keep the naive instant's offset.
+			return offset;
+		}
+		static getWallClockInstant(date, timeZone) {
+			const wallClockUtcTs = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds());
+			if (!main_core.Type.isStringFilled(timeZone)) {
+				return wallClockUtcTs;
+			}
+			return wallClockUtcTs + this.getTimeZoneOffsetForWallClock(timeZone, date) * 60000;
 		}
 		static randomInt(min, max) {
 			return Math.round(min - 0.5 + Math.random() * (max - min + 1));

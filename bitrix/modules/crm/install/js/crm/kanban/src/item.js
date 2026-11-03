@@ -5,11 +5,44 @@ import { Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Menu, MenuManager, Popup, PopupManager } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
+import { LiveAnnouncer } from 'ui.a11y';
+import { Icon, Main } from 'ui.icon-set.api.core';
 import { Label, LabelStyle } from 'ui.system.label';
 import 'ui.hint';
+import 'ui.icon-set.main';
 import 'crm_activity_planner';
 import 'main.kanban';
 import { ViewMode } from './viewmode';
+
+// One decoder for the whole module: it is only ever written to and read back, so
+// a card does not need its own. Creating an element per call was measurable on a
+// board redraw, where the name of every card is built.
+let entityDecoder = null;
+const POPUP_ANGLE_HALF_WIDTH = 17;
+
+/**
+ * Reads an html-formatted string back as plain text. A textarea is parsed as raw
+ * text, so the browser decodes every entity without building any element from
+ * the string.
+ *
+ * The result is no longer escaped: it belongs in a text or an attribute context
+ * (textContent, setAttribute, a live region) and must never be interpolated into
+ * markup. Every getter built on top of this one says so in its name.
+ *
+ * @param {string} html
+ * @returns {string}
+ */
+function decodeEntities(html)
+{
+	if (entityDecoder === null)
+	{
+		entityDecoder = Dom.create('textarea');
+	}
+
+	entityDecoder.innerHTML = html;
+
+	return entityDecoder.value;
+}
 
 /**
  *
@@ -25,6 +58,8 @@ export class Item extends BX.Kanban.Item
 	container = null;
 	timer = null;
 	popupTooltip = null;
+	fieldHintPopup = null;
+	fieldHintPopupCloseTimeout = null;
 	plannerCurrent = null;
 	fieldsWrapper = null;
 	badgesWrapper = null;
@@ -42,11 +77,51 @@ export class Item extends BX.Kanban.Item
 		columnId: null,
 		targetId: null,
 	};
-	checked = false;
+	checkedState = false;
 
 	constructor(options)
 	{
 		super(options);
+	}
+
+	dispose()
+	{
+		this.hideFieldHint();
+		super['dispose']();
+	}
+
+	/**
+	 * Selection flag of the card. Both the grid and the card itself assign it
+	 * directly, so it is an accessor that keeps the selection state readable for
+	 * assistive tech.
+	 *
+	 * @returns {boolean}
+	 */
+	get checked()
+	{
+		return this.checkedState;
+	}
+
+	set checked(value)
+	{
+		this.checkedState = Boolean(value);
+
+		// The name reports the selection state, and selection is changed both by
+		// the mouse and from the keyboard without redrawing the card. Before the
+		// layout is built there is no node to name yet.
+		if (this.container)
+		{
+			this.refreshAriaLabel();
+		}
+	}
+
+	refreshAriaLabel()
+	{
+		const refreshAriaLabel = BX.Kanban.Item.prototype.refreshAriaLabel;
+		if (Type.isFunction(refreshAriaLabel))
+		{
+			refreshAriaLabel.call(this);
+		}
 	}
 
 	setOptions(options)
@@ -171,6 +246,7 @@ export class Item extends BX.Kanban.Item
 
 		if (this.needRenderFields())
 		{
+			this.hideFieldHint();
 			this.fieldsWrapper.innerHTML = null;
 			this.layoutFields();
 		}
@@ -315,6 +391,15 @@ export class Item extends BX.Kanban.Item
 			Dom.append(element, importListNode);
 		});
 
+		const closeButton = Tag.render`
+			<div
+				class="crm-kanban-item-industry-close"
+				data-testid="crm-kanban-item-industry-close-btn"
+				onclick="${this.onIndustryCloseButtonClick.bind(this)}"
+			></div>
+		`;
+		this.makeCardActionAccessible(closeButton, Loc.getMessage('CRM_KANBAN_ITEM_INDUSTRY_CLOSE_ARIA_LABEL'));
+
 		return Tag.render`
 			<div class="crm-kanban-item-industry">
 				<div class="crm-kanban-item-industry-title">
@@ -326,7 +411,7 @@ export class Item extends BX.Kanban.Item
 				<span class="ui-btn ui-btn-sm ui-btn-primary ui-btn-round crm-kanban-sidepanel" data-url="rest_demo">
 					${Loc.getMessage('CRM_KANBAN_REST_DEMO_SETUP')}
 				</span>
-				<div class="crm-kanban-item-industry-close" onclick="${this.onIndustryCloseButtonClick.bind(this)}"></div>
+				${closeButton}
 			</div>
 		`;
 	}
@@ -383,6 +468,152 @@ export class Item extends BX.Kanban.Item
 		{
 			this.totalPrice.innerHTML = data.price_formatted;
 		}
+	}
+
+	/**
+	 * Accessible name of the card. Overridable name hook: title, amount,
+	 * client, stage and selection state, so a screen reader announces a
+	 * meaningful card name even when the visible title is clipped. Parts that are
+	 * empty are skipped.
+	 *
+	 * @returns {string}
+	 */
+	getItemAriaLabel()
+	{
+		const data = this.getData();
+
+		// Placeholder cards (contact center, industry solutions) hold no entity:
+		// an entity name would misname them, so they keep the name their own
+		// content gives them.
+		if (data.special_type)
+		{
+			return '';
+		}
+
+		const parts = [];
+
+		const name = this.getUnescapedName();
+		if (name !== '')
+		{
+			parts.push(Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_NAME', { '#NAME#': name }));
+		}
+
+		const amount = this.getUnescapedAmount();
+		if (amount !== '')
+		{
+			parts.push(amount);
+		}
+
+		const client = this.getUnescapedClientName();
+		if (client !== '')
+		{
+			parts.push(Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_CLIENT', { '#CLIENT#': client }));
+		}
+
+		const stage = this.getColumn()?.getName() ?? '';
+		if (stage !== '')
+		{
+			parts.push(Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_STAGE', { '#STAGE#': stage }));
+		}
+
+		if (this.checked)
+		{
+			parts.push(Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_SELECTED'));
+		}
+
+		return parts.join(', ');
+	}
+
+	/**
+	 * The card is opened through its title link, so that link is the interactive
+	 * node of the card: it takes the board focus and the accessible name, while
+	 * the card container stays a plain list item. Placeholder cards (contact
+	 * center, industry solutions) have no link and keep focus on the container,
+	 * and so do cards whose field set hides the title.
+	 *
+	 * @returns {HTMLElement}
+	 */
+	getFocusableNode()
+	{
+		return this.isTitleLinkDisplayed() ? this.link : super.getFocusableNode();
+	}
+
+	/**
+	 * The title link is rendered hidden when the card shows a configured set of
+	 * fields and is shown back only when that set contains the title, so it is
+	 * not always displayed. A node with display: none takes neither focus nor an
+	 * accessible name, so the card falls back to its container then.
+	 *
+	 * @returns {boolean}
+	 */
+	isTitleLinkDisplayed()
+	{
+		if (!Type.isDomNode(this.link))
+		{
+			return false;
+		}
+
+		// Only the inline style is read, never the computed one. The link is hidden
+		// and shown through inline display alone: createTitleLink() writes
+		// display: none for a card with a configured field set, and layoutField()
+		// shows it back through switchVisible(); no stylesheet sets display for the
+		// title link. A computed style read here would be a read right after the
+		// card was written to and would force a synchronous layout of the board on
+		// every update in place.
+		return this.link.style.display !== 'none';
+	}
+
+	/**
+	 * Title of the item as text, suitable for a11y names. The server sends it
+	 * html-encoded (`Smith &amp; Sons`), so a title that has to be heard is
+	 * decoded back.
+	 *
+	 * The result is not escaped: text and attribute contexts only, never markup.
+	 *
+	 * @returns {string}
+	 */
+	getUnescapedName()
+	{
+		const name = String(this.getData().name ?? '');
+
+		return name === '' ? '' : decodeEntities(name);
+	}
+
+	/**
+	 * Formatted amount as text (markup stripped), suitable for a11y names.
+	 *
+	 * The result is not escaped: text and attribute contexts only, never markup.
+	 *
+	 * @returns {string}
+	 */
+	getUnescapedAmount()
+	{
+		const formatted = String(this.getData().price_formatted ?? '').replace(/<[^>]*>/g, '');
+
+		// The server formats the amount as html: the thousands separator and the
+		// currency sign come as entities (`15&nbsp;000 &#8381;`), and an accessible
+		// name has to carry text, not markup.
+		return decodeEntities(formatted).trim();
+	}
+
+	/**
+	 * Client display name as text (contact and/or company). Both names come from
+	 * the server html-encoded, the same way the title does.
+	 *
+	 * The result is not escaped: text and attribute contexts only, never markup.
+	 *
+	 * @returns {string}
+	 */
+	getUnescapedClientName()
+	{
+		const data = this.getData();
+
+		const client = [data.contactName, data.companyName]
+			.filter((name) => Type.isStringFilled(name))
+			.join(', ')
+		;
+
+		return client === '' ? '' : decodeEntities(client);
 	}
 
 	/**
@@ -775,13 +1006,7 @@ export class Item extends BX.Kanban.Item
 		const tooltipText = fieldConfig?.helpMessage ?? '';
 		if (tooltipText && this.getGrid().shouldShowTooltips())
 		{
-			titleTooltip = Tag.render`
-				<span
-					class="crm-kanban-item-fields-item-title-tooltip --hidden">
-				</span>
-			`;
-
-			titleTooltip.dataset.hint = tooltipText;
+			titleTooltip = this.createFieldHintNode(tooltipText);
 
 			this.ufTooltipNodes.push(titleTooltip);
 		}
@@ -810,11 +1035,7 @@ export class Item extends BX.Kanban.Item
 		if (code === 'COMMENTS' && Type.isStringFilled(this.getGrid().getData().copilotName))
 		{
 			const copilot = `${this.getGrid().getData().copilotName}`;
-			const escapedCopilot =
-				Type.isFunction(RegExp.escape)
-					? RegExp.escape(copilot)
-					: copilot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-			;
+			const escapedCopilot = BX.util.escapeRegExp(copilot);
 			const regex = new RegExp(`(^|<br>)${escapedCopilot}`, 'gim');
 
 			const valueElements = fieldsElement.querySelectorAll('p');
@@ -837,7 +1058,159 @@ export class Item extends BX.Kanban.Item
 		`;
 
 		Dom.append(fieldsItem, this.fieldsWrapper);
-		BX.UI.Hint.init(BX(this.fieldsWrapper));
+	}
+
+	createFieldHintNode(tooltipText)
+	{
+		const titleTooltip = Tag.render`<span
+			class="crm-kanban-item-fields-item-title-tooltip ui-hint --hidden"
+			data-testid="crm-kanban-item-field-hint"
+		></span>`;
+		const iconElement = new Icon({ icon: Main.HELP }).render();
+		Dom.addClass(iconElement, 'ui-hint-icon');
+		Dom.append(iconElement, titleTooltip);
+
+		Event.bind(titleTooltip, 'mouseenter', () => this.showFieldHint(tooltipText, titleTooltip));
+		Event.bind(titleTooltip, 'mouseleave', () => this.scheduleHideFieldHint());
+
+		return titleTooltip;
+	}
+
+	showFieldHint(tooltipText, target)
+	{
+		this.clearFieldHintCloseTimeout();
+		this.hideFieldHint();
+
+		const content = Tag.render`<div class="ui-hint-content"></div>`;
+		content.innerHTML = Text.encode(tooltipText).trim().replaceAll(/\r?\n/g, '<br>');
+
+		this.fieldHintPopup = new Popup(`crm-kanban-field-hint-${this.id}`, target, {
+			content,
+			className: 'ui-hint-popup',
+			targetContainer: document.body,
+			darkMode: true,
+			focusTrap: false,
+			animation: 'fading-slide',
+			angle: true,
+			autoHide: true,
+			closeByEsc: true,
+		});
+
+		this.fieldHintPopup.show();
+		const popupContainer = this.fieldHintPopup.getPopupContainer();
+		Dom.addClass(popupContainer, 'ui-hint-popup-interactivity');
+		popupContainer.setAttribute('data-testid', 'crm-kanban-item-field-hint-popup');
+		Event.bind(popupContainer, 'mouseenter', () => this.clearFieldHintCloseTimeout());
+		Event.bind(popupContainer, 'mouseleave', () => this.scheduleHideFieldHint());
+		this.adjustFieldHintAngle(target);
+	}
+
+	adjustFieldHintAngle(target)
+	{
+		setTimeout(() => {
+			if (!this.fieldHintPopup || !Type.isDomNode(target))
+			{
+				return;
+			}
+
+			const angle = this.fieldHintPopup.angle;
+			const popupContainer = this.fieldHintPopup.getPopupContainer();
+			if (!angle?.element || !Type.isDomNode(popupContainer))
+			{
+				return;
+			}
+
+			const targetRect = target.getBoundingClientRect();
+			const popupRect = popupContainer.getBoundingClientRect();
+			let offset = targetRect.left + targetRect.width / 2 - popupRect.left - POPUP_ANGLE_HALF_WIDTH;
+			const range = this.getFieldHintAngleOffsetRange(popupContainer, angle);
+			let popupShift = 0;
+
+			if (offset < range.min || offset > range.max)
+			{
+				popupShift = this.shiftFieldHintPopupHorizontally(popupContainer, offset, range);
+			}
+
+			if (popupShift > 0)
+			{
+				offset = Math.min(Math.max(offset - popupShift, range.min), range.max);
+			}
+
+			angle.offset = offset;
+			if (angle.position === 'bottom')
+			{
+				Dom.style(angle.element, 'left', '0');
+				Dom.style(angle.element, 'marginLeft', `${offset}px`);
+			}
+			else
+			{
+				Dom.style(angle.element, 'marginLeft', '0');
+				Dom.style(angle.element, 'left', `${offset}px`);
+			}
+		}, 0);
+	}
+
+	getFieldHintAngleOffsetRange(popupContainer, angle)
+	{
+		const styles = getComputedStyle(popupContainer);
+		const angleWidth = angle.element.offsetWidth || POPUP_ANGLE_HALF_WIDTH * 2;
+		const leftRadius = parseFloat(
+			angle.position === 'bottom' ? styles.borderBottomLeftRadius : styles.borderTopLeftRadius,
+		);
+		const rightRadius = parseFloat(
+			angle.position === 'bottom' ? styles.borderBottomRightRadius : styles.borderTopRightRadius,
+		);
+
+		return {
+			min: leftRadius,
+			max: popupContainer.offsetWidth - angleWidth - rightRadius,
+		};
+	}
+
+	shiftFieldHintPopupHorizontally(popupContainer, offset, range)
+	{
+		const popupRect = popupContainer.getBoundingClientRect();
+		const viewportWidth = document.documentElement.clientWidth;
+		const shiftLeft = offset < range.min ? range.min - offset : 0;
+		const shiftRight = offset > range.max ? offset - range.max : 0;
+		const direction = shiftLeft > 0 ? -1 : 1;
+		const maxShift = direction < 0 ? popupRect.left : viewportWidth - popupRect.right;
+		const popupShift = Math.min(Math.max(shiftLeft, shiftRight), Math.max(maxShift, 0));
+
+		if (popupShift <= 0)
+		{
+			return 0;
+		}
+
+		Dom.style(popupContainer, 'left', `${popupRect.left + popupShift * direction}px`);
+
+		return popupShift;
+	}
+
+	hideFieldHint()
+	{
+		this.clearFieldHintCloseTimeout();
+		this.fieldHintPopup?.destroy();
+		this.fieldHintPopup = null;
+	}
+
+	scheduleHideFieldHint()
+	{
+		this.clearFieldHintCloseTimeout();
+		this.fieldHintPopupCloseTimeout = setTimeout(() => {
+			this.hideFieldHint();
+		}, 100);
+	}
+
+	clearFieldHintCloseTimeout()
+	{
+		if (this.fieldHintPopupCloseTimeout === null)
+		{
+			return;
+		}
+
+		clearTimeout(this.fieldHintPopupCloseTimeout);
+		this.fieldHintPopupCloseTimeout = null;
 	}
 
 	addTextExpander(fieldElement)
@@ -1181,6 +1554,60 @@ export class Item extends BX.Kanban.Item
 		});
 	}
 
+	/**
+	 * Keyboard selection is available for real cards only: the special
+	 * import/rest placeholders render without a checkbox.
+	 *
+	 * @returns {boolean}
+	 */
+	isSelectionAvailable()
+	{
+		return Boolean(this.checkedButton);
+	}
+
+	/**
+	 * Routes keyboard selection through the grid so it mirrors the mouse flow
+	 * (checkbox state, action panel) and manages focus board<->panel.
+	 */
+	toggleSelection()
+	{
+		// The grid can defer the selection (an open quick form editor is closed
+		// first), so the announcement is chained onto the promise it returns: a
+		// timer would fire before the promise continuation and announce the state
+		// the card had before the toggle. Nothing is announced when the selection
+		// has not changed after all.
+		this.getGrid().toggleItemSelectionFromKeyboard(this).then((toggled) => {
+			if (toggled)
+			{
+				this.announceSelection();
+			}
+		});
+	}
+
+	/**
+	 * Announces the new selection state of the card and the size of the current
+	 * selection: keyboard selection moves focus to the group actions panel, so
+	 * the change itself has to be reported through the live region.
+	 */
+	announceSelection()
+	{
+		const name = this.getUnescapedName();
+		const state = (
+			this.isChecked()
+				? Loc.getMessage('CRM_KANBAN_A11Y_ITEM_SELECTED', { '#NAME#': name })
+				: Loc.getMessage('CRM_KANBAN_A11Y_ITEM_UNSELECTED', { '#NAME#': name })
+		);
+
+		const count = this.getGrid().getChecked().length;
+		const total = (
+			count > 0
+				? Loc.getMessagePlural('CRM_KANBAN_A11Y_SELECTED_COUNT', count, { '#COUNT#': count })
+				: Loc.getMessage('CRM_KANBAN_A11Y_SELECTED_NONE')
+		);
+
+		LiveAnnouncer.announce(`${state}, ${total}`);
+	}
+
 	selectItem()
 	{
 		this.checked = true;
@@ -1340,6 +1767,8 @@ export class Item extends BX.Kanban.Item
 
 	hideUfTooltips()
 	{
+		this.scheduleHideFieldHint();
+
 		this.ufTooltipNodes.forEach((node, idx) => {
 			this.ufTooltipNodes[idx].classList.add('--hidden');
 		});
@@ -1347,6 +1776,8 @@ export class Item extends BX.Kanban.Item
 
 	showUfTooltips()
 	{
+		this.clearFieldHintCloseTimeout();
+
 		this.ufTooltipNodes.forEach((node, idx) => {
 			this.ufTooltipNodes[idx].classList.remove('--hidden');
 		});
@@ -1354,7 +1785,18 @@ export class Item extends BX.Kanban.Item
 
 	createTitleLink()
 	{
-		this.link = Tag.render`<a class="crm-kanban-item-title" style="${this.getBlockStyleBasedOnFields()}"></a>`;
+		// The link is the focus node of the card, and the board moves a single
+		// tabindex="0" over its cards. Like the card and column containers, the
+		// link starts out of the Tab order, so a card added to a drawn board does
+		// not become an extra tab stop before the board normalizes the matrix.
+		this.link = Tag.render`
+			<a
+				class="crm-kanban-item-title"
+				tabindex="-1"
+				data-testid="crm-kanban-item-title-link"
+				style="${this.getBlockStyleBasedOnFields()}"
+			></a>
+		`;
 
 		return this.link;
 	}
@@ -1424,6 +1866,12 @@ export class Item extends BX.Kanban.Item
 			<div class="crm-kanban-item-checkbox" onclick="${this.onCheckedButtonClick.bind(this)}"></div>
 		`;
 
+		// The mark is a decoration: it has pointer-events: none and selection is
+		// made by clicking the card or pressing Space on it. A widget role here
+		// would announce a control that cannot be reached or operated, so the
+		// selection state is carried by the accessible name of the card instead.
+		this.checkedButton.setAttribute('aria-hidden', 'true');
+
 		return this.checkedButton;
 	}
 
@@ -1440,6 +1888,41 @@ export class Item extends BX.Kanban.Item
 		{
 			Dom.removeClass(this.checkedButton, className);
 		}
+	}
+
+	/**
+	 * Makes a card action drawn as a clickable span or div operable with the
+	 * keyboard and nameable for assistive tech: button semantics, focusability
+	 * and Enter/Space activation through the same click handler the mouse uses.
+	 *
+	 * @param {HTMLElement} node
+	 * @param {?string} ariaLabel Skipped for actions named by their visible text.
+	 * @returns {HTMLElement}
+	 */
+	makeCardActionAccessible(node, ariaLabel = null)
+	{
+		if (!Type.isDomNode(node))
+		{
+			return node;
+		}
+
+		node.setAttribute('role', 'button');
+		node.setAttribute('tabindex', '0');
+
+		if (Type.isStringFilled(ariaLabel))
+		{
+			node.setAttribute('aria-label', ariaLabel);
+		}
+
+		Event.bind(node, 'keydown', (event) => {
+			if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+			{
+				event.preventDefault();
+				node.click();
+			}
+		});
+
+		return node;
 	}
 
 	createBadgesWrapper()
@@ -1467,8 +1950,16 @@ export class Item extends BX.Kanban.Item
 		if (this.isShowActivity())
 		{
 			this.activityExist = Tag.render`
-				<span class="crm-kanban-item-activity" onclick="${this.showCurrentPlan.bind(this)}"></span>
+				<span
+					class="crm-kanban-item-activity"
+					data-testid="crm-kanban-item-activity-show-btn"
+					onclick="${this.showCurrentPlan.bind(this)}"
+				></span>
 			`;
+			this.makeCardActionAccessible(
+				this.activityExist,
+				Loc.getMessage('CRM_KANBAN_ITEM_ACTIVITY_SHOW_ARIA_LABEL'),
+			);
 
 			elements.push({
 				id: 'activityExist',
@@ -1476,8 +1967,16 @@ export class Item extends BX.Kanban.Item
 			});
 
 			this.activityEmpty = Tag.render`
-				<span class="crm-kanban-item-activity" onclick="${this.onActivityEmptyClick.bind(this)}"></span>
+				<span
+					class="crm-kanban-item-activity"
+					data-testid="crm-kanban-item-activity-empty-btn"
+					onclick="${this.onActivityEmptyClick.bind(this)}"
+				></span>
 			`;
+			this.makeCardActionAccessible(
+				this.activityEmpty,
+				Loc.getMessage('CRM_KANBAN_ITEM_ACTIVITY_EMPTY_ARIA_LABEL'),
+			);
 
 			elements.push({
 				id: 'activityEmpty',
@@ -1550,10 +2049,16 @@ export class Item extends BX.Kanban.Item
 		}
 
 		this.activityPlan = Tag.render`
-			<span class="crm-kanban-item-plan" onclick="${this.showPlannerMenu.bind(this)}">
+			<span
+				class="crm-kanban-item-plan"
+				data-testid="crm-kanban-item-activity-plan-btn"
+				onclick="${this.showPlannerMenu.bind(this)}"
+			>
 				+ ${Loc.getMessage('CRM_KANBAN_ACTIVITY_TO_PLAN2')}
 			</span>
 		`;
+		// The visible text of the control is its accessible name.
+		this.makeCardActionAccessible(this.activityPlan);
 
 		this.planner = Tag.render`<div class="crm-kanban-item-planner">${this.activityPlan}</div>`;
 
@@ -1603,7 +2108,15 @@ export class Item extends BX.Kanban.Item
 			|| Loc.getMessage(`CRM_KANBAN_ACTIVITY_CHANGE_${typeTranslateCode}_MSGVER_2`);
 
 		const eventLink = content.querySelector('.crm-kanban-item-activity-link');
-		BX.bind(eventLink, 'click', () => {
+		eventLink.textContent = eventLink.textContent.replace(/\s+$/, '');
+
+		const previousSibling = eventLink.previousSibling;
+		if (previousSibling?.nodeType === Node.TEXT_NODE && /\S$/.test(previousSibling.textContent))
+		{
+			previousSibling.textContent = `${previousSibling.textContent} `;
+		}
+
+		Event.bind(eventLink, 'click', () => {
 			this.showPlannerMenu(this.activityPlan);
 			this.popupTooltip.destroy();
 		});
@@ -1657,6 +2170,10 @@ export class Item extends BX.Kanban.Item
 				autoHide: true,
 				className: 'crm-kanban-popup-plan',
 				closeByEsc: true,
+				focusTrap: true,
+				ariaLabel: Loc.getMessage('CRM_KANBAN_ITEM_PLANNER_POPUP_ARIA_LABEL', {
+					'#NAME#': this.getUnescapedName(),
+				}),
 				contentColor: 'white',
 				angle: true,
 				offsetLeft: 15,
@@ -2316,13 +2833,62 @@ export class Item extends BX.Kanban.Item
 			style = BX.UI.CounterStyle.FILLED_NO_ACCENT;
 		}
 
-		return (new BX.UI.Counter({
+		const counterNode = (new BX.UI.Counter({
 			value: value,
 			maxValue: 99,
 			useAirDesign: true,
 			style,
 			isDouble,
-		}).render()).outerHTML;
+		}).render());
+
+		counterNode.setAttribute('data-testid', 'crm-kanban-item-activity-counter');
+
+		const ariaLabel = this.getActivityCounterAriaLabel(value, style, isDouble);
+		if (ariaLabel !== '')
+		{
+			// role=img makes the screen reader read the meaningful label instead of
+			// the bare number, so the counter's meaning is conveyed without colour.
+			counterNode.setAttribute('role', 'img');
+			counterNode.setAttribute('aria-label', ariaLabel);
+		}
+
+		return counterNode.outerHTML;
+	}
+
+	/**
+	 * Meaningful accessible name for the activity counter, derived from its
+	 * style so the type (incoming / overdue / total) is distinguishable without
+	 * relying on colour. Empty string for the neutral empty counter.
+	 *
+	 * @param {number} value
+	 * @param {string} style
+	 * @param {boolean} isDouble
+	 * @returns {string}
+	 */
+	getActivityCounterAriaLabel(value, style, isDouble)
+	{
+		if (value <= 0)
+		{
+			return '';
+		}
+
+		if (style === BX.UI.CounterStyle.FILLED_SUCCESS)
+		{
+			return Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_INCOMING', value, { '#COUNT#': value });
+		}
+
+		if (style === BX.UI.CounterStyle.FILLED_ALERT)
+		{
+			if (isDouble)
+			{
+				return `${Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_TOTAL', value, { '#COUNT#': value })}. `
+					+ Loc.getMessage('CRM_KANBAN_ACTIVITY_COUNTER_INCOMING_AND_OVERDUE');
+			}
+
+			return Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_OVERDUE', value, { '#COUNT#': value });
+		}
+
+		return Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_TOTAL', value, { '#COUNT#': value });
 	}
 
 	isActivityLimitIsExceeded()

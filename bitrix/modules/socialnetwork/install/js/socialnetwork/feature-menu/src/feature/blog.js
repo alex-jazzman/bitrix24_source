@@ -1,5 +1,6 @@
 import { type SliderOptions } from 'main.sidepanel';
 import { Outline } from 'ui.icon-set.api.core';
+import { type SectionConfig } from 'socialnetwork.v2.lib.event-sender';
 import { Feature, NavigationMode, type NavigationModeType } from './feature';
 
 export class Blog extends Feature
@@ -12,6 +13,11 @@ export class Blog extends Feature
 	getId(): string
 	{
 		return 'blog';
+	}
+
+	getAnalyticsConfig(): SectionConfig
+	{
+		return { tool: 'feed', category: 'feed', event: 'open_section', cElement: 'feed_button' };
 	}
 
 	getNavigationMode(): NavigationModeType

@@ -35,3 +35,16 @@ body.ui-action-panel-shown .pagetitle-below {
 	width: 100%;
 	height: 58px;
 }
+
+/* Visible keyboard focus indicator (WCAG 2.4.7) for the CRM-only controls of the
+   board; the shared board elements are covered by the main.kanban stylesheet. */
+.crm-kanban-column-add-item-button:focus-visible,
+.crm-kanban-total-price-total:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: -2px;
+}
+
+.crm-kanban-column-add-item-button:focus:not(:focus-visible),
+.crm-kanban-total-price-total:focus:not(:focus-visible) {
+	outline: none;
+}

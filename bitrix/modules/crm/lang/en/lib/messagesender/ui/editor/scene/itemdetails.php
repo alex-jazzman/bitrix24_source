@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_MS_EDITOR_SCENE_ITEM_DETAILS_NAME"] = "Item details";

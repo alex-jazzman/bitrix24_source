@@ -330,10 +330,6 @@ $getDownloadResultFileTemplate = static function (
 	?string $downloadUrlForPrinted = null,
 	?string $viewUrl = null,
 	?string $title = null,
-	?string $annulUid = null,
-	bool $canAnnul = false,
-	bool $isAnnulled = false,
-	bool $annulEnabled = false,
 ) use (
 	$arParams
 ): string {
@@ -363,24 +359,15 @@ $getDownloadResultFileTemplate = static function (
 		}
 	}
 
-	// The printed/archive split always coexist; the single annulment action reuses
-	// the same dropdown so the "Action" column keeps one control per row. The item
-	// is offered only under the feature flag and per-row rights; the endpoint stays
-	// authoritative. When toggling, an already annulled document offers "unannul".
+	// Download dropdown may contain archive, printed version, or both.
+	$hasArchive = ($downloadUrl !== null) && $isValidDownloadUrl;
 	$hasPrinted = ($downloadUrlForPrinted !== null) && $isValidDownloadUrlForPrinted;
-	$showAnnulItem = $annulEnabled && $canAnnul && (string)$annulUid !== '';
-	$hasMenu = $hasPrinted || $showAnnulItem;
-	$annulActionText = $isAnnulled
-		? (string)Loc::getMessage('SIGN_DOCUMENT_LIST_MASS_ACTION_UNANNUL')
-		: (string)Loc::getMessage('SIGN_DOCUMENT_LIST_MASS_ACTION_ANNUL')
-	;
+	$hasMenu = $hasPrinted;
 
 	$componentType = mb_strtolower((string)$arParams['COMPONENT_TYPE']);
 	// The company safe and the per-document process grid both render the download
-	// button, with the dropdown toggle added only when there are menu items. Whether
-	// a row can be annulled must not change the control itself, or the "Action"
-	// column mixes buttons and labels within one grid. Personal/current keep the
-	// plain download label below.
+	// button, with the dropdown toggle added only when the printed version is available.
+	// Personal/current keep the plain download label below.
 	if ($componentType === COMPONENT_TYPE_SAFE || $componentType === COMPONENT_TYPE_DOCUMENT): ?>
 		<div class="sign-personal-action">
 			<?php if ($isValidDownloadUrl || $isValidDownloadUrlForPrinted): ?>
@@ -431,26 +418,11 @@ $getDownloadResultFileTemplate = static function (
 								text: "<?= CUtil::JSEscape(Loc::getMessage('SIGN_DOCUMENT_DOWNLOAD_PRINTED'))?>",
 								href: "<?= CUtil::JSEscape($downloadUrlForPrintedObject)?>"
 							},
+						<?php endif; ?>
+						<?php if ($hasArchive): ?>
 							{
 								text: "<?= CUtil::JSEscape(Loc::getMessage('SIGN_DOCUMENT_DOWNLOAD_ARCHIVE'))?>",
 								href: "<?= CUtil::JSEscape($downloadUrlObject)?>"
-							},
-						<?php endif; ?>
-						<?php if ($showAnnulItem): ?>
-							{
-								text: "<?= CUtil::JSEscape($annulActionText)?>",
-								className: 'menu-popup-no-icon sign-document-list__row-annul-item',
-								dataset: { testid: 'sign-document-list-row-annul-item' },
-								onclick: function() {
-									menu.popupWindow.close();
-									if (typeof signAnnulGrid !== 'undefined')
-									{
-										signAnnulGrid.annulOne(
-											'<?= CUtil::JSEscape((string)$annulUid)?>',
-											<?= $isAnnulled ? 'false' : 'true' ?>
-										);
-									}
-								}
 							},
 						<?php endif; ?>
 					]
@@ -754,10 +726,6 @@ $prepareGridData = static function ($documentData) use (
 				downloadUrlForPrinted: $downloadResultFileInfo['DOWNLOAD_URL_PRINTED'],
 				viewUrl: $downloadResultFileInfo['VIEW_URL'],
 				title: $downloadResultFileInfo['TITLE'],
-				annulUid: (string)($documentData['MEMBER_UID'] ?? ''),
-				canAnnul: !empty($documentData['CAN_ANNUL']),
-				isAnnulled: !empty($documentData['IS_ANNULLED']),
-				annulEnabled: $isAnnulSingleActionEnabled,
 			);
 	}
 
@@ -771,10 +739,6 @@ $prepareGridData = static function ($documentData) use (
 		}
 		elseif ($type === 'file')
 		{
-			// In the process grid the signed result file lives in the "Action" column;
-			// carry the annul metadata so a completed signer row can offer the annul
-			// dropdown next to the download. The member uid is the only identifier the
-			// annul endpoint accepts.
 			$data['ACTION'] = $actionData === null
 				? ''
 				: $getDownloadResultFileTemplate(
@@ -785,10 +749,6 @@ $prepareGridData = static function ($documentData) use (
 					downloadUrlForPrinted: $actionData['DOWNLOAD_URL_PRINTED'],
 					viewUrl: $actionData['VIEW_URL'],
 					title: $actionData['TITLE'],
-					annulUid: (string)($documentData['MEMBER_UID'] ?? ''),
-					canAnnul: !empty($documentData['CAN_ANNUL']),
-					isAnnulled: !empty($documentData['IS_ANNULLED']),
-					annulEnabled: $isAnnulSingleActionEnabled,
 				);
 		}
 	}
@@ -854,9 +814,9 @@ foreach ($arResult["DOCUMENTS"] as $documentData)
 		$folderId = (int)$documentData['id'];
 
 		// Folder-row aggregate cells (DTO-01, FP4.T2/T3/T4). Role people are shown as
-		// clickable avatar stacks in their own columns (participant → Участник,
-		// representative → Представитель, sender → Отправитель); companies and roles
-		// as comma-separated lists. Popup titles reuse the actual grid column labels.
+		// clickable avatar stacks in their own columns (participant, representative,
+		// sender); companies and roles as comma-separated lists. Popup titles reuse the
+		// actual grid column labels.
 		$folderColumns = $arResult['COLUMNS'] ?? [];
 		$getFolderColumnName = static fn(string $key): string => (string)($folderColumns[$key]['name'] ?? '');
 
@@ -1502,8 +1462,23 @@ if ($arResult['IS_SHOW_TOOLBAR_FILTER'])
 							return;
 						}
 
-						const response = await BX.ajax.runAction('sign.api_v1.document.member.loadStage', {json: {memberId: params.memberId}});
-						const data = response.data;
+						// The pull event reaches every subscriber, so a denial is a regular outcome
+						// here and must leave the label as it is instead of rejecting.
+						let data = null;
+						try
+						{
+							const response = await BX.ajax.runAction('sign.api_v1.document.member.loadStage', {json: {memberId: params.memberId}});
+							data = response.data;
+						}
+						catch
+						{
+							return;
+						}
+
+						if (!data || !data.color || !data.text)
+						{
+							return;
+						}
 
 						label.classList.remove('ui-label-danger');
 						label.classList.remove('ui-label-success');

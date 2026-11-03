@@ -3,7 +3,7 @@ import {Loader} from "main.loader";
 import {MessageBox} from 'ui.dialogs.messagebox';
 import {UserField} from 'ui.userfield';
 
-import {ButtonManager, Button} from 'ui.buttons';
+import {ButtonManager, type Button} from 'ui.buttons';
 
 const namespace = Reflection.namespace('BX.Main.UserField');
 
@@ -337,6 +337,8 @@ class Config
 		Ajax.runComponentAction('bitrix:main.field.config.detail', 'getSettings', {
 			data: {
 				userTypeId,
+				entityId: this.getInputValue('entityId'),
+				moduleId: this.moduleId,
 			},
 			analyticsLabel: 'mainUserFieldConfigGetSettings',
 			mode: 'class',

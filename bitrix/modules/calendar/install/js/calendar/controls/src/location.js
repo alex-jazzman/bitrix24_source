@@ -500,6 +500,55 @@ export class Location
 		this.updateAccessibilityDebounce();
 	}
 
+	static isRecurringEvent(event): boolean
+	{
+		const rrule = event.RRULE;
+		if (Type.isStringFilled(rrule))
+		{
+			return true;
+		}
+		if (Type.isArray(rrule))
+		{
+			return rrule.length > 0;
+		}
+		if (Type.isPlainObject(rrule))
+		{
+			return Object.keys(rrule).length > 0;
+		}
+
+		return false;
+	}
+
+	// Recurrence instances keep the master's offsets, while all-day and legacy events may have none.
+	static getUnambiguousEventInstant(event): ?{ from: number, to: number }
+	{
+		if (event.DT_SKIP_TIME !== 'N' || Location.isRecurringEvent(event))
+		{
+			return null;
+		}
+
+		const dateFrom = Util.parseDate(event.DATE_FROM, true);
+		const dateTo = Util.parseDate(event.DATE_TO, true);
+		const offsetFrom = Number.parseInt(event.TZ_OFFSET_FROM, 10);
+		const offsetTo = Number.parseInt(event.TZ_OFFSET_TO, 10);
+		if (
+			!Type.isDate(dateFrom)
+			|| !Type.isDate(dateTo)
+			|| !Number.isFinite(dateFrom.getTime())
+			|| !Number.isFinite(dateTo.getTime())
+			|| !Number.isFinite(offsetFrom)
+			|| !Number.isFinite(offsetTo)
+		)
+		{
+			return null;
+		}
+
+		return {
+			from: dateFrom.getTime() - offsetFrom * 1000,
+			to: dateTo.getTime() - offsetTo * 1000,
+		};
+	}
+
 	updateAccessibility()
 	{
 		if (this.readOnly)
@@ -513,12 +562,21 @@ export class Location
 				? params.timezone
 				: Util.getUserSettings().timezoneName
 			;
-			const timezoneOffset = Util.getTimeZoneOffset(timezone) * 60 * 1000;
-			const fromTs = new Date(params.from.getTime() + timezoneOffset).getTime();
-			let toTs = new Date(params.to.getTime() + timezoneOffset).getTime();
-			if (params.fullDay)
+			const fromTs = Number.isFinite(params.fromTsUtc)
+				? params.fromTsUtc
+				: Util.getWallClockInstant(params.from, timezone);
+			let toTs;
+			if (Number.isFinite(params.toTsUtc))
 			{
-				toTs += Location.DAY_LENGTH;
+				toTs = params.toTsUtc;
+			}
+			else
+			{
+				toTs = Util.getWallClockInstant(params.to, timezone);
+				if (params.fullDay)
+				{
+					toTs += Location.DAY_LENGTH;
+				}
 			}
 
 			for (const index in Location.locationList)
@@ -542,17 +600,29 @@ export class Location
 							continue;
 						}
 
-						let eventTimezoneOffset = 0;
-						if (event.DT_SKIP_TIME === 'N')
+						let eventTsFrom;
+						let eventTsTo;
+						const unambiguousInstant = Location.getUnambiguousEventInstant(event);
+						if (unambiguousInstant)
 						{
-							eventTimezoneOffset = Util.getTimeZoneOffset(event.TZ_FROM) * 60 * 1000;
+							eventTsFrom = unambiguousInstant.from;
+							eventTsTo = unambiguousInstant.to;
 						}
-
-						const eventTsFrom = new Date(Util.parseDate(event.DATE_FROM).getTime() + eventTimezoneOffset).getTime();
-						let eventTsTo = new Date(Util.parseDate(event.DATE_TO).getTime() + eventTimezoneOffset).getTime();
-						if (event.DT_SKIP_TIME === 'Y')
+						else
 						{
-							eventTsTo += Location.DAY_LENGTH;
+							const eventDateFrom = Util.parseDate(event.DATE_FROM);
+							const eventDateTo = Util.parseDate(event.DATE_TO);
+							const eventTimezoneTo = event.TZ_TO || event.TZ_FROM;
+							eventTsFrom = event.DT_SKIP_TIME === 'N'
+								? Util.getWallClockInstant(eventDateFrom, event.TZ_FROM)
+								: Util.getWallClockInstant(eventDateFrom);
+							eventTsTo = event.DT_SKIP_TIME === 'N'
+								? Util.getWallClockInstant(eventDateTo, eventTimezoneTo)
+								: Util.getWallClockInstant(eventDateTo);
+							if (event.DT_SKIP_TIME === 'Y')
+							{
+								eventTsTo += Location.DAY_LENGTH;
+							}
 						}
 
 						if (eventTsFrom < toTs && eventTsTo > fromTs)

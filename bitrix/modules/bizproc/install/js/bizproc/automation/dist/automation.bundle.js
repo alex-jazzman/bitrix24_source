@@ -303,7 +303,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.#node = this.createNode();
 			if (node.parentNode) {
 				node.parentNode.replaceChild(this.#node, node);
+				this.#updateAddControlAriaLabel();
 			}
+		}
+		#updateAddControlAriaLabel() {
+			const control = this.#node.previousElementSibling;
+			if (control?.dataset.role !== 'trigger-add-insertion') {
+				return;
+			}
+			const button = control.querySelector('[data-role="trigger-add-insertion-button"]');
+			if (!button) {
+				return;
+			}
+			const addTitle = main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+			const ariaLabel = main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_BEFORE', {
+				'#TITLE#': this.getName()
+			});
+			main_core.Dom.attr(button, 'aria-label', ariaLabel || addTitle);
 		}
 		canEdit() {
 			return bizproc_automation.getGlobalContext().canEdit;
@@ -755,6 +771,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		#listNodes;
 		#modified;
 		#triggerEventsListeners = {};
+		#triggerAddControlMouseMoveHandler;
+		#triggerAddControlMouseLeaveHandler;
+		#triggerAddControlAnimationFrame = null;
+		#triggerAddControlPointerY = null;
+		#triggerAddControlListNode = null;
+		#activeTriggerAddControl = null;
+		#activeTriggerAddControlListNode = null;
 		constructor(triggersContainerNode, params = {}) {
 			super();
 			this.setEventNamespace('BX.Bizproc.Automation');
@@ -818,9 +841,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				const trigger = new Trigger();
 				trigger.init(triggerData, this.#viewMode);
 				this.subscribeTriggerEvents(trigger);
-				this.insertTriggerNode(trigger.getStatusId(), trigger.node);
 				this.#triggers.push(trigger);
+				this.#insertTriggerNode(trigger.getStatusId(), trigger.node);
 			});
+			this.#renderTriggerAddControls();
 		}
 		subscribeTriggerEvents(trigger) {
 			trigger.subscribe('Trigger:copied', event => {
@@ -828,11 +852,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				this.#triggers.push(trigger);
 				if (!event.data.skipInsert) {
 					this.insertTriggerNode(trigger.getStatusId(), trigger.node);
+				} else {
+					this.#renderTriggerAddControls();
 				}
 				this.subscribeTriggerEvents(trigger);
 				this.markModified();
 			});
-			trigger.subscribe('Trigger:modified', () => this.markModified());
+			trigger.subscribe('Trigger:modified', () => {
+				this.#renderTriggerAddControls();
+				this.markModified();
+			});
 			trigger.subscribe('Trigger:onSettingsOpen', event => {
 				this.openTriggerSettingsDialog(event.data.trigger);
 			});
@@ -852,6 +881,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.#triggers.forEach(trigger => trigger.onSearch(event));
 		}
 		enableManageMode(status) {
+			this.#clearTriggerAddControls();
 			this.#viewMode = ViewMode.manage();
 			document.querySelectorAll('[data-role="trigger-list"]').forEach(listNode => {
 				if (listNode.dataset.statusId === status) {
@@ -868,6 +898,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				main_core.Dom.removeClass(listNode, '--multiselect-mode');
 			});
 			this.#triggers.forEach(trigger => trigger.disableManageMode());
+			this.#renderTriggerAddControls();
 		}
 		addTrigger(triggerData, callback) {
 			const trigger = new Trigger();
@@ -881,6 +912,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				trigger
 			});
 		}
+		addTriggerBefore(triggerData, beforeTrigger, callback) {
+			this.addTrigger(triggerData, trigger => {
+				if (callback) {
+					callback.call(this, trigger);
+				}
+				this.insertTrigger(trigger, beforeTrigger);
+				this.insertTriggerNode(trigger.getStatusId(), trigger.node, this.#getTriggerNodeBefore(beforeTrigger));
+			});
+		}
 		deleteTrigger(trigger, callback) {
 			if (trigger.getId() > 0) {
 				trigger.markDeleted();
@@ -888,6 +928,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				for (let i = 0; i < this.#triggers.length; ++i) {
 					if (this.#triggers[i] === trigger) {
 						this.#triggers.splice(i, 1);
+						this.#renderTriggerAddControls();
 					}
 				}
 			}
@@ -897,6 +938,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.emit('TriggerManager:trigger:delete', {
 				trigger
 			});
+			this.#renderTriggerAddControls();
 			this.markModified();
 		}
 		enableDragAndDrop() {
@@ -911,15 +953,238 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				main_core.Dom.removeClass(node, 'bizproc-automation-trigger-item-wrapper-draggable');
 			});
 		}
-		insertTrigger(trigger) {
-			this.#triggers.push(trigger);
+		#bindTriggerAddControlHover() {
+			if (this.#triggerAddControlMouseMoveHandler) {
+				return;
+			}
+			this.#triggerAddControlMouseMoveHandler = this.#onTriggerAddControlMouseMove.bind(this);
+			this.#triggerAddControlMouseLeaveHandler = this.#deactivateTriggerAddControls.bind(this);
+			this.#listNodes.forEach(listNode => {
+				main_core.Event.bind(listNode, 'mousemove', this.#triggerAddControlMouseMoveHandler);
+				main_core.Event.bind(listNode, 'mouseleave', this.#triggerAddControlMouseLeaveHandler);
+			});
+		}
+		#clearTriggerAddControls() {
+			this.#cancelTriggerAddControlUpdate();
+			this.#activeTriggerAddControl = null;
+			this.#activeTriggerAddControlListNode = null;
+			this.#listNodes.forEach(listNode => {
+				main_core.Dom.removeClass(listNode, '--has-active-inner-add');
+			});
+			this.#triggersContainerNode.querySelectorAll('[data-role="trigger-add-insertion"]').forEach(node => main_core.Dom.remove(node));
+		}
+		#renderTriggerAddControls() {
+			this.#clearTriggerAddControls();
+			if (!this.#viewMode.isEdit()) {
+				return;
+			}
+			this.#bindTriggerAddControlHover();
+			this.#listNodes.forEach(listNode => {
+				const documentStatus = listNode.dataset.statusId;
+				const triggers = this.findTriggersByDocumentStatus(documentStatus).filter(trigger => !trigger.deleted && trigger.node.parentNode === listNode);
+				if (triggers.length === 0) {
+					return;
+				}
+				triggers.forEach(trigger => {
+					listNode.insertBefore(this.#createTriggerAddControl(documentStatus, trigger), trigger.node);
+				});
+				main_core.Dom.append(this.#createTriggerAddControl(documentStatus, null, true), listNode);
+			});
+		}
+		#createTriggerAddControl(documentStatus, beforeTrigger, isLast = false) {
+			const addTitle = main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+			const ariaLabel = beforeTrigger ? main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_BEFORE', {
+				'#TITLE#': beforeTrigger.getName()
+			}) : main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_TO_END');
+			const control = main_core.Tag.render`
+			<div
+				class="bizproc-automation-trigger-add-insertion${isLast ? ' --last' : ''}"
+				data-role="trigger-add-insertion"
+				data-testid="bizproc-automation-trigger-add-insertion"
+			>
+				<button
+					class="bizproc-automation-robot-btn-add"
+					type="button"
+					title="${addTitle}"
+					aria-label="${main_core.Text.encode(ariaLabel || addTitle)}"
+					data-role="trigger-add-insertion-button"
+					data-testid="bizproc-automation-trigger-add-insertion-button"
+				></button>
+			</div>
+		`;
+			const button = control.querySelector('[data-role="trigger-add-insertion-button"]');
+			main_core.Event.bind(button, 'click', event => {
+				event.preventDefault();
+				event.stopPropagation();
+				if (!this.#viewMode.isManage()) {
+					this.emit('TriggerManager:trigger:addButtonClick', {
+						documentStatus,
+						beforeTrigger
+					});
+				}
+			});
+			return control;
+		}
+		#onTriggerAddControlMouseMove(event) {
+			if (!this.#viewMode.isEdit()) {
+				return;
+			}
+			if (window.jsDD.bPreStarted || window.jsDD.bStarted) {
+				if (this.#activeTriggerAddControl || this.#triggerAddControlAnimationFrame !== null) {
+					this.#deactivateTriggerAddControls(event);
+				}
+				return;
+			}
+			this.#triggerAddControlListNode = event.currentTarget;
+			this.#triggerAddControlPointerY = event.clientY;
+			if (this.#triggerAddControlAnimationFrame !== null) {
+				return;
+			}
+			this.#triggerAddControlAnimationFrame = window.requestAnimationFrame(() => {
+				this.#triggerAddControlAnimationFrame = null;
+				this.#updateTriggerAddControlState();
+			});
+		}
+		#updateTriggerAddControlState() {
+			const listNode = this.#triggerAddControlListNode;
+			if (!listNode || !this.#viewMode.isEdit() || this.#triggerAddControlPointerY === null) {
+				return;
+			}
+			const activeControl = this.#findActiveTriggerAddControl(listNode, this.#triggerAddControlPointerY);
+			if (activeControl === this.#activeTriggerAddControl && listNode === this.#activeTriggerAddControlListNode) {
+				return;
+			}
+			if (this.#activeTriggerAddControl) {
+				main_core.Dom.removeClass(this.#activeTriggerAddControl, '--active');
+			}
+			if (this.#activeTriggerAddControlListNode) {
+				main_core.Dom.removeClass(this.#activeTriggerAddControlListNode, '--has-active-inner-add');
+			}
+			if (activeControl) {
+				main_core.Dom.addClass(activeControl, '--active');
+				if (!main_core.Dom.hasClass(activeControl, '--last')) {
+					main_core.Dom.addClass(listNode, '--has-active-inner-add');
+				} else {
+					main_core.Dom.removeClass(listNode, '--has-active-inner-add');
+				}
+			}
+			this.#activeTriggerAddControl = activeControl;
+			this.#activeTriggerAddControlListNode = listNode;
+		}
+		#findActiveTriggerAddControl(listNode, pointerY) {
+			const children = listNode.children;
+			let firstControlIndex = 0;
+			while (firstControlIndex < children.length && children[firstControlIndex].dataset.role !== 'trigger-add-insertion') {
+				firstControlIndex++;
+			}
+			const triggerCount = Math.floor((children.length - firstControlIndex) / 2);
+			const overlap = 12;
+			let left = 0;
+			let right = triggerCount - 1;
+			let candidate = null;
+			while (left <= right) {
+				const middle = Math.floor((left + right) / 2);
+				const controlIndex = firstControlIndex + middle * 2;
+				const nextTriggerNode = children[controlIndex + 1];
+				if (pointerY <= nextTriggerNode.getBoundingClientRect().top + overlap) {
+					candidate = children[controlIndex];
+					right = middle - 1;
+				} else {
+					left = middle + 1;
+				}
+			}
+			if (candidate && this.#isTriggerAddControlActive(candidate, pointerY)) {
+				return candidate;
+			}
+			const lastControl = children[children.length - 1];
+			return lastControl && this.#isTriggerAddControlActive(lastControl, pointerY) ? lastControl : null;
+		}
+		#isTriggerAddControlActive(control, pointerY) {
+			const rect = control.getBoundingClientRect();
+			if (main_core.Dom.hasClass(control, '--last')) {
+				const previousTriggerNode = control.previousElementSibling;
+				const previousRect = previousTriggerNode ? previousTriggerNode.getBoundingClientRect() : null;
+				const overlap = 12;
+				const top = previousRect ? previousRect.bottom - overlap : rect.top - overlap;
+				const bottom = rect.bottom + overlap;
+				return pointerY >= top && pointerY <= bottom;
+			}
+			const nextTriggerNode = control.nextElementSibling;
+			if (!nextTriggerNode) {
+				return false;
+			}
+			const nextRect = nextTriggerNode.getBoundingClientRect();
+			const previousTriggerNode = control.previousElementSibling;
+			const previousRect = previousTriggerNode ? previousTriggerNode.getBoundingClientRect() : null;
+			const overlap = 12;
+			const top = previousRect ? previousRect.bottom - overlap : Math.min(rect.top, nextRect.top) - overlap;
+			const bottom = nextRect.top + overlap;
+			return pointerY >= top && pointerY <= bottom;
+		}
+		#deactivateTriggerAddControls(event) {
+			this.#cancelTriggerAddControlUpdate();
+			if (this.#activeTriggerAddControlListNode === event.currentTarget) {
+				this.#activeTriggerAddControl = null;
+				this.#activeTriggerAddControlListNode = null;
+			}
+			event.currentTarget.querySelectorAll('[data-role="trigger-add-insertion"]').forEach(control => main_core.Dom.removeClass(control, '--active'));
+			main_core.Dom.removeClass(event.currentTarget, '--has-active-inner-add');
+		}
+		#cancelTriggerAddControlUpdate() {
+			if (this.#triggerAddControlAnimationFrame !== null) {
+				window.cancelAnimationFrame(this.#triggerAddControlAnimationFrame);
+				this.#triggerAddControlAnimationFrame = null;
+			}
+			this.#triggerAddControlPointerY = null;
+			this.#triggerAddControlListNode = null;
+		}
+		insertTrigger(trigger, beforeTrigger) {
+			this.#insertTrigger(trigger, beforeTrigger);
+			this.#renderTriggerAddControls();
 			this.markModified(true);
 		}
-		insertTriggerNode(documentStatus, triggerNode) {
+		insertTriggerWithNode(trigger, beforeTrigger) {
+			const beforeNode = this.#getTriggerNodeBefore(beforeTrigger);
+			this.#insertTrigger(trigger, beforeTrigger);
+			this.#insertTriggerNode(trigger.getStatusId(), trigger.node, beforeNode);
+			this.#renderTriggerAddControls();
+			this.markModified(true);
+		}
+		#insertTrigger(trigger, beforeTrigger) {
+			let inserted = false;
+			if (beforeTrigger) {
+				for (let i = 0; i < this.#triggers.length; ++i) {
+					if (this.#triggers[i] !== beforeTrigger) {
+						continue;
+					}
+					this.#triggers.splice(i, 0, trigger);
+					inserted = true;
+					break;
+				}
+			}
+			if (!inserted) {
+				this.#triggers.push(trigger);
+			}
+		}
+		#getTriggerNodeBefore(beforeTrigger) {
+			return beforeTrigger && this.#triggers.includes(beforeTrigger) ? beforeTrigger.node : null;
+		}
+		insertTriggerNode(documentStatus, triggerNode, beforeNode) {
+			if (this.#insertTriggerNode(documentStatus, triggerNode, beforeNode)) {
+				this.#renderTriggerAddControls();
+			}
+		}
+		#insertTriggerNode(documentStatus, triggerNode, beforeNode) {
 			const listNode = this.#triggersContainerNode.querySelector(`[data-role="trigger-list"][data-status-id="${documentStatus}"]`);
-			if (listNode) {
+			if (!listNode) {
+				return false;
+			}
+			if (beforeNode && beforeNode.parentNode === listNode) {
+				listNode.insertBefore(triggerNode, beforeNode);
+			} else {
 				main_core.Dom.append(triggerNode, listNode);
 			}
+			return true;
 		}
 		serialize() {
 			return this.#triggers.map(trigger => trigger.serialize());
@@ -1816,6 +2081,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	}
 
 	class Robot extends main_core_events.EventEmitter {
+		static ADD_CONTROL_ROLE = 'robot-add-insertion';
+		static ADD_CONTROL_BUTTON_ROLE = 'robot-add-insertion-button';
 		SYSTEM_EXPRESSION_PATTERN = '\\{=\\s*(?<object>[a-z0-9_]+)\\s*\\:\\s*(?<field>[a-z0-9_\\.]+)(\\s*>\\s*(?<mod1>[a-z0-9_\\:]+)(\\s*,\\s*(?<mod2>[a-z0-9_]+))?)?\\s*\\}';
 		#data;
 		#document;
@@ -1921,7 +2188,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.#node = this.createNode();
 			if (node.parentNode) {
 				main_core.Dom.replace(node, this.#node);
+				this.#updateAddControlAriaLabel();
 			}
+		}
+		#updateAddControlAriaLabel() {
+			const control = this.#node.previousElementSibling;
+			if (control?.dataset.role !== Robot.ADD_CONTROL_ROLE) {
+				return;
+			}
+			const button = control.querySelector(`[data-role="${Robot.ADD_CONTROL_BUTTON_ROLE}"]`);
+			if (!button) {
+				return;
+			}
+			const addTitle = main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+			const ariaLabel = main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_BEFORE', {
+				'#TITLE#': this.getTitle()
+			});
+			main_core.Dom.attr(button, 'aria-label', ariaLabel || addTitle);
 		}
 		destroy() {
 			main_core.Dom.remove(this.#node);
@@ -3146,6 +3429,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		#templateNode;
 		#listNode;
 		#buttonsNode;
+		#robotAddControlMouseMoveHandler;
+		#robotAddControlMouseLeaveHandler;
+		#robotAddControlAnimationFrame;
+		#robotAddControlPointerY;
+		#activeRobotAddControl;
 		#robots;
 		#data;
 		constructor(params) {
@@ -3162,6 +3450,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.#data = {};
 			this.#robots = [];
 			this.#viewMode = ViewMode.none();
+			this.#robotAddControlAnimationFrame = null;
+			this.#robotAddControlPointerY = null;
+			this.#activeRobotAddControl = null;
 		}
 		init(data, viewMode) {
 			if (main_core.Type.isPlainObject(data)) {
@@ -3203,6 +3494,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.init(data, viewMode);
 		}
 		destroy() {
+			this.#deactivateRobotAddControls();
 			this.#robots.forEach(robot => robot.destroy());
 		}
 		static copyRobotTo(dstTemplate, robot, beforeRobot) {
@@ -3225,10 +3517,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 						tracker: this.#tracker
 					});
 					robot.init(this.#data.ROBOTS[i], this.#viewMode);
-					this.insertRobotNode(robot.node);
 					this.#robots.push(robot);
+					this.#insertRobotNode(robot.node);
 				}
 			}
+			this.#renderRobotAddControls();
 		}
 		get robots() {
 			return this.#robots;
@@ -3299,6 +3592,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		enableManageMode(isActive) {
 			if (this.#listNode) {
+				this.#clearRobotAddControls();
 				this.#viewMode = ViewMode.manage().setProperty('isActive', isActive);
 				if (isActive) {
 					main_core.Dom.addClass(this.#listNode, '--multiselect-mode');
@@ -3333,6 +3627,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 						}
 					});
 				}
+				this.#renderRobotAddControls();
 			}
 		}
 		enableDragAndDrop() {
@@ -3345,6 +3640,165 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					}
 				}
 			});
+		}
+		#bindRobotAddControlHover() {
+			if (this.#robotAddControlMouseMoveHandler || !this.#listNode) {
+				return;
+			}
+			this.#robotAddControlMouseMoveHandler = this.#onRobotAddControlMouseMove.bind(this);
+			this.#robotAddControlMouseLeaveHandler = this.#deactivateRobotAddControls.bind(this);
+			main_core.Event.bind(this.#listNode, 'mousemove', this.#robotAddControlMouseMoveHandler);
+			main_core.Event.bind(this.#listNode, 'mouseleave', this.#robotAddControlMouseLeaveHandler);
+		}
+		#clearRobotAddControls() {
+			if (!this.#listNode) {
+				return;
+			}
+			this.#deactivateRobotAddControls();
+			this.#listNode.querySelectorAll(`[data-role="${Robot.ADD_CONTROL_ROLE}"]`).forEach(node => main_core.Dom.remove(node));
+		}
+		#renderRobotAddControls() {
+			this.#clearRobotAddControls();
+			if (!this.#listNode || !this.#viewMode.isEdit() || this.#robots.length === 0) {
+				return;
+			}
+			this.#bindRobotAddControlHover();
+			this.#robots.forEach(robot => {
+				this.#listNode.insertBefore(this.#createRobotAddControl(robot), robot.node);
+			});
+			main_core.Dom.append(this.#createRobotAddControl(null, true), this.#listNode);
+		}
+		#createRobotAddControl(beforeRobot, isLast = false) {
+			const addTitle = main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+			const ariaLabel = beforeRobot ? main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_BEFORE', {
+				'#TITLE#': beforeRobot.getTitle()
+			}) : main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD_TO_END');
+			const control = main_core.Tag.render`
+			<div
+				class="bizproc-automation-robot-add-insertion${isLast ? ' --last' : ''}"
+				data-role="${Robot.ADD_CONTROL_ROLE}"
+				data-testid="bizproc-automation-robot-add-insertion"
+			>
+				<button
+					class="bizproc-automation-robot-btn-add"
+					type="button"
+					title="${addTitle}"
+					aria-label="${main_core.Text.encode(ariaLabel || addTitle)}"
+					data-role="${Robot.ADD_CONTROL_BUTTON_ROLE}"
+					data-testid="bizproc-automation-robot-add-insertion-button"
+				></button>
+			</div>
+		`;
+			const button = control.querySelector(`[data-role="${Robot.ADD_CONTROL_BUTTON_ROLE}"]`);
+			main_core.Event.bind(button, 'click', event => {
+				event.preventDefault();
+				event.stopPropagation();
+				if (!this.#viewMode.isManage()) {
+					this.emit('Template:robot:addButtonClick', {
+						template: this,
+						beforeRobot
+					});
+				}
+			});
+			return control;
+		}
+		#onRobotAddControlMouseMove(event) {
+			if (!this.#listNode || !this.#viewMode.isEdit()) {
+				return;
+			}
+			if (window.jsDD.bPreStarted || window.jsDD.bStarted) {
+				if (this.#activeRobotAddControl || this.#robotAddControlAnimationFrame !== null) {
+					this.#deactivateRobotAddControls();
+				}
+				return;
+			}
+			this.#robotAddControlPointerY = event.clientY;
+			if (this.#robotAddControlAnimationFrame !== null) {
+				return;
+			}
+			this.#robotAddControlAnimationFrame = window.requestAnimationFrame(() => {
+				this.#robotAddControlAnimationFrame = null;
+				this.#updateRobotAddControlState();
+			});
+		}
+		#updateRobotAddControlState() {
+			if (!this.#listNode || !this.#viewMode.isEdit() || this.#robotAddControlPointerY === null) {
+				return;
+			}
+			const activeControl = this.#findActiveRobotAddControl(this.#robotAddControlPointerY);
+			if (activeControl === this.#activeRobotAddControl) {
+				return;
+			}
+			if (this.#activeRobotAddControl) {
+				main_core.Dom.removeClass(this.#activeRobotAddControl, '--active');
+			}
+			if (activeControl) {
+				main_core.Dom.addClass(activeControl, '--active');
+			}
+			this.#activeRobotAddControl = activeControl;
+		}
+		#findActiveRobotAddControl(pointerY) {
+			const children = this.#listNode.children;
+			let firstControlIndex = 0;
+			while (firstControlIndex < children.length && children[firstControlIndex].dataset.role !== Robot.ADD_CONTROL_ROLE) {
+				firstControlIndex++;
+			}
+			const robotCount = Math.floor((children.length - firstControlIndex) / 2);
+			const overlap = 12;
+			let left = 0;
+			let right = robotCount - 1;
+			let candidate = null;
+			while (left <= right) {
+				const middle = Math.floor((left + right) / 2);
+				const controlIndex = firstControlIndex + middle * 2;
+				const nextRobotNode = children[controlIndex + 1];
+				if (pointerY <= nextRobotNode.getBoundingClientRect().top + overlap) {
+					candidate = children[controlIndex];
+					right = middle - 1;
+				} else {
+					left = middle + 1;
+				}
+			}
+			if (candidate && this.#isRobotAddControlActive(candidate, pointerY)) {
+				return candidate;
+			}
+			const lastControl = children[children.length - 1];
+			return lastControl && this.#isRobotAddControlActive(lastControl, pointerY) ? lastControl : null;
+		}
+		#isRobotAddControlActive(control, pointerY) {
+			const rect = control.getBoundingClientRect();
+			if (main_core.Dom.hasClass(control, '--last')) {
+				const previousRobotNode = control.previousElementSibling;
+				const previousRect = previousRobotNode ? previousRobotNode.getBoundingClientRect() : null;
+				const buttonsRect = this.#buttonsNode ? this.#buttonsNode.getBoundingClientRect() : null;
+				const overlap = 12;
+				const top = previousRect ? previousRect.bottom - overlap : rect.top - overlap;
+				const bottom = Math.max(rect.bottom, buttonsRect ? buttonsRect.top : rect.bottom) + overlap;
+				return pointerY >= top && pointerY <= bottom;
+			}
+			const nextRobotNode = control.nextElementSibling;
+			if (!nextRobotNode) {
+				return false;
+			}
+			const nextRect = nextRobotNode.getBoundingClientRect();
+			const previousRobotNode = control.previousElementSibling;
+			const previousRect = previousRobotNode ? previousRobotNode.getBoundingClientRect() : null;
+			const overlap = 12;
+			const top = previousRect ? previousRect.bottom - overlap : Math.min(rect.top, nextRect.top) - overlap;
+			const bottom = nextRect.top + overlap;
+			return pointerY >= top && pointerY <= bottom;
+		}
+		#deactivateRobotAddControls() {
+			if (this.#robotAddControlAnimationFrame !== null) {
+				window.cancelAnimationFrame(this.#robotAddControlAnimationFrame);
+				this.#robotAddControlAnimationFrame = null;
+			}
+			this.#robotAddControlPointerY = null;
+			this.#activeRobotAddControl = null;
+			if (!this.#listNode) {
+				return;
+			}
+			this.#listNode.querySelectorAll(`[data-role="${Robot.ADD_CONTROL_ROLE}"]`).forEach(control => main_core.Dom.removeClass(control, '--active'));
 		}
 		disableDragAndDrop() {
 			this.#robots.forEach(robot => robot.unregisterItem(robot.node));
@@ -3565,6 +4019,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			top.window.location.href = this.#context.bizprocEditorUrl.replace('#ID#', templateId);
 		}
 		addRobot(robotData, callback) {
+			this.#addRobot(robotData, null, callback);
+		}
+		addRobotBefore(robotData, beforeRobot, callback) {
+			this.#addRobot(robotData, beforeRobot, callback);
+		}
+		#addRobot(robotData, beforeRobot, callback) {
 			const robot = new Robot({
 				document: this.#context.document,
 				template: this,
@@ -3578,8 +4038,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				},
 				DialogContext: robotData.DIALOG_CONTEXT
 			};
-			if (this.#robots.length > 0) {
-				const parentRobot = this.#robots[this.#robots.length - 1];
+			const parentRobot = this.#getParentRobot(beforeRobot);
+			if (parentRobot) {
 				if (!parentRobot.getDelayInterval().isNow() || parentRobot.isExecuteAfterPrevious()) {
 					initData.Delay = parentRobot.getDelayInterval().serialize();
 					initData.ExecuteAfterPrevious = 1;
@@ -3587,8 +4047,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}
 			robot.draft = true;
 			robot.init(initData, this.#viewMode);
-			this.insertRobot(robot);
-			this.insertRobotNode(robot.node);
+			this.insertRobot(robot, beforeRobot);
+			this.insertRobotNode(robot.node, this.#getRobotNodeBefore(beforeRobot));
 			this.emit('Template:robot:add', {
 				robot
 			});
@@ -3596,16 +4056,32 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				callback.call(this, robot);
 			}
 		}
+		#getParentRobot(beforeRobot) {
+			if (beforeRobot) {
+				const index = this.#robots.indexOf(beforeRobot);
+				if (index < 0) {
+					return this.#robots.length > 0 ? this.#robots[this.#robots.length - 1] : null;
+				}
+				return index > 0 ? this.#robots[index - 1] : null;
+			}
+			return this.#robots.length > 0 ? this.#robots[this.#robots.length - 1] : null;
+		}
+		#getRobotNodeBefore(beforeRobot) {
+			return beforeRobot && this.#robots.includes(beforeRobot) ? beforeRobot.node : null;
+		}
 		insertRobot(robot, beforeRobot) {
+			let inserted = false;
 			if (beforeRobot) {
 				for (let i = 0; i < this.#robots.length; ++i) {
 					if (this.#robots[i] !== beforeRobot) {
 						continue;
 					}
 					this.#robots.splice(i, 0, robot);
+					inserted = true;
 					break;
 				}
-			} else {
+			}
+			if (!inserted) {
 				this.#robots.push(robot);
 			}
 			this.markModified();
@@ -3622,6 +4098,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			for (let i = 0; i < this.#robots.length; ++i) {
 				if (this.#robots[i].isEqual(robot)) {
 					this.#robots.splice(i, 1);
+					this.#renderRobotAddControls();
 					if (callback) {
 						callback(robot);
 					}
@@ -3634,7 +4111,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}
 		}
 		insertRobotNode(robotNode, beforeNode) {
-			if (beforeNode) {
+			this.#insertRobotNode(robotNode, beforeNode);
+			this.#renderRobotAddControls();
+		}
+		#insertRobotNode(robotNode, beforeNode) {
+			if (beforeNode && beforeNode.parentNode === this.#listNode) {
 				this.#listNode.insertBefore(robotNode, beforeNode);
 			} else {
 				main_core.Dom.append(robotNode, this.#listNode);
@@ -4933,12 +5414,24 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (this.#customSelectorFn) {
 				this.targetInput.setAttribute('id', this.targetInput.getAttribute('name') + InlineSelector.#counter++);
 			}
+			const openSelector = this.#customSelectorFn ? this.#customSelectorFn.bind(this, this.targetInput.id) : this.openMenu.bind(this);
 			this.menuButton = main_core.Tag.render`
-			<span 
-				onclick="${this.#customSelectorFn ? this.#customSelectorFn.bind(this, this.targetInput.id) : this.openMenu.bind(this)}"
+			<span
+				onclick="${openSelector}"
+				onkeydown="${this.#onMenuButtonKeyDown.bind(this, openSelector)}"
 				class="bizproc-automation-popup-select-dotted"
+				role="button"
+				tabindex="0"
+				aria-haspopup="dialog"
+				aria-label="${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_INLINE_SELECTOR_INSERT_VALUE') ?? '')}"
 			></span>
 		`;
+
+			// A custom selector opens a host window this handle does not observe, so the state is
+			// left undeclared there instead of frozen at the closed one.
+			if (!this.#customSelectorFn) {
+				this.#setPopupState(false);
+			}
 			this.parseTargetProperties();
 			this.replaceOnWrite |= this.targetInput.getAttribute('data-select-mode') === 'replace';
 			return main_core.Tag.render`
@@ -5005,12 +5498,38 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				event.preventDefault();
 			}
 		}
+		#onMenuButtonKeyDown(openSelector, event) {
+			if (event.key !== 'Enter' && event.key !== ' ') {
+				return;
+			}
+
+			// The handle is a span with role="button": Space still scrolls the page unless stopped here.
+			event.preventDefault();
+			openSelector(event);
+		}
+
+		/**
+		 * Keeps the handle telling what it opens and whether that is open now (WCAG 4.1.2). The kind is
+		 * written on every open because the handle opens either of two surfaces: the value picker of
+		 * ui.entity-selector, which carries no popup role of its own, and the properties switcher, which
+		 * is a real menu. Neither component writes these attributes for its trigger.
+		 */
+		#setPopupState(expanded, kind = null) {
+			if (!this.menuButton) {
+				return;
+			}
+			if (kind) {
+				this.menuButton.setAttribute('aria-haspopup', kind);
+			}
+			this.menuButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+		}
 		openMenu(event, skipPropertiesSwitcher = false) {
 			if (!skipPropertiesSwitcher && this.context.useSwitcherMenu && !this.targetInput.value) {
 				return this.openPropertiesSwitcherMenu();
 			}
 			if (this.#dialog) {
 				this.#dialog.show();
+				this.#setPopupState(true, 'dialog');
 				return;
 			}
 			this.fillGroups();
@@ -5043,11 +5562,17 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 						event.preventDefault();
 						const item = event.getData().item;
 						this.onFieldSelect(item.getCustomData().get('field'));
+					},
+					// The picker closes by outside click and by Escape as well as by a pick, so the
+					// state follows its own events rather than the code paths that open it.
+					onHide: () => {
+						this.#setPopupState(false);
 					}
 				},
 				compactView: true
 			});
 			this.#dialog.show();
+			this.#setPopupState(true, 'dialog');
 		}
 		fillGroups() {
 			this.fillFieldsGroups();
@@ -5117,11 +5642,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				},
 				events: {
 					onPopupClose() {
+						self.#setPopupState(false);
 						this.destroy();
 					}
 				}
 			});
 			this.#switcherDialog = main_popup.MenuManager.currentItem;
+			this.#setPopupState(true, 'menu');
 			return true;
 		}
 		injectDialogMenuTitles(items) {

@@ -63,4 +63,5 @@ $MESS['LANDING_TPL_DOMAIN_FREE_ALREADY_EXIST_DOMAIN_ALERT'] = 'Хотите по
 $MESS['LANDING_TPL_DOMAIN_FREE_SUSPENDED_H1'] = 'Ваш домен в подарок заблокирован';
 $MESS['LANDING_TPL_DOMAIN_FREE_SUSPENDED_TEXT'] = 'Вы перешли на бесплатный тариф, поэтому сейчас сайт не открывается по адресу <b>#DOMAIN_NAME#</b>. Чтобы восстановить домен, вернитесь на любой платный тариф.';
 $MESS['LANDING_TPL_DOMAIN_FREE_SUSPENDED_NOTICE'] = 'Сайт, для которого вы выбрали домен в подарок, активен, но не доступен по старому адресу. Вы можете выбрать новый адрес сайта в разделе &laquo;Поддомен Битрикс24&raquo; или перейти на платный тариф и восстановить подарочный домен.';
+$MESS['LANDING_TPL_ERROR_DOMAIN_NOT_ASCII'] = 'Поддомен может содержать только латинские буквы, цифры и тире';
 $MESS['LANDING_TPL_TARIFF'] = 'Купить тариф';

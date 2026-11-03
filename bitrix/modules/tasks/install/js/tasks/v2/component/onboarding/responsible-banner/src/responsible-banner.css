@@ -1,0 +1,119 @@
+/* SC-002 ResponsibleBanner — inline "bubble" in the task card flow. */
+
+/* Wrapper: relative so the close button can escape pill's overflow:hidden */
+.tasks-onboarding-responsible-banner {
+	position: relative;
+	display: inline-block;
+	margin-top: 6px;
+	max-width: 322px;
+}
+
+/* decorative beak: a small triangle poking up out of the pill's top edge,
+   like a tooltip tail pointing at the field value above. same color as the
+   pill border (--ui-color-accent-soft-blue-1) so it reads as one shape in
+   both light and dark themes. sibling of __pill (pill has overflow:hidden). */
+.tasks-onboarding-responsible-banner__arrow {
+	position: absolute;
+	top: -7px;
+	left: 26px;
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-bottom: 7px solid var(--ui-color-accent-soft-blue-1, #c4e6ff);
+	pointer-events: none;
+}
+
+.tasks-onboarding-responsible-banner__pill {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2, 10px);
+	/* left 60px — room for the absolute avatar (54px), see below */
+	padding: var(--ui-space-inline-2xs2, 6px) var(--ui-space-inline-xl, 24px) var(--ui-space-inline-2xs2, 6px) 60px;
+	background: var(--ui-color-blue-10, #F3FAFF);
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #C4E6FF);
+	border-radius: var(--ui-border-radius-5xl, 512px);
+	overflow: hidden;
+}
+
+.tasks-onboarding-responsible-banner__avatar {
+	position: absolute;
+	left: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 54px;
+	height: 42px;
+	background: url('../images/zefir-responsible.png') center / contain no-repeat;
+}
+
+/* two stacked lines: accented clickable title + gray subtitle */
+.tasks-onboarding-responsible-banner__text {
+	display: flex;
+	flex-direction: column;
+	row-gap: 2px;
+	max-width: 238px;
+	font-size: 12px;
+	line-height: 15px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+/* CTA — accented title "Assign the task": blue, NORMAL weight (font-normal in Figma, NOT bold) */
+/* native <button> reset; align-self keeps the button width = text width, so only the text is clickable */
+.tasks-onboarding-responsible-banner__cta {
+	align-self: flex-start;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: left;
+	-webkit-appearance: none;
+	appearance: none;
+	color: var(--ui-color-accent-main-link, #0154c8);
+	cursor: pointer;
+	font-weight: 400;
+}
+
+.tasks-onboarding-responsible-banner__cta:focus-visible {
+	outline: none;
+	text-decoration: underline;
+}
+
+.tasks-onboarding-responsible-banner__subtitle {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+/* Close button — styled as b24-hover-pill-remover */
+/* native <button> reset — visual look (border/background/shadow/padding) is set below, UA styles are suppressed */
+.tasks-onboarding-responsible-banner__close {
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	-webkit-appearance: none;
+	appearance: none;
+	position: absolute;
+	right: -5px;
+	top: -5px;
+	padding: 2px;
+	border-radius: var(--ui-border-radius-pill);
+	border: 1px solid var(--ui-color-base-7);
+	background: var(--ui-color-base-8);
+	box-shadow: 0 1px 1px rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
+	line-height: 0;
+	cursor: pointer;
+}
+
+.tasks-onboarding-responsible-banner__close .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	--ui-icon-set__icon-size: 16px;
+}
+
+.tasks-onboarding-responsible-banner__close:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
+.tasks-onboarding-responsible-banner__close:focus-visible {
+	outline: 2px solid var(--ui-color-design-outline-a1-content-divider, var(--ui-color-accent-main-primary));
+}

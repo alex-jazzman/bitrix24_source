@@ -1,5 +1,8 @@
 import { Dom, Tag, Type, Event, Loc } from 'main.core';
+import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.buttons';
 import 'ui.design-tokens';
+import { Solid } from 'ui.icon-set.api.core';
+import 'ui.icon-set.solid';
 import './style.css';
 import { Checker } from '../checker';
 import { Widget } from '../widget';
@@ -135,9 +138,13 @@ export class Button
 	{
 		if (!this.#button)
 		{
-			// noinspection JSAnnotator
-			const text: string = Loc.getMessage('DISK_PROMO_BOOST_BUTTON_TEXT');
-			this.#button = Tag.render`<button class="bx-disk-promo-boost-button"><span>${text}</span></button>`;
+			this.#button = new UiButton({
+				text: Loc.getMessage('DISK_PROMO_BOOST_BUTTON_TEXT'),
+				useAirDesign: true,
+				style: AirButtonStyle.FILLED_BOOST,
+				size: ButtonSize.MEDIUM,
+				icon: Solid.ROCKET,
+			}).render();
 		}
 
 		return this.#button;

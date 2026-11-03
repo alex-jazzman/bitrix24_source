@@ -5,6 +5,7 @@ import {
 	BusyUsersDialog,
 	ColorSelector,
 	Location,
+	PlannerLimitHint,
 	Reminder,
 	RepeatSelector,
 	SectionSelector,
@@ -19,6 +20,15 @@ import { DateTimeFormat } from 'main.date'; // need for planner.js
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { TagSelector as EntityTagSelector } from 'ui.entity-selector';
 import { SliderDateTimeControl } from './sliderdatetimecontrol.js';
+import {
+	createTimezoneProjection,
+	expressWallClockInTimezone,
+	getWallClockInstant,
+	instantToUtcContainer,
+	TimezoneProjectionSource,
+	toUtcWallClock,
+	utcContainerToLocal,
+} from './timezoneprojection.js';
 
 export class EventEditForm
 {
@@ -35,6 +45,11 @@ export class EventEditForm
 	userSettings = {};
 	prevUserList = [];
 	loadedAccessibilityData = {};
+	plannerLimitState = null;
+	plannerLimitHint = null;
+	plannerDataRequestId = 0;
+	plannerDataContext = null;
+	destroyed = false;
 	eventOptions = {};
 
 	constructor(options = {})
@@ -52,6 +67,10 @@ export class EventEditForm
 		this.entry = options.entry || null;
 		this.eventOptions = this.entry?.data?.OPTIONS || {};
 		this.formDataValue = options.formDataValue || {};
+		this.timezoneOffset = options.timezoneOffset ?? null;
+		this.explicitTimezoneIntent = false;
+		this.fromTimezoneChanged = false;
+		this.toTimezoneChanged = false;
 		this.emitter = new EventEmitter();
 		this.emitter.setEventNamespace('BX.Calendar.EventEditForm');
 		this.BX = Util.getBX();
@@ -94,6 +113,7 @@ export class EventEditForm
 			this.formDataValue.from = options.entryDateFrom;
 			this.formDataValue.to = new Date(options.entryDateFrom.getTime() + 3600);
 		}
+		this.handoffIntent = Type.isDate(this.formDataValue.from) && Type.isDate(this.formDataValue.to);
 
 		this.participantsEntityList = Type.isArray(options.participantsEntityList)
 			? options.participantsEntityList
@@ -120,13 +140,19 @@ export class EventEditForm
 
 		if (this.plannerEnabled)
 		{
-			this.refreshPlanner = Runtime.debounce(this.refreshPlannerState, 100, this);
+			const refreshPlanner = Runtime.debounce(this.refreshPlannerState, 100, this);
+			this.refreshPlanner = () => {
+				this.invalidatePlannerData();
+				refreshPlanner();
+			};
 		}
 		this.state = this.STATE.READY;
 		this.doShowConfirmPopup = true;
 		this.sliderOnClose = this.hideWithConfirm.bind(this);
 		this.handlePullBind = this.handlePull.bind(this);
 		this.keyHandlerBind = this.keyHandler.bind(this);
+		this.handlePlannerLimitStateChangeBind = this.handlePlannerLimitStateChange.bind(this);
+		this.emitter.subscribe('onPlannerLimitStateChange', this.handlePlannerLimitStateChangeBind);
 
 		this.lastUsedSaveOptions = {};
 		this.timezoneHint = '';
@@ -276,6 +302,7 @@ export class EventEditForm
 		this.BX.html(this.slider.layout.content, this.slider.getData().get('sliderContent'));
 		this.initControls(this.uid);
 		this.setFormValues();
+		this.captureCanonicalFormDataSnapshot();
 		if (Type.isStringFilled(this.jumpToControl))
 		{
 			if (this.jumpToControl === 'userSelector')
@@ -296,12 +323,260 @@ export class EventEditForm
 		Event.bind(this.DOM.content, 'wheel', () => this.highlightFieldScrollAnimation?.stop());
 	}
 
+	captureCanonicalFormDataSnapshot()
+	{
+		const fieldNames = ['date_from', 'date_to', 'time_from', 'time_to', 'tz_from', 'tz_to', 'skip_time'];
+		const snapshot = new FormData(this.DOM.form);
+		const canonicalDateTime = this.createCanonicalDateTimeFormData();
+
+		this.setFormDataValues(snapshot, canonicalDateTime, fieldNames);
+		this.canonicalSnapshot = snapshot;
+	}
+
+	createCanonicalDateTimeFormData()
+	{
+		const data = new FormData();
+		const entryData = this.rawEntryData || this.entry?.data || {};
+		const sourceMode = this.getTimezoneProjectionSourceMode(entryData);
+		const useStoredWallClock = this.canUseStoredWallClockForProjection(sourceMode);
+		const getDate = (value, fallback) => {
+			if (Type.isDate(value))
+			{
+				return value;
+			}
+
+			if (Type.isString(value))
+			{
+				return Util.parseDate(value, useStoredWallClock);
+			}
+
+			return Type.isDate(fallback) ? fallback : null;
+		};
+		const from = this.getCanonicalBoundaryForDateTimeFormData(
+			entryData,
+			sourceMode,
+			'DATE_FROM',
+			'dateFrom',
+			this.entry?.from,
+			this.formDataValue.from,
+			getDate,
+		);
+		const to = this.getCanonicalBoundaryForDateTimeFormData(
+			entryData,
+			sourceMode,
+			'DATE_TO',
+			'dateTo',
+			this.entry?.to,
+			this.formDataValue.to,
+			getDate,
+		);
+		const useUtc = useStoredWallClock;
+
+		if (Type.isDate(from))
+		{
+			data.set('date_from', Util.formatDate(from, useUtc));
+			data.set('time_from', Util.formatTime(from, null, useUtc));
+		}
+
+		if (Type.isDate(to))
+		{
+			data.set('date_to', Util.formatDate(to, useUtc));
+			data.set('time_to', Util.formatTime(to, null, useUtc));
+		}
+
+		const fullDay = entryData.DT_SKIP_TIME === 'Y'
+			|| entryData.SKIP_TIME === 'Y'
+			|| entryData.SKIP_TIME === true
+			|| this.entry?.fullDay === true;
+		let timezoneFrom = Type.isString(entryData.TZ_FROM)
+			? entryData.TZ_FROM
+			: this.entry?.getTimezoneFrom?.();
+		let timezoneTo = Type.isString(entryData.TZ_TO)
+			? entryData.TZ_TO
+			: this.entry?.getTimezoneTo?.() || timezoneFrom;
+		if (Type.isString(timezoneFrom))
+		{
+			data.set('tz_from', timezoneFrom);
+		}
+
+		if (Type.isString(timezoneTo))
+		{
+			data.set('tz_to', timezoneTo);
+		}
+
+		if (fullDay)
+		{
+			data.set('skip_time', 'Y');
+		}
+
+		return data;
+	}
+
+	getCanonicalBoundaryForDateTimeFormData(
+		entryData,
+		sourceMode,
+		stringField,
+		dateField,
+		entryBoundary,
+		handoffBoundary,
+		getDate,
+	)
+	{
+		if (this.canUseStoredWallClockForProjection(sourceMode))
+		{
+			return getDate(entryData[stringField], entryBoundary);
+		}
+
+		if (sourceMode === TimezoneProjectionSource.compactCanonical)
+		{
+			return handoffBoundary;
+		}
+
+		return Type.isDate(entryBoundary) ? entryBoundary : getDate(entryData[stringField] ?? entryData[dateField], null);
+	}
+
 	close()
 	{
 		if (!this.checkDenyClose())
 		{
 			this.state = this.STATE.READY;
 			this.BX.SidePanel.Instance.close();
+		}
+	}
+
+	createCanonicalFormDataSnapshot()
+	{
+		const snapshot = new FormData();
+		for (const [name, value] of this.canonicalSnapshot.entries())
+		{
+			snapshot.append(name, value);
+		}
+
+		return snapshot;
+	}
+
+	setFormDataValues(data, source, fieldNames)
+	{
+		fieldNames.forEach((fieldName) => {
+			const values = source.getAll(fieldName);
+			if (values.length === 0)
+			{
+				return;
+			}
+
+			data.set(fieldName, values.shift());
+			values.forEach((value) => data.append(fieldName, value));
+		});
+	}
+
+	serializeDateTimeFormData(data, formDataChanges)
+	{
+		const fieldNames = ['date_from', 'date_to', 'time_from', 'time_to', 'tz_from', 'tz_to', 'skip_time'];
+		const dateTimeIntent = formDataChanges.includes('date&time');
+		if (!dateTimeIntent && !this.explicitTimezoneIntent)
+		{
+			this.setFormDataValues(data, this.createCanonicalFormDataSnapshot(), fieldNames);
+
+			return;
+		}
+
+		const dateTime = this.dateTimeControl.getValue();
+		if (this.explicitTimezoneIntent)
+		{
+			data.set('tz_from', this.getEffectiveTimezoneFrom(dateTime));
+			data.set('tz_to', this.getEffectiveTimezoneTo(dateTime));
+		}
+		else
+		{
+			data.set('tz_from', this.initialTimezoneFrom || '');
+			data.set('tz_to', this.initialTimezoneTo || '');
+		}
+		if (!this.timezoneProjection?.active || dateTime.fullDay)
+		{
+			return;
+		}
+
+		this.reverseProjectShownBoundaries(data, dateTime);
+		data.set('skip_time', 'N');
+	}
+
+	// Reverses the shown boundaries back into their event zones for the save payload. Each boundary is
+	// expressed from the display (user) zone into its own event zone through the absolute instant, the
+	// same primitive the planner/location path uses forward. A boundary whose zone changed already
+	// shows event-zone time, so its DOM value is kept; an unchanged, unmoved boundary keeps its
+	// canonical event-zone wall-clock verbatim, so the ambiguous autumn fall-back hour is never
+	// re-resolved to the wrong side (deriving the instant from the wall-clock alone cannot tell the two
+	// occurrences apart). Formatting via a UTC container keeps a spring-forward wall-clock intact.
+	reverseProjectShownBoundaries(data, dateTime)
+	{
+		const displayTimezone = this.initialDisplaySnapshot?.displayTimezone
+			|| this.getUserTimezone();
+		const dateTimeUtc = dateTime.utc === true;
+		const initialDateTimeUtc = this.initialDisplaySnapshot?.utc === true;
+		let canonical = null;
+		const getCanonical = () => {
+			canonical ??= this.createCanonicalDateTimeFormData();
+
+			return canonical;
+		};
+
+		const boundaries = [
+			{
+				zoneChanged: this.fromTimezoneChanged === true,
+				shown: dateTime.from,
+				initialShown: this.initialDisplaySnapshot?.from,
+				eventTimezone: this.initialTimezoneFrom,
+				dateField: 'date_from',
+				timeField: 'time_from',
+			},
+			{
+				zoneChanged: this.toTimezoneChanged === true,
+				shown: dateTime.to,
+				initialShown: this.initialDisplaySnapshot?.to,
+				eventTimezone: this.initialTimezoneTo,
+				dateField: 'date_to',
+				timeField: 'time_to',
+			},
+		];
+
+		for (const boundary of boundaries)
+		{
+			if (boundary.zoneChanged)
+			{
+				// The shown wall-clock is already expressed in the new event zone: keep the DOM value.
+				continue;
+			}
+
+			if (this.isSameWallClock(boundary.shown, boundary.initialShown, dateTimeUtc, initialDateTimeUtc))
+			{
+				// Untouched boundary: emit the canonical event-zone wall-clock verbatim (fold-safe).
+				const canonicalData = getCanonical();
+				const date = canonicalData.get(boundary.dateField);
+				const time = canonicalData.get(boundary.timeField);
+				if (Type.isStringFilled(date))
+				{
+					data.set(boundary.dateField, date);
+				}
+				if (Type.isStringFilled(time))
+				{
+					data.set(boundary.timeField, time);
+				}
+
+				continue;
+			}
+
+			// Moved boundary: reverse its shown user-zone wall-clock into the event zone.
+			const eventWallClock = expressWallClockInTimezone(
+				boundary.shown,
+				displayTimezone,
+				boundary.eventTimezone,
+				dateTimeUtc,
+			);
+			if (Type.isDate(eventWallClock))
+			{
+				data.set(boundary.dateField, Util.formatDate(eventWallClock, true));
+				data.set(boundary.timeField, Util.formatTime(eventWallClock, null, true));
+			}
 		}
 	}
 
@@ -555,13 +830,15 @@ export class EventEditForm
 
 		if (this.DOM.form.tz_from)
 		{
-			data.append('tz_from', this.DOM.form.tz_from.dataset.value);
+			data.set('tz_from', this.DOM.form.tz_from.dataset.value);
 		}
 
 		if (this.DOM.form.tz_to)
 		{
-			data.append('tz_to', this.DOM.form.tz_to.dataset.value);
+			data.set('tz_to', this.DOM.form.tz_to.dataset.value);
 		}
+
+		this.serializeDateTimeFormData(data, formDataChanges);
 
 		this.BX.ajax.runAction('calendar.api.calendarentryajax.editEntry', {
 			data,
@@ -758,15 +1035,23 @@ export class EventEditForm
 	{
 		if (event && event.getSlider() && event.getSlider().getUrl() === this.sliderId)
 		{
+			this.destroyed = true;
+			this.plannerDataRequestId += 1;
 			this.BX.onCustomEvent('OnCalendarPlannerDoUninstall', [{ plannerId: this.plannerId }]);
 			Event.unbind(document, 'keydown', this.keyHandlerBind);
 			EventEmitter.unsubscribe('onPullEvent-calendar', this.handlePullBind);
+			if (this.handlePlannerLimitStateChangeBind)
+			{
+				this.emitter.unsubscribe('onPlannerLimitStateChange', this.handlePlannerLimitStateChangeBind);
+			}
 			this.BX.SidePanel.Instance.destroy(this.sliderId);
 			if (Location)
 			{
 				Location.setCurrentCapacity(0);
 			}
 			Util.closeAllPopups();
+			this.plannerLimitHint?.destroy();
+			this.plannerLimitHint = null;
 			this.planner = null;
 			this.opened = false;
 			Util.clearPlannerWatches();
@@ -778,15 +1063,21 @@ export class EventEditForm
 		const promise = new this.BX.Promise();
 
 		let entry = this.getCurrentEntry();
+		const instanceDateFrom = Type.isDate(entry?.from) ? new Date(entry.from.getTime()) : null;
+		this.instanceSelectionSnapshot = {
+			dateFrom: instanceDateFrom ? Util.formatDate(instanceDateFrom) : '',
+			currentDateFrom: instanceDateFrom,
+		};
 
 		this.BX.ajax.runAction('calendar.api.calendarajax.getEditEventSlider', {
 			data: {
 				event_id: this.entryId || entry.id,
-				date_from: entry ? Util.formatDate(entry.from) : '',
+				date_from: this.instanceSelectionSnapshot.dateFrom,
 				form_type: this.formType,
 				type: entry.data.CAL_TYPE ?? this.type,
 				ownerId: entry.data.OWNER_ID ?? this.ownerId,
 				entityList: this.participantsEntityList,
+				timezoneOffset: this.timezoneOffset,
 			},
 		})
 			.then(
@@ -798,6 +1089,8 @@ export class EventEditForm
 
 						const params = response.data.additionalParams;
 
+						this.setUserSettings(params.userSettings);
+						this.rawEntryData = this.createRawEntryDataSnapshot(params.entry);
 						this.updateEntryData(params.entry, {
 							userSettings: this.userSettings,
 							meetSection: params.meetSection,
@@ -846,7 +1139,6 @@ export class EventEditForm
 						this.attendeesPreselectedItems = this.getUserSelectorEntityList().map((item) => {
 							return [item.entityId, item.id];
 						});
-						this.setUserSettings(params.userSettings);
 						Util.setEventWithEmailGuestEnabled(params.eventWithEmailGuestEnabled);
 						Util.setTeamsAsAttendeeEnabled(params.teamsAsAttendeeEnabled);
 						Util.setTimezoneList(params.timezoneList);
@@ -926,6 +1218,7 @@ export class EventEditForm
 		this.DOM.title = this.DOM.content.querySelector(`#${uid}_title`);
 		this.DOM.formWrap = this.DOM.content.querySelector(`#${uid}_form_wrap`);
 		this.DOM.form = this.DOM.content.querySelector(`#${uid}_form`);
+		this.timezoneProjection = this.createTimezoneProjection();
 		this.DOM.buttonsWrap = this.DOM.content.querySelector('.calendar-form-buttons-fixed');
 		this.DOM.saveBtn = this.DOM.buttonsWrap.querySelector(`#${uid}_save`);
 		this.DOM.closeBtn = this.DOM.buttonsWrap.querySelector(`#${uid}_close`);
@@ -965,21 +1258,491 @@ export class EventEditForm
 		}
 	}
 
+	createRawEntryDataSnapshot(entryData)
+	{
+		if (!Type.isPlainObject(entryData))
+		{
+			return null;
+		}
+
+		return {
+			...entryData,
+			dateFrom: Type.isDate(entryData.dateFrom)
+				? new Date(entryData.dateFrom.getTime())
+				: entryData.dateFrom,
+			dateTo: Type.isDate(entryData.dateTo)
+				? new Date(entryData.dateTo.getTime())
+				: entryData.dateTo,
+		};
+	}
+
+	createTimezoneProjection()
+	{
+		return this.completeTimezoneProjection(this.createRawTimezoneProjection());
+	}
+
+	createRawTimezoneProjection()
+	{
+		const {
+			entry,
+			rawEntryData,
+			userTimezone,
+			sourceMode,
+			sourceFrom,
+			sourceTo,
+			fullDay,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+		} = this.getTimezoneProjectionContext();
+		const editableEventTimezoneReason = this.getEditableEventTimezoneProjectionReason(
+			rawEntryData,
+			sourceMode,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+			fullDay,
+		);
+		if (editableEventTimezoneReason)
+		{
+			const fromUtc = this.getEventWallClockUtcContainer(rawEntryData, 'DATE_FROM', sourceFrom, sourceMode);
+			const toUtc = this.getEventWallClockUtcContainer(rawEntryData, 'DATE_TO', sourceTo, sourceMode);
+
+			return {
+				from: Type.isDate(sourceFrom)
+					? new Date(sourceFrom.getTime())
+					: (Type.isDate(fromUtc) ? utcContainerToLocal(fromUtc) : null),
+				to: Type.isDate(sourceTo)
+					? new Date(sourceTo.getTime())
+					: (Type.isDate(toUtc) ? utcContainerToLocal(toUtc) : null),
+				fromUtc,
+				toUtc,
+				fullDay,
+				displayTimezone: eventTimezoneFrom || '',
+				active: true,
+				reason: editableEventTimezoneReason,
+			};
+		}
+
+		// The stored per-boundary instant is fold-correct in the ambiguous autumn hour, but it only
+		// matches a loaded event's own wall-clock. A compact -> full handoff carries a fresh interval
+		// (compactCanonical), so its projection resolves the wall-clock in the event zone instead.
+		const storedInstant = sourceMode === TimezoneProjectionSource.entryStringCanonical
+			? this.getReliableStoredInstant(
+				rawEntryData,
+				sourceFrom,
+				sourceTo,
+				eventTimezoneFrom,
+				eventTimezoneTo,
+			)
+			: null;
+		const projection = createTimezoneProjection({
+			from: sourceFrom,
+			to: sourceTo,
+			fullDay,
+			sourceMode,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+			userTimezone,
+			fromInstant: storedInstant?.from ?? null,
+			toInstant: storedInstant?.to ?? null,
+		});
+
+		if (projection.active)
+		{
+			return projection;
+		}
+
+		if (sourceMode === TimezoneProjectionSource.compactCanonical)
+		{
+			return {
+				...projection,
+				displayTimezone: projection.displayTimezone || eventTimezoneFrom || '',
+			};
+		}
+
+		return {
+			...projection,
+			from: Type.isDate(entry.from) ? new Date(entry.from.getTime()) : null,
+			to: Type.isDate(entry.to) ? new Date(entry.to.getTime()) : null,
+			fullDay: entry.fullDay,
+			displayTimezone: entry.getTimezoneFrom(),
+		};
+	}
+
+	completeTimezoneProjection(projection)
+	{
+		const useUtcControl = (
+			projection.active === true
+			&& Type.isDate(projection.fromUtc)
+			&& Type.isDate(projection.toUtc)
+		);
+		const useProjectionTimezone = (
+			useUtcControl
+			&& Type.isStringFilled(projection.displayTimezone)
+		);
+		const preview = this.createDateTimePreview(
+			{
+				from: useUtcControl ? projection.fromUtc : projection.from,
+				to: useUtcControl ? projection.toUtc : projection.to,
+				fullDay: projection.fullDay,
+				utc: useUtcControl,
+				timezoneFrom: useProjectionTimezone
+					? projection.displayTimezone
+					: this.entry.getTimezoneFrom(),
+				timezoneTo: useProjectionTimezone
+					? projection.displayTimezone
+					: this.entry.getTimezoneTo(),
+			},
+			projection.displayTimezone,
+		);
+
+		return {
+			...projection,
+			previewFrom: preview.from,
+			previewTo: preview.to,
+			previewTimezone: preview.timezone,
+		};
+	}
+
+	getTimezoneProjectionContext()
+	{
+		const entry = this.entry;
+		const rawEntryData = this.rawEntryData || entry.data;
+		const sourceMode = this.getTimezoneProjectionSourceMode(rawEntryData);
+		const sourceFrom = sourceMode === TimezoneProjectionSource.compactCanonical
+			? this.formDataValue.from
+			: sourceMode === TimezoneProjectionSource.entryDateFieldsProjected
+				? rawEntryData.dateFrom
+				: entry.from;
+		const sourceTo = sourceMode === TimezoneProjectionSource.compactCanonical
+			? this.formDataValue.to
+			: sourceMode === TimezoneProjectionSource.entryDateFieldsProjected
+				? rawEntryData.dateTo
+				: entry.to;
+		const fullDay = Type.isBoolean(this.formDataValue.fullDay)
+			? this.formDataValue.fullDay
+			: entry.fullDay;
+		const eventTimezoneFrom = this.getStoredTimezoneFrom(rawEntryData);
+		const eventTimezoneTo = this.getStoredTimezoneTo(rawEntryData, eventTimezoneFrom);
+
+		return {
+			entry,
+			rawEntryData,
+			userTimezone: this.getUserTimezone(),
+			sourceMode,
+			sourceFrom,
+			sourceTo,
+			fullDay,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+		};
+	}
+
+	getDisplayTimezone()
+	{
+		return this.timezoneProjection?.previewTimezone
+			|| this.timezoneProjection?.displayTimezone
+			|| this.entry.getTimezoneFrom();
+	}
+
+	getStoredTimezoneFrom(entryData)
+	{
+		return Type.isString(entryData?.TZ_FROM)
+			? entryData.TZ_FROM
+			: (this.entry.getTimezoneFrom?.() || '');
+	}
+
+	getStoredTimezoneTo(entryData, timezoneFrom = '')
+	{
+		return Type.isStringFilled(entryData?.TZ_TO)
+			? entryData.TZ_TO
+			: (this.entry.getTimezoneTo?.() || timezoneFrom);
+	}
+
+	getEventWallClockUtcContainer(entryData, fieldName, fallback, sourceMode)
+	{
+		if (
+			this.canUseStoredWallClockForProjection(sourceMode)
+			&& Type.isString(entryData?.[fieldName])
+		)
+		{
+			const parsed = Util.parseDate(entryData[fieldName], true);
+			if (Type.isDate(parsed))
+			{
+				return parsed;
+			}
+		}
+
+		return Type.isDate(fallback) ? toUtcWallClock(fallback) : null;
+	}
+
+	canUseStoredWallClockForProjection(sourceMode)
+	{
+		return sourceMode === TimezoneProjectionSource.entryStringCanonical
+			|| (
+				sourceMode === TimezoneProjectionSource.compactCanonical
+				&& !this.hasHandoffDateTimeChange()
+			);
+	}
+
+	getUserTimezone()
+	{
+		return this.userSettings?.timezoneName || this.userSettings?.timezoneDefaultName || '';
+	}
+
+	// Store the shown wall-clock only. The save path re-derives the event-zone value on demand through
+	// the instant round-trip, so no per-boundary offset is cached here (a cached offset re-derived from
+	// the wall-clock alone cannot tell the two occurrences of the ambiguous fall-back hour apart).
+	updateTimezoneProjection(
+		value,
+		displayTimezone = this.timezoneProjection?.displayTimezone || this.getUserTimezone(),
+	)
+	{
+		const valueUtc = value.utc === true;
+		const from = valueUtc ? utcContainerToLocal(value.from) : new Date(value.from.getTime());
+		const to = valueUtc ? utcContainerToLocal(value.to) : new Date(value.to.getTime());
+		const preview = this.createDateTimePreview(value, displayTimezone);
+
+		this.timezoneProjection = {
+			...this.timezoneProjection,
+			from,
+			to,
+			fromUtc: valueUtc ? new Date(value.from.getTime()) : toUtcWallClock(from),
+			toUtc: valueUtc ? new Date(value.to.getTime()) : toUtcWallClock(to),
+			previewFrom: preview.from,
+			previewTo: preview.to,
+			previewTimezone: preview.timezone,
+			fullDay: value.fullDay,
+			displayTimezone,
+		};
+
+		return preview;
+	}
+
+	getWallClockPart(date, part, utc = false)
+	{
+		if (part === 'year')
+		{
+			return utc ? date.getUTCFullYear() : date.getFullYear();
+		}
+
+		if (part === 'month')
+		{
+			return utc ? date.getUTCMonth() : date.getMonth();
+		}
+
+		if (part === 'date')
+		{
+			return utc ? date.getUTCDate() : date.getDate();
+		}
+
+		if (part === 'hours')
+		{
+			return utc ? date.getUTCHours() : date.getHours();
+		}
+
+		return utc ? date.getUTCMinutes() : date.getMinutes();
+	}
+
+	isSameWallClock(first, second, firstUtc = false, secondUtc = false)
+	{
+		if (!Type.isDate(first) || !Type.isDate(second))
+		{
+			return false;
+		}
+
+		return this.getWallClockPart(first, 'year', firstUtc) === this.getWallClockPart(second, 'year', secondUtc)
+			&& this.getWallClockPart(first, 'month', firstUtc) === this.getWallClockPart(second, 'month', secondUtc)
+			&& this.getWallClockPart(first, 'date', firstUtc) === this.getWallClockPart(second, 'date', secondUtc)
+			&& this.getWallClockPart(first, 'hours', firstUtc) === this.getWallClockPart(second, 'hours', secondUtc)
+			&& this.getWallClockPart(first, 'minutes', firstUtc) === this.getWallClockPart(second, 'minutes', secondUtc);
+	}
+
+	hasDateTimeWallClockChange(dateTime, initialDateTime)
+	{
+		const dateTimeUtc = dateTime.utc === true;
+		const initialDateTimeUtc = initialDateTime.utc === true;
+
+		return initialDateTime.fullDay !== dateTime.fullDay
+			|| !this.isSameWallClock(dateTime.from, initialDateTime.from, dateTimeUtc, initialDateTimeUtc)
+			|| !this.isSameWallClock(dateTime.to, initialDateTime.to, dateTimeUtc, initialDateTimeUtc);
+	}
+
+	getTimezoneProjectionSourceMode(entryData)
+	{
+		if (this.handoffIntent)
+		{
+			return TimezoneProjectionSource.compactCanonical;
+		}
+
+		if (
+			!Type.isString(entryData?.DATE_FROM)
+			&& !Type.isString(entryData?.DATE_TO)
+			&& Type.isDate(entryData?.dateFrom)
+			&& Type.isDate(entryData?.dateTo)
+		)
+		{
+			return TimezoneProjectionSource.entryDateFieldsProjected;
+		}
+
+		if (Type.isString(entryData?.DATE_FROM) && Type.isString(entryData?.DATE_TO))
+		{
+			return TimezoneProjectionSource.entryStringCanonical;
+		}
+
+		return null;
+	}
+
+	shouldKeepEventTimezoneForEditableAttendeeCopy(entryData, sourceMode, timezoneFrom, timezoneTo, fullDay = false)
+	{
+		return (
+			sourceMode === TimezoneProjectionSource.entryStringCanonical
+			|| sourceMode === TimezoneProjectionSource.compactCanonical
+		)
+			&& fullDay !== true
+			&& Type.isStringFilled(timezoneFrom)
+			&& timezoneFrom === timezoneTo
+			&& this.isAttendeeCopy(entryData)
+			&& this.canEdit();
+	}
+
+	getEditableEventTimezoneProjectionReason(entryData, sourceMode, timezoneFrom, timezoneTo, fullDay = false)
+	{
+		if (
+			this.shouldKeepEventTimezoneForEditableAttendeeCopy(
+				entryData,
+				sourceMode,
+				timezoneFrom,
+				timezoneTo,
+				fullDay,
+			)
+		)
+		{
+			return 'delegated-attendee-event-timezone';
+		}
+
+		if (
+			this.canUseStoredWallClockForProjection(sourceMode)
+			&& fullDay !== true
+			&& Type.isStringFilled(timezoneFrom)
+			&& timezoneFrom === timezoneTo
+			&& this.hasEventOwnerMetadata(entryData)
+			&& this.canEdit()
+		)
+		{
+			return 'editable-event-timezone';
+		}
+
+		return null;
+	}
+
+	hasEventOwnerMetadata(entryData)
+	{
+		const ownerId = parseInt(entryData?.OWNER_ID, 10);
+		const createdBy = parseInt(entryData?.CREATED_BY, 10);
+
+		return ownerId > 0 || createdBy > 0;
+	}
+
+	getReliableStoredInstant(entryData, from, to, timezoneFrom, timezoneTo)
+	{
+		const storedInstant = Location.getUnambiguousEventInstant(entryData);
+		if (!storedInstant || !this.isAttendeeCopy(entryData))
+		{
+			return storedInstant;
+		}
+
+		return {
+			from: this.doesInstantMatchWallClock(
+				storedInstant.from,
+				this.getStoredInstantWallClock(entryData, 'DATE_FROM', from),
+				timezoneFrom,
+			)
+				? storedInstant.from
+				: null,
+			to: this.doesInstantMatchWallClock(
+				storedInstant.to,
+				this.getStoredInstantWallClock(entryData, 'DATE_TO', to),
+				timezoneTo,
+			)
+				? storedInstant.to
+				: null,
+		};
+	}
+
+	getStoredInstantWallClock(entryData, fieldName, fallback)
+	{
+		if (Type.isString(entryData?.[fieldName]))
+		{
+			const date = Util.parseDate(entryData[fieldName], true);
+			if (Type.isDate(date))
+			{
+				return { date, utc: true };
+			}
+		}
+
+		return { date: fallback, utc: false };
+	}
+
+	isAttendeeCopy(entryData)
+	{
+		const id = Number(entryData?.ID);
+		const parentId = Number(entryData?.PARENT_ID);
+
+		return this.isMeetingFlagEnabled(entryData?.IS_MEETING)
+			&& Number.isFinite(id)
+			&& Number.isFinite(parentId)
+			&& id > 0
+			&& parentId > 0
+			&& id !== parentId;
+	}
+
+	isMeetingFlagEnabled(value)
+	{
+		return value === true || value === 1 || value === '1' || value === 'Y';
+	}
+
+	doesInstantMatchWallClock(instant, wallClock, timezone)
+	{
+		const date = Type.isPlainObject(wallClock) ? wallClock.date : wallClock;
+		const utc = Type.isPlainObject(wallClock) && wallClock.utc === true;
+
+		if (!Number.isFinite(instant) || !Type.isDate(date) || !Type.isStringFilled(timezone))
+		{
+			return false;
+		}
+
+		const wallClockTime = utc ? date.getTime() : toUtcWallClock(date).getTime();
+
+		return instantToUtcContainer(instant, timezone).getTime() === wallClockTime;
+	}
+
 	updateEntryData(entryData, options = {})
 	{
 		if (this.entry instanceof Entry)
 		{
+			this.invalidatePlannerData();
 			const userSettings = options.userSettings || {};
 
 			if (Type.isPlainObject(entryData))
 			{
 				this.entry.prepareData(entryData);
 			}
-			else
-				if (!this.entry.getTimezoneFrom() || this.entry.getTimezoneTo())
+
+			if (!this.entry.id && !this.entry.fullDay)
+			{
+				const userTimezone = userSettings.timezoneName || userSettings.timezoneDefaultName;
+				if (Type.isStringFilled(userTimezone))
 				{
-					this.entry.setTimezone(userSettings.timezoneName || userSettings.timezoneDefaultName || null);
+					const timezoneFrom = this.entry.getTimezoneFrom() || userTimezone;
+					const timezoneTo = this.entry.getTimezoneTo() || this.entry.getTimezoneFrom() || userTimezone;
+					this.entry.setTimezone(timezoneFrom, timezoneTo);
+					if (this.rawEntryData)
+					{
+						this.rawEntryData.TZ_FROM = timezoneFrom;
+						this.rawEntryData.TZ_TO = timezoneTo;
+					}
 				}
+			}
 
 			if (
 				!this.entry.id
@@ -1036,28 +1799,109 @@ export class EventEditForm
 		Util.setUserSettings(userSettings);
 	}
 
+	// The saved instant applies whenever the shown interval still matches the loaded event. A compact ->
+	// full handoff only invalidates it when it actually changed the interval: then no saved instant fits,
+	// so return null and let the location precheck resolve wall-clock over the new projected interval
+	// (adding DAY_LENGTH for full-day). A no-op handoff keeps the canonical instant, so the ambiguous
+	// fall-back hour is not silently re-resolved to the standard-time side.
+	getLocationPrecheckInstant()
+	{
+		if (this.handoffIntent && this.hasHandoffDateTimeChange())
+		{
+			return null;
+		}
+
+		const {
+			rawEntryData,
+			sourceFrom,
+			sourceTo,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+		} = this.getTimezoneProjectionContext();
+
+		const storedInstant = this.getReliableStoredInstant(
+			rawEntryData,
+			sourceFrom,
+			sourceTo,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+		);
+
+		return Number.isFinite(storedInstant?.from) || Number.isFinite(storedInstant?.to)
+			? storedInstant
+			: null;
+	}
+
 	setFormValues()
 	{
 		const entry = this.entry;
+		const projection = this.timezoneProjection;
+		const {
+			rawEntryData,
+			eventTimezoneFrom,
+			eventTimezoneTo,
+		} = this.getTimezoneProjectionContext();
+		const canEditDateTime = this.canEdit();
 
-		// Date time
+		// Date time. When the projection is active it exposes gap-safe UTC containers (fromUtc/toUtc)
+		// consumed via the control's utc mode; otherwise fall back to the local canonical dates.
+		const useUtcProjection = projection.active === true
+			&& Type.isDate(projection.fromUtc)
+			&& Type.isDate(projection.toUtc);
+		const readonlyFrom = !canEditDateTime && Type.isDate(entry.from)
+			? Util.adjustDateForTimezoneOffset(entry.from, entry.userTimezoneOffsetFrom, entry.fullDay)
+			: null;
+		const readonlyTo = !canEditDateTime && Type.isDate(entry.to)
+			? Util.adjustDateForTimezoneOffset(entry.to, entry.userTimezoneOffsetTo, entry.fullDay)
+			: null;
+		const useUtcControl = !readonlyFrom && useUtcProjection;
+		const displayFrom = readonlyFrom || (useUtcControl ? projection.fromUtc : projection.from);
+		const displayTo = readonlyTo || (useUtcControl ? projection.toUtc : projection.to);
+		const useDisplayTimezoneControl = useUtcControl
+			&& Type.isStringFilled(projection.displayTimezone);
+		const controlTimezoneFrom = useDisplayTimezoneControl
+			? projection.displayTimezone
+			: eventTimezoneFrom;
+		const controlTimezoneTo = useDisplayTimezoneControl
+			? projection.displayTimezone
+			: eventTimezoneTo;
+		const preview = this.createDateTimePreview(
+			{
+				from: displayFrom,
+				to: displayTo,
+				fullDay: projection.fullDay,
+				timezoneFrom: controlTimezoneFrom,
+				timezoneTo: controlTimezoneTo,
+				utc: useUtcControl,
+			},
+			projection.displayTimezone,
+		);
+		const previewFrom = preview.from;
+		const previewTo = preview.to;
+		projection.previewFrom = previewFrom;
+		projection.previewTo = previewTo;
+		projection.previewTimezone = preview.timezone;
+		this.planner?.updateTimezone(preview.timezone);
+
 		this.dateTimeControl.setValue({
-			from: this.formDataValue.from || entry.from,
-			to: this.formDataValue.to || entry.to,
-			fullDay: Type.isBoolean(this.formDataValue.fullDay) ? this.formDataValue.fullDay : entry.fullDay,
-			timezoneFrom: entry.getTimezoneFrom() || '',
-			timezoneTo: entry.getTimezoneTo() || '',
-			timezoneName: this.userSettings.timezoneName,
+			from: displayFrom,
+			to: displayTo,
+			fullDay: projection.fullDay,
+			timezoneFrom: controlTimezoneFrom,
+			timezoneTo: controlTimezoneTo,
+			timezoneName: this.getUserTimezone(),
+			utc: useUtcControl,
 		});
-		this.initialTimezoneFrom = entry.getTimezoneFrom();
-		this.initialTimezoneTo = entry.getTimezoneTo();
-
-		if (entry.isSharingEvent() || !this.canEdit())
+		this.initialControlTimezoneFrom = controlTimezoneFrom;
+		this.initialControlTimezoneTo = controlTimezoneTo;
+		this.initialTimezoneFrom = this.getStoredTimezoneFrom(rawEntryData);
+		this.initialTimezoneTo = this.getStoredTimezoneTo(rawEntryData, this.initialTimezoneFrom);
+		if (entry.isSharingEvent() || !canEditDateTime)
 		{
 			this.dateTimeControl.setReadonly(this.timezoneHint);
 		}
 
-		if (!this.canEdit())
+		if (!canEditDateTime)
 		{
 			Dom.attr(this.DOM.entryName, 'readonly', 'readonly');
 			Dom.style(this.DOM.entryName, 'pointer-events', 'none');
@@ -1139,14 +1983,25 @@ export class EventEditForm
 			this.locationSelector.setValue(this.formDataValue.location
 				|| this.locationSelector.default || entry.getLocation(), false);
 
+			const unambiguousInstant = this.getLocationPrecheckInstant();
+			const projectedInstant = !projection.fullDay && useUtcControl
+				? {
+					from: getWallClockInstant(displayFrom, controlTimezoneFrom, true),
+					to: getWallClockInstant(displayTo, controlTimezoneTo, true),
+				}
+				: null;
 			this.locationSelector.checkLocationAccessibility({
-				from: this.formDataValue.from || entry.from,
-				to: this.formDataValue.to || entry.to,
-				timezone: this.entry.getTimezoneFrom(),
-				fullDay: Type.isBoolean(this.formDataValue.fullDay)
-					? this.formDataValue.fullDay
-					: entry.fullDay,
+				from: previewFrom,
+				to: previewTo,
+				timezone: preview.timezone,
+				fullDay: projection.fullDay,
 				currentEventId: this.entry.id,
+				fromTsUtc: Number.isFinite(unambiguousInstant?.from)
+					? unambiguousInstant.from
+					: projectedInstant?.from,
+				toTsUtc: Number.isFinite(unambiguousInstant?.to)
+					? unambiguousInstant.to
+					: projectedInstant?.to,
 			});
 		}
 
@@ -1213,15 +2068,16 @@ export class EventEditForm
 				this.DOM.form.allow_invite.checked = this.entry.allowInvite;
 			}
 		}
-
-		const dateTime = this.dateTimeControl.getValue();
+		this.initialMeetingNotify = this.DOM.form.meeting_notify?.checked;
+		this.initialHideGuests = this.DOM.form.hide_guests?.checked;
+		this.initialAllowInvite = this.DOM.form.allow_invite?.checked;
 
 		if (this.plannerEnabled)
 		{
 			this.planner.updateSelector(
-				dateTime.from,
-				dateTime.to,
-				dateTime.fullDay,
+				previewFrom,
+				previewTo,
+				projection.fullDay,
 				{
 					focus: true,
 				},
@@ -1261,12 +2117,20 @@ export class EventEditForm
 		{
 			this.loadPlannerData({
 				entityList: this.getUserSelectorEntityList(),
-				from: Util.formatDate(entry.from.getTime() - Util.getDayLength() * 3),
-				to: Util.formatDate(entry.to.getTime() + Util.getDayLength() * 10),
-				timezone: entry.getTimezoneFrom(),
+				from: Util.formatDate(previewFrom.getTime() - Util.getDayLength() * 3),
+				to: Util.formatDate(previewTo.getTime() + Util.getDayLength() * 10),
+				timezone: preview.timezone,
 				location: this.locationSelector.getTextValue(),
 			});
 		}
+
+		this.initialDisplaySnapshot = {
+			from: new Date(displayFrom.getTime()),
+			to: new Date(displayTo.getTime()),
+			fullDay: projection.fullDay,
+			displayTimezone: projection.displayTimezone,
+			utc: useUtcControl,
+		};
 	}
 
 	initCategoryControl(): void
@@ -1323,12 +2187,13 @@ export class EventEditForm
 	switchFullDay(value)
 	{
 		value = Boolean(this.DOM.fullDay.checked);
-		if (value && Type.isString(this.userSettings.timezoneName)
+		const userTimezone = this.getUserTimezone();
+		if (value && Type.isStringFilled(userTimezone)
 			&& (!this.DOM.fromTz.value || !this.DOM.toTz.value))
 		{
-			this.DOM.fromTz.value = this.userSettings.timezoneName;
-			this.DOM.toTz.value = this.userSettings.timezoneName;
-			this.DOM.defTimezone.value = this.userSettings.timezoneName;
+			this.DOM.fromTz.value = userTimezone;
+			this.DOM.toTz.value = userTimezone;
+			this.DOM.defTimezone.value = userTimezone;
 		}
 
 		if (value)
@@ -1410,48 +2275,207 @@ export class EventEditForm
 		this.dateTimeControl.subscribe('onChange', (event) => {
 			if (event instanceof BaseEvent)
 			{
-				const value = event.getData().value;
-
-				this.entry.setTimezone(value.timezoneFrom);
-
-				if (this.remindersControl)
-				{
-					this.remindersControl.setFullDayMode(value.fullDay);
-
-					if (!this.entry.id && !this.remindersControl.wasChangedByUser())
-					{
-						const defaultReminders = EntryManager.getNewEntryReminders(
-							value.fullDay ? 'fullDay' : 'withTime',
-						);
-
-						this.remindersControl.setValue(
-							defaultReminders,
-							true,
-							false,
-						);
-					}
-				}
-
-				if (this.planner)
-				{
-					this.planner.updateSelector(value.from, value.to, value.fullDay);
-					this.planner.updateTimezone(value.timezoneFrom);
-				}
-
-				if (this.locationSelector)
-				{
-					this.locationSelector.checkLocationAccessibility(
-						{
-							from: value.from,
-							to: value.to,
-							timezone: this.entry.getTimezoneFrom(),
-							fullDay: value.fullDay,
-							currentEventId: this.entry.id,
-						},
-					);
-				}
+				this.onDateTimeControlChange(event.getData().value);
 			}
 		});
+	}
+
+	onDateTimeControlChange(value)
+	{
+		// Track timezone intent per boundary: a single OR-flag would skip the reverse projection of
+		// an unchanged boundary while the other boundary's zone changed, shifting its saved time.
+		const initialControlTimezoneFrom = this.initialControlTimezoneFrom || this.initialTimezoneFrom;
+		const initialControlTimezoneTo = this.initialControlTimezoneTo || this.initialTimezoneTo;
+		this.fromTimezoneChanged = value.timezoneFrom !== initialControlTimezoneFrom;
+		this.toTimezoneChanged = value.timezoneTo !== initialControlTimezoneTo;
+		this.explicitTimezoneIntent = this.fromTimezoneChanged || this.toTimezoneChanged;
+		const displayTimezone = this.explicitTimezoneIntent
+			? value.timezoneFrom
+			: this.initialDisplaySnapshot?.displayTimezone;
+		const timezoneFrom = this.getEffectiveTimezoneFrom(value);
+		const timezoneTo = this.getEffectiveTimezoneTo(value);
+		const controlTimezoneFrom = this.getControlTimezone(value.timezoneFrom);
+		const controlTimezoneTo = this.getControlTimezone(value.timezoneTo);
+
+		if (this.explicitTimezoneIntent)
+		{
+			this.entry.setTimezone(timezoneFrom, timezoneTo);
+		}
+		else
+		{
+			this.entry.setTimezone(this.initialTimezoneFrom, this.initialTimezoneTo);
+		}
+
+		const preview = this.updateTimezoneProjection(value, displayTimezone);
+
+		if (this.remindersControl)
+		{
+			this.remindersControl.setFullDayMode(value.fullDay);
+
+			if (!this.entry.id && !this.remindersControl.wasChangedByUser())
+			{
+				const defaultReminders = EntryManager.getNewEntryReminders(
+					value.fullDay ? 'fullDay' : 'withTime',
+				);
+
+				this.remindersControl.setValue(
+					defaultReminders,
+					true,
+					false,
+				);
+			}
+		}
+
+		const locationInstant = !value.fullDay
+			? {
+				from: getWallClockInstant(value.from, controlTimezoneFrom, value.utc === true),
+				to: getWallClockInstant(value.to, controlTimezoneTo, value.utc === true),
+			}
+			: null;
+
+		if (this.planner)
+		{
+			this.planner.updateSelector(preview.from, preview.to, value.fullDay);
+			this.planner.updateTimezone(preview.timezone);
+			this.refreshPlanner?.();
+		}
+
+		if (this.locationSelector)
+		{
+			this.locationSelector.checkLocationAccessibility(
+				{
+					from: preview.from,
+					to: preview.to,
+					timezone: preview.timezone,
+					fullDay: value.fullDay,
+					currentEventId: this.entry.id,
+					fromTsUtc: locationInstant?.from,
+					toTsUtc: locationInstant?.to,
+				},
+			);
+		}
+
+	}
+
+	getLocalControlBoundary(boundary, utc = false)
+	{
+		return utc && Type.isDate(boundary) ? utcContainerToLocal(boundary) : boundary;
+	}
+
+	createDateTimePreview(value, preferredTimezone = '')
+	{
+		const utc = value.utc === true;
+		if (!Type.isDate(value.from) || !Type.isDate(value.to) || value.fullDay)
+		{
+			return {
+				from: this.getLocalControlBoundary(value.from, utc),
+				to: this.getLocalControlBoundary(value.to, utc),
+				timezone: preferredTimezone,
+			};
+		}
+
+		const timezoneFrom = this.getControlTimezone(value.timezoneFrom);
+		const timezoneTo = this.getControlTimezone(value.timezoneTo);
+		const timezoneCandidates = [];
+		for (const timezone of [preferredTimezone, this.getUserTimezone(), this.getBrowserTimezone()])
+		{
+			if (Type.isStringFilled(timezone) && !timezoneCandidates.includes(timezone))
+			{
+				timezoneCandidates.push(timezone);
+			}
+		}
+
+		for (const timezone of timezoneCandidates)
+		{
+			const fromUtc = expressWallClockInTimezone(value.from, timezoneFrom, timezone, utc);
+			const toUtc = expressWallClockInTimezone(value.to, timezoneTo, timezone, utc);
+			if (
+				this.canMaterializeUtcWallClockLocally(fromUtc)
+				&& this.canMaterializeUtcWallClockLocally(toUtc)
+			)
+			{
+				return {
+					from: utcContainerToLocal(fromUtc),
+					to: utcContainerToLocal(toUtc),
+					timezone,
+				};
+			}
+		}
+
+		return {
+			from: this.getLocalControlBoundary(value.from, utc),
+			to: this.getLocalControlBoundary(value.to, utc),
+			timezone: preferredTimezone,
+		};
+	}
+
+	canMaterializeUtcWallClockLocally(boundary)
+	{
+		return Type.isDate(boundary)
+			&& this.isSameWallClock(utcContainerToLocal(boundary), boundary, false, true);
+	}
+
+	getBrowserTimezone()
+	{
+		return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+	}
+
+	getEffectiveTimezoneFrom(value)
+	{
+		return this.fromTimezoneChanged ? (value.timezoneFrom || '') : (this.initialTimezoneFrom || '');
+	}
+
+	getEffectiveTimezoneTo(value)
+	{
+		return this.toTimezoneChanged ? (value.timezoneTo || '') : (this.initialTimezoneTo || '');
+	}
+
+	getControlTimezone(timezone)
+	{
+		return Type.isStringFilled(timezone)
+			? timezone
+			: (this.timezoneProjection?.displayTimezone || this.getUserTimezone());
+	}
+
+	// Returns the wall-clock (as a local Date) in targetTimezone denoting the same absolute instant as
+	// the given boundary wall-clock read in sourceTimezone. DST-safe (offsets resolved at the true
+	// instant); a no-op when the zones match or either is missing.
+	expressBoundaryInTimezone(boundary, sourceTimezone, targetTimezone, sourceUtc = false)
+	{
+		if (
+			!Type.isDate(boundary)
+			|| !Type.isStringFilled(sourceTimezone)
+			|| !Type.isStringFilled(targetTimezone)
+			|| sourceTimezone === targetTimezone
+		)
+		{
+			return this.getLocalControlBoundary(boundary, sourceUtc);
+		}
+
+		return utcContainerToLocal(
+			expressWallClockInTimezone(boundary, sourceTimezone, targetTimezone, sourceUtc),
+		);
+	}
+
+	getRepeatSelectorDate()
+	{
+		const dateTime = this.dateTimeControl.getValue();
+		if (
+			!dateTime.fullDay
+			&& this.timezoneProjection?.active === true
+			&& !this.fromTimezoneChanged
+			&& Type.isStringFilled(this.timezoneProjection.displayTimezone)
+		)
+		{
+			return this.expressBoundaryInTimezone(
+				dateTime.from,
+				this.timezoneProjection.displayTimezone,
+				this.initialTimezoneFrom,
+				dateTime.utc === true,
+			);
+		}
+
+		return this.getLocalControlBoundary(dateTime.from, dateTime.utc === true);
 	}
 
 	initNameControl(uid)
@@ -1657,6 +2681,7 @@ export class EventEditForm
 	initLocationControl(uid)
 	{
 		this.DOM.locationWrap = this.DOM.content.querySelector(`#${uid}_location_wrap`);
+		this.DOM.locationErrorWrap = this.DOM.content.querySelector(`#${uid}_location_error_wrap`);
 		this.DOM.locationInput = this.DOM.content.querySelector(`#${uid}_location`);
 
 		this.locationSelector = new Location(
@@ -1688,7 +2713,7 @@ export class EventEditForm
 			wrap: this.DOM.rruleWrap,
 			rruleType: this.DOM.content.querySelector(`#${uid}_rrule_type`),
 			rruleCount: this.DOM.content.querySelector(`#${uid}_rrule_count`),
-			getDate: function() { return this.dateTimeControl.getValue().from; }.bind(this),
+			getDate: this.getRepeatSelectorDate.bind(this),
 		});
 
 		this.dateTimeControl.subscribe('onChange', () => {
@@ -1829,7 +2854,7 @@ export class EventEditForm
 			wrap: this.DOM.plannerOuterWrap,
 			minWidth: parseInt(this.DOM.plannerOuterWrap.offsetWidth),
 			locked: !this.plannerFeatureEnabled,
-			entryTimezone: this.entry.getTimezoneFrom(),
+			entryTimezone: this.getDisplayTimezone(),
 		});
 
 		this.planner.subscribe('onDateChange', this.handlePlannerSelectorChanges.bind(this));
@@ -1848,70 +2873,162 @@ export class EventEditForm
 
 	loadPlannerData(params = {})
 	{
+		if (this.destroyed)
+		{
+			return Promise.resolve();
+		}
+
+		const data = {
+			entryId: this.entry.id || 0,
+			entryLocation: this.entry.data.LOCATION || '',
+			ownerId: this.ownerId,
+			hostId: this.entry.data.MEETING_HOST || null,
+			type: this.type,
+			entityList: this.isOpenEvent ? [] : (params.entityList ?? this.getUserSelectorEntityList() ?? []),
+			attendeesProvided: 'Y',
+			dateFrom: Util.formatDate(this.planner.scaleDateFrom),
+			dateTo: Util.formatDate(this.planner.scaleDateTo),
+			timezone: params.timezone || '',
+			location: params.location || '',
+		};
+		const context = JSON.stringify(data);
+		if (context !== this.plannerDataContext)
+		{
+			this.invalidatePlannerData();
+			this.plannerDataContext = context;
+		}
+
 		this.planner.showLoader();
+		const requestId = ++this.plannerDataRequestId;
 
-		return new Promise((resolve) => {
-			this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
-				data: {
-					entryId: this.entry.id || 0,
-					entryLocation: this.entry.data.LOCATION || '',
-					ownerId: this.ownerId,
-					hostId: this.entry.data.MEETING_HOST || null,
-					type: this.type,
-					// open_event need only location planner
-					entityList: !this.isOpenEvent && params.entityList || [],
-					dateFrom: Util.formatDate(this.planner.scaleDateFrom),
-					dateTo: Util.formatDate(this.planner.scaleDateTo),
-					timezone: params.timezone || '',
-					location: params.location || '',
-					prevUserList: this.prevUserList,
-				},
-			})
-				.then(
-					(response) => {
-						if (this.planner)
+		// BX.ajax.runAction returns BX.Promise without finally().
+		return Promise.resolve(this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
+			data: { ...data, prevUserList: this.prevUserList },
+		}))
+			.then(
+				(response) => {
+					if (requestId !== this.plannerDataRequestId)
+					{
+						// a newer planner request has been sent, drop the stale response
+						return response;
+					}
+
+					if (this.planner)
+					{
+						this.applyPlannerLimitState(response.data);
+
+						for (const id in response.data.accessibility)
 						{
-							for (const id in response.data.accessibility)
+							if (response.data.accessibility.hasOwnProperty(id))
 							{
-								if (response.data.accessibility.hasOwnProperty(id))
+								this.loadedAccessibilityData[id] = response.data.accessibility[id];
+							}
+						}
+
+						if (Type.isArray(response.data.entries))
+						{
+							response.data.entries.forEach((entry) => {
+								const hasAccessibility = this.loadedAccessibilityData[entry.id];
+								if (entry.type === 'user' && !this.prevUserList.includes(parseInt(entry.id)) && hasAccessibility)
 								{
-									this.loadedAccessibilityData[id] = response.data.accessibility[id];
+									this.prevUserList.push(parseInt(entry.id));
 								}
-							}
-
-							if (Type.isArray(response.data.entries))
-							{
-								response.data.entries.forEach((entry) => {
-									const hasAccessibility = this.loadedAccessibilityData[entry.id];
-									if (entry.type === 'user' && !this.prevUserList.includes(parseInt(entry.id)) && hasAccessibility)
-									{
-										this.prevUserList.push(parseInt(entry.id));
-									}
-								});
-							}
-
-							this.planner.hideLoader();
-							this.planner.update(
-								response.data.entries,
-								this.loadedAccessibilityData,
-							);
+							});
 						}
 
-						if (this.hasExternalEmailUsers())
-						{
-							this.showHideGuestsOption();
-						}
-						else
-						{
-							this.hideHideGuestsOption();
-						}
-						resolve(response);
-					},
-					(response) =>
-                     { resolve(response);
-					},
-				);
-		});
+						this.planner.update(
+							response.data.entries,
+							this.loadedAccessibilityData,
+						);
+					}
+
+					if (this.hasExternalEmailUsers())
+					{
+						this.showHideGuestsOption();
+					}
+					else
+					{
+						this.hideHideGuestsOption();
+					}
+
+					return response;
+				},
+				(response) => response,
+			)
+			.finally(() => {
+				if (requestId === this.plannerDataRequestId)
+				{
+					this.planner?.hideLoader();
+				}
+			});
+	}
+
+	applyPlannerLimitState(data): void
+	{
+		const exceeded = data.plannerLimitExceeded === true;
+		const wasExceeded = this.plannerLimitState?.exceeded ?? false;
+
+		this.plannerLimitState = {
+			exceeded,
+			maxPlannerUsers: parseInt(data.maxPlannerUsers) || 0,
+			peopleCount: parseInt(data.plannerPeopleCount) || 0,
+		};
+
+		if (exceeded)
+		{
+			// render strictly the truncated response and forget missing users,
+			// so their busy data reloads after going back under the limit
+			this.loadedAccessibilityData = {};
+			const responseUserIds = (Type.isArray(data.entries) ? data.entries : [])
+				.filter((entry) => entry.type === 'user')
+				.map((entry) => parseInt(entry.id));
+			this.prevUserList = this.prevUserList.filter((userId) => responseUserIds.includes(userId));
+		}
+
+		if (exceeded !== wasExceeded)
+		{
+			this.emitter.emit('onPlannerLimitStateChange', new BaseEvent({
+				data: { ...this.plannerLimitState },
+			}));
+		}
+	}
+
+	handlePlannerLimitStateChange(event: BaseEvent): void
+	{
+		if (!this.plannerFeatureEnabled)
+		{
+			// the tariff lock promo already explains why the planner is unavailable
+			return;
+		}
+
+		const { exceeded, maxPlannerUsers } = event.getData();
+
+		// the event fires on threshold transitions only, so a hint closed
+		// by user stays hidden until the limit is exceeded again
+		if (exceeded)
+		{
+			this.getPlannerLimitHint(maxPlannerUsers)?.show();
+		}
+		else
+		{
+			this.plannerLimitHint?.close();
+		}
+	}
+
+	getPlannerLimitHint(maxPlannerUsers: number): PlannerLimitHint | null
+	{
+		if (!this.plannerLimitHint && this.DOM.userSelectorWrap)
+		{
+			this.plannerLimitHint = new PlannerLimitHint({
+				bindElement: this.DOM.userSelectorWrap,
+				targetContainer: this.DOM.content,
+				zIndex: this.zIndex,
+				maxPlannerUsers,
+			});
+		}
+		this.plannerLimitHint?.setMaxPlannerUsers(maxPlannerUsers);
+
+		return this.plannerLimitHint;
 	}
 
 	initAdditionalControls(uid)
@@ -2023,6 +3140,7 @@ export class EventEditForm
 
 	setCurrentEntry(entry = null, userIndex = null)
 	{
+		this.invalidatePlannerData();
 		const currentSectionId = this.getCurrentSectionId();
 		this.entry = EntryManager.getEntryInstance(entry, userIndex, { type: this.type, ownerId: this.ownerId });
 		if (
@@ -2456,23 +3574,67 @@ export class EventEditForm
 		if (event instanceof BaseEvent)
 		{
 			const data = event.getData();
+			const currentDateTime = this.dateTimeControl.getValue();
+
+			// The planner reports a single-zone (displayTimezone) interval. Invert the forward projection
+			// from onDateTimeControlChange: express each boundary back in its own effective zone so the
+			// control keeps per-boundary wall-clock, otherwise a boundary with a changed zone would carry
+			// the display wall-clock under its new zone and shift its absolute time on save.
+			const displayTimezone = this.getDisplayTimezone();
+			const controlTimezoneFrom = this.getControlTimezone(currentDateTime.timezoneFrom);
+			const controlTimezoneTo = this.getControlTimezone(currentDateTime.timezoneTo);
+			const useUtcControl = currentDateTime.utc === true;
+			const controlFrom = data.fullDay
+				? (useUtcControl ? toUtcWallClock(data.dateFrom) : data.dateFrom)
+				: useUtcControl
+					? expressWallClockInTimezone(data.dateFrom, displayTimezone, controlTimezoneFrom)
+					: this.expressBoundaryInTimezone(data.dateFrom, displayTimezone, controlTimezoneFrom);
+			const controlTo = data.fullDay
+				? (useUtcControl ? toUtcWallClock(data.dateTo) : data.dateTo)
+				: useUtcControl
+					? expressWallClockInTimezone(data.dateTo, displayTimezone, controlTimezoneTo)
+					: this.expressBoundaryInTimezone(data.dateTo, displayTimezone, controlTimezoneTo);
+
 			// Date time
 			this.dateTimeControl.setValue({
-				from: data.dateFrom,
-				to: data.dateTo,
+				from: controlFrom,
+				to: controlTo,
+				fullDay: data.fullDay,
+				timezoneFrom: currentDateTime.timezoneFrom,
+				timezoneTo: currentDateTime.timezoneTo,
+				utc: useUtcControl,
 			});
+			const dateTime = this.dateTimeControl.getValue();
+			const preview = this.updateTimezoneProjection(dateTime);
+			const locationInstant = !dateTime.fullDay
+				? {
+					from: getWallClockInstant(
+						dateTime.from,
+						this.getControlTimezone(dateTime.timezoneFrom),
+						dateTime.utc === true,
+					),
+					to: getWallClockInstant(
+						dateTime.to,
+						this.getControlTimezone(dateTime.timezoneTo),
+						dateTime.utc === true,
+					),
+				}
+				: null;
 			if (this.locationSelector)
 			{
 				this.locationSelector.checkLocationAccessibility(
 					{
-						from: data.dateFrom,
-						to: data.dateTo,
-						timezone: this.entry.getTimezoneFrom(),
+						from: preview.from,
+						to: preview.to,
+						timezone: preview.timezone,
 						fullDay: data.fullDay,
 						currentEventId: this.entry.id,
+						fromTsUtc: locationInstant?.from,
+						toTsUtc: locationInstant?.to,
 					},
 				);
 			}
+
 
 			if (this.planner)
 			{
@@ -2502,7 +3664,7 @@ export class EventEditForm
 					entityList: this.getUserSelectorEntityList(),
 					from: Util.formatDate(data.dateFrom),
 					to: Util.formatDate(data.dateTo),
-					timezone: dateTime.timezoneFrom,
+					timezone: this.getDisplayTimezone(),
 					location: this.locationSelector.getTextValue(),
 					focusSelector: false,
 				});
@@ -2517,7 +3679,16 @@ export class EventEditForm
 
 	setUserSelectorEntityList(selectorEntityList)
 	{
+		this.invalidatePlannerData();
 		this.selectorEntityList = selectorEntityList;
+	}
+
+	invalidatePlannerData(): void
+	{
+		this.plannerDataRequestId += 1;
+		this.plannerDataContext = null;
+		this.loadedAccessibilityData = {};
+		this.prevUserList = [];
 	}
 
 	refreshPlannerState()
@@ -2527,7 +3698,7 @@ export class EventEditForm
 			entityList: this.isOpenEvent ? [] : this.getUserSelectorEntityList(),
 			from: Util.formatDate(dateTime.from.getTime() - Util.getDayLength() * 3),
 			to: Util.formatDate(dateTime.to.getTime() + Util.getDayLength() * 10),
-			timezone: dateTime.timezoneFrom,
+			timezone: this.getDisplayTimezone(),
 			location: this.locationSelector.getTextValue(),
 		});
 	}
@@ -2537,7 +3708,11 @@ export class EventEditForm
 		if (!this.isCollabUser && event && event instanceof BaseEvent)
 		{
 			const data = event.getData();
-			const usersCount = data.usersCount;
+			// the truncated planner renders the organizer only, so capacity
+			// must be checked against the full people count from the response
+			const usersCount = this.plannerLimitState?.exceeded
+				? Math.max(data.usersCount, this.plannerLimitState.peopleCount)
+				: data.usersCount;
 
 			if (this.locationCapacity !== 0)
 			{
@@ -2608,7 +3783,11 @@ export class EventEditForm
 			errorList.forEach((error) => {
 				if (error.code === 'edit_entry_location_busy' || error.code === 'edit_entry_location_busy_recurrence')
 				{
-					this.locationBusyAlert = Util.showFieldError(error.message, this.DOM.locationWrap, { clearTimeout: 10000 });
+					this.locationBusyAlert = Util.showFieldError(error.message, this.DOM.locationErrorWrap, { clearTimeout: 10000 });
+					if (Type.isDomNode(this.locationBusyAlert))
+					{
+						Dom.attr(this.locationBusyAlert, 'role', 'alert');
+					}
 
 					return;
 				}
@@ -2701,12 +3880,13 @@ export class EventEditForm
 
 		// Date + time
 		const dateTime = this.dateTimeControl.getValue();
+		const initialDateTime = this.initialDisplaySnapshot || entry;
 		if (
 			!excludes.includes('date&time')
 			&& (
-				entry.isFullDay() !== dateTime.fullDay
-				|| dateTime.from.toString() !== entry.from.toString()
-				|| dateTime.to.toString() !== entry.to.toString()
+				this.hasHandoffDateTimeChange()
+				|| this.explicitTimezoneIntent
+				|| this.hasDateTimeWallClockChange(dateTime, initialDateTime)
 			)
 		)
 		{
@@ -2768,12 +3948,14 @@ export class EventEditForm
 			fields.push('important');
 		}
 
-		if (this.DOM.form.tz_from.dataset.value !== this.initialTimezoneFrom)
+		const initialControlTimezoneFrom = this.initialControlTimezoneFrom || this.initialTimezoneFrom;
+		const initialControlTimezoneTo = this.initialControlTimezoneTo || this.initialTimezoneTo;
+		if (this.DOM.form.tz_from.dataset.value !== initialControlTimezoneFrom)
 		{
 			fields.push('tz_from');
 		}
 
-		if (this.DOM.form.tz_to.dataset.value !== this.initialTimezoneTo)
+		if (this.DOM.form.tz_to.dataset.value !== initialControlTimezoneTo)
 		{
 			fields.push('tz_to');
 		}
@@ -2785,9 +3967,29 @@ export class EventEditForm
 			fields.push('uf_crm');
 		}
 
-		if (this.DOM.form.meeting_notify && entry.data.MEETING && this.DOM.form.meeting_notify.checked !== entry.data.MEETING.NOTIFY)
+		if (
+			!excludes.includes('meeting_notify')
+			&& Type.isBoolean(this.initialMeetingNotify)
+			&& this.DOM.form.meeting_notify.checked !== this.initialMeetingNotify
+		)
 		{
 			fields.push('meeting_notify');
+		}
+		if (
+			!excludes.includes('hide_guests')
+			&& Type.isBoolean(this.initialHideGuests)
+			&& this.DOM.form.hide_guests.checked !== this.initialHideGuests
+		)
+		{
+			fields.push('hide_guests');
+		}
+		if (
+			!excludes.includes('allow_invite')
+			&& Type.isBoolean(this.initialAllowInvite)
+			&& this.DOM.form.allow_invite.checked !== this.initialAllowInvite
+		)
+		{
+			fields.push('allow_invite');
 		}
 
 		if (this.DOM.accessibilityInput && this.DOM.accessibilityInput.dataset.value !== entry.accessibility)
@@ -2812,6 +4014,53 @@ export class EventEditForm
 		}
 
 		return fields;
+	}
+
+	// A compact -> full handoff always carries formDataValue.from/to, so handoffIntent alone must not
+	// mark date&time changed. Report a change only when the handed-off interval actually differs from the
+	// loaded event; compare canonical serialized fields (minute granularity) to stay robust against
+	// sub-minute representation drift between the compact and full load paths.
+	hasHandoffDateTimeChange()
+	{
+		if (this.handoffIntent !== true)
+		{
+			return false;
+		}
+
+		const entry = this.entry;
+		const handoffFrom = this.formDataValue.from;
+		const handoffTo = this.formDataValue.to;
+		if (
+			!Type.isDate(handoffFrom)
+			|| !Type.isDate(handoffTo)
+			|| !Type.isDate(entry?.from)
+			|| !Type.isDate(entry?.to)
+		)
+		{
+			return true;
+		}
+
+		const handoffFullDay = Type.isBoolean(this.formDataValue.fullDay)
+			? this.formDataValue.fullDay
+			: entry.fullDay;
+		if (handoffFullDay !== entry.fullDay)
+		{
+			return true;
+		}
+
+		if (
+			Util.formatDate(handoffFrom) !== Util.formatDate(entry.from)
+			|| Util.formatDate(handoffTo) !== Util.formatDate(entry.to)
+		)
+		{
+			return true;
+		}
+
+		return !handoffFullDay
+			&& (
+				Util.formatTime(handoffFrom) !== Util.formatTime(entry.from)
+				|| Util.formatTime(handoffTo) !== Util.formatTime(entry.to)
+			);
 	}
 
 	wasRruleChanged()

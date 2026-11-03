@@ -24,6 +24,12 @@ export const MarkTaskButton = {
 	inject: {
 		task: {},
 	},
+	props: {
+		getMenuTargetContainer: {
+			type: Function,
+			default: null,
+		},
+	},
 	setup(): { task: TaskModel } {},
 	data(): Object
 	{
@@ -42,6 +48,7 @@ export const MarkTaskButton = {
 			return (): MenuOptions => ({
 				id: 'tasks-full-card-mark-task-menu',
 				bindElement: this.$refs.container?.$el || this.$refs.container,
+				targetContainer: this.getMenuTargetContainer?.() ?? null,
 				sections: this.menuSections,
 				items: this.menuItems,
 			});
@@ -92,6 +99,14 @@ export const MarkTaskButton = {
 		isLocked(): boolean
 		{
 			return !Core.getParams().restrictions.mark.available;
+		},
+		opensMenu(): boolean
+		{
+			return this.isAllowed && !this.isLocked;
+		},
+		isActionable(): boolean
+		{
+			return this.opensMenu || this.isLocked;
 		},
 	},
 	watch: {
@@ -178,6 +193,15 @@ export const MarkTaskButton = {
 
 			this.isMenuShown = true;
 		},
+		getTriggerElement(): ?HTMLElement
+		{
+			return this.$refs.container?.$el?.querySelector('.b24-hover-pill-content');
+		},
+		handleMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.getTriggerElement()?.focus();
+		},
 		updateMark(): void
 		{
 			this.activeMenuItemId = this.task.mark;
@@ -188,6 +212,9 @@ export const MarkTaskButton = {
 			:readonly="!isAllowed"
 			ref="container"
 			class="mark-task-button"
+			:ariaLabel="isActionable ? formattedText : ''"
+			:ariaHaspopup="opensMenu ? 'menu' : ''"
+			:ariaExpanded="opensMenu ? isMenuShown : null"
 			@click="handleClick"
 		>
 			<div class="mark-task-button__text">{{ formattedText }}</div>
@@ -200,7 +227,7 @@ export const MarkTaskButton = {
 		<BMenu
 			v-if="isMenuShown"
 			:options="menuOptions()"
-			@close="isMenuShown = false"
+			@close="handleMenuClose"
 		/>
 	`,
 };

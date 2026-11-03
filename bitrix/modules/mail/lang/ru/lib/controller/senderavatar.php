@@ -1,0 +1,25 @@
+<?php
+$MESS['MAIL_AVATAR_ACCESS_DENIED'] = 'Недостаточно прав для изменения фото отправителя';
+$MESS['MAIL_AVATAR_FORMAT_INVALID'] = 'Выберите фото в формате JPEG или PNG';
+$MESS['MAIL_AVATAR_IMAGE_INVALID'] = 'Не удалось обработать фото, выберите другое';
+$MESS['MAIL_AVATAR_LIMIT_EXCEEDED'] = 'Фото слишком большое, выберите другое';
+$MESS['MAIL_AVATAR_NOT_SUPPORTED'] = 'Общее фото внешних отправителей недоступно';
+$MESS['MAIL_AVATAR_SAVE_FAILED'] = 'Не удалось сохранить изменения, попробуйте ещё раз';
+$MESS['MAIL_AVATAR_UPLOAD_INVALID'] = 'Выбранное фото больше недоступно, выберите его ещё раз';
+$MESS['MAIL_MESSAGE_ACCESS_DENIED'] = 'Письмо не найдено или недостаточно прав для его просмотра';
+$MESS['MAIL_SENDER_AVATAR_INVALID_CHANGE'] = 'Не удалось изменить фото отправителя';
+$MESS['MAIL_SENDER_AVATAR_INVALID_SENDER'] = 'Фото этого отправителя нельзя изменить';
+$MESS['MAIL_SENDER_AVATAR_LABEL_CANCEL'] = 'Отмена';
+$MESS['MAIL_SENDER_AVATAR_LABEL_CONFIRM'] = 'Сохранить';
+$MESS['MAIL_SENDER_AVATAR_LABEL_DELETE'] = 'Удалить фото';
+$MESS['MAIL_SENDER_AVATAR_LABEL_DELETE_PENDING'] = 'Удаление не сохранено';
+$MESS['MAIL_SENDER_AVATAR_LABEL_LOADING'] = 'Загружается';
+$MESS['MAIL_SENDER_AVATAR_LABEL_OPEN'] = 'Изменить фото отправителя';
+$MESS['MAIL_SENDER_AVATAR_LABEL_REPLACE'] = 'Заменить фото';
+$MESS['MAIL_SENDER_AVATAR_LABEL_REPLACE_PENDING'] = 'Новое фото не сохранено';
+$MESS['MAIL_SENDER_AVATAR_LABEL_RETRY'] = 'Попробовать ещё раз';
+$MESS['MAIL_SENDER_AVATAR_LABEL_SAVING'] = 'Сохраняется';
+$MESS['MAIL_SENDER_AVATAR_LABEL_SELECT'] = 'Выбрать фото';
+$MESS['MAIL_SENDER_AVATAR_LABEL_TITLE'] = 'Фото отправителя';
+$MESS['MAIL_SENDER_AVATAR_LABEL_UPLOADER_ERROR'] = 'Не удалось выполнить действие, фото не изменилось';
+$MESS['MAIL_SENDER_AVATAR_VERSION_CONFLICT'] = 'Фото уже изменилось, проверьте его и сохраните ещё раз';

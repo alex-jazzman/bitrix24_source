@@ -1,15 +1,28 @@
-import { Tag, Type } from 'main.core';
+import { Loc, Tag, Type } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { BaseView } from './view/base-view';
 import './popup.css';
 
+const POPUP_MAX_WIDTH = 700;
+const POPUP_SIDE_MARGIN = 16;
+
+export const getPopupWidth = (viewWidth, viewportWidth) => {
+	const popupMaxWidth = viewWidth ?? POPUP_MAX_WIDTH;
+	const availableViewportWidth = Math.max(1, viewportWidth - POPUP_SIDE_MARGIN * 2);
+
+	return Math.min(popupMaxWidth, availableViewportWidth);
+};
+
+export const isMobilePopup = (viewWidth) => Type.isNumber(viewWidth);
+
 export class ConnectPopup extends EventEmitter
 {
 	#cache: BaseCache = new MemoryCache();
 	#view: BaseView;
 	#viewCollection: Array = [];
+	#isClosed: boolean = false;
 
 	constructor(options)
 	{
@@ -30,6 +43,11 @@ export class ConnectPopup extends EventEmitter
 
 		this.#viewCollection.forEach((view) => {
 			view.subscribe('onNextView', (event) => {
+				if (this.#isClosed)
+				{
+					return;
+				}
+
 				const viewCode = event.getData()?.viewCode;
 				const fallbackViewCode = event.getData()?.fallbackViewCode;
 				const options = event.getData()?.options;
@@ -51,8 +69,9 @@ export class ConnectPopup extends EventEmitter
 			view.subscribe('onPreviousView', (event) => {
 				const viewCode = event.getData()?.viewCode;
 				const options = event.getData()?.options;
-				Type.isStringFilled(viewCode, this.getViewByCode(viewCode))
-					? this.changeView(this.getViewByCode(viewCode), options)
+				const targetView = Type.isStringFilled(viewCode) ? this.getViewByCode(viewCode) : null;
+				targetView
+					? this.changeView(targetView, options)
 					: this.previousView(options);
 			});
 			view.subscribe('onParentClose', () => {
@@ -194,9 +213,12 @@ export class ConnectPopup extends EventEmitter
 
 	#createPopup(): Popup
 	{
+		const viewWidth = this.#view.getPopupWidth();
+
 		return new Popup({
+			ariaLabel: Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE_MSGVER_1'),
 			content: this.#renderContent(),
-			width: 700,
+			width: getPopupWidth(viewWidth, window.innerWidth),
 			closeByEsc: true,
 			contentColor: 'white',
 			autoHide: true,
@@ -204,8 +226,10 @@ export class ConnectPopup extends EventEmitter
 			fixed: true,
 			overlay: true,
 			disableScroll: true,
+			className: isMobilePopup(viewWidth) ? 'intranet-push-otp-connect-popup--mobile' : '',
 			events: {
 				onPopupShow: () => {
+					this.#isClosed = false;
 					this.emit(
 						'onShow',
 						{
@@ -216,6 +240,7 @@ export class ConnectPopup extends EventEmitter
 					this.#view.afterShow();
 				},
 				onPopupClose: () => {
+					this.#isClosed = true;
 					this.#view.beforeDismiss();
 					this.emit(
 						'onClose',

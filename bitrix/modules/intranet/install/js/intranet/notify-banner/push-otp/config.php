@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/push-otp.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.buttons',
 		'ui.design-tokens',
 		'ui.system.typography',
-		'ui.buttons',
 	],
 	'skip_core' => false,
 ];

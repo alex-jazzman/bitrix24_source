@@ -10,11 +10,13 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 	const { getEntityMessage } = require('crm/loc');
 	const { CrmStageList } = require('crm/stage-list');
 	const { NotifyManager } = require('notify-manager');
+	const { canOpenFunnelSettings } = require('crm/stage-list-view/permissions');
 
 	const { connect } = require('statemanager/redux/connect');
 	const {
 		selectById,
 		selectStagesIdsBySemantics,
+		selectCanUserEditCategory,
 		fetchCrmKanban,
 	} = require('crm/statemanager/redux/slices/kanban-settings');
 
@@ -91,6 +93,28 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			}
 
 			super.componentDidMount();
+		}
+
+		componentDidUpdate(prevProps)
+		{
+			// the button is built once on mount, off the funnel the cache drew the screen with, so
+			// the fresh answer gets to take the way into the funnel settings away or to give it back
+			if (prevProps.editable !== this.props.editable)
+			{
+				this.initNavigation(this.props);
+			}
+		}
+
+		initNavigation(params)
+		{
+			super.initNavigation(params);
+
+			// the base class only ever puts the funnel edit button in, and a refusal has to take it
+			// back out
+			if (!this.isEditable)
+			{
+				this.layout.setRightButtons([]);
+			}
 		}
 
 		bindEvents()
@@ -284,19 +308,21 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 	}
 
 	const mapStateToProps = (state, ownProps) => {
+		const kanbanSettings = selectById(state, ownProps.kanbanSettingsId);
 		const {
 			name = '',
 			categoriesEnabled = false,
-			editable = false,
 			tunnels,
 			categoryId,
-		} = selectById(state, ownProps.kanbanSettingsId) || {};
+		} = kanbanSettings || {};
 
 		return {
 			stageIdsBySemantics: selectStagesIdsBySemantics(state, ownProps.kanbanSettingsId),
 			kanbanSettingsName: name,
 			categoriesEnabled,
-			editable,
+			// the base class draws the funnel edit button off `editable`, and the button leads to the
+			// funnel settings screen, so it asks the capability that screen itself is gated by
+			editable: canOpenFunnelSettings(kanbanSettings, selectCanUserEditCategory(state)),
 			tunnels,
 			categoryId,
 		};

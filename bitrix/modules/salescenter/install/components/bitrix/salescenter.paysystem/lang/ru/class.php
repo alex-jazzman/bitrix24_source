@@ -30,4 +30,5 @@ $MESS['SALESCENTER_SP_CONNECT_COMPANY_DETAILS_KPP'] = 'КПП #KPP#';
 $MESS['SALESCENTER_SP_CONNECT_COMPANY_DETAILS_INN_KPP'] = 'ИНН #INN# • КПП #KPP#';
 $MESS['SALESCENTER_SP_CONNECT_COMPANY_EMPTY_INN_ALERT'] = 'Заполните ИНН';
 $MESS['SALESCENTER_SP_CONNECT_COMPANY_EMPTY_KPP_ALERT'] = 'Заполните КПП';
+$MESS['SALESCENTER_SP_CASHBOX_MEASURE_ATTENTION'] = 'Оставьте настройку включённой, если онлайн-касса работает по ФФД 1.2. Если касса работает по ФФД 1.05, отключите настройку, иначе чек будет отклонён';
 $MESS['SALESCENTER_SP_CONNECT_COMPANY_EMPTY_INN_KPP_ALERT'] = 'Заполните ИНН и КПП';

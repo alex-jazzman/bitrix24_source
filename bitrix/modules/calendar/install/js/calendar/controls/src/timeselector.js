@@ -35,11 +35,13 @@ export class TimeSelector {
 		});
 	}
 
-	highlightValue(date)
+	highlightValue(date, utc = false)
 	{
 		this.valueList.forEach(el => el.selected = false); // unselect previous time
 
-		const minutes = date.getHours() * 60 + date.getMinutes();
+		const hours = utc ? date.getUTCHours() : date.getHours();
+		const minutesValue = utc ? date.getUTCMinutes() : date.getMinutes();
+		const minutes = hours * 60 + minutesValue;
 		this.selectContol.setValue({value: minutes}); // this is needed for correct scroll
 
 		let selectedValue = this.valueList.find(el => el.value === minutes);
@@ -52,12 +54,12 @@ export class TimeSelector {
 		this.selectContol.setValueList(this.valueList);
 	}
 
-	updateDurationHints(fromTime, toTime, fromDate, toDate)
+	updateDurationHints(fromTime, toTime, fromDate, toDate, utc = false)
 	{
-		const parsedFromTime = Util.parseTime(fromTime);
-		const parsedToTime = Util.parseTime(toTime);
-		const parsedFromDate = Util.parseDate(fromDate);
-		const parsedToDate = Util.parseDate(toDate);
+		const parsedFromTime = Util.parseTime(fromTime, utc);
+		const parsedToTime = Util.parseTime(toTime, utc);
+		const parsedFromDate = Util.parseDate(fromDate, utc);
+		const parsedToDate = Util.parseDate(toDate, utc);
 
 		const fromMinutes = parsedFromTime.h * 60 + parsedFromTime.m;
 		const toMinutes = parsedToTime.h * 60 + parsedToTime.m;

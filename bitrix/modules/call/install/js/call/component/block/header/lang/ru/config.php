@@ -1,0 +1,30 @@
+<?php
+
+$MESS["CALL_HEADER_CONTROL_BUTTON"] = "Управление";
+$MESS["CALL_HEADER_FULLSCREEN_BUTTON_COLLAPSE"] = "Свернуть в окно";
+$MESS["CALL_HEADER_FULLSCREEN_BUTTON_EXPAND"] = "Во весь экран";
+$MESS["CALL_HEADER_PARTICIPANT_BUTTON"] = "Добавить";
+$MESS["CALL_HEADER_RATE_BUTTON"] = "Оценить";
+$MESS["CALL_HEADER_VIEW_MODE_BUTTON_GRID"] = "Сетка";
+$MESS["CALL_HEADER_VIEW_MODE_BUTTON_SPEAKER"] = "Режим спикера";
+
+
+
+// BUTTONS
+
+
+// RECORD
+$MESS["CALL_HEADER_RECORD_INITIATOR_M"] = "Запись начал #USER_NAME#";
+$MESS["CALL_HEADER_RECORD_INITIATOR_F"] = "Запись начала #USER_NAME#";
+// CONTROL
+$MESS["CALL_MANAGEMENT_DROPLIST_MICROPHONES"] = "Микрофоны";
+$MESS["CALL_MANAGEMENT_DROPLIST_CAMERAS"] = "Камеры";
+$MESS["CALL_MANAGEMENT_DROPLIST_SCREENS"] = "Экраны";
+$MESS["CALL_MANAGEMENT_DROPLIST_TITLE"] = "Управление звонком";
+$MESS["CALL_MANAGEMENT_DROPLIST_ALLOW_DEMONSTRATION"] = "Разрешить демонстрацию";
+$MESS["CALL_MANAGEMENT_DROPLIST_ALLOW_MICROPHONES"] = "Разрешить микрофоны";
+$MESS["CALL_MANAGEMENT_DROPLIST_ALLOW_CAMERAS"] = "Разрешить камеры";
+$MESS["CALL_MANAGEMENT_DROPLIST_MUTE_ALL"] = "Отключить всем сразу";
+// SECURITY INDICATOR
+$MESS["CALL_SECURITY_INDICATOR_SECURE"] = "Защищено";
+$MESS["CALL_SECURITY_INDICATOR_SECURE_DESC"] = "Соединение производится через шифрованный обмен данными – никто посторонний не подслушает ваш разговор";

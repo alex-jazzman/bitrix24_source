@@ -66,17 +66,12 @@ jn.define('files/entry', (require, exports, module) => {
 
 		getExtension()
 		{
-			let extension = '';
 			if (this.file.extension)
 			{
 				return this.file.extension;
 			}
 
-			extension = (this.file.localURL.match(/\.(\w+)$/gi) || []).pop();
-			if (extension)
-			{
-				return extension;
-			}
+			return (this.file.localURL.match(/\.(\w+)$/gi) || []).pop();
 		}
 
 		readNext()
@@ -90,7 +85,7 @@ jn.define('files/entry', (require, exports, module) => {
 				{
 					const nextOffset = this.readOffset + this.chunk;
 					const file = this.file.slice(this.readOffset, nextOffset);
-					const mode = (this.readMode) ? this.readMode : 'readAsText';
+					const mode = this.readMode || 'readAsText';
 
 					if (file instanceof File)
 					{
@@ -100,7 +95,8 @@ jn.define('files/entry', (require, exports, module) => {
 							this.readOffset = nextOffset;
 							resolve({ content, start: file.start, end: file.end });
 						};
-						reader.onerror = (e) => reject({ 'Error reading': reader });
+
+						reader.onerror = () => reject(new FileError(103, 'Error reading file'));
 						reader[mode](file);
 
 						return;
@@ -115,6 +111,7 @@ jn.define('files/entry', (require, exports, module) => {
 							resolve({ content, start: file.start, end: file.end });
 						});
 						reader.on('error', () => {
+							// eslint-disable-next-line prefer-promise-reject-errors -- Retain Reader for iOS GC.
 							reject({ 'Error reading': reader });
 						});
 						reader[mode](file);
@@ -143,28 +140,25 @@ jn.define('files/entry', (require, exports, module) => {
 	 */
 	function getFile(path)
 	{
-		if (!path.includes('file://'))
-		{
-			path = `file://${path}`;
-		}
+		const filePath = path.includes('file://') ? path : `file://${path}`;
 
 		return new Promise((resolve, reject) => {
 			const fileHandler = (file) => {
 				const fileEntry = new FileEntry(file);
-				fileEntry.originalPath = path;
+				fileEntry.originalPath = filePath;
 				resolve(fileEntry);
 			};
 
 			if (typeof Filesystem === 'object')
 			{
-				Filesystem.getFile(path)
+				Filesystem.getFile(filePath)
 					.then(fileHandler)
-					.catch((e) => reject(new FileError(100)));
+					.catch(() => reject(new FileError(100)));
 
 				return;
 			}
 
-			window.resolveLocalFileSystemURL(path, (entry) => {
+			window.resolveLocalFileSystemURL(filePath, (entry) => {
 				if (entry.isFile)
 				{
 					entry.file(fileHandler);

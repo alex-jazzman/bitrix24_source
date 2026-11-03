@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CMain $APPLICATION */
 /** @var LandingEditComponent $component */
 
+use Bitrix\Landing\Copilot\Services\NameService;
 use Bitrix\Landing\File;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Restriction;
@@ -149,6 +150,7 @@ elseif ($isMainpageEditor)
 			top.BX.Landing.UI.Tool.ActionDialog.getInstance().close();
 		}
 		BX.Landing.Env.createInstance({
+			copilot_name: <?= CUtil::PhpToJSObject(NameService::getCopilotName()) ?>,
 			site_id: '<?= CUtil::JSEscape((string)$row['SITE_ID']['CURRENT']) ?>',
 			params: {
 				type: '<?= CUtil::JSEscape((string)$arParams['TYPE']) ?>',

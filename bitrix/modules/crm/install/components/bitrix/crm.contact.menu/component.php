@@ -435,10 +435,9 @@ if($arParams['TYPE'] === 'list')
 				'ENTITY_TYPE' => $entityType,
 				'EXPORT_TYPE' => 'csv',
 				'COMPONENT_NAME' => $componentName,
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
-					$componentName,
-					$componentParams
-				),
+				'signedParameters' => method_exists(\Bitrix\Crm\Controller\Export::class, 'signExportParameters')
+					? \Bitrix\Crm\Controller\Export::signExportParameters($componentName, $componentParams)
+					: \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			],
 			'optionsFields' => array(
 				'REQUISITE_MULTILINE' => array(

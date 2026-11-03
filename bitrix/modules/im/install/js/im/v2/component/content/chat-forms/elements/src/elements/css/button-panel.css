@@ -17,3 +17,26 @@
 .bx-im-chat-forms-button-panel__create-button {
 	margin-right: 18px;
 }
+
+/* The horizontal inset repeats the one of the form body, so the buttons stand on the same vertical as
+   the fields above them. The height is no longer pinned: it comes out of the buttons and the inset
+   around them, and 38px of a large button with 18px above and below give the 74px of the layout. A
+   button of another size moves the panel with it instead of being clipped by it. The legacy branch
+   keeps the fixed height of the rule above.
+   Two ways in: the messenger drawn in the current design, and a panel that draws the buttons of the
+   design system on its own request on a portal still in the legacy one. */
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-button-panel__container,
+.bx-im-chat-forms-button-panel__container.--air-design {
+	--im-chat-forms-button-panel__background-color_container: var(--ui-color-bg-content-primary);
+
+	height: auto;
+	justify-content: flex-start;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-md2) var(--ui-space-inset-xl2);
+	box-shadow: var(--ui-shadow-top-2xs);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-button-panel__create-button,
+.bx-im-chat-forms-button-panel__container.--air-design .bx-im-chat-forms-button-panel__create-button {
+	margin-right: 0;
+}

@@ -3,7 +3,7 @@
 	flex-direction: column;
 	align-items: flex-start;
 	align-self: stretch;
-	padding: var(--ui-space-inset-xl, 24px);
+	padding: var(--ui-space-inset-xl, 24px) var(--ui-space-inset-xl, 24px) var(--ui-space-inset-sm2, 14px);
 	border-radius: var(--ui-border-radius-3xl, 20px);
 	background: var(--ui-color-background-primary, #FFF);
 	box-shadow: var(--ui-shadow-bottom-2xs, 0px 1px 1px rgba(0, 0, 0, 0.06));
@@ -13,9 +13,9 @@
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: center;
 	width: 100%;
-	margin-bottom: var(--ui-space-stack-md, 16px);
+	margin-bottom: var(--ui-space-stack-xl2, 26px);
 }
 
 .crm-ai-report-drawer__content-block-header.--minimized {
@@ -47,6 +47,7 @@
 .crm-ai-report-drawer__content-block-header-search-block {
 	justify-content: end;
 	gap: var(--ui-space-inline-sm, 12px);
+	height: 0;
 }
 
 .crm-ai-report-drawer__content-block-header-control {
@@ -94,12 +95,87 @@
 	white-space: pre-line;
 }
 
+.crm-ai-report-drawer__content-block-note {
+	margin-top: var(--ui-space-stack-md, 16px);
+}
+
 .crm-ai-report-drawer__content-block-footer {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	width: 100%;
 	gap: var(--ui-space-inline-sm, 12px);
 	margin-top: var(--ui-space-stack-lg, 20px);
+}
+
+.crm-ai-report-drawer__content-block-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2, 10px);
+	flex-shrink: 0;
+}
+
+/* Reset of what the browser puts on a button, and nothing else.
+
+   The glyph deliberately lives on ::before rather than on the button itself. A mask clips everything
+   the element paints - the focus ring included - so an outline on a masked button computes exactly as
+   written and draws nothing at all. Measured: with the mask taken off, the same ring appears at once.
+   Keep the button unmasked, or the ring goes away again without a word from anywhere. */
+.crm-ai-report-drawer__content-block-action {
+	height: 18px;
+	width: 18px;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	appearance: none;
+	cursor: pointer;
+}
+
+.crm-ai-report-drawer__content-block-action::before {
+	content: '';
+	display: block;
+	height: 100%;
+	width: 100%;
+	background-color: var(--ui-color-base-4);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+}
+
+.crm-ai-report-drawer__content-block-action.--selected::before {
+	background-color: var(--ui-color-design-plain-a-content-icon);
+}
+
+.crm-ai-report-drawer__content-block-action.--selected {
+	cursor: default;
+}
+
+/* The ring of ui.system.*, with one departure: the offset is inward. Measured on the stand - the row
+   sits flush against `spoiler-content-inner`, which is `overflow: hidden`, and the slack around the
+   button there is 8px at the top and 0 at the bottom and on the left. Any outward ring is cut on two
+   sides; an inward one is whole. Do not "restore" the +2px of the convention without re-measuring
+   that slack.
+
+   Colour is left to the token on purpose: AIR redefines it per context, measured rgb(0, 117, 255) in
+   the light blocks against rgb(21, 135, 250) inside `--ui-context-edge-dark` of the assessment one. */
+.crm-ai-report-drawer__content-block-action:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.crm-ai-report-drawer__content-block-action.--copy::before {
+	-webkit-mask-image: var(--o-ui-icon-set__path_copy);
+	mask-image: var(--o-ui-icon-set__path_copy);
+}
+
+.crm-ai-report-drawer__content-block-action.--dislike::before {
+	-webkit-mask-image: var(--o-ui-icon-set__path_dislike);
+	mask-image: var(--o-ui-icon-set__path_dislike);
+}
+
+.crm-ai-report-drawer__content-block-action.--like::before {
+	-webkit-mask-image: var(--o-ui-icon-set__path_like);
+	mask-image: var(--o-ui-icon-set__path_like);
 }
 
 .crm-ai-report-drawer__content-block-message {

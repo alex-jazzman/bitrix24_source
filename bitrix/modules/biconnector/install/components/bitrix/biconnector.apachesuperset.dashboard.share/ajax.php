@@ -6,6 +6,8 @@ use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Dashboard\ExternalFilter\RlsRuleBuilder;
+use Bitrix\BIConnector\Internal\Entity\SupersetDashboardShare;
+use Bitrix\BIConnector\Internal\Repository\SupersetDashboardShareBanRepository;
 use Bitrix\BIConnector\Internal\Services\Share\SharePasswordService;
 use Bitrix\BIConnector\Public\Command\DashboardView\AddSupersetDashboardViewCommand;
 use Bitrix\BIConnector\Public\Provider\ShareProvider;
@@ -39,6 +41,14 @@ class SupersetDashboardShareAjax extends \Bitrix\Main\Engine\Controller
 		return ServiceLocator::getInstance()->get('biconnector.service.sharePassword');
 	}
 
+	private function isShareBanned(SupersetDashboardShare $share): bool
+	{
+		/** @var SupersetDashboardShareBanRepository $banRepository */
+		$banRepository = ServiceLocator::getInstance()->get('biconnector.repository.shareBan');
+
+		return $banRepository->isBanned($share->getDashboardId());
+	}
+
 	protected function getDefaultPreFilters(): array
 	{
 		return [
@@ -57,7 +67,10 @@ class SupersetDashboardShareAjax extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		if (!AccessController::getInstance($share->getCreatedById())->check(ActionDictionary::ACTION_BIC_DASHBOARD_SHARE))
+		if (
+			$this->isShareBanned($share)
+			|| !AccessController::getInstance($share->getCreatedById())->check(ActionDictionary::ACTION_BIC_DASHBOARD_SHARE)
+		)
 		{
 			$this->addError(new Error('Share is no longer available.', 'SHARE_UNAVAILABLE'));
 
@@ -181,6 +194,8 @@ class SupersetDashboardShareAjax extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
+		$passwordService->registerOpening($share);
+
 		$urlParams = $this->decodeJson($share->getUrlParameterValues());
 
 		$nativeFilter = new \Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter\NativeFilterBuilder($dashboard);
@@ -223,7 +238,10 @@ class SupersetDashboardShareAjax extends \Bitrix\Main\Engine\Controller
 		}
 
 		$creatorId = $share->getCreatedById();
-		if (!AccessController::getInstance($creatorId)->check(ActionDictionary::ACTION_BIC_DASHBOARD_SHARE))
+		if (
+			$this->isShareBanned($share)
+			|| !AccessController::getInstance($creatorId)->check(ActionDictionary::ACTION_BIC_DASHBOARD_SHARE)
+		)
 		{
 			$this->addError(new Error('Share is no longer available.', 'SHARE_UNAVAILABLE'));
 

@@ -99,7 +99,11 @@ export const ErrorAlert = defineComponent({
 			role="alert"
 			tabindex="-1"
 		>
-			<Alert :design="design" hasCloseButton @closeButtonClick="handleClose">
+			<Alert
+				:design="design"
+				:hasCloseButton="!state.draft.restoreFailed"
+				@closeButtonClick="handleClose"
+			>
 				<span
 					v-for="(message, index) in messages"
 					:key="index"

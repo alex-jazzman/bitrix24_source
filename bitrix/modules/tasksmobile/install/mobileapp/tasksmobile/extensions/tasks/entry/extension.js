@@ -26,6 +26,15 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 	const MS_PER_SECOND = 1000;
 
+	const ADD_OBSERVER_MESSAGE_BY_OUTCOME = {
+		no_permission: 'TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_NO_PERMISSION',
+		already_observer: 'TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_ALREADY_OBSERVER',
+		user_inactive: 'TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_USER_INACTIVE',
+		not_allowed_by_policy: 'TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_NOT_ALLOWED',
+		no_request: 'TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_NO_REQUEST',
+	};
+	const addObserverInFlight = new Set();
+
 	class Entry
 	{
 		/**
@@ -106,6 +115,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				view,
 				kanbanOwnerId,
 				projectId = null,
+				presentation,
 			} = params;
 			const taskId = data.id || data.taskId;
 			const taskGuid = guid();
@@ -133,21 +143,19 @@ jn.define('tasks/entry', (require, exports, module) => {
 			else
 			{
 				PageManager.openComponent('JSStackComponent', {
-					name: 'JSStackComponent',
-					componentCode: 'tasks.task.view-new',
 					// eslint-disable-next-line no-undef
 					scriptPath: availableComponents['tasks:tasks.task.view-new'].publicUrl,
+					componentCode: 'tasks.task.view-new',
 					canOpenInDefault: true,
 					rootWidget: {
 						name: 'layout',
-						settings: {
+						settings: Entry.#buildRootWidgetSettings(presentation, {
 							titleParams: {
 								text: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE'),
 								type: 'entity',
 							},
 							objectName: 'layout',
-							swipeToClose: true,
-						},
+						}),
 					},
 					params: {
 						COMPONENT_CODE: 'tasks.task.view-new',
@@ -163,6 +171,25 @@ jn.define('tasks/entry', (require, exports, module) => {
 					},
 				});
 			}
+		}
+
+		/**
+		 * @param {PresentationLike} [presentation]
+		 * @param {BaseWidgetSettings} [settings={}]
+		 * @return {BaseWidgetSettings}
+		 */
+		static #buildRootWidgetSettings(presentation, settings = {})
+		{
+			if (!presentation?.isModal?.())
+			{
+				return settings;
+			}
+
+			return {
+				...settings,
+				...presentation.getModalSettings(),
+				swipeToClose: true,
+			};
 		}
 
 		/**
@@ -241,28 +268,28 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async openChecklist(options)
 		{
-			const checklistId = Number(options.entityId);
-			if (!checklistId)
+			// a chat link points at a checklist by its server id
+			const checklistServerId = Number(options.entityId);
+			if (!checklistServerId)
 			{
 				return;
 			}
 
-			const ctx = await Entry.#prepareTaskContext(options, { withChecklists: true });
+			const ctx = await Entry.#prepareTaskContext(options);
 			if (!ctx)
 			{
 				return;
 			}
 
-			const { task, checklist } = ctx;
+			const { task } = ctx;
 
 			const { openChecklistWithPreparedData } = await requireLazy('tasks:checklist');
 
 			void openChecklistWithPreparedData({
 				taskId: Number(options?.taskId),
 				userId: Number(options?.userId),
-				checklistId,
+				checklistServerId,
 				groupId: task.groupId,
-				checklistTree: checklist?.tree,
 				onChange: (checklistController) => {
 					const { completed, uncompleted, checklistDetails } = checklistController.getReduxData();
 					dispatch(updateChecklist({
@@ -357,6 +384,72 @@ jn.define('tasks/entry', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {{ taskId: number, entityId: ?number }} params
+		 * @returns {Promise<void>}
+		 */
+		static async addTaskObserver({ taskId, entityId })
+		{
+			const candidateId = Number(entityId);
+			if (!candidateId)
+			{
+				return;
+			}
+
+			const key = `${Number(taskId)}:${candidateId}`;
+
+			if (addObserverInFlight.has(key))
+			{
+				return;
+			}
+
+			addObserverInFlight.add(key);
+
+			let outcome;
+			try
+			{
+				const { data } = await BX.ajax.runAction(
+					'tasks.V2.Task.Access.addObserver',
+					{
+						json: {
+							taskId: Number(taskId),
+							userId: candidateId,
+						},
+					},
+				);
+				outcome = data?.outcome;
+			}
+			catch
+			{
+				showToast({
+					message: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_ERROR'),
+				});
+
+				return;
+			}
+			finally
+			{
+				addObserverInFlight.delete(key);
+			}
+
+			Entry.#showAddObserverOutcome(outcome);
+		}
+
+		static #showAddObserverOutcome(outcome)
+		{
+			if (outcome === 'success')
+			{
+				return;
+			}
+
+			const messageId = ADD_OBSERVER_MESSAGE_BY_OUTCOME[outcome]
+				?? 'TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_ERROR';
+
+			showToast({
+				message: Loc.getMessage(messageId),
+			});
+		}
+
+		/**
 		 * @param {{ taskId: number, userId?: number }} params
 		 * @param {{ withChecklists?: boolean }} [extra]
 		 */
@@ -405,6 +498,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				new RunActionExecutor('tasksmobile.Settings.isChatFeatureEnabled')
 					.setHandler((response) => resolve(response.data))
 					.call()
+					.catch(console.error)
 				;
 			});
 		}
@@ -498,8 +592,9 @@ jn.define('tasks/entry', (require, exports, module) => {
 			}
 
 			const { siteId, siteDir, languageId, userId } = env;
+			const { presentation, ...listData } = data;
 			const extendedData = {
-				...data,
+				...listData,
 				flowId: data.flowId || 0,
 				flowName: data.flowName || null,
 				flowEfficiency: data.flowEfficiency || null,
@@ -509,6 +604,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 				ownerId: data.ownerId || userId,
 				getProjectData: data.getProjectData || true,
 				analyticsLabel: data.analyticsLabel || {},
+			};
+			const listRootWidgetSettings = {
+				objectName: 'layout',
+				useSearch: true,
+				useLargeTitleMode: true,
 			};
 
 			PageManager.openComponent('JSStackComponent', {
@@ -523,11 +623,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				scriptPath: availableComponents['tasks:tasks.dashboard'].publicUrl,
 				rootWidget: {
 					name: 'layout',
-					settings: {
-						objectName: 'layout',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
+					settings: Entry.#buildRootWidgetSettings(presentation, listRootWidgetSettings),
 				},
 				params: {
 					COMPONENT_CODE: 'tasks.dashboard',

@@ -2,8 +2,6 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-\Bitrix\Main\UI\Extension::load('mail.messagegrid');
-
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -18,5 +16,6 @@ $APPLICATION->IncludeComponent(
 		'PLAIN_VIEW' => false,
 		'PAGE_MODE' => false,
 		'PAGE_MODE_OFF_BACK_URL' => "/stream/",
+		'LEFT_PANEL_RESIZABLE' => $arResult['LEFT_PANEL_RESIZABLE'],
 	]
 );

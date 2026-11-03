@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_viewer, color_picker, main_core, ui_vue3, note_ui_themeContext, note_ui_documentHistory, note_ui_loader, translit, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_uploader_core, ui_uploader_vue, ui_notification, ui_vue3_bitrixvue, note_ui_mentionChip, main_core_events, note_sidebar, pull_client, note_ui_actionMenu, note_permissions, ui_buttons, ui_iconSet_outline, note_ui_avatarStack, note_ui_documentList, note_ui_hotkeys, note_analytics) {
+(function (exports, ui_viewer, color_picker, main_core, ui_vue3, note_ui_themeContext, ui_iconSet_api_vue, note_ui_documentHistory, note_ui_loader, translit, ui_entitySelector, ui_uploader_tileWidget, ui_uploader_core, ui_uploader_vue, ui_videoService, ui_notification, main_date, ui_datePicker, ui_vue3_bitrixvue, note_ui_mentionChip, main_core_events, note_sidebar, pull_client, note_ui_actionMenu, note_permissions, ui_buttons, ui_iconSet_outline, note_ui_avatarStack, note_ui_documentList, note_ui_hotkeys, note_analytics) {
 	'use strict';
 
 	function syncPopoverPositions({
@@ -66,6 +66,20 @@ this.BX.Note = this.BX.Note || {};
 			}
 		});
 	}
+
+	//#region \0rolldown/runtime.js
+	var __defProp = Object.defineProperty;
+	var __exportAll = (all, no_symbols) => {
+		let target = {};
+		for (var name in all) __defProp(target, name, {
+			get: all[name],
+			enumerable: true
+		});
+		__defProp(target, Symbol.toStringTag, {
+			value: "Module"
+		});
+		return target;
+	};
 
 	// ::- Persistent data structure representing an ordered mapping from
 	// strings to values, with some convenient update methods.
@@ -1311,7 +1325,7 @@ this.BX.Note = this.BX.Note || {};
 	**Do not** directly mutate the properties of a `Node` object. See
 	[the guide](https://prosemirror.net/docs/guide/#doc) for more information.
 	*/
-	let Node$1 = class Node {
+	let Node$2 = class Node {
 		/**
 		@internal
 		*/
@@ -1734,8 +1748,8 @@ this.BX.Note = this.BX.Note || {};
 			return node;
 		}
 	};
-	Node$1.prototype.text = undefined;
-	class TextNode extends Node$1 {
+	Node$2.prototype.text = undefined;
+	class TextNode extends Node$2 {
 		/**
 		@internal
 		*/
@@ -2373,7 +2387,7 @@ this.BX.Note = this.BX.Note || {};
 		*/
 		create(attrs = null, content, marks) {
 			if (this.isText) throw new Error("NodeType.create can't construct text nodes");
-			return new Node$1(this, this.computeAttrs(attrs), Fragment.from(content), Mark$1.setFrom(marks));
+			return new Node$2(this, this.computeAttrs(attrs), Fragment.from(content), Mark$1.setFrom(marks));
 		}
 		/**
 		Like [`create`](https://prosemirror.net/docs/ref/#model.NodeType.create), but check the given content
@@ -2383,7 +2397,7 @@ this.BX.Note = this.BX.Note || {};
 		createChecked(attrs = null, content, marks) {
 			content = Fragment.from(content);
 			this.checkContent(content);
-			return new Node$1(this, this.computeAttrs(attrs), content, Mark$1.setFrom(marks));
+			return new Node$2(this, this.computeAttrs(attrs), content, Mark$1.setFrom(marks));
 		}
 		/**
 		Like [`create`](https://prosemirror.net/docs/ref/#model.NodeType.create), but see if it is
@@ -2404,7 +2418,7 @@ this.BX.Note = this.BX.Note || {};
 			let matched = this.contentMatch.matchFragment(content);
 			let after = matched && matched.fillBefore(Fragment.empty, true);
 			if (!after) return null;
-			return new Node$1(this, attrs, content.append(after), Mark$1.setFrom(marks));
+			return new Node$2(this, attrs, content.append(after), Mark$1.setFrom(marks));
 		}
 		/**
 		Returns true if the given fragment is valid content for this node
@@ -2626,7 +2640,7 @@ this.BX.Note = this.BX.Note || {};
 					excl = type.spec.excludes;
 				type.excluded = excl == null ? [type] : excl == "" ? [] : gatherMarks(this, excl.split(" "));
 			}
-			this.nodeFromJSON = json => Node$1.fromJSON(this, json);
+			this.nodeFromJSON = json => Node$2.fromJSON(this, json);
 			this.markFromJSON = json => Mark$1.fromJSON(this, json);
 			this.topNodeType = this.nodes[this.spec.topNode || "doc"];
 			this.cached.wrappings = Object.create(null);
@@ -5039,9 +5053,9 @@ this.BX.Note = this.BX.Note || {};
 				openStart,
 				openEnd
 			} = this.unplaced;
-			let inner = contentAt(content, openStart);
-			if (!inner.childCount || inner.firstChild.isLeaf) return false;
-			this.unplaced = new Slice(content, openStart + 1, Math.max(openEnd, inner.size + openStart >= content.size - openEnd ? openStart + 1 : 0));
+			if (maxOpen(content, -1) <= openStart) return false;
+			if (this.unplaced.size > 1 && maxOpen(content, 1) > openEnd) openEnd++;
+			this.unplaced = new Slice(content, openStart + 1, openEnd);
 			return true;
 		}
 		dropNode() {
@@ -5220,6 +5234,13 @@ this.BX.Note = this.BX.Note || {};
 	}
 	function definesContent(type) {
 		return type.spec.defining || type.spec.definingForContent;
+	}
+	function maxOpen(frag, side) {
+		for (let count = 0;; count++) {
+			let ch = side < 0 ? frag.firstChild : frag.lastChild;
+			if (!ch || ch.isAtom) return count;
+			frag = ch.content;
+		}
 	}
 	function replaceRange(tr, from, to, slice) {
 		if (!slice.size) return tr.deleteRange(from, to);
@@ -6700,7 +6721,7 @@ this.BX.Note = this.BX.Note || {};
 			let instance = new EditorState($config);
 			$config.fields.forEach(field => {
 				if (field.name == "doc") {
-					instance.doc = Node$1.fromJSON(config.schema, json.doc);
+					instance.doc = Node$2.fromJSON(config.schema, json.doc);
 				} else if (field.name == "selection") {
 					instance.selection = Selection.fromJSON(instance.doc, json.selection);
 				} else if (field.name == "storedMarks") {
@@ -6815,7 +6836,7 @@ this.BX.Note = this.BX.Note || {};
 	into a parent of the previous block. Will use the view for accurate
 	(bidi-aware) start-of-textblock detection if given.
 	*/
-	const joinBackward$1 = (state, dispatch, view) => {
+	const joinBackward = (state, dispatch, view) => {
 		let $cursor = atBlockStart(state, view);
 		if (!$cursor) return false;
 		let $cut = findCutBefore($cursor);
@@ -6858,7 +6879,7 @@ this.BX.Note = this.BX.Note || {};
 	that only tries to join the current textblock to the one before
 	it, if the cursor is at the start of a textblock.
 	*/
-	const joinTextblockBackward$1 = (state, dispatch, view) => {
+	const joinTextblockBackward = (state, dispatch, view) => {
 		let $cursor = atBlockStart(state, view);
 		if (!$cursor) return false;
 		let $cut = findCutBefore($cursor);
@@ -6869,7 +6890,7 @@ this.BX.Note = this.BX.Note || {};
 	that only tries to join the current textblock to the one after
 	it, if the cursor is at the end of a textblock.
 	*/
-	const joinTextblockForward$1 = (state, dispatch, view) => {
+	const joinTextblockForward = (state, dispatch, view) => {
 		let $cursor = atBlockEnd(state, view);
 		if (!$cursor) return false;
 		let $cut = findCutAfter($cursor);
@@ -6918,7 +6939,7 @@ this.BX.Note = this.BX.Note || {};
 	commands, as a fall-back behavior when the schema doesn't allow
 	deletion at the selected point.
 	*/
-	const selectNodeBackward$1 = (state, dispatch, view) => {
+	const selectNodeBackward = (state, dispatch, view) => {
 		let {
 				$head,
 				empty
@@ -6955,7 +6976,7 @@ this.BX.Note = this.BX.Note || {};
 	block closer to this one in the tree structure. Will use the view
 	for accurate start-of-textblock detection if given.
 	*/
-	const joinForward$1 = (state, dispatch, view) => {
+	const joinForward = (state, dispatch, view) => {
 		let $cursor = atBlockEnd(state, view);
 		if (!$cursor) return false;
 		let $cut = findCutAfter($cursor);
@@ -6992,7 +7013,7 @@ this.BX.Note = this.BX.Note || {};
 	commands, to provide a fall-back behavior when the schema doesn't
 	allow deletion at the selected point.
 	*/
-	const selectNodeForward$1 = (state, dispatch, view) => {
+	const selectNodeForward = (state, dispatch, view) => {
 		let {
 				$head,
 				empty
@@ -7021,7 +7042,7 @@ this.BX.Note = this.BX.Note || {};
 	closest ancestor block of the selection that can be joined, with
 	the sibling above it.
 	*/
-	const joinUp$1 = (state, dispatch) => {
+	const joinUp = (state, dispatch) => {
 		let sel = state.selection,
 			nodeSel = sel instanceof NodeSelection,
 			point;
@@ -7043,7 +7064,7 @@ this.BX.Note = this.BX.Note || {};
 	Join the selected block, or the closest ancestor of the selection
 	that can be joined, with the sibling after it.
 	*/
-	const joinDown$1 = (state, dispatch) => {
+	const joinDown = (state, dispatch) => {
 		let sel = state.selection,
 			point;
 		if (sel instanceof NodeSelection) {
@@ -7060,7 +7081,7 @@ this.BX.Note = this.BX.Note || {};
 	Lift the selected block, or the closest ancestor block of the
 	selection that can be lifted, out of its parent node.
 	*/
-	const lift$1 = (state, dispatch) => {
+	const lift = (state, dispatch) => {
 		let {
 			$from,
 			$to
@@ -7076,7 +7097,7 @@ this.BX.Note = this.BX.Note || {};
 	[`code`](https://prosemirror.net/docs/ref/#model.NodeSpec.code) property in its spec, replace the
 	selection with a newline character.
 	*/
-	const newlineInCode$1 = (state, dispatch) => {
+	const newlineInCode = (state, dispatch) => {
 		let {
 			$head,
 			$anchor
@@ -7099,7 +7120,7 @@ this.BX.Note = this.BX.Note || {};
 	[`code`](https://prosemirror.net/docs/ref/#model.NodeSpec.code) property in its spec, create a
 	default block after the code block, and move the cursor there.
 	*/
-	const exitCode$1 = (state, dispatch) => {
+	const exitCode = (state, dispatch) => {
 		let {
 			$head,
 			$anchor
@@ -7121,7 +7142,7 @@ this.BX.Note = this.BX.Note || {};
 	If a block node is selected, create an empty paragraph before (if
 	it is its parent's first child) or after it.
 	*/
-	const createParagraphNear$1 = (state, dispatch) => {
+	const createParagraphNear = (state, dispatch) => {
 		let sel = state.selection,
 			{
 				$from,
@@ -7142,7 +7163,7 @@ this.BX.Note = this.BX.Note || {};
 	If the cursor is in an empty textblock that can be lifted, lift the
 	block.
 	*/
-	const liftEmptyBlock$1 = (state, dispatch) => {
+	const liftEmptyBlock = (state, dispatch) => {
 		let {
 			$cursor
 		} = state.selection;
@@ -7231,7 +7252,7 @@ this.BX.Note = this.BX.Note || {};
 	Move the selection to the node wrapping the current selection, if
 	any. (Will not select the document node.)
 	*/
-	const selectParentNode$1 = (state, dispatch) => {
+	const selectParentNode = (state, dispatch) => {
 		let {
 				$from,
 				to
@@ -7324,17 +7345,17 @@ this.BX.Note = this.BX.Note || {};
 	/**
 	Moves the cursor to the start of current text block.
 	*/
-	const selectTextblockStart$1 = selectTextblockSide(-1);
+	const selectTextblockStart = selectTextblockSide(-1);
 	/**
 	Moves the cursor to the end of current text block.
 	*/
-	const selectTextblockEnd$1 = selectTextblockSide(1);
+	const selectTextblockEnd = selectTextblockSide(1);
 	// Parameterized commands
 	/**
 	Wrap the selection in a node of the given type with the given
 	attributes.
 	*/
-	function wrapIn$1(nodeType, attrs = null) {
+	function wrapIn(nodeType, attrs = null) {
 		return function (state, dispatch) {
 			let {
 				$from,
@@ -7404,8 +7425,8 @@ this.BX.Note = this.BX.Note || {};
 			return false;
 		};
 	}
-	chainCommands(deleteSelection$1, joinBackward$1, selectNodeBackward$1);
-	chainCommands(deleteSelection$1, joinForward$1, selectNodeForward$1);
+	chainCommands(deleteSelection$1, joinBackward, selectNodeBackward);
+	chainCommands(deleteSelection$1, joinForward, selectNodeForward);
 	/**
 	A basic keymap containing bindings not specific to any schema.
 	Binds the following keys (when multiple commands are listed, they
@@ -7419,7 +7440,7 @@ this.BX.Note = this.BX.Note || {};
 	* **Mod-a** to `selectAll`
 	*/
 	({
-		"Enter": chainCommands(newlineInCode$1, createParagraphNear$1, liftEmptyBlock$1, splitBlock$1)});
+		"Enter": chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock$1)});
 	typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform)
 	// @ts-ignore
 	: typeof os != "undefined" && os.platform ? os.platform() == "darwin" : false;
@@ -7430,7 +7451,7 @@ this.BX.Note = this.BX.Note || {};
 	value to indicate whether this is possible, but don't actually
 	perform the change.
 	*/
-	function wrapInList$1(listType, attrs = null) {
+	function wrapInList(listType, attrs = null) {
 		return function (state, dispatch) {
 			let {
 				$from,
@@ -7491,7 +7512,7 @@ this.BX.Note = this.BX.Note || {};
 	Create a command to lift the list item around the selection up into
 	a wrapping list.
 	*/
-	function liftListItem$1(itemType) {
+	function liftListItem(itemType) {
 		return function (state, dispatch) {
 			let {
 				$from,
@@ -7554,7 +7575,7 @@ this.BX.Note = this.BX.Note || {};
 	Create a command to sink the list item around the selection down
 	into an inner list.
 	*/
-	function sinkListItem$1(itemType) {
+	function sinkListItem(itemType) {
 		return function (state, dispatch) {
 			let {
 				$from,
@@ -8739,7 +8760,7 @@ this.BX.Note = this.BX.Note || {};
 					wrap.appendChild(dom);
 					dom = wrap;
 				}
-				dom.contentEditable = "false";
+				if (!dom.hasAttribute("contenteditable")) dom.contentEditable = "false";
 				dom.classList.add("ProseMirror-widget");
 			}
 			super(parent, [], dom, null);
@@ -10459,9 +10480,14 @@ this.BX.Note = this.BX.Note || {};
 		// With the require-trusted-types-for CSP, Chrome will block
 		// innerHTML, even on a detached document. This wraps the string in
 		// a way that makes the browser allow us to use its parser again.
-		if (!_policy) _policy = trustedTypes.defaultPolicy || trustedTypes.createPolicy("ProseMirrorClipboard", {
-			createHTML: s => s
-		});
+		if (!_policy) {
+			if (_policy = trustedTypes.defaultPolicy) try {
+				return _policy.createHTML(html);
+			} catch (_a) {}
+			_policy = trustedTypes.createPolicy("ProseMirrorClipboard", {
+				createHTML: s => s
+			});
+		}
 		return _policy.createHTML(html);
 	}
 	function readHTML(html) {
@@ -10516,6 +10542,11 @@ this.BX.Note = this.BX.Note || {};
 		for (let i = array.length - 2; i >= 0; i -= 2) {
 			let type = schema.nodes[array[i]];
 			if (!type || type.hasRequiredAttrs()) break;
+			try {
+				type.checkAttrs(array[i + 1]);
+			} catch (e) {
+				break;
+			}
 			content = Fragment.from(type.create(array[i + 1], content));
 			openStart++;
 			openEnd++;
@@ -13390,15 +13421,12 @@ this.BX.Note = this.BX.Note || {};
 		};
 	}
 
-	var __defProp$1 = Object.defineProperty;
-	var __export$1 = (target, all) => {
-		for (var name in all) __defProp$1(target, name, {
-			get: all[name],
-			enumerable: true
-		});
-	};
-
-	// src/helpers/createChainableState.ts
+	//#region src/helpers/createChainableState.ts
+	/**
+	* Takes a Transaction & Editor State and turns it into a chainable state object
+	* @param config The transaction and state to create the chainable state from
+	* @returns A chainable Editor state object
+	*/
 	function createChainableState(config) {
 		const {
 			state,
@@ -13438,9 +13466,9 @@ this.BX.Note = this.BX.Note || {};
 			}
 		};
 	}
-
-	// src/CommandManager.ts
-	var CommandManager = class {
+	//#endregion
+	//#region src/CommandManager.ts
+	var CommandManager = class CommandManager {
 		constructor(props) {
 			this.editor = props.editor;
 			this.rawCommands = this.editor.extensionManager.commands;
@@ -13465,12 +13493,10 @@ this.BX.Note = this.BX.Note || {};
 				tr
 			} = state;
 			const props = this.buildProps(tr);
-			return Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
+			return Object.fromEntries(Object.entries(rawCommands).map(([name, command]) => {
 				const method = (...args) => {
-					const callback = command2(...args)(props);
-					if (!tr.getMeta("preventDispatch") && !this.hasCustomState) {
-						view.dispatch(tr);
-					}
+					const callback = command(...args)(props);
+					if (!tr.getMeta("preventDispatch") && !this.hasCustomState) view.dispatch(tr);
 					return callback;
 				};
 				return [name, method];
@@ -13494,24 +13520,39 @@ this.BX.Note = this.BX.Note || {};
 			const callbacks = [];
 			const hasStartTransaction = !!startTr;
 			const tr = startTr || state.tr;
-			const run3 = () => {
-				if (!hasStartTransaction && shouldDispatch && !tr.getMeta("preventDispatch") && !this.hasCustomState) {
-					view.dispatch(tr);
-				}
+			const run = () => {
+				if (!hasStartTransaction && shouldDispatch && !tr.getMeta("preventDispatch") && !this.hasCustomState) view.dispatch(tr);
 				return callbacks.every(callback => callback === true);
 			};
 			const chain = {
-				...Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
+				...Object.fromEntries(Object.entries(rawCommands).map(([name, command]) => {
 					const chainedCommand = (...args) => {
 						const props = this.buildProps(tr, shouldDispatch);
-						const callback = command2(...args)(props);
+						const callback = command(...args)(props);
 						callbacks.push(callback);
 						return chain;
 					};
 					return [name, chainedCommand];
 				})),
-				run: run3
+				run
 			};
+			return chain;
+		}
+		/**
+		* Creates a chain that safely returns `false` when run.
+		* @returns A non-dispatching command chain.
+		* @example
+		* const chain = CommandManager.createFakeChain()
+		* chain.focus().run() // false
+		*/
+		static createFakeChain() {
+			const chain = new Proxy({}, {
+				get: (_target, property) => {
+					if (property === "then") return;
+					if (property === "run") return () => false;
+					return () => chain;
+				}
+			});
 			return chain;
 		}
 		createCan(startTr) {
@@ -13522,16 +13563,34 @@ this.BX.Note = this.BX.Note || {};
 			const dispatch = false;
 			const tr = startTr || state.tr;
 			const props = this.buildProps(tr, dispatch);
-			const formattedCommands = Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
-				return [name, (...args) => command2(...args)({
-					...props,
-					dispatch: void 0
-				})];
-			}));
 			return {
-				...formattedCommands,
+				...Object.fromEntries(Object.entries(rawCommands).map(([name, command]) => {
+					return [name, (...args) => command(...args)({
+						...props,
+						dispatch: void 0
+					})];
+				})),
 				chain: () => this.createChain(tr, dispatch)
 			};
+		}
+		/**
+		* Creates capability checks that safely return `false`.
+		* @returns A non-dispatching capability checker.
+		* @example
+		* const can = CommandManager.createFallbackCan()
+		* can.focus() // false
+		*/
+		static createFallbackCan() {
+			const chain = CommandManager.createFakeChain();
+			return new Proxy({
+				chain: () => chain
+			}, {
+				get: (target, property) => {
+					if (property === "then") return;
+					if (property === "chain") return target.chain;
+					return () => false;
+				}
+			});
 		}
 		buildProps(tr, shouldDispatch = true) {
 			const {
@@ -13554,104 +13613,41 @@ this.BX.Note = this.BX.Note || {};
 				chain: () => this.createChain(tr, shouldDispatch),
 				can: () => this.createCan(tr),
 				get commands() {
-					return Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
-						return [name, (...args) => command2(...args)(props)];
+					return Object.fromEntries(Object.entries(rawCommands).map(([name, command]) => {
+						return [name, (...args) => command(...args)(props)];
 					}));
 				}
 			};
 			return props;
 		}
 	};
-
-	// src/commands/index.ts
-	var commands_exports = {};
-	__export$1(commands_exports, {
-		blur: () => blur,
-		clearContent: () => clearContent,
-		clearNodes: () => clearNodes,
-		command: () => command,
-		createParagraphNear: () => createParagraphNear,
-		cut: () => cut,
-		deleteCurrentNode: () => deleteCurrentNode,
-		deleteNode: () => deleteNode,
-		deleteRange: () => deleteRange,
-		deleteSelection: () => deleteSelection,
-		enter: () => enter,
-		exitCode: () => exitCode,
-		extendMarkRange: () => extendMarkRange,
-		first: () => first,
-		focus: () => focus,
-		forEach: () => forEach$1,
-		insertContent: () => insertContent,
-		insertContentAt: () => insertContentAt,
-		joinBackward: () => joinBackward,
-		joinDown: () => joinDown,
-		joinForward: () => joinForward,
-		joinItemBackward: () => joinItemBackward,
-		joinItemForward: () => joinItemForward,
-		joinTextblockBackward: () => joinTextblockBackward,
-		joinTextblockForward: () => joinTextblockForward,
-		joinUp: () => joinUp,
-		keyboardShortcut: () => keyboardShortcut,
-		lift: () => lift,
-		liftEmptyBlock: () => liftEmptyBlock,
-		liftListItem: () => liftListItem,
-		newlineInCode: () => newlineInCode,
-		resetAttributes: () => resetAttributes,
-		scrollIntoView: () => scrollIntoView,
-		selectAll: () => selectAll,
-		selectNodeBackward: () => selectNodeBackward,
-		selectNodeForward: () => selectNodeForward,
-		selectParentNode: () => selectParentNode,
-		selectTextblockEnd: () => selectTextblockEnd,
-		selectTextblockStart: () => selectTextblockStart,
-		setContent: () => setContent,
-		setMark: () => setMark,
-		setMeta: () => setMeta$1,
-		setNode: () => setNode,
-		setNodeSelection: () => setNodeSelection,
-		setTextDirection: () => setTextDirection,
-		setTextSelection: () => setTextSelection,
-		sinkListItem: () => sinkListItem,
-		splitBlock: () => splitBlock,
-		splitListItem: () => splitListItem,
-		toggleList: () => toggleList,
-		toggleMark: () => toggleMark,
-		toggleNode: () => toggleNode,
-		toggleWrap: () => toggleWrap,
-		undoInputRule: () => undoInputRule,
-		unsetAllMarks: () => unsetAllMarks,
-		unsetMark: () => unsetMark,
-		unsetTextDirection: () => unsetTextDirection,
-		updateAttributes: () => updateAttributes,
-		wrapIn: () => wrapIn,
-		wrapInList: () => wrapInList
-	});
-
-	// src/commands/blur.ts
-	var blur = () => ({
+	//#endregion
+	//#region src/commands/blur.ts
+	const blur = () => ({
 		editor,
 		view
 	}) => {
 		requestAnimationFrame(() => {
-			var _a;
 			if (!editor.isDestroyed) {
+				var _window;
 				view.dom.blur();
-				(_a = window == null ? void 0 : window.getSelection()) == null ? void 0 : _a.removeAllRanges();
+				(_window = window) === null || _window === void 0 || (_window = _window.getSelection()) === null || _window === void 0 || _window.removeAllRanges();
 			}
 		});
 		return true;
 	};
-
-	// src/commands/clearContent.ts
-	var clearContent = (emitUpdate = true) => ({
+	//#endregion
+	//#region src/commands/clearContent.ts
+	const clearContent = (emitUpdate = true) => ({
 		commands
 	}) => {
 		return commands.setContent("", {
 			emitUpdate
 		});
 	};
-	var clearNodes = () => ({
+	//#endregion
+	//#region src/commands/clearNodes.ts
+	const clearNodes = () => ({
 		state,
 		tr,
 		dispatch
@@ -13662,17 +13658,13 @@ this.BX.Note = this.BX.Note || {};
 		const {
 			ranges
 		} = selection;
-		if (!dispatch) {
-			return true;
-		}
+		if (!dispatch) return true;
 		ranges.forEach(({
 			$from,
 			$to
 		}) => {
 			state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
-				if (node.type.isText) {
-					return;
-				}
+				if (node.type.isText) return;
 				const {
 					doc,
 					mapping
@@ -13680,9 +13672,7 @@ this.BX.Note = this.BX.Note || {};
 				const $mappedFrom = doc.resolve(mapping.map(pos));
 				const $mappedTo = doc.resolve(mapping.map(pos + node.nodeSize));
 				const nodeRange = $mappedFrom.blockRange($mappedTo);
-				if (!nodeRange) {
-					return;
-				}
+				if (!nodeRange) return;
 				const targetLiftDepth = liftTarget(nodeRange);
 				if (node.type.isTextblock) {
 					const {
@@ -13690,25 +13680,27 @@ this.BX.Note = this.BX.Note || {};
 					} = $mappedFrom.parent.contentMatchAt($mappedFrom.index());
 					tr.setNodeMarkup(nodeRange.start, defaultType);
 				}
-				if (targetLiftDepth || targetLiftDepth === 0) {
-					tr.lift(nodeRange, targetLiftDepth);
-				}
+				if (targetLiftDepth || targetLiftDepth === 0) tr.lift(nodeRange, targetLiftDepth);
 			});
 		});
 		return true;
 	};
-
-	// src/commands/command.ts
-	var command = fn => props => {
+	//#endregion
+	//#region src/commands/command.ts
+	const command = fn => props => {
 		return fn(props);
 	};
-	var createParagraphNear = () => ({
+	//#endregion
+	//#region src/commands/createParagraphNear.ts
+	const createParagraphNear$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return createParagraphNear$1(state, dispatch);
+		return createParagraphNear(state, dispatch);
 	};
-	var cut = (originRange, targetPos) => ({
+	//#endregion
+	//#region src/commands/cut.ts
+	const cut = (originRange, targetPos) => ({
 		editor,
 		tr
 	}) => {
@@ -13722,9 +13714,9 @@ this.BX.Note = this.BX.Note || {};
 		tr.setSelection(new TextSelection(tr.doc.resolve(Math.max(newPos - 1, 0))));
 		return true;
 	};
-
-	// src/commands/deleteCurrentNode.ts
-	var deleteCurrentNode = () => ({
+	//#endregion
+	//#region src/commands/deleteCurrentNode.ts
+	const deleteCurrentNode = () => ({
 		tr,
 		dispatch
 	}) => {
@@ -13732,59 +13724,49 @@ this.BX.Note = this.BX.Note || {};
 			selection
 		} = tr;
 		const currentNode = selection.$anchor.node();
-		if (currentNode.content.size > 0) {
-			return false;
-		}
+		if (currentNode.content.size > 0) return false;
 		const $pos = tr.selection.$anchor;
-		for (let depth = $pos.depth; depth > 0; depth -= 1) {
-			const node = $pos.node(depth);
-			if (node.type === currentNode.type) {
-				if (dispatch) {
-					const from = $pos.before(depth);
-					const to = $pos.after(depth);
-					tr.delete(from, to).scrollIntoView();
-				}
-				return true;
+		for (let depth = $pos.depth; depth > 0; depth -= 1) if ($pos.node(depth).type === currentNode.type) {
+			if (dispatch) {
+				const from = $pos.before(depth);
+				const to = $pos.after(depth);
+				tr.delete(from, to).scrollIntoView();
 			}
+			return true;
 		}
 		return false;
 	};
-
-	// src/helpers/getNodeType.ts
+	//#endregion
+	//#region src/helpers/getNodeType.ts
 	function getNodeType(nameOrType, schema) {
 		if (typeof nameOrType === "string") {
-			if (!schema.nodes[nameOrType]) {
-				throw Error(`There is no node type named '${nameOrType}'. Maybe you forgot to add the extension?`);
-			}
+			if (!schema.nodes[nameOrType]) throw Error(`There is no node type named '${nameOrType}'. Maybe you forgot to add the extension?`);
 			return schema.nodes[nameOrType];
 		}
 		return nameOrType;
 	}
-
-	// src/commands/deleteNode.ts
-	var deleteNode = typeOrName => ({
+	//#endregion
+	//#region src/commands/deleteNode.ts
+	const deleteNode = typeOrName => ({
 		tr,
 		state,
 		dispatch
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
 		const $pos = tr.selection.$anchor;
-		for (let depth = $pos.depth; depth > 0; depth -= 1) {
-			const node = $pos.node(depth);
-			if (node.type === type) {
-				if (dispatch) {
-					const from = $pos.before(depth);
-					const to = $pos.after(depth);
-					tr.delete(from, to).scrollIntoView();
-				}
-				return true;
+		for (let depth = $pos.depth; depth > 0; depth -= 1) if ($pos.node(depth).type === type) {
+			if (dispatch) {
+				const from = $pos.before(depth);
+				const to = $pos.after(depth);
+				tr.delete(from, to).scrollIntoView();
 			}
+			return true;
 		}
 		return false;
 	};
-
-	// src/commands/deleteRange.ts
-	var deleteRange = range => ({
+	//#endregion
+	//#region src/commands/deleteRange.ts
+	const deleteRange = range => ({
 		tr,
 		dispatch
 	}) => {
@@ -13792,87 +13774,135 @@ this.BX.Note = this.BX.Note || {};
 			from,
 			to
 		} = range;
-		if (dispatch) {
-			tr.delete(from, to);
-		}
+		if (dispatch) tr.delete(from, to);
 		return true;
 	};
-	var deleteSelection = () => ({
+	//#endregion
+	//#region src/commands/deleteSelection.ts
+	/**
+	* Check if a node has text content based on its content specification.
+	* Returns true if the node's content spec matches text* or text+ patterns.
+	*/
+	const hasTextContent = nodeSpec => {
+		if (!nodeSpec.content) return false;
+		return /^text(\*|\+)/.test(nodeSpec.content);
+	};
+	/**
+	* Expand selection position for a specific side (left or right) to handle inline text nodes.
+	* This function checks if the position is within an inline node with text content and
+	* expands it to include the entire node boundaries for proper deletion.
+	* @param $pos - The resolved position to expand
+	* @param schema - The ProseMirror schema
+	* @param side - Which side to expand ('left' or 'right')
+	* @returns The expanded position for deletion
+	*/
+	const expandSelectionForSide = ($pos, schema, side) => {
+		if (!$pos.parent.isInline) return $pos.pos;
+		if (side === "left" && $pos.pos > $pos.start() || side === "right" && $pos.pos < $pos.end()) return $pos.pos;
+		const parentContent = schema.nodes[$pos.parent.type.name].spec;
+		if (!hasTextContent(parentContent)) return $pos.pos;
+		return side === "left" ? $pos.start() - 1 : $pos.end() + 1;
+	};
+	/**
+	* Expand selection range to properly handle deletion of inline text nodes.
+	* Inline text nodes don't collapse correctly when text inside is deleted,
+	* so we need to expand the selection to include the entire node.
+	* See: https://code.haverbeke.berlin/prosemirror/prosemirror/issues/1365
+	*/
+	const expandSelectionForInlineText = ($from, $to, schema) => {
+		return {
+			from: expandSelectionForSide($from, schema, "left"),
+			to: expandSelectionForSide($to, schema, "right")
+		};
+	};
+	const deleteSelection = () => ({
 		state,
 		dispatch
 	}) => {
-		return deleteSelection$1(state, dispatch);
+		if (state.selection.empty) return false;
+		if (dispatch) {
+			const tr = state.tr;
+			const {
+				ranges
+			} = state.selection;
+			const mapFrom = tr.steps.length;
+			ranges.forEach(range => {
+				const mapping = tr.mapping.slice(mapFrom);
+				const $from = tr.doc.resolve(mapping.map(range.$from.pos));
+				const $to = tr.doc.resolve(mapping.map(range.$to.pos));
+				const {
+					from,
+					to
+				} = expandSelectionForInlineText($from, $to, state.schema);
+				tr.deleteRange(from, to);
+			});
+			if (!tr.selection.empty) tr.setSelection(TextSelection.near(tr.doc.resolve(tr.selection.from)));
+			tr.scrollIntoView();
+			dispatch(tr);
+		}
+		return true;
 	};
-
-	// src/commands/enter.ts
-	var enter = () => ({
+	//#endregion
+	//#region src/commands/enter.ts
+	const enter = () => ({
 		commands
 	}) => {
 		return commands.keyboardShortcut("Enter");
 	};
-	var exitCode = () => ({
+	//#endregion
+	//#region src/commands/exitCode.ts
+	const exitCode$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return exitCode$1(state, dispatch);
+		return exitCode(state, dispatch);
 	};
-
-	// src/utilities/isRegExp.ts
+	//#endregion
+	//#region src/utilities/isRegExp.ts
 	function isRegExp(value) {
 		return Object.prototype.toString.call(value) === "[object RegExp]";
 	}
-
-	// src/utilities/objectIncludes.ts
+	//#endregion
+	//#region src/utilities/objectIncludes.ts
+	/**
+	* Check if object1 includes object2
+	* @param object1 Object
+	* @param object2 Object
+	*/
 	function objectIncludes(object1, object2, options = {
 		strict: true
 	}) {
 		const keys = Object.keys(object2);
-		if (!keys.length) {
-			return true;
-		}
+		if (!keys.length) return true;
 		return keys.every(key => {
-			if (options.strict) {
-				return object2[key] === object1[key];
-			}
-			if (isRegExp(object2[key])) {
-				return object2[key].test(object1[key]);
-			}
+			if (options.strict) return object2[key] === object1[key];
+			if (isRegExp(object2[key])) return object2[key].test(object1[key]);
 			return object2[key] === object1[key];
 		});
 	}
-
-	// src/helpers/getMarkRange.ts
+	//#endregion
+	//#region src/helpers/getMarkRange.ts
 	function findMarkInSet(marks, type, attributes = {}) {
 		return marks.find(item => {
-			return item.type === type && objectIncludes(
-			// Only check equality for the attributes that are provided
-			Object.fromEntries(Object.keys(attributes).map(k => [k, item.attrs[k]])), attributes);
+			return item.type === type && objectIncludes(Object.fromEntries(Object.keys(attributes).map(k => [k, item.attrs[k]])), attributes);
 		});
 	}
 	function isMarkInSet(marks, type, attributes = {}) {
 		return !!findMarkInSet(marks, type, attributes);
 	}
+	/**
+	* Get the range of a mark at a resolved position.
+	*/
 	function getMarkRange($pos, type, attributes) {
-		if (!$pos || !type) {
-			return;
-		}
+		if (!$pos || !type) return;
 		let start = $pos.parent.childAfter($pos.parentOffset);
-		if (!start.node || !start.node.marks.some(mark2 => mark2.type === type)) {
-			start = $pos.parent.childBefore($pos.parentOffset);
-		}
-		if (!start.node || !start.node.marks.some(mark2 => mark2.type === type)) {
-			return;
-		}
+		if (!start.node || !start.node.marks.some(mark => mark.type === type)) start = $pos.parent.childBefore($pos.parentOffset);
+		if (!start.node || !start.node.marks.some(mark => mark.type === type)) return;
 		if (!attributes) {
-			const firstMark = start.node.marks.find(mark2 => mark2.type === type);
-			if (firstMark) {
-				attributes = firstMark.attrs;
-			}
+			const firstMark = start.node.marks.find(mark => mark.type === type);
+			if (firstMark) attributes = firstMark.attrs;
 		}
-		const mark = findMarkInSet([...start.node.marks], type, attributes);
-		if (!mark) {
-			return;
-		}
+		if (!findMarkInSet([...start.node.marks], type, attributes)) return;
 		let startIndex = start.index;
 		let startPos = $pos.start() + start.offset;
 		let endIndex = startIndex + 1;
@@ -13890,20 +13920,18 @@ this.BX.Note = this.BX.Note || {};
 			to: endPos
 		};
 	}
-
-	// src/helpers/getMarkType.ts
+	//#endregion
+	//#region src/helpers/getMarkType.ts
 	function getMarkType(nameOrType, schema) {
 		if (typeof nameOrType === "string") {
-			if (!schema.marks[nameOrType]) {
-				throw Error(`There is no mark type named '${nameOrType}'. Maybe you forgot to add the extension?`);
-			}
+			if (!schema.marks[nameOrType]) throw Error(`There is no mark type named '${nameOrType}'. Maybe you forgot to add the extension?`);
 			return schema.marks[nameOrType];
 		}
 		return nameOrType;
 	}
-
-	// src/commands/extendMarkRange.ts
-	var extendMarkRange = (typeOrName, attributes) => ({
+	//#endregion
+	//#region src/commands/extendMarkRange.ts
+	const extendMarkRange = (typeOrName, attributes) => ({
 		tr,
 		state,
 		dispatch
@@ -13927,66 +13955,62 @@ this.BX.Note = this.BX.Note || {};
 		}
 		return true;
 	};
-
-	// src/commands/first.ts
-	var first = commands => props => {
+	//#endregion
+	//#region src/commands/first.ts
+	const first = commands => props => {
 		const items = typeof commands === "function" ? commands(props) : commands;
-		for (let i = 0; i < items.length; i += 1) {
-			if (items[i](props)) {
-				return true;
-			}
-		}
+		for (let i = 0; i < items.length; i += 1) if (items[i](props)) return true;
 		return false;
 	};
+	//#endregion
+	//#region src/helpers/isTextSelection.ts
 	function isTextSelection(value) {
 		return value instanceof TextSelection;
 	}
-
-	// src/utilities/minMax.ts
+	//#endregion
+	//#region src/utilities/minMax.ts
 	function minMax(value = 0, min = 0, max = 0) {
 		return Math.min(Math.max(value, min), max);
 	}
-
-	// src/helpers/resolveFocusPosition.ts
+	//#endregion
+	//#region src/helpers/resolveFocusPosition.ts
 	function resolveFocusPosition(doc, position = null) {
-		if (!position) {
-			return null;
-		}
+		if (!position) return null;
 		const selectionAtStart = Selection.atStart(doc);
 		const selectionAtEnd = Selection.atEnd(doc);
-		if (position === "start" || position === true) {
-			return selectionAtStart;
-		}
-		if (position === "end") {
-			return selectionAtEnd;
-		}
+		if (position === "start" || position === true) return selectionAtStart;
+		if (position === "end") return selectionAtEnd;
 		const minPos = selectionAtStart.from;
 		const maxPos = selectionAtEnd.to;
-		if (position === "all") {
-			return TextSelection.create(doc, minMax(0, minPos, maxPos), minMax(doc.content.size, minPos, maxPos));
-		}
+		if (position === "all") return TextSelection.create(doc, minMax(0, minPos, maxPos), minMax(doc.content.size, minPos, maxPos));
 		return TextSelection.create(doc, minMax(position, minPos, maxPos), minMax(position, minPos, maxPos));
 	}
-
-	// src/utilities/isAndroid.ts
+	//#endregion
+	//#region src/utilities/isAndroid.ts
 	function isAndroid() {
-		return navigator.platform === "Android" || /android/i.test(navigator.userAgent);
+		return ["Android"].includes(navigator.platform) || /android/i.test(navigator.userAgent);
 	}
-
-	// src/utilities/isiOS.ts
+	//#endregion
+	//#region src/utilities/isiOS.ts
 	function isiOS() {
-		return ["iPad Simulator", "iPhone Simulator", "iPod Simulator", "iPad", "iPhone", "iPod"].includes(navigator.platform) ||
-		// iPad on iOS 13 detection
-		navigator.userAgent.includes("Mac") && "ontouchend" in document;
+		return ["iPad Simulator", "iPhone Simulator", "iPod Simulator", "iPad", "iPhone", "iPod"].includes(navigator.platform) || navigator.userAgent.includes("Mac") && "ontouchend" in document;
 	}
-
-	// src/utilities/isSafari.ts
+	//#endregion
+	//#region src/utilities/isSafari.ts
+	/**
+	* Detects if the current browser is Safari (but not iOS Safari or Chrome).
+	* @returns `true` if the browser is Safari, `false` otherwise.
+	* @example
+	* if (isSafari()) {
+	*   // Safari-specific handling
+	* }
+	*/
 	function isSafari() {
 		return typeof navigator !== "undefined" ? /^((?!chrome|android).)*safari/i.test(navigator.userAgent) : false;
 	}
-
-	// src/commands/focus.ts
-	var focus = (position = null, options = {}) => ({
+	//#endregion
+	//#region src/commands/focus.ts
+	const focus = (position = null, options = {}) => ({
 		editor,
 		view,
 		tr,
@@ -13997,27 +14021,19 @@ this.BX.Note = this.BX.Note || {};
 			...options
 		};
 		const delayedFocus = () => {
-			if (isiOS() || isAndroid()) {
-				view.dom.focus();
-			}
-			if (isSafari() && !isiOS() && !isAndroid()) {
-				view.dom.focus({
-					preventScroll: true
-				});
-			}
+			if (isiOS() || isAndroid()) view.dom.focus();
+			if (isSafari() && !isiOS() && !isAndroid()) view.dom.focus({
+				preventScroll: true
+			});
 			requestAnimationFrame(() => {
 				if (!editor.isDestroyed) {
 					view.focus();
-					if (options == null ? void 0 : options.scrollIntoView) {
-						editor.commands.scrollIntoView();
-					}
+					if (options === null || options === void 0 ? void 0 : options.scrollIntoView) editor.commands.scrollIntoView();
 				}
 			});
 		};
 		try {
-			if (view.hasFocus() && position === null || position === false) {
-				return true;
-			}
+			if (view.hasFocus() && position === null || position === false) return true;
 		} catch {
 			return false;
 		}
@@ -14028,27 +14044,23 @@ this.BX.Note = this.BX.Note || {};
 		const selection = resolveFocusPosition(tr.doc, position) || editor.state.selection;
 		const isSameSelection = editor.state.selection.eq(selection);
 		if (dispatch) {
-			if (!isSameSelection) {
-				tr.setSelection(selection);
-			}
-			if (isSameSelection && tr.storedMarks) {
-				tr.setStoredMarks(tr.storedMarks);
-			}
+			if (!isSameSelection) tr.setSelection(selection);
+			if (isSameSelection && tr.storedMarks) tr.setStoredMarks(tr.storedMarks);
 			delayedFocus();
 		}
 		return true;
 	};
-
-	// src/commands/forEach.ts
-	var forEach$1 = (items, fn) => props => {
+	//#endregion
+	//#region src/commands/forEach.ts
+	const forEach$1 = (items, fn) => props => {
 		return items.every((item, index) => fn(item, {
 			...props,
 			index
 		}));
 	};
-
-	// src/commands/insertContent.ts
-	var insertContent = (value, options) => ({
+	//#endregion
+	//#region src/commands/insertContent.ts
+	const insertContent = (value, options) => ({
 		tr,
 		commands
 	}) => {
@@ -14057,61 +14069,65 @@ this.BX.Note = this.BX.Note || {};
 			to: tr.selection.to
 		}, value, options);
 	};
-
-	// src/utilities/elementFromString.ts
-	var removeWhitespaces = node => {
+	//#endregion
+	//#region src/utilities/elementFromString.ts
+	const removeWhitespaces = node => {
 		const children = node.childNodes;
 		for (let i = children.length - 1; i >= 0; i -= 1) {
 			const child = children[i];
-			if (child.nodeType === 3 && child.nodeValue && /^(\n\s\s|\n)$/.test(child.nodeValue)) {
-				node.removeChild(child);
-			} else if (child.nodeType === 1) {
-				removeWhitespaces(child);
-			}
+			if (child.nodeType === 3 && child.nodeValue && /^(\n\s\s|\n)$/.test(child.nodeValue)) node.removeChild(child);else if (child.nodeType === 1) removeWhitespaces(child);
 		}
 		return node;
 	};
 	function elementFromString(value) {
-		if (typeof window === "undefined") {
-			throw new Error("[tiptap error]: there is no window object available, so this function cannot be used");
-		}
+		if (typeof window === "undefined") throw new Error("[tiptap error]: there is no window object available, so this function cannot be used");
 		const wrappedValue = `<body>${value}</body>`;
 		const html = new window.DOMParser().parseFromString(wrappedValue, "text/html").body;
 		return removeWhitespaces(html);
 	}
-
-	// src/helpers/createNodeFromContent.ts
+	//#endregion
+	//#region src/helpers/isProseMirrorContent.ts
+	/**
+	* Checks whether a value is already a ProseMirror node or fragment. Looks for the
+	* `nodesBetween` method, because `instanceof` fails when prosemirror-model is loaded twice.
+	* @param value Any value that could be passed as content
+	* @returns True for a node or a fragment, false for JSON, HTML and everything else
+	* @example ```js
+	* isProseMirrorContent(editor.state.doc)
+	* ```
+	*/
+	function isProseMirrorContent(value) {
+		return typeof (value === null || value === void 0 ? void 0 : value.nodesBetween) === "function";
+	}
+	//#endregion
+	//#region src/helpers/createNodeFromContent.ts
+	/**
+	* Takes a JSON or HTML content and creates a Prosemirror node or fragment from it.
+	* @param content The JSON or HTML content to create the node from
+	* @param schema The Prosemirror schema to use for the node
+	* @param options Options for the parser
+	* @returns The created Prosemirror node or fragment
+	*/
 	function createNodeFromContent(content, schema, options) {
-		if (content instanceof Node$1 || content instanceof Fragment) {
-			return content;
-		}
+		if (isProseMirrorContent(content)) return content;
+		const isJSONContent = typeof content === "object" && content !== null;
 		options = {
 			slice: true,
 			parseOptions: {},
 			...options
 		};
-		const isJSONContent = typeof content === "object" && content !== null;
 		const isTextContent = typeof content === "string";
-		if (isJSONContent) {
-			try {
-				const isArrayContent = Array.isArray(content) && content.length > 0;
-				if (isArrayContent) {
-					return Fragment.fromArray(content.map(item => schema.nodeFromJSON(item)));
-				}
-				const node = schema.nodeFromJSON(content);
-				if (options.errorOnInvalidContent) {
-					node.check();
-				}
-				return node;
-			} catch (error) {
-				if (options.errorOnInvalidContent) {
-					throw new Error("[tiptap error]: Invalid JSON content", {
-						cause: error
-					});
-				}
-				console.warn("[tiptap warn]: Invalid content.", "Passed value:", content, "Error:", error);
-				return createNodeFromContent("", schema, options);
-			}
+		if (isJSONContent) try {
+			if (Array.isArray(content) && content.length > 0) return Fragment.fromArray(content.map(item => schema.nodeFromJSON(item)));
+			const node = schema.nodeFromJSON(content);
+			if (options.errorOnInvalidContent) node.check();
+			return node;
+		} catch (error) {
+			if (options.errorOnInvalidContent) throw new Error("[tiptap error]: Invalid JSON content", {
+				cause: error
+			});
+			console.warn("[tiptap warn]: Invalid content.", "Passed value:", content, "Error:", error);
+			return createNodeFromContent("", schema, options);
 		}
 		if (isTextContent) {
 			if (options.errorOnInvalidContent) {
@@ -14120,8 +14136,6 @@ this.BX.Note = this.BX.Note || {};
 				const contentCheckSchema = new Schema$1({
 					topNode: schema.spec.topNode,
 					marks: schema.spec.marks,
-					// Prosemirror's schemas are executed such that: the last to execute, matches last
-					// This means that we can add a catch-all node at the end of the schema to catch any content that we don't know how to handle
 					nodes: schema.spec.nodes.append({
 						__tiptap__private__unknown__catch__all__node: {
 							content: "inline*",
@@ -14137,54 +14151,52 @@ this.BX.Note = this.BX.Note || {};
 						}
 					})
 				});
-				if (options.slice) {
-					DOMParser$1.fromSchema(contentCheckSchema).parseSlice(elementFromString(content), options.parseOptions);
-				} else {
-					DOMParser$1.fromSchema(contentCheckSchema).parse(elementFromString(content), options.parseOptions);
-				}
-				if (options.errorOnInvalidContent && hasInvalidContent) {
-					throw new Error("[tiptap error]: Invalid HTML content", {
-						cause: new Error(`Invalid element found: ${invalidContent}`)
-					});
-				}
+				if (options.slice) DOMParser$1.fromSchema(contentCheckSchema).parseSlice(elementFromString(content), options.parseOptions);else DOMParser$1.fromSchema(contentCheckSchema).parse(elementFromString(content), options.parseOptions);
+				if (options.errorOnInvalidContent && hasInvalidContent) throw new Error("[tiptap error]: Invalid HTML content", {
+					cause: /* @__PURE__ */new Error(`Invalid element found: ${invalidContent}`)
+				});
 			}
 			const parser = DOMParser$1.fromSchema(schema);
-			if (options.slice) {
-				return parser.parseSlice(elementFromString(content), options.parseOptions).content;
-			}
+			if (options.slice) return parser.parseSlice(elementFromString(content), options.parseOptions).content;
 			return parser.parse(elementFromString(content), options.parseOptions);
 		}
 		return createNodeFromContent("", schema, options);
 	}
+	//#endregion
+	//#region src/helpers/isFragment.ts
+	/**
+	* Checks whether a node or fragment is a fragment. Looks for a missing `type` field,
+	* because `instanceof` fails when prosemirror-model is loaded twice.
+	* @param nodeOrFragment A ProseMirror node or fragment
+	* @returns True for a fragment, false for a node
+	* @example ```js
+	* isFragment(editor.state.doc.content)
+	* ```
+	*/
+	function isFragment(nodeOrFragment) {
+		return !("type" in nodeOrFragment);
+	}
+	//#endregion
+	//#region src/helpers/selectionToInsertionEnd.ts
 	function selectionToInsertionEnd(tr, startLen, bias) {
 		const last = tr.steps.length - 1;
-		if (last < startLen) {
-			return;
-		}
+		if (last < startLen) return;
 		const step = tr.steps[last];
-		if (!(step instanceof ReplaceStep || step instanceof ReplaceAroundStep)) {
-			return;
-		}
+		if (!(step instanceof ReplaceStep || step instanceof ReplaceAroundStep)) return;
 		const map = tr.mapping.maps[last];
 		let end = 0;
 		map.forEach((_from, _to, _newFrom, newTo) => {
-			if (end === 0) {
-				end = newTo;
-			}
+			if (end === 0) end = newTo;
 		});
 		tr.setSelection(Selection.near(tr.doc.resolve(end), bias));
 	}
-
-	// src/commands/insertContentAt.ts
-	var isFragment = nodeOrFragment => {
-		return !("type" in nodeOrFragment);
-	};
-	var insertContentAt = (position, value, options) => ({
+	//#endregion
+	//#region src/commands/insertContentAt.ts
+	const insertContentAt = (position, value, options) => ({
 		tr,
 		dispatch,
 		editor
 	}) => {
-		var _a;
 		if (dispatch) {
 			options = {
 				parseOptions: editor.options.parseOptions,
@@ -14199,9 +14211,7 @@ this.BX.Note = this.BX.Note || {};
 					editor,
 					error,
 					disableCollaboration: () => {
-						if ("collaboration" in editor.storage && typeof editor.storage.collaboration === "object" && editor.storage.collaboration) {
-							editor.storage.collaboration.isDisabled = true;
-						}
+						if ("collaboration" in editor.storage && typeof editor.storage.collaboration === "object" && editor.storage.collaboration) editor.storage.collaboration.isDisabled = true;
 					}
 				});
 			};
@@ -14209,20 +14219,19 @@ this.BX.Note = this.BX.Note || {};
 				preserveWhitespace: "full",
 				...options.parseOptions
 			};
-			if (!options.errorOnInvalidContent && !editor.options.enableContentCheck && editor.options.emitContentError) {
-				try {
-					createNodeFromContent(value, editor.schema, {
-						parseOptions,
-						errorOnInvalidContent: true
-					});
-				} catch (e) {
-					emitContentError(e);
-				}
+			if (!options.errorOnInvalidContent && !editor.options.enableContentCheck && editor.options.emitContentError) try {
+				createNodeFromContent(value, editor.schema, {
+					parseOptions,
+					errorOnInvalidContent: true
+				});
+			} catch (e) {
+				emitContentError(e);
 			}
 			try {
+				var _options$errorOnInval;
 				content = createNodeFromContent(value, editor.schema, {
 					parseOptions,
-					errorOnInvalidContent: (_a = options.errorOnInvalidContent) != null ? _a : editor.options.enableContentCheck
+					errorOnInvalidContent: (_options$errorOnInval = options.errorOnInvalidContent) !== null && _options$errorOnInval !== void 0 ? _options$errorOnInval : editor.options.enableContentCheck
 				});
 			} catch (e) {
 				emitContentError(e);
@@ -14240,7 +14249,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 			let isOnlyTextContent = true;
 			let isOnlyBlockContent = true;
-			const nodes = isFragment(content) ? content : [content];
+			const nodes = isFragment(content) ? content.content : [content];
 			nodes.forEach(node => {
 				node.check();
 				isOnlyTextContent = isOnlyTextContent ? node.isText && node.marks.length === 0 : false;
@@ -14250,186 +14259,191 @@ this.BX.Note = this.BX.Note || {};
 				const {
 					parent
 				} = tr.doc.resolve(from);
-				const isEmptyTextBlock = parent.isTextblock && !parent.type.spec.code && !parent.childCount;
-				if (isEmptyTextBlock) {
+				if (parent.isTextblock && !parent.type.spec.code && !parent.childCount) {
 					from -= 1;
 					to += 1;
 				}
 			}
 			let newContent;
 			if (isOnlyTextContent) {
-				if (Array.isArray(value)) {
-					newContent = value.map(v => v.text || "").join("");
-				} else if (value instanceof Fragment) {
-					let text = "";
-					value.forEach(node => {
-						if (node.text) {
-							text += node.text;
-						}
-					});
-					newContent = text;
-				} else if (typeof value === "object" && !!value && !!value.text) {
-					newContent = value.text;
-				} else {
-					newContent = value;
-				}
+				if (Array.isArray(value)) newContent = value.map(item => item.text || "").join("");else if (isProseMirrorContent(value)) newContent = nodes.map(node => {
+					var _node$text;
+					return (_node$text = node.text) !== null && _node$text !== void 0 ? _node$text : "";
+				}).join("");else if (typeof value === "object" && !!value && !!value.text) newContent = value.text;else newContent = value;
 				tr.insertText(newContent, from, to);
 			} else {
-				newContent = content;
+				newContent = Fragment.from(nodes);
 				const $from = tr.doc.resolve(from);
 				const $fromNode = $from.node();
 				const fromSelectionAtStart = $from.parentOffset === 0;
-				const isTextSelection2 = $fromNode.isText || $fromNode.isTextblock;
+				const isTextSelection = $fromNode.isText || $fromNode.isTextblock;
 				const hasContent = $fromNode.content.size > 0;
-				if (fromSelectionAtStart && isTextSelection2 && hasContent && isOnlyBlockContent) {
-					from = Math.max(0, from - 1);
-				}
-				tr.replaceWith(from, to, newContent);
+				if (fromSelectionAtStart && isTextSelection && hasContent && isOnlyBlockContent) from = Math.max(0, from - 1);
+				tr.replaceWith(from, to, nodes);
 			}
-			if (options.updateSelection) {
-				selectionToInsertionEnd(tr, tr.steps.length - 1, -1);
-			}
-			if (options.applyInputRules) {
-				tr.setMeta("applyInputRules", {
-					from,
-					text: newContent
-				});
-			}
-			if (options.applyPasteRules) {
-				tr.setMeta("applyPasteRules", {
-					from,
-					text: newContent
-				});
-			}
+			if (options.updateSelection) selectionToInsertionEnd(tr, tr.steps.length - 1, -1);
+			if (options.applyInputRules) tr.setMeta("applyInputRules", {
+				from,
+				text: newContent
+			});
+			if (options.applyPasteRules) tr.setMeta("applyPasteRules", {
+				from,
+				text: newContent
+			});
 		}
 		return true;
 	};
-	var joinUp = () => ({
+	//#endregion
+	//#region src/helpers/defaultBlockAt.ts
+	/**
+	* Gets the default block type at a given match
+	* @param match The content match to get the default block type from
+	* @returns The default block type or null
+	*/
+	function defaultBlockAt(match) {
+		for (let i = 0; i < match.edgeCount; i += 1) {
+			const {
+				type
+			} = match.edge(i);
+			if (type.isTextblock && !type.hasRequiredAttrs()) return type;
+		}
+		return null;
+	}
+	//#endregion
+	//#region src/commands/insertDefaultBlock.ts
+	const insertDefaultBlock = (options = {}) => ({
+		tr,
+		dispatch,
+		editor
+	}) => {
+		const {
+			pos,
+			attrs,
+			content,
+			updateSelection = true
+		} = options;
+		let $pos;
+		if (typeof pos === "number") $pos = tr.doc.resolve(pos);else if (pos) $pos = pos;else $pos = tr.selection.$from;
+		const defaultType = defaultBlockAt($pos.parent.contentMatchAt($pos.index()));
+		if (!defaultType) return false;
+		const validAttrKeys = Object.keys(defaultType.spec.attrs || {});
+		const filteredAttrs = attrs ? Object.fromEntries(Object.entries(attrs).filter(([key]) => validAttrKeys.includes(key))) : {};
+		let node;
+		if (content) {
+			const parsed = createNodeFromContent(content, editor.schema);
+			node = defaultType.createAndFill(filteredAttrs, parsed);
+		} else node = defaultType.createAndFill(filteredAttrs);
+		if (!node) return false;
+		if (dispatch) {
+			tr.insert($pos.pos, node);
+			if (updateSelection) selectionToInsertionEnd(tr, tr.steps.length - 1, -1);
+		}
+		return true;
+	};
+	//#endregion
+	//#region src/commands/join.ts
+	const joinUp$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return joinUp$1(state, dispatch);
+		return joinUp(state, dispatch);
 	};
-	var joinDown = () => ({
+	const joinDown$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return joinDown$1(state, dispatch);
+		return joinDown(state, dispatch);
 	};
-	var joinBackward = () => ({
+	const joinBackward$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return joinBackward$1(state, dispatch);
+		return joinBackward(state, dispatch);
 	};
-	var joinForward = () => ({
+	const joinForward$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return joinForward$1(state, dispatch);
+		return joinForward(state, dispatch);
 	};
-	var joinItemBackward = () => ({
+	//#endregion
+	//#region src/commands/joinItemBackward.ts
+	const joinItemBackward = () => ({
 		state,
 		dispatch,
 		tr
 	}) => {
 		try {
 			const point = joinPoint(state.doc, state.selection.$from.pos, -1);
-			if (point === null || point === void 0) {
-				return false;
-			}
+			if (point === null || point === void 0) return false;
 			tr.join(point, 2);
-			if (dispatch) {
-				dispatch(tr);
-			}
+			if (dispatch) dispatch(tr);
 			return true;
 		} catch {
 			return false;
 		}
 	};
-	var joinItemForward = () => ({
+	//#endregion
+	//#region src/commands/joinItemForward.ts
+	const joinItemForward = () => ({
 		state,
 		dispatch,
 		tr
 	}) => {
 		try {
 			const point = joinPoint(state.doc, state.selection.$from.pos, 1);
-			if (point === null || point === void 0) {
-				return false;
-			}
+			if (point === null || point === void 0) return false;
 			tr.join(point, 2);
-			if (dispatch) {
-				dispatch(tr);
-			}
+			if (dispatch) dispatch(tr);
 			return true;
 		} catch {
 			return false;
 		}
 	};
-	var joinTextblockBackward = () => ({
+	//#endregion
+	//#region src/commands/joinTextblockBackward.ts
+	const joinTextblockBackward$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return joinTextblockBackward$1(state, dispatch);
+		return joinTextblockBackward(state, dispatch);
 	};
-	var joinTextblockForward = () => ({
+	//#endregion
+	//#region src/commands/joinTextblockForward.ts
+	const joinTextblockForward$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return joinTextblockForward$1(state, dispatch);
+		return joinTextblockForward(state, dispatch);
 	};
-
-	// src/utilities/isMacOS.ts
+	//#endregion
+	//#region src/utilities/isMacOS.ts
 	function isMacOS() {
 		return typeof navigator !== "undefined" ? /Mac/.test(navigator.platform) : false;
 	}
-
-	// src/commands/keyboardShortcut.ts
+	//#endregion
+	//#region src/commands/keyboardShortcut.ts
 	function normalizeKeyName(name) {
 		const parts = name.split(/-(?!$)/);
 		let result = parts[parts.length - 1];
-		if (result === "Space") {
-			result = " ";
-		}
+		if (result === "Space") result = " ";
 		let alt;
 		let ctrl;
 		let shift;
 		let meta;
 		for (let i = 0; i < parts.length - 1; i += 1) {
 			const mod = parts[i];
-			if (/^(cmd|meta|m)$/i.test(mod)) {
-				meta = true;
-			} else if (/^a(lt)?$/i.test(mod)) {
-				alt = true;
-			} else if (/^(c|ctrl|control)$/i.test(mod)) {
-				ctrl = true;
-			} else if (/^s(hift)?$/i.test(mod)) {
-				shift = true;
-			} else if (/^mod$/i.test(mod)) {
-				if (isiOS() || isMacOS()) {
-					meta = true;
-				} else {
-					ctrl = true;
-				}
-			} else {
-				throw new Error(`Unrecognized modifier name: ${mod}`);
-			}
+			if (/^(cmd|meta|m)$/i.test(mod)) meta = true;else if (/^a(lt)?$/i.test(mod)) alt = true;else if (/^(c|ctrl|control)$/i.test(mod)) ctrl = true;else if (/^s(hift)?$/i.test(mod)) shift = true;else if (/^mod$/i.test(mod)) {
+				if (isiOS() || isMacOS()) meta = true;else ctrl = true;
+			} else throw new Error(`Unrecognized modifier name: ${mod}`);
 		}
-		if (alt) {
-			result = `Alt-${result}`;
-		}
-		if (ctrl) {
-			result = `Ctrl-${result}`;
-		}
-		if (meta) {
-			result = `Meta-${result}`;
-		}
-		if (shift) {
-			result = `Shift-${result}`;
-		}
+		if (alt) result = `Alt-${result}`;
+		if (ctrl) result = `Ctrl-${result}`;
+		if (meta) result = `Meta-${result}`;
+		if (shift) result = `Shift-${result}`;
 		return result;
 	}
-	var keyboardShortcut = name => ({
+	const keyboardShortcut = name => ({
 		editor,
 		view,
 		tr,
@@ -14449,16 +14463,14 @@ this.BX.Note = this.BX.Note || {};
 		const capturedTransaction = editor.captureTransaction(() => {
 			view.someProp("handleKeyDown", f => f(view, event));
 		});
-		capturedTransaction == null ? void 0 : capturedTransaction.steps.forEach(step => {
+		capturedTransaction === null || capturedTransaction === void 0 || capturedTransaction.steps.forEach(step => {
 			const newStep = step.map(tr.mapping);
-			if (newStep && dispatch) {
-				tr.maybeStep(newStep);
-			}
+			if (newStep && dispatch) tr.maybeStep(newStep);
 		});
 		return true;
 	};
-
-	// src/helpers/isNodeActive.ts
+	//#endregion
+	//#region src/helpers/isNodeActive.ts
 	function isNodeActive(state, typeOrName, attributes = {}) {
 		const {
 			from,
@@ -14468,9 +14480,7 @@ this.BX.Note = this.BX.Note || {};
 		const type = typeOrName ? getNodeType(typeOrName, state.schema) : null;
 		const nodeRanges = [];
 		state.doc.nodesBetween(from, to, (node, pos) => {
-			if (node.isText) {
-				return;
-			}
+			if (node.isText) return;
 			const relativeFrom = Math.max(from, pos);
 			const relativeTo = Math.min(to, pos + node.nodeSize);
 			nodeRanges.push({
@@ -14481,76 +14491,78 @@ this.BX.Note = this.BX.Note || {};
 		});
 		const selectionRange = to - from;
 		const matchedNodeRanges = nodeRanges.filter(nodeRange => {
-			if (!type) {
-				return true;
-			}
+			if (!type) return true;
 			return type.name === nodeRange.node.type.name;
 		}).filter(nodeRange => objectIncludes(nodeRange.node.attrs, attributes, {
 			strict: false
 		}));
-		if (empty) {
-			return !!matchedNodeRanges.length;
-		}
-		const range = matchedNodeRanges.reduce((sum, nodeRange) => sum + nodeRange.to - nodeRange.from, 0);
-		return range >= selectionRange;
+		if (empty) return !!matchedNodeRanges.length;
+		return matchedNodeRanges.reduce((sum, nodeRange) => sum + nodeRange.to - nodeRange.from, 0) >= selectionRange;
 	}
-
-	// src/commands/lift.ts
-	var lift = (typeOrName, attributes = {}) => ({
+	//#endregion
+	//#region src/commands/lift.ts
+	const lift$1 = (typeOrName, attributes = {}) => ({
+		state,
+		dispatch
+	}) => {
+		if (!isNodeActive(state, getNodeType(typeOrName, state.schema), attributes)) return false;
+		return lift(state, dispatch);
+	};
+	//#endregion
+	//#region src/commands/liftEmptyBlock.ts
+	const liftEmptyBlock$1 = () => ({
+		state,
+		dispatch
+	}) => {
+		return liftEmptyBlock(state, dispatch);
+	};
+	//#endregion
+	//#region src/commands/liftListItem.ts
+	const liftListItem$1 = typeOrName => ({
 		state,
 		dispatch
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
-		const isActive2 = isNodeActive(state, type, attributes);
-		if (!isActive2) {
-			return false;
-		}
-		return lift$1(state, dispatch);
+		return liftListItem(type)(state, dispatch);
 	};
-	var liftEmptyBlock = () => ({
+	//#endregion
+	//#region src/commands/newlineInCode.ts
+	const newlineInCode$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return liftEmptyBlock$1(state, dispatch);
+		return newlineInCode(state, dispatch);
 	};
-	var liftListItem = typeOrName => ({
-		state,
-		dispatch
-	}) => {
-		const type = getNodeType(typeOrName, state.schema);
-		return liftListItem$1(type)(state, dispatch);
-	};
-	var newlineInCode = () => ({
-		state,
-		dispatch
-	}) => {
-		return newlineInCode$1(state, dispatch);
-	};
-
-	// src/helpers/getSchemaTypeNameByName.ts
+	//#endregion
+	//#region src/helpers/getSchemaTypeNameByName.ts
+	/**
+	* Get the type of a schema item by its name.
+	* @param name The name of the schema item
+	* @param schema The Prosemiror schema to search in
+	* @returns The type of the schema item (`node` or `mark`), or null if it doesn't exist
+	*/
 	function getSchemaTypeNameByName(name, schema) {
-		if (schema.nodes[name]) {
-			return "node";
-		}
-		if (schema.marks[name]) {
-			return "mark";
-		}
+		if (schema.nodes[name]) return "node";
+		if (schema.marks[name]) return "mark";
 		return null;
 	}
-
-	// src/utilities/deleteProps.ts
+	//#endregion
+	//#region src/utilities/deleteProps.ts
+	/**
+	* Remove a property or an array of properties from an object
+	* @param obj Object
+	* @param key Key to remove
+	*/
 	function deleteProps(obj, propOrProps) {
 		const props = typeof propOrProps === "string" ? [propOrProps] : propOrProps;
 		return Object.keys(obj).reduce((newObj, prop) => {
-			if (!props.includes(prop)) {
-				newObj[prop] = obj[prop];
-			}
+			if (!props.includes(prop)) newObj[prop] = obj[prop];
 			return newObj;
 		}, {});
 	}
-
-	// src/commands/resetAttributes.ts
-	var resetAttributes = (typeOrName, attributes) => ({
+	//#endregion
+	//#region src/commands/resetAttributes.ts
+	const resetAttributes = (typeOrName, attributes) => ({
 		tr,
 		state,
 		dispatch
@@ -14558,50 +14570,38 @@ this.BX.Note = this.BX.Note || {};
 		let nodeType = null;
 		let markType = null;
 		const schemaType = getSchemaTypeNameByName(typeof typeOrName === "string" ? typeOrName : typeOrName.name, state.schema);
-		if (!schemaType) {
-			return false;
-		}
-		if (schemaType === "node") {
-			nodeType = getNodeType(typeOrName, state.schema);
-		}
-		if (schemaType === "mark") {
-			markType = getMarkType(typeOrName, state.schema);
-		}
+		if (!schemaType) return false;
+		if (schemaType === "node") nodeType = getNodeType(typeOrName, state.schema);
+		if (schemaType === "mark") markType = getMarkType(typeOrName, state.schema);
 		let canReset = false;
 		tr.selection.ranges.forEach(range => {
 			state.doc.nodesBetween(range.$from.pos, range.$to.pos, (node, pos) => {
 				if (nodeType && nodeType === node.type) {
 					canReset = true;
-					if (dispatch) {
-						tr.setNodeMarkup(pos, void 0, deleteProps(node.attrs, attributes));
+					if (dispatch) tr.setNodeMarkup(pos, void 0, deleteProps(node.attrs, attributes));
+				}
+				if (markType && node.marks.length) node.marks.forEach(mark => {
+					if (markType === mark.type) {
+						canReset = true;
+						if (dispatch) tr.addMark(pos, pos + node.nodeSize, markType.create(deleteProps(mark.attrs, attributes)));
 					}
-				}
-				if (markType && node.marks.length) {
-					node.marks.forEach(mark => {
-						if (markType === mark.type) {
-							canReset = true;
-							if (dispatch) {
-								tr.addMark(pos, pos + node.nodeSize, markType.create(deleteProps(mark.attrs, attributes)));
-							}
-						}
-					});
-				}
+				});
 			});
 		});
 		return canReset;
 	};
-
-	// src/commands/scrollIntoView.ts
-	var scrollIntoView = () => ({
+	//#endregion
+	//#region src/commands/scrollIntoView.ts
+	const scrollIntoView = () => ({
 		tr,
 		dispatch
 	}) => {
-		if (dispatch) {
-			tr.scrollIntoView();
-		}
+		if (dispatch) tr.scrollIntoView();
 		return true;
 	};
-	var selectAll = () => ({
+	//#endregion
+	//#region src/commands/selectAll.ts
+	const selectAll = () => ({
 		tr,
 		dispatch
 	}) => {
@@ -14611,38 +14611,55 @@ this.BX.Note = this.BX.Note || {};
 		}
 		return true;
 	};
-	var selectNodeBackward = () => ({
+	//#endregion
+	//#region src/commands/selectNodeBackward.ts
+	const selectNodeBackward$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return selectNodeBackward$1(state, dispatch);
+		return selectNodeBackward(state, dispatch);
 	};
-	var selectNodeForward = () => ({
+	//#endregion
+	//#region src/commands/selectNodeForward.ts
+	const selectNodeForward$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return selectNodeForward$1(state, dispatch);
+		return selectNodeForward(state, dispatch);
 	};
-	var selectParentNode = () => ({
+	//#endregion
+	//#region src/commands/selectParentNode.ts
+	const selectParentNode$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return selectParentNode$1(state, dispatch);
+		return selectParentNode(state, dispatch);
 	};
-	var selectTextblockEnd = () => ({
+	//#endregion
+	//#region src/commands/selectTextblockEnd.ts
+	const selectTextblockEnd$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return selectTextblockEnd$1(state, dispatch);
+		return selectTextblockEnd(state, dispatch);
 	};
-	var selectTextblockStart = () => ({
+	//#endregion
+	//#region src/commands/selectTextblockStart.ts
+	const selectTextblockStart$1 = () => ({
 		state,
 		dispatch
 	}) => {
-		return selectTextblockStart$1(state, dispatch);
+		return selectTextblockStart(state, dispatch);
 	};
-
-	// src/helpers/createDocument.ts
+	//#endregion
+	//#region src/helpers/createDocument.ts
+	/**
+	* Create a new Prosemirror document node from content.
+	* @param content The JSON or HTML content to create the document from
+	* @param schema The Prosemirror schema to use for the document
+	* @param parseOptions Options for the parser
+	* @returns The created Prosemirror document node
+	*/
 	function createDocument(content, schema, parseOptions = {}, options = {}) {
 		return createNodeFromContent(content, schema, {
 			slice: false,
@@ -14650,9 +14667,9 @@ this.BX.Note = this.BX.Note || {};
 			errorOnInvalidContent: options.errorOnInvalidContent
 		});
 	}
-
-	// src/commands/setContent.ts
-	var setContent = (content, {
+	//#endregion
+	//#region src/commands/setContent.ts
+	const setContent = (content, {
 		errorOnInvalidContent,
 		emitUpdate = true,
 		parseOptions = {}
@@ -14666,27 +14683,26 @@ this.BX.Note = this.BX.Note || {};
 			doc
 		} = tr;
 		if (parseOptions.preserveWhitespace !== "full") {
-			const document2 = createDocument(content, editor.schema, parseOptions, {
-				errorOnInvalidContent: errorOnInvalidContent != null ? errorOnInvalidContent : editor.options.enableContentCheck
+			const document = createDocument(content, editor.schema, parseOptions, {
+				errorOnInvalidContent: errorOnInvalidContent !== null && errorOnInvalidContent !== void 0 ? errorOnInvalidContent : editor.options.enableContentCheck
 			});
 			if (dispatch) {
-				tr.replaceWith(0, doc.content.size, document2).setMeta("preventUpdate", !emitUpdate);
+				const nodes = isFragment(document) ? document.content : [document];
+				tr.replaceWith(0, doc.content.size, nodes).setMeta("preventUpdate", !emitUpdate);
 			}
 			return true;
 		}
-		if (dispatch) {
-			tr.setMeta("preventUpdate", !emitUpdate);
-		}
+		if (dispatch) tr.setMeta("preventUpdate", !emitUpdate);
 		return commands.insertContentAt({
 			from: 0,
 			to: doc.content.size
 		}, content, {
 			parseOptions,
-			errorOnInvalidContent: errorOnInvalidContent != null ? errorOnInvalidContent : editor.options.enableContentCheck
+			errorOnInvalidContent: errorOnInvalidContent !== null && errorOnInvalidContent !== void 0 ? errorOnInvalidContent : editor.options.enableContentCheck
 		});
 	};
-
-	// src/helpers/getMarkAttributes.ts
+	//#endregion
+	//#region src/helpers/getMarkAttributes.ts
 	function getMarkAttributes(state, typeOrName) {
 		const type = getMarkType(typeOrName, state.schema);
 		const {
@@ -14696,23 +14712,25 @@ this.BX.Note = this.BX.Note || {};
 		} = state.selection;
 		const marks = [];
 		if (empty) {
-			if (state.storedMarks) {
-				marks.push(...state.storedMarks);
-			}
+			if (state.storedMarks) marks.push(...state.storedMarks);
 			marks.push(...state.selection.$head.marks());
-		} else {
-			state.doc.nodesBetween(from, to, node => {
-				marks.push(...node.marks);
-			});
-		}
+		} else state.doc.nodesBetween(from, to, node => {
+			marks.push(...node.marks);
+		});
 		const mark = marks.find(markItem => markItem.type.name === type.name);
-		if (!mark) {
-			return {};
-		}
+		if (!mark) return {};
 		return {
 			...mark.attrs
 		};
 	}
+	//#endregion
+	//#region src/helpers/combineTransactionSteps.ts
+	/**
+	* Returns a new `Transform` based on all steps of the passed transactions.
+	* @param oldDoc The Prosemirror node to start from
+	* @param transactions The transactions to combine
+	* @returns A new `Transform` with all steps of the passed transactions
+	*/
 	function combineTransactionSteps(oldDoc, transactions) {
 		const transform = new Transform(oldDoc);
 		transactions.forEach(transaction => {
@@ -14722,140 +14740,162 @@ this.BX.Note = this.BX.Note || {};
 		});
 		return transform;
 	}
-
-	// src/helpers/defaultBlockAt.ts
-	function defaultBlockAt(match) {
-		for (let i = 0; i < match.edgeCount; i += 1) {
-			const {
-				type
-			} = match.edge(i);
-			if (type.isTextblock && !type.hasRequiredAttrs()) {
-				return type;
-			}
-		}
-		return null;
-	}
-
-	// src/helpers/findChildren.ts
+	//#endregion
+	//#region src/helpers/findChildren.ts
+	/**
+	* Find children inside a Prosemirror node that match a predicate.
+	* @param node The Prosemirror node to search in
+	* @param predicate The predicate to match
+	* @returns An array of nodes with their positions
+	*/
 	function findChildren(node, predicate) {
 		const nodesWithPos = [];
 		node.descendants((child, pos) => {
-			if (predicate(child)) {
-				nodesWithPos.push({
-					node: child,
-					pos
-				});
-			}
+			if (predicate(child)) nodesWithPos.push({
+				node: child,
+				pos
+			});
 		});
 		return nodesWithPos;
 	}
-
-	// src/helpers/findChildrenInRange.ts
+	//#endregion
+	//#region src/helpers/findChildrenInRange.ts
+	/**
+	* Same as `findChildren` but searches only within a `range`.
+	* @param node The Prosemirror node to search in
+	* @param range The range to search in
+	* @param predicate The predicate to match
+	* @returns An array of nodes with their positions
+	*/
 	function findChildrenInRange(node, range, predicate) {
 		const nodesWithPos = [];
 		node.nodesBetween(range.from, range.to, (child, pos) => {
-			if (predicate(child)) {
-				nodesWithPos.push({
-					node: child,
-					pos
-				});
-			}
+			if (predicate(child)) nodesWithPos.push({
+				node: child,
+				pos
+			});
 		});
 		return nodesWithPos;
 	}
-
-	// src/helpers/findParentNodeClosestToPos.ts
+	//#endregion
+	//#region src/helpers/findParentNodeClosestToPos.ts
+	/**
+	* Finds the closest parent node to a resolved position that matches a predicate.
+	* @param $pos The resolved position to search from
+	* @param predicate The predicate to match
+	* @returns The closest parent node to the resolved position that matches the predicate
+	* @example ```js
+	* findParentNodeClosestToPos($from, node => node.type.name === 'paragraph')
+	* ```
+	*/
 	function findParentNodeClosestToPos($pos, predicate) {
 		for (let i = $pos.depth; i > 0; i -= 1) {
 			const node = $pos.node(i);
-			if (predicate(node)) {
-				return {
-					pos: i > 0 ? $pos.before(i) : 0,
-					start: $pos.start(i),
-					depth: i,
-					node
-				};
-			}
+			if (predicate(node)) return {
+				pos: i > 0 ? $pos.before(i) : 0,
+				start: $pos.start(i),
+				depth: i,
+				node
+			};
 		}
 	}
-
-	// src/helpers/findParentNode.ts
+	//#endregion
+	//#region src/helpers/findParentNode.ts
+	/**
+	* Finds the closest parent node to the current selection that matches a predicate.
+	* @param predicate The predicate to match
+	* @returns A command that finds the closest parent node to the current selection that matches the predicate
+	* @example ```js
+	* findParentNode(node => node.type.name === 'paragraph')
+	* ```
+	*/
 	function findParentNode(predicate) {
 		return selection => findParentNodeClosestToPos(selection.$from, predicate);
 	}
-
-	// src/helpers/getExtensionField.ts
+	//#endregion
+	//#region src/helpers/getExtensionField.ts
+	/**
+	* Returns a field from an extension
+	* @param extension The Tiptap extension
+	* @param field The field, for example `renderHTML` or `priority`
+	* @param context The context object that should be passed as `this` into the function
+	* @returns The field value
+	*/
 	function getExtensionField(extension, field, context) {
-		if (extension.config[field] === void 0 && extension.parent) {
-			return getExtensionField(extension.parent, field, context);
-		}
-		if (typeof extension.config[field] === "function") {
-			const value = extension.config[field].bind({
-				...context,
-				parent: extension.parent ? getExtensionField(extension.parent, field, context) : null
-			});
-			return value;
-		}
+		if (extension.config[field] === void 0 && extension.parent) return getExtensionField(extension.parent, field, context);
+		if (typeof extension.config[field] === "function") return extension.config[field].bind({
+			...context,
+			parent: extension.parent ? getExtensionField(extension.parent, field, context) : null
+		});
 		return extension.config[field];
 	}
-
-	// src/helpers/flattenExtensions.ts
+	//#endregion
+	//#region src/helpers/flattenExtensions.ts
+	/**
+	* Create a flattened array of extensions by traversing the `addExtensions` field.
+	* @param extensions An array of Tiptap extensions
+	* @returns A flattened array of Tiptap extensions
+	*/
 	function flattenExtensions(extensions) {
 		return extensions.map(extension => {
-			const context = {
+			const addExtensions = getExtensionField(extension, "addExtensions", {
 				name: extension.name,
 				options: extension.options,
 				storage: extension.storage
-			};
-			const addExtensions = getExtensionField(extension, "addExtensions", context);
-			if (addExtensions) {
-				return [extension, ...flattenExtensions(addExtensions())];
-			}
+			});
+			if (addExtensions) return [extension, ...flattenExtensions(addExtensions())];
 			return extension;
 		}).flat(10);
 	}
+	//#endregion
+	//#region src/helpers/getHTMLFromFragment.ts
 	function getHTMLFromFragment(fragment, schema) {
 		const documentFragment = DOMSerializer.fromSchema(schema).serializeFragment(fragment);
-		const temporaryDocument = document.implementation.createHTMLDocument();
-		const container = temporaryDocument.createElement("div");
+		const container = document.implementation.createHTMLDocument().createElement("div");
 		container.appendChild(documentFragment);
 		return container.innerHTML;
 	}
-
-	// src/utilities/isFunction.ts
+	//#endregion
+	//#region src/utilities/isFunction.ts
 	function isFunction$1(value) {
 		return typeof value === "function";
 	}
-
-	// src/utilities/callOrReturn.ts
+	//#endregion
+	//#region src/utilities/callOrReturn.ts
+	/**
+	* Optionally calls `value` as a function.
+	* Otherwise it is returned directly.
+	* @param value Function or any value.
+	* @param context Optional context to bind to function.
+	* @param props Optional props to pass to function.
+	*/
 	function callOrReturn(value, context = void 0, ...props) {
 		if (isFunction$1(value)) {
-			if (context) {
-				return value.bind(context)(...props);
-			}
+			if (context) return value.bind(context)(...props);
 			return value(...props);
 		}
 		return value;
 	}
-
-	// src/utilities/isEmptyObject.ts
+	//#endregion
+	//#region src/utilities/isEmptyObject.ts
 	function isEmptyObject(value = {}) {
 		return Object.keys(value).length === 0 && value.constructor === Object;
 	}
-
-	// src/helpers/splitExtensions.ts
+	//#endregion
+	//#region src/helpers/splitExtensions.ts
 	function splitExtensions(extensions) {
-		const baseExtensions = extensions.filter(extension => extension.type === "extension");
-		const nodeExtensions = extensions.filter(extension => extension.type === "node");
-		const markExtensions = extensions.filter(extension => extension.type === "mark");
 		return {
-			baseExtensions,
-			nodeExtensions,
-			markExtensions
+			baseExtensions: extensions.filter(extension => extension.type === "extension"),
+			nodeExtensions: extensions.filter(extension => extension.type === "node"),
+			markExtensions: extensions.filter(extension => extension.type === "mark")
 		};
 	}
-
-	// src/helpers/getAttributesFromExtensions.ts
+	//#endregion
+	//#region src/helpers/getAttributesFromExtensions.ts
+	/**
+	* Get a list of all extension attributes defined in `addAttribute` and `addGlobalAttribute`.
+	* @param extensions List of extensions
+	*/
 	function getAttributesFromExtensions(extensions) {
 		const extensionAttributes = [];
 		const {
@@ -14876,30 +14916,16 @@ this.BX.Note = this.BX.Note || {};
 		const markExtensionTypes = markExtensions.map(ext => ext.name);
 		const allExtensionTypes = [...nodeExtensionTypes, ...markExtensionTypes];
 		extensions.forEach(extension => {
-			const context = {
+			const addGlobalAttributes = getExtensionField(extension, "addGlobalAttributes", {
 				name: extension.name,
 				options: extension.options,
 				storage: extension.storage,
 				extensions: nodeAndMarkExtensions
-			};
-			const addGlobalAttributes = getExtensionField(extension, "addGlobalAttributes", context);
-			if (!addGlobalAttributes) {
-				return;
-			}
-			const globalAttributes = addGlobalAttributes();
-			globalAttributes.forEach(globalAttribute => {
+			});
+			if (!addGlobalAttributes) return;
+			addGlobalAttributes().forEach(globalAttribute => {
 				let resolvedTypes;
-				if (Array.isArray(globalAttribute.types)) {
-					resolvedTypes = globalAttribute.types;
-				} else if (globalAttribute.types === "*") {
-					resolvedTypes = allExtensionTypes;
-				} else if (globalAttribute.types === "nodes") {
-					resolvedTypes = nodeExtensionTypes;
-				} else if (globalAttribute.types === "marks") {
-					resolvedTypes = markExtensionTypes;
-				} else {
-					resolvedTypes = [];
-				}
+				if (Array.isArray(globalAttribute.types)) resolvedTypes = globalAttribute.types;else if (globalAttribute.types === "*") resolvedTypes = allExtensionTypes;else if (globalAttribute.types === "nodes") resolvedTypes = nodeExtensionTypes;else if (globalAttribute.types === "marks") resolvedTypes = markExtensionTypes;else resolvedTypes = [];
 				resolvedTypes.forEach(type => {
 					Object.entries(globalAttribute.attributes).forEach(([name, attribute]) => {
 						extensionAttributes.push({
@@ -14915,27 +14941,20 @@ this.BX.Note = this.BX.Note || {};
 			});
 		});
 		nodeAndMarkExtensions.forEach(extension => {
-			const context = {
+			const addAttributes = getExtensionField(extension, "addAttributes", {
 				name: extension.name,
 				options: extension.options,
 				storage: extension.storage
-			};
-			const addAttributes = getExtensionField(extension, "addAttributes", context);
-			if (!addAttributes) {
-				return;
-			}
+			});
+			if (!addAttributes) return;
 			const attributes = addAttributes();
 			Object.entries(attributes).forEach(([name, attribute]) => {
 				const mergedAttr = {
 					...defaultAttribute,
 					...attribute
 				};
-				if (typeof (mergedAttr == null ? void 0 : mergedAttr.default) === "function") {
-					mergedAttr.default = mergedAttr.default();
-				}
-				if ((mergedAttr == null ? void 0 : mergedAttr.isRequired) && (mergedAttr == null ? void 0 : mergedAttr.default) === void 0) {
-					delete mergedAttr.default;
-				}
+				if (typeof (mergedAttr === null || mergedAttr === void 0 ? void 0 : mergedAttr.default) === "function") mergedAttr.default = mergedAttr.default();
+				if ((mergedAttr === null || mergedAttr === void 0 ? void 0 : mergedAttr.isRequired) && (mergedAttr === null || mergedAttr === void 0 ? void 0 : mergedAttr.default) === void 0) delete mergedAttr.default;
 				extensionAttributes.push({
 					type: extension.name,
 					name,
@@ -14945,8 +14964,9 @@ this.BX.Note = this.BX.Note || {};
 		});
 		return extensionAttributes;
 	}
-
-	// src/utilities/mergeAttributes.ts
+	//#endregion
+	//#region src/utilities/mergeAttributes.ts
+	/** Splits a CSS style string into declarations, ignoring semicolons inside quotes/parentheses. */
 	function splitStyleDeclarations(styles) {
 		const result = [];
 		let current = "";
@@ -14961,7 +14981,7 @@ this.BX.Note = this.BX.Note || {};
 				current += char;
 				continue;
 			}
-			if (char === '"' && !inSingleQuote) {
+			if (char === "\"" && !inSingleQuote) {
 				inDoubleQuote = !inDoubleQuote;
 				current += char;
 				continue;
@@ -14985,11 +15005,10 @@ this.BX.Note = this.BX.Note || {};
 			}
 			current += char;
 		}
-		if (current) {
-			result.push(current);
-		}
+		if (current) result.push(current);
 		return result;
 	}
+	/** Yields property/value pairs from a style string. */
 	function parseStyleEntries(styles) {
 		const pairs = [];
 		const declarations = splitStyleDeclarations(styles || "");
@@ -14997,14 +15016,10 @@ this.BX.Note = this.BX.Note || {};
 		for (let i = 0; i < numDeclarations; i += 1) {
 			const declaration = declarations[i];
 			const firstColonIndex = declaration.indexOf(":");
-			if (firstColonIndex === -1) {
-				continue;
-			}
+			if (firstColonIndex === -1) continue;
 			const property = declaration.slice(0, firstColonIndex).trim();
 			const value = declaration.slice(firstColonIndex + 1).trim();
-			if (property && value) {
-				pairs.push([property, value]);
-			}
+			if (property && value) pairs.push([property, value]);
 		}
 		return pairs;
 	}
@@ -15014,8 +15029,16 @@ this.BX.Note = this.BX.Note || {};
 				...items
 			};
 			Object.entries(item).forEach(([key, value]) => {
-				const exists = mergedAttributes[key];
-				if (!exists) {
+				if (key === "__proto__") {
+					Object.defineProperty(mergedAttributes, key, {
+						configurable: true,
+						enumerable: true,
+						value,
+						writable: true
+					});
+					return;
+				}
+				if (!mergedAttributes[key]) {
 					mergedAttributes[key] = value;
 					return;
 				}
@@ -15027,60 +15050,48 @@ this.BX.Note = this.BX.Note || {};
 				} else if (key === "style") {
 					const styleMap = new Map([...parseStyleEntries(mergedAttributes[key]), ...parseStyleEntries(value)]);
 					mergedAttributes[key] = Array.from(styleMap.entries()).map(([property, val]) => `${property}: ${val}`).join("; ");
-				} else {
-					mergedAttributes[key] = value;
-				}
+				} else mergedAttributes[key] = value;
 			});
 			return mergedAttributes;
 		}, {});
 	}
-
-	// src/helpers/getRenderedAttributes.ts
+	//#endregion
+	//#region src/helpers/getRenderedAttributes.ts
 	function getRenderedAttributes(nodeOrMark, extensionAttributes) {
 		return extensionAttributes.filter(attribute => attribute.type === nodeOrMark.type.name).filter(item => item.attribute.rendered).map(item => {
-			if (!item.attribute.renderHTML) {
-				return {
-					[item.name]: nodeOrMark.attrs[item.name]
-				};
-			}
+			if (!item.attribute.renderHTML) return {
+				[item.name]: nodeOrMark.attrs[item.name]
+			};
 			return item.attribute.renderHTML(nodeOrMark.attrs) || {};
 		}).reduce((attributes, attribute) => mergeAttributes(attributes, attribute), {});
 	}
-
-	// src/utilities/fromString.ts
+	//#endregion
+	//#region src/utilities/fromString.ts
 	function fromString(value) {
-		if (typeof value !== "string") {
-			return value;
-		}
-		if (value.match(/^[+-]?(?:\d*\.)?\d+$/)) {
-			return Number(value);
-		}
-		if (value === "true") {
-			return true;
-		}
-		if (value === "false") {
-			return false;
-		}
+		if (typeof value !== "string") return value;
+		if (value.match(/^[+-]?(?:\d*\.)?\d+$/)) return Number(value);
+		if (value === "true") return true;
+		if (value === "false") return false;
 		return value;
 	}
-
-	// src/helpers/injectExtensionAttributesToParseRule.ts
+	//#endregion
+	//#region src/helpers/injectExtensionAttributesToParseRule.ts
+	/**
+	* This function merges extension attributes into parserule attributes (`attrs` or `getAttrs`).
+	* Cancels when `getAttrs` returned `false`.
+	* @param parseRule ProseMirror ParseRule
+	* @param extensionAttributes List of attributes to inject
+	*/
 	function injectExtensionAttributesToParseRule(parseRule, extensionAttributes) {
-		if ("style" in parseRule) {
-			return parseRule;
-		}
+		if ("style" in parseRule) return parseRule;
 		return {
 			...parseRule,
 			getAttrs: node => {
 				const oldAttributes = parseRule.getAttrs ? parseRule.getAttrs(node) : parseRule.attrs;
-				if (oldAttributes === false) {
-					return false;
-				}
+				if (oldAttributes === false) return false;
 				const newAttributes = extensionAttributes.reduce((items, item) => {
 					const value = item.attribute.parseHTML ? item.attribute.parseHTML(node) : fromString(node.getAttribute(item.name));
-					if (value === null || value === void 0) {
-						return items;
-					}
+					if (value === null || value === void 0) return items;
 					return {
 						...items,
 						[item.name]: value
@@ -15093,37 +15104,40 @@ this.BX.Note = this.BX.Note || {};
 			}
 		};
 	}
-
-	// src/helpers/getSchemaByResolvedExtensions.ts
+	//#endregion
+	//#region src/helpers/getSchemaByResolvedExtensions.ts
 	function cleanUpSchemaItem(data) {
-		return Object.fromEntries(
-		// @ts-ignore
-		Object.entries(data).filter(([key, value]) => {
-			if (key === "attrs" && isEmptyObject(value)) {
-				return false;
-			}
+		return Object.fromEntries(Object.entries(data).filter(([key, value]) => {
+			if (key === "attrs" && isEmptyObject(value)) return false;
 			return value !== null && value !== void 0;
 		}));
 	}
+	/**
+	* Builds an attribute spec tuple for ProseMirror schema from an extension attribute.
+	* @param extensionAttribute The extension attribute to build the spec for
+	* @returns A tuple of [attributeName, spec]
+	*/
 	function buildAttributeSpec(extensionAttribute) {
-		var _a, _b;
+		var _extensionAttribute$a, _extensionAttribute$a2;
 		const spec = {};
-		if (!((_a = extensionAttribute == null ? void 0 : extensionAttribute.attribute) == null ? void 0 : _a.isRequired) && "default" in ((extensionAttribute == null ? void 0 : extensionAttribute.attribute) || {})) {
-			spec.default = extensionAttribute.attribute.default;
-		}
-		if (((_b = extensionAttribute == null ? void 0 : extensionAttribute.attribute) == null ? void 0 : _b.validate) !== void 0) {
-			spec.validate = extensionAttribute.attribute.validate;
-		}
+		if (!(extensionAttribute === null || extensionAttribute === void 0 || (_extensionAttribute$a = extensionAttribute.attribute) === null || _extensionAttribute$a === void 0 ? void 0 : _extensionAttribute$a.isRequired) && "default" in ((extensionAttribute === null || extensionAttribute === void 0 ? void 0 : extensionAttribute.attribute) || {})) spec.default = extensionAttribute.attribute.default;
+		if ((extensionAttribute === null || extensionAttribute === void 0 || (_extensionAttribute$a2 = extensionAttribute.attribute) === null || _extensionAttribute$a2 === void 0 ? void 0 : _extensionAttribute$a2.validate) !== void 0) spec.validate = extensionAttribute.attribute.validate;
 		return [extensionAttribute.name, spec];
 	}
+	/**
+	* Creates a new Prosemirror schema based on the given extensions.
+	* @param extensions An array of Tiptap extensions
+	* @param editor The editor instance
+	* @returns A Prosemirror schema
+	*/
 	function getSchemaByResolvedExtensions(extensions, editor) {
-		var _a;
+		var _nodeExtensions$find;
 		const allAttributes = getAttributesFromExtensions(extensions);
 		const {
 			nodeExtensions,
 			markExtensions
 		} = splitExtensions(extensions);
-		const topNode = (_a = nodeExtensions.find(extension => getExtensionField(extension, "topNode"))) == null ? void 0 : _a.name;
+		const topNode = (_nodeExtensions$find = nodeExtensions.find(extension => getExtensionField(extension, "topNode"))) === null || _nodeExtensions$find === void 0 ? void 0 : _nodeExtensions$find.name;
 		const nodes = Object.fromEntries(nodeExtensions.map(extension => {
 			const extensionAttributes = allAttributes.filter(attribute => attribute.type === extension.name);
 			const context = {
@@ -15132,15 +15146,14 @@ this.BX.Note = this.BX.Note || {};
 				storage: extension.storage,
 				editor
 			};
-			const extraNodeFields = extensions.reduce((fields, e) => {
-				const extendNodeSchema = getExtensionField(e, "extendNodeSchema", context);
-				return {
-					...fields,
-					...(extendNodeSchema ? extendNodeSchema(extension) : {})
-				};
-			}, {});
 			const schema = cleanUpSchemaItem({
-				...extraNodeFields,
+				...extensions.reduce((fields, e) => {
+					const extendNodeSchema = getExtensionField(e, "extendNodeSchema", context);
+					return {
+						...fields,
+						...(extendNodeSchema ? extendNodeSchema(extension) : {})
+					};
+				}, {}),
 				content: callOrReturn(getExtensionField(extension, "content", context)),
 				marks: callOrReturn(getExtensionField(extension, "marks", context)),
 				group: callOrReturn(getExtensionField(extension, "group", context)),
@@ -15156,20 +15169,14 @@ this.BX.Note = this.BX.Note || {};
 				attrs: Object.fromEntries(extensionAttributes.map(buildAttributeSpec))
 			});
 			const parseHTML = callOrReturn(getExtensionField(extension, "parseHTML", context));
-			if (parseHTML) {
-				schema.parseDOM = parseHTML.map(parseRule => injectExtensionAttributesToParseRule(parseRule, extensionAttributes));
-			}
+			if (parseHTML) schema.parseDOM = parseHTML.map(parseRule => injectExtensionAttributesToParseRule(parseRule, extensionAttributes));
 			const renderHTML = getExtensionField(extension, "renderHTML", context);
-			if (renderHTML) {
-				schema.toDOM = node => renderHTML({
-					node,
-					HTMLAttributes: getRenderedAttributes(node, extensionAttributes)
-				});
-			}
+			if (renderHTML) schema.toDOM = node => renderHTML({
+				node,
+				HTMLAttributes: getRenderedAttributes(node, extensionAttributes)
+			});
 			const renderText = getExtensionField(extension, "renderText", context);
-			if (renderText) {
-				schema.toText = renderText;
-			}
+			if (renderText) schema.toText = renderText;
 			return [extension.name, schema];
 		}));
 		const marks = Object.fromEntries(markExtensions.map(extension => {
@@ -15180,15 +15187,14 @@ this.BX.Note = this.BX.Note || {};
 				storage: extension.storage,
 				editor
 			};
-			const extraMarkFields = extensions.reduce((fields, e) => {
-				const extendMarkSchema = getExtensionField(e, "extendMarkSchema", context);
-				return {
-					...fields,
-					...(extendMarkSchema ? extendMarkSchema(extension) : {})
-				};
-			}, {});
 			const schema = cleanUpSchemaItem({
-				...extraMarkFields,
+				...extensions.reduce((fields, e) => {
+					const extendMarkSchema = getExtensionField(e, "extendMarkSchema", context);
+					return {
+						...fields,
+						...(extendMarkSchema ? extendMarkSchema(extension) : {})
+					};
+				}, {}),
 				inclusive: callOrReturn(getExtensionField(extension, "inclusive", context)),
 				excludes: callOrReturn(getExtensionField(extension, "excludes", context)),
 				group: callOrReturn(getExtensionField(extension, "group", context)),
@@ -15197,16 +15203,12 @@ this.BX.Note = this.BX.Note || {};
 				attrs: Object.fromEntries(extensionAttributes.map(buildAttributeSpec))
 			});
 			const parseHTML = callOrReturn(getExtensionField(extension, "parseHTML", context));
-			if (parseHTML) {
-				schema.parseDOM = parseHTML.map(parseRule => injectExtensionAttributesToParseRule(parseRule, extensionAttributes));
-			}
+			if (parseHTML) schema.parseDOM = parseHTML.map(parseRule => injectExtensionAttributesToParseRule(parseRule, extensionAttributes));
 			const renderHTML = getExtensionField(extension, "renderHTML", context);
-			if (renderHTML) {
-				schema.toDOM = mark => renderHTML({
-					mark,
-					HTMLAttributes: getRenderedAttributes(mark, extensionAttributes)
-				});
-			}
+			if (renderHTML) schema.toDOM = mark => renderHTML({
+				mark,
+				HTMLAttributes: getRenderedAttributes(mark, extensionAttributes)
+			});
 			return [extension.name, schema];
 		}));
 		return new Schema$1({
@@ -15215,51 +15217,74 @@ this.BX.Note = this.BX.Note || {};
 			marks
 		});
 	}
-
-	// src/utilities/findDuplicates.ts
+	//#endregion
+	//#region src/utilities/findDuplicates.ts
+	/**
+	* Find duplicates in an array.
+	*/
 	function findDuplicates(items) {
 		const filtered = items.filter((el, index) => items.indexOf(el) !== index);
 		return Array.from(new Set(filtered));
 	}
-
-	// src/helpers/sortExtensions.ts
+	//#endregion
+	//#region src/helpers/sortExtensions.ts
+	/**
+	* Sort extensions by priority.
+	* @param extensions An array of Tiptap extensions
+	* @returns A sorted array of Tiptap extensions by priority
+	*/
 	function sortExtensions(extensions) {
 		const defaultPriority = 100;
 		return extensions.sort((a, b) => {
 			const priorityA = getExtensionField(a, "priority") || defaultPriority;
 			const priorityB = getExtensionField(b, "priority") || defaultPriority;
-			if (priorityA > priorityB) {
-				return -1;
-			}
-			if (priorityA < priorityB) {
-				return 1;
-			}
+			if (priorityA > priorityB) return -1;
+			if (priorityA < priorityB) return 1;
 			return 0;
 		});
 	}
-
-	// src/helpers/resolveExtensions.ts
+	//#endregion
+	//#region src/helpers/resolveExtensions.ts
+	/**
+	* Returns a flattened and sorted extension list while
+	* also checking for duplicated extensions and warns the user.
+	* @param extensions An array of Tiptap extensions
+	* @returns An flattened and sorted array of Tiptap extensions
+	*/
 	function resolveExtensions(extensions) {
 		const resolvedExtensions = sortExtensions(flattenExtensions(extensions));
 		const duplicatedNames = findDuplicates(resolvedExtensions.map(extension => extension.name));
-		if (duplicatedNames.length) {
-			console.warn(`[tiptap warn]: Duplicate extension names found: [${duplicatedNames.map(item => `'${item}'`).join(", ")}]. This can lead to issues.`);
-		}
+		if (duplicatedNames.length) console.warn(`[tiptap warn]: Duplicate extension names found: [${duplicatedNames.map(item => `'${item}'`).join(", ")}]. This can lead to issues.`);
 		return resolvedExtensions;
 	}
-
-	// src/helpers/getSchema.ts
+	//#endregion
+	//#region src/helpers/getSchema.ts
 	function getSchema(extensions, editor) {
-		const resolvedExtensions = resolveExtensions(extensions);
-		return getSchemaByResolvedExtensions(resolvedExtensions, editor);
+		return getSchemaByResolvedExtensions(resolveExtensions(extensions), editor);
 	}
+	//#endregion
+	//#region src/helpers/generateJSON.ts
+	/**
+	* Generate JSONContent from HTML
+	* @param html The HTML to generate JSONContent from
+	* @param extensions The extensions to use for the schema
+	* @returns The generated JSONContent
+	*/
 	function generateJSON(html, extensions) {
 		const schema = getSchema(extensions);
 		const dom = elementFromString(html);
 		return DOMParser$1.fromSchema(schema).parse(dom).toJSON();
 	}
-
-	// src/helpers/getTextBetween.ts
+	//#endregion
+	//#region src/helpers/getTextBetween.ts
+	/**
+	* Gets the text between two positions in a Prosemirror node
+	* and serializes it using the given text serializers and block separator (see getText)
+	* @param startNode The Prosemirror node to start from
+	* @param range The range of the text to get
+	* @param options Options for the text serializer & block separator
+	* @returns The text between the two positions
+	*/
 	function getTextBetween(startNode, range, options) {
 		const {
 			from,
@@ -15271,45 +15296,54 @@ this.BX.Note = this.BX.Note || {};
 		} = options || {};
 		let text = "";
 		startNode.nodesBetween(from, to, (node, pos, parent, index) => {
-			var _a;
-			if (node.isBlock && pos > from) {
-				text += blockSeparator;
-			}
-			const textSerializer = textSerializers == null ? void 0 : textSerializers[node.type.name];
+			if (node.isBlock && pos > from) text += blockSeparator;
+			const textSerializer = textSerializers === null || textSerializers === void 0 ? void 0 : textSerializers[node.type.name];
 			if (textSerializer) {
-				if (parent) {
-					text += textSerializer({
-						node,
-						pos,
-						parent,
-						index,
-						range
-					});
-				}
+				if (parent) text += textSerializer({
+					node,
+					pos,
+					parent,
+					index,
+					range
+				});
 				return false;
 			}
 			if (node.isText) {
-				text += (_a = node == null ? void 0 : node.text) == null ? void 0 : _a.slice(Math.max(from, pos) - pos, to - pos);
+				var _node$text;
+				text += node === null || node === void 0 || (_node$text = node.text) === null || _node$text === void 0 ? void 0 : _node$text.slice(Math.max(from, pos) - pos, to - pos);
 			}
 		});
 		return text;
 	}
-
-	// src/helpers/getText.ts
+	//#endregion
+	//#region src/helpers/getText.ts
+	/**
+	* Gets the text of a Prosemirror node
+	* @param node The Prosemirror node
+	* @param options Options for the text serializer & block separator
+	* @returns The text of the node
+	* @example ```js
+	* const text = getText(node, { blockSeparator: '\n' })
+	* ```
+	*/
 	function getText$1(node, options) {
-		const range = {
+		return getTextBetween(node, {
 			from: 0,
 			to: node.content.size
-		};
-		return getTextBetween(node, range, options);
+		}, options);
 	}
-
-	// src/helpers/getTextSerializersFromSchema.ts
+	//#endregion
+	//#region src/helpers/getTextSerializersFromSchema.ts
+	/**
+	* Find text serializers `toText` in a Prosemirror schema
+	* @param schema The Prosemirror schema to search in
+	* @returns A record of text serializers by node name
+	*/
 	function getTextSerializersFromSchema(schema) {
 		return Object.fromEntries(Object.entries(schema.nodes).filter(([, node]) => node.spec.toText).map(([name, node]) => [name, node.spec.toText]));
 	}
-
-	// src/helpers/getNodeAttributes.ts
+	//#endregion
+	//#region src/helpers/getNodeAttributes.ts
 	function getNodeAttributes(state, typeOrName) {
 		const type = getNodeType(typeOrName, state.schema);
 		const {
@@ -15317,31 +15351,35 @@ this.BX.Note = this.BX.Note || {};
 			to
 		} = state.selection;
 		const nodes = [];
-		state.doc.nodesBetween(from, to, node2 => {
-			nodes.push(node2);
+		state.doc.nodesBetween(from, to, node => {
+			nodes.push(node);
 		});
 		const node = nodes.reverse().find(nodeItem => nodeItem.type.name === type.name);
-		if (!node) {
-			return {};
-		}
+		if (!node) return {};
 		return {
 			...node.attrs
 		};
 	}
-
-	// src/helpers/getAttributes.ts
+	//#endregion
+	//#region src/helpers/getAttributes.ts
+	/**
+	* Get node or mark attributes by type or name on the current editor state
+	* @param state The current editor state
+	* @param typeOrName The node or mark type or name
+	* @returns The attributes of the node or mark or an empty object
+	*/
 	function getAttributes(state, typeOrName) {
 		const schemaType = getSchemaTypeNameByName(typeof typeOrName === "string" ? typeOrName : typeOrName.name, state.schema);
-		if (schemaType === "node") {
-			return getNodeAttributes(state, typeOrName);
-		}
-		if (schemaType === "mark") {
-			return getMarkAttributes(state, typeOrName);
-		}
+		if (schemaType === "node") return getNodeAttributes(state, typeOrName);
+		if (schemaType === "mark") return getMarkAttributes(state, typeOrName);
 		return {};
 	}
-
-	// src/utilities/removeDuplicates.ts
+	//#endregion
+	//#region src/utilities/removeDuplicates.ts
+	/**
+	* Removes duplicated values within an array.
+	* Supports numbers, strings and objects.
+	*/
 	function removeDuplicates(array, by = JSON.stringify) {
 		const seen = {};
 		return array.filter(item => {
@@ -15349,17 +15387,24 @@ this.BX.Note = this.BX.Note || {};
 			return Object.prototype.hasOwnProperty.call(seen, key) ? false : seen[key] = true;
 		});
 	}
-
-	// src/helpers/getChangedRanges.ts
+	//#endregion
+	//#region src/helpers/getChangedRanges.ts
+	/**
+	* Removes duplicated ranges and ranges that are
+	* fully captured by other ranges.
+	*/
 	function simplifyChangedRanges(changes) {
 		const uniqueChanges = removeDuplicates(changes);
 		return uniqueChanges.length === 1 ? uniqueChanges : uniqueChanges.filter((change, index) => {
-			const rest = uniqueChanges.filter((_, i) => i !== index);
-			return !rest.some(otherChange => {
+			return !uniqueChanges.filter((_, i) => i !== index).some(otherChange => {
 				return change.oldRange.from >= otherChange.oldRange.from && change.oldRange.to <= otherChange.oldRange.to && change.newRange.from >= otherChange.newRange.from && change.newRange.to <= otherChange.newRange.to;
 			});
 		});
 	}
+	/**
+	* Returns a list of changed ranges
+	* based on the first and last state of all steps.
+	*/
 	function getChangedRanges(transform) {
 		const {
 			mapping,
@@ -15373,21 +15418,17 @@ this.BX.Note = this.BX.Note || {};
 					from,
 					to
 				} = steps[index];
-				if (from === void 0 || to === void 0) {
-					return;
-				}
+				if (from === void 0 || to === void 0) return;
 				ranges.push({
 					from,
 					to
 				});
-			} else {
-				stepMap.forEach((from, to) => {
-					ranges.push({
-						from,
-						to
-					});
+			} else stepMap.forEach((from, to) => {
+				ranges.push({
+					from,
+					to
 				});
-			}
+			});
 			ranges.forEach(({
 				from,
 				to
@@ -15410,78 +15451,124 @@ this.BX.Note = this.BX.Note || {};
 		});
 		return simplifyChangedRanges(changes);
 	}
-
-	// src/helpers/getMarksBetween.ts
+	//#endregion
+	//#region src/helpers/getMarksBetween.ts
 	function getMarksBetween(from, to, doc) {
 		const marks = [];
-		if (from === to) {
-			doc.resolve(from).marks().forEach(mark => {
-				const $pos = doc.resolve(from);
-				const range = getMarkRange($pos, mark.type);
-				if (!range) {
-					return;
-				}
-				marks.push({
-					mark,
-					...range
-				});
+		if (from === to) doc.resolve(from).marks().forEach(mark => {
+			const range = getMarkRange(doc.resolve(from), mark.type);
+			if (!range) return;
+			marks.push({
+				mark,
+				...range
 			});
-		} else {
-			doc.nodesBetween(from, to, (node, pos) => {
-				if (!node || (node == null ? void 0 : node.nodeSize) === void 0) {
-					return;
-				}
-				marks.push(...node.marks.map(mark => ({
-					from: pos,
-					to: pos + node.nodeSize,
-					mark
-				})));
-			});
-		}
+		});else doc.nodesBetween(from, to, (node, pos) => {
+			if (!node || (node === null || node === void 0 ? void 0 : node.nodeSize) === void 0) return;
+			marks.push(...node.marks.map(mark => ({
+				from: pos,
+				to: pos + node.nodeSize,
+				mark
+			})));
+		});
 		return marks;
 	}
-
-	// src/helpers/getNodeAtPosition.ts
-	var getNodeAtPosition = (state, typeOrName, pos, maxDepth = 20) => {
+	//#endregion
+	//#region src/helpers/getNodeAtPosition.ts
+	/**
+	* Finds the first node of a given type or name in the current selection.
+	* @param state The editor state.
+	* @param typeOrName The node type or name.
+	* @param pos The position to start searching from.
+	* @param maxDepth The maximum depth to search.
+	* @returns The node and the depth as an array.
+	*/
+	const getNodeAtPosition = (state, typeOrName, pos, maxDepth = 20) => {
 		const $pos = state.doc.resolve(pos);
 		let currentDepth = maxDepth;
 		let node = null;
 		while (currentDepth > 0 && node === null) {
 			const currentNode = $pos.node(currentDepth);
-			if ((currentNode == null ? void 0 : currentNode.type.name) === typeOrName) {
-				node = currentNode;
-			} else {
-				currentDepth -= 1;
-			}
+			if ((currentNode === null || currentNode === void 0 ? void 0 : currentNode.type.name) === typeOrName) node = currentNode;else currentDepth -= 1;
 		}
 		return [node, currentDepth];
 	};
-
-	// src/helpers/getSchemaTypeByName.ts
+	//#endregion
+	//#region src/helpers/getPreviousBlockSibling.ts
+	/**
+	* Returns the block-level sibling immediately before the cursor's textblock
+	* (or null when the cursor is at the first child of its block parent).
+	*
+	* The position does not have to sit inside a textblock: for any resolved
+	* position, the result is the sibling immediately before `$pos.parent`. At a
+	* GapCursor position this is the sibling before the whole container, not the
+	* node before the gap.
+	*
+	* @param $pos The resolved position to look around
+	* @returns The previous block-level sibling, or null
+	* @example ```js
+	* // Cursor in a top-level paragraph after a list:
+	* // <ul><li>A</li></ul><p>|B</p>
+	* getPreviousBlockSibling($from) // <ul>
+	*
+	* // Cursor in the second paragraph of a list item:
+	* // <ul><li><p>A</p><p>|B</p></li></ul>
+	* getPreviousBlockSibling($from) // <p>A</p>
+	*
+	* // Cursor in the first child of its block parent:
+	* // <doc><p>|A</p></doc>
+	* getPreviousBlockSibling($from) // null
+	* ```
+	*/
+	const getPreviousBlockSibling = $pos => {
+		const parentDepth = $pos.depth - 1;
+		if (parentDepth < 0) return null;
+		const index = $pos.index(parentDepth);
+		if (index === 0) return null;
+		return $pos.node(parentDepth).child(index - 1);
+	};
+	//#endregion
+	//#region src/helpers/getSchemaTypeByName.ts
+	/**
+	* Tries to get a node or mark type by its name.
+	* @param name The name of the node or mark type
+	* @param schema The Prosemiror schema to search in
+	* @returns The node or mark type, or null if it doesn't exist
+	*/
 	function getSchemaTypeByName(name, schema) {
 		return schema.nodes[name] || schema.marks[name] || null;
 	}
-
-	// src/helpers/getSplittedAttributes.ts
+	//#endregion
+	//#region src/helpers/getSplittedAttributes.ts
+	/**
+	* Return attributes of an extension that should be splitted by keepOnSplit flag
+	* @param extensionAttributes Array of extension attributes
+	* @param typeName The type of the extension
+	* @param attributes The attributes of the extension
+	* @returns The splitted attributes
+	*/
 	function getSplittedAttributes(extensionAttributes, typeName, attributes) {
 		return Object.fromEntries(Object.entries(attributes).filter(([name]) => {
 			const extensionAttribute = extensionAttributes.find(item => {
 				return item.type === typeName && item.name === name;
 			});
-			if (!extensionAttribute) {
-				return false;
-			}
+			if (!extensionAttribute) return false;
 			return extensionAttribute.attribute.keepOnSplit;
 		}));
 	}
-
-	// src/helpers/getTextContentFromNodes.ts
-	var getTextContentFromNodes = ($from, maxMatch = 500) => {
+	//#endregion
+	//#region src/helpers/getTextContentFromNodes.ts
+	/**
+	* Returns the text content of a resolved prosemirror position
+	* @param $from The resolved position to get the text content from
+	* @param maxMatch The maximum number of characters to match
+	* @returns The text content
+	*/
+	const getTextContentFromNodes = ($from, maxMatch = 500) => {
 		let textBefore = "";
 		const sliceEndPos = $from.parentOffset;
 		$from.parent.nodesBetween(Math.max(0, sliceEndPos - maxMatch), sliceEndPos, (node, pos, parent, index) => {
-			var _a, _b;
-			const chunk = ((_b = (_a = node.type.spec).toText) == null ? void 0 : _b.call(_a, {
+			var _node$type$spec$toTex, _node$type$spec;
+			const chunk = ((_node$type$spec$toTex = (_node$type$spec = node.type.spec).toText) === null || _node$type$spec$toTex === void 0 ? void 0 : _node$type$spec$toTex.call(_node$type$spec, {
 				node,
 				pos,
 				parent,
@@ -15491,24 +15578,20 @@ this.BX.Note = this.BX.Note || {};
 		});
 		return textBefore;
 	};
-
-	// src/helpers/isMarkActive.ts
+	//#endregion
+	//#region src/helpers/isMarkActive.ts
 	function isMarkActive(state, typeOrName, attributes = {}) {
 		const {
 			empty,
 			ranges
 		} = state.selection;
 		const type = typeOrName ? getMarkType(typeOrName, state.schema) : null;
-		if (empty) {
-			return !!(state.storedMarks || state.selection.$from.marks()).filter(mark => {
-				if (!type) {
-					return true;
-				}
-				return type.name === mark.type.name;
-			}).find(mark => objectIncludes(mark.attrs, attributes, {
-				strict: false
-			}));
-		}
+		if (empty) return !!(state.storedMarks || state.selection.$from.marks()).filter(mark => {
+			if (!type) return true;
+			return type.name === mark.type.name;
+		}).find(mark => objectIncludes(mark.attrs, attributes, {
+			strict: false
+		}));
 		let selectionRange = 0;
 		const markRanges = [];
 		ranges.forEach(({
@@ -15518,16 +15601,12 @@ this.BX.Note = this.BX.Note || {};
 			const from = $from.pos;
 			const to = $to.pos;
 			state.doc.nodesBetween(from, to, (node, pos) => {
-				if (type && node.inlineContent && !node.type.allowsMarkType(type)) {
-					return false;
-				}
-				if (!node.isText && !node.marks.length) {
-					return;
-				}
+				if (type && node.inlineContent && !node.type.allowsMarkType(type)) return false;
+				if (!node.isText && !node.marks.length) return;
 				const relativeFrom = Math.max(from, pos);
 				const relativeTo = Math.min(to, pos + node.nodeSize);
-				const range2 = relativeTo - relativeFrom;
-				selectionRange += range2;
+				const range = relativeTo - relativeFrom;
+				selectionRange += range;
 				markRanges.push(...node.marks.map(mark => ({
 					mark,
 					from: relativeFrom,
@@ -15535,44 +15614,31 @@ this.BX.Note = this.BX.Note || {};
 				})));
 			});
 		});
-		if (selectionRange === 0) {
-			return false;
-		}
+		if (selectionRange === 0) return false;
 		const matchedRange = markRanges.filter(markRange => {
-			if (!type) {
-				return true;
-			}
+			if (!type) return true;
 			return type.name === markRange.mark.type.name;
 		}).filter(markRange => objectIncludes(markRange.mark.attrs, attributes, {
 			strict: false
 		})).reduce((sum, markRange) => sum + markRange.to - markRange.from, 0);
 		const excludedRange = markRanges.filter(markRange => {
-			if (!type) {
-				return true;
-			}
+			if (!type) return true;
 			return markRange.mark.type !== type && markRange.mark.type.excludes(type);
 		}).reduce((sum, markRange) => sum + markRange.to - markRange.from, 0);
-		const range = matchedRange > 0 ? matchedRange + excludedRange : matchedRange;
-		return range >= selectionRange;
+		return (matchedRange > 0 ? matchedRange + excludedRange : matchedRange) >= selectionRange;
 	}
-
-	// src/helpers/isActive.ts
+	//#endregion
+	//#region src/helpers/isActive.ts
 	function isActive(state, name, attributes = {}) {
-		if (!name) {
-			return isNodeActive(state, null, attributes) || isMarkActive(state, null, attributes);
-		}
+		if (!name) return isNodeActive(state, null, attributes) || isMarkActive(state, null, attributes);
 		const schemaType = getSchemaTypeNameByName(name, state.schema);
-		if (schemaType === "node") {
-			return isNodeActive(state, name, attributes);
-		}
-		if (schemaType === "mark") {
-			return isMarkActive(state, name, attributes);
-		}
+		if (schemaType === "node") return isNodeActive(state, name, attributes);
+		if (schemaType === "mark") return isMarkActive(state, name, attributes);
 		return false;
 	}
-
-	// src/helpers/isAtEndOfNode.ts
-	var isAtEndOfNode = (state, nodeType) => {
+	//#endregion
+	//#region src/helpers/isAtEndOfNode.ts
+	const isAtEndOfNode = (state, nodeType) => {
 		const {
 			$from,
 			$to,
@@ -15580,129 +15646,115 @@ this.BX.Note = this.BX.Note || {};
 		} = state.selection;
 		if (nodeType) {
 			const parentNode = findParentNode(node => node.type.name === nodeType)(state.selection);
-			if (!parentNode) {
-				return false;
-			}
+			if (!parentNode) return false;
 			const $parentPos = state.doc.resolve(parentNode.pos + 1);
-			if ($anchor.pos + 1 === $parentPos.end()) {
-				return true;
-			}
+			if ($anchor.pos + 1 === $parentPos.end()) return true;
 			return false;
 		}
-		if ($to.parentOffset < $to.parent.nodeSize - 2 || $from.pos !== $to.pos) {
-			return false;
-		}
+		if ($to.parentOffset < $to.parent.nodeSize - 2 || $from.pos !== $to.pos) return false;
 		return true;
 	};
-
-	// src/helpers/isAtStartOfNode.ts
-	var isAtStartOfNode = state => {
+	//#endregion
+	//#region src/helpers/isAtStartOfNode.ts
+	const isAtStartOfNode = state => {
 		const {
 			$from,
 			$to
 		} = state.selection;
-		if ($from.parentOffset > 0 || $from.pos !== $to.pos) {
-			return false;
-		}
+		if ($from.parentOffset > 0 || $from.pos !== $to.pos) return false;
 		return true;
 	};
-
-	// src/helpers/isExtensionRulesEnabled.ts
+	//#endregion
+	//#region src/helpers/isExtensionRulesEnabled.ts
 	function isExtensionRulesEnabled(extension, enabled) {
-		if (Array.isArray(enabled)) {
-			return enabled.some(enabledExtension => {
-				const name = typeof enabledExtension === "string" ? enabledExtension : enabledExtension.name;
-				return name === extension.name;
-			});
-		}
+		if (Array.isArray(enabled)) return enabled.some(enabledExtension => {
+			return (typeof enabledExtension === "string" ? enabledExtension : enabledExtension.name) === extension.name;
+		});
 		return enabled;
 	}
-
-	// src/helpers/isList.ts
+	//#endregion
+	//#region src/helpers/isList.ts
 	function isList(name, extensions) {
 		const {
 			nodeExtensions
 		} = splitExtensions(extensions);
 		const extension = nodeExtensions.find(item => item.name === name);
-		if (!extension) {
-			return false;
-		}
-		const context = {
+		if (!extension) return false;
+		const group = callOrReturn(getExtensionField(extension, "group", {
 			name: extension.name,
 			options: extension.options,
 			storage: extension.storage
-		};
-		const group = callOrReturn(getExtensionField(extension, "group", context));
-		if (typeof group !== "string") {
-			return false;
-		}
+		}));
+		if (typeof group !== "string") return false;
 		return group.split(" ").includes("list");
 	}
-
-	// src/helpers/isNodeEmpty.ts
+	//#endregion
+	//#region src/helpers/isNodeEmpty.ts
+	/**
+	* Returns true if the given prosemirror node is empty.
+	*/
 	function isNodeEmpty(node, {
 		checkChildren = true,
 		ignoreWhitespace = false
 	} = {}) {
-		var _a;
 		if (ignoreWhitespace) {
-			if (node.type.name === "hardBreak") {
-				return true;
-			}
+			if (node.type.name === "hardBreak") return true;
 			if (node.isText) {
-				return !/\S/.test((_a = node.text) != null ? _a : "");
+				var _node$text;
+				return !/\S/.test((_node$text = node.text) !== null && _node$text !== void 0 ? _node$text : "");
 			}
 		}
-		if (node.isText) {
-			return !node.text;
-		}
-		if (node.isAtom || node.isLeaf) {
-			return false;
-		}
-		if (node.content.childCount === 0) {
-			return true;
-		}
+		if (node.isText) return !node.text;
+		if (node.isAtom || node.isLeaf) return false;
+		if (node.content.childCount === 0) return true;
 		if (checkChildren) {
 			let isContentEmpty = true;
 			node.content.forEach(childNode => {
-				if (isContentEmpty === false) {
-					return;
-				}
+				if (isContentEmpty === false) return;
 				if (!isNodeEmpty(childNode, {
 					ignoreWhitespace,
 					checkChildren
-				})) {
-					isContentEmpty = false;
-				}
+				})) isContentEmpty = false;
 			});
 			return isContentEmpty;
 		}
 		return false;
 	}
+	//#endregion
+	//#region src/helpers/isNodeSelection.ts
 	function isNodeSelection(value) {
 		return value instanceof NodeSelection;
 	}
-
-	// src/helpers/MappablePosition.ts
-	var MappablePosition = class _MappablePosition {
+	//#endregion
+	//#region src/helpers/MappablePosition.ts
+	/**
+	* A class that represents a mappable position in the editor. It can be extended
+	* by other extensions to add additional position mapping capabilities.
+	*/
+	var MappablePosition = class MappablePosition {
 		constructor(position) {
 			this.position = position;
 		}
 		/**
-		 * Creates a MappablePosition from a JSON object.
-		 */
+		* Creates a MappablePosition from a JSON object.
+		*/
 		static fromJSON(json) {
-			return new _MappablePosition(json.position);
+			return new MappablePosition(json.position);
 		}
 		/**
-		 * Converts the MappablePosition to a JSON object.
-		 */
+		* Converts the MappablePosition to a JSON object.
+		*/
 		toJSON() {
 			return {
 				position: this.position
 			};
 		}
 	};
+	/**
+	* Calculates the new position after applying a transaction.
+	*
+	* @returns The new mappable position and the map result.
+	*/
 	function getUpdatedPosition$1(position, transaction) {
 		const mapResult = transaction.mapping.mapResult(position.position);
 		return {
@@ -15710,24 +15762,29 @@ this.BX.Note = this.BX.Note || {};
 			mapResult
 		};
 	}
+	/**
+	* Creates a MappablePosition from a position number. This is the default
+	* implementation for Tiptap core. It can be overridden by other Tiptap
+	* extensions.
+	*
+	* @param position The position (as a number) where the MappablePosition will be created.
+	* @returns A new MappablePosition instance at the given position.
+	*/
 	function createMappablePosition$1(position) {
 		return new MappablePosition(position);
 	}
-
-	// src/commands/setMark.ts
+	//#endregion
+	//#region src/commands/setMark.ts
 	function canSetMark(state, tr, newMarkType) {
-		var _a;
 		const {
 			selection
 		} = tr;
 		let cursor = null;
-		if (isTextSelection(selection)) {
-			cursor = selection.$cursor;
-		}
+		if (isTextSelection(selection)) cursor = selection.$cursor;
 		if (cursor) {
-			const currentMarks = (_a = state.storedMarks) != null ? _a : cursor.marks();
-			const parentAllowsMarkType = cursor.parent.type.allowsMarkType(newMarkType);
-			return parentAllowsMarkType && (!!newMarkType.isInSet(currentMarks) || !currentMarks.some(mark => mark.type.excludes(newMarkType)));
+			var _state$storedMarks;
+			const currentMarks = (_state$storedMarks = state.storedMarks) !== null && _state$storedMarks !== void 0 ? _state$storedMarks : cursor.marks();
+			return cursor.parent.type.allowsMarkType(newMarkType) && (!!newMarkType.isInSet(currentMarks) || !currentMarks.some(mark => mark.type.excludes(newMarkType)));
 		}
 		const {
 			ranges
@@ -15738,9 +15795,7 @@ this.BX.Note = this.BX.Note || {};
 		}) => {
 			let someNodeSupportsMark = $from.depth === 0 ? state.doc.inlineContent && state.doc.type.allowsMarkType(newMarkType) : false;
 			state.doc.nodesBetween($from.pos, $to.pos, (node, _pos, parent) => {
-				if (someNodeSupportsMark) {
-					return false;
-				}
+				if (someNodeSupportsMark) return false;
 				if (node.isInline) {
 					const parentAllowsMarkType = !parent || parent.type.allowsMarkType(newMarkType);
 					const currentMarksAllowMarkType = !!newMarkType.isInSet(node.marks) || !node.marks.some(otherMark => otherMark.type.excludes(newMarkType));
@@ -15751,7 +15806,7 @@ this.BX.Note = this.BX.Note || {};
 			return someNodeSupportsMark;
 		});
 	}
-	var setMark = (typeOrName, attributes = {}) => ({
+	const setMark = (typeOrName, attributes = {}) => ({
 		tr,
 		state,
 		dispatch
@@ -15771,64 +15826,52 @@ this.BX.Note = this.BX.Note || {};
 					...oldAttributes,
 					...attributes
 				}));
-			} else {
-				ranges.forEach(range => {
-					const from = range.$from.pos;
-					const to = range.$to.pos;
-					state.doc.nodesBetween(from, to, (node, pos) => {
-						const trimmedFrom = Math.max(pos, from);
-						const trimmedTo = Math.min(pos + node.nodeSize, to);
-						const someHasMark = node.marks.find(mark => mark.type === type);
-						if (someHasMark) {
-							node.marks.forEach(mark => {
-								if (type === mark.type) {
-									tr.addMark(trimmedFrom, trimmedTo, type.create({
-										...mark.attrs,
-										...attributes
-									}));
-								}
-							});
-						} else {
-							tr.addMark(trimmedFrom, trimmedTo, type.create(attributes));
-						}
-					});
+			} else ranges.forEach(range => {
+				const from = range.$from.pos;
+				const to = range.$to.pos;
+				state.doc.nodesBetween(from, to, (node, pos) => {
+					const trimmedFrom = Math.max(pos, from);
+					const trimmedTo = Math.min(pos + node.nodeSize, to);
+					if (node.marks.find(mark => mark.type === type)) node.marks.forEach(mark => {
+						if (type === mark.type) tr.addMark(trimmedFrom, trimmedTo, type.create({
+							...mark.attrs,
+							...attributes
+						}));
+					});else tr.addMark(trimmedFrom, trimmedTo, type.create(attributes));
 				});
-			}
+			});
 		}
 		return canSetMark(state, tr, type);
 	};
-
-	// src/commands/setMeta.ts
-	var setMeta$1 = (key, value) => ({
+	//#endregion
+	//#region src/commands/setMeta.ts
+	const setMeta$1 = (key, value) => ({
 		tr
 	}) => {
 		tr.setMeta(key, value);
 		return true;
 	};
-	var setNode = (typeOrName, attributes = {}) => ({
+	//#endregion
+	//#region src/commands/setNode.ts
+	const setNode = (typeOrName, attributes = {}) => ({
 		state,
 		dispatch,
 		chain
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
 		let attributesToCopy;
-		if (state.selection.$anchor.sameParent(state.selection.$head)) {
-			attributesToCopy = state.selection.$anchor.parent.attrs;
-		}
+		if (state.selection.$anchor.sameParent(state.selection.$head)) attributesToCopy = state.selection.$anchor.parent.attrs;
 		if (!type.isTextblock) {
-			console.warn('[tiptap warn]: Currently "setNode()" only supports text block nodes.');
+			console.warn("[tiptap warn]: Currently \"setNode()\" only supports text block nodes.");
 			return false;
 		}
 		return chain().command(({
 			commands
 		}) => {
-			const canSetBlock = setBlockType(type, {
+			if (setBlockType(type, {
 				...attributesToCopy,
 				...attributes
-			})(state);
-			if (canSetBlock) {
-				return true;
-			}
+			})(state)) return true;
 			return commands.clearNodes();
 		}).command(({
 			state: updatedState
@@ -15839,7 +15882,9 @@ this.BX.Note = this.BX.Note || {};
 			})(updatedState, dispatch);
 		}).run();
 	};
-	var setNodeSelection = position => ({
+	//#endregion
+	//#region src/commands/setNodeSelection.ts
+	const setNodeSelection = position => ({
 		tr,
 		dispatch
 	}) => {
@@ -15853,9 +15898,9 @@ this.BX.Note = this.BX.Note || {};
 		}
 		return true;
 	};
-
-	// src/commands/setTextDirection.ts
-	var setTextDirection = (direction, position) => ({
+	//#endregion
+	//#region src/commands/setTextDirection.ts
+	const setTextDirection = (direction, position) => ({
 		tr,
 		state,
 		dispatch
@@ -15875,20 +15920,18 @@ this.BX.Note = this.BX.Note || {};
 			from = selection.from;
 			to = selection.to;
 		}
-		if (dispatch) {
-			tr.doc.nodesBetween(from, to, (node, pos) => {
-				if (node.isText) {
-					return;
-				}
-				tr.setNodeMarkup(pos, void 0, {
-					...node.attrs,
-					dir: direction
-				});
+		if (dispatch) tr.doc.nodesBetween(from, to, (node, pos) => {
+			if (node.isText) return;
+			tr.setNodeMarkup(pos, void 0, {
+				...node.attrs,
+				dir: direction
 			});
-		}
+		});
 		return true;
 	};
-	var setTextSelection = position => ({
+	//#endregion
+	//#region src/commands/setTextSelection.ts
+	const setTextSelection = position => ({
 		tr,
 		dispatch
 	}) => {
@@ -15912,21 +15955,25 @@ this.BX.Note = this.BX.Note || {};
 		}
 		return true;
 	};
-	var sinkListItem = typeOrName => ({
+	//#endregion
+	//#region src/commands/sinkListItem.ts
+	const sinkListItem$1 = typeOrName => ({
 		state,
 		dispatch
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
-		return sinkListItem$1(type)(state, dispatch);
+		return sinkListItem(type)(state, dispatch);
 	};
+	//#endregion
+	//#region src/commands/splitBlock.ts
 	function ensureMarks(state, splittableMarks) {
 		const marks = state.storedMarks || state.selection.$to.parentOffset && state.selection.$from.marks();
 		if (marks) {
-			const filteredMarks = marks.filter(mark => splittableMarks == null ? void 0 : splittableMarks.includes(mark.type.name));
+			const filteredMarks = marks.filter(mark => splittableMarks === null || splittableMarks === void 0 ? void 0 : splittableMarks.includes(mark.type.name));
 			state.tr.ensureMarks(filteredMarks);
 		}
 	}
-	var splitBlock = ({
+	const splitBlock = ({
 		keepMarks = true
 	} = {}) => ({
 		tr,
@@ -15945,20 +15992,14 @@ this.BX.Note = this.BX.Note || {};
 		const extensionAttributes = editor.extensionManager.attributes;
 		const newAttributes = getSplittedAttributes(extensionAttributes, $from.node().type.name, $from.node().attrs);
 		if (selection instanceof NodeSelection && selection.node.isBlock) {
-			if (!$from.parentOffset || !canSplit(doc, $from.pos)) {
-				return false;
-			}
+			if (!$from.parentOffset || !canSplit(doc, $from.pos)) return false;
 			if (dispatch) {
-				if (keepMarks) {
-					ensureMarks(state, editor.extensionManager.splittableMarks);
-				}
+				if (keepMarks) ensureMarks(state, editor.extensionManager.splittableMarks);
 				tr.split($from.pos).scrollIntoView();
 			}
 			return true;
 		}
-		if (!$from.parent.isBlock) {
-			return false;
-		}
+		if (!$from.parent.isBlock) return false;
 		const atEnd = $to.parentOffset === $to.parent.content.size;
 		const deflt = $from.depth === 0 ? void 0 : defaultBlockAt($from.node(-1).contentMatchAt($from.indexAfter(-1)));
 		let types = atEnd && deflt ? [{
@@ -15977,79 +16018,59 @@ this.BX.Note = this.BX.Note || {};
 		}
 		if (dispatch) {
 			if (can) {
-				if (selection instanceof TextSelection) {
-					tr.deleteSelection();
-				}
+				if (selection instanceof TextSelection) tr.deleteSelection();
 				tr.split(tr.mapping.map($from.pos), 1, types);
 				if (deflt && !atEnd && !$from.parentOffset && $from.parent.type !== deflt) {
-					const first2 = tr.mapping.map($from.before());
-					const $first = tr.doc.resolve(first2);
-					if ($from.node(-1).canReplaceWith($first.index(), $first.index() + 1, deflt)) {
-						tr.setNodeMarkup(tr.mapping.map($from.before()), deflt);
-					}
+					const first = tr.mapping.map($from.before());
+					const $first = tr.doc.resolve(first);
+					if ($from.node(-1).canReplaceWith($first.index(), $first.index() + 1, deflt)) tr.setNodeMarkup(tr.mapping.map($from.before()), deflt);
 				}
 			}
-			if (keepMarks) {
-				ensureMarks(state, editor.extensionManager.splittableMarks);
-			}
+			if (keepMarks) ensureMarks(state, editor.extensionManager.splittableMarks);
 			tr.scrollIntoView();
 		}
 		return can;
 	};
-	var splitListItem = (typeOrName, overrideAttrs = {}) => ({
+	//#endregion
+	//#region src/commands/splitListItem.ts
+	const splitListItem = (typeOrName, overrideAttrs = {}) => ({
 		tr,
 		state,
 		dispatch,
 		editor
 	}) => {
-		var _a;
 		const type = getNodeType(typeOrName, state.schema);
 		const {
 			$from,
 			$to
 		} = state.selection;
 		const node = state.selection.node;
-		if (node && node.isBlock || $from.depth < 2 || !$from.sameParent($to)) {
-			return false;
-		}
+		if (node && node.isBlock || $from.depth < 2 || !$from.sameParent($to)) return false;
 		const grandParent = $from.node(-1);
-		if (grandParent.type !== type) {
-			return false;
-		}
+		if (grandParent.type !== type) return false;
 		const extensionAttributes = editor.extensionManager.attributes;
 		if ($from.parent.content.size === 0 && $from.node(-1).childCount === $from.indexAfter(-1)) {
-			if ($from.depth === 2 || $from.node(-3).type !== type || $from.index(-2) !== $from.node(-2).childCount - 1) {
-				return false;
-			}
+			if ($from.depth === 2 || $from.node(-3).type !== type || $from.index(-2) !== $from.node(-2).childCount - 1) return false;
 			if (dispatch) {
+				var _type$contentMatch$de;
 				let wrap = Fragment.empty;
 				const depthBefore = $from.index(-1) ? 1 : $from.index(-2) ? 2 : 3;
-				for (let d = $from.depth - depthBefore; d >= $from.depth - 3; d -= 1) {
-					wrap = Fragment.from($from.node(d).copy(wrap));
-				}
-				const depthAfter =
-				// eslint-disable-next-line no-nested-ternary
-				$from.indexAfter(-1) < $from.node(-2).childCount ? 1 : $from.indexAfter(-2) < $from.node(-3).childCount ? 2 : 3;
-				const newNextTypeAttributes2 = {
+				for (let d = $from.depth - depthBefore; d >= $from.depth - 3; d -= 1) wrap = Fragment.from($from.node(d).copy(wrap));
+				const depthAfter = $from.indexAfter(-1) < $from.node(-2).childCount ? 1 : $from.indexAfter(-2) < $from.node(-3).childCount ? 2 : 3;
+				const newNextTypeAttributes = {
 					...getSplittedAttributes(extensionAttributes, $from.node().type.name, $from.node().attrs),
 					...overrideAttrs
 				};
-				const nextType2 = ((_a = type.contentMatch.defaultType) == null ? void 0 : _a.createAndFill(newNextTypeAttributes2)) || void 0;
-				wrap = wrap.append(Fragment.from(type.createAndFill(null, nextType2) || void 0));
+				const nextType = ((_type$contentMatch$de = type.contentMatch.defaultType) === null || _type$contentMatch$de === void 0 ? void 0 : _type$contentMatch$de.createAndFill(newNextTypeAttributes)) || void 0;
+				wrap = wrap.append(Fragment.from(type.createAndFill(null, nextType) || void 0));
 				const start = $from.before($from.depth - (depthBefore - 1));
 				tr.replace(start, $from.after(-depthAfter), new Slice(wrap, 4 - depthBefore, 0));
 				let sel = -1;
 				tr.doc.nodesBetween(start, tr.doc.content.size, (n, pos) => {
-					if (sel > -1) {
-						return false;
-					}
-					if (n.isTextblock && n.content.size === 0) {
-						sel = pos + 1;
-					}
+					if (sel > -1) return false;
+					if (n.isTextblock && n.content.size === 0) sel = pos + 1;
 				});
-				if (sel > -1) {
-					tr.setSelection(TextSelection.near(tr.doc.resolve(sel)));
-				}
+				if (sel > -1) tr.setSelection(TextSelection.near(tr.doc.resolve(sel)));
 				tr.scrollIntoView();
 			}
 			return true;
@@ -16074,9 +16095,7 @@ this.BX.Note = this.BX.Note || {};
 			type,
 			attrs: newTypeAttributes
 		}];
-		if (!canSplit(tr.doc, $from.pos, 2)) {
-			return false;
-		}
+		if (!canSplit(tr.doc, $from.pos, 2)) return false;
 		if (dispatch) {
 			const {
 				selection,
@@ -16087,59 +16106,59 @@ this.BX.Note = this.BX.Note || {};
 			} = editor.extensionManager;
 			const marks = storedMarks || selection.$to.parentOffset && selection.$from.marks();
 			tr.split($from.pos, 2, types).scrollIntoView();
-			if (!marks || !dispatch) {
-				return true;
-			}
+			if (!marks || !dispatch) return true;
 			const filteredMarks = marks.filter(mark => splittableMarks.includes(mark.type.name));
 			tr.ensureMarks(filteredMarks);
 		}
 		return true;
 	};
-	var joinListBackwards = (tr, listType) => {
+	//#endregion
+	//#region src/commands/toggleList.ts
+	/**
+	* Normalise a list type attribute for comparison.
+	* Treats null, undefined, and "1" as equivalent (the default numeric type).
+	*/
+	function normalizeListType(type) {
+		return !type || type === "1" ? null : type;
+	}
+	/**
+	* Check if two list type attributes are compatible for joining.
+	* Lists can only join when they have the same type (both default, or both the same non-default type).
+	*/
+	function areListTypesCompatible(typeA, typeB) {
+		return normalizeListType(typeA) === normalizeListType(typeB);
+	}
+	const joinListBackwards = (tr, listType) => {
 		const list = findParentNode(node => node.type === listType)(tr.selection);
-		if (!list) {
-			return true;
-		}
+		if (!list) return true;
 		const before = tr.doc.resolve(Math.max(0, list.pos - 1)).before(list.depth);
-		if (before === void 0) {
-			return true;
-		}
+		if (before === void 0) return true;
 		const nodeBefore = tr.doc.nodeAt(before);
-		const canJoinBackwards = list.node.type === (nodeBefore == null ? void 0 : nodeBefore.type) && canJoin(tr.doc, list.pos);
-		if (!canJoinBackwards) {
-			return true;
-		}
+		if (!(list.node.type === (nodeBefore === null || nodeBefore === void 0 ? void 0 : nodeBefore.type) && canJoin(tr.doc, list.pos))) return true;
+		if (!areListTypesCompatible(list.node.attrs.type, nodeBefore === null || nodeBefore === void 0 ? void 0 : nodeBefore.attrs.type)) return true;
 		tr.join(list.pos);
 		return true;
 	};
-	var joinListForwards = (tr, listType) => {
+	const joinListForwards = (tr, listType) => {
 		const list = findParentNode(node => node.type === listType)(tr.selection);
-		if (!list) {
-			return true;
-		}
+		if (!list) return true;
 		const after = tr.doc.resolve(list.start).after(list.depth);
-		if (after === void 0) {
-			return true;
-		}
+		if (after === void 0) return true;
 		const nodeAfter = tr.doc.nodeAt(after);
-		const canJoinForwards = list.node.type === (nodeAfter == null ? void 0 : nodeAfter.type) && canJoin(tr.doc, after);
-		if (!canJoinForwards) {
-			return true;
-		}
+		if (!(list.node.type === (nodeAfter === null || nodeAfter === void 0 ? void 0 : nodeAfter.type) && canJoin(tr.doc, after))) return true;
+		if (!areListTypesCompatible(list.node.attrs.type, nodeAfter === null || nodeAfter === void 0 ? void 0 : nodeAfter.attrs.type)) return true;
 		tr.join(after);
 		return true;
 	};
 	function createInnerSelectionForWholeDocList(tr) {
 		const doc = tr.doc;
 		const list = doc.firstChild;
-		if (!list) {
-			return null;
-		}
-		const from = 1;
-		const to = list.nodeSize - 1;
-		return TextSelection.create(doc, from, to);
+		if (!list) return null;
+		const $start = doc.resolve(1);
+		const $end = doc.resolve(list.nodeSize - 1);
+		return TextSelection.between($start, $end);
 	}
-	var toggleList = (listTypeOrName, itemTypeOrName, keepMarks, attributes = {}) => ({
+	const toggleList = (listTypeOrName, itemTypeOrName, keepMarks, attributes = {}) => ({
 		editor,
 		tr,
 		state,
@@ -16164,9 +16183,7 @@ this.BX.Note = this.BX.Note || {};
 		} = selection;
 		const range = $from.blockRange($to);
 		const marks = storedMarks || selection.$to.parentOffset && selection.$from.marks();
-		if (!range) {
-			return false;
-		}
+		if (!range) return false;
 		const parentList = findParentNode(node => isList(node.type.name, extensions))(selection);
 		const isAllSelection = selection.from === 0 && selection.to === state.doc.content.size;
 		const topLevelNodes = state.doc.content.content;
@@ -16174,58 +16191,43 @@ this.BX.Note = this.BX.Note || {};
 		const allSelectionList = isAllSelection && soleTopLevelNode && isList(soleTopLevelNode.type.name, extensions) ? {
 			node: soleTopLevelNode,
 			pos: 0} : null;
-		const currentList = parentList != null ? parentList : allSelectionList;
+		const currentList = parentList !== null && parentList !== void 0 ? parentList : allSelectionList;
 		const isInsideExistingList = !!parentList && range.depth >= 1 && range.depth - parentList.depth <= 1;
 		const hasWholeDocSelectedList = !!allSelectionList;
 		if ((isInsideExistingList || hasWholeDocSelectedList) && currentList) {
 			if (currentList.node.type === listType) {
-				if (isAllSelection && hasWholeDocSelectedList) {
-					return chain().command(({
-						tr: trx,
-						dispatch: disp
-					}) => {
-						const nextSelection = createInnerSelectionForWholeDocList(trx);
-						if (!nextSelection) {
-							return false;
-						}
-						trx.setSelection(nextSelection);
-						if (disp) {
-							disp(trx);
-						}
-						return true;
-					}).liftListItem(itemType).run();
-				}
+				if (isAllSelection && hasWholeDocSelectedList) return chain().command(({
+					tr: trx,
+					dispatch: disp
+				}) => {
+					const nextSelection = createInnerSelectionForWholeDocList(trx);
+					if (!nextSelection) return false;
+					trx.setSelection(nextSelection);
+					if (disp) disp(trx);
+					return true;
+				}).liftListItem(itemType).run();
 				return commands.liftListItem(itemType);
 			}
-			if (isList(currentList.node.type.name, extensions) && listType.validContent(currentList.node.content)) {
-				return chain().command(() => {
-					tr.setNodeMarkup(currentList.pos, listType);
-					return true;
-				}).command(() => joinListBackwards(tr, listType)).command(() => joinListForwards(tr, listType)).run();
-			}
+			if (isList(currentList.node.type.name, extensions) && listType.validContent(currentList.node.content)) return chain().command(() => {
+				tr.setNodeMarkup(currentList.pos, listType);
+				return true;
+			}).command(() => joinListBackwards(tr, listType)).command(() => joinListForwards(tr, listType)).run();
 		}
-		if (!keepMarks || !marks || !dispatch) {
-			return chain().command(() => {
-				const canWrapInList = can().wrapInList(listType, attributes);
-				if (canWrapInList) {
-					return true;
-				}
-				return commands.clearNodes();
-			}).wrapInList(listType, attributes).command(() => joinListBackwards(tr, listType)).command(() => joinListForwards(tr, listType)).run();
-		}
+		if (!keepMarks || !marks || !dispatch) return chain().command(() => {
+			if (can().wrapInList(listType, attributes)) return true;
+			return commands.clearNodes();
+		}).wrapInList(listType, attributes).command(() => joinListBackwards(tr, listType)).command(() => joinListForwards(tr, listType)).run();
 		return chain().command(() => {
 			const canWrapInList = can().wrapInList(listType, attributes);
 			const filteredMarks = marks.filter(mark => splittableMarks.includes(mark.type.name));
 			tr.ensureMarks(filteredMarks);
-			if (canWrapInList) {
-				return true;
-			}
+			if (canWrapInList) return true;
 			return commands.clearNodes();
 		}).wrapInList(listType, attributes).command(() => joinListBackwards(tr, listType)).command(() => joinListForwards(tr, listType)).run();
 	};
-
-	// src/commands/toggleMark.ts
-	var toggleMark = (typeOrName, attributes = {}, options = {}) => ({
+	//#endregion
+	//#region src/commands/toggleMark.ts
+	const toggleMark = (typeOrName, attributes = {}, options = {}) => ({
 		state,
 		commands
 	}) => {
@@ -16233,51 +16235,41 @@ this.BX.Note = this.BX.Note || {};
 			extendEmptyMarkRange = false
 		} = options;
 		const type = getMarkType(typeOrName, state.schema);
-		const isActive2 = isMarkActive(state, type, attributes);
-		if (isActive2) {
-			return commands.unsetMark(type, {
-				extendEmptyMarkRange
-			});
-		}
+		if (isMarkActive(state, type, attributes)) return commands.unsetMark(type, {
+			extendEmptyMarkRange
+		});
 		return commands.setMark(type, attributes);
 	};
-
-	// src/commands/toggleNode.ts
-	var toggleNode = (typeOrName, toggleTypeOrName, attributes = {}) => ({
+	//#endregion
+	//#region src/commands/toggleNode.ts
+	const toggleNode = (typeOrName, toggleTypeOrName, attributes = {}) => ({
 		state,
 		commands
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
 		const toggleType = getNodeType(toggleTypeOrName, state.schema);
-		const isActive2 = isNodeActive(state, type, attributes);
+		const isActive = isNodeActive(state, type, attributes);
 		let attributesToCopy;
-		if (state.selection.$anchor.sameParent(state.selection.$head)) {
-			attributesToCopy = state.selection.$anchor.parent.attrs;
-		}
-		if (isActive2) {
-			return commands.setNode(toggleType, attributesToCopy);
-		}
+		if (state.selection.$anchor.sameParent(state.selection.$head)) attributesToCopy = state.selection.$anchor.parent.attrs;
+		if (isActive) return commands.setNode(toggleType, attributesToCopy);
 		return commands.setNode(type, {
 			...attributesToCopy,
 			...attributes
 		});
 	};
-
-	// src/commands/toggleWrap.ts
-	var toggleWrap = (typeOrName, attributes = {}) => ({
+	//#endregion
+	//#region src/commands/toggleWrap.ts
+	const toggleWrap = (typeOrName, attributes = {}) => ({
 		state,
 		commands
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
-		const isActive2 = isNodeActive(state, type, attributes);
-		if (isActive2) {
-			return commands.lift(type);
-		}
+		if (isNodeActive(state, type, attributes)) return commands.lift(type);
 		return commands.wrapIn(type, attributes);
 	};
-
-	// src/commands/undoInputRule.ts
-	var undoInputRule = () => ({
+	//#endregion
+	//#region src/commands/undoInputRule.ts
+	const undoInputRule = () => ({
 		state,
 		dispatch
 	}) => {
@@ -16289,27 +16281,27 @@ this.BX.Note = this.BX.Note || {};
 				if (dispatch) {
 					const tr = state.tr;
 					const toUndo = undoable.transform;
-					for (let j = toUndo.steps.length - 1; j >= 0; j -= 1) {
-						tr.step(toUndo.steps[j].invert(toUndo.docs[j]));
-					}
+					for (let j = toUndo.steps.length - 1; j >= 0; j -= 1) tr.step(toUndo.steps[j].invert(toUndo.docs[j]));
 					if (undoable.text) {
 						const marks = tr.doc.resolve(undoable.from).marks();
 						tr.replaceWith(undoable.from, undoable.to, state.schema.text(undoable.text, marks));
-					} else {
-						tr.delete(undoable.from, undoable.to);
-					}
+					} else tr.delete(undoable.from, undoable.to);
 				}
 				return true;
 			}
 		}
 		return false;
 	};
-
-	// src/commands/unsetAllMarks.ts
-	var unsetAllMarks = () => ({
+	//#endregion
+	//#region src/commands/unsetAllMarks.ts
+	const unsetAllMarks = (options = {}) => ({
 		tr,
-		dispatch
+		dispatch,
+		editor
 	}) => {
+		const {
+			ignoreClearable = false
+		} = options;
 		const {
 			selection
 		} = tr;
@@ -16317,24 +16309,25 @@ this.BX.Note = this.BX.Note || {};
 			empty,
 			ranges
 		} = selection;
-		if (empty) {
-			return true;
-		}
+		if (empty) return true;
+		const {
+			nonClearableMarks
+		} = editor.extensionManager;
 		if (dispatch) {
+			const clearableMarkTypes = Object.values(editor.schema.marks).filter(markType => ignoreClearable || !nonClearableMarks.includes(markType.name));
 			ranges.forEach(range => {
-				tr.removeMark(range.$from.pos, range.$to.pos);
+				for (const markType of clearableMarkTypes) tr.removeMark(range.$from.pos, range.$to.pos, markType);
 			});
 		}
 		return true;
 	};
-
-	// src/commands/unsetMark.ts
-	var unsetMark = (typeOrName, options = {}) => ({
+	//#endregion
+	//#region src/commands/unsetMark.ts
+	const unsetMark = (typeOrName, options = {}) => ({
 		tr,
 		state,
 		dispatch
 	}) => {
-		var _a;
 		const {
 			extendEmptyMarkRange = false
 		} = options;
@@ -16347,32 +16340,28 @@ this.BX.Note = this.BX.Note || {};
 			empty,
 			ranges
 		} = selection;
-		if (!dispatch) {
-			return true;
-		}
+		if (!dispatch) return true;
 		if (empty && extendEmptyMarkRange) {
+			var _$from$marks$find;
 			let {
 				from,
 				to
 			} = selection;
-			const attrs = (_a = $from.marks().find(mark => mark.type === type)) == null ? void 0 : _a.attrs;
-			const range = getMarkRange($from, type, attrs);
+			const range = getMarkRange($from, type, (_$from$marks$find = $from.marks().find(mark => mark.type === type)) === null || _$from$marks$find === void 0 ? void 0 : _$from$marks$find.attrs);
 			if (range) {
 				from = range.from;
 				to = range.to;
 			}
 			tr.removeMark(from, to, type);
-		} else {
-			ranges.forEach(range => {
-				tr.removeMark(range.$from.pos, range.$to.pos, type);
-			});
-		}
+		} else ranges.forEach(range => {
+			tr.removeMark(range.$from.pos, range.$to.pos, type);
+		});
 		tr.removeStoredMark(type);
 		return true;
 	};
-
-	// src/commands/unsetTextDirection.ts
-	var unsetTextDirection = position => ({
+	//#endregion
+	//#region src/commands/unsetTextDirection.ts
+	const unsetTextDirection = position => ({
 		tr,
 		state,
 		dispatch
@@ -16392,23 +16381,19 @@ this.BX.Note = this.BX.Note || {};
 			from = selection.from;
 			to = selection.to;
 		}
-		if (dispatch) {
-			tr.doc.nodesBetween(from, to, (node, pos) => {
-				if (node.isText) {
-					return;
-				}
-				const newAttrs = {
-					...node.attrs
-				};
-				delete newAttrs.dir;
-				tr.setNodeMarkup(pos, void 0, newAttrs);
-			});
-		}
+		if (dispatch) tr.doc.nodesBetween(from, to, (node, pos) => {
+			if (node.isText) return;
+			const newAttrs = {
+				...node.attrs
+			};
+			delete newAttrs.dir;
+			tr.setNodeMarkup(pos, void 0, newAttrs);
+		});
 		return true;
 	};
-
-	// src/commands/updateAttributes.ts
-	var updateAttributes = (typeOrName, attributes = {}) => ({
+	//#endregion
+	//#region src/commands/updateAttributes.ts
+	const updateAttributes = (typeOrName, attributes = {}) => ({
 		tr,
 		state,
 		dispatch
@@ -16416,15 +16401,9 @@ this.BX.Note = this.BX.Note || {};
 		let nodeType = null;
 		let markType = null;
 		const schemaType = getSchemaTypeNameByName(typeof typeOrName === "string" ? typeOrName : typeOrName.name, state.schema);
-		if (!schemaType) {
-			return false;
-		}
-		if (schemaType === "node") {
-			nodeType = getNodeType(typeOrName, state.schema);
-		}
-		if (schemaType === "mark") {
-			markType = getMarkType(typeOrName, state.schema);
-		}
+		if (!schemaType) return false;
+		if (schemaType === "node") nodeType = getNodeType(typeOrName, state.schema);
+		if (schemaType === "mark") markType = getMarkType(typeOrName, state.schema);
 		let canUpdate = false;
 		tr.selection.ranges.forEach(range => {
 			const from = range.$from.pos;
@@ -16433,116 +16412,218 @@ this.BX.Note = this.BX.Note || {};
 			let lastNode;
 			let trimmedFrom;
 			let trimmedTo;
-			if (tr.selection.empty) {
-				state.doc.nodesBetween(from, to, (node, pos) => {
+			if (tr.selection.empty) state.doc.nodesBetween(from, to, (node, pos) => {
+				if (nodeType && nodeType === node.type) {
+					canUpdate = true;
+					trimmedFrom = Math.max(pos, from);
+					trimmedTo = Math.min(pos + node.nodeSize, to);
+					lastPos = pos;
+					lastNode = node;
+				}
+			});else state.doc.nodesBetween(from, to, (node, pos) => {
+				if (pos < from && nodeType && nodeType === node.type) {
+					canUpdate = true;
+					trimmedFrom = Math.max(pos, from);
+					trimmedTo = Math.min(pos + node.nodeSize, to);
+					lastPos = pos;
+					lastNode = node;
+				}
+				if (pos >= from && pos <= to) {
 					if (nodeType && nodeType === node.type) {
 						canUpdate = true;
-						trimmedFrom = Math.max(pos, from);
-						trimmedTo = Math.min(pos + node.nodeSize, to);
-						lastPos = pos;
-						lastNode = node;
+						if (dispatch) tr.setNodeMarkup(pos, void 0, {
+							...node.attrs,
+							...attributes
+						});
 					}
-				});
-			} else {
-				state.doc.nodesBetween(from, to, (node, pos) => {
-					if (pos < from && nodeType && nodeType === node.type) {
-						canUpdate = true;
-						trimmedFrom = Math.max(pos, from);
-						trimmedTo = Math.min(pos + node.nodeSize, to);
-						lastPos = pos;
-						lastNode = node;
-					}
-					if (pos >= from && pos <= to) {
-						if (nodeType && nodeType === node.type) {
+					if (markType && node.marks.length) node.marks.forEach(mark => {
+						if (markType === mark.type) {
 							canUpdate = true;
 							if (dispatch) {
-								tr.setNodeMarkup(pos, void 0, {
-									...node.attrs,
+								const trimmedFrom2 = Math.max(pos, from);
+								const trimmedTo2 = Math.min(pos + node.nodeSize, to);
+								tr.addMark(trimmedFrom2, trimmedTo2, markType.create({
+									...mark.attrs,
 									...attributes
-								});
+								}));
 							}
 						}
-						if (markType && node.marks.length) {
-							node.marks.forEach(mark => {
-								if (markType === mark.type) {
-									canUpdate = true;
-									if (dispatch) {
-										const trimmedFrom2 = Math.max(pos, from);
-										const trimmedTo2 = Math.min(pos + node.nodeSize, to);
-										tr.addMark(trimmedFrom2, trimmedTo2, markType.create({
-											...mark.attrs,
-											...attributes
-										}));
-									}
-								}
-							});
-						}
-					}
-				});
-			}
+					});
+				}
+			});
 			if (lastNode) {
-				if (lastPos !== void 0 && dispatch) {
-					tr.setNodeMarkup(lastPos, void 0, {
-						...lastNode.attrs,
+				if (lastPos !== void 0 && dispatch) tr.setNodeMarkup(lastPos, void 0, {
+					...lastNode.attrs,
+					...attributes
+				});
+				if (markType && lastNode.marks.length) lastNode.marks.forEach(mark => {
+					if (markType === mark.type && dispatch) tr.addMark(trimmedFrom, trimmedTo, markType.create({
+						...mark.attrs,
 						...attributes
-					});
-				}
-				if (markType && lastNode.marks.length) {
-					lastNode.marks.forEach(mark => {
-						if (markType === mark.type && dispatch) {
-							tr.addMark(trimmedFrom, trimmedTo, markType.create({
-								...mark.attrs,
-								...attributes
-							}));
-						}
-					});
-				}
+					}));
+				});
 			}
 		});
 		return canUpdate;
 	};
-	var wrapIn = (typeOrName, attributes = {}) => ({
+	const DECORATION_MANAGER_PLUGIN_KEY = new PluginKey("__tiptap_decorations__");
+	//#endregion
+	//#region src/commands/updateDecorations.ts
+	const updateDecorations = extensionName => ({
+		tr,
+		dispatch
+	}) => {
+		if (dispatch) tr.setMeta(DECORATION_MANAGER_PLUGIN_KEY, {
+			type: "force",
+			name: extensionName
+		});
+		return true;
+	};
+	//#endregion
+	//#region src/commands/wrapIn.ts
+	const wrapIn$1 = (typeOrName, attributes = {}) => ({
 		state,
 		dispatch
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
-		return wrapIn$1(type, attributes)(state, dispatch);
+		return wrapIn(type, attributes)(state, dispatch);
 	};
-	var wrapInList = (typeOrName, attributes = {}) => ({
+	//#endregion
+	//#region src/commands/wrapInList.ts
+	const wrapInList$1 = (typeOrName, attributes = {}) => ({
 		state,
 		dispatch
 	}) => {
 		const type = getNodeType(typeOrName, state.schema);
-		return wrapInList$1(type, attributes)(state, dispatch);
+		return wrapInList(type, attributes)(state, dispatch);
 	};
-
-	// src/EventEmitter.ts
+	//#endregion
+	//#region src/commands/index.ts
+	var commands_exports = /* @__PURE__ */__exportAll({
+		blur: () => blur,
+		clearContent: () => clearContent,
+		clearNodes: () => clearNodes,
+		command: () => command,
+		createParagraphNear: () => createParagraphNear$1,
+		cut: () => cut,
+		deleteCurrentNode: () => deleteCurrentNode,
+		deleteNode: () => deleteNode,
+		deleteRange: () => deleteRange,
+		deleteSelection: () => deleteSelection,
+		enter: () => enter,
+		exitCode: () => exitCode$1,
+		extendMarkRange: () => extendMarkRange,
+		first: () => first,
+		focus: () => focus,
+		forEach: () => forEach$1,
+		insertContent: () => insertContent,
+		insertContentAt: () => insertContentAt,
+		insertDefaultBlock: () => insertDefaultBlock,
+		joinBackward: () => joinBackward$1,
+		joinDown: () => joinDown$1,
+		joinForward: () => joinForward$1,
+		joinItemBackward: () => joinItemBackward,
+		joinItemForward: () => joinItemForward,
+		joinTextblockBackward: () => joinTextblockBackward$1,
+		joinTextblockForward: () => joinTextblockForward$1,
+		joinUp: () => joinUp$1,
+		keyboardShortcut: () => keyboardShortcut,
+		lift: () => lift$1,
+		liftEmptyBlock: () => liftEmptyBlock$1,
+		liftListItem: () => liftListItem$1,
+		newlineInCode: () => newlineInCode$1,
+		resetAttributes: () => resetAttributes,
+		scrollIntoView: () => scrollIntoView,
+		selectAll: () => selectAll,
+		selectNodeBackward: () => selectNodeBackward$1,
+		selectNodeForward: () => selectNodeForward$1,
+		selectParentNode: () => selectParentNode$1,
+		selectTextblockEnd: () => selectTextblockEnd$1,
+		selectTextblockStart: () => selectTextblockStart$1,
+		setContent: () => setContent,
+		setMark: () => setMark,
+		setMeta: () => setMeta$1,
+		setNode: () => setNode,
+		setNodeSelection: () => setNodeSelection,
+		setTextDirection: () => setTextDirection,
+		setTextSelection: () => setTextSelection,
+		sinkListItem: () => sinkListItem$1,
+		splitBlock: () => splitBlock,
+		splitListItem: () => splitListItem,
+		toggleList: () => toggleList,
+		toggleMark: () => toggleMark,
+		toggleNode: () => toggleNode,
+		toggleWrap: () => toggleWrap,
+		undoInputRule: () => undoInputRule,
+		unsetAllMarks: () => unsetAllMarks,
+		unsetMark: () => unsetMark,
+		unsetTextDirection: () => unsetTextDirection,
+		updateAttributes: () => updateAttributes,
+		updateDecorations: () => updateDecorations,
+		wrapIn: () => wrapIn$1,
+		wrapInList: () => wrapInList$1
+	});
+	//#endregion
+	//#region src/decorations/decorationApplyScope.ts
+	/**
+	* Tracks which editors are running decoration create() callbacks inside state.apply,
+	* using a private WeakMap to keep this off the public Editor surface.
+	*/
+	const depthByEditor = /* @__PURE__ */new WeakMap();
+	/**
+	* Marks callback as decoration-apply work for editor, so editor.state can warn
+	* about stale reads. Counts depth to handle nested applies.
+	*
+	* @param editor The editor the decorations belong to
+	* @param callback The work to run inside the scope
+	* @returns Whatever `callback` returns
+	* @example
+	* runInDecorationApplyScope(editor, () => spec.create({ editor, state, view }))
+	*/
+	function runInDecorationApplyScope(editor, callback) {
+		var _depthByEditor$get;
+		depthByEditor.set(editor, ((_depthByEditor$get = depthByEditor.get(editor)) !== null && _depthByEditor$get !== void 0 ? _depthByEditor$get : 0) + 1);
+		try {
+			return callback();
+		} finally {
+			var _depthByEditor$get2;
+			const remaining = ((_depthByEditor$get2 = depthByEditor.get(editor)) !== null && _depthByEditor$get2 !== void 0 ? _depthByEditor$get2 : 1) - 1;
+			if (remaining > 0) depthByEditor.set(editor, remaining);else depthByEditor.delete(editor);
+		}
+	}
+	/**
+	* Whether the editor is currently inside a decoration apply scope.
+	*
+	* @param editor The editor to check
+	* @returns `true` while decoration create() callbacks run
+	* @example
+	* if (isInDecorationApplyScope(editor)) {
+	*   // reads of editor.state are stale here
+	* }
+	*/
+	function isInDecorationApplyScope(editor) {
+		return depthByEditor.has(editor);
+	}
+	//#endregion
+	//#region src/EventEmitter.ts
 	var EventEmitter = class {
 		constructor() {
 			this.callbacks = {};
 		}
 		on(event, fn) {
-			if (!this.callbacks[event]) {
-				this.callbacks[event] = [];
-			}
+			if (!this.callbacks[event]) this.callbacks[event] = [];
 			this.callbacks[event].push(fn);
 			return this;
 		}
 		emit(event, ...args) {
 			const callbacks = this.callbacks[event];
-			if (callbacks) {
-				callbacks.forEach(callback => callback.apply(this, args));
-			}
+			if (callbacks) callbacks.forEach(callback => callback.apply(this, args));
 			return this;
 		}
 		off(event, fn) {
 			const callbacks = this.callbacks[event];
 			if (callbacks) {
-				if (fn) {
-					this.callbacks[event] = callbacks.filter(callback => callback !== fn);
-				} else {
-					delete this.callbacks[event];
-				}
+				if (fn) this.callbacks[event] = callbacks.filter(callback => callback !== fn);else delete this.callbacks[event];
 			}
 			return this;
 		}
@@ -16557,36 +16638,1048 @@ this.BX.Note = this.BX.Note || {};
 			this.callbacks = {};
 		}
 	};
-	var InputRule = class {
-		constructor(config) {
-			var _a;
-			this.find = config.find;
-			this.handler = config.handler;
-			this.undoable = (_a = config.undoable) != null ? _a : true;
+	//#endregion
+	//#region src/utilities/isDev.ts
+	/**
+	* Whether the editor runs in a development build. Use it to guard warnings so
+	* bundlers can drop them from production output.
+	*/
+	const isDev = typeof process !== "undefined" && "development" !== "production";
+	//#endregion
+	//#region src/decorations/helpers/decorationsToPMDecorations.ts
+	function isWidgetDecoration(decoration) {
+		return decoration.kind === "widget";
+	}
+	/**
+	* Converts a list of decorations to ProseMirror decorations.
+	* @param decorations The decorations to convert.
+	* @param extensionName The name of the extension that created the decorations.
+	* @returns The converted decorations and the widget keys.
+	*/
+	function decorationsToPMDecorations(decorations, extensionName) {
+		const pmDecorations = [];
+		const widgetKeys = /* @__PURE__ */new Set();
+		for (const decoration of decorations) {
+			if (decoration.kind === "widget") {
+				if (isWidgetDecoration(decoration)) widgetKeys.add(decoration.key);
+			}
+			pmDecorations.push(decoration.toPMDecoration(extensionName));
+		}
+		return {
+			decorations: pmDecorations,
+			widgetKeys
+		};
+	}
+	//#endregion
+	//#region src/decorations/helpers/buildDecorationSet.ts
+	/**
+	* Builds a DecorationSet from a list of decorations.
+	* @param doc The document to build the decoration set for.
+	* @param decorations The decorations to build the set from.
+	* @param extensionName The name of the extension that created the decorations.
+	* @returns The built decoration set and the widget keys.
+	*/
+	function buildDecorationSet(doc, decorations, extensionName) {
+		const {
+			decorations: pmDecorations,
+			widgetKeys
+		} = decorationsToPMDecorations(decorations, extensionName);
+		return {
+			set: DecorationSet.create(doc, pmDecorations),
+			widgetKeys
+		};
+	}
+	//#endregion
+	//#region src/decorations/helpers/rangeOwnsPosition.ts
+	/**
+	* Whether the block range `[from, to)` owns a decoration at `position`.
+	*
+	* `to` is the next block's start, so that block owns it. The last block is the
+	* exception: nothing follows it, so it owns the end of the document.
+	*
+	* @param options The position, the range, and the document size.
+	* @returns True when the range owns the position.
+	* @example
+	* // <p>foo</p><p>bar</p>, blocks [0, 5] and [5, 10]
+	* rangeOwnsPosition({ position: 5, from: 0, to: 5, docSize: 10 }) // false, block 2 owns it
+	* rangeOwnsPosition({ position: 5, from: 5, to: 10, docSize: 10 }) // true
+	* rangeOwnsPosition({ position: 10, from: 5, to: 10, docSize: 10 }) // true, end of document
+	*/
+	function rangeOwnsPosition({
+		position,
+		from,
+		to,
+		docSize
+	}) {
+		if (position < from) return false;
+		if (position < to) return true;
+		return position === to && to === docSize;
+	}
+	//#endregion
+	//#region src/decorations/helpers/filterOutOfRangeDecorations.ts
+	/**
+	* Filter decorations the block range `[from, to)` does not own.
+	* Must match the stale sweep in `DecorationManager.rebuildRanges`.
+	*
+	* @param options The decorations, the range, and the warning bookkeeping.
+	* @returns The filtered decorations.
+	*/
+	function filterOutOfRangeDecorations({
+		decorations,
+		from,
+		to,
+		docSize,
+		extensionName,
+		warnedExtensions
+	}) {
+		return decorations.filter(decoration => {
+			if (rangeOwnsPosition({
+				position: decoration.anchor,
+				from,
+				to,
+				docSize
+			})) return true;
+			if (decoration.anchor === to) return false;
+			if (!warnedExtensions.has(extensionName)) {
+				warnedExtensions.add(extensionName);
+				console.warn(`[tiptap warn]: Extension "${extensionName}" returned a decoration outside the requested range [${from}, ${to}). It was ignored.`);
+			}
+			return false;
+		});
+	}
+	//#endregion
+	//#region src/decorations/helpers/widgetKeyOf.ts
+	/**
+	* Extracts the widget key from a decoration spec.
+	* @param decoration The decoration to extract the key from.
+	* @returns The widget key, or undefined if the decoration has no key.
+	*/
+	function widgetKeyOf(decoration) {
+		var _decoration$spec;
+		const key = (_decoration$spec = decoration.spec) === null || _decoration$spec === void 0 ? void 0 : _decoration$spec.key;
+		return typeof key === "string" ? key : void 0;
+	}
+	//#endregion
+	//#region src/decorations/helpers/findDuplicateWidgetKeys.ts
+	/**
+	* Finds widget keys which are still duplicated in the final decoration set.
+	* @param decorationSet The merged decoration set to inspect.
+	* @returns The duplicate keys and their producing extensions.
+	*/
+	function findDuplicateWidgetKeys(decorationSet) {
+		const extensionsByKey = /* @__PURE__ */new Map();
+		const counts = /* @__PURE__ */new Map();
+		for (const decoration of decorationSet.find()) {
+			var _extensionName, _extensionsByKey$get, _counts$get;
+			const key = widgetKeyOf(decoration);
+			if (!key) continue;
+			const extension = (_extensionName = decoration.spec.extensionName) !== null && _extensionName !== void 0 ? _extensionName : "unknown";
+			const extensions = (_extensionsByKey$get = extensionsByKey.get(key)) !== null && _extensionsByKey$get !== void 0 ? _extensionsByKey$get : /* @__PURE__ */new Set();
+			extensions.add(extension);
+			extensionsByKey.set(key, extensions);
+			counts.set(key, ((_counts$get = counts.get(key)) !== null && _counts$get !== void 0 ? _counts$get : 0) + 1);
+		}
+		return Array.from(extensionsByKey, ([key, extensions]) => ({
+			key,
+			extensions
+		})).filter(({
+			key
+		}) => {
+			var _counts$get2;
+			return ((_counts$get2 = counts.get(key)) !== null && _counts$get2 !== void 0 ? _counts$get2 : 0) > 1;
+		});
+	}
+	//#endregion
+	//#region src/decorations/helpers/isAttrStep.ts
+	/**
+	* Whether a step only sets a node attribute.
+	*
+	* Matched by `jsonID` rather than `instanceof`, which fails when two copies of
+	* prosemirror-transform are loaded.
+	*
+	* @param step The step to check.
+	* @returns `true` for an `AttrStep`, which carries the target node's position.
+	* @example
+	* if (isAttrStep(step)) {
+	*   rebuildBlockAt(step.pos)
+	* }
+	*/
+	function isAttrStep(step) {
+		return step.jsonID === "attr";
+	}
+	//#endregion
+	//#region src/decorations/helpers/hasResolvableChangedRange.ts
+	/**
+	* Check if a step has a resolvable changed range.
+	* @param step The step to check.
+	* @returns True if the step has a resolvable changed range, false otherwise.
+	*/
+	function hasResolvableChangedRange(step) {
+		let hasMappedRange = false;
+		step.getMap().forEach(() => {
+			hasMappedRange = true;
+		});
+		if (hasMappedRange || isAttrStep(step)) return true;
+		const positionalStep = step;
+		return typeof positionalStep.from === "number" && typeof positionalStep.to === "number";
+	}
+	//#endregion
+	//#region src/decorations/helpers/getRebuildRanges.ts
+	/**
+	* Expands a changed range to the top-level blocks it touches. Blocks are
+	* ordered, so the walk stops as soon as it passes the range.
+	*/
+	function blockRangeFor(doc, changed) {
+		let from = null;
+		let to = 0;
+		let nodeStart = 0;
+		for (let index = 0; index < doc.childCount; index += 1) {
+			if (nodeStart > changed.to) break;
+			const nodeEnd = nodeStart + doc.child(index).nodeSize;
+			if (nodeEnd >= changed.from) {
+				if (from === null) from = nodeStart;
+				to = nodeEnd;
+			}
+			nodeStart = nodeEnd;
+		}
+		return from === null ? null : {
+			from,
+			to
+		};
+	}
+	/**
+	* Returns the top-level block ranges to recompute after a transaction,
+	* or `{ type: 'full' }` when the whole document must be rebuilt.
+	* @param tr The transaction to inspect.
+	* @param doc The new document after the transaction.
+	* @returns The block ranges to recompute, or a full-recompute signal.
+	*/
+	function getRebuildRanges(tr, doc) {
+		if (tr.steps.some(step => !hasResolvableChangedRange(step))) return {
+			type: "full"
+		};
+		const newRanges = getChangedRanges(tr).map(({
+			newRange
+		}) => newRange);
+		tr.steps.forEach((step, index) => {
+			if (!isAttrStep(step)) return;
+			const mapping = tr.mapping.slice(index);
+			newRanges.push({
+				from: mapping.map(step.pos, -1),
+				to: mapping.map(step.pos + 1)
+			});
+		});
+		const ranges = [];
+		for (const newRange of newRanges) {
+			const blockRange = blockRangeFor(doc, newRange);
+			if (blockRange) ranges.push(blockRange);
+		}
+		ranges.sort((a, b) => a.from - b.from);
+		const merged = [];
+		for (const range of ranges) {
+			const last = merged[merged.length - 1];
+			if (last && range.from <= last.to) last.to = Math.max(last.to, range.to);else merged.push({
+				...range
+			});
+		}
+		return {
+			type: "ranges",
+			ranges: merged
+		};
+	}
+	//#endregion
+	//#region src/decorations/helpers/mapDecorationSet.ts
+	/**
+	* Maps a decoration set through a mapping and prunes the keys of any widget
+	* dropped because its position was deleted.
+	* @param set The decoration set to map.
+	* @param mapping The mapping to use.
+	* @param doc The document to map the set through.
+	* @param widgetKeys The set of widget keys to prune.
+	* @returns The mapped decoration set.
+	*/
+	function mapDecorationSet(set, mapping, doc, widgetKeys) {
+		return set.map(mapping, doc, {
+			onRemove: removedSpec => {
+				const key = removedSpec === null || removedSpec === void 0 ? void 0 : removedSpec.key;
+				if (typeof key === "string") widgetKeys.delete(key);
+			}
+		});
+	}
+	//#endregion
+	//#region src/decorations/helpers/mapDecorations.ts
+	/**
+	* Moves an extension's existing decorations to their new positions after a
+	* transaction, and prunes widget keys for any widget whose position was deleted.
+	* @param name The name of the decoration extension.
+	* @param previous The previous decoration manager state.
+	* @param tr The transaction to map through.
+	* @returns The updated decoration set and widget keys.
+	*/
+	function mapDecorations(name, previous, tr) {
+		var _previous$decorationS, _previous$widgetKeysB;
+		const previousSet = (_previous$decorationS = previous.decorationSetsByExtension[name]) !== null && _previous$decorationS !== void 0 ? _previous$decorationS : DecorationSet.empty;
+		const widgetKeys = new Set((_previous$widgetKeysB = previous.widgetKeysByExtension[name]) !== null && _previous$widgetKeysB !== void 0 ? _previous$widgetKeysB : []);
+		return {
+			set: mapDecorationSet(previousSet, tr.mapping, tr.doc, widgetKeys),
+			widgetKeys
+		};
+	}
+	//#endregion
+	//#region src/decorations/helpers/mergeDecorationSets.ts
+	/**
+	* Merges multiple decoration sets into a single decoration set.
+	* @param doc The document to merge the decoration sets for.
+	* @param decorationSetsByExtension The decoration sets to merge.
+	* @returns The merged decoration set.
+	*/
+	function mergeDecorationSets(doc, decorationSetsByExtension) {
+		const allDecorations = Object.values(decorationSetsByExtension).flatMap(set => set.find());
+		return DecorationSet.create(doc, allDecorations);
+	}
+	//#endregion
+	//#region src/decorations/helpers/unionWidgetKeys.ts
+	/**
+	* Unions all widget keys from multiple extensions into a single set.
+	* @param widgetKeysByExtension The widget keys to union.
+	* @returns The unioned widget keys.
+	*/
+	function unionWidgetKeys(widgetKeysByExtension) {
+		const merged = /* @__PURE__ */new Set();
+		for (const keys of Object.values(widgetKeysByExtension)) for (const key of keys) merged.add(key);
+		return merged;
+	}
+	//#endregion
+	//#region src/decorations/helpers/validateDecorationSpec.ts
+	/**
+	* Validates a decoration spec to ensure it follows the correct pattern for its update strategy.
+	* @param name The name of the extension.
+	* @param spec The decoration spec to validate
+	*/
+	function validateDecorationSpec(name, spec) {
+		var _update;
+		switch ((_update = spec.update) !== null && _update !== void 0 ? _update : "document") {
+			case "document":
+				if (spec.createInRange) throw new Error(`[tiptap error]: Extension "${name}" provides createInRange() but does not use the "changedRanges" decoration update strategy.`);
+				return;
+			case "changedRanges":
+				if (!spec.createInRange) throw new Error(`[tiptap error]: Extension "${name}" uses the "changedRanges" decoration update strategy but does not provide createInRange().`);
+				return;
+			case "manual":
+				if (spec.createInRange) throw new Error(`[tiptap error]: Extension "${name}" uses the "manual" decoration update strategy, which is not compatible with createInRange(). createInRange() requires the "changedRanges" strategy.`);
+				if (spec.shouldUpdate) throw new Error(`[tiptap error]: Extension "${name}" cannot combine the "manual" decoration update strategy with shouldUpdate().`);
+				return;
+			default:
+				throw new Error(`[tiptap error]: Extension "${name}" uses an unknown decoration update strategy. Expected "document", "changedRanges", or "manual".`);
+		}
+	}
+	//#endregion
+	//#region src/decorations/helpers/shouldRecomputeDecoration.ts
+	/**
+	* Decides whether a decoration spec should be recomputed for a transaction.
+	* @param spec The decoration spec to check.
+	* @param props Properties containing editor, transaction, and state.
+	* @param forced Whether recomputation was forced.
+	* @returns `true` if the decoration should be recomputed.
+	*/
+	function shouldRecomputeDecoration(spec, props, forced) {
+		if (forced) return true;
+		if (spec.update === "manual") return false;
+		return spec.shouldUpdate ? spec.shouldUpdate(props) : props.tr.docChanged;
+	}
+	//#endregion
+	//#region src/decorations/DecorationManager.ts
+	const EMPTY_KEYS = /* @__PURE__ */new Set();
+	var DecorationManager = class {
+		constructor(options) {
+			this.warnedWidgetKeys = /* @__PURE__ */new Set();
+			this.warnedOutOfRangeExtensions = /* @__PURE__ */new Set();
+			this.handleBeforeTransaction = ({
+				nextState
+			}) => {
+				const state = DECORATION_MANAGER_PLUGIN_KEY.getState(nextState);
+				if (state) this.warnDuplicateWidgetKeys(state);
+			};
+			this.editor = options.editor;
+			this.entries = this.resolveEntries(options.entries);
+			this.entries.forEach(({
+				name,
+				spec
+			}) => validateDecorationSpec(name, spec));
+			this.plugin = this.entries.length > 0 ? this.createPlugin() : null;
+			this.editor.on("beforeTransaction", this.handleBeforeTransaction);
+		}
+		destroy() {
+			this.editor.off("beforeTransaction", this.handleBeforeTransaction);
+		}
+		/**
+		* Returns the set of live widget keys from all decoration extensions.
+		* @returns A readonly set of widget keys
+		*/
+		liveWidgetKeys() {
+			var _DECORATION_MANAGER_P, _DECORATION_MANAGER_P2;
+			return (_DECORATION_MANAGER_P = (_DECORATION_MANAGER_P2 = DECORATION_MANAGER_PLUGIN_KEY.getState(this.editor.state)) === null || _DECORATION_MANAGER_P2 === void 0 ? void 0 : _DECORATION_MANAGER_P2.widgetKeys) !== null && _DECORATION_MANAGER_P !== void 0 ? _DECORATION_MANAGER_P : EMPTY_KEYS;
+		}
+		/**
+		* The mounted editor view, or `null` when destroyed. Decoration callbacks
+		* must never receive the placeholder view `editor.view` falls back to.
+		* @returns The mounted editor view, or `null`
+		*/
+		get mountedView() {
+			return this.editor.isDestroyed ? null : this.editor.view;
+		}
+		/**
+		* Resolves decoration entries by calling the addDecorations function for each extension entry.
+		* @param entries The decoration manager entries to resolve
+		* @returns An array of resolved decoration entries
+		*/
+		resolveEntries(entries) {
+			const resolved = [];
+			for (const {
+				name,
+				addDecorations
+			} of entries) {
+				const spec = addDecorations();
+				if (spec) resolved.push({
+					name,
+					spec
+				});
+			}
+			return resolved;
+		}
+		/**
+		* Creates the ProseMirror plugin for managing decorations.
+		* @returns A ProseMirror plugin with state management
+		*/
+		createPlugin() {
+			const {
+				editor,
+				entries
+			} = this;
+			return new Plugin({
+				key: DECORATION_MANAGER_PLUGIN_KEY,
+				state: {
+					init: (_config, state) => {
+						const decorationSetsByExtension = {};
+						const widgetKeysByExtension = {};
+						for (const {
+							name,
+							spec
+						} of entries) {
+							const {
+								set,
+								widgetKeys
+							} = this.buildFullSet(name, spec, state);
+							decorationSetsByExtension[name] = set;
+							widgetKeysByExtension[name] = widgetKeys;
+						}
+						const managerState = {
+							decorationSetsByExtension,
+							widgetKeysByExtension,
+							mergedDecorationSet: this.buildMergedSet(state.doc, decorationSetsByExtension),
+							widgetKeys: unionWidgetKeys(widgetKeysByExtension)
+						};
+						this.warnDuplicateWidgetKeys(managerState);
+						return managerState;
+					},
+					apply: (tr, previous, oldState, newState) => {
+						const meta = tr.getMeta(DECORATION_MANAGER_PLUGIN_KEY);
+						const forceAll = (meta === null || meta === void 0 ? void 0 : meta.type) === "force" && !meta.name;
+						const forceName = (meta === null || meta === void 0 ? void 0 : meta.type) === "force" ? meta.name : void 0;
+						const decorationSetsByExtension = {};
+						const widgetKeysByExtension = {};
+						const recomputedNames = /* @__PURE__ */new Set();
+						runInDecorationApplyScope(editor, () => {
+							for (const {
+								name,
+								spec
+							} of entries) {
+								const forced = forceAll || forceName === name;
+								if (!shouldRecomputeDecoration(spec, {
+									editor,
+									tr,
+									oldState,
+									newState
+								}, forced)) {
+									const result = mapDecorations(name, previous, tr);
+									decorationSetsByExtension[name] = result.set;
+									widgetKeysByExtension[name] = result.widgetKeys;
+								} else if (spec.update === "changedRanges" && tr.docChanged && !forced) {
+									const result = this.applyChangedRangesRecompute(name, spec, previous, tr, newState);
+									decorationSetsByExtension[name] = result.set;
+									widgetKeysByExtension[name] = result.widgetKeys;
+									recomputedNames.add(name);
+								} else {
+									const {
+										set,
+										widgetKeys
+									} = this.buildFullSet(name, spec, newState);
+									decorationSetsByExtension[name] = set;
+									widgetKeysByExtension[name] = widgetKeys;
+									recomputedNames.add(name);
+								}
+							}
+						});
+						if (recomputedNames.size === 0 && !tr.docChanged) return previous;
+						return {
+							decorationSetsByExtension,
+							widgetKeysByExtension,
+							mergedDecorationSet: this.mergeAfterApply({
+								entries,
+								previous,
+								tr,
+								decorationSetsByExtension,
+								recomputedNames
+							}),
+							widgetKeys: unionWidgetKeys(widgetKeysByExtension)
+						};
+					}
+				},
+				props: {
+					decorations(state) {
+						var _DECORATION_MANAGER_P3, _DECORATION_MANAGER_P4;
+						return (_DECORATION_MANAGER_P3 = (_DECORATION_MANAGER_P4 = DECORATION_MANAGER_PLUGIN_KEY.getState(state)) === null || _DECORATION_MANAGER_P4 === void 0 ? void 0 : _DECORATION_MANAGER_P4.mergedDecorationSet) !== null && _DECORATION_MANAGER_P3 !== void 0 ? _DECORATION_MANAGER_P3 : DecorationSet.empty;
+					}
+				}
+			});
+		}
+		/**
+		* Applies changed ranges recomputation to a decoration set, dropping stale decorations and rebuilding only the touched blocks.
+		* @param name The name of the decoration extension
+		* @param spec The decoration spec
+		* @param previous The previous decoration manager state
+		* @param tr The transaction to apply
+		* @param newState The new editor state
+		* @returns The updated decoration set and widget keys
+		*/
+		applyChangedRangesRecompute(name, spec, previous, tr, newState) {
+			const resolution = getRebuildRanges(tr, newState.doc);
+			if (resolution.type === "full") return this.buildFullSet(name, spec, newState);
+			return this.rebuildRanges(name, spec, previous, tr, newState, resolution.ranges);
+		}
+		/**
+		* Rebuilds decorations for the changed block ranges: maps the previous set
+		* forward, then for each range removes stale decorations, calls
+		* `createInRange`, and adds the new ones while syncing widget keys.
+		* @param name The extension name.
+		* @param spec The decoration spec.
+		* @param previous The previous decoration manager state.
+		* @param tr The transaction to apply.
+		* @param newState The new editor state.
+		* @param ranges The block ranges to rebuild.
+		* @returns The updated decoration set and widget keys.
+		*/
+		rebuildRanges(name, spec, previous, tr, newState, ranges) {
+			var _previous$decorationS, _previous$widgetKeysB;
+			const previousSet = (_previous$decorationS = previous.decorationSetsByExtension[name]) !== null && _previous$decorationS !== void 0 ? _previous$decorationS : DecorationSet.empty;
+			const widgetKeys = new Set((_previous$widgetKeysB = previous.widgetKeysByExtension[name]) !== null && _previous$widgetKeysB !== void 0 ? _previous$widgetKeysB : []);
+			let set = mapDecorationSet(previousSet, tr.mapping, tr.doc, widgetKeys);
+			const docSize = newState.doc.content.size;
+			for (const {
+				from,
+				to
+			} of ranges) {
+				const stale = set.find(from, to).filter(decoration => rangeOwnsPosition({
+					position: decoration.from,
+					from,
+					to,
+					docSize
+				}));
+				for (const decoration of stale) {
+					const key = widgetKeyOf(decoration);
+					if (key) widgetKeys.delete(key);
+				}
+				set = set.remove(stale);
+				const {
+					decorations: pmDecorations,
+					widgetKeys: addedKeys
+				} = decorationsToPMDecorations(filterOutOfRangeDecorations({
+					decorations: this.runCreate(name, "createInRange", () => spec.createInRange({
+						editor: this.editor,
+						state: newState,
+						view: this.mountedView,
+						from,
+						to
+					})),
+					from,
+					to,
+					docSize,
+					extensionName: name,
+					warnedExtensions: this.warnedOutOfRangeExtensions
+				}), name);
+				set = set.add(newState.doc, pmDecorations);
+				for (const key of addedKeys) widgetKeys.add(key);
+			}
+			return {
+				set,
+				widgetKeys
+			};
+		}
+		/**
+		* Builds a full decoration set for the entire document.
+		* @param name The name of the decoration extension
+		* @param spec The decoration spec
+		* @param state The editor state
+		* @returns The decoration set and widget keys
+		*/
+		buildFullSet(name, spec, state) {
+			const decorations = this.runCreate(name, "create", () => spec.create({
+				editor: this.editor,
+				state,
+				view: this.mountedView
+			}));
+			return buildDecorationSet(state.doc, decorations, name);
+		}
+		/**
+		* Runs a decoration callback and swallows anything it throws. These run inside
+		* `state.apply`, where an uncaught error would abort the whole transaction.
+		* @param name The extension name.
+		* @param method The callback name, used in the error message.
+		* @param create The callback to run.
+		* @returns The decorations, or an empty array if the callback threw.
+		*/
+		runCreate(name, method, create) {
+			try {
+				return create();
+			} catch (error) {
+				console.error(`[tiptap error]: Extension "${name}" threw in \`addDecorations().${method}()\`. Its decorations were dropped for this update.`, error);
+				return [];
+			}
+		}
+		warnDuplicateWidgetKeys(state) {
+			if (!isDev) return;
+			if (state.widgetKeys.size === 0) {
+				this.warnedWidgetKeys.clear();
+				return;
+			}
+			const duplicateKeys = findDuplicateWidgetKeys(state.mergedDecorationSet);
+			const nextWarningKeys = new Set(duplicateKeys.map(({
+				key
+			}) => key));
+			for (const {
+				key,
+				extensions
+			} of duplicateKeys) {
+				if (this.warnedWidgetKeys.has(key)) continue;
+				const names = Array.from(extensions).map(name => `"${name}"`).join(", ");
+				console.warn(`[tiptap warn]: Duplicate widget decoration key "${key}" in extension${extensions.size === 1 ? "" : "s"} ${names}. Widget decoration keys must be globally unique, otherwise ProseMirror misplaces the widget DOM. Use a stable, unique key (e.g. \`comment-\${id}\`).`);
+			}
+			this.warnedWidgetKeys = nextWarningKeys;
+		}
+		/**
+		* Builds the merged DecorationSet during init. Skips the merge for a
+		* single extension since its per-extension set is already correct.
+		* @param doc The document to build the merged set for.
+		* @param decorationSetsByExtension The per-extension decoration sets.
+		* @returns The merged decoration set.
+		*/
+		buildMergedSet(doc, decorationSetsByExtension) {
+			const names = Object.keys(decorationSetsByExtension);
+			if (names.length === 1) return decorationSetsByExtension[names[0]];
+			return mergeDecorationSets(doc, decorationSetsByExtension);
+		}
+		/**
+		* Computes the merged DecorationSet after apply. Single extension skips the
+		* merge; nothing recomputed maps the previous merged set forward; otherwise
+		* the merge is rebuilt from the per-extension sets.
+		*/
+		mergeAfterApply({
+			entries,
+			previous,
+			tr,
+			decorationSetsByExtension,
+			recomputedNames
+		}) {
+			if (entries.length === 1) return decorationSetsByExtension[entries[0].name];
+			if (recomputedNames.size === 0) return previous.mergedDecorationSet.map(tr.mapping, tr.doc);
+			return mergeDecorationSets(tr.doc, decorationSetsByExtension);
 		}
 	};
-	var inputRuleMatcherHandler = (text, find) => {
-		if (isRegExp(find)) {
-			return find.exec(text);
+	//#endregion
+	//#region src/utilities/attrsEqual.ts
+	/**
+	* Compare two attribute objects for equality.
+	* Handles null/undefined and asserts key presence in both objects so that
+	* `{ foo: undefined }` and `{ bar: undefined }` are not treated as equal.
+	*/
+	function attrsEqual$1(a, b) {
+		if (a === b) return true;
+		if (!a || !b) return false;
+		const keysA = Object.keys(a);
+		const keysB = Object.keys(b);
+		if (keysA.length !== keysB.length) return false;
+		return keysA.every(key => Object.prototype.hasOwnProperty.call(b, key) && Object.is(a[key], b[key]));
+	}
+	//#endregion
+	//#region src/utilities/canInsertNode.ts
+	function canInsertNode(state, nodeType) {
+		const {
+			selection
+		} = state;
+		const {
+			$from
+		} = selection;
+		if (selection instanceof NodeSelection) {
+			const index = $from.index();
+			return $from.parent.canReplaceWith(index, index + 1, nodeType);
 		}
+		let depth = $from.depth;
+		while (depth >= 0) {
+			const index = $from.index(depth);
+			if ($from.node(depth).contentMatchAt(index).matchType(nodeType)) return true;
+			depth -= 1;
+		}
+		return false;
+	}
+	//#endregion
+	//#region src/utilities/createStyleTag.ts
+	function createStyleTag(style, nonce, suffix) {
+		const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${""}]`);
+		if (tiptapStyleTag !== null) return tiptapStyleTag;
+		const styleNode = document.createElement("style");
+		if (nonce) styleNode.setAttribute("nonce", nonce);
+		styleNode.setAttribute(`data-tiptap-style${""}`, "");
+		styleNode.innerHTML = style;
+		document.getElementsByTagName("head")[0].appendChild(styleNode);
+		return styleNode;
+	}
+	//#endregion
+	//#region src/utilities/getStyleProperty.ts
+	/**
+	* Read a CSS property value directly from an element's raw inline `style`
+	* attribute, bypassing the CSSOM (e.g. `element.style.fontFamily`) which
+	* canonicalizes values and can change formatting. The original format is
+	* preserved (quotes, hex vs rgb, etc.).
+	*
+	* When a property is declared more than once, the last declaration wins —
+	* this matches CSS cascade order and is useful when nested spans are merged
+	* and the child's value should take priority.
+	*
+	* Property name comparison is case-insensitive.
+	*
+	* @param element - The element whose `style` attribute should be read.
+	* @param propertyName - The CSS property name (e.g. `font-family`).
+	* @returns The raw value string, or `null` if the property is not present.
+	*
+	* @example
+	* ```ts
+	* parseHTML: element => getStyleProperty(element, 'font-family')
+	* ```
+	*/
+	function getStyleProperty(element, propertyName) {
+		const styleAttr = element.getAttribute("style");
+		if (!styleAttr) return null;
+		const decls = styleAttr.split(";").map(decl => decl.trim()).filter(Boolean);
+		const target = propertyName.toLowerCase();
+		for (let i = decls.length - 1; i >= 0; i -= 1) {
+			const decl = decls[i];
+			const colonIndex = decl.indexOf(":");
+			if (colonIndex === -1) continue;
+			if (decl.slice(0, colonIndex).trim().toLowerCase() === target) return decl.slice(colonIndex + 1).trim();
+		}
+		return null;
+	}
+	//#endregion
+	//#region src/utilities/htmlEntities.ts
+	/**
+	* Decode common HTML entities in text content so they display as literal
+	* characters inside the editor.  The decode order matters: `&amp;` must be
+	* decoded **last** so that doubly-encoded sequences like `&amp;lt;` first
+	* survive the `&lt;` pass and then correctly become `&lt;` (not `<`).
+	*/
+	function decodeHtmlEntities(text) {
+		return text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&amp;/g, "&");
+	}
+	/**
+	* Encode HTML special characters so they roundtrip safely through markdown.
+	* `&` is encoded **first** to avoid double-encoding the ampersand in other
+	* entities (e.g. `<` → `&lt;`, not `&amp;lt;`).
+	*
+	* Note: `"` is intentionally NOT encoded here because double quotes are
+	* ordinary characters in markdown and do not need escaping.  The decode
+	* function still handles `&quot;` because the markdown tokenizer may emit it.
+	*/
+	function encodeHtmlEntities(text) {
+		return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	}
+	//#endregion
+	//#region src/utilities/isNumber.ts
+	function isNumber(value) {
+		return typeof value === "number";
+	}
+	//#endregion
+	//#region src/utilities/isPlainObject.ts
+	function getType(value) {
+		return Object.prototype.toString.call(value).slice(8, -1);
+	}
+	function isPlainObject(value) {
+		if (getType(value) !== "Object") return false;
+		return value.constructor === Object && Object.getPrototypeOf(value) === Object.prototype;
+	}
+	//#endregion
+	//#region src/utilities/markdown/parseIndentedBlocks.ts
+	/**
+	* Parses markdown text into hierarchical indented blocks with proper nesting.
+	*
+	* This utility handles:
+	* - Line-by-line parsing with pattern matching
+	* - Hierarchical nesting based on indentation levels
+	* - Nested content collection and parsing
+	* - Empty line handling
+	* - Content dedenting for nested blocks
+	*
+	* The key difference from flat parsing is that this maintains the hierarchical
+	* structure where nested items become `nestedTokens` of their parent items,
+	* rather than being flattened into a single array.
+	*
+	* @param src - The markdown source text to parse
+	* @param config - Configuration object defining how to parse and create tokens
+	* @param lexer - Markdown lexer for parsing nested content
+	* @returns Parsed result with hierarchical items, or undefined if no matches
+	*
+	* @example
+	* ```ts
+	* const result = parseIndentedBlocks(src, {
+	*   itemPattern: /^(\s*)([-+*])\s+\[([ xX])\]\s+(.*)$/,
+	*   extractItemData: (match) => ({
+	*     indentLevel: match[1].length,
+	*     mainContent: match[4],
+	*     checked: match[3].toLowerCase() === 'x'
+	*   }),
+	*   createToken: (data, nestedTokens) => ({
+	*     type: 'taskItem',
+	*     checked: data.checked,
+	*     text: data.mainContent,
+	*     nestedTokens
+	*   })
+	* }, lexer)
+	* ```
+	*/
+	function parseIndentedBlocks(src, config, lexer) {
+		const lines = src.split("\n");
+		const items = [];
+		let totalRaw = "";
+		let i = 0;
+		const baseIndentSize = config.baseIndentSize || 2;
+		while (i < lines.length) {
+			const currentLine = lines[i];
+			const itemMatch = currentLine.match(config.itemPattern);
+			if (!itemMatch) {
+				if (items.length > 0) break;else if (currentLine.trim() === "") {
+					i += 1;
+					totalRaw = `${totalRaw}${currentLine}\n`;
+					continue;
+				} else return;
+			}
+			const itemData = config.extractItemData(itemMatch);
+			const {
+				indentLevel,
+				mainContent
+			} = itemData;
+			totalRaw = `${totalRaw}${currentLine}\n`;
+			const itemContent = [mainContent];
+			i += 1;
+			while (i < lines.length) {
+				var _nextLine$match;
+				const nextLine = lines[i];
+				if (nextLine.trim() === "") {
+					var _nextNonEmpty$match;
+					const nextNonEmptyIndex = lines.slice(i + 1).findIndex(l => l.trim() !== "");
+					if (nextNonEmptyIndex === -1) break;
+					if ((((_nextNonEmpty$match = lines[i + 1 + nextNonEmptyIndex].match(/^(\s*)/)) === null || _nextNonEmpty$match === void 0 || (_nextNonEmpty$match = _nextNonEmpty$match[1]) === null || _nextNonEmpty$match === void 0 ? void 0 : _nextNonEmpty$match.length) || 0) > indentLevel) {
+						itemContent.push(nextLine);
+						totalRaw = `${totalRaw}${nextLine}\n`;
+						i += 1;
+						continue;
+					} else break;
+				}
+				if ((((_nextLine$match = nextLine.match(/^(\s*)/)) === null || _nextLine$match === void 0 || (_nextLine$match = _nextLine$match[1]) === null || _nextLine$match === void 0 ? void 0 : _nextLine$match.length) || 0) > indentLevel) {
+					itemContent.push(nextLine);
+					totalRaw = `${totalRaw}${nextLine}\n`;
+					i += 1;
+				} else break;
+			}
+			let nestedTokens;
+			const nestedContent = itemContent.slice(1);
+			if (nestedContent.length > 0) {
+				const dedentedNested = nestedContent.map(nestedLine => nestedLine.slice(indentLevel + baseIndentSize)).join("\n");
+				if (dedentedNested.trim()) {
+					if (config.customNestedParser) nestedTokens = config.customNestedParser(dedentedNested);else nestedTokens = lexer.blockTokens(dedentedNested);
+				}
+			}
+			const token = config.createToken(itemData, nestedTokens);
+			items.push(token);
+		}
+		if (items.length === 0) return;
+		return {
+			items,
+			raw: totalRaw
+		};
+	}
+	//#endregion
+	//#region src/utilities/markdown/renderNestedMarkdownContent.ts
+	/**
+	* @fileoverview Utility functions for rendering nested content in markdown.
+	*
+	* This module provides reusable utilities for extensions that need to render
+	* content with a prefix on the main line and properly indented nested content.
+	*/
+	/**
+	* Utility function for rendering content with a main line prefix and nested indented content.
+	*
+	* This function handles the common pattern of rendering content with:
+	* 1. A main line with a prefix (like "- " for lists, "> " for blockquotes, etc.)
+	* 2. Nested content that gets indented properly
+	*
+	* @param node - The ProseMirror node representing the content
+	* @param h - The markdown renderer helper
+	* @param prefixOrGenerator - Either a string prefix or a function that generates the prefix from context
+	* @param ctx - Optional context object (used when prefixOrGenerator is a function)
+	* @returns The rendered markdown string
+	*
+	* @example
+	* ```ts
+	* // For a bullet list item with static prefix
+	* return renderNestedMarkdownContent(node, h, '- ')
+	*
+	* // For a task item with static prefix
+	* const prefix = `- [${node.attrs?.checked ? 'x' : ' '}] `
+	* return renderNestedMarkdownContent(node, h, prefix)
+	*
+	* // For a blockquote with static prefix
+	* return renderNestedMarkdownContent(node, h, '> ')
+	*
+	* // For content with dynamic prefix based on context
+	* return renderNestedMarkdownContent(node, h, ctx => {
+	*   if (ctx.parentType === 'orderedList') {
+	*     return `${ctx.index + 1}. `
+	*   }
+	*   return '- '
+	* }, ctx)
+	*
+	* // Custom extension example
+	* const CustomContainer = Node.create({
+	*   name: 'customContainer',
+	*   // ... other config
+	*   markdown: {
+	*     render: (node, h) => {
+	*       const type = node.attrs?.type || 'info'
+	*       return renderNestedMarkdownContent(node, h, `[${type}] `)
+	*     }
+	*   }
+	* })
+	* ```
+	*/
+	function renderNestedMarkdownContent(node, h, prefixOrGenerator, ctx) {
+		if (!node || !Array.isArray(node.content)) return "";
+		const prefix = typeof prefixOrGenerator === "function" ? prefixOrGenerator(ctx) : prefixOrGenerator;
+		const [content, ...children] = node.content;
+		let output = `${prefix}${h.renderChildren([content])}`;
+		if (children && children.length > 0) children.forEach((child, index) => {
+			var _h$renderChild, _h$renderChild2;
+			const childContent = (_h$renderChild = (_h$renderChild2 = h.renderChild) === null || _h$renderChild2 === void 0 ? void 0 : _h$renderChild2.call(h, child, index + 1)) !== null && _h$renderChild !== void 0 ? _h$renderChild : h.renderChildren([child]);
+			if (childContent !== void 0 && childContent !== null) {
+				const indentedChild = childContent.split("\n").map(line => line ? h.indent(line) : h.indent("")).join("\n");
+				output += child.type === "paragraph" ? `\n\n${indentedChild}` : `\n${indentedChild}`;
+			}
+		});
+		return output;
+	}
+	//#endregion
+	//#region src/utilities/marksEqual.ts
+	function markTypeName(mark) {
+		return typeof mark.type === "string" ? mark.type : mark.type.name;
+	}
+	/**
+	* Compare two arrays of mark objects for equality (order-insensitive).
+	* Marks are matched by type name and attributes (via attrsEqual),
+	* so key ordering in attrs does not matter, nor does mark array order.
+	*/
+	function marksEqual(a, b) {
+		if (a.length !== b.length) return false;
+		const consumed = Array.from({
+			length: b.length
+		}, () => false);
+		return a.every(markA => {
+			const nameA = markTypeName(markA);
+			const idx = b.findIndex((markB, i) => !consumed[i] && nameA === markTypeName(markB) && attrsEqual$1(markA.attrs, markB.attrs));
+			if (idx === -1) return false;
+			consumed[idx] = true;
+			return true;
+		});
+	}
+	//#endregion
+	//#region src/utilities/mergeDeep.ts
+	function mergeDeep(target, source) {
+		const output = {
+			...target
+		};
+		if (isPlainObject(target) && isPlainObject(source)) Object.keys(source).forEach(key => {
+			if (isPlainObject(source[key]) && isPlainObject(target[key])) output[key] = mergeDeep(target[key], source[key]);else output[key] = source[key];
+		});
+		return output;
+	}
+	//#endregion
+	//#region src/MarkView.ts
+	function updateMarkViewAttributes(checkMark, editor, attrs = {}) {
+		const {
+			state
+		} = editor;
+		const {
+			doc,
+			tr
+		} = state;
+		const thisMark = checkMark;
+		doc.descendants((node, pos) => {
+			const from = tr.mapping.map(pos);
+			const to = tr.mapping.map(pos) + node.nodeSize;
+			let foundMark = null;
+			node.marks.forEach(mark => {
+				if (mark !== thisMark) return false;
+				foundMark = mark;
+			});
+			if (!foundMark) return;
+			let needsUpdate = false;
+			Object.keys(attrs).forEach(k => {
+				if (attrs[k] !== foundMark.attrs[k]) needsUpdate = true;
+			});
+			if (needsUpdate) {
+				const updatedMark = checkMark.type.create({
+					...checkMark.attrs,
+					...attrs
+				});
+				tr.removeMark(from, to, checkMark.type);
+				tr.addMark(from, to, updatedMark);
+			}
+		});
+		if (tr.docChanged) editor.view.dispatch(tr);
+	}
+	//#endregion
+	//#region src/InputRule.ts
+	var InputRule = class {
+		constructor(config) {
+			var _config$undoable;
+			this.find = config.find;
+			this.handler = config.handler;
+			this.undoable = (_config$undoable = config.undoable) !== null && _config$undoable !== void 0 ? _config$undoable : true;
+		}
+	};
+	const inputRuleMatcherHandler = (text, find) => {
+		if (isRegExp(find)) return find.exec(text);
 		const inputRuleMatch = find(text);
-		if (!inputRuleMatch) {
-			return null;
-		}
+		if (!inputRuleMatch) return null;
 		const result = [inputRuleMatch.text];
 		result.index = inputRuleMatch.index;
 		result.input = text;
 		result.data = inputRuleMatch.data;
 		if (inputRuleMatch.replaceWith) {
-			if (!inputRuleMatch.text.includes(inputRuleMatch.replaceWith)) {
-				console.warn('[tiptap warn]: "inputRuleMatch.replaceWith" must be part of "inputRuleMatch.text".');
-			}
+			if (!inputRuleMatch.text.includes(inputRuleMatch.replaceWith)) console.warn("[tiptap warn]: \"inputRuleMatch.replaceWith\" must be part of \"inputRuleMatch.text\".");
 			result.push(inputRuleMatch.replaceWith);
 		}
 		return result;
 	};
-	function run$2(config) {
-		var _a;
+	function run$1$1(config) {
+		var _ref;
 		const {
 			editor,
 			from,
@@ -16598,26 +17691,19 @@ this.BX.Note = this.BX.Note || {};
 		const {
 			view
 		} = editor;
-		if (view.composing) {
-			return false;
-		}
+		if (view.composing) return false;
 		const $from = view.state.doc.resolve(from);
-		if (
-		// check for code node
-		$from.parent.type.spec.code ||
-		// check for code mark
-		!!((_a = $from.nodeBefore || $from.nodeAfter) == null ? void 0 : _a.marks.find(mark => mark.type.spec.code))) {
-			return false;
-		}
+		if ($from.parent.type.spec.code || !!((_ref = $from.nodeBefore || $from.nodeAfter) === null || _ref === void 0 ? void 0 : _ref.marks.find(mark => mark.type.spec.code))) return false;
 		let matched = false;
 		const textBefore = getTextContentFromNodes($from) + text;
 		rules.forEach(rule => {
-			if (matched) {
-				return;
-			}
+			if (matched) return;
 			const match = inputRuleMatcherHandler(textBefore, rule.find);
-			if (!match) {
-				return;
+			if (!match) return;
+			const matchedDocLength = match[0].length - text.length;
+			if (matchedDocLength > 0) {
+				const matchStartOffset = $from.parentOffset - matchedDocLength;
+				if (matchStartOffset < 0 || $from.parent.textBetween(matchStartOffset, $from.parentOffset) !== match[0].slice(0, matchedDocLength)) return;
 			}
 			const tr = view.state.tr;
 			const state = createChainableState({
@@ -16636,30 +17722,30 @@ this.BX.Note = this.BX.Note || {};
 				editor,
 				state
 			});
-			const handler = rule.handler({
+			if (rule.handler({
 				state,
 				range,
 				match,
 				commands,
 				chain,
 				can
+			}) === null || !tr.steps.length) return;
+			if (rule.undoable) tr.setMeta(plugin, {
+				transform: tr,
+				from,
+				to,
+				text
 			});
-			if (handler === null || !tr.steps.length) {
-				return;
-			}
-			if (rule.undoable) {
-				tr.setMeta(plugin, {
-					transform: tr,
-					from,
-					to,
-					text
-				});
-			}
 			view.dispatch(tr);
 			matched = true;
 		});
 		return matched;
 	}
+	/**
+	* Create an input rules plugin. When enabled, it will cause text
+	* input that matches any of the given rules to trigger the rule’s
+	* action.
+	*/
 	function inputRulesPlugin(props) {
 		const {
 			editor,
@@ -16672,41 +17758,32 @@ this.BX.Note = this.BX.Note || {};
 				},
 				apply(tr, prev, state) {
 					const stored = tr.getMeta(plugin);
-					if (stored) {
-						return stored;
-					}
+					if (stored) return stored;
 					const simulatedInputMeta = tr.getMeta("applyInputRules");
-					const isSimulatedInput = !!simulatedInputMeta;
-					if (isSimulatedInput) {
-						setTimeout(() => {
-							let {
-								text
-							} = simulatedInputMeta;
-							if (typeof text === "string") {
-								text = text;
-							} else {
-								text = getHTMLFromFragment(Fragment.from(text), state.schema);
-							}
-							const {
-								from
-							} = simulatedInputMeta;
-							const to = from + text.length;
-							run$2({
-								editor,
-								from,
-								to,
-								text,
-								rules,
-								plugin
-							});
+					if (!!simulatedInputMeta) setTimeout(() => {
+						let {
+							text
+						} = simulatedInputMeta;
+						if (typeof text === "string") text = text;else text = getHTMLFromFragment(Fragment.from(text), state.schema);
+						const {
+							from
+						} = simulatedInputMeta;
+						const to = from + text.length;
+						run$1$1({
+							editor,
+							from,
+							to,
+							text,
+							rules,
+							plugin
 						});
-					}
+					});
 					return tr.selectionSet || tr.docChanged ? null : prev;
 				}
 			},
 			props: {
 				handleTextInput(view, from, to, text) {
-					return run$2({
+					return run$1$1({
 						editor,
 						from,
 						to,
@@ -16721,77 +17798,40 @@ this.BX.Note = this.BX.Note || {};
 							const {
 								$cursor
 							} = view.state.selection;
-							if ($cursor) {
-								run$2({
-									editor,
-									from: $cursor.pos,
-									to: $cursor.pos,
-									text: "",
-									rules,
-									plugin
-								});
-							}
+							if ($cursor) run$1$1({
+								editor,
+								from: $cursor.pos,
+								to: $cursor.pos,
+								text: "",
+								rules,
+								plugin
+							});
 						});
 						return false;
 					}
 				},
-				// add support for input rules to trigger on enter
-				// this is useful for example for code blocks
 				handleKeyDown(view, event) {
-					if (event.key !== "Enter") {
-						return false;
-					}
+					if (event.key !== "Enter") return false;
 					const {
 						$cursor
 					} = view.state.selection;
-					if ($cursor) {
-						return run$2({
-							editor,
-							from: $cursor.pos,
-							to: $cursor.pos,
-							text: "\n",
-							rules,
-							plugin
-						});
-					}
+					if ($cursor) return run$1$1({
+						editor,
+						from: $cursor.pos,
+						to: $cursor.pos,
+						text: "\n",
+						rules,
+						plugin
+					});
 					return false;
 				}
 			},
-			// @ts-ignore
 			isInputRules: true
 		});
 		return plugin;
 	}
-
-	// src/utilities/isPlainObject.ts
-	function getType(value) {
-		return Object.prototype.toString.call(value).slice(8, -1);
-	}
-	function isPlainObject(value) {
-		if (getType(value) !== "Object") {
-			return false;
-		}
-		return value.constructor === Object && Object.getPrototypeOf(value) === Object.prototype;
-	}
-
-	// src/utilities/mergeDeep.ts
-	function mergeDeep(target, source) {
-		const output = {
-			...target
-		};
-		if (isPlainObject(target) && isPlainObject(source)) {
-			Object.keys(source).forEach(key => {
-				if (isPlainObject(source[key]) && isPlainObject(target[key])) {
-					output[key] = mergeDeep(target[key], source[key]);
-				} else {
-					output[key] = source[key];
-				}
-			});
-		}
-		return output;
-	}
-
-	// src/Extendable.ts
+	//#endregion
+	//#region src/Extendable.ts
 	var Extendable = class {
 		constructor(config = {}) {
 			this.type = "extendable";
@@ -16809,17 +17849,17 @@ this.BX.Note = this.BX.Note || {};
 		}
 		get options() {
 			return {
-				...(callOrReturn(getExtensionField(this, "addOptions", {
+				...callOrReturn(getExtensionField(this, "addOptions", {
 					name: this.name
-				})) || {})
+				}))
 			};
 		}
 		get storage() {
 			return {
-				...(callOrReturn(getExtensionField(this, "addStorage", {
+				...callOrReturn(getExtensionField(this, "addStorage", {
 					name: this.name,
 					options: this.options
-				})) || {})
+				}))
 			};
 		}
 		configure(options = {}) {
@@ -16831,6 +17871,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 			extension.name = this.name;
 			extension.parent = this.parent;
+			this.child = null;
 			return extension;
 		}
 		extend(extendedConfig = {}) {
@@ -16844,20 +17885,24 @@ this.BX.Note = this.BX.Note || {};
 			return extension;
 		}
 	};
-
-	// src/Mark.ts
-	var Mark = class _Mark extends Extendable {
-		constructor() {
-			super(...arguments);
+	//#endregion
+	//#region src/Mark.ts
+	/**
+	* The Mark class is used to create custom mark extensions.
+	* @see https://tiptap.dev/api/extensions#create-a-new-extension
+	*/
+	var Mark = class Mark extends Extendable {
+		constructor(..._args) {
+			super(..._args);
 			this.type = "mark";
 		}
 		/**
-		 * Create a new Mark instance
-		 * @param config - Mark configuration object or a function that returns a configuration object
-		 */
+		* Create a new Mark instance
+		* @param config - Mark configuration object or a function that returns a configuration object
+		*/
 		static create(config = {}) {
 			const resolvedConfig = typeof config === "function" ? config() : config;
-			return new _Mark(resolvedConfig);
+			return new Mark(resolvedConfig);
 		}
 		static handleExit({
 			editor,
@@ -16867,17 +17912,11 @@ this.BX.Note = this.BX.Note || {};
 				tr
 			} = editor.state;
 			const currentPos = editor.state.selection.$from;
-			const isAtEnd = currentPos.pos === currentPos.end();
-			if (isAtEnd) {
+			if (currentPos.pos === currentPos.end()) {
 				const currentMarks = currentPos.marks();
-				const isInMark = !!currentMarks.find(m => (m == null ? void 0 : m.type.name) === mark.name);
-				if (!isInMark) {
-					return false;
-				}
-				const removeMark = currentMarks.find(m => (m == null ? void 0 : m.type.name) === mark.name);
-				if (removeMark) {
-					tr.removeStoredMark(removeMark);
-				}
+				if (!!!currentMarks.find(m => (m === null || m === void 0 ? void 0 : m.type.name) === mark.name)) return false;
+				const removeMark = currentMarks.find(m => (m === null || m === void 0 ? void 0 : m.type.name) === mark.name);
+				if (removeMark) tr.removeStoredMark(removeMark);
 				tr.insertText(" ", currentPos.pos);
 				editor.view.dispatch(tr);
 				return true;
@@ -16892,42 +17931,35 @@ this.BX.Note = this.BX.Note || {};
 			return super.extend(resolvedConfig);
 		}
 	};
-
-	// src/utilities/isNumber.ts
-	function isNumber(value) {
-		return typeof value === "number";
-	}
-
-	// src/PasteRule.ts
+	//#endregion
+	//#region src/PasteRule.ts
+	/**
+	* Paste rules are used to react to pasted content.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#paste-rules
+	*/
 	var PasteRule = class {
 		constructor(config) {
 			this.find = config.find;
 			this.handler = config.handler;
 		}
 	};
-	var pasteRuleMatcherHandler = (text, find, event) => {
-		if (isRegExp(find)) {
-			return [...text.matchAll(find)];
-		}
+	const pasteRuleMatcherHandler = (text, find, event) => {
+		if (isRegExp(find)) return [...text.matchAll(find)];
 		const matches = find(text, event);
-		if (!matches) {
-			return [];
-		}
+		if (!matches) return [];
 		return matches.map(pasteRuleMatch => {
 			const result = [pasteRuleMatch.text];
 			result.index = pasteRuleMatch.index;
 			result.input = text;
 			result.data = pasteRuleMatch.data;
 			if (pasteRuleMatch.replaceWith) {
-				if (!pasteRuleMatch.text.includes(pasteRuleMatch.replaceWith)) {
-					console.warn('[tiptap warn]: "pasteRuleMatch.replaceWith" must be part of "pasteRuleMatch.text".');
-				}
+				if (!pasteRuleMatch.text.includes(pasteRuleMatch.replaceWith)) console.warn("[tiptap warn]: \"pasteRuleMatch.replaceWith\" must be part of \"pasteRuleMatch.text\".");
 				result.push(pasteRuleMatch.replaceWith);
 			}
 			return result;
 		});
 	};
-	function run2(config) {
+	function run$2(config) {
 		const {
 			editor,
 			state,
@@ -16947,22 +17979,15 @@ this.BX.Note = this.BX.Note || {};
 		});
 		const handlers = [];
 		state.doc.nodesBetween(from, to, (node, pos) => {
-			var _a, _b, _c, _d, _e;
-			if (((_b = (_a = node.type) == null ? void 0 : _a.spec) == null ? void 0 : _b.code) || !(node.isText || node.isTextblock || node.isInline)) {
-				return;
-			}
-			const contentSize = (_e = (_d = (_c = node.content) == null ? void 0 : _c.size) != null ? _d : node.nodeSize) != null ? _e : 0;
+			var _node$type, _ref, _node$content$size, _node$content;
+			if (((_node$type = node.type) === null || _node$type === void 0 || (_node$type = _node$type.spec) === null || _node$type === void 0 ? void 0 : _node$type.code) || !(node.isText || node.isTextblock || node.isInline)) return;
+			const contentSize = (_ref = (_node$content$size = (_node$content = node.content) === null || _node$content === void 0 ? void 0 : _node$content.size) !== null && _node$content$size !== void 0 ? _node$content$size : node.nodeSize) !== null && _ref !== void 0 ? _ref : 0;
 			const resolvedFrom = Math.max(from, pos);
 			const resolvedTo = Math.min(to, pos + contentSize);
-			if (resolvedFrom >= resolvedTo) {
-				return;
-			}
-			const textToMatch = node.isText ? node.text || "" : node.textBetween(resolvedFrom - pos, resolvedTo - pos, void 0, "\uFFFC");
-			const matches = pasteRuleMatcherHandler(textToMatch, rule.find, pasteEvent);
-			matches.forEach(match => {
-				if (match.index === void 0) {
-					return;
-				}
+			if (resolvedFrom >= resolvedTo) return;
+			const textToMatch = node.isText ? node.text || "" : node.textBetween(resolvedFrom - pos, resolvedTo - pos, void 0, "￼");
+			pasteRuleMatcherHandler(textToMatch, rule.find, pasteEvent).forEach(match => {
+				if (match.index === void 0) return;
 				const start = resolvedFrom + match.index + 1;
 				const end = start + match[0].length;
 				const range = {
@@ -16982,18 +18007,22 @@ this.BX.Note = this.BX.Note || {};
 				handlers.push(handler);
 			});
 		});
-		const success = handlers.every(handler => handler !== null);
-		return success;
+		return handlers.every(handler => handler !== null);
 	}
-	var tiptapDragFromOtherEditor = null;
-	var createClipboardPasteEvent = text => {
-		var _a;
+	let tiptapDragFromOtherEditor = null;
+	const createClipboardPasteEvent = text => {
+		var _event$clipboardData;
 		const event = new ClipboardEvent("paste", {
 			clipboardData: new DataTransfer()
 		});
-		(_a = event.clipboardData) == null ? void 0 : _a.setData("text/html", text);
+		(_event$clipboardData = event.clipboardData) === null || _event$clipboardData === void 0 || _event$clipboardData.setData("text/html", text);
 		return event;
 	};
+	/**
+	* Create an paste rules plugin. When enabled, it will cause pasted
+	* text that matches any of the given rules to trigger the rule’s
+	* action.
+	*/
 	function pasteRulesPlugin(props) {
 		const {
 			editor,
@@ -17021,7 +18050,7 @@ this.BX.Note = this.BX.Note || {};
 				state,
 				transaction: tr
 			});
-			const handler = run2({
+			if (!run$2({
 				editor,
 				state: chainableState,
 				from: Math.max(from - 1, 0),
@@ -17029,10 +18058,7 @@ this.BX.Note = this.BX.Note || {};
 				rule,
 				pasteEvent: pasteEvt,
 				dropEvent
-			});
-			if (!handler || !tr.steps.length) {
-				return;
-			}
+			}) || !tr.steps.length) return;
 			try {
 				dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
 			} catch {
@@ -17041,21 +18067,16 @@ this.BX.Note = this.BX.Note || {};
 			pasteEvent = typeof ClipboardEvent !== "undefined" ? new ClipboardEvent("paste") : null;
 			return tr;
 		};
-		const plugins = rules.map(rule => {
+		return rules.map(rule => {
 			return new Plugin({
-				// we register a global drag handler to track the current drag source element
 				view(view) {
 					const handleDragstart = event => {
-						var _a;
-						dragSourceElement = ((_a = view.dom.parentElement) == null ? void 0 : _a.contains(event.target)) ? view.dom.parentElement : null;
-						if (dragSourceElement) {
-							tiptapDragFromOtherEditor = editor;
-						}
+						var _view$dom$parentEleme;
+						dragSourceElement = ((_view$dom$parentEleme = view.dom.parentElement) === null || _view$dom$parentEleme === void 0 ? void 0 : _view$dom$parentEleme.contains(event.target)) ? view.dom.parentElement : null;
+						if (dragSourceElement) tiptapDragFromOtherEditor = editor;
 					};
 					const handleDragend = () => {
-						if (tiptapDragFromOtherEditor) {
-							tiptapDragFromOtherEditor = null;
-						}
+						if (tiptapDragFromOtherEditor) tiptapDragFromOtherEditor = null;
 					};
 					window.addEventListener("dragstart", handleDragstart);
 					window.addEventListener("dragend", handleDragend);
@@ -17073,25 +18094,21 @@ this.BX.Note = this.BX.Note || {};
 							dropEvent = event;
 							if (!isDroppedFromProseMirror) {
 								const dragFromOtherEditor = tiptapDragFromOtherEditor;
-								if (dragFromOtherEditor == null ? void 0 : dragFromOtherEditor.isEditable) {
-									setTimeout(() => {
-										const selection = dragFromOtherEditor.state.selection;
-										if (selection) {
-											dragFromOtherEditor.commands.deleteRange({
-												from: selection.from,
-												to: selection.to
-											});
-										}
-									}, 10);
-								}
+								if (dragFromOtherEditor === null || dragFromOtherEditor === void 0 ? void 0 : dragFromOtherEditor.isEditable) setTimeout(() => {
+									const selection = dragFromOtherEditor.state.selection;
+									if (selection) dragFromOtherEditor.commands.deleteRange({
+										from: selection.from,
+										to: selection.to
+									});
+								}, 10);
 							}
 							return false;
 						},
 						paste: (_view, event) => {
-							var _a;
-							const html = (_a = event.clipboardData) == null ? void 0 : _a.getData("text/html");
+							var _clipboardData;
+							const html = (_clipboardData = event.clipboardData) === null || _clipboardData === void 0 ? void 0 : _clipboardData.getData("text/html");
 							pasteEvent = event;
-							isPastedFromProseMirror = !!(html == null ? void 0 : html.includes("data-pm-slice"));
+							isPastedFromProseMirror = !!(html === null || html === void 0 ? void 0 : html.includes("data-pm-slice"));
 							return false;
 						}
 					}
@@ -17102,38 +18119,30 @@ this.BX.Note = this.BX.Note || {};
 					const isDrop = transaction.getMeta("uiEvent") === "drop" && !isDroppedFromProseMirror;
 					const simulatedPasteMeta = transaction.getMeta("applyPasteRules");
 					const isSimulatedPaste = !!simulatedPasteMeta;
-					if (!isPaste && !isDrop && !isSimulatedPaste) {
-						return;
-					}
+					if (!isPaste && !isDrop && !isSimulatedPaste) return;
 					if (isSimulatedPaste) {
 						let {
 							text
 						} = simulatedPasteMeta;
-						if (typeof text === "string") {
-							text = text;
-						} else {
-							text = getHTMLFromFragment(Fragment.from(text), state.schema);
-						}
+						if (typeof text === "string") text = text;else text = getHTMLFromFragment(Fragment.from(text), state.schema);
 						const {
-							from: from2
+							from
 						} = simulatedPasteMeta;
-						const to2 = from2 + text.length;
+						const to = from + text.length;
 						const pasteEvt = createClipboardPasteEvent(text);
 						return processEvent({
 							rule,
 							state,
-							from: from2,
+							from,
 							to: {
-								b: to2
+								b: to
 							},
 							pasteEvt
 						});
 					}
 					const from = oldState.doc.content.findDiffStart(state.doc.content);
 					const to = oldState.doc.content.findDiffEnd(state.doc.content);
-					if (!isNumber(from) || !to || from === to.b) {
-						return;
-					}
+					if (!isNumber(from) || !to || from === to.b) return;
 					return processEvent({
 						rule,
 						state,
@@ -17144,13 +18153,14 @@ this.BX.Note = this.BX.Note || {};
 				}
 			});
 		});
-		return plugins;
 	}
-
-	// src/ExtensionManager.ts
+	//#endregion
+	//#region src/ExtensionManager.ts
 	var ExtensionManager = class {
 		constructor(extensions, editor) {
 			this.splittableMarks = [];
+			this.nonClearableMarks = [];
+			this.decorationManager = null;
 			this.editor = editor;
 			this.baseExtensions = extensions;
 			this.extensions = resolveExtensions(extensions);
@@ -17158,22 +18168,19 @@ this.BX.Note = this.BX.Note || {};
 			this.setupExtensions();
 		}
 		/**
-		 * Get all commands from the extensions.
-		 * @returns An object with all commands where the key is the command name and the value is the command function
-		 */
+		* Get all commands from the extensions.
+		* @returns An object with all commands where the key is the command name and the value is the command function
+		*/
 		get commands() {
 			return this.extensions.reduce((commands, extension) => {
-				const context = {
+				const addCommands = getExtensionField(extension, "addCommands", {
 					name: extension.name,
 					options: extension.options,
 					storage: this.editor.extensionStorage[extension.name],
 					editor: this.editor,
 					type: getSchemaTypeByName(extension.name, this.schema)
-				};
-				const addCommands = getExtensionField(extension, "addCommands", context);
-				if (!addCommands) {
-					return commands;
-				}
+				});
+				if (!addCommands) return commands;
 				return {
 					...commands,
 					...addCommands()
@@ -17181,15 +18188,14 @@ this.BX.Note = this.BX.Note || {};
 			}, {});
 		}
 		/**
-		 * Get all registered Prosemirror plugins from the extensions.
-		 * @returns An array of Prosemirror plugins
-		 */
+		* Get all registered Prosemirror plugins from the extensions.
+		* @returns An array of Prosemirror plugins
+		*/
 		get plugins() {
 			const {
 				editor
 			} = this;
-			const extensions = sortExtensions([...this.extensions].reverse());
-			const allPlugins = extensions.flatMap(extension => {
+			const allPlugins = sortExtensions([...this.extensions].reverse()).flatMap(extension => {
 				const context = {
 					name: extension.name,
 					options: extension.options,
@@ -17200,12 +18206,10 @@ this.BX.Note = this.BX.Note || {};
 				const plugins = [];
 				const addKeyboardShortcuts = getExtensionField(extension, "addKeyboardShortcuts", context);
 				let defaultBindings = {};
-				if (extension.type === "mark" && getExtensionField(extension, "exitable", context)) {
-					defaultBindings.ArrowRight = () => Mark.handleExit({
-						editor,
-						mark: extension
-					});
-				}
+				if (extension.type === "mark" && getExtensionField(extension, "exitable", context)) defaultBindings.ArrowRight = () => Mark.handleExit({
+					editor,
+					mark: extension
+				});
 				if (addKeyboardShortcuts) {
 					const bindings = Object.fromEntries(Object.entries(addKeyboardShortcuts()).map(([shortcut, method]) => {
 						return [shortcut, () => method({
@@ -17249,19 +18253,55 @@ this.BX.Note = this.BX.Note || {};
 				}
 				return plugins;
 			});
+			const decorationPlugin = this.createDecorationPlugin();
+			if (decorationPlugin) allPlugins.push(decorationPlugin);
 			return allPlugins;
 		}
 		/**
-		 * Get all attributes from the extensions.
-		 * @returns An array of attributes
-		 */
+		* Aggregates decorations from extensions into a single plugin, or returns null
+		* if none exist. Destroys the previous manager to avoid orphaned listeners.
+		* @returns A ProseMirror plugin or `null`
+		* @example
+		* const plugin = editor.extensionManager.createDecorationPlugin()
+		*/
+		createDecorationPlugin() {
+			var _this$decorationManag;
+			const {
+				editor
+			} = this;
+			(_this$decorationManag = this.decorationManager) === null || _this$decorationManag === void 0 || _this$decorationManag.destroy();
+			const entries = [];
+			this.extensions.forEach(extension => {
+				const addDecorations = getExtensionField(extension, "addDecorations", {
+					name: extension.name,
+					options: extension.options,
+					storage: this.editor.extensionStorage[extension.name],
+					editor,
+					type: getSchemaTypeByName(extension.name, this.schema)
+				});
+				if (!addDecorations) return;
+				entries.push({
+					name: extension.name,
+					addDecorations
+				});
+			});
+			this.decorationManager = new DecorationManager({
+				editor,
+				entries
+			});
+			return this.decorationManager.plugin;
+		}
+		/**
+		* Get all attributes from the extensions.
+		* @returns An array of attributes
+		*/
 		get attributes() {
 			return getAttributesFromExtensions(this.extensions);
 		}
 		/**
-		 * Get all node views from the extensions.
-		 * @returns An object with all node views where the key is the node name and the value is the node view function
-		 */
+		* Get all node views from the extensions.
+		* @returns An object with all node views where the key is the node name and the value is the node view function
+		*/
 		get nodeViews() {
 			const {
 				editor
@@ -17271,31 +18311,24 @@ this.BX.Note = this.BX.Note || {};
 			} = splitExtensions(this.extensions);
 			return Object.fromEntries(nodeExtensions.filter(extension => !!getExtensionField(extension, "addNodeView")).map(extension => {
 				const extensionAttributes = this.attributes.filter(attribute => attribute.type === extension.name);
-				const context = {
+				const addNodeView = getExtensionField(extension, "addNodeView", {
 					name: extension.name,
 					options: extension.options,
 					storage: this.editor.extensionStorage[extension.name],
 					editor,
 					type: getNodeType(extension.name, this.schema)
-				};
-				const addNodeView = getExtensionField(extension, "addNodeView", context);
-				if (!addNodeView) {
-					return [];
-				}
+				});
+				if (!addNodeView) return [];
 				const nodeViewResult = addNodeView();
-				if (!nodeViewResult) {
-					return [];
-				}
+				if (!nodeViewResult) return [];
 				const nodeview = (node, view, getPos, decorations, innerDecorations) => {
 					const HTMLAttributes = getRenderedAttributes(node, extensionAttributes);
 					return nodeViewResult({
-						// pass-through
 						node,
 						view,
 						getPos,
 						decorations,
 						innerDecorations,
-						// tiptap-specific
 						editor,
 						extension,
 						HTMLAttributes
@@ -17305,16 +18338,15 @@ this.BX.Note = this.BX.Note || {};
 			}));
 		}
 		/**
-		 * Get the composed dispatchTransaction function from all extensions.
-		 * @param baseDispatch The base dispatch function (e.g. from the editor or user props)
-		 * @returns A composed dispatch function
-		 */
+		* Get the composed dispatchTransaction function from all extensions.
+		* @param baseDispatch The base dispatch function (e.g. from the editor or user props)
+		* @returns A composed dispatch function
+		*/
 		dispatchTransaction(baseDispatch) {
 			const {
 				editor
 			} = this;
-			const extensions = sortExtensions([...this.extensions].reverse());
-			return extensions.reduceRight((next, extension) => {
+			return sortExtensions([...this.extensions].reverse()).reduceRight((next, extension) => {
 				const context = {
 					name: extension.name,
 					options: extension.options,
@@ -17323,9 +18355,7 @@ this.BX.Note = this.BX.Note || {};
 					type: getSchemaTypeByName(extension.name, this.schema)
 				};
 				const dispatchTransaction = getExtensionField(extension, "dispatchTransaction", context);
-				if (!dispatchTransaction) {
-					return next;
-				}
+				if (!dispatchTransaction) return next;
 				return transaction => {
 					dispatchTransaction.call(context, {
 						transaction,
@@ -17335,16 +18365,15 @@ this.BX.Note = this.BX.Note || {};
 			}, baseDispatch);
 		}
 		/**
-		 * Get the composed transformPastedHTML function from all extensions.
-		 * @param baseTransform The base transform function (e.g. from the editor props)
-		 * @returns A composed transform function that chains all extension transforms
-		 */
+		* Get the composed transformPastedHTML function from all extensions.
+		* @param baseTransform The base transform function (e.g. from the editor props)
+		* @returns A composed transform function that chains all extension transforms
+		*/
 		transformPastedHTML(baseTransform) {
 			const {
 				editor
 			} = this;
-			const extensions = sortExtensions([...this.extensions]);
-			return extensions.reduce((transform, extension) => {
+			return sortExtensions([...this.extensions]).reduce((transform, extension) => {
 				const context = {
 					name: extension.name,
 					options: extension.options,
@@ -17353,9 +18382,7 @@ this.BX.Note = this.BX.Note || {};
 					type: getSchemaTypeByName(extension.name, this.schema)
 				};
 				const extensionTransform = getExtensionField(extension, "transformPastedHTML", context);
-				if (!extensionTransform) {
-					return transform;
-				}
+				if (!extensionTransform) return transform;
 				return (html, view) => {
 					const transformedHtml = transform(html, view);
 					return extensionTransform.call(context, transformedHtml);
@@ -17371,25 +18398,20 @@ this.BX.Note = this.BX.Note || {};
 			} = splitExtensions(this.extensions);
 			return Object.fromEntries(markExtensions.filter(extension => !!getExtensionField(extension, "addMarkView")).map(extension => {
 				const extensionAttributes = this.attributes.filter(attribute => attribute.type === extension.name);
-				const context = {
+				const addMarkView = getExtensionField(extension, "addMarkView", {
 					name: extension.name,
 					options: extension.options,
 					storage: this.editor.extensionStorage[extension.name],
 					editor,
 					type: getMarkType(extension.name, this.schema)
-				};
-				const addMarkView = getExtensionField(extension, "addMarkView", context);
-				if (!addMarkView) {
-					return [];
-				}
+				});
+				if (!addMarkView) return [];
 				const markView = (mark, view, inline) => {
 					const HTMLAttributes = getRenderedAttributes(mark, extensionAttributes);
 					return addMarkView()({
-						// pass-through
 						mark,
 						view,
 						inline,
-						// tiptap-specific
 						editor,
 						extension,
 						HTMLAttributes,
@@ -17402,14 +18424,44 @@ this.BX.Note = this.BX.Note || {};
 			}));
 		}
 		/**
-		 * Go through all extensions, create extension storages & setup marks
-		 * & bind editor event listener.
-		 */
+		* Destroy the extension manager and clean up all extension references
+		* to prevent memory leaks through parent/child extension chains.
+		*
+		* Walks each extension's full parent chain and nulls every forward
+		* `parent.child → current` link where the parent still points to the
+		* current node. This breaks the retention path from module-scope
+		* singleton roots through deep extend() chains.
+		*
+		* Only ancestor `.child` links matching the current chain are cleared.
+		* The `.parent` pointer on ancestors is never touched — extensions
+		* may be shared across live editors, so their own backward references
+		* and non-matching forward links must remain intact.
+		*/
+		destroy() {
+			var _this$decorationManag2;
+			(_this$decorationManag2 = this.decorationManager) === null || _this$decorationManag2 === void 0 || _this$decorationManag2.destroy();
+			this.extensions.forEach(extension => {
+				let current = extension;
+				while (current.parent) {
+					const parent = current.parent;
+					if (parent.child === current) parent.child = null;
+					current = parent;
+				}
+			});
+			this.extensions = [];
+			this.baseExtensions = [];
+			this.decorationManager = null;
+			this.schema = null;
+			this.editor = null;
+		}
+		/**
+		* Go through all extensions, create extension storages & setup marks
+		* & bind editor event listener.
+		*/
 		setupExtensions() {
 			const extensions = this.extensions;
 			this.editor.extensionStorage = Object.fromEntries(extensions.map(extension => [extension.name, extension.storage]));
 			extensions.forEach(extension => {
-				var _a;
 				const context = {
 					name: extension.name,
 					options: extension.options,
@@ -17418,10 +18470,9 @@ this.BX.Note = this.BX.Note || {};
 					type: getSchemaTypeByName(extension.name, this.schema)
 				};
 				if (extension.type === "mark") {
-					const keepOnSplit = (_a = callOrReturn(getExtensionField(extension, "keepOnSplit", context))) != null ? _a : true;
-					if (keepOnSplit) {
-						this.splittableMarks.push(extension.name);
-					}
+					var _callOrReturn, _callOrReturn2;
+					if ((_callOrReturn = callOrReturn(getExtensionField(extension, "keepOnSplit", context))) !== null && _callOrReturn !== void 0 ? _callOrReturn : true) this.splittableMarks.push(extension.name);
+					if (!((_callOrReturn2 = callOrReturn(getExtensionField(extension, "clearable", context))) !== null && _callOrReturn2 !== void 0 ? _callOrReturn2 : true)) this.nonClearableMarks.push(extension.name);
 				}
 				const onBeforeCreate = getExtensionField(extension, "onBeforeCreate", context);
 				const onCreate = getExtensionField(extension, "onCreate", context);
@@ -17431,66 +18482,38 @@ this.BX.Note = this.BX.Note || {};
 				const onFocus = getExtensionField(extension, "onFocus", context);
 				const onBlur = getExtensionField(extension, "onBlur", context);
 				const onDestroy = getExtensionField(extension, "onDestroy", context);
-				if (onBeforeCreate) {
-					this.editor.on("beforeCreate", onBeforeCreate);
-				}
-				if (onCreate) {
-					this.editor.on("create", onCreate);
-				}
-				if (onUpdate) {
-					this.editor.on("update", onUpdate);
-				}
-				if (onSelectionUpdate) {
-					this.editor.on("selectionUpdate", onSelectionUpdate);
-				}
-				if (onTransaction) {
-					this.editor.on("transaction", onTransaction);
-				}
-				if (onFocus) {
-					this.editor.on("focus", onFocus);
-				}
-				if (onBlur) {
-					this.editor.on("blur", onBlur);
-				}
-				if (onDestroy) {
-					this.editor.on("destroy", onDestroy);
-				}
+				if (onBeforeCreate) this.editor.on("beforeCreate", onBeforeCreate);
+				if (onCreate) this.editor.on("create", onCreate);
+				if (onUpdate) this.editor.on("update", onUpdate);
+				if (onSelectionUpdate) this.editor.on("selectionUpdate", onSelectionUpdate);
+				if (onTransaction) this.editor.on("transaction", onTransaction);
+				if (onFocus) this.editor.on("focus", onFocus);
+				if (onBlur) this.editor.on("blur", onBlur);
+				if (onDestroy) this.editor.on("destroy", onDestroy);
 			});
 		}
 	};
 	ExtensionManager.resolve = resolveExtensions;
 	ExtensionManager.sort = sortExtensions;
 	ExtensionManager.flatten = flattenExtensions;
-
-	// src/extensions/index.ts
-	var extensions_exports = {};
-	__export$1(extensions_exports, {
-		ClipboardTextSerializer: () => ClipboardTextSerializer,
-		Commands: () => Commands,
-		Delete: () => Delete,
-		Drop: () => Drop,
-		Editable: () => Editable,
-		FocusEvents: () => FocusEvents,
-		Keymap: () => Keymap,
-		Paste: () => Paste,
-		Tabindex: () => Tabindex,
-		TextDirection: () => TextDirection,
-		focusEventsPluginKey: () => focusEventsPluginKey
-	});
-
-	// src/Extension.ts
-	var Extension = class _Extension extends Extendable {
-		constructor() {
-			super(...arguments);
+	//#endregion
+	//#region src/Extension.ts
+	/**
+	* The Extension class is the base class for all extensions.
+	* @see https://tiptap.dev/api/extensions#create-a-new-extension
+	*/
+	var Extension = class Extension extends Extendable {
+		constructor(..._args) {
+			super(..._args);
 			this.type = "extension";
 		}
 		/**
-		 * Create a new Extension instance
-		 * @param config - Extension configuration object or a function that returns a configuration object
-		 */
+		* Create a new Extension instance
+		* @param config - Extension configuration object or a function that returns a configuration object
+		*/
 		static create(config = {}) {
 			const resolvedConfig = typeof config === "function" ? config() : config;
-			return new _Extension(resolvedConfig);
+			return new Extension(resolvedConfig);
 		}
 		configure(options) {
 			return super.configure(options);
@@ -17500,9 +18523,9 @@ this.BX.Note = this.BX.Note || {};
 			return super.extend(resolvedConfig);
 		}
 	};
-
-	// src/extensions/clipboardTextSerializer.ts
-	var ClipboardTextSerializer = Extension.create({
+	//#endregion
+	//#region src/extensions/clipboardTextSerializer.ts
+	const ClipboardTextSerializer = Extension.create({
 		name: "clipboardTextSerializer",
 		addOptions() {
 			return {
@@ -17525,30 +18548,31 @@ this.BX.Note = this.BX.Note || {};
 							doc,
 							selection
 						} = state;
-						const {
-							ranges
-						} = selection;
-						const from = Math.min(...ranges.map(range2 => range2.$from.pos));
-						const to = Math.max(...ranges.map(range2 => range2.$to.pos));
 						const textSerializers = getTextSerializersFromSchema(schema);
-						const range = {
-							from,
-							to
-						};
-						return getTextBetween(doc, range, {
-							...(this.options.blockSeparator !== void 0 ? {
-								blockSeparator: this.options.blockSeparator
+						const {
+							blockSeparator
+						} = this.options;
+						const options = {
+							...(blockSeparator !== void 0 ? {
+								blockSeparator
 							} : {}),
 							textSerializers
-						});
+						};
+						return [...selection.ranges].sort((a, b) => a.$from.pos - b.$from.pos).map(({
+							$from,
+							$to
+						}) => getTextBetween(doc, {
+							from: $from.pos,
+							to: $to.pos
+						}, options)).join(blockSeparator !== null && blockSeparator !== void 0 ? blockSeparator : "\n\n");
 					}
 				}
 			})];
 		}
 	});
-
-	// src/extensions/commands.ts
-	var Commands = Extension.create({
+	//#endregion
+	//#region src/extensions/commands.ts
+	const Commands = Extension.create({
 		name: "commands",
 		addCommands() {
 			return {
@@ -17556,52 +18580,52 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 	});
-	var Delete = Extension.create({
+	//#endregion
+	//#region src/extensions/delete.ts
+	/**
+	* This extension allows you to be notified when the user deletes content you are interested in.
+	*/
+	const Delete = Extension.create({
 		name: "delete",
 		onUpdate({
 			transaction,
 			appendedTransactions
 		}) {
-			var _a, _b, _c;
+			var _this$editor$options$4, _this$editor$options$5;
 			const callback = () => {
-				var _a2, _b2, _c2, _d;
-				if ((_d = (_c2 = (_b2 = (_a2 = this.editor.options.coreExtensionOptions) == null ? void 0 : _a2.delete) == null ? void 0 : _b2.filterTransaction) == null ? void 0 : _c2.call(_b2, transaction)) != null ? _d : transaction.getMeta("y-sync$")) {
-					return;
-				}
+				var _this$editor$options$, _this$editor$options$2, _this$editor$options$3;
+				if ((_this$editor$options$ = (_this$editor$options$2 = this.editor.options.coreExtensionOptions) === null || _this$editor$options$2 === void 0 || (_this$editor$options$2 = _this$editor$options$2.delete) === null || _this$editor$options$2 === void 0 || (_this$editor$options$3 = _this$editor$options$2.filterTransaction) === null || _this$editor$options$3 === void 0 ? void 0 : _this$editor$options$3.call(_this$editor$options$2, transaction)) !== null && _this$editor$options$ !== void 0 ? _this$editor$options$ : transaction.getMeta("y-sync$")) return;
 				const nextTransaction = combineTransactionSteps(transaction.before, [transaction, ...appendedTransactions]);
-				const changes = getChangedRanges(nextTransaction);
-				changes.forEach(change => {
-					if (nextTransaction.mapping.mapResult(change.oldRange.from).deletedAfter && nextTransaction.mapping.mapResult(change.oldRange.to).deletedBefore) {
-						nextTransaction.before.nodesBetween(change.oldRange.from, change.oldRange.to, (node, from) => {
-							const to = from + node.nodeSize - 2;
-							const isFullyWithinRange = change.oldRange.from <= from && to <= change.oldRange.to;
-							this.editor.emit("delete", {
-								type: "node",
-								node,
-								from,
-								to,
-								newFrom: nextTransaction.mapping.map(from),
-								newTo: nextTransaction.mapping.map(to),
-								deletedRange: change.oldRange,
-								newRange: change.newRange,
-								partial: !isFullyWithinRange,
-								editor: this.editor,
-								transaction,
-								combinedTransform: nextTransaction
-							});
+				getChangedRanges(nextTransaction).forEach(change => {
+					if (nextTransaction.mapping.mapResult(change.oldRange.from).deletedAfter && nextTransaction.mapping.mapResult(change.oldRange.to).deletedBefore) nextTransaction.before.nodesBetween(change.oldRange.from, change.oldRange.to, (node, from) => {
+						const to = from + node.nodeSize - 2;
+						const isFullyWithinRange = change.oldRange.from <= from && to <= change.oldRange.to;
+						this.editor.emit("delete", {
+							type: "node",
+							node,
+							from,
+							to,
+							newFrom: nextTransaction.mapping.map(from),
+							newTo: nextTransaction.mapping.map(to),
+							deletedRange: change.oldRange,
+							newRange: change.newRange,
+							partial: !isFullyWithinRange,
+							editor: this.editor,
+							transaction,
+							combinedTransform: nextTransaction
 						});
-					}
+					});
 				});
 				const mapping = nextTransaction.mapping;
 				nextTransaction.steps.forEach((step, index) => {
-					var _a3, _b3;
 					if (step instanceof RemoveMarkStep) {
+						var _nextTransaction$doc$, _nextTransaction$doc$2;
 						const newStart = mapping.slice(index).map(step.from, -1);
 						const newEnd = mapping.slice(index).map(step.to);
 						const oldStart = mapping.invert().map(newStart, -1);
 						const oldEnd = mapping.invert().map(newEnd);
-						const foundBeforeMark = newStart > 0 ? (_a3 = nextTransaction.doc.nodeAt(newStart - 1)) == null ? void 0 : _a3.marks.some(mark => mark.eq(step.mark)) : false;
-						const foundAfterMark = (_b3 = nextTransaction.doc.nodeAt(newEnd)) == null ? void 0 : _b3.marks.some(mark => mark.eq(step.mark));
+						const foundBeforeMark = newStart > 0 ? (_nextTransaction$doc$ = nextTransaction.doc.nodeAt(newStart - 1)) === null || _nextTransaction$doc$ === void 0 ? void 0 : _nextTransaction$doc$.marks.some(mark => mark.eq(step.mark)) : false;
+						const foundAfterMark = (_nextTransaction$doc$2 = nextTransaction.doc.nodeAt(newEnd)) === null || _nextTransaction$doc$2 === void 0 ? void 0 : _nextTransaction$doc$2.marks.some(mark => mark.eq(step.mark));
 						this.editor.emit("delete", {
 							type: "mark",
 							mark: step.mark,
@@ -17623,14 +18647,12 @@ this.BX.Note = this.BX.Note || {};
 					}
 				});
 			};
-			if ((_c = (_b = (_a = this.editor.options.coreExtensionOptions) == null ? void 0 : _a.delete) == null ? void 0 : _b.async) != null ? _c : true) {
-				setTimeout(callback, 0);
-			} else {
-				callback();
-			}
+			if ((_this$editor$options$4 = (_this$editor$options$5 = this.editor.options.coreExtensionOptions) === null || _this$editor$options$5 === void 0 || (_this$editor$options$5 = _this$editor$options$5.delete) === null || _this$editor$options$5 === void 0 ? void 0 : _this$editor$options$5.async) !== null && _this$editor$options$4 !== void 0 ? _this$editor$options$4 : true) setTimeout(callback, 0);else callback();
 		}
 	});
-	var Drop = Extension.create({
+	//#endregion
+	//#region src/extensions/drop.ts
+	const Drop = Extension.create({
 		name: "drop",
 		addProseMirrorPlugins() {
 			return [new Plugin({
@@ -17648,7 +18670,9 @@ this.BX.Note = this.BX.Note || {};
 			})];
 		}
 	});
-	var Editable = Extension.create({
+	//#endregion
+	//#region src/extensions/editable.ts
+	const Editable = Extension.create({
 		name: "editable",
 		addProseMirrorPlugins() {
 			return [new Plugin({
@@ -17659,8 +18683,10 @@ this.BX.Note = this.BX.Note || {};
 			})];
 		}
 	});
-	var focusEventsPluginKey = new PluginKey("focusEvents");
-	var FocusEvents = Extension.create({
+	//#endregion
+	//#region src/extensions/focusEvents.ts
+	const focusEventsPluginKey = new PluginKey("focusEvents");
+	const FocusEvents = Extension.create({
 		name: "focusEvents",
 		addProseMirrorPlugins() {
 			const {
@@ -17691,14 +18717,14 @@ this.BX.Note = this.BX.Note || {};
 			})];
 		}
 	});
-	var Keymap = Extension.create({
+	//#endregion
+	//#region src/extensions/keymap.ts
+	const Keymap = Extension.create({
 		name: "keymap",
 		addKeyboardShortcuts() {
 			const handleBackspace = () => this.editor.commands.first(({
 				commands
-			}) => [() => commands.undoInputRule(),
-			// maybe convert first text block node to default node
-			() => commands.command(({
+			}) => [() => commands.undoInputRule(), () => commands.command(({
 				tr
 			}) => {
 				const {
@@ -17717,9 +18743,7 @@ this.BX.Note = this.BX.Note || {};
 				const parentIsIsolating = $parentPos.parent.type.spec.isolating;
 				const parentPos = $anchor.pos - $anchor.parentOffset;
 				const isAtStart = parentIsIsolating && $parentPos.parent.childCount === 1 ? parentPos === $anchor.pos : Selection.atStart(doc).from === pos;
-				if (!empty || !parent.type.isTextblock || parent.textContent.length || !isAtStart || isAtStart && $anchor.parent.type.name === "paragraph") {
-					return false;
-				}
+				if (!empty || !parent.type.isTextblock || parent.textContent.length || !isAtStart || isAtStart && $anchor.parent.type.name === "paragraph") return false;
 				return commands.clearNodes();
 			}), () => commands.deleteSelection(), () => commands.joinBackward(), () => commands.selectNodeBackward()]);
 			const handleDelete = () => this.editor.commands.first(({
@@ -17752,29 +18776,17 @@ this.BX.Note = this.BX.Note || {};
 				"Ctrl-a": () => this.editor.commands.selectTextblockStart(),
 				"Ctrl-e": () => this.editor.commands.selectTextblockEnd()
 			};
-			if (isiOS() || isMacOS()) {
-				return macKeymap;
-			}
+			if (isiOS() || isMacOS()) return macKeymap;
 			return pcKeymap;
 		},
 		addProseMirrorPlugins() {
-			return [
-			// With this plugin we check if the whole document was selected and deleted.
-			// In this case we will additionally call `clearNodes()` to convert e.g. a heading
-			// to a paragraph if necessary.
-			// This is an alternative to ProseMirror's `AllSelection`, which doesn’t work well
-			// with many other commands.
-			new Plugin({
+			return [new Plugin({
 				key: new PluginKey("clearDocument"),
 				appendTransaction: (transactions, oldState, newState) => {
-					if (transactions.some(tr2 => tr2.getMeta("composition"))) {
-						return;
-					}
+					if (transactions.some(tr => tr.getMeta("composition"))) return;
 					const docChanges = transactions.some(transaction => transaction.docChanged) && !oldState.doc.eq(newState.doc);
 					const ignoreTr = transactions.some(transaction => transaction.getMeta("preventClearDocument"));
-					if (!docChanges || ignoreTr) {
-						return;
-					}
+					if (!docChanges || ignoreTr) return;
 					const {
 						empty,
 						from,
@@ -17782,14 +18794,8 @@ this.BX.Note = this.BX.Note || {};
 					} = oldState.selection;
 					const allFrom = Selection.atStart(oldState.doc).from;
 					const allEnd = Selection.atEnd(oldState.doc).to;
-					const allWasSelected = from === allFrom && to === allEnd;
-					if (empty || !allWasSelected) {
-						return;
-					}
-					const isEmpty = isNodeEmpty(newState.doc);
-					if (!isEmpty) {
-						return;
-					}
+					if (empty || !(from === allFrom && to === allEnd)) return;
+					if (!isNodeEmpty(newState.doc)) return;
 					const tr = newState.tr;
 					const state = createChainableState({
 						state: newState,
@@ -17802,15 +18808,15 @@ this.BX.Note = this.BX.Note || {};
 						state
 					});
 					commands.clearNodes();
-					if (!tr.steps.length) {
-						return;
-					}
+					if (!tr.steps.length) return;
 					return tr;
 				}
 			})];
 		}
 	});
-	var Paste = Extension.create({
+	//#endregion
+	//#region src/extensions/paste.ts
+	const Paste = Extension.create({
 		name: "paste",
 		addProseMirrorPlugins() {
 			return [new Plugin({
@@ -17827,20 +18833,59 @@ this.BX.Note = this.BX.Note || {};
 			})];
 		}
 	});
-	var Tabindex = Extension.create({
+	//#endregion
+	//#region src/extensions/tabindex.ts
+	/**
+	* The Tabindex extension adds a configurable tabindex attribute to the editor.
+	*
+	* By default, the editor gets tabindex="0" when editable. This can be customized
+	* via coreExtensionOptions to support specific focus ordering requirements in forms
+	* or to enable focusing on non-editable editors.
+	*
+	* @example
+	* ```ts
+	* new Editor({
+	*   coreExtensionOptions: {
+	*     tabindex: {
+	*       value: '-1',
+	*     },
+	*   },
+	* })
+	* ```
+	*/
+	const Tabindex = Extension.create({
 		name: "tabindex",
+		addOptions() {
+			return {
+				value: void 0
+			};
+		},
 		addProseMirrorPlugins() {
 			return [new Plugin({
 				key: new PluginKey("tabindex"),
 				props: {
-					attributes: () => this.editor.isEditable ? {
-						tabindex: "0"
-					} : {}
+					attributes: () => {
+						var _this$options$value;
+						if (!this.editor.isEditable && this.options.value === void 0) return {};
+						return {
+							tabindex: (_this$options$value = this.options.value) !== null && _this$options$value !== void 0 ? _this$options$value : "0"
+						};
+					}
 				}
 			})];
 		}
 	});
-	var TextDirection = Extension.create({
+	//#endregion
+	//#region src/extensions/textDirection.ts
+	/**
+	* The TextDirection extension adds support for setting text direction (LTR/RTL/auto)
+	* on all nodes in the editor.
+	*
+	* This extension adds a global `dir` attribute to all node types, which can be used
+	* to control bidirectional text rendering. The direction can be set globally via
+	* editor options or per-node using commands.
+	*/
+	const TextDirection = Extension.create({
 		name: "textDirection",
 		addOptions() {
 			return {
@@ -17848,9 +18893,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		},
 		addGlobalAttributes() {
-			if (!this.options.direction) {
-				return [];
-			}
+			if (!this.options.direction) return [];
 			const {
 				nodeExtensions
 			} = splitExtensions(this.extensions);
@@ -17861,15 +18904,11 @@ this.BX.Note = this.BX.Note || {};
 						default: this.options.direction,
 						parseHTML: element => {
 							const dir = element.getAttribute("dir");
-							if (dir && (dir === "ltr" || dir === "rtl" || dir === "auto")) {
-								return dir;
-							}
+							if (dir && (dir === "ltr" || dir === "rtl" || dir === "auto")) return dir;
 							return this.options.direction;
 						},
 						renderHTML: attributes => {
-							if (!attributes.dir) {
-								return {};
-							}
+							if (!attributes.dir) return {};
 							return {
 								dir: attributes.dir
 							};
@@ -17884,9 +18923,7 @@ this.BX.Note = this.BX.Note || {};
 				props: {
 					attributes: () => {
 						const direction = this.options.direction;
-						if (!direction) {
-							return {};
-						}
+						if (!direction) return {};
 						return {
 							dir: direction
 						};
@@ -17895,9 +18932,38 @@ this.BX.Note = this.BX.Note || {};
 			})];
 		}
 	});
-
-	// src/NodePos.ts
-	var NodePos = class _NodePos {
+	//#endregion
+	//#region src/helpers/warnOnDuplicatedProseMirrorModel.ts
+	let hasChecked = false;
+	/**
+	* Warns once when prosemirror-model is loaded twice
+	* @param schema The editor schema
+	* @returns void
+	* @example ```js
+	* warnOnDuplicatedProseMirrorModel(editor.schema)
+	* ```
+	*/
+	function warnOnDuplicatedProseMirrorModel(schema) {
+		if (hasChecked) return;
+		hasChecked = true;
+		let content;
+		try {
+			content = ReplaceStep.fromJSON(schema, {
+				from: 0,
+				to: 0
+			}).slice.content;
+		} catch {
+			return;
+		}
+		if (content instanceof Fragment) return;
+		console.warn("[tiptap warn]: prosemirror-model is loaded more than once. Wrapping and splitting nodes will fail. Deduplicate it in your lock file, or alias it to a single copy in your bundler.");
+	}
+	//#endregion
+	//#region src/NodePos.ts
+	var NodePos = class NodePos {
+		get name() {
+			return this.node.type.name;
+		}
 		constructor(pos, editor, isBlock = false, node = null) {
 			this.currentNode = null;
 			this.actualDepth = null;
@@ -17906,9 +18972,6 @@ this.BX.Note = this.BX.Note || {};
 			this.editor = editor;
 			this.currentNode = node;
 		}
-		get name() {
-			return this.node.type.name;
-		}
 		get node() {
 			return this.currentNode || this.resolvedPos.node();
 		}
@@ -17916,8 +18979,8 @@ this.BX.Note = this.BX.Note || {};
 			return this.editor.view.domAtPos(this.pos).node;
 		}
 		get depth() {
-			var _a;
-			return (_a = this.actualDepth) != null ? _a : this.resolvedPos.depth;
+			var _this$actualDepth;
+			return (_this$actualDepth = this.actualDepth) !== null && _this$actualDepth !== void 0 ? _this$actualDepth : this.resolvedPos.depth;
 		}
 		get pos() {
 			return this.resolvedPos.pos;
@@ -17930,7 +18993,7 @@ this.BX.Note = this.BX.Note || {};
 			let to = this.to;
 			if (this.isBlock) {
 				if (this.content.size === 0) {
-					console.error(`You can\u2019t set content on a block node. Tried to set content on ${this.name} at ${this.pos}`);
+					console.error(`You can’t set content on a block node. Tried to set content on ${this.name} at ${this.pos}`);
 					return;
 				}
 				from = this.from + 1;
@@ -17951,9 +19014,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.node.nodeSize;
 		}
 		get from() {
-			if (this.isBlock) {
-				return this.pos;
-			}
+			if (this.isBlock) return this.pos;
 			return this.resolvedPos.start(this.resolvedPos.depth);
 		}
 		get range() {
@@ -17963,32 +19024,24 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 		get to() {
-			if (this.isBlock) {
-				return this.pos + this.size;
-			}
+			if (this.isBlock) return this.pos + this.size;
 			return this.resolvedPos.end(this.resolvedPos.depth) + (this.node.isText ? 0 : 1);
 		}
 		get parent() {
-			if (this.depth === 0) {
-				return null;
-			}
+			if (this.depth === 0) return null;
 			const parentPos = this.resolvedPos.start(this.resolvedPos.depth - 1);
 			const $pos = this.resolvedPos.doc.resolve(parentPos);
-			return new _NodePos($pos, this.editor);
+			return new NodePos($pos, this.editor);
 		}
 		get before() {
 			let $pos = this.resolvedPos.doc.resolve(this.from - (this.isBlock ? 1 : 2));
-			if ($pos.depth !== this.depth) {
-				$pos = this.resolvedPos.doc.resolve(this.from - 3);
-			}
-			return new _NodePos($pos, this.editor);
+			if ($pos.depth !== this.depth) $pos = this.resolvedPos.doc.resolve(this.from - 3);
+			return new NodePos($pos, this.editor);
 		}
 		get after() {
 			let $pos = this.resolvedPos.doc.resolve(this.to + (this.isBlock ? 2 : 1));
-			if ($pos.depth !== this.depth) {
-				$pos = this.resolvedPos.doc.resolve(this.to + 3);
-			}
-			return new _NodePos($pos, this.editor);
+			if ($pos.depth !== this.depth) $pos = this.resolvedPos.doc.resolve(this.to + 3);
+			return new NodePos($pos, this.editor);
 		}
 		get children() {
 			const children = [];
@@ -17997,17 +19050,11 @@ this.BX.Note = this.BX.Note || {};
 				const isNonTextAtom = node.isAtom && !node.isText;
 				const isInline = node.isInline;
 				const targetPos = this.pos + offset + (isNonTextAtom ? 0 : 1);
-				if (targetPos < 0 || targetPos > this.resolvedPos.doc.nodeSize - 2) {
-					return;
-				}
+				if (targetPos < 0 || targetPos > this.resolvedPos.doc.nodeSize - 2) return;
 				const $pos = this.resolvedPos.doc.resolve(targetPos);
-				if (!isBlock && !isInline && $pos.depth <= this.depth) {
-					return;
-				}
-				const childNodePos = new _NodePos($pos, this.editor, isBlock, isBlock || isInline ? node : null);
-				if (isBlock) {
-					childNodePos.actualDepth = this.depth + 1;
-				}
+				if (!isBlock && !isInline && $pos.depth <= this.depth) return;
+				const childNodePos = new NodePos($pos, this.editor, isBlock, isBlock || isInline ? node : null);
+				if (isBlock) childNodePos.actualDepth = this.depth + 1;
 				children.push(childNodePos);
 			});
 			return children;
@@ -18029,13 +19076,9 @@ this.BX.Note = this.BX.Note || {};
 						const attrKeys = Object.keys(attributes);
 						for (let index = 0; index < attrKeys.length; index += 1) {
 							const key = attrKeys[index];
-							if (nodeAttributes[key] !== attributes[key]) {
-								break;
-							}
+							if (nodeAttributes[key] !== attributes[key]) break;
 						}
-					} else {
-						node = currentNode;
-					}
+					} else node = currentNode;
 				}
 				currentNode = currentNode.parent;
 			}
@@ -18046,23 +19089,18 @@ this.BX.Note = this.BX.Note || {};
 		}
 		querySelectorAll(selector, attributes = {}, firstItemOnly = false) {
 			let nodes = [];
-			if (!this.children || this.children.length === 0) {
-				return nodes;
-			}
+			if (!this.children || this.children.length === 0) return nodes;
 			const attrKeys = Object.keys(attributes);
+			/**
+			* Finds all children recursively that match the selector and attributes
+			* If firstItemOnly is true, it will return the first item found
+			*/
 			this.children.forEach(childPos => {
-				if (firstItemOnly && nodes.length > 0) {
-					return;
-				}
+				if (firstItemOnly && nodes.length > 0) return;
 				if (childPos.node.type.name === selector) {
-					const doesAllAttributesMatch = attrKeys.every(key => attributes[key] === childPos.node.attrs[key]);
-					if (doesAllAttributesMatch) {
-						nodes.push(childPos);
-					}
+					if (attrKeys.every(key => attributes[key] === childPos.node.attrs[key])) nodes.push(childPos);
 				}
-				if (firstItemOnly && nodes.length > 0) {
-					return;
-				}
+				if (firstItemOnly && nodes.length > 0) return;
 				nodes = nodes.concat(childPos.querySelectorAll(selector, attributes, firstItemOnly));
 			});
 			return nodes;
@@ -18078,9 +19116,9 @@ this.BX.Note = this.BX.Note || {};
 			this.editor.view.dispatch(tr);
 		}
 	};
-
-	// src/style.ts
-	var style = `.ProseMirror {
+	//#endregion
+	//#region src/style.ts
+	const style = `.ProseMirror {
 	position: relative;
 }
 
@@ -18151,24 +19189,8 @@ img.ProseMirror-separator {
 .ProseMirror-focused .ProseMirror-gapcursor {
 	display: block;
 }`;
-
-	// src/utilities/createStyleTag.ts
-	function createStyleTag(style2, nonce, suffix) {
-		const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${""}]`);
-		if (tiptapStyleTag !== null) {
-			return tiptapStyleTag;
-		}
-		const styleNode = document.createElement("style");
-		if (nonce) {
-			styleNode.setAttribute("nonce", nonce);
-		}
-		styleNode.setAttribute(`data-tiptap-style${""}`, "");
-		styleNode.innerHTML = style2;
-		document.getElementsByTagName("head")[0].appendChild(styleNode);
-		return styleNode;
-	}
-
-	// src/Editor.ts
+	//#endregion
+	//#region src/Editor.ts
 	var Editor = class extends EventEmitter {
 		constructor(options = {}) {
 			super();
@@ -18176,15 +19198,11 @@ img.ProseMirror-separator {
 			this.className = "tiptap";
 			this.editorView = null;
 			this.isFocused = false;
-			/**
-			 * The editor is considered initialized after the `create` event has been emitted.
-			 */
+			this.destroyed = false;
 			this.isInitialized = false;
 			this.extensionStorage = {};
-			/**
-			 * A unique ID for this editor instance.
-			 */
 			this.instanceId = Math.random().toString(36).slice(2, 9);
+			this.hasWarnedStaleDecorationRead = false;
 			this.options = {
 				element: typeof document !== "undefined" ? document.createElement("div") : null,
 				content: "",
@@ -18224,9 +19242,6 @@ img.ProseMirror-separator {
 			};
 			this.isCapturingTransaction = false;
 			this.capturedTransaction = null;
-			/**
-			 * Returns a set of utilities for working with positions and ranges.
-			 */
 			this.utils = {
 				getUpdatedPosition: getUpdatedPosition$1,
 				createMappablePosition: createMappablePosition$1
@@ -18260,37 +19275,30 @@ img.ProseMirror-separator {
 			}) => this.options.onPaste(event, slice));
 			this.on("delete", this.options.onDelete);
 			const initialDoc = this.createDoc();
-			const selection = resolveFocusPosition(initialDoc, this.options.autofocus);
-			this.editorState = EditorState.create({
-				doc: initialDoc,
-				schema: this.schema,
-				selection: selection || void 0
-			});
-			if (this.options.element) {
-				this.mount(this.options.element);
+			if (!this.editorState) {
+				const selection = resolveFocusPosition(initialDoc, this.options.autofocus);
+				this.editorState = EditorState.create({
+					doc: initialDoc,
+					schema: this.schema,
+					selection: selection || void 0
+				});
 			}
+			warnOnDuplicatedProseMirrorModel(this.schema);
+			if (this.options.element) this.mount(this.options.element);
 		}
 		/**
-		 * Attach the editor to the DOM, creating a new editor view.
-		 */
+		* Attach the editor to the DOM, creating a new editor view.
+		*/
 		mount(el) {
-			if (typeof document === "undefined") {
-				throw new Error(`[tiptap error]: The editor cannot be mounted because there is no 'document' defined in this environment.`);
-			}
+			if (typeof document === "undefined") throw new Error(`[tiptap error]: The editor cannot be mounted because there is no 'document' defined in this environment.`);
 			this.createView(el);
 			this.emit("mount", {
 				editor: this
 			});
-			if (this.css && !document.head.contains(this.css)) {
-				document.head.appendChild(this.css);
-			}
+			if (this.css && !document.head.contains(this.css)) document.head.appendChild(this.css);
 			window.setTimeout(() => {
-				if (this.isDestroyed) {
-					return;
-				}
-				if (this.options.autofocus !== false && this.options.autofocus !== null) {
-					this.commands.focus(this.options.autofocus);
-				}
+				if (this.isDestroyed) return;
+				if (this.options.autofocus !== false && this.options.autofocus !== null) this.commands.focus(this.options.autofocus);
 				this.emit("create", {
 					editor: this
 				});
@@ -18298,28 +19306,21 @@ img.ProseMirror-separator {
 			}, 0);
 		}
 		/**
-		 * Remove the editor from the DOM, but still allow remounting at a different point in time
-		 */
+		* Remove the editor from the DOM, but still allow remounting at a different point in time
+		*/
 		unmount() {
 			if (this.editorView) {
+				this.editorState = this.editorView.state;
 				const dom = this.editorView.dom;
-				if (dom == null ? void 0 : dom.editor) {
-					delete dom.editor;
-				}
+				if (dom === null || dom === void 0 ? void 0 : dom.editor) delete dom.editor;
 				this.editorView.destroy();
 			}
 			this.editorView = null;
 			this.isInitialized = false;
-			if (this.css && !document.querySelectorAll(`.${this.className}`).length) {
-				try {
-					if (typeof this.css.remove === "function") {
-						this.css.remove();
-					} else if (this.css.parentNode) {
-						this.css.parentNode.removeChild(this.css);
-					}
-				} catch (error) {
-					console.warn("Failed to remove CSS element:", error);
-				}
+			if (this.css && !document.querySelectorAll(`.${this.className}`).length) try {
+				if (typeof this.css.remove === "function") this.css.remove();else if (this.css.parentNode) this.css.parentNode.removeChild(this.css);
+			} catch (error) {
+				console.warn("Failed to remove CSS element:", error);
 			}
 			this.css = null;
 			this.emit("unmount", {
@@ -18327,83 +19328,75 @@ img.ProseMirror-separator {
 			});
 		}
 		/**
-		 * Returns the editor storage.
-		 */
+		* Returns the editor storage.
+		*/
 		get storage() {
 			return this.extensionStorage;
 		}
 		/**
-		 * An object of all registered commands.
-		 */
+		* An object of all registered commands.
+		*/
 		get commands() {
 			return this.commandManager.commands;
 		}
 		/**
-		 * Create a command chain to call multiple commands at once.
-		 */
+		* Create a command chain to call multiple commands at once.
+		*/
 		chain() {
+			if (!this.commandManager) return CommandManager.createFakeChain();
 			return this.commandManager.chain();
 		}
 		/**
-		 * Check if a command or a command chain can be executed. Without executing it.
-		 */
+		* Check if a command or a command chain can be executed. Without executing it.
+		*/
 		can() {
+			if (!this.commandManager) return CommandManager.createFallbackCan();
 			return this.commandManager.can();
 		}
 		/**
-		 * Inject CSS styles.
-		 */
+		* Inject CSS styles.
+		*/
 		injectCSS() {
-			if (this.options.injectCSS && typeof document !== "undefined") {
-				this.css = createStyleTag(style, this.options.injectNonce);
-			}
+			if (this.options.injectCSS && typeof document !== "undefined") this.css = createStyleTag(style, this.options.injectNonce);
 		}
 		/**
-		 * Update editor options.
-		 *
-		 * @param options A list of options
-		 */
+		* Update editor options.
+		*
+		* @param options A list of options
+		*/
 		setOptions(options = {}) {
 			this.options = {
 				...this.options,
 				...options
 			};
-			if (!this.editorView || !this.state || this.isDestroyed) {
-				return;
-			}
-			if (this.options.editorProps) {
-				this.view.setProps(this.options.editorProps);
-			}
+			if (!this.editorView || !this.state || this.isDestroyed) return;
+			if (this.options.editorProps) this.view.setProps(this.options.editorProps);
 			this.view.updateState(this.state);
 		}
 		/**
-		 * Update editable state of the editor.
-		 */
+		* Update editable state of the editor.
+		*/
 		setEditable(editable, emitUpdate = true) {
 			this.setOptions({
 				editable
 			});
-			if (emitUpdate) {
-				this.emit("update", {
-					editor: this,
-					transaction: this.state.tr,
-					appendedTransactions: []
-				});
-			}
+			if (emitUpdate) this.emit("update", {
+				editor: this,
+				transaction: this.state.tr,
+				appendedTransactions: []
+			});
 		}
 		/**
-		 * Returns whether the editor is editable.
-		 */
+		* Returns whether the editor is editable.
+		*/
 		get isEditable() {
 			return this.options.editable && this.view && this.view.editable;
 		}
 		/**
-		 * Returns the editor view.
-		 */
+		* Returns the editor view.
+		*/
 		get view() {
-			if (this.editorView) {
-				return this.editorView;
-			}
+			if (this.editorView) return this.editorView;
 			return new Proxy({
 				state: this.editorState,
 				updateState: state => {
@@ -18412,42 +19405,37 @@ img.ProseMirror-separator {
 				dispatch: tr => {
 					this.dispatchTransaction(tr);
 				},
-				// Stub some commonly accessed properties to prevent errors
 				composing: false,
 				dragging: null,
 				editable: true,
 				isDestroyed: false
 			}, {
 				get: (obj, key) => {
-					if (this.editorView) {
-						return this.editorView[key];
-					}
-					if (key === "state") {
-						return this.editorState;
-					}
-					if (key in obj) {
-						return Reflect.get(obj, key);
-					}
+					if (this.editorView) return this.editorView[key];
+					if (key === "state") return this.editorState;
+					if (key in obj) return Reflect.get(obj, key);
 					throw new Error(`[tiptap error]: The editor view is not available. Cannot access view['${key}']. The editor may not be mounted yet.`);
 				}
 			});
 		}
 		/**
-		 * Returns the editor state.
-		 */
+		* Returns the editor state.
+		*/
 		get state() {
-			if (this.editorView) {
-				this.editorState = this.view.state;
+			if (isDev && !this.hasWarnedStaleDecorationRead && isInDecorationApplyScope(this)) {
+				this.hasWarnedStaleDecorationRead = true;
+				console.warn("[tiptap warn]: `editor.state` was read while decoration `create()` was running. It returns the pre-transaction document. Use the `state` argument passed to `create()` instead. Helpers like `editor.isActive()` read `editor.state` too, so pass `state` to their standalone versions instead of calling them on the editor.");
 			}
+			if (this.editorView) this.editorState = this.view.state;
 			return this.editorState;
 		}
 		/**
-		 * Register a ProseMirror plugin.
-		 *
-		 * @param plugin A ProseMirror plugin
-		 * @param handlePlugins Control how to merge the plugin into the existing plugins.
-		 * @returns The new editor state
-		 */
+		* Register a ProseMirror plugin.
+		*
+		* @param plugin A ProseMirror plugin
+		* @param handlePlugins Control how to merge the plugin into the existing plugins.
+		* @returns The new editor state
+		*/
 		registerPlugin(plugin, handlePlugins) {
 			const plugins = isFunction$1(handlePlugins) ? handlePlugins(plugin, [...this.state.plugins]) : [...this.state.plugins, plugin];
 			const state = this.state.reconfigure({
@@ -18457,24 +19445,20 @@ img.ProseMirror-separator {
 			return state;
 		}
 		/**
-		 * Unregister a ProseMirror plugin.
-		 *
-		 * @param nameOrPluginKeyToRemove The plugins name
-		 * @returns The new editor state or undefined if the editor is destroyed
-		 */
+		* Unregister a ProseMirror plugin.
+		*
+		* @param nameOrPluginKeyToRemove The plugins name
+		* @returns The new editor state or undefined if the editor is destroyed
+		*/
 		unregisterPlugin(nameOrPluginKeyToRemove) {
-			if (this.isDestroyed) {
-				return void 0;
-			}
+			if (this.isDestroyed) return;
 			const prevPlugins = this.state.plugins;
 			let plugins = prevPlugins;
 			[].concat(nameOrPluginKeyToRemove).forEach(nameOrPluginKey => {
 				const name = typeof nameOrPluginKey === "string" ? `${nameOrPluginKey}$` : nameOrPluginKey.key;
 				plugins = plugins.filter(plugin => !plugin.key.startsWith(name));
 			});
-			if (prevPlugins.length === plugins.length) {
-				return void 0;
-			}
+			if (prevPlugins.length === plugins.length) return;
 			const state = this.state.reconfigure({
 				plugins
 			});
@@ -18482,42 +19466,41 @@ img.ProseMirror-separator {
 			return state;
 		}
 		/**
-		 * Creates an extension manager.
-		 */
+		* Creates an extension manager.
+		*/
 		createExtensionManager() {
-			var _a, _b;
-			const coreExtensions = this.options.enableCoreExtensions ? [Editable, ClipboardTextSerializer.configure({
-				blockSeparator: (_b = (_a = this.options.coreExtensionOptions) == null ? void 0 : _a.clipboardTextSerializer) == null ? void 0 : _b.blockSeparator
-			}), Commands, FocusEvents, Keymap, Tabindex, Drop, Paste, Delete, TextDirection.configure({
+			var _this$options$coreExt, _this$options$coreExt2;
+			const allExtensions = [...(this.options.enableCoreExtensions ? [Editable, ClipboardTextSerializer.configure({
+				blockSeparator: (_this$options$coreExt = this.options.coreExtensionOptions) === null || _this$options$coreExt === void 0 || (_this$options$coreExt = _this$options$coreExt.clipboardTextSerializer) === null || _this$options$coreExt === void 0 ? void 0 : _this$options$coreExt.blockSeparator
+			}), Commands, FocusEvents, Keymap, Tabindex.configure({
+				value: (_this$options$coreExt2 = this.options.coreExtensionOptions) === null || _this$options$coreExt2 === void 0 || (_this$options$coreExt2 = _this$options$coreExt2.tabindex) === null || _this$options$coreExt2 === void 0 ? void 0 : _this$options$coreExt2.value
+			}), Drop, Paste, Delete, TextDirection.configure({
 				direction: this.options.textDirection
 			})].filter(ext => {
-				if (typeof this.options.enableCoreExtensions === "object") {
-					return this.options.enableCoreExtensions[ext.name] !== false;
-				}
+				if (typeof this.options.enableCoreExtensions === "object") return this.options.enableCoreExtensions[ext.name] !== false;
 				return true;
-			}) : [];
-			const allExtensions = [...coreExtensions, ...this.options.extensions].filter(extension => {
-				return ["extension", "node", "mark"].includes(extension == null ? void 0 : extension.type);
+			}) : []), ...this.options.extensions].filter(extension => {
+				return ["extension", "node", "mark"].includes(extension === null || extension === void 0 ? void 0 : extension.type);
 			});
 			this.extensionManager = new ExtensionManager(allExtensions, this);
 		}
 		/**
-		 * Creates an command manager.
-		 */
+		* Creates an command manager.
+		*/
 		createCommandManager() {
 			this.commandManager = new CommandManager({
 				editor: this
 			});
 		}
 		/**
-		 * Creates a ProseMirror schema.
-		 */
+		* Creates a ProseMirror schema.
+		*/
 		createSchema() {
 			this.schema = this.extensionManager.schema;
 		}
 		/**
-		 * Creates the initial document.
-		 */
+		* Creates the initial document.
+		*/
 		createDoc() {
 			let doc;
 			try {
@@ -18525,29 +19508,31 @@ img.ProseMirror-separator {
 					errorOnInvalidContent: this.options.enableContentCheck
 				});
 			} catch (e) {
-				if (!(e instanceof Error) || !["[tiptap error]: Invalid JSON content", "[tiptap error]: Invalid HTML content"].includes(e.message)) {
-					throw e;
-				}
+				if (!(e instanceof Error) || !["[tiptap error]: Invalid JSON content", "[tiptap error]: Invalid HTML content"].includes(e.message)) throw e;
+				const fallbackDoc = createDocument(this.options.content, this.schema, this.options.parseOptions, {
+					errorOnInvalidContent: false
+				});
+				this.editorState = EditorState.create({
+					doc: fallbackDoc,
+					schema: this.schema,
+					selection: resolveFocusPosition(fallbackDoc, this.options.autofocus) || void 0
+				});
 				this.emit("contentError", {
 					editor: this,
 					error: e,
 					disableCollaboration: () => {
-						if ("collaboration" in this.storage && typeof this.storage.collaboration === "object" && this.storage.collaboration) {
-							this.storage.collaboration.isDisabled = true;
-						}
+						if ("collaboration" in this.storage && typeof this.storage.collaboration === "object" && this.storage.collaboration) this.storage.collaboration.isDisabled = true;
 						this.options.extensions = this.options.extensions.filter(extension => extension.name !== "collaboration");
 						this.createExtensionManager();
 					}
 				});
-				doc = createDocument(this.options.content, this.schema, this.options.parseOptions, {
-					errorOnInvalidContent: false
-				});
+				return this.editorState.doc;
 			}
 			return doc;
 		}
 		/**
-		 * Creates a ProseMirror view.
-		 */
+		* Creates a ProseMirror view.
+		*/
 		createView(element) {
 			const {
 				editorProps,
@@ -18560,9 +19545,8 @@ img.ProseMirror-separator {
 			this.editorView = new EditorView(element, {
 				...editorProps,
 				attributes: {
-					// add `role="textbox"` to the editor element
 					role: "textbox",
-					...(editorProps == null ? void 0 : editorProps.attributes)
+					...(editorProps === null || editorProps === void 0 ? void 0 : editorProps.attributes)
 				},
 				dispatchTransaction: dispatch,
 				transformPastedHTML,
@@ -18580,20 +19564,18 @@ img.ProseMirror-separator {
 			dom.editor = this;
 		}
 		/**
-		 * Creates all node and mark views.
-		 */
+		* Creates all node and mark views.
+		*/
 		createNodeViews() {
-			if (this.view.isDestroyed) {
-				return;
-			}
+			if (this.view.isDestroyed) return;
 			this.view.setProps({
 				markViews: this.extensionManager.markViews,
 				nodeViews: this.extensionManager.nodeViews
 			});
 		}
 		/**
-		 * Prepend class name to element.
-		 */
+		* Prepend class name to element.
+		*/
 		prependClass() {
 			this.view.dom.className = `${this.className} ${this.view.dom.className}`;
 		}
@@ -18606,22 +19588,20 @@ img.ProseMirror-separator {
 			return tr;
 		}
 		/**
-		 * The callback over which to send transactions (state updates) produced by the view.
-		 *
-		 * @param transaction An editor state transaction
-		 */
+		* The callback over which to send transactions (state updates) produced by the view.
+		*
+		* @param transaction An editor state transaction
+		*/
 		dispatchTransaction(transaction) {
-			if (this.view.isDestroyed) {
-				return;
-			}
+			if (this.view.isDestroyed) return;
 			if (this.isCapturingTransaction) {
 				if (!this.capturedTransaction) {
 					this.capturedTransaction = transaction;
 					return;
 				}
 				transaction.steps.forEach(step => {
-					var _a;
-					return (_a = this.capturedTransaction) == null ? void 0 : _a.step(step);
+					var _this$capturedTransac;
+					return (_this$capturedTransac = this.capturedTransaction) === null || _this$capturedTransac === void 0 ? void 0 : _this$capturedTransac.step(step);
 				});
 				return;
 			}
@@ -18637,43 +19617,31 @@ img.ProseMirror-separator {
 				transaction,
 				nextState: state
 			});
-			if (!rootTrWasApplied) {
-				return;
-			}
+			if (!rootTrWasApplied) return;
 			this.view.updateState(state);
 			this.emit("transaction", {
 				editor: this,
 				transaction,
 				appendedTransactions: transactions.slice(1)
 			});
-			if (selectionHasChanged) {
-				this.emit("selectionUpdate", {
-					editor: this,
-					transaction
-				});
-			}
+			if (selectionHasChanged) this.emit("selectionUpdate", {
+				editor: this,
+				transaction
+			});
 			const mostRecentFocusTr = transactions.findLast(tr => tr.getMeta("focus") || tr.getMeta("blur"));
-			const focus2 = mostRecentFocusTr == null ? void 0 : mostRecentFocusTr.getMeta("focus");
-			const blur2 = mostRecentFocusTr == null ? void 0 : mostRecentFocusTr.getMeta("blur");
-			if (focus2) {
-				this.emit("focus", {
-					editor: this,
-					event: focus2.event,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					transaction: mostRecentFocusTr
-				});
-			}
-			if (blur2) {
-				this.emit("blur", {
-					editor: this,
-					event: blur2.event,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					transaction: mostRecentFocusTr
-				});
-			}
-			if (transaction.getMeta("preventUpdate") || !transactions.some(tr => tr.docChanged) || prevState.doc.eq(state.doc)) {
-				return;
-			}
+			const focus = mostRecentFocusTr === null || mostRecentFocusTr === void 0 ? void 0 : mostRecentFocusTr.getMeta("focus");
+			const blur = mostRecentFocusTr === null || mostRecentFocusTr === void 0 ? void 0 : mostRecentFocusTr.getMeta("blur");
+			if (focus) this.emit("focus", {
+				editor: this,
+				event: focus.event,
+				transaction: mostRecentFocusTr
+			});
+			if (blur) this.emit("blur", {
+				editor: this,
+				event: blur.event,
+				transaction: mostRecentFocusTr
+			});
+			if (transaction.getMeta("preventUpdate") || !transactions.some(tr => tr.docChanged) || prevState.doc.eq(state.doc)) return;
 			this.emit("update", {
 				editor: this,
 				transaction,
@@ -18681,8 +19649,8 @@ img.ProseMirror-separator {
 			});
 		}
 		/**
-		 * Get attributes of the currently selected node or mark.
-		 */
+		* Get attributes of the currently selected node or mark.
+		*/
 		getAttributes(nameOrType) {
 			return getAttributes(this.state, nameOrType);
 		}
@@ -18692,20 +19660,20 @@ img.ProseMirror-separator {
 			return isActive(this.state, name, attributes);
 		}
 		/**
-		 * Get the document as JSON.
-		 */
+		* Get the document as JSON.
+		*/
 		getJSON() {
 			return this.state.doc.toJSON();
 		}
 		/**
-		 * Get the document as HTML.
-		 */
+		* Get the document as HTML.
+		*/
 		getHTML() {
 			return getHTMLFromFragment(this.state.doc.content, this.schema);
 		}
 		/**
-		 * Get the document as text.
-		 */
+		* Get the document as text.
+		*/
 		getText(options) {
 			const {
 				blockSeparator = "\n\n",
@@ -18720,44 +19688,57 @@ img.ProseMirror-separator {
 			});
 		}
 		/**
-		 * Check if there is no content.
-		 */
+		* Check if there is no content.
+		*/
 		get isEmpty() {
 			return isNodeEmpty(this.state.doc);
 		}
 		/**
-		 * Destroy the editor.
-		 */
+		* Destroy the editor.
+		*/
 		destroy() {
+			if (this.destroyed) return;
+			this.destroyed = true;
 			this.emit("destroy");
 			this.unmount();
 			this.removeAllListeners();
+			this.extensionManager.destroy();
+			this.extensionManager = null;
+			this.schema = null;
+			this.commandManager = null;
+			this.extensionStorage = {};
 		}
 		/**
-		 * Check if the editor is already destroyed.
-		 */
+		* Check if the editor is already destroyed.
+		*/
 		get isDestroyed() {
-			var _a, _b;
-			return (_b = (_a = this.editorView) == null ? void 0 : _a.isDestroyed) != null ? _b : true;
+			var _this$editorView$isDe, _this$editorView;
+			return (_this$editorView$isDe = (_this$editorView = this.editorView) === null || _this$editorView === void 0 ? void 0 : _this$editorView.isDestroyed) !== null && _this$editorView$isDe !== void 0 ? _this$editorView$isDe : true;
 		}
 		$node(selector, attributes) {
-			var _a;
-			return ((_a = this.$doc) == null ? void 0 : _a.querySelector(selector, attributes)) || null;
+			var _this$$doc;
+			return ((_this$$doc = this.$doc) === null || _this$$doc === void 0 ? void 0 : _this$$doc.querySelector(selector, attributes)) || null;
 		}
 		$nodes(selector, attributes) {
-			var _a;
-			return ((_a = this.$doc) == null ? void 0 : _a.querySelectorAll(selector, attributes)) || null;
+			var _this$$doc2;
+			return ((_this$$doc2 = this.$doc) === null || _this$$doc2 === void 0 ? void 0 : _this$$doc2.querySelectorAll(selector, attributes)) || null;
 		}
 		$pos(pos) {
 			const $pos = this.state.doc.resolve(pos);
-			return new NodePos($pos, this);
+			const node = pos > 0 && $pos.nodeAfter && !$pos.nodeAfter.isText && $pos.nodeAfter.isAtom ? $pos.nodeAfter : null;
+			return new NodePos($pos, this, false, node);
 		}
 		get $doc() {
 			return this.$pos(0);
 		}
 	};
-
-	// src/inputRules/markInputRule.ts
+	//#endregion
+	//#region src/inputRules/markInputRule.ts
+	/**
+	* Build an input rule that adds a mark when the
+	* matched text is typed into it.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#input-rules
+	*/
 	function markInputRule(config) {
 		return new InputRule({
 			find: config.find,
@@ -18767,9 +19748,7 @@ img.ProseMirror-separator {
 				match
 			}) => {
 				const attributes = callOrReturn(config.getAttributes, void 0, match);
-				if (attributes === false || attributes === null) {
-					return null;
-				}
+				if (attributes === false || attributes === null) return null;
 				const {
 					tr
 				} = state;
@@ -18779,19 +19758,11 @@ img.ProseMirror-separator {
 					const startSpaces = fullMatch.search(/\S/);
 					const textStart = range.from + fullMatch.indexOf(captureGroup);
 					const textEnd = textStart + captureGroup.length;
-					const excludedMarks = getMarksBetween(range.from, range.to, state.doc).filter(item => {
-						const excluded = item.mark.type.excluded;
-						return excluded.find(type => type === config.type && type !== item.mark.type);
-					}).filter(item => item.to > textStart);
-					if (excludedMarks.length) {
-						return null;
-					}
-					if (textEnd < range.to) {
-						tr.delete(textEnd, range.to);
-					}
-					if (textStart > range.from) {
-						tr.delete(range.from + startSpaces, textStart);
-					}
+					if (getMarksBetween(range.from, range.to, state.doc).filter(item => {
+						return item.mark.type.excluded.find(type => type === config.type && type !== item.mark.type);
+					}).filter(item => item.to > textStart).length) return null;
+					if (textEnd < range.to) tr.delete(textEnd, range.to);
+					if (textStart > range.from) tr.delete(range.from + startSpaces, textStart);
 					const markEnd = range.from + startSpaces + captureGroup.length;
 					tr.addMark(range.from + startSpaces, markEnd, config.type.create(attributes || {}));
 					tr.removeStoredMark(config.type);
@@ -18800,8 +19771,13 @@ img.ProseMirror-separator {
 			undoable: config.undoable
 		});
 	}
-
-	// src/inputRules/nodeInputRule.ts
+	//#endregion
+	//#region src/inputRules/nodeInputRule.ts
+	/**
+	* Build an input rule that adds a node when the
+	* matched text is typed into it.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#input-rules
+	*/
 	function nodeInputRule(config) {
 		return new InputRule({
 			find: config.find,
@@ -18818,13 +19794,8 @@ img.ProseMirror-separator {
 				let end = range.to;
 				const newNode = config.type.create(attributes);
 				if (match[1]) {
-					const offset = match[0].lastIndexOf(match[1]);
-					let matchStart = start + offset;
-					if (matchStart > end) {
-						matchStart = end;
-					} else {
-						end = matchStart + match[1].length;
-					}
+					let matchStart = start + match[0].lastIndexOf(match[1]);
+					if (matchStart > end) matchStart = end;else end = matchStart + match[1].length;
 					const lastChar = match[0][match[0].length - 1];
 					tr.insertText(lastChar, start + match[0].length - 1);
 					tr.replaceWith(matchStart, end, newNode);
@@ -18837,8 +19808,15 @@ img.ProseMirror-separator {
 			undoable: config.undoable
 		});
 	}
-
-	// src/inputRules/textblockTypeInputRule.ts
+	//#endregion
+	//#region src/inputRules/textblockTypeInputRule.ts
+	/**
+	* Build an input rule that changes the type of a textblock when the
+	* matched text is typed into it. When using a regular expresion you’ll
+	* probably want the regexp to start with `^`, so that the pattern can
+	* only occur at the start of a textblock.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#input-rules
+	*/
 	function textblockTypeInputRule(config) {
 		return new InputRule({
 			find: config.find,
@@ -18849,16 +19827,19 @@ img.ProseMirror-separator {
 			}) => {
 				const $start = state.doc.resolve(range.from);
 				const attributes = callOrReturn(config.getAttributes, void 0, match) || {};
-				if (!$start.node(-1).canReplaceWith($start.index(-1), $start.indexAfter(-1), config.type)) {
-					return null;
-				}
+				if (!$start.node(-1).canReplaceWith($start.index(-1), $start.indexAfter(-1), config.type)) return null;
 				state.tr.delete(range.from, range.to).setBlockType(range.from, range.from, config.type, attributes);
 			},
 			undoable: config.undoable
 		});
 	}
-
-	// src/inputRules/textInputRule.ts
+	//#endregion
+	//#region src/inputRules/textInputRule.ts
+	/**
+	* Build an input rule that replaces text when the
+	* matched text is typed into it.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#input-rules
+	*/
 	function textInputRule(config) {
 		return new InputRule({
 			find: config.find,
@@ -18885,6 +19866,23 @@ img.ProseMirror-separator {
 			undoable: config.undoable
 		});
 	}
+	//#endregion
+	//#region src/inputRules/wrappingInputRule.ts
+	/**
+	* Build an input rule for automatically wrapping a textblock when a
+	* given string is typed. When using a regular expresion you’ll
+	* probably want the regexp to start with `^`, so that the pattern can
+	* only occur at the start of a textblock.
+	*
+	* `type` is the type of node to wrap in.
+	*
+	* By default, if there’s a node with the same type above the newly
+	* wrapped node, the rule will try to join those
+	* two nodes. You can pass a join predicate, which takes a regular
+	* expression match and the node before the wrapped node, and can
+	* return a boolean to indicate whether a join should happen.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#input-rules
+	*/
 	function wrappingInputRule(config) {
 		return new InputRule({
 			find: config.find,
@@ -18896,12 +19894,9 @@ img.ProseMirror-separator {
 			}) => {
 				const attributes = callOrReturn(config.getAttributes, void 0, match) || {};
 				const tr = state.tr.delete(range.from, range.to);
-				const $start = tr.doc.resolve(range.from);
-				const blockRange = $start.blockRange();
+				const blockRange = tr.doc.resolve(range.from).blockRange();
 				const wrapping = blockRange && findWrapping(blockRange, config.type, attributes);
-				if (!wrapping) {
-					return null;
-				}
+				if (!wrapping) return null;
 				tr.wrap(blockRange, wrapping);
 				if (config.keepMarks && config.editor) {
 					const {
@@ -18918,183 +19913,149 @@ img.ProseMirror-separator {
 					}
 				}
 				if (config.keepAttributes) {
+					/** If the nodeType is `bulletList` or `orderedList` set the `nodeType` as `listItem` */
 					const nodeType = config.type.name === "bulletList" || config.type.name === "orderedList" ? "listItem" : "taskList";
 					chain().updateAttributes(nodeType, attributes).run();
 				}
 				const before = tr.doc.resolve(range.from - 1).nodeBefore;
-				if (before && before.type === config.type && canJoin(tr.doc, range.from - 1) && (!config.joinPredicate || config.joinPredicate(match, before))) {
-					tr.join(range.from - 1);
-				}
+				if (before && before.type === config.type && canJoin(tr.doc, range.from - 1) && (!config.joinPredicate || config.joinPredicate(match, before))) tr.join(range.from - 1);
 			},
 			undoable: config.undoable
 		});
 	}
-
-	// src/lib/ResizableNodeView.ts
-	var isTouchEvent = e => {
+	//#endregion
+	//#region src/lib/ResizableNodeView.ts
+	const isTouchEvent = e => {
 		return "touches" in e;
 	};
+	/**
+	* A NodeView implementation that adds resize handles to any DOM element.
+	*
+	* This class creates a resizable node view for Tiptap/ProseMirror editors.
+	* It wraps your element with resize handles and manages the resize interaction,
+	* including aspect ratio preservation, min/max constraints, and keyboard modifiers.
+	*
+	* @example
+	* ```ts
+	* // Basic usage in a Tiptap extension
+	* addNodeView() {
+	*   return ({ node, getPos }) => {
+	*     const img = document.createElement('img')
+	*     img.src = node.attrs.src
+	*
+	*     return new ResizableNodeView({
+	*       element: img,
+	*       node,
+	*       getPos,
+	*       onResize: (width, height) => {
+	*         img.style.width = `${width}px`
+	*         img.style.height = `${height}px`
+	*       },
+	*       onCommit: (width, height) => {
+	*         this.editor.commands.updateAttributes('image', { width, height })
+	*       },
+	*       onUpdate: () => true,
+	*       options: {
+	*         min: { width: 100, height: 100 },
+	*         preserveAspectRatio: true
+	*       }
+	*     })
+	*   }
+	* }
+	* ```
+	*/
 	var ResizableNodeView = class {
 		/**
-		 * Creates a new ResizableNodeView instance.
-		 *
-		 * The constructor sets up the resize handles, applies initial sizing from
-		 * node attributes, and configures all resize behavior options.
-		 *
-		 * @param options - Configuration options for the resizable node view
-		 */
+		* Creates a new ResizableNodeView instance.
+		*
+		* The constructor sets up the resize handles, applies initial sizing from
+		* node attributes, and configures all resize behavior options.
+		*
+		* @param options - Configuration options for the resizable node view
+		*/
 		constructor(options) {
-			/** Active resize handle directions */
+			var _options$options, _options$options2, _options$options3, _options$options4, _options$options5, _options$options6;
 			this.directions = ["bottom-left", "bottom-right", "top-left", "top-right"];
-			/** Minimum allowed dimensions */
 			this.minSize = {
 				height: 8,
 				width: 8
 			};
-			/** Whether to always preserve aspect ratio */
 			this.preserveAspectRatio = false;
-			/** CSS class names for elements */
 			this.classNames = {
 				container: "",
 				wrapper: "",
 				handle: "",
 				resizing: ""
 			};
-			/** Initial width of the element (for aspect ratio calculation) */
 			this.initialWidth = 0;
-			/** Initial height of the element (for aspect ratio calculation) */
 			this.initialHeight = 0;
-			/** Calculated aspect ratio (width / height) */
 			this.aspectRatio = 1;
-			/** Whether a resize operation is currently active */
 			this.isResizing = false;
-			/** The handle currently being dragged */
 			this.activeHandle = null;
-			/** Starting mouse X position when resize began */
 			this.startX = 0;
-			/** Starting mouse Y position when resize began */
 			this.startY = 0;
-			/** Element width when resize began */
 			this.startWidth = 0;
-			/** Element height when resize began */
 			this.startHeight = 0;
-			/** Whether Shift key is currently pressed (for temporary aspect ratio lock) */
 			this.isShiftKeyPressed = false;
-			/** Last known editable state of the editor */
 			this.lastEditableState = void 0;
-			/** Map of handle elements by direction */
 			this.handleMap = /* @__PURE__ */new Map();
-			/**
-			 * Handles mouse movement during an active resize.
-			 *
-			 * Calculates the delta from the starting position, computes new dimensions
-			 * based on the active handle direction, applies constraints and aspect ratio,
-			 * then updates the element's style and calls the onResize callback.
-			 *
-			 * @param event - The mouse move event
-			 */
 			this.handleMouseMove = event => {
-				if (!this.isResizing || !this.activeHandle) {
-					return;
-				}
+				if (!this.isResizing || !this.activeHandle) return;
 				const deltaX = event.clientX - this.startX;
 				const deltaY = event.clientY - this.startY;
 				this.handleResize(deltaX, deltaY);
 			};
 			this.handleTouchMove = event => {
-				if (!this.isResizing || !this.activeHandle) {
-					return;
-				}
+				if (!this.isResizing || !this.activeHandle) return;
 				const touch = event.touches[0];
-				if (!touch) {
-					return;
-				}
+				if (!touch) return;
 				const deltaX = touch.clientX - this.startX;
 				const deltaY = touch.clientY - this.startY;
 				this.handleResize(deltaX, deltaY);
 			};
-			/**
-			 * Completes the resize operation when the mouse button is released.
-			 *
-			 * Captures final dimensions, calls the onCommit callback to persist changes,
-			 * removes the resizing state and class, and cleans up document-level listeners.
-			 */
 			this.handleMouseUp = () => {
-				if (!this.isResizing) {
-					return;
-				}
+				if (!this.isResizing) return;
 				const finalWidth = this.element.offsetWidth;
 				const finalHeight = this.element.offsetHeight;
 				this.onCommit(finalWidth, finalHeight);
 				this.isResizing = false;
 				this.activeHandle = null;
 				this.container.dataset.resizeState = "false";
-				if (this.classNames.resizing) {
-					this.container.classList.remove(this.classNames.resizing);
-				}
+				if (this.classNames.resizing) this.container.classList.remove(this.classNames.resizing);
 				document.removeEventListener("mousemove", this.handleMouseMove);
 				document.removeEventListener("mouseup", this.handleMouseUp);
 				document.removeEventListener("keydown", this.handleKeyDown);
 				document.removeEventListener("keyup", this.handleKeyUp);
 			};
-			/**
-			 * Tracks Shift key state to enable temporary aspect ratio locking.
-			 *
-			 * When Shift is pressed during resize, aspect ratio is preserved even if
-			 * preserveAspectRatio is false.
-			 *
-			 * @param event - The keyboard event
-			 */
 			this.handleKeyDown = event => {
-				if (event.key === "Shift") {
-					this.isShiftKeyPressed = true;
-				}
+				if (event.key === "Shift") this.isShiftKeyPressed = true;
 			};
-			/**
-			 * Tracks Shift key release to disable temporary aspect ratio locking.
-			 *
-			 * @param event - The keyboard event
-			 */
 			this.handleKeyUp = event => {
-				if (event.key === "Shift") {
-					this.isShiftKeyPressed = false;
-				}
+				if (event.key === "Shift") this.isShiftKeyPressed = false;
 			};
-			var _a, _b, _c, _d, _e, _f;
 			this.node = options.node;
 			this.editor = options.editor;
 			this.element = options.element;
+			this.element.draggable = false;
 			this.contentElement = options.contentElement;
 			this.getPos = options.getPos;
 			this.onResize = options.onResize;
 			this.onCommit = options.onCommit;
 			this.onUpdate = options.onUpdate;
-			if ((_a = options.options) == null ? void 0 : _a.min) {
-				this.minSize = {
-					...this.minSize,
-					...options.options.min
-				};
-			}
-			if ((_b = options.options) == null ? void 0 : _b.max) {
-				this.maxSize = options.options.max;
-			}
-			if ((_c = options == null ? void 0 : options.options) == null ? void 0 : _c.directions) {
-				this.directions = options.options.directions;
-			}
-			if ((_d = options.options) == null ? void 0 : _d.preserveAspectRatio) {
-				this.preserveAspectRatio = options.options.preserveAspectRatio;
-			}
-			if ((_e = options.options) == null ? void 0 : _e.className) {
-				this.classNames = {
-					container: options.options.className.container || "",
-					wrapper: options.options.className.wrapper || "",
-					handle: options.options.className.handle || "",
-					resizing: options.options.className.resizing || ""
-				};
-			}
-			if ((_f = options.options) == null ? void 0 : _f.createCustomHandle) {
-				this.createCustomHandle = options.options.createCustomHandle;
-			}
+			if ((_options$options = options.options) === null || _options$options === void 0 ? void 0 : _options$options.min) this.minSize = {
+				...this.minSize,
+				...options.options.min
+			};
+			if ((_options$options2 = options.options) === null || _options$options2 === void 0 ? void 0 : _options$options2.max) this.maxSize = options.options.max;
+			if (options === null || options === void 0 || (_options$options3 = options.options) === null || _options$options3 === void 0 ? void 0 : _options$options3.directions) this.directions = options.options.directions;
+			if ((_options$options4 = options.options) === null || _options$options4 === void 0 ? void 0 : _options$options4.preserveAspectRatio) this.preserveAspectRatio = options.options.preserveAspectRatio;
+			if ((_options$options5 = options.options) === null || _options$options5 === void 0 ? void 0 : _options$options5.className) this.classNames = {
+				container: options.options.className.container || "",
+				wrapper: options.options.className.wrapper || "",
+				handle: options.options.className.handle || "",
+				resizing: options.options.className.resizing || ""
+			};
+			if ((_options$options6 = options.options) === null || _options$options6 === void 0 ? void 0 : _options$options6.createCustomHandle) this.createCustomHandle = options.options.createCustomHandle;
 			this.wrapper = this.createWrapper();
 			this.container = this.createContainer();
 			this.applyInitialSize();
@@ -19102,66 +20063,54 @@ img.ProseMirror-separator {
 			this.editor.on("update", this.handleEditorUpdate.bind(this));
 		}
 		/**
-		 * Returns the top-level DOM node that should be placed in the editor.
-		 *
-		 * This is required by the ProseMirror NodeView interface. The container
-		 * includes the wrapper, handles, and the actual content element.
-		 *
-		 * @returns The container element to be inserted into the editor
-		 */
+		* Returns the top-level DOM node that should be placed in the editor.
+		*
+		* This is required by the ProseMirror NodeView interface. The container
+		* includes the wrapper, handles, and the actual content element.
+		*
+		* @returns The container element to be inserted into the editor
+		*/
 		get dom() {
 			return this.container;
 		}
 		get contentDOM() {
-			var _a;
-			return (_a = this.contentElement) != null ? _a : null;
+			var _this$contentElement;
+			return (_this$contentElement = this.contentElement) !== null && _this$contentElement !== void 0 ? _this$contentElement : null;
 		}
 		handleEditorUpdate() {
 			const isEditable = this.editor.isEditable;
-			if (isEditable === this.lastEditableState) {
-				return;
-			}
+			if (isEditable === this.lastEditableState) return;
 			this.lastEditableState = isEditable;
-			if (!isEditable) {
-				this.removeHandles();
-			} else if (isEditable && this.handleMap.size === 0) {
-				this.attachHandles();
-			}
+			if (!isEditable) this.removeHandles();else if (isEditable && this.handleMap.size === 0) this.attachHandles();
 		}
 		/**
-		 * Called when the node's content or attributes change.
-		 *
-		 * Updates the internal node reference. If a custom `onUpdate` callback
-		 * was provided, it will be called to handle additional update logic.
-		 *
-		 * @param node - The new/updated node
-		 * @param decorations - Node decorations
-		 * @param innerDecorations - Inner decorations
-		 * @returns `false` if the node type has changed (requires full rebuild), otherwise the result of `onUpdate` or `true`
-		 */
+		* Called when the node's content or attributes change.
+		*
+		* Updates the internal node reference. If a custom `onUpdate` callback
+		* was provided, it will be called to handle additional update logic.
+		*
+		* @param node - The new/updated node
+		* @param decorations - Node decorations
+		* @param innerDecorations - Inner decorations
+		* @returns `false` if the node type has changed (requires full rebuild), otherwise the result of `onUpdate` or `true`
+		*/
 		update(node, decorations, innerDecorations) {
-			if (node.type !== this.node.type) {
-				return false;
-			}
+			if (node.type !== this.node.type) return false;
 			this.node = node;
-			if (this.onUpdate) {
-				return this.onUpdate(node, decorations, innerDecorations);
-			}
+			if (this.onUpdate) return this.onUpdate(node, decorations, innerDecorations);
 			return true;
 		}
 		/**
-		 * Cleanup method called when the node view is being removed.
-		 *
-		 * Removes all event listeners to prevent memory leaks. This is required
-		 * by the ProseMirror NodeView interface. If a resize is active when
-		 * destroy is called, it will be properly cancelled.
-		 */
+		* Cleanup method called when the node view is being removed.
+		*
+		* Removes all event listeners to prevent memory leaks. This is required
+		* by the ProseMirror NodeView interface. If a resize is active when
+		* destroy is called, it will be properly cancelled.
+		*/
 		destroy() {
 			if (this.isResizing) {
 				this.container.dataset.resizeState = "false";
-				if (this.classNames.resizing) {
-					this.container.classList.remove(this.classNames.resizing);
-				}
+				if (this.classNames.resizing) this.container.classList.remove(this.classNames.resizing);
 				document.removeEventListener("mousemove", this.handleMouseMove);
 				document.removeEventListener("mouseup", this.handleMouseUp);
 				document.removeEventListener("keydown", this.handleKeyDown);
@@ -19173,89 +20122,75 @@ img.ProseMirror-separator {
 			this.container.remove();
 		}
 		/**
-		 * Creates the outer container element.
-		 *
-		 * The container is the top-level element returned by the NodeView and
-		 * wraps the entire resizable node. It's set up with flexbox to handle
-		 * alignment and includes data attributes for styling and identification.
-		 *
-		 * @returns The container element
-		 */
+		* Creates the outer container element.
+		*
+		* The container is the top-level element returned by the NodeView and
+		* wraps the entire resizable node. It's set up with flexbox to handle
+		* alignment and includes data attributes for styling and identification.
+		*
+		* @returns The container element
+		*/
 		createContainer() {
 			const element = document.createElement("div");
 			element.dataset.resizeContainer = "";
 			element.dataset.node = this.node.type.name;
 			element.style.display = this.node.type.isInline ? "inline-flex" : "flex";
-			if (this.classNames.container) {
-				element.className = this.classNames.container;
-			}
+			if (this.classNames.container) element.className = this.classNames.container;
 			element.appendChild(this.wrapper);
 			return element;
 		}
 		/**
-		 * Creates the wrapper element that contains the content and handles.
-		 *
-		 * The wrapper uses relative positioning so that resize handles can be
-		 * positioned absolutely within it. This is the direct parent of the
-		 * content element being made resizable.
-		 *
-		 * @returns The wrapper element
-		 */
+		* Creates the wrapper element that contains the content and handles.
+		*
+		* The wrapper uses relative positioning so that resize handles can be
+		* positioned absolutely within it. This is the direct parent of the
+		* content element being made resizable.
+		*
+		* @returns The wrapper element
+		*/
 		createWrapper() {
 			const element = document.createElement("div");
 			element.style.position = "relative";
 			element.style.display = "block";
 			element.dataset.resizeWrapper = "";
-			if (this.classNames.wrapper) {
-				element.className = this.classNames.wrapper;
-			}
+			if (this.classNames.wrapper) element.className = this.classNames.wrapper;
 			element.appendChild(this.element);
 			return element;
 		}
 		/**
-		 * Creates a resize handle element for a specific direction.
-		 *
-		 * Each handle is absolutely positioned and includes a data attribute
-		 * identifying its direction for styling purposes.
-		 *
-		 * @param direction - The resize direction for this handle
-		 * @returns The handle element
-		 */
+		* Creates a resize handle element for a specific direction.
+		*
+		* Each handle is absolutely positioned and includes a data attribute
+		* identifying its direction for styling purposes.
+		*
+		* @param direction - The resize direction for this handle
+		* @returns The handle element
+		*/
 		createHandle(direction) {
 			const handle = document.createElement("div");
 			handle.dataset.resizeHandle = direction;
 			handle.style.position = "absolute";
-			if (this.classNames.handle) {
-				handle.className = this.classNames.handle;
-			}
+			if (this.classNames.handle) handle.className = this.classNames.handle;
 			return handle;
 		}
 		/**
-		 * Positions a handle element according to its direction.
-		 *
-		 * Corner handles (e.g., 'top-left') are positioned at the intersection
-		 * of two edges. Edge handles (e.g., 'top') span the full width or height.
-		 *
-		 * @param handle - The handle element to position
-		 * @param direction - The direction determining the position
-		 */
+		* Positions a handle element according to its direction.
+		*
+		* Corner handles (e.g., 'top-left') are positioned at the intersection
+		* of two edges. Edge handles (e.g., 'top') span the full width or height.
+		*
+		* @param handle - The handle element to position
+		* @param direction - The direction determining the position
+		*/
 		positionHandle(handle, direction) {
 			const isTop = direction.includes("top");
 			const isBottom = direction.includes("bottom");
 			const isLeft = direction.includes("left");
 			const isRight = direction.includes("right");
-			if (isTop) {
-				handle.style.top = "0";
-			}
-			if (isBottom) {
-				handle.style.bottom = "0";
-			}
-			if (isLeft) {
-				handle.style.left = "0";
-			}
-			if (isRight) {
-				handle.style.right = "0";
-			}
+			if (isTop) handle.style.top = "0";
+			if (isBottom) handle.style.bottom = "0";
+			if (isLeft) handle.style.left = "0";
+			if (isRight) handle.style.right = "0";
 			if (direction === "top" || direction === "bottom") {
 				handle.style.left = "0";
 				handle.style.right = "0";
@@ -19266,26 +20201,20 @@ img.ProseMirror-separator {
 			}
 		}
 		/**
-		 * Creates and attaches all resize handles to the wrapper.
-		 *
-		 * Iterates through the configured directions, creates a handle for each,
-		 * positions it, attaches the mousedown listener, and appends it to the DOM.
-		 */
+		* Creates and attaches all resize handles to the wrapper.
+		*
+		* Iterates through the configured directions, creates a handle for each,
+		* positions it, attaches the mousedown listener, and appends it to the DOM.
+		*/
 		attachHandles() {
 			this.directions.forEach(direction => {
 				let handle;
-				if (this.createCustomHandle) {
-					handle = this.createCustomHandle(direction);
-				} else {
-					handle = this.createHandle(direction);
-				}
+				if (this.createCustomHandle) handle = this.createCustomHandle(direction);else handle = this.createHandle(direction);
 				if (!(handle instanceof HTMLElement)) {
 					console.warn(`[ResizableNodeView] createCustomHandle("${direction}") did not return an HTMLElement. Falling back to default handle.`);
 					handle = this.createHandle(direction);
 				}
-				if (!this.createCustomHandle) {
-					this.positionHandle(handle, direction);
-				}
+				if (!this.createCustomHandle) this.positionHandle(handle, direction);
 				handle.addEventListener("mousedown", event => this.handleResizeStart(event, direction));
 				handle.addEventListener("touchstart", event => this.handleResizeStart(event, direction));
 				this.handleMap.set(direction, handle);
@@ -19293,50 +20222,44 @@ img.ProseMirror-separator {
 			});
 		}
 		/**
-		 * Removes all resize handles from the wrapper.
-		 *
-		 * Cleans up the handle map and removes each handle element from the DOM.
-		 */
+		* Removes all resize handles from the wrapper.
+		*
+		* Cleans up the handle map and removes each handle element from the DOM.
+		*/
 		removeHandles() {
 			this.handleMap.forEach(el => el.remove());
 			this.handleMap.clear();
 		}
 		/**
-		 * Applies initial sizing from node attributes to the element.
-		 *
-		 * If width/height attributes exist on the node, they're applied to the element.
-		 * Otherwise, the element's natural/current dimensions are measured. The aspect
-		 * ratio is calculated for later use in aspect-ratio-preserving resizes.
-		 */
+		* Applies initial sizing from node attributes to the element.
+		*
+		* If width/height attributes exist on the node, they're applied to the element.
+		* Otherwise, the element's natural/current dimensions are measured. The aspect
+		* ratio is calculated for later use in aspect-ratio-preserving resizes.
+		*/
 		applyInitialSize() {
 			const width = this.node.attrs.width;
 			const height = this.node.attrs.height;
 			if (width) {
 				this.element.style.width = `${width}px`;
 				this.initialWidth = width;
-			} else {
-				this.initialWidth = this.element.offsetWidth;
-			}
+			} else this.initialWidth = this.element.offsetWidth;
 			if (height) {
 				this.element.style.height = `${height}px`;
 				this.initialHeight = height;
-			} else {
-				this.initialHeight = this.element.offsetHeight;
-			}
-			if (this.initialWidth > 0 && this.initialHeight > 0) {
-				this.aspectRatio = this.initialWidth / this.initialHeight;
-			}
+			} else this.initialHeight = this.element.offsetHeight;
+			if (this.initialWidth > 0 && this.initialHeight > 0) this.aspectRatio = this.initialWidth / this.initialHeight;
 		}
 		/**
-		 * Initiates a resize operation when a handle is clicked.
-		 *
-		 * Captures the starting mouse position and element dimensions, sets up
-		 * the resize state, adds the resizing class and state attribute, and
-		 * attaches document-level listeners for mouse movement and keyboard input.
-		 *
-		 * @param event - The mouse down event
-		 * @param direction - The direction of the handle being dragged
-		 */
+		* Initiates a resize operation when a handle is clicked.
+		*
+		* Captures the starting mouse position and element dimensions, sets up
+		* the resize state, adds the resizing class and state attribute, and
+		* attaches document-level listeners for mouse movement and keyboard input.
+		*
+		* @param event - The mouse down event
+		* @param direction - The direction of the handle being dragged
+		*/
 		handleResizeStart(event, direction) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -19351,14 +20274,10 @@ img.ProseMirror-separator {
 			}
 			this.startWidth = this.element.offsetWidth;
 			this.startHeight = this.element.offsetHeight;
-			if (this.startWidth > 0 && this.startHeight > 0) {
-				this.aspectRatio = this.startWidth / this.startHeight;
-			}
-			this.getPos();
+			if (this.startWidth > 0 && this.startHeight > 0) this.aspectRatio = this.startWidth / this.startHeight;
+			if (this.getPos() !== void 0) ;
 			this.container.dataset.resizeState = "true";
-			if (this.classNames.resizing) {
-				this.container.classList.add(this.classNames.resizing);
-			}
+			if (this.classNames.resizing) this.container.classList.add(this.classNames.resizing);
 			document.addEventListener("mousemove", this.handleMouseMove);
 			document.addEventListener("touchmove", this.handleTouchMove);
 			document.addEventListener("mouseup", this.handleMouseUp);
@@ -19366,9 +20285,7 @@ img.ProseMirror-separator {
 			document.addEventListener("keyup", this.handleKeyUp);
 		}
 		handleResize(deltaX, deltaY) {
-			if (!this.activeHandle) {
-				return;
-			}
+			if (!this.activeHandle) return;
 			const shouldPreserveAspectRatio = this.preserveAspectRatio || this.isShiftKeyPressed;
 			const {
 				width,
@@ -19377,23 +20294,21 @@ img.ProseMirror-separator {
 			const constrained = this.applyConstraints(width, height, shouldPreserveAspectRatio);
 			this.element.style.width = `${constrained.width}px`;
 			this.element.style.height = `${constrained.height}px`;
-			if (this.onResize) {
-				this.onResize(constrained.width, constrained.height);
-			}
+			if (this.onResize) this.onResize(constrained.width, constrained.height);
 		}
 		/**
-		 * Calculates new dimensions based on mouse delta and resize direction.
-		 *
-		 * Takes the starting dimensions and applies the mouse movement delta
-		 * according to the handle direction. For corner handles, both dimensions
-		 * are affected. For edge handles, only one dimension changes. If aspect
-		 * ratio should be preserved, delegates to applyAspectRatio.
-		 *
-		 * @param direction - The active resize handle direction
-		 * @param deltaX - Horizontal mouse movement since resize start
-		 * @param deltaY - Vertical mouse movement since resize start
-		 * @returns The calculated width and height
-		 */
+		* Calculates new dimensions based on mouse delta and resize direction.
+		*
+		* Takes the starting dimensions and applies the mouse movement delta
+		* according to the handle direction. For corner handles, both dimensions
+		* are affected. For edge handles, only one dimension changes. If aspect
+		* ratio should be preserved, delegates to applyAspectRatio.
+		*
+		* @param direction - The active resize handle direction
+		* @param deltaX - Horizontal mouse movement since resize start
+		* @param deltaY - Vertical mouse movement since resize start
+		* @returns The calculated width and height
+		*/
 		calculateNewDimensions(direction, deltaX, deltaY) {
 			let newWidth = this.startWidth;
 			let newHeight = this.startHeight;
@@ -19401,60 +20316,42 @@ img.ProseMirror-separator {
 			const isLeft = direction.includes("left");
 			const isBottom = direction.includes("bottom");
 			const isTop = direction.includes("top");
-			if (isRight) {
-				newWidth = this.startWidth + deltaX;
-			} else if (isLeft) {
-				newWidth = this.startWidth - deltaX;
-			}
-			if (isBottom) {
-				newHeight = this.startHeight + deltaY;
-			} else if (isTop) {
-				newHeight = this.startHeight - deltaY;
-			}
-			if (direction === "right" || direction === "left") {
-				newWidth = this.startWidth + (isRight ? deltaX : -deltaX);
-			}
-			if (direction === "top" || direction === "bottom") {
-				newHeight = this.startHeight + (isBottom ? deltaY : -deltaY);
-			}
-			const shouldPreserveAspectRatio = this.preserveAspectRatio || this.isShiftKeyPressed;
-			if (shouldPreserveAspectRatio) {
-				return this.applyAspectRatio(newWidth, newHeight, direction);
-			}
+			if (isRight) newWidth = this.startWidth + deltaX;else if (isLeft) newWidth = this.startWidth - deltaX;
+			if (isBottom) newHeight = this.startHeight + deltaY;else if (isTop) newHeight = this.startHeight - deltaY;
+			if (direction === "right" || direction === "left") newWidth = this.startWidth + (isRight ? deltaX : -deltaX);
+			if (direction === "top" || direction === "bottom") newHeight = this.startHeight + (isBottom ? deltaY : -deltaY);
+			if (this.preserveAspectRatio || this.isShiftKeyPressed) return this.applyAspectRatio(newWidth, newHeight, direction);
 			return {
 				width: newWidth,
 				height: newHeight
 			};
 		}
 		/**
-		 * Applies min/max constraints to dimensions.
-		 *
-		 * When aspect ratio is NOT preserved, constraints are applied independently
-		 * to width and height. When aspect ratio IS preserved, constraints are
-		 * applied while maintaining the aspect ratio—if one dimension hits a limit,
-		 * the other is recalculated proportionally.
-		 *
-		 * This ensures that aspect ratio is never broken when constrained.
-		 *
-		 * @param width - The unconstrained width
-		 * @param height - The unconstrained height
-		 * @param preserveAspectRatio - Whether to maintain aspect ratio while constraining
-		 * @returns The constrained dimensions
-		 */
+		* Applies min/max constraints to dimensions.
+		*
+		* When aspect ratio is NOT preserved, constraints are applied independently
+		* to width and height. When aspect ratio IS preserved, constraints are
+		* applied while maintaining the aspect ratio—if one dimension hits a limit,
+		* the other is recalculated proportionally.
+		*
+		* This ensures that aspect ratio is never broken when constrained.
+		*
+		* @param width - The unconstrained width
+		* @param height - The unconstrained height
+		* @param preserveAspectRatio - Whether to maintain aspect ratio while constraining
+		* @returns The constrained dimensions
+		*/
 		applyConstraints(width, height, preserveAspectRatio) {
-			var _a, _b, _c, _d;
+			var _this$maxSize3, _this$maxSize4;
 			if (!preserveAspectRatio) {
-				let constrainedWidth2 = Math.max(this.minSize.width, width);
-				let constrainedHeight2 = Math.max(this.minSize.height, height);
-				if ((_a = this.maxSize) == null ? void 0 : _a.width) {
-					constrainedWidth2 = Math.min(this.maxSize.width, constrainedWidth2);
-				}
-				if ((_b = this.maxSize) == null ? void 0 : _b.height) {
-					constrainedHeight2 = Math.min(this.maxSize.height, constrainedHeight2);
-				}
+				var _this$maxSize, _this$maxSize2;
+				let constrainedWidth = Math.max(this.minSize.width, width);
+				let constrainedHeight = Math.max(this.minSize.height, height);
+				if ((_this$maxSize = this.maxSize) === null || _this$maxSize === void 0 ? void 0 : _this$maxSize.width) constrainedWidth = Math.min(this.maxSize.width, constrainedWidth);
+				if ((_this$maxSize2 = this.maxSize) === null || _this$maxSize2 === void 0 ? void 0 : _this$maxSize2.height) constrainedHeight = Math.min(this.maxSize.height, constrainedHeight);
 				return {
-					width: constrainedWidth2,
-					height: constrainedHeight2
+					width: constrainedWidth,
+					height: constrainedHeight
 				};
 			}
 			let constrainedWidth = width;
@@ -19467,11 +20364,11 @@ img.ProseMirror-separator {
 				constrainedHeight = this.minSize.height;
 				constrainedWidth = constrainedHeight * this.aspectRatio;
 			}
-			if (((_c = this.maxSize) == null ? void 0 : _c.width) && constrainedWidth > this.maxSize.width) {
+			if (((_this$maxSize3 = this.maxSize) === null || _this$maxSize3 === void 0 ? void 0 : _this$maxSize3.width) && constrainedWidth > this.maxSize.width) {
 				constrainedWidth = this.maxSize.width;
 				constrainedHeight = constrainedWidth / this.aspectRatio;
 			}
-			if (((_d = this.maxSize) == null ? void 0 : _d.height) && constrainedHeight > this.maxSize.height) {
+			if (((_this$maxSize4 = this.maxSize) === null || _this$maxSize4 === void 0 ? void 0 : _this$maxSize4.height) && constrainedHeight > this.maxSize.height) {
 				constrainedHeight = this.maxSize.height;
 				constrainedWidth = constrainedHeight * this.aspectRatio;
 			}
@@ -19481,636 +20378,53 @@ img.ProseMirror-separator {
 			};
 		}
 		/**
-		 * Adjusts dimensions to maintain the original aspect ratio.
-		 *
-		 * For horizontal handles (left/right), uses width as the primary dimension
-		 * and calculates height from it. For vertical handles (top/bottom), uses
-		 * height as primary and calculates width. For corner handles, uses width
-		 * as the primary dimension.
-		 *
-		 * @param width - The new width
-		 * @param height - The new height
-		 * @param direction - The active resize direction
-		 * @returns Dimensions adjusted to preserve aspect ratio
-		 */
+		* Adjusts dimensions to maintain the original aspect ratio.
+		*
+		* For horizontal handles (left/right), uses width as the primary dimension
+		* and calculates height from it. For vertical handles (top/bottom), uses
+		* height as primary and calculates width. For corner handles, uses width
+		* as the primary dimension.
+		*
+		* @param width - The new width
+		* @param height - The new height
+		* @param direction - The active resize direction
+		* @returns Dimensions adjusted to preserve aspect ratio
+		*/
 		applyAspectRatio(width, height, direction) {
 			const isHorizontal = direction === "left" || direction === "right";
 			const isVertical = direction === "top" || direction === "bottom";
-			if (isHorizontal) {
-				return {
-					width,
-					height: width / this.aspectRatio
-				};
-			}
-			if (isVertical) {
-				return {
-					width: height * this.aspectRatio,
-					height
-				};
-			}
+			if (isHorizontal) return {
+				width,
+				height: width / this.aspectRatio
+			};
+			if (isVertical) return {
+				width: height * this.aspectRatio,
+				height
+			};
 			return {
 				width,
 				height: width / this.aspectRatio
 			};
 		}
 	};
-	function canInsertNode(state, nodeType) {
-		const {
-			selection
-		} = state;
-		const {
-			$from
-		} = selection;
-		if (selection instanceof NodeSelection) {
-			const index = $from.index();
-			const parent = $from.parent;
-			return parent.canReplaceWith(index, index + 1, nodeType);
-		}
-		let depth = $from.depth;
-		while (depth >= 0) {
-			const index = $from.index(depth);
-			const parent = $from.node(depth);
-			const match = parent.contentMatchAt(index);
-			if (match.matchType(nodeType)) {
-				return true;
-			}
-			depth -= 1;
-		}
-		return false;
-	}
-
-	// src/utilities/htmlEntities.ts
-	function decodeHtmlEntities(text) {
-		return text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
-	}
-	function encodeHtmlEntities(text) {
-		return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-	}
-
-	// src/utilities/markdown/index.ts
-	var markdown_exports = {};
-	__export$1(markdown_exports, {
-		createAtomBlockMarkdownSpec: () => createAtomBlockMarkdownSpec,
-		createBlockMarkdownSpec: () => createBlockMarkdownSpec,
-		createInlineMarkdownSpec: () => createInlineMarkdownSpec,
-		parseAttributes: () => parseAttributes,
-		parseIndentedBlocks: () => parseIndentedBlocks,
-		renderNestedMarkdownContent: () => renderNestedMarkdownContent,
-		serializeAttributes: () => serializeAttributes
-	});
-
-	// src/utilities/markdown/attributeUtils.ts
-	function parseAttributes(attrString) {
-		if (!(attrString == null ? void 0 : attrString.trim())) {
-			return {};
-		}
-		const attributes = {};
-		const quotedStrings = [];
-		const tempString = attrString.replace(/["']([^"']*)["']/g, match => {
-			quotedStrings.push(match);
-			return `__QUOTED_${quotedStrings.length - 1}__`;
-		});
-		const classMatches = tempString.match(/(?:^|\s)\.([a-zA-Z][\w-]*)/g);
-		if (classMatches) {
-			const classes = classMatches.map(match => match.trim().slice(1));
-			attributes.class = classes.join(" ");
-		}
-		const idMatch = tempString.match(/(?:^|\s)#([a-zA-Z][\w-]*)/);
-		if (idMatch) {
-			attributes.id = idMatch[1];
-		}
-		const kvRegex = /([a-zA-Z][\w-]*)\s*=\s*(__QUOTED_\d+__)/g;
-		const kvMatches = Array.from(tempString.matchAll(kvRegex));
-		kvMatches.forEach(([, key, quotedRef]) => {
-			var _a;
-			const quotedIndex = parseInt(((_a = quotedRef.match(/__QUOTED_(\d+)__/)) == null ? void 0 : _a[1]) || "0", 10);
-			const quotedValue = quotedStrings[quotedIndex];
-			if (quotedValue) {
-				attributes[key] = quotedValue.slice(1, -1);
-			}
-		});
-		const cleanString = tempString.replace(/(?:^|\s)\.([a-zA-Z][\w-]*)/g, "").replace(/(?:^|\s)#([a-zA-Z][\w-]*)/g, "").replace(/([a-zA-Z][\w-]*)\s*=\s*__QUOTED_\d+__/g, "").trim();
-		if (cleanString) {
-			const booleanAttrs = cleanString.split(/\s+/).filter(Boolean);
-			booleanAttrs.forEach(attr => {
-				if (attr.match(/^[a-zA-Z][\w-]*$/)) {
-					attributes[attr] = true;
-				}
-			});
-		}
-		return attributes;
-	}
-	function serializeAttributes(attributes) {
-		if (!attributes || Object.keys(attributes).length === 0) {
-			return "";
-		}
-		const parts = [];
-		if (attributes.class) {
-			const classes = String(attributes.class).split(/\s+/).filter(Boolean);
-			classes.forEach(cls => parts.push(`.${cls}`));
-		}
-		if (attributes.id) {
-			parts.push(`#${attributes.id}`);
-		}
-		Object.entries(attributes).forEach(([key, value]) => {
-			if (key === "class" || key === "id") {
-				return;
-			}
-			if (value === true) {
-				parts.push(key);
-			} else if (value !== false && value != null) {
-				parts.push(`${key}="${String(value)}"`);
-			}
-		});
-		return parts.join(" ");
-	}
-
-	// src/utilities/markdown/createAtomBlockMarkdownSpec.ts
-	function createAtomBlockMarkdownSpec(options) {
-		const {
-			nodeName,
-			name: markdownName,
-			parseAttributes: parseAttributes2 = parseAttributes,
-			serializeAttributes: serializeAttributes2 = serializeAttributes,
-			defaultAttributes = {},
-			requiredAttributes = [],
-			allowedAttributes
-		} = options;
-		const blockName = markdownName || nodeName;
-		const filterAttributes = attrs => {
-			if (!allowedAttributes) {
-				return attrs;
-			}
-			const filtered = {};
-			allowedAttributes.forEach(key => {
-				if (key in attrs) {
-					filtered[key] = attrs[key];
-				}
-			});
-			return filtered;
-		};
-		return {
-			parseMarkdown: (token, h2) => {
-				const attrs = {
-					...defaultAttributes,
-					...token.attributes
-				};
-				return h2.createNode(nodeName, attrs, []);
-			},
-			markdownTokenizer: {
-				name: nodeName,
-				level: "block",
-				start(src) {
-					var _a;
-					const regex = new RegExp(`^:::${blockName}(?:\\s|$)`, "m");
-					const index = (_a = src.match(regex)) == null ? void 0 : _a.index;
-					return index !== void 0 ? index : -1;
-				},
-				tokenize(src, _tokens, _lexer) {
-					const regex = new RegExp(`^:::${blockName}(?:\\s+\\{([^}]*)\\})?\\s*:::(?:\\n|$)`);
-					const match = src.match(regex);
-					if (!match) {
-						return void 0;
-					}
-					const attrString = match[1] || "";
-					const attributes = parseAttributes2(attrString);
-					const missingRequired = requiredAttributes.find(required => !(required in attributes));
-					if (missingRequired) {
-						return void 0;
-					}
-					return {
-						type: nodeName,
-						raw: match[0],
-						attributes
-					};
-				}
-			},
-			renderMarkdown: node => {
-				const filteredAttrs = filterAttributes(node.attrs || {});
-				const attrs = serializeAttributes2(filteredAttrs);
-				const attrString = attrs ? ` {${attrs}}` : "";
-				return `:::${blockName}${attrString} :::`;
-			}
-		};
-	}
-
-	// src/utilities/markdown/createBlockMarkdownSpec.ts
-	function createBlockMarkdownSpec(options) {
-		const {
-			nodeName,
-			name: markdownName,
-			getContent,
-			parseAttributes: parseAttributes2 = parseAttributes,
-			serializeAttributes: serializeAttributes2 = serializeAttributes,
-			defaultAttributes = {},
-			content = "block",
-			allowedAttributes
-		} = options;
-		const blockName = markdownName || nodeName;
-		const filterAttributes = attrs => {
-			if (!allowedAttributes) {
-				return attrs;
-			}
-			const filtered = {};
-			allowedAttributes.forEach(key => {
-				if (key in attrs) {
-					filtered[key] = attrs[key];
-				}
-			});
-			return filtered;
-		};
-		return {
-			parseMarkdown: (token, h2) => {
-				let nodeContent;
-				if (getContent) {
-					const contentResult = getContent(token);
-					nodeContent = typeof contentResult === "string" ? [{
-						type: "text",
-						text: contentResult
-					}] : contentResult;
-				} else if (content === "block") {
-					nodeContent = h2.parseChildren(token.tokens || []);
-				} else {
-					nodeContent = h2.parseInline(token.tokens || []);
-				}
-				const attrs = {
-					...defaultAttributes,
-					...token.attributes
-				};
-				return h2.createNode(nodeName, attrs, nodeContent);
-			},
-			markdownTokenizer: {
-				name: nodeName,
-				level: "block",
-				start(src) {
-					var _a;
-					const regex = new RegExp(`^:::${blockName}`, "m");
-					const index = (_a = src.match(regex)) == null ? void 0 : _a.index;
-					return index !== void 0 ? index : -1;
-				},
-				tokenize(src, _tokens, lexer) {
-					var _a;
-					const openingRegex = new RegExp(`^:::${blockName}(?:\\s+\\{([^}]*)\\})?\\s*\\n`);
-					const openingMatch = src.match(openingRegex);
-					if (!openingMatch) {
-						return void 0;
-					}
-					const [openingTag, attrString = ""] = openingMatch;
-					const attributes = parseAttributes2(attrString);
-					let level = 1;
-					const position = openingTag.length;
-					let matchedContent = "";
-					const blockPattern = /^:::([\w-]*)(\s.*)?/gm;
-					const remaining = src.slice(position);
-					blockPattern.lastIndex = 0;
-					for (;;) {
-						const match = blockPattern.exec(remaining);
-						if (match === null) {
-							break;
-						}
-						const matchPos = match.index;
-						const blockType = match[1];
-						if ((_a = match[2]) == null ? void 0 : _a.endsWith(":::")) {
-							continue;
-						}
-						if (blockType) {
-							level += 1;
-						} else {
-							level -= 1;
-							if (level === 0) {
-								const rawContent = remaining.slice(0, matchPos);
-								matchedContent = rawContent.trim();
-								const fullMatch = src.slice(0, position + matchPos + match[0].length);
-								let contentTokens = [];
-								if (matchedContent) {
-									if (content === "block") {
-										contentTokens = lexer.blockTokens(rawContent);
-										contentTokens.forEach(token => {
-											if (token.text && (!token.tokens || token.tokens.length === 0)) {
-												token.tokens = lexer.inlineTokens(token.text);
-											}
-										});
-										while (contentTokens.length > 0) {
-											const lastToken = contentTokens[contentTokens.length - 1];
-											if (lastToken.type === "paragraph" && (!lastToken.text || lastToken.text.trim() === "")) {
-												contentTokens.pop();
-											} else {
-												break;
-											}
-										}
-									} else {
-										contentTokens = lexer.inlineTokens(matchedContent);
-									}
-								}
-								return {
-									type: nodeName,
-									raw: fullMatch,
-									attributes,
-									content: matchedContent,
-									tokens: contentTokens
-								};
-							}
-						}
-					}
-					return void 0;
-				}
-			},
-			renderMarkdown: (node, h2) => {
-				const filteredAttrs = filterAttributes(node.attrs || {});
-				const attrs = serializeAttributes2(filteredAttrs);
-				const attrString = attrs ? ` {${attrs}}` : "";
-				const renderedContent = h2.renderChildren(node.content || [], "\n\n");
-				return `:::${blockName}${attrString}
-
-${renderedContent}
-
-:::`;
-			}
-		};
-	}
-
-	// src/utilities/markdown/createInlineMarkdownSpec.ts
-	function parseShortcodeAttributes(attrString) {
-		if (!attrString.trim()) {
-			return {};
-		}
-		const attributes = {};
-		const regex = /(\w+)=(?:"([^"]*)"|'([^']*)')/g;
-		let match = regex.exec(attrString);
-		while (match !== null) {
-			const [, key, doubleQuoted, singleQuoted] = match;
-			attributes[key] = doubleQuoted || singleQuoted;
-			match = regex.exec(attrString);
-		}
-		return attributes;
-	}
-	function serializeShortcodeAttributes(attrs) {
-		return Object.entries(attrs).filter(([, value]) => value !== void 0 && value !== null).map(([key, value]) => `${key}="${value}"`).join(" ");
-	}
-	function createInlineMarkdownSpec(options) {
-		const {
-			nodeName,
-			name: shortcodeName,
-			getContent,
-			parseAttributes: parseAttributes2 = parseShortcodeAttributes,
-			serializeAttributes: serializeAttributes2 = serializeShortcodeAttributes,
-			defaultAttributes = {},
-			selfClosing = false,
-			allowedAttributes
-		} = options;
-		const shortcode = shortcodeName || nodeName;
-		const filterAttributes = attrs => {
-			if (!allowedAttributes) {
-				return attrs;
-			}
-			const filtered = {};
-			allowedAttributes.forEach(attr => {
-				const attrName = typeof attr === "string" ? attr : attr.name;
-				const skipIfDefault = typeof attr === "string" ? void 0 : attr.skipIfDefault;
-				if (attrName in attrs) {
-					const value = attrs[attrName];
-					if (skipIfDefault !== void 0 && value === skipIfDefault) {
-						return;
-					}
-					filtered[attrName] = value;
-				}
-			});
-			return filtered;
-		};
-		const escapedShortcode = shortcode.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		return {
-			parseMarkdown: (token, h2) => {
-				const attrs = {
-					...defaultAttributes,
-					...token.attributes
-				};
-				if (selfClosing) {
-					return h2.createNode(nodeName, attrs);
-				}
-				const content = getContent ? getContent(token) : token.content || "";
-				if (content) {
-					return h2.createNode(nodeName, attrs, [h2.createTextNode(content)]);
-				}
-				return h2.createNode(nodeName, attrs, []);
-			},
-			markdownTokenizer: {
-				name: nodeName,
-				level: "inline",
-				start(src) {
-					const startPattern = selfClosing ? new RegExp(`\\[${escapedShortcode}\\s*[^\\]]*\\]`) : new RegExp(`\\[${escapedShortcode}\\s*[^\\]]*\\][\\s\\S]*?\\[\\/${escapedShortcode}\\]`);
-					const match = src.match(startPattern);
-					const index = match == null ? void 0 : match.index;
-					return index !== void 0 ? index : -1;
-				},
-				tokenize(src, _tokens, _lexer) {
-					const tokenPattern = selfClosing ? new RegExp(`^\\[${escapedShortcode}\\s*([^\\]]*)\\]`) : new RegExp(`^\\[${escapedShortcode}\\s*([^\\]]*)\\]([\\s\\S]*?)\\[\\/${escapedShortcode}\\]`);
-					const match = src.match(tokenPattern);
-					if (!match) {
-						return void 0;
-					}
-					let content = "";
-					let attrString = "";
-					if (selfClosing) {
-						const [, attrs] = match;
-						attrString = attrs;
-					} else {
-						const [, attrs, contentMatch] = match;
-						attrString = attrs;
-						content = contentMatch || "";
-					}
-					const attributes = parseAttributes2(attrString.trim());
-					return {
-						type: nodeName,
-						raw: match[0],
-						content: content.trim(),
-						attributes
-					};
-				}
-			},
-			renderMarkdown: node => {
-				let content = "";
-				if (getContent) {
-					content = getContent(node);
-				} else if (node.content && node.content.length > 0) {
-					content = node.content.filter(child => child.type === "text").map(child => child.text).join("");
-				}
-				const filteredAttrs = filterAttributes(node.attrs || {});
-				const attrs = serializeAttributes2(filteredAttrs);
-				const attrString = attrs ? ` ${attrs}` : "";
-				if (selfClosing) {
-					return `[${shortcode}${attrString}]`;
-				}
-				return `[${shortcode}${attrString}]${content}[/${shortcode}]`;
-			}
-		};
-	}
-
-	// src/utilities/markdown/parseIndentedBlocks.ts
-	function parseIndentedBlocks(src, config, lexer) {
-		var _a, _b, _c, _d;
-		const lines = src.split("\n");
-		const items = [];
-		let totalRaw = "";
-		let i = 0;
-		const baseIndentSize = config.baseIndentSize || 2;
-		while (i < lines.length) {
-			const currentLine = lines[i];
-			const itemMatch = currentLine.match(config.itemPattern);
-			if (!itemMatch) {
-				if (items.length > 0) {
-					break;
-				} else if (currentLine.trim() === "") {
-					i += 1;
-					totalRaw = `${totalRaw}${currentLine}
-`;
-					continue;
-				} else {
-					return void 0;
-				}
-			}
-			const itemData = config.extractItemData(itemMatch);
-			const {
-				indentLevel,
-				mainContent
-			} = itemData;
-			totalRaw = `${totalRaw}${currentLine}
-`;
-			const itemContent = [mainContent];
-			i += 1;
-			while (i < lines.length) {
-				const nextLine = lines[i];
-				if (nextLine.trim() === "") {
-					const nextNonEmptyIndex = lines.slice(i + 1).findIndex(l => l.trim() !== "");
-					if (nextNonEmptyIndex === -1) {
-						break;
-					}
-					const nextNonEmpty = lines[i + 1 + nextNonEmptyIndex];
-					const nextIndent2 = ((_b = (_a = nextNonEmpty.match(/^(\s*)/)) == null ? void 0 : _a[1]) == null ? void 0 : _b.length) || 0;
-					if (nextIndent2 > indentLevel) {
-						itemContent.push(nextLine);
-						totalRaw = `${totalRaw}${nextLine}
-`;
-						i += 1;
-						continue;
-					} else {
-						break;
-					}
-				}
-				const nextIndent = ((_d = (_c = nextLine.match(/^(\s*)/)) == null ? void 0 : _c[1]) == null ? void 0 : _d.length) || 0;
-				if (nextIndent > indentLevel) {
-					itemContent.push(nextLine);
-					totalRaw = `${totalRaw}${nextLine}
-`;
-					i += 1;
-				} else {
-					break;
-				}
-			}
-			let nestedTokens;
-			const nestedContent = itemContent.slice(1);
-			if (nestedContent.length > 0) {
-				const dedentedNested = nestedContent.map(nestedLine => nestedLine.slice(indentLevel + baseIndentSize)).join("\n");
-				if (dedentedNested.trim()) {
-					if (config.customNestedParser) {
-						nestedTokens = config.customNestedParser(dedentedNested);
-					} else {
-						nestedTokens = lexer.blockTokens(dedentedNested);
-					}
-				}
-			}
-			const token = config.createToken(itemData, nestedTokens);
-			items.push(token);
-		}
-		if (items.length === 0) {
-			return void 0;
-		}
-		return {
-			items,
-			raw: totalRaw
-		};
-	}
-
-	// src/utilities/markdown/renderNestedMarkdownContent.ts
-	function renderNestedMarkdownContent(node, h2, prefixOrGenerator, ctx) {
-		if (!node || !Array.isArray(node.content)) {
-			return "";
-		}
-		const prefix = typeof prefixOrGenerator === "function" ? prefixOrGenerator(ctx) : prefixOrGenerator;
-		const [content, ...children] = node.content;
-		const mainContent = h2.renderChildren([content]);
-		let output = `${prefix}${mainContent}`;
-		if (children && children.length > 0) {
-			children.forEach((child, index) => {
-				var _a, _b;
-				const childContent = (_b = (_a = h2.renderChild) == null ? void 0 : _a.call(h2, child, index + 1)) != null ? _b : h2.renderChildren([child]);
-				if (childContent !== void 0 && childContent !== null) {
-					const indentedChild = childContent.split("\n").map(line => line ? h2.indent(line) : h2.indent("")).join("\n");
-					output += child.type === "paragraph" ? `
-
-${indentedChild}` : `
-${indentedChild}`;
-				}
-			});
-		}
-		return output;
-	}
-
-	// src/MarkView.ts
-	function updateMarkViewAttributes(checkMark, editor, attrs = {}) {
-		const {
-			state
-		} = editor;
-		const {
-			doc,
-			tr
-		} = state;
-		const thisMark = checkMark;
-		doc.descendants((node, pos) => {
-			const from = tr.mapping.map(pos);
-			const to = tr.mapping.map(pos) + node.nodeSize;
-			let foundMark = null;
-			node.marks.forEach(mark => {
-				if (mark !== thisMark) {
-					return false;
-				}
-				foundMark = mark;
-			});
-			if (!foundMark) {
-				return;
-			}
-			let needsUpdate = false;
-			Object.keys(attrs).forEach(k => {
-				if (attrs[k] !== foundMark.attrs[k]) {
-					needsUpdate = true;
-				}
-			});
-			if (needsUpdate) {
-				const updatedMark = checkMark.type.create({
-					...checkMark.attrs,
-					...attrs
-				});
-				tr.removeMark(from, to, checkMark.type);
-				tr.addMark(from, to, updatedMark);
-			}
-		});
-		if (tr.docChanged) {
-			editor.view.dispatch(tr);
-		}
-	}
-
-	// src/Node.ts
-	var Node3 = class _Node extends Extendable {
-		constructor() {
-			super(...arguments);
+	//#endregion
+	//#region src/Node.ts
+	/**
+	* The Node class is used to create custom node extensions.
+	* @see https://tiptap.dev/api/extensions#create-a-new-extension
+	*/
+	var Node$1 = class Node extends Extendable {
+		constructor(..._args) {
+			super(..._args);
 			this.type = "node";
 		}
 		/**
-		 * Create a new Node instance
-		 * @param config - Node configuration object or a function that returns a configuration object
-		 */
+		* Create a new Node instance
+		* @param config - Node configuration object or a function that returns a configuration object
+		*/
 		static create(config = {}) {
 			const resolvedConfig = typeof config === "function" ? config() : config;
-			return new _Node(resolvedConfig);
+			return new Node(resolvedConfig);
 		}
 		configure(options) {
 			return super.configure(options);
@@ -20120,8 +20434,13 @@ ${indentedChild}`;
 			return super.extend(resolvedConfig);
 		}
 	};
-
-	// src/pasteRules/markPasteRule.ts
+	//#endregion
+	//#region src/pasteRules/markPasteRule.ts
+	/**
+	* Build an paste rule that adds a mark when the
+	* matched text is pasted into it.
+	* @see https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing#paste-rules
+	*/
 	function markPasteRule(config) {
 		return new PasteRule({
 			find: config.find,
@@ -20132,9 +20451,7 @@ ${indentedChild}`;
 				pasteEvent
 			}) => {
 				const attributes = callOrReturn(config.getAttributes, void 0, match, pasteEvent);
-				if (attributes === false || attributes === null) {
-					return null;
-				}
+				if (attributes === false || attributes === null) return null;
 				const {
 					tr
 				} = state;
@@ -20145,25 +20462,14 @@ ${indentedChild}`;
 					const startSpaces = fullMatch.search(/\S/);
 					const textStart = range.from + fullMatch.indexOf(captureGroup);
 					const textEnd = textStart + captureGroup.length;
-					const excludedMarks = getMarksBetween(range.from, range.to, state.doc).filter(item => {
-						const excluded = item.mark.type.excluded;
-						return excluded.find(type => type === config.type && type !== item.mark.type);
-					}).filter(item => item.to > textStart);
-					if (excludedMarks.length) {
-						return null;
-					}
-					if (textEnd < range.to) {
-						tr.delete(textEnd, range.to);
-					}
-					if (textStart > range.from) {
-						tr.delete(range.from + startSpaces, textStart);
-					}
+					if (getMarksBetween(range.from, range.to, state.doc).filter(item => {
+						return item.mark.type.excluded.find(type => type === config.type && type !== item.mark.type);
+					}).filter(item => item.to > textStart).length) return null;
+					if (textEnd < range.to) tr.delete(textEnd, range.to);
+					if (textStart > range.from) tr.delete(range.from + startSpaces, textStart);
 					markEnd = range.from + startSpaces + captureGroup.length;
 					tr.addMark(range.from + startSpaces, markEnd, config.type.create(attributes || {}));
-					const isMatchAtEndOfText = match.index !== void 0 && match.input !== void 0 && match.index + match[0].length >= match.input.length;
-					if (!isMatchAtEndOfText) {
-						tr.removeStoredMark(config.type);
-					}
+					if (!(match.index !== void 0 && match.input !== void 0 && match.index + match[0].length >= match.input.length)) tr.removeStoredMark(config.type);
 				}
 			}
 		});
@@ -20177,6 +20483,112 @@ ${indentedChild}`;
 	const INTERNAL_NOTE_WORKSPACE_PATTERN = /^(?:\/note)?\/(?:workspace|collection)\/(\d+)\/?$/;
 	// Exactly the character set produced by slugify (heading-slug.js:46).
 	const ANCHOR_SLUG_PATTERN = /^[a-z0-9-]+$/;
+	const PUNYCODE_BASE = 36;
+	const PUNYCODE_TMIN = 1;
+	const PUNYCODE_TMAX = 26;
+	const PUNYCODE_SKEW = 38;
+	const PUNYCODE_DAMP = 700;
+	const PUNYCODE_INITIAL_BIAS = 72;
+	const PUNYCODE_INITIAL_N = 128;
+	function decodePunycodeDigit(code) {
+		if (code >= 48 && code <= 57) {
+			return code - 22;
+		}
+		if (code >= 65 && code <= 90) {
+			return code - 65;
+		}
+		if (code >= 97 && code <= 122) {
+			return code - 97;
+		}
+		return PUNYCODE_BASE;
+	}
+	function adaptPunycodeBias(delta, numPoints, firstTime) {
+		let value = firstTime ? Math.floor(delta / PUNYCODE_DAMP) : Math.floor(delta / 2);
+		value += Math.floor(value / numPoints);
+		let k = 0;
+		while (value > (PUNYCODE_BASE - PUNYCODE_TMIN) * PUNYCODE_TMAX / 2) {
+			value = Math.floor(value / (PUNYCODE_BASE - PUNYCODE_TMIN));
+			k += PUNYCODE_BASE;
+		}
+		return Math.floor(k + (PUNYCODE_BASE - PUNYCODE_TMIN + 1) * value / (value + PUNYCODE_SKEW));
+	}
+	function decodePunycodeLabel(label) {
+		if (!label.toLowerCase().startsWith('xn--')) {
+			return label;
+		}
+		const input = label.slice(4);
+		if (!input) {
+			return label;
+		}
+		const delimiter = input.lastIndexOf('-');
+		const basicCodePoints = delimiter === -1 ? '' : input.slice(0, delimiter);
+		const output = [...basicCodePoints];
+		let inputIndex = delimiter + 1;
+		let n = PUNYCODE_INITIAL_N;
+		let index = 0;
+		let bias = PUNYCODE_INITIAL_BIAS;
+		while (inputIndex < input.length) {
+			const oldIndex = index;
+			let weight = 1;
+			for (let k = PUNYCODE_BASE;; k += PUNYCODE_BASE) {
+				const digit = decodePunycodeDigit(input.codePointAt(inputIndex++) ?? PUNYCODE_BASE);
+				if (digit >= PUNYCODE_BASE) {
+					return label;
+				}
+				index += digit * weight;
+				let threshold = PUNYCODE_TMIN;
+				if (k >= bias + PUNYCODE_TMAX) {
+					threshold = PUNYCODE_TMAX;
+				} else if (k > bias) {
+					threshold = k - bias;
+				}
+				if (digit < threshold) {
+					break;
+				}
+				weight *= PUNYCODE_BASE - threshold;
+			}
+			const outputLength = output.length + 1;
+			bias = adaptPunycodeBias(index - oldIndex, outputLength, oldIndex === 0);
+			n += Math.floor(index / outputLength);
+			if (n > 0x10FFFF) {
+				return label;
+			}
+			index %= outputLength;
+			output.splice(index++, 0, String.fromCodePoint(n));
+		}
+		return output.join('');
+	}
+	function decodePunycodeHostname(hostname) {
+		return hostname.split('.').map(label => decodePunycodeLabel(label)).join('.');
+	}
+
+	// Only fully Cyrillic hostnames are decoded. Other IDNs stay in ACE form until a UTS #39 policy is defined.
+	function isFullyCyrillicHostname(hostname) {
+		let hasCyrillicLetter = false;
+		for (const character of hostname) {
+			const codePoint = character.codePointAt(0) ?? 0;
+			if (character === '.' || character === '-' || codePoint >= 48 && codePoint <= 57) {
+				continue;
+			}
+			const isCyrillic = codePoint >= 0x0400 && codePoint <= 0x052F || codePoint >= 0x2DE0 && codePoint <= 0x2DFF || codePoint >= 0xA640 && codePoint <= 0xA69F;
+			if (!isCyrillic) {
+				return false;
+			}
+			hasCyrillicLetter = true;
+		}
+		return hasCyrillicLetter;
+	}
+	function decodeUrlTailForDisplay(tail) {
+		// Reserved delimiters stay encoded in decodeURI, while a decoded percent sign would be ambiguous.
+		if (tail.includes('%25')) {
+			return tail;
+		}
+		try {
+			return decodeURI(tail);
+		} catch {
+			return tail;
+		}
+	}
 	function canonicalizeInternalNotePath(pathname) {
 		const documentMatch = INTERNAL_NOTE_DOCUMENT_PATTERN.exec(pathname);
 		if (documentMatch) {
@@ -20217,6 +20629,34 @@ ${indentedChild}`;
 			return parsed.toString();
 		} catch {
 			return null;
+		}
+	}
+	function formatUrlForDisplay(url) {
+		const href = sanitizeUrl(url);
+		if (!href || href.startsWith('/') || href.startsWith('#')) {
+			return href ?? '';
+		}
+		try {
+			const parsed = new URL(href);
+			if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+				return href;
+			}
+			const decodedHostname = decodePunycodeHostname(parsed.hostname);
+			const displayHostname = isFullyCyrillicHostname(decodedHostname) ? decodedHostname : parsed.hostname;
+			const authorityStart = parsed.protocol.length + 2;
+			const authorityEnd = href.indexOf('/', authorityStart);
+			if (authorityEnd === -1) {
+				return href;
+			}
+			const credentialsEnd = href.lastIndexOf('@', authorityEnd);
+			const hostnameStart = credentialsEnd < authorityStart ? authorityStart : credentialsEnd + 1;
+			const hostnameEnd = parsed.port ? authorityEnd - parsed.port.length - 1 : authorityEnd;
+			const authoritySuffix = href.slice(hostnameEnd, authorityEnd);
+			const displayTail = decodeUrlTailForDisplay(href.slice(authorityEnd));
+			const displayUrl = `${href.slice(0, hostnameStart)}${displayHostname}${authoritySuffix}${displayTail}`;
+			return sanitizeUrl(displayUrl) === href ? displayUrl : href;
+		} catch {
+			return href;
 		}
 	}
 
@@ -20324,7 +20764,7 @@ ${indentedChild}`;
 		} else {
 			editor.chain().focus().insertContent({
 				type: 'text',
-				text: safeHref,
+				text: linkValue,
 				marks: [{
 					type: 'link',
 					attrs: {
@@ -20381,31 +20821,56 @@ ${indentedChild}`;
 		}) {
 			this.linkValue = '';
 			this.initialHref = '';
+			this.initialSafeHref = null;
 			this.linkSelection = null;
+			this.isOpen = false;
+			this.isDirty = false;
 			this._getEditor = getEditor;
 		}
 
 		// `range` is the real link-mark span ({ from, to, href }), e.g. from findLinkMarkRangeAtPos.
 		// Caret-driven callers must pass it so linkSelection seeds a non-collapsed range (the caret
 		// itself is collapsed at this point); the toolbar path has no range and keeps the old behavior.
-		open(range) {
+		open(range, {
+			showSelectionOverlay = true
+		} = {}) {
 			const editor = this._getEditor();
+			this.isOpen = true;
 			this.linkSelection = range ? {
 				from: range.from,
 				to: range.to
 			} : captureLinkSelection(editor);
-			showLinkSelectionOverlay(editor, this.linkSelection);
+			if (showSelectionOverlay) {
+				this.showSelectionOverlay();
+			} else {
+				clearLinkSelectionOverlay(editor);
+			}
 			// Prefer the href resolved from the link-mark range (caret may sit on a non-inclusive boundary
 			// where getAttributes by selection reads empty); fall back to selection for the toolbar path.
-			this.linkValue = range?.href ?? editor?.getAttributes('link').href ?? '';
-			this.initialHref = this.linkValue;
+			this.initialHref = range?.href ?? editor?.getAttributes('link').href ?? '';
+			this.initialSafeHref = sanitizeUrl(this.initialHref);
+			this.linkValue = formatUrlForDisplay(this.initialHref);
+			this.isDirty = false;
+		}
+		updateRange(range) {
+			this.linkSelection = {
+				from: range.from,
+				to: range.to
+			};
+		}
+		showSelectionOverlay() {
+			showLinkSelectionOverlay(this._getEditor(), this.linkSelection);
 		}
 
 		// Closed contract: valid non-empty -> apply, empty -> unset, invalid -> rollback to initialHref.
 		commit() {
-			// Href unchanged: skip apply() so we don't restoreLinkSelection and yank the caret back into
-			// the link (the common open/look/click-away case). Only touch the doc on a real edit.
-			if (this.linkValue === this.initialHref) {
+			if (!this.isOpen) {
+				return true;
+			}
+
+			// Only touch the document after actual input. Formatting the value for display may produce a
+			// different but equivalent URL (for example, add a trailing slash or decode an IDN hostname).
+			if (!this.hasChanges()) {
 				return true;
 			}
 			if (!this.linkValue) {
@@ -20420,13 +20885,17 @@ ${indentedChild}`;
 		}
 		close() {
 			clearLinkSelectionOverlay(this._getEditor());
+			this.isOpen = false;
 		}
 
 		// Same closed contract as commit(), but lands the edit on this.linkSelection directly instead of
 		// the live selection, so the caret (already elsewhere, e.g. moved into a different link) doesn't
 		// get pulled back. Used when the caret leaves this link before the user closed the popup.
 		commitInPlace() {
-			if (this.linkValue === this.initialHref) {
+			if (!this.isOpen) {
+				return;
+			}
+			if (!this.hasChanges()) {
 				return;
 			}
 			if (this.linkValue && !sanitizeUrl(this.linkValue)) {
@@ -20451,9 +20920,11 @@ ${indentedChild}`;
 			if (!applied) {
 				return false;
 			}
-			this.linkValue = href;
+			this.linkValue = formatUrlForDisplay(href);
 			// Sync initialHref so a follow-up commit-on-close (after Enter already applied) is a no-op.
 			this.initialHref = href;
+			this.initialSafeHref = sanitizeUrl(href);
+			this.isDirty = false;
 			this.linkSelection = null;
 			clearLinkSelectionOverlay(editor);
 			return true;
@@ -20467,11 +20938,21 @@ ${indentedChild}`;
 			this.linkValue = '';
 			// Sync initialHref so a follow-up commit-on-close is a no-op after the link was already removed.
 			this.initialHref = '';
+			this.initialSafeHref = null;
+			this.isDirty = false;
 			this.linkSelection = null;
 			clearLinkSelectionOverlay(editor);
 		}
 		setLinkValue(value) {
 			this.linkValue = value;
+			this.isDirty = true;
+		}
+		hasChanges() {
+			if (!this.isDirty || !this.linkValue && !this.initialHref) {
+				return false;
+			}
+			const safeHref = sanitizeUrl(this.linkValue);
+			return safeHref === null || safeHref !== this.initialSafeHref;
 		}
 	}
 
@@ -21363,7 +21844,7 @@ ${indentedChild}`;
 				default: false
 			}
 		},
-		emits: ['update:linkValue', 'apply', 'unset'],
+		emits: ['update:linkValue', 'apply', 'unset', 'field-focus'],
 		computed: {
 			safeLinkHref() {
 				this.editorTick;
@@ -21374,8 +21855,20 @@ ${indentedChild}`;
 				return !this.linkValue && !this.linkIsActive;
 			}
 		},
+		watch: {
+			autofocus(value) {
+				if (value) {
+					this.focusInput();
+				}
+			}
+		},
 		mounted() {
 			if (this.autofocus) {
+				this.focusInput();
+			}
+		},
+		methods: {
+			focusInput() {
 				this.$nextTick(() => {
 					const input = this.$refs.input;
 					if (input instanceof HTMLInputElement) {
@@ -21383,9 +21876,7 @@ ${indentedChild}`;
 						input.select();
 					}
 				});
-			}
-		},
-		methods: {
+			},
 			emitValue(value) {
 				this.$emit('update:linkValue', value.trim());
 			},
@@ -21410,6 +21901,7 @@ ${indentedChild}`;
 				:value="linkValue"
 				class="note-editor-input note-editor-input-clamp"
 				placeholder="https://"
+				@focus="$emit('field-focus')"
 				@input="emitValue($event.target.value)"
 				@keydown="handleKeydown"
 			/>
@@ -21426,6 +21918,7 @@ ${indentedChild}`;
 	const ToolbarMoreGroupComponent = {
 		name: 'NoteToolbarMoreGroup',
 		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
 			PlusIcon,
 			LinkIcon,
 			TableIcon,
@@ -21508,7 +22001,26 @@ ${indentedChild}`;
 			onInsertVideo: {
 				type: Function,
 				default: null
+			},
+			// Own entry point for a file that already lives on Disk. Hidden when the feature is off, so the
+			// row stays exactly as it was.
+			diskAttachmentsEnabled: {
+				type: Boolean,
+				default: false
+			},
+			onPickDiskFile: {
+				type: Function,
+				default: null
+			},
+			onInsertDate: {
+				type: Function,
+				default: null
 			}
+		},
+		data() {
+			return {
+				Outline: ui_iconSet_api_vue.Outline
+			};
 		},
 		computed: {
 			showLinkRow() {
@@ -21528,8 +22040,12 @@ ${indentedChild}`;
 				this.onCloseMenu?.();
 			},
 			insertFile() {
-				this.onInsertFile?.();
 				this.onCloseMenu?.();
+				this.onInsertFile?.();
+			},
+			pickDiskFile() {
+				this.onCloseMenu?.();
+				this.onPickDiskFile?.();
 			},
 			insertImage() {
 				this.onInsertImage?.();
@@ -21538,6 +22054,10 @@ ${indentedChild}`;
 			insertVideo() {
 				this.onInsertVideo?.();
 				this.onCloseMenu?.();
+			},
+			insertDate() {
+				this.onCloseMenu?.();
+				this.onInsertDate?.();
 			},
 			switchToLink() {
 				this.onSetSubMode?.('link');
@@ -21571,8 +22091,10 @@ ${indentedChild}`;
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LINK')" :data-note-editor-active="linkIsActive" :disabled="!editor?.isEditable" @click="switchToLink"><LinkIcon /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_INSERT_TABLE')" :disabled="insertTableDisabled" @click="insertTable"><TableIcon /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_FILE')" :disabled="!editor?.isEditable" @click="insertFile"><FilePlusIcon /></button>
+								<button v-if="diskAttachmentsEnabled" type="button" class="note-editor-popover-button" data-testid="note-editor-file-from-disk" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_FILE_FROM_DISK')" :disabled="!editor?.isEditable" @click="pickDiskFile"><BIcon :name="Outline.STORAGE" :size="24" /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_IMAGE')" :disabled="!editor?.isEditable" @click="insertImage"><ImagePlusIcon /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_VIDEO')" :disabled="!editor?.isEditable" @click="insertVideo"><VideoIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-insert-date" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_DATE')" :disabled="!editor?.isEditable" @click="insertDate"><BIcon :name="Outline.CALENDAR" :size="24" /></button>
 							</div>
 							<LinkEditForm
 								v-else
@@ -21634,10 +22156,6 @@ ${indentedChild}`;
 				type: Number,
 				default: 0
 			},
-			maxFileSize: {
-				type: Number,
-				default: 0
-			},
 			fixed: {
 				type: Boolean,
 				default: false
@@ -21653,9 +22171,14 @@ ${indentedChild}`;
 			fixedMaxWidth: {
 				type: Number,
 				default: 0
+			},
+			// Whether the row offers the second file entry point — the one that picks a file already on Disk.
+			diskAttachmentsEnabled: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['insertFileStub', 'insertImageStub', 'insertVideoStub'],
+		emits: ['insertFileStub', 'insertImageStub', 'insertVideoStub', 'pickDiskFile', 'insertDate'],
 		data() {
 			return {
 				openMenu: null,
@@ -21980,13 +22503,22 @@ ${indentedChild}`;
 				}
 			},
 			insertFileStub() {
-				void this.$emit?.('insertFileStub', this.maxFileSize);
+				void this.$emit?.('insertFileStub');
+			},
+			pickDiskFile() {
+				void this.$emit?.('pickDiskFile');
 			},
 			insertImageStub() {
 				void this.$emit?.('insertImageStub', this.maxImageSize);
 			},
 			insertVideoStub() {
-				void this.$emit?.('insertVideoStub', this.maxFileSize);
+				// No size limit travels with the intent: the limit is not the toolbar's to state, and the
+				// upload node reads it from the same constant this prop was filled from (see upload-asset.js
+				// and file-upload-service.js). The file intent stopped passing it, this one follows.
+				void this.$emit?.('insertVideoStub');
+			},
+			insertDate() {
+				void this.$emit?.('insertDate');
 			}
 		},
 		// language=Vue
@@ -22079,6 +22611,9 @@ ${indentedChild}`;
 				:on-insert-file="insertFileStub"
 				:on-insert-image="insertImageStub"
 				:on-insert-video="insertVideoStub"
+				:on-insert-date="insertDate"
+				:disk-attachments-enabled="diskAttachmentsEnabled"
+				:on-pick-disk-file="pickDiskFile"
 			/>
 			</div>
 			<div class="note-editor-toolbar-thumb" aria-hidden="true" @pointerdown="handleThumbPointerDown"></div>
@@ -22301,6 +22836,224 @@ ${indentedChild}`;
 	`
 	};
 
+	const TABLE_ALIGNMENTS = ['left', 'center', 'right'];
+	function isTableAlignment(value) {
+		return main_core.Type.isString(value) && TABLE_ALIGNMENTS.includes(value);
+	}
+	function normalizeTableAlignment(value) {
+		return isTableAlignment(value) ? value : 'left';
+	}
+	function findTableAtSelection(selection) {
+		const $position = selection?.$anchorCell ?? selection?.$from;
+		if (!$position) {
+			return null;
+		}
+		let hasTableCell = Boolean(selection?.$anchorCell);
+		for (let depth = $position.depth; depth > 0; depth--) {
+			const node = $position.node(depth);
+			if (node.type.name === 'tableCell' || node.type.name === 'tableHeader') {
+				hasTableCell = true;
+			}
+			if (hasTableCell && node.type.name === 'table') {
+				return {
+					node,
+					pos: $position.before(depth)
+				};
+			}
+		}
+		return null;
+	}
+
+	const VIEWPORT_PADDING$1 = 8;
+	const TABLE_CONTROL_GAP = 8;
+	const TABLE_CONTROL_MARGIN = 4;
+	function clamp(value, min, max) {
+		return Math.min(max, Math.max(min, value));
+	}
+	function resolveTableElement(editor, position) {
+		const nodeDom = editor.view?.nodeDOM(position);
+		if (!(nodeDom instanceof HTMLElement)) {
+			return null;
+		}
+		if (nodeDom.matches('table')) {
+			return nodeDom;
+		}
+		const table = nodeDom.querySelector('table');
+		return table instanceof HTMLElement ? table : null;
+	}
+	const TableAlignmentControls = {
+		name: 'NoteTableAlignmentControls',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			editor: {
+				type: Object,
+				default: null
+			},
+			editorTick: {
+				type: Number,
+				default: 0
+			},
+			layoutStable: {
+				type: Boolean,
+				default: true
+			}
+		},
+		data() {
+			return {
+				visible: false,
+				position: {
+					left: 0,
+					top: 0
+				},
+				alignment: 'center',
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		computed: {
+			actions() {
+				return [{
+					value: 'left',
+					label: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_LEFT'),
+					icon: this.Outline.POINT_LEFT
+				}, {
+					value: 'center',
+					label: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_CENTER'),
+					icon: this.Outline.ALIGN_CENTER
+				}, {
+					value: 'right',
+					label: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_RIGHT'),
+					icon: this.Outline.POINT_RIGHT
+				}];
+			}
+		},
+		watch: {
+			visible(value) {
+				if (value) {
+					this.$nextTick(() => this.sync());
+				}
+			},
+			editorTick() {
+				this.sync();
+			},
+			editor() {
+				this.sync();
+			},
+			layoutStable(stable) {
+				if (!stable) {
+					this.visible = false;
+					return;
+				}
+				this.$nextTick(() => this.sync());
+			}
+		},
+		mounted() {
+			this.handleViewportChange = this.handleViewportChange.bind(this);
+			main_core.Event.bind(document, 'scroll', this.handleViewportChange, {
+				passive: true,
+				capture: true
+			});
+			main_core.Event.bind(window, 'resize', this.handleViewportChange, {
+				passive: true
+			});
+			this.sync();
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(document, 'scroll', this.handleViewportChange, true);
+			main_core.Event.unbind(window, 'resize', this.handleViewportChange);
+		},
+		methods: {
+			sync() {
+				if (!this.layoutStable) {
+					this.visible = false;
+					return;
+				}
+				const editor = this.editor;
+				if (!editor?.isEditable) {
+					this.visible = false;
+					return;
+				}
+				const table = findTableAtSelection(editor.state?.selection);
+				if (!table) {
+					this.visible = false;
+					return;
+				}
+				const tableElement = resolveTableElement(editor, table.pos);
+				if (!tableElement) {
+					this.visible = false;
+					return;
+				}
+				this.alignment = normalizeTableAlignment(table.node.attrs.alignment);
+				this.updatePosition(tableElement);
+				this.visible = true;
+			},
+			handleViewportChange() {
+				if (this.visible) {
+					this.sync();
+				}
+			},
+			updatePosition(table) {
+				const tableRect = table.getBoundingClientRect();
+				const wrapper = table.closest('.tableWrapper');
+				const isHorizontallyScrollable = wrapper instanceof HTMLElement && wrapper.scrollWidth > wrapper.clientWidth;
+				const boundsRect = isHorizontallyScrollable ? wrapper.getBoundingClientRect() : tableRect;
+				const controlRect = this.$refs.controls instanceof HTMLElement ? this.$refs.controls.getBoundingClientRect() : null;
+				const controlWidth = controlRect?.width ?? 0;
+				const controlHeight = controlRect?.height ?? 0;
+				const halfControlWidth = controlWidth / 2;
+				const viewportMinLeft = VIEWPORT_PADDING$1 + halfControlWidth;
+				const viewportMaxLeft = window.innerWidth - VIEWPORT_PADDING$1 - halfControlWidth;
+				const minLeft = Math.max(VIEWPORT_PADDING$1 + halfControlWidth, boundsRect.left + TABLE_CONTROL_MARGIN + halfControlWidth);
+				const maxLeft = Math.min(window.innerWidth - VIEWPORT_PADDING$1 - halfControlWidth, boundsRect.right - TABLE_CONTROL_MARGIN - halfControlWidth);
+				const preferredLeft = tableRect.left + tableRect.width / 2;
+				const left = minLeft <= maxLeft ? clamp(preferredLeft, minLeft, maxLeft) : clamp(preferredLeft, viewportMinLeft, viewportMaxLeft);
+				const minTop = VIEWPORT_PADDING$1 + controlHeight;
+				const maxTop = window.innerHeight - VIEWPORT_PADDING$1;
+				const preferredTop = tableRect.top - TABLE_CONTROL_GAP;
+				this.position = {
+					left,
+					top: minTop <= maxTop ? clamp(preferredTop, minTop, maxTop) : maxTop
+				};
+			},
+			setAlignment(alignment) {
+				if (!this.editor?.isEditable) {
+					return;
+				}
+				this.editor.chain().focus().setTableAlignment(alignment).run();
+			}
+		},
+		// language=Vue
+		template: `
+		<teleport to="#note-editor-app">
+			<div
+				v-if="visible"
+				ref="controls"
+				class="note-editor-table-alignment-controls"
+				data-testid="note-editor-table-alignment-controls"
+				:style="{ left: position.left + 'px', top: position.top + 'px' }"
+				contenteditable="false"
+				@mousedown.prevent
+			>
+				<button
+					v-for="action in actions"
+					:key="action.value"
+					type="button"
+					class="note-editor-table-alignment-controls_button"
+					:class="{ 'note-editor-table-alignment-controls_button--active': alignment === action.value }"
+					:title="action.label"
+					:aria-label="action.label"
+					:aria-pressed="alignment === action.value"
+					:data-testid="'note-editor-table-alignment-' + action.value + '-btn'"
+					@click="setAlignment(action.value)"
+				>
+					<BIcon :name="action.icon" :size="20" />
+				</button>
+			</div>
+		</teleport>
+	`
+	};
+
 	const VIEWPORT_PADDING = 8;
 	const ANCHOR_GAP = 6;
 	const LinkFloatingPopupComponent = {
@@ -22322,7 +23075,9 @@ ${indentedChild}`;
 			return {
 				visible: false,
 				posX: 0,
-				posY: 0
+				posY: 0,
+				linkAutofocus: false,
+				caretDrivenOpen: false
 			};
 		},
 		created() {
@@ -22345,6 +23100,10 @@ ${indentedChild}`;
 			// True when the current pointer interaction started inside the popup, so a drag-select that
 			// ends outside the popup (mouseup beyond its bounds) isn't misread as a click-outside close.
 			this.pointerDownInsidePopup = false;
+			this.pointerInteractionActive = false;
+			this.pointerStart = null;
+			this.pointerWasDragged = false;
+			this.explicitPopupOpen = false;
 			// Tracks the isEditable false->true transition: on entering edit mode the caret may land inside
 			// a link (e.g. a link at doc start), and we must not auto-open the popup for that programmatic
 			// caret placement — only an explicit interaction should open it.
@@ -22360,7 +23119,9 @@ ${indentedChild}`;
 			this.handleDocumentKeydown = this.handleDocumentKeydown.bind(this);
 			this.handleViewportChange = this.handleViewportChange.bind(this);
 			this.handleDocumentPointerDown = this.handleDocumentPointerDown.bind(this);
+			this.handleDocumentPointerUp = this.handleDocumentPointerUp.bind(this);
 			main_core.Event.bind(document, 'mousedown', this.handleDocumentPointerDown, true);
+			main_core.Event.bind(document, 'mouseup', this.handleDocumentPointerUp, true);
 			main_core.Event.bind(document, 'click', this.handleDocumentClick, true);
 			main_core.Event.bind(document, 'keydown', this.handleDocumentKeydown, true);
 			// Capture phase on document to also catch scroll of `main.content`, not just window.
@@ -22374,6 +23135,7 @@ ${indentedChild}`;
 		},
 		beforeUnmount() {
 			main_core.Event.unbind(document, 'mousedown', this.handleDocumentPointerDown, true);
+			main_core.Event.unbind(document, 'mouseup', this.handleDocumentPointerUp, true);
 			main_core.Event.unbind(document, 'click', this.handleDocumentClick, true);
 			main_core.Event.unbind(document, 'keydown', this.handleDocumentKeydown, true);
 			main_core.Event.unbind(document, 'scroll', this.handleViewportChange, true);
@@ -22391,7 +23153,24 @@ ${indentedChild}`;
 			handleDocumentPointerDown(event) {
 				const target = event.target instanceof Element ? event.target : null;
 				const popup = this.$refs.popup;
+				this.pointerInteractionActive = true;
+				this.pointerStart = {
+					x: event.clientX,
+					y: event.clientY
+				};
+				this.pointerWasDragged = false;
+				const editorDom = this.editor?.view?.dom;
+				if (this.explicitPopupOpen && editorDom instanceof HTMLElement && target !== null && editorDom.contains(target) && target.closest('a[href]') !== this.currentAnchor) {
+					this.explicitPopupOpen = false;
+				}
 				this.pointerDownInsidePopup = this.visible && popup instanceof HTMLElement && target !== null && popup.contains(target);
+			},
+			handleDocumentPointerUp(event) {
+				this.pointerInteractionActive = false;
+				if (this.pointerStart) {
+					this.pointerWasDragged = Math.abs(event.clientX - this.pointerStart.x) > 2 || Math.abs(event.clientY - this.pointerStart.y) > 2;
+					this.pointerStart = null;
+				}
 			},
 			// Popup visibility is primarily caret-driven (see syncVisibilityWithCaret), but a click
 			// outside both the popup and the editor DOM doesn't move ProseMirror selection, so it
@@ -22401,6 +23180,11 @@ ${indentedChild}`;
 				// outside it; that mouseup/click is not a real click-outside, so keep the popup open.
 				if (this.pointerDownInsidePopup) {
 					this.pointerDownInsidePopup = false;
+					this.pointerWasDragged = false;
+					return;
+				}
+				if (this.pointerWasDragged) {
+					this.pointerWasDragged = false;
 					return;
 				}
 				const target = event.target instanceof Element ? event.target : null;
@@ -22428,20 +23212,48 @@ ${indentedChild}`;
 				}
 				const anchor = target.closest('a[href]');
 				if (!(anchor instanceof HTMLAnchorElement)) {
+					// The click moved the caret outside the dismissed link. This must be synchronous: a
+					// close() transaction may still be flushing and defer the caret-driven reset.
+					this.dismissedRange = null;
 					return;
 				}
 				if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+					return;
+				}
+				event.preventDefault();
+				let range = null;
+				try {
+					range = findLinkMarkRangeAtPos(editor, editor.view.posAtDOM(anchor, 0));
+				} catch {
+					return;
+				}
+				if (!range) {
 					return;
 				}
 
 				// Explicit click on a link must always be able to reopen the popup, even if this exact
 				// range was just dismissed (Enter/Escape) with the caret still inside it.
 				this.dismissedRange = null;
-				event.preventDefault();
-				// The caret may already sit inside this link (popup was just closed with Enter/Escape),
-				// so no transaction fires to drive the caret sync. Trigger it explicitly so a single
-				// click reopens the popup instead of requiring a second one.
-				this.$nextTick(() => this.syncVisibilityWithCaret());
+				this.explicitPopupOpen = true;
+				if (!this.visible) {
+					this.linkState.open(range);
+					this.openAt(anchor, {
+						autofocus: true
+					});
+					return;
+				}
+				if (anchor !== this.currentAnchor) {
+					this.commitPendingRange();
+					this.linkState.open(range);
+					this.openAt(anchor, {
+						autofocus: true
+					});
+				} else if (this.caretDrivenOpen) {
+					this.caretDrivenOpen = false;
+					this.linkState.updateRange(range);
+					this.linkState.showSelectionOverlay();
+					this.linkAutofocus = true;
+				}
 			},
 			// Resolve the anchor from a position inside the mark range (not the left edge): domAtPos
 			// at range.from tends to land on the block element (e.g. <p>), whose closest('a[href]')
@@ -22495,14 +23307,43 @@ ${indentedChild}`;
 				}
 				const justEnabledEdit = !this.wasEditable;
 				this.wasEditable = true;
+				const selection = editor.state.selection;
+				if (!selection.empty) {
+					this.anchorRetryPending = false;
+					this.dismissedRange = null;
+					if (this.visible && this.caretDrivenOpen) {
+						this.close({
+							restoreFocus: false
+						});
+					}
+					if (!this.visible || this.caretDrivenOpen) {
+						return;
+					}
+				}
 
 				// Ignore transactions caused by our own close()/commit() to avoid reopening the popup.
 				if (this.isClosing) {
 					return;
 				}
-				const range = findLinkMarkRangeAtPos(editor, editor.state.selection.from);
+				if (!this.visible && this.pointerInteractionActive) {
+					return;
+				}
+				let range = findLinkMarkRangeAtPos(editor, selection.from);
+
+				// Consume the one-shot marker even when the caret is on an external link boundary. Otherwise
+				// it survives until the next entry into the link and suppresses that real user interaction.
+				const inputRuleRange = editor.storage?.link?.suppressPopupRange ?? null;
+				if (inputRuleRange) {
+					editor.storage.link.suppressPopupRange = null;
+				}
+				if ((!this.visible || this.caretDrivenOpen) && range && (selection.from === range.from || selection.from === range.to)) {
+					range = null;
+				}
 				if (!range) {
 					this.anchorRetryPending = false;
+					if (this.visible && this.explicitPopupOpen) {
+						return;
+					}
 					// Caret left the link: clear dismissal so re-entering it later reopens the popup.
 					this.dismissedRange = null;
 					if (this.visible) {
@@ -22527,13 +23368,9 @@ ${indentedChild}`;
 				// range handed over by LinkWithInputRule and seed the dismissal (same as entering edit mode),
 				// so the popup stays closed until the user clicks the link or moves into it. Clear it
 				// unconditionally so a later click can still reopen the popup for the same range.
-				const inputRuleRange = editor.storage?.link?.suppressPopupRange ?? null;
-				if (inputRuleRange) {
-					editor.storage.link.suppressPopupRange = null;
-					if (!this.visible && inputRuleRange.from === range.from && inputRuleRange.to === range.to) {
-						this.dismissedRange = range;
-						return;
-					}
+				if (inputRuleRange && !this.visible && inputRuleRange.from === range.from && inputRuleRange.to === range.to) {
+					this.dismissedRange = range;
+					return;
 				}
 
 				// Caret moved to a different link range: the previous dismissal no longer applies.
@@ -22561,15 +23398,27 @@ ${indentedChild}`;
 				}
 				this.anchorRetryPending = false;
 				if (!this.visible) {
-					this.linkState.open(range);
-					this.openAt(anchor);
+					this.linkState.open(range, {
+						showSelectionOverlay: false
+					});
+					this.openAt(anchor, {
+						caretDriven: true
+					});
 				} else if (anchor !== this.currentAnchor) {
 					// Caret moved from link A to link B: commit A's pending edit onto A's own range first
 					// (not via restoreLinkSelection, which would yank the caret back into A), then re-open
 					// on B (re-read its href/selection).
+					const caretDriven = this.caretDrivenOpen;
 					this.commitPendingRange();
-					this.linkState.open(range);
-					this.openAt(anchor);
+					this.linkState.open(range, {
+						showSelectionOverlay: !caretDriven
+					});
+					this.openAt(anchor, {
+						autofocus: !caretDriven,
+						caretDriven
+					});
+				} else if (this.caretDrivenOpen) {
+					this.linkState.updateRange(range);
 				}
 			},
 			// Lands the currently open link's pending edit on its own (now stale) range, without moving
@@ -22579,9 +23428,14 @@ ${indentedChild}`;
 			commitPendingRange() {
 				this.linkState.commitInPlace();
 			},
-			openAt(anchor) {
+			openAt(anchor, {
+				autofocus = false,
+				caretDriven = false
+			} = {}) {
 				this.currentAnchor = anchor;
 				this.committed = false;
+				this.linkAutofocus = autofocus;
+				this.caretDrivenOpen = caretDriven;
 				const rect = anchor.getBoundingClientRect();
 				this.posX = Math.round(rect.left);
 				this.posY = Math.round(rect.top - ANCHOR_GAP);
@@ -22637,9 +23491,12 @@ ${indentedChild}`;
 					return;
 				}
 				this.isClosing = true;
+				this.explicitPopupOpen = false;
 				this.commitOnce();
 				this.visible = false;
 				this.currentAnchor = null;
+				this.linkAutofocus = false;
+				this.caretDrivenOpen = false;
 				this.linkState.close();
 				if (restoreFocus) {
 					// Return focus to the editor after commit/hide (a11y: focus must not be lost to <body>).
@@ -22649,11 +23506,17 @@ ${indentedChild}`;
 				// Release the guard after the closing/commit transactions have flushed through the sync.
 				this.$nextTick(() => {
 					this.isClosing = false;
+					this.syncVisibilityWithCaret();
 				});
 			},
 			handleDocumentKeydown(event) {
 				if (!this.visible) {
 					return;
+				}
+				const editorDom = this.editor?.view?.dom;
+				if (this.explicitPopupOpen && editorDom instanceof HTMLElement && event.target instanceof Node && editorDom.contains(event.target)) {
+					this.explicitPopupOpen = false;
+					this.$nextTick(() => this.syncVisibilityWithCaret());
 				}
 				if (event.key === 'Escape') {
 					event.preventDefault();
@@ -22675,8 +23538,9 @@ ${indentedChild}`;
 			},
 			handleApply() {
 				// Enter is an explicit user close (like Escape): mark the range dismissed so the caret
-				// staying inside the link after apply doesn't reopen the popup. close() performs the commit.
-				this.dismissCurrentRange();
+				// staying inside the link after apply doesn't reopen the popup. Before creating a new link,
+				// the editor selection has no link mark yet, so use the pending selection captured by linkState.
+				this.dismissedRange = this.linkState.linkSelection ?? findLinkMarkRangeAtPos(this.editor, this.editor?.state.selection.from);
 				this.close();
 			},
 			handleUnset() {
@@ -22686,6 +23550,13 @@ ${indentedChild}`;
 			},
 			handleLinkValueChange(value) {
 				this.linkState.setLinkValue(value);
+			},
+			handleFormFocus() {
+				if (!this.visible || !this.caretDrivenOpen) {
+					return;
+				}
+				this.caretDrivenOpen = false;
+				this.linkState.showSelectionOverlay();
 			}
 		},
 		// language=Vue
@@ -22695,6 +23566,7 @@ ${indentedChild}`;
 				v-if="visible"
 				ref="popup"
 				class="note-editor-popover note-editor-popover--floating"
+				data-testid="note-editor-link-floating-popup"
 				:style="{ position: 'fixed', left: posX + 'px', top: posY + 'px' }"
 			>
 				<div class="note-editor-popover-card">
@@ -22703,7 +23575,8 @@ ${indentedChild}`;
 						:editor-tick="editorTick"
 						:link-value="linkState.linkValue"
 						:link-is-active="true"
-						:autofocus="true"
+						:autofocus="linkAutofocus"
+						@field-focus="handleFormFocus"
 						@update:link-value="handleLinkValueChange"
 						@apply="handleApply"
 						@unset="handleUnset"
@@ -24437,129 +25310,226 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		b.parse;
 		x.lex;
 
-	// src/Extension.ts
-
-	// src/utils.ts
+	//#region src/utils.ts
+	/**
+	* Matches a run of two or more consecutive line breaks (a blank line) at the
+	* end of a string, allowing horizontal whitespace between the breaks.
+	*
+	* @example
+	* TRAILING_BLANK_LINES.test('paragraph\n  \n')
+	* // => true
+	*/
+	const TRAILING_BLANK_LINES = /\n[^\S\n]*(?:\n[^\S\n]*)+$/;
+	/**
+	* Extracts blank lines absorbed into marked token `raw` back into explicit
+	* `space` tokens so they're handled uniformly by the reconstruction path.
+	* @param tokens The marked token stream to normalize.
+	* @returns A new token array with absorbed blank lines as `space` tokens.
+	*/
+	function extractAbsorbedBlankLines(tokens) {
+		return tokens.flatMap((token, index) => {
+			var _tokens;
+			if (token.type === "space" || ((_tokens = tokens[index + 1]) === null || _tokens === void 0 ? void 0 : _tokens.type) === "space") return [token];
+			const trailingBlankLines = (token.raw || "").match(TRAILING_BLANK_LINES);
+			if (!trailingBlankLines) return [token];
+			return [{
+				...token,
+				raw: (token.raw || "").slice(0, -trailingBlankLines[0].length)
+			}, {
+				type: "space",
+				raw: trailingBlankLines[0]
+			}];
+		});
+	}
+	/**
+	* Wraps each line of the content with the given prefix.
+	* @param prefix The prefix to wrap each line with.
+	* @param content The content to wrap.
+	* @returns The content with each line wrapped with the prefix.
+	*/
 	function wrapInMarkdownBlock(prefix, content) {
-		const lines = content.split("\n");
-		const output = lines.flatMap(line => [line, ""]).map(line => `${prefix}${line}`).join("\n");
+		const output = content.split("\n").flatMap(line => [line, ""]).map(line => `${prefix}${line}`).join("\n");
 		return output.slice(0, output.length - 1);
 	}
+	/**
+	* Determines which marks to close based on the next node's marks,
+	* treating same-type marks with different attributes as distinct.
+	*/
 	function findMarksToClose(currentMarks, nextNode) {
 		const marksToClose = [];
-		Array.from(currentMarks.keys()).forEach(markType => {
-			if (!nextNode || !nextNode.marks || !nextNode.marks.map(mark => mark.type).includes(markType)) {
+		Array.from(currentMarks.entries()).forEach(([markType, currentMark]) => {
+			if (!nextNode) {
 				marksToClose.push(markType);
+				return;
 			}
+			if (!(nextNode.marks || []).find(mark => mark.type === markType && attrsEqual$1(mark.attrs, currentMark.attrs))) marksToClose.push(markType);
 		});
 		return marksToClose;
 	}
+	/**
+	* Determines which marks need to open, treating same-type marks with
+	* different attributes as distinct (close + reopen).
+	*/
 	function findMarksToOpen(activeMarks, currentMarks) {
 		const marksToOpen = [];
 		Array.from(currentMarks.entries()).forEach(([markType, mark]) => {
-			if (!activeMarks.has(markType)) {
-				marksToOpen.push({
-					type: markType,
-					mark
-				});
-			}
+			const activeMark = activeMarks.get(markType);
+			if (!activeMark || !attrsEqual$1(activeMark.attrs, mark.attrs)) marksToOpen.push({
+				type: markType,
+				mark
+			});
 		});
 		return marksToOpen;
 	}
+	/**
+	* Determines which marks to close at the node end, treating same-type marks
+	* with different attributes as distinct (close + reopen).
+	*/
 	function findMarksToCloseAtEnd(activeMarks, currentMarks, nextNode, markSetsEqual) {
 		const isLastNode = !nextNode;
-		const nextNodeHasNoMarks = nextNode && nextNode.type === "text" && (!nextNode.marks || nextNode.marks.length === 0);
-		const nextNodeHasDifferentMarks = nextNode && nextNode.type === "text" && nextNode.marks && !markSetsEqual(currentMarks, new Map(nextNode.marks.map(mark => [mark.type, mark])));
+		const nextNodeHasNoMarks = nextNode && (!nextNode.marks || nextNode.marks.length === 0);
+		const nextNodeHasDifferentMarks = nextNode && nextNode.marks && !markSetsEqual(currentMarks, new Map(nextNode.marks.map(mark => [mark.type, mark])));
 		const marksToCloseAtEnd = [];
 		if (isLastNode || nextNodeHasNoMarks || nextNodeHasDifferentMarks) {
-			if (nextNode && nextNode.type === "text" && nextNode.marks) {
-				const nextMarks = new Map(nextNode.marks.map(mark => [mark.type, mark]));
-				Array.from(activeMarks.keys()).reverse().forEach(markType => {
-					if (!nextMarks.has(markType)) {
-						marksToCloseAtEnd.push(markType);
-					}
-				});
-			} else if (isLastNode || nextNodeHasNoMarks) {
-				marksToCloseAtEnd.push(...Array.from(activeMarks.keys()).reverse());
-			}
+			if (nextNode && nextNode.marks) Array.from(activeMarks.entries()).reverse().forEach(([markType, activeMark]) => {
+				if (!nextNode.marks.find(m => m.type === markType && attrsEqual$1(m.attrs, activeMark.attrs))) marksToCloseAtEnd.push(markType);
+			});else if (isLastNode || nextNodeHasNoMarks) marksToCloseAtEnd.push(...Array.from(activeMarks.keys()).reverse());
 		}
 		return marksToCloseAtEnd;
 	}
+	/**
+	* Closes active marks before rendering a non-text node.
+	* Returns the closing markdown syntax and clears the active marks.
+	*/
 	function closeMarksBeforeNode(activeMarks, getMarkClosing) {
 		let beforeMarkdown = "";
 		Array.from(activeMarks.keys()).reverse().forEach(markType => {
-			const mark = activeMarks.get(markType);
-			const closeMarkdown = getMarkClosing(markType, mark);
-			if (closeMarkdown) {
-				beforeMarkdown = closeMarkdown + beforeMarkdown;
-			}
+			const closeMarkdown = getMarkClosing(markType, activeMarks.get(markType));
+			if (closeMarkdown) beforeMarkdown = closeMarkdown + beforeMarkdown;
 		});
 		activeMarks.clear();
 		return beforeMarkdown;
 	}
+	/**
+	* Reopens marks after rendering a non-text node.
+	* Returns the opening markdown syntax and updates the active marks.
+	*/
 	function reopenMarksAfterNode(marksToReopen, activeMarks, getMarkOpening) {
 		let afterMarkdown = "";
 		Array.from(marksToReopen.entries()).forEach(([markType, mark]) => {
 			const openMarkdown = getMarkOpening(markType, mark);
-			if (openMarkdown) {
-				afterMarkdown += openMarkdown;
-			}
+			if (openMarkdown) afterMarkdown += openMarkdown;
 			activeMarks.set(markType, mark);
 		});
 		return afterMarkdown;
 	}
+	/**
+	* Check if a markdown list item token is a task item and extract its state.
+	*
+	* @param item The list item token to check
+	* @returns Object containing isTask flag, checked state, and indentation level
+	*
+	* @example
+	* ```ts
+	* isTaskItem({ raw: '- [ ] Task' }) // { isTask: true, checked: false, indentLevel: 0 }
+	* isTaskItem({ raw: '  - [x] Done' }) // { isTask: true, checked: true, indentLevel: 2 }
+	* isTaskItem({ raw: '- Regular' }) // { isTask: false, indentLevel: 0 }
+	* ```
+	*/
 	function isTaskItem(item) {
-		const raw = item.raw || item.text || "";
-		const match = raw.match(/^(\s*)[-+*]\s+\[([ xX])\]\s+/);
-		if (match) {
-			return {
-				isTask: true,
-				checked: match[2].toLowerCase() === "x",
-				indentLevel: match[1].length
-			};
-		}
+		const match = (item.raw || item.text || "").match(/^(\s*)[-+*]\s+\[([ xX])\]\s+/);
+		if (match) return {
+			isTask: true,
+			checked: match[2].toLowerCase() === "x",
+			indentLevel: match[1].length
+		};
 		return {
 			isTask: false,
 			indentLevel: 0
 		};
 	}
+	/**
+	* Assumes the content type based off the content.
+	* @param content The content to assume the type for.
+	* @param contentType The content type that should be prioritized.
+	*/
 	function assumeContentType(content, contentType) {
-		if (typeof content !== "string") {
-			return "json";
-		}
+		if (typeof content !== "string") return "json";
 		return contentType;
 	}
-
-	// src/MarkdownManager.ts
+	//#endregion
+	//#region src/utils/htmlTagDetection.ts
+	/**
+	* Standard HTML and common SVG element names. Used to tell apart real
+	* (but possibly empty) elements like `<em></em>` from genuinely unknown
+	* angle-bracket text such as `<enter foo bar>` so the latter can be
+	* preserved as literal text.
+	*
+	* Non-hyphenated tags not in this set are treated as unknown unless
+	* declared in the schema's parseDOM rules. This does not claim full
+	* parity with browser `HTMLUnknownElement` classification across all
+	* namespaces (e.g. rare SVG filter elements, MathML).
+	*/
+	const STANDARD_HTML_TAGS = /* @__PURE__ */new Set(["a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code", "col", "colgroup", "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link", "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "search", "section", "select", "slot", "small", "source", "span", "strong", "style", "sub", "summary", "sup", "svg", "circle", "clippath", "defs", "ellipse", "foreignobject", "g", "image", "line", "lineargradient", "mask", "path", "polygon", "polyline", "radialgradient", "rect", "stop", "switch", "symbol", "textpath", "tspan", "use", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video", "wbr"]);
+	const HTML_TAG_NAME_PATTERN = /<\/?([a-zA-Z][\w-]*)/g;
+	/**
+	* Extract lower-cased tag names from an HTML fragment (opening and closing tags).
+	*/
+	function extractHtmlTagNames(html) {
+		const tagNames = [];
+		let match;
+		while ((match = HTML_TAG_NAME_PATTERN.exec(html)) !== null) tagNames.push(match[1].toLowerCase());
+		return tagNames;
+	}
+	/**
+	* Returns true when the tag name is non-hyphenated and not in the
+	* STANDARD_HTML_TAGS allowlist (i.e. would be treated as unrecognized).
+	*/
+	function isHtmlUnknownTagName(tagName) {
+		const lower = tagName.toLowerCase();
+		if (lower.includes("-")) return false;
+		return !STANDARD_HTML_TAGS.has(lower);
+	}
+	/**
+	* Returns true when the HTML contains a tag that is neither a standard HTML
+	* element nor declared in the schema's parseDOM rules.
+	*/
+	function htmlContainsUnrecognizedTag(html, schemaTags) {
+		return extractHtmlTagNames(html).some(tagName => {
+			if (!isHtmlUnknownTagName(tagName)) return false;
+			return !schemaTags.has(tagName);
+		});
+	}
+	//#endregion
+	//#region src/MarkdownManager.ts
 	var MarkdownManager = class {
 		/**
-		 * Create a MarkdownManager.
-		 * @param options.marked Optional marked instance to use (injected).
-		 * @param options.markedOptions Optional options to pass to marked.setOptions
-		 * @param options.indentation Indentation settings (style and size).
-		 * @param options.extensions An array of Tiptap extensions to register for markdown parsing and rendering.
-		 */
+		* Create a MarkdownManager.
+		* @param options.marked Optional marked instance to use (injected).
+		* @param options.markedOptions Optional options to pass to marked.setOptions
+		* @param options.indentation Indentation settings (style and size).
+		* @param options.extensions An array of Tiptap extensions to register for markdown parsing and rendering.
+		*/
 		constructor(options) {
+			var _options$marked, _options$indentation$, _options$indentation, _options$indentation$2, _options$indentation2;
 			this.activeParseLexer = null;
+			this.extensionRanks = /* @__PURE__ */new Map();
 			this.baseExtensions = [];
 			this.extensions = [];
-			/** Set of extension names whose `code` spec property is truthy (nodes and marks). */
 			this.codeTypes = /* @__PURE__ */new Set();
+			this.schemaParseDomTagsCache = null;
+			this.inlineNodeTypesCache = null;
 			this.lastParseResult = null;
-			var _a, _b, _c, _d, _e;
-			this.markedInstance = (_a = options == null ? void 0 : options.marked) != null ? _a : g;
-			this.indentStyle = (_c = (_b = options == null ? void 0 : options.indentation) == null ? void 0 : _b.style) != null ? _c : "space";
-			this.indentSize = (_e = (_d = options == null ? void 0 : options.indentation) == null ? void 0 : _d.size) != null ? _e : 2;
-			this.baseExtensions = (options == null ? void 0 : options.extensions) || [];
-			if ((options == null ? void 0 : options.markedOptions) && typeof this.markedInstance.setOptions === "function") {
-				this.markedInstance.setOptions(options.markedOptions);
-			}
+			this.markedInstance = (_options$marked = options === null || options === void 0 ? void 0 : options.marked) !== null && _options$marked !== void 0 ? _options$marked : g;
+			this.indentStyle = (_options$indentation$ = options === null || options === void 0 || (_options$indentation = options.indentation) === null || _options$indentation === void 0 ? void 0 : _options$indentation.style) !== null && _options$indentation$ !== void 0 ? _options$indentation$ : "space";
+			this.indentSize = (_options$indentation$2 = options === null || options === void 0 || (_options$indentation2 = options.indentation) === null || _options$indentation2 === void 0 ? void 0 : _options$indentation2.size) !== null && _options$indentation$2 !== void 0 ? _options$indentation$2 : 2;
+			this.baseExtensions = (options === null || options === void 0 ? void 0 : options.extensions) || [];
+			if ((options === null || options === void 0 ? void 0 : options.markedOptions) && typeof this.markedInstance.setOptions === "function") this.markedInstance.setOptions(options.markedOptions);
 			this.registry = /* @__PURE__ */new Map();
 			this.nodeTypeRegistry = /* @__PURE__ */new Map();
-			if (options == null ? void 0 : options.extensions) {
+			if (options === null || options === void 0 ? void 0 : options.extensions) {
 				this.baseExtensions = options.extensions;
-				const flattened = flattenExtensions(options.extensions);
-				flattened.forEach(ext => this.registerExtension(ext));
+				sortExtensions(flattenExtensions(options.extensions)).forEach(ext => this.registerExtension(ext));
 			}
 		}
 		/** Returns the underlying marked instance. */
@@ -24579,32 +25549,29 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return !!this.markedInstance;
 		}
 		/**
-		 * Register a Tiptap extension (Node/Mark/Extension). This will read
-		 * `markdownName`, `parseMarkdown`, `renderMarkdown` and `priority` from the
-		 * extension config (using the same resolution used across the codebase).
-		 */
+		* Register a Tiptap extension (Node/Mark/Extension). This will read
+		* `markdownName`, `parseMarkdown`, `renderMarkdown` and `priority` from the
+		* extension config (using the same resolution used across the codebase).
+		*/
 		registerExtension(extension) {
-			var _a, _b;
+			var _getExtensionField, _markdownCfg$indentsC;
 			this.extensions.push(extension);
 			const isCode = callOrReturn(getExtensionField(extension, "code"));
 			const name = extension.name;
-			if (isCode) {
-				this.codeTypes.add(name);
-			}
+			if (isCode) this.codeTypes.add(name);
+			if (!this.extensionRanks.has(name)) this.extensionRanks.set(name, this.extensionRanks.size);
 			const tokenName = getExtensionField(extension, "markdownTokenName") || name;
 			const parseMarkdown = getExtensionField(extension, "parseMarkdown");
 			const renderMarkdown = getExtensionField(extension, "renderMarkdown");
 			const tokenizer = getExtensionField(extension, "markdownTokenizer");
-			const markdownCfg = (_a = getExtensionField(extension, "markdownOptions")) != null ? _a : null;
-			const isIndenting = (_b = markdownCfg == null ? void 0 : markdownCfg.indentsContent) != null ? _b : false;
-			const htmlReopen = markdownCfg == null ? void 0 : markdownCfg.htmlReopen;
+			const markdownCfg = (_getExtensionField = getExtensionField(extension, "markdownOptions")) !== null && _getExtensionField !== void 0 ? _getExtensionField : null;
 			const spec = {
 				tokenName,
 				nodeName: name,
 				parseMarkdown,
 				renderMarkdown,
-				isIndenting,
-				htmlReopen,
+				isIndenting: (_markdownCfg$indentsC = markdownCfg === null || markdownCfg === void 0 ? void 0 : markdownCfg.indentsContent) !== null && _markdownCfg$indentsC !== void 0 ? _markdownCfg$indentsC : false,
+				htmlReopen: markdownCfg === null || markdownCfg === void 0 ? void 0 : markdownCfg.htmlReopen,
 				tokenizer
 			};
 			if (tokenName && parseMarkdown) {
@@ -24617,12 +25584,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				renderExisting.push(spec);
 				this.nodeTypeRegistry.set(name, renderExisting);
 			}
-			if (tokenizer && this.hasMarked()) {
-				this.registerTokenizer(tokenizer);
-			}
+			if (tokenizer && this.hasMarked()) this.registerTokenizer(tokenizer);
 		}
 		createLexer() {
-			return new this.markedInstance.Lexer();
+			return new this.markedInstance.Lexer(this.markedInstance.defaults);
 		}
 		createTokenizerHelpers(lexer) {
 			return {
@@ -24631,16 +25596,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			};
 		}
 		tokenizeInline(src) {
-			var _a;
-			return ((_a = this.activeParseLexer) != null ? _a : this.createLexer()).inlineTokens(src);
+			var _this$activeParseLexe;
+			return ((_this$activeParseLexe = this.activeParseLexer) !== null && _this$activeParseLexe !== void 0 ? _this$activeParseLexe : this.createLexer()).inlineTokens(src);
 		}
 		/**
-		 * Register a custom tokenizer with marked.js for parsing non-standard markdown syntax.
-		 */
+		* Register a custom tokenizer with marked.js for parsing non-standard markdown syntax.
+		*/
 		registerTokenizer(tokenizer) {
-			if (!this.hasMarked()) {
-				return;
-			}
+			if (!this.hasMarked()) return;
 			const {
 				name,
 				start,
@@ -24650,18 +25613,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const createTokenizerHelpers = this.createTokenizerHelpers.bind(this);
 			const createLexer = this.createLexer.bind(this);
 			let startCb;
-			if (!start) {
-				startCb = src => {
-					const result = tokenize(src, [], this.createTokenizerHelpers(this.createLexer()));
-					if (result && result.raw) {
-						const index = src.indexOf(result.raw);
-						return index;
-					}
-					return -1;
-				};
-			} else {
-				startCb = typeof start === "function" ? start : src => src.indexOf(start);
-			}
+			if (!start) startCb = src => {
+				const result = tokenize(src, [], this.createTokenizerHelpers(this.createLexer()));
+				if (result && result.raw) return src.indexOf(result.raw);
+				return -1;
+			};else startCb = typeof start === "function" ? start : src => src.indexOf(start);
 			const markedExtension = {
 				name,
 				level,
@@ -24669,15 +25625,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				tokenizer(src, tokens) {
 					const helper = this.lexer ? createTokenizerHelpers(this.lexer) : createTokenizerHelpers(createLexer());
 					const result = tokenize(src, tokens, helper);
-					if (result && result.type) {
-						return {
-							...result,
-							type: result.type || name,
-							raw: result.raw || "",
-							tokens: result.tokens || []
-						};
-					}
-					return void 0;
+					if (result && result.type) return {
+						...result,
+						type: result.type || name,
+						raw: result.raw || "",
+						tokens: result.tokens || []
+					};
 				},
 				childTokens: []
 			};
@@ -24696,9 +25649,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		/** Get the first handler for a token type (for backwards compatibility). */
 		getHandlerForToken(type) {
 			const markdownHandlers = this.getHandlersForToken(type);
-			if (markdownHandlers.length > 0) {
-				return markdownHandlers[0];
-			}
+			if (markdownHandlers.length > 0) return markdownHandlers[0];
 			const nodeTypeHandlers = this.getHandlersForNodeType(type);
 			return nodeTypeHandlers.length > 0 ? nodeTypeHandlers[0] : void 0;
 		}
@@ -24711,85 +25662,71 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}
 		}
 		/**
-		 * Serialize a ProseMirror-like JSON document (or node array) to a Markdown string
-		 * using registered renderers and fallback renderers.
-		 */
+		* Serialize a ProseMirror-like JSON document (or node array) to a Markdown string
+		* using registered renderers and fallback renderers.
+		*/
 		serialize(docOrContent) {
-			if (!docOrContent) {
-				return "";
-			}
+			if (!docOrContent) return "";
 			const result = this.renderNodes(docOrContent, docOrContent);
 			return this.isEmptyOutput(result) ? "" : result;
 		}
 		/**
-		 * Check if the markdown output represents an empty document.
-		 * Empty documents may contain only &nbsp; entities or non-breaking space characters
-		 * which are used by the Paragraph extension to preserve blank lines.
-		 */
+		* Check if the markdown output represents an empty document.
+		* Empty documents may contain only &nbsp; entities or non-breaking space characters
+		* which are used by the Paragraph extension to preserve blank lines.
+		*/
 		isEmptyOutput(markdown) {
-			if (!markdown || markdown.trim() === "") {
-				return true;
-			}
-			const cleanedOutput = markdown.replace(/&nbsp;/g, "").replace(/\u00A0/g, "").trim();
-			return cleanedOutput === "";
+			if (!markdown || markdown.trim() === "") return true;
+			return markdown.replace(/&nbsp;/g, "").replace(/\u00A0/g, "").trim() === "";
 		}
 		/**
-		 * Parse markdown string into Tiptap JSON document using registered extension handlers.
-		 */
+		* Parse markdown string into Tiptap JSON document using registered extension handlers.
+		*/
 		parse(markdown) {
-			if (!this.hasMarked()) {
-				throw new Error("No marked instance available for parsing");
-			}
+			if (!this.hasMarked()) throw new Error("No marked instance available for parsing");
 			const previousParseLexer = this.activeParseLexer;
 			const parseLexer = this.createLexer();
 			this.activeParseLexer = parseLexer;
 			try {
 				const tokens = parseLexer.lex(markdown);
-				const content = this.parseTokens(tokens, true);
 				return {
 					type: "doc",
-					content
+					content: this.parseTokens(tokens, true)
 				};
 			} finally {
 				this.activeParseLexer = previousParseLexer;
 			}
 		}
 		/**
-		 * Convert an array of marked tokens into Tiptap JSON nodes using registered extension handlers.
-		 */
+		* Convert an array of marked tokens into Tiptap JSON nodes using registered extension handlers.
+		*/
 		parseTokens(tokens, parseImplicitEmptyParagraphs = false) {
-			const nonSpaceTokenIndexes = tokens.reduce((indexes, token, index) => {
-				if (token.type !== "space") {
-					indexes.push(index);
-				}
+			const normalizedTokens = parseImplicitEmptyParagraphs ? extractAbsorbedBlankLines(tokens) : tokens;
+			const nonSpaceTokenIndexes = normalizedTokens.reduce((indexes, token, index) => {
+				if (token.type !== "space") indexes.push(index);
 				return indexes;
 			}, []);
 			let previousNonSpaceTokenIndex = -1;
 			let nextNonSpaceTokenPointer = 0;
-			return tokens.flatMap((token, index) => {
-				var _a;
+			return normalizedTokens.flatMap((token, index) => {
 				while (nextNonSpaceTokenPointer < nonSpaceTokenIndexes.length && nonSpaceTokenIndexes[nextNonSpaceTokenPointer] < index) {
 					previousNonSpaceTokenIndex = nonSpaceTokenIndexes[nextNonSpaceTokenPointer];
 					nextNonSpaceTokenPointer += 1;
 				}
 				if (parseImplicitEmptyParagraphs && token.type === "space") {
-					const nextNonSpaceTokenIndex = (_a = nonSpaceTokenIndexes[nextNonSpaceTokenPointer]) != null ? _a : -1;
+					var _nonSpaceTokenIndexes;
+					const nextNonSpaceTokenIndex = (_nonSpaceTokenIndexes = nonSpaceTokenIndexes[nextNonSpaceTokenPointer]) !== null && _nonSpaceTokenIndexes !== void 0 ? _nonSpaceTokenIndexes : -1;
 					return this.createImplicitEmptyParagraphsFromSpace(token, previousNonSpaceTokenIndex, nextNonSpaceTokenIndex);
 				}
 				const parsed = this.parseToken(token, parseImplicitEmptyParagraphs);
-				if (parsed === null) {
-					return [];
-				}
+				if (parsed === null) return [];
 				return Array.isArray(parsed) ? parsed : [parsed];
 			});
 		}
 		createImplicitEmptyParagraphsFromSpace(token, previousNonSpaceTokenIndex, nextNonSpaceTokenIndex) {
 			const separatorCount = this.countParagraphSeparators(token.raw || "");
-			if (separatorCount === 0) {
-				return [];
-			}
-			const isBoundarySpace = previousNonSpaceTokenIndex === -1 || nextNonSpaceTokenIndex === -1;
-			const emptyParagraphCount = Math.max(separatorCount - (isBoundarySpace ? 0 : 1), 0);
+			if (separatorCount === 0) return [];
+			const emptyParagraphCount = Math.max(separatorCount - (previousNonSpaceTokenIndex === -1 || nextNonSpaceTokenIndex === -1 ? 0 : 1), 0);
 			return Array.from({
 				length: emptyParagraphCount
 			}, () => ({
@@ -24801,21 +25738,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return (raw.replace(/\r\n/g, "\n").match(/\n\n/g) || []).length;
 		}
 		/**
-		 * Parse a single token into Tiptap JSON using the appropriate registered handler.
-		 */
+		* Parse a single token into Tiptap JSON using the appropriate registered handler.
+		*/
 		parseToken(token, parseImplicitEmptyParagraphs = false) {
-			if (!token.type) {
-				return null;
-			}
-			if (token.type === "list") {
-				return this.parseListToken(token);
-			}
+			if (!token.type) return null;
+			if (token.type === "list") return this.parseListToken(token);
 			const handlers = this.getHandlersForToken(token.type);
 			const helpers = this.createParseHelpers();
-			const result = handlers.find(handler => {
-				if (!handler.parseMarkdown) {
-					return false;
-				}
+			if (handlers.find(handler => {
+				if (!handler.parseMarkdown) return false;
 				const parseResult = handler.parseMarkdown(token, helpers);
 				const normalized = this.normalizeParseResult(parseResult);
 				if (normalized && (!Array.isArray(normalized) || normalized.length > 0)) {
@@ -24823,8 +25754,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					return true;
 				}
 				return false;
-			});
-			if (result && this.lastParseResult) {
+			}) && this.lastParseResult) {
 				const toReturn = this.lastParseResult;
 				this.lastParseResult = null;
 				return toReturn;
@@ -24832,21 +25762,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return this.parseFallbackToken(token, parseImplicitEmptyParagraphs);
 		}
 		/**
-		 * Parse a list token, handling mixed bullet and task list items by splitting them into separate lists.
-		 * This ensures that consecutive task items and bullet items are grouped and parsed as separate list nodes.
-		 *
-		 * @param token The list token to parse
-		 * @returns Array of parsed list nodes, or null if parsing fails
-		 */
+		* Parse a list token, handling mixed bullet and task list items by splitting them into separate lists.
+		* This ensures that consecutive task items and bullet items are grouped and parsed as separate list nodes.
+		*
+		* @param token The list token to parse
+		* @returns Array of parsed list nodes, or null if parsing fails
+		*/
 		parseListToken(token) {
-			if (!token.items || token.items.length === 0) {
-				return this.parseTokenWithHandlers(token);
-			}
+			if (!token.items || token.items.length === 0) return this.parseTokenWithHandlers(token);
 			const hasTask = token.items.some(item => isTaskItem(item).isTask);
 			const hasNonTask = token.items.some(item => !isTaskItem(item).isTask);
-			if (!hasTask || !hasNonTask || this.getHandlersForToken("taskList").length === 0) {
-				return this.parseTokenWithHandlers(token);
-			}
+			if (!hasTask || !hasNonTask || this.getHandlersForToken("taskList").length === 0) return this.parseTokenWithHandlers(token);
 			const groups = [];
 			let currentGroup = [];
 			let currentType = null;
@@ -24859,29 +25785,21 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				} = isTaskItem(item);
 				let processedItem = item;
 				if (isTask) {
-					const raw = item.raw || item.text || "";
-					const lines = raw.split("\n");
+					const lines = (item.raw || item.text || "").split("\n");
 					const firstLineMatch = lines[0].match(/^\s*[-+*]\s+\[([ xX])\]\s+(.*)$/);
 					const mainContent = firstLineMatch ? firstLineMatch[2] : "";
 					let nestedTokens = [];
 					if (lines.length > 1) {
-						const nestedRaw = lines.slice(1).join("\n");
-						if (nestedRaw.trim()) {
+						if (lines.slice(1).join("\n").trim()) {
 							const nestedLines = lines.slice(1);
 							const nonEmptyLines = nestedLines.filter(line => line.trim());
 							if (nonEmptyLines.length > 0) {
 								const minIndent = Math.min(...nonEmptyLines.map(line => line.length - line.trimStart().length));
-								const trimmedLines = nestedLines.map(line => {
-									if (!line.trim()) {
-										return "";
-									}
+								const nestedContent = nestedLines.map(line => {
+									if (!line.trim()) return "";
 									return line.slice(minIndent);
-								});
-								const nestedContent = trimmedLines.join("\n").trim();
-								if (nestedContent) {
-									nestedTokens = this.markedInstance.lexer(`${nestedContent}
-`);
-								}
+								}).join("\n").trim();
+								if (nestedContent) nestedTokens = this.markedInstance.lexer(`${nestedContent}\n`);
 							}
 						}
 					}
@@ -24890,7 +25808,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						raw: "",
 						mainContent,
 						indentLevel,
-						checked: checked != null ? checked : false,
+						checked: checked !== null && checked !== void 0 ? checked : false,
 						text: mainContent,
 						tokens: this.tokenizeInline(mainContent),
 						nestedTokens
@@ -24898,24 +25816,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				}
 				const itemType = isTask ? "taskList" : "list";
 				if (currentType !== itemType) {
-					if (currentGroup.length > 0) {
-						groups.push({
-							type: currentType,
-							items: currentGroup
-						});
-					}
+					if (currentGroup.length > 0) groups.push({
+						type: currentType,
+						items: currentGroup
+					});
 					currentGroup = [processedItem];
 					currentType = itemType;
-				} else {
-					currentGroup.push(processedItem);
-				}
+				} else currentGroup.push(processedItem);
 			}
-			if (currentGroup.length > 0) {
-				groups.push({
-					type: currentType,
-					items: currentGroup
-				});
-			}
+			if (currentGroup.length > 0) groups.push({
+				type: currentType,
+				items: currentGroup
+			});
 			const results = [];
 			for (let i = 0; i < groups.length; i += 1) {
 				const group = groups[i];
@@ -24926,28 +25838,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				};
 				const parsed = this.parseToken(subToken);
 				if (parsed) {
-					if (Array.isArray(parsed)) {
-						results.push(...parsed);
-					} else {
-						results.push(parsed);
-					}
+					if (Array.isArray(parsed)) results.push(...parsed);else results.push(parsed);
 				}
 			}
 			return results.length > 0 ? results : null;
 		}
 		/**
-		 * Parse a token using registered handlers (extracted for reuse).
-		 */
+		* Parse a token using registered handlers (extracted for reuse).
+		*/
 		parseTokenWithHandlers(token) {
-			if (!token.type) {
-				return null;
-			}
+			if (!token.type) return null;
 			const handlers = this.getHandlersForToken(token.type);
 			const helpers = this.createParseHelpers();
-			const result = handlers.find(handler => {
-				if (!handler.parseMarkdown) {
-					return false;
-				}
+			if (handlers.find(handler => {
+				if (!handler.parseMarkdown) return false;
 				const parseResult = handler.parseMarkdown(token, helpers);
 				const normalized = this.normalizeParseResult(parseResult);
 				if (normalized && (!Array.isArray(normalized) || normalized.length > 0)) {
@@ -24955,8 +25859,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					return true;
 				}
 				return false;
-			});
-			if (result && this.lastParseResult) {
+			}) && this.lastParseResult) {
 				const toReturn = this.lastParseResult;
 				this.lastParseResult = null;
 				return toReturn;
@@ -24964,21 +25867,21 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return this.parseFallbackToken(token);
 		}
 		/**
-		 * Creates helper functions for parsing markdown tokens.
-		 * @returns An object containing helper functions for parsing.
-		 */
+		* Creates helper functions for parsing markdown tokens.
+		* @returns An object containing helper functions for parsing.
+		*/
 		createParseHelpers() {
 			return {
 				parseInline: tokens => this.parseInlineTokens(tokens),
+				tokenizeInline: src => this.tokenizeInline(src),
 				parseChildren: tokens => this.parseTokens(tokens),
 				parseBlockChildren: tokens => this.parseTokens(tokens, true),
 				createTextNode: (text, marks) => {
-					const node = {
+					return {
 						type: "text",
 						text,
 						marks: marks || void 0
 					};
-					return node;
 				},
 				createNode: (type, attrs, content) => {
 					const node = {
@@ -24986,9 +25889,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						attrs: attrs || void 0,
 						content: content || void 0
 					};
-					if (!attrs || Object.keys(attrs).length === 0) {
-						delete node.attrs;
-					}
+					if (!attrs || Object.keys(attrs).length === 0) delete node.attrs;
 					return node;
 				},
 				applyMark: (markType, content, attrs) => ({
@@ -24999,27 +25900,28 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			};
 		}
 		/**
-		 * Escape special regex characters in a string.
-		 */
+		* Escape special regex characters in a string.
+		*/
 		escapeRegex(str) {
 			return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		}
 		/**
-		 * Parse inline tokens (bold, italic, links, etc.) into text nodes with marks.
-		 * This is the complex part that handles mark nesting and boundaries.
-		 */
+		* Parse inline tokens (bold, italic, links, etc.) into text nodes with marks.
+		* This is the complex part that handles mark nesting and boundaries.
+		*/
 		parseInlineTokens(tokens) {
-			var _a, _b, _c, _d;
 			const result = [];
 			for (let i = 0; i < tokens.length; i += 1) {
 				const token = tokens[i];
-				if (token.type === "text") {
-					result.push({
-						type: "text",
-						text: decodeHtmlEntities(token.text || "")
-					});
-				} else if (token.type === "html") {
-					const raw = ((_b = (_a = token.raw) != null ? _a : token.text) != null ? _b : "").toString();
+				if (token.type === "text") result.push({
+					type: "text",
+					text: decodeHtmlEntities(token.text || "")
+				});else if (token.type === "escape") result.push({
+					type: "text",
+					text: token.text || ""
+				});else if (token.type === "html") {
+					var _ref, _token$raw;
+					const raw = ((_ref = (_token$raw = token.raw) !== null && _token$raw !== void 0 ? _token$raw : token.text) !== null && _ref !== void 0 ? _ref : "").toString();
 					const isClosing = /^<\/[\s]*[\w-]+/i.test(raw);
 					const openMatch = raw.match(/^<[\s]*([\w-]+)(\s|>|\/|$)/i);
 					if (!isClosing && openMatch && !/\/>$/.test(raw)) {
@@ -25029,8 +25931,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						let foundIndex = -1;
 						const parts = [raw];
 						for (let j = i + 1; j < tokens.length; j += 1) {
+							var _ref2, _t$raw;
 							const t = tokens[j];
-							const tRaw = ((_d = (_c = t.raw) != null ? _c : t.text) != null ? _d : "").toString();
+							const tRaw = ((_ref2 = (_t$raw = t.raw) !== null && _t$raw !== void 0 ? _t$raw : t.text) !== null && _ref2 !== void 0 ? _ref2 : "").toString();
 							parts.push(tRaw);
 							if (t.type === "html" && closingRegex.test(tRaw)) {
 								foundIndex = j;
@@ -25048,11 +25951,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							const parsed = this.parseHTMLToken(mergedToken);
 							if (parsed) {
 								const normalized = this.normalizeParseResult(parsed);
-								if (Array.isArray(normalized)) {
-									result.push(...normalized);
-								} else if (normalized) {
-									result.push(normalized);
-								}
+								if (Array.isArray(normalized)) result.push(...normalized);else if (normalized) result.push(normalized);
 							}
 							i = foundIndex;
 							continue;
@@ -25061,11 +25960,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					const parsedSingle = this.parseHTMLToken(token);
 					if (parsedSingle) {
 						const normalized = this.normalizeParseResult(parsedSingle);
-						if (Array.isArray(normalized)) {
-							result.push(...normalized);
-						} else if (normalized) {
-							result.push(normalized);
-						}
+						if (Array.isArray(normalized)) result.push(...normalized);else if (normalized) result.push(normalized);
 					}
 				} else if (token.type) {
 					const markHandler = this.getHandlerForToken(token.type);
@@ -25077,22 +25972,28 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							result.push(...markedContent);
 						} else {
 							const normalized = this.normalizeParseResult(parsed);
-							if (Array.isArray(normalized)) {
-								result.push(...normalized);
-							} else if (normalized) {
-								result.push(normalized);
-							}
+							if (Array.isArray(normalized)) result.push(...normalized);else if (normalized) result.push(normalized);
 						}
-					} else if (token.tokens) {
-						result.push(...this.parseInlineTokens(token.tokens));
+					} else if (token.tokens) result.push(...this.parseInlineTokens(token.tokens));
+				}
+			}
+			for (let i = result.length - 1; i > 0; i -= 1) {
+				const current = result[i];
+				const previous = result[i - 1];
+				if (current.type === "text" && previous.type === "text") {
+					const currentMarks = current.marks || [];
+					const previousMarks = previous.marks || [];
+					if (marksEqual(currentMarks, previousMarks)) {
+						previous.text = (previous.text || "") + (current.text || "");
+						result.splice(i, 1);
 					}
 				}
 			}
 			return result;
 		}
 		/**
-		 * Apply a mark to content nodes.
-		 */
+		* Apply a mark to content nodes.
+		*/
 		applyMarkToContent(markType, content, attrs) {
 			return content.map(node => {
 				if (node.type === "text") {
@@ -25114,27 +26015,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				};
 			});
 		}
-		/**
-		* Check if a parse result represents a mark to be applied.
-		*/
 		isMarkResult(result) {
 			return result && typeof result === "object" && "mark" in result;
 		}
 		/**
-		 * Normalize parse results to ensure they're valid JSONContent.
-		 */
+		* Normalize parse results to ensure they're valid JSONContent.
+		*/
 		normalizeParseResult(result) {
-			if (!result) {
-				return null;
-			}
-			if (this.isMarkResult(result)) {
-				return result.content;
-			}
+			if (!result) return null;
+			if (this.isMarkResult(result)) return result.content;
 			return result;
 		}
 		/**
-		 * Fallback parsing for common tokens when no specific handler is registered.
-		 */
+		* Fallback parsing for common tokens when no specific handler is registered.
+		*/
 		parseFallbackToken(token, parseImplicitEmptyParagraphs = false) {
 			switch (token.type) {
 				case "paragraph":
@@ -25157,49 +26051,39 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					};
 				case "html":
 					return this.parseHTMLToken(token);
+				case "escape":
+					return {
+						type: "text",
+						text: token.text || ""
+					};
 				case "space":
 					return null;
 				default:
-					if (token.tokens) {
-						return this.parseTokens(token.tokens, parseImplicitEmptyParagraphs);
-					}
+					if (token.tokens) return this.parseTokens(token.tokens, parseImplicitEmptyParagraphs);
 					return null;
 			}
 		}
 		/**
-		 * Parse HTML tokens using extensions' parseHTML methods.
-		 * This allows HTML within markdown to be parsed according to extension rules.
-		 */
+		* Parse an HTML token from marked into JSONContent using the registered
+		* extensions' `parseHTML` rules. Falls back to literal text when the HTML
+		* has nothing for the schema to keep.
+		*
+		* @param token Marked HTML token (block or inline).
+		* @example
+		*   parseHTMLToken({ type: 'html', raw: '<em>hi</em>', block: false })
+		*   // → text node with an italic mark
+		*/
 		parseHTMLToken(token) {
 			const html = token.text || token.raw || "";
-			if (!html.trim()) {
-				return null;
-			}
-			if (typeof window === "undefined") {
-				if (token.block) {
-					return {
-						type: "paragraph",
-						content: [{
-							type: "text",
-							text: html
-						}]
-					};
-				}
-				return {
-					type: "text",
-					text: html
-				};
-			}
+			if (!html.trim()) return null;
+			if (this.isUnrecognizedHtml(html)) return this.htmlAsLiteralText(html, !!token.block);
+			if (typeof window === "undefined" || typeof window.DOMParser === "undefined") return this.htmlAsLiteralText(html, !!token.block);
 			try {
 				const parsed = generateJSON(html, this.baseExtensions);
 				if (parsed.type === "doc" && parsed.content) {
-					if (token.block) {
-						return parsed.content;
-					}
-					if (parsed.content.length === 1 && parsed.content[0].type === "paragraph" && parsed.content[0].content) {
-						return parsed.content[0].content;
-					}
-					return parsed.content;
+					if (token.block) return parsed.content;
+					const inlineContent = this.toInlineContent(parsed.content);
+					return inlineContent.length > 0 ? inlineContent : null;
 				}
 				return parsed;
 			} catch (error) {
@@ -25207,32 +26091,152 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}
 		}
 		/**
-		 * Encode HTML entities in text unless the node is inside a code context
-		 * (code mark or code-block parent) where literal characters should be preserved.
-		 */
+		* Keep only the inline nodes of parsed HTML content, unwrapping the block
+		* nodes around them. Inline HTML sits inside a textblock, where a block node
+		* would make the document invalid for the schema.
+		*
+		* @param content Content array of a parsed HTML fragment.
+		* @example
+		*   toInlineContent([{ type: 'paragraph', content: [{ type: 'text', text: 'hi' }] }])
+		*   // → [{ type: 'text', text: 'hi' }]
+		*/
+		toInlineContent(content) {
+			const inlineTypes = this.getInlineNodeTypes();
+			return content.flatMap(node => {
+				if (node.type && inlineTypes.has(node.type)) return [node];
+				return node.content ? this.toInlineContent(node.content) : [];
+			});
+		}
+		/**
+		* Collect the names of the node types the schema treats as inline. Result is
+		* cached for the lifetime of the manager since extensions don't change after
+		* registration.
+		*
+		* @example
+		*   getInlineNodeTypes().has('text') // → true
+		*/
+		getInlineNodeTypes() {
+			if (this.inlineNodeTypesCache) return this.inlineNodeTypesCache;
+			const types = /* @__PURE__ */new Set(["text"]);
+			try {
+				const schema = getSchema(this.baseExtensions);
+				Object.values(schema.nodes).forEach(type => {
+					if (type.isInline) types.add(type.name);
+				});
+			} catch {}
+			this.inlineNodeTypesCache = types;
+			return types;
+		}
+		/**
+		* Returns true when the HTML contains a tag that is neither a standard
+		* HTML/SVG element nor declared in a registered extension's parseDOM rules.
+		*
+		* Recognized but empty elements such as `<em></em>` or `<span></span>`,
+		* and hyphenated custom elements like `<my-mention>`, are not considered
+		* unrecognized.
+		*
+		* @param html Raw HTML string from a marked token.
+		* @example
+		*   isUnrecognizedHtml('<enter foo bar>')  // → true
+		*   isUnrecognizedHtml('<em></em>')        // → false (empty, but real tag)
+		*   isUnrecognizedHtml('<em>hi</em>')      // → false
+		*   isUnrecognizedHtml('<my-el></my-el>')  // → false (valid custom element)
+		*   isUnrecognizedHtml('<br>')             // → false
+		*/
+		isUnrecognizedHtml(html) {
+			return htmlContainsUnrecognizedTag(html, this.getSchemaParseDomTags());
+		}
+		/**
+		* Collect the lower-cased tag names declared by the registered extensions'
+		* parseDOM rules, so custom node/mark elements that use non-hyphenated,
+		* non-standard tag names are treated as recognized HTML. Result is cached for the
+		* lifetime of the manager since extensions don't change after registration.
+		*
+		* @example
+		*   // After registering an extension with parseDOM [{ tag: 'something' }]
+		*   getSchemaParseDomTags().has('something') // → true
+		*/
+		getSchemaParseDomTags() {
+			if (this.schemaParseDomTagsCache) return this.schemaParseDomTagsCache;
+			const tags = /* @__PURE__ */new Set();
+			try {
+				const schema = getSchema(this.baseExtensions);
+				const collect = spec => {
+					const parseDOM = spec === null || spec === void 0 ? void 0 : spec.parseDOM;
+					if (!Array.isArray(parseDOM)) return;
+					parseDOM.forEach(rule => {
+						if (typeof (rule === null || rule === void 0 ? void 0 : rule.tag) === "string") {
+							const match = rule.tag.match(/^[a-zA-Z][\w-]*/);
+							if (match) tags.add(match[0].toLowerCase());
+						}
+					});
+				};
+				Object.values(schema.nodes).forEach(type => collect(type.spec));
+				Object.values(schema.marks).forEach(type => collect(type.spec));
+			} catch {}
+			this.schemaParseDomTagsCache = tags;
+			return tags;
+		}
+		/**
+		* Build a JSONContent that preserves the original HTML markup as literal
+		* text. Used when the HTML would otherwise be silently dropped during
+		* schema-aware parsing.
+		*
+		* @param html Raw HTML string to preserve verbatim.
+		* @param isBlock Whether to wrap the text in a paragraph node (block tokens)
+		*   or return it as a bare text node (inline tokens).
+		* @example
+		*   htmlAsLiteralText('<enter foo>', true)
+		*   // → { type: 'paragraph', content: [{ type: 'text', text: '<enter foo>' }] }
+		*/
+		htmlAsLiteralText(html, isBlock) {
+			const text = html.replace(/\s+$/, "");
+			if (!text) return null;
+			if (isBlock) return {
+				type: "paragraph",
+				content: [{
+					type: "text",
+					text
+				}]
+			};
+			return {
+				type: "text",
+				text
+			};
+		}
+		/**
+		* Encode HTML entities in text unless the node is inside a code context
+		* (code mark or code-block parent) where literal characters should be preserved.
+		* Also backslash-escape markdown-significant characters in non-code text to
+		* prevent them from being misinterpreted as formatting delimiters.
+		*/
 		encodeTextForMarkdown(text, node, parentNode) {
-			const isInsideCode = (parentNode == null ? void 0 : parentNode.type) != null && this.codeTypes.has(parentNode.type) || (node.marks || []).some(m => this.codeTypes.has(typeof m === "string" ? m : m.type));
-			return isInsideCode ? text : encodeHtmlEntities(text);
+			if ((parentNode === null || parentNode === void 0 ? void 0 : parentNode.type) != null && this.codeTypes.has(parentNode.type) || (node.marks || []).some(m => this.codeTypes.has(typeof m === "string" ? m : m.type))) return text;
+			return this.escapeMarkdownSyntax(encodeHtmlEntities(text));
+		}
+		/**
+		* Backslash-escape characters that have special meaning in markdown inline
+		* syntax. This prevents literal characters in text nodes from being
+		* misinterpreted as formatting delimiters when the output is parsed again.
+		*
+		* The set covers the most common inline markdown syntax characters.
+		* Characters inside code blocks/code marks are skipped by the caller
+		* (`encodeTextForMarkdown`) via the existing `isInsideCode` guard.
+		*/
+		escapeMarkdownSyntax(text) {
+			return text.replace(/([\\`*_[\]~])/g, "\\$1");
 		}
 		renderNodeToMarkdown(node, parentNode, index = 0, level = 0, meta = {}) {
-			var _a;
-			if (node.type === "text") {
-				return this.encodeTextForMarkdown(node.text || "", node, parentNode);
-			}
-			if (!node.type) {
-				return "";
-			}
+			var _handler$renderMarkdo;
+			if (node.type === "text") return this.encodeTextForMarkdown(node.text || "", node, parentNode);
+			if (!node.type) return "";
 			const handler = this.getHandlerForToken(node.type);
-			if (!handler) {
-				return "";
-			}
-			const previousNode = Array.isArray(parentNode == null ? void 0 : parentNode.content) && index > 0 ? parentNode.content[index - 1] : void 0;
+			if (!handler) return "";
+			const previousNode = Array.isArray(parentNode === null || parentNode === void 0 ? void 0 : parentNode.content) && index > 0 ? parentNode.content[index - 1] : void 0;
 			const helpers = {
 				renderChildren: (nodes, separator) => {
 					const childLevel = handler.isIndenting ? level + 1 : level;
-					if (!Array.isArray(nodes) && nodes.content) {
-						return this.renderNodes(nodes.content, node, separator || "", index, childLevel);
-					}
+					if (!Array.isArray(nodes) && nodes.content) return this.renderNodes(nodes.content, node, separator || "", index, childLevel);
 					return this.renderNodes(nodes, node, separator || "", index, childLevel);
 				},
 				renderChild: (childNode, childIndex) => {
@@ -25247,33 +26251,30 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const context = {
 				index,
 				level,
-				parentType: parentNode == null ? void 0 : parentNode.type,
+				parentType: parentNode === null || parentNode === void 0 ? void 0 : parentNode.type,
 				previousNode,
 				meta: {
-					parentAttrs: parentNode == null ? void 0 : parentNode.attrs,
+					parentAttrs: parentNode === null || parentNode === void 0 ? void 0 : parentNode.attrs,
 					...meta
 				}
 			};
-			const rendered = ((_a = handler.renderMarkdown) == null ? void 0 : _a.call(handler, node, helpers, context)) || "";
-			return rendered;
+			return ((_handler$renderMarkdo = handler.renderMarkdown) === null || _handler$renderMarkdo === void 0 ? void 0 : _handler$renderMarkdo.call(handler, node, helpers, context)) || "";
 		}
 		/**
-		 * Render a node or an array of nodes. Parent type controls how children
-		 * are joined (which determines newline insertion between children).
-		 */
+		* Render a node or an array of nodes. Parent type controls how children
+		* are joined (which determines newline insertion between children).
+		*/
 		renderNodes(nodeOrNodes, parentNode, separator = "", index = 0, level = 0) {
 			if (!Array.isArray(nodeOrNodes)) {
-				if (!nodeOrNodes.type) {
-					return "";
-				}
+				if (!nodeOrNodes.type) return "";
 				return this.renderNodeToMarkdown(nodeOrNodes, parentNode, index, level);
 			}
 			return this.renderNodesWithMarkBoundaries(nodeOrNodes, parentNode, separator, level);
 		}
 		/**
-		 * Render an array of nodes while properly tracking mark boundaries.
-		 * This handles cases where marks span across multiple text nodes.
-		 */
+		* Render an array of nodes while properly tracking mark boundaries.
+		* This handles cases where marks span across multiple text nodes.
+		*/
 		renderNodesWithMarkBoundaries(nodes, parentNode, separator = "", level = 0) {
 			const result = [];
 			const activeMarks = /* @__PURE__ */new Map();
@@ -25281,13 +26282,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const markOpeningModes = /* @__PURE__ */new Map();
 			nodes.forEach((node, i) => {
 				const nextNode = i < nodes.length - 1 ? nodes[i + 1] : null;
-				if (!node.type) {
-					return;
-				}
+				if (!node.type) return;
 				if (node.type === "text") {
 					let textContent = this.encodeTextForMarkdown(node.text || "", node, parentNode);
 					const currentMarks = new Map((node.marks || []).map(mark => [mark.type, mark]));
-					const marksToOpen = findMarksToOpen(activeMarks, currentMarks);
+					const marksToOpen = this.getMarksToOpenForSerialization(activeMarks, currentMarks, nextNode);
 					const marksToClose = findMarksToClose(currentMarks, nextNode);
 					const activeMarksClosingHere = marksToClose.filter(markType => activeMarks.has(markType));
 					const hasCrossedBoundary = activeMarksClosingHere.length > 0 && marksToOpen.length > 0;
@@ -25299,22 +26298,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							textContent = textContent.slice(0, -middleTrailingWhitespace.length);
 						}
 					}
-					if (!hasCrossedBoundary) {
-						marksToClose.forEach(markType => {
-							if (!activeMarks.has(markType)) {
-								return;
-							}
-							const mark = currentMarks.get(markType);
-							const closeMarkdown = this.getMarkClosing(markType, mark, markOpeningModes.get(markType));
-							if (closeMarkdown) {
-								textContent += closeMarkdown;
-							}
-							if (activeMarks.has(markType)) {
-								activeMarks.delete(markType);
-								markOpeningModes.delete(markType);
-							}
-						});
-					}
+					if (!hasCrossedBoundary) marksToClose.slice().reverse().forEach(markType => {
+						if (!activeMarks.has(markType)) return;
+						const mark = currentMarks.get(markType);
+						const closeMarkdown = this.getMarkClosing(markType, mark, markOpeningModes.get(markType));
+						if (closeMarkdown) textContent += closeMarkdown;
+						if (activeMarks.has(markType)) {
+							activeMarks.delete(markType);
+							markOpeningModes.delete(markType);
+						}
+					});
 					let leadingWhitespace = "";
 					if (marksToOpen.length > 0) {
 						const leadingMatch = textContent.match(/^(\s+)/);
@@ -25329,39 +26322,29 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					}) => {
 						const openingMode = reopenWithHtmlOnNextOpen.has(type) ? "html" : "markdown";
 						const openMarkdown = this.getMarkOpening(type, mark, openingMode);
-						if (openMarkdown) {
-							textContent = openMarkdown + textContent;
-						}
+						if (openMarkdown) textContent = openMarkdown + textContent;
 						markOpeningModes.set(type, openingMode);
 						reopenWithHtmlOnNextOpen.delete(type);
 					});
-					if (!hasCrossedBoundary) {
-						marksToOpen.slice().reverse().forEach(({
-							type,
-							mark
-						}) => {
-							activeMarks.set(type, mark);
-						});
-					}
+					if (!hasCrossedBoundary) marksToOpen.slice().reverse().forEach(({
+						type,
+						mark
+					}) => {
+						activeMarks.set(type, mark);
+					});
 					textContent = leadingWhitespace + textContent;
 					let marksToCloseAtEnd;
 					if (hasCrossedBoundary) {
-						const nextMarkTypes = new Set(((nextNode == null ? void 0 : nextNode.marks) || []).map(mark => mark.type));
+						const nextMarkTypes = new Set(((nextNode === null || nextNode === void 0 ? void 0 : nextNode.marks) || []).map(mark => mark.type));
 						marksToOpen.forEach(({
 							type
 						}) => {
-							if (nextMarkTypes.has(type) && this.getHtmlReopenTags(type)) {
-								reopenWithHtmlOnNextOpen.add(type);
-							}
+							if (nextMarkTypes.has(type) && this.getHtmlReopenTags(type)) reopenWithHtmlOnNextOpen.add(type);
 						});
-						marksToCloseAtEnd = [...marksToOpen.map(m => m.type),
-						// inner (opened here) — close first
-						...activeMarksClosingHere
-						// outer (were active before) — close last
-						];
-					} else {
-						marksToCloseAtEnd = findMarksToCloseAtEnd(activeMarks, currentMarks, nextNode, this.markSetsEqual.bind(this));
-					}
+						const activeMarkKeys = Array.from(activeMarks.keys());
+						const activeMarksClosingHereLifo = activeMarksClosingHere.slice().sort((a, b) => activeMarkKeys.indexOf(b) - activeMarkKeys.indexOf(a));
+						marksToCloseAtEnd = [...marksToOpen.map(m => m.type), ...activeMarksClosingHereLifo];
+					} else marksToCloseAtEnd = findMarksToCloseAtEnd(activeMarks, currentMarks, nextNode, this.markSetsEqual.bind(this));
 					let trailingWhitespace = "";
 					if (marksToCloseAtEnd.length > 0) {
 						const trailingMatch = textContent.match(/(\s+)$/);
@@ -25371,12 +26354,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						}
 					}
 					marksToCloseAtEnd.forEach(markType => {
-						var _a;
-						const mark = (_a = activeMarks.get(markType)) != null ? _a : currentMarks.get(markType);
+						var _activeMarks$get;
+						const mark = (_activeMarks$get = activeMarks.get(markType)) !== null && _activeMarks$get !== void 0 ? _activeMarks$get : currentMarks.get(markType);
 						const closeMarkdown = this.getMarkClosing(markType, mark, markOpeningModes.get(markType));
-						if (closeMarkdown) {
-							textContent += closeMarkdown;
-						}
+						if (closeMarkdown) textContent += closeMarkdown;
 						activeMarks.delete(markType);
 						markOpeningModes.delete(markType);
 					});
@@ -25384,16 +26365,24 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					textContent += middleTrailingWhitespace;
 					result.push(textContent);
 				} else {
-					const marksToReopen = new Map(activeMarks);
-					const openingModesToReopen = new Map(markOpeningModes);
+					const nodeMarkTypes = new Set((node.marks || []).map(mark => mark.type));
+					const marksToReopen = /* @__PURE__ */new Map();
+					const openingModesToReopen = /* @__PURE__ */new Map();
+					activeMarks.forEach((mark, type) => {
+						if (nodeMarkTypes.has(type)) {
+							var _markOpeningModes$get;
+							marksToReopen.set(type, mark);
+							openingModesToReopen.set(type, (_markOpeningModes$get = markOpeningModes.get(type)) !== null && _markOpeningModes$get !== void 0 ? _markOpeningModes$get : "markdown");
+						}
+					});
 					const beforeMarkdown = closeMarksBeforeNode(activeMarks, (markType, mark) => {
 						return this.getMarkClosing(markType, mark, markOpeningModes.get(markType));
 					});
 					markOpeningModes.clear();
 					const nodeContent = this.renderNodeToMarkdown(node, parentNode, i, level);
 					const afterMarkdown = node.type === "hardBreak" ? "" : reopenMarksAfterNode(marksToReopen, activeMarks, (markType, mark) => {
-						var _a;
-						const openingMode = (_a = openingModesToReopen.get(markType)) != null ? _a : "markdown";
+						var _openingModesToReopen;
+						const openingMode = (_openingModesToReopen = openingModesToReopen.get(markType)) !== null && _openingModesToReopen !== void 0 ? _openingModesToReopen : "markdown";
 						markOpeningModes.set(markType, openingMode);
 						return this.getMarkOpening(markType, mark, openingMode);
 					});
@@ -25403,19 +26392,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return result.join(separator);
 		}
 		/**
-		 * Get the opening markdown syntax for a mark type.
-		 */
+		* Get the opening markdown syntax for a mark type.
+		*/
 		getMarkOpening(markType, mark, openingMode = "markdown") {
-			var _a;
 			if (openingMode === "html") {
-				return ((_a = this.getHtmlReopenTags(markType)) == null ? void 0 : _a.open) || "";
+				var _this$getHtmlReopenTa;
+				return ((_this$getHtmlReopenTa = this.getHtmlReopenTags(markType)) === null || _this$getHtmlReopenTa === void 0 ? void 0 : _this$getHtmlReopenTa.open) || "";
 			}
 			const handlers = this.getHandlersForNodeType(markType);
 			const handler = handlers.length > 0 ? handlers[0] : void 0;
-			if (!handler || !handler.renderMarkdown) {
-				return "";
-			}
-			const placeholder = "\uE000__TIPTAP_MARKDOWN_PLACEHOLDER__\uE001";
+			if (!handler || !handler.renderMarkdown) return "";
+			const placeholder = "__TIPTAP_MARKDOWN_PLACEHOLDER__";
 			const syntheticNode = {
 				type: markType,
 				attrs: mark.attrs || {},
@@ -25443,19 +26430,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}
 		}
 		/**
-		 * Get the closing markdown syntax for a mark type.
-		 */
+		* Get the closing markdown syntax for a mark type.
+		*/
 		getMarkClosing(markType, mark, openingMode = "markdown") {
-			var _a;
 			if (openingMode === "html") {
-				return ((_a = this.getHtmlReopenTags(markType)) == null ? void 0 : _a.close) || "";
+				var _this$getHtmlReopenTa2;
+				return ((_this$getHtmlReopenTa2 = this.getHtmlReopenTags(markType)) === null || _this$getHtmlReopenTa2 === void 0 ? void 0 : _this$getHtmlReopenTa2.close) || "";
 			}
 			const handlers = this.getHandlersForNodeType(markType);
 			const handler = handlers.length > 0 ? handlers[0] : void 0;
-			if (!handler || !handler.renderMarkdown) {
-				return "";
-			}
-			const placeholder = "\uE000__TIPTAP_MARKDOWN_PLACEHOLDER__\uE001";
+			if (!handler || !handler.renderMarkdown) return "";
+			const placeholder = "__TIPTAP_MARKDOWN_PLACEHOLDER__";
 			const syntheticNode = {
 				type: markType,
 				attrs: mark.attrs || {},
@@ -25477,35 +26462,69 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					meta: {}
 				});
 				const placeholderIndex = rendered.indexOf(placeholder);
-				const placeholderEnd = placeholderIndex + placeholder.length;
+				const placeholderEnd = placeholderIndex + 33;
 				return placeholderIndex >= 0 ? rendered.substring(placeholderEnd) : "";
 			} catch (err) {
 				throw new Error(`Failed to get mark closing for ${markType}: ${err}`);
 			}
 		}
 		/**
-		 * Returns the inline HTML tags an extension exposes for overlap-boundary
-		 * reopen handling, if that mark explicitly opted into HTML reopen mode.
-		 */
+		* Returns the inline HTML tags an extension exposes for overlap-boundary
+		* reopen handling, if that mark explicitly opted into HTML reopen mode.
+		*/
 		getHtmlReopenTags(markType) {
 			const handlers = this.getHandlersForNodeType(markType);
 			const handler = handlers.length > 0 ? handlers[0] : void 0;
-			return handler == null ? void 0 : handler.htmlReopen;
+			return handler === null || handler === void 0 ? void 0 : handler.htmlReopen;
 		}
 		/**
-		 * Check if two mark sets are equal.
-		 */
+		* Check if two mark sets are equal (same types and matching attributes).
+		*/
 		markSetsEqual(marks1, marks2) {
-			if (marks1.size !== marks2.size) {
-				return false;
-			}
-			return Array.from(marks1.keys()).every(type => marks2.has(type));
+			if (marks1.size !== marks2.size) return false;
+			return Array.from(marks1.entries()).every(([type, mark]) => {
+				const otherMark = marks2.get(type);
+				return otherMark && attrsEqual$1(mark.attrs, otherMark.attrs);
+			});
+		}
+		/**
+		* Decide the order in which marks open on the current text node.
+		*
+		* The returned array is iterated head-first when prepending opening
+		* delimiters, so the first entry becomes the innermost mark in the emitted
+		* markdown and the last becomes the outermost. Two stable signals drive
+		* the order — neither one inspects any rendered markdown:
+		*
+		*   1. Marks that end on this node must be inner relative to marks that
+		*      continue into the next node, otherwise the delimiters interleave
+		*      instead of nesting.
+		*   2. Within each lifetime group, marks are sorted so that lower
+		*      registration ranks (i.e. higher Tiptap extension priorities) end up
+		*      outermost. ProseMirror assigns mark ranks in the same priority-aware
+		*      order Tiptap uses when building the schema, so link (priority 1000)
+		*      naturally wraps bold/italic without the serializer needing to peek
+		*      at how any particular mark renders.
+		*/
+		getMarksToOpenForSerialization(activeMarks, currentMarks, nextNode) {
+			const marksToOpen = findMarksToOpen(activeMarks, currentMarks);
+			if (marksToOpen.length <= 1) return marksToOpen;
+			const nextMarks = (nextNode === null || nextNode === void 0 ? void 0 : nextNode.marks) || [];
+			const continuesInNextNode = (markType, attrs) => nextMarks.some(m => m.type === markType && attrsEqual$1(m.attrs, attrs));
+			const byRankInnerFirst = (a, b) => {
+				var _this$extensionRanks$, _this$extensionRanks$2;
+				const rankA = (_this$extensionRanks$ = this.extensionRanks.get(a.type)) !== null && _this$extensionRanks$ !== void 0 ? _this$extensionRanks$ : Number.MAX_SAFE_INTEGER;
+				const rankB = (_this$extensionRanks$2 = this.extensionRanks.get(b.type)) !== null && _this$extensionRanks$2 !== void 0 ? _this$extensionRanks$2 : Number.MAX_SAFE_INTEGER;
+				if (rankA !== rankB) return rankB - rankA;
+				return a.type.localeCompare(b.type);
+			};
+			const endingHere = marksToOpen.filter(mark => !continuesInNextNode(mark.type, mark.mark.attrs)).sort(byRankInnerFirst);
+			const continuing = marksToOpen.filter(mark => continuesInNextNode(mark.type, mark.mark.attrs)).sort(byRankInnerFirst);
+			return [...endingHere, ...continuing];
 		}
 	};
-	var MarkdownManager_default = MarkdownManager;
-
-	// src/Extension.ts
-	var Markdown = Extension.create({
+	//#endregion
+	//#region src/Extension.ts
+	const Markdown = Extension.create({
 		name: "markdown",
 		addOptions() {
 			return {
@@ -25520,35 +26539,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		addCommands() {
 			return {
 				setContent: (content, options) => {
-					if (!(options == null ? void 0 : options.contentType)) {
-						return commands_exports.setContent(content, options);
-					}
-					const actualContentType = assumeContentType(content, options == null ? void 0 : options.contentType);
-					if (actualContentType !== "markdown" || !this.editor.markdown) {
-						return commands_exports.setContent(content, options);
-					}
+					if (!(options === null || options === void 0 ? void 0 : options.contentType)) return commands_exports.setContent(content, options);
+					if (assumeContentType(content, options === null || options === void 0 ? void 0 : options.contentType) !== "markdown" || !this.editor.markdown) return commands_exports.setContent(content, options);
 					const mdContent = this.editor.markdown.parse(content);
 					return commands_exports.setContent(mdContent, options);
 				},
 				insertContent: (value, options) => {
-					if (!(options == null ? void 0 : options.contentType)) {
-						return commands_exports.insertContent(value, options);
-					}
-					const actualContentType = assumeContentType(value, options == null ? void 0 : options.contentType);
-					if (actualContentType !== "markdown" || !this.editor.markdown) {
-						return commands_exports.insertContent(value, options);
-					}
+					if (!(options === null || options === void 0 ? void 0 : options.contentType)) return commands_exports.insertContent(value, options);
+					if (assumeContentType(value, options === null || options === void 0 ? void 0 : options.contentType) !== "markdown" || !this.editor.markdown) return commands_exports.insertContent(value, options);
 					const mdContent = this.editor.markdown.parse(value);
 					return commands_exports.insertContent(mdContent, options);
 				},
 				insertContentAt: (position, value, options) => {
-					if (!(options == null ? void 0 : options.contentType)) {
-						return commands_exports.insertContentAt(position, value, options);
-					}
-					const actualContentType = assumeContentType(value, options == null ? void 0 : options.contentType);
-					if (actualContentType !== "markdown" || !this.editor.markdown) {
-						return commands_exports.insertContentAt(position, value, options);
-					}
+					if (!(options === null || options === void 0 ? void 0 : options.contentType)) return commands_exports.insertContentAt(position, value, options);
+					if (assumeContentType(value, options === null || options === void 0 ? void 0 : options.contentType) !== "markdown" || !this.editor.markdown) return commands_exports.insertContentAt(position, value, options);
 					const mdContent = this.editor.markdown.parse(value);
 					return commands_exports.insertContentAt(position, mdContent, options);
 				}
@@ -25556,7 +26560,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		},
 		addStorage() {
 			return {
-				manager: new MarkdownManager_default({
+				manager: new MarkdownManager({
 					indentation: this.options.indentation,
 					marked: this.options.marked,
 					markedOptions: this.options.markedOptions,
@@ -25565,11 +26569,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			};
 		},
 		onBeforeCreate() {
+			var _json$content;
 			if (this.editor.markdown) {
 				console.error("[tiptap][markdown]: There is already a `markdown` property on the editor instance. This might lead to unexpected behavior.");
 				return;
 			}
-			this.storage.manager = new MarkdownManager_default({
+			this.storage.manager = new MarkdownManager({
 				indentation: this.options.indentation,
 				marked: this.options.marked,
 				markedOptions: this.options.markedOptions,
@@ -25579,21 +26584,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			this.editor.getMarkdown = () => {
 				return this.storage.manager.serialize(this.editor.getJSON());
 			};
-			if (!this.editor.options.contentType) {
-				return;
-			}
-			const assumedType = assumeContentType(this.editor.options.content, this.editor.options.contentType);
-			if (assumedType !== "markdown") {
-				return;
-			}
-			if (!this.editor.markdown) {
-				throw new Error('[tiptap][markdown]: The `contentType` option is set to "markdown", but the Markdown extension is not added to the editor. Please add the Markdown extension to use this feature.');
-			}
-			if (this.editor.options.content === void 0 || typeof this.editor.options.content !== "string") {
-				throw new Error('[tiptap][markdown]: The `contentType` option is set to "markdown", but the initial content is not a string. Please provide the initial content as a markdown string.');
-			}
+			if (!this.editor.options.contentType) return;
+			if (assumeContentType(this.editor.options.content, this.editor.options.contentType) !== "markdown") return;
+			if (!this.editor.markdown) throw new Error("[tiptap][markdown]: The `contentType` option is set to \"markdown\", but the Markdown extension is not added to the editor. Please add the Markdown extension to use this feature.");
+			if (this.editor.options.content === void 0 || typeof this.editor.options.content !== "string") throw new Error("[tiptap][markdown]: The `contentType` option is set to \"markdown\", but the initial content is not a string. Please provide the initial content as a markdown string.");
 			const json = this.editor.markdown.parse(this.editor.options.content);
-			this.editor.options.content = json;
+			if ((_json$content = json.content) === null || _json$content === void 0 ? void 0 : _json$content.length) this.editor.options.content = json;
 		}
 	});
 
@@ -25605,12 +26601,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	const NOTE_ASSET_GRAMMAR = String.raw`\[\[(image|file|video) fileId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\]`;
 	const NOTE_ASSET_RE = new RegExp(`^ {0,3}${NOTE_ASSET_GRAMMAR}[ \\t]*(?:\\n|$)`);
 
+	// Attachment picked from Disk: [[disk <type> objectId=<digits> <opt-attrs>]]. Same shape as above,
+	// deliberately — the block looks and behaves the same, only the source of the file differs.
+	// The id addresses the Disk OBJECT, not a version of it: the document must follow the file as it
+	// is edited on Disk, and name/size/mime are never written here — they come from the server, so a
+	// rename on Disk cannot leave a stale name in the text.
+	const NOTE_DISK_ASSET_RE = /^ {0,3}\[\[disk (image|file|video) objectId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\][ \t]*(?:\n|$)/;
+
 	// Optional attributes allowed after fileId. Unknown keys make the whole token non-canonical (rejected).
 	const KNOWN_ASSET_ATTRS = new Set(['width', 'align']);
 
 	// Float-based image alignment. `center` is the default (no float) and is stored as null,
 	// so it never round-trips into markdown — only left/right are serialized.
-	const ALIGN_VALUES = new Set(['left', 'right', 'center']);
+	const ALIGN_VALUES$1 = new Set(['left', 'right', 'center']);
 	function isEscapedAt(src, index) {
 		let backslashCount = 0;
 		for (let cursor = index - 1; cursor >= 0 && src[cursor] === '\\'; cursor--) {
@@ -25623,14 +26626,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		file: 'fileAttachment',
 		video: 'video'
 	};
-	function interpretAssetMatch(match) {
-		const fileId = Number(match[2]);
-		if (!Number.isInteger(fileId) || fileId <= 0) {
-			return null;
-		}
+	function parsePresentationAttrs(attrsRaw) {
 		let width = null;
 		let align = null;
-		const attrsRaw = match[3] || '';
 		if (attrsRaw) {
 			const attrRe = /([a-z]+)=([^\s\]]+)/g;
 			let attrMatch = attrRe.exec(attrsRaw);
@@ -25649,7 +26647,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					}
 					width = Math.min(Math.round(value * 100) / 100, 100);
 				} else if (key === 'align') {
-					if (!ALIGN_VALUES.has(attrMatch[2])) {
+					if (!ALIGN_VALUES$1.has(attrMatch[2])) {
 						return null;
 					}
 					align = attrMatch[2] === 'center' ? null : attrMatch[2];
@@ -25658,10 +26656,25 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}
 		}
 		return {
-			assetType: match[1],
-			fileId,
 			width,
-			align,
+			align
+		};
+	}
+	function interpretAssetMatch(match, isDiskAsset) {
+		const id = Number(match[2]);
+		if (!Number.isInteger(id) || id <= 0) {
+			return null;
+		}
+		const presentation = parsePresentationAttrs(match[3] || '');
+		if (!presentation) {
+			return null;
+		}
+		return {
+			assetType: match[1],
+			fileId: isDiskAsset ? null : id,
+			diskObjectId: isDiskAsset ? id : null,
+			width: presentation.width,
+			align: presentation.align,
 			raw: match[0]
 		};
 	}
@@ -25670,8 +26683,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return null;
 		}
 		const slice = src ;
+
+		// Disk first: its token starts with the same `[[` but carries an extra keyword, so trying the
+		// older pattern first would only ever fail on it — order is for clarity, not correctness.
+		const diskMatch = NOTE_DISK_ASSET_RE.exec(slice);
+		if (diskMatch) {
+			return interpretAssetMatch(diskMatch, true);
+		}
 		const match = NOTE_ASSET_RE.exec(slice);
-		return match ? interpretAssetMatch(match) : null;
+		return match ? interpretAssetMatch(match, false) : null;
 	}
 	function findNoteAssetMatches(src, includeEscaped = false) {
 		const matches = [];
@@ -25679,7 +26699,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		let match = searchRe.exec(src);
 		while (match) {
 			if (includeEscaped || !isEscapedAt(src, match.index)) {
-				const interpreted = interpretAssetMatch(match);
+				// Грамматика поиска — без Диска, поэтому токены Диска здесь не находятся.
+				const interpreted = interpretAssetMatch(match, false);
 				if (interpreted) {
 					matches.push({
 						match: interpreted,
@@ -26140,19 +27161,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				return {
 					type: 'escape',
 					raw: src.slice(0, assetLength + 1),
-					text: src.slice(1, assetLength + 1)
+					// The library decodes entities for a `text` token but not for an `escape` one, and a
+					// legacy run was stored with them encoded: without decoding here `&amp;` reaches the
+					// document as five characters and the reader sees it instead of `&`.
+					text: decodeHtmlEntities(src.slice(1, assetLength + 1))
 				};
 			}
 		}
 	});
-
-	// Workaround for @tiptap/markdown bug: MarkdownManager.createLexer() calls
-	// `new this.markedInstance.Lexer()` without passing instance defaults, so
-	// custom block tokenizers (callout, enrichedAsset) registered via .use()
-	// are lost in the created Lexer. Override .Lexer to auto-inject current
-	// defaults when no options are provided.
 	const OriginalLexer = _sharedMarked.Lexer;
-	const markedRef = _sharedMarked;
 	function collectEscapedAssetLengths(src) {
 		const assetLengths = new Map();
 		if (!src.includes('\\[') && !src.includes('\\![')) {
@@ -26171,10 +27188,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 		return assetLengths;
 	}
-	_sharedMarked.Lexer = class PatchedLexer extends OriginalLexer {
-		constructor(options) {
-			super(options ?? markedRef.defaults);
-		}
+
+	// Documents saved before the upgrade carry a single backslash in front of an asset run - the module
+	// escaped it itself back then. Reading them still needs the lengths of those runs, so the stack the
+	// `escape` tokenizer reads is filled here, around the inline pass that consumes it.
+	_sharedMarked.Lexer = class AssetAwareLexer extends OriginalLexer {
 		inlineTokens(src, tokens) {
 			this.tokenizer.escapeAssetLengthsStack ??= [];
 			this.tokenizer.escapeAssetLengthsStack.push(collectEscapedAssetLengths(src));
@@ -26186,106 +27204,52 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	};
 	const sharedMarked = _sharedMarked;
-	const MarkdownEscapeParser = Extension.create({
-		name: 'markdownEscapeParser',
-		markdownTokenName: 'escape',
-		parseMarkdown(token, h) {
-			return h.createTextNode(decodeHtmlEntities(String(token.text ?? '')));
-		}
-	});
-	const escapedTextNodes = new WeakSet();
-	const MARKDOWN_PUNCTUATION_RE = /[!-/:-@[-`{-~]/;
-	function buildEscapedText(text, offsets) {
-		const escaped = [];
-		const originalOffsets = [];
-		for (let offset = 0; offset < text.length; offset++) {
-			if (offsets.has(offset)) {
-				escaped.push('\\');
-				originalOffsets.push(null);
-			}
-			escaped.push(text[offset]);
-			originalOffsets.push(offset);
-		}
-		return {
-			escaped: escaped.join(''),
-			originalOffsets
-		};
-	}
-	function collectMarkdownEscapeOffsets(text) {
-		const offsets = new Set();
-		const assetRanges = [...findNoteAssetMatches(text, true), ...parseAllEnrichedAssets(text)];
-		for (let offset = 0; offset < text.length; offset++) {
-			if (text[offset] === '\\' || text[offset] === '|') {
-				offsets.add(offset);
-			}
-		}
-		for (const {
-			start
-		} of assetRanges) {
-			offsets.add(start);
-		}
-		const baseline = buildEscapedText(text, offsets);
-		let tokenOffset = 0;
-		for (const token of new sharedMarked.Lexer().inlineTokens(baseline.escaped)) {
-			const raw = String(token?.raw ?? '');
-			if (!['text', 'escape'].includes(token?.type)) {
-				for (let rawOffset = 0; rawOffset < raw.length; rawOffset++) {
-					if (!MARKDOWN_PUNCTUATION_RE.test(raw[rawOffset])) {
-						break;
-					}
-					const originalOffset = baseline.originalOffsets[tokenOffset + rawOffset];
-					if (originalOffset !== null && originalOffset !== undefined) {
-						offsets.add(originalOffset);
-					}
-				}
-			}
-			tokenOffset += raw.length;
-		}
-		return offsets;
-	}
-	function escapeMarkdownText(text) {
-		const offsets = collectMarkdownEscapeOffsets(text);
-		const escaped = [];
-		for (let offset = 0; offset < text.length; offset++) {
-			if (offsets.has(offset)) {
-				escaped.push('\\');
-			}
-			escaped.push(text[offset]);
-		}
-		return escaped.join('');
-	}
-	function haveSameMarks(left, right) {
-		return JSON.stringify(left?.marks ?? []) === JSON.stringify(right?.marks ?? []);
-	}
-	function escapeInlineText(nodes) {
-		const escapedNodes = [];
-		for (const sourceNode of nodes ?? []) {
-			const node = escapedTextNodes.has(sourceNode) ? sourceNode : sourceNode?.type === 'text' ? {
-				...sourceNode
-			} : Array.isArray(sourceNode?.content) && sourceNode.type !== 'codeBlock' ? {
-				...sourceNode,
-				content: escapeInlineText(sourceNode.content)
-			} : sourceNode;
-			const previous = escapedNodes.at(-1);
-			if (node?.type === 'text' && previous?.type === 'text' && haveSameMarks(previous, node) && !escapedTextNodes.has(previous) && !escapedTextNodes.has(node)) {
-				previous.text = `${previous.text ?? ''}${node.text ?? ''}`;
+
+	// The only escaping the module still does: a vertical bar typed into the plain text of a table
+	// cell. The library escapes ``\`` `` ` `` ``*`` ``_`` ``[`` ``]`` ``~`` on its own since
+	// @tiptap/markdown 3.25.0 and handles the bar inside a code span of a table row itself, but a bar
+	// in ordinary cell text still splits the row and swallows the next cell.
+	//
+	// Applied to the string the library has already rendered for a cell, never to its internals: code
+	// spans are copied through untouched, and a bar that already carries a backslash is left as it is.
+	//
+	// Not to be confused with the library's own `escapeTableCellPipes`, which covers the opposite half -
+	// the inside of a code span, and on the parsing side.
+	function escapeTableCellPlainPipes(rendered) {
+		const text = String(rendered ?? '');
+		let escaped = '';
+		let offset = 0;
+		while (offset < text.length) {
+			const char = text[offset];
+			if (char === '\\') {
+				escaped += text.slice(offset, offset + 2);
+				offset += 2;
 				continue;
 			}
-			escapedNodes.push(node);
-		}
-		return escapedNodes.map(node => {
-			if (node?.type !== 'text' || escapedTextNodes.has(node) || node.marks?.some(({
-				type
-			}) => type === 'code')) {
-				return node;
+			if (char === '`') {
+				let fenceEnd = offset;
+				while (text[fenceEnd] === '`') {
+					fenceEnd += 1;
+				}
+				const fence = text.slice(offset, fenceEnd);
+				const closing = text.indexOf(fence, fenceEnd);
+				if (closing === -1) {
+					// Backticks with no pair are ordinary characters, the way marked reads them - taking
+					// them for a span that runs to the end of the cell would leave every bar after them
+					// unescaped, and the row would split there.
+					escaped += fence;
+					offset = fenceEnd;
+					continue;
+				}
+				const end = closing + fence.length;
+				escaped += text.slice(offset, end);
+				offset = end;
+				continue;
 			}
-			const escapedNode = {
-				...node,
-				text: escapeMarkdownText(String(node.text ?? ''))
-			};
-			escapedTextNodes.add(escapedNode);
-			return escapedNode;
-		});
+			escaped += char === '|' ? '\\|' : char;
+			offset += 1;
+		}
+		return escaped;
 	}
 
 	/**
@@ -26544,23 +27508,38 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	}
 
-	// src/document.ts
-	var Document = Node3.create({
+	//#region src/document.ts
+	/**
+	* The default document node which represents the top level node of the editor.
+	* @see https://tiptap.dev/api/nodes/document
+	*/
+	const Document = Node$1.create({
 		name: "doc",
 		topNode: true,
 		content: "block+",
 		renderMarkdown: (node, h) => {
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			return h.renderChildren(node.content, "\n\n");
 		}
 	});
 
-	// src/paragraph.ts
-	var EMPTY_PARAGRAPH_MARKDOWN = "&nbsp;";
-	var NBSP_CHAR = "\xA0";
-	var Paragraph = Node3.create({
+	//#region src/paragraph.ts
+	/**
+	* Markdown marker for empty paragraphs to preserve blank lines.
+	* Using &nbsp; (non-breaking space HTML entity) ensures the paragraph
+	* is not collapsed by markdown parsers while remaining human-readable.
+	*/
+	const EMPTY_PARAGRAPH_MARKDOWN = "&nbsp;";
+	/**
+	* Unicode character for non-breaking space (U+00A0).
+	* Some markdown parsers may convert &nbsp; entities to this literal character.
+	*/
+	const NBSP_CHAR = "\xA0";
+	/**
+	* This extension allows you to create paragraphs.
+	* @see https://www.tiptap.dev/api/nodes/paragraph
+	*/
+	const Paragraph = Node$1.create({
 		name: "paragraph",
 		priority: 1e3,
 		addOptions() {
@@ -26582,26 +27561,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		},
 		parseMarkdown: (token, helpers) => {
 			const tokens = token.tokens || [];
-			if (tokens.length === 1 && tokens[0].type === "image") {
-				return helpers.parseChildren([tokens[0]]);
-			}
+			if (tokens.length === 1 && tokens[0].type === "image") return helpers.parseChildren([tokens[0]]);
 			const content = helpers.parseInline(tokens);
-			const hasExplicitEmptyParagraphMarker = tokens.length === 1 && tokens[0].type === "text" && (tokens[0].raw === EMPTY_PARAGRAPH_MARKDOWN || tokens[0].text === EMPTY_PARAGRAPH_MARKDOWN || tokens[0].raw === NBSP_CHAR || tokens[0].text === NBSP_CHAR);
-			if (hasExplicitEmptyParagraphMarker && content.length === 1 && content[0].type === "text" && (content[0].text === EMPTY_PARAGRAPH_MARKDOWN || content[0].text === NBSP_CHAR)) {
-				return helpers.createNode("paragraph", void 0, []);
-			}
+			if (tokens.length === 1 && tokens[0].type === "text" && (tokens[0].raw === EMPTY_PARAGRAPH_MARKDOWN || tokens[0].text === EMPTY_PARAGRAPH_MARKDOWN || tokens[0].raw === NBSP_CHAR || tokens[0].text === NBSP_CHAR) && content.length === 1 && content[0].type === "text" && (content[0].text === EMPTY_PARAGRAPH_MARKDOWN || content[0].text === NBSP_CHAR)) return helpers.createNode("paragraph", void 0, []);
 			return helpers.createNode("paragraph", void 0, content);
 		},
 		renderMarkdown: (node, h, ctx) => {
-			var _a, _b;
-			if (!node) {
-				return "";
-			}
+			if (!node) return "";
 			const content = Array.isArray(node.content) ? node.content : [];
 			if (content.length === 0) {
-				const previousContent = Array.isArray((_a = ctx == null ? void 0 : ctx.previousNode) == null ? void 0 : _a.content) ? ctx.previousNode.content : [];
-				const previousNodeIsEmptyParagraph = ((_b = ctx == null ? void 0 : ctx.previousNode) == null ? void 0 : _b.type) === "paragraph" && previousContent.length === 0;
-				return previousNodeIsEmptyParagraph ? EMPTY_PARAGRAPH_MARKDOWN : "";
+				var _ctx$previousNode, _ctx$previousNode2;
+				const previousContent = Array.isArray(ctx === null || ctx === void 0 || (_ctx$previousNode = ctx.previousNode) === null || _ctx$previousNode === void 0 ? void 0 : _ctx$previousNode.content) ? ctx.previousNode.content : [];
+				return (ctx === null || ctx === void 0 || (_ctx$previousNode2 = ctx.previousNode) === null || _ctx$previousNode2 === void 0 ? void 0 : _ctx$previousNode2.type) === "paragraph" && previousContent.length === 0 ? EMPTY_PARAGRAPH_MARKDOWN : "";
 			}
 			return h.renderChildren(content);
 		},
@@ -26621,8 +27592,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	// src/text.ts
-	var Text$1 = Node3.create({
+	//#region src/text.ts
+	/**
+	* This extension allows you to create text nodes.
+	* @see https://www.tiptap.dev/api/nodes/text
+	*/
+	const Text$1 = Node$1.create({
 		name: "text",
 		group: "inline",
 		parseMarkdown: token => {
@@ -26634,8 +27609,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		renderMarkdown: node => node.text || ""
 	});
 
-	// src/hard-break.ts
-	var HardBreak = Node3.create({
+	//#region src/hard-break.ts
+	/**
+	* This extension allows you to insert hard breaks.
+	* @see https://www.tiptap.dev/api/nodes/hard-break
+	*/
+	const HardBreak = Node$1.create({
 		name: "hardBreak",
 		markdownTokenName: "br",
 		addOptions() {
@@ -26661,8 +27640,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		renderText() {
 			return "\n";
 		},
-		renderMarkdown: () => `  
-`,
+		renderMarkdown: () => `  \n`,
 		parseMarkdown: () => {
 			return {
 				type: "hardBreak"
@@ -26681,9 +27659,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							selection,
 							storedMarks
 						} = state;
-						if (selection.$from.parent.type.spec.isolating) {
-							return false;
-						}
+						if (selection.$from.parent.type.spec.isolating) return false;
 						const {
 							keepMarks
 						} = this.options;
@@ -26702,7 +27678,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 								tr.ensureMarks(filteredMarks);
 							}
 							return true;
-						}).run();
+						}).scrollIntoView().run();
 					})]);
 				}
 			};
@@ -27720,12 +28696,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	*/
 	const redo$1 = buildCommand(true, true);
 
-	// src/character-count/character-count.ts
+	//#region src/character-count/character-count.ts
+	/**
+	* This extension allows you to count the characters and words of your document.
+	* @see https://tiptap.dev/api/extensions/character-count
+	*/
 	Extension.create({
 		name: "characterCount",
 		addOptions() {
 			return {
 				limit: null,
+				autoTrim: true,
 				mode: "textSize",
 				textCounter: text => text.length,
 				wordCounter: text => text.split(" ").filter(word => word !== "").length
@@ -27739,16 +28720,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		},
 		onBeforeCreate() {
 			this.storage.characters = options => {
-				const node = (options == null ? void 0 : options.node) || this.editor.state.doc;
-				const mode = (options == null ? void 0 : options.mode) || this.options.mode;
-				if (mode === "textSize") {
+				const node = (options === null || options === void 0 ? void 0 : options.node) || this.editor.state.doc;
+				if (((options === null || options === void 0 ? void 0 : options.mode) || this.options.mode) === "textSize") {
 					const text = node.textBetween(0, node.content.size, void 0, " ");
 					return this.options.textCounter(text);
 				}
 				return node.nodeSize;
 			};
 			this.storage.words = options => {
-				const node = (options == null ? void 0 : options.node) || this.editor.state.doc;
+				const node = (options === null || options === void 0 ? void 0 : options.node) || this.editor.state.doc;
 				const text = node.textBetween(0, node.content.size, " ", " ");
 				return this.options.wordCounter(text);
 			};
@@ -27758,11 +28738,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return [new Plugin({
 				key: new PluginKey("characterCount"),
 				appendTransaction: (transactions, oldState, newState) => {
-					if (initialEvaluationDone) {
-						return;
-					}
+					if (initialEvaluationDone) return;
 					const limit = this.options.limit;
-					if (limit === null || limit === void 0 || limit === 0) {
+					const autoTrim = this.options.autoTrim;
+					if (limit === null || limit === void 0 || limit === 0 || autoTrim === false) {
 						initialEvaluationDone = true;
 						return;
 					}
@@ -27782,45 +28761,38 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				},
 				filterTransaction: (transaction, state) => {
 					const limit = this.options.limit;
-					if (!transaction.docChanged || limit === 0 || limit === null || limit === void 0) {
-						return true;
-					}
+					if (!transaction.docChanged || limit === 0 || limit === null || limit === void 0) return true;
 					const oldSize = this.storage.characters({
 						node: state.doc
 					});
 					const newSize = this.storage.characters({
 						node: transaction.doc
 					});
-					if (newSize <= limit) {
-						return true;
-					}
-					if (oldSize > limit && newSize > limit && newSize <= oldSize) {
-						return true;
-					}
-					if (oldSize > limit && newSize > limit && newSize > oldSize) {
-						return false;
-					}
-					const isPaste = transaction.getMeta("paste");
-					if (!isPaste) {
-						return false;
-					}
+					if (newSize <= limit) return true;
+					if (oldSize > limit && newSize > limit && newSize <= oldSize) return true;
+					if (oldSize > limit && newSize > limit && newSize > oldSize) return false;
+					if (!transaction.getMeta("paste")) return false;
 					const pos = transaction.selection.$head.pos;
-					const over = newSize - limit;
-					const from = pos - over;
+					const from = pos - (newSize - limit);
 					const to = pos;
 					transaction.deleteRange(from, to);
-					const updatedSize = this.storage.characters({
+					if (this.storage.characters({
 						node: transaction.doc
-					});
-					if (updatedSize > limit) {
-						return false;
-					}
+					}) > limit) return false;
 					return true;
 				}
 			})];
 		}
 	});
-	var Dropcursor = Extension.create({
+	//#endregion
+	//#region src/drop-cursor/drop-cursor.ts
+	/**
+	* This extension allows you to add a drop cursor to your editor.
+	* A drop cursor is a line that appears when you drag and drop content
+	* in-between nodes.
+	* @see https://tiptap.dev/api/extensions/dropcursor
+	*/
+	const Dropcursor = Extension.create({
 		name: "dropCursor",
 		addOptions() {
 			return {
@@ -27833,6 +28805,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return [dropCursor(this.options)];
 		}
 	});
+	//#endregion
+	//#region src/focus/focus.ts
+	/**
+	* This extension allows you to add a class to the focused node.
+	* @see https://www.tiptap.dev/api/extensions/focus
+	*/
 	Extension.create({
 		name: "focus",
 		addOptions() {
@@ -27857,36 +28835,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							anchor
 						} = selection;
 						const decorations = [];
-						if (!isEditable || !isFocused) {
-							return DecorationSet.create(doc, []);
-						}
+						if (!isEditable || !isFocused) return DecorationSet.create(doc, []);
 						let maxLevels = 0;
-						if (this.options.mode === "deepest") {
-							doc.descendants((node, pos) => {
-								if (node.isText) {
-									return;
-								}
-								const isCurrent = anchor >= pos && anchor <= pos + node.nodeSize - 1;
-								if (!isCurrent) {
-									return false;
-								}
-								maxLevels += 1;
-							});
-						}
+						if (this.options.mode === "deepest") doc.descendants((node, pos) => {
+							if (node.isText) return;
+							if (!(anchor >= pos && anchor <= pos + node.nodeSize - 1)) return false;
+							maxLevels += 1;
+						});
 						let currentLevel = 0;
 						doc.descendants((node, pos) => {
-							if (node.isText) {
-								return false;
-							}
-							const isCurrent = anchor >= pos && anchor <= pos + node.nodeSize - 1;
-							if (!isCurrent) {
-								return false;
-							}
+							if (node.isText) return false;
+							if (!(anchor >= pos && anchor <= pos + node.nodeSize - 1)) return false;
 							currentLevel += 1;
-							const outOfScope = this.options.mode === "deepest" && maxLevels - currentLevel > 0 || this.options.mode === "shallowest" && currentLevel > 1;
-							if (outOfScope) {
-								return this.options.mode === "deepest";
-							}
+							if (this.options.mode === "deepest" && maxLevels - currentLevel > 0 || this.options.mode === "shallowest" && currentLevel > 1) return this.options.mode === "deepest";
 							decorations.push(Decoration.node(pos, pos + node.nodeSize, {
 								class: this.options.className
 							}));
@@ -27897,27 +28858,430 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			})];
 		}
 	});
+	//#endregion
+	//#region src/gap-cursor/gap-cursor.ts
+	/**
+	* This extension allows you to add a gap cursor to your editor.
+	* A gap cursor is a cursor that appears when you click on a place
+	* where no content is present, for example inbetween nodes.
+	* @see https://tiptap.dev/api/extensions/gapcursor
+	*/
 	Extension.create({
 		name: "gapCursor",
 		addProseMirrorPlugins() {
 			return [gapCursor()];
 		},
 		extendNodeSchema(extension) {
-			var _a;
+			var _callOrReturn;
 			const context = {
 				name: extension.name,
 				options: extension.options,
 				storage: extension.storage
 			};
 			return {
-				allowGapCursor: (_a = callOrReturn(getExtensionField(extension, "allowGapCursor", context))) != null ? _a : null
+				allowGapCursor: (_callOrReturn = callOrReturn(getExtensionField(extension, "allowGapCursor", context))) !== null && _callOrReturn !== void 0 ? _callOrReturn : null
 			};
 		}
 	});
-	var DEFAULT_DATA_ATTRIBUTE = "placeholder";
+	//#endregion
+	//#region src/placeholder/constants.ts
+	/** The default data attribute label */
+	const DEFAULT_DATA_ATTRIBUTE = "placeholder";
+	/** The plugin key used to store and read the placeholder decoration set */
+	const PLUGIN_KEY = new PluginKey("tiptap__placeholder");
+	//#endregion
+	//#region src/placeholder/utils/createPlaceholderDecoration.ts
+	/**
+	* Creates a ProseMirror node decoration that applies a placeholder
+	* CSS class and data attribute to an empty node.
+	* @param options.editor - The editor instance
+	* @param options.pos - The position of the node in the document
+	* @param options.node - The ProseMirror node
+	* @param options.isEmptyDoc - Whether the entire document is empty
+	* @param options.hasAnchor - Whether the selection anchor is within the node
+	* @param options.dataAttribute - The data attribute name (e.g. `data-placeholder`)
+	* @param options.classes - CSS classes for empty nodes and the empty editor
+	* @param options.placeholder - The placeholder text or a function that returns it
+	* @returns A ProseMirror node decoration with placeholder classes and data attribute
+	*/
+	function createPlaceholderDecoration(options) {
+		const {
+			editor,
+			placeholder,
+			dataAttribute,
+			pos,
+			node,
+			isEmptyDoc,
+			hasAnchor,
+			classes: {
+				emptyNode,
+				emptyEditor
+			}
+		} = options;
+		const classes = [emptyNode];
+		if (isEmptyDoc) classes.push(emptyEditor);
+		return Decoration.node(pos, pos + node.nodeSize, {
+			class: classes.join(" "),
+			[dataAttribute]: typeof placeholder === "function" ? placeholder({
+				editor,
+				node,
+				pos,
+				hasAnchor
+			}) : placeholder
+		});
+	}
+	//#endregion
+	//#region src/placeholder/utils/buildPlaceholderDecorations.ts
+	function resolveEmptyNodeClass(emptyNodeClass, props) {
+		return typeof emptyNodeClass === "function" ? emptyNodeClass(props) : emptyNodeClass;
+	}
+	/**
+	* Scans a document range for empty textblocks that should receive placeholder
+	* decorations. Used by the slow path and incremental state updates.
+	*/
+	function scanRangeForDecorations({
+		editor,
+		options,
+		dataAttribute,
+		doc,
+		selection,
+		from,
+		to
+	}) {
+		const {
+			anchor
+		} = selection;
+		const decorations = [];
+		const isEmptyDoc = editor.isEmpty;
+		doc.nodesBetween(from, to, (node, pos) => {
+			const hasAnchor = anchor >= pos && anchor <= pos + node.nodeSize;
+			const isEmpty = !node.isLeaf && isNodeEmpty(node);
+			if (!node.type.isTextblock) return options.includeChildren;
+			if ((hasAnchor || !options.showOnlyCurrent) && isEmpty) decorations.push(createPlaceholderDecoration({
+				editor,
+				isEmptyDoc,
+				dataAttribute,
+				hasAnchor,
+				placeholder: options.placeholder,
+				classes: {
+					emptyEditor: options.emptyEditorClass,
+					emptyNode: resolveEmptyNodeClass(options.emptyNodeClass, {
+						editor,
+						node,
+						pos,
+						hasAnchor
+					})
+				},
+				node,
+				pos
+			}));
+			return options.includeChildren;
+		});
+		return decorations;
+	}
+	/**
+	* Builds the placeholder decorations for the current document state.
+	* @param options.editor - The editor instance.
+	* @param options.options - The resolved placeholder options.
+	* @param options.dataAttribute - The prepared `data-*` attribute name.
+	* @param options.doc - The current document node.
+	* @param options.selection - The current selection.
+	* @returns A decoration set, or `null` when no placeholders should be shown.
+	*/
+	function buildPlaceholderDecorations({
+		editor,
+		options,
+		dataAttribute,
+		doc,
+		selection
+	}) {
+		if (!(editor.isEditable || !options.showOnlyWhenEditable)) return null;
+		const {
+			anchor
+		} = selection;
+		const decorations = [];
+		const isEmptyDoc = editor.isEmpty;
+		if (options.showOnlyCurrent && !options.includeChildren) {
+			const resolved = doc.resolve(anchor);
+			const node = resolved.depth > 0 ? resolved.node(1) : resolved.nodeAfter;
+			const nodeStart = resolved.depth > 0 ? resolved.before(1) : anchor;
+			if (node && node.type.isTextblock && isNodeEmpty(node)) {
+				const hasAnchor = anchor >= nodeStart && anchor <= nodeStart + node.nodeSize;
+				decorations.push(createPlaceholderDecoration({
+					editor,
+					isEmptyDoc,
+					dataAttribute,
+					hasAnchor,
+					placeholder: options.placeholder,
+					classes: {
+						emptyEditor: options.emptyEditorClass,
+						emptyNode: resolveEmptyNodeClass(options.emptyNodeClass, {
+							editor,
+							node,
+							pos: nodeStart,
+							hasAnchor
+						})
+					},
+					node,
+					pos: nodeStart
+				}));
+			}
+		} else decorations.push(...scanRangeForDecorations({
+			editor,
+			options,
+			dataAttribute,
+			doc,
+			selection,
+			from: 0,
+			to: doc.content.size
+		}));
+		return DecorationSet.create(doc, decorations);
+	}
+	//#endregion
+	//#region src/placeholder/utils/resolveTopLevelRange.ts
+	/**
+	* Resolves a document position to the `[from, to)` range of its containing
+	* top-level block node in absolute document positions.
+	*/
+	function resolveTopLevelRange(doc, pos) {
+		const resolved = doc.resolve(pos);
+		if (resolved.depth === 0) {
+			var _resolved$nodeAfter;
+			const node = (_resolved$nodeAfter = resolved.nodeAfter) !== null && _resolved$nodeAfter !== void 0 ? _resolved$nodeAfter : resolved.nodeBefore;
+			if (!node) return {
+				from: pos,
+				to: pos
+			};
+			const nodePos = resolved.nodeAfter ? pos : pos - node.nodeSize;
+			return {
+				from: nodePos,
+				to: nodePos + node.nodeSize
+			};
+		}
+		const topLevelPos = resolved.before(1);
+		return {
+			from: topLevelPos,
+			to: topLevelPos + resolved.node(1).nodeSize
+		};
+	}
+	/**
+	* Converts an absolute document range to content-relative positions used by
+	* `Node#nodesBetween` and `Node#forEach` offsets.
+	*/
+	function toContentRelativeRange(doc, range) {
+		return {
+			from: Math.max(0, range.from - 1),
+			to: Math.min(doc.content.size, range.to - 1)
+		};
+	}
+	/**
+	* Returns the top-level block ranges that intersect a document change range.
+	* Input `from`/`to` are absolute positions (e.g. from `getChangedRanges`).
+	* Returned ranges are content-relative, matching `Node#forEach` offsets.
+	*/
+	function getTopLevelBlocksInRange(doc, from, to) {
+		const ranges = [];
+		doc.forEach((node, offset) => {
+			const nodeStart = offset;
+			const nodeEnd = nodeStart + node.nodeSize;
+			const absNodeStart = nodeStart + 1;
+			const absNodeEnd = nodeEnd + 1;
+			if (absNodeStart < to && absNodeEnd > from) ranges.push({
+				from: nodeStart,
+				to: nodeEnd
+			});
+		});
+		return ranges;
+	}
+	/**
+	* Sorts ranges by start position and merges overlapping or adjacent ranges.
+	*/
+	function mergeRanges(ranges) {
+		if (ranges.length === 0) return [];
+		const sorted = [...ranges].sort((a, b) => a.from - b.from);
+		const merged = [{
+			...sorted[0]
+		}];
+		for (let i = 1; i < sorted.length; i += 1) {
+			const last = merged[merged.length - 1];
+			const current = sorted[i];
+			if (current.from <= last.to) last.to = Math.max(last.to, current.to);else merged.push({
+				...current
+			});
+		}
+		return merged;
+	}
+	//#endregion
+	//#region src/placeholder/utils/placeholderStateField.ts
+	/**
+	* Expands a single changed range to the top-level blocks it touches.
+	* Also resolves blocks at range boundaries so split/merge edits update
+	* adjacent empty nodes (e.g. a new paragraph after Enter).
+	*/
+	function collectBlocksForChange(doc, change) {
+		const ranges = getTopLevelBlocksInRange(doc, change.from, change.to);
+		ranges.push(toContentRelativeRange(doc, resolveTopLevelRange(doc, change.from)));
+		if (change.to > change.from) ranges.push(toContentRelativeRange(doc, resolveTopLevelRange(doc, Math.min(change.to, doc.content.size + 1) - 1)));else if (change.from < doc.content.size + 1) ranges.push(toContentRelativeRange(doc, resolveTopLevelRange(doc, Math.min(change.from + 1, doc.content.size))));
+		return ranges;
+	}
+	/**
+	* Collects content-relative top-level block ranges that need placeholder
+	* decorations recomputed after a transaction.
+	*/
+	function collectRescanRanges(tr, oldState, newState) {
+		const ranges = [];
+		if (tr.docChanged) {
+			const changes = getChangedRanges(tr);
+			for (const change of changes) ranges.push(...collectBlocksForChange(newState.doc, change.newRange));
+		}
+		if (tr.selectionSet) {
+			ranges.push(toContentRelativeRange(newState.doc, resolveTopLevelRange(newState.doc, tr.mapping.map(oldState.selection.anchor))));
+			ranges.push(toContentRelativeRange(newState.doc, resolveTopLevelRange(newState.doc, newState.selection.anchor)));
+		}
+		return mergeRanges(ranges);
+	}
+	/** Clamps a content-relative range to `[0, doc.content.size]`. */
+	function clampRange(from, to, doc) {
+		const clampedFrom = Math.max(0, Math.min(from, doc.content.size));
+		return {
+			from: clampedFrom,
+			to: Math.max(clampedFrom, Math.min(to, doc.content.size))
+		};
+	}
+	/**
+	* Removes and rebuilds placeholder decorations within the given ranges.
+	* Only drops decorations fully contained in a range so mapped decorations
+	* on neighbouring blocks (e.g. at a block boundary) are kept intact.
+	*/
+	function updateDecorationsInRanges({
+		decorations,
+		ranges,
+		editor,
+		options,
+		dataAttribute,
+		doc,
+		selection
+	}) {
+		let next = decorations;
+		for (const range of ranges) {
+			const {
+				from,
+				to
+			} = clampRange(range.from, range.to, doc);
+			const existing = next.find(from, to).filter(decoration => decoration.from >= from && decoration.to <= to);
+			if (existing.length) next = next.remove(existing);
+			const newDecos = scanRangeForDecorations({
+				editor,
+				options,
+				dataAttribute,
+				doc,
+				selection,
+				from,
+				to
+			});
+			if (newDecos.length) next = next.add(doc, newDecos);
+		}
+		return next;
+	}
+	/**
+	* Creates the incremental `StateField<DecorationSet>` used by the slow path
+	* (`showOnlyCurrent: false` or `includeChildren: true`).
+	*
+	* Decorations are mapped through each transaction and only recomputed for
+	* top-level blocks touched by document or selection changes.
+	* @param options.editor - The editor instance.
+	* @param options.options - The resolved placeholder options.
+	* @param options.dataAttribute - The prepared `data-*` attribute name.
+	* @returns A ProseMirror state field storing the placeholder decoration set.
+	*/
+	function createPlaceholderStateField({
+		editor,
+		options,
+		dataAttribute
+	}) {
+		return {
+			init(_config, state) {
+				const decorations = buildPlaceholderDecorations({
+					editor,
+					options,
+					dataAttribute,
+					doc: state.doc,
+					selection: state.selection
+				});
+				return decorations !== null && decorations !== void 0 ? decorations : DecorationSet.empty;
+			},
+			apply(tr, prev, oldState, newState) {
+				if (!tr.docChanged && !tr.selectionSet) return prev;
+				return updateDecorationsInRanges({
+					decorations: prev.map(tr.mapping, tr.doc),
+					ranges: collectRescanRanges(tr, oldState, newState),
+					editor,
+					options,
+					dataAttribute,
+					doc: newState.doc,
+					selection: newState.selection
+				});
+			}
+		};
+	}
+	//#endregion
+	//#region src/placeholder/utils/preparePlaceholderAttribute.ts
+	/**
+	* Prepares the placeholder attribute by ensuring it is properly formatted.
+	* @param attr - The placeholder attribute string.
+	* @returns The prepared placeholder attribute string.
+	*/
 	function preparePlaceholderAttribute(attr) {
 		return attr.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/^[0-9-]+/, "").replace(/^-+/, "").toLowerCase();
 	}
+	//#endregion
+	//#region src/placeholder/plugins/PlaceholderPlugin.ts
+	/**
+	* Creates the ProseMirror plugin that renders placeholder decorations.
+	* @param options.editor - The editor instance.
+	* @param options.options - The resolved placeholder options.
+	* @returns The configured placeholder plugin.
+	*/
+	function createPlaceholderPlugin({
+		editor,
+		options
+	}) {
+		const dataAttribute = options.dataAttribute ? `data-${preparePlaceholderAttribute(options.dataAttribute)}` : `data-${DEFAULT_DATA_ATTRIBUTE}`;
+		const useResolvedPath = options.showOnlyCurrent && !options.includeChildren;
+		return new Plugin({
+			key: PLUGIN_KEY,
+			...(useResolvedPath ? {} : {
+				state: createPlaceholderStateField({
+					editor,
+					options,
+					dataAttribute
+				})
+			}),
+			props: {
+				decorations: useResolvedPath ? ({
+					doc,
+					selection
+				}) => buildPlaceholderDecorations({
+					editor,
+					options,
+					dataAttribute,
+					doc,
+					selection
+				}) : state => {
+					var _PLUGIN_KEY$getState;
+					if (options.showOnlyWhenEditable && !editor.isEditable) return DecorationSet.empty;
+					return (_PLUGIN_KEY$getState = PLUGIN_KEY.getState(state)) !== null && _PLUGIN_KEY$getState !== void 0 ? _PLUGIN_KEY$getState : DecorationSet.empty;
+				}
+			}
+		});
+	}
+	//#endregion
+	//#region src/placeholder/placeholder.ts
+	/**
+	* This extension allows you to add a placeholder to your editor.
+	* A placeholder is a text that appears when the editor or a node is empty.
+	* @see https://www.tiptap.dev/api/extensions/placeholder
+	*/
 	Extension.create({
 		name: "placeholder",
 		addOptions() {
@@ -27925,60 +29289,52 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				emptyEditorClass: "is-editor-empty",
 				emptyNodeClass: "is-empty",
 				dataAttribute: DEFAULT_DATA_ATTRIBUTE,
-				placeholder: "Write something \u2026",
+				placeholder: "Write something …",
 				showOnlyWhenEditable: true,
 				showOnlyCurrent: true,
 				includeChildren: false
 			};
 		},
 		addProseMirrorPlugins() {
-			const dataAttribute = this.options.dataAttribute ? `data-${preparePlaceholderAttribute(this.options.dataAttribute)}` : `data-${DEFAULT_DATA_ATTRIBUTE}`;
-			return [new Plugin({
-				key: new PluginKey("placeholder"),
-				props: {
-					decorations: ({
-						doc,
-						selection
-					}) => {
-						const active = this.editor.isEditable || !this.options.showOnlyWhenEditable;
-						const {
-							anchor
-						} = selection;
-						const decorations = [];
-						if (!active) {
-							return null;
-						}
-						const isEmptyDoc = this.editor.isEmpty;
-						doc.descendants((node, pos) => {
-							const hasAnchor = anchor >= pos && anchor <= pos + node.nodeSize;
-							const isEmpty = !node.isLeaf && isNodeEmpty(node);
-							if (!node.type.isTextblock) {
-								return this.options.includeChildren;
-							}
-							if ((hasAnchor || !this.options.showOnlyCurrent) && isEmpty) {
-								const classes = [this.options.emptyNodeClass];
-								if (isEmptyDoc) {
-									classes.push(this.options.emptyEditorClass);
-								}
-								const decoration = Decoration.node(pos, pos + node.nodeSize, {
-									class: classes.join(" "),
-									[dataAttribute]: typeof this.options.placeholder === "function" ? this.options.placeholder({
-										editor: this.editor,
-										node,
-										pos,
-										hasAnchor
-									}) : this.options.placeholder
-								});
-								decorations.push(decoration);
-							}
-							return this.options.includeChildren;
-						});
-						return DecorationSet.create(doc, decorations);
-					}
-				}
+			return [createPlaceholderPlugin({
+				editor: this.editor,
+				options: this.options
 			})];
 		}
 	});
+	//#endregion
+	//#region src/selection/selection.ts
+	/**
+	* Whether the native browser selection should be cleared on blur and restored on focus.
+	* Only applies to non-empty text selections in an editable editor.
+	*/
+	function shouldSyncDomSelection(state, editor) {
+		return !state.selection.empty && !isNodeSelection(state.selection) && editor.isEditable;
+	}
+	/**
+	* Whether the selection decoration should be rendered to keep the selection
+	* visible while the editor is blurred (and not dragging).
+	*/
+	function shouldPreserveSelection(state, editor) {
+		return shouldSyncDomSelection(state, editor) && !editor.isFocused && !editor.view.dragging;
+	}
+	function clearDomSelection() {
+		var _window$getSelection;
+		(_window$getSelection = window.getSelection()) === null || _window$getSelection === void 0 || _window$getSelection.removeAllRanges();
+	}
+	/**
+	* Sync the native selection from the editor state.
+	* @see https://prosemirror.net/docs/ref/#view.EditorView.focus
+	*/
+	function restoreDomSelection(view) {
+		view.focus();
+	}
+	/**
+	* This extension allows you to add a class to the selected text when the editor is blurred.
+	* It clears the native browser selection on blur (so `::selection` styles do not overlap the
+	* decoration) and restores it when the editor is focused again.
+	* @see https://www.tiptap.dev/api/extensions/selection
+	*/
 	Extension.create({
 		name: "selection",
 		addOptions() {
@@ -27995,24 +29351,39 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				key: new PluginKey("selection"),
 				props: {
 					decorations(state) {
-						if (state.selection.empty || editor.isFocused || !editor.isEditable || isNodeSelection(state.selection) || editor.view.dragging) {
-							return null;
-						}
+						if (!shouldPreserveSelection(state, editor)) return null;
 						return DecorationSet.create(state.doc, [Decoration.inline(state.selection.from, state.selection.to, {
 							class: options.className
 						})]);
+					},
+					handleDOMEvents: {
+						blur(view) {
+							if (!shouldSyncDomSelection(view.state, editor)) return false;
+							clearDomSelection();
+							return false;
+						},
+						focus(view) {
+							if (!shouldSyncDomSelection(view.state, editor)) return false;
+							requestAnimationFrame(() => {
+								if (!editor.isDestroyed && view.hasFocus()) restoreDomSelection(view);
+							});
+							return false;
+						}
 					}
 				}
 			})];
 		}
 	});
-	var skipTrailingNodeMeta = "skipTrailingNode";
 	function nodeEqualsType({
 		types,
 		node
 	}) {
-		return node && Array.isArray(types) && types.includes(node.type) || (node == null ? void 0 : node.type) === types;
+		return node && Array.isArray(types) && types.includes(node.type) || (node === null || node === void 0 ? void 0 : node.type) === types;
 	}
+	/**
+	* This extension allows you to add an extra node at the end of the document.
+	* @see https://www.tiptap.dev/api/extensions/trailing-node
+	*/
 	Extension.create({
 		name: "trailingNode",
 		addOptions() {
@@ -28022,9 +29393,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			};
 		},
 		addProseMirrorPlugins() {
-			var _a;
+			var _this$editor$schema$t;
 			const plugin = new PluginKey(this.name);
-			const defaultNode = this.options.node || ((_a = this.editor.schema.topNodeType.contentMatch.defaultType) == null ? void 0 : _a.name) || "paragraph";
+			const defaultNode = this.options.node || ((_this$editor$schema$t = this.editor.schema.topNodeType.contentMatch.defaultType) === null || _this$editor$schema$t === void 0 ? void 0 : _this$editor$schema$t.name) || "paragraph";
 			const disabledNodes = Object.entries(this.editor.schema.nodes).map(([, value]) => value).filter(node => (this.options.notAfter || []).concat(defaultNode).includes(node.name));
 			return [new Plugin({
 				key: plugin,
@@ -28037,12 +29408,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					const shouldInsertNodeAtEnd = plugin.getState(state);
 					const endPosition = doc.content.size;
 					const type = schema.nodes[defaultNode];
-					if (transactions.some(transaction => transaction.getMeta(skipTrailingNodeMeta))) {
-						return;
-					}
-					if (!shouldInsertNodeAtEnd) {
-						return;
-					}
+					if (transactions.some(transaction => transaction.getMeta("skipTrailingNode"))) return;
+					if (!shouldInsertNodeAtEnd) return;
 					return tr.insert(endPosition, type.create());
 				},
 				state: {
@@ -28054,12 +29421,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						});
 					},
 					apply: (tr, value) => {
-						if (!tr.docChanged) {
-							return value;
-						}
-						if (tr.getMeta("__uniqueIDTransaction")) {
-							return value;
-						}
+						if (!tr.docChanged) return value;
+						if (tr.getMeta("__uniqueIDTransaction")) return value;
 						const lastNode = tr.doc.lastChild;
 						return !nodeEqualsType({
 							node: lastNode,
@@ -28070,7 +29433,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			})];
 		}
 	});
-	var UndoRedo = Extension.create({
+	//#endregion
+	//#region src/undo-redo/undo-redo.ts
+	/**
+	* This extension allows you to undo and redo recent changes.
+	* @see https://www.tiptap.dev/api/extensions/undo-redo
+	*
+	* **Important**: If the `@tiptap/extension-collaboration` package is used, make sure to remove
+	* the `undo-redo` extension, as it is not compatible with the `collaboration` extension.
+	*
+	* `@tiptap/extension-collaboration` uses its own history implementation.
+	*/
+	const UndoRedo = Extension.create({
 		name: "undoRedo",
 		addOptions() {
 			return {
@@ -28102,9 +29476,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				"Mod-z": () => this.editor.commands.undo(),
 				"Shift-Mod-z": () => this.editor.commands.redo(),
 				"Mod-y": () => this.editor.commands.redo(),
-				// Russian keyboard layouts
-				"Mod-\u044F": () => this.editor.commands.undo(),
-				"Shift-Mod-\u044F": () => this.editor.commands.redo()
+				"Mod-я": () => this.editor.commands.undo(),
+				"Shift-Mod-я": () => this.editor.commands.redo()
 			};
 		}
 	});
@@ -28169,8 +29542,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	// src/heading.ts
-	var Heading = Node3.create({
+	//#region src/heading.ts
+	/**
+	* This extension allows you to create headings.
+	* @see https://www.tiptap.dev/api/nodes/heading
+	*/
+	const Heading = Node$1.create({
 		name: "heading",
 		addOptions() {
 			return {
@@ -28201,9 +29578,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			node,
 			HTMLAttributes
 		}) {
-			const hasLevel = this.options.levels.includes(node.attrs.level);
-			const level = hasLevel ? node.attrs.level : this.options.levels[0];
-			return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+			return [`h${this.options.levels.includes(node.attrs.level) ? node.attrs.level : this.options.levels[0]}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
 		},
 		parseMarkdown: (token, helpers) => {
 			return helpers.createNode("heading", {
@@ -28211,12 +29586,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}, helpers.parseInline(token.tokens || []));
 		},
 		renderMarkdown: (node, h) => {
-			var _a;
-			const level = ((_a = node.attrs) == null ? void 0 : _a.level) ? parseInt(node.attrs.level, 10) : 1;
+			var _node$attrs;
+			const level = ((_node$attrs = node.attrs) === null || _node$attrs === void 0 ? void 0 : _node$attrs.level) ? parseInt(node.attrs.level, 10) : 1;
 			const headingChars = "#".repeat(level);
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			return `${headingChars} ${h.renderChildren(node.content)}`;
 		},
 		addCommands() {
@@ -28224,17 +29597,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				setHeading: attributes => ({
 					commands
 				}) => {
-					if (!this.options.levels.includes(attributes.level)) {
-						return false;
-					}
+					if (!this.options.levels.includes(attributes.level)) return false;
 					return commands.setNode(this.name, attributes);
 				},
 				toggleHeading: attributes => ({
 					commands
 				}) => {
-					if (!this.options.levels.includes(attributes.level)) {
-						return false;
-					}
+					if (!this.options.levels.includes(attributes.level)) return false;
 					return commands.toggleNode(this.name, "paragraph", attributes);
 				}
 			};
@@ -28242,11 +29611,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		addKeyboardShortcuts() {
 			return this.options.levels.reduce((items, level) => ({
 				...items,
-				...{
-					[`Mod-Alt-${level}`]: () => this.editor.commands.toggleHeading({
-						level
-					})
-				}
+				[`Mod-Alt-${level}`]: () => this.editor.commands.toggleHeading({
+					level
+				})
 			}), {});
 		},
 		addInputRules() {
@@ -28975,12 +30342,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	}
 
 	const HeadingAnchor = Heading.extend({
-		renderMarkdown(node, h, ctx) {
-			return this.parent?.({
-				...node,
-				content: escapeInlineText(node.content)
-			}, h, ctx) ?? '';
-		},
 		addOptions() {
 			return {
 				...(this.parent?.() ?? {}),
@@ -29141,48 +30502,83 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	const MarkdownParagraph = Paragraph.extend({
-		renderMarkdown(node, h, ctx) {
-			return this.parent?.({
-				...node,
-				content: escapeInlineText(node.content)
-			}, h, ctx) ?? '';
-		}
-	});
 	function createCoreExtensions({
 		hasCollaborationProvider,
 		documentId = null
 	}) {
-		return [Document, MarkdownParagraph, Text$1, HardBreak, HeadingAnchor.configure({
+		return [Document, Paragraph, Text$1, HardBreak, HeadingAnchor.configure({
 			levels: [1, 2, 3, 4],
 			documentId
 		}), HeadingCollapseEnter, Dropcursor, NoteGapcursor, ...(hasCollaborationProvider ? [] : [UndoRedo])];
 	}
 
-	// src/jsx-runtime.ts
-	var h = (tag, attributes) => {
-		if (tag === "slot") {
-			return 0;
-		}
+	//#region src/jsx-runtime.ts
+	const jsxElements = /* @__PURE__ */new WeakSet();
+	const jsxFragments = /* @__PURE__ */new WeakSet();
+	/** Create a new JSX element from the given spec */
+	function createJSXElement(spec) {
+		const element = spec;
+		jsxElements.add(element);
+		return element;
+	}
+	/** Check if a spec is a JSX element */
+	function isJSXElement(value) {
+		return Array.isArray(value) && jsxElements.has(value);
+	}
+	function flattenFragmentChildren(children) {
+		return children.flatMap(child => {
+			if (child == null) return [];
+			if (Array.isArray(child) && jsxFragments.has(child) && !isJSXElement(child)) return flattenFragmentChildren(child);
+			return [child];
+		});
+	}
+	function render(tag, attributes) {
+		if (tag === "slot") return 0;
 		if (tag instanceof Function) {
-			return tag(attributes);
+			const result = tag(attributes);
+			if (Array.isArray(result) && !isJSXElement(result) && !jsxFragments.has(result)) return createJSXElement(result);
+			return result;
 		}
 		const {
 			children,
 			...rest
-		} = attributes != null ? attributes : {};
-		if (tag === "svg") {
-			throw new Error("SVG elements are not supported in the JSX syntax, use the array syntax instead");
+		} = attributes !== null && attributes !== void 0 ? attributes : {};
+		if (tag === "svg") throw new Error("SVG elements are not supported in the JSX syntax, use the array syntax instead");
+		if (Array.isArray(children)) {
+			if (isJSXElement(children)) return createJSXElement([tag, rest, children]);
+			if (children.length === 0) return createJSXElement([tag, rest]);
+			const flattenedChildren = flattenFragmentChildren(children);
+			if (flattenedChildren.length === 0) return createJSXElement([tag, rest]);
+			return createJSXElement([tag, rest, ...flattenedChildren]);
 		}
-		return [tag, rest, children];
-	};
+		if (children !== void 0 && children !== null) return createJSXElement([tag, rest, children]);
+		return createJSXElement([tag, rest]);
+	}
+	const h = (tag, attributes) => render(tag, attributes);
 
-	// src/bold.tsx
-	var starInputRegex$1 = /(?:^|\s)(\*\*(?!\s+\*\*)((?:[^*]+))\*\*(?!\s+\*\*))$/;
-	var starPasteRegex$1 = /(?:^|\s)(\*\*(?!\s+\*\*)((?:[^*]+))\*\*(?!\s+\*\*))/g;
-	var underscoreInputRegex$1 = /(?:^|\s)(__(?!\s+__)((?:[^_]+))__(?!\s+__))$/;
-	var underscorePasteRegex$1 = /(?:^|\s)(__(?!\s+__)((?:[^_]+))__(?!\s+__))/g;
-	var Bold = Mark.create({
+	//#region src/bold.tsx
+	/** @jsxImportSource @tiptap/core */
+	/**
+	* Matches bold text via `**` as input.
+	*/
+	const starInputRegex$1 = /(?:^|\s)(\*\*(?!\s+\*\*)((?:[^*]+))\*\*(?!\s+\*\*))$/;
+	/**
+	* Matches bold text via `**` while pasting.
+	*/
+	const starPasteRegex$1 = /(?:^|\s)(\*\*(?!\s+\*\*)((?:[^*]+))\*\*(?!\s+\*\*))/g;
+	/**
+	* Matches bold text via `__` as input.
+	*/
+	const underscoreInputRegex$1 = /(?:^|\s)(__(?!\s+__)((?:[^_]+))__(?!\s+__))$/;
+	/**
+	* Matches bold text via `__` while pasting.
+	*/
+	const underscorePasteRegex$1 = /(?:^|\s)(__(?!\s+__)((?:[^_]+))__(?!\s+__))/g;
+	/**
+	* This extension allows you to mark text as bold.
+	* @see https://tiptap.dev/api/marks/bold
+	*/
+	const Bold = Mark.create({
 		name: "bold",
 		addOptions() {
 			return {
@@ -29269,12 +30665,28 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	// src/italic.ts
-	var starInputRegex = /(?:^|\s)(\*(?!\s+\*)((?:[^*]+))\*(?!\s+\*))$/;
-	var starPasteRegex = /(?:^|\s)(\*(?!\s+\*)((?:[^*]+))\*(?!\s+\*))/g;
-	var underscoreInputRegex = /(?:^|\s)(_(?!\s+_)((?:[^_]+))_(?!\s+_))$/;
-	var underscorePasteRegex = /(?:^|\s)(_(?!\s+_)((?:[^_]+))_(?!\s+_))/g;
-	var Italic = Mark.create({
+	//#region src/italic.ts
+	/**
+	* Matches an italic to a *italic* on input.
+	*/
+	const starInputRegex = /(?:^|\s)(\*(?!\s+\*)((?:[^*]+))\*(?!\s+\*))$/;
+	/**
+	* Matches an italic to a *italic* on paste.
+	*/
+	const starPasteRegex = /(?:^|\s)(\*(?!\s+\*)((?:[^*]+))\*(?!\s+\*))/g;
+	/**
+	* Matches an italic to a _italic_ on input.
+	*/
+	const underscoreInputRegex = /(?:^|\s)(_(?!\s+_)((?:[^_]+))_(?!\s+_))$/;
+	/**
+	* Matches an italic to a _italic_ on paste.
+	*/
+	const underscorePasteRegex = /(?:^|\s)(_(?!\s+_)((?:[^_]+))_(?!\s+_))/g;
+	/**
+	* This extension allows you to create italic text.
+	* @see https://www.tiptap.dev/api/marks/italic
+	*/
+	const Italic = Mark.create({
 		name: "italic",
 		addOptions() {
 			return {
@@ -29357,10 +30769,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	// src/strike.ts
-	var inputRegex$5 = /(?:^|\s)(~~(?!\s+~~)((?:[^~]+))~~(?!\s+~~))$/;
-	var pasteRegex$2 = /(?:^|\s)(~~(?!\s+~~)((?:[^~]+))~~(?!\s+~~))/g;
-	var Strike = Mark.create({
+	//#region src/strike.ts
+	/**
+	* Matches a strike to a ~~strike~~ on input.
+	*/
+	const inputRegex$4 = /(?:^|\s)(~~(?!\s+~~)((?:[^~]+))~~(?!\s+~~))$/;
+	/**
+	* Matches a strike to a ~~strike~~ on paste.
+	*/
+	const pasteRegex$1 = /(?:^|\s)(~~(?!\s+~~)((?:[^~]+))~~(?!\s+~~))/g;
+	/**
+	* This extension allows you to create strike text.
+	* @see https://www.tiptap.dev/api/marks/strike
+	*/
+	const Strike = Mark.create({
 		name: "strike",
 		addOptions() {
 			return {
@@ -29418,20 +30840,24 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		},
 		addInputRules() {
 			return [markInputRule({
-				find: inputRegex$5,
+				find: inputRegex$4,
 				type: this.type
 			})];
 		},
 		addPasteRules() {
 			return [markPasteRule({
-				find: pasteRegex$2,
+				find: pasteRegex$1,
 				type: this.type
 			})];
 		}
 	});
 
-	// src/underline.ts
-	var Underline = Mark.create({
+	//#region src/underline.ts
+	/**
+	* This extension allows you to create underline text.
+	* @see https://www.tiptap.dev/api/marks/underline
+	*/
+	const Underline = Mark.create({
 		name: "underline",
 		addOptions() {
 			return {
@@ -29465,11 +30891,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				return src.indexOf("++");
 			},
 			tokenize(src, _tokens, lexer) {
-				const rule = /^(\+\+)([\s\S]+?)(\+\+)/;
-				const match = rule.exec(src);
-				if (!match) {
-					return void 0;
-				}
+				const match = /^(\+\+)([\s\S]+?)(\+\+)/.exec(src);
+				if (!match) return;
 				const innerContent = match[2].trim();
 				return {
 					type: "underline",
@@ -29506,10 +30929,45 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	// src/code.ts
-	var inputRegex$4 = /(^|[^`])`([^`]+)`(?!`)$/;
-	var pasteRegex$1 = /(^|[^`])`([^`]+)`(?!`)/g;
-	var Code = Mark.create({
+	/**
+	* A function-based finder for the inline code input rule.
+	* Used internally by the extension to ensure the preceding character
+	* is not consumed as part of the match, preventing it from being deleted.
+	*/
+	const inputRegexMatch = text => {
+		const match = /`([^`]+)`(?!`)$/.exec(text);
+		if (!match) return null;
+		if (match.index > 0 && text[match.index - 1] === "`") return null;
+		return {
+			index: match.index,
+			text: match[0],
+			replaceWith: match[1]
+		};
+	};
+	/**
+	* A function-based finder for the inline code paste rule.
+	* Used internally by the extension to avoid consuming the preceding
+	* character as part of the match.
+	*/
+	const pasteRegexMatch = text => {
+		const regex = /`([^`]+)`(?!`)/g;
+		const matches = [];
+		let match;
+		while ((match = regex.exec(text)) !== null) {
+			if (match.index > 0 && text[match.index - 1] === "`") continue;
+			matches.push({
+				index: match.index,
+				text: match[0],
+				replaceWith: match[1]
+			});
+		}
+		return matches;
+	};
+	/**
+	* This extension allows you to mark text as inline code.
+	* @see https://tiptap.dev/api/marks/code
+	*/
+	const Code = Mark.create({
 		name: "code",
 		addOptions() {
 			return {
@@ -29537,9 +30995,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}]);
 		},
 		renderMarkdown: (node, h) => {
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			return `\`${h.renderChildren(node.content)}\``;
 		},
 		addCommands() {
@@ -29568,29 +31024,40 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		},
 		addInputRules() {
 			return [markInputRule({
-				find: inputRegex$4,
+				find: inputRegexMatch,
 				type: this.type
 			})];
 		},
 		addPasteRules() {
 			return [markPasteRule({
-				find: pasteRegex$1,
+				find: pasteRegexMatch,
 				type: this.type
 			})];
 		}
 	});
 
-	// src/code-block.ts
-	var DEFAULT_TAB_SIZE = 4;
-	var backtickInputRegex = /^```([a-z]+)?[\s\n]$/;
-	var tildeInputRegex = /^~~~([a-z]+)?[\s\n]$/;
-	var CodeBlock$1 = Node3.create({
+	//#region src/code-block.ts
+	const DEFAULT_TAB_SIZE = 4;
+	/**
+	* Matches a code block with backticks.
+	*/
+	const backtickInputRegex = /^```([a-z]+)?[\s\n]$/;
+	/**
+	* Matches a code block with tildes.
+	*/
+	const tildeInputRegex = /^~~~([a-z]+)?[\s\n]$/;
+	/**
+	* This extension allows you to create code blocks.
+	* @see https://tiptap.dev/api/nodes/code-block
+	*/
+	const CodeBlock$1 = Node$1.create({
 		name: "codeBlock",
 		addOptions() {
 			return {
 				languageClassPrefix: "language-",
 				exitOnTripleEnter: true,
 				exitOnArrowDown: true,
+				exitOnArrowUp: true,
 				defaultLanguage: null,
 				enableTabIndentation: false,
 				tabSize: DEFAULT_TAB_SIZE,
@@ -29607,19 +31074,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				language: {
 					default: this.options.defaultLanguage,
 					parseHTML: element => {
-						var _a;
+						var _element$firstElement;
 						const {
 							languageClassPrefix
 						} = this.options;
-						if (!languageClassPrefix) {
-							return null;
-						}
-						const classNames = [...(((_a = element.firstElementChild) == null ? void 0 : _a.classList) || [])];
-						const languages = classNames.filter(className => className.startsWith(languageClassPrefix)).map(className => className.replace(languageClassPrefix, ""));
-						const language = languages[0];
-						if (!language) {
-							return null;
-						}
+						if (!languageClassPrefix) return null;
+						const language = [...(((_element$firstElement = element.firstElementChild) === null || _element$firstElement === void 0 ? void 0 : _element$firstElement.classList) || [])].filter(className => className.startsWith(languageClassPrefix)).map(className => className.replace(languageClassPrefix, ""))[0];
+						if (!language) return null;
 						return language;
 					},
 					rendered: false
@@ -29642,26 +31103,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		},
 		markdownTokenName: "code",
 		parseMarkdown: (token, helpers) => {
-			var _a, _b;
-			if (((_a = token.raw) == null ? void 0 : _a.startsWith("```")) === false && ((_b = token.raw) == null ? void 0 : _b.startsWith("~~~")) === false && token.codeBlockStyle !== "indented") {
-				return [];
-			}
+			var _token$raw, _token$raw2;
+			if (((_token$raw = token.raw) === null || _token$raw === void 0 ? void 0 : _token$raw.startsWith("```")) === false && ((_token$raw2 = token.raw) === null || _token$raw2 === void 0 ? void 0 : _token$raw2.startsWith("~~~")) === false && token.codeBlockStyle !== "indented") return [];
 			return helpers.createNode("codeBlock", {
 				language: token.lang || null
 			}, token.text ? [helpers.createTextNode(token.text)] : []);
 		},
 		renderMarkdown: (node, h) => {
-			var _a;
+			var _node$attrs;
 			let output = "";
-			const language = ((_a = node.attrs) == null ? void 0 : _a.language) || "";
-			if (!node.content) {
-				output = `\`\`\`${language}
-
-\`\`\``;
-			} else {
-				const lines = [`\`\`\`${language}`, h.renderChildren(node.content), "```"];
-				output = lines.join("\n");
-			}
+			const language = ((_node$attrs = node.attrs) === null || _node$attrs === void 0 ? void 0 : _node$attrs.language) || "";
+			if (!node.content) output = `\`\`\`${language}\n\n\`\`\``;else output = [`\`\`\`${language}`, h.renderChildren(node.content), "```"].join("\n");
 			return output;
 		},
 		addCommands() {
@@ -29681,30 +31133,22 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		addKeyboardShortcuts() {
 			return {
 				"Mod-Alt-c": () => this.editor.commands.toggleCodeBlock(),
-				// remove code block when at start of document or code block is empty
 				Backspace: () => {
 					const {
 						empty,
 						$anchor
 					} = this.editor.state.selection;
 					const isAtStart = $anchor.pos === 1;
-					if (!empty || $anchor.parent.type.name !== this.name) {
-						return false;
-					}
-					if (isAtStart || !$anchor.parent.textContent.length) {
-						return this.editor.commands.clearNodes();
-					}
+					if (!empty || $anchor.parent.type.name !== this.name) return false;
+					if (isAtStart || !$anchor.parent.textContent.length) return this.editor.commands.clearNodes();
 					return false;
 				},
-				// handle tab indentation
 				Tab: ({
 					editor
 				}) => {
-					var _a;
-					if (!this.options.enableTabIndentation) {
-						return false;
-					}
-					const tabSize = (_a = this.options.tabSize) != null ? _a : DEFAULT_TAB_SIZE;
+					var _this$options$tabSize;
+					if (!this.options.enableTabIndentation) return false;
+					const tabSize = (_this$options$tabSize = this.options.tabSize) !== null && _this$options$tabSize !== void 0 ? _this$options$tabSize : DEFAULT_TAB_SIZE;
 					const {
 						state
 					} = editor;
@@ -29715,13 +31159,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						$from,
 						empty
 					} = selection;
-					if ($from.parent.type !== this.type) {
-						return false;
-					}
+					if ($from.parent.type !== this.type) return false;
 					const indent = " ".repeat(tabSize);
-					if (empty) {
-						return editor.commands.insertContent(indent);
-					}
+					if (empty) return editor.commands.insertContent(indent);
 					return editor.commands.command(({
 						tr
 					}) => {
@@ -29729,22 +31169,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							from,
 							to
 						} = selection;
-						const text = state.doc.textBetween(from, to, "\n", "\n");
-						const lines = text.split("\n");
-						const indentedText = lines.map(line => indent + line).join("\n");
+						const indentedText = state.doc.textBetween(from, to, "\n", "\n").split("\n").map(line => indent + line).join("\n");
 						tr.replaceWith(from, to, state.schema.text(indentedText));
 						return true;
 					});
 				},
-				// handle shift+tab reverse indentation
 				"Shift-Tab": ({
 					editor
 				}) => {
-					var _a;
-					if (!this.options.enableTabIndentation) {
-						return false;
-					}
-					const tabSize = (_a = this.options.tabSize) != null ? _a : DEFAULT_TAB_SIZE;
+					var _this$options$tabSize2;
+					if (!this.options.enableTabIndentation) return false;
+					const tabSize = (_this$options$tabSize2 = this.options.tabSize) !== null && _this$options$tabSize2 !== void 0 ? _this$options$tabSize2 : DEFAULT_TAB_SIZE;
 					const {
 						state
 					} = editor;
@@ -29755,49 +31190,36 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						$from,
 						empty
 					} = selection;
-					if ($from.parent.type !== this.type) {
-						return false;
-					}
-					if (empty) {
-						return editor.commands.command(({
-							tr
-						}) => {
-							var _a2;
-							const {
-								pos
-							} = $from;
-							const codeBlockStart = $from.start();
-							const codeBlockEnd = $from.end();
-							const allText = state.doc.textBetween(codeBlockStart, codeBlockEnd, "\n", "\n");
-							const lines = allText.split("\n");
-							let currentLineIndex = 0;
-							let charCount = 0;
-							const relativeCursorPos = pos - codeBlockStart;
-							for (let i = 0; i < lines.length; i += 1) {
-								if (charCount + lines[i].length >= relativeCursorPos) {
-									currentLineIndex = i;
-									break;
-								}
-								charCount += lines[i].length + 1;
+					if ($from.parent.type !== this.type) return false;
+					if (empty) return editor.commands.command(({
+						tr
+					}) => {
+						var _currentLine$match;
+						const {
+							pos
+						} = $from;
+						const codeBlockStart = $from.start();
+						const codeBlockEnd = $from.end();
+						const lines = state.doc.textBetween(codeBlockStart, codeBlockEnd, "\n", "\n").split("\n");
+						let currentLineIndex = 0;
+						let charCount = 0;
+						const relativeCursorPos = pos - codeBlockStart;
+						for (let i = 0; i < lines.length; i += 1) {
+							if (charCount + lines[i].length >= relativeCursorPos) {
+								currentLineIndex = i;
+								break;
 							}
-							const currentLine = lines[currentLineIndex];
-							const leadingSpaces = ((_a2 = currentLine.match(/^ */)) == null ? void 0 : _a2[0]) || "";
-							const spacesToRemove = Math.min(leadingSpaces.length, tabSize);
-							if (spacesToRemove === 0) {
-								return true;
-							}
-							let lineStartPos = codeBlockStart;
-							for (let i = 0; i < currentLineIndex; i += 1) {
-								lineStartPos += lines[i].length + 1;
-							}
-							tr.delete(lineStartPos, lineStartPos + spacesToRemove);
-							const cursorPosInLine = pos - lineStartPos;
-							if (cursorPosInLine <= spacesToRemove) {
-								tr.setSelection(TextSelection.create(tr.doc, lineStartPos));
-							}
-							return true;
-						});
-					}
+							charCount += lines[i].length + 1;
+						}
+						const leadingSpaces = ((_currentLine$match = lines[currentLineIndex].match(/^ */)) === null || _currentLine$match === void 0 ? void 0 : _currentLine$match[0]) || "";
+						const spacesToRemove = Math.min(leadingSpaces.length, tabSize);
+						if (spacesToRemove === 0) return true;
+						let lineStartPos = codeBlockStart;
+						for (let i = 0; i < currentLineIndex; i += 1) lineStartPos += lines[i].length + 1;
+						tr.delete(lineStartPos, lineStartPos + spacesToRemove);
+						if (pos - lineStartPos <= spacesToRemove) tr.setSelection(TextSelection.create(tr.doc, lineStartPos));
+						return true;
+					});
 					return editor.commands.command(({
 						tr
 					}) => {
@@ -29805,11 +31227,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							from,
 							to
 						} = selection;
-						const text = state.doc.textBetween(from, to, "\n", "\n");
-						const lines = text.split("\n");
-						const reverseIndentText = lines.map(line => {
-							var _a2;
-							const leadingSpaces = ((_a2 = line.match(/^ */)) == null ? void 0 : _a2[0]) || "";
+						const reverseIndentText = state.doc.textBetween(from, to, "\n", "\n").split("\n").map(line => {
+							var _line$match;
+							const leadingSpaces = ((_line$match = line.match(/^ */)) === null || _line$match === void 0 ? void 0 : _line$match[0]) || "";
 							const spacesToRemove = Math.min(leadingSpaces.length, tabSize);
 							return line.slice(spacesToRemove);
 						}).join("\n");
@@ -29817,13 +31237,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						return true;
 					});
 				},
-				// exit node on triple enter
 				Enter: ({
 					editor
 				}) => {
-					if (!this.options.exitOnTripleEnter) {
-						return false;
-					}
+					if (!this.options.exitOnTripleEnter) return false;
 					const {
 						state
 					} = editor;
@@ -29834,14 +31251,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						$from,
 						empty
 					} = selection;
-					if (!empty || $from.parent.type !== this.type) {
-						return false;
-					}
+					if (!empty || $from.parent.type !== this.type) return false;
 					const isAtEnd = $from.parentOffset === $from.parent.nodeSize - 2;
 					const endsWithDoubleNewline = $from.parent.textContent.endsWith("\n\n");
-					if (!isAtEnd || !endsWithDoubleNewline) {
-						return false;
-					}
+					if (!isAtEnd || !endsWithDoubleNewline) return false;
 					return editor.chain().command(({
 						tr
 					}) => {
@@ -29849,13 +31262,32 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						return true;
 					}).exitCode().run();
 				},
-				// exit node on arrow down
+				ArrowUp: ({
+					editor
+				}) => {
+					if (!this.options.exitOnArrowUp) return false;
+					const {
+						state
+					} = editor;
+					const {
+						selection
+					} = state;
+					const {
+						$from,
+						empty
+					} = selection;
+					if (!empty || $from.parent.type !== this.type) return false;
+					if ($from.parentOffset !== 0) return false;
+					const before = $from.before();
+					if (before > 0) return false;
+					return editor.commands.insertDefaultBlock({
+						pos: before
+					});
+				},
 				ArrowDown: ({
 					editor
 				}) => {
-					if (!this.options.exitOnArrowDown) {
-						return false;
-					}
+					if (!this.options.exitOnArrowDown) return false;
 					const {
 						state
 					} = editor;
@@ -29867,26 +31299,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						$from,
 						empty
 					} = selection;
-					if (!empty || $from.parent.type !== this.type) {
-						return false;
-					}
-					const isAtEnd = $from.parentOffset === $from.parent.nodeSize - 2;
-					if (!isAtEnd) {
-						return false;
-					}
+					if (!empty || $from.parent.type !== this.type) return false;
+					if (!($from.parentOffset === $from.parent.nodeSize - 2)) return false;
 					const after = $from.after();
-					if (after === void 0) {
-						return false;
-					}
-					const nodeAfter = doc.nodeAt(after);
-					if (nodeAfter) {
-						return editor.commands.command(({
-							tr
-						}) => {
-							tr.setSelection(Selection.near(doc.resolve(after)));
-							return true;
-						});
-					}
+					if (after === void 0) return false;
+					if (doc.nodeAt(after)) return editor.commands.command(({
+						tr
+					}) => {
+						tr.setSelection(Selection.near(doc.resolve(after)));
+						return true;
+					});
 					return editor.commands.exitCode();
 				}
 			};
@@ -29907,26 +31329,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			})];
 		},
 		addProseMirrorPlugins() {
-			return [
-			// this plugin creates a code block for pasted content from VS Code
-			// we can also detect the copied code language
-			new Plugin({
+			return [new Plugin({
 				key: new PluginKey("codeBlockVSCodeHandler"),
 				props: {
 					handlePaste: (view, event) => {
-						if (!event.clipboardData) {
-							return false;
-						}
-						if (this.editor.isActive(this.type.name)) {
-							return false;
-						}
+						if (!event.clipboardData) return false;
+						if (this.editor.isActive(this.type.name)) return false;
 						const text = event.clipboardData.getData("text/plain");
 						const vscode = event.clipboardData.getData("vscode-editor-data");
 						const vscodeData = vscode ? JSON.parse(vscode) : void 0;
-						const language = vscodeData == null ? void 0 : vscodeData.mode;
-						if (!text || !language) {
-							return false;
-						}
+						const language = vscodeData === null || vscodeData === void 0 ? void 0 : vscodeData.mode;
+						if (!text || !language) return false;
 						const {
 							tr,
 							schema
@@ -29935,9 +31348,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						tr.replaceSelectionWith(this.type.create({
 							language
 						}, textNode));
-						if (tr.selection.$from.parent.type !== this.type) {
-							tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(0, tr.selection.from - 2))));
-						}
+						if (tr.selection.$from.parent.type !== this.type) tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(0, tr.selection.from - 2))));
 						tr.setMeta("paste", true);
 						view.dispatch(tr);
 						return true;
@@ -32456,13 +33867,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	var coreExports$1 = /*@__PURE__*/ requireCore$1();
 	var HighlightJS$1 = /*@__PURE__*/getDefaultExportFromCjs(coreExports$1);
 
-	// src/code-block-lowlight.ts
+	//#region src/lowlight-plugin.ts
 	function parseNodes(nodes, className = []) {
 		return nodes.flatMap(node => {
 			const classes = [...className, ...(node.properties ? node.properties.className : [])];
-			if (node.children) {
-				return parseNodes(node.children, classes);
-			}
+			if (node.children) return parseNodes(node.children, classes);
 			return {
 				text: node.value,
 				classes
@@ -32483,12 +33892,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	}) {
 		const decorations = [];
 		findChildren(doc, node => node.type.name === name).forEach(block => {
-			var _a;
+			var _lowlight$registered;
 			let from = block.pos + 1;
 			const language = block.node.attrs.language || defaultLanguage;
 			const languages = lowlight.listLanguages();
-			const nodes = language && (languages.includes(language) || registered$1(language) || ((_a = lowlight.registered) == null ? void 0 : _a.call(lowlight, language))) ? getHighlightNodes(lowlight.highlight(language, block.node.textContent)) : getHighlightNodes(lowlight.highlightAuto(block.node.textContent));
-			parseNodes(nodes).forEach(node => {
+			parseNodes(language && (languages.includes(language) || registered$1(language) || ((_lowlight$registered = lowlight.registered) === null || _lowlight$registered === void 0 ? void 0 : _lowlight$registered.call(lowlight, language))) ? getHighlightNodes(lowlight.highlight(language, block.node.textContent)) : getHighlightNodes(lowlight.highlightAuto(block.node.textContent))).forEach(node => {
 				const to = from + node.text.length;
 				if (node.classes.length) {
 					const decoration = Decoration.inline(from, to, {
@@ -32509,9 +33917,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		lowlight,
 		defaultLanguage
 	}) {
-		if (!["highlight", "highlightAuto", "listLanguages"].every(api => isFunction(lowlight[api]))) {
-			throw Error("You should provide an instance of lowlight to use the code-block-lowlight extension");
-		}
+		if (!["highlight", "highlightAuto", "listLanguages"].every(api => isFunction(lowlight[api]))) throw Error("You should provide an instance of lowlight to use the code-block-lowlight extension");
 		const lowlightPlugin = new Plugin({
 			key: new PluginKey("lowlight"),
 			state: {
@@ -32528,37 +33934,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					const newNodeName = newState.selection.$head.parent.type.name;
 					const oldNodes = findChildren(oldState.doc, node => node.type.name === name);
 					const newNodes = findChildren(newState.doc, node => node.type.name === name);
-					if (transaction.docChanged && (
-					// Apply decorations if:
-					// selection includes named node,
-					[oldNodeName, newNodeName].includes(name) ||
-					// OR transaction adds/removes named node,
-					newNodes.length !== oldNodes.length ||
-					// OR transaction has changes that completely encapsulte a node
-					// (for example, a transaction that affects the entire document).
-					// Such transactions can happen during collab syncing via y-prosemirror, for example.
-					transaction.steps.some(step => {
-						return (
-							// @ts-ignore
-							step.from !== void 0 &&
-							// @ts-ignore
-							step.to !== void 0 && oldNodes.some(node => {
-								return (
-									// @ts-ignore
-									node.pos >= step.from &&
-									// @ts-ignore
-									node.pos + node.node.nodeSize <= step.to
-								);
-							})
-						);
-					}))) {
-						return getDecorations({
-							doc: transaction.doc,
-							name,
-							lowlight,
-							defaultLanguage
+					if (transaction.docChanged && ([oldNodeName, newNodeName].includes(name) || newNodes.length !== oldNodes.length || transaction.steps.some(step => {
+						return step.from !== void 0 && step.to !== void 0 && oldNodes.some(node => {
+							return node.pos >= step.from && node.pos + node.node.nodeSize <= step.to;
 						});
-					}
+					}))) return getDecorations({
+						doc: transaction.doc,
+						name,
+						lowlight,
+						defaultLanguage
+					});
 					return decorationSet.map(transaction.mapping, transaction.doc);
 				}
 			},
@@ -32570,17 +33955,22 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		});
 		return lowlightPlugin;
 	}
-
-	// src/code-block-lowlight.ts
-	var CodeBlockLowlight = CodeBlock$1.extend({
+	//#endregion
+	//#region src/code-block-lowlight.ts
+	/**
+	* This extension allows you to highlight code blocks with lowlight.
+	* @see https://tiptap.dev/api/nodes/code-block-lowlight
+	*/
+	const CodeBlockLowlight = CodeBlock$1.extend({
 		addOptions() {
-			var _a;
+			var _this$parent;
 			return {
-				...((_a = this.parent) == null ? void 0 : _a.call(this)),
+				...((_this$parent = this.parent) === null || _this$parent === void 0 ? void 0 : _this$parent.call(this)),
 				lowlight: {},
 				languageClassPrefix: "language-",
 				exitOnTripleEnter: true,
 				exitOnArrowDown: true,
+				exitOnArrowUp: true,
 				defaultLanguage: null,
 				enableTabIndentation: false,
 				tabSize: 4,
@@ -32588,8 +33978,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			};
 		},
 		addProseMirrorPlugins() {
-			var _a;
-			return [...(((_a = this.parent) == null ? void 0 : _a.call(this)) || []), LowlightPlugin({
+			var _this$parent2;
+			return [...(((_this$parent2 = this.parent) === null || _this$parent2 === void 0 ? void 0 : _this$parent2.call(this)) || []), LowlightPlugin({
 				name: this.name,
 				lowlight: this.options.lowlight,
 				defaultLanguage: this.options.defaultLanguage
@@ -41141,7 +42531,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 
 	const ENTITY_ID = 'note-code-block-language';
 	const TAB_ID = 'note-code-block-language';
-	const POPUP_CLASS$2 = 'note-editor-code-block-popup';
+	const POPUP_CLASS$3 = 'note-editor-code-block-popup';
 	let dialogCounter$1 = 0;
 	const NoteCodeBlockOverlay = {
 		name: 'NoteCodeBlockOverlay',
@@ -41256,7 +42646,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					showAvatars: false,
 					offsetTop: 6,
 					popupOptions: {
-						className: `${POPUP_CLASS$2} ${note_ui_themeContext.NoteThemeContext.getDesignSystemContext()}`
+						className: `${POPUP_CLASS$3} ${note_ui_themeContext.NoteThemeContext.getDesignSystemContext()}`
 					},
 					tabs: [{
 						id: TAB_ID,
@@ -43986,9 +45376,69 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		tabSize: 4
 	});
 
-	// src/blockquote.tsx
-	var inputRegex$3 = /^\s*>\s$/;
-	var Blockquote = Node3.create({
+	//#region src/handleBackspace.ts
+	/**
+	* Restructure the blockquote boundary at the caret.
+	*
+	* Two cases are handled in a single backspace:
+	*
+	* 1. Caret at the start of a non-first child of a blockquote — lift the
+	*    current child out, splitting the blockquote around it.
+	* 2. Caret at the start of a top-level textblock whose previous sibling is
+	*    a blockquote with a textblock last child — merge the current
+	*    textblock's inline content into the blockquote's last textblock
+	*    instead of letting joinBackward pull the paragraph back inside.
+	*
+	* Returns true when the backspace was consumed.
+	*/
+	const handleBackspace$1 = (editor, type) => {
+		var _previous$lastChild;
+		const {
+			state
+		} = editor;
+		const {
+			selection
+		} = state;
+		if (!selection.empty) return false;
+		const {
+			$from
+		} = selection;
+		if ($from.parentOffset !== 0) return false;
+		const parentDepth = $from.depth - 1;
+		if (parentDepth < 0) return false;
+		const parent = $from.node(parentDepth);
+		const index = $from.index(parentDepth);
+		if (index === 0) return false;
+		if (parent.type === type) return editor.commands.lift(type.name);
+		const previous = parent.child(index - 1);
+		if (previous.type !== type || !((_previous$lastChild = previous.lastChild) === null || _previous$lastChild === void 0 ? void 0 : _previous$lastChild.isTextblock)) return false;
+		const targetPos = $from.before() - 1 - 1;
+		return editor.commands.command(({
+			tr,
+			dispatch
+		}) => {
+			if (!dispatch) return true;
+			const content = $from.parent.content;
+			const slice = new Slice(content, 0, 0);
+			tr.replace(targetPos, $from.after(), slice);
+			tr.setSelection(TextSelection.create(tr.doc, targetPos + content.size));
+			tr.scrollIntoView();
+			dispatch(tr);
+			return true;
+		});
+	};
+	//#endregion
+	//#region src/blockquote.tsx
+	/** @jsxImportSource @tiptap/core */
+	/**
+	* Matches a blockquote to a `>` as input.
+	*/
+	const inputRegex$3 = /^\s*>\s$/;
+	/**
+	* This extension allows you to create blockquotes.
+	* @see https://tiptap.dev/api/nodes/blockquote
+	*/
+	const Blockquote = Node$1.create({
 		name: "blockquote",
 		addOptions() {
 			return {
@@ -44012,31 +45462,23 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			});
 		},
 		parseMarkdown: (token, helpers) => {
-			var _a;
-			const parseBlockChildren = (_a = helpers.parseBlockChildren) != null ? _a : helpers.parseChildren;
+			var _helpers$parseBlockCh;
+			const parseBlockChildren = (_helpers$parseBlockCh = helpers.parseBlockChildren) !== null && _helpers$parseBlockCh !== void 0 ? _helpers$parseBlockCh : helpers.parseChildren;
 			return helpers.createNode("blockquote", void 0, parseBlockChildren(token.tokens || []));
 		},
 		renderMarkdown: (node, h) => {
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			const prefix = ">";
 			const result = [];
 			node.content.forEach((child, index) => {
-				var _a, _b;
-				const childContent = (_b = (_a = h.renderChild) == null ? void 0 : _a.call(h, child, index)) != null ? _b : h.renderChildren([child]);
-				const lines = childContent.split("\n");
-				const linesWithPrefix = lines.map(line => {
-					if (line.trim() === "") {
-						return prefix;
-					}
+				var _h$renderChild, _h$renderChild2;
+				const linesWithPrefix = ((_h$renderChild = (_h$renderChild2 = h.renderChild) === null || _h$renderChild2 === void 0 ? void 0 : _h$renderChild2.call(h, child, index)) !== null && _h$renderChild !== void 0 ? _h$renderChild : h.renderChildren([child])).split("\n").map(line => {
+					if (line.trim() === "") return prefix;
 					return `${prefix} ${line}`;
 				});
 				result.push(linesWithPrefix.join("\n"));
 			});
-			return result.join(`
-${prefix}
-`);
+			return result.join(`\n${prefix}\n`);
 		},
 		addCommands() {
 			return {
@@ -44059,7 +45501,8 @@ ${prefix}
 		},
 		addKeyboardShortcuts() {
 			return {
-				"Mod-Shift-b": () => this.editor.commands.toggleBlockquote()
+				"Mod-Shift-b": () => this.editor.commands.toggleBlockquote(),
+				Backspace: () => handleBackspace$1(this.editor, this.type)
 			};
 		},
 		addInputRules() {
@@ -44329,7 +45772,7 @@ ${prefix}
 		tip: '--o-favorite',
 		zefir: null
 	};
-	const Callout = Node3.create({
+	const Callout = Node$1.create({
 		name: 'callout',
 		content: 'block+',
 		group: 'block',
@@ -44527,17 +45970,20 @@ ${prefix}
 		}
 	});
 
-	var __defProp = Object.defineProperty;
-	var __export = (target, all) => {
-		for (var name in all) __defProp(target, name, {
-			get: all[name],
-			enumerable: true
-		});
-	};
-	var ListItemName = "listItem";
-	var TextStyleName = "textStyle";
-	var bulletListInputRegex = /^\s*([-+*])\s$/;
-	var BulletList = Node3.create({
+	//#region src/bullet-list/bullet-list.ts
+	const ListItemName$1 = "listItem";
+	const TextStyleName$1 = "textStyle";
+	/**
+	* Matches a bullet list to a dash or asterisk.
+	*/
+	const bulletListInputRegex = /^\s*([-+*])\s$/;
+	/**
+	* This extension allows you to create bullet lists.
+	* This requires the ListItem extension
+	* @see https://tiptap.dev/api/nodes/bullet-list
+	* @see https://tiptap.dev/api/nodes/list-item.
+	*/
+	const BulletList = Node$1.create({
 		name: "bulletList",
 		addOptions() {
 			return {
@@ -44563,18 +46009,14 @@ ${prefix}
 		},
 		markdownTokenName: "list",
 		parseMarkdown: (token, helpers) => {
-			if (token.type !== "list" || token.ordered) {
-				return [];
-			}
+			if (token.type !== "list" || token.ordered) return [];
 			return {
 				type: "bulletList",
 				content: token.items ? helpers.parseChildren(token.items) : []
 			};
 		},
 		renderMarkdown: (node, h) => {
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			return h.renderChildren(node.content, "\n");
 		},
 		markdownOptions: {
@@ -44586,9 +46028,7 @@ ${prefix}
 					commands,
 					chain
 				}) => {
-					if (this.options.keepAttributes) {
-						return chain().toggleList(this.name, this.options.itemTypeName, this.options.keepMarks).updateAttributes(ListItemName, this.editor.getAttributes(TextStyleName)).run();
-					}
+					if (this.options.keepAttributes) return chain().toggleList(this.name, this.options.itemTypeName, this.options.keepMarks).updateAttributes(ListItemName$1, this.editor.getAttributes(TextStyleName$1)).run();
 					return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks);
 				}
 			};
@@ -44603,22 +46043,363 @@ ${prefix}
 				find: bulletListInputRegex,
 				type: this.type
 			});
-			if (this.options.keepMarks || this.options.keepAttributes) {
-				inputRule = wrappingInputRule({
-					find: bulletListInputRegex,
-					type: this.type,
-					keepMarks: this.options.keepMarks,
-					keepAttributes: this.options.keepAttributes,
-					getAttributes: () => {
-						return this.editor.getAttributes(TextStyleName);
-					},
-					editor: this.editor
-				});
-			}
+			if (this.options.keepMarks || this.options.keepAttributes) inputRule = wrappingInputRule({
+				find: bulletListInputRegex,
+				type: this.type,
+				keepMarks: this.options.keepMarks,
+				keepAttributes: this.options.keepAttributes,
+				getAttributes: () => {
+					return this.editor.getAttributes(TextStyleName$1);
+				},
+				editor: this.editor
+			});
 			return [inputRule];
 		}
 	});
-	var ListItem = Node3.create({
+	//#endregion
+	//#region src/helpers/getBranchingNestedListAtCursor.ts
+	/**
+	* Resolves a branching nested list immediately after the cursor when the selection is
+	* collapsed at the end of a textblock inside a list item.
+	*
+	* @param state - The editor state to inspect.
+	* @param itemName - The list item node name (for example `listItem` or `taskItem`).
+	* @param wrapperNames - List wrapper node names (for example `bulletList` and `orderedList`).
+	* @returns Resolved positions and nodes for hoisting, or `null` when not applicable.
+	*
+	* @example
+	* ```ts
+	* const context = getBranchingNestedListAtCursor(editor.state, 'listItem', [
+	*   'bulletList',
+	*   'orderedList',
+	* ])
+	*
+	* if (context) {
+	*   // cursor is at the end of Item 1 before a branching nested sublist
+	* }
+	* ```
+	*/
+	const getBranchingNestedListAtCursor = (state, itemName, wrapperNames) => {
+		const {
+			selection
+		} = state;
+		if (!selection.empty) return null;
+		const {
+			$from
+		} = selection;
+		if (!$from.parent.isTextblock) return null;
+		if ($from.parentOffset !== $from.parent.content.size) return null;
+		let listItemDepth = -1;
+		for (let depth = $from.depth; depth > 0; depth -= 1) if ($from.node(depth).type.name === itemName) {
+			listItemDepth = depth;
+			break;
+		}
+		if (listItemDepth < 0) return null;
+		const listItem = $from.node(listItemDepth);
+		const indexInListItem = $from.index(listItemDepth);
+		if (indexInListItem + 1 >= listItem.childCount) return null;
+		const nextChild = listItem.child(indexInListItem + 1);
+		if (!wrapperNames.includes(nextChild.type.name)) return null;
+		const itemType = state.schema.nodes[itemName];
+		let hasBranching = false;
+		nextChild.forEach(child => {
+			if (child.type === itemType && child.childCount > 1) hasBranching = true;
+		});
+		if (!hasBranching) return null;
+		const nodeAfter = state.doc.resolve($from.after()).nodeAfter;
+		if (!nodeAfter || !wrapperNames.includes(nodeAfter.type.name)) return null;
+		const items = [];
+		nodeAfter.forEach(child => {
+			items.push(child);
+		});
+		if (items.length === 0) return null;
+		return {
+			listItemDepth,
+			nestedList: nodeAfter,
+			nestedListPos: $from.after(),
+			insertPos: $from.after(listItemDepth),
+			items
+		};
+	};
+	//#endregion
+	//#region src/helpers/hoistBranchingNestedList.ts
+	/**
+	* Hoists all list items from a branching nested list after the cursor into the parent list.
+	*
+	* Use this when `joinForward` cannot restructure a nested list that contains list items
+	* with sublists (see issue #6906).
+	*
+	* @param state - The editor state to transform.
+	* @param dispatch - Optional dispatch function for the transaction.
+	* @param itemName - The list item node name (for example `listItem` or `taskItem`).
+	* @param wrapperNames - List wrapper node names (for example `bulletList` and `orderedList`).
+	* @returns `true` when the nested list was hoisted, otherwise `false`.
+	*
+	* @example
+	* ```ts
+	* // Cursor at the end of "Item 1" before a nested list with branching items.
+	* hoistBranchingNestedList(editor.state, editor.view.dispatch, 'listItem', [
+	*   'bulletList',
+	*   'orderedList',
+	* ])
+	* ```
+	*/
+	const hoistBranchingNestedList = (state, dispatch, itemName, wrapperNames) => {
+		const context = getBranchingNestedListAtCursor(state, itemName, wrapperNames);
+		if (!context) return false;
+		const {
+			selection
+		} = state;
+		const {
+			nestedList,
+			nestedListPos,
+			insertPos,
+			items
+		} = context;
+		const tr = state.tr;
+		tr.delete(nestedListPos, nestedListPos + nestedList.nodeSize);
+		const mappedInsertPos = tr.mapping.map(insertPos);
+		tr.insert(mappedInsertPos, Fragment.from(items));
+		tr.setSelection(selection.map(tr.doc, tr.mapping));
+		if (dispatch) dispatch(tr);
+		return true;
+	};
+	//#endregion
+	//#region src/helpers/handleDeleteBranchingNestedList.ts
+	/**
+	* Handles Delete for a list item when a branching nested sublist follows the cursor.
+	*
+	* @param editor - The editor instance whose state should be updated.
+	* @param itemName - The list item node name (for example `listItem` or `taskItem`).
+	* @param wrapperNames - List wrapper node names (for example `bulletList` and `orderedList`).
+	* @returns `true` when the nested list was hoisted, otherwise `false`.
+	*
+	* @example
+	* ```ts
+	* Delete: () =>
+	*   handleDeleteBranchingNestedList(editor, 'listItem', ['bulletList', 'orderedList']),
+	* ```
+	*/
+	const handleDeleteBranchingNestedList = (editor, itemName, wrapperNames) => {
+		return hoistBranchingNestedList(editor.state, editor.view.dispatch, itemName, wrapperNames);
+	};
+	//#endregion
+	//#region src/helpers/createBranchingListDeleteKeymap.ts
+	/**
+	* Creates a high-priority keymap extension that handles Delete for branching nested lists.
+	* Kept separate from the list item node so Enter/Tab shortcuts keep their default priority.
+	*/
+	const createBranchingListDeleteKeymap = (itemName, wrapperNames) => {
+		return Extension.create({
+			name: `${itemName}BranchingDeleteKeymap`,
+			priority: 101,
+			addKeyboardShortcuts() {
+				const handleDelete = () => handleDeleteBranchingNestedList(this.editor, itemName, wrapperNames);
+				return {
+					Delete: handleDelete,
+					"Mod-Delete": handleDelete
+				};
+			}
+		});
+	};
+	//#endregion
+	//#region src/ordered-list/roman.ts
+	const ROMAN_NUMERALS = [[1e3, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+	const ALPHA_NUMERALS = "abcdefghijklmnopqrstuvwxyz";
+	/**
+	* Marker segment for ordered list lines: numeric, roman, or 1–2 letter alpha.
+	* Roman is matched before alpha so "iii" is roman; invalid romans like "aa" fall through to alpha.
+	*/
+	const ORDERED_LIST_MARKER_PATTERN = String.raw`\d+|[ivxlcdmIVXLCDM]+|${"[a-zA-Z]{1,2}"}`;
+	/**
+	* Convert a number to lowercase roman numerals.
+	* @example toRoman(1) // 'i'
+	* @example toRoman(4) // 'iv'
+	*/
+	function toRoman(num) {
+		let remaining = num;
+		let result = "";
+		for (const [value, numeral] of ROMAN_NUMERALS) while (remaining >= value) {
+			result += numeral;
+			remaining -= value;
+		}
+		return result;
+	}
+	/**
+	* Convert a number to uppercase roman numerals.
+	* @example toRomanUpper(1) // 'I'
+	* @example toRomanUpper(4) // 'IV'
+	*/
+	function toRomanUpper(num) {
+		return toRoman(num).toUpperCase();
+	}
+	function fromRoman(roman) {
+		const lower = roman.toLowerCase();
+		let index = 0;
+		let result = 0;
+		while (index < lower.length) {
+			let matched = false;
+			for (const [value, numeral] of ROMAN_NUMERALS) if (lower.startsWith(numeral, index)) {
+				result += value;
+				index += numeral.length;
+				matched = true;
+				break;
+			}
+			if (!matched) return 0;
+		}
+		return result;
+	}
+	function isValidRoman(marker) {
+		if (!/^[ivxlcdmIVXLCDM]+$/.test(marker)) return false;
+		const value = fromRoman(marker);
+		if (value <= 0) return false;
+		return (marker === marker.toLowerCase() ? toRoman(value) : toRomanUpper(value)) === marker;
+	}
+	function fromAlpha(marker) {
+		const lower = marker.toLowerCase();
+		if (lower.length === 1) return lower.charCodeAt(0) - "a".charCodeAt(0) + 1;
+		if (lower.length === 2) {
+			const first = lower.charCodeAt(0) - "a".charCodeAt(0);
+			const second = lower.charCodeAt(1) - "a".charCodeAt(0);
+			return (first + 1) * 26 + second + 1;
+		}
+		return 0;
+	}
+	function toRomanAlpha(num) {
+		if (num <= 26) return ALPHA_NUMERALS[num - 1];
+		const first = Math.floor((num - 1) / 26) - 1;
+		const second = (num - 1) % 26;
+		if (first < 0) return ALPHA_NUMERALS[second];
+		return ALPHA_NUMERALS[first] + ALPHA_NUMERALS[second];
+	}
+	/**
+	* Extract the list marker type from a marker string.
+	* Supports "1", "a", "A", "i", "I" marker styles.
+	*
+	* @param marker The text content of the list marker (e.g. "a", "1", "iii", "b")
+	* @returns The normalized type string, or undefined for default numeric type
+	*/
+	function detectMarkerType(marker) {
+		if (!marker || /^\d+$/.test(marker)) return;
+		if (isValidRoman(marker)) return marker === marker.toLowerCase() ? "i" : "I";
+		if (/^[a-z]{1,2}$/.test(marker)) return "a";
+		if (/^[A-Z]{1,2}$/.test(marker)) return "A";
+	}
+	/**
+	* Convert a list marker string to its numeric start position.
+	*
+	* @param marker The text content of the list marker (e.g. "3", "b", "II")
+	* @returns The 1-based start value for the ordered list
+	*/
+	function markerToStart(marker) {
+		if (/^\d+$/.test(marker)) return parseInt(marker, 10);
+		const type = detectMarkerType(marker);
+		if (type === "i" || type === "I") return fromRoman(marker);
+		if (type === "a" || type === "A") {
+			const start = fromAlpha(marker);
+			return start > 0 ? start : 1;
+		}
+		const parsed = parseInt(marker, 10);
+		return Number.isNaN(parsed) ? 1 : parsed;
+	}
+	function startToMarker(type, start) {
+		if (type === "numeric") return String(start);
+		switch (type) {
+			case "a":
+				return toRomanAlpha(start);
+			case "A":
+				return toRomanAlpha(start).toUpperCase();
+			case "i":
+				return toRoman(start);
+			case "I":
+				return toRomanUpper(start);
+			default:
+				return String(start);
+		}
+	}
+	/**
+	* Returns true when all markers share the same style and increment by 1.
+	* Style is inferred from the first marker so ambiguous letters (e.g. "c", "i")
+	* are not re-classified differently on later lines.
+	*/
+	function areOrderedListMarkersSequential(markers) {
+		var _detectMarkerType;
+		if (markers.length === 0) return false;
+		const firstType = (_detectMarkerType = detectMarkerType(markers[0])) !== null && _detectMarkerType !== void 0 ? _detectMarkerType : "numeric";
+		const firstStart = markerToStart(markers[0]);
+		if (firstStart < 1) return false;
+		for (let i = 0; i < markers.length; i++) {
+			const expected = startToMarker(firstType, firstStart + i);
+			if (markers[i] !== expected) return false;
+		}
+		return true;
+	}
+	/**
+	* Parse a list marker into HTML ordered-list attrs (type + start).
+	*/
+	function parseListMarker(marker) {
+		return {
+			type: detectMarkerType(marker),
+			start: markerToStart(marker)
+		};
+	}
+	/**
+	* Build orderedList node attrs from the first list item marker.
+	*/
+	function buildOrderedListAttrsFromMarker(marker) {
+		const {
+			type,
+			start
+		} = parseListMarker(marker);
+		const attrs = {};
+		if (type) attrs.type = type;
+		if (start !== 1) attrs.start = start;
+		return attrs;
+	}
+	/**
+	* Returns the list marker prefix for a given item at a given index.
+	*
+	* @param type The list type attribute (e.g. "a", "A", "i", "I", null/undefined for default)
+	* @param index The zero-based index of the list item
+	* @param separator The separator to use (default: ". ")
+	* @returns The marker string (e.g. "a. ", "I. ", "1. ")
+	*/
+	function getListMarker(type, index, separator = ". ") {
+		const position = index + 1;
+		if (!type || type === "1") return `${position}${separator}`;
+		switch (type) {
+			case "a":
+				return `${toRomanAlpha(position)}${separator}`;
+			case "A":
+				return `${toRomanAlpha(position).toUpperCase()}${separator}`;
+			case "i":
+				return `${toRoman(position)}${separator}`;
+			case "I":
+				return `${toRomanUpper(position)}${separator}`;
+			default:
+				return `${position}${separator}`;
+		}
+	}
+	//#endregion
+	//#region src/item/list-item.ts
+	function isSameLineOrderedListToken(token) {
+		var _token$tokens, _token$tokens2;
+		const nestedToken = (_token$tokens = token.tokens) === null || _token$tokens === void 0 ? void 0 : _token$tokens[0];
+		return Boolean(token.text && ((_token$tokens2 = token.tokens) === null || _token$tokens2 === void 0 ? void 0 : _token$tokens2.length) === 1 && (nestedToken === null || nestedToken === void 0 ? void 0 : nestedToken.type) === "list" && nestedToken.ordered && nestedToken.raw === token.text);
+	}
+	function parseSameLineOrderedListText(text, helpers) {
+		if (helpers.tokenizeInline) return helpers.parseInline(helpers.tokenizeInline(text));
+		return helpers.parseInline([{
+			type: "text",
+			raw: text,
+			text
+		}]);
+	}
+	/**
+	* This extension allows you to create list items.
+	* @see https://www.tiptap.dev/api/nodes/list-item
+	*/
+	const ListItem = Node$1.create({
 		name: "listItem",
 		addOptions() {
 			return {
@@ -44641,40 +46422,36 @@ ${prefix}
 		},
 		markdownTokenName: "list_item",
 		parseMarkdown: (token, helpers) => {
-			var _a;
-			if (token.type !== "list_item") {
-				return [];
-			}
-			const parseBlockChildren = (_a = helpers.parseBlockChildren) != null ? _a : helpers.parseChildren;
+			var _helpers$parseBlockCh;
+			if (token.type !== "list_item") return [];
+			const parseBlockChildren = (_helpers$parseBlockCh = helpers.parseBlockChildren) !== null && _helpers$parseBlockCh !== void 0 ? _helpers$parseBlockCh : helpers.parseChildren;
 			let content = [];
 			if (token.tokens && token.tokens.length > 0) {
-				const hasParagraphTokens = token.tokens.some(t => t.type === "paragraph");
-				if (hasParagraphTokens) {
-					content = parseBlockChildren(token.tokens);
-				} else {
+				if (isSameLineOrderedListToken(token)) return {
+					type: "listItem",
+					content: [{
+						type: "paragraph",
+						content: parseSameLineOrderedListText(token.text || "", helpers)
+					}]
+				};
+				if (token.tokens.some(t => t.type === "paragraph")) content = parseBlockChildren(token.tokens);else {
 					const firstToken = token.tokens[0];
 					if (firstToken && firstToken.type === "text" && firstToken.tokens && firstToken.tokens.length > 0) {
-						const inlineContent = helpers.parseInline(firstToken.tokens);
 						content = [{
 							type: "paragraph",
-							content: inlineContent
+							content: helpers.parseInline(firstToken.tokens)
 						}];
 						if (token.tokens.length > 1) {
-							const remainingTokens = token.tokens.slice(1);
-							const additionalContent = parseBlockChildren(remainingTokens);
+							const additionalContent = parseBlockChildren(token.tokens.slice(1));
 							content.push(...additionalContent);
 						}
-					} else {
-						content = parseBlockChildren(token.tokens);
-					}
+					} else content = parseBlockChildren(token.tokens);
 				}
 			}
-			if (content.length === 0) {
-				content = [{
-					type: "paragraph",
-					content: []
-				}];
-			}
+			if (content.length === 0) content = [{
+				type: "paragraph",
+				content: []
+			}];
 			return {
 				type: "listItem",
 				content
@@ -44682,16 +46459,17 @@ ${prefix}
 		},
 		renderMarkdown: (node, h, ctx) => {
 			return renderNestedMarkdownContent(node, h, context => {
-				var _a, _b;
-				if (context.parentType === "bulletList") {
-					return "- ";
-				}
+				if (context.parentType === "bulletList") return "- ";
 				if (context.parentType === "orderedList") {
-					const start = ((_b = (_a = context.meta) == null ? void 0 : _a.parentAttrs) == null ? void 0 : _b.start) || 1;
-					return `${start + context.index}. `;
+					var _context$meta, _context$meta2;
+					const start = ((_context$meta = context.meta) === null || _context$meta === void 0 || (_context$meta = _context$meta.parentAttrs) === null || _context$meta === void 0 ? void 0 : _context$meta.start) || 1;
+					return getListMarker((_context$meta2 = context.meta) === null || _context$meta2 === void 0 || (_context$meta2 = _context$meta2.parentAttrs) === null || _context$meta2 === void 0 ? void 0 : _context$meta2.type, start - 1 + (context.index || 0), ". ");
 				}
 				return "- ";
 			}, ctx);
+		},
+		addExtensions() {
+			return [createBranchingListDeleteKeymap(this.name, [this.options.bulletListTypeName, this.options.orderedListTypeName])];
 		},
 		addKeyboardShortcuts() {
 			return {
@@ -44701,22 +46479,9 @@ ${prefix}
 			};
 		}
 	});
-
-	// src/keymap/listHelpers/index.ts
-	var listHelpers_exports = {};
-	__export(listHelpers_exports, {
-		findListItemPos: () => findListItemPos,
-		getNextListDepth: () => getNextListDepth,
-		handleBackspace: () => handleBackspace,
-		handleDelete: () => handleDelete,
-		hasListBefore: () => hasListBefore,
-		hasListItemAfter: () => hasListItemAfter,
-		hasListItemBefore: () => hasListItemBefore,
-		listItemHasSubList: () => listItemHasSubList,
-		nextListIsDeeper: () => nextListIsDeeper,
-		nextListIsHigher: () => nextListIsHigher
-	});
-	var findListItemPos = (typeOrName, state) => {
+	//#endregion
+	//#region src/keymap/listHelpers/findListItemPos.ts
+	const findListItemPos = (typeOrName, state) => {
 		const {
 			$from
 		} = state.selection;
@@ -44727,80 +46492,41 @@ ${prefix}
 		let targetDepth = null;
 		while (currentDepth > 0 && targetDepth === null) {
 			currentNode = $from.node(currentDepth);
-			if (currentNode.type === nodeType) {
-				targetDepth = currentDepth;
-			} else {
+			if (currentNode.type === nodeType) targetDepth = currentDepth;else {
 				currentDepth -= 1;
 				currentPos -= 1;
 			}
 		}
-		if (targetDepth === null) {
-			return null;
-		}
+		if (targetDepth === null) return null;
 		return {
 			$pos: state.doc.resolve(currentPos),
 			depth: targetDepth
 		};
 	};
-	var getNextListDepth = (typeOrName, state) => {
+	//#endregion
+	//#region src/keymap/listHelpers/getNextListDepth.ts
+	const getNextListDepth = (typeOrName, state) => {
 		const listItemPos = findListItemPos(typeOrName, state);
-		if (!listItemPos) {
-			return false;
-		}
+		if (!listItemPos) return false;
 		const [, depth] = getNodeAtPosition(state, typeOrName, listItemPos.$pos.pos + 4);
 		return depth;
 	};
-
-	// src/keymap/listHelpers/hasListBefore.ts
-	var hasListBefore = (editorState, name, parentListTypes) => {
+	//#endregion
+	//#region src/keymap/listHelpers/hasListBefore.ts
+	const hasListBefore = (editorState, name, parentListTypes) => {
 		const {
 			$anchor
 		} = editorState.selection;
 		const previousNodePos = Math.max(0, $anchor.pos - 2);
 		const previousNode = editorState.doc.resolve(previousNodePos).node();
-		if (!previousNode || !parentListTypes.includes(previousNode.type.name)) {
-			return false;
-		}
+		if (!previousNode || !parentListTypes.includes(previousNode.type.name)) return false;
 		return true;
 	};
-
-	// src/keymap/listHelpers/hasListItemBefore.ts
-	var hasListItemBefore = (typeOrName, state) => {
-		var _a;
-		const {
-			$anchor
-		} = state.selection;
-		const $targetPos = state.doc.resolve($anchor.pos - 2);
-		if ($targetPos.index() === 0) {
-			return false;
-		}
-		if (((_a = $targetPos.nodeBefore) == null ? void 0 : _a.type.name) !== typeOrName) {
-			return false;
-		}
-		return true;
-	};
-	var listItemHasSubList = (typeOrName, state, node) => {
-		if (!node) {
-			return false;
-		}
-		const nodeType = getNodeType(typeOrName, state.schema);
-		let hasSubList = false;
-		node.descendants(child => {
-			if (child.type === nodeType) {
-				hasSubList = true;
-			}
-		});
-		return hasSubList;
-	};
-
-	// src/keymap/listHelpers/handleBackspace.ts
-	var handleBackspace = (editor, name, parentListTypes) => {
-		if (editor.commands.undoInputRule()) {
-			return true;
-		}
-		if (editor.state.selection.from !== editor.state.selection.to) {
-			return false;
-		}
+	//#endregion
+	//#region src/keymap/listHelpers/handleBackspace.ts
+	const handleBackspace = (editor, name, parentListTypes) => {
+		if (editor.commands.undoInputRule()) return true;
+		if (editor.state.selection.from !== editor.state.selection.to) return false;
 		if (!isNodeActive(editor.state, name) && hasListBefore(editor.state, name, parentListTypes)) {
 			const {
 				$anchor
@@ -44808,76 +46534,51 @@ ${prefix}
 			const $listPos = editor.state.doc.resolve($anchor.before() - 1);
 			const listDescendants = [];
 			$listPos.node().descendants((node, pos) => {
-				if (node.type.name === name) {
-					listDescendants.push({
-						node,
-						pos
-					});
-				}
+				if (node.type.name === name) listDescendants.push({
+					node,
+					pos
+				});
 			});
 			const lastItem = listDescendants.at(-1);
-			if (!lastItem) {
-				return false;
-			}
+			if (!lastItem) return false;
 			const $lastItemPos = editor.state.doc.resolve($listPos.start() + lastItem.pos + 1);
 			return editor.chain().cut({
 				from: $anchor.start() - 1,
 				to: $anchor.end() + 1
 			}, $lastItemPos.end()).joinForward().run();
 		}
-		if (!isNodeActive(editor.state, name)) {
-			return false;
-		}
-		if (!isAtStartOfNode(editor.state)) {
-			return false;
-		}
-		const listItemPos = findListItemPos(name, editor.state);
-		if (!listItemPos) {
-			return false;
-		}
-		const $prev = editor.state.doc.resolve(listItemPos.$pos.pos - 2);
-		const prevNode = $prev.node(listItemPos.depth);
-		const previousListItemHasSubList = listItemHasSubList(name, editor.state, prevNode);
-		if (hasListItemBefore(name, editor.state) && !previousListItemHasSubList) {
-			return editor.commands.joinItemBackward();
-		}
+		if (!isNodeActive(editor.state, name)) return false;
+		if (!isAtStartOfNode(editor.state)) return false;
+		const {
+			$from
+		} = editor.state.selection;
+		const itemDepth = $from.depth - 1;
+		if ($from.node(itemDepth).type !== editor.schema.nodes[name] || $from.index(itemDepth) !== 0) return false;
 		return editor.chain().liftListItem(name).run();
 	};
-
-	// src/keymap/listHelpers/nextListIsDeeper.ts
-	var nextListIsDeeper = (typeOrName, state) => {
+	//#endregion
+	//#region src/keymap/listHelpers/nextListIsDeeper.ts
+	const nextListIsDeeper = (typeOrName, state) => {
 		const listDepth = getNextListDepth(typeOrName, state);
 		const listItemPos = findListItemPos(typeOrName, state);
-		if (!listItemPos || !listDepth) {
-			return false;
-		}
-		if (listDepth > listItemPos.depth) {
-			return true;
-		}
+		if (!listItemPos || !listDepth) return false;
+		if (listDepth > listItemPos.depth) return true;
 		return false;
 	};
-
-	// src/keymap/listHelpers/nextListIsHigher.ts
-	var nextListIsHigher = (typeOrName, state) => {
+	//#endregion
+	//#region src/keymap/listHelpers/nextListIsHigher.ts
+	const nextListIsHigher = (typeOrName, state) => {
 		const listDepth = getNextListDepth(typeOrName, state);
 		const listItemPos = findListItemPos(typeOrName, state);
-		if (!listItemPos || !listDepth) {
-			return false;
-		}
-		if (listDepth < listItemPos.depth) {
-			return true;
-		}
+		if (!listItemPos || !listDepth) return false;
+		if (listDepth < listItemPos.depth) return true;
 		return false;
 	};
-
-	// src/keymap/listHelpers/handleDelete.ts
-	var handleDelete = (editor, name) => {
-		if (!isNodeActive(editor.state, name)) {
-			return false;
-		}
-		if (!isAtEndOfNode(editor.state, name)) {
-			return false;
-		}
+	//#endregion
+	//#region src/keymap/listHelpers/handleDelete.ts
+	const handleDelete = (editor, name) => {
+		if (!isNodeActive(editor.state, name)) return false;
+		if (!isAtEndOfNode(editor.state, name)) return false;
 		const {
 			selection
 		} = editor.state;
@@ -44885,36 +46586,58 @@ ${prefix}
 			$from,
 			$to
 		} = selection;
-		if (!selection.empty && $from.sameParent($to)) {
-			return false;
-		}
-		if (nextListIsDeeper(name, editor.state)) {
-			return editor.chain().focus(editor.state.selection.from + 4).lift(name).joinBackward().run();
-		}
-		if (nextListIsHigher(name, editor.state)) {
-			return editor.chain().joinForward().joinBackward().run();
-		}
+		if (!selection.empty && $from.sameParent($to)) return false;
+		if (nextListIsDeeper(name, editor.state)) return editor.chain().focus(editor.state.selection.from + 4).lift(name).joinBackward().run();
+		if (nextListIsHigher(name, editor.state)) return editor.chain().joinForward().joinBackward().run();
 		return editor.commands.joinItemForward();
 	};
-
-	// src/keymap/listHelpers/hasListItemAfter.ts
-	var hasListItemAfter = (typeOrName, state) => {
-		var _a;
+	//#endregion
+	//#region src/keymap/listHelpers/handleTab.ts
+	const handleTab = (editor, name, parentListTypes) => {
 		const {
-			$anchor
-		} = state.selection;
-		const $targetPos = state.doc.resolve($anchor.pos - $anchor.parentOffset - 2);
-		if ($targetPos.index() === $targetPos.parent.childCount - 1) {
-			return false;
-		}
-		if (((_a = $targetPos.nodeAfter) == null ? void 0 : _a.type.name) !== typeOrName) {
-			return false;
-		}
-		return true;
+			state
+		} = editor;
+		const {
+			selection
+		} = state;
+		if (!selection.empty) return false;
+		const {
+			$from
+		} = selection;
+		if ($from.parentOffset !== 0) return false;
+		if (!$from.parent.isTextblock) return false;
+		if (isNodeActive(state, name)) return false;
+		const previous = getPreviousBlockSibling($from);
+		if (!previous || !parentListTypes.includes(previous.type.name)) return false;
+		const lastItem = previous.lastChild;
+		if (!lastItem || lastItem.type.name !== name) return false;
+		const block = $from.parent;
+		if (!lastItem.canReplace(lastItem.childCount, lastItem.childCount, Fragment.from(block))) return false;
+		const blockStart = $from.before();
+		const blockEnd = $from.after();
+		const insideLastItemEnd = blockStart - 2;
+		return editor.commands.command(({
+			tr,
+			dispatch
+		}) => {
+			if (dispatch) {
+				tr.delete(blockStart, blockEnd).insert(insideLastItemEnd, Fragment.from(block));
+				tr.setSelection(TextSelection.create(tr.doc, insideLastItemEnd + 1));
+				tr.scrollIntoView();
+			}
+			return true;
+		});
 	};
-
-	// src/keymap/list-keymap.ts
-	var ListKeymap = Extension.create({
+	//#endregion
+	//#region src/keymap/list-keymap.ts
+	/**
+	* This extension registers custom keymaps to change the behaviour of the backspace and delete keys.
+	* By default Prosemirror keyhandling will always lift or sink items so paragraphs are joined into
+	* the adjacent or previous list item. This extension will prevent this behaviour and instead will
+	* try to join paragraphs from two list items into a single list item.
+	* @see https://www.tiptap.dev/api/extensions/list-keymap
+	*/
+	const ListKeymap = Extension.create({
 		name: "listKeymap",
 		addOptions() {
 			return {
@@ -44936,12 +46659,8 @@ ${prefix}
 					this.options.listTypes.forEach(({
 						itemName
 					}) => {
-						if (editor.state.schema.nodes[itemName] === void 0) {
-							return;
-						}
-						if (handleDelete(editor, itemName)) {
-							handled = true;
-						}
+						if (editor.state.schema.nodes[itemName] === void 0) return;
+						if (handleDelete(editor, itemName)) handled = true;
 					});
 					return handled;
 				},
@@ -44952,12 +46671,8 @@ ${prefix}
 					this.options.listTypes.forEach(({
 						itemName
 					}) => {
-						if (editor.state.schema.nodes[itemName] === void 0) {
-							return;
-						}
-						if (handleDelete(editor, itemName)) {
-							handled = true;
-						}
+						if (editor.state.schema.nodes[itemName] === void 0) return;
+						if (handleDelete(editor, itemName)) handled = true;
 					});
 					return handled;
 				},
@@ -44969,12 +46684,8 @@ ${prefix}
 						itemName,
 						wrapperNames
 					}) => {
-						if (editor.state.schema.nodes[itemName] === void 0) {
-							return;
-						}
-						if (handleBackspace(editor, itemName, wrapperNames)) {
-							handled = true;
-						}
+						if (editor.state.schema.nodes[itemName] === void 0) return;
+						if (handleBackspace(editor, itemName, wrapperNames)) handled = true;
 					});
 					return handled;
 				},
@@ -44986,22 +46697,96 @@ ${prefix}
 						itemName,
 						wrapperNames
 					}) => {
-						if (editor.state.schema.nodes[itemName] === void 0) {
-							return;
-						}
-						if (handleBackspace(editor, itemName, wrapperNames)) {
-							handled = true;
-						}
+						if (editor.state.schema.nodes[itemName] === void 0) return;
+						if (handleBackspace(editor, itemName, wrapperNames)) handled = true;
 					});
 					return handled;
+				},
+				Tab: ({
+					editor
+				}) => {
+					for (const {
+						itemName,
+						wrapperNames
+					} of this.options.listTypes) {
+						if (editor.state.schema.nodes[itemName] === void 0) continue;
+						if (handleTab(editor, itemName, wrapperNames)) return true;
+					}
+					return false;
 				}
 			};
 		}
 	});
-
-	// src/ordered-list/utils.ts
-	var ORDERED_LIST_ITEM_REGEX = /^(\s*)(\d+)\.\s+(.*)$/;
-	var INDENTED_LINE_REGEX = /^\s/;
+	//#endregion
+	//#region src/ordered-list/utils.ts
+	/**
+	* Matches an ordered list item line with optional leading whitespace.
+	* Captures: (1) indentation spaces, (2) item marker (number, letter, or roman numeral),
+	* (3) separator (. or )), (4) content after marker
+	*
+	* Examples: "1. Item", "  a) Nested item", "    I. Roman item", "iii. Another", "aa. Item 27"
+	*/
+	const ORDERED_LIST_ITEM_REGEX = new RegExp(`^(\\s*)(${ORDERED_LIST_MARKER_PATTERN})([.)])\\s+(.*)$`);
+	/**
+	* Matches any line that starts with whitespace (indented content).
+	* Used to identify continuation content that belongs to a list item.
+	*/
+	const INDENTED_LINE_REGEX = /^\s/;
+	/**
+	* This are blocks that can interrupt a paragraph, so a line starting with one of
+	* them can never be lazy continuation text of a list item
+	*/
+	const PARAGRAPH_INTERRUPTERS = {
+		heading: /^#{1,6}(?:\s|$)/,
+		bulletItem: /^[-+*]\s+/,
+		codeFence: /^(?:```|~~~)/,
+		blockMath: /^\$\$/,
+		thematicBreak: /^(?:(?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$/
+	};
+	function isOrderedListMarkerLine(line) {
+		return ORDERED_LIST_ITEM_REGEX.test(line.trimStart());
+	}
+	function isBlockContentLine(line) {
+		const trimmedLine = line.trimStart();
+		return PARAGRAPH_INTERRUPTERS.bulletItem.test(trimmedLine) || isOrderedListMarkerLine(trimmedLine) || PARAGRAPH_INTERRUPTERS.heading.test(trimmedLine) || PARAGRAPH_INTERRUPTERS.thematicBreak.test(trimmedLine) && !trimmedLine.startsWith("-") || /^>\s?/.test(trimmedLine) || PARAGRAPH_INTERRUPTERS.codeFence.test(trimmedLine) || PARAGRAPH_INTERRUPTERS.blockMath.test(trimmedLine);
+	}
+	function interruptsLazyContinuation(line) {
+		return Object.values(PARAGRAPH_INTERRUPTERS).some(pattern => pattern.test(line));
+	}
+	function splitItemContent(contentLines) {
+		const paragraphLines = [];
+		const blockLines = [];
+		let reachedBlockBoundary = false;
+		contentLines.forEach(line => {
+			if (reachedBlockBoundary) {
+				blockLines.push(line);
+				return;
+			}
+			if (line.trim() === "") {
+				reachedBlockBoundary = true;
+				blockLines.push(line);
+				return;
+			}
+			if (paragraphLines.length > 0 && isBlockContentLine(line)) {
+				reachedBlockBoundary = true;
+				blockLines.push(line);
+				return;
+			}
+			paragraphLines.push(line);
+		});
+		return {
+			paragraphLines,
+			blockLines
+		};
+	}
+	/**
+	* Collects all ordered list items from lines, parsing them into a flat array
+	* with indentation information. Stops collecting continuation content when
+	* encountering nested list items, allowing them to be processed separately.
+	*
+	* @param lines - Array of source lines to parse
+	* @returns Tuple of [listItems array, number of lines consumed]
+	*/
 	function collectOrderedListItems(lines) {
 		const listItems = [];
 		let currentLineIndex = 0;
@@ -45009,37 +46794,43 @@ ${prefix}
 		while (currentLineIndex < lines.length) {
 			const line = lines[currentLineIndex];
 			const match = line.match(ORDERED_LIST_ITEM_REGEX);
-			if (!match) {
-				break;
-			}
-			const [, indent, number, content] = match;
+			if (!match) break;
+			const [, indent, marker, _separator, content] = match;
 			const indentLevel = indent.length;
-			let itemContent = content;
+			const number = parseInt(marker, 10);
+			const markerType = isNaN(number) ? detectMarkerType(marker) : void 0;
+			const itemNumber = isNaN(number) ? markerToStart(marker) : number;
+			const itemContentLines = [content];
 			let nextLineIndex = currentLineIndex + 1;
 			const itemLines = [line];
+			let sawBlankLine = false;
 			while (nextLineIndex < lines.length) {
 				const nextLine = lines[nextLineIndex];
-				const nextMatch = nextLine.match(ORDERED_LIST_ITEM_REGEX);
-				if (nextMatch) {
-					break;
-				}
+				if (nextLine.match(ORDERED_LIST_ITEM_REGEX)) break;
 				if (nextLine.trim() === "") {
 					itemLines.push(nextLine);
-					itemContent += "\n";
+					itemContentLines.push("");
+					sawBlankLine = true;
 					nextLineIndex += 1;
 				} else if (nextLine.match(INDENTED_LINE_REGEX)) {
+					const leadingWhitespace = nextLine.length - nextLine.trimStart().length;
+					const contentIndent = indentLevel + marker.length + 1;
 					itemLines.push(nextLine);
-					itemContent += `
-${nextLine.slice(indentLevel + 2)}`;
+					itemContentLines.push(nextLine.slice(Math.min(leadingWhitespace, contentIndent)));
 					nextLineIndex += 1;
 				} else {
-					break;
+					if (sawBlankLine || interruptsLazyContinuation(nextLine)) break;
+					itemLines.push(nextLine);
+					itemContentLines.push(nextLine);
+					nextLineIndex += 1;
 				}
 			}
 			listItems.push({
 				indent: indentLevel,
-				number: parseInt(number, 10),
-				content: itemContent.trim(),
+				number: itemNumber,
+				type: markerType,
+				content: itemContentLines.join("\n").trim(),
+				contentLines: itemContentLines,
 				raw: itemLines.join("\n")
 			});
 			consumed = nextLineIndex;
@@ -45047,24 +46838,66 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 		return [listItems, consumed];
 	}
+	const PLAIN_TEXT_ORDERED_LIST_LINE_REGEX = new RegExp(`^(${ORDERED_LIST_MARKER_PATTERN})([.)])\\s+(.+)$`);
+	/**
+	* Parse plain-text pasted ordered list lines into JSONContent, or null if not a typed list.
+	*/
+	function parsePlainTextOrderedListPaste(text) {
+		const lines = text.split("\n").filter(l => l.trim().length > 0);
+		if (lines.length === 0) return null;
+		const parsedItems = [];
+		for (const line of lines) {
+			const match = line.trim().match(PLAIN_TEXT_ORDERED_LIST_LINE_REGEX);
+			if (!match) return null;
+			parsedItems.push({
+				marker: match[1],
+				content: match[3]
+			});
+		}
+		if (!areOrderedListMarkersSequential(parsedItems.map(item => item.marker))) return null;
+		return {
+			type: "orderedList",
+			attrs: buildOrderedListAttrsFromMarker(parsedItems[0].marker),
+			content: parsedItems.map(item => ({
+				type: "listItem",
+				content: [{
+					type: "paragraph",
+					content: [{
+						type: "text",
+						text: item.content
+					}]
+				}]
+			}))
+		};
+	}
+	/**
+	* Recursively builds a nested structure from a flat array of list items
+	* based on their indentation levels. Creates proper markdown tokens with
+	* nested lists where appropriate.
+	*
+	* @param items - Flat array of list items with indentation info
+	* @param baseIndent - The indentation level to process at this recursion level
+	* @param lexer - Markdown lexer for parsing inline and block content
+	* @returns Array of list_item tokens with proper nesting
+	*/
 	function buildNestedStructure(items, baseIndent, lexer) {
-		var _a;
 		const result = [];
 		let currentIndex = 0;
 		while (currentIndex < items.length) {
 			const item = items[currentIndex];
 			if (item.indent === baseIndent) {
-				const contentLines = item.content.split("\n");
-				const mainText = ((_a = contentLines[0]) == null ? void 0 : _a.trim()) || "";
+				const {
+					paragraphLines,
+					blockLines
+				} = splitItemContent(item.contentLines);
+				const mainText = paragraphLines.join("\n").trim();
 				const tokens = [];
-				if (mainText) {
-					tokens.push({
-						type: "paragraph",
-						raw: mainText,
-						tokens: lexer.inlineTokens(mainText)
-					});
-				}
-				const additionalContent = contentLines.slice(1).join("\n").trim();
+				if (mainText) tokens.push({
+					type: "paragraph",
+					raw: mainText,
+					tokens: lexer.inlineTokens(mainText)
+				});
+				const additionalContent = blockLines.join("\n").trim();
 				if (additionalContent) {
 					const blockTokens = lexer.blockTokens(additionalContent);
 					tokens.push(...blockTokens);
@@ -45076,12 +46909,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 					lookAheadIndex += 1;
 				}
 				if (nestedItems.length > 0) {
-					const nextIndent = Math.min(...nestedItems.map(nestedItem => nestedItem.indent));
-					const nestedListItems = buildNestedStructure(nestedItems, nextIndent, lexer);
+					const nestedListItems = buildNestedStructure(nestedItems, Math.min(...nestedItems.map(nestedItem => nestedItem.indent)), lexer);
 					tokens.push({
 						type: "list",
 						ordered: true,
 						start: nestedItems[0].number,
+						typeMarker: nestedItems[0].type,
 						items: nestedListItems,
 						raw: nestedItems.map(nestedItem => nestedItem.raw).join("\n")
 					});
@@ -45092,48 +46925,77 @@ ${nextLine.slice(indentLevel + 2)}`;
 					tokens
 				});
 				currentIndex = lookAheadIndex;
-			} else {
-				currentIndex += 1;
-			}
+			} else currentIndex += 1;
 		}
 		return result;
 	}
+	/**
+	* Parses markdown list item tokens into Tiptap JSONContent structure,
+	* ensuring text content is properly wrapped in paragraph nodes.
+	*
+	* @param items - Array of markdown tokens representing list items
+	* @param helpers - Markdown parse helpers for recursive parsing
+	* @returns Array of listItem JSONContent nodes
+	*/
 	function parseListItems(items, helpers) {
 		return items.map(item => {
-			if (item.type !== "list_item") {
-				return helpers.parseChildren([item])[0];
-			}
+			if (item.type !== "list_item") return helpers.parseChildren([item])[0];
 			const content = [];
-			if (item.tokens && item.tokens.length > 0) {
-				item.tokens.forEach(itemToken => {
-					if (itemToken.type === "paragraph" || itemToken.type === "list" || itemToken.type === "blockquote" || itemToken.type === "code") {
-						content.push(...helpers.parseChildren([itemToken]));
-					} else if (itemToken.type === "text" && itemToken.tokens) {
-						const inlineContent = helpers.parseChildren([itemToken]);
-						content.push({
-							type: "paragraph",
-							content: inlineContent
-						});
-					} else {
-						const parsed = helpers.parseChildren([itemToken]);
-						if (parsed.length > 0) {
-							content.push(...parsed);
-						}
-					}
-				});
-			}
+			if (item.tokens && item.tokens.length > 0) item.tokens.forEach(itemToken => {
+				if (itemToken.type === "paragraph" || itemToken.type === "list" || itemToken.type === "blockquote" || itemToken.type === "code") content.push(...helpers.parseChildren([itemToken]));else if (itemToken.type === "text" && itemToken.tokens) {
+					const inlineContent = helpers.parseChildren([itemToken]);
+					content.push({
+						type: "paragraph",
+						content: inlineContent
+					});
+				} else {
+					const parsed = helpers.parseChildren([itemToken]);
+					if (parsed.length > 0) content.push(...parsed);
+				}
+			});
 			return {
 				type: "listItem",
 				content
 			};
 		});
 	}
-
-	// src/ordered-list/ordered-list.ts
-	var ListItemName2 = "listItem";
-	var TextStyleName2 = "textStyle";
-	var orderedListInputRegex = /^(\d+)\.\s$/;
-	var OrderedList = Node3.create({
+	//#endregion
+	//#region src/ordered-list/ordered-list.ts
+	const ListItemName = "listItem";
+	const TextStyleName = "textStyle";
+	/**
+	* Matches an ordered list to a 1. on input (or any number followed by a dot).
+	*/
+	const orderedListInputRegex = /^(\d+)\.\s$/;
+	/**
+	* Maps CSS list-style-type values to HTML type attribute values.
+	* Google Docs and Word often use CSS instead of the HTML type attribute.
+	*/
+	function cssListStyleTypeToHtmlType(style) {
+		const match = style.match(/list-style-type\s*:\s*([^;]+)/i);
+		if (!match) return null;
+		switch (match[1].trim().toLowerCase()) {
+			case "upper-roman":
+				return "I";
+			case "lower-roman":
+				return "i";
+			case "upper-alpha":
+			case "upper-latin":
+				return "A";
+			case "lower-alpha":
+			case "lower-latin":
+				return "a";
+			default:
+				return null;
+		}
+	}
+	/**
+	* This extension allows you to create ordered lists.
+	* This requires the ListItem extension
+	* @see https://www.tiptap.dev/api/nodes/ordered-list
+	* @see https://www.tiptap.dev/api/nodes/list-item
+	*/
+	const OrderedList = Node$1.create({
 		name: "orderedList",
 		addOptions() {
 			return {
@@ -45157,7 +47019,24 @@ ${nextLine.slice(indentLevel + 2)}`;
 				},
 				type: {
 					default: null,
-					parseHTML: element => element.getAttribute("type")
+					parseHTML: element => {
+						const htmlType = element.getAttribute("type");
+						if (htmlType) return htmlType;
+						const style = element.getAttribute("style");
+						if (style) {
+							const mappedFromOl = cssListStyleTypeToHtmlType(style);
+							if (mappedFromOl) return mappedFromOl;
+						}
+						const firstLi = element.querySelector("li");
+						if (firstLi) {
+							const liStyle = firstLi.getAttribute("style");
+							if (liStyle) {
+								const mappedFromLi = cssListStyleTypeToHtmlType(liStyle);
+								if (mappedFromLi) return mappedFromLi;
+							}
+						}
+						return null;
+					}
 				}
 			};
 		},
@@ -45171,61 +47050,53 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}) {
 			const {
 				start,
-				...attributesWithoutStart
+				type,
+				...attributesWithoutType
 			} = HTMLAttributes;
-			return start === 1 ? ["ol", mergeAttributes(this.options.HTMLAttributes, attributesWithoutStart), 0] : ["ol", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+			const attrs = mergeAttributes(this.options.HTMLAttributes, attributesWithoutType);
+			if (start !== 1) attrs.start = start;
+			if (type && type !== "1") attrs.type = type;
+			return ["ol", attrs, 0];
 		},
 		markdownTokenName: "list",
 		parseMarkdown: (token, helpers) => {
-			if (token.type !== "list" || !token.ordered) {
-				return [];
-			}
+			if (token.type !== "list" || !token.ordered) return [];
 			const startValue = token.start || 1;
+			const typeValue = token.typeMarker;
 			const content = token.items ? parseListItems(token.items, helpers) : [];
-			if (startValue !== 1) {
-				return {
-					type: "orderedList",
-					attrs: {
-						start: startValue
-					},
-					content
-				};
-			}
+			const attrs = {};
+			if (startValue !== 1) attrs.start = startValue;
+			if (typeValue) attrs.type = typeValue;
+			if (Object.keys(attrs).length > 0) return {
+				type: "orderedList",
+				attrs,
+				content
+			};
 			return {
 				type: "orderedList",
 				content
 			};
 		},
 		renderMarkdown: (node, h) => {
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			return h.renderChildren(node.content, "\n");
 		},
 		markdownTokenizer: {
 			name: "orderedList",
 			level: "block",
-			start: src => {
-				const match = src.match(/^(\s*)(\d+)\.\s+/);
-				const index = match == null ? void 0 : match.index;
-				return index !== void 0 ? index : -1;
-			},
+			start: () => -1,
 			tokenize: (src, _tokens, lexer) => {
-				var _a;
+				var _listItems$, _listItems$2;
 				const lines = src.split("\n");
 				const [listItems, consumed] = collectOrderedListItems(lines);
-				if (listItems.length === 0) {
-					return void 0;
-				}
-				const items = buildNestedStructure(listItems, 0, lexer);
-				if (items.length === 0) {
-					return void 0;
-				}
-				const startValue = ((_a = listItems[0]) == null ? void 0 : _a.number) || 1;
+				if (listItems.length === 0) return;
+				const items = buildNestedStructure(listItems, listItems[0].indent, lexer);
+				if (items.length === 0) return;
 				return {
 					type: "list",
 					ordered: true,
-					start: startValue,
+					start: ((_listItems$ = listItems[0]) === null || _listItems$ === void 0 ? void 0 : _listItems$.number) || 1,
+					typeMarker: (_listItems$2 = listItems[0]) === null || _listItems$2 === void 0 ? void 0 : _listItems$2.type,
 					items,
 					raw: lines.slice(0, consumed).join("\n")
 				};
@@ -45240,9 +47111,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					commands,
 					chain
 				}) => {
-					if (this.options.keepAttributes) {
-						return chain().toggleList(this.name, this.options.itemTypeName, this.options.keepMarks).updateAttributes(ListItemName2, this.editor.getAttributes(TextStyleName2)).run();
-					}
+					if (this.options.keepAttributes) return chain().toggleList(this.name, this.options.itemTypeName, this.options.keepMarks).updateAttributes(ListItemName, this.editor.getAttributes(TextStyleName)).run();
 					return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks);
 				}
 			};
@@ -45252,34 +47121,75 @@ ${nextLine.slice(indentLevel + 2)}`;
 				"Mod-Shift-7": () => this.editor.commands.toggleOrderedList()
 			};
 		},
+		addProseMirrorPlugins() {
+			return [new Plugin({
+				props: {
+					handlePaste: (view, event) => {
+						var _event$clipboardData, _event$clipboardData2;
+						const html = (_event$clipboardData = event.clipboardData) === null || _event$clipboardData === void 0 ? void 0 : _event$clipboardData.getData("text/html");
+						if (html === null || html === void 0 ? void 0 : html.trim()) return false;
+						const text = (_event$clipboardData2 = event.clipboardData) === null || _event$clipboardData2 === void 0 ? void 0 : _event$clipboardData2.getData("text/plain");
+						if (!text) return false;
+						const orderedListContent = parsePlainTextOrderedListPaste(text);
+						if (!orderedListContent) return false;
+						try {
+							const orderedListNode = view.state.schema.nodeFromJSON(orderedListContent);
+							const tr = view.state.tr.replaceSelectionWith(orderedListNode);
+							view.dispatch(tr);
+							return true;
+						} catch {
+							return false;
+						}
+					}
+				}
+			})];
+		},
 		addInputRules() {
+			const joinPredicate = (match, node) => {
+				return (!node.attrs.type || node.attrs.type === "1") && node.childCount + node.attrs.start === +match[1];
+			};
 			let inputRule = wrappingInputRule({
 				find: orderedListInputRegex,
 				type: this.type,
 				getAttributes: match => ({
 					start: +match[1]
 				}),
-				joinPredicate: (match, node) => node.childCount + node.attrs.start === +match[1]
+				joinPredicate
 			});
-			if (this.options.keepMarks || this.options.keepAttributes) {
-				inputRule = wrappingInputRule({
-					find: orderedListInputRegex,
-					type: this.type,
-					keepMarks: this.options.keepMarks,
-					keepAttributes: this.options.keepAttributes,
-					getAttributes: match => ({
-						start: +match[1],
-						...this.editor.getAttributes(TextStyleName2)
-					}),
-					joinPredicate: (match, node) => node.childCount + node.attrs.start === +match[1],
-					editor: this.editor
-				});
-			}
+			if (this.options.keepMarks || this.options.keepAttributes) inputRule = wrappingInputRule({
+				find: orderedListInputRegex,
+				type: this.type,
+				keepMarks: this.options.keepMarks,
+				keepAttributes: this.options.keepAttributes,
+				getAttributes: match => ({
+					start: +match[1],
+					...this.editor.getAttributes(TextStyleName)
+				}),
+				joinPredicate,
+				editor: this.editor
+			});
 			return [inputRule];
 		}
 	});
-	var inputRegex$2 = /^\s*(\[([( |x])?\])\s$/;
-	var TaskItem = Node3.create({
+	//#endregion
+	//#region src/task-item/task-item.ts
+	/**
+	* Matches a task item to a - [ ] on input.
+	*/
+	const inputRegex$2 = /^\s*(\[([( |x])?\])\s$/;
+	/**
+	* Hides the checkbox label visually while keeping it in the accessibility tree.
+	*/
+	const visuallyHiddenStyle = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0";
+	const getCheckboxLabel = (node, checked, a11y) => {
+		var _a11y$checkboxLabel;
+		return (a11y === null || a11y === void 0 || (_a11y$checkboxLabel = a11y.checkboxLabel) === null || _a11y$checkboxLabel === void 0 ? void 0 : _a11y$checkboxLabel.call(a11y, node, checked)) || `Task item checkbox for ${node.textContent || "empty task item"}`;
+	};
+	/**
+	* This extension allows you to create task items.
+	* @see https://www.tiptap.dev/api/nodes/task-item
+	*/
+	const TaskItem = Node$1.create({
 		name: "taskItem",
 		addOptions() {
 			return {
@@ -45311,7 +47221,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 		parseHTML() {
 			return [{
 				tag: `li[data-type="${this.name}"]`,
-				priority: 51
+				priority: 51,
+				contentElement: element => {
+					var _element$querySelecto;
+					return (_element$querySelecto = element.querySelector("div")) !== null && _element$querySelecto !== void 0 ? _element$querySelecto : element;
+				}
 			}];
 		},
 		renderHTML({
@@ -45327,15 +47241,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		parseMarkdown: (token, h) => {
 			const content = [];
-			if (token.tokens && token.tokens.length > 0) {
-				content.push(h.createNode("paragraph", {}, h.parseInline(token.tokens)));
-			} else if (token.text) {
-				content.push(h.createNode("paragraph", {}, [h.createNode("text", {
-					text: token.text
-				})]));
-			} else {
-				content.push(h.createNode("paragraph", {}, []));
-			}
+			if (token.tokens && token.tokens.length > 0) content.push(h.createNode("paragraph", {}, h.parseInline(token.tokens)));else if (token.text) content.push(h.createNode("paragraph", {}, [h.createNode("text", {
+				text: token.text
+			})]));else content.push(h.createNode("paragraph", {}, []));
 			if (token.nestedTokens && token.nestedTokens.length > 0) {
 				const nestedContent = h.parseChildren(token.nestedTokens);
 				content.push(...nestedContent);
@@ -45345,19 +47253,20 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}, content);
 		},
 		renderMarkdown: (node, h) => {
-			var _a;
-			const checkedChar = ((_a = node.attrs) == null ? void 0 : _a.checked) ? "x" : " ";
-			const prefix = `- [${checkedChar}] `;
+			var _node$attrs;
+			const prefix = `- [${((_node$attrs = node.attrs) === null || _node$attrs === void 0 ? void 0 : _node$attrs.checked) ? "x" : " "}] `;
 			return renderNestedMarkdownContent(node, h, prefix);
+		},
+		addExtensions() {
+			if (!this.options.nested) return [];
+			return [createBranchingListDeleteKeymap(this.name, [this.options.taskListTypeName])];
 		},
 		addKeyboardShortcuts() {
 			const shortcuts = {
 				Enter: () => this.editor.commands.splitListItem(this.name),
 				"Shift-Tab": () => this.editor.commands.liftListItem(this.name)
 			};
-			if (!this.options.nested) {
-				return shortcuts;
-			}
+			if (!this.options.nested) return shortcuts;
 			return {
 				...shortcuts,
 				Tab: () => this.editor.commands.sinkListItem(this.name)
@@ -45375,9 +47284,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				const checkboxStyler = document.createElement("span");
 				const checkbox = document.createElement("input");
 				const content = document.createElement("div");
+				checkboxStyler.style.cssText = visuallyHiddenStyle;
 				const updateA11Y = currentNode => {
-					var _a, _b;
-					checkbox.ariaLabel = ((_b = (_a = this.options.a11y) == null ? void 0 : _a.checkboxLabel) == null ? void 0 : _b.call(_a, currentNode, checkbox.checked)) || `Task item checkbox for ${currentNode.textContent || "empty task item"}`;
+					const label = getCheckboxLabel(currentNode, currentNode.attrs.checked, this.options.a11y);
+					checkbox.setAttribute("aria-label", label);
+					checkboxStyler.textContent = label;
 				};
 				updateA11Y(node);
 				checkboxWrapper.contentEditable = "false";
@@ -45391,28 +47302,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 					const {
 						checked
 					} = event.target;
-					if (editor.isEditable && typeof getPos === "function") {
-						editor.chain().focus(void 0, {
-							scrollIntoView: false
-						}).command(({
-							tr
-						}) => {
-							const position = getPos();
-							if (typeof position !== "number") {
-								return false;
-							}
-							const currentNode = tr.doc.nodeAt(position);
-							tr.setNodeMarkup(position, void 0, {
-								...(currentNode == null ? void 0 : currentNode.attrs),
-								checked
-							});
-							return true;
-						}).run();
-					}
+					if (editor.isEditable && typeof getPos === "function") editor.chain().focus(void 0, {
+						scrollIntoView: false
+					}).command(({
+						tr
+					}) => {
+						const position = getPos();
+						if (typeof position !== "number") return false;
+						const currentNode = tr.doc.nodeAt(position);
+						tr.setNodeMarkup(position, void 0, {
+							...(currentNode === null || currentNode === void 0 ? void 0 : currentNode.attrs),
+							checked
+						});
+						return true;
+					}).run();
 					if (!editor.isEditable && this.options.onReadOnlyChecked) {
-						if (!this.options.onReadOnlyChecked(node, checked)) {
-							checkbox.checked = !checkbox.checked;
-						}
+						if (!this.options.onReadOnlyChecked(node, checked)) checkbox.checked = !checkbox.checked;
 					}
 				});
 				Object.entries(this.options.HTMLAttributes).forEach(([key, value]) => {
@@ -45430,9 +47335,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					dom: listItem,
 					contentDOM: content,
 					update: updatedNode => {
-						if (updatedNode.type !== this.type) {
-							return false;
-						}
+						if (updatedNode.type !== this.type) return false;
 						listItem.dataset.checked = updatedNode.attrs.checked;
 						checkbox.checked = updatedNode.attrs.checked;
 						updateA11Y(updatedNode);
@@ -45442,23 +47345,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 						const staticAttrs = this.options.HTMLAttributes;
 						prevRenderedAttributeKeys.forEach(key => {
 							if (!newKeys.has(key)) {
-								if (key in staticAttrs) {
-									listItem.setAttribute(key, staticAttrs[key]);
-								} else {
-									listItem.removeAttribute(key);
-								}
+								if (key in staticAttrs) listItem.setAttribute(key, staticAttrs[key]);else listItem.removeAttribute(key);
 							}
 						});
 						Object.entries(newHTMLAttributes).forEach(([key, value]) => {
 							if (value === null || value === void 0) {
-								if (key in staticAttrs) {
-									listItem.setAttribute(key, staticAttrs[key]);
-								} else {
-									listItem.removeAttribute(key);
-								}
-							} else {
-								listItem.setAttribute(key, value);
-							}
+								if (key in staticAttrs) listItem.setAttribute(key, staticAttrs[key]);else listItem.removeAttribute(key);
+							} else listItem.setAttribute(key, value);
 						});
 						prevRenderedAttributeKeys = newKeys;
 						return true;
@@ -45476,7 +47369,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			})];
 		}
 	});
-	var TaskList = Node3.create({
+	//#endregion
+	//#region src/task-list/task-list.ts
+	/**
+	* This extension allows you to create task lists.
+	* @see https://www.tiptap.dev/api/nodes/task-list
+	*/
+	const TaskList = Node$1.create({
 		name: "taskList",
 		addOptions() {
 			return {
@@ -45505,17 +47404,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return h.createNode("taskList", {}, h.parseChildren(token.items || []));
 		},
 		renderMarkdown: (node, h) => {
-			if (!node.content) {
-				return "";
-			}
+			if (!node.content) return "";
 			return h.renderChildren(node.content, "\n");
 		},
 		markdownTokenizer: {
 			name: "taskList",
 			level: "block",
 			start(src) {
-				var _a;
-				const index = (_a = src.match(/^\s*[-+*]\s+\[([ xX])\]\s+/)) == null ? void 0 : _a.index;
+				var _src$match;
+				const index = (_src$match = src.match(/^\s*[-+*]\s+\[([ xX])\]\s+/)) === null || _src$match === void 0 ? void 0 : _src$match.index;
 				return index !== void 0 ? index : -1;
 			},
 			tokenize(src, tokens, lexer) {
@@ -45537,15 +47434,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 							tokens: lexer.inlineTokens(data.mainContent),
 							nestedTokens
 						}),
-						// Allow recursive nesting
 						customNestedParser: parseTaskListContent
 					}, lexer);
 					if (nestedResult) {
-						return [{
+						const taskListToken = {
 							type: "taskList",
 							raw: nestedResult.raw,
 							items: nestedResult.items
-						}];
+						};
+						const remainder = content.slice(nestedResult.raw.length);
+						if (remainder.trim()) return [taskListToken, ...lexer.blockTokens(remainder)];
+						return [taskListToken];
 					}
 					return lexer.blockTokens(content);
 				};
@@ -45566,12 +47465,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 						tokens: lexer.inlineTokens(data.mainContent),
 						nestedTokens
 					}),
-					// Use the recursive parser for nested content
 					customNestedParser: parseTaskListContent
 				}, lexer);
-				if (!result) {
-					return void 0;
-				}
+				if (!result) return;
 				return {
 					type: "taskList",
 					raw: result.raw,
@@ -45597,36 +47493,33 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-
-	// src/kit/index.ts
+	//#endregion
+	//#region src/kit/index.ts
+	/**
+	* The table kit is a collection of table editor extensions.
+	*
+	* It’s a good starting point for building your own table in Tiptap.
+	*/
 	Extension.create({
 		name: "listKit",
 		addExtensions() {
 			const extensions = [];
-			if (this.options.bulletList !== false) {
-				extensions.push(BulletList.configure(this.options.bulletList));
-			}
-			if (this.options.listItem !== false) {
-				extensions.push(ListItem.configure(this.options.listItem));
-			}
-			if (this.options.listKeymap !== false) {
-				extensions.push(ListKeymap.configure(this.options.listKeymap));
-			}
-			if (this.options.orderedList !== false) {
-				extensions.push(OrderedList.configure(this.options.orderedList));
-			}
-			if (this.options.taskItem !== false) {
-				extensions.push(TaskItem.configure(this.options.taskItem));
-			}
-			if (this.options.taskList !== false) {
-				extensions.push(TaskList.configure(this.options.taskList));
-			}
+			if (this.options.bulletList !== false) extensions.push(BulletList.configure(this.options.bulletList));
+			if (this.options.listItem !== false) extensions.push(ListItem.configure(this.options.listItem));
+			if (this.options.listKeymap !== false) extensions.push(ListKeymap.configure(this.options.listKeymap));
+			if (this.options.orderedList !== false) extensions.push(OrderedList.configure(this.options.orderedList));
+			if (this.options.taskItem !== false) extensions.push(TaskItem.configure(this.options.taskItem));
+			if (this.options.taskList !== false) extensions.push(TaskList.configure(this.options.taskList));
 			return extensions;
 		}
 	});
 
-	// src/horizontal-rule.ts
-	var HorizontalRule = Node3.create({
+	//#region src/horizontal-rule.ts
+	/**
+	* This extension allows you to insert horizontal rules.
+	* @see https://www.tiptap.dev/api/nodes/horizontal-rule
+	*/
+	const HorizontalRule = Node$1.create({
 		name: "horizontalRule",
 		addOptions() {
 			return {
@@ -45658,9 +47551,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					chain,
 					state
 				}) => {
-					if (!canInsertNode(state, state.schema.nodes[this.name])) {
-						return false;
-					}
+					if (!canInsertNode(state, state.schema.nodes[this.name])) return false;
 					const {
 						selection
 					} = state;
@@ -45668,15 +47559,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 						$to: $originTo
 					} = selection;
 					const currentChain = chain();
-					if (isNodeSelection(selection)) {
-						currentChain.insertContentAt($originTo.pos, {
-							type: this.name
-						});
-					} else {
-						currentChain.insertContent({
-							type: this.name
-						});
-					}
+					if (isNodeSelection(selection)) currentChain.insertContentAt($originTo.pos, {
+						type: this.name
+					});else currentChain.insertContent({
+						type: this.name
+					});
 					return currentChain.command(({
 						state: chainState,
 						tr,
@@ -45688,16 +47575,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 							} = tr.selection;
 							const posAfter = $to.end();
 							if ($to.nodeAfter) {
-								if ($to.nodeAfter.isTextblock) {
-									tr.setSelection(TextSelection.create(tr.doc, $to.pos + 1));
-								} else if ($to.nodeAfter.isBlock) {
-									tr.setSelection(NodeSelection.create(tr.doc, $to.pos));
-								} else {
-									tr.setSelection(TextSelection.create(tr.doc, $to.pos));
-								}
+								if ($to.nodeAfter.isTextblock) tr.setSelection(TextSelection.create(tr.doc, $to.pos + 1));else if ($to.nodeAfter.isBlock) tr.setSelection(NodeSelection.create(tr.doc, $to.pos));else tr.setSelection(TextSelection.create(tr.doc, $to.pos));
 							} else {
 								const nodeType = chainState.schema.nodes[this.options.nextNodeType] || $to.parent.type.contentMatch.defaultType;
-								const node = nodeType == null ? void 0 : nodeType.create();
+								const node = nodeType === null || nodeType === void 0 ? void 0 : nodeType.create();
 								if (node) {
 									tr.insert(posAfter, node);
 									tr.setSelection(TextSelection.create(tr.doc, posAfter + 1));
@@ -45718,10 +47599,20 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	// src/highlight.ts
-	var inputRegex$1 = /(?:^|\s)(==(?!\s+==)((?:[^=]+))==(?!\s+==))$/;
-	var pasteRegex = /(?:^|\s)(==(?!\s+==)((?:[^=]+))==(?!\s+==))/g;
-	var Highlight = Mark.create({
+	//#region src/highlight.ts
+	/**
+	* Matches a highlight to a ==highlight== on input.
+	*/
+	const inputRegex$1 = /(?:^|\s)(==(?!\s+==)((?:[^=]+))==(?!\s+==))$/;
+	/**
+	* Matches a highlight to a ==highlight== on paste.
+	*/
+	const pasteRegex = /(?:^|\s)(==(?!\s+==)((?:[^=]+))==(?!\s+==))/g;
+	/**
+	* This extension allows you to highlight text.
+	* @see https://www.tiptap.dev/api/marks/highlight
+	*/
+	const Highlight = Mark.create({
 		name: "highlight",
 		addOptions() {
 			return {
@@ -45730,17 +47621,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		},
 		addAttributes() {
-			if (!this.options.multicolor) {
-				return {};
-			}
+			if (!this.options.multicolor) return {};
 			return {
 				color: {
 					default: null,
-					parseHTML: element => element.getAttribute("data-color") || element.style.backgroundColor,
+					parseHTML: element => element.getAttribute("data-color") || getStyleProperty(element, "background-color") || element.style.backgroundColor,
 					renderHTML: attributes => {
-						if (!attributes.color) {
-							return {};
-						}
+						if (!attributes.color) return {};
 						return {
 							"data-color": attributes.color,
 							style: `background-color: ${attributes.color}; color: inherit`
@@ -45770,8 +47657,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			level: "inline",
 			start: src => src.indexOf("=="),
 			tokenize(src, _, h) {
-				const rule = /^(==)([^=]+)(==)/;
-				const match = rule.exec(src);
+				const match = /^(==)([^=]+)(==)/.exec(src);
 				if (match) {
 					const innerContent = match[2].trim();
 					const children = h.inlineTokens(innerContent);
@@ -45822,8 +47708,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	// src/subscript.ts
-	var Subscript = Mark.create({
+	//#region src/subscript.ts
+	/**
+	* This extension allows you to create subscript text.
+	* @see https://www.tiptap.dev/api/marks/subscript
+	*/
+	const Subscript = Mark.create({
 		name: "subscript",
 		addOptions() {
 			return {
@@ -45836,9 +47726,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}, {
 				style: "vertical-align",
 				getAttrs(value) {
-					if (value !== "sub") {
-						return false;
-					}
+					if (value !== "sub") return false;
 					return null;
 				}
 			}];
@@ -45874,8 +47762,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	// src/superscript.ts
-	var Superscript = Mark.create({
+	//#region src/superscript.ts
+	/**
+	* This extension allows you to create superscript text.
+	* @see https://www.tiptap.dev/api/marks/superscript
+	*/
+	const Superscript = Mark.create({
 		name: "superscript",
 		addOptions() {
 			return {
@@ -45888,9 +47780,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}, {
 				style: "vertical-align",
 				getAttrs(value) {
-					if (value !== "super") {
-						return false;
-					}
+					if (value !== "super") return false;
 					return null;
 				}
 			}];
@@ -45926,134 +47816,134 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	// src/typography.ts
-	var emDash = override => textInputRule({
+	//#region src/typography.ts
+	const emDash = override => textInputRule({
 		find: /--$/,
-		replace: override != null ? override : "\u2014"
+		replace: override !== null && override !== void 0 ? override : "—"
 	});
-	var ellipsis = override => textInputRule({
+	const ellipsis = override => textInputRule({
 		find: /\.\.\.$/,
-		replace: override != null ? override : "\u2026"
+		replace: override !== null && override !== void 0 ? override : "…"
 	});
-	var openDoubleQuote = override => textInputRule({
+	const openDoubleQuote = override => textInputRule({
 		find: /(?:^|[\s{[(<'"\u2018\u201C])(")$/,
-		replace: override != null ? override : "\u201C"
+		replace: override !== null && override !== void 0 ? override : "“"
 	});
-	var closeDoubleQuote = override => textInputRule({
+	const closeDoubleQuote = override => textInputRule({
 		find: /"$/,
-		replace: override != null ? override : "\u201D"
+		replace: override !== null && override !== void 0 ? override : "”"
 	});
-	var openSingleQuote = override => textInputRule({
+	const openSingleQuote = override => textInputRule({
 		find: /(?:^|[\s{[(<'"\u2018\u201C])(')$/,
-		replace: override != null ? override : "\u2018"
+		replace: override !== null && override !== void 0 ? override : "‘"
 	});
-	var closeSingleQuote = override => textInputRule({
+	const closeSingleQuote = override => textInputRule({
 		find: /'$/,
-		replace: override != null ? override : "\u2019"
+		replace: override !== null && override !== void 0 ? override : "’"
 	});
-	var leftArrow = override => textInputRule({
+	const leftArrow = override => textInputRule({
 		find: /<-$/,
-		replace: override != null ? override : "\u2190"
+		replace: override !== null && override !== void 0 ? override : "←"
 	});
-	var rightArrow = override => textInputRule({
+	const rightArrow = override => textInputRule({
 		find: /->$/,
-		replace: override != null ? override : "\u2192"
+		replace: override !== null && override !== void 0 ? override : "→"
 	});
-	var copyright = override => textInputRule({
+	const copyright = override => textInputRule({
 		find: /\(c\)$/,
-		replace: override != null ? override : "\xA9"
+		replace: override !== null && override !== void 0 ? override : "©"
 	});
-	var trademark = override => textInputRule({
+	const trademark = override => textInputRule({
 		find: /\(tm\)$/,
-		replace: override != null ? override : "\u2122"
+		replace: override !== null && override !== void 0 ? override : "™"
 	});
-	var servicemark = override => textInputRule({
+	const servicemark = override => textInputRule({
 		find: /\(sm\)$/,
-		replace: override != null ? override : "\u2120"
+		replace: override !== null && override !== void 0 ? override : "℠"
 	});
-	var registeredTrademark = override => textInputRule({
+	const registeredTrademark = override => textInputRule({
 		find: /\(r\)$/,
-		replace: override != null ? override : "\xAE"
+		replace: override !== null && override !== void 0 ? override : "®"
 	});
-	var oneHalf = override => textInputRule({
+	const oneHalf = override => textInputRule({
 		find: /(?:^|\s)(1\/2)\s$/,
-		replace: override != null ? override : "\xBD"
+		replace: override !== null && override !== void 0 ? override : "½"
 	});
-	var plusMinus = override => textInputRule({
+	const plusMinus = override => textInputRule({
 		find: /\+\/-$/,
-		replace: override != null ? override : "\xB1"
+		replace: override !== null && override !== void 0 ? override : "±"
 	});
-	var notEqual = override => textInputRule({
+	const notEqual = override => textInputRule({
 		find: /!=$/,
-		replace: override != null ? override : "\u2260"
+		replace: override !== null && override !== void 0 ? override : "≠"
 	});
-	var laquo = override => textInputRule({
+	const laquo = override => textInputRule({
 		find: /<<$/,
-		replace: override != null ? override : "\xAB"
+		replace: override !== null && override !== void 0 ? override : "«"
 	});
-	var raquo = override => textInputRule({
+	const raquo = override => textInputRule({
 		find: />>$/,
-		replace: override != null ? override : "\xBB"
+		replace: override !== null && override !== void 0 ? override : "»"
 	});
-	var multiplication = override => textInputRule({
+	const multiplication = override => textInputRule({
 		find: /\d+\s?([*x])\s?\d+$/,
-		replace: override != null ? override : "\xD7"
+		replace: override !== null && override !== void 0 ? override : "×"
 	});
-	var superscriptTwo = override => textInputRule({
+	const superscriptTwo = override => textInputRule({
 		find: /\^2$/,
-		replace: override != null ? override : "\xB2"
+		replace: override !== null && override !== void 0 ? override : "²"
 	});
-	var superscriptThree = override => textInputRule({
+	const superscriptThree = override => textInputRule({
 		find: /\^3$/,
-		replace: override != null ? override : "\xB3"
+		replace: override !== null && override !== void 0 ? override : "³"
 	});
-	var oneQuarter = override => textInputRule({
+	const oneQuarter = override => textInputRule({
 		find: /(?:^|\s)(1\/4)\s$/,
-		replace: override != null ? override : "\xBC"
+		replace: override !== null && override !== void 0 ? override : "¼"
 	});
-	var threeQuarters = override => textInputRule({
+	const threeQuarters = override => textInputRule({
 		find: /(?:^|\s)(3\/4)\s$/,
-		replace: override != null ? override : "\xBE"
+		replace: override !== null && override !== void 0 ? override : "¾"
 	});
-	var Typography = Extension.create({
+	/**
+	* This extension allows you to add typography replacements for specific characters.
+	* @see https://www.tiptap.dev/api/extensions/typography
+	*/
+	const Typography = Extension.create({
 		name: "typography",
 		addOptions() {
 			return {
-				closeDoubleQuote: "\u201D",
-				closeSingleQuote: "\u2019",
-				copyright: "\xA9",
-				ellipsis: "\u2026",
-				emDash: "\u2014",
-				laquo: "\xAB",
-				leftArrow: "\u2190",
-				multiplication: "\xD7",
-				notEqual: "\u2260",
-				oneHalf: "\xBD",
-				oneQuarter: "\xBC",
-				openDoubleQuote: "\u201C",
-				openSingleQuote: "\u2018",
-				plusMinus: "\xB1",
-				raquo: "\xBB",
-				registeredTrademark: "\xAE",
-				rightArrow: "\u2192",
-				servicemark: "\u2120",
-				superscriptThree: "\xB3",
-				superscriptTwo: "\xB2",
-				threeQuarters: "\xBE",
-				trademark: "\u2122"
+				closeDoubleQuote: "”",
+				closeSingleQuote: "’",
+				copyright: "©",
+				ellipsis: "…",
+				emDash: "—",
+				laquo: "«",
+				leftArrow: "←",
+				multiplication: "×",
+				notEqual: "≠",
+				oneHalf: "½",
+				oneQuarter: "¼",
+				openDoubleQuote: "“",
+				openSingleQuote: "‘",
+				plusMinus: "±",
+				raquo: "»",
+				registeredTrademark: "®",
+				rightArrow: "→",
+				servicemark: "℠",
+				superscriptThree: "³",
+				superscriptTwo: "²",
+				threeQuarters: "¾",
+				trademark: "™"
 			};
 		},
 		addInputRules() {
-			var _a, _b;
+			var _this$options$doubleQ, _this$options$singleQ;
 			const rules = [];
-			if (this.options.emDash !== false) {
-				rules.push(emDash(this.options.emDash));
-			}
-			if (this.options.ellipsis !== false) {
-				rules.push(ellipsis(this.options.ellipsis));
-			}
+			if (this.options.emDash !== false) rules.push(emDash(this.options.emDash));
+			if (this.options.ellipsis !== false) rules.push(ellipsis(this.options.ellipsis));
 			const isRTL = this.editor.options.textDirection === "rtl";
-			if ((_a = this.options.doubleQuotes) == null ? void 0 : _a.rtl) {
+			if ((_this$options$doubleQ = this.options.doubleQuotes) === null || _this$options$doubleQ === void 0 ? void 0 : _this$options$doubleQ.rtl) {
 				const {
 					open,
 					close
@@ -46061,17 +47951,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 				rules.push(openDoubleQuote(open));
 				rules.push(closeDoubleQuote(close));
 			} else if (isRTL) {
-				rules.push(openDoubleQuote("\u201D"));
-				rules.push(closeDoubleQuote("\u201C"));
+				rules.push(openDoubleQuote("”"));
+				rules.push(closeDoubleQuote("“"));
 			} else {
-				if (this.options.openDoubleQuote !== false) {
-					rules.push(openDoubleQuote(this.options.openDoubleQuote));
-				}
-				if (this.options.closeDoubleQuote !== false) {
-					rules.push(closeDoubleQuote(this.options.closeDoubleQuote));
-				}
+				if (this.options.openDoubleQuote !== false) rules.push(openDoubleQuote(this.options.openDoubleQuote));
+				if (this.options.closeDoubleQuote !== false) rules.push(closeDoubleQuote(this.options.closeDoubleQuote));
 			}
-			if ((_b = this.options.singleQuotes) == null ? void 0 : _b.rtl) {
+			if ((_this$options$singleQ = this.options.singleQuotes) === null || _this$options$singleQ === void 0 ? void 0 : _this$options$singleQ.rtl) {
 				const {
 					open,
 					close
@@ -46079,70 +47965,38 @@ ${nextLine.slice(indentLevel + 2)}`;
 				rules.push(openSingleQuote(open));
 				rules.push(closeSingleQuote(close));
 			} else if (isRTL) {
-				rules.push(openSingleQuote("\u2019"));
-				rules.push(closeSingleQuote("\u2018"));
+				rules.push(openSingleQuote("’"));
+				rules.push(closeSingleQuote("‘"));
 			} else {
-				if (this.options.openSingleQuote !== false) {
-					rules.push(openSingleQuote(this.options.openSingleQuote));
-				}
-				if (this.options.closeSingleQuote !== false) {
-					rules.push(closeSingleQuote(this.options.closeSingleQuote));
-				}
+				if (this.options.openSingleQuote !== false) rules.push(openSingleQuote(this.options.openSingleQuote));
+				if (this.options.closeSingleQuote !== false) rules.push(closeSingleQuote(this.options.closeSingleQuote));
 			}
-			if (this.options.leftArrow !== false) {
-				rules.push(leftArrow(this.options.leftArrow));
-			}
-			if (this.options.rightArrow !== false) {
-				rules.push(rightArrow(this.options.rightArrow));
-			}
-			if (this.options.copyright !== false) {
-				rules.push(copyright(this.options.copyright));
-			}
-			if (this.options.trademark !== false) {
-				rules.push(trademark(this.options.trademark));
-			}
-			if (this.options.servicemark !== false) {
-				rules.push(servicemark(this.options.servicemark));
-			}
-			if (this.options.registeredTrademark !== false) {
-				rules.push(registeredTrademark(this.options.registeredTrademark));
-			}
-			if (this.options.oneHalf !== false) {
-				rules.push(oneHalf(this.options.oneHalf));
-			}
-			if (this.options.plusMinus !== false) {
-				rules.push(plusMinus(this.options.plusMinus));
-			}
-			if (this.options.notEqual !== false) {
-				rules.push(notEqual(this.options.notEqual));
-			}
-			if (this.options.laquo !== false) {
-				rules.push(laquo(this.options.laquo));
-			}
-			if (this.options.raquo !== false) {
-				rules.push(raquo(this.options.raquo));
-			}
-			if (this.options.multiplication !== false) {
-				rules.push(multiplication(this.options.multiplication));
-			}
-			if (this.options.superscriptTwo !== false) {
-				rules.push(superscriptTwo(this.options.superscriptTwo));
-			}
-			if (this.options.superscriptThree !== false) {
-				rules.push(superscriptThree(this.options.superscriptThree));
-			}
-			if (this.options.oneQuarter !== false) {
-				rules.push(oneQuarter(this.options.oneQuarter));
-			}
-			if (this.options.threeQuarters !== false) {
-				rules.push(threeQuarters(this.options.threeQuarters));
-			}
+			if (this.options.leftArrow !== false) rules.push(leftArrow(this.options.leftArrow));
+			if (this.options.rightArrow !== false) rules.push(rightArrow(this.options.rightArrow));
+			if (this.options.copyright !== false) rules.push(copyright(this.options.copyright));
+			if (this.options.trademark !== false) rules.push(trademark(this.options.trademark));
+			if (this.options.servicemark !== false) rules.push(servicemark(this.options.servicemark));
+			if (this.options.registeredTrademark !== false) rules.push(registeredTrademark(this.options.registeredTrademark));
+			if (this.options.oneHalf !== false) rules.push(oneHalf(this.options.oneHalf));
+			if (this.options.plusMinus !== false) rules.push(plusMinus(this.options.plusMinus));
+			if (this.options.notEqual !== false) rules.push(notEqual(this.options.notEqual));
+			if (this.options.laquo !== false) rules.push(laquo(this.options.laquo));
+			if (this.options.raquo !== false) rules.push(raquo(this.options.raquo));
+			if (this.options.multiplication !== false) rules.push(multiplication(this.options.multiplication));
+			if (this.options.superscriptTwo !== false) rules.push(superscriptTwo(this.options.superscriptTwo));
+			if (this.options.superscriptThree !== false) rules.push(superscriptThree(this.options.superscriptThree));
+			if (this.options.oneQuarter !== false) rules.push(oneQuarter(this.options.oneQuarter));
+			if (this.options.threeQuarters !== false) rules.push(threeQuarters(this.options.threeQuarters));
 			return rules;
 		}
 	});
 
-	// src/text-align.ts
-	var TextAlign = Extension.create({
+	//#region src/text-align.ts
+	/**
+	* This extension allows you to align text.
+	* @see https://www.tiptap.dev/api/extensions/text-align
+	*/
+	const TextAlign = Extension.create({
 		name: "textAlign",
 		addOptions() {
 			return {
@@ -46162,9 +48016,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 							return this.options.alignments.includes(alignment) ? alignment : this.options.defaultAlignment;
 						},
 						renderHTML: attributes => {
-							if (!attributes.textAlign) {
-								return {};
-							}
+							if (!attributes.textAlign) return {};
 							return {
 								style: `text-align: ${attributes.textAlign}`
 							};
@@ -46178,9 +48030,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				setTextAlign: alignment => ({
 					commands
 				}) => {
-					if (!this.options.alignments.includes(alignment)) {
-						return false;
-					}
+					if (!this.options.alignments.includes(alignment)) return false;
 					return this.options.types.map(type => commands.updateAttributes(type, {
 						textAlign: alignment
 					})).some(response => response);
@@ -46194,14 +48044,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 					editor,
 					commands
 				}) => {
-					if (!this.options.alignments.includes(alignment)) {
-						return false;
-					}
+					if (!this.options.alignments.includes(alignment)) return false;
 					if (editor.isActive({
 						textAlign: alignment
-					})) {
-						return commands.unsetTextAlign();
-					}
+					})) return commands.unsetTextAlign();
 					return commands.setTextAlign(alignment);
 				}
 			};
@@ -46216,38 +48062,37 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	// src/text-style/index.ts
-	var MAX_FIND_CHILD_SPAN_DEPTH = 20;
-	var findChildSpans = (element, depth = 0) => {
+	//#region src/text-style/index.ts
+	const MAX_FIND_CHILD_SPAN_DEPTH = 20;
+	/**
+	* Returns all next child spans, either direct children or nested deeper
+	* but won't traverse deeper into child spans found, will only go MAX_FIND_CHILD_SPAN_DEPTH levels deep (default: 20)
+	*/
+	const findChildSpans = (element, depth = 0) => {
 		const childSpans = [];
-		if (!element.children.length || depth > MAX_FIND_CHILD_SPAN_DEPTH) {
-			return childSpans;
-		}
+		if (!element.children.length || depth > MAX_FIND_CHILD_SPAN_DEPTH) return childSpans;
 		Array.from(element.children).forEach(child => {
-			if (child.tagName === "SPAN") {
-				childSpans.push(child);
-			} else if (child.children.length) {
-				childSpans.push(...findChildSpans(child, depth + 1));
-			}
+			if (child.tagName === "SPAN") childSpans.push(child);else if (child.children.length) childSpans.push(...findChildSpans(child, depth + 1));
 		});
 		return childSpans;
 	};
-	var mergeNestedSpanStyles = element => {
-		if (!element.children.length) {
-			return;
-		}
+	const mergeNestedSpanStyles = element => {
+		if (!element.children.length) return;
 		const childSpans = findChildSpans(element);
-		if (!childSpans) {
-			return;
-		}
+		if (!childSpans) return;
 		childSpans.forEach(childSpan => {
-			var _a, _b;
+			var _childSpan$parentElem;
 			const childStyle = childSpan.getAttribute("style");
-			const closestParentSpanStyleOfChild = (_b = (_a = childSpan.parentElement) == null ? void 0 : _a.closest("span")) == null ? void 0 : _b.getAttribute("style");
+			const closestParentSpanStyleOfChild = (_childSpan$parentElem = childSpan.parentElement) === null || _childSpan$parentElem === void 0 || (_childSpan$parentElem = _childSpan$parentElem.closest("span")) === null || _childSpan$parentElem === void 0 ? void 0 : _childSpan$parentElem.getAttribute("style");
 			childSpan.setAttribute("style", `${closestParentSpanStyleOfChild};${childStyle}`);
 		});
 	};
-	var TextStyle = Mark.create({
+	/**
+	* This extension allows you to create text styles. It is required by default
+	* for the `text-color` and `font-family` extensions.
+	* @see https://www.tiptap.dev/api/marks/text-style
+	*/
+	const TextStyle = Mark.create({
 		name: "textStyle",
 		priority: 101,
 		addOptions() {
@@ -46261,13 +48106,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				tag: "span",
 				consuming: false,
 				getAttrs: element => {
-					const hasStyles = element.hasAttribute("style");
-					if (!hasStyles) {
-						return false;
-					}
-					if (this.options.mergeNestedSpanStyles) {
-						mergeNestedSpanStyles(element);
-					}
+					if (!element.hasAttribute("style")) return false;
+					if (this.options.mergeNestedSpanStyles) mergeNestedSpanStyles(element);
 					return {};
 				}
 			}];
@@ -46291,19 +48131,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 						selection
 					} = tr;
 					tr.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-						if (node.isTextblock) {
-							return true;
-						}
-						if (!node.marks.filter(mark => mark.type === this.type).some(mark => Object.values(mark.attrs).some(value => !!value))) {
-							tr.removeMark(pos, pos + node.nodeSize, this.type);
-						}
+						if (!node.isInline) return true;
+						if (!node.marks.filter(mark => mark.type === this.type).some(mark => Object.values(mark.attrs).some(value => !!value))) tr.removeMark(pos, pos + node.nodeSize, this.type);
 					});
 					return true;
 				}
 			};
 		}
 	});
-	var BackgroundColor = Extension.create({
+	//#endregion
+	//#region src/background-color/background-color.ts
+	/**
+	* This extension allows you to color your text.
+	* @see https://tiptap.dev/api/extensions/background-color
+	*/
+	const BackgroundColor = Extension.create({
 		name: "backgroundColor",
 		addOptions() {
 			return {
@@ -46317,27 +48159,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 					backgroundColor: {
 						default: null,
 						parseHTML: element => {
-							var _a;
-							const styleAttr = element.getAttribute("style");
-							if (styleAttr) {
-								const decls = styleAttr.split(";").map(s => s.trim()).filter(Boolean);
-								for (let i = decls.length - 1; i >= 0; i -= 1) {
-									const parts = decls[i].split(":");
-									if (parts.length >= 2) {
-										const prop = parts[0].trim().toLowerCase();
-										const val = parts.slice(1).join(":").trim();
-										if (prop === "background-color") {
-											return val.replace(/['"]+/g, "");
-										}
-									}
-								}
-							}
-							return (_a = element.style.backgroundColor) == null ? void 0 : _a.replace(/['"]+/g, "");
+							var _getStyleProperty;
+							const value = (_getStyleProperty = getStyleProperty(element, "background-color")) !== null && _getStyleProperty !== void 0 ? _getStyleProperty : element.style.backgroundColor;
+							return value === null || value === void 0 ? void 0 : value.replace(/['"]+/g, "");
 						},
 						renderHTML: attributes => {
-							if (!attributes.backgroundColor) {
-								return {};
-							}
+							if (!attributes.backgroundColor) return {};
 							return {
 								style: `background-color: ${attributes.backgroundColor}`
 							};
@@ -46365,7 +48192,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-	var Color = Extension.create({
+	//#endregion
+	//#region src/color/color.ts
+	/**
+	* This extension allows you to color your text.
+	* @see https://tiptap.dev/api/extensions/color
+	*/
+	const Color = Extension.create({
 		name: "color",
 		addOptions() {
 			return {
@@ -46379,27 +48212,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 					color: {
 						default: null,
 						parseHTML: element => {
-							var _a;
-							const styleAttr = element.getAttribute("style");
-							if (styleAttr) {
-								const decls = styleAttr.split(";").map(s => s.trim()).filter(Boolean);
-								for (let i = decls.length - 1; i >= 0; i -= 1) {
-									const parts = decls[i].split(":");
-									if (parts.length >= 2) {
-										const prop = parts[0].trim().toLowerCase();
-										const val = parts.slice(1).join(":").trim();
-										if (prop === "color") {
-											return val.replace(/['"]+/g, "");
-										}
-									}
-								}
-							}
-							return (_a = element.style.color) == null ? void 0 : _a.replace(/['"]+/g, "");
+							var _getStyleProperty;
+							const value = (_getStyleProperty = getStyleProperty(element, "color")) !== null && _getStyleProperty !== void 0 ? _getStyleProperty : element.style.color;
+							return value === null || value === void 0 ? void 0 : value.replace(/['"]+/g, "");
 						},
 						renderHTML: attributes => {
-							if (!attributes.color) {
-								return {};
-							}
+							if (!attributes.color) return {};
 							return {
 								style: `color: ${attributes.color}`
 							};
@@ -46427,7 +48245,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-	var FontFamily = Extension.create({
+	//#endregion
+	//#region src/font-family/font-family.ts
+	/**
+	* This extension allows you to set a font family for text.
+	* @see https://www.tiptap.dev/api/extensions/font-family
+	*/
+	const FontFamily = Extension.create({
 		name: "fontFamily",
 		addOptions() {
 			return {
@@ -46440,11 +48264,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				attributes: {
 					fontFamily: {
 						default: null,
-						parseHTML: element => element.style.fontFamily,
+						parseHTML: element => {
+							var _getStyleProperty;
+							return (_getStyleProperty = getStyleProperty(element, "font-family")) !== null && _getStyleProperty !== void 0 ? _getStyleProperty : element.style.fontFamily;
+						},
 						renderHTML: attributes => {
-							if (!attributes.fontFamily) {
-								return {};
-							}
+							if (!attributes.fontFamily) return {};
 							return {
 								style: `font-family: ${attributes.fontFamily}`
 							};
@@ -46472,7 +48297,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-	var FontSize = Extension.create({
+	//#endregion
+	//#region src/font-size/font-size.ts
+	/**
+	* This extension allows you to set a font size for text.
+	* @see https://www.tiptap.dev/api/extensions/font-size
+	*/
+	const FontSize = Extension.create({
 		name: "fontSize",
 		addOptions() {
 			return {
@@ -46485,11 +48316,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				attributes: {
 					fontSize: {
 						default: null,
-						parseHTML: element => element.style.fontSize,
+						parseHTML: element => {
+							var _getStyleProperty;
+							return (_getStyleProperty = getStyleProperty(element, "font-size")) !== null && _getStyleProperty !== void 0 ? _getStyleProperty : element.style.fontSize;
+						},
 						renderHTML: attributes => {
-							if (!attributes.fontSize) {
-								return {};
-							}
+							if (!attributes.fontSize) return {};
 							return {
 								style: `font-size: ${attributes.fontSize}`
 							};
@@ -46517,7 +48349,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-	var LineHeight = Extension.create({
+	//#endregion
+	//#region src/line-height/line-height.ts
+	/**
+	* This extension allows you to set the line-height for text.
+	* @see https://www.tiptap.dev/api/extensions/line-height
+	*/
+	const LineHeight = Extension.create({
 		name: "lineHeight",
 		addOptions() {
 			return {
@@ -46530,11 +48368,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				attributes: {
 					lineHeight: {
 						default: null,
-						parseHTML: element => element.style.lineHeight,
+						parseHTML: element => {
+							var _getStyleProperty;
+							return (_getStyleProperty = getStyleProperty(element, "line-height")) !== null && _getStyleProperty !== void 0 ? _getStyleProperty : element.style.lineHeight;
+						},
 						renderHTML: attributes => {
-							if (!attributes.lineHeight) {
-								return {};
-							}
+							if (!attributes.lineHeight) return {};
 							return {
 								style: `line-height: ${attributes.lineHeight}`
 							};
@@ -46562,28 +48401,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
+	//#endregion
+	//#region src/text-style-kit/index.ts
+	/**
+	* The table kit is a collection of table editor extensions.
+	*
+	* It’s a good starting point for building your own table in Tiptap.
+	*/
 	Extension.create({
 		name: "textStyleKit",
 		addExtensions() {
 			const extensions = [];
-			if (this.options.backgroundColor !== false) {
-				extensions.push(BackgroundColor.configure(this.options.backgroundColor));
-			}
-			if (this.options.color !== false) {
-				extensions.push(Color.configure(this.options.color));
-			}
-			if (this.options.fontFamily !== false) {
-				extensions.push(FontFamily.configure(this.options.fontFamily));
-			}
-			if (this.options.fontSize !== false) {
-				extensions.push(FontSize.configure(this.options.fontSize));
-			}
-			if (this.options.lineHeight !== false) {
-				extensions.push(LineHeight.configure(this.options.lineHeight));
-			}
-			if (this.options.textStyle !== false) {
-				extensions.push(TextStyle.configure(this.options.textStyle));
-			}
+			if (this.options.backgroundColor !== false) extensions.push(BackgroundColor.configure(this.options.backgroundColor));
+			if (this.options.color !== false) extensions.push(Color.configure(this.options.color));
+			if (this.options.fontFamily !== false) extensions.push(FontFamily.configure(this.options.fontFamily));
+			if (this.options.fontSize !== false) extensions.push(FontSize.configure(this.options.fontSize));
+			if (this.options.lineHeight !== false) extensions.push(LineHeight.configure(this.options.lineHeight));
+			if (this.options.textStyle !== false) extensions.push(TextStyle.configure(this.options.textStyle));
 			return extensions;
 		}
 	});
@@ -48324,39 +50158,55 @@ ${nextLine.slice(indentLevel + 2)}`;
 		return filtered;
 	}
 
-	// src/link.ts
-
-	// src/helpers/whitespace.ts
-	var UNICODE_WHITESPACE_PATTERN = "[\0- \xA0\u1680\u180E\u2000-\u2029\u205F\u3000]";
-	var UNICODE_WHITESPACE_REGEX = new RegExp(UNICODE_WHITESPACE_PATTERN);
-	var UNICODE_WHITESPACE_REGEX_END = new RegExp(`${UNICODE_WHITESPACE_PATTERN}$`);
-	var UNICODE_WHITESPACE_REGEX_GLOBAL = new RegExp(UNICODE_WHITESPACE_PATTERN, "g");
-
-	// src/helpers/autolink.ts
+	//#region src/helpers/whitespace.ts
+	const UNICODE_WHITESPACE_PATTERN = "[\0- \xA0 ᠎ -\u2029 　]";
+	const UNICODE_WHITESPACE_REGEX = new RegExp(UNICODE_WHITESPACE_PATTERN);
+	const UNICODE_WHITESPACE_REGEX_END = new RegExp(`${UNICODE_WHITESPACE_PATTERN}$`);
+	const UNICODE_WHITESPACE_REGEX_GLOBAL = new RegExp(UNICODE_WHITESPACE_PATTERN, "g");
+	//#endregion
+	//#region src/helpers/autolink.ts
+	/**
+	* Check if the provided tokens form a valid link structure, which can either be a single link token
+	* or a link token surrounded by parentheses or square brackets.
+	*
+	* This ensures that only complete and valid text is hyperlinked, preventing cases where a valid
+	* top-level domain (TLD) is immediately followed by an invalid character, like a number. For
+	* example, with the `find` method from Linkify, entering `example.com1` would result in
+	* `example.com` being linked and the trailing `1` left as plain text. By using the `tokenize`
+	* method, we can perform more comprehensive validation on the input text.
+	*/
 	function isValidLinkStructure(tokens) {
-		if (tokens.length === 1) {
-			return tokens[0].isLink;
-		}
-		if (tokens.length === 3 && tokens[1].isLink) {
-			return ["()", "[]"].includes(tokens[0].value + tokens[2].value);
-		}
+		if (tokens.length === 1) return tokens[0].isLink;
+		if (tokens.length === 3 && tokens[1].isLink) return ["()", "[]"].includes(tokens[0].value + tokens[2].value);
 		return false;
 	}
+	/**
+	* This plugin allows you to automatically add links to your editor.
+	* @param options The plugin options
+	* @returns The plugin instance
+	*/
 	function autolink(options) {
 		return new Plugin({
 			key: new PluginKey("autolink"),
 			appendTransaction: (transactions, oldState, newState) => {
+				/**
+				* Does the transaction change the document?
+				*/
 				const docChanges = transactions.some(transaction => transaction.docChanged) && !oldState.doc.eq(newState.doc);
+				/**
+				* Prevent autolink if the transaction is not a document change or if the transaction has the meta `preventAutolink`.
+				*/
 				const preventAutolink = transactions.some(transaction => transaction.getMeta("preventAutolink"));
-				if (!docChanges || preventAutolink) {
-					return;
-				}
+				/**
+				* Prevent autolink if the transaction is not a document change
+				* or if the transaction has the meta `preventAutolink`.
+				*/
+				if (!docChanges || preventAutolink) return;
 				const {
 					tr
 				} = newState;
 				const transform = combineTransactionSteps(oldState.doc, [...transactions]);
-				const changes = getChangedRanges(transform);
-				changes.forEach(({
+				getChangedRanges(transform).forEach(({
 					newRange
 				}) => {
 					const nodesInChangedRanges = findChildrenInRange(newState.doc, newRange, node => node.isTextblock);
@@ -48367,90 +50217,63 @@ ${nextLine.slice(indentLevel + 2)}`;
 						textBeforeWhitespace = newState.doc.textBetween(textBlock.pos, textBlock.pos + textBlock.node.nodeSize, void 0, " ");
 					} else if (nodesInChangedRanges.length) {
 						const endText = newState.doc.textBetween(newRange.from, newRange.to, " ", " ");
-						if (!UNICODE_WHITESPACE_REGEX_END.test(endText)) {
-							return;
-						}
+						if (!UNICODE_WHITESPACE_REGEX_END.test(endText)) return;
 						textBlock = nodesInChangedRanges[0];
 						textBeforeWhitespace = newState.doc.textBetween(textBlock.pos, newRange.to, void 0, " ");
 					}
 					if (textBlock && textBeforeWhitespace) {
 						const wordsBeforeWhitespace = textBeforeWhitespace.split(UNICODE_WHITESPACE_REGEX).filter(Boolean);
-						if (wordsBeforeWhitespace.length <= 0) {
-							return false;
-						}
+						if (wordsBeforeWhitespace.length <= 0) return false;
 						const lastWordBeforeSpace = wordsBeforeWhitespace[wordsBeforeWhitespace.length - 1];
 						const lastWordAndBlockOffset = textBlock.pos + textBeforeWhitespace.lastIndexOf(lastWordBeforeSpace);
-						if (!lastWordBeforeSpace) {
-							return false;
-						}
+						if (!lastWordBeforeSpace) return false;
 						const linksBeforeSpace = tokenize(lastWordBeforeSpace).map(t => t.toObject(options.defaultProtocol));
-						if (!isValidLinkStructure(linksBeforeSpace)) {
-							return false;
-						}
+						if (!isValidLinkStructure(linksBeforeSpace)) return false;
 						linksBeforeSpace.filter(link => link.isLink).map(link => ({
 							...link,
 							from: lastWordAndBlockOffset + link.start + 1,
 							to: lastWordAndBlockOffset + link.end + 1
 						})).filter(link => {
-							if (!newState.schema.marks.code) {
-								return true;
-							}
+							if (!newState.schema.marks.code) return true;
 							return !newState.doc.rangeHasMark(link.from, link.to, newState.schema.marks.code);
 						}).filter(link => options.validate(link.value)).filter(link => options.shouldAutoLink(link.value)).forEach(link => {
-							if (getMarksBetween(link.from, link.to, newState.doc).some(item => item.mark.type === options.type)) {
-								return;
-							}
+							if (getMarksBetween(link.from, link.to, newState.doc).some(item => item.mark.type === options.type)) return;
 							tr.addMark(link.from, link.to, options.type.create({
 								href: link.href
 							}));
 						});
 					}
 				});
-				if (!tr.steps.length) {
-					return;
-				}
+				if (!tr.steps.length) return;
 				return tr;
 			}
 		});
 	}
+	//#endregion
+	//#region src/helpers/clickHandler.ts
 	function clickHandler(options) {
 		return new Plugin({
 			key: new PluginKey("handleClickLink"),
 			props: {
 				handleClick: (view, pos, event) => {
-					var _a, _b;
-					if (event.button !== 0) {
-						return false;
-					}
-					if (!view.editable) {
-						return false;
-					}
+					if (event.button !== 0) return false;
+					if (!view.editable) return false;
 					let link = null;
-					if (event.target instanceof HTMLAnchorElement) {
-						link = event.target;
-					} else {
+					if (event.target instanceof HTMLAnchorElement) link = event.target;else {
 						const target = event.target;
-						if (!target) {
-							return false;
-						}
+						if (!target) return false;
 						const root = options.editor.view.dom;
 						link = target.closest("a");
-						if (link && !root.contains(link)) {
-							link = null;
-						}
+						if (link && !root.contains(link)) link = null;
 					}
-					if (!link) {
-						return false;
-					}
+					if (!link) return false;
 					let handled = false;
-					if (options.enableClickSelection) {
-						const commandResult = options.editor.commands.extendMarkRange(options.type.name);
-						handled = commandResult;
-					}
+					if (options.enableClickSelection) handled = options.editor.commands.extendMarkRange(options.type.name);
 					if (options.openOnClick) {
+						var _link$href, _link$target;
 						const attrs = getAttributes(view.state, options.type.name);
-						const href = (_a = link.href) != null ? _a : attrs.href;
-						const target = (_b = link.target) != null ? _b : attrs.target;
+						const href = (_link$href = link.href) !== null && _link$href !== void 0 ? _link$href : attrs.href;
+						const target = (_link$target = link.target) !== null && _link$target !== void 0 ? _link$target : attrs.target;
 						if (href) {
 							window.open(href, target);
 							handled = true;
@@ -48461,6 +50284,133 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		});
 	}
+	//#endregion
+	//#region src/helpers/markdownLink.ts
+	/**
+	* Matches a Markdown link with an optional quoted title.
+	* for ex: [Tiptap](https://tiptap.dev) or [Tiptap](https://tiptap.dev "some title")
+	* the URL may also contain one level of balanced parentheses, as in CommonMark
+	* (titles accept curly quotes too, the Typography extension swaps them in while typing)
+	* the title delimiters must come in matching pairs
+	*/
+	const MARKDOWN_LINK_INPUT_REGEX = /\[([^[\]]+)\]\(((?:[^\s()]|\([^\s()]*\))+)(?:\s+(?:(["'])(.*?)\3|“(.*?)”|‘(.*?)’))?\)$/;
+	/**
+	* Same as the input regex but global, to find every Markdown link in pasted text.
+	*/
+	const MARKDOWN_LINK_PASTE_REGEX = /\[([^[\]]+)\]\(((?:[^\s()]|\([^\s()]*\))+)(?:\s+(?:(["'])(.*?)\3|“(.*?)”|‘(.*?)’))?\)/g;
+	function isEscaped(text, index) {
+		let backslashes = 0;
+		for (let position = index - 1; position >= 0 && text[position] === "\\"; position -= 1) backslashes += 1;
+		return backslashes % 2 === 1;
+	}
+	/**
+	* Pairs the backtick runs before the match by length, as CommonMark does.
+	* A run left open means the match sits in an unfinished code span.
+	*/
+	function isInsideCodeSpan(text, matchIndex) {
+		let openRunLength = 0;
+		let index = 0;
+		while (index < matchIndex) {
+			if (text[index] !== "`") {
+				index += 1;
+				continue;
+			}
+			if (openRunLength === 0 && isEscaped(text, index)) {
+				index += 1;
+				continue;
+			}
+			let runLength = 0;
+			while (index < matchIndex && text[index] === "`") {
+				runLength += 1;
+				index += 1;
+			}
+			if (openRunLength === 0) openRunLength = runLength;else if (runLength === openRunLength) openRunLength = 0;
+		}
+		return openRunLength > 0;
+	}
+	function isConvertibleLink(text, match, isAllowedHref) {
+		var _match$index, _match$index2;
+		const [, linkText, href] = match;
+		if ((match.index ? text[match.index - 1] : void 0) === "!" || isEscaped(text, (_match$index = match.index) !== null && _match$index !== void 0 ? _match$index : 0)) return false;
+		if (isInsideCodeSpan(text, (_match$index2 = match.index) !== null && _match$index2 !== void 0 ? _match$index2 : 0)) return false;
+		return !!linkText.trim() && isAllowedHref(href);
+	}
+	function toRuleMatch(match) {
+		var _ref, _match$index3;
+		const [linkSyntax, linkText, href,, straightQuotedTitle, curlyDoubleTitle, curlySingleTitle] = match;
+		const title = (_ref = straightQuotedTitle !== null && straightQuotedTitle !== void 0 ? straightQuotedTitle : curlyDoubleTitle) !== null && _ref !== void 0 ? _ref : curlySingleTitle;
+		return {
+			index: (_match$index3 = match.index) !== null && _match$index3 !== void 0 ? _match$index3 : 0,
+			text: linkSyntax,
+			replaceWith: linkText,
+			data: {
+				href,
+				title: title || null,
+				markdown: true
+			}
+		};
+	}
+	function matchesOverlap(a, b) {
+		return a.index < b.index + b.text.length && b.index < a.index + a.text.length;
+	}
+	function getMarkdownLinkAttributes(match) {
+		var _match$data, _match$data$title, _match$data2;
+		return {
+			href: (_match$data = match.data) === null || _match$data === void 0 ? void 0 : _match$data.href,
+			title: (_match$data$title = (_match$data2 = match.data) === null || _match$data2 === void 0 ? void 0 : _match$data2.title) !== null && _match$data$title !== void 0 ? _match$data$title : null
+		};
+	}
+	/**
+	* Turns typed Markdown link syntax into a link mark as soon as the closing `)` comes in.
+	* The transaction gets flagged so autolink doesn't touch the converted text again.
+	*/
+	function markdownLinkInputRule(config) {
+		const rule = markInputRule({
+			find: text => {
+				const match = MARKDOWN_LINK_INPUT_REGEX.exec(text);
+				if (!match || !isConvertibleLink(text, match, config.isAllowedHref)) return null;
+				return toRuleMatch(match);
+			},
+			type: config.type,
+			getAttributes: getMarkdownLinkAttributes
+		});
+		return new InputRule({
+			find: rule.find,
+			handler: props => {
+				const result = rule.handler(props);
+				if (result !== null && props.state.tr.steps.length) props.state.tr.setMeta("preventAutolink", true);
+				return result;
+			}
+		});
+	}
+	/**
+	* Same for pasting, converts every Markdown link found in the pasted text
+	* and links the plain URLs from `findPlainUrls`.
+	*/
+	function markdownLinkPasteRule(config) {
+		const rule = markPasteRule({
+			find: text => {
+				var _config$findPlainUrls, _config$findPlainUrls2;
+				const markdownMatches = [];
+				for (const match of text.matchAll(MARKDOWN_LINK_PASTE_REGEX)) if (isConvertibleLink(text, match, config.isAllowedHref)) markdownMatches.push(toRuleMatch(match));
+				const plainUrlMatches = ((_config$findPlainUrls = (_config$findPlainUrls2 = config.findPlainUrls) === null || _config$findPlainUrls2 === void 0 ? void 0 : _config$findPlainUrls2.call(config, text)) !== null && _config$findPlainUrls !== void 0 ? _config$findPlainUrls : []).filter(urlMatch => !markdownMatches.some(markdownMatch => matchesOverlap(markdownMatch, urlMatch)));
+				return [...markdownMatches, ...plainUrlMatches];
+			},
+			type: config.type,
+			getAttributes: getMarkdownLinkAttributes
+		});
+		return new PasteRule({
+			find: rule.find,
+			handler: props => {
+				var _props$match$data;
+				const result = rule.handler(props);
+				if (result !== null && props.state.tr.steps.length && ((_props$match$data = props.match.data) === null || _props$match$data === void 0 ? void 0 : _props$match$data.markdown)) props.state.tr.setMeta("preventAutolink", true);
+				return result;
+			}
+		});
+	}
+	//#endregion
+	//#region src/helpers/pasteHandler.ts
 	function pasteHandler(options) {
 		return new Plugin({
 			key: new PluginKey("handlePasteLink"),
@@ -48478,9 +50428,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					const {
 						empty
 					} = selection;
-					if (empty) {
-						return false;
-					}
+					if (empty) return false;
 					let textContent = "";
 					slice.content.forEach(node => {
 						textContent += node.textContent;
@@ -48488,9 +50436,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					const link = find$1(textContent, {
 						defaultProtocol: options.defaultProtocol
 					}).find(item => item.isLink && item.value === textContent);
-					if (!textContent || !link || shouldAutoLink !== void 0 && !shouldAutoLink(link.value)) {
-						return false;
-					}
+					if (!textContent || !link || shouldAutoLink !== void 0 && !shouldAutoLink(link.value)) return false;
 					return options.editor.commands.setMark(options.type, {
 						href: link.href
 					});
@@ -48500,19 +50446,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 	}
 	function isAllowedUri(uri, protocols) {
 		const allowedProtocols = ["http", "https", "ftp", "ftps", "mailto", "tel", "callto", "sms", "cid", "xmpp"];
-		if (protocols) {
-			protocols.forEach(protocol => {
-				const nextProtocol = typeof protocol === "string" ? protocol : protocol.scheme;
-				if (nextProtocol) {
-					allowedProtocols.push(nextProtocol);
-				}
-			});
-		}
-		return !uri || uri.replace(UNICODE_WHITESPACE_REGEX_GLOBAL, "").match(new RegExp(
-		// eslint-disable-next-line no-useless-escape
-		`^(?:(?:${allowedProtocols.join("|")}):|[^a-z]|[a-z0-9+.-]+(?:[^a-z+.-:]|$))`, "i"));
+		if (protocols) protocols.forEach(protocol => {
+			const nextProtocol = typeof protocol === "string" ? protocol : protocol.scheme;
+			if (nextProtocol) allowedProtocols.push(nextProtocol);
+		});
+		return !uri || uri.replace(UNICODE_WHITESPACE_REGEX_GLOBAL, "").match(new RegExp(`^(?:(?:${allowedProtocols.map(protocol => protocol.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|")}):|[^a-z]|[a-z0-9+.\\-]+(?:[^a-z+.\\-:]|$))`, "i"));
 	}
-	var Link = Mark.create({
+	/**
+	* This extension allows you to create links.
+	* @see https://www.tiptap.dev/api/marks/link
+	*/
+	const Link = Mark.create({
 		name: "link",
 		priority: 1e3,
 		keepOnSplit: false,
@@ -48541,6 +50485,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				openOnClick: true,
 				enableClickSelection: false,
 				linkOnPaste: true,
+				markdownLinks: false,
 				autolink: true,
 				protocols: [],
 				defaultProtocol: "http",
@@ -48554,22 +50499,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 				shouldAutoLink: url => {
 					const hasProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(url);
 					const hasMaybeProtocol = /^[a-z][a-z0-9+.-]*:/i.test(url);
-					if (hasProtocol || hasMaybeProtocol && !url.includes("@")) {
-						return true;
-					}
-					const urlWithoutUserinfo = url.includes("@") ? url.split("@").pop() : url;
-					const hostname = urlWithoutUserinfo.split(/[/?#:]/)[0];
-					if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
-						return false;
-					}
-					if (!/\./.test(hostname)) {
-						return false;
-					}
+					if (hasProtocol || hasMaybeProtocol && !url.includes("@")) return true;
+					const hostname = (url.includes("@") ? url.split("@").pop() : url).split(/[/?#:]/)[0];
+					if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return false;
+					if (!/\./.test(hostname)) return false;
 					return true;
 				}
 			};
 		},
 		addAttributes() {
+			var _this$options$HTMLAtt, _this$options$HTMLAtt2, _this$options$HTMLAtt3;
 			return {
 				href: {
 					default: null,
@@ -48578,13 +50517,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 				},
 				target: {
-					default: this.options.HTMLAttributes.target
+					default: (_this$options$HTMLAtt = this.options.HTMLAttributes.target) !== null && _this$options$HTMLAtt !== void 0 ? _this$options$HTMLAtt : null
 				},
 				rel: {
-					default: this.options.HTMLAttributes.rel
+					default: (_this$options$HTMLAtt2 = this.options.HTMLAttributes.rel) !== null && _this$options$HTMLAtt2 !== void 0 ? _this$options$HTMLAtt2 : null
 				},
 				class: {
-					default: this.options.HTMLAttributes.class
+					default: (_this$options$HTMLAtt3 = this.options.HTMLAttributes.class) !== null && _this$options$HTMLAtt3 !== void 0 ? _this$options$HTMLAtt3 : null
 				},
 				title: {
 					default: null
@@ -48600,9 +50539,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						defaultValidate: url => !!isAllowedUri(url, this.options.protocols),
 						protocols: this.options.protocols,
 						defaultProtocol: this.options.defaultProtocol
-					})) {
-						return false;
-					}
+					})) return false;
 					return null;
 				}
 			}];
@@ -48614,12 +50551,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 				defaultValidate: href => !!isAllowedUri(href, this.options.protocols),
 				protocols: this.options.protocols,
 				defaultProtocol: this.options.defaultProtocol
-			})) {
-				return ["a", mergeAttributes(this.options.HTMLAttributes, {
-					...HTMLAttributes,
-					href: ""
-				}), 0];
-			}
+			})) return ["a", mergeAttributes(this.options.HTMLAttributes, {
+				...HTMLAttributes,
+				href: ""
+			}), 0];
 			return ["a", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
 		},
 		markdownTokenName: "link",
@@ -48630,9 +50565,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			});
 		},
 		renderMarkdown: (node, h) => {
-			var _a, _b, _c, _d;
-			const href = (_b = (_a = node.attrs) == null ? void 0 : _a.href) != null ? _b : "";
-			const title = (_d = (_c = node.attrs) == null ? void 0 : _c.title) != null ? _d : "";
+			var _node$attrs$href, _node$attrs, _node$attrs$title, _node$attrs2;
+			const href = (_node$attrs$href = (_node$attrs = node.attrs) === null || _node$attrs === void 0 ? void 0 : _node$attrs.href) !== null && _node$attrs$href !== void 0 ? _node$attrs$href : "";
+			const title = (_node$attrs$title = (_node$attrs2 = node.attrs) === null || _node$attrs2 === void 0 ? void 0 : _node$attrs2.title) !== null && _node$attrs$title !== void 0 ? _node$attrs$title : "";
 			const text = h.renderChildren(node);
 			return title ? `[${text}](${href} "${title}")` : `[${text}](${href})`;
 		},
@@ -48648,9 +50583,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						defaultValidate: url => !!isAllowedUri(url, this.options.protocols),
 						protocols: this.options.protocols,
 						defaultProtocol: this.options.defaultProtocol
-					})) {
-						return false;
-					}
+					})) return false;
 					return chain().setMark(this.name, attributes).setMeta("preventAutolink", true).run();
 				},
 				toggleLink: attributes => ({
@@ -48663,9 +50596,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						defaultValidate: url => !!isAllowedUri(url, this.options.protocols),
 						protocols: this.options.protocols,
 						defaultProtocol: this.options.defaultProtocol
-					})) {
-						return false;
-					}
+					})) return false;
 					return chain().toggleMark(this.name, attributes, {
 						extendEmptyMarkRange: true
 					}).setMeta("preventAutolink", true).run();
@@ -48679,42 +50610,58 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 			};
 		},
+		addInputRules() {
+			if (!this.options.markdownLinks) return [];
+			return [markdownLinkInputRule({
+				type: this.type,
+				isAllowedHref: href => this.options.isAllowedUri(href, {
+					defaultValidate: url => !!isAllowedUri(url, this.options.protocols),
+					protocols: this.options.protocols,
+					defaultProtocol: this.options.defaultProtocol
+				})
+			})];
+		},
 		addPasteRules() {
+			const findPlainUrls = text => {
+				const foundLinks = [];
+				if (text) {
+					const {
+						protocols,
+						defaultProtocol
+					} = this.options;
+					find$1(text).filter(item => item.isLink && this.options.isAllowedUri(item.value, {
+						defaultValidate: href => !!isAllowedUri(href, protocols),
+						protocols,
+						defaultProtocol
+					})).forEach(link => {
+						if (!this.options.shouldAutoLink(link.value)) return;
+						foundLinks.push({
+							text: link.value,
+							data: {
+								href: link.href
+							},
+							index: link.start
+						});
+					});
+				}
+				return foundLinks;
+			};
+			if (this.options.markdownLinks) return [markdownLinkPasteRule({
+				type: this.type,
+				isAllowedHref: href => this.options.isAllowedUri(href, {
+					defaultValidate: url => !!isAllowedUri(url, this.options.protocols),
+					protocols: this.options.protocols,
+					defaultProtocol: this.options.defaultProtocol
+				}),
+				findPlainUrls
+			})];
 			return [markPasteRule({
-				find: text => {
-					const foundLinks = [];
-					if (text) {
-						const {
-							protocols,
-							defaultProtocol
-						} = this.options;
-						const links = find$1(text).filter(item => item.isLink && this.options.isAllowedUri(item.value, {
-							defaultValidate: href => !!isAllowedUri(href, protocols),
-							protocols,
-							defaultProtocol
-						}));
-						if (links.length) {
-							links.forEach(link => {
-								if (!this.options.shouldAutoLink(link.value)) {
-									return;
-								}
-								foundLinks.push({
-									text: link.value,
-									data: {
-										href: link.href
-									},
-									index: link.start
-								});
-							});
-						}
-					}
-					return foundLinks;
-				},
+				find: findPlainUrls,
 				type: this.type,
 				getAttributes: match => {
-					var _a;
+					var _match$data;
 					return {
-						href: (_a = match.data) == null ? void 0 : _a.href
+						href: (_match$data = match.data) === null || _match$data === void 0 ? void 0 : _match$data.href
 					};
 				}
 			})];
@@ -48725,32 +50672,28 @@ ${nextLine.slice(indentLevel + 2)}`;
 				protocols,
 				defaultProtocol
 			} = this.options;
-			if (this.options.autolink) {
-				plugins.push(autolink({
-					type: this.type,
-					defaultProtocol: this.options.defaultProtocol,
-					validate: url => this.options.isAllowedUri(url, {
-						defaultValidate: href => !!isAllowedUri(href, protocols),
-						protocols,
-						defaultProtocol
-					}),
-					shouldAutoLink: this.options.shouldAutoLink
-				}));
-			}
+			if (this.options.autolink) plugins.push(autolink({
+				type: this.type,
+				defaultProtocol: this.options.defaultProtocol,
+				validate: url => this.options.isAllowedUri(url, {
+					defaultValidate: href => !!isAllowedUri(href, protocols),
+					protocols,
+					defaultProtocol
+				}),
+				shouldAutoLink: this.options.shouldAutoLink
+			}));
 			plugins.push(clickHandler({
 				type: this.type,
 				editor: this.editor,
 				openOnClick: this.options.openOnClick === "whenNotEditable" ? true : this.options.openOnClick,
 				enableClickSelection: this.options.enableClickSelection
 			}));
-			if (this.options.linkOnPaste) {
-				plugins.push(pasteHandler({
-					editor: this.editor,
-					defaultProtocol: this.options.defaultProtocol,
-					type: this.type,
-					shouldAutoLink: this.options.shouldAutoLink
-				}));
-			}
+			if (this.options.linkOnPaste) plugins.push(pasteHandler({
+				editor: this.editor,
+				defaultProtocol: this.options.defaultProtocol,
+				type: this.type,
+				shouldAutoLink: this.options.shouldAutoLink
+			}));
 			return plugins;
 		}
 	});
@@ -48848,12 +50791,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 		});
 	}
 	const SafeListItem = ListItem.extend({
-		renderMarkdown(node, h, ctx) {
-			return this.parent?.({
-				...node,
-				content: escapeInlineText(node.content)
-			}, h, ctx) ?? '';
-		},
 		parseMarkdown: (token, helpers) => {
 			if (token.type !== 'list_item') {
 				return [];
@@ -48915,14 +50852,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-	const MarkdownBlockquote = Blockquote.extend({
-		renderMarkdown(node, h, ctx) {
-			return this.parent?.({
-				...node,
-				content: escapeInlineText(node.content)
-			}, h, ctx) ?? '';
-		}
-	});
 	const CleanOrderedList = OrderedList.extend({
 		markdownTokenizer: null,
 		parseMarkdown: (token, helpers) => {
@@ -48956,15 +50885,167 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}, ['hr']];
 		}
 	});
+	const COLOR_MARK_TOKEN = 'colorMark';
+	const COLOR_OPEN = '{color:';
+	const COLOR_CLOSE = '{/color}';
+
+	/**
+	 * Whitelists CSS color values so a `{color:VALUE}` markdown token can only ever become a safe inline
+	 * `color:` style: hex (#rgb / #rgba / #rrggbb / #rrggbbaa), rgb()/rgba(), hsl()/hsla(), or a bare CSS
+	 * named color. Anything else (url(), expression(), CSS keywords, over-long input) is rejected.
+	 * Mirrors HtmlToMarkdown::normalizeColor() on the import side so both ends agree on what survives.
+	 * Legibility is decided there, not here: the import converter drops white because the foreign markup
+	 * rendered it against its own background, while a white the user picked in the editor round-trips -
+	 * the document canvas follows the theme.
+	 */
+	function isSafeColor(value) {
+		if (typeof value !== 'string') {
+			return false;
+		}
+		const v = value.trim();
+		if (v === '' || v.length > 32) {
+			return false;
+		}
+		if (/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)) {
+			return true;
+		}
+		if (/^rgba?\(\s*[0-9.,%\s]+\)$/i.test(v) || /^hsla?\(\s*[0-9.,%\s]+\)$/i.test(v)) {
+			return true;
+		}
+		if (/^[a-z]{3,20}$/i.test(v)) {
+			const reserved = ['inherit', 'initial', 'unset', 'revert', 'currentcolor', 'transparent', 'none', 'auto'];
+			return !reserved.includes(v.toLowerCase());
+		}
+		return false;
+	}
+
+	/**
+	 * Scans a `{color:VALUE}...{/color}` token at the start of `src`, matching the closing marker with
+	 * nesting support (a colored run may contain another colored run). Returns the color value, the raw
+	 * matched text and the inner markdown, or null when `src` does not start a balanced color token.
+	 */
+	function scanColorToken(src) {
+		if (!src.startsWith(COLOR_OPEN)) {
+			return null;
+		}
+		const closeBrace = src.indexOf('}', COLOR_OPEN.length);
+		if (closeBrace === -1) {
+			return null;
+		}
+		const color = src.slice(COLOR_OPEN.length, closeBrace).trim();
+		if (color === '' || color.length > 32) {
+			return null;
+		}
+		const innerStart = closeBrace + 1;
+		let depth = 1;
+		let i = innerStart;
+		while (i < src.length) {
+			if (src.startsWith(COLOR_CLOSE, i)) {
+				depth -= 1;
+				if (depth === 0) {
+					return {
+						color,
+						inner: src.slice(innerStart, i),
+						raw: src.slice(0, i + COLOR_CLOSE.length)
+					};
+				}
+				i += COLOR_CLOSE.length;
+				continue;
+			}
+			if (src.startsWith(COLOR_OPEN, i)) {
+				depth += 1;
+				i += COLOR_OPEN.length;
+				continue;
+			}
+			i += 1;
+		}
+		return null;
+	}
+
+	/**
+	 * Adds a `textStyle` color mark to every text node that does not already carry one, recursing into
+	 * child content. Used on parse so an outer `{color:...}` never overrides a nested inner color (inner
+	 * wins), matching ProseMirror's single-textStyle-per-node model. Mutates and returns `nodes`.
+	 */
+	function applyColorToUnmarked(nodes, color) {
+		(nodes || []).forEach(node => {
+			if (node.type === 'text') {
+				const marks = node.marks || [];
+				if (!marks.some(mark => mark.type === 'textStyle')) {
+					node.marks = [...marks, {
+						type: 'textStyle',
+						attrs: {
+							color
+						}
+					}];
+				}
+			} else if (node.content) {
+				applyColorToUnmarked(node.content, color);
+			}
+		});
+		return nodes;
+	}
+
+	/**
+	 * Adds a markdown round-trip to the textStyle mark for the `{color:VALUE}...{/color}` token that
+	 * HtmlToMarkdown emits (and the editor's own color picker sets). Without this the color attribute is
+	 * silently dropped on serialise. The mark stays `textStyle` (so the Color extension's `color`
+	 * attribute still applies); only the token type differs (`colorMark`).
+	 */
+	const ColorTextStyle = TextStyle.extend({
+		markdownTokenName: COLOR_MARK_TOKEN,
+		markdownTokenizer: {
+			name: COLOR_MARK_TOKEN,
+			level: 'inline',
+			start(src) {
+				return src.indexOf(COLOR_OPEN);
+			},
+			tokenize(src, tokens, helpers) {
+				const parsed = scanColorToken(src);
+				if (!parsed) {
+					return null;
+				}
+				return {
+					type: COLOR_MARK_TOKEN,
+					raw: parsed.raw,
+					color: parsed.color,
+					tokens: helpers.inlineTokens(parsed.inner)
+				};
+			},
+			childTokens: []
+		},
+		parseMarkdown(token, helpers) {
+			const content = helpers.parseInline(token.tokens || []);
+			// An unsafe/unknown color is stripped to its inner text - never applied as a style attribute.
+			if (!isSafeColor(token.color)) {
+				return content;
+			}
+
+			// Apply this color only where a nested run has not already set one. ProseMirror allows a single
+			// textStyle mark per text node (the color picker's setColor replaces, never stacks), so on a
+			// nested `{color:A}...{color:B}x{/color}...{/color}` the inner color B must win for `x`. Returning
+			// the already-marked node array (not applyMark) avoids the manager stacking a second textStyle.
+			return applyColorToUnmarked(content, token.color);
+		},
+		renderMarkdown(node, helpers) {
+			const inner = helpers.renderChildren(node.content ?? []);
+			const color = node?.attrs?.color;
+			// Only a safe color round-trips; any other textStyle attribute serialises to just its text.
+			if (!isSafeColor(color)) {
+				return inner;
+			}
+			return `${COLOR_OPEN}${color}}${inner}${COLOR_CLOSE}`;
+		}
+	});
 	function createFormattingExtensions() {
 		return [Bold, Italic, Strike, Underline, Code.extend({
 			// Allow bold, italic, strike etc. to coexist with code mark (like GitHub).
 			// Default '_' excludes ALL marks; 'code link' only prevents code-in-code
 			// and link inside code (autolink would otherwise linkify URLs in code spans).
 			excludes: 'code link'
-		}), CodeBlock, MarkdownBlockquote, Callout, CalloutInputEnter, BulletList, CleanOrderedList, SafeListItem, TaskList, TaskItem.configure({
+		}), CodeBlock, Blockquote, Callout, CalloutInputEnter, BulletList, CleanOrderedList, SafeListItem, TaskList, TaskItem.configure({
 			nested: true
-		}), CustomHorizontalRule, TextStyle, Color.configure({
+		}), CustomHorizontalRule, ColorTextStyle, Color.configure({
 			types: ['textStyle']
 		}), Highlight.configure({
 			multicolor: true
@@ -51103,41 +53184,109 @@ ${nextLine.slice(indentLevel + 2)}`;
 		});
 	}
 
-	// src/cell/table-cell.ts
-
-	// src/utilities/parseAlign.ts
+	//#region src/utils/parseAlign.ts
+	/**
+	* Normalize unknown input into a supported table alignment
+	*
+	* @param value - A potential alignment value
+	* @returns A valid TableCellAlign value or null
+	*/
 	function normalizeTableCellAlign(value) {
-		if (value === "left" /* Left */ || value === "right" /* Right */ || value === "center" /* Center */) {
-			return value;
-		}
+		if (value === "left" || value === "right" || value === "center") return value;
 		return null;
 	}
+	/**
+	* Parse table cell alignment from an HTML element
+	*
+	* Prefers inline style (${"`"}text-align${"`"}) and falls back to the legacy
+	* ${"`"}align${"`"} attribute.
+	*
+	* @param element - The table cell/header DOM element
+	* @returns A valid TableCellAlign value or null
+	*/
 	function parseAlign(element) {
 		const styleAlign = (element.style.textAlign || "").trim().toLowerCase();
 		const attrAlign = (element.getAttribute("align") || "").trim().toLowerCase();
-		const align = styleAlign || attrAlign;
-		return normalizeTableCellAlign(align);
+		return normalizeTableCellAlign(styleAlign || attrAlign);
 	}
+	/**
+	* Normalize alignment from a generic attrs object that may include an align field
+	*
+	* @param attributes - A node attrs-like object with an optional align field
+	* @returns A valid TableCellAlign value or null.
+	*/
 	function normalizeTableCellAlignFromAttributes(attributes) {
-		return normalizeTableCellAlign(attributes == null ? void 0 : attributes.align);
+		return normalizeTableCellAlign(attributes === null || attributes === void 0 ? void 0 : attributes.align);
 	}
+	/**
+	* Create a reusable Tiptap attribute config for table alignment
+	*
+	* @returns A Tiptap Attribute definition that parses and renders table alignment
+	*/
 	function createAlignAttribute() {
 		return {
 			default: null,
 			parseHTML: element => parseAlign(element),
 			renderHTML: attributes => {
-				if (!attributes.align) {
-					return {};
-				}
+				if (!attributes.align) return {};
 				return {
 					style: `text-align: ${attributes.align}`
 				};
 			}
 		};
 	}
-
-	// src/cell/table-cell.ts
-	var TableCell = Node3.create({
+	//#endregion
+	//#region src/utils/parseColwidth.ts
+	/**
+	* reads the width of the `<col>` element matching a cell's column from the table's `<colgroup>`
+	*
+	* @param element - The table cell/header DOM element
+	* @returns - An array with the column width in pixels or null
+	*/
+	function parseColgroupWidth(element) {
+		var _table$querySelectorA;
+		const row = element.parentElement;
+		const table = element.closest("table");
+		if (!row || !table) return null;
+		const cellIndex = Array.from(row.children).indexOf(element);
+		const width = (_table$querySelectorA = table.querySelectorAll("colgroup > col")[cellIndex]) === null || _table$querySelectorA === void 0 ? void 0 : _table$querySelectorA.getAttribute("width");
+		return width ? [parseInt(width, 10)] : null;
+	}
+	/**
+	* Parse the column width/s of a table cell/header from an HTML element.
+	* it prefers the `colwidth` attribute and if not-provided falls back to the `width` attribute
+	* of the matching `<col>` element in the table's `<colgroup>`.
+	*
+	* @param element - The table cell/header DOM element
+	* @returns - An array of column widths in pixels or null
+	*/
+	function parseColwidth(element) {
+		const colwidth = element.getAttribute("colwidth");
+		if (colwidth) return colwidth.split(",").map(width => parseInt(width, 10));
+		return parseColgroupWidth(element);
+	}
+	//#endregion
+	//#region src/utils/fillEmptyCellContent.ts
+	const COLLAPSIBLE_WHITESPACE = /[ \t\r\n\f]+/g;
+	/** Whether a cell/header element has no child elements and only collapsible whitespace. */
+	function isEmptyCellElement(element) {
+		var _element$textContent;
+		if (element.children.length > 0) return false;
+		return ((_element$textContent = element.textContent) !== null && _element$textContent !== void 0 ? _element$textContent : "").replace(COLLAPSIBLE_WHITESPACE, "") === "";
+	}
+	/** Builds a cell/header's minimal `block+` content, derived from the node type. */
+	function fillEmptyCellContent(cellType) {
+		const filled = cellType.createAndFill();
+		if (!filled) throw new Error(`[tiptap error]: "${cellType.name}" has no default content to backfill.`);
+		return filled.content;
+	}
+	//#endregion
+	//#region src/cell/table-cell.ts
+	/**
+	* This extension allows you to create table cells.
+	* @see https://www.tiptap.dev/api/nodes/table-cell
+	*/
+	const TableCell = Node$1.create({
 		name: "tableCell",
 		addOptions() {
 			return {
@@ -51155,20 +53304,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				},
 				colwidth: {
 					default: null,
-					parseHTML: element => {
-						var _a, _b;
-						const colwidth = element.getAttribute("colwidth");
-						const value = colwidth ? colwidth.split(",").map(width => parseInt(width, 10)) : null;
-						if (!value) {
-							const cols = (_a = element.closest("table")) == null ? void 0 : _a.querySelectorAll("colgroup > col");
-							const cellIndex = Array.from(((_b = element.parentElement) == null ? void 0 : _b.children) || []).indexOf(element);
-							if (cellIndex && cellIndex > -1 && cols && cols[cellIndex]) {
-								const colWidth = cols[cellIndex].getAttribute("width");
-								return colWidth ? [parseInt(colWidth, 10)] : null;
-							}
-						}
-						return value;
-					}
+					parseHTML: parseColwidth
 				},
 				align: createAlignAttribute()
 			};
@@ -51177,6 +53313,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 		isolating: true,
 		parseHTML() {
 			return [{
+				tag: "td",
+				getAttrs: node => isEmptyCellElement(node) ? {} : false,
+				getContent: (_node, schema) => fillEmptyCellContent(schema.nodes[this.name])
+			}, {
 				tag: "td"
 			}];
 		},
@@ -51186,7 +53326,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return ["td", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
 		}
 	});
-	var TableHeader = Node3.create({
+	//#endregion
+	//#region src/header/table-header.ts
+	/**
+	* This extension allows you to create table headers.
+	* @see https://www.tiptap.dev/api/nodes/table-header
+	*/
+	const TableHeader = Node$1.create({
 		name: "tableHeader",
 		addOptions() {
 			return {
@@ -51204,11 +53350,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				},
 				colwidth: {
 					default: null,
-					parseHTML: element => {
-						const colwidth = element.getAttribute("colwidth");
-						const value = colwidth ? colwidth.split(",").map(width => parseInt(width, 10)) : null;
-						return value;
-					}
+					parseHTML: parseColwidth
 				},
 				align: createAlignAttribute()
 			};
@@ -51217,6 +53359,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 		isolating: true,
 		parseHTML() {
 			return [{
+				tag: "th",
+				getAttrs: node => isEmptyCellElement(node) ? {} : false,
+				getContent: (_node, schema) => fillEmptyCellContent(schema.nodes[this.name])
+			}, {
 				tag: "th"
 			}];
 		},
@@ -51226,7 +53372,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return ["th", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
 		}
 	});
-	var TableRow = Node3.create({
+	//#endregion
+	//#region src/row/table-row.ts
+	/**
+	* This extension allows you to create table rows.
+	* @see https://www.tiptap.dev/api/nodes/table-row
+	*/
+	const TableRow = Node$1.create({
 		name: "tableRow",
 		addOptions() {
 			return {
@@ -51246,53 +53398,47 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return ["tr", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
 		}
 	});
-
-	// src/table/utilities/colStyle.ts
+	//#endregion
+	//#region src/table/utilities/colStyle.ts
 	function getColStyleDeclaration(minWidth, width) {
-		if (width) {
-			return ["width", `${Math.max(width, minWidth)}px`];
-		}
+		if (width) return ["width", `${Math.max(width, minWidth)}px`];
 		return ["min-width", `${minWidth}px`];
 	}
-
-	// src/table/TableView.ts
+	//#endregion
+	//#region src/table/TableView.ts
 	function updateColumns(node, colgroup, table, cellMinWidth, overrideCol, overrideValue) {
-		var _a;
 		let totalWidth = 0;
 		let fixedWidth = true;
 		let nextDOM = colgroup.firstChild;
 		const row = node.firstChild;
-		if (row !== null) {
-			for (let i = 0, col = 0; i < row.childCount; i += 1) {
-				const {
-					colspan,
-					colwidth
-				} = row.child(i).attrs;
-				for (let j = 0; j < colspan; j += 1, col += 1) {
-					const hasWidth = overrideCol === col ? overrideValue : colwidth && colwidth[j];
-					const cssWidth = hasWidth ? `${hasWidth}px` : "";
-					totalWidth += hasWidth || cellMinWidth;
-					if (!hasWidth) {
-						fixedWidth = false;
-					}
-					if (!nextDOM) {
-						const colElement = document.createElement("col");
+		if (row !== null) for (let i = 0, col = 0; i < row.childCount; i += 1) {
+			const {
+				colspan,
+				colwidth
+			} = row.child(i).attrs;
+			for (let j = 0; j < colspan; j += 1, col += 1) {
+				const hasWidth = overrideCol === col ? overrideValue : colwidth && colwidth[j];
+				const cssWidth = hasWidth ? `${hasWidth}px` : "";
+				totalWidth += hasWidth || cellMinWidth;
+				if (!hasWidth) fixedWidth = false;
+				if (!nextDOM) {
+					const colElement = document.createElement("col");
+					const [propertyKey, propertyValue] = getColStyleDeclaration(cellMinWidth, hasWidth);
+					colElement.style.setProperty(propertyKey, propertyValue);
+					colgroup.appendChild(colElement);
+				} else {
+					if (nextDOM.style.width !== cssWidth) {
 						const [propertyKey, propertyValue] = getColStyleDeclaration(cellMinWidth, hasWidth);
-						colElement.style.setProperty(propertyKey, propertyValue);
-						colgroup.appendChild(colElement);
-					} else {
-						if (nextDOM.style.width !== cssWidth) {
-							const [propertyKey, propertyValue] = getColStyleDeclaration(cellMinWidth, hasWidth);
-							nextDOM.style.setProperty(propertyKey, propertyValue);
-						}
-						nextDOM = nextDOM.nextSibling;
+						nextDOM.style.setProperty(propertyKey, propertyValue);
 					}
+					nextDOM = nextDOM.nextSibling;
 				}
 			}
 		}
 		while (nextDOM) {
+			var _nextDOM$parentNode;
 			const after = nextDOM.nextSibling;
-			(_a = nextDOM.parentNode) == null ? void 0 : _a.removeChild(nextDOM);
+			(_nextDOM$parentNode = nextDOM.parentNode) === null || _nextDOM$parentNode === void 0 || _nextDOM$parentNode.removeChild(nextDOM);
 			nextDOM = after;
 		}
 		const hasUserWidth = node.attrs.style && typeof node.attrs.style === "string" && /\bwidth\s*:/i.test(node.attrs.style);
@@ -51305,23 +53451,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 	var TableView = class {
-		constructor(node, cellMinWidth) {
+		constructor(node, cellMinWidth, _view, HTMLAttributes = {}) {
 			this.node = node;
 			this.cellMinWidth = cellMinWidth;
 			this.dom = document.createElement("div");
 			this.dom.className = "tableWrapper";
 			this.table = this.dom.appendChild(document.createElement("table"));
-			if (node.attrs.style) {
-				this.table.style.cssText = node.attrs.style;
+			for (const [key, value] of Object.entries(HTMLAttributes)) if (value !== void 0 && value !== null) {
+				if (key === "style") this.table.style.cssText = String(value);else this.table.setAttribute(key, String(value));
 			}
+			if (node.attrs.style) this.table.style.cssText = node.attrs.style;
 			this.colgroup = this.table.appendChild(document.createElement("colgroup"));
 			updateColumns(node, this.colgroup, this.table, cellMinWidth);
 			this.contentDOM = this.table.appendChild(document.createElement("tbody"));
 		}
 		update(node) {
-			if (node.type !== this.node.type) {
-				return false;
-			}
+			if (node.type !== this.node.type) return false;
 			this.node = node;
 			updateColumns(node, this.colgroup, this.table, this.cellMinWidth);
 			return true;
@@ -51331,23 +53476,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 			const isInsideWrapper = this.dom.contains(target);
 			const isInsideContent = this.contentDOM.contains(target);
 			if (isInsideWrapper && !isInsideContent) {
-				if (mutation.type === "attributes" || mutation.type === "childList" || mutation.type === "characterData") {
-					return true;
-				}
+				if (mutation.type === "attributes" || mutation.type === "childList" || mutation.type === "characterData") return true;
 			}
 			return false;
 		}
 	};
-
-	// src/table/utilities/createColGroup.ts
+	//#endregion
+	//#region src/table/utilities/createColGroup.ts
 	function createColGroup(node, cellMinWidth, overrideCol, overrideValue) {
 		let totalWidth = 0;
 		let fixedWidth = true;
 		const cols = [];
 		const row = node.firstChild;
-		if (!row) {
-			return {};
-		}
+		if (!row) return {};
 		for (let i = 0, col = 0; i < row.childCount; i += 1) {
 			const {
 				colspan,
@@ -51356,9 +53497,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			for (let j = 0; j < colspan; j += 1, col += 1) {
 				const hasWidth = overrideCol === col ? overrideValue : colwidth && colwidth[j];
 				totalWidth += hasWidth || cellMinWidth;
-				if (!hasWidth) {
-					fixedWidth = false;
-				}
+				if (!hasWidth) fixedWidth = false;
 				const [property, value] = getColStyleDeclaration(cellMinWidth, hasWidth);
 				cols.push(["col", {
 					style: `${property}: ${value}`
@@ -51367,189 +53506,222 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 		const tableWidth = fixedWidth ? `${totalWidth}px` : "";
 		const tableMinWidth = fixedWidth ? "" : `${totalWidth}px`;
-		const colgroup = ["colgroup", {}, ...cols];
 		return {
-			colgroup,
+			colgroup: ["colgroup", {}, ...cols],
 			tableWidth,
 			tableMinWidth
 		};
 	}
-
-	// src/table/utilities/createCell.ts
+	//#endregion
+	//#region src/table/utilities/createCell.ts
 	function createCell(cellType, cellContent) {
 		return cellType.createAndFill();
 	}
-
-	// src/table/utilities/getTableNodeTypes.ts
+	//#endregion
+	//#region src/table/utilities/getTableNodeTypes.ts
 	function getTableNodeTypes(schema) {
-		if (schema.cached.tableNodeTypes) {
-			return schema.cached.tableNodeTypes;
-		}
+		if (schema.cached.tableNodeTypes) return schema.cached.tableNodeTypes;
 		const roles = {};
 		Object.keys(schema.nodes).forEach(type => {
 			const nodeType = schema.nodes[type];
-			if (nodeType.spec.tableRole) {
-				roles[nodeType.spec.tableRole] = nodeType;
-			}
+			if (nodeType.spec.tableRole) roles[nodeType.spec.tableRole] = nodeType;
 		});
 		schema.cached.tableNodeTypes = roles;
 		return roles;
 	}
-
-	// src/table/utilities/createTable.ts
+	//#endregion
+	//#region src/table/utilities/createTable.ts
 	function createTable(schema, rowsCount, colsCount, withHeaderRow, cellContent) {
 		const types = getTableNodeTypes(schema);
 		const headerCells = [];
 		const cells = [];
 		for (let index = 0; index < colsCount; index += 1) {
 			const cell = createCell(types.cell);
-			if (cell) {
-				cells.push(cell);
-			}
+			if (cell) cells.push(cell);
 			if (withHeaderRow) {
 				const headerCell = createCell(types.header_cell);
-				if (headerCell) {
-					headerCells.push(headerCell);
-				}
+				if (headerCell) headerCells.push(headerCell);
 			}
 		}
 		const rows = [];
-		for (let index = 0; index < rowsCount; index += 1) {
-			rows.push(types.row.createChecked(null, withHeaderRow && index === 0 ? headerCells : cells));
-		}
+		for (let index = 0; index < rowsCount; index += 1) rows.push(types.row.createChecked(null, withHeaderRow && index === 0 ? headerCells : cells));
 		return types.table.createChecked(null, rows);
 	}
+	//#endregion
+	//#region src/table/utilities/isCellSelection.ts
 	function isCellSelection(value) {
 		return value instanceof CellSelection;
 	}
-
-	// src/table/utilities/deleteTableWhenAllCellsSelected.ts
-	var deleteTableWhenAllCellsSelected = ({
+	//#endregion
+	//#region src/table/utilities/deleteTableWhenAllCellsSelected.ts
+	const deleteTableWhenAllCellsSelected = ({
 		editor
 	}) => {
 		const {
 			selection
 		} = editor.state;
-		if (!isCellSelection(selection)) {
-			return false;
-		}
+		if (!isCellSelection(selection)) return false;
 		let cellCount = 0;
 		const table = findParentNodeClosestToPos(selection.ranges[0].$from, node => {
 			return node.type.name === "table";
 		});
-		table == null ? void 0 : table.node.descendants(node => {
-			if (node.type.name === "table") {
-				return false;
-			}
-			if (["tableCell", "tableHeader"].includes(node.type.name)) {
-				cellCount += 1;
-			}
+		table === null || table === void 0 || table.node.descendants(node => {
+			if (node.type.name === "table") return false;
+			if (["tableCell", "tableHeader"].includes(node.type.name)) cellCount += 1;
 		});
-		const allCellsSelected = cellCount === selection.ranges.length;
-		if (!allCellsSelected) {
-			return false;
-		}
+		if (!(cellCount === selection.ranges.length)) return false;
 		editor.commands.deleteTable();
 		return true;
 	};
-
-	// src/table/utilities/markdown.ts
-	var DEFAULT_CELL_LINE_SEPARATOR = "";
+	//#endregion
+	//#region src/table/utilities/keepCursorInTable.ts
+	function keepCursorInTable(tr, tablePos) {
+		const mappedTablePos = tr.mapping.map(tablePos);
+		const stillInTable = findParentNodeClosestToPos(tr.selection.$from, node => node.type.name === "table");
+		if ((stillInTable === null || stillInTable === void 0 ? void 0 : stillInTable.pos) === mappedTablePos) return;
+		const tableNode = tr.doc.nodeAt(mappedTablePos);
+		if (!tableNode) return;
+		const endOfTable = mappedTablePos + tableNode.nodeSize - 1;
+		tr.setSelection(TextSelection.near(tr.doc.resolve(endOfTable), -1));
+	}
+	/**
+	* Walk a single table-row line and escape any `|` characters that appear
+	* inside backtick code spans so marked's cell splitter ignores them.
+	* Backslash escape sequences outside code spans are passed through untouched.
+	* If a backtick run has no matching closer on the same line it is emitted
+	* as-is — no over-escaping for malformed input.
+	*/
+	function escapeTableCellPipes(line) {
+		let result = "";
+		let i = 0;
+		while (i < line.length) {
+			if (line[i] === "\\" && i + 1 < line.length) {
+				result += line[i] + line[i + 1];
+				i += 2;
+				continue;
+			}
+			if (line[i] !== "`") {
+				result += line[i++];
+				continue;
+			}
+			let runLen = 0;
+			while (i + runLen < line.length && line[i + runLen] === "`") runLen += 1;
+			let j = i + runLen;
+			let found = false;
+			while (j < line.length) {
+				if (line[j] !== "`") {
+					j += 1;
+					continue;
+				}
+				let closeLen = 0;
+				while (j + closeLen < line.length && line[j + closeLen] === "`") closeLen += 1;
+				if (closeLen === runLen) {
+					const spanContent = line.slice(i + runLen, j);
+					result += line.slice(i, i + runLen) + spanContent.replace(/\\\||\|/g, match => match === "|" ? "\\|" : match) + line.slice(j, j + runLen);
+					i = j + runLen;
+					found = true;
+					break;
+				}
+				j += closeLen;
+			}
+			if (!found) {
+				result += line.slice(i, i + runLen);
+				i += runLen;
+			}
+		}
+		return result;
+	}
+	/**
+	* Escape pipe characters inside backtick code spans on table-row lines.
+	* marked's `splitCells` only recognises backslash-escaped pipes (`\|`) and
+	* splits on every other `|`, so \`a || b\` in a table cell would be treated
+	* as multiple column delimiters. Escaping them here lets `splitCells` skip
+	* them; it already converts `\|` → `|` after splitting, so the cell content
+	* is restored correctly.
+	*/
+	function preprocessTablePipes(src) {
+		return src.split("\n").map(line => {
+			if (!line.includes("|") || !line.includes("`")) return line;
+			return escapeTableCellPipes(line);
+		}).join("\n");
+	}
 	function collapseWhitespace(s) {
 		return (s || "").replace(/\s+/g, " ").trim();
 	}
 	function renderTableToMarkdown(node, h, options = {}) {
-		var _a;
-		const cellSep = (_a = options.cellLineSeparator) != null ? _a : DEFAULT_CELL_LINE_SEPARATOR;
-		if (!node || !node.content || node.content.length === 0) {
-			return "";
-		}
+		var _options$cellLineSepa;
+		const cellSep = (_options$cellLineSepa = options.cellLineSeparator) !== null && _options$cellLineSepa !== void 0 ? _options$cellLineSepa : "";
+		if (!node || !node.content || node.content.length === 0) return "";
 		const rows = [];
 		node.content.forEach(rowNode => {
 			const cells = [];
-			if (rowNode.content) {
-				rowNode.content.forEach(cellNode => {
-					let raw = "";
-					if (cellNode.content && Array.isArray(cellNode.content) && cellNode.content.length > 1) {
-						const parts = cellNode.content.map(child => h.renderChildren(child));
-						raw = parts.join(cellSep);
-					} else {
-						raw = cellNode.content ? h.renderChildren(cellNode.content) : "";
-					}
-					const text = collapseWhitespace(raw);
-					const isHeader = cellNode.type === "tableHeader";
-					const align = normalizeTableCellAlignFromAttributes(cellNode.attrs);
-					cells.push({
-						text,
-						isHeader,
-						align
-					});
+			if (rowNode.content) rowNode.content.forEach(cellNode => {
+				let raw = "";
+				if (cellNode.content && Array.isArray(cellNode.content) && cellNode.content.length > 1) raw = cellNode.content.map(child => h.renderChildren(child)).join(cellSep);else raw = cellNode.content ? h.renderChildren(cellNode.content) : "";
+				const text = collapseWhitespace(raw.split(cellSep).join("\n").replace(/[ \t]*\r?\n[ \t]*/g, "<br>"));
+				const isHeader = cellNode.type === "tableHeader";
+				const align = normalizeTableCellAlignFromAttributes(cellNode.attrs);
+				cells.push({
+					text,
+					isHeader,
+					align
 				});
-			}
+			});
 			rows.push(cells);
 		});
 		const columnCount = rows.reduce((max, r) => Math.max(max, r.length), 0);
-		if (columnCount === 0) {
-			return "";
-		}
-		const colWidths = new Array(columnCount).fill(0);
+		if (columnCount === 0) return "";
+		const colWidths = Array.from({
+			length: columnCount
+		}).fill(0);
 		rows.forEach(r => {
-			var _a2;
 			for (let i = 0; i < columnCount; i += 1) {
-				const cell = ((_a2 = r[i]) == null ? void 0 : _a2.text) || "";
-				const len = cell.length;
-				if (len > colWidths[i]) {
-					colWidths[i] = len;
-				}
-				if (colWidths[i] < 3) {
-					colWidths[i] = 3;
-				}
+				var _r$i;
+				const len = (((_r$i = r[i]) === null || _r$i === void 0 ? void 0 : _r$i.text) || "").length;
+				if (len > colWidths[i]) colWidths[i] = len;
+				if (colWidths[i] < 3) colWidths[i] = 3;
 			}
 		});
 		const pad = (s, width) => s + " ".repeat(Math.max(0, width - s.length));
 		const headerRow = rows[0];
 		const hasHeader = headerRow.some(c => c.isHeader);
-		const colAlignments = new Array(columnCount).fill(null);
+		const colAlignments = Array.from({
+			length: columnCount
+		}).fill(null);
 		rows.forEach(r => {
-			var _a2;
 			for (let i = 0; i < columnCount; i += 1) {
-				if (!colAlignments[i] && ((_a2 = r[i]) == null ? void 0 : _a2.align)) {
-					colAlignments[i] = r[i].align;
-				}
+				var _r$i2;
+				if (!colAlignments[i] && ((_r$i2 = r[i]) === null || _r$i2 === void 0 ? void 0 : _r$i2.align)) colAlignments[i] = r[i].align;
 			}
 		});
 		let out = "\n";
-		const headerTexts = new Array(columnCount).fill(0).map((_, i) => hasHeader ? headerRow[i] && headerRow[i].text || "" : "");
-		out += `| ${headerTexts.map((t, i) => pad(t, colWidths[i])).join(" | ")} |
-`;
+		const headerTexts = Array.from({
+			length: columnCount
+		}).map((_, i) => hasHeader ? headerRow[i] && headerRow[i].text || "" : "");
+		out += `| ${headerTexts.map((t, i) => pad(t, colWidths[i])).join(" | ")} |\n`;
 		out += `| ${colWidths.map((w, index) => {
 		const dashCount = Math.max(3, w);
 		const alignment = colAlignments[index];
-		if (alignment === "left" /* Left */) {
-			return `:${"-".repeat(dashCount)}`;
-		}
-		if (alignment === "right" /* Right */) {
-			return `${"-".repeat(dashCount)}:`;
-		}
-		if (alignment === "center" /* Center */) {
-			return `:${"-".repeat(dashCount)}:`;
-		}
+		if (alignment === "left") return `:${"-".repeat(dashCount)}`;
+		if (alignment === "right") return `${"-".repeat(dashCount)}:`;
+		if (alignment === "center") return `:${"-".repeat(dashCount)}:`;
 		return "-".repeat(dashCount);
-	}).join(" | ")} |
-`;
-		const body = hasHeader ? rows.slice(1) : rows;
-		body.forEach(r => {
-			out += `| ${new Array(columnCount).fill(0).map((_, i) => pad(r[i] && r[i].text || "", colWidths[i])).join(" | ")} |
-`;
+	}).join(" | ")} |\n`;
+		(hasHeader ? rows.slice(1) : rows).forEach(r => {
+			out += `| ${Array.from({
+			length: columnCount
+		}).fill(0).map((_, i) => pad(r[i] && r[i].text || "", colWidths[i])).join(" | ")} |\n`;
 		});
 		return out;
 	}
-	var markdown_default = renderTableToMarkdown;
-
-	// src/table/table.ts
-	var Table = Node3.create({
+	//#endregion
+	//#region src/table/table.ts
+	/**
+	* This extension allows you to create tables.
+	* @see https://www.tiptap.dev/api/nodes/table
+	*/
+	const Table = Node$1.create({
 		name: "table",
-		// @ts-ignore
 		addOptions() {
 			return {
 				HTMLAttributes: {},
@@ -51557,7 +53729,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 				renderWrapper: false,
 				handleWidth: 5,
 				cellMinWidth: 25,
-				// TODO: fix
 				View: TableView,
 				lastColumnResizable: true,
 				allowTableNodeSelection: false
@@ -51583,9 +53754,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			} = createColGroup(node, this.options.cellMinWidth);
 			const userStyles = HTMLAttributes.style;
 			function getTableStyle() {
-				if (userStyles) {
-					return userStyles;
-				}
+				if (userStyles) return userStyles;
 				return tableWidth ? `width: ${tableWidth}` : `min-width: ${tableMinWidth}`;
 			}
 			const table = ["table", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
@@ -51601,8 +53770,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (token.header) {
 				const headerCells = [];
 				token.header.forEach((cell, index) => {
-					var _a;
-					const align = normalizeTableCellAlign((_a = alignments[index]) != null ? _a : cell.align);
+					var _alignments$index;
+					const align = normalizeTableCellAlign((_alignments$index = alignments[index]) !== null && _alignments$index !== void 0 ? _alignments$index : cell.align);
 					const attrs = align ? {
 						align
 					} : {};
@@ -51613,27 +53782,54 @@ ${nextLine.slice(indentLevel + 2)}`;
 				});
 				rows.push(h.createNode("tableRow", {}, headerCells));
 			}
-			if (token.rows) {
-				token.rows.forEach(row => {
-					const bodyCells = [];
-					row.forEach((cell, index) => {
-						var _a;
-						const align = normalizeTableCellAlign((_a = alignments[index]) != null ? _a : cell.align);
-						const attrs = align ? {
-							align
-						} : {};
-						bodyCells.push(h.createNode("tableCell", attrs, [{
-							type: "paragraph",
-							content: h.parseInline(cell.tokens)
-						}]));
-					});
-					rows.push(h.createNode("tableRow", {}, bodyCells));
+			if (token.rows) token.rows.forEach(row => {
+				const bodyCells = [];
+				row.forEach((cell, index) => {
+					var _alignments$index2;
+					const align = normalizeTableCellAlign((_alignments$index2 = alignments[index]) !== null && _alignments$index2 !== void 0 ? _alignments$index2 : cell.align);
+					const attrs = align ? {
+						align
+					} : {};
+					bodyCells.push(h.createNode("tableCell", attrs, [{
+						type: "paragraph",
+						content: h.parseInline(cell.tokens)
+					}]));
 				});
-			}
+				rows.push(h.createNode("tableRow", {}, bodyCells));
+			});
 			return h.createNode("table", void 0, rows);
 		},
 		renderMarkdown: (node, h) => {
-			return markdown_default(node, h);
+			return renderTableToMarkdown(node, h);
+		},
+		markdownTokenizer: {
+			name: "table",
+			level: "block",
+			start: src => {
+				const lines = src.split("\n");
+				if (lines.length < 2) return -1;
+				const sep = lines[1];
+				if (!/^[ \t|:]*-[ \t|:-]*$/.test(sep) || !sep.includes("|")) return -1;
+				return lines[0].includes("|") ? 0 : -1;
+			},
+			tokenize(src, _tokens, helper) {
+				const blankLineIndex = src.indexOf("\n\n");
+				const candidate = blankLineIndex >= 0 ? src.slice(0, blankLineIndex) : src;
+				const candidateLines = candidate.split("\n");
+				if (candidateLines.length < 2) return void 0;
+				const sep = candidateLines[1];
+				if (!/^[ \t|:]*-[ \t|:-]*$/.test(sep) || !sep.includes("|")) return void 0;
+				const preprocessed = preprocessTablePipes(candidate);
+				if (preprocessed === candidate) return void 0;
+				const tableToken = helper.blockTokens(preprocessed)[0];
+				if ((tableToken === null || tableToken === void 0 ? void 0 : tableToken.type) !== "table" || !tableToken.raw) return void 0;
+				const lineCount = tableToken.raw.split("\n").length;
+				const raw = src.split("\n").slice(0, lineCount).join("\n");
+				return {
+					...tableToken,
+					raw
+				};
+			}
 		},
 		addCommands() {
 			return {
@@ -51669,7 +53865,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 					state,
 					dispatch
 				}) => {
-					return deleteColumn(state, dispatch);
+					const table = findParentNodeClosestToPos(state.selection.$from, node => node.type.name === "table");
+					return deleteColumn(state, dispatch && (tr => {
+						if (table) keepCursorInTable(tr, table.pos);
+						dispatch(tr);
+					}));
 				},
 				addRowBefore: () => ({
 					state,
@@ -51687,7 +53887,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 					state,
 					dispatch
 				}) => {
-					return deleteRow(state, dispatch);
+					const table = findParentNodeClosestToPos(state.selection.$from, node => node.type.name === "table");
+					return deleteRow(state, dispatch && (tr => {
+						if (table) keepCursorInTable(tr, table.pos);
+						dispatch(tr);
+					}));
 				},
 				deleteTable: () => ({
 					state,
@@ -51729,9 +53933,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					state,
 					dispatch
 				}) => {
-					if (mergeCells(state, dispatch)) {
-						return true;
-					}
+					if (mergeCells(state, dispatch)) return true;
 					return splitCell(state, dispatch);
 				},
 				setCellAttribute: (name, value) => ({
@@ -51756,9 +53958,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					state,
 					dispatch
 				}) => {
-					if (dispatch) {
-						fixTables(state);
-					}
+					if (dispatch) fixTables(state);
 					return true;
 				},
 				setCellSelection: position => ({
@@ -51776,12 +53976,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 		addKeyboardShortcuts() {
 			return {
 				Tab: () => {
-					if (this.editor.commands.goToNextCell()) {
-						return true;
-					}
-					if (!this.editor.can().addRowAfter()) {
-						return false;
-					}
+					if (this.editor.commands.goToNextCell()) return true;
+					if (!this.editor.can().addRowAfter()) return false;
 					return this.editor.chain().addRowAfter().goToNextCell().run();
 				},
 				"Shift-Tab": () => this.editor.commands.goToPreviousCell(),
@@ -51792,8 +53988,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		},
 		addProseMirrorPlugins() {
-			const isResizable = this.options.resizable && this.editor.isEditable;
-			return [...(isResizable ? [columnResizing({
+			return [...(this.options.resizable && this.editor.isEditable ? [columnResizing({
 				handleWidth: this.options.handleWidth,
 				cellMinWidth: this.options.cellMinWidth,
 				defaultCellMinWidth: this.options.cellMinWidth,
@@ -51802,6 +53997,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 			})] : []), tableEditing({
 				allowTableNodeSelection: this.options.allowTableNodeSelection
 			})];
+		},
+		addNodeView() {
+			const isResizable = this.options.resizable && this.editor.isEditable;
+			const View = this.options.View;
+			if (isResizable || !View) return null;
+			return ({
+				node,
+				view,
+				HTMLAttributes
+			}) => {
+				const mergedAttributes = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes);
+				return new View(node, this.options.cellMinWidth, view, mergedAttributes);
+			};
 		},
 		extendNodeSchema(extension) {
 			const context = {
@@ -51814,24 +54022,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
-
-	// src/kit/index.ts
-	var TableKit = Extension.create({
+	//#endregion
+	//#region src/kit/index.ts
+	/**
+	* The table kit is a collection of table editor extensions.
+	*
+	* It’s a good starting point for building your own table in Tiptap.
+	*/
+	const TableKit = Extension.create({
 		name: "tableKit",
 		addExtensions() {
 			const extensions = [];
-			if (this.options.table !== false) {
-				extensions.push(Table.configure(this.options.table));
-			}
-			if (this.options.tableCell !== false) {
-				extensions.push(TableCell.configure(this.options.tableCell));
-			}
-			if (this.options.tableHeader !== false) {
-				extensions.push(TableHeader.configure(this.options.tableHeader));
-			}
-			if (this.options.tableRow !== false) {
-				extensions.push(TableRow.configure(this.options.tableRow));
-			}
+			if (this.options.table !== false) extensions.push(Table.configure(this.options.table));
+			if (this.options.tableCell !== false) extensions.push(TableCell.configure(this.options.tableCell));
+			if (this.options.tableHeader !== false) extensions.push(TableHeader.configure(this.options.tableHeader));
+			if (this.options.tableRow !== false) extensions.push(TableRow.configure(this.options.tableRow));
 			return extensions;
 		}
 	});
@@ -67415,7 +69620,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * @return {Y.Doc}
 	 */
 	function prosemirrorJSONToYDoc(schema, state, xmlFragment = 'prosemirror') {
-		const doc = Node$1.fromJSON(schema, state);
+		const doc = Node$2.fromJSON(schema, state);
 		return prosemirrorToYDoc(doc, xmlFragment);
 	}
 
@@ -67756,6 +69961,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// (which scrolls) instead of stealing from its neighbours, and cells keep wrapping.
 	const tableColwidthKey = new PluginKey('noteTableColwidthDefaults');
 	const MIN_COLUMN_WIDTH = 25;
+	const TABLE_ALIGNMENT_MARKER = /^<!--\s*b24-note-table-align:([^\s>]+)\s*-->/;
 	// border-collapse paints the outer cell borders ~1px beyond the table box, so a
 	// column-width sum equal to the wrapper overflows it by a hairline. Reserve it.
 	const TABLE_BORDER_ALLOWANCE = 2;
@@ -68074,6 +70280,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return furthestContainerEnd < range.end;
 		});
 	}
+
+	// The shared instance is what carries the module's tokenizers, and a Lexer built from it keeps them
+	// only when it is given the instance defaults. MarkdownManager does that itself since 3.30.5; the
+	// lexers the module builds for a table cell have to do it here.
+	function createCellLexer() {
+		return new sharedMarked.Lexer(sharedMarked.defaults);
+	}
 	function mergeAssetRanges(rawText, referenceLinks) {
 		const escapedAssetRanges = [...findEscapedCanonicalAssetRanges(rawText), ...findEscapedEnrichedAssetRanges(rawText)].sort((left, right) => left.start - right.start);
 		const canonicalRanges = excludeContainedRanges(findCanonicalAssetRanges(rawText), escapedAssetRanges);
@@ -68101,7 +70314,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		const mergedRanges = [...assetRanges, ...canonicalRanges.slice(canonicalIndex), ...enrichedRanges.slice(enrichedIndex)];
 		const markedCell = replaceTableCellAssetsWithMarkers(rawText, mergedRanges);
 		const visibleMarkers = new Set();
-		const lexer = new sharedMarked.Lexer();
+		const lexer = createCellLexer();
 		lexer.tokens.links = referenceLinks;
 		findVisibleAssetMarkers(lexer.inlineTokens(markedCell.markdown), markedCell.assetByMarker, visibleMarkers);
 		const markers = Array.from(markedCell.assetByMarker.keys());
@@ -68333,19 +70546,92 @@ ${nextLine.slice(indentLevel + 2)}`;
 		flushParagraph();
 		return blocks;
 	}
-	function buildCellChildren(cell, h) {
-		// Defensive access: fall back gracefully if marked internal API changes
-		const cellText = cell && typeof cell === 'object' && 'text' in cell ? cell.text : '';
-		const rawText = cellText.replaceAll(TABLE_CELL_LINE_SEPARATOR, ' ');
-		const tokens = cell && typeof cell === 'object' && 'tokens' in cell ? cell.tokens : [];
+	const CELL_BLOCK_BREAK_AT_RE = /^<br\s*\/?>/i;
+	// Only a cap on the slice the match is tried on. The library writes `<br>`, but a body written
+	// outside the editor - REST, an import from Outline or a wiki - carries `<br />` with whatever
+	// spacing its author used.
+	const CELL_BLOCK_BREAK_MAX_LENGTH = 16;
+
+	// Cuts a stored cell at the `<br>` tags the library wrote for its block boundaries, and only at
+	// those. A `<br>` the author typed into a code span is content, not a boundary: @tiptap/markdown
+	// returns text under a code mark verbatim - no HTML encoding, no escaping - so it reaches the row
+	// as a literal tag. Reading it as a boundary tore the span into two paragraphs and turned its
+	// backticks into text. Plain text cannot reach here as a literal tag: outside code the serializer
+	// encodes it as `&lt;br&gt;`.
+	function splitCellAtBreakTags(text) {
+		const parts = [];
+		let current = '';
+		let offset = 0;
+		while (offset < text.length) {
+			const char = text[offset];
+			if (char === '\\') {
+				current += text.slice(offset, offset + 2);
+				offset += 2;
+				continue;
+			}
+			if (char === '`') {
+				let fenceEnd = offset;
+				while (text[fenceEnd] === '`') {
+					fenceEnd += 1;
+				}
+				const fence = text.slice(offset, fenceEnd);
+				const closing = text.indexOf(fence, fenceEnd);
+				if (closing === -1) {
+					// Backticks with no pair are ordinary characters, the way marked reads them - taking
+					// them for a span that runs to the end of the cell would hide every block boundary
+					// after them.
+					current += fence;
+					offset = fenceEnd;
+					continue;
+				}
+				const end = closing + fence.length;
+				current += text.slice(offset, end);
+				offset = end;
+				continue;
+			}
+			if (char === '<') {
+				const tag = CELL_BLOCK_BREAK_AT_RE.exec(text.slice(offset, offset + CELL_BLOCK_BREAK_MAX_LENGTH));
+				if (tag !== null) {
+					parts.push(current);
+					current = '';
+					offset += tag[0].length;
+					continue;
+				}
+			}
+			current += char;
+			offset += 1;
+		}
+		parts.push(current);
+		return parts;
+	}
+	function trimEdgeEmptyParts(parts) {
+		let start = 0;
+		let end = parts.length;
+		while (start < end && parts[start] === '') {
+			start += 1;
+		}
+		while (end > start && parts[end - 1] === '') {
+			end -= 1;
+		}
+		return parts.slice(start, end);
+	}
+
+	// Where the blocks of one cell begin and end.
+	//
+	// Since 3.30.5 the library writes `<br>` for every line break inside a cell - both a break the user
+	// typed and the boundary between two blocks of the cell - because a real newline would split the
+	// markdown row. So `<br>` is read back as that same boundary: each part becomes a block of its own.
+	// Left as text it would be re-escaped to `&lt;br&gt;` on the next save and grow with every one; a
+	// literal `<br>` a user typed is stored as `&lt;br&gt;` and never reaches this split.
+	function buildCellBlocks(rawText, tokens, h, parsedTokens) {
 		if (!rawText.includes('fileId=')) {
-			if (!rawText.includes('\\') && cellText === rawText) {
+			if (parsedTokens) {
 				return [{
 					type: 'paragraph',
-					content: h.parseInline(tokens)
+					content: h.parseInline(parsedTokens)
 				}];
 			}
-			const lexer = new sharedMarked.Lexer();
+			const lexer = createCellLexer();
 			lexer.tokens.links = collectReferenceLinks(tokens);
 			return [{
 				type: 'paragraph',
@@ -68355,14 +70641,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 		const referenceLinks = collectReferenceLinks(tokens);
 		const assetRanges = mergeAssetRanges(rawText, referenceLinks);
 		if (assetRanges.length === 0) {
-			const lexer = new sharedMarked.Lexer();
+			const lexer = createCellLexer();
 			lexer.tokens.links = referenceLinks;
 			return [{
 				type: 'paragraph',
 				content: h.parseInline(lexer.inlineTokens(rawText))
 			}];
 		}
-		const lexer = new sharedMarked.Lexer();
+		const lexer = createCellLexer();
 		lexer.tokens.links = referenceLinks;
 		const markedCell = replaceTableCellAssetsWithMarkers(rawText, assetRanges);
 		const inlineContent = h.parseInline(lexer.inlineTokens(markedCell.markdown));
@@ -68372,14 +70658,113 @@ ${nextLine.slice(indentLevel + 2)}`;
 			content: []
 		}];
 	}
+	function buildCellChildren(cell, h, textOverride = null) {
+		// Defensive access: fall back gracefully if marked internal API changes
+		const hasTextOverride = typeof textOverride === 'string';
+		const cellText = hasTextOverride ? textOverride : cell && typeof cell === 'object' && 'text' in cell ? cell.text : '';
+		const rawText = cellText.replaceAll(TABLE_CELL_LINE_SEPARATOR, ' ');
+		const tokens = cell && typeof cell === 'object' && 'tokens' in cell ? cell.tokens : [];
+		const parts = splitCellAtBreakTags(rawText);
+		if (parts.length > 1) {
+			// An empty part between two breaks is an empty block of the cell, not nothing: dropping it
+			// glued the blocks around it together and the next save stored the cell without it. Only the
+			// edges of the split are dropped - there a leading or trailing break means no block at all.
+			const inner = trimEdgeEmptyParts(parts.map(part => part.trim()));
+			const blocks = inner.flatMap(part => part === '' ? [{
+				type: 'paragraph',
+				content: []
+			}] : buildCellBlocks(part, tokens, h, null));
+			return blocks.length > 0 ? blocks : [{
+				type: 'paragraph',
+				content: []
+			}];
+		}
+
+		// The fast path is only valid for the cell as a whole: `tokens` were lexed for the whole cell
+		// text, so a part of a split cell must go through the lexer instead.
+		// An overridden text is a slice of the cell, so its `tokens` do not match it either.
+		const alreadyParsed = !hasTextOverride && !rawText.includes('\\') && cellText === rawText ? tokens : null;
+		return buildCellBlocks(rawText, tokens, h, alreadyParsed);
+	}
+	function parseTableAlignment(header) {
+		const firstCell = Array.isArray(header) ? header[0] : null;
+		const text = firstCell && typeof firstCell === 'object' && typeof firstCell.text === 'string' ? firstCell.text : '';
+		const marker = TABLE_ALIGNMENT_MARKER.exec(text);
+		if (!marker) {
+			return {
+				alignment: 'left',
+				firstHeaderText: null
+			};
+		}
+		return {
+			alignment: normalizeTableAlignment(marker[1]),
+			firstHeaderText: text.slice(marker[0].length)
+		};
+	}
+	function applyTableAlignmentToView(view, node) {
+		const alignment = normalizeTableAlignment(node.attrs.alignment);
+		view.table.classList.remove('note-editor-table--align-left', 'note-editor-table--align-center', 'note-editor-table--align-right');
+		view.table.classList.add(`note-editor-table--align-${alignment}`);
+		view.table.setAttribute('data-table-alignment', alignment);
+	}
 	const CustomTable = Table.extend({
+		addAttributes() {
+			return {
+				...this.parent?.(),
+				alignment: {
+					default: 'left',
+					parseHTML: element => normalizeTableAlignment(element.getAttribute('data-table-alignment')),
+					renderHTML: attrs => {
+						const alignment = normalizeTableAlignment(attrs.alignment);
+						return {
+							class: `note-editor-table--align-${alignment}`,
+							'data-table-alignment': alignment
+						};
+					}
+				}
+			};
+		},
+		addCommands() {
+			return {
+				...this.parent?.(),
+				setTableAlignment: alignment => ({
+					state,
+					dispatch
+				}) => {
+					if (!isTableAlignment(alignment)) {
+						return false;
+					}
+					const table = findTableAtSelection(state.selection);
+					if (!table) {
+						return false;
+					}
+					if (dispatch) {
+						dispatch(state.tr.setNodeMarkup(table.pos, undefined, {
+							...table.node.attrs,
+							alignment
+						}));
+					}
+					return true;
+				}
+			};
+		},
 		addNodeView() {
 			return ({
 				node
 			}) => {
 				const View = this.options.View;
 				const cellMinWidth = this.options.cellMinWidth;
-				return new View(node, cellMinWidth);
+				const view = new View(node, cellMinWidth);
+				const update = view.update.bind(view);
+				applyTableAlignmentToView(view, node);
+				view.update = nextNode => {
+					const updated = update(nextNode);
+					if (updated) {
+						applyTableAlignmentToView(view, nextNode);
+					}
+					return updated;
+				};
+				return view;
 			};
 		},
 		addProseMirrorPlugins() {
@@ -68402,10 +70787,25 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		parseMarkdown(token, h) {
 			const rows = [];
-			if (token.header) {
+			const header = Array.isArray(token.header) ? token.header : [];
+			const {
+				alignment,
+				firstHeaderText
+			} = parseTableAlignment(header);
+
+			// GFM requires a header row, but imported content tables (e.g. landing card lists) carry a
+			// deliberately blank header so no label row is shown. Rendering an all-empty <th> row just
+			// adds a stray empty line at the top, so skip it - but only when there are body rows to keep
+			// the table non-empty; a header-only table falls back to showing the (blank) header.
+			const hasBody = Array.isArray(token.rows) && token.rows.length > 0;
+			const headerIsBlank = header.length > 0 && header.every(cell => {
+				const text = cell && typeof cell === 'object' && typeof cell.text === 'string' ? cell.text : '';
+				return text.trim() === '';
+			});
+			if (header.length > 0 && !(headerIsBlank && hasBody)) {
 				const headerCells = [];
-				token.header.forEach(cell => {
-					headerCells.push(h.createNode('tableHeader', {}, buildCellChildren(cell, h)));
+				header.forEach((cell, index) => {
+					headerCells.push(h.createNode('tableHeader', {}, buildCellChildren(cell, h, index === 0 ? firstHeaderText : null)));
 				});
 				rows.push(h.createNode('tableRow', {}, headerCells));
 			}
@@ -68418,15 +70818,29 @@ ${nextLine.slice(indentLevel + 2)}`;
 					rows.push(h.createNode('tableRow', {}, bodyCells));
 				});
 			}
-			return h.createNode('table', undefined, rows);
+			return h.createNode('table', {
+				alignment
+			}, rows);
 		},
 		renderMarkdown(node, h) {
-			return renderTableToMarkdown({
-				...node,
-				content: escapeInlineText(node.content)
-			}, h, {
-				cellLineSeparator: ' '
+			// The bar is escaped in what the library rendered for a cell, not in the table markup it
+			// writes around it: wrapping the whole result would escape the cell separators too, and the
+			// table would come back as a single paragraph. `renderChildren` is the seam that carries
+			// cell content and nothing else.
+			const cellRenderer = Object.create(h);
+			cellRenderer.renderChildren = child => escapeTableCellPlainPipes(h.renderChildren(child));
+
+			// '\n' rather than ' ': since 3.30.5 the library splits the rendered cell on this separator
+			// and turns every resulting line break into `<br>`, so a separator of ' ' would put a `<br>`
+			// in place of every space in the cell.
+			const markdown = renderTableToMarkdown(node, cellRenderer, {
+				cellLineSeparator: '\n'
 			});
+			const alignment = normalizeTableAlignment(node.attrs?.alignment);
+			if (alignment === 'left') {
+				return markdown;
+			}
+			return markdown.replace(/^(\n*\|[\t ]*)/, `$1<!-- b24-note-table-align:${alignment} -->`);
 		}
 	});
 	const backgroundColorAttribute = {
@@ -68468,9 +70882,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}), CustomTableCell, CustomTableHeader];
 	}
 
-	// src/image.ts
-	var inputRegex = /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/;
-	var Image = Node3.create({
+	//#region src/image.ts
+	/**
+	* Matches an image to a ![image](src "title") on input.
+	*/
+	const inputRegex = /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/;
+	/**
+	* This extension allows you to insert images.
+	* @see https://www.tiptap.dev/api/nodes/image
+	*/
+	const Image = Node$1.create({
 		name: "image",
 		addOptions() {
 			return {
@@ -68508,7 +70929,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		parseHTML() {
 			return [{
-				tag: this.options.allowBase64 ? "img[src]" : 'img[src]:not([src^="data:"])'
+				tag: this.options.allowBase64 ? "img[src]" : "img[src]:not([src^=\"data:\"])"
 			}];
 		},
 		renderHTML({
@@ -68524,22 +70945,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 			});
 		},
 		renderMarkdown: node => {
-			var _a, _b, _c, _d, _e, _f;
-			const src = (_b = (_a = node.attrs) == null ? void 0 : _a.src) != null ? _b : "";
-			const alt = (_d = (_c = node.attrs) == null ? void 0 : _c.alt) != null ? _d : "";
-			const title = (_f = (_e = node.attrs) == null ? void 0 : _e.title) != null ? _f : "";
+			var _node$attrs$src, _node$attrs, _node$attrs$alt, _node$attrs2, _node$attrs$title, _node$attrs3;
+			const src = (_node$attrs$src = (_node$attrs = node.attrs) === null || _node$attrs === void 0 ? void 0 : _node$attrs.src) !== null && _node$attrs$src !== void 0 ? _node$attrs$src : "";
+			const alt = (_node$attrs$alt = (_node$attrs2 = node.attrs) === null || _node$attrs2 === void 0 ? void 0 : _node$attrs2.alt) !== null && _node$attrs$alt !== void 0 ? _node$attrs$alt : "";
+			const title = (_node$attrs$title = (_node$attrs3 = node.attrs) === null || _node$attrs3 === void 0 ? void 0 : _node$attrs3.title) !== null && _node$attrs$title !== void 0 ? _node$attrs$title : "";
 			return title ? `![${alt}](${src} "${title}")` : `![${alt}](${src})`;
 		},
 		addNodeView() {
-			if (!this.options.resize || !this.options.resize.enabled || typeof document === "undefined") {
-				return null;
-			}
+			if (!this.options.resize || !this.options.resize.enabled || typeof document === "undefined") return null;
 			const {
 				directions,
 				minWidth,
 				minHeight,
 				alwaysPreserveAspectRatio
 			} = this.options.resize;
+			const resizeManagedAttributes = /* @__PURE__ */new Set(["src", "width", "height"]);
 			return ({
 				node,
 				getPos,
@@ -68547,19 +70967,46 @@ ${nextLine.slice(indentLevel + 2)}`;
 				editor
 			}) => {
 				const el = document.createElement("img");
-				Object.entries(HTMLAttributes).forEach(([key, value]) => {
-					if (value != null) {
-						switch (key) {
-							case "width":
-							case "height":
-								break;
-							default:
-								el.setAttribute(key, value);
-								break;
-						}
+				el.draggable = false;
+				const mergedAttributes = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes);
+				Object.entries(mergedAttributes).forEach(([key, value]) => {
+					if (value != null) switch (key) {
+						case "src":
+						case "width":
+						case "height":
+							break;
+						default:
+							el.setAttribute(key, value);
 					}
 				});
-				el.src = HTMLAttributes.src;
+				if (mergedAttributes.src !== null) el.src = mergedAttributes.src;
+				let previousHTMLAttributes = {
+					...HTMLAttributes
+				};
+				const syncImageSource = src => {
+					if (typeof src === "string" && src !== "") {
+						if (el.getAttribute("src") !== src) el.src = src;
+						return;
+					}
+					if (el.hasAttribute("src")) el.removeAttribute("src");
+					if (el.src !== "") el.src = "";
+				};
+				syncImageSource(HTMLAttributes.src);
+				const onUpdate = updatedNode => {
+					if (updatedNode.type !== node.type) return false;
+					const extensionAttributes = editor.extensionManager.attributes.filter(attribute => attribute.type === updatedNode.type.name);
+					const newHTMLAttributes = getRenderedAttributes(updatedNode, extensionAttributes);
+					Object.keys(previousHTMLAttributes).forEach(key => {
+						if (!resizeManagedAttributes.has(key) && !(key in newHTMLAttributes)) el.removeAttribute(key);
+					});
+					Object.entries(newHTMLAttributes).forEach(([key, value]) => {
+						if (resizeManagedAttributes.has(key)) return;
+						if (value != null) el.setAttribute(key, value);else el.removeAttribute(key);
+					});
+					syncImageSource(newHTMLAttributes.src);
+					previousHTMLAttributes = newHTMLAttributes;
+					return true;
+				};
 				const nodeView = new ResizableNodeView({
 					element: el,
 					editor,
@@ -68571,20 +71018,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 					},
 					onCommit: (width, height) => {
 						const pos = getPos();
-						if (pos === void 0) {
-							return;
-						}
+						if (pos === void 0) return;
 						this.editor.chain().setNodeSelection(pos).updateAttributes(this.name, {
 							width,
 							height
 						}).run();
 					},
-					onUpdate: (updatedNode, _decorations, _innerDecorations) => {
-						if (updatedNode.type !== node.type) {
-							return false;
-						}
-						return true;
-					},
+					onUpdate,
 					options: {
 						directions,
 						min: {
@@ -68595,12 +71035,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 				});
 				const dom = nodeView.dom;
-				dom.style.visibility = "hidden";
-				dom.style.pointerEvents = "none";
-				el.onload = () => {
+				const showNodeView = () => {
 					dom.style.visibility = "";
 					dom.style.pointerEvents = "";
 				};
+				dom.style.visibility = "hidden";
+				dom.style.pointerEvents = "none";
+				if (el.complete && el.naturalWidth > 0) showNodeView();else {
+					el.onload = showNodeView;
+					el.onerror = showNodeView;
+				}
 				return nodeView;
 			};
 		},
@@ -68861,6 +71305,93 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 
+	/**
+	 * What the server currently says about the Disk files a document references.
+	 *
+	 * Deliberately NOT part of the document. Markdown carries only the object id, so name, size, links
+	 * and trash state are re-fetched on every open anyway — writing them into the collaborative model
+	 * would buy nothing and cost something real: the model is shared, and rights on a Disk file are not.
+	 * A co-editor who may not read the file would receive its name from whoever may, and the server's
+	 * refusal to name it for them would be undone by the very mechanism that keeps the text in sync.
+	 *
+	 * Keyed by document as well as object: the same file can be attached to one document and unreachable
+	 * from another, and the two answers must not be mistaken for one another.
+	 */
+
+	const entries = new Map();
+
+	// Subscribers of one attachment, not of the store: a document full of Disk files resolves one object
+	// at a time, and a single list of subscribers would run every block's callback on every answer.
+	const listeners = new Map();
+	function keyOf(documentId, objectId) {
+		return `${documentId}:${objectId}`;
+	}
+	const DiskAttachmentStore = {
+		get(documentId, objectId) {
+			if (!Number.isInteger(documentId) || !Number.isInteger(objectId)) {
+				return null;
+			}
+			return entries.get(keyOf(documentId, objectId)) ?? null;
+		},
+		has(documentId, objectId) {
+			return this.get(documentId, objectId) !== null;
+		},
+		set(documentId, objectId, entry) {
+			if (!Number.isInteger(documentId) || !Number.isInteger(objectId)) {
+				return;
+			}
+			const key = keyOf(documentId, objectId);
+			entries.set(key, entry);
+			listeners.get(key)?.forEach(listener => listener());
+		},
+		/**
+		 * Watches one attachment of one document.
+		 *
+		 * @returns An unsubscribe function. Node views hold one each and re-subscribe when the node they
+		 *          draw changes into another attachment, so it has to be cheap to drop.
+		 */
+		subscribe(documentId, objectId, listener) {
+			const key = keyOf(documentId, objectId);
+			let forKey = listeners.get(key);
+			if (!forKey) {
+				forKey = new Set();
+				listeners.set(key, forKey);
+			}
+			forKey.add(listener);
+			return () => {
+				const current = listeners.get(key);
+				if (!current) {
+					return;
+				}
+				current.delete(listener);
+				if (current.size === 0) {
+					listeners.delete(key);
+				}
+			};
+		},
+		/**
+		 * Drops what was learned about one document. Called when its editor goes away: the app switches
+		 * documents without a page load, so entries of every document ever opened would otherwise live
+		 * until the tab is closed. Nothing is lost — the next open asks the server again, which it does
+		 * anyway.
+		 */
+		forgetDocument(documentId) {
+			if (!Number.isInteger(documentId) || documentId <= 0) {
+				return;
+			}
+			const prefix = `${documentId}:`;
+			for (const key of entries.keys()) {
+				if (key.startsWith(prefix)) {
+					entries.delete(key);
+				}
+			}
+		},
+		/** Test seam. Production forgets per document, see forgetDocument(). */
+		clear() {
+			entries.clear();
+		}
+	};
+
 	// Float images cap at 70% of the container so wrapped text keeps a usable column; center/no-align
 	// can fill the width.
 	const FLOAT_MAX_PCT$1 = 70;
@@ -68885,7 +71416,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 			dataType,
 			className,
 			inline,
-			uploadService
+			uploadService,
+			getDocumentId
 		}) {
 			this.node = node;
 			this.editor = editor;
@@ -68895,6 +71427,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.className = className;
 			this.inline = inline === true;
 			this.uploadService = uploadService || null;
+			this.getDocumentId = typeof getDocumentId === 'function' ? getDocumentId : () => 0;
+			this.unsubscribeDiskStore = null;
+			this.diskSubscriptionKey = null;
 			// Capability flag: enables resize/align/stack logic for this node type.
 			this.resizable = Boolean(extension?.options?.resizable);
 			this.app = null;
@@ -68947,8 +71482,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					AttachmentNodeViewComponent: component
 				},
 				data: () => ({
-					attrs: this.node.attrs,
-					defaultTypeMessage: this.extension.options.defaultTypeMessage,
+					attrs: this.resolveAttrs(),
 					editable: Boolean(this.editor?.isEditable),
 					selected: false,
 					// onReplace is null unless an uploadService was injected (image node only).
@@ -68975,7 +71509,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 				template: `
 				<AttachmentNodeViewComponent
 					:attrs="attrs"
-					:default-type-message="defaultTypeMessage"
 					:editable="editable"
 					:selected="selected"
 					:on-resize="handleResize"
@@ -68987,6 +71520,56 @@ ${nextLine.slice(indentLevel + 2)}`;
 			`
 			});
 			this.vm = this.app.mount(this.dom);
+			this.syncDiskSubscription();
+		}
+
+		/**
+		 * A Disk attachment is described outside the document (see DiskAttachmentStore), so the resolve pass
+		 * produces no node update to re-render on — the store reports it instead.
+		 *
+		 * Reconciled rather than set up once: a node view survives an update into another node of the same
+		 * type, so the block this view draws can become a different attachment — or stop being a Disk one at
+		 * all — without the view being rebuilt. A subscription left pinned to the attributes the constructor
+		 * saw would then watch the wrong file, and the resolved answer for the right one would never reach
+		 * the block.
+		 */
+		syncDiskSubscription() {
+			const documentId = this.getDocumentId();
+			const objectId = Number(this.node.attrs.diskObjectId);
+			const isDiskAttachment = Number.isInteger(objectId) && objectId > 0;
+			const key = isDiskAttachment ? `${documentId}:${objectId}` : null;
+			if (key === this.diskSubscriptionKey) {
+				return;
+			}
+			this.unsubscribeDiskStore?.();
+			this.unsubscribeDiskStore = null;
+			this.diskSubscriptionKey = key;
+			if (key === null) {
+				return;
+			}
+			this.unsubscribeDiskStore = DiskAttachmentStore.subscribe(documentId, objectId, () => this.syncAttrs());
+		}
+
+		/**
+		 * Node attributes as the block should see them: what the document holds, plus what the server
+		 * currently says about the Disk file behind it. The store wins on the fields it owns — the
+		 * document never carries them, and a stale copy there would outrank a fresh answer.
+		 */
+		resolveAttrs() {
+			const objectId = Number(this.node.attrs.diskObjectId);
+			if (!Number.isInteger(objectId) || objectId <= 0) {
+				return this.node.attrs;
+			}
+			const entry = DiskAttachmentStore.get(this.getDocumentId(), objectId);
+			return entry === null ? this.node.attrs : {
+				...this.node.attrs,
+				...entry
+			};
+		}
+		syncAttrs() {
+			if (this.vm) {
+				this.vm.attrs = this.resolveAttrs();
+			}
 		}
 		update(node) {
 			if (node.type !== this.node.type) {
@@ -68995,9 +71578,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.node = node;
 			this.syncLayout();
 			this.syncDiffState();
+			this.syncDiskSubscription();
 			this.scheduleStackUpdate();
 			if (this.vm) {
-				this.vm.attrs = node.attrs;
+				this.vm.attrs = this.resolveAttrs();
 				this.vm.editable = Boolean(this.editor?.isEditable);
 			}
 			return true;
@@ -69343,7 +71927,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return selection.from === pos && selection.to === pos + this.node.nodeSize;
 		}
 		#isActivatableTarget(target) {
-			return Boolean(target.closest('.note-editor-image-attachment-link') || target.closest('.note-editor-file-attachment-link') || target.closest('.note-editor-video-player'));
+			return Boolean(target.closest('.note-editor-image-attachment-link') || target.closest('.note-editor-file-attachment-link') || target.closest('.note-editor-video-player') || target.closest('.note-editor-video-embed__frame'));
 		}
 		stopEvent(event) {
 			if (!(event.target instanceof Element) || !this.dom.contains(event.target)) {
@@ -69383,6 +71967,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 				cancelAnimationFrame(this._stackRafId);
 				this._stackRafId = undefined;
 			}
+			this.unsubscribeDiskStore?.();
+			this.unsubscribeDiskStore = null;
+			this.diskSubscriptionKey = null;
 			this.app?.unmount();
 			this.app = null;
 			this.vm = null;
@@ -69415,6 +72002,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 			fileId: {
 				default: null
 			},
+			// Disk object behind the attachment, filled instead of fileId when the file was picked from
+			// Disk rather than uploaded here. Exactly one of the two is set; that choice decides both how
+			// the node resolves and which token it serializes into. A node with neither is invalid.
+			diskObjectId: {
+				default: null
+			},
 			documentId: {
 				default: null
 			},
@@ -69432,6 +72025,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			unavailable: {
 				default: false
 			},
+			// NOTE: what the server says about a Disk file — name, size, links, trash state — is NOT a
+			// node attribute. It is per-reader data and lives in DiskAttachmentStore; the node view merges
+			// it in when it draws. Putting it here would share one reader's answer with every co-editor.
 			// Rendered width as a percentage of the container (image resize), >0..100, fractional
 			// allowed (0.01% steps). null = natural size. Persisted in markdown as `width=N` (bare
 			// number = percent).
@@ -69500,7 +72096,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 		static createNode(config) {
 			const isInline = config.inline === true;
-			return Node3.create({
+			return Node$1.create({
 				name: config.name,
 				group: isInline ? 'inline' : 'block',
 				inline: isInline,
@@ -69525,6 +72121,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						class: config.className,
 						contenteditable: 'false',
 						'data-file-id': node.attrs.fileId || '',
+						'data-disk-object-id': node.attrs.diskObjectId || '',
 						'data-document-id': node.attrs.documentId || '',
 						'data-download-url': node.attrs.downloadUrl || '',
 						'data-show-url': node.attrs.showUrl || '',
@@ -69534,9 +72131,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				addOptions() {
 					return {
 						nodeViewComponent: config.nodeViewComponent || null,
-						defaultTypeMessage: config.defaultTypeMessage,
 						// Injected for image replace (see media-extensions/registry). null for file/video.
 						uploadService: null,
+						// Disk attachments resolve per reader, outside the shared model — the node view
+						// needs the document to look its data up (see DiskAttachmentStore).
+						getDocumentId: () => 0,
 						// Enables resize/align/float-stacking for this node type (image, video).
 						resizable: config.resizable === true
 					};
@@ -69554,7 +72153,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 						dataType: config.dataType,
 						className: config.className,
 						inline: isInline,
-						uploadService: this.options.uploadService
+						uploadService: this.options.uploadService,
+						getDocumentId: this.options.getDocumentId
 					});
 				},
 				addProseMirrorPlugins() {
@@ -69587,16 +72187,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 				},
 				addCommands: createCommandFactory(config),
 				renderMarkdown(node) {
-					const fileId = Number(node?.attrs?.fileId);
-					if (!Number.isInteger(fileId) || fileId <= 0) {
-						return '';
-					}
-
 					// width is a percentage (>0..100, fractional allowed); serialize as a bare number.
 					const width = Number(node?.attrs?.width);
 					const widthAttr = Number.isFinite(width) && width > 0 && width <= 100 ? ` width=${width}` : '';
 					const align = node?.attrs?.align;
 					const alignAttr = align === 'left' || align === 'right' ? ` align=${align}` : '';
+					const diskObjectId = Number(node?.attrs?.diskObjectId);
+					if (Number.isInteger(diskObjectId) && diskObjectId > 0) {
+						return `[[disk ${config.assetType} objectId=${diskObjectId}${widthAttr}${alignAttr}]]`;
+					}
+					const fileId = Number(node?.attrs?.fileId);
+					if (!Number.isInteger(fileId) || fileId <= 0) {
+						return '';
+					}
 					return `[[${config.assetType} fileId=${fileId}${widthAttr}${alignAttr}]]`;
 				}
 			});
@@ -69690,10 +72293,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: Object,
 				required: true
 			},
-			defaultTypeMessage: {
-				type: String,
-				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE'
-			},
 			editable: {
 				type: Boolean,
 				default: false
@@ -69735,9 +72334,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 			fileName() {
 				return this.attrs.name || main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED');
 			},
-			fileType() {
-				return this.attrs.mimeType || main_core.Loc.getMessage(this.defaultTypeMessage);
-			},
 			fileSize() {
 				return normalizeFileSize(this.attrs.size);
 			},
@@ -69748,6 +72344,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			showUrl() {
 				return sanitizeAttachmentUrl(this.attrs.showUrl) || '';
+			},
+			// Where an <img>/<video> may read the bytes from, as opposed to where the block points.
+			// For a file of ours the two coincide, so the show url stands in when there is no inline one.
+			// For a file on Disk they do not: `showUrl` is Disk's HTML page for the file and its download
+			// url is served as an attachment, so neither may stand in — a player pointed at a page is an
+			// empty player. Only `inlineUrl` serves bytes there, and a Disk file without one has nothing
+			// to show at all.
+			mediaUrl() {
+				const inlineUrl = sanitizeAttachmentUrl(this.attrs.inlineUrl);
+				if (this.diskObjectId !== null) {
+					return inlineUrl || '';
+				}
+				return inlineUrl || this.showUrl || this.downloadUrl;
 			},
 			fileId() {
 				const value = Number(this.attrs.fileId);
@@ -69765,13 +72374,34 @@ ${nextLine.slice(indentLevel + 2)}`;
 			isUnavailable() {
 				return Boolean(this.attrs.unavailable);
 			},
-			// fileId present but no URL yet and not flagged failed: the resolver is in flight.
+			// Disk attachment: the object id the token carries, filled instead of fileId.
+			diskObjectId() {
+				const value = Number(this.attrs.diskObjectId);
+				return Number.isInteger(value) && value > 0 ? value : null;
+			},
+			// A Disk attachment whose file sits in Disk's trash can. The block stays where it is — the
+			// document must not reshape itself because somebody deleted a file elsewhere.
+			isDeleted() {
+				return Boolean(this.attrs.deleted);
+			},
+			// The restore action appears only when the server said this reader may restore it, and it
+			// leads into Disk's trash can: the module performs no restore of its own.
+			restoreUrl() {
+				return this.attrs.canRestore === true ? sanitizeAttachmentUrl(this.attrs.restoreUrl) || '' : '';
+			},
+			// An id present but no URL yet and not flagged failed: the resolver is in flight.
 			// Render a skeleton instead of the "Untitled" name fallback during this window.
 			isResolving() {
-				return this.fileId !== null && !this.showUrl && !this.downloadUrl && !this.isUnavailable;
+				return (this.fileId !== null || this.diskObjectId !== null) && !this.showUrl && !this.downloadUrl && !this.isUnavailable;
 			},
 			unavailableMessage() {
 				return main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE');
+			},
+			deletedMessage() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_DELETED');
+			},
+			restoreMessage() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_RESTORE');
 			}
 		}
 	};
@@ -69788,8 +72418,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 					...this.viewerDataAttrs
 				};
 				attrs['data-viewer'] = true;
-				if (this.fileUrl) {
-					attrs['data-src'] = this.fileUrl;
+				// What the viewer READS, as opposed to where the block points. For a file of ours the two
+				// coincide; for a file on Disk the link is Disk's own HTML page, and a viewer told to read a
+				// page shows the page's markup instead of the file — a `.md` opens as portal page source,
+				// because Disk types it as `code` and the code viewer fetches this very url.
+				const sourceUrl = this.mediaUrl || this.fileUrl;
+				if (sourceUrl) {
+					attrs['data-src'] = sourceUrl;
 				}
 				if (main_core.Type.isStringFilled(this.fileName)) {
 					attrs['data-title'] = this.fileName;
@@ -69809,7 +72444,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		// language=Vue
 		template: `
+		<div v-if="isDeleted" class="note-editor-file-attachment-inner note-editor-attachment--deleted">
+			<div class="note-editor-file-attachment-icon" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+			</div>
+			<div class="note-editor-file-attachment-text">
+				<div class="note-editor-file-attachment-name">{{ deletedMessage }}</div>
+				<div v-if="restoreUrl" class="note-editor-file-attachment-extra">
+					<a class="note-editor-file-attachment-restore" :href="restoreUrl" target="_blank" rel="noopener noreferrer">{{ restoreMessage }}</a>
+				</div>
+			</div>
+		</div>
 		<a
+			v-else
 			class="note-editor-file-attachment-inner note-editor-file-attachment-link"
 			:class="{ 'note-editor-attachment--unavailable': isUnavailable }"
 			v-bind="fileViewerAttrs"
@@ -69824,7 +72471,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
 					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
 				</div>
-				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileType }} · {{ fileSize }}</div>
+				<!-- Size only: the mime type says nothing the file name does not, and for an office
+				document it is a line of vendor gibberish wider than the block itself. -->
+				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileSize }}</div>
 			</div>
 		</a>
 	`
@@ -70213,14 +72862,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 		components: {
 			MediaResizeControls
 		},
-		props: {
-			defaultTypeMessage: {
-				type: String,
-				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE'
-			}
-		},
 		computed: {
 			imageUrl() {
+				return this.mediaUrl;
+			},
+			// The anchor leads to the file itself: our own viewer for a file of ours, Disk's page for one
+			// of theirs — where the file's own permission check lives.
+			linkUrl() {
 				return this.showUrl || this.downloadUrl;
 			},
 			hasImage() {
@@ -70242,7 +72890,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				if (main_core.Type.isStringFilled(this.fileName)) {
 					attrs['data-title'] = this.fileName;
 				}
-				attrs.href = this.hasImage ? this.imageUrl : '#';
+				attrs.href = this.linkUrl || (this.hasImage ? this.imageUrl : '#');
 				if (this.hasImage) {
 					attrs['data-viewer-preview'] = this.imageUrl;
 					attrs['data-src'] = this.imageUrl;
@@ -70261,8 +72909,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		// language=Vue
 		template: `
-		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
-			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
+		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable, 'note-editor-attachment--deleted': isDeleted }">
+			<div v-if="isDeleted" class="note-editor-image-attachment-empty">
+				{{ deletedMessage }}
+				<a v-if="restoreUrl" class="note-editor-file-attachment-restore" :href="restoreUrl" target="_blank" rel="noopener noreferrer">{{ restoreMessage }}</a>
+			</div>
+			<div v-else-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
 			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
 			<div v-else class="note-editor-image-attachment-preview" :class="{ 'note-editor-image-attachment-preview--resizing': dragging }">
 				<a
@@ -70512,7 +73164,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	`
 	};
 
-	const UploadAsset = Node3.create({
+	const UploadAsset = Node$1.create({
 		name: 'uploadAsset',
 		group: 'block',
 		atom: true,
@@ -70586,16 +73238,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		components: {
 			MediaResizeControls
 		},
-		props: {
-			defaultTypeMessage: {
-				type: String,
-				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO'
-			}
-		},
 		computed: {
 			videoUrl() {
-				// `showUrl` is already checked by the base component, own `src` is not.
-				return sanitizeAttachmentUrl(this.attrs.src) || this.showUrl || '';
+				// `mediaUrl` is already checked by the base component, own `src` is not. A Disk video has
+				// no `src` of its own and plays through `mediaUrl`; when Disk offers no source for the file
+				// the block shows its meta without a player rather than an empty one.
+				return sanitizeAttachmentUrl(this.attrs.src) || this.mediaUrl || '';
 			},
 			// Required by ResizableMediaMixin to gate handles/overlay.
 			hasMedia() {
@@ -70604,8 +73252,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		// language=Vue
 		template: `
-		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
-			<div v-if="isUnavailable" class="note-editor-video-meta">
+		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable, 'note-editor-attachment--deleted': isDeleted }">
+			<div v-if="isDeleted" class="note-editor-video-meta">
+				<div class="note-editor-video-name">{{ deletedMessage }}</div>
+				<a v-if="restoreUrl" class="note-editor-file-attachment-restore" :href="restoreUrl" target="_blank" rel="noopener noreferrer">{{ restoreMessage }}</a>
+			</div>
+			<div v-else-if="isUnavailable" class="note-editor-video-meta">
 				<div class="note-editor-video-name">{{ unavailableMessage }}</div>
 			</div>
 			<template v-else>
@@ -70635,7 +73287,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 						<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
 						<template v-else>{{ fileName }}</template>
 					</div>
-					<div v-if="!isResolving" class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
+					<!-- Size only, as under a file: the mime type repeats the extension in the name. -->
+					<div v-if="!isResolving" class="note-editor-video-extra">{{ fileSize }}</div>
 				</div>
 			</template>
 		</div>
@@ -70663,7 +73316,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		resizable: true
 	});
 
-	const EnrichedAssetTokenizer = Node3.create({
+	const EnrichedAssetTokenizer = Node$1.create({
 		name: 'enrichedAsset',
 		markdownTokenizer: {
 			name: 'enrichedAsset',
@@ -70720,7 +73373,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// Block-level tokenizer for all asset types (image/file/video). Each [[<type> fileId=N ...]] token
 	// owns its line and becomes a top-level block node — images are block nodes again, so they are no
 	// longer wrapped in a paragraph nor handled by a separate inline tokenizer.
-	const NoteAssetTokenizer = Node3.create({
+	const NoteAssetTokenizer = Node$1.create({
 		name: 'noteAsset',
 		markdownTokenizer: {
 			name: 'noteAsset',
@@ -70739,6 +73392,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					attrs: {
 						assetType: result.assetType,
 						fileId: result.fileId,
+						diskObjectId: result.diskObjectId,
 						width: result.width,
 						align: result.align
 					}
@@ -70752,7 +73406,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return null;
 			}
 			const attrs = {
+				// The source of the attachment travels as "which of the two ids is filled" — the node type
+				// itself stays the same for both, so an image from Disk is still an image block.
 				fileId: token.attrs.fileId,
+				diskObjectId: token.attrs.diskObjectId,
 				documentId: null,
 				name: null,
 				size: null,
@@ -70767,6 +73424,551 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return {
 				type: nodeType,
 				attrs
+			};
+		}
+	});
+
+	// Pure helpers for the bare-video-URL block tokenizer. Kept free of `ui.video-service` so they can
+	// be unit-tested in isolation; the URL->embed-src resolution lives in video-embed.js, which owns the
+	// ui.video-service dependency - but the final say on which host may be framed is isAllowedEmbedSrc.
+	// Hosts of every embed URL ui.video-service can build: its per-service `*_EMBEDDED` replacement
+	// constants plus the host Facebook.getEmbeddedUrl() concatenates.
+	//
+	// The resolved src has to be re-checked against them because several of those matchers (Instagram,
+	// RuTube, VK) are not anchored to the start of the URL: `String.replace` then rewrites only the
+	// matched tail and keeps the caller's prefix, so `https://evil.example/x/https://vk.com/video1_2`
+	// resolves to an embed path under `evil.example`. The player is framed without `sandbox` and with
+	// `allow`, so that host must never reach the iframe.
+	const ALLOWED_EMBED_HOSTS = ['www.youtube-nocookie.com', 'player.vimeo.com', 'www.facebook.com', 'instagram.com', 'vk.com', 'rutube.ru'];
+
+	// A whole line that is nothing but an http(s)/scheme-relative URL (up to 3 leading spaces, like the
+	// other block tokenizers). `\S+` stops at the first whitespace, so trailing spaces before the line
+	// end are tolerated. The URL itself never contains spaces.
+	const BARE_URL_LINE = /^[ \t]{0,3}((?:https?:)?\/\/\S+)[ \t]*(?:\n|$)/;
+
+	// Same shape, anchored to a line boundary, for the tokenizer's `start()` scan.
+	const BARE_URL_LINE_SCAN = /(?:^|\n)[ \t]{0,3}((?:https?:)?\/\/\S+)[ \t]*(?=\n|$)/;
+
+	/**
+	 * Normalises a video URL before it is handed to ui.video-service.
+	 *
+	 * ui.video-service's VK matcher only covers `vk.com` / `vk.ru`, but VK's newer video domain
+	 * `vkvideo.ru` plays through the very same `vk.com/video_ext.php` embed, so rewrite the host.
+	 */
+	function normalizeVideoUrl(url) {
+		const trimmed = String(url).trim();
+		return trimmed.replace(/^((?:https?:)?\/\/)(?:www\.)?vkvideo\.ru\//i, '$1vk.com/');
+	}
+
+	/**
+	 * Whether an embed src resolved by ui.video-service may be loaded into the player iframe.
+	 *
+	 * Only https URLs whose host is one a ui.video-service embed constant produces pass; anything else
+	 * (an attacker-controlled prefix that survived an unanchored matcher, a lookalike host, credentials
+	 * pointing the authority elsewhere, a non-https scheme) is rejected and stays an ordinary link.
+	 */
+	function isAllowedEmbedSrc(src) {
+		if (typeof src !== 'string' || src === '') {
+			return false;
+		}
+		try {
+			const parsed = new URL(src);
+			return parsed.protocol === 'https:' && ALLOWED_EMBED_HOSTS.includes(parsed.hostname);
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Index of the first line in `src` that is a bare URL, or -1. Used as the marked block tokenizer's
+	 * `start()` hint; it is deliberately generic (any bare URL) - video-host filtering happens in the
+	 * tokenizer via ui.video-service, so a non-video URL surfaced here is simply rejected there.
+	 */
+	function findBareUrlLineStart(src) {
+		const match = BARE_URL_LINE_SCAN.exec(src);
+		if (!match) {
+			return -1;
+		}
+
+		// match.index points at the leading `\n` (or 0 at BOF); the URL starts after the newline and any
+		// leading spaces. Locate the URL within the matched slice to return its exact offset.
+		return match.index + match[0].indexOf(match[1]);
+	}
+
+	/**
+	 * Matches a bare URL occupying the whole first line of `src` (anchored at position 0).
+	 *
+	 * @return {{ url: string, raw: string } | null} raw includes the trailing newline it consumed.
+	 */
+	function matchBareUrlLine(src) {
+		const match = BARE_URL_LINE.exec(src);
+		if (!match) {
+			return null;
+		}
+		return {
+			url: match[1],
+			raw: match[0]
+		};
+	}
+
+	// Pure parser/serializer for the `[[video-embed url=<URL> width=<N> align=<left|right>]]` block form.
+	// This is the round-trip representation of a video embed that carries sizing/positioning - the plain
+	// bare-URL form (video-embed-parser.js) has no room for attributes, so a resized/aligned embed
+	// serializes to this richer token instead. Kept free of `ui.video-service`; URL->embed-src resolution
+	// stays in video-embed.js.
+	//
+	// Grammar mirrors the note-asset `[[...]]` family (video-embed.js is a distinct keyword, so the
+	// strict `(image|file|video) fileId=` parser in note-asset-parser.js never claims it). The URL value
+	// is `\S`-minus-`]` (video hosts don't use spaces or `]` in their URLs).
+	// Block token owning its line (<=3 leading spaces tolerated, trailing spaces/newline consumed).
+	const VIDEO_EMBED_ASSET_RE = /^ {0,3}\[\[video-embed url=([^\s\]]+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\][ \t]*(?:\n|$)/;
+	const KNOWN_ATTRS = new Set(['width', 'align']);
+	const ALIGN_VALUES = new Set(['left', 'right', 'center']);
+	function interpretAttrs(attrsRaw) {
+		let width = null;
+		let align = null;
+		if (!attrsRaw) {
+			return {
+				width,
+				align
+			};
+		}
+		const attrRe = /([a-z]+)=([^\s\]]+)/g;
+		let attrMatch = attrRe.exec(attrsRaw);
+		while (attrMatch) {
+			const key = attrMatch[1];
+			if (!KNOWN_ATTRS.has(key)) {
+				return null; // unknown attribute - not our canonical form
+			}
+			if (key === 'width') {
+				// Percentage of the container (>0..100, fractional allowed); clamp over-100 to 100 and
+				// normalize to two decimals so it stays clean across round-trips (matches note-asset-parser).
+				const value = Number(attrMatch[2]);
+				if (!Number.isFinite(value) || value <= 0) {
+					return null;
+				}
+				width = Math.min(Math.round(value * 100) / 100, 100);
+			} else if (key === 'align') {
+				if (!ALIGN_VALUES.has(attrMatch[2])) {
+					return null;
+				}
+				// center is the default (no float) and is stored as null - never serialized.
+				align = attrMatch[2] === 'center' ? null : attrMatch[2];
+			}
+			attrMatch = attrRe.exec(attrsRaw);
+		}
+		return {
+			width,
+			align
+		};
+	}
+
+	/**
+	 * Serializes a video embed to the `[[video-embed ...]]` block token. Only emits width/align when set;
+	 * with neither, the caller should prefer the bare-URL form instead (this still produces a valid token).
+	 */
+	function buildVideoEmbedAsset(source, width, align) {
+		let out = `[[video-embed url=${String(source)}`;
+		const w = Number(width);
+		if (Number.isFinite(w) && w > 0 && w <= 100) {
+			out += ` width=${w}`;
+		}
+		if (align === 'left' || align === 'right') {
+			out += ` align=${align}`;
+		}
+		return `${out}]]`;
+	}
+
+	/**
+	 * Matches a `[[video-embed ...]]` token occupying the whole first line of `src` (anchored at 0).
+	 *
+	 * @return {VideoEmbedAsset | null} null when the line is not a canonical video-embed token.
+	 */
+	function matchVideoEmbedAsset(src) {
+		const match = VIDEO_EMBED_ASSET_RE.exec(src);
+		if (!match) {
+			return null;
+		}
+		const attrs = interpretAttrs(match[2] || '');
+		if (attrs === null) {
+			return null;
+		}
+		return {
+			url: match[1],
+			width: attrs.width,
+			align: attrs.align,
+			raw: match[0]
+		};
+	}
+
+	/**
+	 * Index of the first line that starts a `[[video-embed` token (<=3 leading spaces), or -1. Used as the
+	 * marked block tokenizer's `start()` hint.
+	 */
+	function findVideoEmbedAssetStart(src) {
+		let from = 0;
+		while (from < src.length) {
+			const idx = src.indexOf('[[video-embed', from);
+			if (idx === -1) {
+				return -1;
+			}
+			const lineStart = idx === 0 ? 0 : src.lastIndexOf('\n', idx - 1) + 1;
+			if (/^ {0,3}$/.test(src.slice(lineStart, idx))) {
+				return lineStart;
+			}
+			from = idx + 1;
+		}
+		return -1;
+	}
+
+	// Iframe permissions mirror video-embed.js (kept in sync). No `sandbox`: the player-host whitelist
+	// checked on the src being framed is the security boundary, and players need scripts + same-origin.
+	const IFRAME_ALLOW$1 = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+
+	// Node-view component for the external video embed. Reuses the shared resize/align machinery
+	// (ResizableMediaMixin + MediaResizeControls) so the player resizes and floats exactly like an image.
+	const VideoEmbedNodeViewComponent = {
+		extends: AttachmentNodeViewBaseComponent,
+		mixins: [ResizableMediaMixin],
+		components: {
+			MediaResizeControls
+		},
+		data() {
+			return {
+				iframeAllow: IFRAME_ALLOW$1
+			};
+		},
+		computed: {
+			embedSrc() {
+				// A collaborative patch can carry any attrs into the node, so the whitelist has to hold
+				// here, where the iframe is built, not only where the src was resolved.
+				return isAllowedEmbedSrc(this.attrs.src) ? this.attrs.src : '';
+			},
+			// Required by ResizableMediaMixin to gate handles/overlay.
+			hasMedia() {
+				return main_core.Type.isStringFilled(this.embedSrc);
+			},
+			// A frame with no name of its own is announced as just "frame", and a document with
+			// several videos in it gives no way to tell them apart.
+			frameTitle() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_VIDEO_EMBED_FRAME');
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="note-editor-video-embed-inner">
+			<div
+				class="note-editor-video-embed-preview"
+				:class="{ 'note-editor-video-embed-preview--resizing': dragging }"
+			>
+				<div class="note-editor-video-embed__frame">
+					<iframe
+						v-if="hasMedia"
+						class="note-editor-video-embed__iframe"
+						:src="embedSrc"
+						:title="frameTitle"
+						frameborder="0"
+						:allow="iframeAllow"
+						allowfullscreen="true"
+						loading="lazy"
+						referrerpolicy="strict-origin-when-cross-origin"
+					></iframe>
+				</div>
+				<!-- Cross-origin iframes swallow clicks, so without this shield the node can't be
+					 selected (to resize/align) by clicking the video. Shown only while editing and
+					 unselected; once selected it's removed so the player becomes interactive. -->
+				<div
+					v-if="editable && !selected"
+					class="note-editor-video-embed__shield"
+				></div>
+				<MediaResizeControls
+					:show-handles="showHandles"
+					:show-overlay="showOverlay"
+					:overlay-style="overlayStyle"
+					:align="align"
+					:align-titles="alignTitles"
+					:on-start-resize="startResize"
+					:on-set-align="setAlign"
+					:on-replace="null"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// Iframe permissions mirror what ui.video-service / landing grant their players. No `sandbox`: the
+	// security boundary is isAllowedEmbedSrc, re-checked wherever a stored src becomes an iframe, and
+	// video players need scripts + same-origin to run, which a meaningful sandbox forbids.
+	const IFRAME_ALLOW = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+
+	/**
+	 * Resolves a raw video URL to its embeddable form via ui.video-service.
+	 *
+	 * The resolved src is re-checked host-wise: ui.video-service recognises a URL by a matcher that is
+	 * not always anchored to its start, so a crafted URL can carry a foreign prefix into the embed src.
+	 *
+	 * @return {EmbedAttrs | null} null when the host is not a supported video provider - the caller
+	 *   then leaves the URL as a normal link.
+	 */
+	function resolveEmbed(rawUrl) {
+		const service = ui_videoService.VideoService.createByUrl(normalizeVideoUrl(rawUrl));
+		if (!service) {
+			return null;
+		}
+		const src = service.getEmbeddedUrl();
+		if (!isAllowedEmbedSrc(src)) {
+			return null;
+		}
+		return {
+			source: String(rawUrl).trim(),
+			src
+		};
+	}
+
+	// Normalizes a width attr to a percentage (>0..100, fractional allowed) or null.
+	function normalizeWidth(value) {
+		const width = Number(value);
+		return Number.isFinite(width) && width > 0 ? Math.min(width, 100) : null;
+	}
+
+	// Normalizes an align attr to a float direction; center is the default and stored as null.
+	function normalizeAlign(value) {
+		return value === 'left' || value === 'right' ? value : null;
+	}
+
+	/**
+	 * Turns a standalone whitelisted video URL (YouTube/Vimeo/RuTube/VK/...) into an inline player.
+	 *
+	 * A bare video URL on its own line becomes a `videoEmbed` block that renders a responsive iframe,
+	 * using ui.video-service (the same resolver ui.text-editor uses) to map the URL to its embed src.
+	 * The player can be resized (width %) and aligned (left/right float) exactly like an image; those
+	 * settings round-trip through the `[[video-embed ...]]` markdown form (see renderMarkdown). URLs that
+	 * ui.video-service does not recognise are left untouched and stay ordinary links.
+	 */
+	const VideoEmbed = Node$1.create({
+		name: 'videoEmbed',
+		group: 'block',
+		atom: true,
+		selectable: true,
+		draggable: true,
+		addAttributes() {
+			return {
+				// Original URL as written in markdown - the round-trip source of truth.
+				source: {
+					default: null
+				},
+				// Resolved iframe URL (derived from `source` via ui.video-service at parse time).
+				src: {
+					default: null
+				},
+				// Rendered width as a percentage of the container (>0..100, fractional). null = default size.
+				// Persisted in markdown via the `[[video-embed ... width=N]]` form.
+				width: {
+					default: null
+				},
+				// Float alignment: 'left' | 'right'. null = center (default, no float).
+				align: {
+					default: null
+				}
+			};
+		},
+		addOptions() {
+			return {
+				// Vue component the node-view mounts (renders the iframe + resize/align controls).
+				nodeViewComponent: VideoEmbedNodeViewComponent,
+				// Enables resize/align/float-stacking via the shared VueAttachmentNodeView.
+				resizable: true,
+				// No file-replace for an external embed.
+				uploadService: null,
+				defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO'
+			};
+		},
+		parseHTML() {
+			return [{
+				tag: 'div[data-type="videoEmbed"]',
+				getAttrs: dom => {
+					// Re-resolve the embed src from the declared source URL rather than trusting the
+					// pasted `<iframe src>`. A crafted HTML paste that points the iframe at an arbitrary
+					// host is thus ignored - only a source resolving to a known player host yields a src
+					// (anything else leaves src null -> renders nothing).
+					const source = dom.getAttribute('data-source') || null;
+					const embed = source ? resolveEmbed(source) : null;
+					return {
+						source: embed ? embed.source : source,
+						src: embed ? embed.src : null,
+						width: normalizeWidth(dom.getAttribute('data-width')),
+						align: normalizeAlign(dom.getAttribute('data-align'))
+					};
+				}
+			}];
+		},
+		renderHTML({
+			HTMLAttributes,
+			node
+		}) {
+			const safeSrc = isAllowedEmbedSrc(node.attrs.src) ? node.attrs.src : '';
+			const source = typeof node.attrs.source === 'string' ? node.attrs.source : '';
+			const width = normalizeWidth(node.attrs.width);
+			const align = normalizeAlign(node.attrs.align);
+
+			// Width/align mirrored onto the exported element so copy/paste and non-editor HTML keep sizing.
+			const alignClass = `note-editor-media--align-${align || 'center'}`;
+			const style = width !== null ? `width:${width}%` : '';
+			return ['div', mergeAttributes(HTMLAttributes, {
+				'data-type': 'videoEmbed',
+				'data-source': source,
+				'data-width': width !== null ? String(width) : '',
+				'data-align': align || '',
+				class: `note-editor-video-embed note-editor-media ${alignClass}`,
+				style,
+				contenteditable: 'false'
+			}), ['div', {
+				class: 'note-editor-video-embed__frame'
+			}, ['iframe', {
+				src: safeSrc,
+				class: 'note-editor-video-embed__iframe',
+				frameborder: '0',
+				allow: IFRAME_ALLOW,
+				allowfullscreen: 'true',
+				loading: 'lazy',
+				referrerpolicy: 'strict-origin-when-cross-origin'
+			}]]];
+		},
+		addNodeView() {
+			return ({
+				node,
+				editor,
+				getPos
+			}) => new VueAttachmentNodeView({
+				node,
+				editor,
+				getPos,
+				extension: this,
+				dataType: 'videoEmbed',
+				className: 'note-editor-video-embed',
+				inline: false,
+				uploadService: null
+			});
+		},
+		addProseMirrorPlugins() {
+			const nodeName = this.name;
+			return [new Plugin({
+				props: {
+					// Click on the frame chrome (around the iframe) selects the node so it can be
+					// deleted/dragged; clicks on the resize handles drive their own UI.
+					handleClickOn(view, pos, node, nodePos, event, direct) {
+						if (!direct || node.type.name !== nodeName || !view.editable) {
+							return false;
+						}
+						if (event.target instanceof Element && event.target.closest('.note-editor-media-resize-handle')) {
+							return false;
+						}
+						const {
+							selection
+						} = view.state;
+						if (selection instanceof NodeSelection && selection.from === nodePos) {
+							return false;
+						}
+						view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
+						return true;
+					}
+				}
+			})];
+		},
+		markdownTokenizer: {
+			name: 'videoEmbed',
+			level: 'block',
+			start(src) {
+				return findBareUrlLineStart(src);
+			},
+			tokenize(src) {
+				const line = matchBareUrlLine(src);
+				if (!line) {
+					return null;
+				}
+				const embed = resolveEmbed(line.url);
+				if (!embed) {
+					return null;
+				}
+				return {
+					type: 'videoEmbed',
+					raw: line.raw,
+					attrs: embed
+				};
+			},
+			childTokens: []
+		},
+		parseMarkdown(token) {
+			return {
+				type: 'videoEmbed',
+				attrs: {
+					source: token.attrs.source,
+					src: token.attrs.src,
+					width: normalizeWidth(token.attrs.width),
+					align: normalizeAlign(token.attrs.align)
+				}
+			};
+		},
+		renderMarkdown(node) {
+			const source = typeof node?.attrs?.source === 'string' ? node.attrs.source : '';
+			if (source === '') {
+				return '';
+			}
+			const width = normalizeWidth(node?.attrs?.width);
+			const align = normalizeAlign(node?.attrs?.align);
+
+			// No sizing/positioning -> keep the clean bare-URL form (imported docs stay idempotent).
+			// Any width/align -> the richer [[video-embed ...]] token that can carry them.
+			if (width === null && align === null) {
+				return source;
+			}
+			return buildVideoEmbedAsset(source, width, align);
+		}
+	});
+
+	/**
+	 * Tokenizer-only extension for the `[[video-embed url=.. width=.. align=..]]` markdown form.
+	 *
+	 * Mirrors EnrichedAssetTokenizer: it is never inserted as a `videoEmbedAsset` node - its token is
+	 * re-mapped to a real `videoEmbed` node by parseMarkdown, re-resolving the embed src from the URL.
+	 */
+	const VideoEmbedAssetTokenizer = Node$1.create({
+		name: 'videoEmbedAsset',
+		markdownTokenizer: {
+			name: 'videoEmbedAsset',
+			level: 'block',
+			start(src) {
+				return findVideoEmbedAssetStart(src);
+			},
+			tokenize(src) {
+				const asset = matchVideoEmbedAsset(src);
+				if (!asset) {
+					return null;
+				}
+				const embed = resolveEmbed(asset.url);
+				return {
+					type: 'videoEmbedAsset',
+					raw: asset.raw,
+					attrs: {
+						source: asset.url,
+						// Re-resolved src; empty if the host is no longer recognised (rare) - renders blank.
+						src: embed ? embed.src : '',
+						width: asset.width,
+						align: asset.align
+					}
+				};
+			},
+			childTokens: []
+		},
+		parseMarkdown(token) {
+			return {
+				type: 'videoEmbed',
+				attrs: {
+					source: token.attrs.source,
+					src: token.attrs.src,
+					width: normalizeWidth(token.attrs.width),
+					align: normalizeAlign(token.attrs.align)
+				}
 			};
 		}
 	});
@@ -70790,47 +73992,75 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		});
 	}
-	function createMediaExtensions(uploadService = null) {
+	function createMediaExtensions(uploadService = null, documentId = 0) {
 		// SafeImage handles raw markdown `![](url)` images only; inline so they coexist with text in a
 		// paragraph and keep the lexer's inline image tokens schema-legal. imageAttachment/video are block.
 		const SafeImage = createSafeImageExtension().configure({
 			inline: true
 		});
-		return [SafeImage, UploadAsset, FileAttachment,
+		// Disk attachments are resolved per reader and kept out of the document, so every attachment node
+		// view has to know which document it is drawing for.
+		const getDocumentId = () => Number(documentId) || 0;
+		return [SafeImage, UploadAsset, FileAttachment.configure({
+			getDocumentId
+		}),
 		// uploadService powers the in-place "replace image" action in the node-view overlay.
 		ImageAttachment.configure({
-			uploadService
-		}), Video];
+			uploadService,
+			getDocumentId
+		}), Video.configure({
+			getDocumentId
+		})];
 	}
 
-	// src/collaboration.ts
+	//#region src/helpers/isChangeOrigin.ts
+	/**
+	* Checks if a transaction was originated from a Yjs change.
+	* @param {Transaction} transaction - The transaction to check.
+	* @returns {boolean} - True if the transaction was originated from a Yjs change, false otherwise.
+	* @example
+	* const transaction = new Transaction(doc)
+	* const isOrigin = isChangeOrigin(transaction) // returns false
+	*/
 	function isChangeOrigin(transaction) {
 		return !!transaction.getMeta(ySyncPluginKey);
 	}
+	//#endregion
+	//#region src/helpers/yRelativePosition.ts
+	/**
+	* Converts a Y.js relative position to a position in the Tiptap document.
+	*/
 	function getYAbsolutePosition(state, relativePos) {
 		const ystate = ySyncPluginKey.getState(state);
 		return relativePositionToAbsolutePosition(ystate.doc, ystate.type, relativePos, ystate.binding.mapping) || 0;
 	}
+	/**
+	* Converts a position in the Tiptap document to a Y.js relative position.
+	*/
 	function getYRelativePosition(state, absolutePos) {
 		const ystate = ySyncPluginKey.getState(state);
 		return absolutePositionToRelativePosition(absolutePos, ystate.type, ystate.binding.mapping);
 	}
-
-	// src/helpers/CollaborationMappablePosition.ts
-	var CollaborationMappablePosition = class _CollaborationMappablePosition extends MappablePosition {
+	//#endregion
+	//#region src/helpers/CollaborationMappablePosition.ts
+	/**
+	* A MappablePosition subclass that includes Y.js relative position information
+	* to track positions in collaborative transactions.
+	*/
+	var CollaborationMappablePosition = class CollaborationMappablePosition extends MappablePosition {
 		constructor(position, yRelativePosition) {
 			super(position);
 			this.yRelativePosition = yRelativePosition;
 		}
 		/**
-		 * Creates a CollaborationMappablePosition from a JSON object.
-		 */
+		* Creates a CollaborationMappablePosition from a JSON object.
+		*/
 		static fromJSON(json) {
-			return new _CollaborationMappablePosition(json.position, json.yRelativePosition);
+			return new CollaborationMappablePosition(json.position, json.yRelativePosition);
 		}
 		/**
-		 * Converts the CollaborationMappablePosition to a JSON object.
-		 */
+		* Converts the CollaborationMappablePosition to a JSON object.
+		*/
 		toJSON() {
 			return {
 				position: this.position,
@@ -70838,29 +74068,37 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	};
+	/**
+	* Creates a MappablePosition from a position number.
+	* This is the collaboration implementation that returns a CollaborationMappablePosition.
+	*/
 	function createMappablePosition(position, state) {
-		const yRelativePosition = getYRelativePosition(state, position);
-		return new CollaborationMappablePosition(position, yRelativePosition);
+		return new CollaborationMappablePosition(position, getYRelativePosition(state, position));
 	}
+	/**
+	* Returns the new position after applying a transaction. Handles both Y.js
+	* transactions and regular transactions.
+	*/
 	function getUpdatedPosition(position, transaction, state) {
 		const yRelativePosition = position instanceof CollaborationMappablePosition ? position.yRelativePosition : null;
-		if (isChangeOrigin(transaction) && yRelativePosition) {
-			const absolutePosition2 = getYAbsolutePosition(state, yRelativePosition);
-			return {
-				position: new CollaborationMappablePosition(absolutePosition2, yRelativePosition),
-				mapResult: null
-			};
-		}
+		if (isChangeOrigin(transaction) && yRelativePosition) return {
+			position: new CollaborationMappablePosition(getYAbsolutePosition(state, yRelativePosition), yRelativePosition),
+			mapResult: null
+		};
 		const result = getUpdatedPosition$1(position, transaction);
 		const absolutePosition = result.position.position;
 		return {
-			position: new CollaborationMappablePosition(absolutePosition, yRelativePosition != null ? yRelativePosition : getYRelativePosition(state, absolutePosition)),
+			position: new CollaborationMappablePosition(absolutePosition, yRelativePosition !== null && yRelativePosition !== void 0 ? yRelativePosition : getYRelativePosition(state, absolutePosition)),
 			mapResult: result.mapResult
 		};
 	}
-
-	// src/collaboration.ts
-	var Collaboration = Extension.create({
+	//#endregion
+	//#region src/collaboration.ts
+	/**
+	* This extension allows you to collaborate with others in real-time.
+	* @see https://tiptap.dev/api/extensions/collaboration
+	*/
+	const Collaboration = Extension.create({
 		name: "collaboration",
 		priority: 1e3,
 		addOptions() {
@@ -70877,9 +74115,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		},
 		onCreate() {
-			if (this.editor.extensionManager.extensions.find(extension => extension.name === "undoRedo")) {
-				console.warn('[tiptap warn]: "@tiptap/extension-collaboration" comes with its own history support and is not compatible with "@tiptap/extension-undo-redo".');
-			}
+			if (this.editor.extensionManager.extensions.find(extension => extension.name === "undoRedo")) console.warn("[tiptap warn]: \"@tiptap/extension-collaboration\" comes with its own history support and is not compatible with \"@tiptap/extension-undo-redo\".");
 		},
 		onBeforeCreate() {
 			this.editor.utils.getUpdatedPosition = (position, transaction) => getUpdatedPosition(position, transaction, this.editor.state);
@@ -70893,13 +74129,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 					dispatch
 				}) => {
 					tr.setMeta("preventDispatch", true);
-					const undoManager = yUndoPluginKey.getState(state).undoManager;
-					if (undoManager.undoStack.length === 0) {
-						return false;
-					}
-					if (!dispatch) {
-						return true;
-					}
+					if (yUndoPluginKey.getState(state).undoManager.undoStack.length === 0) return false;
+					if (!dispatch) return true;
 					return undo(state);
 				},
 				redo: () => ({
@@ -70908,13 +74139,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 					dispatch
 				}) => {
 					tr.setMeta("preventDispatch", true);
-					const undoManager = yUndoPluginKey.getState(state).undoManager;
-					if (undoManager.redoStack.length === 0) {
-						return false;
-					}
-					if (!dispatch) {
-						return true;
-					}
+					if (yUndoPluginKey.getState(state).undoManager.redoStack.length === 0) return false;
+					if (!dispatch) return true;
 					return redo(state);
 				}
 			};
@@ -70944,15 +74170,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 						const hasUndoManSelf = undoManager.trackedOrigins.has(undoManager);
 						const observers = undoManager._observers;
 						undoManager.restore = () => {
-							if (hasUndoManSelf) {
-								undoManager.trackedOrigins.add(undoManager);
-							}
+							if (hasUndoManSelf) undoManager.trackedOrigins.add(undoManager);
 							undoManager.doc.on("afterTransaction", undoManager.afterTransactionHandler);
 							undoManager._observers = observers;
 						};
-						if (viewRet == null ? void 0 : viewRet.destroy) {
-							viewRet.destroy();
-						}
+						if (viewRet === null || viewRet === void 0 ? void 0 : viewRet.destroy) viewRet.destroy();
 					}
 				};
 			};
@@ -70960,21 +74182,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				...this.options.ySyncOptions,
 				onFirstRender: this.options.onFirstRender
 			};
-			const ySyncPluginInstance = ySyncPlugin(fragment, ySyncPluginOptions);
-			return [ySyncPluginInstance, yUndoPluginInstance,
-			// Only add the filterInvalidContent plugin if content checking is enabled
-			this.editor.options.enableContentCheck && new Plugin({
+			return [ySyncPlugin(fragment, ySyncPluginOptions), yUndoPluginInstance, this.editor.options.enableContentCheck && new Plugin({
 				key: new PluginKey("filterInvalidContent"),
 				filterTransaction: transaction => {
-					if (!isChangeOrigin(transaction)) {
-						return true;
-					}
-					if (this.storage.isDisabled) {
-						return false;
-					}
-					if (!transaction.docChanged) {
-						return true;
-					}
+					if (!isChangeOrigin(transaction)) return true;
+					if (this.storage.isDisabled) return false;
+					if (!transaction.docChanged) return true;
 					try {
 						transaction.doc.check();
 						return true;
@@ -70984,31 +74197,38 @@ ${nextLine.slice(indentLevel + 2)}`;
 							error,
 							editor: this.editor,
 							disableCollaboration: () => {
-								var _a;
-								(_a = fragment.doc) == null ? void 0 : _a.destroy();
+								var _fragment$doc;
+								(_fragment$doc = fragment.doc) === null || _fragment$doc === void 0 || _fragment$doc.destroy();
 							}
 						});
-						return false;
+						return true;
 					}
 				}
 			})].filter(Boolean);
 		}
 	});
+	//#endregion
+	//#region src/index.ts
+	var src_default$1 = Collaboration;
 
-	// src/index.ts
-	var index_default$1 = Collaboration;
-
-	// src/collaboration-caret.ts
-	var awarenessStatesToArray = states => {
+	//#region src/collaboration-caret.ts
+	const awarenessStatesToArray = states => {
 		return Array.from(states.entries()).map(([key, value]) => {
-			return {
+			if (value && value.user) return {
 				clientId: key,
 				...value.user
 			};
+			return {
+				clientId: key
+			};
 		});
 	};
-	var defaultOnUpdate = () => null;
-	var CollaborationCaret = Extension.create({
+	const defaultOnUpdate = () => null;
+	/**
+	* This extension allows you to add collaboration carets to your editor.
+	* @see https://tiptap.dev/api/extensions/collaboration-caret
+	*/
+	const CollaborationCaret = Extension.create({
 		name: "collaborationCaret",
 		priority: 999,
 		addOptions() {
@@ -71034,12 +74254,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		},
 		onCreate() {
-			if (this.options.onUpdate !== defaultOnUpdate) {
-				console.warn('[tiptap warn]: DEPRECATED: The "onUpdate" option is deprecated. Please use `editor.storage.collaborationCaret.users` instead. Read more: https://tiptap.dev/api/extensions/collaboration-caret');
-			}
-			if (!this.options.provider) {
-				throw new Error('The "provider" option is required for the CollaborationCaret extension');
-			}
+			if (this.options.onUpdate !== defaultOnUpdate) console.warn("[tiptap warn]: DEPRECATED: The \"onUpdate\" option is deprecated. Please use `editor.storage.collaborationCaret.users` instead. Read more: https://tiptap.dev/api/extensions/collaboration-caret");
+			if (!this.options.provider) throw new Error("The \"provider\" option is required for the CollaborationCaret extension");
 		},
 		addStorage() {
 			return {
@@ -71055,28 +74271,42 @@ ${nextLine.slice(indentLevel + 2)}`;
 				user: attributes => ({
 					editor
 				}) => {
-					console.warn('[tiptap warn]: DEPRECATED: The "user" command is deprecated. Please use "updateUser" instead. Read more: https://tiptap.dev/api/extensions/collaboration-caret');
+					console.warn("[tiptap warn]: DEPRECATED: The \"user\" command is deprecated. Please use \"updateUser\" instead. Read more: https://tiptap.dev/api/extensions/collaboration-caret");
 					return editor.commands.updateUser(attributes);
 				}
 			};
 		},
 		addProseMirrorPlugins() {
-			return [yCursorPlugin((() => {
-				this.options.provider.awareness.setLocalStateField("user", this.options.user);
-				this.storage.users = awarenessStatesToArray(this.options.provider.awareness.states);
-				this.options.provider.awareness.on("update", () => {
-					this.storage.users = awarenessStatesToArray(this.options.provider.awareness.states);
-				});
-				return this.options.provider.awareness;
-			})(), {
+			const {
+				provider
+			} = this.options;
+			const storage = this.storage;
+			const user = this.options.user;
+			return [new Plugin({
+				key: new PluginKey("collaborationCaretAwarenessListener"),
+				view: () => {
+					const onAwarenessUpdate = () => {
+						storage.users = awarenessStatesToArray(provider.awareness.states);
+					};
+					provider.awareness.setLocalStateField("user", user);
+					storage.users = awarenessStatesToArray(provider.awareness.states);
+					provider.awareness.on("update", onAwarenessUpdate);
+					return {
+						destroy: () => {
+							provider.awareness.off("update", onAwarenessUpdate);
+							storage.users = [];
+						}
+					};
+				}
+			}), yCursorPlugin(provider.awareness, {
 				cursorBuilder: this.options.render,
 				selectionBuilder: this.options.selectionRender
 			})];
 		}
 	});
-
-	// src/index.ts
-	var index_default = CollaborationCaret;
+	//#endregion
+	//#region src/index.ts
+	var src_default = CollaborationCaret;
 
 	const remoteNodeOutlinePluginKey = new PluginKey('note-remote-node-outline');
 	const TABLE_ROLES = new Set(['cell', 'header_cell', 'row', 'table']);
@@ -71228,10 +74458,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 		provider,
 		user
 	}) {
-		return [index_default$1.configure({
+		return [src_default$1.configure({
 			document: provider.document,
 			field: 'prosemirror'
-		}), index_default.configure({
+		}), src_default.configure({
 			provider,
 			user: normalizeCurrentUser(user),
 			render: caretUser => {
@@ -71338,77 +74568,62 @@ ${nextLine.slice(indentLevel + 2)}`;
 		})];
 	}
 
-	// src/fileHandler.ts
-	var FileHandlePlugin = ({
+	//#region src/FileHandlePlugin.ts
+	const FileHandlePlugin = ({
 		key,
 		editor,
 		onPaste,
 		onDrop,
-		allowedMimeTypes
+		allowedMimeTypes,
+		consumePasteEvent
 	}) => {
 		return new Plugin({
 			key: key || new PluginKey("fileHandler"),
 			props: {
 				handleDrop(_view, event) {
-					var _a;
-					if (!onDrop) {
-						return false;
-					}
-					if (!((_a = event.dataTransfer) == null ? void 0 : _a.files.length)) {
-						return false;
-					}
+					var _event$dataTransfer, _event$dataTransfer2;
+					if (!onDrop) return false;
+					if ((_event$dataTransfer = event.dataTransfer) === null || _event$dataTransfer === void 0 ? void 0 : _event$dataTransfer.types.includes("application/x-prosemirror-slice")) return false;
+					if (!((_event$dataTransfer2 = event.dataTransfer) === null || _event$dataTransfer2 === void 0 ? void 0 : _event$dataTransfer2.files.length)) return false;
 					const dropPos = _view.posAtCoords({
 						left: event.clientX,
 						top: event.clientY
 					});
 					let filesArray = Array.from(event.dataTransfer.files);
-					if (allowedMimeTypes) {
-						filesArray = filesArray.filter(file => allowedMimeTypes.includes(file.type));
-					}
-					if (filesArray.length === 0) {
-						return false;
-					}
+					if (allowedMimeTypes) filesArray = filesArray.filter(file => allowedMimeTypes.includes(file.type));
+					if (filesArray.length === 0) return false;
 					event.preventDefault();
 					event.stopPropagation();
-					onDrop(editor, filesArray, (dropPos == null ? void 0 : dropPos.pos) || 0);
+					onDrop(editor, filesArray, (dropPos === null || dropPos === void 0 ? void 0 : dropPos.pos) || 0);
 					return true;
 				},
 				handlePaste(_view, event) {
-					var _a;
-					if (!onPaste) {
-						return false;
-					}
-					if (!((_a = event.clipboardData) == null ? void 0 : _a.files.length)) {
-						return false;
-					}
+					var _event$clipboardData;
+					if (!onPaste) return false;
+					if (!((_event$clipboardData = event.clipboardData) === null || _event$clipboardData === void 0 ? void 0 : _event$clipboardData.files.length)) return false;
 					let filesArray = Array.from(event.clipboardData.files);
 					const htmlContent = event.clipboardData.getData("text/html");
-					if (allowedMimeTypes) {
-						filesArray = filesArray.filter(file => allowedMimeTypes.includes(file.type));
-					}
-					if (filesArray.length === 0) {
-						return false;
-					}
+					if (allowedMimeTypes) filesArray = filesArray.filter(file => allowedMimeTypes.includes(file.type));
+					if (filesArray.length === 0) return false;
 					event.preventDefault();
 					event.stopPropagation();
 					onPaste(editor, filesArray, htmlContent);
-					if (htmlContent.length > 0) {
-						return false;
-					}
+					if (htmlContent.length > 0 && !consumePasteEvent) return false;
 					return true;
 				}
 			}
 		});
 	};
-
-	// src/fileHandler.ts
-	var FileHandler = Extension.create({
+	//#endregion
+	//#region src/fileHandler.ts
+	const FileHandler = Extension.create({
 		name: "fileHandler",
 		addOptions() {
 			return {
 				onPaste: void 0,
 				onDrop: void 0,
-				allowedMimeTypes: void 0
+				allowedMimeTypes: void 0,
+				consumePasteEvent: false
 			};
 		},
 		addProseMirrorPlugins() {
@@ -71417,7 +74632,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				editor: this.editor,
 				allowedMimeTypes: this.options.allowedMimeTypes,
 				onDrop: this.options.onDrop,
-				onPaste: this.options.onPaste
+				onPaste: this.options.onPaste,
+				consumePasteEvent: this.options.consumePasteEvent
 			})];
 		}
 	});
@@ -71623,7 +74839,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// text. Worst case we lose styling for that single block — neighbours stay intact.
 	function toValidBlock(block, schema) {
 		try {
-			const node = Node$1.fromJSON(schema, block);
+			const node = Node$2.fromJSON(schema, block);
 			// fromJSON does not recurse into content-model validation; check() does.
 			// Catches residual inline-in-block (or block-in-inline) mismatches that flattenInlineBlocks missed.
 			node.check();
@@ -71641,7 +74857,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}]
 			};
 			try {
-				const node = Node$1.fromJSON(schema, paragraph);
+				const node = Node$2.fromJSON(schema, paragraph);
 				node.check();
 				return paragraph;
 			} catch {
@@ -71877,6 +75093,20 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 			});
 		}
+
+		// One request per document, never one per node: an article can carry dozens of attachments and
+		// each of them costs Disk a permission check.
+		static async resolveDiskAttachments({
+			documentId,
+			objectIds
+		}) {
+			return main_core.ajax.runAction('note.infrastructure.FileController.resolveDiskAttachmentsBatch', {
+				data: {
+					documentId: Number(documentId),
+					objectIds
+				}
+			});
+		}
 		static async finalizeFileSnapshot({
 			documentId,
 			referencedFileIds = []
@@ -71891,8 +75121,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 
-	const FILE_NODE_TYPES$2 = new Set(['imageAttachment', 'fileAttachment', 'video']);
-	const EMPTY_RESULT = Object.freeze({
+	const FILE_NODE_TYPES$3 = new Set(['imageAttachment', 'fileAttachment', 'video']);
+	const EMPTY_RESULT$1 = Object.freeze({
 		resolvedIds: [],
 		failedIds: [],
 		failedById: new Map()
@@ -71900,7 +75130,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	function collectUnresolvedFileIds(doc, skip) {
 		const fileIds = new Set();
 		doc.descendants(node => {
-			if (!FILE_NODE_TYPES$2.has(node.type.name)) {
+			if (!FILE_NODE_TYPES$3.has(node.type.name)) {
 				return;
 			}
 			const {
@@ -71918,9 +75148,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * Resolve missing file URLs by fileId for attachment nodes in the document.
 	 *
 	 * Sets showUrl/downloadUrl/name/viewerAttrs (and clears `unavailable`) for every node whose
-	 * fileId the backend resolved. Nodes the backend reports as failed (e.g. a file the [P4.T3]
+	 * fileId the backend resolved. Nodes the backend reports as failed (e.g. a file the
 	 * reachability sweep already physically removed) are flagged `unavailable = true` here, which is
-	 * enough on its own to surface the existing placeholder (AC-024/ERR-004) — this is the fallback
+	 * enough on its own to surface the existing placeholder - this is the fallback
 	 * for read-only consumers like the version preview, which have no extra caller-side handling.
 	 * A caller with origin-specific needs (e.g. the live editor's paste-delete flow) may still act on
 	 * `failedIds`/`failedById` afterwards — marking unavailable first does not preclude removing the
@@ -71933,12 +75163,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 */
 	async function resolveFileNodes(editor, documentId, options = {}) {
 		if (!editor || !Number.isInteger(documentId) || documentId <= 0) {
-			return EMPTY_RESULT;
+			return EMPTY_RESULT$1;
 		}
 		const skip = options.skip instanceof Set ? options.skip : new Set();
 		const fileIds = collectUnresolvedFileIds(editor.state.doc, skip);
 		if (fileIds.length === 0) {
-			return EMPTY_RESULT;
+			return EMPTY_RESULT$1;
 		}
 		let response = null;
 		try {
@@ -71948,7 +75178,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			});
 		} catch {
 			// Transient failure (network/5xx): report nothing as failed so the caller retries later.
-			return EMPTY_RESULT;
+			return EMPTY_RESULT$1;
 		}
 		const files = Array.isArray(response?.data?.files) ? response.data.files : [];
 		const failed = Array.isArray(response?.data?.failed) ? response.data.failed : [];
@@ -71987,7 +75217,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			} = editor.state;
 			let changed = false;
 			doc.descendants((node, pos) => {
-				if (!FILE_NODE_TYPES$2.has(node.type.name)) {
+				if (!FILE_NODE_TYPES$3.has(node.type.name)) {
 					return;
 				}
 				const payload = urlMap.get(node.attrs.fileId);
@@ -72039,6 +75269,158 @@ ${nextLine.slice(indentLevel + 2)}`;
 		};
 	}
 
+	const FILE_NODE_TYPES$2 = new Set(['imageAttachment', 'fileAttachment', 'video']);
+
+	/**
+	 * Object ids of the document's Disk blocks that still need an answer from the server, deduplicated
+	 * and in reading order.
+	 *
+	 * Split out of resolve-disk-attachment-nodes.js so it can be unit-tested on a plain document stub:
+	 * that module reaches the server through DocumentService, and the unit harness cannot resolve Bitrix
+	 * bundle namespaces.
+	 *
+	 * @param skip Ids the caller holds back for now — see the retry hold in FileNodeResolverExtension.
+	 */
+	function collectUnresolvedObjectIds(doc, documentId, skip) {
+		const objectIds = new Set();
+		doc.descendants(node => {
+			if (!FILE_NODE_TYPES$2.has(node.type.name)) {
+				return;
+			}
+			const {
+				diskObjectId
+			} = node.attrs;
+			if (!Number.isInteger(diskObjectId) || diskObjectId <= 0 || skip.has(diskObjectId)) {
+				return;
+			}
+
+			// A verdict that can still change is kept in the store so the block can draw it, and asked about
+			// again all the same: access can be granted while the document stays open, and a file in the trash
+			// can be restored — by this very reader, through the link the block itself offers. Only a file the
+			// server described and did not call deleted is a final answer. How long to wait before asking
+			// again is the caller's business (see the skip set).
+			const entry = DiskAttachmentStore.get(documentId, diskObjectId);
+			if (entry === null || entry.unavailable === true || entry.deleted === true) {
+				objectIds.add(diskObjectId);
+			}
+		});
+		return [...objectIds];
+	}
+
+	const EMPTY_RESULT = Object.freeze({
+		resolvedIds: [],
+		unavailableIds: [],
+		deletedIds: []
+	});
+
+	// How many objects travel in one request. Well under the server's own ceiling
+	// (`FileController::DISK_RESOLVE_MAX_ITEMS`), which stays a guard against a client asking for
+	// everything at once — see the loop below for why the client no longer wants to.
+	const RESOLVE_CHUNK_SIZE = 25;
+
+	/**
+	 * Fills in the Disk attachments of a document — name, size, links, viewer attributes and trash
+	 * state — in a single request for the whole document.
+	 *
+	 * The markdown holds nothing but the object id, deliberately: a file renamed or moved on Disk shows
+	 * its current state here, and one the reader cannot see shows as unavailable rather than leaking a
+	 * name. That also means this runs on every open, including the read-only version preview, which
+	 * carries the same tokens and resolves them against the file as it is now.
+	 *
+	 * What comes back is put in {@see DiskAttachmentStore}, never into the document: it is per-reader
+	 * data, and the document is shared with readers whose rights on the file differ.
+	 *
+	 * @returns resolvedIds — objects whose attributes were stored; unavailableIds — objects the server
+	 *          refused to describe, whose blocks now draw the unavailable state; deletedIds — objects it
+	 *          described as sitting in Disk's trash can. The last two are answers that can change on
+	 *          their own, and the caller is the one holding them back from being asked again at once.
+	 */
+	async function resolveDiskAttachmentNodes(editor, documentId, options = {}) {
+		if (!editor || !Number.isInteger(documentId) || documentId <= 0) {
+			return EMPTY_RESULT;
+		}
+		const skip = options.skip instanceof Set ? options.skip : new Set();
+		const objectIds = collectUnresolvedObjectIds(editor.state.doc, documentId, skip);
+		if (objectIds.length === 0) {
+			return EMPTY_RESULT;
+		}
+		const resolvedIds = [];
+		const unavailableIds = [];
+		const deletedIds = [];
+
+		// One request per chunk, one chunk at a time. The answer costs the server about 8-9 ms per file —
+		// building the viewer attributes on Disk's side, measured, and linear — so a document with a
+		// hundred attachments would otherwise hold a worker for a second on every open. Chunked, the
+		// blocks fill in as the answers land and no single request grows with the document. Sequential on
+		// purpose: parallel chunks would put the very same load on the server at once.
+		for (let from = 0; from < objectIds.length; from += RESOLVE_CHUNK_SIZE) {
+			const chunk = objectIds.slice(from, from + RESOLVE_CHUNK_SIZE);
+			let response = null;
+			try {
+				response = await DocumentService.resolveDiskAttachments({
+					documentId,
+					objectIds: chunk
+				});
+			} catch {
+				// Transient failure (network/5xx): stop asking and report what has already landed. What is
+				// left stays unresolved in the store, so the next pass picks it up.
+				break;
+			}
+			const items = Array.isArray(response?.data?.items) ? response.data.items : [];
+			for (const item of items) {
+				const objectId = Number(item?.objectId);
+				if (!Number.isInteger(objectId) || objectId <= 0) {
+					continue;
+				}
+				if (item.available !== true) {
+					// Nothing but the flag: the server sends no name, size or preview for a file the reader
+					// may not see, and the block must not invent them.
+					DiskAttachmentStore.set(documentId, objectId, {
+						unavailable: true
+					});
+					unavailableIds.push(objectId);
+					continue;
+				}
+				DiskAttachmentStore.set(documentId, objectId, {
+					name: String(item.name ?? ''),
+					size: Number(item.size) || 0,
+					mimeType: String(item.mimeType ?? ''),
+					// The link the block points AT: Disk's own page for the file, with its own permission
+					// check. Not a source for <img>/<video> — see inlineUrl.
+					showUrl: item.showUrl ?? item.downloadUrl ?? null,
+					downloadUrl: item.downloadUrl ?? null,
+					// The only URL that serves the bytes inline; the download one is served as an attachment
+					// and would make a picture a download prompt instead of a picture.
+					inlineUrl: item.inlineUrl ?? null,
+					viewerAttrs: item.viewerAttrs ?? null,
+					deleted: item.deleted === true,
+					canRestore: item.canRestore === true,
+					restoreUrl: item.restoreUrl ?? null,
+					// Access granted after the fact restores the block on the next resolve, without a reload.
+					unavailable: false
+				});
+				resolvedIds.push(objectId);
+
+				// The file is described, but it sits in Disk's trash can, and the block offers this reader the
+				// link to take it out of there. So the answer is reported as one to come back to: restore it in
+				// the other tab and the card follows, without reopening the document.
+				if (item.deleted === true) {
+					deletedIds.push(objectId);
+				}
+			}
+		}
+
+		// The node type asserted by markdown is NOT re-derived from the resolved mime here, unlike own
+		// files: the kind was chosen from Disk's own classification at pick time, and a document whose
+		// author wrote `[[disk file ...]]` by hand should keep the block they asked for.
+
+		return {
+			resolvedIds,
+			unavailableIds,
+			deletedIds
+		};
+	}
+
 	function showErrorToast(message) {
 		const content = String(message || '').trim();
 		if (!content) {
@@ -72054,6 +75436,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 	const FILE_NODE_RESOLVER_KEY = new PluginKey('noteFileNodeResolver');
 	const FILE_NODE_TYPES$1 = new Set(['imageAttachment', 'fileAttachment', 'video']);
 	const RESOLVE_DEBOUNCE_MS$1 = 200;
+	// What the server says about a Disk file can change while the document stays open: access is granted,
+	// or the file is taken out of Disk's trash can — by this very reader, from the link the block offers.
+	// So neither an unavailable nor a deleted verdict is sealed for the session the way a physically
+	// deleted own file is; each is only held long enough to stop a pass from asking about the same object
+	// again and again.
+	//
+	// Held, not scheduled: the retry rides the next resolve pass, and passes come from editor updates
+	// (see the plugin view below), not from a timer of their own. A reader who touches nothing sees the
+	// block recover on their next edit or reload — the alternative is a request every half minute, for
+	// as long as a tab stays open on a file that will most likely never change its answer.
+	const DISK_RETRY_HOLD_MS = 30000;
 
 	// Signal from the paste path: these fileIds were just inserted by the user, so if the backend
 	// can't resolve them they should be removed + toasted (rather than left as a placeholder, which
@@ -72139,6 +75532,24 @@ ${nextLine.slice(indentLevel + 2)}`;
 					let timer = null;
 					let running = false;
 					let dirty = false;
+					let diskHeld = new Set();
+					let diskHeldAt = 0;
+					const resolveDiskNodes = async documentId => {
+						if (diskHeld.size > 0 && Date.now() - diskHeldAt > DISK_RETRY_HOLD_MS) {
+							diskHeld = new Set();
+						}
+						const result = await resolveDiskAttachmentNodes(editor, documentId, {
+							skip: diskHeld
+						});
+
+						// Both verdicts are answers that can change on their own, so both are asked about again
+						// — after the hold, and not before it.
+						const held = [...result.unavailableIds, ...result.deletedIds];
+						if (held.length > 0) {
+							held.forEach(id => diskHeld.add(id));
+							diskHeldAt = Date.now();
+						}
+					};
 					const run = async () => {
 						if (running) {
 							dirty = true;
@@ -72152,9 +75563,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 								failed,
 								deleteOnFail
 							} = FILE_NODE_RESOLVER_KEY.getState(view.state);
-							const result = await resolveFileNodes(editor, documentId, {
+
+							// Own files and Disk attachments live in different id spaces and answer to
+							// different endpoints, so each is one request — and the two go together: they
+							// depend on nothing of each other's, and a document holding both would
+							// otherwise wait out one round trip before starting the next.
+							const [result] = await Promise.all([resolveFileNodes(editor, documentId, {
 								skip: failed
-							});
+							}), resolveDiskNodes(documentId)]);
 							if (result.failedIds.length > 0) {
 								const deleteIds = new Set();
 								const placeholderIds = new Set();
@@ -72199,12 +75615,101 @@ ${nextLine.slice(indentLevel + 2)}`;
 							if (timer) {
 								clearTimeout(timer);
 							}
+
+							// The store is a per-reader cache of what the server said, not document data:
+							// once this editor is gone nobody reads its entries, and the app switches
+							// documents without a page load, so without this they would pile up for the
+							// whole session. A document opened again simply resolves again.
+							DiskAttachmentStore.forgetDocument(getDocumentId());
 						}
 					};
 				}
 			})];
 		}
 	});
+
+	// Pure grammar of the inline date token `[[date YYYY-MM-DD]]` - the only place that knows the written
+	// form. The node, the clipboard sniffer, the export pass and the server-side mirror all go through
+	// here, so the form cannot drift between them.
+	//
+	// The token carries a calendar date and nothing else: no keys, no `|`, no newline. A `|` inside it
+	// would split a table row and drop the neighbouring cell (the table serializer never escapes it), so
+	// the strict pattern below is what keeps such a token from ever being written.
+	// The grammar, unanchored: asks whether a fragment carries a token anywhere. Kept flagless so that
+	// `.test()` stays stateless for the clipboard sniffer that shares this instance.
+	const DATE_TOKEN_PATTERN = /\[\[date (\d{4})-(\d{2})-(\d{2})]]/;
+
+	// The same grammar anchored at the fragment start - the inline tokenizer is only ever offered a slice
+	// that has to begin with the token.
+	const DATE_TOKEN_RE$1 = /^\[\[date (\d{4})-(\d{2})-(\d{2})]]/;
+
+	// Shape of an already written value, re-validated when it arrives as an attribute (collaborative
+	// state, pasted HTML) instead of through a token.
+	const DATE_VALUE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+	const TOKEN_PREFIX = '[[date';
+
+	/**
+	 * Index of the first `[[date` at or after `from`, or -1. Used as the inline tokenizer's start() hint.
+	 */
+	function findDateTokenStart(text, from = 0) {
+		return text.indexOf(TOKEN_PREFIX, from);
+	}
+
+	/**
+	 * Matches a token at the very start of `text`.
+	 *
+	 * @return {DateTokenMatch | null} null for anything that is not the canonical form, or that spells a
+	 * date the calendar does not have.
+	 */
+	function matchDateToken(text) {
+		const match = DATE_TOKEN_RE$1.exec(text);
+		if (!match) {
+			return null;
+		}
+		const value = normalizeDateValue(match[1], match[2], match[3]);
+		return value === null ? null : {
+			raw: match[0],
+			length: match[0].length,
+			value
+		};
+	}
+
+	/**
+	 * Normalizes calendar parts to `YYYY-MM-DD`, or refuses. There is no partial trust: parts that do not
+	 * normalize never become a node.
+	 */
+	function normalizeDateValue(year, month, day) {
+		const yearNumber = Number(year);
+		const monthNumber = Number(month);
+		const dayNumber = Number(day);
+		if (!Number.isInteger(yearNumber) || !Number.isInteger(monthNumber) || !Number.isInteger(dayNumber)) {
+			return null;
+		}
+
+		// Round-trip through the UTC fields: it refuses both a day the calendar does not have (2026-02-31
+		// rolls over into March) and Date.UTC's two-digit-year remap (0026 would silently become 1926).
+		const date = new Date(Date.UTC(yearNumber, monthNumber - 1, dayNumber));
+		if (date.getUTCFullYear() !== yearNumber || date.getUTCMonth() !== monthNumber - 1 || date.getUTCDate() !== dayNumber) {
+			return null;
+		}
+		return [String(yearNumber).padStart(4, '0'), String(monthNumber).padStart(2, '0'), String(dayNumber).padStart(2, '0')].join('-');
+	}
+
+	/**
+	 * Re-validates an already written value through the same normalization, so a value that reached the
+	 * node past the tokenizer is trusted no more than one that came through it.
+	 */
+	function normalizeDateString(value) {
+		const match = DATE_VALUE_RE.exec(String(value ?? ''));
+		return match === null ? null : normalizeDateValue(match[1], match[2], match[3]);
+	}
+
+	/**
+	 * Builds the canonical token: writes exactly what matchDateToken() accepts.
+	 */
+	function buildDateToken(value) {
+		return `${TOKEN_PREFIX} ${value}]]`;
+	}
 
 	const MARKDOWN_PASTE_KEY = new PluginKey('noteMarkdownPaste');
 
@@ -72226,7 +75731,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 	const FILE_NODE_TYPES = new Set(['imageAttachment', 'fileAttachment', 'video']);
 	function looksLikeMarkdown(text) {
 		const trimmed = text.trimStart();
-		return MD_PATTERN.test(trimmed) || NOTE_ASSET_PATTERN.test(trimmed) || NOTE_MENTION_PATTERN.test(trimmed);
+		return MD_PATTERN.test(trimmed) || NOTE_ASSET_PATTERN.test(trimmed) || NOTE_MENTION_PATTERN.test(trimmed)
+		// Date token [[date YYYY-MM-DD]] - a standalone one matches none of the patterns above, so
+		// without this branch it never reaches the inline tokenizer and pastes as plain text. The
+		// pattern comes from the grammar module, not a copy of it, so the two cannot drift apart.
+		|| DATE_TOKEN_PATTERN.test(trimmed);
 	}
 
 	// A code block stores raw source, so markdown markup in the clipboard (e.g. a Python `# comment`)
@@ -72303,12 +75812,513 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
+	const NODE_NAME = 'noteDate';
+
+	// Same class the color popup already uses for its own scoped dark-theme overrides
+	// (highlight-link-group.js) - the widget it decorates is foreign the same way.
+	// Paired by hand with the dark-theme rules in note.ui.theme-context (theme-context.css): a stylesheet
+	// cannot import this constant, so renaming it here without renaming it there silently drops the dark
+	// theme of the calendar - and nothing but the eye would notice.
+	const POPUP_CLASS$2 = 'note-editor-date-picker-popup';
+
+	/**
+	 * Builds the local calendar-midnight Date the picker expects for a `YYYY-MM-DD` value.
+	 *
+	 * DatePicker re-tags any Date-like it receives by reading its LOCAL year/month/day (see
+	 * `createDate()` in ui.date-picker) before comparing it against calendar cells, so the value must
+	 * be built with the local constructor - a UTC-built Date here would read back a day off west of
+	 * Greenwich.
+	 */
+	function dateFromValue(value) {
+		const [year, month, day] = value.split('-').map(Number);
+		return new Date(year, month - 1, day);
+	}
+
+	/**
+	 * Reverses dateFromValue(): DatePicker hands its selection back already re-tagged, so its calendar
+	 * day is read through the UTC fields (mirrors the picker's own `getDate()` helper).
+	 */
+	function valueFromPickerDate(date) {
+		if (!(date instanceof Date)) {
+			return null;
+		}
+		return normalizeDateValue(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
+	}
+
+	/**
+	 * Owns the single `ui.date-picker` instance a `noteDate` extension uses to let the author pick a
+	 * value - one instance per editor, created on first open() and torn down with the extension.
+	 *
+	 * The node has no node view, so there is no live `getPos()` to lean on. Rather than remembering a
+	 * raw position across the open popup's lifetime (stale the moment an earlier edit lands while it
+	 * is open), open() and the selection handler both re-read the current `NodeSelection` from the
+	 * editor: the caller places one on the target node before calling open(), and ProseMirror re-maps
+	 * an existing selection through every following transaction on its own - the same guarantee
+	 * note-mention-node.js already leans on for its diff decorations. A selection that stops pointing
+	 * at a `noteDate` node (the node got deleted from under the open popup) makes both a silent no-op.
+	 */
+	class NoteDatePickerOwner {
+		#editor;
+		#picker = null;
+		constructor(editor) {
+			this.#editor = editor;
+		}
+
+		/**
+		 * Opens the calendar on the node currently held by a `NodeSelection`, preselecting its value.
+		 * Does nothing if the selection is not one - see the class doc for why this is the contract
+		 * instead of taking a position.
+		 */
+		open() {
+			const target = this.#selectedDateNode();
+			if (target === null) {
+				return;
+			}
+			const {
+				view
+			} = this.#editor;
+			const targetElement = view.nodeDOM(target.pos);
+			if (!(targetElement instanceof HTMLElement)) {
+				return;
+			}
+			const picker = this.#ensurePicker();
+			// The target goes in before the popup is ever asked for: getPopup() builds it on first call
+			// and binds it to whatever target the picker holds right then. Asking first would bind the
+			// very first calendar to nothing and open it away from the date that summoned it.
+			picker.setTargetNode(targetElement);
+			const popup = picker.getPopup();
+			const alreadyOpen = popup.isShown();
+			popup.setDesignSystemContext(note_ui_themeContext.NoteThemeContext.getDesignSystemContext());
+			this.#preselect(picker, normalizeDateString(target.node.attrs.value));
+			if (alreadyOpen) {
+				// Moving the calendar from one date to another happens on a click the already open popup
+				// is itself watching (main.popup bindAutoHide, document capture phase): showing it here
+				// would be undone the moment that same click finishes travelling, leaving the calendar
+				// shut. Hand the show to the next task, once the watcher has closed the previous one.
+				setTimeout(() => this.#picker?.show(), 0);
+				return;
+			}
+			picker.show();
+		}
+
+		/**
+		 * Releases the calendar instance. The popup is cached by its own manager and would otherwise
+		 * outlive the document that opened it.
+		 */
+		destroy() {
+			this.#picker?.destroy();
+			this.#picker = null;
+		}
+		#ensurePicker() {
+			if (this.#picker !== null) {
+				return this.#picker;
+			}
+			this.#picker = new ui_datePicker.DatePicker({
+				type: 'date',
+				popupOptions: {
+					className: POPUP_CLASS$2
+				}
+			});
+			this.#picker.subscribe(ui_datePicker.DatePickerEvent.SELECT, ({
+				data
+			}) => this.#applySelected(data?.date));
+			// Focus on close is not ours to restore: ui.date-picker builds its popup with a focus trap
+			// (date-picker.js, `focusTrap: { initialFocus: false }`), and FocusTrap deliberately leaves
+			// the focus alone when it already sits outside the popup - a click into search or the
+			// sidebar closes the calendar and stays where the user put it. Focusing the editor here
+			// would drag it back out of whatever the user had just chosen.
+
+			return this.#picker;
+		}
+		#preselect(picker, value) {
+			[...picker.getSelectedDates()].forEach(date => picker.deselectDate(date, {
+				emitEvents: false,
+				render: false
+			}));
+			if (value !== null) {
+				picker.selectDate(dateFromValue(value), {
+					emitEvents: false
+				});
+			}
+		}
+		#applySelected(date) {
+			const value = valueFromPickerDate(date);
+			if (value === null) {
+				return;
+			}
+			const target = this.#selectedDateNode();
+			if (target === null) {
+				return;
+			}
+			const {
+				view
+			} = this.#editor;
+			view.dispatch(view.state.tr.setNodeMarkup(target.pos, undefined, {
+				...target.node.attrs,
+				value
+			}));
+		}
+		#selectedDateNode() {
+			const {
+				selection
+			} = this.#editor.view.state;
+			if (!(selection instanceof NodeSelection) || selection.node.type.name !== NODE_NAME) {
+				return null;
+			}
+			return {
+				pos: selection.from,
+				node: selection.node
+			};
+		}
+	}
+
+	// The stable DOM anchor of the node: styles, e2e and the click handler below all key off it.
+	const DOM_TYPE_ATTRIBUTE = 'data-note-date';
+
+	// [version-diff] The same classes the attachment and mention node views paint. The date has no node
+	// view of its own - its visible part is a single line of text, and a per-date Vue app would cost one
+	// application per date in the document - so renderHTML paints them itself.
+	const DIFF_STATE_CLASS = Object.freeze({
+		added: 'note-version-diff-node--added',
+		removed: 'note-version-diff-node--removed'
+	});
+
+	/**
+	 * The caption: always a concrete date in the portal's culture format, never a relative wording.
+	 * The year is dropped while the date sits in the current year and printed once it leaves it - the
+	 * only rule borrowed from the document history hub, whose own helper cannot be reused because every
+	 * API it exports glues a time and a relative day onto the day part.
+	 */
+	function formatDateCaption(value) {
+		const [year, month, day] = value.split('-').map(Number);
+		const isCurrentYear = year === new Date().getFullYear();
+		const format = isCurrentYear ? main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT') : main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT');
+
+		// The value is a calendar date, so its parts are printed from the UTC fields they were built
+		// from; local getters would shift the day west of Greenwich. Only "current year" above is local.
+		return main_date.DateTimeFormat.format(format, new Date(Date.UTC(year, month - 1, day)), null, true);
+	}
+
+	// The calendar day the author sees, not UTC's - a hotkey pressed near midnight lands on the date
+	// still showing on their clock.
+	function todayDateValue() {
+		const today = new Date();
+		return normalizeDateValue(today.getFullYear(), today.getMonth() + 1, today.getDate());
+	}
+
+	/**
+	 * Locates a noteDate node touching the caret: a NodeSelection already on one, or an atom right
+	 * before/after an empty caret. `editor.isActive('noteDate')` and `deleteNode` both miss an inline
+	 * atom - this is the by-hand replacement both toggleDate and the hotkey binding rely on.
+	 */
+	// Whether the schema lets an inline atom stand where the caret is. A code block holds raw text and
+	// admits no atom at all: without this the insert lands nowhere and the NodeSelection below is built
+	// on a position that holds no node. Asking the schema covers every such context, not just code.
+	function canInsertDate(state) {
+		const {
+			$from
+		} = state.selection;
+		const type = state.schema.nodes.noteDate;
+		for (let depth = $from.depth; depth >= 0; depth--) {
+			const index = $from.index(depth);
+			if ($from.node(depth).canReplaceWith(index, index, type)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	function findDateAtCaret(state) {
+		const {
+			selection
+		} = state;
+		if (selection instanceof NodeSelection && selection.node.type.name === 'noteDate') {
+			return {
+				pos: selection.from,
+				size: selection.node.nodeSize
+			};
+		}
+		const {
+			$from
+		} = selection;
+		if ($from.nodeAfter?.type.name === 'noteDate') {
+			return {
+				pos: $from.pos,
+				size: $from.nodeAfter.nodeSize
+			};
+		}
+		if ($from.nodeBefore?.type.name === 'noteDate') {
+			return {
+				pos: $from.pos - $from.nodeBefore.nodeSize,
+				size: $from.nodeBefore.nodeSize
+			};
+		}
+		return null;
+	}
+
+	/**
+	 * The position of a date node the selection covers whole - either as a node selection or as a text
+	 * range that happens to span exactly it, which is what shift-arrow over an inline atom produces.
+	 * Selecting a date and pressing Enter is the keyboard way into the calendar, so both shapes of
+	 * "this date is selected" have to be recognized.
+	 */
+	function findSelectedDateNode(state) {
+		const {
+			selection,
+			doc
+		} = state;
+		if (selection instanceof NodeSelection) {
+			return selection.node.type.name === 'noteDate' ? selection.from : null;
+		}
+		const node = doc.nodeAt(selection.from);
+		return node?.type.name === 'noteDate' && selection.to - selection.from === node.nodeSize ? selection.from : null;
+	}
+
+	/**
+	 * TipTap inline-atom node for a calendar date inside a phrase.
+	 *
+	 * Persisted attribute: value, a normalized `YYYY-MM-DD` string - the node carries nothing else, a
+	 * date being a value and not an entity. The transient version-diff attribute is declared so the
+	 * schema knows it, but is never written to markdown.
+	 *
+	 * renderText is deliberately absent: copying a document out goes through "Copy markdown", which
+	 * takes the document's markdown whole, so the date lands in the clipboard as its own token. A
+	 * human-readable form is the export pass's job, as it is for mentions.
+	 *
+	 * atom:true makes Backspace/Delete remove the node as a whole without a custom keymap.
+	 */
+	const NoteDateNode = Node$1.create({
+		name: 'noteDate',
+		group: 'inline',
+		inline: true,
+		atom: true,
+		selectable: true,
+		addStorage() {
+			return {
+				// One calendar per editor - created on first click, see note-date-picker-owner.js.
+				pickerOwner: null
+			};
+		},
+		onCreate() {
+			this.storage.pickerOwner = new NoteDatePickerOwner(this.editor);
+		},
+		onDestroy() {
+			this.storage.pickerOwner?.destroy();
+			this.storage.pickerOwner = null;
+		},
+		addAttributes() {
+			return {
+				// --- persisted ---
+				value: {
+					default: null,
+					parseHTML: element => normalizeDateString(element.getAttribute('data-note-date-value')),
+					renderHTML: attrs => ({
+						'data-note-date-value': normalizeDateString(attrs.value) ?? ''
+					})
+				},
+				// --- transient (version-diff tag, not serialised to markdown) ---
+				diffState: {
+					default: null,
+					rendered: false
+				}
+			};
+		},
+		parseHTML() {
+			return [{
+				tag: 'span[data-note-date]'
+			}];
+		},
+		renderHTML({
+			node,
+			HTMLAttributes
+		}) {
+			// Both the caption and the DOM value come from the normalized value, never from whatever
+			// string the attribute holds: a value that arrived through the collaborative state without
+			// passing normalization renders empty rather than half-trusted.
+			const value = normalizeDateString(node.attrs.value);
+			return ['span', mergeAttributes(HTMLAttributes, {
+				[DOM_TYPE_ATTRIBUTE]: '',
+				class: DIFF_STATE_CLASS[node.attrs.diffState] ?? null,
+				contenteditable: 'false'
+			}), value === null ? '' : formatDateCaption(value)];
+		},
+		/**
+		 * Enter on a selected date opens the calendar - the keyboard counterpart of the click. Without it
+		 * a date already in the text can only be replaced by removing it and inserting today's again:
+		 * Mod-; deliberately never opens the calendar, and Enter would otherwise just split the line.
+		 *
+		 * Unlike the click path this can show the popup straight away: a keypress has no trailing click
+		 * for main.popup's outside-click watcher to catch.
+		 */
+		addKeyboardShortcuts() {
+			return {
+				Enter: () => {
+					const {
+						editor
+					} = this;
+					const pos = findSelectedDateNode(editor.state);
+					if (pos === null || !editor.isEditable) {
+						return false;
+					}
+
+					// The picker owner reads its target from a node selection; a text range covering the
+					// node is narrowed to one first.
+					if (!(editor.state.selection instanceof NodeSelection)) {
+						editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, pos)));
+					}
+					this.storage.pickerOwner?.open();
+					return true;
+				}
+			};
+		},
+		addCommands() {
+			return {
+				// Drops today's date at the caret and selects it as a NodeSelection. Used by the "+" menu
+				// item (note-editor.js), whose handler opens the calendar on that same selection right after
+				// - see NoteDatePickerOwner.open(), which reads its target from the current NodeSelection.
+				insertDate: () => ({
+					tr,
+					dispatch,
+					state
+				}) => {
+					if (!canInsertDate(state)) {
+						return false;
+					}
+					if (dispatch) {
+						const pos = tr.selection.from;
+						const node = state.schema.nodes.noteDate.create({
+							value: todayDateValue()
+						});
+						tr.replaceSelectionWith(node, false);
+						tr.setSelection(NodeSelection.create(tr.doc, pos));
+					}
+					return true;
+				},
+				// The calendar is the extension's to open: the "+" menu item (note-editor.js) asks for it
+				// through the command API instead of reaching into editor.storage itself. Runs after the
+				// insert has been dispatched, since the owner reads its target from the live selection.
+				openDatePicker: () => ({
+					editor
+				}) => {
+					editor.storage.noteDate?.pickerOwner?.open();
+					return true;
+				},
+				// The Mod-; toggle: removes the date under the caret, or inserts today's without opening
+				// the calendar - picking another value stays a click away.
+				toggleDate: () => ({
+					tr,
+					dispatch,
+					state
+				}) => {
+					if (!canInsertDate(state)) {
+						return false;
+					}
+
+					// Only a caret (or the node picked out on its own) toggles the date away. Over a text
+					// range the date is one of the selected things, and dropping just it would leave the
+					// rest of the selection standing - there the toggle inserts, replacing the selection.
+					const found = state.selection.empty || state.selection instanceof NodeSelection ? findDateAtCaret(state) : null;
+					if (found) {
+						if (dispatch) {
+							tr.delete(found.pos, found.pos + found.size);
+						}
+						return true;
+					}
+					if (dispatch) {
+						const node = state.schema.nodes.noteDate.create({
+							value: todayDateValue()
+						});
+						tr.replaceSelectionWith(node, false);
+					}
+					return true;
+				}
+			};
+		},
+		/**
+		 * A click on the node, in edit mode, opens the calendar to change its value.
+		 *
+		 * The calendar is opened from the native `click`, not from ProseMirror's own `handleClickOn`,
+		 * which runs on `mouseup`. Showing a popup there registers main.popup's outside-click watcher
+		 * (popup.ts, bindAutoHide) in the document capture phase before the browser dispatches the
+		 * trailing `click` of the very same gesture - the watcher then reads that click as one landing
+		 * outside and closes the calendar the instant it appeared. Running on the click itself puts the
+		 * watcher in place after the document capture phase for this event has already passed, which is
+		 * why opening from the toolbar (a Vue `@click`) never had the problem.
+		 *
+		 * The node selection the picker owner reads is left to ProseMirror: its default mouseup handling
+		 * selects a clicked leaf on its own, and mouseup precedes click.
+		 */
+		addProseMirrorPlugins() {
+			const {
+				storage
+			} = this;
+			return [new Plugin({
+				props: {
+					handleDOMEvents: {
+						click(view, event) {
+							if (!view.editable || !(event.target instanceof HTMLElement)) {
+								return false;
+							}
+							if (event.target.closest(`[${DOM_TYPE_ATTRIBUTE}]`) === null) {
+								return false;
+							}
+							storage.pickerOwner?.open();
+
+							// The event is not consumed: the selection ProseMirror placed on mouseup stays.
+							return false;
+						}
+					}
+				}
+			})];
+		},
+		/**
+		 * Inline markdown tokenizer for the `[[date YYYY-MM-DD]]` token.
+		 *
+		 * The `[[` delimiter is shared with the block-level attachment tokenizers, which claim their own
+		 * keywords (`image|file|video`, `disk`, `video-embed`); a foreign grammar is turned away by the
+		 * strictness of the pattern in note-date-parser.js, not by the order of registration.
+		 */
+		markdownTokenizer: {
+			name: 'noteDate',
+			level: 'inline',
+			start(src) {
+				return findDateTokenStart(src);
+			},
+			tokenize(src) {
+				const match = matchDateToken(src);
+				if (!match) {
+					return null;
+				}
+				return {
+					type: 'noteDate',
+					raw: match.raw,
+					value: match.value
+				};
+			}
+		},
+		parseMarkdown(token) {
+			return {
+				type: 'noteDate',
+				attrs: {
+					value: token.value
+				}
+			};
+		},
+		/**
+		 * Serialises the node back to the canonical token - exactly what the tokenizer accepts, so the
+		 * round trip cannot lose the node at the next reader.
+		 */
+		renderMarkdown(node) {
+			const value = normalizeDateString(node?.attrs?.value);
+			return value === null ? '' : buildDateToken(value);
+		}
+	});
+
 	/**
 	 * Registry of supported mention types.
 	 *
 	 * Wire values match REG-01 (backend enum MentionType).
 	 * entityId values match ENT-01 (entity-selector entity identifiers).
-	 * navKind: 'internal-link' for document/collection, 'slider' for user/task.
+	 * navKind: 'internal-link' for document/collection, 'slider' for user/task/diskfolder.
 	 *
 	 * Presentation (color, icon, marker, avatar shape) lives in note.ui.mention-chip,
 	 * not here — this file is logic-only.
@@ -72332,6 +76342,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}),
 		task: Object.freeze({
 			entityId: 'task',
+			navKind: 'slider'
+		}),
+		diskfolder: Object.freeze({
+			entityId: 'note-disk-folder',
 			navKind: 'slider'
 		})
 	});
@@ -72367,10 +76381,46 @@ ${nextLine.slice(indentLevel + 2)}`;
 
 	const POPUP_CLASS$1 = 'note-editor-mention-popup';
 
+	// 500 fits a 41-char collection title on one line without truncation.
+	const TARGET_WIDTH = 500;
+	const MIN_WIDTH = 260;
+	const TARGET_HEIGHT = 400;
+	const MIN_HEIGHT = 240;
+
+	// The tab labels rail sits outside the dialog, to its left (ui.entity-selector tab.css:
+	// absolute, translate(-100%), max-width 38px), so the popup footprint is width + rail.
+	// Both gutters mirror --note-popup-rail-gutter / --note-popup-vh-gutter of note.app mobile.css.
+	const RAIL_GUTTER = 44;
+	const VIEWPORT_GUTTER = 30;
+
+	// main.popup keeps this much free at the right edge when it shifts a popup that does not fit
+	// (Popup#bordersWidth, main/install/js/main/popup/src/popup/popup.ts). Unless it is reserved here
+	// too, the shift moves the dialog left by these pixels and takes the rail off the left edge.
+	const POPUP_SHIFT_RESERVE = 20;
+
 	// Reverse map: entityId -> wire type string (e.g. 'note-document' -> 'document').
 	// Built once from the registry to avoid O(n) scan on every Item:onSelect.
 	const ENTITY_ID_TO_TYPE = Object.fromEntries(allTypes().map(type => [byType(type).entityId, type]));
 	let dialogCounter = 0;
+
+	/**
+	 * Dialog size at open time, capped by the viewport.
+	 *
+	 * On mobile the width declared here loses to the module-wide
+	 * `html.note-mobile .popup-window:has(.ui-selector-dialog)` rule (note.app mobile.css),
+	 * which owns width and left with !important. The height has no CSS owner in either
+	 * environment: vertical placement follows the caret, which CSS cannot see.
+	 *
+	 * @returns {{ width: number, height: number }}
+	 */
+	function getViewportBoundSize() {
+		const availableWidth = window.innerWidth - RAIL_GUTTER - POPUP_SHIFT_RESERVE;
+		const availableHeight = window.innerHeight - VIEWPORT_GUTTER;
+		return {
+			width: Math.max(MIN_WIDTH, Math.min(TARGET_WIDTH, availableWidth)),
+			height: Math.max(MIN_HEIGHT, Math.min(TARGET_HEIGHT, availableHeight))
+		};
+	}
 
 	/**
 	 * Wrapper around EntitySelector.Dialog for mention entity selection.
@@ -72436,7 +76486,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			preselected = null
 		}) {
 			const id = `note-mention-dialog-${++dialogCounter}`;
-			const isMobile = document.documentElement.classList.contains('note-mobile');
+			const {
+				width,
+				height
+			} = getViewportBoundSize();
 			const popupClass = suggestionMode ? `${POPUP_CLASS$1} ${POPUP_CLASS$1}--suggestion ${note_ui_themeContext.NoteThemeContext.getDesignSystemContext()}` : `${POPUP_CLASS$1} ${note_ui_themeContext.NoteThemeContext.getDesignSystemContext()}`;
 
 			// Dialog.validateItemIds() only accepts tuples [entityId, id], not plain objects.
@@ -72451,8 +76504,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				alwaysShowLabels: false,
 				showAvatars: true,
 				compactView: false,
-				width: 350,
-				height: isMobile ? 300 : 400,
+				width,
+				height,
 				preselectedItems,
 				popupOptions: {
 					className: popupClass
@@ -72488,6 +76541,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 					options: {
 						withTab: true
 					}
+				}, {
+					id: 'note-disk-folder',
+					dynamicLoad: true,
+					dynamicSearch: true,
+					// Disk answers from its full-text index, which holds the author's name as well as the
+					// folder's, so the default 'exact' re-match on the client would drop what the server found.
+					dynamicSearchMatchMode: 'all'
 				}],
 				events: {
 					'Item:onSelect': event => {
@@ -73053,6 +77113,224 @@ ${nextLine.slice(indentLevel + 2)}`;
 		});
 	}
 
+	// `/note` prefix is optional: the SPA is mounted on base `/note/`, so `/document/{id}/` and
+	// `/note/document/{id}/` denote the same internal document link (user-typed short form must not reload).
+	const DOCUMENT_PATH_PATTERN = /^(?:\/note)?\/document\/(\d+)\/?$/;
+	// Real collection route is `/workspace/{id}/` (app/src/router/routes.js); `/collection/{id}/` is a
+	// dead route that never existed but is already saved in some documents, so it's kept as a legacy alias.
+	const COLLECTION_PATH_PATTERN = /^(?:\/note)?\/(?:workspace|collection)\/(\d+)\/?$/;
+	function resolveCurrentOrigin() {
+		if (typeof window === 'undefined' || !window.location) {
+			return null;
+		}
+		const origin = window.location.origin;
+		return typeof origin === 'string' && origin !== '' ? origin : null;
+	}
+	function buildInternalDocumentUrl(documentId, {
+		absolute = false,
+		origin
+	} = {}) {
+		const id = Number(documentId);
+		if (!Number.isInteger(id) || id <= 0) {
+			return '';
+		}
+		const path = `/note/document/${id}/`;
+		if (!absolute) {
+			return path;
+		}
+		const currentOrigin = origin === undefined ? resolveCurrentOrigin() : origin;
+		return currentOrigin ? `${currentOrigin}${path}` : '';
+	}
+	function extractPathname(href, currentOrigin) {
+		if (href.startsWith('//')) {
+			return null;
+		}
+		if (href.startsWith('/')) {
+			return href.split(/[?#]/)[0];
+		}
+		if (!/^https?:\/\//i.test(href)) {
+			return null;
+		}
+		if (!currentOrigin) {
+			return null;
+		}
+		try {
+			const parsed = new URL(href);
+			if (parsed.origin !== currentOrigin) {
+				return null;
+			}
+			return parsed.pathname;
+		} catch {
+			return null;
+		}
+	}
+	function extractHash(href) {
+		const index = href.indexOf('#');
+		if (index === -1) {
+			return '';
+		}
+		return href.slice(index + 1).trim();
+	}
+	function parseInternalNoteLink(href, origin) {
+		if (typeof href !== 'string' || href === '') {
+			return null;
+		}
+
+		// Pure in-document anchor: "#slug".
+		if (href.startsWith('#')) {
+			const hash = href.slice(1).trim();
+			return hash === '' ? null : {
+				type: 'anchor',
+				hash
+			};
+		}
+		const currentOrigin = resolveCurrentOrigin() ;
+		const pathname = extractPathname(href, currentOrigin);
+		if (pathname === null) {
+			return null;
+		}
+		const documentMatch = DOCUMENT_PATH_PATTERN.exec(pathname);
+		if (documentMatch) {
+			const id = Number(documentMatch[1]);
+			if (!Number.isInteger(id) || id <= 0) {
+				return null;
+			}
+			const hash = extractHash(href);
+			return hash === '' ? {
+				type: 'document',
+				id
+			} : {
+				type: 'document',
+				id,
+				hash
+			};
+		}
+		const collectionMatch = COLLECTION_PATH_PATTERN.exec(pathname);
+		if (collectionMatch) {
+			const id = Number(collectionMatch[1]);
+			if (!Number.isInteger(id) || id <= 0) {
+				return null;
+			}
+			const hash = extractHash(href);
+			return hash === '' ? {
+				type: 'collection',
+				id
+			} : {
+				type: 'collection',
+				id,
+				hash
+			};
+		}
+		return null;
+	}
+
+	/**
+	 * Batch-resolve utility for noteMention nodes.
+	 *
+	 * Collects mention nodes from the document (deduped by type:id),
+	 * calls API-01, and returns a Map keyed by "type:id".
+	 *
+	 * Unlike file-node resolver, unavailable/inaccessible nodes are NOT removed —
+	 * they receive unavailable:true as a placeholder (persisted mention remains valid).
+	 */
+
+	const MENTION_NODE_TYPE$1 = 'noteMention';
+	const MENTION_BATCH_LIMIT = 200;
+	function createMentionSnapshot(mention, fallbackLabel = null) {
+		if (!mention?.available) {
+			const label = mention?.type === 'document' ? mention.label ?? fallbackLabel : fallbackLabel;
+			return Object.freeze({
+				label,
+				avatar: null,
+				url: null,
+				available: false,
+				isCurrentUser: false,
+				unavailable: true
+			});
+		}
+		return Object.freeze({
+			label: mention.label ?? fallbackLabel,
+			avatar: mention.avatar ?? null,
+			url: mention.url ?? null,
+			available: true,
+			isCurrentUser: Boolean(mention.isCurrentUser),
+			unavailable: false
+		});
+	}
+
+	/**
+	 * Collects mention nodes from the ProseMirror document.
+	 * Presentation attributes are deliberately ignored: they can belong to a previous
+	 * editor session and therefore are not authoritative for the current user.
+	 * Results are deduped by "type:id" — one entry per unique pair.
+	 *
+	 * @param {Object} doc - ProseMirror document.
+	 * @param {Set<string>} skip - "type:id" keys excluded from this pass.
+	 * @returns {{ type: string, id: number }[]}
+	 */
+	function collectMentions(doc, skip) {
+		const seen = new Set();
+		const items = [];
+		const skippedKeys = skip instanceof Set ? skip : new Set();
+		doc.descendants(node => {
+			if (node.type.name !== MENTION_NODE_TYPE$1) {
+				return;
+			}
+			const {
+				entityType,
+				entityId
+			} = node.attrs;
+			if (!entityType || !(entityId > 0)) {
+				return;
+			}
+			const key = `${entityType}:${entityId}`;
+			if (seen.has(key) || skippedKeys.has(key)) {
+				return;
+			}
+			seen.add(key);
+			items.push({
+				type: entityType,
+				id: Number(entityId)
+			});
+		});
+		return items;
+	}
+
+	/**
+	 * Calls API-01 to resolve a batch of mentions.
+	 * Returns a Map keyed by "type:id" → ResolvedMention DTO on success (a missing key
+	 * means the backend reported that item as gone/no-access). Returns null on a
+	 * transient network/server failure so the caller can distinguish "resolved, item
+	 * absent" from "request failed" and avoid marking healthy chips as unavailable.
+	 *
+	 * @param {{ type: string, id: number }[]} items
+	 * @returns {Promise<Map<string, Object> | null>}
+	 */
+	async function resolveMentionsBatch(items) {
+		if (!items || items.length === 0) {
+			return new Map();
+		}
+		let response = null;
+		try {
+			response = await BX.ajax.runAction('note.infrastructure.MentionController.resolveMentionsBatch', {
+				data: {
+					items
+				}
+			});
+		} catch {
+			// Transient network/server failure — signal the caller to retry, not to give up.
+			return null;
+		}
+		const mentions = Array.isArray(response?.data?.mentions) ? response.data.mentions : [];
+		const resultMap = new Map();
+		for (const mention of mentions) {
+			if (mention?.type && mention?.id > 0) {
+				resultMap.set(`${mention.type}:${mention.id}`, mention);
+			}
+		}
+		return resultMap;
+	}
+
 	/**
 	 * ProseMirror NodeView that mounts a Vue MentionChip for noteMention nodes.
 	 *
@@ -73064,6 +77342,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 */
 	class MentionNodeView {
 		#editDialog = null;
+		#projection = null;
+		#projectionKey = '';
+		#projectionSnapshot = null;
+		#initialSnapshot = null;
+		#unsubscribeProjection = null;
 		constructor({
 			node,
 			editor,
@@ -73076,11 +77359,66 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.options = extension?.options ?? {};
 			this.app = null;
 			this.vm = null;
+			this.#projection = editor.storage?.noteMentionResolver ?? null;
 			this.dom = document.createElement('span');
 			this.dom.setAttribute('data-type', 'note-mention');
 			this.dom.contentEditable = 'false';
+			this.#subscribeProjection();
 			this.#mountVue();
 			this.#syncDiffState();
+		}
+		#buildPresentationAttrs() {
+			const fallbackLabel = this.node.attrs.entityType === 'document' ? this.node.attrs.label : null;
+			const fallbackAvailable = fallbackLabel ? true : null;
+			const snapshot = this.#projectionSnapshot ?? this.#initialSnapshot;
+			return {
+				...this.node.attrs,
+				label: snapshot?.label ?? fallbackLabel ?? null,
+				avatar: snapshot?.avatar ?? null,
+				url: snapshot?.url ?? null,
+				available: snapshot?.available ?? fallbackAvailable,
+				isCurrentUser: snapshot?.isCurrentUser ?? false,
+				unavailable: snapshot?.unavailable ?? false
+			};
+		}
+		#readInitialSnapshot() {
+			const {
+				entityType,
+				entityId
+			} = this.node.attrs;
+			const id = Number(entityId);
+			if (entityType !== 'document' || !Number.isInteger(id) || id <= 0) {
+				return null;
+			}
+			const cachedSnapshot = this.options.labelCache?.get(id);
+			if (!cachedSnapshot) {
+				return null;
+			}
+			return createMentionSnapshot({
+				type: 'document',
+				label: cachedSnapshot.label,
+				available: cachedSnapshot.available
+			});
+		}
+		#subscribeProjection() {
+			this.#unsubscribeProjection?.();
+			this.#unsubscribeProjection = null;
+			this.#projectionSnapshot = null;
+			this.#initialSnapshot = this.#readInitialSnapshot();
+			this.#projectionKey = `${this.node.attrs.entityType}:${this.node.attrs.entityId}`;
+			if (typeof this.#projection?.subscribe !== 'function') {
+				this.#syncPresentation();
+				return;
+			}
+			this.#unsubscribeProjection = this.#projection.subscribe(this.#projectionKey, snapshot => {
+				this.#projectionSnapshot = snapshot;
+				this.#syncPresentation();
+			});
+		}
+		#syncPresentation() {
+			if (this.vm) {
+				this.vm.attrs = this.#buildPresentationAttrs();
+			}
 		}
 
 		// [version-diff] Reflect the diffState attr as a class on the chip wrapper. The attr is part of the
@@ -73099,16 +77437,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 				},
 				data() {
 					return {
-						attrs: {
-							...nodeView.node.attrs
-						},
+						attrs: nodeView.#buildPresentationAttrs(),
+						navigationPending: false,
 						// Passed to the chip so it can gate keyboard/tabindex enhancements.
 						// Reactive: updated by MentionNodeView.update() when editor state changes.
 						isEditable: nodeView.editor.isEditable
 					};
 				},
 				methods: {
-					handleClick() {
+					async handleClick(event) {
 						if (nodeView.editor.isEditable) {
 							nodeView.#openEditDialog();
 							return;
@@ -73118,10 +77455,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 							entityId,
 							url,
 							unavailable
-						} = nodeView.node.attrs;
-						if (unavailable) {
-							return;
-						}
+						} = nodeView.#buildPresentationAttrs();
 						const entry = byType(entityType);
 						if (!entry) {
 							return;
@@ -73129,19 +77463,45 @@ ${nextLine.slice(indentLevel + 2)}`;
 
 						// Dispatch navigation by navKind:
 						// internal-link (document/collection) → delegate to onMentionClick (feature emits open-internal-link)
-						// slider (user/task) → open in a new browser tab (mobile app: native card via the bridge).
+						// slider (user/task/diskfolder) → open in a new browser tab
+						// (mobile app: native card via the bridge).
 						if (entry.navKind === 'internal-link') {
+							const internalUrl = url || (entityType === 'document' && Number(entityId) > 0 ? buildInternalDocumentUrl(entityId) : '');
+							const isMiddleClick = event?.type === 'auxclick' && event?.button === 1;
+							const isModifiedClick = event?.button === 0 && (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey);
+							if ((isMiddleClick || isModifiedClick) && !unavailable) {
+								if (internalUrl) {
+									openLinkNative(internalUrl);
+								}
+								return;
+							}
+							const isUnavailableDocumentActivation = unavailable && entityType === 'document' && (isMiddleClick || isModifiedClick);
+							if (event?.button > 0 && !isUnavailableDocumentActivation) {
+								return;
+							}
+							if (unavailable && entityType !== 'document') {
+								return;
+							}
+							if (entityType === 'document' && this.navigationPending) {
+								return;
+							}
 							const onMentionClick = nodeView.options?.onMentionClick;
-							if (typeof onMentionClick === 'function') {
-								onMentionClick({
-									type: entityType,
-									id: entityId,
-									url
-								});
+							if (main_core.Type.isFunction(onMentionClick)) {
+								this.navigationPending = entityType === 'document';
+								try {
+									await onMentionClick({
+										type: entityType,
+										id: entityId,
+										url: internalUrl,
+										origin: event?.type === 'keydown' ? 'keyboard' : 'pointer'
+									});
+								} finally {
+									this.navigationPending = false;
+								}
 							}
 							return;
 						}
-						if (entry.navKind === 'slider' && url) {
+						if (!unavailable && entry.navKind === 'slider' && url) {
 							openLinkNative(url);
 						}
 					}
@@ -73156,7 +77516,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 					:is-current-user="attrs.isCurrentUser"
 					:unavailable="attrs.unavailable"
 					:is-editable="isEditable"
+					:allow-unavailable-activation="attrs.entityType === 'document' && Number(attrs.entityId) > 0"
+					:navigation-pending="navigationPending"
 					@click="handleClick"
+					@auxclick="handleClick"
 				/>
 			`
 			});
@@ -73217,12 +77580,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (node.type !== this.node.type) {
 				return false;
 			}
+			const previousProjectionKey = this.#projectionKey;
 			this.node = node;
 			this.#syncDiffState();
+			const nextProjectionKey = `${node.attrs.entityType}:${node.attrs.entityId}`;
+			if (nextProjectionKey !== previousProjectionKey) {
+				this.#subscribeProjection();
+			}
 			if (this.vm) {
-				this.vm.attrs = {
-					...node.attrs
-				};
+				this.vm.attrs = this.#buildPresentationAttrs();
 				this.vm.isEditable = this.editor.isEditable;
 			}
 			return true;
@@ -73233,7 +77599,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		stopEvent(event) {
 			// Return true = ProseMirror ignores the event (won't place cursor inside atom).
 			// The DOM event still bubbles so Vue's @click / @keydown handlers fire normally.
-			if (event.type === 'click') {
+			if (event.type === 'click' || event.type === 'auxclick') {
 				return true;
 			}
 
@@ -73249,6 +77615,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return false;
 		}
 		destroy() {
+			this.#unsubscribeProjection?.();
+			this.#unsubscribeProjection = null;
 			this.#editDialog?.destroy();
 			this.#editDialog = null;
 			this.app?.unmount();
@@ -73321,7 +77689,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 *
 	 * atom:true ensures Backspace/Delete remove the node as a whole without a custom keymap.
 	 */
-	const NoteMentionNode = Node3.create({
+	const NoteMentionNode = Node$1.create({
 		name: 'noteMention',
 		group: 'inline',
 		inline: true,
@@ -73329,7 +77697,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 		selectable: true,
 		addOptions() {
 			return {
-				onMentionClick: null
+				onMentionClick: null,
+				labelCache: null
 			};
 		},
 		addAttributes() {
@@ -73501,257 +77870,639 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	/**
-	 * Batch-resolve utility for noteMention nodes.
-	 *
-	 * Collects unresolved nodes from the document (deduped by type:id),
-	 * calls API-01, and returns a Map keyed by "type:id".
-	 *
-	 * Unlike file-node resolver, unavailable/inaccessible nodes are NOT removed —
-	 * they receive unavailable:true as a placeholder (persisted mention remains valid).
-	 */
-
-	const MENTION_NODE_TYPE$1 = 'noteMention';
-
-	/**
-	 * Collects unresolved mention nodes from the ProseMirror document.
-	 * "Unresolved" means available === null (resolver has not touched it yet).
-	 * Results are deduped by "type:id" — one entry per unique pair.
-	 *
-	 * @param {Object} doc - ProseMirror document.
-	 * @param {Set<string>} skip - Already-failed "type:id" keys to skip.
-	 * @returns {{ type: string, id: number }[]}
-	 */
-	function collectUnresolvedMentions(doc, skip) {
-		const seen = new Set();
-		const items = [];
-		doc.descendants(node => {
-			if (node.type.name !== MENTION_NODE_TYPE$1) {
-				return;
-			}
-			const {
-				entityType,
-				entityId,
-				available
-			} = node.attrs;
-
-			// Skip already-resolved or invalid nodes.
-			if (available !== null || !entityType || !(entityId > 0)) {
-				return;
-			}
-			const key = `${entityType}:${entityId}`;
-			if (seen.has(key) || skip.has(key)) {
-				return;
-			}
-			seen.add(key);
-			items.push({
-				type: entityType,
-				id: Number(entityId)
-			});
-		});
-		return items;
-	}
-
-	/**
-	 * Calls API-01 to resolve a batch of mentions.
-	 * Returns a Map keyed by "type:id" → ResolvedMention DTO on success (a missing key
-	 * means the backend reported that item as gone/no-access). Returns null on a
-	 * transient network/server failure so the caller can distinguish "resolved, item
-	 * absent" from "request failed" and avoid marking healthy chips as unavailable.
-	 *
-	 * @param {{ type: string, id: number }[]} items
-	 * @returns {Promise<Map<string, Object> | null>}
-	 */
-	async function resolveMentionsBatch(items) {
-		if (!items || items.length === 0) {
-			return new Map();
-		}
-		let response = null;
+	const STORAGE_KEY_PREFIX = 'note:document-mention-labels:v2';
+	const LEGACY_STORAGE_KEY_PREFIX = 'note:document-mention-labels:v1';
+	const CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+	const DOCUMENT_MENTION_LABEL_CACHE_LIMIT = 200;
+	function getLocalStorage() {
 		try {
-			response = await BX.ajax.runAction('note.infrastructure.MentionController.resolveMentionsBatch', {
-				data: {
-					items
-				}
-			});
+			return typeof window === 'undefined' ? null : window.localStorage;
 		} catch {
-			// Transient network/server failure — signal the caller to retry, not to give up.
 			return null;
 		}
-		const mentions = Array.isArray(response?.data?.mentions) ? response.data.mentions : [];
-		const resultMap = new Map();
-		for (const mention of mentions) {
-			if (mention?.type && mention?.id > 0) {
-				resultMap.set(`${mention.type}:${mention.id}`, mention);
+	}
+	class DocumentMentionLabelCache {
+		#storage;
+		#storageKey;
+		#limit;
+		#entries;
+		#now;
+		constructor({
+			userId,
+			storage = getLocalStorage(),
+			limit = DOCUMENT_MENTION_LABEL_CACHE_LIMIT,
+			now = () => Date.now()
+		}) {
+			const normalizedUserId = Number(userId);
+			this.#storage = storage;
+			this.#storageKey = Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? `${STORAGE_KEY_PREFIX}:${normalizedUserId}` : null;
+			this.#limit = Number.isInteger(limit) && limit > 0 ? limit : DOCUMENT_MENTION_LABEL_CACHE_LIMIT;
+			this.#now = now;
+			this.#removeForeignUserEntries();
+			this.#entries = this.#readEntries();
+		}
+		get(documentId) {
+			const id = Number(documentId);
+			if (!Number.isInteger(id) || id <= 0) {
+				return null;
+			}
+			const entry = this.#entries.get(id);
+			if (!entry) {
+				return null;
+			}
+			this.#entries.delete(id);
+			this.#entries.set(id, entry);
+			return Object.freeze({
+				label: entry.label,
+				available: entry.available
+			});
+		}
+		set(documentId, snapshot) {
+			this.setMany([[documentId, snapshot]]);
+		}
+		setMany(snapshots) {
+			if (!this.#storageKey || !snapshots?.[Symbol.iterator]) {
+				return;
+			}
+			let changed = false;
+			for (const [documentId, snapshot] of snapshots) {
+				const id = Number(documentId);
+				const entry = this.#normalizeEntry(snapshot, this.#now());
+				if (!Number.isInteger(id) || id <= 0 || entry === null) {
+					continue;
+				}
+				this.#entries.delete(id);
+				this.#entries.set(id, entry);
+				changed = true;
+			}
+			if (!changed) {
+				return;
+			}
+			while (this.#entries.size > this.#limit) {
+				this.#entries.delete(this.#entries.keys().next().value);
+			}
+			if (!this.#storage) {
+				return;
+			}
+			try {
+				const entries = [...this.#entries].map(([entryId, entry]) => ({
+					id: entryId,
+					...entry
+				}));
+				this.#storage.setItem(this.#storageKey, JSON.stringify({
+					entries
+				}));
+			} catch {}
+		}
+		#readEntries() {
+			if (!this.#storage || !this.#storageKey) {
+				return new Map();
+			}
+			try {
+				const parsed = JSON.parse(this.#storage.getItem(this.#storageKey) ?? 'null');
+				if (!Array.isArray(parsed?.entries)) {
+					return new Map();
+				}
+				const entries = new Map();
+				for (const entry of parsed.entries) {
+					const id = Number(entry?.id);
+					const normalizedEntry = this.#normalizeEntry(entry, Number(entry?.savedAt));
+					if (Number.isInteger(id) && id > 0 && normalizedEntry !== null) {
+						entries.delete(id);
+						entries.set(id, normalizedEntry);
+					}
+				}
+				while (entries.size > this.#limit) {
+					entries.delete(entries.keys().next().value);
+				}
+				return entries;
+			} catch {
+				return new Map();
 			}
 		}
-		return resultMap;
+		#normalizeEntry(entry, savedAt) {
+			const rawLabel = typeof entry === 'string' ? entry : entry?.label;
+			const label = typeof rawLabel === 'string' && rawLabel.trim() !== '' ? rawLabel : null;
+			const available = typeof entry === 'object' && entry?.available === true;
+			const age = this.#now() - savedAt;
+			if (!label && available || !Number.isFinite(savedAt) || age < 0 || age > CACHE_TTL_MS) {
+				return null;
+			}
+			return Object.freeze({
+				label,
+				available,
+				savedAt
+			});
+		}
+		#removeForeignUserEntries() {
+			if (!this.#storage || !this.#storageKey) {
+				return;
+			}
+			try {
+				const keys = [];
+				for (let index = 0; index < this.#storage.length; index += 1) {
+					const key = this.#storage.key(index);
+					if (typeof key === 'string' && (key.startsWith(`${STORAGE_KEY_PREFIX}:`) || key.startsWith(`${LEGACY_STORAGE_KEY_PREFIX}:`)) && key !== this.#storageKey) {
+						keys.push(key);
+					}
+				}
+				for (const key of keys) {
+					this.#storage.removeItem(key);
+				}
+			} catch {}
+		}
 	}
 
 	const MENTION_RESOLVER_KEY = new PluginKey('noteMentionResolver');
 	const RESOLVE_DEBOUNCE_MS = 200;
 	const RESOLVE_MAX_WAIT_MS = 1000;
-	// Backoff before retrying after a transient request failure (no busy-loop on a down server).
 	const RESOLVE_RETRY_MS = 3000;
-	// Must stay in sync with MentionController::MAX_BATCH_SIZE — the backend truncates larger
-	// batches, so we resolve at most this many per pass and let the next pass pick up the rest.
-	const RESOLVE_BATCH_LIMIT = 200;
-
-	/**
-	 * TipTap extension that lazily resolves noteMention nodes via a debounced batch request.
-	 *
-	 * Mirrors FileNodeResolverExtension but with key differences:
-	 *   - Unresolved/pasted mentions are NOT deleted on failure — they become unavailable:true.
-	 *   - Uses its own PluginKey, entirely separate from FileNodeResolverExtension.
-	 *   - Labels stay out of markdown (single source of truth is the backend).
-	 */
+	const RESOLVE_RETRY_MAX_MS = 60_000;
+	const Freshness = Object.freeze({
+		PENDING: 'pending',
+		FRESH: 'fresh',
+		STALE: 'stale'
+	});
+	function collectMentionState(doc) {
+		const items = [];
+		const presentKeys = new Set();
+		const historicalDocumentLabels = new Map();
+		doc.descendants(node => {
+			const {
+				entityType,
+				entityId,
+				label
+			} = node.attrs ?? {};
+			const id = Number(entityId);
+			if (node.type.name !== 'noteMention' || !entityType || !Number.isInteger(id) || id <= 0) {
+				return;
+			}
+			const key = `document:${id}`;
+			if (entityType === 'document' && typeof label === 'string' && label.trim() !== '' && !historicalDocumentLabels.has(key)) {
+				historicalDocumentLabels.set(key, label);
+			}
+			const mentionKey = `${entityType}:${id}`;
+			if (!presentKeys.has(mentionKey)) {
+				presentKeys.add(mentionKey);
+				items.push({
+					type: entityType,
+					id
+				});
+			}
+		});
+		return {
+			items,
+			presentKeys,
+			historicalDocumentLabels
+		};
+	}
+	class MentionProjection {
+		#entries = new Map();
+		#listeners = new Map();
+		#presentKeys = new Set();
+		#invalidateHandler = null;
+		#subscribeHandler = null;
+		get(key) {
+			return this.#entries.get(key)?.snapshot ?? null;
+		}
+		getFresh(key) {
+			const entry = this.#entries.get(key);
+			return entry?.freshness === Freshness.FRESH ? entry.snapshot : null;
+		}
+		subscribe(key, listener) {
+			if (!this.#listeners.has(key)) {
+				this.#listeners.set(key, new Set());
+			}
+			if (!this.#entries.has(key)) {
+				this.#entries.set(key, {
+					snapshot: null,
+					freshness: Freshness.PENDING,
+					revision: 0
+				});
+			}
+			this.#listeners.get(key).add(listener);
+			this.#subscribeHandler?.(key);
+			listener(this.get(key));
+			return () => {
+				const listeners = this.#listeners.get(key);
+				listeners?.delete(listener);
+				if (listeners?.size === 0) {
+					this.#listeners.delete(key);
+				}
+			};
+		}
+		replace(key, snapshot) {
+			return this.replaceIfCurrent(key, snapshot, null);
+		}
+		hydratePending(key, snapshot) {
+			const entry = this.#entries.get(key);
+			if (!entry || entry.snapshot !== null) {
+				return false;
+			}
+			entry.snapshot = snapshot;
+			entry.freshness = Freshness.PENDING;
+			this.#notify(key);
+			return true;
+		}
+		replaceIfCurrent(key, snapshot, revision) {
+			const entry = this.#entries.get(key);
+			if (!entry || !this.#presentKeys.has(key) || revision !== null && entry.revision !== revision) {
+				return false;
+			}
+			entry.snapshot = snapshot;
+			entry.freshness = Freshness.FRESH;
+			this.#notify(key);
+			return true;
+		}
+		invalidate(key) {
+			if (!this.#listeners.has(key)) {
+				return;
+			}
+			const entry = this.#entries.get(key);
+			if (!entry) {
+				return;
+			}
+			entry.freshness = Freshness.STALE;
+			entry.revision += 1;
+			this.#invalidateHandler?.(key);
+		}
+		setPresentKeys(keys) {
+			this.#presentKeys = new Set(keys);
+			for (const key of this.#entries.keys()) {
+				if (!this.#presentKeys.has(key)) {
+					this.#entries.delete(key);
+				}
+			}
+			for (const key of this.#presentKeys) {
+				if (!this.#entries.has(key)) {
+					this.#entries.set(key, {
+						snapshot: null,
+						freshness: Freshness.PENDING,
+						revision: 0
+					});
+				}
+			}
+		}
+		getPendingKeys() {
+			return [...this.#presentKeys].filter(key => {
+				return this.#entries.get(key)?.freshness !== Freshness.FRESH;
+			});
+		}
+		getRevision(key) {
+			return this.#entries.get(key)?.revision ?? -1;
+		}
+		setInvalidateHandler(handler) {
+			this.#invalidateHandler = handler;
+		}
+		getSubscribedKeys() {
+			return [...this.#listeners.keys()];
+		}
+		setSubscribeHandler(handler) {
+			this.#subscribeHandler = handler;
+		}
+		destroy() {
+			this.#invalidateHandler = null;
+			this.#subscribeHandler = null;
+			this.#entries.clear();
+			this.#listeners.clear();
+			this.#presentKeys.clear();
+		}
+		#notify(key) {
+			const snapshot = this.get(key);
+			for (const listener of this.#listeners.get(key) ?? []) {
+				listener(snapshot);
+			}
+		}
+	}
+	function getCachedDocumentSnapshot(labelCache, key) {
+		const [type, rawId] = key.split(':');
+		const id = Number(rawId);
+		if (type !== 'document' || !Number.isInteger(id) || id <= 0) {
+			return null;
+		}
+		const cachedSnapshot = labelCache?.get(id);
+		if (!cachedSnapshot) {
+			return null;
+		}
+		return createMentionSnapshot({
+			type: 'document',
+			label: cachedSnapshot.label,
+			available: cachedSnapshot.available
+		});
+	}
+	function createMentionProjectionStorage() {
+		const projection = new MentionProjection();
+		return {
+			get: key => projection.get(key),
+			getFresh: key => projection.getFresh(key),
+			subscribe: (key, listener) => projection.subscribe(key, listener),
+			replace: (key, snapshot) => projection.replace(key, snapshot),
+			hydratePending: (key, snapshot) => projection.hydratePending(key, snapshot),
+			replaceIfCurrent: (key, snapshot, revision) => projection.replaceIfCurrent(key, snapshot, revision),
+			invalidate: key => projection.invalidate(key),
+			setPresentKeys: keys => projection.setPresentKeys(keys),
+			getPendingKeys: () => projection.getPendingKeys(),
+			getRevision: key => projection.getRevision(key),
+			setInvalidateHandler: handler => projection.setInvalidateHandler(handler),
+			getSubscribedKeys: () => projection.getSubscribedKeys(),
+			setSubscribeHandler: handler => projection.setSubscribeHandler(handler),
+			destroy: () => projection.destroy()
+		};
+	}
+	class MentionResolver {
+		#view;
+		#projection;
+		#resolveBatch;
+		#eventEmitter;
+		#noteEvent;
+		#setTimer;
+		#clearTimer;
+		#labelCache;
+		#historicalDocumentLabels = new Map();
+		#timer = null;
+		#retryTimer = null;
+		#retryAttempt = 0;
+		#retryPending = false;
+		#running = false;
+		#dirty = false;
+		#firstScheduleAt = null;
+		#destroyed = false;
+		constructor({
+			view,
+			projection,
+			resolveBatch = resolveMentionsBatch,
+			eventEmitter = main_core_events.EventEmitter,
+			noteEvent = note_sidebar.NoteEvent,
+			setTimer = (handler, delay) => setTimeout(handler, delay),
+			clearTimer = timer => clearTimeout(timer),
+			labelCache = null
+		}) {
+			this.#view = view;
+			this.#projection = projection;
+			this.#resolveBatch = resolveBatch;
+			this.#eventEmitter = eventEmitter;
+			this.#noteEvent = noteEvent;
+			this.#setTimer = setTimer;
+			this.#clearTimer = clearTimer;
+			this.#labelCache = labelCache;
+		}
+		start() {
+			this.#eventEmitter.subscribe(this.#noteEvent.DOCUMENT_RENAMED, this.#handleDocumentRenamed);
+			this.#eventEmitter.subscribe(this.#noteEvent.PULL_EVENT, this.#handlePullEvent);
+			if (typeof document !== 'undefined') {
+				document.addEventListener('visibilitychange', this.#handleVisibilityChange);
+			}
+			this.#projection.setInvalidateHandler(() => this.schedule());
+			this.#projection.setSubscribeHandler(key => this.#hydrateCachedDocument(key));
+			for (const key of this.#projection.getSubscribedKeys()) {
+				this.#hydrateCachedDocument(key);
+			}
+			this.schedule();
+		}
+		update(view, prevState) {
+			this.#view = view;
+			if (view.state.doc !== prevState.doc) {
+				this.schedule();
+			}
+		}
+		async runNow() {
+			if (this.#timer !== null) {
+				this.#clearTimer(this.#timer);
+				this.#timer = null;
+			}
+			await this.#run();
+		}
+		schedule() {
+			if (this.#destroyed) {
+				return;
+			}
+			if (this.#timer !== null) {
+				this.#clearTimer(this.#timer);
+			}
+			if (this.#firstScheduleAt === null) {
+				this.#firstScheduleAt = Date.now();
+			}
+			const elapsed = Date.now() - this.#firstScheduleAt;
+			const delay = Math.min(RESOLVE_DEBOUNCE_MS, Math.max(0, RESOLVE_MAX_WAIT_MS - elapsed));
+			this.#timer = this.#setTimer(() => {
+				this.#timer = null;
+				return this.#run();
+			}, delay);
+		}
+		destroy() {
+			this.#destroyed = true;
+			this.#eventEmitter.unsubscribe(this.#noteEvent.DOCUMENT_RENAMED, this.#handleDocumentRenamed);
+			this.#eventEmitter.unsubscribe(this.#noteEvent.PULL_EVENT, this.#handlePullEvent);
+			if (typeof document !== 'undefined') {
+				document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
+			}
+			this.#projection.setInvalidateHandler(null);
+			this.#projection.setSubscribeHandler(null);
+			if (this.#timer !== null) {
+				this.#clearTimer(this.#timer);
+				this.#timer = null;
+			}
+			if (this.#retryTimer !== null) {
+				this.#clearTimer(this.#retryTimer);
+				this.#retryTimer = null;
+			}
+		}
+		#hydrateCachedDocument(key) {
+			const cachedSnapshot = getCachedDocumentSnapshot(this.#labelCache, key);
+			if (cachedSnapshot) {
+				this.#projection.hydratePending(key, cachedSnapshot);
+			}
+		}
+		async #run() {
+			if (this.#destroyed) {
+				return;
+			}
+			if (this.#running) {
+				this.#dirty = true;
+				return;
+			}
+			this.#running = true;
+			this.#dirty = false;
+			this.#firstScheduleAt = null;
+			try {
+				const {
+					items: presentItems,
+					presentKeys,
+					historicalDocumentLabels
+				} = collectMentionState(this.#view.state.doc);
+				this.#historicalDocumentLabels = historicalDocumentLabels;
+				this.#projection.setPresentKeys(presentKeys);
+				for (const {
+					type,
+					id
+				} of presentItems) {
+					this.#hydrateCachedDocument(`${type}:${id}`);
+				}
+				const pendingKeys = new Set(this.#projection.getPendingKeys());
+				const items = presentItems.filter(({
+					type,
+					id
+				}) => pendingKeys.has(`${type}:${id}`)).slice(0, MENTION_BATCH_LIMIT);
+				if (items.length === 0) {
+					this.#resetRetry();
+					return;
+				}
+				const revisions = new Map(items.map(({
+					type,
+					id
+				}) => {
+					const key = `${type}:${id}`;
+					return [key, this.#projection.getRevision(key)];
+				}));
+				const resolvedMap = await this.#resolveBatch(items);
+				if (this.#destroyed) {
+					return;
+				}
+				if (resolvedMap === null) {
+					this.#scheduleRetry();
+					return;
+				}
+				this.#resetRetry();
+				const resolvedDocumentSnapshots = new Map();
+				for (const {
+					type,
+					id
+				} of items) {
+					const key = `${type}:${id}`;
+					const resolvedMention = resolvedMap.get(key);
+					const fallbackLabel = type === 'document' ? this.#projection.get(key)?.label ?? this.#historicalDocumentLabels.get(key) ?? null : null;
+					const snapshot = createMentionSnapshot(resolvedMention, fallbackLabel);
+					const replaced = this.#projection.replaceIfCurrent(key, snapshot, revisions.get(key));
+					if (replaced && type === 'document' && (snapshot.available === false || typeof snapshot.label === 'string' && snapshot.label.trim() !== '')) {
+						resolvedDocumentSnapshots.set(id, {
+							label: snapshot.label,
+							available: snapshot.available
+						});
+					}
+				}
+				this.#labelCache?.setMany(resolvedDocumentSnapshots);
+				if (this.#projection.getPendingKeys().length > 0) {
+					this.schedule();
+				}
+			} finally {
+				this.#running = false;
+				if (this.#dirty) {
+					this.schedule();
+				}
+			}
+		}
+		#scheduleRetry() {
+			if (this.#destroyed || this.#retryTimer !== null) {
+				return;
+			}
+			if (this.#isDocumentHidden()) {
+				this.#retryPending = true;
+				return;
+			}
+			const delay = Math.min(RESOLVE_RETRY_MS * 2 ** this.#retryAttempt, RESOLVE_RETRY_MAX_MS);
+			this.#retryAttempt += 1;
+			this.#retryTimer = this.#setTimer(() => {
+				this.#retryTimer = null;
+				if (this.#isDocumentHidden()) {
+					this.#retryPending = true;
+					return;
+				}
+				return this.#run();
+			}, delay);
+		}
+		#resetRetry() {
+			this.#retryAttempt = 0;
+			this.#retryPending = false;
+			if (this.#retryTimer !== null) {
+				this.#clearTimer(this.#retryTimer);
+				this.#retryTimer = null;
+			}
+		}
+		#invalidateDocument(documentId) {
+			const id = Number(documentId);
+			if (Number.isInteger(id) && id > 0) {
+				this.#projection.invalidate(`document:${id}`);
+			}
+		}
+		#invalidateDocuments(documentIds) {
+			if (!Array.isArray(documentIds)) {
+				return;
+			}
+			for (const documentId of documentIds) {
+				this.#invalidateDocument(documentId);
+			}
+		}
+		#invalidateAllDocuments() {
+			for (const key of this.#projection.getSubscribedKeys()) {
+				if (key.startsWith('document:')) {
+					this.#projection.invalidate(key);
+				}
+			}
+		}
+		#invalidateFromPullParams(params) {
+			if (params?.requestRefetch === true) {
+				this.#invalidateAllDocuments();
+				return;
+			}
+			this.#invalidateDocument(params?.documentId);
+			this.#invalidateDocuments(params?.documentIds);
+		}
+		#handleDocumentRenamed = event => {
+			this.#invalidateDocument(event.getData()?.id);
+		};
+		#handlePullEvent = event => {
+			const {
+				command,
+				params
+			} = event.getData() ?? {};
+			if (command === 'documentUpdate' || command === 'documentMentionTargetChanged' || command === 'documentAccessCascade') {
+				this.#invalidateFromPullParams(params);
+			}
+		};
+		#handleVisibilityChange = () => {
+			if (!this.#isDocumentHidden() && this.#retryPending) {
+				this.#retryPending = false;
+				this.schedule();
+			}
+		};
+		#isDocumentHidden() {
+			return typeof document !== 'undefined' && document.hidden === true;
+		}
+	}
 	const NoteMentionResolverExtension = Extension.create({
 		name: 'noteMentionResolver',
+		addOptions() {
+			return {
+				currentUserId: 0,
+				labelCache: null
+			};
+		},
+		addStorage() {
+			return createMentionProjectionStorage();
+		},
+		onDestroy() {
+			this.storage.destroy();
+		},
 		addProseMirrorPlugins() {
 			const {
-				editor
+				editor,
+				options
 			} = this;
+			const labelCache = options.labelCache ?? new DocumentMentionLabelCache({
+				userId: options.currentUserId
+			});
 			return [new Plugin({
 				key: MENTION_RESOLVER_KEY,
 				view(view) {
-					// Session-scoped set of "type:id" strings that permanently failed — skip re-requesting.
-					const failed = new Set();
-					let timer = null;
-					let retryTimer = null;
-					let running = false;
-					let dirty = false;
-					let firstScheduleAt = null;
-					const run = async () => {
-						if (running) {
-							dirty = true;
-							return;
-						}
-						running = true;
-						dirty = false;
-						firstScheduleAt = null;
-						try {
-							// Cap per pass: the backend truncates to RESOLVE_BATCH_LIMIT, so anything
-							// beyond it must be resolved by a later pass rather than dropped as failed.
-							const items = collectUnresolvedMentions(view.state.doc, failed).slice(0, RESOLVE_BATCH_LIMIT);
-							if (items.length === 0) {
-								return;
-							}
-							const resolvedMap = await resolveMentionsBatch(items);
-
-							// Transient failure (null) — keep nodes unresolved and retry with backoff;
-							// do NOT mark healthy chips as permanently failed.
-							if (resolvedMap === null) {
-								scheduleRetry();
-								return;
-							}
-
-							// Mark items absent from the successful response as permanently failed.
-							for (const {
-								type,
-								id
-							} of items) {
-								const key = `${type}:${id}`;
-								if (!resolvedMap.has(key)) {
-									failed.add(key);
-								}
-							}
-
-							// Apply resolved/unavailable attrs via tr.setNodeMarkup.
-							const {
-								tr,
-								doc
-							} = view.state;
-							let changed = false;
-							doc.descendants((node, pos) => {
-								if (node.type.name !== 'noteMention') {
-									return;
-								}
-								const {
-									entityType,
-									entityId,
-									available
-								} = node.attrs;
-								if (available !== null) {
-									return; // already resolved
-								}
-								const key = `${entityType}:${entityId}`;
-								const mention = resolvedMap.get(key);
-								let newAttrs;
-								if (mention) {
-									newAttrs = {
-										...node.attrs,
-										label: mention.label ?? null,
-										avatar: mention.avatar ?? null,
-										url: mention.url ?? null,
-										available: Boolean(mention.available),
-										isCurrentUser: Boolean(mention.isCurrentUser),
-										// When backend reports unavailable, mark the node so NodeView shows grey chip.
-										unavailable: !mention.available
-									};
-								} else if (failed.has(key)) {
-									// Permanently failed — mark unavailable without deleting.
-									newAttrs = {
-										...node.attrs,
-										available: false,
-										unavailable: true
-									};
-								} else {
-									return;
-								}
-								tr.setNodeMarkup(pos, undefined, newAttrs);
-								changed = true;
-							});
-							if (changed) {
-								view.dispatch(tr);
-							}
-						} finally {
-							running = false;
-							if (dirty) {
-								schedule();
-							}
-						}
-					};
-					const schedule = () => {
-						if (timer) {
-							clearTimeout(timer);
-						}
-						if (firstScheduleAt === null) {
-							firstScheduleAt = Date.now();
-						}
-						// Cap the debounce reset: under continuous updates run() must still fire at least every RESOLVE_MAX_WAIT_MS,
-						// otherwise chips can stay stuck in skeleton indefinitely.
-						const elapsed = Date.now() - firstScheduleAt;
-						const delay = Math.min(RESOLVE_DEBOUNCE_MS, Math.max(0, RESOLVE_MAX_WAIT_MS - elapsed));
-						timer = setTimeout(run, delay);
-					};
-
-					// One-shot backoff retry after a transient failure; coalesced so a burst
-					// of failures schedules a single pending retry.
-					const scheduleRetry = () => {
-						if (retryTimer) {
-							return;
-						}
-						retryTimer = setTimeout(() => {
-							retryTimer = null;
-							run();
-						}, RESOLVE_RETRY_MS);
-					};
-					schedule();
+					const resolver = new MentionResolver({
+						view,
+						projection: editor.storage.noteMentionResolver,
+						labelCache
+					});
+					resolver.start();
 					return {
-						update(view, prevState) {
-							// Only re-scan when the document actually changed; selection-only
-							// transactions (caret moves) must not trigger a full doc walk.
-							if (view.state.doc !== prevState.doc) {
-								schedule();
-							}
-						},
-						destroy() {
-							if (timer) {
-								clearTimeout(timer);
-							}
-							if (retryTimer) {
-								clearTimeout(retryTimer);
-							}
-						}
+						update: (updatedView, prevState) => resolver.update(updatedView, prevState),
+						destroy: () => resolver.destroy()
 					};
 				}
 			})];
@@ -73857,7 +78608,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						return true; // preventDefault — prevents browser/PM from navigating inside
 					}
 
-					// AC-017: Tab must never move focus out of editable content; always consume in lists.
+					// Tab must never move focus out of editable content; always consume in lists.
 					if (editor.isActive('listItem')) {
 						editor.commands.sinkListItem('listItem');
 						return true;
@@ -73895,7 +78646,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						return true; // preventDefault — prevents browser/PM from navigating inside
 					}
 
-					// AC-017: Shift-Tab must never move focus out of editable content; always consume in lists.
+					// Shift-Tab must never move focus out of editable content; always consume in lists.
 					if (editor.isActive('listItem')) {
 						editor.commands.liftListItem('listItem');
 						return true;
@@ -74000,6 +78751,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			aliases: [],
 			command: null,
 			editorScoped: true,
+			// Name of the feature the entry belongs to, NULL for one that is always there. A consumer that
+			// knows which features are on (the help panel) hides the rest: a shortcut listed for a feature
+			// the portal has switched off would be a promise nothing keeps.
+			feature: null,
 			...record
 		});
 	}
@@ -74174,6 +78929,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 		binding: 'new',
 		command: 'insertFileNode',
 		labelKey: 'NOTE_HOTKEYS_ACTION_ATTACHMENTS'
+	}), entry({
+		id: 'diskAttachment',
+		group: 'insert',
+		combo: 'Mod-Shift-d',
+		binding: 'new',
+		command: 'pickDiskFile',
+		labelKey: 'NOTE_HOTKEYS_ACTION_DISK_ATTACHMENT',
+		feature: 'diskAttachments'
+	}), entry({
+		id: 'date',
+		group: 'insert',
+		combo: 'Mod-;',
+		binding: 'new',
+		command: 'toggleDate',
+		labelKey: 'NOTE_HOTKEYS_ACTION_DATE'
 	}),
 	// Group: history — from the TipTap history package.
 	entry({
@@ -74271,6 +79041,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 				action: 'insertFileNode'
 			});
 			return true;
+		},
+		// The Disk picker is host-owned UI as well: the intent goes to note-editor.js, which opens the very
+		// picker its toolbar button opens. The combo is bound only where the feature is on (see
+		// buildHotkeyShortcuts), so consuming the key here always leads to a picker.
+		pickDiskFile: editor => {
+			editor.emit('note:hotkey', {
+				action: 'pickDiskFile'
+			});
+			return true;
+		},
+		// date node (note-date-node.js): a plain toggle, entirely owned by the extension's own
+		// `toggleDate` command - no host intent needed, unlike the two entries above. The calendar
+		// itself only opens by a click on the node, never by this hotkey.
+		toggleDate: editor => {
+			editor.chain().focus().toggleDate().run();
+			return true;
 		}
 	};
 
@@ -74296,23 +79082,30 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// `editorHotkeys` are the note-added `binding:'new'` editor-scoped entries; `descriptor` is the
 	// full list, used only to pick up the extra aliases on builtin entries. Builtin primary combos are
 	// intentionally NOT rebound here (one keymap per key) — the TipTap packages own them.
+	//
+	// `features` are the features this portal has switched on. An entry tied to one that is off is not
+	// bound at all, by the same rule the help panel lists them: a bound combo is consumed, so binding an
+	// action nothing will perform would take the key away from the browser and give nothing back —
+	// Ctrl+Shift+D would stop bookmarking and start doing nothing.
 	function buildHotkeyShortcuts({
 		editorHotkeys,
-		descriptor
+		descriptor,
+		features = []
 	}) {
+		const isAvailable = entry => entry.feature === null || features.includes(entry.feature);
 		const shortcuts = {};
-		for (const {
-			combo,
-			command
-		} of editorHotkeys) {
-			const handler = resolveHandler(command);
+		for (const entry of editorHotkeys) {
+			if (!isAvailable(entry)) {
+				continue;
+			}
+			const handler = resolveHandler(entry.command);
 			if (handler) {
-				shortcuts[combo] = handler;
+				shortcuts[entry.combo] = handler;
 			}
 		}
 		for (const entry of descriptor) {
 			const run = BUILTIN_ALIAS_COMMANDS[entry.id];
-			if (entry.binding !== 'builtin' || !run || entry.aliases.length === 0) {
+			if (entry.binding !== 'builtin' || !run || entry.aliases.length === 0 || !isAvailable(entry)) {
 				continue;
 			}
 			for (const alias of entry.aliases) {
@@ -74338,10 +79131,18 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// mention contracts, so they don't need to pre-empt them (contrast heading-enter-command.js).
 	const NoteHotkeys = Extension.create({
 		name: 'noteHotkeys',
+		addOptions() {
+			return {
+				// Features the portal has switched on, as the descriptor names them. Combos of a feature that
+				// is off are left unbound — see buildHotkeyShortcuts.
+				features: []
+			};
+		},
 		addKeyboardShortcuts() {
 			return buildHotkeyShortcuts({
 				editorHotkeys: getEditorHotkeys(),
-				descriptor: getHotkeyDescriptor()
+				descriptor: getHotkeyDescriptor(),
+				features: Array.isArray(this.options.features) ? this.options.features : []
 			});
 		}
 	});
@@ -74351,24 +79152,40 @@ ${nextLine.slice(indentLevel + 2)}`;
 		provider = null,
 		user = null,
 		documentId = 0,
-		onMentionClick = null
+		onMentionClick = null,
+		hotkeyFeatures = []
 	} = {}) {
 		// Awareness counts as much as the document: the caret extension binds straight to it, so a provider
 		// that stopped halfway through its connect is not one the collaborative extensions can run on.
 		const hasCollaborationProvider = Boolean(provider?.document && provider?.awareness);
+		const currentUserId = Number(user?.id) || 0;
+		const documentMentionLabelCache = new DocumentMentionLabelCache({
+			userId: currentUserId
+		});
 		const extensions = [...createCoreExtensions({
 			hasCollaborationProvider,
 			documentId
-		}), ...createFormattingExtensions(), ...createMediaExtensions(uploadService), ...createTableExtensions(), createFileHandlerExtension(uploadService), TabIndent, NoteHotkeys, Markdown.configure({
+		}), ...createFormattingExtensions(), ...createMediaExtensions(uploadService, documentId), ...createTableExtensions(), createFileHandlerExtension(uploadService), TabIndent,
+		// A combo whose feature the portal switched off stays with the browser, so the list travels here.
+		NoteHotkeys.configure({
+			features: hotkeyFeatures
+		}), Markdown.configure({
 			marked: sharedMarked,
 			markedOptions: {
 				gfm: true
 			}
-		}), MarkdownEscapeParser, MarkdownPasteExtension, NoteAssetTokenizer, EnrichedAssetTokenizer, FileNodeResolverExtension.configure({
+		}), MarkdownPasteExtension, NoteAssetTokenizer, EnrichedAssetTokenizer, VideoEmbed, VideoEmbedAssetTokenizer, FileNodeResolverExtension.configure({
 			getDocumentId: () => Number(documentId) || 0
 		}), NoteMentionNode.configure({
-			onMentionClick: typeof onMentionClick === 'function' ? onMentionClick : null
-		}), NoteMentionResolverExtension,
+			onMentionClick: typeof onMentionClick === 'function' ? onMentionClick : null,
+			labelCache: documentMentionLabelCache
+		}), NoteMentionResolverExtension.configure({
+			currentUserId,
+			labelCache: documentMentionLabelCache
+		}),
+		// Registered unconditionally: the collaborative schema is built with no arguments at all, so a
+		// node behind a flag would leave the two schemas disagreeing about the document.
+		NoteDateNode,
 		// Read-only version-preview diff mark; inert everywhere else (never applied on the live editor).
 		DiffChangeMark];
 		if (hasCollaborationProvider) {
@@ -74548,7 +79365,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 						return DecorationSet.empty;
 					}
 					return DecorationSet.create(transaction.doc, [Decoration.inline(from, to, {
-						class: 'note-editor-link-selection-retained'
+						class: 'note-editor-link-selection-retained',
+						'data-testid': 'note-editor-link-selection-retained'
 					})]);
 				}
 			},
@@ -75434,102 +80252,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 
-	// `/note` prefix is optional: the SPA is mounted on base `/note/`, so `/document/{id}/` and
-	// `/note/document/{id}/` denote the same internal document link (user-typed short form must not reload).
-	const DOCUMENT_PATH_PATTERN = /^(?:\/note)?\/document\/(\d+)\/?$/;
-	// Real collection route is `/workspace/{id}/` (app/src/router/routes.js); `/collection/{id}/` is a
-	// dead route that never existed but is already saved in some documents, so it's kept as a legacy alias.
-	const COLLECTION_PATH_PATTERN = /^(?:\/note)?\/(?:workspace|collection)\/(\d+)\/?$/;
-	function resolveCurrentOrigin() {
-		if (typeof window === 'undefined' || !window.location) {
-			return null;
-		}
-		const origin = window.location.origin;
-		return typeof origin === 'string' && origin !== '' ? origin : null;
-	}
-	function extractPathname(href, currentOrigin) {
-		if (href.startsWith('//')) {
-			return null;
-		}
-		if (href.startsWith('/')) {
-			return href.split(/[?#]/)[0];
-		}
-		if (!/^https?:\/\//i.test(href)) {
-			return null;
-		}
-		if (!currentOrigin) {
-			return null;
-		}
-		try {
-			const parsed = new URL(href);
-			if (parsed.origin !== currentOrigin) {
-				return null;
-			}
-			return parsed.pathname;
-		} catch {
-			return null;
-		}
-	}
-	function extractHash(href) {
-		const index = href.indexOf('#');
-		if (index === -1) {
-			return '';
-		}
-		return href.slice(index + 1).trim();
-	}
-	function parseInternalNoteLink(href, origin) {
-		if (typeof href !== 'string' || href === '') {
-			return null;
-		}
-
-		// Pure in-document anchor: "#slug".
-		if (href.startsWith('#')) {
-			const hash = href.slice(1).trim();
-			return hash === '' ? null : {
-				type: 'anchor',
-				hash
-			};
-		}
-		const currentOrigin = resolveCurrentOrigin() ;
-		const pathname = extractPathname(href, currentOrigin);
-		if (pathname === null) {
-			return null;
-		}
-		const documentMatch = DOCUMENT_PATH_PATTERN.exec(pathname);
-		if (documentMatch) {
-			const id = Number(documentMatch[1]);
-			if (!Number.isInteger(id) || id <= 0) {
-				return null;
-			}
-			const hash = extractHash(href);
-			return hash === '' ? {
-				type: 'document',
-				id
-			} : {
-				type: 'document',
-				id,
-				hash
-			};
-		}
-		const collectionMatch = COLLECTION_PATH_PATTERN.exec(pathname);
-		if (collectionMatch) {
-			const id = Number(collectionMatch[1]);
-			if (!Number.isInteger(id) || id <= 0) {
-				return null;
-			}
-			const hash = extractHash(href);
-			return hash === '' ? {
-				type: 'collection',
-				id
-			} : {
-				type: 'collection',
-				id,
-				hash
-			};
-		}
-		return null;
-	}
-
 	function createUploadToken() {
 		return `upload-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 	}
@@ -75613,6 +80335,41 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 		chain.run();
 	}
+
+	/**
+	 * Inserts attachment nodes for files picked on Disk, at the caret or over the current selection.
+	 *
+	 * Unlike an upload there is no pending tile and no progress: the file already exists, so the final
+	 * node goes in straight away. Its name, size and links stay empty here and arrive from the batch
+	 * resolve — the same path that fills them on document open, so a freshly picked file and a reopened
+	 * one go through identical code.
+	 */
+	function insertDiskAssetNodes(editor, pickedFiles) {
+		if (!editor || !Array.isArray(pickedFiles) || pickedFiles.length === 0) {
+			return;
+		}
+		const content = pickedFiles.map(file => {
+			const nodeType = ASSET_TYPE_TO_NODE$1[file?.assetType];
+			const diskObjectId = toPositiveInt(file?.diskObjectId);
+			return nodeType && diskObjectId !== null ? {
+				type: nodeType,
+				attrs: {
+					diskObjectId
+				}
+			} : null;
+		}).filter(Boolean);
+		if (content.length === 0) {
+			return;
+		}
+		const from = Number(editor.state.selection?.from);
+		const to = Number(editor.state.selection?.to);
+		const hasSelection = Number.isInteger(from) && Number.isInteger(to);
+		const range = hasSelection ? {
+			from,
+			to
+		} : editor.state.doc.content.size;
+		editor.chain().focus().insertContentAt(range, content).run();
+	}
 	function createScopedUploadService(uploadAdapter, collectionId, documentId) {
 		const scopedCollectionId = normalizeCollectionId(collectionId);
 		const scopedDocumentId = normalizeDocumentId(documentId);
@@ -75641,6 +80398,369 @@ ${nextLine.slice(indentLevel + 2)}`;
 		};
 	}
 
+	function extractErrorMessage(error, fallback) {
+		if (main_core.Type.isStringFilled(error)) {
+			return error;
+		}
+		if (main_core.Type.isPlainObject(error)) {
+			const firstError = error?.errors?.[0]?.message;
+			if (main_core.Type.isStringFilled(firstError)) {
+				return firstError;
+			}
+			if (main_core.Type.isStringFilled(error.message)) {
+				return error.message;
+			}
+		}
+		return fallback;
+	}
+
+	// Disk classifies a file into one of these; anything not visual becomes a plain file block. The
+	// block a document shows is decided by the KIND of file, never by where it came from — an image
+	// from Disk is the same image block as an uploaded one.
+	const DISK_FILE_TYPE_TO_ASSET_TYPE = {
+		image: 'image',
+		video: 'video'
+	};
+
+	/**
+	 * A failure of this service itself: there was no document to pick for, or the picker could not be
+	 * put on screen at all. The message is diagnostics for a developer — unlike a refusal from our own
+	 * controller, nobody wrote it for a user to read, so a caller that reports the failure must use a
+	 * localized text of its own and never this one.
+	 */
+	class DiskPickerServiceError extends Error {
+		constructor(message) {
+			super(message);
+			this.name = 'DiskPickerServiceError';
+		}
+	}
+
+	/**
+	 * Whose text the user sees when picking a file from Disk failed. A refusal from our own server
+	 * (feature switched off between render and click, lost rights) comes with the message it wrote for
+	 * the user; our own failure has none, and gets the localized fallback the caller passes in. A
+	 * request that never reached the server carries its English 'Network error' in the very same place,
+	 * so it is filtered out here before it can be mistaken for a message written for a user to read.
+	 */
+	function resolveDiskPickerErrorMessage(error, fallback) {
+		if (error instanceof DiskPickerServiceError) {
+			return fallback;
+		}
+		const firstError = main_core.Type.isPlainObject(error) && main_core.Type.isArrayFilled(error.errors) ? error.errors[0] : null;
+		const isTransportFailure = main_core.Type.isPlainObject(firstError) && firstError.code === 'NETWORK_ERROR';
+		return isTransportFailure ? fallback : extractErrorMessage(error, fallback);
+	}
+
+	/**
+	 * Opens Disk's file picker and turns the choice into attachment nodes.
+	 *
+	 * The picker is loaded on demand rather than declared as a dependency of the editor bundle: it only
+	 * exists on portals that have Disk with the universal picker switched on, and everybody else should
+	 * not pay for its stack. The entry point that calls this is already gated on the same server flag.
+	 *
+	 * Nothing about the picker is reimplemented here — no menu, no texts, no error messages. Its errors
+	 * are its own to show, so an error callback here stays silent by design. A refusal from our own
+	 * controller is the opposite case: the picker is not open yet and nobody else is going to report it,
+	 * so it travels to the caller untouched, carrying the message the server wrote for the user.
+	 */
+	class DiskPickerService {
+		/**
+		 * @throws the server's own rejection when it refuses to issue a config (feature off, document
+		 *   gone, no edit right) — its message is meant to be shown to the user as it came.
+		 * @throws DiskPickerServiceError when the refusal is ours and has no such message.
+		 */
+		static async fetchSignedConfig(documentId) {
+			const id = toPositiveInt(documentId);
+			if (id === null) {
+				throw new DiskPickerServiceError('Document context is required');
+			}
+			const response = await main_core.ajax.runAction('note.infrastructure.FileController.getDiskPickerConfig', {
+				data: {
+					documentId: id
+				}
+			});
+			const signedConfig = response?.data?.signedConfig;
+			if (!main_core.Type.isPlainObject(signedConfig)) {
+				throw new DiskPickerServiceError('Disk picker config is unavailable');
+			}
+			return signedConfig;
+		}
+
+		/**
+		 * Resolves with the picked files, or with an empty array when the user cancelled or the picker
+		 * failed to open. Cancelling must leave the document exactly as it was.
+		 *
+		 * What comes back is already attached to the document — see #attachPicked. The caller cannot be
+		 * left to remember that: it is what decides whether the other readers of the document can open the
+		 * file at all, and the block is inserted right after.
+		 */
+		static async pick(documentId) {
+			const picked = await this.#openPicker(documentId);
+			await this.#attachPicked(documentId, picked);
+			return picked;
+		}
+		static async #openPicker(documentId) {
+			const signedConfig = await this.fetchSignedConfig(documentId);
+			const {
+				DiskPicker
+			} = await main_core.Runtime.loadExtension('disk.disk-picker');
+			if (!DiskPicker) {
+				throw new DiskPickerServiceError('Disk picker extension is unavailable');
+			}
+			return new Promise(resolve => {
+				let picked = [];
+				let detachTheme = null;
+				new DiskPicker().open({
+					signedConfig,
+					onOpen: ({
+						container
+					}) => {
+						detachTheme = note_ui_themeContext.NoteThemeContext.themeForeignContainer(container);
+					},
+					onSelect: result => {
+						picked = (result?.items ?? []).map(item => this.#toPickedFile(item)).filter(Boolean);
+					},
+					// onClose fires for every outcome the picker actually opened for — selection and cancel —
+					// so the theme subscription is dropped in exactly one place and repeated opens cannot
+					// pile them up.
+					onClose: () => {
+						detachTheme?.();
+						detachTheme = null;
+						resolve(picked);
+					},
+					// A picker that never opened (its bootstrap failed, or a session is already running)
+					// reports the failure here and never reaches onClose. Without this the promise would
+					// hang forever and every click would leave another one pending. The picker has already
+					// told the user what happened; we only make sure the document stays as it was.
+					onError: () => {
+						detachTheme?.();
+						detachTheme = null;
+						resolve([]);
+					}
+				});
+			});
+		}
+
+		/**
+		 * Attaches the picked files to the document at once, without waiting for their tokens to reach the
+		 * stored text.
+		 *
+		 * The attachment is what routes the permission question to the document: until it exists, Disk asks
+		 * whether the reader may read somebody else's file and answers no, so every reader but the person
+		 * who picked it sees the block as unavailable. Doing it here also means it is done on the rights of
+		 * that person, at the one moment we know it is them asking.
+		 *
+		 * Done before the nodes are inserted, and awaited: the batch resolve is triggered by a block
+		 * appearing, and its answer is remembered per object — resolved a moment too early, the block would
+		 * keep the url that only its picker can open until something dropped that cache.
+		 *
+		 * A failure is silent and changes nothing for the user: the file still goes into the text, and the
+		 * server brings the attachment in line with the text on the next materialization. All that is lost
+		 * is the speed at which the other readers get access.
+		 */
+		static async #attachPicked(documentId, picked) {
+			const id = toPositiveInt(documentId);
+			const objectIds = [...new Set(picked.map(file => file.diskObjectId))];
+			if (id === null || objectIds.length === 0) {
+				return;
+			}
+			try {
+				await main_core.ajax.runAction('note.infrastructure.FileController.attachDiskObjects', {
+					data: {
+						documentId: id,
+						objectIds
+					}
+				});
+			} catch {
+				// See above: the projection sync on the server is the fallback, there is nothing to say here.
+			}
+		}
+		static #toPickedFile(item) {
+			const diskObjectId = toPositiveInt(item?.objectId);
+			if (diskObjectId === null) {
+				return null;
+			}
+			return {
+				diskObjectId,
+				assetType: DISK_FILE_TYPE_TO_ASSET_TYPE[item?.fileType] ?? 'file'
+			};
+		}
+	}
+
+	const FALLBACK_DELAY_MS = 100;
+	const VISIBLE_CLASS = 'is-visible';
+
+	function parseTime(value)
+	{
+		const normalizedValue = value.trim();
+		const numericValue = Number.parseFloat(normalizedValue);
+		if (!Number.isFinite(numericValue))
+		{
+			return 0;
+		}
+
+		return normalizedValue.endsWith('ms') ? numericValue : numericValue * 1000;
+	}
+
+	function splitTransitionList(value)
+	{
+		return value.split(',').map((item) => item.trim());
+	}
+
+	function resolveTransitionTime(element, propertyName)
+	{
+		const computedStyle = window.getComputedStyle(element);
+		const properties = splitTransitionList(computedStyle.transitionProperty);
+		const durations = splitTransitionList(computedStyle.transitionDuration);
+		const delays = splitTransitionList(computedStyle.transitionDelay);
+
+		return properties.reduce((transitionTime, transitionProperty, index) => {
+			if (transitionProperty !== propertyName && transitionProperty !== 'all')
+			{
+				return transitionTime;
+			}
+
+			const duration = parseTime(durations[index % durations.length] ?? '0s');
+			if (duration <= 0)
+			{
+				return transitionTime;
+			}
+
+			const delay = parseTime(delays[index % delays.length] ?? '0s');
+
+			return Math.max(transitionTime, Math.max(0, duration + delay));
+		}, 0);
+	}
+
+	function hasActiveTransition(element, propertyName)
+	{
+		if (!main_core.Type.isFunction(element.getAnimations))
+		{
+			return false;
+		}
+
+		return element.getAnimations().some((animation) => {
+			return animation?.constructor?.name === 'CSSTransition'
+				&& animation.transitionProperty === propertyName
+				&& animation.playState !== 'finished'
+				&& animation.playState !== 'idle';
+		});
+	}
+
+	function waitForToolbarLayoutTransition(
+		element,
+		{ visible, propertyName = 'height', onComplete },
+	)
+	{
+		let cancelled = false;
+		let completed = false;
+		let fallbackTimer = 0;
+		let validationRaf = 0;
+
+		function clear()
+		{
+			if (fallbackTimer)
+			{
+				clearTimeout(fallbackTimer);
+				fallbackTimer = 0;
+			}
+
+			if (validationRaf)
+			{
+				cancelAnimationFrame(validationRaf);
+				validationRaf = 0;
+			}
+
+			if (element)
+			{
+				main_core.Event.unbind(element, 'transitionend', handleTransitionEvent);
+				main_core.Event.unbind(element, 'transitioncancel', handleTransitionEvent);
+			}
+		}
+
+		function complete()
+		{
+			if (cancelled || completed)
+			{
+				return;
+			}
+
+			completed = true;
+			clear();
+			onComplete();
+		}
+
+		function matchesTargetState()
+		{
+			return !element || main_core.Dom.hasClass(element, VISIBLE_CLASS) === visible;
+		}
+
+		function validateCompletion(ignoreActiveTransition)
+		{
+			if (validationRaf)
+			{
+				cancelAnimationFrame(validationRaf);
+			}
+
+			validationRaf = requestAnimationFrame(() => {
+				validationRaf = 0;
+				if (!matchesTargetState())
+				{
+					return;
+				}
+
+				if (!ignoreActiveTransition && element && hasActiveTransition(element, propertyName))
+				{
+					return;
+				}
+
+				complete();
+			});
+		}
+
+		function handleTransitionEvent(event)
+		{
+			if (event.target !== element || event.propertyName !== propertyName)
+			{
+				return;
+			}
+
+			validateCompletion(false);
+		}
+
+		if (element)
+		{
+			const transitionTime = resolveTransitionTime(element, propertyName);
+			if (transitionTime <= 0)
+			{
+				validateCompletion(true);
+			}
+			else
+			{
+				main_core.Event.bind(element, 'transitionend', handleTransitionEvent);
+				main_core.Event.bind(element, 'transitioncancel', handleTransitionEvent);
+				fallbackTimer = setTimeout(() => {
+					fallbackTimer = 0;
+					validateCompletion(true);
+				}, transitionTime + FALLBACK_DELAY_MS);
+			}
+		}
+		else
+		{
+			validateCompletion(true);
+		}
+
+		return () => {
+			if (cancelled || completed)
+			{
+				return;
+			}
+
+			cancelled = true;
+			clear();
+		};
+	}
+
 	const DEFAULT_CONTENT = {
 		type: 'doc',
 		content: [{
@@ -75652,6 +80772,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		components: {
 			EditorToolbarComponent,
 			TableContextMenuComponent,
+			TableAlignmentControls,
 			LinkFloatingPopupComponent,
 			ActivityLineComponent: note_ui_documentHistory.ActivityLineComponent,
 			Loader: note_ui_loader.Loader
@@ -75737,7 +80858,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: Function,
 				default: null
 			},
-			// [P1.T5 relocation, #2] Activity line hub (chip / eye / bell), rendered right under the
+			openInternalLink: {
+				type: Function,
+				default: null
+			},
+			// Activity line hub (chip / eye / bell), rendered right under the
 			// <h1> title — that DOM lives in this component, not in note-document-page.js.
 			// ActivityLineComponent now lives in the note.ui.document-history extension and owns its
 			// own lang (see historyMessages below). `lastChange` is `{ authors, time } | null`,
@@ -75748,19 +80873,27 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: Object,
 				default: null
 			},
-			// [P8.T5] ISO creation timestamp — passed through to ActivityLineComponent for the chip's
+			// ISO creation timestamp - passed through to ActivityLineComponent for the chip's
 			// "Created <date>" fallback when there is no last-change info.
 			createdAt: {
 				type: String,
 				default: null
 			},
-			// [P8.T2/T3] Bootstrap UI flags. historyEnabled gates the chip's history-open affordance;
+			// Bootstrap UI flags. historyEnabled gates the chip's history-open affordance;
 			// notificationsEnabled gates the subscription bell. Both default off (hidden).
 			historyEnabled: {
 				type: Boolean,
 				default: false
 			},
 			notificationsEnabled: {
+				type: Boolean,
+				default: false
+			},
+			// Decides whether the file button offers a choice of sources at all. Off — the button uploads
+			// from the device exactly as it always has. A prop and not an inject: this component is the
+			// root of its own Vue app (see EditorMount), and note.app's provide() does not cross that
+			// boundary — the flag travels the same way historyEnabled/notificationsEnabled do.
+			diskAttachmentsEnabled: {
 				type: Boolean,
 				default: false
 			},
@@ -75771,7 +80904,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: Object,
 				default: null
 			},
-			// [DTO-01] Backlinks counter bundled with the document bootstrap payload — passed through to
+			// Backlinks counter bundled with the document bootstrap payload - passed through to
 			// ActivityLineComponent/BacklinksWidgetComponent, which adopts it instead of reading the count
 			// itself (see note.editor's type.js). `null` = nothing reported, the widget asks on its own.
 			initialBacklinks: {
@@ -75784,7 +80917,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: Object,
 				default: null
 			},
-			// [TPL-01] "In favorites" flag bundled with the document bootstrap - passed through to
+			// "In favorites" flag bundled with the document bootstrap - passed through to
 			// ActivityLineComponent/FavoriteStarComponent so the star is right on the first frame of a
 			// document opened by a direct link. `null` = nothing reported, the star reads the sidebar only.
 			initialFavorite: {
@@ -75814,6 +80947,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				// force-reflows on every toggle).
 				toolbarInDom: this.showToolbar,
 				toolbarShown: this.showToolbar,
+				toolbarLayoutStable: true,
+				toolbarLayoutCycle: 0,
 				// [#11/#12 rework] Version-preview state — driven imperatively by EditorMount's
 				// setPreview()/clearPreview() (see create-document-feature.js's showVersionPreview/
 				// hideVersionPreview), not by props: this instance is mounted once via
@@ -75834,6 +80969,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 		computed: {
 			isPreviewMode() {
 				return this.previewActive;
+			},
+			// Optional features whose hotkeys the keymap may bind at all (see buildHotkeyShortcuts). Named the
+			// same way the shortcuts panel names them, from the same flag.
+			enabledHotkeyFeatures() {
+				return this.diskAttachmentsEnabled ? ['diskAttachments'] : [];
 			},
 			displayTitle() {
 				if (this.internalTitle) {
@@ -75912,7 +81052,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		created() {
 			// Non-reactive handles for the toolbar enter/leave animation.
 			this.toolbarEnterRaf = 0;
-			this.toolbarLeaveTimer = 0;
+			this.cancelToolbarLayoutWait = null;
 		},
 		mounted() {
 			this.createEditor();
@@ -75924,6 +81064,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.toolbarTracker.start();
 		},
 		beforeUnmount() {
+			this.toolbarLayoutCycle += 1;
 			this.clearToolbarAnim();
 			this.toolbarTracker?.stop();
 			this.editor?.off?.('note:hotkey', this.handleEditorHotkeyIntent);
@@ -75931,6 +81072,28 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.editor = null;
 		},
 		methods: {
+			async activateInternalLink(anchor, payload, origin) {
+				const isAnotherDocument = payload.type === 'document' && Number(payload.id) !== Number(this.documentId);
+				if (isAnotherDocument && main_core.Dom.hasClass(anchor, 'note-editor-link--pending')) {
+					return;
+				}
+				if (isAnotherDocument) {
+					main_core.Dom.addClass(anchor, 'note-editor-link--pending');
+				}
+				try {
+					const nextPayload = {
+						...payload,
+						origin
+					};
+					if (main_core.Type.isFunction(this.openInternalLink)) {
+						await this.openInternalLink(nextPayload);
+					} else {
+						this.$emit('open-internal-link', nextPayload);
+					}
+				} finally {
+					main_core.Dom.removeClass(anchor, 'note-editor-link--pending');
+				}
+			},
 			handleEditorAnchorClick(event) {
 				if (event.defaultPrevented) {
 					return false;
@@ -75946,7 +81109,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				const parsed = parseInternalNoteLink(anchor.getAttribute('href'));
 				if (parsed) {
 					event.preventDefault();
-					this.$emit('open-internal-link', parsed);
+					void this.activateInternalLink(anchor, parsed, event.detail === 0 ? 'keyboard' : 'pointer');
 					return true;
 				}
 
@@ -75959,6 +81122,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 					return true;
 				}
 				return false;
+			},
+			handleEditorAnchorKeydown(event) {
+				if (event.defaultPrevented || this.editor?.isEditable || event.key !== 'Enter' && event.key !== ' ') {
+					return false;
+				}
+				const target = event.target instanceof Element ? event.target : null;
+				const anchor = target?.closest('a[href]');
+				if (!(anchor instanceof HTMLAnchorElement)) {
+					return false;
+				}
+				const parsed = parseInternalNoteLink(anchor.getAttribute('href'));
+				if (!parsed) {
+					return false;
+				}
+				event.preventDefault();
+				void this.activateInternalLink(anchor, parsed, 'keyboard');
+				return true;
 			},
 			updateTitle(newTitle) {
 				this.internalTitle = newTitle;
@@ -76064,6 +81244,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			animateToolbar(show) {
 				this.clearToolbarAnim();
+				const cycle = this.toolbarLayoutCycle + 1;
+				this.toolbarLayoutCycle = cycle;
+				this.toolbarLayoutStable = false;
 				if (show) {
 					// Mount at the "from" state (no .is-visible), let the browser paint it, then
 					// flip to visible so the transition has a committed start value. Double rAF
@@ -76072,29 +81255,67 @@ ${nextLine.slice(indentLevel + 2)}`;
 					// read that was causing the jank.
 					this.toolbarInDom = true;
 					this.$nextTick(() => {
+						if (cycle !== this.toolbarLayoutCycle) {
+							return;
+						}
 						this.toolbarEnterRaf = requestAnimationFrame(() => {
+							if (cycle !== this.toolbarLayoutCycle) {
+								return;
+							}
 							this.toolbarEnterRaf = requestAnimationFrame(() => {
+								this.toolbarEnterRaf = 0;
+								if (cycle !== this.toolbarLayoutCycle) {
+									return;
+								}
 								this.toolbarShown = true;
+								this.$nextTick(() => this.startToolbarLayoutWait(cycle, show));
 							});
 						});
 					});
 				} else {
-					// Play the leave transition, then unmount once it has finished (see
-					// --note-editor-toolbar-anim duration mirrored in editor.css).
 					this.toolbarShown = false;
-					this.toolbarLeaveTimer = setTimeout(() => {
-						this.toolbarInDom = false;
-					}, 200);
+					this.$nextTick(() => this.startToolbarLayoutWait(cycle, show));
 				}
+			},
+			startToolbarLayoutWait(cycle, show) {
+				if (cycle !== this.toolbarLayoutCycle || this.toolbarShown !== show) {
+					return;
+				}
+				const placeholder = this.$refs.toolbarPlaceholder instanceof HTMLElement ? this.$refs.toolbarPlaceholder : null;
+				const toolbar = !placeholder && !show && this.$refs.toolbar?.$el instanceof HTMLElement ? this.$refs.toolbar.$el : null;
+				const transitionElement = placeholder ?? toolbar;
+				this.cancelToolbarLayoutWait = waitForToolbarLayoutTransition(transitionElement, {
+					visible: show,
+					propertyName: placeholder ? 'height' : 'opacity',
+					onComplete: () => {
+						this.cancelToolbarLayoutWait = null;
+						this.finishToolbarLayoutChange(cycle, show);
+					}
+				});
+			},
+			finishToolbarLayoutChange(cycle, show) {
+				if (cycle !== this.toolbarLayoutCycle || this.toolbarShown !== show) {
+					return;
+				}
+				if (show) {
+					this.toolbarLayoutStable = true;
+					return;
+				}
+				this.toolbarInDom = false;
+				this.$nextTick(() => {
+					if (cycle === this.toolbarLayoutCycle && this.toolbarShown === show) {
+						this.toolbarLayoutStable = true;
+					}
+				});
 			},
 			clearToolbarAnim() {
 				if (this.toolbarEnterRaf) {
 					cancelAnimationFrame(this.toolbarEnterRaf);
 					this.toolbarEnterRaf = 0;
 				}
-				if (this.toolbarLeaveTimer) {
-					clearTimeout(this.toolbarLeaveTimer);
-					this.toolbarLeaveTimer = 0;
+				if (this.cancelToolbarLayoutWait) {
+					this.cancelToolbarLayoutWait();
+					this.cancelToolbarLayoutWait = null;
 				}
 			},
 			onTitleFocus() {
@@ -76153,7 +81374,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 					provider: this.provider,
 					user: this.normalizedCurrentUser,
 					documentId: this.documentId,
-					onMentionClick: typeof this.onMentionClick === 'function' ? this.onMentionClick : null
+					onMentionClick: typeof this.onMentionClick === 'function' ? this.onMentionClick : null,
+					hotkeyFeatures: this.enabledHotkeyFeatures
 				}), ...extraExtensions];
 				const resolvedContent = content ?? (this.provider ? undefined : this.resolveInitialContent());
 				const isMarkdownContent = main_core.Type.isString(resolvedContent);
@@ -76170,7 +81392,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 							'aria-label': 'Document editor'
 						},
 						handleDOMEvents: {
-							click: (_view, event) => this.handleEditorAnchorClick(event)
+							click: (_view, event) => this.handleEditorAnchorClick(event),
+							keydown: (_view, event) => this.handleEditorAnchorKeydown(event)
 						}
 					},
 					content: isMarkdownContent ? undefined : resolvedContent,
@@ -76271,15 +81494,62 @@ ${nextLine.slice(indentLevel + 2)}`;
 				if (!this.editor?.isEditable) {
 					return;
 				}
+				this.insertUploadFileNode();
+			},
+			// The Disk source has a button of its own next to the file one, so the click goes straight to the
+			// picker: nothing to choose between beforehand.
+			handlePickDiskFile() {
+				void this.pickFileFromDisk();
+			},
+			// Unlike the hotkey toggle (hotkeys-bindings.js), the menu item always opens the calendar:
+			// the author came by mouse to pick a value, not just to drop today's date. `insertDate`
+			// (note-date-node.js) leaves a NodeSelection on the new node, which the picker owner reads.
+			handleInsertDate() {
+				if (!this.editor?.isEditable) {
+					return;
+				}
+				this.editor.chain().focus().insertDate().run();
+				this.editor.commands.openDatePicker();
+			},
+			insertUploadFileNode() {
 				insertUploadAssetNode(this.editor, 'file', {
 					documentId: this.documentId,
 					collectionId: this.collectionId
 				});
 			},
-			// Attachments hotkey (see hotkeys-bindings.js `insertFileNode`): drop a file tile at the caret
-			// and select it, so a click browses-and-uploads while an arrow key / click-away just moves on.
+			async pickFileFromDisk() {
+				if (!this.editor?.isEditable) {
+					return;
+				}
+
+				// Errors of the picker are shown by the picker, and cancelling is not an error at all. What
+				// reaches this catch is the failure to even get that far, and the document stays untouched.
+				let pickedFiles = [];
+				try {
+					pickedFiles = await DiskPickerService.pick(this.documentId);
+				} catch (error) {
+					const fallback = main_core.Loc.getMessage('NOTE_EDITOR_DISK_PICKER_ERROR');
+					showErrorToast(resolveDiskPickerErrorMessage(error, fallback));
+					return;
+				}
+				insertDiskAssetNodes(this.editor, pickedFiles);
+			},
+			// Attachment hotkeys (see hotkeys-bindings.js). `insertFileNode` drops a file tile at the caret
+			// and selects it, so a click browses-and-uploads while an arrow key / click-away just moves on;
+			// `pickDiskFile` opens the Disk picker, exactly as its toolbar button does.
 			handleEditorHotkeyIntent(payload) {
-				if (payload?.action !== 'insertFileNode' || !this.editor?.isEditable) {
+				if (!this.editor?.isEditable) {
+					return;
+				}
+				if (payload?.action === 'pickDiskFile') {
+					// The combo is not even bound where the feature is off (see buildHotkeyShortcuts), so this
+					// is the second line of the same defence: the intent bus is open to any caller.
+					if (this.diskAttachmentsEnabled) {
+						void this.pickFileFromDisk();
+					}
+					return;
+				}
+				if (payload?.action !== 'insertFileNode') {
 					return;
 				}
 				insertUploadAssetNode(this.editor, 'file', {
@@ -76313,6 +81583,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			<div ref="toolbarAnchor"></div>
 			<EditorToolbarComponent
 				v-if="toolbarInDom && !isPreviewMode"
+				ref="toolbar"
 				:class="{ 'is-visible': toolbarShown }"
 				:editor="editor"
 				:heading-level="headingLevel"
@@ -76320,16 +81591,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 				:can-undo="canUndo"
 				:can-redo="canRedo"
 				:max-image-size="${MAX_IMAGE_SIZE}"
-				:max-file-size="${MAX_FILE_SIZE$1}"
 				:fixed="toolbarFixed"
 				:fixed-top="toolbarTop"
 				:fixed-left="toolbarLeft"
 				:fixed-max-width="toolbarMaxWidth"
+				:disk-attachments-enabled="diskAttachmentsEnabled"
 				@insertFileStub="handleInsertFileStub"
 				@insertImageStub="handleInsertImageStub"
 				@insertVideoStub="handleInsertVideoStub"
+				@pickDiskFile="handlePickDiskFile"
+				@insertDate="handleInsertDate"
 			/>
-			<div v-if="toolbarInDom && toolbarFixed && !isPreviewMode" class="note-editor-toolbar-placeholder" :class="{ 'is-visible': toolbarShown }"></div>
+			<div
+				v-if="toolbarInDom && toolbarFixed && !isPreviewMode"
+				ref="toolbarPlaceholder"
+				class="note-editor-toolbar-placeholder"
+				:class="{ 'is-visible': toolbarShown }"
+			></div>
 			<div v-if="!contentOnly && (displayTitle || effectiveEditable)" class="note-editor-title-block">
 				<h1
 					ref="titleEl"
@@ -76385,6 +81663,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				<div ref="content" class="note-editor-content"></div>
 			</div>
 			<TableContextMenuComponent :editor="editor" :editor-tick="editorTick" />
+			<TableAlignmentControls
+				v-if="!isPreviewMode"
+				:editor="editor"
+				:editor-tick="editorTick"
+				:layout-stable="toolbarLayoutStable"
+			/>
 			<LinkFloatingPopupComponent :editor="editor" :editor-tick="editorTick" />
 		</div>
 	`
@@ -76507,7 +81791,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// to ViewsWidgetComponent so it can skip its own getViews call on mount (see type.js's
 			// DocumentViewsSnapshot).
 			initialViews: null,
-			// [DTO-01] Backlinks counter bundled with the document bootstrap — handed down to
+			// Backlinks counter bundled with the document bootstrap - handed down to
 			// BacklinksWidgetComponent so it can skip its own count request on mount (see type.js's
 			// DocumentBacklinksSnapshot).
 			initialBacklinks: null,
@@ -76515,13 +81799,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// document bootstrap, handed down to ActivityLineComponent's chip (see type.js's
 			// DocumentLastChange).
 			lastChange: null,
-			// [P8.T5] ISO-8601 creation timestamp from the bootstrap payload — the activity-line chip
+			// ISO-8601 creation timestamp from the bootstrap payload - the activity-line chip
 			// falls back to "Created <date>" when there is no last-change info to show.
 			createdAt: null,
 			// Bell state bundled with the document bootstrap, handed down to SubscriptionBellComponent
 			// so it skips its own getState request on mount.
 			initialSubscription: null,
-			// [TPL-01] "In favorites" flag bundled with the document bootstrap, handed down to the
+			// "In favorites" flag bundled with the document bootstrap, handed down to the
 			// activity-line star. `null` means the bootstrap reported nothing, so the star keeps reading
 			// the sidebar store alone.
 			initialFavorite: null
@@ -76535,22 +81819,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 			cachedSchema = getSchema(extensions);
 		}
 		return cachedSchema;
-	}
-
-	function extractErrorMessage(error, fallback) {
-		if (main_core.Type.isStringFilled(error)) {
-			return error;
-		}
-		if (main_core.Type.isPlainObject(error)) {
-			const firstError = error?.errors?.[0]?.message;
-			if (main_core.Type.isStringFilled(firstError)) {
-				return firstError;
-			}
-			if (main_core.Type.isStringFilled(error.message)) {
-				return error.message;
-			}
-		}
-		return fallback;
 	}
 
 	// CRC-32/ISO-HDLC over the UTF-8 bytes of the text, as an unsigned decimal string - the very value
@@ -78538,10 +83806,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.#awarenessManager.destroy();
 				this.#awarenessManager = null;
 			}
-			if (this.awareness) {
-				this.awareness.destroy();
-				this.awareness = null;
-			}
+
+			// Destroyed but still reachable, unlike the Y.Doc below. The editor outlives the provider on
+			// this path - the final markdown above is captured from a live one - and the plugin views torn
+			// down after us read `provider.awareness` to unhook their own listeners. CollaborationCaret has
+			// done exactly that since 3.30.5; nulling the field made that read throw, ProseMirror stopped
+			// walking the plugin views, and every view after the caret kept its listeners for good.
+			this.awareness?.destroy();
 			if (this.document) {
 				this.document.destroy();
 				this.document = null;
@@ -78869,10 +84140,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.#awarenessManager.destroy();
 				this.#awarenessManager = null;
 			}
-			if (this.awareness) {
-				this.awareness.destroy();
-				this.awareness = null;
-			}
+
+			// Destroyed but still reachable, for the same reason as in destroy(): a plugin view torn down
+			// while this runs reads `provider.awareness` to unhook its own listeners. Here the field would
+			// stay null for a whole round trip to the server - connect() awaits loadForCollaboration right
+			// after this call.
+			this.awareness?.destroy();
 			if (this.document) {
 				this.document.destroy();
 				this.document = null;
@@ -79820,6 +85093,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 	}
 
 	const MENTION_NODE_TYPE = 'noteMention';
+	const DATE_NODE_TYPE = 'noteDate';
+	const MENTION_EXPORT_CONCURRENCY = 3;
 	const ASSET_NODE_TYPES = new Set(['imageAttachment', 'fileAttachment', 'video']);
 
 	// Maps the ProseMirror node type name to the wire assetType used in the [[type fileId=N]] token.
@@ -79839,6 +85114,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// a global replace only needs to swap the token substring itself, leaving surrounding
 	// whitespace/newlines in the source markdown untouched.
 	const ASSET_TOKEN_RE = /\[\[(image|file|video) fileId=(\d+)(?:[ \t]+[a-z]+=[^\s\]]+)*\]\]/g;
+
+	// Same, for attachments living on Disk. They always export as a link, never as an archived file:
+	// the file belongs to Disk, and packing its bytes would hand it to whoever opens the archive.
+	const DISK_ASSET_TOKEN_RE = /\[\[disk (image|file|video) objectId=(\d+)(?:[ \t]+[a-z]+=[^\s\]]+)*\]\]/g;
+
+	// Mirrors DATE_TOKEN_PATTERN from note-date-parser.js, but global so a `.replace()` over the whole
+	// markdown string catches every occurrence, not just one match at the string start.
+	const DATE_TOKEN_RE = /\[\[date (\d{4}-\d{2}-\d{2})]]/g;
 
 	// Normative source for the zip entry naming contract: DocumentZipExportService::sanitizeFileName
 	// (PHP) MUST fold identically. The client writes `attachments/{fileId}-{name}` links into the .md
@@ -79870,62 +85153,69 @@ ${nextLine.slice(indentLevel + 2)}`;
 	/**
 	 * Forces resolution of unresolved mention/file nodes before export.
 	 *
-	 * Export reads mention/asset attrs straight off the node — attrs that are normally filled in
-	 * asynchronously by the debounced background resolver (RESOLVE_DEBOUNCE_MS/RESOLVE_MAX_WAIT_MS).
-	 * Without this, exporting right after inserting a mention/file would carry empty label/url.
+	 * Mention presentation is session-local and never written to the ProseMirror node. Export uses
+	 * the current projection and resolves only keys that do not have a fresh server snapshot yet.
 	 *
 	 * One forced attempt per export call — no retry loop if resolveMentionsBatch reports a
-	 * transient failure (null); any mentions left unresolved stay in their current node state.
+	 * transient failure (null); unresolved mentions are exported with a neutral unavailable label.
 	 *
 	 * @param {Object} editor - Tiptap editor instance.
 	 * @param {number} documentId - owning document id.
-	 * @returns {Promise<void>}
+	 * @returns {Promise<Map<string, Object>>}
 	 */
 	async function ensureResolved(editor, documentId) {
 		await resolveFileNodes(editor, documentId);
-		const items = collectUnresolvedMentions(editor.state.doc, new Set());
-		if (items.length === 0) {
-			return;
-		}
-		const resolvedMap = await resolveMentionsBatch(items);
-		if (resolvedMap === null) {
-			return;
-		}
-		const {
-			tr,
-			doc
-		} = editor.state;
-		let changed = false;
-		doc.descendants((node, pos) => {
-			if (node.type.name !== MENTION_NODE_TYPE) {
-				return;
+		// Disk attachments too: an export fired before the editor's own resolve pass has run would
+		// otherwise write out placeholders for files the reader can perfectly well see.
+		await resolveDiskAttachmentNodes(editor, documentId);
+		const projection = editor.storage?.noteMentionResolver ?? null;
+		const snapshots = new Map();
+		const items = collectMentions(editor.state.doc, new Set()).filter(({
+			type,
+			id
+		}) => {
+			const key = `${type}:${id}`;
+			const snapshot = projection?.getFresh?.(key) ?? null;
+			if (snapshot) {
+				snapshots.set(key, snapshot);
+				return false;
 			}
-			const {
-				entityType,
-				entityId,
-				available
-			} = node.attrs;
-			if (available !== null) {
-				return; // already resolved
-			}
-			const mention = resolvedMap.get(`${entityType}:${entityId}`);
-
-			// Same attribute set as note-mention-resolver-extension.js:106-129 — a missing key means
-			// the backend reported the entity as gone/no-access, so it becomes unavailable:true.
-			tr.setNodeMarkup(pos, undefined, {
-				...node.attrs,
-				label: mention?.label ?? null,
-				avatar: mention?.avatar ?? null,
-				url: mention?.url ?? null,
-				available: Boolean(mention?.available),
-				isCurrentUser: Boolean(mention?.isCurrentUser),
-				unavailable: !mention?.available
-			});
-			changed = true;
+			return true;
 		});
-		if (changed) {
-			editor.view.dispatch(tr);
+		const batches = [];
+		for (let offset = 0; offset < items.length; offset += MENTION_BATCH_LIMIT) {
+			batches.push(items.slice(offset, offset + MENTION_BATCH_LIMIT));
 		}
+		let nextBatchIndex = 0;
+		const resolveNext = async () => {
+			while (nextBatchIndex < batches.length) {
+				const batch = batches[nextBatchIndex];
+				nextBatchIndex += 1;
+				const resolvedMap = await resolveMentionsBatch(batch);
+				if (resolvedMap === null) {
+					for (const {
+						type,
+						id
+					} of batch) {
+						snapshots.set(`${type}:${id}`, createMentionSnapshot());
+					}
+					continue;
+				}
+				for (const {
+					type,
+					id
+				} of batch) {
+					const key = `${type}:${id}`;
+					const resolvedMention = resolvedMap.get(key);
+					const snapshot = createMentionSnapshot(resolvedMention);
+					snapshots.set(key, snapshot);
+				}
+			}
+		};
+		await Promise.all(Array.from({
+			length: Math.min(MENTION_EXPORT_CONCURRENCY, batches.length)
+		}, () => resolveNext()));
+		return snapshots;
 	}
 
 	/**
@@ -79965,7 +85255,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	function escapeLinkText(text) {
 		return String(text ?? '').replace(/[[\]\\]/g, char => `\\${char}`);
 	}
-	function buildMentionMap(doc) {
+	function buildMentionMap(doc, snapshots) {
 		const mentionMap = new Map();
 		doc.descendants(node => {
 			if (node.type.name !== MENTION_NODE_TYPE) {
@@ -79973,19 +85263,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			const {
 				entityType,
-				entityId,
-				label,
-				url,
-				available
+				entityId
 			} = node.attrs;
 			if (!entityType || !Number.isInteger(entityId) || entityId <= 0) {
 				return;
 			}
-			mentionMap.set(`${entityType}:${entityId}`, {
-				label,
-				url,
-				available
-			});
+			const key = `${entityType}:${entityId}`;
+			const snapshot = snapshots.get(key);
+			if (snapshot) {
+				mentionMap.set(key, snapshot);
+			}
 		});
 		return mentionMap;
 	}
@@ -80012,11 +85299,53 @@ ${nextLine.slice(indentLevel + 2)}`;
 		return assetMap;
 	}
 
+	// Disk attachments are described outside the document (DiskAttachmentStore): the node carries only
+	// the object id, so what to write into the export is asked of the store, per document.
+	function buildDiskAssetMap(doc, documentId) {
+		const diskAssetMap = new Map();
+		doc.descendants(node => {
+			if (!ASSET_NODE_TYPES.has(node.type.name)) {
+				return;
+			}
+			const {
+				diskObjectId
+			} = node.attrs;
+			if (!Number.isInteger(diskObjectId) || diskObjectId <= 0) {
+				return;
+			}
+			const entry = DiskAttachmentStore.get(documentId, diskObjectId) ?? {};
+			diskAssetMap.set(diskObjectId, {
+				name: entry.name ?? '',
+				// The view link opens the file on Disk with its own permission check — the right thing for
+				// an exported document to point at. Absent for a file this reader may not see.
+				url: entry.showUrl ?? entry.downloadUrl ?? null,
+				assetType: ASSET_NODE_TYPE_TO_ASSET_TYPE[node.type.name]
+			});
+		});
+		return diskAssetMap;
+	}
+
+	// A value only counts once it round-trips through the same normalization the node itself trusts:
+	// no partial trust for an attribute that reached the doc past the tokenizer.
+	function collectDateValues(doc) {
+		const dateSet = new Set();
+		doc.descendants(node => {
+			if (node.type.name !== DATE_NODE_TYPE) {
+				return;
+			}
+			const value = normalizeDateString(node.attrs.value);
+			if (value !== null) {
+				dateSet.add(value);
+			}
+		});
+		return dateSet;
+	}
+
 	/**
 	 * Canonical export algorithm (ALG-01): turns the live editor document into readable markdown
-	 * with mentions replaced by markdown links (or bare labels when unavailable) and attachment
+	 * with mentions replaced by markdown links (or bare labels when unavailable), attachment
 	 * tokens replaced by absolute download links (`mode: 'links'`) or `attachments/...` zip paths
-	 * (`mode: 'zip'`).
+	 * (`mode: 'zip'`), and date tokens replaced by a formatted caption in the portal's culture.
 	 *
 	 * A regex match that has no counterpart in the mention/asset map (e.g. hand-typed text that
 	 * happens to look like a token) is left untouched rather than replaced with an empty/undefined
@@ -80028,9 +85357,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * @returns {Promise<string>}
 	 */
 	async function exportMarkdown(editor, documentId, mode) {
-		await ensureResolved(editor, documentId);
-		const mentionMap = buildMentionMap(editor.state.doc);
+		const mentionSnapshots = await ensureResolved(editor, documentId);
+		const mentionMap = buildMentionMap(editor.state.doc, mentionSnapshots);
 		const assetMap = buildAssetMap(editor.state.doc);
+		const diskAssetMap = buildDiskAssetMap(editor.state.doc, documentId);
+		const dateSet = collectDateValues(editor.state.doc);
 		const {
 			origin
 		} = window.location;
@@ -80040,7 +85371,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (!mention) {
 				return raw;
 			}
-			const label = mention.label ?? '';
+			const label = mention.available === true ? mention.label ?? '' : main_core.Loc.getMessage('NOTE_MENTION_UNAVAILABLE');
 			return mention.available === true ? `[${escapeLinkText(label)}](${origin}${mention.url ?? ''})` : label;
 		});
 		markdown = markdown.replace(ASSET_TOKEN_RE, (raw, type, idStr) => {
@@ -80052,6 +85383,34 @@ ${nextLine.slice(indentLevel + 2)}`;
 			const target = mode === 'zip' ? `attachments/${encodeZipEntryPath(zipEntryName(Number(idStr), name))}` : `${origin}${asset.downloadUrl ?? ''}`;
 			const text = escapeLinkText(name);
 			return asset.assetType === 'image' ? `![${text}](${target})` : `[${text}](${target})`;
+		});
+
+		// A Disk attachment becomes a plain link in both modes — including zip, where the attachments
+		// folder holds only files this module owns. An image is not embedded either: the link needs
+		// Disk's own permission check, and an `![...]` would render as a broken image to anyone without
+		// access to the file.
+		markdown = markdown.replace(DISK_ASSET_TOKEN_RE, (raw, type, idStr) => {
+			const asset = diskAssetMap.get(Number(idStr));
+			const name = asset?.name ?? '';
+			if (!asset?.url) {
+				// No link means the reader could not see the file, so there is nothing to point at. The
+				// name (when known) goes in as plain text — the same way an unavailable mention degrades.
+				// What must not happen is the raw token leaking into a document meant for a human.
+				return escapeLinkText(name === '' ? main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE') : name);
+			}
+
+			// Disk hands back either an absolute link or a site-root path, depending on the file type.
+			const target = /^https?:\/\//.test(asset.url) ? asset.url : `${origin}${asset.url}`;
+			return `[${escapeLinkText(name)}](${target})`;
+		});
+
+		// The caption is built by the same code the node itself uses: a mismatch here
+		// would mean the exported date reads differently from the one shown in the editor.
+		markdown = markdown.replace(DATE_TOKEN_RE, (raw, value) => {
+			if (!dateSet.has(value)) {
+				return raw;
+			}
+			return formatDateCaption(value);
 		});
 		return markdown;
 	}
@@ -80104,6 +85463,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			initialFavorite = null,
 			historyEnabled = false,
 			notificationsEnabled = false,
+			diskAttachmentsEnabled = false,
 			showActivityLine = true,
 			onRenameTitle = null,
 			onOpenInternalLink = null,
@@ -80129,28 +85489,32 @@ ${nextLine.slice(indentLevel + 2)}`;
 					// [#6] Base snapshot for the views widget — see create-document-feature.js's
 					// applyLoadedDocument(); null falls back to the widget's own getViews call.
 					initialViews,
-					// [DTO-01] Backlinks counter from the same bootstrap — see create-document-feature.js's
+					// Backlinks counter from the same bootstrap - see create-document-feature.js's
 					// applyLoadedDocument(); null makes the chip read its own count.
 					initialBacklinks,
 					// [#2] `{ authors, time } | null` for the activity-line chip's default (non-preview)
 					// state — see create-document-feature.js's applyLoadedDocument()/state.lastChange.
 					lastChange,
-					// [P8.T5] ISO creation timestamp for the chip's "Created …" fallback.
+					// ISO creation timestamp for the chip's "Created ..." fallback.
 					createdAt,
 					// Bell state bundled with the bootstrap — the bell adopts it instead of its own getState.
 					initialSubscription,
-					// [TPL-01] Star state from the same bootstrap - the star prefers it over the sidebar
+					// Star state from the same bootstrap - the star prefers it over the sidebar
 					// store until the store reports a change of its own.
 					initialFavorite,
-					// [P8.T2/T3] UI feature flags — gate the chip's history-open affordance and the bell.
+					// UI feature flags - gate the chip's history-open affordance and the bell.
 					historyEnabled,
 					notificationsEnabled,
+					// Same channel for the Disk source of the file button: note.app's provide() does not
+					// reach this app, so the flag arrives as a prop.
+					diskAttachmentsEnabled,
 					showActivityLine,
-					// [P1.T5 relocation] Activity line renders inside DocumentEditorComponent (right
+					// Activity line renders inside DocumentEditorComponent (right
 					// under the title) and builds its own lang via note.ui.document-history's
 					// createHistoryMessages() — it no longer needs this bundle's own messages. The
 					// open-history bridge still crosses this createApp() boundary.
 					onRenameTitle,
+					openInternalLink: onOpenInternalLink,
 					onOpenInternalLink,
 					onMentionClick,
 					onOpenHistory
@@ -80384,16 +85748,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 			onOpenHistory = null,
 			historyEnabled = false,
 			notificationsEnabled = false,
+			diskAttachmentsEnabled = false,
 			showActivityLine = true
 		}) {
 			this.state = state;
 			this.getDocumentId = getDocumentId;
 			this.nextTick = nextTick;
 			this.messages = messages;
-			// [P8.T2/T3] Bootstrap-level UI flags. history_enabled gates the chip's history-open
-			// affordance; notifications_enabled gates the subscription bell. Default off.
+			// Bootstrap-level UI flags. history_enabled gates the chip's history-open affordance;
+			// notifications_enabled gates the subscription bell. Default off.
 			this.historyEnabled = Boolean(historyEnabled);
 			this.notificationsEnabled = Boolean(notificationsEnabled);
+			// Gates the Disk source of the file button. Travels as a prop through EditorMount for the same
+			// reason the two above do: the editor is its own Vue app, and note.app's provide() stops at
+			// its border — an inject there would silently read the default and the source would never
+			// appear.
+			this.diskAttachmentsEnabled = Boolean(diskAttachmentsEnabled);
 			// Embedded surfaces (the collection description) render the editor without the activity line.
 			this.showActivityLine = showActivityLine !== false;
 			this.onOpenInternalLink = typeof onOpenInternalLink === 'function' ? onOpenInternalLink : null;
@@ -80402,7 +85772,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// Optional reporter of the editor's live emptiness so an embedding surface can react to
 			// content becoming (non-)empty -- including remote edits -- without a mode/save/ACL flip.
 			this.notifyContentEmpty = typeof onContentChange === 'function' ? onContentChange : null;
-			// [P1.T5 relocation] Activity line chip lives inside DocumentEditorComponent now
+			// Activity line chip lives inside DocumentEditorComponent now
 			// (own createApp() instance) — bridge its "open history" click back to the page
 			// component the same way onOpenInternalLink bridges mention clicks.
 			this.onOpenHistory = typeof onOpenHistory === 'function' ? onOpenHistory : null;
@@ -80413,15 +85783,32 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.onMentionClick = ({
 				type,
 				id,
-				url
+				url,
+				origin = 'pointer'
 			}) => {
-				if (!url || !this.onOpenInternalLink) {
-					return;
+				if (!this.onOpenInternalLink) {
+					return null;
+				}
+				const entityId = Number(id);
+				if (type === 'document' && Number.isInteger(entityId) && entityId > 0) {
+					return this.onOpenInternalLink({
+						type,
+						id: entityId,
+						hash: '',
+						origin
+					});
+				}
+				if (!url) {
+					return null;
 				}
 				const parsed = parseInternalNoteLink(url);
 				if (parsed) {
-					this.onOpenInternalLink(parsed);
+					return this.onOpenInternalLink({
+						...parsed,
+						origin
+					});
 				}
+				return null;
 			};
 			this.capabilityRefreshTimer = null;
 			// Guards the overwrite handler against a parallel entry for the SAME document: the rebuild it
@@ -81215,19 +86602,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.state.content = this.resolveDocumentContent(documentData);
 			// [#6] Base snapshot for the views widget — null falls back to its own getViews call.
 			this.state.initialViews = main_core.Type.isPlainObject(documentData.views) ? documentData.views : null;
-			// [DTO-01] Backlinks counter for the chip of incoming links. A payload without the key (an
+			// Backlinks counter for the chip of incoming links. A payload without the key (an
 			// older answer, or the feature switched off) stays null — the widget then reads the count
 			// itself and gets a neutral zero, which renders no chip at all.
 			this.state.initialBacklinks = main_core.Type.isPlainObject(documentData.backlinks) ? documentData.backlinks : null;
 			// [#2] Bootstrap snapshot for the activity-line chip — already normalized upstream in
 			// note.app's route-document-resolver.js (or null if the backend has nothing to report yet).
 			this.state.lastChange = main_core.Type.isPlainObject(documentData.lastChange) ? documentData.lastChange : null;
-			// [P8.T5] ISO creation timestamp — spread from the resolver payload (route-document-resolver's
+			// ISO creation timestamp - spread from the resolver payload (route-document-resolver's
 			// ...row). Used for the chip's "Created …" fallback when there is no last-change info.
 			this.state.createdAt = typeof documentData.createdAt === 'string' && documentData.createdAt !== '' ? documentData.createdAt : null;
 			// Bell state — null falls back to the bell's own getState call on mount.
 			this.state.initialSubscription = main_core.Type.isPlainObject(documentData.subscription) ? documentData.subscription : null;
-			// [TPL-01] Star state - bundled next to the bell. A payload without the key (an older answer)
+			// Star state - bundled next to the bell. A payload without the key (an older answer)
 			// stays null, which leaves the star exactly as it behaved before: sidebar store only.
 			this.state.initialFavorite = typeof documentData.isFavorite === 'boolean' ? documentData.isFavorite : null;
 			const collaborationContext = extractCollaborationContext(documentData);
@@ -82043,7 +87430,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.providerLifecycle.setMode(editable ? 'edit' : 'view');
 		}
 
-		// [P1.T5 restore flow, SDD 455-468] Exposes the periodic auto-compact path (see
+		// Exposes the periodic auto-compact path (see
 		// provider-lifecycle.js#startCompaction / compact-manager.js) for an on-demand call —
 		// the client always compacts the pending patch window right before a version restore.
 		async compactBeforeRestore() {
@@ -82180,6 +87567,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				initialFavorite: this.state.initialFavorite,
 				historyEnabled: this.historyEnabled,
 				notificationsEnabled: this.notificationsEnabled,
+				diskAttachmentsEnabled: this.diskAttachmentsEnabled,
 				showActivityLine: this.showActivityLine,
 				onRenameTitle: this.handleTitleRename,
 				onOpenInternalLink: this.onOpenInternalLink,
@@ -83178,8 +88566,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 	const DocumentChildrenComponent = {
 		name: 'NoteEditorDocumentChildren',
 		components: {
-			BIcon: ui_iconSet_api_vue.BIcon,
-			DocumentList: note_ui_documentList.DocumentList
+			DocumentList: note_ui_documentList.DocumentList,
+			DocumentSection: note_ui_documentList.DocumentSection
 		},
 		props: {
 			children: {
@@ -83204,23 +88592,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		},
 		emits: ['open-child'],
-		data() {
-			return {
-				collapsed: false
-			};
-		},
 		computed: {
+			// Whether the block is shown at all stays here: the shared section renders whatever it is
+			// given and knows nothing about documents.
 			visible() {
 				return this.children.length > 0;
-			},
-			toggleIcon() {
-				return this.collapsed ? ui_iconSet_api_vue.Set.CHEVRON_DOWN : ui_iconSet_api_vue.Set.CHEVRON_UP;
 			}
 		},
 		methods: {
-			toggle() {
-				this.collapsed = !this.collapsed;
-			},
 			onOpen(item) {
 				this.$emit('open-child', item);
 			},
@@ -83230,24 +88609,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		// language=Vue
 		template: `
-		<div v-if="visible" class="note-editor-children-block">
-			<div class="note-editor-children-header" @click="toggle">
-				<span class="note-editor-children-header-label">{{ documentsLabel }}</span>
-				<button class="note-editor-children-toggle" type="button">
-					<BIcon :name="toggleIcon" :size="16" />
-				</button>
-			</div>
-			<template v-if="!collapsed">
-				<DocumentList
-					mode="compact"
-					:items="children"
-					:has-more="childrenHasMore"
-					:loading="childrenLoading"
-					@open="onOpen"
-					@load-more="onLoadMore"
-				/>
-			</template>
-		</div>
+		<DocumentSection
+			v-if="visible"
+			class="note-editor-children-block"
+			:label="documentsLabel"
+			:heading-level="2"
+			test-id="note-editor-children"
+		>
+			<DocumentList
+				mode="compact"
+				data-testid="note-editor-children-list"
+				:items="children"
+				:has-more="childrenHasMore"
+				:loading="childrenLoading"
+				@open="onOpen"
+				@load-more="onLoadMore"
+			/>
+		</DocumentSection>
 	`
 	};
 
@@ -83306,6 +88684,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// Gates every way to reach the shortcuts help: button, `?`/`Cmd+/` listener, panel.
 			hotkeysEnabled: {
 				default: false
+			},
+			// Gates the Disk source of the editor's file button. Injected here, in note.app's own app, and
+			// handed to the editor as a prop below: the editor lives in a separate app where this provide
+			// does not reach.
+			diskAttachmentsEnabled: {
+				default: false
 			}
 		},
 		data() {
@@ -83314,12 +88698,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				feature: null,
 				actionMenuService: null,
 				Outline: ui_iconSet_api_vue.Outline,
-				// [P1.T5] History sidebar open/closed — purely local UI state, not persisted.
+				// History sidebar open/closed - purely local UI state, not persisted.
 				historyOpen: false,
 				// Hotkeys help panel open/closed. Mutually exclusive with the history sidebar — both are
 				// the single right-hand rail (see openHotkeys / openHistory). Purely local UI state.
 				hotkeysOpen: false,
-				// [EVENT-02] Last seen occupant of the right rail, including our own announcements. Two
+				// Last seen occupant of the right rail, including our own announcements. Two
 				// jobs: deciding whether an `owner: null` of ours would clobber someone else's claim, and
 				// driving the shift of the floating hotkeys button.
 				railOwner: null,
@@ -83353,14 +88737,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 					mode
 				}) => this.handleRemoteHardDelete(mode),
 				onAccessRevoked: () => this.handleAccessRevoked(),
-				// [P1.T5 relocation] The activity line's chip now lives inside the editor's own
+				// The activity line's chip now lives inside the editor's own
 				// Vue app (see note-editor.js) — bridge its click back to this component's local
 				// historyOpen state, same as it did when ActivityLineComponent was mounted here.
 				// [#3] A repeat click toggles the sidebar closed instead of always (re-)opening it.
 				onOpenHistory: () => this.toggleHistory(),
-				// [P8.T2/T3] Bootstrap UI flags threaded to the isolated editor app (chip + bell).
+				// Bootstrap UI flags threaded to the isolated editor app (chip + bell).
 				historyEnabled: Boolean(this.sidebarState?.historyEnabled),
-				notificationsEnabled: Boolean(this.sidebarState?.notificationsEnabled)
+				notificationsEnabled: Boolean(this.sidebarState?.notificationsEnabled),
+				diskAttachmentsEnabled: Boolean(this.diskAttachmentsEnabled)
 			});
 			this.actionMenuService = ui_vue3.markRaw(new DocumentActionMenuService(this.feature?.messages ?? {}));
 		},
@@ -83402,14 +88787,18 @@ ${nextLine.slice(indentLevel + 2)}`;
 			isMobile() {
 				return Boolean(this.sidebarState?.isMobile);
 			},
-			// [P8.T2] history_enabled bootstrap flag (from the injected sidebar root state). Gates the
+			// history_enabled bootstrap flag (from the injected sidebar root state). Gates the
 			// version-timeline panel and the chip's history-open path.
 			historyEnabled() {
 				return Boolean(this.sidebarState?.historyEnabled);
 			},
-			// [P8.T3] notifications_enabled bootstrap flag — gates the subscription bell.
+			// notifications_enabled bootstrap flag - gates the subscription bell.
 			notificationsEnabled() {
 				return Boolean(this.sidebarState?.notificationsEnabled);
+			},
+			// Which optional features the shortcuts panel may advertise (see its `features` prop).
+			enabledHotkeyFeatures() {
+				return this.diskAttachmentsEnabled ? ['diskAttachments'] : [];
 			},
 			canEditCollection() {
 				return Boolean(this.state.canEditCollection);
@@ -83522,7 +88911,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				document.addEventListener('keydown', this.handleHelpKeydown, true);
 			}
 
-			// [EVENT-02] The event only carries CHANGES, and the chat can already be open before this page
+			// The event only carries CHANGES, and the chat can already be open before this page
 			// exists: opened on the workspace root, then a document is opened from the tree. Without this
 			// initial read the floating button would come up unshifted, right on top of the open panel.
 			this.railOwner = this.sidebarState?.aiChatOpen === true ? note_sidebar.NoteRailOwner.AI_CHAT : null;
@@ -83553,7 +88942,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			scrollToParticipant(userId) {
 				this.feature?.scrollToParticipant?.(userId);
 			},
-			// [EVENT-02] Claim the rail for one of our two panels.
+			// Claim the rail for one of our two panels.
 			announceRail(owner) {
 				main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, new main_core_events.BaseEvent({
 					data: {
@@ -83591,7 +88980,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.hotkeysFocusOrigin = null;
 			},
 			openHistory() {
-				// [P8.T2] history_enabled off — the timeline entry point is closed; keep it a no-op.
+				// history_enabled off - the timeline entry point is closed; keep it a no-op.
 				if (!this.historyEnabled) {
 					return;
 				}
@@ -83600,7 +88989,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				// one closes the other.
 				this.hotkeysOpen = false;
 				this.historyOpen = true;
-				// [EVENT-02] Claim the rail: the chat, the third resident, collapses on this.
+				// Claim the rail: the chat, the third resident, collapses on this.
 				this.announceRail(note_sidebar.NoteRailOwner.HISTORY);
 			},
 			// Reuses the mention-chip navigation contract (open-link.js): native user card in the
@@ -83620,7 +89009,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			// [#3] The chip's own toggle: open when closed, close (same as the X button) when already open.
 			toggleHistory() {
-				// [P8.T2] history_enabled off — no timeline at all.
+				// history_enabled off - no timeline at all.
 				if (!this.historyEnabled) {
 					return;
 				}
@@ -83635,7 +89024,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.historyOpen = false;
 				this.exitPreview();
 				this.hotkeysOpen = true;
-				// [EVENT-02] The hotkeys panel is a rail resident too — without this claim it and the chat
+				// The hotkeys panel is a rail resident too - without this claim it and the chat
 				// could be expanded at the same time, squeezing the document with two columns.
 				this.announceRail(note_sidebar.NoteRailOwner.HOTKEYS);
 				// Remember where focus came from: the global shortcut can fire from anywhere on the page, and
@@ -83799,7 +89188,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					baseMarkdown: this.previewBaseMarkdown
 				});
 			},
-			// [P1.T2 client flow, SDD 455-468] Relocated from VersionTimelineComponent (see that
+			// Relocated from VersionTimelineComponent (see that
 			// extension's history — this used to live in the sidebar's own restore button). Always
 			// compact the pending patch window before restoring; a 409 NOTE_RESTORE_DIRTY_WINDOW means
 			// a patch landed in the gap, so compact once more and retry exactly once.
@@ -83960,7 +89349,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				if (!Number.isInteger(id) || id <= 0) {
 					return;
 				}
-				const hash = String(payload.hash || '').trim();
+				const rawHash = String(payload.hash || '').trim();
+				const hash = rawHash.startsWith('#') ? rawHash.slice(1) : rawHash;
 				if (Number(this.documentId) === id) {
 					if (hash !== '') {
 						const nextHash = `#${hash}`;
@@ -83973,29 +89363,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 					return;
 				}
-				const target = {
-					name: 'document',
-					params: {
-						id
-					}
-				};
-				if (hash !== '') {
-					target.hash = `#${hash}`;
+				if (!main_core.Type.isFunction(this.documentActions?.openInternalDocument)) {
+					return 'rejected';
 				}
-
-				// Navigation to another document via internal link / mention.
-				note_analytics.NoteAnalytics.documentViewed('document');
-				this.$router.push(target);
+				return this.documentActions.openInternalDocument({
+					id,
+					hash,
+					origin: payload.origin === 'keyboard' ? 'keyboard' : 'pointer'
+				});
 			},
 			buildDocumentLink() {
 				const id = Number(this.documentId);
 				if (!Number.isInteger(id) || id <= 0) {
 					return '';
 				}
-				const {
-					origin
-				} = window.location;
-				return `${origin}/note/document/${id}/`;
+				return buildInternalDocumentUrl(id, {
+					absolute: true
+				});
 			},
 			async copyDocumentLink() {
 				const url = this.buildDocumentLink();
@@ -84212,6 +89596,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				<HotkeysPanelComponent
 					v-if="hotkeysEnabled"
 					:open="hotkeysOpen"
+					:features="enabledHotkeyFeatures"
 					@close="closeHotkeys"
 				/>
 			</teleport>
@@ -84247,6 +89632,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 			preloadedDocument: {
 				type: Object,
 				default: null
+			}
+		},
+		inject: {
+			// Gates the Disk file button, exactly as on the document page: this is the same editor, so the
+			// description of a knowledge base takes files from Disk the same way a document does. Injected
+			// from note.app's own app (where the provide lives) and handed to the editor as a prop by
+			// createDocumentFeature — the editor is a separate app root the provide does not reach.
+			diskAttachmentsEnabled: {
+				default: false
 			}
 		},
 		emits: ['ready', 'state-change', 'load-error', 'open-internal-link'],
@@ -84309,7 +89703,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				onOpenInternalLink: payload => this.handleOpenInternalLink(payload),
 				onContentChange: isEmpty => this.handleContentEmptyChange(isEmpty),
 				// The description is not a document page: no activity chip, views counter or bell.
-				showActivityLine: false
+				showActivityLine: false,
+				diskAttachmentsEnabled: Boolean(this.diskAttachmentsEnabled)
 			});
 			void this.reload();
 		},
@@ -84485,5 +89880,5 @@ ${nextLine.slice(indentLevel + 2)}`;
 	exports.NoteDocumentPageComponent = NoteDocumentPageComponent;
 	exports.NoteEditorApp = NoteEditorApp;
 
-})(this.BX.Note.Editor = this.BX.Note.Editor || {}, BX.UI.Viewer, BX, BX, BX.Vue3, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Notification, BX.Vue3, BX.Note.Ui, BX.Event, BX.Note.Sidebar, BX, BX.Note.Ui, BX.Note.Permissions, BX.UI, window, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note);
+})(this.BX.Note.Editor = this.BX.Note.Editor || {}, BX.UI.Viewer, BX, BX, BX.Vue3, BX.Note.Ui, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX, BX.UI.EntitySelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Uploader, BX.UI.VideoService, BX.UI.Notification, BX.Main, BX.UI.DatePicker, BX.Vue3, BX.Note.Ui, BX.Event, BX.Note.Sidebar, BX, BX.Note.Ui, BX.Note.Permissions, BX.UI, window, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note);
 //# sourceMappingURL=editor.bundle.js.map

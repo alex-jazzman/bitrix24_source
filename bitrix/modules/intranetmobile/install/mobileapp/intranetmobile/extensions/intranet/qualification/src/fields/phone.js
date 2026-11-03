@@ -5,6 +5,7 @@ jn.define('intranet/qualification/fields/phone', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const { BBCodeText } = require('ui-system/typography');
 	const { PhoneInput, InputSize } = require('ui-system/form/inputs/phone');
+	const { inAppUrl } = require('in-app-url');
 	const { Color, Indent } = require('tokens');
 	const { Loc } = require('loc');
 	const { PropTypes } = require('utils/validation');
@@ -73,6 +74,7 @@ jn.define('intranet/qualification/fields/phone', (require, exports, module) => {
 						},
 					),
 					testId: this.getTestId('footer-field'),
+					onLinkClick: ({ url }) => inAppUrl.open(url),
 				}),
 			);
 		}

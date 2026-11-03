@@ -438,10 +438,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			return this.#data.stage ? [tasks_v2_provider_service_groupService.GroupMappers.mapStageDtoToModel(this.#data.stage)] : [];
 		}
 		getUsers() {
-			return [this.#data.creator ?? [], this.#data.responsible ?? [], ...(this.#data?.responsibleCollection ?? []), ...(this.#data.multiResponsibles ?? []), ...(this.#data?.accomplices ?? []), ...(this.#data?.auditors ?? [])].map(userDto => tasks_v2_provider_service_userService.UserMappers.mapDtoToModel(userDto));
+			const creator = this.#data.creator;
+			const hasCreatorName = main_core.Type.isString(creator?.name) && creator.name.trim().length > 0;
+			return [...(hasCreatorName ? [creator] : []), this.#data.responsible ?? [], ...(this.#data?.responsibleCollection ?? []), ...(this.#data.multiResponsibles ?? []), ...(this.#data?.accomplices ?? []), ...(this.#data?.auditors ?? [])].map(userDto => tasks_v2_provider_service_userService.UserMappers.mapDtoToModel(userDto));
 		}
 	}
 
+	const STAGE_SYNC_FAILED_EVENT = tasks_v2_const.EventName.TaskStageSyncFailed ?? 'tasks:card:taskStageSyncFailed';
+	const STAGE_SYNC_RESTORED_EVENT = tasks_v2_const.EventName.TaskStageSyncRestored ?? 'tasks:card:taskStageSyncRestored';
+	const stageMoveStates = new Map();
+	const stageReadBarriers = new Map();
+	const stageChangeGenerations = new Map();
+	const activeStageReads = new Set();
+	let stageChangeGeneration = 0;
 	const separateFields = [{
 		fields: new Set(['storyPoints', 'epicId']),
 		endpoint: tasks_v2_const.Endpoint.ScrumUpdateTask
@@ -492,14 +501,17 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				};
 			}
 			try {
-				const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskGet, {
-					task: {
-						id
-					},
-					taskSelect
+				await this.withStageSnapshot(async snapshot => {
+					const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskGet, {
+						task: {
+							id
+						},
+						taskSelect
+					});
+					if (this.extractTask(data, ignoreContains, snapshot)) {
+						await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/removePartiallyLoaded`, id);
+					}
 				});
-				this.extractTask(data, ignoreContains);
-				await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/removePartiallyLoaded`, id);
 			} catch (error) {
 				if (!this.#silentErrorMode) {
 					console.error(tasks_v2_const.Endpoint.TaskGet, error);
@@ -589,7 +601,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		async add(props) {
 			const {
 				task,
-				view
+				view,
+				deadlineManuallySet
 			} = props;
 			if (tasks_v2_lib_idUtils.idUtils.isTemplate(task.id)) {
 				return tasks_v2_provider_service_templateService.templateService.add(task);
@@ -597,7 +610,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			try {
 				const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskAdd, {
 					task: mapModelToDto(task),
-					view: Boolean(view)
+					view: Boolean(view),
+					// SC-003 (AC-013): explicit client marker that the user set the deadline
+					// themselves in the create form. The controller prefers it over the
+					// server-side !empty(DEADLINE) heuristic, which cannot tell an accepted
+					// default auto deadline from a manual one.
+					deadlineManuallySet: Boolean(deadlineManuallySet)
 				});
 				await this.onAfterTaskAdded(task, data);
 				return [data.id, null];
@@ -759,20 +777,237 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				return false;
 			}
 		}
-		async setStage(taskId, stageId) {
-			this.updateStoreTask(taskId, {
-				stageId
+		async setStage(taskId, stageId, options = {}) {
+			const barrier = stageReadBarriers.get(taskId) ?? {
+				stageId: this.getStoreTask(taskId)?.stageId,
+				hasConfirmedMove: false,
+				uncertain: false,
+				reported: false,
+				conflictGeneration: 0,
+				reconciliationPromise: null
+			};
+			if (barrier.uncertain) {
+				return this.#buildStageSyncError();
+			}
+			const state = stageMoveStates.get(taskId) ?? {
+				latestStageId: stageId,
+				latestRequestId: 0,
+				pendingMoves: new Map(),
+				invalidated: false,
+				tail: Promise.resolve()
+			};
+			const previousLatestStageId = state.latestStageId;
+			state.latestStageId = stageId;
+			const requestId = ++state.latestRequestId;
+			state.pendingMoves.set(requestId, {
+				stageId,
+				echoed: false
 			});
+			stageReadBarriers.set(taskId, barrier);
+			stageMoveStates.set(taskId, state);
+			const isCurrent = () => !state.invalidated && stageMoveStates.get(taskId) === state && stageReadBarriers.get(taskId) === barrier;
 			try {
-				await tasks_v2_lib_apiClient.apiClient.postComponent('bitrix:tasks.task', 'moveStage', {
-					taskId,
+				this.updateStoreTask(taskId, {
 					stageId
 				});
-				return true;
 			} catch (error) {
-				console.error('bitrix:tasks.task.moveStage', error);
-				return false;
+				state.latestStageId = previousLatestStageId;
+				state.pendingMoves.delete(requestId);
+				if (state.latestRequestId === requestId) {
+					state.latestRequestId -= 1;
+				}
+				if (state.pendingMoves.size === 0) {
+					stageMoveStates.delete(taskId);
+					if (!barrier.hasConfirmedMove && !barrier.uncertain) {
+						stageReadBarriers.delete(taskId);
+					}
+				}
+				throw error;
 			}
+			const execute = async () => {
+				if (!isCurrent()) {
+					return this.#buildStageMoveStaleError();
+				}
+				try {
+					const response = await tasks_v2_lib_apiClient.apiClient.postComponent('bitrix:tasks.task', 'moveStage', {
+						taskId,
+						stageId,
+						...options
+					});
+					if (!isCurrent()) {
+						return this.#buildStageMoveStaleError();
+					}
+					if (response === false) {
+						throw new Error('The task stage was not moved');
+					}
+					barrier.stageId = stageId;
+					barrier.hasConfirmedMove = true;
+					this.#noteStageChange(taskId);
+					if (state.pendingMoves.size === 1 && barrier.stageId !== state.latestStageId && this.getStoreTask(taskId)?.stageId === state.latestStageId) {
+						this.updateStoreTask(taskId, {
+							stageId: barrier.stageId
+						});
+					}
+					return null;
+				} catch (error) {
+					if (!isCurrent()) {
+						return this.#buildStageMoveStaleError();
+					}
+					if (state.pendingMoves.get(requestId)?.echoed) {
+						barrier.uncertain = true;
+					}
+					if (state.latestRequestId === requestId) {
+						this.updateStoreTask(taskId, {
+							stageId: barrier.stageId
+						});
+					}
+					console.error('bitrix:tasks.task.moveStage', error);
+					const moveError = new Error(error.errors?.[0]?.message ?? error.message);
+					moveError.code = error.errors?.[0]?.code ?? error.code;
+					return moveError;
+				} finally {
+					state.pendingMoves.delete(requestId);
+					if (isCurrent() && state.pendingMoves.size === 0) {
+						stageMoveStates.delete(taskId);
+						if (!barrier.hasConfirmedMove && !barrier.uncertain) {
+							stageReadBarriers.delete(taskId);
+						}
+					}
+				}
+			};
+			const result = state.tail.then(execute);
+			state.tail = result.then(() => undefined, () => undefined);
+			return result.then(async error => {
+				if (state.invalidated) {
+					return this.#buildStageMoveStaleError();
+				}
+				if (state.pendingMoves.size === 0 && barrier.uncertain) {
+					const reconciliationError = await this.reconcileStage(taskId);
+					if (stageReadBarriers.get(taskId) !== barrier) {
+						return this.#buildStageMoveStaleError();
+					}
+					if (error?.code && error.code !== 'STAGE_SYNC_UNCERTAIN') {
+						return error;
+					}
+					return reconciliationError ?? error;
+				}
+				return error;
+			});
+		}
+		async reconcileStage(taskId) {
+			const barrier = stageReadBarriers.get(taskId);
+			if (!barrier?.uncertain || !this.hasStoreTask(taskId)) {
+				return null;
+			}
+			if (stageMoveStates.get(taskId)?.pendingMoves.size > 0) {
+				return this.#buildStageSyncError();
+			}
+			if (barrier.reconciliationPromise) {
+				return barrier.reconciliationPromise;
+			}
+			let lastReadGeneration = barrier.conflictGeneration;
+			let acceptedReply = false;
+			const promise = (async () => {
+				while (stageReadBarriers.get(taskId) === barrier && this.hasStoreTask(taskId)) {
+					lastReadGeneration = barrier.conflictGeneration;
+					try {
+						const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskGet, {
+							task: {
+								id: taskId
+							}
+						});
+						if (stageReadBarriers.get(taskId) !== barrier || !this.hasStoreTask(taskId)) {
+							return null;
+						}
+						if (lastReadGeneration !== barrier.conflictGeneration) {
+							continue;
+						}
+						if (!data || Number(data.id) !== taskId || data.rights?.read === false || !Object.prototype.hasOwnProperty.call(data, 'stage')) {
+							throw new Error('Task.get did not return the current stage');
+						}
+						const stageId = data.stage?.id ?? 0;
+						this.updateStoreTask(taskId, {
+							stageId
+						});
+						barrier.stageId = stageId;
+						barrier.uncertain = false;
+						barrier.reported = false;
+						acceptedReply = true;
+						return null;
+					} catch (error) {
+						if (stageReadBarriers.get(taskId) !== barrier || !this.hasStoreTask(taskId)) {
+							return null;
+						}
+						if (lastReadGeneration !== barrier.conflictGeneration) {
+							continue;
+						}
+						if (!barrier.reported) {
+							barrier.reported = true;
+							main_core_events.EventEmitter.emit(STAGE_SYNC_FAILED_EVENT, {
+								taskId
+							});
+						}
+						return this.#buildStageSyncError();
+					}
+				}
+				return null;
+			})();
+			barrier.reconciliationPromise = promise;
+			try {
+				return await promise;
+			} finally {
+				if (barrier.reconciliationPromise === promise) {
+					barrier.reconciliationPromise = null;
+					if (acceptedReply && stageReadBarriers.get(taskId) === barrier && this.hasStoreTask(taskId) && !barrier.uncertain) {
+						main_core_events.EventEmitter.emit(STAGE_SYNC_RESTORED_EVENT, {
+							taskId
+						});
+					}
+					if (barrier.uncertain && barrier.conflictGeneration !== lastReadGeneration && stageReadBarriers.get(taskId) === barrier && !stageMoveStates.get(taskId)?.pendingMoves.size) {
+						void this.reconcileStage(taskId);
+					}
+				}
+			}
+		}
+		isStageSyncUncertain(taskId) {
+			return stageReadBarriers.get(taskId)?.uncertain === true;
+		}
+		#observeServerStage(taskId, stageId, barrier) {
+			let isExpected = stageId === barrier.stageId;
+			const state = stageMoveStates.get(taskId);
+			for (const move of state?.pendingMoves.values() ?? []) {
+				if (move.stageId === stageId) {
+					move.echoed = true;
+					isExpected = true;
+				}
+			}
+			if (!isExpected || barrier.reconciliationPromise) {
+				barrier.conflictGeneration += 1;
+			}
+			if (!isExpected) {
+				barrier.uncertain = true;
+			}
+			if (barrier.uncertain && (!state || state.pendingMoves.size === 0)) {
+				void this.reconcileStage(taskId);
+			}
+		}
+		#buildStageSyncError() {
+			const error = new Error('The task stage could not be verified');
+			error.code = 'STAGE_SYNC_UNCERTAIN';
+			return error;
+		}
+		#buildStageMoveStaleError() {
+			const error = new Error('The task was removed during a stage move');
+			error.code = 'STAGE_MOVE_STALE';
+			return error;
+		}
+		releaseStageMoveBarrier(taskId) {
+			const state = stageMoveStates.get(taskId);
+			if (state) {
+				state.invalidated = true;
+			}
+			stageMoveStates.delete(taskId);
+			stageReadBarriers.delete(taskId);
 		}
 		async setMark(taskId, mark) {
 			this.updateStoreTask(taskId, {
@@ -879,18 +1114,74 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				return false;
 			}
 		}
-		extractTask(data, ignoreContains = true) {
-			if (!data) {
+		async withStageSnapshot(read) {
+			const snapshot = {
+				generation: stageChangeGeneration,
+				changedTaskIds: new Set(),
+				deletedTaskIds: new Set()
+			};
+			activeStageReads.add(snapshot);
+			try {
+				return await read(snapshot);
+			} finally {
+				activeStageReads.delete(snapshot);
+				if (activeStageReads.size === 0) {
+					stageChangeGenerations.clear();
+				}
+			}
+		}
+		#noteStageChange(id) {
+			if (activeStageReads.size === 0) {
 				return;
+			}
+			stageChangeGeneration += 1;
+			stageChangeGenerations.set(id, stageChangeGeneration);
+			for (const snapshot of activeStageReads) {
+				snapshot.changedTaskIds.add(id);
+			}
+		}
+		#rollbackStoreTask(id, taskBefore, updatedFields, snapshot) {
+			const fields = Object.fromEntries(Object.keys(updatedFields).filter(field => field !== 'id').map(field => [field, taskBefore[field]]));
+			if (snapshot?.changedTaskIds.has(id)) {
+				delete fields.stageId;
+			}
+			if (Object.keys(fields).length > 0) {
+				this.updateStoreTask(id, fields);
+			}
+		}
+		#preserveStoreStage(task, currentTask) {
+			if (main_core.Type.isUndefined(currentTask?.stageId)) {
+				delete task.stageId;
+			} else {
+				task.stageId = currentTask.stageId;
+			}
+		}
+		extractTask(data, ignoreContains = true, stageSnapshot = null) {
+			if (!data) {
+				return false;
+			}
+			if (stageSnapshot?.deletedTaskIds.has(data.id)) {
+				return false;
 			}
 			if (data?.rights?.read === false) {
 				this.deleteStore(data.id);
-				return;
+				return false;
 			}
 			const extractor = new TaskGetExtractor(data);
 			let task = extractor.getTask();
 			const currentTask = this.getStoreTask(task.id);
 			task = this.#mergeExtractedTaskWithStoreTask(task, currentTask);
+			if (!main_core.Type.isUndefined(task.stageId)) {
+				if (stageSnapshot !== null && (stageChangeGenerations.get(task.id) ?? 0) > stageSnapshot.generation) {
+					this.#preserveStoreStage(task, currentTask);
+				} else {
+					const barrier = stageReadBarriers.get(task.id);
+					if (barrier) {
+						this.#observeServerStage(task.id, task.stageId, barrier);
+						this.#preserveStoreStage(task, currentTask);
+					}
+				}
+			}
 			if (ignoreContains) {
 				['containsSubTasks', 'containsRelatedTasks', 'containsGanttLinks', 'containsPlacements'].forEach(prop => delete task[prop]);
 			}
@@ -899,6 +1190,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				tasks_v2_provider_service_remindersService.remindersService.clearForTask(task.id);
 			}
 			void tasks_v2_provider_service_fileService.fileService.get(data.id).list(data.fileIds);
+			return true;
 		}
 		#mergeExtractedTaskWithStoreTask(task, currentTask) {
 			const mergedTask = {
@@ -941,6 +1233,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			};
 		}
 		deleteStore(id) {
+			this.releaseStageMoveBarrier(id);
+			for (const snapshot of activeStageReads) {
+				snapshot.deletedTaskIds.add(id);
+			}
 			tasks_v2_provider_service_relationService.subTasksService.unlinkStore(id);
 			tasks_v2_provider_service_relationService.relatedTasksService.unlinkStore(id);
 			tasks_v2_provider_service_relationService.ganttService.unlinkStore(id);
@@ -963,12 +1259,15 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			return this.#updatePromises[id];
 		}
 		async #updateTask(id) {
+			const promise = this.#updatePromises[id];
+			if (!promise) {
+				return;
+			}
+			delete this.#updatePromises[id];
 			const fields = this.#updateFields[id];
 			delete this.#updateFields[id];
 			const taskBefore = this.#updateTaskBefore[id];
 			delete this.#updateTaskBefore[id];
-			const promise = this.#updatePromises[id];
-			delete this.#updatePromises[id];
 			const task = {
 				id,
 				...fields
@@ -1008,14 +1307,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			})) {
 				return {};
 			}
+			let stageSnapshot = null;
 			try {
-				const data = await tasks_v2_lib_apiClient.apiClient.post(endpoint, {
-					task
+				return await this.withStageSnapshot(async snapshot => {
+					stageSnapshot = snapshot;
+					const data = await tasks_v2_lib_apiClient.apiClient.post(endpoint, {
+						task
+					});
+					this.extractTask(data, true, snapshot);
+					return {};
 				});
-				this.extractTask(data);
-				return {};
 			} catch (error) {
-				this.updateStoreTask(id, taskBefore);
+				this.#rollbackStoreTask(id, taskBefore, fields, stageSnapshot);
 				if (!this.#silentErrorMode) {
 					console.error(endpoint, error);
 				}
@@ -1047,8 +1350,26 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			}
 			await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/insert`, task);
 		}
-		updateStoreTask(id, fields) {
+		updateStoreTask(id, fields, source = 'local') {
 			if (this.hasStoreTask(id)) {
+				const barrier = stageReadBarriers.get(id);
+				if (source === 'server' && barrier && !main_core.Type.isUndefined(fields.stageId)) {
+					const {
+						stageId,
+						...otherFields
+					} = fields;
+					this.#observeServerStage(id, stageId, barrier);
+					if (Object.keys(otherFields).length > 0) {
+						void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+							id,
+							fields: otherFields
+						});
+					}
+					return;
+				}
+				if (!main_core.Type.isUndefined(fields.stageId)) {
+					this.#noteStageChange(id);
+				}
 				void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
 					id,
 					fields

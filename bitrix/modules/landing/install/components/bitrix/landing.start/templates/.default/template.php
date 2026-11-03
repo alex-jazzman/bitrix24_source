@@ -39,6 +39,8 @@ foreach ($arParams['SEF_URL_TEMPLATES'] as $code => $url)
 		'DRAFT_MODE' => $arParams['DRAFT_MODE'],
 		'SEF' => $sef,
 		'AI_SITE_CHAT_AVAILABLE' => $arResult['AI_SITE_CHAT_AVAILABLE'] ?? true,
+		'PRESET_SITES_EMPTY_STATE' => $arResult['PRESET_SITES_EMPTY_STATE'] ?? false,
+		'PRESET_SITES_EMPTY_STATE_REMAINING' => $arResult['PRESET_SITES_EMPTY_STATE_REMAINING'] ?? 0,
 		'AGREEMENT' => $arResult['AGREEMENT']
 	),
 	$component

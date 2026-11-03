@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/go-to-chat/providers-selector
  */
 jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Line } = require('utils/skeleton');
 	const AppTheme = require('apptheme');
@@ -127,7 +128,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 			alignItems: 'center',
 		},
 		label: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base4,
 		},
 		arrow: {
@@ -143,7 +144,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 			marginRight: 12,
 		},
 		provider: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base3,
 		},
 	};

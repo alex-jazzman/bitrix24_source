@@ -17,6 +17,16 @@
 	background-color: var(--ui-color-palette-blue-25);
 }
 
+/* Keyboard cursor: the real focus stays in the search input, so :focus-visible never fires on the
+   item and the shared .--focus-visible rule cannot be reused. The offset stays inset while the
+   carousel tiles use the outward one (carousel-user.css): the row fills its scroll container to the
+   last pixel on the right, so an outward ring is clipped there. The ring is rounded by the row's own
+   border-radius above. */
+.bx-im-search-item-layout__container.--keyboard-active {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .bx-im-search-item-layout__avatar-container {
 	padding: 11px 0 0 10px;
 }
@@ -42,6 +52,7 @@
 }
 
 .bx-im-search-item-layout__item-text {
+	flex-shrink: 0;
 	font: var(--ui-font-size-md)/var(--ui-font-line-height-2xs) var(--ui-font-family-system);
 	color: var(--ui-color-palette-gray-60);
 	text-overflow: ellipsis;

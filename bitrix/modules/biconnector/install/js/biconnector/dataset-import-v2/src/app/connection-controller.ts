@@ -1,6 +1,7 @@
-import { ajax, Loc } from 'main.core';
+import { ajax, Loc, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { Store } from 'ui.vue3.vuex';
+import { getServerErrorHtml, isNetworkError } from 'biconnector.error-message';
 import type { FieldSettings, RootState } from '../types/state';
 import { showErrorPopup } from './error-popup';
 
@@ -77,13 +78,15 @@ export class ConnectionController
 	async sync(): Promise<void>
 	{
 		const datasetId = this.store.state.config.datasetProperties.id;
-		if (!datasetId || this.isLoading)
+		if (!datasetId || this.isLoading || this.store.getters.isLockedByRights)
 		{
 			return;
 		}
 
 		this.isLoading = true;
 		this.store.commit('setValidationLoading', true);
+		const previousConnectionLoad = this.store.state.ui.connectionLoad;
+		this.store.commit('setConnectionLoading');
 
 		try
 		{
@@ -94,20 +97,24 @@ export class ConnectionController
 			}) as ViewResponse;
 
 			const responseData = response.data;
-			if (!responseData)
+			if (responseData)
 			{
-				return;
+				const headers = (responseData.headers ?? []).map(
+					(header, index) => this.prepareHeader(header, index),
+				);
+				this.store.commit('setFieldsSettings', headers);
+				this.store.commit('setPreviewData', responseData.data ?? []);
 			}
-
-			const headers = (responseData.headers ?? []).map(
-				(header, index) => this.prepareHeader(header, index),
-			);
-			this.store.commit('setFieldsSettings', headers);
-			this.store.commit('setPreviewData', responseData.data ?? []);
+			this.store.commit('setConnectionLoaded');
 		}
-		catch
+		catch (error)
 		{
-			// keep current data on sync failure
+			this.store.commit('setConnectionLoad', previousConnectionLoad);
+			showErrorPopup(
+				error,
+				Loc.getMessage('DATASET_IMPORT_V2_ERROR_POPUP_TITLE_SYNC'),
+				this.resolveLoadErrorHtml(error),
+			);
 		}
 		finally
 		{
@@ -127,6 +134,7 @@ export class ConnectionController
 
 		this.isLoading = true;
 		this.store.commit('setValidationLoading', true);
+		this.store.commit('setConnectionLoading');
 
 		try
 		{
@@ -145,28 +153,45 @@ export class ConnectionController
 			}) as ViewResponse;
 
 			const responseData = response.data;
-			if (!responseData)
+			if (responseData)
 			{
-				return;
+				const headers = (responseData.headers ?? []).map(
+					(header, index) => this.prepareHeader(header, index),
+				);
+				this.store.commit('setFieldsSettings', headers);
+				this.store.commit('setPreviewData', responseData.data ?? []);
 			}
-
-			const headers = (responseData.headers ?? []).map(
-				(header, index) => this.prepareHeader(header, index),
-			);
-			this.store.commit('setFieldsSettings', headers);
-			this.store.commit('setPreviewData', responseData.data ?? []);
+			this.store.commit('setConnectionLoaded');
 		}
 		catch (error)
 		{
-			this.store.commit('setFieldsSettings', []);
-			this.store.commit('setPreviewData', []);
-			showErrorPopup(error, Loc.getMessage('DATASET_IMPORT_V2_ERROR_POPUP_TITLE_LOAD'));
+			if (!this.store.getters.isEditMode)
+			{
+				this.store.commit('setFieldsSettings', []);
+				this.store.commit('setPreviewData', []);
+			}
+			this.store.commit('setConnectionLoadFailed', this.resolveLoadErrorHtml(error));
 		}
 		finally
 		{
 			this.isLoading = false;
 			this.store.commit('setValidationLoading', false);
 		}
+	}
+
+	private resolveLoadErrorHtml(error: unknown): string
+	{
+		const serverErrorHtml = getServerErrorHtml(error);
+		if (serverErrorHtml !== null)
+		{
+			return serverErrorHtml;
+		}
+
+		const phraseCode = isNetworkError(error)
+			? 'DATASET_IMPORT_V2_PREVIEW_NETWORK_ERROR'
+			: 'DATASET_IMPORT_V2_PREVIEW_LOAD_ERROR';
+
+		return Text.encode(Loc.getMessage(phraseCode) ?? '');
 	}
 
 	private prepareHeader(header: ViewResponseHeader, index: number): FieldSettings

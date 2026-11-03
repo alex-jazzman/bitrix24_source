@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_buttons, ui_iconSet_actions, ui_iconSet_main, ui_icons_b24, ui_icons_crm, ui_popupcomponentsmaker) {
+(function (exports, main_core, main_core_events, ui_a11y, ui_buttons, ui_iconSet_actions, ui_iconSet_main, ui_icons_b24, ui_icons_crm, ui_popupcomponentsmaker, intranet_widgetLoader, main_popup) {
 	'use strict';
 
 	class RequisiteSection extends main_core_events.EventEmitter {
@@ -13,8 +13,15 @@ this.BX = this.BX || {};
 		#requisiteElement;
 		#requisitesPopup;
 		#requisiteButton;
-		constructor(options) {
+		#closeSettingsWidget;
+		#getSettingsPopup;
+		#handleSettingsPopupClick = () => {
+			this.#requisitesPopup?.close();
+		};
+		constructor(options, closeSettingsWidget, getSettingsPopup) {
 			super();
+			this.#closeSettingsWidget = closeSettingsWidget;
+			this.#getSettingsPopup = getSettingsPopup;
 			if (options) {
 				this.#updateOptions(options);
 				top.BX.addCustomEvent('onLocalStorageSet', params => {
@@ -35,24 +42,52 @@ this.BX = this.BX || {};
 			this.#publicUrl = main_core.Type.isString(options.publicUrl) ? options.publicUrl : '';
 			this.#editUrl = main_core.Type.isString(options.editUrl) ? options.editUrl : '';
 		}
-		#updateElement() {
+		#updateElement(forceFocusRestore = false) {
 			const currentElement = this.getElement();
+			const activeElement = ui_a11y.FocusNavigator.getActiveElement(currentElement);
+			const shouldMoveFocus = forceFocusRestore || activeElement !== null && currentElement.contains(activeElement);
+			if (this.#requisitesPopup) {
+				this.#requisitesPopup.destroy();
+				this.#requisitesPopup = null;
+			}
 			this.#requisiteElement = null;
 			this.#requisiteButton = null;
-			main_core.Dom.replace(currentElement, this.getElement());
+			const newElement = this.getElement();
+			main_core.Dom.replace(currentElement, newElement);
+			const settingsPopup = this.#getSettingsPopup();
+			if (shouldMoveFocus && settingsPopup?.isShown()) {
+				ui_a11y.FocusNavigator.focusTarget(this.#getRequisiteButton().getContainer(), {
+					focusVisible: true
+				});
+			}
 		}
 		getElement() {
 			if (!this.#requisiteElement) {
+				const onclickHelp = () => {
+					this.#closeSettingsWidget();
+					BX.Helper.show('redirect=detail&code=18213326');
+				};
 				this.#requisiteElement = main_core.Tag.render`
-				<div class="intranet-settings-widget__business-card intranet-settings-widget_box" data-testid="settings-widget-block-requisite">
+				<div
+					class="intranet-settings-widget__business-card intranet-settings-widget_box"
+					data-testid="settings-widget-block-requisite"
+				>
 					<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
 						<div class="intranet-settings-widget_icon-box --gray">
-							<div class="ui-icon-set --customer-card-1"></div>
+							<div class="ui-icon-set --customer-card-1" aria-hidden="true"></div>
 						</div>
 						<div class="intranet-settings-widget__title" data-role="requisite-widget-title">
 							${this.#isConnected ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_SITE_TITLE') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_TITLE')}
 						</div>
-						<i class="ui-icon-set --help" onclick="BX.Helper.show('redirect=detail&code=18213326')"></i>
+						<button
+							type="button"
+							class="intranet-settings-widget__requisite-help"
+							aria-label="${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_REQUISITE_HELP_ARIA')}"
+							data-testid="settings-widget-requisite-help"
+							onclick="${onclickHelp}"
+						>
+							<span class="ui-icon-set --help" aria-hidden="true"></span>
+						</button>
 					</div>
 
 					<div class="intranet-settings-widget__business-card_footer">
@@ -65,38 +100,90 @@ this.BX = this.BX || {};
 			return this.#requisiteElement;
 		}
 		#getRequisiteSettingsButton() {
-			const onclickRequisitesSettings = () => {
-				this.#getRequisitesPopup().show();
+			const onclickRequisitesSettings = event => {
+				this.#getRequisitesPopup(event.currentTarget).show();
 			};
 			return main_core.Tag.render`
-			<span onclick="${onclickRequisitesSettings}" class="intranet-settings-widget__requisite-btn">
-				<i class='ui-icon-set --more-information'></i>
-			</span>
+			<button
+				type="button"
+				class="intranet-settings-widget__requisite-btn"
+				aria-label="${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_REQUISITE_MORE_ARIA')}"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				data-testid="settings-widget-requisite-more"
+				onclick="${onclickRequisitesSettings}"
+			>
+				<span class="ui-icon-set --more-information" aria-hidden="true"></span>
+			</button>
 		`;
 		}
-		#getRequisitesPopup() {
+		#getRequisitesPopupEvents(bindElement) {
+			return {
+				onShow: () => {
+					main_core.Dom.attr(bindElement, 'aria-expanded', 'true');
+					setTimeout(() => {
+						if (!this.#requisitesPopup?.isShown()) {
+							return;
+						}
+						const settingsPopupContainer = this.#getSettingsPopup()?.getPopupContainer();
+						if (settingsPopupContainer) {
+							main_core.Event.unbind(settingsPopupContainer, 'click', this.#handleSettingsPopupClick);
+							main_core.Event.bind(settingsPopupContainer, 'click', this.#handleSettingsPopupClick);
+						}
+					}, 0);
+				},
+				onClose: () => {
+					this.#unbindSettingsPopupClick();
+					main_core.Dom.attr(bindElement, 'aria-expanded', 'false');
+					if (ui_a11y.FocusMonitor.Instance.getLastInputModality() === 'keyboard') {
+						ui_a11y.FocusNavigator.focusTarget(bindElement, {
+							focusVisible: true
+						});
+					}
+				},
+				onDestroy: () => {
+					this.#unbindSettingsPopupClick();
+					main_core.Dom.attr(bindElement, 'aria-expanded', 'false');
+					this.#requisitesPopup = null;
+				}
+			};
+		}
+		#unbindSettingsPopupClick() {
+			const settingsPopupContainer = this.#getSettingsPopup()?.getPopupContainer();
+			if (settingsPopupContainer) {
+				main_core.Event.unbind(settingsPopupContainer, 'click', this.#handleSettingsPopupClick);
+			}
+		}
+		#getRequisitesPopup(bindElement) {
 			if (!this.#requisitesPopup) {
 				const onclickCopyLink = () => {
 					if (BX.clipboard.copy(this.#publicUrl)) {
+						const message = main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPIED_POPUP');
 						BX.UI.Notification.Center.notify({
-							content: main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPIED_POPUP'),
+							content: message,
 							position: 'top-left',
 							autoHideDelay: 3000
 						});
+						ui_a11y.LiveAnnouncer.announce(message, 'polite');
 					}
 				};
 				const onclickConfigureSite = () => {
 					window.open(this.#editUrl, '_blank');
 					this.#requisitesPopup.close();
-					SettingsWidget.close();
+					this.#closeSettingsWidget();
 				};
 				let copyLinkButton = null;
 				if (this.#publicUrl) {
 					copyLinkButton = {
+						attrs: {
+							'data-testid': 'settings-widget-requisite-copy-link'
+						},
 						html: `
 							<div class="intranet-settings-widget__popup-item">
 								<div class="ui-icon-set --link-3"></div> 
-								<div class="intranet-settings-widget__popup-name">${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON')}</div>
+								<div class="intranet-settings-widget__popup-name">
+									${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON')}
+								</div>
 							</div>
 						`,
 						onclick: onclickCopyLink
@@ -105,10 +192,15 @@ this.BX = this.BX || {};
 				let configureSiteButton = null;
 				if (this.#editUrl) {
 					configureSiteButton = {
+						attrs: {
+							'data-testid': 'settings-widget-requisite-configure-site'
+						},
 						html: `
 							<div class="intranet-settings-widget__popup-item">
 								<div class="ui-icon-set --paint-1"></div> 
-								<div class="intranet-settings-widget__popup-name">${main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON')}</div>
+								<div class="intranet-settings-widget__popup-name">
+									${main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON')}
+								</div>
 							</div>
 						`,
 						onclick: onclickConfigureSite
@@ -118,37 +210,39 @@ this.BX = this.BX || {};
 					if (this.#requisitesPopup) {
 						this.#requisitesPopup.close();
 					}
-					SettingsWidget.close();
+					this.#closeSettingsWidget();
 					BX.SidePanel.Instance.open(`/crm/company/details/${this.#companyId}/?init_mode=edit&rqedit=y`);
 				};
 				const configureRequisiteButton = {
+					attrs: {
+						'data-testid': 'settings-widget-requisite-configure'
+					},
 					html: `
 						<div class="intranet-settings-widget__popup-item">
 							<div class="ui-icon-set --pencil-40"></div>
-							<div class="intranet-settings-widget__popup-name">${main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON')}</div>
+							<div class="intranet-settings-widget__popup-name">
+								${main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON')}
+							</div>
 						</div>
 					`,
 					onclick: onclickConfigureRequisites
 				};
 				const popupWidth = 240;
-				this.#requisitesPopup = BX.PopupMenu.create('requisites-settings', event.currentTarget, [copyLinkButton, configureRequisiteButton, configureSiteButton], {
+				this.#requisitesPopup = main_popup.MenuManager.create('requisites-settings', bindElement, [copyLinkButton, configureRequisiteButton, configureSiteButton], {
+					ariaLabel: main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_REQUISITE_MORE_ARIA'),
 					closeByEsc: true,
 					autoHide: true,
+					focusTrap: {
+						initialFocus: 'container'
+					},
 					width: popupWidth,
 					offsetLeft: -72,
 					angle: {
 						offset: popupWidth / 2 - 15
 					},
-					events: {
-						onShow: () => {
-							setTimeout(() => {
-								main_core.Event.bindOnce(SettingsWidget.getInstance().getWidget().getPopup().getPopupContainer(), 'click', () => {
-									this.#requisitesPopup.close();
-								});
-							}, 0);
-						}
-					}
+					events: this.#getRequisitesPopupEvents(bindElement)
 				});
+				main_core.Dom.attr(this.#requisitesPopup.getMenuContainer(), 'data-testid', 'settings-widget-requisite-menu');
 			}
 			return this.#requisitesPopup;
 		}
@@ -170,6 +264,7 @@ this.BX = this.BX || {};
 					onclick: this.#handleButtonOnclick.bind(this),
 					className: 'ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light'
 				});
+				main_core.Dom.attr(this.#requisiteButton.getContainer(), 'data-testid', 'settings-widget-requisite-primary');
 			}
 			return this.#requisiteButton;
 		}
@@ -187,26 +282,30 @@ this.BX = this.BX || {};
 			}
 		}
 		#handleOpenRequisite() {
-			SettingsWidget.close();
+			this.#closeSettingsWidget();
 			window.open(this.#publicUrl, '_blank');
 		}
 		#handleCreateLanding() {
-			this.#getRequisiteButton().setWaiting(true);
+			const requisiteButton = this.#getRequisiteButton();
+			const shouldRestoreFocus = ui_a11y.FocusNavigator.getActiveElement(this.getElement()) === requisiteButton.getContainer();
+			requisiteButton.setWaiting(true);
 			this.#createLanding().then(() => {
-				this.#requisitesPopup = null;
 				this.#requisiteButton = null;
-				this.#updateElement();
+				this.#updateElement(shouldRestoreFocus);
 				if (!this.#isPublic) {
-					const errorPopup = new Popup('public-landing-error', this.getElement().querySelector('[data-role="requisite-widget-title"]'), {
+					const message = main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING_ERROR');
+					const errorPopup = new main_popup.Popup('public-landing-error', this.getElement().querySelector('[data-role="requisite-widget-title"]'), {
 						autoHide: true,
 						closeByEsc: true,
+						focusTrap: false,
 						angle: true,
 						darkMode: true,
-						content: main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING_ERROR'),
+						ariaLabel: message,
+						content: message,
 						events: {
 							onShow: () => {
 								setTimeout(() => {
-									main_core.Event.bindOnce(SettingsWidget.getInstance().getWidget().getPopup().getPopupContainer(), 'click', () => {
+									main_core.Event.bindOnce(this.#getSettingsPopup().getPopupContainer(), 'click', () => {
 										errorPopup.close();
 									});
 								}, 0);
@@ -216,7 +315,9 @@ this.BX = this.BX || {};
 							}
 						}
 					});
+					main_core.Dom.attr(errorPopup.getPopupContainer(), 'data-testid', 'settings-widget-requisite-error');
 					errorPopup.show();
+					ui_a11y.LiveAnnouncer.announce(message, 'assertive');
 				}
 			});
 		}
@@ -241,11 +342,11 @@ this.BX = this.BX || {};
 			});
 		}
 		#handleEditRequisite() {
-			SettingsWidget.close();
+			this.#closeSettingsWidget();
 			BX.SidePanel.Instance.open(`/crm/company/details/${this.#companyId}/?init_mode=edit&rqedit=y`);
 		}
 		#handleCreateCompany() {
-			SettingsWidget.close();
+			this.#closeSettingsWidget();
 			BX.SidePanel.Instance.open('/crm/company/details/0/?mycompany=y&rqedit=y');
 		}
 		#getRequisites() {
@@ -292,7 +393,7 @@ this.BX = this.BX || {};
 			this.#settingsUrl = options.settingsPath;
 			this.#isRenameable = options.isRenameable;
 			this.#mainPage = options.mainPage;
-			this.#requisiteSection = new RequisiteSection(options.requisite);
+			this.#requisiteSection = new RequisiteSection(options.requisite, () => this.getWidget().close(), () => this.getWidget().getPopup());
 			this.#setOptions(options);
 		}
 		#setOptions(options) {
@@ -326,9 +427,17 @@ this.BX = this.BX || {};
 				main_core.Event.unbindAll(this.getWidget().getPopup().getPopupContainer(), 'click');
 				this.#updateAriaExpanded(false);
 			});
+			const popup = this.#widgetPopup.getPopup();
+			const popupContainer = popup.getPopupContainer();
+			const loadingFocusTarget = ui_a11y.FocusNavigator.getActiveElement(popupContainer);
+			const shouldSetInitialFocus = popup.isShown() && ui_a11y.FocusMonitor.Instance.getLastInputModality() === 'keyboard' && loadingFocusTarget !== null && popupContainer.contains(loadingFocusTarget);
 			widgetLoader.clearBeforeInsertContent();
 			this.#getItemsList().then(() => {
 				this.#drawItemsList();
+				const currentFocusTarget = ui_a11y.FocusNavigator.getActiveElement(popupContainer);
+				if (shouldSetInitialFocus && popup.isShown() && currentFocusTarget !== null && currentFocusTarget === loadingFocusTarget && popupContainer.contains(currentFocusTarget)) {
+					ui_a11y.FocusNavigator.focusContainer(popupContainer);
+				}
 			});
 			return this;
 		}
@@ -339,11 +448,17 @@ this.BX = this.BX || {};
 			}
 			return instance;
 		}
-		static bindAndShow(button) {
+		static bind(button) {
 			const instance = this.getInstance();
 			if (instance) {
 				main_core.Event.unbindAll(button);
 				main_core.Event.bind(button, 'click', instance.toggle.bind(instance, button));
+			}
+			return instance;
+		}
+		static bindAndShow(button) {
+			const instance = this.bind(button);
+			if (instance) {
 				instance.show(button);
 			}
 			return instance;
@@ -422,21 +537,43 @@ this.BX = this.BX || {};
 		#getLinkHeaderIcon() {
 			const onclickCopyLink = () => {
 				if (BX.clipboard.copy(window.location.origin)) {
+					const message = main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_LINK_COPIED_POPUP');
 					BX.UI.Notification.Center.notify({
-						content: main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_LINK_COPIED_POPUP'),
+						content: message,
 						position: 'top-left',
 						autoHideDelay: 3000
 					});
+					ui_a11y.LiveAnnouncer.announce(message, 'polite');
 				}
 			};
-			return main_core.Tag.render`<span class='ui-icon-set --link-3 intranet-settings-widget__header-btn' onclick="${onclickCopyLink}"></span>`;
+			return main_core.Tag.render`
+			<button
+				type="button"
+				class="intranet-settings-widget__header-btn"
+				aria-label="${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_PORTAL_LINK_ARIA')}"
+				data-autofocus
+				data-testid="settings-widget-copy-link"
+				onclick="${onclickCopyLink}"
+			>
+				<span class="ui-icon-set --link-3" aria-hidden="true"></span>
+			</button>
+		`;
 		}
 		#getEditHeaderIcon() {
-			const onclickEditLink = () => {
-				this.getWidget().close();
-				BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings&page=portal&option=subDomainName');
-			};
-			return main_core.Tag.render`<span class='ui-icon-set --pencil-40 intranet-settings-widget__header-btn' onclick="${onclickEditLink}"></span>`;
+			const settingsUrl = `${this.#settingsUrl}?analyticContext=widget_settings_settings&page=portal&option=subDomainName`;
+			const onclickEditLink = this.#openSidePanel.bind(this, settingsUrl);
+			return main_core.Tag.render`
+			<a
+				class="intranet-settings-widget__header-btn"
+				href="${settingsUrl}"
+				aria-label="${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_RENAME_PORTAL_ARIA')}"
+				data-autofocus
+				data-testid="settings-widget-rename"
+				onclick="${onclickEditLink}"
+			>
+				<span class="ui-icon-set --pencil-40" aria-hidden="true"></span>
+			</a>
+		`;
 		}
 		#getHeader() {
 			const header = main_core.Tag.render`
@@ -475,9 +612,14 @@ this.BX = this.BX || {};
 				BX.UI.InfoHelper.show('info_implementation_request');
 			};
 			const partnerOrder = main_core.Tag.render`
-			<span class="intranet-settings-widget__footer-item" onclick="${onclickOpenPartnerOrder}">
+			<button
+				type="button"
+				class="intranet-settings-widget__footer-item"
+				data-testid="settings-widget-order"
+				onclick="${onclickOpenPartnerOrder}"
+			>
 				${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_ORDER_PARTNER_LINK_MSGVER_1')}
-			</span>
+			</button>
 		`;
 			const onclickWhereToBegin = () => {
 				if (top.BX.Helper) {
@@ -498,12 +640,22 @@ this.BX = this.BX || {};
 			return main_core.Tag.render`
 				<div class="intranet-settings-widget__footer">
 					${this.#isBitrix24 ? partnerOrder : ''}
-					<span class="intranet-settings-widget__footer-item" onclick="${onclickWhereToBegin}">
+					<button
+						type="button"
+						class="intranet-settings-widget__footer-item"
+						data-testid="settings-widget-getting-started"
+						onclick="${onclickWhereToBegin}"
+					>
 						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WHERE_TO_BEGIN_LINK')}
-					</span>
-					<span class="intranet-settings-widget__footer-item" onclick="${onclickSupport}">
+					</button>
+					<button
+						type="button"
+						class="intranet-settings-widget__footer-item"
+						data-testid="settings-widget-support"
+						onclick="${onclickSupport}"
+					>
 						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SUPPORT_BUTTON')}
-					</span>
+					</button>
 				</div>
 			`;
 		}
@@ -515,24 +667,33 @@ this.BX = this.BX || {};
 			main_core.Dom.addClass(node, '--widget-item');
 			return node;
 		}
+		#openSidePanel(url, event) {
+			if (event.ctrlKey || event.metaKey) {
+				return;
+			}
+			event.preventDefault();
+			this.getWidget().close();
+			BX.SidePanel.Instance.open(url);
+		}
 		#getMainPageElement() {
-			const onclick = () => {
-				this.getWidget().close();
-				BX.SidePanel.Instance.open(this.#mainPage.settingsPath);
-				// todo: add vibe analytic context sub_section = from_widget_vibe_point
-			};
+			const onclick = this.#openSidePanel.bind(this, this.#mainPage.settingsPath);
 			const element = main_core.Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --green">
-						<div class="ui-icon-set --home-page"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${this.#mainPage.settingsPath}"
+				data-testid="settings-widget-main-page"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box --green">
+						<span class="ui-icon-set --home-page" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</div>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 			return this.#prepareElement(element);
 		}
@@ -552,25 +713,30 @@ this.BX = this.BX || {};
 				this.#getHoldingWidget().show(this.#target);
 			};
 			const element = main_core.Tag.render`
-			<button type="button" class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
-			<span class="intranet-settings-widget__branch-icon_box">
-				<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></span>
-			</span>
-			<span class="intranet-settings-widget__branch_content">
-				<span class="intranet-settings-widget__branch-title">
-					${affiliate.isHolding ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH')}
-				</span>
-				<span class="intranet-settings-widget__title">
-					${affiliate.name}
-				</span>
-			</span>
-			<span class="intranet-settings-widget__branch-btn_box">
-				<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
-					${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES')}
-				</span>
-			</span>
-		</button>
-		`;
+			<button
+				type="button"
+				class="intranet-settings-widget__branch"
+				data-testid="settings-widget-affiliate"
+				onclick="${onclickOpen}"
+			>
+					<span class="intranet-settings-widget__branch-icon_box">
+						<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__branch_content">
+						<span class="intranet-settings-widget__branch-title">
+							${affiliate.isHolding ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH')}
+						</span>
+						<span class="intranet-settings-widget__title">
+							${affiliate.name}
+						</span>
+					</span>
+					<span class="intranet-settings-widget__branch-btn_box">
+						<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
+							${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES')}
+						</span>
+					</span>
+				</button>
+			`;
 			return this.#prepareElement(element);
 		}
 		#getHoldingWidget() {
@@ -581,9 +747,16 @@ this.BX = this.BX || {};
 					this.show(this.#target);
 				};
 				const holdingWidgetCloseBtn = main_core.Tag.render`
-				<button type="button" onclick="${onclickClose}" class="intranet-settings-widget__close-btn">
+				<button
+					type="button"
+					class="intranet-settings-widget__close-btn"
+					data-testid="settings-widget-holding-back"
+					onclick="${onclickClose}"
+				>
 					<span aria-hidden="true" class="ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon"></span>
-					<span class="intranet-settings-widget__close-btn_name">${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST')}</span>
+					<span class="intranet-settings-widget__close-btn_name">
+						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST')}
+					</span>
 				</button>
 			`;
 				this.#holdingWidget.getWidget().getPopup().getContentContainer().prepend(holdingWidgetCloseBtn);
@@ -606,20 +779,29 @@ this.BX = this.BX || {};
 			};
 			const lockIcon = main_core.Tag.render`
 			<span class="intranet-settings-widget__branch-lock-icon_box">
-				<span class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock"></span>
+				<span class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock" aria-hidden="true"></span>
 			</span>
 		`;
 			const element = main_core.Tag.render`
-			<button type="button" class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
+			<button
+				type="button"
+				class="intranet-settings-widget__branch"
+				data-testid="settings-widget-holding"
+				onclick="${onclickOpen}"
+			>
 				<span class="intranet-settings-widget__branch-icon_box">
-					<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></span>
+					<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network" aria-hidden="true"></span>
 					${!this.#holding.canBeHolding ? lockIcon : ''}
 				</span>
 				<span class="intranet-settings-widget__branch_content">
 					<span class="intranet-settings-widget__title">${title}</span>
 				</span>
 				<span class="intranet-settings-widget__branch-btn_box">
-					<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">${buttonText}</span>
+					<span
+						class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light"
+					>
+						${buttonText}
+					</span>
 				</span>
 			</button>
 		`;
@@ -634,62 +816,71 @@ this.BX = this.BX || {};
 		`;
 		}
 		#getSecurityElement() {
-			const onclick = () => {
-				this.getWidget().close();
-				BX.SidePanel.Instance.open(this.#settingsUrl + '?page=security&analyticContext=widget_settings_settings');
-			};
+			const settingsUrl = `${this.#settingsUrl}?page=security&analyticContext=widget_settings_settings`;
+			const onclick = this.#openSidePanel.bind(this, settingsUrl);
 			const element = main_core.Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box ${this.#otp.IS_ACTIVE === 'Y' ? '--green' : '--yellow'}">
-						<div class="ui-icon-set --shield"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${settingsUrl}"
+				data-testid="settings-widget-security"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box ${this.#otp.IS_ACTIVE === 'Y' ? '--green' : '--yellow'}">
+						<span class="ui-icon-set --shield" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SECURITY_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</span>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 			return this.#prepareElement(element);
 		}
 		#getGeneralSettingsElement() {
-			const onclick = () => {
-				this.getWidget().close();
-				BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings');
-			};
+			const settingsUrl = `${this.#settingsUrl}?analyticContext=widget_settings_settings`;
+			const onclick = this.#openSidePanel.bind(this, settingsUrl);
 			const element = main_core.Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --settings-2"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${settingsUrl}"
+				data-testid="settings-widget-general"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box --gray">
+						<span class="ui-icon-set --settings-2" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SETTINGS_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</span>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 			return this.#prepareElement(element);
 		}
 		#getMigrateElement() {
-			const onclick = () => {
-				this.getWidget().close();
-				BX.SidePanel.Instance.open(`${this.#marketUrl}category/migration/`);
-			};
+			const marketUrl = `${this.#marketUrl}category/migration/`;
+			const onclick = this.#openSidePanel.bind(this, marketUrl);
 			const element = main_core.Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --market-1"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${marketUrl}"
+				data-testid="settings-widget-migrate"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box --gray">
+						<span class="ui-icon-set --market-1" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_MIGRATION_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</div>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 			return this.#prepareElement(element);
 		}
@@ -702,5 +893,5 @@ this.BX = this.BX || {};
 
 	exports.SettingsWidget = SettingsWidget;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI, window, window, BX, BX, BX.UI);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI.Accessibility, BX.UI, window, window, BX, BX, BX.UI, BX.Intranet, BX.Main);
 //# sourceMappingURL=script.js.map

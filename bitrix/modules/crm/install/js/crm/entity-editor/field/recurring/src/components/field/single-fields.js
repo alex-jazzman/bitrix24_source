@@ -2,6 +2,7 @@ import { getPeriodByValue, getPeriods } from '../../enum/period';
 import { createDatePickerInstance, getFormattedDate, showPopupMenu } from '../../helper';
 import { popupMenuMixin } from '../common/destroy-popup-menu';
 import { FieldTitle } from '../common/field-title';
+import { selectorA11yMixin } from '../common/selector-a11y';
 import { HiddenInput } from '../common/hidden-input';
 
 // @vue/component
@@ -11,7 +12,7 @@ export const SingleFields = {
 		HiddenInput,
 	},
 
-	mixins: [popupMenuMixin('crm-recurring-period-selector')],
+	mixins: [popupMenuMixin('crm-recurring-period-selector'), selectorA11yMixin],
 
 	props: {
 		interval: {
@@ -100,7 +101,7 @@ export const SingleFields = {
 			});
 		},
 
-		showPeriodSelector(): void
+		showPeriodSelector(event: ?Event = null): void
 		{
 			const menu = [];
 
@@ -112,7 +113,8 @@ export const SingleFields = {
 				});
 			});
 
-			showPopupMenu(this.popupMenuId, this.$refs.periodSelector, menu);
+			this.markSelectorOpened('period');
+			showPopupMenu(this.popupMenuId, this.$refs.periodSelector, menu, () => this.markSelectorClosed('period'), event);
 		},
 
 		onChangePeriod(_, item): void
@@ -141,11 +143,19 @@ export const SingleFields = {
 						v-model="currentInterval"
 					>
 					
-					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div
+						class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown"
+						role="button"
+						tabindex="0"
+						aria-haspopup="menu"
+						:aria-expanded="isSelectorExpanded('period')"
+						@click="showPeriodSelector"
+						@keydown.enter.prevent="showPeriodSelector"
+						@keydown.space.prevent="showPeriodSelector"
+					>
 						<div
 							ref="periodSelector"
 							class="ui-ctl-element"
-							@click="showPeriodSelector"
 						>
 							{{currentModeTitle}}
 						</div>

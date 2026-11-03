@@ -68,7 +68,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				const name = searchQuery.getQuery().toLowerCase();
 				const dialog = event.getTarget();
 				setTimeout(() => {
-					const tagsList = name.split(',');
+					const tagsList = name.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 					tagsList.forEach(tag => {
 						const item = dialog.addItem({
 							id: tag,

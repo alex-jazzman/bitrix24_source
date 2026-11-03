@@ -22,6 +22,7 @@ return [
 		'im.v2.lib.notifier',
 		'im.v2.lib.permission',
 		'im.v2.lib.promo',
+		'im.v2.lib.slider',
 		'im.v2.lib.utils',
 		'im.v2.provider.service.chat',
 		'main.core',
@@ -30,7 +31,9 @@ return [
 		'socialnetwork.collab.access-rights',
 		'socialnetwork.v2.application.project-wizard',
 		'socialnetwork.v2.model.interface',
+		'ui.design-tokens.air',
 		'ui.icon-set.api.vue',
+		'ui.system.typography.vue',
 	],
 	'skip_core' => false,
 ];

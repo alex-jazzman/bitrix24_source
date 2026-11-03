@@ -1,43 +1,61 @@
 import './canvas-map.css';
-import { Type } from 'main.core';
-import { toValue, computed, toRefs, useTemplateRef, reactive } from 'ui.vue3';
-import { useBlockDiagram, useCanvas, useLoc } from '../../composables';
-import type { DiagramBlockDimensions } from '../../types';
-import type { DiagramBlock } from '../../types';
-
-type ViewportIndicatorRect = {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-}
+// The map is drawn by the video card, so it reads the tokens below itself instead of leaving
+// them to the browser: an undeclared token would resolve to nothing at all here.
+// ui.design-tokens is the legacy set and is needed while DEFAULT_BLOCK_COLOR lives there.
+import 'ui.design-tokens';
+import 'ui.design-tokens.air';
+import {
+	toValue,
+	computed,
+	toRefs,
+	useTemplateRef,
+	reactive,
+	watch,
+	onMounted,
+	onUnmounted,
+	type ComputedRef,
+} from 'ui.vue3';
+import { useActionKeyshortcuts, useBlockDiagram, useCanvas, useLoc } from '../../composables';
+import {
+	CANVAS_ACTION_ID,
+	buildCanvasKeyShortcuts,
+	getMapBlockRects,
+	getMapLayout,
+	getMapScale,
+	getMapViewportRect,
+	isPointInMapRect,
+	isValidColorPalette,
+} from '../../utils';
+import type { MapPalette } from '../../utils';
 
 type CanvasMapSetup = {
-	mapWidth: number;
-	mapHeight: number;
-	sortedBlocks: Array<DiagramBlock>,
 	canvasMapStyle: { [string]: string };
-	contentOffsetX: number;
-	contentOffsetY: number;
-	renderScale: number;
-	viewportIndicator: ViewportIndicatorRect;
 	mapLabel: string;
+	keyShortcuts: ComputedRef<string>;
 	onMapMouseDown: (event: MouseEvent) => void;
 	onMapMouseMove: (event: MouseEvent) => void;
-	onMapMouseUp: (event: MouseEvent) => void;
-	onMapKeyDown: (event: KeyboardEvent) => void;
-	getBlockColor: (block: ?DiagramBlock) => string;
+	onMapMouseUp: () => void;
 };
-
-const MAP_PADDING: number = 50;
-const KEYBOARD_PAN_STEP: number = 50;
 
 const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
 const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
-const FRAME_BLOCK_TYPE = 'frame';
+// The frame of the current view is drawn with a graphics context, so a CSS rule of a consumer
+// never reaches it - the token is the extension point instead, and it is deliberately left
+// undeclared: a value declared on the container would beat the same token declared by a consumer
+// on any ancestor. Behind it stands the default of the extension, a token of the design system.
+const VIEWPORT_COLOR = 'var(--ui-block-diagram-map-viewport-color, var(--ui-color-blue-57))';
+
 const INTERACTION_STATE_MODES = {
 	CURSOR: 'cursor',
 	MAP: 'map',
+};
+
+// Redraw levels. Geometry is the expensive one - it rebuilds the rectangles of every block;
+// viewport only moves the frame of the current view, which is what a gesture on the map does.
+const INVALIDATION_LEVELS = {
+	NONE: 0,
+	VIEWPORT: 1,
+	GEOMETRY: 2,
 };
 
 // @vue/component
@@ -54,7 +72,19 @@ export const CanvasMap = {
 		},
 		blockColors: {
 			type: Object,
-			default: () => {},
+			default: () => ({}),
+			validator(value): boolean
+			{
+				return isValidColorPalette(value);
+			},
+		},
+		frameColors: {
+			type: Object,
+			default: () => ({}),
+			validator(value): boolean
+			{
+				return isValidColorPalette(value);
+			},
 		},
 	},
 	// eslint-disable-next-line max-lines-per-function
@@ -68,10 +98,16 @@ export const CanvasMap = {
 			transformX,
 			transformY,
 			zoom,
+			mapRenderer,
+			canvasMapRef,
 		} = useBlockDiagram();
 		const { setCamera } = useCanvas();
 		const loc = useLoc();
-		const { mapWidth, mapHeight, blockColors } = toRefs(props);
+		const fitToViewKeyshortcuts = useActionKeyshortcuts(CANVAS_ACTION_ID.FIT_TO_VIEW);
+		const keyShortcuts = computed((): string => {
+			return buildCanvasKeyShortcuts(toValue(fitToViewKeyshortcuts));
+		});
+		const { mapWidth, mapHeight, blockColors, frameColors } = toRefs(props);
 		const mapEl = useTemplateRef('map');
 		const mapRootEl = useTemplateRef('mapRoot');
 		const mapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_LABEL');
@@ -81,129 +117,177 @@ export const CanvasMap = {
 			mode: null,
 			dragOffsetX: 0,
 			dragOffsetY: 0,
-			mapRect: null,
 		});
+
+		// Re-measured every frame of the gesture: layout may shift or the page may scroll while it runs.
+		const getMapRect = (): DOMRect | null => {
+			return toValue(mapEl)?.getBoundingClientRect() ?? null;
+		};
+
+		// Rectangles of the last drawn frame. The array is handed to the renderer as is, and a
+		// viewport-only redraw reuses the very same array - that is what keeps a drag on the
+		// map from rebuilding the geometry of the blocks.
+		let blockRects = [];
+		let pendingLevel = INVALIDATION_LEVELS.NONE;
+		let frameId = null;
+		// The template ref is already cleared by the time the unmount hook runs, so the element the
+		// map was attached to is kept here: the detach has to name it to leave a binding made by a
+		// component that mounted earlier alone.
+		let attachedElement = null;
+		// The element registered as the focus surface. The unregistration names it so that a panel
+		// unmounted after a later one mounted does not drop the registration that later one made.
+		let registeredMapRoot = null;
 
 		const canvasMapStyle = computed((): { [string]: string } => ({
 			width: `${toValue(mapWidth)}px`,
 			height: `${toValue(mapHeight)}px`,
 		}));
 
-		const layoutData = computed(() => {
-			const items = toValue(blocks);
+		const layout = computed(() => getMapLayout(toValue(blocks), {
+			canvasWidth: toValue(canvasWidth),
+			canvasHeight: toValue(canvasHeight),
+			blocksRectMap: toValue(blocksRectMap),
+		}));
 
-			if (!Type.isArrayFilled(items))
+		const renderScale = computed((): number => getMapScale(toValue(layout), {
+			width: toValue(mapWidth),
+			height: toValue(mapHeight),
+		}));
+
+		const viewportRect = computed(() => getMapViewportRect(toValue(layout), toValue(renderScale), {
+			x: toValue(transformX),
+			y: toValue(transformY),
+			zoom: toValue(zoom),
+			canvasWidth: toValue(canvasWidth),
+			canvasHeight: toValue(canvasHeight),
+		}));
+
+		function flush(): void
+		{
+			frameId = null;
+
+			if (!mapRenderer.isAttached)
 			{
-				const cWidth = toValue(canvasWidth);
-				const cHeight = toValue(canvasHeight);
+				pendingLevel = INVALIDATION_LEVELS.NONE;
 
-				return {
-					sortedBlocks: [],
-					minX: 0,
-					minY: 0,
-					width: cWidth ? 2 * cWidth : 1000,
-					height: cHeight ? 2 * cHeight : 1000,
-				};
+				return;
 			}
 
-			let minX = Infinity;
-			let minY = Infinity;
-			let maxX = -Infinity;
-			let maxY = -Infinity;
+			if (pendingLevel === INVALIDATION_LEVELS.GEOMETRY)
+			{
+				blockRects = getMapBlockRects(toValue(layout), toValue(renderScale), mapRenderer.colors);
+			}
 
-			const frames = [];
-			const content = [];
-
-			items.forEach((block: DiagramBlock) => {
-				const { x, y } = block.position;
-				const { width, height } = getBlockSize(block);
-
-				minX = Math.min(minX, x);
-				minY = Math.min(minY, y);
-				maxX = Math.max(maxX, x + width);
-				maxY = Math.max(maxY, y + height);
-
-				const renderBlock = {
-					...block,
-					dimensions: { width, height },
-				};
-
-				if (block?.type === FRAME_BLOCK_TYPE)
-				{
-					frames.push(renderBlock);
-				}
-				else
-				{
-					content.push(renderBlock);
-				}
+			mapRenderer.render({
+				blocks: blockRects,
+				viewport: toValue(viewportRect),
+				viewportColor: mapRenderer.colors.viewport,
 			});
 
-			return {
-				sortedBlocks: [
-					...content,
-					...frames,
-				],
-				minX: minX - MAP_PADDING,
-				minY: minY - MAP_PADDING,
-				width: (maxX + MAP_PADDING) - (minX - MAP_PADDING),
-				height: (maxY + MAP_PADDING) - (minY - MAP_PADDING),
-			};
-		});
-
-		const sortedBlocks = computed(() => toValue(layoutData).sortedBlocks);
-		const contentOffsetX = computed(() => toValue(layoutData).minX);
-		const contentOffsetY = computed(() => toValue(layoutData).minY);
-
-		const renderScale = computed((): number => {
-			const { width, height } = toValue(layoutData);
-
-			if (width <= 0 || height <= 0)
-			{
-				return 1;
-			}
-
-			return Math.min(
-				toValue(mapWidth) / width,
-				toValue(mapHeight) / height,
-			);
-		});
-
-		const viewportIndicator = computed((): ViewportIndicatorRect => {
-			const scale = toValue(renderScale);
-			const currentZoom = toValue(zoom);
-
-			const width = toValue(canvasWidth) * scale / currentZoom;
-			const height = toValue(canvasHeight) * scale / currentZoom;
-
-			const x = (toValue(transformX) - toValue(contentOffsetX)) * scale;
-			const y = (toValue(transformY) - toValue(contentOffsetY)) * scale;
-
-			return { x, y, width, height };
-		});
-
-		function isPointInViewport(x: number, y: number): boolean
-		{
-			const indicator = toValue(viewportIndicator);
-
-			return (
-				x >= indicator.x
-				&& x <= indicator.x + indicator.width
-				&& y >= indicator.y
-				&& y <= indicator.y + indicator.height
-			);
+			pendingLevel = INVALIDATION_LEVELS.NONE;
 		}
 
-		function updateCamera(clientX: number, clientY: number): void
+		function invalidate(level: number): void
 		{
-			if (!interactionState.mapRect)
+			pendingLevel = Math.max(pendingLevel, level);
+
+			if (frameId !== null)
 			{
 				return;
 			}
 
-			const mouseRelX = clientX - interactionState.mapRect.left;
-			const mouseRelY = clientY - interactionState.mapRect.top;
+			frameId = requestAnimationFrame(flush);
+		}
 
-			const indicator = toValue(viewportIndicator);
+		function getPalette(): MapPalette
+		{
+			return {
+				palette: toValue(blockColors) ?? {},
+				framePalette: toValue(frameColors) ?? {},
+				block: DEFAULT_BLOCK_COLOR,
+				frame: DEFAULT_FRAME_BLOCK_COLOR,
+				viewport: VIEWPORT_COLOR,
+			};
+		}
+
+		watch([layout, renderScale], () => invalidate(INVALIDATION_LEVELS.GEOMETRY));
+		watch(viewportRect, () => invalidate(INVALIDATION_LEVELS.VIEWPORT));
+
+		// The colors of the blocks and of the frames are resolved into numbers once and live in the
+		// renderer, so a consumer who changes either palette has to reach them. Repainting a single
+		// entry in place is as much a palette change as handing over another object, and the map has
+		// no other way to learn about it - hence the deep watch over a handful of colors. One watch
+		// for both: they have the same effect, and two of them would call setPalette twice per frame.
+		// It follows the palettes alone: the level it raises is the expensive one, and a gesture on
+		// the map must not raise it.
+		watch([blockColors, frameColors], () => {
+			if (!mapRenderer.isAttached)
+			{
+				return;
+			}
+
+			mapRenderer.setPalette(getPalette());
+			invalidate(INVALIDATION_LEVELS.GEOMETRY);
+		}, { deep: true });
+
+		onMounted(() => {
+			// Registers the panel as a focus surface of the diagram; why - see `isFocusOnAnyOf` in
+			// composables/keyboard-pan.js.
+			registeredMapRoot = toValue(mapRootEl);
+			canvasMapRef.value = registeredMapRoot;
+
+			const element = toValue(mapEl);
+
+			if (!element)
+			{
+				return;
+			}
+
+			mapRenderer.attach(element, getPalette());
+			attachedElement = element;
+
+			// An attach that did not happen leaves nothing to draw on - without a drawing context
+			// the map stays empty, and asking for a frame would only hide that.
+			if (!mapRenderer.isAttached)
+			{
+				return;
+			}
+
+			invalidate(INVALIDATION_LEVELS.GEOMETRY);
+		});
+
+		onUnmounted(() => {
+			if (frameId !== null)
+			{
+				cancelAnimationFrame(frameId);
+				frameId = null;
+			}
+
+			pendingLevel = INVALIDATION_LEVELS.NONE;
+			mapRenderer.detach(attachedElement);
+			attachedElement = null;
+
+			if (toValue(canvasMapRef) === registeredMapRoot)
+			{
+				canvasMapRef.value = null;
+			}
+
+			registeredMapRoot = null;
+		});
+
+		function updateCamera(clientX: number, clientY: number): void
+		{
+			const mapRect = getMapRect();
+
+			if (!mapRect)
+			{
+				return;
+			}
+
+			const mouseRelX = clientX - mapRect.left;
+			const mouseRelY = clientY - mapRect.top;
+
+			const indicator = toValue(viewportRect);
 			const scale = toValue(renderScale);
 			const currentZoom = toValue(zoom);
 
@@ -216,15 +300,15 @@ export const CanvasMap = {
 				targetMapY = mouseRelY - interactionState.dragOffsetY - (indicator.height / 2);
 			}
 
-			const canvasX = targetMapX / scale + toValue(contentOffsetX);
-			const canvasY = targetMapY / scale + toValue(contentOffsetY);
+			const canvasX = targetMapX / scale + toValue(layout).minX;
+			const canvasY = targetMapY / scale + toValue(layout).minY;
 
+			// No anchor point here on purpose: the gesture moves the camera to a place, and an
+			// anchored landmark would compensate the move away entirely.
 			setCamera({
 				x: canvasX + (toValue(canvasWidth) / currentZoom / 2),
 				y: canvasY + (toValue(canvasHeight) / currentZoom / 2),
 				zoom: currentZoom,
-				viewportX: 0,
-				viewportY: 0,
 			});
 		}
 
@@ -232,22 +316,20 @@ export const CanvasMap = {
 		{
 			event.preventDefault();
 
-			const el = toValue(mapEl);
-			if (!el)
+			const rect = getMapRect();
+			if (!rect)
 			{
 				return;
 			}
 
-			const rect = el.getBoundingClientRect();
-			interactionState.mapRect = rect;
 			interactionState.isDragging = true;
 
 			const mouseRelX = event.clientX - rect.left;
 			const mouseRelY = event.clientY - rect.top;
 
-			if (isPointInViewport(mouseRelX, mouseRelY))
+			if (isPointInMapRect({ x: mouseRelX, y: mouseRelY }, toValue(viewportRect)))
 			{
-				const indicator = toValue(viewportIndicator);
+				const indicator = toValue(viewportRect);
 				interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
 				interactionState.dragOffsetX = mouseRelX - indicator.x;
 				interactionState.dragOffsetY = mouseRelY - indicator.y;
@@ -272,44 +354,10 @@ export const CanvasMap = {
 			updateCamera(event.clientX, event.clientY);
 		}
 
-		function onMapMouseUp(event: MouseEvent): void
+		function onMapMouseUp(): void
 		{
 			interactionState.isDragging = false;
 			interactionState.mode = null;
-		}
-
-		function onMapKeyDown(event: KeyboardEvent): void
-		{
-			let deltaX = 0;
-			let deltaY = 0;
-
-			switch (event.key)
-			{
-				case 'ArrowLeft':
-					deltaX = -1;
-					break;
-				case 'ArrowRight':
-					deltaX = 1;
-					break;
-				case 'ArrowUp':
-					deltaY = -1;
-					break;
-				case 'ArrowDown':
-					deltaY = 1;
-					break;
-				default:
-					return;
-			}
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			const currentZoom = toValue(zoom) || 1;
-			setCamera({
-				x: toValue(transformX) + (deltaX * KEYBOARD_PAN_STEP / currentZoom),
-				y: toValue(transformY) + (deltaY * KEYBOARD_PAN_STEP / currentZoom),
-				zoom: currentZoom,
-			});
 		}
 
 		function focus(): void
@@ -319,58 +367,13 @@ export const CanvasMap = {
 
 		expose({ focus });
 
-		function getBlockColor(block: ?DiagramBlock): string
-		{
-			const blockType = block?.node?.type;
-			const colorIndex = block?.node?.colorIndex;
-
-			if (blockType === FRAME_BLOCK_TYPE)
-			{
-				return DEFAULT_FRAME_BLOCK_COLOR;
-			}
-
-			if (colorIndex === null || colorIndex === false)
-			{
-				return DEFAULT_BLOCK_COLOR;
-			}
-
-			const palette = toValue(blockColors) ?? {};
-
-			return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
-		}
-
-		function getBlockSize(block: ?DiagramBlock): DiagramBlockDimensions
-		{
-			const dimensions = {
-				width: block.dimensions.width,
-				height: block.dimensions.height,
-			};
-
-			if (!dimensions.width || !dimensions.height)
-			{
-				const blocksRectangleMap = toValue(blocksRectMap);
-				const blockDimensions = blocksRectangleMap[block.id];
-
-				dimensions.width = blockDimensions.width ?? 200;
-				dimensions.height = blockDimensions.height ?? 50;
-			}
-
-			return dimensions;
-		}
-
 		return {
-			sortedBlocks,
 			canvasMapStyle,
-			contentOffsetX,
-			contentOffsetY,
-			renderScale,
-			viewportIndicator,
 			mapLabel,
+			keyShortcuts,
 			onMapMouseDown,
 			onMapMouseMove,
 			onMapMouseUp,
-			onMapKeyDown,
-			getBlockColor,
 		};
 	},
 	template: `
@@ -382,40 +385,17 @@ export const CanvasMap = {
 			role="region"
 			tabindex="0"
 			:aria-label="mapLabel"
-			@keydown="onMapKeyDown"
+			:aria-keyshortcuts="keyShortcuts"
 		>
-			<svg
-				:width="mapWidth"
-				:height="mapHeight"
-				aria-hidden="true"
-				focusable="false"
+			<canvas
 				ref="map"
 				class="ui-block-diagram-canvas-map"
+				aria-hidden="true"
 				@mousedown="onMapMouseDown"
 				@mousemove="onMapMouseMove"
 				@mouseup="onMapMouseUp"
 				@mouseleave="onMapMouseUp"
-			>
-				<rect
-					v-for="block in sortedBlocks"
-					:key="block.id"
-					:x="(block.position.x - contentOffsetX) * renderScale"
-					:y="(block.position.y - contentOffsetY) * renderScale"
-					:width="block.dimensions.width * renderScale"
-					:height="block.dimensions.height * renderScale"
-					:rx="2"
-					:fill="getBlockColor(block)"
-					class="ui-block-diagram-canvas-map__block"
-				/>
-				<rect
-					:x="viewportIndicator.x"
-					:y="viewportIndicator.y"
-					:width="viewportIndicator.width"
-					:height="viewportIndicator.height"
-					:rx="4"
-					class="ui-block-diagram-canvas-map__cursor"
-				/>
-			</svg>
+			></canvas>
 		</div>
 	`,
 };

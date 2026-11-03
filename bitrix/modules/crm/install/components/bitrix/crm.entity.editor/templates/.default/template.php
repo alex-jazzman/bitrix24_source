@@ -27,6 +27,7 @@ use Bitrix\Main\Web\Json;
 
 Main\UI\Extension::load("ui.label");
 Main\UI\Extension::load("crm.entity-editor");
+Main\UI\Extension::load('crm.entity-editor.user-field-manager');
 Main\UI\Extension::load("crm.entity-editor.field.requisite");
 Main\UI\Extension::load("ui.icons.b24");
 
@@ -36,6 +37,8 @@ if(Main\Loader::includeModule('calendar'))
 {
 	\Bitrix\Crm\Integration\Calendar::loadResourcebookingUserfieldExtention();
 }
+
+$copilotName = AIManager::getCopilotName();
 
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
@@ -386,7 +389,7 @@ $isRichTextUserFieldAvailable =
 				CATEGORY_ID: <?=$arParams['EXTRAS']['CATEGORY_ID'] ?? 0?>
 			};
 
-			var userFieldManager = BX.UI.EntityUserFieldManager.create(
+			var userFieldManager = BX.Crm.DateValidationUserFieldManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
 					entityId: <?=$arResult['ENTITY_ID']?>,
@@ -533,6 +536,10 @@ $isRichTextUserFieldAvailable =
 				showAlways: "<?=GetMessageJS('CRM_ENTITY_ED_SHOW_ALWAYS')?>",
 				enableTime: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ENABLE_TIME')?>",
 				enumItems: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ENUM_ITEMS')?>",
+				aiFillPolicy: "<?=GetMessageJS('CRM_ENTITY_ED_UF_AI_FILL_POLICY', ['#AI_NAME#' => $copilotName])?>",
+				aiFillPolicySaving: "<?=GetMessageJS('CRM_ENTITY_ED_UF_AI_FILL_POLICY_SAVING')?>",
+				aiFillPolicySaveErrorRevertOn: "<?=GetMessageJS('CRM_ENTITY_ED_UF_AI_FILL_POLICY_SAVE_ERROR_REVERT_ON')?>",
+				aiFillPolicySaveErrorRevertOff: "<?=GetMessageJS('CRM_ENTITY_ED_UF_AI_FILL_POLICY_SAVE_ERROR_REVERT_OFF')?>",
 				add: "<?=GetMessageJS('CRM_ENTITY_ED_ADD')?>"
 			};
 
@@ -864,6 +871,7 @@ $isRichTextUserFieldAvailable =
 					"CRM_EDITOR_CONTINUE": "<?=GetMessageJS('CRM_ENTITY_ED_CONTINUE')?>",
 					"CRM_EDITOR_CANCEL": "<?=GetMessageJS('CRM_ENTITY_ED_CANCEL')?>",
 					"CRM_EDITOR_DELETE": "<?=GetMessageJS('CRM_ENTITY_ED_DELETE')?>",
+					"CRM_EDITOR_DELETE_VALUE_ARIA_LABEL": "<?=GetMessageJS('CRM_ENTITY_ED_DELETE_VALUE_ARIA_LABEL')?>",
 					"CRM_EDITOR_ADD": "<?=GetMessageJS('CRM_ENTITY_ED_ADD')?>",
 					"CRM_EDITOR_ADD_REQUISITE": "<?=GetMessageJS('CRM_EDITOR_ADD_REQUISITE')?>",
 					"CRM_EDITOR_ADD_BANK_DETAILS": "<?=GetMessageJS('CRM_EDITOR_ADD_BANK_DETAILS')?>",
@@ -878,6 +886,7 @@ $isRichTextUserFieldAvailable =
 					"CRM_EDITOR_NO": "<?=GetMessageJS('MAIN_NO')?>",
 					"CRM_EDITOR_PHONE": "<?=GetMessageJS('CRM_EDITOR_PHONE')?>",
 					"CRM_EDITOR_EMAIL": "<?=GetMessageJS('CRM_EDITOR_EMAIL')?>",
+					"CRM_EDITOR_IM": "<?=GetMessageJS('CRM_EDITOR_IM')?>",
 					"CRM_EDITOR_ADDRESS": "<?=GetMessageJS('CRM_EDITOR_ADDRESS')?>",
 					"CRM_EDITOR_REQUISITES": "<?=GetMessageJS('CRM_EDITOR_REQUISITES')?>",
 					"CRM_EDITOR_PLACEMENT_CAUTION": "<?=GetMessageJS('CRM_EDITOR_PLACEMENT_CAUTION')?>",
@@ -971,6 +980,7 @@ $isRichTextUserFieldAvailable =
 						requisiteEditUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_REQUISITE_EDIT'])?>",
 						options: <?=CUtil::PhpToJSObject($arResult['EDITOR_OPTIONS'])?>,
 						attributeConfig: <?=CUtil::PhpToJSObject($arResult['ATTRIBUTE_CONFIG'])?>,
+						aiFillPolicySettings: <?=CUtil::PhpToJSObject($arResult['AI_FILL_POLICY_SETTINGS'])?>,
 						showEmptyFields: <?=$arResult['SHOW_EMPTY_FIELDS'] ? 'true' : 'false'?>,
                         ajaxData: <?=CUtil::PhpToJSObject($arResult['COMPONENT_AJAX_DATA'])?>,
 						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,

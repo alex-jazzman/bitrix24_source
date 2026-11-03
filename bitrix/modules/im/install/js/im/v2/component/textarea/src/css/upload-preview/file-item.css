@@ -1,11 +1,8 @@
 .bx-im-upload-preview-file-item__scope {
 	--im-upload-preview-file-item__background-color_container: #f1f4f6;
-	--im-upload-preview-file-item__background-color_error: #ffe8e8;
-	--im-upload-preview-file-item__color_error-text: #959ca4;
 	--im-upload-preview-file-item__color_file-name: var(--im-color-palette-black-base);
 	--im-upload-preview-file-item__color_file-size: #858585;
 	--im-upload-preview-file-item__border-color_file-icon: var(--im-color-palette-gray-10);
-	--im-upload-preview-file-item__background_error-icon: url("../images/upload-preview/error-icon.svg") no-repeat center;
 	--im-upload-preview-file-item__background-color_play-icon: rgb(0 0 0 / 50%);
 
 	font-family: var(--im-font-family-system);
@@ -28,6 +25,16 @@
 	border-bottom: 1px red solid;
 }
 
+/* Keyboard-focus ring for the file row - the roving stop of the file branch of the grid. The items
+   container clips overflow, so a positive outline-offset would be cut; the ring is pulled inside by its own
+   width instead. Keyboard-only comes for free: :focus-visible does not match a mouse focus on a row, so no
+   ring flashes on click. */
+.bx-im-upload-preview-file-item__scope:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+	border-radius: var(--ui-border-radius-sm);
+}
+
 
 .bx-im-upload-preview-file-item__drag {
 	display: flex;
@@ -43,29 +50,6 @@
 	height: 24px;
 }
 
-.bx-im-upload-preview-file-item__item-error {
-	background-color: var(--im-upload-preview-file-item__background-color_container);
-	width: 100%;
-	height: 57px;
-	display: flex;
-	align-items: center;
-	border-radius: 6px;
-}
-
-.bx-im-upload-preview-file-item__item-error-icon {
-	width: 48px;
-	height: 48px;
-	background: var(--im-upload-preview-file-item__background_error-icon);
-	margin-left: 8px;
-}
-
-.bx-im-upload-preview-file-item__item-error-text {
-	font-size: var(--im-font-size-xs);
-	color: var(--im-upload-preview-file-item__color_error-text);
-	max-width: 197px;
-	margin-left: 12px;
-}
-
 .bx-im-upload-preview-file-item__file-container {
 	display: flex;
 	gap: 8px;
@@ -75,6 +59,8 @@
 }
 
 .bx-im-upload-preview-file-item__icon {
+	/* positioning context for the loader of the row, which fills this box while the file goes up */
+	position: relative;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -107,6 +93,43 @@
 	color: rgba(var(--im-color-palette-gray-90-rgb), 0.5);
 }
 
+/* takes the place of the size on a row that has something to say about the file instead of its weight */
+.bx-im-upload-preview-file-item__status {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-accent-main-alert);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+/* an edit lays the line out as the mockup does: the reason, then the weight the file would have had */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__status {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.bx-im-upload-preview-file-item__status-icon {
+	/* the mockup sets the reason icon between the 12px and 16px steps of the size scale */
+	--ui-icon-set__icon-size: 14px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+/* the typography component pins its own colour, so both roles are restated on the texts themselves */
+.bx-im-upload-preview-file-item__status .bx-im-upload-preview-file-item__status-text {
+	color: var(--ui-color-accent-main-alert);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bx-im-upload-preview-file-item__status .bx-im-upload-preview-file-item__status-size {
+	color: var(--ui-color-base-4);
+	white-space: nowrap;
+}
+
 .bx-im-upload-preview-file-item__remove {
 	display: flex;
 	align-items: center;
@@ -120,24 +143,188 @@
 	transition: opacity 200ms ease;
 	opacity: 0;
 	cursor: pointer;
+
+	/* the control is a native button: the reset leaves it looking the way it did as a div */
+	padding: 0;
+	border: none;
+	background: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
 }
 
-.bx-im-upload-preview-file-item__item-error + .bx-im-upload-preview-file-item__remove {
-	top: 11px;
+/* the control shows itself on hover, and a keyboard has no hover to show it with */
+.bx-im-upload-preview-file-item__remove:focus-visible {
+	opacity: 1;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* a failed file always asks for a decision, so both of its actions are there without waiting for a hover,
+   and the row keeps a gutter wide enough for the two of them instead of stacking one over the other */
+.bx-im-upload-preview-file-item__scope.--has-upload-error {
+	padding-right: 70px;
+}
+
+.bx-im-upload-preview-file-item__scope.--has-upload-error .bx-im-upload-preview-file-item__remove {
 	right: 3px;
+	opacity: 1;
 }
 
-.bx-im-upload-preview-file-item__remove-icon {
-	width: 22px;
-	height: 22px;
-	background: url("../images/upload-preview/remove-icon.svg") no-repeat center;
-	transition: opacity 200ms ease;
+/* The metrics of the mockup belong to the whole composition of an edit: rows 0-3 of the page carry
+   the same geometry, whatever became of the file. A send has no mockup and keeps the window it always
+   had, so the geometry is gated on the mode. The window states the mode on its own container
+   (data-edit-mode), and the row reads it there instead of inferring it from its own props. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope
+	+ .bx-im-upload-preview-file-item__scope {
+	margin-top: var(--ui-space-stack-sm);
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__file-container {
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* the row height of the mockup; no size token carries 44px */
+	height: 44px;
+	padding-top: 0;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__icon {
+	/* the emblem of the mockup fills the row height; the scale of ui.icons has no 44px step */
+	--ui-icon-size: 44px;
+
+	width: 44px;
+	height: 44px;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__info {
+	gap: var(--ui-space-stack-2xs);
+	justify-content: center;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__name {
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+/* What the failure alone changes, and only in an edit: the mockup is of that window, and a send keeps
+   the row it always had. The other rows of the edit stay in their own colours. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__icon {
+	/* the file never arrived, so the mockup dims its emblem */
+	opacity: 0.45;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__name {
+	color: var(--ui-color-base-4);
+}
+
+/* Both exits of the failed row are plain controls of the mockup, and the mockup is of an edit: a send
+   keeps the round controls it always had, gutter included. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error {
+	/* the gutter clears both controls: 3px offset + 34px + 4px between them + 34px + 4px of air */
+	padding-right: 79px;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__retry,
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__remove {
+	/* no token pair carries 34x28 */
+	width: 34px;
+	height: var(--ui-size-2xl);
+	/* centred on the 44px row, 1px of it taken by the transparent border of the row */
+	top: 7px;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__retry {
+	--ui-icon-set__icon-size: var(--ui-size-xl);
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__remove-icon {
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+}
+
+.bx-im-upload-preview-file-item__retry {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--im-color-palette-gray-90);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	top: 11px;
+	right: 41px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	cursor: pointer;
+
+	/* the control is a native button, as the removal beside it is: the reset leaves the icon alone */
+	padding: 0;
+	border: none;
+	background: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+}
+
+.bx-im-upload-preview-file-item__retry:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The row hover reveals the cross, dimmed until the pointer reaches the cross itself. The dimming used to
+   live on a nested icon div that the IconButton replaced, so it is expressed on the button now - the same
+   two steps, one node fewer. A focused cross goes to full opacity too: the removal moves focus onto it, and
+   a ring around an invisible button is no ring at all. Both rules are scoped through the row on purpose:
+   the two states now live on ONE node, so the fuller one has to outweigh the dimming rather than sit at a
+   lower specificity and lose to it. */
+.bx-im-upload-preview-file-item__scope:hover .bx-im-upload-preview-file-item__remove {
 	opacity: .8;
 }
 
-.bx-im-upload-preview-file-item__scope:hover .bx-im-upload-preview-file-item__remove,
-.bx-im-upload-preview-file-item__remove:hover .bx-im-upload-preview-file-item__remove-icon {
+.bx-im-upload-preview-file-item__scope .bx-im-upload-preview-file-item__remove:hover,
+.bx-im-upload-preview-file-item__scope .bx-im-upload-preview-file-item__remove:focus-visible {
 	opacity: 1;
+}
+
+/* The cross sits at right: -3px, overhanging the right edge of the items container, which clips overflow.
+   The --focus-visible utility of the icon button draws its ring at a positive offset, and that outward part
+   is cut off on the right. Pull the ring inside the button box instead - the same inset the row above uses,
+   plus 2px more to clear the overhang. The button itself is not moved. */
+.bx-im-messenger__scope .bx-im-upload-preview-file-item__remove.--focus-visible:focus-visible {
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width) - 2px);
+}
+
+.bx-im-upload-preview-file-item__content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+}
+
+.bx-im-upload-preview-file-item__validation-error {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-accent-main-alert);
+	padding: 0 0 3px var(--ui-space-inline-2xs);
+}
+
+.bx-im-upload-preview-file-item__scope.--has-validation-error {
+	border: 1px solid var(--ui-color-accent-main-alert);
+	border-radius: var(--ui-border-radius-sm);
+	padding-right: 38px;
+	margin: var(--ui-space-stack-2xs2) 0;
+}
+
+.bx-im-upload-preview-file-item__scope.--has-validation-error .bx-im-upload-preview-file-item__remove {
+	opacity: 1;
+	right: 3px;
 }
 
 .bx-im-upload-preview-file-item__preview {

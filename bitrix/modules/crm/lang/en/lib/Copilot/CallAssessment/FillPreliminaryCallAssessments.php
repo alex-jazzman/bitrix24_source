@@ -1,5 +1,5 @@
 <?php
-$MESS["FPCA_COMMUNICATION_ETIQUETTE_DESCRIPTION"] = "Following communication etiquette in any call, inbound or outbound, with a new or an existing client. The goal is to greet the client in a friendly manner and introduce yourself, listen carefully without interrupting, speak politely and avoid inappropriate language, and thank the client for their time. Suitable for any call that has no specific business focus.";
+$MESS["FPCA_COMMUNICATION_ETIQUETTE_DESCRIPTION"] = "Following communication etiquette in any call, inbound or outbound, with a new or an existing customer. The goal is to greet the customer in a friendly manner and introduce yourself, listen carefully without interrupting, speak politely and avoid inappropriate language, and thank the customer for their time. Suitable for any call that has no specific business focus.";
 $MESS["FPCA_COMMUNICATION_ETIQUETTE_GIST"] = "Start the conversation with a friendly greeting and introduce yourself
 Listen to the client attentively
 Do not interrupt
@@ -15,7 +15,7 @@ $MESS["FPCA_COMMUNICATION_ETIQUETTE_PROMPT"] = "[p]Start the conversation with a
 At the end, [b]thank the client for their time[/b]. This shows that you appreciate their attention and willingness to engage. Leave your contact details so the client knows they can always reach out for support.
 [/p]";
 $MESS["FPCA_COMMUNICATION_ETIQUETTE_TITLE"] = "Communication style";
-$MESS["FPCA_COMPLAINT_HANDLING_DESCRIPTION"] = "A conversation with an unhappy client who is making a complaint, inbound or outbound. The goal is to keep a calm and polite tone, show empathy and apologize for the inconvenience, clarify the details of the problem, suggest specific steps and deadlines for solving it, and make sure the client feels heard. Suitable for complaints and conflict situations.";
+$MESS["FPCA_COMPLAINT_HANDLING_DESCRIPTION"] = "A conversation with an unhappy customer who is making a complaint, inbound or outbound. The goal is to keep a calm and polite tone, show empathy and apologize for the inconvenience, clarify the details of the problem, suggest specific steps and deadlines for solving it, and make sure the customer feels heard. Suitable for complaints and conflict situations.";
 $MESS["FPCA_COMPLAINT_HANDLING_GIST"] = "Maintain a calm and polite tone
 Avoid raising your voice or interrupting the client
 Show empathy and apologize for the inconvenience
@@ -45,7 +45,7 @@ Make sure the client feels [b]heard[/b], and ask if they have any further questi
 Leave your [b]contact information[/b] for further communication, offering your assistance in the future. [i]Do not end the conversation abruptly or without offering ongoing support.[/i]
 [/p]";
 $MESS["FPCA_COMPLAINT_HANDLING_TITLE"] = "Complaint management";
-$MESS["FPCA_DEAL_SUPPORT_DESCRIPTION"] = "A conversation with a client who already has a deal in progress, inbound or outbound. The goal is to remind the client of the current deal status, identify new needs or changes in their expectations, move the deal towards closing, and agree on the next step. Suitable for clients with deals already in progress.";
+$MESS["FPCA_DEAL_SUPPORT_DESCRIPTION"] = "A conversation with a customer who already has a deal in progress, inbound or outbound. The goal is to remind the customer of the current deal status, identify new needs or changes in their expectations, move the deal towards closing, and agree on the next step. Suitable for customers with deals already in progress.";
 $MESS["FPCA_DEAL_SUPPORT_GIST"] = "Start the conversation with a friendly greeting
 Remind the client of the current status of the deal
 Get to know the client
@@ -75,7 +75,7 @@ Be ready to answer any questions the client may have. If you don’t know the an
 End the conversation by [b]thanking the client for their time and trust in your company[/b]. This will leave a positive impression and strengthen your relationship.
 [/p]";
 $MESS["FPCA_DEAL_SUPPORT_TITLE"] = "Sales support";
-$MESS["FPCA_FIRST_IMPRESSION_DESCRIPTION"] = "The first conversation with a new client, inbound or outbound. The goal is to make a good first impression: greet the client and introduce yourself, identify the client's needs, explain the product or service clearly and highlight its benefits, summarize the conversation and suggest the next step. Suitable for initial contacts with clients who have no deals in progress yet.";
+$MESS["FPCA_FIRST_IMPRESSION_DESCRIPTION"] = "The first conversation with a new customer, inbound or outbound. The goal is to make a good first impression: greet the customer and introduce yourself, identify the customer's needs, explain the product or service clearly and highlight its benefits, summarize the conversation and suggest the next step. Suitable for initial contacts with customers who have no deals in progress yet.";
 $MESS["FPCA_FIRST_IMPRESSION_GIST"] = "Greet the client at the beginning of the conversation
 Introduce yourself, state your position, and mention the company name
 Speak politely and friendly
@@ -99,7 +99,7 @@ Be ready to answer any questions the client may have. If you don’t know the an
 End the conversation by [b]thanking the client for their time and interest in your company[/b]. This will leave a positive impression and help strengthen your relationship with the client.
 [/p]";
 $MESS["FPCA_FIRST_IMPRESSION_TITLE"] = "Initial contact";
-$MESS["FPCA_INCREASE_LOYALTY_DESCRIPTION"] = "A conversation with a returning client who is contacting you again, inbound or outbound. The goal is to create a sense of a personalized approach: use the client's name, mention their previous purchase, thank them for coming back, and suggest relevant products or services based on their past experience. Suitable for loyal and returning clients.";
+$MESS["FPCA_INCREASE_LOYALTY_DESCRIPTION"] = "A conversation with a returning customer who is contacting you again, inbound or outbound. The goal is to create a sense of a personalized approach: use the customer's name, mention their previous purchase, thank them for coming back, and suggest relevant products or services based on their past experience. Suitable for loyal and returning customers.";
 $MESS["FPCA_INCREASE_LOYALTY_GIST"] = "Start the conversation with a greeting and mention the client’s name
 Remind the client of their previous purchase
 Express gratitude for the client returning
@@ -119,7 +119,7 @@ Don’t forget to [b]listen attentively[/b] and respond to their questions. This
 At the end of the conversation, [b]confirm your readiness to help in the future[/b] and leave your contact information in case they have any further questions.
 [/p]";
 $MESS["FPCA_INCREASE_LOYALTY_TITLE"] = "Customer loyalty building";
-$MESS["FPCA_OBJECTION_MANAGEMENT_DESCRIPTION"] = "A conversation with a client who raises objections, expresses doubts, or disagrees with the offer, inbound or outbound. The goal is to let the client fully express themselves, show empathy, understand what the objections are really about, respond to them with facts and benefits, suggest a solution or an alternative, and make sure the client feels confident about making a decision.";
+$MESS["FPCA_OBJECTION_MANAGEMENT_DESCRIPTION"] = "A conversation with a customer who raises objections, expresses doubts, or disagrees with the offer, inbound or outbound. The goal is to let the customer fully express themselves, show empathy, understand what the objections are really about, respond to them with facts and benefits, suggest a solution or an alternative, and make sure the customer feels confident about making a decision.";
 $MESS["FPCA_OBJECTION_MANAGEMENT_GIST"] = "Allow the client to fully express their objections
 Show empathy and acknowledge the client’s feelings
 Understand the essence of the objections
@@ -146,7 +146,36 @@ Summarize the discussion and [b]highlight how you’ve addressed the objections[
 Offer your help in the future and leave your contact information.
 [/p]";
 $MESS["FPCA_OBJECTION_MANAGEMENT_TITLE"] = "Objection handling";
-$MESS["FPCA_PRESENTATION_OF_NEW_DESCRIPTION"] = "An outbound call to present new products or services to a client. The goal is to introduce yourself and explain the purpose of the call, present the new products with their key features and advantages, engage the client with questions, address their doubts, and invite them to take the next step: request a demo, schedule a meeting, or place an order.";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_1_DESCRIPTION"] = "Give a greeting at the start of the conversation and introduce yourself: state your name, position, and company. Applies to the employee's first replies, before moving on to the customer's request.";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_1_TITLE"] = "Greeting and introduction";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_2_DESCRIPTION"] = "Maintain a correct tone throughout the conversation: polite phrasing, no rudeness, raised voice, profanity, or disrespectful expressions. Applies to all of the employee's replies at any stage of the dialogue.";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_2_TITLE"] = "Correct speech";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_3_DESCRIPTION"] = "Let the customer finish their thought, don't interrupt them mid-sentence. Confirm your attention with short replies (\"yes\", \"I understand\", \"I see\"). Applies to moments when the customer is describing their request, situation, objection, or complaint.";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_3_TITLE"] = "Active listening";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_4_DESCRIPTION"] = "If the customer stated their name themselves or it was known beforehand (through CRM or a previous contact), address them by name at least once during the conversation. Applies after the moment the employee learns the name. If the customer's name is never mentioned in the dialogue, this criterion doesn't apply.";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_4_TITLE"] = "Addressing by name";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_5_DESCRIPTION"] = "In the closing part of the conversation, after the issue is resolved and before saying goodbye, thank the customer - for reaching out, for choosing the company, or for their time. Applies to the employee's final replies, before the goodbye phrase.";
+$MESS["FPCA_POLITE_COMMUNICATION_CRITERIA_5_TITLE"] = "Gratitude at closing";
+$MESS["FPCA_POLITE_COMMUNICATION_DESCRIPTION"] = "Basic rules of polite communication for any call, inbound or outbound, with a new or an existing customer. The goal is to ensure a greeting, correct speech, active listening, addressing the customer by name, and gratitude. Suitable when the call has no specific business focus (sales, complaints, promotions, a particular product).";
+$MESS["FPCA_POLITE_COMMUNICATION_GIST"] = "Greet the customer at the start of the conversation and introduce yourself: state your name, position, and company
+Maintain a correct tone throughout the conversation, without rudeness or raising your voice
+Listen to the customer actively, don't interrupt, and confirm your attention with short replies
+Address the customer by name if it is known
+Thank the customer at the end of the conversation - for reaching out, for choosing the company, or for their time";
+$MESS["FPCA_POLITE_COMMUNICATION_PROMPT"] = "[p]Follow the basic rules of polite communication throughout the entire conversation, regardless of whether it is an inbound or outbound call, and whether the customer is new or existing.
+
+In the first replies, before moving on to the essence of the request, [b]greet the customer and introduce yourself[/b]: state your name, position, and company.
+
+[b]Maintain a correct tone[/b] at any stage of the dialogue: use polite phrasing, avoid rudeness, raised voice, profanity, and disrespectful expressions.
+
+[b]Listen to the customer actively[/b]: let them finish their thought, don't interrupt mid-sentence. Confirm your attention with short replies (\"yes\", \"I understand\", \"I see\") - especially when the customer is describing their request, situation, objection, or complaint.
+
+If the customer stated their name themselves or it was known beforehand (through CRM or a previous contact), [b]address them by name[/b] at least once during the conversation.
+
+In the closing part of the conversation, after the issue is resolved and before saying goodbye, [b]thank the customer[/b] - for reaching out, for choosing the company, or for their time.
+[/p]";
+$MESS["FPCA_POLITE_COMMUNICATION_TITLE"] = "Polite communication";
+$MESS["FPCA_PRESENTATION_OF_NEW_DESCRIPTION"] = "An outbound call to present new products or services to a customer. The goal is to introduce yourself and explain the purpose of the call, present the new products with their key features and advantages, engage the customer with questions, address their doubts, and invite them to take the next step: request a demo, schedule a meeting, or place an order.";
 $MESS["FPCA_PRESENTATION_OF_NEW_GIST"] = "Introduce yourself and briefly explain the purpose of the call, emphasizing that you have exciting information about new products that may be useful to the client
 Start with a presentation of the new products, highlighting the key features and benefits of each product or service
 Emphasize how the new products can meet the client’s needs
@@ -173,7 +202,7 @@ Summarize the key benefits of the new products, and [b]invite the client to take
 End the conversation by thanking the client for their time and leaving your contact information for further communication.
 [/p]";
 $MESS["FPCA_PRESENTATION_OF_NEW_TITLE"] = "Product presentation";
-$MESS["FPCA_SPECIAL_OFFER_DESCRIPTION"] = "A conversation presenting a promotional offer to a client, inbound or outbound. The goal is to present the promotion, emphasize its uniqueness and limited-time nature, explain the benefits for the client, address their doubts, and encourage the client to make a prompt decision and proceed with the purchase. Suitable for calls with limited-time special offers.";
+$MESS["FPCA_SPECIAL_OFFER_DESCRIPTION"] = "A conversation presenting a promotional offer to a customer, inbound or outbound. The goal is to present the promotion, emphasize its uniqueness and limited-time nature, explain the benefits for the customer, address their doubts, and encourage the customer to make a prompt decision and proceed with the purchase. Suitable for calls with limited-time special offers.";
 $MESS["FPCA_SPECIAL_OFFER_GIST"] = "Start with a presentation of the promotional offer and emphasize its uniqueness and limited-time nature
 Explain the benefits and advantages of the promotional offer that the client will receive
 Use social proof and share stories of other customers who have already taken advantage of the offer and were satisfied

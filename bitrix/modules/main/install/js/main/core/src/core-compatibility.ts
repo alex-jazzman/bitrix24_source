@@ -6,11 +6,15 @@ import Dom from './lib/dom';
 import Browser from './lib/browser';
 import Event from './lib/event';
 import Http from './lib/http';
+import { type CookieOptions } from './lib/http/cookie';
 import Runtime from './lib/runtime';
 import Text from './lib/text';
-import messageFunction from './lib/loc/message';
+import messageFunction, { type MessageFunction } from './lib/loc/message';
 import * as debugNs from './lib/runtime/debug';
 import {isReady} from './lib/event/ready';
+import type bindFn from './lib/event/bind';
+import type unbindFn from './lib/event/unbind';
+import type bindOnceFn from './lib/event/bind-once';
 import getElement from './internal/get-element';
 import getWindow from './internal/get-window';
 import EventEmitter from './lib/event/event-emitter';
@@ -21,46 +25,45 @@ import { localStorage } from './lib/local-storage';
 import { Page } from './lib/page';
 
 // BX.*
-export const {getClass, namespace} = Reflection;
-export const message = messageFunction;
-export const easing = Easing;
-export const fx = FX;
-export const PageObject = Page;
+export const getClass: typeof Reflection.getClass = Reflection.getClass;
+export const namespace: typeof Reflection.namespace = Reflection.namespace;
+export const message: MessageFunction = messageFunction;
+export const easing: typeof Easing = Easing;
+export const fx: typeof FX = FX;
+export const PageObject: typeof Page = Page;
 
 /**
  * @memberOf BX
  */
-export const {
-	replace,
-	remove,
-	clean,
-	insertBefore,
-	insertAfter,
-	append,
-	prepend,
-	style,
-	adjust,
-	create,
-	isShown,
-} = Dom;
+export const replace: typeof Dom.replace = Dom.replace;
+export const remove: typeof Dom.remove = Dom.remove;
+export const clean: typeof Dom.clean = Dom.clean;
+export const insertBefore: typeof Dom.insertBefore = Dom.insertBefore;
+export const insertAfter: typeof Dom.insertAfter = Dom.insertAfter;
+export const append: typeof Dom.append = Dom.append;
+export const prepend: typeof Dom.prepend = Dom.prepend;
+export const style: typeof Dom.style = Dom.style;
+export const adjust: typeof Dom.adjust = Dom.adjust;
+export const create: typeof Dom.create = Dom.create;
+export const isShown: typeof Dom.isShown = Dom.isShown;
 
-export const addClass = function addClass() {
+export const addClass: (...args: any[]) => void = function addClass() {
 	Dom.addClass(...Runtime.merge([], Array.from(arguments), [getElement(arguments[0])]) as [any, any]);
 };
 
-export const removeClass = function removeClass() {
+export const removeClass: (...args: any[]) => void = function removeClass() {
 	Dom.removeClass(...Runtime.merge(Array.from(arguments), [getElement(arguments[0])]) as [any, any]);
 };
 
-export const hasClass = function hasClass() {
+export const hasClass: (...args: any[]) => boolean = function hasClass() {
 	return Dom.hasClass(...Runtime.merge(Array.from(arguments), [getElement(arguments[0])]) as [any, any]);
 };
 
-export const toggleClass = function toggleClass() {
+export const toggleClass: (...args: any[]) => void = function toggleClass() {
 	Dom.toggleClass(...Runtime.merge(Array.from(arguments), [getElement(arguments[0])]) as [any, any]);
 };
 
-export const cleanNode = (element: any, removeElement = false) => {
+export const cleanNode = (element: string | HTMLElement, removeElement: boolean = false): HTMLElement | null => {
 	const currentElement = getElement(element);
 
 	if (Type.isDomNode(currentElement))
@@ -77,8 +80,8 @@ export const cleanNode = (element: any, removeElement = false) => {
 	return currentElement;
 };
 
-export const getCookie = Http.Cookie.get;
-export const setCookie = (name: any, value: any, options: Record<string, any> = {}) => {
+export const getCookie: typeof Http.Cookie.get = Http.Cookie.get;
+export const setCookie = (name: string, value: any, options: CookieOptions = {}): void => {
 	const attributes: Record<string, any> = {...options};
 
 	if (Type.isNumber(attributes.expires))
@@ -89,22 +92,18 @@ export const setCookie = (name: any, value: any, options: Record<string, any> = 
 	Http.Cookie.set(name, value, attributes);
 };
 
-export const {
-	bind,
-	unbind,
-	unbindAll,
-	bindOnce,
-	ready,
-} = Event;
+export const bind: typeof bindFn = Event.bind;
+export const unbind: typeof unbindFn = Event.unbind;
+export const unbindAll: (target: any, eventName?: string) => void = Event.unbindAll;
+export const bindOnce: typeof bindOnceFn = Event.bindOnce;
+export const ready: (handler: () => void) => void = Event.ready;
 
 export {isReady};
-export const {
-	debugState: debugEnableFlag,
-	isDebugEnabled: debugStatus,
-	default: debug,
-} = debugNs;
+export const debugEnableFlag: boolean = debugNs.debugState;
+export const debugStatus: typeof debugNs.isDebugEnabled = debugNs.isDebugEnabled;
+export const debug: typeof debugNs.default = debugNs.default;
 
-export const debugEnable = (value: any) => {
+export const debugEnable = (value: any): void => {
 	if (value)
 	{
 		debugNs.enableDebug();
@@ -115,16 +114,22 @@ export const debugEnable = (value: any) => {
 	}
 };
 
-export const {
-	clone,
-	loadExtension: loadExt,
-	debounce,
-	throttle,
-	html,
-} = Runtime;
+export const clone: <T>(value: T) => T = Runtime.clone;
+export const loadExt: typeof Runtime.loadExtension = Runtime.loadExtension;
+export const debounce: typeof Runtime.debounce = Runtime.debounce;
+export const throttle: typeof Runtime.throttle = Runtime.throttle;
+export const html: typeof Runtime.html = Runtime.html;
+
+type TypeCompatLibrary = {
+	isNotEmptyString: (value: any) => boolean,
+	isNotEmptyObject: (value: any) => boolean,
+	isMapKey: typeof Type.isObject,
+	stringToInt: (value: any) => number,
+	[method: string]: any,
+};
 
 // BX.type
-export const type = {
+export const type: TypeCompatLibrary = {
 	...Object.getOwnPropertyNames(Type)
 		.filter(key => !['name', 'length', 'prototype', 'caller', 'arguments'].includes(key))
 		.reduce((acc: Record<string, any>, key) => {
@@ -140,8 +145,45 @@ export const type = {
 	},
 };
 
+type WindowSize = {
+	innerWidth: number,
+	innerHeight: number,
+	scrollLeft: number,
+	scrollTop: number,
+	scrollWidth: number,
+	scrollHeight: number,
+};
+
+type BrowserCompat = {
+	IsOpera: typeof Browser.isOpera,
+	IsIE: typeof Browser.isIE,
+	IsIE6: typeof Browser.isIE6,
+	IsIE7: typeof Browser.isIE7,
+	IsIE8: typeof Browser.isIE8,
+	IsIE9: typeof Browser.isIE9,
+	IsIE10: typeof Browser.isIE10,
+	IsIE11: typeof Browser.isIE11,
+	IsSafari: typeof Browser.isSafari,
+	IsFirefox: typeof Browser.isFirefox,
+	IsChrome: typeof Browser.isChrome,
+	DetectIeVersion: typeof Browser.detectIEVersion,
+	IsMac: typeof Browser.isMac,
+	IsAndroid: typeof Browser.isAndroid,
+	isIPad: typeof Browser.isIPad,
+	isIPhone: typeof Browser.isIPhone,
+	IsIOS: typeof Browser.isIOS,
+	IsMobile: typeof Browser.isMobile,
+	isRetina: typeof Browser.isRetina,
+	IsDoctype: typeof Browser.isDoctype,
+	SupportLocalStorage: typeof Browser.isLocalStorageSupported,
+	addGlobalClass: typeof Browser.addGlobalClass,
+	DetectAndroidVersion: typeof Browser.detectAndroidVersion,
+	isPropertySupported: typeof Browser.isPropertySupported,
+	addGlobalFeatures: typeof Browser.addGlobalFeatures,
+};
+
 // BX.browser
-export const browser = {
+export const browser: BrowserCompat = {
 	IsOpera: Browser.isOpera,
 	IsIE: Browser.isIE,
 	IsIE6: Browser.isIE6,
@@ -170,10 +212,10 @@ export const browser = {
 };
 
 // eslint-disable-next-line
-const ajax = (window as any).BX ? (window as any).BX.ajax : () => {};
+const ajax: any = (window as any).BX ? (window as any).BX.ajax : () => {};
 export {ajax};
 
-export function GetWindowScrollSize(doc = document)
+export function GetWindowScrollSize(doc: Document = document): { scrollWidth: number, scrollHeight: number }
 {
 	return {
 		scrollWidth: doc.documentElement.scrollWidth,
@@ -181,7 +223,7 @@ export function GetWindowScrollSize(doc = document)
 	};
 }
 
-export function GetWindowScrollPos(doc = document)
+export function GetWindowScrollPos(doc: Document = document): { scrollLeft: number, scrollTop: number }
 {
 	const win = getWindow(doc);
 
@@ -191,13 +233,13 @@ export function GetWindowScrollPos(doc = document)
 	};
 }
 
-export function GetWindowInnerSize(doc = document)
+export function GetWindowInnerSize(doc: Document = document): { innerWidth: number, innerHeight: number }
 {
 	const win = getWindow(doc);
 	return {innerWidth: win.innerWidth, innerHeight: win.innerHeight};
 }
 
-export function GetWindowSize(doc = document)
+export function GetWindowSize(doc: Document = document): WindowSize
 {
 	return {
 		...GetWindowInnerSize(doc),
@@ -206,12 +248,12 @@ export function GetWindowSize(doc = document)
 	};
 }
 
-export function GetContext(node: any)
+export function GetContext(node: Node | null): Window
 {
 	return getWindow(node);
 }
 
-export function pos(element: any, relative = false)
+export function pos(element: any, relative: boolean = false): any
 {
 	if (!element)
 	{
@@ -265,7 +307,7 @@ export function pos(element: any, relative = false)
 	return (new DOMRect(x, y, w, h)).toJSON();
 }
 
-export function addCustomEvent(eventObject: any, eventName: any, eventHandler: any)
+export function addCustomEvent(eventObject: any, eventName: any, eventHandler: any): void
 {
 	if (Type.isString(eventObject))
 	{
@@ -302,7 +344,7 @@ export function addCustomEvent(eventObject: any, eventName: any, eventHandler: a
 	EventEmitter.subscribe(eventObject, eventName, eventHandler, { compatMode: true, useGlobalNaming: true });
 }
 
-export function onCustomEvent(eventObject: any, eventName: any, eventParams?: any, secureParams?: any)
+export function onCustomEvent(eventObject: any, eventName: any, eventParams?: any, secureParams?: any): void
 {
 	if (Type.isString(eventObject))
 	{
@@ -331,7 +373,7 @@ export function onCustomEvent(eventObject: any, eventName: any, eventParams?: an
 	EventEmitter.emit(eventObject, eventName, event, { cloneData: secureParams === true, useGlobalNaming: true });
 }
 
-export function removeCustomEvent(eventObject: any, eventName: any, eventHandler: any)
+export function removeCustomEvent(eventObject: any, eventName: any, eventHandler: any): void
 {
 	if (Type.isString(eventObject))
 	{
@@ -356,7 +398,7 @@ export function removeCustomEvent(eventObject: any, eventName: any, eventHandler
 	EventEmitter.unsubscribe(eventObject, eventName, eventHandler, { useGlobalNaming: true });
 }
 
-export function removeAllCustomEvents(eventObject: any, eventName: any)
+export function removeAllCustomEvents(eventObject: any, eventName: any): void
 {
 	if (Type.isString(eventObject))
 	{
@@ -374,7 +416,7 @@ export function removeAllCustomEvents(eventObject: any, eventName: any)
 	EventEmitter.unsubscribeAll(eventObject, eventName, { useGlobalNaming: true });
 }
 
-export function onGlobalCustomEvent(eventName: any, arEventParams: any, bSkipSelf: any)
+export function onGlobalCustomEvent(eventName: any, arEventParams: any, bSkipSelf: any): void
 {
 	localStorage.set('BXGCE', { e: eventName, p: arEventParams }, 1);
 

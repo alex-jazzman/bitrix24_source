@@ -2186,5 +2186,5 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 
 	exports.Search = Search;
 
-})(this.BX.Messenger.Embedding.ComponentLegacy = this.BX.Messenger.Embedding.ComponentLegacy || {}, BX, BX, BX.Event, BX.Messenger.Embedding.Const, BX.Messenger.Embedding.ComponentLegacy, BX.Messenger.Embedding.LibLegacy, BX.Messenger.Embedding.Lib, BX, BX.Messenger.Embedding.Lib, BX.DexieExport);
+})(this.BX.Messenger.Embedding.ComponentLegacy = this.BX.Messenger.Embedding.ComponentLegacy || {}, window, BX, BX.Event, BX.Messenger.Embedding.Const, BX.Messenger.Embedding.ComponentLegacy, BX.Messenger.Embedding.LibLegacy, BX.Messenger.Embedding.Lib, BX, BX.Messenger.Embedding.Lib, BX.DexieExport);
 //# sourceMappingURL=search.bundle.js.map

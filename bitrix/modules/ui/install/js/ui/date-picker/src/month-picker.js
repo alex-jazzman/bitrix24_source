@@ -1,11 +1,15 @@
 import { Dom, Loc, Tag, Text, Event } from 'main.core';
-import { DateTimeFormat } from 'main.date';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
-import { BasePicker } from './base-picker';
+import { DateTimeFormat } from 'main.date';
+import { InteractivityChecker } from 'ui.a11y';
 
+import { BasePicker } from './base-picker';
 import { createUtcDate } from './helpers/create-utc-date';
 import { getDate } from './helpers/get-date';
 import { isDatesEqual } from './helpers/is-dates-equal';
+import { setTabAnchor } from './helpers/set-tab-anchor';
+
+import './css/month-picker.css';
 
 export type MonthPickerQuarter = Array<MonthPickerMonth>;
 export type MonthPickerMonth = {
@@ -20,8 +24,6 @@ export type MonthPickerMonth = {
 	tabIndex: number,
 };
 
-import './css/month-picker.css';
-
 export class MonthPicker extends BasePicker
 {
 	#refs: BaseCache<HTMLElement> = new MemoryCache();
@@ -30,7 +32,7 @@ export class MonthPicker extends BasePicker
 	{
 		return this.#refs.remember('container', () => {
 			return Tag.render`
-				<div class="ui-month-picker" role="none">
+				<div class="ui-month-picker" data-testid="ui-date-picker-month-view" role="none">
 					${this.getHeaderContainer(
 						this.getPrevBtn(),
 						this.getHeaderTitle(),
@@ -49,6 +51,7 @@ export class MonthPicker extends BasePicker
 				<button
 					type="button" 
 					class="ui-month-picker-header-title" 
+					data-testid="ui-date-picker-year-view-btn"
 					onclick="${this.#handleTitleClick.bind(this)}"
 					aria-live="polite" 
 					aria-label="${Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
@@ -76,13 +79,14 @@ export class MonthPicker extends BasePicker
 		const { year } = getDate(this.getDatePicker().getViewDate());
 		const today = this.getDatePicker().getToday();
 		const focusDate = this.getDatePicker().getFocusDate();
-		const initialFocusDate = this.getDatePicker().getInitialFocusDate();
+		const anchorDate = this.getDatePicker().getInitialFocusDate();
 		// const formatter = new Intl.DateTimeFormat(
 		// 	this.getDatePicker().getLocale(),
 		// 	{ month: 'short', timeZone: 'UTC' },
 		// );
 
 		const months: MonthPickerQuarter[] = [];
+		const cells: MonthPickerMonth[] = [];
 		let currentMonthIndex = 0;
 		for (let quarterIndex = 0; quarterIndex < 4; quarterIndex++)
 		{
@@ -90,26 +94,28 @@ export class MonthPicker extends BasePicker
 			for (let monthIndex = 0; monthIndex < 3; monthIndex++)
 			{
 				const date = createUtcDate(year, currentMonthIndex);
-				const focused = isDatesEqual(date, focusDate, 'month');
 				const month: MonthPickerMonth = {
 					name: DateTimeFormat.format('f', date, null, true),
 					// name: formatter.format(date),
 					date,
 					year,
 					month: currentMonthIndex,
-					current: isDatesEqual(date, today, 'month'),
+					current: this.getDatePicker().shouldShowToday() && isDatesEqual(date, today, 'month'),
 					selected: this.getDatePicker().isDateSelected(date, 'month'),
 					disabled: !this.getDatePicker().isDateAllowed(date, 'month'),
-					focused,
-					tabIndex: focused || isDatesEqual(date, initialFocusDate, 'month') ? 0 : -1,
+					focused: isDatesEqual(date, focusDate, 'month'),
+					tabIndex: -1,
 				};
 
 				quarter.push(month);
+				cells.push(month);
 				currentMonthIndex++;
 			}
 
 			months.push(quarter);
 		}
+
+		setTabAnchor(cells, (cell: MonthPickerMonth): boolean => isDatesEqual(cell.date, anchorDate, 'month'));
 
 		return months;
 	}
@@ -144,8 +150,8 @@ export class MonthPicker extends BasePicker
 		const { year: currentYear } = getDate(this.getDatePicker().getViewDate());
 		this.getHeaderTitle().textContent = currentYear;
 
-		this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('month', 'prev');
-		this.getNextBtn().disabled = !this.getDatePicker().canNavigate('month', 'next');
+		this.setPrevBtnDisabled(!this.getDatePicker().canNavigate('month', 'prev'));
+		this.setNextBtnDisabled(!this.getDatePicker().canNavigate('month', 'next'));
 	}
 
 	#renderQuarter(index: number): HTMLElement
@@ -165,6 +171,7 @@ export class MonthPicker extends BasePicker
 				<button
 					type="button"
 					class="ui-month-picker-month"
+					data-testid="ui-date-picker-month-cell"
 					role="gridcell"
 					data-year="${month.year}"
 					data-month="${month.month}"
@@ -241,7 +248,12 @@ export class MonthPicker extends BasePicker
 			Dom.removeClass(button, '--disabled');
 		}
 
-		button.disabled = Boolean(month.disabled);
+		const ariaDisabled = month.disabled ? 'true' : 'false';
+		if (button.getAttribute('aria-disabled') !== ariaDisabled)
+		{
+			button.setAttribute('aria-disabled', ariaDisabled);
+		}
+
 		button.tabIndex = month.tabIndex;
 
 		return button;
@@ -262,7 +274,8 @@ export class MonthPicker extends BasePicker
 
 	#handleMonthClick(event: MouseEvent): void
 	{
-		if (!Dom.hasClass(event.target, 'ui-month-picker-month') || event.target.disabled)
+		// Keyboard activation reaches the handler past the pointer-events guard, so the cell is refused here.
+		if (!Dom.hasClass(event.target, 'ui-month-picker-month') || InteractivityChecker.isDisabled(event.target))
 		{
 			return;
 		}

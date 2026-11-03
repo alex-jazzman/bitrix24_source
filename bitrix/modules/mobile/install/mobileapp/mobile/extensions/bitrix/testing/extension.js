@@ -2,8 +2,7 @@
  * @module testing
  */
 jn.define('testing', (require, exports, module) => {
-	const { TestSuite } = require('testing/test-suite');
-	const { TestCase } = require('testing/test-case');
+	const { SuiteRegistry } = require('testing/suite-registry');
 	const { TestingExpectation } = require('testing/expectation');
 	const { TestingReport } = require('testing/report');
 	const { config } = require('testing/test-config');
@@ -15,53 +14,28 @@ jn.define('testing', (require, exports, module) => {
 
 	const report = new TestingReport();
 
-	/** @type {function():TestSuite} */
-	const currentSuite = () => {
-		if (testSuites.length === 0)
-		{
-			testSuites.push(new TestSuite('Default test suite', report));
-		}
-
-		return testSuites[testSuites.length - 1];
-	};
+	const registry = new SuiteRegistry(report, testSuites);
 
 	/**
 	 * @param {string} title
 	 * @param {function} setupFn
 	 * @return {TestSuite}
 	 */
-	const describe = (title, setupFn) => {
-		const suite = new TestSuite(title, report);
-		testSuites.push(suite);
-
-		setupFn();
-
-		return suite;
-	};
+	const describe = (title, setupFn) => registry.describe(title, setupFn);
 
 	/**
 	 * @param {string} title
 	 * @param {function} callback
 	 * @return {TestCase}
 	 */
-	const it = (title, callback) => {
-		const testCase = new TestCase(title, callback, 'it', report);
-		currentSuite().testCases.push(testCase);
-
-		return testCase;
-	};
+	const it = (title, callback) => registry.addTestCase(title, callback, 'it');
 
 	/**
 	 * @param {string} title
 	 * @param {function} callback
 	 * @return {TestCase}
 	 */
-	const test = (title, callback) => {
-		const testCase = new TestCase(title, callback, 'test', report);
-		currentSuite().testCases.push(testCase);
-
-		return testCase;
-	};
+	const test = (title, callback) => registry.addTestCase(title, callback, 'test');
 
 	const expect = (value) => new TestingExpectation(value);
 
@@ -73,13 +47,13 @@ jn.define('testing', (require, exports, module) => {
 		expectationCount.setRequiredCount(1);
 	};
 
-	const beforeEach = (fn) => currentSuite().beforeEach.push(fn);
+	const beforeEach = (fn) => registry.beforeEach(fn);
 
-	const afterEach = (fn) => currentSuite().afterEach.push(fn);
+	const afterEach = (fn) => registry.afterEach(fn);
 
-	const beforeAll = (fn) => currentSuite().beforeAll.push(fn);
+	const beforeAll = (fn) => registry.beforeAll(fn);
 
-	const afterAll = (fn) => currentSuite().afterAll.push(fn);
+	const afterAll = (fn) => registry.afterAll(fn);
 
 	module.exports = {
 		describe,
@@ -92,6 +66,7 @@ jn.define('testing', (require, exports, module) => {
 		afterAll,
 		report,
 		testSuites,
+		SuiteRegistry,
 		ConsolePrinter,
 		JnLayoutPrinter,
 		config,

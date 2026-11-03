@@ -1,7 +1,7 @@
 .mail-compose-editor-host
 {
 	display: flex;
-	flex: 1 1 320px;
+	flex: 1 0 auto;
 	flex-direction: column;
 	min-width: 0;
 	min-height: 240px;
@@ -18,33 +18,33 @@
 .mail-compose-editor-host__slot
 {
 	display: flex;
-	flex: 1 1 auto;
+	flex: 1 0 auto;
 	flex-direction: column;
 	min-width: 0;
 	min-height: 240px;
 }
 
+/*
+ * One scroll for the whole middle of the form: the letter takes the height of its text and the wrappers
+ * of the post form neither fix that height nor clip it, or the sticky bar of the toolbar would have
+ * nothing to stick to.
+ */
 .mail-compose-editor-host__slot > .feed-add-post,
 .mail-compose-editor-host__slot .feed-add-post-form,
 .mail-compose-editor-host__slot .feed-add-post-text
 {
 	display: flex;
-	flex: 1 1 auto;
-	height: 100%;
+	flex: 1 0 auto;
 	flex-direction: column;
 	min-height: 0;
+	overflow: visible !important;
 }
 
+/* the floor of the letter is set by the editor through minBodyHeight, not from here */
 .mail-compose-editor-host__slot .bx-html-editor
 {
-	flex: 1 1 auto;
-	height: 100% !important;
-	min-height: 240px !important;
-}
-
-.mail-compose-editor-host__slot .bxhtmled-area-cnt
-{
-	height: calc(100% - 43px) !important;
+	flex: 1 0 auto;
+	overflow: visible !important;
 }
 
 .mail-compose-editor-host__slot .bxhtmled-iframe-cnt,
@@ -57,4 +57,31 @@
 .mail-compose-editor-host__slot .main-post-form-toolbar
 {
 	display: none;
+}
+
+/*
+ * The bar keeps to the top of the scroll while the letter under it goes by. No dividing line under it:
+ * the letter starts right below.
+ */
+.mail-compose-editor-host__slot .bxhtmled-toolbar-cnt
+{
+	position: sticky;
+	top: 0;
+	/*
+	 * Above the letter box: it is absolutely positioned at z-index 100 and painted opaque white, so at a
+	 * lower layer the pinned bar is simply hidden behind the letter as the form scrolls.
+	 */
+	z-index: 110;
+	background: var(--ui-color-bg-content-primary);
+	border-bottom: none;
+}
+
+/*
+ * The first glyph of the toolbar starts where the labels of the rows start. The shift sits on the bar
+ * itself and is prefixed by the frame class: the stylesheet of the post form loads after this bundle
+ * and at equal specificity would win the wrap back.
+ */
+.mail-compose-form-frame .mail-compose-editor-host__slot .bxhtmled-toolbar
+{
+	margin-left: calc(-1 * var(--ui-space-inline-md2));
 }

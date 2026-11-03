@@ -4,19 +4,21 @@ import { Menu } from 'ui.system.menu';
 
 import { type TabConfig } from '../catalog';
 
-export type CatalogStateValue = 'active' | 'hidden' | 'all' | 'new';
+export type CatalogStateValue = 'active' | 'hidden' | 'all' | 'new' | 'favorite';
 
 export const CatalogState = Object.freeze({
 	Active: 'active',
 	Hidden: 'hidden',
 	All: 'all',
 	New: 'new',
+	Favorite: 'favorite',
 });
 
 const STATE_ORDER: Array<CatalogStateValue> = [
 	CatalogState.Active,
 	CatalogState.Hidden,
 	CatalogState.New,
+	CatalogState.Favorite,
 	CatalogState.All,
 ];
 
@@ -193,6 +195,11 @@ export class CatalogPopupStateDropdown
 			return Loc.getMessage('VIBECODECONNECTOR_CATALOG_STATE_NEW');
 		}
 
+		if (state === CatalogState.Favorite)
+		{
+			return Loc.getMessage('VIBECODECONNECTOR_CATALOG_STATE_FAVORITE');
+		}
+
 		return Loc.getMessage('VIBECODECONNECTOR_CATALOG_STATE_ACTIVE');
 	}
 
@@ -211,6 +218,11 @@ export class CatalogPopupStateDropdown
 		if (this.#state === CatalogState.New)
 		{
 			return Loc.getMessage('VIBECODECONNECTOR_CATALOG_TAB_VIBECODE_NEW');
+		}
+
+		if (this.#state === CatalogState.Favorite)
+		{
+			return Loc.getMessage('VIBECODECONNECTOR_CATALOG_TAB_VIBECODE_FAVORITE');
 		}
 
 		return Loc.getMessage('VIBECODECONNECTOR_CATALOG_TAB_VIBECODE');

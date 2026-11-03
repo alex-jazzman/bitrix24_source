@@ -275,7 +275,9 @@ if (!empty($arParams["BLOG_GROUP_ID"]))
 }
 $arFilter["GROUP_SITE_ID"] = SITE_ID;
 $arFilter["SOCNET_SITE_ID"] = array(SITE_ID, false);
-if (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite())
+
+$isExtranetSite = CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite();
+if ($isExtranetSite)
 	$arFilter["SOCNET_SITE_ID"] = SITE_ID;
 
 if($arParams["USER_ID"] > 0 && $arParams["USER_ID"] == $user_id) // in own profile
@@ -386,7 +388,25 @@ $arCacheID = array(
 	CTimeZone::GetOffset(),
 	$USER->GetID()
 );
-$cache_id = "blog_blog_".md5(serialize($arCacheID));
+$navSnapshot = null;
+$importantPostContext = new \Bitrix\Socialnetwork\Livefeed\ImportantPostComponentContext(
+	(string)$this->getTemplateName(),
+	$user_id,
+	$USER->IsAuthorized(),
+	$arParams,
+	$arPostUserFields ?? [],
+	$isExtranetSite,
+	SITE_ID,
+	$USER,
+);
+$cache_id = $importantPostContext->getCacheId($arCacheID);
+$importantCache = $importantPostContext->resolveComponentCache(
+	$cache_path,
+	$arParams['CACHE_TIME'],
+	defined('BX_COMP_MANAGED_CACHE'),
+);
+$cache_path = $importantCache['path'];
+$arParams['CACHE_TIME'] = $importantCache['ttl'];
 /********************************************************************
 				Actions
 ********************************************************************/
@@ -409,8 +429,15 @@ if(
 	}
 	else
 	{
-		$obCache = new CPHPCache;
-		$obCache->Clean($cache_id, $cache_path);
+		if ($importantPostContext->isImportantTemplateContext())
+		{
+			\Bitrix\Socialnetwork\Livefeed\ImportantPostCache::clear($user_id);
+		}
+		else
+		{
+			$obCache = new CPHPCache;
+			$obCache->Clean($cache_id, $cache_path);
+		}
 	}
 
 	$db_events = GetModuleEvents("socialnetwork", "OnAfterCBlogUserOptionsSet");
@@ -423,35 +450,58 @@ if(
 				/Actions
 ********************************************************************/
 
+$isComponentCacheHit = false;
 if (($_REQUEST["return"] ?? '') == "users")
 {
 	include(str_replace(array("\\", "//"), "/", __DIR__."/")."users.php");
 }
 elseif ($PAGEN == null && $arParams["CACHE_TIME"] > 0) // cache only the first page
 {
-	if ($cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path))
+	$isComponentCacheHit = $cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path);
+	if ($isComponentCacheHit)
 	{
 		$arRes = $cache->GetVars();
-		$arResult["POST"] = $arRes["POST"];
-		$arResult["IDS"] = $arRes["IDS"];
-		$arResult["userCache"] = $arRes["userCache"];
-		$arResult["NAV_STRING"] = $arRes["NAV_STRING"];
-		$arResult["USER"] = $arRes["USER"];
+		if (!$importantPostContext->isCacheValid($arRes))
+		{
+			$cache->Clean($cache_id, $cache_path);
+			$isComponentCacheHit = false;
+		}
 
-		$dbPost = CBlogPost::GetList(
-			$arParams["SORT"],
-			$arParams["FILTER"],
-			false,
-			$arParams["PAGE_SETTINGS"],
-			array("ID")
-		);
-		$arResult["NAV_RESULT"] = $dbPost;
+		if (!$isComponentCacheHit)
+		{
+			$arRes = [];
+		}
+		else
+		{
+			$arResult["POST"] = $arRes["POST"];
+			$arResult["IDS"] = $arRes["IDS"];
+			$arResult["userCache"] = $arRes["userCache"];
+			$arResult["NAV_STRING"] = $arRes["NAV_STRING"];
+			$arResult["USER"] = $arRes["USER"];
+
+			$navResult = $importantPostContext->restoreNavigation($arRes, $navNum);
+			if ($navResult !== null)
+			{
+				$arResult['NAV_RESULT'] = $navResult;
+			}
+			else
+			{
+				$dbPost = CBlogPost::GetList(
+					$arParams["SORT"],
+					$arParams["FILTER"],
+					false,
+					$arParams["PAGE_SETTINGS"],
+					array("ID")
+				);
+				$arResult["NAV_RESULT"] = $dbPost;
+			}
+		}
 	}
 }
 if (
 	$PAGEN
 	|| $arParams["CACHE_TIME"] <= 0
-	|| !($cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path))
+	|| !$isComponentCacheHit
 )
 {
 	$dbPost = CBlogPost::GetList(
@@ -463,6 +513,7 @@ if (
 			"DETAIL_TEXT", "DETAIL_TEXT_TYPE", "DATE_PUBLISH", "PUBLISH_STATUS",
 			"ENABLE_COMMENTS", "VIEWS", "NUM_COMMENTS", "CATEGORY_ID", "CODE", "BLOG_OWNER_ID", "BLOG_GROUP_ID", "MICRO")
 	);
+	$navSnapshot = $importantPostContext->createNavigationSnapshot($dbPost);
 	$arResult["NAV_RESULT"] = $dbPost;
 	$arResult["NAV_STRING"] = $dbPost->GetPageNavString(GetMessage("MESSAGE_COUNT"), $arParams["NAV_TEMPLATE"]);
 	$p = new blogTextParser(false, $arParams["PATH_TO_SMILE"]);
@@ -492,7 +543,6 @@ if (
 
 	$arPostsAll = array();
 	$arIdToGet = array();
-
 	while ($arPost = $dbPost->GetNext())
 	{
 		if(intval($arPost["AUTHOR_ID"]) > 0)
@@ -567,12 +617,21 @@ if (
 *******************************************************************/
 	if ($PAGEN == null && $arParams["CACHE_TIME"] > 0)
 	{
+		$nextPublicationDelay = $importantPostContext->getNextPublicationDelay();
 		$cache->StartDataCache($arParams["CACHE_TIME"], $cache_id, $cache_path);
 
 		if (defined("BX_COMP_MANAGED_CACHE"))
 		{
 			$CACHE_MANAGER->StartTagCache($cache_path);
-			$CACHE_MANAGER->RegisterTag('blogpost_important_all');
+			if ($importantPostContext->isImportantFilterContext())
+			{
+				$CACHE_MANAGER->RegisterTag('blogpost_important_all');
+				$CACHE_MANAGER->RegisterTag('sonet_features2perms');
+			}
+			foreach ($arResult["POST"] as $postId => $arPost)
+			{
+				$CACHE_MANAGER->RegisterTag('blog_post_' . $postId);
+			}
 
 			if (!empty($arResult["POST"]))
 			{
@@ -600,13 +659,20 @@ if (
 			$CACHE_MANAGER->EndTagCache();
 		}
 
-		$cache->EndDataCache(array(
+		$cacheData = array(
 			"POST" => $arResult["POST"],
 			"IDS" => $arResult["IDS"],
 			"userCache" => $arResult["userCache"],
 			"NAV_STRING" => $arResult["NAV_STRING"],
 			"USER" => $arResult["USER"]
-		));
+		);
+		$cacheData = $importantPostContext->enrichCacheData(
+			$cacheData,
+			$navSnapshot,
+			(int)$arParams['CACHE_TIME'],
+			$nextPublicationDelay,
+		);
+		$cache->EndDataCache($cacheData);
 	}
 /*******************************************************************
 				/ CACHE

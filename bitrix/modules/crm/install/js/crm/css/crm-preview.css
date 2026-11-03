@@ -24,7 +24,7 @@
 	height: 40px;
 	margin: 6px;
 	border-radius: 50%;
-	background: url(/bitrix/js/crm/css/../images/crm-control-panel-sprite-21.png) no-repeat 100px 100px #fff;
+	background: url(/bitrix/js/crm/css/../images/crm-control-panel-sprite-21.webp) no-repeat 100px 100px #fff;
 }
 
 .crm-preview-header-icon-lead {background-position: center -3866px;}

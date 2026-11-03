@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { mapState } from 'ui.vue3.pinia';
 import { ItemListAdvice } from './item-list-advice';
 import { ItemList} from './item-list';
@@ -34,6 +34,11 @@ export const MainContent = {
 		},
 	},
 	computed: {
+		itemsRegionName(): string
+		{
+			const regionName = Loc.getMessage('UI_JS_ENTITY_CATALOG_ITEMS_ARIA');
+			return Type.isStringFilled(this.group?.name) ? `${this.group.name}. ${regionName}` : regionName;
+		},
 		...mapState(useGlobalState, ['filtersApplied', 'shouldShowWelcomeStub']),
 		showAdvice(): boolean
 		{
@@ -70,6 +75,36 @@ export const MainContent = {
 			return this.showAdvice && (this.items.length <= 0);
 		},
 	},
+	data()
+	{
+		return { contentScrollable: false };
+	},
+	mounted()
+	{
+		this.updateScrollableRegion();
+		this.contentResizeObserver = new ResizeObserver(() => this.updateScrollableRegion());
+		this.contentResizeObserver.observe(this.$refs.content);
+	},
+	updated()
+	{
+		this.updateScrollableRegion();
+	},
+	beforeUnmount()
+	{
+		this.contentResizeObserver?.disconnect();
+	},
+	methods: {
+		focusContent()
+		{
+			const content = this.$refs.content;
+			content?.focus({ preventScroll: true });
+		},
+		updateScrollableRegion()
+		{
+			const content = this.$refs.content;
+			this.contentScrollable = content && content.scrollHeight > content.clientHeight;
+		},
+	},
 	beforeUpdate()
 	{
 		this.$refs.content.scrollTop = 0;
@@ -83,7 +118,14 @@ export const MainContent = {
 
 			<hr class="ui-entity-catalog__main-separator" v-if="showSeparator">
 
-			<div class="ui-entity-catalog__main-content-body" ref="content">
+			<div
+				class="ui-entity-catalog__main-content-body"
+				data-testid="entity-catalog-items-region"
+				ref="content"
+				role="region"
+				:aria-label="itemsRegionName"
+				:tabindex="contentScrollable ? 0 : -1"
+			>
 				<slot name="main-content-welcome-stub" v-if="showWelcomeStub"/>
 				<slot name="main-content-no-selected-group-stub" v-else-if="showNoSelectedGroupStub"/>
 				<slot name="main-content-filter-stub" v-if="showFiltersStub">

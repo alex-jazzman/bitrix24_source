@@ -3,11 +3,16 @@ import { NoteAvatarStack } from 'note.ui.avatar-stack';
 import { ViewsWidgetComponent } from './views-widget';
 import { BacklinksWidgetComponent } from 'note.ui.backlinks';
 import { SubscriptionBellComponent } from './subscription-bell';
+import { hasSubscriptionSurface, SUBSCRIPTION_SCOPE_DOCUMENT } from './subscription-api';
 import { FavoriteStarComponent } from './favorite-star';
 import { subscribeDocumentHistory } from './history-pull';
-import { formatActivityTimestamp } from './format-date';
+import { ActivityDayKind, describeActivityTimestamp } from './format-date';
 
-// [P1.T5] Activity line hub under the document title: three slots — last-change chip
+// One raw #DATE# / #TIME# template per calendar branch, keyed by ActivityDayKind. A value is null
+// on a locale whose translation of that phrase has not shipped yet.
+type ChipPhrases = { [kind: string]: ?string };
+
+// Activity line hub under the document title: three slots - last-change chip
 // (opens the history sidebar), views eye and subscription bell. The chip's payload is `lastChange`
 // (`{ authors, time }`, bundled into the document bootstrap payload by the backend) — `null` falls
 // back to a generic "open history" label instead of inventing an author/time.
@@ -19,14 +24,14 @@ import { formatActivityTimestamp } from './format-date';
 // `#eyeCtl,#bellLine{display:none}`) — those read live-document state that doesn't apply to a
 // past version.
 //
-// [P3.T4] The eye slot is the working ViewsWidgetComponent. It needs `documentId` and the
+// The eye slot is the working ViewsWidgetComponent. It needs `documentId` and the
 // live-collaboration `provider` (for the real-time overlay, reusing AwarenessManager per Block
 // 5 — see views-widget.js) — both are explicit props on this component now, handed down by the
 // caller (note.editor's DocumentEditorComponent). Previously read via `this.$parent` back when
 // this component still lived inside note.editor itself; that coupling is gone now that this
 // component is its own extension.
 //
-// [P6.T4] The bell slot is the working SubscriptionBellComponent (self-contained — it loads its
+// The bell slot is the working SubscriptionBellComponent (self-contained - it loads its
 // own subscribed/mode state from SubscriptionController.getState, same pattern as the eye).
 // Subscribing only requires document VIEW rights (see SubscriptionController::assertTargetViewAccess),
 // not edit — the bell is NOT gated by `canEdit`.
@@ -59,7 +64,7 @@ export const ActivityLineComponent = {
 		},
 		// Handed down to SubscriptionBellComponent — optional (the server falls back to the
 		// document's own collection when it's 0/omitted), passed through when the caller
-		// already has it (see note-editor.js's own `collectionId` prop). [P3.T1] Also read by
+		// already has it (see note-editor.js's own `collectionId` prop). Also read by
 		// BacklinksWidgetComponent, which labels only the sources living in another knowledge base.
 		collectionId: {
 			type: Number,
@@ -75,19 +80,20 @@ export const ActivityLineComponent = {
 			type: Object,
 			default: null,
 		},
-		// [P8.T5] ISO-8601 creation timestamp of the document. When there is no last-change info to
+		// ISO-8601 creation timestamp of the document. When there is no last-change info to
 		// show, the chip falls back to "Created <date>" instead of the generic "open history" label.
 		createdAt: {
 			type: String,
 			default: null,
 		},
-		// [P8.T2] history_enabled UI flag. When false the chip still renders and live-updates, but it
+		// history_enabled UI flag. When false the chip still renders and live-updates, but it
 		// is NOT interactive: no history-open click, no title/hover/cursor affordance.
 		historyEnabled: {
 			type: Boolean,
 			default: false,
 		},
-		// [P8.T3] notifications_enabled UI flag — gates the subscription bell only.
+		// notifications_enabled UI flag. When false the bell is not drawn at all - the feature is
+		// hidden whole, and nothing is delivered behind it either (NotificationDrainAgent).
 		notificationsEnabled: {
 			type: Boolean,
 			default: false,
@@ -106,7 +112,7 @@ export const ActivityLineComponent = {
 			type: Object,
 			default: null,
 		},
-		// [DTO-01] Backlinks counter bundled with the document bootstrap — passed straight through
+		// Backlinks counter bundled with the document bootstrap - passed straight through
 		// to BacklinksWidgetComponent, which adopts it instead of reading the count itself. See that
 		// component's own prop doc.
 		initialBacklinks: {
@@ -119,7 +125,7 @@ export const ActivityLineComponent = {
 			type: Object,
 			default: null,
 		},
-		// [TPL-01] "In favorites" flag from the document bootstrap - passed straight through to
+		// "In favorites" flag from the document bootstrap - passed straight through to
 		// FavoriteStarComponent. `null` leaves the star to the sidebar's own state (see its prop doc).
 		initialFavorite: {
 			type: Boolean,
@@ -161,7 +167,7 @@ export const ActivityLineComponent = {
 			// once a `content_changed` event arrives, overrides it so the chip updates in place
 			// without a reload. Same `{ authors, time }` shape as `lastChange`.
 			liveLastChange: null,
-			// [AC-045] Effective "in favorites" flag as the star reports it (bootstrap, sidebar store or
+			// Effective "in favorites" flag as the star reports it (bootstrap, sidebar store or
 			// the user's own press). The bell is gated by it, so it has to be the star's value and not a
 			// second reading of the same fact.
 			starFavorite: null,
@@ -198,6 +204,13 @@ export const ActivityLineComponent = {
 		{
 			return this.starFavorite ?? Boolean(this.initialFavorite);
 		},
+		// An article is followed with `self`, and that is shipped, so the line carries a bell wherever
+		// the option leaves the feature on. Asked of the policy rather than stated here, so neither
+		// narrowing the shipping nor switching the option is an edit of this line.
+		hasSubscriptionBell(): boolean
+		{
+			return hasSubscriptionSurface(SUBSCRIPTION_SCOPE_DOCUMENT, this.notificationsEnabled);
+		},
 		effectiveChipInfo(): Object | null
 		{
 			// A version preview wins over everything; otherwise the freshest live content-change
@@ -216,14 +229,23 @@ export const ActivityLineComponent = {
 		{
 			return this.chipAuthors.length > 0 && Type.isStringFilled(this.effectiveChipInfo?.time);
 		},
-		// [#2, date-format fix] Shared day+time convention — see format-date.js.
-		chipTimeText(): string
+		// [#2, date-format fix] The signature is one whole phrase per calendar branch instead of a prefix
+		// glued to a formatted date — the reason, and the shared day+time convention, live in format-date.js.
+		chipChangedText(): string
 		{
 			const ts = this.toTimestampSeconds(this.effectiveChipInfo?.time);
+			if (ts === null)
+			{
+				return '';
+			}
 
-			return ts === null ? '' : formatActivityTimestamp(ts);
+			return this.buildChipText(ts, {
+				[ActivityDayKind.Today]: this.messages.activityChangedToday,
+				[ActivityDayKind.Yesterday]: this.messages.activityChangedYesterday,
+				[ActivityDayKind.Date]: this.messages.activityChangedAtDate,
+			});
 		},
-		// [P8.T5] No last-change info: show "Created <date>" when we have a valid creation timestamp,
+		// No last-change info: show "Created <date>" when we have a valid creation timestamp,
 		// otherwise keep the generic "open history" label (no crash on a missing/invalid createdAt).
 		chipFallbackText(): string
 		{
@@ -233,7 +255,11 @@ export const ActivityLineComponent = {
 				return this.messages.activityOpenHistory;
 			}
 
-			return `${this.messages.activityCreated} ${formatActivityTimestamp(ts)}`;
+			return this.buildChipText(ts, {
+				[ActivityDayKind.Today]: this.messages.activityCreatedToday,
+				[ActivityDayKind.Yesterday]: this.messages.activityCreatedYesterday,
+				[ActivityDayKind.Date]: this.messages.activityCreatedAtDate,
+			});
 		},
 	},
 	methods: {
@@ -247,6 +273,20 @@ export const ActivityLineComponent = {
 			const ms = Date.parse(value);
 
 			return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+		},
+		// A phrase may legitimately be absent: the new keys ship in ru first, and Loc.getMessage() returns
+		// null on a locale whose translation has not arrived yet. An empty signature is the accepted
+		// outcome there — never a TypeError on a missing template, never a literal "undefined" in the chip.
+		buildChipText(ts: number, phrases: ChipPhrases): string
+		{
+			const { kind, date, time } = describeActivityTimestamp(ts);
+			const phrase = phrases[kind];
+			if (!Type.isStringFilled(phrase))
+			{
+				return '';
+			}
+
+			return phrase.replace('#DATE#', date).replace('#TIME#', time);
 		},
 		// [NEW-C, live chip] Subscribe to the same pushed history stream the sidebar feed reads, but
 		// only to keep the chip's "last change" fresh. `content_changed` is visible to every role
@@ -296,7 +336,7 @@ export const ActivityLineComponent = {
 		},
 		handleChipClick(): void
 		{
-			// [P8.T2] history_enabled off → the chip is a passive label, no history-open.
+			// history_enabled off -> the chip is a passive label, no history-open.
 			if (!this.historyEnabled)
 			{
 				return;
@@ -315,20 +355,41 @@ export const ActivityLineComponent = {
 	},
 	// language=Vue
 	template: `
-		<div class="note-activity-line">
+		<div class="note-activity-line" data-testid="note-activity-line">
 			<button
 				v-if="historyEnabled"
 				type="button"
 				class="note-activity-line__chip"
 				:title="messages.activityOpenHistory"
+				data-testid="note-activity-chip"
 				@click="handleChipClick"
 			>
-				<span v-if="hasChipInfo" class="note-activity-line__chip-text">{{ messages.activityChanged }} {{ chipTimeText }}</span>
-				<span v-else class="note-activity-line__chip-text">{{ chipFallbackText }}</span>
+				<span
+					v-if="hasChipInfo"
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipChangedText }}</span>
+				<span
+					v-else
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipFallbackText }}</span>
 			</button>
-			<span v-else class="note-activity-line__chip note-activity-line__chip--static">
-				<span v-if="hasChipInfo" class="note-activity-line__chip-text">{{ messages.activityChanged }} {{ chipTimeText }}</span>
-				<span v-else class="note-activity-line__chip-text">{{ chipFallbackText }}</span>
+			<span
+				v-else
+				class="note-activity-line__chip note-activity-line__chip--static"
+				data-testid="note-activity-chip-static"
+			>
+				<span
+					v-if="hasChipInfo"
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipChangedText }}</span>
+				<span
+					v-else
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipFallbackText }}</span>
 			</span>
 			<template v-if="hasChipInfo">
 				<span class="note-activity-line__chip-sep" aria-hidden="true">·</span>
@@ -340,7 +401,7 @@ export const ActivityLineComponent = {
 					@avatar-click="handleAvatarClick"
 				/>
 			</template>
-			<span v-if="!isPreviewMode" class="note-activity-line__actions">
+			<span v-if="!isPreviewMode" class="note-activity-line__actions" data-testid="note-activity-actions">
 				<ViewsWidgetComponent
 					:document-id="documentId"
 					:provider="provider"
@@ -349,14 +410,14 @@ export const ActivityLineComponent = {
 					:messages="messages"
 					:open-user-profile="openUserProfile"
 				/>
-				<!-- [P2.T3] Slot order is fixed by the product: last change, views, incoming links,
+				<!-- Slot order is fixed by the product: last change, views, incoming links,
 				     favorites, subscription. -->
 				<BacklinksWidgetComponent
 					:document-id="documentId"
 					:initial-backlinks="initialBacklinks"
 					@open-internal-link="$emit('open-internal-link', $event)"
 				/>
-				<!-- [P4.T3] The star is not gated by notificationsEnabled: the favorites list exists
+				<!-- The star is not gated by the subscription shipping: the favorites list exists
 				     independently of the bell. In "meta" mode (a version preview) it is hidden along
 				     with the eye and the bell - see the wrapper above. -->
 				<FavoriteStarComponent
@@ -368,7 +429,7 @@ export const ActivityLineComponent = {
 					@favorite-change="starFavorite = $event"
 				/>
 				<SubscriptionBellComponent
-					v-if="notificationsEnabled"
+					v-if="hasSubscriptionBell"
 					:document-id="documentId"
 					:collection-id="collectionId"
 					:initial-state="initialSubscription"

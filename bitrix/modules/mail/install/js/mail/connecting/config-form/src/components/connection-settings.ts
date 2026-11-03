@@ -23,6 +23,7 @@ export const ConnectionSettings = defineComponent({
 
 	props: {
 		passwordPlaceholder: { type: String, default: '' },
+		connectionSettingsLocked: { type: Boolean, default: false },
 	},
 
 	emits: ['oauth-email-blur'],
@@ -41,7 +42,7 @@ export const ConnectionSettings = defineComponent({
 		},
 		credentialsReadOnly(): boolean
 		{
-			return this.state.migrationActive;
+			return this.connectionSettingsLocked || this.state.migrationActive;
 		},
 		isOAuthService(): boolean
 		{
@@ -109,9 +110,23 @@ export const ConnectionSettings = defineComponent({
 		{
 			return !this.state.permissions.isSmtpAvailable;
 		},
+		// The credentials of the mailbox come from outside the portal and cannot be changed here, so
+		// the form draws none of them. The server refuses such a change whether or not this holds.
+		credentialsAreExternal(): boolean
+		{
+			return Boolean(this.state.service?.externalCredentials);
+		},
 		hasCustomImapServer(): boolean
 		{
 			return !this.state.service?.server;
+		},
+		showServerFields(): boolean
+		{
+			return !this.credentialsAreExternal && this.hasCustomImapServer;
+		},
+		showCredentialFields(): boolean
+		{
+			return !this.credentialsAreExternal && !this.isOAuthService;
 		},
 	},
 
@@ -162,6 +177,11 @@ export const ConnectionSettings = defineComponent({
 		},
 		openDirsSlider(): void
 		{
+			if (this.credentialsReadOnly)
+			{
+				return;
+			}
+
 			const url = Uri.addParam('/mail/config/dirs', {
 				mailboxId: this.state.mailboxId,
 			});
@@ -195,107 +215,103 @@ export const ConnectionSettings = defineComponent({
 	// language=Vue
 	template: `
 		<div class="mail-config-form__input-content" data-test-id="mail_config-form__connection-settings">
-			<div
-				v-if="showEmailField"
-				class="mail-config-form__email-field"
-				:class="oauthEmailStatusModifier"
-				data-test-id="mail_config-form__connection-email-group"
-			>
+			<template v-if="!credentialsReadOnly">
+				<div
+					v-if="showEmailField"
+					class="mail-config-form__email-field"
+					:class="oauthEmailStatusModifier"
+					data-test-id="mail_config-form__connection-email-group"
+				>
+					<BInput
+						:label="loc('MAIL_CONFIG_FORM_EMAIL_LABEL')"
+						:size="InputSize.Md"
+						v-model="state.connection.email"
+						:design="InputDesign.DEFAULT"
+						:error="state.errors.email"
+						:placeholder="loc('MAIL_CONFIG_FORM_EMAIL_LABEL_PLACEHOLDER')"
+						data-test-id="mail_config-form__connection-email_field"
+						@blur="onEmailBlur"
+					/>
+					<div
+						v-if="state.connection.oauthEmailNeedsConfirmation"
+						class="mail-config-form__email-hint"
+						:class="oauthEmailStatusModifier"
+						data-test-id="mail_config-form__connection-email-hint"
+					>{{ oauthEmailStatusHint }}</div>
+				</div>
+				<div
+					class="mail-config-form__input-group_checkbox"
+					v-if="showServerFields"
+					data-test-id="mail_config-form__connection-server-group"
+				>
+					<div class="mail-config-form__input-group">
+						<BInput
+							class="mail-config-form__input-group_main"
+							:label="loc('MAIL_CONFIG_FORM_SERVER_LABEL')"
+							:size="InputSize.Md"
+							:design="InputDesign.DEFAULT"
+							v-model="state.connection.server"
+							:placeholder="loc('MAIL_CONFIG_FORM_SERVER_LABEL_PLACEHOLDER')"
+							data-test-id="mail_config-form__connection-server_field"
+						/>
+						<BInput
+							class="mail-config-form__input-group_port"
+							:label="loc('MAIL_CONFIG_FORM_PORT_LABEL')"
+							type="number"
+							:size="InputSize.Md"
+							:design="InputDesign.DEFAULT"
+							v-model="portModel"
+							:placeholder="loc('MAIL_CONFIG_FORM_PORT_PLACEHOLDER')"
+							data-test-id="mail_config-form__connection-port_field"
+						/>
+					</div>
+					<div class="mail-config-form__checkbox-row">
+						<input
+							type="checkbox"
+							id="mail-config-imap-ssl"
+							class="mail-config-form__checkbox"
+							v-model="state.connection.ssl"
+							data-test-id="mail_config-form__connection-ssl_checkbox"
+						/>
+						<label class="mail-config-form__checkbox-label --connection-settings" for="mail-config-imap-ssl">
+							{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
+						</label>
+					</div>
+				</div>
 				<BInput
-					:label="loc('MAIL_CONFIG_FORM_EMAIL_LABEL')"
+					v-if="showCredentialFields"
+					:label="loc('MAIL_CONFIG_FORM_LOGIN_LABEL')"
 					:size="InputSize.Md"
-					v-model="state.connection.email"
-					:disabled="credentialsReadOnly"
-					:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-					:error="state.errors.email"
-					:placeholder="loc('MAIL_CONFIG_FORM_EMAIL_LABEL_PLACEHOLDER')"
-					data-test-id="mail_config-form__connection-email_field"
-					@blur="onEmailBlur"
+					:design="isEditMode ? InputDesign.Disabled : InputDesign.DEFAULT"
+					:model-value="state.connection.login"
+					:error="state.errors.login"
+					data-test-id="mail_config-form__connection-login_field"
+					@update:model-value="onLoginChange"
 				/>
 				<div
-					v-if="state.connection.oauthEmailNeedsConfirmation"
-					class="mail-config-form__email-hint"
-					:class="oauthEmailStatusModifier"
-					data-test-id="mail_config-form__connection-email-hint"
-				>{{ oauthEmailStatusHint }}</div>
-			</div>
-			<div
-				class="mail-config-form__input-group_checkbox"
-				v-if="hasCustomImapServer"
-				data-test-id="mail_config-form__connection-server-group"
-			>
-				<div class="mail-config-form__input-group">
-					<BInput
-						class="mail-config-form__input-group_main"
-						:label="loc('MAIL_CONFIG_FORM_SERVER_LABEL')"
-						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
-						v-model="state.connection.server"
-						:disabled="credentialsReadOnly"
-						:placeholder="loc('MAIL_CONFIG_FORM_SERVER_LABEL_PLACEHOLDER')"
-						data-test-id="mail_config-form__connection-server_field"
-					/>
-					<BInput
-						class="mail-config-form__input-group_port"
-						:label="loc('MAIL_CONFIG_FORM_PORT_LABEL')"
-						type="number"
-						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
-						v-model="portModel"
-						:disabled="credentialsReadOnly"
-						:placeholder="loc('MAIL_CONFIG_FORM_PORT_PLACEHOLDER')"
-						data-test-id="mail_config-form__connection-port_field"
-					/>
-				</div>
-				<div class="mail-config-form__checkbox-row">
-					<input
-						type="checkbox"
-						id="mail-config-imap-ssl"
-						class="mail-config-form__checkbox"
-						v-model="state.connection.ssl"
-						:disabled="credentialsReadOnly"
-						data-test-id="mail_config-form__connection-ssl_checkbox"
-					/>
-					<label class="mail-config-form__checkbox-label --connection-settings" for="mail-config-imap-ssl">
-						{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
-					</label>
-				</div>
-			</div>
-			<BInput
-				v-if="!isOAuthService"
-				:label="loc('MAIL_CONFIG_FORM_LOGIN_LABEL')"
-				:size="InputSize.Md"
-				:design="isEditMode || credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-				:model-value="state.connection.login"
-				:disabled="isEditMode || credentialsReadOnly"
-				:error="state.errors.login"
-				data-test-id="mail_config-form__connection-login_field"
-				@update:model-value="onLoginChange"
-			/>
-			<div
-				v-if="!isOAuthService"
-				class="mail-config-form__password-field"
-				data-id="mail-config-form-password-field"
-				data-test-id="mail_config-form__connection-password_field"
-			>
-				<BInput
-					:label="loc('MAIL_CONFIG_FORM_PASSWORD_LABEL')"
-					type="password"
-					:size="InputSize.Md"
-					:design="InputDesign.DEFAULT"
-					v-model="state.connection.password"
-					:disabled="credentialsReadOnly"
-					:placeholder="isEditMode ? passwordPlaceholder : ''"
-					:error="state.errors.password"
+					v-if="showCredentialFields"
+					class="mail-config-form__password-field"
+					data-id="mail-config-form-password-field"
 					data-test-id="mail_config-form__connection-password_field"
-				/>
-			</div>
-			<a v-if="isEditMode && state.mailboxId"
-				class="mail-config-form__dirs-link"
-				href="#"
-				@click.prevent="openDirsSlider"
-				data-test-id="mail_config-form__dirs_link"
-			>{{ loc('MAIL_CONFIG_FORM_DIRS_LINK') }}</a>
+				>
+					<BInput
+						:label="loc('MAIL_CONFIG_FORM_PASSWORD_LABEL')"
+						type="password"
+						:size="InputSize.Md"
+						:design="InputDesign.DEFAULT"
+						v-model="state.connection.password"
+						:placeholder="isEditMode ? passwordPlaceholder : ''"
+						:error="state.errors.password"
+						data-test-id="mail_config-form__connection-password_field"
+					/>
+				</div>
+				<a v-if="isEditMode && state.mailboxId"
+					class="mail-config-form__dirs-link"
+					href="#"
+					@click.prevent="openDirsSlider"
+					data-test-id="mail_config-form__dirs_link"
+				>{{ loc('MAIL_CONFIG_FORM_DIRS_LINK') }}</a>
+			</template>
 			<slot name="after-fields"></slot>
 			<a class="mail-config-form__extra-params-link"
 				href="#"

@@ -9,6 +9,7 @@ export class LastNameInput extends RowTextInput
 			placeholder: Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
 			ariaLabel: Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_ARIA_LABEL'),
 			dataTestId,
+			autocomplete: 'family-name',
 		});
 	}
 }

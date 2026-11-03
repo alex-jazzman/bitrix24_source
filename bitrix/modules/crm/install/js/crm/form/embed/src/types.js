@@ -75,6 +75,7 @@ export type EmbedData = {
 	dict: EmbedDict,
 	embed: {
 		pubLink: string,
+		qrLink: string,
 		previewLink: string,
 		scripts: {
 			auto: {old: string, text: string},

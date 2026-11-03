@@ -122,13 +122,34 @@ if ($arParams['SHOW_EDIT_PANEL'] === 'Y')
 	$allMess = Loc::loadLanguageFile(__FILE__);
 	$setMessForJS = [];
 	$setMessForJS['LANDING_TPL_PUB_COPIED_LINK'] = $allMess['LANDING_TPL_PUB_COPIED_LINK'];
+	// the phrases ship in ru only, and an `aria-label` with nothing in it names nothing
+	$ariaLabel = static function(?string $phrase): string
+	{
+		$phrase = (string)$phrase;
+		if ($phrase === '')
+		{
+			return '';
+		}
+
+		return 'aria-label="' . \htmlspecialcharsbx($phrase) . '"';
+	};
 	?>
 	<div class="landing-pub-top-panel-wrapper">
 		<div class="landing-pub-top-panel">
 			<div class="landing-pub-top-panel-left">
 				<div class="landing-pub-top-panel-nav-buttons">
-					<button class="landing-pub-top-panel-back ui-btn ui-btn-xs ui-btn-icon-back ui-btn-link ui-btn-light"></button>
-					<button class="landing-pub-top-panel-forward ui-btn ui-btn-xs ui-btn-icon-back ui-btn-link ui-btn-light"></button>
+					<button
+						type="button"
+						class="landing-pub-top-panel-back ui-btn ui-btn-xs ui-btn-icon-back ui-btn-link ui-btn-light"
+						<?= $ariaLabel(Loc::getMessage('LANDING_TPL_PUB_NAV_BACK'))?>
+						data-testid="pub-panel-back"
+					></button>
+					<button
+						type="button"
+						class="landing-pub-top-panel-forward ui-btn ui-btn-xs ui-btn-icon-back ui-btn-link ui-btn-light"
+						<?= $ariaLabel(Loc::getMessage('LANDING_TPL_PUB_NAV_FORWARD'))?>
+						data-testid="pub-panel-forward"
+					></button>
 				</div>
 				<div class="landing-pub-top-panel-separator"></div>
 				<div class="landing-pub-top-panel-chain">
@@ -138,7 +159,7 @@ if ($arParams['SHOW_EDIT_PANEL'] === 'Y')
 					</span>
 					<strong class="landing-pub-top-panel-chain-separator"><span></span></strong>
 					<?php $title = \htmlspecialcharsbx($landing->getTitle());?>
-					<span class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-pub-top-panel-chain-link landing-pub-top-panel-chain-link-page"" data-hint="<?= $title?>" data-hint-no-icon>
+					<span class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-pub-top-panel-chain-link landing-pub-top-panel-chain-link-page" data-hint="<?= $title?>" data-hint-no-icon>
 						<?= $title?>
 					</span>
 				</div>
@@ -147,17 +168,25 @@ if ($arParams['SHOW_EDIT_PANEL'] === 'Y')
 				</div>
 			</div>
 			<div class="landing-pub-top-panel-right">
-				<div class="landing-pub-top-panel-unique-view">
-					<div class="ui-icon-set --person"></div>
-					<div>
+				<button
+					type="button"
+					class="landing-pub-top-panel-unique-view"
+					aria-expanded="false"
+					aria-controls="landing-pub-unique-view-popup"
+					data-testid="pub-panel-unique-view"
+				>
+					<span class="ui-icon-set --person" aria-hidden="true"></span>
+					<?php $viewsLabel = (string)$component->getMessageType('LANDING_TPL_VIEWS');?>
+					<span class="landing-pub-visually-hidden"><?= \htmlspecialcharsbx($viewsLabel)?></span>
+					<span>
 						<?= View::getNumberUniqueViews($landing->getId())?>
+					</span>
+				</button>
+				<div class="landing-pub-top-panel-unique-view-popup hide" id="landing-pub-unique-view-popup">
+					<div class="landing-pub-top-panel-unique-view-popup-header">
+						<?= \htmlspecialcharsbx($viewsLabel)?>
 					</div>
-					<div class="landing-pub-top-panel-unique-view-popup hide">
-						<div class="landing-pub-top-panel-unique-view-popup-header">
-							<?= $component->getMessageType('LANDING_TPL_VIEWS')?>
-						</div>
-						<div class="landing-pub-top-panel-unique-view-popup-item-container"></div>
-					</div>
+					<div class="landing-pub-top-panel-unique-view-popup-item-container"></div>
 				</div>
 				<div class="landing-pub-top-panel-total-view">
 					<div class="ui-icon-set --opened-eye"></div>
@@ -237,15 +266,50 @@ $check = \Bitrix\Landing\Restriction\Manager::isAllowed(
 );
 if (!$check)
 {
+	// Both go through page properties and not through this place in the output: the branch runs
+	// after `$landing->view()`, so anything printed here lands inside the content area, which is
+	// exactly what the state dims. `AfterBodyOpen` puts the message above the content, where it
+	// stays readable, and `BodyClass` puts the state on the document before any script runs.
+	$viewLimitMessage = (string)Loc::getMessage('LANDING_TPL_PUB_VIEW_LIMIT');
+	if ($viewLimitMessage !== '')
+	{
+		Manager::setPageView(
+			'AfterBodyOpen',
+			'<div class="landing-pub-view-limit" data-testid="pub-view-limit-alert">'
+			. \htmlspecialcharsbx($viewLimitMessage)
+			. '</div>'
+		);
+	}
+	Manager::setPageView('BodyClass', 'landing-mode-view-limit');
 	?>
 	<script>
 		BX.ready(function()
 		{
-			document.body.style.opacity = 0.1;
-			document.addEventListener('click', function handler(e) {
-				e.stopPropagation();
-				e.preventDefault();
-			}, true);
+			// printing `BodyClass` is a convention of the site template, and the template is an
+			// option of the portal: the state reaches the document from here as well
+			document.body.classList.add('landing-mode-view-limit');
+			// everything the page arrived with except the message goes out of reach at once; the
+			// slider opened below is appended afterwards and stays usable
+			var message = document.querySelector('.landing-pub-view-limit');
+			[].slice.call(document.body.children).forEach(function(node) {
+				if (node !== message)
+				{
+					node.setAttribute('inert', '');
+				}
+			});
+			// a browser that does not know the attribute still draws the content dimmed, because the
+			// selector alone is enough for that, and leaves it clickable: there the state has to stop
+			// the click the way it did before, and only inside what is marked
+			if (!('inert' in HTMLElement.prototype))
+			{
+				document.addEventListener('click', function(e) {
+					if (e.target && e.target.closest && e.target.closest('[inert]') !== null)
+					{
+						e.stopPropagation();
+						e.preventDefault();
+					}
+				}, true);
+			}
 			top.BX.UI.InfoHelper.show('limit_knowledge_base_number_page_view');
 		});
 	</script>

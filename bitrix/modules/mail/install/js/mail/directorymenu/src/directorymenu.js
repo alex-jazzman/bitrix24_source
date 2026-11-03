@@ -1,4 +1,4 @@
-import { Tag, Dom, Event, Loc, Runtime, Text, Type } from 'main.core';
+import { Tag, Dom, Event, Loc, Runtime, Text, Page, Type, Uri } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
@@ -7,6 +7,7 @@ import 'ui.notification';
 
 import { Item } from './item.js';
 import { SectionRegistry } from './section-registry.js';
+import { getMigrationState } from 'mail.migration-state';
 import { FAVORITES_SECTION } from 'mail.favorites-filter-state';
 
 import './css/style.css';
@@ -19,7 +20,7 @@ export class DirectoryMenu
 {
 	#activeDir = '';
 	#menu = Tag.render`<div class="mail-left-directory-menu-wrapper"></div>`;
-	#folderMenu = Tag.render`<ul role="list" aria-label="${Loc.getMessage('MAIL_DIRECTORY_MENU_ARIA_SYSTEM_LIST')}" class="ui-mail-left-directory-menu" data-test-id="mail_directory-menu__folder-list"></ul>`;
+	#folderMenu = Tag.render`<ul role="list" aria-label="${Loc.getMessage('MAIL_DIRECTORY_MENU_ARIA_SYSTEM_LIST')}" class="ui-mail-left-directory-menu" data-testid="mail-directory-menu-folder-list"></ul>`;
 	#directoryCounters = [];
 	#items = new Map();
 	#itemByContainer = new Map();
@@ -31,6 +32,12 @@ export class DirectoryMenu
 	#folderDefaultOrder = [];
 	#mailboxId = 0;
 	#manualSortingAvailable = false;
+	#sortingStatusReady = false;
+	#migrationActive = false;
+	#unsubscribeMigration = null;
+	#sortingRevision = -1;
+	#blockedDragStart = null;
+	#blockedDragClick = false;
 	#saveTimer = null;
 	#onDirectorySelect = null;
 	#orderSaveTimer = null;
@@ -41,6 +48,13 @@ export class DirectoryMenu
 	#favoritesActive = false;
 	#favoritesNode = null;
 	#favoritesItem = null;
+	#scheduledMessagesAvailable = false;
+	#scheduledMessagesActive = false;
+	#scheduledMessagesPath = '';
+	#scheduledMessagesCount = 0;
+	#messageListPath = '';
+	#scheduledMessagesItem = null;
+	#scheduledMessagesItemPath = '__scheduled_messages__';
 	#sections = new SectionRegistry(() => this.#disableFolderItems());
 	#draggables = [];
 	#dragAndDropToken = 0;
@@ -61,7 +75,7 @@ export class DirectoryMenu
 
 	hasDirectorySelectHandler()
 	{
-		return typeof this.#onDirectorySelect === 'function';
+		return Type.isFunction(this.#onDirectorySelect);
 	}
 
 	// The single point that drops every section highlight of the left menu: folders,
@@ -69,6 +83,7 @@ export class DirectoryMenu
 	clearActiveMenuButtons()
 	{
 		this.#sections.deactivateAll();
+		this.#scheduledMessagesActive = false;
 	}
 
 	#disableFolderItems()
@@ -77,6 +92,8 @@ export class DirectoryMenu
 		{
 			item.disableActivity();
 		}
+
+		this.#scheduledMessagesActive = false;
 	}
 
 	// A section rendered outside this bundle joins the same point by handing over the
@@ -127,6 +144,7 @@ export class DirectoryMenu
 		}
 		this.#items.clear();
 		this.#itemByContainer.clear();
+		this.#scheduledMessagesItem = null;
 	}
 
 	includeItem(item, directoryPath, directory = {}, nestingLevel = 0)
@@ -151,6 +169,17 @@ export class DirectoryMenu
 
 	chooseFunction(path)
 	{
+		if (this.#scheduledMessagesActive && this.#messageListPath !== '')
+		{
+			const messageListPath = Uri.addParam(this.#resolveMailboxPath(this.#messageListPath), {
+				apply_filter: 'Y',
+				DIR: path,
+			});
+			Page.redirect(messageListPath);
+
+			return;
+		}
+
 		this.#activateKeepingFocus(this.#items.get(path)?.getItemElement(), () => {
 			this.clearActiveMenuButtons();
 			this.setActiveDir(path);
@@ -181,6 +210,7 @@ export class DirectoryMenu
 
 	buildMenu(firstBuild = false)
 	{
+		let scheduledMessagesItemCreated = false;
 		for (let i = 0; i < this.#directoryCounters.length; i++)
 		{
 			const directory = this.#directoryCounters[i];
@@ -196,6 +226,16 @@ export class DirectoryMenu
 			}
 
 			new Item(directory, this, this.#systemDirs);
+
+			if (path === this.#systemDirs.drafts)
+			{
+				scheduledMessagesItemCreated = this.#createScheduledMessagesItem();
+			}
+		}
+
+		if (!scheduledMessagesItemCreated)
+		{
+			this.#createScheduledMessagesItem();
 		}
 
 		this.#updateNestingClass();
@@ -232,14 +272,14 @@ export class DirectoryMenu
 		const event = new BaseEvent({ data: { directory: name } });
 		EventEmitter.emit('BX.DirectoryMenu:onChangeFilter', event);
 
-		name = BX.Mail.Home.Counters.getShortcut(name);
+		const directoryName = BX.Mail.Home.Counters.getShortcut(name);
 
 		const filter = this.filter;
 		if (Boolean(filter) && (filter instanceof BX.Main.Filter))
 		{
 			const FilterApi = filter.getApi();
 			FilterApi.setFields({
-				DIR: name,
+				DIR: directoryName,
 			});
 			FilterApi.apply();
 		}
@@ -250,9 +290,8 @@ export class DirectoryMenu
 		const item = this.#items.get(dirPath);
 
 		if (item === undefined)
-
-		
-    { return;
+		{
+			return;
 		}
 
 		if (mode === 'set')
@@ -267,12 +306,9 @@ export class DirectoryMenu
 
 	setCounters(counters)
 	{
-		for (const path in counters)
+		for (const [path, count] of Object.entries(counters))
 		{
-			if (counters.hasOwnProperty(path))
-			{
-				this.changeCounter(path, counters[path], 'set');
-			}
+			this.changeCounter(path, count, 'set');
 		}
 	}
 
@@ -286,7 +322,7 @@ export class DirectoryMenu
 
 		// another section owns the highlight: the folder is remembered for the way
 		// back, but a redraw driven by the filter or by a rebuild does not steal it
-		if (this.#sections.getActiveId() !== null)
+		if (this.#sections.getActiveId() !== null || this.#scheduledMessagesActive)
 		{
 			return;
 		}
@@ -315,12 +351,14 @@ export class DirectoryMenu
 		this.filter = BX.Main?.filterManager?.getById?.(config.filterId) ?? null;
 		this.#systemDirs = config.systemDirs;
 		this.#mailboxId = config.mailboxId || 0;
+		this.#initScheduledMessagesSettings(config.scheduledMessages);
 		this.#onDirectorySelect = config.onDirectorySelect || null;
 		this.#manualSortingAvailable = Boolean(config.manualSortingAvailable);
 		this.#collapsedFolders = config.collapsedFolders || {};
 		this.#folderCustomOrder = Array.isArray(config.folderCustomOrder?.all)
 			? config.folderCustomOrder.all
 			: [];
+		this.#orderSaveBaseline = [...this.#folderCustomOrder];
 		this.#folderDefaultOrder = Array.isArray(config.folderDefaultOrder)
 			? config.folderDefaultOrder
 			: [];
@@ -374,6 +412,11 @@ export class DirectoryMenu
 		}
 
 		EventEmitter.subscribe('BX.Mail.FolderSort:onChange', (event) => {
+			if (!this.#canSortFolders())
+			{
+				return;
+			}
+
 			const { mode } = event.data;
 			this.#sortMode = mode;
 			this.#applySortMode();
@@ -382,8 +425,177 @@ export class DirectoryMenu
 		Event.bind(window, 'pagehide', this.#handlePageLeave);
 		Event.bind(window, 'beforeunload', this.#handlePageLeave);
 		Event.bind(window, 'pageshow', this.#handlePageShow);
+		Event.bind(window, 'pagehide', () => {
+			this.#unsubscribeMigration?.();
+			this.#unsubscribeMigration = null;
+		});
 
-		this.#initDragAndDrop();
+		Event.bind(this.#menu, 'pointerdown', (event) => {
+			this.#blockedDragStart = null;
+			this.#blockedDragClick = false;
+			if (!this.#manualSortingAvailable || !this.#migrationActive || event.button !== 0
+				|| event.pointerType === 'touch' || event.target.closest('.mail-menu-directory-toggle'))
+			{
+				return;
+			}
+			const row = event.target.closest('.mail-menu-directory-item-container:not(.mail-menu-directory-item-container--fixed) > .ui-sidepanel-menu-item');
+			if (row)
+			{
+				this.#blockedDragStart = { id: event.pointerId, x: event.clientX, y: event.clientY };
+			}
+		});
+		Event.bind(this.#menu, 'click', (event) => {
+			if (this.#blockedDragClick)
+			{
+				this.#blockedDragClick = false;
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		}, true);
+		Event.bind(this.#menu, 'pointermove', this.#handleBlockedDragMove);
+		Event.bind(this.#menu, 'pointerleave', (event) => {
+			this.#handleBlockedDragMove(event);
+			this.#blockedDragStart = null;
+		});
+		['pointerup', 'pointercancel'].forEach((name) => {
+			Event.bind(this.#menu, name, () => { this.#blockedDragStart = null; });
+		});
+		this.#initMigrationState();
+	}
+
+	#handleBlockedDragMove = (event) => {
+		const start = this.#blockedDragStart;
+		if (!start || start.id !== event.pointerId)
+		{
+			return;
+		}
+		if (!this.#migrationActive || (event.buttons & 1) === 0)
+		{
+			this.#blockedDragStart = null;
+
+			return;
+		}
+		if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 8)
+		{
+			this.#blockedDragStart = null;
+			this.#blockedDragClick = true;
+			this.#showMigrationNotice();
+		}
+	};
+
+	#showMigrationNotice()
+	{
+		BX.UI.Notification.Center.notify({ content: Loc.getMessage('MAIL_MIGRATION_ACTION_UNAVAILABLE') });
+	}
+
+	#canSortFolders()
+	{
+		return this.#sortingStatusReady && !this.#migrationActive;
+	}
+
+	#initMigrationState()
+	{
+		if (this.#mailboxId <= 0)
+		{
+			return;
+		}
+
+		this.#sortingRevision = -1;
+		this.#sortingStatusReady = false;
+		this.#applySortableSemantics();
+		this.#destroyDragAndDrop();
+		const state = getMigrationState(Number(this.#mailboxId));
+		const apply = (change) => {
+			if (this.#sortingRevision === state.getRevision())
+			{
+				return;
+			}
+			this.#blockedDragStart = null;
+			this.#blockedDragClick = false;
+			this.#sortingRevision = state.getRevision();
+			this.#sortingStatusReady = state.isInitialized()
+				&& !(change?.source === 'pull' && change.status.status === 'done');
+			this.#migrationActive = change ? change.active : state.isActive();
+			clearTimeout(this.#orderSaveTimer);
+			this.#orderSaveTimer = null;
+			if (!this.#ordersEqual(this.#folderCustomOrder, this.#orderSaveBaseline))
+			{
+				this.#folderCustomOrder = [...this.#orderSaveBaseline];
+				this.#applySortMode();
+			}
+			this.#applySortableSemantics();
+			this.#initDragAndDrop();
+		};
+		this.#unsubscribeMigration = state.subscribe(apply);
+		void state.initialize().then(() => apply());
+	}
+
+	#initScheduledMessagesSettings(config)
+	{
+		if (Type.isPlainObject(config))
+		{
+			this.#scheduledMessagesAvailable = config.available === true;
+			this.#scheduledMessagesActive = config.active === true;
+			this.#scheduledMessagesPath = config.path || '';
+			this.#scheduledMessagesCount = Text.toInteger(config.count);
+			this.#messageListPath = config.messageListPath || '';
+
+			return;
+		}
+
+		this.#scheduledMessagesAvailable = false;
+		this.#scheduledMessagesActive = false;
+		this.#scheduledMessagesPath = '';
+		this.#scheduledMessagesCount = 0;
+		this.#messageListPath = '';
+	}
+
+	/**
+	 * How many letters the section holds now. Zero hides the badge, the way every item of the menu does.
+	 */
+	setScheduledMessagesCount(count)
+	{
+		this.#scheduledMessagesCount = Text.toInteger(count);
+		this.#scheduledMessagesItem?.setCount(this.#scheduledMessagesCount);
+	}
+
+	#createScheduledMessagesItem()
+	{
+		if (
+			!this.#scheduledMessagesAvailable
+			|| this.#mailboxId <= 0
+			|| this.#scheduledMessagesPath === ''
+		)
+		{
+			return false;
+		}
+
+		const item = new Item({
+			path: this.#scheduledMessagesItemPath,
+			href: this.#resolveMailboxPath(this.#scheduledMessagesPath),
+			name: Loc.getMessage('MAIL_DIRECTORY_MENU_SCHEDULED_MESSAGES'),
+			count: this.#scheduledMessagesCount,
+			icon: 'scheduled',
+			fixed: true,
+			dataTestId: 'mail-directory-menu-scheduled-btn',
+		}, this, this.#systemDirs);
+
+		if (this.#scheduledMessagesActive)
+		{
+			item.enableActivity();
+		}
+
+		this.#scheduledMessagesItem = item;
+
+		return true;
+	}
+
+	#resolveMailboxPath(path)
+	{
+		return path
+			.replace('#id#', encodeURIComponent(String(this.#mailboxId)))
+			.replace('#start_sync_with_showing_stepper#', 'false')
+		;
 	}
 
 	#applySortMode()
@@ -396,6 +608,7 @@ export class DirectoryMenu
 			{
 				this.#sortContainer(container);
 			}
+			this.#placeScheduledMessagesAfterDrafts();
 
 			return;
 		}
@@ -405,6 +618,7 @@ export class DirectoryMenu
 			this.#applyManualOrder();
 
 			this.#seedOrder();
+			this.#placeScheduledMessagesAfterDrafts();
 
 			return;
 		}
@@ -412,12 +626,31 @@ export class DirectoryMenu
 		if (this.#folderDefaultOrder.length > 0)
 		{
 			this.#applyBlockManualOrder(this.#folderMenu, this.#folderDefaultOrder);
+			this.#placeScheduledMessagesAfterDrafts();
+
 			return;
 		}
 
 		for (const container of this.#getBlockContainers())
 		{
 			this.#reorderContainer(this.#directoryCounters, container);
+		}
+
+		this.#placeScheduledMessagesAfterDrafts();
+	}
+
+	#placeScheduledMessagesAfterDrafts()
+	{
+		const scheduledContainer = this.#scheduledMessagesItem?.getContainer();
+		if (!scheduledContainer)
+		{
+			return;
+		}
+
+		const draftsContainer = this.#items.get(this.#systemDirs.drafts)?.getContainer();
+		if (draftsContainer)
+		{
+			Dom.insertAfter(scheduledContainer, draftsContainer);
 		}
 	}
 
@@ -527,8 +760,13 @@ export class DirectoryMenu
 	// Keyboard reorder: move an item one step among its direct siblings.
 	moveItemInBlock(itemElement, direction)
 	{
-		if (!this.#manualSortingAvailable)
+		if (!this.#manualSortingAvailable || !this.#canSortFolders())
 		{
+			if (this.#manualSortingAvailable && this.#migrationActive)
+			{
+				this.#showMigrationNotice();
+			}
+
 			return;
 		}
 
@@ -540,7 +778,7 @@ export class DirectoryMenu
 
 		this.#prepareOrderForMove();
 		const parent = container.parentNode;
-		const siblings = [...parent.querySelectorAll(':scope > .mail-menu-directory-item-container')];
+		const siblings = [...parent.querySelectorAll(':scope > .mail-menu-directory-item-container:not(.mail-menu-directory-item-container--fixed)')];
 		const index = siblings.indexOf(container);
 		const targetIndex = index + direction;
 
@@ -580,14 +818,14 @@ export class DirectoryMenu
 	// verification (NVDA/VoiceOver) is a QA step.
 	#applySortableSemantics()
 	{
-		const roleDescription = this.#manualSortingAvailable
+		const roleDescription = this.#manualSortingAvailable && this.#canSortFolders()
 			? Loc.getMessage('MAIL_DIRECTORY_MENU_ARIA_SORTABLE_ITEM')
 			: null;
-		const shortcuts = this.#manualSortingAvailable ? 'Alt+ArrowUp Alt+ArrowDown' : null;
+		const shortcuts = this.#manualSortingAvailable && this.#canSortFolders() ? 'Alt+ArrowUp Alt+ArrowDown' : null;
 
 		for (const block of this.#getBlockContainers())
 		{
-			if (this.#manualSortingAvailable)
+			if (this.#manualSortingAvailable && this.#canSortFolders())
 			{
 				Dom.addClass(block, 'mail-left-directory-menu--sortable');
 			}
@@ -704,14 +942,14 @@ export class DirectoryMenu
 	{
 		this.#destroyDragAndDrop();
 
-		if (!this.#manualSortingAvailable)
+		if (!this.#manualSortingAvailable || !this.#canSortFolders())
 		{
 			return;
 		}
 
 		const token = this.#dragAndDropToken;
 
-		let Draggable;
+		let Draggable = null;
 		try
 		{
 			({ Draggable } = await Runtime.loadExtension('ui.draganddrop.draggable'));
@@ -737,7 +975,7 @@ export class DirectoryMenu
 		// children. A per-draggable beforeStart guard keeps a drag within its own
 		// parent, so a folder can be reordered only among its same-level neighbours.
 		const nestedDraggables = [...this.#menu.querySelectorAll('.mail-menu-directory-children')]
-			.filter((children) => children.querySelectorAll(':scope > .mail-menu-directory-item-container').length >= 2)
+			.filter((children) => children.querySelectorAll(':scope > .mail-menu-directory-item-container:not(.mail-menu-directory-item-container--fixed)').length >= 2)
 			.map((children) => this.#createContainerDraggable(children, Draggable, true));
 
 		this.#draggables = [topLevelDraggable, ...nestedDraggables].filter(Boolean);
@@ -750,7 +988,7 @@ export class DirectoryMenu
 	#handleDragBeforeStart = (event) => {
 		const { source, sourceContainer } = event.data;
 
-		if (source.parentNode !== sourceContainer)
+		if (!this.#canSortFolders() || source.parentNode !== sourceContainer)
 		{
 			event.preventDefault();
 
@@ -783,15 +1021,15 @@ export class DirectoryMenu
 
 	#prepareOrderForMove()
 	{
-		if (this.#sortMode !== 'manual')
+		if (this.#sortMode === 'manual')
+		{
+			this.#seedOrder();
+		}
+		else
 		{
 			const currentOrder = this.#getBlockOrder(this.#folderMenu);
 			this.#folderCustomOrder = [...currentOrder];
 			this.#orderSaveBaseline = [...currentOrder];
-		}
-		else
-		{
-			this.#seedOrder();
 		}
 	}
 
@@ -813,7 +1051,7 @@ export class DirectoryMenu
 	{
 		const draggable = new Draggable({
 			container,
-			draggable: '.mail-menu-directory-item-container',
+			draggable: '.mail-menu-directory-item-container:not(.mail-menu-directory-item-container--fixed)',
 			// A nested container must NOT block on .mail-menu-directory-children: the
 			// grabbed nested row lives inside one, so Sensor.getDragElementByChild would
 			// reject the start. Block containers keep it out so a deep row never starts a
@@ -847,6 +1085,11 @@ export class DirectoryMenu
 	// network save is deferred. Returns true when the order actually changed.
 	#commitOrder()
 	{
+		if (!this.#canSortFolders())
+		{
+			return false;
+		}
+
 		const prevOrder = this.#folderCustomOrder;
 		const newOrder = this.#getBlockOrder(this.#folderMenu);
 
@@ -907,10 +1150,19 @@ export class DirectoryMenu
 
 	#handlePageShow = () => {
 		this.#orderSentOnPageLeave = [];
+		if (!this.#unsubscribeMigration)
+		{
+			this.#initMigrationState();
+		}
 	};
 
 	#sendOrderOnPageLeave(order)
 	{
+		if (!this.#canSortFolders())
+		{
+			return false;
+		}
+
 		const data = new URLSearchParams();
 		data.set('mailboxId', String(this.#mailboxId));
 		data.set('activateManualMode', this.#sortMode === 'manual' ? '1' : '0');
@@ -943,8 +1195,14 @@ export class DirectoryMenu
 
 	#sendOrder()
 	{
+		if (!this.#canSortFolders())
+		{
+			return false;
+		}
+
 		this.#orderSaveTimer = null;
 
+		const revision = this.#sortingRevision;
 		const baseline = this.#orderSaveBaseline;
 		const order = this.#folderCustomOrder;
 
@@ -960,10 +1218,18 @@ export class DirectoryMenu
 				activateManualMode: this.#sortMode === 'manual',
 			},
 		}).then(() => {
+			if (revision !== this.#sortingRevision)
+			{
+				return;
+			}
 			// The server now holds this order: advance the rollback baseline so a
 			// later failure rolls back here, not to a stale slice.
 			this.#orderSaveBaseline = [...order];
 		}).catch(() => {
+			if (revision !== this.#sortingRevision)
+			{
+				return;
+			}
 			this.#showSaveErrorNotice();
 
 			// A newer reorder superseded this request while it was in flight: leave

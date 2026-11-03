@@ -30,6 +30,37 @@ this.BX.Sign = this.BX.Sign || {};
 	function setInitialNextButtonState(wizard, uid) {
 		wizard.toggleBtnActiveState('next', !main_core.Type.isStringFilled(uid));
 	}
+	async function waitForGroupPlaceholderValidation(api, groupId, options = {}) {
+		const {
+			wait = timeout => new Promise(resolve => setTimeout(resolve, timeout)),
+			maxAttempts = 180,
+			isCancelled = () => false,
+			requestTimeout = 10000
+		} = options;
+		for (let attempt = 0; attempt < maxAttempts; attempt++) {
+			if (isCancelled()) {
+				return false;
+			}
+			let response = null;
+			try {
+				// eslint-disable-next-line no-await-in-loop
+				response = await Promise.race([api.getDocumentGroupPlaceholderValidationStatus(groupId), new Promise(resolve => setTimeout(() => resolve(null), requestTimeout))]);
+			} catch {
+				return false;
+			}
+			if (!main_core.Type.isBoolean(response?.ready)) {
+				return false;
+			}
+			if (response.ready) {
+				return true;
+			}
+			if (attempt + 1 < maxAttempts) {
+				// eslint-disable-next-line no-await-in-loop
+				await wait(1000);
+			}
+		}
+		return false;
+	}
 
 	class SignSettings {
 		#cache = new main_core_cache.MemoryCache();
@@ -511,6 +542,7 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.SignSettings = SignSettings;
 	exports.decorateResultBeforeCompletion = decorateResultBeforeCompletion;
 	exports.isTemplateMode = isTemplateMode;
+	exports.waitForGroupPlaceholderValidation = waitForGroupPlaceholderValidation;
 
 })(this.BX.Sign.V2 = this.BX.Sign.V2 || {}, BX, BX.Cache, BX.Sign, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.Ui);
 //# sourceMappingURL=sign-settings.bundle.js.map

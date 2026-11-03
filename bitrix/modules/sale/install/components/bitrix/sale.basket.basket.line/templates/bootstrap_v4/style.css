@@ -79,6 +79,24 @@
 	/*.bx-basket-fixed */
 }
 
+/* The ring hangs outside the box of a link, and the floating cart cuts it away: the link of the
+   cart stands at the very top edge of the container. It stops cutting only while the focus is
+   inside, the way the list of products of the page of the cart does it
+   (`sale.basket.basket/templates/bootstrap_v4/style.css:558`). Outside the focus the clipping is
+   the one of today. */
+.bx-basket-fixed:has(:focus-visible) { overflow: visible; }
+
+/* The cart stands over the page, and the control the focus scrolls to may come to rest under it.
+   `script.js` writes the room the cart takes at the bottom of the window into the root: the scroll
+   of the focus keeps out of it, and on a narrow screen, where the cart is a bar along the bottom
+   edge, the body is lengthened by the bar, so the end of the page can be scrolled above it. A cart
+   that keeps no room leaves the bottom padding of the theme alone. */
+html:has(.bx-basket-fixed) { scroll-padding-bottom: var(--bx-basket-fixed-reserve, 0px); }
+
+@media (max-width: 767px) {
+	html.bx-basket-fixed-reserved body:has(.bx-basket-fixed) { padding-bottom: var(--bx-basket-fixed-reserve); }
+}
+
 .bx-basket-fixed .basket-line-block { margin-left: 10px; }
 
 .bx-basket-item-list {
@@ -241,3 +259,27 @@
 }
 
 .bx_cart_login_top .basket-line { line-height: 1.44em; }
+
+/*region Focus ring*/
+/* One dark band outside the box of the control, drawn on the focus tokens of the design system,
+   the same as on the page of the cart. The values the tokens hold on a light surface stand in the
+   `var()` as fallbacks, and the extension carrying them is not asked for: it weighs 177 KB, three
+   variables is all this file takes from it, and the line stands in the header of every page of the
+   store and not on the page of the cart alone. The weight of 0,3,1 is what it takes: the floor of the
+   landing store draws its band inside the box and hangs a halo outside it
+   (`landing24/template_styles.css:212-224`, 0,1,1 for a link and 0,2,1 for a control of a block),
+   and that file goes into the head after this one; the `a { outline: none }` of the theme
+   (`landing24/theme.css:30-33`) is left behind as well. The halo of the floor is a `box-shadow`,
+   hence the stop on it here. The light gap of `--ui-color-base-8` that the cart line of
+   `store_v3` lays under its ring (`store_v3/style.css:28`) has nothing to answer for: every
+   surface this line stands on is light - the floating container of this file is white, and so is
+   the header section of both shipped storefronts. The scope ends at the block of the line, so
+   the list of products, which no shipped call turns on, keeps the look it has. */
+.basket-line .basket-line-block a:focus-visible,
+.basket-line .basket-line-block button:focus-visible,
+.basket-line .basket-line-block [tabindex]:not([tabindex="-1"]):focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+/*endregion*/

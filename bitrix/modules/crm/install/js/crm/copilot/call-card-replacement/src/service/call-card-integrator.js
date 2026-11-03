@@ -1,14 +1,26 @@
-import { PhoneManager } from 'im.v2.lib.phone';
-import { DesktopApi } from 'im.v2.lib.desktop-api';
-import { Loc, Type } from 'main.core';
+import { Loc, Reflection, Type } from 'main.core';
 import { Controller } from './controller';
 import { CallCardReplacementApp } from '../app';
+
+// The call view that requested the card is already on the page; importing im.v2.lib.phone
+// would bring the whole messenger v2 into every getCrmCard response.
+function getCallView(): ?Object
+{
+	if (Type.isObject(window.BXDesktopSystem))
+	{
+		return window.PCW ?? null;
+	}
+
+	const PhoneManager = Reflection.getClass('BX.Messenger.v2.Lib.PhoneManager');
+
+	return PhoneManager?.getInstance().getPhoneCallView() ?? null;
+}
 
 export class CallCardIntegrator
 {
 	static async integrate(): ?CallCardReplacementApp
 	{
-		const callView = DesktopApi.isDesktop() ? window?.PCW : PhoneManager.getInstance().getPhoneCallView();
+		const callView = getCallView();
 		if (!callView)
 		{
 			return null;
@@ -23,7 +35,12 @@ export class CallCardIntegrator
 		return (new Controller())
 			.resolveCallAssessment(callId)
 			.then((response): ?CallCardReplacementApp => {
-				const { callAssessment, hasAvailableSelectorItems, isCallScoringV2Enabled } = response?.data ?? {};
+				const {
+					callAssessment,
+					hasAvailableSelectorItems,
+					hintViewMode,
+					isCallScoringV2Enabled,
+				} = response?.data ?? {};
 				if (!callAssessment)
 				{
 					return null;
@@ -33,6 +50,7 @@ export class CallCardIntegrator
 					hasAvailableSelectorItems,
 					callAssessment,
 					callId,
+					hintViewMode,
 					isCallScoringV2Enabled: Boolean(isCallScoringV2Enabled),
 				});
 

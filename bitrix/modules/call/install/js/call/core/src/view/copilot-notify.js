@@ -21,27 +21,31 @@ export const CopilotNotifyType = {
 
 export class CopilotNotify
 {
-	constructor(config) {
+	constructor(config)
+	{
 		this.callId = config.callId || 0;
 		this.type = config.type || '';
 		this.code = config.code || '';
 		this.popup = null;
-		this.notifyText = '';
+		this.notifyText = config.notifyText || '';
 		this.promoId = '';
 		this.popupTemplate = null;
 		this.bindElement = config.bindElement;
 		this.notifyColor = '';
-		this.targetContainer = config.bindElement || document.body;
+		this.targetContainer = config.targetContainer ?? config.bindElement ?? document.body;
 
 		this.callbacks = {
 			onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
 		};
 	}
 
-	getPopupTemplate() {
+	getPopupTemplate()
+	{
 		if (!this.notifyText)
 		{
 			this.popupTemplate = null;
+
+			return;
 		}
 
 		this.popupTemplate = Dom.create('div', {
@@ -52,10 +56,15 @@ export class CopilotNotify
 				}),
 				Dom.create('div', {
 					props: { className: 'bx-call-copilot-notify__message' },
+					attrs: { 'data-testid': 'copilot-notify-message' },
 					text: this.notifyText,
 				}),
 				Dom.create('button', {
-					props: { className: 'bx-call-copilot-notify__close-btn' },
+					props: {
+						className: 'bx-call-copilot-notify__close-btn',
+						ariaLabel: Loc.getMessage('CALL_COPILOT_NOTIFY_CLOSE'),
+					},
+					attrs: { 'data-testid': 'copilot-notify-close-btn' },
 					events: {
 						click: () => {
 							this.close();
@@ -66,34 +75,37 @@ export class CopilotNotify
 		});
 	}
 
-	setAdditionalInformation() {
+	setAdditionalInformation()
+	{
+		const customText = this.notifyText;
+
 		switch (this.type)
 		{
 			case CopilotNotifyType.COPILOT_ENABLED:
-				this.notifyText = Loc.getMessage('CALL_POPUP_WARNING_ENABLED');
+				this.notifyText = customText || Loc.getMessage('CALL_POPUP_WARNING_ENABLED_MSGVER_1');
 				this.promoId = 'call:copilot-notify-warning:21112024:all';
 				this.notifyColor = '#8E52EC';
 				break;
 			case CopilotNotifyType.COPILOT_DISABLED:
-				this.notifyText = Loc.getMessage('CALL_POPUP_PROMO_ENABLED');
+				this.notifyText = customText || Loc.getMessage('CALL_POPUP_PROMO_ENABLED');
 				this.promoId = 'call:copilot-notify-promo:21112024:all';
 				this.notifyColor = '#8E52EC';
 				break;
 			case CopilotNotifyType.COPILOT_RESULT:
-				this.notifyText = Loc.getMessage('CALL_POPUP_RESULT_WARNING');
+				this.notifyText = Loc.getMessage('CALL_POPUP_RESULT_WARNING_MSGVER_1');
 				this.promoId = 'call:copilot-notify-result:24112024:all';
 				this.notifyColor = '#8E52EC';
 				break;
 			case CopilotNotifyType.AI_UNAVAILABLE_ERROR:
-				this.notifyText = Loc.getMessage('CALL_POPUP_AI_UNAVAILABLE_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_UNAVAILABLE_ERROR_MSGVER_1');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_MODULE_ERROR:
-				this.notifyText = Loc.getMessage('CALL_POPUP_AI_MODULE_ERROR').replace('#ERROR_CODE#', this.code);
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_MODULE_ERROR_MSGVER_1').replace('#ERROR_CODE#', this.code);
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_SETTINGS_ERROR:
-				this.notifyText = Loc.getMessage('CALL_POPUP_AI_SETTINGS_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_SETTINGS_ERROR_MSGVER_1');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_AGREEMENT_ERROR:
@@ -101,25 +113,25 @@ export class CopilotNotify
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_NOT_ENOUGH_BAAS_ERROR:
-				this.notifyText = Loc.getMessage('CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR_MSGVER_1');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.ENABLE_AI_INTERNAL_ERROR:
-				this.notifyText = Loc.getMessage('CALL_POPUP_ENABLE_AI_INTERNAL_ERROR').replace(
+				this.notifyText = Loc.getMessage('CALL_POPUP_ENABLE_AI_INTERNAL_ERROR_MSGVER_1').replace(
 					'#ERROR_CODE#',
 					this.code,
 				);
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.DISABLE_AI_INTERNAL_ERROR:
-				this.notifyText = Loc.getMessage('CALL_POPUP_DISABLE_AI_INTERNAL_ERROR').replace(
+				this.notifyText = Loc.getMessage('CALL_POPUP_DISABLE_AI_INTERNAL_ERROR_MSGVER_1').replace(
 					'#ERROR_CODE#',
 					this.code,
 				);
 				this.notifyColor = '#FF5752';
 				break;
 			default:
-				this.notifyText = Loc.getMessage('CALL_POPUP_AI_DEFAULT_TEXT');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_DEFAULT_TEXT_MSGVER_1');
 				this.notifyColor = '#FF5752';
 				break;
 		}

@@ -1,58 +1,310 @@
+/* Registered so that getComputedStyle() returns a resolved length even when the advance is
+   written with calc() or var(): readMetrics() in lib/metrics parses that value as px. */
+@property --disk-picker-list-row-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-group-title-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-table-row-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-source-row-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --disk-picker-source-group-advance {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+/* The popup shell is created by the outer disk.disk-picker extension, which builds no CSS of
+   its own, so the ground of the dialog lives here: this bundle is always loaded before the
+   popup is shown. The 1.4px ring has no token yet (between thin 1px and medium 1.5px), so it
+   waits as a local value. */
+.disk-picker-popup {
+	/* main.popup owns the shell's fill, shadow, border and radius through these variables, and
+	   its own rules would override plain declarations here — so they are cleared through the
+	   variables it reads and the ground is painted below. */
+	--popup-window-background-color: transparent;
+	--popup-window-box-shadow: none;
+	--popup-window-border: none;
+	/* Four past the largest step of the scale: the dialog is wider than anything the scale was
+	   drawn for, and at 20 its corners read as sharp against that width. */
+	--popup-window-border-radius: 24px;
+
+	box-sizing: border-box;
+	position: relative;
+	/* The ground of the dialog is the portal's own wallpaper, in the blurred copy the theme
+	   publishes for exactly this: a picture behind glass, the way the reference concept is built.
+	   There the background is a photograph and the panels blur it with a backdrop filter; here
+	   the blur has already been applied to the file, so the panels only have to lie on it.
+
+	   The theme variable is read through a local one so that a portal without a theme picture
+	   falls back to `none` and the sweep below shows instead: `var()` with no fallback would
+	   make the whole declaration invalid and leave the dialog with no ground at all. The sweep
+	   is the same one the move and copy dialog carries. */
+	--disk-picker-ground: var(--air-theme-bg-image-blurred, none);
+
+	/* The picture and the tint over it are laid by the layer below, which can be blurred; this
+	   sweep is what shows on a portal whose theme carries no picture at all. It repeats the
+	   tint's own hues, so a portal without a picture reads as the same surface. */
+	background-image: linear-gradient(291deg, rgba(12, 36, 120, 0.5) 15.73%, rgba(26, 58, 140, 0.5) 97.4%);
+	overflow: hidden;
+}
+
+/* The picture, softened past what the theme's own blurred copy gives: at the size the dialog
+   shows it, its shapes still read as a photograph, and the eye went to them instead of to the
+   files. It lives on a layer of its own because `filter` would otherwise take the whole dialog
+   with it, and it is laid out past the edges — a blur thins the pixels at the boundary, and
+   without the overhang the window would carry a pale rim. The shell clips it back. */
+.disk-picker-popup::before {
+	content: '';
+	position: absolute;
+	inset: -10%;
+	z-index: -1;
+	/* The tint rides on this layer too: a pseudo-element with a negative z-index paints over the
+	   background of its own element, so a tint left on the shell would have ended up under the
+	   picture rather than over it. Blurring it costs nothing — it is a flat sweep. */
+	background-image:
+		linear-gradient(291deg, rgba(12, 36, 120, 0.55) 15.73%, rgba(26, 58, 140, 0.55) 97.4%),
+		var(--disk-picker-ground);
+	background-size: auto, cover;
+	background-position: 0 0, center;
+	background-repeat: no-repeat, no-repeat;
+	filter: blur(24px);
+	pointer-events: none;
+}
+
+/* Same ring as the icon avatars: drawn over the glass rather than in the element's edge,
+   where it sank into the backdrop. The overlay carries the gradient and a mask cuts its
+   middle out, leaving the 1px circle. */
+.disk-picker-popup::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-divider-vibrant-accent) 0%,
+		var(--ui-color-divider-vibrant-accent-alt) 50%,
+		var(--ui-color-divider-vibrant-accent) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+}
+
+/* One curve and one beat for everything that moves in the dialog: picking a disk, opening a
+   folder, switching the view and choosing a file all settle at the same pace, which is what
+   makes the motion read as one interface rather than as several. Out fast, in slow.
+
+   Declared on the application root as well as on the layout: the relocated search field is a
+   node of the root, outside the layout, and the showcase page mounts the layout without a root
+   around it — so either one alone would leave a surface without the values. */
+.disk-picker__root,
+/* The advance of every virtualised row — its own height plus the air below it — lives here and
+   nowhere else. The virtual scroll counts these numbers in item-browser.ts and source-sidebar.ts,
+   which read them back off this element, and the rows themselves derive their heights from the
+   same declarations below: one source, so a row can no longer grow in the stylesheet while the
+   scroll keeps counting the old number. */
 .disk-picker-layout {
+	--disk-picker-list-row-advance: 48px;
+	--disk-picker-list-row-gap: var(--ui-space-stack-xs);
+	--disk-picker-group-title-advance: 36px;
+	--disk-picker-table-row-advance: 48px;
+	--disk-picker-source-row-advance: 48px;
+	--disk-picker-source-row-gap: var(--ui-space-stack-2xs);
+	--disk-picker-source-group-advance: 46px;
+	/* The focus ring of a row is drawn outside it, so the scrolling box has to end this much
+	   below the last row — otherwise the ring of a row at the bottom edge is cut. */
+	--disk-picker-focus-ring-width: 2px;
+
+	--disk-picker-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+	--disk-picker-duration-press: 160ms;
+	--disk-picker-duration-state: 240ms;
+	--disk-picker-duration-swap: 300ms;
+}
+
+/* The layout no longer paints its own surface: an opaque fill would hide the glass. */
+.disk-picker-layout {
+	/* The scrollbar thumb of the light surfaces — the list and the preview — painted in
+	   application/app.css. A light grey step of the base scale: white was invisible on the plate,
+	   which is itself near-white, and ink read as a bar pinned across it. The sources panel is
+	   dark and overrides both values for itself, below. */
+	--disk-picker-scrollbar-thumb: var(--ui-color-base-5);
+	--disk-picker-scrollbar-thumb-hover: var(--ui-color-base-4);
+
+	/* Both scrolling columns end in the same fade instead of a cut edge, so the shape is
+	   declared once on their common ancestor and used by the list and the source list
+	   alike. It lives here rather than on the popup shell, so the layout also fades when
+	   it is mounted without one, as the showcase page does. */
+	--disk-picker-fade-out-bottom: linear-gradient(
+		180deg,
+		#000 0%,
+		#000 calc(100% - 32px),
+		transparent 100%
+	);
+
 	display: grid;
 	grid-template-columns: 210px minmax(0, 1fr);
+	/* The header is a row of the frame rather than the top of the plate: it carries the path and
+	   the controls and stands on the glass, while the plate below holds the list alone. */
+	grid-template-rows: auto minmax(0, 1fr);
 	width: 100%;
 	height: 100%;
 	border-radius: var(--ui-border-radius-2xl);
-	background: var(--ui-color-bg-content-primary);
+	background: transparent;
 	overflow: hidden;
+}
+
+/* The same steps, resolved again inside the edge context of the sources: declared on the layout
+   they would inherit the grey of the light plate, which disappears on the glass. */
+.disk-picker-source-sidebar__scroll {
+	--disk-picker-scrollbar-thumb: var(--ui-color-base-5);
+	--disk-picker-scrollbar-thumb-hover: var(--ui-color-base-4);
 }
 
 .disk-picker-layout__sidebar {
+	grid-row: 1 / span 2;
 	display: flex;
 	flex-direction: column;
 	padding: var(--ui-space-inset-sm);
-	background: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-3xl);
+	/* The panel keeps the popup's edge-dark context rather than nesting content-light: it is
+	   a translucent surface over the same glass, so its fill and states come from the edge
+	   scale and its text reads light like the rest of the dialog.
+
+	   The panel carries neither fill nor outline of its own: the sources stand on the ground of
+	   the dialog itself, which is one surface across the whole window. A film and a hairline of
+	   its own — the way the reference concept builds its columns — made the panel a separate
+	   pane laid over that ground, and the seam between the two was the thing the eye caught
+	   first. No blur either: the ground is a picture the theme has already blurred. */
+	box-sizing: border-box;
+	position: relative;
 	overflow: hidden;
 }
 
+/* The whole right side is one surface: the design lifts the header, the list, the preview and
+   the footer together off the glass onto a plate of its own, while the sources on the left stay
+   on the glass itself. */
 .disk-picker-layout__workarea {
+	box-sizing: border-box;
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
-	height: 100%;
+	/* Air on the three free sides: without a gap of its own the plate stood right against the
+	   disks and the edges of the frame. */
+	margin: 0 var(--ui-space-inset-sm) var(--ui-space-inset-sm) var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-2xl);
+	/* A veil of white rather than a sheet of it: the plate keeps a little of the ground behind
+	   the dialog, so it belongs to the window instead of sitting on it. It is a sweep along the
+	   same 291deg the shell runs, thinner where the ground is dark and denser where it is light;
+	   both stops are steps of the vibrant scale.
+
+	   The picture visible through this sweep is the theme's pre-blurred copy, so the plate keeps
+	   its glass character without sampling live page content behind the modal stack. */
+	background: linear-gradient(
+		291deg,
+		var(--ui-color-bg-vibrant-default) 15.73%,
+		var(--ui-color-bg-vibrant-accent) 97.4%
+	);
 	overflow: hidden;
 }
 
+/* The rule over the footer is a gradient, not a flat line: at the ends it is a trace of white,
+   in the middle a step of the base scale, so the line gathers where the content is and dissolves
+   at the edges of the plate. A `border` takes no gradient, so it is a one-pixel background on a
+   pseudo-element pinned to the edge. The header needs none any more: it stands on the glass, and
+   what separates it from the list is the edge of the plate itself. */
+.disk-picker-layout__footer {
+	position: relative;
+}
+
+.disk-picker-layout__footer::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-accent);
+	pointer-events: none;
+}
+
+.disk-picker-layout__footer::before {
+	top: 0;
+}
+/* The path and the controls stand on the glass, with no surface of their own. The inset matches
+   the plate's own gap below, so the path starts on the same vertical as the plate's edge. */
 .disk-picker-layout__header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--ui-space-inset-sm) var(--ui-space-inset-lg);
-	border-bottom: 1px solid var(--ui-color-divider-default);
+	min-width: 0;
+	padding: var(--ui-space-inset-sm);
 }
 
+/* The preview keeps its width and the list takes the slack: a fixed list made every
+   window resize land on the preview and pushed it past the dialog edge. The preview takes 30
+   more than it used to and the list gives them up: a file is judged by what the panel shows,
+   and its minimum falls by the same 30, so the pair still fits the narrowest dialog. */
 .disk-picker-layout__body {
 	display: grid;
-	grid-template-columns: 488px minmax(0, 1fr);
+	grid-template-columns: minmax(330px, 1fr) 312px;
 	flex-grow: 1;
 	min-height: 0;
 }
 
 /* The list padding lives on the scrolling item-browser so its scrollbar spans the
-   full list height, flush to the edge, with no vertical offset. */
+   full list height, flush to the edge, with no vertical offset.
+
+   The fade sits on this wrapper rather than on the scrolling browser inside it: a mask on
+   the scroller itself would travel with the rows and the last one would never come out of
+   it. Bottom only — the top edge carries the sticky table head, which a fade would eat. */
 .disk-picker-layout__list {
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 	overflow: hidden;
+	-webkit-mask-image: var(--disk-picker-fade-out-bottom);
+	mask-image: var(--disk-picker-fade-out-bottom);
 }
 
+/* The rule left of the preview is the same grey hairline as the ones under the header and over
+   the footer, turned on its end. */
 .disk-picker-layout__preview {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
-	border-left: 1px solid var(--ui-color-divider-default);
+}
+
+.disk-picker-layout__preview::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-accent);
+	pointer-events: none;
+	z-index: 1;
 }
 
 /* Table mode: the list spans the whole body, the preview column is removed. */
@@ -64,8 +316,24 @@
 	display: none;
 }
 
-/* On a narrow window the preview yields to the list; the footer stays reachable. */
-@media (max-width: 720px) {
+/* Nothing in the list — an empty folder, a search without matches, a failed load — leaves the
+   preview nothing to describe, and the plate belongs to the message of the list alone. */
+.disk-picker-layout.--no-preview .disk-picker-layout__body {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* On a narrow window the sidebar collapses to an icon rail so the dialog keeps fitting.
+   Padding stays as it is, so the rail leaves 56px for icons and clipped group titles. */
+@media (max-width: 999px) {
+	.disk-picker-layout {
+		grid-template-columns: 80px minmax(0, 1fr);
+	}
+}
+
+/* On a narrow window the preview yields to the list; the footer stays reachable. The
+   threshold covers the narrowest dialog that still fits rail + list minimum + preview
+   (80 + 330 + 312 = 722 plus the viewport margins), so no width is left overflowing. */
+@media (max-width: 760px) {
 	.disk-picker-layout__body {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -81,5 +349,4 @@
 	justify-content: flex-end;
 	gap: var(--ui-space-inline-sm);
 	padding: var(--ui-space-inset-sm) var(--ui-space-inset-lg);
-	border-top: 1px solid var(--ui-color-divider-default);
 }

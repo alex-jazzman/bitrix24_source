@@ -11,6 +11,11 @@ import { SidebarPanel } from './components/sidebar-panel';
 import './css/icons.css';
 import './css/sidebar.css';
 
+export { MainMenu } from './classes/context-menu/main/main-menu';
+export { MembersMenu } from './classes/context-menu/main/members-menu';
+
+export type { MembersMenuContext } from './classes/context-menu/main/members-menu';
+
 type SidebarPanelType = $Values<typeof SidebarDetailBlock>;
 type LocalStorageKeyType = $Values<typeof LocalStorageKey>;
 

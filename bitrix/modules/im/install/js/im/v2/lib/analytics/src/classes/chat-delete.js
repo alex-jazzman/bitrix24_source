@@ -8,8 +8,9 @@ import {
 	AnalyticsSection, AnalyticsSubSection,
 	AnalyticsTool,
 } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
+import { getProjectId } from '../helpers/get-collab-id';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -18,51 +19,69 @@ export class ChatDelete
 	onClick(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		const chatType = getChatType(chat);
 
-		sendData({
+		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.clickDelete,
-			type: getChatType(chat),
+			type: chatType,
 			c_section: AnalyticsSection.sidebar,
 			c_sub_section: AnalyticsSubSection.contextMenu,
-			p1: `chatType_${chat.type}`,
-		});
+			p1: `chatType_${chatType}`,
+		};
+
+		sendData(params);
 	}
 
 	onCancel(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		const chatType = getChatType(chat);
 
-		sendData({
+		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.cancelDelete,
-			type: getChatType(chat),
+			type: chatType,
 			c_section: AnalyticsSection.popup,
-			p1: `chatType_${chat.type}`,
-		});
+			p1: `chatType_${chatType}`,
+		};
+
+		sendData(params);
 	}
 
 	onConfirm(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		const chatType = getChatType(chat);
 
-		sendData({
+		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.delete,
-			type: getChatType(chat),
+			type: chatType,
 			c_section: AnalyticsSection.popup,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${chatType}`,
 			p5: `chatId_${chat.chatId}`,
-		});
+		};
+
+		if (params.category === AnalyticsCategory.collab)
+		{
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
+		}
+
+		sendData(params);
 	}
 
 	onChatDeletedNotification(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
-		const category = getCategoryByChatType(chat);
+		const category = getCategoryByChat(chat);
 
 		sendData({
 			tool: AnalyticsTool.im,
@@ -70,7 +89,7 @@ export class ChatDelete
 			event: AnalyticsEvent.view,
 			type: `deleted_${category}`,
 			c_section: AnalyticsSection.activeChat,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 		});
 	}
 }

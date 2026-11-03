@@ -21,28 +21,26 @@
 	--menu-scroll-thumb-color: rgba(82, 92, 105, .13);
 }
 
-/* for firefox */
-@supports not selector(::-webkit-scrollbar) {
-	.menu-items-body {
-		--menu-scroll-width: 3px;
+/* for firefox: it partially supports ::-webkit-scrollbar since 153, but never applies colors from it */
+.bx-firefox .menu-items-body {
+	--menu-scroll-width: 3px;
 
-		scrollbar-color: transparent var(--menu-scrollbar-color);
-		scrollbar-width: thin;
-		min-width: auto;
-	}
+	scrollbar-color: transparent var(--menu-scrollbar-color);
+	scrollbar-width: thin;
+	min-width: auto;
+}
 
-	.bx-mac .menu-items-body {
-		--menu-scroll-width: 14px;
-	}
+.bx-firefox.bx-mac .menu-items-body {
+	--menu-scroll-width: 14px;
+}
 
-	.bx-mac .root.menu-collapsed-mode .menu-items-body,
-	.bx-mac .root.menu-animation-closing-mode .menu-items-body {
-		scrollbar-width: none;
-	}
+.bx-firefox.bx-mac .root.menu-collapsed-mode .menu-items-body,
+.bx-firefox.bx-mac .root.menu-animation-closing-mode .menu-items-body {
+	scrollbar-width: none;
+}
 
-	.menu-items-body:hover {
-		scrollbar-color: var(--menu-scroll-thumb-color) var(--menu-scrollbar-color);
-	}
+.bx-firefox .menu-items-body:hover {
+	scrollbar-color: var(--menu-scroll-thumb-color) var(--menu-scrollbar-color);
 }
 
 .root.menu-collapsed-mode:not(.menu-sliding-mode) .menu-items-body,
@@ -62,21 +60,21 @@
 	flex-direction: column;
 }
 
-/* for chrome and safari */
-.menu-items-body::-webkit-scrollbar {
+/* for chrome and safari; in firefox a non-zero width here would only force a permanent scrollbar */
+html:not(.bx-firefox) .menu-items-body::-webkit-scrollbar {
 	width: 6px;
 	background-color: rgba(0, 0, 0, 0);
 	appearance: none;
 }
 
 /* for and safari */
-.menu-items-body::-webkit-scrollbar-thumb {
+html:not(.bx-firefox) .menu-items-body::-webkit-scrollbar-thumb {
 	background: var(--menu-scroll-thumb-color);
 	background: rgba(0, 0, 0, 0);
 	border-radius: 5px;
 }
 
-.menu-items-body:hover::-webkit-scrollbar-thumb {
+html:not(.bx-firefox) .menu-items-body:hover::-webkit-scrollbar-thumb {
 	background: var(--menu-scroll-thumb-color);
 }
 

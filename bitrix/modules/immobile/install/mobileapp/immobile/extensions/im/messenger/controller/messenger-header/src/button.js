@@ -16,10 +16,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
 	const { RecentActionsMenu, NestedRecentActionsMenu } = require('im/messenger/lib/popup-menu/recent-actions');
 	const { Button } = require('im/messenger/lib/widget/header-button');
-	const {
-		onClick: onVibecodeClick,
-		isIndicatorVisible: isVibecodeIndicatorVisible,
-	} = require('im/messenger/lib/integration/mobile/vibecode');
+	const { onClick: onVibecodeClick } = require('im/messenger/lib/integration/mobile/vibecode');
 
 	const HeaderButtonId = Object.freeze({
 		search: 'search',
@@ -39,6 +36,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 
 	const ButtonBadgeCode = Object.freeze({
 		notifications: 'notifications',
+		vibecode: 'vibecode',
 	});
 
 	const searchButton = Button.create({
@@ -200,7 +198,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 	const vibecodeButton = Button.create({
 		id: HeaderButtonId.vibecode,
 		iconName: Icon.VIBECODE_CATALOG.getIconName(),
-		isDot: () => Type.isFunction(isVibecodeIndicatorVisible) ? isVibecodeIndicatorVisible() : false,
+		badgeCode: ButtonBadgeCode.vibecode,
 		isAccent: () => true,
 		shouldShow: async () => Feature.isVibecodeButtonAvailable,
 		callback: async () => {

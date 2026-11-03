@@ -52,9 +52,6 @@ $isAjax = $request->get('IS_AJAX') == 'Y';
 $storeEnabled = !Manager::isB24() && Manager::isStoreEnabled();
 $actionFolder = 'folderId';
 $type = 'SMN';
-$siteTemplate = Manager::getTemplateId($site);
-
-define('SMN_SITE_ID', $site);
 
 // check module rights
 if ($application->getGroupRight('landing') < 'W')
@@ -137,6 +134,10 @@ else
 		require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
 	}
 }
+
+$siteTemplate = Manager::getTemplateId($site);
+
+define('SMN_SITE_ID', $site);
 
 // paths
 $landingsPage = 'landing_site.php?lang=' . LANGUAGE_ID . '&site=' . $site;
@@ -276,7 +277,7 @@ if ($isAjax)
 	\Bitrix\Landing\Manager::getApplication()->restartBuffer();
 }
 
-echo '<div id="workarea-content" class="landing-content-admin">';
+echo '<div id="workarea-content" class="landing-content-admin"' . ($isAjax ? '' : ' role="main"') . '>';
 
 $component = null;
 

@@ -106,6 +106,18 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 			return this.userModel.type === UserType.extranet;
 		}
 
+		/**
+		 * @desc The server-side extranet flag, which is not the same as the extranet user type: a
+		 * collaber is typed `collaber` while carrying the flag. Both the server and the web client
+		 * key their external-user rules off this flag, so a check that must agree with them reads it
+		 * instead of `isExtranet`.
+		 * @return {boolean}
+		 */
+		get hasExtranetFlag()
+		{
+			return this.userModel.extranet === true;
+		}
+
 		get isExtranetOrCollaber()
 		{
 			return [UserType.collaber, UserType.extranet].includes(this.userModel.type);

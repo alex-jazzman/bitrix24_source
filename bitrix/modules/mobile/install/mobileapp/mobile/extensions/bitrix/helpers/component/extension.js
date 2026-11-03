@@ -9,7 +9,6 @@ jn.define('helpers/component', (require, exports, module) => {
 	class ComponentHelper
 	{
 		/**
-		 *
 		 * @param options - parameters
 		 * @param options.name - name of component (display in debugger)
 		 * @param options.version - name of component (display in debugger)
@@ -17,7 +16,6 @@ jn.define('helpers/component', (require, exports, module) => {
 		 * @param options.canOpenInDefault - if true component is can be opened in default navigation stack
 		 * @param options.widgetParams - parameters of list widget
 		 * @param options.componentParams - parameters of component which will be available thought BX.componentsParameters
-		 *
 		 */
 		static openList(options = {})
 		{

@@ -1,25 +1,27 @@
 import Type from './type';
+import { evalGlobal } from '../legacy/html';
+import extractAssets from './assets/extract-assets';
 import debug from './runtime/debug';
 import loadExtension from './runtime/loadextension/load-extension';
 import clone from './runtime/clone';
-import {
-	fetchExternalScripts,
-	fetchExternalStyles,
-	fetchInlineScripts,
-	loadAll,
-} from './runtime/loadextension/internal/utils';
+import { loadAll } from './runtime/loadextension/internal/utils';
 import merge from './runtime/merge';
 import createComparator from './runtime/create-comparator';
 import registerExtension from './runtime/loadextension/internal/register-extension';
 
 export default class Runtime
 {
-	static debug = debug;
-	static loadExtension = loadExtension;
-	static registerExtension = registerExtension;
-	static clone = clone;
+	static debug: typeof debug = debug;
+	static extractAssets: typeof extractAssets = extractAssets;
+	static loadExtension: typeof loadExtension = loadExtension;
+	static registerExtension: typeof registerExtension = registerExtension;
+	static clone: typeof clone = clone;
 
-	static debounce(func: Function, wait: number = 0, context: any = null): Function
+	static debounce<F extends (...args: any[]) => any>(
+		func: F,
+		wait: number = 0,
+		context: object | null = null,
+	): (...args: Parameters<F>) => void
 	{
 		let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -36,7 +38,11 @@ export default class Runtime
 		};
 	}
 
-	static throttle(func: Function, wait: number = 0, context: any = null): Function
+	static throttle<F extends (...args: any[]) => any>(
+		func: F,
+		wait: number = 0,
+		context: object | null = null,
+	): (...args: Parameters<F>) => void
 	{
 		let timer: ReturnType<typeof setTimeout> | null = null;
 		let invoke: boolean = false;
@@ -65,18 +71,20 @@ export default class Runtime
 		};
 	}
 
-	static html(node: HTMLElement, html: any, params: Record<string, any> = {}): Promise<any> | string
+	static html(node: HTMLElement, html: any, params: Record<string, any> = {}): Promise<void> | string
 	{
 		if (Type.isNil(html) && Type.isDomNode(node))
 		{
 			return node.innerHTML;
 		}
 
-		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-		const parsedHtml = BX.processHTML(html);
-		const externalCss = parsedHtml.STYLE.reduce((acc: any, item: any) => fetchExternalStyles(acc, item), []);
-		const externalJs = parsedHtml.SCRIPT.reduce((acc: any, item: any) => fetchExternalScripts(acc, item), []);
-		const inlineJs = parsedHtml.SCRIPT.reduce((acc: any, item: any) => fetchInlineScripts(acc, item), []);
+		const assets = extractAssets(html);
+		// `ext: 'css'` is not decoration: the loader otherwise guesses the kind of a resource
+		// from the extension in its url, and an address collected from `<link rel="stylesheet">`
+		// that happens to end in `.js` would be injected as a `<script src>` and run.
+		const externalCss = assets.styles.map((item) => ({ url: item.href, ext: 'css' }));
+		const externalJs = assets.scripts.filter((item) => !item.isInternal).map((item) => item.src);
+		const inlineJs = assets.scripts.filter((item) => item.isInternal).map((item) => item.text);
 
 		if (
 			Type.isDomNode(node)
@@ -85,11 +93,11 @@ export default class Runtime
 		{
 			if (params.useAdjacentHTML)
 			{
-				node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
+				node.insertAdjacentHTML('beforeend', assets.html);
 			}
 			else
 			{
-				node.innerHTML = parsedHtml.HTML;
+				node.innerHTML = assets.html;
 			}
 		}
 
@@ -98,16 +106,15 @@ export default class Runtime
 			{
 				if (params.useAdjacentHTML)
 				{
-					node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
+					node.insertAdjacentHTML('beforeend', assets.html);
 				}
 				else
 				{
-					node.innerHTML = parsedHtml.HTML;
+					node.innerHTML = assets.html;
 				}
 			}
 
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-			inlineJs.forEach((script: any) => BX.evalGlobal(script));
+			inlineJs.forEach((script) => evalGlobal(script));
 
 			if (Type.isFunction(params.callback))
 			{
@@ -121,7 +128,7 @@ export default class Runtime
 	 * @param targets
 	 * @return {any}
 	 */
-	static merge(...targets: any[])
+	static merge(...targets: any[]): any
 	{
 		if (Type.isArray(targets[0]))
 		{
@@ -141,14 +148,14 @@ export default class Runtime
 		collection: Array<{ [key: string]: any }> | { [key: string]: { [key: string]: any } },
 		fields: Array<string> = [],
 		orders: Array<string> = [],
-	)
+	): Array<{ [key: string]: any }>
 	{
 		const comparator = createComparator(fields, orders);
 
 		return Object.values(collection).sort(comparator);
 	}
 
-	static destroy(target: any, errorMessage = 'Object is destroyed')
+	static destroy(target: any, errorMessage: string = 'Object is destroyed'): void
 	{
 		if (Type.isObject(target))
 		{

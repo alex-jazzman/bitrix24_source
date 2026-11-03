@@ -9,3 +9,4 @@ $MESS["MAIL_PASSWORDLESS_ERROR_INVALID_HOST"] = "Email server address is incorre
 $MESS["MAIL_PASSWORDLESS_ERROR_LIMIT"] = "Maximum number of mailboxes per user exceeded.";
 $MESS["MAIL_PASSWORDLESS_ERROR_NOT_FOUND"] = "User request to connect mailbox was not found.";
 $MESS["MAIL_PASSWORDLESS_ERROR_SMTP_UNAVAILABLE"] = "SMTP server is not available or does not respond.";
+$MESS["MAIL_PASSWORDLESS_ERROR_REQUEST_ALREADY_SENT"] = "A mailbox connection request is already sent to this user.";

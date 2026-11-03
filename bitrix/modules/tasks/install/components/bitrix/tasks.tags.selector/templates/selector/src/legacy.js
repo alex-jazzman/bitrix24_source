@@ -67,32 +67,6 @@ BX.Tasks.TagsSelector.prototype = {
 		if (!this.dialog)
 		{
 			var statusSuccess = {status: false};
-
-			var showAddButton = function()
-			{
-				var dialog = BX.UI.EntitySelector.Dialog.getById('tasks-selector-task-tag-widget');
-				dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
-				dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
-			}
-
-			var hideAddButton = function()
-			{
-				var dialog = BX.UI.EntitySelector.Dialog.getById('tasks-selector-task-tag-widget');
-				dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
-				dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
-			}
-
-			var onSearch = function(event) {
-				var query = event.getData().query;
-				if (query.trim() !== '')
-				{
-					showAddButton();
-				}
-				else
-				{
-					hideAddButton();
-				}
-			};
 			var showAlert = function(className, error) {
 				var dialog = BX.UI.EntitySelector.Dialog.getById('tasks-selector-task-tag-widget');
 
@@ -104,89 +78,76 @@ BX.Tasks.TagsSelector.prototype = {
 				var alert = document.createElement('div');
 				alert.className = className;
 				alert.innerHTML = `
-				<div class='ui-alert ui-alert-xs ui-alert-danger'  
+				<div class='ui-alert ui-alert-xs ui-alert-danger'
 					<span class='ui-alert-message'>
 						${error}
-					</span> 
+					</span>
 				</div>
 				`;
 				dialog.getFooterContainer().before(alert);
 			};
 
-			var onTagsLoad = function(event)
-			{
-				var dialog = event.getTarget();
-				var events = ['click', 'keydown'];
+			var createTag = function() {
+				var dialog = BX.UI.EntitySelector.Dialog.getById('tasks-selector-task-tag-widget');
+				if (!dialog)
+				{
+					return;
+				}
 
-				var handler = function(event) {
-					if (event.type === 'keydown')
+				var tags = dialog.getSelectedItems().map(function(item) {
+					return item.getTitle();
+				});
+
+				var newTag = dialog.getTagSelectorQuery();
+				if (newTag.trim() === '')
+				{
+					return;
+				}
+
+				return BX.ajax.runComponentAction('bitrix:tasks.tags.selector', 'updateTags', {
+					mode: 'class',
+					data: {
+						taskId: taskId,
+						tagIds: tags,
+						newTag: newTag,
+					},
+				}).then(function(response) {
+					if (response.data.success)
 					{
-						if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13))
-						{
-							return;
-						}
-					}
+						statusSuccess.status = true;
+						const item = dialog.addItem({
+							id: newTag,
+							entityId: 'task-tag',
+							title: newTag,
+							sort: 1,
+							badges: [
+								{
+									title: response.data.owner,
+								},
+							],
+						});
 
-					var tags = dialog.getSelectedItems().map(function(item) {
-						return item.getTitle();
-					});
-
-					var newTag = dialog.getTagSelectorQuery();
-					if (newTag.trim() === '')
-					{
-						return;
-					}
-
-					BX.ajax.runComponentAction('bitrix:tasks.tags.selector', 'updateTags', {
-						mode: 'class',
-						data: {
-							taskId: taskId,
-							tagIds: tags,
-							newTag: newTag,
-						},
-					}).then(function(response) {
-						if (response.data.success)
-						{
-							statusSuccess.status = true;
-							const item = dialog.addItem({
-								id: newTag,
-								entityId: 'task-tag',
-								title: newTag,
-								sort: 1,
-								badges: [
-									{
-										title: response.data.owner,
-									},
-								],
-							});
-
-							dialog.getTab('all').getRootNode().addItem(item);
-							item.select();
-						}
-						else
-						{
-							const alertClass = 'tasks-selector-tag-already-exists-alert';
-							showAlert(alertClass, response.data.error);
-							const removeAlert = function() {
-								const notification = dialog.getContainer().querySelector(`div.${alertClass}`);
-								notification && notification.remove();
-							};
-							setTimeout(removeAlert, 2000);
-						}
-					});
-				};
-
-				events.forEach(function(ev) {
-					if (ev === 'click')
-					{
-						dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
-							.addEventListener(ev, handler);
+						dialog.getTab('all').getRootNode().addItem(item);
+						item.select();
 					}
 					else
 					{
-						dialog.getContainer().addEventListener(ev, handler);
+						const alertClass = 'tasks-selector-tag-already-exists-alert';
+						showAlert(alertClass, response.data.error);
+						const removeAlert = function() {
+							const notification = dialog.getContainer().querySelector(`div.${alertClass}`);
+							notification && notification.remove();
+						};
+						setTimeout(removeAlert, 2000);
 					}
 				});
+			};
+			var syncFooterSearch = function(event) {
+				var footer = event.getTarget().getFooter();
+				if (footer && typeof footer.setSearchQuery === 'function')
+				{
+					footer.setSearchQuery(event.getData().query);
+				}
 			};
 
 			var taskId = this.taskId;
@@ -244,18 +205,18 @@ BX.Tasks.TagsSelector.prototype = {
 						userId: this.userId,
 						taskId: this.taskId,
 						groupId: groupId,
+						onCreateTag: createTag,
 					},
 					clearUnavailableItems: true,
 					events: {
 						'onLoad': function(event) {
 							event.getTarget().getFooterContainer().style.zIndex = 1;
-							onTagsLoad(event);
 						}.bind(this),
 						'Item:onSelect': function(event) {
 							this.onTagsChange(event, statusSuccess);
 						}.bind(this),
 						'onSearch': function(event){
-							onSearch(event);
+							syncFooterSearch(event);
 						}.bind(this),
 						'Item:onDeselect': function(event) {
 							this.onTagsChange(event, statusSuccess);
@@ -362,8 +323,11 @@ BX.Tasks.TagsSelector.prototype = {
 		{
 			statusSuccess.status = false;
 			this.dialog.clearSearch();
-			this.dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
-			this.dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
+			var footer = this.dialog.getFooter();
+			if (footer && typeof footer.setSearchQuery === 'function')
+			{
+				footer.setSearchQuery('');
+			}
 			return;
 		}
 

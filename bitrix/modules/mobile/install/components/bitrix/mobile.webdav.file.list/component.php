@@ -147,7 +147,7 @@ if( $requestTupe == "shared")
 		$APPLICATION->RestartBuffer();
 		exit(json_encode(array('status' => 'failed')));
 	}
-	$shared_files = unserialize($shared_files);
+	$shared_files = unserialize($shared_files, ['allowed_classes' => false]);
 	$arParams["IBLOCK_ID"] = $shared_files[$sID]["id"];
 	$arParams["BASE_URL"] = $arParams["SEF_FOLDER"] . "/" . $requestTupe . "/";
 }
@@ -159,7 +159,7 @@ elseif( $requestTupe == "group")
 		$APPLICATION->RestartBuffer();
 		exit(json_encode(array('status' => 'failed')));
 	}
-	$group_files = unserialize($group_files);
+	$group_files = unserialize($group_files, ['allowed_classes' => false]);
 	$arParams["IBLOCK_ID"] = $group_files[$sID]["id"];
 	$filesOwnerGroupID = array_shift($arURL);
 	if($filesOwnerGroupID != null && intval($filesOwnerGroupID) > 0)
@@ -230,7 +230,7 @@ elseif( $requestTupe == "user")
 		$APPLICATION->RestartBuffer();
 		exit(json_encode(array('status' => 'failed')));
 	}
-	$user_files = unserialize($user_files);
+	$user_files = unserialize($user_files, ['allowed_classes' => false]);
 	$arParams["IBLOCK_ID"] = $user_files[$sID]["id"];
 	$filesOwnerUserID = array_shift($arURL);
 	$arParams["BASE_URL"] = $arParams["SEF_FOLDER"] . "/" . $requestTupe . "/" . $filesOwnerUserID . "/";

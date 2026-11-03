@@ -61,8 +61,8 @@
 	display: flex;
 }
 
-.ui-label-inner {
-	text-transform: uppercase;
+#biconnector-external-source-grid .ui-label-inner {
+	font: var(--ui-font-size-xs)/var(--ui-font-size-xs) var(--ui-label-font);
 }
 
 .biconnector-grid-cell-comment{
@@ -123,4 +123,17 @@
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-lg);
 	color: #555555;
+}
+
+#biconnector_superset_external_source_grid_table .main-grid-row-head {
+	background-color: var(--ui-color-bg-vibrant-default);
+}
+
+#biconnector_superset_external_source_grid_table .main-grid-cell-head {
+	background-color: transparent;
+}
+
+#ui-page-slider-content .ui-page-slider-workarea
+{
+	margin-top: var(--ui-space-stack-xs);
 }

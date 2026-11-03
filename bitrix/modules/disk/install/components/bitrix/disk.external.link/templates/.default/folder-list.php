@@ -83,7 +83,7 @@ $firstPageInTrail = max(1, $currentPage - 2);
 								<?= htmlspecialcharsbx($item['FORMATTED_SIZE']) ?>
 							</td>
 							<td class="disk-ext-folder-list__cell --action">
-								<?php if (!$item['IS_FOLDER']): ?>
+								<?php if (!$item['IS_FOLDER'] && $item['CAN_DOWNLOAD']): ?>
 									<a
 										class="disk-ext-folder-list__download ui-icon-set --o-download"
 										href="<?= htmlspecialcharsbx($item['URL']) ?>"

@@ -21,10 +21,10 @@
 				<div class="u-info-v2-2 h-100 g-color-white text-center">
 					<div class="u-info-v2-2__item h-100 g-brd-around g-brd-top-none g-brd-white-opacity-0_2 g-px-20 g-pb-30">
 						<span class="landing-block-node-card-icon-container m-auto u-icon-v1 u-icon-size--2xl g-line-height-1 g-color-white g-pull-50x-up">
-							<i class="landing-block-node-card-icon icon-transport-026 u-line-icon-pro"></i>
+							<i class="landing-block-node-card-icon icon-transport-026 u-line-icon-pro" aria-hidden="true"></i>
 						</span>
-						<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
-							International Shipping</h6>
+						<h3 class="landing-block-node-card-title h6 text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
+							International Shipping</h3>
 						<div class="landing-block-node-card-text g-color-white-opacity-0_8 mb-0">
 							<p>Fusce mauris eros, ullamcorper in gravida a, feugiat
 								in mauris. Curabitur ac scelerisque nisi. Vivamus accumsan in purus et egestas.</p>
@@ -39,10 +39,10 @@
 				<div class="u-info-v2-2 h-100 g-color-white text-center">
 					<div class="u-info-v2-2__item h-100 g-brd-around g-brd-top-none g-brd-white-opacity-0_2 g-px-20 g-pb-30">
 						<span class="landing-block-node-card-icon-container m-auto u-icon-v1 u-icon-size--2xl g-line-height-1 g-color-white g-pull-50x-up">
-							<i class="landing-block-node-card-icon icon-christmas-090 u-line-icon-pro"></i>
+							<i class="landing-block-node-card-icon icon-christmas-090 u-line-icon-pro" aria-hidden="true"></i>
 						</span>
-						<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
-							Packaging</h6>
+						<h3 class="landing-block-node-card-title h6 text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
+							Packaging</h3>
 						<div class="landing-block-node-card-text g-color-white-opacity-0_8 mb-0">
 							<p>Fusce mauris eros, ullamcorper in gravida a, feugiat
 								in mauris. Curabitur ac scelerisque nisi. Vivamus accumsan in purus et egestas.</p>
@@ -57,11 +57,11 @@
 				<div class="u-info-v2-2 h-100 g-color-white text-center">
 					<div class="u-info-v2-2__item h-100 g-brd-around g-brd-top-none g-brd-white-opacity-0_2 g-px-20 g-pb-30">
 						<span class="landing-block-node-card-icon-container m-auto u-icon-v1 u-icon-size--2xl g-line-height-1 g-color-white g-pull-50x-up">
-							<i class="landing-block-node-card-icon icon-travel-044 u-line-icon-pro"></i>
+							<i class="landing-block-node-card-icon icon-travel-044 u-line-icon-pro" aria-hidden="true"></i>
 						</span>
-						<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
+						<h3 class="landing-block-node-card-title h6 text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
 							Competitive
-							rates</h6>
+							rates</h3>
 						<div class="landing-block-node-card-text g-color-white-opacity-0_8 mb-0">
 							<p>Fusce mauris eros, ullamcorper in gravida a, feugiat
 								in mauris. Curabitur ac scelerisque nisi. Vivamus accumsan in purus et egestas.</p>
@@ -76,11 +76,11 @@
 				<div class="u-info-v2-2 h-100 g-color-white text-center">
 					<div class="u-info-v2-2__item h-100 g-brd-around g-brd-top-none g-brd-white-opacity-0_2 g-px-20 g-pb-30">
 						<span class="landing-block-node-card-icon-container m-auto u-icon-v1 u-icon-size--2xl g-line-height-1 g-color-white g-pull-50x-up">
-							<i class="landing-block-node-card-icon icon-hotel-restaurant-249 u-line-icon-pro"></i>
+							<i class="landing-block-node-card-icon icon-hotel-restaurant-249 u-line-icon-pro" aria-hidden="true"></i>
 						</span>
-						<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
+						<h3 class="landing-block-node-card-title h6 text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
 							Quick
-							shipping</h6>
+							shipping</h3>
 						<div class="landing-block-node-card-text g-color-white-opacity-0_8 mb-0">
 							<p>Fusce mauris eros, ullamcorper in gravida a, feugiat
 								in mauris. Curabitur ac scelerisque nisi. Vivamus accumsan in purus et egestas.</p>
@@ -95,11 +95,11 @@
 				<div class="u-info-v2-2 h-100 g-color-white text-center">
 					<div class="u-info-v2-2__item h-100 g-brd-around g-brd-top-none g-brd-white-opacity-0_2 g-px-20 g-pb-30">
 						<span class="landing-block-node-card-icon-container m-auto u-icon-v1 u-icon-size--2xl g-line-height-1 g-color-white g-pull-50x-up">
-							<i class="landing-block-node-card-icon icon-hotel-restaurant-211 u-line-icon-pro"></i>
+							<i class="landing-block-node-card-icon icon-hotel-restaurant-211 u-line-icon-pro" aria-hidden="true"></i>
 						</span>
-						<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
+						<h3 class="landing-block-node-card-title h6 text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
 							Quality
-							protection</h6>
+							protection</h3>
 						<div class="landing-block-node-card-text g-color-white-opacity-0_8 mb-0">
 							<p>Fusce mauris eros, ullamcorper in gravida a, feugiat
 								in mauris. Curabitur ac scelerisque nisi. Vivamus accumsan in purus et egestas.</p>
@@ -114,11 +114,11 @@
 				<div class="u-info-v2-2 h-100 g-color-white text-center">
 					<div class="u-info-v2-2__item h-100 g-brd-around g-brd-top-none g-brd-white-opacity-0_2 g-px-20 g-pb-30">
 						<span class="landing-block-node-card-icon-container m-auto u-icon-v1 u-icon-size--2xl g-line-height-1 g-color-white g-pull-50x-up">
-							  <i class="landing-block-node-card-icon icon-hotel-restaurant-234 u-line-icon-pro"></i>
+							  <i class="landing-block-node-card-icon icon-hotel-restaurant-234 u-line-icon-pro" aria-hidden="true"></i>
 						</span>
-						<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
+						<h3 class="landing-block-node-card-title h6 text-uppercase g-font-weight-700 g-color-white g-mt-minus-35 g-mb-15">
 							Shipping
-							anywhere</h6>
+							anywhere</h3>
 						<div class="landing-block-node-card-text g-color-white-opacity-0_8 mb-0">
 							<p>Fusce mauris eros, ullamcorper in gravida a, feugiat
 								in mauris. Curabitur ac scelerisque nisi. Vivamus accumsan in purus et egestas.</p>

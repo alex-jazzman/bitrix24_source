@@ -1,0 +1,10 @@
+/* `call.lib.push-to-talk` marks the element whose activation a hold took (FALSE_FOCUS_RING_ATTRIBUTE).
+ * The descendant and !important: rings are declared by rules of their own all over both windows, some
+ * of them on a child of the focused element, and this one has to outrank every one of them.
+ * `:focus` and not `:focus-visible`: the rings around are declared both ways, and it is the mark that
+ * says this one is false, not the modality of a browser that has just seen the space bar.
+ * Deliberately narrow: only that element loses its ring, not everything focused during a hold. */
+[data-bx-call-push-to-talk-false-focus-ring]:focus,
+[data-bx-call-push-to-talk-false-focus-ring]:focus * {
+	outline: none !important;
+}

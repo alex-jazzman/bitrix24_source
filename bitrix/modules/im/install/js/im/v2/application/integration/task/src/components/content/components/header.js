@@ -27,6 +27,10 @@ export const TaskChatHeader = {
 		{
 			return this.dialog.inited;
 		},
+		isMuted(): boolean
+		{
+			return this.dialog.isMuted;
+		},
 	},
 	methods:
 	{
@@ -41,7 +45,16 @@ export const TaskChatHeader = {
 				<div class="bx-im-task-chat-header__left_container">
 					<div class="bx-im-task-chat-header__avatar"></div>
 					<div class="bx-im-task-chat-header__info">
-						<div class="bx-im-task-chat-header__title">{{ loc('IM_TASK_CHAT_HEADER_TITLE') }}</div>
+						<div class="bx-im-task-chat-header__title">
+							{{ loc('IM_TASK_CHAT_HEADER_TITLE') }}
+							<span
+								v-if="isMuted"
+								class="bx-im-task-chat-header__muted-icon"
+								data-testid="task-chat-header-muted-icon"
+								role="img"
+								:aria-label="loc('IM_TASK_CHAT_HEADER_MUTED_ICON')"
+							></span>
+						</div>
 						<LineLoader v-if="!isInited" :width="50" :height="16" />
 						<FadeAnimation :duration="100">
 							<UserCounter v-if="isInited" :dialogId="dialogId" />

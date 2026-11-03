@@ -1,0 +1,27 @@
+/*
+ * The container keeps the class names of the legacy control, so the rules of that control reach the
+ * widget mounted inside it: `.bizproc-type-control` sizes an inline-block like a text input and
+ * `.bizproc-type-control-file input[type="file"]` positions the file input of the old markup. Both are
+ * undone here - the widget lays out its own drop area and its own input.
+ * Rules being undone: bizproc/install/js/bizproc/css/fieldtype.css.
+ */
+.bizproc-type-control[data-role="bp-task-file"] {
+	display: block;
+	position: static;
+	overflow: visible;
+	height: auto;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font-size: inherit;
+	/* a flex item does not shrink below its content unless min-width says so */
+	min-width: 0;
+}
+
+.bizproc-type-control[data-role="bp-task-file"] input[type="file"] {
+	width: 100%;
+	height: 100%;
+	font-size: inherit;
+	z-index: auto;
+}

@@ -62,7 +62,7 @@
 	background-image: url("images/type3.svg");
 }
 
-.landing-ui-agreement-type-3-icon:hover,
+.landing-ui-field-radio-button-item:not(.landing-ui-disabled) .landing-ui-agreement-type-3-icon:hover,
 .landing-ui-agreement-type-3-icon.landing-ui-field-radio-button-item-active {
 	background-image: url("images/type3-hover.svg");
 }
@@ -71,9 +71,30 @@
 	background-image: url("images/type4.svg");
 }
 
-.landing-ui-agreement-type-4-icon:hover,
+.landing-ui-field-radio-button-item:not(.landing-ui-disabled) .landing-ui-agreement-type-4-icon:hover,
 .landing-ui-agreement-type-4-icon.landing-ui-field-radio-button-item-active {
 	background-image: url("images/type4-hover.svg");
+}
+
+.landing-ui-agreement-type-5-icon::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	-webkit-mask-image: url("/bitrix/images/landing/agreements-personal-data-consent.svg");
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: var(--ui-size-7xl);
+	background-color: #a3b2c5;
+	transition: background-color 200ms ease;
+}
+
+.landing-ui-field-radio-button-item:not(.landing-ui-disabled) .landing-ui-agreement-type-5-icon:hover::after,
+.landing-ui-agreement-type-5-icon.landing-ui-field-radio-button-item-active::after {
+	background-color: var(--ui-color-palette-blue-50);
+}
+
+.landing-ui-field-agreements-list-container .landing-ui-field-radio-button-item.landing-ui-disabled {
+	cursor: default;
 }
 
 .landing-ui-field-agreements-list-item-body-actions {
@@ -94,4 +115,95 @@
 .landing-ui-field-agreements-list-item-body-action:active {
 	color: #333333;
 	border-bottom: 1px dashed #333333;
+}
+
+
+.landing-ui-field-agreements-list-notice-switch .landing-ui-field-input {
+	width: 100%;
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+
+.landing-ui-field-agreements-list-notice-switch .landing-ui-field-switch-label {
+	height: auto;
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+	color: var(--ui-color-base-2);
+}
+
+.landing-ui-field-agreements-list-notice-switch .landing-ui-field-switch-slider {
+	flex: 0 0 auto;
+	margin: var(--ui-space-stack-3xs) 0 0;
+}
+
+.landing-ui-field-agreements-list-notice-switch .landing-ui-field-switch-checkbox {
+	display: block;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	clip-path: inset(50%);
+}
+
+.landing-ui-field-agreements-list-notice-switch.--disabled .landing-ui-field-switch-label {
+	color: var(--ui-color-base-4);
+	opacity: 1;
+	cursor: default;
+}
+
+.landing-ui-field-agreements-list-notice-switch.--disabled .landing-ui-field-switch-slider {
+	opacity: var(--ui-opacity-60);
+}
+
+.landing-ui-field-agreements-list-notice-text {
+	margin-top: var(--ui-space-stack-sm);
+}
+
+.landing-ui-field-agreements-list-notice-help {
+	margin-top: var(--ui-space-stack-sm);
+}
+
+.landing-ui-field-agreements-list-notice-help summary {
+	display: flex;
+	align-items: center;
+	width: fit-content;
+	color: var(--ui-color-accent-main-link);
+	list-style: none;
+	cursor: pointer;
+}
+
+.landing-ui-field-agreements-list-notice-help summary::-webkit-details-marker {
+	display: none;
+}
+
+.landing-ui-field-agreements-list-notice-help summary::after {
+	content: '';
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+	-webkit-mask-image: url("/bitrix/images/landing/agreements-chevron-down.svg");
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+	background: currentColor;
+	transition: 150ms ease-in-out transform;
+}
+
+.landing-ui-field-agreements-list-notice-help[open] summary::after {
+	transform: rotate(180deg);
+}
+
+.landing-ui-field-agreements-list-notice-help-text {
+	margin-top: var(--ui-space-stack-xs);
+	color: var(--ui-color-base-2);
+}
+
+.landing-ui-field-agreements-list-actions-button:focus-visible,
+.landing-ui-field-agreements-list-container [role="radio"]:focus-visible,
+.landing-ui-field-agreements-list-notice-switch:focus-visible,
+.landing-ui-field-agreements-list-notice-help summary:focus-visible,
+.landing-ui-field-agreements-list-notice-switch .landing-ui-field-switch-checkbox:focus-visible + .landing-ui-field-switch-slider {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }

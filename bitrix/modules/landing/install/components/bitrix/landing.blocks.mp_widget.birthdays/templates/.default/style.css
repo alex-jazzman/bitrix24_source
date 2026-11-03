@@ -17,11 +17,13 @@
 	padding: 24px 25px 61px 25px;
 }
 
+/* the title stands on an h2, so the margin of a heading is set here; the font shorthand below
+   already carries the size, the weight and the line height */
 .landing-widget-birthdays-title {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	margin-bottom: 50px;
+	margin: 0 0 50px;
 	font: var(--ui-font-weight-medium) 28px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--widget-color-h);
 }
@@ -79,7 +81,7 @@
 	background: var(--primary) url(./images/img.svg) no-repeat center;
 }
 
-a[href].landing-widget-birthdays-content-item-img:hover {
+.landing-widget-birthdays-content-item-img.--link:hover {
 	opacity: .9;
 }
 
@@ -112,8 +114,16 @@ a[href].landing-widget-birthdays-content-item-img:hover {
 	color: var(--widget-color-name);
 }
 
-a[href].landing-widget-birthdays-content-item-text-name:hover {
+.landing-widget-birthdays-content-item-text-name.--link:hover {
 	opacity: .9;
+}
+
+/* the box around the name clips its content to keep the name on one line, and a ring drawn outward
+   is cut off on the way out. An unresolved var makes the whole outline invalid at computed-value
+   time and the browser drops its own ring too, so every token here carries a fallback */
+.landing-widget-birthdays-content-item-text-name:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
 }
 
 

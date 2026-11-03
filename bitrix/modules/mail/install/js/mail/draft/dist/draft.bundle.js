@@ -353,6 +353,7 @@ this.BX.Mail = this.BX.Mail || {};
 			contextType: 'mail'
 		});
 		const lifecycleToken = options.form.getDraftLifecycleToken?.() ?? 0;
+		let isDraftRestoreComplete = false;
 		options.form.setDraftLoading?.(true);
 		try {
 			options.form.setDraftRestoreFailed?.(false);
@@ -377,8 +378,9 @@ this.BX.Mail = this.BX.Mail || {};
 				return null;
 			}
 			if (window.top && window.top !== window) {
-				await prepareMailDraftNotificationCenter();
+				await tryPrepareMailDraftNotificationCenter();
 			}
+			isDraftRestoreComplete = true;
 			return new DraftCoordinator({
 				form: options.form,
 				connector,
@@ -397,7 +399,9 @@ this.BX.Mail = this.BX.Mail || {};
 				}
 			});
 		} catch (error) {
-			handleMailDraftBootstrapError(options);
+			if (!isDraftRestoreComplete) {
+				handleMailDraftBootstrapError(options);
+			}
 			throw error;
 		} finally {
 			options.form.setDraftLoading?.(false);
@@ -419,7 +423,11 @@ this.BX.Mail = this.BX.Mail || {};
 			});
 			return;
 		}
-		void prepareMailDraftNotificationCenter().then(() => notifyMailDraftClosed());
+		void tryPrepareMailDraftNotificationCenter().then(() => {
+			mailDraftNotificationCenter?.notify({
+				content
+			});
+		});
 	}
 	async function prepareMailDraftNotificationCenter() {
 		if (mailDraftNotificationCenter) {
@@ -430,6 +438,12 @@ this.BX.Mail = this.BX.Mail || {};
 		if (!mailDraftNotificationCenter) {
 			const notificationExtension = topWindow?.BX?.Runtime ? await topWindow.BX.Runtime.loadExtension('ui.notification') : await main_core.Runtime.loadExtension('ui.notification');
 			mailDraftNotificationCenter = topWindow?.BX?.UI?.Notification?.Center ?? notificationExtension.Center;
+		}
+	}
+	async function tryPrepareMailDraftNotificationCenter() {
+		try {
+			await prepareMailDraftNotificationCenter();
+		} catch {
 		}
 	}
 	function notifyMailDraftSaved(draftId) {
@@ -477,7 +491,7 @@ this.BX.Mail = this.BX.Mail || {};
 				options.onDraftIdChange?.(coordinatorDraft.id, coordinatorDraft.revision);
 			}
 			if (window.top && window.top !== window) {
-				await prepareMailDraftNotificationCenter();
+				await tryPrepareMailDraftNotificationCenter();
 			}
 			return new DraftCoordinator({
 				form: options.form,

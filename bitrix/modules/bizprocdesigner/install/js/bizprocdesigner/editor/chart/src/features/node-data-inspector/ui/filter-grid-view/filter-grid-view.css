@@ -17,6 +17,11 @@
 	padding: 0;
 }
 
+.editor-chart-filter-grid-view-dropdown .ui-system-input-value:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
 .editor-chart-filter-grid-view-dropdown .ui-system-input-value::placeholder {
 	color: var(--ui-color-base-50);
 }

@@ -277,6 +277,7 @@ $migration->table('b_im_command')->create(function (\Bitrix\Main\UpdateSystem\Mi
 	$columns->varchar('METHOD_LANG_GET', 255);
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_IM_COMMAND_1', ['BOT_ID']);
+	$table->addIndex('IX_IM_COMMAND_2', ['COMMON', 'HIDDEN', 'ID']);
 });
 
 $migration->table('b_im_command_lang')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -853,6 +854,16 @@ $migration->table('b_im_ai_transcribe_queue')->create(function (\Bitrix\Main\Upd
 	$table->addUniqueIndex('UIX_B_IM_AI_TRANSCRIBE_QUEUE_1', ['FILE_ID', 'CHAT_ID']);
 });
 
+$migration->table('b_im_ai_task_queue')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->varchar('ENTITY_TYPE', 50)->notNull();
+	$columns->varchar('ENTITY_ID', 255)->notNull();
+	$columns->text('PARAMS');
+	$columns->datetime('DATE_CREATE')->notNull();
+	$table->addUniqueIndex('UIX_B_IM_AI_TASK_QUEUE_1', ['ENTITY_TYPE', 'ENTITY_ID']);
+});
+
 $migration->table('b_im_sharing_link')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
 	$columns->int('ID')->autoincrement();
@@ -949,6 +960,7 @@ $migration->table('b_im_folder')->create(function (\Bitrix\Main\UpdateSystem\Mig
 	$columns->varchar('TYPE', 20)->notNull()->default('personal');
 	$columns->varchar('CODE', 50);
 	$columns->varchar('TITLE', 255);
+	$columns->varchar('DESCRIPTION', 255);
 	$columns->int('SORT')->notNull()->default('0');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_IM_FOLDER_1', ['USER_ID', 'PARENT_CHAT_ID', 'SORT']);
@@ -977,4 +989,15 @@ $migration->table('b_im_folder_pin')->create(function (\Bitrix\Main\UpdateSystem
 	$table->addUniqueIndex('UIX_B_IM_FOLDER_PIN_1', ['FOLDER_ID', 'CHAT_ID']);
 	$table->addIndex('IX_B_IM_FOLDER_PIN_2', ['CHAT_ID']);
 	$table->addIndex('IX_B_IM_FOLDER_PIN_3', ['USER_ID', 'FOLDER_PARENT_ID']);
+});
+
+$migration->table('b_im_folder_source')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('FOLDER_ID')->notNull();
+	$columns->int('USER_ID')->notNull();
+	$columns->varchar('SOURCE_FOLDER_CODE', 50)->notNull();
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('UIX_B_IM_FOLDER_SOURCE_1', ['FOLDER_ID', 'SOURCE_FOLDER_CODE']);
+	$table->addIndex('IX_B_IM_FOLDER_SOURCE_2', ['USER_ID']);
 });

@@ -1,3 +1,4 @@
+import { ChangeOwnerAction } from './change-owner-action';
 import { EditAction } from './edit-action';
 import { DeleteAction } from './delete-action';
 import { RestartAction } from './restart-action';
@@ -10,6 +11,7 @@ export const actionMap = new Map([
 	[DeleteAction.getActionId(), DeleteAction],
 	[RestartAction.getActionId(), RestartAction],
 	[UpgradeAction.getActionId(), UpgradeAction],
+	[ChangeOwnerAction.getActionId(), ChangeOwnerAction],
 ]);
 
 export const groupActionMap = new Map([

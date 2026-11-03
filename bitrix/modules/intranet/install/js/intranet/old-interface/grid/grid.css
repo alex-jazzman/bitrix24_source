@@ -48,11 +48,11 @@ body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-up {
 }
 
 body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-up {
-	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-sort-up.png) !important;
+	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-sort-up.webp) !important;
 }
 
 body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-down {
-	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-sort-down.png) !important;
+	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-sort-down.webp) !important;
 }
 
 body table.bx-interface-grid tr.bx-grid-head td.bx-sorted,
@@ -77,11 +77,11 @@ body table.bx-interface-grid tr.bx-grid-head td {
 }
 
 body table.bx-interface-grid tr.bx-grid-head > td {
-	background: #e4e4e4 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-head.png) repeat-x left top !important;
+	background: #e4e4e4 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-head.webp) repeat-x left top !important;
 }
 
 body table.bx-interface-grid tr.bx-grid-head > td.bx-sorted {
-	background: #cbcfd1 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-head-sorted.png) repeat-x left top !important;
+	background: #cbcfd1 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-head-sorted.webp) repeat-x left top !important;
 }
 
 body table.bx-interface-grid tr.bx-grid-head td.bx-left {
@@ -131,7 +131,7 @@ body table.bx-interface-grid tr.bx-grid-footer > td {
 	-webkit-border-radius: 0 0 4px 4px !important;
 	-khtml-border-radius: 0 0 4px 4px !important;
 	border-radius: 0 0 4px 4px !important;
-	background: transparent url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-footer.png) repeat-x left top !important;
+	background: transparent url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-footer.webp) repeat-x left top !important;
 }
 
 body div.bx-edit-tab-inner table.bx-interface-grid tr.bx-grid-footer td {

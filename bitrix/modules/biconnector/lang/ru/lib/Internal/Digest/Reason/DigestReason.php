@@ -1,0 +1,22 @@
+<?php
+$MESS['BI_DIGEST_REASON_BI_DELETED'] = 'BI Конструктор удалён или удаляется';
+$MESS['BI_DIGEST_REASON_BI_DISABLED'] = 'BI Конструктор отключён тарифом или настройками';
+$MESS['BI_DIGEST_REASON_BI_LIMIT_EXCEEDED'] = 'Достигнут лимит BI Конструкторов для лицензионного ключа';
+$MESS['BI_DIGEST_REASON_BI_PREPARING'] = 'BI Конструктор готовится к работе';
+$MESS['BI_DIGEST_REASON_DASHBOARD_NOT_FOUND'] = 'Отчёт не найден или удалён';
+$MESS['BI_DIGEST_REASON_DASHBOARD_NOT_SYNCED'] = 'Отчёт не синхронизирован с BI Конструктором';
+$MESS['BI_DIGEST_REASON_DASHBOARD_PREPARING'] = 'Отчёт готовится или переустанавливается';
+$MESS['BI_DIGEST_REASON_DASHBOARD_TIMEOUT'] = 'Отчёт не успел загрузиться';
+$MESS['BI_DIGEST_REASON_DOMAIN_NOT_LINKED'] = 'Адрес не привязан к BI Конструктору';
+$MESS['BI_DIGEST_REASON_NO_ACCESSIBLE_SCOPE_VALUE'] = 'У получателя нет доступных значений обязательного параметра отчёта';
+$MESS['BI_DIGEST_REASON_NO_DASHBOARD_RIGHT'] = 'У получателя нет прав на просмотр отчёта';
+$MESS['BI_DIGEST_REASON_SCOPE_PARAMETERS_MISMATCH'] = 'Состав параметров отчёта не совпадает с настройкой рассылки';
+$MESS['BI_DIGEST_REASON_SCOPE_VALUE_FOREIGN'] = 'Параметр из настройки рассылки не относится к выбранному отчёту';
+$MESS['BI_DIGEST_REASON_SCOPE_VALUE_NOT_ACCESSIBLE'] = 'Значение параметра отчёта недоступно получателю';
+$MESS['BI_DIGEST_REASON_WARMUP_FAILED'] = 'Не удалось получить ответ от BI Конструктора';
+$MESS['BI_DIGEST_SETUP_REASON_DASHBOARD_NOT_FOUND'] = 'отчёт не найден';
+$MESS['BI_DIGEST_SETUP_REASON_NO_ACCESSIBLE_SCOPE_VALUE'] = 'нет доступа ни к одному значению параметра отчёта';
+$MESS['BI_DIGEST_SETUP_REASON_NO_DASHBOARD_RIGHT'] = 'нет доступа к отчёту';
+$MESS['BI_DIGEST_SETUP_REASON_SCOPE_PARAMETERS_MISMATCH'] = 'Параметры в настройке не совпадают с параметрами отчёта — сводку никто не получит';
+$MESS['BI_DIGEST_SETUP_REASON_SCOPE_VALUE_FOREIGN'] = 'Параметр из настройки не относится к выбранному отчёту — сводку никто не получит';
+$MESS['BI_DIGEST_SETUP_REASON_SCOPE_VALUE_NOT_ACCESSIBLE'] = 'нет доступа к выбранному значению параметра отчёта';

@@ -1,6 +1,8 @@
 import { EventEmitter } from 'main.core.events';
-import { Cache, ajax, Event, Runtime } from 'main.core';
+import { Cache, ajax, Event, Runtime, Tag } from 'main.core';
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
+import { FocusNavigator } from 'ui.a11y';
+import type { Popup } from 'main.popup';
 import type { ConfigContent } from './types/content';
 import type { InvitationPopupOptions } from './types/options';
 import { InvitationContent } from './contents/invitation';
@@ -9,6 +11,10 @@ import { EmployeesContent } from './contents/employees';
 import { ExtranetContent } from './contents/extranet';
 import { CollabContent } from './contents/collab';
 import { UserOnlineContent } from './contents/user-online';
+
+const POPUP_WIDTH = 350;
+const POPUP_HORIZONTAL_OFFSET = 40;
+const OFFICES_TILE_HEIGHT = 66;
 
 export class InvitationPopup extends EventEmitter
 {
@@ -34,7 +40,16 @@ export class InvitationPopup extends EventEmitter
 
 	show(): void
 	{
-		this.getPopup().show();
+		const popup = this.getPopup();
+		this.#syncPopupPosition(popup.getPopup());
+		const wasShown = popup.isShown();
+
+		popup.show();
+
+		if (wasShown)
+		{
+			this.#applyPopupInitialFocus();
+		}
 	}
 
 	close(): void
@@ -59,13 +74,18 @@ export class InvitationPopup extends EventEmitter
 	getPopup(): PopupComponentsMaker
 	{
 		return this.#cache.remember('popup', () => {
-			return new PopupComponentsMaker({
+			const popup = new PopupComponentsMaker({
 				id: 'invitation-popup',
 				target: this.getOptions().target,
-				width: 350,
+				width: POPUP_WIDTH,
 				content: this.#getContent(),
 				popupLoader: this.getOptions().loader,
 			});
+			const popupWindow = popup.getPopup();
+			popupWindow.subscribe('onShow', () => this.#applyPopupInitialFocus());
+			this.#observeTargetResize(popupWindow);
+
+			return popup;
 		});
 	}
 
@@ -77,11 +97,19 @@ export class InvitationPopup extends EventEmitter
 				this.#getInvitationContent().getConfig(),
 				{
 					html: [
-						this.#getStructureContent().getConfig(),
-						this.#getEmployeesContent().getConfig(),
+						{
+							...this.#getStructureContent().getConfig(),
+							attrs: { role: 'listitem' },
+						},
+						{
+							...this.#getEmployeesContent().getConfig(),
+							attrs: { role: 'listitem' },
+						},
 					],
 					marginBottom: 24,
+					attrs: { role: 'list' },
 				},
+				this.#getOfficesTileConfig(),
 				this.getOptions().isExtranetAvailable ? this.#getExtranetContent().getConfig() : null,
 				this.getOptions().isCollabAvailable ? this.#getCollabContent().getConfig() : null,
 				this.#getUserOnlineContent().getConfig(),
@@ -117,6 +145,27 @@ export class InvitationPopup extends EventEmitter
 		});
 	}
 
+	#getOfficesTileConfig(): ConfigContent | null
+	{
+		const offices = this.getOptions().offices;
+
+		if (!offices)
+		{
+			return null;
+		}
+
+		const { count, url } = offices;
+		const renderTilePlaceholder = () => Tag.render`<div></div>`;
+
+		return {
+			html: Runtime.loadExtension('stafftrack.offices-tile')
+				.then(({ OfficesTile }) => OfficesTile.create({ count, url })?.getLayout() ?? renderTilePlaceholder())
+				.catch(renderTilePlaceholder),
+			minHeight: `${OFFICES_TILE_HEIGHT}px`,
+			marginBottom: 24,
+		};
+	}
+
 	#getExtranetContent(): ExtranetContent
 	{
 		return this.#cache.remember('extranet-content', () => {
@@ -149,6 +198,55 @@ export class InvitationPopup extends EventEmitter
 		return this.#cache.remember('popup-container', () => {
 			return this.getPopup().getPopup().getPopupContainer();
 		});
+	}
+
+	#applyPopupInitialFocus(): void
+	{
+		const focusTrap = this.getPopup().getPopup().getFocusTrap();
+		const activeElement = FocusNavigator.getActiveElement();
+
+		if (
+			focusTrap
+			&& (
+				activeElement === this.getOptions().button
+				|| (activeElement && focusTrap.contains(activeElement))
+			)
+		)
+		{
+			FocusNavigator.focusContainer(this.#getPopupContainer(), { preventScroll: true });
+		}
+	}
+
+	#syncPopupPosition(popup: Popup): void
+	{
+		const target = this.getOptions().target;
+		if (!target)
+		{
+			return;
+		}
+
+		popup.setOffset({
+			offsetTop: 0,
+			offsetLeft: -(POPUP_WIDTH / 2) + (target.offsetWidth / 2) + POPUP_HORIZONTAL_OFFSET,
+		});
+
+		if (popup.isShown())
+		{
+			popup.adjustPosition({ forceBindPosition: true });
+		}
+	}
+
+	#observeTargetResize(popup: Popup): void
+	{
+		const target = this.getOptions().target;
+		if (!target)
+		{
+			return;
+		}
+
+		const resizeObserver = new ResizeObserver(() => this.#syncPopupPosition(popup));
+		resizeObserver.observe(target);
+		popup.subscribeOnce('onDestroy', () => resizeObserver.disconnect());
 	}
 
 	#setEventHandler()

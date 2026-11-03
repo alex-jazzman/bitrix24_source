@@ -1,5 +1,14 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Crm\V2\Internal\Access\Measure\MeasureAccess;
+use Bitrix\Main\Context;
+use Bitrix\Main\LoaderException;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -7,18 +16,30 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-if (!CModule::IncludeModule('catalog'))
+try
+{
+	$canEditMeasures = (new MeasureAccess())->canEdit();
+}
+catch (LoaderException)
 {
 	ShowError(GetMessage('CATALOG_MODULE_NOT_INSTALLED'));
 
 	return;
 }
 
-if (!\Bitrix\Catalog\Access\AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_MEASURE_EDIT))
+if (!$canEditMeasures)
 {
 	$this->IncludeComponentTemplate('error');
 	return;
 }
+
+Toolbar::deleteFavoriteStar();
+
+$request = Context::getCurrent()->getRequest();
+$arResult['IS_SIDE_PANEL'] =
+	$request->getQuery('IFRAME') === 'Y'
+	&& $request->getQuery('IFRAME_TYPE') === 'SIDE_SLIDER'
+;
 
 $arDefaultUrlTemplates404 = array(
 	'index' => 'index.php',
@@ -66,6 +87,11 @@ else
 		$componentPage = 'edit';
 	$arResult['PATH_TO_MEASURE_LIST'] = $APPLICATION->GetCurPage();
 	$arResult['PATH_TO_MEASURE_EDIT'] = $APPLICATION->GetCurPage()."?$arVariableAliases[company_id]=#measure_id#&edit";
+}
+
+if ($componentPage === 'index')
+{
+	$componentPage = 'list';
 }
 
 $arResult = array_merge(

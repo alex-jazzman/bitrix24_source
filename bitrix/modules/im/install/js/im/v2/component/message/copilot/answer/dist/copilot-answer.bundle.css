@@ -89,6 +89,8 @@
 }
 
 .bx-im-message-ai-assistant-v2-answer__container {
+	--im-message-ai-assistant-v2__background-color_error: var(--im-color-palette-red-20);
+
 	position: relative;
 	overflow: hidden;
 	border-radius: inherit;
@@ -98,7 +100,111 @@
 }
 
 .bx-im-message-ai-assistant-v2-answer__container.--error {
-	background-color: var(--ui-color-palette-red-20);
+	background-color: var(--im-message-ai-assistant-v2__background-color_error);
+}
+
+/* the static top glow would show through the animated outline */
+.bx-im-message-ai-assistant-v2-base-message__container.--thinking .bx-im-message-ai-assistant-v2-answer__container {
+	background-image: none;
+}
+
+/*
+ * While thinking, the glow has to run along a closed outline, so the bubble angle is hidden
+ * and its corner gets the same radius the base module uses for angle-less bubbles.
+ * The wrap class is part of the selector to outweigh the base module rule that squares the corner.
+ */
+.bx-im-message-ai-assistant-v2-base-message__container.--thinking.bx-im-message-base__wrap:last-child .bx-im-message-base__body {
+	border-bottom-left-radius: var(--ui-border-radius-md);
+}
+
+.bx-im-message-ai-assistant-v2-base-message__container.--thinking .bx-im-message-base__body::before {
+	display: none;
+}
+
+/* the footer follows the glow layer in the DOM, so being positioned keeps it painted above */
+.bx-im-message-ai-assistant-v2-answer__bottom-panel {
+	position: relative;
+}
+
+/*
+ * Animated glow border shown while the copilot is thinking.
+ * The decorative layer covers the whole message bubble and sits under its content.
+ * Its outer edge stays crisp because overflow clips the layer by the bubble radius,
+ * while the mask layers fade the paint inwards down to nothing (10px from the top,
+ * 14px from the other sides); the layers are composited additively by default, so
+ * the corners keep the full depth of both adjacent sides. A rotating pseudo-element
+ * inside holds the conic-gradient and spins via transform: rotate(), which is
+ * cross-browser (custom-property angle animation is unsupported in Firefox 115-127;
+ * transform animates everywhere).
+ */
+.bx-im-message-ai-assistant-v2-answer__glow {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	container-type: size;
+	overflow: hidden;
+	border-radius: inherit;
+	-webkit-mask:
+		linear-gradient(to bottom, #000, transparent 10px),
+		linear-gradient(to top, #000, transparent 14px),
+		linear-gradient(to left, #000, transparent 14px),
+		linear-gradient(to right, #000, transparent 14px);
+	        mask:
+		linear-gradient(to bottom, #000, transparent 10px),
+		linear-gradient(to top, #000, transparent 14px),
+		linear-gradient(to left, #000, transparent 14px),
+		linear-gradient(to right, #000, transparent 14px);
+	pointer-events: none;
+}
+
+.bx-im-message-ai-assistant-v2-answer__glow::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	/*
+	 * The square must stay wider than the bubble diagonal (up to 1.42cqmax), otherwise its corners
+	 * run out of paint while rotating. The remaining margin also hides the blurred edge of the
+	 * square itself. Every extra percent is an animated surface the compositor keeps in memory,
+	 * so the value stays just above what the geometry needs.
+	 * The percentage value is a fallback for browsers without container query units.
+	 */
+	width: 150%;
+	width: 170cqmax;
+	aspect-ratio: 1;
+	transform: translate(-50%, -50%) rotate(0);
+	/*
+	 * The palette runs as a wave: a transparent arc, a short rise into the colors and a long fade
+	 * back to nothing. The peak alpha matches the mockup, where the same colors are painted as a
+	 * thin ring and lose most of their opacity to the blur.
+	 */
+	background: conic-gradient(
+		rgba(0, 166, 255, 0) 97deg,
+		rgba(0, 166, 255, 0.24) 137deg,
+		rgba(63, 104, 255, 0.24) 155deg,
+		rgba(157, 72, 255, 0.24) 175deg,
+		rgba(252, 131, 212, 0.24) 205deg,
+		rgba(252, 131, 212, 0) 360deg
+	);
+	filter: blur(9px);
+	animation: bx-im-ai-glow-rotate 3.5s linear infinite;
+}
+
+@keyframes bx-im-ai-glow-rotate {
+	to {
+		transform: translate(-50%, -50%) rotate(1turn);
+	}
+}
+
+/*
+ * The rotation runs longer than five seconds next to readable text, so it stops
+ * for users who asked for less motion (WCAG 2.1, 2.2.2). Only the spin goes away:
+ * the glow stays painted, keeping the thinking state visible.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-message-ai-assistant-v2-answer__glow::before {
+		animation: none;
+	}
 }
 
 .bx-im-message-ai-assistant-v2-answer__actions-panel {

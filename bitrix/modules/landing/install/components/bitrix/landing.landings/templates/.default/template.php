@@ -752,7 +752,7 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 			<?if ($item['DELETED'] == 'Y'):?>
 				<span class="landing-item-link"></span>
 			<?elseif ($arParams['TILE_MODE'] == 'view' && $item['PUBLIC_URL']):?>
-				<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL']));?>" class="landing-item-link" target="_top" data-testid="landing-landings-page-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span></a>
+				<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme(str_replace(' ', '%20', $item['PUBLIC_URL'])));?>" class="landing-item-link" target="_top" data-testid="landing-landings-page-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span></a>
 			<?elseif ($urlView):?>
 				<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($urlView));?>" class="landing-item-link" target="_top" data-testid="landing-landings-page-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span></a>
 			<?else:?>
@@ -1246,7 +1246,15 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 						{
 							BX.Landing.UI.Tool.ActionDialog.getInstance()
 								.show({
-									content: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_REC_CONFIRM'));?>'
+									content: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_REC_CONFIRM'));?>',
+									popupOptions: {
+										closeByEsc: true,
+										minHeight: false,
+										minWidth: 260,
+										maxWidth: 300,
+										width: false,
+										animation: 'fading-slide',
+									},
 								})
 								.then(
 									function() {

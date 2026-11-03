@@ -3,6 +3,8 @@ import { EventEmitter } from 'main.core.events';
 import { DashboardParametersSelector } from 'biconnector.dashboard-parameters-selector';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { AhaMoment } from 'biconnector.aha-moment';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { type ShareSettingState } from 'biconnector.share-setting';
 import { AirButtonStyle, Button, ButtonManager, ButtonSize, ButtonState } from 'ui.buttons';
 import { Dialog } from 'ui.entity-selector';
 import { MenuManager, Popup } from 'main.popup';
@@ -11,10 +13,10 @@ import {
 	DescriptionField,
 	GroupsField,
 	ParametersField,
-	PeriodField,
 	CoverField,
 	GalleryField,
 } from './fields';
+import { ShareSettingField } from './fields/share-setting-field';
 
 type DefaultValues = {
 	title: string,
@@ -26,18 +28,6 @@ type DefaultValues = {
 	groups: number[],
 	scopes: string[],
 	params: string[],
-	filterPeriod: string,
-	dateFilterStart: string,
-	dateFilterEnd: string,
-};
-
-type PeriodItem = {
-	value: string,
-	name: string,
-	isDefault?: boolean,
-	prefixText?: string,
-	valueText?: string,
-	suffixText?: string,
 };
 
 type AttachAhaMoment = {
@@ -53,7 +43,6 @@ type Props = {
 	dashboardId: number,
 	emptyCoverIconPath: string,
 	defaultValues: DefaultValues,
-	periodList: PeriodItem[],
 	paramList: Object,
 	requiredParamList: Object,
 	groupIds: number[],
@@ -61,6 +50,7 @@ type Props = {
 	isAllowedClearGroups: boolean,
 	isEditMode: boolean,
 	attachAhaMoment: ?AttachAhaMoment,
+	shareSetting: ?ShareSettingState,
 };
 
 export class SupersetDashboardEditManager
@@ -78,7 +68,6 @@ export class SupersetDashboardEditManager
 	#descriptionField: DescriptionField;
 	#groupsField: GroupsField;
 	#parametersField: ParametersField;
-	#periodField: PeriodField;
 	#coverField: CoverField;
 	#galleryField: GalleryField;
 
@@ -92,10 +81,6 @@ export class SupersetDashboardEditManager
 		this.#descriptionField = new DescriptionField(this.#props?.defaultValues?.description ?? '');
 		this.#groupsField = new GroupsField(this.#props?.defaultValues ?? {});
 		this.#parametersField = new ParametersField(this.#props?.defaultValues ?? {});
-		this.#periodField = new PeriodField({
-			periodList: this.#props?.periodList ?? [],
-			defaultValues: this.#props?.defaultValues ?? {},
-		});
 		this.#coverField = new CoverField(
 			{
 				...(this.#props?.defaultValues ?? {}),
@@ -128,7 +113,6 @@ export class SupersetDashboardEditManager
 		Dom.append(mainSection, this.#node);
 
 		this.#titleField.bind(this.#node);
-		this.#periodField.bind(this.#node);
 		this.#coverField.bind(this.#node);
 
 		this.#paramsSelector = new DashboardParametersSelector({
@@ -152,6 +136,12 @@ export class SupersetDashboardEditManager
 
 		Dom.append(this.#getGallerySection(), this.#node);
 		this.#galleryField.bind(this.#node);
+
+		if (this.#props.isEditMode && this.#props.shareSetting)
+		{
+			const shareSettingField = new ShareSettingField(this.#props.dashboardId, this.#props.shareSetting);
+			Dom.append(shareSettingField.render(), this.#node);
+		}
 	}
 
 	#getTopBlock(): HTMLElement
@@ -479,9 +469,6 @@ export class SupersetDashboardEditManager
 					</div>
 					<div class="ui-entity-editor-content-block" data-role="dashboard-main-parameters"></div>
 					<div class="ui-entity-editor-content-block">
-						${this.#periodField.render()}
-					</div>
-					<div class="ui-entity-editor-content-block">
 						${this.#coverField.render()}
 					</div>
 				</div>
@@ -566,7 +553,6 @@ export class SupersetDashboardEditManager
 		const currentTitle = this.#titleField.getValue();
 		const currentDescription = this.#descriptionField.getValue();
 		const currentGroups = this.#groupsField.getValue(selectorData);
-		const currentPeriod = this.#periodField.getValue();
 		const currentGalleryIds = this.#galleryField.getValue();
 
 		const saveData = {
@@ -580,7 +566,6 @@ export class SupersetDashboardEditManager
 				ids: currentGalleryIds,
 				tempFileIds: this.#galleryField.getTempFileIds(),
 			},
-			period: currentPeriod,
 			groups: currentGroups,
 			...this.#parametersField.getValue(selectorData),
 		};
@@ -630,7 +615,6 @@ export class SupersetDashboardEditManager
 						currentTitle,
 						currentDescription,
 						currentGroups,
-						currentPeriod,
 						currentGalleryIds,
 					);
 				}
@@ -645,17 +629,8 @@ export class SupersetDashboardEditManager
 				BX.SidePanel.Instance.getTopSlider().close();
 			})
 			.catch((response) => {
-				const message = Type.isStringFilled(response?.errors?.[0]?.message)
-					? response.errors[0].message
-					: (
-						Type.isStringFilled(response?.message)
-							? response.message
-							: Loc.getMessage('DASHBOARD_EDIT_SAVE_RESPONSE_ERROR')
-					)
-				;
-
 				BX.UI.Notification.Center.notify({
-					content: Text.encode(message),
+					content: resolveErrorHtml(response, Loc.getMessage('DASHBOARD_EDIT_SAVE_ERROR')),
 				});
 				this.#saveButton?.setWaiting(false);
 			})
@@ -666,7 +641,6 @@ export class SupersetDashboardEditManager
 		currentTitle: string,
 		currentDescription: string,
 		currentGroups: number[],
-		currentPeriod: Object,
 		currentGalleryIds: number[],
 	): void
 	{
@@ -689,21 +663,6 @@ export class SupersetDashboardEditManager
 		if (newGroups !== defaultGroups)
 		{
 			ApacheSupersetAnalytics.sendAnalytics('edit', 'change_group', {
-				...analyticsBase,
-				status: 'success',
-			});
-		}
-
-		const defaultPeriod = defaults.filterPeriod ?? 'default';
-		const defaultDateStart = defaults.dateFilterStart ?? '';
-		const defaultDateEnd = defaults.dateFilterEnd ?? '';
-		if (
-			(currentPeriod.filterPeriod ?? 'default') !== defaultPeriod
-			|| (currentPeriod.dateFilterStart ?? '') !== defaultDateStart
-			|| (currentPeriod.dateFilterEnd ?? '') !== defaultDateEnd
-		)
-		{
-			ApacheSupersetAnalytics.sendAnalytics('edit', 'change_period', {
 				...analyticsBase,
 				status: 'success',
 			});

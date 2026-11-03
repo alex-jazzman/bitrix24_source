@@ -1,0 +1,21 @@
+.sign-b2e-process-pill {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* the ring of the design system belongs to the item of the panel, and the stop of the keyboard is the link
+   around it */
+.sign-b2e-process-pill:focus-visible {
+	border-radius: var(--ui-border-radius-sm);
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.sign-b2e-process-pill__mark {
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	margin-left: var(--ui-space-inline-2xs);
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-accent-main-primary);
+}

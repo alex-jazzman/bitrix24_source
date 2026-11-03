@@ -138,6 +138,12 @@ jn.define('crm/salescenter/products-step', (require, exports, module) => {
 					showFloatingButton: editable,
 					isNeedRenderFloatingButton: editable,
 					layout: this.layoutWidget || this.props.layoutWidget,
+					getVoiceContext: () => ({
+						module: 'crm',
+						screen: 'crm.salescenter.products',
+						widgetCode: this.widgetCode,
+						productCount: this.products.length,
+					}),
 					uid: this.uid,
 					editable,
 					menuAnalyticsPrefix: analytics.menuPrefix || '',

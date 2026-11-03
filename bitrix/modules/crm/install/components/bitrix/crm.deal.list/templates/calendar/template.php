@@ -213,10 +213,12 @@ foreach($arResult['DEAL'] as $sKey => $arDeal)
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
 					'ENTITY_ID' => $arDeal['~ID'],
+					'ENTITY_TITLE' => $arDeal['~TITLE'] ?? '',
 					'CURRENT_ID' => $arDeal['~STAGE_ID'] ?? null,
 					'CATEGORY_ID' => $arDeal['~CATEGORY_ID'] ?? null,
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.list/list.ajax.php',
-					'READ_ONLY' => !(isset($arDeal['EDIT']) && $arDeal['EDIT'] === true)
+					'READ_ONLY' => !(isset($arDeal['EDIT']) && $arDeal['EDIT'] === true),
+					'LAZY_LOAD_FINAL_TRANSITION' => true,
 				)
 			),
 			'PREVIOUS_STAGE_ID' => $arDeal['DEAL_PREVIOUS_STAGE_NAME'],

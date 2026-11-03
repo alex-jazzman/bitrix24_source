@@ -2,6 +2,7 @@ import { getModeByValue, modeItems } from '../../enum/mode';
 import { resolveEntityTypeName, showPopupMenu } from '../../helper';
 import { popupMenuMixin } from '../common/destroy-popup-menu';
 import { FieldTitle } from '../common/field-title';
+import { selectorA11yMixin } from '../common/selector-a11y';
 
 // @vue/component
 export const ModeSelector = {
@@ -9,7 +10,7 @@ export const ModeSelector = {
 		FieldTitle,
 	},
 
-	mixins: [popupMenuMixin('crm-recurring-mode-selector')],
+	mixins: [popupMenuMixin('crm-recurring-mode-selector'), selectorA11yMixin],
 
 	props: {
 		entityTypeId: {
@@ -37,7 +38,7 @@ export const ModeSelector = {
 	},
 
 	methods: {
-		showModeSelector(): void
+		showModeSelector(event: ?Event = null): void
 		{
 			const menu = [];
 
@@ -49,7 +50,8 @@ export const ModeSelector = {
 				});
 			});
 
-			showPopupMenu(this.popupMenuId, this.$refs.modeSelector, menu);
+			this.markSelectorOpened('mode');
+			showPopupMenu(this.popupMenuId, this.$refs.modeSelector, menu, () => this.markSelectorClosed('mode'), event);
 		},
 		onChangeMode(_, item): void
 		{
@@ -62,14 +64,24 @@ export const ModeSelector = {
 	// language=Vue
 	template: `
 		<div>
-			<FieldTitle :title="modeTitle" />
+			<FieldTitle :title="modeTitle" :label-id="a11yId('mode-title')" />
 		
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('mode')"
+					:aria-labelledby="selectorLabelledBy('mode')"
+					@click="showModeSelector"
+					@keydown.enter.prevent="showModeSelector"
+					@keydown.space.prevent="showModeSelector"
+				>
 					<div
 						ref="modeSelector"
+						:id="a11yId('mode-value')"
 						class="ui-ctl-element"
-						@click="showModeSelector"
 					>
 						{{currentModeTitle}}
 					</div>

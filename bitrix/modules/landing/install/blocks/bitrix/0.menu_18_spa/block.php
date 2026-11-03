@@ -36,7 +36,7 @@
 								procedures</a>
 						</li>
 						<li class="landing-block-node-menu-list-item nav-item g-mx-12--lg g-mb-7 g-mb-0--lg">
-							<a href="#advices" class="landing-block-node-menu-list-item-link nav-link p-0">Advices</a>
+							<a href="#advices" class="landing-block-node-menu-list-item-link nav-link p-0">Tips</a>
 						</li>
 						<li class="landing-block-node-menu-list-item nav-item g-mx-12--lg g-mb-7 g-mb-0--lg">
 							<a href="#subscribe"

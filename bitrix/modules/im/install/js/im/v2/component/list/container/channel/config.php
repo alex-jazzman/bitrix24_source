@@ -17,6 +17,7 @@ return [
 		'im.v2.lib.create-chat',
 		'im.v2.lib.logger',
 		'im.v2.lib.promo',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

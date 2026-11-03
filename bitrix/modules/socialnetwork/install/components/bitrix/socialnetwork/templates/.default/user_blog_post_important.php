@@ -7,7 +7,7 @@
 /** @global CMain $APPLICATION */
 
 $arParams["BLOG_POSTS_FILTER"] = array("=UF_BLOG_POST_IMPRTNT" => 1);
-$arParams["BLOG_POSTS_PAGE_SETTINGS"] = array("bDescPageNumbering" => true, "nPageSize" => 5);
+$arParams["BLOG_POSTS_PAGE_SETTINGS"] = array("bDescPageNumbering" => false, "nPageSize" => 5);
 $arParams["BLOG_POSTS_TEMPLATE"] = "widget";
 
 $APPLICATION->IncludeComponent(

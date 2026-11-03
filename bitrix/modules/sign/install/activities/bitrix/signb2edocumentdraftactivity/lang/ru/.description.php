@@ -1,0 +1,8 @@
+<?php
+
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_CREATION_STATUS'] = 'Статус создания';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_DESCRIPTION'] = 'Создаёт из файла черновик документа для подписания с сотрудником';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_DOCUMENT_ID'] = 'ID документа';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_DOCUMENT_STATUS'] = 'Статус документа';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_SMART_DOCUMENT_ID'] = 'ID элемента смарт-процесса';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_TITLE'] = 'Создать черновик документа с сотрудником';

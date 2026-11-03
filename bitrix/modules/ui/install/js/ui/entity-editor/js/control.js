@@ -310,6 +310,14 @@ if(typeof BX.UI.EntityEditorControl === "undefined")
 		},
 		focus: function()
 		{
+			this._notifyVisualScrollAnchorNavigationRequested();
+		},
+		_notifyVisualScrollAnchorNavigationRequested: function()
+		{
+			if (this._editor)
+			{
+				this._editor._onVisualScrollAnchorNavigationRequested(this);
+			}
 		},
 		save: function()
 		{
@@ -338,6 +346,10 @@ if(typeof BX.UI.EntityEditorControl === "undefined")
 				return;
 			}
 
+			if (this._editor)
+			{
+				this._editor._onVisualScrollAnchorControlModeChange(this, mode);
+			}
 			this.onBeforeModeChange();
 
 			this._mode = mode;
@@ -919,6 +931,7 @@ if(typeof BX.UI.EntityEditorControl === "undefined")
 		onContextMenuShow: function()
 		{
 			this._isContextMenuOpened = true;
+			this.setContextMenuButtonExpanded(true);
 		},
 		onContextMenuClose: function()
 		{
@@ -927,16 +940,82 @@ if(typeof BX.UI.EntityEditorControl === "undefined")
 		onPopupDestroy: function()
 		{
 			this._isContextMenuOpened = false;
+			this.setContextMenuButtonExpanded(false);
+		},
+		setContextMenuButtonExpanded: function(isExpanded)
+		{
+			if(this._contextMenuButton)
+			{
+				this._contextMenuButton.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+			}
+		},
+		activateOnKey: function(e, handler)
+		{
+			return BX.UI.EntityEditorControl.activateOnKey(e, handler, this);
+		},
+		showMenuKeepingScroll: function(id, bindElement, menuItems, params)
+		{
+			BX.UI.EntityEditorControl.showMenuKeepingScroll(id, bindElement, menuItems, params);
+		},
+		focusContextMenuButton: function()
+		{
+			// Always through the control, never through a node kept from before: a refreshLayout()
+			// builds a new button and a saved reference would point at a node out of the document.
+			if(this._contextMenuButton)
+			{
+				this._contextMenuButton.focus();
+			}
 		},
 		createContextMenuButton: function()
 		{
+			// The gear was a bare div with a click handler: no tab stop, no role, no name, and
+			// there is one on every block of the card - 2.1.1 Keyboard and 4.1.2 Name, Role, Value.
+			// It opens a popup menu, hence aria-haspopup with aria-expanded kept in step below.
 			this._contextMenuButton = BX.create("div",
 			{
 				props: { className: "ui-entity-editor-block-context-menu" },
-				events: { click: BX.delegate(this.onContextButtonClick, this) }
+				attrs:
+					{
+						role: "button",
+						tabindex: "0",
+						"aria-haspopup": "menu",
+						"aria-expanded": "false"
+					},
+				events:
+					{
+						click: BX.delegate(this.onContextButtonClick, this),
+						keydown: BX.delegate(this.onContextButtonKeyDown, this)
+					}
 			});
 
+			// An icon with no text of its own, and there is one per block, so the name carries the
+			// block title - otherwise a screen reader reads the same "settings" eighteen times over.
+			// Substitution goes through Loc, not String.replace(): the latter reads "$&", "$`" and
+			// "$'" in a title as backreferences.
+			var title = this.getTitle();
+			if(BX.type.isNotEmptyString(title))
+			{
+				this._contextMenuButton.setAttribute(
+					"aria-label",
+					BX.Loc.getMessage("UI_ENTITY_EDITOR_CONTEXT_MENU_ARIA_LABEL", { "#TITLE#": title })
+				);
+			}
+
 			return this._contextMenuButton;
+		},
+		insertContextMenuButton: function(wrapper)
+		{
+			// The gear is position: absolute at the top of the block but used to be appended last,
+			// so in a tall block the focus order ran to the bottom and jumped back up (2.4.3).
+			// Layout is untouched: the button is out of flow and no selector depends on this order.
+			var button = this.createContextMenuButton();
+			wrapper.insertBefore(button, wrapper.firstChild);
+
+			return button;
+		},
+		onContextButtonKeyDown: function(e)
+		{
+			this.activateOnKey(e, this.onContextButtonClick);
 		},
 		onContextButtonClick: function(e)
 		{
@@ -967,7 +1046,7 @@ if(typeof BX.UI.EntityEditorControl === "undefined")
 						menu[i]["onclick"] = handler;
 					}
 				}
-				BX.PopupMenu.show(
+				this.showMenuKeepingScroll(
 					this._id,
 					this._contextMenuButton,
 					menu,
@@ -1038,6 +1117,85 @@ if(typeof BX.UI.EntityEditorControl === "undefined")
 		getHideButtonHint: function(enabled)
 		{
 			return "";
+		}
+	};
+
+	// A div or span with role="button" gets no click of its own from Enter or Space, unlike a
+	// real button, so the key has to raise the activation itself.
+	BX.UI.EntityEditorControl.isActivationKey = function(e)
+	{
+		return e.key === "Enter" || e.key === " " || e.key === "Spacebar";
+	};
+
+	// The depth is static rather than per control because the menu that reads it can belong to a
+	// different object than the one whose key was pressed. It is safe because activation and the
+	// menu it opens run in one synchronous call: PopupMenu.show() returns before the flag drops.
+	BX.UI.EntityEditorControl.keyboardActivationDepth = 0;
+
+	BX.UI.EntityEditorControl.activateOnKey = function(e, handler, context)
+	{
+		if(!BX.UI.EntityEditorControl.isActivationKey(e))
+		{
+			return false;
+		}
+
+		// Space would otherwise scroll the card out from under the control.
+		e.preventDefault();
+
+		BX.UI.EntityEditorControl.keyboardActivationDepth++;
+		try
+		{
+			if(handler)
+			{
+				handler.call(context, e);
+			}
+			else
+			{
+				// Raising a click instead of calling the handler keeps one path for both devices
+				// where the handler reads event.target: a click raised on the container binds the
+				// menu to the control rather than to whichever inner node the mouse would hit.
+				e.currentTarget.click();
+			}
+		}
+		finally
+		{
+			BX.UI.EntityEditorControl.keyboardActivationDepth--;
+		}
+
+		return true;
+	};
+
+	BX.UI.EntityEditorControl.isKeyboardActivation = function()
+	{
+		return BX.UI.EntityEditorControl.keyboardActivationDepth > 0;
+	};
+
+	BX.UI.EntityEditorControl.showMenuKeepingScroll = function(id, bindElement, menuItems, params)
+	{
+		// Opening a menu from the keyboard threw the card to the top: MenuNavigation focuses the
+		// first item on the menu's own onShow, before the popup is positioned, and MenuItem.focus()
+		// passes preventScroll: false. The jump is synchronous inside show() and the popup is
+		// positioned in document coordinates, so restoring the scroll right after show() leaves the
+		// menu where it belongs. The cause is in main.popup and out of this ticket's reach.
+		//
+		// The trap is forced only for keyboard activation. MenuNavigation reaches the DOM only
+		// while Menu.getFocusTrap() is not null, and the portal-wide ui.a11y switch is off for
+		// client portals - but passing an object bypasses Popup.shouldUseFocusTrapByDefault()
+		// whole, including its exception for text inputs, so the mouse path is left alone.
+		var options = BX.Type.isPlainObject(params) ? Object.assign({}, params) : {};
+		if(BX.UI.EntityEditorControl.isKeyboardActivation())
+		{
+			options.focusTrap = { initialFocus: "container" };
+		}
+
+		var scroller = document.scrollingElement;
+		var scrollTop = scroller ? scroller.scrollTop : 0;
+
+		BX.PopupMenu.show(id, bindElement, menuItems, options);
+
+		if(scroller)
+		{
+			scroller.scrollTop = scrollTop;
 		}
 	};
 
@@ -1329,6 +1487,11 @@ if(typeof BX.UI.EntityEditorField === "undefined")
 			{ attrs: { className: "ui-entity-editor-block-title-text" }, text: title }
 		);
 
+		// Here rather than in layout(): setTitle() rebuilds the title on its own through
+		// refreshTitleLayout(), and a field whose aria-labelledby points at the title would
+		// otherwise be left referencing a node that no longer exists.
+		titleNode.setAttribute("id", this._id.toLowerCase() + "_title");
+
 		if (this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			BX.addClass(this._titleWrapper, "ui-entity-widget-content-block-title-edit");
@@ -1519,7 +1682,16 @@ if(typeof BX.UI.EntityEditorField === "undefined")
 		this.initializeSwitchingAbilities();
 		if(this.isInEditMode() && this.checkModeOption(BX.UI.EntityEditorModeOptions.individual))
 		{
-			window.setTimeout(BX.delegate(this.focus, this), 0);
+			window.setTimeout(() => {
+				if (this._editor)
+				{
+					this._editor._runWithVisualScrollAnchorNavigationPreserved(() => this.focus());
+				}
+				else
+				{
+					this.focus();
+				}
+			}, 0);
 		}
 		BX.UI.EntityEditorField.superclass.registerLayout.apply(this, arguments);
 
@@ -1831,6 +2003,7 @@ if(typeof BX.UI.EntityEditorField === "undefined")
 	};
 	BX.UI.EntityEditorField.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if (!this.isContentWrapperOnScreen())
 		{
 			this.scrollAnimate();
@@ -1838,6 +2011,7 @@ if(typeof BX.UI.EntityEditorField === "undefined")
 	};
 	BX.UI.EntityEditorField.prototype.scrollAnimate = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		var doc = BX.GetDocElement(document);
 		var anchor = this._wrapper;
 		window.setTimeout(
@@ -1991,6 +2165,28 @@ if(typeof BX.UI.EntityEditorField === "undefined")
 		if(command === "showAlways")
 		{
 			var target = BX.getEventTarget(e);
+
+			// A mouse click inside the <label> reaches this handler twice - once for the node under
+			// the cursor, once for the checkbox the label forwards to - and the INPUT branch below
+			// rides on that second event. The keyboard produces only the first: MenuNavigation
+			// activates an item with container.click(), which never crosses the label. A click that
+			// did not start inside the label is therefore forwarded to the checkbox by hand, so one
+			// activation stays one toggle for both devices.
+			if(BX.type.isElementNode(target) && target.tagName !== "INPUT"
+				&& !target.closest(".ui-entity-card-context-menu-item-hide-empty-wrap"))
+			{
+				var menuItem = target.closest(".menu-popup-item");
+				var checkbox = menuItem
+					? menuItem.querySelector(".ui-entity-card-context-menu-item-hide-empty-input")
+					: null;
+				if(checkbox)
+				{
+					checkbox.click();
+				}
+
+				return;
+			}
+
 			if(target && target.tagName === "INPUT")
 			{
 				this.toggleOptionFlag(BX.UI.EntityEditorControlOptions.showAlways);
@@ -3052,6 +3248,8 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 
 		this._titleEditButton = null;
 		this._titleEditHandler = BX.delegate(this.onTitleEditButtonClick, this);
+		this._titleEditKeyHandler = BX.delegate(this.onTitleEditButtonKeyDown, this);
+		this._titleEditKeyUpHandler = BX.delegate(this.onTitleEditButtonKeyUp, this);
 		this._headerContainer = null;
 		this._titleContainer = null;
 		this._titleView = null;
@@ -3073,6 +3271,7 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 
 		this._deleteButton = null;
 		this._deleteButtonHandler = BX.delegate(this.onDeleteSectionBtnClick, this);
+		this._shellControlKeyHandler = BX.delegate(this.onShellControlKeyDown, this);
 
 		this._draggableContextId = "";
 		this._dragContainerController = null;
@@ -3088,6 +3287,37 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 		this.eventsNamespace = 'BX.UI.EntityEditorSection';
 	};
 	BX.extend(BX.UI.EntityEditorSection, BX.UI.EntityEditorControl);
+	/*
+		The shell controls of a section - "Change", "Select field", "Create field", "Remove section" -
+		are spans carrying a click handler, so they are outside the tab order and cannot be activated
+		from the keyboard at all (WCAG 2.1.1 Keyboard, 4.1.2 Name, Role, Value). Rewriting them as
+		real buttons would change the look everywhere they are used, so instead they get the button
+		role, a tab stop and Enter/Space activation, which is what a button does natively.
+	*/
+	BX.UI.EntityEditorSection.prototype.makeShellControlAccessible = function(node)
+	{
+		if (!BX.type.isElementNode(node))
+		{
+			return node;
+		}
+
+		node.setAttribute("role", "button");
+		node.setAttribute("tabindex", "0");
+		BX.bind(node, "keydown", this._shellControlKeyHandler);
+
+		return node;
+	};
+	BX.UI.EntityEditorSection.prototype.onShellControlKeyDown = function(event)
+	{
+		if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar")
+		{
+			return;
+		}
+
+		// Space would scroll the card and Enter would submit a wrapping form.
+		event.preventDefault();
+		event.currentTarget.click();
+	};
 	BX.UI.EntityEditorSection.prototype.doSetActive = function()
 	{
 		for(var i = 0, l = this._fields.length; i < l; i++)
@@ -3169,6 +3399,8 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 				text: BX.message(isViewMode ? "UI_ENTITY_EDITOR_CHANGE" : "UI_ENTITY_EDITOR_CANCEL")
 			}
 		);
+		this.makeShellControlAccessible(this._toggleButton);
+
 		if(!this._enableToggling)
 		{
 			this._toggleButton.style.display = "none";
@@ -3216,11 +3448,21 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 				this._headerContainer.appendChild(this.createDragButton());
 			}
 
+			// The pencil that opens the section title for renaming was a bare span with a click
+			// handler: no tab stop, no role, no name, so the title could not be renamed from the
+			// keyboard at all - 2.1.1 Keyboard. setTitleMode() hides it while the title is being
+			// edited, so this adds one tab stop, not two.
 			this._titleEditButton = BX.create("span",
 			{
 				props: { className: "ui-entity-editor-header-title-edit-icon" },
-				events: { click: this._titleEditHandler }
+				attrs: { role: "button", tabindex: "0" },
+				events: {
+					click: this._titleEditHandler,
+					keydown: this._titleEditKeyHandler,
+					keyup: this._titleEditKeyUpHandler
+				}
 			});
+			this.setTitleEditButtonLabel(title);
 
 			if(!this._editor.isSectionEditEnabled() || !this._editor.canChangeScheme())
 			{
@@ -3563,6 +3805,7 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 						],
 						events: {click: BX.delegate(this.onAddChildBtnClick, this)}
 					});
+				this.makeShellControlAccessible(this._addChildButton);
 				this.addButtonElement(this._addChildButton, {position: "left"});
 			}
 
@@ -3574,6 +3817,7 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 						text: BX.message("UI_ENTITY_EDITOR_CREATE_FIELD"),
 						events: {click: BX.delegate(this.onCreateFieldBtnClick, this)}
 					});
+				this.makeShellControlAccessible(this._createChildButton);
 				this.addButtonElement(this._createChildButton, {position: "left"});
 			}
 		}
@@ -3590,6 +3834,10 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 				props: {className: deleteClassName},
 				text: BX.message("UI_ENTITY_EDITOR_DELETE_SECTION")
 			});
+			// The variant that looks disabled is clickable too: it explains why the section
+			// cannot be removed - see onDeleteSectionBtnClick().
+			this.makeShellControlAccessible(this._deleteButton);
+
 			this.addButtonElement(this._deleteButton, {position: "right"});
 			BX.bind(this._deleteButton, "click", this._deleteButtonHandler);
 		}
@@ -3629,12 +3877,30 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 
 		if(this._titleMode === BX.UI.EntityEditorMode.view)
 		{
+			// Asked while the field is still shown, because that is the only moment the question
+			// ("was the visitor inside the field we are about to hide?") has a defined answer.
+			// Chrome moves the focus off a display: none element at the next rendering update
+			// rather than on the spot, so reading this after the line below happens to work
+			// there - but nothing specifies that order, and other engines need not follow it.
+			var wasFocusInsideTitleInput = document.activeElement === this._titleInput
+				|| this._titleInput.contains(document.activeElement);
+
 			this._titleView.style.display = "";
 			this._titleInput.style.display = "none";
 			this._titleEditButton.style.display = "";
 
 			var title = this._titleInput.value;
 			this._titleView.innerHTML = BX.util.htmlspecialchars(title);
+			this.setTitleEditButtonLabel(title);
+
+			// Without this the focus would drop to <body> once the field goes display: none, and
+			// a keyboard visitor would lose their place on the card. It goes back to the control
+			// that opened the editing. Closing by a click outside leaves this alone: the focus is
+			// already on whatever was clicked, so the flag above is false.
+			if(wasFocusInsideTitleInput)
+			{
+				this._titleEditButton.focus();
+			}
 
 			this._schemeElement.setTitle(title);
 			this.markSchemeAsChanged();
@@ -3667,6 +3933,38 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 				? BX.UI.EntityEditorMode.edit
 				: BX.UI.EntityEditorMode.view
 		);
+	};
+	BX.UI.EntityEditorSection.prototype.setTitleEditButtonLabel = function(title)
+	{
+		// An icon with no text of its own, and there is one per section, so the name carries the
+		// section title - otherwise a screen reader reads the same "rename" three times over.
+		// Substitution goes through Loc, not String.replace(): the latter reads "$&", "$`" and
+		// "$'" in a section title as backreferences.
+		if(this._titleEditButton)
+		{
+			this._titleEditButton.setAttribute(
+				"aria-label",
+				BX.Loc.getMessage("UI_ENTITY_EDITOR_SECTION_TITLE_EDIT_ARIA_LABEL", { "#TITLE#": title })
+			);
+		}
+	};
+	BX.UI.EntityEditorSection.prototype.onTitleEditButtonKeyDown = function(e)
+	{
+		// Only the default is suppressed here - the activation waits for keyup, see
+		// onTitleEditButtonKeyUp.
+		if(BX.UI.EntityEditorControl.isActivationKey(e))
+		{
+			e.preventDefault();
+		}
+	};
+	BX.UI.EntityEditorSection.prototype.onTitleEditButtonKeyUp = function(e)
+	{
+		// Activation deliberately sits on keyup. setTitleMode(edit) binds _titleInput to keyup and
+		// moves the focus into it synchronously, so opening on keydown would let the release of
+		// that very same keypress land on the input, reach onTitleInputKeyPress and toggle the
+		// title straight back to view - one Enter would open and close the rename, writing the old
+		// value back through saveScheme().
+		this.activateOnKey(e, this.onTitleEditButtonClick);
 	};
 	BX.UI.EntityEditorSection.prototype.onTitleEditButtonClick = function(e)
 	{
@@ -4424,12 +4722,26 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 		if(this._fieldConfigurator)
 		{
 			var field = this._fieldConfigurator.getField();
+
+			// Removing the node that holds focus drops focus to <body> in the same task - measured.
+			// The configurator is opened from the field's gear, and its "Save" and "Cancel" are tab
+			// stops now, so someone who finished here with the keyboard would otherwise have to tab
+			// from the top of the card again. Focus goes back where the flow started. Only when it
+			// is actually inside the configurator - a mouse user is left where they are.
+			var wrapper = this._fieldConfigurator.getWrapper();
+			var isFocusInside = !!(field && wrapper && wrapper.contains(document.activeElement));
+
 			if(field)
 			{
 				field.setVisible(true);
 			}
 			this.removeChild(this._fieldConfigurator);
 			this._fieldConfigurator = null;
+
+			if(isFocusInside)
+			{
+				field.focusContextMenuButton();
+			}
 		}
 	};
 	BX.UI.EntityEditorSection.prototype.onFieldConfigurationSave = function(sender, params)
@@ -4559,6 +4871,14 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 								field.getSchemeElement().setDataParam("items", items);
 								field.setItems();
 								field.refreshLayout();
+
+								// refreshLayout() builds a new gear, so the one focus was handed back
+								// to when the configurator closed is out of the document by now and
+								// focus has fallen to <body>. Take it back if nothing else claimed it.
+								if(document.activeElement === document.body)
+								{
+									field.focusContextMenuButton();
+								}
 							}
 						}
 						else
@@ -4785,6 +5105,12 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 
 			var updateField = function()
 			{
+				BX.onCustomEvent(
+					this._editor,
+					this._editor.eventsNamespace + ":onBeforeUserFieldUpdate",
+					[ this, params ]
+				);
+
 				this._editor.getUserFieldManager().updateField(
 					fieldData,
 					field.getMode()
@@ -5025,8 +5351,9 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 				}
 			}
 
+			var visibilityConfig = null;
 			if (this._visibilityConfigurator) {
-				var visibilityConfig = {
+				visibilityConfig = {
 					'accessCodes': this._visibilityConfigurator.formatAccessCodesFromConfig(
 						this._visibilityConfigurator.getItems()
 					)
@@ -5035,10 +5362,13 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 					element.getName(),
 					this._editor.getEntityTypeId()
 				);
-				field.setVisibilityConfiguration(visibilityConfig);
 			}
 
 			manager.updateSchemeElement(element, info);
+			if (visibilityConfig)
+			{
+				field.setVisibilityConfiguration(visibilityConfig);
+			}
 			var options = {};
 			var html = BX.prop.getString(data, "HTML", "");
 			if(html !== "")
@@ -5619,6 +5949,7 @@ if(typeof BX.UI.EntityEditorText === "undefined")
 	};
 	BX.UI.EntityEditorText.prototype.focus = function(isSelectedFocus)
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(!this._input)
 		{
 			return;
@@ -5728,7 +6059,7 @@ if(typeof BX.UI.EntityEditorText === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -6116,7 +6447,7 @@ if(typeof BX.UI.EntityEditorMultiText === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -6609,7 +6940,7 @@ if(typeof BX.UI.EntityEditorMultiMoney === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -6648,7 +6979,7 @@ if(typeof BX.UI.EntityEditorMultiMoney === "undefined")
 			key++
 		}
 
-		BX.PopupMenu.show(
+		this.showMenuKeepingScroll(
 			this._id,
 			this._selectContainer[index],
 			menu,
@@ -6723,20 +7054,10 @@ if(typeof BX.UI.EntityEditorMultiMoney === "undefined")
 			return;
 		}
 
-		var currencyFormat = BX.prop.getObject(
-			BX.Currency.Editor.currencyList,
-			this._selectedCurrencyValue[index],
-			null
-		);
-		if (currencyFormat)
-		{
-			value = BX.Currency.Editor.getFormattedValue(
-				value,
-				this._selectedCurrencyValue[index]
-			);
-			value = value.replaceAll(currencyFormat['SEPARATOR'], '');
-		}
-		this._amountValue[index].value = value;
+		var currency = this._selectedCurrencyValue[index];
+		var currencyFormat = BX.Currency.Editor.getCurrencyFormat(currency);
+		var formattedValue = BX.Currency.Editor.getFormattedValue(value, currency);
+		this._amountValue[index].value = formattedValue.replaceAll(currencyFormat['SEPARATOR'], '');
 	};
 	BX.UI.EntityEditorMultiMoney.prototype.getViewInnerLayout = function()
 	{
@@ -7100,6 +7421,7 @@ if(typeof BX.UI.EntityEditorTextarea === "undefined")
 	};
 	BX.UI.EntityEditorTextarea.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(!this._input)
 		{
 			return;
@@ -7212,7 +7534,7 @@ if(typeof BX.UI.EntityEditorTextarea === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -7354,6 +7676,7 @@ if(typeof BX.UI.EntityEditorNumber === "undefined")
 	};
 	BX.UI.EntityEditorNumber.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(!this._input)
 		{
 			return;
@@ -7458,7 +7781,7 @@ if(typeof BX.UI.EntityEditorNumber === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -7558,6 +7881,7 @@ if(typeof BX.UI.EntityEditorDatetime === "undefined")
 	};
 	BX.UI.EntityEditorDatetime.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(this._input)
 		{
 			BX.focus(this._input);
@@ -7670,7 +7994,7 @@ if(typeof BX.UI.EntityEditorDatetime === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -7937,7 +8261,7 @@ if(typeof BX.UI.EntityEditorBoolean === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -8022,6 +8346,7 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 		this._selectContainer = null;
 		this._selectedValue = "";
 		this._selectorClickHandler = BX.delegate(this.onSelectorClick, this);
+		this._selectorKeyDownHandler = BX.delegate(this.onSelectorKeyDown, this);
 		this._innerWrapper = null;
 		this._isOpened = false;
 	};
@@ -8106,7 +8431,6 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 			}
 
 			this._select = BX.create("div", containerProps);
-			BX.bind(this._select, "click", this._selectorClickHandler);
 
 			this._selectIcon = BX.create("div",
 				{
@@ -8123,6 +8447,46 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 					]
 				}
 			);
+
+			// The list opens a popup menu on click but was built out of plain divs: no tab stop,
+			// no role, no focusable child, so it could not be reached or opened from the keyboard
+			// (2.1.1). Declared a button like the currency selector below; unlike that one it has
+			// no locked state, so there is nothing to branch on. role="button" also makes the
+			// children presentational: safe here because the isHtml option only ever carries
+			// formatting - a decorative span in highloadblock's directory field and in
+			// biconnector's period filter, nothing interactive.
+			this._selectContainer.setAttribute("role", "button");
+			this._selectContainer.setAttribute("tabindex", "0");
+			this._selectContainer.setAttribute("aria-haspopup", "menu");
+			this._selectContainer.setAttribute("aria-expanded", "false");
+			this._selectContainer.setAttribute("data-testid", "ui-entity-editor-list-btn");
+
+			// The chosen item is rendered inside the button, so a plain aria-label would suppress
+			// it, and the title above is a <label> with no "for" and cannot point at a div. The
+			// name is therefore assembled by aria-labelledby out of the two nodes that already
+			// carry translated text - the field title and the current value - rather than out of
+			// a phrase: "#TITLE#: #VALUE#" reaches the translator with no word to translate
+			// (rule 2 of the localization checklist). It also keeps itself in step, so nothing
+			// has to reset the name when the value changes.
+			var titleNode = this._titleWrapper
+				? this._titleWrapper.querySelector(".ui-entity-editor-block-title-text")
+				: null;
+			if(titleNode && this._select)
+			{
+				var listTitleId = this._id.toLowerCase() + "_title";
+				var listValueId = this._id.toLowerCase() + "_value";
+				this._select.setAttribute("id", listValueId);
+				this._selectContainer.setAttribute("aria-labelledby", listTitleId + " " + listValueId);
+			}
+
+			// Both handlers sit on the container, the same way the currency selector below does.
+			// The click used to be bound to this._select: a click dispatched on the node that
+			// carries role="button" - which is how assistive technology activates it - never
+			// reached that inner div, because events travel up and not down. Moving the handler
+			// rather than adding a second one keeps onSelectorClick, which toggles, firing once
+			// per click; it also makes the drop-down arrow clickable, which it never was.
+			BX.bind(this._selectContainer, "click", this._selectorClickHandler);
+			BX.bind(this._selectContainer, "keydown", this._selectorKeyDownHandler);
 
 			this._innerWrapper = BX.create("div",
 				{
@@ -8175,7 +8539,7 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -8285,6 +8649,17 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 			this.closeMenu();
 		}
 	};
+	BX.UI.EntityEditorList.prototype.onSelectorKeyDown = function (e)
+	{
+		this.activateOnKey(e, this.onSelectorClick);
+	};
+	BX.UI.EntityEditorList.prototype.setSelectorExpanded = function(isExpanded)
+	{
+		if(this._selectContainer && this._selectContainer.hasAttribute("aria-expanded"))
+		{
+			this._selectContainer.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+		}
+	};
 	BX.UI.EntityEditorList.prototype.openMenu = function()
 	{
 		if(this._isOpened)
@@ -8329,7 +8704,7 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 
 		const popupMaxHeight = distanceToTop > distanceToBottom ? distanceToTop - 50 : distanceToBottom - 100;
 
-		BX.PopupMenu.show(
+		this.showMenuKeepingScroll(
 			this._id,
 			this._select,
 			menu,
@@ -8356,6 +8731,7 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 	BX.UI.EntityEditorList.prototype.onMenuShow = function()
 	{
 		BX.addClass(this._selectContainer, "ui-ctl-active");
+		this.setSelectorExpanded(true);
 		this._isOpened = true;
 	};
 	BX.UI.EntityEditorList.prototype.onMenuClose = function()
@@ -8363,6 +8739,7 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 		BX.PopupMenu.destroy(this._id);
 
 		BX.removeClass(this._selectContainer, "ui-ctl-active");
+		this.setSelectorExpanded(false);
 		this._isOpened = false;
 	};
 	BX.UI.EntityEditorList.prototype.onItemSelect = function(e, item)
@@ -8660,7 +9037,7 @@ if(typeof BX.UI.EntityEditorMultiList === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -8891,6 +9268,7 @@ if(typeof BX.UI.EntityEditorHtml === "undefined")
 	};
 	BX.UI.EntityEditorHtml.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(this._htmlEditor && this._isEditorInitialized)
 		{
 			this._htmlEditor.Focus(true);
@@ -9053,7 +9431,7 @@ if(typeof BX.UI.EntityEditorHtml === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -9488,6 +9866,7 @@ if (typeof BX.UI.EntityEditorBBCode === 'undefined')
 	}
 	BX.UI.EntityEditorBBCode.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		this._htmlEditor.focus();
 	};
 
@@ -9700,7 +10079,7 @@ if (typeof BX.UI.EntityEditorFile === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -9973,6 +10352,7 @@ if(typeof BX.UI.EntityEditorLink === "undefined")
 	};
 	BX.UI.EntityEditorLink.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(!this._input)
 		{
 			return;
@@ -10125,7 +10505,7 @@ if(typeof BX.UI.EntityEditorLink === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -10380,7 +10760,7 @@ if(typeof BX.UI.EntityEditorCustom === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -10472,6 +10852,7 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 		this._innerWrapper = null;
 		this._selectedCurrencyValue = "";
 		this._selectorClickHandler = BX.delegate(this.onSelectorClick, this);
+		this._selectorKeyDownHandler = BX.delegate(this.onSelectorKeyDown, this);
 		this._isCurrencyMenuOpened = false;
 		this.wrapperClassName = "ui-entity-editor-field-money";
 	};
@@ -10491,11 +10872,20 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 	};
 	BX.UI.EntityEditorMoney.prototype.focus = function()
 	{
+		this._notifyVisualScrollAnchorNavigationRequested();
 		if(this._amountInput && !this.isInputDisabled())
 		{
 			BX.focus(this._amountInput);
 			BX.UI.EditorTextHelper.getCurrent().selectAll(this._amountInput);
 		}
+	};
+	BX.UI.EntityEditorMoney.prototype.getFocusInputID = function()
+	{
+		if(this._mode === BX.UI.EntityEditorMode.edit)
+		{
+			return this._id.toLowerCase() + "_amount";
+		}
+		return "";
 	};
 	BX.UI.EntityEditorMoney.prototype.getValue = function(defaultValue)
 	{
@@ -10590,7 +10980,9 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 						{
 							className: "ui-ctl-element",
 							type: "text",
-							value: formatted
+							value: formatted,
+							id: this.getFocusInputID(),
+							"data-testid": "ui-entity-editor-money-amount"
 						}
 				}
 			);
@@ -10652,7 +11044,17 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 			}
 			else
 			{
+				// The currency selector opens a popup menu on click. Expose it as a button
+				// so that it gets a name, keyboard focus and an expanded state.
+				this._selectContainer.setAttribute("role", "button");
+				this._selectContainer.setAttribute("tabindex", "0");
+				this._selectContainer.setAttribute("aria-haspopup", "menu");
+				this._selectContainer.setAttribute("aria-expanded", "false");
+				this._selectContainer.setAttribute("data-testid", "ui-entity-editor-money-currency-btn");
+				this.setCurrencySelectorLabel();
+
 				BX.bind(this._selectContainer, "click", this._selectorClickHandler);
+				BX.bind(this._selectContainer, "keydown", this._selectorKeyDownHandler);
 			}
 
 			this._inputWrapper = BX.create("div",
@@ -10731,7 +11133,7 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -10806,18 +11208,10 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 			return;
 		}
 
-		var currencyFormat = BX.prop.getObject(
-			BX.Currency.Editor.currencyList,
-			this._selectedCurrencyValue,
-			null
-		);
-
-		if (currencyFormat)
-		{
-			value = BX.Currency.Editor.getUnFormattedValue(value, this._selectedCurrencyValue);
-		}
-
-		this._amountValue.value = value;
+		var currency = this._selectedCurrencyValue;
+		var currencyFormat = BX.Currency.Editor.getCurrencyFormat(currency);
+		var formattedValue = BX.Currency.Editor.getFormattedValue(value, currency);
+		this._amountValue.value = formattedValue.replaceAll(currencyFormat['SEPARATOR'], '');
 	};
 	BX.UI.EntityEditorMoney.prototype.getAmountFieldName = function()
 	{
@@ -10834,6 +11228,39 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 	BX.UI.EntityEditorMoney.prototype.onSelectorClick = function (e)
 	{
 		this.openCurrencyMenu();
+	};
+	BX.UI.EntityEditorMoney.prototype.onSelectorKeyDown = function (e)
+	{
+		this.activateOnKey(e, this.onSelectorClick);
+	};
+	BX.UI.EntityEditorMoney.prototype.setCurrencySelectorLabel = function()
+	{
+		// The selected currency is rendered inside the button, so a plain aria-label
+		// would suppress it. Keep the visible text as a part of the accessible name.
+		if(!this._select
+			|| !this._selectContainer
+			|| this._selectContainer.getAttribute("role") !== "button"
+		)
+		{
+			return;
+		}
+
+		// Substitution goes through Loc, not through String.replace(): the latter
+		// reads "$&", "$`" and "$'" in the currency text as backreferences.
+		this._selectContainer.setAttribute(
+			"aria-label",
+			BX.Loc.getMessage(
+				"UI_ENTITY_EDITOR_MONEY_CURRENCY_ARIA_LABEL",
+				{ "#CURRENCY#": this._select.textContent }
+			)
+		);
+	};
+	BX.UI.EntityEditorMoney.prototype.setCurrencySelectorExpanded = function(isExpanded)
+	{
+		if(this._selectContainer && this._selectContainer.hasAttribute("aria-expanded"))
+		{
+			this._selectContainer.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+		}
 	};
 	BX.UI.EntityEditorMoney.prototype.openCurrencyMenu = function()
 	{
@@ -10859,7 +11286,7 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 			key++
 		}
 
-		BX.PopupMenu.show(
+		this.showMenuKeepingScroll(
 			this._id,
 			this._selectContainer,
 			menu,
@@ -10889,6 +11316,7 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 	BX.UI.EntityEditorMoney.prototype.onCurrencyMenuOpen = function()
 	{
 		BX.addClass(this._selectContainer, "active");
+		this.setCurrencySelectorExpanded(true);
 		this._isCurrencyMenuOpened = true;
 	};
 	BX.UI.EntityEditorMoney.prototype.onCurrencyMenuClose = function()
@@ -10896,6 +11324,7 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 		BX.PopupMenu.destroy(this._id);
 
 		BX.removeClass(this._selectContainer, "active");
+		this.setCurrencySelectorExpanded(false);
 		this._isCurrencyMenuOpened = false;
 	};
 	BX.UI.EntityEditorMoney.prototype.onCurrencySelect = function(e, item)
@@ -10904,6 +11333,7 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 
 		this._selectedCurrencyValue = this._currencyInput.value = item.value;
 		this._select.innerHTML = BX.util.htmlspecialchars(item.text);
+		this.setCurrencySelectorLabel();
 		if(this._currencyEditor)
 		{
 			this._currencyEditor.setCurrency(this._selectedCurrencyValue);
@@ -11219,7 +11649,7 @@ if(typeof BX.UI.EntityEditorUser === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -11433,7 +11863,7 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 
 			if (this.isContextMenuEnabled())
 			{
-				this._wrapper.appendChild(this.createContextMenuButton());
+				this.insertContextMenuButton(this._wrapper);
 			}
 
 			if (this.isDragEnabled())

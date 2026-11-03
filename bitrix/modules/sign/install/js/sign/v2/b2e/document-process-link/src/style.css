@@ -1,0 +1,19 @@
+.sign-b2e-document-process-link {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.sign-b2e-document-process-link__name {
+	color: var(--ui-color-accent-main-link);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+a.sign-b2e-document-process-link__name:hover {
+	text-decoration: underline;
+}

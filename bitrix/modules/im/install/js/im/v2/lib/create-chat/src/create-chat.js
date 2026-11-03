@@ -38,6 +38,7 @@ export class CreateChatManager extends EventEmitter
 	#preselectedMembers: PreselectedMemberItem[] = [];
 	#includeCurrentUser: boolean = true;
 	#ownerId: number;
+	#onCreate: ?Function = null;
 
 	static getInstance(): CreateChatManager
 	{
@@ -63,6 +64,7 @@ export class CreateChatManager extends EventEmitter
 			includeCurrentUser = true,
 			ownerId = null,
 			parentChatId = 0,
+			onCreate = null,
 		} = params;
 
 		if (clearCurrentCreation)
@@ -73,6 +75,7 @@ export class CreateChatManager extends EventEmitter
 		this.#preselectedMembers = preselectedMembers;
 		this.#includeCurrentUser = includeCurrentUser;
 		this.#ownerId = ownerId;
+		this.#onCreate = onCreate;
 
 		return LayoutManager.getInstance().setLayout({
 			name: Layout.createChat,
@@ -189,6 +192,11 @@ export class CreateChatManager extends EventEmitter
 		return this.#ownerId ?? Core.getUserId();
 	}
 
+	getOnCreate(): ?Function
+	{
+		return this.#onCreate;
+	}
+
 	getUndeselectedItems(): SelectorEntityItem[]
 	{
 		if (this.#includeCurrentUser)
@@ -204,6 +212,7 @@ export class CreateChatManager extends EventEmitter
 		this.#ownerId = null;
 		this.#includeCurrentUser = true;
 		this.#preselectedMembers = [];
+		this.#onCreate = null;
 	}
 
 }

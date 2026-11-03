@@ -1,4 +1,4 @@
-import {Loc} from 'main.core';
+import {Loc, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import Item from './item';
 import Utils from '../utils';
@@ -87,6 +87,19 @@ export default class ItemUserFavorites extends Item
 		return Backend.updateFavoritesItemMenu(itemInfoToSave);
 	}
 
+	static applyAddResponseData(itemInfo, responseData): void
+	{
+		itemInfo.id = responseData.itemId;
+		itemInfo.topMenuId = itemInfo.id;
+		itemInfo.iconClass = responseData.iconClass;
+		itemInfo.bindSlider = responseData.bindSlider;
+
+		if (Type.isStringFilled(responseData.canonicalLink))
+		{
+			itemInfo.link = responseData.canonicalLink;
+		}
+	}
+
 	static getActiveTopMenuItem()
 	{
 		if (this.#currentPageInTopMenu)
@@ -147,7 +160,7 @@ export default class ItemUserFavorites extends Item
 	static saveCurrentPage({pageTitle, pageLink})
 	{
 		const topMenuPoint = this.getActiveTopMenuItem();
-		let itemInfo, startX, startY;
+		let itemInfo, animateFromPoint;
 
 		if (topMenuPoint
 			&& topMenuPoint.NODE
@@ -156,8 +169,7 @@ export default class ItemUserFavorites extends Item
 		)
 		{
 			const menuNodeCoord = topMenuPoint.NODE.getBoundingClientRect();
-			startX = menuNodeCoord.left;
-			startY = menuNodeCoord.top;
+			animateFromPoint = {startX: menuNodeCoord.left, startY: menuNodeCoord.top};
 
 			itemInfo = {
 				id: topMenuPoint.DATA_ID,
@@ -171,22 +183,24 @@ export default class ItemUserFavorites extends Item
 		}
 		else
 		{
+			const titleNode = BX('pagetitle');
 			itemInfo = {
-				text: pageTitle || document.getElementById('pagetitle').innerText,
+				text: pageTitle || titleNode?.innerText || '',
 				link: pageLink || Utils.getCurPage(),
 				isStandardItem: pageLink === Utils.getCurPage()
 			};
-			const titleCoord = BX("pagetitle").getBoundingClientRect();
-			startX = titleCoord.left;
-			startY = titleCoord.top
+			if (titleNode)
+			{
+				const titleCoord = titleNode.getBoundingClientRect();
+				animateFromPoint = {startX: titleCoord.left, startY: titleCoord.top};
+			}
 		}
 
 		return Backend
 			.addFavoritesItemMenu(itemInfo)
-			.then(({data: {itemId}}) => {
-				itemInfo.id = itemId;
-				itemInfo.topMenuId = itemInfo.id;
-				return {node: this.createNode(itemInfo), animateFromPoint: {startX, startY}, itemInfo: itemInfo};
+			.then(({data}) => {
+				this.applyAddResponseData(itemInfo, data);
+				return {node: this.createNode(itemInfo), animateFromPoint, itemInfo};
 			})
 		;
 	}
@@ -195,22 +209,24 @@ export default class ItemUserFavorites extends Item
 	{
 		const topPoint = this.getActiveTopMenuItem();
 
-		var itemInfo = {}, startX, startY;
+		var itemInfo = {}, animateToPoint;
 
 		if (topPoint && this.isCurrentPageStandard(topPoint))
 		{
 			itemInfo['id'] = topPoint.DATA_ID;
 
 			const menuNodeCoord = topPoint.NODE.getBoundingClientRect();
-			startX = menuNodeCoord.left;
-			startY = menuNodeCoord.top;
+			animateToPoint = {startX: menuNodeCoord.left, startY: menuNodeCoord.top};
 		}
 		else
 		{
 			itemInfo['link'] = pageLink || Utils.getCurPage();
-			const titleCoord = BX("pagetitle").getBoundingClientRect();
-			startX = titleCoord.left;
-			startY = titleCoord.top
+			const titleNode = BX('pagetitle');
+			if (titleNode)
+			{
+				const titleCoord = titleNode.getBoundingClientRect();
+				animateToPoint = {startX: titleCoord.left, startY: titleCoord.top};
+			}
 		}
 		return Backend
 			.deleteFavoritesItemMenu(itemInfo)
@@ -220,7 +236,7 @@ export default class ItemUserFavorites extends Item
 					itemInfo.id = data['itemId'];
 				}
 				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, Options.eventName('onItemDeleteAsFavorites'), {id: itemInfo.id});
-				return {itemInfo: itemInfo, animateToPoint: {startX, startY}};
+				return {itemInfo, animateToPoint};
 			});
 	}
 
@@ -240,9 +256,8 @@ export default class ItemUserFavorites extends Item
 		const startY = pos.top
 		return Backend
 			.addFavoritesItemMenu(itemInfo)
-			.then(({data: {itemId}}) => {
-				itemInfo.id = itemId;
-				itemInfo.topMenuId = itemInfo.id;
+			.then(({data}) => {
+				this.applyAddResponseData(itemInfo, data);
 
 				const topPoint = this.getActiveTopMenuItem();
 				BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, this]);

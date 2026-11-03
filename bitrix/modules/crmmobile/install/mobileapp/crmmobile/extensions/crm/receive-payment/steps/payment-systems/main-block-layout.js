@@ -2,6 +2,8 @@
  * @module crm/receive-payment/steps/payment-systems/main-block-layout
  */
 jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (require, exports, module) => {
+	const { Text5, Text4 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { ExpandableList } = require('crm/receive-payment/steps/payment-systems/expandable-list');
@@ -127,9 +129,8 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 					style: styles.description(this.isFilledList),
 					text: title,
 				}),
-				!this.isFilledList && Text({
+				!this.isFilledList && Text5({
 					style: {
-						fontSize: 13,
 						color: AppTheme.colors.base3,
 						lineHeightMultiple: 1.05,
 					},
@@ -156,9 +157,8 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 					{
 						style: styles.linkText,
 					},
-					Text({
+					Text5({
 						style: {
-							fontSize: 13,
 							color: AppTheme.colors.base4,
 						},
 						text: Loc.getMessage('M_RP_PS_SETTINGS_LINK_TITLE'),
@@ -184,9 +184,8 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 					style: styles.buttonContainer,
 					onClick,
 				},
-				Text({
+				Text4({
 					style: {
-						fontSize: 14,
 						color: AppTheme.colors.base1,
 					},
 					text: Loc.getMessage('M_RP_PS_SETTINGS_BUTTON_TITLE'),
@@ -223,7 +222,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 		},
 		description: (isFilledList) => {
 			return {
-				fontSize: 16,
+				fontSize: Typography.text3.getValue().fontSize,
 				fontWeight: '500',
 				color: isFilledList ? AppTheme.colors.base1 : AppTheme.colors.base3,
 				marginTop: 18,

@@ -21,6 +21,16 @@ export class ChatActionDispatcher
 		this.#actions.set(actionName, action);
 	}
 
+	get(actionName: string): BaseAction | null
+	{
+		if (!Type.isString(actionName) || actionName.trim() === '')
+		{
+			return null;
+		}
+
+		return this.#actions.get(actionName.trim()) ?? null;
+	}
+
 	async execute(actionName: string, payload: ActionPayload): Promise<void>
 	{
 		if (!Type.isString(actionName) || actionName.trim() === '')

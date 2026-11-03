@@ -269,5 +269,8 @@
 }
 
 .crm__channel-selector--network-link.--instagram {
-	background-image: url("../images/crm-network--instagram.svg");
+	background-image: url("../images/crm-network--instagram.webp");
+	background-image: -webkit-image-set(url("../images/crm-network--instagram.webp") 1x, url("../images/crm-network--instagram@2x.webp") 2x);
+	background-image: image-set(url("../images/crm-network--instagram.webp") 1x, url("../images/crm-network--instagram@2x.webp") 2x);
+	background-size: 16px 16px;
 }

@@ -1,5 +1,8 @@
-import { ref, toValue } from 'ui.vue3';
+import { onBeforeUnmount, ref, toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
+import { bindCancelPaths, type UnbindCancelPaths } from './gesture';
+import { replaceSelection } from './highlighted-blocks';
+import { type DiagramBlockId } from '../types';
 
 type Rect = {
 	x: number,
@@ -16,10 +19,12 @@ type UseCanvasSelectionParams = {
 type UseCanvasSelection = {
 	isSelecting: boolean,
 	selectionRect: Rect,
-	start: MouseEvent,
-	move: MouseEvent,
+	start: (event: MouseEvent) => void,
+	move: (event: MouseEvent) => void,
+	end: () => void,
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasSelection
 {
 	const {
@@ -30,6 +35,8 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 		startAutoScroll,
 		stopAutoScroll,
 		updateMousePosition,
+		highlitedBlockIds,
+		inputState,
 	} = useBlockDiagram();
 	const { rootRef, transformLayoutRef } = params;
 	const selectionRect = ref({ x: 0, y: 0, width: 0, height: 0 });
@@ -42,6 +49,10 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 	let scrollOffsetY = 0;
 	let lastClientX = 0;
 	let lastClientY = 0;
+	// The selection as it stood before the press cleared it, and the handle on the cancel paths:
+	// the drag is open for exactly as long as that handle is held.
+	let selectionBeforeDrag: Array<DiagramBlockId> = [];
+	let unbindCancelPaths: UnbindCancelPaths | null = null;
 
 	function updateRects(clientX: number, clientY: number): void
 	{
@@ -96,6 +107,9 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 		lastClientY = event.clientY;
 		scrollOffsetX = 0;
 		scrollOffsetY = 0;
+		// A cancelled drag leaves the diagram the way it found it, so what stood selected is kept
+		// until the drag ends one way or another.
+		selectionBeforeDrag = [...toValue(highlitedBlockIds)];
 
 		cachedRootRect = root.getBoundingClientRect();
 		cachedLayerRect = layer.getBoundingClientRect();
@@ -111,6 +125,12 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 			scrollOffsetY += dy;
 			updateRects(lastClientX, lastClientY);
 		});
+
+		// A drag whose release never arrived is still open when this press comes: a mouseup
+		// dispatched on the window never travels down to the document. The handle is the only way
+		// left to unbind its subscriptions.
+		unbindCancelPaths?.();
+		unbindCancelPaths = bindCancelPaths(inputState, cancel);
 	}
 
 	function move(event: MouseEvent): void
@@ -128,6 +148,8 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 
 	function end(): void
 	{
+		unbindCancelPaths?.();
+		unbindCancelPaths = null;
 		stopAutoScroll();
 
 		if (toValue(isSelectionActive))
@@ -140,6 +162,26 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 		cachedRootRect = null;
 		cachedLayerRect = null;
 	}
+
+	// A cancelled gesture is one that never happened: the selection goes back to what the press
+	// found. A release does not come here - what it selected is its result.
+	function cancel(): void
+	{
+		if (unbindCancelPaths === null)
+		{
+			return;
+		}
+
+		replaceSelection(highlitedBlockIds, selectionBeforeDrag);
+		end();
+	}
+
+	// The cancel paths listen on the document and the window: a diagram taken down mid-drag has to
+	// take them with it.
+	onBeforeUnmount(() => {
+		unbindCancelPaths?.();
+		unbindCancelPaths = null;
+	});
 
 	return {
 		isSelecting: isSelectionActive,

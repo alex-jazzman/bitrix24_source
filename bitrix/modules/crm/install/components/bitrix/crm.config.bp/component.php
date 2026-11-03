@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -28,13 +30,6 @@ if (!CModule::IncludeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
 	return;
 }
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
-{
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-	return;
-}
-
-
 $arDefaultUrlTemplates404 = [
 	'entity_list' => '',
 	'bp_list' => '#entity_id#/',
@@ -51,7 +46,57 @@ $arComponentVariables = [
 	'mode',
 ];
 
-if ($arParams['SEF_MODE'] == 'Y')
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? null) === true;
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+
+if ($isSettingsHub)
+{
+	$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+	foreach ([$request->getQuery('back_url'), $request->getPost('back_url')] as $backUrl)
+	{
+		if ($backUrl !== null && $backUrl !== '')
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+
+			return;
+		}
+	}
+
+	$mode = $arParams['MODE'] ?? 'entity_list';
+	$componentPage = match ($mode)
+	{
+		'list' => 'bp_list',
+		'edit' => 'bp_edit',
+		default => 'entity_list',
+	};
+	$arVariables = [
+		'mode' => $mode,
+		'entity_id' => $arParams['BP_ENTITY_ID'] ?? '',
+		'bp_id' => $arParams['BP_BP_ID'] ?? 0,
+	];
+
+	$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+	$url->addParams([
+		'IFRAME' => 'Y',
+		'IFRAME_TYPE' => 'SIDE_SLIDER',
+	]);
+	$arUrlTemplates = ['entity_list' => $url->getUri()];
+	foreach (['list', 'edit'] as $page)
+	{
+		$pageUrl = clone $url;
+		$pageUrl->addParams(['mode' => $page]);
+		$arUrlTemplates['bp_' . $page] = $pageUrl->getUri() . '&entity_id=#entity_id#';
+	}
+	$arUrlTemplates['bp_edit'] .= '&bp_id=#bp_id#';
+
+	$arResult = [
+		'FOLDER' => '',
+		'URL_TEMPLATES' => $arUrlTemplates,
+		'VARIABLES' => $arVariables,
+		'ALIASES' => [],
+	];
+}
+elseif ($arParams['SEF_MODE'] == 'Y')
 {
 	$arVariables = [];
 
@@ -133,6 +178,29 @@ else
 		'VARIABLES' => $arVariables,
 		'ALIASES' => $arVariableAliases
 	];
+}
+
+$requestedEntityId = $isSettingsHub
+	? ($arVariables['entity_id'] ?? null)
+	: ($_REQUEST['entity_id'] ?? $arVariables['entity_id'] ?? null);
+$scope = ConfigurationScope::ofCrm();
+if (
+	$componentPage !== 'entity_list'
+	&& is_string($requestedEntityId)
+	&& preg_match('/^CRM_DYNAMIC_(\d+)$/D', $requestedEntityId, $matches)
+)
+{
+	$scope = ConfigurationScope::ofEntityType((int)$matches[1]);
+}
+$canManageTemplates = \Bitrix\Crm\Service\Container::getInstance()
+	->getUserPermissions()
+	->configuration()
+	->canManageBizprocTemplates(ConfigurationCallSite::BizprocTemplateComponent, $scope)
+;
+if (!$canManageTemplates)
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
 }
 
 $this->IncludeComponentTemplate($componentPage);

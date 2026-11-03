@@ -38,9 +38,10 @@
 		successOnlyWithNewApp = typeof (successOnlyWithNewApp) == 'undefined' || !successOnlyWithNewApp? false: true;
 
 		var dateCheck = (+new Date());
+		var isDesktop = typeof BX.desktop !== 'undefined' && BX.desktop.apiReady;
 		if (typeof (BXDesktopSystem) !== 'undefined')
 		{
-			if (BX.MessengerCommon.isDesktop())
+			if (isDesktop)
 			{
 				failureCallback(false, dateCheck);
 			}
@@ -50,7 +51,7 @@
 			}
 			return true;
 		}
-		else if (typeof(BXIM) == 'undefined' || BX.MessengerCommon.isDesktop() || !BXIM.desktopStatus || BXIM.desktopVersion < 18)
+		else if (typeof(BXIM) == 'undefined' || isDesktop || !BXIM.desktopStatus || BXIM.desktopVersion < 18)
 		{
 			failureCallback(false, dateCheck);
 			return false;

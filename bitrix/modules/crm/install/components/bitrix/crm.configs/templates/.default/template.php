@@ -35,17 +35,22 @@ if (\Bitrix\Main\Loader::includeModule('catalog'))
 
 /* Settings items */
 $items = array();
-if($arResult['PERM_CONFIG'])
+if($arResult['CAN_MANAGE_STAGES'])
 {
 	$items['tab_content_where_to_begin']['STATUS']['URL'] = $siteDir.'/crm/configs/status/';
 	$items['tab_content_where_to_begin']['STATUS']['ICON_CLASS'] = 'img-book';
 	$items['tab_content_where_to_begin']['STATUS']['NAME'] = GetMessage("CRM_CONFIGS_STATUS");
+}
+if($arResult['PERM_CONFIG'])
+{
 	$items['tab_content_where_to_begin']['CURRENCY']['URL'] = $siteDir.'/crm/configs/currency/';
 	$items['tab_content_where_to_begin']['CURRENCY']['ICON_CLASS'] = 'img-curr';
 	$items['tab_content_where_to_begin']['CURRENCY']['NAME'] = GetMessage("CRM_CONFIGS_CURRENCY");
 	$items['tab_content_where_to_begin']['LOCATIONS']['URL'] = $siteDir.'/crm/configs/locations/';
 	$items['tab_content_where_to_begin']['LOCATIONS']['ICON_CLASS'] = 'img-location';
 	$items['tab_content_where_to_begin']['LOCATIONS']['NAME'] = GetMessage("CRM_CONFIGS_LOCATIONS");
+	$items['tab_content_where_to_begin']['LOCATIONS']['SIDE_PANEL'] = true;
+	$items['tab_content_where_to_begin']['LOCATIONS']['TEST_ID'] = 'crm-locations-config-link';
 	if ($catalogAccessController && $catalogAccessController->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_VAT_EDIT))
 	{
 		$items['tab_content_where_to_begin']['TAX']['URL'] = $siteDir.'/crm/configs/tax/';
@@ -57,6 +62,7 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_where_to_begin']['MEASURE']['URL'] = $siteDir.'/crm/configs/measure/';
 		$items['tab_content_where_to_begin']['MEASURE']['ICON_CLASS'] = 'img-units';
 		$items['tab_content_where_to_begin']['MEASURE']['NAME'] = GetMessage("CRM_CONFIGS_MEASURE");
+		$items['tab_content_where_to_begin']['MEASURE']['SIDE_PANEL'] = true;
 	}
 
 	if ($catalogAccessController && $catalogAccessController->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
@@ -65,12 +71,19 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_where_to_begin']['PRODUCT_PROPS']['ICON_CLASS'] = 'img-properties';
 		$items['tab_content_where_to_begin']['PRODUCT_PROPS']['NAME'] = GetMessage("CRM_CONFIGS_PRODUCT_PROPS");
 	}
+}
 
+if($arResult['CAN_MANAGE_FUNNELS'])
+{
 	$items['tab_content_where_to_begin']['DEAL_CATEGORY'] = array(
 		'URL' => $siteDir.'/crm/configs/deal_category/',
 		'NAME' => GetMessage("CRM_CONFIGS_DEAL_CATEGORY"),
 		'ICON_CLASS' => 'img-deal-category'
 	);
+}
+
+if($arResult['PERM_CONFIG'])
+{
 	$items['tab_content_where_to_begin']['PRESET']['URL'] = $siteDir.'/crm/configs/preset/';
 	$items['tab_content_where_to_begin']['PRESET']['ICON_CLASS'] = 'img-other';
 	$items['tab_content_where_to_begin']['PRESET']['NAME'] = GetMessage("CRM_CONFIGS_PRESET");
@@ -86,10 +99,18 @@ if($arResult['PERM_CONFIG'])
 			'ICON_CLASS' => 'img-app'
 		);
 	}
+}
 
+// The list of the user fields opens for changing them and for deleting them alike.
+if($arResult['CAN_MANAGE_FIELDS'] || $arResult['CAN_DELETE_FIELDS'])
+{
 	$items['tab_content_settings_forms_and_reports']['FIELDS']['URL'] = $siteDir.'/crm/configs/fields/';
 	$items['tab_content_settings_forms_and_reports']['FIELDS']['ICON_CLASS'] = 'img-fields';
 	$items['tab_content_settings_forms_and_reports']['FIELDS']['NAME'] = GetMessage("CRM_CONFIGS_FIELDS");
+}
+
+if($arResult['PERM_CONFIG'])
+{
 	$items['tab_content_settings_forms_and_reports']['SLOT']['URL'] = $siteDir.'/crm/configs/widget/';
 	$items['tab_content_settings_forms_and_reports']['SLOT']['ICON_CLASS'] = 'img-reports';
 	$items['tab_content_settings_forms_and_reports']['SLOT']['NAME'] = GetMessage("CRM_CONFIGS_SLOT");
@@ -110,7 +131,12 @@ if($arResult['PERM_CONFIG'])
 	);
 	$items['tab_content_rights']['PERMS']['ICON_CLASS'] = 'img-permissions';
 	$items['tab_content_rights']['PERMS']['NAME'] = GetMessage("CRM_CONFIGS_PERMS");
+}
 
+// The tariff locks of the automation cards below - of the business process card among them, which the
+// business process templates right can show on its own.
+if($arResult['PERM_CONFIG'] || $arResult['CAN_MANAGE_BIZPROC_TEMPLATES'])
+{
 	$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
 	$bpHelperId = $toolsManager->checkBizprocAvailability() ? 'limit_crm_bp_automation' : $toolsManager::BIZPROC_SLIDER_CODE;
 	$automationHelperId = $toolsManager->checkRobotsAvailability() ? 'limit_crm_robots' : $toolsManager::ROBOTS_SLIDER_CODE;
@@ -119,7 +145,10 @@ if($arResult['PERM_CONFIG'])
 	$bpHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'' . $bpHelperId . '\', event)';
 	$automationHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\''. $automationHelperId . '\', event)';
 	$automationOrderHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'' . $automationOrderHelperId . '\', event)';
+}
 
+if($arResult['CAN_MANAGE_BIZPROC_TEMPLATES'])
+{
 	$items['tab_content_automation']['BP']['URL'] = $siteDir.'/crm/configs/bp/';
 	$items['tab_content_automation']['BP']['ICON_CLASS'] = 'img-bp';
 	$items['tab_content_automation']['BP']['NAME'] = GetMessage("CRM_CONFIGS_BP");
@@ -129,7 +158,10 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_automation']['BP']['URL'] = $bpHelperUrl;
 		$items['tab_content_automation']['BP']['LOCKED'] = true;
 	}
+}
 
+if($arResult['PERM_CONFIG'])
+{
 	$items['tab_content_automation']['AUTOMATION_LEAD']['URL'] =
 		Container::getInstance()->getRouter()
 		->getAutomationUrl(CCrmOwnerType::Lead)
@@ -315,18 +347,21 @@ $mailItemsOrder = array(
 	'MAIL_TEMPLATES'   => 2,
 	'SENDSAVE'         => 3,
 );
-uksort(
-	$items['tab_content_work_with_mail'],
-	function ($a, $b) use ($mailItemsOrder)
-	{
-		if (!isset($mailItemsOrder[$a]))
-			return 1;
-		if (!isset($mailItemsOrder[$b]))
-			return -1;
+if (!empty($items['tab_content_work_with_mail']))
+{
+	uksort(
+		$items['tab_content_work_with_mail'],
+		function ($a, $b) use ($mailItemsOrder)
+		{
+			if (!isset($mailItemsOrder[$a]))
+				return 1;
+			if (!isset($mailItemsOrder[$b]))
+				return -1;
 
-		return $mailItemsOrder[$a]-$mailItemsOrder[$b];
-	}
-);
+			return $mailItemsOrder[$a]-$mailItemsOrder[$b];
+		}
+	);
+}
 
 /*
 $items['tab_content_creation_on_the_basis']['LEAD']['URL'] = '#';
@@ -377,12 +412,13 @@ foreach($tabs as $tabId => $tabName)
 	<div class="view-report-wrapper-wrapp">
 	<div class="view-report-wrapper-shell">
 
-		<div class="view-report-sidebar view-report-sidebar-settings">
+		<div class="view-report-sidebar view-report-sidebar-settings" data-testid="crm-configs-tabs">
 			<? $counter = 0; ?>
 			<? foreach($tabs as $tabId => $tabName): ?>
 				<? $class = (!$counter) ? 'sidebar-tab sidebar-tab-active' : 'sidebar-tab'?>
 				<a href="javascript:void(0)" class="<?=$class?>" id="tab_<?=$tabId?>"
-					onclick="javascript:BX['CrmConfigClass_<?= $arResult['RAND_STRING']?>'].selectTab('<?=$tabId ?>');">
+					onclick="javascript:BX['CrmConfigClass_<?= $arResult['RAND_STRING']?>'].selectTab('<?=$tabId ?>');"
+					data-testid="crm-configs-tab-<?=htmlspecialcharsbx(str_replace('_', '-', $tabId))?>">
 					<?=$tabName?>
 				</a>
 				<? $counter++; ?>
@@ -394,8 +430,33 @@ foreach($tabs as $tabId => $tabName)
 			<? foreach($items as $contentId => $contentList): ?>
 				<? $class = (!$counter)? 'view-report-wrapper-inner active' : 'view-report-wrapper-inner'?>
 				<div class="<?= $class ?>" id="<?=$contentId?>">
-					<? foreach($contentList as $itemData): ?>
-						<a href="<?=$itemData['URL']?>" class="view-report-wrapper-inner-item">
+					<? foreach($contentList as $itemId => $itemData): ?>
+						<?
+						$itemClass = 'view-report-wrapper-inner-item';
+						if ($itemId === 'CURRENCY')
+						{
+							$itemClass .= ' crm-configs-currency-link';
+						}
+						if ($itemId === 'DEAL_CATEGORY')
+						{
+							$itemClass .= ' js-crm-config-deal-category';
+						}
+						$itemTestId = $itemData['TEST_ID'] ?? (
+							$itemId === 'CURRENCY'
+								? 'crm-configs-currency-link'
+								: 'crm-configs-card-' . strtolower(str_replace('_', '-', $itemId))
+						)
+						;
+						?>
+						<a
+							href="<?=$itemData['URL']?>"
+							class="<?=$itemClass?>"
+							<?=($itemId === 'CURRENCY' ? 'data-role="crm-configs-currency-link"' : '')?>
+							data-testid="<?=htmlspecialcharsbx($itemTestId)?>"
+							<?if($itemData['SIDE_PANEL'] ?? false):?>
+								onclick="BX.Runtime.loadExtension('main.sidepanel').then(() => BX.SidePanel.Instance.open(this.href, { cacheable: false })); return false;"
+							<?endif?>
+						>
 							<span class="view-report-wrapper-inner-img <?=$itemData['ICON_CLASS']?>"></span>
 							<span class="view-report-wrapper-inner-title">
 								<?=$itemData['NAME']?>
@@ -414,7 +475,8 @@ foreach($tabs as $tabId => $tabName)
 	</div>
 	</div>
 <?else:?>
-	<div class="crm-configs-error-container"><?=GetMessage("CRM_CONFIGS_NO_ACCESS_ERROR")?></div>
+	<div class="crm-configs-error-container"
+		data-testid="crm-configs-no-access"><?=GetMessage("CRM_CONFIGS_NO_ACCESS_ERROR")?></div>
 <?endif;?>
 </div>
 </div>

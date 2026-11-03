@@ -29,7 +29,7 @@
 								<a href="#" class="landing-block-node-menu-list-item-link nav-link p-0">PROJECTS</a>
 							</li>
 							<li class="landing-block-node-menu-list-item nav-item g-mx-10--lg g-mx-15--xl g-mb-0--lg">
-								<a href="#" class="landing-block-node-menu-list-item-link nav-link p-0">Testomonials</a>
+								<a href="#" class="landing-block-node-menu-list-item-link nav-link p-0">Testimonials</a>
 							</li>
 							<li class="landing-block-node-menu-list-item nav-item g-mx-10--lg g-mx-15--xl g-mb-0--lg">
 								<a href="#" class="landing-block-node-menu-list-item-link nav-link p-0">Best

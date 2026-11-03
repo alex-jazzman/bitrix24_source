@@ -6,6 +6,8 @@ export type CallSettingsType = {
 	optionsForTestingEnabled?: boolean,
 	mobileCallUIVisibilityTimer?: number,
 	gridViewEnabled?: boolean,
+	finishForAllEnabled?: boolean,
+	viewToggleEnabled?: boolean,
 	callBalancerUrl?: string,
 	callInvitePeriod?: number,
 	syncCallInvitePeriod?: number,

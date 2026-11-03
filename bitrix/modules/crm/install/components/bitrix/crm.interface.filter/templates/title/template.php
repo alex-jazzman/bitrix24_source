@@ -172,7 +172,7 @@ if ($shouldRenderActionsBar)
 				if ($shouldRenderRepeatSaleButton)
 				{
 					echo $navigationBar->getRepeatSaleView();
-					WidgetManager::getInstance()->showBanner();
+					WidgetManager::getInstance()->showBanner($navigationBar->getRepeatSaleDealFilterParams());
 				}
 
 				if ($shouldRenderAutomationButton)

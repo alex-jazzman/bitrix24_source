@@ -3,11 +3,11 @@ import BaseError from '../base-error';
 /**
  * Implements base event object interface
  */
-export default class BaseEvent<DataType = any>
+export default class BaseEvent<DataType = any, TargetType = any>
 {
 	type: string = '';
 	data: DataType | null = null;
-	target: any = null;
+	target: TargetType | null = null;
 	compatData: Array<any> | null = null;
 	defaultPrevented: boolean = false;
 	immediatePropagationStopped: boolean = false;
@@ -15,10 +15,10 @@ export default class BaseEvent<DataType = any>
 
 	constructor(
 		options: {
-			data?: any,
+			data?: DataType,
 			compatData?: Array<any>
 		} = {
-			data: {},
+			data: {} as DataType,
 		},
 	)
 	{
@@ -103,7 +103,7 @@ export default class BaseEvent<DataType = any>
 	 * Sets a event target
 	 * @param target
 	 */
-	setTarget(target: any): this
+	setTarget(target: TargetType): this
 	{
 		this.target = target;
 
@@ -113,7 +113,7 @@ export default class BaseEvent<DataType = any>
 	/**
 	 * Returns a event target
 	 */
-	getTarget(): any
+	getTarget(): TargetType | null
 	{
 		return this.target;
 	}

@@ -1,28 +1,30 @@
 import { ProgressBarRepository } from 'crm.autorun';
+import { Reflection, Type } from 'main.core';
 import { SettingsCollection } from 'main.core.collections';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { BaseHandler } from './handlers/base-handler';
 
 type BaseHandlerConstructor = typeof BaseHandler;
 type SubscriptionHandler = (event: BaseEvent) => void;
+type PanelCommandData = { gridId: string };
 
 export class Router
 {
 	static #handlers: Set<BaseHandlerConstructor> = new Set([]);
 
-	#grid: BX.Main.grid;
+	#gridId: string;
 	#progressBarRepo: ProgressBarRepository;
 	#extensionSettings: SettingsCollection;
 
 	#subscriptions: Map<string, SubscriptionHandler> = new Map();
 
-	constructor(grid: BX.Main.grid, progressBarRepo: ProgressBarRepository, extensionSettings: SettingsCollection)
+	constructor(gridId: string, progressBarRepo: ProgressBarRepository, extensionSettings: SettingsCollection)
 	{
-		if (!(grid instanceof BX.Main.grid))
+		if (!Type.isStringFilled(gridId))
 		{
-			throw new TypeError('expected grid to be instance of BX.Main.grid');
+			throw new TypeError('expected gridId to be a non empty string');
 		}
-		this.#grid = grid;
+		this.#gridId = gridId;
 
 		if (!(progressBarRepo instanceof ProgressBarRepository))
 		{
@@ -42,6 +44,11 @@ export class Router
 		this.#handlers.add(handler);
 	}
 
+	static unregisterHandler(handler: BaseHandlerConstructor): void
+	{
+		this.#handlers.delete(handler);
+	}
+
 	startListening(): void
 	{
 		for (const HandlerClass of this.constructor.#handlers)
@@ -59,16 +66,61 @@ export class Router
 	#createSubscriptionHandler(HandlerClass: BaseHandlerConstructor): SubscriptionHandler
 	{
 		return (event: BaseEvent) => {
-			const eventHandler: BaseHandler = new HandlerClass(event.getData());
+			const eventData = event.getData();
+
+			if (!this.#isAddressedToOwnGrid(eventData, HandlerClass.getEventName()))
+			{
+				return;
+			}
+
+			// a card loads its tabs one by one and redraws them, so the instance behind the address
+			// appears and changes after the panel was initialized
+			const grid = this.#getGrid();
+			if (!grid)
+			{
+				console.error(`entity list panel grid not found: ${this.#gridId}`);
+
+				return;
+			}
+
+			const eventHandler: BaseHandler = new HandlerClass(eventData);
 
 			eventHandler.injectDependencies(this.#progressBarRepo, this.#extensionSettings);
 
 			eventHandler.execute(
-				this.#grid,
-				this.#grid.getRows().getSelectedIds(),
-				this.#grid.getActionsPanel()?.getForAllCheckbox()?.checked ?? false,
+				grid,
+				grid.getRows().getSelectedIds(),
+				grid.getActionsPanel()?.getForAllCheckbox()?.checked ?? false,
 			);
 		};
+	}
+
+	#getGrid(): ?BX.Main.grid
+	{
+		const gridManager = Reflection.getClass('BX.Main.gridManager');
+		const gridClass = Reflection.getClass('BX.Main.grid');
+		if (!Type.isFunction(gridManager?.getInstanceById) || !gridClass)
+		{
+			return null;
+		}
+
+		const grid = gridManager.getInstanceById(this.#gridId);
+
+		return grid instanceof gridClass ? grid : null;
+	}
+
+	#isAddressedToOwnGrid(eventData: ?PanelCommandData, eventName: string): boolean
+	{
+		if (!Type.isPlainObject(eventData) || !Type.isStringFilled(eventData.gridId))
+		{
+			console.error(
+				`entity list panel command without gridId: ${eventName}, own grid: ${this.#gridId}`,
+			);
+
+			return false;
+		}
+
+		return eventData.gridId === this.#gridId;
 	}
 
 	stopListening(): void

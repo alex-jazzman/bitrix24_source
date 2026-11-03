@@ -31,6 +31,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const MINIMAL_SEARCH_LENGTH = 3;
 
 	const TIME_TO_BAD_REQUEST = 60000;
+	const FLOATING_BUTTON_UPDATE_DELAY = 100;
 
 	const renderType = {
 		cache: 'cache',
@@ -59,6 +60,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.layoutRightButtons = null;
 			this.menuProps = null;
 			this.floatingButton = null;
+			this.floatingButtonAccentByDefault = null;
+			this.floatingButtonUpdateTimeout = null;
 			this.floatingButtonPointerRef = null;
 			this.fabSpotlightId = null;
 
@@ -186,6 +189,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		{
 			this.removeSearchBarEventListeners();
 			this.layout.removeEventListener('onViewShown', this.onViewShow);
+			clearTimeout(this.requestRenderTimeout);
+			clearTimeout(this.floatingButtonUpdateTimeout);
+			this.requestRenderTimeout = null;
+			this.currentRequestUid = null;
 
 			this.pull.unsubscribe();
 		}
@@ -1306,10 +1313,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 
 			const { onFloatingButtonClick, onFloatingButtonLongClick } = this.props;
+			this.floatingButtonAccentByDefault = this.isFloatingButtonAccent();
 
 			this.floatingButton = new FloatingActionButton({
 				testId: `${this.getTestId()}_ADD_BTN`,
-				accentByDefault: this.isFloatingButtonAccent(),
+				accentByDefault: this.floatingButtonAccentByDefault,
 				layout: this.layout,
 				onClick: onFloatingButtonClick,
 				onLongClick: onFloatingButtonLongClick,
@@ -1486,7 +1494,20 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return;
 			}
 
-			this.floatingButton?.updateOption('accentByDefault', floatingButtonParams.accentByDefault, true);
+			if (this.floatingButtonAccentByDefault === floatingButtonParams.accentByDefault)
+			{
+				return;
+			}
+
+			this.floatingButtonAccentByDefault = floatingButtonParams.accentByDefault;
+			this.floatingButton?.updateOption('accentByDefault', floatingButtonParams.accentByDefault);
+			this.floatingButton?.hide();
+
+			clearTimeout(this.floatingButtonUpdateTimeout);
+			this.floatingButtonUpdateTimeout = setTimeout(() => {
+				this.floatingButton?.update();
+				this.floatingButtonUpdateTimeout = null;
+			}, FLOATING_BUTTON_UPDATE_DELAY);
 		}
 
 		// search

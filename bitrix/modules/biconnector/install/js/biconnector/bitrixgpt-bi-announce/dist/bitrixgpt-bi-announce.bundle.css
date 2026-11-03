@@ -1,0 +1,360 @@
+/*
+ * The announcement paints the whole card itself instead of leaning on the dialog background.
+ * Reason: the mockup keeps one brand blue under every slot - media, texts and buttons - while
+ * the dialog paints only its own background and leaves header and footer on the portal white.
+ * So the dialog is asked for zero paddings and no slots at all (no title, no close button, no
+ * footer buttons), and everything below lives inside its content. The radius repeats the one
+ * the dialog gives to the popup, otherwise the white corners of the popup would show through.
+ *
+ * Deliberately no overflow: hidden anywhere on the way to __art - the illustration leaves the
+ * card through its top edge, and neither .ui-system-dialog nor .popup-window clips content.
+ */
+.biconnector-bitrixgpt-bi-announce {
+	position: relative;
+	display: flex;
+	box-sizing: border-box;
+	width: 680px;
+	max-width: calc(100vw - var(--ui-space-inset-3xl));
+	flex-direction: column;
+	/*
+	 * Backdrop of the card is the "Ai background default" raster of the mockup - the scheme the
+	 * layout asks for by name (WhatsNew backdropColor="bitrix-gpt"). A gradient cannot reproduce
+	 * it, so it ships as an image; cover keeps it filling the card whichever surface it is on,
+	 * since the list and the report page differ in height. The water effect reads this very
+	 * declaration and repaints the same raster into its canvas.
+	 *
+	 * The fallback colour under it is the average of the raster and is literal on purpose: the
+	 * design keeps one look in every portal theme, while every --ui-color-* token flips with the
+	 * token context.
+	 */
+	/*
+	 * Accent green of the mockup. The token behind it resolves to #1BCE7B in the light content
+	 * context and to #1CAE6A in every other one, and the mockup uses the darker value. The card
+	 * keeps one look whatever the surrounding context is, so its accent must not follow the
+	 * context either. Pinned on the design token rather than on the palette one, so only the
+	 * filled-success surfaces inside the announcement are affected - the button and the badge,
+	 * which the mockup deliberately keeps as one accent pair.
+	 */
+	--ui-color-design-filled-success-bg: #1cae6a;
+	background: #3d3d8c url("images/ai-bg@2x.webp") center / cover no-repeat;
+	border-radius: 18px;
+}
+
+/*
+ * Host of the water surface: the canvas of the effect lives here and is clipped by the card, while
+ * the illustration stays outside this box and keeps leaving the card through its top edge.
+ *
+ * The canvas covers the css background of the card and repaints the same raster itself. The css one
+ * stays as the declaration of the asset and as the still fallback - with reduced motion asked for,
+ * or without a 2d context, the effect does not mount at all and nothing changes visually.
+ */
+.biconnector-bitrixgpt-bi-announce__backdrop {
+	position: absolute;
+	z-index: 0;
+	overflow: hidden;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+/*
+ * The content of the card is raised above the water host: positioned boxes paint after the in-flow
+ * ones, so without this the canvas would lie on top of the texts.
+ */
+.biconnector-bitrixgpt-bi-announce__media,
+.biconnector-bitrixgpt-bi-announce__header,
+.biconnector-bitrixgpt-bi-announce__features,
+.biconnector-bitrixgpt-bi-announce__footer {
+	position: relative;
+	z-index: 1;
+}
+
+/* Sits above the illustration layers, which reach into the top corners of the card. */
+.biconnector-bitrixgpt-bi-announce__close {
+	position: absolute;
+	z-index: 2;
+	top: var(--ui-space-inset-md);
+	right: var(--ui-space-inset-md);
+	display: flex;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 200ms ease;
+}
+
+.biconnector-bitrixgpt-bi-announce__close:hover {
+	opacity: 1;
+}
+
+/*
+ * Media zone: an empty holder that only reserves height inside the card. The art itself is
+ * pinned to the bottom of this zone and is taller than it, so it rises above the top edge of
+ * the card by GROUP_H + gap - zone height = 300 + 8 - 224 = 84px. Raising the art by growing
+ * the gap instead would push the title down and leave a dead strip under the illustration.
+ */
+.biconnector-bitrixgpt-bi-announce__media {
+	height: 224px;
+	flex: none;
+}
+
+.biconnector-bitrixgpt-bi-announce__art {
+	position: absolute;
+	bottom: 8px;
+	left: 50%;
+	width: 342px;
+	height: 300px;
+	transform: translateX(-50%);
+}
+
+/*
+ * Eight layers of one frame, stacked in painting order. They are cropped to a common frame by
+ * the designer, so the composition comes from the mockup itself and needs no per-layer
+ * coordinates - cropping any of them to its own content would break the alignment.
+ *
+ * Separate layers are what the mockup ships: there they levitate and follow the cursor, each
+ * with its own amplitude and parallax depth, so both motions live here per layer below.
+ *
+ * The two motions are kept on different properties - the pointer shift on translate, the
+ * levitation on transform - because the browser composes those, while a single transform would
+ * make the animation overwrite the shift every frame.
+ *
+ * Per-layer delays are negative on purpose: with positive ones the scene would start as one flat
+ * picture and drift apart only later.
+ */
+.biconnector-bitrixgpt-bi-announce__art-layer {
+	--announce-depth: 1;
+	--announce-float-rise: 4px;
+	--announce-float-duration: 6s;
+	--announce-float-delay: 0s;
+
+	position: absolute;
+	inset: 0;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	translate:
+		calc(var(--announce-pointer-x, 0px) * var(--announce-depth))
+		calc(var(--announce-pointer-y, 0px) * var(--announce-depth));
+	transition: translate 260ms ease-out;
+	animation: biconnector-bitrixgpt-bi-announce-float var(--announce-float-duration) ease-in-out var(--announce-float-delay) infinite;
+	will-change: translate, transform;
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--back {
+	--announce-depth: 0.15;
+	--announce-float-rise: 2px;
+	--announce-float-duration: 9s;
+
+	background-image: url("images/announce-back@2x.webp");
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--icon-0 {
+	--announce-depth: 0.55;
+	--announce-float-rise: 7px;
+	--announce-float-duration: 5.4s;
+	--announce-float-delay: -0.4s;
+
+	background-image: url("images/announce-icon-0@2x.webp");
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--icon-1 {
+	--announce-depth: 0.7;
+	--announce-float-rise: 8px;
+	--announce-float-duration: 6.2s;
+	--announce-float-delay: -2.1s;
+
+	background-image: url("images/announce-icon-1@2x.webp");
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--icon-2 {
+	--announce-depth: 0.85;
+	--announce-float-rise: 9px;
+	--announce-float-duration: 5.8s;
+	--announce-float-delay: -3.3s;
+
+	background-image: url("images/announce-icon-2@2x.webp");
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--icon-3 {
+	--announce-depth: 1;
+	--announce-float-rise: 10px;
+	--announce-float-duration: 6.6s;
+	--announce-float-delay: -1.7s;
+
+	background-image: url("images/announce-icon-3@2x.webp");
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--logo {
+	--announce-depth: 0.45;
+	--announce-float-rise: 4px;
+	--announce-float-duration: 7.4s;
+	--announce-float-delay: -2.8s;
+
+	background-image: url("images/announce-logo@2x.webp");
+}
+
+.biconnector-bitrixgpt-bi-announce__art-layer.--mascot {
+	--announce-depth: 1.2;
+	--announce-float-rise: 6px;
+	--announce-float-duration: 4.8s;
+	--announce-float-delay: -0.9s;
+
+	background-image: url("images/announce-mascot@2x.webp");
+}
+
+@keyframes biconnector-bitrixgpt-bi-announce-float {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+
+	50% {
+		transform: translateY(calc(var(--announce-float-rise) * -1));
+	}
+}
+
+/* Both motions are decoration: with reduced motion asked for, the scene stays the still picture. */
+@media (prefers-reduced-motion: reduce) {
+	.biconnector-bitrixgpt-bi-announce__art-layer {
+		animation: none;
+		transition: none;
+		translate: none;
+	}
+}
+
+
+.biconnector-bitrixgpt-bi-announce__header {
+	display: flex;
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-5xl) 0;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-xs);
+}
+
+.biconnector-bitrixgpt-bi-announce__title-row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.biconnector-bitrixgpt-bi-announce__title {
+	color: var(--ui-color-design-filled-content);
+}
+
+/*
+ * Brand word of the headline, filled with the BitrixGPT gradient. The angle comes from the
+ * mockup, where the gradient is set by handles: start at the top right, end at the bottom
+ * left, which is 223deg in CSS. Filling glyphs through background-clip is the way the design
+ * system paints its own branded text, so no new technique is introduced here.
+ */
+.biconnector-bitrixgpt-bi-announce__brand {
+	background: linear-gradient(
+		223deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-7) 0%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 53%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 78%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 100%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+/*
+ * The wrapper stretches to the height of the headline line box and centres the pill inside it,
+ * so the badge lines up with the title instead of sitting on its baseline. Stretching is used
+ * because the headline line-height tokens live inside the DS class and are not readable here.
+ */
+.biconnector-bitrixgpt-bi-announce__badge {
+	display: flex;
+	flex: none;
+	align-items: center;
+	align-self: stretch;
+}
+
+.biconnector-bitrixgpt-bi-announce__subtitle {
+	color: var(--ui-color-design-filled-content-secondary);
+}
+
+.biconnector-bitrixgpt-bi-announce__features {
+	display: flex;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-5xl) 0;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.biconnector-bitrixgpt-bi-announce__feature {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+}
+
+/* Translucent plate under the icon: on the filled background a bare icon loses its shape. */
+.biconnector-bitrixgpt-bi-announce__feature-icon {
+	display: flex;
+	box-sizing: border-box;
+	width: 36px;
+	height: 36px;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	background: #ffffff24;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.biconnector-bitrixgpt-bi-announce__feature-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.biconnector-bitrixgpt-bi-announce__feature-title {
+	color: var(--ui-color-design-filled-content);
+}
+
+.biconnector-bitrixgpt-bi-announce__feature-text {
+	color: var(--ui-color-design-filled-content-secondary);
+}
+
+/*
+ * Own footer instead of the dialog one: the buttons have to stand on the blue of the card,
+ * and the footer slot of the dialog lies outside its content, on the portal background.
+ */
+.biconnector-bitrixgpt-bi-announce__footer {
+	/*
+	 * The plain button takes its text from a token that resolves to dark secondary text, which
+	 * disappears on the filled card. The token is redefined for this scope only - the same hook
+	 * the design system uses itself - so no button class is restyled. Hover needs no separate
+	 * value: the air button derives --ui-btn-color-hover from the base colour.
+	 */
+	--ui-color-design-plain-content: var(--ui-color-design-filled-content-secondary);
+	display: flex;
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-5xl) var(--ui-space-inset-3xl);
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+@media (max-width: 640px) {
+	.biconnector-bitrixgpt-bi-announce__media {
+		height: 168px;
+	}
+
+	.biconnector-bitrixgpt-bi-announce__art {
+		width: 240px;
+		height: 210px;
+	}
+
+	.biconnector-bitrixgpt-bi-announce__header,
+	.biconnector-bitrixgpt-bi-announce__features,
+	.biconnector-bitrixgpt-bi-announce__footer {
+		padding-right: var(--ui-space-inset-lg);
+		padding-left: var(--ui-space-inset-lg);
+	}
+}

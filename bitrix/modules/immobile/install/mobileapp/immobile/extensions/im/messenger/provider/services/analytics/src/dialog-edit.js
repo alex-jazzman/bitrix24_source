@@ -36,9 +36,10 @@ jn.define('im/messenger/provider/services/analytics/dialog-edit', (require, expo
 				return;
 			}
 
+			const category = AnalyticsHelper.getCategoryByChat(dialogModelState);
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialogModelState.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.clickEdit)
 				.setSection(Analytics.Section.sidebar)
 				.setSubSection(Analytics.SubSection.contextMenu)
@@ -46,9 +47,13 @@ jn.define('im/messenger/provider/services/analytics/dialog-edit', (require, expo
 				.setP5(AnalyticsHelper.getFormattedChatId(dialogModelState.chatId))
 			;
 
-			if (dialogHelper.isCollab)
+			if (category === Analytics.Category.project)
 			{
-				analyticsEvent.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialogModelState.dialogId));
+				const projectId = AnalyticsHelper.getFormattedProjectId(dialogModelState);
+				if (projectId)
+				{
+					analyticsEvent.setP4(projectId);
+				}
 			}
 
 			analyticsEvent.send();
@@ -75,9 +80,10 @@ jn.define('im/messenger/provider/services/analytics/dialog-edit', (require, expo
 				return;
 			}
 
+			const category = AnalyticsHelper.getCategoryByChat(dialogModelState);
 			const analyticsEvent = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialogModelState.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.submitEdit)
 				.setSection(Analytics.Section.editor)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialogModelState))
@@ -85,9 +91,13 @@ jn.define('im/messenger/provider/services/analytics/dialog-edit', (require, expo
 				.setP5(AnalyticsHelper.getFormattedChatId(dialogModelState?.chatId))
 			;
 
-			if (dialogHelper.isCollab)
+			if (category === Analytics.Category.project)
 			{
-				analyticsEvent.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialogModelState.dialogId));
+				const projectId = AnalyticsHelper.getFormattedProjectId(dialogModelState);
+				if (projectId)
+				{
+					analyticsEvent.setP4(projectId);
+				}
 			}
 
 			analyticsEvent.send();

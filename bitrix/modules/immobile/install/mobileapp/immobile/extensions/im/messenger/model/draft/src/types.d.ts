@@ -42,6 +42,7 @@ export interface DraftModelState {
 
 export type DraftModelActions =
 	'draftModel/set'
+	| 'draftModel/setPreservingLastActivityDate'
 	| 'draftModel/setState'
 	| 'draftModel/delete'
 

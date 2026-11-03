@@ -10,7 +10,6 @@ return [
 	"lang" => "/bitrix/modules/ui/install/ui.switcher.php",
 	'rel' => [
 		'main.core',
-		'main.core.events',
 		'ui.design-tokens',
 		'ui.design-tokens.air',
 	],

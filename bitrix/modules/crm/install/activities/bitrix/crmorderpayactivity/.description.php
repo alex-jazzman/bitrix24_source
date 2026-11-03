@@ -48,5 +48,6 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setIcon(Outline::PAYMENT_TERMINAL->name)
+	->set('NODE_DESCRIPTION', Loc::getMessage('CRM_BP_OPAY_NODE_DESCRIPTION') ?? '')
 	->toArray()
 ;

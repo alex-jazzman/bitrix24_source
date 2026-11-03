@@ -2,7 +2,10 @@ import { Extension, Loc, Type } from 'main.core';
 
 import { CatalogPopup, CatalogStateMode } from './popup';
 import { MY_TAB_ID } from './constants';
+import { openCatalogAppById } from './utils/links';
 import './style.css';
+
+export { openCatalogAppById };
 
 export type TabConfig = {
 	id: string,

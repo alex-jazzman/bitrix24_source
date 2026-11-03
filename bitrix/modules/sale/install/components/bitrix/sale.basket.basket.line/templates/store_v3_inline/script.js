@@ -198,9 +198,62 @@ BitrixSmallCart.prototype = {
 	setCartBody: function (result)
 	{
 		if (this.cartElement)
+		{
+			var focusWasInside = this.cartElement.contains(document.activeElement);
 			this.cartElement.innerHTML = result.replace(/#CURRENT_URL#/g, this.currentUrl);
+			if (focusWasInside)
+			{
+				this.restoreFocus();
+			}
+			this.announceBasket();
+		}
 		if (this.fixedPosition)
 			setTimeout(this.fixAfterRenderClosure, 100);
+	},
+
+	getAccessibility: function ()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	},
+
+	restoreFocus: function ()
+	{
+		var accessibility = this.getAccessibility();
+		var options = {preventScroll: true};
+		if (accessibility && accessibility.FocusNavigator.focusBySelector(this.cartElement, 'a', options))
+		{
+			return;
+		}
+
+		// The navigator skips a link it deems invisible, and the sticky header is transparent while it fades in.
+		var link = this.cartElement.querySelector('a');
+		if (link)
+		{
+			link.focus(options);
+		}
+	},
+
+	announceBasket: function ()
+	{
+		// The header cart and the floating cart both refresh on one change; only one of them speaks for the page.
+		if (BX.Type.isUndefined(window.bxStoreV3BasketAnnouncer))
+		{
+			window.bxStoreV3BasketAnnouncer = this.cartId;
+		}
+
+		if (window.bxStoreV3BasketAnnouncer !== this.cartId)
+		{
+			return;
+		}
+
+		var accessibility = this.getAccessibility();
+		var carrier = this.cartElement.querySelector('[data-basket-announce]');
+		if (!accessibility || !carrier)
+		{
+			return;
+		}
+
+		accessibility.LiveAnnouncer.announce(carrier.dataset.basketAnnounce, 'polite');
 	},
 
 	removeItemFromCart: function (id)

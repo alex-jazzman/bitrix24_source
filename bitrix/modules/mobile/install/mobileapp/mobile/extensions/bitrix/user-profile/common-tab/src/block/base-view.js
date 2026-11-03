@@ -32,6 +32,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 	 * @function BaseViewWrapper
 	 * @param {Object} props
 	 * @param {string} [props.title]
+	 * @param {string} [props.titleTestId]
 	 * @param {Object} [props.content]
 	 * @param {string} [props.testId]
 	 * @param {Object} [props.viewMode]
@@ -42,6 +43,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 	const BaseViewWrapper = (props) => {
 		const {
 			title,
+			titleTestId,
 			content,
 			testId,
 			viewMode = ViewMode.FULL_WIDTH,
@@ -60,6 +62,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 			}
 
 			return Text4({
+				testId: titleTestId,
 				accent: true,
 				text: title,
 				color: Color.base1,
@@ -91,6 +94,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 
 	BaseViewWrapper.defaultProps = {
 		title: null,
+		titleTestId: null,
 		content: null,
 		testId: null,
 		viewMode: ViewMode.FULL_WIDTH,
@@ -100,6 +104,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 		testId: PropTypes.string.isRequired,
 		viewMode: PropTypes.oneOf([ViewMode.FULL_WIDTH, ViewMode.HALF_WIDTH]),
 		title: PropTypes.string,
+		titleTestId: PropTypes.string,
 		content: PropTypes.object,
 		onClick: PropTypes.func,
 		style: PropTypes.object,

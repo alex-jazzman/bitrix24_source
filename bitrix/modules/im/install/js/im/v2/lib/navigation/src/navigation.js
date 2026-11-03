@@ -1,13 +1,25 @@
 import { FeaturePromoter } from 'ui.info-helper';
 import { EventEmitter } from 'main.core.events';
 
-import { Layout, SliderCode, NavigationMenuItem, Path, GetParameter, EventType } from 'im.v2.const';
+import {
+	Layout,
+	SliderCode,
+	NavigationMenuItem,
+	Path,
+	GetParameter,
+	EventType,
+	type LayoutType,
+	type NavigationMenuItemType,
+} from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { PhoneManager } from 'im.v2.lib.phone';
 import { Utils } from 'im.v2.lib.utils';
 import { MarketManager } from 'im.v2.lib.market';
+
+import { getNavigationItemId } from './functions/navigation-item';
 
 export type NavigationMenuItemParams = {
 	id: string,
@@ -22,6 +34,7 @@ type LayoutParams = {
 };
 
 const customClickHandler = {
+	[NavigationMenuItem.messenger]: onMessengerClick,
 	[NavigationMenuItem.copilot]: onCopilotClick,
 	[NavigationMenuItem.call]: onCallClick,
 	[NavigationMenuItem.timemanager]: onTimeManagerClick,
@@ -54,7 +67,23 @@ export const NavigationManager = {
 
 		return isMarketMenuItem && Boolean(entityId);
 	},
+	getNavigationItemId(layoutName: LayoutType): NavigationMenuItemType | ''
+	{
+		return getNavigationItemId(layoutName);
+	},
 };
+
+function onMessengerClick(): void
+{
+	// The item has no screen of its own: it opens the same folder the messenger starts with.
+	const initialLayout = FolderManager.getDefaultLayout() ?? { name: Layout.chat };
+
+	// changeLayout() is bypassed on purpose: it forwards entityId only and would drop the
+	// starting folder kept in params.
+	EventEmitter.emit(EventType.recent.closeNestedList);
+
+	void LayoutManager.getInstance().setLayout(initialLayout);
+}
 
 function onCopilotClick(payload: NavigationMenuItemParams)
 {
@@ -190,21 +219,19 @@ function openLink({ layoutName, layoutEntityId }: LayoutParams): void
 
 function changeLayout({ layoutName, layoutEntityId }: LayoutParams)
 {
+	// The only place where a navigation menu item becomes a layout name, so the menu item of the plain
+	// chats is sent to the section where those chats live now. Everything below keeps working on the
+	// resolved name: the validity check, the last opened chat and the nested list event.
+	const targetLayoutName = layoutName === Layout.chat ? FolderManager.getRegularChatsLayout().name : layoutName;
+
 	const layoutManager = LayoutManager.getInstance();
-	if (!layoutManager.isValidLayout(layoutName))
+	if (!layoutManager.isValidLayout(targetLayoutName))
 	{
 		return;
 	}
 
-	let entityId = layoutEntityId;
-
-	const lastOpenedElement = layoutManager.getLastOpenedElement(layoutName);
-	if (!entityId && lastOpenedElement)
-	{
-		entityId = lastOpenedElement;
-	}
+	const targetLayout = layoutManager.resolveLayoutEntityId({ name: targetLayoutName, entityId: layoutEntityId });
 
 	EventEmitter.emit(EventType.recent.closeNestedList);
-
-	void layoutManager.setLayout({ name: layoutName, entityId });
+	void layoutManager.setLayout(targetLayout);
 }

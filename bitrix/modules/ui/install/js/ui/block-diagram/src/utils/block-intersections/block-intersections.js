@@ -679,25 +679,13 @@ export class BlockIntersections
 		this.#gestureConnectionsHeldIds = null;
 	}
 
-	// Nodes of the running gesture: the one being resized, the one leading a drag, the whole set
-	// the gesture registered and the source of a new connection. Empty once the gesture ends, so
-	// nothing is retained past it.
+	// Nodes of the running gesture and the source of a new connection. Every canvas gesture
+	// registers its own nodes in one place, so there is a single set to read here. Empty once the
+	// gesture ends, so nothing is retained past it.
 	#interactingBlockIds(): Set<DiagramBlockId>
 	{
 		const interactingIds = new Set();
-		const resizingId = this.#state?.resizingBlock?.id ?? null;
-		const movingId = toValue(this.#state?.movingBlockId) ?? null;
 		const gestureIds = toValue(this.#state?.gestureBlockIds) ?? null;
-
-		if (resizingId !== null)
-		{
-			interactingIds.add(resizingId);
-		}
-
-		if (movingId !== null)
-		{
-			interactingIds.add(movingId);
-		}
 
 		gestureIds?.forEach((blockId) => interactingIds.add(blockId));
 

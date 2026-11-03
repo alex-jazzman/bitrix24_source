@@ -1,6 +1,7 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
+import { getChatType } from '../helpers/get-chat-type';
 
 import {
 	AnalyticsCategory,
@@ -27,7 +28,7 @@ export class MessageDelete
 			category: AnalyticsCategory.chatPopup,
 			event: AnalyticsEvent.view,
 			type: AnalyticsType.deletedMessage,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 		});
 	}
 

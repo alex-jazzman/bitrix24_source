@@ -60,7 +60,7 @@ $MESS["MAIN_SC_GOT_ERRORS"] = "Intranet has errors. <a href=\"#LINK#\">Check and
 $MESS["MAIN_SC_MAIL_INTEGRATION"] = "External e-mail account integration is OK, but none of the users configured integration settings.";
 $MESS["MAIN_SC_MAIL_IS_NOT_INSTALLED"] = "The Mail module is not installed.";
 $MESS["MAIN_SC_MAIL_TEST"] = "E-mail notifications";
-$MESS["MAIN_SC_MCRYPT"] = "Encryption features";
+$MESS["MAIN_SC_MCRYPT"] = "Encryption features OpenSSL";
 $MESS["MAIN_SC_METHOD_NOT_SUP"] = "The server does not support the method #METHOD#.";
 $MESS["MAIN_SC_NOT_AVAIL"] = "Unavailable";
 $MESS["MAIN_SC_NOT_SUPPORTED"] = "Server does not support this feature.";

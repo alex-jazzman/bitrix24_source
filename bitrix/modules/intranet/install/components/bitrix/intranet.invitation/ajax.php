@@ -632,11 +632,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		$isCurrentUserAdmin = Intranet\CurrentUser::get()->isAdmin();
 		$settings = [
 			"REGISTER" => $allowRegister,
-			"INVITE_TOKEN_SECRET" => $request->getPost('allow_register_secret'),
 		];
 
 		if ($isCurrentUserAdmin)
 		{
+			$settings["INVITE_TOKEN_SECRET"] = $request->getPost('allow_register_secret');
 			$settings["REGISTER_CONFIRM"] = $request->getPost('allow_register_confirm');
 			$settings["REGISTER_WHITELIST"] = $request->getPost('allow_register_whitelist');
 		}
@@ -778,6 +778,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		$error = new \Bitrix\Main\Error('');
 		$checkResult = Integrator::checkPartnerEmail($_POST['integrator_email'], $error);
+		$partnerData = $checkResult->getData();
 
 		if (!$checkResult->isSuccess())
 		{
@@ -808,13 +809,14 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$this->getAnalyticsInstance()->sendInvitation(
 				$newIntegratorId,
 				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
-			true,
+				true,
 				1,
+				partnerId: (int)($partnerData['partnerId'] ?? 0),
 			);
 		}
 
 		(new PartnerInfo())->addByResponseAndUserId(
-			$checkResult->getData(),
+			$partnerData,
 			$newIntegratorId,
 		);
 
@@ -944,8 +946,14 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	 */
 	private function getDefaultDepartmentCollection(): Intranet\Entity\Collection\DepartmentCollection
 	{
+		$rootDepartment = $this->getRootDepartment();
+		if ($rootDepartment === null)
+		{
+			throw new \Bitrix\Main\ObjectNotFoundException('Available root department not found');
+		}
+
 		$departmentCollection = new Intranet\Entity\Collection\DepartmentCollection();
-		$departmentCollection->add($this->getRootDepartment());
+		$departmentCollection->add($rootDepartment);
 
 		return $departmentCollection;
 	}

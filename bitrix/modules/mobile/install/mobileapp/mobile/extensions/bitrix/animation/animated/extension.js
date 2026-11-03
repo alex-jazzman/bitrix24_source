@@ -40,6 +40,29 @@ jn.define('animation/animated', (require, exports, module) => {
 		}
 
 		/**
+		 * Plays the animations together and reports once they have all finished.
+		 * Runtimes that predate the group primitive have none of it, so a consumer that cannot afford
+		 * an exception asks isParallelSupported first.
+		 * @param {Array<JNCalculatedAnimation>} animations
+		 * @param {{ stopTogether?: boolean }} [config]
+		 * @return {JNCalculatedAnimation}
+		 */
+		static parallel(animations, config = {})
+		{
+			// eslint-disable-next-line no-undef
+			return Animated.parallel(animations, config);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		static isParallelSupported()
+		{
+			// eslint-disable-next-line no-undef
+			return typeof Animated.parallel === 'function';
+		}
+
+		/**
 		 * @param {Array<JNCalculatedAnimation>} animations
 		 * @param {StaggerConfig} config
 		 * @return {JNCalculatedAnimation}

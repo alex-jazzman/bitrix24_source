@@ -1,27 +1,8 @@
 import { AvatarRound } from 'ui.avatar';
+import { EMPTY_AVATAR_PALETTE } from './checkin-tokens';
 
-// Color palette and selection logic from layout/ui/user/empty-avatar
-const COLORS = [
-	'#df532d',
-	'#64a513',
-	'#4ba984',
-	'#4ba5c3',
-	'#3e99ce',
-	'#8474c8',
-	'#1eb4aa',
-	'#f76187',
-	'#58cc47',
-	'#ab7761',
-	'#29619b',
-	'#728f7a',
-	'#ba9c7b',
-	'#e8a441',
-	'#556574',
-	'#909090',
-	'#5e5f5e',
-];
-
-const getColor = (id) => COLORS[id % COLORS.length];
+// Palette indexing C - hash, no guard: id % len; NaN/negative gives undefined. Behavior kept as-is.
+const getColor = (id) => EMPTY_AVATAR_PALETTE[id % EMPTY_AVATAR_PALETTE.length];
 
 /**
  * Returns the outerHTML of an AvatarRound component.

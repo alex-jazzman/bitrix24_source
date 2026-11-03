@@ -13,6 +13,7 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 	} = require('layout/ui/kanban/settings');
 	const { CategoryPermissions } = require('crm/category-permissions');
 	const { CrmStageList } = require('crm/stage-list');
+	const { getFunnelSettingsPermissions } = require('crm/kanban/settings/permissions');
 
 	const { connect } = require('statemanager/redux/connect');
 	const {
@@ -86,14 +87,22 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'isDefault', false);
 		}
 
+		get configurationPermissions()
+		{
+			return getFunnelSettingsPermissions(this.props);
+		}
+
 		componentDidMount()
 		{
-			if (this.stageIdsBySemantics.processStages.length === 0 && Number.isInteger(this.categoryId))
+			// the capabilities of the screen are asked again every time it opens: the cached funnel
+			// draws it at once, but only a fresh answer decides what may be changed
+			if (Number.isInteger(this.categoryId))
 			{
 				this.navigationLoader.setLoading(true);
 				this.props.fetchCrmKanban({
 					entityTypeId: this.entityTypeId,
 					categoryId: this.categoryId,
+					forceFetch: true,
 				}).then(() => {
 					this.navigationLoader.setLoading(false);
 				}).catch(() => {
@@ -105,39 +114,79 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 			super.componentDidMount();
 		}
 
+		componentDidUpdate(prevProps)
+		{
+			const wasManagingFunnel = getFunnelSettingsPermissions(prevProps).canManageFunnel;
+
+			// the navigation is built once on mount, off the funnel the cache drew the screen with,
+			// so the fresh answer gets to take the funnel removal away or to give it back. Every
+			// other update - the reorder of the stages included - leaves the navigation as it is
+			if (wasManagingFunnel !== this.configurationPermissions.canManageFunnel)
+			{
+				this.initNavigation();
+			}
+		}
+
+		initNavigation()
+		{
+			super.initNavigation();
+
+			// the base class puts the funnel removal into the navigation for every funnel but the
+			// default one, and only managing funnels grants it
+			if (this.layout && !this.configurationPermissions.canManageFunnel)
+			{
+				this.layout.setRightButtons([]);
+			}
+		}
+
 		renderStageList()
 		{
+			const { canOpenStageCard, canReorderStages } = this.configurationPermissions;
+
 			return new CrmStageList({
 				tunnels: this.tunnels,
-				readOnly: false,
-				canMoveStages: true,
+				readOnly: !canOpenStageCard,
+				canMoveStages: canReorderStages,
 				stageParams: {
 					showTunnels: this.tunnelsEnabled,
 				},
-				onStageMove: (processStages) => {
-					this.changedFields = {
-						...this.changedFields,
-						stageIdsBySemantics: {
-							...this.stageIdsBySemantics,
-							processStages,
-						},
-					};
-					this.setState({});
-				},
+				onStageMove: canReorderStages ? (processStages) => this.changeStageOrder(processStages) : null,
 				onOpenStageDetail: this.onOpenStageDetail,
 				kanbanSettingsId: this.kanbanSettingsId,
 				stageIdsBySemantics: this.changedFields.stageIdsBySemantics || this.stageIdsBySemantics,
 			});
 		}
 
+		changeStageOrder(processStages)
+		{
+			this.changedFields = {
+				...this.changedFields,
+				stageIdsBySemantics: {
+					...this.stageIdsBySemantics,
+					processStages,
+				},
+			};
+			this.setState({});
+		}
+
 		renderCategoryName()
 		{
-			if (!this.categoriesEnabled)
+			if (!this.configurationPermissions.canManageFunnel)
 			{
 				return null;
 			}
 
 			return super.renderCategoryName();
+		}
+
+		renderStageButtons()
+		{
+			if (!this.configurationPermissions.canManageStages)
+			{
+				return null;
+			}
+
+			return super.renderStageButtons();
 		}
 
 		renderDeleteButton()
@@ -200,6 +249,11 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 
 		renderPermissions()
 		{
+			if (!this.configurationPermissions.canManageCategoryAccess)
+			{
+				return null;
+			}
+
 			return new CategoryPermissions({
 				access: this.access,
 				categoriesEnabled: this.categoriesEnabled,
@@ -369,9 +423,15 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 			access,
 			documentFields,
 			tunnelsEnabled,
+			categoriesSupported,
 			categoriesEnabled,
 			tunnels,
 			isDefault,
+			editable,
+			canManageFunnels,
+			canManageStages,
+			canManageTunnels,
+			canManageCategoryAccess,
 		} = selectById(state, ownProps.kanbanSettingsId) || {};
 
 		return {
@@ -380,8 +440,14 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 			access,
 			documentFields,
 			tunnelsEnabled,
+			categoriesSupported,
 			categoriesEnabled,
 			tunnels,
+			editable,
+			canManageFunnels,
+			canManageStages,
+			canManageTunnels,
+			canManageCategoryAccess,
 			status: selectStatus(state),
 			stageIdsBySemantics: selectStagesIdsBySemantics(state, ownProps.kanbanSettingsId),
 			isDefault,

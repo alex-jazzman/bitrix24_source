@@ -5,6 +5,8 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Alert, confirmClosing } = require('alert');
 	const { Indent } = require('tokens');
+	const { Type } = require('type');
+	const { addSubFolderByUnifiedLink } = require('disk/opener/unified-link/rest');
 
 	const { StringInput, InputDesign, InputMode } = require('ui-system/form/inputs/string');
 
@@ -143,15 +145,10 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 				pending: true,
 			});
 
-			const data = {
-				id: this.props.parentFolderId,
-				name: this.state.name,
-			};
-
-			BX.ajax.runAction('disk.api.folder.addSubFolder', { data })
+			this.#createFolder()
 				.then((response) => {
 					this.#closeWithoutConfirm();
-					this.props.onCreate?.(response?.data?.folder);
+					this.props.onCreate?.(response?.data?.folder ?? response?.data?.object);
 				})
 				.catch((err) => {
 					console.error(err);
@@ -171,9 +168,27 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 				});
 		};
 
+		#createFolder()
+		{
+			const { parentFolderId, uniqueCode } = this.props;
+
+			if (Type.isStringFilled(uniqueCode))
+			{
+				return addSubFolderByUnifiedLink(uniqueCode, this.state.name);
+			}
+
+			return BX.ajax.runAction('disk.api.folder.addSubFolder', {
+				data: {
+					id: parentFolderId,
+					name: this.state.name,
+				},
+			});
+		}
+
 		/**
 		 * @param {Object} data
 		 * @param {string} data.parentFolderId
+		 * @param {string} [data.uniqueCode]
 		 * @param {Function} [data.onCreate]
 		 * @param {LayoutWidget} parentWidget
 		 */

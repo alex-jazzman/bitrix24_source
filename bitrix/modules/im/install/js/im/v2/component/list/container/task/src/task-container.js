@@ -1,11 +1,14 @@
-import { Event, type JsonObject } from 'main.core';
+import { Event, Text, type JsonObject } from 'main.core';
+import { computed } from 'ui.vue3';
 
 import { TaskList, TaskUnreadList } from 'im.v2.component.list.items.task';
 import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
+import { FilterRow, FilterMode, type FilterModeItem } from 'im.v2.component.list.container.elements.filter-row';
 import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
 import { Layout, RecentType, type LayoutType, ParentChatScope } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
+import { Analytics, AnalyticsSection } from 'im.v2.lib.analytics';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelLayout } from 'im.v2.model';
 import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
@@ -15,11 +18,32 @@ import './css/task-container.css';
 // @vue/component
 export const TaskListContainer = {
 	name: 'TaskListContainer',
-	components: { TaskList, HeaderMenu, ChatSearchInput, RecentSearch, TaskUnreadList, CreateChatButton },
+	components: {
+		TaskList,
+		HeaderMenu,
+		ChatSearchInput,
+		FilterRow,
+		RecentSearch,
+		TaskUnreadList,
+		CreateChatButton,
+	},
+	provide(): { avatarsOnly: boolean }
+	{
+		return {
+			avatarsOnly: computed(() => this.avatarsOnly),
+		};
+	},
+	props: {
+		avatarsOnly: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
+			searchAreaId: Text.getRandom(),
 			searchMode: false,
 			unreadMode: false,
 			searchQuery: '',
@@ -36,6 +60,18 @@ export const TaskListContainer = {
 		layoutName(): LayoutType
 		{
 			return this.layout.name;
+		},
+		isShellNavigationAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isChatShellNavigationWebAvailable);
+		},
+		filterMode(): FilterModeItem
+		{
+			return this.unreadMode ? FilterMode.unread : FilterMode.all;
+		},
+		unreadCounter(): number
+		{
+			return this.$store.getters['counters/getTotalTaskCounter'];
 		},
 	},
 	created()
@@ -55,7 +91,7 @@ export const TaskListContainer = {
 		},
 		onCreateClick(): void
 		{
-			(new EntityCreator()).openTaskCreationForm();
+			void (new EntityCreator()).openTaskCreationFormInTaskChats();
 		},
 		onOpenSearch()
 		{
@@ -105,15 +141,24 @@ export const TaskListContainer = {
 		{
 			this.unreadMode = !this.unreadMode;
 		},
+		onChangeFilterMode(mode: FilterModeItem)
+		{
+			this.unreadMode = mode === FilterMode.unread;
+			if (this.unreadMode)
+			{
+				Analytics.getInstance().recentHeaderMenu.onOpenTasksUnreadMode(AnalyticsSection.filterRow);
+			}
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
-		<div class="bx-im-list-container-task__container" ref="task-container">
-			<div class="bx-im-list-container-task__header_container">
+		<div class="bx-im-list-container-task__container" data-testid="im-list-task" ref="task-container">
+			<div class="bx-im-list-container-task__header_container" :class="{ '--with-filter-row': isShellNavigationAvailable }">
 				<HeaderMenu
+					v-if="!isShellNavigationAvailable"
 					:unreadMode="unreadMode"
 					:recentSection="RecentType.taskComments"
 					@toggleUnreadMode="onToggleUnreadMode"
@@ -123,6 +168,8 @@ export const TaskListContainer = {
 						:searchMode="searchMode"
 						:isLoading="searchMode && isSearchLoading"
 						:placeholder="loc('IM_LIST_CONTAINER_TASK_SEARCH_INPUT_PLACEHOLDER')"
+						:activateOnEnter="true"
+						:searchAreaId="searchAreaId"
 						@openSearch="onOpenSearch"
 						@closeSearch="onCloseRecentSearch"
 						@updateSearch="onUpdateSearch"
@@ -130,6 +177,13 @@ export const TaskListContainer = {
 				</div>
 				<CreateChatButton @click="onCreateClick" />
 			</div>
+			<FilterRow
+				v-if="isShellNavigationAvailable"
+				:mode="filterMode"
+				:counter="unreadCounter"
+				:readAllSection="RecentType.taskComments"
+				@changeMode="onChangeFilterMode"
+			/>
 			<div class="bx-im-list-container-task__elements_container">
 				<div class="bx-im-list-container-task__elements">
 					<RecentSearch
@@ -139,6 +193,8 @@ export const TaskListContainer = {
 						:parentChatId="ParentChatScope.all"
 						:showUsersCarousel="false"
 						:recentSectionType="RecentType.taskComments"
+						:withKeyboardNavigation="true"
+						:searchAreaId="searchAreaId"
 						@loading="onLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"

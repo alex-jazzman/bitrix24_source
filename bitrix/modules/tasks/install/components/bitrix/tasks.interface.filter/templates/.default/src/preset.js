@@ -1,5 +1,5 @@
 import { Guide } from 'ui.tour';
-import { ajax, Loc } from 'main.core';
+import { ajax, Dom, Loc } from 'main.core';
 
 type Options = {
 	filterId: number,
@@ -60,6 +60,7 @@ export class Preset
 		});
 
 		this.guide.getPopup().setWidth(420);
+		Dom.addClass(this.guide.getPopup().getPopupContainer(), 'tasks-interface-filter-popup-adaptive');
 
 		return this;
 	}

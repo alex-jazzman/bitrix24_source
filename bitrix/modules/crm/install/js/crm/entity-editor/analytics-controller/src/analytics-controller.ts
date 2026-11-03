@@ -6,6 +6,7 @@ export class EntityEditorAnalyticsController extends BX.UI.EntityEditorControlle
 	formBeforeSubmitHandler: (ajaxForm: any, eventArgs: any) => void;
 	postFormAnalytics: Record<string, any> = {};
 	appendParamsFromCurrentUrl: boolean = true;
+	kanbanCreateOrigin: string = '';
 
 	constructor()
 	{
@@ -29,6 +30,10 @@ export class EntityEditorAnalyticsController extends BX.UI.EntityEditorControlle
 			BX.Type.isBoolean(config?.appendParamsFromCurrentUrl)
 				? config.appendParamsFromCurrentUrl
 				: true
+		;
+		this.kanbanCreateOrigin = BX.Type.isStringFilled(config?.kanbanCreateOrigin)
+			? config.kanbanCreateOrigin
+			: ''
 		;
 	}
 
@@ -123,7 +128,8 @@ export class EntityEditorAnalyticsController extends BX.UI.EntityEditorControlle
 			analytics = BX.Runtime.merge(analytics, this.postFormAnalytics);
 		}
 
-		if (Object.keys(analytics).length === 0)
+		const saveAnalyticsData = this.#buildSaveAnalyticsData(analytics);
+		if (Object.keys(saveAnalyticsData).length === 0)
 		{
 			return;
 		}
@@ -142,7 +148,9 @@ export class EntityEditorAnalyticsController extends BX.UI.EntityEditorControlle
 			{
 				eventArgs.options.data = {};
 			}
-			eventArgs.options.data.ANALYTICS = analytics;
+
+			const eventOptions = eventArgs.options;
+			Object.assign(eventOptions.data, saveAnalyticsData);
 		}
 		else if (isAjaxForm)
 		{
@@ -154,8 +162,26 @@ export class EntityEditorAnalyticsController extends BX.UI.EntityEditorControlle
 			{
 				ajaxForm._config.data = {};
 			}
-			ajaxForm._config.data.ANALYTICS = analytics;
+
+			const ajaxFormConfig = Reflect.get(ajaxForm, '_config');
+			Object.assign(ajaxFormConfig.data, saveAnalyticsData);
 		}
+	}
+
+	#buildSaveAnalyticsData(analytics: Record<string, any>): Record<string, any>
+	{
+		const data: Record<string, any> = {};
+		if (Object.keys(analytics).length > 0)
+		{
+			data.ANALYTICS = analytics;
+		}
+
+		if (this.kanbanCreateOrigin !== '')
+		{
+			data.KANBAN_CREATE_ORIGIN = this.kanbanCreateOrigin;
+		}
+
+		return data;
 	}
 
 	release(): void

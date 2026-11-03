@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CMain $APPLICATION */
 /** @var LandingEditComponent $component */
 
+use Bitrix\Landing\Copilot\Services\NameService;
 use Bitrix\Landing\Domain;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Restriction;
@@ -219,6 +220,7 @@ elseif ($isVibeEditor)
 		<?php endif;?>
 		BX.Landing.Env.createInstance({
  			site_id: '<?= CUtil::jsEscape((string)$row['SITE_ID']['CURRENT']) ?>',
+			copilot_name: <?= CUtil::PhpToJSObject(NameService::getCopilotName()) ?>,
 			params: {
 				type: '<?= CUtil::jsEscape((string)$arParams['TYPE']) ?>',
 			},
@@ -280,7 +282,7 @@ if ($arParams['SUCCESS_SAVE'])
 		</div>
 
 		<div class="ui-form ui-form-section">
-			<!--Adress-->
+			<!--Address-->
 			<div class="ui-form-row">
 				<div class="ui-form-label">
 					<div class="ui-ctl-label-text" id="<?= $template->getFieldId('CODE_LABEL') ?>">

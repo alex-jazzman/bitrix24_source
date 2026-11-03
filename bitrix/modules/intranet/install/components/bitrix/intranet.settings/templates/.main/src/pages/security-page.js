@@ -1,4 +1,4 @@
-import { ajax as Ajax, Loc, Tag, Event, Dom, Type} from 'main.core';
+import { ajax as Ajax, Loc, Tag, Text, Event, Dom, Type} from 'main.core';
 import 'ui.forms';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
@@ -7,16 +7,24 @@ import { Section, Row, SeparatorRow } from 'ui.section';
 import { Checker, Selector, SingleChecker, UserSelector, TextInput, FieldFactory } from 'ui.form-elements.view';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Popup } from 'main.popup';
-import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage, ErrorCollection, DescriptionField } from 'ui.form-elements.field';
+import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage, ErrorCollection } from 'ui.form-elements.field';
 import { PushOtp } from 'intranet.notify-banner.push-otp';
 import { AirButtonStyle, Button, CloseButton } from "ui.buttons";
 import {MessageBox} from "ui.dialogs.messagebox";
+import { OtpDisableConfirm } from './otp-disable-confirm';
+
+const OTP_PERIOD_HINT_TEST_ID = 'intranet-settings-security-otp-period-hint';
+const OTP_DISABLED_BY_TEST_ID = 'intranet-settings-security-otp-disabled-by-note';
+const OTP_SWITCHER_TEST_ID = 'intranet-settings-security-otp-switcher';
+const OTP_PERIOD_SELECTOR_TEST_ID = 'intranet-settings-security-otp-period-selector';
 
 export class SecurityPage extends BaseSettingsPage
 {
 	#otpChecker: ?Checker;
 	#otpSelector: ?Selector;
 	#otpPopup: ?Popup;
+	#otpDisableConfirm: ?OtpDisableConfirm;
+	#otpPeriodHintId: string = `intranet-settings-otp-period-hint-${Text.getRandom().toLowerCase()}`;
 
 	constructor()
 	{
@@ -76,9 +84,16 @@ export class SecurityPage extends BaseSettingsPage
 			parent: section,
 		});
 
+		let securityOtpCheckerRow = null;
+		let securityOtpPeriodSelectorRow = null;
+		let securityOtpDisabledByRow = null;
+		let securityOtpPeriodHintRow = null;
+
 		if (this.hasValue('SECURITY_OTP'))
 		{
-			const securityOtpCheckerRow = new Row({
+			Dom.attr(this.#getOTPChecker().getInputNode(), 'data-testid', OTP_SWITCHER_TEST_ID);
+
+			securityOtpCheckerRow = new Row({
 				content: this.#getOTPChecker().render(),
 				separator: this.#getOTPChecker().isChecked() ? '' : 'bottom',
 				className: this.#getOTPChecker().isChecked() ? '' : '--block',
@@ -88,7 +103,26 @@ export class SecurityPage extends BaseSettingsPage
 				parent: section,
 			});
 
-			const securityOtpPeriodSelectorRow = new Row({
+			const disabledByText = this.#getOTPDisabledByText();
+
+			if (disabledByText !== null)
+			{
+				securityOtpDisabledByRow = new Row({
+					content: this.#createOTPNoteAlert(disabledByText, OTP_DISABLED_BY_TEST_ID).getContainer(),
+				});
+				new SettingsRow({
+					row: securityOtpDisabledByRow,
+					parent: section,
+				});
+			}
+
+			Dom.attr(
+				this.#getOTPPeriodSelector().getInputNode(),
+				'data-testid',
+				OTP_PERIOD_SELECTOR_TEST_ID,
+			);
+
+			securityOtpPeriodSelectorRow = new Row({
 				content: this.#getOTPPeriodSelector().render(),
 				isHidden: !this.#getOTPChecker().isChecked(),
 			});
@@ -96,6 +130,49 @@ export class SecurityPage extends BaseSettingsPage
 				row: securityOtpPeriodSelectorRow,
 				parent: section,
 			});
+
+			const otpPeriodHintNode = this.#createOTPNoteAlert(
+				Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_OTP_SWITCHING_PERIOD'),
+				OTP_PERIOD_HINT_TEST_ID,
+			).getContainer();
+			Dom.attr(otpPeriodHintNode, 'id', this.#otpPeriodHintId);
+
+			securityOtpPeriodHintRow = new Row({
+				content: otpPeriodHintNode,
+				isHidden: !this.#getOTPChecker().isChecked(),
+			});
+			new SettingsRow({
+				row: securityOtpPeriodHintRow,
+				parent: section,
+			});
+			this.#describeOTPPeriodSelector(this.#getOTPChecker().isChecked());
+		}
+
+		if (this.hasValue('fieldAllowSkipDeviceConnect'))
+		{
+			const allowSkipDeviceConnectChecker = new Checker(this.getValue('fieldAllowSkipDeviceConnect'));
+			const allowSkipDeviceConnectRow = new Row({
+				content: allowSkipDeviceConnectChecker.render(),
+			});
+			new SettingsRow({
+				row: allowSkipDeviceConnectRow,
+				parent: section,
+			});
+		}
+
+		if (this.hasValue('fieldSecurityOtpEmailFrom'))
+		{
+			const otpEmailFrom = new TextInput(this.getValue('fieldSecurityOtpEmailFrom'));
+			new SettingsRow({
+				parent: section,
+				child: new SettingsField({
+					fieldView: otpEmailFrom,
+				}),
+			});
+		}
+
+		if (this.hasValue('SECURITY_OTP'))
+		{
 			let securityOtpMessageChatCheckerRow = null;
 
 			if (this.hasValue('SEND_OTP_PUSH'))
@@ -199,33 +276,83 @@ export class SecurityPage extends BaseSettingsPage
 					{
 						this.#getOTPPopup().show();
 						this.#getOTPChecker().cancel();
-						this.#getOTPChecker().switcher.check(false);
+						this.#getOTPChecker().switcher.check(false, false);
+						this.#getOTPChecker().switcher.inputNode?.form?.dispatchEvent(new window.Event('change'));
+
+						return;
+					}
+
+					if (!this.#getOTPChecker().isChecked())
+					{
+						this.#getOTPDisableConfirm().confirm().then((isConfirmed) => {
+							if (!isConfirmed)
+							{
+								return;
+							}
+
+							if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED'))
+							{
+								this.getAnalytic()?.addEventToggle2fa(false);
+							}
+
+							const rowsToHide = [
+								securityOtpPeriodSelectorRow,
+								securityOtpPeriodHintRow,
+								securityOtpMessageChatCheckerRow,
+							].filter((row) => row !== null);
+
+							Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
+							this.#moveFocusFromRows(rowsToHide, securityOtpCheckerRow.render());
+							rowsToHide.forEach((row) => row.hide());
+							securityOtpDisabledByRow?.show();
+							this.#describeOTPPeriodSelector(false);
+						});
 
 						return;
 					}
 
 					if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED'))
 					{
-						this.getAnalytic()?.addEventToggle2fa(this.#getOTPChecker().isChecked());
+						this.getAnalytic()?.addEventToggle2fa(true);
 					}
 
-					if (this.#getOTPChecker().isChecked())
-					{
-						Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
-						securityOtpPeriodSelectorRow.show();
-						securityOtpMessageChatCheckerRow?.show();
-					}
-					else
-					{
-						Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
-						securityOtpPeriodSelectorRow.hide();
-						securityOtpMessageChatCheckerRow?.hide();
-					}
+					Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
+					securityOtpDisabledByRow?.hide();
+					securityOtpPeriodSelectorRow.show();
+					securityOtpPeriodHintRow.show();
+					securityOtpMessageChatCheckerRow?.show();
+					this.#describeOTPPeriodSelector(true);
 				},
 			);
 		}
 
 		return section;
+	}
+
+	#describeOTPPeriodSelector(isHintVisible: boolean): void
+	{
+		Dom.attr(
+			this.#getOTPPeriodSelector().getInputNode(),
+			'aria-describedby',
+			isHintVisible ? this.#otpPeriodHintId : null,
+		);
+	}
+
+	#moveFocusFromRows(rows: Row[], targetNode: HTMLElement): void
+	{
+		const activeNode = document.activeElement;
+		if (!Type.isDomNode(activeNode) || !rows.some((row) => row.render().contains(activeNode)))
+		{
+			return;
+		}
+
+		Dom.attr(targetNode, 'tabindex', '-1');
+		targetNode.addEventListener(
+			'focusout',
+			() => Dom.attr(targetNode, 'tabindex', null),
+			{ once: true },
+		);
+		targetNode.focus({ preventScroll: true });
 	}
 
 	#getOTPChecker(): Checker
@@ -301,6 +428,18 @@ export class SecurityPage extends BaseSettingsPage
 		return this.#otpPopup;
 	}
 
+	#getOTPDisableConfirm(): OtpDisableConfirm
+	{
+		if (this.#otpDisableConfirm instanceof OtpDisableConfirm)
+		{
+			return this.#otpDisableConfirm;
+		}
+
+		this.#otpDisableConfirm = new OtpDisableConfirm(this.#getOTPChecker());
+
+		return this.#otpDisableConfirm;
+	}
+
 	#getOTPPeriodSelector(): Selector
 	{
 		if (this.#otpSelector instanceof Selector)
@@ -316,6 +455,44 @@ export class SecurityPage extends BaseSettingsPage
 		});
 
 		return this.#otpSelector;
+	}
+
+	#getOTPDisabledByText(): ?string
+	{
+		if (!this.hasValue('SECURITY_OTP_DISABLED_BY'))
+		{
+			return null;
+		}
+
+		const disabledBy = this.getValue('SECURITY_OTP_DISABLED_BY');
+		const userName = Text.encode(disabledBy.USER_NAME ?? '');
+		const date = Text.encode(disabledBy.DATE ?? '');
+
+		if (userName === '')
+		{
+			return Loc.getMessage('INTRANET_SETTINGS_SECURITY_OTP_DISABLED_BY_UNKNOWN_USER', {
+				'#DATE#': date,
+			});
+		}
+
+		return Loc.getMessage('INTRANET_SETTINGS_SECURITY_OTP_DISABLED_BY', {
+			'#DATE#': date,
+			'#USER_NAME#': userName,
+		});
+	}
+
+	#createOTPNoteAlert(text: string, testId: string): BX.UI.Alert
+	{
+		const alert = new BX.UI.Alert({
+			text,
+			inline: true,
+			size: BX.UI.Alert.Size.SMALL,
+			color: BX.UI.Alert.Color.PRIMARY,
+			animated: true,
+		});
+		Dom.attr(alert.getContainer(), 'data-testid', testId);
+
+		return alert;
 	}
 
 	#getOTPDescription(): BX.UI.Alert

@@ -11,7 +11,7 @@ type Params = {
 	targetNode: HTMLElement,
 	taskId: TaskId,
 	withTemplates: boolean,
-	onUpdate: Function,
+	onClose: Function,
 };
 
 const dialogs: { [taskId: TaskId]: EntitySelectorDialog } = {};
@@ -20,14 +20,14 @@ export const parentTaskDialog = new class
 {
 	#taskId: TaskId;
 	#withTemplates: boolean;
-	#onUpdate: Function;
+	#onClose: Function;
 	#templateEntity: Object;
 
 	show(params: Params): void
 	{
 		this.#taskId = params.taskId;
 		this.#withTemplates = params.withTemplates ?? true;
-		this.#onUpdate = params.onClose;
+		this.#onClose = params.onClose;
 
 		this.#dialog.selectItemsByIds(this.#items);
 		this.#dialog.showTo(params.targetNode);
@@ -73,6 +73,13 @@ export const parentTaskDialog = new class
 				'Item:onSelect': onItemChange,
 				'Item:onDeselect': onItemChange,
 			},
+			popupOptions: {
+				events: {
+					onClose: (): void => {
+						this.#onClose?.();
+					},
+				},
+			},
 		});
 	}
 
@@ -87,11 +94,7 @@ export const parentTaskDialog = new class
 		if (error)
 		{
 			void relationError.setTaskId(this.#taskId).showError(error, TaskField.Parent);
-
-			return;
 		}
-
-		this.#onUpdate?.();
 	}
 
 	#updateTemplatesVisibility = (): void => {

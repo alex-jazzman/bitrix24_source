@@ -17,49 +17,71 @@ export class UpdatesContent extends Content
 	getLayout(): HTMLElement
 	{
 		return this.cache.remember('layout', () => {
-			const onclick = this.getOptions().isAdminRestricted
-				? (event) => {
-					event.preventDefault();
-					AdminRestrictedPopup.show(event.target);
-				}
-				: () => {
-					window.open(this.getOptions().link, '_blank');
+			if (this.getOptions().isAdminRestricted)
+			{
+				const onclick = (event) => {
+					AdminRestrictedPopup.show(event.currentTarget);
 				};
 
+				return Tag.render`
+					<button
+						type="button"
+						onclick="${onclick}"
+						data-id="license-widget-block-whatsnew"
+						class="license-widget-item license-widget-item--secondary --pointer"
+					>
+						${this.#getLayoutContent()}
+					</button>
+				`;
+			}
+
 			return Tag.render`
-				<div onclick="${onclick}" data-id="license-widget-block-whatsnew" class="license-widget-item license-widget-item--secondary --pointer">
-					<div class="license-widget-inner">
-						<div class="license-widget-content">
-							${this.getMainIcon()}
-							<div class="license-widget-item-content">
-								${this.getTitle()}
-							</div>
-						</div>
-						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
-					</div>
-				</div>
+				<a
+					href="${this.getOptions().link}"
+					target="_blank"
+					rel="noopener noreferrer"
+					data-id="license-widget-block-whatsnew"
+					class="license-widget-item license-widget-item--secondary --pointer"
+				>
+					${this.#getLayoutContent()}
+				</a>
 			`;
 		});
 	}
 
-	getMainIcon(): HTMLDivElement
+	#getLayoutContent(): HTMLElement
+	{
+		return Tag.render`
+			<span class="license-widget-inner">
+				<span class="license-widget-content">
+					${this.getMainIcon()}
+					<span class="license-widget-item-content">
+						${this.getTitle()}
+					</span>
+				</span>
+				<span class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</span>
+		`;
+	}
+
+	getMainIcon(): HTMLSpanElement
 	{
 		return this.cache.remember('main-icon', () => {
 			return Tag.render`
-				<div class="license-widget-item-icon license-widget-item-icon--updates"></div>
+				<span class="license-widget-item-icon license-widget-item-icon--updates" aria-hidden="true"></span>
 			`;
 		});
 	}
 
-	getTitle(): HTMLDivElement
+	getTitle(): HTMLSpanElement
 	{
 		return this.cache.remember('title', () => {
 			return Tag.render`
-				<div class="license-widget-item-name">
+				<span class="license-widget-item-name">
 					<span>
 						${this.getOptions().title}
 					</span>
-				</div>
+				</span>
 			`;
 		});
 	}

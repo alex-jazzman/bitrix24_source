@@ -19,7 +19,7 @@ export const DatePlanDate = {
 	},
 	template: `
 		<div>
-			<HoverPill textOnly readonly>
+			<HoverPill textOnly readonly :withTabStop="false">
 				<div>{{ calendar.formatDateTime(dateTs, { forceYear: true }) }}</div>
 			</HoverPill>
 		</div>

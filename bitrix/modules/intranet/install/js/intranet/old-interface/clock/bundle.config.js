@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/clock.bundle.js',
 	namespace: 'BX.Intranet.Bitrix24',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

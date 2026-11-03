@@ -4,9 +4,13 @@
 jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Random } = require('utils/random');
-	const { ItemTextField } = require('tasks/layout/checklist/list/src/text-field');
+	const { debounce } = require('utils/function');
+	const { ItemTextField } = require('tasks/layout/checklist/list/text-field');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
+	const { ItemPresenter } = require('tasks/layout/checklist/presenter');
 	const { confirmDestructiveAction } = require('alert');
+
+	const TITLE_DISPATCH_DELAY = 300;
 
 	class BaseChecklistItem extends LayoutComponent
 	{
@@ -19,6 +23,11 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			this.textRef = null;
 			/** @type {Object | null} */
 			this.attachmentsRef = null;
+			/** @type {string | null} */
+			this.pendingTitle = null;
+
+			this.flushTitle = this.flushTitle.bind(this);
+			this.scheduleTitleDispatch = debounce(this.flushTitle, TITLE_DISPATCH_DELAY, this);
 
 			this.handleOnBlur = this.handleOnBlur.bind(this);
 			this.handleOnFocus = this.handleOnFocus.bind(this);
@@ -49,7 +58,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 
 			return ChecklistItemView({
 				testId: this.getTestId(`depth-${item.getDepth()}`),
-				divider: !item.isFirstListDescendant(),
+				divider: !ItemPresenter.isFirstListDescendant(item),
 				...itemProps,
 			});
 		}
@@ -94,7 +103,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		/**
 		 * @protected
 		 * @abstract
-		 * @param {CheckListFlatTreeItem} item
+		 * @param {ChecklistItemView} item
 		 */
 		getPlaceholder(item)
 		{
@@ -108,13 +117,33 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		 */
 		handleOnChangeTitle(title, isFocused, shouldSave = true)
 		{
-			const { item } = this.props;
+			// while the field is focused it renders its own buffer, so the store may lag behind it.
+			// A dispatch per character is expensive: the state-sync middleware deep-compares the whole
+			// store and broadcasts the action to every JS context on each one.
+			this.pendingTitle = title;
+			this.scheduleTitleDispatch();
 
-			item.setTitle(title);
-			item.setIsNew(false);
-			const skipSaving = isFocused && !title;
+			// do not save during typing: reconciliation would overwrite the edited title
+			this.handleOnChange(false);
+		}
 
-			this.handleOnChange(shouldSave && !skipSaving);
+		/**
+		 * Pushes the typed title into the store right away. Called before anything that reads the title
+		 * from the store - a blur, a submit or a removal - and by the debounce in between.
+		 *
+		 * @return {void}
+		 */
+		flushTitle()
+		{
+			if (this.pendingTitle === null)
+			{
+				return;
+			}
+
+			const title = this.pendingTitle;
+			this.pendingTitle = null;
+
+			this.props.item.setTitle(title);
 		}
 
 		/** @param {boolean} [shouldSave] */
@@ -144,6 +173,8 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		{
 			const { onBlur, item } = this.props;
 
+			this.flushTitle();
+
 			if (onBlur)
 			{
 				onBlur({ item });
@@ -154,6 +185,8 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		handleOnSubmit()
 		{
 			const { onSubmit, item } = this.props;
+
+			this.flushTitle();
 
 			if (onSubmit)
 			{
@@ -174,7 +207,11 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 
 		handleOnRemove = () => {
 			const { item, onRemove, onBlur } = this.props;
-			const removeAction = item.hasItemTitle() ? onRemove : onBlur;
+
+			// the branch below asks the store whether the item has a title
+			this.flushTitle();
+
+			const removeAction = item.hasTitle() ? onRemove : onBlur;
 
 			const remove = (forceDelete) => {
 				if (removeAction)
@@ -266,6 +303,10 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		 */
 		syncTitleText(shouldSave = true, force = false)
 		{
+			// the close flow calls this instead of blurring the field, so the debounced title
+			// has to be pushed out here as well
+			this.flushTitle();
+
 			return Boolean(this.textRef?.syncTextValue?.(shouldSave, force));
 		}
 
@@ -291,7 +332,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		{
 			const { item } = this.props;
 
-			return item.checkCanUpdate();
+			return item.canEdit();
 		}
 
 		/** @return {boolean} */
@@ -299,7 +340,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		{
 			const { item } = this.props;
 
-			return item.checkCanRemove();
+			return item.canRemove();
 		}
 	}
 

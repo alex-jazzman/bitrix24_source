@@ -47,7 +47,7 @@ $MESS["SERVICES_INFO2"] = "<br />
   <table cellspacing='1' cellpadding='1' border='0' style='border-collapse: collapse;'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/main.png', 1039, 705, 'Добавленные сотрудники')\" ><img width='500' height='339' border='0' src='#SITE#images/ru/docs/main_sm.png' alt='Добавленные сотрудники' title='Добавленные сотрудники'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/main.webp', 1039, 705, 'Добавленные сотрудники')\" ><img width='500' height='339' border='0' src='#SITE#images/ru/docs/main_sm.webp' alt='Добавленные сотрудники' title='Добавленные сотрудники'  /> </a>
             <br />
            </div>
 
@@ -67,13 +67,13 @@ $MESS["SERVICES_INFO2"] = "<br />
 <p>Вы можете синхронизировать с календарями MS Outlook <b>любые календари</b> на Портале: свои персональные, календари сотрудников или общие календари компании. Попробуйте сделать это прямо сейчас! Перейти на страницу с одним из календарей, выбрать из меню действий <b>&lt;Соединить с Outlook&gt;</b> и запустить процесс синхронизации!
 </p>
 
-<p><div align='center'><img width='302' height='244' border='0' src='#SITE#images/ru/docs/go_to.png'  />
+<p><div align='center'><img width='302' height='244' border='0' src='#SITE#images/ru/docs/go_to.webp'  />
   <br />
  <i>Соединить с Outlook!</i></div></p>
 
 <p>Не обращайте особого внимания на сообщения MS Outlook и просто соглашайтесь с ними, поскольку они в большинстве своем информационного характера. К примеру, появится на экране вопрос-предупреждение: <b>&lt;Подключить к Outlook папку &quot;SharePoint&quot; Календарь?&gt;</b> - смело жмите кнопку <b>&lt;Да&gt;</b>. Почему? Да потому что интеграция эта выполнена в полном соответствии со спецификацией корпорации Microsoft и ни каких проблем быть не может! </p>
 
-<p><div align='center'><img width='482' height='202' src='#SITE#images/ru/docs/step1.png'  />  </div></p>
+<p><div align='center'><img width='482' height='202' src='#SITE#images/ru/docs/step1.webp'  />  </div></p>
 
 <p>В принципе, можно не спешить, а нажать в этом окне <b>&lt;Дополнительно...&gt;</b>, где слегка описать календарь. </p>
 
@@ -82,7 +82,7 @@ $MESS["SERVICES_INFO2"] = "<br />
   <table cellspacing='1' cellpadding='1' border='0' style='border-collapse: collapse;'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/step2.png', 518, 448, 'Описание календаря')\" ><img width='299' height='259' border='0' src='#SITE#images/ru/docs/step2_sm.png' alt='Описание календаря' title='Описание календаря'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/step2.webp', 518, 448, 'Описание календаря')\" ><img width='299' height='259' border='0' src='#SITE#images/ru/docs/step2_sm.webp' alt='Описание календаря' title='Описание календаря'  /> </a>
             <br />
            </div>
 
@@ -104,7 +104,7 @@ $MESS["SERVICES_INFO2"] = "<br />
   <table cellspacing='1' cellpadding='1' border='0' style='border-collapse: collapse;'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/calendar1.png', 550, 434, 'Календарь добавился в Outlook!')\" ><img width='300' height='237' border='0' src='#SITE#images/ru/docs/calendar1_sm.png' alt='Календарь добавился в Outlook!' title='Календарь добавился в Outlook!'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/calendar1.webp', 550, 434, 'Календарь добавился в Outlook!')\" ><img width='300' height='237' border='0' src='#SITE#images/ru/docs/calendar1_sm.webp' alt='Календарь добавился в Outlook!' title='Календарь добавился в Outlook!'  /> </a>
             <br />
            </div>
 
@@ -126,7 +126,7 @@ $MESS["SERVICES_INFO2"] = "<br />
   <table cellspacing='1' cellpadding='1' border='0' style='border-collapse: collapse;'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/calendar2.png', 550, 434, 'Экспортированные календари в MS Outlook')\" ><img width='300' height='237' border='0' src='#SITE#images/ru/docs/calendar2_sm.png' alt='Экспортированные календари в MS Outlook' title='Экспортированные календари в MS Outlook'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/calendar2.webp', 550, 434, 'Экспортированные календари в MS Outlook')\" ><img width='300' height='237' border='0' src='#SITE#images/ru/docs/calendar2_sm.webp' alt='Экспортированные календари в MS Outlook' title='Экспортированные календари в MS Outlook'  /> </a>
             <br />
            </div>
 
@@ -161,7 +161,7 @@ $MESS["SERVICES_INFO2"] = "<br />
   <table cellspacing='1' cellpadding='1' border='0' style='border-collapse: collapse;'>
     <tbody>
       <tr><td>
-          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/event.png', 600, 378, 'Экспортированные календари в MS Outlook')\" ><img width='300' height='189' border='0' src='#SITE#images/ru/docs/event_sm.png' alt='Экспортированные календари в MS Outlook' title='Экспортированные календари в MS Outlook'  /> </a>
+          <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/event.webp', 600, 378, 'Экспортированные календари в MS Outlook')\" ><img width='300' height='189' border='0' src='#SITE#images/ru/docs/event_sm.webp' alt='Экспортированные календари в MS Outlook' title='Экспортированные календари в MS Outlook'  /> </a>
             <br />
            </div>
 
@@ -177,11 +177,11 @@ $MESS["SERVICES_INFO2"] = "<br />
 <a name='sinhr'></a>
 Для синхронизации с календарем Портала вам ничего делать не нужно - это произойдет автоматически, в соответствии с настроенной частотой проверки почты Outlook'ом. <b>Ход синхронизации</b> будет отображаться в нижнем правом углу программы.</p>
 
-<p align='center' class='a1'><img width='370' height='26' src='#SITE#images/ru/docs/status.png'  /></p>
+<p align='center' class='a1'><img width='370' height='26' src='#SITE#images/ru/docs/status.webp'  /></p>
  А вот то же самое событие <b>в календаре на Портале</b>!
 <br />
 
-<p><div align='center'><img width='477' height='294' src='#SITE#images/ru/docs/event_portal.png'  /></div></p>
+<p><div align='center'><img width='477' height='294' src='#SITE#images/ru/docs/event_portal.webp'  /></div></p>
 
 <p>Точно так же вы сможете <b>изменять и удалять события</b> - как календарях MS Outlook, так и в календарях на Портале. И изменения <b>двусторонне синхронизируются</b>! Теперь вы уже в курсе, что это значит: сразу же произойдет автоматическая синхронизация и событие изменится или удалится - в MS Outlook или на Портале. </p>
 
@@ -192,7 +192,7 @@ $MESS["SERVICES_INFO2"] = "<br />
 
 
 <div align='center'>
-  <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/tasks.png', 700, 442, 'Синхронизация личных задач')\" ><img width='400' height='252' border='0' src='#SITE#images/ru/docs/tasks_sm.png' alt='Синхронизация личных задач' title='Синхронизация личных задач'  /> </a>
+  <div align='center'><a href=\"javascript:ShowImg('#SITE#images/ru/docs/tasks.webp', 700, 442, 'Синхронизация личных задач')\" ><img width='400' height='252' border='0' src='#SITE#images/ru/docs/tasks_sm.webp' alt='Синхронизация личных задач' title='Синхронизация личных задач'  /> </a>
     <br />
    </div>
 

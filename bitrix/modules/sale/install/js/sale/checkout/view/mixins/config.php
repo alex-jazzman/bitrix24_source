@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'sale.checkout.const',
 		'main.loader',
+		'sale.checkout.const',
 	],
 	'skip_core' => true,
 ];

@@ -760,5 +760,5 @@
 	`
 	});
 
-})(BX, BX, BX.Messenger.Model, BX.Messenger.Lib);
+})(window, BX, BX.Messenger.Model, BX.Messenger.Lib);
 //# sourceMappingURL=attach.bundle.js.map

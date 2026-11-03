@@ -114,14 +114,14 @@ export class Grid
 		EventEmitter.emit('Tasks.Projects.Grid:RowUpdate', {id});
 	}
 
-	removeRow(id)
+	removeRow(id, callback)
 	{
 		if (!this.isRowExist(id))
 		{
 			return;
 		}
 
-		this.grid.removeRow(id);
+		this.grid.removeRow(id, '', '', callback);
 
 		EventEmitter.emit('Tasks.Projects.Grid:RowRemove', {id});
 	}
@@ -202,6 +202,16 @@ export class Grid
 	getRows()
 	{
 		return this.grid.getRows().getBodyChild();
+	}
+
+	getContainer()
+	{
+		return this.grid.getContainer();
+	}
+
+	getHeaderSelectAllCheckbox()
+	{
+		return this.getContainer().querySelector('.main-grid-row-head .main-grid-check-all');
 	}
 
 	getFirstRowId()

@@ -19,6 +19,7 @@ jn.define('im/messenger/model/sidebar/src/files/default-element', (require, expo
 			hasNextPage: true,
 			isHistoryLimitExceeded: false,
 			lastLoadFileId: 0,
+			lastLoadFileDate: null,
 		};
 	}
 

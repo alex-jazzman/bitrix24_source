@@ -38,7 +38,12 @@ $emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage()
 
 $message = $arResult['MESSAGE'];
 $sendError = $arResult['SEND_ERROR'] ?? null;
+if ($sendError instanceof \Bitrix\Main\Error)
+{
+	\Bitrix\Main\UI\Extension::load(['ui.system.alert']);
+}
 $renderLabelControl = !empty($arResult['LABELS_ENABLED']);
+$hasAccessToMessageDelete = Helper\MailAccess::hasUserAccessToMessageDeletion();
 
 $migrationWatchMailboxId = (int)($message['MAILBOX_ID'] ?? 0);
 if ($migrationWatchMailboxId > 0 && \Bitrix\Main\Loader::includeModule('pull'))
@@ -89,9 +94,7 @@ ob_start();
 <?php Toolbar::addRightCustomHtml(ob_get_clean()); ?>
 
 <?php if ($sendError instanceof \Bitrix\Main\Error): ?>
-	<div class="ui-alert ui-alert-warning">
-		<span class="ui-alert-message"><?= htmlspecialcharsbx($sendError->getMessage()) ?></span>
-	</div>
+	<div class="mail-msg-send-error" id="mail-msg-send-error" role="alert" data-testid="mail-message-view-send-error"></div>
 <?php endif ?>
 
 <script>
@@ -112,6 +115,42 @@ BX.ready(function ()
 			)
 		)) ?>'
 	});
+
+	<?php if ($sendError instanceof \Bitrix\Main\Error): ?>
+	(function (host, text)
+	{
+		var renderLegacyAlert = function ()
+		{
+			var alert = document.createElement('div');
+			alert.className = 'ui-alert ui-alert-danger';
+			var message = document.createElement('span');
+			message.className = 'ui-alert-message';
+			message.textContent = text;
+			alert.append(message);
+			host.replaceChildren(alert);
+		};
+
+		var SystemAlert = BX.UI && BX.UI.System && BX.UI.System.Alert;
+		if (!SystemAlert || !SystemAlert.Alert)
+		{
+			renderLegacyAlert();
+
+			return;
+		}
+
+		try
+		{
+			host.replaceChildren(new SystemAlert.Alert({
+				design: SystemAlert.AlertDesign.tintedAlert,
+				content: text,
+			}).render());
+		}
+		catch (error)
+		{
+			renderLegacyAlert();
+		}
+	})(BX('mail-msg-send-error'), '<?= \CUtil::jsEscape($sendError->getMessage()) ?>');
+	<?php endif ?>
 
 	<?php if (!empty($arResult['LABELS_ENABLED'])): ?>
 	BX.Mail.Label.ViewButton.ViewLabelButton.init();

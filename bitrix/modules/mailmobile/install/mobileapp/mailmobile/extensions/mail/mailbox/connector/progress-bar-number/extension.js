@@ -2,7 +2,7 @@
  * @module mail/mailbox/connector/progress-bar-number
  */
 jn.define('mail/mailbox/connector/progress-bar-number', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color, Typography } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
 
 	/**
@@ -34,13 +34,12 @@ jn.define('mail/mailbox/connector/progress-bar-number', (require, exports, modul
 					Text({
 						text: String(this.props.number ?? ''),
 						style: {
+							...Typography.h3Accent.getStyle(),
 							height: 35,
 							width: 35,
-							backgroundColor: this.props.backgroundColor || AppTheme.colors.accentMainPrimary,
+							backgroundColor: this.props.backgroundColor || Color.accentMainPrimary.toHex(),
 							borderRadius: 100,
-							color: AppTheme.colors.baseWhiteFixed,
-							fontSize: 19,
-							fontWeight: '600',
+							color: Color.baseWhiteFixed.toHex(),
 							textAlign: 'center',
 						},
 					}),

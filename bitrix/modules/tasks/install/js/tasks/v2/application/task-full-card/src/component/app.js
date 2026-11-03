@@ -63,12 +63,15 @@ import { Chat } from './chat/chat';
 import { Chips } from './chips/chips';
 import { FooterCreate } from './footer-create/footer-create';
 import { FooterEdit } from './footer-edit/footer-edit';
+import { createSheetBindProps } from '../lib/sheet-bind-props';
 import { Placeholder } from './placeholder/placeholder';
-import iconUrl from '../images/marshmallow_sad_pink_with_orange_lock.png';
-import notFoundUrl from '../images/marshmallow_confused_pink_with_blue_magnifier.png';
+import iconUrl from '../images/marshmallow_sad_pink_with_orange_lock.webp';
+import notFoundUrl from '../images/marshmallow_confused_pink_with_blue_magnifier.webp';
 import './app.css';
 
 const UserOptions = Reflection.namespace('BX.userOptions');
+
+const TEMPLATE_UNAVAILABLE_ERROR_CODE = 'access_denied';
 
 // @vue/component
 export const App = {
@@ -109,6 +112,7 @@ export const App = {
 			analytics: this.analytics,
 			embedded: this.embedded,
 			onCloseEmbedded: this.onCloseEmbedded,
+			popupTeleportTarget: this.popupTeleportTarget,
 			cardType: CardType.Full,
 			/** @type { TaskModel } */
 			task: computed((): TaskModel => taskService.getStoreTask(this.taskId)),
@@ -142,6 +146,10 @@ export const App = {
 			type: Function,
 			default: null,
 		},
+		popupTeleportTarget: {
+			type: [HTMLElement, String],
+			default: null,
+		},
 	},
 	setup(): Object
 	{
@@ -155,7 +163,6 @@ export const App = {
 	{
 		return {
 			taskId: this.id,
-			isFilesSheetShown: false,
 			isDescriptionSheetShown: false,
 			isCheckListSheetShown: false,
 			isDatePlanSheetShown: false,
@@ -590,10 +597,7 @@ export const App = {
 		},
 		sheetBindProps(): SheetBindProps
 		{
-			return {
-				getBindElement: () => this.$refs.title,
-				getTargetContainer: () => this.$refs.main,
-			};
+			return createSheetBindProps(this.$refs);
 		},
 		primaryFields(): AppField[]
 		{
@@ -655,7 +659,6 @@ export const App = {
 		isBottomSheetShown(): boolean
 		{
 			return this.isDescriptionSheetShown
-				|| this.isFilesSheetShown
 				|| this.isCheckListSheetShown
 				|| this.isDatePlanSheetShown
 				|| this.isTimeTrackingSheetShown
@@ -804,121 +807,19 @@ export const App = {
 	},
 	async created(): Promise<void>
 	{
-		if (!this.isEdit && !this.task)
+		this.isUnmounted = false;
+
+		try
 		{
-			const initialTemplate = {};
-			const flags = this.isTemplate ? this.templateStateFlags : this.stateFlags;
-			if (this.isTemplate)
-			{
-				initialTemplate.requireDeadlineChangeReason = false;
-				initialTemplate.allowsChangeDeadline = false;
-			}
-
-			const responsibleIds = this.initialTask.responsibleIds;
-
-			await taskService.insertStoreTask({
-				...this.initialTask,
-				id: this.taskId,
-				creatorId: Core.getParams().currentUser.id,
-				responsibleIds: responsibleIds?.length > 0 ? responsibleIds : [Core.getParams().currentUser.id],
-				deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
-				needsControl: flags.needsControl ?? null,
-				matchesWorkTime: flags.matchesWorkTime ?? null,
-				allowsTimeTracking: flags.allowsTimeTracking ?? null,
-				requireResult: Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult,
-				allowsChangeDeadline: this.deadlineUserOption.canChangeDeadline,
-				requireDeadlineChangeReason: this.deadlineUserOption.requireDeadlineChangeReason,
-				maxDeadlineChangeDate: this.deadlineUserOption.maxDeadlineChangeDate,
-				maxDeadlineChanges: this.deadlineUserOption.maxDeadlineChanges,
-				...initialTemplate,
-			});
-
-			if (this.initialTask.copiedFromId)
-			{
-				await taskService.getCopy(this.initialTask.copiedFromId, this.taskId);
-			}
-
-			if (this.initialTask.templateId)
-			{
-				await templateService.getTask(this.initialTask.templateId, this.taskId);
-			}
-
-			analytics.sendClickCreate(this.analytics, {
-				collabId: this.group?.type === GroupType.Collab ? this.group.id : null,
-				cardType: CardType.Full,
-				viewersCount: this.initialTask?.auditorsIds?.length ?? 0,
-				coexecutorsCount: this.initialTask?.accomplicesIds?.length ?? 0,
-			});
+			await this.bootstrap();
 		}
-
-		await this.$store.dispatch(`${Model.Tasks}/clearFieldsFilled`, this.taskId);
-
-		if (this.isEdit && (!this.task || this.isPartiallyLoaded))
+		catch (error)
 		{
-			taskService.setSilentErrorMode(true);
+			// a pending chat action waits for a terminal event, so a broken bootstrap must still announce its end
+			console.error('TaskFullCard: failed to bootstrap the card', error);
 
-			const { error } = await taskService.get(this.taskId);
-
-			taskService.setSilentErrorMode(false);
-
-			this.taskGetError = error;
-
-			if (!this.isTemplate)
-			{
-				await viewersService.count(this.taskId);
-			}
+			this.announceBootstrapEnd(EventName.FullCardInitFailed, { taskId: this.taskId });
 		}
-
-		if (!this.task)
-		{
-			this.isLoading = false;
-
-			this.isAccessRequested = await taskService.isAccessRequested(this.taskId);
-
-			this.accessRequestError = this.isAccessRequested
-				? Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED')
-				: null
-			;
-
-			return;
-		}
-
-		this.isAccessRequested = false;
-
-		await fileService.get(this.taskId).list(this.task.fileIds);
-
-		this.isLoading = false;
-
-		if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges)
-		{
-			void deadlineService.updateDeadlineChangeCount(this.task.id);
-		}
-
-		if (this.isEdit && this.task.rights.timeTracking && !this.timer)
-		{
-			void timeTrackingService.getTaskWithActiveTimer();
-		}
-
-		entityTextEditor.get(
-			this.taskId,
-			EntityTextTypes.Task,
-			{ content: this.task?.description },
-		);
-
-		this.taskInitial = this.task;
-
-		if (this.isEdit)
-		{
-			analytics.sendTaskView(this.analytics, {
-				taskId: this.task?.id,
-				viewersCount: this.task?.auditorsIds?.length ?? 0,
-				coexecutorsCount: this.task?.accomplicesIds?.length ?? 0,
-			});
-		}
-
-		await Runtime.loadExtension(Core.getParams().externalExtensions);
-
-		EventEmitter.emit(EventName.FullCardInit, { task: this.task });
 	},
 	async mounted(): void
 	{
@@ -930,6 +831,8 @@ export const App = {
 	},
 	unmounted(): void
 	{
+		this.isUnmounted = true;
+
 		this.unsubscribeEvents();
 
 		if (!this.isEdit)
@@ -943,6 +846,145 @@ export const App = {
 		...mapActions(Model.Interface, [
 			'updateFullCardWidth',
 		]),
+		// eslint-disable-next-line max-lines-per-function
+		async bootstrap(): Promise<void>
+		{
+			if (!this.isEdit && !this.task)
+			{
+				const initialTemplate = {};
+				const flags = this.isTemplate ? this.templateStateFlags : this.stateFlags;
+				if (this.isTemplate)
+				{
+					initialTemplate.requireDeadlineChangeReason = false;
+					initialTemplate.allowsChangeDeadline = false;
+				}
+
+				const responsibleIds = this.initialTask.responsibleIds;
+
+				await taskService.insertStoreTask({
+					...this.initialTask,
+					id: this.taskId,
+					creatorId: Core.getParams().currentUser.id,
+					responsibleIds: responsibleIds?.length > 0 ? responsibleIds : [Core.getParams().currentUser.id],
+					deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
+					needsControl: flags.needsControl ?? null,
+					matchesWorkTime: flags.matchesWorkTime ?? null,
+					allowsTimeTracking: flags.allowsTimeTracking ?? null,
+					requireResult: Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult,
+					allowsChangeDeadline: this.deadlineUserOption.canChangeDeadline,
+					requireDeadlineChangeReason: this.deadlineUserOption.requireDeadlineChangeReason,
+					maxDeadlineChangeDate: this.deadlineUserOption.maxDeadlineChangeDate,
+					maxDeadlineChanges: this.deadlineUserOption.maxDeadlineChanges,
+					...initialTemplate,
+				});
+
+				if (this.initialTask.copiedFromId)
+				{
+					await taskService.getCopy(this.initialTask.copiedFromId, this.taskId);
+				}
+
+				if (this.initialTask.templateId)
+				{
+					await templateService.getTask(this.initialTask.templateId, this.taskId);
+				}
+
+				analytics.sendClickCreate(this.analytics, {
+					collabId: this.group?.type === GroupType.Collab ? this.group.id : null,
+					cardType: CardType.Full,
+					viewersCount: this.initialTask?.auditorsIds?.length ?? 0,
+					coexecutorsCount: this.initialTask?.accomplicesIds?.length ?? 0,
+				});
+			}
+
+			await this.$store.dispatch(`${Model.Tasks}/clearFieldsFilled`, this.taskId);
+
+			if (this.isEdit && (!this.task || this.isPartiallyLoaded))
+			{
+				taskService.setSilentErrorMode(true);
+
+				const { error } = await taskService.get(this.taskId);
+
+				taskService.setSilentErrorMode(false);
+
+				this.taskGetError = error;
+
+				if (!this.isTemplate)
+				{
+					await viewersService.count(this.taskId);
+				}
+			}
+
+			if (!this.task)
+			{
+				this.isLoading = false;
+
+				this.isAccessRequested = await taskService.isAccessRequested(this.taskId);
+
+				this.accessRequestError = this.isAccessRequested
+					? Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED')
+					: null
+				;
+
+				this.announceBootstrapEnd(EventName.FullCardInitFailed, { taskId: this.taskId });
+
+				return;
+			}
+
+			this.isAccessRequested = false;
+
+			await fileService.get(this.taskId).list(this.task.fileIds);
+
+			this.isLoading = false;
+
+			if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges)
+			{
+				void deadlineService.updateDeadlineChangeCount(this.task.id);
+			}
+
+			if (this.isEdit && this.task.rights.timeTracking && !this.timer)
+			{
+				void timeTrackingService.getTaskWithActiveTimer();
+			}
+
+			entityTextEditor.get(
+				this.taskId,
+				EntityTextTypes.Task,
+				{ content: this.task?.description },
+			);
+
+			this.taskInitial = this.task;
+
+			if (this.isEdit)
+			{
+				analytics.sendTaskView(this.analytics, {
+					taskId: this.task?.id,
+					viewersCount: this.task?.auditorsIds?.length ?? 0,
+					coexecutorsCount: this.task?.accomplicesIds?.length ?? 0,
+				});
+			}
+
+			try
+			{
+				await Runtime.loadExtension(Core.getParams().externalExtensions);
+			}
+			catch (error)
+			{
+				// external extensions are not part of the card, so their failure must not hide a loaded task
+				console.error('TaskFullCard: failed to load external extensions', error);
+			}
+
+			this.announceBootstrapEnd(EventName.FullCardInit, { task: this.task });
+		},
+		// a card unmounted mid bootstrap has no fields left to act on, so it must not announce an init
+		announceBootstrapEnd(eventName: string, data: Object): void
+		{
+			if (this.isUnmounted)
+			{
+				return;
+			}
+
+			EventEmitter.emit(eventName, data);
+		},
 		subscribeEvents(): void
 		{
 			EventEmitter.subscribe(EventName.FullCardHasChanges, this.handleHasChanges);
@@ -971,7 +1013,6 @@ export const App = {
 			const preserved = new Set(sheetsByAction[actionName] || []);
 
 			const allSheets = [
-				'isFilesSheetShown',
 				'isDescriptionSheetShown',
 				'isCheckListSheetShown',
 				'isDatePlanSheetShown',
@@ -1034,7 +1075,13 @@ export const App = {
 		{
 			const checklists = this.checklist;
 
-			const [id, error] = await taskService.add({ task: this.task, view: true });
+			const [id, error] = await taskService.add({
+				task: this.task,
+				view: true,
+				// SC-003 (AC-013): report the marker set by the deadline field when
+				// the user set the deadline themselves during this create session.
+				deadlineManuallySet: this.task.deadlineManuallySet === true,
+			});
 
 			if (!id)
 			{
@@ -1107,6 +1154,15 @@ export const App = {
 
 			if (!id)
 			{
+				if (error?.code === TEMPLATE_UNAVAILABLE_ERROR_CODE)
+				{
+					taskService.updateStoreTask(this.taskId, { templateId: 0 });
+
+					await this.addTask();
+
+					return;
+				}
+
 				this.handleCreationError(error);
 
 				this.sendAddTaskFromTemplateAnalytics(false);
@@ -1339,6 +1395,7 @@ export const App = {
 			class="tasks-full-card print-fit-height"
 			:class="{ '--blur': isDescriptionSheetShown }"
 			:data-task-id="taskId"
+			:aria-busy="embedded && isLoading ? 'true' : null"
 			data-task-full
 		>
 			<template v-if="task && !isPartiallyLoaded && !isLoading">
@@ -1352,7 +1409,7 @@ export const App = {
 					:style="{ width: ((isTemplate || embedded) ? '100%' : fullCardWidth + 'px'),}"
 				>
 					<div class="tasks-full-card-content" :data-task-card-scroll="taskId" ref="scrollContent">
-						<div ref="title">
+						<div class="tasks-full-card-header-holder" ref="title" data-testid="task-full-card-header">
 							<TaskHeader />
 						</div>
 						<CheckList
@@ -1396,6 +1453,7 @@ export const App = {
 									<Results
 										v-model:isSheetShown="isResultEditorSheetShown"
 										v-model:isListSheetShown="isResultListSheetShown"
+										:isAnySheetShown="isBottomSheetShown"
 										:sheetBindProps
 									/>
 								</div>
@@ -1404,7 +1462,7 @@ export const App = {
 									class="tasks-full-card-field-container --small-vertical-padding print-ignore"
 									data-field-container
 								>
-									<Files v-model:isSheetShown="isFilesSheetShown" :taskId :sheetBindProps/>
+									<Files :taskId/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.CheckList)"

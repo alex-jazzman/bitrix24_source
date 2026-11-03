@@ -5,5 +5,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_RETURN_ANSWER_TIME'] = 'Время
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_NAME_1'] = 'Отследить, что чат принят в работу';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_DESCRIPTION'] = 'Меняет стадию в тот момент, когда сотрудник начинает общение с клиентом';
 
-$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_NODE_DESCRIPTION'] = 'Запускает процесс в тот момент, когда сотрудник начинает общение с клиентом';
+$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_NODE_DESCRIPTION'] = 'Запускает процесс, когда оператор принял чат в работу';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_EVENT_DATE_TIME'] = 'Дата и время принятия чата';

@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Text, Type } from 'main.core';
 import type { PopupOptions } from 'main.popup';
 
 import { mapGetters } from 'ui.vue3.vuex';
@@ -61,6 +61,7 @@ export const TaskTrackingPopup = {
 		return {
 			localAllowsTimeTracking: true,
 			localEstimatedTime: 0,
+			switcherLabelId: `tasks-time-tracking-switcher-label-${Text.getRandom()}`,
 		};
 	},
 	computed: {
@@ -77,6 +78,9 @@ export const TaskTrackingPopup = {
 				bindElement: this.bindElement,
 				width: 540,
 				targetContainer: document.body,
+				focusTrap: true,
+				closeByEsc: true,
+				ariaLabel: this.loc('TASKS_V2_TIME_TRACKING_SETTINGS_ARIA_LABEL'),
 			};
 		},
 		switcherOptions(): SwitcherOptions
@@ -247,6 +251,16 @@ export const TaskTrackingPopup = {
 				void statusService.pauseTimer(this.taskId);
 			}
 		},
+		handleSwitcherKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== 'Enter' && event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.toggleAllows();
+		},
 		openHelpDesk(): void
 		{
 			top.BX.Helper.show('redirect=detail&code=27145920');
@@ -268,29 +282,43 @@ export const TaskTrackingPopup = {
 			>
 				<div class="tasks-time-tracking-popup-content">
 					<div class="tasks-time-tracking-popup-content-info">
-						<div class="tasks-time-tracking-popup-content-switcher">
+						<div
+							class="tasks-time-tracking-popup-content-switcher"
+							role="switch"
+							data-testid="tasks-time-tracking-allows-switcher"
+							:aria-checked="localAllowsTimeTracking"
+							:aria-labelledby="switcherLabelId"
+							tabindex="0"
+							@click="toggleAllows"
+							@keydown="handleSwitcherKeydown"
+						>
 							<Switcher
 								:isChecked="localAllowsTimeTracking"
 								:options="switcherOptions"
-								@click="toggleAllows"
 							/>
 							<Text2Xl
+								:id="switcherLabelId"
 								class="tasks-task-setting-switcher-label"
-								@click="toggleAllows"
 							>{{ loc('TASKS_V2_TIME_TRACKING_POPUP_LABEL') }}</Text2Xl>
 						</div>
 						<TextMd class="tasks-time-tracking-popup-content-text">
 							{{ loc('TASKS_V2_TIME_TRACKING_POPUP_TEXT') }}
 						</TextMd>
-						<div class="tasks-time-tracking-popup-content-more" @click="openHelpDesk">
+						<button
+							type="button"
+							class="tasks-time-tracking-popup-content-more"
+							data-testid="tasks-time-tracking-more-btn"
+							@click="openHelpDesk"
+						>
 							<BIcon
 								:name="Outline.KNOWLEDGE_BASE"
 								class="tasks-time-tracking-popup-content-more-icon"
+								aria-hidden="true"
 							/>
 							<TextSm class="tasks-time-tracking-popup-content-more-text">
 								{{ loc('TASKS_V2_TIME_TRACKING_POPUP_MORE') }}
 							</TextSm>
-						</div>
+						</button>
 					</div>
 					<div class="tasks-time-tracking-popup-content-icon"/>
 				</div>
@@ -308,6 +336,8 @@ export const TaskTrackingPopup = {
 						class="tasks-time-tracking-popup-form-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_HOUR')"
+						data-testid="tasks-time-tracking-estimate-hours-input"
 						labelInline
 					/>
 					<BInput
@@ -315,6 +345,8 @@ export const TaskTrackingPopup = {
 						class="tasks-time-tracking-popup-form-field"
 						:design="InputDesign.LightGrey"
 						:label="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						:ariaLabel="loc('TASKS_V2_TIME_TRACKING_POPUP_FORM_MINUTES')"
+						data-testid="tasks-time-tracking-estimate-minutes-input"
 						labelInline
 					/>
 				</div>

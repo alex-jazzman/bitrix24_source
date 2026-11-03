@@ -7,7 +7,14 @@
  */
 import type { EditorConfig } from 'ui.lexical.core';
 import { ElementNode } from './LexicalElementNode';
+/** @internal */
 export declare class ArtificialNode__DO_NOT_USE extends ElementNode {
-    static getType(): string;
+    $config(): import("ui.lexical.core").BaseStaticNodeConfig & {
+        readonly artificial?: {
+            readonly extends: typeof ElementNode;
+        } | undefined;
+    } & import("ui.lexical.core").StaticNodeTypeAccessor<"artificial"> & import("ui.lexical.core").StaticNodeConfigAccessor<{
+        readonly extends: typeof ElementNode;
+    }>;
     createDOM(config: EditorConfig): HTMLElement;
 }

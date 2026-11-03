@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/files/src/items/file', (requi
 	const { getFileIconTypeByExtension } = require('im/messenger/lib/helper');
 	const { ChatAvatar } = require('im/messenger/lib/ui/avatar');
 	const { ListItem } = require('im/messenger/controller/sidebar-v2/ui/layout/list-item');
-	const { FileActionMenu } = require('im/messenger/controller/sidebar-v2/tabs/files/src/action-menu/file');
+	const { fileActionMenu } = require('im/messenger/controller/sidebar-v2/tabs/files/action-menu');
 
 	class FileItem extends LayoutComponent
 	{
@@ -53,7 +53,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/files/src/items/file', (requi
 
 		/**
 		 * @protected
-		 * @param {string} suffix
+		 * @param {string} [suffix]
 		 * @returns {string}
 		 */
 		getTestId(suffix)
@@ -179,12 +179,13 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/files/src/items/file', (requi
 		};
 
 		showActionMenu = ({ ref: target }) => {
-			(new FileActionMenu({
+			void fileActionMenu({
+				testId: this.getTestId(),
 				fileId: this.fileModel.id,
 				dialogId: this.dialogId,
 				messageId: this.messageId,
 				widgetNavigator: this.props.widgetNavigator,
-			})).show(target);
+			}).show(target);
 		};
 	}
 

@@ -6,4 +6,5 @@ export type EpicModel = {
 	id: number,
 	title: string,
 	color: string,
+	isRestricted: boolean,
 };

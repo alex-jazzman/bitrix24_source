@@ -16,6 +16,7 @@ jn.define('im/messenger/const/permission', (require, exports, module) => {
 		getOpenlines: 'getOpenlines',
 		joinChat: 'joinChat',
 		leaveCollab: 'leaveCollab',
+		linkStructureNode: 'linkStructureNode',
 		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
 		createStickerPack: 'createStickerPack',
 		changeStickerPack: 'changeStickerPack',

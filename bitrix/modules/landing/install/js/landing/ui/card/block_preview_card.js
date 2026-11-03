@@ -29,6 +29,9 @@
 	{
 		BX.Landing.UI.Card.BaseCard.apply(this, arguments);
 		this.layout.classList.add("landing-ui-card-block-preview");
+		// Stable hook for e2e tests: which block a card stands for is already on it as
+		// `data-code`, so the id is the same for every card of the list.
+		this.layout.setAttribute("data-testid", "landing-block-card");
 
 		if (getComputedStyle(this.layout).position === 'static')
 		{
@@ -76,6 +79,7 @@
 					role: 'button',
 					tabindex: '-1',
 					'data-card-action': '',
+					'data-testid': 'landing-block-card-favourite-btn',
 					'aria-label': data.isFavorite
 						? BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_FAVORITE_REMOVE_LABEL')
 						: BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_FAVORITE_ADD_LABEL'),
@@ -131,6 +135,10 @@
 								blocksPanelContent,
 							);
 						}
+						// The container role has to follow what the container now holds, so it is
+						// re-derived from the state after every removal instead of being patched
+						// in the one branch that empties the category.
+						mainInstance.updateBlocksListSemantics();
 					}
 				}
 				else

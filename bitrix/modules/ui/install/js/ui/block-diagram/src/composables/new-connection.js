@@ -2,7 +2,9 @@ import { toValue, ref, computed, watch, onUnmounted } from 'ui.vue3';
 import { Event, Text, Type } from 'main.core';
 
 import { useBlockDiagram } from './block-diagram';
+import { bindCancelPaths, type UnbindCancelPaths } from './gesture';
 import { buildSnapCandidatePorts } from '../utils';
+import { MOUSE_BUTTON } from '../constants';
 import { type DiagramBlock, type DiagramBlockId, type DiagramPort, type DiagramPortId, type DiagramPortRect, type DiagramAddConnection, type DiagramNewConnection, type DiagramValidationPortRuleFn, type DiagramValidationPortRules, type DiagramNormalyzeConnectionFn, type DiagramPortsMap } from '../types';
 
 // Point insertion does not rebalance the tree: targets arriving along a column come in almost
@@ -45,6 +47,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		startAutoScroll,
 		stopAutoScroll,
 		updateMousePosition,
+		inputState,
 	} = useBlockDiagram();
 	const {
 		block,
@@ -62,6 +65,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 	let isAutoScrollStarted = false;
 	let stopSnapTargetsWatch = null;
 	let insertsSinceBuild = 0;
+	let unbindCancelPaths: UnbindCancelPaths | null = null;
 
 	const isTargetPort = computed((): boolean => {
 		const {
@@ -372,7 +376,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		// A non-primary press opens a gesture whose mouseup the context menu eats, and a press
 		// over a live gesture leaves its owner with bound handlers, a live watch and an unmount
 		// that would stop the autoscroll of the gesture that replaced it.
-		if (event.button !== 0 || toValue(newConnection) !== null)
+		if (event.button !== MOUSE_BUTTON.LEFT || toValue(newConnection) !== null)
 		{
 			return;
 		}
@@ -415,20 +419,21 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		startSnapTargetsWatch();
 	}
 
+	// The pointer stream stays private - this gesture drives its own mouse - while everything that
+	// cancels it from outside comes from the shared paths, Escape included.
 	function bindGestureHandlers(): void
 	{
 		Event.bind(document, 'mousemove', onMouseMove);
 		Event.bind(document, 'mouseup', onMouseUp);
-		Event.bind(document, 'pointercancel', closeGesture);
-		Event.bind(window, 'blur', closeGesture);
+		unbindCancelPaths = bindCancelPaths(inputState, closeGesture);
 	}
 
 	function unbindGestureHandlers(): void
 	{
 		Event.unbind(document, 'mousemove', onMouseMove);
 		Event.unbind(document, 'mouseup', onMouseUp);
-		Event.unbind(document, 'pointercancel', closeGesture);
-		Event.unbind(window, 'blur', closeGesture);
+		unbindCancelPaths?.();
+		unbindCancelPaths = null;
 	}
 
 	// Winds the gesture down without committing anything. Only the instance that owns the
@@ -441,27 +446,35 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 			return;
 		}
 
-		// The autoscroll instance is shared by the whole diagram, so only a gesture that started
-		// it may stop it.
-		if (isAutoScrollStarted)
+		// The gesture holds Escape over the whole page and draws a connection nothing else clears, so
+		// the teardown is nobody's to skip: whatever the shutdown above it throws, the key goes back
+		// and the drawn connection goes with it - a connection left standing blocks every new one.
+		try
 		{
-			stopAutoScroll();
+			// The autoscroll instance is shared by the whole diagram, so only a gesture that started
+			// it may stop it.
+			if (isAutoScrollStarted)
+			{
+				stopAutoScroll();
+			}
 		}
-
-		unbindGestureHandlers();
-		unwatchSnapTargets();
-		newConnection.value = null;
-		isSourcePort.value = false;
-		lastMouseEvent = null;
-		isAutoScrollStarted = false;
-		insertsSinceBuild = 0;
-		rejectedTargets.clear();
-		validPortsMap.value = new Map();
-		portsNearest.clear();
-		// Move and resize change the model as they end, and the write path itself asks culling to
-		// catch up. This gesture changes nothing, so the retained source node would stay in the
-		// visible set until the camera moves next.
-		blockIntersections.selectVisibleBlocks();
+		finally
+		{
+			unbindGestureHandlers();
+			unwatchSnapTargets();
+			newConnection.value = null;
+			isSourcePort.value = false;
+			lastMouseEvent = null;
+			isAutoScrollStarted = false;
+			insertsSinceBuild = 0;
+			rejectedTargets.clear();
+			validPortsMap.value = new Map();
+			portsNearest.clear();
+			// Move and resize change the model as they end, and the write path itself asks culling to
+			// catch up. This gesture changes nothing, so the retained source node would stay in the
+			// visible set until the camera moves next.
+			blockIntersections.selectVisibleBlocks();
+		}
 	}
 
 	function onMouseMove(event: MouseEvent): void

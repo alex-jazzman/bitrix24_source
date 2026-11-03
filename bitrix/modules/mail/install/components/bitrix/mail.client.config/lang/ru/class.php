@@ -150,6 +150,7 @@ $MESS['MAIL_MAILBOX_SERVICE_NAME_OFFICE365'] = 'Office 365';
 $MESS['MAIL_MAILBOX_SERVICE_NAME_ICLOUD'] = 'iCloud';
 $MESS['MAIL_MAILBOX_SERVICE_NAME_YAHOO'] = 'Yahoo!';
 $MESS['MAIL_MAILBOX_SERVICE_NAME_AOL'] = 'Aol';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_MAILHOST'] = 'Почта Битрикс24';
 
 $MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE"] = "Авторизуйтесь повторно";
 $MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT"] = "При последней синхронизации мы не смогли получить доступ к вашему ящику. Авторизуйтесь повторно, чтобы продолжить работу с почтой";

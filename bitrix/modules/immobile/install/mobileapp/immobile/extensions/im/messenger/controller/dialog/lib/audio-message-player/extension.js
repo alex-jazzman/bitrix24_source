@@ -2,24 +2,31 @@
  * @module im/messenger/controller/dialog/lib/audio-player
  */
 jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, module) => {
-	const {
-		FileType,
-	} = require('im/messenger/const');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
+	const {
+		getAudioRate,
+		getNextAudioRate,
+	} = require('im/messenger/controller/dialog/lib/audio-panel/audio-helper');
 
 	/**
 	 * @class AudioMessagePlayer
 	 */
 	class AudioMessagePlayer
 	{
-		constructor(store)
+		/**
+		 * @param {MessengerCoreStore} store
+		 * @param {DialogLocator} [dialogLocator]
+		 */
+		constructor(store, dialogLocator = null)
 		{
 			this.store = store;
+			this.dialogLocator = dialogLocator;
 			this.player = null;
 			this.playingMessageId = null;
 		}
 
-		play({ messageId, playingTime = 0 })
+		play({ messageId, fileId = null, playingTime = 0 })
 		{
 			Logger.log('AudioMessagePlayer.play: messageId: ', messageId, ' playingTime:', playingTime);
 			if (this.playingMessageId)
@@ -29,13 +36,7 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 
 			this.playingMessageId = messageId;
 			const playingMessage = this.store.getters['messagesModel/getById'](this.playingMessageId);
-			if (!playingMessage || !playingMessage.files[0])
-			{
-				return;
-			}
-
-			const file = this.store.getters['filesModel/getById'](playingMessage.files[0]);
-			if (!file || file.type !== FileType.audio)
+			if (!playingMessage || !this.resolveAudioFile(playingMessage, fileId))
 			{
 				return;
 			}
@@ -44,31 +45,70 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 		}
 
 		/**
+		 * @private
+		 * @param {MessagesModelState} message
+		 * @param {number|string|null} [preferredFileId]
+		 * @return {FilesModelState|null}
+		 */
+		resolveAudioFile(message, preferredFileId = null)
+		{
+			return MessageHelper.resolveAudioFile(this.store, message, preferredFileId);
+		}
+
+		/**
 		 * @return {Promise}
 		 */
 		changeRate()
 		{
-			const applicationSettingState = this.store.getters['applicationModel/getSettings']();
-			const currentAudioRate = applicationSettingState ? applicationSettingState.audioRate : 1;
+			return this.setApplicationAudioRate(getNextAudioRate(getAudioRate(this.store)));
+		}
 
-			/** @type {AudioRate} */
-			let newRate = currentAudioRate;
-			switch (currentAudioRate)
+		/**
+		 * Counterpart of AudioPanel.applyRate for the build without the audio panel. This player
+		 * holds no native player of its own - the rate reaches the native audio cell with the
+		 * message data - so the value is applied by redrawing the cell of the voice message that
+		 * is playing.
+		 *
+		 * Takes no rate: unlike AudioPanel.applyRate, which hands the value to its native player,
+		 * this one gets it from the saved setting, the source the shared message options are built
+		 * from. Hence the precondition of the contract - the caller saves the setting first, or the
+		 * redraw carries the previous value.
+		 *
+		 * @return {Promise}
+		 */
+		applyRate()
+		{
+			Logger.log('AudioMessagePlayer.applyRate');
+
+			return this.renderPlayingMessage();
+		}
+
+		/**
+		 * Only the playing voice message is redrawn: a silent one takes the new rate with its next
+		 * ordinary render. The playback survives the redraw - the renderer reads the live position
+		 * of a playing audio cell from the view instead of the model.
+		 *
+		 * @return {Promise}
+		 * @private
+		 */
+		renderPlayingMessage()
+		{
+			const renderer = this.dialogLocator?.get('message-renderer');
+			// An id unknown to the renderer goes to the branch that adds a new cell to the feed.
+			if (!this.playingMessageId || !renderer?.isMessageRendered(this.playingMessageId))
 			{
-				case 1:
-					newRate = 1.5;
-					break;
-				case 1.5:
-					newRate = 2;
-					break;
-				case 2:
-					newRate = 1;
-					break;
-				default:
-					newRate = 1;
+				return Promise.resolve();
 			}
 
-			return this.setApplicationAudioRate(newRate);
+			const message = this.store.getters['messagesModel/getById'](this.playingMessageId);
+			if (!message)
+			{
+				return Promise.resolve();
+			}
+
+			// The store keeps a reply without the quote block, so a raw model would redraw the
+			// voice message without an already shown quote.
+			return renderer.render([renderer.prepareStoreMessageForRender(message)]);
 		}
 
 		playNext()
@@ -102,7 +142,32 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 			this.playingMessageId = null;
 		}
 
+		closeDialog()
+		{
+			this.stopPlayingMessage();
+		}
+
+		/**
+		 * The dialog calls the same lifecycle methods on whichever player the feature gate
+		 * produced, and it guards only the player itself, not the method. This player has no
+		 * floating panel, so there is nothing to do here - but the methods must exist.
+		 */
+		showDialog()
+		{}
+
+		hiddenDialog()
+		{}
+
 		stopPlayingMessage()
+		{
+			this.pause();
+		}
+
+		/**
+		 * Stops current audio playback: mutes the sound and resets the store playing state.
+		 * Does not send pause analytics. Idempotent: safe when nothing is playing.
+		 */
+		stopPlayback()
 		{
 			this.pause();
 		}
@@ -153,14 +218,12 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 			const chatMessageList = this.store.getters['messagesModel/getByChatId'](previousMessage.chatId);
 
 			return chatMessageList.find((message) => {
-				if (message.id <= previousMessage.id || !message.files[0])
+				if (message.id <= previousMessage.id)
 				{
 					return false;
 				}
 
-				const file = this.store.getters['filesModel/getById'](message.files[0]);
-
-				return file && file.type === FileType.audio;
+				return Boolean(this.resolveAudioFile(message));
 			});
 		}
 	}

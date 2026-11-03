@@ -12,8 +12,9 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityT
 	return;
 }
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 $arVatID = isset($arParams['VAT_ID']) ? strval($arParams['VAT_ID']) : '';
-if($arVatID <= 0)
+if (!$isSettingsHub && $arVatID <= 0)
 {
 	$arVatIDParName = isset($arParams['VAT_ID_PAR_NAME']) ? intval($arParams['VAT_ID_PAR_NAME']) : 0;
 	if($arVatIDParName <= 0)

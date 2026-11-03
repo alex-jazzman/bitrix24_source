@@ -6,6 +6,10 @@ import { SpecialBackground } from 'im.v2.lib.theme';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 import { UserType } from 'im.v2.const';
 
+export { collectCollabTransitionCandidates } from './functions/collect-transition-candidates';
+export { selectCollabTransitionTarget } from './functions/select-transition-target';
+export type { CollabTransitionCandidate } from './types/transition';
+
 export const CollabManager = {
 	isCurrentUserGuest(): boolean
 	{

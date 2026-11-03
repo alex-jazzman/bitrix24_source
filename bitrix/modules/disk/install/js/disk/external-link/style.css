@@ -23,11 +23,11 @@
 }
 
 .disk-control-external-link-btn {
-	margin-right: 6px;
+	margin-right: var(--ui-space-inline-2xs2);
 }
 
 .disk-documents-grid-owner-icon {
-	margin-right: 6px;
+	margin-right: var(--ui-space-inline-2xs2);
 	width: 22px;
 	height: 22px;
 }
@@ -43,31 +43,41 @@
 
 .disk-control-external-link-text {
 	display: block;
-	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #525c69;
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-md);
+	/* the shorthand replaced here also reset weight and leading; the scale has no counterpart for `normal` */
+	font-weight: var(--ui-font-weight-normal);
+	line-height: normal;
+	color: var(--ui-color-base-3);
 	transition: opacity .3s;
-	opacity: .5;
 }
 
 .disk-control-external-link-link {
 	display: none;
 	max-width: 185px;
-	border-bottom: 1px dashed rgba(130,139,149,.4);
-	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #80868e;
+	border-bottom: 1px dashed var(--ui-color-accent-main-link-underline);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: normal;
+	color: var(--ui-color-accent-main-link);
 	transition: border-bottom .3s, opacity .3s;
 }
 
 .disk-control-external-link-link:hover,
 .main-grid-cell-content a.disk-control-external-link-link:hover {
 	border-bottom: 1px dashed transparent;
-	color: #80868e;
+	color: var(--ui-color-accent-main-link);
 	text-decoration: none;
 }
 
 .disk-control-external-link-link-icon {
+	/* button reset for the icon-only control: only the icon below is left of the native look */
+	padding: 0;
+	border: 0;
+	appearance: none;
 	display: none;
-	margin-left: 5px;
+	margin-left: var(--ui-space-inline-2xs2);
 	min-width: 14px;
 	height: 14px;
 	background: url("data:image/svg+xml,%3Csvg width='14' height='14' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.908 8.516V2.105c0-.108.089-.197.197-.197h6.411c.108 0 .197.089.197.197v.309h1.908V.644A.646.646 0 009.977 0H.644A.646.646 0 000 .644v9.333c0 .354.29.644.644.644h1.663V8.713h-.202a.197.197 0 01-.197-.197zm10.276 3.46a.209.209 0 01-.208.208H5.188a.209.209 0 01-.208-.208V5.188c0-.114.094-.208.208-.208h6.788c.114 0 .208.094.208.208v6.788zm1.154-8.906H3.733a.664.664 0 00-.663.663v9.605c0 .364.298.662.663.662h9.605a.664.664 0 00.662-.662V3.733a.664.664 0 00-.662-.663z' fill='%23525C69' fill-rule='evenodd'/%3E%3C/svg%3E") center no-repeat;
@@ -81,12 +91,23 @@
 }
 
 .disk-control-external-link-subtitle {
+	/* button reset for the text row: its font, colour and truncation are set here and above.
+	   The width is given back on purpose: a button shrinks to its text, while the row it replaced
+	   filled the block, and in the grid column that width is the click area of the whole row. */
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: left;
+	appearance: none;
 	display: none;
-	margin-top: 3px;
-	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #525c69;
+	width: 100%;
+	margin-top: var(--ui-space-stack-2xs);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: normal;
+	color: var(--ui-color-base-3);
 	transition: opacity .3s;
-	opacity: .5;
 	cursor: pointer;
 }
 
@@ -99,6 +120,47 @@
 }
 
 .disk-control-external-link-block--active .disk-control-external-link-text {
+	display: none;
+}
+
+/* the same focus ring the surrounding sidebar of the file card draws on its own controls */
+.disk-control-external-link .ui-switcher:focus-visible,
+.disk-control-external-link-link:focus-visible,
+.disk-control-external-link-link-icon:focus-visible,
+.disk-control-external-link-subtitle:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* the dimmed icon is brought to full opacity so the focus ring is not washed out with it */
+.disk-control-external-link-link-icon:focus-visible {
+	opacity: 1;
+}
+
+/* the control is a flex container, so it makes a new formatting context and browsers place it
+   beside preceding floats instead of below them: in a narrow panel that leaves it a few pixels wide */
+.disk-control-external-link-block--vertical {
+	clear: both;
+}
+
+.disk-control-external-link-block--vertical .disk-control-external-link {
+	height: auto;
+}
+
+.disk-control-external-link-block--vertical .disk-control-external-link-btn,
+.disk-control-external-link-block--vertical .disk-control-external-link-main {
+	align-self: flex-start;
+}
+
+.disk-control-external-link-block--vertical .disk-control-external-link-subtitle > span {
+	display: block;
+	max-width: 100%;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.disk-control-external-link-block--vertical .disk-control-external-link-subtitle > .disk-control-external-link-separator {
 	display: none;
 }
 
@@ -117,8 +179,8 @@
 	width: 100%;
 	max-width: 137px;
 	height: 8px;
-	border-radius: 2px;
-	background-color: #9ea6ad;
+	border-radius: var(--ui-border-radius-3xs);
+	background-color: var(--ui-color-base-4);
 	transform: translate(0, -50%);
 	opacity: .2;
 	overflow: hidden;
@@ -132,7 +194,7 @@
 	top: 0;
 	height: 100%;
 	width: 100%;
-	background: linear-gradient(to right, transparent 0%, #ededed 50%, transparent 100%);
+	background: linear-gradient(to right, transparent 0%, var(--ui-color-base-7) 50%, transparent 100%);
 	animation: im-skeleton-load 1s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
 }
 
@@ -229,9 +291,9 @@
 .disk-external-link-setting-popup-password-show {
 	display: block;
 	width: 35px;
-	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%229%22%20viewBox%3D%220%200%2017%209%22%3E%0A%20%20%3Cpath%20fill%3D%22%23535C6A%22%20fill-rule%3D%22evenodd%22%20d%3D%22M8.333%2C0%20C3.3875%2C0%200.1355%2C3.6645%200%2C3.82%20L1.406%2C5.049%20C1.434%2C5.0175%204.2545%2C1.8675%208.333%2C1.8675%20C12.4115%2C1.8675%2015.232%2C5.0175%2015.259%2C5.0475%20L16.666%2C3.82%20C16.5305%2C3.6645%2013.2785%2C0%208.333%2C0%20M8.208%2C3.934%20C6.827%2C3.934%205.708%2C5.053%205.708%2C6.434%20C5.708%2C7.8145%206.827%2C8.934%208.208%2C8.934%20C9.589%2C8.934%2010.708%2C7.8145%2010.708%2C6.434%20C10.708%2C5.053%209.589%2C3.934%208.208%2C3.934%22/%3E%0A%3C/svg%3E%0A') center center no-repeat;
+	background: var(--ui-color-base-8) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%229%22%20viewBox%3D%220%200%2017%209%22%3E%0A%20%20%3Cpath%20fill%3D%22%23535C6A%22%20fill-rule%3D%22evenodd%22%20d%3D%22M8.333%2C0%20C3.3875%2C0%200.1355%2C3.6645%200%2C3.82%20L1.406%2C5.049%20C1.434%2C5.0175%204.2545%2C1.8675%208.333%2C1.8675%20C12.4115%2C1.8675%2015.232%2C5.0175%2015.259%2C5.0475%20L16.666%2C3.82%20C16.5305%2C3.6645%2013.2785%2C0%208.333%2C0%20M8.208%2C3.934%20C6.827%2C3.934%205.708%2C5.053%205.708%2C6.434%20C5.708%2C7.8145%206.827%2C8.934%208.208%2C8.934%20C9.589%2C8.934%2010.708%2C7.8145%2010.708%2C6.434%20C10.708%2C5.053%209.589%2C3.934%208.208%2C3.934%22/%3E%0A%3C/svg%3E%0A') center center no-repeat;
 	border-left: none;
-	border-radius: 0 2px 2px 0;
+	border-radius: var(--ui-border-radius-none) var(--ui-border-radius-3xs) var(--ui-border-radius-3xs) var(--ui-border-radius-none);
 	transition: .1s;
 	cursor: pointer;
 	z-index: 11;
@@ -242,7 +304,7 @@ input[type=text] ~ .disk-external-link-setting-popup-password-show {
 }
 
 .disk-control-external-link-settings {
-	padding: 20px 0 0 0;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-none) var(--ui-space-inset-none) var(--ui-space-inset-none);
 	min-width: 350px;
 }
 
@@ -251,7 +313,7 @@ input[type=text] ~ .disk-external-link-setting-popup-password-show {
 }
 
 .disk-control-external-link-settings .ui-form-row:last-child {
-	margin-bottom: 15px;
+	margin-bottom: var(--ui-space-stack-md);
 }
 
 .disk-control-external-link-settings .ui-ctl-datetime div.ui-ctl-element {

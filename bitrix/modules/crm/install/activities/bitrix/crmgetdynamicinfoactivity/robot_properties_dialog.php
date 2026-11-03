@@ -14,6 +14,16 @@ $map = $dialog->getMap();
 $returnFieldsProperty = $map['ReturnFields'];
 unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty['Getter']);
 ?>
+<style>
+	[data-role="bca-cuda-return-fields-container"] select
+	{
+		box-sizing: border-box;
+		width: 100% !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+	}
+</style>
+
 <?php foreach ($map as $field): ?>
 	<?php if (isset($field['Name'], $field['Type'])): ?>
 		<div class="bizproc-automation-popup-settings">
@@ -64,5 +74,6 @@ unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty[
 			conditions: <?=Json::encode($dialog->getCurrentValue('dynamic_filter_fields'))?>,
 		});
 		script.init();
+
 	})
 </script>

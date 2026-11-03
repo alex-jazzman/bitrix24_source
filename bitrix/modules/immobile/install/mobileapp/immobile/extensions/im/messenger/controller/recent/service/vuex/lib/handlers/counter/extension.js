@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (require, exports, module) => {
 	const { Type } = require('type');
 	const { unique } = require('utils/array');
+	const { ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	class CounterMutationHandler
@@ -11,8 +12,10 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 		/**
 		 * @param {RecentLocator} recentLocator
 		 * @param {Logger} logger
+		 * @param {{recentSection?: SectionRecentValue}} [options] recentSection is set by a tab whose
+		 *   id is not resolvable to a section by itself, e.g. a folder addressed by its numeric id
 		 */
-		constructor(recentLocator, logger)
+		constructor(recentLocator, logger, options = {})
 		{
 			/**
 			 * @private
@@ -29,6 +32,11 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 			 * @type {MessengerCoreStore}
 			 */
 			this.store = serviceLocator.get('core').getStore();
+			/**
+			 * @private
+			 * @type {?SectionRecentValue}
+			 */
+			this.recentSection = options.recentSection ?? null;
 		}
 
 		/**
@@ -69,6 +77,10 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 		}
 
 		/**
+		 * Returns both chatId and parentChatId (when present) so the mutation
+		 * reaches both representations: a top-level recent item that aggregates
+		 * its children (e.g. chats / collab tabs) and a nested recent item that
+		 * is rendered standalone (e.g. task comments in the tasks tab).
 		 * @param {Array<CounterModelState>} counterStateList
 		 * @return {Array<number>}
 		 */
@@ -80,13 +92,13 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 			}
 
 			const rawChatIdList = counterStateList
-				.map((counterState) => {
+				.flatMap((counterState) => {
 					if (counterState.parentChatId > 0)
 					{
-						return counterState.parentChatId;
+						return [counterState.chatId, counterState.parentChatId];
 					}
 
-					return counterState.chatId;
+					return [counterState.chatId];
 				})
 				.filter(Boolean)
 			;
@@ -111,7 +123,11 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 			}
 
 			const tabId = this.recentLocator.get('id');
-			const collection = this.store.getters['recentModel/getIdCollection'](tabId);
+			const collection = this.store.getters['recentModel/getIdCollection'](
+				tabId,
+				ROOT_PARENT_CHAT_ID,
+				this.recentSection,
+			);
 			const render = this.recentLocator.get('render');
 			const { toUpsert, toDelete } = this.#partitionItemsForUpdate(recentItems, collection, render);
 
@@ -129,7 +145,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 		/**
 		 * @param {Array<RecentModelState>} items
 		 * @param {Set<string>} collection
-		 * @param {object} render
+		 * @param {IRenderService} render
 		 * @returns {{ toUpsert: Array<RecentModelState>, toDelete: Array<RecentModelState> }}
 		 */
 		#partitionItemsForUpdate(items, collection, render)
@@ -148,7 +164,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 				{
 					toUpsert.push(item);
 				}
-				else if (render.hasItemRendered(id))
+				else if (render.hasItemPending(id))
 				{
 					toDelete.push({ id });
 				}

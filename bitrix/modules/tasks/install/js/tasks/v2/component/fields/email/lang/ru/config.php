@@ -1,6 +1,7 @@
 <?php
 
 $MESS['TASKS_V2_EMAIL_TITLE'] = 'Письмо';
+$MESS['TASKS_V2_EMAIL_VALUE_ARIA_LABEL'] = 'Письмо: #SUBJECT#';
 $MESS['TASKS_V2_EMAIL_FROM_TITLE'] = 'От кого';
 $MESS['TASKS_V2_EMAIL_DATE_TITLE'] = 'Дата';
 $MESS['TASKS_V2_EMAIL_TITLE_HINT'] = 'Задача создана из письма';

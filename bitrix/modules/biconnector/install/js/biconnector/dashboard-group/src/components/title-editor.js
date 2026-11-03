@@ -97,6 +97,7 @@ export const TitleEditor: BitrixVueComponentProps = {
 				<input
 					v-if="editMode"
 					class="group-name-input"
+					data-testid="biconnector-dashboard-group-name-input"
 					@blur="setViewMode"
 					@keyup.enter="setViewMode"
 					v-model="groupName"
@@ -104,18 +105,23 @@ export const TitleEditor: BitrixVueComponentProps = {
 					:placeholder="namePlaceholder"
 				>
 				<template v-else>
-					<div class="group-name">{{displayedGroupName}}</div>
+					<div class="group-name" data-testid="biconnector-dashboard-group-name">{{displayedGroupName}}</div>
 					<BIcon
 						:name="set.EDIT_L"
 						:size="20"
 						color="var(--ui-color-base-4)"
 						:class="'group-name-edit-icon'"
+						data-testid="biconnector-dashboard-group-name-edit"
 						@click="setEditMode"
 					></BIcon>
 				</template>
 			</template>
 			<template v-else>
-				<div class="group-name" v-hint="nameHintOptions">{{displayedGroupName}}</div>
+				<div
+					class="group-name"
+					data-testid="biconnector-dashboard-group-name"
+					v-hint="nameHintOptions"
+				>{{displayedGroupName}}</div>
 			</template>
 		</div>
 	`,

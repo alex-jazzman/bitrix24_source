@@ -3,7 +3,7 @@
  *
  * Wire values match REG-01 (backend enum MentionType).
  * entityId values match ENT-01 (entity-selector entity identifiers).
- * navKind: 'internal-link' for document/collection, 'slider' for user/task.
+ * navKind: 'internal-link' for document/collection, 'slider' for user/task/diskfolder.
  *
  * Presentation (color, icon, marker, avatar shape) lives in note.ui.mention-chip,
  * not here — this file is logic-only.
@@ -27,6 +27,10 @@ const MENTION_TYPE_MAP = Object.freeze({
 	}),
 	task: Object.freeze({
 		entityId: 'task',
+		navKind: 'slider',
+	}),
+	diskfolder: Object.freeze({
+		entityId: 'note-disk-folder',
 		navKind: 'slider',
 	}),
 });

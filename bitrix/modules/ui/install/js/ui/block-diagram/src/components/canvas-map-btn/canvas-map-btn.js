@@ -1,10 +1,13 @@
 import './canvas-map-btn.css';
-import { computed } from 'ui.vue3';
-import { useLoc } from '../../composables';
+import { computed, toValue } from 'ui.vue3';
+import { vBTooltip } from 'ui.system.tooltip.vue';
+import { useActionShortcut, useLoc } from '../../composables';
+import { CANVAS_ACTION_ID, TOOLTIP_SHOW_DELAY, withShortcut } from '../../utils';
 
 type CanvasMapBtnSetup = {
 	btnStyle: { [string]: string};
 	ariaLabel: string;
+	tooltip: { [string]: string | number };
 	currentIconColor: string;
 };
 
@@ -14,6 +17,9 @@ const DEFAULT_CLICKED_ICON_COLOR = 'var(--ui-color-accent-main-primary)';
 // @vue/component
 export const CanvasMapBtn = {
 	name: 'canvas-map-btn',
+	directives: {
+		'b-tooltip': vBTooltip,
+	},
 	props: {
 		width: {
 			type: Number,
@@ -39,6 +45,7 @@ export const CanvasMapBtn = {
 	setup(props): CanvasMapBtnSetup
 	{
 		const loc = useLoc();
+		const mapShortcut = useActionShortcut(CANVAS_ACTION_ID.TOGGLE_MAP);
 		const btnStyle = computed(() => ({
 			width: `${props.width}px`,
 			height: `${props.height}px`,
@@ -55,9 +62,17 @@ export const CanvasMapBtn = {
 			return props.isActive ? props.clickedIconColor : props.iconColor;
 		});
 
+		// The tooltip names the tool, so unlike the accessible name it does not follow the open state.
+		// It does follow the combo: a reassignment reaches a button that stays mounted.
+		const tooltip = computed(() => ({
+			content: withShortcut(loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_TITLE'), toValue(mapShortcut)),
+			showDelay: TOOLTIP_SHOW_DELAY,
+		}));
+
 		return {
 			btnStyle,
 			ariaLabel,
+			tooltip,
 			currentIconColor,
 		};
 	},
@@ -65,8 +80,10 @@ export const CanvasMapBtn = {
 		<button
 			type="button"
 			:style="btnStyle"
+			v-b-tooltip="tooltip"
 			:aria-label="ariaLabel"
 			class="ui-block-diagram-canvas-map-btn"
+			:class="{ '--active': isActive }"
 		>
 			<svg
 				width="24"

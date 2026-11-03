@@ -1,15 +1,17 @@
 import { defineStore } from 'ui.vue3.pinia';
 
-import { type SelectionState } from './types';
+import { type SelectionSnapshot, type SelectionState, type SelectionStateSnapshot } from './types';
 
-// Selection of the current feed. Only selectable files reach it; folders never
-// do. File sizes are snapshotted so hidden selections remain in the total. The
-// order of insertion is preserved because it decides the order files leave for
-// the caller. This store never reads other stores and never touches the network.
+// The set of files picked during one opening of the picker. Only selectable files
+// reach it; folders never do. Every id carries a display snapshot taken when the
+// file was picked, so the set survives a feed change and stays describable where
+// none of its files are listed. The order of insertion is preserved because it
+// decides the order files leave for the caller. This store never reads other
+// stores and never touches the network.
 export const useSelectionStore = defineStore('diskPickerSelection', {
 	state: (): SelectionState => ({
 		selectedIds: [],
-		selectedSizes: {},
+		selectedSnapshots: {},
 		activeObjectId: null,
 	}),
 	getters: {
@@ -27,44 +29,65 @@ export const useSelectionStore = defineStore('diskPickerSelection', {
 		{
 			return new Set(this.selectedIds);
 		},
+		// Snapshots in the order the files were picked: consumers describe the set
+		// without reaching into the visible list.
+		selectedSnapshotList(): SelectionSnapshot[]
+		{
+			return this.selectedIds.map((objectId) => this.selectedSnapshots[objectId]);
+		},
 	},
 	actions: {
 		has(objectId: number): boolean
 		{
 			return this.selectedIds.includes(objectId);
 		},
-		add(objectId: number, size?: number): void
+		add(objectId: number, snapshot: SelectionSnapshot): void
 		{
 			if (!this.selectedIds.includes(objectId))
 			{
 				this.selectedIds = [...this.selectedIds, objectId];
-				if (size !== undefined)
-				{
-					this.selectedSizes = { ...this.selectedSizes, [objectId]: size };
-				}
+				this.selectedSnapshots = { ...this.selectedSnapshots, [objectId]: snapshot };
 			}
 		},
 		remove(objectId: number): void
 		{
 			this.selectedIds = this.selectedIds.filter((id) => id !== objectId);
-			const selectedSizes = { ...this.selectedSizes };
-			delete selectedSizes[objectId];
-			this.selectedSizes = selectedSizes;
+			const selectedSnapshots = { ...this.selectedSnapshots };
+			delete selectedSnapshots[objectId];
+			this.selectedSnapshots = selectedSnapshots;
 		},
-		replaceWith(objectId: number, size?: number): void
+		replaceWith(objectId: number, snapshot: SelectionSnapshot): void
 		{
 			this.selectedIds = [objectId];
-			this.selectedSizes = size === undefined ? {} : { [objectId]: size };
+			this.selectedSnapshots = { [objectId]: snapshot };
 		},
 		setActive(objectId: number | null): void
 		{
 			this.activeObjectId = objectId;
 		},
-		// Changing the feed drops selection and active alike.
+		// The pair a double click is built on: what the set was before the first click is
+		// taken whole and put back whole, so restoring costs the same whatever the click
+		// did to it. The copies are detached - a snapshot survives any later change and
+		// can be restored more than once.
+		captureState(): SelectionStateSnapshot
+		{
+			return {
+				selectedIds: [...this.selectedIds],
+				selectedSnapshots: { ...this.selectedSnapshots },
+				activeObjectId: this.activeObjectId,
+			};
+		},
+		restoreState(snapshot: SelectionStateSnapshot): void
+		{
+			this.selectedIds = [...snapshot.selectedIds];
+			this.selectedSnapshots = { ...snapshot.selectedSnapshots };
+			this.activeObjectId = snapshot.activeObjectId;
+		},
+		// Only an explicit reset and closing the picker empty the set.
 		clear(): void
 		{
 			this.selectedIds = [];
-			this.selectedSizes = {};
+			this.selectedSnapshots = {};
 			this.activeObjectId = null;
 		},
 		// The active preview must stay within the visible list. Selection is kept

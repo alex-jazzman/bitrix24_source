@@ -28,19 +28,27 @@ BX.saleAccountPay = (function()
 		BX.bindDelegate(this.paySystemsContainer, 'click', { 'className': 'sale-accountpay-pp-company' }, BX.proxy(
 			function(event)
 			{
-				var oldChosenCheckboxList = this.wrapper.querySelectorAll('.sale-accountpay-pp-company-checkbox:checked');
-				Array.prototype.forEach.call(oldChosenCheckboxList, function(checkbox)
-				{
-					checkbox.checked = false;
-					checkbox.parentNode.parentNode.classList.remove('bx-selected');
-				});
-				var parent = event.target.parentNode;
-				parent.classList.add('bx-selected');
-				parent.parentNode.classList.add('bx-selected');
-				parent.querySelector('.sale-accountpay-pp-company-checkbox').checked = 'checked';
+				this.selectPaySystem(event.target);
 				return this;
 			}, this)
 		);
+
+		BX.bindDelegate(this.paySystemsContainer, 'keydown', { 'className': 'sale-accountpay-pp-company' }, BX.proxy(
+			function(event)
+			{
+				if (!this.isActivationKey(event) || event.target.getAttribute('role') !== 'radio')
+				{
+					return;
+				}
+
+				event.preventDefault();
+				this.selectPaySystem(event.target);
+			}, this)
+		);
+
+		var activateFocusZone = BX.proxy(this.activateFocusZone, this);
+		this.paySystemsContainer.addEventListener('focusin', activateFocusZone, true);
+		this.paySystemsContainer.addEventListener('keydown', activateFocusZone, true);
 
 		BX.bind(this.inputElement, 'input', BX.delegate(
 			function ()
@@ -55,7 +63,31 @@ BX.saleAccountPay = (function()
 		BX.bindDelegate(this.changeInputContainer, 'click', { 'className': 'sale-accountpay-fixedpay-item' }, BX.proxy(
 			function(event)
 			{
-				this.inputElement.value = parseInt(event.target.innerText);
+				this.setFixedSum(event.target);
+			}, this)
+		);
+
+		BX.bindDelegate(this.changeInputContainer, 'keydown', { 'className': 'sale-accountpay-fixedpay-item' }, BX.proxy(
+			function(event)
+			{
+				if (!this.isActivationKey(event))
+				{
+					return;
+				}
+
+				event.preventDefault();
+				this.setFixedSum(event.target);
+			}, this)
+		);
+
+		BX.bind(this.submitButton, 'keydown', BX.delegate(
+			function(event)
+			{
+				if (event.key === ' ' || event.key === 'Spacebar')
+				{
+					event.preventDefault();
+					this.submitButton.click();
+				}
 			}, this)
 		);
 
@@ -63,6 +95,10 @@ BX.saleAccountPay = (function()
 			function(event)
 			{
 				event.preventDefault();
+				if (!this.inputElement)
+				{
+					return false;
+				}
 				if (parseFloat(this.inputElement.value) <= 0 || this.inputElement.value == "")
 				{
 					window.alert( BX.util.htmlspecialchars(this.messages.wrongInput));
@@ -84,12 +120,17 @@ BX.saleAccountPay = (function()
 						},
 						onsuccess: BX.proxy(function(result)
 						{
+							this.deactivateFocusZone();
 							while (this.wrapper.firstChild)
 							{
 								this.wrapper.removeChild(this.wrapper.firstChild);
 							}
 							this.wrapper.innerHTML = result;
 							this.endLoader();
+							this.wrapper.setAttribute('tabindex', '-1');
+							this.wrapper.setAttribute('role', 'group');
+							this.wrapper.setAttribute('aria-label', BX.message('SAP_RESULT_ARIA'));
+							this.wrapper.focus();
 						},this),
 						onfailure: BX.proxy(function()
 						{
@@ -101,6 +142,96 @@ BX.saleAccountPay = (function()
 			}, this)
 		);
 		return this;
+	};
+
+	classDescription.prototype.getA11y = function()
+	{
+		var a11y = BX.UI && BX.UI.Accessibility;
+
+		return a11y && a11y.FocusZone && a11y.FocusKeys && a11y.LiveAnnouncer ? a11y : null;
+	};
+
+	classDescription.prototype.isActivationKey = function(event)
+	{
+		return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+	};
+
+	// The zone starts once a tile is reached: the form may be out of sight on init.
+	classDescription.prototype.activateFocusZone = function()
+	{
+		var a11y = this.getA11y();
+		var container = this.paySystemsContainer;
+		if (this.focusZone || !a11y || !container || container.getAttribute('role') !== 'radiogroup')
+		{
+			return;
+		}
+
+		this.focusZone = new a11y.FocusZone(container, {
+			bindKeys: a11y.FocusKeys.ArrowAll | a11y.FocusKeys.HomeAndEnd,
+			focusableElementFilter: function(element)
+			{
+				return element.getAttribute('role') === 'radio';
+			},
+		});
+		this.focusZone.activate();
+	};
+
+	classDescription.prototype.deactivateFocusZone = function()
+	{
+		if (this.focusZone)
+		{
+			this.focusZone.deactivate();
+			this.focusZone = null;
+		}
+	};
+
+	classDescription.prototype.selectPaySystem = function(target)
+	{
+		var tile = target.closest('.sale-accountpay-pp-company');
+		if (!tile)
+		{
+			return;
+		}
+
+		var tiles = this.wrapper.getElementsByClassName('sale-accountpay-pp-company');
+		Array.prototype.forEach.call(tiles, function(item)
+		{
+			var checkbox = item.querySelector('.sale-accountpay-pp-company-checkbox');
+			if (checkbox)
+			{
+				checkbox.checked = false;
+			}
+			item.classList.remove('bx-selected');
+			if (item.hasAttribute('aria-checked'))
+			{
+				item.setAttribute('aria-checked', 'false');
+			}
+		});
+
+		tile.classList.add('bx-selected');
+		if (tile.hasAttribute('aria-checked'))
+		{
+			tile.setAttribute('aria-checked', 'true');
+		}
+		tile.querySelector('.sale-accountpay-pp-company-checkbox').checked = 'checked';
+	};
+
+	classDescription.prototype.setFixedSum = function(target)
+	{
+		var item = target.closest('.sale-accountpay-fixedpay-item');
+		if (!item || !this.inputElement)
+		{
+			return;
+		}
+
+		var sum = item.getAttribute('data-sum');
+		this.inputElement.value = parseInt(sum === null ? item.innerText : sum);
+
+		var a11y = this.getA11y();
+		if (a11y && sum !== null)
+		{
+			a11y.LiveAnnouncer.announce(BX.message('SAP_SUM_CHANGED_ARIA').replace('#SUM#', this.inputElement.value), 'polite');
+		}
 	};
 
 	classDescription.prototype.destroy = function()
@@ -133,13 +264,15 @@ BX.saleAccountPay = (function()
 			{
 				overlay: {backgroundColor: 'white', opacity: '80'},
 				autoHide : true,
+				focusTrap: false,
+				ariaLabel: BX.message('SAP_LOADING_ARIA'),
 				events:
 				{
 					onAfterPopupShow: BX.proxy(function()
 					{
 						BX.cleanNode(this.loadingScreen.popupContainer);
 						this.loadingScreen.popupContainer.appendChild(
-							BX.create('IMG', {props: {src: this.templateFolder + "/images/loader.gif"}})
+							BX.create('IMG', {props: {src: this.templateFolder + "/images/loader.gif", alt: ''}})
 						);
 						this.loadingScreen.popupContainer.removeAttribute('style');
 						this.loadingScreen.popupContainer.style.display = 'block';

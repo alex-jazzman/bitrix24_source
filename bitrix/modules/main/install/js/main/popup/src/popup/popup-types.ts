@@ -14,6 +14,7 @@ export type PopupOptions = {
 	offsetLeft?: number;
 	content?: string | Element | Node;
 	closeByEsc?: boolean;
+	blockBackgroundEsc?: boolean;
 	buttons?: PopupButton[];
 	className?: string;
 	width?: number;

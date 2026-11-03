@@ -421,6 +421,17 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		 */
 		#interruptMessageAnimation(messageId)
 		{
+			if (this.#dialogLocator.get('ai-task-indication-manager')?.isMessageOfOperation?.(messageId))
+			{
+				// Every message the task is built from is left alone, not the anchor alone: the indication
+				// frame lives in the very visualState the interruption overwrites, and an interrupted status
+				// makes the frame builder return null -- the glow of that message would go dark until the next
+				// status arrives, and after the terminal frame it would not come back at all.
+				logger.log(`${this.constructor.name}.interruptMessageAnimation skipped: ai task message`, messageId);
+
+				return;
+			}
+
 			const payloadParams = {
 				id: messageId,
 				fields: {

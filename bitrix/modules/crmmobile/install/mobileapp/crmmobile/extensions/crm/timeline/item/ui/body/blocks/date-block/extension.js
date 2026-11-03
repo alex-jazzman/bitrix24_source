@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/date-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { Moment } = require('utils/date');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
@@ -19,12 +20,11 @@ jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, modu
 
 			return View(
 				{},
-				Text({
+				Text4({
 					text: this.props.withTime
 						? moment.format(`${dateFormat}, ${shortTime()}`)
 						: moment.format(dateFormat),
 					style: {
-						fontSize: 14,
 						color: AppTheme.colors.base2,
 						marginLeft: 5,
 					},

@@ -20,6 +20,7 @@ import {
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { DescriptionCheckListMixin } from './description-check-list-mixin';
+import { EditorActionsToolbar } from './editor-actions-toolbar';
 import { CheckList } from './actions/check-list';
 
 import './description.css';
@@ -31,6 +32,7 @@ export const DescriptionEditor = {
 		BIcon,
 		UiButton,
 		CheckList,
+		EditorActionsToolbar,
 		CopilotButton,
 		AttachButton,
 		MentionButton,
@@ -108,16 +110,23 @@ export const DescriptionEditor = {
 				<div class="tasks-card-description-title">
 					{{ loc('TASKS_V2_CHANGE_DESCRIPTION') }}
 				</div>
-				<BIcon
-					:name="Outline.CROSS_L"
-					hoverable
-					class="tasks-card-description-field-icon"
+				<button
+					type="button"
+					class="tasks-card-description-header-close"
+					:aria-label="loc('TASKS_V2_DESCRIPTION_SHEET_CLOSE_ARIA_LABEL')"
 					@click="handleClose"
-				/>
+				>
+					<BIcon
+						:name="Outline.CROSS_L"
+						hoverable
+						class="tasks-card-description-field-icon"
+						aria-hidden="true"
+					/>
+				</button>
 			</div>
 			<div class="tasks-card-description-editor-wrapper" id="descriptionTextAreaDestination"/>
 			<div v-if="!readonly" class="tasks-card-description-editor-footer" ref="descriptionActions">
-				<div class="tasks-card-description-action-list">
+				<EditorActionsToolbar class="tasks-card-description-action-list">
 					<AttachButton v-if="isDiskModuleInstalled" :fileService/>
 					<MentionButton :editor/>
 					<BulletListButton :editor/>
@@ -130,7 +139,7 @@ export const DescriptionEditor = {
 						:loading="isAiCommandProcessing"
 						@click="handleCheckListButtonClick"
 					/>
-				</div>
+				</EditorActionsToolbar>
 				<div class="tasks-card-description-footer-buttons">
 					<UiButton
 						:text="loc('TASKS_V2_DESCRIPTION_BUTTON_SAVE')"

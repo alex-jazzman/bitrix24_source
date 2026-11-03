@@ -35,3 +35,21 @@
 	font: var(--im-font-size-md) var(--im-font-family-system);
 	color: var(--im-collab-header-title__font-color_guest-counter);
 }
+
+/* Collab header subtitle (isAirDesignEnabled flag). The title is delegated to
+   the shared ChatTitle and covered separately; only the member counter and guest
+   subtitle are here. */
+.bx-im-collab-header-title__container.--air .bx-im-collab-header-title__user-counter {
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-4);
+}
+
+.bx-im-collab-header-title__container.--air .bx-im-collab-header-title__guest-counter {
+	margin-left: var(--ui-space-inline-2xs);
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-collab-accent-primary);
+}

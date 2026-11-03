@@ -20,6 +20,32 @@ export function getSelectorItemByAccessCode(accessCode)
 	return null;
 }
 
+// The project provider keeps the workgroup avatar preset in the same `avatar` field as an
+// uploaded image (Socialnetwork\Helper\Workgroup::getAvatarEntitySelectorUrl), while the server
+// fills ownAvatar from IMAGE_ID only. Presets are static files shipped with the product, so the
+// directory they live in is the only thing that tells them apart from an uploaded image.
+const workgroupPresetAvatarPath = '/bitrix/images/socialnetwork/workgroup/';
+
+/**
+ * Returns the member own picture taken from a selector item, or null when the item carries
+ * nothing but a provider preset.
+ */
+export function getOwnAvatarByDialogItem(item): ?string
+{
+	const avatar = item.avatar ?? null;
+	if (avatar === null)
+	{
+		return null;
+	}
+
+	if (item.getEntityId() === 'project' && avatar.startsWith(workgroupPresetAvatarPath))
+	{
+		return null;
+	}
+
+	return avatar;
+}
+
 export function getAccessCodeByDialogItem(item)
 {
 	const entityId = item.getEntityId();

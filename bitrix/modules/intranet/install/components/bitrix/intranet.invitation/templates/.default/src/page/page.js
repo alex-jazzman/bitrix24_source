@@ -19,6 +19,9 @@ export class Page
 	onInviteSuccess(event: BaseEvent)
 	{}
 
+	restoreErrors(): void
+	{}
+
 	hasShownButtonPanel(): boolean
 	{
 		return true;

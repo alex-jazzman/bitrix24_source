@@ -4,6 +4,35 @@
 	if (window.JCCatalogElement)
 		return;
 
+	// A held step button repeats the change every 150 ms and the announcer plays every queued
+	// message in full instead of dropping stale ones. Announcing the total only after this
+	// quiet period turns a series of steps into a single announcement.
+	var TOTAL_PRICE_ANNOUNCE_DELAY = 500;
+
+	// String.replace reads $& and $' in the replacement, and both the name of a property and the name
+	// of a value come from the product.
+	var fillTemplate = function(template, values)
+	{
+		var filled = template;
+
+		for (var placeholder in values)
+		{
+			if (values.hasOwnProperty(placeholder))
+			{
+				filled = filled.split(placeholder).join(values[placeholder]);
+			}
+		}
+
+		return filled;
+	};
+
+	// The accessibility primitives come from an extension of their own. Without it the page keeps its
+	// price, quantity and buy button and loses only the keyboard and reader extras.
+	var getAccessibility = function()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	};
+
 	var BasketButton = function(params)
 	{
 		params = params || {};
@@ -23,17 +52,19 @@
 			}
 		}
 
-		this.buttonNode = BX.create('SPAN', {
+		var attrs = {type: 'button'};
+		if (params.autofocus)
+		{
+			attrs['data-autofocus'] = 'true';
+		}
+
+		this.buttonNode = BX.create('BUTTON', {
 			props: {className: 'btn btn-primary btn-buy btn-sm', id: this.id},
+			attrs: attrs,
 			style: typeof params.style === 'object' ? params.style : {},
 			text: this.text,
 			events: this.contextEvents
 		});
-
-		if (BX.browser.IsIE())
-		{
-			this.buttonNode.setAttribute('hideFocus', 'hidefocus');
-		}
 	};
 	BX.extend(BasketButton, BX.PopupWindowButton);
 
@@ -104,6 +135,7 @@
 			addUrl: '',
 			buyUrl: '',
 			slider: {},
+			pager: {},
 			sliderCount: 0,
 			useSlider: false,
 			sliderPict: []
@@ -147,9 +179,14 @@
 			pager: [],
 			controls: []
 		};
+		this.dotsFocusZone = null;
+		this.dotsFocusZoneCont = null;
+		this.skuFocusZones = [];
+		this.tabsFocusZone = null;
 
 		this.quantityDelay = null;
 		this.quantityTimer = null;
+		this.totalPriceAnnounceTimer = null;
 
 		this.obProduct = null;
 		this.obQuantity = null;
@@ -203,6 +240,7 @@
 		};
 
 		this.obPopupWin = null;
+		this.popupInitiator = null;
 		this.basketUrl = '';
 		this.basketParams = {};
 
@@ -583,6 +621,22 @@
 								BX.bind(this.product.slider.ITEMS[j], 'click', BX.delegate(this.selectSliderImg, this));
 							}
 
+							// transparent overlay above the photo, switches pictures on hover
+							this.product.pager = {
+								ID: this.visual.SLIDER_PAGER_ID,
+								CONT: BX(this.visual.SLIDER_PAGER_ID),
+								COUNT: this.product.sliderCount
+							};
+							this.product.pager.ITEMS = this.getEntities(this.product.pager.CONT, 'slider-control');
+							for (j = 0; j < this.product.pager.ITEMS.length; j++)
+							{
+								BX.bind(this.product.pager.ITEMS[j], 'mouseenter', BX.delegate(this.onSliderControlHover, this));
+								BX.bind(this.product.pager.ITEMS[j], 'mouseleave', BX.delegate(this.onSliderControlLeave, this));
+								BX.bind(this.product.pager.ITEMS[j], 'click', BX.delegate(this.selectSliderImg, this));
+							}
+
+							this.activateDotsZone(this.product.slider.CONT);
+
 							this.setCurrentImg(this.product.sliderPict[0], true, true);
 							this.checkSliderControls(this.product.sliderCount);
 
@@ -603,7 +657,10 @@
 							for (i = 0; i < treeItems.length; i++)
 							{
 								BX.bind(treeItems[i], 'click', BX.delegate(this.selectOfferProp, this));
+								BX.bind(treeItems[i], 'keydown', BX.delegate(this.selectOfferPropKey, this));
 							}
+
+							this.createSkuZones();
 						}
 
 						for (i = 0; i < this.offers.length; i++)
@@ -1115,6 +1172,7 @@
 							{
 								BX.addClass(tabs[i], 'active');
 								BX.addClass(panelTabs[i], 'active');
+								this.setTabSelected(tabs[i], true);
 								BX.show(targetTab);
 								haveActive = true;
 							}
@@ -1122,11 +1180,69 @@
 							{
 								BX.removeClass(tabs[i], 'active');
 								BX.removeClass(panelTabs[i], 'active');
+								this.setTabSelected(tabs[i], false);
 								BX.hide(targetTab);
 							}
 						}
 					}
 				}
+			}
+
+			this.createTabsZone();
+		},
+
+		// Selection stays detached from focus: arrows only move it, Enter and Space click the button.
+		createTabsZone: function()
+		{
+			if (this.tabsFocusZone || !this.obTabs)
+			{
+				return;
+			}
+
+			// the zone lives exactly where the role does: an empty strip carries neither
+			var list = this.obTabs.querySelector('[role="tablist"]');
+			var accessibility = getAccessibility();
+			if (!list || !accessibility)
+			{
+				return;
+			}
+
+			var keys = accessibility.FocusKeys;
+
+			this.tabsFocusZone = new accessibility.FocusZone(list, {
+				bindKeys: keys.ArrowHorizontal | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getTabsTabStop(list);
+				}, this)
+			});
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			requestAnimationFrame(BX.delegate(this.startTabsZone, this));
+		},
+
+		startTabsZone: function()
+		{
+			if (this.tabsFocusZone && !this.tabsFocusZone.isActive())
+			{
+				this.tabsFocusZone.activate();
+			}
+		},
+
+		getTabsTabStop: function(list)
+		{
+			return list.querySelector('[role="tab"][aria-selected="true"]')
+				|| list.querySelector('[role="tab"]');
+		},
+
+		// The sticky strip has no roles of its own, so only the main strip carries the state.
+		setTabSelected: function(tab, selected)
+		{
+			var control = tab.querySelector('[role="tab"]');
+
+			if (control)
+			{
+				control.setAttribute('aria-selected', selected ? 'true' : 'false');
 			}
 		},
 
@@ -1359,11 +1475,13 @@
 						{
 							BX.addClass(tabs[i], 'active');
 							BX.addClass(panelTabs[i], 'active');
+							this.setTabSelected(tabs[i], true);
 						}
 						else
 						{
 							BX.removeClass(tabs[i], 'active');
 							BX.removeClass(panelTabs[i], 'active');
+							this.setTabSelected(tabs[i], false);
 						}
 					}
 				}
@@ -1409,6 +1527,153 @@
 			this.node.sliderControlRight && (this.node.sliderControlRight.style.display = display);
 		},
 
+		// Every offer has its own dots container, and only the shown one carries the zone.
+		activateDotsZone: function(container)
+		{
+			var accessibility = getAccessibility();
+
+			if (!BX.type.isElementNode(container) || !accessibility)
+			{
+				return;
+			}
+
+			if (this.dotsFocusZone && this.dotsFocusZoneCont === container)
+			{
+				return;
+			}
+
+			this.removeDotsZone(this.dotsFocusZoneCont);
+
+			var keys = accessibility.FocusKeys;
+
+			this.dotsFocusZoneCont = container;
+			this.dotsFocusZone = new accessibility.FocusZone(container, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getDotsTabStop(container);
+				}, this),
+				getNextFocusable: BX.delegate(function(direction, from) {
+					return this.getNextDot(container, direction, from);
+				}, this)
+			});
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			requestAnimationFrame(BX.delegate(this.startDotsZone, this));
+		},
+
+		startDotsZone: function()
+		{
+			if (this.dotsFocusZone && !this.dotsFocusZone.isActive())
+			{
+				this.dotsFocusZone.activate();
+			}
+		},
+
+		// Called for every hidden container, so the zone goes away only with its own one.
+		removeDotsZone: function(container)
+		{
+			if (!this.dotsFocusZone || this.dotsFocusZoneCont !== container)
+			{
+				return;
+			}
+
+			this.dotsFocusZone.deactivate();
+			this.dotsFocusZone = null;
+			this.dotsFocusZoneCont = null;
+		},
+
+		getDotsTabStop: function(container)
+		{
+			return this.getEntity(container, 'slider-control', '.active')
+				|| this.getEntity(container, 'slider-control');
+		},
+
+		// The arrows, Home and End change the photo right away, so the dot the zone is
+		// about to focus is switched through the same path a click takes. Wrapping is done
+		// here as well: the zone falls back to its own navigation only on an empty answer.
+		getNextDot: function(container, direction, from)
+		{
+			var navigator = BX.UI.Accessibility.FocusNavigator;
+			var options = {from: from || undefined, tabbableOnly: false, wrap: true};
+			var nextDot;
+
+			switch (direction)
+			{
+				case 'previous':
+					nextDot = navigator.getPrevious(container, options);
+					break;
+				case 'next':
+					nextDot = navigator.getNext(container, options);
+					break;
+				case 'start':
+					nextDot = navigator.getFirst(container, options);
+					break;
+				default:
+					nextDot = navigator.getLast(container, options);
+					break;
+			}
+
+			if (nextDot)
+			{
+				this.selectSliderImg(nextDot);
+			}
+
+			return nextDot;
+		},
+
+		createSkuZones: function()
+		{
+			if (this.skuFocusZones.length || !getAccessibility())
+			{
+				return;
+			}
+
+			var lineContainer = this.getEntities(this.obTree, 'sku-line-block');
+			var list;
+
+			for (var i = 0; i < lineContainer.length; i++)
+			{
+				list = lineContainer[i].querySelector('ul');
+				// a group without a list keeps its slot: updateRow addresses zones by line index
+				this.skuFocusZones.push(list ? this.createSkuZone(list) : null);
+			}
+
+			// the zone collects its set by visibility, so activation waits for the first frame
+			requestAnimationFrame(BX.delegate(this.startSkuZones, this));
+		},
+
+		createSkuZone: function(list)
+		{
+			var accessibility = getAccessibility();
+			var keys = accessibility.FocusKeys;
+
+			return new accessibility.FocusZone(list, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getSkuTabStop(list);
+				}, this)
+			});
+		},
+
+		startSkuZones: function()
+		{
+			for (var i = 0; i < this.skuFocusZones.length; i++)
+			{
+				if (this.skuFocusZones[i] && !this.skuFocusZones[i].isActive())
+				{
+					this.skuFocusZones[i].activate();
+				}
+			}
+		},
+
+		getSkuTabStop: function(list)
+		{
+			return list.querySelector('[role="radio"][aria-checked="true"]')
+				|| list.querySelector('[role="radio"]');
+		},
+
 		setCurrentImg: function(img, showImage, showPanelImage)
 		{
 			var images, l;
@@ -1432,10 +1697,16 @@
 						}
 
 						BX.addClass(images[l], 'active');
+						images[l].removeAttribute('aria-hidden');
 					}
-					else if (BX.hasClass(images[l], 'active'))
+					else
 					{
-						BX.removeClass(images[l], 'active');
+						if (BX.hasClass(images[l], 'active'))
+						{
+							BX.removeClass(images[l], 'active');
+						}
+
+						images[l].setAttribute('aria-hidden', 'true');
 					}
 				}
 			}
@@ -1656,6 +1927,15 @@
 						{
 							BX.removeClass(this.product.slider.ITEMS[i], 'active');
 						}
+
+						if (value === intPict)
+						{
+							this.product.slider.ITEMS[i].setAttribute('aria-current', 'true');
+						}
+						else
+						{
+							this.product.slider.ITEMS[i].removeAttribute('aria-current');
+						}
 					}
 				}
 			}
@@ -1753,6 +2033,15 @@
 							else if (BX.hasClass(this.product.slider.ITEMS[i], 'active'))
 							{
 								BX.removeClass(this.product.slider.ITEMS[i], 'active');
+							}
+
+							if (value === strValue)
+							{
+								this.product.slider.ITEMS[i].setAttribute('aria-current', 'true');
+							}
+							else
+							{
+								this.product.slider.ITEMS[i].removeAttribute('aria-current');
 							}
 						}
 					}
@@ -1865,6 +2154,11 @@
 
 		quantityUp: function()
 		{
+			if (this.isQuantityButtonDisabled(this.obQuantityUp))
+			{
+				return;
+			}
+
 			var curValue = 0,
 				boolSet = true;
 
@@ -1900,6 +2194,11 @@
 
 		quantityDown: function()
 		{
+			if (this.isQuantityButtonDisabled(this.obQuantityDown))
+			{
+				return;
+			}
+
 			var curValue = 0,
 				boolSet = true;
 
@@ -2225,11 +2524,6 @@
 				if (BX.hasClass(target, 'selected'))
 					return;
 
-				if (typeof document.activeElement === 'object')
-				{
-					document.activeElement.blur();
-				}
-
 				strTreeValue = target.getAttribute('data-treevalue');
 				arTreeItem = strTreeValue.split('_');
 				this.searchOfferPropIndex(arTreeItem[0], arTreeItem[1]);
@@ -2240,10 +2534,13 @@
 					for (i = 0; i < rowItems.length; i++)
 					{
 						BX.removeClass(rowItems[i], 'selected');
+						rowItems[i].setAttribute('aria-checked', 'false');
 					}
 				}
 
 				BX.addClass(target, 'selected');
+				target.setAttribute('aria-checked', 'true');
+				this.announceSkuChoice(target);
 
 				if (this.smallCardNodes.panel)
 				{
@@ -2276,6 +2573,19 @@
 					);
 				}
 			}
+		},
+
+		// the <li> carries the radio role but is not an interactive element,
+		// so the browser synthesizes no activation from Enter or Space
+		selectOfferPropKey: function(event)
+		{
+			if (event.key !== 'Enter' && event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.selectOfferProp();
 		},
 
 		searchOfferPropIndex: function(strPropID, strPropValue)
@@ -2369,7 +2679,8 @@
 				isCurrent = false,
 				rowItems = null;
 
-			var lineContainer = this.getEntities(this.obTree, 'sku-line-block');
+			var lineContainer = this.getEntities(this.obTree, 'sku-line-block'),
+				visibleItems = [];
 
 			if (intNumber > -1 && intNumber < lineContainer.length)
 			{
@@ -2382,27 +2693,43 @@
 					if (isCurrent)
 					{
 						BX.addClass(rowItems[i], 'selected');
+						rowItems[i].setAttribute('aria-checked', 'true');
 					}
 					else
 					{
 						BX.removeClass(rowItems[i], 'selected');
+						rowItems[i].setAttribute('aria-checked', 'false');
 					}
 
 					if (BX.util.in_array(value, canBuyId))
 					{
 						BX.removeClass(rowItems[i], 'notallowed');
+						rowItems[i].removeAttribute('aria-disabled');
 					}
 					else
 					{
 						BX.addClass(rowItems[i], 'notallowed');
+						// not `disabled`: the value stays reachable by arrows and explained to a screen reader
+						rowItems[i].setAttribute('aria-disabled', 'true');
 					}
 
 					rowItems[i].style.display = BX.util.in_array(value, showId) ? '' : 'none';
+					if (rowItems[i].style.display !== 'none')
+					{
+						visibleItems.push(rowItems[i]);
+					}
 
 					if (isCurrent)
 					{
 						lineContainer[intNumber].style.display = (value == 0 && canBuyId.length == 1) ? 'none' : '';
 					}
+				}
+
+				this.updateSkuPositions(visibleItems);
+				if (this.skuFocusZones[intNumber])
+				{
+					// the zone observer does not watch inline styles, so the set is rebuilt here
+					this.skuFocusZones[intNumber].refreshElements();
 				}
 
 				if (this.smallCardNodes.panel)
@@ -2437,6 +2764,17 @@
 						}
 					}
 				}
+			}
+		},
+
+		// the browser cannot compute the set position for a role carried by <li>,
+		// and a hidden value must not be counted
+		updateSkuPositions: function(items)
+		{
+			for (var i = 0; i < items.length; i++)
+			{
+				items[i].setAttribute('aria-setsize', items.length);
+				items[i].setAttribute('aria-posinset', i + 1);
 			}
 		},
 
@@ -2640,6 +2978,7 @@
 							{
 								this.slider.controls[i].CONT.style.display = "";
 								this.slider.controls[i].CONT && BX.addClass(this.slider.controls[i].CONT, "selected");
+								this.activateDotsZone(this.slider.controls[i].CONT);
 							}
 							if (this.slider.pager[i].CONT)
 							{
@@ -2653,6 +2992,7 @@
 							{
 								this.slider.controls[i].CONT && BX.removeClass(this.slider.controls[i].CONT, "selected");
 								this.slider.controls[i].CONT && BX.hide(this.slider.controls[i].CONT);
+								this.removeDotsZone(this.slider.controls[i].CONT);
 							}
 							if (this.slider.pager[i].CONT)
 							{
@@ -2824,21 +3164,28 @@
 					+ 'background-image: image-set(url(\'' + xImages[i].SRC + '\') 1x, url(\'' + x2Images[i].SRC + '\') 2x);'
 				);
 
-				this.node.imageContainer.appendChild(
-					BX.create('DIV', {
-						attrs: {
-							'data-entity': 'image',
-							'data-id': xImages[i].ID
-						},
-						props: {
-							className: 'product-detail-slider-image' + (i == 0 ? ' active' : '')
-						},
-						children: [
-							img,
-							overlay
-						]
-					})
-				);
+				var slide = BX.create('DIV', {
+					attrs: {
+						'data-entity': 'image',
+						'data-id': xImages[i].ID
+					},
+					props: {
+						className: 'product-detail-slider-image' + (i == 0 ? ' active' : '')
+					},
+					children: [
+						img,
+						overlay
+					]
+				});
+
+				// an inactive slide stays in the DOM under zero opacity, and its image is kept out of
+				// the accessibility tree: otherwise the reader repeats the same alt for every photo
+				if (i != 0)
+				{
+					slide.setAttribute('aria-hidden', 'true');
+				}
+
+				this.node.imageContainer.appendChild(slide);
 			}
 		},
 
@@ -3016,6 +3363,34 @@
 			return range;
 		},
 
+		disableQuantityButton: function(button)
+		{
+			if (!BX.type.isElementNode(button))
+			{
+				return;
+			}
+
+			BX.addClass(button, 'product-item-amount-field-btn-disabled');
+			button.setAttribute('aria-disabled', 'true');
+		},
+
+		enableQuantityButton: function(button)
+		{
+			if (!BX.type.isElementNode(button))
+			{
+				return;
+			}
+
+			BX.removeClass(button, 'product-item-amount-field-btn-disabled');
+			button.removeAttribute('aria-disabled');
+		},
+
+		// the step button keeps the focus at the limit, so the step is refused here
+		isQuantityButtonDisabled: function(button)
+		{
+			return BX.type.isElementNode(button) && button.getAttribute('aria-disabled') === 'true';
+		},
+
 		checkQuantityControls: function()
 		{
 			if (!this.obQuantity)
@@ -3026,20 +3401,20 @@
 
 			if (reachedTopLimit)
 			{
-				BX.addClass(this.obQuantityUp, 'product-item-amount-field-btn-disabled');
+				this.disableQuantityButton(this.obQuantityUp);
 			}
-			else if (BX.hasClass(this.obQuantityUp, 'product-item-amount-field-btn-disabled'))
+			else
 			{
-				BX.removeClass(this.obQuantityUp, 'product-item-amount-field-btn-disabled');
+				this.enableQuantityButton(this.obQuantityUp);
 			}
 
 			if (reachedBottomLimit)
 			{
-				BX.addClass(this.obQuantityDown, 'product-item-amount-field-btn-disabled');
+				this.disableQuantityButton(this.obQuantityDown);
 			}
-			else if (BX.hasClass(this.obQuantityDown, 'product-item-amount-field-btn-disabled'))
+			else
 			{
-				BX.removeClass(this.obQuantityDown, 'product-item-amount-field-btn-disabled');
+				this.enableQuantityButton(this.obQuantityDown);
 			}
 
 			if (reachedTopLimit && reachedBottomLimit)
@@ -3054,7 +3429,7 @@
 
 		setPrice: function()
 		{
-			var economyInfo = '', price;
+			var economyInfo = '', formatTotalPrice = '', price;
 
 			if (this.obQuantity)
 			{
@@ -3156,15 +3531,23 @@
 							})
 						}
 
+						formatTotalPrice = BX.Currency.currencyFormat(price.PRICE * this.obQuantity.value, price.CURRENCY, true);
+
 						BX.adjust(this.obPrice.total, {
 							html: BX.message('PRICE_TOTAL_PREFIX') + ' <span>'
-							+ BX.Currency.currencyFormat(price.PRICE * this.obQuantity.value, price.CURRENCY, true)
+							+ formatTotalPrice
 							+ '</span>',
 							style: {display: ''}
 						});
+
+						// the announcer writes plain text, so the currency template is read back
+						// from the visible node, where the browser has already decoded it
+						this.announceTotalPrice(this.obPrice.total.textContent);
 					}
 					else
 					{
+						this.cancelTotalPriceAnnounce();
+
 						BX.adjust(this.obPrice.total, {
 							html: '',
 							style: {display: 'none'}
@@ -3183,6 +3566,81 @@
 			}
 		},
 
+		// The choice of a variant is spoken by us and not left to the reader. Orca repeats the state of
+		// a radio only when the last key was the space bar (orca/scripts/default.py: onCheckedChanged),
+		// so a choice made with Enter, with the arrows or with the mouse stayed silent. The property is
+		// named next to the value because the page carries several groups and a bare value does not say
+		// which of them changed.
+		announceSkuChoice: function(node)
+		{
+			var template = BX.message('SKU_SELECTED_ARIA') || '';
+			var accessibility = getAccessibility();
+			if (template === '' || !BX.type.isElementNode(node) || !accessibility)
+			{
+				return;
+			}
+
+			var value = node.getAttribute('aria-label') || node.getAttribute('title') || '';
+			if (value === '')
+			{
+				return;
+			}
+
+			var property = this.getSkuGroupName(node);
+
+			accessibility.LiveAnnouncer.announce(
+				property === ''
+					? value
+					: fillTemplate(template, {'#PROPERTY#': property, '#VALUE#': value})
+			);
+		},
+
+		getSkuGroupName: function(node)
+		{
+			var group = node.closest ? node.closest('[role="radiogroup"]') : null;
+			if (!group)
+			{
+				return '';
+			}
+
+			var label = group.getAttribute('aria-label');
+			if (label)
+			{
+				return label;
+			}
+
+			var titleId = group.getAttribute('aria-labelledby');
+			var title = titleId ? document.getElementById(titleId) : null;
+
+			return title ? (title.textContent || '').trim() : '';
+		},
+
+		announceTotalPrice: function(text)
+		{
+			this.cancelTotalPriceAnnounce();
+
+			var accessibility = getAccessibility();
+
+			if (!accessibility)
+			{
+				return;
+			}
+
+			this.totalPriceAnnounceTimer = setTimeout(
+				BX.delegate(function() {
+					this.totalPriceAnnounceTimer = null;
+					accessibility.LiveAnnouncer.announce(text);
+				}, this),
+				TOTAL_PRICE_ANNOUNCE_DELAY
+			);
+		},
+
+		cancelTotalPriceAnnounce: function()
+		{
+			clearTimeout(this.totalPriceAnnounceTimer);
+			this.totalPriceAnnounceTimer = null;
+		},
+
 		compare: function(event)
 		{
 			var checkbox = this.obCompare.querySelector('[data-entity="compare-checkbox"]'),
@@ -3193,6 +3651,8 @@
 			{
 				checked = target === checkbox ? checkbox.checked : !checkbox.checked;
 			}
+
+			this.popupInitiator = checkbox || target;
 
 			var url = checked ? this.compareData.compareUrl : this.compareData.compareDeleteUrl,
 				compareLink;
@@ -3264,7 +3724,8 @@
 							events: {
 								click: BX.delegate(this.compareRedirect, this)
 							},
-							style: {marginRight: '10px'}
+							style: {marginRight: '10px'},
+							autofocus: true
 						}),
 						new BasketButton({
 							text: BX.message('BTN_MESSAGE_CLOSE'),
@@ -3281,7 +3742,8 @@
 							text: BX.message('BTN_MESSAGE_COMPARE_REDIRECT'),
 							events: {
 								click: BX.delegate(this.compareRedirect, this)
-							}
+							},
+							autofocus: true
 						})
 					];
 				}
@@ -3296,7 +3758,8 @@
 						text: BX.message('BTN_MESSAGE_CLOSE'),
 						events: {
 							click: BX.delegate(this.obPopupWin.close, this.obPopupWin)
-						}
+						},
+						autofocus: true
 					})
 				];
 			}
@@ -3515,14 +3978,16 @@
 			});
 		},
 
-		add2Basket: function()
+		add2Basket: function(event)
 		{
+			this.popupInitiator = this.getPressedButton(event, this.obAddToBasketBtn);
 			this.basketMode = 'ADD';
 			this.basket();
 		},
 
-		buyBasket: function()
+		buyBasket: function(event)
 		{
+			this.popupInitiator = this.getPressedButton(event, this.obBuyBtn);
 			BX.addClass(this.obBuyBtn, "btn-wait");
 			this.basketMode = 'BUY';
 			this.basket();
@@ -3556,7 +4021,8 @@
 								text: BX.message('BTN_SEND_PROPS'),
 								events: {
 									click: BX.delegate(this.sendToBasket, this)
-								}
+								},
+								autofocus: true
 							})
 						]);
 						this.obPopupWin.show();
@@ -3626,7 +4092,8 @@
 								events: {
 									click: BX.delegate(this.basketRedirect, this)
 								},
-								style: {marginRight: '10px'}
+								style: {marginRight: '10px'},
+								autofocus: true
 							}),
 							new BasketButton({
 								text: BX.message('BTN_MESSAGE_CLOSE_POPUP'),
@@ -3643,7 +4110,8 @@
 								text: BX.message('BTN_MESSAGE_BASKET_REDIRECT'),
 								events: {
 									click: BX.delegate(this.basketRedirect, this)
-								}
+								},
+								autofocus: true
 							})
 						];
 					}
@@ -3658,7 +4126,8 @@
 							text: BX.message('BTN_MESSAGE_CLOSE'),
 							events: {
 								click: BX.delegate(this.obPopupWin.close, this.obPopupWin)
-							}
+							},
+							autofocus: true
 						})
 					];
 				}
@@ -3675,6 +4144,22 @@
 			location.href = (this.basketData.basketUrl ? this.basketData.basketUrl : BX.message('BASKET_URL'));
 		},
 
+		// buy and add buttons are duplicated in the sticky panel, so the pressed one is taken from the event
+		getPressedButton: function(event, defaultButton)
+		{
+			var node = event && event.currentTarget;
+
+			return BX.type.isDomNode(node) ? node : defaultButton;
+		},
+
+		// the popup is built once per page while its initiator differs from call to call
+		getPopupReturnTarget: function()
+		{
+			var node = this.popupInitiator;
+
+			return node && node.isConnected ? node : null;
+		},
+
 		initPopupWindow: function()
 		{
 			if (this.obPopupWin)
@@ -3689,7 +4174,8 @@
 				titleBar: true,
 				closeIcon: true,
 				contentColor: 'white',
-				className: this.config.templateTheme ? 'bx-' + this.config.templateTheme : ''
+				className: this.config.templateTheme ? 'bx-' + this.config.templateTheme : '',
+				focusTrap: {restoreFocus: BX.delegate(this.getPopupReturnTarget, this)}
 			});
 		},
 

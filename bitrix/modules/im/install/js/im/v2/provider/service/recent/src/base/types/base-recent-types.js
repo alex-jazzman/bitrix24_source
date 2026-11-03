@@ -4,6 +4,7 @@ import {
 	type RawFile,
 	type RawMessage,
 	type RawMessagesAutoDeleteConfig,
+	type RawRecentConfig,
 	type RawRecentItem,
 	type RawUser,
 	type RawCopilot,
@@ -37,6 +38,10 @@ type BaseRecentRestResult = {
 	chats: RawChat[],
 	files: RawFile[],
 	recentItems: RawRecentItem[],
+	// section membership of every chat in the tail, comes in all v2 tails
+	recentConfigs: RawRecentConfig[],
+	// colleagues whose birthday is today, comes in all v2 tails
+	birthdayList: RawUser[],
 	users: RawUser[],
 	messages: RawMessage[],
 	additionalMessages: RawMessage[],

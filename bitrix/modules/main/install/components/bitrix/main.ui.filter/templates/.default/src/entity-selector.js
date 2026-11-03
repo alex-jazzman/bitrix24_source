@@ -1,6 +1,7 @@
-import {Dialog, DialogOptions, Item} from 'ui.entity-selector';
+import type {Dialog, DialogOptions, Item} from 'ui.entity-selector';
 import {Event, Reflection, Type, Runtime, Dom} from "main.core";
-import {EventEmitter, BaseEvent} from "main.core.events";
+import {EventEmitter} from "main.core.events";
+import type {BaseEvent} from "main.core.events";
 
 class EntitySelector
 {
@@ -75,6 +76,12 @@ class EntitySelector
 	getFilterField(): ?BX.Filter.Field
 	{
 		return this.filter.getField(this.id);
+	}
+
+	isControlFromThisFilter(control: BX.Main.ui.CustomEntity): boolean
+	{
+		const field = this.getFilterField();
+		return !!(field && field.node && field.node.contains(control.getField()));
 	}
 
 	getFilterFieldInputWrapper(): ?HTMLElement
@@ -274,7 +281,7 @@ class EntitySelector
 	onCustomEntityFocus(event: BaseEvent): void
 	{
 		const [control] = event.getData();
-		if (this.id !== control.getId())
+		if (this.id !== control.getId() || !this.isControlFromThisFilter(control))
 		{
 			return;
 		}
@@ -285,7 +292,7 @@ class EntitySelector
 	onCustomEntityBlur(event: BaseEvent): void
 	{
 		const [control] = event.getData();
-		if (this.id !== control.getId())
+		if (this.control !== control)
 		{
 			return;
 		}
@@ -331,7 +338,7 @@ class EntitySelector
 	onCustomEntityRemove(event: BaseEvent): void
 	{
 		const [control] = event.getData();
-		if (this.id !== control.getId())
+		if (this.id !== control.getId() || !this.isControlFromThisFilter(control))
 		{
 			return;
 		}
@@ -403,16 +410,17 @@ class EntitySelector
 
 	static create(id, settings): EntitySelector
 	{
-		if (Type.isObject(this.items[id]))
+		const key = JSON.stringify([settings.filter.getParam('FILTER_ID'), id]);
+		if (Type.isObject(this.items[key]))
 		{
 			if (Type.isObject(settings.filter))
 			{
-				this.items[id].filter = settings.filter;
+				this.items[key].filter = settings.filter;
 			}
-			return this.items[id];
+			return this.items[key];
 		}
 		const self = new EntitySelector(id, settings);
-		this.items[id] = self;
+		this.items[key] = self;
 		return self;
 	}
 }

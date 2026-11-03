@@ -8,9 +8,10 @@ return [
 	'css' => 'dist/select.bundle.css',
 	'js' => 'dist/select.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'ui.system.input.vue',
 		'ui.system.menu.vue',
+		'ui.vue3',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

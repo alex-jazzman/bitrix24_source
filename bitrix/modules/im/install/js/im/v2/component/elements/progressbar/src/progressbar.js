@@ -43,6 +43,12 @@ export const ProgressBar = {
 				return {};
 			},
 		},
+		// the cross of the loader stops the upload; where it cannot be stopped the loader only tells
+		// that the file is on its way, and offers no control that would do nothing
+		allowCancel: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['cancelClick'],
 	computed: {
@@ -85,7 +91,7 @@ export const ProgressBar = {
 				return this.statusMap[this.file.status].iconClass;
 			}
 
-			return OutlineIcons.CROSS_L;
+			return this.allowCancel ? OutlineIcons.CROSS_L : OutlineIcons.CLOUD_SYNC;
 		},
 		containerClass(): string
 		{
@@ -103,7 +109,7 @@ export const ProgressBar = {
 	methods: {
 		onLoaderClick()
 		{
-			if (!this.handleStatus.includes(this.file.status))
+			if (!this.allowCancel || !this.handleStatus.includes(this.file.status))
 			{
 				return;
 			}
@@ -121,7 +127,11 @@ export const ProgressBar = {
 			:class="containerClass"
 			class="bx-im-progress-bar__container" 
 		>
-			<div class="bx-im-progress-bar__loader" @click="onLoaderClick">
+			<div
+				class="bx-im-progress-bar__loader"
+				:class="{ '--static': !allowCancel }"
+				@click="onLoaderClick"
+			>
 				<svg viewBox="0 0 48 48">
 					<circle
 						:style="progressStyles"

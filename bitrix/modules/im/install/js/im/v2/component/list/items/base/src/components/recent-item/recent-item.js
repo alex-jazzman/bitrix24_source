@@ -2,11 +2,15 @@ import 'main.date';
 
 import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
 import { ChatTitle, ChatTitleType } from 'im.v2.component.elements.chat-title';
+import { EntityLink, EntityLinkAppearance, hasEntityLink } from 'im.v2.component.elements.entity-link';
 import { InputActionIndicator } from 'im.v2.component.list.items.elements.input-action-indicator';
-import { Settings, Layout } from 'im.v2.const';
+import { ActionByRole, Settings, Layout, ChatType, ChatEntityLinkType } from 'im.v2.const';
+import 'im.v2.css.classes';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { RecentManager } from 'im.v2.lib.recent';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { PermissionManager } from 'im.v2.lib.permission';
 import { type ImModelRecentItem, type ImModelChat, type ImModelLayout } from 'im.v2.model';
 
 import { AvatarCounter } from './components/avatar-counter';
@@ -15,11 +19,21 @@ import { MessageStatus } from './components/message-status';
 import { MessageText } from './components/message-text/message-text';
 
 import './css/recent-item.css';
+import './css/entity-link.css';
 
 // @vue/component
 export const BaseRecentItem = {
 	name: 'BaseRecentItem',
-	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, AvatarCounter, ItemCounters, InputActionIndicator },
+	components: {
+		ChatAvatar,
+		ChatTitle,
+		MessageText,
+		MessageStatus,
+		AvatarCounter,
+		ItemCounters,
+		InputActionIndicator,
+		EntityLink,
+	},
 	inject: {
 		avatarsOnly: {
 			default: false,
@@ -61,6 +75,7 @@ export const BaseRecentItem = {
 	},
 	computed: {
 		AvatarSize: () => AvatarSize,
+		EntityLinkAppearance: () => EntityLinkAppearance,
 		recentItem(): ImModelRecentItem
 		{
 			return this.item;
@@ -109,6 +124,22 @@ export const BaseRecentItem = {
 
 			return this.layout.entityId === this.recentItem.dialogId;
 		},
+		accessibleName(): string
+		{
+			// Explicit accessible name = chat title only, so the screen reader announces the
+			// chat instead of reading the whole row (unread counter, indicators, preview).
+			if (this.isSelfChat)
+			{
+				return this.loc('IM_CHAT_TITLE_MY_NOTES');
+			}
+
+			if (this.dialog.type === ChatType.user)
+			{
+				return this.$store.getters['users/get'](this.recentItem.dialogId, true).name;
+			}
+
+			return this.dialog.name;
+		},
 		hasActiveInputAction(): boolean
 		{
 			return this.$store.getters['chats/inputActions/isChatActive'](this.recentItem.dialogId);
@@ -125,9 +156,32 @@ export const BaseRecentItem = {
 		{
 			return this.$store.getters['application/settings/get'](Settings.recent.showLastMessage);
 		},
+		canSend(): boolean
+		{
+			if (this.dialog.isTextareaEnabled === false)
+			{
+				return false;
+			}
+
+			return PermissionManager.getInstance().canPerformActionByRole(
+				ActionByRole.send,
+				this.dialog.dialogId,
+			);
+		},
+		isDraftActive(): boolean
+		{
+			return this.withDraft && this.canSend && Boolean(this.recentItem.draft.text);
+		},
 		invitation(): { isActive: boolean, originator: number, canResend: boolean }
 		{
 			return this.recentItem.invitation;
+		},
+		showEntityLink(): boolean
+		{
+			const isAvailable = FeatureManager.isFeatureAvailable(Feature.isVibecodeAppOpenButtonAvailable);
+			const isApplicationChat = this.dialog.entityLink?.type === ChatEntityLinkType.vibecodeApp;
+
+			return isAvailable && !this.avatarsOnly && isApplicationChat && hasEntityLink(this.dialog);
 		},
 		wrapClasses(): { [string]: boolean }
 		{
@@ -139,8 +193,14 @@ export const BaseRecentItem = {
 		},
 	},
 	methods: {
-		formatDate(date): string
+		formatDate(date: ?Date): string
 		{
+			// у элемента может не быть даты вовсе (например, канал без сообщений и активности)
+			if (!date)
+			{
+				return '';
+			}
+
 			return DateFormatter.formatByTemplate(date, DateTemplate.recent);
 		},
 		loc(phraseCode: string): string
@@ -149,7 +209,16 @@ export const BaseRecentItem = {
 		},
 	},
 	template: `
-		<div :data-id="recentItem.dialogId" :class="wrapClasses" class="bx-im-list-recent-item__wrap">
+		<div
+			:data-id="recentItem.dialogId"
+			:data-testid="'im-recent-item-' + recentItem.dialogId"
+			:class="wrapClasses"
+			class="bx-im-list-recent-item__wrap --focus-visible"
+			role="button"
+			tabindex="-1"
+			:aria-current="isChatSelected"
+			:aria-label="accessibleName"
+		>
 			<div class="bx-im-list-recent-item__container">
 				<div class="bx-im-list-recent-item__avatar_container">
 					<div v-if="invitation.isActive" class="bx-im-list-recent-item__avatar_invitation"></div>
@@ -167,6 +236,7 @@ export const BaseRecentItem = {
 						v-if="avatarsOnly"
 						:item="recentItem"
 						:isChatMuted="dialog.isMuted"
+						:isSelected="isChatSelected"
 					/>
 				</div>
 				<div class="bx-im-list-recent-item__content_container">
@@ -181,19 +251,40 @@ export const BaseRecentItem = {
 							/>
 						</slot>
 						<div class="bx-im-list-recent-item__date">
-							<MessageStatus v-if="withMessageStatus" :item="item" />
+							<MessageStatus 
+								v-if="withMessageStatus" 
+								:item="item" 
+								:isDraftActive="isDraftActive" 
+								:isSelected="isChatSelected" 
+							/>
 							<span>{{ formattedDate }}</span>
 						</div>
 					</div>
 					<div class="bx-im-list-recent-item__content_bottom">
-						<MessageText :item="recentItem" :withDraft="withDraft" :forceOwnMessage="forceOwnMessage" />
+						<MessageText
+							:item="recentItem"
+							:isDraftActive="isDraftActive"
+							:forceOwnMessage="forceOwnMessage"
+						/>
 						<ItemCounters
-							v-if="withCounter"
-							:withPinStatus="withPinStatus"
+							v-if="withCounter || showEntityLink"
+							:withCounter="withCounter"
+							:compactMode="showEntityLink"
+							:withPinStatus="withPinStatus && !showEntityLink"
 							:withChildrenCounter="withChildrenCounter"
 							:item="recentItem"
 							:isChatMuted="dialog.isMuted"
-						/>
+							:isSelected="isChatSelected"
+						>
+							<template #default>
+								<EntityLink
+									v-if="showEntityLink"
+									:dialogId="recentItem.dialogId"
+									:appearance="EntityLinkAppearance.button"
+									:withEntityName="false"
+								/>
+							</template>
+						</ItemCounters>
 					</div>
 				</div>
 			</div>

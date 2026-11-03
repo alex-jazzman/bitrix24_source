@@ -16,6 +16,9 @@ if ($arParams["SET_TITLE"] == "Y")
 
 <? if (!empty($arResult["ORDER"])): ?>
 
+	<div class="bx-soa-confirm">
+	<h2 class="bx-soa-visually-hidden"><?=Loc::getMessage("SOA_ORDER_COMPLETE")?></h2>
+
 	<div class="row mb-5">
 		<div class="col">
 			<?=Loc::getMessage("SOA_ORDER_SUC", array(
@@ -115,6 +118,7 @@ if ($arParams["SET_TITLE"] == "Y")
 		<?
 	}
 	?>
+	</div>
 
 <? else: ?>
 

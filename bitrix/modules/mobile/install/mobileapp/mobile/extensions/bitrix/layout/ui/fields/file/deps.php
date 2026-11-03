@@ -7,8 +7,9 @@ return [
 		'assets/common',
 		'assets/icons',
 		'haptics',
+		'loc',
 		'layout/ui/fields/base',
-		'layout/ui/fields/file/file-preview',
+		'layout/ui/file',
 		'layout/ui/file-attachment',
 		'tokens',
 		'uploader/client',
@@ -18,6 +19,11 @@ return [
 		'utils/object',
 		'utils/skeleton',
 		'utils/uuid',
+		'ui-system/typography/text',
 		'utils/validation',
+		'ui-system/blocks/icon',
+	],
+	'bundle' => [
+		'./src/file-preview',
 	],
 ];

@@ -3,4 +3,4 @@ $MESS["CRM_AUTOMATION_TRIGGER_CALLBACK_DESCRIPTION"] = "Changes the stage when t
 $MESS["CRM_AUTOMATION_TRIGGER_CALLBACK_EVENT_DATE_TIME"] = "Feedback form submitted date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_CALLBACK_NAME"] = "Callback";
 $MESS["CRM_AUTOMATION_TRIGGER_CALLBACK_NAME_1"] = "Feedback form submitted";
-$MESS["CRM_AUTOMATION_TRIGGER_CALLBACK_NODE_DESCRIPTION"] = "Triggered after customer submitted feedback to the CRM form.";
+$MESS["CRM_AUTOMATION_TRIGGER_CALLBACK_NODE_DESCRIPTION"] = 'Triggered after a CRM callback form is submitted.';

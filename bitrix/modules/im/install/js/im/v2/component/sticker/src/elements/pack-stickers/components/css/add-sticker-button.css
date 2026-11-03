@@ -1,3 +1,9 @@
+/* Semantic gridcell wrapper; the button below stays the 85x85 box and the focusable member. */
+.bx-im-stickers-add-sticker-button__cell {
+	display: flex;
+	flex-shrink: 0;
+}
+
 .bx-im-stickers-add-sticker-button__container {
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
 	--ui-icon-set__icon-size: 28px;
@@ -8,11 +14,31 @@
 	flex-shrink: 0;
 	width: 85px;
 	height: 85px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+/*
+ * An outline takes its corners from the element's own border-radius plus the outline-offset, and this
+ * button declares none - so the --focus-visible ring came out square. The sticker cells beside it in the
+ * same row round their 85x85 box at 6px; match that value, and the ring looks the same at every stop of
+ * the grid. Only the ring changes: no padding, no margin, no size.
+ */
+.bx-im-stickers-add-sticker-button__container.--focus-visible:focus-visible {
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .bx-im-stickers-add-sticker-button__button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	border-radius: 10px;
 	background-color: var(--ui-color-accent-soft-blue-3);
 	padding: 20px 19px 19px 20px;
-	cursor: pointer;
 }

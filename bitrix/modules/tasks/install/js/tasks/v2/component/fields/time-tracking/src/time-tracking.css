@@ -3,7 +3,21 @@
 	gap: var(--ui-space-inline-sm);
 }
 
+.tasks-task-time-tracking-settings {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+
+.tasks-task-time-tracking-settings.--visible,
+.tasks-task-time-tracking-settings:focus-within {
+	opacity: 1;
+}
+
 .tasks-task-time-tracking-icon {
 	margin-right: var(--ui-space-inline-2xs2);
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.ui-chip[data-task-chip-id="allowsTimeTracking"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }

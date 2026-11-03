@@ -3,6 +3,10 @@
 use Bitrix\Crm\Invoice\Compatible;
 use Bitrix\Crm\Invoice\Invoice;
 use Bitrix\Sale;
+use Bitrix\Crm\V2\Internal\Integration\Sale\CheckedPaySystemServiceFactory;
+use Bitrix\Crm\V2\Internal\Service\PaySystem\CheckedBusinessValueContext;
+use Bitrix\Crm\V2\Internal\Service\PaySystem\HandlerCatalog;
+use Bitrix\Crm\V2\Internal\Service\PaySystem\PrintOperation;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -21,6 +25,7 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
+$publicPayment = null;
 if (isset($arParams['HASH']))
 {
 	$invoice = Invoice::loadByAccountNumber($arParams['ORDER_ID']);
@@ -32,11 +37,12 @@ if (isset($arParams['HASH']))
 	$paymentCollection = $invoice->loadPaymentCollection();
 	/**	@var Sale\Payment $payment*/
 	$payment = $paymentCollection->current();
-	if ($arParams['HASH'] != $payment->getHash())
+	if (!($payment instanceof Sale\Payment) || $arParams['HASH'] !== $payment->getHash())
 	{
 		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 		return;
 	}
+	$publicPayment = $payment;
 }
 else
 {
@@ -79,37 +85,55 @@ if ($arOrder)
 	if ($arOrder["SUM_PAID"] <> '')
 		$arOrder["PRICE"] -= $arOrder["SUM_PAID"];
 
-	$dbPaySysAction = CSalePaySystemAction::GetList(
-		array(),
-		array(
-			"PAY_SYSTEM_ID" => $arOrder["PAY_SYSTEM_ID"],
-			"PERSON_TYPE_ID" => $arOrder["PERSON_TYPE_ID"]
-		),
-		false,
-		false,
-		array("ACTION_FILE", "PARAMS", "ENCODING")
-	);
-
-	if ($arPaySysAction = $dbPaySysAction->Fetch())
+	$invoice = Invoice::load($ORDER_ID);
+	$payment = $publicPayment;
+	if ($payment === null && $invoice)
 	{
-		if ($arPaySysAction["ACTION_FILE"] <> ''  && !\Bitrix\Sale\PaySystem\Manager::isRestHandler($arPaySysAction["ACTION_FILE"]))
+		foreach ($invoice->getPaymentCollection() as $candidate)
 		{
-			CSalePaySystemAction::InitParamArrays(
-				$arOrder,
-				$ID,
-				$arPaySysAction["PARAMS"],
-				[
-					'REQUISITE' => is_array($paymentData['REQUISITE']) ? $paymentData['REQUISITE'] : null,
-					'BANK_DETAIL' => is_array($paymentData['BANK_DETAIL']) ? $paymentData['BANK_DETAIL'] : null,
-					'CRM_COMPANY' => is_array($paymentData['CRM_COMPANY']) ? $paymentData['CRM_COMPANY'] : null,
-					'CRM_CONTACT' => is_array($paymentData['CRM_CONTACT']) ? $paymentData['CRM_CONTACT'] : null,
-					'MC_REQUISITE' => is_array($paymentData['MC_REQUISITE']) ? $paymentData['MC_REQUISITE'] : null,
-					'MC_BANK_DETAIL' => is_array($paymentData['MC_BANK_DETAIL']) ? $paymentData['MC_BANK_DETAIL'] : null,
-					'CRM_MYCOMPANY' => is_array($paymentData['CRM_MYCOMPANY']) ? $paymentData['CRM_MYCOMPANY'] : null
-				],
-				[],
-				array(),
-				REGISTRY_TYPE_CRM_INVOICE
+			if (!$candidate->isInner())
+			{
+				$payment = $candidate;
+				break;
+			}
+		}
+	}
+	$arPaySysAction = $payment ? Sale\PaySystem\Manager::getById($payment->getPaymentSystemId()) : false;
+	$created = is_array($arPaySysAction)
+		? (new CheckedPaySystemServiceFactory())->createFromFields(
+			$arPaySysAction, HandlerCatalog::PURPOSE_LEGACY_PRINT, $payment,
+		)
+		: null
+	;
+	if ($created !== null && $created->isSuccess())
+	{
+		$service = $created->getData()['service'];
+		$handler = $created->getData()['handler'];
+		$pdf = array_key_exists('pdf', $_REQUEST);
+		$operation = new PrintOperation('invoice', $pdf ? 'pdf_download' : 'print', 'invoice_payment');
+		$render = static function () use (
+			$arOrder, $arPaySysAction, $paymentData, $ORDER_ID, $service, $payment,
+		) {
+			(new CheckedBusinessValueContext())->run(
+				$service->getConsumerName(),
+				static fn() => $service->getHandlerDescription(),
+				static fn() => CSalePaySystemAction::InitParamArrays(
+					$arOrder,
+					0,
+					$arPaySysAction["PARAMS"],
+					[
+						'REQUISITE' => is_array($paymentData['REQUISITE']) ? $paymentData['REQUISITE'] : null,
+						'BANK_DETAIL' => is_array($paymentData['BANK_DETAIL']) ? $paymentData['BANK_DETAIL'] : null,
+						'CRM_COMPANY' => is_array($paymentData['CRM_COMPANY']) ? $paymentData['CRM_COMPANY'] : null,
+						'CRM_CONTACT' => is_array($paymentData['CRM_CONTACT']) ? $paymentData['CRM_CONTACT'] : null,
+						'MC_REQUISITE' => is_array($paymentData['MC_REQUISITE']) ? $paymentData['MC_REQUISITE'] : null,
+						'MC_BANK_DETAIL' => is_array($paymentData['MC_BANK_DETAIL']) ? $paymentData['MC_BANK_DETAIL'] : null,
+						'CRM_MYCOMPANY' => is_array($paymentData['CRM_MYCOMPANY']) ? $paymentData['CRM_MYCOMPANY'] : null
+					],
+					[],
+					array(),
+					REGISTRY_TYPE_CRM_INVOICE
+				),
 			);
 
 			// USER_ID hack (0050242)
@@ -144,27 +168,40 @@ if ($arOrder)
 			}
 			unset($arInvoice);
 
-			$invoice = Invoice::load($ORDER_ID);
-			if ($invoice)
-			{
-				/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
-				$paymentCollection = $invoice->getPaymentCollection();
-				if ($paymentCollection)
-				{
-					/** @var \Bitrix\Sale\Payment $payment */
-					foreach ($paymentCollection as $payment)
-					{
-						if (!$payment->isInner())
-						{
-							$context = \Bitrix\Main\Application::getInstance()->getContext();
-							$service = \Bitrix\Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-							$result = $service->initiatePay($payment, $context->getRequest());
-							break;
-						}
-					}
-				}
-			}
+			$context = \Bitrix\Main\Application::getInstance()->getContext();
+			return $service->initiatePay($payment, $context->getRequest());
+		};
+		try
+		{
+			$captured = $operation->run(static fn() => $operation->capture($render));
 		}
+		catch (\Throwable)
+		{
+			$captured = null;
+		}
+		$result = $captured['value'] ?? null;
+		$content = $captured['output'] ?? '';
+		if (
+			$result !== null
+			&& $result->isSuccess()
+			&& $content !== ''
+			&& (!$pdf || (str_starts_with($content, '%PDF-') && str_contains($content, '%%EOF')))
+		)
+		{
+			$operation->markGenerated($handler->getCode());
+			$operation->complete();
+			echo $content;
+		}
+		else
+		{
+			header_remove('Content-Disposition');
+			header('Content-Type: text/html; charset=' . LANG_CHARSET);
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+		}
+	}
+	else
+	{
+		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	}
 }
 

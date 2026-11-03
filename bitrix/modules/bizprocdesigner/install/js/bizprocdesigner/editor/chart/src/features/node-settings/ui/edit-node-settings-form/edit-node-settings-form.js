@@ -1,13 +1,61 @@
 import { mapState } from 'ui.vue3.pinia';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
-import { useNodeSettingsStore } from '../../../../entities/node-settings';
+import { useNodeSettingsStore, PORTLESS_RULE, hasPortlessRulesContainer } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
 import { PORT_TYPES, isPortRulesAllowedBlockType } from '../../../../shared/constants';
-import { type Port as TPort } from '../../../../shared/types';
+import { type Block, type Port as TPort } from '../../../../shared/types';
 import { ReadableExpressions } from '../../directives/readable-expressions';
 
 import './style.css';
+
+// A row of the rules section as the section and the preview inside it read it: the fields of a port
+// (id, type, title) and nothing more. The rules container of a node without input ports is such a row
+// too, and it is the store descriptor of that container that stands for it (PORTLESS_RULE): not a
+// port, so it stays out of `ports` and adds nothing to the canvas and nothing to the saved template.
+type RuleRow = { id: string, type: string, title: string };
+
+/**
+ * Rows of the rules section: the input ports of the node, or - for a node whose fixed set of rules
+ * lives in the reserved container instead of ports - that single container. Relation ports are never
+ * rows of this section: they are served by RelationsBlock.
+ * The container is offered under the very condition the store creates it (hasPortlessRulesContainer,
+ * resolvePortlessRule), so a row never stands for a rule that does not exist: a node whose rules the
+ * user manages by input ports keeps no container after the last of them is deleted, and a node
+ * keeping a relation port instead reaches that resolve with no container at all.
+ * Exported because the widget walks the ancestor blocks of the previews against the same rows: two
+ * readings of what the section renders would leave a row without its blocks.
+ */
+export function getRulesSectionRows(ports: ?Array<TPort>, block: ?Block): Array<RuleRow>
+{
+	const nodePorts = ports ?? [];
+	const rulePorts = nodePorts.filter((port: TPort) => port.type === PORT_TYPES.input);
+	if (rulePorts.length > 0)
+	{
+		return rulePorts;
+	}
+
+	const hasRelationPort = nodePorts.some((port: TPort) => port.type === PORT_TYPES.inputRelation);
+	if (hasRelationPort || !hasPortlessRulesContainer(block))
+	{
+		return [];
+	}
+
+	return [PORTLESS_RULE];
+}
+
+/**
+ * Whether the rules section is laid out at all. A node whose set of rules the user manages keeps the
+ * section even while it is empty - that is where the rule is added; a node with a fixed set shows it
+ * only while it has rows to show.
+ * Exported for the same reason as the rows above: the warning about the references of the node has to
+ * know whether the section that would name them is on screen, and a second reading of that condition
+ * would let the two disagree - the section hidden, the references named nowhere.
+ */
+export function isRulesSectionShown(ports: ?Array<TPort>, block: ?Block): boolean
+{
+	return isPortRulesAllowedBlockType(block?.type) || getRulesSectionRows(ports, block).length > 0;
+}
 
 let formIdCounter = 0;
 
@@ -38,23 +86,24 @@ export const EditNodeSettingsForm = {
 	computed:
 	{
 		...mapState(useNodeSettingsStore, ['block', 'ports', 'nodeSettings']),
-		rulePorts(): Array<TPort>
+		rulePorts(): Array<RuleRow>
 		{
-			return this.ports
-				.filter((port) => port.type === PORT_TYPES.input)
-			;
+			return getRulesSectionRows(this.ports, this.block);
 		},
 		rulePortsLength(): number
 		{
 			return this.rulePorts.length;
 		},
+		// Whether the user may change the set of rules of the node: the add button and the removability
+		// of a row. Not what decides the section itself - a node of the unified panel keeps a fixed set
+		// of rules and still shows them.
 		supportsPortRules(): boolean
 		{
 			return isPortRulesAllowedBlockType(this.block?.type);
 		},
 		showRulesSection(): boolean
 		{
-			return this.supportsPortRules || this.rulePortsLength > 0;
+			return isRulesSectionShown(this.ports, this.block);
 		},
 	},
 	watch:
@@ -95,6 +144,7 @@ export const EditNodeSettingsForm = {
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GENERAL_SECTION_DESCRIPTION') }}
 					</span>
 				</div>
+				<slot name="generalNotice" />
 				<div class="editor-chart-node-settings-form__fields">
 					<div>
 						<label class="editor-chart-node-settings-form__label" :for="titleFieldId">
@@ -148,6 +198,7 @@ export const EditNodeSettingsForm = {
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_DESCRIPTION_MSGVER_1') }}
 					</span>
 				</div>
+				<slot name="rulesNotice" />
 				<slot
 					v-for="port in rulePorts"
 					:key="port.id"

@@ -8,6 +8,10 @@
 use Bitrix\Main\Localization\Loc;
 
 CJSCore::init(array('popup'));
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\Main\UI\Extension::load('ui.a11y');
+}
 
 $randomString = $this->randString();
 
@@ -172,6 +176,9 @@ if (!empty($arResult['ITEMS']))
 			foreach($arProp as $propId => $prop)
 			{
 				$propId = $prop['ID'];
+				$groupAria = htmlspecialcharsbx(Loc::getMessage('CPSL_TPL_SCU_GROUP_ARIA', ['#PROPERTY#' => $prop['NAME']]));
+				$prevAria = htmlspecialcharsbx(Loc::getMessage('CPSL_TPL_SCU_PREV_ARIA', ['#PROPERTY#' => $prop['NAME']]));
+				$nextAria = htmlspecialcharsbx(Loc::getMessage('CPSL_TPL_SCU_NEXT_ARIA', ['#PROPERTY#' => $prop['NAME']]));
 				$skuTemplate[$itemId][$propId] = array(
 					'SCROLL' => array(
 						'START' => '',
@@ -188,24 +195,24 @@ if (!empty($arResult['ITEMS']))
 				{
 					$skuTemplate[$itemId][$propId]['SCROLL']['START'] = '<div class="bx_item_detail_size full" id="#ITEM#_prop_'.$propId.'_cont">'.
 						'<span class="bx_item_section_name_gray">'.htmlspecialcharsbx($prop['NAME']).'</span>'.
-						'<div class="bx_size_scroller_container"><div class="bx_size"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;">';;
+						'<div class="bx_size_scroller_container"><div class="bx_size"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;" role="radiogroup" aria-label="'.$groupAria.'">';;
 					$skuTemplate[$itemId][$propId]['SCROLL']['FINISH'] = '</ul></div>'.
-						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style=""></div>'.
-						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style=""></div>'.
+						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style="" role="button" tabindex="0" aria-label="'.$prevAria.'"></div>'.
+						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style="" role="button" tabindex="0" aria-label="'.$nextAria.'"></div>'.
 						'</div></div>';
 
 					$skuTemplate[$itemId][$propId]['FULL']['START'] = '<div class="bx_item_detail_size" id="#ITEM#_prop_'.$propId.'_cont">'.
 						'<span class="bx_item_section_name_gray">'.htmlspecialcharsbx($prop['NAME']).'</span>'.
-						'<div class="bx_size_scroller_container"><div class="bx_size"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;">';;
+						'<div class="bx_size_scroller_container"><div class="bx_size"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;" role="radiogroup" aria-label="'.$groupAria.'">';;
 					$skuTemplate[$itemId][$propId]['FULL']['FINISH'] = '</ul></div>'.
-						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style="display: none;"></div>'.
-						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style="display: none;"></div>'.
+						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style="display: none;" role="button" tabindex="0" aria-label="'.$prevAria.'"></div>'.
+						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style="display: none;" role="button" tabindex="0" aria-label="'.$nextAria.'"></div>'.
 						'</div></div>';
 					foreach ($prop['VALUES'] as $value)
 					{
 						$value['NAME'] = htmlspecialcharsbx($value['NAME']);
 						$skuTemplate[$itemId][$propId]['ITEMS'][$value['ID']] = '<li data-treevalue="'.$propId.'_'.$value['ID'].
-							'" data-onevalue="'.$value['ID'].'" style="width: #WIDTH#;" title="'.$value['NAME'].'"><i></i><span class="cnt">'.$value['NAME'].'</span></li>';
+							'" data-onevalue="'.$value['ID'].'" style="width: #WIDTH#;" title="'.$value['NAME'].'" role="radio" aria-checked="false" tabindex="-1" aria-label="'.$value['NAME'].'"><i></i><span class="cnt">'.$value['NAME'].'</span></li>';
 					}
 					unset($value);
 				}
@@ -213,24 +220,24 @@ if (!empty($arResult['ITEMS']))
 				{
 					$skuTemplate[$itemId][$propId]['SCROLL']['START'] = '<div class="bx_item_detail_scu full" id="#ITEM#_prop_'.$propId.'_cont">'.
 						'<span class="bx_item_section_name_gray">'.htmlspecialcharsbx($prop['NAME']).'</span>'.
-						'<div class="bx_scu_scroller_container"><div class="bx_scu"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;">';
+						'<div class="bx_scu_scroller_container"><div class="bx_scu"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;" role="radiogroup" aria-label="'.$groupAria.'">';
 					$skuTemplate[$itemId][$propId]['SCROLL']['FINISH'] = '</ul></div>'.
-						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style=""></div>'.
-						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style=""></div>'.
+						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style="" role="button" tabindex="0" aria-label="'.$prevAria.'"></div>'.
+						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style="" role="button" tabindex="0" aria-label="'.$nextAria.'"></div>'.
 						'</div></div>';
 
 					$skuTemplate[$itemId][$propId]['FULL']['START'] = '<div class="bx_item_detail_scu" id="#ITEM#_prop_'.$propId.'_cont">'.
 						'<span class="bx_item_section_name_gray">'.htmlspecialcharsbx($prop['NAME']).'</span>'.
-						'<div class="bx_scu_scroller_container"><div class="bx_scu"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;">';
+						'<div class="bx_scu_scroller_container"><div class="bx_scu"><ul id="#ITEM#_prop_'.$propId.'_list" style="width: #WIDTH#;" role="radiogroup" aria-label="'.$groupAria.'">';
 					$skuTemplate[$itemId][$propId]['FULL']['FINISH'] = '</ul></div>'.
-						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style="display: none;"></div>'.
-						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style="display: none;"></div>'.
+						'<div class="bx_slide_left" id="#ITEM#_prop_'.$propId.'_left" data-treevalue="'.$propId.'" style="display: none;" role="button" tabindex="0" aria-label="'.$prevAria.'"></div>'.
+						'<div class="bx_slide_right" id="#ITEM#_prop_'.$propId.'_right" data-treevalue="'.$propId.'" style="display: none;" role="button" tabindex="0" aria-label="'.$nextAria.'"></div>'.
 						'</div></div>';
 					foreach ($prop['VALUES'] as $value)
 					{
 						$value['NAME'] = htmlspecialcharsbx($value['NAME']);
 						$skuTemplate[$itemId][$propId]['ITEMS'][$value['ID']] = '<li data-treevalue="'.$propId.'_'.$value['ID'].
-							'" data-onevalue="'.$value['ID'].'" style="width: #WIDTH#; padding-top: #WIDTH#;"><i title="'.$value['NAME'].'"></i>'.
+							'" data-onevalue="'.$value['ID'].'" style="width: #WIDTH#; padding-top: #WIDTH#;" role="radio" aria-checked="false" tabindex="-1" aria-label="'.$value['NAME'].'"><i title="'.$value['NAME'].'"></i>'.
 							'<span class="cnt"><span class="cnt_item" style="background-image:url(\''.$value['PICT']['SRC'].'\');" title="'.$value['NAME'].'"></span></span></li>';
 					}
 					unset($value);
@@ -294,7 +301,7 @@ if (!empty($arResult['ITEMS']))
 		{
 			?> style="background-image: url('<?=($arParams['SHOW_IMAGE'] == "Y"
 			? $arItem['PREVIEW_PICTURE']['SRC'] : "");?>')"<?
-		} ?> title="<?=$strTitle;?>"><?
+		} ?> title="<?=$strTitle;?>" aria-label="<?=$arItem['NAME'];?>"><?
 		if ('Y' == $arParams['SHOW_DISCOUNT_PERCENT'])
 		{
 			?>
@@ -321,7 +328,7 @@ if (!empty($arResult['ITEMS']))
 			? $arItem['PREVIEW_PICTURE_SECOND']['SRC']
 			: $arItem['PREVIEW_PICTURE']['SRC']
 		);?>')"<?
-	} ?> title="<?=$strTitle;?>"><?
+	} ?> title="<?=$strTitle;?>" tabindex="-1" aria-hidden="true"><?
 		if ('Y' == $arParams['SHOW_DISCOUNT_PERCENT'])
 		{
 			?>
@@ -361,7 +368,7 @@ if (!empty($arResult['ITEMS']))
 				</a>
 			</div>
 			<div>
-				<a id="<?=$arItemIDs['SUBSCRIBE_DELETE_LINK'];?>" class="btn btn-link" href="javascript:void(0)">
+				<a id="<?=$arItemIDs['SUBSCRIBE_DELETE_LINK'];?>" class="btn btn-link" href="javascript:void(0)" role="button">
 					<?=GetMessage('CPSL_TPL_MESS_BTN_UNSUBSCRIBE');?>
 				</a>
 			</div>
@@ -513,7 +520,7 @@ if (!empty($arResult['ITEMS']))
 				</a>
 			</div>
 			<div>
-				<a id="<?=$arItemIDs['SUBSCRIBE_DELETE_LINK'];?>" class="btn btn-link" href="javascript:void(0)">
+				<a id="<?=$arItemIDs['SUBSCRIBE_DELETE_LINK'];?>" class="btn btn-link" href="javascript:void(0)" role="button">
 					<?=GetMessage('CPSL_TPL_MESS_BTN_UNSUBSCRIBE');?>
 				</a>
 			</div>

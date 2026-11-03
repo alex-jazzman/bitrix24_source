@@ -3,6 +3,8 @@
 return [
 	'extensions' => [
 		'type',
+		'im:messenger/const',
+		'im:messenger/lib/permission-manager',
 		'im:messenger/provider/services/folder',
 		'im:messenger/controller/recent/service/server-load/chat',
 		'im:messenger/controller/recent/service/pagination/lib/state',

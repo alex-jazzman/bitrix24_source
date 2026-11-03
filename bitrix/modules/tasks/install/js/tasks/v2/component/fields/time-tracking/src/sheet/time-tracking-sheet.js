@@ -136,26 +136,35 @@ export const TimeTrackingSheet = {
 		<BottomSheet
 			customClass="tasks-task-time-tracking-sheet"
 			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_TIME_TRACKING_TITLE_SHEET')"
 			@close="$emit('close')"
 		>
-			<div class="tasks-task-time-tracking-sheet-container">
+			<div class="tasks-task-time-tracking-sheet-container" data-testid="tasks-time-tracking-sheet">
 				<div class="tasks-task-time-tracking-sheet-header">
 					<HeadlineSm>{{ loc('TASKS_V2_TIME_TRACKING_TITLE_SHEET') }}</HeadlineSm>
 					<div class="tasks-task-time-tracking-sheet-header-icons">
-						<BIcon
-							ref="filterIcon"
+						<button
 							v-if="task.rights.edit && !isTimeTrackingLocked"
+							ref="filterButton"
+							type="button"
 							class="tasks-task-time-tracking-sheet-filter"
-							:name="Outline.FILTER_2_LINES"
-							hoverable
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SETTINGS_ARIA_LABEL')"
+							aria-haspopup="dialog"
+							:aria-expanded="isSettingsPopupShown"
+							data-testid="tasks-time-tracking-sheet-filter-btn"
 							@click="isSettingsPopupShown = true"
-						/>
-						<BIcon
+						>
+							<BIcon :name="Outline.FILTER_2_LINES" hoverable aria-hidden="true"/>
+						</button>
+						<button
+							type="button"
 							class="tasks-task-time-tracking-sheet-close"
-							:name="Outline.CROSS_L"
-							hoverable
+							:aria-label="loc('TASKS_V2_TIME_TRACKING_SHEET_CLOSE_ARIA_LABEL')"
+							data-testid="tasks-time-tracking-sheet-close-btn"
 							@click="$emit('close')"
-						/>
+						>
+							<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+						</button>
 					</div>
 				</div>
 				<div class="tasks-task-time-tracking-sheet-content">
@@ -184,6 +193,7 @@ export const TimeTrackingSheet = {
 					<div
 						v-else-if="task.numberOfElapsedTimes > 0"
 						ref="participants"
+						data-testid="tasks-time-tracking-participants"
 						class="tasks-task-time-tracking-sheet-users"
 					>
 						<UserAvatarList
@@ -202,6 +212,7 @@ export const TimeTrackingSheet = {
 					</div>
 					<div
 						ref="invoiceBtn"
+						data-testid="tasks-time-tracking-invoice-btn"
 						class="tasks-task-time-tracking-sheet-invoice"
 						@mouseover="isInvoiceHintShown = true"
 					>
@@ -215,7 +226,7 @@ export const TimeTrackingSheet = {
 			</div>
 			<TaskTrackingPopup
 				v-if="isSettingsPopupShown"
-				:bindElement="$refs.filterIcon.$el"
+				:bindElement="$refs.filterButton"
 				:timeSpent
 				@close="handleClosePopup"
 			/>

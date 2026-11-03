@@ -8,8 +8,8 @@
 .intranet-helper-notification-popup:before {
 	content: '';
 	background-image: image-set(
-		url(image/helper-notification-background.png) 1x,
-		url(image/helper-notification-background@2x.png) 2x
+		url(image/helper-notification-background.webp) 1x,
+		url(image/helper-notification-background@2x.webp) 2x
 	);
 	background-position: center;
 	background-repeat: no-repeat;

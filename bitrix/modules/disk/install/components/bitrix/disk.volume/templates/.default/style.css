@@ -5,10 +5,10 @@
 	position: relative;
 	display: flex;
 	overflow: hidden;
-	margin: 0 0 13px;
+	margin: 0 0 var(--ui-space-stack-sm2);
 	height: 30px;
-	-webkit-border-radius: 2px;
-	border-radius: 2px;
+	-webkit-border-radius: var(--ui-border-radius-3xs);
+	border-radius: var(--ui-border-radius-3xs);
 }
 
 .bx-disk-interface-percent-diagram > .bx-disk-interface-percent-part {
@@ -17,20 +17,22 @@
 }
 
 .bx-disk-interface-percent-legend {
-	margin: 0 0 13px;
-	color: #535c69;
-	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	margin: 0 0 var(--ui-space-stack-sm2);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-sm);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 .bx-disk-interface-percent-legend-title {
 	display: inline-block;
-	margin: 0 15px 0 0;
+	margin: 0 var(--ui-space-inline-md) 0 0;
 }
 
 .bx-disk-interface-percent-legend-part {
 	display: inline-block;
-	margin: 0 23px 0 0;
+	margin: 0 var(--ui-space-inline-xl) 0 0;
 }
 
 .bx-disk-interface-percent-legend-part:last-child { margin: 0; }
@@ -38,20 +40,20 @@
 .bx-disk-interface-percent-legend-part-circle {
 	display: inline-block;
 	overflow: hidden;
-	margin: 0 5px 0 0;
+	margin: 0 var(--ui-space-inline-2xs2) 0 0;
 	width: 10px;
 	height: 10px;
-	border-radius: 100%;
+	border-radius: var(--ui-border-radius-circle);
 }
 
 .bx-disk-interface-percent-legend-part-text { display: inline-block; }
 
 .tasks-grid-avatar {
 	display: inline-block;
-	margin: 0 5px 0 0;
+	margin: 0 var(--ui-space-inline-2xs2) 0 0;
 	width: 20px;
 	height: 20px;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle);
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2040%2040%22%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2220%22%20fill%3D%22%23525C68%22/%3E%0A%20%20%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M30.4364902%2C31.4100231%20C30.4364902%2C29.9871769%2028.8398242%2C23.9680557%2028.8398242%2C23.9680557%20C28.8398242%2C23.0883414%2027.6898708%2C22.083459%2025.4253473%2C21.4978674%20C24.6581347%2C21.2838747%2023.9288072%2C20.9520366%2023.2634349%2C20.514215%20C23.1179216%2C20.4310645%2023.1400361%2C19.6628072%2023.1400361%2C19.6628072%20L22.4107003%2C19.5517925%20C22.4107003%2C19.4894296%2022.3483374%2C18.5681401%2022.3483374%2C18.5681401%20C23.2209751%2C18.274902%2023.1311903%2C16.5451067%2023.1311903%2C16.5451067%20C23.6853794%2C16.8524981%2024.0462878%2C15.4836113%2024.0462878%2C15.4836113%20C24.7017612%2C13.5817654%2023.719878%2C13.6967607%2023.719878%2C13.6967607%20C23.8916546%2C12.5357299%2023.8916546%2C11.3557413%2023.719878%2C10.1947105%20C23.283338%2C6.34325128%2016.7109122%2C7.38882426%2017.4902268%2C8.64669632%20C15.5693624%2C8.29286451%2016.0076715%2C12.6635719%2016.0076715%2C12.6635719%20L16.4243085%2C13.7953913%20C15.6060724%2C14.326139%2016.1748571%2C14.9679015%2016.2031636%2C15.7065254%20C16.243412%2C16.7972119%2016.9108272%2C16.5712018%2016.9108272%2C16.5712018%20C16.9519602%2C18.3713211%2017.8396357%2C18.6057347%2017.8396357%2C18.6057347%20C18.0063789%2C19.7362273%2017.9024408%2C19.5438313%2017.9024408%2C19.5438313%20L17.1125113%2C19.6393659%20C17.1232047%2C19.896452%2017.1022601%2C20.1538778%2017.0501485%2C20.405854%20C16.12134%2C20.8198372%2015.921425%2C21.0626543%2014.9983663%2C21.4673494%20C13.215054%2C22.2488754%2011.2769403%2C23.2652573%2010.9323966%2C24.6337018%20C10.5878529%2C26.0021463%209.56350982%2C31.4100231%209.56350982%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4364902%2C31.4100231%20Z%22/%3E%0A%3C/svg%3E%0A');
 	background-size: cover;
 	vertical-align: middle;
@@ -73,7 +75,7 @@
 	overflow: hidden;
 	min-width: 200px;
 	max-width: calc(100% - 1px);
-	color: #525c69;
+	color: var(--ui-color-base-2);
 	vertical-align: middle;
 	text-decoration: none;
 	text-overflow: ellipsis;
@@ -81,7 +83,7 @@
 }
 
 .main-grid-cell-content a.tasks-grid-username:hover {
-	color: #2067b0;
+	color: var(--ui-color-accent-main-link);
 	text-decoration: none;
 }
 
@@ -90,8 +92,8 @@
 .tasks-grid-username-emailcrm .tasks-grid-username .tasks-grid-username-inner,
 .tasks-grid-username-email .tasks-grid-username .tasks-grid-username-inner {
 	position: relative;
-	padding-left: 15px;
-	color: #d9930a !important;
+	padding-left: var(--ui-space-inset-md);
+	color: var(--ui-color-accent-main-warning) !important;
 }
 
 .tasks-grid-username-extranet .tasks-grid-username .tasks-grid-username-inner:before,
@@ -114,8 +116,8 @@
 .disk-volume-header-container.disk-volume-header-container-emailcrm .disk-volume-header-title,
 .disk-volume-header-container.disk-volume-header-container-email .disk-volume-header-title {
 	position: relative;
-	padding-left: 15px;
-	color: #d9930a !important;
+	padding-left: var(--ui-space-inset-md);
+	color: var(--ui-color-accent-main-warning) !important;
 }
 
 .disk-volume-header-container.disk-volume-header-container-extranet .disk-volume-header-title:before,
@@ -138,15 +140,17 @@
 
 .disk-volume-wrap {
 	position: relative;
-	padding: 15px;
+	padding: var(--ui-space-inset-md);
 }
 
 .disk-volume-container {
 	display: flex;
-	margin: 0 0 53px;
-	color: #525c69;
-	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	margin: 0 0 var(--ui-space-stack-6xl);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-md);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-light);
 }
 
 .disk-volume-wrap-state {
@@ -156,16 +160,16 @@
 	flex-wrap: wrap;
 }
 
-.disk-volume-border { border-bottom: 4px solid #eef2f4; }
+.disk-volume-border { border-bottom: 4px solid var(--ui-color-divider-default); }
 
-.disk-volume-header-container { margin: 0 0 23px; }
+.disk-volume-header-container { margin: 0 0 var(--ui-space-stack-xl); }
 
 .disk-volume-header-icon {
 	display: inline-block;
-	margin: 0 20px 0 0;
+	margin: 0 var(--ui-space-inline-lg) 0 0;
 	width: 70px;
 	height: 70px;
-	border-radius: 100%;
+	border-radius: var(--ui-border-radius-circle);
 }
 
 .disk-volume-header-icon-default-disk {
@@ -190,22 +194,26 @@
 }
 
 .disk-volume-header-title {
-	margin: 0 0 5px;
-	color: #333;
-	font: 27px/37px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	margin: 0 0 var(--ui-space-stack-2xs2);
+	color: var(--ui-color-base-1);
+	font-size: 27px;
+	line-height: var(--ui-font-line-height-sm);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 .disk-volume-header-amount-info {
 	display: inline-block;
-	margin: 0 30px 0 0;
-	color: #79818d;
-	font: 18px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	margin: 0 var(--ui-space-inline-3xl) 0 0;
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-3xs);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 .disk-volume-left-block {
-	margin: 0 30px 0 0;
+	margin: 0 var(--ui-space-inline-3xl) 0 0;
 	max-width: 500px;
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
@@ -222,25 +230,29 @@
 }
 
 .disk-volume-main-title {
-	margin: 0 0 25px;
-	color: #333;
-	font: 41px/56px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	margin: 0 0 var(--ui-space-stack-xl2);
+	color: var(--ui-color-base-1);
+	font-size: 41px;
+	line-height: var(--ui-font-line-height-sm);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-light);
 }
 
 .disk-volume-title {
 	margin: 0;
 	width: 100%;
-	color: #525c69;
+	color: var(--ui-color-base-2);
 	text-align: center;
-	font: 37px/51px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	font-size: 37px;
+	line-height: var(--ui-font-line-height-md);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-light);
 }
 
-.disk-volume-item:last-child { margin: 25px 0 0; }
+.disk-volume-item:last-child { margin: var(--ui-space-stack-xl2) 0 0; }
 
 .disk-volume-logo-main {
-	margin: 18px 21px 0 auto;
+	margin: var(--ui-space-stack-md2) var(--ui-space-inline-lg2) 0 auto;
 	width: 267px;
 	height: 267px;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20267%20302%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%22133.5%22%20cy%3D%22133.5%22%20r%3D%22133.5%22%20fill%3D%22%232FC6F6%22%20opacity%3D%22.285%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M254.02%20110.93c2.778-5.35%201.442-10.49-3.142-12.86-4.726-2.444-9.465-.642-12.304%204.778-7.022%2013.41-13.997%2026.842-21.004%2040.26-5.07%209.71-10.165%2019.41-15.328%2029.266-1.358-.677-2.492-1.22-3.606-1.798-9.02-4.692-18.022-9.42-27.06-14.077-5.9-3.04-12.123-.484-13.43%205.43-.94%204.247%201.054%207.876%205.746%2010.316%2018.244%209.487%2036.496%2018.96%2054.748%2028.433%207.588%203.937%2015.128%207.973%2022.79%2011.76%204.325%202.14%209.267.46%2011.423-3.48%202.28-4.168.916-9.138-3.287-11.76-1.27-.793-2.632-1.443-3.964-2.137-9.2-4.793-18.4-9.58-27.803-14.476.57-1.147%201.008-2.056%201.473-2.95%2011.586-22.235%2023.195-44.455%2034.747-66.706M238.884%20221.44c-26.898-13.947-53.782-27.92-80.636-41.948-2.468-1.29-4.322-.883-6.227.96-17.07%2016.518-34.174%2032.998-51.247%2049.512-2.61%202.525-2.344%205.04.835%206.796%204.134%202.28%208.392%204.335%2012.903%206.644.516-.65.928-1.252%201.423-1.777%2012.27-13.038%2024.557-26.058%2036.812-39.108%201.57-1.672%203.254-2.94%205.267-1.007%201.906%201.832.64%203.536-.784%205.042-4.1%204.338-8.195%208.678-12.3%2013.01-8.284%208.735-16.573%2017.466-25.178%2026.534l13.696%207.21c.985-1.364%201.707-2.332%202.395-3.323%209.507-13.71%2019.012-27.423%2028.505-41.14%201.18-1.707%202.552-3.394%204.706-1.78%201.988%201.488%201.21%203.407-.02%205.156-2.94%204.185-5.844%208.396-8.763%2012.596L138.582%20256c5.047%202.606%209.57%204.94%2014.378%207.42.86-1.553%201.643-2.898%202.36-4.28%207.412-14.248%2014.808-28.505%2022.223-42.752.927-1.78%202.065-3.72%204.44-2.6%202.584%201.216%201.754%203.236.697%205.237-3.638%206.885-7.192%2013.812-10.78%2020.722l-13.684%2026.342c3.29%201.73%206.275%203.302%209.413%204.953.525-.968%201.023-1.787%201.43-2.65%207.128-15.066%2014.25-30.137%2021.358-45.212.962-2.038%202.182-3.82%204.713-2.56%202.45%201.22%201.492%203.188.62%205.02-3.08%206.484-6.136%2012.978-9.204%2019.466l-13.6%2028.768%2014.353%207.458c.617-1.555%201.187-2.885%201.68-4.244%205.52-15.198%2011.013-30.408%2016.563-45.597.686-1.876%201.212-4.338%204.2-3.213%202.81%201.058%202.027%203.113%201.282%205.16-3.535%209.715-7.04%2019.44-10.554%2029.163-2.587%207.164-5.168%2014.33-7.787%2021.592%205.138%202.627%209.918%205.07%2014.887%207.613.29-1.117.436-1.58.528-2.05%203.373-17.318%206.753-34.635%2010.095-51.96.38-1.97.94-3.772%203.394-3.276%202.498.504%202.592%202.307%202.16%204.53-2.912%2014.93-5.738%2029.877-8.545%2044.826-.668%203.56-2.683%207.96-1.328%2010.51%201.478%202.785%206.12%203.934%209.443%205.682%204.072%202.142%206.026%201.06%206.743-3.522%201.072-6.853%202.188-13.7%203.278-20.552%202.6-16.35%205.176-32.702%207.817-49.045.388-2.394.154-4.253-2.27-5.512%22%20opacity%3D%22.391%22/%3E%3Cg%20transform%3D%22translate%2852%2047%29%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M159.378%20157.453l-2.17-15.358c0-2.137-.564-4.216-1.61-6.033l-8.81-94.09c0-1.212-.184-2.38-.525-3.48l-1.118-11.99c0-3.05-1.207-5.977-3.354-8.134-2.145-2.158-5.055-3.37-8.09-3.368H29.35c-3.036%200-5.946%201.21-8.093%203.368-2.146%202.157-3.352%205.083-3.353%208.135l-1.12%2011.988c-.34%201.1-.522%202.27-.522%203.482l-9.096%2097.123c-.244.96-.374%201.964-.374%203l-2.17%2015.358C4.218%20158.725%204%20160.08%204%20161.488c0%20.113%200%20.226.004.338l-.004.03c0%202.553.79%204.92%202.133%206.865%202.373%203.663%206.496%206.085%2011.184%206.085h129.366c4.69%200%208.812-2.423%2011.184-6.085%201.345-1.945%202.133-4.312%202.133-6.864l-.004-.03c.003-.112.004-.225.004-.338%200-1.407-.218-2.763-.622-4.035z%22%20opacity%3D%22.111%22/%3E%3Cpath%20fill%3D%22%23F1F1F1%22%20d%3D%22M26.65%200h109.7c3.19%200%206.25%201.272%208.508%203.54%202.256%202.268%203.524%205.345%203.525%208.553L159%20125.907c0%203.208-1.27%206.285-3.526%208.553-2.256%202.268-5.316%203.54-8.506%203.54H16.032c-3.19%200-6.25-1.272-8.506-3.54C5.27%20132.192%204%20129.115%204%20125.907L14.617%2012.093c0-3.208%201.27-6.285%203.525-8.553C20.4%201.272%2023.46%200%2026.65%200z%22/%3E%3Cpath%20fill%3D%22%2315AAD2%22%20d%3D%22M25.233%2016h112.534c6.817%200%2012.343%205.532%2012.343%2012.356L161%20144.644c0%206.824-5.526%2012.356-12.342%2012.356H14.342C7.526%20157%202%20151.468%202%20144.644L12.89%2028.356C12.89%2021.532%2018.416%2016%2025.233%2016z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M15.408%20121H148.59c3.31%200%206.482%201.33%208.82%203.694%202.34%202.366%203.655%205.574%203.655%208.92L164%20154.386c0%206.966-5.585%2012.613-12.474%2012.613H12.473C5.583%20167%200%20161.352%200%20154.387l2.935-20.774C2.935%20126.648%208.52%20121%2015.408%20121z%22/%3E%3Crect%20width%3D%22164%22%20height%3D%2228%22%20y%3D%22140%22%20fill%3D%22%23F1F1F1%22%20fill-rule%3D%22nonzero%22%20rx%3D%2214%22/%3E%3Cpath%20fill%3D%22%23BFBFBF%22%20d%3D%22M46.448%205h71.104c1.904%200%203.448.895%203.448%202s-1.544%202-3.448%202H46.448C44.544%209%2043%208.105%2043%207s1.544-2%203.448-2z%22/%3E%3Ccircle%20cx%3D%2239%22%20cy%3D%22153%22%20r%3D%222%22%20fill%3D%22%237BD500%22%20fill-rule%3D%22nonzero%22/%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%22153%22%20r%3D%222%22%20fill%3D%22%23FF5752%22%20fill-rule%3D%22nonzero%22/%3E%3Ccircle%20cx%3D%2227%22%20cy%3D%22153%22%20r%3D%222%22%20fill%3D%22%23D3D3D3%22%20fill-rule%3D%22nonzero%22/%3E%3Ccircle%20cx%3D%2221%22%20cy%3D%22153%22%20r%3D%222%22%20fill%3D%22%23D3D3D3%22%20fill-rule%3D%22nonzero%22/%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M41.438%20104.993c-10.96-.275-18.638-8.94-17.283-19.16%201.13-8.517%208.227-15.42%2016.765-17.205-.42-1.99-.542-4.062-.328-6.175C41.84%2050.1%2053.688%2041%2066.804%2041c8.113%200%2015.352%203.484%2019.806%208.96%202.8-1.035%205.86-1.602%209.052-1.602%2012.403%200%2023.283%208.546%2024.98%2019.85.366-.02.736-.03%201.11-.03%2010.357%200%2019.778%207.73%2021.093%2017.655%201.332%2010.053-6.075%2018.602-16.75%2019.14V105H41.44v-.007z%22%20opacity%3D%22.073%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M41.438%20101.993c-10.96-.275-18.638-8.94-17.283-19.16%201.13-8.517%208.227-15.42%2016.765-17.205-.42-1.99-.542-4.062-.328-6.175C41.84%2047.1%2053.688%2038%2066.804%2038c8.113%200%2015.352%203.484%2019.806%208.96%202.8-1.035%205.86-1.602%209.052-1.602%2012.403%200%2023.283%208.546%2024.98%2019.85.366-.02.736-.03%201.11-.03%2010.357%200%2019.778%207.73%2021.093%2017.655%201.332%2010.053-6.075%2018.602-16.75%2019.14V102H41.44v-.007z%22/%3E%3Cpath%20fill%3D%22%238DBA00%22%20d%3D%22M82%2055c11.598%200%2021%208.283%2021%2018.5S93.598%2092%2082%2092s-21-8.283-21-18.5S70.402%2055%2082%2055z%22/%3E%3Cpath%20fill%3D%22%23F1F1F1%22%20d%3D%22M80.5%2063c1.38%200%202.5.932%202.5%202.08v9.84c0%201.148-1.12%202.08-2.5%202.08s-2.5-.932-2.5-2.08v-9.84c0-1.15%201.12-2.08%202.5-2.08z%22/%3E%3Cpath%20fill%3D%22%23F1F1F1%22%20d%3D%22M94%2076c0%201.104-1.065%202-2.378%202H80.378C79.065%2078%2078%2077.105%2078%2076s1.065-2%202.378-2H91.62c1.315%200%202.38.896%202.38%202z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E') no-repeat;
@@ -256,7 +268,7 @@
 }
 
 .disk-volume-loader-logo {
-	margin: 65px auto 0;
+	margin: var(--ui-space-stack-7xl) auto 0;
 	width: 267px;
 	height: 267px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20267%20267%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%22133.5%22%20cy%3D%22133.5%22%20r%3D%22133.5%22%20fill%3D%22%232FC6F6%22%20opacity%3D%22.285%22/%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M211.378%20202.453l-2.17-15.358c0-2.137-.564-4.216-1.61-6.033l-8.81-94.09c0-1.212-.184-2.38-.525-3.48l-1.118-11.99c0-3.05-1.207-5.977-3.354-8.134-2.145-2.158-5.055-3.37-8.09-3.368H81.35c-3.036%200-5.946%201.21-8.093%203.368-2.146%202.157-3.352%205.083-3.353%208.135l-1.12%2011.988c-.34%201.1-.522%202.27-.522%203.482l-9.096%2097.123c-.244.96-.374%201.964-.374%203l-2.17%2015.358c-.404%201.272-.622%202.628-.622%204.035%200%20.113%200%20.226.004.338l-.004.03c0%202.553.79%204.92%202.133%206.865%202.373%203.663%206.496%206.085%2011.184%206.085h129.366c4.69%200%208.812-2.423%2011.184-6.085%201.345-1.945%202.133-4.312%202.133-6.864l-.004-.03c.003-.112.004-.225.004-.338%200-1.407-.218-2.763-.622-4.035z%22%20opacity%3D%22.111%22/%3E%3Cpath%20fill%3D%22%23F1F1F1%22%20d%3D%22M78.65%2043h109.7c3.19%200%206.25%201.272%208.508%203.54%202.256%202.268%203.524%205.345%203.525%208.553L211%20168.907c0%203.208-1.27%206.285-3.526%208.553-2.256%202.268-5.316%203.54-8.506%203.54H68.032c-3.19%200-6.25-1.272-8.506-3.54-2.257-2.268-3.525-5.345-3.526-8.553L66.617%2055.093c0-3.208%201.27-6.285%203.525-8.553C72.4%2044.272%2075.46%2043%2078.65%2043z%22/%3E%3Cpath%20fill%3D%22%2315AAD2%22%20d%3D%22M77.233%2059h112.534c6.817%200%2012.343%205.532%2012.343%2012.356L213%20187.644c0%206.824-5.526%2012.356-12.342%2012.356H66.342C59.526%20200%2054%20194.468%2054%20187.644L64.89%2071.356C64.89%2064.532%2070.416%2059%2077.233%2059z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M67.408%20164H200.59c3.31%200%206.482%201.33%208.82%203.694%202.34%202.366%203.655%205.574%203.655%208.92L216%20197.386c0%206.966-5.585%2012.613-12.474%2012.613H64.473C57.583%20210%2052%20204.352%2052%20197.387l2.935-20.774c0-6.965%205.584-12.612%2012.473-12.613z%22/%3E%3Crect%20width%3D%22164%22%20height%3D%2228%22%20x%3D%2252%22%20y%3D%22183%22%20fill%3D%22%23F1F1F1%22%20fill-rule%3D%22nonzero%22%20rx%3D%2214%22/%3E%3Cpath%20fill%3D%22%23BFBFBF%22%20d%3D%22M98.448%2048h71.104c1.904%200%203.448.895%203.448%202s-1.544%202-3.448%202H98.448C96.544%2052%2095%2051.105%2095%2050s1.544-2%203.448-2z%22/%3E%3Ccircle%20cx%3D%2291%22%20cy%3D%22196%22%20r%3D%222%22%20fill%3D%22%237BD500%22%20fill-rule%3D%22nonzero%22/%3E%3Ccircle%20cx%3D%2285%22%20cy%3D%22196%22%20r%3D%222%22%20fill%3D%22%23FF5752%22%20fill-rule%3D%22nonzero%22/%3E%3Ccircle%20cx%3D%2279%22%20cy%3D%22196%22%20r%3D%222%22%20fill%3D%22%23D3D3D3%22%20fill-rule%3D%22nonzero%22/%3E%3Ccircle%20cx%3D%2273%22%20cy%3D%22196%22%20r%3D%222%22%20fill%3D%22%23D3D3D3%22%20fill-rule%3D%22nonzero%22/%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M93.438%20147.993c-10.96-.275-18.638-8.94-17.283-19.16%201.13-8.517%208.227-15.42%2016.765-17.205-.42-1.99-.542-4.062-.328-6.175C93.84%2093.1%20105.688%2084%20118.804%2084c8.113%200%2015.352%203.484%2019.806%208.96%202.8-1.035%205.86-1.602%209.052-1.602%2012.403%200%2023.283%208.546%2024.98%2019.85.366-.02.736-.03%201.11-.03%2010.357%200%2019.778%207.73%2021.093%2017.655%201.332%2010.053-6.075%2018.602-16.75%2019.14V148H93.44v-.007z%22%20opacity%3D%22.073%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M93.438%20144.993c-10.96-.275-18.638-8.94-17.283-19.16%201.13-8.517%208.227-15.42%2016.765-17.205-.42-1.99-.542-4.062-.328-6.175C93.84%2090.1%20105.688%2081%20118.804%2081c8.113%200%2015.352%203.484%2019.806%208.96%202.8-1.035%205.86-1.602%209.052-1.602%2012.403%200%2023.283%208.546%2024.98%2019.85.366-.02.736-.03%201.11-.03%2010.357%200%2019.778%207.73%2021.093%2017.655%201.332%2010.053-6.075%2018.602-16.75%2019.14V145H93.44v-.007z%22/%3E%3Cpath%20fill%3D%22%238DBA00%22%20d%3D%22M134%2098c11.598%200%2021%208.283%2021%2018.5s-9.402%2018.5-21%2018.5-21-8.283-21-18.5S122.402%2098%20134%2098z%22/%3E%3Cpath%20fill%3D%22%23F1F1F1%22%20d%3D%22M132.5%20106c1.38%200%202.5.932%202.5%202.08v9.84c0%201.148-1.12%202.08-2.5%202.08s-2.5-.932-2.5-2.08v-9.84c0-1.15%201.12-2.08%202.5-2.08z%22/%3E%3Cpath%20fill%3D%22%23F1F1F1%22%20d%3D%22M146%20119c0%201.104-1.065%202-2.378%202h-11.244c-1.313%200-2.378-.895-2.378-2s1.065-2%202.378-2h11.242c1.315%200%202.38.896%202.38%202z%22/%3E%3C/g%3E%3C/svg%3E');
@@ -310,7 +322,7 @@
 	-ms-animation: diskVolumePathDash 1.5s ease-in-out infinite;
 	-o-animation: diskVolumePathDash 1.5s ease-in-out infinite;
 	animation: diskVolumePathDash 1.5s ease-in-out infinite;
-	stroke: rgba(47, 198, 246, .7);
+	stroke: var(--ui-color-accent-main-primary);
 	stroke-width: .6;
 	stroke-dasharray: 20, 200;
 	stroke-dashoffset: 0;
@@ -348,17 +360,19 @@
 }
 
 .disk-volume-loader-progress-bar {
-	margin: 0 0 28px;
+	margin: 0 0 var(--ui-space-stack-2xl);
 	width: 100%;
-	color: #333;
+	color: var(--ui-color-base-1);
 	text-align: center;
-	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	font-size: var(--ui-font-size-xl);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-light);
 }
 
 .disk-volume-loader-progress-bar-number {
 	display: block;
-	margin: 0 0 10px;
+	margin: 0 0 var(--ui-space-stack-xs2);
 }
 
 .disk-volume-loader-progress-bar-line {
@@ -367,9 +381,9 @@
 	margin: 0 auto;
 	max-width: 267px;
 	height: 7px;
-	-webkit-border-radius: 16px;
-	border-radius: 16px;
-	background: #edeef0;
+	-webkit-border-radius: var(--ui-border-radius-2xl);
+	border-radius: var(--ui-border-radius-2xl);
+	background: var(--ui-color-base-7);
 }
 
 .disk-volume-loader-progress-bar-line-active {
@@ -378,7 +392,7 @@
 	left: 0;
 	width: 0;
 	height: 7px;
-	background: #9dcf00;
+	background: var(--ui-color-accent-main-success);
 }
 
 .disk-volume-info {
@@ -392,8 +406,8 @@
 }
 
 .disk-volume-button-container.--with-top-border {
-	padding: 40px 0 0 0;
-	border-top: 1px solid rgba(168, 173, 180, .2);
+	padding: var(--ui-space-inset-5xl) 0 0 0;
+	border-top: 1px solid var(--ui-color-divider-vibrant-default);
 }
 
 .disk-volume-button-container.--center {
@@ -402,34 +416,40 @@
 
 .disc-volume-button { margin: 0; }
 
-.disk-volume-button-margin-top { margin: 20px 0 0; }
+.disk-volume-button-margin-top { margin: var(--ui-space-stack-lg) 0 0; }
 
 .disk-volume-space-amount {
-	margin: 0 0 25px;
-	color: #333;
+	margin: 0 0 var(--ui-space-stack-xl2);
+	color: var(--ui-color-base-1);
 	text-align: center;
-	font: 86px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	font-size: 86px;
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-light);
 }
 
-.disk-volume-space-amount-item { color: #828b95; }
+.disk-volume-space-amount-item { color: var(--ui-color-base-3); }
 
 .disc-volume-notice,
 .disc-volume-file-count {
 	margin: 0;
-	color: #333;
+	color: var(--ui-color-base-1);
 	text-align: center;
-	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	font-size: var(--ui-font-size-md);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-light);
 }
 
-.disc-volume-notice { margin: 0 0 40px; }
+.disc-volume-notice { margin: 0 0 var(--ui-space-stack-5xl); }
 
 .disc-volume-notice-small {
-	color: rgba(83, 92, 105, .5);
+	color: var(--ui-color-base-4);
 	text-transform: lowercase;
-	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	font-size: var(--ui-font-size-3xs);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 #bx-disk-volume-space {
@@ -439,49 +459,53 @@
 
 .disk-volume-header-link {
 	display: inline-block;
-	border-bottom: 1px solid #468ee5;
-	color: #468ee5;
+	border-bottom: 1px solid var(--ui-color-accent-main-primary);
+	color: var(--ui-color-accent-main-primary);
 	vertical-align: top;
-	font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
 
 .disk-volume-header-link:hover {
 	border-bottom: 1px solid transparent;
-	color: #468ee5;
+	color: var(--ui-color-accent-main-primary);
 }
 
-#bx-disk-volume-cancel-workers { margin-left: 10px; }
+#bx-disk-volume-cancel-workers { margin-left: var(--ui-space-inline-xs2); }
 
 .disk-volume-cancel-link {
-	color: #468ee5;
+	color: var(--ui-color-accent-main-primary);
 	cursor: pointer;
 }
 
 .disk-volume-cancel-link:hover {
-	border-bottom: 1px solid #468ee5;
-	color: #468ee5;
+	border-bottom: 1px solid var(--ui-color-accent-main-primary);
+	color: var(--ui-color-accent-main-primary);
 }
 
-#bx-disk-volume-process-cancel { margin-left: 10px; }
+#bx-disk-volume-process-cancel { margin-left: var(--ui-space-inline-xs2); }
 
 .disk-volume-link-grey {
 	position: absolute;
 	right: 10px;
 	display: inline-block;
-	margin: 15px 0 0;
-	border-bottom: 1px solid #79818d;
-	color: #79818d;
-	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	margin: var(--ui-space-stack-md) 0 0;
+	border-bottom: 1px solid var(--ui-color-base-3);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-xs);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 	transition: border-bottom .3s;
 }
 
 .disk-volume-link-grey:hover {
 	border-bottom: 1px solid transparent;
-	color: #79818d;
+	color: var(--ui-color-base-3);
 }
 
 .disc-volume-space-entity-container {
@@ -489,7 +513,7 @@
 	display: -ms-flexbox;
 	display: flex;
 	-ms-flex-pack: distribute;
-	margin: 0 auto 50px auto;
+	margin: 0 auto var(--ui-space-stack-6xl) auto;
 	max-width: 800px;
 	justify-content: space-around;
 }
@@ -497,11 +521,11 @@
 .disc-volume-space-entity-block {
 	display: inline-block;
 	box-sizing: border-box;
-	padding: 17px 40px 14px 30px;
+	padding: var(--ui-space-inset-md2) var(--ui-space-inset-5xl) var(--ui-space-inset-sm2) var(--ui-space-inset-3xl);
 	min-width: 364px;
-	-webkit-border-radius: 60px;
-	border-radius: 60px;
-	background: rgba(47, 198, 246, .09);
+	-webkit-border-radius: var(--ui-border-radius-pill);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-accent-soft-blue-3);
 	text-align: left;
 	cursor: pointer;
 }
@@ -516,7 +540,7 @@
 
 .disc-volume-space-entity-image {
 	display: inline-block;
-	margin: 0 16px 0 0;
+	margin: 0 var(--ui-space-inline-md) 0 0;
 	width: 53px;
 	height: 60px;
 	background-repeat: no-repeat;
@@ -528,7 +552,7 @@
 
 .disc-volume-space-entity-checkbox {
 	display: inline-block;
-	margin: 21px 18px 0 0;
+	margin: var(--ui-space-stack-lg2) var(--ui-space-inline-md2) 0 0;
 	width: 28px;
 	height: 23px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2023%2023%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Crect%20id%3D%22a%22%20width%3D%2223%22%20height%3D%2223%22%20x%3D%22395%22%20y%3D%22541%22%20rx%3D%222%22/%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-395%20-541%29%22%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Crect%20width%3D%2221%22%20height%3D%2221%22%20x%3D%22396%22%20y%3D%22542%22%20stroke%3D%22%2379818D%22%20stroke-opacity%3D%22.774%22%20stroke-width%3D%222%22%20rx%3D%222%22/%3E%3C/g%3E%3C/svg%3E');
@@ -543,7 +567,7 @@
 .disc-volume-space-entity-inprocess {
 	position: relative;
 	display: none;
-	margin: 21px 18px 0 0;
+	margin: var(--ui-space-stack-lg2) var(--ui-space-inline-md2) 0 0;
 	width: 28px;
 	height: 23px;
 	vertical-align: top;
@@ -552,15 +576,19 @@
 .disc-volume-space-entity-block-inprocess .disc-volume-space-entity-inprocess { display: inline-block; }
 
 .disc-volume-space-text {
-	color: #000;
-	font: 21px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-3xl);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 .disc-volume-space-text-grey {
-	color: #525c69;
-	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-2xl);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 .disk-volume-info-control-panel {
@@ -569,14 +597,15 @@
 	display: flex;
 	-ms-flex-pack: justify;
 	-ms-flex-align: center;
-	margin: -15px -15px 15px;
-	padding: 0 20px;
+	margin: var(--ui-space-stack-md-neg) var(--ui-space-inline-md-neg) var(--ui-space-stack-md);
+	padding: 0 var(--ui-space-inset-lg);
 	min-height: 30px;
-	border-bottom: 2px solid #eef2f4;
-	background: #fff8d2;
-	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
-	line-height: 27px;
+	border-bottom: 2px solid var(--ui-color-divider-default);
+	background: var(--ui-color-accent-soft-orange-2);
+	font-size: var(--ui-font-size-sm);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: var(--ui-font-line-height-3xl);
 	-webkit-box-align: center;
 	align-items: center;
 	-webkit-box-pack: justify;
@@ -588,9 +617,9 @@
 .disk-volume-info-control-panel-warning {
 	display: inline-block;
 	overflow: hidden;
-	margin: 0 10px 0 0;
+	margin: 0 var(--ui-space-inline-xs2) 0 0;
 	max-width: 100%;
-	color: #525c69;
+	color: var(--ui-color-base-2);
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -600,7 +629,7 @@
 .disk-volume-info-control-panel-link {
 	display: inline-block;
 	border-bottom: 1px solid transparent;
-	color: #2c77b1;
+	color: var(--ui-color-accent-main-link);
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -609,8 +638,8 @@
 }
 
 .disk-volume-info-control-panel-link:hover {
-	border-bottom: 1px solid #2c77b1;
-	color: #2c77b1;
+	border-bottom: 1px solid var(--ui-color-accent-main-link);
+	color: var(--ui-color-accent-main-link);
 }
 
 .disk-volume-toolbar-menu {
@@ -622,15 +651,17 @@
 	padding: 0;
 	min-height: 62px;
 	white-space: nowrap;
-	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	font-size: var(--ui-font-size-md);
+	line-height: normal;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
 	-webkit-box-align: center;
 	align-items: center;
 }
 
 .disk-volume-toolbar-menu-item {
 	position: relative;
-	margin: 0 24px 0 0;
+	margin: 0 var(--ui-space-inline-xl) 0 0;
 	list-style: none;
 }
 
@@ -644,37 +675,37 @@
 	position: absolute;
 	top: 0;
 	left: -7px;
-	padding: 0 6px;
+	padding: 0 var(--ui-space-inset-2xs2);
 	width: 100%;
 	height: 19px;
-	border: 1px solid #c8cdd2;
-	border-radius: 30px;
+	border: 1px solid var(--ui-color-base-5);
+	border-radius: var(--ui-border-radius-pill);
 	opacity: 1;
 }
 
-.disk-volume-toolbar-menu-name { color: #535c6a; }
+.disk-volume-toolbar-menu-name { color: var(--ui-color-base-2); }
 
-.disk-volume-toolbar-menu-amount { color: #828b95; }
+.disk-volume-toolbar-menu-amount { color: var(--ui-color-base-3); }
 
 /* END OF DISC VOLUME */
 
 /* FOLDER LIST */
 .main-grid-cell-content a.bx-disk-file-title,
 .main-grid-cell-content a.bx-disk-folder-title {
-	color: #535c69;
+	color: var(--ui-color-base-2);
 	text-decoration: none;
-	font-size: 14px;
+	font-size: var(--ui-font-size-md);
 }
 
 .main-grid-cell-content a.bx-disk-file-title:hover,
 .main-grid-cell-content a.bx-disk-folder-title:hover {
-	color: #2067b0;
+	color: var(--ui-color-accent-main-link);
 	text-decoration: none;
 }
 
 .disk-volume-folder-icon {
 	display: inline-block;
-	margin: 0 5px 0 0;
+	margin: 0 var(--ui-space-inline-2xs2) 0 0;
 	width: 18px;
 	height: 16px;
 	background: transparent url(/bitrix/images/disk/icons-files2.png) no-repeat -72px 0;
@@ -682,10 +713,10 @@
 }
 
 .disk-volume-folder-parent {
-	padding: 5px 0 0 3px;
-	color: #a5a9ab;
-	font-size: 11px;
-	line-height: 14px !important;
+	padding: var(--ui-space-inset-2xs2) 0 0 var(--ui-space-inset-2xs);
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-3xs);
+	line-height: var(--ui-font-line-height-2xs) !important;
 }
 
 /* FILE LIST */
@@ -697,18 +728,18 @@
 }
 
 .disk-volume-file-using-count {
-	border-bottom: 1px dashed #2067b0;
-	color: #2067b0;
+	border-bottom: 1px dashed var(--ui-color-accent-main-link);
+	color: var(--ui-color-accent-main-link);
 	cursor: pointer;
 }
 
 .disk-volume-file-using {
-	padding: 3px;
+	padding: var(--ui-space-inset-2xs);
 }
 
 /* SELECT BUTTON */
 .disk-volume-toolbar-button-container {
-	margin-right: 19px;
+	margin-right: var(--ui-space-inline-lg);
 	max-width: 240px;
 }
 
@@ -725,10 +756,10 @@
 	display: flex;
 	-ms-flex-pack: justify;
 	box-sizing: border-box;
-	padding: 0 13px 0 13px;
+	padding: 0 var(--ui-space-inset-sm2) 0 var(--ui-space-inset-sm2);
 	height: 38px;
-	border: 1px solid #c8d1d6;
-	border-radius: 2px;
+	border: 1px solid var(--ui-color-base-5);
+	border-radius: var(--ui-border-radius-3xs);
 	cursor: pointer;
 	-webkit-transition: background .3s linear, color .3s linear;
 	transition: background .3s linear, color .3s linear;
@@ -748,23 +779,25 @@
 }
 
 .disk-volume-toolbar-button-block:hover {
-	background: #cfd4d8;
-	color: #535c69;
+	background: var(--ui-color-base-6);
+	color: var(--ui-color-base-2);
 }
 
 .disk-volume-toolbar-button-text {
 	display: inline-block;
 	overflow: hidden;
 	box-sizing: border-box;
-	padding: 0 13px 0 0;
+	padding: 0 var(--ui-space-inset-sm2) 0 0;
 	border: none;
-	color: #7a818a;
+	color: var(--ui-color-base-3);
 	text-transform: uppercase;
 	text-overflow: ellipsis;
 	text-shadow: none !important;
 	white-space: nowrap;
-	font: 12px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-bold, 700);
+	font-size: var(--ui-font-size-xs);
+	line-height: 38px;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-bold);
 	-webkit-transition: color .25s linear;
 	transition: color .25s linear;
 }
@@ -791,19 +824,19 @@
 
 /* stepper */
 .disk-volume-stepper.disk-volume-stepper-default {
-	margin: -15px -15px 15px -15px;
+	margin: var(--ui-space-stack-md-neg) var(--ui-space-inline-md-neg) var(--ui-space-stack-md) var(--ui-space-inline-md-neg);
 }
 
 /* stepper alert */
 .disk-volume-stepper .disk-volume-stepper-alert {
 	display: none;
-	padding: 5px 8px;
-	background: #ffe5e0;
-	color: #f73100;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs);
+	background: var(--ui-color-accent-soft-red-2);
+	color: var(--ui-color-accent-soft-element-red);
 	text-align: center;
 	font-weight: var(--ui-font-weight-bold);
-	font-size: 13px;
-	line-height: 20px;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-lg);
 	animation: stepperAlertShow .3s linear forwards;
 }
 
@@ -813,7 +846,7 @@
 	margin-top: -2px;
 	border: 8px solid transparent;
 	border-top: 0;
-	border-bottom: 15px solid #f73100;
+	border-bottom: 15px solid var(--ui-color-accent-soft-element-red);
 	vertical-align: middle;
 }
 
@@ -823,8 +856,8 @@
 	left: -10px;
 	width: 16px;
 	height: 15px;
-	border: 2px solid #ffe5e0;
-	border-radius: 50%;
+	border: 2px solid var(--ui-color-accent-soft-red-2);
+	border-radius: var(--ui-border-radius-circle);
 	content: '';
 }
 
@@ -836,8 +869,8 @@
 	margin: auto;
 	width: 2px;
 	height: 4px;
-	background: #fff;
-	box-shadow: 0 2px 0 0 #f73100, 0 3px 0 #fff;
+	background: var(--ui-color-base-white-fixed);
+	box-shadow: 0 2px 0 0 var(--ui-color-accent-soft-element-red), 0 3px 0 var(--ui-color-base-white-fixed);
 	content: '';
 	opacity: .9;
 }
@@ -871,15 +904,15 @@
 .disk-volume-list-back {
 	position: relative;
 	display: inline-block;
-	margin: 0 15px 20px 30px;
-	padding-left: 18px;
-	color: #535c69 !important;
+	margin: 0 var(--ui-space-inline-md) var(--ui-space-stack-lg) var(--ui-space-inline-3xl);
+	padding-left: var(--ui-space-inset-md2);
+	color: var(--ui-color-base-2) !important;
 	vertical-align: middle;
 	text-decoration: none;
 	text-transform: uppercase;
-	font-size: 12px;
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-size: var(--ui-font-size-xs);
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-semi-bold);
 }
 
 .disk-volume-list-back:before {
@@ -900,17 +933,17 @@
 	/*position: relative;
 	top: -3px;*/
 	overflow: hidden;
-	padding: 1px;
+	padding: var(--ui-space-inset-3xs);
 	width: 10px;
 	height: 10px;
-	border-radius: 10px;
-	background-color: #3c9dbf;
-	color: #fff;
+	border-radius: var(--ui-border-radius-md);
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
 	content: '\003F';
 	vertical-align: super;
 	text-align: center;
-	font-size: 8px;
-	line-height: 10px;
+	font-size: var(--ui-font-size-6xs);
+	line-height: var(--ui-font-line-height-3xs);
 	opacity: .5;
 	cursor: help;
 	-webkit-transition: opacity .3s;
@@ -922,11 +955,11 @@
 }
 
 .disk-volume-hint-balloon {
-	background-color: #fff8d2;
+	background-color: var(--ui-color-accent-soft-orange-2);
 }
 
 .disk-volume-hint-balloon .popup-window-angly:before {
-	background-color: #fff8d2;
+	background-color: var(--ui-color-accent-soft-orange-2);
 }
 
 .disk-volume-hint-balloon .popup-window-content {
@@ -986,7 +1019,7 @@
 	width: 22px;
 	height: 22px;
 	border-radius: unset;
-	background: #7f8389 url("/bitrix/components/bitrix/crm.timeline/templates/.default/images/icons-sprite.svg") no-repeat center -1178px;;
+	background: var(--ui-color-base-3) url("/bitrix/components/bitrix/crm.timeline/templates/.default/images/icons-sprite.svg") no-repeat center -1178px;
 }
 
 /* im icon */
@@ -1001,12 +1034,12 @@
 .bx-disk-volume-im-avatar {
 	position: relative;
 	display: inline-block;
-	margin-right: 9px;
+	margin-right: var(--ui-space-inline-xs2);
 	width: 34px;
 	height: 34px;
 	border: 0;
-	border-radius: 50%;
-	background-color: #77828e;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: var(--ui-color-base-3);
 	vertical-align: middle;
 }
 
@@ -1044,7 +1077,7 @@
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
-	margin: 0 35px 21px 0;
+	margin: 0 var(--ui-space-inline-4xl) var(--ui-space-stack-lg2) 0;
 	max-width: 70%;
 	vertical-align: middle;
 	white-space: nowrap;
@@ -1053,7 +1086,7 @@
 .bx-disk-volume-bread-crumbs-item-container {
 	position: relative;
 	display: inline-block;
-	margin-left: 30px;
+	margin-left: var(--ui-space-inline-3xl);
 	max-width: 300px;
 }
 
@@ -1072,14 +1105,14 @@
 
 .bx-disk-volume-bread-crumbs-item-link {
 	overflow: hidden;
-	margin-right: 10px;
-	color: #535c69;
+	margin-right: var(--ui-space-inline-xs2);
+	color: var(--ui-color-base-2);
 	vertical-align: middle;
 	text-decoration: none;
 	-ms-text-overflow: ellipsis;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-size: 13px;
+	font-size: var(--ui-font-size-sm);
 }
 
 /* confirm alert */
@@ -1087,11 +1120,11 @@
 .bx-disk-popup-content-small { max-width: 700px; }
 
 .bx-disk-volume-errors {
-	margin: 1.117em;
-	padding: 0.4em 1.117em;
-	border: 1px solid #ffd482;
-	background-color: #fffeeb;
-	color: #f00;
+	margin: var(--ui-space-stack-md) var(--ui-space-inline-md);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-md);
+	border: 1px solid var(--ui-color-accent-soft-border-red);
+	background-color: var(--ui-color-accent-soft-red-3);
+	color: var(--ui-color-accent-soft-element-red);
 }
 
 /* in process icon */
@@ -1112,7 +1145,7 @@
 
 .disc-volume-circular-inner-path {
 	fill: none;
-	stroke: rgba(110, 119, 131, .17);
+	stroke: var(--ui-color-base-6);
 	stroke-width: 3;
 	stroke-dasharray: 200, 200;
 	stroke-dashoffset: 0;
@@ -1122,8 +1155,8 @@
 .disc-volume-circular-path {
 	-webkit-animation: diskVolumeCircularPathDash 1.5s ease-in-out infinite;
 	animation: diskVolumeCircularPathDash 1.5s ease-in-out infinite;
-	fill: #fff;
-	stroke: rgba(110, 119, 131, 1);
+	fill: var(--ui-color-base-white-fixed);
+	stroke: var(--ui-color-base-3);
 	stroke-width: 3;
 	stroke-dasharray: 20, 200;
 	stroke-dashoffset: 0;
@@ -1143,4 +1176,69 @@
 		stroke-dasharray: 89, 200;
 		stroke-dashoffset: -124px;
 	}
+}
+
+/*
+	Volume diagram palette. \CDiskVolumeComponent::paletteStep() gives the step number,
+	both templates put it into the modifier of a bar segment and of a legend circle.
+	c12 is the dedicated step of the "other" segment.
+*/
+.bx-disk-interface-percent-part.--c1,
+.bx-disk-interface-percent-legend-part-circle.--c1 {
+	background-color: var(--ui-color-accent-soft-element-violet);
+}
+
+.bx-disk-interface-percent-part.--c2,
+.bx-disk-interface-percent-legend-part-circle.--c2 {
+	background-color: var(--ui-color-accent-extra-pink);
+}
+
+.bx-disk-interface-percent-part.--c3,
+.bx-disk-interface-percent-legend-part-circle.--c3 {
+	background-color: var(--ui-color-accent-main-link);
+}
+
+.bx-disk-interface-percent-part.--c4,
+.bx-disk-interface-percent-legend-part-circle.--c4 {
+	background-color: var(--ui-color-accent-extra-brown);
+}
+
+.bx-disk-interface-percent-part.--c5,
+.bx-disk-interface-percent-legend-part-circle.--c5 {
+	background-color: var(--ui-color-accent-extra-darkblue);
+}
+
+.bx-disk-interface-percent-part.--c6,
+.bx-disk-interface-percent-legend-part-circle.--c6 {
+	background-color: var(--ui-color-base-3);
+}
+
+.bx-disk-interface-percent-part.--c7,
+.bx-disk-interface-percent-legend-part-circle.--c7 {
+	background-color: var(--ui-color-accent-main-alert);
+}
+
+.bx-disk-interface-percent-part.--c8,
+.bx-disk-interface-percent-legend-part-circle.--c8 {
+	background-color: var(--ui-color-accent-extra-aqua);
+}
+
+.bx-disk-interface-percent-part.--c9,
+.bx-disk-interface-percent-legend-part-circle.--c9 {
+	background-color: var(--ui-color-accent-soft-element-orange);
+}
+
+.bx-disk-interface-percent-part.--c10,
+.bx-disk-interface-percent-legend-part-circle.--c10 {
+	background-color: var(--ui-color-accent-extra-grass);
+}
+
+.bx-disk-interface-percent-part.--c11,
+.bx-disk-interface-percent-legend-part-circle.--c11 {
+	background-color: var(--ui-color-accent-brand-green);
+}
+
+.bx-disk-interface-percent-part.--c12,
+.bx-disk-interface-percent-legend-part-circle.--c12 {
+	background-color: var(--ui-color-base-5);
 }

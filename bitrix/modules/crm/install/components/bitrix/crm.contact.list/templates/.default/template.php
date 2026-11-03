@@ -53,7 +53,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 \Bitrix\Main\UI\Extension::load('crm.dialog');
 
-?><div id="crm-contact-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div><?
+?><div id="batchDeletionWrapper"></div><?
 
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 
@@ -115,6 +115,7 @@ if($arResult['NEED_FOR_TRANSFER_REQUISITES']):
 endif;
 
 $isInternal = $arResult['INTERNAL'];
+$enableGroupActions = !empty($arResult['ENABLE_GROUP_ACTIONS']);
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
 if(!$isInternal):
@@ -164,7 +165,8 @@ $fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleI
 
 if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 {
-	$arResult['CONTACT'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Contact))->appendNearestActivityBlock($arResult['CONTACT']);
+	$arResult['CONTACT'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Contact))
+		->appendNearestActivityBlock($arResult['CONTACT'], false, $arParams['ANALYTICS'] ?? []);
 }
 
 $toolsManager = Container::getInstance()->getIntranetToolsManager();
@@ -524,7 +526,10 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 	$sourceId = null;
 	if (isset($arContact['SOURCE_ID']))
 	{
-		$sourceId = $arResult['SOURCE_LIST'][$arContact['SOURCE_ID']] ?? $arContact['SOURCE_ID'];
+		$sourceId = (string)$arContact['SOURCE_ID'] === ''
+			? ''
+			: ($arResult['SOURCE_LIST'][$arContact['SOURCE_ID']] ?? $arContact['SOURCE_ID'])
+		;
 	}
 	$webformId = null;
 	if (isset($arContact['WEBFORM_ID']))
@@ -562,6 +567,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
 			'HONORIFIC' => $arResult['HONORIFIC'][$arContact['HONORIFIC']] ?? '',
 			'TYPE_ID' => $arResult['TYPE_LIST'][$arContact['TYPE_ID']] ?? $arContact['TYPE_ID'],
+			'OPENED' => ($arContact['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 			'SOURCE_ID' => $sourceId,
 			'WEBFORM_ID' => $webformId,
 			'CREATED_BY' => isset($arContact['~CREATED_BY']) && $arContact['~CREATED_BY'] > 0
@@ -631,7 +637,9 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 	unset($resultItem);
 }
 
-if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+$isEmbeddedListLayout = $arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest();
+
+if ($isEmbeddedListLayout)
 {
 	$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Contact;
 	$targetId = 'relation-button-' . $relationCode;
@@ -676,6 +684,13 @@ if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest
 	<?php
 }
 
+if ($isEmbeddedListLayout)
+{
+	echo '<div class="crm-list-embedded-grid-block">';
+}
+
+echo '<div id="crm-contact-list-progress-bar-container"></div>';
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.newentity.counter.panel',
 	'',
@@ -696,6 +711,15 @@ $filterLazyLoadParams = [
 $uri = new Uri($filterLazyLoadUrl);
 
 $isDefaultCategory = $arResult['IS_DEFAULT_CATEGORY'] ?? false;
+
+$actionPanelItems = ($isInternal && !$enableGroupActions)
+	? []
+	: ($arResult['PANEL']?->getControls() ?? []);
+
+if ($isInternal && $enableGroupActions)
+{
+	$actionPanelItems = \Bitrix\Crm\Component\EntityList\Grid\Panel\ActionPanelItems::withoutForAllCheckbox($actionPanelItems);
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -741,7 +765,7 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => [
 			'GROUPS' => [
 				[
-					'ITEMS' => $isInternal ? [] : $arResult['PANEL']?->getControls(),
+					'ITEMS' => $actionPanelItems,
 				],
 			],
 		],
@@ -783,6 +807,12 @@ $APPLICATION->IncludeComponent(
 		)
 	)
 );
+
+if ($isEmbeddedListLayout)
+{
+	echo '</div>';
+}
+
 
 ?><script>
 BX.ready(

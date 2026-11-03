@@ -47,7 +47,8 @@ return static function (RoutingConfigurator $routes) {
 		$site = SiteTable::getByDomain($request->getHttpHost(), $request->getRequestedPageDirectory());
 		$wizardId = Option::get('main', '~wizard_id', false, $site['LID'] ?? null);
 
-		if ($wizardId === 'portal')
+		// wizard_id set by box install wizards: install/wizards/bitrix/{portal,bitrix24}; sync when a new one appears
+		if (in_array($wizardId, ['portal', 'bitrix24'], true))
 		{
 			$siteDir = $site['DIR'] ?? '/';
 		}
@@ -112,6 +113,16 @@ return static function (RoutingConfigurator $routes) {
 			$routes->any('bi/dashboard/{hash}/{any}', new PublicPageController($siteDir . 'pub/bi/dashboard.php'))
 				->where('hash', '[0-9a-zA-Z]+')
 			;
+			// A knowledge base opened by an external-access link. The address lives under /pub/
+			// because everything else there is already outside the portal authorization, and the
+			// routes below must stay above the catch-all of this group - it sends anything
+			// unclaimed to the payment page.
+			$routes->any('note/{token}', new PublicPageController($siteDir . 'pub/note.php'))
+				->where('token', '[0-9a-zA-Z]+')
+			;
+			$routes->any('note/{token}/{any}', new PublicPageController($siteDir . 'pub/note.php'))
+				->where('token', '[0-9a-zA-Z]+')
+			;
 			$routes->any('site/{any}', new PublicPageController($siteDir . 'pub/site/index.php'));
 			$routes->any('{any}', new PublicPageController($siteDir . 'pub/payment.php'));
 		})
@@ -121,19 +132,34 @@ return static function (RoutingConfigurator $routes) {
 	$routes->prefix($sitePrefix . 'docs')
 		->where('any', '.*')
 		->group(function (RoutingConfigurator $routes) use ($siteDir) {
+			$routes->any('pub/{hash}/{action}/', new PublicPageController($siteDir . 'docs/pub/index.php'))
+				->where('hash', '[0-9a-f]{32}')
+				->where('action', '[^/]+')
+			;
 			$routes->any('pub/{hash}/{action}', new PublicPageController($siteDir . 'docs/pub/index.php'))
 				->where('hash', '[0-9a-f]{32}')
-				->where('action', '.*')
+				->where('action', '[^/]+')
 			;
 			$routes->any('pub/{any}', new PublicPageController($siteDir . 'docs/pub/extlinks.php'));
 			$routes->any('sale/{any}', new PublicPageController($siteDir . 'docs/sale/index.php'));
 			$routes->any('shared/{any}', new PublicPageController($siteDir . 'docs/shared/index.php'));
 			$routes->any('manage/{any}', new PublicPageController($siteDir . 'docs/manage/index.php'));
-			$routes->any('{any}', new PublicPageController($siteDir . 'docs/index.php'));
+			// Subpaths of user common storages are resolved by the docs service entry (see
+			// disk/services/docs_section.php), which loads no module at all: such routing entry
+			// points are executed before the prolog. The install check is a cheap lookup without
+			// a module load and keeps the plain docs page as a fallback when disk is absent.
+			$routes->any('{any}', ModuleManager::isModuleInstalled('disk')
+				? new PublicPageController('/bitrix/services/disk/docs_section.php')
+				: new PublicPageController($siteDir . 'docs/index.php')
+			);
 		})
 	;
 
 	// disk
+	$routes->any(
+		'/' . $sitePrefix . 'disk/audit/',
+		new PublicPageController('/bitrix/modules/disk/admin/audit_log.php'),
+	);
 	$routes->prefix($sitePrefix . 'disk/boards')
 		->where('fileId', '[0-9]+')
 		->where('attachedObjectId', '[0-9]+')
@@ -171,7 +197,7 @@ return static function (RoutingConfigurator $routes) {
 		})
 	;
 	$routes->prefix($sitePrefix . '{fileType}')
-		->where('fileType', '(picture|media|audio|board|doc|sheet|pres|html|file)')
+		->where('fileType', '(picture|media|audio|board|doc|sheet|pres|html|file|folder)')
 		->where('uniqueCode', '[0-9a-zA-Z]{20}')
 		->group(function (RoutingConfigurator $routes) {
 			$routes->get('{uniqueCode}', [UnifiedLinkController::class, 'view']);
@@ -390,7 +416,7 @@ return static function (RoutingConfigurator $routes) {
 	$routes->any($siteDir . 'conference/{any}', new PublicPageController($siteDir . 'conference/index.php'))
 		->where('any', '.*')
 	;
-	$routes->any('/sync/{any}', new PublicPageController('/sync/index.php'))
+	$routes->any($siteDir . 'sync/{any}', new PublicPageController($siteDir . 'sync/index.php'))
 		->where('any', '.*')
 	;
 
@@ -549,6 +575,9 @@ return static function (RoutingConfigurator $routes) {
 		->group(function (RoutingConfigurator $routes) use ($siteDir) {
 			$routes->any('dashboard/detail/{dashboardId}/', new PublicPageController($siteDir . 'bi/dashboard/detail/index.php'))
 				->where('dashboardId', '[0-9]+')
+			;
+			$routes->any('dashboard/demo/{code}/', new PublicPageController($siteDir . 'bi/dashboard/demo/index.php'))
+				->where('code', '[A-Za-z0-9_.-]+')
 			;
 			$routes->any('dashboard/{any}', new PublicPageController($siteDir . 'bi/dashboard/index.php'));
 			$routes->any('table/{any}', new PublicPageController($siteDir . 'bi/table/index.php'));

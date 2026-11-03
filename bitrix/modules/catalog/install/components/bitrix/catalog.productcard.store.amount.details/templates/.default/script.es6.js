@@ -8,6 +8,7 @@ class StoreAmountDetails
 	{
 		this.gridId = settings.gridId;
 		this.productId = settings.productId;
+		this.storeId = settings.storeId;
 		this.allowPurchasingPrice = settings.allowPurchasingPrice;
 
 		this.onFilterApplyHandler = this.onFilterApply.bind(this);
@@ -30,6 +31,11 @@ class StoreAmountDetails
 		return this.productId;
 	}
 
+	getStoreId()
+	{
+		return this.storeId;
+	}
+
 	onFilterApply(event: BaseEvent)
 	{
 		const [gridId] = event.getCompatData();
@@ -46,6 +52,7 @@ class StoreAmountDetails
 				mode: 'class',
 				data: {
 					productId: this.getProductId(),
+					storeId: this.getStoreId(),
 				}
 			}
 		).then(response => {

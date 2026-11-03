@@ -1,13 +1,25 @@
 .mail-compose-subject-field__label
 {
 	flex: 0 0 76px;
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-3);
 }
 
-/* the naked design of the input draws no ring at all, so the row shows the focus of the field itself */
-.mail-compose-subject-field:focus-within
+/* the box the phrase of the generation is laid over: the field itself keeps the whole width of it */
+.mail-compose-subject-field__slot
 {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 2px;
-	border-radius: var(--ui-border-radius-sm);
+	position: relative;
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* the typed subject reads a step bolder than the body; the placeholder stays quiet */
+.mail-compose-subject-field input
+{
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.mail-compose-subject-field input::placeholder
+{
+	font-weight: var(--ui-font-weight-normal);
 }

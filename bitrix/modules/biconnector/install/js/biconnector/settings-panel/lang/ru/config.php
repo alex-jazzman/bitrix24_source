@@ -1,7 +1,7 @@
 <?php
 
 $MESS['BICONNECTOR_SETTINGS_PANEL_PERIOD_TITLE'] = 'Период отчёта по умолчанию';
-$MESS['BICONNECTOR_SETTINGS_PANEL_PERIOD_HINT'] = 'Интервал будет применяться для всех отчётов, кроме тех, где указан свой период.';
+$MESS['BICONNECTOR_SETTINGS_PANEL_PERIOD_HINT_MSGVER_1'] = 'Интервал применяется к отчётам, у которых в BI Конструкторе не задан период.';
 $MESS['BICONNECTOR_SETTINGS_PANEL_PERIOD_FROM'] = 'Начало периода';
 $MESS['BICONNECTOR_SETTINGS_PANEL_PERIOD_TO'] = 'Конец периода';
 $MESS['BICONNECTOR_SETTINGS_PANEL_PERIOD_SAVED'] = 'Период отчёта сохранён';

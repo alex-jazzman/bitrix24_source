@@ -19,3 +19,7 @@
 	color: var(--im-content-create-chat__font-color_subheading);
 	font-weight: var(--im-font-weight-medium);
 }
+
+.bx-im-chat-forms-heading__subheading {
+	color: var(--ui-color-base-4);
+}

@@ -23,7 +23,12 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 	const { ReinviteEntry } = require('intranet/reinvite/entry');
 	const { PropTypes } = require('utils/validation');
 	const { isCloudAccount } = require('user/account');
-	const { getTextColorByTheme } = require('user/theme');
+	const {
+		getTextColorByTheme,
+		resolveAppearanceTextColorMode,
+		applyAppearanceTextColorMode,
+		subscribeToAppearanceTextColorModeChange,
+	} = require('user/theme');
 
 	const { dispatch } = require('statemanager/redux/store');
 	const { connect } = require('statemanager/redux/connect');
@@ -67,8 +72,30 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 				context: this,
 			});
 			this.avatarPicker = new AvatarPicker();
+			this.isComponentMounted = false;
+			this.unsubscribeFromAppearanceTextColorModeChange = null;
 
 			this.#initState(props);
+		}
+
+		componentDidMount()
+		{
+			this.isComponentMounted = true;
+
+			this.#loadAppearanceTextColorMode();
+
+			this.unsubscribeFromAppearanceTextColorModeChange = subscribeToAppearanceTextColorModeChange(
+				() => this.state.appearanceTextColorMode,
+				(appearanceTextColorMode) => this.#applyAppearanceTextColorMode(appearanceTextColorMode),
+			);
+		}
+
+		componentWillUnmount()
+		{
+			this.isComponentMounted = false;
+
+			this.unsubscribeFromAppearanceTextColorModeChange?.();
+			this.unsubscribeFromAppearanceTextColorModeChange = null;
 		}
 
 		componentWillReceiveProps(props)
@@ -78,13 +105,34 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 
 		#initState(props)
 		{
-			const { status: oldStatus } = this.state;
+			const { status: oldStatus, appearanceTextColorMode } = this.state;
 			const { status: newStatus, image } = props;
 
 			this.state = {
 				image: image ?? null,
 				status: oldStatus === UserStatus.REINVITED && newStatus === UserStatus.INVITED ? oldStatus : newStatus,
+				appearanceTextColorMode: appearanceTextColorMode ?? null,
 			};
+		}
+
+		#loadAppearanceTextColorMode()
+		{
+			void resolveAppearanceTextColorMode().then((appearanceTextColorMode) => {
+				this.#applyAppearanceTextColorMode(appearanceTextColorMode);
+			});
+		}
+
+		#applyAppearanceTextColorMode(appearanceTextColorMode)
+		{
+			if (this.isComponentMounted)
+			{
+				this.setState({ appearanceTextColorMode });
+			}
+		}
+
+		get currentTheme()
+		{
+			return applyAppearanceTextColorMode(this.props.currentTheme, this.state.appearanceTextColorMode);
 		}
 
 		render()
@@ -131,14 +179,15 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 				fullName,
 				isExtranet,
 				isCollaber,
+				isSystemUser,
 				workPosition,
-				currentTheme,
 				GMTString,
 				lastSeenDate,
 				personalGender,
 				onVacationDateTo,
 				isBirthday,
 				isRootAdmin,
+				isAdmin,
 			} = this.props;
 			const { status } = this.state;
 
@@ -149,10 +198,12 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 					fullName,
 					isExtranet,
 					isCollaber,
+					isSystemUser,
 					workPosition,
 					isRootAdmin,
+					isAdmin,
 				},
-				currentTheme,
+				currentTheme: this.currentTheme,
 				GMTString,
 				lastSeenDate,
 				personalGender,
@@ -218,10 +269,10 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 
 		#renderFullName()
 		{
-			const { fullName, currentTheme } = this.props;
+			const { fullName } = this.props;
 
 			const color = Feature.canUseWidgetBackground()
-				? getTextColorByTheme(currentTheme)
+				? getTextColorByTheme(this.currentTheme)
 				: Color.base1;
 
 			return H3({
@@ -234,7 +285,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 
 		#renderWorkPosition()
 		{
-			const { workPosition, currentTheme } = this.props;
+			const { workPosition } = this.props;
 
 			if (Type.isNil(workPosition) || workPosition === '')
 			{
@@ -242,7 +293,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			}
 
 			const color = Feature.canUseWidgetBackground()
-				? getTextColorByTheme(currentTheme)
+				? getTextColorByTheme(this.currentTheme)
 				: Color.base2;
 
 			return Text5({
@@ -484,6 +535,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 		}).isRequired,
 		isCollaber: PropTypes.bool,
 		isExtranet: PropTypes.bool,
+		isSystemUser: PropTypes.bool,
 		GMTString: PropTypes.string,
 		lastSeenDate: PropTypes.number,
 		personalGender: PropTypes.string,
@@ -506,7 +558,9 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			avatarSizeOriginal,
 			isCollaber,
 			isExtranet,
+			isSystemUser,
 			isRootAdmin,
+			isAdmin,
 		} = usersSelector.selectById(state, ownerId);
 
 		return {
@@ -515,7 +569,9 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			workPosition,
 			isCollaber,
 			isExtranet,
+			isSystemUser,
 			isRootAdmin,
+			isAdmin,
 			image: {
 				previewUrl: avatarSize100,
 				originalImage: avatarSizeOriginal,

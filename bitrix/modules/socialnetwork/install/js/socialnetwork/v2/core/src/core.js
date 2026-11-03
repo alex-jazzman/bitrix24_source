@@ -12,12 +12,21 @@ export type Settings = {
 	isOldPortal: boolean;
 	isAccessRestricted: boolean;
 	canProposeProjectsTrial: boolean;
+	isTeamsAvailable: boolean;
+	isExtranetConfigured: boolean;
+	// Tools the create form may offer a switch for, named as the server names them.
+	toggleableFeaturesOnCreate?: string[] | null;
 	notificationDefaults?: NotificationCatalog | null;
 }
 
 type ProjectWizardCoreParams = {
 	action: string;
 	projectId: number | null;
+	currentUser?: {
+		id: number;
+		name: string;
+		image: { src: string } | null;
+	} | null;
 	publication?: boolean;
 	scrollToStartupTool?: boolean;
 }
@@ -39,6 +48,7 @@ class CoreApplication
 		const {
 			action,
 			projectId,
+			currentUser,
 			publication,
 			scrollToStartupTool,
 		} = params;
@@ -54,6 +64,13 @@ class CoreApplication
 			projectId: projectId || null,
 			publication,
 			notifications: notificationDefaults,
+			ownerId: isCreate ? (currentUser?.id ?? settings.currentUserId) : null,
+			owner: isCreate && currentUser
+				? {
+					name: currentUser.name,
+					image: currentUser.image,
+				}
+				: null,
 		};
 		const optionsStoreInterface = {
 			...settings,

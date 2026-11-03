@@ -9,6 +9,15 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		MessengerInitRestMethod,
 	} = require('im/messenger/const');
 	const { runAction } = require('im/messenger/lib/rest');
+	const { getLogger } = require('im/messenger/lib/logger');
+
+	const logger = getLogger('provider--services--messenger-init');
+
+	/**
+	 * Upper bound of waiting for the onceOnInit handlers. The server wave handler waits for the tab
+	 * widget, and that promise neither rejects nor has a timeout of its own.
+	 */
+	const INIT_HANDLERS_WAIT_TIMEOUT_MS = 5000;
 
 	/**
 	 * @implements {Unsubscribable}
@@ -16,6 +25,19 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 	 */
 	class MessengerInitService
 	{
+		/** @type {Array<Promise<void>>} */
+		#onceInitHandlerPromises = [];
+		/**
+		 * @desc Subscriptions of `onceOnInit` that have not received their result yet. A subscription
+		 * belongs to the run that started after it was made, and is served by the response of that very
+		 * run: a subscriber asked about the request its own options were built for.
+		 * @type {Set<OnceInitSubscription>}
+		 */
+		#onceInitSubscriptions = new Set();
+		#runCounter = 0;
+		/** @type {number|null} id of the run whose result is being dispatched right now */
+		#emittingRunId = null;
+
 		actionCommonMethodList = [
 			MessengerInitRestMethod.mobileRevision,
 			MessengerInitRestMethod.portalCounters,
@@ -48,6 +70,38 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		 */
 		async runAction(methodList, options = {})
 		{
+			const runId = this.#claimPendingSubscriptions();
+
+			try
+			{
+				const result = await this.fetchInitResult(methodList, options);
+
+				// only the handlers of the current run are collected: a previous run whose promises were
+				// never awaited must not hold the startup
+				this.#onceInitHandlerPromises = [];
+				this.#dispatchResult(runId, result);
+			}
+			catch (error)
+			{
+				// the run brought no result, so its subscribers get none: left subscribed they would take
+				// the result of the next run for their own, and a handler that keys off the options of its
+				// own request - the recent filter, for one - would read a page it never asked for
+				this.#dropSubscriptionsOfRun(runId);
+
+				throw error;
+			}
+		}
+
+		/**
+		 * @desc The request of one run and the merge of the data shared between contexts: everything the
+		 * result is made of, and nothing of the dispatch. Kept a separate method so that the dispatch can
+		 * be exercised without the network step.
+		 * @param {string[]} methodList
+		 * @param {object} options
+		 * @return {Promise<object>}
+		 */
+		async fetchInitResult(methodList, options)
+		{
 			const data = this.#prepareActionData(methodList);
 			let result = await runAction(this.actionName, {
 				data: {
@@ -66,18 +120,43 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 				await this.#setCommonActionResultStore(result);
 			}
 
-			this.eventEmitter.emit(EventType.messenger.init, [result]);
+			return result;
 		}
 
 		/**
+		 * @desc Runs the handler once, on the result of the run that started after this call, and never
+		 * on the result of another run: the subscriber builds the options of that request and reads its
+		 * response by them. A run that failed serves nobody, and its subscribers leave with it.
+		 * Additionally remembers the promise returned by the handler, so the startup orchestrator can
+		 * wait for it before starting the synchronization.
 		 * @param {Function} eventHandler
 		 */
 		onceOnInit(eventHandler)
 		{
-			this.#once(EventType.messenger.init, eventHandler);
+			/** @type {OnceInitSubscription} */
+			const subscription = { runId: null, listener: null };
+
+			subscription.listener = (...args) => {
+				if (subscription.runId !== this.#emittingRunId)
+				{
+					// the result of a run this subscriber did not ask for; it keeps waiting for its own
+					return;
+				}
+
+				this.#dropSubscription(subscription);
+				this.#onceInitHandlerPromises.push(
+					this.#runInitHandler(eventHandler, args)
+						.catch((error) => logger.error('onceOnInit handler error', error)),
+				);
+			};
+
+			this.#onceInitSubscriptions.add(subscription);
+			this.#on(EventType.messenger.init, subscription.listener);
 		}
 
 		/**
+		 * @desc A permanent subscription of a third-party consumer: its promise is NOT remembered,
+		 * the startup must not be tied to subsystems unrelated to the order of the recent data.
 		 * @param {Function} eventHandler
 		 */
 		onInit(eventHandler)
@@ -85,9 +164,99 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 			this.#on(EventType.messenger.init, eventHandler);
 		}
 
+		/**
+		 * @desc Waits for the onceOnInit handlers of the current run to finish - by the fact of
+		 * finishing, not by success. After the return the promise collection is emptied.
+		 * @param {{ timeoutMs?: number }} [options]
+		 * @return {Promise<void>}
+		 */
+		async waitOnceInitHandlers({ timeoutMs = INIT_HANDLERS_WAIT_TIMEOUT_MS } = {})
+		{
+			const promiseList = this.#onceInitHandlerPromises;
+			this.#onceInitHandlerPromises = [];
+
+			if (promiseList.length === 0)
+			{
+				return;
+			}
+
+			// the stored promises never reject: the failure of a handler is caught on subscription
+			const settled = Promise.all(promiseList).then(() => false);
+
+			let timeoutId = null;
+			const expired = new Promise((resolve) => {
+				timeoutId = setTimeout(() => resolve(true), timeoutMs);
+			});
+
+			const isExpired = await Promise.race([settled, expired]);
+			clearTimeout(timeoutId);
+
+			if (isExpired)
+			{
+				logger.warn(`waitOnceInitHandlers: ${promiseList.length} handler(s) did not finish in ${timeoutMs}ms`);
+			}
+		}
+
 		unsubscribeEvents()
 		{
+			this.#onceInitSubscriptions.clear();
 			this.eventEmitter.removeAll();
+		}
+
+		/**
+		 * @desc Hands the subscriptions made so far to the run that starts now. A subscription already
+		 * bound to an earlier run keeps waiting for it: two runs overlap as soon as a refresh fails and
+		 * the next one goes out, and then each response has to reach the subscriber of its own request.
+		 * @return {number} id of the starting run
+		 */
+		#claimPendingSubscriptions()
+		{
+			this.#runCounter += 1;
+
+			this.#onceInitSubscriptions.forEach((subscription) => {
+				subscription.runId ??= this.#runCounter;
+			});
+
+			return this.#runCounter;
+		}
+
+		/**
+		 * @param {number} runId
+		 * @param {object} result
+		 */
+		#dispatchResult(runId, result)
+		{
+			this.#emittingRunId = runId;
+			try
+			{
+				this.eventEmitter.emit(EventType.messenger.init, [result]);
+			}
+			finally
+			{
+				this.#emittingRunId = null;
+			}
+		}
+
+		/**
+		 * @param {number} runId
+		 */
+		#dropSubscriptionsOfRun(runId)
+		{
+			this.#onceInitSubscriptions.forEach((subscription) => {
+				if (subscription.runId === runId)
+				{
+					this.#dropSubscription(subscription);
+				}
+			});
+		}
+
+		/**
+		 * @param {OnceInitSubscription} subscription
+		 */
+		#dropSubscription(subscription)
+		{
+			this.#onceInitSubscriptions.delete(subscription);
+			this.eventEmitter.off(EventType.messenger.init, subscription.listener);
 		}
 
 		/**
@@ -100,12 +269,15 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		}
 
 		/**
+		 * @desc Turns a synchronous throw of the handler into a rejection, so a failing handler does
+		 * not break the dispatch of the result to the rest of the subscribers.
 		 * @param {Function} eventHandler
-		 * @param {string} eventName
+		 * @param {Array} args
+		 * @return {Promise<void>}
 		 */
-		#once(eventName, eventHandler)
+		async #runInitHandler(eventHandler, args)
 		{
-			this.eventEmitter.once(eventName, eventHandler);
+			return eventHandler(...args);
 		}
 
 		/**

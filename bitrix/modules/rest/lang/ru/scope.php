@@ -107,4 +107,5 @@ $MESS["REST_SCOPE_AI_ADMIN"] = "#COPILOT_NAME#";
 $MESS["REST_SCOPE_AI_ADMIN_MSGVER_1"] = "#COPILOT_NAME#";
 $MESS["REST_SCOPE_AI_ADMIN_DESCRIPTION"] = "полный доступ: добавление, удаление провайдера AI, получение списка провайдеров в Битрикс24";
 $MESS["REST_SCOPE_SIGN.B2E"] = "КЭДО + Госключ";
+$MESS["REST_SCOPE_SIGN.B2E_DESCRIPTION"] = "Отправка и получение кадровых документов, просмотр их статусов и событий, скачивание подписанных документов и управление провайдерами подписи";
 $MESS["REST_SCOPE_BOOKING"] = "Онлайн-запись";

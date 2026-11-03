@@ -72,6 +72,29 @@
 	gap: 10px;
 }
 
+.biconnector-share-popup__admin-status {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-sm);
+	margin-top: var(--ui-space-stack-sm);
+}
+
+.biconnector-share-popup__admin-status.--hidden {
+	display: none;
+}
+
+.biconnector-share-popup__admin-status-enable.--hidden {
+	display: none;
+}
+
+.biconnector-share-popup__admin-status-text {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-2);
+}
+
 .biconnector-share-popup__toggle-label {
 	font-size: 15px;
 	font-weight: 500;
@@ -207,6 +230,11 @@
 
 .biconnector-share-popup__toggle-input:checked + .biconnector-share-popup__toggle-slider::before {
 	transform: translateX(16px);
+}
+
+.biconnector-share-popup__toggle-input:disabled + .biconnector-share-popup__toggle-slider {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 /* Field styles */

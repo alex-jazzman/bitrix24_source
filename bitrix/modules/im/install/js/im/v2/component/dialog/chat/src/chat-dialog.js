@@ -34,6 +34,8 @@ import { MessageService } from 'im.v2.provider.service.message';
 import { AnchorService } from './classes/anchor-service';
 import { PullWatchManager } from './classes/pull-watch-manager';
 import { ScrollManager } from './classes/scroll-manager';
+import { ScrollPinController, ScrollPinRegion, consumePendingAnchor } from './classes/scroll-pin-controller';
+import { isScrollPinApplicable } from './classes/scroll-pin-policy';
 import { VisibleMessagesManager } from './classes/visible-messages-manager';
 import { FloatButtons } from './components/float-buttons';
 import { PinnedMessages } from './components/pinned/pinned-messages';
@@ -47,6 +49,17 @@ import './css/float-button.css';
 export { ScrollManager } from './classes/scroll-manager';
 export { PinnedMessages } from './components/pinned/pinned-messages';
 export { FloatButton, FloatButtonIcon, FloatButtonColor } from './components/float-button';
+
+type GoToMessageContextParams = {
+	position?: string,
+	// off for a jump by date: there the message list lights the divider of the day up, and the day
+	// and the message lit up at once read as two jumps instead of one
+	withMessageHighlight?: boolean,
+	// the two fields of a jump by date, filled in together: the day the jump is answered by and the
+	// identifier every report about it is addressed with. An ordinary jump carries neither
+	date?: string,
+	jumpId?: number,
+};
 
 // @vue/component
 export const ChatDialog = {
@@ -77,6 +90,10 @@ export const ChatDialog = {
 			type: Boolean,
 			default: false,
 		},
+		directForward: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data(): Object
 	{
@@ -97,6 +114,10 @@ export const ChatDialog = {
 			containerHeight: 0,
 			quoteButtonPosition: {},
 			shouldShowGuestNamePopup: false,
+			scrollPinEnabled: false,
+			scrollPinSpacerHeight: 0,
+			scrollPinSpacerAnimated: false,
+			scrollPinMessageStyles: {},
 		};
 	},
 	computed:
@@ -112,6 +133,10 @@ export const ChatDialog = {
 		isChatOpenedInWidget(): boolean
 		{
 			return this.$store.getters['copilot/isChatOpenedInWidget'](this.dialogId);
+		},
+		shouldForwardDirectly(): boolean
+		{
+			return this.directForward || this.isChatOpenedInWidget;
 		},
 		dialogInited(): boolean
 		{
@@ -213,6 +238,12 @@ export const ChatDialog = {
 	created()
 	{
 		Logger.warn('Dialog: Chat created', this.dialogId);
+		// the jumps to a message context of this chat: the one asked for last wins, so they are
+		// numbered and the number decides wherever a jump would touch the list - see
+		// goToMessageContext()
+		this.messageContextGeneration = 0;
+		// how many of them are loading right now: the loading bar belongs to all of them at once
+		this.messageContextLoads = 0;
 		this.initContextMode();
 	},
 	async mounted()
@@ -222,6 +253,17 @@ export const ChatDialog = {
 
 		this.shouldShowGuestNamePopup = GuestManager.getInstance().getGuestNamePopupState();
 		this.getScrollManager().setContainer(this.getContainer());
+		this.getScrollManager().observeResize();
+		if (isScrollPinApplicable(this.dialogId))
+		{
+			this.scrollPinEnabled = true;
+			this.getScrollPinController().attach();
+			this.getScrollManager().setScrollPinHooks({
+				getSpacerHeight: () => this.scrollPinController?.getSpacerHeight() ?? 0,
+				isPinActive: () => this.scrollPinController?.isActive() ?? false,
+				onContainerHeightChange: () => this.scrollPinController?.onHeightChange(ScrollPinRegion.container),
+			});
+		}
 		if (this.dialogInited)
 		{
 			// second+ opening
@@ -241,11 +283,15 @@ export const ChatDialog = {
 	beforeUnmount()
 	{
 		this.unsubscribeFromEvents();
+		this.getScrollManager().destroy();
 		if (this.dialogInited)
 		{
 			this.saveScrollPosition();
 			void this.handleMessagesOnExit();
 		}
+		// destroy the pin controller after saving: saveScrollPosition() reads its active
+		// state, and destroy() would reset it
+		this.scrollPinController?.destroy();
 		this.getPullWatchManager().unsubscribe();
 		this.closeDialogPopups();
 		this.forwardPopup.show = false;
@@ -258,6 +304,27 @@ export const ChatDialog = {
 		async scrollOnStart(): void
 		{
 			await this.$nextTick();
+
+			const positionBeforeStartScroll = this.getContainer()?.scrollTop ?? 0;
+			this.applyStartScroll();
+			// the feed holds the position the start scroll chose until the user moves it away, so a
+			// container shrinking in the same frame does not drag it off the New messages mark
+			this.getScrollManager().markStartScrollPosition(positionBeforeStartScroll);
+		},
+		applyStartScroll(): void
+		{
+			// a question sent from the draft empty state before this feed mounted (AC-005/006):
+			// it takes priority over the whole start-scroll chain and pins instantly
+			if (this.scrollPinEnabled)
+			{
+				const pending = consumePendingAnchor(this.dialogId);
+				if (pending)
+				{
+					this.getScrollPinController().pinFromStart(pending.messageId);
+
+					return;
+				}
+			}
 
 			// we loaded chat with context
 			if (this.contextMode.active && this.contextMode.messageIsLoaded)
@@ -327,9 +394,72 @@ export const ChatDialog = {
 		{
 			this.getEmitter().emit(EventType.dialog.hideLoadingBar, { dialogId: this.dialogId });
 		},
-		async goToMessageContext(messageId: number, params: { position: string } = {}): void
+		/**
+		 * Loading a context replaces the whole message collection, and the request behind it cannot
+		 * be called back: two jumps at once would leave the list on whichever answer came back last,
+		 * which is not the message asked for last. So the jumps are numbered, and the number is asked
+		 * at every point where a jump would touch the list - the collection included, through the
+		 * `isActual` of the load.
+		 *
+		 * The number and not a queue: a jump made to wait out the request of the one before it makes
+		 * the last thing the user did the slowest thing on screen, for as long as a request nobody
+		 * wants any more takes to time out. They run side by side instead, and only the current one
+		 * is allowed to move anything.
+		 *
+		 * Everything a jump is announced by is announced from HERE and not from the handler of the
+		 * event that asks for one: the event is one way of asking among several - the comments button
+		 * of a channel and a chat opened on a message context call this method by ref, the pinned bar
+		 * and the context mode of the layout from inside the chat - and a side that heard only about
+		 * the jumps asked for by event would keep waiting for something the user has already replaced.
+		 */
+		goToMessageContext(messageId: number, params: GoToMessageContextParams = {}): Promise
 		{
-			const { position = ScrollManager.scrollPosition.messageTop } = params;
+			// an explicit navigation cancels the pin before its own scroll; the spacer stays
+			// frozen so the content bottom holds until the next send (AC-008)
+			this.scrollPinController?.freeze();
+
+			this.messageContextGeneration += 1;
+			// the generation alone stops the jump before this one only where it asks - and an animated
+			// scroll asks nothing until it lands, so it would go on moving the list all the while this
+			// jump loads its context. Cut short here, it leaves the list where the user replaced it
+			this.getScrollManager().cancelAnimatedScroll();
+
+			const { date = '', jumpId = 0 } = params;
+			const jump = { dialogId: this.dialogId, messageId, date, jumpId };
+			this.getEmitter().emit(EventType.dialog.messageContextJumpStarted, jump);
+			if (date)
+			{
+				// after the jump itself and before the loading: the sides waiting for this jump learn
+				// of it from the announcement above, and what they are told here is that its bounds
+				// can come off - so the two are sent in this order and from the same place, instead
+				// of depending on who subscribed to what first
+				this.getEmitter().emit(EventType.dialog.dateNavigationContextApplying, {
+					dialogId: this.dialogId,
+					jumpId,
+				});
+			}
+
+			const applying = this.applyMessageContext(messageId, params, this.messageContextGeneration);
+			// most callers start a jump and walk away from the promise; a rejection with nobody
+			// listening is an unhandled rejection in the console and nothing more useful than that
+			applying.catch(() => {});
+
+			if (date)
+			{
+				void this.reportDateNavigationContextApplied(applying, jump);
+			}
+
+			return applying;
+		},
+		async applyMessageContext(messageId: number, params: GoToMessageContextParams, generation: number): void
+		{
+			const {
+				position = ScrollManager.scrollPosition.messageTop,
+				withMessageHighlight = true,
+			} = params;
+			// asked back after every wait: a jump the user has replaced must move nothing, neither
+			// the collection nor the scroll of a list that belongs to the jump after it now
+			const isActual = () => generation === this.messageContextGeneration;
 			const hasMessage = this.$store.getters['messages/hasMessage']({
 				chatId: this.dialog.chatId,
 				messageId,
@@ -339,12 +469,22 @@ export const ChatDialog = {
 				Logger.warn('Dialog: we have this message, scrolling to it', messageId);
 
 				await this.getScrollManager().animatedScrollToMessage(messageId, { position });
-				this.highlightMessage(messageId);
+				if (withMessageHighlight && isActual())
+				{
+					this.highlightMessage(messageId);
+				}
 
 				return;
 			}
 
 			const { hasAccess, errorCode } = await MessageAccessManager.checkMessageAccess(messageId);
+			if (!isActual())
+			{
+				Logger.warn('Dialog: the jump to', messageId, 'is superseded by a later one');
+
+				return;
+			}
+
 			if (!hasAccess && errorCode === ErrorCode.message.accessDeniedByTariff)
 			{
 				Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({ dialogId: this.dialogId });
@@ -353,13 +493,52 @@ export const ChatDialog = {
 				return;
 			}
 
-			this.showLoadingBar();
-			await this.getMessageService().loadContext(messageId);
-			await this.$nextTick();
-			this.hideLoadingBar();
+			this.showContextLoadingBar();
+			try
+			{
+				await this.getMessageService().loadContext(messageId, { isActual });
+				await this.$nextTick();
+			}
+			finally
+			{
+				this.hideContextLoadingBar();
+			}
+
+			if (!isActual())
+			{
+				Logger.warn('Dialog: the jump to', messageId, 'is superseded by a later one');
+
+				return;
+			}
+
 			this.getScrollManager().scrollToMessage(messageId, { position });
 			await this.$nextTick();
-			this.highlightMessage(messageId);
+			if (withMessageHighlight)
+			{
+				this.highlightMessage(messageId);
+			}
+		},
+		/**
+		 * The bar of a context load, raised by the first jump loading one and lowered by the last:
+		 * several of them run side by side, and a jump superseded on the way must not take down the
+		 * bar of the jump that replaced it - nor leave one standing when it is the last to finish.
+		 * Kept in balance by the caller pairing the two around a `finally`.
+		 */
+		showContextLoadingBar(): void
+		{
+			this.messageContextLoads += 1;
+			if (this.messageContextLoads === 1)
+			{
+				this.showLoadingBar();
+			}
+		},
+		hideContextLoadingBar(): void
+		{
+			this.messageContextLoads -= 1;
+			if (this.messageContextLoads === 0)
+			{
+				this.hideLoadingBar();
+			}
 		},
 		highlightMessage(messageId: number)
 		{
@@ -384,7 +563,9 @@ export const ChatDialog = {
 				return;
 			}
 			let savedPositionMessageId = this.getVisibleMessagesManager().getFirstMessageId();
-			if (this.getScrollManager().isAroundBottom())
+			// an active pin sits at the content bottom; record "was at the bottom" so the chat
+			// reopens by the usual rules, not glued to a stale pinned message (AC-016)
+			if (this.getScrollManager().isAtBottomUnlessUserLeft() || this.isScrollPinActive())
 			{
 				savedPositionMessageId = 0;
 			}
@@ -540,7 +721,7 @@ export const ChatDialog = {
 			await this.getMessageService().loadUnread();
 			this.hideLoadingBar();
 			// Messages loaded and we are at the bottom
-			if (this.getScrollManager().isAroundBottom())
+			if (this.getScrollManager().isAtOrBelowContentBottom())
 			{
 				Logger.warn('Dialog: we are at the bottom after unread request, inserting messages');
 				await this.getMessageService().drawPreparedUnreadMessages();
@@ -551,6 +732,13 @@ export const ChatDialog = {
 		{
 			const { chatId, threshold = DialogScrollThreshold.halfScreenUp, animation = true } = event.getData();
 			if (this.dialog.chatId !== chatId)
+			{
+				return;
+			}
+
+			// while a question is pinned every "to bottom" input is ignored (streaming,
+			// pull, force scroll, textarea growth); only the pin event changes the position
+			if (this.isScrollPinActive())
 			{
 				return;
 			}
@@ -573,7 +761,7 @@ export const ChatDialog = {
 				return;
 			}
 
-			if (threshold === DialogScrollThreshold.nearTheBottom && !this.getScrollManager().isAroundBottom())
+			if (threshold === DialogScrollThreshold.nearTheBottom && !this.getScrollManager().shouldFollowNewContent())
 			{
 				return;
 			}
@@ -590,13 +778,29 @@ export const ChatDialog = {
 		},
 		onGoToMessageContext(event: BaseEvent)
 		{
-			const { dialogId, messageId } = event.getData();
+			const { dialogId, messageId, date, jumpId, withMessageHighlight } = event.getData();
 			if (this.dialog.dialogId !== dialogId)
 			{
 				return;
 			}
 
-			this.goToMessageContext(messageId);
+			// the fields of a jump by date travel on into the jump instead of being acted upon here:
+			// what is said about a jump is said by the jump itself, so that a jump started by a
+			// direct call is announced the same way as one asked for by this event
+			this.goToMessageContext(messageId, { withMessageHighlight, date, jumpId });
+		},
+		/**
+		 * Settled and not succeeded: a context that failed to load and a jump whose answer was refused
+		 * as superseded both leave the list where it is, which is exactly what the message list has
+		 * to tell from an anchor still on its way. The report is carried back under the identifier the
+		 * jump arrived with and nothing of it is reinterpreted here - the side that started the jump
+		 * is the one that names it, and the message list answers only for the jump it is waiting for.
+		 */
+		async reportDateNavigationContextApplied(applying: Promise, jump: Object): Promise<void>
+		{
+			await applying.catch(() => {});
+
+			this.getEmitter().emit(EventType.dialog.dateNavigationContextApplied, jump);
 		},
 		onPinnedMessageClick(messageId: number)
 		{
@@ -610,10 +814,23 @@ export const ChatDialog = {
 		onScroll(event: Event)
 		{
 			this.closeDialogPopups();
+			// the gesture is classified here, not in the debounced handler: 100ms later the
+			// programmatic-scroll flag is already cleared and the pin's own moves read as manual
+			this.getScrollManager().onRawScroll();
 			this.debouncedScrollHandler(event);
 		},
 		async onScrollButtonClick()
 		{
+			// the down button is an explicit cancel: drop the spacer (with compensation) and
+			// scroll to the content bottom
+			if (this.scrollPinController && (this.scrollPinController.isActive() || this.scrollPinController.getSpacerHeight() > 0))
+			{
+				this.scrollPinController.release({ compensate: true });
+				this.getScrollManager().scrollToBottom();
+
+				return;
+			}
+
 			if (this.getScrollManager().scrollButtonClicked)
 			{
 				void this.handleSecondScrollButtonClick();
@@ -717,6 +934,7 @@ export const ChatDialog = {
 		},
 		async handleSecondScrollButtonClick()
 		{
+			this.scrollPinController?.freeze();
 			this.getScrollManager().scrollButtonClicked = false;
 			if (this.dialog.hasNextPage)
 			{
@@ -859,6 +1077,46 @@ export const ChatDialog = {
 
 			return this.scrollManager;
 		},
+		getScrollPinController(): ScrollPinController
+		{
+			if (!this.scrollPinController)
+			{
+				this.scrollPinController = new ScrollPinController({
+					dialogId: this.dialogId,
+					store: this.$store,
+					getContainer: () => this.getContainer(),
+					getScrollManager: () => this.getScrollManager(),
+					onSpacerHeightChange: (height: number, animate: boolean = false) => {
+						if (animate)
+						{
+							this.scrollPinSpacerAnimated = true;
+						}
+
+						this.scrollPinSpacerHeight = height;
+					},
+					onAnchorGapChange: (messageId: ?(number | string), height: number) => {
+						this.onScrollPinAnchorGapChange(messageId, height);
+					},
+				});
+			}
+
+			return this.scrollPinController;
+		},
+		isScrollPinActive(): boolean
+		{
+			return this.scrollPinController?.isActive() === true;
+		},
+		onScrollPinSpacerRiseEnd(): void
+		{
+			this.scrollPinSpacerAnimated = false;
+			this.scrollPinController?.onSpacerRiseEnd();
+		},
+		onScrollPinAnchorGapChange(messageId: ?(number | string), height: number): void
+		{
+			this.scrollPinMessageStyles = messageId === null
+				? {}
+				: { [messageId]: { marginTop: `${height}px` } };
+		},
 		getPullWatchManager(): PullWatchManager
 		{
 			if (!this.pullWatchManager)
@@ -972,7 +1230,15 @@ export const ChatDialog = {
 			<!-- Message list -->
 			<div @scroll="onScroll" class="bx-im-dialog-chat__scroll-container" tabindex="-1" ref="container">
 				<slot name="message-list">
-					<MessageList :dialogId="dialogId" :containerHeight="containerHeight" />
+					<MessageList
+						:dialogId="dialogId"
+						:containerHeight="containerHeight"
+						:scrollPinEnabled="scrollPinEnabled"
+						:spacerHeight="scrollPinSpacerHeight"
+						:spacerAnimated="scrollPinSpacerAnimated"
+						:messageStyles="scrollPinMessageStyles"
+						@spacerRiseEnd="onScrollPinSpacerRiseEnd"
+					/>
 				</slot>
 			</div>
 			<FloatButtons
@@ -989,7 +1255,7 @@ export const ChatDialog = {
 				v-if="forwardPopup.show"
 				:messagesIds="forwardPopup.messagesIds"
 				:dialogId="dialogId"
-				:directForward="isChatOpenedInWidget"
+				:directForward="shouldForwardDirectly"
 				@close="onCloseForwardPopup"
 			/>
 			<GuestNamePopup 

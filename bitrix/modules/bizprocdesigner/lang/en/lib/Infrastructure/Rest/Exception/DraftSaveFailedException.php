@@ -1,0 +1,7 @@
+<?php
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_DRAFT_SAVE_FAILED'] = 'The workflow draft was not saved: #DETAIL#';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_DRAFT_SAVE_FAILED_ACCESS_DENIED'] = 'insufficient permissions to modify the template';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_DRAFT_SAVE_FAILED_NO_DRAFT_ID'] = 'the write completed without a draft ID';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_DRAFT_SAVE_FAILED_TEMPLATE_DRAFT_CONFLICT'] = 'the draft changed during the write';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_DRAFT_SAVE_FAILED_TEMPLATE_NOT_FOUND'] = 'the template was not found';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_DRAFT_SAVE_FAILED_UNKNOWN'] = 'an internal error occurred during the write';

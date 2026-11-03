@@ -17,7 +17,15 @@
 	top: 0;
 	width: 736px;
 	height: 428px;
-	background: url('./images/circuit.png') no-repeat center / cover;
+	background: url('./images/circuit.webp') no-repeat center / cover;
+	background-image: -webkit-image-set(
+		url('./images/circuit.webp') 1x,
+		url('./images/circuit@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('./images/circuit.webp') 1x,
+		url('./images/circuit@2x.webp') 2x
+	);
 	-webkit-mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
 	mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
 }

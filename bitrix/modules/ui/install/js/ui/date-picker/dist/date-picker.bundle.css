@@ -191,12 +191,12 @@
 	opacity: 1;
 }
 
-.ui-date-picker-button:disabled {
+.ui-date-picker-button[aria-disabled="true"] {
 	cursor: not-allowed;
 	pointer-events: none;
 }
 
-.ui-date-picker-button:disabled .ui-icon-set {
+.ui-date-picker-button[aria-disabled="true"] .ui-icon-set {
 	opacity: 0.2;
 }
 

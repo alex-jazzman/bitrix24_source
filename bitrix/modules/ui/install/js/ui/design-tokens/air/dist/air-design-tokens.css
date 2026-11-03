@@ -1,6 +1,6 @@
 /**
  * Do not edit directly
- * Generated on Mon, 01 Jun 2026 13:22:15 GMT
+ * Generated on Mon, 17 Aug 2026 07:01:58 GMT
  */
 
 :root, .--ui-context-content-light {
@@ -33,8 +33,8 @@
   --ui-divider-optical-1-weight: 0px;
   --ui-divider-optical-2-weight: 0px;
   --ui-color-divider-optical-on-overlay: #FFFFFF00;
-  --ui-color-bg-content-secondary: #F6FAFB;
   --ui-divider-optical-on-overlay-weight: 0px;
+  --ui-color-bg-content-secondary: #F6FAFB;
   --ui-color-bg-content-tertiary: #EEF2F4;
   --ui-color-bg-vibrant-accent: #FAFBFCF5;
   --ui-color-bg-state-hover-default-hex: #000000;
@@ -311,13 +311,13 @@
   --ui-color-design-selection-stroke: var(--ui-color-accent-soft-blue-1);
   --ui-design-selection-stroke-weight: var(--ui-border-width-medium);
   --ui-design-selection-stroke-weight-alt: var(--ui-border-width-thin);
-  --ui-color-design-selection-content: var(--ui-color-accent-main-primary);
   --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-selection-content: var(--ui-color-accent-main-primary);
   --ui-color-design-selection-content-icon: var(--ui-color-accent-main-primary);
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-accent-main-primary-alt-2);
-  --ui-color-design-selection-content-chevron: var(--ui-color-accent-main-primary);
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: var(--ui-color-accent-main-primary);
   --ui-color-design-selection-content-divider: var(--ui-color-accent-soft-blue-1);
   --ui-color-design-selection-focused-bg: var(--ui-color-bg-content-primary);
   --ui-color-accent-main-primary-alt: #1F86FF;
@@ -418,6 +418,9 @@
   --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
   --ui-color-designer-bp-rules-orange-text: #FFA900;
   --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
+  --ui-color-designer-bp-rules-purple-stroke: #DECAFF;
+  --ui-color-designer-bp-rules-purple-text: #AA74FF;
+  --ui-color-designer-bp-rules-purple-bg: #F8F4FF;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #000000B3;
   --ui-color-chat-my-base-0_3: #00000033;
@@ -488,8 +491,8 @@
   --ui-color-leftmenu-bg: var(--ui-color-bg-content-secondary);
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-leftmenu-bg-expanded: var(--ui-color-bg-content-secondary);
   --ui-color-marta-bg-gradient-1: #58D7D5;
+  --ui-color-leftmenu-bg-expanded: var(--ui-color-bg-content-secondary);
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -550,8 +553,8 @@
   --ui-color-tech-bg-picture-tint: #00000000;
   --ui-color-tech-dark-fixes: #FFFFFF00;
   --ui-color-blue-02: #F9FCFF;
-  --ui-color-blue-04: #F8FBFF;
   --ui-color-black-base: #333333;
+  --ui-color-blue-04: #F8FBFF;
   --ui-color-blue-06: #F7FBFF;
   --ui-color-blue-08: #F5FAFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -600,8 +603,8 @@
   --ui-color-g-glass-orange-bg-2: #DB7600D1;
   --ui-color-g-glass-orange-bg-3: #FFD685BD;
   --ui-color-g-glass-orange-stroke: #FFFFFF2E;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #F3F8FF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F3FAFF;
   --ui-color-blue-15: #F0F7FF;
   --ui-color-blue-20: #E7F4FF;
@@ -693,6 +696,7 @@
   --ui-color-g-plastic-white-bg: #FFFFFF;
   --ui-color-g-plastic-white-stroke: #DFE0E3;
   --ui-color-design-disabled-bg: var(--ui-color-base-7);
+  --ui-color-design-disabled-bg-alpha: #525C6914;
   --ui-color-design-disabled-bg-alt: #FFFFFFAD;
   --ui-color-design-disabled-stroke: var(--ui-color-base-7);
   --ui-design-disabled-stroke-weight: 0px;
@@ -730,6 +734,7 @@
   --ui-color-design-filled-market-content-icon: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-divider: #FFFFFF3D;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-0: #6ECCF5;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-1: #0098EA;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-2: #3F68FF;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-3: #9D48FF;
@@ -737,6 +742,7 @@
   --ui-color-design-filled-bitrix-gpt-bg-gradient-5: #F96269;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-6: #FFB61A;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-7: #FF7438;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-8: #F5C94E;
   --ui-design-filled-bitrix-gpt-stroke-weight: 0px;
   --ui-color-design-filled-bitrix-gpt-content: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-icon: var(--ui-color-base-white-fixed);
@@ -813,8 +819,8 @@
   --ui-divider-optical-1-weight: var(--ui-border-width-thin);
   --ui-divider-optical-2-weight: var(--ui-border-width-thick);
   --ui-color-divider-optical-on-overlay: #FFFFFF14;
-  --ui-color-bg-content-secondary: #1F1F1F;
   --ui-divider-optical-on-overlay-weight: var(--ui-border-width-thin);
+  --ui-color-bg-content-secondary: #1F1F1F;
   --ui-color-bg-content-tertiary: #171717;
   --ui-color-bg-vibrant-accent: #262626E0;
   --ui-color-bg-state-hover-default-hex: #000000;
@@ -1091,13 +1097,13 @@
   --ui-color-design-selection-stroke: #294162;
   --ui-design-selection-stroke-weight: var(--ui-border-width-medium);
   --ui-design-selection-stroke-weight-alt: var(--ui-border-width-thin);
-  --ui-color-design-selection-content: #2A94FF;
   --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-selection-content: #2A94FF;
   --ui-color-design-selection-content-icon: #2A94FF;
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: #5EAEFF;
-  --ui-color-design-selection-content-chevron: #2A94FF;
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: #2A94FF;
   --ui-color-design-selection-content-divider: var(--ui-color-accent-soft-blue-1);
   --ui-color-design-selection-focused-bg: #1F3048;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -1198,6 +1204,9 @@
   --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
   --ui-color-designer-bp-rules-orange-text: #FFA900;
   --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
+  --ui-color-designer-bp-rules-purple-stroke: #DECAFF;
+  --ui-color-designer-bp-rules-purple-text: #AA74FF;
+  --ui-color-designer-bp-rules-purple-bg: #F8F4FF;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #FFFFFFB3;
   --ui-color-chat-my-base-0_3: #FFFFFF80;
@@ -1268,8 +1277,8 @@
   --ui-color-leftmenu-bg: #262626;
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-leftmenu-bg-expanded: #262626;
   --ui-color-marta-bg-gradient-1: #58D7D5;
+  --ui-color-leftmenu-bg-expanded: #262626;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -1330,8 +1339,8 @@
   --ui-color-tech-bg-picture-tint: #0000003D;
   --ui-color-tech-dark-fixes: #383838;
   --ui-color-blue-02: #FFFFFF;
-  --ui-color-blue-04: #FFFFFF;
   --ui-color-black-base: #333333;
+  --ui-color-blue-04: #FFFFFF;
   --ui-color-blue-06: #FFFFFF;
   --ui-color-blue-08: #FFFFFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -1380,8 +1389,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #00000029;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #FFFFFF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -1473,6 +1482,7 @@
   --ui-color-g-plastic-white-bg: #2A2A2A;
   --ui-color-g-plastic-white-stroke: #535353;
   --ui-color-design-disabled-bg: var(--ui-color-base-7);
+  --ui-color-design-disabled-bg-alpha: #A0B7D60A;
   --ui-color-design-disabled-bg-alt: #262626AD;
   --ui-color-design-disabled-stroke: var(--ui-color-base-7);
   --ui-design-disabled-stroke-weight: 0px;
@@ -1510,6 +1520,7 @@
   --ui-color-design-filled-market-content-icon: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-divider: #FFFFFF3D;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-0: #5697B4;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-1: #0E618E;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-2: #2E4A99;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-3: #62369A;
@@ -1517,6 +1528,7 @@
   --ui-color-design-filled-bitrix-gpt-bg-gradient-5: #96424A;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-6: #BA8D2E;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-7: #B6552B;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-8: #B4953F;
   --ui-design-filled-bitrix-gpt-stroke-weight: 0px;
   --ui-color-design-filled-bitrix-gpt-content: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-icon: var(--ui-color-base-white-fixed);
@@ -1593,8 +1605,8 @@
   --ui-divider-optical-1-weight: var(--ui-border-width-thin);
   --ui-divider-optical-2-weight: var(--ui-border-width-thin);
   --ui-color-divider-optical-on-overlay: #00000014;
-  --ui-color-bg-content-secondary: #0000000A;
   --ui-divider-optical-on-overlay-weight: var(--ui-border-width-thin);
+  --ui-color-bg-content-secondary: #0000000A;
   --ui-color-bg-content-tertiary: #00000005;
   --ui-color-bg-vibrant-accent: #00000033;
   --ui-color-bg-state-hover-default-hex: #000000;
@@ -1871,13 +1883,13 @@
   --ui-color-design-selection-stroke: #00000000;
   --ui-design-selection-stroke-weight: 0px;
   --ui-design-selection-stroke-weight-alt: 0px;
-  --ui-color-design-selection-content: var(--ui-color-base-1);
   --ui-color-design-plain-na-focused-stroke: #00000014;
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-selection-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-icon: var(--ui-color-base-1);
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-base-2);
-  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-selection-content-divider: var(--ui-color-base-7);
   --ui-color-design-selection-focused-bg: #00000026;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -1978,6 +1990,9 @@
   --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
   --ui-color-designer-bp-rules-orange-text: #FFA900;
   --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
+  --ui-color-designer-bp-rules-purple-stroke: #DECAFF;
+  --ui-color-designer-bp-rules-purple-text: #AA74FF;
+  --ui-color-designer-bp-rules-purple-bg: #F8F4FF;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #FFFFFFB3;
   --ui-color-chat-my-base-0_3: #FFFFFF80;
@@ -2048,8 +2063,8 @@
   --ui-color-leftmenu-bg: #00000008;
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-leftmenu-bg-expanded: #00000005;
   --ui-color-marta-bg-gradient-1: #58D7D5;
+  --ui-color-leftmenu-bg-expanded: #00000005;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -2110,8 +2125,8 @@
   --ui-color-tech-bg-picture-tint: #0000003D;
   --ui-color-tech-dark-fixes: #383838;
   --ui-color-blue-02: #FFFFFF;
-  --ui-color-blue-04: #FFFFFF;
   --ui-color-black-base: #333333;
+  --ui-color-blue-04: #FFFFFF;
   --ui-color-blue-06: #FFFFFF;
   --ui-color-blue-08: #FFFFFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -2160,8 +2175,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #FFFFFF24;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #FFFFFF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -2253,6 +2268,7 @@
   --ui-color-g-plastic-white-bg: #2A2A2A;
   --ui-color-g-plastic-white-stroke: #535353;
   --ui-color-design-disabled-bg: var(--ui-color-bg-content-primary);
+  --ui-color-design-disabled-bg-alpha: var(--ui-color-bg-content-primary);
   --ui-color-design-disabled-bg-alt: var(--ui-color-bg-content-primary);
   --ui-color-design-disabled-stroke: var(--ui-color-bg-content-primary);
   --ui-design-disabled-stroke-weight: 0px;
@@ -2290,6 +2306,7 @@
   --ui-color-design-filled-market-content-icon: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-divider: #FFFFFF14;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-0: #6ECCF5;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-1: #0098EA;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-2: #3F68FF;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-3: #9D48FF;
@@ -2297,6 +2314,7 @@
   --ui-color-design-filled-bitrix-gpt-bg-gradient-5: #F96269;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-6: #FFB61A;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-7: #FF7438;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-8: #F5C94E;
   --ui-design-filled-bitrix-gpt-stroke-weight: 0px;
   --ui-color-design-filled-bitrix-gpt-content: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-icon: var(--ui-color-base-white-fixed);
@@ -2373,8 +2391,8 @@
   --ui-divider-optical-1-weight: var(--ui-border-width-thin);
   --ui-divider-optical-2-weight: var(--ui-border-width-thick);
   --ui-color-divider-optical-on-overlay: #FFFFFF1F;
-  --ui-color-bg-content-secondary: #FFFFFF1F;
   --ui-divider-optical-on-overlay-weight: var(--ui-border-width-thin);
+  --ui-color-bg-content-secondary: #FFFFFF1F;
   --ui-color-bg-content-tertiary: #FFFFFF14;
   --ui-color-bg-vibrant-accent: #FFFFFF3D;
   --ui-color-bg-state-hover-default-hex: #FFFFFF;
@@ -2651,13 +2669,13 @@
   --ui-color-design-selection-stroke: #FFFFFF00;
   --ui-design-selection-stroke-weight: 0px;
   --ui-design-selection-stroke-weight-alt: 0px;
-  --ui-color-design-selection-content: var(--ui-color-base-0);
   --ui-color-design-plain-na-focused-stroke: #FFFFFF1F;
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-selection-content: var(--ui-color-base-0);
   --ui-color-design-selection-content-icon: var(--ui-color-base-0);
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-base-2);
-  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-selection-content-divider: var(--ui-color-base-7);
   --ui-color-design-selection-focused-bg: #FFFFFF57;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -2758,6 +2776,9 @@
   --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
   --ui-color-designer-bp-rules-orange-text: #FFA900;
   --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
+  --ui-color-designer-bp-rules-purple-stroke: #DECAFF;
+  --ui-color-designer-bp-rules-purple-text: #AA74FF;
+  --ui-color-designer-bp-rules-purple-bg: #F8F4FF;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #FFFFFFB3;
   --ui-color-chat-my-base-0_3: #FFFFFF80;
@@ -2828,8 +2849,8 @@
   --ui-color-leftmenu-bg: #FFFFFF0F;
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-leftmenu-bg-expanded: #FFFFFF0A;
   --ui-color-marta-bg-gradient-1: #58D7D5;
+  --ui-color-leftmenu-bg-expanded: #FFFFFF0A;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -2890,8 +2911,8 @@
   --ui-color-tech-bg-picture-tint: #0000003D;
   --ui-color-tech-dark-fixes: #383838;
   --ui-color-blue-02: #FFFFFF;
-  --ui-color-blue-04: #FFFFFF;
   --ui-color-black-base: #333333;
+  --ui-color-blue-04: #FFFFFF;
   --ui-color-blue-06: #FFFFFF;
   --ui-color-blue-08: #FFFFFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -2940,8 +2961,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #FFFFFF24;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #FFFFFF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -3033,6 +3054,7 @@
   --ui-color-g-plastic-white-bg: #2A2A2A;
   --ui-color-g-plastic-white-stroke: #535353;
   --ui-color-design-disabled-bg: var(--ui-color-bg-content-primary);
+  --ui-color-design-disabled-bg-alpha: var(--ui-color-bg-content-primary);
   --ui-color-design-disabled-bg-alt: var(--ui-color-bg-content-primary);
   --ui-color-design-disabled-stroke: var(--ui-color-bg-content-primary);
   --ui-design-disabled-stroke-weight: 0px;
@@ -3070,6 +3092,7 @@
   --ui-color-design-filled-market-content-icon: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-market-content-divider: #FFFFFF1A;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-0: #5697B4;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-1: #0E618E;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-2: #2E4A99;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-3: #62369A;
@@ -3077,6 +3100,7 @@
   --ui-color-design-filled-bitrix-gpt-bg-gradient-5: #96424A;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-6: #BA8D2E;
   --ui-color-design-filled-bitrix-gpt-bg-gradient-7: #B6552B;
+  --ui-color-design-filled-bitrix-gpt-bg-gradient-8: #B4953F;
   --ui-design-filled-bitrix-gpt-stroke-weight: 0px;
   --ui-color-design-filled-bitrix-gpt-content: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-icon: var(--ui-color-base-white-fixed);

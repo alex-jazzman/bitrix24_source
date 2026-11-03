@@ -3,9 +3,12 @@ import './css/timeline.css';
 import type { JsonObject } from 'main.core';
 
 const Wave = {
+	count: 5,
 	verticalShift: 44,
 	activeVerticalShift: 19,
 };
+
+export const getRandomWaveformIndex = (): number => Math.floor(Math.random() * Wave.count);
 
 // @vue/component
 export const Timeline = {
@@ -27,11 +30,20 @@ export const Timeline = {
 			type: Boolean,
 			default: true,
 		},
+		waveformIndex: {
+			type: Number,
+			default: null,
+		},
+		stretched: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['change'],
 	data(): JsonObject {
 		return {
 			seekerOffset: 0,
+			containerWidth: 0,
 		};
 	},
 	computed: {
@@ -48,6 +60,10 @@ export const Timeline = {
 
 			return { left: `${this.seekerOffset}px` };
 		},
+		trackWidth(): number
+		{
+			return this.containerWidth;
+		},
 		progressPosition(): JsonObject
 		{
 			if (!this.loaded || this.timeCurrent === 0)
@@ -55,9 +71,13 @@ export const Timeline = {
 				return { width: '100%' };
 			}
 
-			const offset = Math.round(this.$refs.timeline.offsetWidth / 100 * this.progress);
+			const offset = Math.round(this.trackWidth / 100 * this.progress);
 
 			return { width: `${offset}px` };
+		},
+		waveType(): number
+		{
+			return this.waveformIndex ?? this.ownWaveformIndex;
 		},
 		activeWaveStyles(): JsonObject
 		{
@@ -79,9 +99,29 @@ export const Timeline = {
 	},
 	created()
 	{
-		this.waveType = Math.floor(Math.random() * 5);
+		this.ownWaveformIndex = getRandomWaveformIndex();
+	},
+	mounted()
+	{
+		this.initResizeObserver();
+	},
+	beforeUnmount()
+	{
+		this.getResizeObserver()?.disconnect();
 	},
 	methods: {
+		initResizeObserver()
+		{
+			this.containerWidth = this.$refs.timeline.offsetWidth;
+			this.resizeObserver = new ResizeObserver(([entry]) => {
+				this.containerWidth = entry.contentRect.width;
+			});
+			this.resizeObserver.observe(this.$refs.timeline);
+		},
+		getResizeObserver(): ?ResizeObserver
+		{
+			return this.resizeObserver;
+		},
 		setPosition()
 		{
 			if (!this.loaded || !this.withSeeking)
@@ -89,7 +129,7 @@ export const Timeline = {
 				return;
 			}
 
-			const pixelPerPercent = this.$refs.timeline.offsetWidth / 100;
+			const pixelPerPercent = this.trackWidth / 100;
 			const progress = Math.round(this.seekerOffset / pixelPerPercent);
 
 			this.$emit('change', progress);
@@ -107,8 +147,9 @@ export const Timeline = {
 	template: `
 		<div 
 			ref="timeline"
-			:class="{'--with-seeking': withSeeking}"
+			:class="{'--with-seeking': withSeeking, '--stretched': stretched}"
 			class="bx-im-player-timeline__container" 
+			data-testid="im-player-timeline"
 			@click="setPosition" 
 			@mousemove="updateSeekerPosition" 
 		>

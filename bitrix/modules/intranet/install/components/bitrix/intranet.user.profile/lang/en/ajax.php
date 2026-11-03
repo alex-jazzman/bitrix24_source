@@ -1,5 +1,6 @@
 <?php
 $MESS["INTRANET_USER_PROFILE_DELETE_ERROR"] = "An error occurred while deleting an object.";
+$MESS['INTRANET_USER_PROFILE_DEPARTMENT_ASSIGN_ERROR'] = 'Could not assign the selected department.';
 $MESS["INTRANET_USER_PROFILE_EMAIL_ERROR"] = "Incorrect email format";
 $MESS["INTRANET_USER_PROFILE_EMPTY_DEPARTMENT_ERROR"] = "Department is not selected";
 $MESS["INTRANET_USER_PROFILE_INTEGRATOR_COUNT_ERROR"] = "The maximum number of Bitrix24 Partners exceeded";

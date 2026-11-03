@@ -584,19 +584,45 @@ class ItemService implements Errorable
 
 	public function updateEntityIdToItems(int $entityId, array $itemIds): void
 	{
+		$this->tryUpdateEntityIdToItems($entityId, $itemIds);
+	}
+
+	public function tryUpdateEntityIdToItems(int $entityId, array $itemIds): bool
+	{
+		if (!$itemIds)
+		{
+			return true;
+		}
+
 		try
 		{
-			if ($itemIds)
+			if ($this->updateItemEntityIds($entityId, $itemIds))
 			{
-				ItemTable::updateMulti($itemIds, ['ENTITY_ID' => $entityId]);
+				return true;
 			}
+
+			$this->errorCollection->setError(
+				new Error('Failed to update item entities', self::ERROR_COULD_NOT_UPDATE_ITEMS_ENTITY)
+			);
+
+			return false;
 		}
-		catch (\Exception $exception)
+		catch (\Throwable $exception)
 		{
 			$this->errorCollection->setError(
 				new Error($exception->getMessage(), self::ERROR_COULD_NOT_UPDATE_ITEMS_ENTITY)
 			);
+
+			return false;
 		}
+	}
+
+	protected function updateItemEntityIds(int $entityId, array $itemIds): bool
+	{
+		$result = ItemTable::updateMulti($itemIds, ['ENTITY_ID' => $entityId]);
+
+		return $result !== false
+			&& (!($result instanceof \Bitrix\Main\Result) || $result->isSuccess());
 	}
 
 	public function changeItem(ItemForm $item, PushService $pushService = null): bool
@@ -671,9 +697,19 @@ class ItemService implements Errorable
 
 	public function sortItems(array $sortInfo, ?PushService $pushService = null): void
 	{
+		$updatedItems = [];
+		if ($this->trySortItems($sortInfo, $updatedItems) && $updatedItems && $pushService)
+		{
+			$pushService->sendSortItemEvent($updatedItems);
+		}
+	}
+
+	public function trySortItems(array $sortInfo, array &$updatedItems = []): bool
+	{
+		$updatedItems = [];
 		if (empty($sortInfo))
 		{
-			return;
+			return true;
 		}
 
 		$allItemIds = $this->collectAllItemIds($sortInfo);
@@ -681,13 +717,12 @@ class ItemService implements Errorable
 
 		if (empty($itemIds))
 		{
-			return;
+			return true;
 		}
 
 		$currentItemsData = $this->getCurrentItemsData($allItemIds);
 
 		$sortWhens = [];
-		$entityWhens = [];
 		$updatedItems = [];
 
 		foreach ($sortInfo as $itemId => $info)
@@ -717,10 +752,6 @@ class ItemService implements Errorable
 			);
 
 			$sortWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $newSort;
-			if ($newEntityId)
-			{
-				$entityWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $newEntityId;
-			}
 
 			if ($updatedItemId)
 			{
@@ -731,29 +762,148 @@ class ItemService implements Errorable
 
 				if ($newEntityId)
 				{
-					$updatedItems[$itemId]['entityId'] = $newEntityId;
+					$updatedItems[$itemId]['entityId'] = $currentData['ENTITY_ID'];
 				}
 			}
 		}
 
 		if (!empty($sortWhens))
 		{
-			ItemTable::updateMulti($itemIds, [
-				'SORT_FLOAT' => new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)'),
-			]);
+			if (!$this->updateItemSorts($itemIds, $sortWhens))
+			{
+				$this->errorCollection->setError(
+					new Error('Failed to sort items', self::ERROR_COULD_NOT_UPDATE_ITEM)
+				);
+
+				$updatedItems = [];
+
+				return false;
+			}
 		}
 
-		if (!empty($entityWhens))
+		return true;
+	}
+
+	protected function updateItemSorts(array $itemIds, array $sortWhens): bool
+	{
+		$result = ItemTable::updateMulti($itemIds, [
+			'SORT_FLOAT' => new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)'),
+		]);
+
+		return $result !== false
+			&& (!($result instanceof Result) || $result->isSuccess());
+	}
+
+	public function canSortItemsInGroup(int $groupId, array $sortInfo, array $additionalItemIds = []): bool
+	{
+		if ($groupId <= 0)
 		{
-			ItemTable::updateMulti($itemIds, [
-				'ENTITY_ID' => new SqlExpression('(CASE ' . implode(' ', $entityWhens) . ' ELSE ENTITY_ID END)'),
-			]);
+			return false;
 		}
 
-		if ($updatedItems && $pushService)
+		$itemIds = [];
+		$entityIds = [];
+		foreach ($additionalItemIds as $itemId)
 		{
-			$pushService->sendSortItemEvent($updatedItems);
+			$id = (int)$itemId;
+			if ($id <= 0 || (string)$id !== (string)$itemId)
+			{
+				return false;
+			}
+
+			$itemIds[$id] = true;
 		}
+
+		foreach ($sortInfo as $itemId => $info)
+		{
+			if (!is_array($info) || (int)$itemId <= 0 || (string)(int)$itemId !== (string)$itemId)
+			{
+				return false;
+			}
+
+			$itemIds[(int)$itemId] = true;
+			foreach (['previousItemId', 'nextItemId'] as $anchor)
+			{
+				if (!isset($info[$anchor]))
+				{
+					continue;
+				}
+
+				$id = (int)$info[$anchor];
+				if ($id < 0)
+				{
+					return false;
+				}
+
+				if ($id > 0)
+				{
+					$itemIds[$id] = true;
+				}
+			}
+
+			if (isset($info['entityId']))
+			{
+				$entityId = (int)$info['entityId'];
+				if ($entityId < 0)
+				{
+					return false;
+				}
+
+				if ($entityId > 0)
+				{
+					$entityIds[$entityId] = true;
+				}
+			}
+		}
+
+		try
+		{
+			if ($itemIds)
+			{
+				$items = ItemTable::getList([
+					'select' => ['ID', 'ENTITY_GROUP_ID' => 'ENTITY.GROUP_ID'],
+					'filter' => ['ID' => array_keys($itemIds)],
+				])->fetchAll();
+				if (count($items) !== count($itemIds))
+				{
+					return false;
+				}
+
+				foreach ($items as $item)
+				{
+					if ((int)$item['ENTITY_GROUP_ID'] !== $groupId)
+					{
+						return false;
+					}
+				}
+			}
+
+			if ($entityIds)
+			{
+				$entities = EntityTable::getList([
+					'select' => ['ID', 'GROUP_ID'],
+					'filter' => ['ID' => array_keys($entityIds)],
+				])->fetchAll();
+				if (count($entities) !== count($entityIds))
+				{
+					return false;
+				}
+
+				foreach ($entities as $entity)
+				{
+					if ((int)$entity['GROUP_ID'] !== $groupId)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		catch (\Throwable $exception)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	private function collectAllItemIds(array $sortInfo): array

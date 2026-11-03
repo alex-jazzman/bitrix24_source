@@ -21,6 +21,7 @@ type CatalogItemSetup = {
 	getIconColor: (colorIndex: ?Number) => ?string;
 	isUrl: (value: string) => boolean,
 	getBackgroundImage: (value: string) => Object,
+	onDragStartCapture: (event: DragEvent) => void,
 	onDragStart: (event: DragEvent) => void,
 	onDragEnd: (event: DragEvent) => void,
 };
@@ -75,6 +76,10 @@ export const CatalogItem = {
 			required: true,
 		},
 		active: {
+			type: Boolean,
+			default: false,
+		},
+		dragDisabled: {
 			type: Boolean,
 			default: false,
 		},
@@ -163,7 +168,8 @@ export const CatalogItem = {
 				contentBlockColor = null,
 				icon = DEFAULT_ICON_NAME,
 				hasAuxPorts = false,
-				relationsAvailable = null,
+				// The catalog always states it: a palette item declaring no relations has none.
+				relationsAvailable = false,
 				contentBlock = null,
 				defaultSettings: {
 					width,
@@ -210,7 +216,7 @@ export const CatalogItem = {
 					// dropped from the palette opens the very panel it reopens after the template reload.
 					servedByUnifiedPanel: servedByUnifiedPanel === true,
 					shouldShowAuxPorts: hasAuxPorts === true,
-					...(relationsAvailable !== null ? { relationsAvailable } : {}),
+					relationsAvailable,
 					...(contentBlockColor !== null ? { contentBlockColor } : {}),
 					...(frameColorName !== null ? { frameColorName } : {}),
 					...(frameTextAlign !== null ? { frameTextAlign } : {}),
@@ -244,6 +250,17 @@ export const CatalogItem = {
 			closeContextMenu();
 		}
 
+		function onDragStartCapture(event: DragEvent): void
+		{
+			if (!props.dragDisabled)
+			{
+				return;
+			}
+
+			event.preventDefault();
+			event.stopImmediatePropagation();
+		}
+
 		return {
 			dragPayload,
 			preparedBlock,
@@ -255,6 +272,7 @@ export const CatalogItem = {
 			getIconColor,
 			isUrl,
 			getBackgroundImage,
+			onDragStartCapture,
 			onDragStart,
 		};
 	},
@@ -263,6 +281,7 @@ export const CatalogItem = {
 			v-drag-block="getDragPayload"
 			:class="catalogItemClassNames"
 			:data-test-id="$testId('catalogItem', item.id)"
+			@dragstart.capture="onDragStartCapture"
 			@dragstart="onDragStart"
 		>
 			<div

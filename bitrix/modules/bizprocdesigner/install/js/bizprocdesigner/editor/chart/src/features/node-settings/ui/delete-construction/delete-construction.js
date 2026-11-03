@@ -24,6 +24,16 @@ export const DeleteConstruction = {
 			type: Object,
 			required: true,
 		},
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the row this button belongs to. Named here, the store deletes from that very rule
+		 * instead of looking the owner of the card up across every rule of the node.
+		 */
+		rulePort:
+		{
+			type: [Object, null],
+			default: null,
+		},
 	},
 	setup(): { getMessage: GetMessage }
 	{
@@ -57,7 +67,7 @@ export const DeleteConstruction = {
 			class="editor-chart-node-settings-delete-construction"
 			:data-test-id="$testId('complexNodeRuleSettingsDeleteConstruction', construction.id)"
 			:aria-label="ariaLabel"
-			@click="deleteConstruction(ruleCard, construction)"
+			@click="deleteConstruction(ruleCard, construction, rulePort)"
 		>
 			<BIcon
 				:size="20"

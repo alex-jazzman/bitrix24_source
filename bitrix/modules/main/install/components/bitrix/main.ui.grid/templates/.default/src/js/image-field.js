@@ -48,6 +48,7 @@
 							BX.Dom.remove(this.getFakeField());
 							BX.Dom.append(this.getFileInput(), this.getLayout());
 							BX.Dom.removeClass(this.getRemoveButton(), 'ui-btn-disabled');
+							this.getRemoveButton().disabled = false;
 							BX.Dom.style(this.getPreview(), null);
 						}.bind(this),
 					},
@@ -86,6 +87,9 @@
 							BX.Dom.append(this.getFakeField(), this.getLayout());
 							BX.Dom.remove(this.getFileInput());
 							BX.Dom.addClass(this.getRemoveButton(), 'ui-btn-disabled');
+							// The class only greys the button out: without the attribute it keeps
+							// its tab stop and still fires on Enter.
+							this.getRemoveButton().disabled = true;
 							BX.Dom.style(this.getPreview(), {
 								opacity: 0.4,
 							});

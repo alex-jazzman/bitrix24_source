@@ -43,6 +43,7 @@ use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption\Option;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Provider\Exception\InvalidOrderException;
 use Bitrix\Tasks\Provider\Exception\InvalidSelectException;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
@@ -89,6 +90,20 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	public const ALIAS_TASK_REGULAR = 'REG';
 	public const ALIAS_TASK_CHAT_ID = 'TCID';
 
+	/**
+	 * Column => "has value" field used to keep rows without a value at the end.
+	 */
+	private const EMPTY_VALUES_LAST_FIELDS = [
+		'DEADLINE' => 'LENGTH_DEADLINE',
+		'MARK' => 'HAS_VALUE_MARK',
+		'START_DATE_PLAN' => 'HAS_VALUE_START_DATE_PLAN',
+		'END_DATE_PLAN' => 'HAS_VALUE_END_DATE_PLAN',
+		'ORIGINATOR_NAME' => 'HAS_VALUE_CREATED_BY_LAST_NAME',
+		'CREATED_BY_LAST_NAME' => 'HAS_VALUE_CREATED_BY_LAST_NAME',
+		'RESPONSIBLE_NAME' => 'HAS_VALUE_RESPONSIBLE_LAST_NAME',
+		'RESPONSIBLE_LAST_NAME' => 'HAS_VALUE_RESPONSIBLE_LAST_NAME',
+	];
+
 	private TaskQuery $taskQuery;
 	private ?UserModel $user;
 	private Query $query;
@@ -119,6 +134,17 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	}
 
 	/**
+	 * Tells whether the "empty values last" order modifier is supported for the column.
+	 *
+	 * @param string $column
+	 * @return bool
+	 */
+	public static function supportsEmptyValuesLastOrder(string $column): bool
+	{
+		return array_key_exists(strtoupper($column), self::EMPTY_VALUES_LAST_FIELDS);
+	}
+
+	/**
 	 * @return string[]
 	 */
 	public static function getTranslateMap(): array
@@ -136,6 +162,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @param TaskQuery $taskQuery
 	 * @return Query
+	 * @throws InvalidOrderException
 	 * @throws InvalidSelectException
 	 * @throws ArgumentException
 	 * @throws SystemException
@@ -390,6 +417,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @return $this
 	 * @throws ArgumentException
+	 * @throws InvalidOrderException
 	 * @throws SystemException
 	 */
 	private function buildOrder(): self
@@ -413,11 +441,19 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	 * @param string $order
 	 * @return void
 	 * @throws ArgumentException
+	 * @throws InvalidOrderException
 	 * @throws SystemException
 	 */
 	private function addOrder(string $column, string $order): void
 	{
 		$column = strtoupper($column);
+
+		$emptyValuesLast = $this->isEmptyValuesLastOrder($order);
+		if ($emptyValuesLast)
+		{
+			$order = $this->extractDirection($order);
+			$this->addEmptyValuesLastOrder($column);
+		}
 
 		switch ($column)
 		{
@@ -466,17 +502,13 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				break;
 
 			case 'DEADLINE':
-				if ($order === TaskQuery::SORT_ASC)
+				if ($order === TaskQuery::SORT_ASC && !$emptyValuesLast)
 				{
 					$this->query->addOrder('LENGTH_DEADLINE', TaskQuery::SORT_DESC);
-					$this->query->addOrder('DEADLINE', TaskQuery::SORT_ASC);
 					$this->taskQuery->addSelect('LENGTH_DEADLINE');
 				}
-				else
-				{
-					$this->query->addOrder('DEADLINE', TaskQuery::SORT_DESC);
-				}
 
+				$this->query->addOrder('DEADLINE', $order);
 				$this->taskQuery->addSelect('DEADLINE');
 				break;
 
@@ -616,6 +648,46 @@ class TaskQueryBuilder implements QueryBuilderInterface
 					break;
 				}
 		}
+	}
+
+	/**
+	 * @param string $order
+	 * @return bool
+	 */
+	private function isEmptyValuesLastOrder(string $order): bool
+	{
+		return in_array($order, [TaskQuery::SORT_ASC_EMPTY_LAST, TaskQuery::SORT_DESC_EMPTY_LAST], true);
+	}
+
+	/**
+	 * @param string $order
+	 * @return string
+	 */
+	private function extractDirection(string $order): string
+	{
+		return $order === TaskQuery::SORT_DESC_EMPTY_LAST ? TaskQuery::SORT_DESC : TaskQuery::SORT_ASC;
+	}
+
+	/**
+	 * Sorts rows with a value first, so empty ones stay at the end for both directions.
+	 *
+	 * @param string $column
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws InvalidOrderException
+	 * @throws SystemException
+	 */
+	private function addEmptyValuesLastOrder(string $column): void
+	{
+		$field = self::EMPTY_VALUES_LAST_FIELDS[$column] ?? null;
+		if ($field === null)
+		{
+			// TaskQuery keeps the modifier for supported columns only, so this is a broken order, not a user input
+			throw new InvalidOrderException("Empty values last order is not supported for {$column}");
+		}
+
+		$this->query->addOrder($field, TaskQuery::SORT_DESC);
+		$this->taskQuery->addSelect($field);
 	}
 
 	/**
@@ -1323,6 +1395,17 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				END",
 				['DEADLINE']
 			),
+			"HAS_VALUE_MARK" => $this->getHasValueField('MARK'),
+			"HAS_VALUE_START_DATE_PLAN" => $this->getHasValueField('START_DATE_PLAN', true),
+			"HAS_VALUE_END_DATE_PLAN" => $this->getHasValueField('END_DATE_PLAN', true),
+			"HAS_VALUE_CREATED_BY_LAST_NAME" => function ()
+			{
+				return $this->getUserHasValueField('CREATED_BY_LAST_NAME', self::ALIAS_USER_CREATE);
+			},
+			"HAS_VALUE_RESPONSIBLE_LAST_NAME" => function ()
+			{
+				return $this->getUserHasValueField('RESPONSIBLE_LAST_NAME', self::ALIAS_USER_RESPONSIBLE);
+			},
 			"SCENARIO_NAME" => self::ALIAS_TASK_SCENARIO . ".SCENARIO",
 			'IS_REGULAR' => 'IS_REGULAR',
 			'FLOW_ID' => self::ALIAS_TASK_FLOW_ID . '.FLOW_ID',
@@ -1373,6 +1456,51 @@ class TaskQueryBuilder implements QueryBuilderInterface
 		);
 
 		return $entityAlias;
+	}
+
+	/**
+	 * Cross-database "column has a value": 1 for a filled column, 0 for NULL or an empty string.
+	 * A date column is either NULL or a date, so it needs no length check.
+	 *
+	 * @param string $column
+	 * @param bool $isDate
+	 * @param string|null $source Column to read the value from, when it differs from the name of the field.
+	 * @return ExpressionField
+	 */
+	private function getHasValueField(string $column, bool $isDate = false, ?string $source = null): ExpressionField
+	{
+		$helper = Application::getConnection()->getSqlHelper();
+		$condition = $isDate ? '%s IS NOT NULL' : "{$helper->getLengthFunction('%s')} > 0";
+
+		return new ExpressionField(
+			'HAS_VALUE_' . $column,
+			"CASE
+				WHEN
+					{$condition}
+				THEN
+					1
+				ELSE
+					0
+			END",
+			[$source ?? $column]
+		);
+	}
+
+	/**
+	 * "Last name has a value" of a joined user: a task whose user record is gone counts as a task without a value.
+	 *
+	 * @param string $column
+	 * @param string $alias
+	 * @return ExpressionField
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 * @throws SystemException
+	 */
+	private function getUserHasValueField(string $column, string $alias): ExpressionField
+	{
+		$this->joinByAlias($alias);
+
+		return $this->getHasValueField($column, false, $alias . '.LAST_NAME');
 	}
 
 	/**

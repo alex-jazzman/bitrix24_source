@@ -1,5 +1,7 @@
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
+import 'im.v2.css.classes';
+
 import { StickerPackForm } from '../../sticker-pack-form/sticker-pack-form';
 
 import './css/add-sticker-button.css';
@@ -43,14 +45,23 @@ export const AddStickerButton = {
 		},
 	},
 	template: `
-		<div class="bx-im-stickers-add-sticker-button__container" @click="onUpdatePackClick">
-			<div class="bx-im-stickers-add-sticker-button__button">
-				<BIcon
-					:name="OutlineIcons.PLUS_L"
-					:title="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT')"
-				/>
-			</div>
-			<StickerPackForm v-if="showPackForm" :pack="pack" @close="onPackFormClose" />
+		<div role="gridcell" class="bx-im-stickers-add-sticker-button__cell">
+			<button
+				type="button"
+				class="bx-im-stickers-add-sticker-button__container --focus-visible"
+				tabindex="-1"
+				aria-haspopup="dialog"
+				:aria-label="loc('IM_STICKER_PACK_ADD_STICKER_ARIA')"
+				data-testid="im-sticker-add-sticker-btn"
+				@click="onUpdatePackClick"
+				@keydown.enter.prevent="onUpdatePackClick"
+				@keydown.space.prevent="onUpdatePackClick"
+			>
+				<span class="bx-im-stickers-add-sticker-button__button">
+					<BIcon :name="OutlineIcons.PLUS_L" :aria-hidden="true" />
+				</span>
+			</button>
 		</div>
+		<StickerPackForm v-if="showPackForm" :pack="pack" @close="onPackFormClose" />
 	`,
 };

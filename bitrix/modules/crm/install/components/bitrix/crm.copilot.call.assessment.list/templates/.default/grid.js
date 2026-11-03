@@ -1,9 +1,13 @@
-import { ajax as Ajax, Loc, Reflection, Text } from 'main.core';
+import { Builder } from 'crm.integration.analytics';
+import { ajax as Ajax, Event, Loc, Reflection, Text } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { sendData } from 'ui.analytics';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 
 const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
+
+const callListViewClickHandlers: WeakMap<HTMLElement, (event: MouseEvent) => void> = new WeakMap();
 
 export class Grid {
 	#grid = null;
@@ -26,6 +30,46 @@ export class Grid {
 		EventEmitter.subscribe('BX.Main.Popup:onShow', this.#handleSettingsMenuShow.bind(this));
 
 		BX.addCustomEvent('SidePanel.Slider:onCloseComplete', this.#handleSliderClose.bind(this));
+
+		const gridContainer = this.#grid?.getContainer?.();
+		if (!gridContainer)
+		{
+			return;
+		}
+
+		const existing = callListViewClickHandlers.get(gridContainer);
+		if (existing)
+		{
+			Event.unbind(gridContainer, 'click', existing);
+		}
+
+		const handler = this.#sendCallListViewAnalytics.bind(this);
+		callListViewClickHandlers.set(gridContainer, handler);
+		Event.bind(gridContainer, 'click', handler);
+	}
+
+	#sendCallListViewAnalytics(event: MouseEvent): void
+	{
+		const link = event.target?.closest('.crm-copilot-call-assessment-list--match-link');
+		if (!link)
+		{
+			return;
+		}
+
+		const callAssessmentId = Text.toInteger(link.dataset.callAssessmentId);
+		if (callAssessmentId <= 0)
+		{
+			return;
+		}
+
+		const data = Builder.CallAssessment.CallListViewEvent
+			.createDefault(callAssessmentId)
+			.buildData()
+		;
+		if (data)
+		{
+			sendData(data);
+		}
 	}
 
 	#handleSettingsMenuShow(event: BaseEvent): void
@@ -86,6 +130,9 @@ export class Grid {
 				Ajax.runAction(
 					'crm.controller.copilot.callassessment.delete', {
 						data: { id },
+						analytics: Builder.CallAssessment.ScriptDeleteEvent
+							.createDefault(id)
+							.buildData(),
 					}).then((response) => {
 						UI.Notification.Center.notify({
 							content: Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')

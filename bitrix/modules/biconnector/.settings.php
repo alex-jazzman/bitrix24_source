@@ -1,12 +1,20 @@
 <?php
 
+use Bitrix\BIConnector\Cli\Key\AuditCommand;
+use Bitrix\BIConnector\Cli\Key\RevokeCommand;
+use Bitrix\BIConnector\Internal\Integration\AiAssistant\RateLimit\BiToolsRateLimiter;
+use Bitrix\BIConnector\Internal\Integration\AiAssistant\ToolSet\BiChartsToolSet;
 use Bitrix\BIConnector\Internal\Integration\AiAssistant\ToolSet\BiDashboardsToolSet;
+use Bitrix\BIConnector\Internal\Integration\AiAssistant\ToolSet\BiDatasetsToolSet;
+use Bitrix\BIConnector\Internal\Integration\AiAssistant\ToolSet\BiTablesToolSet;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\ExternalConnectionProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\ExternalTableProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardTagProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\UnlinkedSupersetDashboardProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetGroupProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\TableGroupProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\DigestPeriodProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetScopeProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\UsageStatChartProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\UsageStatDashboardProvider;
@@ -18,21 +26,70 @@ use Bitrix\Biconnector\Public\Provider\DashboardDetailInfoProvider;
 use Bitrix\Biconnector\Public\Services\AhaMoment\AhaMomentSpotlightResolver;
 use Bitrix\Biconnector\Internal\Services\DashboardInfo\FileCleanupService;
 use Bitrix\BIConnector\Internal\Repository\Mapper\SupersetDashboardShareMapper;
+use Bitrix\BIConnector\Internal\Repository\SupersetDashboardShareBanRepository;
 use Bitrix\BIConnector\Internal\Repository\SupersetDashboardShareRepository;
+use Bitrix\BIConnector\Internal\Services\Share\AuthorShareStateService;
 use Bitrix\BIConnector\Internal\Services\Share\SharePasswordService;
+use Bitrix\BIConnector\Public\Provider\AgentOperationsProvider;
 use Bitrix\BIConnector\Public\Provider\ShareProvider;
+use Bitrix\BIConnector\Public\Provider\DigestRecipientAccessProvider;
 use Bitrix\BIConnector\Public\Provider\ScopeAccessibleValueProvider;
+use Bitrix\BIConnector\Internal\Digest\Logger\DigestRunLogger;
+use Bitrix\BIConnector\Internal\Digest\Provider\BiAvailabilityProvider;
+use Bitrix\BIConnector\Internal\Digest\Provider\BiInstanceStatusProvider;
+use Bitrix\BIConnector\Internal\Digest\Provider\BizprocLiveWorkflowInstanceProvider;
+use Bitrix\BIConnector\Internal\Digest\Provider\DashboardViewRightChecker;
+use Bitrix\BIConnector\Internal\Digest\Provider\DigestDashboardProvider;
+use Bitrix\BIConnector\Internal\Digest\Provider\DigestIntegratorProvider;
+use Bitrix\BIConnector\Internal\Digest\Provider\ScopeValueAccessChecker;
+use Bitrix\BIConnector\Internal\Digest\Service\InstanceWarmupService;
+use Bitrix\BIConnector\Internal\Digest\Service\OverviewWarmupService;
+use Bitrix\BIConnector\Internal\Digest\Service\DashboardInstallService;
+use Bitrix\BIConnector\Internal\Digest\Service\RecipientReadinessService;
+use Bitrix\BIConnector\Internal\Digest\Service\RunReadinessService;
+use Bitrix\BIConnector\Internal\Digest\Onboarding\DigestSetupOnboarding;
+use Bitrix\BIConnector\Internal\Digest\Service\DigestRecipientAccessCheckService;
+use Bitrix\BIConnector\Internal\Digest\Service\DigestSetupAvailabilityService;
+use Bitrix\BIConnector\Internal\Digest\Service\DigestSetupPreparationService;
+use Bitrix\BIConnector\Superset\MarketDashboardManager;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 
 // Parsed by Configuration::load() before the biconnector module is included, so the gate
 // must read the option directly: biconnector classes (Feature) aren't autoloadable here yet,
 // and referencing one breaks extension loading portal-wide. Mirrors
 // Feature::isBitrixGptBiConstructorEnabled().
-$biDashboardsToolSets = Option::get('biconnector', 'bitrixgpt_bi_constructor', 'N') === 'Y'
-	? [BiDashboardsToolSet::class]
+$biToolSets = Option::get('biconnector', 'bitrixgpt_bi_constructor', 'N') === 'Y'
+	? [
+		BiDashboardsToolSet::class,
+		BiTablesToolSet::class,
+		BiDatasetsToolSet::class,
+		BiChartsToolSet::class,
+	]
 	: [];
 
 return [
+	'console' => [
+		'value' => [
+			'commands' => [
+				AuditCommand::class,
+				RevokeCommand::class,
+			],
+		],
+		'readonly' => true,
+	],
+	'feature-flags' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\BIConnector\\Public\\Features',
+		],
+		'readonly' => true,
+	],
+	'rest' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\BIConnector\\Infrastructure\\Rest\\Controller',
+		],
+		'readonly' => true,
+	],
 	'controllers' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\BIConnector\\Controller',
@@ -74,10 +131,20 @@ return [
 					'mapper' => \Bitrix\Main\DI\ServiceLocator::getInstance()->get('biconnector.repository.share.mapper'),
 				],
 			],
+			'biconnector.repository.shareBan' => [
+				'className' => SupersetDashboardShareBanRepository::class,
+			],
 			'biconnector.service.sharePassword' => [
 				'className' => SharePasswordService::class,
 				'constructorParams' => static fn() => [
 					'repository' => \Bitrix\Main\DI\ServiceLocator::getInstance()->get('biconnector.repository.share'),
+				],
+			],
+			'biconnector.service.authorShareState' => [
+				'className' => AuthorShareStateService::class,
+				'constructorParams' => static fn() => [
+					'repository' => \Bitrix\Main\DI\ServiceLocator::getInstance()->get('biconnector.repository.share'),
+					'banRepository' => \Bitrix\Main\DI\ServiceLocator::getInstance()->get('biconnector.repository.shareBan'),
 				],
 			],
 			'biconnector.provider.share' => [
@@ -88,6 +155,97 @@ return [
 			],
 			'biconnector.provider.scopeAccessibleValue' => [
 				'className' => ScopeAccessibleValueProvider::class,
+			],
+			'biconnector.provider.agentOperations' => [
+				'className' => AgentOperationsProvider::class,
+			],
+			'biconnector.service.biToolsRateLimiter' => [
+				'className' => BiToolsRateLimiter::class,
+			],
+			DashboardInstallService::class => [
+				'className' => DashboardInstallService::class,
+				'constructorParams' => static fn() => [
+					'dashboardManager' => MarketDashboardManager::getInstance(),
+					'application' => Application::getInstance(),
+				],
+			],
+			// One instance for the readiness check and the warmup: the check reads the report card the
+			// warmup of the same run has already received instead of asking Superset again.
+			DigestDashboardProvider::class => [
+				'className' => DigestDashboardProvider::class,
+			],
+			'biconnector.service.digestRecipientReadiness' => [
+				'className' => RecipientReadinessService::class,
+				'constructorParams' => static fn() => [
+					'dashboardProvider' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get(DigestDashboardProvider::class),
+					'rightChecker' => new DashboardViewRightChecker(),
+					'instanceStatusProvider' => new BiInstanceStatusProvider(),
+					'scopeValueAccessChecker' => new ScopeValueAccessChecker(
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get('biconnector.provider.scopeAccessibleValue'),
+					),
+					'installService' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get(DashboardInstallService::class),
+				],
+			],
+			OverviewWarmupService::class => [
+				'className' => OverviewWarmupService::class,
+				'constructorParams' => static fn() => [
+					'integratorProvider' => new DigestIntegratorProvider(),
+					'dashboardProvider' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get(DigestDashboardProvider::class),
+				],
+			],
+			DigestRecipientAccessProvider::class => [
+				'className' => DigestRecipientAccessProvider::class,
+				'constructorParams' => static fn() => [
+					'readinessService' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get('biconnector.service.digestRecipientReadiness'),
+				],
+			],
+			DigestRecipientAccessCheckService::class => [
+				'className' => DigestRecipientAccessCheckService::class,
+				'constructorParams' => static fn() => [
+					'accessProvider' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get(DigestRecipientAccessProvider::class),
+				],
+			],
+			// One instance per hit: the grid, the report screen and the onboarding share its answer about
+			// the portal instead of asking it each.
+			DigestSetupAvailabilityService::class => [
+				'className' => DigestSetupAvailabilityService::class,
+			],
+			DigestSetupOnboarding::class => [
+				'className' => DigestSetupOnboarding::class,
+				'constructorParams' => static fn() => [
+					'availabilityService' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get(DigestSetupAvailabilityService::class),
+				],
+			],
+			DigestSetupPreparationService::class => [
+				'className' => DigestSetupPreparationService::class,
+				'constructorParams' => static fn() => [
+					'availabilityService' => \Bitrix\Main\DI\ServiceLocator::getInstance()
+						->get(DigestSetupAvailabilityService::class),
+				],
+			],
+			'biconnector.service.digestRunReadiness' => [
+				'className' => RunReadinessService::class,
+				'constructorParams' => static function (): array {
+					$instanceStatusProvider = new BiInstanceStatusProvider();
+
+					return [
+						'availabilityProvider' => new BiAvailabilityProvider(),
+						'instanceStatusProvider' => $instanceStatusProvider,
+						'liveInstanceProvider' => new BizprocLiveWorkflowInstanceProvider(),
+						'warmupService' => new InstanceWarmupService(
+							$instanceStatusProvider,
+							new DigestIntegratorProvider(),
+							\Bitrix\Main\DI\ServiceLocator::getInstance()->get(DigestDashboardProvider::class),
+						),
+						'runLogger' => new DigestRunLogger(),
+					];
+				},
 			],
 		],
 		'readonly' => true,
@@ -124,6 +282,13 @@ return [
 					],
 				],
 				[
+					'entityId' => 'biconnector-digest-period',
+					'provider' => [
+						'moduleId' => 'biconnector',
+						'className' => DigestPeriodProvider::class,
+					],
+				],
+				[
 					'entityId' => 'biconnector-external-connection',
 					'provider' => [
 						'moduleId' => 'biconnector',
@@ -142,6 +307,13 @@ return [
 					'provider' => [
 						'moduleId' => 'biconnector',
 						'className' => SupersetGroupProvider::class,
+					],
+				],
+				[
+					'entityId' => 'biconnector-table-group',
+					'provider' => [
+						'moduleId' => 'biconnector',
+						'className' => TableGroupProvider::class,
 					],
 				],
 				[
@@ -179,7 +351,7 @@ return [
 	],
 	'aiassistant.marta' => [
 		'value' => [
-			'toolSets' => $biDashboardsToolSets,
+			'toolSets' => $biToolSets,
 		],
 		'readonly' => true,
 	],

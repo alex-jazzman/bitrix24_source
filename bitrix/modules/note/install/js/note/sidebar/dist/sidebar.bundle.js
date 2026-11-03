@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_iconSet_api_vue, ui_iconSet_outline, ui_iconSet_solid, note_analytics, note_ui_loader, ui_vue3, main_core, note_ui_actionMenu, main_sidepanel, note_import, note_permissions, note_ui_themeContext, note_ui_documentHistory, main_core_events, ui_notification, note_ui_collectionPicker, pull_client, ui_buttons, ui_dialogs_messagebox, ui_system_dialog) {
+(function (exports, ui_iconSet_api_vue, ui_iconSet_outline, ui_iconSet_solid, note_analytics, note_ui_loader, ui_vue3, main_core, note_ui_actionMenu, main_sidepanel, note_permissions, ui_notification, note_ui_themeContext, note_ui_documentHistory, main_core_events, note_ui_collectionPicker, pull_client, ui_buttons, ui_dialogs_messagebox, ui_system_dialog) {
 	'use strict';
 
 	const SidebarLoader = {
@@ -932,7 +932,7 @@ this.BX.Note = this.BX.Note || {};
 				type: Function,
 				required: true
 			},
-			// [TPL-02] The star of the row: state and toggle both belong to the store, the row only asks.
+			// The star of the row: state and toggle both belong to the store, the row only asks.
 			isDocumentFavorite: {
 				type: Function,
 				required: true
@@ -941,8 +941,8 @@ this.BX.Note = this.BX.Note || {};
 				type: Function,
 				required: true
 			},
-			// [P4.T5] The bell of a row drawn inside the favorites block: its coverage state (DTO-02) and
-			// the one gesture it offers. Absent in the tree - the tree draws no bells at all (AC-048).
+			// The bell of a row drawn inside the favorites block: its coverage state (DTO-02) and
+			// the one gesture it offers. Absent in the tree - the tree draws no bells at all.
 			notifyStateOf: {
 				type: Function,
 				default: null
@@ -951,7 +951,7 @@ this.BX.Note = this.BX.Note || {};
 				type: Function,
 				default: null
 			},
-			// [ERR-005] The failure of the branch THIS row opened, asked for in the block's own space. Absent
+			// The failure of the branch THIS row opened, asked for in the block's own space. Absent
 			// in the tree: there a branch that fails to arrive is reported by the section, not by the row.
 			branchErrorOf: {
 				type: Function,
@@ -1115,7 +1115,7 @@ this.BX.Note = this.BX.Note || {};
 			isFavorite() {
 				return this.isDocumentFavorite(this.doc) === true;
 			},
-			// [DTO-02] Coverage of this document, as the block read it for the whole branch at once.
+			// Coverage of this document, as the block read it for the whole branch at once.
 			notifyState() {
 				if (!this.isFavoritesContext || typeof this.notifyStateOf !== 'function') {
 					return null;
@@ -1132,7 +1132,7 @@ this.BX.Note = this.BX.Note || {};
 			isMuteInEffect() {
 				return this.notifyState?.muted === true && this.notifyState?.inherited === true;
 			},
-			// [AC-048] A bell appears where it has something to say: notifications reach this document,
+			// A bell appears where it has something to say: notifications reach this document,
 			// they are muted on it, or the document is in the list itself. Nowhere else.
 			hasNotifyBell() {
 				return this.notifyState !== null && (this.isNotified || this.isMuteInEffect || this.isFavorite);
@@ -1423,7 +1423,7 @@ this.BX.Note = this.BX.Note || {};
 				</span>
 				<span v-if="!isRenaming" class="tree-actions-anchor">
 					<span class="tree-actions">
-						<!-- [P4.T5] The bell of a row of the block: filled where notifications arrive,
+						<!-- The bell of a row of the block: filled where notifications arrive,
 								 struck through where they are muted. A row with neither draws nothing and holds
 								 no room - exactly like the "create child" button of the tree, so a row of the
 								 block lays out identically to the same row in the tree. -->
@@ -1521,7 +1521,7 @@ this.BX.Note = this.BX.Note || {};
 				<li v-if="isLoadingChildren(doc.collectionId, doc.id)" class="sidebar-muted">
 					<SidebarLoader :level="level + 1" />
 				</li>
-				<!-- [ERR-005] The failure of a nested branch stays in the row that opened it, with the same
+				<!-- The failure of a nested branch stays in the row that opened it, with the same
 						 second attempt a top-level row of the block offers. -->
 				<li
 					v-if="branchError !== null"
@@ -2159,6 +2159,28 @@ this.BX.Note = this.BX.Note || {};
 	`
 	};
 
+	// The import dialog is only ever reached through the footer button, so its bundle is fetched on
+	// demand instead of riding along with every note page. The promise lives in module scope on
+	// purpose: in component `data` Vue would wrap it in a reactive proxy.
+	let dialogPromise = null;
+	function ensureImportDialog() {
+		if (dialogPromise === null) {
+			// Drop a failed promise instead of caching it: a transient load failure must not
+			// disable import for the rest of the session.
+			dialogPromise = main_core.Runtime.loadExtension('note.import').then(exports => {
+				const dialogClass = exports?.ImportDialog;
+				if (!main_core.Type.isFunction(dialogClass)) {
+					throw new TypeError('note.import extension API is not available');
+				}
+				return dialogClass;
+			}).catch(error => {
+				dialogPromise = null;
+				throw error;
+			});
+		}
+		return dialogPromise;
+	}
+
 	const SidebarFooter = {
 		name: 'SidebarFooter',
 		components: {
@@ -2179,6 +2201,13 @@ this.BX.Note = this.BX.Note || {};
 			}
 		},
 		emits: ['toggle-collapsed'],
+		data() {
+			return {
+				// Fetching the extension takes a moment during which the button looks unanswered, and a
+				// second click there would stack a second dialog with a polling loop of its own.
+				importOpening: false
+			};
+		},
 		computed: {
 			canEditGlobalPermissions() {
 				return Boolean(this.state?.permissions?.canEditGlobalPermissions);
@@ -2224,23 +2253,42 @@ this.BX.Note = this.BX.Note || {};
 			}
 		},
 		methods: {
-			openImportDialog() {
+			async openImportDialog() {
+				if (this.importOpening) {
+					return;
+				}
+				this.importOpening = true;
 				try {
-					if (!main_core.Type.isFunction(note_import.ImportDialog)) {
-						throw new TypeError('note.import extension API is not available');
-					}
-					const dialog = new note_import.ImportDialog({
+					const ImportDialog = await ensureImportDialog();
+					const dialog = new ImportDialog({
 						wikiImportEnabled: Boolean(this.state?.permissions?.canImportWiki),
-						onComplete: async () => {
+						landingImportEnabled: Boolean(this.state?.permissions?.canImportLanding),
+						onComplete: async collectionId => {
 							if (main_core.Type.isFunction(this.actions?.refreshCollections)) {
 								await this.actions.refreshCollections();
+							}
+							if (collectionId && main_core.Type.isFunction(this.actions?.navigateToWorkspace)) {
+								this.actions.navigateToWorkspace(collectionId);
 							}
 						}
 					});
 					dialog.show();
 				} catch (error) {
+					this.notifyImportFailure();
 					console.error('note.sidebar: failed to open import dialog', error);
+				} finally {
+					this.importOpening = false;
 				}
+			},
+			notifyImportFailure() {
+				const content = main_core.Loc.getMessage('NOTE_SIDEBAR_IMPORT_OPEN_FAILED') || '';
+				if (!content) {
+					return;
+				}
+				BX.UI.Notification.Center.notify({
+					content,
+					position: 'top-right'
+				});
 			},
 			onToggleCollapsed() {
 				this.$emit('toggle-collapsed');
@@ -2399,7 +2447,7 @@ this.BX.Note = this.BX.Note || {};
 		return scope === '' ? key : `${scope}/${key}`;
 	}
 
-	// [DTO-01] One row of the favorites block. The row carries no URL - the address is built here,
+	// One row of the favorites block. The row carries no URL - the address is built here,
 	// exactly as it is for every other tree row. A row with nested documents opens into its branch: the
 	// branch is read from the namespace the server named in expandVia, and drawn by the tree's own row
 	// component so nested rows behave like tree rows, stars included.
@@ -2478,10 +2526,18 @@ this.BX.Note = this.BX.Note || {};
 				}
 				return this.isCollection ? `/note/workspace/${id}/` : `/note/document/${id}/`;
 			},
-			// [DTO-02] "Notifications actually arrive" - a direct subscription or coverage from above,
-			// and not muted.
+			// Scope the row's subscription is written in: the map of shipped modes is read per scope, and
+			// a knowledge base and a document are two different scopes of it.
+			notifyScope() {
+				return this.isCollection ? note_ui_documentHistory.SUBSCRIPTION_SCOPE_COLLECTION : note_ui_documentHistory.SUBSCRIPTION_SCOPE_DOCUMENT;
+			},
+			// MODES-01 / Q-1: a direct row in a shipped mode, and only that. A row of a mode outside the
+			// shipping delivers nothing, so reading it as on would promise notifications that never arrive -
+			// it reads as off instead, and one press rewrites it into the shipped mode (set() upserts).
+			// Derived from the row's own fields rather than taken from the DTO's `notified`, which the
+			// server now answers by this very rule: a page cached before the rule changed still draws right.
 			isNotified() {
-				return this.item?.notify?.notified === true;
+				return this.item?.notify?.subscribed === true && note_ui_documentHistory.isShippedSubscriptionMode(this.notifyScope, this.item?.notify?.mode);
 			},
 			notifyLabel() {
 				if (this.isMuted) {
@@ -2489,22 +2545,31 @@ this.BX.Note = this.BX.Note || {};
 				}
 				return this.isNotified ? this.messages.notifyOff : this.messages.notifyOn;
 			},
+			// Coverage from above is a state of the row only while `muted` is shipped: the inherited and muted
+			// layouts of the control exist to suppress that coverage, and coverage nothing can suppress has
+			// nothing to offer. Read from the map, like the gate of the nested rows and the one of the bell of
+			// the activity line, so returning `muted` to the shipping brings the state back by itself - same
+			// rule and same terms as SubscriptionBellComponent.isCovered.
+			isCovered() {
+				return this.item?.notify?.inherited === true && note_ui_documentHistory.isShippedSubscriptionMode(this.notifyScope, note_ui_documentHistory.SUBSCRIPTION_MODE_MUTED);
+			},
 			// Only while there is coverage to suppress: the negative row survives the covering subscription
-			// being switched off, and on its own it mutes nothing (same rule in SubscriptionBellView).
+			// being switched off, and on its own it mutes nothing (same rule in SubscriptionBellView), so a
+			// mute outside the shipping reads as plain "off" instead of drawing a third state `aria-pressed`
+			// has no way to tell apart.
 			isMuted() {
-				return this.item?.notify?.muted === true && this.item?.notify?.inherited === true;
+				return this.item?.notify?.muted === true && this.isCovered;
 			},
 			// Room the title leaves before the visible right edge, by the same rule the tree rows follow: the
 			// star of a block row never hides, and a bell with something to say stays next to it. A bell that
 			// only shows under the pointer gets nothing - it may cover the tail of the title.
 			nameReserve() {
+				// Q-2: the previous rule without the `muted` term, and only where a bell is offered at all -
+				// a row that carries none holds no room for one.
 				return rowNameReserve({
 					isFavorite: true,
-					hasBell: this.notificationsEnabled && (this.isNotified || this.isMuted)
+					hasBell: this.hasNotifyBell && this.isNotified
 				});
-			},
-			notificationsEnabled() {
-				return this.state.notificationsEnabled === true;
 			},
 			notifyIcon() {
 				if (this.isMuted) {
@@ -2512,15 +2577,47 @@ this.BX.Note = this.BX.Note || {};
 				}
 				return this.isNotified ? ui_iconSet_api_vue.Solid.NOTIFICATION : ui_iconSet_api_vue.Outline.NOTIFICATION;
 			},
-			// [P4.T1] A row with nested documents has a depth to choose, so its bell opens the popover of
+			// Bootstrap flag off the sidebar root state - with the notifications option off the block has
+			// no bells at all, neither on its rows nor inside their branches.
+			notificationsEnabled() {
+				return this.state.notificationsEnabled === true;
+			},
+			// MODES-01: a bell is offered only where the shipping has a mode to write and the option
+			// leaves the feature on. An article is followed with `self`, so its row carries one; a
+			// knowledge base is subscribed with `all` alone and `all` is not shipped, so its row carries
+			// no bell whatever the option says. Read from the policy, so widening the shipping brings the
+			// bell back without touching this component.
+			hasNotifyBell() {
+				return note_ui_documentHistory.hasSubscriptionSurface(this.notifyScope, this.notificationsEnabled);
+			},
+			// A row with nested documents has a depth to choose, so its bell opens the popover of
 			// the editor. Everything else - a document with nothing under it, a knowledge base - is one press.
+			// A depth is a `subtree` row, and while that mode is not shipped there is nothing to choose: the
+			// row takes the plain toggle form the block already has.
 			hasNotifyDepth() {
-				return !this.isCollection && this.item?.hasChildren === true;
+				return !this.isCollection && this.item?.hasChildren === true && note_ui_documentHistory.isShippedSubscriptionMode(note_ui_documentHistory.SUBSCRIPTION_SCOPE_DOCUMENT, note_ui_documentHistory.SUBSCRIPTION_MODE_SUBTREE);
+			},
+			// The state surface the control draws from. The control is presentational and normalizes nothing
+			// itself, so both of its hosts owe it the same shape, already brought to the shipped modes: this
+			// is SubscriptionBellComponent.bellState written over the DTO of the row instead of over the
+			// component's own fields. Handing the raw `notify` over instead would let a row of an unshipped
+			// mode light the bell up here while the activity line reads the very same row as off.
+			bellState() {
+				const notify = this.item?.notify ?? null;
+				const inherited = notify?.inherited === true;
+				return {
+					mode: this.isNotified ? String(notify?.mode || '') : null,
+					subscribed: this.isNotified,
+					muted: this.isMuted,
+					inherited: this.isCovered,
+					inheritedSource: inherited ? String(notify?.inheritedSource || '') : null,
+					inheritedTitle: inherited ? String(notify?.inheritedTitle || '') : ''
+				};
 			},
 			isNotifySaving() {
 				return this.state.favorites.isNotifyPending(this.item.entityType, Number(this.item.entityId));
 			},
-			// [DTO-01] hasChildren is the whole answer about the chevron of a document; a branch already read
+			// hasChildren is the whole answer about the chevron of a document; a branch already read
 			// keeps it after the last child left, so the row can still be closed. A knowledge base carries its
 			// chevron whether it holds anything or not - the row it has in the knowledge-bases block does, and
 			// one base is not to be drawn two ways in one panel.
@@ -2543,7 +2640,7 @@ this.BX.Note = this.BX.Note || {};
 			branchExpandedDocs() {
 				return this.state.favorites.expandedDocsByRow[this.rowScope] ?? {};
 			},
-			// [DTO-01] expandVia: a document seen only through a personal grant lives in the accessible-tree
+			// expandVia: a document seen only through a personal grant lives in the accessible-tree
 			// namespace, and the regular branch action would turn its owner down.
 			isSharedBranch() {
 				return !this.isCollection && this.item?.expandVia === 'accessibleTree';
@@ -2659,12 +2756,15 @@ this.BX.Note = this.BX.Note || {};
 			onClearNotify() {
 				void this.actions.clearFavoriteNotify(this.notifyTarget());
 			},
-			// [AC-045] A document of the branch keeps only what it is allowed to do there: mute what
+			// A document of the branch keeps only what it is allowed to do there: mute what
 			// reaches it and lift that mute. The depth of the subscription above it is not its to change.
 			nestedNotifyState(doc) {
-				if (!this.notificationsEnabled) {
-					// The only source of a bell for a row of the branch: no state, no bell, no room held
-					// for one. Nothing else in tree-node has to know about the flag.
+				// The only source of a bell for a row of the branch: no state, no bell, no room held for one.
+				// Nothing else in tree-node has to know about either gate. MODES-01: what a nested row is
+				// offered is a `muted` row, and while that mode is not shipped its bell would suppress
+				// nothing - read from the shipped map, so returning `muted` to it brings those bells back
+				// by itself.
+				if (!this.notificationsEnabled || !note_ui_documentHistory.isShippedSubscriptionMode(note_ui_documentHistory.SUBSCRIPTION_SCOPE_DOCUMENT, note_ui_documentHistory.SUBSCRIPTION_MODE_MUTED)) {
 					return null;
 				}
 				return this.state.favorites.notifyOf('document', Number(doc?.id));
@@ -2695,7 +2795,7 @@ this.BX.Note = this.BX.Note || {};
 			onToggleNested(doc) {
 				void this.actions.toggleFavoriteExpanded(this.nestedTarget(doc));
 			},
-			// [ERR-005] Read and written under one key: the branch of a nested row fails in this row's scope.
+			// Read and written under one key: the branch of a nested row fails in this row's scope.
 			nestedBranchError(doc) {
 				return this.state.favorites.branchError('document', Number(doc?.id), this.rowScope);
 			},
@@ -2760,13 +2860,14 @@ this.BX.Note = this.BX.Note || {};
 						 block scroll sideways. -->
 				<span class="tree-actions-anchor">
 				<span class="favorite-row__actions">
-					<!-- [P4.T1] Depth to choose - the popover of the editor, one and the same control.
+					<!-- Depth to choose - the popover of the editor, one and the same control.
 							 Nothing to choose - one press. -->
 					<SubscriptionBellView
-						v-if="notificationsEnabled && hasNotifyDepth"
-						:state="item.notify"
+						v-if="hasNotifyBell && hasNotifyDepth"
+						:state="bellState"
 						:is-saving="isNotifySaving"
 						:messages="messages.notifyPopover"
+						test-id="note-sidebar-favorite-notify"
 						trigger-class="favorite-row__btn favorite-row__btn--notify"
 						active-class="is-on"
 						muted-class="is-muted"
@@ -2779,13 +2880,14 @@ this.BX.Note = this.BX.Note || {};
 						@resume="onClearNotify"
 					/>
 					<button
-						v-else-if="notificationsEnabled"
+						v-else-if="hasNotifyBell"
 						type="button"
 						class="favorite-row__btn favorite-row__btn--notify"
 						:class="{ 'is-on': isNotified, 'is-muted': isMuted }"
 						:title="notifyLabel"
 						:aria-label="messages.notifyState"
 						:aria-pressed="isNotified.toString()"
+						data-testid="note-sidebar-favorite-notify"
 						@click.stop="onToggleNotify"
 					>
 						<BIcon :name="notifyIcon" :size="16" />
@@ -2848,7 +2950,7 @@ this.BX.Note = this.BX.Note || {};
 						aria-hidden="true"
 					/>
 				</ul>
-				<!-- [ERR-005] The failure of one branch stays in its own row. An empty branch is not a
+				<!-- The failure of one branch stays in its own row. An empty branch is not a
 						 failure: personal grants can leave a branch with nothing visible in it. -->
 				<div v-if="branchError !== null" class="favorites-empty">
 					{{ branchError }}
@@ -2936,7 +3038,7 @@ this.BX.Note = this.BX.Note || {};
 			return {
 				rowTransition: ROW_TRANSITION,
 				scrollRaf: 0,
-				// [P4.T1] The depth popover of a row is teleported out of the panel (which clips it and
+				// The depth popover of a row is teleported out of the panel (which clips it and
 				// stands in the way of viewport positioning), so it no longer inherits the design-system
 				// context of the application - the block carries the class for it, one subscription for
 				// every row instead of one per row.
@@ -2976,10 +3078,16 @@ this.BX.Note = this.BX.Note || {};
 			notifyFilter() {
 				return this.state.favorites.onlyNotified;
 			},
-			// Hiding the filter cannot strand the list in a filtered state: onlyNotified is held in the
-			// store for the life of the page, so the next load starts unfiltered.
+			// Bootstrap flag off the sidebar root state - the same value the rows of the block read.
 			notificationsEnabled() {
 				return this.state.notificationsEnabled === true;
+			},
+			// The filter shows the rows delivery reaches, and only an article followed with `self` is such
+			// a row today - and only while the notifications option is on. Hiding the filter cannot strand
+			// the list in a filtered state: onlyNotified is held in the store for the life of the page, so
+			// the next load starts unfiltered.
+			hasNotifyFilter() {
+				return note_ui_documentHistory.hasSubscriptionSurface(note_ui_documentHistory.SUBSCRIPTION_SCOPE_DOCUMENT, this.notificationsEnabled);
 			},
 			loadError() {
 				return this.state.favorites.error;
@@ -3135,7 +3243,7 @@ this.BX.Note = this.BX.Note || {};
 						id: parentId
 					};
 					const page = isShared ? this.actions.loadMoreSharedChildren(doc) : this.actions.loadMoreChildren(doc);
-					// [API-06] The next page of a branch arrives without notification states - one request
+					// The next page of a branch arrives without notification states - one request
 					// per page brings them, or the new rows would show no bell where a bell belongs.
 					void Promise.resolve(page).then(() => this.actions.refreshFavoriteCoverage({
 						collectionId,
@@ -3177,7 +3285,7 @@ this.BX.Note = this.BX.Note || {};
 					/>
 					<span class="sidebar-section-header__title">{{ messages.favorites }}</span>
 				</button>
-				<span v-if="notificationsEnabled" class="sidebar-section-header__filter">
+				<span v-if="hasNotifyFilter" class="sidebar-section-header__filter">
 					<button
 						type="button"
 						:class="filterClass"
@@ -5091,7 +5199,7 @@ this.BX.Note = this.BX.Note || {};
 		favoriteActions = {}
 	}) {
 		return {
-			// [TPL-02] The favorites block and all three stars go through the store, nothing else.
+			// The favorites block and all three stars go through the store, nothing else.
 			...favoriteActions,
 			canEditCollection: collection => collectionUseCases.canEditCollection(collection),
 			canManageCollectionPermissions: collection => collectionUseCases.canManageCollectionPermissions(collection),
@@ -5156,7 +5264,7 @@ this.BX.Note = this.BX.Note || {};
 			setSidebarCollapsed: collapsed => setSidebarCollapsed(collapsed),
 			toggleSidebarCollapsed: () => toggleSidebarCollapsed(),
 			saveSidebarState: payload => saveSidebarState(payload),
-			// [ALG-01] The only way the shell flips the rail panel state — mutation goes through
+			// The only way the shell flips the rail panel state - mutation goes through
 			// actions everywhere in the module.
 			setAiChatOpen: open => setAiChatOpen(open),
 			navigateToSearch: query => {
@@ -5469,6 +5577,8 @@ this.BX.Note = this.BX.Note || {};
 	const NoteEvent = {
 		DOCUMENT_RENAMED: 'Note:documentRenamed',
 		COLLECTION_RENAMED: 'Note:collectionRenamed',
+		// Payload: `{ collectionId, status: 'started' | 'cancelled' }`.
+		COLLECTION_DELETION_STARTED: 'Note:collectionDeletionStarted',
 		DOCUMENT_CHILDREN_CHANGED: 'Note:documentChildrenChanged',
 		DOCUMENTS_BULK_RESTORED: 'Note:documentsBulkRestored',
 		// Workspace → sidebar: a bulk archive/delete/move ran on the current page. The
@@ -5495,16 +5605,16 @@ this.BX.Note = this.BX.Note || {};
 		// within the frame of the press, so the flag travels locally first.
 		// Payload: `{ entityType, entityId, isFavorite }`.
 		FAVORITE_CHANGED: 'Note:favoriteChanged',
-		// [EVENT-01] The only public way in and out of the BitrixGPT panel. Payload
+		// The only public way in and out of the BitrixGPT panel. Payload
 		// `{ desired?: 'open' | 'close' }`; without `desired` the shell toggles the current state. The
 		// single listener is the note.app shell, which owns that state.
 		AI_CHAT_TOGGLE_REQUESTED: 'Note:aiChatToggleRequested',
-		// [EVENT-02] Who occupies the right rail: `{ owner: NoteRailOwner | null }`. Every resident
+		// Who occupies the right rail: `{ owner: NoteRailOwner | null }`. Every resident
 		// announces itself, and anyone seeing a foreign owner collapses.
 		RAIL_OCCUPANCY_CHANGED: 'Note:railOccupancyChanged'
 	};
 
-	// [EVENT-02] The three residents of the single right rail. The chat belongs to the app shell, the
+	// The three residents of the single right rail. The chat belongs to the app shell, the
 	// other two to the document page — the vocabulary lives here, next to the event, rather than with
 	// either side.
 	const NoteRailOwner = Object.freeze({
@@ -6039,7 +6149,7 @@ this.BX.Note = this.BX.Note || {};
 
 	// [P3] Manual order of the favorites block, built on the same HTML5 drag events as the knowledge
 	// base list. Geometry only: the order itself belongs to the store, which owns the list and answers
-	// to the server (AC-072). Rows are addressed by the id of the favorites row, the same key the
+	// to the server. Rows are addressed by the id of the favorites row, the same key the
 	// server uses in affectedPositions.
 	class FavoriteDndService {
 		#dragState;
@@ -6145,7 +6255,7 @@ this.BX.Note = this.BX.Note || {};
 				return;
 			}
 
-			// Top-level rows only (AC-032): the rows of an expanded branch are drawn by the tree and take
+			// Top-level rows only: the rows of an expanded branch are drawn by the tree and take
 			// no part in the order of the block. A row of the block is the only thing .favorite-item ever
 			// holds, so this says the same as a child selector without depending on how deep inside the
 			// scrolling area the items are wrapped.
@@ -6942,6 +7052,74 @@ this.BX.Note = this.BX.Note || {};
 			}
 			return Boolean(this.#store.queries.findLoadedDocument(normalizedCollectionId, routeDocId));
 		}
+		#getFirstCollectionId(excludedCollectionId) {
+			const collection = this.#store.state.collections.value.find(item => {
+				const collectionId = Number(item?.id);
+				return Number.isInteger(collectionId) && collectionId > 0 && collectionId !== excludedCollectionId;
+			});
+			const collectionId = Number(collection?.id);
+			return Number.isInteger(collectionId) && collectionId > 0 ? collectionId : null;
+		}
+		#isSameCollectionCursor(left, right) {
+			if (left === null || right === null) {
+				return left === right;
+			}
+			return Number(left?.position) === Number(right?.position) && Number(left?.id) === Number(right?.id);
+		}
+		async #resolveNextCollectionId(excludedCollectionId) {
+			let nextCollectionId = this.#getFirstCollectionId(excludedCollectionId);
+			let retried = false;
+			while (nextCollectionId === null && this.#store.state.collectionsHasNextPage.value) {
+				const previousCursor = this.#store.state.collectionsCursor.value;
+				let loaded = false;
+				try {
+					loaded = await this.#store.actions.loadCollections(true);
+				} catch {
+					loaded = false;
+				}
+				if (!loaded) {
+					if (retried) {
+						return {
+							collectionId: null,
+							loadFailed: true
+						};
+					}
+					retried = true;
+					try {
+						loaded = await this.#store.actions.loadCollections(false);
+					} catch {
+						loaded = false;
+					}
+					if (!loaded) {
+						return {
+							collectionId: null,
+							loadFailed: true
+						};
+					}
+					nextCollectionId = this.#getFirstCollectionId(excludedCollectionId);
+					continue;
+				}
+				nextCollectionId = this.#getFirstCollectionId(excludedCollectionId);
+				if (nextCollectionId === null && this.#store.state.collectionsHasNextPage.value && this.#isSameCollectionCursor(previousCursor, this.#store.state.collectionsCursor.value)) {
+					return {
+						collectionId: null,
+						loadFailed: false
+					};
+				}
+			}
+			return {
+				collectionId: nextCollectionId,
+				loadFailed: false
+			};
+		}
+		#emitCollectionDeletionStatus(collectionId, status) {
+			main_core_events.EventEmitter.emit(NoteEvent.COLLECTION_DELETION_STARTED, new main_core_events.BaseEvent({
+				data: {
+					collectionId,
+					status
+				}
+			}));
+		}
 		async deleteCollection(collection) {
 			if (!this.canManageCollectionPermissions(collection)) {
 				return;
@@ -6950,23 +7128,43 @@ this.BX.Note = this.BX.Note || {};
 			if (!confirmed) {
 				return;
 			}
+			const collectionId = Number(collection.id);
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return;
+			}
+			this.#emitCollectionDeletionStatus(collectionId, 'started');
 			try {
-				const collectionId = Number(collection.id);
 				await this.#api.deleteCollection(collectionId);
-				const shouldLeaveDocumentPage = this.#isRouteDocumentInCollection(collectionId);
+			} catch (error) {
+				this.#emitCollectionDeletionStatus(collectionId, 'cancelled');
+				this.#onFail(error);
+				return;
+			}
+			const {
+				collectionId: nextCollectionId,
+				loadFailed
+			} = await this.#resolveNextCollectionId(collectionId);
+			if (loadFailed) {
 				this.#store.actions.removeCollectionLocal(collectionId);
 				delete this.#uiState.expandedCollections[collectionId];
-				if (collectionId === this.#store.state.selectedCollectionId.value) {
-					this.#store.actions.clearSelection();
-				}
-				if (shouldLeaveDocumentPage) {
-					await this.#router?.replace({
-						name: this.#homeRouteName
-					});
-				}
-			} catch (error) {
-				this.#onFail(error);
+				this.#onFail(new Error('Collections loading failed'));
+				return true;
 			}
+			if (nextCollectionId !== null) {
+				await this.#router?.replace({
+					name: this.#workspaceRouteName,
+					params: {
+						id: String(nextCollectionId)
+					}
+				});
+			} else {
+				await this.#router?.replace({
+					name: this.#homeRouteName
+				});
+			}
+			this.#store.actions.removeCollectionLocal(collectionId);
+			delete this.#uiState.expandedCollections[collectionId];
+			return true;
 		}
 		async archiveCollection(collection) {
 			if (!this.canManageCollectionPermissions(collection)) {
@@ -6996,6 +7194,14 @@ this.BX.Note = this.BX.Note || {};
 		}
 	}
 
+	// A collection born in the picker has no permission dialog behind it: the creator ends up its sole
+	// moderator, so the composition is fixed and known before the request leaves.
+	const PICKER_CREATE_STATS = {
+		admin: 1,
+		reductorsCount: 0,
+		viewersCount: 0,
+		customCount: 0
+	};
 	function openPickCollectionPopup(options) {
 		const api = options?.api;
 		const store = options?.store;
@@ -7014,6 +7220,7 @@ this.BX.Note = this.BX.Note || {};
 					const created = await api.createCollection(name);
 					const id = Number(created?.id);
 					if (!Number.isInteger(id) || id <= 0) {
+						note_analytics.NoteAnalytics.collectionCreated(PICKER_CREATE_STATS, false);
 						return null;
 					}
 					const collectionName = String(created?.name || name);
@@ -7027,11 +7234,13 @@ this.BX.Note = this.BX.Note || {};
 							canManagePermissions: true
 						});
 					}
+					note_analytics.NoteAnalytics.collectionCreated(PICKER_CREATE_STATS, true);
 					return {
 						id,
 						title: collectionName
 					};
 				} catch (error) {
+					note_analytics.NoteAnalytics.collectionCreated(PICKER_CREATE_STATS, false);
 					onFail(error);
 					return null;
 				}
@@ -8173,7 +8382,7 @@ this.BX.Note = this.BX.Note || {};
 			void this.#refetchExpandedBranches(expandedCandidates);
 		}
 
-		// [P2.T3 / EVENT-01] Pull cascade of a document-level ACL change. Arrives on the personal
+		// Pull cascade of a document-level ACL change. Arrives on the personal
 		// channel (the receiver has no collection VIEW, so no NOTE_COLLECTION_* watch). A collapsed
 		// section only marks itself stale — the refetch is deferred to the next expand (lazy). Both
 		// the documentIds and requestRefetch shapes reload just the section, never the whole sidebar:
@@ -8363,7 +8572,7 @@ this.BX.Note = this.BX.Note || {};
 			void this.loadSharedTree(false);
 		}
 
-		// [EVENT-01] An access change lands on a subtree, not on a page: a descendant can lose the grant
+		// An access change lands on a subtree, not on a page: a descendant can lose the grant
 		// it was held by while its parent keeps one of its own. The page re-reads branch ROOTS and drops
 		// only the branches it re-reads, so every nested branch stayed hydrated and kept showing a child
 		// whose access had just been taken away - here, and in the favorites block, which draws its
@@ -8749,8 +8958,10 @@ this.BX.Note = this.BX.Note || {};
 				this.#state.collections.value = this.#mergeCollections(this.#state.collections.value, response.items);
 				this.#state.collectionsCursor.value = response.nextCursor;
 				this.#state.collectionsHasNextPage.value = response.hasNextPage;
+				return true;
 			} catch (error) {
 				this.#setError(error?.message || 'Collections loading failed');
+				return false;
 			} finally {
 				this.#state.collectionsLoading.value = false;
 			}
@@ -9474,7 +9685,7 @@ this.BX.Note = this.BX.Note || {};
 	// and every bell under it changes with them.
 	const COVERING_MODES = ['subtree', 'all'];
 	const MODE_MUTED = 'muted';
-	// [API-05] The one refusal the interface is not supposed to be able to reach: the target left the
+	// The one refusal the interface is not supposed to be able to reach: the target left the
 	// list between the read and the press. The state is re-read rather than guessed at.
 	const FAVORITE_REQUIRED_ERROR = 'FAVORITE_REQUIRED';
 	const EMPTY_NOTIFY = Object.freeze({
@@ -9485,6 +9696,25 @@ this.BX.Note = this.BX.Note || {};
 		inheritedSource: null,
 		notified: false
 	});
+
+	// Where a write of the direct row leads, computed rather than re-read: the write is optimistic and
+	// the row has to be right on the frame of the press.
+	//
+	// MODES-01: `notified` is the predicate of the notification filter and says only what the transport
+	// delivers - a direct row in a mode the shipping holds for this scope. Coverage from above is not
+	// touched by a row of one's own, so `inherited` carries over as it was, and it no longer counts
+	// towards `notified`: nothing is delivered through inheritance. Read from the same map the server
+	// reads its own list from, so the server's answer to the very same press agrees with this.
+	function nextNotifyState(scope, current, mode) {
+		const base = current ?? EMPTY_NOTIFY;
+		return {
+			...base,
+			mode: mode ?? null,
+			subscribed: POSITIVE_MODES.includes(mode),
+			muted: mode === MODE_MUTED,
+			notified: note_ui_documentHistory.isShippedSubscriptionMode(scope, mode)
+		};
+	}
 
 	// [P1] Favorites block: the whole list lives on the server, so every gesture goes through here -
 	// the components own no state of their own. Reads come back through the store (state + queries).
@@ -9506,7 +9736,7 @@ this.BX.Note = this.BX.Note || {};
 		#inheritanceRefreshQueued = false;
 		#announcingNotify = false;
 		#announcingFavorite = false;
-		// [TPL-02] Rows the notification filter took off the screen, held on to so that switching it back
+		// Rows the notification filter took off the screen, held on to so that switching it back
 		// off can put them back within the frame of the press instead of after a round trip. Kept level with
 		// the block while it is on (see #putRow, #dropRow), and the server page that follows the switch
 		// replaces the list outright anyway - so anything that went stale out of our sight is corrected a
@@ -9566,7 +9796,7 @@ this.BX.Note = this.BX.Note || {};
 			return true;
 		}
 
-		// [TPL-02] First page taken from the payload the page was rendered with, instead of a request of
+		// First page taken from the payload the page was rendered with, instead of a request of
 		// its own - the block is painted together with the knowledge bases, which arrive the same way.
 		// Answers whether it had anything to take: without a payload the caller reads the page itself.
 		hydrateFavorites(payload) {
@@ -9590,7 +9820,7 @@ this.BX.Note = this.BX.Note || {};
 			return true;
 		}
 
-		// [TPL-02] First read and every following page: which of the two it is follows from the state,
+		// First read and every following page: which of the two it is follows from the state,
 		// so the caller (a scroll sentinel, the block on mount) never has to decide.
 		async loadFavoritesPage() {
 			if (this.#state.favoritesStale.value || !this.#state.favoritesHydrated.value) {
@@ -9602,7 +9832,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [ERR-006] Second attempt at whatever failed: the next page keeps the rows already loaded, the
+		// Second attempt at whatever failed: the next page keeps the rows already loaded, the
 		// first page is re-read from scratch.
 		async retryFavorites() {
 			if (this.#state.favoritesErrorOnAppend.value) {
@@ -9651,7 +9881,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#state.favoritesSectionExpanded.value = !this.#state.favoritesSectionExpanded.value;
 		}
 
-		// [TPL-02] The filter is a request parameter, not a client-side sieve: filtering on the client would
+		// The filter is a request parameter, not a client-side sieve: filtering on the client would
 		// hand out pages with holes in them and break the cursor. Both directions of the press are answered
 		// here all the same, in the frame of the press: the rows on screen carry the same `notified` the
 		// server filters by, so switching it on drops what it excludes, and what was dropped is kept, so
@@ -9683,7 +9913,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [TPL-02] The single path in and out of the list, shared by all three stars. `hint` is what the
+		// The single path in and out of the list, shared by all three stars. `hint` is what the
 		// caller knows about the object it starred, so the row can be drawn within the frame of the press
 		// instead of after a re-read (see #provisionalRow).
 		async toggleFavorite(target, hint = null) {
@@ -9712,7 +9942,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [ALG-02] (NORMATIVE) Expansion of a block row. The flag goes into the block's own space, the
+		// (NORMATIVE) Expansion of a block row. The flag goes into the block's own space, the
 		// branch comes from the namespace the server named in expandVia: the regular branch action would
 		// turn a user down for a document they see only through a personal grant.
 		async toggleFavoriteExpanded(item) {
@@ -9734,7 +9964,7 @@ this.BX.Note = this.BX.Note || {};
 			await this.#loadFavoriteBranch(target, key);
 		}
 
-		// [ERR-005] Second attempt at a branch, offered inside the row that failed.
+		// Second attempt at a branch, offered inside the row that failed.
 		async retryFavoriteBranch(item) {
 			const target = this.#normalizeExpandTarget(item);
 			if (target === null) {
@@ -9766,7 +9996,7 @@ this.BX.Note = this.BX.Note || {};
 			await this.refreshFavoriteCoverage(branch);
 		}
 
-		// [ALG-02] The branches of the block are not its own copies - they are read from the two document
+		// The branches of the block are not its own copies - they are read from the two document
 		// namespaces of the panel. When one of those namespaces drops a branch (the accessible-tree section
 		// re-reading its first page, an access cascade), every row of the block standing open on it reads it
 		// again. Without this the row kept its chevron open over nothing until the same branch happened to
@@ -9819,7 +10049,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [AC-052] A subscription on a knowledge base covers every document in it, and a subtree subscription
+		// A subscription on a knowledge base covers every document in it, and a subtree subscription
 		// everything below itself - so a write of that kind changes the state of rows it never touched. Their
 		// coverage is the server's answer, not something derivable here: the list is re-read and every opened
 		// branch re-reads its states. Without this the bells of the descendants keep the coverage that has
@@ -9857,7 +10087,7 @@ this.BX.Note = this.BX.Note || {};
 			return COVERING_MODES.includes(previousMode) || COVERING_MODES.includes(nextMode);
 		}
 
-		// [API-06] Coverage of the documents of one branch: one request per branch, never one per row.
+		// Coverage of the documents of one branch: one request per branch, never one per row.
 		// Called on expansion and on every following page of the branch - a page that arrives without
 		// states would draw rows with no bell where a bell belongs.
 		async refreshFavoriteCoverage(params) {
@@ -9913,50 +10143,66 @@ this.BX.Note = this.BX.Note || {};
 			return Array.isArray(docs) ? docs : [];
 		}
 
-		// [API-05] One press of a bell that has no depth to choose: a covered object is muted, a muted one
+		// One press of a bell that has no depth to choose: a covered object is muted, a muted one
 		// resumes, a subscribed one goes silent, and an object in the list with nothing arriving subscribes.
 		// The same rule the bell of the editor follows.
+		//
+		// MODES-01: every branch that leans on a mode outside the shipping stands behind the map, so in the
+		// shipping the press comes down to a pair - a shipped subscription goes off, anything else goes on.
+		// The branches themselves stay in working order: returning a mode to the map is all it takes.
 		async toggleFavoriteNotify(target) {
 			const normalized = this.#normalizeTarget(target);
 			if (normalized === null) {
 				return;
 			}
 			const current = this.#notifyStateOf(normalized.entityType, normalized.entityId);
+			const canMute = note_ui_documentHistory.isShippedSubscriptionMode(normalized.entityType, MODE_MUTED);
 			// A mute counts only while there is coverage to suppress. The negative row survives the covering
 			// subscription being switched off, and treating that leftover as "muted" would spend the press on
 			// deleting a row nothing depends on - the bell would look unresponsive.
-			const isMuted = current?.muted === true && current?.inherited === true;
-			if (isMuted || current?.subscribed === true) {
+			const isMuted = canMute && current?.muted === true && current?.inherited === true;
+			// Q-1: only a row in a shipped mode is a subscription to switch off. A legacy row of another mode
+			// is shown as off (see FavoriteRow.isNotified), so the press has to write rather than delete -
+			// set() upserts, and the row repairs itself into the shipped mode.
+			const isSubscribed = current?.subscribed === true && note_ui_documentHistory.isShippedSubscriptionMode(normalized.entityType, current?.mode);
+			if (isMuted || isSubscribed) {
 				await this.clearFavoriteNotify(normalized);
 				return;
 			}
-			if (current?.inherited === true) {
-				// [AC-045] Outside the list only muting is on offer, and muting is what a covered object
-				// gets here too: the depth of the covering subscription is not this row's to change (AC-052).
+			if (canMute && current?.inherited === true) {
+				// Outside the list only muting is on offer, and muting is what a covered object
+				// gets here too: the depth of the covering subscription is not this row's to change.
 				await this.setFavoriteNotify(normalized, MODE_MUTED);
 				return;
 			}
-			await this.setFavoriteNotify(normalized, normalized.entityType === 'collection' ? 'all' : 'self');
+			const mode = this.#shippedModeOf(normalized.entityType);
+			if (mode === null) {
+				// Nothing to write: a knowledge base is subscribed with `all` alone, and `all` is not shipped.
+				// Its row carries no bell either, so this is unreachable from the interface - it only keeps the
+				// action honest for a caller that has one.
+				return;
+			}
+			await this.setFavoriteNotify(normalized, mode);
 		}
 
-		// [API-05] Explicit depth, chosen in the popover of a row with nested documents.
+		// Explicit depth, chosen in the popover of a row with nested documents.
 		async setFavoriteNotify(target, mode) {
 			await this.#writeNotify(target, mode);
 		}
 
-		// [API-05] "Off" for a direct subscription and "resume" for a muted object are the same call.
+		// "Off" for a direct subscription and "resume" for a muted object are the same call.
 		async clearFavoriteNotify(target) {
 			await this.#writeNotify(target, null);
 		}
 
-		// [EVENT-02] subscriptionSet. Idempotent: the initiator is not excluded from the broadcast, so
+		// subscriptionSet. Idempotent: the initiator is not excluded from the broadcast, so
 		// this lands on top of the change it describes. Objects the sidebar knows nothing about are
 		// skipped - inventing a state for them would light a bell on a row nobody asked about.
 		applySubscriptionSet(params) {
 			this.#applyRemoteMode(params, this.#normalizeMode(params?.mode));
 		}
 
-		// [EVENT-02] subscriptionRemove. Also arrives from the cascade of a star being taken off, and the
+		// subscriptionRemove. Also arrives from the cascade of a star being taken off, and the
 		// handler makes no distinction: the row is gone either way.
 		applySubscriptionRemove(params) {
 			this.#applyRemoteMode(params, null);
@@ -9984,7 +10230,7 @@ this.BX.Note = this.BX.Note || {};
 			// the block already holds the mode being announced - re-reading everything again would cost a
 			// second reload of the list per press. A mode that differs is news, and news is followed.
 			const isKnown = (current.mode ?? null) === mode;
-			this.#patchNotify(target, this.#nextNotifyState(current, mode));
+			this.#patchNotify(target, nextNotifyState(target.entityType, current, mode));
 			if (covers && !isKnown) {
 				void this.#refreshInheritance();
 			}
@@ -10002,7 +10248,7 @@ this.BX.Note = this.BX.Note || {};
 			// Optimistic: the state a successful call leads to follows from DTO-02 alone - a direct row
 			// never changes the coverage an object gets from above - so nothing has to be re-read.
 			const previous = this.#notifyStateOf(normalized.entityType, normalized.entityId);
-			this.#patchNotify(normalized, this.#nextNotifyState(previous, mode));
+			this.#patchNotify(normalized, nextNotifyState(normalized.entityType, previous, mode));
 			this.#state.favoritesNotifyPending[key] = true;
 			try {
 				await (mode === null ? this.#api.removeSubscription(normalized) : this.#api.setSubscription(normalized, mode));
@@ -10015,7 +10261,7 @@ this.BX.Note = this.BX.Note || {};
 				// for exactly this one instead of the push.
 				this.#announceNotify(normalized, this.#notifyStateOf(normalized.entityType, normalized.entityId), true);
 			} catch (error) {
-				// [ERR-003] The failed change goes back to what it was and the composition of the list is
+				// The failed change goes back to what it was and the composition of the list is
 				// untouched: notifications and membership are separate things.
 				this.#patchNotify(normalized, previous);
 				if (String(error?.code || '') === FAVORITE_REQUIRED_ERROR) {
@@ -10027,21 +10273,6 @@ this.BX.Note = this.BX.Note || {};
 			} finally {
 				delete this.#state.favoritesNotifyPending[key];
 			}
-		}
-
-		// [DTO-02] Where a write of the direct row leads. `notified` is the predicate of the filter, and
-		// coverage from above is not touched by a row of one's own - so it carries over as it was.
-		#nextNotifyState(current, mode) {
-			const base = current ?? EMPTY_NOTIFY;
-			const subscribed = POSITIVE_MODES.includes(mode);
-			const muted = mode === MODE_MUTED;
-			return {
-				...base,
-				mode: mode ?? null,
-				subscribed,
-				muted,
-				notified: (subscribed || base.inherited === true) && !muted
-			};
 		}
 
 		// Both surfaces of the same state: the row of the block and the coverage map its branch reads.
@@ -10065,7 +10296,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [DTO-02] One announcement of a notification state over the local bus. `confirmed` says whether the
+		// One announcement of a notification state over the local bus. `confirmed` says whether the
 		// server has already accepted the change: a listener that has to re-read something (coverage from
 		// above) can only trust the confirmed one.
 		#announceNotify(target, notify, confirmed) {
@@ -10129,8 +10360,14 @@ this.BX.Note = this.BX.Note || {};
 			return [...POSITIVE_MODES, MODE_MUTED].includes(mode) ? mode : null;
 		}
 
+		// The mode one press writes for the scope: the first the shipping holds, the same rule the bell of
+		// the editor follows for its own toggle. Absent - the scope ships no subscription at all.
+		#shippedModeOf(entityType) {
+			return note_ui_documentHistory.SHIPPED_SUBSCRIPTION_MODES[entityType]?.[0] ?? null;
+		}
+
 		// The branch loaders answer with state rather than by throwing: a branch that is still not there
-		// after the read is the failure, and an empty one that did arrive is a valid answer (AC-035).
+		// after the read is the failure, and an empty one that did arrive is a valid answer.
 		#reportBranchResult(key, isLoaded) {
 			if (isLoaded) {
 				return;
@@ -10151,7 +10388,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [EVENT-01] favoriteAdd. Idempotent by contract: the initiator is not excluded from the
+		// favoriteAdd. Idempotent by contract: the initiator is not excluded from the
 		// broadcast, so this lands on top of the optimistic change it describes.
 		async applyFavoriteAdd(params) {
 			const target = this.#normalizeTarget(params);
@@ -10161,7 +10398,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#setIndex(target, true);
 			this.#applyPositions(params?.affectedPositions);
 
-			// [EVENT-01] The push carries the finished row, in the same shape a page of the list does - so a
+			// The push carries the finished row, in the same shape a page of the list does - so a
 			// row the block has never seen goes in from here, and one it holds (the provisional row of a press
 			// of our own) is replaced by it.
 			const item = this.#api.normalizeFavoriteItem(params?.item);
@@ -10184,7 +10421,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [EVENT-01] favoriteRemove.
+		// favoriteRemove.
 		applyFavoriteRemove(params) {
 			const target = this.#normalizeTarget(params);
 			if (target === null) {
@@ -10194,7 +10431,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#dropRow(target);
 		}
 
-		// [EVENT-01] favoriteMove. Mass renumbering arrives as requestRefetch instead of positions.
+		// favoriteMove. Mass renumbering arrives as requestRefetch instead of positions.
 		async applyFavoriteMove(params) {
 			if (params?.requestRefetch === true) {
 				await this.reloadFavorites();
@@ -10217,9 +10454,9 @@ this.BX.Note = this.BX.Note || {};
 			this.#applyServerPosition(target, params);
 		}
 
-		// [API-03] Manual order. The gap comes from the drag as a pair of row ids; the order moves at once
+		// Manual order. The gap comes from the drag as a pair of row ids; the order moves at once
 		// and is then overwritten by what the server confirmed - two sessions reordering the same list can
-		// only converge on the server's answer (AC-072).
+		// only converge on the server's answer.
 		async moveFavoriteRow(dragId, targetId, placement) {
 			const rows = this.#state.favorites.value;
 			const dragRow = rows.find(row => Number(row.id) === Number(dragId)) ?? null;
@@ -10232,7 +10469,7 @@ this.BX.Note = this.BX.Note || {};
 				return;
 			}
 
-			// [ERR-007] The position the server last confirmed for this row. Putting that one value back is
+			// The position the server last confirmed for this row. Putting that one value back is
 			// what returns the order - and unlike a snapshot of the whole list it cannot resurrect a row
 			// that left the block while the request was in flight.
 			const confirmedPosition = Number(dragRow.position);
@@ -10266,7 +10503,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#refreshCursorFromTail();
 		}
 
-		// [API-04] The cursor is the position of the last loaded row, and reordering moves it: left as it
+		// The cursor is the position of the last loaded row, and reordering moves it: left as it
 		// was, the next page would be asked for from a place no row stands in any more.
 		#refreshCursorFromTail() {
 			if (this.#state.favoritesCursor.value === null) {
@@ -10286,7 +10523,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [API-03] The ordinal number of the insertion point in the list, counted without the row being
+		// The ordinal number of the insertion point in the list, counted without the row being
 		// moved: 1 is the first row. The client never computes a POSITION of its own.
 		#insertPositionOf(dragRow, targetRow, placement) {
 			const ids = this.#state.favorites.value.map(row => Number(row.id)).filter(id => id !== Number(dragRow.id));
@@ -10402,7 +10639,7 @@ this.BX.Note = this.BX.Note || {};
 			return true;
 		}
 
-		// [DTO-01] One finished row into the block, in place of whatever stood under its key. Under the
+		// One finished row into the block, in place of whatever stood under its key. Under the
 		// notification filter a row that nothing reaches has no place on screen.
 		#putRow(row) {
 			const target = this.#normalizeTarget(row);
@@ -10452,7 +10689,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.#sort([...visible, ...restored]);
 		}
 
-		// [TPL-02] The filter is a request parameter, so a row that arrives from anywhere but a page of the
+		// The filter is a request parameter, so a row that arrives from anywhere but a page of the
 		// list has to be held to it here.
 		#passesFilter(row) {
 			return this.#state.favoritesOnlyNotified.value !== true || row?.notify?.notified === true;
@@ -10464,7 +10701,7 @@ this.BX.Note = this.BX.Note || {};
 			return rows.length > 0 ? Number(rows[0].position) || 0 : 0;
 		}
 
-		// [ALG-01] Removal.
+		// Removal.
 		async #removeFavorite(target) {
 			const snapshot = this.#snapshotOf(target);
 			this.#setIndex(target, false);
@@ -10528,7 +10765,7 @@ this.BX.Note = this.BX.Note || {};
 				}
 				this.#reapplyUnanswered();
 			} catch (error) {
-				// [ERR-004] The failure stays inside the block: the rest of the sidebar is untouched and
+				// The failure stays inside the block: the rest of the sidebar is untouched and
 				// the block itself offers a retry.
 				this.#state.favoritesError.value = this.#messages.favoritesLoadError || error?.message || '';
 				this.#state.favoritesErrorOnAppend.value = append;
@@ -10652,7 +10889,7 @@ this.BX.Note = this.BX.Note || {};
 				return;
 			}
 
-			// [DTO-01] The sender that has the server's answer reports the finished row with it, so the block
+			// The sender that has the server's answer reports the finished row with it, so the block
 			// completes the row it drew on the press without a read of its own and without waiting for pull.
 			const item = this.#api.normalizeFavoriteItem(params?.item);
 			if (item !== null) {
@@ -10742,7 +10979,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.#sort(merged);
 		}
 
-		// [API-04] Server order: POSITION DESC, ID DESC.
+		// Server order: POSITION DESC, ID DESC.
 		#sort(rows) {
 			return [...rows].sort((left, right) => {
 				const leftPosition = Number(left?.position || 0);
@@ -10817,6 +11054,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#state.globalPermissions.canEditGlobalPermissions = normalized.canEditGlobalPermissions;
 			this.#state.globalPermissions.canImport = normalized.canImport;
 			this.#state.globalPermissions.canImportWiki = normalized.canImportWiki;
+			this.#state.globalPermissions.canImportLanding = normalized.canImportLanding;
 			this.#state.globalPermissions.hasManageableCollection = normalized.hasManageableCollection;
 		}
 		#hydrateBranches(rawBranches, fallbackCollectionId) {
@@ -10929,6 +11167,7 @@ this.BX.Note = this.BX.Note || {};
 					canEditGlobalPermissions: false,
 					canImport: false,
 					canImportWiki: false,
+					canImportLanding: false,
 					hasManageableCollection: false
 				};
 			}
@@ -10937,6 +11176,7 @@ this.BX.Note = this.BX.Note || {};
 				canEditGlobalPermissions: Boolean(rawPermissions.canEditGlobalPermissions),
 				canImport: Boolean(rawPermissions.canImport),
 				canImportWiki: Boolean(rawPermissions.canImportWiki),
+				canImportLanding: Boolean(rawPermissions.canImportLanding),
 				hasManageableCollection: Boolean(rawPermissions.hasManageableCollection)
 			};
 		}
@@ -10950,6 +11190,7 @@ this.BX.Note = this.BX.Note || {};
 		DOCUMENT_RESTORE: 'documentRestore',
 		DOCUMENT_DELETE: 'documentDelete',
 		DOCUMENT_HARD_DELETE: 'documentHardDelete',
+		DOCUMENT_MENTION_TARGET_CHANGED: 'documentMentionTargetChanged',
 		COLLECTION_CREATE: 'collectionCreate',
 		COLLECTION_UPDATE: 'collectionUpdate',
 		COLLECTION_MOVE: 'collectionMove',
@@ -10959,11 +11200,11 @@ this.BX.Note = this.BX.Note || {};
 		COLLECTION_CAPABILITIES: 'collectionCapabilities',
 		COLLECTION_LIST_INVALIDATED: 'collectionListInvalidated',
 		DOCUMENT_ACCESS_CASCADE: 'documentAccessCascade',
-		// [EVENT-01] Personal channel: the composition of the favorites block.
+		// Personal channel: the composition of the favorites block.
 		FAVORITE_ADD: 'favoriteAdd',
 		FAVORITE_REMOVE: 'favoriteRemove',
 		FAVORITE_MOVE: 'favoriteMove',
-		// [EVENT-02] Personal channel: the notification state of an object of the block.
+		// Personal channel: the notification state of an object of the block.
 		SUBSCRIPTION_SET: 'subscriptionSet',
 		SUBSCRIPTION_REMOVE: 'subscriptionRemove'
 	});
@@ -11277,7 +11518,7 @@ this.BX.Note = this.BX.Note || {};
 			return collections.find(collection => Number(collection.id) === normalizedId) || null;
 		}
 
-		// [TPL-02] The star of any row. Two sources feed the answer: the index the block keeps (loaded
+		// The star of any row. Two sources feed the answer: the index the block keeps (loaded
 		// pages, optimistic toggles, pull events) and, for objects no loaded page mentions, the isFavorite
 		// flag the server puts on the entity itself (TPL-01). The index wins - it is the fresher of the two.
 		isFavorite(entityType, entityId) {
@@ -11300,7 +11541,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.#state.favoritesExpanded[favoriteExpandKey(entityType, entityId)] === true;
 		}
 
-		// [DTO-02] Notification state of one object. A row of the block answers from the list it came
+		// Notification state of one object. A row of the block answers from the list it came
 		// with; a document nested in an opened branch answers from the coverage map (API-06). Objects
 		// neither the list nor an opened branch mentions have no state - and no bell.
 		favoriteNotify(entityType, entityId) {
@@ -11318,7 +11559,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.#state.favoritesNotifyPending[favoriteKey(entityType, Number(entityId))] === true;
 		}
 
-		// [ERR-005] The failure of a branch belongs to the PLACE that opened it, so it is asked for by the
+		// The failure of a branch belongs to the PLACE that opened it, so it is asked for by the
 		// same key the loader wrote it under - scope included (see favoriteExpandKey). Asked without the
 		// scope, the failure of a nested branch was never found and its row stood open over nothing.
 		favoriteBranchError(entityType, entityId, scope = '') {
@@ -11386,6 +11627,7 @@ this.BX.Note = this.BX.Note || {};
 				canEditGlobalPermissions: false,
 				canImport: false,
 				canImportWiki: false,
+				canImportLanding: false,
 				hasManageableCollection: false
 			});
 			this.selectedCollectionId = ui_vue3.ref(null);
@@ -11448,10 +11690,10 @@ this.BX.Note = this.BX.Note || {};
 			this.favoritesStaleToken = 0;
 			this.favoritesHasNextPage = ui_vue3.ref(false);
 			this.favoritesCursor = ui_vue3.ref(null);
-			// Server-side filter of the block. Deliberately not persisted (AC-059).
+			// Server-side filter of the block. Deliberately not persisted.
 			this.favoritesOnlyNotified = ui_vue3.ref(false);
 			this.favoritesError = ui_vue3.ref(null);
-			// [ERR-006] Which read failed. A failed next page is retried as a next page: re-reading the
+			// Which read failed. A failed next page is retried as a next page: re-reading the
 			// first one would throw away the rows already on screen and put the user back at the top.
 			this.favoritesErrorOnAppend = ui_vue3.ref(false);
 			// Stars ask this index, keyed `entityType:entityId`, because they also live on objects that are
@@ -11463,13 +11705,13 @@ this.BX.Note = this.BX.Note || {};
 			this.favoritesRequest = null;
 
 			// [P2] Expansion space of the block, same keys. Deliberately separate from expandedDocs: the
-			// same document may be open here and closed in the tree (AC-040). Only the flags are separate -
+			// same document may be open here and closed in the tree. Only the flags are separate -
 			// the branches themselves are read from docsByParent / sharedDocsByParent, so a branch already
 			// loaded for the tree is not loaded again and an edit in the tree shows up here at once.
 			this.favoritesExpanded = ui_vue3.reactive({});
 			// [P4] Coverage states (DTO-02) of the documents inside opened branches of the block, keyed by
 			// document id. Read with API-06 once per branch: the branch responses of the tree carry no
-			// notifications and must not - the tree itself draws no bells (AC-048).
+			// notifications and must not - the tree itself draws no bells.
 			this.favoritesCoverage = ui_vue3.reactive({});
 			// Which branch each opened row reads, keyed the same way as favoritesExpanded:
 			// `{ collectionId, parentId, expandVia }`. A subscription on a knowledge base (or on a subtree)
@@ -11481,7 +11723,7 @@ this.BX.Note = this.BX.Note || {};
 			// first, and the popover of the row disables its options while one is on the wire.
 			this.favoritesNotifyPending = ui_vue3.reactive({});
 			// Branch of a block row that failed to load, same keys. Kept per row so the failure stays
-			// inside the row it belongs to (ERR-005) instead of taking the whole block down.
+			// inside the row it belongs to instead of taking the whole block down.
 			this.favoritesBranchError = ui_vue3.reactive({});
 		}
 	}
@@ -11561,7 +11803,7 @@ this.BX.Note = this.BX.Note || {};
 				messages,
 				notify,
 				isFavorite: bind(queryService, 'isFavorite'),
-				// [ALG-02] The block owns the expansion flags, not the branches: both namespaces are read
+				// The block owns the expansion flags, not the branches: both namespaces are read
 				// through their existing loaders, so a branch is never fetched twice.
 				ensureChildrenLoaded,
 				ensureAccessibleChildrenLoaded: (collectionId, parentId) => accessibleTreeActions.prefetchSharedChildren({
@@ -11570,7 +11812,7 @@ this.BX.Note = this.BX.Note || {};
 				}),
 				isBranchLoaded: bind(queryService, 'isBranchLoaded'),
 				isAccessibleBranchLoaded: bind(accessibleTreeActions, 'isSharedBranchHydrated'),
-				// [API-06] Which documents an opened branch holds - the set whose coverage is asked for.
+				// Which documents an opened branch holds - the set whose coverage is asked for.
 				getBranchDocs: (collectionId, parentId, isShared) => isShared ? accessibleTreeActions.getSharedChildren(collectionId, parentId) : queryService.getChildren(collectionId, parentId),
 				notifyStateOf: bind(queryService, 'favoriteNotify')
 			});
@@ -11681,6 +11923,7 @@ this.BX.Note = this.BX.Note || {};
 				// Nothing left for the trees to do - the document left them when it went to the bin - but the
 				// favorite rows pointing at it are deleted for good at this moment, server-side.
 				[PullCommand.DOCUMENT_HARD_DELETE]: () => favoriteActions.invalidateComposition(),
+				[PullCommand.DOCUMENT_MENTION_TARGET_CHANGED]: () => {},
 				[PullCommand.COLLECTION_CREATE]: applyCollectionCreate,
 				[PullCommand.COLLECTION_UPDATE]: applyCollectionUpdate,
 				[PullCommand.COLLECTION_MOVE]: applyCollectionMove,
@@ -11844,9 +12087,9 @@ this.BX.Note = this.BX.Note || {};
 			createChildDocument: msg('NOTE_SIDEBAR_CREATE_CHILD_DOCUMENT'),
 			delete: msg('NOTE_SIDEBAR_DELETE'),
 			deleteWithNested: msg('NOTE_SIDEBAR_DELETE_WITH_NESTED'),
-			confirmDeleteCollection: msg('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION'),
+			confirmDeleteCollection: msg('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_MSGVER_1'),
 			confirmDeleteCollectionTitle: msg('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_TITLE'),
-			confirmDeleteDocument: msg('NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT'),
+			confirmDeleteDocument: msg('NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_MSGVER_1'),
 			confirmDeleteDocumentTitle: msg('NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_TITLE'),
 			archiveConfirm: msg('NOTE_APP_ARCHIVE'),
 			archiveWithNested: msg('NOTE_SIDEBAR_ARCHIVE_WITH_NESTED'),
@@ -11889,7 +12132,7 @@ this.BX.Note = this.BX.Note || {};
 			favoriteRemoveFailed: msg('NOTE_SIDEBAR_FAVORITE_REMOVE_FAILED'),
 			favoriteMoveFailed: msg('NOTE_SIDEBAR_FAVORITE_MOVE_FAILED'),
 			favoriteNotifyFailed: msg('NOTE_SIDEBAR_FAVORITE_NOTIFY_FAILED'),
-			// [P4.T1] Wording of the depth chooser, taken from the extension that owns the popover - the
+			// Wording of the depth chooser, taken from the extension that owns the popover - the
 			// same phrases the bell of the editor shows, not a second copy of them.
 			notifyPopover: note_ui_documentHistory.createHistoryMessages(),
 			expandCollections: msg('NOTE_SIDEBAR_COLLECTIONS_EXPAND'),
@@ -11926,7 +12169,7 @@ this.BX.Note = this.BX.Note || {};
 			hasManageableCollection: hasManageableCollection.value
 		}));
 
-		// [TPL-02] Everything the favorites block and the stars are allowed to read.
+		// Everything the favorites block and the stars are allowed to read.
 		const favorites = {
 			get items() {
 				return store.state.favorites.value;
@@ -11970,7 +12213,7 @@ this.BX.Note = this.BX.Note || {};
 				return dragState.favoriteTarget;
 			},
 			isExpanded: (entityType, entityId) => store.queries.isFavoriteExpanded(entityType, entityId),
-			// [DTO-02] Notification state of a row of the block or of a document inside one of its branches,
+			// Notification state of a row of the block or of a document inside one of its branches,
 			// and whether a write on it is still on the wire.
 			notifyOf: (entityType, entityId) => store.queries.favoriteNotify(entityType, entityId),
 			isNotifyPending: (entityType, entityId) => store.queries.isFavoriteNotifyPending(entityType, entityId),
@@ -12316,7 +12559,7 @@ this.BX.Note = this.BX.Note || {};
 	// Mirror of SubscriptionController::MAX_STATES_BATCH - the ceiling the endpoint silently trims to.
 	const STATES_BATCH_SIZE = 200;
 
-	// [DTO-01] Cursor and target of the favorites list. entityType is the server's own wording.
+	// Cursor and target of the favorites list. entityType is the server's own wording.
 
 	class SidebarApi {
 		#client;
@@ -12386,7 +12629,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 
-		// [API-03] Pruned tree of documents reachable via document-level grants only (no collection VIEW),
+		// Pruned tree of documents reachable via document-level grants only (no collection VIEW),
 		// grouped by container collection. Flat keyset pagination over the whole accessible set; the
 		// cursor is {collectionId, id}, NOT per-parent — the client rebuilds the hierarchy from parentId.
 		async listAccessibleTree({
@@ -12414,7 +12657,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [API-03b] Direct children of one node of the accessible tree. Separate from listByParent,
+		// Direct children of one node of the accessible tree. Separate from listByParent,
 		// which gates on collection VIEW — a right this section's users do not hold by definition.
 		// The cursor is per-parent {position, id}, exactly like the collection tree's.
 		async listAccessibleChildren(collectionId, parentId, {
@@ -12478,7 +12721,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [API-04] One page of the personal favorites list. The end of the list is nextCursor === null:
+		// One page of the personal favorites list. The end of the list is nextCursor === null:
 		// the server refills a page whose rows the access filter dropped, so a short page is not the end.
 		async listFavorites({
 			limit = PAGE_SIZE,
@@ -12497,7 +12740,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.normalizeFavoritePage(data);
 		}
 
-		// [TPL-02] One mapper for both sources of a page: the list action and the payload the page carries
+		// One mapper for both sources of a page: the list action and the payload the page carries
 		// for the first one. Public because the store hydrates from the second without going through here.
 		normalizeFavoritePage(data) {
 			if (!main_core.Type.isPlainObject(data) || !Array.isArray(data.items)) {
@@ -12515,7 +12758,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [API-01] position is the ordinal of the insertion point (1 - first row); null puts the row first.
+		// position is the ordinal of the insertion point (1 - first row); null puts the row first.
 		// `item` is the finished row, in the shape `list` hands out - null when the object is not visible to
 		// the caller any more (no rights, trashed, deleted), which is the caller's cue to re-read the list.
 		async addFavorite(target, position = null) {
@@ -12546,7 +12789,7 @@ this.BX.Note = this.BX.Note || {};
 			return this.#normalizeFavoriteRow(item);
 		}
 
-		// [API-02] Reports the state that was taken away: the position of the row and its notification depth.
+		// Reports the state that was taken away: the position of the row and its notification depth.
 		async removeFavorite(target) {
 			const data = await this.#client.run('note.infrastructure.FavoriteController.remove', {
 				entityType: target.entityType,
@@ -12561,7 +12804,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [API-03] Reorders one row of the personal list; the response carries the recomputed positions.
+		// Reorders one row of the personal list; the response carries the recomputed positions.
 		async moveFavorite(target, position) {
 			const data = await this.#client.run('note.infrastructure.FavoriteController.move', {
 				entityType: target.entityType,
@@ -12580,7 +12823,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [API-05] Subscription depth. The server invariant refuses a depth on an object that is not in the
+		// Subscription depth. The server invariant refuses a depth on an object that is not in the
 		// favorites list, so the row has to be there first (FAVORITE_REQUIRED).
 		setSubscription(target, mode) {
 			return this.#client.run('note.infrastructure.SubscriptionController.set', {
@@ -12590,7 +12833,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-05] Removes the caller's own subscription row - both "off" and lifting a mute.
+		// Removes the caller's own subscription row - both "off" and lifting a mute.
 		removeSubscription(target) {
 			return this.#client.run('note.infrastructure.SubscriptionController.remove', {
 				scope: target.entityType,
@@ -12598,7 +12841,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-06] Coverage states of the documents of one knowledge base. Documents the user cannot see are
+		// Coverage states of the documents of one knowledge base. Documents the user cannot see are
 		// absent from the answer, so an absent key means "no bell", not "no coverage".
 		//
 		// Asked in batches: the endpoint answers for STATES_BATCH_SIZE ids and drops the rest without saying
@@ -12657,7 +12900,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 
-		// [DTO-02] Coverage state of one row. Absent state reads as "no notifications" - the safe default.
+		// Coverage state of one row. Absent state reads as "no notifications" - the safe default.
 		#normalizeNotifyState(notify) {
 			const source = main_core.Type.isPlainObject(notify) ? notify : {};
 			const inheritedSource = source.inheritedSource === 'subtree' || source.inheritedSource === 'collection' ? source.inheritedSource : null;
@@ -13077,12 +13320,12 @@ this.BX.Note = this.BX.Note || {};
 			sidebarCollapsed: normalizeSidebarCollapsed(sidebarCollapsed),
 			isMobile: Boolean(isMobile),
 			// Bootstrap-level UI feature flags — surfaced on the sidebar root state so the pages that
-			// inject it (document / workspace) can gate their history + notifications affordances.
+			// inject it (document / workspace) can gate their history and notification affordances.
 			historyEnabled: Boolean(historyEnabled),
 			notificationsEnabled: Boolean(notificationsEnabled),
 			renamingDocId: null,
 			renamingCollectionId: null,
-			// [ALG-01] Whether the BitrixGPT rail panel is expanded. Owned by the shell, never by the
+			// Whether the BitrixGPT rail panel is expanded. Owned by the shell, never by the
 			// panel: the panel is mounted once and only its geometry collapses.
 			aiChatOpen: false
 		});
@@ -13267,13 +13510,13 @@ this.BX.Note = this.BX.Note || {};
 			setRecycleBinView: active => store.actions.setRecycleBinView(active),
 			insertCollectionLocal: collection => store.actions.insertCollectionLocal(collection),
 			updateCollectionLocal: (collectionId, patch) => store.actions.updateCollectionLocal(Number(collectionId), patch),
-			removeCollectionLocal: collectionId => store.actions.removeCollectionLocal(Number(collectionId)),
+			removeArchivedCollectionLocal: collectionId => store.actions.removeCollectionLocal(Number(collectionId)),
 			isCollectionSelected: collectionId => Number(store.state.selectedCollectionId.value) === Number(collectionId),
 			clearCollectionSelection: () => store.actions.clearSelection(),
-			// [P4.T6] The page of a knowledge base re-reads the block when the server turns a subscription
+			// The page of a knowledge base re-reads the block when the server turns a subscription
 			// down for an object that is not in the list any more.
 			reloadFavorites: () => store.actions.reloadFavorites(),
-			// [TPL-01] Star of the knowledge base page: one implementation of the gesture for every star.
+			// Star of the knowledge base page: one implementation of the gesture for every star.
 			toggleFavorite: (target, hint) => store.actions.toggleFavorite(target, hint)
 		};
 	}
@@ -13439,7 +13682,7 @@ this.BX.Note = this.BX.Note || {};
 		const state = createSidebarState(store, uiState, dragState, routeSyncService);
 		const storeProxy = createStoreProxy(store);
 
-		// The block is painted with the rest of the sidebar, and hiding an empty one (AC-027) needs a
+		// The block is painted with the rest of the sidebar, and hiding an empty one needs a
 		// confirmed empty page - so its first page is there from the start: taken from the page when the
 		// server rendered it in (TPL-02), read up front otherwise.
 		if (!store.actions.hydrateFavorites(initialFavorites)) {
@@ -13534,5 +13777,5 @@ this.BX.Note = this.BX.Note || {};
 	exports.SidebarRootComponent = SidebarRootComponent;
 	exports.createSidebarFeature = createSidebarFeature;
 
-})(this.BX.Note.Sidebar = this.BX.Note.Sidebar || {}, BX.UI.IconSet, window, window, BX.Note, BX.Note.Ui, BX.Vue3, BX, BX.Note.Ui, BX.SidePanel, BX.Note.Import, BX.Note.Permissions, BX.Note.Ui, BX.Note.Ui, BX.Event, BX.UI.Notification, BX.Note.Ui, BX, BX.UI, BX.UI.Dialogs, BX.UI.System);
+})(this.BX.Note.Sidebar = this.BX.Note.Sidebar || {}, BX.UI.IconSet, window, window, BX.Note, BX.Note.Ui, BX.Vue3, BX, BX.Note.Ui, BX.SidePanel, BX.Note.Permissions, BX.UI.Notification, BX.Note.Ui, BX.Note.Ui, BX.Event, BX.Note.Ui, BX, BX.UI, BX.UI.Dialogs, BX.UI.System);
 //# sourceMappingURL=sidebar.bundle.js.map

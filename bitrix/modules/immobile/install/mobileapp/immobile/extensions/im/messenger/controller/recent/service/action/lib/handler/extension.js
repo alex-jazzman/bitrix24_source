@@ -5,7 +5,11 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { Type } = require('type');
 	const { UserProfile } = require('user-profile');
 	const { Loc } = require('im/messenger/loc');
-	const { ErrorType, OpenlineStatus, Analytics } = require('im/messenger/const');
+	const {
+		ErrorType,
+		OpenlineStatus,
+		ROOT_PARENT_CHAT_ID,
+	} = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 	const { openDialog } = require('im/messenger/controller/recent/service/select/lib/opener');
@@ -13,7 +17,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { ChatDeletionOrigin, ChatDeletionReason } = require('im/messenger/application/lib/chat-deletion-manager');
 	const { FolderCreate } = require('im/messenger/controller/folder/create');
 	const { FolderSelector } = require('im/messenger/controller/folder/selector');
-	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { FolderComposition } = require('im/messenger/controller/recent/service/lib/folder-composition');
 
 	const {
 		RecentRest,
@@ -97,11 +101,68 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	}
 
 	/**
+	 * @desc Swipe actions are a direct user action: the call is marked so it goes through an
+	 * active coalescing scope and the response stays immediate.
 	 * @param {RecentLocator} recentLocator
 	 */
 	function renderRecent(recentLocator)
 	{
-		recentLocator.get('render')?.renderInstant();
+		recentLocator.get('render')?.renderInstant({ force: true });
+	}
+
+	/**
+	 * Recent sections of the tab an action was made on. A tab with a section of its own reports that
+	 * section. A composite folder tab ("All") has none: its list is the union of the sections of the
+	 * member folders, so the item leaves it only when it is taken from every one of them, and its
+	 * counter is bound to the same set. The set is narrowed down to the sections the item really lies
+	 * in, so the rollback returns it where it was and no further: a section of the composition is the
+	 * section of another tab as well. A tab without a section and without a composition (a personal
+	 * folder) gets an empty set, and the actions of the model leave the store untouched.
+	 *
+	 * @param {MessengerCoreStore} store
+	 * @param {RecentLocator} recentLocator
+	 * @param {RecentModelState} recentItem
+	 * @return {Array<string>}
+	 */
+	function getRecentSectionsForTab(store, recentLocator, recentItem)
+	{
+		const recentSection = recentLocator.get('recentSection');
+		if (Type.isStringFilled(recentSection))
+		{
+			return [recentSection];
+		}
+
+		const compositionSections = FolderComposition.getSectionsByTabId(recentLocator.get('id'));
+		const parentChatId = recentLocator.get('parentChatId') ?? ROOT_PARENT_CHAT_ID;
+
+		return store.getters['recentModel/getSectionsContainingItem'](recentItem.id, [parentChatId])
+			.map((entry) => entry.recentSection)
+			.filter((section) => compositionSections.has(section))
+		;
+	}
+
+	/**
+	 * Recent sections the item still lies in, grouped by the parent level: a chat lifted to the top
+	 * level lies in a bucket of its own parent and in a root one, and both have to be restored.
+	 *
+	 * @param {MessengerCoreStore} store
+	 * @param {string} itemId
+	 * @param {Array<number>} parentChatIds
+	 * @return {Map<number, Array<string>>}
+	 */
+	function getRecentSectionsByParentChatId(store, itemId, parentChatIds)
+	{
+		const sectionsByParentChatId = new Map();
+
+		store.getters['recentModel/getSectionsContainingItem'](itemId, [...new Set(parentChatIds)])
+			.forEach(({ parentChatId, recentSection }) => {
+				const sections = sectionsByParentChatId.get(parentChatId) ?? [];
+				sections.push(recentSection);
+				sectionsByParentChatId.set(parentChatId, sections);
+			})
+		;
+
+		return sectionsByParentChatId;
 	}
 
 	/**
@@ -196,7 +257,6 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			return;
 		}
 
-		const tabs = store.getters['recentModel/getTabsContainsItem'](recentItem.id);
 		// Copy the chat coordinates as primitives BEFORE deletion so the announce does
 		// not depend on the store object that delete() removes from the collection.
 		const dialog = store.getters['dialoguesModel/getById'](recentItem.id);
@@ -205,6 +265,13 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			parentChatId: dialog?.parentChatId,
 			chatType: dialog?.type,
 		};
+		// delete() clears the item from every bucket, so the rollback has to return it to every
+		// section of every level it was in. Sections of a composition ("chat", "channel") have no
+		// navigation tab of their own, so resolving the membership through the tab map loses them.
+		const sectionsToRestore = getRecentSectionsByParentChatId(store, recentItem.id, [
+			ROOT_PARENT_CHAT_ID,
+			snapshot.parentChatId ?? ROOT_PARENT_CHAT_ID,
+		]);
 		const recentProvider = new RecentDataProvider();
 
 		try
@@ -232,10 +299,10 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 		catch (error)
 		{
 			logger.error('handler full delete chat error: ', error);
-			await store.dispatch('recentModel/setByNavigationTabs', {
-				tabs,
-				itemList: [recentItem],
-			});
+			await Promise.all([...sectionsToRestore].map(([parentChatId, sections]) => store.dispatch(
+				'recentModel/setByRecentConfigTabs',
+				{ sections, itemList: [recentItem], parentChatId },
+			)));
 		}
 	}
 
@@ -255,15 +322,21 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 
 			const counterChatId = Type.isPlainObject(counterState)
 				? counterState.chatId
-				: getDialogById(store, itemId).chatId
+				: getDialogById(store, itemId)?.chatId
 			;
 
-			await store.dispatch('recentModel/hideByNavigationTabs', {
+			// A row of a colleague carries no chat of its own: it has either no dialogue at all, or a
+			// dialogue whose chatId stays the default zero. Such a row has no chat counters, while the
+			// row itself is still hidden by its dialogId.
+			const hasCounterChat = Type.isNumber(counterChatId) && counterChatId > 0;
+			const recentSections = getRecentSectionsForTab(store, recentLocator, recentItem);
+
+			await store.dispatch('recentModel/hideByRecentConfigTabs', {
 				id: recentItem.id,
-				fromTabs: [recentLocator.get('id')],
+				fromSections: recentSections,
 				parentChatId: recentLocator.get('parentChatId'),
 			});
-			if (Type.isPlainObject(counterState))
+			if (hasCounterChat && Type.isPlainObject(counterState))
 			{
 				await store.dispatch('counterModel/delete', { chatIdList: [counterChatId] });
 			}
@@ -272,17 +345,21 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			try
 			{
 				await RecentRest.hideChat({ dialogId: recentItem.id });
-				await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([counterChatId]);
+				if (hasCounterChat)
+				{
+					await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([counterChatId]);
+				}
 			}
 			catch (error)
 			{
 				logger.error('handler recent item hide error: ', error?.error?.() ?? error?.message);
-				await store.dispatch('recentModel/setByNavigationTabs', {
-					tabs: [recentLocator.get('id')],
+				// Rollback of the optimistic hide: the item returns to the very sections it was taken from.
+				await store.dispatch('recentModel/setByRecentConfigTabs', {
+					sections: recentSections,
 					itemList: [recentItem],
 					parentChatId: recentLocator.get('parentChatId'),
 				});
-				if (Type.isPlainObject(counterState))
+				if (hasCounterChat && Type.isPlainObject(counterState))
 				{
 					await store.dispatch('counterModel/setList', { counterList: [counterState] });
 				}
@@ -422,7 +499,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			const counterState = getCounterStateById(store, itemId);
 			await store.dispatch('counterModel/setMarkedAsUnread', {
 				dialogId: itemId,
-				recentSection: recentLocator.get('recentSection'),
+				recentSections: getRecentSectionsForTab(store, recentLocator, recentItem),
 				isMarkedAsUnread: true,
 			});
 
@@ -672,7 +749,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 		 * @param {string} itemId
 		 * @returns {Promise<void>}
 		 */
-		addToFolder: async ({ store, logger }, itemId) => {
+		addToFolder: async ({ store, logger, subSection }, itemId) => {
 			const chatId = resolveChatIdForFolderSelector(store, itemId);
 			if (!Type.isNumber(chatId))
 			{
@@ -681,11 +758,6 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 				return;
 			}
 
-			AnalyticsService.getInstance().sendAddToFolder({
-				dialogId: itemId,
-				subSection: Analytics.SubSection.recentSwipeMenu,
-			});
-
 			if (!hasPersonalFolders(store))
 			{
 				new FolderCreate({ initialChatIds: [itemId] }).openAsBottomSheet();
@@ -693,8 +765,14 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 				return;
 			}
 
+			// The membership labels are sent by the selector: the tap only opens it, and the chat joins
+			// or leaves a folder when the set of folders is saved there. The surface travels with the
+			// call - the swipe of an item and its long tap are two entries of one action, and the
+			// labels of the memberships are read by that difference.
 			FolderSelector.open({
 				chatId,
+				dialogId: itemId,
+				subSection,
 				onComplete: () => {},
 			});
 		},

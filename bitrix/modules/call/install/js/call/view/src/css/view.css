@@ -427,6 +427,16 @@
 	width: 96px;
 	padding: 10px 0;
 	cursor: pointer;
+	/* reset native <button> styles: settings item is a <button> for a11y */
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+}
+
+.bx-messenger-call-window-settings-button:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-messenger-call-window-settings-button.bx-messenger-call-window-button-disabled {
@@ -513,6 +523,22 @@
 	flex-direction: column;
 	gap: 8px;
 	padding: 10px;
+	/* reset native <button> styles: container is a <button> for a11y */
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+/* focus ring on the inner round button, not the wrapping container */
+.bx-messenger-call-window-button-container:focus-visible {
+	outline: none;
+}
+
+.bx-messenger-call-window-button-container:focus-visible .bx-messenger-call-window-button {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-messenger-call-window-buttons-block .bx-messenger-call-window-button {
@@ -708,7 +734,7 @@
 	background-size: contain;
 	background-position: center;
 	background-repeat: no-repeat;
-	z-index: 10;
+	z-index: 2;
 	pointer-events: none;
 	border-radius: var(--border-radius);
 	overflow: hidden;
@@ -804,6 +830,21 @@
 	flex-grow: 1;
 }
 
+/* reset native <button> UA styles: top button is a <button> for a11y */
+.bx-messenger-videocall-top-button {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: inherit;
+}
+
+.bx-messenger-videocall-top-button:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
 .bx-messenger-videocall-top-button {
 	display: flex;
 	gap: 4px;
@@ -823,6 +864,23 @@
 	background-color: var(--call-view__button-background-color-blocked);
 	opacity: 0.4;
 	pointer-events: none;
+}
+
+/* reset native <button> UA styles: frameless top button is a <button> for a11y */
+.bx-messenger-videocall-top-button-frameless {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+}
+
+.bx-messenger-videocall-top-button-frameless:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-messenger-videocall-top-button-frameless {
@@ -876,6 +934,13 @@
 
 .bx-videocall-tooltip.-bottom:hover::after {
 	transform: translateY(10px);
+}
+
+/* the tooltip advertises a shortcut that does nothing while the button is blocked.
+   Kept below the position rules: they share its specificity, so translateY(0) only wins here */
+.bx-videocall-tooltip.blocked:hover::after {
+	opacity: 0;
+	transform: translateY(0);
 }
 
 .bx-messenger-videocall-top-button-icon {
@@ -934,6 +999,25 @@
 	overflow: hidden;
 	box-sizing: border-box;
 	color: var(--call-view__participants-button-text-color);
+}
+
+/* reset native <button> UA styles: both participants zones are <button> for a11y */
+.bx-messenger-videocall-top-participants-inner {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	margin: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	border-radius: 6px;
+}
+
+/* inset ring: root has overflow:hidden, a positive outline-offset would be clipped */
+.bx-messenger-videocall-top-participants-inner:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: -3px;
 }
 
 .bx-messenger-videocall-top-participants-inner {
@@ -1510,7 +1594,7 @@
 	font-size: var(--ui-font-size-xs);
 	line-height: var(--call-view__button-text-line-height);
 	letter-spacing: var(--call-view__button-text-letter-spacing);
-	transition: opacity var(--call-view__button-text-transition-duration) linear, visibility var(--call-view__button-text-transition-duration) linear;
+	transition: opacity var(--call-view__button-text-transition-duration) linear;
 	text-align: center;
 	visibility: visible;
 	cursor: pointer;
@@ -1548,6 +1632,23 @@
 	align-items: center;
 }
 
+/* reset native <button> UA styles: panel item is a <button> for a11y */
+.bx-messenger-videocall-panel-item {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	box-sizing: content-box;
+}
+
+.bx-messenger-videocall-panel-item:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
 .bx-messenger-videocall-panel-item,
 .bx-messenger-videocall-panel-item-with-arrow {
 	margin: 0;
@@ -1573,13 +1674,42 @@
 	margin-left: calc(var(--call-view__button-icon-gap) * (1 / 4));
 }
 
+/* device button root: non-interactive container, positioning context for the chevron sibling */
+.bx-messenger-videocall-panel-item-with-arrow {
+	position: relative;
+}
+
+/* reset native <button> UA styles: device main toggle is a <button> for a11y */
+.bx-messenger-videocall-panel-item-with-arrow-main {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	margin: 0;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	cursor: pointer;
+}
+
+.bx-messenger-videocall-panel-item-with-arrow-main:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
+/* on a compound button the blocked state belongs to the main toggle, not to the whole button:
+   its chevron sibling opens the device selector and stays clickable */
 .bx-messenger-videocall-panel-item.blocked,
-.bx-messenger-videocall-panel-item-with-arrow.blocked {
+.bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-main {
 	pointer-events: none;
 }
 
 .bx-messenger-videocall-panel-item.blocked .bx-messenger-videocall-panel-icon-background,
-.bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-right,
 .bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-icon-container {
 	background-color: var(--call-view__button-background-color-blocked);
 }
@@ -1590,7 +1720,6 @@
 }
 
 .bx-messenger-videocall-panel-item.blocked .bx-messenger-videocall-panel-icon,
-.bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-right-icon,
 .bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-icon {
 	background-color: var(--call-view__button-icon-color-blocked);
 }
@@ -1622,6 +1751,31 @@
 
 .bx-messenger-videocall-panel-item-hangup {
 	background: #66221f;
+}
+
+/* hangup / options: element-scoped focus ring. Base item ring is suppressed via the has() relational selector,
+   guarded by @supports so older browsers (Firefox < 121) keep the base whole-item ring instead of a double outline. */
+@supports selector(:has(*)) {
+	/* hangup: ring the red pill (60x38, radius 10), not the tall item box */
+	.bx-messenger-videocall-panel-item:has(.bx-messenger-videocall-panel-icon-background-hangup):focus-visible {
+		outline: none;
+	}
+
+	.bx-messenger-videocall-panel-item:focus-visible .bx-messenger-videocall-panel-icon-background-hangup {
+		outline: 2px solid var(--ui-color-palette-white-base);
+		outline-offset: 2px;
+	}
+
+	/* hangup options: ring only the small options glyph, not the whole item box */
+	.bx-messenger-videocall-panel-item:has(.bx-messenger-videocall-panel-icon-background-hangup-options):focus-visible {
+		outline: none;
+	}
+
+	.bx-messenger-videocall-panel-item:focus-visible .bx-messenger-videocall-panel-icon-background-hangup-options {
+		outline: 2px solid var(--ui-color-palette-white-base);
+		outline-offset: 2px;
+		border-radius: 6px;
+	}
 }
 
 .bx-messenger-videocall-panel-item .bx-messenger-videocall-panel-icon-background:hover {
@@ -1832,13 +1986,39 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	justify-content: center;
 	align-items: center;
 	position: absolute;
-	left: 27px;
+	/* +root left-padding: chevron positioning context moved from -left to the padded root */
+	left: calc(27px + var(--call-view__button-icon-gap) * (1 / 4));
 	top: 28px;
 	width: 16px;
 	height: 16px;
 	background-color: var(--call-view__button-background-color);
 	border-radius: 50%;
 	transition: background-color var(--call-view__icon-transition-duration) ease-in;
+	/* reset native <button> UA styles: device chevron is a <button> for a11y (background kept above) */
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	box-sizing: border-box;
+}
+
+.bx-messenger-videocall-panel-item-with-arrow-right:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
+/* WCAG 2.5.8: expand chevron tap target to 24x24 without resizing the visible 16x16 circle */
+.bx-messenger-videocall-panel-item-with-arrow-right::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 24px;
+	height: 24px;
+	transform: translate(-50%, -50%);
 }
 
 .bx-messenger-videocall-panel-icon-background,
@@ -2014,8 +2194,6 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	clip-path: path("M14.3506 8.75635C19.1375 8.80828 22.0384 10.0753 23.7129 11.813C25.4208 13.5856 25.7215 15.7116 25.6006 17.1196C25.5244 18.0057 24.832 18.604 24.0791 18.7437C23.942 18.7691 23.8191 18.7686 23.7383 18.7661C22.6418 18.732 21.7787 18.681 21.0996 18.6401C20.4068 18.5984 19.9425 18.571 19.5996 18.5776C19.5163 18.5793 19.3489 18.5806 19.1641 18.5327C18.582 18.3819 18.0849 17.9359 17.9326 17.2915C17.7944 16.7066 17.6776 15.7854 17.8672 14.6382C17.8708 14.6162 17.8735 14.5981 17.875 14.5835C17.8104 14.4969 17.687 14.3814 17.4736 14.2524C17.2231 14.101 16.8969 13.9615 16.5205 13.8433C15.7642 13.6057 14.9027 13.4839 14.2588 13.4839H14.082C13.4381 13.4839 12.5765 13.6057 11.8203 13.8433C11.4439 13.9615 11.1177 14.101 10.8672 14.2524C10.6541 14.3812 10.5315 14.497 10.4668 14.5835C10.4683 14.5981 10.47 14.6162 10.4736 14.6382C10.6632 15.7854 10.5464 16.7066 10.4082 17.2915C10.2383 18.0103 9.64447 18.4758 8.98242 18.5718C8.95244 18.5761 8.92188 18.5796 8.8916 18.5806C7.92809 18.6117 6.60437 18.6513 4.37988 18.7114C4.34205 18.7124 4.30421 18.7108 4.2666 18.7065C3.45756 18.6153 2.68635 18.0031 2.60547 17.062C2.48324 15.6388 2.82707 13.527 4.56934 11.7749C6.2755 10.0592 9.20428 8.8076 13.9912 8.75635C14.0083 8.75528 14.0256 8.7544 14.043 8.75439H14.2979C14.3155 8.75439 14.3332 8.75525 14.3506 8.75635ZM14.1699 10.3882C9.54075 10.4098 7.04563 11.6009 5.72754 12.9263C4.39752 14.2638 4.14235 15.8628 4.2334 16.9224C4.23597 16.9523 4.24747 16.9814 4.2793 17.0112C4.30803 17.038 4.35246 17.0634 4.40918 17.0767C6.53869 17.019 7.83152 16.9801 8.77539 16.9497C8.7936 16.9439 8.8045 16.9365 8.80957 16.9321C8.81285 16.9293 8.81504 16.9259 8.81543 16.9253C8.81543 16.9253 8.81801 16.9211 8.81934 16.9155C8.91673 16.5032 9.01078 15.8031 8.8623 14.9048C8.82579 14.6838 8.77491 14.2481 9.01172 13.8296C9.25258 13.4043 9.63577 13.0877 10.0225 12.854C10.4167 12.6157 10.8722 12.4288 11.3311 12.2847C12.2451 11.9975 13.2717 11.8511 14.082 11.8511H14.2588C15.0693 11.8511 16.0965 11.9974 17.0107 12.2847C17.4695 12.4288 17.9242 12.6158 18.3184 12.854C18.7051 13.0877 19.0882 13.4043 19.3291 13.8296C19.566 14.2482 19.515 14.6838 19.4785 14.9048C19.33 15.8032 19.4251 16.5032 19.5225 16.9155C19.5235 16.9198 19.5249 16.9233 19.5254 16.9243C19.5254 16.9243 19.5269 16.9278 19.5293 16.9302C19.5325 16.9333 19.5397 16.9394 19.5518 16.9448C19.5562 16.9448 19.5613 16.944 19.5674 16.9438C19.9806 16.9358 20.5067 16.9677 21.1475 17.0063L21.1973 17.0093C21.8743 17.0501 22.7176 17.101 23.7891 17.1343C23.7922 17.1344 23.7979 17.1343 23.7979 17.1343C23.8589 17.1198 23.9048 17.0911 23.9326 17.063C23.9598 17.0355 23.9702 17.0087 23.9727 16.98C24.065 15.9053 23.8336 14.2926 22.5371 12.9468C21.254 11.615 18.7978 10.4098 14.1699 10.3882Z");
 }
 
-.call-common-record-menu-popup,
-.call-common-record-menu-popup .popup-window-angly--arrow,
 .bx-call-view-popup-call-hint,
 .bx-call-view-popup-call-hint .popup-window-angly--arrow,
 .call-view-device-selector-popup,
@@ -2037,7 +2215,6 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	background-color: var(--call-view__popup-backgroud-color);
 }
 
-.call-common-record-menu-popup .menu-popup-item-text,
 .bx-call-view-popup-call-hint .menu-popup-item-text,
 .call-view-device-selector-popup .menu-popup-item-text,
 .bx-call-user-context-menu .menu-popup-item-text,
@@ -2051,7 +2228,6 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	background-color: var(--call-view__popup-backgroud-color);
 }
 
-.call-common-record-menu-popup .menu-popup-item:hover,
 .call-view-device-selector-popup .menu-popup-item:hover,
 .bx-call-user-context-menu .menu-popup-item:hover,
 .bx-conference-user-list-context-menu .menu-popup-item:hover,
@@ -2063,7 +2239,6 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	background-color: var(--call-view__popup-backgroud-color-hover);
 }
 
-.call-common-record-menu-popup .menu-popup-item:hover .menu-popup-item-text,
 .call-view-device-selector-popup .menu-popup-item:hover .menu-popup-item-text,
 .bx-call-user-context-menu .menu-popup-item:hover .menu-popup-item-text,
 .bx-conference-user-list-context-menu .menu-popup-item:hover .menu-popup-item-text,
@@ -3151,6 +3326,7 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 .bx-messenger-videocall-grid .bx-messenger-videocall-user {
 	width: var(--grid-user-width);
 	height: var(--grid-user-height);
+	isolation: isolate;
 }
 
 .bx-messenger-videocall-grid .bx-messenger-videocall-user-inner {
@@ -3558,7 +3734,7 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	bottom: 0;
 	right: 0;
 	transition: transform .5s ease-in-out;
-	background-color: #525c69;
+	background-color: transparent;
 	z-index: 4;
 	min-width: 159px;
 }
@@ -3956,6 +4132,22 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18' fill='none'%3E%3Cpath opacity='0.7' fill-rule='evenodd' clip-rule='evenodd' d='M9 15C12.3137 15 15 12.3137 15 9C15 5.68629 12.3137 3 9 3C5.68629 3 3 5.68629 3 9C3 12.3137 5.68629 15 9 15ZM9.00039 13.6995C11.5958 13.6995 13.6997 11.5955 13.6997 9.00011C13.6997 6.40473 11.5958 4.30076 9.00039 4.30076C6.40501 4.30076 4.30104 6.40473 4.30104 9.00011C4.30104 11.5955 6.40501 13.6995 9.00039 13.6995Z' fill='white'/%3E%3Ccircle cx='9' cy='9' r='2.25' fill='%23FF5752'/%3E%3C/svg%3E");
 }
 
+/* reset native <button> UA styles: mobile participants button is a <button> for a11y */
+.bx-messenger-videocall-top-participants-mobile {
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+}
+
+.bx-messenger-videocall-top-participants-mobile:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
 .bx-messenger-videocall-top-participants-mobile {
 	display: flex;
 	align-items: baseline;
@@ -4327,7 +4519,9 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	margin-right: 25px;
 }
 
-.bx-call-view-device-selector-menu-container-blocked {
+/* the block dims the switch and the quality slider; the device list stays live */
+.bx-call-view-device-selector-menu-container-blocked .bx-call-view-device-selector-device-switch,
+.bx-call-view-device-selector-menu-container-blocked .bx-call-view-device-selector-quality {
 	opacity: 0.5;
 	pointer-events: none;
 }
@@ -4415,17 +4609,31 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	background-color: var(--ui-color-palette-gray-35);
 }
 
-.bx-call-view-device-selector-menu-inner.inactive {
-	filter: opacity(.5);
-	pointer-events: none;
+.bx-call-view-device-selector-device-switch .ui-switcher:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-call-view-device-selector-menu-item {
+	/* reset native <button>: the item is a <button> for a11y, but stays a full-width row */
+	appearance: none;
+	padding: 0;
+	background: none;
+	border: none;
+	font: inherit;
+	color: inherit;
+	width: 100%;
+	text-align: left;
 	display: flex;
 	flex-direction: row;
 	cursor: pointer;
 	align-items: center;
 	margin: 9px 0;
+}
+
+.bx-call-view-device-selector-menu-item:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-call-view-device-selector-menu-item-icon {
@@ -4475,6 +4683,11 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	appearance: none;
 }
 
+.bx-call-view-device-selector-bottom-item-checkbox:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
 .bx-call-view-device-selector-bottom-item-checkbox-checked{
 	background-image: url('data:image/svg+xml,<svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.52593 0.616976C7.66914 0.760796 7.66865 0.993484 7.52483 1.1367L3.25618 5.38737C3.11279 5.53016 2.88095 5.53016 2.73756 5.38737L0.799591 3.45752C0.655772 3.31431 0.655283 3.08162 0.7985 2.9378C0.941716 2.79398 1.1744 2.79349 1.31822 2.93671L2.99687 4.60833L7.00621 0.61588C7.15003 0.472665 7.38271 0.473156 7.52593 0.616976Z" fill="white"/></svg>');
 	background-repeat: no-repeat;
@@ -4508,6 +4721,12 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 }
 
 .bx-call-view-device-selector-bottom-item-action {
+	/* reset native <button>: only the dashed underline below stays visible */
+	appearance: none;
+	padding: 0;
+	background: none;
+	border: none;
+	text-align: left;
 	font-size: var(--ui-font-size-md);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-bottom: 1px dashed var(--call-view__device-selector-footer-item-action-border-color);
@@ -4518,6 +4737,11 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	font-weight: var(--ui-font-weight-normal, 400);
 	line-height: var(--call-view__device-selector-footer-item-action-text-line-height);
 	letter-spacing: var(--call-view__device-selector-footer-item-action-text-letter-spacing);
+}
+
+.bx-call-view-device-selector-bottom-item-action:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
 }
 
 .bx-call-view-device-selector-bottom-item:not(:first-child) {
@@ -4873,7 +5097,6 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	margin-left: 19px;
 }
 
-.bx-call-view-popup-call-hint-close,
 .bx-call-view-popup-web-screenshare-close {
 	display: inline-block;
 	width: 16px;
@@ -4884,12 +5107,56 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	cursor: pointer;
 }
 
-.bx-call-view-popup-call-hint-close:hover,
 .bx-call-view-popup-web-screenshare-close:hover {
 	opacity: 0.9;
 }
 
 /* endregion: web-screenshare */
+
+/* region: call-hint accessibility */
+
+.bx-call-view-popup-call-hint-close {
+	/* reset native <button>; the icon of the hint lives on ::before and nowhere else */
+	appearance: none;
+	border: none;
+	background: none;
+	position: relative;
+	display: inline-block;
+	/* the message next to it can be long: the hit area must not be squeezed below 24x24 */
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	margin-left: 11px;
+	cursor: pointer;
+}
+
+.bx-call-view-popup-call-hint-close::before {
+	content: '';
+	position: absolute;
+	/* visual size stays 16x16, 4px on every side makes the hit area 24x24 */
+	inset: -4px;
+	background: url('data:image/svg+xml,<svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.83594 4.33643C5.01814 4.15422 5.31384 4.15431 5.49609 4.33643L8.49902 7.34033L11.5029 4.3374C11.6852 4.15516 11.9799 4.15516 12.1621 4.3374C12.3443 4.51965 12.3443 4.81435 12.1621 4.99658L9.15918 7.99951L12.1621 11.0034C12.3443 11.1857 12.3443 11.4804 12.1621 11.6626C11.9799 11.8448 11.6852 11.8448 11.5029 11.6626L8.49902 8.65967L5.49609 11.6636C5.31385 11.8456 5.01813 11.8457 4.83594 11.6636C4.65375 11.4814 4.65386 11.1857 4.83594 11.0034L7.83984 7.99951L4.83594 4.99658C4.65382 4.81433 4.65374 4.51863 4.83594 4.33643Z" fill="white"/></svg>') no-repeat center;
+	/* white over #00428F: the 0.4 baked into the legacy icon gives 2.82:1, 0.55 gives 4.02:1 */
+	opacity: 0.55;
+}
+
+.bx-call-view-popup-call-hint-close:hover::before {
+	/* brightness belongs to the icon alone: fading the button would fade its focus ring too */
+	opacity: 0.9;
+}
+
+.bx-call-view-popup-call-hint-close:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base);
+	outline-offset: 2px;
+}
+
+.bx-call-view-popup-call-hint-body .ui-btn:focus-visible {
+	/* only the color: offset, width and the pointer-modality reset stay with the platform */
+	outline-color: var(--ui-color-palette-white-base);
+}
+
+/* endregion: call-hint accessibility */
 
 /* region: overflown buttons popup */
 .bx-call-buttons-popup {
@@ -4958,7 +5225,7 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 
 .bx-messenger-videocall-width-lt-700 .bx-messenger-videocall-panel-text {
 	opacity: 0;
-	visibility: hidden;
+	pointer-events: none;
 }
 
 .bx-messenger-videocall-width-lt-700 .bx-messenger-videocall-panel-item,

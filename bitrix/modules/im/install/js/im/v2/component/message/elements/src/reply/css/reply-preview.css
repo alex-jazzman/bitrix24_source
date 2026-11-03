@@ -49,6 +49,34 @@
 	min-width: 0;
 }
 
+.bx-im-message-quote.--contact-message .bx-im-message-quote__wrap {
+	display: grid;
+	grid-template-columns: 50px minmax(0, 1fr);
+	column-gap: 8px;
+}
+
+.bx-im-message-quote.--contact-message .bx-im-message-quote__name {
+	grid-column: 1 / -1;
+}
+
+.bx-im-message-quote.--contact-message .bx-im-message-quote__preview {
+	grid-column: 1;
+	grid-row: 2;
+	align-self: center;
+}
+
+.bx-im-message-quote.--contact-message .bx-im-message-quote__text {
+	grid-column: 2;
+	grid-row: 2;
+	align-self: center;
+	min-width: 0;
+	padding-left: 0;
+}
+
+.bx-im-message-quote.--contact-message .bx-im-message-quote__toggle {
+	grid-column: 1 / -1;
+}
+
 /*
  * File chip / gallery stack need 8px between the author name and the preview content per Figma.
  * The shared .bx-im-message-quote__name adds 4px (padding-bottom); this adds the remaining 4px.
@@ -114,6 +142,23 @@
 	left: 0;
 	top: 0;
 	object-fit: cover;
+}
+
+.bx-im-message-quote.--contact-message .bx-im-message-quote__preview-image {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+
+.bx-im-message-quote__contact-avatar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	overflow: hidden;
+	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 /* Video note: round thumbnail of the poster (no background — the poster fills the circle) */

@@ -18,8 +18,7 @@ BitrixVue.component('sale-payment_pay-components-payment_system-pay_system_resul
 	{
 		localize()
 		{
-			return Object.freeze(
-				BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_'))
+			return BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_');
 		},
 	},
 	mounted()
@@ -31,7 +30,7 @@ BitrixVue.component('sale-payment_pay-components-payment_system-pay_system_resul
 	},
 	// language=Vue
 	template: `
-		<div class="payment-mobile-change-method">
+		<div class="payment-mobile-change-method" data-payment-stage="result" data-testid="sale-payment-result" tabindex="-1">
 			<template v-if="html">
 				<div ref="paySystemResultTemplate"></div>
 			</template>

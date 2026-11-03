@@ -216,8 +216,8 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 
 		renderStatusText(textColor)
 		{
-			const { status, lastSeenDate, personalGender } = this.props;
-			if (!status)
+			const { status, lastSeenDate, personalGender, user } = this.props;
+			if (!status || user?.isSystemUser)
 			{
 				return null;
 			}
@@ -325,65 +325,57 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 			}
 		}
 
+		renderRootAdminIcon()
+		{
+			return IconView({
+				testId: this.getTestId('role-icon'),
+				icon: Icon.CROWN_1,
+				color: Color.baseWhiteFixed,
+				size: 20,
+				solid: true,
+				style: {
+					marginRight: Indent.XS2.toNumber(),
+				},
+			});
+		}
+
+		renderRoleText(roleText, textColor)
+		{
+			return Text5({
+				testId: this.getTestId('role'),
+				text: roleText,
+				color: textColor,
+				style: {
+					marginTop: Indent.XS2.toNumber(),
+				},
+			});
+		}
+
 		renderUserRole(textColor)
 		{
 			const { user } = this.props;
-			if (user?.isCollaber)
-			{
-				return Text5({
-					testId: this.getTestId('role'),
-					text: Loc.getMessage('M_PROFILE_USER_ROLE_COLLAB'),
-					color: textColor,
+			const systemUserText = Loc.getMessage('M_PROFILE_USER_ROLE_SYSTEM_USER');
+			const adminText = Loc.getMessage('M_PROFILE_USER_ROLE_ROOT_ADMIN');
+			const collaberText = Loc.getMessage('M_PROFILE_USER_ROLE_COLLAB');
+			const extranetText = Loc.getMessage('M_PROFILE_USER_ROLE_EXTRANET');
+
+			return View(
+				{
 					style: {
-						marginTop: Indent.XS2.toNumber(),
+						flexDirection: 'row',
+						alignItems: 'flex-start',
 					},
-				});
-			}
+				},
+				user?.isRootAdmin && this.renderRootAdminIcon(),
+				View(
+					{},
+					(user?.isRootAdmin || user?.isAdmin) && this.renderRoleText(adminText, textColor),
+					user?.isCollaber && this.renderRoleText(collaberText, textColor),
+					user?.isExtranet && this.renderRoleText(extranetText, textColor),
+					user?.isSystemUser && this.renderRoleText(systemUserText, textColor),
+				)
 
-			if (user.isExtranet)
-			{
-				return Text5({
-					testId: this.getTestId('role'),
-					text: Loc.getMessage('M_PROFILE_USER_ROLE_EXTRANET'),
-					color: textColor,
-					style: {
-						marginTop: Indent.XS2.toNumber(),
-					},
-				});
-			}
-
-			if (user.isRootAdmin)
-			{
-				return View(
-					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-							justifyContent: 'flex-start',
-						},
-					},
-					IconView({
-						testId: this.getTestId('role-icon'),
-						icon: Icon.CROWN_1,
-						color: Color.baseWhiteFixed,
-						size: 20,
-						solid: true,
-						style: {
-							marginRight: Indent.XS2.toNumber(),
-						},
-					}),
-					Text5({
-						testId: this.getTestId('role'),
-						text: Loc.getMessage('M_PROFILE_USER_ROLE_ROOT_ADMIN'),
-						color: textColor,
-						style: {
-							marginTop: Indent.XS2.toNumber(),
-						},
-					}),
-				);
-			}
-
-			return null;
+			);
 		}
 	}
 

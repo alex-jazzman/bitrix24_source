@@ -8,6 +8,7 @@ return [
     'js' => './dist/compose-form.bundle.js',
     'css' => './dist/compose-form.bundle.css',
     'rel' => [
+		'mail.message-body',
 		'mail.migration-state',
 		'main.core',
 		'main.core.events',

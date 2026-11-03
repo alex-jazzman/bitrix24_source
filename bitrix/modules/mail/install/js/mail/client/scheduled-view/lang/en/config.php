@@ -1,0 +1,21 @@
+<?php
+$MESS['MAIL_SCHEDULED_VIEW_BODY'] = 'Message text';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL'] = 'Cancel sending';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR'] = 'Could not cancel sending. Refresh the page and try again.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_ACCESS_DENIED'] = 'Insufficient permissions to cancel sending for this message.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_ALREADY_CANCELLED'] = 'Sending has already been canceled. Message has been saved as a draft.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_ALREADY_SENDING'] = 'Sending has already started. It cannot be canceled.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_ALREADY_SENT'] = 'Message has already been sent. Sending cannot be canceled.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_DRAFT_SAVE_FAILED'] = 'Could not save the message to drafts. Sending is still scheduled. Try again.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_DRAFT_UNAVAILABLE'] = 'Drafts are unavailable. Sending cannot be canceled.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_NOT_FOUND'] = 'Message is no longer scheduled for sending.';
+$MESS['MAIL_SCHEDULED_VIEW_CANCEL_ERROR_REVISION_CONFLICT'] = 'Message has changed. Data has been updated. Try canceling sending again.';
+$MESS['MAIL_SCHEDULED_VIEW_CC'] = 'CC';
+$MESS['MAIL_SCHEDULED_VIEW_EDIT'] = 'Edit message';
+$MESS['MAIL_SCHEDULED_VIEW_FROM'] = 'From';
+$MESS['MAIL_SCHEDULED_VIEW_LOAD_ERROR'] = 'Could not open the scheduled message.';
+$MESS['MAIL_SCHEDULED_VIEW_READ_ONLY'] = 'View only';
+$MESS['MAIL_SCHEDULED_VIEW_SCHEDULED_AT'] = 'Scheduled to send on #DATE#';
+$MESS['MAIL_SCHEDULED_VIEW_SUBJECT'] = 'Subject';
+$MESS['MAIL_SCHEDULED_VIEW_TITLE'] = 'Scheduled message';
+$MESS['MAIL_SCHEDULED_VIEW_TO'] = 'To';

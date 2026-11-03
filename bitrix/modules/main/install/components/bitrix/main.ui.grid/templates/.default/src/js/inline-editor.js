@@ -268,21 +268,107 @@ import { EventEmitter } from 'main.core.events';
 
 		getDropdownValueItemByValue(items, value)
 		{
-			const preparedValue = String(value);
-			const result = items.filter((current) => {
-				return String(current.VALUE) === preparedValue;
-			});
+			return this.findDropdownValueItemByValue(items, value) ?? items[0];
+		},
 
-			return result.length > 0 ? result[0] : items[0];
+		findDropdownValueItemByValue(items, value)
+		{
+			const preparedValue = String(value);
+
+			for (const current of items)
+			{
+				if ('VALUE' in current && String(current.VALUE) === preparedValue)
+				{
+					return current;
+				}
+
+				if ('ITEMS' in current)
+				{
+					const nestedItem = this.findDropdownValueItemByValue(current.ITEMS, value);
+					if (nestedItem)
+					{
+						return nestedItem;
+					}
+				}
+			}
+
+			return null;
+		},
+
+		isDropdownEmptyValue(value)
+		{
+			return value === false || BX.Type.isNil(value) || (BX.Type.isString(value) && value === '');
+		},
+
+		getDropdownEmptyValueCaption(editObject)
+		{
+			if (
+				BX.Type.isPlainObject(editObject.DATA)
+				&& BX.Type.isString(editObject.DATA.EMPTY_VALUE_CAPTION)
+			)
+			{
+				return editObject.DATA.EMPTY_VALUE_CAPTION;
+			}
+
+			return null;
+		},
+
+		getDropdownEmptyValueName(emptyValueCaption, isHtmlEntity)
+		{
+			return isHtmlEntity ? BX.util.htmlspecialchars(emptyValueCaption) : emptyValueCaption;
+		},
+
+		prepareDropdownItems(items, emptyValueCaption, isHtmlEntity)
+		{
+			return items.map((item) => {
+				const preparedItem = { ...item };
+				const hasSubItems = 'ITEMS' in preparedItem;
+				if (hasSubItems)
+				{
+					preparedItem.ITEMS = this.prepareDropdownItems(preparedItem.ITEMS, emptyValueCaption, isHtmlEntity);
+				}
+
+				if (
+					!hasSubItems
+					&& BX.Type.isString(emptyValueCaption)
+					&& this.isDropdownEmptyValue(preparedItem.VALUE)
+				)
+				{
+					preparedItem.VALUE = '';
+					preparedItem.NAME = this.getDropdownEmptyValueName(emptyValueCaption, isHtmlEntity);
+				}
+
+				return preparedItem;
+			});
 		},
 
 		createDropdown(editObject)
 		{
-			const valueItem = this.getDropdownValueItemByValue(
-				editObject.DATA.ITEMS,
-				editObject.VALUE,
-			);
 			const isHtmlEntity = 'HTML_ENTITY' in editObject && editObject.HTML_ENTITY === true;
+			const emptyValueCaption = this.getDropdownEmptyValueCaption(editObject);
+			const isEmptyValueCaptionSelected = BX.Type.isString(emptyValueCaption)
+				&& this.isDropdownEmptyValue(editObject.VALUE);
+			const items = this.prepareDropdownItems(
+				editObject.DATA.ITEMS,
+				emptyValueCaption,
+				isHtmlEntity,
+			);
+			const value = isEmptyValueCaptionSelected ? '' : editObject.VALUE;
+			const valueItem = this.getDropdownValueItemByValue(
+				items,
+				value,
+			);
+			const valueItemName = valueItem.NAME;
+			const attrs = {
+				name: editObject.NAME,
+				tabindex: '0',
+				role: 'button',
+				'aria-haspopup': 'menu',
+				'aria-expanded': 'false',
+				'data-items': JSON.stringify(items),
+				'data-value': valueItem.VALUE,
+				'data-html-entity': editObject.HTML_ENTITY,
+			};
 
 			return BX.create('div', {
 				props: {
@@ -292,17 +378,11 @@ import { EventEmitter } from 'main.core.events';
 					].join(' '),
 					id: `${editObject.NAME}_control`,
 				},
-				attrs: {
-					name: editObject.NAME,
-					tabindex: '0',
-					'data-items': JSON.stringify(editObject.DATA.ITEMS),
-					'data-value': valueItem.VALUE,
-					'data-html-entity': editObject.HTML_ENTITY,
-				},
+				attrs,
 				children: [BX.create('span', {
 					props: { className: 'main-dropdown-inner' },
-					html: isHtmlEntity ? valueItem.NAME : null,
-					text: isHtmlEntity ? null : valueItem.NAME,
+					html: isHtmlEntity ? valueItemName : null,
+					text: isHtmlEntity ? null : valueItemName,
 				})],
 			});
 		},
@@ -548,6 +628,48 @@ import { EventEmitter } from 'main.core.events';
 				{
 					BX.fireEvent(saveButton, 'click');
 				}
+			}
+
+			if (event.code === 'Escape')
+			{
+				this._cancelEditOnEscape(event);
+			}
+		},
+
+		/**
+		 * Cancels the edit mode the same way the cancel button of the action panel does and returns
+		 * the focus to the cell the editor was opened in. The event is stopped only when the edit was
+		 * actually cancelled, so Escape still reaches a popup the grid may live in.
+		 */
+		_cancelEditOnEscape(event)
+		{
+			const cell = event.target.closest('.main-grid-cell');
+			const cancelButton = BX.Grid.Utils.getBySelector(
+				this.parent.getContainer(),
+				'#grid_cancel_button > button',
+				true,
+			);
+
+			if (!cancelButton)
+			{
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			BX.fireEvent(cancelButton, 'click');
+
+			if (BX.Type.isDomNode(cell))
+			{
+				// The cell is focusable just long enough to take the focus back: a tabindex left
+				// behind would turn every edited cell into a permanent stop for assistive tech.
+				BX.Dom.attr(cell, 'tabindex', '-1');
+				cell.focus();
+				BX.bind(cell, 'blur', function onBlur() {
+					BX.unbind(cell, 'blur', onBlur);
+					BX.Dom.attr(cell, 'tabindex', null);
+				});
 			}
 		},
 	};

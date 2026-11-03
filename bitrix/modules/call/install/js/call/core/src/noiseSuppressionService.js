@@ -28,48 +28,70 @@ export class NoiseSuppressionService
 			await this.audioCtx.resume();
 		}
 
-		if (stream && (!this.inputSource || this.inputStream !== stream))
+		try
 		{
-			this.inputStream?.getAudioTracks().forEach(track => {
-				const trackInNewStream = stream.getTrackById(track.id);
-				if (!trackInNewStream)
-				{
-					track.stop();
-				}
-			});
-			// The replaced source node stays wired into the graph until it is unplugged explicitly.
-			this.inputSource?.disconnect();
-			this.inputSource = this.audioCtx.createMediaStreamSource(stream);
-			this.inputStream = stream;
-		}
-		else if (!stream && !this.inputSource)
-		{
-			return;
-		}
+			if (stream && (!this.inputSource || this.inputStream !== stream))
+			{
+				this.inputStream?.getAudioTracks().forEach(track => {
+					const trackInNewStream = stream.getTrackById(track.id);
+					if (!trackInNewStream)
+					{
+						track.stop();
+					}
+				});
+				// The replaced source node stays wired into the graph until it is unplugged explicitly.
+				this.inputSource?.disconnect();
+				this.inputSource = this.audioCtx.createMediaStreamSource(stream);
+				this.inputStream = stream;
+			}
+			else if (!stream && !this.inputSource)
+			{
+				return;
+			}
 
-		if (!this.noiseSuppressionNode)
-		{
-			await this.audioCtx.audioWorklet.addModule(NOISE_SUPPRESSION_WORKLET_PATH);
-			this.noiseSuppressionNode = new AudioWorkletNode(this.audioCtx, 'NoiseSuppressorWorklet');
-		}
+			if (!this.noiseSuppressionNode)
+			{
+				await this.audioCtx.audioWorklet.addModule(NOISE_SUPPRESSION_WORKLET_PATH);
+				this.noiseSuppressionNode = new AudioWorkletNode(this.audioCtx, 'NoiseSuppressorWorklet');
+			}
 
-		if (this.previousEnable === Boolean(this.previousEnable)
-			&& this.previousEnable !== this.enable)
-		{
-			this.inputSource.disconnect();
-		}
+			if (this.previousEnable === Boolean(this.previousEnable)
+				&& this.previousEnable !== this.enable)
+			{
+				this.inputSource.disconnect();
+			}
 
-		if (this.enable)
-		{
-			this.inputSource.connect(this.noiseSuppressionNode);
-			this.noiseSuppressionNode.connect(this.destination);
-		}
-		else
-		{
-			this.inputSource.connect(this.destination);
-		}
+			if (this.enable)
+			{
+				this.inputSource.connect(this.noiseSuppressionNode);
+				this.noiseSuppressionNode.connect(this.destination);
+			}
+			else
+			{
+				this.inputSource.connect(this.destination);
+			}
 
-		this.previousEnable = this.enable;
+			this.previousEnable = this.enable;
+		}
+		catch (error)
+		{
+			// turn(stream) is the getUserMedia path, which falls back to the raw stream: on any
+			// init error roll back so noiseSuppressionInputStream stays null; don't stop input
+			// tracks (they belong to that raw stream). The toggle path (no stream) leaves the
+			// running graph intact.
+			if (stream)
+			{
+				this.audioCtx?.close();
+				this.audioCtx = null;
+				this.destination = null;
+				this.inputSource = null;
+				this.inputStream = null;
+				this.noiseSuppressionNode = null;
+				this.previousEnable = null;
+			}
+
+			throw error;
+		}
 	}
 
 	#isDestinationLive(): boolean

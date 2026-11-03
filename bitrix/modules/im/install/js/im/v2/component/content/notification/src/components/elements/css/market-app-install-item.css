@@ -1,0 +1,43 @@
+.bx-im-content-notification-market-app-install__tile {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.bx-im-content-notification-market-app-install__tile-icon {
+	flex-shrink: 0;
+}
+
+.bx-im-content-notification-market-app-install__tile-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	min-width: 0;
+}
+
+.bx-im-content-notification-market-app-install__tile-status {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bx-im-content-notification-market-app-install__footer-text {
+	margin-top: var(--ui-space-stack-xs);
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-content-notification-market-app-install__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-sm2);
+}
+
+.bx-im-content-notification-market-app-install__footer-text + .bx-im-content-notification-market-app-install__buttons
+{
+	margin-top: var(--ui-space-stack-xs);
+}

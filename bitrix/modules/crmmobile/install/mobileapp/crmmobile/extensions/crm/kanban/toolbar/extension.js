@@ -29,12 +29,7 @@ jn.define('crm/kanban/toolbar', (require, exports, module) => {
 		 */
 		get(type)
 		{
-			if (this.has(type))
-			{
-				return EntityToolbar;
-			}
-
-			return null;
+			return (this.has(type) ? EntityToolbar : null);
 		}
 	}
 

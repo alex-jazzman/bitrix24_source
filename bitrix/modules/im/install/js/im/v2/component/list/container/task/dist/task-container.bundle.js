@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_v2_component_list_items_task, im_v2_component_list_container_elements_createChatButton, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_entityCreator, im_v2_lib_logger, im_v2_component_list_container_elements_headerMenu) {
+(function (exports, main_core, ui_vue3, im_v2_component_list_items_task, im_v2_component_list_container_elements_createChatButton, im_v2_component_list_container_elements_filterRow, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_entityCreator, im_v2_lib_feature, im_v2_lib_logger, im_v2_component_list_container_elements_headerMenu) {
 	'use strict';
 
 	// @vue/component
@@ -13,13 +13,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			TaskList: im_v2_component_list_items_task.TaskList,
 			HeaderMenu: im_v2_component_list_container_elements_headerMenu.HeaderMenu,
 			ChatSearchInput: im_v2_component_search.ChatSearchInput,
+			FilterRow: im_v2_component_list_container_elements_filterRow.FilterRow,
 			RecentSearch: im_v2_component_search.RecentSearch,
 			TaskUnreadList: im_v2_component_list_items_task.TaskUnreadList,
 			CreateChatButton: im_v2_component_list_container_elements_createChatButton.CreateChatButton
 		},
+		provide() {
+			return {
+				avatarsOnly: ui_vue3.computed(() => this.avatarsOnly)
+			};
+		},
+		props: {
+			avatarsOnly: {
+				type: Boolean,
+				default: false
+			}
+		},
 		emits: ['selectChat'],
 		data() {
 			return {
+				searchAreaId: main_core.Text.getRandom(),
 				searchMode: false,
 				unreadMode: false,
 				searchQuery: '',
@@ -34,6 +47,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			layoutName() {
 				return this.layout.name;
+			},
+			isShellNavigationAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatShellNavigationWebAvailable);
+			},
+			filterMode() {
+				return this.unreadMode ? im_v2_component_list_container_elements_filterRow.FilterMode.unread : im_v2_component_list_container_elements_filterRow.FilterMode.all;
+			},
+			unreadCounter() {
+				return this.$store.getters['counters/getTotalTaskCounter'];
 			}
 		},
 		created() {
@@ -51,7 +73,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 			},
 			onCreateClick() {
-				new im_v2_lib_entityCreator.EntityCreator().openTaskCreationForm();
+				void new im_v2_lib_entityCreator.EntityCreator().openTaskCreationFormInTaskChats();
 			},
 			onOpenSearch() {
 				if (!this.searchMode) {
@@ -90,14 +112,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onToggleUnreadMode() {
 				this.unreadMode = !this.unreadMode;
 			},
+			onChangeFilterMode(mode) {
+				this.unreadMode = mode === im_v2_component_list_container_elements_filterRow.FilterMode.unread;
+				if (this.unreadMode) {
+					im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenTasksUnreadMode(im_v2_lib_analytics.AnalyticsSection.filterRow);
+				}
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
-		<div class="bx-im-list-container-task__container" ref="task-container">
-			<div class="bx-im-list-container-task__header_container">
+		<div class="bx-im-list-container-task__container" data-testid="im-list-task" ref="task-container">
+			<div class="bx-im-list-container-task__header_container" :class="{ '--with-filter-row': isShellNavigationAvailable }">
 				<HeaderMenu
+					v-if="!isShellNavigationAvailable"
 					:unreadMode="unreadMode"
 					:recentSection="RecentType.taskComments"
 					@toggleUnreadMode="onToggleUnreadMode"
@@ -107,6 +136,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:searchMode="searchMode"
 						:isLoading="searchMode && isSearchLoading"
 						:placeholder="loc('IM_LIST_CONTAINER_TASK_SEARCH_INPUT_PLACEHOLDER')"
+						:activateOnEnter="true"
+						:searchAreaId="searchAreaId"
 						@openSearch="onOpenSearch"
 						@closeSearch="onCloseRecentSearch"
 						@updateSearch="onUpdateSearch"
@@ -114,6 +145,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				</div>
 				<CreateChatButton @click="onCreateClick" />
 			</div>
+			<FilterRow
+				v-if="isShellNavigationAvailable"
+				:mode="filterMode"
+				:counter="unreadCounter"
+				:readAllSection="RecentType.taskComments"
+				@changeMode="onChangeFilterMode"
+			/>
 			<div class="bx-im-list-container-task__elements_container">
 				<div class="bx-im-list-container-task__elements">
 					<RecentSearch
@@ -123,6 +161,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:parentChatId="ParentChatScope.all"
 						:showUsersCarousel="false"
 						:recentSectionType="RecentType.taskComments"
+						:withKeyboardNavigation="true"
+						:searchAreaId="searchAreaId"
 						@loading="onLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
@@ -137,5 +177,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.TaskListContainer = TaskListContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List);
 //# sourceMappingURL=task-container.bundle.js.map

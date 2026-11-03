@@ -4,9 +4,8 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 import { TextMd } from 'ui.system.typography.vue';
 
-import { CollapseButton } from './collapsible-action/collapse-button';
 import { EditButton } from './collapsible-action/edit-button';
-import { ExpandButton } from './collapsible-action/expand-button';
+import { ToggleButton } from './collapsible-action/toggle-button';
 import { EntityCollapsibleTextEvent } from './const';
 
 import './entity-text.css';
@@ -19,8 +18,7 @@ export const EntityCollapsibleText = {
 		BIcon,
 		TextMd,
 		EditButton,
-		ExpandButton,
-		CollapseButton,
+		ToggleButton,
 	},
 	inject: {
 		task: {},
@@ -58,6 +56,14 @@ export const EntityCollapsibleText = {
 			type: Boolean,
 			default: false,
 		},
+		enableClickToExpand: {
+			type: Boolean,
+			default: false,
+		},
+		editButtonLabel: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['editButtonClick', 'update:opened'],
 	setup(): { Outline: Object, EntityCollapsibleTextEvent: typeof EntityCollapsibleTextEvent }
@@ -72,6 +78,7 @@ export const EntityCollapsibleText = {
 		return {
 			isOverflowing: false,
 			isOverflowChecked: false,
+			hadSelectionOnMouseDown: false,
 		};
 	},
 	computed: {
@@ -108,6 +115,10 @@ export const EntityCollapsibleText = {
 		showCollapseButton(): boolean
 		{
 			return this.opened && !this.openByDefault;
+		},
+		showToggleButton(): boolean
+		{
+			return Boolean(this.hidden) || this.showCollapseButton;
 		},
 		showEditButton(): boolean
 		{
@@ -243,12 +254,54 @@ export const EntityCollapsibleText = {
 		{
 			this.setPreviewShown(false, targetEvent);
 		},
+		handleToggle(): void
+		{
+			if (this.opened)
+			{
+				this.handleClickCollapser(EntityCollapsibleTextEvent.CollapseButtonClick);
+
+				return;
+			}
+
+			this.handleClickOpener(EntityCollapsibleTextEvent.ExpandButtonClick);
+		},
 		handleMouseDownText(): void
-		{},
+		{
+			const selection = window.getSelection();
+			const preview = this.$refs.preview;
+
+			this.hadSelectionOnMouseDown = Boolean(
+				selection?.toString().trim()
+				&& selection.rangeCount > 0
+				&& preview
+				&& selection.getRangeAt(0).intersectsNode(preview),
+			);
+		},
 		handleMouseMoveText(): void
 		{},
-		handleMouseUpText(): void
-		{},
+		handleMouseUpText(event: MouseEvent): void
+		{
+			if (event.button !== 0 || !this.enableClickToExpand || !this.hidden)
+			{
+				return;
+			}
+
+			if (event.target.closest('a, button, img, video'))
+			{
+				return;
+			}
+
+			const dismissedSelection = this.hadSelectionOnMouseDown;
+			this.hadSelectionOnMouseDown = false;
+
+			setTimeout(() => {
+				const textSelected = window.getSelection()?.toString().trim();
+				if (!textSelected && !dismissedSelection)
+				{
+					this.setPreviewShown(true, EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp);
+				}
+			}, 0);
+		},
 		handleSelectionStart(): void
 		{
 			this.removeHandlerSelectionFinish();
@@ -282,6 +335,7 @@ export const EntityCollapsibleText = {
 			class="tasks-card-entity-collapsible-text print-fit-height"
 			:class="{ '--disable-animation': openByDefault }"
 			:style="{ 'maxHeight': maxHeightStyle }"
+			data-testid="tasks-entity-collapsible-text"
 			ref="preview"
 		>
 			<HtmlFormatterComponent
@@ -311,9 +365,13 @@ export const EntityCollapsibleText = {
 				'--sticky': stickyFooter,
 			}"
 		>
-			<EditButton v-if="showEditButton" @click="$emit('editButtonClick')" />
-			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="handleClickOpener(EntityCollapsibleTextEvent.ExpandButtonClick)" />
-			<CollapseButton v-if="showCollapseButton" @click="handleClickCollapser(EntityCollapsibleTextEvent.CollapseButtonClick)" />
+			<EditButton
+				v-if="showEditButton"
+				data-testid="tasks-entity-collapsible-text-edit-btn"
+				:ariaLabel="editButtonLabel"
+				@click="$emit('editButtonClick')"
+			/>
+			<ToggleButton v-if="showToggleButton" :opened :showFilesIndicator :filesCount data-testid="tasks-entity-collapsible-text-toggle-btn" @click="handleToggle" />
 		</div>
 	`,
 };

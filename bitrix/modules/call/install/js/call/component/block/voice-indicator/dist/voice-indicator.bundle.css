@@ -1,0 +1,30 @@
+.call-voice-indicator {
+	width: max-content;
+	border-radius: 20px;
+	background: rgba(0, 0, 0, 0.45);
+	-webkit-backdrop-filter: blur(50px);
+	        backdrop-filter: blur(50px);
+	display: flex;
+	align-items: center;
+	padding: 8px 24px 7px 11px;
+	gap: 8px;
+}
+
+.call-voice-indicator__content {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.call-voice-indicator__item {
+	border-radius: 2px;
+	opacity: 0.5;
+	background: #FFF;
+	width: 3px;
+	height: 8px;
+}
+
+.call-voice-indicator__item.--active {
+	background: #1CAE6A;
+	opacity: 1;
+}

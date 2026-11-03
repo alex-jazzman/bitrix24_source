@@ -13,7 +13,7 @@ BitrixVue.component('sale-payment_pay-components-payment_system-payment_info-but
 	mixins:[MixinPaymentInfoButton],
 	// language=Vue
 	template: `
-		<button :class="classes" @click="onClick($event)">
+		<button :class="classes" data-testid="sale-payment-info-btn" :aria-busy="ariaBusy" @click="onClick($event)">
 			<slot></slot>
 		</button>
 	`,

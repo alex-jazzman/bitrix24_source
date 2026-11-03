@@ -1,0 +1,96 @@
+.call-incoming {
+	box-sizing: border-box;
+	display: flex;
+	position: relative;
+	flex-direction: column;
+	align-items: center;
+	width: 350px;
+	height: 495px;
+	padding: 30px 50px 50px;
+	border: 1px var(--call-color-incoming-border) solid;
+	border-radius: 16px;
+	font-size: var(--ui-font-size-md);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	background: var(--call-color-background) url('../../../../../images/invitation-background.webp') no-repeat center;
+	background-size: calc(100% + 2px) calc(100% + 2px);
+}
+
+.call-incoming.--desktop {
+	width: 100%;
+	height: 100%;
+	border-radius: inherit;
+}
+
+.call-incoming__subtitle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 10px;
+	gap: 4px;
+	color: var(--ui-color-palette-white-base);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal, 400);
+	font-size: var(--ui-font-size-md);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	text-align: center;
+	opacity: 0.5;
+	user-select: none;
+}
+
+.call-incoming__title {
+	width: 100%;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	color: var(--ui-color-palette-white-base);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-medium, 500);
+	font-size: 19px;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	letter-spacing: 0;
+	text-align: center;
+	word-break: break-word;
+	-webkit-box-orient: vertical;
+	text-overflow: ellipsis;
+}
+
+.call-incoming__center {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 0;
+}
+
+.call-incoming__devices {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	gap: 50px;
+	margin-top: 50px;
+}
+
+.call-incoming__actions {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	gap: 120px;
+}
+
+/* Text for the screen reader only. ui.a11y ships VisuallyHidden, but this extension does not
+   depend on ui.a11y and the nodes must hide before any custom element upgrades, so its recipe
+   is repeated here as a class. */
+.call-incoming__visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+}

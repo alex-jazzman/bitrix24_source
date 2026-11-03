@@ -1,18 +1,18 @@
 import { LayoutWidget } from '../../../../../../../../../../mobile/dev/janative/api';
-import { CheckListFlatTreeItem, ChecklistConditions, ChecklistDiskConfig } from '../../../../checklist/types/common';
+import { ChecklistConditions, ChecklistDiskConfig } from '../../../../checklist/types';
 import { ChecklistOnBlurParams, ChecklistChangeAttachmentsParams } from './list';
 
 export type ChecklistItemSelectedOptions = ChecklistConditions;
 
 export type BaseChecklistItemProps = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	isFocused?: boolean,
 	parentWidget?: LayoutWidget,
 	showToastNoRights?: () => void,
 	onChange?: (shouldSave: boolean) => void,
 	onBlur?: (params: ChecklistOnBlurParams) => void,
-	onSubmit?: (item: CheckListFlatTreeItem) => void,
-	onFocus?: (item: CheckListFlatTreeItem) => void,
+	onSubmit?: (item: ChecklistItemView) => void,
+	onFocus?: (item: ChecklistItemView) => void,
 	onRemove?: (params: ChecklistOnBlurParams) => void,
 	onSelectionStylesChange?: (styles: string[]) => void,
 };
@@ -20,10 +20,10 @@ export type BaseChecklistItemProps = {
 export type MainChecklistItemProps = BaseChecklistItemProps & {
 	diskConfig?: ChecklistDiskConfig,
 	selectedOptions?: ChecklistItemSelectedOptions,
-	onToggleComplete?: (item: CheckListFlatTreeItem) => void,
+	onToggleComplete?: (item: ChecklistItemView) => void,
 	onChangeAttachments?: (params: ChecklistChangeAttachmentsParams) => void,
-	updateMenu?: (item: CheckListFlatTreeItem) => void,
-	updateRowByKey?: (item: CheckListFlatTreeItem, shouldRender?: boolean) => Object,
+	updateMenu?: (item: ChecklistItemView) => void,
+	updateRowByKey?: (item: ChecklistItemView, shouldRender?: boolean) => Object,
 	openUserSelectionManager?: (itemId: number | string, memberType: string) => void,
 	openTariffRestrictionWidget?: (memberType: string) => void,
 };

@@ -17,6 +17,12 @@ $pageId = "group_card";
 include("util_group_menu.php");
 include("util_group_limit.php");
 
+$allowProjectNavigationInFrame = true;
+if (include('util_project_navigation.php'))
+{
+	return;
+}
+
 $componentParameters = [
 	"PATH_TO_USER" => $arParams["PATH_TO_USER"],
 	"PATH_TO_GROUP" => $arResult["PATH_TO_GROUP"],

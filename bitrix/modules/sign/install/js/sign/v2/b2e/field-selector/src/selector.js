@@ -7,6 +7,7 @@ import { Button } from 'ui.buttons';
 import Backend from './backend/backend';
 import Search from './search/search';
 import ListItem from './list-item/list-item';
+import { spreadTitleToLanguages } from './field-title';
 
 import type { SelectorOptions, ControllerOptions, SelectorFilter, FieldsFactoryFilter } from './types/selector-options';
 import type { FieldsList } from './types/fields-list';
@@ -571,19 +572,17 @@ export class FieldSelector extends EventEmitter
 			const menu = factory.getMenu();
 
 			menu.open((selectedType) => {
+				const createdField = factory.createUserField(selectedType);
+				const currentLanguage = Loc.getMessage('LANGUAGE_ID');
+
 				const configurator = factory.getConfigurator({
-					userField: factory.createUserField(selectedType),
+					userField: createdField,
 					canMultipleFields: false,
 					canRequiredFields: false,
 					onSave: (userField) => {
 						Dom.addClass(configurator.saveButton, 'ui-btn-wait');
 
-						const languages = new Set(Object.keys(this.#getOptions().languages));
-						const currentLanguage = Loc.getMessage('LANGUAGE_ID');
-						const currentValue = userField.data.editFormLabel[currentLanguage];
-						languages.forEach((lang) => {
-							userField.data.editFormLabel[lang] = currentValue;
-						});
+						spreadTitleToLanguages(userField, currentLanguage, this.#getOptions().languages);
 
 						return userField
 							.save()
@@ -605,6 +604,14 @@ export class FieldSelector extends EventEmitter
 
 				this.#cleanFieldsList();
 				Dom.append(configurator.render(), this.#getFieldsListLayout());
+
+				// The editor shows the title of the field as the hint of its input and takes the title from
+				// the value of that input on save, so the query of the user is put into the value itself.
+				const initialFieldTitle = this.#getOptions().initialFieldTitle;
+				if (Type.isStringFilled(initialFieldTitle))
+				{
+					configurator.labelInput.value = initialFieldTitle;
+				}
 			});
 		}
 	}

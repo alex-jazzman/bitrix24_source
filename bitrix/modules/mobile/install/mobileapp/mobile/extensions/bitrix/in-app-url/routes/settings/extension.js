@@ -5,25 +5,19 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 	const { Feature } = require('feature');
 	const { requireLazy } = require('require-lazy');
 	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
+	const { Loc } = require('loc');
+	const { showSafeToast } = require('toast');
+	const { WidgetPresenter } = require('in-app-url/widget-presenter');
 
 	const openPresetManagementPage = (params, { context }) => {
-		PageManager.openComponent(
-			'JSStackComponent',
-			{
-				// eslint-disable-next-line no-undef
-				scriptPath: availableComponents['tab.presets'].publicUrl,
-				rootWidget: {
-					name: 'layout',
-					settings: {
-						objectName: 'layout',
-						titleParams: {
-							text: context?.title,
-							useLargeTitleMode: true,
-						},
-					},
-				},
-			},
-		);
+		void WidgetPresenter.fromContext(context)
+			.setComponentName('tab.presets')
+			.setTitleParams({
+				text: context?.title || Loc.getMessage('MENU_SETTINGS_SECTION_BOTTOM_MENU'),
+				useLargeTitleMode: true,
+			})
+			.setCanOpenInDefault(context?.canOpenInDefault ?? Boolean(context?.deeplink))
+			.open();
 	};
 
 	const openGeneralSettingsPage = async (params, { context }) => {
@@ -33,8 +27,9 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 				{
 					componentCode: 'settings.config',
 					// eslint-disable-next-line no-undef
-					scriptPath: availableComponents['settings'].publicUrl,
+					scriptPath: availableComponents.settings?.publicUrl ?? '/mobileapp/jn/settings/?version=1.0',
 					type: 'component',
+					canOpenInDefault: context?.canOpenInDefault ?? Boolean(context?.deeplink),
 					rootWidget: {
 						name: 'settings',
 						settings: {
@@ -43,6 +38,7 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 								text: context?.title,
 								type: 'section',
 							},
+							...(context?.presentation?.isModal?.() ? context.presentation.getModalSettings() : {}),
 						},
 					},
 					params: {
@@ -75,7 +71,11 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 			}
 
 			const { openSettings, SettingsPageId } = await requireLazy('settings-v2');
-			openSettings({ settingsPageId: SettingsPageId.ROOT });
+			openSettings({
+				settingsPageId: SettingsPageId.ROOT,
+				parentWidget: context?.parentWidget,
+				presentation: context?.presentation,
+			});
 		}
 		catch (e)
 		{
@@ -101,8 +101,27 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 		}
 	};
 
+	const openQrLoginOnOtherDevice = async (params, { context }) => {
+		try
+		{
+			const { openQrLogin } = await requireLazy('qrauth/show-code');
+
+			await openQrLogin({
+				parentWidget: context?.parentWidget,
+			});
+		}
+		catch (e)
+		{
+			console.error('settings: failed to open the cross-device login sheet', e);
+			showSafeToast(
+				{ message: Loc.getMessage('MOBILE_TOAST_ERROR_MESSAGE') },
+				context?.parentWidget,
+			);
+		}
+	};
+
 	// eslint-disable-next-line consistent-return
-	const openNotificationSettingsPage = async () => {
+	const openNotificationSettingsPage = async (params, { context }) => {
 		const openOldNotificationSettings = async () => {
 			try
 			{
@@ -147,7 +166,11 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 			}
 
 			const { openSettings, SettingsPageId } = await requireLazy('settings-v2');
-			openSettings({ settingsPageId: SettingsPageId.NOTIFICATIONS_ROOT });
+			openSettings({
+				settingsPageId: SettingsPageId.NOTIFICATIONS_ROOT,
+				parentWidget: context?.parentWidget,
+				presentation: context?.presentation,
+			});
 		}
 		catch (e)
 		{
@@ -157,7 +180,7 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 		}
 	};
 
-	const openSecuritySettingsPage = async () => {
+	const openSecuritySettingsPage = async (params, { context }) => {
 		const isSecuritySettingsAvailable = await checkFeatureFlag(FeatureFlagType.SECURITY_SETTINGS);
 		if (isSecuritySettingsAvailable === true)
 		{
@@ -167,6 +190,8 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 			{
 				openSettings({
 					settingsPageId: SettingsPageId.SECURITY,
+					parentWidget: context?.parentWidget,
+					presentation: context?.presentation,
 				});
 			}
 			else
@@ -182,23 +207,33 @@ jn.define('in-app-url/routes/settings', (require, exports, module) => {
 
 	module.exports = function(inAppUrl) {
 		inAppUrl
-			.register('/settings/tab.presets', openPresetManagementPage)
+			.addRoute('/settings/tab.presets')
+			.handler(openPresetManagementPage)
 			.name('settings-tab-presets');
 
 		inAppUrl
-			.register('/settings/general', openGeneralSettingsPage)
+			.addRoute('/settings/general')
+			.handler(openGeneralSettingsPage)
 			.name('settings-general');
 
 		inAppUrl
-			.register('/settings/go-to-web', openGoToWebWidget)
+			.addRoute('/settings/go-to-web')
+			.handler(openGoToWebWidget)
 			.name('settings-go-to-web');
 
 		inAppUrl
-			.register('/settings/notification', openNotificationSettingsPage)
+			.addRoute('/settings/login-on-other-device')
+			.handler(openQrLoginOnOtherDevice)
+			.name('settings-login-on-other-device');
+
+		inAppUrl
+			.addRoute('/settings/notification')
+			.handler(openNotificationSettingsPage)
 			.name('settings-notification');
 
 		inAppUrl
-			.register('/settings/security', openSecuritySettingsPage)
+			.addRoute('/settings/security')
+			.handler(openSecuritySettingsPage)
 			.name('settings-security');
 	};
 });

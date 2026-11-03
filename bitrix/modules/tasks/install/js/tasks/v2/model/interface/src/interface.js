@@ -14,6 +14,7 @@ import {
 	type StateFlags,
 	type UserFieldScheme,
 	type TaskListOptions,
+	type FilesViewMode,
 } from './types';
 import { type TaskModel } from 'tasks.v2.model.tasks';
 
@@ -35,6 +36,7 @@ export class Interface extends BuilderModel
 				? JSON.parse(params.userOptions.fullCard.taskListOptions)
 				: undefined
 			,
+			filesViewMode: params.userOptions.filesViewMode || 'tile',
 		});
 	}
 
@@ -79,6 +81,7 @@ export class Interface extends BuilderModel
 				showSubTasks: true,
 				showSubTemplates: true,
 			}),
+			filesViewMode: this.getVariable('filesViewMode', 'tile'),
 		};
 	}
 
@@ -99,6 +102,11 @@ export class Interface extends BuilderModel
 			deadlineUserOption: (state: InterfaceModelState): DeadlineUserOption => state.deadlineUserOption,
 			/** @function interface/defaultDeadlineTs */
 			defaultDeadlineTs: (state: InterfaceModelState): ?number => {
+				if (state.deadlineUserOption?.defaultDeadlineInSeconds === 0)
+				{
+					return null;
+				}
+
 				if (state.deadlineUserOption && state.deadlineUserOption.isExactDeadlineTime)
 				{
 					const worktimeTs = calendar.clampWorkDateTime(Date.now());
@@ -132,6 +140,8 @@ export class Interface extends BuilderModel
 			taskWithActiveTimer: (state: InterfaceModelState): ?TaskModel => state.taskWithActiveTimer,
 			/** @function interface/taskListOptions */
 			taskListOptions: (state: InterfaceModelState): TaskListOptions => state.taskListOptions,
+			/** @function interface/filesViewMode */
+			filesViewMode: (state: InterfaceModelState): FilesViewMode => state.filesViewMode,
 		};
 	}
 
@@ -199,6 +209,10 @@ export class Interface extends BuilderModel
 			updateTaskListOptions: (store, taskListOptions: TaskListOptions) => {
 				store.commit('setTaskListOptions', taskListOptions);
 			},
+			/** @function interface/updateFilesViewMode */
+			updateFilesViewMode: (store, filesViewMode: FilesViewMode) => {
+				store.commit('setFilesViewMode', filesViewMode);
+			},
 		};
 	}
 
@@ -224,9 +238,14 @@ export class Interface extends BuilderModel
 				};
 			},
 			setDeadlineUserOption: (state: InterfaceModelState, deadlineUserOption: Partial<DeadlineUserOption>) => {
+				const normalizedDeadlineUserOption = deadlineUserOption.defaultDeadlineInSeconds === 0
+					? { ...deadlineUserOption, defaultDeadlineDate: '' }
+					: deadlineUserOption
+				;
+
 				state.deadlineUserOption = {
 					...state.deadlineUserOption,
-					...deadlineUserOption,
+					...normalizedDeadlineUserOption,
 				};
 			},
 			addCheckListItemToDeleting: (state: InterfaceModelState, itemId: number | string) => {
@@ -260,12 +279,16 @@ export class Interface extends BuilderModel
 			setTaskListOptions: (state: InterfaceModelState, taskListOptions: TaskListOptions) => {
 				state.taskListOptions = taskListOptions;
 			},
+			setFilesViewMode: (state: InterfaceModelState, filesViewMode: FilesViewMode) => {
+				state.filesViewMode = filesViewMode;
+			},
 		};
 	}
 }
 
 const updateSkeleton = (width: number) => {
-	const style = width ? `style="width: ${width}px;"` : '';
+	const widthStyle = width ? `width: ${width}px; ` : '';
+	const style = `style="${widthStyle}min-width: 0; max-width: 100%;"`;
 
 	localStorage.set('tasks-skeleton-width', style, 315_360_000);
 };

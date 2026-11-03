@@ -104,6 +104,26 @@
 .landing-pub-top-panel-total-view {
 	display: flex;
 	align-items: center;
+	gap: 4px;
+}
+
+.landing-pub-top-panel-total-view {
+	margin-left: 16px;
+}
+
+.landing-pub-top-panel-unique-view {
+	appearance: none;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.landing-pub-top-panel-unique-view:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
 }
 
 .landing-pub-top-panel-actions {
@@ -150,13 +170,12 @@
 	will-change: opacity;
 }
 
+/* The only state of the popup. The pointer opens it through the same script the button does, so that
+   the class stays the one source of truth about the state the counter declares. */
 .landing-pub-top-panel-unique-view-popup.hide {
 	display: none;
 }
 
-.landing-pub-top-panel-unique-view:hover .landing-pub-top-panel-unique-view-popup {
-	display: flex;
-}
 .landing-pub-top-panel-unique-view .ui-btn-icon-eye-opened:hover {
 	border-color: transparent !important;
 	background-color: transparent !important;

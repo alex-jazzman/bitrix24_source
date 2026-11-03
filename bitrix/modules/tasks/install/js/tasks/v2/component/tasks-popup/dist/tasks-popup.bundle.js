@@ -2,12 +2,35 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports, main_core, main_core_zIndexManager) {
+(function (exports, main_core, main_core_zIndexManager, ui_a11y) {
 	'use strict';
 
+	const openPopups = new Set();
+	function hasOpenPopups(scope = null) {
+		if (!main_core.Type.isDomNode(scope)) {
+			return openPopups.size > 0;
+		}
+		for (const popup of openPopups) {
+			if (isPopupInsideScope(popup, scope)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	function isPopupInsideScope(popup, scope) {
+		const popupElement = popup.$refs?.popupOverlay;
+		if (main_core.Type.isDomNode(popupElement) && scope.contains(popupElement)) {
+			return true;
+		}
+		const anchorElement = popup.elementAnchor;
+		return main_core.Type.isDomNode(anchorElement) && scope.contains(anchorElement);
+	}
 	// @vue/components
 	const TasksPopup = {
 		name: 'TasksPopup',
+		directives: {
+			focusTrap: ui_a11y.FocusTrapDirective
+		},
 		props: {
 			options: {
 				/** @type TasksPopupOptions */
@@ -16,6 +39,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			}
 		},
 		emits: ['mouseenterOverlay', 'mouseleaveOverlay', 'clickOverlay', 'mouseenter', 'mouseleave', 'click', 'close'],
+		inject: {
+			popupTeleportTarget: {
+				default: null
+			}
+		},
 		data() {
 			return {
 				// TODO: remove zIndex management when there is no old popup
@@ -40,6 +68,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			},
 			elementScrollContainer() {
 				return this.positioning.elementScrollContainer;
+			},
+			isDialog() {
+				return main_core.Type.isStringFilled(this.options?.ariaLabel);
+			},
+			dialogAriaLabel() {
+				return this.isDialog ? this.options.ariaLabel : null;
+			},
+			focusTrapBinding() {
+				return {
+					active: this.isDialog,
+					options: this.focusTrapOptions
+				};
 			},
 			offsetVertical() {
 				const offsetVerticalNew = this.positioning.offsetVertical || 0;
@@ -114,9 +154,26 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					stylePopupNew.bottom = `${this.bottom}px`;
 				}
 				return stylePopupNew;
+			},
+			teleportTarget() {
+				if (this.options?.isTeleportedToContainer && this.popupTeleportTarget) {
+					return this.popupTeleportTarget;
+				}
+				return 'body';
 			}
 		},
+		created() {
+			// FocusTrapDirective compares its options by identity and rebuilds the trap on any
+			// mismatch, and rebuilding pulls focus out of an open dialog. The object is built once
+			// and resolves the restore target lazily, so a changing anchor never rebuilds the trap.
+			this.focusTrapOptions = {
+				restoreFocus: () => this.getElementAnchorFocusable()
+			};
+		},
 		mounted() {
+			if (!this.options?.isHoverTooltip) {
+				openPopups.add(this);
+			}
 			this.registerZIndexComponent();
 			if (this.elementAnchor) {
 				this.setCoordsForPopup();
@@ -127,9 +184,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				}
 			}
 			main_core.Event.bind(document, 'click', this.handleClickDocument);
-			main_core.Event.bind(document, 'keydown', this.handleKeyDownDocument);
+			// SidePanel binds its own Escape handler on the document before this popup mounts, so a
+			// bubbling listener cannot keep the key from closing the slider underneath. A dialog owns
+			// its Escape and listens in the capture phase to stop it there.
+			this.isEscapeCaptured = this.isDialog;
+			main_core.Event.bind(document, 'keydown', this.handleKeyDownDocument, this.isEscapeCaptured);
 		},
 		async beforeUnmount() {
+			openPopups.delete(this);
 			this.unregisterZIndexComponent();
 			if (this.elementAnchor) {
 				if (this.positioning.isAutoAdjust) {
@@ -139,7 +201,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				}
 			}
 			main_core.Event.unbind(document, 'click', this.handleClickDocument);
-			main_core.Event.unbind(document, 'keydown', this.handleKeyDownDocument);
+			main_core.Event.unbind(document, 'keydown', this.handleKeyDownDocument, this.isEscapeCaptured);
 		},
 		methods: {
 			registerZIndexComponent() {
@@ -212,11 +274,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			setCoordsForPopupHorizontal(sizes) {
 				const {
 					rectAnchor,
+					rectParent,
 					widthParent,
 					widthSelf
 				} = sizes;
 				if (this.positioning.isCenteredHorizontally) {
-					const leftNew = rectAnchor.left - widthSelf / 2 + (this.positioning.offsetHorizontal || 0);
+					const leftNew = rectAnchor.left - rectParent.left - widthSelf / 2 + (this.positioning.offsetHorizontal || 0);
 					const rightBasedOnLeftResult = widthParent - (leftNew + widthSelf);
 					if (leftNew < 0) {
 						this.left = 0;
@@ -229,7 +292,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						this.right = null;
 					}
 				} else if (this.positioning.isOpenedLeft) {
-					const leftNew = rectAnchor.right - widthSelf - (this.positioning.offsetHorizontal || 0);
+					const leftNew = rectAnchor.right - rectParent.left - widthSelf - (this.positioning.offsetHorizontal || 0);
 					if (leftNew < 0 && !this.positioning.isFlippingBlockedHorizontal) {
 						if (!this.isFlippedNoSpaceHorizontally) {
 							this.isFlippedNoSpaceHorizontally = true;
@@ -248,7 +311,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						this.right = null;
 					}
 				} else {
-					const leftNew = rectAnchor.left + (this.positioning.offsetHorizontal || 0);
+					const leftNew = rectAnchor.left - rectParent.left + (this.positioning.offsetHorizontal || 0);
 					const rightBasedOnLeftResult = widthParent - (leftNew + widthSelf);
 					if (rightBasedOnLeftResult < 0 && !this.positioning.isFlippingBlockedHorizontal) {
 						if (!this.isFlippedNoSpaceHorizontally) {
@@ -272,11 +335,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			setCoordsForPopupVertical(sizes) {
 				const {
 					rectAnchor,
+					rectParent,
 					heightParent,
 					heightSelf
 				} = sizes;
 				if (this.positioning.isOpenedUp) {
-					const topNew = rectAnchor.top - heightSelf - (this.offsetVertical || 0);
+					const topNew = rectAnchor.top - rectParent.top - heightSelf - (this.offsetVertical || 0);
 					if (topNew < 0 && !this.positioning.isFlippingBlockedVertical) {
 						if (!this.isFlippedNoSpaceVertically) {
 							this.isFlippedNoSpaceVertically = true;
@@ -295,7 +359,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						this.bottom = null;
 					}
 				} else {
-					const topNew = rectAnchor.bottom + (this.offsetVertical || 0);
+					const topNew = rectAnchor.bottom - rectParent.top + (this.offsetVertical || 0);
 					const bottomBasedOnTopResult = heightParent - (topNew + heightSelf);
 					if (bottomBasedOnTopResult < 0 && !this.positioning.isFlippingBlockedVertical) {
 						if (!this.isFlippedNoSpaceVertically) {
@@ -352,9 +416,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			},
 			tryToCloseThisPopup() {
 				if (this.options.isFrozen) {
-					return;
+					return false;
 				}
 				this.closeThisPopup();
+				return true;
+			},
+			getElementAnchorFocusable() {
+				const elementAnchor = this.elementAnchor;
+				if (!main_core.Type.isElementNode(elementAnchor)) {
+					return null;
+				}
+
+				// The anchor is the opener root, which is not always the node that takes focus:
+				// HoverPill moves role and tabindex onto an inner element when it acts as a trigger.
+				return ui_a11y.InteractivityChecker.isFocusable(elementAnchor) ? elementAnchor : ui_a11y.FocusNavigator.getFirst(elementAnchor);
 			},
 			closeNextPopups() {
 				const popupsModern = document.body.querySelectorAll('.tasks-popup-overlay');
@@ -401,7 +476,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			handleMouseLeavePopup() {
 				this.$emit('mouseleave');
 			},
-			handleClickPopup() {
+			handleClickPopup(event) {
 				event.stopPropagation();
 				const isThisPopupLast = this.getIsThisPopupLast();
 				if (!isThisPopupLast) {
@@ -419,13 +494,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					if (!isThisPopupLast) {
 						return;
 					}
-					this.tryToCloseThisPopup();
+					const isClosed = this.tryToCloseThisPopup();
+					if (isClosed && this.isDialog) {
+						event.stopPropagation();
+					}
 				}
 			}
 		},
 		template: `
 		<Teleport
-			to="body"
+			:to="teleportTarget"
 		>
 			<div
 				ref="popupOverlay"
@@ -449,7 +527,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					@click="handleClickPopup"
 				>
 					<div class="tasks-popup__bg"></div>
-					<div class="tasks-popup__content">
+					<div
+						class="tasks-popup__content"
+						v-focus-trap="focusTrapBinding"
+						:role="isDialog ? 'dialog' : null"
+						:aria-modal="isDialog ? 'true' : null"
+						:aria-label="dialogAriaLabel"
+					>
 						<slot />
 					</div>
 				</div>
@@ -459,6 +543,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	};
 
 	exports.TasksPopup = TasksPopup;
+	exports.hasOpenPopups = hasOpenPopups;
 
-})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX, BX);
+})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX, BX, BX.UI.Accessibility);
 //# sourceMappingURL=tasks-popup.bundle.js.map

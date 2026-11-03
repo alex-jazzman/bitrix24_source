@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports, main_core, ui_designTokens, disk_onlyofficeSessionRestrictions) {
+(function (exports, main_core, ui_buttons, ui_designTokens, ui_iconSet_api_core, ui_iconSet_solid, disk_onlyofficeSessionRestrictions) {
 	'use strict';
 
 	class Settings {
@@ -186,9 +186,13 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 		#getButton() {
 			if (!this.#button) {
-				// noinspection JSAnnotator
-				const text = main_core.Loc.getMessage('DISK_PROMO_BOOST_BUTTON_TEXT');
-				this.#button = main_core.Tag.render`<button class="bx-disk-promo-boost-button"><span>${text}</span></button>`;
+				this.#button = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('DISK_PROMO_BOOST_BUTTON_TEXT'),
+					useAirDesign: true,
+					style: ui_buttons.AirButtonStyle.FILLED_BOOST,
+					size: ui_buttons.ButtonSize.MEDIUM,
+					icon: ui_iconSet_api_core.Solid.ROCKET
+				}).render();
 			}
 			return this.#button;
 		}
@@ -219,5 +223,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.Factory = Factory;
 	exports.Widget = Widget;
 
-})(this.BX.Disk.PromoBoost = this.BX.Disk.PromoBoost || {}, BX, window, BX.Disk.OnlyOfficeSessionRestrictions);
+})(this.BX.Disk.PromoBoost = this.BX.Disk.PromoBoost || {}, BX, BX.UI, window, BX.UI.IconSet, window, BX.Disk.OnlyOfficeSessionRestrictions);
 //# sourceMappingURL=promo-boost.bundle.js.map

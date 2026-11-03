@@ -27,6 +27,7 @@
 		this.previewUrl = null;
 		this.linkUrl = null;
 		this.downloadUrl = null;
+		this.downloadDisabled = options.downloadDisabled === true;
 		this.isSeparate = false;
 		this.transformationTimeout = options.transformationTimeout || 22000;
 		this.layout = {
@@ -81,6 +82,7 @@
 
 			this.previewUrl = previewUrl === null || previewUrl.startsWith('data:image') ? null : previewUrl;
 			this.linkUrl = node.dataset.unifiedLink ?? null;
+			this.downloadDisabled = node.dataset.viewerDownloadDisabled === 'true';
 		},
 
 		/**
@@ -337,6 +339,11 @@
 		getDownloadUrl()
 		{
 			return this.downloadUrl === null ? this.src : this.downloadUrl;
+		},
+
+		isDownloadDisabled()
+		{
+			return this.downloadDisabled;
 		},
 
 		setDownloadUrl(url)

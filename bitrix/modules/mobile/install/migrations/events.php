@@ -25,6 +25,24 @@ $event
 		\Bitrix\Mobile\Internal\Integration\Mobileapp\EventHandler\OnBuildEnvVariable::class,
 		'handle',
 	)
+	->register(
+		'humanresources',
+		'OnMemberAdded',
+		\Bitrix\Mobile\Integration\HumanResources\EventHandler::class,
+		'onMemberChanged',
+	)
+	->register(
+		'humanresources',
+		'OnMemberUpdated',
+		\Bitrix\Mobile\Integration\HumanResources\EventHandler::class,
+		'onMemberChanged',
+	)
+	->register(
+		'humanresources',
+		'OnMemberDeleted',
+		\Bitrix\Mobile\Integration\HumanResources\EventHandler::class,
+		'onMemberChanged',
+	)
 ;
 
 $mode = $migration->context()->getDatabaseUpdateMode();

@@ -21,6 +21,11 @@ export class UserPlannerSelector extends EventEmitter
 	inlineEditMode = UserPlannerSelector.VIEW_MODE;
 	prevUserList = [];
 	loadedAccessibilityData = {};
+	plannerLimitState = null;
+	plannerDataRequestId = 0;
+	plannerDataContext = null;
+	plannerDateTimeContext = null;
+	destroyed = false;
 	REFRESH_PLANNER_DELAY = 500;
 
 	constructor(params = {})
@@ -98,6 +103,10 @@ export class UserPlannerSelector extends EventEmitter
 								},
 							},
 						});
+						this.userSelectorDialog.getPopup().subscribe(
+							'onClose',
+							this.handleUserSelectorHide.bind(this),
+						);
 					}
 					this.userSelectorDialog.show();
 				};
@@ -137,6 +146,11 @@ export class UserPlannerSelector extends EventEmitter
 				this.setHideGuestsValue(!this.hideGuests);
 			});
 		}
+	}
+
+	handleUserSelectorHide()
+	{
+		this.emit('onUserSelectorClose');
 	}
 
 	getSelectorEntities()
@@ -195,6 +209,7 @@ export class UserPlannerSelector extends EventEmitter
 
 	setValue(params)
 	{
+		this.invalidatePlannerData();
 		const { attendeesEntityList, attendees, location, notify, hideGuests, viewMode, entry } = params;
 		this.attendeesEntityList = Type.isArray(attendeesEntityList) ? attendeesEntityList : [];
 		this.attendeesPreselectedItems = this.attendeesEntityList.map((item) => {return [item.entityId, item.id]});
@@ -318,12 +333,38 @@ export class UserPlannerSelector extends EventEmitter
 
 	setEntityList(selectorEntityList)
 	{
-		if (this.type === 'user' && this.userId !== this.ownerId)
+		const uniqueEntities = new Map();
+		(Type.isArray(selectorEntityList) ? selectorEntityList : []).forEach((entity) => {
+			const key = `${entity.entityId}:${entity.id}`;
+			if (!uniqueEntities.has(key))
+			{
+				uniqueEntities.set(key, { ...entity });
+			}
+		});
+
+		const currentEntities = this.selectorEntityList || [];
+		const nextEntities = [...uniqueEntities.values()];
+		if (
+			currentEntities.length !== nextEntities.length
+			|| currentEntities.some((entity, index) => {
+				return entity.entityId !== nextEntities[index].entityId
+					|| String(entity.id) !== String(nextEntities[index].id)
+				;
+			})
+		)
 		{
-			selectorEntityList.push({entityId: 'user', id: this.ownerId});
+			this.invalidatePlannerData();
 		}
 
-		this.selectorEntityList = selectorEntityList;
+		this.selectorEntityList = nextEntities;
+	}
+
+	invalidatePlannerData(): void
+	{
+		this.plannerDataRequestId += 1;
+		this.plannerDataContext = null;
+		this.prevUserList = [];
+		this.loadedAccessibilityData = {};
 	}
 
 	isReadOnly()
@@ -348,26 +389,39 @@ export class UserPlannerSelector extends EventEmitter
 			{
 				this.planner.updateSelector(this.planner.currentFromDate, this.planner.currentToDate, true);
 			}
-
-			this.planner.setEntriesCount(this.getUsersCount());
 		}
 	}
 
 	checkBusyTime()
 	{
+		if (this.destroyed)
+		{
+			return Promise.resolve();
+		}
+
 		const dateTime = this.getDateTime();
 		const entityList = this.getEntityList();
 		this.planner.updateScaleLimitsFromEntry(dateTime.from, dateTime.to);
 
-		this.runPlannerDataRequest({
+		const request = this.runPlannerDataRequest({
 			entityList: entityList,
 			timezone: dateTime.timezoneFrom,
 			location: this.getLocationValue(),
 			entryId: this.entryId,
 			parentId: this.entry.parentId,
-		})
+		});
+		const requestId = this.plannerDataRequestId;
+
+		return request
 			.then((response) =>
 			{
+				if (requestId !== this.plannerDataRequestId)
+				{
+					return response;
+				}
+
+				this.applyPlannerLimit(response.data);
+
 				for (let id in response.data.accessibility)
 				{
 					if (response.data.accessibility.hasOwnProperty(id))
@@ -387,11 +441,15 @@ export class UserPlannerSelector extends EventEmitter
 					});
 				}
 
-				if (Type.isArray(response.data.accessibility[this.ownerId]))
+				const organizerEntry = Type.isArray(response.data.entries)
+					? response.data.entries.find((entry) => entry.type === 'user' && entry.status === 'h')
+					: null
+				;
+				if (organizerEntry && Type.isArray(response.data.accessibility[organizerEntry.id]))
 				{
 					const from = this.getDateTime().from;
 					const to = this.getDateTime().to;
-					const preparedData = this.preparedDataAccessibility(response.data.accessibility[this.ownerId]);
+					const preparedData = this.preparedDataAccessibility(response.data.accessibility[organizerEntry.id]);
 
 					if (!this.planner.currentFromDate)
 					{
@@ -411,11 +469,23 @@ export class UserPlannerSelector extends EventEmitter
 						this.showPlanner();
 						this.planner.update(response.data.entries, response.data.accessibility);
 						this.planner.updateSelector(dateTime.from, dateTime.to, dateTime.fullDay);
-						this.planner.hideLoader();
-						this.displayAttendees(this.prepareAttendeesForDisplay(response.data.entries));
+						if (!this.plannerLimitState?.exceeded)
+						{
+							// A truncated response contains only the planner-visible attendee slice,
+							// so it must not replace the full attendee list of the form.
+							this.displayAttendees(this.prepareAttendeesForDisplay(response.data.entries));
+						}
 					}
 				}
-			})
+
+				return response;
+			}, (response) => response)
+			.finally(() => {
+				if (requestId === this.plannerDataRequestId)
+				{
+					this.planner?.hideLoader();
+				}
+			});
 	}
 
 	prepareAttendeesForDisplay(attendees)
@@ -441,6 +511,11 @@ export class UserPlannerSelector extends EventEmitter
 
 	refreshPlannerState()
 	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
 		if (this.planner && this.planner.isShown())
 		{
 			let dateTime = this.getDateTime();
@@ -457,62 +532,144 @@ export class UserPlannerSelector extends EventEmitter
 
 	loadPlannerData(params = {})
 	{
+		if (this.destroyed)
+		{
+			return Promise.resolve();
+		}
+
 		this.planner.showLoader();
-		return new Promise((resolve) => {
-			this.runPlannerDataRequest(params)
-				.then((response) => {
-					for (let id in response.data.accessibility)
+		const request = this.runPlannerDataRequest(params);
+		const requestId = this.plannerDataRequestId;
+
+		return request
+			.then((response) => {
+				if (requestId !== this.plannerDataRequestId)
+				{
+					return response;
+				}
+
+				this.applyPlannerLimit(response.data);
+
+				for (let id in response.data.accessibility)
+				{
+					if (response.data.accessibility.hasOwnProperty(id))
 					{
-						if (response.data.accessibility.hasOwnProperty(id))
+						this.loadedAccessibilityData[id] = response.data.accessibility[id];
+					}
+				}
+
+				if (Type.isArray(response.data.entries))
+				{
+					response.data.entries.forEach((entry) => {
+						const hasAccessibility = this.loadedAccessibilityData[entry.id];
+						if (entry.type === 'user' && !this.prevUserList.includes(parseInt(entry.id)) && hasAccessibility)
 						{
-							this.loadedAccessibilityData[id] = response.data.accessibility[id];
+							this.prevUserList.push(parseInt(entry.id));
 						}
-					}
+					});
+				}
 
-					if (Type.isArray(response.data.entries))
-					{
-						response.data.entries.forEach((entry) => {
-							const hasAccessibility = this.loadedAccessibilityData[entry.id];
-							if (entry.type === 'user' && !this.prevUserList.includes(parseInt(entry.id)) && hasAccessibility)
-							{
-								this.prevUserList.push(parseInt(entry.id));
-							}
-						});
-					}
+				this.planner.update(
+					response.data.entries,
+					this.loadedAccessibilityData
+				);
 
-					this.planner.hideLoader();
-					this.planner.update(
-						response.data.entries,
-						this.loadedAccessibilityData
-					);
+				return response;
+			}, (response) => response)
+			.finally(() => {
+				if (requestId === this.plannerDataRequestId)
+				{
+					this.planner?.hideLoader();
+				}
+			});
+	}
 
-					resolve(response);
-				},
-				(response) => {resolve(response);}
-			);
-		});
+	applyPlannerLimit(data): void
+	{
+		const exceeded = data.plannerLimitExceeded === true;
+		const wasExceeded = this.plannerLimitState?.exceeded ?? false;
+
+		this.plannerLimitState = {
+			exceeded,
+			maxPlannerUsers: parseInt(data.maxPlannerUsers) || 0,
+			peopleCount: parseInt(data.plannerPeopleCount) || 0,
+		};
+
+		if (exceeded)
+		{
+			// render strictly the truncated response and forget missing users,
+			// so their busy data reloads after going back under the limit
+			this.loadedAccessibilityData = {};
+			const responseUserIds = (Type.isArray(data.entries) ? data.entries : [])
+				.filter((entry) => entry.type === 'user')
+				.map((entry) => parseInt(entry.id));
+			this.prevUserList = this.prevUserList.filter((userId) => responseUserIds.includes(userId));
+		}
+
+		if (exceeded !== wasExceeded)
+		{
+			this.emit('onPlannerLimitStateChange', new BaseEvent({
+				data: { ...this.plannerLimitState },
+			}));
+		}
+	}
+
+	getPlannerLimitState(): ?Object
+	{
+		return this.plannerLimitState;
+	}
+
+	resetPlannerLimitState(): void
+	{
+		this.plannerDataRequestId += 1;
+		this.planner?.hideLoader();
+		this.plannerLimitState = null;
 	}
 
 	runPlannerDataRequest(params)
 	{
-		return this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
-			data: {
-				entryId: params.entryId || 0,
-				parentId: params.parentId || 0,
-				entryLocation: this.entry.data.LOCATION || '',
-				ownerId: this.ownerId,
-				hostId: this.entry.data.MEETING_HOST || null,
-				type: this.type,
-				entityList: params.entityList || [],
-				dateFrom: Util.formatDate(this.planner.scaleDateFrom),
-				dateTo: Util.formatDate(this.planner.scaleDateTo),
-				timezone: params.timezone || '',
-				location: params.location || '',
-				entries: params.entrieIds || false,
-				prevUserList: params.prevUserList || [],
-				entry: this.entry,
-			},
-		});
+		const data = {
+			entryId: params.entryId || 0,
+			parentId: params.parentId || 0,
+			entryLocation: this.entry.data.LOCATION || '',
+			ownerId: this.ownerId,
+			hostId: this.entry.data.MEETING_HOST || null,
+			type: this.type,
+			entityList: params.entityList || [],
+			attendeesProvided: 'Y',
+			dateFrom: Util.formatDate(this.planner.scaleDateFrom),
+			dateTo: Util.formatDate(this.planner.scaleDateTo),
+			timezone: params.timezone || '',
+			location: params.location || '',
+			entries: params.entrieIds || false,
+			prevUserList: params.prevUserList || [],
+			entry: this.entry,
+		};
+		const context = JSON.stringify([
+			data.entryId,
+			data.parentId,
+			data.entryLocation,
+			data.ownerId,
+			data.hostId,
+			data.type,
+			data.entityList.map((entity) => [entity.entityId, String(entity.id)]),
+			data.dateFrom,
+			data.dateTo,
+			data.timezone,
+			data.location,
+		]);
+		if (context !== this.plannerDataContext)
+		{
+			this.invalidatePlannerData();
+			this.plannerDataContext = context;
+			data.prevUserList = [];
+		}
+		this.plannerDataRequestId += 1;
+
+		// BX.ajax.runAction returns BX.Promise without finally().
+		return Promise.resolve(this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
+			data,
+		}));
 	}
 
 	setDateTime(dateTime, updatePlaner = false)
@@ -527,6 +684,22 @@ export class UserPlannerSelector extends EventEmitter
 			dateTimeCloned.to.setHours(23, 55, 0, 0);
 		}
 
+		const context = JSON.stringify([
+			dateTimeCloned.from.getTime(),
+			dateTimeCloned.to.getTime(),
+			dateTimeCloned.fullDay,
+			dateTimeCloned.timezoneFrom,
+			dateTimeCloned.timezoneTo,
+		]);
+		const shouldRefreshPlanner = Type.isStringFilled(this.plannerDateTimeContext)
+			&& context !== this.plannerDateTimeContext
+		;
+		if (context !== this.plannerDateTimeContext)
+		{
+			this.invalidatePlannerData();
+			this.plannerDateTimeContext = context;
+		}
+		const requestId = this.plannerDataRequestId;
 		this.dateTime = dateTimeCloned;
 
 		this.planner.currentFromDate = dateTimeCloned.from;
@@ -546,6 +719,15 @@ export class UserPlannerSelector extends EventEmitter
 			{
 				this.planner.updateSelector(dateTimeCloned.from, dateTimeCloned.to, dateTimeCloned.fullDay);
 			}
+		}
+
+		if (
+			shouldRefreshPlanner
+			&& requestId === this.plannerDataRequestId
+			&& this.planner?.isShown()
+		)
+		{
+			this.refreshPlannerStateDebounce();
 		}
 	}
 
@@ -721,6 +903,15 @@ export class UserPlannerSelector extends EventEmitter
 
 	destroy()
 	{
+		this.destroyed = true;
+		this.reset();
+		this.planner?.destroy();
+	}
+
+	reset()
+	{
+		this.resetPlannerLimitState();
+
 		if (this.userSelectorDialog && this.userSelectorDialog.destroy)
 		{
 			this.userSelectorDialog.destroy();

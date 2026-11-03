@@ -70,10 +70,11 @@ BX.namespace('BX.Sale.PersonalProfileComponent');
 						cancelButton.classList.add("sale-personal-profile-hide");
 						labelFileInfo.innerHTML = BX.message('SPPD_FILE_NOT_SELECTED');
 						inputFile.value = "";
-						inputFile.files = [];
+						inputFile.focus();
 					}, this)
 				);
-			});
+				this.bindActivationKeys(cancelButton);
+			}, this);
 
 			var dateFileList = document.querySelectorAll('.sale-personal-profile-detail-form-date');
 			for (var i=0; i < dateFileList.length; i++)
@@ -118,20 +119,37 @@ BX.namespace('BX.Sale.PersonalProfileComponent');
 						}
 					}, this)
 				);
+				this.bindActivationKeys(hiddenLocation);
 			}
+		},
+		bindActivationKeys: function(node)
+		{
+			BX.bind(node, 'keydown', BX.proxy(function(event)
+			{
+				if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+				{
+					event.preventDefault();
+					node.click();
+				}
+			}, this));
 		},
 		createTextInput : function(event)
 		{
 			if (!BX.type.isDomNode(event.target))
 				return;
 
-			var newInput = BX.create('input',{attrs:{
-				className: 'form-control',
-				type: 'text',
-				name: event.target.getAttribute('data-add-name')
-			}});
+			var newInput = BX.create('input',{
+				props: {
+					className: 'form-control mb-1'
+				},
+				attrs: {
+					type: 'text',
+					name: event.target.getAttribute('data-add-name')
+				}
+			});
 
 			event.target.parentNode.insertBefore(newInput, event.target);
+			newInput.focus();
 		},
 		createLocationInput : function(event)
 		{
@@ -158,6 +176,15 @@ BX.namespace('BX.Sale.PersonalProfileComponent');
 						wrapper.innerHTML = result;
 						event.target.parentNode.insertBefore(wrapper,event.target);
 						event.target.setAttribute('data-add-last-key', newKey)
+						// The widget builds its field once the scripts of the response have run.
+						setTimeout(function()
+						{
+							var newField = wrapper.querySelector('.bx-ui-sls-fake');
+							if (newField)
+							{
+								newField.focus();
+							}
+						}, 0);
 					},this),
 					onfailure: BX.proxy(function()
 					{

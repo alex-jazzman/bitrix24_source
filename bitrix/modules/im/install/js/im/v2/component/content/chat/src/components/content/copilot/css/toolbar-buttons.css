@@ -10,3 +10,11 @@
 .bx-im-copilot-textarea__left-buttons .ui-chip {
 	max-width: 200px;
 }
+
+/* The panel clips overflow, and it must: the clip is what lets this flex item shrink below its content and
+   what trims the mode chip at the max-width above. The first chip starts right at the clip edge, so the ring
+   ui.system.chip draws outside the chip border box was cut off there. Pull the ring inside by its own width
+   instead, as the upload preview does - nothing moves, and it holds for every chip of the panel. */
+.bx-im-copilot-textarea__left-buttons .ui-chip:focus-visible {
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+}

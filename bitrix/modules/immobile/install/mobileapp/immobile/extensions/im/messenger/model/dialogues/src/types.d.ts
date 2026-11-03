@@ -24,6 +24,7 @@ export enum DialogType {
 	generalChannel = 'generalChannel',
 	collab = 'collab',
 	tasksTask = 'tasksTask',
+	vibecodeApp = 'vibecodeApp',
 }
 
 export type DialoguesModelState = {
@@ -60,6 +61,7 @@ export type DialoguesModelState = {
 	entityId: string,
 	entityLink: {
 		type?: string,
+		id?: string,
 		url?: string,
 	},
 	dateCreate: Date | null,
@@ -88,6 +90,12 @@ export type DialoguesModelState = {
 	} | null,
 	containsCollaber: boolean,
 	guestCount: number,
+	copilotGenerationState: CopilotGenerationState | null,
+};
+
+export type CopilotGenerationState = {
+	status: string,
+	initiatorId: number,
 };
 
 export type LastMessageViews = {
@@ -152,6 +160,8 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/deleteFromModel'
 	| 'dialoguesModel/setInputAction'
 	| 'dialoguesModel/removeInputAction'
+	| 'dialoguesModel/setCopilotGenerationState'
+	| 'dialoguesModel/clearCopilotGenerationState'
 	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/updateUserCounter'
 	| 'dialoguesModel/updateManagerList'
@@ -199,6 +209,7 @@ export type DialoguesUpdateActions =
 	| 'updateType'
 	| 'updateTariffRestrictions'
 	| 'updateInputAction'
+	| 'setCopilotGenerationState'
 	| 'decreaseCounter'
 	| 'updateUserCounter'
 	| 'mute'

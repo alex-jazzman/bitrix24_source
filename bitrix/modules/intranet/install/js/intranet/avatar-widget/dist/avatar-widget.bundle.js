@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_popupcomponentsmaker, ui_analytics, ui_cnt, ui_buttons, main_popup, intranet_desktopDownload, intranet_desktopAccountList, main_sidepanel, im_v2_lib_desktopApi, ui_avatar, timeman_workStatusControlPanel, pull_client, ui_infoHelper, crm_router, humanresources_hcmlink_salaryVacationMenu, ui_shortQrAuth) {
+(function (exports, main_core, main_core_events, ui_a11y, ui_popupcomponentsmaker, ui_analytics, ui_cnt, ui_buttons, main_popup, intranet_desktopDownload, intranet_desktopAccountList, main_sidepanel, im_v2_lib_desktopApi, ui_avatar, timeman_workStatusControlPanel, pull_client, ui_infoHelper, crm_router, humanresources_hcmlink_salaryVacationMenu, ui_shortQrAuth) {
 	'use strict';
 
 	class Analytics {
@@ -77,7 +77,8 @@ this.BX = this.BX || {};
 		getLayout() {
 			return this.cache.remember('layout', () => {
 				return main_core.Tag.render`
-				<div
+				<button
+						type="button"
 						data-testid="bx-avatar-widget-tool-${this.getId()}"
 						onclick="${this.onClick.bind(this)}"
 						class="intranet-avatar-widget-item__wrapper intranet-avatar-widget-annual-summary-tool__wrapper"
@@ -86,7 +87,7 @@ this.BX = this.BX || {};
 						<span class="intranet-avatar-widget-annual-summary-tool__title">
 							${this.getTitle()}
 						</span>
-				</div>
+				</button>
 			`;
 			});
 		}
@@ -99,7 +100,10 @@ this.BX = this.BX || {};
 				main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.Popup:openChild');
 				return;
 			}
-			main_core.Dom.addClass(this.getLayout(), 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
+			const layout = this.getLayout();
+			layout.disabled = true;
+			layout.setAttribute('aria-busy', 'true');
+			main_core.Dom.addClass(layout, 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
 			Promise.all([main_core.ajax.runAction('intranet.v2.AnnualSummary.load', {}), main_core.Runtime.loadExtension('intranet.notify-banner.annual-summary')]).then(([response, {
 				AnnualSummary
 			}]) => {
@@ -107,7 +111,6 @@ this.BX = this.BX || {};
 					topFeatures,
 					options
 				} = response.data;
-				main_core.Dom.removeClass(this.getLayout(), 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
 				main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.Popup:openChild');
 				this.#annualSummaryPopup = new AnnualSummary(topFeatures, {
 					...options,
@@ -117,6 +120,10 @@ this.BX = this.BX || {};
 				this.#annualSummaryPopup.show();
 			}).catch(error => {
 				console.error(error);
+			}).finally(() => {
+				layout.disabled = false;
+				layout.removeAttribute('aria-busy');
+				main_core.Dom.removeClass(layout, 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
 			});
 		}
 		getId() {
@@ -149,35 +156,93 @@ this.BX = this.BX || {};
 	class BaseSecondaryTool extends BaseTool {
 		getLayout() {
 			return this.cache.remember('layout', () => {
+				const actionElement = this.getActionElement();
+				if (this.hasInteractiveAction()) {
+					return main_core.Tag.render`
+					<div data-testid="bx-avatar-widget-tool-${this.getId()}" class="intranet-avatar-widget-secondary-tool__wrapper">
+						${this.getIconElement()}
+						<div class="intranet-avatar-widget-item__info-wrapper">
+							<span id="${this.getTitleId()}" class="intranet-avatar-widget-item__title">
+								${this.getTitle()}
+							</span>
+						</div>
+						${this.#getCounterWrapper()}
+						${actionElement}
+					</div>
+				`;
+				}
+				if (this.getHref()) {
+					const link = main_core.Tag.render`
+					<a
+						class="intranet-avatar-widget-secondary-tool__wrapper"
+						href="${this.getHref()}"
+						data-testid="bx-avatar-widget-tool-${this.getId()}"
+					>
+						${this.getIconElement()}
+						<div class="intranet-avatar-widget-item__info-wrapper">
+							<span id="${this.getTitleId()}" class="intranet-avatar-widget-item__title">
+								${this.getTitle()}
+							</span>
+						</div>
+						${this.#getCounterWrapper()}
+						${actionElement}
+					</a>
+				`;
+					if (this.getTarget()) {
+						main_core.Dom.attr(link, {
+							target: this.getTarget(),
+							rel: 'noopener noreferrer'
+						});
+					}
+					if (this.hasLinkClickHandler()) {
+						main_core.Event.bind(link, 'click', this.onClick.bind(this));
+					}
+					return link;
+				}
 				return main_core.Tag.render`
-				<div data-testid="bx-avatar-widget-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-secondary-tool__wrapper">
+				<button type="button" data-testid="bx-avatar-widget-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-secondary-tool__wrapper">
 					${this.getIconElement()}
 					<div class="intranet-avatar-widget-item__info-wrapper">
-						<span class="intranet-avatar-widget-item__title">
+						<span id="${this.getTitleId()}" class="intranet-avatar-widget-item__title">
 							${this.getTitle()}
 						</span>
 					</div>
 					${this.#getCounterWrapper()}
-					${this.getActionElement()}
-				</div>
+					${actionElement}
+				</button>
 			`;
 			});
 		}
+		getHref() {
+			return '';
+		}
+		getTarget() {
+			return '';
+		}
+		hasLinkClickHandler() {
+			return false;
+		}
 		getIconElement() {
 			return this.cache.remember('icon', () => {
-				return main_core.Tag.render`<i class="ui-icon-set ${this.getIconClass()} intranet-avatar-widget-secondary-tool__icon"/>`;
+				return main_core.Tag.render`<i aria-hidden="true" class="ui-icon-set ${this.getIconClass()} intranet-avatar-widget-secondary-tool__icon"/>`;
 			});
 		}
 		getActionElement() {
 			return this.cache.remember('actionElement', () => {
-				return main_core.Tag.render`<i class="ui-icon-set --chevron-right-m intranet-avatar-widget-item__chevron"/>`;
+				return main_core.Tag.render`<i aria-hidden="true" class="ui-icon-set --chevron-right-m intranet-avatar-widget-item__chevron"/>`;
 			});
+		}
+		hasInteractiveAction() {
+			return false;
 		}
 		getCounter() {
 			return null;
 		}
 		getId() {
 			return '';
+		}
+		getTitleId() {
+			return `intranet-avatar-widget-tool-${this.getId()}-title`;
 		}
 		#getCounterWrapper() {
 			return this.cache.remember('counterWrapper', () => {
@@ -195,9 +260,11 @@ this.BX = this.BX || {};
 		getIconClass() {
 			return '--o-mobile';
 		}
-		onClick() {
+		onClick(event) {
 			Analytics.send(Analytics.EVENT_CLICK_INSTALL_MOBILE_APP);
-			main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick');
+			main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', {
+				focusTarget: event.currentTarget
+			});
 		}
 	}
 
@@ -205,9 +272,11 @@ this.BX = this.BX || {};
 		getIconClass() {
 			return '--o-qr-code';
 		}
-		onClick() {
+		onClick(event) {
 			Analytics.send(Analytics.EVENT_CLICK_FAST_MOBILE_AUTH);
-			main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick');
+			main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', {
+				focusTarget: event.currentTarget
+			});
 		}
 		getId() {
 			return 'fast-mobile-auth';
@@ -221,7 +290,7 @@ this.BX = this.BX || {};
 					return main_core.Tag.render`
 					<span class="intranet-avatar-widget-secondary-tool-icons__wrapper">
 						${this.#getMobileIcon()}
-						<div class="intranet-avatar-widget-secondary-tool-icons__seporator"></div>
+						<div aria-hidden="true" class="intranet-avatar-widget-secondary-tool-icons__seporator"></div>
 						${this.#getDesktopIcon()}
 					</span>
 				`;
@@ -232,11 +301,18 @@ this.BX = this.BX || {};
 		getActionElement() {
 			return this.cache.remember('actionElement', () => {
 				if (this.options.desktop.installed && this.options.menu) {
-					const onclick = element => {
-						this.#getInstallMenu(element.target).toggle();
+					const onclick = event => {
+						this.#getInstallMenu(event.currentTarget).toggle();
 					};
 					return main_core.Tag.render`
-					<i onclick="${onclick}" class="ui-icon-set --more-m intranet-avatar-widget-item__more"/>
+					<button
+						type="button"
+						onclick="${onclick}"
+						aria-label="${main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_ADDITIONAL_INSTALL_OPTIONS')}"
+						aria-haspopup="menu"
+						aria-expanded="false"
+						class="ui-icon-set --more-m intranet-avatar-widget-item__more"
+					></button>
 				`;
 				}
 				const desktopDownload = new intranet_desktopDownload.DesktopDownload();
@@ -251,12 +327,16 @@ this.BX = this.BX || {};
 					},
 					wide: true
 				}).render();
+				button.setAttribute('aria-label', `${this.options.desktop.buttonName} ${this.getTitle()}`);
 				return main_core.Tag.render`
 				<span class="intranet-avatar-widget-secondary-tool-application__button-wrapper">
 					${button}
 				</span>
 			`;
 			});
+		}
+		hasInteractiveAction() {
+			return true;
 		}
 		#getMobileIcon() {
 			return this.cache.remember('mobileIcon', () => {
@@ -265,7 +345,7 @@ this.BX = this.BX || {};
 					className += ' --installed';
 				}
 				return main_core.Tag.render`
-				<i class="${className}"/>
+				<i aria-hidden="true" class="${className}"/>
 			`;
 			});
 		}
@@ -278,7 +358,7 @@ this.BX = this.BX || {};
 					className += ' --o-screen';
 				}
 				return main_core.Tag.render`
-				<i class="${className}"/>
+				<i aria-hidden="true" class="${className}"/>
 			`;
 			});
 		}
@@ -290,10 +370,15 @@ this.BX = this.BX || {};
 				}
 				return new main_popup.Menu({
 					bindElement,
+					ariaLabel: main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_ADDITIONAL_INSTALL_OPTIONS'),
 					items,
 					offsetLeft: 5,
 					angle: true,
-					fixed: true
+					fixed: true,
+					events: {
+						onShow: () => bindElement.setAttribute('aria-expanded', 'true'),
+						onClose: () => bindElement.setAttribute('aria-expanded', 'false')
+					}
 				});
 			});
 		}
@@ -315,7 +400,9 @@ this.BX = this.BX || {};
 						onclick: () => {
 							Analytics.send(Analytics.EVENT_CLICK_INSTALL_MOBILE_APP);
 							this.#getInstallMenu().close();
-							main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick');
+							main_core_events.EventEmitter.emit('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', {
+								focusTarget: this.getActionElement()
+							});
 						}
 					});
 				}
@@ -361,8 +448,16 @@ this.BX = this.BX || {};
 				}).show();
 			} else if (this.options.type === 'network') {
 				Analytics.send(Analytics.EVENT_CLICK_NETWORK);
-				window.open(this.options.path, '_blank');
 			}
+		}
+		getHref() {
+			return this.options.type === 'network' ? this.options.path : '';
+		}
+		getTarget() {
+			return this.options.type === 'network' ? '_blank' : '';
+		}
+		hasLinkClickHandler() {
+			return this.options.type === 'network';
 		}
 		getId() {
 			return 'account-changer';
@@ -373,8 +468,11 @@ this.BX = this.BX || {};
 		getIconClass() {
 			return '--o-filter-2-lines';
 		}
-		onClick() {
-			window.open(this.options.path, '_blank');
+		getHref() {
+			return this.options.path;
+		}
+		getTarget() {
+			return '_blank';
 		}
 		getId() {
 			return 'administration';
@@ -385,8 +483,11 @@ this.BX = this.BX || {};
 		getIconClass() {
 			return '--o-achievement';
 		}
-		onClick() {
-			window.open(this.options.path || '/performan/', '_blank');
+		getHref() {
+			return this.options.path || '/performan/';
+		}
+		getTarget() {
+			return '_blank';
 		}
 		getId() {
 			return 'performan-user-profile';
@@ -464,9 +565,9 @@ this.BX = this.BX || {};
 		}
 		getLayout() {
 			return main_core.Tag.render`
-			<div data-testid="bx-avatar-widget-footer-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-footer__item">
+			<button type="button" data-testid="bx-avatar-widget-footer-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-footer__item">
 				${this.getTitle()}
-			</div>
+			</button>
 		`;
 		}
 		onClick() {
@@ -560,22 +661,43 @@ this.BX = this.BX || {};
 	class BaseMainTool extends BaseTool {
 		getLayout() {
 			return this.cache.remember('layout', () => {
+				const titleId = `intranet-avatar-widget-main-tool-${this.getId()}-title`;
 				return main_core.Tag.render`
-				<div data-testid="bx-avatar-widget-main-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-main-tool__wrapper">
-					<div class="intranet-avatar-widget-main-tool-icon__wrapper">
-						${this.getIconElement()}
-						${this.#getCounterWrapper()}
-					</div>
-					<div class="intranet-avatar-widget-main-tool__title">
+				<div
+					data-testid="bx-avatar-widget-main-tool-${this.getId()}"
+					class="intranet-avatar-widget-main-tool__wrapper"
+					onclick="${this.#onWrapperClick.bind(this)}"
+				>
+					${this.getButton()}
+					<div id="${titleId}" class="intranet-avatar-widget-main-tool__title">
 						${this.getTitle()}
 					</div>
 				</div>
 			`;
 			});
 		}
+		#onWrapperClick(event) {
+			const button = this.getButton();
+			if (button.contains(event.target)) {
+				return;
+			}
+			button.click();
+		}
+		getButton() {
+			return this.cache.remember('button', () => {
+				const titleId = `intranet-avatar-widget-main-tool-${this.getId()}-title`;
+				const counterId = `intranet-avatar-widget-main-tool-${this.getId()}-counter`;
+				return main_core.Tag.render`
+				<button type="button" aria-labelledby="${titleId} ${counterId}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-main-tool-icon__wrapper">
+					${this.getIconElement()}
+					${this.#getCounterWrapper(counterId)}
+				</button>
+			`;
+			});
+		}
 		getIconElement() {
 			return this.cache.remember('icon', () => {
-				return main_core.Tag.render`<i class="ui-icon-set ${this.getIconClass()} intranet-avatar-widget-main-tool__icon"/>`;
+				return main_core.Tag.render`<i aria-hidden="true" class="ui-icon-set ${this.getIconClass()} intranet-avatar-widget-main-tool__icon"/>`;
 			});
 		}
 		getCounter() {
@@ -584,11 +706,11 @@ this.BX = this.BX || {};
 		getId() {
 			return '';
 		}
-		#getCounterWrapper() {
+		#getCounterWrapper(id) {
 			return this.cache.remember('counterWrapper', () => {
 				const counter = this.getCounter();
 				return main_core.Tag.render`
-				<div class="intranet-avatar-widget-main-tool__counter-wrapper">
+				<div id="${id}" class="intranet-avatar-widget-main-tool__counter-wrapper">
 					${counter?.render()}
 				</div>
 			`;
@@ -597,6 +719,15 @@ this.BX = this.BX || {};
 	}
 
 	class ExtensionTool extends BaseMainTool {
+		getLayout() {
+			return this.cache.remember('extensionLayout', () => {
+				const layout = super.getLayout();
+				const trigger = this.#getTriggerElement();
+				trigger.setAttribute('aria-haspopup', 'menu');
+				trigger.setAttribute('aria-expanded', 'false');
+				return layout;
+			});
+		}
 		getIconClass() {
 			return '--o-box';
 		}
@@ -606,19 +737,32 @@ this.BX = this.BX || {};
 		}
 		#getMenu() {
 			return this.cache.remember('menu', () => {
+				const trigger = this.#getTriggerElement();
 				const menu = new main_popup.Menu({
-					bindElement: this.getIconElement(),
+					bindElement: trigger,
+					ariaLabel: this.getTitle(),
 					items: this.options.items,
 					angle: true,
 					cachable: false,
 					offsetLeft: 10,
-					fixed: true
+					fixed: true,
+					events: {
+						onShow: () => trigger.setAttribute('aria-expanded', 'true'),
+						onClose: () => trigger.setAttribute('aria-expanded', 'false')
+					}
 				});
 				main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpenStart', () => {
 					menu.close();
 				});
 				return menu;
 			});
+		}
+		#getTriggerElement() {
+			const trigger = this.getIconElement().closest('button');
+			if (!trigger) {
+				throw new Error('Extension tool trigger was not found');
+			}
+			return trigger;
 		}
 		getId() {
 			return 'extension';
@@ -721,16 +865,28 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const SALARY_VACATION_MENU_ID = 'hcmLink-vacation-salary-menu';
 	class SalaryVacationTool extends BaseMainTool {
 		getIconClass() {
 			return '--o-favorite';
 		}
 		getLayout() {
 			const container = super.getLayout();
+			const button = this.getButton();
 			if (this.#getMenu().isHidden()) {
 				return null;
 			}
+			main_core.Dom.attr(button, {
+				'aria-haspopup': 'menu',
+				'aria-expanded': 'false'
+			});
 			if (this.#getMenu().isDisabled()) {
+				const description = this.#getDisabledDescription();
+				main_core.Dom.append(description, container);
+				main_core.Dom.attr(button, {
+					'aria-disabled': 'true',
+					'aria-describedby': description.id
+				});
 				main_core.Dom.attr(container, 'data-hint', '');
 				main_core.Dom.attr(container, 'data-hint-interactivity', '');
 				main_core.Event.bind(container, 'mouseenter', () => {
@@ -745,13 +901,32 @@ this.BX = this.BX || {};
 					}, 100);
 				});
 			}
-			return super.getLayout();
+			return container;
 		}
 		onClick() {
-			Analytics.send(Analytics.EVENT_CLICK_SALARY);
-			if (!this.#getMenu().isHidden() && !this.#getMenu().isDisabled()) {
-				this.#getMenu().show(this.getLayout());
+			if (this.#getMenu().isHidden() || this.#getMenu().isDisabled()) {
+				return;
 			}
+			Analytics.send(Analytics.EVENT_CLICK_SALARY);
+			this.#getMenu().show(this.getButton());
+			this.#syncMenuState();
+		}
+		#syncMenuState() {
+			const popup = main_popup.PopupManager.getPopupById(SALARY_VACATION_MENU_ID);
+			if (!popup) {
+				return;
+			}
+			this.cache.remember('salaryMenuStateHandlers', () => {
+				popup.subscribe('onShow', () => {
+					main_core.Dom.attr(this.getButton(), 'aria-expanded', 'true');
+				});
+				popup.subscribe('onClose', () => {
+					main_core.Dom.attr(this.getButton(), 'aria-expanded', 'false');
+				});
+				return true;
+			});
+			main_core.Dom.attr(this.getButton(), 'aria-expanded', popup.isShown() ? 'true' : 'false');
+			main_core.Dom.attr(popup.getPopupContainer(), 'aria-label', this.getTitle());
 		}
 		#getMenu() {
 			return this.cache.remember('salaryMenu', () => {
@@ -765,6 +940,16 @@ this.BX = this.BX || {};
 						fixed: true
 					}
 				});
+			});
+		}
+		#getDisabledDescription() {
+			return this.cache.remember('disabledDescription', () => {
+				const hintContainer = main_core.Tag.render`<div>${this.options.disabledHint}</div>`;
+				return main_core.Tag.render`
+				<visually-hidden id="intranet-avatar-widget-salary-vacation-disabled-description">
+					${main_core.Text.encode(hintContainer.textContent)}
+				</visually-hidden>
+			`;
 			});
 		}
 		getId() {
@@ -795,17 +980,10 @@ this.BX = this.BX || {};
 						Analytics.sendOpenProfile();
 					}
 				};
+				const profileButton = this.#getProfileButton(onclick);
 				return main_core.Tag.render`
 				<div class="intranet-avatar-widget-item__wrapper" data-testid="bx-avatar-widget-content-main">
-					<div onclick="${onclick}" class="intranet-avatar-widget-item-main__wrapper-head">
-						<div class="intranet-avatar-widget-item__avatar">
-							${this.#getAvatar().getContainer()}
-						</div>
-						<div class="intranet-avatar-widget-item__info-wrapper">
-							${this.#getFullName()}
-							${this.#getWorkPosition()}
-						</div>
-					</div>
+					${profileButton}
 					${this.#getStatus()}
 					${this.#getWorkStatusBlock()}
 					${this.#getToolsContainer()}
@@ -813,12 +991,35 @@ this.BX = this.BX || {};
 			`;
 			});
 		}
+		#getProfileButton(onclick) {
+			return this.cache.remember('profileButton', () => main_core.Tag.render`
+			<button
+				type="button"
+				onclick="${onclick}"
+				class="intranet-avatar-widget-item-main__wrapper-head"
+				aria-label="${this.#getProfileButtonLabel()}"
+			>
+				<div class="intranet-avatar-widget-item__avatar">
+					${this.#getAvatar().getContainer()}
+				</div>
+				<div class="intranet-avatar-widget-item__info-wrapper">
+					${this.#getFullName()}
+					${this.#getWorkPosition()}
+				</div>
+			</button>
+		`);
+		}
+		#getProfileButtonLabel() {
+			return main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_OPEN_USER_PROFILE', {
+				'#NAME#': this.getOptions().fullName
+			});
+		}
 		#getFullName() {
 			return this.cache.remember('title', () => {
 				return main_core.Tag.render`
 				<span class="intranet-avatar-widget-item__title">
 					<span>${this.getOptions().fullName}</span>
-					<i class="ui-icon-set --chevron-right-s intranet-avatar-widget-item__chevron"/>
+					<i aria-hidden="true" class="ui-icon-set --chevron-right-s intranet-avatar-widget-item__chevron"/>
 				</span>
 			`;
 			});
@@ -951,6 +1152,7 @@ this.BX = this.BX || {};
 			}) => {
 				this.getOptions().fullName = fullName;
 				this.#getFullName().querySelector('span').innerHTML = fullName;
+				main_core.Dom.attr(this.#getProfileButton(), 'aria-label', this.#getProfileButtonLabel());
 			});
 			main_core_events.EventEmitter.subscribe('BX.Intranet.AvatarWidget.Popup:enabledAutoHide', () => {
 				this.#activeOnclick = true;
@@ -994,6 +1196,7 @@ this.BX = this.BX || {};
 					}
 				});
 				button.setCollapsed(true);
+				button.render().setAttribute('aria-label', main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_BACK'));
 				return button;
 			});
 		}
@@ -1039,6 +1242,7 @@ this.BX = this.BX || {};
 	class Popup extends main_core_events.EventEmitter {
 		#cache = new main_core.Cache.MemoryCache();
 		#popupsShowAfterBasePopup = [];
+		#subsectionFocusTarget = null;
 		constructor(options) {
 			super();
 			this.setOptions(options);
@@ -1051,10 +1255,28 @@ this.BX = this.BX || {};
 		getOptions() {
 			return this.#cache.get('options', {});
 		}
-		show() {
-			this.getBasePopup().show();
+		show({
+			focusFirst = false
+		} = {}) {
+			const popup = this.getBasePopup();
+			const isShown = popup.isShown();
+			if (isShown) {
+				if (focusFirst && !this.focusFirst()) {
+					popup.getPopup().subscribeOnce('onAfterShow', () => this.focusFirst());
+				}
+				return;
+			}
+			if (focusFirst && !isShown) {
+				popup.getPopup().subscribeOnce('onAfterShow', () => this.focusFirst());
+			}
+			popup.show();
 			this.emit('show');
 			Analytics.send(Analytics.EVENT_OPEN_WIDGET);
+		}
+		focusFirst() {
+			return ui_a11y.FocusNavigator.focusContainer(this.getBasePopup().getPopup().getPopupContainer(), {
+				preventScroll: true
+			});
 		}
 		close() {
 			this.getBasePopup().close();
@@ -1216,14 +1438,31 @@ this.BX = this.BX || {};
 			});
 		}
 		#setSubsectionEventHandlers() {
-			const openFastMobileAuthSubsection = () => {
+			const openFastMobileAuthSubsection = (focusTarget = null) => {
+				const popup = this.getBasePopup().getPopup();
 				const subsection = this.#getFastMobileAuthSubsection();
-				this.getBasePopup().getPopup().setContent(subsection);
+				this.#subsectionFocusTarget = focusTarget;
+				ui_a11y.FocusNavigator.focusContainer(popup.getPopupContainer());
+				popup.setContent(subsection);
+				ui_a11y.FocusNavigator.focusBySelector(subsection, '.intranet-avatar-widget-item-subsection__header button');
 			};
-			main_core_events.EventEmitter.subscribe('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', openFastMobileAuthSubsection);
-			main_core_events.EventEmitter.subscribe('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', openFastMobileAuthSubsection);
+			main_core_events.EventEmitter.subscribe('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', event => {
+				openFastMobileAuthSubsection(event.getData()?.focusTarget);
+			});
+			main_core_events.EventEmitter.subscribe('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', event => {
+				openFastMobileAuthSubsection(event.getData()?.focusTarget);
+			});
 			main_core_events.EventEmitter.subscribe('BX.Intranet.AvatarWidget.Subsection:back', () => {
-				this.getBasePopup().getPopup().setContent(this.getBasePopup().getContentWrapper());
+				const popup = this.getBasePopup().getPopup();
+				const contentWrapper = this.getBasePopup().getContentWrapper();
+				ui_a11y.FocusNavigator.focusContainer(popup.getPopupContainer());
+				popup.setContent(contentWrapper);
+				if (this.#subsectionFocusTarget?.isConnected) {
+					ui_a11y.FocusNavigator.restoreFocus(this.#subsectionFocusTarget);
+				} else {
+					ui_a11y.FocusNavigator.focusFirst(contentWrapper);
+				}
+				this.#subsectionFocusTarget = null;
 			});
 		}
 	}
@@ -1237,11 +1476,8 @@ this.BX = this.BX || {};
 			}
 			return this.#instance;
 		}
-		show() {
-			if (this.#getPopup().getBasePopup().isShown()) {
-				return;
-			}
-			this.#getPopup().show();
+		show(options = {}) {
+			this.#getPopup().show(options);
 		}
 		setOptions(options) {
 			this.#cache.set('options', options);
@@ -1265,5 +1501,5 @@ this.BX = this.BX || {};
 
 	exports.AvatarWidget = AvatarWidget;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI, BX.UI.Analytics, BX.UI, BX.UI, BX.Main, BX.Intranet, BX.Intranet, BX.SidePanel, BX.Messenger.v2.Lib, BX.UI, BX.Timeman, BX, BX.UI, BX.Crm, BX.HumanResources.HcmLink, BX.UI);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI.Accessibility, BX.UI, BX.UI.Analytics, BX.UI, BX.UI, BX.Main, BX.Intranet, BX.Intranet, BX.SidePanel, BX.Messenger.v2.Lib, BX.UI, BX.Timeman, BX, BX.UI, BX.Crm, BX.HumanResources.HcmLink, BX.UI);
 //# sourceMappingURL=avatar-widget.bundle.js.map

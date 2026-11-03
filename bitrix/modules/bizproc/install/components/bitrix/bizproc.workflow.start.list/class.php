@@ -20,6 +20,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\UI\Format\BBCode\Converter;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -540,7 +541,8 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 		static $workflowStateService;
 		$workflowStateService ??= new WorkflowStateService();
 
-		$description = trim((string)$template->getDescription()); // description can be null
+		// description can be null; the converter also trims and collapses whitespace
+		$description = Converter::toPlainText((string)$template->getDescription());
 		if ($description === '')
 		{
 			$description = Loc::getMessage('BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION_1');

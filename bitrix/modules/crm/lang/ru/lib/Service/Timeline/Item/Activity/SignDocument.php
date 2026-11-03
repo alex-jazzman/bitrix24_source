@@ -10,4 +10,5 @@ $MESS['CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT'] = 'Документ на подпи
 $MESS['CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED'] = 'Документ на подпись обработан';
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED_TAG"] = "Подписан всеми сторонами";
 
+$MESS['CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_COPY_UID'] = 'Скопировать UID документа';
 $MESS['CRM_TIMELINE_ACTIVITY_SIGN_NOT_EXISTS'] = 'Запись недоступна';

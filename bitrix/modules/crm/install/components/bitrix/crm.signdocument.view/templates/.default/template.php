@@ -136,6 +136,7 @@ $renderRequisiteSection = function(?string $entityName, array $data): void {
 			widgetPlaceholders.forEach((widgetPlaceholder) => {
 				new BX.Crm.Component.SignDocumentViewSendWidget({
 					memberIds: params?.documentResendMembers ?? [],
+					documentSigned: params?.documentSigned ?? false,
 				}).renderTo(widgetPlaceholder);
 			});
 		}

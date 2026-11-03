@@ -17,6 +17,11 @@
 	--bx-im-message-quote__background-rgb: 224, 245, 194;
 	--bx-im-message-quote-with-context__background: var(--bx-im-message-quote__background);
 	--bx-im-message-quote-toggle__background: linear-gradient(90deg, rgba(var(--bx-im-message-quote__background-rgb), 0) 0%, var(--bx-im-message-quote__background) 40%);
+	/* The base bar is a black veil tuned for the white bubble; over green it fades, so the
+	   neutral value stays here. */
+	--bx-im-message-content-code__border-color: var(--ui-color-base-2);
+	--bx-im-message-content-code-inline__background: var(--ui-color-chat-my-channel-cmnt);
+	--bx-im-message-content-code-inline__color: var(--ui-color-chat-my-primary-1);
 }
 .bx-im-message-base__wrap.--system {
 	--bx-im-message-quote__color: var(--ui-color-palette-gray-90);
@@ -24,8 +29,11 @@
 	--bx-im-message-quote-with-context__background: rgba(var(--ui-color-palette-white-base-rgb), 0.16);
 	--bx-im-message-quote-toggle__background: none;
 	--bx-im-message-quote-toggle__position: unset;
-	--bx-im-message-content-code-inline__background: rgba(var(--ui-color-palette-black-solid-rgb), 0.1);
-	--bx-im-message-content-code-inline__border-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.16);
+	/* The system plate is white at 30% over the chat wallpaper -- a light surface. Its own text
+	   and timestamp are dark, so the code surfaces keep the colours of the base context and
+	   their veils are darkening ones, not the `-alt` variants meant for dark surfaces. */
+	--bx-im-message-content-code__border-color: var(--ui-color-divider-vibrant-accent-more);
+	--bx-im-message-content-code-inline__background: var(--ui-color-chat-overall-base-0);
 	--bx-im-message-content-table__background: rgba(var(--ui-color-palette-black-solid-rgb), 0.1);
 	--bx-im-message-content-table__divider: rgba(var(--ui-color-palette-black-solid-rgb), 0.16);
 }
@@ -150,20 +158,24 @@
 }
 
 .bx-im-message-content-code {
-	padding-left: 5px;
-	border-left: 3px solid var(--ui-color-palette-gray-90);
-	color: var(--ui-color-palette-gray-90);
+	font-family: var(--ui-font-family-system-mono);
+	padding-left: var(--ui-space-inset-2xs2);
+	border-left: 3px solid var(--bx-im-message-content-code__border-color, var(--ui-color-chat-other-base-1_1));
+	color: var(--ui-color-base-2);
 	white-space: pre-line;
 }
 
 .bx-im-message-content-code-inline {
 	font-family: var(--ui-font-family-system-mono);
-	background: var(--bx-im-message-content-code-inline__background, rgba(var(--ui-color-palette-black-solid-rgb), 0.06));
-	border: 1px solid var(--bx-im-message-content-code-inline__border-color, rgba(var(--ui-color-palette-black-solid-rgb), 0.1));
-	color: var(--bx-im-message-content-code-inline__color, var(--ui-color-palette-gray-90));
-	border-radius: 4px;
-	padding: 2px 5px;
+	background: var(--bx-im-message-content-code-inline__background, var(--ui-color-chat-other-citation));
+	color: var(--bx-im-message-content-code-inline__color, var(--ui-color-accent-main-primary));
+	border-radius: var(--ui-border-radius-2xs);
+	padding: 1px var(--ui-space-inset-2xs2);
 	margin: 0 1px;
+	/* Vertical padding grows the chip background but not the line box, so on a wrapped run
+	   of chips the backgrounds of neighbouring lines touch. A taller line-height on the chip
+	   itself lifts only the lines that carry one, leaving the 4px row gap of the layout. */
+	line-height: var(--ui-font-line-height-xl);
 	white-space: pre-wrap;
 	box-decoration-break: clone;
 	-webkit-box-decoration-break: clone;
@@ -175,6 +187,23 @@
 .bx-im-message-content-list {
 	padding-left: 24px;
 	margin: 2px 0;
+}
+
+/* An <ol> marker is painted inside the list indent, right-aligned to the content edge, so
+   the indent is sized for the widest marker the converter accepts as the START of a list:
+   "999." takes ~36px at the 15px message font, whereas 24px fits only a single digit. That
+   marker length is declared below instead of only described, because the indent is worth
+   nothing without it: a unit test holds the declaration against the converter's own cap
+   (MAX_ORDERED_MARKER_DIGITS in markdown/rules/list-rules.js) and the e2e measures a marker
+   of exactly that many digits against this padding in a live font. Raising the cap therefore
+   means coming back here and re-measuring, or a test goes red instead of a chat bubble.
+   The following items are numbered by the browser, so a long list started near the cap (up
+   to "1198.") can grow past the indent - an accepted limitation. Bullet lists need no such
+   room. */
+ol.bx-im-message-content-list {
+	--im-message-content-list__marker-digits: 3;
+
+	padding-left: 36px;
 }
 
 .bx-im-message-content-list-item {
@@ -294,6 +323,28 @@
 	border-bottom: none;
 	border-radius: 6px;
 	padding: 1px 5px;
+}
+
+.bx-im-message-source-item__container {
+	display: inline-flex;
+	max-width: 122px;
+	padding: 1px 8px 2px;
+	border-radius: 512px;
+	margin-left: 3px;
+	background-color: var(--ui-color-chat-other-citation);
+	color: var(--ui-color-chat-my-base-0_2);
+	cursor: pointer;
+	font: var(--ui-font-size-xs)/15px var(--ui-font-family-primary);
+	vertical-align: baseline;
+}
+
+.bx-im-message-source-item__container + .bx-im-message-source-item__container {
+	margin-left: 2px;
+}
+
+.bx-im-message-base__wrap.--self .bx-im-message-source-item__container {
+	background-color: var(--ui-color-chat-my-channel-cmnt);
+	color: var(--ui-color-chat-my-base-0_2);
 }
 
 .bx-im-message-command-wrap {

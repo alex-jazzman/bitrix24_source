@@ -1,0 +1,50 @@
+.call-raise-hand-queue {
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: flex-end;
+	z-index: 99;
+}
+
+.call-raise-hand-queue__item {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 6px;
+
+	color: #FFF;
+	text-align: center;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 19px;
+	letter-spacing: -0.05px;
+
+	border-radius: 6px;
+	background: #F2A100;
+}
+
+.call-raise-hand-queue__cross {
+	margin-left: 2px;
+	cursor: pointer;
+}
+
+.call-raise-hand-queue-enter-active,
+.call-raise-hand-queue-leave-active {
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.call-raise-hand-queue-enter-from,
+.call-raise-hand-queue-leave-to {
+	transform: translateX(calc(100% + 20px));
+	opacity: 0;
+}
+
+.call-raise-hand-queue-move {
+	transition: transform 0.2s ease;
+}
+
+.call-raise-hand-queue__text {}

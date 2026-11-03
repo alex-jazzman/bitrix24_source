@@ -14,12 +14,12 @@ table.bx-interface-grid tr.bx-even td.bx-sorted {background-color:#EDEDED;}
 table.bx-interface-grid tr.bx-odd > td {background-color:white;}
 table.bx-interface-grid tr.bx-odd td.bx-sorted {background-color:#F8F8F8;}
 table.bx-interface-grid tr.bx-grid-gutter td {height:0 !important; border:none !important; padding:0px !important;}
-table.bx-interface-grid tr.bx-grid-gutter td.bx-over {background-image:url(images/gutter_bg.png); background-repeat:repeat-x;}
+table.bx-interface-grid tr.bx-grid-gutter td.bx-over {background-image:url(images/gutter_bg.webp); background-repeat:repeat-x;}
 table.bx-interface-grid tr.bx-grid-gutter td.bx-sorted {background-color:#C0C0C0;  border-top:1px solid #B7B7B7;}
-table.bx-interface-grid tr.bx-grid-gutter td.bx-over-sorted {background-image:url(images/gutter_sort_bg.png); background-repeat:repeat-x;}
+table.bx-interface-grid tr.bx-grid-gutter td.bx-over-sorted {background-image:url(images/gutter_sort_bg.webp); background-repeat:repeat-x;}
 table.bx-interface-grid tr.bx-grid-gutter td.bx-left {border-left:1px solid #D6D6D6;}
 table.bx-interface-grid tr.bx-grid-gutter td.bx-right {border-right:1px solid #D6D6D6;}
-table.bx-interface-grid tr.bx-grid-head td {padding:5px !important; border-right:1px solid #EBEBEB; border-bottom:1px solid #CDCDCD; border-top:none; border-left:none; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D9D9D9; background-image:url(images/listhead.png); background-repeat:repeat-x; background-position:top; cursor:default;}
+table.bx-interface-grid tr.bx-grid-head td {padding:5px !important; border-right:1px solid #EBEBEB; border-bottom:1px solid #CDCDCD; border-top:none; border-left:none; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D9D9D9; background-image:url(images/listhead.webp); background-repeat:repeat-x; background-position:top; cursor:default;}
 table.bx-interface-grid tr.bx-grid-head td.bx-sortable {cursor:pointer;}
 table.bx-interface-grid tr.bx-grid-head td.bx-sorted {background-color:#C0C0C0; background-image:none; border-bottom:1px solid #C3C3C3;}
 table.bx-interface-grid tr.bx-grid-head td.bx-left {border-left:1px solid #D6D6D6;}
@@ -86,7 +86,7 @@ table.bx-interface-grid table.bx-grid-sorting td.bx-sort-down {background-image:
 
 /* Multiple Actions */
 div.bx-grid-multiaction {margin:16px 0px 16px 0px;}
-table.bx-grid-multiaction {width:100%; background-color:#E6E9F4; background-image:url(images/actions/actions_bg.png); background-repeat:repeat-x;  border-collapse:separate; height:38px;}
+table.bx-grid-multiaction {width:100%; background-color:#E6E9F4; background-image:url(images/actions/actions_bg.webp); background-repeat:repeat-x;  border-collapse:separate; height:38px;}
 table.bx-grid-multiaction td {padding:0px; color:black;}
 table.bx-grid-multiaction tr.bx-top td {border-top:1px solid #DFDFDF;}
 table.bx-grid-multiaction td.bx-left {border-left:1px solid #D1D1D1;}
@@ -112,13 +112,13 @@ table.bx-grid-multiaction a.action-edit-button-dis {background-image:url(images/
 table.bx-grid-multiaction a.action-delete-button-dis {background-image:url(images/actions/delete_button_dis.gif); }
 
 /* Drag-n-Drop*/
-div.bx-drag-object {padding:5px; border:1px solid #CDCDCD; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D9D9D9; background-image:url(images/listhead.png); background-repeat:repeat-x; background-position:top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
+div.bx-drag-object {padding:5px; border:1px solid #CDCDCD; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D9D9D9; background-image:url(images/listhead.webp); background-repeat:repeat-x; background-position:top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
 div.bx-drag-arrow {width:11px; height:6px; background-image:url(images/drag_arrow.gif); background-repeat:no-repeat; background-position:left top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
 
 /* Filter */
 div.bx-interface-filter {margin:16px 0px 16px 0px;}
 table.bx-interface-filter td {padding:0;}
-table.bx-interface-filter tr.bx-filter-header td {background-color:#A1A1A1; background-image:url(images/filter/bg.png); background-repeat:repeat-x; background-position:left 1px; border:1px solid #909090; border-top:1px solid #9A9A9A; border-bottom:1px solid #818181;}
+table.bx-interface-filter tr.bx-filter-header td {background-color:#A1A1A1; background-image:url(images/filter/bg.webp); background-repeat:repeat-x; background-position:left 1px; border:1px solid #909090; border-top:1px solid #9A9A9A; border-bottom:1px solid #818181;}
 table.bx-interface-filter tr.bx-filter-content td {border:1px solid #D6D6D6; border-top:none; padding:10px; padding-top:5px;}
 table.bx-interface-filter table.bx-filter-rows tr {background-image:url(images/filter/row_bg.gif); background-position:left bottom; background-repeat:repeat-x;}
 table.bx-interface-filter table.bx-filter-rows td {border:none; padding:5px;}
@@ -145,7 +145,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.edit { background:url
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.copy {background:url(images/popup/copy.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.delete {background:url(images/popup/delete.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.view {background:url(images/popup/view.gif) no-repeat 0 0 !important;}
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.print {background:url(images/popup/print.png) no-repeat 0 0 !important;}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.print {background:url(images/popup/print.webp) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.checked {background:url(images/popup/checkbox.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.list {background:url(images/popup/list.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.add {background:url(images/popup/new.gif) no-repeat 0 0 !important;}
@@ -157,7 +157,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-sort-asc {backgr
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-sort-desc {background:url(images/icons/sort_desc.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-themes {background:url(images/icons/themes.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-views {background:url(images/icons/views.gif) no-repeat 0 0 !important;}
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background:url(images/icons/lock.png) no-repeat 0 -2px !important;}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background:url(images/icons/lock.webp) no-repeat 0 -2px !important;}
 
 span.bx-filter-from { white-space: nowrap !important; }
 span.bx-filter-to { white-space: nowrap !important; }

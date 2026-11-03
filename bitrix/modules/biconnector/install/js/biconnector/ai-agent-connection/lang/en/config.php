@@ -1,0 +1,23 @@
+<?php
+$MESS['BICONNECTOR_AGENT_CONNECTION_AUTH_REQUIRED'] = 'Your session has expired. Log in to Bitrix24 again to continue.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BOUNDARY_WARNING'] = 'After you connect the AI agent, it will be able to work with all BI Builder dashboards and data you can access, not just the current dashboard.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BTN_CONNECT'] = 'Get command';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BTN_REGENERATE'] = 'Reissue';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BTN_RETRY'] = 'Try again';
+$MESS['BICONNECTOR_AGENT_CONNECTION_COMMAND_SECRET_WARNING'] = 'This command contains a secret access link. Share it only with the AI agent you\'re connecting.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_ERROR'] = 'Cannot complete the action. Please try again.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_HINT_CONNECTED'] = 'The connection is active. To get a new command, regenerate it.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_REGENERATE_CONFIRM'] = 'The current command will stop working. You will need to connect the AI agent again.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_REGENERATE_CONFIRM_UNKNOWN'] = 'The connection may have already been replaced. After it is reissued, you will need to connect the AI agent again.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_SCOPE_TITLE'] = 'AI agent access';
+$MESS['BICONNECTOR_AGENT_CONNECTION_SCOPE_UNKNOWN'] = 'Could not load the access list.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_SECRET_WARNING'] = 'The command contains a secret access link and will be shown only once.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_STATUS_CONNECTED_UNTIL'] = 'Valid until #DATE#';
+$MESS['BICONNECTOR_AGENT_CONNECTION_STATUS_ISSUED_AT'] = 'Issued on #DATE#';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TERMINAL_CLIENT_HINT'] = 'Send the command to an AI client that supports MCP.';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TITLE'] = 'Connect AI agent';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_CHARTS'] = 'Charts';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_DASHBOARDS'] = 'Dashboards';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_DATASETS'] = 'Datasets';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_TABLES'] = 'Tables';
+$MESS['BICONNECTOR_AGENT_CONNECTION_UNKNOWN_RESULT'] = 'Unknown result: the connection may have been created or replaced, but the command was not received. It cannot be retrieved. Reissue the connection to get a working command.';

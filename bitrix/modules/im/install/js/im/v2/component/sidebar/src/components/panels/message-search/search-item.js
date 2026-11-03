@@ -61,7 +61,7 @@ export const SearchItem = {
 				messageId: this.messageId,
 				dialogId: this.dialogId,
 			});
-			Analytics.getInstance().messageSearch.onSearchResultClick(this.dialogId);
+			Analytics.getInstance().messageSearch.onSearchResultClick(this.dialogId, this.message.date);
 		},
 		onMessageBodyClick(event)
 		{

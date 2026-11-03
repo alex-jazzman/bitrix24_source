@@ -4,9 +4,6 @@
 jn.define('ui-system/blocks/badges/button/src/size-enum', (require, exports, module) => {
 	const { BaseEnum } = require('utils/enums/base');
 
-	/**
-	 * @class BadgeButtonSize
-	 */
 	class BadgeButtonSize extends BaseEnum
 	{
 		static S = new BadgeButtonSize('S', 18);
@@ -15,7 +12,6 @@ jn.define('ui-system/blocks/badges/button/src/size-enum', (require, exports, mod
 		static XL = new BadgeButtonSize('XL', 24);
 
 		/**
-		 *
 		 * @returns {number}
 		 */
 		getIconSize()
@@ -24,7 +20,6 @@ jn.define('ui-system/blocks/badges/button/src/size-enum', (require, exports, mod
 		}
 
 		/**
-		 *
 		 * @returns {number}
 		 */
 		getBackgroundSize()

@@ -16,6 +16,7 @@ jn.define('mail/statemanager/redux/slices/messages/selector', (require, exports,
 	const selectSelectedIds = (state) => state[sliceName].selectedIds;
 	const selectSelectedCount = (state) => state[sliceName].selectedIds.length;
 	const selectOriginalReadStatuses = (state) => state[sliceName].originalReadStatuses;
+	const selectMessageDeleteAvailable = (state) => state[sliceName].messageDeleteAvailable !== false;
 	const selectSelectedMessages = (state) => {
 		const entities = selectEntities(state);
 		const selectedIds = selectSelectedIds(state);
@@ -75,5 +76,6 @@ jn.define('mail/statemanager/redux/slices/messages/selector', (require, exports,
 		selectUnreadCountByFolder,
 		selectOriginalReadStatuses,
 		selectUidIdsByIds,
+		selectMessageDeleteAvailable,
 	};
 });

@@ -17,6 +17,8 @@ use Bitrix\BizprocDesigner\Infrastructure\Dto\Activity\Complex\Rule\Construction
 use Bitrix\BizprocDesigner\Infrastructure\Enum\ConstructionType;
 use Bitrix\BizprocDesigner\Internal\Command\AbstractCommand;
 use Bitrix\BizprocDesigner\Internal\Config\Feature;
+use Bitrix\BizprocDesigner\Internal\Service\Activity\ActionDocumentValue;
+use Bitrix\BizprocDesigner\Internal\Service\Activity\BaseSettingsPayload;
 use Bitrix\BizprocDesigner\Internal\Service\Container as DesignerContainer;
 use Bitrix\BizprocDesigner\Internal\Trait\NodeActionResolver;
 use Bitrix\BizprocDesigner\Public\Service\Activity\TriggerUpgradeResolver;
@@ -236,28 +238,40 @@ class ValidateSingleRuleCommand extends AbstractCommand
 	{
 		$result = new Result();
 		$activityData = $expression->activityData ?? [];
+		$actualType = (string)($activityData['Type'] ?? '');
+
+		// Node-action-backed base-settings (actionId !== null): it describes an action of its own and is
+		// converted into a child activity, so its document answers to the rules an ACTION answers to, and
+		// its action answers to the catalog of the node - the declared-vs-actual payload guard included.
+		if ($expression->actionId !== null && $expression->actionId !== '')
+		{
+			// The editor puts the block on the node the moment the node is opened
+			// (initBaseSettingsIfNeeded), so a form nobody ever filled is the normal state of a node
+			// nobody has touched. The converter builds no child of such a proxy, and nothing of the
+			// form may be asked of it here either - otherwise the very first save of the node would
+			// refuse it over a document its author was never shown. The action itself is another
+			// matter: it is declared by the node and not filled in by anyone, so its catalog
+			// membership is checked whether the form was filled or not.
+			if (!BaseSettingsPayload::isFormEmpty($expression))
+			{
+				$this->validateProxyDocument($expression, $result);
+			}
+
+			if ($this->activityType !== null)
+			{
+				$this->validateActionCatalogMembership($expression->actionId, $actualType, $result);
+			}
+
+			return $result;
+		}
 
 		if ($this->activityType === null)
 		{
 			return $result;
 		}
 
-		// Node-action-backed base-settings (actionId !== null): enforce catalog membership and the
-		// declared-vs-actual payload guard, identically to ACTION constructions.
-		if ($expression->actionId !== null && $expression->actionId !== '')
-		{
-			$this->validateActionCatalogMembership(
-				$expression->actionId,
-				(string)($activityData['Type'] ?? ''),
-				$result,
-			);
-
-			return $result;
-		}
-
 		// Bound to a node-action by its type alone: the converter builds it as a proxy child - or drops it
 		// on the portless container - and never host-merges it, so the guard below must not speak about it.
-		$actualType = (string)($activityData['Type'] ?? '');
 		if ($this->isNodeActionBackingType($actualType))
 		{
 			return $result;
@@ -271,6 +285,27 @@ class ValidateSingleRuleCommand extends AbstractCommand
 		$this->validateHostMergedBaseSettingsType($actualType, $activityData, $result);
 
 		return $result;
+	}
+
+	/**
+	 * The document of a node-action proxy, by the rules the document of an action is checked by. An action
+	 * the portal does not know is left to the catalog check: it is the one that answers for the action
+	 * itself, and a second refusal here would only say the same thing twice.
+	 */
+	private function validateProxyDocument(BaseSettingsExpressionDto $expression, Result $result): void
+	{
+		$description = $this->searcher->searchByCode((string)$expression->actionId);
+		if ($description === null)
+		{
+			return;
+		}
+
+		$this->validateActionDocument(
+			$expression->document,
+			$description->getName(),
+			$description->getNodeActionSettingsDto()?->handlesDocument ?? false,
+			$result,
+		);
 	}
 
 	private function validateHostMergedBaseSettingsType(string $actualType, array $activityData, Result $result): void
@@ -584,18 +619,49 @@ class ValidateSingleRuleCommand extends AbstractCommand
 		}
 
 		$handlesDocument = $description->getNodeActionSettingsDto()?->handlesDocument ?? false;
-		if ($handlesDocument && empty($expression->document))
-		{
-			$message = Loc::getMessage('BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_NO_HANDLE_DOCUMENT', [
-				'#NAME#' => $description->getName(),
-			]);
-
-			$result->addError(new Error($message));
-		}
+		$this->validateActionDocument($expression->document, $description->getName(), $handlesDocument, $result);
 
 		if ($this->activityType !== null)
 		{
 			$this->validateActionInCatalog($expression, $constructionType, $result);
+		}
+	}
+
+	/**
+	 * The document field of an action takes a value of any shape the author needs - a bare id, a constant, a
+	 * variable, an output of another node - and what it names is only known when the process runs. So the
+	 * check here is on the format alone, and refuses only what could never name a document
+	 * ({@see ActionDocumentValue}). A value that turns out to name nothing at run time skips the node and
+	 * says so in the journal, instead of silently working over the document of the process.
+	 */
+	private function validateActionDocument(
+		?string $document,
+		string $actionName,
+		bool $handlesDocument,
+		Result $result,
+	): void
+	{
+		if (!ActionDocumentValue::isBound($document))
+		{
+			if ($handlesDocument)
+			{
+				$result->addError(new Error(
+					(string)Loc::getMessage('BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_NO_HANDLE_DOCUMENT', [
+						'#NAME#' => $actionName,
+					])
+				));
+			}
+
+			return;
+		}
+
+		if (!ActionDocumentValue::isAcceptable($document))
+		{
+			$result->addError(new Error(
+				(string)Loc::getMessage('BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_BAD_DOCUMENT', [
+					'#NAME#' => $actionName,
+				])
+			));
 		}
 	}
 }

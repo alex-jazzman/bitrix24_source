@@ -32,3 +32,21 @@
 .landing-widget-apps-collaboration .landing-widget-desktop-button {
 	background: none !important;
 }
+
+/* the node was a link without an address: the values a button carries by default are reset here,
+   the g-* utilities on the node keep the fill, the horizontal padding and the type */
+.landing-widget-apps-collaboration .landing-widget-qr-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+}
+
+/* an unresolved var makes the whole outline invalid at computed-value time, and the browser then
+   drops its own ring as well, so every token here carries a fallback. The colour repeats the value
+   of the token rather than currentColor: the label of a filled button is white, and a white ring
+   on the fill it sits on reads as no ring at all */
+.landing-widget-apps-collaboration .landing-widget-qr-button:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}

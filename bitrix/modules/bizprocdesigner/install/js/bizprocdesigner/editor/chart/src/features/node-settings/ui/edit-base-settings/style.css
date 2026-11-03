@@ -15,3 +15,51 @@
 	line-height: 17px;
 	color: var(--ui-color-base-3);
 }
+
+/* Label of a base-settings field: the legacy markup carries a class of the action form that has no
+   rule of its own, so the metrics of the head card are set here: 13/17 grey, 4px to the control.
+   The 2px inset is the column of the panel - the caption under the same control and the captions of
+   the neighbouring blocks all stand on it. */
+.editor-chart-node-settings-edit-base-settings__field-label {
+	margin-bottom: var(--ui-space-stack-2xs);
+	padding-left: 2px;
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
+}
+
+.editor-chart-node-settings-edit-base-settings__field-label.--project-deleted {
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Rhythm between the fields inside the head card: the legacy form spaces its boxes wider. The room
+   below a box is given up first - otherwise it meets the room above the next one, the two collapse
+   into the larger of the two, and the legacy value simply stays. That also hands the room below the
+   last box to the card whatever ends the form, instead of relying on the box being `:last-child`.
+   The rhythm is then set from the top of every box that follows another one, so a hidden field - the
+   form renders it as a bare `input`, not as a box - changes nothing wherever it lands. */
+.editor-chart-node-settings-edit-base-settings .node-settings-edit-box {
+	margin-bottom: 0;
+}
+
+.editor-chart-node-settings-edit-base-settings .node-settings-edit-box ~ .node-settings-edit-box {
+	margin-top: var(--ui-space-stack-xs);
+}
+
+/* Said in place of the fields of a node that has none: the muted tone of a caption, because it is a
+   statement about the node and not a value of it */
+.editor-chart-node-settings-edit-base-settings__no-fields {
+	padding: var(--ui-space-inset-xs) 0;
+	color: var(--ui-color-base-3);
+	font-size: 14px;
+	line-height: 20px;
+}
+
+/* Place the form will take while it is loading. The loader of the library centres itself in the
+   nearest positioned ancestor, so without these the bullets leave the body of the card and land next
+   to its header. The height is the room of a field: the card keeps its size when the form arrives */
+.editor-chart-node-settings-edit-base-settings__status.--loading {
+	position: relative;
+	min-height: 60px;
+}

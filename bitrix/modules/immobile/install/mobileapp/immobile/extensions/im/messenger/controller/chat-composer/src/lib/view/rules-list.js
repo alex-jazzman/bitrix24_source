@@ -289,7 +289,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/rules-list', (require,
 						? Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_ALL_PARTICIPANTS')
 						: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_ALL_SUBSCRIBERS');
 				case UserRole.manager:
-					return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_OWNER_AND_MANAGERS');
+					return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_OWNER_AND_MANAGERS_MSGVER_1');
 				case UserRole.owner:
 					return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_ONLY_OWNER');
 				default:
@@ -340,7 +340,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/rules-list', (require,
 				},
 				{
 					id: UserRole.manager,
-					title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_OWNER_AND_MANAGERS'),
+					title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_OWNER_AND_MANAGERS_MSGVER_1'),
 					onItemSelected: () => this.changeUserRoleHandler(rule, UserRole.manager),
 					showIcon: false,
 					testId: 'CHAT_COMPOSER_RULES_LIST_CONTEXT_MENU_OWNER_AND_MANAGERS',

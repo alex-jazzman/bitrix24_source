@@ -78,15 +78,39 @@
 .dnd-add-dragged-item:active,
 .catalog-preset-shem:focus,
 .catalog-preset-shem:active{cursor: grabbing;cursor: -webkit-grabbing;}
-.catalog-preset-shem-1  {background-image: url(images/preset-1.png);}
-.catalog-preset-shem-2  {background-image: url(images/preset-2.png);}
-.catalog-preset-shem-3  {background-image: url(images/preset-3.png);}
-.catalog-preset-shem-4  {background-image: url(images/preset-4.png);}
-.catalog-preset-shem-4-1{background-image: url(images/preset-4-1.png);}
-.catalog-preset-shem-1-4{background-image: url(images/preset-1-4.png);}
+.catalog-preset-shem-1 {
+	background-image: -webkit-image-set(url(images/preset-1-1x.webp) 1x, url(images/preset-1-2x.webp) 2x);
+	background-image: image-set(url(images/preset-1-1x.webp) 1x, url(images/preset-1-2x.webp) 2x);
+}
+.catalog-preset-shem-2 {
+	background-image: -webkit-image-set(url(images/preset-2-1x.webp) 1x, url(images/preset-2-2x.webp) 2x);
+	background-image: image-set(url(images/preset-2-1x.webp) 1x, url(images/preset-2-2x.webp) 2x);
+}
+.catalog-preset-shem-3 {
+	background-image: -webkit-image-set(url(images/preset-3-1x.webp) 1x, url(images/preset-3-2x.webp) 2x);
+	background-image: image-set(url(images/preset-3-1x.webp) 1x, url(images/preset-3-2x.webp) 2x);
+}
+.catalog-preset-shem-4 {
+	background-image: -webkit-image-set(url(images/preset-4-1x.webp) 1x, url(images/preset-4-2x.webp) 2x);
+	background-image: image-set(url(images/preset-4-1x.webp) 1x, url(images/preset-4-2x.webp) 2x);
+}
+.catalog-preset-shem-4-1 {
+	background-image: -webkit-image-set(url(images/preset-4-1-1x.webp) 1x, url(images/preset-4-1-2x.webp) 2x);
+	background-image: image-set(url(images/preset-4-1-1x.webp) 1x, url(images/preset-4-1-2x.webp) 2x);
+}
+.catalog-preset-shem-1-4 {
+	background-image: -webkit-image-set(url(images/preset-1-4-1x.webp) 1x, url(images/preset-1-4-2x.webp) 2x);
+	background-image: image-set(url(images/preset-1-4-1x.webp) 1x, url(images/preset-1-4-2x.webp) 2x);
+}
 .catalog-preset-shem-6  {background-image: url(images/preset-6.png);}
-.catalog-preset-shem-6-1{background-image: url(images/preset-6-1.png);}
-.catalog-preset-shem-1-6{background-image: url(images/preset-1-6.png);}
+.catalog-preset-shem-6-1 {
+	background-image: -webkit-image-set(url(images/preset-6-1-1x.webp) 1x, url(images/preset-6-1-2x.webp) 2x);
+	background-image: image-set(url(images/preset-6-1-1x.webp) 1x, url(images/preset-6-1-2x.webp) 2x);
+}
+.catalog-preset-shem-1-6 {
+	background-image: -webkit-image-set(url(images/preset-1-6-1x.webp) 1x, url(images/preset-1-6-2x.webp) 2x);
+	background-image: image-set(url(images/preset-1-6-1x.webp) 1x, url(images/preset-1-6-2x.webp) 2x);
+}
 .catalog-preset-shem-line{background-image: url(images/preset-line.png);}
 
 .catalog-preset-bigdata-control{text-align: right !important;}

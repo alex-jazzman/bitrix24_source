@@ -23,12 +23,8 @@ export class Textarea
 		}
 
 		const result = await EventEmitter.emitAsync(EventType.textarea.getText, { dialogId });
-		if (result.length === 0)
-		{
-			return '';
-		}
 
-		return result[0];
+		return result.find((text) => text !== '') ?? '';
 	}
 
 	insertQuote(chatId: number, text: string, options: InsertTextConfig = {})

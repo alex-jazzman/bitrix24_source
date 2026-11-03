@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use \Bitrix\Rest;
+use Bitrix\Rest\Public\Provider\Application\AppEmbeddingOwnerProvider;
 
 return [
 	'rest' => [
@@ -10,6 +11,7 @@ return [
 			'defaultNamespace' => '\\Bitrix\\Rest\\V3\\Realisation\\Controller',
 			'namespaces' => [
 				'\\Bitrix\\Rest\\Infrastructure\\Rest\\Controller',
+				'\\Bitrix\\Rest\\Tests\\Lib\\Rest\\V3\\Controller',
 			],
 			'routes' => [
 				'documentation' => 'rest.documentation.openApi',
@@ -20,11 +22,25 @@ return [
 					'batch' => \Bitrix\Rest\V3\Documentation\BatchMethodProvider::class,
 				],
 			],
-		]
+			'events' => [
+				'providers' => [
+					\Bitrix\Rest\V3\Event\Provider\SubscribableEventProvider::class,
+				],
+			],
+		],
+	],
+	'rest.embedding.ownerProviders' => [
+		'value' => [
+			'app' => AppEmbeddingOwnerProvider::class,
+		],
+		'readonly' => true,
 	],
 	'controllers' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Rest\\Controller',
+			'namespaces' => [
+				'\\Bitrix\\Rest\\Infrastructure\\Controller' => 'v2',
+			],
 			'restIntegration' => [
 				'enabled' => true,
 				'hideModuleScope' => true,
@@ -39,11 +55,17 @@ return [
 	],
 	'services' => [
 		'value' => [
-			Rest\Public\Service\VibePlusMarketApplicationLimitProvider::class => [
-				'className' => Rest\Public\Service\VibePlusMarketApplicationLimitProvider::class,
+			Rest\Internal\Service\OAuth\RegistrationService::class => [
+				'constructor' => static function () {
+					return new Rest\Internal\Service\OAuth\RegistrationService(
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get(Rest\OAuth\Engine::class),
+						Rest\OAuthService::SERVICE_URL . Rest\OAuthService::REGISTER,
+					);
+				},
+				'singleton' => true,
 			],
 			'rest.service.vibe_plus.tariff_access' => [
-				'className' => Rest\Internal\Service\VibePlus\TariffAccessService::class,
+				'className' => Rest\Internal\Integration\Bitrix24\TariffAccessService::class,
 			],
 			'rest.service.apauth.password' => [
 				'className' => \Bitrix\Rest\Service\APAuth\PasswordService::class,

@@ -4,6 +4,7 @@ import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonManager, ButtonState } from 'ui.buttons';
 import { Dialog } from 'ui.entity-selector';
 import { Slider as ImportSlider } from 'biconnector.dataset-import-v2';
+import { resolveErrorHtml } from 'biconnector.error-message';
 
 type SettingField = {
 	name: string,
@@ -263,7 +264,7 @@ class ExternalConnectionForm
 		Dom.clean(this.#connectionStatusNode);
 	}
 
-	#updateConnectionStatus(succedeed: boolean, errorMessage: string)
+	#updateConnectionStatus(succedeed: boolean, errorHtml: string)
 	{
 		Dom.clean(this.#connectionStatusNode);
 		let status = null;
@@ -278,11 +279,10 @@ class ExternalConnectionForm
 		}
 		else
 		{
-			errorMessage = Text.encode(errorMessage);
 			status = Tag.render`
 				<div class="db-connection-error">
 					<div class="ui-icon-set --warning" style="--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: var(--ui-color-palette-red-60);"></div>
-					${errorMessage.replaceAll(/\s+/g, ' ')}
+					${errorHtml.replaceAll(/\s+/g, ' ')}
 				</div>
 			`;
 		}
@@ -322,7 +322,10 @@ class ExternalConnectionForm
 					resolve(response);
 				})
 				.catch((response) => {
-					this.#updateConnectionStatus(false, response.errors[0].message);
+					this.#updateConnectionStatus(
+						false,
+						resolveErrorHtml(response, Loc.getMessage('EXTERNAL_CONNECTION_CHECK_FAILED_MSGVER_1')),
+					);
 					this.#checkConnectButton.setState(null);
 
 					reject();
@@ -341,38 +344,42 @@ class ExternalConnectionForm
 			connectionValues.id = this.#props.sourceFields.id;
 		}
 
+		const onSaveFailed = () => {
+			saveButton.setWaiting(false);
+			BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreationError');
+		};
+
 		this.#onCheckConnectClick()
-			.then(() => {
-				return Ajax.runAction('biconnector.externalsource.source.save', {
-					data: {
-						data: connectionValues,
-					},
-				});
-			})
-			.then((response) => {
-				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
-					connection: response.data.connection,
-				});
-				if (this.#props.closeAfterCreate)
-				{
-					this.#closeSlider();
-				}
-				else
-				{
-					this.#showSaveSuccessPopup(response.data.connection);
-					saveButton.setWaiting(false);
-				}
-			})
-			.catch((response) => {
-				saveButton.setWaiting(false);
-				if (response?.errors?.length > 0)
-				{
-					BX.UI.Notification.Center.notify({
-						content: response.errors[0].message,
-					});
-				}
-				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreationError');
-			});
+			.then(
+				() => {
+					return Ajax.runAction('biconnector.externalsource.source.save', {
+						data: {
+							data: connectionValues,
+						},
+					})
+						.then((response) => {
+							BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
+								connection: response.data.connection,
+							});
+							if (this.#props.closeAfterCreate)
+							{
+								this.#closeSlider();
+							}
+							else
+							{
+								this.#showSaveSuccessPopup(response.data.connection);
+								saveButton.setWaiting(false);
+							}
+						})
+						.catch((response) => {
+							BX.UI.Notification.Center.notify({
+								content: resolveErrorHtml(response, Loc.getMessage('EXTERNAL_CONNECTION_SAVE_ERROR')),
+							});
+							onSaveFailed();
+						});
+				},
+				onSaveFailed,
+			);
 	}
 
 	#showSaveSuccessPopup(connection: { id: any, name: string, type: string, isSupportMapping: boolean})

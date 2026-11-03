@@ -2,7 +2,7 @@ import {Vuex} from 'ui.vue.vuex';
 import {Vue} from 'ui.vue';
 import {ajax, Loc} from 'main.core';
 import { CurrencyCore } from 'currency.currency-core';
-import DeliverySelector from 'salescenter.deliveryselector';
+import { DeliverySelector } from 'salescenter.deliveryselector';
 
 export default {
 	props: {

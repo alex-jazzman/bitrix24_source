@@ -4,26 +4,172 @@
  * Integration point for the vibecodeconnector (cloud) team.
  *
  * This file is the isolated area for free modification. immobile only renders
- * the button and invokes onClick / reads isIndicatorVisible. All click
- * handling, popup opening, navigation, instrumentation, etc. is supposed to
- * live here.
+ * the button and invokes onClick. Badge value is delivered to the native badge
+ * registry by code (`vibecode`) via Application.setBadges. All click handling,
+ * popup opening, navigation, instrumentation, etc. is supposed to live here.
  *
  * Contract:
  * - onClick(): invoked when the user taps the button.
- * - showIndicator(): turns on the indicator dot on the button.
- * - hideIndicator(): turns off the indicator dot on the button.
- * - isIndicatorVisible(): returns the current indicator state. Used by the
- *   button definition to render the dot dynamically.
+ * - recount(): fetches the actual number of new apps and pushes it to the
+ *   native badge registry when it changed (see ALG-01). Triggered on messenger
+ *   activation (app active) and when the catalog view is shown again after an
+ *   app opened over it. A no-op while the badge is withdrawn: with the app chats
+ *   on, the messenger folder announces the new apps instead
+ *   (Feature.isVibecodeNewAppsBadgeAvailable, decided by the connector).
  */
 jn.define('im/messenger/lib/integration/mobile/vibecode', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { ChatEntityType, EventType } = require('im/messenger/const');
+	const { Loc } = require('im/messenger/loc');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { requireLazy } = require('require-lazy');
 	const { showErrorToast } = require('toast/error');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const logger = getLogger('integration--vibecode');
 
-	let indicatorVisible = true;
+	const BadgeCode = 'vibecode';
+	const GET_NEW_APPS_COUNT_ACTION = 'vibecodeconnector.Catalog.getNewAppsCount';
+
+	/**
+	 * Single-flight guard for the recent item button: catalog item IDs whose open is
+	 * already running. Row selection is throttled by the select service, the button tap
+	 * is not, so without this a double tap opens the app twice and records two opens.
+	 * @type {Set<number>}
+	 */
+	const openingCatalogItemIds = new Set();
+
+	/**
+	 * @param {*} value
+	 * @return {?number}
+	 */
+	function normalizePositiveInteger(value)
+	{
+		const normalizedValue = Number(value);
+
+		return Number.isFinite(normalizedValue) && Number.isInteger(normalizedValue) && normalizedValue > 0
+			? normalizedValue
+			: null
+		;
+	}
+
+	/**
+	 * @param {string} itemId
+	 * @return {?RecentWidgetItemButton}
+	 */
+	function getRecentItemButton(itemId)
+	{
+		if (
+			!Feature.isRecentItemButtonAvailable
+			|| !Feature.isVibecodeButtonAvailable
+			|| !Feature.isVibecodeRecentActionAvailable
+		)
+		{
+			return null;
+		}
+
+		const store = serviceLocator.get('core')?.getStore();
+		const dialog = store?.getters?.['dialoguesModel/getById']?.(itemId);
+		if (!dialog || dialog.entityType !== ChatEntityType.vibecodeApp)
+		{
+			return null;
+		}
+
+		if (normalizePositiveInteger(dialog.entityId) === null)
+		{
+			return null;
+		}
+
+		return createRecentItemButton();
+	}
+
+	/**
+	 * @param {string} itemId
+	 * @param {function(): Promise<{VibeCodeAppOpener: Object}>} [loadAppOpener]
+	 * @return {Promise<void>}
+	 */
+	async function handleRecentItemButtonTap(
+		itemId,
+		loadAppOpener = () => requireLazy('vibecode/app-opener'),
+	)
+	{
+		if (
+			!Feature.isRecentItemButtonAvailable
+			|| !Feature.isVibecodeButtonAvailable
+			|| !Feature.isVibecodeRecentActionAvailable
+		)
+		{
+			return;
+		}
+
+		if (typeof itemId !== 'string' || itemId.length === 0)
+		{
+			logger.error('handleRecentItemButtonTap: invalid itemId', itemId);
+
+			return;
+		}
+
+		const store = serviceLocator.get('core')?.getStore();
+		const dialog = store?.getters?.['dialoguesModel/getById']?.(itemId);
+		if (!dialog || dialog.entityType !== ChatEntityType.vibecodeApp)
+		{
+			logger.error('handleRecentItemButtonTap: invalid dialog', itemId);
+
+			return;
+		}
+
+		const catalogItemId = normalizePositiveInteger(dialog.entityId);
+		if (catalogItemId === null)
+		{
+			logger.error('handleRecentItemButtonTap: invalid catalog item ID', dialog.entityId);
+
+			return;
+		}
+
+		if (openingCatalogItemIds.has(catalogItemId))
+		{
+			logger.log('handleRecentItemButtonTap: open is already in flight', catalogItemId);
+
+			return;
+		}
+
+		openingCatalogItemIds.add(catalogItemId);
+		try
+		{
+			const { VibeCodeAppOpener } = await loadAppOpener();
+			await VibeCodeAppOpener.open({ catalogItemId });
+		}
+		catch (error)
+		{
+			logger.error('handleRecentItemButtonTap: failed to open vibecode app', error);
+		}
+		finally
+		{
+			openingCatalogItemIds.delete(catalogItemId);
+		}
+	}
+
+	/**
+	 * @return {RecentWidgetItemButton}
+	 */
+	function createRecentItemButton()
+	{
+		return Object.freeze({
+			id: 'open',
+			text: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_VIBECODE_OPEN'),
+			size: 'm',
+			design: 'primary',
+			mode: 'solid',
+			rounded: true,
+			viewId: 'chat_recent_open_app_button',
+		});
+	}
+
+	/** @type {number|null} */
+	let newAppsCount = null;
+	let recountInFlight = false;
+	let recountPending = false;
 
 	/**
 	 * Button tap handler.
@@ -31,8 +177,6 @@ jn.define('im/messenger/lib/integration/mobile/vibecode', (require, exports, mod
 	 */
 	async function onClick()
 	{
-		await hideIndicator();
-
 		const parentWidget = serviceLocator.get('recent-manager')?.recentGetter?.getCurrentRecent() ?? PageManager;
 
 		try
@@ -44,7 +188,19 @@ jn.define('im/messenger/lib/integration/mobile/vibecode', (require, exports, mod
 			{
 				logger.error('onClick: failed to open vibecode catalog');
 				showErrorToast({}, parentWidget);
+
+				return;
 			}
+
+			// Returning from an app opened over the catalog fires neither app-active nor
+			// a reliable view.show, so recount on view.close (catalog dismissed) to refresh
+			// the messenger badge; view.show still covers other re-show cases.
+			widget.on?.(EventType.view.show, () => {
+				void recount();
+			});
+			widget.on?.(EventType.view.close, () => {
+				void recount();
+			});
 		}
 		catch (error)
 		{
@@ -54,58 +210,119 @@ jn.define('im/messenger/lib/integration/mobile/vibecode', (require, exports, mod
 	}
 
 	/**
-	 * Shows the indicator dot on the button.
-	 * @return {Promise<void>}
+	 * ALG-01 badge lifecycle decision. Pure: no network or native side effects.
+	 * @param {number|null} previousCount
+	 * @param {number} count
+	 * @return {{ shouldSetBadge: boolean, count: number }}
 	 */
-	async function showIndicator()
+	function resolveBadgeUpdate(previousCount, count)
 	{
-		if (indicatorVisible)
+		if (count === previousCount)
 		{
-			return;
+			return { shouldSetBadge: false, count };
 		}
 
-		indicatorVisible = true;
-		await redrawHeaderButton();
+		return { shouldSetBadge: true, count };
 	}
 
 	/**
-	 * Hides the indicator dot on the button.
-	 * @return {Promise<void>}
+	 * Fetches the actual new apps count, bypassing cache.
+	 * @return {Promise<number>}
 	 */
-	async function hideIndicator()
+	async function fetchNewAppsCount()
 	{
-		if (!indicatorVisible)
+		const response = await (new RunActionExecutor(GET_NEW_APPS_COUNT_ACTION, {})).call(false);
+		const errors = Array.isArray(response?.errors) ? response.errors : [];
+		if (errors.length > 0)
 		{
-			return;
+			throw response;
 		}
 
-		indicatorVisible = false;
-		await redrawHeaderButton();
+		const count = Number(response?.data?.count);
+
+		return (Number.isInteger(count) && count > 0 ? count : 0);
 	}
 
 	/**
+	 * The badge lives only on a shown button and only while the connector lets the button carry
+	 * the counter: with the app chats on, the messenger folder announces the new apps itself.
 	 * @return {boolean}
 	 */
-	function isIndicatorVisible()
+	function isBadgeAvailable()
 	{
-		return indicatorVisible;
+		return Feature.isVibecodeButtonAvailable && Feature.isVibecodeNewAppsBadgeAvailable;
 	}
 
 	/**
+	 * ALG-01: recount and push to the native badge registry if the value changed.
 	 * @return {Promise<void>}
 	 */
-	async function redrawHeaderButton()
+	async function recount()
 	{
-		const navigationManager = serviceLocator.get('navigation-manager');
-		const headerManager = serviceLocator.get('messenger-header-manager');
-		const tabId = await navigationManager.getActiveTab();
-		headerManager.redrawLeftButtonsIfNeeded(tabId);
+		if (!isBadgeAvailable())
+		{
+			return;
+		}
+
+		if (recountInFlight)
+		{
+			// A recount is running with a value read before the latest event; defer one
+			// more pass so the last trigger is reflected instead of being dropped.
+			recountPending = true;
+
+			return;
+		}
+
+		recountInFlight = true;
+		recountPending = false;
+		try
+		{
+			const count = await fetchNewAppsCount();
+			const { shouldSetBadge } = resolveBadgeUpdate(newAppsCount, count);
+			if (shouldSetBadge)
+			{
+				newAppsCount = count;
+				Application.setBadges({ [BadgeCode]: count });
+			}
+		}
+		catch (error)
+		{
+			logger.error('recount: failed to update vibecode badge', error);
+		}
+		finally
+		{
+			// Re-run when an event arrived mid-flight, including after a failed request,
+			// so the latest trigger is not dropped.
+			const shouldRecount = recountPending;
+			recountInFlight = false;
+			recountPending = false;
+
+			if (shouldRecount)
+			{
+				void recount();
+			}
+		}
+	}
+
+	if (isBadgeAvailable())
+	{
+		BX.addCustomEvent(EventType.app.active, () => {
+			void recount();
+		});
+		// Pull-to-refresh (and resume/reconnect refreshes) complete with this event,
+		// so recount to keep the messenger badge in sync with the catalog.
+		BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, () => {
+			void recount();
+		});
+		void recount();
 	}
 
 	module.exports = {
+		normalizePositiveInteger,
+		getRecentItemButton,
+		handleRecentItemButtonTap,
 		onClick,
-		showIndicator,
-		hideIndicator,
-		isIndicatorVisible,
+		recount,
+		resolveBadgeUpdate,
 	};
 });

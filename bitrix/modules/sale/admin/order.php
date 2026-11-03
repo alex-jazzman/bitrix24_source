@@ -125,7 +125,8 @@ $arOrderPropsCode = array();
 $dbProps = Sale\Internals\OrderPropsTable::getList(
 	array(
 		'filter' => array(
-			'=ACTIVE' => 'Y'
+			'=ACTIVE' => 'Y',
+			'=ENTITY_REGISTRY_TYPE' => Sale\Registry::REGISTRY_TYPE_ORDER,
 		),
 		'order' => array(
 			"PERSON_TYPE_ID" => "ASC", "SORT" => "ASC"

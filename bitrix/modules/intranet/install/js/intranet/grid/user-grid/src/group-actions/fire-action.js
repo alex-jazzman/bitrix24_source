@@ -2,7 +2,13 @@ import { FirstAdminGuard } from 'bitrix24.first-admin-guard';
 import { ajax, Loc } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { ErrorCollection } from 'ui.form-elements.field';
+import {
+	FireSystemUserWizard,
+	SystemUserConfigProvider,
+	type FireWizardListConfigDto,
+} from 'intranet.fire-system-user-wizard';
 import { BaseAction } from './base-action';
+import { showFireConfigFailure } from '../fire-config-failure';
 
 export class FireAction extends BaseAction
 {
@@ -13,25 +19,80 @@ export class FireAction extends BaseAction
 
 	execute(): void
 	{
-		const confirmationPopup = this.showPopups
-			? this.getConfirmationPopup()
-			: null;
-
-		if (confirmationPopup)
-		{
-			confirmationPopup.setOkCallback(() => {
-				confirmationPopup.close();
-				this.executeAfterConfirmation();
+		this.grid.tableFade();
+		SystemUserConfigProvider.fetchForList(this.collectFireFields())
+			.then((response) => {
+				this.grid.tableUnfade();
+				this.showConfirmation(response?.data);
+			})
+			.catch(() => {
+				this.grid.tableUnfade();
+				this.showConfigFailure();
 			});
-			confirmationPopup.show();
-		}
-		else
-		{
-			this.executeAfterConfirmation();
-		}
 	}
 
-	executeAfterConfirmation(): void
+	showConfirmation(config: ?FireWizardListConfigDto): void
+	{
+		if (!this.showPopups)
+		{
+			this.executeAfterConfirmation(FireSystemUserWizard.hasSystemUsers(config));
+
+			return;
+		}
+
+		FireSystemUserWizard.showForListConfig(config, {
+			onConfirm: () => {
+				this.executeAfterConfirmation(true);
+			},
+			onFallback: () => {
+				this.showDefaultConfirmation();
+			},
+		});
+	}
+
+	showDefaultConfirmation(): void
+	{
+		const confirmationPopup = this.getConfirmationPopup();
+
+		confirmationPopup.setOkCallback(() => {
+			confirmationPopup.close();
+			this.executeAfterConfirmation(false);
+		});
+		confirmationPopup.show();
+	}
+
+	showConfigFailure(): void
+	{
+		showFireConfigFailure();
+	}
+
+	collectFireFields(): { userIds: Array, isSelectedAllRows: string, filter: Array }
+	{
+		const selectedRows = this.selectedUsers ?? this.grid.getRows().getSelectedIds();
+		const isSelectedAllRows = this.grid.getRows().isAllSelected() ? 'Y' : 'N';
+
+		return {
+			userIds: selectedRows,
+			isSelectedAllRows,
+			filter: this.userFilter,
+		};
+	}
+
+	sendActionRequest(disableIntegrations: boolean = false): void
+	{
+		this.grid.tableFade();
+
+		ajax.runAction(this.getAjaxMethod(), {
+			data: {
+				fields: this.collectFireFields(),
+				disableIntegrations: disableIntegrations === true,
+			},
+		})
+			.then((result) => this.handleSuccess(result))
+			.catch((result) => this.handleError(result));
+	}
+
+	executeAfterConfirmation(disableIntegrations: boolean = false): void
 	{
 		if (this.firstAdminId)
 		{
@@ -42,16 +103,16 @@ export class FireAction extends BaseAction
 
 			if (isFirstAdminSelected)
 			{
-				this.handleFirstAdminFire();
+				this.handleFirstAdminFire(disableIntegrations);
 
 				return;
 			}
 		}
 
-		this.sendActionRequest();
+		this.sendActionRequest(disableIntegrations);
 	}
 
-	handleFirstAdminFire(): void
+	handleFirstAdminFire(disableIntegrations: boolean = false): void
 	{
 		const guard = new FirstAdminGuard(
 			this.currentUserName || '',
@@ -96,7 +157,7 @@ export class FireAction extends BaseAction
 				if (nonFirstAdminUsers.length > 0)
 				{
 					this.selectedUsers = nonFirstAdminUsers;
-					this.sendActionRequest();
+					this.sendActionRequest(disableIntegrations);
 				}
 				else
 				{
@@ -106,7 +167,7 @@ export class FireAction extends BaseAction
 			() => {
 				const selectedRows = this.selectedUsers ?? this.grid.getRows().getSelectedIds();
 				this.selectedUsers = selectedRows.filter((id) => Number(id) !== Number(this.firstAdminId));
-				this.sendActionRequest();
+				this.sendActionRequest(disableIntegrations);
 			},
 		);
 	}

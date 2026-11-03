@@ -16,8 +16,10 @@ return [
 		'im:messenger/lib/ui/notification',
 		'im:messenger/controller/folder/create',
 		'im:messenger/controller/folder/update',
+		'im:messenger/controller/folder/sources-settings',
 		'im:messenger/controller/folder/lib/ui/loadable-button',
 		'im:messenger/controller/folder/lib/actions',
+		'im:messenger/controller/recent/service/lib/folder-composition',
 		'im:messenger/provider/services/analytics',
 	],
 	'bundle' => [

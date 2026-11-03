@@ -8,10 +8,6 @@ jn.define('require-lazy/extension-loader', (require, exports, module) => {
 
 	/**
 	 * Lazy loading and initialization of JaNative extensions via requireLazy
-	 * @typedef {Object} LoadExtensionsParams
-	 * @property {String[]} extensions
-	 * @property {*} [context]
-	 * @property {String} [logPrefix='extension-loader']
 	 */
 	class ExtensionLoader
 	{
@@ -43,7 +39,6 @@ jn.define('require-lazy/extension-loader', (require, exports, module) => {
 		 */
 		logError(message, context = {})
 		{
-			// eslint-disable-next-line no-console
 			console.error(`${this.logPrefix}: ${message}`, context);
 		}
 
@@ -107,6 +102,24 @@ jn.define('require-lazy/extension-loader', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {String} ext
+		 * @returns {Any|null}
+		 */
+		requireBundled(ext)
+		{
+			try
+			{
+				return require(ext);
+			}
+			catch (error)
+			{
+				this.logError('extension require failed', { error, extension: ext });
+
+				return null;
+			}
+		}
+
+		/**
 		 * @param {LoadExtensionsParams} params
 		 * @returns {Promise<any[]>}
 		 */
@@ -116,12 +129,34 @@ jn.define('require-lazy/extension-loader', (require, exports, module) => {
 			{
 				this.validateExtensions(extensions);
 
-				const extensionPromises = extensions.map((ext) => requireLazy(ext));
-				const requireResults = await Promise.allSettled(extensionPromises);
+				const initialized = [];
+				const notBundled = [];
 
-				return requireResults
-					.map((result) => this.processLoadResult(result, context))
-					.filter(Boolean);
+				extensions.forEach((ext) => {
+					// awaiting an already bundled extension would defer its initialization
+					// to a microtask, while a cold start by deeplink opens before that
+					if (!jn.define.moduleMap[ext])
+					{
+						notBundled.push(ext);
+
+						return;
+					}
+
+					const extensionModule = this.requireBundled(ext);
+					if (!extensionModule)
+					{
+						return;
+					}
+
+					initialized.push(this.initializeModule(extensionModule, context));
+				});
+
+				const requireResults = await Promise.allSettled(notBundled.map((ext) => requireLazy(ext, false)));
+
+				return [
+					...initialized,
+					...requireResults.map((result) => this.processLoadResult(result, context)),
+				].filter(Boolean);
 			}
 			catch (error)
 			{

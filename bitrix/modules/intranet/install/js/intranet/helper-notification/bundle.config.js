@@ -4,4 +4,7 @@ module.exports = {
 	namespace: 'BX.Intranet',
 	browserslist: true,
 	transformClasses: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

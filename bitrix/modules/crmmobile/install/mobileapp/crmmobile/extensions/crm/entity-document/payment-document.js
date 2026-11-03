@@ -2,6 +2,8 @@
  * @module crm/entity-document/payment-document
  */
 jn.define('crm/entity-document/payment-document', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { CrmProductTabShimmer } = require('layout/ui/detail-card/tabs/shimmer/crm-product');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
@@ -299,7 +301,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 							deepMergeStyles: {
 								element: {
 									title: {
-										fontSize: 16,
+										fontSize: Typography.text3.getValue().fontSize,
 									},
 								},
 							},
@@ -362,7 +364,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 						style: {
 							flexShrink: 2,
 							color: AppTheme.colors.base4,
-							fontSize: 15,
+							...Typography.text4.getValue(),
 						},
 						value: `[C type=dot textColor=${AppTheme.colors.base4} lineColor=${AppTheme.colors.base4}][COLOR=${AppTheme.colors.base4}][URL="${currentDomain + this.payment.slipLink}"]${terminalCheckPhrase}[/URL][/COLOR][/C]`,
 						linksUnderline: false,
@@ -373,14 +375,13 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 								paddingTop: 6,
 							},
 						},
-						Text({
+						Text4({
 							text: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_TERMINAL_CHECK_PHONE', {
 								'#PHONE_NUMBER#': getFormattedNumber(this.payment.phoneNumber),
 							}),
 							testId: 'PaymentDocumentCheckPhone',
 							style: {
 								color: AppTheme.colors.base3,
-								fontSize: 14,
 								fontWeight: '400',
 							},
 						}),
@@ -453,7 +454,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 							style: {
 								flexShrink: 2,
 								color: AppTheme.colors.base3,
-								fontSize: 16,
+								...Typography.text3.getValue(),
 								marginTop: index > 0 ? 10 : 0,
 							},
 							value: `[C type=dot textColor=${AppTheme.colors.base3} lineColor=${AppTheme.colors.base3}][COLOR=${AppTheme.colors.base3}][URL="${check.url}"]${checkText}[/URL][/COLOR][/C]`,
@@ -693,7 +694,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 	const styles = {
 		summary: {
 			title: {
-				fontSize: 10,
+				fontSize: Typography.text7.getValue().fontSize,
 				color: AppTheme.colors.base4,
 				marginBottom: 14,
 				fontWeight: '400',
@@ -714,7 +715,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 		summaryBlockText: {
 			flexShrink: 2,
 			color: AppTheme.colors.base4,
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 		},
 		badge: (color) => ({
 			backgroundColor: color,
@@ -728,7 +729,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 		}),
 		badgeText: (color) => ({
 			color,
-			fontSize: 9,
+			fontSize: Typography.text7.getValue().fontSize,
 			fontWeight: '700',
 			textAlign: 'center',
 		}),

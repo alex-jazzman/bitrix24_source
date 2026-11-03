@@ -1,0 +1,7 @@
+<?php
+
+$MESS['SIGN_ACTIVITIES_B2E_MANUAL_START_TRIGGER_DESCRIPTION'] = 'Запускает процесс из раздела КЭДО для выбранных сотрудников: для каждого — отдельный процесс';
+$MESS['SIGN_ACTIVITIES_B2E_MANUAL_START_TRIGGER_NAME'] = 'Запуск из КЭДО';
+$MESS['SIGN_ACTIVITIES_B2E_MANUAL_START_TRIGGER_RETURN_EMPLOYEE'] = 'Сотрудник';
+$MESS['SIGN_ACTIVITIES_B2E_MANUAL_START_TRIGGER_RETURN_INITIATOR'] = 'Инициатор запуска';
+$MESS['SIGN_ACTIVITIES_B2E_MANUAL_START_TRIGGER_RETURN_STARTED_DATE'] = 'Дата запуска';

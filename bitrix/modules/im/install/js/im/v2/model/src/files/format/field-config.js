@@ -70,6 +70,11 @@ export const fileFieldsConfig: FieldsConfig = [
 		checkFunction: [Type.isString, (file) => !Type.isUndefined(FileStatus[file.status])],
 	},
 	{
+		fieldName: 'validationError',
+		targetFieldName: 'validationError',
+		checkFunction: [Type.isString, Type.isNull],
+	},
+	{
 		fieldName: 'progress',
 		targetFieldName: 'progress',
 		checkFunction: isNumberOrString,
@@ -79,6 +84,19 @@ export const fileFieldsConfig: FieldsConfig = [
 		fieldName: 'isVideoNote',
 		targetFieldName: 'isVideoNote',
 		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'isVoiceNote',
+		targetFieldName: 'isVoiceNote',
+		checkFunction: Type.isBoolean,
+	},
+	{
+		// Comes only with files sent after the field appeared: for the rest the check drops the null
+		// the server sends, and the consumer falls back to reading the duration from the media itself.
+		fieldName: 'duration',
+		targetFieldName: 'duration',
+		checkFunction: isNumberOrString,
+		formatFunction: convertToNumber,
 	},
 	{
 		fieldName: 'authorId',
@@ -97,6 +115,11 @@ export const fileFieldsConfig: FieldsConfig = [
 		targetFieldName: 'urlPreview',
 		checkFunction: Type.isString,
 		formatFunction: prepareUrl,
+	},
+	{
+		fieldName: 'mediaUrl',
+		targetFieldName: 'mediaUrl',
+		checkFunction: Type.isPlainObject,
 	},
 	{
 		fieldName: 'urlDownload',

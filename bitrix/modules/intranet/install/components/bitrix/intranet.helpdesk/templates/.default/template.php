@@ -67,23 +67,6 @@ $notifyData = array_merge(\Bitrix\UI\InfoHelper::getParameters(), [
 				BX.Helper.show();
 			});
 		<?php endif;?>
-		<?php if ($arResult['SHOULD_SHOW_NEW_HELPER_NOTIFICATION'] === 'Y' && !$arResult['OPEN_HELPER_AFTER_PAGE_LOADING']): ?>
-		BX.ready(function() {
-				const helpBlock = BX('bx-help-block');
-
-				if (!helpBlock)
-				{
-					return;
-				}
-
-				BX.Runtime.loadExtension('intranet.helper-notification')
-					.then(function({HelperNotification}) {
-						(new HelperNotification({
-							bindElement: helpBlock,
-						})).show();
-					});
-			});
-		<?php endif; ?>
 		<?php
 		if (isset($notifyData['support_bot'], $_REQUEST['support_chat']) && ($notifyData['support_bot'] > 0))
 			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$notifyData['support_bot'].');});';

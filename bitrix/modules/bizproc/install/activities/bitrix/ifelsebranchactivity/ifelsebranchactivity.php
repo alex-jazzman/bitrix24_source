@@ -11,6 +11,26 @@ $runtime->IncludeActivityFile('SequenceActivity');
 /** @property-read CBPActivityCondition Condition */
 class CBPIfElseBranchActivity extends CBPSequenceActivity
 {
+	/** The AI contract of an activity reports into the channel of the AI description service. */
+	private const AI_LOGGER_ID = 'bizproc.aiassistant.activity_description';
+
+	/**
+	 * Answers of {@see self::getAiPassthroughSettingNames()} per document type. Resolving them walks the whole
+	 * activity catalog, which {@see \Bitrix\Bizproc\Runtime\ActivitySearcher\Searcher::searchByType()} does not
+	 * memoise, while one reverse AI entry asks for them once per node that carries a condition.
+	 *
+	 * @var array<string, list<string>>
+	 */
+	private static array $aiConditionCodes = [];
+
+	/**
+	 * Answers of {@see self::getAiRestrictedSettingNames()} per document type. An answer a condition could not be
+	 * asked for is absent from here on purpose - see the method.
+	 *
+	 * @var array<string, list<string>>
+	 */
+	private static array $aiRestrictedConditionCodes = [];
+
 	public function __construct($name)
 	{
 		parent::__construct($name);
@@ -110,6 +130,71 @@ class CBPIfElseBranchActivity extends CBPSequenceActivity
 		}
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
+	}
+
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// Condition codes are stored as property keys; take them from the same source as the graph.
+		return self::$aiConditionCodes[implode('|', $documentType)] ??= array_keys(
+			CBPRuntime::GetRuntime()->SearchActivitiesByType('condition', $documentType)
+		);
+	}
+
+	/**
+	 * Condition codes whose payload is executable, so an AI agent may only pass an existing one through verbatim.
+	 * Membership is asked of the condition class itself ({@see CBPActivityCondition::requiresAdminToAuthor()}),
+	 * not hard-coded: today only `codecondition` answers true, but a new executable condition joins the rule by
+	 * declaring it. The EXCLUDED flag is deliberately not used - it is distribution-specific and marks a different
+	 * property (whether the editor offers the condition at all).
+	 *
+	 * The codes come from the passthrough list rather than from a catalog walk of its own: this is a subset of
+	 * that list, and both are asked for on the same reverse entry.
+	 *
+	 * A condition that could not be asked is answered as restricted: the barrier of ALG-04 lets an agent author
+	 * every name absent from this set, so an unknown status has to refuse authorship instead of granting it. The
+	 * published template still survives the round-trip - the barrier compares against a baseline built through
+	 * this very method, so the same code is restricted on both sides and its unchanged value matches. Such an
+	 * answer is not memoised either: the restriction belongs to the failed load, not to the condition, and must
+	 * not settle the question for the rest of the process.
+	 */
+	public static function getAiRestrictedSettingNames(array $documentType): array
+	{
+		$cacheKey = implode('|', $documentType);
+		if (isset(self::$aiRestrictedConditionCodes[$cacheKey]))
+		{
+			return self::$aiRestrictedConditionCodes[$cacheKey];
+		}
+
+		$restricted = [];
+		$isComplete = true;
+
+		foreach (self::getAiPassthroughSettingNames($documentType) as $code)
+		{
+			try
+			{
+				if (CBPActivityCondition::CallStaticMethod($code, 'requiresAdminToAuthor') === true)
+				{
+					$restricted[] = $code;
+				}
+			}
+			catch (Throwable $exception)
+			{
+				$restricted[] = $code;
+				$isComplete = false;
+				(new \Bitrix\Main\Diag\LoggerFactory())->createById(self::AI_LOGGER_ID)?->error(
+					'Condition {code} could not be asked whether authoring it needs admin rights and stays'
+					. ' restricted until it can be: {error}',
+					['code' => $code, 'error' => $exception->getMessage()],
+				);
+			}
+		}
+
+		if (!$isComplete)
+		{
+			return $restricted;
+		}
+
+		return self::$aiRestrictedConditionCodes[$cacheKey] = $restricted;
 	}
 
 	public static function GetPropertiesDialog(

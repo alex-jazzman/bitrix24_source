@@ -24,6 +24,9 @@ const ADD_MODE = 'add';
 
 export { Events };
 
+// The deadline pill has to change its format, not just its size: see the reflow region in todo-editor.css.
+const NARROW_LAYOUT_QUERY = '(max-width: 768px)';
+
 const CALENDAR_BLOCK_ID = TodoEditorBlocksCalendar.methods.getId();
 
 export const TodoEditor = {
@@ -101,6 +104,8 @@ export const TodoEditor = {
 			blocksData,
 			modeData: this.mode,
 			currentUserData: this.currentUser,
+			isActionsPopupShown: false,
+			isNarrowLayout: window.matchMedia(NARROW_LAYOUT_QUERY).matches,
 			canChangeDeadline: true,
 			isEdit: this.mode !== ADD_MODE,
 		};
@@ -116,7 +121,12 @@ export const TodoEditor = {
 			let converter = new DatetimeConverter(this.currentDeadline);
 
 			let deadlineFormatted = converter.toDatetimeString({
-				withDayOfWeek: true,
+				// Measured at a card width of 241px: the full form ("Ср, 26 августа, 19:00") needs 185px
+				// of the 118px its container has and runs past the card edge, while the short one
+				// ("26 авг, 19:00") takes 111px. The day of the week goes first because it is the part
+				// the date itself already carries.
+				withDayOfWeek: !this.isNarrowLayout,
+				withFullMonth: !this.isNarrowLayout,
 				delimiter: ', ',
 			});
 
@@ -154,6 +164,11 @@ export const TodoEditor = {
 	},
 
 	methods: {
+		onNarrowLayoutChange(event: MediaQueryListEvent): void
+		{
+			this.isNarrowLayout = event.matches;
+		},
+
 		/* @internal */
 		prepareBlockDataWithEditorParams(blocksData: BlockSettings, { currentDeadline }): void
 		{
@@ -535,6 +550,16 @@ export const TodoEditor = {
 			}
 		},
 
+		onActionsPopupShow(): void
+		{
+			this.isActionsPopupShown = true;
+		},
+
+		onActionsPopupClose(): void
+		{
+			this.isActionsPopupShown = false;
+		},
+
 		getNextBlockSortValue(): number
 		{
 			let maxSortValue = 0;
@@ -578,9 +603,13 @@ export const TodoEditor = {
 			// eslint-disable-next-line no-param-reassign
 			block.sort = 0;
 
-			if (Type.isFunction(this.$refs[block.id]?.reset))
+			const blockRef = Type.isArray(this.$refs[block.id])
+				? this.$refs[block.id][0]
+				: this.$refs[block.id]
+			;
+			if (Type.isFunction(blockRef?.reset))
 			{
-				this.$refs[block.id].reset();
+				blockRef.reset();
 			}
 
 			const blockData = this.getBlockDataById(block.id);
@@ -592,15 +621,18 @@ export const TodoEditor = {
 
 		getExecutedBlocksData(): Object[]
 		{
-			const data = [];
-			this.blocksData.filter((block) => block.active).forEach((block: BlockSettings) => {
-				data.push({
+			return this.blocksData.map((block: BlockSettings) => {
+				if (!block.active)
+				{
+					return { id: block.id, active: false };
+				}
+
+				return {
 					...this.$refs[block.id][0].getExecutedData(),
 					id: block.id,
-				});
+					active: true,
+				};
 			});
-
-			return data;
 		},
 
 		getBlockComponentName(blockId: string): string
@@ -635,6 +667,11 @@ export const TodoEditor = {
 		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 
 		EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
+		EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_SHOW, this.onActionsPopupShow);
+		EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_CLOSE, this.onActionsPopupClose);
+
+		this.narrowLayoutQuery = window.matchMedia(NARROW_LAYOUT_QUERY);
+		this.narrowLayoutQuery.addEventListener('change', this.onNarrowLayoutChange);
 	},
 
 	beforeUnmount()
@@ -643,6 +680,10 @@ export const TodoEditor = {
 		this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 
 		EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
+		EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_SHOW, this.onActionsPopupShow);
+		EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_CLOSE, this.onActionsPopupClose);
+
+		this.narrowLayoutQuery?.removeEventListener('change', this.onNarrowLayoutChange);
 	},
 
 	template: `
@@ -651,6 +692,8 @@ export const TodoEditor = {
 				<button
 					class="crm-activity__todo-show-actions-popup-button ui-btn ui-btn-sm ui-btn-base-light"
 					@click="showActionsPopup"
+					aria-haspopup="menu"
+					:aria-expanded="isActionsPopupShown ? 'true' : 'false'"
 				>
 					{{ popupMenuButtonTitle }}
 					<span class="crm-activity__todo-show-actions-popup-button-arrow"></span>
@@ -717,12 +760,13 @@ export const TodoEditor = {
 			<div
 				class="crm-activity__todo-editor-v2_block-wrapper"
 				v-for="block in orderedBlocksData"
-				key="block.id"
+				:key="block.id"
 				v-show="block?.active"
 			>
 				<component
 					v-if="block?.active"
 					v-bind:is="getBlockComponentName(block.id)"
+					:key="block.id + '-' + block.sort"
 					:ref="block.id"
 					@close="onBlockCloseClick"
 					:id="getBlockDataById(block.id).id"

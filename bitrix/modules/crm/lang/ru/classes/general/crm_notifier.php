@@ -1,4 +1,7 @@
 <?php
+
+$MESS['CRM_NOTIFY_PRODUCT_SOURCE_NAME'] = 'CRM';
+$MESS['CRM_NOTIFY_PRODUCT_SOURCE_DESCRIPTION'] = 'Сделки, лиды и действия клиентов';
 $MESS["CRM_NOTIFY_TITLE"] = 'CRM';
 $MESS["CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING"] = 'Пришло письмо';
 $MESS["CRM_NOTIFY_SCHEME_WEBFORM"] = "Заполнена CRM-форма";

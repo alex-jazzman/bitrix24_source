@@ -18,6 +18,29 @@
 	margin-right: 18px;
 }
 
+/* The horizontal inset repeats the one of the form body, so the buttons stand on the same vertical as
+   the fields above them. The height is no longer pinned: it comes out of the buttons and the inset
+   around them, and 38px of a large button with 18px above and below give the 74px of the layout. A
+   button of another size moves the panel with it instead of being clipped by it. The legacy branch
+   keeps the fixed height of the rule above.
+   Two ways in: the messenger drawn in the current design, and a panel that draws the buttons of the
+   design system on its own request on a portal still in the legacy one. */
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-button-panel__container,
+.bx-im-chat-forms-button-panel__container.--air-design {
+	--im-chat-forms-button-panel__background-color_container: var(--ui-color-bg-content-primary);
+
+	height: auto;
+	justify-content: flex-start;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-md2) var(--ui-space-inset-xl2);
+	box-shadow: var(--ui-shadow-top-2xs);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-button-panel__create-button,
+.bx-im-chat-forms-button-panel__container.--air-design .bx-im-chat-forms-button-panel__create-button {
+	margin-right: 0;
+}
+
 .bx-im-chat-forms-chat-avatar__container {
 	cursor: pointer;
 }
@@ -25,6 +48,28 @@
 .bx-im-chat-forms-chat-avatar__input {
 	display: none;
 }
+
+/* Air avatar */
+.bx-im-chat-forms-chat-avatar__button {
+	display: flex;
+	flex-shrink: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	border-radius: var(--ui-border-radius-circle);
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-chat-avatar__button.--squared,
+.bx-im-chat-forms-chat-avatar__button.--collab {
+	border-radius: var(--ui-border-radius-md);
+}
+
+.bx-im-chat-forms-chat-avatar__button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+/* End air avatar */
 
 .bx-im-chat-forms-chat-members__container {
 	--im-chat-forms-chat-members__background-color_container: var(--im-color-palette-white-base);
@@ -38,6 +83,19 @@
 	border: none;
 	padding: 0;
 }
+
+/* Air members */
+/* The members block is a card of the same family as the form sections, so it repeats their
+   paddings, corners and shadow. The selector inside keeps its own markup. */
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-chat-members__container {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+	background-color: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-md);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+/* End air members */
 
 .bx-im-content-create-chat__heading_container {
 	--im-content-create-chat__font-color_heading: var(--im-color-palette-gray-80);
@@ -59,6 +117,10 @@
 	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	color: var(--im-content-create-chat__font-color_subheading);
 	font-weight: var(--im-font-weight-medium);
+}
+
+.bx-im-chat-forms-heading__subheading {
+	color: var(--ui-color-base-4);
 }
 .bx-im-content-create-chat-radio__container {
 	--im-content-create-chat-radio__font_title: var(--im-font-size-md)/17px var(--im-font-family-system);
@@ -106,6 +168,42 @@
 	color: var(--im-content-create-chat-radio__font-color_subtitle);
 }
 
+.bx-im-chat-forms-radio {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.bx-im-chat-forms-radio__option {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs2);
+	cursor: pointer;
+}
+
+/* Keeps the control on the first line of the caption next to it. */
+.bx-im-chat-forms-radio__control {
+	padding: 3px 0;
+}
+
+.bx-im-chat-forms-radio__text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.bx-im-chat-forms-radio__title {
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-radio__option.--selected .bx-im-chat-forms-radio__title {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-chat-forms-radio__subtitle {
+	color: var(--ui-color-base-3);
+}
+
 .bx-im-content-create-chat__textarea_container {
 	--im-create-chat-textarea__font_placeholder: var(--im-font-size-md)/17px var(--im-font-family-system);
 	--im-create-chat-textarea__font-color_placeholder: #aab0b8;
@@ -151,6 +249,20 @@
 	border-radius: var(--im-border-radius-sm);
 }
 /* end rounded */
+
+/* Air description field */
+/* The description is an ordinary field of the form: the plain design of BInput draws its border,
+   its background and its rounding, and the resting and the active border come with it. This node
+   repeats the box of the field to carry the shadow every surface of the form has, the same way
+   the wrapper of the selects does. */
+.bx-im-chat-forms-textarea__field {
+	border-radius: var(--ui-border-radius-sm);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+/* End air description field */
+
 .bx-im-chat-forms-title-input__container {
 	--im-chat-forms-title-input__background-color_input-border: rgba(var(--im-color-palette-gray-70-rgb), 0.2);
 	--im-chat-forms-title-input__background-color_input-selection: rgba(var(--im-color-palette-blue-60-rgb), 0.3);
@@ -183,6 +295,15 @@
 	background: var(--im-chat-forms-title-input__background-color_input-selection);
 }
 
+/* The naked design leaves the field without a border, a background and side padding, so the
+   heading keeps only the line under it. The rest of the metrics are variables of BInput. */
+.bx-im-chat-forms-title-input__field {
+	--font-size: var(--ui-font-size-4xl);
+	--min-height: 42px;
+
+	border-bottom: 1px solid var(--ui-color-divider-accent);
+}
+
 .bx-im-chat-forms-auto-delete__container {
 	--im-chat-forms-auto-delete__color_title: var(--im-color-palette-gray-80);
 
@@ -203,6 +324,111 @@
 
 .bx-im-chat-forms-auto-delete__toggle {
 	margin-top: 2px;
+}
+
+/* Air auto delete */
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-auto-delete__container {
+	flex-direction: column;
+	gap: 0;
+}
+
+/* The height matches the icon box of the dropdown chevron, so the line keeps its height when the
+   status is replaced by the dropdown. */
+.bx-im-chat-forms-auto-delete__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 24px;
+}
+
+/* Height of the reference caption line: it sets the rhythm the period line below follows. */
+.bx-im-chat-forms-auto-delete__row.--caption {
+	min-height: 28px;
+}
+
+.bx-im-chat-forms-auto-delete__switcher,
+.bx-im-chat-forms-auto-delete__spacer {
+	flex: 0 0 auto;
+	min-width: 2em;
+}
+
+.bx-im-chat-forms-auto-delete__switcher {
+	display: inline-flex;
+	align-items: center;
+	height: var(--ui-size-lg);
+	border-radius: var(--ui-border-radius-pill);
+}
+
+.bx-im-chat-forms-auto-delete__switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bx-im-chat-forms-auto-delete__caption {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bx-im-chat-forms-auto-delete__status {
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-chat-forms-auto-delete__delay {
+	display: flex;
+	align-items: center;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-auto-delete__delay:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bx-im-chat-forms-auto-delete__chevron {
+	transition: transform 150ms ease;
+}
+
+.bx-im-chat-forms-auto-delete__chevron.--open {
+	transform: rotate(180deg);
+}
+/* End air auto delete */
+
+.bx-im-chat-forms-field-row {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	width: 100%;
+}
+
+.bx-im-chat-forms-field-row__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bx-im-chat-forms-field-row__label {
+	color: var(--ui-color-base-2);
+}
+
+/* The wrapper repeats the box of the field, so the shadow of the reference is drawn here
+   instead of reaching into the markup of BInput. The cap keeps the field off the whole width
+   of the row: it repeats the 260px the legacy select of the same rights is pinned to, and the
+   token scale has no field widths. */
+.bx-im-chat-forms-select-input {
+	display: flex;
+	min-width: 0;
+	max-width: 260px;
+	border-radius: var(--ui-border-radius-sm);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
 }
 
 /* Section */
@@ -354,6 +580,85 @@
 }
 /* End external section */
 
+/* Air section */
+/* Wins over the folded, hover and per-name rules above by specificity: the air card keeps one
+   look in every state, and the section paddings move from the header to the card. */
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+	margin-bottom: var(--ui-space-stack-sm);
+	border-radius: var(--ui-border-radius-md);
+	background-color: var(--ui-color-bg-content-primary);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+
+/* The accordion draws its icon with a glyph of the icon set; the background image is left to the
+   external section, which still keeps its own graphics. */
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section_icon {
+	display: block;
+	flex-shrink: 0;
+	margin-right: 0;
+}
+
+.bx-im-chat-forms-section__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	width: 100%;
+	min-height: 38px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	text-align: left;
+}
+
+button.bx-im-chat-forms-section__header {
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-section__header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bx-im-chat-forms-section__title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bx-im-chat-forms-section__icon {
+	flex-shrink: 0;
+}
+
+.bx-im-chat-forms-section__chevron {
+	flex-shrink: 0;
+	transition: transform 200ms ease;
+}
+
+.bx-im-content-create-chat__section.--active .bx-im-chat-forms-section__chevron {
+	transform: rotate(180deg);
+}
+
+/* The top inset is the gap from the line above the content to the caption of the first field;
+   a section that draws no line keeps the same rhythm under its head. */
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section_content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+	padding: var(--ui-space-inset-md) 0 0;
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section_content.--divided {
+	margin-top: var(--ui-space-stack-sm);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+/* End air section */
+
 .bx-im-chat-forms-settings__description_container {
 	width: 100%;
 	height: 150px;
@@ -379,6 +684,25 @@
 	margin-left: 7px;
 }
 
+/* The field brings the rhythm of the form body itself: it is no longer a section card. */
+.bx-im-chat-forms-privacy {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* The options stand on the background of the form, so the group is a card of its own, the same
+   card the privacy type field of the project wizard draws. Wins over the paddingless group of
+   the radio element by specificity, whatever the order of the files in the bundle. The wizard
+   leaves this card flat; here it carries the hairline of every other surface of the form. */
+.bx-im-chat-forms-privacy .bx-im-chat-forms-privacy__options {
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+
 .bx-im-chat-forms-chat-settings__type-select {
 	--im-chat-forms-chat-settings__font_toggle-label: var(--im-font-size-md)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	--im-chat-forms-chat-settings__font-color_toggle-label: var(--im-color-palette-gray-80);
@@ -396,4 +720,35 @@
 
 .bx-im-chat-forms-chat-settings__password-container {
 	margin-top: 14px;
+}
+
+.bx-im-chat-forms-conference__password-toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bx-im-chat-forms-conference__switcher {
+	display: inline-flex;
+	align-items: center;
+	height: var(--ui-size-lg);
+	border-radius: var(--ui-border-radius-pill);
+}
+
+.bx-im-chat-forms-conference__switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* The caption fills the row so that the whole line stays clickable, as it is in the legacy form. */
+.bx-im-chat-forms-conference__caption {
+	flex-grow: 1;
+	cursor: pointer;
+}
+
+/* The cap keeps the field off the whole width of the row: it repeats the 260px the selects of the
+   rights are capped to in select-input.css, which the field of the password is asked to match, and
+   the token scale has no field widths. */
+.bx-im-chat-forms-conference__password-field {
+	max-width: 260px;
 }

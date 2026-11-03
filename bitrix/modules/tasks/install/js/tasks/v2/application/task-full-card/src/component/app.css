@@ -1,5 +1,5 @@
 :root {
-	--tasks-color-bg-drawer: #EEF2F4;
+	--tasks-color-bg-drawer: var(--ui-color-drawer-bg-default, #eef2f4);
 }
 
 .tasks-full-card {
@@ -24,6 +24,18 @@
 	min-width: 432px;
 }
 
+.tasks-full-card-main .tasks-full-card-header-holder {
+	position: sticky;
+	top: 0;
+	z-index: 4;
+	background: var(--tasks-color-bg-drawer);
+}
+
+/* sticky footers of collapsible texts must scroll under the header, not over the task title */
+.tasks-full-card-main .tasks-card-entity-collapsible-footer.--sticky {
+	z-index: 3;
+}
+
 @media (min-width: 1600px) {
 	.tasks-full-card-main {
 		width: 660px;
@@ -34,7 +46,7 @@
 	content: '';
 	position: absolute;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.1);
+	background: var(--ui-color-bg-state-hover-default-overlay);
 	pointer-events: none;
 	opacity: 0;
 	transition: opacity 300ms;
@@ -92,6 +104,7 @@
 }
 
 .tasks-full-card-fields {
+	isolation: isolate;
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
@@ -116,7 +129,7 @@
 	padding: var(--ui-space-inset-md2);
 	background: var(--ui-color-base-8);
 	border-radius: 10px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	box-shadow: var(--ui-area-box-shadow-default-x) var(--ui-area-box-shadow-default-y) 1px var(--ui-color-area-box-shadow-default-color);
 }
 
 .tasks-full-card-field-container.--small-vertical-padding {
@@ -134,14 +147,38 @@
 }
 
 .tasks-full-card-field-container.--task-list {
-	background: #f5f7f8;
-	--highlight-background: #f5f7f8;
+	background: var(--ui-color-bg-content-secondary);
+	--highlight-background: var(--ui-color-bg-content-secondary);
 }
 
 .tasks-full-card-chips-fields {
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-stack-sm);
+}
+
+@media (max-width: 960px) {
+	.tasks-full-card {
+		position: relative;
+		flex-direction: column;
+		overflow-y: auto;
+	}
+
+	.tasks-full-card-main:not(.--embedded) {
+		width: auto !important;
+		min-width: 0;
+		max-width: none;
+		height: auto;
+	}
+
+	.tasks-full-card-main:not(.--embedded) .tasks-full-card-content {
+		flex: none;
+		overflow: visible;
+	}
+
+	.tasks-full-card-main:not(.--embedded) .b24-content-resizer {
+		display: none;
+	}
 }
 
 @media print {
@@ -183,6 +220,10 @@
 
 	.tasks-full-card .print-white-space-normal {
 		white-space: normal;
+	}
+
+	.tasks-full-card .tasks-full-card-header-holder {
+		position: static;
 	}
 
 	.tasks-full-card .print-display-block {

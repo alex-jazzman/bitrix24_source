@@ -7,6 +7,7 @@ export class MandatoryEnableOtp extends BaseContent
 	#endDateTs: number;
 	#promoteMode: string;
 	#formatEndDate: string;
+	#blockMode: boolean;
 
 	constructor(options: Object)
 	{
@@ -14,6 +15,7 @@ export class MandatoryEnableOtp extends BaseContent
 		this.#promoteMode = options.promoteMode;
 		this.#endDateTs = options.endDate;
 		this.#formatEndDate = options.formatEndDate;
+		this.#blockMode = options.blockMode === true;
 	}
 
 	getId(): string
@@ -64,6 +66,11 @@ export class MandatoryEnableOtp extends BaseContent
 		const buttons = [
 			this.btnFactory.createEnableBtn(),
 		];
+
+		if (this.#blockMode)
+		{
+			return buttons;
+		}
 
 		if (!this.isTimeEnd() || !this.#endDateTs)
 		{

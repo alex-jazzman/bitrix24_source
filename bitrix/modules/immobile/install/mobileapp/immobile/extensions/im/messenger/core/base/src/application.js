@@ -12,6 +12,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 	const { MessengerMutationManager } = require('im/messenger/lib/state-manager/vuex-manager/mutation-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { DatabaseEpoch } = require('im/messenger/lib/database-epoch');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { DatabaseConnection } = require('im/messenger/db/connection');
@@ -19,6 +20,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		RecentSectionSchema,
 		FolderSchema,
 		FolderChatSchema,
+		ChatCommandSchema,
 	} = require('im/messenger/db/table-schema');
 
 	const {
@@ -36,6 +38,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		CopilotRepository,
 		DraftRepository,
 		FolderRepository,
+		ChatCommandRepository,
 		CommentRepository,
 		CounterRepository,
 		// SidebarFileRepository, TODO: The backend is not ready yet
@@ -216,6 +219,12 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				DatabaseConnection.getInstance().dropSchema(RecentSectionSchema);
 				DatabaseConnection.getInstance().dropSchema(FolderSchema);
 				DatabaseConnection.getInstance().dropSchema(FolderChatSchema);
+				DatabaseConnection.getInstance().dropSchema(ChatCommandSchema);
+
+				// The single place every wipe goes through, whichever caller asked for it: the view caches
+				// of the lists live in their own storages and outlive the tables, so the generation they
+				// are checked against has to move exactly here.
+				DatabaseEpoch.bump();
 
 				logger.warn('CoreApplication drop database complete');
 			};
@@ -238,6 +247,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				copilot: new CopilotRepository(),
 				draft: new DraftRepository(),
 				folder: new FolderRepository(),
+				chatCommand: new ChatCommandRepository(),
 				comment: new CommentRepository(),
 				// sidebarFile: new SidebarFileRepository(),
 				counter: new CounterRepository(),

@@ -20,6 +20,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parserAction } = require('im/messenger/lib/parser/functions/action');
 	const { parserFont } = require('im/messenger/lib/parser/functions/font');
 	const { parserImage } = require('im/messenger/lib/parser/functions/image');
+	const { parserTable } = require('im/messenger/lib/parser/functions/table');
 	const { parserDisk } = require('im/messenger/lib/parser/functions/disk');
 	const { parsedElements } = require('im/messenger/lib/parser/utils/parsed-elements');
 	const { parserSmile } = require('im/messenger/lib/parser/functions/smile');
@@ -28,17 +29,24 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { QuoteActive } = require('im/messenger/lib/parser/elements/dialog/message/quote-active');
 	const { QuoteInactive } = require('im/messenger/lib/parser/elements/dialog/message/quote-inactive');
 	const { Code } = require('im/messenger/lib/parser/elements/dialog/message/code');
+	const { Table } = require('im/messenger/lib/parser/elements/dialog/message/table');
 	const { MessageText } = require('im/messenger/lib/parser/elements/dialog/message/text');
+	const { MessageComponent } = require('im/messenger/const');
 	const { NEW_LINE } = require('im/messenger/lib/parser/const');
 	const { markdownConverter } = require('im/messenger/lib/parser/markdown/converter');
+	const { createMarkdownNonce } = require('im/messenger/lib/parser/markdown/utils/nonce');
+	const { repairVisualStyleBBCode } = require('im/messenger/lib/bbcode/style-canonicalizer');
+	const CRLF = '\r\n';
 
 	function removeExtraNewLinesAroundBlocks(elements)
 	{
-		const blockTypes = new Set([
-			QuoteActive.getType(),
-			QuoteInactive.getType(),
-			Code.getType(),
-		]);
+		const blockTypes = new Set([Code.getType()]);
+		if (Feature.isChatDialogCompactQuoteSupported)
+		{
+			blockTypes.add(QuoteActive.getType());
+			blockTypes.add(QuoteInactive.getType());
+			blockTypes.add(Table.getType());
+		}
 
 		return elements.filter((element, index) => {
 			if (element.type !== MessageText.getType())
@@ -56,23 +64,61 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return true;
 			}
 
-			if (element.text === NEW_LINE)
+			if (element.text === NEW_LINE || element.text === CRLF)
 			{
 				return false;
 			}
 
-			if (isAfterBlock && element.text.startsWith(NEW_LINE))
+			if (isAfterBlock && element.text.startsWith(CRLF))
 			{
-				element.text = element.text.slice(1);
+				element.text = element.text.slice(CRLF.length);
+			}
+			else if (isAfterBlock && element.text.startsWith(NEW_LINE))
+			{
+				element.text = element.text.slice(NEW_LINE.length);
 			}
 
-			if (isBeforeBlock && element.text.endsWith(NEW_LINE))
+			if (isBeforeBlock && element.text.endsWith(CRLF))
 			{
-				element.text = element.text.slice(0, -1);
+				element.text = element.text.slice(0, -CRLF.length);
+			}
+			else if (isBeforeBlock && element.text.endsWith(NEW_LINE))
+			{
+				element.text = element.text.slice(0, -NEW_LINE.length);
 			}
 
 			return true;
 		});
+	}
+
+	function repairMessageTextElements(elements)
+	{
+		for (const element of elements)
+		{
+			if (element.type !== MessageText.getType())
+			{
+				continue;
+			}
+
+			try
+			{
+				const repair = repairVisualStyleBBCode(element.text);
+				if (repair.status === 'failed')
+				{
+					Logger.error('Parser: incoming style repair failed');
+
+					continue;
+				}
+
+				element.text = repair.result.newText;
+			}
+			catch (error)
+			{
+				Logger.error('Parser: incoming style repair failed');
+			}
+		}
+
+		return elements;
 	}
 
 	const parser = {
@@ -83,17 +129,22 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return [];
 			}
 
+			let tableNonce;
 			if (Feature.isMarkdownParserEnabled)
 			{
-				text = markdownConverter.decode(text);
+				// Single source of the render mode (P1); no converter rule reads feature flags itself.
+				const renderMode = Feature.isMarkdownNativeRendererEnabled ? 'canonical' : 'fallback';
+				// Per-render nonce for the canonical table token; the same nonce is shared by the token
+				// producer (markdown converter) and its consumer (parserTable.decodeTable below).
+				tableNonce = createMarkdownNonce();
+				text = markdownConverter.decode(text, { renderMode, tableNonce });
 			}
 			text = parserDate.decode(text);
-
-			// TODO: support bb code [context]
-			text = text.replaceAll(
-				/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gi,
-				(whole, dialogId, messageId, message) => message,
-			);
+			text = parserContext.decode(text);
+			if (!Type.isStringFilled(text))
+			{
+				return [];
+			}
 
 			// TODO: support bb code [chat]
 			text = text.replaceAll(/\[chat=(imol\|)?(\d+)](.*?)\[\/chat]/gi, (whole, imol, chatId, text) => {
@@ -116,19 +167,20 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserCall.decode(text);
 			text = parserQuote.decodeCode(text);
 			text = parserQuote.decodeArrowQuote(text);
+			// Canonical table tokens -> Table elements. No-op in fallback / without a nonce (self-guarded).
+			// Runs before decodeQuote (like decodeCode) so a token inside a quote becomes a placeholder the
+			// quote body inlines, instead of being captured as the raw token; and before
+			// decodeTextAroundQuotes, so the placeholder outside a quote is picked up as an element.
+			text = parserTable.decodeTable(text, tableNonce);
 			text = parserQuote.decodeQuote(text, options);
 			text = parserImage.decodeIcon(text);
 			text = parserQuote.decodeTextAroundQuotes(text);
 
 			const elementList = parsedElements.getOrderedList(text);
 			parsedElements.clean();
+			repairMessageTextElements(elementList);
 
-			if (Feature.isChatDialogCompactQuoteSupported)
-			{
-				return removeExtraNewLinesAroundBlocks(elementList);
-			}
-
-			return elementList;
+			return removeExtraNewLinesAroundBlocks(elementList);
 		},
 
 		decodeTextForAttachBlock(text)
@@ -157,6 +209,12 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 		 */
 		simplifyMessage(modelMessage, messageFiles = null)
 		{
+			const contactPreviewText = this.getContactPreviewText(modelMessage);
+			if (contactPreviewText !== null)
+			{
+				return contactPreviewText;
+			}
+
 			if (!messageFiles)
 			{
 				messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
@@ -263,6 +321,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 		prepareCopy(modelMessage)
 		{
 			let text = modelMessage.text;
+			text = parserContext.simplify(text);
 			text = parserUrl.simplify(text);
 			text = parserUrl.removeBR(text);
 
@@ -275,6 +334,12 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 		 */
 		prepareQuote(modelMessage)
 		{
+			const contactPreviewText = this.getContactPreviewText(modelMessage, true);
+			if (contactPreviewText !== null)
+			{
+				return contactPreviewText;
+			}
+
 			const {
 				id,
 				params,
@@ -293,12 +358,30 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			}
 			text = text.trim();
 
+			if (Feature.isMarkdownParserEnabled)
+			{
+				// Markdown has to be converted BEFORE the body is wrapped into the quote (same order
+				// as web im). Otherwise its block constructs are re-parsed inside the assembled quote,
+				// where a `---`/`----` line turns the quote header (author/date/context) into a setext
+				// heading and decodeQuote loses the author, the date and the link to the message.
+				// A Markdown blockquote is left to the block rules on purpose: they turn `>` into the
+				// BB-quote sign, which simplifyArrowQuote below replaces with the quote label - the
+				// same two steps web im runs, so a quoted quote reads as a quote and not as plain text.
+				// The quote body is baked into the message text by the sender, so unlike
+				// decodeMessageFromText it cannot adapt to the reader's build. It follows the server
+				// rollout flag alone, without the native-capability term: the portal picks one
+				// contract for every reader, which is what keeps the quote identical to web im.
+				const renderMode = Feature.isMarkdownNativeRendererAvailable ? 'canonical' : 'fallback';
+				text = markdownConverter.simplify(text, { renderMode });
+			}
+
 			text = parserMention.simplify(text);
 			text = parserCall.simplify(text);
 			text = parserLines.simplify(text);
 			text = parserCommon.simplifyBreakLine(text, '\n');
 			text = parserCommon.simplifyNbsp(text);
 			text = parserUrl.removeSimpleUrlTag(text);
+			text = parserContext.simplify(text);
 			text = parserQuote.simplifyCode(text, ' ');
 			text = parserQuote.simplifyQuote(text, ' ');
 			text = parserQuote.simplifyArrowQuote(text, ' ');
@@ -312,6 +395,35 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserQuote.truncateDoubleLineBreak(text);
 
 			return text.trim();
+		},
+
+		getContactPreviewText(modelMessage, includeCaption = false)
+		{
+			if (modelMessage.params?.componentId !== MessageComponent.contact)
+			{
+				return null;
+			}
+
+			const params = modelMessage.params?.COMPONENT_PARAMS ?? {};
+			const firstName = Type.isStringFilled(params.firstName) ? params.firstName.trim() : '';
+			const lastName = Type.isStringFilled(params.lastName) ? params.lastName.trim() : '';
+			const phone = Type.isArrayFilled(params.phones) && Type.isString(params.phones[0])
+				? params.phones[0].trim()
+				: '';
+			const name = [lastName, firstName].filter(Boolean).join(' ');
+			const previewText = [name, phone].filter(Boolean).join('\n');
+			if (!includeCaption || previewText === '')
+			{
+				return previewText;
+			}
+
+			const cardLine = name === '' ? phone : `${name}, ${phone}`;
+			const cardLineSuffix = `\n${cardLine}`;
+			const caption = modelMessage.text?.endsWith(cardLineSuffix)
+				? modelMessage.text.slice(0, -cardLineSuffix.length)
+				: '';
+
+			return [caption, previewText].filter(Boolean).join('\n');
 		},
 
 		/**

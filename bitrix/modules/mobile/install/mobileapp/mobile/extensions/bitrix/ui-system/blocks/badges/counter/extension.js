@@ -12,17 +12,8 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 	const MAX_COUNTS = 99;
 
 	/**
-	 * @typedef {Object} BadgeCounterProps
-	 * @property {number} testId
-	 * @property {number | string} [value=0]
-	 * @property {boolean} [showRawValue]
-	 * @property {BadgeCounterDesign} design=BadgeCounterDesign.SUCCESS
-	 * @property {BadgeCounterSize} size=BadgeCounterSize.M
-	 * @property {Color} [color=Color.baseWhiteFixed]
-	 * @property {Color} [backgroundColor=Color.accentMainPrimary]
-	 *
 	 * @param {BadgeCounterProps} props
-	 * @function BadgeCounter
+	 * @return {View|null}
 	 */
 	function BadgeCounter(props = {})
 	{
@@ -102,6 +93,9 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 					text: String(badgeText),
 					color: design.getColor(),
 					colorGradient: design.getColorGradient(),
+					style: {
+						marginTop: size.getTextOffset(),
+					},
 				}),
 			),
 		);
@@ -114,10 +108,10 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 
 	BadgeCounter.propTypes = {
 		testId: PropTypes.string.isRequired,
+		value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 		showRawValue: PropTypes.bool,
 		design: PropTypes.instanceOf(BadgeCounterDesign),
 		size: PropTypes.instanceOf(BadgeCounterSize),
-		value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 	};
 
 	module.exports = {

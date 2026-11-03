@@ -695,7 +695,7 @@ export class Input
 					${commonAttrs.readonly ? 'readonly' : ''}
 					type="${commonAttrs.type}"
 					value="${commonAttrs.value}"
-					${commonAttrs.dataTestId ? `data-test-id="${commonAttrs.dataTestId}"` : ''}
+					${commonAttrs.dataTestId ? `data-testid="${commonAttrs.dataTestId}"` : ''}
 				/>
 			`;
 		}

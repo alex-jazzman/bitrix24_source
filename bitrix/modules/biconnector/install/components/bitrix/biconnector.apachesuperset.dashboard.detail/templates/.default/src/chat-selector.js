@@ -1,6 +1,7 @@
 import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { Dialog, Item } from 'ui.entity-selector';
+import { resolveErrorHtml } from 'biconnector.error-message';
 
 type Props = {
 	targetNode: HTMLElement,
@@ -117,9 +118,8 @@ export class ChatSelector
 			})
 			.catch((response) => {
 				this.#dialog.hideLoader();
-				console.error(response);
 				BX.UI.Notification.Center.notify({
-					content: response.errors[0].message,
+					content: resolveErrorHtml(response, Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_ERROR')),
 					stack: notificationStack,
 				});
 				ApacheSupersetAnalytics.sendAnalytics('share', 'dashboard_share', {

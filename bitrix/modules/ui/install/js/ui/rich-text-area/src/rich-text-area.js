@@ -1,6 +1,7 @@
 import { Type, Runtime } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
-import { COMMAND_PRIORITY_LOW, COMMAND_PRIORITY_NORMAL, PASTE_COMMAND } from 'ui.lexical.core';
+import { COMMAND_PRIORITY_LOW, COMMAND_PRIORITY_NORMAL, PASTE_COMMAND, type PasteCommandType } from 'ui.lexical.core';
+import { objectKlassEquals } from 'ui.lexical.utils';
 import { Plugins, TextEditor, Commands, type TextEditorOptions } from 'ui.text-editor';
 import { VueUploaderAdapter } from 'ui.uploader.vue';
 
@@ -196,7 +197,12 @@ export class RichTextArea extends EventEmitter
 	{
 		this.getEditor().registerCommand(
 			PASTE_COMMAND,
-			(clipboardEvent: ClipboardEvent) => {
+			(clipboardEvent: PasteCommandType) => {
+				if (!objectKlassEquals(clipboardEvent, ClipboardEvent))
+				{
+					return false;
+				}
+
 				const clipboardData: DataTransfer = clipboardEvent.clipboardData;
 				if (!clipboardData || !isFilePasted(clipboardData))
 				{

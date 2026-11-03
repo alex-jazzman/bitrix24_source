@@ -39,7 +39,6 @@ $documentRoot = Application::getDocumentRoot();
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $isInIframe = Main\Context::getCurrent()->getRequest()->get('IFRAME') === 'Y';
 $componentId = (string)$component->getComponentId();
-$actionPanelKey = $componentId;
 $actionPanelContainerId = 'disk-folder-list-toolbar-' . $componentId;
 
 CJSCore::Init(array(
@@ -52,14 +51,13 @@ CJSCore::Init(array(
 	'disk_folder_tree',
 	'disk_information_popups',
 	'socnetlogdest',
-	'access',
 	'bp_starter',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.tilegrid',
 	'ui.icons',
 	'ui.avatar',
-	'ui.actionpanel',
+	'ui.action-panel',
 	'ui.avatar',
 	'sidepanel',
 	'tooltip',
@@ -281,7 +279,7 @@ if (empty($arResult['IS_TRASH_MODE']))
 
 	Toolbar::addButton($addBtn, ButtonLocation::AFTER_TITLE);
 }
-else
+elseif (empty($arResult['IS_VIEW_BY_UNIFIED_LINK']))
 {
 	Toolbar::addButton([
 		"color" => Color::PRIMARY,
@@ -447,7 +445,6 @@ BX.message({
 	DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME: '<?= GetMessageJS('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME') ?>',
 	DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL: '<?= GetMessageJS('DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL') ?>',
 	DISK_FOLDER_LIST_BIZPROC_LABEL: '<?= GetMessageJS('DISK_FOLDER_LIST_BIZPROC_LABEL') ?>',
-	DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3') ?>',
 	DISK_FOLDER_LIST_SHARING_LABEL_RIGHTS_FOLDER: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_RIGHTS_FOLDER') ?>',
 	DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') ?>',
 	DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') ?>',
@@ -457,7 +454,6 @@ BX.message({
 	DISK_FOLDER_LIST_SHARING_LABEL_RIGHT_EDIT: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_RIGHT_EDIT') ?>',
 	DISK_FOLDER_LIST_SHARING_LABEL_RIGHT_FULL: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_RIGHT_FULL') ?>',
 	DISK_FOLDER_LIST_SHARING_LABEL_TOOLTIP_SHARING: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_TOOLTIP_SHARING') ?>',
-	DISK_FOLDER_LIST_SHARING_LABEL_OWNER: '<?= GetMessageJS('DISK_FOLDER_LIST_SHARING_LABEL_OWNER') ?>',
 	DISK_FOLDER_LIST_BTN_CLOSE: '<?= GetMessageJS('DISK_FOLDER_LIST_BTN_CLOSE') ?>',
 	DISK_FOLDER_LIST_BTN_SAVE: '<?= GetMessageJS('DISK_FOLDER_LIST_BTN_SAVE') ?>',
 	DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK: '<?=GetMessageJS("DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK")?>',
@@ -495,14 +491,11 @@ BX.message({
 	DISK_FOLDER_LIST_OK_FILE_MOVED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_MOVED')?>',
 	DISK_FOLDER_LIST_OK_FILE_COPIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_COPIED')?>',
 	DISK_FOLDER_LIST_OK_FILE_DELETED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_DELETED')?>',
-	DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED')?>',
-	DISK_FOLDER_LIST_OK_BOARD_SHARE_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_BOARD_SHARE_MODIFIED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_MOVED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_MOVED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_COPIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_COPIED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_DELETED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_DELETED')?>',
 	DISK_FOLDER_LIST_OK_FILE_RIGHTS_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_RIGHTS_MODIFIED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_RIGHTS_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_RIGHTS_MODIFIED')?>',
-	DISK_FOLDER_LIST_OK_FOLDER_SHARE_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_SHARE_MODIFIED')?>',
 	DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1: '<?= GetMessageJS('DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1')?>',
 	DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE: '<?= GetMessageJS('DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE')?>',
 	DISK_TRASHCAN_TRASH_RESTORE_SUCCESS: '<?= GetMessageJS('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS')?>',
@@ -510,30 +503,13 @@ BX.message({
 	DISK_FOLDER_LIST_COLLABER_HINT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_HINT')?>',
 	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE')?>',
 	DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR: '<?=GetMessageJS("DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR")?>',
+	DISK_FOLDER_LIST_ACT_DOWNLOAD_ACCESS_DENIED: '<?=GetMessageJS("DISK_FOLDER_LIST_ACT_DOWNLOAD_ACCESS_DENIED")?>',
 	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT')?>',
-	DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS: '<?= GetMessageJS('DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS')?>',
 	DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB')?>',
+	DISK_FOLDER_LIST_RIGHTS_ANNOUNCE_ADDED: '<?= GetMessageJS('DISK_FOLDER_LIST_RIGHTS_ANNOUNCE_ADDED')?>',
+	DISK_FOLDER_LIST_RIGHTS_ANNOUNCE_REMOVED: '<?= GetMessageJS('DISK_FOLDER_LIST_RIGHTS_ANNOUNCE_REMOVED')?>',
+	DISK_FOLDER_LIST_RIGHTS_SELECTOR_LOAD_ERROR: '<?= GetMessageJS('DISK_FOLDER_LIST_RIGHTS_SELECTOR_LOAD_ERROR')?>',
 });
-</script>
-
-<script>
-BX.namespace('BX.Disk');
-BX.Disk.folderListActionPanels = BX.Disk.folderListActionPanels || {};
-(function() {
-	const componentId = '<?= CUtil::JSEscape($actionPanelKey) ?>';
-	const renderTo = document.getElementById('<?= CUtil::JSEscape($actionPanelContainerId) ?>');
-	const handleActionPanelCreated = function(panel) {
-		if (panel.renderTo !== renderTo)
-		{
-			return;
-		}
-
-		BX.Disk.folderListActionPanels[componentId] = panel;
-		BX.removeCustomEvent('BX.UI.ActionPanel:created', handleActionPanelCreated);
-	};
-
-	BX.addCustomEvent('BX.UI.ActionPanel:created', handleActionPanelCreated);
-})();
 </script>
 
 <?php
@@ -557,8 +533,8 @@ BX(function () {
 		isTrashMode: <?= empty($arResult['IS_TRASH_MODE'])? 0 : 1 ?>,
 		relativePath: '<?= $arResult['RELATIVE_PATH_ENCODED'] ?>',
 		actionPanel: {
-			key: '<?= CUtil::JSEscape($actionPanelKey) ?>',
-			renderTo: document.getElementById('<?= CUtil::JSEscape($actionPanelContainerId) ?>')
+			renderTo: document.getElementById('<?= CUtil::JSEscape($actionPanelContainerId) ?>'),
+			groupActions: <?= Json::encode($arResult['GRID']['ACTION_PANEL'] ?? null) ?>
 		},
 		layout: {
 			trashCanButton: document.querySelector('.js-disk-trashcan-button'),
@@ -572,10 +548,13 @@ BX(function () {
 			canAdd: <?= $arResult['STORAGE']['CAN_ADD']? 1 : 0 ?>,
 			name: '<?= CUtil::JSEscape($arResult['BREADCRUMBS_ROOT']['NAME']) ?>'
 		},
+		destinationRootObject: <?= Bitrix\Main\Web\Json::encode($arResult['DESTINATION_ROOT_OBJECT']) ?>,
 		currentFolder: {
 			id: <?= (int)$arResult['FOLDER']['ID'] ?>,
 			name: '<?= CUtil::JSEscape($arResult['FOLDER']['NAME']) ?>',
-			canAdd: <?= $arResult['FOLDER']['CAN_ADD']? 1 : 0 ?>
+			uniqueCode: '<?= CUtil::JSEscape($arResult['FOLDER']['UNIQUE_CODE']) ?>',
+			canAdd: <?= $arResult['FOLDER']['CAN_ADD']? 1 : 0 ?>,
+			uls: '<?= htmlspecialcharsbx($arResult['FOLDER']['ULS']) ?>',
 		},
 		sortFields: <?= CUtil::PhpToJSObject($jsSortFields) ?>,
 		sort: {
@@ -632,7 +611,8 @@ BX(function () {
 		isCollaberTourOnAddButtonViewed: <?= $arResult['IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED']? 'true' : 'false' ?>,
 		readonlyCollabFolderStateCookieName: '<?= CUtil::JSEscape($arResult['READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME']) ?>',
 		analytics: <?= Bitrix\Main\Web\Json::encode($arResult['ANALYTICS'] ?? null) ?>,
-		showFile: <?= Bitrix\Main\Web\Json::encode($arResult['SHOW_FILE'] ?? null) ?>,
+		showObject: <?= Bitrix\Main\Web\Json::encode($arResult['SHOW_OBJECT'] ?? null) ?>,
+		isViewByUnifiedLink: <?= Bitrix\Main\Web\Json::encode($arResult['IS_VIEW_BY_UNIFIED_LINK'] ?? false) ?>,
 	});
 
 	var btnSettings = document.querySelector('.js-disk-settings-button');
@@ -883,34 +863,23 @@ $APPLICATION->includeComponent("bitrix:spotlight", "", array(
 ?>
 
 <?php
-$showFile = $arResult['SHOW_FILE'] ?? null;
-$showFileUrl = $showFile['url'] ?? null;
-$showFileDownloadUrl = $showFile['downloadUrl'] ?? null;
-$showFileType = $showFile['type'] ?? null;
-$showFileName = $showFile['name'] ?? null;
-$showFileMarkdownUrl = $showFile['markdownUrl'] ?? null;
-$showFileTiffPreviewUrl = $showFile['tiffPreviewUrl'] ?? null;
-$showFileViewerTypeClass = $showFile['viewerTypeClass'] ?? null;
+$showObject = $arResult['SHOW_OBJECT'] ?? null;
+$showObjectType = $showObject['type'] ?? null;
 
-if (is_string($showFileUrl) && is_string($showFileDownloadUrl) && is_string($showFileType))
-{?>
-	<span
-		id="showFile"
-		data-unified-link="<?= htmlspecialcharsbx($showFileUrl) ?>"
-		data-viewer=""
-		data-src="<?= htmlspecialcharsbx($showFileDownloadUrl) ?>"
-		data-viewer-type="<?= htmlspecialcharsbx($showFileType) ?>"
-		data-title="<?= htmlspecialcharsbx($showFileName) ?>"
-		<?php if (is_string($showFileViewerTypeClass)): ?>data-viewer-type-class="<?= htmlspecialcharsbx($showFileViewerTypeClass) ?>"<?php endif ?>
-		<?php if (is_string($showFileMarkdownUrl)): ?>data-markdown-url="<?= htmlspecialcharsbx($showFileMarkdownUrl) ?>"<?php endif ?>
-		<?php if (is_string($showFileTiffPreviewUrl)): ?>data-tiff-preview-url="<?= htmlspecialcharsbx($showFileTiffPreviewUrl) ?>"<?php endif ?>
-	></span>
-<?php
+if ($showObjectType === 'file')
+{
+	$attributes = $showObject['attributes'] ?? null;
+
+	if (is_string($attributes) && $attributes !== '')
+	{?>
+		<span id="showObject" <?= $attributes ?>></span>
+		<?php
+	}
 }
 ?>
 
 <script>
 	BX.Disk.UrlCleaner.cleanUrl(window.location, window.history, [
-		/^show_file_code$/,
+		/^show_object_code$/,
 	]);
 </script>

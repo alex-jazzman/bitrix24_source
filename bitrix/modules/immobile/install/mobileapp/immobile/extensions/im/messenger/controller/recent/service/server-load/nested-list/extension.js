@@ -44,7 +44,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 		{
 			const filter = {
 				parentId: this.recentLocator.get('parentChatId'),
-				recentSection: this.props.recentSection,
+				recentSection: this.recentSection,
 			};
 
 			if (currentFilterId === RecentFilterId.unread)
@@ -61,6 +61,14 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 		get store()
 		{
 			return serviceLocator.get('core').getStore();
+		}
+
+		/**
+		 * @return {string}
+		 */
+		get recentSection()
+		{
+			return this.props.recentSection ?? this.recentLocator.get('recentSection');
 		}
 
 		/**
@@ -143,7 +151,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 					this.store.dispatch(
 						recentAction,
 						{
-							recentSection: this.recentLocator.get('recentSection'),
+							recentSection: this.recentSection,
 							itemList: regularRecentItems,
 							parentChatId: this.recentLocator.get('parentChatId'),
 							tabId: this.recentLocator.get('id'),
@@ -160,7 +168,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 
 				await Promise.all(dispatches);
 
-				const section = this.recentLocator.get('recentSection');
+				const section = this.recentSection;
 				const dialogIds = regularRecentItems.map((item) => String(item.dialogId));
 				await serviceLocator.get('core').getRepository().recent
 					.ensureSectionForDialogIds(dialogIds, section);
@@ -383,7 +391,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 			const filter = {
 				lastActivityDate: currentLastItem.lastActivityDate,
 				parentId: this.recentLocator.get('parentChatId'),
-				recentSection: this.props.recentSection,
+				recentSection: this.recentSection,
 			};
 
 			if (this.recentLocator.get('filter')?.getCurrentFilterId() === RecentFilterId.unread)

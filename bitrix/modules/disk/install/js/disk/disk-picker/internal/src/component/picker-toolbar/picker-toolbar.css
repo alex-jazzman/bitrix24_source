@@ -18,8 +18,13 @@
  * (right of the breadcrumbs) can take the remaining space; the breadcrumbs stay
  * visible and clickable and shrink through their own ellipsis if the path is wide.
  */
+/* With the search open the path is the thing that gives way: it keeps at most a third of the
+   row and shortens through its own ellipsis. Without a ceiling a long path pushed the field
+   past the slot and the field ran over the buttons at the end of the row. */
 .disk-picker-toolbar__title.--search-open {
 	flex-grow: 0;
+	flex-shrink: 1;
+	max-width: 33%;
 }
 
 .disk-picker-toolbar__title-text {
@@ -40,63 +45,81 @@
 	align-self: stretch;
 }
 
-.disk-picker-toolbar__search-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+/* The buttons keep the corner their size gives them: at ButtonSize.MEDIUM the design
+   system resolves --ui-btn-radius to --ui-border-radius-md, and the view group below is
+   spelled with the same token so the two neighbours share one arc. Overriding the property
+   from here would not work anyway — the design system sets it through `.ui-btn.--air
+   .ui-btn-md`, which outweighs a single class.
+
+   None of them carries a fill: on the glass a tinted plate under a glyph read as a solid blue
+   chip, and three of them in a row made the header the loudest thing in the dialog. What marks
+   a button is the ring around it and, in the view group, which of the two glyphs is lit. No
+   fill is cleared here: PLAIN_NO_ACCENT, the style these controls take, carries none — both its
+   background and its stroke tokens are fully transparent, and the design system works out the
+   hover and the press from them on its own. */
+.disk-picker-toolbar__button {
 	flex-shrink: 0;
-	width: 34px;
-	height: 34px;
-	border: 1px solid var(--ui-color-divider-default);
-	border-radius: var(--ui-border-radius-sm);
-	background: var(--ui-color-bg-content-primary);
-	color: var(--ui-color-base-70);
-	cursor: pointer;
-	transition: background-color 200ms ease;
 }
 
-.disk-picker-toolbar__search-button:hover {
-	background: var(--ui-color-bg-state-hover-default);
+/* The search button stands in a wrapper of its own, so the ring is drawn on our element and
+   not on a pseudo-element of the design-system button. */
+.disk-picker-toolbar__search {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+	border-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-toolbar__search-button:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+/* The ring of the search, and of the view group below: the same one the disk avatars carry —
+   lit from the top-left corner, gone by the middle, back as a trace at the far end. Drawn over
+   the control rather than in its edge, where it would add to the size of the button, and cut
+   hollow by a mask so only the line remains. */
+.disk-picker-toolbar__search::after,
+.disk-picker-toolbar__view-toggle::after {
+	content: '';
+	/* The mask cuts the middle out through `padding`, so the padding has to lie inside. */
+	box-sizing: border-box;
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		140deg,
+		var(--ui-color-bg-vibrant-accent) 0%,
+		var(--ui-color-divider-vibrant-default) 55%,
+		var(--ui-color-divider-vibrant-accent-more) 100%
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
 }
 
+/* The two view buttons stand in one ring rather than each in its own: they are a single
+   control with two states, and two rings side by side read as two separate buttons. What tells
+   the modes apart inside it is the colour of the glyphs and the hairline between them. */
 .disk-picker-toolbar__view-toggle {
+	position: relative;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	gap: var(--ui-space-inline-3xs);
 	flex-shrink: 0;
+	/* No inset of its own: the group is as tall as the buttons in it, which is what keeps its
+	   ring level with the search button's ring beside it. With an inset the group stood 38 to
+	   the search button's 34 and the two rings sat at different heights. */
+	padding: 0;
+	/* The same token the medium button resolves to, not a pill: the group is the search
+	   button's neighbour and has to repeat its corner. The group is taller by its own
+	   inset, so an equal radius reads as the same arc rather than a rounder one. */
+	border-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-toolbar__view-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 34px;
-	height: 34px;
-	border: 1px solid var(--ui-color-divider-default);
-	background: var(--ui-color-bg-content-primary);
-	color: var(--ui-color-base-70);
-	cursor: pointer;
-	transition: background-color 200ms ease;
-}
-
-.disk-picker-toolbar__view-button.--active {
-	color: var(--ui-color-accent-main-primary);
-}
-
-.disk-picker-toolbar__view-button:first-child {
-	border-radius: var(--ui-border-radius-sm) 0 0 var(--ui-border-radius-sm);
-}
-
-.disk-picker-toolbar__view-button:last-child {
-	border-radius: 0 var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0;
-	border-left: none;
-}
-
-.disk-picker-toolbar__view-button.--active {
-	background: var(--ui-color-bg-state-hover-default);
+/* The hairline between the two modes: a flat line, not the fading gradient it once was. */
+.disk-picker-toolbar__view-divider {
+	flex-shrink: 0;
+	width: var(--ui-border-width-thin);
+	height: var(--ui-size-md);
+	background: var(--ui-color-divider-vibrant-accent-more);
 }

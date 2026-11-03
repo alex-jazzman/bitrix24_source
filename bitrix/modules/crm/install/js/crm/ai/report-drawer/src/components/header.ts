@@ -46,7 +46,7 @@ export const Header = defineComponent({
 	},
 
 	template: `
-		<div class="crm-ai-report-drawer__header">
+		<div class="crm-ai-report-drawer__header" data-testid="crm-ai-report-drawer-header">
 			<div class="crm-ai-report-drawer__title-section">
 				<h3 class="crm-ai-report-drawer__title ui-typography-heading-h3">{{ title }}</h3>
 				<Subtitle v-if="hasSubtitle" :subtitleData="subtitle" />

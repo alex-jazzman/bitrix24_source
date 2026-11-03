@@ -2,6 +2,7 @@
 
 use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
 use Bitrix\Intranet\UI\LeftMenu\Menu;
+use Bitrix\Intranet\UI\LeftMenu\MenuItem\ItemUserFavorites;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -17,6 +18,7 @@ CJSCore::Init([
 	'intranet.menu.analytics',
 	'ui.icon-set',
 	'ui.icon-set.outline',
+	'ui.system.skeleton',
 	'main.loader',
 ]);
 $isCompositeMode = defined("USE_HTML_STATIC_CACHE") ? true : false;
@@ -32,12 +34,22 @@ $arHiddenItemsCounters = array();
 $arAllItemsCounters = array();
 $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 $siteUrl = htmlspecialcharsbx(SITE_DIR);
+$isMainPageEnabled = $mainPage->isEnabled();
+$isMainToolPickerEnabled = $arResult['IS_MAIN_TOOL_PICKER_ENABLED'] ?? false;
+$mainToolRenderRevision = hash('sha256', \Bitrix\Main\Web\Json::encode([
+	'isMainToolPickerEnabled' => $isMainToolPickerEnabled,
+	'siteId' => SITE_ID,
+	'userId' => (int)\Bitrix\Intranet\CurrentUser::get()->getId(),
+	'effective' => $arResult['MAIN_TOOL_EFFECTIVE_STATE'] ?? null,
+	'presetId' => $isMainToolPickerEnabled ? $arResult['CURRENT_PRESET_ID'] : null,
+	'isMainPageEnabled' => $isMainToolPickerEnabled ? $isMainPageEnabled : null,
+]));
 $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 	&& Option::get('aiassistant', 'marta_registration_enabled') === 'Y'
 ;
 ?>
 
-<nav tabindex="-1" aria-label="<?=Loc::getMessage('MENU_NAV_ARIA_LABEL_2')?>" class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block">
+<nav tabindex="-1" aria-label="<?=Loc::getMessage('MENU_NAV_ARIA_LABEL_2')?>" class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block" data-main-tool-render-revision="<?= $mainToolRenderRevision ?>">
 	<div class="menu-items-header">
 		<div class="menu-items-header__menu-swticher">
 			<button type="button"
@@ -87,6 +99,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 
 					$counterId = "";
 					$counter = 0;
+					$counterValues = [];
 					if (array_key_exists("counter_id", $item["PARAMS"]) && $item["PARAMS"]["counter_id"] <> '')
 					{
 						switch ($item['PARAMS']['counter_id'])
@@ -100,10 +113,32 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 
 						$counter = array_key_exists($counterId, $arResult["COUNTERS"]) ? $arResult["COUNTERS"][$counterId] : 0;
 					}
+					foreach ($item['PARAMS']['aggregate_counter_ids'] ?? [] as $aggregateCounterId)
+					{
+						if ($aggregateCounterId === 'live-feed')
+						{
+							$aggregateCounterId = \CUserCounter::LIVEFEED_CODE;
+						}
+						$counterValues[$aggregateCounterId] = $arResult['COUNTERS'][$aggregateCounterId] ?? 0;
+					}
+					if ($counterValues !== [])
+					{
+						$counter = array_sum($counterValues);
+					}
 
 					if ($counterId)
 					{
-						if ($counter > 0)
+						if ($counterValues !== [])
+						{
+							foreach ($counterValues as $aggregateCounterId => $aggregateCounterValue)
+							{
+								if ($aggregateCounterValue > 0)
+								{
+									$arAllItemsCounters[$aggregateCounterId] = $aggregateCounterValue;
+								}
+							}
+						}
+						elseif ($counter > 0)
 						{
 							$arAllItemsCounters[$counterId] = $counter;
 						}
@@ -145,7 +180,10 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 						$curLink = "";
 					}
 
-					if ($curLink === $GLOBALS['APPLICATION']->getCurPage(false))
+					if (
+						$curLink === $GLOBALS['APPLICATION']->getCurPage(false)
+						&& ($item['PARAMS'][ItemUserFavorites::PARAM_IS_NEW_PROJECT_SECTION] ?? 'N') !== 'Y'
+					)
 					{
 						\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 					}
@@ -194,7 +232,10 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 					{
 						$itemClass .= " menu-item-group";
 					}
-					elseif (!in_array($item["ITEM_TYPE"], ['default', 'main']) || $isCustomItem || $isCustomSection)
+					elseif (
+						(!in_array($item["ITEM_TYPE"], ['default', 'main']) || $isCustomItem || $isCustomSection)
+						&& empty($customClasses)
+					)
 					{
 						$itemClass .= " menu-item-no-icon-state";
 					}
@@ -213,14 +254,20 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 					?><li id="bx_left_menu_<?=$itemId?>"
 						data-status="<?=$status?>"
 						data-id="<?=$item["PARAMS"]["menu_item_id"]?>"
+						<? if ($item['ITEM_TYPE'] === 'standard'):?>
+							data-testid="<?=htmlspecialcharsbx('intranet-left-menu-favorite-' . $item['ID'])?>"
+						<?endif ?>
 						data-role="<?= isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y' ? 'group' : 'item' ?>"
 						<? if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y'):?>
 							data-collapse-mode="<?=$item['PARAMS']['collapse_mode']?>"
 						<?endif ?>
 						data-storage="<?= $item['PARAMS']['storage'] ?? '' ?>"
 						data-counter-id="<?=$counterId?>"
+						<?php if ($counterValues !== []): ?>
+							data-counter-values="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($counterValues))?>"
+						<?php endif ?>
 						data-link="<?=htmlspecialcharsbx($curLink)?>"
-						data-all-links="<?=$addLinks?>"
+						data-all-links="<?=htmlspecialcharsbx($addLinks)?>"
 						data-type="<?=$item["ITEM_TYPE"]?>"
 						data-delete-perm="<?=$item["DELETE_PERM"]?>"
 						<? if (isset($item["PARAMS"]["is_application"])):?>
@@ -229,6 +276,10 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 						<? if (isset($item["PARAMS"]["top_menu_id"])):?>
 							data-top-menu-id="<?=$item["PARAMS"]["top_menu_id"]?>"
 						<?endif ?>
+						<?php if ($item['PARAMS']['is_collaboration_menu'] ?? false): ?>
+							data-collaboration-menu="Y"
+							data-collaboration-entry-url="<?= htmlspecialcharsbx($item['PARAMS']['collaboration_entry_url']) ?>"
+						<?php endif ?>
 						data-new-page="<?=(isset($item["OPEN_IN_NEW_PAGE"]) && $item["OPEN_IN_NEW_PAGE"] === "Y" ? "Y" : "N")?>"
 						<? if (array_key_exists("can_be_first_item", $item["PARAMS"]) && !$item["PARAMS"]["can_be_first_item"]) :?>
 						data-disable-first-item="Y"
@@ -279,6 +330,10 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 							<?if (isset($item["OPEN_IN_NEW_PAGE"]) && ($item["OPEN_IN_NEW_PAGE"] === "Y")):?>
 								target="_blank"
 								data-slider-ignore-autobinding="true"
+							<?elseif (($item["PARAMS"][ItemUserFavorites::PARAM_BIND_SLIDER] ?? '') === 'N'):?>
+								data-slider-ignore-autobinding="true"
+							<?elseif (($item["PARAMS"][ItemUserFavorites::PARAM_BIND_SLIDER] ?? '') === 'Y'):?>
+								data-slider-bind="Y"
 							<?endif?>
 							onclick="<?if (isset($item["PARAMS"]["onclick"])):?>
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
@@ -459,8 +514,9 @@ $arJSParams = array(
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
 	"customPresetExists" => !empty($arResult["CUSTOM_PRESET_EXISTS"]) ? "Y" : "N",
 	'availablePresetTools' => $arResult['PRESET_TOOLS_AVAILABILITY'],
+	'isMainToolPickerEnabled' => $isMainToolPickerEnabled,
 	'settingsPath' => $arResult['SETTINGS_PATH'],
-	'isMainPageEnabled' => $mainPage->isEnabled() ? 'Y' : 'N',
+	'isMainPageEnabled' => $isMainPageEnabled ? 'Y' : 'N',
 	'inviteDialogLink' => CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed()
 		? CIntranetInviteDialog::GetInviteDialogLink([
 			'analyticsLabel' => [
@@ -514,6 +570,11 @@ BX.message({
 	MENU_CANCEL: '<?=GetMessageJS("MENU_CANCEL")?>',
 	MENU_DELETE: '<?=GetMessageJS("MENU_DELETE")?>',
 	MENU_ERROR_OCCURRED: '<?=GetMessageJS("MENU_ERROR_OCCURRED")?>',
+	MENU_MAIN_TOOL_PICKER_ERROR: '<?=GetMessageJS("MENU_MAIN_TOOL_PICKER_ERROR")?>',
+	MENU_MAIN_TOOL_PICKER_FORCED: '<?=GetMessageJS("MENU_MAIN_TOOL_PICKER_FORCED")?>',
+	MENU_MAIN_TOOL_PICKER_ACCESS_DENIED: '<?=GetMessageJS("MENU_MAIN_TOOL_PICKER_ACCESS_DENIED")?>',
+	MENU_MAIN_TOOL_PICKER_UNAVAILABLE: '<?=GetMessageJS("MENU_MAIN_TOOL_PICKER_UNAVAILABLE")?>',
+	MENU_MAIN_TOOL_PICKER_CLOSE: '<?=GetMessageJS("MENU_MAIN_TOOL_PICKER_CLOSE")?>',
 	MENU_ITEM_WAS_ADDED_TO_LEFT: '<?=GetMessageJS("MENU_ITEM_WAS_ADDED_TO_LEFT")?>',
 	MENU_ITEM_WAS_DELETED_FROM_LEFT: '<?=GetMessageJS("MENU_ITEM_WAS_DELETED_FROM_LEFT")?>',
 	MENU_ITEM_WAS_ADDED_TO_ALL: '<?=GetMessageJS("MENU_ITEM_WAS_ADDED_TO_ALL")?>',
@@ -571,6 +632,107 @@ BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)
 $frame = $this->createFrame()->begin('');
 $counters = $isCompositeMode ? \CUtil::PhpToJSObject($arAllItemsCounters) : '{}';
 ?>
-	<script>BX.Intranet.LeftMenu.updateCounters(<?=$counters?>);</script>
+	<script>
+		BX.Intranet.LeftMenu.updateCounters(<?=$counters?>);
+		BX.ready(async () => {
+			const menu = document.getElementById('menu-items-block');
+			const renderedRevision = menu?.dataset.mainToolRenderRevision;
+			const serverRevision = <?= CUtil::PhpToJSObject($mainToolRenderRevision) ?>;
+			const isEnabled = <?= CUtil::PhpToJSObject($isMainToolPickerEnabled) ?>;
+			BX.Intranet.LeftMenu.setMainToolPickerEnabled?.(isEnabled);
+			if (!menu || (!renderedRevision && !isEnabled))
+			{
+				return;
+			}
+
+			const guardKey = 'intranet.mainTool.cacheReload';
+			const clearPersistentReloadGuard = () => {
+				try
+				{
+					if (sessionStorage.getItem(guardKey) === serverRevision)
+					{
+						sessionStorage.removeItem(guardKey);
+					}
+				}
+				catch
+				{}
+
+				try
+				{
+					if (
+						history.state?.[guardKey] === serverRevision
+						&& Object.getPrototypeOf(history.state) === Object.prototype
+					)
+					{
+						const state = { ...history.state };
+						delete state[guardKey];
+						history.replaceState(state, '');
+					}
+				}
+				catch
+				{}
+			};
+
+			if (renderedRevision === serverRevision)
+			{
+				delete menu.dataset.mainToolCacheReload;
+				clearPersistentReloadGuard();
+				return;
+			}
+
+			if (menu.dataset.mainToolCacheReload === serverRevision)
+			{
+				return;
+			}
+			menu.dataset.mainToolCacheReload = serverRevision;
+
+			let canReload = false;
+			try
+			{
+				if (sessionStorage.getItem(guardKey) === serverRevision)
+				{
+					return;
+				}
+				sessionStorage.setItem(guardKey, serverRevision);
+				canReload = sessionStorage.getItem(guardKey) === serverRevision;
+			}
+			catch
+			{
+				try
+				{
+					const state = history.state;
+					if (state?.[guardKey] === serverRevision)
+					{
+						return;
+					}
+					if (state === null || Object.getPrototypeOf(state) === Object.prototype)
+					{
+						history.replaceState({ ...state, [guardKey]: serverRevision }, '');
+						canReload = history.state?.[guardKey] === serverRevision;
+					}
+				}
+				catch
+				{
+					canReload = false;
+				}
+			}
+
+			try
+			{
+				await BX.ajax.runAction('intranet.leftmenu.clearCache', {
+					data: {},
+				});
+				if (canReload)
+				{
+					window.location.reload();
+				}
+			}
+			catch (error)
+			{
+				clearPersistentReloadGuard();
+				console.error('Unable to refresh the left menu cache', error);
+			}
+		});
+	</script>
 <?
 $frame->end();

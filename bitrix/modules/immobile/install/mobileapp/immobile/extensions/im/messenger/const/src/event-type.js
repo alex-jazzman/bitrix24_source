@@ -68,6 +68,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		/** Extension events */
 		recent: {
 			itemSelected: 'onItemSelected',
+			itemButtonTap: 'onItemButtonTap',
 			itemAction: 'onItemAction',
 			popupMenuItemTap: 'onPopupMenuItemTap',
 			searchShow: 'onSearchShow',
@@ -104,8 +105,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
 			messageCheckInButtonTap: 'messageCheckInButtonTap',
+			contactSaveTap: 'contactSaveTap',
 			messageBannerButtonTap: 'messageBannerButtonTap',
 			messageAvatarTap: 'avatarTap',
+			messageUserNameTap: 'userNameTap',
 			messageAvatarLongTap: 'avatarLongTap',
 			messageDoubleTap: 'messageDoubleTap',
 			messageLongTap: 'messageLongTap',
@@ -125,6 +128,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageBuilderVideoTap: 'messageBuilderVideoTap',
 			bbcodeSourceTap: 'bbcodeSourceTap',
 			builderSourceTap: 'builderSourceTap',
+			builderFileBlockDownloadTap: 'builderFileBlockDownloadTap',
 			voteAnswerTap: 'voteAnswerTap',
 			voteButtonTap: 'voteButtonTap',
 			copilotFootnoteTap: 'copilotFootnoteTap',
@@ -166,6 +170,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			videoNoteWasHide: 'videoNoteWasHide',
 			videoNoteSubmit: 'videoNoteSubmit',
 			videoNoteTap: 'videoNoteTap',
+			videoNoteRateTap: 'videoNoteRateTap',
 			clipboardMediaSend: 'clipboardMediaSend',
 			external: {
 				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
@@ -195,6 +200,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				focus: 'focus',
 				blur: 'blur',
 				actionButtonTap: 'actionButtonTap',
+				buttonTap: 'buttonTap',
 				actionButtonMenuItemTap: 'actionButtonMenuItemTap',
 				actionButtonMenuHidden: 'actionButtonMenuHidden',
 				assistantButtonTap: 'assistantButtonTap',

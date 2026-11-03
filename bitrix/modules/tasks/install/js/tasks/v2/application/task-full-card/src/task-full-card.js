@@ -5,18 +5,20 @@ import { type Popup } from 'main.popup';
 
 import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import { locMixin } from 'ui.vue3.mixins.loc-mixin';
+import 'ui.design-tokens.air';
 
 import { TaskCard, type Params } from 'tasks.v2.application.task-card';
 import { Core } from 'tasks.v2.core';
 import { EventName } from 'tasks.v2.const';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { type TaskModel } from 'tasks.v2.model.tasks';
+import { hasOpenPopups } from 'tasks.v2.component.tasks-popup';
 
 import { App } from './component/app';
 import { ClosePopup } from './lib/close-popup';
+import { isSameTaskId } from './lib/is-same-task-id';
+import { openedCards } from './lib/opened-cards';
 import { mapSliderParamsToModel } from './lib/slider-params';
-
-const openedCards = new Set();
 
 export class TaskFullCard
 {
@@ -24,9 +26,11 @@ export class TaskFullCard
 	#slider: Slider;
 	#application: ?VueCreateAppResult;
 	#handlers: { [eventName: string]: Function };
+	#onCloseByEscHandler: (event: SliderEvent) => void;
 	#needToReloadGrid: boolean = false;
 	#isCloseConfirmed: boolean = false;
 	#shouldCloseComplete: boolean = true;
+	#isTornDown: boolean = false;
 
 	constructor(params: Params = {})
 	{
@@ -42,6 +46,18 @@ export class TaskFullCard
 	static isOpened(taskId: number): boolean
 	{
 		return openedCards.has(taskId);
+	}
+
+	// an opened card holds no task data until its bootstrap ends, so callers can tell loading from settled
+	static isBootstrapped(taskId: number): boolean
+	{
+		return openedCards.isBootstrapped(taskId);
+	}
+
+	// a mounted card runs the task UI, so callers can route an action into it instead of answering with a hint
+	static isMounted(taskId: number): boolean
+	{
+		return openedCards.isMounted(taskId);
 	}
 
 	async mount(slider: Slider): Promise<void>
@@ -64,13 +80,17 @@ export class TaskFullCard
 
 		this.#slider = slider;
 
+		// Veto the slider Esc while a nested popup is open, on ANY open path: the
+		// task list auto-binding (intranet.sidepanel) mounts the card without
+		// wiring this slider option, so the veto must be self-contained here.
+		this.#onCloseByEscHandler = this.onCloseByEsc.bind(this);
+		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onCloseByEsc', this.#onCloseByEscHandler, { compatMode: true });
+
 		this.#updateSliderUrl();
 
 		this.#subscribe();
 
-		this.#application = await this.#mountApplication(slider.getContentContainer());
-
-		openedCards.add(this.#params.taskId);
+		await this.#mountApplication(slider.getContentContainer(), slider.getContainer());
 	}
 
 	async mountEmbedded(container: HTMLElement): Promise<void>
@@ -82,16 +102,17 @@ export class TaskFullCard
 
 		this.#subscribe();
 
-		this.#application = await this.#mountApplication(container);
-
-		openedCards.add(this.#params.taskId);
+		await this.#mountApplication(container);
 	}
 
 	unmount(): void
 	{
-		this.#unmountApplication();
+		this.#teardown();
 
-		this.#unsubscribe();
+		if (this.#slider && this.#onCloseByEscHandler)
+		{
+			EventEmitter.unsubscribe(this.#slider, 'SidePanel.Slider:onCloseByEsc', this.#onCloseByEscHandler);
+		}
 
 		if (this.#needToReloadGrid)
 		{
@@ -109,12 +130,25 @@ export class TaskFullCard
 				],
 			}));
 		}
-
-		openedCards.delete(this.#params.taskId);
 	}
 
 	unmountEmbedded(): void
 	{
+		this.#teardown();
+	}
+
+	#teardown(): void
+	{
+		if (this.#isTornDown)
+		{
+			return;
+		}
+
+		this.#isTornDown = true;
+
+		// unregistered first, so the closed event lets subscribers see the cards that stay opened
+		openedCards.remove(this);
+
 		this.#unmountApplication();
 
 		this.#unsubscribe();
@@ -143,6 +177,14 @@ export class TaskFullCard
 		});
 	}
 
+	onCloseByEsc(event: SliderEvent): void
+	{
+		if (hasOpenPopups(this.#slider.getContainer()))
+		{
+			event.denyAction();
+		}
+	}
+
 	onCloseComplete(): void
 	{
 		this.unmount();
@@ -153,9 +195,34 @@ export class TaskFullCard
 		}
 	}
 
-	async #mountApplication(container: HTMLElement): Promise<VueCreateAppResult>
+	async #mountApplication(container: HTMLElement, popupTeleportTarget: ?HTMLElement = null): Promise<void>
+	{
+		// registered before the await, so an unmount during the load still clears the entry
+		openedCards.add(this, this.#params.taskId);
+
+		try
+		{
+			// assigned where the application is created, so no path can outlive the teardown with it unset
+			this.#application = await this.#createApplication(container, popupTeleportTarget);
+		}
+		catch (error)
+		{
+			// the embedded path mounts without awaiting, so a failed mount has to end the lifecycle on its own
+			this.#teardown();
+
+			throw error;
+		}
+	}
+
+	async #createApplication(container: HTMLElement, popupTeleportTarget: ?HTMLElement): Promise<?VueCreateAppResult>
 	{
 		await Core.init();
+
+		// the card may be closed while Core loads, and a torn down one has no one left to unmount the application
+		if (this.#isTornDown)
+		{
+			return null;
+		}
 
 		const {
 			taskId,
@@ -174,6 +241,7 @@ export class TaskFullCard
 			analytics,
 			embedded,
 			onCloseEmbedded,
+			popupTeleportTarget,
 		});
 
 		application.mixin(locMixin);
@@ -194,6 +262,7 @@ export class TaskFullCard
 	{
 		this.#handlers = {
 			[EventName.FullCardInit]: this.#handleTaskCardInit,
+			[EventName.FullCardInitFailed]: this.#handleTaskCardInitFailed,
 			[EventName.TaskAdded]: this.#handleTaskAdd,
 			[EventName.TaskBeforeUpdate]: this.#handleTaskUpdate,
 			[EventName.TemplateAdded]: this.#handleTemplateAdd,
@@ -231,15 +300,25 @@ export class TaskFullCard
 			this.#needToReloadGrid = true;
 		}
 
-		this.#updateSliderTitle(task.title);
+		this.#updateSliderTitle(taskId, task.title);
 	};
 
 	#handleTaskCardInit = (event: BaseEvent): void => {
 		const task: TaskModel = event.getData().task;
 
-		if (task.id === this.#params.taskId)
+		if (isSameTaskId(task.id, this.#params.taskId))
 		{
-			this.#updateSliderTitle(task.title);
+			openedCards.markBootstrapped(this);
+			openedCards.markMounted(this);
+		}
+
+		this.#updateSliderTitle(task.id, task.title);
+	};
+
+	#handleTaskCardInitFailed = (event: BaseEvent): void => {
+		if (isSameTaskId(event.getData().taskId, this.#params.taskId))
+		{
+			openedCards.markBootstrapped(this);
 		}
 	};
 
@@ -252,13 +331,12 @@ export class TaskFullCard
 
 		const task: TaskModel = event.getData().task;
 
-		openedCards.delete(this.#params.taskId);
 		this.#params.taskId = task.id;
-		openedCards.add(this.#params.taskId);
+		openedCards.add(this, this.#params.taskId);
 
 		this.#isCloseConfirmed = true;
 
-		this.#updateSliderTitle(task.title);
+		this.#updateSliderTitle(task.id, task.title);
 		this.#updateSliderUrl();
 	};
 
@@ -274,14 +352,14 @@ export class TaskFullCard
 		this.#params.taskId = template.id;
 		this.#isCloseConfirmed = true;
 
-		this.#updateSliderTitle(template.title);
+		this.#updateSliderTitle(template.id, template.title);
 		this.#updateSliderUrl();
 	};
 
 	#handleTemplateUpdate = (event: BaseEvent): void => {
 		const template: TaskModel = event.getData().template;
 
-		this.#updateSliderTitle(template.title);
+		this.#updateSliderTitle(template.id, template.title);
 	};
 
 	#updateSliderUrl(): void
@@ -304,8 +382,13 @@ export class TaskFullCard
 		SidePanel.Instance.resetBrowserHistory();
 	}
 
-	#updateSliderTitle(title: string): void
+	#updateSliderTitle(taskId: number | string, title: string): void
 	{
+		if (!isSameTaskId(taskId, this.#params.taskId))
+		{
+			return;
+		}
+
 		if (this.#slider && Type.isStringFilled(title))
 		{
 			this.#slider.setTitle(title);

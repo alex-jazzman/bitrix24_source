@@ -22,6 +22,28 @@ function resolveCurrentOrigin(): string | null
 	return typeof origin === 'string' && origin !== '' ? origin : null;
 }
 
+export function buildInternalDocumentUrl(
+	documentId: mixed,
+	{ absolute = false, origin }: { absolute?: boolean, origin?: string | null } = {},
+): string
+{
+	const id = Number(documentId);
+	if (!Number.isInteger(id) || id <= 0)
+	{
+		return '';
+	}
+
+	const path = `/note/document/${id}/`;
+	if (!absolute)
+	{
+		return path;
+	}
+
+	const currentOrigin = origin === undefined ? resolveCurrentOrigin() : origin;
+
+	return currentOrigin ? `${currentOrigin}${path}` : '';
+}
+
 function extractPathname(href: string, currentOrigin: string | null): string | null
 {
 	if (href.startsWith('//'))

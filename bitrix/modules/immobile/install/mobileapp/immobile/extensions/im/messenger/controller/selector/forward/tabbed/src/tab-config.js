@@ -4,8 +4,10 @@
 jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (require, exports, module) => {
 	const { DialogType, RecentTab, MessengerInitRestMethod, NavigationTabId } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const ForwardTab = Object.freeze({
+		all: 'all',
 		chats: 'chats',
 		tasks: 'tasks',
 		projects: 'projects',
@@ -46,6 +48,34 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (req
 		}
 
 		/**
+		 * @description Availability is resolved on every call: feature flags are filled
+		 * from the shared params and may change between picker sessions.
+		 * @param {string} tabId
+		 * @return {boolean}
+		 */
+		isAvailable(tabId)
+		{
+			const config = this.#tabs.get(tabId);
+			if (!config)
+			{
+				return false;
+			}
+
+			return config.isAvailable?.() ?? true;
+		}
+
+		/**
+		 * @description Resolved on every call, like isAvailable(): titles come from the
+		 * server-side navigation params, and the copilot one is region-dependent.
+		 * @param {string} tabId
+		 * @return {?string}
+		 */
+		getTitle(tabId)
+		{
+			return this.#tabs.get(tabId)?.getTitle() ?? null;
+		}
+
+		/**
 		 * @return {string[]}
 		 */
 		getIds()
@@ -55,6 +85,12 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (req
 	}
 
 	const forwardTabRegistry = new ForwardTabRegistry();
+
+	forwardTabRegistry.register(ForwardTab.all, {
+		recentGetter: 'recentModel/getAllFirstPage',
+		filter: {},
+		getTitle: () => Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TAB_ALL'),
+	});
 
 	forwardTabRegistry.register(ForwardTab.chats, {
 		recentGetter: 'recentModel/getChatFirstPage',
@@ -69,7 +105,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (req
 			],
 		},
 		recentTab: RecentTab.chat,
-		title: Loc.getNavigationTabTitle(NavigationTabId.chats),
+		getTitle: () => Loc.getNavigationTabTitle(NavigationTabId.chats),
 	});
 
 	forwardTabRegistry.register(ForwardTab.tasks, {
@@ -80,7 +116,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (req
 			dialogTypes: [DialogType.tasksTask],
 		},
 		recentTab: RecentTab.tasksTask,
-		title: Loc.getNavigationTabTitle(NavigationTabId.task),
+		getTitle: () => Loc.getNavigationTabTitle(NavigationTabId.task),
 	});
 
 	forwardTabRegistry.register(ForwardTab.projects, {
@@ -91,7 +127,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (req
 			dialogTypes: [DialogType.collab],
 		},
 		recentTab: RecentTab.collab,
-		title: Loc.getNavigationTabTitle(NavigationTabId.collab),
+		getTitle: () => Loc.getNavigationTabTitle(NavigationTabId.collab),
 	});
 
 	forwardTabRegistry.register(ForwardTab.channels, {
@@ -106,19 +142,21 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/tab-config', (req
 			],
 		},
 		recentTab: RecentTab.openChannel,
-		title: Loc.getNavigationTabTitle(NavigationTabId.channel),
+		getTitle: () => Loc.getNavigationTabTitle(NavigationTabId.channel),
 	});
 
 	forwardTabRegistry.register(ForwardTab.copilot, {
 		recentGetter: 'recentModel/getCopilotFirstPage',
 		initMethod: MessengerInitRestMethod.copilotList,
 		navigationTabId: NavigationTabId.copilot,
-		isAvailable: false, // TODO: There is no support for forwarding to ForwardTab.copilot
+		// same gate as the server-side copilot navigation tab, so the picker never
+		// offers a tab the portal has turned off (or that its zone forbids)
+		isAvailable: () => Feature.isCopilotEnabled,
 		filter: {
 			dialogTypes: [DialogType.copilot],
 		},
 		recentTab: RecentTab.copilot,
-		title: Loc.getNavigationTabTitle(NavigationTabId.copilot),
+		getTitle: () => Loc.getNavigationTabTitle(NavigationTabId.copilot),
 	});
 
 	module.exports = {

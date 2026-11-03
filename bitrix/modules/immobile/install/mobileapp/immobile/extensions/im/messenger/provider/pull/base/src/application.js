@@ -5,7 +5,6 @@
  */
 jn.define('im/messenger/provider/pull/base/application', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
-	const { Type } = require('type');
 	const {
 		EventType,
 		ComponentCode,
@@ -25,11 +24,6 @@ jn.define('im/messenger/provider/pull/base/application', (require, exports, modu
 			}
 
 			this.logger.info(`${this.getClassName()}.handleApplicationOpenChat`, params);
-			const dialogModelState = this.store.getters['dialoguesModel/getById'](params.dialogId);
-			if (Type.isUndefined(dialogModelState))
-			{
-				return;
-			}
 
 			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId }, ComponentCode.imMessenger);
 		}

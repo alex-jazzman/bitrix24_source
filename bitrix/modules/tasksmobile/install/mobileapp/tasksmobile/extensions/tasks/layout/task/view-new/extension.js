@@ -36,6 +36,10 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { isOnline } = require('device/connection');
 	const { showOfflineToast, showToast, showErrorToast } = require('toast');
 	const { ChecklistController } = require('tasks/checklist');
+	const { ChecklistEntityType } = require('tasks/checklist/enum');
+	const { observeChecklistStats } = require(
+		'tasks/statemanager/redux/slices/checklists/observers/stats-observer',
+	);
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
@@ -57,7 +61,6 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		selectIsCreating,
 		selectByTaskIdOrGuid,
 		selectHasChecklist,
-		updateChecklist,
 		tasksRead,
 		setRelatedTasks,
 		selectSubTasksIdsByTaskId,
@@ -170,23 +173,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.layout.on('titleClick', () => this.scrollViewRef?.scrollToBegin(true));
 			this.layout.on('onViewRemoved', this.onViewRemoved);
 
-			this.checklistController = new ChecklistController({
+			const checklistControllerProps = {
 				taskId: this.#taskId,
 				userId: this.props.userId,
 				groupId: this.#task?.groupId || 0,
 				inLayout: true,
-				hideCompleted: false,
 				parentWidget: this.layout,
-				onChange: () => {
-					const { completed, uncompleted, checklistDetails } = this.checklistController.getReduxData();
+			};
 
-					dispatch(updateChecklist({
-						checklistDetails,
-						taskId: this.#taskId,
-						checklist: { completed, uncompleted },
-					}));
-				},
-			});
+			this.checklistController = new ChecklistController(checklistControllerProps);
 
 			this.layoutButtons = new LayoutButtons({
 				taskId: this.#taskId,
@@ -249,6 +244,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				this.#initFromBackend();
 			}
 
+			void this.checklistController.init();
+			this.unsubscribeChecklistStatsObserver = observeChecklistStats(store, {
+				entityType: ChecklistEntityType.TASK.getValue(),
+				entityId: this.#taskId,
+				taskId: this.#taskId,
+			});
+
 			this.#observeTaskState();
 			this.unsubscribeCreationErrorObserver = observeCreationError(
 				store,
@@ -306,6 +308,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.stickyTitle.unsubscribe();
 			this.unsubscribeTaskStateObserver?.();
 			this.unsubscribeCreationErrorObserver?.();
+			this.unsubscribeChecklistStatsObserver?.();
 		}
 
 		#initFromRedux()
@@ -318,7 +321,6 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					.allSettled([
 						this.#getTaskData({
 							withResultData: true,
-							withChecklistData: true,
 						}),
 						this.#getDiskFolderId(),
 					])
@@ -352,7 +354,6 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				.allSettled([
 					this.#getTaskData({
 						withResultData: true,
-						withChecklistData: true,
 					}),
 					this.#getDiskFolderId(),
 				])
@@ -403,6 +404,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		{
 			this.pullListener.unsubscribe();
 			this.unsubscribeTaskStateObserver?.();
+			this.unsubscribeChecklistStatsObserver?.();
 
 			this.setState({
 				loading: false,
@@ -427,19 +429,18 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		/**
 		 * @param {object} [options = {}]
 		 * @param {boolean} [options.withResultData = false]
-		 * @param {boolean} [options.withChecklistData = false]
 		 * @return {Promise}
 		 */
 		#getTaskData(options = {})
 		{
-			const { withResultData = false, withChecklistData = false } = options;
+			const { withResultData = false } = options;
 
 			return new Promise((resolve) => {
 				new RunActionExecutor('tasksmobile.Task.get', {
 					taskId: this.#taskId,
 					params: {
 						WITH_RESULT_DATA: this.props.isChatFeatureEnabled ? 'N' : (withResultData ? 'Y' : 'N'),
-						WITH_CHECKLIST_DATA: (withChecklistData ? 'Y' : 'N'),
+						WITH_CHECKLIST_DATA: 'N',
 						WORK_MODE: WorkModeByViewMode[this.view],
 						KANBAN_OWNER_ID: this.kanbanOwnerId,
 						MARKED_AS_VIEWED: this.markedAsViewed ? 'Y' : 'N',
@@ -472,10 +473,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 							);
 						}
 
-						if (withChecklistData)
-						{
-							this.checklistController.setChecklistTree(response.data.checklist.tree);
-						}
+						// redux loads checklists via a V2 fetch - we don't seed the tree from Task.get
 						this.checklistController.setGroupId(response.data.groupId);
 
 						this.#onAfterGetTaskData(response);
@@ -584,7 +582,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					this.formRef?.flushOriginalValues();
 					this.checklistController.setTaskId(this.#taskId);
 
-					this.#getTaskData({ withResultData: true, withChecklistData: true })
+					this.#getTaskData({ withResultData: true })
 						.then(() => {
 							this.setState({ checklistLoading: false, reactionsLoading: false });
 						})

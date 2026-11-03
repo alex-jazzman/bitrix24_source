@@ -10,11 +10,11 @@ return [
 	'rel' => [
 		'landing.loc',
 		'landing.ui.card.headercard',
-		'landing.ui.panel.basepresetpanel',
-		'landing.ui.field.accordionfield',
 		'landing.ui.card.messagecard',
-		'ui.design-tokens',
+		'landing.ui.field.accordionfield',
+		'landing.ui.panel.basepresetpanel',
 		'main.core',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

@@ -2,6 +2,11 @@ import { addCustomEvent, ajax, removeCustomEvent, Runtime, Type } from 'main.cor
 
 const EDITOR_DEPLOYED_EVENT = 'BX.Crm.EntityEditor:onUserFieldsDeployed';
 
+// Crm\Entity\EntityEditorConfigScope::UNDEFINED. Makes the editor pick the configuration saved by
+// the user (the personal one when it exists, the common one otherwise) — the same configuration the
+// details card is opened with, so a field placed into the personal configuration gets into the scheme.
+const ENTITY_EDITOR_SCOPE_UNDEFINED = '';
+
 // Entity types whose details component still keeps its own ajax.php with PREPARE_EDITOR_HTML.
 // Every other Factory based type (quote, smart invoice, smart document, smart process) is rendered
 // by the universal crm.api.item.getEditor controller.
@@ -95,6 +100,7 @@ export class EntityEditorRender
 			ACTION_ENTITY_ID: params.entityId,
 			GUID: params.domContainerId,
 			CONFIG_ID: params.configId,
+			SCOPE: ENTITY_EDITOR_SCOPE_UNDEFINED,
 			FORCE_DEFAULT_CONFIG: 'N',
 			FORCE_DEFAULT_OPTIONS: 'Y',
 			IS_EMBEDDED: 'Y',

@@ -4,6 +4,7 @@ import { Builder } from 'ui.vue3.vuex';
 
 import 'pull.client';
 import 'rest.client';
+import 'ui.design-tokens.air';
 
 import 'im.v2.application.launch';
 
@@ -20,7 +21,9 @@ import {
 	CountersModel,
 	CopilotModel,
 	AiAssistantModel,
+	AiTaskModel,
 	StickersModel,
+	CommandsModel,
 } from 'im.v2.model';
 import {
 	BasePullHandler,
@@ -236,6 +239,8 @@ class CoreApplication
 			.addModel(CopilotModel.create())
 			.addModel(StickersModel.create())
 			.addModel(AiAssistantModel.create())
+			.addModel(AiTaskModel.create())
+			.addModel(CommandsModel.create())
 		;
 
 		if (OpenLinesLaunchResources)

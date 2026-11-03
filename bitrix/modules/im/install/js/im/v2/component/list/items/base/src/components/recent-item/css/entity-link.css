@@ -1,0 +1,18 @@
+.bx-im-list-recent-item__counters_wrap .bx-im-entity-button {
+	--im-entity-button__badge-background-color: var(--im-list-recent-item__background-color_counter);
+	--im-entity-button__badge-background-color_muted: var(--im-list-recent-item__background-color_muted);
+	--im-entity-button__badge-border-color: var(--im-list-recent-item__border-color_unread);
+}
+
+.bx-im-list-recent-item__wrap:hover .bx-im-entity-button {
+	--im-entity-button__badge-border-color: var(--im-list-recent-item__border-color_unread-hover);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-entity-button {
+	--im-entity-button__background-color: var(--im-color-palette-white-base);
+	--im-entity-button__background-color_hover: var(--im-color-palette-white-base);
+	--im-entity-button__color: var(--ui-color-accent-main-primary);
+	--im-entity-button__badge-background-color: var(--im-color-palette-white-base);
+	--im-entity-button__badge-background-color_muted: var(--im-color-palette-white-base);
+	--im-entity-button__badge-border-color: var(--im-list-recent-item__background-color_selected);
+}

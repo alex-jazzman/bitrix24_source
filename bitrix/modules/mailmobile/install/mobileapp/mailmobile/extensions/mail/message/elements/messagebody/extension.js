@@ -2,7 +2,8 @@
  * @module mail/message/elements/messagebody
  */
 jn.define('mail/message/elements/messagebody', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color, Indent } = require('tokens');
+	const { Text3 } = require('ui-system/typography/text');
 	const { PureComponent } = require('layout/pure-component');
 	const { FileField } = require('layout/ui/fields/file');
 	const { clone } = require('utils/object');
@@ -31,7 +32,7 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 				style: {
 					marginLeft: 30,
 					marginRight: 30,
-					marginBottom: 10,
+					marginBottom: Indent.L.toNumber(),
 				},
 			},
 			FileField({
@@ -55,12 +56,20 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 			return null;
 		}
 
+		// A themed body is recolored to the content surface, an untouched one stays light:
+		// the area around the body has to match, otherwise the edges read as a layout defect.
+		const backgroundColor = props.isBodyThemed === true
+			? Color.bgContentPrimary.toHex()
+			: Color.baseWhiteFixed.toHex()
+		;
+
 		return View(
 			{
 				testId: 'mail-message-body-content',
 				style: {
-					marginLeft: 12,
-					marginRight: 12,
+					marginLeft: Indent.XL.toNumber(),
+					marginRight: Indent.XL.toNumber(),
+					backgroundColor,
 				},
 			},
 			WebView({
@@ -88,9 +97,9 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 			style: {
 				height: 1,
 				borderTopWidth: 1,
-				borderTopColor: AppTheme.colors.bgSeparatorPrimary,
-				marginLeft: 12,
-				marginRight: 12,
+				borderTopColor: Color.bgSeparatorPrimary.toHex(),
+				marginLeft: Indent.XL.toNumber(),
+				marginRight: Indent.XL.toNumber(),
 			},
 		});
 	}
@@ -120,8 +129,8 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 					testId: 'mail-message-quote-hide-show-btn',
 					style: {
 						alignSelf: 'center',
-						padding: 2,
-						marginTop: 10,
+						padding: Indent.XS2.toNumber(),
+						marginTop: Indent.L.toNumber(),
 					},
 					onClick: () => {
 						if (this.state.isHide)
@@ -183,17 +192,15 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 					{
 						testId: 'mail-message-subject',
 						style: {
-							paddingLeft: 20,
-							paddingRight: 20,
-							paddingTop: 15.5,
+							paddingLeft: Indent.XL3.toNumber(),
+							paddingRight: Indent.XL3.toNumber(),
+							paddingTop: Indent.XL2.toNumber(),
 						},
 					},
-					Text({
-						style: {
-							fontSize: 16,
-							fontWeight: '700',
-							color: AppTheme.colors.base0,
-						},
+					Text3({
+						testId: 'mail-message-body-subject',
+						header: true,
+						color: Color.base0,
 						text: this.props.subject,
 					}),
 				);

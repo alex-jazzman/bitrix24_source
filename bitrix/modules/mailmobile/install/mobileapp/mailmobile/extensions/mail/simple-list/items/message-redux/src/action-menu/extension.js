@@ -3,6 +3,9 @@
  */
 jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const {
+		isLabelActionVisible,
+	} = require('mail/simple-list/items/message-redux/src/action-menu/src/label-action');
 	const { Uuid } = require('utils/uuid');
 	const { Icon } = require('assets/icons');
 	const { Alert, ButtonType } = require('alert');
@@ -13,7 +16,11 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 	const {
 		markAsSelected,
 	} = require('mail/statemanager/redux/slices/messages');
-	const { selectCurrentFolder, selectIsVirtualFolderMode } = require('mail/statemanager/redux/slices/folders/selector');
+	const {
+		selectCurrentFolder,
+		selectIsVirtualFolderMode,
+		selectLabelsAvailable,
+	} = require('mail/statemanager/redux/slices/folders/selector');
 	const {
 		remove,
 		markAsSpam,
@@ -21,15 +28,126 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 		addToChat,
 		addToTask,
 		addToEvent,
+		addToFeed,
 		discussInChat,
 		sendBindingEvent,
+		setFavoriteState,
 	} = require('mail/statemanager/redux/slices/messages/thunk');
-	const { selectById } = require('mail/statemanager/redux/slices/messages/selector');
+	const {
+		selectById,
+		selectMessageDeleteAvailable,
+	} = require('mail/statemanager/redux/slices/messages/selector');
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
 	const { openDetail } = require('mail/message/elements/contact/card');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 	const { Moment } = require('utils/date');
+	const { inAppUrl } = require('in-app-url');
+	const connection = require('device/connection');
+	const { requireLazy } = require('require-lazy');
+
+	function isFavoriteActionVisible({ message, isOnline, readOnly })
+	{
+		return message?.isFavoriteAllowed === true
+			&& Boolean(message.uidId)
+			&& isOnline === true
+			&& readOnly !== true
+		;
+	}
+
+	function getFavoriteActionTitle(message)
+	{
+		return Loc.getMessage(
+			message?.isFavorite
+				? 'MAILMOBILE_ACTIONS_REMOVE_FROM_FAVORITES'
+				: 'MAILMOBILE_ACTIONS_ADD_TO_FAVORITES',
+		);
+	}
+
+	function getFavoriteActionPayload(message)
+	{
+		return {
+			objectId: message.id,
+			uidId: message.uidId,
+			isFavorite: !message.isFavorite,
+		};
+	}
+
+	/**
+	 * Opens the assign sheet for one message; the sheet extension is pulled lazily, like the CoPilot
+	 * ones. The list row keeps no marks, so currentLabelIds is not passed and the sheet reads them.
+	 */
+	// Consumed by the message grid controller so a label-mode list row hides/restores after a change.
+	const LABEL_BINDING_CHANGED_EVENT = 'mail.label:onMessageLabelChanged';
+
+	/**
+	 * Default onChange for the sheet opened over a list row: the row keeps no controller reference,
+	 * so a confirmed change is broadcast and the grid controller reacts to it.
+	 */
+	function broadcastLabelChange(message, { labelId, assigned })
+	{
+		BX.postComponentEvent(LABEL_BINDING_CHANGED_EVENT, [{ messageId: message.id, labelId, assigned }]);
+	}
+
+	function openLabelAssignSheet({ message, parentWidget = null, currentLabelIds = null, onChange = null })
+	{
+		const changeHandler = onChange ?? ((change) => broadcastLabelChange(message, change));
+		void requireLazy('mail:label/assign-sheet').then((exports) => {
+			const LabelAssignSheet = exports?.LabelAssignSheet;
+			if (!LabelAssignSheet)
+			{
+				return;
+			}
+
+			LabelAssignSheet.show({
+				uidId: message.uidId,
+				mailboxId: message.mailboxId,
+				parentWidget,
+				currentLabelIds,
+				onChange: changeHandler,
+			});
+		});
+	}
+
+	async function executeFavoriteAction({
+		objectId,
+		readOnly,
+		getMessage = (id) => selectById(store.getState(), id),
+		dispatchAction = dispatch,
+		createFavoriteAction = setFavoriteState,
+		onStateChange = () => {},
+		isOnline = connection.isOnline(),
+	})
+	{
+		const message = getMessage(objectId);
+		if (!isFavoriteActionVisible({ message, isOnline, readOnly }))
+		{
+			return null;
+		}
+
+		const payload = getFavoriteActionPayload(message);
+		const request = dispatchAction(createFavoriteAction(payload));
+		onStateChange({
+			isFavorite: payload.isFavorite,
+			phase: 'optimistic',
+			requestId: request.requestId,
+		});
+
+		const action = await request;
+		const currentMessage = getMessage(objectId);
+		onStateChange({
+			isFavorite: Boolean(currentMessage?.isFavorite),
+			phase: 'settled',
+			requestId: action.meta.requestId,
+		});
+
+		return action;
+	}
+
+	function isRemoveActionVisible(state = store.getState())
+	{
+		return selectMessageDeleteAvailable(state);
+	}
 
 	/**
 	 * @class ActionMenu
@@ -52,6 +170,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				crmBindTypeId,
 				taskBindId,
 				eventBindId,
+				blogPostBindId,
 			} = this.object || {};
 
 			this.isRead = isRead;
@@ -60,11 +179,19 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			this.crmBindTypeId = crmBindTypeId;
 			this.taskBindId = taskBindId;
 			this.eventBindId = eventBindId;
+			this.blogPostBindId = blogPostBindId;
 		}
 
-		async show({ target, isDetailCard = false })
+		async show({
+			target,
+			isDetailCard = false,
+			readOnly = false,
+			onFavoriteStateChange = () => {},
+		})
 		{
 			this.isDetailCard = isDetailCard;
+			this.readOnly = readOnly;
+			this.onFavoriteStateChange = onFavoriteStateChange;
 
 			this.menu = new PopupMenu(this.#menuItems);
 			this.menu.show({ target });
@@ -169,6 +296,15 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			changeReadStatus({ objectIds: [objectId], objectUidIds: [message.uidId], isRead });
 		}
 
+		async changeFavoriteState(objectId)
+		{
+			return executeFavoriteAction({
+				objectId,
+				readOnly: this.readOnly,
+				onStateChange: this.onFavoriteStateChange,
+			});
+		}
+
 		createCrmEntity(objectId)
 		{
 			const message = selectById(store.getState(), objectId);
@@ -248,6 +384,17 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			});
 		}
 
+		createFeedPost(objectId)
+		{
+			const message = selectById(store.getState(), objectId);
+			if (!message)
+			{
+				return;
+			}
+
+			dispatch(addToFeed({ messageId: objectId }));
+		}
+
 		createDescriptionForCalendarEvent(message)
 		{
 			return Loc.getMessage(
@@ -286,6 +433,14 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			void requireLazy('calendar:entry').then(({ Entry }) => {
 				Entry.openEventViewForm({ eventId: this.eventBindId });
 			});
+		}
+
+		openFeedPostEntity()
+		{
+			if (this.blogPostBindId > 0)
+			{
+				inAppUrl.open(`${currentDomain}/company/personal/user/${env.userId}/blog/${this.blogPostBindId}/`);
+			}
 		}
 
 		#onAcceptDiscuss = ({ objectId, dialogId }) => {
@@ -356,6 +511,14 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						? () => this.openEventEntity()
 						: () => this.createEventEntity(this.objectId),
 				}),
+				this.#menuItem({
+					id: 'post',
+					testId: 'mail-action-menu-item-post',
+					title: Loc.getMessage('MAILMOBILE_ACTIONS_SUBMENU_POST'),
+					sectionCode: 'create',
+					icon: Icon.NEWSFEED,
+					handler: () => this.createFeedPost(this.objectId),
+				}),
 			];
 
 			return {
@@ -369,6 +532,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 		{
 			const actions = [];
 			const currentFolder = selectCurrentFolder(store.getState());
+			const currentMessage = selectById(store.getState(), this.objectId);
 
 			if (!this.isDetailCard)
 			{
@@ -401,6 +565,41 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						},
 				),
 			);
+
+			if (isFavoriteActionVisible({
+				message: currentMessage,
+				isOnline: connection.isOnline(),
+				readOnly: this.readOnly,
+			}))
+			{
+				actions.push(this.#menuItem({
+					id: 'favorite',
+					testId: 'mail-action-menu-item-favorite',
+					title: getFavoriteActionTitle(currentMessage),
+					sectionCode: 'edit',
+					icon: Icon.FAVORITE,
+					handler: () => {
+					void this.changeFavoriteState(this.objectId);
+				},
+				}));
+			}
+
+			if (isLabelActionVisible({
+				labelsAvailable: selectLabelsAvailable(store.getState()),
+				message: currentMessage,
+				isOnline: connection.isOnline(),
+				readOnly: this.readOnly,
+			}))
+			{
+				actions.push(this.#menuItem({
+					id: 'labels',
+					testId: 'mail-action-menu-item-labels',
+					title: Loc.getMessage('MAILMOBILE_ACTIONS_LABELS'),
+					sectionCode: 'edit',
+					icon: Icon.SALE_TAG,
+					handler: () => openLabelAssignSheet({ message: currentMessage }),
+				}));
+			}
 
 			if (!selectIsVirtualFolderMode(store.getState()))
 			{
@@ -443,7 +642,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				}),
 			);
 
-			if (this.object)
+			if (this.object && isRemoveActionVisible())
 			{
 				actions.push(this.#menuItem({
 					id: 'remove',
@@ -474,5 +673,15 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 		}
 	}
 
-	module.exports = { ActionMenu, sendBindingEvent };
+	module.exports = {
+		ActionMenu,
+		sendBindingEvent,
+		isFavoriteActionVisible,
+		isRemoveActionVisible,
+		getFavoriteActionTitle,
+		getFavoriteActionPayload,
+		executeFavoriteAction,
+		isLabelActionVisible,
+		openLabelAssignSheet,
+	};
 });

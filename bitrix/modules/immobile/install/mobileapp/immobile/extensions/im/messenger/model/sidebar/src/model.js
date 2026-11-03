@@ -11,6 +11,7 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 	const { sidebarLinksModel } = require('im/messenger/model/sidebar/src/links/model');
 	const { sidebarCommonChatsModel } = require('im/messenger/model/sidebar/src/common-chats/model');
 	const { sidebarSharedLinkModel } = require('im/messenger/model/sidebar/src/shared-link/model');
+	const { sidebarProjectInfoModel } = require('im/messenger/model/sidebar/src/project-info/model');
 	const { sidebarDefaultElement } = require('im/messenger/model/sidebar/src/default-element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -25,6 +26,7 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 			sidebarLinksModel,
 			sidebarCommonChatsModel,
 			sidebarSharedLinkModel,
+			sidebarProjectInfoModel,
 		},
 		getters: {
 			/**
@@ -146,6 +148,7 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 
 				const { dialogId, chatId } = payload;
 				store.dispatch('sidebarModel/deleteTabsData', { chatId }, { root: true });
+				store.dispatch('sidebarModel/sidebarProjectInfoModel/delete', { dialogId }, { root: true });
 
 				store.commit('delete', {
 					actionName: 'delete',

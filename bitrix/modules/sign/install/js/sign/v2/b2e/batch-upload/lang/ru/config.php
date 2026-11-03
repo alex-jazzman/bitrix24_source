@@ -1,0 +1,29 @@
+<?php
+
+$MESS['SIGN_B2E_BATCH_UPLOAD_TITLE'] = 'Загрузка документов';
+$MESS['SIGN_B2E_BATCH_UPLOAD_COUNTER'] = 'Загружено файлов #DONE# из #TOTAL#';
+$MESS['SIGN_B2E_BATCH_UPLOAD_COMMITTING_COUNTER'] = 'Файлы загружены, создаём документы: #COUNT#';
+$MESS['SIGN_B2E_BATCH_UPLOAD_TOTAL_PROGRESS'] = 'Общий прогресс загрузки';
+$MESS['SIGN_B2E_BATCH_UPLOAD_TOTAL_COMMITTING'] = 'Создаём документы, это может занять время';
+$MESS['SIGN_B2E_BATCH_UPLOAD_LIMIT_HINT'] = 'В один процесс можно добавить не более #LIMIT# документов';
+$MESS['SIGN_B2E_BATCH_UPLOAD_LIMIT_REACHED'] = 'Достигнут лимит документов в процессе';
+$MESS['SIGN_B2E_BATCH_UPLOAD_REJECTED_NOTICE'] = 'Не загружено файлов: #COUNT#. Превышен лимит документов в процессе: #NAMES#';
+$MESS['SIGN_B2E_BATCH_UPLOAD_REJECTED_BY_LIMIT'] = 'Не загружен из-за лимита';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR'] = 'Не удалось загрузить файл';
+$MESS['SIGN_B2E_BATCH_UPLOAD_RETRY'] = 'Повторить';
+$MESS['SIGN_B2E_BATCH_UPLOAD_RETRY_FILE'] = 'Повторить загрузку файла #NAME#';
+$MESS['SIGN_B2E_BATCH_UPLOAD_REMOVE_FILE'] = 'Удалить файл #NAME#';
+$MESS['SIGN_B2E_BATCH_UPLOAD_PROGRESS'] = 'Загрузка файла #NAME#';
+$MESS['SIGN_B2E_BATCH_UPLOAD_COMMITTING_FILE'] = 'Создаём документ';
+$MESS['SIGN_B2E_BATCH_UPLOAD_DONE_MARK'] = 'Файл загружен';
+$MESS['SIGN_B2E_BATCH_UPLOAD_ADD_MORE'] = 'Загрузить ещё';
+$MESS['SIGN_B2E_BATCH_UPLOAD_CLOSE'] = 'Закрыть';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_LIMIT'] = 'Превышен лимит документов в процессе';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_TARIFF'] = 'Недоступно на вашем тарифе';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_BLANK'] = 'Не удалось подготовить документ';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_REGISTER'] = 'Не удалось создать документ';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_GROUP'] = 'Не удалось создать процесс подписания';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_B2E_UNAVAILABLE'] = 'Подписание с сотрудниками недоступно';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_COMMIT'] = 'Документ не создан. Попробуйте загрузить файл ещё раз';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_ADD'] = 'Документ создан, но не попал в этот процесс подписания. Обновите страницу и проверьте список документов процесса';
+$MESS['SIGN_B2E_BATCH_UPLOAD_FILE_ERROR_ATTACH'] = 'Не удалось добавить документ в процесс подписания. Загрузите файл ещё раз';

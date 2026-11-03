@@ -207,7 +207,7 @@
 .biconnector-dataset-import-v2-error-popup__mascot {
 	width: 160px;
 	height: 160px;
-	background-image: url("../images/failed-mascot.png");
+	background-image: url("../images/failed-mascot.webp");
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
@@ -330,7 +330,7 @@
 	flex-shrink: 0;
 	width: 80px;
 	height: 80px;
-	background-image: url("../images/attention-lighter.png");
+	background-image: url("../images/attention-lighter.webp");
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: contain;

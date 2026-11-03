@@ -15,11 +15,11 @@
 .bx-im-empty-avatar__avatar {
 	width: 100%;
 	height: 100%;
-	background-color: var(--im-empty-avatar__background-color_avatar);
 	border-radius: var(--im-border-radius-circle);
 }
 
 .bx-im-empty-avatar__avatar.--default {
+	background-color: var(--im-empty-avatar__background-color_avatar);
 	background-image: url('images/create-chat-default-avatar.svg');
 	background-repeat: no-repeat;
 	background-position: center;

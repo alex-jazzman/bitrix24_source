@@ -6,8 +6,6 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 	const { BaseEnum } = require('utils/enums/base');
 
 	/**
-	 * @class BadgeCounterDesign
-	 * @template TBadgeCounterDesign
 	 * @extends {BaseEnum<BadgeCounterDesign>}
 	 */
 	class BadgeCounterDesign extends BaseEnum
@@ -17,7 +15,7 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 			backgroundColor: Color.accentMainPrimary,
 		});
 
-		static PRIMARY_EFFECTIVINESS = new BadgeCounterDesign('PRIMARY', {
+		static PRIMARY_EFFECTIVINESS = new BadgeCounterDesign('PRIMARY_EFFECTIVINESS', {
 			color: Color.baseWhiteFixed,
 			backgroundColor: Color.accentMainWarning,
 		});

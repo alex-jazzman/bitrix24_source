@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
 this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperset.Dashboard || {};
-(function (exports, main_core, main_core_events, main_loader, im_public, biconnector_apacheSupersetDashboardManager, biconnector_apacheSupersetAnalytics, main_popup, ui_vue3, market_ratingReview, market_marketLinks, market_ratingStarsInput) {
+(function (exports, main_core, main_core_events, main_loader, im_public, biconnector_apacheSupersetDashboardManager, biconnector_apacheSupersetAnalytics, biconnector_errorMessage, main_popup, ui_vue3, market_ratingReview, market_marketLinks, market_ratingStarsInput) {
 	'use strict';
 
 	class VendorBlock {
@@ -238,7 +238,6 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			this.dashboard = options.dashboard;
 			this.publishedDate = options.publishedDate;
 			this.updatedDate = options.updatedDate;
-			this.period = options.period;
 			this.reloadDashboardCallback = options.reloadDashboardCallback;
 			this.isMarketModuleInstalled = options.isMarketModuleInstalled;
 			this.appCode = main_core.Type.isStringFilled(options.appCode) ? options.appCode : '';
@@ -261,15 +260,10 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 		static getDateValue(dateRaw) {
 			return main_core.Type.isStringFilled(dateRaw) ? main_core.Text.encode(dateRaw) : '&ndash;';
 		}
-		static getPeriodValue(periodRaw) {
-			return main_core.Type.isStringFilled(periodRaw) ? main_core.Text.encode(periodRaw) : '&ndash;';
-		}
 		render() {
 			const publishedLabel = this.getPublishedLabel();
 			const publishedRow = this.renderPublishedRow(publishedLabel);
 			const updatedLabel = main_core.Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_UPDATED') ?? '';
-			const periodLabel = main_core.Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_PERIOD') ?? '';
-			const periodHint = main_core.Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_PERIOD_HINT') ?? '';
 			let ratingHintText = '';
 			let ratingCountText = '';
 			let ratingHintIcon = '';
@@ -319,17 +313,6 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 							<span>${this.updatedDate}</span>
 						</div>
 					</div>
-
-						<div class="report-info__row">
-							<div class="report-info__label">
-								${main_core.Text.encode(periodLabel)}
-								<span data-hint="${main_core.Text.encode(periodHint)}"></span>
-							</div>
-							<div class="report-info__value">
-								<div class="ui-icon-set --o-calendar-with-slots report-info__value-icon"></div>
-								<span>${this.period}</span>
-							</div>
-						</div>
 				</div>
 			</div>
 		`;
@@ -440,7 +423,7 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			const appInfo = {
 				REVIEW_APP_CODE: this.appCode,
 				NAME: this.dashboardTitle,
-				ICON: this.dashboard?.ICON ?? `${this.imagesPath}/icon_empty.png`,
+				ICON: this.dashboard?.ICON ?? `${this.imagesPath}/icon_empty.webp`,
 				REVIEWS: {
 					CAN_REVIEW: this.ratingInfo?.CAN_REVIEW ?? 'N'
 				}
@@ -541,10 +524,12 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			if (items === '') {
 				return '';
 			}
+			const navPrevLabel = main_core.Text.encode(main_core.Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_GALLERY_NAV_PREV'));
+			const navNextLabel = main_core.Text.encode(main_core.Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_GALLERY_NAV_NEXT'));
 			return `
 			<div class="report__row">
 				<div class="report__gallery" data-role="gallery">
-					<button class="report-gallery__nav report-gallery__nav--left" type="button" aria-label="Назад" data-role="prev">
+					<button class="report-gallery__nav report-gallery__nav--left" type="button" aria-label="${navPrevLabel}" data-role="prev">
 						<div class="ui-icon-set --chevron-left-l"></div>
 					</button>
 
@@ -554,7 +539,7 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 						</div>
 					</div>
 
-					<button class="report-gallery__nav report-gallery__nav--right" type="button" aria-label="Вперёд" data-role="next">
+					<button class="report-gallery__nav report-gallery__nav--right" type="button" aria-label="${navNextLabel}" data-role="next">
 						<div class="ui-icon-set --chevron-right-l"></div>
 					</button>
 
@@ -746,8 +731,8 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			this.moreMenuId = `biconnector-dashboard-detail-info-more-menu-${this.dashboardId || 'default'}`;
 			this.dashboardListUrl = main_core.Type.isStringFilled(config.dashboardListUrl) ? config.dashboardListUrl : '/bi/dashboard/';
 			this.imagesPath = main_core.Type.isStringFilled(config.imagesPath) ? config.imagesPath : '';
-			this.emptyIconPath = this.imagesPath ? `${this.imagesPath}/icon_empty.png` : '';
-			this.emptyDescriptionPath = this.imagesPath ? `${this.imagesPath}/description_empty.png` : '';
+			this.emptyIconPath = this.imagesPath ? `${this.imagesPath}/icon_empty.webp` : '';
+			this.emptyDescriptionPath = this.imagesPath ? `${this.imagesPath}/description_empty.webp` : '';
 			this.isMarketModuleInstalled = config.isMarketModuleInstalled === true;
 			this.marketBackgroundPath = CoverBlock.getRandomMarketBackgroundPath(this.isMarketModuleInstalled);
 			this.canModifySettings = config.canModifySettings === true;
@@ -796,7 +781,7 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 					c_element: 'context_menu',
 					status: 'error'
 				});
-				this.renderError(this.getErrorMessage(response));
+				this.renderError(this.getErrorHtml(response));
 			});
 		}
 		bindLifecycleEvents() {
@@ -931,12 +916,11 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			}
 			this.appNode.innerHTML = this.getDashboardMarkup(dashboard);
 		}
-		renderError(message) {
+		renderError(messageHtml) {
 			if (!main_core.Type.isDomNode(this.appNode)) {
 				return;
 			}
 			this.destroyGalleryBlocks();
-			const safeMessage = main_core.Type.isStringFilled(message) ? main_core.Text.encode(message) : main_core.Text.encode(this.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_LOAD_ERROR'));
 			this.appNode.innerHTML = `
 			<section class="report">
 				<div class="report__row">
@@ -944,22 +928,15 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 						<div class="report__description-title">
 							${main_core.Text.encode(this.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_DESCRIPTION_TITLE'))}
 						</div>
-						<div class="report__description-content">${safeMessage}</div>
+						<div class="report__description-content">${messageHtml}</div>
 					</div>
 				</div>
 			</section>
 		`;
 		}
-		getErrorMessage(response, fallbackMessage = '') {
+		getErrorHtml(response, fallbackMessage = '') {
 			const defaultMessage = main_core.Type.isStringFilled(fallbackMessage) ? fallbackMessage : this.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_LOAD_ERROR');
-			if (response instanceof Error && main_core.Type.isStringFilled(response.message)) {
-				return response.message;
-			}
-			const firstError = response?.errors?.[0];
-			if (main_core.Type.isStringFilled(firstError?.message)) {
-				return firstError.message;
-			}
-			return defaultMessage;
+			return biconnector_errorMessage.resolveErrorHtml(response, defaultMessage);
 		}
 		bindDynamicElements() {
 			if (!main_core.Type.isDomNode(this.appNode)) {
@@ -1010,13 +987,12 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			const canShowMoreMenu = this.currentCanModifySettings || this.currentCanDelete;
 			const publishedDate = InfoBlock.getDateValue(dashboard.PUBLISHED_DATE);
 			const updatedDate = InfoBlock.getDateValue(dashboard.UPDATED_DATE);
-			const period = InfoBlock.getPeriodValue(dashboard.PERIOD);
 			const description = DescriptionBlock.getDescriptionValue(dashboard.DESCRIPTION, this.emptyDescriptionPath);
 			const images = GalleryBlock.normalizeImages(dashboard.IMAGES);
 			return `
 			<section class="report">
 				${this.getTopRowMarkup(vendorBlock.render(), viewsBlock.render(), canShowMoreMenu)}
-				${this.getOverviewMarkup(dashboard, publishedDate, updatedDate, period)}
+				${this.getOverviewMarkup(dashboard, publishedDate, updatedDate)}
 				${GalleryBlock.render(images, this.viewerGroupId)}
 				${new DescriptionBlock(description).render()}
 			</section>
@@ -1036,7 +1012,7 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 			</div>
 		`;
 		}
-		getOverviewMarkup(dashboard, publishedDate, updatedDate, period) {
+		getOverviewMarkup(dashboard, publishedDate, updatedDate) {
 			const coverBlock = new CoverBlock({
 				icon: dashboard.ICON,
 				dashboardType: dashboard.TYPE,
@@ -1047,7 +1023,6 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 				dashboard,
 				publishedDate,
 				updatedDate,
-				period,
 				reloadDashboardCallback: this.reloadDashboard.bind(this),
 				isMarketModuleInstalled: this.isMarketModuleInstalled,
 				appCode: this.appCode,
@@ -1138,7 +1113,7 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 					status: 'error'
 				});
 				BX.UI.Notification.Center.notify({
-					content: main_core.Text.encode(this.getErrorMessage(response, fallbackMessage))
+					content: this.getErrorHtml(response, fallbackMessage)
 				});
 				finishRequest();
 			});
@@ -1211,4 +1186,4 @@ this.BX.BIConnector.ApacheSuperset.Dashboard = this.BX.BIConnector.ApacheSuperse
 
 	exports.Info = Info;
 
-})(this.BX.BIConnector.ApacheSuperset.Dashboard.Detail = this.BX.BIConnector.ApacheSuperset.Dashboard.Detail || {}, BX, BX.Event, BX, BX.Messenger.v2.Lib, BX.BIConnector, BX.BIConnector, BX.Main, BX.Vue3, BX.Market, BX.Market, BX.Market);
+})(this.BX.BIConnector.ApacheSuperset.Dashboard.Detail = this.BX.BIConnector.ApacheSuperset.Dashboard.Detail || {}, BX, BX.Event, BX, BX.Messenger.v2.Lib, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.Main, BX.Vue3, BX.Market, BX.Market, BX.Market);

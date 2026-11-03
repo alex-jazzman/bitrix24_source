@@ -9,6 +9,8 @@ jn.define('user-profile/common-tab/src/const/block-config', (require, exports, m
 	const { AboutMeBlock } = require('user-profile/common-tab/src/block/about-me/block');
 	const { DepartmentBlock } = require('user-profile/common-tab/src/block/department/block');
 	const { CommonFieldsBlock } = require('user-profile/common-tab/src/block/common-fields/block');
+	const { AboutSystemUserBlock } = require('user-profile/common-tab/src/block/about-system-user/block');
+	const { OfficeBlock } = require('user-profile/common-tab/src/block/office/block');
 
 	const Section = {
 		HEADER: 'HEADER',
@@ -22,7 +24,9 @@ jn.define('user-profile/common-tab/src/const/block-config', (require, exports, m
 
 	const BlockRegistry = {
 		HEADER: HeaderBlock,
+		ABOUT_SYSTEM_USER: AboutSystemUserBlock,
 		COMMON_FIELDS: CommonFieldsBlock,
+		OFFICE: OfficeBlock,
 		DEPARTMENT: DepartmentBlock,
 		GRATITUDE: GratitudeBlock,
 		EFFICIENCY: EfficiencyBlock,
@@ -32,12 +36,14 @@ jn.define('user-profile/common-tab/src/const/block-config', (require, exports, m
 
 	const BlockOrderRegistry = {
 		HEADER: { order: 100, section: Section.HEADER },
-		COMMON_FIELDS: { order: 100, section: Section.MAIN },
-		DEPARTMENT: { order: 200, section: Section.MAIN },
-		GRATITUDE: { order: 300, section: Section.MAIN },
-		EFFICIENCY: { order: 400, section: Section.MAIN },
-		TAGS: { order: 500, section: Section.MAIN },
-		ABOUT_ME: { order: 600, section: Section.MAIN },
+		ABOUT_SYSTEM_USER: { order: 100, section: Section.MAIN },
+		COMMON_FIELDS: { order: 200, section: Section.MAIN },
+		OFFICE: { order: 250, section: Section.MAIN },
+		DEPARTMENT: { order: 300, section: Section.MAIN },
+		GRATITUDE: { order: 400, section: Section.MAIN },
+		EFFICIENCY: { order: 500, section: Section.MAIN },
+		TAGS: { order: 600, section: Section.MAIN },
+		ABOUT_ME: { order: 700, section: Section.MAIN },
 	};
 
 	module.exports = {

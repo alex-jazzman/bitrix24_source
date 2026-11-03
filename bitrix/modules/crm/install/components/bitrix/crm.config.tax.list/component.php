@@ -30,6 +30,8 @@ $arParams['PATH_TO_TAX_SHOW'] = CrmCheckPath('PATH_TO_TAX_SHOW', $arParams['PATH
 $arParams['PATH_TO_TAX_ADD'] = CrmCheckPath('PATH_TO_TAX_ADD', $arParams['PATH_TO_TAX_ADD'], '?add');
 $arParams['PATH_TO_TAX_EDIT'] = CrmCheckPath('PATH_TO_TAX_EDIT', $arParams['PATH_TO_TAX_EDIT'], '?tax_id=#tax_id#&edit');
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+
 $arResult['GRID_ID'] = 'CRM_TAX_LIST';
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
 $arResult['EDIT_FORM_ID'] = 'CRM_TAX_EDIT_FORM';
@@ -99,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 
 	if(!isset($_POST['AJAX_CALL']))
 	{
-		LocalRedirect($APPLICATION->GetCurPage());
+		LocalRedirect($isSettingsHub ? $arParams['PATH_TO_TAX_LIST'] : $APPLICATION->GetCurPage());
 	}
 }
 elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_GET['action_'.$arResult['GRID_ID']]))
@@ -125,7 +127,16 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 	}
 
 	if (!isset($_GET['AJAX_CALL']))
-		LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_product' : '');
+	{
+		if ($isSettingsHub)
+		{
+			LocalRedirect($arParams['PATH_TO_TAX_LIST']);
+		}
+		else
+		{
+			LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_product' : '');
+		}
+	}
 }
 
 $gridOptions = new CCrmGridOptions($arResult['GRID_ID']);
@@ -187,7 +198,17 @@ foreach($allTaxies as $k => $v)
 
 	if ($rateNum > 0)
 	{
-		$rateNumShow = "<a href=\"".$tax['PATH_TO_TAX_SHOW_RATES']."\">".$rateNum."</a>";
+		if ($isSettingsHub)
+		{
+			$rateNumShow = '<a data-testid="crm-config-tax-list-rates-link-' . (int)$tax['ID'] . '"'
+				. ' data-slider-ignore-autobinding="true" target="_self" href="'
+				. htmlspecialcharsbx($tax['PATH_TO_TAX_SHOW_RATES']) . '">' . $rateNum . '</a>'
+			;
+		}
+		else
+		{
+			$rateNumShow = "<a href=\"".$tax['PATH_TO_TAX_SHOW_RATES']."\">".$rateNum."</a>";
+		}
 	}
 	else
 		$rateNumShow = "0";

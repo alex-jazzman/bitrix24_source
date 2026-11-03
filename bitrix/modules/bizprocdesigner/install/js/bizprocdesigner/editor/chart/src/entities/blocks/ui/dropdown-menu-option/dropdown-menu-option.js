@@ -36,6 +36,13 @@ export const DropdownMenuOption = {
 			type: Boolean,
 			default: false,
 		},
+		// The operation of the item is refused for now. Told in ARIA and not by the disabled attribute on
+		// purpose: a disabled control leaves the Tab order, and the keyboard would then meet an item that
+		// silently disappears from the menu it is walking. Announced as unavailable, it stays reachable.
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed:
 	{
@@ -61,6 +68,22 @@ export const DropdownMenuOption = {
 			return !this.toggle && this.isActive ? 'true' : null;
 		},
 	},
+	methods:
+	{
+		// The click handler of the item is bound by its owner and lands on the row around the control, so
+		// the refusal is enforced on the way down: stopping the event here is what keeps a refused item from
+		// running the operation of a click that a pointer or the keyboard still delivers.
+		handleClickCapture(event: MouseEvent): void
+		{
+			if (!this.disabled)
+			{
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+		},
+	},
 	template: `
 		<li
 			class="editor-chart-dropdown-menu-option"
@@ -71,8 +94,10 @@ export const DropdownMenuOption = {
 				:type="isAction ? 'button' : null"
 				class="editor-chart-dropdown-menu-option__control"
 				:aria-busy="busy ? 'true' : null"
+				:aria-disabled="disabled && isAction ? 'true' : null"
 				:aria-pressed="ariaPressed"
 				:aria-current="ariaCurrent"
+				@click.capture="handleClickCapture"
 			>
 				<span class="editor-chart-dropdown-menu-option__content">
 					<span class="editor-chart-dropdown-menu-option__title">

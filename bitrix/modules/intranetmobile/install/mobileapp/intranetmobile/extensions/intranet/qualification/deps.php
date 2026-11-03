@@ -5,9 +5,11 @@ return [
 		'intranet:qualification',
 	],
 	'extensions' => [
+		'asset-manager',
 		'analytics',
 		'apptheme',
 		'background/ui-manager',
+		'in-app-url',
 		'layout/pure-component',
 		'layout/ui/menu',
 		'layout/ui/smartphone-contact-selector',

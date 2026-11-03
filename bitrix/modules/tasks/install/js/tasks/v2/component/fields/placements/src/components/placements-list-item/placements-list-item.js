@@ -64,10 +64,15 @@ export const PlacementsListItem = {
 		},
 	},
 	template: `
-		<div class="tasks-field-placement-item" @click="onPlacementClick">
+		<button
+			type="button"
+			class="tasks-field-placement-item"
+			data-testid="tasks-placements-item-btn"
+			@click="onPlacementClick"
+		>
 			<div class="tasks-field-placement-item-header">
 				<div class="tasks-field-placement-item-title-container">
-					<BIcon :name="Outline.PRODUCT" class="tasks-field-placement-item-icon"/>
+					<BIcon :name="Outline.PRODUCT" class="tasks-field-placement-item-icon" aria-hidden="true"/>
 					<TextMd accent>{{ placement.title }}</TextMd>
 				</div>
 			</div>
@@ -77,6 +82,6 @@ export const PlacementsListItem = {
 			>
 				{{ placement.description }}
 			</TextXs>
-		</div>
+		</button>
 	`,
 };

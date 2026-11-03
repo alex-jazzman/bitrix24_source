@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_popup, ui_popupcomponentsmaker, ui_system_menu, main_core_events, ui_iconSet_api_core, main_sidepanel) {
+(function (exports, main_core, main_popup, ui_popupcomponentsmaker, ui_system_menu, main_core_events, ui_iconSet_api_core, main_sidepanel, socialnetwork_v2_lib_eventSender) {
 	'use strict';
 
 	class Content extends main_core_events.EventEmitter {
@@ -105,7 +105,10 @@ this.BX = this.BX || {};
 		handleClick(event) {
 			this.emit('click');
 			if (this.isLocked()) {
-				this.#showRestriction();
+				// A click handler is synchronous, so a rejection of the asynchronous window has
+				// nowhere to go: showRestriction() has already reported the failure to the console,
+				// and an unhandled rejection would only report it a second time.
+				void this.showRestriction(this.getRestrictionCode()).catch(() => {});
 				event?.stopPropagation();
 				event?.preventDefault();
 				return;
@@ -114,6 +117,7 @@ this.BX = this.BX || {};
 			if (!url) {
 				return;
 			}
+			this.trackOpen();
 			if (this.getNavigationMode() === NavigationMode.SIDE_PANEL) {
 				this.#openSidePanel(url, this.getSliderOptions());
 			} else {
@@ -122,18 +126,62 @@ this.BX = this.BX || {};
 			event?.stopPropagation();
 			event?.preventDefault();
 		}
+		getAnalyticsConfig() {
+			return null;
+		}
+		trackOpen() {
+			const config = this.getAnalyticsConfig();
+			const projectId = this.params.projectId;
+			if (!config || !projectId) {
+				return;
+			}
+			new socialnetwork_v2_lib_eventSender.SectionAnalytics().trackOpen(config, projectId);
+		}
 		isLocked() {
 			return this.params.isLocked === true;
 		}
 		getRestrictionCode() {
 			return this.params.restrictionCode;
 		}
-		#showRestriction() {
-			const code = this.getRestrictionCode();
+		showRestriction(code) {
 			if (!code) {
-				return;
+				return Promise.resolve();
 			}
-			BX.UI.InfoHelper.show(code);
+
+			// A row locked by the server is rendered locked on a page which has already got
+			// ui.info-helper: show the window right away, without a round-trip to the portal.
+			if (this.#hasRestrictionWindow()) {
+				return this.#showRestrictionWindow(code);
+			}
+
+			// A row may turn out to be restricted only by the server answer, so the page
+			// carrying the menu has no reason to load ui.info-helper — take it on demand.
+			return main_core.Runtime.loadExtension('ui.info-helper').catch(error => {
+				console.error('Feature: failed to load ui.info-helper', error);
+				throw error;
+			}).then(() => {
+				return this.#showRestrictionWindow(code);
+			});
+		}
+
+		// ui.info-helper is bundled into the BX.UI namespace, so a loaded extension is visible
+		// on the page without asking the loader about it.
+		#hasRestrictionWindow() {
+			return main_core.Type.isFunction(BX.UI?.InfoHelper?.show);
+		}
+		#showRestrictionWindow(code) {
+			if (!this.#hasRestrictionWindow()) {
+				const error = new Error('Feature: the restriction window (BX.UI.InfoHelper) is missing');
+				console.error(error.message);
+				return Promise.reject(error);
+			}
+			try {
+				BX.UI.InfoHelper.show(code);
+			} catch (error) {
+				console.error('Feature: failed to show the restriction window', error);
+				return Promise.reject(error);
+			}
+			return Promise.resolve();
 		}
 		getNavigationMode() {
 			return NavigationMode.REDIRECT;
@@ -167,6 +215,14 @@ this.BX = this.BX || {};
 		}
 		getId() {
 			return 'blog';
+		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'feed',
+				category: 'feed',
+				event: 'open_section',
+				cElement: 'feed_button'
+			};
 		}
 		getNavigationMode() {
 			return NavigationMode.SIDE_PANEL;
@@ -238,6 +294,14 @@ this.BX = this.BX || {};
 		getNavigationMode() {
 			return NavigationMode.SIDE_PANEL;
 		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'calendar',
+				category: 'calendar',
+				event: 'open_section',
+				cElement: 'calendar_view_button'
+			};
+		}
 	}
 
 	class Files extends Base {
@@ -249,6 +313,14 @@ this.BX = this.BX || {};
 		}
 		getNavigationMode() {
 			return NavigationMode.SIDE_PANEL;
+		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'files',
+				category: 'files_operations',
+				event: 'open_section',
+				cElement: 'files_button'
+			};
 		}
 	}
 
@@ -319,12 +391,83 @@ this.BX = this.BX || {};
 		}
 	}
 
-	class Lists extends Feature {
+	/**
+	 * Lists keeps its own ordinary pages, so the tool is opened in a new tab and the project stays
+	 * in the tab the menu was opened from. The page is reached either by the link this row renders
+	 * or, when the menu shows Lists as a menu item, by the click handler below — either way the tab
+	 * is opened synchronously, while the user gesture still allows it.
+	 */
+	class Lists extends Row {
 		getIcon() {
 			return ui_iconSet_api_core.Outline.ACTION_REQUIRED;
 		}
 		getId() {
 			return 'group_lists';
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				const layout = main_core.Tag.render`
+				<a
+					data-testid="bx-socnet-feature-menu-content-row-feature-${this.getId()}"
+					onclick="${this.handleClick.bind(this)}"
+					class="socnet-feature-menu-row-feature__wrapper"
+				>
+					${this.getIconElement()}
+					<div class="socnet-feature-menu-content-row-item__info-wrapper">
+						<span class="socnet-feature-menu-content-row-item__title">
+							${main_core.Text.encode(this.getTitle())}
+						</span>
+					</div>
+					${this.getActionElement()}
+				</a>
+			`;
+
+				// A row the server brought no url for is not a link: it leads nowhere and an empty
+				// `href` would reload the project page instead.
+				const url = this.getUrl();
+				if (url) {
+					layout.href = url;
+					layout.target = '_blank';
+					// The opened page keeps no handle on the tab of the project.
+					layout.rel = 'noopener';
+				}
+				return layout;
+			});
+		}
+		handleClick(event) {
+			this.emit('click');
+			if (this.isLocked()) {
+				// A click handler is synchronous, so a rejection of the asynchronous window has
+				// nowhere to go: showRestriction() has already reported the failure to the console,
+				// and an unhandled rejection would only report it a second time.
+				void this.showRestriction(this.getRestrictionCode()).catch(() => {});
+				event?.stopPropagation();
+				event?.preventDefault();
+				return;
+			}
+			const url = this.getUrl();
+			if (!url) {
+				return;
+			}
+			this.trackOpen();
+
+			// The link of getLayout() is followed by the browser itself: opening the page here on
+			// top of it would open the tool twice.
+			if (this.#isOwnLinkClick(event)) {
+				event.stopPropagation();
+				return;
+			}
+
+			// A menu item is not the link — it calls the handler directly, so the new tab is opened
+			// here. The default is prevented afterwards, the way the base row does it, so the click
+			// leaves the menu container alone.
+			window.open(url, '_blank', 'noopener');
+			event?.stopPropagation();
+			event?.preventDefault();
+		}
+		#isOwnLinkClick(event) {
+			const layout = this.cache.get('layout', null);
+			return layout instanceof HTMLAnchorElement && layout.hasAttribute('href') && event?.currentTarget === layout;
 		}
 	}
 
@@ -341,6 +484,14 @@ this.BX = this.BX || {};
 		getNavigationMode() {
 			return NavigationMode.SIDE_PANEL;
 		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'kb',
+				category: 'kb',
+				event: 'open_start_page',
+				cElement: 'bz_button'
+			};
+		}
 	}
 
 	class Marketplace extends Row {
@@ -350,7 +501,16 @@ this.BX = this.BX || {};
 		getId() {
 			return 'marketplace';
 		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'kb',
+				category: 'kb',
+				event: 'open_market',
+				cElement: 'market_button'
+			};
+		}
 		handleClick(event) {
+			this.trackOpen();
 			BX.rest.Marketplace.open({
 				PLACEMENT: 'SONET_GROUP_DETAIL_TAB'
 			});
@@ -358,6 +518,9 @@ this.BX = this.BX || {};
 			event?.preventDefault();
 		}
 	}
+
+	// socialnetwork.collab.Note.resolveSection: every field of the section may come back empty,
+	// and `collectionId` is a part of the answer the row itself does not need.
 
 	class Note extends Row {
 		getIcon() {
@@ -402,16 +565,26 @@ this.BX = this.BX || {};
 						groupId: projectId
 					}
 				});
-				const url = response?.data?.url;
-				if (!url) {
-					return;
-				}
-				main_sidepanel.SidePanel.Instance.open(url, this.getSliderOptions());
+
+				// Awaited, so the spinner stays until the answer has been acted upon —
+				// the restriction window may still have to load its own extension.
+				await this.handleSectionResponse(response);
 			} catch (error) {
-				console.error('Note: failed to resolve the knowledge-base section', error);
+				console.error('Note: failed to open the knowledge-base section', error);
 			} finally {
 				this.#setLoading(false);
 			}
+		}
+		handleSectionResponse(response) {
+			const url = response?.data?.url;
+			if (url) {
+				main_sidepanel.SidePanel.Instance.open(url, this.getSliderOptions());
+				return Promise.resolve();
+			}
+
+			// The menu is cached until the page reloads, so the tariff may have closed
+			// after the row had been rendered as available.
+			return this.showRestriction(response?.data?.restriction);
 		}
 		#setLoading(loading) {
 			const action = this.getActionElement();
@@ -445,6 +618,14 @@ this.BX = this.BX || {};
 		}
 		getId() {
 			return 'photo';
+		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'projects',
+				category: 'project',
+				event: 'open_section',
+				cElement: 'photos_button'
+			};
 		}
 		getNavigationMode() {
 			return NavigationMode.SIDE_PANEL;
@@ -519,6 +700,14 @@ this.BX = this.BX || {};
 		}
 		getId() {
 			return 'wiki';
+		}
+		getAnalyticsConfig() {
+			return {
+				tool: 'projects',
+				category: 'project',
+				event: 'open_start_page',
+				cElement: 'wiki_button'
+			};
 		}
 	}
 
@@ -750,7 +939,7 @@ this.BX = this.BX || {};
 			});
 			const baseFeature = response.data;
 			if (baseFeature) {
-				const feature = FeatureFactory.create(baseFeature);
+				const feature = FeatureFactory.create(baseFeature, baseFeature?.projectId);
 				feature?.handleClick();
 			}
 		}
@@ -1095,5 +1284,5 @@ this.BX = this.BX || {};
 
 	exports.FeatureMenu = FeatureMenu;
 
-})(this.BX.Socialnetwork = this.BX.Socialnetwork || {}, BX, BX.Main, BX.UI, BX.UI.System, BX.Event, BX.UI.IconSet, BX.SidePanel);
+})(this.BX.Socialnetwork = this.BX.Socialnetwork || {}, BX, BX.Main, BX.UI, BX.UI.System, BX.Event, BX.UI.IconSet, BX.SidePanel, BX.Socialnetwork.V2.Lib);
 //# sourceMappingURL=feature-menu.bundle.js.map

@@ -4,7 +4,6 @@
 	position: fixed;
 	top: 66px;
 	height: calc(100vh - 66px);
-	-webkit-transform: translateX(0) translateZ(0);
 	transform: translateX(0) translateZ(0);
 	opacity: 0;
 	z-index: 22!important;
@@ -35,18 +34,7 @@
 
 
 .landing-ui-panel-style .landing-ui-panel-content-body-content .landing-ui-form {
-	-webkit-animation: showStyleForm 200ms ease both;
-	        animation: showStyleForm 200ms ease both;
-}
-
-@-webkit-keyframes showStyleForm {
-	0% {
-		opacity: 0;
-	}
-
-	100% {
-		opacity: 1;
-	}
+	animation: showStyleForm 200ms ease both;
 }
 
 @keyframes showStyleForm {
@@ -66,18 +54,14 @@
 }
 
 .landing-ui-panel-style.landing-ui-show {
-	-webkit-animation: showStylePanel 300ms both;
 	animation: showStylePanel 300ms both;
 }
 
 .landing-ui-panel-style.landing-ui-hide {
-	-webkit-animation: hideStylePanel 300ms both;
 	animation: hideStylePanel 300ms both;
 }
 
 .landing-ui-panel-style .landing-ui-button.landing-ui-button-content-cancel {
-	-webkit-box-flex: 1;
-	-ms-flex-positive: 1;
 	flex-grow: 1;
 }
 
@@ -103,78 +87,32 @@
 }
 
 .landing-ui-panel-style:not(.landing-ui-style-form-mode).landing-ui-show ~ .landing-ui-view-wrapper {
-	-webkit-animation: frameResizeIn 300ms ease both;
-	        animation: frameResizeIn 300ms ease both;
+	animation: frameResizeIn 300ms ease both;
 }
 
 .landing-ui-panel-style:not(.landing-ui-style-form-mode).landing-ui-hide ~ .landing-ui-view-wrapper {
-	-webkit-animation: frameResizeOut 300ms ease both;
-	        animation: frameResizeOut 300ms ease both;
-}
-
-@-webkit-keyframes frameResizeIn {
-	0% {
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-
-	100% {
-		-webkit-transform: translateX(320px);
-		        transform: translateX(320px);
-	}
+	animation: frameResizeOut 300ms ease both;
 }
 
 
 @keyframes frameResizeIn {
 	0% {
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(0);
 	}
 
 	100% {
-		-webkit-transform: translateX(320px);
-		        transform: translateX(320px);
-	}
-}
-
-
-@-webkit-keyframes frameResizeOut {
-	0% {
-		-webkit-transform: translateX(320px);
-		        transform: translateX(320px);
-	}
-
-	100% {
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(320px);
 	}
 }
 
 
 @keyframes frameResizeOut {
 	0% {
-		-webkit-transform: translateX(320px);
-		        transform: translateX(320px);
+		transform: translateX(320px);
 	}
 
 	100% {
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-}
-
-
-@-webkit-keyframes showStylePanel {
-	0% {
-		opacity: 0;
-		-webkit-transform: translateX(-320px);
-		        transform: translateX(-320px);
-	}
-
-	100% {
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(0);
 	}
 }
 
@@ -182,42 +120,24 @@
 @keyframes showStylePanel {
 	0% {
 		opacity: 0;
-		-webkit-transform: translateX(-320px);
-		        transform: translateX(-320px);
+		transform: translateX(-320px);
 	}
 
 	100% {
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-}
-
-@-webkit-keyframes hideStylePanel {
-	0% {
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-
-	100% {
-		opacity: 0;
-		-webkit-transform: translateX(-320px);
-		        transform: translateX(-320px);
+		transform: translateX(0);
 	}
 }
 
 @keyframes hideStylePanel {
 	0% {
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(0);
 	}
 
 	100% {
 		opacity: 0;
-		-webkit-transform: translateX(-320px);
-		        transform: translateX(-320px);
+		transform: translateX(-320px);
 	}
 }
 
@@ -226,8 +146,7 @@
 	top: 50%;
 	left: 50%;
 	margin: 0!important;
-	-webkit-transform: translate3d(-50%, -100%, 0);
-	        transform: translate3d(-50%, -100%, 0);
+	transform: translate3d(-50%, -100%, 0);
 }
 
 .landing-ui-field-button-group .landing-ui-field-input [data-id="font-weight-bold"] {

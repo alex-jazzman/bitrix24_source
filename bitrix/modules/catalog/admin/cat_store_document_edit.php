@@ -80,7 +80,10 @@ function getStoreListForControl(?int $value, array $activeStores, array $allStor
 	$nonSelect = false;
 	$list = [];
 
-	if ($value !== null && !isset($allStores[$value]))
+	if (
+		($value !== null && !isset($allStores[$value]))
+		|| ($value === null && !isset($activeStores[$defaultStoreId]))
+	)
 	{
 		$value = null;
 		$nonSelect = true;
@@ -1219,7 +1222,7 @@ if (!empty($arResult['ELEMENT']) && is_array($arResult['ELEMENT']))
 				. ' id="CAT_DOC_STORE_FROM_' . $arRes['ID'] . '"'
 				. $isDisable . '>'
 				. getStoreListForControl(
-					$value['STORE_FROM'] ?? 0,
+					array_key_exists('STORE_FROM', $value) ? (int)$value['STORE_FROM'] : null,
 					$activeStores,
 					$allStores,
 					$defaultStoreId
@@ -1236,7 +1239,7 @@ if (!empty($arResult['ELEMENT']) && is_array($arResult['ELEMENT']))
 				. ' id="CAT_DOC_STORE_TO_' . $arRes['ID'] . '"'
 				. $isDisable . '>'
 				. getStoreListForControl(
-					$value['STORE_TO'] ?? 0,
+					array_key_exists('STORE_TO', $value) ? (int)$value['STORE_TO'] : null,
 					$activeStores,
 					$allStores,
 					$defaultStoreId

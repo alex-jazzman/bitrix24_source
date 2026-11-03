@@ -41,8 +41,12 @@ export class CatalogPopupItemShareAction
 						iconUrl: this.#item.iconUrl,
 						color: this.#item.color,
 						viewUrl: this.#item.viewUrl,
+						appChatWritingAllowed: this.#item.appChatWritingAllowed,
 					},
 					trigger,
+					onChatWritingChanged: (allowed: boolean) => {
+						this.#item.appChatWritingAllowed = allowed;
+					},
 				});
 			},
 		};

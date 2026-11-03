@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, main_core_events, main_polyfill_intersectionobserver, ui_vue3_vuex, im_v2_component_elements_loader, im_v2_component_elements_userListPopup, im_v2_const, im_v2_lib_counter, im_v2_lib_logger, im_v2_lib_theme, im_v2_lib_utils, im_v2_provider_service_notification, ui_system_menu, im_public, im_v2_application_core, im_v2_lib_rest, im_v2_provider_service_settings, im_v2_lib_notifier, im_v2_lib_analytics, im_v2_lib_user, ui_iconSet_api_vue, im_v2_lib_parser, im_v2_component_elements_attach, im_v2_lib_dateFormatter, ui_vue3_components_button, im_v2_component_elements_avatar, ui_reactionsSelect, im_v2_component_elements_chatTitle, im_v2_component_elements_popup, ui_iconSet_api_core, ui_entitySelector, main_popup, ui_datePicker, ui_system_input_vue, im_v2_css_classes, ui_system_chip_vue) {
+(function (exports, main_core, main_core_events, main_polyfill_intersectionobserver, ui_vue3_vuex, im_v2_component_elements_loader, im_v2_component_elements_userListPopup, im_v2_const, im_v2_lib_counter, im_v2_lib_logger, im_v2_lib_theme, im_v2_lib_utils, im_v2_provider_service_notification, ui_system_menu, im_public, im_v2_application_core, im_v2_lib_rest, im_v2_provider_service_settings, im_v2_lib_notifier, im_v2_lib_analytics, im_v2_lib_user, ui_iconSet_api_vue, im_v2_lib_parser, im_v2_component_elements_attach, im_v2_lib_dateFormatter, ui_vue3_components_button, im_v2_component_elements_avatar, ui_reactionsSelect, im_v2_component_elements_chatTitle, ui_notification, ui_system_typography_vue, ui_vue3_components_avatar, im_v2_component_elements_popup, ui_iconSet_api_core, ui_entitySelector, main_popup, ui_datePicker, ui_system_input_vue, im_v2_css_classes, ui_system_chip_vue) {
 	'use strict';
 
 	class NotificationReadService {
@@ -24,6 +24,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return;
 				}
 				const notification = this.store.getters['notifications/getById'](id);
+				if (!notification) {
+					return;
+				}
 				if (notification.read) {
 					return;
 				}
@@ -45,7 +48,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			const confirmNotificationIds = new Set(confirmNotifications.map(notification => notification.id));
 			const allIdsToRead = [...this.itemsToRead];
 			const notificationsToReadIds = allIdsToRead.filter(id => {
-				return !confirmNotificationIds.has(id);
+				if (confirmNotificationIds.has(id)) {
+					return false;
+				}
+				return this.store.getters['notifications/getById'](id) !== false;
 			});
 			if (notificationsToReadIds.length === 0) {
 				this.itemsToRead.clear();
@@ -144,22 +150,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.menu = new ui_system_menu.Menu({
 				id: 'im-notifications-header-menu',
 				items: this.getHeaderMenuItems(isReadAllAvailable),
-				closeOnItemClick: true,
+				// Closing is added per item by withMenuClose() instead.
+				closeOnItemClick: false,
 				autoHide: true
 			});
 			this.menu.show(bindElement);
 		}
 		getHeaderMenuItems(isReadAllAvailable) {
-			return [this.getOptionsItem(), this.getReadAllItem(isReadAllAvailable)];
+			return [this.getOptionsItem(), this.getReadAllItem(isReadAllAvailable)].map(item => this.withMenuClose(item));
 		}
-		getReadAllItem(isReadAllAvailable) {
+		withMenuClose(item) {
+			// An item without an action leaves the menu open: that is what unavailable looks like.
+			if (!item.onClick) {
+				return item;
+			}
 			return {
-				title: main_core.Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_BUTTON'),
-				design: isReadAllAvailable ? ui_system_menu.MenuItemDesign.Default : ui_system_menu.MenuItemDesign.Disabled,
+				...item,
 				onClick: () => {
-					this.notificationReadService.readAll();
+					item.onClick();
 					this.menu.close();
 				}
+			};
+		}
+		getReadAllItem(isReadAllAvailable) {
+			const item = {
+				title: main_core.Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_BUTTON'),
+				design: isReadAllAvailable ? ui_system_menu.MenuItemDesign.Default : ui_system_menu.MenuItemDesign.Disabled
+			};
+			if (!isReadAllAvailable) {
+				return item;
+			}
+			return {
+				...item,
+				onClick: () => this.notificationReadService.readAll()
 			};
 		}
 		getOptionsItem() {
@@ -169,7 +192,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					void im_public.Messenger.openSettings({
 						onlyPanel: im_v2_const.SettingsSection.notification
 					});
-					this.menu.close();
 				}
 			};
 		}
@@ -2114,6 +2136,236 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const MARKET_APP_INSTALL_STATE = Object.freeze({
+		pending: 'pending',
+		rejected: 'rejected',
+		installed: 'installed'
+	});
+	const MARKET_APP_INSTALL_ROLE = Object.freeze({
+		admin: 'admin',
+		user: 'user'
+	});
+	const RestAction = Object.freeze({
+		approve: 'rest.v2.Application.AppInstallRequest.approve',
+		reject: 'rest.v2.Application.AppInstallRequest.reject'
+	});
+
+	// @vue/component
+	const MarketAppInstallNotificationItem = {
+		name: 'MarketAppInstallNotificationItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			Avatar: ui_vue3_components_avatar.Avatar,
+			UiButton: ui_vue3_components_button.Button,
+			BaseNotificationItem,
+			TypographyText: ui_system_typography_vue.Text
+		},
+		props: {
+			notification: {
+				type: Object,
+				required: true
+			}
+		},
+		data() {
+			return {
+				dismissed: false,
+				isRejecting: false
+			};
+		},
+		computed: {
+			ButtonSize: () => ui_vue3_components_button.ButtonSize,
+			AirButtonStyle: () => ui_vue3_components_button.AirButtonStyle,
+			notificationItem() {
+				return this.notification;
+			},
+			componentParams() {
+				return this.notificationItem.params?.componentParams ?? null;
+			},
+			role() {
+				return this.componentParams?.role ?? MARKET_APP_INSTALL_ROLE.user;
+			},
+			state() {
+				return this.componentParams?.state ?? MARKET_APP_INSTALL_STATE.pending;
+			},
+			requestId() {
+				return this.componentParams?.requestId ?? 0;
+			},
+			appName() {
+				return this.componentParams?.appName ?? '';
+			},
+			appIconUrl() {
+				return this.componentParams?.appIconUrl ?? '';
+			},
+			avatarOptions() {
+				return {
+					picPath: this.appIconUrl,
+					title: this.appName,
+					size: 48
+				};
+			},
+			installUrl() {
+				return this.componentParams?.installUrl ?? '';
+			},
+			openUrl() {
+				return this.componentParams?.openUrl ?? '';
+			},
+			footerText() {
+				return this.componentParams?.footerText ?? '';
+			},
+			hasFooterText() {
+				return this.footerText.length > 0;
+			},
+			status() {
+				if (this.state === MARKET_APP_INSTALL_STATE.installed) {
+					return {
+						text: main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_STATUS_INSTALLED'),
+						icon: ui_iconSet_api_vue.Outline.CIRCLE_CHECK,
+						color: 'var(--ui-color-accent-main-success)'
+					};
+				}
+				if (this.state === MARKET_APP_INSTALL_STATE.rejected) {
+					return {
+						text: main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_STATUS_REJECTED'),
+						icon: ui_iconSet_api_vue.Outline.CIRCLE_CROSS,
+						color: 'var(--ui-color-accent-main-alert)'
+					};
+				}
+				return {
+					text: this.role === MARKET_APP_INSTALL_ROLE.admin ? main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_STATUS_PENDING_ADMIN') : main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_STATUS_PENDING_USER'),
+					icon: ui_iconSet_api_vue.Outline.CLOCK,
+					color: 'var(--ui-color-accent-main-primary)'
+				};
+			},
+			showInstallButtons() {
+				return this.role === MARKET_APP_INSTALL_ROLE.admin && this.state === MARKET_APP_INSTALL_STATE.pending;
+			},
+			showOpenButton() {
+				return this.role === MARKET_APP_INSTALL_ROLE.user && this.state === MARKET_APP_INSTALL_STATE.installed;
+			},
+			actionButtons() {
+				if (this.showInstallButtons) {
+					return [{
+						text: main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_BTN_GO_TO_INSTALL'),
+						style: ui_vue3_components_button.AirButtonStyle.FILLED,
+						handler: this.onGoToInstallClick,
+						disabled: this.isRejecting,
+						testId: 'im-content-notification-market-app-install__go-to-install-button'
+					}, {
+						text: main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_BTN_REJECT'),
+						style: ui_vue3_components_button.AirButtonStyle.OUTLINE_NO_ACCENT,
+						handler: this.onRejectClick,
+						disabled: this.isRejecting,
+						loading: this.isRejecting,
+						testId: 'im-content-notification-market-app-install__reject-button'
+					}];
+				}
+				if (this.showOpenButton) {
+					return [{
+						text: main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_BTN_OPEN'),
+						style: ui_vue3_components_button.AirButtonStyle.FILLED,
+						handler: this.onOpenClick,
+						testId: 'im-content-notification-market-app-install__open-button'
+					}];
+				}
+				return [];
+			}
+		},
+		methods: {
+			onGoToInstallClick() {
+				if (this.isRejecting) {
+					return;
+				}
+				if (this.installUrl) {
+					BX.SidePanel.Instance.open(this.installUrl);
+				}
+				if (this.requestId && !this.dismissed) {
+					im_v2_lib_rest.runAction(RestAction.approve, {
+						data: {
+							requestId: this.requestId
+						}
+					}).then(() => {
+						this.dismissed = true;
+					}).catch(error => {
+						im_v2_lib_logger.Logger.error('MarketAppInstall: approve failed', error);
+					});
+				}
+			},
+			onRejectClick() {
+				if (this.isRejecting) {
+					return;
+				}
+				this.isRejecting = true;
+				im_v2_lib_rest.runAction(RestAction.reject, {
+					data: {
+						requestId: this.requestId
+					}
+				}).then(() => {
+					this.$store.dispatch('notifications/delete', {
+						id: this.notificationItem.id
+					});
+				}).catch(error => {
+					this.isRejecting = false;
+					im_v2_lib_logger.Logger.error('MarketAppInstall: reject failed', error);
+					ui_notification.Center.notify({
+						content: main_core.Loc.getMessage('IM_NOTIFICATIONS_MARKET_APP_INSTALL_REJECT_ERROR'),
+						autoHideDelay: 5000
+					});
+				});
+			},
+			onOpenClick() {
+				if (this.openUrl) {
+					BX.SidePanel.Instance.open(this.openUrl);
+				}
+			}
+		},
+		template: `
+		<BaseNotificationItem :notification="notificationItem">
+			<template #content>
+				<div class="bx-im-content-notification-market-app-install__tile" data-test-id="im-content-notification-market-app-install">
+					<Avatar
+						class="bx-im-content-notification-market-app-install__tile-icon"
+						aria-hidden="true"
+						type="square"
+						:options="avatarOptions"
+					/>
+					<div class="bx-im-content-notification-market-app-install__tile-info">
+						<TypographyText size="sm" accent>{{ appName }}</TypographyText>
+						<div class="bx-im-content-notification-market-app-install__tile-status" data-test-id="im-content-notification-market-app-install__status">
+							<BIcon
+								aria-hidden="true"
+								:name="status.icon"
+								:size="18"
+								:color="status.color"
+							/>
+							<TypographyText size="xs">{{ status.text }}</TypographyText>
+						</div>
+					</div>
+				</div>
+				<div v-if="hasFooterText" class="bx-im-content-notification-market-app-install__footer-text">
+					<TypographyText size="sm">{{ footerText }}</TypographyText>
+				</div>
+				<div
+					v-if="actionButtons.length > 0"
+					class="bx-im-content-notification-market-app-install__buttons"
+				>
+					<UiButton
+						v-for="(button, index) in actionButtons"
+						:key="index"
+						:text="button.text"
+						:style="button.style"
+						:size="ButtonSize.SMALL"
+						:disabled="button.disabled"
+						:loading="button.loading"
+						:dataset="{ testId: button.testId }"
+						class="--air"
+						@click="button.handler"
+					/>
+				</div>
+			</template>
+		</BaseNotificationItem>
+	`
+	};
+
 	const NotificationComponents = {
 		TaskEntity: TaskNotificationItem,
 		CalendarEntity: CalendarNotificationItem,
@@ -2122,7 +2374,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		BizprocEntity: BizprocNotificationItem,
 		SonetEntity: SonetNotificationItem,
 		DefaultEntity: DefaultNotificationItem,
-		MailEntity: MailNotificationItem
+		MailEntity: MailNotificationItem,
+		MarketAppInstallRequestEntity: MarketAppInstallNotificationItem
 	};
 
 	const ItemPlaceholder = {
@@ -3850,7 +4103,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-notification__container --ui-context-content-light">
+		<div class="bx-im-content-notification__container --ui-context-content-light" data-testid="im-content-notification-container">
 			<div class="bx-im-content-notification__header-container">
 				<div class="bx-im-content-notification__header">
 					<div class="bx-im-content-notification__header-left-container">
@@ -3869,6 +4122,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<div v-if="hasNotifications" class="bx-im-content-notification__header-buttons-container">
 						<div
 							class="bx-im-content-notification__header-menu"
+							data-testid="im-content-notification-header-menu-button"
 							@click="onClickHeaderMenu"
 						></div>
 					</div>
@@ -3959,5 +4213,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.NotificationContent = NotificationContent;
 
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX, BX.Event, BX, BX.Vue3.Vuex, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Ui, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.UI.IconSet, BX.UI.EntitySelector, BX.Main, BX.UI.DatePicker, BX.UI.System.Input.Vue, BX.Messenger.v2.Css, BX.UI.System.Chip.Vue);
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX, BX.Event, BX, BX.Vue3.Vuex, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Ui, BX.Messenger.v2.Component.Elements, BX.UI.Notification, BX.UI.System.Typography.Vue, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.UI.IconSet, BX.UI.EntitySelector, BX.Main, BX.UI.DatePicker, BX.UI.System.Input.Vue, BX.Messenger.v2.Css, BX.UI.System.Chip.Vue);
 //# sourceMappingURL=notification-content.bundle.js.map

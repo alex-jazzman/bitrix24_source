@@ -1,0 +1,16 @@
+.sign-b2e-send__message {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.sign-b2e-send__message_counter {
+	align-self: flex-end;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.sign-b2e-send__message_counter.--error {
+	color: var(--ui-color-accent-main-alert);
+}

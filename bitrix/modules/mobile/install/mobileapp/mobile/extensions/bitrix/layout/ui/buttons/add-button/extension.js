@@ -5,14 +5,28 @@ jn.define('layout/ui/buttons/add-button', (require, exports, module) => {
 	const { plus, chevronRight } = require('assets/common');
 	const { merge } = require('utils/object');
 	const AppTheme = require('apptheme');
+	const { IconView } = require('ui-system/blocks/icon');
 	const color = AppTheme.colors.base4;
+
+	// the registry glyph fills about two thirds of its box: the 20px image slot draws it too
+	// small, 28 too large against the 15px label
+	const REGISTRY_ICON_SIZE = 24;
 
 	/**
 	 * @function AddButton
 	 */
 	function AddButton(props)
 	{
-		const { svg, text, showArrow = false, deepMergeStyles = {}, onClick } = props;
+		const {
+			icon,
+			iconColor,
+			iconSize = REGISTRY_ICON_SIZE,
+			svg,
+			text,
+			showArrow = false,
+			deepMergeStyles = {},
+			onClick,
+		} = props;
 		const styles = merge({
 			view: {
 				flexDirection: 'row',
@@ -46,12 +60,19 @@ jn.define('layout/ui/buttons/add-button', (require, exports, module) => {
 				style: styles.view,
 				onClick,
 			},
-			Image({
-				style: styles.image,
-				svg: {
-					content: svg || plus(color),
-				},
-			}),
+			icon
+				? IconView({
+					icon,
+					color: iconColor,
+					size: iconSize,
+				})
+				// callers without a registry counterpart still pass their own svg
+				: Image({
+					style: styles.image,
+					svg: {
+						content: svg || plus(color),
+					},
+				}),
 			Text({
 				style: styles.text,
 				numberOfLines: 1,

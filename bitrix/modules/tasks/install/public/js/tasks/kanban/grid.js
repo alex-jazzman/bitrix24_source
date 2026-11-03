@@ -4,6 +4,128 @@
 
 BX.namespace("BX.Tasks.Kanban");
 
+const KANBAN_ITEM_SELECTOR = ".main-kanban-item";
+const KANBAN_COLUMN_SELECTOR = ".main-kanban-column";
+const KANBAN_COLUMN_TITLE_SELECTOR = ".main-kanban-column-title";
+const KANBAN_ADD_ITEM_BUTTON_SELECTOR = ".main-kanban-column-add-item-button";
+const FOCUS_ZONE_MEMBER_SELECTOR = [
+	KANBAN_ITEM_SELECTOR,
+	KANBAN_COLUMN_TITLE_SELECTOR,
+	KANBAN_ADD_ITEM_BUTTON_SELECTOR,
+].join(", ");
+const CARD_CONTROL_SELECTOR = [
+	".tasks-kanban-item-title",
+	".tasks-kanban-task-mute",
+	".tasks-kanban-task-start",
+	".tasks-kanban-task-complete",
+	".tasks-kanban-item-tags button",
+	".tasks-kanban-item-epic",
+	"button.tasks-kanban-item-author-avatar",
+	".tasks-kanban-item-pointer .ui-chip",
+	".tasks-kanban-item-fields-item-value a",
+	".tasks-kanban-item-move",
+].join(", ");
+
+function normalizedText(node)
+{
+	return (node.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * MAP-01: the closed list of controls a logical focus snapshot is able to name. Every entry of it
+ * belongs to CARD_CONTROL_SELECTOR; a control outside the list lowers the accuracy of the snapshot
+ * to the card container and is never matched approximately.
+ * @type {Array<{kind: String, selector: String, stableKey: (Function|undefined)}>}
+ */
+const CARD_CONTROL_MAP = [
+	{ kind: "title", selector: ".tasks-kanban-item-title" },
+	{ kind: "mute", selector: ".tasks-kanban-task-mute" },
+	{ kind: "start", selector: ".tasks-kanban-task-start" },
+	{ kind: "complete", selector: ".tasks-kanban-task-complete" },
+	{
+		kind: "tag",
+		selector: ".tasks-kanban-item-tags button",
+		stableKey: (node) => normalizedText(node).replace(/^#/, ""),
+	},
+	{ kind: "epic", selector: ".tasks-kanban-item-epic" },
+	{ kind: "author", selector: ".tasks-kanban-item-author button.tasks-kanban-item-author-avatar" },
+	{
+		kind: "responsible",
+		selector: [
+			".tasks-kanban-item-responsible button.tasks-kanban-item-author-avatar",
+			".tasks-kanban-item-responsible-sprint button.tasks-kanban-item-author-avatar",
+		].join(", "),
+	},
+	{ kind: "deadline", selector: ".tasks-kanban-item-pointer .ui-chip" },
+	{
+		kind: "fieldLink",
+		selector: ".tasks-kanban-item-fields-item-value a",
+		stableKey: (node) => (node.getAttribute("href") || "") + "\n" + normalizedText(node),
+	},
+	{ kind: "move", selector: ".tasks-kanban-item-move" },
+];
+
+const CARD_CONTROL_KIND = "card";
+const MY_PLAN_COMPLETION_INTENT_APPROVE = "approve";
+const MY_PLAN_COMPLETION_ACTION_APPROVE = "approveMyPlanTask";
+const MY_PLAN_COMPLETION_ACTION_COMPLETE = "completeTask";
+
+function setControlsTabIndex(card, value)
+{
+	card.querySelectorAll(CARD_CONTROL_SELECTOR).forEach((control) => {
+		control.setAttribute("tabindex", value);
+	});
+}
+
+function namedTitleContainer(column)
+{
+	const title = column.getTitleContainer();
+
+	return (title.matches(KANBAN_COLUMN_TITLE_SELECTOR) ? title : null);
+}
+
+function setMembers(root)
+{
+	const nodes = Array.from(root.querySelectorAll(FOCUS_ZONE_MEMBER_SELECTOR));
+
+	return nodes.filter((node) => BX.UI.Accessibility.InteractivityChecker.isFocusable(node));
+}
+
+function currentMember(zone, from)
+{
+	const member = (from ? from.closest(FOCUS_ZONE_MEMBER_SELECTOR) : null);
+
+	return member || zone.getCurrentFocusedElement();
+}
+
+function orderedColumns(grid)
+{
+	return grid.getColumns().map((column) => column.getContainer());
+}
+
+function siblingColumnMember(grid, column, index, direction)
+{
+	const columns = orderedColumns(grid);
+	const start = columns.indexOf(column);
+	if (start === -1)
+	{
+		return null;
+	}
+
+	const step = (direction === "next" ? 1 : -1);
+
+	for (let target = start + step; target >= 0 && target < columns.length; target += step)
+	{
+		const members = setMembers(columns[target]);
+		if (members.length > 0)
+		{
+			return members[Math.min(index, members.length - 1)];
+		}
+	}
+
+	return null;
+}
+
 /**
  * @param options
  * @extends {BX.Kanban.Grid}
@@ -17,6 +139,8 @@ BX.Tasks.Kanban.Grid = function(options)
 	this.isSprintView = (options.isSprintView === 'Y');
 	this.isCollab = (options.isCollab === 'Y');
 	this.networkEnabled = options.networkEnabled || false;
+	this.currentUserId = Number(options.currentUserId) || 0;
+	this.isNewUser = (options.isNewUser === true);
 
 	this.gridHeader = Boolean(options.gridHeader);
 	this.parentTaskId = parseInt(options.parentTaskId, 10);
@@ -26,9 +150,19 @@ BX.Tasks.Kanban.Grid = function(options)
 	this.neighborGrids = [];
 	this.delayedQueueForChildGrid = {};
 	this.isBindEvents = false;
+	this.sortGeneration = 0;
+	this.myPlanCompletions = new Map();
+	this.filterGeneration = 0;
+	this.focusZone = null;
+	this.focusInHandler = null;
+	this.activeCard = null;
+	this.sourcePositions = new Map();
+	this.boardHintAnnounced = false;
+	this.pullBatch = null;
 
 	BX.Kanban.Grid.apply(this, arguments);
 
+	BX.addCustomEvent(this, "Kanban.Grid:onBeforeItemMoved", BX.delegate(this.onBeforeItemMoved, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemMoved", BX.delegate(this.onItemMoved, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemAddedAsync", BX.delegate(this.onItemAddedAsync, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnMoved", BX.delegate(this.onColumnMoved, this));
@@ -106,6 +240,229 @@ BX.Tasks.Kanban.Grid.prototype = {
 			mode: 'class',
 			data: data,
 		});
+	},
+
+	isMyPlanCompletionPending(taskId)
+	{
+		return this.myPlanCompletions.has(String(taskId));
+	},
+
+	setMyPlanCompletion(taskId, attempt)
+	{
+		if (attempt === null)
+		{
+			this.myPlanCompletions.delete(String(taskId));
+		}
+		else
+		{
+			this.myPlanCompletions.set(String(taskId), attempt);
+		}
+
+		const item = this.getItem(taskId);
+		if (item && item.task_complete)
+		{
+			item.task_complete.disabled = attempt !== null;
+		}
+	},
+
+	async completeMyPlanTask(taskId, columnId, intent)
+	{
+		if (this.isMyPlanCompletionPending(taskId))
+		{
+			return;
+		}
+
+		const attempt = { accepted: false, recoveryStarted: false };
+		this.setMyPlanCompletion(taskId, attempt);
+		const filterGeneration = this.filterGeneration;
+		const sortGeneration = this.sortGeneration;
+		try
+		{
+			const snapshot = await this.prepareMyPlanCompletion(taskId, intent);
+			const hasDialog = snapshot.groups.length > 0;
+			const { result, acceptedData } = await this.runMyPlanCompletion(
+				taskId,
+				columnId,
+				intent,
+				snapshot,
+				attempt,
+			);
+			if (!attempt.accepted)
+			{
+				if (result.state === BX.Tasks.V2.Lib.CompletionStates.Returned)
+				{
+					const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
+					TaskCard.showFullCard({ taskId: Number(taskId) });
+				}
+				if (result.state === BX.Tasks.V2.Lib.CompletionStates.Failed)
+				{
+					throw result.error;
+				}
+
+				return;
+			}
+
+			if (!this.applyMyPlanCompletion(taskId, acceptedData, filterGeneration, sortGeneration))
+			{
+				await this.recoverMyPlanCompletion(taskId);
+
+				return;
+			}
+
+			this.setMyPlanCompletion(taskId, null);
+			if (hasDialog)
+			{
+				const itemData = acceptedData.item.data;
+				const message = itemData.completed_supposedly
+					? 'TASKS_KANBAN_COMPLETION_REVIEW'
+					: (itemData.completed ? 'TASKS_KANBAN_COMPLETION_DONE' : 'TASKS_KANBAN_COMPLETION_SAVED')
+				;
+				BX.UI.Notification.Center.notify({ content: BX.message(message) });
+			}
+		}
+		catch (error)
+		{
+			if (attempt.accepted)
+			{
+				await this.recoverMyPlanCompletion(taskId);
+			}
+			else
+			{
+				const message = error?.errors?.[0]?.message || error?.message;
+				BX.Kanban.Utils.showErrorDialog(message || BX.message('TASKS_KANBAN_COMPLETION_FAILED'), true);
+			}
+		}
+		finally
+		{
+			if (!attempt.accepted)
+			{
+				this.setMyPlanCompletion(taskId, null);
+			}
+		}
+	},
+
+	async prepareMyPlanCompletion(taskId, intent)
+	{
+		const emptySnapshot = { groups: [], incompleteIds: [], firstIncompleteId: null };
+		if (intent === MY_PLAN_COMPLETION_INTENT_APPROVE)
+		{
+			return emptySnapshot;
+		}
+
+		const preparation = await this.ajax('prepareMyPlanTaskCompletion', { taskId });
+		const data = this.getMyPlanCompletionData(preparation);
+
+		return data.snapshot || emptySnapshot;
+	},
+
+	async runMyPlanCompletion(taskId, columnId, intent, snapshot, attempt)
+	{
+		let acceptedData = null;
+		const complete = async () => {
+			const action = intent === MY_PLAN_COMPLETION_INTENT_APPROVE
+				? MY_PLAN_COMPLETION_ACTION_APPROVE
+				: MY_PLAN_COMPLETION_ACTION_COMPLETE;
+			const payload = { taskId, columnId };
+			if (intent !== MY_PLAN_COMPLETION_INTENT_APPROVE)
+			{
+				payload.completeChecklist = true;
+			}
+
+			const response = await this.ajax(action, payload);
+			const result = this.getMyPlanCompletionData(response);
+			if (result.operationAccepted !== true)
+			{
+				throw new Error(BX.message('TASKS_KANBAN_COMPLETION_FAILED'));
+			}
+
+			acceptedData = result;
+			attempt.accepted = true;
+
+			return null;
+		};
+
+		const result = await BX.Tasks.V2.Lib.checkListCompletionPromptRunner.run(snapshot, {
+			complete,
+			completeWithChecklist: complete,
+		});
+
+		return { result, acceptedData };
+	},
+
+	applyMyPlanCompletion(taskId, acceptedData, filterGeneration, sortGeneration)
+	{
+		try
+		{
+			return acceptedData.item !== null
+				&& filterGeneration === this.filterGeneration
+				&& sortGeneration === this.sortGeneration
+				&& Boolean(this.getItem(taskId))
+				&& Boolean(this.getColumn(acceptedData.item.columnId))
+				&& this.updateItem(taskId, acceptedData.item) !== false
+			;
+		}
+		catch (error)
+		{
+			return false;
+		}
+	},
+
+	getMyPlanCompletionData(response)
+	{
+		if (response?.errors?.length > 0)
+		{
+			throw response.errors[0];
+		}
+		if (response?.status !== 'success' || !BX.Type.isPlainObject(response.data))
+		{
+			throw new Error(BX.message('TASKS_KANBAN_COMPLETION_FAILED'));
+		}
+
+		return response.data;
+	},
+
+	async recoverMyPlanCompletion(taskId)
+	{
+		const attempt = this.myPlanCompletions.get(String(taskId));
+		if (!attempt || attempt.recoveryStarted)
+		{
+			return;
+		}
+
+		attempt.recoveryStarted = true;
+		const notification = BX.UI.Notification.Center.notify({
+			content: BX.message('TASKS_KANBAN_COMPLETION_REFRESHING'),
+			autoHide: false,
+			closeButton: false,
+		});
+		try
+		{
+			await this.refreshMyPlanCompletionBoard();
+			this.setMyPlanCompletion(taskId, null);
+		}
+		catch (error)
+		{
+			BX.UI.Notification.Center.notify({
+				content: BX.message('TASKS_KANBAN_COMPLETION_REFRESH_FAILED'),
+				autoHide: false,
+				closeButton: false,
+				actions: [{
+					title: BX.message('TASKS_KANBAN_COMPLETION_RELOAD'),
+					events: { click: () => window.location.reload() },
+				}],
+			});
+		}
+		finally
+		{
+			notification.close();
+		}
+	},
+
+	async refreshMyPlanCompletionBoard()
+	{
+		const reloaded = new BX.Promise();
+		this.onApplyFilter(null, null, null, reloaded);
+		await reloaded;
 	},
 
 	/**
@@ -304,6 +661,12 @@ BX.Tasks.Kanban.Grid.prototype = {
 		});
 	},
 
+	/**
+	 * Applies a batch of realtime updates to the board. The batch is also the unit of the
+	 * announcement policy, see announcePullUpdate.
+	 * @param {Array} pullItems
+	 * @returns {Promise}
+	 */
 	executePullQueue(pullItems)
 	{
 		const pullHandlers = {
@@ -318,17 +681,26 @@ BX.Tasks.Kanban.Grid.prototype = {
 		};
 
 		return new Promise((resolve, reject) => {
-			pullItems.forEach((pullItem) => {
-				const { data: { action, actionParams, id }, taskData } = pullItem;
+			this.pullBatch = { updateAnnounced: false };
 
-				if (pullHandlers[action])
-				{
-					pullHandlers[action].apply(
-						this,
-						[actionParams, id, taskData],
-					);
-				}
-			});
+			try
+			{
+				pullItems.forEach((pullItem) => {
+					const { data: { action, actionParams, id }, taskData } = pullItem;
+
+					if (pullHandlers[action])
+					{
+						pullHandlers[action].apply(
+							this,
+							[actionParams, id, taskData],
+						);
+					}
+				});
+			}
+			finally
+			{
+				this.pullBatch = null;
+			}
 
 			resolve();
 		});
@@ -392,6 +764,15 @@ BX.Tasks.Kanban.Grid.prototype = {
 	isRealtimeMode: function()
 	{
 		return this.data.newTaskOrder === "actual";
+	},
+
+	/**
+	 * Returns true, if Kanban is sorted by a task field.
+	 * @return {boolean}
+	 */
+	isFieldSortMode: function()
+	{
+		return this.data.newTaskOrder === "field";
 	},
 
 	getGroupId: function()
@@ -458,10 +839,189 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		BX.Kanban.Grid.prototype.renderLayout.apply(this, arguments);
 
+		var outerContainer = this.getOuterContainer();
+
+		outerContainer.setAttribute("role", "group");
+		outerContainer.setAttribute("aria-label", BX.message("TASKS_KANBAN_A11Y_BOARD_LABEL"));
+		outerContainer.setAttribute("tabindex", "-1");
+		outerContainer.setAttribute("data-testid", "tasks-kanban-board");
+
+		this.activateFocusZone();
+
 		if (this.isScrumGridHeader())
 		{
 			this.observeScrumGridHeader();
 		}
+	},
+
+	activateFocusZone: function()
+	{
+		if (this.focusZone === null)
+		{
+			const outerContainer = this.getOuterContainer();
+
+			this.focusZone = new BX.UI.Accessibility.FocusZone(outerContainer, {
+				focusOutBehavior: "stop",
+				focusInStrategy: "previous",
+				focusableElementFilter: (element) => element.matches(FOCUS_ZONE_MEMBER_SELECTOR),
+				getNextFocusable: this.getNextFocusable.bind(this),
+			});
+
+			this.focusInHandler = this.onFocusIn.bind(this);
+			BX.bind(outerContainer, "focusin", this.focusInHandler);
+		}
+
+		this.focusZone.activate();
+	},
+
+	deactivateFocusZone: function()
+	{
+		if (this.focusZone === null)
+		{
+			return;
+		}
+
+		this.focusZone.deactivate();
+		BX.unbind(this.getOuterContainer(), "focusin", this.focusInHandler);
+
+		this.focusZone = null;
+		this.focusInHandler = null;
+		this.activeCard = null;
+	},
+
+	getNextFocusable: function(direction, from, event)
+	{
+		const current = currentMember(this.focusZone, from);
+		if (!current)
+		{
+			return null;
+		}
+
+		const column = current.closest(KANBAN_COLUMN_SELECTOR);
+		if (!column)
+		{
+			return current;
+		}
+
+		const members = setMembers(column);
+		const index = members.indexOf(current);
+		if (index === -1)
+		{
+			return current;
+		}
+
+		if (direction === "start" || direction === "end")
+		{
+			return direction === "start" ? members[0] : members[members.length - 1];
+		}
+
+		if (event.key === "ArrowUp" || event.key === "ArrowDown")
+		{
+			return members[index + (direction === "next" ? 1 : -1)] || current;
+		}
+
+		return siblingColumnMember(this, column, index, direction) || current;
+	},
+
+	onFocusIn: function(event)
+	{
+		const card = event.target.closest(KANBAN_ITEM_SELECTOR);
+		if (card !== this.activeCard)
+		{
+			if (this.activeCard)
+			{
+				setControlsTabIndex(this.activeCard, "-1");
+			}
+
+			this.activeCard = card;
+
+			if (card)
+			{
+				setControlsTabIndex(card, "0");
+			}
+		}
+
+		// the hint is told on any first entrance, including the one that lands on a column title
+		// and leaves the active card as it was
+		this.announceBoardHint();
+	},
+
+	/**
+	 * Tells the way around the board once per grid, on the first entrance of the focus: the move
+	 * command lives behind Tab inside a card and stays invisible until the focus reaches it. The
+	 * hint is deliberately kept out of the accessible name of a card, where it would be read on
+	 * each of the hundreds of cards of the board.
+	 * @returns {void}
+	 */
+	announceBoardHint: function()
+	{
+		if (this.boardHintAnnounced)
+		{
+			return;
+		}
+
+		this.boardHintAnnounced = true;
+
+		this.announce(BX.message("TASKS_KANBAN_A11Y_BOARD_HINT"), "polite");
+	},
+
+	restoreCardControlsTabIndex: function(item)
+	{
+		if (this.activeCard !== null && item.getContainer() === this.activeCard)
+		{
+			setControlsTabIndex(this.activeCard, "0");
+		}
+	},
+
+	isFocusInsideBoard: function()
+	{
+		const active = document.activeElement;
+
+		return (active !== null && this.getOuterContainer().contains(active));
+	},
+
+	/**
+	 * Tells whether the card is the one the user is standing on. Must be read before the change is
+	 * applied: re-attaching a card drops the focus to the body. The draft card of the quick task is
+	 * not a task and never speaks, hence the type check.
+	 * @param {BX.Kanban.Item|null} item
+	 * @returns {Boolean}
+	 */
+	isCardUnderFocus: function(item)
+	{
+		return (item instanceof BX.Tasks.Kanban.Item && item.holdsFocus());
+	},
+
+	/**
+	 * Where focus goes when a card is removed. Must be called before the node leaves the DOM: the
+	 * column re-renders as a whole, so every card of it is detached and re-attached, which drops
+	 * focus to the body even when the removed card is not the focused one.
+	 * @param {BX.Kanban.Item|null} item
+	 * @returns {HTMLElement|null}
+	 */
+	getFocusTargetForRemovedItem: function(item)
+	{
+		if (!item || !this.isFocusInsideBoard())
+		{
+			return null;
+		}
+
+		const focusedNode = document.activeElement;
+		const focusedCard = focusedNode.closest(KANBAN_ITEM_SELECTOR);
+		if (focusedCard === null || this.getItemByElement(focusedCard) !== item)
+		{
+			return focusedNode;
+		}
+
+		const column = item.getColumn();
+		const sibling = column.getNextItemSibling(item) || column.getPreviousItemSibling(item);
+
+		if (sibling)
+		{
+			return sibling.getContainer();
+		}
+
+		return namedTitleContainer(column) || this.getOuterContainer();
 	},
 
 	/**
@@ -579,7 +1139,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 			columnItems = columnOne.getItems();
 		}
 
-		if (
+		if (this.isFieldSortMode())
+		{
+			this.addItemInSortOrder(data, columnOne, columnItems);
+		}
+		else if (
 			gridData.newTaskOrder === "desc" || // new task - in top
 			this.isRealtimeMode()// realtime kanban
 		)
@@ -641,6 +1205,118 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 	},
 
+	/**
+	 * Put the item to its place among the loaded items of the column by the value of the sort axis.
+	 * @param {Object} data
+	 * @param {BX.Kanban.Column} column
+	 * @param {BX.Kanban.Item[]} columnItems
+	 * @returns {void}
+	 */
+	addItemInSortOrder: function(data, column, columnItems)
+	{
+		if (!column)
+		{
+			return;
+		}
+
+		var draftItem = column.getDraftItem();
+		// the draft of the inline creation is not a card: it has no value of the axis and is out of the total
+		var sortableItems = columnItems.filter(function(columnItem) {
+			return (columnItem !== draftItem);
+		});
+
+		var isItemUpdate = Boolean(this.getItem(data.id));
+		// unknown task joins the column only when there is no next page to keep it out of order
+		// getTotal() is not used: with no total set it answers the loaded count, hiding the unloaded tail
+		if (!isItemUpdate && sortableItems.length < column.total)
+		{
+			return;
+		}
+
+		var gridData = this.getData();
+		// the value is comparable only while it is calculated for the axis the kanban is sorted by
+		var isSortValueActual = (
+			Boolean(BX.Tasks.KanbanSortComparator)
+			&& data.data["sort_field"] === gridData.sortField
+		);
+		if (isSortValueActual)
+		{
+			data.targetId = BX.Tasks.KanbanSortComparator.findTargetId(
+				sortableItems,
+				data,
+				gridData.sortDirection
+			);
+		}
+
+		if (!isItemUpdate)
+		{
+			this.addItem(data);
+
+			return;
+		}
+
+		this.updateItem(data.id, data, true);
+		// null target means the end of the loaded part
+		if (isSortValueActual && !this.isItemPlacedBefore(data.id, column, data.targetId))
+		{
+			this.moveItem(data.id, data.columnId, data.targetId);
+		}
+	},
+
+	/**
+	 * Checks the item already stands right before the target one, or last in the column when there is no target.
+	 * @param {number|string} itemId
+	 * @param {BX.Kanban.Column} column
+	 * @param {number|string|null} targetId
+	 * @returns {boolean}
+	 */
+	isItemPlacedBefore: function(itemId, column, targetId)
+	{
+		var item = this.getItem(itemId);
+		if (!item || item.getColumn() !== column)
+		{
+			return false;
+		}
+
+		var items = column.getItems();
+		var nextItem = items[items.indexOf(item) + 1] || null;
+
+		return (nextItem === this.getItem(targetId));
+	},
+
+	/**
+	 * Move the just created task from the place of the draft to its place by the value of the sort axis.
+	 * Unlike a task coming with a pull event, the created one stays in the column even when the next page is not loaded.
+	 * @param {Object} data
+	 * @returns {void}
+	 */
+	placeAddedTaskInSortOrder: function(data)
+	{
+		var column = this.getColumn(data.columnId);
+		var gridData = this.getData();
+		// the value is comparable only while it is calculated for the axis the kanban is sorted by
+		if (
+			!column
+			|| !BX.Tasks.KanbanSortComparator
+			|| data.data["sort_field"] !== gridData.sortField
+		)
+		{
+			return;
+		}
+
+		var draftItem = column.getDraftItem();
+		var columnItems = column.getItems().filter(function(columnItem) {
+			return (columnItem !== draftItem);
+		});
+
+		// null target means the end of the loaded part
+		var targetId = BX.Tasks.KanbanSortComparator.findTargetId(columnItems, data, gridData.sortDirection);
+		if (!this.isItemPlacedBefore(data.id, column, targetId))
+		{
+			this.moveItem(data.id, data.columnId, targetId);
+		}
+	},
+
 	updateItemState(taskId, taskData)
 	{
 		if (taskData)
@@ -667,22 +1343,49 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		if (
 			notDestroy !== true
-			&& BX.Bitrix24
-			&& BX.Bitrix24.Slider
-			&& BX.Bitrix24.Slider.destroy
+			&& BX.SidePanel
+			&& BX.SidePanel.Instance
+			&& BX.SidePanel.Instance.destroy
 			&& this.getItem(item)
 		)
 		{
 			var url = this.getItem(item).getTaskUrl(item);
-			BX.Bitrix24.Slider.destroy(url);
+			BX.SidePanel.Instance.destroy(url);
 		}
 
+		const updatedItem = this.getItem(item);
+		const focusedBeforeUpdate = this.isCardUnderFocus(updatedItem);
+
 		BX.Kanban.Grid.prototype.updateItem.apply(this, arguments);
+
+		if (updatedItem)
+		{
+			this.restoreCardControlsTabIndex(updatedItem);
+		}
+
+		if (focusedBeforeUpdate)
+		{
+			this.announcePullUpdate(updatedItem);
+		}
 	},
 
 	removeItem: function(itemId)
 	{
+		const removedItem = this.getItem(itemId);
+		const focusedBeforeRemoval = this.isCardUnderFocus(removedItem);
+		const pendingFocus = this.getFocusTargetForRemovedItem(removedItem);
+
 		var item = BX.Kanban.Grid.prototype.removeItem.apply(this, arguments);
+
+		if (pendingFocus)
+		{
+			pendingFocus.focus();
+		}
+
+		if (pendingFocus && focusedBeforeRemoval)
+		{
+			this.announceItemRemoval(removedItem, pendingFocus);
+		}
 
 		BX.onCustomEvent(this, 'Kanban.Grid:onItemRemoved', {itemId: itemId});
 
@@ -781,11 +1484,21 @@ BX.Tasks.Kanban.Grid.prototype = {
 			return promise;
 		}
 
+		const sortGeneration = this.sortGeneration;
+
 		this.ajax('getColumnItems', {
 			pageId: column.getPagination().getPage() + 1,
 			columnId: column.getId()
 		}).then(
 			(response) => {
+				// the page was requested for the order left behind, its items would break the current one
+				if (sortGeneration !== this.sortGeneration)
+				{
+					promise.fulfill([]);
+
+					return;
+				}
+
 				const data = response.data;
 				const error = response.errors.pop();
 
@@ -800,6 +1513,14 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			},
 			(response) => {
+				// the page was requested for the order left behind, its failure concerns nobody now
+				if (sortGeneration !== this.sortGeneration)
+				{
+					promise.fulfill([]);
+
+					return;
+				}
+
 				const error = response.errors.pop().message;
 				BX.Kanban.Utils.showErrorDialog(error, true);
 				promise.reject("Error: " + error);
@@ -1034,7 +1755,20 @@ BX.Tasks.Kanban.Grid.prototype = {
 				if (data && !error)
 				{
 					this.analytics('task_create', 'quick_button', 'success');
+					// fulfill renders the card in place of the draft, the sort axis owns that place instead
 					promise.fulfill(data);
+					if (this.isGroupingMode())
+					{
+						this.resyncBoard({
+							queueAfterCurrent: true,
+							allowStaleChild: this.isChildScrumGrid(),
+							onlyAfterCurrent: !this.isChildScrumGrid(),
+						});
+					}
+					if (this.isFieldSortMode())
+					{
+						this.placeAddedTaskInSortOrder(data);
+					}
 				}
 				else if (error)
 				{
@@ -1053,6 +1787,246 @@ BX.Tasks.Kanban.Grid.prototype = {
 		);
 
 		return promise;
+	},
+
+	/**
+	 * Hook before item moved: the drop is cancelled while the action is denied.
+	 *
+	 * A drop that goes through takes the snapshot every rollback is built from. The event is
+	 * published by each drop path before the move, so the column the card is leaving is still
+	 * reachable here and not after it. Multi item drops carry no single item and are skipped.
+	 * @param {BX.Kanban.DragEvent} event
+	 * @returns {void}
+	 */
+	onBeforeItemMoved: function(event)
+	{
+		// the axis owns the place inside a column, so moving there must not write the manual order
+		if (this.isFieldSortMode() && this.isDropInsideOwnColumn(event))
+		{
+			event.denyAction();
+
+			// the move is refused here and never happens, so it has nothing to be rolled back from
+			return;
+		}
+
+		const item = event.getItem();
+		const column = (item ? item.getColumn() : null);
+		if (!column)
+		{
+			return;
+		}
+
+		// a second move of the same card, started before the server answered the first one, keeps
+		// the snapshot of the first: the rollback owes the user the position the card started from,
+		// not the one it reached in between
+		if (this.sourcePositions.has(item.getId()))
+		{
+			return;
+		}
+
+		const nextSibling = column.getNextItemSibling(item);
+
+		this.sourcePositions.set(item.getId(), {
+			itemId: item.getId(),
+			columnId: column.getId(),
+			nextSiblingId: (nextSibling ? nextSibling.getId() : null),
+			columnName: column.getName(),
+		});
+	},
+
+	/**
+	 * Drops the snapshot of an operation that ends without a move: the event is published before the
+	 * drop, which can still be refused, and a snapshot left behind would be spent on the next rollback.
+	 * @param {BX.Kanban.Item|null} item
+	 * @returns {void}
+	 */
+	forgetSourcePosition: function(item)
+	{
+		if (item)
+		{
+			this.sourcePositions.delete(item.getId());
+		}
+	},
+
+	/**
+	 * Checks the drop leaves the item in the column it already belongs to.
+	 * @param {BX.Kanban.DragEvent} event
+	 * @returns {boolean}
+	 */
+	isDropInsideOwnColumn: function(event)
+	{
+		var item = event.getItem();
+
+		// the item joins the target column later, in moveItem, so it still knows the column it is dragged from
+		return (Boolean(item) && item.getColumn() === event.getTargetColumn());
+	},
+
+	/**
+	 * Puts the card back where it was before the refused move and drops the snapshot.
+	 * @param {BX.Kanban.Item|null} item
+	 * @returns {void}
+	 */
+	restoreSourcePosition: function(item)
+	{
+		if (!item)
+		{
+			return;
+		}
+
+		const position = this.sourcePositions.get(item.getId());
+		this.forgetSourcePosition(item);
+		if (!position)
+		{
+			return;
+		}
+
+		const column = this.getColumn(position.columnId);
+		if (column)
+		{
+			this.moveItem(item, column, position.nextSiblingId);
+		}
+	},
+
+	/**
+	 * @param {String} message
+	 * @param {String} politeness
+	 * @returns {void}
+	 */
+	announce: function(message, politeness)
+	{
+		BX.UI.Accessibility.LiveAnnouncer.announce(message, politeness);
+	},
+
+	/**
+	 * @param {String} phraseId
+	 * @param {BX.Kanban.Item} item
+	 * @param {BX.Kanban.Column} column
+	 * @returns {String}
+	 */
+	moveMessage: function(phraseId, item, column)
+	{
+		return BX.message(phraseId)
+			.replace("#task#", item.getData().name)
+			.replace("#stage#", column.getName())
+		;
+	},
+
+	/**
+	 * Realtime updates reach the DOM silently by policy: the announcer holds every message for
+	 * seconds, so speaking a batch of pull updates would turn an active board into a stream of
+	 * speech. The single exception is the card the user is standing on, and even it speaks once
+	 * per batch, because the queue of the announcer drops a repeat only while the previous copy
+	 * is still queued. Everything else stays silent by decision: the other cards of the batch, the
+	 * count of what has changed, and the updates our own operations make, which those operations
+	 * announce themselves.
+	 * @param {BX.Tasks.Kanban.Item} item
+	 * @returns {void}
+	 */
+	announcePullUpdate: function(item)
+	{
+		// the move of this card has not ended yet: its outcome is announced by the operation, and
+		// two polite messages about one event are heard as two events
+		const movePending = this.sourcePositions.has(item.getId());
+
+		if (this.pullBatch === null || this.pullBatch.updateAnnounced || movePending)
+		{
+			return;
+		}
+
+		this.pullBatch.updateAnnounced = true;
+
+		this.announce(
+			BX.message("TASKS_KANBAN_A11Y_ITEM_UPDATED").replace("#task#", item.getData().name),
+			"polite"
+		);
+	},
+
+	/**
+	 * The card the user was standing on has left the board: removed by pull, dropped out of the
+	 * selection or hidden by the filter after its own move. The focus has already been carried to
+	 * another node by then, so the message names where it went; announcing it earlier would name a
+	 * place the focus has not reached yet.
+	 * @param {BX.Tasks.Kanban.Item} item
+	 * @param {HTMLElement} focusTarget
+	 * @returns {void}
+	 */
+	announceItemRemoval: function(item, focusTarget)
+	{
+		this.announce(
+			BX.message("TASKS_KANBAN_A11Y_ITEM_REMOVED")
+				.replace("#task#", item.getData().name)
+				// every focus target of the board (card, column title, board) is named by aria-label
+				.replace("#focus#", focusTarget.getAttribute("aria-label") || ""),
+			"polite"
+		);
+	},
+
+	/**
+	 * The server refused the move: the card goes back, the focus follows it and the outcome
+	 * is told in its own phrase, not by the error dialog the caller shows next.
+	 * @param {BX.Tasks.Kanban.Item} item
+	 * @param {BX.Kanban.Column} targetColumn
+	 * @returns {void}
+	 */
+	rollbackMove: function(item, targetColumn)
+	{
+		const heldFocus = item.holdsFocus();
+		const restoredOutside = this.hasExternalMoveRollback();
+		if (restoredOutside)
+		{
+			this.forgetSourcePosition(item);
+		}
+		else
+		{
+			this.restoreSourcePosition(item);
+		}
+
+		if (heldFocus)
+		{
+			if (restoredOutside)
+			{
+				// the outside rollback runs right after this call and re-attaches the card once
+				// more, dropping the node under focus to the body: the focus is given back after it
+				requestAnimationFrame(() => item.focusCard());
+			}
+			else
+			{
+				item.focusCard();
+			}
+		}
+
+		this.announce(this.moveMessage("TASKS_KANBAN_A11Y_MOVE_FAILED", item, targetColumn), "assertive");
+	},
+
+	/**
+	 * Tells whether the card of a refused move is put back outside of the board. The scrum template
+	 * keeps a snapshot of its own and moves the card back itself
+	 * (tasks.kanban/templates/scrum/src/finish.move.controller.js, handleItemMoved), so restoring
+	 * the position here as well would move one card twice.
+	 * @returns {Boolean}
+	 */
+	hasExternalMoveRollback: function()
+	{
+		return false;
+	},
+
+	/**
+	 * The completion chain refused the move: the card never left its stage, so there is nothing
+	 * to roll back - only the outcome to tell and the focus to give back from the closing dialog.
+	 * The outcome is told to everyone; the focus goes back only to the operation that owned it
+	 * before the dialog opened, so a drop of the mouse is left where the user left it.
+	 * @param {BX.Tasks.Kanban.Item} item
+	 * @param {Boolean} heldFocus
+	 * @returns {void}
+	 */
+	announceRejectedCompletion: function(item, heldFocus)
+	{
+		this.announce(BX.message("TASKS_KANBAN_A11Y_DOD_REJECTED"), "assertive");
+
+		if (heldFocus)
+		{
+			item.focusCard();
+		}
 	},
 
 	/**
@@ -1090,7 +2064,25 @@ BX.Tasks.Kanban.Grid.prototype = {
 				const error = response.errors.pop();
 				if (data && !error)
 				{
+					this.forgetSourcePosition(item);
+
+					// the second half of the focus return: updateItem re-renders the card and
+					// the column, and the node under focus is re-attached once more
+					const heldFocus = item.holdsFocus();
 					this.updateItem(itemId, data);
+					if (heldFocus)
+					{
+						item.focusCard();
+					}
+
+					this.announce(
+						beforeItem
+							? this.moveMessage("TASKS_KANBAN_A11Y_MOVE_DONE_BEFORE", item, targetColumn)
+								.replace("#neighbour#", beforeItem.getData().name)
+							: this.moveMessage("TASKS_KANBAN_A11Y_MOVE_DONE", item, targetColumn),
+						"polite"
+					);
+
 					if (gridData.kanbanType === "TL")
 					{
 						const deadlineText = data.data.deadline.rawValue ?? item.getDeadline();
@@ -1126,7 +2118,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 											: 'renew'
 									)
 								});
-								this.taskStatus.update()
+								return this.taskStatus.update()
 									.then((action) => {
 										const actions = top.BX.Tasks.Scrum.TaskStatus.actions;
 										switch (action)
@@ -1134,23 +2126,36 @@ BX.Tasks.Kanban.Grid.prototype = {
 											case actions.complete:
 											case actions.renew:
 											case actions.proceed:
-												this.updateParentTaskStatus(action);
-												break;
+												return this.updateParentTaskStatus(action);
 											case actions.skip:
-												break;
+												return null;
 										}
 									})
 								;
 							}
+						}).finally(() => {
+							this.resyncBoard({
+								queueAfterCurrent: true,
+								allowStaleChild: true,
+							});
+						});
+					}
+					else if (this.isGroupingMode())
+					{
+						this.resyncBoard({
+							queueAfterCurrent: true,
+							onlyAfterCurrent: true,
 						});
 					}
 				}
 				else if (error)
 				{
+					this.rollbackMove(item, targetColumn);
 					BX.Kanban.Utils.showErrorDialog(error.message, true);
 				}
 			},
 			(response) => {
+				this.rollbackMove(item, targetColumn);
 				BX.Kanban.Utils.showErrorDialog(BX.message('TASKS_KANBAN_MODAL_ERROR_PREFIX').concat(response.errors[0].message), true);
 			},
 		);
@@ -1160,7 +2165,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		if (inputAction === 'proceed')
 		{
-			this.ajax('proceedParentTask',{
+			return this.ajax('proceedParentTask',{
 				taskId: this.parentTaskId,
 			}).then(
 				(response) => {
@@ -1171,9 +2176,12 @@ BX.Tasks.Kanban.Grid.prototype = {
 					{
 						this.scrollToItem(parentItem);
 					}
-					setTimeout(() => {
-						BX.onCustomEvent(this, 'Kanban.Grid:onProceedParentTask', [this]);
-					}, 300);
+					return new Promise((resolve) => {
+						setTimeout(() => {
+							BX.onCustomEvent(this, 'Kanban.Grid:onProceedParentTask', [this]);
+							resolve();
+						}, 300);
+					});
 				},
 				(response) => {
 					BX.Kanban.Utils.showErrorDialog(response.errors[0].message, true);
@@ -1184,7 +2192,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 		{
 			const isCompleteAction = inputAction === 'complete';
 			const action = isCompleteAction ? 'completeParentTask' : 'renewParentTask';
-			this.ajax(action, {
+			return this.ajax(action, {
 				taskId: this.parentTaskId,
 				finishColumnId: this.getFinishColumn().getId(),
 				newColumnId: this.getNewColumn().getId()
@@ -1324,6 +2332,27 @@ BX.Tasks.Kanban.Grid.prototype = {
 		return `/bitrix/services/main/ajax.php?mode=class&c=${encodeURIComponent('bitrix:tasks.kanban')}`;
 	},
 
+	resyncBoard: function(options = {})
+	{
+		if (!this.isGroupingMode())
+		{
+			return Promise.resolve(false);
+		}
+
+		const promises = [];
+		BX.Event.EventEmitter.emit('tasks:kanban:resyncRequest', {
+			grid: this,
+			promises,
+			groupId: this.groupId,
+			allowStaleChild: options.allowStaleChild === true,
+			onlyAfterCurrent: options.onlyAfterCurrent === true,
+		});
+
+		return Promise.all(promises).then((results) => {
+			return results.length > 0 && results.every((result) => result !== false);
+		});
+	},
+
 	/**
 	 * Hook on main filter applied.
 	 * @param {String} filterId
@@ -1352,11 +2381,29 @@ BX.Tasks.Kanban.Grid.prototype = {
 			data.timeline = 'Y';
 		}
 
+		const sortGeneration = this.sortGeneration;
+		const filterGeneration = ++this.filterGeneration;
+
 		this.ajax('applyFilter', {}).then(
 			(response) => {
+				// the board was requested for the order left behind, a newer request is on its way and will fade it in
+				if (
+					sortGeneration !== this.sortGeneration
+					|| (this.getData().kanbanType === 'P' && filterGeneration !== this.filterGeneration)
+				)
+				{
+					if (promise)
+					{
+						promise.fulfill();
+					}
+
+					return;
+				}
+
 				// re-set some data
 				const data = response.data;
 				const gridData = this.getData();
+				const focusWasInsideBoard = this.isFocusInsideBoard();
 				if (typeof data.customFields !== "undefined")
 				{
 					gridData.customFields = data.customFields;
@@ -1367,6 +2414,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 				this.removeItems();
 				this.loadData(data);
+				if (focusWasInsideBoard)
+				{
+					this.getOuterContainer().focus();
+				}
 				if (promise)
 				{
 					promise.fulfill();
@@ -1378,6 +2429,15 @@ BX.Tasks.Kanban.Grid.prototype = {
 				{
 					promise.reject();
 				}
+
+				if (
+					sortGeneration !== this.sortGeneration
+					|| (this.getData().kanbanType === 'P' && filterGeneration !== this.filterGeneration)
+				)
+				{
+					return;
+				}
+
 				this.fadeIn();
 			}
 		);
@@ -1416,6 +2476,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				task.setDataKey("time_logs", task.getData().time_logs_start + delta);
 				task.setDataKey("in_progress", true);
 				task.render();
+				this.restoreCardControlsTabIndex(task);
 			}
 		}
 	},
@@ -1423,13 +2484,61 @@ BX.Tasks.Kanban.Grid.prototype = {
 	/**
 	 * Hook on sort selector.
 	 * @param {Object} data
+	 * @param {Object} [sourceParams] Parameters of the view the order was changed for.
 	 * @returns {void}
 	 */
-	onTaskSortChanged: function(data)
+	onTaskSortChanged: function(data, sourceParams)
 	{
+		if (!data || !data.newTaskOrder)
+		{
+			return;
+		}
+
+		// the event is global, and the senders telling no view keep the old behaviour of reacting everywhere
+		if (sourceParams && !this.isViewOfParams(sourceParams))
+		{
+			return;
+		}
+
 		var gridData = this.getData();
+		// only the field order changes the content of the columns, the other modes affect new tasks only
+		var needReload = (gridData.newTaskOrder === "field" || data.newTaskOrder === "field");
+
 		gridData.newTaskOrder = data.newTaskOrder;
+		gridData.sortField = data.sortField;
+		gridData.sortDirection = data.sortDirection;
 		this.setData(gridData);
+
+		if (needReload)
+		{
+			this.sortGeneration++;
+			this.resetPaginationPage();
+			this.onApplyFilter();
+		}
+	},
+
+	/**
+	 * Checks the parameters describe the view this grid shows.
+	 * @param {Object} params
+	 * @returns {boolean}
+	 */
+	isViewOfParams: function(params)
+	{
+		var ownParams = this.getData().params || {};
+
+		// a template builds the parameters of the grid and of the sort menu as separate objects and types the values
+		// differently, so the view is recognized by the content of the fields defining it
+		return [
+			'USER_ID',
+			'GROUP_ID',
+			'GROUP_ID_FORCED',
+			'PERSONAL',
+			'TIMELINE_MODE',
+			'SPRINT_ID',
+			'IS_COMPLETED_SPRINT',
+		].every(function(field) {
+			return (String(ownParams[field] ?? '') === String(params[field] ?? ''));
+		});
 	},
 
 	/**
@@ -1478,6 +2587,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				data.counter.value = (isExpiredCounts ? 1 : 0);
 				counter.update(data.counter.value);
 				item.render();
+				this.restoreCardControlsTabIndex(item);
 			}
 		});
 	},
@@ -1552,7 +2662,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 	refreshTask: function(taskId)
 	{
-		this.ajax('refreshTask',{
+		return this.ajax('refreshTask',{
 			taskId: taskId,
 			isScrum: this.isScrumGrid() ? 'Y' : 'N',
 			parentId: this.getParentTaskId()
@@ -1564,10 +2674,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 				{
 					this.addItemOrder(data);
 				}
-			},
-			(response) => {
 
+				return response;
 			},
+			() => null,
 		);
 	},
 
@@ -1876,7 +2986,8 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 	setKanbanRealtimeMode: function()
 	{
-		if(this.isRealtimeMode())
+		// the field order owns the places inside a column just like the realtime one does
+		if(this.isRealtimeMode() || this.isFieldSortMode())
 		{
 			this.getOuterContainer().classList.add("tasks-kanban-realtime-mode")
 		}
@@ -1884,7 +2995,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 	unSetKanbanRealtimeMode: function()
 	{
-		if(this.isRealtimeMode())
+		if(this.isRealtimeMode() || this.isFieldSortMode())
 		{
 			this.getOuterContainer().classList.remove("tasks-kanban-realtime-mode")
 		}

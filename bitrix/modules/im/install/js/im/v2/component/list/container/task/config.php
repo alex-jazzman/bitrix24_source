@@ -9,14 +9,17 @@ return [
 	'js' => 'dist/task-container.bundle.js',
 	'rel' => [
 		'im.v2.component.list.container.elements.create-chat-button',
+		'im.v2.component.list.container.elements.filter-row',
 		'im.v2.component.list.container.elements.header-menu',
 		'im.v2.component.list.items.task',
 		'im.v2.component.search',
 		'im.v2.const',
 		'im.v2.lib.analytics',
 		'im.v2.lib.entity-creator',
+		'im.v2.lib.feature',
 		'im.v2.lib.logger',
 		'main.core',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

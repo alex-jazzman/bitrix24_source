@@ -14,15 +14,26 @@ Extension::load([
 ]);
 
 $value = '';
+$currency = '';
 
 /** @var $arResult [] */
 if (isset($arResult['additionalParameters']['bVarsFromForm']) && $arResult['additionalParameters']['bVarsFromForm'])
 {
-	$value = $GLOBALS[$arResult['additionalParameters']['NAME']]['DEFAULT_VALUE'];
+	$settings = $GLOBALS[$arResult['additionalParameters']['NAME']] ?? [];
+	if (is_array($settings))
+	{
+		$value = $settings['DEFAULT_VALUE'] ?? '';
+		$currency = $settings['DEFAULT_CURRENCY'] ?? '';
+	}
 }
 elseif (isset($arResult['userField']) && is_array($arResult['userField']))
 {
-	$value = $arResult['userField']['SETTINGS']['DEFAULT_VALUE'];
+	$settings = $arResult['userField']['SETTINGS'] ?? [];
+	if (is_array($settings))
+	{
+		$value = $settings['DEFAULT_VALUE'] ?? '';
+		$currency = $settings['DEFAULT_CURRENCY'] ?? '';
+	}
 }
 else
 {
@@ -38,6 +49,8 @@ else
 	}
 
 	$value = MoneyType::formatToDB($defaultValue, $defaultCurrency);
+	$currency = $defaultCurrency;
 }
 
 $arResult['value'] = $value;
+$arResult['currency'] = $currency;

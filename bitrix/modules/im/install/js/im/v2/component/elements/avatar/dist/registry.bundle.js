@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_const, im_v2_lib_copilot, ui_avatar, ui_fonts_opensans, im_v2_lib_utils, im_v2_lib_channel, im_v2_lib_feature, main_core) {
+(function (exports, im_v2_const, im_v2_lib_copilot, im_v2_lib_feature, ui_avatar, main_core, ui_fonts_opensans, im_v2_lib_utils, im_v2_lib_channel) {
 	'use strict';
 
 	const AvatarSize = Object.freeze({
@@ -26,6 +26,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		[AvatarSize.XS]: 18,
 		[AvatarSize.XXS]: 14
 	});
+
+	/**
+	 * Pixel sizes used when the Air design is enabled.
+	 * Overrides on top of `AvatarSizeMap`; the exported base map is intentionally left untouched
+	 * so legacy (flag-off) branches keep their original geometry.
+	 */
+	const AvatarSizeMapAir = Object.freeze({
+		[AvatarSize.L]: 44
+	});
+
+	/**
+	 * Resolves the numeric avatar size for a given `AvatarSize` step.
+	 * When the Air design is enabled, Air-specific overrides take precedence.
+	 */
+	function getAvatarPixelSize(size, isAirDesignEnabled = false) {
+		if (isAirDesignEnabled && AvatarSizeMapAir[size]) {
+			return AvatarSizeMapAir[size];
+		}
+		return AvatarSizeMap[size];
+	}
 	const ChatAvatarType = {
 		selfChat: 'selfChat'
 	};
@@ -86,12 +106,31 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			backgroundColor: {
 				type: String,
 				default: ''
+			},
+			/**
+			 * When false, the built-in silhouette placeholder is suppressed
+			 * (used when an im-specific overlay, e.g. a chat-type icon, is rendered on top).
+			 * Read when the avatar instance is created, i.e. on `created` and on a `type` change.
+			 */
+			withDefaultUserpic: {
+				type: Boolean,
+				default: true
 			}
+		},
+		emits: ['imageDisplayStateChange'],
+		data() {
+			return {
+				// The image is actually painted, so the base underneath it can be hidden.
+				isImageLoaded: false
+			};
 		},
 		computed: {
 			AvatarSize: () => AvatarSize,
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
 			calculatedSize() {
-				return AvatarSizeMap[this.size];
+				return getAvatarPixelSize(this.size, this.isAirDesignEnabled);
 			}
 		},
 		watch: {
@@ -105,6 +144,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.avatar.setTitle(this.title);
 			},
 			url() {
+				this.brokenImageUrl = '';
 				this.setAvatarImage();
 			},
 			backgroundColor() {
@@ -112,10 +152,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
+			this.avatarImage = null;
+			this.avatarImageUrl = '';
+			// The last url the preload failed on. It only lives while that url stays the current one,
+			// so re-creating the avatar keeps the letters, while any other url is retried from scratch.
+			this.brokenImageUrl = '';
+			// The image is in the avatar and is not known to be broken (reported to the parent).
+			this.isImageDisplayed = false;
 			this.initAvatarClass();
 		},
 		mounted() {
 			this.renderAvatar();
+		},
+		beforeUnmount() {
+			this.unbindAvatarImageEvents();
 		},
 		methods: {
 			initAvatarClass() {
@@ -126,6 +176,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				this.setAvatarImage();
 				this.setBackgroundColor();
+				if (!this.withDefaultUserpic) {
+					this.avatar.removeDefaultUserPic();
+				}
 			},
 			renderAvatar() {
 				if (!this.avatar || !this.$refs.avatarContainer) {
@@ -134,12 +187,64 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.avatar.renderTo(this.$refs.avatarContainer);
 			},
 			setAvatarImage() {
-				if (!this.url) {
+				this.unbindAvatarImageEvents();
+				this.isImageLoaded = false;
+
+				// A url already known to be broken keeps the letters: re-creating the avatar instance
+				// on a type change must not report the image as displayed until the next error.
+				if (!this.url || this.url === this.brokenImageUrl) {
 					this.avatar.removeUserPic();
 					this.avatar.setTitle(this.title);
+					this.setImageDisplayState(false);
 					return;
 				}
+
+				// The image goes into the avatar right away, so no placeholder is ever shown in its
+				// place; the preload only tells us when it is painted and when it cannot be displayed.
 				this.avatar.setUserPic(this.url);
+				this.setImageDisplayState(true);
+				this.avatarImage = new Image();
+				this.avatarImageUrl = this.url;
+				main_core.Event.bind(this.avatarImage, 'load', this.handleAvatarImageLoad);
+				main_core.Event.bind(this.avatarImage, 'error', this.handleAvatarImageError);
+				this.avatarImage.src = this.avatarImageUrl;
+			},
+			handleAvatarImageLoad() {
+				const loadedUrl = this.avatarImageUrl;
+				this.unbindAvatarImageEvents();
+				if (loadedUrl !== this.url) {
+					return;
+				}
+				this.isImageLoaded = true;
+			},
+			handleAvatarImageError() {
+				const failedUrl = this.avatarImageUrl;
+				this.unbindAvatarImageEvents();
+				if (failedUrl !== this.url) {
+					return;
+				}
+				this.brokenImageUrl = failedUrl;
+				this.avatar.removeUserPic();
+				this.avatar.setTitle(this.title);
+				this.setImageDisplayState(false);
+			},
+			setImageDisplayState(isDisplayed) {
+				if (this.isImageDisplayed === isDisplayed) {
+					return;
+				}
+				this.isImageDisplayed = isDisplayed;
+				this.$emit('imageDisplayStateChange', isDisplayed);
+			},
+			unbindAvatarImageEvents() {
+				if (!this.avatarImage) {
+					this.avatarImageUrl = '';
+					return;
+				}
+				main_core.Event.unbind(this.avatarImage, 'load', this.handleAvatarImageLoad);
+				main_core.Event.unbind(this.avatarImage, 'error', this.handleAvatarImageError);
+				this.avatarImage.removeAttribute('src');
+				this.avatarImage = null;
+				this.avatarImageUrl = '';
 			},
 			setBackgroundColor() {
 				if (!this.backgroundColor) {
@@ -148,13 +253,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.avatar.setBaseColor(this.backgroundColor);
 			},
 			updateAvatarType() {
+				this.unbindAvatarImageEvents();
 				this.$refs.avatarContainer.innerHTML = '';
 				this.initAvatarClass();
 				this.renderAvatar();
 			}
 		},
 		template: `
-		<div class="bx-im-base-ui-avatar__container" ref="avatarContainer"></div>
+		<div
+			class="bx-im-base-ui-avatar__container"
+			:class="{ '--has-image': isImageLoaded }"
+			ref="avatarContainer"
+		></div>
 	`
 	};
 
@@ -197,8 +307,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const Avatar = {
-		name: 'MessengerAvatar',
+	const LegacyAvatar = {
+		name: 'MessengerLegacyAvatar',
 		props: {
 			dialogId: {
 				type: [String, Number],
@@ -288,7 +398,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return !this.isSpecialType;
 			},
 			showSpecialTypeIcon() {
-				if (!this.withSpecialTypes || !this.withSpecialTypeIcon || this.isChannel) {
+				if (!this.withSpecialTypes || !this.withSpecialTypeIcon || this.isChannel || this.dialog.type === im_v2_const.ChatType.vibecodeApp) {
 					return false;
 				}
 				return this.isSpecialType;
@@ -315,16 +425,164 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div :title="containerTitle" :class="containerClasses" class="bx-im-avatar__scope bx-im-avatar__container">
+		<div :title="containerTitle" :class="containerClasses" class="bx-im-legacy-avatar__scope bx-im-legacy-avatar__container">
 			<!-- Avatar -->
 			<template v-if="hasImage">
-				<img :src="avatarUrl" :alt="dialog.name" class="bx-im-avatar__content --image" @error="onImageLoadError" draggable="false"/>
-				<div v-if="showSpecialTypeIcon" :style="backgroundColorStyle" class="bx-im-avatar__special-type_icon"></div>
+				<img :src="avatarUrl" :alt="dialog.name" class="bx-im-legacy-avatar__content --image" @error="onImageLoadError" draggable="false"/>
+				<div v-if="showSpecialTypeIcon" :style="backgroundColorStyle" class="bx-im-legacy-avatar__special-type_icon"></div>
 			</template>
-			<div v-else-if="withAvatarLetters && avatarText" :style="backgroundColorStyle" class="bx-im-avatar__content --text">
+			<div v-else-if="withAvatarLetters && avatarText" :style="backgroundColorStyle" class="bx-im-legacy-avatar__content --text">
 				{{ avatarText }}
 			</div>
-			<div v-else :style="backgroundColorStyle" class="bx-im-avatar__content bx-im-avatar__icon"></div>
+			<div v-else :style="backgroundColorStyle" class="bx-im-legacy-avatar__content bx-im-legacy-avatar__icon"></div>
+		</div>
+	`
+	};
+
+	// Chat types rendered with a round avatar and letters/photo (i.e. not a square special placeholder).
+	const COMMON_TYPES = new Set([im_v2_const.ChatType.user, im_v2_const.ChatType.chat, im_v2_const.ChatType.open, im_v2_const.ChatType.lines, im_v2_const.ChatType.copilot, im_v2_const.ChatType.taskComments]);
+
+	// Special types that still show letters (in a square) instead of a chat-type icon.
+	const TYPES_WITH_LETTERS = new Set([im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel, im_v2_const.ChatType.taskComments]);
+	const SIZES_WITH_TEXT = new Set([AvatarSize.M, AvatarSize.L, AvatarSize.XL, AvatarSize.XXL, AvatarSize.XXXL]);
+
+	/**
+	 * Default avatar branch built on top of the design-system avatar (`ui.avatar`).
+	 * Used instead of `LegacyAvatar` when the Air design is enabled.
+	 *
+	 * Content priority (mirrors the legacy component): photo -> initials -> chat-type icon placeholder.
+	 * Regular users and group/open chats render as a round `AvatarRound`; special chat types
+	 * render as a square `AvatarSquare` with the chat-type icon layered on top as an im overlay.
+	 */
+	// @vue/component
+	const Avatar = {
+		name: 'MessengerAvatar',
+		components: {
+			BaseUiAvatar
+		},
+		props: {
+			dialogId: {
+				type: [String, Number],
+				default: 0
+			},
+			// Accepted for prop-compatibility with the dispatcher; not used by this branch.
+			contextDialogId: {
+				type: [String, Number, null],
+				default: null
+			},
+			customSource: {
+				type: String,
+				default: ''
+			},
+			size: {
+				type: String,
+				default: AvatarSize.M
+			},
+			withAvatarLetters: {
+				type: Boolean,
+				default: true
+			},
+			withSpecialTypes: {
+				type: Boolean,
+				default: true
+			},
+			withSpecialTypeIcon: {
+				type: Boolean,
+				default: true
+			},
+			withTooltip: {
+				type: Boolean,
+				default: true
+			},
+			backgroundColor: {
+				type: String,
+				default: ''
+			}
+		},
+		data() {
+			return {
+				isImageBroken: false
+			};
+		},
+		computed: {
+			AvatarType: () => AvatarType,
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			isSpecialType() {
+				return !COMMON_TYPES.has(this.dialog.type);
+			},
+			isSquare() {
+				return this.withSpecialTypes && this.isSpecialType;
+			},
+			avatarClass() {
+				return this.isSquare ? ui_avatar.AvatarSquare : null;
+			},
+			avatarUrl() {
+				return this.customSource.length > 0 ? this.customSource : this.dialog.avatar;
+			},
+			// An image that is still loading counts as displayed: it is already in the avatar,
+			// so nothing must take its place until we know it cannot be shown.
+			hasImage() {
+				return Boolean(this.avatarUrl) && !this.isImageBroken;
+			},
+			isEnoughSizeForText() {
+				return SIZES_WITH_TEXT.has(this.size.toUpperCase());
+			},
+			showAvatarLetters() {
+				if (TYPES_WITH_LETTERS.has(this.dialog.type)) {
+					return true;
+				}
+				return !this.isSpecialType;
+			},
+			hasLetters() {
+				return this.withAvatarLetters && this.showAvatarLetters && this.isEnoughSizeForText && Boolean(this.dialog.name);
+			},
+			showTypeIcon() {
+				return !this.hasImage && !this.hasLetters;
+			},
+			avatarTitle() {
+				// Pass the title only when initials should be shown, so the DS base doesn't
+				// derive initials where a chat-type icon must be rendered instead.
+				return this.hasLetters ? this.dialog.name : '';
+			},
+			// The base under the image is hidden once the image is painted, so the colour is always
+			// passed: while the image is pending it is the chat colour that fills the avatar.
+			computedBackgroundColor() {
+				return this.backgroundColor || this.dialog.color;
+			},
+			typeIconClasses() {
+				const typeClass = im_v2_const.ChatType[this.dialog.type] ? `--${this.dialog.type}` : '--default';
+				return [typeClass];
+			},
+			containerTitle() {
+				return this.withTooltip ? this.dialog.name : '';
+			}
+		},
+		watch: {
+			avatarUrl() {
+				this.isImageBroken = false;
+			}
+		},
+		methods: {
+			handleImageDisplayStateChange(isDisplayed) {
+				this.isImageBroken = !isDisplayed;
+			}
+		},
+		template: `
+		<div class="bx-im-avatar__scope" :title="containerTitle">
+			<!-- The DS silhouette is never used here: the image, the letters or the type icon take its place -->
+			<BaseUiAvatar
+				:type="AvatarType.default"
+				:avatarClass="avatarClass"
+				:size="size"
+				:url="avatarUrl"
+				:title="avatarTitle"
+				:backgroundColor="computedBackgroundColor"
+				:withDefaultUserpic="false"
+				@imageDisplayStateChange="handleImageDisplayStateChange"
+			/>
+			<div v-if="showTypeIcon" class="bx-im-avatar__type-icon" :class="typeIconClasses"></div>
 		</div>
 	`
 	};
@@ -394,9 +652,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		template: `
 		<BaseUiAvatar
 			:type="avatarType"
-			:key="avatarKey" 
-			:title="dialogName" 
-			:size="size" 
+			:key="avatarKey"
+			:title="dialogName"
+			:size="size"
 			:url="dialogAvatarUrl"
 			:backgroundColor="backgroundColor"
 		/>
@@ -559,7 +817,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const ExtranetChatAvatar = {
 		name: 'ExtranetChatAvatar',
 		components: {
-			Avatar
+			LegacyAvatar
 		},
 		props: {
 			dialogId: {
@@ -606,12 +864,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<Avatar
+		<LegacyAvatar
 			:dialogId="dialogId"
-			:title="dialogName" 
-			:size="size" 
-			:url="dialogAvatarUrl" 
-			:backgroundColor="extranetBackgroundColor" 
+			:title="dialogName"
+			:size="size"
+			:url="dialogAvatarUrl"
+			:backgroundColor="extranetBackgroundColor"
 		/>
 	`
 	};
@@ -685,10 +943,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
 			sizeStyles() {
+				const pixelSize = getAvatarPixelSize(this.size, this.isAirDesignEnabled);
 				return {
-					width: `${AvatarSizeMap[this.size]}px`,
-					height: `${AvatarSizeMap[this.size]}px`
+					width: `${pixelSize}px`,
+					height: `${pixelSize}px`
 				};
 			}
 		},
@@ -815,9 +1077,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					component: ExtranetChatAvatar
 				}];
 			},
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
+			defaultAvatarComponent() {
+				return this.isAirDesignEnabled ? Avatar : LegacyAvatar;
+			},
 			avatarComponent() {
 				const matchingItem = this.avatarComponentConfig.find(item => item.condition());
-				return matchingItem ? matchingItem.component : Avatar;
+				return matchingItem ? matchingItem.component : this.defaultAvatarComponent;
 			}
 		},
 		created() {
@@ -886,6 +1154,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			user() {
 				return this.$store.getters['users/get'](this.authorId, true);
 			},
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
+			defaultAvatarComponent() {
+				return this.isAirDesignEnabled ? Avatar : LegacyAvatar;
+			},
 			avatarComponent() {
 				const avatarMap = {
 					[im_v2_const.UserType.extranet]: ExtranetUserAvatar,
@@ -893,7 +1167,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					[im_v2_const.UserType.guest]: CollaberAvatar,
 					[im_v2_const.UserType.bot]: this.getBotAvatar()
 				};
-				return avatarMap[this.user.type] ?? Avatar;
+				return avatarMap[this.user.type] ?? this.defaultAvatarComponent;
 			},
 			isAiAssistantMarta() {
 				return this.$store.getters['users/bots/isAiAssistant'](this.authorId);
@@ -905,7 +1179,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return MartaAvatar;
 				}
 				const copilotManager = new im_v2_lib_copilot.CopilotManager();
-				return copilotManager.isCopilotChatOrBot(this.authorId) ? CopilotAvatar : Avatar;
+				return copilotManager.isCopilotChatOrBot(this.authorId) ? CopilotAvatar : this.defaultAvatarComponent;
 			}
 		},
 		template: `
@@ -963,11 +1237,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isCollabType() {
 				return this.type === EmptyAvatarType.collab;
 			},
+			isCollabPlaceholder() {
+				return !main_core.Type.isStringFilled(this.url);
+			},
 			collabEmptyAvatarUrl() {
-				if (!main_core.Type.isStringFilled(this.url)) {
-					return COLLAB_EMPTY_AVATAR_URL;
-				}
-				return this.url;
+				return this.isCollabPlaceholder ? COLLAB_EMPTY_AVATAR_URL : this.url;
 			},
 			containerClasses() {
 				const classes = [`--size-${this.size.toLowerCase()}`];
@@ -985,6 +1259,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:size="size"
 			:title="title"
 			:backgroundColor="Color.collab10"
+			:class="{ '--placeholder-image': isCollabPlaceholder }"
 		/>
 		<div v-else class="bx-im-empty-avatar__container" :class="containerClasses">
 			<div v-if="!url" class="bx-im-empty-avatar__avatar --default"></div>
@@ -994,11 +1269,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.AvatarSize = AvatarSize;
+	exports.BaseUiAvatar = BaseUiAvatar;
 	exports.ChatAvatar = ChatAvatar;
 	exports.ChatAvatarType = ChatAvatarType;
 	exports.EmptyAvatar = EmptyAvatar;
 	exports.EmptyAvatarType = EmptyAvatarType;
 	exports.MessageAvatar = MessageAvatar;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.UI, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI, BX, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

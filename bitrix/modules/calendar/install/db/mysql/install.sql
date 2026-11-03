@@ -242,7 +242,10 @@ CREATE TABLE b_calendar_queue_message (
 	ID int NOT NULL AUTO_INCREMENT,
 	MESSAGE text NOT NULL,
 	DATE_CREATE datetime NULL,
-	PRIMARY KEY (ID)
+	STATUS varchar(10) NOT NULL DEFAULT 'new',
+	ATTEMPTS int NOT NULL DEFAULT 0,
+	PRIMARY KEY (ID),
+	INDEX ix_cal_queue_msg_status_id (STATUS, ID)
 );
 
 CREATE TABLE b_calendar_queue_handled_message(
@@ -252,7 +255,8 @@ CREATE TABLE b_calendar_queue_handled_message(
 	HASH varchar(255) NULL,
 	DATE_CREATE datetime NULL,
 	PRIMARY KEY (ID),
-	INDEX ix_cal_queue_handled_id_hash (QUEUE_ID, HASH)
+	INDEX ix_cal_queue_handled_id_hash (QUEUE_ID, HASH),
+	INDEX ix_cal_queue_handled_message_id (MESSAGE_ID)
 );
 
 CREATE TABLE b_calendar_sharing_link (

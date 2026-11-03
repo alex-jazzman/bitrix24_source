@@ -5,11 +5,18 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 	const { Type } = require('type');
 	const { inRange } = require('utils/number');
 	const { Color, Indent } = require('tokens');
-	const { isEmpty } = require('utils/object');
+	const { isEmpty, isFunction } = require('utils/object');
+	const { PropTypes } = require('utils/validation');
 	const { Text } = require('ui-system/typography/text');
 	const { PureComponent } = require('layout/pure-component');
 	const { ElementsStack, ElementsStackDirection } = require('elements-stack');
-	const { Avatar, AvatarClass, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
+	const {
+		Avatar,
+		AvatarClass,
+		AvatarShape,
+		AvatarEntityType,
+		propTypes: avatarPropTypes,
+	} = require('ui-system/blocks/avatar');
 
 	const OUTLINE_INDENT = {
 		MIN: 2,
@@ -30,6 +37,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 	 * 	@property {boolean} [useLetterImage=true]
 	 * 	@property {boolean} [withRedux=true]
 	 * 	@property {Color} [backgroundColor=Color.bgSecondary]
+	 * 	@property {number} [backgroundColorOpacity]
 	 * 	@property {Object} [style={}]
 	 * 	@property {Function} [onClick]
 	 * 	@property {Function} [restView]
@@ -59,9 +67,9 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		}
 
 		renderRestElement = (restCount) => {
-			const { restView = {} } = this.props;
+			const { restView } = this.props;
 
-			if (restView)
+			if (isFunction(restView))
 			{
 				return restView(restCount);
 			}
@@ -137,10 +145,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 
 		renderAvatar(params)
 		{
-			const { elementType } = this.props;
-
 			return Avatar({
-				elementType,
 				onClick: this.handleOnClick,
 				testId: this.getTestId(),
 				outline: this.getOutline(),
@@ -164,10 +169,8 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 
 		getAvatarStyle()
 		{
-			const { backgroundColor } = this.props;
-
 			return {
-				backgroundColor: Color.resolve(backgroundColor, Color.bgSecondary).toHex(),
+				backgroundColor: this.getBackgroundColor(),
 			};
 		}
 
@@ -192,11 +195,18 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 			return size;
 		}
 
+		/**
+		 * The ring around every avatar is a cutout down to the surface the stack lies on, so it is painted
+		 * with the color of that surface. A translucent surface has no such color to copy, and the owner of
+		 * the stack asks for a transparent ring with `backgroundColorOpacity: 0` instead.
+		 *
+		 * @return {string}
+		 */
 		getBackgroundColor()
 		{
-			const { backgroundColor } = this.props;
+			const { backgroundColor, backgroundColorOpacity } = this.props;
 
-			return Color.resolve(backgroundColor, Color.bgSecondary).toHex();
+			return Color.resolve(backgroundColor, Color.bgSecondary).toHex(backgroundColorOpacity);
 		}
 
 		/**
@@ -288,10 +298,15 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 			PropTypes.oneOfType([
 				PropTypes.number,
 				PropTypes.string,
-				PropTypes.shape(AvatarClass.propTypes),
+				PropTypes.shape({
+					...avatarPropTypes,
+					// the stack passes its own testId to every avatar it renders
+					testId: PropTypes.string,
+				}),
 			]),
 		).isRequired,
 		style: PropTypes.object,
+		backgroundColorOpacity: PropTypes.number,
 		offset: PropTypes.oneOfType([PropTypes.number, PropTypes.instanceOf(Indent)]),
 		outline: PropTypes.instanceOf(Indent),
 		direction: PropTypes.instanceOf(ElementsStackDirection),

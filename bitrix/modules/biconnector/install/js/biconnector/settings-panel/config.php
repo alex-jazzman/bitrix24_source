@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/settings-panel.bundle.css',
 	'js' => 'dist/settings-panel.bundle.js',
 	'rel' => [
+		'biconnector.error-message',
 		'date',
 		'main.core',
 		'main.popup',

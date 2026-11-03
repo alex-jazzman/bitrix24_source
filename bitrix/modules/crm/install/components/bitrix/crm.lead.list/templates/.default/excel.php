@@ -138,6 +138,9 @@ else
 						case 'COMMENTS':
 							$leadData['COMMENTS'] = isset($arLead['COMMENTS']) ? htmlspecialcharsback($arLead['COMMENTS']) : '';
 							break;
+						case 'OPENED':
+							$leadData['OPENED'] = ($arLead['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+							break;
 						default:
 							if(isset($arResult['LEAD_UF'][$i]) && isset($arResult['LEAD_UF'][$i][$arHead['id']]))
 								$leadData[$headerID] = $arResult['LEAD_UF'][$i][$headerID];

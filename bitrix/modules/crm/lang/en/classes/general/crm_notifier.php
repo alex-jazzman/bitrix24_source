@@ -1,4 +1,6 @@
 <?php
+$MESS['CRM_NOTIFY_PRODUCT_SOURCE_DESCRIPTION'] = 'Deals, leads and customer activities.';
+$MESS['CRM_NOTIFY_PRODUCT_SOURCE_NAME'] = 'CRM';
 $MESS["CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING"] = "New email received";
 $MESS["CRM_NOTIFY_SCHEME_CALLBACK"] = "Callback requested";
 $MESS["CRM_NOTIFY_SCHEME_ENTITY_ASSIGNED_BY"] = "You were assigned as a responsible person";

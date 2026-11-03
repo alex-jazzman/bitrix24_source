@@ -1,5 +1,6 @@
 import { Type } from 'main.core';
-import { type Property } from '../../const/type';
+import { type Property, type RenderModeValue } from '../../const/type';
+import { RenderMode } from '../../const/const';
 
 export function isMultiple(property: Property): boolean
 {
@@ -19,6 +20,25 @@ export function isSelectable(property: Property): boolean
 	}
 
 	return toBool(property.AllowSelection);
+}
+
+/**
+ * Whether value insertion is open to this field at all, mode included - the rule the core
+ * actually lives by, as opposed to the raw flag isSelectable() reads. Public mode is the live
+ * document rather than the designer, so an unsaid AllowSelection reads as "no" there and keeps
+ * reading as "yes" everywhere else. Designer and NewDesigner are the same side of that line.
+ *
+ * Mirrors the backend, where Base::renderControlSingle draws the expression companion strictly
+ * under $allowSelection.
+ */
+export function isSelectionAllowed(property: Property, renderMode: RenderModeValue): boolean
+{
+	if (renderMode === RenderMode.Public)
+	{
+		return toBool(property.AllowSelection);
+	}
+
+	return isSelectable(property);
 }
 
 export function isRequired(property: Property): boolean

@@ -122,6 +122,12 @@
 					autoscroll: stepConfig.autoscroll ?? null,
 					iconSrc: stepConfig.iconSrc ?? null
 				};
+
+				// Guide reads any value >= 0 as an explicit padding, and `null` passes that check too,
+				// so the key stays absent unless the step really asked for a padding of its own.
+				if (main_core.Type.isNumber(stepConfig.areaPadding)) {
+					step.areaPadding = stepConfig.areaPadding;
+				}
 				if (stepConfig.useDynamicTarget) {
 					const eventName = stepConfig.eventName ?? this.#getDefaultStepEventName(step.id);
 					main_core_events.EventEmitter.subscribeOnce(eventName, this.#showStepByEvent.bind(this));
@@ -158,7 +164,7 @@
 			const {
 				disableBannerDispatcher = false
 			} = this.#options;
-			void this.tourPromise.then(exports$1 => {
+			void this.tourPromise.then(exports => {
 				const {
 					stepId,
 					target
@@ -172,7 +178,7 @@
 				step.target = target;
 				const {
 					Guide
-				} = exports$1;
+				} = exports;
 				const guide = this.createGuideInstance(Guide, [step], true);
 				this.setStepPopupOptions(guide.getPopup());
 				if (disableBannerDispatcher === false) {
@@ -199,18 +205,27 @@
 		}
 		#runGuide(guide, onDone = null) {
 			let canShowGuide = !this.#isAnyPopupShown();
-			const {
-				target
-			} = guide.steps[0];
-			if (canShowGuide && main_core.Type.isStringFilled(target)) {
-				canShowGuide = this.#getAvailableTarget(target) !== null;
+			const [firstStep] = guide.steps;
+			if (canShowGuide && main_core.Type.isStringFilled(firstStep.target)) {
+				// Presence in the DOM is not enough: a card opened on a tab of its own keeps the nodes of
+				// the hidden one, and start() draws the guide over them, unlike showNextStep() which asks
+				// the step first. Asking here puts both routes below on one answer.
+				canShowGuide = firstStep.isTargetVisible();
 			}
 			if (canShowGuide) {
 				this.#onGuideFinish(guide, onDone);
 				void this.#onBeforeShow(guide).then(() => {
-					guide.showNextStep();
+					// Queued tours keep their legacy route: only a multi-step one needs the overlay,
+					// single-step ones are shown as before regardless of showOverlayFromFirstStep.
+					if (guide.steps.length > 1) {
+						guide.start();
+					} else {
+						guide.showNextStep();
+					}
 				});
-			} else {
+			} else if (onDone) {
+				// A tour that disables the dispatcher runs without a callback, and refusing to show it
+				// used to throw here instead of simply ending.
 				onDone();
 			}
 		}
@@ -249,10 +264,10 @@
 			if (this.#isAnyPopupShown()) {
 				return;
 			}
-			void this.whatNewPromise.then(exports$1 => {
+			void this.whatNewPromise.then(exports => {
 				const {
 					WhatsNew
-				} = exports$1;
+				} = exports;
 				this.#popup = new WhatsNew({
 					slides: this.#slides,
 					popupOptions: {
@@ -288,7 +303,7 @@
 			if (steps.length === 0) {
 				return;
 			}
-			void this.tourPromise.then(exports$1 => {
+			void this.tourPromise.then(exports => {
 				if (ActionViewMode.tourInstances.some(existedGuide => existedGuide.getPopup()?.isShown())) {
 					return; // do not allow many guides at the same time
 				}
@@ -297,7 +312,7 @@
 				}
 				const {
 					Guide
-				} = exports$1;
+				} = exports;
 				const guide = this.createGuideInstance(Guide, steps, this.#steps.length <= 1);
 				ActionViewMode.tourInstances.push(guide);
 				this.setStepPopupOptions(guide.getPopup());

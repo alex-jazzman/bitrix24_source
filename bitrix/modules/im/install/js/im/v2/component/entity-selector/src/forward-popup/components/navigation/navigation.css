@@ -1,0 +1,22 @@
+/* the gap under the search input belongs to the navigation: without tabs the list follows the input directly */
+.bx-im-entity-selector-forward__container > .bx-im-scroll-with-gradient__container {
+	flex: none;
+	height: auto;
+	margin-top: var(--ui-space-stack-md2);
+}
+
+.bx-im-entity-selector-forward-navigation__section_container {
+	display: flex;
+	align-items: center;
+	width: max-content;
+	gap: var(--ui-space-inline-2xs2);
+	padding: 6px var(--ui-space-inset-md);
+}
+
+/* The tab set scrolls horizontally inside ScrollWithGradient, and that container clips anything drawn
+   outside a tab, so the ring goes inside the tab bounds. The selector is semantic on purpose: the
+   focusable root of a tab is a chip of the design system, whose classes are not ours to hook into. */
+.bx-im-entity-selector-forward-navigation__section_container [role="tab"]:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}

@@ -6,3 +6,4 @@ $MESS['TASKS_RECYCLEBIN_RESTORE_CONFIRM'] = 'Хотите восстановит
 $MESS['TASKS_RECYCLEBIN_REMOVE_CONFIRM'] = 'Задача будут удалена безвозвратно. Вы уверены что хотите продолжить удаление? ';
 
 $MESS['TASKS_RECYCLEBIN_TASK_MOVED_TO_RECYCLEBIN'] = 'Задача перемещена в <a href="#RECYCLEBIN_URL#">корзину</a>';
+$MESS['TASKS_RECYCLEBIN_RESTORE_RESTRICTED'] = 'Восстановление задачи из корзины недоступно на текущем тарифе';

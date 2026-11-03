@@ -25,7 +25,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
 $arActivityDescription = (new ActivityDescription(
 	(string)Loc::getMessage('TIMEMAN_GET_REPORT_NAME'),
-	(string)Loc::getMessage('TIMEMAN_GET_REPORT_DESCR'),
+	(string)Loc::getMessage('TIMEMAN_GET_REPORT_DESCR_MSGVER_1'),
 	[ActivityType::NODE->value],
 ))
 	->setGroups([ActivityGroup::TEAM_MANAGEMENT->value])

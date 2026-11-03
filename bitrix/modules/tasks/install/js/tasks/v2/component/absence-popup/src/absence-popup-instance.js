@@ -100,6 +100,7 @@ export const AbsencePopupInstance = {
 				},
 				autoHideHandler: this.handleHide.bind(this),
 				closeIcon: true,
+				focusTrap: { initialFocus: false },
 				bindOptions: {
 					forceBindPosition: true,
 					forceTop: true,

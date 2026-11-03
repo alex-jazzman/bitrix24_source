@@ -27,6 +27,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		emits: ['clear'],
 		setup() {},
+		computed: {
+			entityName() {
+				return this.prepareTitle(this.item).replace(/\[\/?a\]/g, '');
+			}
+		},
 		async mounted() {
 			const {
 				EntityMiniCard
@@ -54,6 +59,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<HoverPill
 			class="tasks-field-crm-item"
 			:withClear="!isEdit || task.rights.edit"
+			:ariaLabel="entityName"
+			:ariaHaspopup="'dialog'"
+			:clearAriaLabel="loc('TASKS_V2_CRM_CLEAR_ARIA_LABEL')"
+			data-testid="tasks-crm-item"
 			textOnly
 			@click.stop="handleClick"
 			@clear="$emit('clear', item.id)"
@@ -61,7 +70,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<TextMd class="tasks-field-crm-item-text print-font-color-base-1-recursive">
 				<RichLoc tag="span" :text="prepareTitle(item)" placeholder="[a]">
 					<template #a="{ text }">
-						<a @click.prevent>{{ text }}</a>
+						<span>{{ text }}</span>
 					</template>
 				</RichLoc>
 			</TextMd>
@@ -78,15 +87,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const crmDialog = new class {
 		#taskId;
 		#onClose;
+		#onUpdate;
 		fillDialog(taskId) {
 			this.#taskId = taskId;
-			this.#fillDialog(this.#ids);
+			this.#syncSelectedItems();
 		}
 		show(params) {
 			this.#taskId = params.taskId;
 			this.#onClose = params.onClose;
-			this.#fillDialog(this.#ids);
-			this.#dialog.selectItemsByIds(this.#items);
+			this.#onUpdate = params.onUpdate;
+			this.#syncSelectedItems();
 			this.#dialog.showTo(params.targetNode);
 		}
 		get #dialog() {
@@ -115,32 +125,44 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				})),
 				preselectedItems: this.#items,
 				events: {
-					onLoad: this.#fillStore
+					onLoad: () => {
+						this.#syncSelectedItems();
+						void this.#fillStore();
+					}
 				},
 				popupOptions: {
 					events: {
-						onClose: async () => {
-							if (!this.#dialog.isLoaded()) {
-								return;
-							}
-							const items = await this.#fillStore();
-							const crmItemIds = items.map(({
-								id
-							}) => id);
-							void tasks_v2_provider_service_taskService.taskService.update(this.#taskId, {
-								crmItemIds
-							});
-							this.#onClose?.();
-						}
+						onClose: this.#handleClose
 					}
 				}
 			});
 		}
+		#handleClose = async () => {
+			try {
+				if (!this.#dialog.isLoaded()) {
+					return;
+				}
+				const items = await this.#fillStore();
+				const crmItemIds = items.map(({
+					id
+				}) => id);
+				void tasks_v2_provider_service_taskService.taskService.update(this.#taskId, {
+					crmItemIds
+				});
+				this.#onUpdate?.();
+			} finally {
+				this.#onClose?.();
+			}
+		};
 		#fillStore = async () => {
 			const crmItems = this.#dialog.getSelectedItems().map(item => this.#mapItemToModel(item));
 			await tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.CrmItems}/upsertMany`, crmItems);
 			return crmItems;
 		};
+		#syncSelectedItems() {
+			this.#fillDialog(this.#ids);
+			this.#dialog.selectItemsByIds(this.#items);
+		}
 		#fillDialog(ids) {
 			if (!this.#dialog.isLoaded()) {
 				return;
@@ -153,6 +175,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return;
 				}
 				const crmItem = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.CrmItems}/getById`](crmItemId);
+				if (!crmItem) {
+					return;
+				}
 				this.#dialog.addItem({
 					id,
 					entityId,
@@ -315,6 +340,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:icon="Outline.PLUS_L"
 				:isVisible="isAddVisible"
 				:isLocked
+				:ariaLabel="loc('TASKS_V2_CRM_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isDialogShown"
+				data-testid="tasks-crm-add-hover-btn"
 				@click="handleClick"
 			/>
 			<div
@@ -327,6 +356,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					v-if="isEmpty"
 					:icon="Outline.CRM"
 					:isLocked
+					:ariaLabel="loc('TASKS_V2_CRM_ADD_ARIA_LABEL')"
+					:ariaHaspopup="'dialog'"
+					:ariaExpanded="isDialogShown"
+					data-testid="tasks-crm-add-btn"
 					@click="showDialog"
 				/>
 				<div v-if="isLoading" class="tasks-field-crm-skeleton">
@@ -340,13 +373,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<template v-if="isExpanded" v-for="item in collapsedItems" :key="item.id">
 					<CrmItem :item @clear="handleClear"/>
 				</template>
-				<TextSm
+				<button
 					v-if="collapsedItems.length > 0"
-					class="tasks-field-crm-expand print-font-color-base-1"
+					type="button"
+					class="tasks-field-crm-expand"
+					:aria-expanded="isExpanded"
+					data-testid="tasks-crm-expand-btn"
 					@click.capture.stop="isExpanded = !isExpanded"
 				>
-					{{ expandButtonText }}
-				</TextSm>
+					<TextSm class="print-font-color-base-1">{{ expandButtonText }}</TextSm>
+				</button>
 			</div>
 			<div class="tasks-field-crm-anchor" ref="anchor"/>
 		</div>
@@ -368,6 +404,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				crmMeta
 			};
 		},
+		data() {
+			return {
+				isDialogShown: false
+			};
+		},
 		computed: {
 			design() {
 				return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
@@ -377,9 +418,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isLocked() {
 				return !tasks_v2_core.Core.getParams().restrictions.crmIntegration.available;
+			},
+			opensDialog() {
+				return !this.isSelected && !this.isLocked;
 			}
 		},
+		watch: {
+			isDialogShown() {
+				this.syncAria();
+			},
+			opensDialog() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+			},
 			handleClick() {
 				if (this.isSelected) {
 					this.highlightField();
@@ -391,11 +455,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					});
 					return;
 				}
+				this.isDialogShown = true;
 				crmDialog.show({
 					targetNode: this.$el,
 					taskId: this.taskId,
-					onClose: this.highlightField
+					onClose: this.handleDialogClose,
+					onUpdate: this.highlightField
 				});
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
+			},
+			handleDialogClose() {
+				this.isDialogShown = false;
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(crmMeta.id);
@@ -411,7 +487,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-id="taskId"
 			:data-task-chip-id="crmMeta.id"
 			:data-task-crm-item-ids="task.crmItemIds?.join(',')"
+			data-testid="tasks-crm-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`
 	};

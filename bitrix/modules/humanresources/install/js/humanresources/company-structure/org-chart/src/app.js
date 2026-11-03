@@ -15,11 +15,23 @@ import { chartAPI } from './api';
 import { events, detailPanelWidth } from './consts';
 import { OrgChartActions } from './actions';
 import { sendData as analyticsSendData } from 'ui.analytics';
-import { addCustomEvent, removeCustomEvent } from 'main.core';
+import { addCustomEvent, Dom, Event, removeCustomEvent } from 'main.core';
 
 import type { ChartData } from './types';
 import './style.css';
 import 'ui.design-tokens';
+
+// outlasts the 0.2s transform transition of ui.canvas, so hover is recalculated on the settled layout
+const canvasHoverResumeDelay = 250;
+
+// the mini profile card is rendered in document.body, so the wheel over it never reaches the canvas
+const miniProfilePopupSelector = '.intranet-user-mini-profile-popup';
+// menus of the card (department list, call menu) are popups of their own, outside the card and prefixed by its id
+const miniProfileMenuSelector = '[id^="intranet-user-mini-profile-"]';
+const miniProfileAnchorSelector = '[bx-tooltip-user-id]';
+
+// a wheel line in pixels, the same step ui.block-diagram uses for its own wheel scrolling
+const wheelLineHeight = 40;
 
 // @vue/component
 export const Chart = {
@@ -39,6 +51,7 @@ export const Chart = {
 			canvas: {
 				shown: false,
 				moved: false,
+				transforming: false,
 				modelTransform: {
 					x: 0,
 					y: 0,
@@ -59,6 +72,7 @@ export const Chart = {
 			},
 			// so we block all controls until transition isn't completed
 			isTransitionCompleted: false,
+			isDragInProgress: false,
 			analyticsQueue: [],
 			isAnalyticsBusy: false,
 		};
@@ -112,19 +126,36 @@ export const Chart = {
 		EventEmitter.subscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
 		EventEmitter.subscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
 		EventEmitter.subscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
+		EventEmitter.subscribe(events.HR_ENTITY_TOGGLE_ELEMENTS, this.onToggleEntityDrag);
+		EventEmitter.subscribe(events.HR_USER_DRAG_START, this.onUserDragStart);
+		EventEmitter.subscribe(events.HR_USER_DRAG_END, this.onUserDragEnd);
 
 		this.handleAnalyticsAjaxSuccess = this.handleAnalyticsAjaxSuccess.bind(this);
 		addCustomEvent('OnAjaxSuccess', this.handleAnalyticsAjaxSuccess);
 	},
 
+	mounted(): void
+	{
+		this.miniProfileAnchor = null;
+		this.miniProfileWheelPopup = null;
+		Event.bind(document, 'mouseover', this.onDocumentMouseOver);
+	},
+
 	unmounted(): void
 	{
+		Event.unbind(document, 'mouseover', this.onDocumentMouseOver);
+		this.unbindMiniProfileWheel();
+
 		EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
 		EventEmitter.unsubscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
 		EventEmitter.unsubscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
 		EventEmitter.unsubscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
 		EventEmitter.unsubscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
+		EventEmitter.unsubscribe(events.HR_ENTITY_TOGGLE_ELEMENTS, this.onToggleEntityDrag);
+		EventEmitter.unsubscribe(events.HR_USER_DRAG_START, this.onUserDragStart);
+		EventEmitter.unsubscribe(events.HR_USER_DRAG_END, this.onUserDragEnd);
 
+		clearTimeout(this.hoverResumeTimeout);
 		removeCustomEvent('OnAjaxSuccess', this.handleAnalyticsAjaxSuccess);
 	},
 
@@ -304,6 +335,36 @@ export const Chart = {
 		{
 			EventEmitter.emit(events.INTRANET_USER_MINIPROFILE_CLOSE);
 			EventEmitter.emit(events.HR_DEPARTMENT_MENU_CLOSE);
+			this.suspendCanvasHover();
+		},
+		// the canvas moves by transform, so the browser keeps the hover of the node that has already left the cursor
+		suspendCanvasHover(): void
+		{
+			if (this.isDragInProgress)
+			{
+				return;
+			}
+
+			this.canvas.transforming = true;
+			clearTimeout(this.hoverResumeTimeout);
+			this.hoverResumeTimeout = setTimeout(() => {
+				this.canvas.transforming = false;
+			}, canvasHoverResumeDelay);
+		},
+		onToggleEntityDrag({ data }: BaseEvent): void
+		{
+			this.isDragInProgress = !data.shouldShowElements;
+		},
+		onUserDragStart(): void
+		{
+			this.isDragInProgress = true;
+			// the drop target is looked up by the cursor, so the tree layer needs its hit testing back at once
+			clearTimeout(this.hoverResumeTimeout);
+			this.canvas.transforming = false;
+		},
+		onUserDragEnd(): void
+		{
+			this.isDragInProgress = false;
 		},
 		handleInviteSliderMessage(event: BaseEvent): void
 		{
@@ -345,16 +406,148 @@ export const Chart = {
 				this.canvas.modelTransform.y += -directionY * speed;
 			}
 		},
+		onDocumentMouseOver(event: MouseEvent): void
+		{
+			const popup = event.target.closest(miniProfilePopupSelector);
+			if (popup)
+			{
+				this.bindMiniProfileWheel(popup);
+
+				return;
+			}
+
+			this.unbindMiniProfileWheel();
+			if (event.target.closest(miniProfileMenuSelector))
+			{
+				// the card stays open behind its own menu, so the anchor stays ours until the cursor leaves them both
+				return;
+			}
+
+			if (this.$el.contains(event.target))
+			{
+				this.miniProfileAnchor = event.target.closest(miniProfileAnchorSelector) ?? this.miniProfileAnchor;
+
+				return;
+			}
+
+			// a card of a foreign anchor opens only after the cursor has passed that anchor outside the chart
+			this.miniProfileAnchor = null;
+		},
+		bindMiniProfileWheel(popup: HTMLElement): void
+		{
+			if (this.miniProfileWheelPopup === popup && popup.isConnected)
+			{
+				return;
+			}
+
+			this.unbindMiniProfileWheel();
+			if (!this.miniProfileAnchor?.isConnected || !this.$el.contains(this.miniProfileAnchor))
+			{
+				return;
+			}
+
+			this.miniProfileWheelPopup = popup;
+			Event.bind(popup, 'wheel', this.onMiniProfileWheel, { passive: false });
+		},
+		unbindMiniProfileWheel(): void
+		{
+			if (!this.miniProfileWheelPopup)
+			{
+				return;
+			}
+
+			Event.unbind(this.miniProfileWheelPopup, 'wheel', this.onMiniProfileWheel, { passive: false });
+			this.miniProfileWheelPopup = null;
+		},
+		onMiniProfileWheel(event: WheelEvent): void
+		{
+			if (event.ctrlKey)
+			{
+				// the canvas owns the zoom: cursor focus, its own limits and trackpad detection
+				this.$refs.canvas?.onWheel(event);
+
+				return;
+			}
+
+			if (this.findScrollableTarget(event.target, event.deltaY, this.miniProfileWheelPopup))
+			{
+				return;
+			}
+
+			const anchorList = this.findScrollableTarget(this.miniProfileAnchor, event.deltaY, this.$el);
+			if (anchorList)
+			{
+				anchorList.scrollTop += this.toScrollPixels(event, anchorList);
+			}
+			else
+			{
+				this.panCanvas(event);
+			}
+
+			event.preventDefault();
+		},
+		// repeats what ui.canvas does on panning, which never sees this wheel event: it moves and drops the hover.
+		// the raw delta is kept here as well, so panning over the card goes as fast as panning over the canvas
+		panCanvas({ deltaX, deltaY, shiftKey }: WheelEvent): void
+		{
+			const { modelTransform } = this.canvas;
+			modelTransform.x -= shiftKey ? deltaY : deltaX;
+			modelTransform.y -= shiftKey ? deltaX : deltaY;
+			this.suspendCanvasHover();
+		},
+		// scrollTop is always in pixels, while some mice report the wheel in lines or pages
+		toScrollPixels({ deltaY, deltaMode }: WheelEvent, element: HTMLElement): number
+		{
+			if (deltaMode === WheelEvent.DOM_DELTA_LINE)
+			{
+				return deltaY * wheelLineHeight;
+			}
+
+			if (deltaMode === WheelEvent.DOM_DELTA_PAGE)
+			{
+				return deltaY * element.clientHeight;
+			}
+
+			return deltaY;
+		},
+		findScrollableTarget(element: ?HTMLElement, deltaY: number, root: HTMLElement): ?HTMLElement
+		{
+			let node = element;
+			while (node)
+			{
+				if (this.canScrollBy(node, deltaY))
+				{
+					return node;
+				}
+
+				node = node === root ? null : node.parentElement;
+			}
+
+			return null;
+		},
+		canScrollBy(element: HTMLElement, deltaY: number): boolean
+		{
+			const overflow = Dom.style(element, 'overflowY');
+			if (deltaY === 0 || (overflow !== 'auto' && overflow !== 'scroll'))
+			{
+				return false;
+			}
+
+			return deltaY > 0
+				? element.scrollTop < element.scrollHeight - element.clientHeight - 1
+				: element.scrollTop > 0;
+		},
 	},
 
 	template: `
 		<div
 			class="humanresources-chart"
-			:class="{ '--locked': !isTransitionCompleted }"
+			:class="{ '--locked': !isTransitionCompleted, '--canvas-transforming': canvas.transforming }"
 			@keydown="onKeyDown"
 		>
 			<TitlePanel @showWizard="onShowWizard"></TitlePanel>
 			<TransformCanvas
+				ref="canvas"
 				v-if="canvas.shown"
 				v-slot="{transform}"
 				v-model="canvas.modelTransform"

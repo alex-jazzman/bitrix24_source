@@ -1,3 +1,12 @@
 .bx-im-copilot-agent-mode-button__container {
 	margin-left: auto;
 }
+
+/* margin-left: auto parks the button at the right edge of the toolbar panel, and that panel clips overflow,
+   so the ring ui.buttons draws outside the border box (2px offset + 2px width) was cut there. Pull the ring
+   inside the button box instead, like the mode chip next to it - nothing moves, no padding changes. The air
+   button also shows the ring on a plain :focus under keyboard modality, so both states need the offset. */
+.bx-im-copilot-agent-mode-button__container .ui-btn:focus-visible,
+html[data-input-modality="keyboard"] .bx-im-copilot-agent-mode-button__container .ui-btn:focus:not(:focus-visible) {
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+}

@@ -2,6 +2,7 @@
  * @module crm/terminal/payment-create
  */
 jn.define('crm/terminal/payment-create', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
@@ -429,7 +430,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 					flexBasis: '50%',
 				},
 				text: {
-					fontSize: 18,
+					fontSize: Typography.text1.getValue().fontSize,
 					fontWeight: '500',
 					color: AppTheme.colors.base2,
 					textAlign: 'center',
@@ -445,7 +446,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 				},
 				text: (isValid) => {
 					return {
-						fontSize: 18,
+						fontSize: Typography.text1.getValue().fontSize,
 						fontWeight: '500',
 						color: AppTheme.colors.accentMainLinks,
 						opacity: isValid ? 1 : 0.3,

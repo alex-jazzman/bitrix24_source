@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/sms
  */
 jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
@@ -1083,11 +1084,11 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			marginBottom: 10,
 		},
 		templateTitleLabel: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base3,
 		},
 		templateTitle: {
-			fontSize: 18,
+			fontSize: Typography.text1.getValue().fontSize,
 			color: AppTheme.colors.base3,
 			marginTop: 4,
 		},
@@ -1099,7 +1100,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 		},
 		templatePreview: {
 			color: AppTheme.colors.base3,
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 		},
 		textFieldCorner: {
 			width: 15,
@@ -1115,7 +1116,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 				zIndex: 10,
 				color: hasRemainingLetters ? AppTheme.colors.base5 : AppTheme.colors.accentSoftElementRed1,
 				paddingHorizontal: 6,
-				fontSize: 13,
+				fontSize: Typography.text5.getValue().fontSize,
 				right: 12,
 				top: 15,
 				textAlign: 'center',
@@ -1132,7 +1133,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 		},
 		textField: {
 			color: AppTheme.colors.base1,
-			fontSize: 16,
+			fontSize: Typography.text3.getValue().fontSize,
 			paddingHorizontal: 16,
 			paddingVertical: 14,
 		},

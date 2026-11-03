@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 (function (exports, main_core, main_core_events, note_sidebar, note_ui_themeContext, ui_notification, note_ui_railGeometry) {
 	'use strict';
 
-	// [API-02] Copilot chat creation, pinned in one place so the parameter names are testable.
+	// Copilot chat creation, pinned in one place so the parameter names are testable.
 	//
 	// The type goes out as the upper-case string: im's client constant ChatType.copilot is 'copilot',
 	// but CreateService runs it through #prepareType() (camel→snake, upper-case) before the request.
@@ -93,7 +93,7 @@ this.BX = this.BX || {};
 		emits: ['mounted', 'geometry'],
 		data() {
 			return {
-				// [ALG-02] Live inputs of the geometry. clientWidth, not innerWidth: the latter counts the
+				// Live inputs of the geometry. clientWidth, not innerWidth: the latter counts the
 				// scrollbar, which would move the overlay threshold by its width.
 				viewportWidth: document.documentElement.clientWidth,
 				resizeRaf: 0,
@@ -173,7 +173,7 @@ this.BX = this.BX || {};
 			columnContextClass() {
 				return COLUMN_CONTEXT_CLASS[this.theme] ?? COLUMN_CONTEXT_CLASS[note_ui_themeContext.NoteTheme.LIGHT];
 			},
-			// [ALG-02] Single source of the applied width and of the placement mode. Recomputed on every
+			// Single source of the applied width and of the placement mode. Recomputed on every
 			// input change — window resize, navigation collapse, a drag frame — so the mode switches on
 			// the fly without ever closing the panel.
 			geometry() {
@@ -403,7 +403,7 @@ this.BX = this.BX || {};
 				}));
 			},
 			notifyFailure() {
-				const content = String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '').replace('#NAME#', String(this.productName ?? '')).trim();
+				const content = String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '').replace('#COPILOT_NAME#', String(this.productName ?? '')).trim();
 				if (!content) {
 					return;
 				}

@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/action', (require
 	const { Icon } = require('assets/icons');
 	const { Color } = require('tokens');
 
-	const { MessageMenuActionType } = require('im/messenger/const');
+	const { MessageMenuActionType, Color: MessengerColor, } = require('im/messenger/const');
 	const { Url } = require('im/messenger/lib/helper');
 
 	const deleteColor = AppTheme.colors.accentMainAlert;
@@ -128,6 +128,26 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/action', (require
 		title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_CREATE_TASK'),
 		iconName: Icon.TASK.getIconName(),
 		iconUrl: Url.createFromPath(Icon.TASK.getPath()).href,
+	};
+
+	/** @type MessageContextMultiLevelMenuActionItem */
+	const CreateAiTaskAction = {
+		id: MessageMenuActionType.createAiTask,
+		testId: 'MESSAGE_MENU_ACTION_CREATE_AI_TASK',
+		type: ActionViewType.base,
+		title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_CREATE_AI_TASK'),
+		iconName: Icon.AI_STARS.getIconName(),
+		iconUrl: Url.createFromPath(Icon.AI_STARS.getPath()).href,
+		styles: {
+			title: {
+				font: {
+					colorGradient: MessengerColor.copilotGradient,
+				},
+			},
+			icon: {
+				colorGradient: MessengerColor.copilotGradient,
+			},
+		},
 	};
 
 	/** @type MessageContextMultiLevelMenuActionItem */
@@ -338,6 +358,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/action', (require
 		GoToMessageAction,
 		AskCopilotAction,
 		CreateTaskAction,
+		CreateAiTaskAction,
 		CreateEventAction,
 		MoreAction,
 	};

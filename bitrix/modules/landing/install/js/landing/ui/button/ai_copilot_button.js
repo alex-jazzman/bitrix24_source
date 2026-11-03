@@ -63,10 +63,10 @@
 
 			this.context = ' ';
 			const selectedText = window.getSelection().toString();
+			this.selectedContext = selectedText !== '';
 			if (selectedText !== '')
 			{
 				this.context = selectedText;
-				this.selectedContext = true;
 			}
 
 			if (this.context === ' ' && this.editor.currentElement)
@@ -154,7 +154,10 @@
 		{
 			if (this.selectedContext === true)
 			{
-				this.onReplaceContext(event.data.result);
+				if (this.onReplaceContext(event.data.result) === false)
+				{
+					return;
+				}
 			}
 			else
 			{

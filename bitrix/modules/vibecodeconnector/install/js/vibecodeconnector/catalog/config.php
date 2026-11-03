@@ -6,34 +6,38 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
-use Bitrix\Vibecodeconnector\Internal\Integration\Socialservices\NetworkService;
-use Bitrix\Vibecodeconnector\Internal\Service\Catalog\OpenApp\OpenAppSettings;
-use Bitrix\Vibecodeconnector\Internal\Service\Endpoint\BaseEndpointProvider;
-use Bitrix\Vibecodeconnector\Internal\Service\Endpoint\CloudEndpointProvider;
+use Bitrix\Vibecodeconnector\Internal\Service\Catalog\Item\CatalogItemSettings;
+use Bitrix\Vibecodeconnector\Internal\Service\Embed\EmbedCreateSettings;
+use Bitrix\Vibecodeconnector\Internal\Service\Endpoint\VibecodeUrlProvider;
+use Bitrix\Vibecodeconnector\Internal\Service\Vibecode\VibecodeBrandResolver;
 use Bitrix\Vibecodeconnector\Public\Provider\CatalogProvider;
 use Bitrix\Vibecodeconnector\Public\Service\AvailabilityService;
 
 $isEmpty = false;
-$openAppInIframe = false;
+$createInIframe = false;
+$itemClickOpensChat = false;
 $vibecodeUrl = null;
+$dashboardUrl = null;
 $marketUrl = null;
 $newAppsCount = 0;
+$catalogBrand = 'bitrix24';
+$brandName = '';
 if (Loader::includeModule('vibecodeconnector'))
 {
-	$serviceLocator = ServiceLocator::getInstance();
-	$vibecodeUrl =
-		$serviceLocator->get(NetworkService::class)->isCloudPortal()
-			? $serviceLocator->get(CloudEndpointProvider::class)->getCloudUrl()
-			: $serviceLocator->get(BaseEndpointProvider::class)->getBaseUrl()
-	;
+	$resolvedBrand = (new VibecodeBrandResolver())->resolve();
+	$catalogBrand = $resolvedBrand->value;
+	$brandName = $resolvedBrand->getDisplayName();
+	$itemClickOpensChat = (new CatalogItemSettings())->isClickOpensChatEnabled();
+	$urlProvider = new VibecodeUrlProvider();
+	$vibecodeUrl = $urlProvider->getEndpointUrl();
 
 	$userId = (int)CurrentUser::get()->getId();
+	$dashboardUrl = $urlProvider->getDashboardUrl($userId);
 	if ($userId > 0)
 	{
-		$openAppInIframe = (new OpenAppSettings())->isOpenInIframeEnabled();
+		$createInIframe = (new EmbedCreateSettings())->isEnabled();
 
 		// same predicate as the CheckCatalogAvailability prefilter of the catalog actions
 		if (ServiceLocator::getInstance()->get(AvailabilityService::class)->isAvailableForUser($userId))
@@ -49,18 +53,16 @@ if (Loader::includeModule('intranet'))
 	$marketUrl = \Bitrix\Intranet\Binding\Marketplace::getMainDirectory();
 }
 
-// the profile path differs per site context (extranet, multi-site): same source as
-// \Bitrix\Socialnetwork\ComponentHelper::getUserSEFUrl(), read without the hard module dependency
-$siteDir = defined('SITE_DIR') ? SITE_DIR : '/';
-$userPage = Option::get('socialnetwork', 'user_page', $siteDir . 'company/personal/', defined('SITE_ID') ? SITE_ID : false);
-
 $settings = [
 	'isEmpty' => $isEmpty,
-	'openAppInIframe' => $openAppInIframe,
+	'createInIframe' => $createInIframe,
+	'itemClickOpensChat' => $itemClickOpensChat,
 	'vibecodeUrl' => $vibecodeUrl,
+	'dashboardUrl' => $dashboardUrl,
 	'marketUrl' => $marketUrl,
 	'newAppsCount' => $newAppsCount,
-	'userProfilePathTemplate' => $userPage . 'user/#user_id#/',
+	'catalogBrand' => $catalogBrand,
+	'brandName' => $brandName,
 ];
 
 return [
@@ -68,7 +70,6 @@ return [
 	'css' => './dist/catalog.bundle.css',
 	'rel' => [
 		'im.public',
-		'intranet.user.mini-profile',
 		'main.core',
 		'main.core.events',
 		'main.popup',
@@ -81,7 +82,6 @@ return [
 		'ui.entity-selector',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
-		'ui.icon-set.small-outline',
 		'ui.icon-set.solid',
 		'ui.notification',
 		'ui.switcher',
@@ -91,7 +91,8 @@ return [
 		'ui.system.menu',
 		'ui.system.skeleton',
 		'ui.system.typography',
-		'ui.tooltip',
+		'vibecodeconnector.app-creation',
+		'vibecodeconnector.open-app',
 	],
 	'skip_core' => false,
 	'settings' => $settings,

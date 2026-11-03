@@ -3,6 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+/** @var array $arParams */
+/** @var array $arResult */
+
 $period = 0; $time = 0;
 // ********************************************************************************
 $arParams['FONT_MIN'] = intval($arParams['FONT_MIN']) > 0 ? $arParams['FONT_MIN'] : 10;
@@ -28,11 +31,12 @@ else
 }
 $arParams['WIDTH'] = trim($arParams['WIDTH']);
 $unit = [];
-preg_match('/^[\d\.]+(\%|px|pt|in)$/i', $arParams['WIDTH'], $unit);
+preg_match('/^[[0-9].]+(%|px|pt|in)$/i', $arParams['WIDTH'], $unit);
 $arParams['WIDTH'] = (empty($unit) ? '' : " style='width:" . $arParams['WIDTH'] . ";'");
 $arParams['COLOR_TYPE'] = ($arParams['COLOR_TYPE'] != 'N' ? 'LOGORIFM' : 'REAL');
 
-
+$aColors = [];
+$iColorCount = 0;
 if ($arParams['COLOR_TYPE'] == 'LOGORIFM')
 {
 	asort($arResult['DATE']);
@@ -51,6 +55,7 @@ if (is_array($arResult['SEARCH']))
 {
 	foreach ($arResult['SEARCH'] as $key => $res)
 	{
+		$font_size = 0;
 		if ($arResult['CNT_ALL'] != 0)
 		{
 			$cnt = $res['CNT'];
@@ -66,6 +71,7 @@ if (is_array($arResult['SEARCH']))
 
 			$font_size = min($arParams['FONT_MAX'], intval($font_size + $arParams['FONT_MIN']));
 		}
+
 		$color = '';
 		foreach ($arParams['COLOR_OLD'] as $k => $old)
 		{
@@ -86,6 +92,7 @@ if (is_array($arResult['SEARCH']))
 
 			$color .= str_pad(dechex(intval($old + ($new - $old) * $new_val)), 2, '0', STR_PAD_LEFT);
 		}
+
 		$color = mb_strtoupper(str_replace('_', '', $color));
 		$arResult['SEARCH'][$key]['FONT_SIZE'] = $font_size;
 		$arResult['SEARCH'][$key]['COLOR'] = $color;

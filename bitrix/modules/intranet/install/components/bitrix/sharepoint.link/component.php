@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Intranet\Integration\Sharepoint\ServerAllowList;
+use Bitrix\Intranet\Integration\Sharepoint\ServerOrigin;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Uri;
 
@@ -21,10 +24,11 @@ TODO:
 2. CHECK ACCESS! - done but need testing
 */
 
-$arParams['OUTPUT'] = $arParams['OUTPUT'] == 'N' ? 'N' : 'Y';
+$arParams['OUTPUT'] = ($arParams['OUTPUT'] ?? '') == 'N' ? 'N' : 'Y';
 
-$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID']);
-if ($arParams['IBLOCK_ID'] <= 0 && $arParams['MODE'] != 'test')
+$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID'] ?? 0);
+$arParams['MODE'] = is_string($arParams['MODE'] ?? null) ? $arParams['MODE'] : '';
+if ($arParams['IBLOCK_ID'] <= 0)
 {
 	ShowError(GetMessage('SL_ERROR_NO_IBLOCK'));
 	return false;
@@ -35,7 +39,7 @@ if (!CModule::IncludeModule('intranet'))
 	return false;
 }
 
-if ($arParams['IBLOCK_ID'] > 0 && !CIntranetSharepoint::CheckAccess($arParams['IBLOCK_ID']))
+if (!CIntranetSharepoint::CheckAccess($arParams['IBLOCK_ID']))
 {
 	if ($arParams['OUTPUT'] == 'Y')
 	{
@@ -116,22 +120,43 @@ else
 			$dbRes = CIntranetSharepoint::GetByID($arParams['IBLOCK_ID'], true);
 			$arResult['SERVICE'] = $dbRes->Fetch();
 			if (!$arResult['SERVICE']) $arResult['SERVICE'] = array();
+			$arResult['ALLOWED_ORIGINS'] = ServerAllowList::list();
+			$arResult['SELECTED_ORIGIN'] = '';
+			try
+			{
+				$arResult['SELECTED_ORIGIN'] = ServerOrigin::fromUrl(
+					(string)($arResult['SERVICE']['SP_URL'] ?? ''),
+				)->toString();
+			}
+			catch (ArgumentException)
+			{
+			}
 
 			$STEP = 0;
 			$arResult['ERROR'] = '';
-			if ($_REQUEST['server'])
+			$server = is_string($_REQUEST['server'] ?? null) ? $_REQUEST['server'] : '';
+			$user = is_string($_REQUEST['user'] ?? null) ? $_REQUEST['user'] : '';
+			$pass = is_string($_REQUEST['pass'] ?? null) ? $_REQUEST['pass'] : '';
+			$listId = $_REQUEST['list_id'] ?? null;
+			$fields = $_REQUEST['FIELDS'] ?? null;
+			$period = $_REQUEST['period'] ?? '';
+			if ($server)
 			{
 				$STEP = 2;
-				$arResult['URL'] = parse_url($_REQUEST['server']);
+				$arResult['URL'] = parse_url($server);
 
-				if (is_array($arResult['URL']) && isset($arResult['URL']['host']))
+				if (!ServerAllowList::isAllowed($server))
 				{
-					$arResult['URL']['user'] = $_REQUEST['user'];
-					$arResult['URL']['pass'] = $_REQUEST['pass'];
+					$arResult['ERROR'] = GetMessage('SP_ERROR_SERVER_NOT_ALLOWED');
+				}
+				elseif (is_array($arResult['URL']) && isset($arResult['URL']['host']))
+				{
+					$arResult['URL']['user'] = $user;
+					$arResult['URL']['pass'] = $pass;
 
 					CModule::IncludeModule('webservice');
 
-					if (!$_REQUEST['list_id'])
+					if (!$listId)
 					{
 						$CLIENT = new CSPListsClient($arResult['URL']);
 						if (!($arResult['LISTS'] = $CLIENT->GetListCollection()))
@@ -149,10 +174,10 @@ else
 					}
 					else
 					{
-						$listID = CIntranetUtils::makeGUID($_REQUEST['list_id']);
+						$listID = CIntranetUtils::makeGUID($listId);
 						$listID_clear = CIntranetUtils::checkGUID($listID);
 
-						if (!$_REQUEST['FIELDS'])
+						if (!$fields)
 						{
 							$STEP = 3;
 							$CLIENT = new CSPListsClient($arResult['URL']);
@@ -170,17 +195,17 @@ else
 						{
 							$STEP = 4;
 
-							$FIELDS = $_REQUEST['FIELDS'];
+							$FIELDS = $fields;
 							$SESSIONLIST = $_SESSION['SP_LIST_'.$listID_clear];
 
 							$arFields = array(
 								'IBLOCK_ID' => $arParams['IBLOCK_ID'],
 								'SP_LIST_ID' => $listID_clear,
-								'SP_URL' => $_REQUEST['server'],
-								'SP_AUTH_USER' => $_REQUEST['user'],
-								'SP_AUTH_PASS' => $_REQUEST['pass'],
-								'SYNC_PERIOD' => $_REQUEST['period'],
-								'FIELDS' => $_REQUEST['FIELDS'],
+								'SP_URL' => $server,
+								'SP_AUTH_USER' => $user,
+								'SP_AUTH_PASS' => $pass,
+								'SYNC_PERIOD' => $period,
+								'FIELDS' => $fields,
 								'LIST_DATA' => $SESSIONLIST['FIELDS'],
 							);
 
@@ -345,17 +370,24 @@ else
 			if (!check_bitrix_sessid())
 				return;
 
-			$sp_server = $_REQUEST['sp_server'];
-			$sp_user = $_REQUEST['sp_user'];
-			$sp_pass = $_REQUEST['sp_pass'];
+			$sp_server = is_string($_REQUEST['sp_server'] ?? null) ? $_REQUEST['sp_server'] : '';
+			$sp_user = is_string($_REQUEST['sp_user'] ?? null) ? $_REQUEST['sp_user'] : '';
+			$sp_pass = is_string($_REQUEST['sp_pass'] ?? null) ? $_REQUEST['sp_pass'] : '';
 
 			$arResult['SERVER'] = 0; $arResult['AUTH'] = 0;
-			if ($sp_server && $sp_server != 'http://')
+			if ($sp_server && $sp_server != 'http://' && ServerAllowList::isAllowed($sp_server))
 			{
 				$URL = new Uri($sp_server);
 				if ($URL->getHost() && ($URL->getScheme() == 'http' || $URL->getScheme() == 'https'))
 				{
-					$ob = (new HttpClient())
+					$ob = (new HttpClient([
+							// on-premise SharePoint usually lives in a private network, in the cloud a private address is never a valid target
+							'privateIp' => !IsModuleInstalled('bitrix24'),
+							// the check needs the status code only, so the body of a user-supplied address is never read
+							'waitResponse' => false,
+							'socketTimeout' => 5,
+							'streamTimeout' => 10,
+						]))
 						->setRedirect(false)
 					;
 
@@ -364,7 +396,7 @@ else
 						$ob->setAuthorization($sp_user, $sp_pass);
 					}
 
-					if ($ob->get($sp_server) !== false)
+					if ($ob->get((string)$URL) !== false)
 					{
 						$status = $ob->getStatus();
 						if ($status == 200 || $status == 302 || $status == 401)
@@ -386,4 +418,3 @@ else
 
 	return;
 }
-?>

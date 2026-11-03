@@ -21,6 +21,7 @@ import {
 
 export type DraftLargeAttachment = ConvertResult & {
 	sourceFileIds: number[],
+	tokenFileIds?: number[],
 	valid?: boolean,
 };
 
@@ -163,6 +164,7 @@ export class LargeAttachment
 		return [...this.#convertedByToken.values()].map((result: ConvertResult): DraftLargeAttachment => ({
 			...result,
 			sourceFileIds: result.sourceFileIds ?? result.fileIds,
+			tokenFileIds: result.tokenFileIds ?? result.sourceFileIds ?? result.fileIds,
 			valid: true,
 		}));
 	}
@@ -520,6 +522,7 @@ export class LargeAttachment
 			results.map((result: ConvertResult) => ({
 				token: result.token,
 				fileIds: [...result.fileIds],
+				sourceFileIds: [...(result.tokenFileIds ?? result.sourceFileIds ?? result.fileIds)],
 			})),
 		);
 	}

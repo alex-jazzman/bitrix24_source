@@ -2,18 +2,18 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
-		'rest',
-		'loc',
+		'ui-system/typography/text',
 		'alert',
-		'apptheme',
-		'utils/copy',
-		'qrauth/utils',
 		'animation/components/fade-view',
-		'crm:timeline/scheduler/providers/sms',
-		'crm:timeline/scheduler/providers/mail',
+		'apptheme',
+		'loc',
+		'tokens',
+		'qrauth/utils',
+		'utils/copy',
+		'utils/object',
 		'crm:document/shared-utils',
-		'crm:type',
 		'im:messenger/api/dialog-opener',
+		'crm:timeline/scheduler/providers/sms',
+		'crm:type',
 	],
 ];

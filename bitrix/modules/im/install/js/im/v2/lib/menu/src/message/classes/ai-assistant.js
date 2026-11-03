@@ -5,7 +5,7 @@ import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 import { Core } from 'im.v2.application.core';
 import { FeedbackManager } from 'im.v2.lib.feedback';
 
-import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
+import { MessageMenu, MenuItemPlacement, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
 export class AiAssistantMessageMenu extends MessageMenu
 {
@@ -15,7 +15,8 @@ export class AiAssistantMessageMenu extends MessageMenu
 			this.getCopyItem(),
 			this.getDownloadFileItem(),
 			this.getForwardItem(),
-			this.getCreateTaskItem(),
+			this.getCreateAiTaskItem(),
+			this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
 		];
 
@@ -29,6 +30,7 @@ export class AiAssistantMessageMenu extends MessageMenu
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
+			this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null,
 			this.getCreateMeetingItem(),
 		];
 

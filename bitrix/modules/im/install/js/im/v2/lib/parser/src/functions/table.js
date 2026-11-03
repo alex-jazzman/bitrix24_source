@@ -27,7 +27,13 @@ const MAX_RENDER_COLUMNS = 24;
 // (cutTableTag). Cell text is therefore already Text.encode'd; the only
 // un-decoded things left inside a cell are the inline tags ([b]/[i]/[s]/[url])
 // the converter allowed there — decoded here and inserted as innerHTML.
-const TABLE_PATTERN = /\[table]([\s\S]*?)\[\/table]/gi;
+//
+// The optional trailing break is part of the block, same rule as for [list] and
+// with the same deliberate asymmetry: a table opens a line of its own, so it
+// swallows exactly one break behind itself (K source breaks -> K-1 blank lines),
+// while a break in front is left alone — it ends the previous paragraph. Both
+// spellings are matched, see the reasoning at INNERMOST_LIST_PATTERN (list.js).
+const TABLE_PATTERN = /\[table]([\s\S]*?)\[\/table](?:<br ?\/?>)?/gi;
 const ROW_PATTERN = /\[tr]([\s\S]*?)\[\/tr]/gi;
 const CELL_PATTERN = /\[(th|td)]([\s\S]*?)\[\/(?:th|td)]/gi;
 

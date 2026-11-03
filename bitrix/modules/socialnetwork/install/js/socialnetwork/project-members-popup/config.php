@@ -11,6 +11,7 @@ return [
 		'main.core',
 		'main.loader',
 		'main.popup',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

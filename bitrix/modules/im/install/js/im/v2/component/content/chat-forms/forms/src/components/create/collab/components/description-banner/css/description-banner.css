@@ -64,6 +64,12 @@
 	cursor: pointer;
 }
 
+.bx-im-create-collab-description-banner__link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .bx-im-create-collab-description-banner__link:hover {
 	color: var(--im-create-collab-description-banner__text-color_link-hover);
 	text-decoration-color: var(--im-create-collab-description-banner__text-color_link-underline-hover);
@@ -76,3 +82,36 @@
 .bx-im-create-collab-description-banner__link.--dashed {
 	text-decoration-style: dashed;
 }
+
+/* Air banner */
+/* The card keeps its shape: air only re-points the custom properties of the block at air tokens
+   (the legacy im tokens carry the very same colours) and puts the paddings on the spacing scale.
+   The underline of a link follows the colour of the link itself instead of a translucent copy. */
+.bx-im-messenger__scope.--air-design .bx-im-create-collab-description-banner__container {
+	--im-create-collab-description-banner__background-color_content: var(--ui-color-collab-bg-content-2);
+	--im-create-collab-description-banner__background-color_border: var(--ui-color-collab-accent-primary);
+	--im-create-collab-description-banner__text-color_link: var(--ui-color-collab-accent-primary-alt);
+	--im-create-collab-description-banner__text-color_link-hover: var(--ui-color-collab-element-1);
+	--im-create-collab-description-banner__text-color_link-underline: currentColor;
+	--im-create-collab-description-banner__text-color_link-underline-hover: currentColor;
+
+	margin-bottom: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xl);
+	border-radius: var(--ui-border-radius-xs);
+}
+
+/* The two rules below are scoped to the card on purpose: the typography components reset the margin
+   and set the colour with a single class of their own, so a single class here would tie with them
+   and the outcome would depend on the load order of the stylesheets. */
+.bx-im-create-collab-description-banner__container .bx-im-chat-forms-collab-banner__title {
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bx-im-create-collab-description-banner__container .bx-im-chat-forms-collab-banner__text {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-chat-forms-collab-banner__text + .bx-im-chat-forms-collab-banner__text {
+	margin-top: var(--ui-space-stack-sm);
+}
+/* End air banner */

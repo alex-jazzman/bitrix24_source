@@ -39,7 +39,25 @@ if (!$arResult['isSlider'])
 	);
 }
 
-if ($arResult['page'] === 'limits')
+if ($arResult['page'] === 'providers')
+{
+	?>
+	<ul class="crm-config-sms-providers" data-testid="crm-sms-providers">
+		<?php foreach ($arResult['providers'] as $provider): ?>
+			<li>
+				<a
+					href="<?= htmlspecialcharsbx($provider['manageUrl']) ?>"
+					target="_self"
+					data-slider-ignore-autobinding="true"
+					data-testid="crm-sms-provider"
+					data-provider-id="<?= htmlspecialcharsbx($provider['id']) ?>"
+				><?= htmlspecialcharsbx($provider['name']) ?></a>
+			</li>
+		<?php endforeach ?>
+	</ul>
+	<?php
+}
+elseif ($arResult['page'] === 'limits')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:messageservice.config.sender.limits',

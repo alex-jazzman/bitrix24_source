@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.Vue3 = this.BX.UI.Vue3 || {};
-(function (exports,main_core,ui_switcher) {
+(function (exports, main_core, ui_switcher) {
 	'use strict';
 
 	/*
@@ -22,95 +22,103 @@ this.BX.UI.Vue3 = this.BX.UI.Vue3 || {};
 
 	// @vue/component
 	const Switcher = {
-	  name: 'Switcher',
-	  emits: ['check', 'uncheck'],
-	  props: {
-	    isChecked: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isDisabled: {
-	      type: Boolean,
-	      default: false
-	    },
-	    options: {
-	      /** @type SwitcherOptions */
-	      type: Object,
-	      default: {}
-	    }
-	  },
-	  switcher: null,
-	  mounted() {
-	    this.renderSwitcher();
-	  },
-	  watch: {
-	    isChecked() {
-	      this.switcher.check(this.isChecked, false);
-	    },
-	    isDisabled() {
-	      this.switcher.disable(this.isDisabled, false);
-	    },
-	    options(newOptions, oldOptions) {
-	      if (this.isOptionsEqual(newOptions, oldOptions)) {
-	        return;
-	      }
+		name: 'Switcher',
+		emits: ['check', 'uncheck'],
+		props: {
+			isChecked: {
+				type: Boolean,
+				required: true
+			},
+			isDisabled: {
+				type: Boolean,
+				default: false
+			},
+			options: {
+				/** @type SwitcherOptions */
+				type: Object,
+				default: {}
+			}
+		},
+		switcher: null,
+		mounted() {
+			this.renderSwitcher();
+		},
+		beforeUnmount() {
+			// UI.Switcher keeps every instance in a static list, so an unmounted wrapper has to
+			// release its own — otherwise the detached node and this component stay reachable.
+			this.switcher?.destroy();
+			this.switcher = null;
+		},
+		watch: {
+			isChecked() {
+				// The instance is gone between beforeUnmount and a re-render on changed options.
+				this.switcher?.check(this.isChecked, false);
+			},
+			isDisabled() {
+				this.switcher?.disable(this.isDisabled, false);
+			},
+			options(newOptions, oldOptions) {
+				if (this.isOptionsEqual(newOptions, oldOptions)) {
+					return;
+				}
 
-	      // re-render switcher since options has changed
-	      this.switcher = null;
-	      main_core.Dom.clean(this.$refs.container);
-	      this.renderSwitcher();
-	    }
-	  },
-	  methods: {
-	    renderSwitcher() {
-	      this.switcher = new ui_switcher.Switcher({
-	        ...this.options,
-	        checked: this.isChecked,
-	        disabled: this.isDisabled,
-	        handlers: {
-	          // checked for when the switcher is made off and unchecked for when the switcher is made on
-	          // it looks like a bug, but I'm not sure
-	          checked: () => {
-	            // switch it back until the state is muted and we reactively change it to a new state
-	            this.switcher.check(this.isChecked, false);
-	            this.$emit('uncheck');
-	          },
-	          unchecked: () => {
-	            // switch it back until the state is muted and we reactively change it to a new state
-	            this.switcher.check(this.isChecked, false);
-	            this.$emit('check');
-	          }
-	        }
-	      });
-	      this.switcher.renderTo(this.$refs.container);
-	    },
-	    isOptionsEqual(newOptions, oldOptions) {
-	      if (Object.keys(newOptions).length !== Object.keys(oldOptions).length) {
-	        return false;
-	      }
-	      for (const [key, value] of Object.entries(newOptions)) {
-	        if (!Object.hasOwn(oldOptions, key)) {
-	          return false;
-	        }
-	        if (value !== oldOptions[key]) {
-	          return false;
-	        }
-	      }
-	      for (const [key, value] of Object.entries(oldOptions)) {
-	        if (!Object.hasOwn(newOptions, key)) {
-	          return false;
-	        }
-	        if (value !== newOptions[key]) {
-	          return false;
-	        }
-	      }
-	      return true;
-	    }
-	  },
-	  template: '<a ref="container"></a>'
+				// re-render switcher since options has changed
+				this.switcher?.destroy();
+				this.switcher = null;
+				main_core.Dom.clean(this.$refs.container);
+				this.renderSwitcher();
+			}
+		},
+		methods: {
+			renderSwitcher() {
+				this.switcher = new ui_switcher.Switcher({
+					...this.options,
+					checked: this.isChecked,
+					disabled: this.isDisabled,
+					handlers: {
+						// checked for when the switcher is made off and unchecked for when the switcher is made on
+						// it looks like a bug, but I'm not sure
+						checked: () => {
+							// switch it back until the state is muted and we reactively change it to a new state
+							this.switcher.check(this.isChecked, false);
+							this.$emit('uncheck');
+						},
+						unchecked: () => {
+							// switch it back until the state is muted and we reactively change it to a new state
+							this.switcher.check(this.isChecked, false);
+							this.$emit('check');
+						}
+					}
+				});
+				this.switcher.renderTo(this.$refs.container);
+			},
+			isOptionsEqual(newOptions, oldOptions) {
+				if (Object.keys(newOptions).length !== Object.keys(oldOptions).length) {
+					return false;
+				}
+				for (const [key, value] of Object.entries(newOptions)) {
+					if (!Object.hasOwn(oldOptions, key)) {
+						return false;
+					}
+					if (value !== oldOptions[key]) {
+						return false;
+					}
+				}
+				for (const [key, value] of Object.entries(oldOptions)) {
+					if (!Object.hasOwn(newOptions, key)) {
+						return false;
+					}
+					if (value !== newOptions[key]) {
+						return false;
+					}
+				}
+				return true;
+			}
+		},
+		template: '<a ref="container"></a>'
 	};
 
 	exports.Switcher = Switcher;
 
-}((this.BX.UI.Vue3.Components = this.BX.UI.Vue3.Components || {}),BX,BX.UI));
+})(this.BX.UI.Vue3.Components = this.BX.UI.Vue3.Components || {}, BX, BX.UI);
 //# sourceMappingURL=switcher.bundle.js.map

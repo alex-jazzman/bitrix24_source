@@ -10,7 +10,6 @@ return [
 		'layout/ui/menu',
 		'layout/ui/friendly-date',
 		'layout/ui/copilot-role-selector',
-		'layout/ui/file/icon',
 		'utils/object',
 		'utils/date',
 		'utils/file',

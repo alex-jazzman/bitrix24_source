@@ -188,7 +188,19 @@ while ($db_res = $rsData->Fetch())
 			: GetMessage('MAIN_AGENT_SYSTEM_USER')
 	);
 	$row->AddInputField('SORT');
-	$row->AddInputField('NAME');
+	$row->AddInputField('NAME', ['size' => 50]);
+	$agentName = \CAgent::getAgentName($db_res['NAME']);
+	$agentNameView = htmlspecialcharsbx($agentName);
+	if ($agentName !== $db_res['NAME'] && !$lAdmin->isExportMode())
+	{
+		$jsonId = 'agent_json_' . (int)$db_res['ID'];
+		$agentNameView .= ' <a href="#" onclick="BX.toggle(BX(\'' . $jsonId . '\')); return false;">json</a>';
+		$agentNameView .= '<div id="' . $jsonId . '" style="display:none; margin-top:4px; white-space:normal; word-break:break-all;"><code>'
+			. htmlspecialcharsbx($db_res['NAME'])
+			. '</code></div>'
+		;
+	}
+	$row->AddViewField('NAME', $agentNameView);
 	$row->AddCheckField('ACTIVE');
 	$row->AddField('LAST_EXEC', htmlspecialcharsbx($db_res['LAST_EXEC']));
 	$row->AddField('NEXT_EXEC', htmlspecialcharsbx($db_res['NEXT_EXEC']));

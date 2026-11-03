@@ -3,7 +3,7 @@ import type { ApplicationState } from '../store';
 import type { CallAssessmentSelector } from 'crm.copilot.call-assessment-selector';
 import type { ReplacementOptions } from '../app';
 import { Type } from 'main.core';
-import { prepareCallAssessment, prepareCriteria } from './functions';
+import { correctViewModeOrNull, prepareCallAssessment, prepareCriteria } from './functions';
 
 export default {
 	initializeApplicationState(state: ApplicationState, options: ReplacementOptions): void
@@ -17,6 +17,7 @@ export default {
 
 		state.callId = options.callId;
 		state.assessment = prepareCallAssessment(callAssessment);
+		state.hintViewMode = correctViewModeOrNull(options.hintViewMode);
 		state.hasAvailableSelectorItems = options.hasAvailableSelectorItems ?? true;
 		state.isCallScoringV2Enabled = Boolean(options.isCallScoringV2Enabled);
 		state.criteria = prepareCriteria(callAssessment?.criteria);
@@ -38,5 +39,10 @@ export default {
 	{
 		state.assessment = prepareCallAssessment(assessment);
 		state.criteria = prepareCriteria(assessment?.criteria);
+	},
+
+	setHintViewMode(state: ApplicationState, mode: string): void
+	{
+		state.hintViewMode = correctViewModeOrNull(mode);
 	},
 };

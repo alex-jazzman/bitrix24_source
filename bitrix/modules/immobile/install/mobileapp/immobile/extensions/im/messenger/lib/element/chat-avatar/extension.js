@@ -109,6 +109,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.containsCollaber = false;
 			this.isCurrentUser = UserHelper.isCurrentUser(dialogId);
 			this.useCopilotRadialGradient = false;
+			this.useCopilotStarAvatar = false;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -129,7 +130,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			const { accentType, placeholderType } = AvatarDetailFields;
 
-			return {
+			const avatarFields = {
 				type: AvatarShape.CIRCLE.value,
 				polygonAngle: 30, // only IOS
 				radius: 0,
@@ -150,13 +151,25 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 					},
 				},
 			};
+
+			if (!Feature.isBitrixGptV2Available)
+			{
+				return avatarFields;
+			}
+
+			// The star image carries its own theme background, so the placeholder takes the same
+			// background and the icon under it switches to the accent color to stay visible.
+			avatarFields.uri = CopilotAsset.starPngUrl;
+			avatarFields.placeholder.backgroundColor = Color.bgContentPrimary.toHex();
+			avatarFields.placeholder.svg.tintColor = Color.accentSoftElementViolet.toHex();
+
+			return avatarFields;
 		}
 
 		static createOptimisticCopilotAvatar(title)
 		{
 			const defaultFields = ChatAvatar.#defaultAvatarFields;
-			const avatarPng = Feature.isBitrixGptV2Available ? 'avatar_copilot_v2.png' : 'avatar_copilot_assistant.png';
-			defaultFields.uri = `${ChatAvatar.getImagePath()}${avatarPng}`;
+			defaultFields.uri = ChatAvatar.#copilotDefaultAvatarUrl;
 			defaultFields.title = title;
 
 			defaultFields.radius = Theme.corner.S.toNumber();
@@ -167,6 +180,11 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				defaultFields.accentType = AvatarDetailFields.accentType.purple;
 				defaultFields.hideOutline = false;
 				defaultFields.backBorderWidth = 2;
+			}
+
+			if (Feature.isBitrixGptV2Available)
+			{
+				return ChatAvatar.#withCopilotStarBackground(defaultFields);
 			}
 
 			return defaultFields;
@@ -248,13 +266,15 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			if (this.type === DialogType.copilot)
 			{
 				const mainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogModel.dialogId);
-				const avatarPng = Feature.isBitrixGptV2Available ? 'avatar_copilot_v2.png' : 'avatar_copilot_assistant.png';
-				const defaultAvatar = `${ChatAvatar.getImagePath()}${avatarPng}`;
+				const defaultAvatar = ChatAvatar.#copilotDefaultAvatarUrl;
 
 				const isNotUniversalRole = mainRole?.code !== CopilotRoleType.copilotUniversalRole;
 				if (isNotUniversalRole)
 				{
-					this.avatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId) || defaultAvatar;
+					// A profile role may have no picture of its own, then the star is shown as well.
+					const roleAvatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId);
+					this.avatar = roleAvatar || defaultAvatar;
+					this.useCopilotStarAvatar = Feature.isBitrixGptV2Available && !roleAvatar;
 
 					return;
 				}
@@ -268,6 +288,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				}
 
 				this.avatar = defaultAvatar;
+				this.useCopilotStarAvatar = Feature.isBitrixGptV2Available;
 			}
 		}
 
@@ -390,6 +411,47 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		}
 
 		/**
+		 * @return {AvatarDetail} Invisible placeholder-row avatar for the slash-command panel empty state.
+		 */
+		static createMentionEmptyStateAvatar()
+		{
+			return ChatAvatar.#createMentionInvisibleAvatar();
+		}
+
+		/**
+		 * @return {AvatarDetail} Invisible placeholder-row avatar for the slash-command panel error state.
+		 */
+		static createMentionErrorStateAvatar()
+		{
+			return ChatAvatar.#createMentionInvisibleAvatar();
+		}
+
+		/**
+		 * @desc An intentionally invisible avatar (no image, no placeholder circle) for the
+		 * slash-command panel placeholder rows. The shared mention panel does not render a row
+		 * without an avatar, so a valid-but-empty AvatarDetail keeps the row and its text visible
+		 * while showing nothing on the left. A truly avatar-less / centered empty state would need
+		 * native panel support and is out of scope here.
+		 * @private
+		 * @return {AvatarDetail}
+		 */
+		static #createMentionInvisibleAvatar()
+		{
+			const { placeholderType } = AvatarDetailFields;
+
+			return {
+				type: AvatarShape.CIRCLE.value,
+				radius: 0,
+				backBorderWidth: 0,
+				hideOutline: true,
+				uri: null,
+				placeholder: {
+					type: placeholderType.none,
+				},
+			};
+		}
+
+		/**
 		 * @return {AvatarDetail}
 		 */
 		getMessageAvatarProps()
@@ -406,6 +468,13 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		getMessageCopilotPromptAvatarUrl()
 		{
 			const roleData = this.#getCopilotRoleData();
+
+			// The server hands out an opaque icon for the universal role, so the prompt avatar
+			// reuses the same themed star as the copilot chat avatar.
+			if (Feature.isBitrixGptV2Available && ChatAvatar.#isUniversalCopilotRole(roleData))
+			{
+				return ChatAvatar.#copilotDefaultAvatarUrl;
+			}
 
 			return withCurrentDomain(roleData?.avatar?.medium || roleData?.avatar?.small);
 		}
@@ -742,12 +811,55 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return this.#getAvatarRadialGradientCopilotFields();
 			}
 
-			const defaultFields = this.#getAvatarDefaultFields();
-
-			return {
-				...defaultFields,
+			const copilotFields = {
+				...this.#getAvatarDefaultFields(),
 				...this.#getCopilotFields(),
 			};
+
+			return this.useCopilotStarAvatar
+				? ChatAvatar.#withCopilotStarBackground(copilotFields)
+				: copilotFields
+			;
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		static get #copilotDefaultAvatarUrl()
+		{
+			return Feature.isBitrixGptV2Available
+				? CopilotAsset.starPngUrl
+				: `${ChatAvatar.getImagePath()}avatar_copilot_assistant.png`
+			;
+		}
+
+		/**
+		 * @private
+		 * @param {AvatarDetail} avatarFields
+		 * @return {AvatarDetail}
+		 */
+		static #withCopilotStarBackground(avatarFields)
+		{
+			// The star image carries its own theme background, the placeholder only has to
+			// match it while the image is still loading.
+			return {
+				...avatarFields,
+				placeholder: {
+					...avatarFields.placeholder,
+					backgroundColor: Color.bgContentPrimary.toHex(),
+				},
+			};
+		}
+
+		/**
+		 * @private
+		 * @param {?CopilotRoleData} roleData missing role data means the universal role
+		 * @return {boolean}
+		 */
+		static #isUniversalCopilotRole(roleData)
+		{
+			return !roleData || roleData.code === CopilotRoleType.copilotUniversalRole;
 		}
 
 		/**
@@ -779,28 +891,41 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getAvatarCopilotFields()
 		{
 			const copilotRoleData = this.#getCopilotRoleData() ?? this.#getCopilotMainRoleData();
+
+			// For a bot avatar the role of a specific message (messageId) wins over the chat's main role.
+			// The universal-role check lives here (not in #getCopilotFields) because that branch
+			// always uses the chat's main role and doesn't consider per-message roles.
+			if (Feature.isBitrixGptV2Available && ChatAvatar.#isUniversalCopilotRole(copilotRoleData))
+			{
+				// The server hands out an opaque icon for the universal role, so the bot avatar
+				// reuses the same themed star as the copilot chat avatar.
+				this.avatar = ChatAvatar.#copilotDefaultAvatarUrl;
+
+				return ChatAvatar.#withCopilotStarBackground(this.#getAvatarDefaultFields());
+			}
+
+			// A role without picture files leaves the opaque server star of the bot in place,
+			// so the themed one takes over; the outline of the role is not affected.
 			const smallRoleAvatar = copilotRoleData?.avatar?.small;
+			const useStarAvatar = !smallRoleAvatar && Feature.isBitrixGptV2Available;
 			if (smallRoleAvatar)
 			{
 				this.avatar = encodeURI(smallRoleAvatar);
 			}
-
-			const defaultFields = this.#getAvatarDefaultFields();
-
-			// For a bot avatar the outline is driven by the role of a specific message (messageId)
-			// when available, otherwise it falls back to the chat's main role.
-			// The universal-role check lives here (not in #getCopilotFields) because that branch
-			// always uses the chat's main role and doesn't consider per-message roles.
-			const isUniversalRole = copilotRoleData?.code === CopilotRoleType.copilotUniversalRole;
-			if (Feature.isBitrixGptV2Available && isUniversalRole)
+			else if (useStarAvatar)
 			{
-				return defaultFields;
+				this.avatar = ChatAvatar.#copilotDefaultAvatarUrl;
 			}
 
-			return {
-				...defaultFields,
+			const copilotFields = {
+				...this.#getAvatarDefaultFields(),
 				...this.#getCopilotFields(),
 			};
+
+			return useStarAvatar
+				? ChatAvatar.#withCopilotStarBackground(copilotFields)
+				: copilotFields
+			;
 		}
 
 		/**
@@ -897,8 +1022,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.#getCopilotChatDialogId());
-			const isUniversalRole = !copilotMainRole || copilotMainRole?.code === CopilotRoleType.copilotUniversalRole;
-			if (Feature.isBitrixGptV2Available && isUniversalRole)
+			if (Feature.isBitrixGptV2Available && ChatAvatar.#isUniversalCopilotRole(copilotMainRole))
 			{
 				return {};
 			}

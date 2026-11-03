@@ -24,3 +24,5 @@ $MESS['CRM_SEMA_EMAIL_CREATION_CANCELED'] = 'Операция создания �
 $MESS['CRM_SEMA_TIMELINE_ERROR'] = 'Письмо не отправлено. #ERROR_TEXT#';
 $MESS['CRM_SEMA_ACTIVITY_LINK_LABEL'] = 'Открыть письмо';
 $MESS['CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED'] = 'Превышен максимальный размер вложений (#SIZE#)';
+$MESS['CRM_SEMA_ATTACHMENT_INVALID'] = 'Укажите ID файла или поле с файлом в поле «Файлы»';
+$MESS['CRM_SEMA_SENDER_UNAVAILABLE_FOR_RESPONSIBLE'] = 'Выбранный отправитель недоступен ответственному за элемент CRM. Предоставьте доступ к почтовому ящику этому сотруднику или всему его отделу либо выберите другого отправителя в настройках робота';

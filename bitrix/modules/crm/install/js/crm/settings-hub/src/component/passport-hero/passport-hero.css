@@ -1,0 +1,197 @@
+.crm-settings-hub-passport-hero {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	/* Symmetric top and bottom. The card used to sit 24 over 20, which read as a tilt rather than as
+	   a rhythm — there is nothing above the avatar row that needs the extra four pixels. */
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+/* The avatar sits on the middle of the content column, not on its first line. Top-aligned it read as
+   an icon attached to the name; the column is a block of three things — name, description, placement
+   — and the tile belongs to the block.
+
+   It is held there by a TOP offset, not by centring, and that is what the margin on __avatar is for.
+   Centring is a function of the column's height, so every pixel the column gained in edit mode moved
+   the tile by half of it: measured on the stand (type 1032) the column grows 120 -> 150 and the
+   avatar slid 15px down the moment the pencil was pressed. Artwork drifting while the name is being
+   typed is what PM called "тянет". Any future row inside the mode would only widen that gap, which is
+   the second reason the tile is not tied to the column's height at all. */
+.crm-settings-hub-passport-hero__top {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inset-sm2);
+}
+
+/* Placeholder tile for the type avatar: the composed graphic of the layout is not exported yet.
+   The margin is the position centring produced in READ mode — (120 - 78) / 2 on the canonical
+   passport — frozen, so the tile stands still and edit mode cannot reach it. It is a constant on
+   purpose: the point is that this number does NOT follow the column any more. */
+.crm-settings-hub-passport-hero__avatar {
+	position: relative;
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 78px;
+	height: 78px;
+	margin-top: 21px;
+	background: var(--ui-color-design-tinted-bg);
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.crm-settings-hub-passport-hero__avatar-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.crm-settings-hub-passport-hero__badge {
+	position: absolute;
+	right: -4px;
+	bottom: -4px;
+}
+
+/* The column holds three different things — a 25px name, a line of prose and a control — and 6px
+   between them read as one clump: the description looked glued under the name and the placement
+   button glued under the description. 8px separates the name from its description; the placement
+   button then takes a step of its own below (see __placement) — it is a control, not another line of
+   text, and it earns the extra distance the prose does not. The same rhythm holds in edit mode, where
+   the description grows into a bordered field. */
+.crm-settings-hub-passport-hero__content {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	min-width: 0;
+}
+
+.crm-settings-hub-passport-hero__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	min-height: 33px;
+}
+
+/* The pencil belongs to the name, not beside it: light, tucked in close and sitting on the name's
+   bottom edge rather than floating at its optical centre, where it read as a second element of the
+   row. Size comes from the button (AIR ties --ui-btn-icon-size to the size class: xs is 14px, sm is
+   20px), so it is asked for with the prop rather than fought over in CSS.
+   The colour has no prop — AIR fixes it at --ui-color-design-plain-content, which is the same
+   #525C69 as the description and made the pencil read as text. Overridden through the button's own
+   variable, not the icon's: .ui-btn .ui-icon-set already maps one onto the other. The selector
+   carries AIR's own classes because AIR sets the variable at (0,3,0) and a single class would lose.
+   The token is the plain style's secondary icon colour, not a raw grey — it flips with the theme. */
+.ui-btn.--air.--style-plain.crm-settings-hub-passport-hero__edit {
+	--ui-btn-color: var(--ui-color-design-plain-content-icon-secondary);
+}
+
+.crm-settings-hub-passport-hero__edit {
+	align-self: flex-end;
+}
+
+.crm-settings-hub-passport-hero__title {
+	color: var(--ui-color-base-0);
+}
+
+/* Editing happens on this very element, so it must not gain a box, a background or an outline: the
+   caret is the whole affordance, and anything else would move the text the moment it is clicked.
+   Safe as an accessibility trade only because the element is a textbox — the caret IS its focus
+   indicator, the same bargain every in-place title editor makes. */
+.crm-settings-hub-passport-hero__title.--editable {
+	min-width: 1px;
+	outline: none;
+	cursor: text;
+}
+
+/* An emptied name would otherwise collapse to a caret on blank space with nothing to say what the
+   field is. Enter is intercepted and paste is flattened, so nothing leaves a stray <br> behind and
+   :empty stays honest. */
+.crm-settings-hub-passport-hero__title.--editable:empty::before {
+	content: attr(data-placeholder);
+	color: var(--ui-color-design-outline-content-secondary);
+}
+
+.crm-settings-hub-passport-hero__description {
+	color: var(--ui-color-design-outline-content);
+}
+
+/* Vertical breathing room inside the description field. BInput gives its textarea 2px top and
+   bottom, which is right for a form row and wrong here: the two rows of prose ended up touching the
+   box. Reaching into the input's internals is deliberate and kept to one property — the component
+   has no roomier size to ask for (it is already --l), and this is the only place where its textarea
+   is a paragraph rather than a field in a form. */
+.crm-settings-hub-passport-hero__description .ui-system-input-value.--multi {
+	padding-block: var(--ui-space-inset-xs);
+}
+
+.crm-settings-hub-passport-hero__description-text {
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+/* One step muted from the description itself, same semantic family — and it flips with the theme,
+   unlike a raw base token. */
+.crm-settings-hub-passport-hero__description-text.--empty {
+	color: var(--ui-color-design-outline-content-secondary);
+}
+
+.crm-settings-hub-passport-hero__description-text:disabled {
+	cursor: default;
+}
+
+.crm-settings-hub-passport-hero__description-text.--read-only {
+	cursor: default;
+}
+
+.crm-settings-hub-passport-hero__location {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm2) 11px var(--ui-space-inset-sm2) var(--ui-space-inset-sm);
+	background: var(--ui-color-design-outline-a2-focused-bg);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.crm-settings-hub-passport-hero__location-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+
+	flex: 0 0 auto;
+}
+
+.crm-settings-hub-passport-hero__location-title {
+	flex: 1 1 auto;
+	color: var(--ui-color-base-0);
+}
+
+.crm-settings-hub-passport-hero__location-action {
+	flex: 0 0 auto;
+}
+
+.crm-settings-hub-passport-hero__details {
+	min-width: 0;
+}
+
+.crm-settings-hub-passport-hero__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+/* Its own line in the content column, so the button never shares a row with the description and
+   keeps the column's own rhythm instead of bringing a margin of its own.
+   A column, not a row: the placement control puts its permission alert in the same slot, and inline
+   it would sit beside the button and squeeze it. */
+.crm-settings-hub-passport-hero__placement {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	margin-top: var(--ui-space-stack-2xs);
+}

@@ -6,21 +6,48 @@
  *
  */
 import type { KlassConstructor } from '../LexicalEditor';
-import type { DOMConversionMap, NodeKey, SerializedLexicalNode } from '../LexicalNode';
-import { LexicalNode } from '../LexicalNode';
+import { type DOMConversionOutput, LexicalNode, type SerializedLexicalNode } from '../LexicalNode';
 export type SerializedLineBreakNode = SerializedLexicalNode;
 /** @noInheritDoc */
 export declare class LineBreakNode extends LexicalNode {
+    /** @internal */
     ['constructor']: KlassConstructor<typeof LineBreakNode>;
-    static getType(): string;
-    static clone(node: LineBreakNode): LineBreakNode;
-    constructor(key?: NodeKey);
+    $config(): import("..").BaseStaticNodeConfig & {
+        readonly linebreak?: {
+            readonly importDOM: {
+                readonly br: (node: Node) => {
+                    conversion: typeof $convertLineBreakElement;
+                    priority: 0;
+                } | null;
+            };
+        } | undefined;
+    };
     getTextContent(): '\n';
     createDOM(): HTMLElement;
     updateDOM(): false;
-    static importDOM(): DOMConversionMap | null;
-    static importJSON(serializedLineBreakNode: SerializedLineBreakNode): LineBreakNode;
-    exportJSON(): SerializedLexicalNode;
+    isInline(): true;
 }
+declare function $convertLineBreakElement(node: Node): DOMConversionOutput;
+/** Creates a LineBreakNode representing a soft line break (Shift+Enter). */
 export declare function $createLineBreakNode(): LineBreakNode;
+/** Returns true if the given node is a LineBreakNode. */
 export declare function $isLineBreakNode(node: LexicalNode | null | undefined): node is LineBreakNode;
+/**
+ * True when `node` is the sole non-whitespace child of a block DOM
+ * element. Used by the LineBreak importer to drop stray `<br>` elements
+ * that the legacy `$generateNodesFromDOM` also skipped (matches the
+ * behavior of `LineBreakNode.importDOM`).
+ *
+ * @experimental
+ */
+export declare function isOnlyChildInBlockNode(node: Node): boolean;
+/**
+ * True when `node` is the trailing non-whitespace child of a block DOM
+ * element (excluding the only-child case). Used by the LineBreak
+ * importer to drop trailing `<br>` elements like the Apple-interchange
+ * clipboard artifact (matches `LineBreakNode.importDOM`).
+ *
+ * @experimental
+ */
+export declare function isLastChildInBlockNode(node: Node): boolean;
+export {};

@@ -44,6 +44,11 @@ CREATE TABLE b_search_content_right (
 );
 CREATE UNIQUE INDEX ux_b_search_content_right_search_content_id_group_code ON b_search_content_right (search_content_id, group_code);
 
+CREATE TABLE b_search_content_right_sync (
+  SEARCH_CONTENT_ID int NOT NULL,
+  PRIMARY KEY (SEARCH_CONTENT_ID)
+);
+
 CREATE TABLE b_search_user_right (
   USER_ID int NOT NULL,
   GROUP_CODE varchar(100) NOT NULL

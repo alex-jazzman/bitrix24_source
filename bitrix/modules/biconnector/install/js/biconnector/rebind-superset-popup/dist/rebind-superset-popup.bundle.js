@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, biconnector_cardSelectPopup) {
+(function (exports, main_core, biconnector_cardSelectPopup, biconnector_errorMessage, ui_notification) {
 	'use strict';
 
 	const ACTION_REBIND = 'rebind';
@@ -57,16 +57,14 @@ this.BX = this.BX || {};
 			});
 		}
 		#processErrorResponse(response) {
-			if (response.errors && main_core.Type.isStringFilled(response.errors[0]?.message)) {
-				BX.UI.Notification.Center.notify({
-					content: main_core.Text.encode(response.errors[0].message)
-				});
-			}
+			ui_notification.Center.notify({
+				content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_REBIND_POPUP_ERROR'))
+			});
 			this.#popup.setLoading(false);
 		}
 	}
 
 	exports.RebindSupersetPopup = RebindSupersetPopup;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.BIConnector);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.BIConnector, BX.BIConnector, BX.UI.Notification);
 //# sourceMappingURL=rebind-superset-popup.bundle.js.map

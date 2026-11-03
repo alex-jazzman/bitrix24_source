@@ -53,7 +53,7 @@ export function useDiagramLayout(options: UseDiagramLayoutOptions = {}): UseDiag
 
 	function isEditorDisabled(): boolean
 	{
-		return toValue(diagram.isDisabledBlockDiagram) || store.isTemplateNotFound || store.isEditorReadonly;
+		return toValue(diagram.isDisabledBlockDiagram) || store.isTemplateNotFound || store.isWriteLocked;
 	}
 
 	function isAvailable(): boolean

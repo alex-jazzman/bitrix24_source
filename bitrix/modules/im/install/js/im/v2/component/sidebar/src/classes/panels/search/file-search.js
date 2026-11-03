@@ -1,9 +1,11 @@
+import { Type } from 'main.core';
+
 import { RestMethod } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
 import { Core } from 'im.v2.application.core';
 
 import { getChatId } from '../helpers/get-chat-id';
-import { getLastElementId } from '../helpers/get-last-element-id';
+import { getPageCursor, SidebarFileDateOrder, usesDateOrder } from '../helpers/page-cursor';
 
 import type { Store } from 'ui.vue3.vuex';
 import type { RestClient } from 'rest.client';
@@ -21,7 +23,9 @@ type UrlGetQueryParams = {
 	LIMIT: number,
 	GROUP: string,
 	SEARCH_FILE_NAME?: string,
+	ORDER?: {[string]: string},
 	LAST_ID?: number,
+	LAST_DATE?: string,
 };
 
 export class FileSearch
@@ -74,17 +78,17 @@ export class FileSearch
 			console.error('SidebarSearch: Im.imChatFileGet: page request error', error);
 		}
 
-		return this.#processSearchResponse(responseData);
+		return this.#processSearchResponse(responseData, group);
 	}
 
-	#processSearchResponse(response: RestResponse): Promise<number[]>
+	#processSearchResponse(response: RestResponse, group: string): Promise<number[]>
 	{
-		return this.updateModels(response).then(() => {
+		return this.updateModels(response, group).then(() => {
 			return response.files.map((file) => file.id);
 		});
 	}
 
-	updateModels(resultData: RestResponse): Promise
+	updateModels(resultData: RestResponse, group: string): Promise
 	{
 		const { list, users, files, tariffRestrictions = {} } = resultData;
 
@@ -106,23 +110,23 @@ export class FileSearch
 		});
 
 		const setSidebarFilesPromises = [];
-		Object.keys(sortedGroups).forEach((group) => {
-			const listByType = sortedGroups[group];
+		Object.keys(sortedGroups).forEach((groupName) => {
+			const listByType = sortedGroups[groupName];
 			setSidebarFilesPromises.push(
 				this.store.dispatch('sidebar/files/setSearch', {
 					chatId: this.chatId,
 					files: listByType,
-					group,
+					group: groupName,
 				}),
 				this.store.dispatch('sidebar/files/setHasNextPageSearch', {
 					chatId: this.chatId,
-					group,
+					group: groupName,
 					hasNextPage: listByType.length === REQUEST_ITEMS_LIMIT,
 				}),
 				this.store.dispatch('sidebar/files/setLastIdSearch', {
 					chatId: this.chatId,
-					group,
-					lastId: getLastElementId(listByType),
+					group: groupName,
+					...getPageCursor(listByType, usesDateOrder(group) && groupName === group),
 				}),
 			);
 		});
@@ -152,9 +156,27 @@ export class FileSearch
 		};
 
 		const lastId = this.store.getters['sidebar/files/getSearchResultCollectionLastId'](this.chatId, group);
-		if (lastId > 0)
+
+		if (!usesDateOrder(group))
+		{
+			if (lastId > 0)
+			{
+				queryParams.LAST_ID = lastId;
+			}
+
+			return queryParams;
+		}
+
+		// the search over the tab goes by the same order and the same cursor, otherwise it shows the
+		// records in an order the tab itself does not have
+		queryParams.ORDER = { ...SidebarFileDateOrder };
+
+		const lastDate = this.store.getters['sidebar/files/getSearchResultCollectionLastDate'](this.chatId, group);
+		// an incomplete pair is a wrong request, so the cursor goes in only once a page has come back
+		if (lastId > 0 && Type.isStringFilled(lastDate))
 		{
 			queryParams.LAST_ID = lastId;
+			queryParams.LAST_DATE = lastDate;
 		}
 
 		return queryParams;

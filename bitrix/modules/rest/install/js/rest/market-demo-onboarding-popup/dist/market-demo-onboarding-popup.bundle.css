@@ -1,0 +1,327 @@
+.popup-window.rest-market-demo-onboarding-popup-window {
+	width: min(900px, calc(100vw - 24px)) !important;
+	max-height: calc(100vh - 24px);
+	overflow: visible !important;
+	background: transparent !important;
+}
+
+.rest-market-demo-onboarding-popup-window .popup-window-content {
+	max-height: calc(100vh - 24px);
+	overflow: visible !important;
+	border-radius: 32px;
+	background: transparent !important;
+}
+
+.rest-market-demo-onboarding-popup {
+	position: relative;
+	display: flex;
+	width: 100%;
+	min-height: 500px;
+	border-radius: 32px;
+	box-sizing: border-box;
+	color: var(--ui-color-design-filled-content);
+}
+
+.rest-market-demo-onboarding-popup__content {
+	position: relative;
+	z-index: 5;
+	display: flex;
+	flex: 0 0 480px;
+	flex-direction: column;
+	align-items: flex-start;
+	padding:
+		var(--ui-space-inset-6xl)
+		var(--ui-space-inset-lg)
+		var(--ui-space-inset-6xl)
+		var(--ui-space-inset-6xl);
+	box-sizing: border-box;
+}
+
+.rest-market-demo-onboarding-popup__title {
+	--ui-text-2xl-font-size: 34px;
+	--ui-text-2xl-line-height: 40px;
+	--ui-text-2xl-letter-spacing: -0.4px;
+	--ui-text-2xl-font-weight: var(--ui-font-weight-bold);
+
+	margin: 0;
+	color: var(--ui-color-design-filled-content);
+}
+
+.rest-market-demo-onboarding-popup__subtitle {
+	margin: 16px 0 0;
+	color: var(--ui-color-design-filled-content);
+}
+
+.rest-market-demo-onboarding-popup__features {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	margin: 28px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rest-market-demo-onboarding-popup__feature {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.rest-market-demo-onboarding-popup__feature-text {
+	color: var(--ui-color-design-filled-content);
+}
+
+.rest-market-demo-onboarding-popup__feature-icon {
+	display: flex;
+	flex: 0 0 38px;
+	align-items: center;
+	justify-content: center;
+	width: 38px;
+	height: 38px;
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-design-filled-content-divider);
+}
+
+.rest-market-demo-onboarding-popup__cta {
+	margin-top: auto;
+	padding-top: 28px;
+}
+
+.rest-market-demo-onboarding-popup__button {
+	min-height: 48px;
+}
+
+.rest-market-demo-onboarding-popup__close {
+	position: absolute;
+	z-index: 6;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-md);
+	background: transparent;
+	cursor: pointer;
+}
+
+.rest-market-demo-onboarding-popup__close::before {
+	content: '';
+	position: absolute;
+	inset: 4px;
+	border-radius: var(--ui-border-radius-md);
+	background: transparent;
+	transition: background-color 160ms ease;
+}
+
+.rest-market-demo-onboarding-popup__close:hover::before {
+	background: var(--ui-color-design-filled-content-divider);
+}
+
+.rest-market-demo-onboarding-popup__close > * {
+	position: relative;
+	z-index: 1;
+}
+
+.rest-market-demo-onboarding-popup__close:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-white-fixed);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+.rest-market-demo-onboarding-popup__decoration {
+	position: absolute;
+	z-index: 1;
+	inset: 0;
+	pointer-events: none;
+}
+
+.rest-market-demo-onboarding-popup__scene {
+	--rest-market-demo-onboarding-popup-image-1x:
+		url("images/rest-market-demo-onboarding-popup-scene@1x.webp");
+	--rest-market-demo-onboarding-popup-image-2x:
+		url("images/rest-market-demo-onboarding-popup-scene@2x.webp");
+
+	position: absolute;
+	z-index: 1;
+	inset: 0;
+	overflow: hidden;
+	border-radius: 32px;
+	background-image: -webkit-image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	background-image: image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.rest-market-demo-onboarding-popup__tile,
+.rest-market-demo-onboarding-popup__hero {
+	position: absolute;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.rest-market-demo-onboarding-popup__tile {
+	--rest-market-demo-onboarding-popup-float-offset: -12px;
+
+	filter: drop-shadow(0 16px 26px rgba(8, 30, 96, 0.22));
+	animation: rest-market-demo-onboarding-popup-float 6s ease-in-out infinite;
+}
+
+.rest-market-demo-onboarding-popup__tile.--ai {
+	--rest-market-demo-onboarding-popup-image-1x:
+		url("images/rest-market-demo-onboarding-popup-tile-ai@1x.webp");
+	--rest-market-demo-onboarding-popup-image-2x:
+		url("images/rest-market-demo-onboarding-popup-tile-ai@2x.webp");
+
+	z-index: 4;
+	top: -54px;
+	left: 612px;
+	width: 250px;
+	height: 250px;
+	background-image: -webkit-image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	background-image: image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+}
+
+.rest-market-demo-onboarding-popup__tile.--market {
+	--rest-market-demo-onboarding-popup-image-1x:
+		url("images/rest-market-demo-onboarding-popup-tile-market@1x.webp");
+	--rest-market-demo-onboarding-popup-image-2x:
+		url("images/rest-market-demo-onboarding-popup-tile-market@2x.webp");
+	--rest-market-demo-onboarding-popup-float-offset: -16px;
+
+	z-index: 2;
+	top: 6px;
+	left: 405px;
+	width: 242px;
+	height: 242px;
+	background-image: -webkit-image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	background-image: image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	animation-duration: 7.2s;
+}
+
+.rest-market-demo-onboarding-popup__tile.--vibe {
+	--rest-market-demo-onboarding-popup-image-1x:
+		url("images/rest-market-demo-onboarding-popup-tile-vibe@1x.webp");
+	--rest-market-demo-onboarding-popup-image-2x:
+		url("images/rest-market-demo-onboarding-popup-tile-vibe@2x.webp");
+	--rest-market-demo-onboarding-popup-float-offset: -9px;
+
+	z-index: 2;
+	top: 112px;
+	right: -104px;
+	width: 248px;
+	height: 248px;
+	background-image: -webkit-image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	background-image: image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	animation-duration: 5.6s;
+}
+
+.rest-market-demo-onboarding-popup__hero {
+	--rest-market-demo-onboarding-popup-image-1x:
+		url("images/rest-market-demo-onboarding-popup-hero@1x.webp");
+	--rest-market-demo-onboarding-popup-image-2x:
+		url("images/rest-market-demo-onboarding-popup-hero@2x.webp");
+
+	z-index: 3;
+	right: 52px;
+	bottom: 24px;
+	width: 360px;
+	height: 360px;
+	background-image: -webkit-image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	background-image: image-set(
+		var(--rest-market-demo-onboarding-popup-image-1x) 1x,
+		var(--rest-market-demo-onboarding-popup-image-2x) 2x
+	);
+	filter: drop-shadow(0 22px 30px rgba(8, 30, 96, 0.28));
+}
+
+@keyframes rest-market-demo-onboarding-popup-float {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+
+	50% {
+		transform: translateY(var(--rest-market-demo-onboarding-popup-float-offset));
+	}
+}
+
+@media (max-width: 700px), (max-height: 524px) {
+	.popup-window.rest-market-demo-onboarding-popup-window {
+		overflow: hidden !important;
+	}
+
+	.rest-market-demo-onboarding-popup-window .popup-window-content {
+		overflow: auto !important;
+	}
+
+	.rest-market-demo-onboarding-popup {
+		min-height: auto;
+	}
+
+	.rest-market-demo-onboarding-popup__content {
+		flex: 1 1 auto;
+		padding: 52px 32px 40px;
+	}
+
+	.rest-market-demo-onboarding-popup__tile,
+	.rest-market-demo-onboarding-popup__hero {
+		display: none;
+	}
+}
+
+@media (max-width: 420px) {
+	.rest-market-demo-onboarding-popup__content {
+		padding: 52px 20px 32px;
+	}
+
+	.rest-market-demo-onboarding-popup__title {
+		--ui-text-2xl-font-size: 28px;
+		--ui-text-2xl-line-height: 34px;
+	}
+
+	.rest-market-demo-onboarding-popup__feature {
+		align-items: flex-start;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rest-market-demo-onboarding-popup__tile {
+		animation: none;
+	}
+
+	.rest-market-demo-onboarding-popup__close::before {
+		transition: none;
+	}
+}

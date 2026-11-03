@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_SITE_FORM_SIGN"] = "Заряжено";
 $MESS["CRM_SITE_FORM_SIGN_BY"] = "Битрикс24";
 $MESS["CRM_SITE_FORM_NAV_NEXT"] = "Далее";
@@ -24,4 +24,8 @@ $MESS["CRM_SITE_FORM_CONSENT_READ_ALL"] = "Прочитайте до конца"
 $MESS["CRM_SITE_FORM_MORE_FIELDS_YET"] = "Внизу есть еще поля";
 $MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_LESS_THAN_MINUTE"] = "менее 1 минуты";
 $MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_FEW_SECONDS"] = "несколько секунд";
+$MESS['CRM_SITE_FORM_AGREEMENT_NOTICE_DEFAULT'] = 'Информационные и рекламные сообщения можно отправлять только с вашего согласия. Чтобы получать их, примите согласие. Чтобы продолжить без сообщений, нажмите кнопку ещё раз.';
+$MESS['CRM_SITE_FORM_CONSENT_ACCEPT_BY_SUBMIT'] = 'Нажимая кнопку «%buttonCaption%», я даю свое %documentTitle% на обработку моих персональных данных.';
+$MESS['CRM_SITE_FORM_CONSENT_ACCEPT_BY_SUBMIT_DOCUMENT'] = 'Нажимая на кнопку, я принимаю условия соглашения.';
+$MESS['CRM_SITE_FORM_CONSENT_ACCEPT_BY_SUBMIT_LINK'] = 'согласие';
 $MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_FEW_MINUTES"] = "несколько минут";

@@ -129,6 +129,8 @@ if($MOD_RIGHT=="W" && $arID = $lAdmin->GroupAction())
 		$_REQUEST['action'] = "refilter";
 	}
 
+	$deletedMessageIds = array();
+
 	foreach($arID as $ID)
 	{
 		if($ID == '')
@@ -152,12 +154,17 @@ if($MOD_RIGHT=="W" && $arID = $lAdmin->GroupAction())
 				break;
 			case "delete":
 				CMailMessage::Delete($ID);
+				$deletedMessageIds[] = $ID;
 				break;
 			case "refilter":
 				CMailFilter::FilterMessage($ID, "M", $filter_id);
 				break;
 		}
 	}
+
+	// The letters are gone for good, so the conversation projection may not keep them either
+	(new \Bitrix\Mail\Internal\Service\Message\Conversation\ConversationBackfill())
+		->removeDeletedMessages($deletedMessageIds);
 }
 
 $nav = new Bitrix\Main\UI\AdminPageNavigation('nav-mail-message');

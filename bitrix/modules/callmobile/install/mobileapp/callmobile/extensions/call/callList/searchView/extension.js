@@ -3,17 +3,59 @@
  */
 jn.define('call/callList/searchView', (require, exports, module) => {
 	const { OptimizedListView } = require('layout/ui/optimized-list-view');
-	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
+	const { Text2 } = require('ui-system/typography/text');
 	const { CallListItem } = require('call/callList/item');
 	const { SearchUserItem } = require('call/callList/searchUserItem');
 	const { formatTime } = require('call/callList/utils');
 	const { EmptyView } = require('call/callList/emptyView');
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { CallLogType } = require('call/const');
+
+	function SearchLoader()
+	{
+		return View(
+			{
+				testId: 'call-list-search-loader',
+				style: {
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'center',
+				},
+			},
+			Loader({
+				style: { height: 24 },
+				tintColor: Color.base3.toHex(),
+				animating: true,
+				size: 'small',
+			}),
+			Text2({
+				text: BX.message('MOBILEAPP_CALL_LIST_SEARCH_LOADING'),
+				color: Color.base3,
+				style: {
+					marginLeft: Indent.XS.toNumber(),
+				},
+			}),
+		);
+	}
 
 	const IS_IOS_PLATFORM = Application.getPlatform() === 'ios';
 
 	const NOT_FOUND_PADDING_TOP = IS_IOS_PLATFORM ? '30%' : 108;
+
+	function SearchLoaderCentered()
+	{
+		return View(
+			{
+				style: {
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'flex-start',
+					paddingTop: NOT_FOUND_PADDING_TOP,
+				},
+			},
+			SearchLoader(),
+		);
+	}
 
 	class CallListSearchViewComponent extends LayoutComponent
 	{
@@ -30,7 +72,13 @@ jn.define('call/callList/searchView', (require, exports, module) => {
 
 		setLoading(loading)
 		{
-			this.setState({ loading: Boolean(loading) });
+			const nextLoading = Boolean(loading);
+			if (this.state.loading === nextLoading)
+			{
+				return;
+			}
+
+			this.setState({ loading: nextLoading });
 		}
 
 		render()
@@ -39,35 +87,38 @@ jn.define('call/callList/searchView', (require, exports, module) => {
 
 			if (!items)
 			{
-				return loading
-					? View({
-						style: {
-							flex: 1,
-							alignItems: 'center',
-							justifyContent: 'flex-start',
-							paddingTop: NOT_FOUND_PADDING_TOP,
-						},
-					}, new LoaderItem({ enable: true, text: '' }))
-					: null;
+				return loading ? SearchLoaderCentered() : null;
 			}
 
-			if (items.length === 0 && !loading)
+			if (items.length === 0)
 			{
-				return EmptyView({
-					text: {
-						title: BX.message('MOBILEAPP_CALL_LIST_EMPTY_NOT_FOUND'),
-					},
+				return loading
+					? SearchLoaderCentered()
+					: EmptyView({
+						testId: 'call-list-search-empty-state',
+						text: {
+							title: BX.message('MOBILEAPP_CALL_LIST_EMPTY_NOT_FOUND'),
+						},
+					});
+			}
+
+			const rows = items.map((item) => ({
+				id: String(item.id),
+				key: String(item.id),
+				type: 'callListItem',
+				item,
+			}));
+
+			if (loading)
+			{
+				rows.push({
+					id: '__search_loading__',
+					key: '__search_loading__',
+					type: 'searchLoader',
 				});
 			}
 
-			const data = [{
-				items: items.map((item) => ({
-					id: String(item.id),
-					key: String(item.id),
-					type: 'callListItem',
-					item,
-				})),
-			}];
+			const data = [{ items: rows }];
 
 			return View(
 				{
@@ -78,7 +129,9 @@ jn.define('call/callList/searchView', (require, exports, module) => {
 				OptimizedListView({
 					style: { flex: 1 },
 					data,
-					renderItem: (row) => this.renderRow(row.item),
+					renderItem: (row) => (row.type === 'searchLoader'
+						? View({ style: { paddingTop: 10, paddingBottom: 10 } }, SearchLoader())
+						: this.renderRow(row.item)),
 				}),
 				IS_IOS_PLATFORM && View(
 					{
@@ -86,19 +139,6 @@ jn.define('call/callList/searchView', (require, exports, module) => {
 							height: 250,
 						},
 					},
-				),
-				(loading
-					? View({
-						style: {
-							position: 'absolute',
-							left: 0,
-							right: 0,
-							top: 0,
-							bottom: 0,
-							paddingTop: NOT_FOUND_PADDING_TOP,
-						},
-					}, new LoaderItem({ enable: true, text: '' }))
-					: null
 				),
 			);
 		}

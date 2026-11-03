@@ -8,6 +8,7 @@ export type InterfaceModelParams = {
 	deadlineUserOption: DeadlineUserOption,
 	userOptions: {
 		fullCard: FullCardOptions | false,
+		filesViewMode?: FilesViewMode | false,
 	},
 	taskUserFieldScheme: UserFieldScheme[],
 	templateUserFieldScheme: UserFieldScheme[],
@@ -28,6 +29,7 @@ export type InterfaceModelState = {
 	taskWithActiveTimer: ?TaskModel,
 	fullCardWidth: ?number,
 	taskListOptions: TaskListOptions,
+	filesViewMode: FilesViewMode,
 };
 
 export type DeadlineUserOption = {
@@ -57,6 +59,8 @@ export type StateFlags = {
 	allowsTimeTracking: boolean,
 	defaultRequireResult: boolean,
 };
+
+export type FilesViewMode = 'tile' | 'list';
 
 export type TaskListOptions = {
 	showCompletedSubTasks: boolean,

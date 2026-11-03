@@ -17,6 +17,7 @@ export function mapDtoToModel(resultDto: ResultDto): ResultModel
 		previewId: resultDto.previewId,
 		rights: resultDto.rights,
 		files: resultDto.files,
+		archiveLink: resultDto.archiveLink,
 	};
 }
 

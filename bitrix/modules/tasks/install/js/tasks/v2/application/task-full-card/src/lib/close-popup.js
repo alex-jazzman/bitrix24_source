@@ -14,6 +14,7 @@ export class ClosePopup
 			onOk,
 			popupOptions: {
 				closeIcon: false,
+				focusTrap: true,
 			},
 		});
 	}

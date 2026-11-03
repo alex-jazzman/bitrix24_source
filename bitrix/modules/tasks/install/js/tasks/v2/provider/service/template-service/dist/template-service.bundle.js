@@ -152,6 +152,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	const ceilTs = timestamp => Math.ceil(timestamp / step) * step;
 	const mapValue = (value, mapped) => main_core.Type.isNil(value) ? value : mapped;
 
+	// An empty member list in the request means "remove every member of this role" on the server, so a member
+	// field that repeats the state before the edit must not travel: it carries no change, and if the model
+	// holds an empty list for a role the person never touched, sending it would wipe that role.
+	const MEMBER_FIELDS = ['responsibleIds', 'accomplicesIds', 'auditorsIds'];
 	const templateService = new class {
 		constructor() {
 			main_core.Event.bind(window, 'beforeunload', () => {
@@ -241,7 +245,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 					tasks_v2_provider_service_relationService.subTasksService.addStore(template.parentId, [data.id]);
 				}
 				if (template.checklist?.length > 0) {
-					void tasks_v2_provider_service_checkListService.checkListService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](template.checklist));
+					tasks_v2_provider_service_checkListService.checkListService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](template.checklist)).catch(() => {});
 				}
 				return [data.id, null];
 			} catch (error) {
@@ -270,7 +274,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 					initialTemplate: template
 				});
 				if (template.checklist?.length > 0) {
-					void tasks_v2_provider_service_checkListService.checkListService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](template.checklist));
+					tasks_v2_provider_service_checkListService.checkListService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](template.checklist)).catch(() => {});
 				}
 				return [data.id, null];
 			} catch (error) {
@@ -330,6 +334,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				}
 			} catch (error) {
 				console.error(tasks_v2_const.Endpoint.TaskFromTemplateGet, error);
+				if (error?.errors?.[0]?.code === 'access_denied') {
+					tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+						templateId: 0
+					});
+				}
 			}
 		}
 		async addTask(templateId, task, withSubTasks, view) {
@@ -350,7 +359,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				return [data.id, null];
 			} catch (error) {
 				console.error(tasks_v2_const.Endpoint.TaskFromTemplateAdd, error);
-				return [0, new Error(error.errors?.[0]?.message)];
+				const [firstError] = error.errors ?? [];
+				const resultError = new Error(firstError?.message);
+				resultError.code = firstError?.code;
+				return [0, resultError];
 			}
 		}
 		async addFromExistingTask(taskId) {
@@ -455,11 +467,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			const promise = this.#updatePromises[id];
 			delete this.#updatePromises[id];
 			const templateId = tasks_v2_lib_idUtils.idUtils.unbox(id);
+			const fieldsToSend = this.#dropUnchangedMemberFields(fields, templateBefore);
 			try {
 				await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
 					template: tasks_v2_provider_service_taskService.TaskMappers.mapModelToDto({
 						id: templateId,
-						...fields
+						...fieldsToSend
 					})
 				});
 				promise.resolve({});
@@ -470,6 +483,29 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 					[tasks_v2_const.Endpoint.TemplateUpdate]: error.errors
 				});
 			}
+		}
+		#dropUnchangedMemberFields(fields, templateBefore) {
+			if (!main_core.Type.isPlainObject(templateBefore)) {
+				return fields;
+			}
+			const fieldsToSend = {
+				...fields
+			};
+			MEMBER_FIELDS.forEach(field => {
+				if (main_core.Type.isArray(fieldsToSend[field]) && this.#isSameMemberList(fieldsToSend[field], templateBefore[field])) {
+					delete fieldsToSend[field];
+				}
+			});
+			return fieldsToSend;
+		}
+		#isSameMemberList(left, right) {
+			if (!main_core.Type.isArray(right) || left.length !== right.length) {
+				return false;
+			}
+			const sortById = (a, b) => a - b;
+			const sortedLeft = left.map(Number).sort(sortById);
+			const sortedRight = right.map(Number).sort(sortById);
+			return sortedLeft.every((id, index) => id === sortedRight[index]);
 		}
 		get $store() {
 			return tasks_v2_core.Core.getStore();

@@ -4,6 +4,7 @@
 jn.define('intranet/qualification/const', (require, exports, module) => {
 	const FieldType = {
 		BALLOON_ONE_SELECT: 'balloon-one-select',
+		BALLOON_MULTIPLE_SELECT: 'balloon-multiple-select',
 		PHONE_INPUT: 'phone-number',
 		USER_INVITATION: 'user-invitation',
 	};

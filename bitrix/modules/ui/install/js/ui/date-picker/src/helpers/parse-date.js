@@ -1,3 +1,6 @@
+// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 import { Type, Text } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 

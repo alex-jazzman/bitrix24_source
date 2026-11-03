@@ -1,0 +1,3 @@
+<?php
+$MESS["INTRANET_LICENSE_WIDGET_DIALOG_LABEL"] = "Plan details";
+$MESS['INTRANET_LICENSE_WIDGET_TRIGGER_LABEL'] = '#TARIFF#: open plan details';

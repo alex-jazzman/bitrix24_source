@@ -13,9 +13,8 @@ export class FloatingWindowService extends EventEmitter
 	 * @param {boolean} config.floatingVideo - Whether to instantiate the floating video window (currently disabled)
 	 * @param {boolean} config.floatingScreenShare - Whether to instantiate the floating screen-share window
 	 * @param {boolean} config.darkMode
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ floatingVideo, floatingScreenShare, darkMode, callStore })
+	constructor({ floatingVideo, floatingScreenShare, darkMode })
 	{
 		super();
 		this.setEventNamespace('BX.Call.FloatingWindowService');
@@ -26,7 +25,6 @@ export class FloatingWindowService extends EventEmitter
 		this.showFloatingWindowTimeout = 0;
 		this.showFloatingScreenShareWindowTimeout = 0;
 		this.darkMode = darkMode ?? false;
-		this.callStore = callStore ?? null;
 
 		if (floatingVideo)
 		{
@@ -212,8 +210,6 @@ export class FloatingWindowService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
-
 		clearTimeout(this.showFloatingWindowTimeout);
 		clearTimeout(this.showFloatingScreenShareWindowTimeout);
 

@@ -3,12 +3,12 @@ import { ZIndexManager } from 'main.core.z-index-manager';
 import { FocusTrap } from 'ui.a11y';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { OPERATION } from 'bizproc.dataview';
-
 import {
 	ExpressionBuilderBody,
 	EXPRESSION_BUILDER_MODES,
 	resolveExpressionMode,
-} from '../../node-settings/ui/expression-builder/expression-builder-body';
+} from 'bizprocdesigner.expression-builder';
+
 import { getAllowedFormulaFunctions } from '../api';
 import { useDataViewDefinitionStore } from '../stores/definition-store';
 import { findColumnSchemaField, useDataViewMetaStore } from '../stores/meta-store';

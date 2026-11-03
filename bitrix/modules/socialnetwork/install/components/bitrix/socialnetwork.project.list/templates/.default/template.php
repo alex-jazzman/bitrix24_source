@@ -27,8 +27,10 @@ Extension::load([
 	'ui.forms',
 	'ui.system.typography',
 	'ui.avatar',
+	'ui.a11y',
 	'socialnetwork.project-members-popup',
 	'socialnetwork.v2.application.delete-project-popup',
+	'socialnetwork.v2.lib.event-sender',
 ]);
 
 $component = $this->getComponent();
@@ -155,7 +157,7 @@ $templateMessages = Loc::loadLanguageFile(__FILE__);
 		animation: sonetProjectListRowHighlight 900ms ease;
 	}
 </style>
-<div class="socialnetwork-project-list-wrapper">
+<div class="socialnetwork-project-list-wrapper" data-testid="socialnetwork-project-list">
 	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.ui.grid',

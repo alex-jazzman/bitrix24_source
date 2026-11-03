@@ -77,6 +77,7 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 		},
 		containsCollaber: false,
 		guestCount: 0,
+		copilotGenerationState: null, // runtime only, not stored in local database
 	});
 
 	module.exports = {

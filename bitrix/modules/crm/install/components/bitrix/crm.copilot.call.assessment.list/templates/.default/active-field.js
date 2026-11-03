@@ -1,3 +1,4 @@
+import { Builder } from 'crm.integration.analytics';
 import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
@@ -84,6 +85,9 @@ export class ActiveField
 						id: this.#id,
 						isEnabled: isEnabled ? 'Y' : 'N',
 					},
+					analytics: Builder.CallAssessment.ScriptToggleEvent
+						.createDefault(isEnabled, Text.toInteger(this.#id))
+						.buildData(),
 				})
 				.catch((response) => {
 					UI.Notification.Center.notify({

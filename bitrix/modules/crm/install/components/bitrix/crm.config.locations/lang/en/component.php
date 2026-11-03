@@ -4,4 +4,4 @@ $MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "The Commercial Catalog module is no
 $MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "The Currency module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "The e-Store module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
-?>
+$MESS['CRM_CONFIG_LOCATIONS_ADD_TITLE'] = 'New location';

@@ -1,0 +1,95 @@
+/* Let the flex parents shrink so the long url ellipsizes instead of pushing
+   the row past the card edge (default flex min-width is auto = content size). */
+[data-testid="calendar-event-guest-link-compact-block"],
+[data-testid="calendar-event-guest-link-compact-block"] .calendar-field-block {
+	min-width: 0;
+}
+
+/* The field-container is a column flex: keep the row from stretching to the
+   unbreakable url width (which would push it past the card edge). */
+[data-testid="calendar-event-guest-link-compact-block"] .calendar-field-block {
+	max-width: 100%;
+}
+
+.calendar-field-value.calendar-compact-form-guest-link-value {
+	display: flex;
+	flex: 1;
+	/* Single row so the "has link" state (url + copy button) is as tall as the
+	   "get link" button and the loader — no form layout shift between states. */
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.calendar-compact-form-guest-link-url {
+	flex: 1;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	/* Pin the link's line box to the row height (button/skeleton) so the "has link"
+	   state is not 1-2px taller than the button and loader — no layout shift. */
+	line-height: var(--ui-btn-size-xs, 24px);
+}
+
+.calendar-compact-form-guest-link-btn {
+	flex: none;
+}
+
+.calendar-compact-form-guest-link-hint {
+	color: var(--ui-color-base-50, #828b95);
+}
+
+.calendar-compact-form-guest-link-skeleton {
+	display: block;
+	width: 100%;
+	min-width: 0;
+	align-self: stretch;
+	/* Reserve the height of the resolved single row (as tall as an xs button) so
+	   the value area does not grow when the button/link replaces the loader — no
+	   form layout shift in any state. */
+	min-height: var(--ui-btn-size-xs, 24px);
+}
+
+.calendar-compact-form-guest-link-skeleton-line {
+	display: block;
+	width: 70%;
+	min-width: 120px;
+	max-width: 220px;
+	height: var(--ui-btn-size-xs, 24px);
+	border-radius: calc(var(--ui-btn-size-xs, 24px) / 2);
+	background: var(--ui-color-base-30, #d5dce3);
+	animation: calendar-compact-form-guest-link-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.calendar-simple-view-popup .calendar-field-container-members .calendar-field-container-inform {
+	appearance: none;
+	box-sizing: border-box;
+	width: fit-content;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
+}
+
+.calendar-simple-view-popup .calendar-field-container-members .calendar-field-container-inform:focus-visible {
+	border-radius: var(--ui-border-radius-2xs);
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+@keyframes calendar-compact-form-guest-link-skeleton-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}

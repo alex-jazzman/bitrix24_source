@@ -1,0 +1,24 @@
+.disk-document-header-save-status {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	color: var(--ui-color-base-2);
+}
+
+.disk-document-header-save-status.--failed {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.disk-document-header-save-status__text {
+	color: inherit;
+	white-space: nowrap;
+}
+
+/* the spinner of the loader is drawn into this box and takes it whole */
+.disk-document-header-save-status__spinner {
+	display: flex;
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+}

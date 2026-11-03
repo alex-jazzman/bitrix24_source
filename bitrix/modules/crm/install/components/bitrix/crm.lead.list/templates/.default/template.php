@@ -58,7 +58,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_edit
 
 echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
 
-?><div id="crm-lead-list-progress-bar-container"></div><div id="batchConversionWrapper"></div><?
+?><div id="batchConversionWrapper"></div><?
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 ?><div id="batchDeletionWrapper"></div><?
 
@@ -124,6 +124,7 @@ if (isset($arResult['ERROR_HTML'])):
 endif;
 
 $isInternal = $arResult['INTERNAL'];
+$enableGroupActions = !empty($arResult['ENABLE_GROUP_ACTIONS']);
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
 if (!$isInternal):
@@ -192,7 +193,8 @@ foreach (Container::getInstance()->getFactory(\CCrmOwnerType::Lead)?->getStages(
 
 if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 {
-	$arResult['LEAD'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Lead))->appendNearestActivityBlock($arResult['LEAD']);
+	$arResult['LEAD'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Lead))
+		->appendNearestActivityBlock($arResult['LEAD'], false, $arParams['ANALYTICS'] ?? []);
 }
 
 $toolsManager = Container::getInstance()->getIntranetToolsManager();
@@ -557,6 +559,8 @@ js,
 	$dateCreate = $arLead['DATE_CREATE'] ?? '';
 	$dateModify = $arLead['DATE_MODIFY'] ?? '';
 	$movedTime = $arLead['MOVED_TIME'] ?? '';
+	$sourceId = (string)($arLead['~SOURCE_ID'] ?? $arLead['SOURCE_ID'] ?? '');
+	$sourceName = $sourceId === '' ? '' : ($arLead['LEAD_SOURCE_NAME'] ?? null);
 	$webformId = null;
 	if (isset($arLead['WEBFORM_ID']))
 	{
@@ -617,6 +621,7 @@ js,
 			'IS_RETURN_CUSTOMER' => isset($arResult['BOOLEAN_VALUES_LIST'], $arLead['IS_RETURN_CUSTOMER'])
 				? $arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']]
 				: $arLead['IS_RETURN_CUSTOMER'],
+			'OPENED' => ($arLead['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 			'HONORIFIC' => !empty($arResult['HONORIFIC']) && !empty($arLead['HONORIFIC'])
 				? $arResult['HONORIFIC'][$arLead['HONORIFIC']]
 				: '',
@@ -624,6 +629,7 @@ js,
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
 					'ENTITY_ID' => $arLead['~ID'],
+					'ENTITY_TITLE' => $arLead['~TITLE'] ?? '',
 					'CURRENT_ID' => $arLead['~STATUS_ID'],
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php',
 					'CONVERSION_SCHEME' => isset($arResult['CONVERSION']['SCHEMES']) && isset($arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']])
@@ -635,7 +641,7 @@ js,
 					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true),
 				)
 			),
-			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? null,
+			'SOURCE_ID' => $sourceName,
 			'WEBFORM_ID' => $webformId,
 			'CREATED_BY' => isset($arLead['~CREATED_BY']) && isset($arLead['CREATED_BY_FORMATTED_NAME']) && $arLead['~CREATED_BY'] > 0
 				? $userRender->render(
@@ -707,7 +713,9 @@ js,
 	unset($resultItem);
 }
 
-if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+$isEmbeddedListLayout = $arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest();
+
+if ($isEmbeddedListLayout)
 {
 	$pathToLeadAdd = $arResult['PATH_TO_LEAD_ADD'] ?? null;
 
@@ -780,6 +788,13 @@ if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest
 	<?php
 }
 
+if ($isEmbeddedListLayout)
+{
+	echo '<div class="crm-list-embedded-grid-block">';
+}
+
+echo '<div id="crm-lead-list-progress-bar-container"></div>';
+
 $messages = [];
 if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 {
@@ -813,6 +828,15 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
+
+$actionPanelItems = ($isInternal && !$enableGroupActions)
+	? []
+	: ($arResult['PANEL']?->getControls() ?? []);
+
+if ($isInternal && $enableGroupActions)
+{
+	$actionPanelItems = \Bitrix\Crm\Component\EntityList\Grid\Panel\ActionPanelItems::withoutForAllCheckbox($actionPanelItems);
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -858,7 +882,7 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => [
 			'GROUPS' => [
 				[
-					'ITEMS' => $isInternal ? [] : $arResult['PANEL']?->getControls(),
+					'ITEMS' => $actionPanelItems,
 				],
 			],
 		],
@@ -910,6 +934,12 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+
+if ($isEmbeddedListLayout)
+{
+	echo '</div>';
+}
+
 ?><script>
 	BX.ready(
 		function()

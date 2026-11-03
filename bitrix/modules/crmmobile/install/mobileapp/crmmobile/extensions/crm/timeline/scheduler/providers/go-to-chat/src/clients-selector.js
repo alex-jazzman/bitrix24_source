@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/go-to-chat/clients-selector
  */
 jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { ContextMenu } = require('layout/ui/context-menu');
@@ -240,7 +241,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 			flexWrap: 'wrap',
 		},
 		label: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base4,
 			marginRight: 4,
 		},
@@ -255,11 +256,11 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 			color: AppTheme.colors.base3,
 		}),
 		client: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base3,
 		},
 		addPhone: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.accentMainWarning,
 		},
 		arrow: {

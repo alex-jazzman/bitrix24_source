@@ -13,26 +13,22 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 	const { SettingMode } = require('ui-system/blocks/setting-selector/src/mode-enum');
 
 	/**
-	 * @typedef {Object} SettingSelectorProps
-	 * @property {string} testId
-	 * @property {boolean} [checked]
-	 * @property {boolean} [locked]
-	 * @property {boolean} [divider]
-	 * @property {Icon} [icon]
-	 * @property {Color} [iconColor]
-	 * @property {string} [title]
-	 * @property {Ellipsize} [titleEllipsize]
-	 * @property {number} [numberOfLinesTitle]
-	 * @property {string} [subtitle]
-	 * @property {Ellipsize} [subtitleEllipsize]
-	 * @property {number} [numberOfLinesSubtitle]
-	 * @property {mode} [SettingMode]
-	 * @property {Function} [onClick]
+	 * How much of the row the value of a parameter may take by default. Without a cap it takes the
+	 * width it needs and the title, which is the only shrinking part of the row, is left with a
+	 * couple of narrow lines. A value that fits into the half keeps its own width, and a row whose
+	 * value is the point of it names a cap of its own (`modeParams.maxWidth`).
 	 *
-	 * @function SettingSelector
-	 * @param {SettingSelectorProps} props
+	 * @type {string}
 	 */
+	const PARAMETER_MAX_WIDTH = '50%';
 
+	/**
+	 * Row of a settings list: a title with an optional icon and subtitle, and on the right whatever
+	 * the mode puts there - a switch, a value with a chevron, or an icon. Props are declared in
+	 * `types.d.ts`.
+	 *
+	 * @extends {PureComponent<SettingSelectorProps>}
+	 */
 	class SettingSelector extends PureComponent
 	{
 		constructor(props)
@@ -196,19 +192,36 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		#renderParameterMode()
 		{
 			const { testId } = this.props;
-			const { chevron, text, iconRef, color, textColor } = this.#getModeParams();
+			const {
+				chevron,
+				text,
+				iconRef,
+				color,
+				textColor,
+				numberOfLines = 1,
+				ellipsize,
+				maxWidth = PARAMETER_MAX_WIDTH,
+			} = this.#getModeParams();
 
 			return View(
 				{
 					testId: `${testId}-parameter`,
 					style: {
 						flexDirection: 'row',
+						alignItems: 'center',
+						flexShrink: 1,
+						maxWidth,
 						marginLeft: Indent.XL4.toNumber(),
 					},
 				},
 				Boolean(text) && Text4({
 					text,
 					color: textColor ?? color ?? Color.base4,
+					numberOfLines,
+					ellipsize: this.#getEllipsize(ellipsize),
+					style: {
+						flexShrink: 1,
+					},
 				}),
 				chevron && IconView({
 					size: 20,
@@ -217,6 +230,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 					forwardRef: iconRef,
 					style: {
 						marginLeft: Indent.XS.toNumber(),
+						flexShrink: 0,
 					},
 				}),
 			);
@@ -313,6 +327,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		icon: PropTypes.instanceOf(Icon),
 		iconColor: PropTypes.instanceOf(Color),
 		title: PropTypes.string,
+		color: PropTypes.instanceOf(Color),
 		titleEllipsize: PropTypes.instanceOf(Ellipsize),
 		numberOfLinesTitle: PropTypes.number,
 		subtitle: PropTypes.string,
@@ -320,6 +335,9 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		numberOfLinesSubtitle: PropTypes.number,
 		mode: PropTypes.instanceOf(SettingMode),
 		modeParams: PropTypes.object,
+		switcherSize: PropTypes.instanceOf(SwitcherSize),
+		additionalContent: PropTypes.object,
+		style: PropTypes.object,
 		onClick: PropTypes.func,
 	};
 

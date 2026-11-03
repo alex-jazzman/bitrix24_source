@@ -30,6 +30,20 @@ export const groupDialog = new class
 		this.#dialog.showTo(params.targetNode);
 	}
 
+	#openInMessenger(group: GroupModel): void
+	{
+		const externalId = `sg${group.id}`;
+
+		if (group.type === GroupType.Collab)
+		{
+			Messenger.openChat(externalId);
+
+			return;
+		}
+
+		Messenger.openCollab(externalId);
+	}
+
 	async openGroup(isAutonomous: boolean, group: GroupModel, taskId: number = 0): Promise<void>
 	{
 		if (
@@ -47,7 +61,7 @@ export const groupDialog = new class
 					: EventName.FullCardClosed
 			);
 			EventEmitter.subscribeOnce(closeEventName, () => {
-				Messenger.openCollab(`sg${group.id}`);
+				this.#openInMessenger(group);
 			});
 
 			if (isAutonomous)
@@ -76,7 +90,7 @@ export const groupDialog = new class
 			&& group.type !== GroupType.Scrum
 		)
 		{
-			Messenger.openCollab(`sg${group.id}`);
+			this.#openInMessenger(group);
 		}
 		else
 		{
@@ -116,25 +130,37 @@ export const groupDialog = new class
 	}
 
 	#handleGroupSelect = async (): Promise<void> => {
+		const onClose = this.#onClose;
+		this.#onClose = null;
+
 		if (!this.#dialog.isLoaded())
 		{
+			onClose?.();
+
 			return;
 		}
+
+		// Singleton dialog: a show() for another card can overwrite this.#taskId while an await
+		// below is in flight, so capture the id and current group synchronously and use only these.
+		const taskId = this.#taskId;
+		const currentGroupId = taskService.getStoreTask(taskId).groupId;
 
 		const groupId = await this.#fillStore();
 
-		if (this.#groupId === groupId)
+		if (currentGroupId === groupId)
 		{
+			onClose?.();
+
 			return;
 		}
 
-		groupService.setHasScrumInfo(this.#taskId);
-
-		this.#onClose?.(groupId);
-
 		taskService.setSilentErrorMode(true);
+		const updatePromise = taskService.update(taskId, { groupId, stageId: 0 });
+		groupService.setHasScrumInfo(taskId, updatePromise);
 
-		const result = await taskService.update(this.#taskId, { groupId, stageId: 0 });
+		onClose?.(groupId);
+
+		const result = await updatePromise;
 
 		taskService.setSilentErrorMode(false);
 
@@ -147,6 +173,14 @@ export const groupDialog = new class
 				text: error?.message,
 			});
 		}
+
+		// Refetch canCreateEpic unconditionally: setHasScrumInfo() cleared it as a fail-safe, so on
+		// update failure (server unchanged) the refetch restores the old group's real right, and on
+		// success the new group's. The synthetic promise from setHasScrumInfo() would otherwise
+		// short-circuit the mount-fetch with the stale flag. Each call self-guards by task id kind:
+		// getScrumInfo runs for a real task, getEpicCreationRight for a create-mode draft.
+		void groupService.getScrumInfo(taskId, { force: true });
+		void groupService.getEpicCreationRight(taskId);
 	};
 
 	#fillStore = async (): Promise<number> => {

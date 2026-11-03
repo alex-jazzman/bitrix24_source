@@ -12,16 +12,23 @@ export type TemplateListItemDto = {
 	disabledReason: string | null,
 };
 
+export type PreparedTemplateAttachmentDto = {
+	id: number,
+	name: string,
+	size: number,
+	contentType: string | null,
+};
+
 export type PreparedTemplateDto = {
 	reference: TemplateReferenceDto,
 	subject: string,
 	bodyHtml: string,
+	/** Old Mail backends omit the field, which is equivalent to an empty list. */
+	attachments?: PreparedTemplateAttachmentDto[],
 };
 
 export type QuickListResponse = {
 	items: TemplateListItemDto[],
-	rememberLast: boolean,
-	autoApply: TemplateReferenceDto | null,
 };
 
 export type SearchTemplatesRequest = {
@@ -37,10 +44,6 @@ export type SearchTemplatesResponse = {
 
 export type PrepareTemplateResponse = {
 	template: PreparedTemplateDto,
-};
-
-export type SetRememberLastResponse = {
-	enabled: boolean,
 };
 
 export type RecordTemplateUsageResponse = {

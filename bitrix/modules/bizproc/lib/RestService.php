@@ -1,0 +1,2161 @@
+<?php
+
+namespace Bitrix\Bizproc;
+
+use Bitrix\Bizproc\Api\Enum\ErrorMessage;
+use Bitrix\Bizproc\Internal\Entity\WorkflowTemplate\VersionChoice;
+use Bitrix\Bizproc\Internal\Access\Permission\PermissionDictionary;
+use Bitrix\Bizproc\Internal\Service\Pilot\StartFormParameters;
+use Bitrix\Bizproc\Public\Provider\PilotVisibilityProvider;
+use Bitrix\Bizproc\Public\Provider\TemplateAccessProvider;
+use Bitrix\Bizproc\Public\Service\Workflow\StarterService;
+use Bitrix\Bizproc\Starter\Dto\ContextDto;
+use Bitrix\Bizproc\Starter\Dto\DocumentDto;
+use Bitrix\Bizproc\Starter\Enum\Face;
+use Bitrix\Bizproc\Starter\Enum\ManualStartSurface;
+use Bitrix\Bizproc\Workflow\Entity\WorkflowInstanceTable;
+use Bitrix\Main\DB\DuplicateEntryException;
+use Bitrix\Main\Loader;
+use Bitrix\Rest\AppLangTable;
+use Bitrix\Rest\AppTable;
+use Bitrix\Rest\HandlerHelper;
+use Bitrix\Rest\PlacementTable;
+use Bitrix\Rest\RestException;
+use Bitrix\Rest\AccessException;
+
+Loader::includeModule('rest');
+
+class RestService extends \IRestService
+{
+	public const SCOPE = 'bizproc';
+	public const PLACEMENT_ACTIVITY_PROPERTIES_DIALOG = 'BIZPROC_ACTIVITY_PROPERTIES_DIALOG';
+
+	protected static $app;
+	private static $allowedOperations = ['', '!', '=', '!=', '<', '<=', '>', '>='];
+	//, '><', '!><', '?', '%', '!%', ''); May be later?
+
+	const ERROR_ACTIVITY_ALREADY_INSTALLED = 'ERROR_ACTIVITY_ALREADY_INSTALLED';
+	const ERROR_ACTIVITY_ADD_FAILURE = 'ERROR_ACTIVITY_ADD_FAILURE';
+	const ERROR_ACTIVITY_VALIDATION_FAILURE = 'ERROR_ACTIVITY_VALIDATION_FAILURE';
+	const ERROR_ACTIVITY_NOT_FOUND = 'ERROR_ACTIVITY_NOT_FOUND';
+	const ERROR_EMPTY_LOG_MESSAGE = 'ERROR_EMPTY_LOG_MESSAGE';
+	const ERROR_WRONG_WORKFLOW_ID = 'ERROR_WRONG_WORKFLOW_ID';
+
+	const ERROR_TEMPLATE_VALIDATION_FAILURE = 'ERROR_TEMPLATE_VALIDATION_FAILURE';
+	const ERROR_TEMPLATE_NOT_FOUND = 'ERROR_TEMPLATE_NOT_FOUND';
+	const ERROR_TEMPLATE_NOT_OWNER = 'ERROR_TEMPLATE_NOT_OWNER';
+
+	const ERROR_TASK_VALIDATION = 'ERROR_TASK_VALIDATION';
+	const ERROR_TASK_NOT_FOUND = 'ERROR_TASK_NOT_FOUND';
+	const ERROR_TASK_TYPE = 'ERROR_TASK_TYPE';
+	const ERROR_TASK_COMPLETED = 'ERROR_TASK_COMPLETED';
+	const ERROR_TASK_EXECUTION = 'ERROR_TASK_EXECUTION';
+	const ERROR_SELECT_VALIDATION_FAILURE = 'ERROR_SELECT_VALIDATION_FAILURE';
+
+	const ERROR_INVALID_USER_ID = 'ERROR_INVALID_USER_ID';
+	const ERROR_DELEGATION_NOT_ALLOWED = 'ERROR_DELEGATION_NOT_ALLOWED';
+
+	private const ALLOWED_TASK_ACTIVITIES = [
+		'ReviewActivity',
+		'ApproveActivity',
+		'RequestInformationActivity',
+		'RequestInformationOptionalActivity'
+	];
+
+	public static function onRestServiceBuildDescription()
+	{
+		$map = [];
+
+		if (self::isEnabled())
+		{
+			$map = [
+				//activity
+				'bizproc.activity.add' => [__CLASS__, 'addActivity'],
+				'bizproc.activity.update' => [__CLASS__, 'updateActivity'],
+				'bizproc.activity.delete' => [__CLASS__, 'deleteActivity'],
+				'bizproc.activity.log' => [__CLASS__, 'writeActivityLog'],
+				'bizproc.activity.list' => [__CLASS__, 'getActivityList'],
+
+				//event
+				'bizproc.event.send' => [__CLASS__, 'sendEvent'],
+
+				//task
+				'bizproc.task.list' => [__CLASS__, 'getTaskList'],
+				'bizproc.task.complete' => [__CLASS__, 'completeTask'],
+				'bizproc.task.delegate' => [__CLASS__, 'delegateTask'],
+
+				//workflow
+				'bizproc.workflow.terminate' => [__CLASS__, 'terminateWorkflow'],
+				'bizproc.workflow.kill' => [__CLASS__, 'killWorkflow'],
+				'bizproc.workflow.start' => [__CLASS__, 'startWorkflow'],
+
+				//workflow.instance
+				'bizproc.workflow.instance.list' => [__CLASS__, 'getWorkflowInstances'],
+
+				//workflow.template
+				'bizproc.workflow.template.list' => [__CLASS__, 'getWorkflowTemplates'],
+				'bizproc.workflow.template.add' => [__CLASS__, 'addWorkflowTemplate'],
+				'bizproc.workflow.template.update' => [__CLASS__, 'updateWorkflowTemplate'],
+				'bizproc.workflow.template.delete' => [__CLASS__, 'deleteWorkflowTemplate'],
+
+				//aliases
+				'bizproc.workflow.instances' => [__CLASS__, 'getWorkflowInstances'],
+			];
+		}
+
+		if (
+			self::isEnabled()
+			|| self::isEnabled('crm_automation_lead')
+			|| self::isEnabled('crm_automation_deal')
+			|| self::isEnabled('crm_automation_order')
+			|| self::isEnabled('tasks_automation')
+		)
+		{
+			$map = array_merge($map, array(
+				'bizproc.event.send' => [__CLASS__, 'sendEvent'],
+				'bizproc.activity.log' => [__CLASS__, 'writeActivityLog'],
+
+				//robot
+				'bizproc.robot.add' => array(__CLASS__, 'addRobot'),
+				'bizproc.robot.update' => array(__CLASS__, 'updateRobot'),
+				'bizproc.robot.delete' => array(__CLASS__, 'deleteRobot'),
+				'bizproc.robot.list' => array(__CLASS__, 'getRobotList'),
+
+				//provider
+				'bizproc.provider.add' => [__CLASS__, 'addProvider'],
+				'bizproc.provider.delete' => [__CLASS__, 'deleteProvider'],
+				'bizproc.provider.list' => [__CLASS__, 'getProviderList'],
+			));
+		}
+
+		//placements
+		$map[\CRestUtil::PLACEMENTS] = [
+			static::PLACEMENT_ACTIVITY_PROPERTIES_DIALOG => ['private' => true],
+		];
+
+		return [
+			static::SCOPE => $map,
+		];
+	}
+
+	private static function isEnabled(string $feature = 'bizproc'): bool
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return \Bitrix\Bitrix24\Feature::isFeatureEnabled($feature);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Deletes application activities.
+	 * @param array $fields Fields describes application.
+	 * @return void
+	 */
+	public static function onRestAppDelete(array $fields)
+	{
+		$fields = array_change_key_case($fields, CASE_UPPER);
+		if (empty($fields['APP_ID']))
+			return;
+
+		if (!Loader::includeModule('rest'))
+			return;
+
+		$dbRes = AppTable::getById($fields['APP_ID']);
+		$app = $dbRes->fetch();
+
+		if(!$app)
+			return;
+
+		$iterator = RestActivityTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array('=APP_ID' => $app['CLIENT_ID'])
+		));
+
+		while ($activity = $iterator->fetch())
+		{
+			RestActivityTable::delete($activity['ID']);
+		}
+
+		$iterator = RestProviderTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array('=APP_ID' => $app['CLIENT_ID'])
+		));
+
+		while ($activity = $iterator->fetch())
+		{
+			RestProviderTable::delete($activity['ID']);
+		}
+
+		self::deleteAppPlacement($app['ID']);
+	}
+
+	/**
+	 * Deletes application activities.
+	 * @param array $fields Fields describes application.
+	 * @return void
+	 */
+	public static function onRestAppUpdate(array $fields)
+	{
+		static::onRestAppDelete($fields);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function addActivity($params, $n, $server)
+	{
+		return self::addActivityInternal($params, $server, false);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function addRobot($params, $n, $server)
+	{
+		return self::addActivityInternal($params, $server, true);
+	}
+
+	/**
+	 * @param array $params
+	 * @param  \CRestServer $server
+	 * @param bool $isRobot
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	private static function addActivityInternal($params, $server, $isRobot = false)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$params = self::prepareActivityData($params);
+
+		if ($isRobot)
+			self::validateRobot($params, $server);
+		else
+			self::validateActivity($params, $server);
+
+		$appId = self::getAppId($server->getClientId());
+		$params['APP_ID'] = $server->getClientId();
+		$params['INTERNAL_CODE'] = self::generateInternalCode($params);
+		$params['APP_NAME'] = self::getAppName($params['APP_ID']);
+
+		$iterator = RestActivityTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array('=INTERNAL_CODE' => $params['INTERNAL_CODE'])
+		));
+		$result = $iterator->fetch();
+		if ($result)
+		{
+			throw new RestException('Activity or Robot already installed!', self::ERROR_ACTIVITY_ALREADY_INSTALLED);
+		}
+
+		$params['AUTH_USER_ID'] = isset($params['AUTH_USER_ID'])? (int) $params['AUTH_USER_ID'] : 0;
+		$params['IS_ROBOT'] = $isRobot ? 'Y' : 'N';
+		$params['USE_PLACEMENT'] = (isset($params['USE_PLACEMENT']) && $params['USE_PLACEMENT'] === 'Y') ? 'Y' : 'N';
+
+		if ($params['USE_PLACEMENT'] === 'Y')
+		{
+			self::validateActivityHandler($params['PLACEMENT_HANDLER'] ?? null, $server);
+			self::upsertAppPlacement($appId, $params['CODE'], $params['PLACEMENT_HANDLER'] ?? null);
+		}
+
+		try
+		{
+			$result = RestActivityTable::add($params);
+		}
+		catch (DuplicateEntryException $exception)
+		{
+			throw new RestException('Activity or Robot already added!', self::ERROR_ACTIVITY_ADD_FAILURE);
+		}
+
+		if ($result->getErrors())
+		{
+			if ($params['USE_PLACEMENT'] === 'Y')
+			{
+				self::deleteAppPlacement($appId, $params['CODE']);
+			}
+
+			throw new RestException('Activity save error!', self::ERROR_ACTIVITY_ADD_FAILURE);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function updateActivity($params, $n, $server)
+	{
+		return self::updateActivityInternal($params, $server, false);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function deleteActivity($params, $n, $server)
+	{
+		return self::deleteActivityInternal($params, $server, false);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function updateRobot($params, $n, $server)
+	{
+		return self::updateActivityInternal($params, $server, true);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function deleteRobot($params, $n, $server)
+	{
+		return self::deleteActivityInternal($params, $server, true);
+	}
+
+	/**
+	 * @param array $params
+	 * @param \CRestServer $server
+	 * @param bool $isRobot
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	private static function deleteActivityInternal($params, $server, $isRobot = false)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		$params = array_change_key_case($params, CASE_UPPER);
+		self::checkAdminPermissions();
+		self::validateActivityCode($params['CODE']);
+		$params['APP_ID'] = $server->getClientId();
+		$internalCode = self::generateInternalCode($params);
+
+		$iterator = RestActivityTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array(
+				'=INTERNAL_CODE' => $internalCode,
+				'=IS_ROBOT' => $isRobot ? 'Y' : 'N'
+			)
+		));
+		$result = $iterator->fetch();
+		if (!$result)
+		{
+			throw new RestException('Activity or Robot not found!', self::ERROR_ACTIVITY_NOT_FOUND);
+		}
+		RestActivityTable::delete($result['ID']);
+		self::deleteAppPlacement(self::getAppId($params['APP_ID']), $params['CODE']);
+
+		return true;
+	}
+
+	/**
+	 * @param array $params
+	 * @param \CRestServer $server
+	 * @param bool $isRobot
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function updateActivityInternal($params, $server, $isRobot = false)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		$params = self::prepareActivityData($params);
+		self::checkAdminPermissions();
+		self::validateActivityCode($params['CODE']);
+		$params['APP_ID'] = $server->getClientId();
+		$internalCode = self::generateInternalCode($params);
+
+		$iterator = RestActivityTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array(
+				'=INTERNAL_CODE' => $internalCode,
+				'=IS_ROBOT' => $isRobot ? 'Y' : 'N'
+			)
+		));
+		$result = $iterator->fetch();
+		if (!$result)
+		{
+			throw new RestException('Activity or Robot not found!', self::ERROR_ACTIVITY_NOT_FOUND);
+		}
+
+		$fields = (isset($params['FIELDS']) && is_array($params['FIELDS'])) ? $params['FIELDS'] : null;
+
+		if (!$fields)
+		{
+			throw new RestException('No fields to update', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+		}
+
+		$toUpdate = [];
+
+		if (isset($fields['HANDLER']))
+		{
+			self::validateActivityHandler($fields['HANDLER'], $server);
+			$toUpdate['HANDLER'] = $fields['HANDLER'];
+		}
+
+		if (isset($fields['AUTH_USER_ID']))
+		{
+			$toUpdate['AUTH_USER_ID'] = (int) $fields['AUTH_USER_ID'];
+		}
+
+		if (isset($fields['USE_SUBSCRIPTION']))
+		{
+			$toUpdate['USE_SUBSCRIPTION'] = (string) $fields['USE_SUBSCRIPTION'];
+		}
+
+		if (isset($fields['USE_PLACEMENT']))
+		{
+			$toUpdate['USE_PLACEMENT'] = ($fields['USE_PLACEMENT'] === 'Y') ? 'Y' : 'N';
+		}
+
+		if (!empty($fields['NAME']))
+		{
+			$toUpdate['NAME'] = $fields['NAME'];
+		}
+
+		if (isset($fields['DESCRIPTION']))
+		{
+			$toUpdate['DESCRIPTION'] = $fields['DESCRIPTION'];
+		}
+
+		if (isset($fields['PROPERTIES']))
+		{
+			self::validateActivityProperties($fields['PROPERTIES']);
+			$toUpdate['PROPERTIES'] = $fields['PROPERTIES'];
+		}
+
+		if (isset($fields['RETURN_PROPERTIES']))
+		{
+			self::validateActivityProperties($fields['RETURN_PROPERTIES']);
+			$toUpdate['RETURN_PROPERTIES'] = $fields['RETURN_PROPERTIES'];
+		}
+
+		if (isset($fields['DOCUMENT_TYPE']))
+		{
+			if (empty($fields['DOCUMENT_TYPE']))
+			{
+				$toUpdate['DOCUMENT_TYPE'] = null;
+			}
+			else
+			{
+				static::validateActivityDocumentType($fields['DOCUMENT_TYPE']);
+				$toUpdate['DOCUMENT_TYPE'] = $fields['DOCUMENT_TYPE'];
+			}
+		}
+
+		if (isset($fields['FILTER']))
+		{
+			if (empty($fields['FILTER']))
+			{
+				$toUpdate['FILTER'] = null;
+			}
+			else
+			{
+				if (!is_array($fields['FILTER']))
+				{
+					throw new RestException('Wrong activity FILTER!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+				}
+				$toUpdate['FILTER'] = $fields['FILTER'];
+			}
+		}
+
+		if (!$toUpdate)
+		{
+			throw new RestException('No fields to update', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+		}
+
+		if (isset($fields['PLACEMENT_HANDLER']))
+		{
+			self::validateActivityHandler($fields['PLACEMENT_HANDLER'], $server);
+			self::upsertAppPlacement(self::getAppId($params['APP_ID']), $params['CODE'], $fields['PLACEMENT_HANDLER']);
+		}
+
+		if (isset($toUpdate['USE_PLACEMENT']) && $toUpdate['USE_PLACEMENT'] === 'N')
+		{
+			self::deleteAppPlacement(self::getAppId($params['APP_ID']), $params['CODE']);
+		}
+
+		$updateResult = RestActivityTable::update($result['ID'], $toUpdate);
+
+		if (!$updateResult->isSuccess())
+		{
+			throw new RestException(
+				implode('; ', $updateResult->getErrorMessages()),
+				self::ERROR_ACTIVITY_VALIDATION_FAILURE
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function sendEvent($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+		[$workflowId, $activityName, $eventId] = self::extractEventToken($params['EVENT_TOKEN']);
+
+		$errors = [];
+		\Bitrix\Main\Application::getInstance()->addBackgroundJob(
+			static fn() => \CBPDocument::sendExternalEvent(
+				$workflowId,
+				$activityName,
+				[
+					'EVENT_ID' => $eventId,
+					'RETURN_VALUES' => $params['RETURN_VALUES'] ?? [],
+					'LOG_MESSAGE' => $params['LOG_MESSAGE'] ?? '',
+				],
+				$errors,
+			),
+		);
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function writeActivityLog($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+		[$workflowId, $activityName, $eventId] = self::extractEventToken($params['EVENT_TOKEN']);
+
+		$logMessage = isset($params['LOG_MESSAGE']) ? $params['LOG_MESSAGE'] : '';
+
+		if (empty($logMessage))
+			throw new RestException('Empty log message!', self::ERROR_EMPTY_LOG_MESSAGE);
+
+		$errors = [];
+		\CBPDocument::sendExternalEvent(
+			$workflowId,
+			$activityName,
+			[
+				'EVENT_ID' => $eventId,
+				'LOG_ACTION' => true,
+				'LOG_MESSAGE' => $logMessage
+			],
+			$errors,
+		);
+
+		if ($errors)
+		{
+			$error = current($errors);
+			throw new RestException($error['message'], $error['code']);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return array
+	 * @throws AccessException
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function getActivityList($params, $n, $server)
+	{
+		return self::getActivityListInternal($params, $server, false);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return array
+	 * @throws AccessException
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function getRobotList($params, $n, $server)
+	{
+		return self::getActivityListInternal($params, $server, true);
+	}
+
+	/**
+	 * @param array $params
+	 * @param \CRestServer $server
+	 * @param bool $isRobot
+	 * @return array
+	 * @throws AccessException
+	 */
+	private static function getActivityListInternal($params, $server, $isRobot = false)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$iterator = RestActivityTable::getList(array(
+			'select' => array('CODE'),
+			'filter' => array(
+				'=APP_ID' => $server->getClientId(),
+				'=IS_ROBOT' => $isRobot ? 'Y' : 'N'
+			)
+		));
+
+		$result = array();
+		while ($row = $iterator->fetch())
+		{
+			$result[] = $row['CODE'];
+		}
+		return $result;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return \Countable
+	 * @throws AccessException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getWorkflowInstances($params, $n, $server)
+	{
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$fields = [
+			'ID' => 'ID',
+			'MODIFIED' => 'MODIFIED',
+			'OWNED_UNTIL' => 'OWNED_UNTIL',
+			'MODULE_ID' => 'MODULE_ID',
+			'ENTITY' => 'ENTITY',
+			'DOCUMENT_ID' => 'DOCUMENT_ID',
+			'STARTED' => 'STARTED',
+			'STARTED_BY' => 'STARTED_BY',
+			'TEMPLATE_ID' => 'WORKFLOW_TEMPLATE_ID',
+		];
+
+		$select = static::getSelect($params['SELECT'] ?? null, $fields, ['ID', 'MODIFIED', 'OWNED_UNTIL']);
+		$filter = static::getFilter($params['FILTER'] ?? null, $fields, ['MODIFIED', 'OWNED_UNTIL', 'STARTED']);
+		$order = static::getOrder($params['ORDER'] ?? null, $fields, ['MODIFIED' => 'DESC']);
+		$shouldCountTotal = ($n >= 0);
+
+		$iterator = WorkflowInstanceTable::getList([
+			'select' => $select,
+			'filter' => $filter,
+			'order' => $order,
+			'limit' => static::LIST_LIMIT,
+			'offset' => max(0, (int)$n),
+			'count_total' => $shouldCountTotal,
+		]);
+
+		$result = [];
+		while ($row = $iterator->fetch())
+		{
+			if (isset($row['MODIFIED']))
+			{
+				$row['MODIFIED'] = \CRestUtil::convertDateTime($row['MODIFIED']);
+			}
+			if (isset($row['STARTED']))
+			{
+				$row['STARTED'] = \CRestUtil::convertDateTime($row['STARTED']);
+			}
+			if (isset($row['OWNED_UNTIL']))
+			{
+				$row['OWNED_UNTIL'] = \CRestUtil::convertDateTime($row['OWNED_UNTIL']);
+			}
+			$result[] = $row;
+		}
+
+		$count = $shouldCountTotal ? $iterator->getCount() : 0;
+
+		return static::setNavData($result, ['count' => $count, 'offset' => $n]);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool True on success.
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function terminateWorkflow($params, $n, $server)
+	{
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (empty($params['ID']))
+		{
+			throw new RestException('Empty workflow instance ID', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		if (!is_string($params['ID']))
+		{
+			throw new RestException('Invalid workflow instance ID (string expected)', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		$id = $params['ID'];
+		$status = isset($params['STATUS']) ? (string)$params['STATUS'] : '';
+		$errors = [];
+
+		if (!\CBPDocument::terminateWorkflow($id, [], $errors, $status))
+		{
+			throw new RestException($errors[0]['message']);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool True on success.
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function killWorkflow($params, $n, $server)
+	{
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (empty($params['ID']))
+		{
+			throw new RestException('Empty workflow instance ID', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		if (!is_string($params['ID']))
+		{
+			throw new RestException('Invalid workflow instance ID (string expected)', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		$id = $params['ID'];
+		$errors = \CBPDocument::killWorkflow($id);
+
+		if ($errors)
+		{
+			throw new RestException($errors[0]['message']);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return string Workflow ID.
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function startWorkflow($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (empty($params['TEMPLATE_ID']))
+		{
+			throw new RestException('Empty TEMPLATE_ID', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+		$templateId = (int)$params['TEMPLATE_ID'];
+		$templateInfo = self::getTemplateInfoForStart($templateId);
+
+		if (!$templateInfo)
+		{
+			throw new RestException('Template not found', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		if ((int)($templateInfo['AUTO_EXECUTE'] ?? 0) === \CBPDocumentEventType::Script)
+		{
+			throw new RestException(
+				ErrorMessage::SCRIPT_START_NOT_SUPPORTED->get(),
+				self::ERROR_WRONG_WORKFLOW_ID,
+			);
+		}
+
+		$tplDocumentType = [$templateInfo['MODULE_ID'], $templateInfo['ENTITY'], $templateInfo['DOCUMENT_TYPE']];
+
+		//hotfix #0120474
+		$getParams = array_change_key_case($_GET, CASE_UPPER);
+		if (isset($getParams['DOCUMENT_ID']) && is_array($getParams['DOCUMENT_ID']))
+		{
+			$params['DOCUMENT_ID'] = $getParams['DOCUMENT_ID'];
+		}
+
+		$documentId = self::getDocumentId($params['DOCUMENT_ID']);
+
+		if (!$documentId)
+		{
+			throw new RestException('Wrong DOCUMENT_ID!');
+		}
+
+		$documentType = self::getDocumentType($documentId);
+
+		if (!$documentType)
+		{
+			throw new RestException('Incorrect document type!');
+		}
+
+		if (!\CBPHelper::isEqualDocument($tplDocumentType, $documentType))
+		{
+			throw new RestException('Template type and DOCUMENT_ID mismatch!');
+		}
+
+		self::checkStartWorkflowPermissions($documentId, $templateId);
+
+		$currentUserId = self::getCurrentUserId();
+		$workflowParameters = isset($params['PARAMETERS']) && is_array($params['PARAMETERS']) ? $params['PARAMETERS'] : [];
+		$workflowParameters = self::matchParametersToStartedVersion(
+			$templateId,
+			$currentUserId,
+			$workflowParameters,
+			is_array($templateInfo['PARAMETERS'] ?? null) ? $templateInfo['PARAMETERS'] : [],
+		);
+		$starterService = new StarterService();
+		$document = new DocumentDto(complexDocumentId: $documentId, complexDocumentType: $documentType);
+		$isAutomationTemplate = ((int)($templateInfo['AUTO_EXECUTE'] ?? 0)) === \CBPDocumentEventType::Automation;
+
+		// the start is attributed to the employee of the calling context; a call with no employee behind
+		// it keeps the mark off and runs the common version of the template
+		$context = new ContextDto('bizproc', Face::REST, manualStartSurface: ManualStartSurface::Rest);
+
+		$starter = (
+			$isAutomationTemplate
+				? $starterService->getAutomationStarterForManualRestDocumentScenario(
+					templateIds: [$templateId],
+					document: $document,
+					context: $context,
+					userId: $currentUserId,
+					parameters: $workflowParameters,
+				)
+				: $starterService->getProcessStarterForManualRestDocumentScenario(
+					templateIds: [$templateId],
+					document: $document,
+					context: $context,
+					userId: $currentUserId,
+					parameters: $workflowParameters,
+				)
+		)
+			->setValidateParameters(false)
+		;
+
+		$startResult = $starter->start();
+
+		if ($startResult->isSuccess())
+		{
+			$workflowId = current($startResult->getWorkflowIds()) ?: null;
+			if ($workflowId !== null)
+			{
+				return $workflowId;
+			}
+
+			throw new RestException(ErrorMessage::CREATE_WORKFLOW->get(), self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		throw new RestException($startResult->getErrorMessages()[0]);
+	}
+
+	/**
+	 * The values of the call are matched against the parameters of the version that will be executed for
+	 * the employee of the calling context : the starter matches them against the live row, and a
+	 * field that exists only in the pilot version would be dropped on the way.
+	 *
+	 * The set is keyed by the template so that the starter takes it as it is instead of matching it a
+	 * second time. The schema token lets the runtime detect a version change before it starts the process.
+	 */
+	private static function matchParametersToStartedVersion(
+		int $templateId,
+		int $userId,
+		array $values,
+		array $commonParameters,
+	): array
+	{
+		$templateParameters = (new StartFormParameters())
+			->pilotParametersFor($templateId, $userId, ManualStartSurface::Rest)
+			?? $commonParameters
+		;
+
+		$matched = [];
+		foreach ($templateParameters as $key => $property)
+		{
+			$matched[$key] = $values[$key] ?? null;
+		}
+		$matched[VersionChoice::PARAMETER_SCHEMA_TOKEN] = VersionChoice::parameterSchemaToken($templateParameters);
+
+		return [$templateId => $matched];
+	}
+
+	private static function checkStartWorkflowPermissions(array $documentId, $templateId)
+	{
+		if (static::isAdmin())
+		{
+			return true;
+		}
+
+		if (
+			\CBPDocument::CanUserOperateDocument(
+				\CBPCanUserOperateOperation::StartWorkflow,
+				static::getCurrentUserId(),
+				$documentId,
+				['WorkflowTemplateId' => $templateId]
+			)
+		)
+		{
+			return true;
+		}
+
+		throw new AccessException();
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return \Countable Templates collection.
+	 * @throws AccessException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getWorkflowTemplates($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$fields = array(
+			'ID' => 'ID',
+			'MODULE_ID' => 'MODULE_ID',
+			'ENTITY' => 'ENTITY',
+			'DOCUMENT_TYPE' => 'DOCUMENT_TYPE',
+			'AUTO_EXECUTE' => 'AUTO_EXECUTE',
+			'NAME' => 'NAME',
+			'DESCRIPTION' => 'DESCRIPTION',
+			'TEMPLATE' => 'TEMPLATE',
+			'PARAMETERS' => 'PARAMETERS',
+			'VARIABLES' => 'VARIABLES',
+			'CONSTANTS' => 'CONSTANTS',
+			'MODIFIED' => 'MODIFIED',
+			'IS_MODIFIED' => 'IS_MODIFIED',
+			'USER_ID' => 'USER_ID',
+			'SYSTEM_CODE' => 'SYSTEM_CODE',
+		);
+
+		$select = static::getSelect($params['SELECT'] ?? null, $fields, ['ID']);
+		$filter = static::getFilter($params['FILTER'] ?? null, $fields, ['MODIFIED']);
+		$filter['<AUTO_EXECUTE'] = \CBPDocumentEventType::Automation;
+
+		if (!static::isAdmin())
+		{
+			$filter['=TYPE'] = \Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateType::Nodes->value;
+			$filter['=SYSTEM_CODE'] = null;
+		}
+
+		// Visibility scope by the caller's edit area. Non-admin REST callers can only see user Nodes
+		// templates within their editable area.
+		$entityFilter = (new TemplateAccessProvider())->getEntityFilter(
+			static::getCurrentUserId(),
+			PermissionDictionary::BIZPROC_TEMPLATE_EDIT,
+		);
+		$scopeCondition = null;
+		foreach ($entityFilter as $filterKey => $filterValue)
+		{
+			// The area may arrive as a nested ConditionTree, which the array filter cannot carry: it is
+			// applied through where() below and stays conjunctive with the filter keys of the request.
+			if ($filterKey === TemplateAccessProvider::SCOPE_CONDITION_KEY)
+			{
+				$scopeCondition = $filterValue;
+
+				continue;
+			}
+
+			$filter[$filterKey] = $filterValue;
+		}
+
+		// The templates a pilot acts on are narrowed to the ones the employee of the calling context may
+		// see; a call with no employee behind it sees none of them. The key of the condition is its own and
+		// meets neither the scope of the rights above nor an operation the caller is allowed to name.
+		$visibilityFilter = (new PilotVisibilityProvider())->getVisibilityFilter(static::getCurrentUserId());
+		foreach ($visibilityFilter as $filterKey => $filterValue)
+		{
+			$filter[$filterKey] = $filterValue;
+		}
+
+		$order = static::getOrder($params['ORDER'] ?? null, $fields, ['ID' => 'ASC']);
+		$shouldCountTotal = ($n >= 0);
+
+		$query = WorkflowTemplateTable::query()
+			->setSelect($select)
+			->setFilter($filter)
+			->setOrder($order)
+			->setLimit(static::LIST_LIMIT)
+			->setOffset(max(0, (int)$n))
+			->countTotal($shouldCountTotal)
+		;
+
+		if ($scopeCondition !== null)
+		{
+			$query->where($scopeCondition);
+		}
+
+		$iterator = $query->exec();
+
+		$countTotal = $shouldCountTotal ? $iterator->getCount() : 0;
+
+		$iterator = new \CBPWorkflowTemplateResult($iterator, \CBPWorkflowTemplateLoader::useGZipCompression());
+
+		$result = array();
+		while ($row = $iterator->fetch())
+		{
+			if (isset($row['MODIFIED']))
+				$row['MODIFIED'] = \CRestUtil::convertDateTime($row['MODIFIED']);
+			if (isset($row['STARTED']))
+				$row['STARTED'] = \CRestUtil::convertDateTime($row['STARTED']);
+			if (isset($row['OWNED_UNTIL']))
+				$row['OWNED_UNTIL'] = \CRestUtil::convertDateTime($row['OWNED_UNTIL']);
+			$result[] = $row;
+		}
+
+		return static::setNavData($result, ['count' => $countTotal, 'offset' => $n]);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function addWorkflowTemplate($params, $n, $server)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		self::validateTemplateDocumentType($params['DOCUMENT_TYPE']);
+		self::validateTemplateName($params['NAME']);
+
+		$autoExecute = \CBPDocumentEventType::None;
+		if (isset($params['AUTO_EXECUTE']))
+		{
+			self::validateTemplateAutoExecution($params['AUTO_EXECUTE']);
+			$autoExecute = (int) $params['AUTO_EXECUTE'];
+		}
+
+		$data = self::prepareTemplateData($params['TEMPLATE_DATA']);
+
+		try
+		{
+			return \CBPWorkflowTemplateLoader::ImportTemplate(
+				0,
+				$params['DOCUMENT_TYPE'],
+				$autoExecute,
+				$params['NAME'],
+				isset($params['DESCRIPTION']) ? (string) $params['DESCRIPTION'] : '',
+				$data,
+				self::generateTemplateSystemCode($server)
+			);
+		}
+		catch (\Exception $e)
+		{
+			throw new RestException($e->getMessage());
+		}
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function updateWorkflowTemplate($params, $n, $server)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$fields = (isset($params['FIELDS']) && is_array($params['FIELDS'])) ? $params['FIELDS'] : null;
+
+		if (!$fields)
+		{
+			throw new RestException("No fields to update.", self::ERROR_TEMPLATE_VALIDATION_FAILURE);
+		}
+
+		$tpl = WorkflowTemplateTable::getList(array(
+			'select' => ['ID', 'SYSTEM_CODE', 'NAME', 'DESCRIPTION', 'AUTO_EXECUTE', 'MODULE_ID', 'ENTITY', 'DOCUMENT_TYPE'],
+			'filter' => ['=ID' => (int) $params['ID']],
+		))->fetch();
+
+		if (!$tpl)
+		{
+			throw new RestException("Workflow template not found.", self::ERROR_TEMPLATE_NOT_FOUND);
+		}
+
+		if ($tpl['SYSTEM_CODE'] !== self::generateTemplateSystemCode($server))
+		{
+			throw new RestException(
+				"You can update ONLY templates created by current application",
+				self::ERROR_TEMPLATE_NOT_OWNER,
+			);
+		}
+
+		if (isset($fields['NAME']))
+		{
+			self::validateTemplateName($fields['NAME']);
+			$tpl['NAME'] = $fields['NAME'];
+		}
+
+		if (isset($fields['DESCRIPTION']))
+		{
+			$tpl['DESCRIPTION'] = (string) $fields['DESCRIPTION'];
+		}
+
+		if (isset($fields['AUTO_EXECUTE']))
+		{
+			self::validateTemplateAutoExecution($fields['AUTO_EXECUTE']);
+			$tpl['AUTO_EXECUTE'] = (int) $fields['AUTO_EXECUTE'];
+		}
+
+		if (isset($fields['TEMPLATE_DATA']))
+		{
+			$data = self::prepareTemplateData($fields['TEMPLATE_DATA']);
+
+			return \CBPWorkflowTemplateLoader::ImportTemplate(
+				$tpl['ID'],
+				[$tpl['MODULE_ID'], $tpl['ENTITY'], $tpl['DOCUMENT_TYPE']],
+				$tpl['AUTO_EXECUTE'],
+				$tpl['NAME'],
+				$tpl['DESCRIPTION'],
+				$data,
+				$tpl['SYSTEM_CODE']
+			);
+		}
+		else
+		{
+			return \CBPWorkflowTemplateLoader::Update($tpl['ID'], [
+				'NAME' => $tpl['NAME'],
+				'DESCRIPTION' => $tpl['DESCRIPTION'],
+				'AUTO_EXECUTE' => $tpl['AUTO_EXECUTE'],
+			]);
+		}
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function deleteWorkflowTemplate($params, $n, $server)
+	{
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$tpl = WorkflowTemplateTable::getList(array(
+			'select' => ['ID', 'SYSTEM_CODE'],
+			'filter' => ['=ID' => (int) $params['ID']],
+		))->fetch();
+
+		if (!$tpl)
+		{
+			throw new RestException("Workflow template not found.", self::ERROR_TEMPLATE_NOT_FOUND);
+		}
+
+		if ($tpl['SYSTEM_CODE'] !== self::generateTemplateSystemCode($server))
+		{
+			throw new RestException("You can delete ONLY templates created by current application");
+		}
+
+		try
+		{
+			\CBPWorkflowTemplateLoader::Delete($tpl['ID']);
+		}
+		catch (\CBPInvalidOperationException $e)
+		{
+			throw new RestException($e->getMessage());
+		}
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return array
+	 * @throws AccessException
+	 */
+	public static function getTaskList($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$fields = array(
+			'ID' => 'ID',
+			'ACTIVITY' => 'ACTIVITY',
+			'ACTIVITY_NAME' => 'ACTIVITY_NAME',
+			'WORKFLOW_ID' => 'WORKFLOW_ID',
+			'DOCUMENT_NAME' => 'DOCUMENT_NAME',
+			'DESCRIPTION' => 'DESCRIPTION',
+			'NAME' => 'NAME',
+			'MODIFIED' => 'MODIFIED',
+			'WORKFLOW_STARTED' => 'WORKFLOW_STARTED',
+			'WORKFLOW_STARTED_BY' => 'WORKFLOW_STARTED_BY',
+			'OVERDUE_DATE' => 'OVERDUE_DATE',
+			'WORKFLOW_TEMPLATE_ID' => 'WORKFLOW_TEMPLATE_ID',
+			'WORKFLOW_TEMPLATE_NAME' => 'WORKFLOW_TEMPLATE_NAME',
+			'WORKFLOW_STATE' => 'WORKFLOW_STATE',
+			'STATUS' => 'STATUS',
+			'USER_ID' => 'USER_ID',
+			'USER_STATUS' => 'USER_STATUS',
+			'MODULE_ID' => 'MODULE_ID',
+			'ENTITY' => 'ENTITY',
+			'DOCUMENT_ID' => 'DOCUMENT_ID',
+			'PARAMETERS' => 'PARAMETERS',
+		);
+
+		$select = static::getSelect($params['SELECT'], $fields, array('ID', 'WORKFLOW_ID', 'DOCUMENT_NAME', 'NAME'));
+		$select = array_merge(array('MODULE', 'ENTITY', 'DOCUMENT_ID'), $select);
+		$filter = static::getFilter($params['FILTER'], $fields, array('MODIFIED', 'WORKFLOW_STARTED', 'OVERDUE_DATE'));
+		$order = static::getOrder($params['ORDER'], $fields, array('ID' => 'DESC'));
+
+		$currentUserId = self::getCurrentUserId();
+		$isAdmin = static::isAdmin();
+
+		if (!$isAdmin && !isset($filter['USER_ID']))
+		{
+			$filter['USER_ID'] = $currentUserId;
+		}
+
+		$targetUserId = isset($filter['USER_ID'])? (int)$filter['USER_ID'] : 0;
+		if ($targetUserId !== $currentUserId && !\CBPHelper::checkUserSubordination($currentUserId, $targetUserId))
+		{
+			self::checkAdminPermissions();
+		}
+
+		$iterator = \CBPTaskService::getList(
+			$order,
+			$filter,
+			false,
+			static::getNavData($n),
+			$select
+		);
+
+		$result = array();
+		while ($row = $iterator->fetch())
+		{
+			if (isset($row['MODIFIED']))
+				$row['MODIFIED'] = \CRestUtil::convertDateTime($row['MODIFIED']);
+			if (isset($row['WORKFLOW_STARTED']))
+				$row['WORKFLOW_STARTED'] = \CRestUtil::convertDateTime($row['WORKFLOW_STARTED']);
+			if (isset($row['OVERDUE_DATE']))
+				$row['OVERDUE_DATE'] = \CRestUtil::convertDateTime($row['OVERDUE_DATE']);
+			$row['DOCUMENT_URL'] = \CBPDocument::getDocumentAdminPage(array(
+				$row['MODULE_ID'], $row['ENTITY'], $row['DOCUMENT_ID']
+			));
+
+			if (isset($row['PARAMETERS']) && is_array($row['PARAMETERS']))
+			{
+				$row['PARAMETERS'] = static::prepareTaskParameters($row['PARAMETERS'], $row);
+			}
+
+			$result[] = $row;
+		}
+
+		return static::setNavData($result, $iterator);
+	}
+
+	private static function prepareTaskParameters(array $parameters, array $task)
+	{
+		$whiteList = [
+			['CommentLabelMessage', 'CommentLabel'],
+			'CommentRequired', 'ShowComment',
+			['TaskButtonMessage', 'StatusOkLabel'],
+			['TaskButton1Message', 'StatusYesLabel'],
+			['TaskButton2Message', 'StatusNoLabel'],
+			['TaskButtonCancelMessage', 'StatusCancelLabel'],
+			['REQUEST', 'Fields'],
+		];
+
+		$filtered = [];
+
+		foreach ($whiteList as $whiteKey)
+		{
+			$filterKey = $whiteKey;
+			if (is_array($whiteKey))
+			{
+				$filterKey = $whiteKey[1];
+				$whiteKey = $whiteKey[0];
+			}
+			if (isset($parameters[$whiteKey]))
+			{
+				$filtered[$filterKey] = $parameters[$whiteKey];
+			}
+		}
+
+		if (isset($filtered['Fields']))
+		{
+			$filtered['Fields'] = self::externalizeRequestFields($task, $filtered['Fields']);
+		}
+
+		return $filtered;
+	}
+
+	private static function externalizeRequestFields($task, array $fields): array
+	{
+		$documentService = \CBPRuntime::GetRuntime(true)->getDocumentService();
+		$result = [];
+		foreach ($fields as $requestField)
+		{
+			$id = $requestField['Name'];
+			$requestField['Name'] = $requestField['Title'];
+			$property = FieldType::normalizeProperty($requestField);
+			$property['Id'] = $id;
+
+			$fieldTypeObject = $documentService->getFieldTypeObject($task["PARAMETERS"]["DOCUMENT_TYPE"], $property);
+			if ($fieldTypeObject)
+			{
+				$fieldTypeObject->setDocumentId($task["PARAMETERS"]["DOCUMENT_ID"]);
+				$property['Default'] = $fieldTypeObject->externalizeValue(
+					FieldType::VALUE_CONTEXT_REST,
+					$property['Default']
+				);
+			}
+
+			$result[] = $property;
+		}
+		return $result;
+	}
+
+	private static function internalizeRequestFields($task, array $values): array
+	{
+		$documentService = \CBPRuntime::GetRuntime(true)->getDocumentService();
+		$result = [];
+
+		foreach ($task['PARAMETERS']['REQUEST'] as $property)
+		{
+			if (!isset($values[$property['Name']]))
+			{
+				continue;
+			}
+
+			// read before the property is normalized: the fields of the decision are keyed by this code
+			// afterwards (CBPRequestInformationActivity::prepareResponseFields)
+			$fieldName = (string)$property['Name'];
+
+			$property = FieldType::normalizeProperty($property);
+			$fieldTypeObject = $documentService->getFieldTypeObject($task["PARAMETERS"]["DOCUMENT_TYPE"], $property);
+			if ($fieldTypeObject)
+			{
+				$fieldTypeObject->setDocumentId($task["PARAMETERS"]["DOCUMENT_ID"]);
+
+				// a file field is given the bytes of the file and not an id of one; whatever the type saves
+				// out of them is taken by BaseType\File::acceptTaskFileIds() and by nothing else
+				if ($fieldTypeObject->getBaseType() === FieldType::FILE)
+				{
+					// the task being performed wins over a setting of the template
+					$fieldTypeObject->setSettings(
+						BaseType\File::taskFieldSettings((int)($task['ID'] ?? 0), $fieldName)
+						+ $fieldTypeObject->getSettings()
+					);
+				}
+
+				$result[$property['Name']] = $fieldTypeObject->internalizeValue(FieldType::VALUE_CONTEXT_REST, $values[$property['Name']]);
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws RestException
+	 */
+	public static function completeTask($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+		self::validateTaskParameters($params);
+
+		$userId = self::getCurrentUserId();
+		$task = static::getTask($params['TASK_ID'], $userId);
+
+		if (!in_array($task['ACTIVITY'], self::ALLOWED_TASK_ACTIVITIES))
+		{
+			throw new RestException('Incorrect task type', self::ERROR_TASK_TYPE);
+		}
+
+		if (!empty($params['FIELDS']))
+		{
+			$params['FIELDS'] = self::internalizeRequestFields($task, $params['FIELDS']);
+		}
+
+		$errors = array();
+		$request = array(
+			'INLINE_USER_STATUS' => \CBPTaskUserStatus::resolveStatus($params['STATUS']),
+			'task_comment' => !empty($params['COMMENT']) && is_string($params['COMMENT']) ? $params['COMMENT'] : null,
+			'fields' => $params['FIELDS'] ?? null,
+		);
+
+		if (!\CBPDocument::postTaskForm($task, $userId, $request, $errors))
+		{
+			throw new RestException($errors[0]["message"], self::ERROR_TASK_EXECUTION);
+		}
+
+		return true;
+	}
+
+	public static function delegateTask($params, $n, $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+		$currentUserId = self::getCurrentUserId();
+
+		if (!is_array($params['TASK_IDS']) || array_filter($params['TASK_IDS'], static fn($id) => !is_numeric($id)))
+		{
+			throw new RestException('Invalid TASK_IDS', self::ERROR_TASK_VALIDATION);
+		}
+		$taskIds = array_map('intval', $params['TASK_IDS']);
+
+		if (!isset($params['FROM_USER_ID']) || !is_numeric($params['FROM_USER_ID']) || $params['FROM_USER_ID'] <= 0)
+		{
+			throw new RestException('Invalid FROM_USER_ID', self::ERROR_INVALID_USER_ID);
+		}
+		$fromUserId = (int)$params['FROM_USER_ID'];
+
+		if (!isset($params['TO_USER_ID']) || !is_numeric($params['TO_USER_ID']) || $params['TO_USER_ID'] <= 0)
+		{
+			throw new RestException('Invalid TO_USER_ID', self::ERROR_INVALID_USER_ID);
+		}
+		$toUserId = (int)$params['TO_USER_ID'];
+
+		$taskService = new Api\Service\TaskService(new Api\Service\TaskAccessService($currentUserId));
+		$tasksRequest = new Api\Request\TaskService\DelegateTasksRequest($taskIds, $fromUserId, $toUserId, $currentUserId);
+		$delegateTaskResult = $taskService->delegateTasks($tasksRequest);
+
+		if (!$delegateTaskResult->isSuccess())
+		{
+			$errors = implode(';', $delegateTaskResult->getErrorMessages());
+			throw new RestException($errors, self::ERROR_DELEGATION_NOT_ALLOWED);
+		}
+
+		return true;
+	}
+
+	private static function validateTaskParameters(array $params)
+	{
+		if (empty($params['TASK_ID']))
+		{
+			throw new RestException('empty TASK_ID', self::ERROR_TASK_VALIDATION);
+		}
+		if (empty($params['STATUS']) || \CBPTaskUserStatus::resolveStatus($params['STATUS']) === null)
+		{
+			throw new RestException('incorrect STATUS', self::ERROR_TASK_VALIDATION);
+		}
+	}
+
+	private static function getTask($id, $userId)
+	{
+		$dbTask = \CBPTaskService::getList(
+			array(),
+			array("ID" => (int)$id, "USER_ID" => $userId),
+			false,
+			false,
+			array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", "USER_STATUS")
+		);
+		$task = $dbTask->fetch();
+
+		if (!$task)
+		{
+			throw new RestException('Task not found', self::ERROR_TASK_NOT_FOUND);
+		}
+		elseif ((int)$task['USER_STATUS'] !== \CBPTaskUserStatus::Waiting)
+		{
+			throw new RestException('Task already completed', self::ERROR_TASK_COMPLETED);
+		}
+
+		if ($task)
+		{
+			$task["PARAMETERS"]["DOCUMENT_ID"] = \CBPStateService::getStateDocumentId($task['WORKFLOW_ID']);
+			$task["MODULE_ID"] = $task["PARAMETERS"]["DOCUMENT_ID"][0];
+			$task["ENTITY"] = $task["PARAMETERS"]["DOCUMENT_ID"][1];
+			$task["DOCUMENT_ID"] = $task["PARAMETERS"]["DOCUMENT_ID"][2];
+		}
+
+		return $task;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function addProvider($params, $n, $server)
+	{
+		if (Loader::includeModule('messageservice'))
+		{
+			return \Bitrix\MessageService\RestService::addSender($params, $n, $server);
+		}
+
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$params = self::prepareActivityData($params);
+
+		self::validateProvider($params, $server);
+
+		$params['APP_ID'] = $server->getClientId();
+		$params['APP_NAME'] = self::getAppName($params['APP_ID']);
+
+		$iterator = RestProviderTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array(
+				'=APP_ID' => $params['APP_ID'],
+				'=CODE' => $params['CODE']
+			)
+		));
+		$result = $iterator->fetch();
+		if ($result)
+		{
+			throw new RestException('Provider already installed!', self::ERROR_ACTIVITY_ALREADY_INSTALLED);
+		}
+
+		$result = RestProviderTable::add($params);
+
+		if ($result->getErrors())
+			throw new RestException('Activity save error!', self::ERROR_ACTIVITY_ADD_FAILURE);
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public static function deleteProvider($params, $n, $server)
+	{
+		if (Loader::includeModule('messageservice'))
+		{
+			return \Bitrix\MessageService\RestService::deleteSender($params, $n, $server);
+		}
+
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		$params = array_change_key_case($params, CASE_UPPER);
+		self::checkAdminPermissions();
+		self::validateActivityCode($params['CODE']);
+		$params['APP_ID'] = $server->getClientId();
+
+		$iterator = RestProviderTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array(
+				'=APP_ID' => $params['APP_ID'],
+				'=CODE' => $params['CODE']
+			)
+		));
+		$result = $iterator->fetch();
+		if (!$result)
+		{
+			throw new RestException('Provider not found!', self::ERROR_ACTIVITY_NOT_FOUND);
+		}
+		RestProviderTable::delete($result['ID']);
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return array
+	 * @throws AccessException
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function getProviderList($params, $n, $server)
+	{
+		if (Loader::includeModule('messageservice'))
+		{
+			return \Bitrix\MessageService\RestService::getSenderList($params, $n, $server);
+		}
+
+		if(!$server->getClientId())
+		{
+			throw new AccessException("Application context required");
+		}
+
+		self::checkAdminPermissions();
+		$iterator = RestProviderTable::getList(array(
+			'select' => array('CODE'),
+			'filter' => array(
+				'=APP_ID' => $server->getClientId()
+			)
+		));
+
+		$result = array();
+		while ($row = $iterator->fetch())
+		{
+			$result[] = $row['CODE'];
+		}
+		return $result;
+	}
+
+	private static function getSelect($rules, $fields, $default = array())
+	{
+		$select = array();
+		if (!empty($rules) && is_array($rules))
+		{
+			foreach ($rules as $field)
+			{
+				if (!is_scalar($field))
+				{
+					throw new RestException(
+						"Invalid data in SELECT parameter",
+						self::ERROR_SELECT_VALIDATION_FAILURE,
+					);
+				}
+
+				$field = mb_strtoupper($field);
+				if (isset($fields[$field]) && !in_array($field, $select))
+					$select[$field] = $fields[$field];
+			}
+		}
+
+		return $select ?: $default;
+	}
+
+	private static function getOrder($rules, $fields, array $default = array())
+	{
+		$order = array();
+		if (!empty($rules) && is_array($rules))
+		{
+			foreach ($rules as $field => $ordering)
+			{
+				$field = mb_strtoupper($field);
+				$ordering = mb_strtoupper($ordering);
+				if (isset($fields[$field]))
+					$order[$fields[$field]] = $ordering == 'DESC' ? 'DESC' : 'ASC';
+			}
+		}
+
+		return $order ? $order : $default;
+	}
+
+	private static function getFilter($rules, $fields, array $datetimeFieldsList = array())
+	{
+		$filter = array();
+		if (!empty($rules) && is_array($rules))
+		{
+			foreach ($rules as $key => $value)
+			{
+				if (preg_match('/^([^a-zA-Z]*)(.*)/', $key, $matches))
+				{
+					$operation = $matches[1];
+					$field = mb_strtoupper($matches[2]);
+
+					if (in_array($operation, static::$allowedOperations, true) && isset($fields[$field]))
+					{
+						if (in_array($field, $datetimeFieldsList))
+						{
+							$value = \CRestUtil::unConvertDateTime($value);
+						}
+
+						$filter[$operation.$fields[$field]] = $value;
+					}
+				}
+			}
+		}
+
+		return $filter;
+	}
+
+	private static function checkAdminPermissions()
+	{
+		if (!static::isAdmin())
+		{
+			throw new AccessException();
+		}
+	}
+
+	private static function isAdmin()
+	{
+		global $USER;
+		return (
+			isset($USER)
+			&& is_object($USER)
+			&& (
+				$USER->isAdmin()
+				|| Loader::includeModule('bitrix24') && \CBitrix24::isPortalAdmin($USER->getID())
+			)
+		);
+	}
+
+	private static function getCurrentUserId()
+	{
+		global $USER;
+		return (isset($USER) && is_object($USER)) ? (int)$USER->getID() : 0;
+	}
+
+	private static function generateInternalCode($data)
+	{
+		return md5($data['APP_ID'].'@'.$data['CODE']);
+	}
+
+	private static function getAppName($appId)
+	{
+		if (!Loader::includeModule('rest'))
+			return array('*' => 'No app');
+
+		$iterator = AppTable::getList(
+			array(
+				'filter' => array(
+					'=CLIENT_ID' => $appId
+				),
+				'select' => array('ID', 'APP_NAME', 'CODE'),
+			)
+		);
+		$app = $iterator->fetch();
+		$result = array('*' => $app['APP_NAME'] ? $app['APP_NAME'] : $app['CODE']);
+
+		$iterator = AppLangTable::getList(array(
+			'filter' => array(
+				'=APP_ID' => $app['ID'],
+			),
+			'select' => array('LANGUAGE_ID', 'MENU_NAME')
+		));
+		while($lang = $iterator->fetch())
+		{
+			$result[mb_strtoupper($lang['LANGUAGE_ID'])] = $lang['MENU_NAME'];
+		}
+
+		return $result;
+	}
+
+	private static function getAppId($clientId)
+	{
+		if (!Loader::includeModule('rest'))
+		{
+			return null;
+		}
+
+		$iterator = AppTable::getList(
+			array(
+				'filter' => array(
+					'=CLIENT_ID' => $clientId
+				),
+				'select' => array('ID'),
+			)
+		);
+		$app = $iterator->fetch();
+
+		return (int) $app['ID'];
+	}
+
+	private static function prepareActivityData(array $data, $ignore = false)
+	{
+		if (!$ignore)
+			$data = array_change_key_case($data, CASE_UPPER);
+		foreach ($data as $key => &$field)
+		{
+			if (is_array($field))
+				$field = self::prepareActivityData($field, $key == 'PROPERTIES' || $key == 'RETURN_PROPERTIES' || $key == 'OPTIONS');
+		}
+		return $data;
+	}
+
+	private static function validateActivity($data, $server)
+	{
+		if (!is_array($data) || empty($data))
+			throw new RestException('Empty data!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		static::validateActivityCode($data['CODE']);
+		static::validateActivityHandler($data['HANDLER'], $server);
+		if (empty($data['NAME']))
+			throw new RestException('Empty activity NAME!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		if (isset($data['PROPERTIES']))
+			static::validateActivityProperties($data['PROPERTIES']);
+
+		if (isset($data['RETURN_PROPERTIES']))
+			static::validateActivityProperties($data['RETURN_PROPERTIES']);
+		if (isset($data['DOCUMENT_TYPE']))
+			static::validateActivityDocumentType($data['DOCUMENT_TYPE']);
+		if (isset($data['FILTER']) && !is_array($data['FILTER']))
+			throw new RestException('Wrong activity FILTER!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+	}
+
+	private static function validateProvider($data, $server)
+	{
+		if (!is_array($data) || empty($data))
+			throw new RestException('Empty data!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		static::validateActivityCode($data['CODE']);
+		static::validateActivityHandler($data['HANDLER'], $server);
+		if (empty($data['NAME']))
+			throw new RestException('Empty provider NAME!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		if (empty($data['TYPE']))
+			throw new RestException('Empty provider TYPE!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		if (!in_array($data['TYPE'], RestProviderTable::getTypesList(), true))
+			throw new RestException('Unknown provider TYPE!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+	}
+
+	private static function validateRobot($data, $server)
+	{
+		if (!is_array($data) || empty($data))
+			throw new RestException('Empty data!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		static::validateActivityCode($data['CODE']);
+		static::validateActivityHandler($data['HANDLER'], $server);
+		if (empty($data['NAME']))
+			throw new RestException('Empty activity NAME!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		if (isset($data['PROPERTIES']))
+			static::validateActivityProperties($data['PROPERTIES']);
+
+		if (isset($data['DOCUMENT_TYPE']))
+		{
+			static::validateActivityDocumentType($data['DOCUMENT_TYPE']);
+		}
+
+		if (isset($data['RETURN_PROPERTIES']))
+			static::validateActivityProperties($data['RETURN_PROPERTIES']);
+		if (isset($data['FILTER']) && !is_array($data['FILTER']))
+			throw new RestException('Wrong activity FILTER!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+	}
+
+	private static function validateActivityCode($code)
+	{
+		if (empty($code))
+		{
+			throw new RestException('Empty activity code!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+		}
+		if (!is_string($code) || !preg_match('#^[a-z0-9\.\-_]+$#i', $code))
+		{
+			throw new RestException('Wrong activity code!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+		}
+	}
+
+	private static function validateActivityHandler($handler, $server)
+	{
+		HandlerHelper::checkCallback($handler);
+	}
+
+	private static function validateActivityProperties($properties)
+	{
+		if (!is_array($properties))
+			throw new RestException('Wrong properties array!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+
+		foreach ($properties as $key => $property)
+		{
+			if (!preg_match('#^[a-z][a-z0-9_]*$#i', $key))
+				throw new RestException('Wrong property key ('.$key.')!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+			if (empty($property['NAME']))
+				throw new RestException('Empty property NAME ('.$key.')!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+		}
+	}
+
+	private static function validateActivityDocumentType($documentType)
+	{
+		try
+		{
+			$runtime = \CBPRuntime::getRuntime();
+			$runtime->startRuntime();
+			/** @var \CBPDocumentService $documentService */
+			$documentService = $runtime->getService('DocumentService');
+			$documentService->getDocumentFieldTypes($documentType);
+		}
+		catch (\CBPArgumentNullException $e)
+		{
+			throw new RestException('Wrong activity DOCUMENT_TYPE!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
+		}
+	}
+
+	private static function getDocumentId($documentId): ?array
+	{
+		try
+		{
+			$documentService = \CBPRuntime::getRuntime()->getDocumentService();
+			$documentId = $documentService->normalizeDocumentId($documentId);
+			if ($documentService->getDocument($documentId, select: ['ID']))
+			{
+				return $documentId;
+			}
+		}
+		catch (\CBPArgumentException $exception) {}
+
+		return null;
+	}
+
+	private static function getDocumentType(array $documentId): ?array
+	{
+		try
+		{
+			$documentId = \CBPHelper::parseDocumentId($documentId);
+			$runtime = \CBPRuntime::getRuntime(true);
+			$documentService = $runtime->getDocumentService();
+
+			return $documentService->getDocumentType($documentId);
+		}
+		catch (\Exception $e) {}
+
+		return null;
+	}
+
+	/**
+	 * The identifier comes from the call and no list is built on the way, so the templates a pilot acts on
+	 * are asked about here one by one: the narrowing of the lists alone would be bypassed by naming the
+	 * identifier directly. A template the employee of the calling context may not see is answered exactly
+	 * as a template that does not exist - same reason, same code, same message.
+	 */
+	private static function getTemplateInfoForStart(int $id): ?array
+	{
+		if (!(new PilotVisibilityProvider())->isVisible(static::getCurrentUserId(), $id))
+		{
+			return null;
+		}
+
+		$tpl = WorkflowTemplateTable::getList([
+			'select' => ['MODULE_ID', 'ENTITY', 'DOCUMENT_TYPE', 'AUTO_EXECUTE', 'PARAMETERS'],
+			'filter' => ['=ID' => $id],
+		])->fetch();
+
+		return $tpl ?: null;
+	}
+
+	private static function validateTemplateName($name)
+	{
+		if (empty($name))
+		{
+			throw new RestException('Empty template name!', self::ERROR_TEMPLATE_VALIDATION_FAILURE);
+		}
+	}
+
+	private static function upsertAppPlacement(int $appId, string $code, string $handler)
+	{
+		$filter = [
+			'=APP_ID' => $appId,
+			'=ADDITIONAL' => $code,
+			'=PLACEMENT' => static::PLACEMENT_ACTIVITY_PROPERTIES_DIALOG,
+		];
+		$dbRes = PlacementTable::getList([
+			'filter' => $filter,
+		]);
+		$placementHandler = $dbRes->fetch();
+
+		try
+		{
+			if ($placementHandler)
+			{
+				$result = PlacementTable::update($placementHandler['ID'], ['PLACEMENT_HANDLER' => $handler]);
+			}
+			else
+			{
+				$placementBind = [
+					'APP_ID' => $appId,
+					'ADDITIONAL' => $code,
+					'PLACEMENT' => static::PLACEMENT_ACTIVITY_PROPERTIES_DIALOG,
+					'PLACEMENT_HANDLER' => $handler,
+				];
+				$result = PlacementTable::add($placementBind);
+			}
+		}
+		catch (DuplicateEntryException $e)
+		{
+			throw new RestException(
+				'Unable to set placement handler: You should use unique placement handler for each CODE!',
+				RestException::ERROR_CORE
+			);
+		}
+		if (!$result->isSuccess())
+		{
+			$errorMessage = $result->getErrorMessages();
+			throw new RestException(
+				'Unable to set placement handler: ' . implode(', ', $errorMessage),
+				RestException::ERROR_CORE
+			);
+		}
+	}
+
+	private static function deleteAppPlacement(int $appId, string $code = null)
+	{
+		$filter = [
+			'=APP_ID' => $appId,
+			'=PLACEMENT' => static::PLACEMENT_ACTIVITY_PROPERTIES_DIALOG,
+		];
+
+		if ($code)
+		{
+			$filter['=ADDITIONAL'] = $code;
+		}
+
+		$dbRes = PlacementTable::getList(array(
+			'filter' => $filter
+		));
+
+		while($placementHandler = $dbRes->fetch())
+		{
+			PlacementTable::delete($placementHandler["ID"]);
+		}
+	}
+
+	private static function prepareTemplateData($data)
+	{
+		if (!empty($data))
+		{
+			$fileFields = \CRestUtil::saveFile($data);
+
+			if ($fileFields)
+			{
+				return \Bitrix\Main\IO\File::getFileContents($fileFields['tmp_name']);
+			}
+		}
+		throw new RestException('Incorrect field TEMPLATE_DATA!', self::ERROR_TEMPLATE_VALIDATION_FAILURE);
+	}
+
+	private static function validateTemplateDocumentType($documentType)
+	{
+		try
+		{
+			$documentService = \CBPRuntime::getRuntime(true)->getDocumentService();
+			$documentService->getDocumentFieldTypes($documentType);
+		}
+		catch (\CBPArgumentNullException $e)
+		{
+			throw new RestException('Incorrect field DOCUMENT_TYPE!', self::ERROR_TEMPLATE_VALIDATION_FAILURE);
+		}
+	}
+
+	private static function validateTemplateAutoExecution($flag)
+	{
+		if ($flag === (string) (int) $flag)
+		{
+			$flag = (int) $flag;
+
+			if (in_array(
+					$flag,
+					[
+						\CBPDocumentEventType::None,
+						\CBPDocumentEventType::Create,
+						\CBPDocumentEventType::Edit,
+						\CBPDocumentEventType::Create | \CBPDocumentEventType::Edit
+					],
+					true
+				)
+			)
+			{
+				return true;
+			}
+		}
+
+		throw new RestException('Incorrect field AUTO_EXECUTE!', self::ERROR_TEMPLATE_VALIDATION_FAILURE);
+	}
+
+	private static function generateTemplateSystemCode(\CRestServer $server)
+	{
+		$appId = self::getAppId($server->getClientId());
+
+		return 'rest_app_'.$appId;
+	}
+
+	private static function extractEventToken($token)
+	{
+		$data = \CBPRestActivity::extractToken($token);
+		if (!$data)
+			throw new AccessException();
+		return $data;
+	}
+
+	/**
+	 * @param \CRestServer $server
+	 * @return array|bool|false|mixed|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	private static function getApp($server)
+	{
+		if(self::$app == null)
+		{
+			if (Loader::includeModule('rest'))
+			{
+				$result = AppTable::getList(
+					array(
+						'filter' => array(
+							'=CLIENT_ID' => $server->getClientId()
+						)
+					)
+				);
+				self::$app = $result->fetch();
+			}
+		}
+
+		return self::$app;
+	}
+}

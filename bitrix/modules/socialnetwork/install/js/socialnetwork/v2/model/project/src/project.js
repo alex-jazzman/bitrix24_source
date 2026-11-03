@@ -6,7 +6,12 @@ import {
 	AccessRightsBoolKind,
 	AccessRightsRoleKind,
 } from 'socialnetwork.v2.const';
-import { type ProjectModel, type ProjectFeatures, type NotificationCatalog } from './types';
+import {
+	type ProjectModel,
+	type ProjectFeatures,
+	type ProjectOwner,
+	type NotificationCatalog,
+} from './types';
 
 export const defaultProjectFeatures: ProjectFeatures = Object.freeze({
 	tasks: true,
@@ -30,6 +35,7 @@ export const useProjectStore = defineStore('project', {
 		title: '',
 		description: '',
 		goal: '',
+		owner: null,
 		ownerId: null,
 		chatId: null,
 		members: [],
@@ -93,10 +99,24 @@ export const useProjectStore = defineStore('project', {
 		},
 	},
 	actions: {
-		init({ projectId, publication, notifications }: { projectId: ?number, publication?: boolean, notifications?: NotificationCatalog | null }): void
+		init({
+			projectId,
+			publication,
+			notifications,
+			ownerId,
+			owner,
+		}: {
+			projectId: ?number,
+			publication?: boolean,
+			notifications?: NotificationCatalog | null,
+			ownerId?: ?number,
+			owner?: ?ProjectOwner,
+		}): void
 		{
 			this.id = projectId;
 			this.publication = publication;
+			this.ownerId = ownerId ?? null;
+			this.owner = owner ? structuredClone(owner) : null;
 			if (notifications !== undefined)
 			{
 				this.notifications = notifications ? structuredClone(notifications) : notifications;

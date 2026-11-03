@@ -44,6 +44,40 @@
 	user-select: none;
 }
 
+/* The interactive divider is a native button, so its own frame and cursor are reset here; the pill
+   itself keeps the look it has without the entry into the calendar. The transition belongs to the
+   fade of the highlight below and to nothing else: the hover is a background layer of its own and
+   answers at once, and a divider without the entry never changes its background at all. */
+.bx-im-message-list-date-group-title__text.--interactive {
+	border: none;
+	cursor: pointer;
+	transition: background-color 1.5s;
+}
+
+/* The veil is laid over the pill instead of replacing its background: this overlay token holds the
+   very value the pill background already has, so a swap of background-color would repaint the pill
+   in its own color and show nothing. A background layer composes with the pill the way the design
+   layer composes the same token with the color of an element (design-tokens/air/src/hoverable.css),
+   and it keeps the hover out of the transition the highlight below rides. */
+.bx-im-message-list-date-group-title__text.--interactive:hover {
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-hover-default-overlay),
+		var(--ui-color-bg-state-hover-default-overlay)
+	);
+}
+
+.bx-im-message-list-date-group-title__text.--interactive:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The divider sits on the chat wallpaper, so the emphasis is a stronger veil over media, and it
+   shows up at once and fades out - the same way a highlighted message behaves. */
+.bx-im-message-list-date-group__container.--date-highlighted .bx-im-message-list-date-group-title__text {
+	background-color: var(--ui-color-bg-state-click-default-overlay);
+	transition: none;
+}
+
 .bx-im-message-list-new-message__container {
 	height: 30px;
 	margin-top: var(--im-dialog-chat__offset_block);
@@ -76,6 +110,11 @@
 	display: grid;
 	grid-template-columns: 0 auto 100%;;
 	width: 100%;
+}
+
+/* Air design: author-group avatar (size L) grows to 44px. */
+.--air-design .bx-im-message-list-author-group__container {
+	--im-message-list-author-group__height_avatar-container: 44px;
 }
 
 .bx-im-message-list-author-group__container.--has-avatar {
@@ -117,4 +156,8 @@
 
 .bx-im-message-list-author-group__container.--no-menu .bx-im-message-list-author-group__avatar {
 	cursor: initial;
+}
+
+.bx-im-message-list-author-group__container.--no-menu.--mention-clickable .bx-im-message-list-author-group__avatar {
+	cursor: pointer;
 }

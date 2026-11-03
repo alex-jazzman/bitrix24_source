@@ -1,0 +1,9 @@
+<?php
+$MESS['BI_DIGEST_PERIOD_CURRENT_MONTH'] = 'Current month';
+$MESS['BI_DIGEST_PERIOD_CURRENT_WEEK'] = 'Current week';
+$MESS['BI_DIGEST_PERIOD_CURRENT_YEAR'] = 'Current year';
+$MESS['BI_DIGEST_PERIOD_DEFAULT'] = 'BI Builder default';
+$MESS['BI_DIGEST_PERIOD_PREVIOUS_MONTH'] = 'Previous month';
+$MESS['BI_DIGEST_PERIOD_PREVIOUS_WEEK'] = 'Previous week';
+$MESS['BI_DIGEST_PERIOD_PREVIOUS_YEAR'] = 'Previous year';
+$MESS['BI_DIGEST_PERIOD_REPORT'] = 'As in the dashboard';

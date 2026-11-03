@@ -74,7 +74,23 @@ export class TalkingService
 		}
 	}
 
+	#isTalking(userId)
+	{
+		return this.users[userId]?.talking === true;
+	}
+
+	// A queue record is valid only while the participant still talks: the delayed close that used to
+	// carry the cleanup belongs to one updateQueue call and is lost when the next one interrupts it.
+	#dropSilentUsers()
+	{
+		this.queue
+			.filter((userId) => !this.#isTalking(userId))
+			.forEach((userId) => this.deleteFromQueue(userId));
+	}
+
 	updateQueue(config) {
+		this.#dropSilentUsers();
+
 		let user = null;
 		let isUserTalking = false;
 		if (config)
@@ -85,12 +101,6 @@ export class TalkingService
 
 		let mutedUserId = null;
 		let newActiveId = null;
-		const deleteUserFromQueue = () => {
-			if (mutedUserId)
-			{
-				this.deleteFromQueue(mutedUserId);
-			}
-		};
 
 		if (user)
 		{
@@ -115,16 +125,20 @@ export class TalkingService
 			activeUserCard = this.root?.querySelector(`.bx-messenger-videocall-user[data-user-id="${this.activeId}"]`);
 		}
 
-		let canPopupClose = false;
-		const userTalkAgain = user && user?.id === this.activeId && isUserTalking && this.talkingPopup?.closingTimeout;
+		const popupClosing = Boolean(this.talkingPopup?.closingTimeout);
+		const userTalkAgain = user && user?.id === this.activeId && isUserTalking && popupClosing;
+		const activeUserSilent = !this.#isTalking(this.activeId);
+		const canPopupClose = Boolean(!this.activeId || activeUserCard
+			|| (mutedUserId && mutedUserId === this.activeId) || (activeUserSilent && !popupClosing));
 
-		if (!this.activeId || activeUserCard || (mutedUserId && mutedUserId === this.activeId))
+		// A silent activeId opens the scan below too, so the popup can pass to somebody who really talks
+		// even while its close is already running. `!popupClosing` sits on the silence alone: once that
+		// close runs, silence no longer opens canPopupClose, while a returned card or an explicit mute do.
+		if (canPopupClose || activeUserSilent)
 		{
-			canPopupClose = true;
-
 			for (const userId of this.queue)
 			{
-				if (userId === mutedUserId || userId === this.activeId)
+				if (userId === mutedUserId || userId === this.activeId || !this.#isTalking(userId))
 				{
 					continue;
 				}
@@ -139,34 +153,24 @@ export class TalkingService
 		}
 		else if (!userTalkAgain)
 		{
-			deleteUserFromQueue();
-
 			return;
 		}
 
 		if (this.activeId && !newActiveId && canPopupClose)
 		{
 			this.hidePopup(this.activeId !== mutedUserId, () => {
-				deleteUserFromQueue();
-
 				this.activeId = null;
-			}, true);
+			});
 		}
 		else if ((this.activeId && newActiveId && this.activeId !== newActiveId)
 			|| (!this.activeId && newActiveId))
 		{
 			this.showPopup(this.users[newActiveId]);
-			deleteUserFromQueue();
 			this.activeId = newActiveId;
 		}
 		else if (userTalkAgain)
 		{
 			this.showPopup(this.users[user?.id]);
-			deleteUserFromQueue();
-		}
-		else
-		{
-			deleteUserFromQueue();
 		}
 	}
 

@@ -1,6 +1,51 @@
-.ui-alert-mail-error-box{
+/*
+ * The alert keeps the surface its own colour gives it. The wash of white at 15% it used to carry was
+ * drawn for another background and leaves none here: red letters end up straight on the page, while
+ * the migration banner right under it stands on a card of its own - one pair, two different things.
+ */
+.ui-alert-mail-error-box {
 	border-radius: 16px;
-	background: rgba(255, 255, 255, .15);
-	margin-top: 10px;
-	margin-bottom: 0;
+	margin-top: var(--ui-space-stack-xs2);
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.mail-error-box__title {
+	display: block;
+	margin-bottom: var(--ui-space-stack-2xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.mail-error-box__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-sm);
+}
+
+/*
+ * A button of the design system is one line of text it never breaks, and a label longer than the room
+ * left runs out of the card it stands in. Here it takes the width it has and carries the label over:
+ * the width keeps the button inside the card, the line break keeps the whole label readable
+ * (WCAG 1.4.10).
+ */
+.ui-alert-mail-error-box .mail-error-box__actions .mail-error-box__action {
+	min-width: 0;
+	max-width: 100%;
+	height: auto;
+	min-height: var(--ui-btn-height);
+	padding-top: var(--ui-space-inset-2xs);
+	padding-bottom: var(--ui-space-inset-2xs);
+	line-height: var(--ui-font-line-height-md);
+	white-space: normal;
+}
+
+/*
+ * `ui-btn-text-inner` is the span the design system puts the label in, and it cuts the label with an
+ * ellipsis of its own. The design system offers no option for a button of several lines, so the rule
+ * reaches for the class: a class renamed there costs the line break, not the width above it.
+ */
+.ui-alert-mail-error-box .mail-error-box__actions .mail-error-box__action .ui-btn-text-inner {
+	overflow: visible;
+	text-overflow: clip;
+	white-space: normal;
 }

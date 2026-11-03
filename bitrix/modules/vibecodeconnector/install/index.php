@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -13,6 +14,15 @@ if (class_exists('vibecodeconnector'))
 
 class Vibecodeconnector extends CModule
 {
+	private const ROUTE_FILE = 'vibecodeconnector.php';
+	private const PREVIEW_ROUTES = [
+		'/vibecode/app/#catalogItemId#/',
+		'/vibecode/app/#catalogItemId#',
+	];
+	private const PREVIEW_ROUTE_HANDLER =
+		'\Bitrix\Vibecodeconnector\Internal\Integration\Main\UrlPreview\CatalogItemUrlPreview';
+	private const PREVIEW_ROUTE_PARAMETERS = ['catalogItemId' => '$catalogItemId'];
+
 	public $MODULE_ID = 'vibecodeconnector';
 	public $MODULE_VERSION;
 	public $MODULE_VERSION_DATE;
@@ -104,8 +114,43 @@ class Vibecodeconnector extends CModule
 			return;
 		}
 
+		$this->removeModuleAfterAppChatCleanup();
+	}
+
+	protected function removeModuleAfterAppChatCleanup(): void
+	{
+		global $APPLICATION;
+
+		try
+		{
+			$this->cleanupAppChatsBeforeUninstall();
+		}
+		catch (\Throwable $exception)
+		{
+			\AddMessage2Log(
+				'Vibecodeconnector uninstall was stopped before app-chat cleanup completed: '
+					. $exception->getMessage(),
+				$this->MODULE_ID,
+			);
+			$APPLICATION->ThrowException(
+				Loc::getMessage('VIBECODECONNECTOR_UNINSTALL_ERROR') . ': ' . $exception->getMessage(),
+			);
+
+			return;
+		}
+
 		$this->UninstallFiles();
 		$this->UnInstallDB();
+	}
+
+	protected function cleanupAppChatsBeforeUninstall(): void
+	{
+		if (!\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
+		{
+			throw new \RuntimeException('The vibecodeconnector module could not be loaded for app-chat cleanup');
+		}
+
+		(new \Bitrix\Vibecodeconnector\Internal\Service\Catalog\AppChat\AppChatUninstallService())->cleanup();
 	}
 
 	private function isRegisteredWithPlatform(): bool
@@ -134,6 +179,14 @@ class Vibecodeconnector extends CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin',
 			true,
 		);
+
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/vibecodeconnector/install/routes',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes',
+			true,
+		);
+
+		$this->registerRouteFile();
 	}
 
 	public function UninstallFiles(): void
@@ -143,6 +196,61 @@ class Vibecodeconnector extends CModule
 		DeleteDirFiles(
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/vibecodeconnector/install/admin',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin',
+		);
+
+		$this->unregisterRouteFile();
+		@unlink($_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes/' . self::ROUTE_FILE);
+	}
+
+	private function registerRouteFile(): void
+	{
+		$routesConfig = $this->routesConfig();
+		if ($routesConfig === null)
+		{
+			return;
+		}
+
+		$config = $routesConfig->get('routing')['config'] ?? [];
+
+		if (!in_array(self::ROUTE_FILE, $config, true))
+		{
+			$config[] = self::ROUTE_FILE;
+			$routesConfig->add('routing', ['config' => $config]);
+			$routesConfig->saveConfiguration();
+		}
+	}
+
+	private function unregisterRouteFile(): void
+	{
+		$routesConfig = $this->routesConfig();
+		if ($routesConfig === null)
+		{
+			return;
+		}
+
+		$config = $routesConfig->get('routing')['config'] ?? [];
+
+		$filtered = array_values(array_filter(
+			$config,
+			static fn ($file) => $file !== self::ROUTE_FILE,
+		));
+
+		if ($filtered !== $config)
+		{
+			$routesConfig->add('routing', ['config' => $filtered]);
+			$routesConfig->saveConfiguration();
+		}
+	}
+
+	private function routesConfig(): ?Configuration
+	{
+		if (!method_exists(Configuration::class, 'getInstanceByPath'))
+		{
+			return null;
+		}
+
+		return Configuration::getInstanceByPath(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes/.settings.php',
 		);
 	}
 
@@ -170,6 +278,16 @@ class Vibecodeconnector extends CModule
 			Option::set('immobile', 'is_vibecode_button_available', 'Y');
 		}
 
+		foreach (self::PREVIEW_ROUTES as $previewRoute)
+		{
+			\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+				$previewRoute,
+				$this->MODULE_ID,
+				self::PREVIEW_ROUTE_HANDLER,
+				self::PREVIEW_ROUTE_PARAMETERS,
+			);
+		}
+
 		return true;
 	}
 
@@ -180,7 +298,7 @@ class Vibecodeconnector extends CModule
 			return false;
 		}
 
-		return \CBitrix24::getPortalZone() === 'ru';
+		return in_array(\CBitrix24::getPortalZone(), ['ru', 'by', 'kz', 'uz']);
 	}
 
 	function UnInstallDB()

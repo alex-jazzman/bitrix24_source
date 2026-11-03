@@ -6,6 +6,8 @@ import { type FilterData } from '../types/filter';
 
 import '../css/titlebar-filter.css';
 
+let menuSequence = 0;
+
 export const TitleBarFilter = {
 	emits: ['onApplyFilters'],
 	name: 'ui-entity-catalog-titlebar-filter',
@@ -24,21 +26,57 @@ export const TitleBarFilter = {
 		return {
 			appliedFilters: this.getAppliedFilters(),
 			allFilters: this.filters,
+			menuOpen: false,
+			activeMenuId: '',
+			filterOpenLabel: Loc.getMessage('UI_JS_ENTITY_CATALOG_FILTER_OPEN_ARIA'),
 		};
 	},
 	methods: {
-		showMenu(): Menu
+		showMenu(event: MouseEvent): Menu
 		{
-			MenuManager.create({
-				id: 'ui-entity-catalog-titlebar-filter-menu',
+			const openedWithKeyboard = event.detail === 0;
+			const menuId = `ui-entity-catalog-titlebar-filter-menu-${++menuSequence}`;
+			this.activeMenuId = menuId;
+			const menu = MenuManager.create({
+				id: menuId,
 				bindElement: this.$el,
 				minWidth: 271,
 				autoHide: true,
 				contentColor: 'white',
 				draggable: false,
 				cacheable: false,
+				focusTrap: { initialFocus: 'container' },
 				items: this.getItems(),
-			}).show();
+			});
+
+			menu.subscribe('onShow', () => {
+				if (this.activeMenuId !== menuId)
+				{
+					return;
+				}
+
+				this.menuOpen = true;
+				if (openedWithKeyboard)
+				{
+					menu.getNavigation().focusFirst();
+				}
+			});
+			menu.subscribe('onClose', () => {
+				if (this.activeMenuId !== menuId)
+				{
+					return;
+				}
+
+				this.menuOpen = false;
+				this.activeMenuId = '';
+				if (openedWithKeyboard)
+				{
+					this.$el?.focus({ preventScroll: true });
+				}
+			});
+			menu.show();
+
+			return menu;
 		},
 		getItems(): MenuItemOptions[]
 		{
@@ -133,12 +171,17 @@ export const TitleBarFilter = {
 		}
 	},
 	template: `
-		<div 
+		<button
+			type="button"
+			data-testid="entity-catalog-filter-open"
 			:class="{
 				'ui-entity-catalog__titlebar_btn-filter': true,
 				'--active': Object.keys(appliedFilters).length > 0
 			}"
-			@click="showMenu">
-		</div>
+			aria-haspopup="menu"
+			:aria-expanded="menuOpen"
+			:aria-label="filterOpenLabel"
+			@click="showMenu"
+		></button>
 	`,
 };

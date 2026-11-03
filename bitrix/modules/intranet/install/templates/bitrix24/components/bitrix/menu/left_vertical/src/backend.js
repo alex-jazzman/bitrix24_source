@@ -141,6 +141,37 @@ export default class Backend
 		});
 	}
 
+	static getMainToolState()
+	{
+		return this.#runMainToolAction('getState', { data: {} });
+	}
+
+	static confirmInitialShow()
+	{
+		return this.#runMainToolAction('confirmInitialShow', { data: {} });
+	}
+
+	static applyMainTool({ presetId, applyForAll })
+	{
+		return this.#runMainToolAction('apply', {
+			json: { presetId, applyForAll },
+		});
+	}
+
+	static #runMainToolAction(action: string, params)
+	{
+		if (!Options.isMainToolPickerEnabled)
+		{
+			return Promise.reject({ errors: [{ code: 'MAIN_TOOL_FEATURE_DISABLED' }] });
+		}
+
+		return ajax.runAction(`intranet.maintool.${action}`, {
+			method: 'POST',
+			timeout: 30,
+			...params,
+		});
+	}
+
 	static postponeSystemPreset(mode)
 	{
 		return ajax.runAction('intranet.leftmenu.delaySetPreset', {

@@ -44,8 +44,11 @@ $arJSParams = [
 
 	...$arResult["OTP"]["PUSH_OTP_CONFIG"],
 	'provideSmsOtp' => $arResult['PROVIDE_SMS_OTP'] === true,
+	'canSendSms' => $arResult['PROVIDE_SMS_OTP'] === true,
+	'canSendEmail' => $arResult['PROVIDE_EMAIL_OTP'] === true,
 	'isOtpActive' => $arResult["OTP"]["IS_ACTIVE"] === true,
 	'isNotPushOtp' => $arResult['OTP']['TYPE'] !== \Bitrix\Security\Mfa\OtpType::Push,
+	'canSkipDeviceConnect' => $arResult['OTP']['CAN_SKIP_DEVICE_CONNECT'] === true,
 	'userId' => $arResult["OTP"]["USER_ID"] ?? null,
 ];
 ?>
@@ -85,17 +88,15 @@ $arJSParams = [
 				if (isExist)
 				{
 					popupProvider.resumeOtpRequest()
-						.then(() => BX.SidePanel.Instance.reload());
+						.then(() => BX.Intranet.UserOtpConnected.reload());
 				}
 				else
 				{
 					const popup = popupProvider.full();
-					popup.subscribe('onClose', (event) => {
-						const context = event.getData()?.context;
-						const qrView = context?.getViewByCode('qr');
-						if (qrView?.isAppSuccessConnected() === true)
+					popup.subscribe('onClose', () => {
+						if (popupProvider.isConnectionCompleted())
 						{
-							BX.SidePanel.Instance.reload()
+							BX.Intranet.UserOtpConnected.reload()
 						}
 					});
 					popup.show();

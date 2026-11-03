@@ -13,6 +13,7 @@ this.BX.Call = this.BX.Call || {};
 		startCallCollab: 'start_call_collab',
 		connectCallCollab: 'connect_call_collab',
 		reconnect: 'reconnect',
+		reconnectResult: 'reconnect_result',
 		addUser: 'add_user',
 		disconnect: 'disconnect',
 		finishCall: 'finish_call',
@@ -69,7 +70,9 @@ this.BX.Call = this.BX.Call || {};
 		joinCall: 'join_call',
 		clickOpenSlots: 'click_open_slots',
 		clickBooking: 'click_booking',
-		openSection: 'open_section'
+		openSection: 'open_section',
+		syncTabBannerView: 'view_popup',
+		syncTabBannerButtonClick: 'click_sync'
 	});
 	const AnalyticsTool = Object.freeze({
 		im: 'im',
@@ -86,7 +89,8 @@ this.BX.Call = this.BX.Call || {};
 		callFollowup: 'call_followup',
 		callRecord: 'call_record',
 		collabCall: 'collab_call',
-		sync: 'sync'
+		sync: 'sync',
+		syncPopup: 'sync_popup'
 	});
 	const AnalyticsType = Object.freeze({
 		private: 'private',
@@ -102,7 +106,8 @@ this.BX.Call = this.BX.Call || {};
 		groupCall: 'group',
 		aiOn: 'ai_on',
 		turnOnAi: 'turn_on_ai',
-		sync: 'sync'
+		sync: 'sync',
+		syncTabPromo: 'synctabpromo'
 	});
 	const AnalyticsSection = Object.freeze({
 		callWindow: 'call_window',
@@ -115,7 +120,8 @@ this.BX.Call = this.BX.Call || {};
 		callMessage: 'call_message',
 		callFollowup: 'call_followup',
 		call: 'call',
-		syncPage: 'sync_page'
+		syncPage: 'sync_page',
+		im: 'im'
 	});
 	const AnalyticsSubSection = Object.freeze({
 		finishButton: 'finish_button',
@@ -137,7 +143,9 @@ this.BX.Call = this.BX.Call || {};
 		startButton: 'start_button',
 		initialBanner: 'initial_banner',
 		startMessage: 'start_message',
-		finishMessage: 'finish_message'
+		finishMessage: 'finish_message',
+		micButton: 'mic_button',
+		pushToTalk: 'push_to_talk'
 	});
 	const AnalyticsStatus = Object.freeze({
 		success: 'success',
@@ -148,9 +156,9 @@ this.BX.Call = this.BX.Call || {};
 		lastUserLeft: 'last_user_left',
 		finishedForAll: 'finished_for_all',
 		privateToGroup: 'private_to_group',
-		errorAgreement: 'error_agreement',
-		errorLimitBaas: 'error_limit_baas',
-		errorB24: 'error_b24'
+		notRecovered: 'not_recovered',
+		notConnected: 'not_connected',
+		escalated: 'escalated'
 	});
 	const AnalyticsDeviceStatus = Object.freeze({
 		videoOn: 'video_on',
@@ -166,13 +174,33 @@ this.BX.Call = this.BX.Call || {};
 		vpnOn: 'vpn_on',
 		vpnOff: 'vpn_off'
 	});
+	const AnalyticsStorageType = Object.freeze({
+		cloud: 'cloud',
+		local: 'local'
+	});
 
 	const PRESET_TOOL_MAP = {
 		sync: AnalyticsTool.sync
 	};
+	const ERROR_STATUS_PREFIX = 'error_';
+	const UNKNOWN_ERROR_CODE = 'UNKNOWN_ERROR';
+	const ERROR_CODE_MAX_LENGTH = 90;
 	function getCallTool() {
-		const presetCode = main_core.Extension.getSettings('call.core')?.activePresetCode ?? '';
+		const presetCode = main_core.Extension.getSettings('call.core').get('activePresetCode', '');
 		return PRESET_TOOL_MAP[presetCode] ?? AnalyticsTool.im;
+	}
+	function shouldSendToggleMicrophone(command) {
+		if (!command.applied) {
+			return false;
+		}
+		return !(command.source === AnalyticsElement.pushToTalk && command.muted);
+	}
+	function toAnalyticsErrorStatus(errorCode) {
+		if (!main_core.Type.isStringFilled(errorCode)) {
+			return `${ERROR_STATUS_PREFIX}${UNKNOWN_ERROR_CODE}`;
+		}
+		const normalized = errorCode.slice(0, ERROR_CODE_MAX_LENGTH * 2).replaceAll(/([\da-z])([A-Z])/g, '$1_$2').replaceAll(/([A-Z])([A-Z][a-z])/g, '$1_$2').toUpperCase().replaceAll(/[^\dA-Z]/g, '_').slice(0, ERROR_CODE_MAX_LENGTH);
+		return `${ERROR_STATUS_PREFIX}${normalized}`;
 	}
 
 	class Sync {
@@ -238,6 +266,23 @@ this.BX.Call = this.BX.Call || {};
 		}
 	}
 
+	class SyncTabBanner {
+		onBannerView() {
+			this.#sendData(AnalyticsEvent.syncTabBannerView);
+		}
+		onButtonClick() {
+			this.#sendData(AnalyticsEvent.syncTabBannerButtonClick);
+		}
+		#sendData(event) {
+			ui_analytics.sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.syncPopup,
+				type: AnalyticsType.syncTabPromo,
+				event
+			});
+		}
+	}
+
 	class Copilot {
 		#callAutoStartRecordSent = [];
 		onAIRecordStart(params) {
@@ -245,12 +290,6 @@ this.BX.Call = this.BX.Call || {};
 				return;
 			}
 			this.#callAutoStartRecordSent.push(params.callId);
-			const errorCodes = {
-				AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
-				AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
-				AI_AGREEMENT_ERROR: AnalyticsStatus.errorAgreement,
-				AI_NOT_ENOUGH_BAAS_ERROR: AnalyticsStatus.errorLimitBaas
-			};
 			const resultData = {
 				tool: AnalyticsTool.ai,
 				category: AnalyticsCategory.callsOperations,
@@ -264,7 +303,7 @@ this.BX.Call = this.BX.Call || {};
 			if (params?.userCount) {
 				resultData.p3 = `userCount_${params.userCount}`;
 			}
-			resultData.status = params?.errorCode ? errorCodes[params.errorCode] : AnalyticsStatus.success;
+			resultData.status = this.#getStatus(params);
 			ui_analytics.sendData(resultData);
 		}
 		onAIRecordStatusChanged(params) {
@@ -273,9 +312,12 @@ this.BX.Call = this.BX.Call || {};
 				category: AnalyticsCategory.call,
 				event: params.isAIOn ? AnalyticsEvent.aiOn : AnalyticsEvent.aiOff,
 				type: params.callType,
-				status: params?.error ? `error_${params.error}` : AnalyticsStatus.success,
+				status: this.#getStatus(params),
 				p5: `callId_${params.callId}`
 			});
+		}
+		#getStatus(params) {
+			return params.isFailure ? toAnalyticsErrorStatus(params.errorCode) : AnalyticsStatus.success;
 		}
 		onOpenFollowUpTab(params) {
 			ui_analytics.sendData({
@@ -388,8 +430,10 @@ this.BX.Call = this.BX.Call || {};
 		static AnalyticsSection = AnalyticsSection;
 		static AnalyticsElement = AnalyticsElement;
 		static AnalyticsSubSection = AnalyticsSubSection;
+		static AnalyticsStorageType = AnalyticsStorageType;
 		copilot = new Copilot();
 		sync = new Sync();
+		syncTabBanner = new SyncTabBanner();
 		#screenShareStarted = false;
 		static getInstance() {
 			if (!this.#instance) {
@@ -416,6 +460,12 @@ this.BX.Call = this.BX.Call || {};
 		}
 		#buildErrorStatus(errorCode) {
 			return this.safeDecode(`error_${errorCode}`).replaceAll(/\s+/g, '_');
+		}
+		#buildJoinErrorStatus(params) {
+			if (params.isRoomClosed) {
+				return CALL_ALREADY_FINISHED_STATUS;
+			}
+			return this.#buildErrorStatus(params.errorCode);
 		}
 		onScreenShareBtnClick({
 			callId,
@@ -548,6 +598,9 @@ this.BX.Call = this.BX.Call || {};
 			ui_analytics.sendData(resultData);
 		}
 		onStartCallError(params) {
+			if (params.isOffline) {
+				return;
+			}
 			const resultData = {
 				tool: getCallTool(),
 				category: AnalyticsCategory.call,
@@ -600,12 +653,15 @@ this.BX.Call = this.BX.Call || {};
 			ui_analytics.sendData(sendParams);
 		}
 		onJoinCallError(params) {
+			if (params.isOffline && !params.isRoomClosed) {
+				return;
+			}
 			const resultData = {
 				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.connect,
 				type: params.callType,
-				status: params.isRoomClosed ? CALL_ALREADY_FINISHED_STATUS : this.#buildErrorStatus(params.errorCode),
+				status: this.#buildJoinErrorStatus(params),
 				p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 				p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 				...buildCallIdParam(params.callId)
@@ -613,31 +669,37 @@ this.BX.Call = this.BX.Call || {};
 			ui_analytics.sendData(resultData);
 		}
 		onReconnect(params) {
-			const reconnectionReasonInfo = params.reconnectionReasonInfo?.replace('Handling a remote offer failed: InvalidAccessError: ', '*').replaceAll('_', '').slice(0, 100);
-			ui_analytics.sendData({
+			const reconnectionReasonInfo = params.reconnectionReasonInfo?.replace('Handling a remote offer failed: InvalidAccessError: ', '*').replaceAll('_', '-').slice(0, 100);
+			const sendParams = {
 				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.reconnect,
 				type: params.callType,
-				c_section: AnalyticsSection.callWindow,
 				status: params.reconnectionReason || '',
 				p2: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
-				p3: `msg_${reconnectionReasonInfo}`,
-				p4: `attemptNumber_${params.reconnectionEventCount}`,
 				p5: `callId_${params.callId}`
-			});
+			};
+			if (reconnectionReasonInfo) {
+				sendParams.p3 = `msg_${reconnectionReasonInfo}`;
+			}
+			ui_analytics.sendData(sendParams);
 		}
-		onReconnectError(params) {
-			ui_analytics.sendData({
+		onReconnectResult(params) {
+			const reconnectionReason = params.reconnectionReason?.replaceAll('_', '-').slice(0, 100);
+			const sendParams = {
 				tool: getCallTool(),
 				category: AnalyticsCategory.call,
-				event: AnalyticsEvent.reconnect,
+				event: AnalyticsEvent.reconnectResult,
 				type: params.callType,
-				status: this.#buildErrorStatus(params.errorCode),
-				p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
-				p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
+				status: this.safeDecode(params.status).replaceAll(/\s+/g, '_'),
+				p2: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
+				p4: `attemptCount_${params.attemptCount}`,
 				p5: `callId_${params.callId}`
-			});
+			};
+			if (reconnectionReason) {
+				sendParams.p3 = `msg_${reconnectionReason}`;
+			}
+			ui_analytics.sendData(sendParams);
 		}
 		onInviteUser(params) {
 			ui_analytics.sendData({
@@ -698,6 +760,7 @@ this.BX.Call = this.BX.Call || {};
 				c_section: AnalyticsSection.callWindow,
 				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 				p1: `recordType_${params.recordType}`,
+				p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 				p5: `callId_${params.callId}`
 			});
 		}
@@ -709,6 +772,7 @@ this.BX.Call = this.BX.Call || {};
 				type: params.callType,
 				c_section: AnalyticsSection.callWindow,
 				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
+				p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 				p5: `callId_${params.callId}`
 			});
 		}
@@ -720,6 +784,7 @@ this.BX.Call = this.BX.Call || {};
 				type: params.callType,
 				c_section: AnalyticsSection.callWindow,
 				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
+				p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 				p5: `callId_${params.callId}`
 			});
 		}
@@ -730,6 +795,7 @@ this.BX.Call = this.BX.Call || {};
 				event: AnalyticsEvent.recordDelete,
 				type: params.callType,
 				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
+				p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 				p5: `callId_${params.callId}`
 			});
 		}
@@ -743,6 +809,7 @@ this.BX.Call = this.BX.Call || {};
 				c_sub_section: params.subSection,
 				c_element: params.element,
 				p1: `recordLength_${params?.recordTime}`,
+				p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 				p5: `callId_${params.callId}`
 			});
 		}
@@ -772,6 +839,7 @@ this.BX.Call = this.BX.Call || {};
 				event: params.muted ? AnalyticsEvent.micOff : AnalyticsEvent.micOn,
 				type: params.callType,
 				c_section: AnalyticsSection.callWindow,
+				c_element: params.source ?? AnalyticsElement.micButton,
 				p5: `callId_${params.callId}`
 			});
 		}
@@ -1132,6 +1200,8 @@ this.BX.Call = this.BX.Call || {};
 	}
 
 	exports.Analytics = Analytics;
+	exports.shouldSendToggleMicrophone = shouldSendToggleMicrophone;
+	exports.toAnalyticsErrorStatus = toAnalyticsErrorStatus;
 
 })(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX, BX.UI.Analytics, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Call.Const);
 //# sourceMappingURL=analytics.bundle.js.map

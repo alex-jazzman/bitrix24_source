@@ -3,6 +3,7 @@ export * as Html from '@lexical/html';
 export * as List from '@lexical/list';
 export * as Link from '@lexical/link';
 export * as Clipboard from '@lexical/clipboard';
+export * as Extension from '@lexical/extension';
 export * as Selection from '@lexical/selection';
 export * as History from '@lexical/history';
 export * as Utils from '@lexical/utils';

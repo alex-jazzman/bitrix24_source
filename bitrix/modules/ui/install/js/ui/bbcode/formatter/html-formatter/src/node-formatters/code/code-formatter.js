@@ -8,7 +8,6 @@ import {
 
 import { type BBCodeNode } from 'ui.bbcode.model';
 import { CodeParser, type CodeToken } from 'ui.code-parser';
-import { normalizeLineBreaks } from '../../helpers/normalize-line-breaks';
 
 export class CodeNodeFormatter extends NodeFormatter
 {
@@ -19,15 +18,47 @@ export class CodeNodeFormatter extends NodeFormatter
 		super({
 			name: 'code',
 			before({ node }: BeforeConvertCallbackOptions): BBCodeNode {
-				return normalizeLineBreaks(node);
+				return node.clone({ deep: true });
 			},
 			convert({ node }: ConvertCallbackOptions): HTMLElement {
 				const content = node.getTextContent();
+				// Keep the final empty line visible without adding it to the copied text.
+				const layoutLineBreak = document.createElement('br');
 
 				const code = Dom.create({
 					tag: 'code',
 					attrs: {
 						className: 'ui-typography-code',
+					},
+					dataset: {
+						decorator: true,
+					},
+					children: [...getCodeTokenNodes(this.#codeParser.parse(content)), layoutLineBreak],
+				});
+
+				const button = Tag.render`
+					<button type="button"
+						class="ui-typography-code-copy-button"
+						onclick="${this.#handleCopyButtonClick.bind(this, code, layoutLineBreak)}"
+						title="${Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
+						aria-label="${Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
+					>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copy"></span>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copied"></span>
+					</button>
+				`;
+				const buttonOverlay = Dom.create({
+					tag: 'div',
+					attrs: {
+						className: 'ui-typography-code-copy-button-overlay',
+					},
+					children: [button],
+				});
+
+				return Dom.create({
+					tag: 'div',
+					attrs: {
+						className: 'ui-typography-code-container',
 					},
 					events: {
 						mouseenter: () => {
@@ -41,34 +72,21 @@ export class CodeNodeFormatter extends NodeFormatter
 					dataset: {
 						decorator: true,
 					},
-					children: getCodeTokenNodes(this.#codeParser.parse(content)),
+					children: [code, buttonOverlay],
 				});
-
-				const button = Tag.render`
-					<button type="button" 
-						class="ui-typography-code-copy-button" 
-						onclick="${this.#handleCopyButtonClick.bind(this)}" 
-						title="${Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
-						aria-label="${Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
-					>
-						<span class="ui-typography-code-copy-icon ui-icon-set --o-copy"></span>
-						<span class="ui-typography-code-copy-icon ui-icon-set --o-copied"></span>
-					</button>
-				`;
-
-				code.append(button);
-
-				return code;
 			},
 			...options,
 		});
 	}
 
-	#handleCopyButtonClick(event: MouseEvent): void
+	#handleCopyButtonClick(code: HTMLElement, layoutLineBreak: HTMLBRElement, event: MouseEvent): void
 	{
 		const button: HTMLButtonElement = event.currentTarget;
-		const codeElement = button.parentElement;
-		const text = codeElement.innerText;
+		let text = code.innerText;
+		if (code.lastChild === layoutLineBreak && text.endsWith('\n'))
+		{
+			text = text.slice(0, -1);
+		}
 
 		event.stopPropagation();
 
@@ -88,10 +106,10 @@ export class CodeNodeFormatter extends NodeFormatter
 
 			Dom.attr(textarea, 'aria-hidden', 'true');
 
-			document.body.appendChild(textarea);
+			Dom.append(textarea, document.body);
 			textarea.select();
 			document.execCommand('copy');
-			document.body.removeChild(textarea);
+			Dom.remove(textarea);
 		}
 
 		Dom.addClass(button, '--copied');

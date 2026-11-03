@@ -8,16 +8,20 @@ import {PlanBuilder} from '../view/plan/plan.builder';
 
 import {Entity} from '../entity/entity';
 import {EntityStorage} from '../entity/entity.storage';
+import {EntityCounters} from '../counters/entity.counters';
 import {Sprint, SprintParams} from '../entity/sprint/sprint';
 
 import {RequestSender} from './request.sender';
 
 import {Item, ItemParams} from '../item/item';
 
+const PLACEMENT_RESYNC_DELAY = 150;
+
 type Params = {
 	filter: Filter,
 	requestSender: RequestSender,
 	entityStorage: EntityStorage,
+	entityCounters?: EntityCounters,
 	planBuilder: PlanBuilder,
 	pageSize: number
 }
@@ -37,14 +41,55 @@ export class FilterHandler
 		this.filter = params.filter;
 		this.requestSender = params.requestSender;
 		this.entityStorage = params.entityStorage;
+		this.entityCounters = params.entityCounters ?? new EntityCounters({
+			requestSender: this.requestSender,
+			entityStorage: this.entityStorage
+		});
 		this.planBuilder = params.planBuilder;
 		this.pageSize = params.pageSize;
+		this.requestGeneration = 0;
+		this.pendingRequestGeneration = null;
+		this.resyncTimer = null;
+		this.refreshCountersPending = false;
 
 		this.filter.subscribe('applyFilter', this.onApplyFilter.bind(this));
 	}
 
-	onApplyFilter(baseEvent: BaseEvent)
+	requestResync(force: boolean = true): void
 	{
+		if (!force && this.pendingRequestGeneration !== this.requestGeneration)
+		{
+			return;
+		}
+
+		this.refreshCountersPending = true;
+		this.requestGeneration += 1;
+		if (this.resyncTimer !== null)
+		{
+			return;
+		}
+
+		this.resyncTimer = setTimeout(() => {
+			this.resyncTimer = null;
+			this.onApplyFilter(null, true);
+		}, PLACEMENT_RESYNC_DELAY);
+	}
+
+	onApplyFilter(baseEvent: ?BaseEvent, refreshCounters: boolean = false)
+	{
+		if (refreshCounters)
+		{
+			this.refreshCountersPending = true;
+		}
+
+		if (this.resyncTimer !== null)
+		{
+			clearTimeout(this.resyncTimer);
+			this.resyncTimer = null;
+		}
+		const requestGeneration = ++this.requestGeneration;
+		this.pendingRequestGeneration = requestGeneration;
+
 		this.fadeOutAll();
 
 		const containerPosition = Dom.getPosition(this.planBuilder.getScrumContainer());
@@ -61,11 +106,22 @@ export class FilterHandler
 		this.requestSender.applyFilter({
 			pageSize: this.pageSize
 		}).then((response: ApplyFilterResponse) => {
+			if (this.pendingRequestGeneration === requestGeneration)
+			{
+				this.pendingRequestGeneration = null;
+			}
+
+			if (requestGeneration !== this.requestGeneration)
+			{
+				loader.hide();
+
+				return;
+			}
 
 			const filteredItemsData = response.data.items;
 
 			this.entityStorage.getAllItems().forEach((item: Item) => {
-				const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
+				const entity = this.entityStorage.findEntityByItemId(item.getId());
 				entity.removeItem(item);
 				if (item.isShownSubTasks())
 				{
@@ -160,10 +216,31 @@ export class FilterHandler
 				}
 			}
 
+			if (this.refreshCountersPending)
+			{
+				this.refreshCountersPending = false;
+				const entities = new Map(
+					[...this.entityStorage.getAllEntities()]
+						.filter(([, entity]) => !entity.isCompleted())
+				);
+				this.entityCounters.updateCounters(entities);
+			}
+
 			this.fadeInAll();
 
 			loader.hide();
 		}).catch((response) => {
+			if (this.pendingRequestGeneration === requestGeneration)
+			{
+				this.pendingRequestGeneration = null;
+			}
+
+			if (requestGeneration !== this.requestGeneration)
+			{
+				loader.hide();
+
+				return;
+			}
 
 			this.fadeInAll();
 

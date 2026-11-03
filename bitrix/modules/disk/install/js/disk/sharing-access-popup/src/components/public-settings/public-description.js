@@ -80,6 +80,7 @@ export const PublicAccessDescription = {
 			<TextXl
 				tag="p"
 				className="access-public-block__description-text"
+				data-testid="disk-sharing-access-public-description"
 			>
 				{{ publicDescriptionText }}
 			</TextXl>
@@ -87,8 +88,10 @@ export const PublicAccessDescription = {
 		<button
 			v-if="isActive && !isFullSettings"
 			type="button"
+			data-testid="disk-sharing-public-settings-button"
 			@click="onToggleSettings"
 			class="access-public-block__open-settings"
+			data-testid="disk-sharing-access-public-settings-toggle"
 			:class="{ 'access-public-block__open-settings--disabled': isSettingsBlocked }"
 			:aria-disabled="isSettingsBlocked"
 		>
@@ -99,6 +102,7 @@ export const PublicAccessDescription = {
 			type="button"
 			@click="openHelpDesk"
 			class="access-public-block__open-aside-popup"
+			data-testid="disk-sharing-access-public-details"
 		>
 			${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_DETAILS_BUTTON')}
 		</button>

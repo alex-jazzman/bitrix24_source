@@ -86,7 +86,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 		onReadAllClick() {
 			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllChats();
-			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(im_v2_const.RecentType.default);
+			im_v2_lib_unreadMode.UnreadModeManager.removeAllClosedChats();
 			new im_v2_provider_service_chat.ChatService().readAll();
 		}
 		getUnreadCounter() {
@@ -117,7 +117,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabHeaderMenu extends BaseRecentHeaderMenu {
+		onSelectUnreadMode() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenProjectTabUnreadMode();
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
 		onReadAllClick() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllProjectTabChats();
 			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.collab, im_v2_const.ParentChatScope.topLevel);
 		}
 		getUnreadCounter() {
@@ -126,7 +131,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabDefaultHeaderMenu extends BaseRecentHeaderMenu {
+		onSelectUnreadMode() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenProjectUnreadMode();
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
 		onReadAllClick() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllProjectChats();
 			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.collabDefault, this.context.parentChatId);
 			this.#readParentChat();
 		}
@@ -144,7 +154,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabChatHeaderMenu extends BaseRecentHeaderMenu {
+		onSelectUnreadMode() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenProjectUnreadMode();
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
 		onReadAllClick() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllProjectChats();
 			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.collabChat, this.context.parentChatId);
 		}
 		getUnreadCounter() {
@@ -153,7 +168,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabCalendarHeaderMenu extends BaseRecentHeaderMenu {
+		onSelectUnreadMode() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenProjectUnreadMode();
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
 		onReadAllClick() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllProjectChats();
 			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.calendar, this.context.parentChatId);
 		}
 		getUnreadCounter() {
@@ -162,8 +182,54 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabCopilotHeaderMenu extends BaseRecentHeaderMenu {
+		onSelectUnreadMode() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenProjectUnreadMode();
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
 		getUnreadCounter() {
 			return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.copilot);
+		}
+	}
+
+	class AllFolderHeaderMenu extends BaseRecentHeaderMenu {
+		onSelectUnreadMode() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onOpenUnreadMode();
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
+		onReadAllClick() {
+			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllChats();
+			im_v2_lib_unreadMode.UnreadModeManager.removeAllClosedChats();
+			new im_v2_provider_service_chat.ChatService().readAll();
+		}
+		getUnreadModeItem() {
+			return {
+				...super.getUnreadModeItem(),
+				dataset: {
+					testid: 'im-recent-header-menu-item-unread'
+				}
+			};
+		}
+		getDefaultModeItem() {
+			return {
+				...super.getDefaultModeItem(),
+				dataset: {
+					testid: 'im-recent-header-menu-item-all'
+				}
+			};
+		}
+		getReadAllItem() {
+			return {
+				...super.getReadAllItem(),
+				dataset: {
+					testid: 'im-recent-header-menu-item-read-all'
+				}
+			};
+		}
+		getUnreadCounter() {
+			const store = im_v2_application_core.Core.getStore();
+			const folderId = store.getters['recent/folders/getByCode'](im_v2_const.SystemFolderCode.all).id;
+			const sourceDefinitions = store.getters['recent/folders/getSourceDefinitions'](folderId);
+			return store.getters['counters/getCounterByRecentSections'](sourceDefinitions);
 		}
 	}
 
@@ -174,7 +240,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		[im_v2_const.RecentType.collabDefault]: CollabDefaultHeaderMenu,
 		[im_v2_const.RecentType.collabChat]: CollabChatHeaderMenu,
 		[im_v2_const.RecentType.calendar]: CollabCalendarHeaderMenu,
-		[im_v2_const.RecentType.copilot]: CollabCopilotHeaderMenu
+		[im_v2_const.RecentType.copilot]: CollabCopilotHeaderMenu,
+		[im_v2_const.SystemFolderCode.all]: AllFolderHeaderMenu
 	};
 
 	// @vue/component
@@ -190,7 +257,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			recentSection: {
 				type: String,
-				required: true
+				default: null
+			},
+			menuKey: {
+				type: String,
+				default: null
 			},
 			parentChatId: {
 				type: Number,
@@ -207,7 +278,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			OutlineIcons: () => ui_iconSet_api_vue.Outline
 		},
 		created() {
-			this.contextMenuManager = new MenuClass[this.recentSection]();
+			this.contextMenuManager = new MenuClass[this.menuKey ?? this.recentSection]();
 			this.contextMenuManager.subscribe(im_v2_lib_menu.BaseMenu.events.close, this.closeMenu);
 			this.contextMenuManager.subscribe(BaseRecentHeaderMenu.events.onToggleUnreadMode, this.onToggleUnreadMode);
 		},
@@ -215,6 +286,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.contextMenuManager.destroy();
 		},
 		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
 			onToggleUnreadMode() {
 				this.$emit('toggleUnreadMode');
 			},
@@ -245,6 +319,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<button
 			class="bx-im-list-container-header-menu__container"
 			:class="{'--active': unreadMode, '--menu-opened': showMenu }" 
+			:aria-label="loc('IM_LIST_CONTAINER_HEADER_MENU_FILTER_ARIA')"
 			:aria-pressed="unreadMode"
 			@click="onClick"
 		>

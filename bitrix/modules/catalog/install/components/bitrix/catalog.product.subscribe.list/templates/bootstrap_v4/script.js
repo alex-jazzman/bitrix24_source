@@ -33,17 +33,28 @@ var unsubscribeButton = function(params)
 		text: params.text
 	});
 	this.buttonNode = BX.create('span', {
-		attrs: { className: params.className },
+		attrs: { className: params.className, role: 'button', tabindex: '0' },
 		style: { marginBottom: '0', borderBottom: '0 none transparent' },
 		children: [this.nameNode],
 		events : this.contextEvents
 	});
+	BX.bind(this.buttonNode, 'keydown', BX.delegate(this.onKeyDown, this));
 	if (BX.browser.IsIE())
 	{
 		this.buttonNode.setAttribute("hideFocus", "hidefocus");
 	}
 };
 BX.extend(unsubscribeButton, BX.PopupWindowButton);
+unsubscribeButton.prototype.onKeyDown = function(event)
+{
+	if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar')
+	{
+		return;
+	}
+
+	event.preventDefault();
+	this.buttonNode.click();
+};
 
 window.JCCatalogProductSubscribeList = function (arParams)
 {
@@ -110,6 +121,7 @@ window.JCCatalogProductSubscribeList = function (arParams)
 	this.showCount = [];
 	this.showStart = [];
 	this.selectedValues = {};
+	this.treeZones = [];
 
 	this.obProduct = null;
 	this.obQuantity = null;
@@ -140,6 +152,7 @@ window.JCCatalogProductSubscribeList = function (arParams)
 	this.errorCode = 0;
 
 	this.ajaxUrl = '/bitrix/components/bitrix/catalog.product.subscribe.list/ajax.php';
+	this.isDeleteSubscribePending = false;
 
 	if ('object' === typeof arParams)
 	{
@@ -169,6 +182,7 @@ window.JCCatalogProductSubscribeList = function (arParams)
 			if (!!this.deleteSubscribeBtn)
 			{
 				BX.bind(this.deleteSubscribeBtn, 'click', BX.delegate(this.deleteSubscribe, this));
+				BX.bind(this.deleteSubscribeBtn, 'keydown', BX.delegate(this.onDeleteSubscribeKeyDown, this));
 			}
 			this.product.listSubscribeId = arParams.PRODUCT.LIST_SUBSCRIBE_ID;
 		}
@@ -405,12 +419,16 @@ window.JCCatalogProductSubscribeList.prototype.Init = function()
 					for (i = 0; i < TreeItems.length; i++)
 					{
 						BX.bind(TreeItems[i], 'click', BX.delegate(this.SelectOfferProp, this));
+						BX.bind(TreeItems[i], 'keydown', BX.delegate(this.onTreeItemKeyDown, this));
 					}
 				}
 				for (i = 0; i < this.obTreeRows.length; i++)
 				{
 					BX.bind(this.obTreeRows[i].LEFT, 'click', BX.delegate(this.RowLeft, this));
 					BX.bind(this.obTreeRows[i].RIGHT, 'click', BX.delegate(this.RowRight, this));
+					BX.bind(this.obTreeRows[i].LEFT, 'keydown', BX.delegate(this.onRowArrowKeyDown, this));
+					BX.bind(this.obTreeRows[i].RIGHT, 'keydown', BX.delegate(this.onRowArrowKeyDown, this));
+					this.bindTreeRowFocus(i);
 				}
 				this.SetCurrent();
 				break;
@@ -429,7 +447,9 @@ window.JCCatalogProductSubscribeList.prototype.Init = function()
 			this.setHeight();
 			BX.bind(window, 'resize', BX.delegate(this.checkHeight, this));
 			BX.bind(this.obProduct.parentNode, 'mouseover', BX.delegate(this.setHeight, this));
-			BX.bind(this.obProduct.parentNode, 'mouseout', BX.delegate(this.clearHeight, this));
+			BX.bind(this.obProduct.parentNode, 'mouseout', BX.delegate(this.onContainerMouseOut, this));
+			BX.bind(this.obProduct.parentNode, 'focusin', BX.delegate(this.onContainerFocusIn, this));
+			BX.bind(this.obProduct.parentNode, 'focusout', BX.delegate(this.onContainerFocusOut, this));
 		}
 	}
 };
@@ -489,6 +509,286 @@ window.JCCatalogProductSubscribeList.prototype.setHeight = function()
 window.JCCatalogProductSubscribeList.prototype.clearHeight = function()
 {
 	BX.adjust(this.obProduct.parentNode, {style: { height: 'auto'}});
+};
+
+// The keyboard focus opens the card, as :has(:focus-visible) does in the stylesheet; a click does not.
+window.JCCatalogProductSubscribeList.prototype.isKeyboardFocus = function(node)
+{
+	try
+	{
+		return Boolean(node) && node.matches(':focus-visible');
+	}
+	catch
+	{
+		return true;
+	}
+};
+
+// A Tab press takes the focus off one control before it gives it to the next, and :has(:focus-visible)
+// lets the card close in between, so the next control is hidden and refuses the focus. The class holds
+// the controls of the card shown while the keyboard focus is inside it.
+window.JCCatalogProductSubscribeList.prototype.keyboardFocusClass = 'bx_catalog_item_keyboard_focus';
+
+// The last card of a row listens for the whole row, so the card is the one of the focused node.
+window.JCCatalogProductSubscribeList.prototype.markKeyboardFocusCard = function(node)
+{
+	var card = node ? BX.findParent(node, {className: 'bx_catalog_item'}, this.obProduct.parentNode) : null,
+		marked = this.obProduct.parentNode.getElementsByClassName(this.keyboardFocusClass),
+		i;
+
+	for (i = marked.length - 1; i >= 0; i--)
+	{
+		if (marked[i] !== card)
+		{
+			BX.removeClass(marked[i], this.keyboardFocusClass);
+		}
+	}
+
+	if (card)
+	{
+		BX.addClass(card, this.keyboardFocusClass);
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.onContainerFocusIn = function(event)
+{
+	if (this.isKeyboardFocus(event.target))
+	{
+		this.markKeyboardFocusCard(event.target);
+		this.setHeight();
+	}
+	else
+	{
+		this.markKeyboardFocusCard(null);
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.onContainerMouseOut = function()
+{
+	var active = document.activeElement;
+
+	if (!this.obProduct.parentNode.contains(active) || !this.isKeyboardFocus(active))
+	{
+		this.clearHeight();
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.onContainerFocusOut = function(event)
+{
+	var container = this.obProduct.parentNode;
+
+	if (!event.relatedTarget || !container.contains(event.relatedTarget))
+	{
+		this.markKeyboardFocusCard(null);
+		this.clearHeight();
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.getA11y = function()
+{
+	var a11y = BX.UI && BX.UI.Accessibility;
+
+	return a11y && a11y.FocusZone && a11y.FocusKeys ? a11y : null;
+};
+
+window.JCCatalogProductSubscribeList.prototype.isActivationKey = function(event)
+{
+	return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+};
+
+window.JCCatalogProductSubscribeList.prototype.onTreeItemKeyDown = function(event)
+{
+	if (!this.isActivationKey(event))
+	{
+		return;
+	}
+
+	event.preventDefault();
+	this.SelectOfferProp(event.currentTarget);
+};
+
+window.JCCatalogProductSubscribeList.prototype.onDeleteSubscribeKeyDown = function(event)
+{
+	if (event.key !== ' ' && event.key !== 'Spacebar')
+	{
+		return;
+	}
+
+	event.preventDefault();
+	// A held key repeats: one request per press.
+	if (event.repeat)
+	{
+		return;
+	}
+
+	this.deleteSubscribe();
+};
+
+window.JCCatalogProductSubscribeList.prototype.onRowArrowKeyDown = function(event)
+{
+	var arrow = event.currentTarget;
+
+	if (!this.isActivationKey(event))
+	{
+		return;
+	}
+
+	event.preventDefault();
+	if (BX.hasClass(arrow, 'bx_slide_left'))
+	{
+		this.RowLeft(arrow);
+	}
+	else
+	{
+		this.RowRight(arrow);
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.bindTreeRowFocus = function(index)
+{
+	var list = this.obTreeRows[index].LIST,
+		activateFocusZone = BX.delegate(function()
+		{
+			this.activateTreeZone(index);
+		}, this);
+
+	// The values are hidden until the card is opened, so the zone starts once a value is reached.
+	list.addEventListener('focusin', activateFocusZone, true);
+	list.addEventListener('keydown', activateFocusZone, true);
+	BX.bind(list, 'focusin', BX.delegate(function(event)
+	{
+		this.revealTreeItem(index, event.target);
+	}, this));
+};
+
+window.JCCatalogProductSubscribeList.prototype.getVisibleTreeItems = function(index)
+{
+	var RowItems = BX.findChildren(this.obTreeRows[index].LIST, {tagName: 'li'}, false) || [],
+		result = [],
+		i;
+
+	for (i = 0; i < RowItems.length; i++)
+	{
+		if (RowItems[i].style.display !== 'none')
+		{
+			result.push(RowItems[i]);
+		}
+	}
+
+	return result;
+};
+
+window.JCCatalogProductSubscribeList.prototype.getCheckedTreeItem = function(index)
+{
+	var items = this.getVisibleTreeItems(index),
+		i;
+
+	for (i = 0; i < items.length; i++)
+	{
+		if (BX.hasClass(items[i], 'bx_active'))
+		{
+			return items[i];
+		}
+	}
+
+	return items.length > 0 ? items[0] : null;
+};
+
+window.JCCatalogProductSubscribeList.prototype.activateTreeZone = function(index)
+{
+	var a11y = this.getA11y();
+
+	if (this.treeZones[index] || !a11y)
+	{
+		return;
+	}
+
+	this.treeZones[index] = new a11y.FocusZone(this.obTreeRows[index].LIST, {
+		bindKeys: a11y.FocusKeys.ArrowHorizontal | a11y.FocusKeys.HomeAndEnd,
+		preventScroll: true,
+		focusableElementFilter: function(element)
+		{
+			return element.tagName === 'LI' && element.style.display !== 'none';
+		},
+		focusInStrategy: BX.delegate(function()
+		{
+			return this.getCheckedTreeItem(index);
+		}, this),
+	});
+	this.treeZones[index].activate();
+};
+
+window.JCCatalogProductSubscribeList.prototype.syncTreeRow = function(index)
+{
+	var zone = this.treeZones[index],
+		RowItems = BX.findChildren(this.obTreeRows[index].LIST, {tagName: 'li'}, false) || [],
+		checked = this.getCheckedTreeItem(index),
+		i;
+
+	// The zone keeps the set of values it collected, so it is rebuilt over the new one.
+	if (zone)
+	{
+		zone.deactivate();
+	}
+
+	for (i = 0; i < RowItems.length; i++)
+	{
+		RowItems[i].setAttribute('aria-checked', BX.hasClass(RowItems[i], 'bx_active') ? 'true' : 'false');
+		RowItems[i].setAttribute('tabindex', RowItems[i] === checked ? '0' : '-1');
+	}
+
+	if (zone)
+	{
+		zone.activate();
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.adjustRowArrow = function(arrow, style)
+{
+	BX.adjust(arrow, {style: style});
+	if (style === this.treeDisableArrow)
+	{
+		arrow.setAttribute('aria-disabled', 'true');
+	}
+	else
+	{
+		arrow.removeAttribute('aria-disabled');
+	}
+};
+
+window.JCCatalogProductSubscribeList.prototype.revealTreeItem = function(index, item)
+{
+	var items = this.getVisibleTreeItems(index),
+		position = BX.util.array_search(item, items),
+		firstShown = -this.showStart[index];
+
+	// Focus scrolls the window of the ribbon on its own, while the ribbon moves by its margin.
+	this.obTreeRows[index].LIST.parentNode.scrollLeft = 0;
+
+	if (position < 0 || this.treeRowShowSize >= this.showCount[index])
+	{
+		return;
+	}
+
+	if (position < firstShown)
+	{
+		this.showStart[index] = -position;
+	}
+	else if (position >= firstShown + this.treeRowShowSize)
+	{
+		this.showStart[index] = this.treeRowShowSize - position - 1;
+	}
+	else
+	{
+		return;
+	}
+
+	BX.adjust(this.obTreeRows[index].LIST, { style: { marginLeft: this.showStart[index]*20+'%' }});
+	this.adjustRowArrow(this.obTreeRows[index].LEFT, 0 > this.showStart[index] ? this.treeEnableArrow : this.treeDisableArrow);
+	this.adjustRowArrow(
+		this.obTreeRows[index].RIGHT,
+		(this.treeRowShowSize - this.showStart[index]) < this.showCount[index] ? this.treeEnableArrow : this.treeDisableArrow
+	);
 };
 
 window.JCCatalogProductSubscribeList.prototype.QuantityUp = function()
@@ -626,14 +926,14 @@ window.JCCatalogProductSubscribeList.prototype.QuantitySet = function(index)
 	}
 };
 
-window.JCCatalogProductSubscribeList.prototype.SelectOfferProp = function()
+window.JCCatalogProductSubscribeList.prototype.SelectOfferProp = function(node)
 {
 	var i = 0,
 		value = '',
 		strTreeValue = '',
 		arTreeItem = [],
 		RowItems = null,
-		target = BX.proxy_context;
+		target = BX.type.isDomNode(node) ? node : BX.proxy_context;
 
 	if (!!target && target.hasAttribute('data-treevalue'))
 	{
@@ -654,6 +954,13 @@ window.JCCatalogProductSubscribeList.prototype.SelectOfferProp = function()
 					else
 					{
 						BX.removeClass(RowItems[i], 'bx_active');
+					}
+				}
+				for (i = 0; i < this.obTreeRows.length; i++)
+				{
+					if (this.obTreeRows[i].LIST === target.parentNode)
+					{
+						this.syncTreeRow(i);
 					}
 				}
 			}
@@ -744,12 +1051,12 @@ window.JCCatalogProductSubscribeList.prototype.SearchOfferPropIndex = function(s
 	return true;
 };
 
-window.JCCatalogProductSubscribeList.prototype.RowLeft = function()
+window.JCCatalogProductSubscribeList.prototype.RowLeft = function(node)
 {
 	var i = 0,
 		strTreeValue = '',
 		index = -1,
-		target = BX.proxy_context;
+		target = BX.type.isDomNode(node) ? node : BX.proxy_context;
 
 	if (!!target && target.hasAttribute('data-treevalue'))
 	{
@@ -768,23 +1075,23 @@ window.JCCatalogProductSubscribeList.prototype.RowLeft = function()
 			{
 				this.showStart[index]++;
 				BX.adjust(this.obTreeRows[index].LIST, { style: { marginLeft: this.showStart[index]*20+'%' }});
-				BX.adjust(this.obTreeRows[index].RIGHT, { style: this.treeEnableArrow });
+				this.adjustRowArrow(this.obTreeRows[index].RIGHT, this.treeEnableArrow);
 			}
 
 			if (0 <= this.showStart[index])
 			{
-				BX.adjust(this.obTreeRows[index].LEFT, { style: this.treeDisableArrow });
+				this.adjustRowArrow(this.obTreeRows[index].LEFT, this.treeDisableArrow);
 			}
 		}
 	}
 };
 
-window.JCCatalogProductSubscribeList.prototype.RowRight = function()
+window.JCCatalogProductSubscribeList.prototype.RowRight = function(node)
 {
 	var i = 0,
 		strTreeValue = '',
 		index = -1,
-		target = BX.proxy_context;
+		target = BX.type.isDomNode(node) ? node : BX.proxy_context;
 
 	if (!!target && target.hasAttribute('data-treevalue'))
 	{
@@ -803,12 +1110,12 @@ window.JCCatalogProductSubscribeList.prototype.RowRight = function()
 			{
 				this.showStart[index]--;
 				BX.adjust(this.obTreeRows[index].LIST, { style: { marginLeft: this.showStart[index]*20+'%' }});
-				BX.adjust(this.obTreeRows[index].LEFT, { style: this.treeEnableArrow });
+				this.adjustRowArrow(this.obTreeRows[index].LEFT, this.treeEnableArrow);
 			}
 
 			if ((this.treeRowShowSize - this.showStart[index]) >= this.showCount[index])
 			{
-				BX.adjust(this.obTreeRows[index].RIGHT, { style: this.treeDisableArrow });
+				this.adjustRowArrow(this.obTreeRows[index].RIGHT, this.treeDisableArrow);
 			}
 		}
 	}
@@ -897,17 +1204,18 @@ window.JCCatalogProductSubscribeList.prototype.UpdateRow = function(intNumber, a
 				{
 					obLeft = this.treeDisableArrow;
 				}
-				BX.adjust(this.obTreeRows[intNumber].LEFT, {style: obLeft });
-				BX.adjust(this.obTreeRows[intNumber].RIGHT, {style: obRight });
+				this.adjustRowArrow(this.obTreeRows[intNumber].LEFT, obLeft);
+				this.adjustRowArrow(this.obTreeRows[intNumber].RIGHT, obRight);
 			}
 			else
 			{
-				BX.adjust(this.obTreeRows[intNumber].LEFT, {style: {display: 'none'}});
-				BX.adjust(this.obTreeRows[intNumber].RIGHT, {style: {display: 'none'}});
+				this.adjustRowArrow(this.obTreeRows[intNumber].LEFT, {display: 'none'});
+				this.adjustRowArrow(this.obTreeRows[intNumber].RIGHT, {display: 'none'});
 			}
 			BX.adjust(this.obTreeRows[intNumber].LIST, obData);
 			this.showCount[intNumber] = countShow;
 			this.showStart[intNumber] = currentShowStart;
+			this.syncTreeRow(intNumber);
 		}
 	}
 };
@@ -1347,6 +1655,11 @@ window.JCCatalogProductSubscribeList.prototype.InitPopupWindow = function()
 
 	window.JCCatalogProductSubscribeList.prototype.deleteSubscribe = function()
 	{
+		if (this.isDeleteSubscribePending)
+		{
+			return;
+		}
+
 		var itemId, offerIndex;
 		switch(this.productType)
 		{
@@ -1385,6 +1698,7 @@ window.JCCatalogProductSubscribeList.prototype.InitPopupWindow = function()
 		if(!itemId || !this.product.listSubscribeId.hasOwnProperty(itemId))
 			return;
 
+		this.isDeleteSubscribePending = true;
 		BX.ajax({
 			method: 'POST',
 			dataType: 'json',
@@ -1403,8 +1717,12 @@ window.JCCatalogProductSubscribeList.prototype.InitPopupWindow = function()
 				}
 				else
 				{
+					this.isDeleteSubscribePending = false;
 					this.showWindowWithAnswer({status: 'error', message: result.message});
 				}
+			}, this),
+			onfailure: BX.delegate(function () {
+				this.isDeleteSubscribePending = false;
 			}, this)
 		});
 	};

@@ -1,8 +1,13 @@
 <?php
+use Bitrix\Disk\Driver;
 use Bitrix\Disk\Folder;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkAccessService;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkUrl;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Storage;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Encoding;
 
@@ -58,7 +63,8 @@ class DiskBreadcrumbsAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_BREADCRUMBS_ERROR_COULD_NOT_FIND_FOLDER'), self::ERROR_COULD_NOT_FIND_FOLDER)));
 			$this->sendJsonErrorResponse();
 		}
-		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
+		$shouldCheckUnifiedLink = $this->shouldCheckUnifiedLink($folder);
+		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext($shouldCheckUnifiedLink);
 
 		$subFolders = array();
 		$filter = array(
@@ -69,17 +75,14 @@ class DiskBreadcrumbsAjaxController extends \Bitrix\Disk\Internals\Controller
 			$filter['!=DELETED_TYPE'] = ObjectTable::DELETED_TYPE_NONE;
 		}
 
-		if($showOnlyDeleted && $isRoot)
-		{
-			$filter['DELETED_TYPE'] = ObjectTable::DELETED_TYPE_ROOT;
-			$children = $folder->getDescendants($securityContext, array(
-				'filter' => $filter,
-			));
-		}
-		else
-		{
-			$children = $folder->getChildren($securityContext, array('filter' => $filter));
-		}
+		$children = $this->getSubFolderModels(
+			$folder,
+			$securityContext,
+			$filter,
+			$showOnlyDeleted,
+			$isRoot,
+			$shouldCheckUnifiedLink
+		);
 
 		foreach($children as $subFolder)
 		{
@@ -98,6 +101,63 @@ class DiskBreadcrumbsAjaxController extends \Bitrix\Disk\Internals\Controller
 		$this->sendJsonSuccessResponse(array(
 			'items' => $subFolders,
 		));
+	}
+
+	protected function shouldCheckUnifiedLink(Folder $folder): bool
+	{
+		$uls = (new UnifiedLinkUrl())->getUlsFromRequest($this->request);
+		if (!is_string($uls))
+		{
+			return false;
+		}
+
+		return ServiceLocator::getInstance()
+			->get(UnifiedLinkAccessService::class)
+			->validateUlsForObjectId($folder->getId(), $uls)
+		;
+	}
+
+	protected function getSubFolderModels(
+		Folder $folder,
+		SecurityContext $securityContext,
+		array $filter,
+		bool $showOnlyDeleted,
+		bool $isRoot,
+		bool $shouldCheckUnifiedLink
+	): array
+	{
+		if($showOnlyDeleted && $isRoot)
+		{
+			$filter['DELETED_TYPE'] = ObjectTable::DELETED_TYPE_ROOT;
+			$parameters = [
+				'filter' => $filter,
+			];
+
+			// The storage filter narrows candidates before the subtree check.
+			if ((int)$folder->getStorage()->getRootObjectId() === (int)$folder->getId())
+			{
+				$parameters['subtree_check'] = ObjectTable::SUBTREE_CHECK_EXISTS;
+			}
+
+			return $folder->getDescendants($securityContext, $parameters);
+		}
+
+		if (!$shouldCheckUnifiedLink)
+		{
+			return $folder->getChildren($securityContext, array('filter' => $filter));
+		}
+
+		$children = $folder->getChildren(
+			Driver::getInstance()->getFakeSecurityContext(),
+			array('filter' => $filter)
+		);
+
+		$securityContext->preloadUnifiedLinkAccessLevelsForObjects($children);
+
+		return array_filter(
+			$children,
+			static fn($subFolder) => $subFolder instanceof Folder && $subFolder->canRead($securityContext),
+		);
 	}
 
 	protected function processActionReloadBreadcrumbs($storageId, $path, $isTrashcan = false)

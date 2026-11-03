@@ -4,7 +4,7 @@
 jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
-	const { Indent } = require('tokens');
+	const { Indent, Typography } = require('tokens');
 	const { ItemMembers } = require('tasks/layout/checklist/list/src/actions/members');
 	const { ItemAttachments } = require('tasks/layout/checklist/list/src/actions/attachments');
 	const { CheckBoxCounter } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter');
@@ -13,6 +13,12 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 	const { MEMBER_TYPE_RESTRICTION_FEATURE_META } = require('tasks/layout/checklist/list/src/constants');
 
 	const LAYOUT_CHECKBOX_WIDTH = 34;
+	const TEXT_FIELD_SIZE = 2;
+	// The multiline text field keeps its own top inset, so a checkbox aligned to the top of the row
+	// ends up above the first text line. Centering it inside a box of this height puts it on the line.
+	const TEXT_FIELD_TOP_INSET = 4;
+	const CHECKBOX_LINE_BOX_HEIGHT = (TEXT_FIELD_TOP_INSET * 2)
+		+ Typography.getTokenBySize({ size: TEXT_FIELD_SIZE }).getDigitHeight();
 
 	class MainChecklistItem extends BaseChecklistItem
 	{
@@ -84,7 +90,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 		{
 			const { item } = this.props;
 
-			return item.getMembersCount() > 0 || item.getAttachmentsCount() > 0;
+			return item.hasMembers() || item.hasAttachments();
 		}
 
 		/**
@@ -144,7 +150,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 					this.attachmentsRef = ref;
 				},
 				testId: this.getTestId('file'),
-				readOnly: !item.checkCanUpdate(),
+				readOnly: !item.canEdit(),
 				item,
 				diskConfig,
 				parentWidget,
@@ -154,7 +160,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 
 		/**
 		 * @protected
-		 * @param {CheckListFlatTreeItem} item
+		 * @param {ChecklistItemView} item
 		 */
 		getPlaceholder(item)
 		{
@@ -175,6 +181,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 						flexDirection: 'row',
 						marginRight: 6,
 						marginLeft: this.getLeftShift(),
+						height: CHECKBOX_LINE_BOX_HEIGHT,
 						alignItems: 'center',
 					},
 				},
@@ -182,11 +189,11 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 					ref: this.#setRef,
 					showToastNoRights,
 					onClick: this.handleOnToggleComplete,
-					checked: item.getIsComplete(),
-					important: item.getIsImportant(),
-					disabled: !item.checkCanToggle(),
-					totalCount: item.getTotalCount(),
-					completedCount: item.getCompletedCount(),
+					checked: item.isComplete(),
+					important: item.isImportant(),
+					disabled: !item.canToggle(),
+					totalCount: item.getChildrenCount(),
+					completedCount: item.getCompletedChildrenCount(),
 				}),
 			);
 		}
@@ -195,7 +202,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 		getTextFieldStyle()
 		{
 			return {
-				textSize: 2,
+				textSize: TEXT_FIELD_SIZE,
 				header: false,
 			};
 		}
@@ -205,7 +212,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			const { item, onToggleComplete } = this.props;
 
 			Haptics.impactLight();
-			item.toggleComplete();
+			item.toggle();
 
 			onToggleComplete(item);
 		};
@@ -256,37 +263,13 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 		toggleImportant()
 		{
 			const { item } = this.props;
-			item.toggleImportant(!item.getIsImportant());
 
-			return this.counterRef.toggleAnimateImportant(item.getIsImportant());
-		}
+			// the caller decides whether to save by asking the store for a title
+			this.flushTitle();
 
-		/** @param {string[]} members */
-		setMembersToText(members)
-		{
-			const { item } = this.props;
-			const itemTitle = item.getTitle().trim();
-			const slicePosition = this.textRef?.getCursorPosition() ?? itemTitle.length;
-			const startPosition = itemTitle.slice(0, slicePosition).trim();
-			const endPosition = itemTitle.slice(slicePosition, itemTitle.length).trim();
-			const title = `${startPosition} ${members.join(' ')} ${endPosition}`.trim();
+			item.setImportant(!item.isImportant());
 
-			this.handleOnChangeTitle(title);
-			this.toggleCompleteText();
-		}
-
-		/**
-		 * @param {Object} progressParams
-		 * @return {Promise<void>}
-		 */
-		updateProgress(progressParams)
-		{
-			if (!this.counterRef)
-			{
-				return Promise.resolve();
-			}
-
-			return this.counterRef.updateProgress(progressParams);
+			return this.counterRef.toggleAnimateImportant(item.isImportant());
 		}
 
 		#setRef = (ref) => {

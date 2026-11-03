@@ -89,7 +89,7 @@
  * toggled rapidly. The toolbar keeps its inline translateX(-50%) in fixed mode, so
  * only opacity is animated — a transform animation would fight it.
  *
- * The 200ms here is mirrored by the unmount delay in note-editor.js animateToolbar.
+ * The unmount logic in note-editor.js observes this transition instead of duplicating its duration.
  */
 .note-editor-toolbar-wrap {
 	opacity: 0;
@@ -259,6 +259,14 @@
 .note-editor-toolbar-button:hover,
 .note-editor-toolbar-button[data-note-editor-active="true"] {
 	color: var(--ui-color-accent-main-primary);
+}
+
+/* An icon-set glyph is a mask painted with its own colour, so it ignores the button's `color` the
+   way the inlined svg icons of this toolbar follow it. Handing it currentColor puts it back in line
+   with its neighbours — including the hover and disabled shades above. */
+.note-editor-toolbar-button .ui-icon-set,
+.note-editor-popover-button .ui-icon-set {
+	--ui-icon-set__icon-color: currentColor;
 }
 
 .note-editor-toolbar-button[data-note-editor-active="true"] {
@@ -594,6 +602,33 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 .ProseMirror.note-editor-prose .note-editor-link-selection-retained {
 	background: color-mix(in srgb, var(--ui-color-accent-main-link) 18%, transparent);
 	border-radius: 0.2rem;
+}
+
+/* Date node: plain document text (own size, weight and colour) with a dotted underline as its only
+ * permanent marker — no chip, border or icon. Truncating a date would print the wrong day, so it
+ * never wraps or ellipsizes; a document-wide overflow rule (a table cell, a narrow column) may still
+ * clip it, and that is accepted. The pointer affordance only shows in edit mode, where a click opens
+ * the calendar (note-date-node.js) — in read mode the node is inert and looks like it. */
+.ProseMirror.note-editor-prose [data-note-date] {
+	white-space: nowrap;
+	/* The dotted line is a border, not a text decoration. An underline offset below the baseline is
+	   painted OUTSIDE the element's inline box, and the browser sizes the repaint region by that box:
+	   when the surrounding content shifts (leaving edit mode, a collapsing block), the old line is
+	   left on screen as a stale streak until something forces a full repaint (a scroll). A border
+	   belongs to the element's own geometry, so it is always invalidated with it. */
+	border-bottom: 1px dotted var(--ui-color-base-4);
+}
+
+.ProseMirror.note-editor-prose[contenteditable="true"] [data-note-date]:hover {
+	cursor: pointer;
+}
+
+/* A selected date has to be visible as selected: the keyboard path to the calendar is "select the
+ * date, press Enter", and without a marker the author cannot tell what Enter will act on. Same
+ * treatment the mention chip gets for its own node selection. */
+.ProseMirror.note-editor-prose [data-note-date].ProseMirror-selectednode {
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-color-accent-main-link) 35%, transparent);
+	border-radius: .16em;
 }
 
 .ProseMirror.note-editor-prose blockquote {
@@ -1516,6 +1551,76 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 	box-shadow: 0 0 0 2px var(--remote-color, #888);
 }
 
+/* Video embed (external player: YouTube/Vimeo/RuTube/VK). A standalone video URL is rendered as a
+   responsive 16:9 iframe instead of a bare link. Resizable/alignable like an image: the block carries
+   the width % (set inline by the node-view) and the shared .note-editor-media--align-* / --stacked
+   float classes. min(100%, 640px) is the default (null width); an explicit inline width % overrides it
+   fully (no max-width cap to fight the stored %). overflow:visible lets the resize handles / align pill
+   escape the block bounds — the rounded clip lives on __frame instead. */
+.ProseMirror.note-editor-prose .note-editor-video-embed {
+	width: min(100%, 640px);
+	/* Vertical-only longhand: must NOT touch margin-left/right, or it would override the shared
+	   .note-editor-media--align-* auto/float margins (defined earlier in this file) and break
+	   centering. */
+	margin-top: 0.75rem;
+	margin-bottom: 0.75rem;
+	overflow: visible;
+}
+
+.ProseMirror.note-editor-prose .note-editor-video-embed-inner {
+	display: block;
+	width: 100%;
+}
+
+/* Resizable preview wrapper: position:relative anchors the handles/overlay absolutely inside it. */
+.ProseMirror.note-editor-prose .note-editor-video-embed-preview {
+	position: relative;
+	width: 100%;
+	overflow: visible;
+}
+
+.ProseMirror.note-editor-prose .note-editor-video-embed__frame {
+	position: relative;
+	width: 100%;
+	padding-top: 56.25%;
+	background: #000;
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.ProseMirror.note-editor-prose .note-editor-video-embed__iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+/* Transparent click-catcher over the iframe (edit mode, unselected) so a click selects the node
+   instead of being eaten by the cross-origin player. Below the handles (z-index:2) / pill (3). */
+.ProseMirror.note-editor-prose .note-editor-video-embed__shield {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	cursor: pointer;
+	border-radius: 10px;
+}
+
+/* While dragging a handle, block the iframe from stealing pointer events (belt-and-braces on top of
+   the handle's pointer capture) and suppress text selection. */
+.ProseMirror.note-editor-prose .note-editor-video-embed-preview--resizing {
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.ProseMirror.note-editor-prose .note-editor-video-embed-preview--resizing .note-editor-video-embed__iframe {
+	pointer-events: none;
+}
+
+.ProseMirror.note-editor-prose .note-editor-video-embed.ProseMirror-selectednode {
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-color-accent-main-link) 20%, transparent);
+}
+
 .ProseMirror.note-editor-prose .note-editor-video-inner {
 	display: flex;
 	flex-direction: column;
@@ -1921,6 +2026,27 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 	font-weight: 400;
 }
 
+/* Deleted placeholder: a Disk attachment whose file went to the Disk trash can. Muted the same way
+   as the unavailable one — either way the block keeps its place in the document. */
+.ProseMirror.note-editor-prose .note-editor-attachment--deleted {
+	opacity: 0.7;
+}
+
+.ProseMirror.note-editor-prose .note-editor-attachment--deleted .note-editor-file-attachment-name,
+.ProseMirror.note-editor-prose .note-editor-attachment--deleted .note-editor-video-name {
+	color: var(--ui-color-base-2);
+	font-weight: 400;
+}
+
+.ProseMirror.note-editor-prose .note-editor-file-attachment-restore {
+	color: var(--ui-color-primary);
+	text-decoration: none;
+}
+
+.ProseMirror.note-editor-prose .note-editor-file-attachment-restore:hover {
+	text-decoration: underline;
+}
+
 .ProseMirror.note-editor-prose .note-editor-file-attachment-text {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -1953,6 +2079,21 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 	   stealing width from the neighbours on every resize. width:100% only covers the
 	   frame before the backfill plugin fills a fresh table to the wrapper width. */
 	width: 100%;
+}
+
+.ProseMirror.note-editor-prose .note-editor-table--align-left {
+	margin-left: 0;
+	margin-right: auto;
+}
+
+.ProseMirror.note-editor-prose .note-editor-table--align-center {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.ProseMirror.note-editor-prose .note-editor-table--align-right {
+	margin-left: auto;
+	margin-right: 0;
 }
 
 .ProseMirror.note-editor-prose table td,
@@ -2000,6 +2141,53 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 
 .ProseMirror.note-editor-prose.resize-cursor {
 	cursor: col-resize;
+}
+
+.note-editor-table-alignment-controls {
+	position: fixed;
+	z-index: 130;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	width: max-content;
+	height: 40px;
+	padding: 8px 16px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-pill, 9999px);
+	color: var(--ui-color-base-3);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+	transform: translate(-50%, -100%);
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.note-editor-table-alignment-controls_button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 24px;
+	height: 24px;
+	padding: 0;
+	box-sizing: border-box;
+	border: 0;
+	border-radius: var(--ui-border-radius-3xs, 6px);
+	color: inherit;
+	background: transparent;
+	--ui-icon-set__icon-color: currentColor;
+	line-height: 1;
+	cursor: pointer;
+	transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-editor-table-alignment-controls_button:hover,
+.note-editor-table-alignment-controls_button--active {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.note-editor-table-alignment-controls_button--active {
+	background-color: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
 }
 
 .note-editor-icon {
@@ -2385,47 +2573,6 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 	min-height: 200px;
 }
 
-.note-editor-children-header {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 0.75rem;
-	cursor: pointer;
-}
-
-.note-editor-children-header-label {
-	font-size: 0.875rem;
-	font-weight: 600;
-	color: var(--ui-color-base-2);
-	white-space: nowrap;
-}
-
-.note-editor-children-header::before {
-	content: '';
-	order: 1;
-	flex: 1;
-	height: 1px;
-	background: var(--ui-color-divider-accent);
-}
-
-.note-editor-children-toggle {
-	order: 2;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0.125rem;
-	border: none;
-	border-radius: var(--ui-border-radius-sm);
-	background: transparent;
-	color: var(--ui-color-base-3);
-	cursor: pointer;
-}
-
-.note-editor-children-toggle:hover {
-	color: var(--ui-color-base-2);
-	background: var(--ui-color-base-7);
-}
-
 .collaboration-cursor__caret {
 	border-left: 1px solid currentColor;
 	border-right: 1px solid currentColor;
@@ -2539,7 +2686,7 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 	outline-offset: 2px;
 }
 
-/* [EVENT-02] The shift now follows whoever occupies the rail, not the timeline alone: the chat panel
+/* The shift now follows whoever occupies the rail, not the timeline alone: the chat panel
    has an arbitrary, draggable width. `--note-rail-width` is published by the shell on `.note-page`;
    its absence means a resident of the fixed 340px kind (timeline, hotkeys panel) — hence the
    fallback, which is the same value `--note-history-width` carries. */
@@ -2566,6 +2713,9 @@ html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .n
 .note-hotkeys-fab__icon {
 	width: 24px;
 	height: 24px;
+}
+.note-editor-link--pending {
+	cursor: progress;
 }
 
 /* Mobile adaptation for note.editor. Scoped via html.note-mobile.

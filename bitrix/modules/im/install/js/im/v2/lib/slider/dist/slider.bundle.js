@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_sidepanel, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_application_launch, im_v2_lib_desktop, im_v2_lib_layout, im_v2_lib_call, im_v2_lib_confirm, im_v2_lib_promo) {
+(function (exports, main_core, main_sidepanel, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_application_launch, im_v2_lib_desktop, im_v2_lib_folder, im_v2_lib_layout, im_v2_lib_call, im_v2_lib_confirm, im_v2_lib_promo) {
 	'use strict';
 
 	const SLIDER_PREFIX = 'im:slider';
@@ -150,7 +150,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const id = this.getIdFromSliderId(sliderId);
 			delete this.instances[id];
 			main_core_events.EventEmitter.emit(im_v2_const.EventType.slider.onClose);
-			void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
+			void im_v2_lib_layout.LayoutManager.getInstance().setLayout(im_v2_lib_folder.FolderManager.getDefaultLayout() ?? {
 				name: im_v2_const.Layout.chat
 			});
 		}
@@ -226,5 +226,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessengerSlider = MessengerSlider;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.SidePanel, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.SidePanel, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=slider.bundle.js.map

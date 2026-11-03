@@ -69,9 +69,8 @@ class SaveCommandHandler
 		}
 
 		$errors = [];
-		\CBPActivity::callStaticMethod(
+		\CBPActivity::savePropertiesDialogValues(
 			$targetType,
-			'getPropertiesDialogValues',
 			[
 				$command->data->documentType,
 				$activity->name,

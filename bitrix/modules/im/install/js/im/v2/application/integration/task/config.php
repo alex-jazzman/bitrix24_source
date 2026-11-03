@@ -21,6 +21,7 @@ return [
 		'im.v2.lib.demo',
 		'im.v2.lib.logger',
 		'im.v2.lib.message-notifier',
+		'im.v2.lib.task-result-button',
 		'im.v2.lib.theme',
 		'im.v2.provider.service.chat',
 		'main.core',

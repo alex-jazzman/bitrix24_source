@@ -63,9 +63,13 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_edit
 
 echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
 
-?><div id="crm-deal-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div>
+?><div id="batchDeletionWrapper"></div>
 <?
-echo \Bitrix\Crm\Update\Order\DealGenerator::getHtml();
+$isRepeatSaleWidgetDealGrid = ($arResult['IS_REPEAT_SALE_WIDGET_DEAL_GRID'] ?? false) === true;
+if (!$isRepeatSaleWidgetDealGrid)
+{
+	echo \Bitrix\Crm\Update\Order\DealGenerator::getHtml();
+}
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 ?>
 <div id="rebuildMessageWrapper"><?
@@ -109,7 +113,11 @@ echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 	?></div><?
 
 $isRecurring = isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y';
-$isShowCounterPanel = ($arParams['SHOW_COUNTER_PANEL'] ?? true) && !$isRecurring;
+$isShowCounterPanel =
+	($arParams['SHOW_COUNTER_PANEL'] ?? true)
+	&& !$isRecurring
+	&& !$isRepeatSaleWidgetDealGrid
+;
 $isInternal = $arResult['INTERNAL'];
 $enableGroupActions = !empty($arResult['ENABLE_GROUP_ACTIONS']);
 $allowWrite = $arResult['PERMS']['WRITE'];
@@ -168,7 +176,8 @@ $fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleI
 
 if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 {
-	$arResult['DEAL'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Deal))->appendNearestActivityBlock($arResult['DEAL']);
+	$arResult['DEAL'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Deal))
+		->appendNearestActivityBlock($arResult['DEAL'], false, $arParams['ANALYTICS'] ?? []);
 }
 
 /** @var \Bitrix\Crm\Conversion\EntityConversionConfig $conversionConfig */
@@ -471,7 +480,10 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 	$sourceId = null;
 	if (isset($arDeal['SOURCE_ID']))
 	{
-		$sourceId = $arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']] ?? $arDeal['SOURCE_ID'];
+		$sourceId = (string)$arDeal['SOURCE_ID'] === ''
+			? ''
+			: ($arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']] ?? $arDeal['SOURCE_ID'])
+		;
 	}
 
 	$eventId = null;
@@ -523,6 +535,9 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 			'CLOSED' =>
 				isset($arDeal['CLOSED']) && $arDeal['CLOSED'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO')
 			,
+			'OPENED' =>
+				($arDeal['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO')
+			,
 			'ASSIGNED_BY' =>
 				isset($arDeal['~ASSIGNED_BY_ID']) && $arDeal['~ASSIGNED_BY_ID'] > 0
 				? $userRender->render(
@@ -556,6 +571,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
 					'ENTITY_ID' => $arDeal['~ID'],
+					'ENTITY_TITLE' => $arDeal['~TITLE'] ?? '',
 					'CURRENT_ID' => $arDeal['~STAGE_ID'],
 					'CATEGORY_ID' => $arDeal['~CATEGORY_ID'],
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.list/list.ajax.php',
@@ -707,7 +723,9 @@ $filterLazyLoadParams = [
 ];
 $uri = new Uri($filterLazyLoadUrl);
 
-if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+$isEmbeddedListLayout = $arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest();
+
+if ($isEmbeddedListLayout)
 {
 	$urlParams = [];
 	if (isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS']))
@@ -830,6 +848,13 @@ if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest
 	<?php
 }
 
+if ($isEmbeddedListLayout)
+{
+	echo '<div class="crm-list-embedded-grid-block">';
+}
+
+echo '<div id="crm-deal-list-progress-bar-container"></div>';
+
 $messages = [];
 if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 {
@@ -855,16 +880,19 @@ if (isset($arResult['MESSAGES']) && is_array($arResult['MESSAGES']))
 }
 
 //$arParams['IS_RECURRING']
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.newentity.counter.panel',
-	'',
-	array(
-		'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-		'GRID_ID' => $arResult['GRID_ID'],
-		'CATEGORY_ID' => $arResult['CATEGORY_ID'] >=0 ? $arResult['CATEGORY_ID'] : null,
-	),
-	$component
-);
+if ($isShowCounterPanel)
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.newentity.counter.panel',
+		'',
+		array(
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
+			'GRID_ID' => $arResult['GRID_ID'],
+			'CATEGORY_ID' => $arResult['CATEGORY_ID'] >=0 ? $arResult['CATEGORY_ID'] : null,
+		),
+		$component
+	);
+}
 
 $actionPanelItems = ($isInternal && !$enableGroupActions)
 	? []
@@ -980,6 +1008,12 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+
+if ($isEmbeddedListLayout)
+{
+	echo '</div>';
+}
+
 ?>
 <script>
 	BX.ready(

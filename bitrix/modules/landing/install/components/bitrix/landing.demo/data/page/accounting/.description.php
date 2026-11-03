@@ -56,7 +56,7 @@ return [
 								<a href="#block@block[04.7.one_col_fix_with_title_and_text_2@2]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">PROJECTS</a>
 							</li>
 							<li class="landing-block-node-menu-list-item nav-item g-mx-10--lg g-mx-15--xl g-my-7 g-mb-0--lg">
-								<a href="#block@block[04.7.one_col_fix_with_title_and_text_2@4]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">TESTOMONIALS</a>
+								<a href="#block@block[04.7.one_col_fix_with_title_and_text_2@4]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">TESTIMONIALS</a>
 							</li>
 							<li class="landing-block-node-menu-list-item nav-item g-mx-10--lg g-mx-15--xl g-my-7 g-mb-0--lg">
 								<a href="#block@block[04.3.one_col_fix_with_title_and_text]" class="landing-block-node-menu-list-item-link nav-link p-0" target="_self">BEST OFFERS</a>

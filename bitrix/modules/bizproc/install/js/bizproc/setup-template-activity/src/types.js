@@ -24,6 +24,18 @@ export type ConstantType =
 	| 'datetime';
 export type DelimiterType = 'line';
 
+export type ConstantValueRule = {
+	Min?: number;
+	Max?: number;
+	MaxLength?: number;
+};
+
+// The value rule lives next to the settings the other constant types declare for themselves.
+export type ConstantSettings = {
+	ValueRule?: ConstantValueRule;
+	[key: string]: mixed;
+};
+
 export type Item = {
 	itemType: ItemType;
 };
@@ -54,7 +66,7 @@ export type ConstantItem = Item & {
 	description: string;
 	required: boolean;
 	options: Record<string, string>;
-	settings: Object,
+	settings: ConstantSettings,
 };
 
 export type ConstantPreset = {
@@ -79,7 +91,7 @@ export type ConstantConvertedData = {
 	Multiple: boolean,
 	Options: Array,
 	Default: string,
-	Settings: Object,
+	Settings: ConstantSettings,
 	Source: string,
 };
 

@@ -7,4 +7,5 @@ export const ChatEntityLinkType = Object.freeze({
 	deal: 'DEAL',
 	lead: 'LEAD',
 	dynamic: 'DYNAMIC',
+	vibecodeApp: 'VIBECODE_APP',
 });

@@ -158,7 +158,16 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			}) => [ui_uploader_core.FileStatus.UPLOADING, ui_uploader_core.FileStatus.LOADING].includes(status));
 		}
 		hasUploadingError() {
-			return this.getFileItems().some(({
+			return this.#getFailedFileItems().length > 0;
+		}
+		removeFailedFiles() {
+			const uploader = this.#adapter.getUploader();
+			this.#getFailedFileItems().forEach(({
+				id
+			}) => uploader.removeFile(id));
+		}
+		#getFailedFileItems() {
+			return this.getFileItems().filter(({
 				status
 			}) => [ui_uploader_core.FileStatus.UPLOAD_FAILED, ui_uploader_core.FileStatus.LOAD_FAILED].includes(status));
 		}
@@ -237,19 +246,52 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			const promise = new Resolvable();
 			this.#promises.push(promise);
 			this.#addLoadedIds(unloadedIds);
+			FileService.#enqueueListObjects(this, unloadedIds, promise);
+			await promise;
+			await Promise.all(this.#promises);
+			return this.getFileItems();
+		}
+		static #listObjectsBatch = [];
+		static #listObjectsScheduled = false;
+		static #enqueueListObjects(service, ids, promise) {
+			FileService.#listObjectsBatch.push({
+				service,
+				ids,
+				promise
+			});
+			if (!FileService.#listObjectsScheduled) {
+				FileService.#listObjectsScheduled = true;
+				queueMicrotask(() => {
+					void FileService.#flushListObjects();
+				});
+			}
+		}
+		static async #flushListObjects() {
+			const batch = FileService.#listObjectsBatch;
+			FileService.#listObjectsBatch = [];
+			FileService.#listObjectsScheduled = false;
+			const ids = [...new Set(batch.flatMap(entry => entry.ids))];
 			try {
 				const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileListObjects, {
-					ids: unloadedIds
+					ids
 				});
-				this.#handleLoadedFiles(data);
-				promise.resolve();
-				await Promise.all(this.#promises);
-				return this.getFileItems();
+				batch.forEach(entry => {
+					const entryIds = new Set(entry.ids);
+					try {
+						entry.service.#handleLoadedFiles(data.filter(fileDto => entryIds.has(fileDto.id)));
+					} catch (error) {
+						entry.service.#removeLoadedIds(entry.ids);
+						console.error(tasks_v2_const.Endpoint.FileListObjects, error);
+					} finally {
+						entry.promise.resolve();
+					}
+				});
 			} catch (error) {
-				this.#removeLoadedIds(unloadedIds);
-				promise.resolve();
+				batch.forEach(entry => {
+					entry.service.#removeLoadedIds(entry.ids);
+					entry.promise.resolve();
+				});
 				console.error(tasks_v2_const.Endpoint.FileListObjects, error);
-				return [];
 			}
 		}
 		remove(idsToRemove) {
@@ -497,7 +539,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		}
 		get #entityFileIds() {
 			if (this.#entityType === EntityTypes.Task) {
-				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.#entityId).fileIds;
+				// a draft task is already dropped from the store by the time its id is replaced
+				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.#entityId)?.fileIds ?? [];
 			}
 			if (this.#entityType === EntityTypes.Result) {
 				return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](this.#entityId).fileIds;
@@ -520,7 +563,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			const oldKey = getKey(tempId, entityType);
 			const newKey = getKey(entityId, entityType);
 			services[newKey] = services[oldKey];
-			services[newKey].setEntityId(entityId, entityType);
+
+			// drop server-rejected files while the id is still a draft one, so removal queues no detach request
+			services[newKey]?.removeFailedFiles();
+			services[newKey]?.setEntityId(entityId, entityType);
 			delete services[oldKey];
 		},
 		delete(entityId, entityType = EntityTypes.Task, removeFilesFromServer = true) {

@@ -16,6 +16,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Disk\Volume\FileDeleted;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
@@ -24,7 +25,7 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 \Bitrix\Main\Loader::includeModule('ui');
 
-CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'disk.viewer.board-item', 'ui.fonts.opensans'));
+CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'disk.viewer.board-item', 'ui.design-tokens', 'ui.design-tokens.air'));
 
 Loc::loadMessages(__FILE__);
 
@@ -147,6 +148,8 @@ if ($isBitrix24Template)
 			Toolbar::addButton([
 				'link' => $component->getActionUrl(array('reload' => 'Y', 'action' => $component::ACTION_DEFAULT)),
 				'text' => Loc::getMessage('DISK_VOLUME_MEASURE_DATA_REPEAT'),
+				// without an explicit style the toolbar maps PRIMARY to the green FILLED_SUCCESS, reserved for entity creation
+				'style' => AirButtonStyle::FILLED,
 				'color' => Color::PRIMARY,
 				'icon' => Icon::START,
 				'dataset' => [
@@ -440,7 +443,19 @@ if (
 			</div>
 
 			<? if(count($arResult['ACTION_MENU']) > 0):?>
-				<span id="bx-disk-volume-popupMenuStorage" class="ui-btn ui-btn-light-border ui-btn-icon-list"></span>
+				<?=
+					(new Button([
+						'air' => true,
+						'style' => AirButtonStyle::OUTLINE,
+						'color' => Color::LIGHT_BORDER,
+						'icon' => Icon::LIST,
+						'collapsed' => true,
+					]))
+						->addAttribute('id', 'bx-disk-volume-popupMenuStorage')
+						->addAttribute('type', 'button')
+						->addAttribute('aria-haspopup', 'menu')
+						->render(false)
+				?>
 				<script>
 					BX.ready(function()
 					{
@@ -493,18 +508,18 @@ if (
 					{
 						$pp += $row['PERCENT'];
 						$tt += $row['FILE_SIZE'];
-						$color = $component->pastelColors();
+						$step = $component->paletteStep($row['TYPE_FILE']);
 						$width = ($row['PERCENT'] > .1 ? $row['PERCENT'].'' : '0');
 						$percent = ($row['PERCENT'] < .1 ? '&lt; 0.1%' : $row['PERCENT'].'%');
 						$title = $row['TITLE']." ".$row['FILE_SIZE_FORMAT']." ({$percent})";
 						$alt = $row['FILE_SIZE_FORMAT']." ({$percent})";
 						$legend["$inx"] = array(
-							'color' => $color,
+							'step' => $step,
 							'title' => $row['TITLE'],
 							'alt' => $alt,
 						);
 						?>
-						<div class="bx-disk-interface-percent-part" style="flex:<?= $width ?>; background-color:<?= $color ?>;" title="<?= $title ?>"></div>
+						<div class="bx-disk-interface-percent-part --c<?= $step ?>" style="flex:<?= $width ?>;" title="<?= $title ?>"></div>
 						<?
 					}
 					if (isset($arResult[$plotIndicatorId]['OTHER']))
@@ -512,18 +527,18 @@ if (
 						$row = $arResult[$plotIndicatorId]['OTHER'];
 						$pp += $row['PERCENT'];
 						$tt += $row['FILE_SIZE'];
-						$color = $component->pastelColors(true);
+						$step = $component->paletteStep('other', true);
 						$width = ($row['PERCENT'] > .1 ? $row['PERCENT'].'' : '0');
 						$percent = ($row['PERCENT'] < .1 ? '&lt; 0.1%' : $row['PERCENT'].'%');
 						$title = $row['TITLE']." ".$row['FILE_SIZE_FORMAT']." ({$percent})";
 						$alt = $row['FILE_SIZE_FORMAT']." ({$percent})";
 						$legend['other'] = array(
-							'color' => $color,
+							'step' => $step,
 							'title' => $row['TITLE'],
 							'alt' => $alt,
 						);
 						?>
-						<div class="bx-disk-interface-percent-part" style="flex:<?= $width ?>; background-color:<?= $color ?>;" title="<?= $title ?>"></div>
+						<div class="bx-disk-interface-percent-part --c<?= $step ?>" style="flex:<?= $width ?>;" title="<?= $title ?>"></div>
 						<?
 					}
 					?>
@@ -540,7 +555,7 @@ if (
 					{
 						?>
 						<div class="bx-disk-interface-percent-legend-part">
-							<span class="bx-disk-interface-percent-legend-part-circle" style="background-color:<?= $row['color'] ?>;"></span>
+							<span class="bx-disk-interface-percent-legend-part-circle --c<?= $row['step'] ?>"></span>
 							<span class="bx-disk-interface-percent-legend-part-text" title="<?= $row['alt'] ?>"><?= $row['title'] ?></span>
 						</div>
 						<?

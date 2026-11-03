@@ -1,0 +1,21 @@
+/* Themes the record menu through the private markup of ui.system.menu: the module gives theming no
+   public API, so a rename on the ui side breaks the look here silently, with no test to catch it. */
+
+/* The platform does not style the icon container at all, and currentColor resolves to black there. */
+.call-record-menu .ui-popup-menu-item-svg {
+	display: flex;
+	color: var(--ui-color-base-1);
+}
+
+/* --ui-color-red-50 keeps the shade the destructive item had before the move. The alert design uses
+   --ui-color-accent-main-alert, darker in the dark context (#F2473D against #FF5752), which loses
+   contrast on the panel. */
+.call-record-menu .ui-popup-menu-item.--alert:not(.--disabled) .ui-popup-menu-item-title-text,
+.call-record-menu .ui-popup-menu-item.--alert:not(.--disabled) .ui-popup-menu-item-svg {
+	color: var(--ui-color-red-50);
+}
+
+/* The platform greys out the title and its own icons, but knows nothing about a third-party svg. */
+.call-record-menu .ui-popup-menu-item.--disabled .ui-popup-menu-item-svg {
+	color: var(--ui-color-base-5);
+}

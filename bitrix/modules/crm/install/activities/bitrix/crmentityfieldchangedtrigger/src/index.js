@@ -1,4 +1,4 @@
-import { Tag, Event, ajax, Dom, Type, Runtime } from 'main.core';
+import { Tag, Event, ajax, Dom, Type, Runtime, Reflection } from 'main.core';
 import type { BaseEvent } from 'main.core.events';
 
 import { ReactionModeControl } from './reaction-mode-control';
@@ -11,6 +11,7 @@ export class CrmEntityFieldChangedTriggerRenderer
 	#form: HTMLFormElement = null;
 	#categoryRow: HTMLElement = null;
 	#categoryCell: HTMLElement = null;
+	#categoryControlMultiple: ?boolean = null;
 	#reactionMode: ?ReactionModeControl = null;
 	#radioButtonExtension: ?Promise<RadioButtonExports> = null;
 	#onDocumentChangeHandler: Function = null;
@@ -35,6 +36,7 @@ export class CrmEntityFieldChangedTriggerRenderer
 		this.#form = form;
 		this.#categoryRow = form.querySelector('#row_categoryId');
 		this.#categoryCell = this.#categoryRow?.querySelector('.field-row > div') ?? this.#categoryRow?.querySelector('td:last-child');
+		this.#rememberCategoryControlMode();
 		this.#bindEvents();
 		this.#syncCategoryRowVisibility();
 		setTimeout(() => this.#syncCategoryRowVisibility());
@@ -74,7 +76,7 @@ export class CrmEntityFieldChangedTriggerRenderer
 
 	#getCurrentCategorySelect(): ?HTMLSelectElement
 	{
-		return this.#categoryCell?.querySelector('select[name="categoryId"]');
+		return this.#categoryCell?.querySelector('select[name="categoryId"], select[name="categoryId[]"]');
 	}
 
 	#resetCategorySelection(): void
@@ -124,13 +126,32 @@ export class CrmEntityFieldChangedTriggerRenderer
 
 	#createCategoryProperty(options: {[key: string]: string}): Object
 	{
+		this.#rememberCategoryControlMode();
+
 		return {
 			Type: 'select',
 			FieldName: 'categoryId',
+			Multiple: this.#categoryControlMultiple === true,
 			Options: options,
 			Required: false,
 			AllowSelection: false,
 		};
+	}
+
+	#rememberCategoryControlMode(): void
+	{
+		if (Type.isBoolean(this.#categoryControlMultiple))
+		{
+			return;
+		}
+
+		const select = this.#getCurrentCategorySelect();
+		if (!select)
+		{
+			return;
+		}
+
+		this.#categoryControlMultiple = select.multiple || select.name === 'categoryId[]';
 	}
 
 	#renderCategoryControl(options: {[key: string]: string}): void
@@ -169,15 +190,17 @@ export class CrmEntityFieldChangedTriggerRenderer
 		}
 
 		const { item } = event.getData();
+		const requestData = {
+			documentType: ['bizproc', 'Bitrix\\Bizproc\\Public\\Entity\\Document\\Workflow', 'WORKFLOW'],
+			activity: 'CrmEntityFieldChangedTrigger',
+			params: { document: item.id, form_name: 'document' },
+		};
 
 		ajax.runAction(
 			'bizproc.activity.request',
 			{
-				data: {
-					documentType: ['bizproc', 'Bitrix\\Bizproc\\Public\\Entity\\Document\\Workflow', 'WORKFLOW'],
-					activity: 'CrmEntityFieldChangedTrigger',
-					params: { document: item.id, form_name: 'document' },
-				},
+				// The Nodes editor names its template: the server grants the request by the right on it.
+				data: Reflection.getClass('BX.Bizproc.EditorTemplateContext')?.appendTo(requestData) ?? requestData,
 			},
 		).then((response) => {
 			const data = response.data;
@@ -207,6 +230,7 @@ export class CrmEntityFieldChangedTriggerRenderer
 		this.#form = null;
 		this.#categoryRow = null;
 		this.#categoryCell = null;
+		this.#categoryControlMultiple = null;
 		this.#reactionMode?.destroy();
 		this.#reactionMode = null;
 		Event.EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:Item:onSelect', this.#onDocumentChangeHandler);

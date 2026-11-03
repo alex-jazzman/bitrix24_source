@@ -1,4 +1,4 @@
-import { Dom, Loc, Type, Uri } from 'main.core';
+import { type JsonObject, Dom, Loc, Type, Uri } from 'main.core';
 import { MenuManager, Popup, PopupWindowButton } from 'main.popup';
 
 export function parseUrl(url, key): JsonObject
@@ -27,11 +27,8 @@ export function openUrl(viewUrl, loaderPath, width): void
 {
 	if (BX.SidePanel)
 	{
-		if (!Type.isNumber(width))
-		{
-			width = 810;
-		}
-		BX.SidePanel.Instance.open(viewUrl, { width, cacheable: false, loader: loaderPath });
+		const sliderWidth = Type.isNumber(width) ? width : 810;
+		BX.SidePanel.Instance.open(viewUrl, { width: sliderWidth, cacheable: false, loader: loaderPath });
 		const menu = MenuManager.getCurrentMenu();
 		if (menu && menu.popupWindow)
 		{
@@ -48,40 +45,39 @@ let popupConfirm = null;
 
 export function showMessage(content, buttons, title, onclose): void
 {
-	title = title || '';
-	if (Type.isNil(buttons) || (Type.isObjectLike(buttons) && Object.keys(buttons).length <= 0))
-	{
-		buttons = [new PopupWindowButton({
+	const popupTitle = title || '';
+	const popupButtons = Type.isNil(buttons)
+		|| (Type.isObjectLike(buttons) && Object.keys(buttons).length <= 0)
+		? [new PopupWindowButton({
+			id: 'documentgenerator-preview-message-close',
 			text: Loc.getMessage('DOCGEN_PREVIEW_CLOSE_BUTTON'),
 			className: 'ui-btn ui-btn-md ui-btn-default',
 			events: {
 				click(e) {
 					this.popupWindow.close();
-					BX.PreventDefault(e);
+					e.preventDefault();
+					e.stopPropagation();
 				},
 			},
-		})];
-	}
+		})]
+		: buttons
+	;
 
 	popupConfirm?.destroy();
 
-	if (!Type.isDomNode(content))
-	{
+	const normalizedContent = Type.isDomNode(content) ? content : (() => {
 		const node = document.createElement('div');
 		node.innerHTML = content;
-		content = node;
-	}
 
-	if (!Type.isArray(content))
-	{
-		content = [content];
-	}
+		return node;
+	})();
+	const popupContent = Type.isArray(normalizedContent) ? normalizedContent : [normalizedContent];
 
 	popupConfirm = new Popup('bx-popup-documentgenerator-popup', null, {
 		zIndex: 200,
 		autoHide: true,
 		closeByEsc: true,
-		buttons,
+		buttons: popupButtons,
 		closeIcon: true,
 		overlay: true,
 		events: {
@@ -99,9 +95,9 @@ export function showMessage(content, buttons, title, onclose): void
 		},
 		content: Dom.create('span', {
 			attrs: { className: 'bx-popup-documentgenerator-popup-content-text' },
-			children: content,
+			children: popupContent,
 		}),
-		titleBar: title,
+		titleBar: popupTitle,
 		contentColor: 'white',
 		className: 'bx-popup-documentgenerator-popup',
 		maxWidth: 470,

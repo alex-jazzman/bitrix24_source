@@ -35,6 +35,7 @@ jn.define('im/messenger/lib/promotion/src/entities/copilot', (require, exports, 
 						logger.log('showCopilotSidebarChangeEngine AhaMoment.onHide');
 						actionCallback({ read: true, promoId: Promo.copilotSidebarEngine });
 					},
+					onShowSkipped: () => actionCallback(),
 				});
 			}
 			catch (error)

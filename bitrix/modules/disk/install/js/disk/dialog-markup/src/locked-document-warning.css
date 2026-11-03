@@ -1,0 +1,16 @@
+/* The action used to be a link styled by the shared `webform-button` rules. A native button keeps
+   those rules but brings its own box model and alignment, and the shared rules drop the focus ring
+   of every control they style. */
+.disk-locked-document-popup-content-button {
+	box-sizing: content-box;
+	text-align: inherit;
+}
+
+/* The window is raised from surfaces that carry no design tokens, and there the whole declaration
+   would go invalid and leave the button with no ring at all: the shared rules above have already
+   taken the system one away. The fallbacks are the values the tokens themselves are defined with. */
+.disk-locked-document-popup-content-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-3xs, 2px);
+}

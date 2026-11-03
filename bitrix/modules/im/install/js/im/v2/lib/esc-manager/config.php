@@ -14,6 +14,7 @@ return [
 		'im.v2.lib.call',
 		'im.v2.lib.desktop',
 		'im.v2.lib.desktop-api',
+		'im.v2.lib.folder',
 		'im.v2.lib.layout',
 		'im.v2.lib.slider',
 		'im.v2.lib.utils',

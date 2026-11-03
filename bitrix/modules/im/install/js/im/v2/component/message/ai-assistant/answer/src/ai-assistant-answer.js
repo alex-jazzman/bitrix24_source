@@ -1,5 +1,6 @@
 import { BaseMessage } from 'im.v2.component.message.base';
 import { AuthorTitle, DefaultMessageContent, MessageKeyboard } from 'im.v2.component.message.elements';
+import { isCopilotGenerationActive } from 'im.v2.lib.copilot';
 
 import { BottomPanelContent } from './components/bottom-panel-content';
 
@@ -30,16 +31,25 @@ export const AiAssistantMessage = {
 		{
 			return this.item;
 		},
+		isGenerationActive(): boolean
+		{
+			return isCopilotGenerationActive(this.message, this.$store);
+		},
 		hasKeyboard(): boolean
 		{
 			return this.message.keyboard.length > 0;
 		},
 	},
 	template: `
-		<BaseMessage :item="item" :dialogId="dialogId" class="bx-im-message-ai-assistant-base-message__container">
+		<BaseMessage :item="item" :dialogId="dialogId" :withContextMenu="!isGenerationActive" class="bx-im-message-ai-assistant-base-message__container">
 			<div class="bx-im-message-default__container">
 				<AuthorTitle v-if="withTitle" :item="message"/>
-				<DefaultMessageContent :item="message" :dialogId="dialogId" :withMessageStatus="false" />
+				<DefaultMessageContent
+					:item="message"
+					:dialogId="dialogId"
+					:withMessageStatus="false"
+					:withBuilder="true"
+				/>
 			</div>
 			<BottomPanelContent :item="message" />
 			<template #after-message v-if="hasKeyboard">

@@ -59,6 +59,12 @@ export const TASK_WEIGHT = {
 export const DEFAULT_MAX_TASK_NAME = 'disk_access_full';
 export const PREFERRED_DEFAULT_TASK_NAME = 'disk_access_edit';
 
+export const SWITCHER_OPTIONS = {
+	size: 'small',
+	showStateTitle: false,
+	useAirDesign: true,
+};
+
 export const TYPE_FILE_DOCUMENT = 4;
 export const TYPE_FILE_BOARD = 12;
 export const HELP_DESK_SLIDER_CODE_DESCRIPTION = '25483894';

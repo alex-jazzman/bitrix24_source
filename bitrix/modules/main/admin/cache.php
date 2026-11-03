@@ -6,7 +6,8 @@ use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Landing\Block;
-use Bitrix\Main\Composite\Helper;
+use Bitrix\Main\Composite\Data\FileStorage;
+use Bitrix\Main\Composite\Internals\PageDeleteBatch;
 use Bitrix\Main\Composite\Page;
 use Bitrix\Main\ModuleManager;
 
@@ -115,86 +116,102 @@ if (
 
 	$session = Application::getInstance()->getSession();
 
-	if ($cachetype === "html")
+	// keeps the page table in sync with the deleted files
+	$compositeBatch = new PageDeleteBatch();
+
+	try
 	{
-		$obCacheCleaner->Start();
-		$space_freed = 0;
-		while ($file = $obCacheCleaner->GetNextFile())
+		if ($cachetype === "html")
 		{
-			if (
-				is_string($file)
-				&& !preg_match("/(\\.enabled|\\.size|.config\\.php)\$/", $file)
-			)
+			$obCacheCleaner->Start();
+			while ($file = $obCacheCleaner->GetNextFile())
 			{
-				$file_size = filesize($file);
-
-				$session["CACHE_STAT"]["scanned"] = ($session["CACHE_STAT"]["scanned"] ?? 0) + 1;
-				$session["CACHE_STAT"]["space_total"] = ($session["CACHE_STAT"]["space_total"] ?? 0) + $file_size;
-
-				if (@unlink($file))
-				{
-					$session["CACHE_STAT"]["deleted"] = ($session["CACHE_STAT"]["deleted"] ?? 0) + 1;
-					$session["CACHE_STAT"]["space_freed"] = ($session["CACHE_STAT"]["space_freed"] ?? 0) + $file_size;
-					$space_freed += $file_size;
-				}
-				else
-				{
-					$session["CACHE_STAT"]["errors"] = ($session["CACHE_STAT"]["errors"] ?? 0) + 1;
-				}
-
-				if (time() >= $endTime)
-				{
-					break;
-				}
-			}
-		}
-		Helper::updateCacheFileSize(-$space_freed);
-	}
-	elseif ($filesEngine)
-	{
-		$bDoNotCheckExpiredDate = (
-			$cachetype === "all"
-			|| $cachetype === "menu"
-			|| $cachetype === "managed"
-		);
-		$obCacheCleaner->Start();
-		while ($file = $obCacheCleaner->GetNextFile())
-		{
-			if (is_string($file))
-			{
-				$date_expire = $obCacheCleaner->GetFileExpiration($file);
-				if ($date_expire)
+				// the web server reads the rules of the static response from the service files of the folder
+				if (is_string($file) && !FileStorage::isServiceFile($file))
 				{
 					$file_size = filesize($file);
 
 					$session["CACHE_STAT"]["scanned"] = ($session["CACHE_STAT"]["scanned"] ?? 0) + 1;
 					$session["CACHE_STAT"]["space_total"] = ($session["CACHE_STAT"]["space_total"] ?? 0) + $file_size;
 
-					if ($bDoNotCheckExpiredDate || ($date_expire < $curentTime))
+					if (@unlink($file))
 					{
-						if (@unlink($file))
-						{
-							$session["CACHE_STAT"]["deleted"] = ($session["CACHE_STAT"]["deleted"] ?? 0) + 1;
-							$session["CACHE_STAT"]["space_freed"] = ($session["CACHE_STAT"]["space_freed"] ?? 0) + $file_size;
-						}
-						else
-						{
-							$session["CACHE_STAT"]["errors"] = ($session["CACHE_STAT"]["errors"] ?? 0) + 1;
-						}
-					}
-				}
+						$session["CACHE_STAT"]["deleted"] = ($session["CACHE_STAT"]["deleted"] ?? 0) + 1;
+						$session["CACHE_STAT"]["space_freed"] = ($session["CACHE_STAT"]["space_freed"] ?? 0) + $file_size;
 
-				if (time() >= $endTime)
-				{
-					break;
+						// keeps the table of the pages and the counter of the composite in sync with the file
+						FileStorage::collectDeletedPage($file, $compositeBatch, (float)$file_size);
+					}
+					else
+					{
+						$session["CACHE_STAT"]["errors"] = ($session["CACHE_STAT"]["errors"] ?? 0) + 1;
+					}
+
+					if (time() >= $endTime)
+					{
+						break;
+					}
 				}
 			}
 		}
+		elseif ($filesEngine)
+		{
+			$bDoNotCheckExpiredDate = (
+				$cachetype === "all"
+				|| $cachetype === "menu"
+				|| $cachetype === "managed"
+			);
+			$obCacheCleaner->Start();
+			while ($file = $obCacheCleaner->GetNextFile())
+			{
+				if (is_string($file))
+				{
+					$date_expire = $obCacheCleaner->GetFileExpiration($file);
+					if ($date_expire)
+					{
+						$file_size = filesize($file);
+
+						$session["CACHE_STAT"]["scanned"] = ($session["CACHE_STAT"]["scanned"] ?? 0) + 1;
+						$session["CACHE_STAT"]["space_total"] = ($session["CACHE_STAT"]["space_total"] ?? 0) + $file_size;
+
+						// the cleanup walks the composite folder too, and the service files of it are kept
+						if (
+							($bDoNotCheckExpiredDate || ($date_expire < $curentTime))
+							&& !FileStorage::isServiceFile($file)
+						)
+						{
+							if (@unlink($file))
+							{
+								$session["CACHE_STAT"]["deleted"] = ($session["CACHE_STAT"]["deleted"] ?? 0) + 1;
+								$session["CACHE_STAT"]["space_freed"] = ($session["CACHE_STAT"]["space_freed"] ?? 0) + $file_size;
+
+								// a page of the composite leaves the table and the counter with its file
+								FileStorage::collectDeletedPage($file, $compositeBatch, (float)$file_size);
+							}
+							else
+							{
+								$session["CACHE_STAT"]["errors"] = ($session["CACHE_STAT"]["errors"] ?? 0) + 1;
+							}
+						}
+					}
+
+					if (time() >= $endTime)
+					{
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			$file = false;
+			$session["CACHE_STAT"] = array();
+		}
 	}
-	else
+	finally
 	{
-		$file = false;
-		$session["CACHE_STAT"] = array();
+		// the files are gone already: a break of the walk must not lose the keys and their bytes
+		$compositeBatch->flush();
 	}
 
 	if (is_string($file))

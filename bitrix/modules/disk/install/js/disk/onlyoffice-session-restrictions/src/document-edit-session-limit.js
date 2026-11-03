@@ -1,4 +1,4 @@
-import { Extension } from 'main.core';
+import { Extension, Type } from 'main.core';
 
 export class DocumentEditSessionLimit
 {
@@ -39,6 +39,8 @@ export class DocumentEditSessionLimit
 
 	isExceeded(): boolean
 	{
-		return this.#availableDocumentSessionCount <= 0;
+		return Type.isNumber(this.#availableDocumentSessionCount)
+			&& this.#availableDocumentSessionCount <= 0
+		;
 	}
 }

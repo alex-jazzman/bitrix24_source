@@ -1,16 +1,21 @@
 /* eslint-disable */
-(function (exports, main_core, ui_sidepanel, ui_dialogs_messagebox, ui_notification, main_core_events, ui_progressround) {
+(function (exports, crm_integration_analytics, main_core, ui_analytics, ui_sidepanel, ui_dialogs_messagebox, ui_notification, main_core_events, ui_progressround) {
 	'use strict';
 
 	const namespace$3 = main_core.Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
 	class ActionButton {
 		#isActive;
 		#sliderWidth;
-		constructor(isActiveCopilot = true, sliderWidth = 700) {
+		#isV2Enabled;
+		constructor(isActiveCopilot = true, sliderWidth = 700, isV2Enabled = false) {
 			this.#isActive = isActiveCopilot;
 			this.#sliderWidth = sliderWidth;
+			this.#isV2Enabled = isV2Enabled;
 		}
 		execute() {
+			if (this.#isV2Enabled) {
+				ui_analytics.sendData(crm_integration_analytics.Builder.CallAssessment.GridActionsEvent.createDefault(crm_integration_analytics.Dictionary.ELEMENT_CREATE_BUTTON).buildData());
+			}
 			if (this.#isActive) {
 				if (!ui_sidepanel.SidePanel.Instance) {
 					console.error('SidePanel.Instance not found');
@@ -104,7 +109,8 @@
 					data: {
 						id: this.#id,
 						isEnabled: isEnabled ? 'Y' : 'N'
-					}
+					},
+					analytics: crm_integration_analytics.Builder.CallAssessment.ScriptToggleEvent.createDefault(isEnabled, main_core.Text.toInteger(this.#id)).buildData()
 				}).catch(response => {
 					ui_notification.UI.Notification.Center.notify({
 						content: main_core.Text.encode(response.errors[0].message),
@@ -118,6 +124,7 @@
 	namespace$2.ActiveField = ActiveField;
 
 	const namespace$1 = main_core.Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
+	const callListViewClickHandlers = new WeakMap();
 	class Grid {
 		#grid = null;
 		#reloadGridTimeoutId = null;
@@ -132,6 +139,31 @@
 			main_core_events.EventEmitter.subscribe('BX.Crm.Copilot.CallAssessment:onClickDelete', this.#handleItemDelete.bind(this));
 			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.#handleSettingsMenuShow.bind(this));
 			BX.addCustomEvent('SidePanel.Slider:onCloseComplete', this.#handleSliderClose.bind(this));
+			const gridContainer = this.#grid?.getContainer?.();
+			if (!gridContainer) {
+				return;
+			}
+			const existing = callListViewClickHandlers.get(gridContainer);
+			if (existing) {
+				main_core.Event.unbind(gridContainer, 'click', existing);
+			}
+			const handler = this.#sendCallListViewAnalytics.bind(this);
+			callListViewClickHandlers.set(gridContainer, handler);
+			main_core.Event.bind(gridContainer, 'click', handler);
+		}
+		#sendCallListViewAnalytics(event) {
+			const link = event.target?.closest('.crm-copilot-call-assessment-list--match-link');
+			if (!link) {
+				return;
+			}
+			const callAssessmentId = main_core.Text.toInteger(link.dataset.callAssessmentId);
+			if (callAssessmentId <= 0) {
+				return;
+			}
+			const data = crm_integration_analytics.Builder.CallAssessment.CallListViewEvent.createDefault(callAssessmentId).buildData();
+			if (data) {
+				ui_analytics.sendData(data);
+			}
 		}
 		#handleSettingsMenuShow(event) {
 			const popup = event.getTarget();
@@ -175,7 +207,8 @@
 					main_core.ajax.runAction('crm.controller.copilot.callassessment.delete', {
 						data: {
 							id
-						}
+						},
+						analytics: crm_integration_analytics.Builder.CallAssessment.ScriptDeleteEvent.createDefault(id).buildData()
 					}).then(response => {
 						ui_notification.UI.Notification.Center.notify({
 							content: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')
@@ -302,5 +335,5 @@
 	exports.Grid = Grid;
 	exports.RoundChartField = RoundChartField;
 
-})(this.window = this.window || {}, BX, BX, BX.UI.Dialogs, BX.UI.Notification, BX.Event, BX.UI);
+})(this.window = this.window || {}, BX.Crm.Integration.Analytics, BX, BX.UI.Analytics, BX, BX.UI.Dialogs, BX.UI.Notification, BX.Event, BX.UI);
 //# sourceMappingURL=script.js.map

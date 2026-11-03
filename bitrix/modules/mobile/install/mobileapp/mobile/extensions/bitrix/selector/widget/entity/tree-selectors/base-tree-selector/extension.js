@@ -246,9 +246,7 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 			let children = navigator.getChildren(node);
 			if (!children)
 			{
-				this.getSelector().setItems([
-					this.#getLoadingItem(),
-				]);
+				this.getSelector().setItems([this.getLoadingItem()]);
 
 				children = await provider.loadChildren(node);
 
@@ -285,7 +283,7 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 			};
 		}
 
-		#getLoadingItem()
+		getLoadingItem()
 		{
 			return {
 				id: 'loading',

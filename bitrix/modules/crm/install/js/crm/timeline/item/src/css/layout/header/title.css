@@ -32,3 +32,33 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card-title:last-child {
 	margin-right: unset;
 }
+/*region Reflow: the card title wraps instead of being cut (WCAG 2.1 AA, 1.4.10)*/
+/*
+	Measured at a card width of 241px: the title had 75px of the 218px it needs, so an activity
+	subject read as "Заплани…". Below the breakpoint it wraps - the header row is rearranged for
+	that in layout/header.css, where the title gets a line of its own.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-title {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*
+	Second trigger, same fix: @media reacts to the card/window width, not to the timeline
+	column's own width, so it never fires when the CRM Entity Card Split handle narrows just
+	the column on a wide desktop. Measured live on the stand at the handle's 460px floor: the
+	title was 1px short ("Запланирован исходящий звон…"), clean again from 465px up - see
+	decisions.md (CRM Entity Card Split) for the full measurement. crm-entity-stream is
+	declared on .crm-entity-stream-container in crm.entity.details/templates/.default/style.css,
+	desktop only.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-title {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*endregion*/

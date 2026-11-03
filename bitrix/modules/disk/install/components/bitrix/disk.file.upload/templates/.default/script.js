@@ -119,6 +119,8 @@
 					}
 				});
 
+				BX.onCustomEvent(window, 'onDiskUploadAgentInitialized', [this]);
+
 				this._onItemIsAdded = BX.delegate(this.onItemIsAdded, this);
 				this._onFileIsInited = BX.delegate(this.onFileIsInited, this);
 				this._onStart = BX.delegate(this.onStart, this);
@@ -133,6 +135,7 @@
 
 				BX.addCustomEvent("Disk.Page:onChangeFolder", function(folder, newFolder){
 					this.changeTargetFolderId(newFolder.id);
+					this.updateUls(newFolder.uls);
 				}.bind(this));
 
 				this._onFileIsAppended = BX.delegate(this.onFileIsAppended, this);
@@ -558,6 +561,8 @@
 			this.counter.uploading = BX.util.deleteFromArray(this.counter.uploading, BX.util.array_search(item.id, this.counter.uploading));
 			this.counter.uploaded.push(item.id);
 			item.fileId = result["file"]["fileId"];
+			item.uniqueCode = result["file"]["uniqueCode"];
+			item.uls = result["file"]["uls"];
 			var node = this.agent.getItem(item.id).node, file = this._camelToSNAKE(result["file"]);
 			if (BX(node))
 			{
@@ -872,12 +877,17 @@
 				this.popup.close();
 				if (this.counter.uploaded.length > 0)
 				{
-					var url, item;
+					var url, item, uploadedFile;
 					var countOfUploadedFiles = this.counter.uploaded.length;
 					while ((item = this.agent.getItem(this.counter.uploaded.pop())) && item && item["item"] && (item = item["item"]))
 					{
 						if (item["fileId"])
 						{
+							uploadedFile = {
+								id: item["fileId"],
+								uniqueCode: item["uniqueCode"],
+								uls: item["uls"],
+							};
 							url = BX.Disk.getUrlToShowObjectInGrid(item["fileId"]);
 							break;
 						}
@@ -887,14 +897,26 @@
 					{
 						BX.SidePanel.Instance.postMessageAll(window, 'Disk.File:onNewVersionUploaded', {
 							object: {
-								id: item["fileId"]
+								id: item["fileId"],
+								uniqueCode: item["uniqueCode"],
+								uls: item["uls"],
 							}
 						});
 					}
 
-					BX.onCustomEvent("onPopupFileUploadClose", [this, item["fileId"]]);
+					BX.onCustomEvent("onPopupFileUploadClose", [this, item["fileId"], uploadedFile]);
 				}
 			}
+		},
+		updateUls: function (uls)
+		{
+			if (!BX.type.isStringFilled(uls) || !this.agent?.uploadFileUrl) return;
+
+			const url = new URL(this.agent.uploadFileUrl, location.origin);
+
+			url.searchParams.set('_uls', uls);
+
+			this.agent.uploadFileUrl = `${url.pathname}${url.search}`;
 		}
 	};
 	BX.DiskUpload.initialize = function(params)

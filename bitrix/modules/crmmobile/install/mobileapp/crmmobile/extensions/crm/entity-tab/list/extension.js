@@ -6,7 +6,6 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 	const { Filter } = require('layout/ui/kanban/filter');
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { StatefulList } = require('layout/ui/stateful-list');
-	const { Type } = require('type');
 
 	/**
 	 * @class ListTab
@@ -40,8 +39,10 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				popupItemMenu: true,
 				itemParams: {
 					isClientEnabled: this.isClientEnabled(),
+					isCompactView: this.itemsViewManager.isCompactView(),
 					...this.props.itemParams,
 				},
+				deepMergeStyles: this.getListDeepMergeStyles(),
 				forcedShowSkeleton: false,
 				getItemCustomStyles: this.getItemCustomStyles,
 				emptyListText: BX.message('M_CRM_LIST_EMPTY_LIST_TEXT'),
@@ -55,6 +56,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
 				isShowFloatingButton: this.isShowFloatingButton(),
+				getVoiceContext: () => this.getVoiceContext(),
 				getEmptyListComponent: this.getEmptyListComponent,
 				itemType: ListItemType.CRM_ENTITY,
 				itemFactory: ListItemsFactory,
@@ -181,15 +183,19 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				let useCache = false;
 
 				// Note: disabled cache for now, because of the bug with the filter cancellation
-				if (!params.filterCancelled)
+				// params of their own mean conditions of their own, and the cache holds the answer
+				// the previous ones got
+				if (!params.filterCancelled && !params.actionParams)
 				{
-					const selectedNotDefaultPreset = this.filter.hasSelectedNotDefaultPreset();
-					useCache = !selectedNotDefaultPreset && !Type.isStringFilled(this.filter.getSearchString());
+					useCache = this.filterMode.canUseCache();
 				}
 
 				this.getViewComponent().reload(
 					{
 						forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', !useCache),
+						// the list keeps the payload it was built with, so conditions just applied reach
+						// the server only if the fresh payload travels with the reload
+						...(params.actionParams ? { actionParams: params.actionParams } : {}),
 					},
 					{ useCache },
 					() => initMenu && this.getViewComponent().initMenu(),
@@ -202,7 +208,8 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			const menuActions = [];
 
 			const entityType = this.getCurrentEntityType();
-			if (entityType && entityType.isLastActivityEnabled)
+			// where the order is a section of the filter drawer, the "---" menu does not offer it twice
+			if (entityType && entityType.isLastActivityEnabled && !this.filterMode.hasDrawerSorting())
 			{
 				menuActions.push(this.itemsSortManager.getSortMenuAction(this.onSetSortTypeHandler));
 			}

@@ -20,6 +20,7 @@ import { TasksAiPromo } from 'tasks.v2.lib.promotion';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { DescriptionCheckListMixin } from './description-check-list-mixin';
+import { EditorActionsToolbar } from './editor-actions-toolbar';
 import { CheckList } from './actions/check-list';
 import { FullDescription } from './actions/full-description';
 
@@ -30,6 +31,7 @@ export const MiniForm = {
 	name: 'TaskDescriptionMiniForm',
 	components: {
 		CheckList,
+		EditorActionsToolbar,
 		CopilotButton,
 		AttachButton,
 		MentionButton,
@@ -177,7 +179,7 @@ export const MiniForm = {
 				</Teleport>
 				<div class="tasks-card-description-footer-container">
 					<div class="tasks-card-description-footer">
-						<div class="tasks-card-description-action-list">
+						<EditorActionsToolbar class="tasks-card-description-action-list">
 							<AttachButton v-if="isDiskModuleInstalled" :fileService/>
 							<MentionButton :editor/>
 							<BulletListButton :editor/>
@@ -190,7 +192,7 @@ export const MiniForm = {
 								:loading="isAiCommandProcessing"
 								@click="handleCheckListButtonClick"
 							/>
-						</div>
+						</EditorActionsToolbar>
 						<div
 							class="tasks-card-description-footer-buttons"
 							ref="fullDescriptionArea"

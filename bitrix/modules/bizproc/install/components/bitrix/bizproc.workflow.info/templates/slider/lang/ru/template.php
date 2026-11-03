@@ -26,3 +26,6 @@ $MESS['BPWFI_SLIDER_CONFIRM_ACCEPT'] = 'Да, отменить';
 $MESS['BPWFI_SLIDER_CONFIRM_CANCEL'] = 'Не отменять';
 
 $MESS['BPWFI_SLIDER_ARGUMENT_NULL'] = "Не заполнено обязательное поле '#PARAM#'";
+$MESS['BPWFI_SLIDER_DECISIONS_BUSY'] = 'Файл загружается. Кнопки решения недоступны';
+$MESS['BPWFI_SLIDER_DECISIONS_READY'] = 'Файл загружен. Кнопки решения снова доступны';
+$MESS['BPWFI_SLIDER_FILE_CONTROL_ERROR'] = 'Не удалось показать поле для файла, обновите страницу';

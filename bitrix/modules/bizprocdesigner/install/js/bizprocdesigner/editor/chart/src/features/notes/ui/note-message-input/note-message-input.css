@@ -1,0 +1,55 @@
+/*
+ * The field of a reply: the editor, a line with the length and the send button under it, and the status
+ * line the answer of the server is told on. Typography is set by the components of the design system,
+ * so nothing here touches the font.
+ */
+.editor-chart-note-message-input {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	width: 100%;
+	/* lets the field shrink to the thread so the editor wraps instead of widening the popup */
+	min-width: 0;
+}
+
+/* own node so Vue and ui.text-editor never share children */
+.editor-chart-note-message-input__editor {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
+}
+
+.editor-chart-note-message-input__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* The counter stands beside the text it counts and steps back from it until the limit is passed. */
+.editor-chart-note-message-input__counter {
+	color: var(--ui-color-base-4);
+}
+
+.editor-chart-note-message-input__counter.--over {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Always rendered: a live region has to stand in the document before its text changes to be read out.
+   With nothing in it the column has no children and no height of its own. */
+.editor-chart-note-message-input__status {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+/* A refusal keeps the message in the field, so it is the field it is read next to. */
+.editor-chart-note-message-input__error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* The message is saved and only its notifications are not: that is a warning, not a failure. */
+.editor-chart-note-message-input__notice {
+	color: var(--ui-color-accent-main-warning);
+}

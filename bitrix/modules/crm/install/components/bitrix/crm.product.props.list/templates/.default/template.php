@@ -2,6 +2,8 @@
 
 global $APPLICATION;
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+
 \Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_grid.js');
@@ -21,7 +23,9 @@ foreach($arResult['PROPS'] as $key => &$arProp)
 			'ICONCLASS' => 'edit',
 			'TITLE' => GetMessage('CRM_PRODUCTPROP_EDIT_TITLE'),
 			'TEXT' => GetMessage('CRM_PRODUCTPROP_EDIT'),
-			'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape($arProp['PATH_TO_PRODUCTPROPS_EDIT']).'\');',
+			'ONCLICK' => $isSettingsHub
+				? 'window.location.href = \'' . CUtil::JSEscape($arProp['PATH_TO_PRODUCTPROPS_EDIT']) . '\';'
+				: 'jsUtils.Redirect([], \'' . CUtil::JSEscape($arProp['PATH_TO_PRODUCTPROPS_EDIT']) . '\');',
 			'DEFAULT' => true
 		);
 	}
@@ -45,8 +49,11 @@ foreach($arResult['PROPS'] as $key => &$arProp)
 	);
 	if ($arResult['CAN_EDIT'])
 	{
-		$gridDataItem['columns']['NAME'] =
-			'<a href="'.$arProp['PATH_TO_PRODUCTPROPS_EDIT'].'">'.$arProp['NAME'].'</a>';
+		$gridDataItem['columns']['NAME']
+			= '<a data-testid="crm-product-props-list-edit-link-' . (int)$arProp['ID'] . '" href="'
+			. ($isSettingsHub ? htmlspecialcharsbx($arProp['PATH_TO_PRODUCTPROPS_EDIT']) : $arProp['PATH_TO_PRODUCTPROPS_EDIT'])
+			. '"' . ($isSettingsHub ? ' data-slider-ignore-autobinding="true" target="_self"' : '')
+			. '>' . $arProp['NAME'] . '</a>';
 	}
 	$arResult['GRID_DATA'][] = $gridDataItem;
 	unset($gridDataItem);

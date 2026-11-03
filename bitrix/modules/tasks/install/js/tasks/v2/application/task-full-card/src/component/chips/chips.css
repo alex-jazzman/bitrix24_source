@@ -1,5 +1,10 @@
 .tasks-full-card-chips {
+	/* Chips wrap and stay inside, so the clip is only needed as a guard - give it room for the
+	   focus ring of the leftmost chip. The hidden fallback keeps the old behaviour where clip
+	   is unsupported. */
 	overflow: hidden;
+	overflow: clip;
+	overflow-clip-margin: 3px;
 	display: flex;
 	flex-wrap: wrap;
 	align-content: start;

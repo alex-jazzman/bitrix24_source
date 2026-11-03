@@ -337,7 +337,7 @@
 		}).catch(() => {
 			button.disabled = false;
 			BX.removeClass(button, 'ui-btn-wait');
-			this.showError(BX.Loc.getMessage('MAIL_DRAFT_SAVE_ERROR') || '');
+			this.showError(BX.Loc.getMessage('MAIL_DRAFT_SAVE_ERROR_CONTACT_ADMIN') || '');
 		});
 
 		return true;
@@ -489,12 +489,56 @@
 			{
 				return;
 			}
-			Object.keys(controller.values || {}).forEach(addAttachment);
+			const held = Object.keys(controller.values || {});
+			held.forEach(addAttachment);
+			// A template file the user has taken out of the form is gone from the controller, and it
+			// must not come back through the list remembered for the template.
 			(controller.postForm?.currentTemplateFiles || this.postForm.currentTemplateFiles || [])
+				.filter((id) => held.includes(String(id)))
 				.forEach(addAttachment);
 		});
 
 		return [...attachments.values()];
+	};
+
+	// The files of a CRM template reach the form with the id of their Disk UF attachment: a bare number,
+	// which the draft would otherwise take for the id of a Disk object. They are remembered as `attached`,
+	// so the draft reads them by the right of the template, not of the Disk of its author.
+	BXMainMailForm.prototype.markComposeTemplateFiles = function(serverFileIds)
+	{
+		// The ids keep the type the uploader gave them: removeFiles() of the Disk controller finds
+		// a file by strict comparison with its serverFileId, which is a number for an attachment.
+		const templateFiles = [...(serverFileIds || [])];
+		(this.postForm.currentTemplateFiles || []).forEach((id) => {
+			this.__composeAttachmentSources.delete(String(id));
+		});
+		templateFiles.forEach((id) => {
+			const stringId = String(id);
+			if (!stringId.startsWith('n'))
+			{
+				this.__composeAttachmentSources.set(stringId, { source: 'attached', id: stringId });
+			}
+		});
+		this.postForm.currentTemplateFiles = templateFiles;
+	};
+
+	// A template file the user has taken out of the form must leave the draft too: only the ids the
+	// upload controllers still hold stay remembered as template files.
+	BXMainMailForm.prototype.pruneComposeTemplateFiles = function()
+	{
+		const templateFiles = this.postForm?.currentTemplateFiles;
+		if (!BX.type.isArray(templateFiles) || templateFiles.length === 0)
+		{
+			return;
+		}
+		const held = new Set();
+		Object.values(this.postForm.controllers || {}).forEach((controller) => {
+			if (controller.storage === 'disk')
+			{
+				Object.keys(controller.values || {}).forEach((id) => held.add(String(id)));
+			}
+		});
+		this.postForm.currentTemplateFiles = templateFiles.filter((id) => held.has(String(id)));
 	};
 
 	BXMainMailForm.prototype.syncDraftAttachmentSources = function(
@@ -603,7 +647,15 @@
 			window.setTimeout(() => this.emitComposeChanged());
 		};
 		bindCustom(this.postForm.eventNode, 'OnFileUploadSuccess', emitAttachmentChanged);
-		bindCustom(this.postForm.eventNode, 'OnFileUploadRemove', emitAttachmentChanged);
+		const emitAttachmentRemoved = () => {
+			window.setTimeout(() => {
+				this.pruneComposeTemplateFiles();
+				this.emitComposeChanged();
+			});
+		};
+		bindCustom(this.postForm.eventNode, 'OnFileUploadRemove', emitAttachmentRemoved);
+		// The Disk user field widget reports a removed item with this event, not with OnFileUploadRemove.
+		bindCustom(this.postForm.eventNode, 'onShowControllers:File:Decrement', emitAttachmentRemoved);
 		bindCustom(this.postForm.eventNode, 'onUploadsHasBeenChanged', emitAttachmentChanged);
 		bindCustom(this, 'MailForm::from::change', () => this.emitComposeChanged());
 		this.__composeReady = true;
@@ -749,16 +801,8 @@
 	{
 		var errorNode = BX.findChildByClassName(this.formWrapper, 'main-mail-form-error', true);
 
-		var alert = new BX.UI.Alert({
-			text: html,
-			inline: true,
-			closeBtn: true,
-			animate: true,
-			color: BX.UI.Alert.Color.DANGER,
-		});
-
 		errorNode.innerHTML = '';
-		errorNode.append(alert.getContainer());
+		errorNode.append(this.renderErrorAlert(html));
 		errorNode.setAttribute('tabindex', '-1');
 		errorNode.focus();
 
@@ -774,6 +818,38 @@
 			else if (pos0.bottom < pos1.bottom-10-this.__scrollable.scrollTop)
 				this.__scrollable.scrollTop = pos1.bottom-10-pos0.bottom;
 		}
+	};
+
+	// The legacy alert stays as a fallback for a portal whose ui module has no ui.system.alert yet.
+	BXMainMailForm.prototype.renderErrorAlert = function (html)
+	{
+		var SystemAlert = BX.UI.System?.Alert?.Alert;
+		var Typography = BX.UI.System?.Typography?.Text;
+		if (!SystemAlert || !Typography)
+		{
+			return new BX.UI.Alert({
+				text: html,
+				closeBtn: true,
+				color: BX.UI.Alert.Color.DANGER,
+			}).getContainer();
+		}
+
+		var content = Typography.render('', { size: '2xs' });
+		content.innerHTML = html;
+
+		var alert = new SystemAlert({
+			design: BX.UI.System.Alert.AlertDesign.tintedAlert,
+			hasCloseButton: true,
+			content: content,
+			events: {
+				closeButtonClick: function ()
+				{
+					alert.destroy();
+				},
+			},
+		});
+
+		return alert.render();
 	};
 
 	BXMainMailForm.prototype.fillFieldsFromDialogs = function ()
@@ -1827,9 +1903,20 @@
 
 				return;
 			}
+
+			this.hideSignatureSurrogates();
+
+			// A `<style>` block of the signature would rule the document the user writes in, so the markup
+			// goes in through the parser of the editor, the way the quote does.
+			var parsedSignatureHtml = this.editor.Parse(signatureHtml);
+			if(!BX.type.isNotEmptyString(parsedSignatureHtml))
+			{
+				parsedSignatureHtml = signatureHtml;
+			}
+
 			if(signatureNode)
 			{
-				signatureNode.innerHTML = signatureHtml;
+				signatureNode.innerHTML = parsedSignatureHtml;
 			}
 			else
 			{
@@ -1840,7 +1927,7 @@
 					props: {
 						className: 'main-mail-form-signature',
 					},
-					html: signatureHtml
+					html: parsedSignatureHtml
 				});
 				var quoteNode = this.editor.GetIframeDoc().getElementById(this.quoteNodeId);
 				if(quoteNode)
@@ -1864,6 +1951,22 @@
 				this.insertSignature(signature);
 			}, this));
 		}
+	};
+
+	// The parser of the editor leaves a surrogate in place of a `<style>` block; in the signature it is noise.
+	BXMainMailForm.prototype.hideSignatureSurrogates = function()
+	{
+		var editorDoc = this.editor.GetIframeDoc();
+		if(!editorDoc || editorDoc.head.querySelector('[data-main-mail-form-signature-style]'))
+		{
+			return;
+		}
+
+		var style = editorDoc.createElement('style');
+		style.dataset.mainMailFormSignatureStyle = '';
+		// The editor shows every surrogate with `display: inline-block !important`, so hiding it takes the same weight.
+		style.textContent = '#' + this.signatureNodeId + ' .bxhtmled-surrogate { display: none !important; }';
+		BX.append(style, editorDoc.head);
 	};
 
 	BXMainMailForm.prototype.findRestoredSignatureNode = function(signatureHtml, signature)
@@ -3216,7 +3319,7 @@
 			}
 
 			ctrl.handler.selectFile({}, {}, value);
-			postForm.currentTemplateFiles = value.map(item => item.serverFileId);
+			field.form.markComposeTemplateFiles(value.map(item => item.serverFileId));
 
 			break;
 		}
@@ -3344,11 +3447,11 @@
 						&& form.fields[i].params.hasOwnProperty('allUserSignatures')) {
 						var field = form.fields[i];
 						field.params.allUserSignatures = response.data.signatures;
-						// Remembered choices travel with the refreshed list: editing a signature may
-						// have changed which of them still resolve.
-						if (response.data.hasOwnProperty('signatureChoices'))
+						// The default of the server travels with the refreshed list: editing a
+						// signature may have changed which one is substituted.
+						if (response.data.hasOwnProperty('signatureSelection'))
 						{
-							field.params.signatureChoices = response.data.signatureChoices;
+							field.params.signatureSelection = response.data.signatureSelection;
 						}
 						var currentSignatures = form.getSenderSignatures(field);
 						form.rebuildSignatureMenu(currentSignatures, field.params, field);
@@ -3361,49 +3464,17 @@
 
 	BXMainMailForm.prototype.getSenderSignatures = function(field)
 	{
-		var currentSignatures = [];
 		var mailbox = this.getCurrentMailbox(field);
 
 		if (mailbox === null || !BX.type.isNotEmptyObject(field.params.allUserSignatures))
 		{
-			return currentSignatures;
+			return [];
 		}
 
-		var allSignatures = field.params.allUserSignatures;
-		var signaturesByKey = {};
-		for (var key in allSignatures)
-		{
-			if (allSignatures.hasOwnProperty(key) && BX.type.isArrayFilled(allSignatures[key]))
-			{
-				// Senders are compared by the normalized key, so a signature saved for the same
-				// sender written in another case still belongs to it
-				var normalizedKey = this.normalizeSenderKey(key);
-				signaturesByKey[normalizedKey] = BX.type.isArrayFilled(signaturesByKey[normalizedKey])
-					? signaturesByKey[normalizedKey].concat(allSignatures[key])
-					: allSignatures[key].slice();
-			}
-		}
+		// The server answered by the sender key of this form, so there is nothing left to look up
+		var senderSignatures = field.params.allUserSignatures[mailbox.formated];
 
-		// The order is the personal cascade of the server side: "name and address", then
-		// "address", then the signature bound to no sender at all
-		var lookupKeys = [
-			this.normalizeSenderKey(mailbox.formated),
-			this.normalizeSenderKey(mailbox.email),
-			'',
-		];
-		var usedKeys = {};
-		for (var i = 0; i < lookupKeys.length; i++)
-		{
-			var lookupKey = lookupKeys[i];
-			if (usedKeys[lookupKey] === true || !BX.type.isArrayFilled(signaturesByKey[lookupKey]))
-			{
-				continue;
-			}
-			usedKeys[lookupKey] = true;
-			currentSignatures.push.apply(currentSignatures, signaturesByKey[lookupKey]);
-		}
-
-		return currentSignatures;
+		return BX.type.isArrayFilled(senderSignatures) ? senderSignatures.slice() : [];
 	}
 
 	/**
@@ -3434,10 +3505,8 @@
 	}
 
 	/**
-	 * The single rule for comparing senders, the same one the server applies
-	 * (Bitrix\Mail\Service\SharedSignature\AssignmentResolver::normalizeSenderKey): lower case,
-	 * trailing spaces stripped. Both sides have to agree, otherwise the default signature differs
-	 * between the first render and a later recalculation.
+	 * Compares the sender typed into the field with the senders the form knows: lower case,
+	 * trailing spaces stripped.
 	 *
 	 * @param {string} sender
 	 * @returns {string}
@@ -3453,10 +3522,9 @@
 	}
 
 	/**
-	 * Default signature for the current sender. The order is ALG-01 and belongs to the mail module
-	 * (Bitrix\Mail\Service\SharedSignature\SignatureResolver): the signature the person picked for
-	 * this sender, unless a shared one was assigned to the mailbox later; then the last assigned
-	 * shared one; then the personal default.
+	 * Default signature for the current sender. The rule of which signature it is belongs to the
+	 * mail module and is already applied on the server; the only thing decided here is that a pick
+	 * made in this session of the form wins over the default that came with the page.
 	 *
 	 * @param {object} field
 	 * @param {Array} signatures Signatures of the current sender.
@@ -3469,125 +3537,60 @@
 			return '';
 		}
 
-		var assigned = null;
-		var personal = null;
-		for (var i = 0; i < signatures.length; i++)
+		var candidates = this.getSignatureChoiceIds(field);
+		for (var c = 0; c < candidates.length; c++)
 		{
-			if (!BX.type.isNotEmptyObject(signatures[i]) || !BX.type.isNotEmptyString(signatures[i].full))
+			for (var i = 0; i < signatures.length; i++)
 			{
-				continue;
-			}
-
-			// The server hands assigned signatures over ordered by assignment date desc
-			if (signatures[i].isShared === true)
-			{
-				assigned = assigned === null ? signatures[i] : assigned;
-			}
-			else
-			{
-				personal = personal === null ? signatures[i] : personal;
-			}
-		}
-
-		var choice = this.getRememberedSignatureChoice(field);
-		if (choice !== null)
-		{
-			var chosen = null;
-			for (var k = 0; k < signatures.length; k++)
-			{
-				if (BX.type.isNotEmptyObject(signatures[k])
-					&& BX.type.isNotEmptyString(signatures[k].full)
-					&& parseInt(signatures[k].signatureId, 10) === choice.id)
+				if (BX.type.isNotEmptyObject(signatures[i])
+					&& BX.type.isNotEmptyString(signatures[i].full)
+					&& parseInt(signatures[i].signatureId, 10) === candidates[c])
 				{
-					chosen = signatures[k];
-					break;
+					return signatures[i].full;
 				}
 			}
+		}
 
-			// A reference to a signature that is gone counts as no choice at all. An assignment
-			// whose moment is unknown wins over the choice: there is nothing to compare the choice
-			// with, and the assigned signature is what the mailbox promises by default.
-			var assignedAt = assigned === null ? 0 : parseInt(assigned.assignedAt, 10);
-			if (chosen !== null && (assigned === null || (assignedAt > 0 && choice.time > assignedAt)))
+		return '';
+	}
+
+	/**
+	 * Signatures worth substituting for the current sender, most wanted first: the pick of this
+	 * session of the form, then the default the mail module has chosen. A pick pointing at a
+	 * signature that is gone counts as no pick at all, hence the list rather than a single value.
+	 *
+	 * @param {object} field
+	 * @returns {Array<number>}
+	 */
+	BXMainMailForm.prototype.getSignatureChoiceIds = function(field)
+	{
+		var mailbox = this.getCurrentMailbox(field);
+		if (mailbox === null || !BX.type.isNotEmptyObject(field.params))
+		{
+			return [];
+		}
+
+		var candidates = [];
+		var sources = [field.params.signatureSessionChoices, field.params.signatureSelection];
+		for (var i = 0; i < sources.length; i++)
+		{
+			var signatureId = BX.type.isPlainObject(sources[i])
+				? parseInt(sources[i][mailbox.formated], 10)
+				: 0;
+			if (signatureId > 0 && candidates.indexOf(signatureId) === -1)
 			{
-				return chosen.full;
+				candidates.push(signatureId);
 			}
 		}
 
-		if (assigned !== null)
-		{
-			return assigned.full;
-		}
-
-		return personal === null ? '' : personal.full;
+		return candidates;
 	}
 
 	/**
-	 * Choice remembered for the current sender, in the very shape the mail module stores it: a map
-	 * of sender key to "<signature id>:<unix time>", see
-	 * Bitrix\Mail\Service\SharedSignature\SignatureChoiceStorage.
-	 *
-	 * @param {object} field
-	 * @returns {?{id: number, time: number}}
-	 */
-	BXMainMailForm.prototype.getRememberedSignatureChoice = function(field)
-	{
-		if (!BX.type.isNotEmptyObject(field.params) || !BX.type.isNotEmptyObject(field.params.signatureChoices))
-		{
-			return null;
-		}
-
-		var senderKey = this.getSenderChoiceKey(field);
-		if (senderKey === '')
-		{
-			return null;
-		}
-
-		var raw = field.params.signatureChoices[senderKey];
-		if (!BX.type.isNotEmptyString(raw))
-		{
-			return null;
-		}
-
-		var parts = raw.split(':');
-		var id = parseInt(parts[0], 10);
-		var time = parseInt(parts[1], 10);
-
-		if (!(id > 0))
-		{
-			return null;
-		}
-
-		return {id: id, time: time > 0 ? time : 0};
-	}
-
-	/**
-	 * Storage key of a remembered choice, built exactly as
-	 * SignatureChoiceStorage::buildSenderKey() builds it.
-	 *
-	 * @param {object} field
-	 * @returns {string}
-	 */
-	BXMainMailForm.prototype.getSenderChoiceKey = function(field)
-	{
-		var mailbox = this.getCurrentMailbox(field);
-		if (mailbox === null)
-		{
-			return '';
-		}
-
-		var email = BX.type.isNotEmptyString(mailbox.email) ? mailbox.email.trim() : '';
-		var name = BX.type.isNotEmptyString(mailbox.name) ? mailbox.name.trim() : '';
-		var sender = (name !== '' && email !== '') ? name + ' <' + email + '>' : email;
-
-		return this.normalizeSenderKey(sender);
-	}
-
-	/**
-	 * Remembers the pick for the current sender in the platform user option the mail module reads:
-	 * category 'mail', name 'signature_choice', value "<signature id>:<unix time>" per sender key.
-	 * CUserOptions merges such an option key by key, so writing one sender leaves the choices made
-	 * for the other senders alone and no controller of our own is needed.
+	 * Remembers the pick for the current sender. The mail module owns both the store and the shape
+	 * of its key, so the pick goes to its action with the sender given as an address and a name.
+	 * The pick is kept in the parameters of the field as well: switching the sender back and forth
+	 * must apply the fresh pick, not the one the page was opened with.
 	 *
 	 * @param {number} signatureId Identifier of the picked signature; there is nothing to remember
 	 *                             without it.
@@ -3602,23 +3605,28 @@
 			return;
 		}
 
-		var senderKey = this.getSenderChoiceKey(field);
-		if (senderKey === '')
+		var mailbox = this.getCurrentMailbox(field);
+		if (mailbox === null)
 		{
 			return;
 		}
 
-		var choice = signatureId + ':' + Math.floor((new Date).getTime() / 1000);
-
-		if (!BX.type.isPlainObject(field.params.signatureChoices))
+		if (!BX.type.isPlainObject(field.params.signatureSessionChoices))
 		{
-			field.params.signatureChoices = {};
+			field.params.signatureSessionChoices = {};
 		}
-		// Keeps the form in step with the option: switching the sender back and forth must apply
-		// the fresh choice, not the one the page was opened with
-		field.params.signatureChoices[senderKey] = choice;
+		field.params.signatureSessionChoices[mailbox.formated] = signatureId;
 
-		BX.userOptions.save('mail', 'signature_choice', senderKey, choice);
+		BX.ajax.runAction('mail.api.signature.setSenderChoice', {
+			data: {
+				email: BX.type.isNotEmptyString(mailbox.email) ? mailbox.email : '',
+				name: BX.type.isNotEmptyString(mailbox.name) ? mailbox.name : '',
+				signatureId: signatureId,
+			},
+		}).catch(function()
+		{
+			// The pick already works in this form; a failure only costs it the next page load
+		});
 	}
 
 	BXMainMailForm.prototype.removeSignaturesFromMenu = function()
@@ -3709,9 +3717,15 @@
 	BXMainMailForm.prototype.buildSignatureMenuItemNode = function(label, isShared)
 	{
 		var wrapper = BX.create('span', {
-			attrs: { style: 'display:flex;align-items:center;gap:6px;' },
-			text: label,
+			attrs: { style: 'display:flex;align-items:center;gap:6px;max-width:320px;padding-right:8px;' },
 		});
+
+		// The label is the only part allowed to shrink: it ellipsises instead of running under the
+		// edge of the popup, while the badge next to it keeps its width.
+		BX.append(BX.create('span', {
+			attrs: { style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;' },
+			text: label,
+		}), wrapper);
 
 		if (isShared)
 		{

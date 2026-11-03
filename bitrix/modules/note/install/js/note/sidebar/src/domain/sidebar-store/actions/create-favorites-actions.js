@@ -1,8 +1,9 @@
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { isShippedSubscriptionMode, SHIPPED_SUBSCRIPTION_MODES } from 'note.ui.document-history';
 import { PAGE_SIZE, REFRESH_DEBOUNCE_JITTER_MS, REFRESH_DEBOUNCE_MIN_MS } from '../shared/constants';
 import { favoriteExpandKey, favoriteKey } from '../shared/keys';
 import { NoteEvent } from '../../../services/note-events';
-import type { SidebarApi } from '../../../services/sidebar-api';
+import type { FavoriteNotifyState, SidebarApi } from '../../../services/sidebar-api';
 
 type FavoriteTarget = { entityType: string, entityId: number };
 type FavoriteSnapshot = { row: Object | null };
@@ -33,7 +34,7 @@ const POSITIVE_MODES = ['self', 'subtree', 'all'];
 // and every bell under it changes with them.
 const COVERING_MODES = ['subtree', 'all'];
 const MODE_MUTED = 'muted';
-// [API-05] The one refusal the interface is not supposed to be able to reach: the target left the
+// The one refusal the interface is not supposed to be able to reach: the target left the
 // list between the read and the press. The state is re-read rather than guessed at.
 const FAVORITE_REQUIRED_ERROR = 'FAVORITE_REQUIRED';
 
@@ -45,6 +46,31 @@ const EMPTY_NOTIFY = Object.freeze({
 	inheritedSource: null,
 	notified: false,
 });
+
+// Where a write of the direct row leads, computed rather than re-read: the write is optimistic and
+// the row has to be right on the frame of the press.
+//
+// MODES-01: `notified` is the predicate of the notification filter and says only what the transport
+// delivers - a direct row in a mode the shipping holds for this scope. Coverage from above is not
+// touched by a row of one's own, so `inherited` carries over as it was, and it no longer counts
+// towards `notified`: nothing is delivered through inheritance. Read from the same map the server
+// reads its own list from, so the server's answer to the very same press agrees with this.
+export function nextNotifyState(
+	scope: string,
+	current: FavoriteNotifyState | null,
+	mode: string | null,
+): FavoriteNotifyState
+{
+	const base = current ?? EMPTY_NOTIFY;
+
+	return {
+		...base,
+		mode: mode ?? null,
+		subscribed: POSITIVE_MODES.includes(mode),
+		muted: mode === MODE_MUTED,
+		notified: isShippedSubscriptionMode(scope, mode),
+	};
+}
 
 // [P1] Favorites block: the whole list lives on the server, so every gesture goes through here -
 // the components own no state of their own. Reads come back through the store (state + queries).
@@ -67,7 +93,7 @@ export class SidebarFavoriteActions
 	#inheritanceRefreshQueued: boolean = false;
 	#announcingNotify: boolean = false;
 	#announcingFavorite: boolean = false;
-	// [TPL-02] Rows the notification filter took off the screen, held on to so that switching it back
+	// Rows the notification filter took off the screen, held on to so that switching it back
 	// off can put them back within the frame of the press instead of after a round trip. Kept level with
 	// the block while it is on (see #putRow, #dropRow), and the server page that follows the switch
 	// replaces the list outright anyway - so anything that went stale out of our sight is corrected a
@@ -147,7 +173,7 @@ export class SidebarFavoriteActions
 		return true;
 	}
 
-	// [TPL-02] First page taken from the payload the page was rendered with, instead of a request of
+	// First page taken from the payload the page was rendered with, instead of a request of
 	// its own - the block is painted together with the knowledge bases, which arrive the same way.
 	// Answers whether it had anything to take: without a payload the caller reads the page itself.
 	hydrateFavorites(payload: mixed): boolean
@@ -177,7 +203,7 @@ export class SidebarFavoriteActions
 		return true;
 	}
 
-	// [TPL-02] First read and every following page: which of the two it is follows from the state,
+	// First read and every following page: which of the two it is follows from the state,
 	// so the caller (a scroll sentinel, the block on mount) never has to decide.
 	async loadFavoritesPage(): Promise<void>
 	{
@@ -194,7 +220,7 @@ export class SidebarFavoriteActions
 		}
 	}
 
-	// [ERR-006] Second attempt at whatever failed: the next page keeps the rows already loaded, the
+	// Second attempt at whatever failed: the next page keeps the rows already loaded, the
 	// first page is re-read from scratch.
 	async retryFavorites(): Promise<void>
 	{
@@ -259,7 +285,7 @@ export class SidebarFavoriteActions
 		this.#state.favoritesSectionExpanded.value = !this.#state.favoritesSectionExpanded.value;
 	}
 
-	// [TPL-02] The filter is a request parameter, not a client-side sieve: filtering on the client would
+	// The filter is a request parameter, not a client-side sieve: filtering on the client would
 	// hand out pages with holes in them and break the cursor. Both directions of the press are answered
 	// here all the same, in the frame of the press: the rows on screen carry the same `notified` the
 	// server filters by, so switching it on drops what it excludes, and what was dropped is kept, so
@@ -300,7 +326,7 @@ export class SidebarFavoriteActions
 		}
 	}
 
-	// [TPL-02] The single path in and out of the list, shared by all three stars. `hint` is what the
+	// The single path in and out of the list, shared by all three stars. `hint` is what the
 	// caller knows about the object it starred, so the row can be drawn within the frame of the press
 	// instead of after a re-read (see #provisionalRow).
 	async toggleFavorite(target: mixed, hint: FavoriteHint | null = null): Promise<boolean>
@@ -336,7 +362,7 @@ export class SidebarFavoriteActions
 		}
 	}
 
-	// [ALG-02] (NORMATIVE) Expansion of a block row. The flag goes into the block's own space, the
+	// (NORMATIVE) Expansion of a block row. The flag goes into the block's own space, the
 	// branch comes from the namespace the server named in expandVia: the regular branch action would
 	// turn a user down for a document they see only through a personal grant.
 	async toggleFavoriteExpanded(item: mixed): Promise<void>
@@ -364,7 +390,7 @@ export class SidebarFavoriteActions
 		await this.#loadFavoriteBranch(target, key);
 	}
 
-	// [ERR-005] Second attempt at a branch, offered inside the row that failed.
+	// Second attempt at a branch, offered inside the row that failed.
 	async retryFavoriteBranch(item: mixed): Promise<void>
 	{
 		const target = this.#normalizeExpandTarget(item);
@@ -409,7 +435,7 @@ export class SidebarFavoriteActions
 		await this.refreshFavoriteCoverage(branch);
 	}
 
-	// [ALG-02] The branches of the block are not its own copies - they are read from the two document
+	// The branches of the block are not its own copies - they are read from the two document
 	// namespaces of the panel. When one of those namespaces drops a branch (the accessible-tree section
 	// re-reading its first page, an access cascade), every row of the block standing open on it reads it
 	// again. Without this the row kept its chevron open over nothing until the same branch happened to
@@ -473,7 +499,7 @@ export class SidebarFavoriteActions
 		}
 	}
 
-	// [AC-052] A subscription on a knowledge base covers every document in it, and a subtree subscription
+	// A subscription on a knowledge base covers every document in it, and a subtree subscription
 	// everything below itself - so a write of that kind changes the state of rows it never touched. Their
 	// coverage is the server's answer, not something derivable here: the list is re-read and every opened
 	// branch re-reads its states. Without this the bells of the descendants keep the coverage that has
@@ -523,7 +549,7 @@ export class SidebarFavoriteActions
 		return COVERING_MODES.includes(previousMode) || COVERING_MODES.includes(nextMode);
 	}
 
-	// [API-06] Coverage of the documents of one branch: one request per branch, never one per row.
+	// Coverage of the documents of one branch: one request per branch, never one per row.
 	// Called on expansion and on every following page of the branch - a page that arrives without
 	// states would draw rows with no bell where a bell belongs.
 	async refreshFavoriteCoverage(params: mixed): Promise<void>
@@ -608,9 +634,13 @@ export class SidebarFavoriteActions
 		return Array.isArray(docs) ? docs : [];
 	}
 
-	// [API-05] One press of a bell that has no depth to choose: a covered object is muted, a muted one
+	// One press of a bell that has no depth to choose: a covered object is muted, a muted one
 	// resumes, a subscribed one goes silent, and an object in the list with nothing arriving subscribes.
 	// The same rule the bell of the editor follows.
+	//
+	// MODES-01: every branch that leans on a mode outside the shipping stands behind the map, so in the
+	// shipping the press comes down to a pair - a shipped subscription goes off, anything else goes on.
+	// The branches themselves stay in working order: returning a mode to the map is all it takes.
 	async toggleFavoriteNotify(target: mixed): Promise<void>
 	{
 		const normalized = this.#normalizeTarget(target);
@@ -620,42 +650,58 @@ export class SidebarFavoriteActions
 		}
 
 		const current = this.#notifyStateOf(normalized.entityType, normalized.entityId);
+		const canMute = isShippedSubscriptionMode(normalized.entityType, MODE_MUTED);
 		// A mute counts only while there is coverage to suppress. The negative row survives the covering
 		// subscription being switched off, and treating that leftover as "muted" would spend the press on
 		// deleting a row nothing depends on - the bell would look unresponsive.
-		const isMuted = current?.muted === true && current?.inherited === true;
-		if (isMuted || current?.subscribed === true)
+		const isMuted = canMute && current?.muted === true && current?.inherited === true;
+		// Q-1: only a row in a shipped mode is a subscription to switch off. A legacy row of another mode
+		// is shown as off (see FavoriteRow.isNotified), so the press has to write rather than delete -
+		// set() upserts, and the row repairs itself into the shipped mode.
+		const isSubscribed = current?.subscribed === true
+			&& isShippedSubscriptionMode(normalized.entityType, current?.mode)
+		;
+		if (isMuted || isSubscribed)
 		{
 			await this.clearFavoriteNotify(normalized);
 
 			return;
 		}
 
-		if (current?.inherited === true)
+		if (canMute && current?.inherited === true)
 		{
-			// [AC-045] Outside the list only muting is on offer, and muting is what a covered object
-			// gets here too: the depth of the covering subscription is not this row's to change (AC-052).
+			// Outside the list only muting is on offer, and muting is what a covered object
+			// gets here too: the depth of the covering subscription is not this row's to change.
 			await this.setFavoriteNotify(normalized, MODE_MUTED);
 
 			return;
 		}
 
-		await this.setFavoriteNotify(normalized, normalized.entityType === 'collection' ? 'all' : 'self');
+		const mode = this.#shippedModeOf(normalized.entityType);
+		if (mode === null)
+		{
+			// Nothing to write: a knowledge base is subscribed with `all` alone, and `all` is not shipped.
+			// Its row carries no bell either, so this is unreachable from the interface - it only keeps the
+			// action honest for a caller that has one.
+			return;
+		}
+
+		await this.setFavoriteNotify(normalized, mode);
 	}
 
-	// [API-05] Explicit depth, chosen in the popover of a row with nested documents.
+	// Explicit depth, chosen in the popover of a row with nested documents.
 	async setFavoriteNotify(target: mixed, mode: string): Promise<void>
 	{
 		await this.#writeNotify(target, mode);
 	}
 
-	// [API-05] "Off" for a direct subscription and "resume" for a muted object are the same call.
+	// "Off" for a direct subscription and "resume" for a muted object are the same call.
 	async clearFavoriteNotify(target: mixed): Promise<void>
 	{
 		await this.#writeNotify(target, null);
 	}
 
-	// [EVENT-02] subscriptionSet. Idempotent: the initiator is not excluded from the broadcast, so
+	// subscriptionSet. Idempotent: the initiator is not excluded from the broadcast, so
 	// this lands on top of the change it describes. Objects the sidebar knows nothing about are
 	// skipped - inventing a state for them would light a bell on a row nobody asked about.
 	applySubscriptionSet(params: Object): void
@@ -663,7 +709,7 @@ export class SidebarFavoriteActions
 		this.#applyRemoteMode(params, this.#normalizeMode(params?.mode));
 	}
 
-	// [EVENT-02] subscriptionRemove. Also arrives from the cascade of a star being taken off, and the
+	// subscriptionRemove. Also arrives from the cascade of a star being taken off, and the
 	// handler makes no distinction: the row is gone either way.
 	applySubscriptionRemove(params: Object): void
 	{
@@ -699,7 +745,7 @@ export class SidebarFavoriteActions
 		// the block already holds the mode being announced - re-reading everything again would cost a
 		// second reload of the list per press. A mode that differs is news, and news is followed.
 		const isKnown = (current.mode ?? null) === mode;
-		this.#patchNotify(target, this.#nextNotifyState(current, mode));
+		this.#patchNotify(target, nextNotifyState(target.entityType, current, mode));
 		if (covers && !isKnown)
 		{
 			void this.#refreshInheritance();
@@ -723,7 +769,7 @@ export class SidebarFavoriteActions
 		// Optimistic: the state a successful call leads to follows from DTO-02 alone - a direct row
 		// never changes the coverage an object gets from above - so nothing has to be re-read.
 		const previous = this.#notifyStateOf(normalized.entityType, normalized.entityId);
-		this.#patchNotify(normalized, this.#nextNotifyState(previous, mode));
+		this.#patchNotify(normalized, nextNotifyState(normalized.entityType, previous, mode));
 
 		this.#state.favoritesNotifyPending[key] = true;
 		try
@@ -748,7 +794,7 @@ export class SidebarFavoriteActions
 		}
 		catch (error)
 		{
-			// [ERR-003] The failed change goes back to what it was and the composition of the list is
+			// The failed change goes back to what it was and the composition of the list is
 			// untouched: notifications and membership are separate things.
 			this.#patchNotify(normalized, previous);
 			if (String(error?.code || '') === FAVORITE_REQUIRED_ERROR)
@@ -765,23 +811,6 @@ export class SidebarFavoriteActions
 		{
 			delete this.#state.favoritesNotifyPending[key];
 		}
-	}
-
-	// [DTO-02] Where a write of the direct row leads. `notified` is the predicate of the filter, and
-	// coverage from above is not touched by a row of one's own - so it carries over as it was.
-	#nextNotifyState(current: Object | null, mode: string | null): Object
-	{
-		const base = current ?? EMPTY_NOTIFY;
-		const subscribed = POSITIVE_MODES.includes(mode);
-		const muted = mode === MODE_MUTED;
-
-		return {
-			...base,
-			mode: mode ?? null,
-			subscribed,
-			muted,
-			notified: (subscribed || base.inherited === true) && !muted,
-		};
 	}
 
 	// Both surfaces of the same state: the row of the block and the coverage map its branch reads.
@@ -810,7 +839,7 @@ export class SidebarFavoriteActions
 		}
 	}
 
-	// [DTO-02] One announcement of a notification state over the local bus. `confirmed` says whether the
+	// One announcement of a notification state over the local bus. `confirmed` says whether the
 	// server has already accepted the change: a listener that has to re-read something (coverage from
 	// above) can only trust the confirmed one.
 	#announceNotify(target: FavoriteTarget, notify: Object | null, confirmed: boolean): void
@@ -893,8 +922,15 @@ export class SidebarFavoriteActions
 		return [...POSITIVE_MODES, MODE_MUTED].includes(mode) ? mode : null;
 	}
 
+	// The mode one press writes for the scope: the first the shipping holds, the same rule the bell of
+	// the editor follows for its own toggle. Absent - the scope ships no subscription at all.
+	#shippedModeOf(entityType: string): string | null
+	{
+		return SHIPPED_SUBSCRIPTION_MODES[entityType]?.[0] ?? null;
+	}
+
 	// The branch loaders answer with state rather than by throwing: a branch that is still not there
-	// after the read is the failure, and an empty one that did arrive is a valid answer (AC-035).
+	// after the read is the failure, and an empty one that did arrive is a valid answer.
 	#reportBranchResult(key: string, isLoaded: boolean): void
 	{
 		if (isLoaded)
@@ -922,7 +958,7 @@ export class SidebarFavoriteActions
 		};
 	}
 
-	// [EVENT-01] favoriteAdd. Idempotent by contract: the initiator is not excluded from the
+	// favoriteAdd. Idempotent by contract: the initiator is not excluded from the
 	// broadcast, so this lands on top of the optimistic change it describes.
 	async applyFavoriteAdd(params: Object): Promise<void>
 	{
@@ -935,7 +971,7 @@ export class SidebarFavoriteActions
 		this.#setIndex(target, true);
 		this.#applyPositions(params?.affectedPositions);
 
-		// [EVENT-01] The push carries the finished row, in the same shape a page of the list does - so a
+		// The push carries the finished row, in the same shape a page of the list does - so a
 		// row the block has never seen goes in from here, and one it holds (the provisional row of a press
 		// of our own) is replaced by it.
 		const item = this.#api.normalizeFavoriteItem(params?.item);
@@ -963,7 +999,7 @@ export class SidebarFavoriteActions
 		}
 	}
 
-	// [EVENT-01] favoriteRemove.
+	// favoriteRemove.
 	applyFavoriteRemove(params: Object): void
 	{
 		const target = this.#normalizeTarget(params);
@@ -976,7 +1012,7 @@ export class SidebarFavoriteActions
 		this.#dropRow(target);
 	}
 
-	// [EVENT-01] favoriteMove. Mass renumbering arrives as requestRefetch instead of positions.
+	// favoriteMove. Mass renumbering arrives as requestRefetch instead of positions.
 	async applyFavoriteMove(params: Object): Promise<void>
 	{
 		if (params?.requestRefetch === true)
@@ -1007,9 +1043,9 @@ export class SidebarFavoriteActions
 		this.#applyServerPosition(target, params);
 	}
 
-	// [API-03] Manual order. The gap comes from the drag as a pair of row ids; the order moves at once
+	// Manual order. The gap comes from the drag as a pair of row ids; the order moves at once
 	// and is then overwritten by what the server confirmed - two sessions reordering the same list can
-	// only converge on the server's answer (AC-072).
+	// only converge on the server's answer.
 	async moveFavoriteRow(dragId: number, targetId: number, placement: string): Promise<void>
 	{
 		const rows = this.#state.favorites.value;
@@ -1026,7 +1062,7 @@ export class SidebarFavoriteActions
 			return;
 		}
 
-		// [ERR-007] The position the server last confirmed for this row. Putting that one value back is
+		// The position the server last confirmed for this row. Putting that one value back is
 		// what returns the order - and unlike a snapshot of the whole list it cannot resurrect a row
 		// that left the block while the request was in flight.
 		const confirmedPosition = Number(dragRow.position);
@@ -1066,7 +1102,7 @@ export class SidebarFavoriteActions
 		this.#refreshCursorFromTail();
 	}
 
-	// [API-04] The cursor is the position of the last loaded row, and reordering moves it: left as it
+	// The cursor is the position of the last loaded row, and reordering moves it: left as it
 	// was, the next page would be asked for from a place no row stands in any more.
 	#refreshCursorFromTail(): void
 	{
@@ -1087,7 +1123,7 @@ export class SidebarFavoriteActions
 		this.#state.favoritesCursor.value = { position: Number(tail.position), id: Number(tail.id) };
 	}
 
-	// [API-03] The ordinal number of the insertion point in the list, counted without the row being
+	// The ordinal number of the insertion point in the list, counted without the row being
 	// moved: 1 is the first row. The client never computes a POSITION of its own.
 	#insertPositionOf(dragRow: Object, targetRow: Object, placement: string): number | null
 	{
@@ -1239,7 +1275,7 @@ export class SidebarFavoriteActions
 		return true;
 	}
 
-	// [DTO-01] One finished row into the block, in place of whatever stood under its key. Under the
+	// One finished row into the block, in place of whatever stood under its key. Under the
 	// notification filter a row that nothing reaches has no place on screen.
 	#putRow(row: Object): void
 	{
@@ -1311,7 +1347,7 @@ export class SidebarFavoriteActions
 		return this.#sort([...visible, ...restored]);
 	}
 
-	// [TPL-02] The filter is a request parameter, so a row that arrives from anywhere but a page of the
+	// The filter is a request parameter, so a row that arrives from anywhere but a page of the
 	// list has to be held to it here.
 	#passesFilter(row: Object): boolean
 	{
@@ -1326,7 +1362,7 @@ export class SidebarFavoriteActions
 		return rows.length > 0 ? Number(rows[0].position) || 0 : 0;
 	}
 
-	// [ALG-01] Removal.
+	// Removal.
 	async #removeFavorite(target: FavoriteTarget): Promise<boolean>
 	{
 		const snapshot = this.#snapshotOf(target);
@@ -1421,7 +1457,7 @@ export class SidebarFavoriteActions
 		}
 		catch (error)
 		{
-			// [ERR-004] The failure stays inside the block: the rest of the sidebar is untouched and
+			// The failure stays inside the block: the rest of the sidebar is untouched and
 			// the block itself offers a retry.
 			this.#state.favoritesError.value = this.#messages.favoritesLoadError || error?.message || '';
 			this.#state.favoritesErrorOnAppend.value = append;
@@ -1569,7 +1605,7 @@ export class SidebarFavoriteActions
 			return;
 		}
 
-		// [DTO-01] The sender that has the server's answer reports the finished row with it, so the block
+		// The sender that has the server's answer reports the finished row with it, so the block
 		// completes the row it drew on the press without a read of its own and without waiting for pull.
 		const item = this.#api.normalizeFavoriteItem(params?.item);
 		if (item !== null)
@@ -1690,7 +1726,7 @@ export class SidebarFavoriteActions
 		return this.#sort(merged);
 	}
 
-	// [API-04] Server order: POSITION DESC, ID DESC.
+	// Server order: POSITION DESC, ID DESC.
 	#sort(rows: Object[]): Object[]
 	{
 		return [...rows].sort((left, right) => {

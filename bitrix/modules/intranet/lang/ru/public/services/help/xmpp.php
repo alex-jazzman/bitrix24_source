@@ -60,8 +60,8 @@ $MESS["SERVICES_INFO"] = "На Портале имеется внутренни�
 <br />
 
 <div align='center'>
-<a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/video1s.png', 768, 480, 'Пример видеоконференции')\"/>
-<img height='192' border='0' width='307' src='#SITE#images/ru/docs/cp/video1s-s.png' alt='Нажмите на рисунок, чтобы увеличить' style='cursor: pointer;' />
+<a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/video1s.webp', 768, 480, 'Пример видеоконференции')\"/>
+<img height='192' border='0' width='307' src='#SITE#images/ru/docs/cp/video1s-s.webp' alt='Нажмите на рисунок, чтобы увеличить' style='cursor: pointer;' />
 </a>
   <br />
  <i>Видеоконференция через Bria</i>
@@ -85,8 +85,8 @@ $MESS["SERVICES_INFO"] = "На Портале имеется внутренни�
     <tr> </tr>
 
     <tr><td valign='top'>
-    <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/qip2.png', 176, 328, 'QIP в мобильном!')\">
-    <img src='#SITE#images/ru/docs/cp/qip2-s.png' width='100' height='186' border='0' alt='QIP в мобильном!' title='QIP в мобильном!' />
+    <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/qip2.webp', 176, 328, 'QIP в мобильном!')\">
+    <img src='#SITE#images/ru/docs/cp/qip2-s.webp' width='100' height='186' border='0' alt='QIP в мобильном!' title='QIP в мобильном!' />
     </a>
         <br />
                                           </td><td>
@@ -118,8 +118,8 @@ $MESS["SERVICES_INFO"] = "На Портале имеется внутренни�
        </td><td>
         <br />
        </td><td valign='top'>
-        <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/im2.png', 266, 405, 'Контакт лист компании и вложенные группы')\">
-        <img src='#SITE#images/ru/docs/cp/im2-s.png' width='100' height='152' border='0' alt='Контакт лист компании и вложенные группы' title='Контакт лист компании и вложенные группы' />
+        <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/im2.webp', 266, 405, 'Контакт лист компании и вложенные группы')\">
+        <img src='#SITE#images/ru/docs/cp/im2-s.webp' width='100' height='152' border='0' alt='Контакт лист компании и вложенные группы' title='Контакт лист компании и вложенные группы' />
         </a>
         <br />
 
@@ -137,8 +137,8 @@ $MESS["SERVICES_INFO"] = "На Портале имеется внутренни�
     <tr><td valign='top'>
 
 
-    <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/cp8_miranda.png', 648, 476, 'Настройка Miranda')\">
-    <img src='#SITE#images/ru/docs/cp/cp8_miranda-s.png' border='0' width='100' height='73' alt='Настройка Miranda' title='Настройка Miranda' />
+    <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/cp8_miranda.webp', 648, 476, 'Настройка Miranda')\">
+    <img src='#SITE#images/ru/docs/cp/cp8_miranda-s.webp' border='0' width='100' height='73' alt='Настройка Miranda' title='Настройка Miranda' />
     </a>
         <br />
        </td><td valign='top'> <span class='text'>
@@ -165,8 +165,8 @@ $MESS["SERVICES_INFO"] = "На Портале имеется внутренни�
   <div align='left'>
     <h2><a name='Infium'></a>Даешь QIP Infium!</h2>
    </div>
- <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/qip.png', 662, 478, 'Настройки Jabber в QIP Infium')\">
- <img src='#SITE#images/ru/docs/cp/qip-s.png' width='300' height='216' border='0' alt='Настройки Jabber в QIP Infium' title='Настройки Jabber в QIP Infium' />
+ <a href=\"javascript:ShowImg('#SITE#images/ru/docs/cp/qip.webp', 662, 478, 'Настройки Jabber в QIP Infium')\">
+ <img src='#SITE#images/ru/docs/cp/qip-s.webp' width='300' height='216' border='0' alt='Настройки Jabber в QIP Infium' title='Настройки Jabber в QIP Infium' />
  </a>
   <br />
  <i>Настройки Jabber в QIP Infium </i>

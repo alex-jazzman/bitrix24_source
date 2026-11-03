@@ -1,4 +1,12 @@
 /* eslint-disable */
+type CallLogContextProvider = () => CallLogContext;
+
+type CallLogContext = {
+	roomId?: string;
+	callId?: number;
+	chatId?: number;
+};
+
 type CallSettingsType = {
 	jwtCallsEnabled?: boolean;
 	plainCallsUseJwt?: boolean;
@@ -10,6 +18,14 @@ type CallSettingsType = {
 };
 
 declare namespace BX.Call.Lib {
+	const CallLogContextRegistry: ContextProviderRegistry;
+
+	class ContextProviderRegistry {
+		registerProvider(provider: CallLogContextProvider): void;
+		unregisterProvider(provider: CallLogContextProvider): void;
+		getContext(): CallLogContext;
+	}
+
 	const CallSettingsManager: CallSettings;
 
 	class CallSettings {

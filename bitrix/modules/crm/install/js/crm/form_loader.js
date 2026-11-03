@@ -133,7 +133,8 @@
 			throw new Error('Could not load form without parameter `ref`');
 		}
 
-		var cacheId = host + '|' + parameters.id;
+		var telemetrySign = parameters.telemetrySign || '';
+		var cacheId = host + '|' + parameters.id + '|' + parameters.sec + '|' + telemetrySign;
 		if (loaders[cacheId]) // check loaded
 		{
 			InvokeLoader(parameters, loaders[cacheId]);
@@ -146,6 +147,7 @@
 				var uri = host + '/bitrix/services/main/ajax.php?action=crm.site.form.get'
 					+ '&id=' + parameters.id
 					+ '&sec=' + parameters.sec
+					+ '&telemetry_sign=' + encodeURIComponent(telemetrySign)
 					+ '&loaderOnly=y';
 
 				window.fetch(

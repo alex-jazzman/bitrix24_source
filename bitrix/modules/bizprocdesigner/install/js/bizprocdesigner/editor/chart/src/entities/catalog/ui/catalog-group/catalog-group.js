@@ -29,8 +29,13 @@ export const CatalogGroup = {
 		<div class="editor-chart-catalog-group">
 			<div
 				:data-test-id="$testId('catalogGroup', group.id)"
+				:data-group-id="group.id"
 				class="editor-chart-catalog-group__header"
+				role="button"
+				tabindex="-1"
 				@click="$emit('changeGroup', group)"
+				@keydown.enter.stop.prevent="$emit('changeGroup', group)"
+				@keydown.space.stop.prevent="$emit('changeGroup', group)"
 			>
 				<div class="editor-chart-catalog-group__icon-wrapper">
 					<slot name="icon"/>

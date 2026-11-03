@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_const, ui_notification, im_public, im_v2_lib_collab) {
+(function (exports, main_core, ui_a11y, im_v2_const, ui_notification, im_v2_lib_collab) {
 	'use strict';
 
 	const extractRestErrorCode = error => {
@@ -14,12 +14,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return errorCode;
 	};
 
-	const showNotification = (text, params) => {
-		BX.UI.Notification.Center.notify({
-			content: text,
+	const showNotification = (content, params = {}) => {
+		const balloon = BX.UI.Notification.Center.notify({
+			content,
 			blinkOnUpdate: false,
 			...params
 		});
+		return balloon ?? BX.UI.Notification.Center.getBalloonById(params.id);
 	};
 
 	const CHAT_ACCESS_ERROR_NOTIFICATION_ID = 'im-chat-access-error';
@@ -42,6 +43,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 			const notificationText = NotificationTextByErrorCode[errorCode] ?? NotificationTextByErrorCode.default;
 			showNotification(notificationText);
+		},
+		handleJoinError(isChannel = false) {
+			const notificationText = isChannel ? main_core.Loc.getMessage('IM_NOTIFIER_CHANNEL_SUBSCRIBE_ERROR') : main_core.Loc.getMessage('IM_NOTIFIER_CHAT_JOIN_ERROR');
+			showNotification(notificationText);
+		},
+		onChannelSubscribeComplete() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHANNEL_SUBSCRIBE_COMPLETE'));
 		},
 		handleUserKickError(error) {
 			const errorCode = extractRestErrorCode(error);
@@ -78,8 +86,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		onDeleteError() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_DELETE_ERROR'));
 		},
+		// The editor is already closed by the time the server answers, so the failure has to reach both
+		// channels: the balloon and the screen reader, which the balloon never reaches - it is no live
+		// region. Nothing here touches the focus: the user has moved on, and the announcement follows them.
 		onRenameError() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_RENAME_ERROR'));
+			const text = main_core.Loc.getMessage('IM_NOTIFIER_CHAT_RENAME_ERROR');
+			showNotification(text);
+			ui_a11y.LiveAnnouncer.announce(text, 'assertive');
 		},
 		onMessagesPinLimitError(pinLimit) {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGES_PIN_LIMIT_ERROR', {
@@ -102,11 +115,48 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const notificationText = NotificationTextByChatType[chatType] ?? NotificationTextByChatType.default;
 			showNotification(notificationText);
 		},
+		handleSelectionAddError(usersError, nodesError) {
+			if (usersError && nodesError) {
+				showNotification(main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_USERS_AND_NODES_ERROR'));
+				return;
+			}
+			if (usersError) {
+				showNotification(main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_USERS_ERROR'));
+				return;
+			}
+			const NotificationTextByErrorCode = {
+				[im_v2_const.ErrorCode.chat.accessDenied]: main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_ACCESS_ERROR'),
+				[im_v2_const.ErrorCode.structureLink.chatTypeNotSupported]: main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_CHAT_TYPE_ERROR'),
+				[im_v2_const.ErrorCode.structureLink.tooManyNodes]: main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_LIMIT_ERROR'),
+				[im_v2_const.ErrorCode.structureLink.nodeNotAvailable]: main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_UNAVAILABLE_ERROR'),
+				[im_v2_const.ErrorCode.structureLink.structureNotAvailable]: main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_STRUCTURE_UNAVAILABLE_ERROR'),
+				default: main_core.Loc.getMessage('IM_NOTIFIER_ADD_TO_CHAT_NODES_ERROR')
+			};
+			const notificationText = NotificationTextByErrorCode[nodesError.code] ?? NotificationTextByErrorCode.default;
+			showNotification(notificationText);
+		},
 		onCopyIdComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_COPY_ID_COMPLETE'));
 		}
 	};
 
+	const EDIT_ERROR_NOTIFICATION_ID = 'im-message-edit-error';
+	const AI_TASK_REFUSAL_NOTIFICATION_ID = 'im-message-ai-task-refusal';
+	/**
+	 * Refusals of the creation request that name a cause the user can do something about, and therefore
+	 * get a phrase of their own instead of the general failure. A busy slot is a state of the chat and
+	 * not a fault of the request, so it is announced politely; an unusable source is the answer to what
+	 * was asked for and keeps the assertive tone of a failure.
+	 */
+	const AI_TASK_REFUSALS = new Map([[im_v2_const.ErrorCode.aiTask.creationInProgress, {
+		single: 'IM_NOTIFIER_MESSAGE_AI_TASK_ALREADY_CREATING',
+		multiple: 'IM_NOTIFIER_MESSAGE_AI_TASK_ALREADY_CREATING_MULTIPLE',
+		politeness: 'polite'
+	}], [im_v2_const.ErrorCode.aiTask.sourceNotSupported, {
+		single: 'IM_NOTIFIER_MESSAGE_AI_TASK_SOURCE_NOT_SUPPORTED',
+		multiple: 'IM_NOTIFIER_MESSAGE_AI_TASK_SOURCE_NOT_SUPPORTED_MULTIPLE',
+		politeness: 'assertive'
+	}]]);
 	const MessageNotifier = {
 		onCopyComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_COPY_COMPLETE'));
@@ -117,17 +167,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		onAddToFavoriteComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE'));
 		},
-		onForwardComplete(messagesIds, dialogId) {
+		onForwardComplete(messagesIds, openChat) {
 			const text = messagesIds.length > 1 ? main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE') : main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE');
 			const openChatAction = {
 				title: main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'),
 				events: {
-					click: () => im_public.Messenger.openChat(dialogId)
+					click: openChat
 				}
 			};
 			showNotification(text, {
 				actions: [openChatAction]
 			});
+		},
+		onSelectMainReaction() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_SELECT_MAIN_REACTION_COMPLETE'));
 		},
 		handleLoadContextError(error) {
 			if (error.code === im_v2_const.ErrorCode.message.notFound) {
@@ -139,6 +192,43 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		onSelectLimitError() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_SELECT_LIMIT_ERROR'));
+		},
+		onAiTaskCreateError() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_AI_TASK_CREATE_ERROR'));
+		},
+		/**
+		 * The creation request itself was refused, so no indication was ever raised: this balloon is the
+		 * whole outcome of the attempt, and the two refusals that name a cause say it instead of the
+		 * general failure. A code this client does not know keeps that general failure untouched.
+		 *
+		 * A named refusal is also announced - the balloon carries no live region, and here there is no
+		 * frame on the message to speak for it - and shown under a stable id: the slot of a chat stays
+		 * busy for hours, so a repeated attempt replaces the balloon instead of stacking a copy of it.
+		 * The announcement is what keeps a repeat perceivable all the same.
+		 */
+		onAiTaskCreateRefusal(refusal) {
+			const presentation = AI_TASK_REFUSALS.get(refusal?.code);
+			if (!presentation) {
+				this.onAiTaskCreateError();
+				return;
+			}
+			const text = main_core.Loc.getMessage(refusal.messageCount > 1 ? presentation.multiple : presentation.single);
+			showNotification(text, {
+				id: AI_TASK_REFUSAL_NOTIFICATION_ID
+			});
+			ui_a11y.LiveAnnouncer.announce(text, presentation.politeness);
+		},
+		onEditError(reason) {
+			const text = main_core.Type.isStringFilled(reason?.message) ? reason.message : main_core.Loc.getMessage('IM_NOTIFIER_DEFAULT_ERROR');
+
+			// the reason comes from the response and reaches the balloon as raw html, so it is encoded;
+			// the stable id keeps repeated failures from stacking up as identical notifications
+			showNotification(main_core.Text.encode(text), {
+				id: EDIT_ERROR_NOTIFICATION_ID
+			});
+			// the balloon is no live region, and the stable id leaves a repeated failure without any
+			// signal at all, so every failure is announced on its own
+			ui_a11y.LiveAnnouncer.announce(text, 'assertive');
 		}
 	};
 
@@ -151,6 +241,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		calendarNotEmpty: 'CALENDAR_NOT_EMPTY'
 	};
 	const NotEmptyCollabErrorCodes = new Set([CollabErrorCode.tasksNotEmpty, CollabErrorCode.diskNotEmpty, CollabErrorCode.calendarNotEmpty]);
+	const InvitationErrorCodes = new Set(['COLLAB_INVITE_PORTAL_DISABLED', 'COLLAB_INVITE_ACCESS_DENIED', 'COLLAB_INVITE_MODULES_UNAVAILABLE', 'COLLAB_INVITE_TECHNICAL_DISABLED', 'COLLAB_INVITE_FEATURE_UNAVAILABLE', 'COLLAB_INVITE_EXTRANET_NOT_CONFIGURED', 'COLLAB_INVITE_GROUP_DISABLED']);
+	const getInvitationErrorMessage = error => {
+		if (InvitationErrorCodes.has(error?.code) && main_core.Type.isStringFilled(error?.message) && error.message.trim().length > 0) {
+			return main_core.Text.encode(error.message);
+		}
+		return main_core.Loc.getMessage('IM_NOTIFIER_DEFAULT_ERROR');
+	};
 	const CollabNotifier = {
 		onBeforeDelete() {
 			showNotification(im_v2_lib_collab.CollabManager.getBeforeDeleteText());
@@ -184,8 +281,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		onCollaberNotAcceptInvitation() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
 		},
-		onCopyLinkError() {
-			showNotification(im_v2_lib_collab.CollabManager.getCopyLinkError());
+		onCopyLinkError(error) {
+			if (main_core.Type.isNil(error?.code) || error.code === 0) {
+				showNotification(im_v2_lib_collab.CollabManager.getCopyLinkError());
+				return;
+			}
+			showNotification(getInvitationErrorMessage(error));
+		},
+		onUpdateLinkError(error) {
+			showNotification(getInvitationErrorMessage(error));
 		},
 		handleCreateError(error) {
 			const NotificationTextByErrorCode = {
@@ -224,6 +328,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (error.getCode() === im_v2_const.ErrorCode.file.maxFileSize) {
 				showNotification(`${error.getMessage()}<br>${error.getDescription()}`);
 			}
+		},
+		showValidationError(text) {
+			if (!text) {
+				return;
+			}
+			showNotification(text);
 		}
 	};
 
@@ -386,6 +496,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const FolderNotifier = {
+		handleCompositionError(error) {
+			const NotificationTextByErrorCode = {
+				[im_v2_const.ErrorCode.folder.chatNotEligible]: main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_CHAT_NOT_ELIGIBLE_ERROR'),
+				default: main_core.Loc.getMessage('IM_NOTIFIER_DEFAULT_ERROR')
+			};
+			const notificationText = NotificationTextByErrorCode[error.code] ?? NotificationTextByErrorCode.default;
+			showNotification(notificationText);
+		},
+		// Every refusal of the composition save reads the same for the user: the server tells apart a
+		// missing, a foreign and a non-composite folder, but none of that is his to fix.
+		onSourcesSaveError() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_SOURCES_SAVE_ERROR'));
+		},
+		// A refused read leaves the screen with an empty card, which reads as a folder without sources -
+		// the notification is the only thing telling the two apart.
+		onSourcesLoadError() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_SOURCES_LOAD_ERROR'));
+		},
 		onFolderLimitError(maxFolders) {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_LIMIT_ERROR', {
 				'#LIMIT#': maxFolders
@@ -398,6 +526,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		onAddChatComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_CHAT_ADD_COMPLETE'));
+		}
+	};
+
+	const EXTENSION_NAME = 'im.v2.lib.notifier.forward';
+	let loadingPromise = null;
+	const loadForwardNotifier = async () => {
+		if (!loadingPromise) {
+			loadingPromise = main_core.Runtime.loadExtension(EXTENSION_NAME).then(({
+				ForwardNotifier
+			}) => ForwardNotifier).catch(error => {
+				loadingPromise = null;
+				throw error;
+			});
+		}
+		return loadingPromise;
+	};
+	const ForwardNotifier = {
+		async showResult(params) {
+			const notifier = await loadForwardNotifier();
+			return notifier.showResult(params);
+		},
+		async onComplete(operationId, recipientCount) {
+			const notifier = await loadForwardNotifier();
+			return notifier.onComplete(operationId, recipientCount);
 		}
 	};
 
@@ -416,6 +568,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		notification: NotificationNotifier,
 		sticker: StickerNotifier,
 		folder: FolderNotifier,
+		forward: ForwardNotifier,
 		onCopyTextComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_TEXT_COPY_COMPLETE'));
 		},
@@ -435,5 +588,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Notifier = Notifier;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Const, BX.UI.Notification, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.UI.Accessibility, BX.Messenger.v2.Const, BX.UI.Notification, BX.Messenger.v2.Lib);
 //# sourceMappingURL=notifier.bundle.js.map

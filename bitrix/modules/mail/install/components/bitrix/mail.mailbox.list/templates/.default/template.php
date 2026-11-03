@@ -4,8 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die;
 }
 
+use Bitrix\Mail\Helper\Config\Feature;
+use Bitrix\Mail\Helper\Config\Guide;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\AirButtonStyle;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Buttons\JsCode;
@@ -40,6 +43,135 @@ Extension::load([
 $APPLICATION->SetTitle($arResult['TITLE']);
 
 Toolbar::deleteFavoriteStar();
+
+/*
+ * Every surface of the migration messages is closed by the switch of the feature, and this page is
+ * one of them: with the switch off the section of the connected mailboxes stays exactly as it was -
+ * no button of the panel, no hint beside it and no extension brought in for either.
+ */
+if (Feature::isMigrationNoticeAvailable())
+{
+	/*
+	 * The permanent way into the control panel of the company mail: the domain, its records and the
+	 * addresses of the employees (BTN-1). It stands here whether or not the domain has been moved and
+	 * whether or not the company already has mailboxes of Bitrix24 Mail (AC-048); it takes the first
+	 * place after the title because it is the main action of the page (AC-047), and the address of the
+	 * panel comes from the single place that knows it (Q-3).
+	 */
+	$controlPanelButton = [
+		'color' => Color::PRIMARY,
+		// The accent of the main action, told to the Air toolbar in its own terms: left to the colour
+		// alone it would turn into the green of the button that creates an entity of the section
+		'style' => AirButtonStyle::FILLED,
+		'text' => Loc::getMessage('MAIL_MAILBOX_LIST_COMPANY_MAIL_PANEL_BUTTON'),
+		'dataset' => [
+			'toolbar-collapsed-icon' => Icon::MAIL,
+			'id' => 'mailboxGridCompanyMailPanelButton',
+			'testid' => 'mailbox-grid-company-mail-panel-button',
+		],
+	];
+
+	/*
+	 * The panel is entered by a one-off address the service issues for one person and kills in a minute, so
+	 * the button asks for one at the click instead of carrying one. An address spelled here would be dead
+	 * by the time anybody pressed it - and the extension that asks for it is loaded for that reason alone.
+	 */
+	$hasPanelEntry = (bool)$arResult['HAS_ACCESS_TO_MASS_CONNECT'];
+
+	if ($hasPanelEntry)
+	{
+		Extension::load(['mail.migration-notice']);
+		$controlPanelButton['onclick'] = new JsCode('BX.Mail.MigrationControlPanel.open()');
+	}
+	else
+	{
+		// Without the right to manage the company mail the button behaves as the restricted actions of
+		// this page do, rather than vanishing without a word (AC-050)
+		$controlPanelButton['icon'] = Icon::LOCK;
+		$controlPanelButton['dataset']['toolbar-collapsed-icon'] = Icon::LOCK;
+		$controlPanelButton['onclick'] = new JsCode(
+			"BX.Mail.MailboxList.LimitHelpers.showLimitSlider('limit_v2_mail_mailbox_massconnect')",
+		);
+	}
+
+	Toolbar::addButton($controlPanelButton, ButtonLocation::AFTER_TITLE);
+
+	/*
+	 * HINT-3. The aha-moment of the button above (SC-007): coming back from the panel for the first
+	 * time, the person is told once where the mail of the company is settled (AC-043, AC-044). The
+	 * portal has no signal from the panel, so the way out is what it remembers (Q-2), and both marks
+	 * live in the store the rest of the states of the feature use.
+	 *
+	 * A button that leads nowhere - the one the restrictions gave a lock instead of an address - has no
+	 * way out to remember and nothing to come back from.
+	 */
+	if ($hasPanelEntry)
+	{
+		$panelVisitOptionName = 'migration_panel_visited';
+		$panelHintOptionName = 'migration_panel_hint_shown';
+		$panelButtonSelector = '[data-id="' . $controlPanelButton['dataset']['id'] . '"]';
+		$isPanelHintDue =
+			\CUserOptions::GetOption(Guide::USER_OPTION_CATEGORY, $panelVisitOptionName, null) === 'Y'
+			&& \CUserOptions::GetOption(Guide::USER_OPTION_CATEGORY, $panelHintOptionName, null) !== 'Y'
+		;
+
+		if ($isPanelHintDue)
+		{
+			Extension::load(['mail.migration-notice']);
+
+			$panelHintOptions = Json::encode([
+				'buttonSelector' => $panelButtonSelector,
+				'title' => Loc::getMessage('MAIL_MAILBOX_LIST_PANEL_HINT_TITLE'),
+				'text' => Loc::getMessage('MAIL_MAILBOX_LIST_PANEL_HINT_TEXT'),
+				'linkTitle' => Loc::getMessage('MAIL_MAILBOX_LIST_PANEL_HINT_LINK'),
+				'visitOptionName' => $panelVisitOptionName,
+				'hintOptionName' => $panelHintOptionName,
+				'hintDue' => $isPanelHintDue,
+			]);
+			?>
+			<script>
+				BX.ready(function()
+				{
+					new BX.Mail.MigrationPanelHint(<?= $panelHintOptions ?>).run();
+				});
+			</script>
+			<?php
+		}
+		else
+		{
+			// The mark of the way out is a call of the core, and only the hint itself needs the extension
+			?>
+			<script>
+				BX.ready(function()
+				{
+					var panelButton = document.querySelector(<?= Json::encode($panelButtonSelector) ?>);
+					if (!panelButton)
+					{
+						return;
+					}
+
+					var visitRemembered = false;
+					BX.bind(panelButton, 'click', function()
+					{
+						if (visitRemembered)
+						{
+							return;
+						}
+
+						visitRemembered = true;
+						BX.userOptions.save(
+							<?= Json::encode(Guide::USER_OPTION_CATEGORY) ?>,
+							<?= Json::encode($panelVisitOptionName) ?>,
+							null,
+							'Y'
+						);
+					});
+				});
+			</script>
+			<?php
+		}
+	}
+}
 
 if ($arResult['HAS_ACCESS_TO_MASS_CONNECT'])
 {
@@ -255,7 +387,7 @@ if (!empty($gearMenuItems))
 
 $gridContainerId = 'bx-mml-' . $arResult['GRID_ID'] . '-container';
 
-if (!empty($arResult['BULK_ACTIONS_AVAILABLE']))
+if (!empty($arResult['HAS_ACCESS_TO_BULK_ACTIONS']))
 {
 	?><div class="mail-mailbox-list-actionpanel-container"></div><?php
 }

@@ -10,10 +10,24 @@ BX.ready(() => {
 				size: 'extra-large',
 				handlers: {
 					toggled: () => {
+						const requestedState = switcher.isChecked();
+						const previousState = !requestedState;
+
+						// setLoading(false) must precede check(): Switcher.check() exits early while loading.
+						const restoreState = (state, response) => {
+							switcher.setLoading(false);
+							BX.UI.Notification.Center.notify({
+								content: response?.errors?.[0]?.message || 'Something went wrong',
+							});
+							console.error(response);
+
+							switcher.check(state, false);
+						};
+
 						switcher.setLoading(true);
 						BX.ajax.runComponentAction(
 							'bitrix:crm.features.list',
-							switcher.isChecked() ? 'enableFeature' : 'disableFeature',
+							requestedState ? 'enableFeature' : 'disableFeature',
 							{
 								mode: 'class',
 								data: {
@@ -21,29 +35,21 @@ BX.ready(() => {
 								},
 							},
 						).then((response) => {
-							switcher.setLoading(false);
-							if (response.errors && response.errors.length > 0)
+							// The action answers with the effective state, not with a plain success flag.
+							const effectiveState = response?.data;
+							if (effectiveState === requestedState)
 							{
-								BX.UI.Notification.Center.notify({
-									content: response.errors[0]?.message,
-								});
-								console.error(response);
+								switcher.setLoading(false);
 
-								// return init state
-								switcher.check(true, false);
+								return;
 							}
+
+							restoreState(
+								typeof effectiveState === 'boolean' ? effectiveState : previousState,
+								response,
+							);
 						}, (response) => {
-							switcher.setLoading(false);
-							if (response.errors && response.errors.length > 0)
-							{
-								BX.UI.Notification.Center.notify({
-									content: response.errors[0]?.message,
-								});
-								console.error(response);
-
-								// return init state
-								switcher.check(false, false);
-							}
+							restoreState(previousState, response);
 						});
 					},
 				},

@@ -2,6 +2,7 @@
  * @module crm/receive-payment/steps/send-message
  */
 jn.define('crm/receive-payment/steps/send-message', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { SmsServiceSelector } = require('crm/receive-payment/steps/send-message/sms-service-selector');
@@ -140,10 +141,9 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 							paddingHorizontal: 16,
 						},
 					},
-					Text({
+					Text6({
 						style: {
 							color: AppTheme.colors.base4,
-							fontSize: 12,
 						},
 						text: `${sendingMethodText} `,
 					}),
@@ -153,10 +153,9 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 								helpdesk.openHelpArticle('17537000', 'helpdesk');
 							},
 						},
-						Text({
+						Text6({
 							style: {
 								color: AppTheme.colors.base3,
-								fontSize: 12,
 								borderBottomWidth: 1,
 								borderBottomColor: AppTheme.colors.base5,
 								borderStyle: 'dash',
@@ -219,10 +218,9 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 						backgroundColor: AppTheme.colors.base3,
 					},
 				}),
-				Text({
+				Text6({
 					text: this.entityResponsible.name,
 					style: {
-						fontSize: 11,
 						textAlign: 'center',
 						color: AppTheme.colors.base3,
 					},

@@ -6,10 +6,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
+use Bitrix\Main\Loader;
 
-$settings = [
-	'feedbackFormParams' => WidgetManager::getInstance()->getFeedbackFormParams(),
-];
+$settings = [];
+if (Loader::includeModule('crm'))
+{
+	$settings['feedbackFormParams'] = WidgetManager::getInstance()->getFeedbackFormParams();
+}
 
 return [
 	'css' => 'dist/widget.bundle.css',
@@ -25,9 +28,9 @@ return [
 		'ui.design-tokens',
 		'ui.design-tokens.air',
 		'ui.feedback.form',
-		'ui.hint',
 		'ui.lottie',
 		'ui.notification',
+		'ui.sidepanel',
 		'ui.system.highlighter',
 	],
 	'skip_core' => false,

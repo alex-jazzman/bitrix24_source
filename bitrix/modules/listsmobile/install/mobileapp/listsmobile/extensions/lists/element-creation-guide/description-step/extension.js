@@ -6,7 +6,9 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 	const { Loc } = require('loc');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { EventEmitter } = require('event-emitter');
+	const { Alert, ButtonType } = require('alert');
 	const { NotifyManager } = require('notify-manager');
+	const { openQRAuth } = require('qrauth/utils');
 	const { Random } = require('utils/random');
 	const { DescriptionStepComponent } = require('lists/element-creation-guide/description-step/component');
 	const { ProgressBarNumber } = require('lists/wizard/progress-bar-number');
@@ -41,6 +43,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 			this.description = null;
 			this.hasFieldsToRender = true;
 			this.isConstantsTuned = false;
+			this.canUserTuneConstants = false;
 			this.sign = '';
 			this.startTime = null;
 
@@ -51,7 +54,14 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 		{
 			this.customEventEmitter.on(
 				'DescriptionStepComponent:onAfterLoadDescription',
-				({ description, hasFieldsToRender, sign, isConstantsTuned, hasErrors }) => {
+				({
+					description,
+					hasFieldsToRender,
+					sign,
+					isConstantsTuned,
+					canUserTuneConstants,
+					hasErrors,
+				}) => {
 					this.description = description;
 					this.startTime = this.getCurrentTime();
 					if (this.prevDescription === null)
@@ -60,6 +70,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 					}
 					this.hasFieldsToRender = hasFieldsToRender;
 					this.isConstantsTuned = isConstantsTuned;
+					this.canUserTuneConstants = canUserTuneConstants === true;
 					this.sign = sign;
 
 					this.customEventEmitter.emit(
@@ -74,6 +85,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 						this.prevDescription = null;
 						this.hasFieldsToRender = true;
 						this.isConstantsTuned = true;
+						this.canUserTuneConstants = false;
 						this.sign = null;
 					}
 				},
@@ -109,6 +121,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 			{
 				this.hasFieldsToRender = true;
 				this.isConstantsTuned = false;
+				this.canUserTuneConstants = false;
 				this.sign = '';
 				this.stepAvailabilityChangeCallback(false);
 			}
@@ -129,9 +142,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 
 			if (!this.isConstantsTuned)
 			{
-				NotifyManager.showError(
-					Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_CONFIGURED'),
-				);
+				this.showConstantsNotTunedPopup();
 
 				return Promise.resolve(failedMoveResponse);
 			}
@@ -171,6 +182,64 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 					})
 				;
 			});
+		}
+
+		showConstantsNotTunedPopup()
+		{
+			if (this.canUserTuneConstants)
+			{
+				this.showConstantsNotTunedAdminPopup();
+
+				return;
+			}
+
+			Alert.alert(
+				Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_TITLE'),
+				Loc.getMessage(
+					'LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_USER_DESCRIPTION',
+				),
+				null,
+				Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_OK'),
+			);
+		}
+
+		showConstantsNotTunedAdminPopup()
+		{
+			Alert.confirm(
+				Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_ADMIN_TITLE'),
+				Loc.getMessage(
+					'LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_ADMIN_DESCRIPTION',
+				),
+				[
+					{
+						text: Loc.getMessage(
+							'LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_GO_TO_WEB',
+						),
+						type: ButtonType.DEFAULT,
+						onPress: () => this.openConstantsInWebVersion(),
+					},
+					{
+						text: Loc.getMessage(
+							'LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_NOT_TUNED_CANCEL',
+						),
+						type: ButtonType.CANCEL,
+					},
+				],
+			);
+		}
+
+		openConstantsInWebVersion()
+		{
+			openQRAuth({
+				title: Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_CONSTANTS_TO_WEB_TITLE'),
+				redirectUrl: this.getFillConstantsUrl(),
+				layout: this.props.layout,
+			}).then(() => {});
+		}
+
+		getFillConstantsUrl()
+		{
+			return `/bizproc/userprocesses/?iBlockId=${this.iBlockId}`;
 		}
 
 		updateProps(props)

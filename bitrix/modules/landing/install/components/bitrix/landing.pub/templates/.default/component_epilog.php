@@ -45,7 +45,11 @@ Manager::setPageView(
 	'<meta property="Bitrix24SiteType" content="' . \htmlspecialcharsbx($siteType) . '" />'
 );
 
-$faviconPath = rtrim((string)($arResult['SITE_RELATIVE_URL'] ?? ''), '/') . '/favicon.ico';
+$faviconPath = (string)($arResult['FAVICON_URL'] ?? '');
+if ($faviconPath === '')
+{
+	$faviconPath = rtrim((string)($arResult['SITE_RELATIVE_URL'] ?? ''), '/') . '/favicon.ico';
+}
 Manager::setPageView(
 	'BeforeHeadClose',
 	'<link rel="icon" type="image/x-icon" href="' . \htmlspecialcharsbx($faviconPath) . '">'

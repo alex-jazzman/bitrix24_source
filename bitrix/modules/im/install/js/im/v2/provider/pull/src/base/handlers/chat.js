@@ -9,9 +9,11 @@ import { CallManager } from 'im.v2.lib.call';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { Logger } from 'im.v2.lib.logger';
 import { Notifier } from 'im.v2.lib.notifier';
+import { PlaybackService } from 'im.v2.lib.playback';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { UserManager } from 'im.v2.lib.user';
 import { type ImModelChat } from 'im.v2.model';
+import { CommandService } from 'im.v2.provider.service.command';
 
 import {
 	type ChatOwnerParams,
@@ -32,10 +34,12 @@ import { type RawUser, type RawChat } from '../../types/common';
 export class ChatPullHandler
 {
 	#store: Store;
+	#commandService: CommandService;
 
 	constructor()
 	{
 		this.#store = Core.getStore();
+		this.#commandService = new CommandService();
 	}
 
 	handleChatOwner(params: ChatOwnerParams)
@@ -91,6 +95,11 @@ export class ChatPullHandler
 	{
 		Logger.warn('ChatPullHandler: handleChatUserAdd', params);
 		this.#updateChatUsers(params);
+		this.onChatMembershipChanged(
+			params.dialogId,
+			params.newUsers,
+			(userId: number): boolean => params.users?.[userId]?.bot === true,
+		);
 
 		const { newUsers, dialogId, relations } = params;
 
@@ -109,12 +118,31 @@ export class ChatPullHandler
 	{
 		Logger.warn('ChatPullHandler: handleChatUserLeave', params);
 		this.#updateChatUsers(params);
+		this.onChatMembershipChanged(
+			params.dialogId,
+			[params.userId],
+			// The leave payload carries no users, so the flag is read from the store. The bots
+			// sub-model only holds records that arrived with bot data, while the user type is
+			// filled for every hydrated participant - so ask the users model.
+			(userId: number): boolean => this.#store.getters['users/isBot'](userId),
+		);
 
 		// chatUserLeave is single user event, so we can safely use first (and only) relation from array
 		const { userId, dialogId, chatId, relations: [relation] } = params;
 		const currentUserIsKicked = userId === Core.getUserId();
 		if (relation?.isHidden || !currentUserIsKicked)
 		{
+			return;
+		}
+
+		// open channel and its comments stay readable after unsubscribe: keep them open and show the join CTA again
+		if (this.#staysReadableAfterLeave(dialogId))
+		{
+			void this.#store.dispatch('chats/update', {
+				dialogId,
+				fields: { role: UserRole.guest },
+			});
+
 			return;
 		}
 
@@ -297,9 +325,44 @@ export class ChatPullHandler
 		});
 	}
 
+	// Command list depends only on the chat's bots, so rebuild the cached list (and close the open popup) only when a bot joins or leaves
+	onChatMembershipChanged(dialogId: string, changedUserIds: number[], isBot: (userId: number) => boolean): void
+	{
+		if (!this.#store.getters['commands/isCached'](dialogId))
+		{
+			return;
+		}
+
+		if (!changedUserIds.some(isBot))
+		{
+			return;
+		}
+
+		EventEmitter.emit(EventType.textarea.closeSlashCommandPopup, { dialogId });
+		void this.#commandService.loadCommands(dialogId, { silent: true });
+	}
+
 	#isChatOpen(dialogId: string): boolean
 	{
 		return this.#store.getters['application/isChatOpen'](dialogId);
+	}
+
+	#staysReadableAfterLeave(dialogId: string): boolean
+	{
+		const { type }: ImModelChat = this.#store.getters['chats/get'](dialogId, true);
+		if (type === ChatType.openChannel)
+		{
+			return true;
+		}
+
+		if (type === ChatType.comment)
+		{
+			const parentChat: ?ImModelChat = this.#store.getters['chats/getParent'](dialogId);
+
+			return parentChat?.type === ChatType.openChannel;
+		}
+
+		return false;
 	}
 
 	#onChatAccessLost(dialogId: string)
@@ -317,6 +380,8 @@ export class ChatPullHandler
 		{
 			CallManager.getInstance().leaveCurrentCall();
 		}
+
+		PlaybackService.getInstanceIfCreated()?.handleChatAccessLost(dialogId);
 	}
 
 	#updateChatUsers(params: {

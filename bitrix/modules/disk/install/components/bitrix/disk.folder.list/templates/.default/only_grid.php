@@ -2,10 +2,11 @@
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
-
-$actionPanelContainerId = 'disk-folder-list-toolbar-' . $component->getComponentId();
 ?>
-<div class="bx-disk-interface-filelist <?= $arResult['IS_RUNNING_FILTER']? 'disk-running-filter' : '' ?>">
+<div
+	class="bx-disk-interface-filelist <?= $arResult['IS_RUNNING_FILTER']? 'disk-running-filter' : '' ?>"
+	data-testid="disk-folder-list-grid"
+>
 	<?
 	$generateEmptyBlock = 'function() {
 			return BX.create("div", {
@@ -70,7 +71,8 @@ $actionPanelContainerId = 'disk-folder-list-toolbar-' . $component->getComponent
 		'bitrix:main.ui.grid',
 		'',
 		array(
-			'TOP_ACTION_PANEL_RENDER_TO' => '#' . $actionPanelContainerId,
+			// The action panel belongs to the component itself: it runs on ui.action-panel,
+			// while main.ui.grid would create a panel of the legacy ui.actionpanel extension.
 			'TILE_GRID_MODE' => $arResult['GRID']['MODE'] === FolderListOptions::VIEW_MODE_TILE,
 			'TILE_SIZE' => $arResult['GRID']['VIEW_SIZE'],
 			'TILE_GRID_ITEMS' => $arResult['TILE_ITEMS'] ?? null,

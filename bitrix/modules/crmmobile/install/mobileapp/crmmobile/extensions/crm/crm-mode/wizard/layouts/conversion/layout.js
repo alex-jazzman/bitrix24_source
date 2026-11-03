@@ -2,6 +2,7 @@
  * @module crm/crm-mode/wizard/layouts/conversion/layout
  */
 jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, module) => {
+	const { Text3, Text4 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { UIScrollView } = require('layout/ui/scroll-view');
@@ -56,12 +57,11 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 						marginBottom: 10,
 					},
 				},
-				Text(
+				Text3(
 					{
 						text: title,
 						style: {
 							color: AppTheme.colors.base1,
-							fontSize: 16,
 						},
 					},
 				),
@@ -79,11 +79,10 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 						onChange: this.handleOnChange.bind(this),
 					}),
 				),
-				Text(
+				Text4(
 					{
 						text: description,
 						style: {
-							fontSize: 14,
 							color: AppTheme.colors.base4,
 						},
 					},

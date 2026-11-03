@@ -600,7 +600,7 @@ this.BX = this.BX || {};
 			command: editLink
 		}));
 		history.registerCommand(new Command({
-			id: 'cnangeNodeName',
+			id: 'changeNodeName',
 			command: changeNodeName
 		}));
 		history.registerCommand(new Command({

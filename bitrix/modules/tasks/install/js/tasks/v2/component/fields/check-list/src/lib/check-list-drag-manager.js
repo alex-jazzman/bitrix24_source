@@ -1,8 +1,12 @@
+import { Dom, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { Draggable, type DragStartEvent } from 'ui.draganddrop.draggable';
+
 import { Model } from 'tasks.v2.const';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 
 import type { CheckListManager } from './check-list-manager';
+import { getFixedContainingBlockOffset } from './fixed-containing-block';
 
 export type Params = {
 	store: any,
@@ -19,6 +23,37 @@ export class CheckListDragManager extends EventEmitter
 
 	#stubItemId: string;
 
+	#draggable: Draggable = null;
+	#container: HTMLElement = null;
+	#ghost: HTMLElement = null;
+	#offsetFrameId: number = null;
+	#offsetCompensationY: number = 0;
+
+	#handleScroll = (): void => {
+		if (this.#offsetFrameId !== null)
+		{
+			return;
+		}
+
+		this.#offsetFrameId = requestAnimationFrame(() => {
+			this.#offsetFrameId = null;
+			this.updateGhostOffset();
+		});
+	};
+
+	#handleDragStart = (event: DragStartEvent): void => {
+		const { type } = this.#draggable.getOptions();
+		this.#ghost = (type === Draggable.HEADLESS ? null : event.getData().draggable);
+
+		Event.bind(document, 'scroll', this.#handleScroll, { capture: true });
+	};
+
+	#handleDragEnd = (): void => {
+		this.stopGhostOffsetTracking();
+
+		this.#offsetCompensationY = 0;
+	};
+
 	constructor(params: Params)
 	{
 		super();
@@ -29,6 +64,67 @@ export class CheckListDragManager extends EventEmitter
 		this.#checkListManager = params.checkListManager;
 
 		this.#stubItemId = params.stubItemId;
+	}
+
+	initGhostOffsetTracking(draggable: Draggable, container: HTMLElement): void
+	{
+		this.#draggable = draggable;
+		this.#container = container;
+
+		draggable.subscribe('start', this.#handleDragStart);
+		draggable.subscribe('end', this.#handleDragEnd);
+	}
+
+	stopGhostOffsetTracking(): void
+	{
+		Event.unbind(document, 'scroll', this.#handleScroll, { capture: true });
+
+		if (this.#offsetFrameId !== null)
+		{
+			cancelAnimationFrame(this.#offsetFrameId);
+			this.#offsetFrameId = null;
+		}
+
+		this.#ghost = null;
+	}
+
+	setGhostOffsetCompensationY(compensationY: number): void
+	{
+		this.#offsetCompensationY = compensationY;
+	}
+
+	updateGhostOffset(): void
+	{
+		const { x, y } = getFixedContainingBlockOffset(this.#container);
+		const offsetY = y + this.#offsetCompensationY;
+
+		const { offset } = this.#draggable.getOptions();
+
+		this.#shiftGhost(x - offset.x, offsetY - offset.y);
+
+		offset.x = x;
+		offset.y = offsetY;
+	}
+
+	#shiftGhost(x: number, y: number): void
+	{
+		if (!this.#ghost || (x === 0 && y === 0))
+		{
+			return;
+		}
+
+		const { top, left } = this.#ghost.style;
+		const shiftedTop = Number.parseFloat(top) + y;
+		const shiftedLeft = Number.parseFloat(left) + x;
+		if (Number.isNaN(shiftedTop) || Number.isNaN(shiftedLeft))
+		{
+			return;
+		}
+
+		Dom.style(this.#ghost, {
+			top: `${shiftedTop}px`,
+			left: `${shiftedLeft}px`,
+		});
 	}
 
 	moveDropPreview(

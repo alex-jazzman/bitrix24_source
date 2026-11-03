@@ -126,7 +126,7 @@ export default function render<T = HTMLElement>(
 
 	if (ast.length === 1)
 	{
-		const refs: any[] = [];
+		const refs: Array<[string, Element]> = [];
 		const renderedNode = renderNode({
 			node: ast[0],
 			substitutions,
@@ -143,7 +143,7 @@ export default function render<T = HTMLElement>(
 
 	if (ast.length > 1)
 	{
-		const refs: any[] = [];
+		const refs: Array<[string, Element]> = [];
 		const renderedNodes = ast.map((node: any) => {
 			return renderNode({
 				node,

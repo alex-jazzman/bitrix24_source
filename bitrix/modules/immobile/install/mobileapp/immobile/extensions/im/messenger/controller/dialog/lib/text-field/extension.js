@@ -29,15 +29,22 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 		 * @type {DialogView}
 		 */
 		#view;
+		/**
+		 * @desc Rebuilds the input-buttons model from the owning dialog on demand.
+		 * @type {(() => ({ left: object[], right: object[] }|undefined))|null}
+		 */
+		#getInputButtons;
 
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {DialogLocator} locator
+		 * @param {(() => ({ left: object[], right: object[] }|undefined))} [getInputButtons]
 		 */
-		constructor({ dialogId, locator })
+		constructor({ dialogId, locator, getInputButtons = null })
 		{
 			this.#dialogLocator = locator;
 			this.#dialogId = dialogId;
+			this.#getInputButtons = getInputButtons;
 		}
 
 		get dialogId()
@@ -76,6 +83,8 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 
 		update()
 		{
+			this.#updateInputButtons();
+
 			const isHide = this.#shouldHide();
 			if (isHide)
 			{
@@ -97,6 +106,20 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 
 			this.view.hideTextField(false);
 			this.setJoinButton();
+		}
+
+		/**
+		 * @desc Recomputes the input-buttons model together with text-field visibility,
+		 * so the "/" button appears/disappears on chat-state changes (e.g. a bot leaving). A no-op
+		 * when the model is undefined - the native default set is then left untouched.
+		 */
+		#updateInputButtons()
+		{
+			const model = this.#getInputButtons?.();
+			if (model)
+			{
+				this.view.textField.updateButtons(model);
+			}
 		}
 
 		setJoinButton()

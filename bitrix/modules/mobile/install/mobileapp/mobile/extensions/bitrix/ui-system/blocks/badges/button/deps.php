@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'assets/icons',
 		'tokens',
 		'ui-system/blocks/icon',
 		'utils/object',

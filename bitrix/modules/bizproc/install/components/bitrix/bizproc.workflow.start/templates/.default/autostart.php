@@ -1,6 +1,17 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/main/utils.js');
 CBPDocument::AddShowParameterInit($arParams["DOCUMENT_TYPE"][0], "only_users", $arParams["DOCUMENT_TYPE"][2], $arParams["DOCUMENT_TYPE"][1]);
+
+// template description is stored as BBCode
+$toPlainDescription = static function ($description): string
+{
+	$description = (string)$description;
+
+	return \Bitrix\Main\Loader::includeModule('ui')
+		? \Bitrix\UI\Format\BBCode\Converter::toPlainText($description)
+		: $description
+	;
+};
 ?>
 <div class="bizproc-page-workflow-start">
 	<?
@@ -23,7 +34,7 @@ CBPDocument::AddShowParameterInit($arParams["DOCUMENT_TYPE"][0], "only_users", $
 			</legend>
 			<?if($template["DESCRIPTION"]!=''):?>
 				<div class="bizproc-item-description bizproc-workflow-template-description">
-					<?= htmlspecialcharsbx($template["DESCRIPTION"]) ?>
+					<?= htmlspecialcharsbx($toPlainDescription($template["DESCRIPTION"])) ?>
 				</div>
 			<?endif;
 

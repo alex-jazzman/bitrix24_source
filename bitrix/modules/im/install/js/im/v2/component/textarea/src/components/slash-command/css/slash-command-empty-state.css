@@ -1,0 +1,32 @@
+.bx-im-slash-command-empty-state__container {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 16px;
+}
+
+.bx-im-slash-command-empty-state__icon {
+	flex-shrink: 0;
+	width: 48px;
+	height: 48px;
+	background: url("./images/search.png") no-repeat center;
+	background-size: contain;
+}
+
+.bx-im-slash-command-empty-state__text-block {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: left;
+}
+
+.bx-im-slash-command-empty-state__title {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-slash-command-empty-state__text {
+	font: var(--im-font-size-md)/var(--im-font-line-height-md) var(--im-font-family-system);
+	color: var(--ui-color-base-4);
+}

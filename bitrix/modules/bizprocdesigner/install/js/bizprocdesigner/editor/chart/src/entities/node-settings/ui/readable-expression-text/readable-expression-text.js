@@ -1,4 +1,5 @@
-import { Loc } from 'main.core';
+import { Type } from 'main.core';
+import { computed } from 'ui.vue3';
 import { mapState } from 'ui.vue3.pinia';
 
 import { type ActivityData, type ActivityProperty, type Block } from '../../../../shared/types';
@@ -8,6 +9,8 @@ import {
 	type ExpressionToken,
 	buildExpressionTokens,
 	expressionTokenLabel,
+	expressionTokenUnresolvedHint,
+	getActivityReturnProperties,
 	isReadableExpressionsAvailable,
 	tokenSectionClass,
 } from '../../utils/readable-expressions';
@@ -37,7 +40,7 @@ function getActivityExpressionSource(activity: ?ActivityData): ?ActivityExpressi
 	return {
 		name: activity.Name,
 		title: activity.Properties?.Title,
-		returnProperties: activity.ReturnProperties,
+		returnProperties: getActivityReturnProperties(activity),
 		children: (activity.Children ?? []).map(getActivityExpressionSource),
 	};
 }
@@ -49,6 +52,31 @@ function getExpressionSources(blocks: Array<Block>): Array<BlockExpressionSource
 		nodeTitle: block.node?.title,
 		activity: getActivityExpressionSource(block.activity),
 	}));
+}
+
+/**
+ * A preview is created per construction, and they read the same arrays of blocks: the blocks of the
+ * diagram for every one of them, one context for every construction of a card. The snapshot of an array
+ * is therefore built once for all its readers - a `computed` keeps it until something it read changes,
+ * exactly as the computed of a component would, and the WeakMap lets it go together with the array.
+ */
+const sourcesByBlocks: WeakMap<Array<Block>, Object> = new WeakMap();
+
+function getSharedExpressionSources(blocks: ?Array<Block>): Array<BlockExpressionSource>
+{
+	if (!Type.isArrayFilled(blocks))
+	{
+		return [];
+	}
+
+	let sources = sourcesByBlocks.get(blocks);
+	if (!sources)
+	{
+		sources = computed(() => getExpressionSources(blocks));
+		sourcesByBlocks.set(blocks, sources);
+	}
+
+	return sources.value;
 }
 
 /**
@@ -71,6 +99,13 @@ export const ReadableExpressionText = {
 			type: Array,
 			default: null,
 		},
+		// Whether the whole text goes into a `title` hint of its own. Asked for by a place of use that
+		// cuts the text with an ellipsis, where the hint is the only way to read the tail.
+		withTitle:
+		{
+			type: Boolean,
+			default: false,
+		},
 	},
 	data(): { tokens: Array<ExpressionToken>, isUnmounted: boolean }
 	{
@@ -92,7 +127,25 @@ export const ReadableExpressionText = {
 				return [];
 			}
 
-			return getExpressionSources([...(this.contextBlocks ?? []), ...this.blocks]);
+			return [
+				...getSharedExpressionSources(this.contextBlocks),
+				...getSharedExpressionSources(this.blocks),
+			];
+		},
+		// Built out of the rendered tokens: a hint must never fall back to the raw notation of a reference.
+		titleText(): string | null
+		{
+			if (!this.withTitle)
+			{
+				return null;
+			}
+
+			const text = this.tokens
+				.map((token: ExpressionToken) => (token.kind === 'ref' ? expressionTokenLabel(token) : token.text))
+				.join('')
+			;
+
+			return text === '' ? null : text;
 		},
 	},
 	watch:
@@ -140,19 +193,19 @@ export const ReadableExpressionText = {
 		},
 		getTokenClass(token: ExpressionRefToken): Array<string>
 		{
-			return [tokenSectionClass(token), token.unknown ? 'bxr-unknown' : ''];
+			return [tokenSectionClass(token), token.unresolved === null ? '' : 'bxr-unknown'];
 		},
-		// A broken reference is told apart by colour alone, so the same is said in words as well.
 		getTokenTitle(token: ExpressionRefToken): string | null
 		{
-			return token.unknown
-				? Loc.getMessage('BIZPROCDESIGNER_EDITOR_READABLE_EXPRESSIONS_UNKNOWN') ?? ''
-				: null
-			;
+			return expressionTokenUnresolvedHint(token);
 		},
 	},
 	template: `
-		<span class="editor-chart-readable-expression-text" data-testid="bizprocdesigner-readable-expression-text">
+		<span
+			class="editor-chart-readable-expression-text"
+			:title="titleText"
+			data-testid="bizprocdesigner-readable-expression-text"
+		>
 			<template v-for="(token, index) in tokens" :key="index">
 				<span
 					v-if="token.kind === 'ref'"

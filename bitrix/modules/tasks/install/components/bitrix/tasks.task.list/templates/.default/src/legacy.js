@@ -5,6 +5,8 @@ BX.Tasks.GridActions = {
 	gridId: null,
 	groupSelector: null,
 	registeredTimerNodes: {},
+	expandedDeadlineTrigger: null,
+	deadlineCalendarCloseBound: false,
 	defaultPresetId: '',
 	getTotalCountProceed: false,
 	currentGroupAction: null,
@@ -24,9 +26,39 @@ BX.Tasks.GridActions = {
 	{
 		this.groupSelector = null;
 		this.flowSelectorDialog = null;
+		this.crmSelectorDialog = null;
 
 		BX.bind(BX(searchField + '_control'), 'click', BX.delegate(function() {
-				if (mode === 'flow')
+				if (mode === 'crm')
+				{
+					if (!this.crmSelectorDialog)
+					{
+						this.crmSelectorDialog = new BX.UI.EntitySelector.Dialog({
+							targetNode: BX(searchField + '_control'),
+							width: 350,
+							height: 400,
+							multiple: false,
+							dropdownMode: true,
+							enableSearch: true,
+							context: 'tasks-list-crm-bind',
+							entities: this.getCrmSelectorEntities(),
+							events: {
+								'Item:onBeforeSelect': (baseEvent) => {
+									const item = baseEvent.getData().item;
+									// getTitle() returns '' safely; item.title is null for a title-less
+									// CRM element, so reading item.title.text would throw.
+									BX(searchField + '_control').value =
+										BX.util.htmlspecialcharsback(item.getTitle()) || '';
+									BX(groupIdField + '_control').value =
+										BX.Tasks.GridActions.mapCrmItemId(item.getEntityId(), item.getId());
+								},
+							},
+						});
+					}
+
+					this.crmSelectorDialog.show();
+				}
+				else if (mode === 'flow')
 				{
 					if (!this.flowSelectorDialog)
 					{
@@ -53,6 +85,21 @@ BX.Tasks.GridActions = {
 									const data = baseEvent.getData();
 									BX(searchField + '_control').value = BX.util.htmlspecialcharsback(data.item.title.text) || '';
 									BX(groupIdField + '_control').value = data.item.id || '';
+								},
+								'onHide': (baseEvent) => {
+									const dialog = baseEvent.getTarget();
+									const targetNode = dialog.getTargetNode();
+									const activeNode = document.activeElement;
+									if (
+										targetNode
+										&& (
+											activeNode === document.body
+											|| dialog.getContainer().contains(activeNode)
+										)
+									)
+									{
+										targetNode.focus();
+									}
 								},
 							},
 							recentTabOptions: {
@@ -99,6 +146,67 @@ BX.Tasks.GridActions = {
 		}, this));
 	},
 
+	setTriggerExpandedIfPresent: function(triggerNode, expanded)
+	{
+		if (
+			triggerNode
+			&& typeof triggerNode.hasAttribute === 'function'
+			&& triggerNode.hasAttribute('aria-expanded')
+		)
+		{
+			triggerNode.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+		}
+	},
+
+	expandDeadlineTrigger: function(triggerNode)
+	{
+		this.collapseDeadlineTrigger();
+		this.expandedDeadlineTrigger = triggerNode;
+		this.setTriggerExpandedIfPresent(triggerNode, true);
+	},
+
+	collapseDeadlineTrigger: function()
+	{
+		this.setTriggerExpandedIfPresent(this.expandedDeadlineTrigger, false);
+		this.expandedDeadlineTrigger = null;
+	},
+
+	bindDeadlineCalendarClose: function(calendar)
+	{
+		if (this.deadlineCalendarCloseBound || !calendar || !calendar.popup)
+		{
+			return;
+		}
+
+		this.deadlineCalendarCloseBound = true;
+		BX.addCustomEvent(calendar.popup, 'onPopupClose', function() {
+			var triggerNode = BX.Tasks.GridActions.expandedDeadlineTrigger;
+			var popupContainer = (typeof calendar.popup.getPopupContainer === 'function')
+				? calendar.popup.getPopupContainer()
+				: null;
+			var isTriggerFocusable = (
+				triggerNode
+				&& document.body.contains(triggerNode)
+				&& (triggerNode.offsetParent !== null || triggerNode.getClientRects().length > 0)
+			);
+			var activeNode = document.activeElement;
+			var shouldRestoreFocus = (
+				isTriggerFocusable
+				&& (
+					activeNode === document.body
+					|| (popupContainer && popupContainer.contains(activeNode))
+				)
+			);
+
+			BX.Tasks.GridActions.collapseDeadlineTrigger();
+
+			if (shouldRestoreFocus)
+			{
+				triggerNode.focus();
+			}
+		});
+	},
+
 	onTagUpdateClick: function(taskId, groupId, event)
 	{
 		const onRowUpdate = (baseEvent) => {
@@ -128,41 +236,20 @@ BX.Tasks.GridActions = {
 			if (statusSuccess)
 			{
 				dialog.clearSearch();
+				dialog.getFooter().setSearchQuery(dialog.getTagSelectorQuery());
 				BX.Tasks.GridActions.reloadRow(taskId);
 				statusSuccess = false;
-				hideAddButton();
 				return;
 			}
 			var tags = dialog.getSelectedItems().map(function(item) {
 				return item.getTitle();
 			});
-			hideAddButton();
 			BX.Tasks.GridActions.action('setTags', taskId, { tags: tags });
 		};
 		var onSearch = function(event) {
 			var dialog = event.getTarget();
-			var query = event.getData().query;
-			if (query.trim() !== '')
-			{
-				showAddButton();
-			}
-			else
-			{
-				hideAddButton();
-			}
+			dialog.getFooter().setSearchQuery(event.getData().query);
 		};
-
-		var showAddButton = function()
-		{
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
-		}
-
-		var hideAddButton = function()
-		{
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
-		}
 
 		var showAlert = function(className, error)
 		{
@@ -172,29 +259,26 @@ BX.Tasks.GridActions = {
 			}
 			var alert = document.createElement('div');
 			alert.className = className;
-			alert.innerHTML = `
-				<div class='ui-alert ui-alert-xs ui-alert-danger'  
-					<span class='ui-alert-message'>
-						${error}
-					</span> 
-				</div>
-			`;
+
+			var alertInner = document.createElement('div');
+			alertInner.className = 'ui-alert ui-alert-xs ui-alert-danger';
+
+			var alertMessage = document.createElement('span');
+			alertMessage.className = 'ui-alert-message';
+			alertMessage.textContent = error;
+
+			alertInner.appendChild(alertMessage);
+			alert.appendChild(alertInner);
 			dialog.getFooterContainer().before(alert);
+
+			if (BX.UI.Accessibility && BX.UI.Accessibility.LiveAnnouncer)
+			{
+				BX.UI.Accessibility.LiveAnnouncer.announce(error, 'assertive');
+			}
 		};
 
-		var onTagsLoad = function()
+		var onCreateTag = function()
 		{
-			var events = ['click', 'keydown'];
-
-			var handler = function(event) {
-				if (event.type === 'keydown')
-				{
-					if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13))
-					{
-						return;
-					}
-				}
-
 				var tags = dialog.getSelectedItems().map(function(item) {
 					return item.getTitle();
 				});
@@ -241,19 +325,6 @@ BX.Tasks.GridActions = {
 						setTimeout(removeAlert, 2000);
 					}
 				});
-			};
-
-			events.forEach(function(ev) {
-				if (ev === 'click')
-				{
-					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
-					.addEventListener(ev, handler);
-				}
-				else
-				{
-					dialog.getContainer().addEventListener(ev, handler);
-				}
-			});
 		};
 
 		var eventData = event.getData();
@@ -314,20 +385,22 @@ BX.Tasks.GridActions = {
 				userId: BX.Tasks.GridInstance.userId,
 				taskId: taskId,
 				groupId: groupId,
+				onCreateTag: onCreateTag,
 			},
 			clearUnavailableItems: true,
 			events: {
 				'onLoad': function() {
 					dialog.getFooterContainer().style.zIndex = 1;
 					BX.addCustomEvent('Tasks.Tasks.Grid:RowRemove', onRowRemove);
-					onTagsLoad();
 				}.bind(this),
 				'onShow': function() {
 					BX.addCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+					BX.Tasks.GridActions.setTriggerExpandedIfPresent(eventData.button, true);
 				}.bind(this),
 				'onHide': function() {
 					BX.removeCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
 					BX.removeCustomEvent('Tasks.Tasks.Grid:RowRemove', onRowRemove);
+					BX.Tasks.GridActions.setTriggerExpandedIfPresent(eventData.button, false);
 				}.bind(this),
 				'onSearch': function(event){
 					onSearch(event)
@@ -363,9 +436,159 @@ BX.Tasks.GridActions = {
 					BX.Tasks.GridActions.action('setGroup', taskId, { groupId: item.getId() });
 					event.getTarget().hide();
 				},
+				'onShow': function() {
+					BX.Tasks.GridActions.setTriggerExpandedIfPresent(target, true);
+				},
+				'onHide': function() {
+					BX.Tasks.GridActions.setTriggerExpandedIfPresent(target, false);
+				},
 			},
 		});
 		dialog.show();
+	},
+
+	// Same CRM entity set as the task card CRM field (see tasks.v2 crm-dialog).
+	// dynamicTypeIds mirrors the portal CRM UF settings when the card field
+	// extension is on the page; otherwise the selector shows all SPA types.
+	getCrmSelectorEntities: function() {
+		var crmSettings = (BX.Extension && BX.Extension.getSettings)
+			? BX.Extension.getSettings('tasks.v2.component.fields.crm')
+			: null;
+		var taskCrmSettings = (crmSettings && crmSettings.crmIntegration)
+			? crmSettings.crmIntegration.task
+			: null;
+
+		// null (not []) when the card field extension is absent: the dynamic-multiple provider auto-loads
+		// all smart processes only when dynamicTypeIds is missing/not an array; an empty array would be a
+		// valid filter that loads nothing, hiding smart processes from the picker.
+		var dynamicTypeIds = taskCrmSettings === null
+			? null
+			: Object.entries(taskCrmSettings)
+				.filter(function([entityId, enabled]) {
+					return enabled === 'Y' && entityId.indexOf('DYNAMIC_') === 0;
+				})
+				.map(function([entityId]) {
+					return Number(entityId.slice('DYNAMIC_'.length));
+				});
+
+		return ['deal', 'contact', 'company', 'lead', 'smart_invoice', 'dynamic_multiple']
+			.map(function(entityId) {
+				return {
+					id: entityId,
+					dynamicLoad: true,
+					dynamicSearch: true,
+					options: {
+						dynamicTypeIds: dynamicTypeIds,
+						showTab: true,
+						allowAllCategories: true,
+					},
+					dynamicSearchMatchMode: 'all',
+				};
+			});
+	},
+
+	// Encodes a selected entity-selector item as the DTO-01 crmItemId
+	// ({ABBR}_{id}; SPA => T{hex(typeId)}_{itemId}). Mirrors tasks.v2 CrmMappers.mapId.
+	mapCrmItemId: function(entityId, id) {
+		var prefixMap = {
+			deal: 'D',
+			contact: 'C',
+			company: 'CO',
+			lead: 'L',
+			smart_invoice: 'SI',
+		};
+
+		if (!prefixMap[entityId])
+		{
+			var parts = String(id).split(':');
+
+			return 'T' + Number(parts[0]).toString(16) + '_' + parts[1];
+		}
+
+		return prefixMap[entityId] + '_' + id;
+	},
+
+	getCrmSelectedItemsFromCell: function(target) {
+		var container = target.closest('.tasks-list-crm');
+		if (!container)
+		{
+			return [];
+		}
+
+		return [].slice.call(container.querySelectorAll('[data-crm-filter-value]'))
+			.map(function(chip) {
+				try
+				{
+					var item = JSON.parse(chip.getAttribute('data-crm-filter-value') || '');
+
+					return BX.Type.isArray(item) && item.length === 2 ? item : null;
+				}
+				catch (error)
+				{
+					return null;
+				}
+			})
+			.filter(function(item) {
+				return item !== null;
+			});
+	},
+
+	onCrmBindAddClick: function(taskId, target) {
+		var selectedItems = this.getCrmSelectedItemsFromCell(target);
+
+		// cacheable:false so the dialog is destroyed on close instead of piling up in the selector's
+		// instance registry; a new dialog is created for every "+" click.
+		var dialog = new BX.UI.EntitySelector.Dialog({
+			targetNode: target,
+			enableSearch: true,
+			multiple: true,
+			compactView: true,
+			tagSelectorOptions: {
+				maxHeight: 68,
+				textBoxWidth: '50%',
+			},
+			cacheable: false,
+			context: 'tasks-list-crm-bind',
+			entities: this.getCrmSelectorEntities(),
+			preselectedItems: selectedItems,
+			undeselectedItems: selectedItems,
+			events: {
+				'Item:onSelect': function(event) {
+					var item = event.getData().item;
+					var crmItemId = BX.Tasks.GridActions.mapCrmItemId(item.getEntityId(), item.getId());
+
+					BX.Tasks.GridActions.bindCrmItem(taskId, crmItemId);
+					event.getTarget().hide();
+				},
+			},
+		});
+		dialog.show();
+	},
+
+	bindCrmItem: function(taskId, crmItemId) {
+		return BX.ajax.runAction('tasks.task.bindCrmItem', {
+			data: {
+				taskId: Number(taskId),
+				crmItemId: crmItemId,
+			},
+		}).then(function() {
+			BX.Tasks.GridActions.reloadRow(taskId);
+		}).catch(function(response) {
+			BX.UI.Notification.Center.notify({
+				content: BX.message('TASKS_LIST_CRM_BIND_ERROR'),
+				actions: [{
+					title: BX.message('TASKS_LIST_CRM_BIND_RETRY'),
+					events: {
+						click: function(event, balloon) {
+							balloon.close();
+							BX.Tasks.GridActions.bindCrmItem(taskId, crmItemId);
+						},
+					},
+				}],
+			});
+
+			return Promise.reject(response);
+		});
 	},
 
 	toggleFilter: function(options, selected, extendable) {
@@ -491,6 +714,114 @@ BX.Tasks.GridActions = {
 		filterApi.apply();
 	},
 
+	// Toggles the chip's element in the CRM_ITEM filter: an active chip is removed, an inactive one added.
+	toggleCrmItemFilter: function(chip) {
+		var value = chip.getAttribute('data-crm-filter-value');
+		var label = chip.getAttribute('data-crm-filter-label');
+
+		if (chip.classList.contains('tasks-grid-filter-active'))
+		{
+			this.unfilterByCrmItem(value, label);
+		}
+		else
+		{
+			this.filterByCrmItem(value, label);
+		}
+	},
+
+	// crmItemId is the entity-selector filter value (e.g. '["deal","15"]'), matching what the CRM_ITEM
+	// filter field stores when the element is picked in the dialog, so add/remove are symmetric.
+	filterByCrmItem: function(crmItemId, crmItemLabel) {
+		if (!crmItemId)
+		{
+			return;
+		}
+
+		var filterManager = BX.Main.filterManager.getById(this.gridId);
+		if (!filterManager)
+		{
+			console.log('BX.Main.filterManager not initialised');
+			return;
+		}
+
+		// entity_selector filter field needs the value and its label in parallel
+		// arrays; without the label the chip is not rendered.
+		this.extendFilter(
+			filterManager,
+			{
+				CRM_ITEM: [crmItemId],
+				CRM_ITEM_label: [crmItemLabel || crmItemId],
+			},
+			true,
+		);
+	},
+
+	unfilterByCrmItem: function(crmItemId, crmItemLabel) {
+		if (!crmItemId)
+		{
+			return;
+		}
+
+		var filterManager = BX.Main.filterManager.getById(this.gridId);
+		if (!filterManager)
+		{
+			console.log('BX.Main.filterManager not initialised');
+			return;
+		}
+
+		// Mirror of filterByCrmItem: drop this element's value/label from the CRM_ITEM
+		// filter set. reduceFilter clears the field entirely when the last value is removed.
+		this.reduceFilter(
+			filterManager,
+			{
+				CRM_ITEM: [crmItemId],
+				CRM_ITEM_label: [crmItemLabel || crmItemId],
+			},
+			true,
+		);
+	},
+
+	// Binds a hover CRM mini-card (crm.mini-card) to each accessible CRM chip. The chip title is plain
+	// text now, so the card is reachable only by hovering the chip. Chips are re-created on every grid
+	// reload, so this runs on init and on Grid::updated; chips are marked to avoid double-binding.
+	initCrmMiniCards: function() {
+		var chips = [].slice.call(
+			document.querySelectorAll('.tasks-list-crm [data-crm-mini-card-id]:not([data-crm-mini-card-bound])'),
+		);
+		if (!chips.length)
+		{
+			return;
+		}
+
+		// Mark synchronously so a concurrent init (rapid Grid::updated) never binds the same chip twice.
+		chips.forEach(function(chip) {
+			chip.setAttribute('data-crm-mini-card-bound', '1');
+		});
+
+		BX.Runtime.loadExtension('crm.mini-card').then(function(exports) {
+			var EntityMiniCard = exports.EntityMiniCard;
+			if (!EntityMiniCard)
+			{
+				return;
+			}
+
+			chips.forEach(function(chip) {
+				var entityTypeId = parseInt(chip.getAttribute('data-crm-mini-card-type-id'), 10);
+				var entityId = parseInt(chip.getAttribute('data-crm-mini-card-id'), 10);
+				if (!entityTypeId || !entityId)
+				{
+					return;
+				}
+
+				new EntityMiniCard({
+					bindElement: chip,
+					entityTypeId: entityTypeId,
+					entityId: entityId,
+				});
+			});
+		});
+	},
+
 	changePin: function(taskId, groupId, event) {
 		var eventData = event.getData();
 		var button = eventData.button;
@@ -560,6 +891,31 @@ BX.Tasks.GridActions = {
 			}
 
 			case 'complete':
+			{
+				const completion = this.prepareCompletion();
+
+				BX.ajax.runAction(
+					'bitrix:tasks.scrum.task.isScrumTask',
+					{
+						mode: 'class',
+						data: { taskId: taskId },
+					},
+				).then(function(response) {
+					if (response.data === true)
+					{
+						this.doScrumAction(code, taskId, args, completion);
+					}
+					else
+					{
+						this.doCompleteAction(taskId, undefined, completion);
+					}
+				}.bind(this)).catch(function(error) {
+					this.notifyActionError(error);
+				}.bind(this));
+
+				break;
+			}
+
 			case 'renew':
 			{
 				BX.ajax.runAction(
@@ -577,6 +933,8 @@ BX.Tasks.GridActions = {
 					{
 						this.doAction(code, taskId, args);
 					}
+				}.bind(this)).catch(function(error) {
+					this.notifyActionError(error);
 				}.bind(this));
 
 				break;
@@ -694,6 +1052,134 @@ BX.Tasks.GridActions = {
 		);
 	},
 
+	prepareCompletion: function()
+	{
+		return {
+			apiClient: this.loadCompletionExtension('tasks.v2.lib.api-client'),
+			prompt: this.loadCompletionExtension('tasks.v2.lib.check-list-completion-prompt'),
+		};
+	},
+
+	loadCompletionExtension: function(extension)
+	{
+		const loading = top.BX.Runtime.loadExtension(extension);
+		// the action may end before the extension is awaited, so a failure must not stay unhandled
+		loading.catch(function() {
+			return null;
+		});
+
+		return loading;
+	},
+
+	completeWithPrompt: function(prompt, taskId, complete, beforeComplete)
+	{
+		return prompt.then(function(extension) {
+			return extension.checkListCompletionPromptRunner.runForTask(taskId, {
+				complete: () => complete(true),
+				completeWithChecklist: () => complete(true),
+			}, {
+				beforeComplete: beforeComplete,
+			}).then(function(result) {
+				return {
+					success: result.state === extension.CompletionStates.Success,
+					error: result.state === extension.CompletionStates.Failed ? result.error : null,
+				};
+			});
+		});
+	},
+
+	completeWithoutPrompt: function(complete, beforeComplete)
+	{
+		return Promise.resolve(beforeComplete ? beforeComplete() : true).then(function(confirmed) {
+			if (!confirmed)
+			{
+				return { success: false, error: null };
+			}
+
+			return complete(true).then(function(error) {
+				return { success: !error, error: error };
+			});
+		});
+	},
+
+	doCompleteAction: function(taskId, beforeComplete, completion)
+	{
+		const context = completion || this.prepareCompletion();
+		const complete = function(completeWithChecklist) {
+			return context.apiClient.then(function(extension) {
+				return extension.apiClient.post('Task.Status.complete', {
+					task: { id: taskId },
+					completeWithChecklist: completeWithChecklist,
+				});
+			}).then(
+				function(response) {
+					if (response?.errors?.length > 0)
+					{
+						return this.normalizeActionError(response);
+					}
+
+					return null;
+				}.bind(this),
+				function(error) {
+					return this.normalizeActionError(error);
+				}.bind(this),
+			);
+		}.bind(this);
+
+		const completed = context.prompt
+			? this.completeWithPrompt(context.prompt, taskId, complete, beforeComplete)
+			: this.completeWithoutPrompt(complete, beforeComplete)
+		;
+
+		return completed.then(function(result) {
+			if (!result.success)
+			{
+				if (result.error)
+				{
+					this.notifyActionError(result.error);
+				}
+
+				return false;
+			}
+
+			this.sendAnalytics(taskId, 'task_complete');
+			if (!this.gridId)
+			{
+				window.location.reload();
+
+				return false;
+			}
+			if (!this.checkCanMove())
+			{
+				this.reloadRow(taskId);
+			}
+
+			return true;
+		}.bind(this)).catch(function(error) {
+			this.notifyActionError(error);
+
+			return false;
+		}.bind(this));
+	},
+
+	normalizeActionError: function(error)
+	{
+		if (error instanceof Error)
+		{
+			return error;
+		}
+
+		const message = error?.errors?.[0]?.message || error?.errors?.[0]?.MESSAGE || String(error);
+
+		return new Error(message);
+	},
+
+	notifyActionError: function(error)
+	{
+		const normalizedError = this.normalizeActionError(error);
+		BX.UI.Notification.Center.notify({ content: normalizedError.message });
+	},
+
 	doTakeAction: function(taskId, args)
 	{
 		if (!args.allowTimeTracking)
@@ -732,13 +1218,12 @@ BX.Tasks.GridActions = {
 		);
 	},
 
-	doScrumAction(action, taskId, args)
+	doScrumAction(action, taskId, args, completion)
 	{
-		const promise = new BX.Promise();
 		let taskStatus = null;
 		let isParentScrumTask = false;
 
-		top.BX.loadExt('tasks.scrum.task-status')
+		return Promise.resolve(top.BX.loadExt('tasks.scrum.task-status'))
 		.then(function() {
 			if (
 				!BX.type.isUndefined(top.BX.Tasks.Scrum)
@@ -750,54 +1235,47 @@ BX.Tasks.GridActions = {
 					action: action,
 					performActionOnParentTask: true,
 				});
-				taskStatus.updateState()
+				return taskStatus.updateState()
 				.then(function() {
-					taskStatus.isParentScrumTask()
+					return taskStatus.isParentScrumTask()
 					.then(function(result) {
 						isParentScrumTask = result;
-						if (isParentScrumTask)
-						{
-							promise.fulfill();
-						}
-						else
-						{
-							if (action === 'complete')
-							{
-								return taskStatus.showDod(taskId)
-								.then(function() {
-									promise.fulfill();
-								}.bind(this))
-								.catch(function() {
-									promise.reject();
-								}.bind(this))
-									;
-							}
-							else
-							{
-								promise.fulfill();
-							}
-						}
 					}.bind(this))
 					;
 				}.bind(this))
 				;
 			}
-			else
-			{
-				promise.fulfill();
-			}
-		}.bind(this))
-		;
 
-		promise.then(function() {
-			this.doAction(action, taskId, args)
-			.then(function() {
-				if (taskStatus && isParentScrumTask)
+			return null;
+		}.bind(this))
+		.then(function() {
+			const beforeComplete = (
+				action === 'complete'
+				&& taskStatus
+				&& !isParentScrumTask
+			)
+				? () => taskStatus.showDodConfirmation(taskId)
+				: undefined
+			;
+			const actionPromise = action === 'complete'
+				? this.doCompleteAction(taskId, beforeComplete, completion)
+				: this.doAction(action, taskId, args)
+			;
+
+			return actionPromise.then(function(success) {
+				if (success !== false && taskStatus && isParentScrumTask)
 				{
 					taskStatus.update();
 				}
+
+				return success;
 			}.bind(this))
 			;
+		}.bind(this))
+		.catch(function(error) {
+			this.notifyActionError(error);
+
+			return false;
 		}.bind(this));
 	},
 
@@ -810,7 +1288,15 @@ BX.Tasks.GridActions = {
 		this.getTotalCountProceed = true;
 
 		var container = document.getElementById(prefix + '_row_count_wrapper');
+		var countButton = container.querySelector('.tasks-list-row-count-link');
+		var restoreFocus = !!(countButton && document.activeElement === countButton);
+
 		this.showCountLoader(container);
+
+		if (restoreFocus)
+		{
+			this.focusCountWrapper(container);
+		}
 
 		BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getTotalCount', {
 			mode: 'class',
@@ -825,12 +1311,22 @@ BX.Tasks.GridActions = {
 				if (response.data)
 				{
 					response.data = (typeof response.data == 'number') ? response.data : 0;
-					var button = container.querySelector('a');
+					var button = container.querySelector('.tasks-list-row-count-link');
 					if (button)
 					{
 						button.remove();
 					}
 					container.append(response.data);
+
+					if (restoreFocus)
+					{
+						var activeNode = document.activeElement;
+						if (activeNode === container || activeNode === document.body)
+						{
+							this.focusCountWrapper(container);
+						}
+						this.announceTotalCount(container);
+					}
 				}
 				this.getTotalCountProceed = false;
 			}.bind(this),
@@ -846,7 +1342,7 @@ BX.Tasks.GridActions = {
 	},
 
 	showCountLoader: function(container) {
-		var button = container.querySelector('a');
+		var button = container.querySelector('.tasks-list-row-count-link');
 		if (button)
 		{
 			button.style.display = 'none';
@@ -867,11 +1363,48 @@ BX.Tasks.GridActions = {
 		}
 	},
 
+	focusCountWrapper: function(container) {
+		if (!container)
+		{
+			return;
+		}
+		if (!container.hasAttribute('tabindex'))
+		{
+			container.setAttribute('tabindex', '-1');
+		}
+		container.focus();
+	},
+
+	announceTotalCount: function(container) {
+		if (!container || !(BX.UI.Accessibility && BX.UI.Accessibility.LiveAnnouncer))
+		{
+			return;
+		}
+
+		var text = container.textContent.replace(/\s+/g, ' ').trim();
+		if (text !== '')
+		{
+			BX.UI.Accessibility.LiveAnnouncer.announce(text);
+		}
+	},
+
 	reloadRow: function(taskId) {
 		var grid = BX.Main.gridManager.getById(this.gridId);
 		if (grid && grid.hasOwnProperty('instance'))
 		{
+			var gridInstance = BX.Tasks.GridInstance;
+			var focusDescriptor = null;
+			if (gridInstance && gridInstance.isRowExist(taskId))
+			{
+				focusDescriptor = gridInstance.captureRowFocus(gridInstance.getRowNodeById(taskId));
+			}
+
 			grid.instance.updateRow(taskId.toString(), null, null, ({ id }) => {
+				if (gridInstance && gridInstance.isRowExist(id) && gridInstance.isFocusLost())
+				{
+					gridInstance.restoreRowFocus(id, focusDescriptor);
+				}
+
 				BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
 			});
 		}
@@ -985,12 +1518,21 @@ BX.Tasks.GridActions = {
 			data.flowId = Number(gridActions.flowId);
 		}
 
+		if (action === 'bindcrm')
+		{
+			data.crmItemId = gridActions.crmItemId;
+		}
+
 		return data;
 	},
 
 	onDeadlineChangeClick: function(taskId, node, curDeadline, event) {
 		curDeadline = curDeadline || (new Date).getDate();
 		node = node || event.getData().button;
+
+		this.expandDeadlineTrigger(node);
+
+		var wasTriggerFocused = (document.activeElement === node);
 
 		var calendar = BX.calendar({
 			node: node,
@@ -1024,15 +1566,14 @@ BX.Tasks.GridActions = {
 							},
 						],
 						{
-							callbackOnSuccess: (function(node, taskId, value) {
+							callbackOnSuccess: (function(taskId) {
 								return function(reply) {
-									// if (node.parentNode.parentNode.tagName === 'TD')
-									//     node.parentNode.parentNode.innerHTML = tasksListNS.renderDeadline(taskId, value, true);
-									// else
-									//     node.parentNode.innerHTML = tasksListNS.renderDeadline(taskId, value, true);
-
+									if (!BX.Tasks.GridActions.checkCanMove())
+									{
+										BX.Tasks.GridActions.reloadRow(taskId);
+									}
 								};
-							})(node, taskId, value),
+							})(taskId),
 							callbackOnFailure: (response) => {
 								const data = response.rawReply;
 								if (data.message)
@@ -1045,13 +1586,16 @@ BX.Tasks.GridActions = {
 						},
 					);
 					BX.CJSTask.ajaxUrl = path;
-					if (!BX.Tasks.GridActions.checkCanMove())
-					{
-						BX.Tasks.GridActions.reloadRow(taskId);
-					}
 				};
 			})(node, taskId),
 		});
+
+		if (wasTriggerFocused)
+		{
+			node.focus();
+		}
+
+		this.bindDeadlineCalendarClose(calendar);
 
 		var guide = BX.Tasks.TourGuideController.getGuide();
 		if (guide && guide.setCalendarPopup && guide.isCorrectRow(taskId) && !guide.getIsStopped())
@@ -1073,19 +1617,23 @@ BX.Tasks.GridActions = {
 			},
 		);
 		BX.addClass(bindElement, 'task-grade-and-report-selected');
+		this.setTriggerExpandedIfPresent(bindElement, true);
 
 		return false;
 	},
 
 	__onGradePopupClose: function() {
 		BX.removeClass(this.bindElement, 'task-grade-and-report-selected');
+		BX.Tasks.GridActions.setTriggerExpandedIfPresent(this.bindElement, false);
 	},
 
 	__onGradePopupChange: function() {
-		this.bindElement.className = 'task-grade-and-report'
+		this.bindElement.className = 'task-grade-and-report tasks-grid-control'
 			+ (this.listValue !== 'NULL' ? ' task-grade-' + this.listItem.className : '')
 			+ (this.report ? ' task-in-report' : '');
-		this.bindElement.title = BX.message('TASKS_MARK') + ': ' + this.listItem.name;
+		var accessibleName = BX.message('TASKS_MARK') + ': ' + this.listItem.name;
+		this.bindElement.title = accessibleName;
+		this.bindElement.setAttribute('aria-label', accessibleName);
 
 		BX.Tasks.GridActions.action('legacyUpdate', this.id, {
 			data: {
@@ -1094,23 +1642,29 @@ BX.Tasks.GridActions = {
 		});
 	},
 
-	renderTimerItem: function(taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking) {
-		canStartTimeTracking = canStartTimeTracking || false;
-
+	__getTimerState: function(timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking) {
 		var className = 'task-timer-inner';
 		var timeSpent = timeSpentInLogs + taskTimersTotalValue;
+		var ariaLabel;
+		var interactive;
 
 		if (isRunning)
 		{
 			className = className + ' task-timer-play';
+			ariaLabel = BX.message('TASKS_TIMER_STOP');
+			interactive = true;
 		}
 		else if (canStartTimeTracking)
 		{
 			className = className + ' task-timer-pause';
+			ariaLabel = BX.message('TASKS_TIMER_START');
+			interactive = true;
 		}
 		else
 		{
 			className = className + ' task-timer-clock';
+			ariaLabel = BX.message('TASKS_TIMER_TRACKING');
+			interactive = false;
 		}
 
 		if (timeEstimate > 0 && timeSpent > timeEstimate)
@@ -1118,52 +1672,123 @@ BX.Tasks.GridActions = {
 			className = className + ' task-timer-overdue';
 		}
 
-		return (
-			BX.create('span', {
+		return {
+			className: className,
+			ariaLabel: ariaLabel,
+			text: BX.Tasks.GridActions.renderTimerTimes(timeSpent, timeEstimate, isRunning),
+			interactive: interactive,
+		};
+	},
+
+	__updateTimerNode: function(taskId, timerState) {
+		var innerTimerBlock = BX('task-timer-block-inner-' + taskId);
+		if (innerTimerBlock)
+		{
+			innerTimerBlock.className = timerState.className;
+		}
+
+		var outerTimerBlock = BX('task-timer-block-' + taskId);
+		if (outerTimerBlock)
+		{
+			outerTimerBlock.setAttribute('aria-label', timerState.ariaLabel);
+		}
+
+		var valueBlock = BX('task-timer-block-value-' + taskId);
+		if (valueBlock)
+		{
+			valueBlock.textContent = timerState.text;
+		}
+	},
+
+	__replaceTimerNode: function(currentNode, newNode) {
+		var keepFocus = currentNode.contains(document.activeElement);
+
+		currentNode.parentNode.replaceChild(newNode, currentNode);
+
+		if (keepFocus)
+		{
+			if (newNode.tagName !== 'BUTTON')
+			{
+				newNode.setAttribute('tabindex', '-1');
+			}
+
+			newNode.focus();
+		}
+	},
+
+	renderTimerItem: function(taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking) {
+		canStartTimeTracking = canStartTimeTracking || false;
+
+		var timerState = BX.Tasks.GridActions.__getTimerState(
+			timeSpentInLogs,
+			timeEstimate,
+			isRunning,
+			taskTimersTotalValue,
+			canStartTimeTracking,
+		);
+
+		var innerBlock = BX.create('span', {
+			props: {
+				id: 'task-timer-block-inner-' + taskId,
+				className: timerState.className,
+			},
+			children: [
+				BX.create('span', {
+					props: {
+						className: 'task-timer-icon',
+					},
+				}),
+				BX.create('span', {
+					props: {
+						id: 'task-timer-block-value-' + taskId,
+						className: 'task-timer-time',
+					},
+					text: timerState.text,
+				}),
+			],
+		});
+
+		if (!timerState.interactive)
+		{
+			return BX.create('span', {
 				props: {
 					id: 'task-timer-block-' + taskId,
 					className: 'task-timer-block',
 				},
-				events: {
-					click: (function(taskId, canStartTimeTracking) {
-						return function() {
-							if (BX.hasClass(BX('task-timer-block-inner-' + taskId), 'task-timer-play'))
-							{
-								BX.Tasks.GridInstance.stopTimerPull();
-								BX.TasksTimerManager.stop(taskId);
-							}
-							else if (canStartTimeTracking)
-							{
-								BX.Tasks.GridInstance.stopTimerPull();
-								BX.TasksTimerManager.start(taskId);
-							}
-						};
-					})(taskId, canStartTimeTracking),
+				attrs: {
+					role: 'timer',
+					'aria-label': timerState.ariaLabel,
 				},
-				children: [
-					BX.create('span', {
-						props: {
-							id: 'task-timer-block-inner-' + taskId,
-							className: className,
-						},
-						children: [
-							BX.create('span', {
-								props: {
-									className: 'task-timer-icon',
-								},
-							}),
-							BX.create('span', {
-								props: {
-									id: 'task-timer-block-value-' + taskId,
-									className: 'task-timer-time',
-								},
-								text: BX.Tasks.GridActions.renderTimerTimes(timeSpent, timeEstimate, isRunning),
-							}),
-						],
-					}),
-				],
-			})
-		);
+				children: [innerBlock],
+			});
+		}
+
+		return BX.create('button', {
+			props: {
+				id: 'task-timer-block-' + taskId,
+				className: 'task-timer-block',
+			},
+			attrs: {
+				type: 'button',
+				'aria-label': timerState.ariaLabel,
+			},
+			events: {
+				click: function() {
+					var innerTimerBlock = BX('task-timer-block-inner-' + taskId);
+					if (BX.hasClass(innerTimerBlock, 'task-timer-play'))
+					{
+						BX.Tasks.GridInstance.stopTimerPull();
+						BX.TasksTimerManager.stop(taskId);
+					}
+					else if (BX.hasClass(innerTimerBlock, 'task-timer-pause'))
+					{
+						BX.Tasks.GridInstance.stopTimerPull();
+						BX.TasksTimerManager.start(taskId);
+					}
+				},
+			},
+			children: [innerBlock],
+		});
 	},
 
 	renderTimerTimes: function(timeSpent, timeEstimate, isRunning) {
@@ -1210,24 +1835,50 @@ BX.Tasks.GridActions = {
 
 	redrawTimerNode: function(taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking) {
 		var taskTimerBlock = BX('task-timer-block-' + taskId);
-		var newTaskTimerBlock = BX.Tasks.GridActions.renderTimerItem(
-			taskId,
-			timeSpentInLogs,
-			timeEstimate,
-			isRunning,
-			taskTimersTotalValue,
-			canStartTimeTracking,
-		);
 
 		if (taskTimerBlock)
 		{
-			taskTimerBlock.parentNode.replaceChild(newTaskTimerBlock, taskTimerBlock);
+			var timerState = BX.Tasks.GridActions.__getTimerState(
+				timeSpentInLogs,
+				timeEstimate,
+				isRunning,
+				taskTimersTotalValue,
+				canStartTimeTracking,
+			);
+
+			if (timerState.interactive === (taskTimerBlock.tagName === 'BUTTON'))
+			{
+				BX.Tasks.GridActions.__updateTimerNode(taskId, timerState);
+			}
+			else
+			{
+				BX.Tasks.GridActions.__replaceTimerNode(
+					taskTimerBlock,
+					BX.Tasks.GridActions.renderTimerItem(
+						taskId,
+						timeSpentInLogs,
+						timeEstimate,
+						isRunning,
+						taskTimersTotalValue,
+						canStartTimeTracking,
+					),
+				);
+			}
 		}
 		else
 		{
 			var container = BX('task-timer-block-container-' + taskId);
 			if (container)
 			{
+				var newTaskTimerBlock = BX.Tasks.GridActions.renderTimerItem(
+					taskId,
+					timeSpentInLogs,
+					timeEstimate,
+					isRunning,
+					taskTimersTotalValue,
+					canStartTimeTracking,
+				);
+
 				// Unregister callback function for this item (if it exists)
 				if (this.registeredTimerNodes[taskId])
 				{
@@ -1336,10 +1987,16 @@ BX.Tasks.GridActions = {
 				innerTimerBlock = BX('task-timer-block-inner-' + selfTaskId);
 				if (innerTimerBlock && !BX.hasClass(innerTimerBlock, 'task-timer-clock'))
 				{
+					var outerTimerBlock = BX('task-timer-block-' + selfTaskId);
+
 					if (switchStateTo === 'paused')
 					{
 						BX.removeClass(innerTimerBlock, 'task-timer-play');
 						BX.addClass(innerTimerBlock, 'task-timer-pause');
+						if (outerTimerBlock)
+						{
+							outerTimerBlock.setAttribute('aria-label', BX.message('TASKS_TIMER_START'));
+						}
 						const valueBlock = BX('task-timer-block-value-' + selfTaskId);
 						if (valueBlock && valueBlock.textContent)
 						{
@@ -1352,6 +2009,10 @@ BX.Tasks.GridActions = {
 					{
 						BX.removeClass(innerTimerBlock, 'task-timer-pause');
 						BX.addClass(innerTimerBlock, 'task-timer-play');
+						if (outerTimerBlock)
+						{
+							outerTimerBlock.setAttribute('aria-label', BX.message('TASKS_TIMER_STOP'));
+						}
 					}
 				}
 
@@ -1360,7 +2021,7 @@ BX.Tasks.GridActions = {
 		};
 	},
 
-	sendAnalytics: function (taskId, event)
+	getAnalyticsSection: function ()
 	{
 		let section = 'tasks';
 
@@ -1378,15 +2039,49 @@ BX.Tasks.GridActions = {
 			}
 		}
 
+		return section;
+	},
+
+	sendAnalytics: function (taskId, event)
+	{
 		const analyticsData = {
 			tool: 'tasks',
 			category: 'task_operations',
 			type: 'task',
-			c_section: section,
+			c_section: this.getAnalyticsSection(),
 			c_element: 'context_menu',
 			c_sub_section: 'list',
 			p1: `taskId_${taskId}`,
 			event,
+		};
+
+		if (BX.UI.Analytics)
+		{
+			BX.UI.Analytics.sendData(analyticsData);
+
+			return;
+		}
+
+		BX.Runtime.loadExtension('ui.analytics').then(() => {
+			BX.UI.Analytics.sendData(analyticsData);
+		});
+	},
+
+	// SC-005 events 1-2: the deadlineless hint is a notification, not a card banner —
+	// type=notification, no c_element, c_sub_section=list. Values are literals kept in sync
+	// with the tasks.v2.const dictionary (no ES import in this legacy plain-JS bundle).
+	// ui.analytics is loaded lazily via the loadExtension fallback below. The CTA opens the
+	// local BX.calendar without unloading the page, so the promise resolves and the event is
+	// delivered.
+	sendDeadlinelessHintAnalytics: function (event)
+	{
+		const analyticsData = {
+			tool: 'tasks',
+			category: 'task_operations',
+			event: event,
+			type: 'notification',
+			c_section: this.getAnalyticsSection(),
+			c_sub_section: 'list',
 		};
 
 		if (BX.UI.Analytics)
@@ -1438,12 +2133,14 @@ BX.Tasks.GridActions = {
 			}
 
 			stageElement.dataset.selected = 'N';
+			stageElement.removeAttribute('aria-current');
 
 			if (stageElementId === parseInt(stageId))
 			{
 				applyCurrent = false;
 				title = stageElement.title;
 				stageElement.dataset.selected = 'Y';
+				stageElement.setAttribute('aria-current', 'step');
 			}
 		}
 
@@ -1501,6 +2198,9 @@ BX.Tasks.GridActions = {
 BX(function() {
 	'use strict';
 
+	// SC-005: shared registry — at most one deadlineless hint popup is open at a time.
+	var activeDeadlinelessHintRow = null;
+
 	BX.Tasks.Grid = function(options) {
 		this.grid = BX.Main.gridManager.getInstanceById(options.gridId);
 
@@ -1516,6 +2216,10 @@ BX(function() {
 		this.migrationBarOptions = options.migrationBarOptions;
 
 		this.isV2Form = (options.isV2Form === 'true');
+
+		// SC-005: current viewer id (distinct from this.userId semantics) and new-user segment flag
+		this.currentUserId = Number(options.currentUserId);
+		this.isNewUser = (options.isNewUser === true);
 
 		this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
 
@@ -1548,12 +2252,48 @@ BX(function() {
 			this.bindEvents();
 			this.fillTaskListItems(options.taskList);
 			this.colorPinnedRows();
+			this.applyDeadlinelessHints();
 			this.showStub();
 			this.clearAnalyticsParams();
+			this.initHints();
+			BX.Tasks.GridActions.initCrmMiniCards();
 
 			if (options.arParams && options.arParams['LAZY_LOAD'])
 			{
 				this.grid.reload();
+			}
+		},
+
+		initHints: function() {
+			if (BX.UI && BX.UI.Hint)
+			{
+				// Cache the hint manager on the instance: initHints() runs on init AND on every
+				// BX.Main.grid:paramsUpdated (sort/filter/row reload). Each createInstance() makes a
+				// new manager that binds a document listener on its first init(), so recreating it
+				// per update leaked listeners. Reuse one manager and just re-init() the grid nodes.
+				if (!this.hintTooltip)
+				{
+					this.hintTooltip = BX.UI.Hint.createInstance({
+						popupParameters: {
+							className: 'tasks-hint-popup',
+							darkMode: false,
+							offsetTop: 2,
+							background: 'var(--ui-color-bg-content-inapp)',
+							padding: 6,
+							angle: true,
+							targetContainer: document.body,
+							events: {
+								onPopupShow: (popup) => {
+									popup.setOffset({
+										offsetLeft: popup.bindElement.getBoundingClientRect()?.width / 2 ?? 0,
+									});
+								}
+							}
+						},
+						attributeName: 'data-tasks-hint',
+					});
+				}
+				this.hintTooltip.init(this.grid.getContainer());
 			}
 		},
 
@@ -1694,6 +2434,7 @@ BX(function() {
 			BX.addCustomEvent('BX.Main.grid:paramsUpdated', function() {
 				this.updateCanMove();
 				this.colorPinnedRows();
+				this.applyDeadlinelessHints();
 				this.clearTaskListItems();
 				this.clearLastGroupId();
 				this.getRows()
@@ -1709,6 +2450,7 @@ BX(function() {
 				}.bind(this))
 				;
 				this.showStub();
+				this.initHints();
 			}.bind(this));
 
 			BX.addCustomEvent('BX.Tasks.Filter.group', function(grid, groupType, value) {
@@ -1717,6 +2459,25 @@ BX(function() {
 					this[groupType] = value;
 				}
 			}.bind(this));
+
+			BX.Event.EventEmitter.subscribe('Grid::beforeRequest', (event) => {
+				const [, eventArgs] = event.getCompatData();
+
+				// an empty url means the grid will fall back to its own baseUrl, so it must be left untouched
+				if (
+					!this.groupByGroups
+					|| eventArgs.gridId !== this.getGrid().getId()
+					|| !BX.Type.isStringFilled(eventArgs.url)
+				)
+				{
+					return;
+				}
+
+				eventArgs.url = new BX.Uri(eventArgs.url)
+					.setQueryParam('lastGroupId', this.lastGroupId)
+					.toString()
+				;
+			});
 
 			const clearParam = new BX.Uri(location.toString())
 				.removeQueryParam('relationToId')
@@ -1836,6 +2597,245 @@ BX(function() {
 					: BX.removeClass(node, this.classes.pinned)
 				;
 			}.bind(this));
+		},
+
+		/**
+		 * SC-005: apply deadlineless hint highlighting to all rows matching ALG-02 predicate.
+		 * Also wires up mouseenter/mouseleave for hover popup.
+		 */
+		applyDeadlinelessHints: function() {
+			if (!this.isNewUser)
+			{
+				return;
+			}
+
+			this.getRows().forEach(function(row) {
+				var rowId = row.getId();
+				if (!rowId || rowId === 'template_0' || typeof rowId === 'string' && rowId.indexOf('group_') === 0)
+				{
+					return;
+				}
+
+				var node = row.getNode();
+				if (!node)
+				{
+					return;
+				}
+
+				var creatorId = Number(node.getAttribute('data-creator-id') || 0);
+				var hasDeadline = node.getAttribute('data-has-deadline') === 'true';
+				// the deadline must actually be settable on this row — computed server-side in
+				// result_modifier.php from the deadline cell's own clickable + CHANGE_DEADLINE
+				// gate; without it the badge/CTA would target a read-only cell whose picker
+				// never opens (completed/deferred/no-permission rows).
+				var canChangeDeadline = node.getAttribute('data-can-change-deadline') === 'true';
+
+				// ALG-02: isNewUser (already checked above) && !hasDeadline && creatorId === currentUserId
+				var isHint = !hasDeadline && creatorId === this.currentUserId && canChangeDeadline;
+
+				if (isHint)
+				{
+					BX.addClass(node, 'tasks-task-list-deadlineless-hint');
+
+					// Bind hover events only once (guard with dataset flag)
+					if (!node._deadlinelessHintBound)
+					{
+						node._deadlinelessHintBound = true;
+						node._deadlinelessHintPopup = null;
+						node._deadlinelessHintCloseTimer = null;
+
+						var self = this;
+
+						node.addEventListener('mouseenter', function() {
+							clearTimeout(node._deadlinelessHintCloseTimer);
+							if (BX.hasClass(node, 'tasks-task-list-deadlineless-hint'))
+							{
+								self.showDeadlinelessHintForRow(node, rowId);
+							}
+						});
+
+						node.addEventListener('mouseleave', function() {
+							if (node._deadlinelessHintPopup)
+							{
+								node._deadlinelessHintCloseTimer = setTimeout(function() {
+									if (node._deadlinelessHintPopup)
+									{
+										node._deadlinelessHintPopup.close();
+									}
+								}, 300);
+							}
+						});
+					}
+				}
+				else
+				{
+					BX.removeClass(node, 'tasks-task-list-deadlineless-hint');
+				}
+			}.bind(this));
+		},
+
+		/**
+		 * SC-005: show hover popup for a deadlineless task row.
+		 * @param {HTMLElement} rowNode
+		 * @param {string|number} taskId
+		 */
+		showDeadlinelessHintForRow: function(rowNode, taskId) {
+			if (rowNode._deadlinelessHintPopup)
+			{
+				return;
+			}
+
+			// AC-024: suppress under an open slider / panel
+			if (
+				typeof BX.SidePanel !== 'undefined'
+				&& BX.SidePanel.Instance
+				&& BX.SidePanel.Instance.getTopSlider
+				&& BX.SidePanel.Instance.getTopSlider()
+			)
+			{
+				return;
+			}
+
+			// Find DEADLINE cell for popup bind point; fall back to row node
+			var deadlineCell = rowNode.querySelector('[data-column-id="DEADLINE"]') || rowNode;
+
+			var ctaButton = BX.create('button', {
+				attrs: {
+					type: 'button',
+					className: 'tasks-kanban-deadlineless-hint__cta',
+					'data-testid': 'task-list-deadlineless-hint-cta'
+				},
+				text: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_CTA'),
+				events: {
+					click: function() {
+						// Event 2: sent before opening the calendar (ALG-02) so it survives the navigation
+						BX.Tasks.GridActions.sendDeadlinelessHintAnalytics('click_suggest_banner');
+						if (rowNode._deadlinelessHintPopup)
+						{
+							rowNode._deadlinelessHintPopup.close();
+						}
+						// Pass the current date explicitly: with null the handler falls back to
+						// `(new Date).getDate()` — a day-of-month number, not a date
+						BX.Tasks.GridActions.onDeadlineChangeClick(taskId, deadlineCell, new Date(), null);
+					}
+				}
+			});
+
+			var closeButton = BX.create('button', {
+				attrs: {
+					type: 'button',
+					className: 'tasks-kanban-deadlineless-hint__close',
+					'data-testid': 'task-list-deadlineless-hint-close',
+					'aria-label': BX.message('TASKS_KANBAN_DEADLINELESS_HINT_CLOSE')
+				},
+				html: '&times;',
+				events: {
+					click: function() {
+						// Event 1: explicit dismissal via the × button
+						BX.Tasks.GridActions.sendDeadlinelessHintAnalytics('close_suggest_banner');
+						if (rowNode._deadlinelessHintPopup)
+						{
+							rowNode._deadlinelessHintPopup.close();
+						}
+					}
+				}
+			});
+
+			// RF-11: no role/aria-label here — the accessible name and role are set on the BX.Main.Popup itself
+			var content = BX.create('div', {
+				attrs: {
+					className: 'tasks-kanban-deadlineless-hint'
+				},
+				children: [
+					BX.create('div', { attrs: { className: 'tasks-kanban-deadlineless-hint__avatar' } }),
+					BX.create('div', {
+						attrs: { className: 'tasks-kanban-deadlineless-hint__body' },
+						children: [
+							BX.create('div', {
+								attrs: { className: 'tasks-kanban-deadlineless-hint__title' },
+								text: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_TITLE')
+							}),
+							BX.create('div', {
+								attrs: { className: 'tasks-kanban-deadlineless-hint__text' },
+								text: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_TEXT')
+							}),
+							ctaButton
+						]
+					}),
+					closeButton
+				]
+			});
+
+			// Close any previously open deadlineless hint
+			if (activeDeadlinelessHintRow && activeDeadlinelessHintRow !== rowNode)
+			{
+				clearTimeout(activeDeadlinelessHintRow._deadlinelessHintCloseTimer);
+				if (activeDeadlinelessHintRow._deadlinelessHintPopup)
+				{
+					activeDeadlinelessHintRow._deadlinelessHintPopup.close();
+				}
+			}
+
+			var popup = new BX.Main.Popup({
+				bindElement: deadlineCell,
+				content: content,
+				// RF-11: hover hint — expose as a named live region instead of a nameless dialog
+				role: 'status',
+				ariaLabel: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_TITLE'),
+				width: 390,
+				padding: 0,
+				angle: true,
+				background: 'var(--ui-color-bg-content-inapp, #0056bf)',
+				borderRadius: 16,
+				closeByEsc: true,
+				autoHide: true,
+				// onClose drops the reference, so a cacheable (default) popup would leak
+				// a hidden container into document.body on every hover
+				cacheable: false,
+				offsetLeft: 55,
+				offsetTop: -5,
+				className: 'tasks-kanban-deadlineless-hint-popup',
+				events: {
+					onClose: function() {
+						clearTimeout(rowNode._deadlinelessHintCloseTimer);
+						rowNode._deadlinelessHintPopup = null;
+						if (activeDeadlinelessHintRow === rowNode)
+						{
+							activeDeadlinelessHintRow = null;
+						}
+					},
+					onDestroy: function() {
+						clearTimeout(rowNode._deadlinelessHintCloseTimer);
+						rowNode._deadlinelessHintPopup = null;
+						if (activeDeadlinelessHintRow === rowNode)
+						{
+							activeDeadlinelessHintRow = null;
+						}
+					}
+				}
+			});
+
+			rowNode._deadlinelessHintPopup = popup;
+
+			// hover-intent: keep popup open while cursor is inside it
+			var popupContainer = popup.getPopupContainer();
+			if (popupContainer)
+			{
+				popupContainer.addEventListener('mouseenter', function() {
+					clearTimeout(rowNode._deadlinelessHintCloseTimer);
+				});
+				popupContainer.addEventListener('mouseleave', function() {
+					rowNode._deadlinelessHintCloseTimer = setTimeout(function() {
+						if (rowNode._deadlinelessHintPopup)
+						{
+							rowNode._deadlinelessHintPopup.close();
+						}
+					}, 300);
+				});
+			}
+
+			activeDeadlinelessHintRow = rowNode;
+			popup.show();
 		},
 
 		getIsPinned: function(rowId) {
@@ -2204,11 +3204,19 @@ BX(function() {
 				}
 				else
 				{
+					var focusDescriptor = null;
+
 					if (parameters.action === this.actions.commentAdd)
 					{
 						if (parameters.isCompleteComment === true)
 						{
+							focusDescriptor = this.captureRowFocus(this.getRowNodeById(taskId));
 							this.getGrid().updateRow(taskId, null, null, ({ id }) => {
+								if (this.isRowExist(id) && this.isFocusLost())
+								{
+									this.restoreRowFocus(id, focusDescriptor);
+								}
+
 								BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
 							});
 						}
@@ -2227,7 +3235,13 @@ BX(function() {
 					}
 					else if (parameters.action === this.actions.taskUpdate)
 					{
+						focusDescriptor = this.captureRowFocus(this.getRowNodeById(taskId));
 						this.getGrid().updateRow(taskId, null, null, ({ id }) => {
+							if (this.isRowExist(id) && this.isFocusLost())
+							{
+								this.restoreRowFocus(id, focusDescriptor);
+							}
+
 							BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
 						});
 					}
@@ -2329,6 +3343,7 @@ BX(function() {
 			{
 				var rowData = item[rowId];
 				var row = this.getRowById(rowId);
+				var focusDescriptor = this.captureRowFocus(row.getNode());
 				row.setCellsContent(rowData.content);
 				row.setActions(rowData.actions);
 				row.setCellActions(rowData.cellActions);
@@ -2347,6 +3362,8 @@ BX(function() {
 
 				this.getGrid().bindOnRowEvents();
 
+				this.restoreRowFocus(rowId, focusDescriptor);
+
 				BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id: rowId });
 			}
 			else
@@ -2362,8 +3379,26 @@ BX(function() {
 				return;
 			}
 
+			var rowNode = this.getRowNodeById(id);
+			var hadRowFocus = !!rowNode && rowNode.contains(document.activeElement);
+			var neighbourFocus = this.moveFocusFromRow(id);
+
 			this.removeTaskListItem(id);
-			this.getGrid().removeRow(id);
+			this.getGrid().removeRow(id, undefined, undefined, function() {
+				if (document.activeElement !== document.body)
+				{
+					return;
+				}
+
+				if (neighbourFocus && neighbourFocus.id)
+				{
+					this.restoreRowFocus(neighbourFocus.id, neighbourFocus.descriptor);
+				}
+				else if (hadRowFocus)
+				{
+					this.focusGridFallback();
+				}
+			}.bind(this));
 
 			BX.onCustomEvent('Tasks.Tasks.Grid:RowRemove', { id: id });
 		},
@@ -2402,6 +3437,200 @@ BX(function() {
 				const firstRow = this.getGrid().getRows().getBodyFirstChild();
 				this.getGrid().getRows().insertBefore(rowId, firstRow.getId());
 			}
+		},
+
+		moveFocusFromRow: function(rowId) {
+			var row = this.getRowById(rowId);
+			if (!row)
+			{
+				return null;
+			}
+
+			var rowNode = row.getNode();
+			if (!rowNode || !rowNode.contains(document.activeElement))
+			{
+				return null;
+			}
+
+			return this.focusNeighbourRow(rowId);
+		},
+
+		focusNeighbourRow: function(rowId) {
+			var row = this.getRowById(rowId);
+			if (!row)
+			{
+				return null;
+			}
+
+			var rows = this.getRows();
+			var currentId = row.getId();
+			var currentIndex = -1;
+			for (var i = 0; i < rows.length; i++)
+			{
+				if (rows[i].getId() === currentId)
+				{
+					currentIndex = i;
+					break;
+				}
+			}
+
+			if (currentIndex === -1)
+			{
+				return null;
+			}
+
+			var neighbours = [];
+			for (var offset = 1; offset < rows.length; offset++)
+			{
+				if (rows[currentIndex + offset])
+				{
+					neighbours.push(rows[currentIndex + offset]);
+				}
+				if (rows[currentIndex - offset])
+				{
+					neighbours.push(rows[currentIndex - offset]);
+				}
+			}
+
+			for (var j = 0; j < neighbours.length; j++)
+			{
+				if (this.focusNode(this.getFocusableNode(neighbours[j].getNode())))
+				{
+					return {
+						id: neighbours[j].getId(),
+						descriptor: this.captureRowFocus(neighbours[j].getNode()),
+					};
+				}
+			}
+
+			this.focusGridFallback();
+
+			return null;
+		},
+
+		isFocusLost: function() {
+			return document.activeElement === document.body;
+		},
+
+		captureRowFocus: function(rowNode) {
+			if (!rowNode || !rowNode.contains(document.activeElement))
+			{
+				return null;
+			}
+
+			var active = document.activeElement;
+			var candidates = this.getRowFocusables(rowNode);
+			var index = -1;
+			for (var i = 0; i < candidates.length; i++)
+			{
+				if (candidates[i] === active)
+				{
+					index = i;
+					break;
+				}
+			}
+
+			return {
+				id: (active.id || null),
+				index: index,
+			};
+		},
+
+		restoreRowFocus: function(rowId, descriptor) {
+			if (!descriptor)
+			{
+				return;
+			}
+
+			var row = this.getRowById(rowId);
+			var rowNode = (row ? row.getNode() : null);
+			if (!rowNode)
+			{
+				this.focusNeighbourRow(rowId);
+				return;
+			}
+
+			if (descriptor.id)
+			{
+				var byId = document.getElementById(descriptor.id);
+				if (byId && rowNode.contains(byId) && this.focusNode(byId))
+				{
+					return;
+				}
+			}
+
+			var candidates = this.getRowFocusables(rowNode);
+			if (
+				descriptor.index >= 0
+				&& descriptor.index < candidates.length
+				&& this.focusNode(candidates[descriptor.index])
+			)
+			{
+				return;
+			}
+
+			if (this.focusNode(this.getFocusableNode(rowNode)))
+			{
+				return;
+			}
+
+			this.focusNeighbourRow(rowId);
+		},
+
+		getRowFocusables: function(container) {
+			if (!container)
+			{
+				return [];
+			}
+
+			return container.querySelectorAll(
+				'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			);
+		},
+
+		getFocusableNode: function(container) {
+			var candidates = this.getRowFocusables(container);
+
+			for (var i = 0; i < candidates.length; i++)
+			{
+				if (this.isNodeVisible(candidates[i]))
+				{
+					return candidates[i];
+				}
+			}
+
+			return null;
+		},
+
+		isNodeVisible: function(node) {
+			return !!node && (node.offsetParent !== null || node.getClientRects().length > 0);
+		},
+
+		focusNode: function(node) {
+			if (!this.isNodeVisible(node))
+			{
+				return false;
+			}
+
+			node.focus();
+
+			return document.activeElement === node;
+		},
+
+		focusGridFallback: function() {
+			var gridId = this.getGrid().containerId;
+			if (this.focusNode(document.getElementById(gridId + '_check_all')))
+			{
+				return;
+			}
+
+			var container = this.getGrid().getContainer();
+			if (container && !container.hasAttribute('tabindex'))
+			{
+				container.setAttribute('tabindex', '-1');
+			}
+
+			this.focusNode(container);
 		},
 
 		getLastPinnedRowId: function() {
@@ -2581,6 +3810,77 @@ BX(function() {
 			BX.Tasks.GridActions.reloadGrid();
 		}
 	}, this));
+
+	// Delegated click inside the CRM cell. The chip body adds its element to the CRM_ITEM filter; the
+	// remove button (shown by CSS only while the chip is active) removes it; the card link opens the CRM
+	// card and must not filter. Capture phase + stopPropagation: the click must not bubble to the grid's
+	// row-select handler, so filtering by a chip does not tick the row checkbox. The handler is a no-op
+	// when the feature is off (no matching nodes in the DOM), so it registers unconditionally.
+	document.addEventListener('click', function(event) {
+		var removeButton = event.target.closest('[data-crm-filter-remove]');
+		if (removeButton)
+		{
+			var activeChip = removeButton.closest('[data-crm-filter-value]');
+			if (activeChip)
+			{
+				event.stopPropagation();
+				BX.PreventDefault(event);
+				BX.Tasks.GridActions.unfilterByCrmItem(
+					activeChip.getAttribute('data-crm-filter-value'),
+					activeChip.getAttribute('data-crm-filter-label'),
+				);
+			}
+
+			return;
+		}
+
+		var chip = event.target.closest('.tasks-list-crm [data-crm-filter-value]');
+		if (chip)
+		{
+			event.stopPropagation();
+			BX.PreventDefault(event);
+			BX.Tasks.GridActions.toggleCrmItemFilter(chip);
+
+			return;
+		}
+
+		// Delegated click on the empty CRM cell "+" button: opens the CRM selector and binds the chosen
+		// element to the task. Backend renders the button only when allowed.
+		var addButton = event.target.closest('[data-crm-bind-add]');
+		if (addButton)
+		{
+			event.stopPropagation();
+			BX.PreventDefault(event);
+			BX.Tasks.GridActions.onCrmBindAddClick(addButton.getAttribute('data-task-id'), addButton);
+		}
+	}, true);
+
+	// Keyboard path for the focusable chip (role="button", tabindex=0): Enter/Space toggles the filter.
+	// The remove button is a native <button>, so it keeps its own Enter/Space handling via the click above.
+	document.addEventListener('keydown', function(event) {
+		if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar')
+		{
+			return;
+		}
+
+		if (event.target.closest('[data-crm-filter-remove]'))
+		{
+			return;
+		}
+
+		var chip = event.target.closest('.tasks-list-crm [data-crm-filter-value]');
+		if (chip)
+		{
+			event.stopPropagation();
+			BX.PreventDefault(event);
+			BX.Tasks.GridActions.toggleCrmItemFilter(chip);
+		}
+	}, true);
+
+	// CRM chips are re-rendered on every grid reload; re-bind their hover mini-cards each time.
+	BX.addCustomEvent('Grid::updated', function() {
+		BX.Tasks.GridActions.initCrmMiniCards();
+	});
 
 	BX.addCustomEvent('BX.Main.Filter:apply', function(filterId, data, ctx) {
 		var stringUrl = window.location.href;

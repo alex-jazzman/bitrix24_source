@@ -5,7 +5,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 Loc::loadMessages(__DIR__ . '/template.php');
 ?>
-<div class="disk-detail-sidebar-user-custom-field" id="disk-uf-sidebar-values">
+<div class="disk-detail-sidebar-user-custom-field">
 	<? foreach($arResult["USER_FIELDS"] as $arUserField) {?>
 		<div class="disk-detail-sidebar-user-custom-field-label"><?php echo htmlspecialcharsbx($arUserField["EDIT_FORM_LABEL"])?>:</div>
 		<div class="disk-detail-sidebar-user-custom-field-value">

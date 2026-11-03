@@ -1,8 +1,9 @@
 import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { Core } from 'im.v2.application.core';
-import { ActionByRole, ChatType, UserType } from 'im.v2.const';
+import { ActionByRole, ChatType, EventType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { Utils } from 'im.v2.lib.utils';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
 import { type AuthorGroupItem } from '../../classes/collection-manager/collection-manager';
@@ -98,12 +99,21 @@ export const AuthorGroup = {
 
 			return permissionManager.canPerformActionByRole(ActionByRole.openAvatarMenu, this.contextDialogId);
 		},
+		canMentionByClick(): boolean
+		{
+			return new CopilotManager().isMentionByClickAvailable(this.contextDialogId, this.authorDialogId);
+		},
 		containerClasses(): string[]
 		{
 			const classes = [`--${this.authorGroup.messageType}`];
 			if (!this.avatarMenuAvailable)
 			{
 				classes.push('--no-menu');
+			}
+
+			if (this.canMentionByClick)
+			{
+				classes.push('--mention-clickable');
 			}
 
 			if (this.isBulkActionsMode)
@@ -129,6 +139,14 @@ export const AuthorGroup = {
 		},
 		onAvatarClick(event: PointerEvent): void
 		{
+			if (this.canMentionByClick)
+			{
+				const botUser: ImModelUser = this.$store.getters['users/get'](this.authorDialogId, true);
+				this.insertMention(botUser);
+
+				return;
+			}
+
 			if (!this.avatarMenuAvailable)
 			{
 				return;
@@ -137,6 +155,16 @@ export const AuthorGroup = {
 			this.$emit('avatarClick', {
 				dialogId: this.authorGroup.avatar.avatarId,
 				$event: event,
+			});
+		},
+		insertMention(user: ImModelUser): void
+		{
+			this.$Bitrix.eventEmitter.emit(EventType.textarea.insertMention, {
+				mentionText: user.name,
+				mentionReplacement: Utils.text.getMentionBbCode(user.id, user.name),
+				mentionedUserId: user.id,
+				dialogId: this.contextDialogId,
+				isMentionSymbol: false,
 			});
 		},
 		loc(phraseCode: string): string
@@ -150,7 +178,7 @@ export const AuthorGroup = {
 				<Transition name="bx-im-select-button-transition">
 					<MessageSelectButton v-if="isBulkActionsMode" :contextDialogId="contextDialogId" :message="message" />
 				</Transition>
-				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar">
+				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar" data-testid="im-message-list-author-avatar">
 					<MessageAvatar
 						:contextDialogId="contextDialogId"
 						:messageId="firstMessageIdInAuthorGroup"

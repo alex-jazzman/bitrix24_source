@@ -39,6 +39,7 @@ export class ConfirmModal
 		{
 			buttons.push(Dom.create('button', {
 				props: { className: 'call-confirm-modal__button call-confirm-modal__button-yes' },
+				attrs: { 'data-testid': 'call-confirm-modal-yes-btn' },
 				text: this.yesButtonText,
 				events: {
 					click: () => {

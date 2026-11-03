@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 	const {
 		DialogType,
 		ActionByUserType,
+		MessageComponent,
 	} = require('im/messenger/const');
 
 	const { Feature, MobileFeature } = require('im/messenger/lib/feature');
@@ -23,6 +24,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 		#messageHelper;
 		/** @type {DialogHelper} */
 		#dialogHelper;
+		/** @type {number|undefined} */
+		#fileCount;
 
 		/**
 		 * @param {MessagesModelState} messageModel
@@ -167,7 +170,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		isPossibleForward()
 		{
-			return this.dialogModel.type !== DialogType.comment && !this.#isVote();
+			if (this.#isVote())
+			{
+				return false;
+			}
+
+			// a vote inside a discussion stays unavailable whatever the feature says: the ban on votes
+			// is ours and does not depend on the server, which would let one through
+			return this.dialogModel.type !== DialogType.comment || Feature.isChatThreadsAvailable;
 		}
 
 		isPossibleCreate()
@@ -192,6 +202,16 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 				&& UserPermission.canPerformActionByUserType(ActionByUserType.createAnyTask);
 		}
 
+		isPossibleAiTaskCreate()
+		{
+			// The server refuses a system message as an unsupported source, so the item is kept out of
+			// the menu rather than offered and answered with a toast. Excluded here and not in
+			// isPossibleCreate(): the neighbouring create items go to services with rules of their own.
+			return this.isPossibleCreate()
+				&& !this.#isSystem()
+				&& Feature.isAiTaskCreationFromMessagesEntryPointAvailable;
+		}
+
 		isPossibleEventCreate()
 		{
 			return this.isPossibleCreate()
@@ -202,7 +222,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		isPossibleSaveFile()
 		{
-			return this.#isWithFile() && !this.#isDeleted() && !this.#isVideoNote();
+			return this.#getFileCount() > 0 && !this.#isDeleted() && !this.#isVideoNote();
 		}
 
 		isPossibleSaveToDisk()
@@ -219,12 +239,19 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 			}
 
 			return (this.#isSingleFileMessage() && this.isPossibleSaveFile())
-				|| (this.isPossibleSaveGallery() && MobileFeature.isMultipleFilesDownloadSupported());
+				|| (this.isPossibleSaveSeveralFiles() && this.#isSeveralFilesDownloadPossible());
 		}
 
-		isPossibleSaveGallery()
+		/**
+		 * Several files to act on at once. The message keeps its own attachments and the files of its
+		 * blocks in different places, so the count comes from the file source of the menu, not from
+		 * the attachment list alone. Unlike `#isGallery()`, which looks at the attachments only.
+		 *
+		 * @returns {boolean}
+		 */
+		isPossibleSaveSeveralFiles()
 		{
-			return this.#isGallery() && !this.#isDeleted();
+			return this.#getFileCount() > 1 && !this.#isDeleted();
 		}
 
 		isPossibleSaveToLibrary()
@@ -274,15 +301,17 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 				return false;
 			}
 
+			// CAP-02: a video note is editable only where its caption is rendered
 			return this.#isYour()
 				&& !this.#isDeleted()
 				&& !this.#isSystem()
 				&& !this.#isForward()
 				&& !this.#isVote()
-				&& !this.#isVideoNote()
+				&& (!this.#isVideoNote() || Feature.isVideoNoteCaptionAvailable)
 				&& !this.#isSticker()
 				&& !this.#isDeletedSticker()
 				&& !this.#isBlock()
+				&& !this.#isContact()
 			;
 		}
 
@@ -402,9 +431,19 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 			return this.#messageHelper.isGallery;
 		}
 
-		#isWithFile()
+		/**
+		 * Number of files the menu actions work on: the attachments of the message plus the files of
+		 * its blocks. A file id without a model in the store is not counted, because no action can
+		 * reach such a file. Memoized for the lifetime of the helper, which is one menu build: both
+		 * halves of the file set behind the count are memoized by the message helper the same way.
+		 *
+		 * @returns {number}
+		 */
+		#getFileCount()
 		{
-			return this.#messageHelper.isWithFile;
+			this.#fileCount ??= this.#messageHelper.getAllFiles().length;
+
+			return this.#fileCount;
 		}
 
 		#isVideo()
@@ -492,6 +531,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 			return this.#messageHelper.isBlock;
 		}
 
+		#isContact()
+		{
+			return this.#messageHelper.getComponentId() === MessageComponent.contact;
+		}
+
 		isDialogCopilot()
 		{
 			return this.dialogModel.type === DialogType.copilot;
@@ -549,7 +593,24 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		#isSingleFileMessage()
 		{
-			return this.messageModel.files.length === 1;
+			return this.#getFileCount() === 1;
+		}
+
+		#isSingleAttachmentMessage()
+		{
+			return this.#messageHelper.files.length === 1;
+		}
+
+		/**
+		 * Several files reach the device only when the native build downloads them at once (API 60+).
+		 * Below that a message is saved when it carries a single attachment of its own — a block
+		 * message never gets there, its native support ('chat_builder') is newer than API 60.
+		 *
+		 * @returns {boolean}
+		 */
+		#isSeveralFilesDownloadPossible()
+		{
+			return MobileFeature.isMultipleFilesDownloadSupported() || this.#isSingleAttachmentMessage();
 		}
 	}
 

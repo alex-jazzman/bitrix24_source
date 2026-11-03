@@ -1,6 +1,12 @@
 import { type JsonObject } from 'main.core';
 
-import { MessageComponent, type ChatTypeItem, type AttachConfig, type KeyboardButtonConfig } from 'im.v2.const';
+import {
+	MessageComponent,
+	type AttachConfig,
+	type ChatTypeItem,
+	type CopilotSimpleReasoningPlan,
+	type KeyboardButtonConfig,
+} from 'im.v2.const';
 
 export type Message = {
 	id: number | string,
@@ -13,6 +19,8 @@ export type Message = {
 	viewedByOthers: boolean,
 	sending: boolean,
 	error: boolean,
+	notDelivered: boolean,
+	sendingTs: number,
 	componentId: $Values<typeof MessageComponent>,
 	componentParams: Object,
 	forward: {
@@ -20,6 +28,9 @@ export type Message = {
 		id: string,
 		chatTitle: string | null,
 		chatType: ChatTypeItem,
+		parentChatId: number,
+		parentMessageId: number,
+		parentChatType: ChatTypeItem | null,
 	},
 	files: number[],
 	attach: AttachConfig[] | boolean | string,
@@ -29,7 +40,9 @@ export type Message = {
 	isDeleted: boolean,
 	removeLinks: boolean,
 	copilotRole?: string,
+	langfuseTraceId?: string,
 	sticker: boolean,
+	copilotSimpleReasoningPlan: CopilotSimpleReasoningPlan | null,
 };
 
 export type RawMessage = {

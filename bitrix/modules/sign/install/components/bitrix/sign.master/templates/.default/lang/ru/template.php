@@ -16,7 +16,6 @@ $MESS['SIGN_CMP_MASTER_TPL_STEP_SEND_HEADER'] = 'Отправка докумен
 $MESS['SIGN_CMP_MASTER_TPL_STEP_SEND_DOCUMENT'] = 'Документ №#NUM#';
 $MESS['SIGN_CMP_MASTER_TPL_STEP_SEND_ADDED_BLOCKS'] = 'Добавлены блоки: #CNT#';
 $MESS['SIGN_CMP_MASTER_TPL_STEP_SEND_ADDED_BLOCKS_FILL'] = 'Добавлены заполняемые поля: #CNT#';
-$MESS['SIGN_CMP_MASTER_TPL_STEP_SEND_BAN_SYMBOLS'] = 'Название не должно содержать символы #, $, %, ^, @';
 $MESS['SIGN_CMP_MASTER_TPL_LABEL_WHOIS_RESPONSIBLE'] = 'Кто подписывает с вашей стороны';
 $MESS['SIGN_CMP_MASTER_TPL_LABEL_WHOIS_RESPONSIBLE_HELP'] = 'Укажите ФИО сотрудника вашей компании, который будет подписывать документ. Это будет отображено в тексте документа и готовом сертификате.';
 $MESS['SIGN_CMP_MASTER_TPL_LABEL_WHOIS_WHO'] = 'Ваша сторона';

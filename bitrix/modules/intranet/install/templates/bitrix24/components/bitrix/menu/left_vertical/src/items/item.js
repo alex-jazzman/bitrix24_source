@@ -13,6 +13,7 @@ export default class Item
 	parentContainer: Element;
 	container: Element;
 	links = [];
+	counterValues: ?Map = null;
 	isDraggable = true;
 	storage: Array = [];
 
@@ -60,6 +61,27 @@ export default class Item
 	init()
 	{
 		this.links = [];
+		this.counterValues = null;
+		if (Type.isStringFilled(this.container.dataset.counterValues))
+		{
+			try
+			{
+				const counterValues = JSON.parse(this.container.dataset.counterValues);
+				if (Type.isPlainObject(counterValues))
+				{
+					this.counterValues = new Map(
+						Object.entries(counterValues).map(([counterId, counterValue]) => [
+							counterId === '**' ? 'live-feed' : counterId,
+							parseInt(counterValue, 10) || 0,
+						]),
+					);
+				}
+			}
+			catch
+			{
+				this.counterValues = null;
+			}
+		}
 		if (
 			this.container.hasAttribute('data-link')
 			&& Type.isStringFilled(this.container.getAttribute("data-link"))
@@ -160,9 +182,31 @@ export default class Item
 		}
 	}
 
-	getCounterValue(): ?number
+	hasCounterId(counterId: string): boolean
 	{
-		const counter = Counter.initFromCounterNode(this.container.querySelector(`.${Counter.BaseClassname}`));
+		if (this.counterValues !== null)
+		{
+			return this.counterValues.has(counterId);
+		}
+
+		const counter = this.getCounter();
+
+		return Boolean(counter && counter.getId().includes(counterId));
+	}
+
+	getCounter(): ?Counter
+	{
+		return Counter.initFromCounterNode(this.container.querySelector(`.${Counter.BaseClassname}`));
+	}
+
+	getCounterValue(counterId: ?string = null): ?number
+	{
+		if (this.counterValues !== null && Type.isStringFilled(counterId))
+		{
+			return this.counterValues.get(counterId) ?? null;
+		}
+
+		const counter = this.getCounter();
 
 		if (!counter)
 		{
@@ -172,9 +216,9 @@ export default class Item
 		return counter.getRealValue();
 	}
 
-	updateCounter(counterValue: number): { oldValue: number, newValue: number }
+	updateCounter(counterValue: number, counterId: ?string = null): { oldValue: number, newValue: number }
 	{
-		const counter = Counter.initFromCounterNode(this.container.querySelector(`.${Counter.BaseClassname}`));
+		const counter = this.getCounter();
 
 		if (!counter)
 		{
@@ -182,6 +226,17 @@ export default class Item
 		}
 
 		const oldValue = counter.getRealValue() || 0;
+		if (this.counterValues !== null && Type.isStringFilled(counterId) && this.counterValues.has(counterId))
+		{
+			this.counterValues.set(counterId, parseInt(counterValue, 10) || 0);
+			const serializedCounterValues = {};
+			counterValue = 0;
+			this.counterValues.forEach((value, id) => {
+				serializedCounterValues[id] = value;
+				counterValue += value;
+			});
+			this.container.dataset.counterValues = JSON.stringify(serializedCounterValues);
+		}
 
 		counter.update(parseInt(counterValue, 10));
 
@@ -223,6 +278,11 @@ export default class Item
 		const node = Tag.render`<span class="menu-post-warn-icon" role="img" title="${title}" aria-label="${title}"></span>`;
 		if (events)
 		{
+			if (Type.isFunction(events.click))
+			{
+				Dom.attr(node, 'data-slider-ignore-autobinding', '');
+			}
+
 			Object.keys(events).forEach((key) => {
 				Event.bind(node, key, events[key]);
 			});
@@ -323,7 +383,7 @@ export default class Item
 			node.getAttribute("data-type") === this.code;
 	}
 
-	static createNode({id, text, link, openInNewPage, counterId, counterValue, topMenuId})
+	static createNode({id, text, link, openInNewPage, counterId, counterValue, topMenuId, iconClass, bindSlider})
 	{
 		id = Text.encode(id);
 		text = Text.encode(text);
@@ -331,6 +391,13 @@ export default class Item
 		counterId = counterId ? Text.encode(counterId) : '';
 		counterValue = counterValue ? parseInt(counterValue) : 0;
 		openInNewPage = openInNewPage === 'Y' ? 'Y' : 'N';
+		bindSlider = bindSlider === 'Y' ? 'Y' : 'N';
+		iconClass = Type.isStringFilled(iconClass) ? Text.encode(iconClass) : '';
+
+		const sliderAttribute = bindSlider === 'Y' && openInNewPage !== 'Y'
+			? 'data-slider-bind="Y"'
+			: 'data-slider-ignore-autobinding="true"'
+		;
 		const counter = new Counter({
 			size: Counter.Size.SMALL,
 			style: Counter.Style.FILLED_ALERT,
@@ -341,7 +408,7 @@ export default class Item
 
 		const ariaLabel = this.getItemAriaLabel(text, counterValue);
 
-		return Tag.render`<li 
+		const node = Tag.render`<li
 			id="bx_left_menu_${id}" 
 			data-status="show" 
 			data-id="${id}" 
@@ -354,13 +421,13 @@ export default class Item
 			data-delete-perm="Y" 
 			${topMenuId ? `data-top-menu-id="${Text.encode(topMenuId)}"` : ""}
 			data-new-page="${openInNewPage}" 
-			class="menu-item-block menu-item-no-icon-state">
+			class="menu-item-block ${iconClass === '' ? 'menu-item-no-icon-state' : iconClass}">
 				<span class="menu-favorites-btn menu-favorites-draggable" aria-hidden="true">
 					<span class="menu-fav-draggable-icon"></span>
 				</span>
-				<a class="menu-item-link" aria-label="${ariaLabel}" data-slider-ignore-autobinding="true" href="${link}" target="${openInNewPage === 'Y' ? '_blank' : '_self'}">
+				<a class="menu-item-link" aria-label="${ariaLabel}" ${sliderAttribute} href="${link}" target="${openInNewPage === 'Y' ? '_blank' : '_self'}">
 					<span class="menu-item-icon-box" aria-hidden="true">
-						<span class="menu-item-icon">W</span>
+						<span class="menu-item-icon">${iconClass === '' ? 'W' : ''}</span>
 					</span>
 					<span class="menu-item-link-text " data-role="item-text">${text}</span>
 					${counterId ? 
@@ -372,6 +439,13 @@ export default class Item
 					<span class="menu-favorites-btn-icon"></span>
 				</span>
 			</li>`;
+
+		if (this.code === 'standard')
+		{
+			Dom.attr(node, 'data-testid', `intranet-left-menu-favorite-${id}`);
+		}
+
+		return node;
 	}
 
 	// region Edition for siblings

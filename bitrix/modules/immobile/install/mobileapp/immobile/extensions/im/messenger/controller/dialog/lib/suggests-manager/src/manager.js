@@ -5,15 +5,19 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 	const { Type } = require('type');
 	const { Color } = require('tokens');
 	const { Loc } = require('im/messenger/loc');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const {
+		GreetingSelector,
+	} = require('im/messenger/controller/recent/service/empty-state/lib/welcome-screen/copilot/greeting-selector');
 
 	const logger = getLoggerWithContext('dialog--suggests-manager', 'Suggest');
 
-	const SuggestDesign = Object.freeze({
+	const SuggestDesign = {
 		primary: 'primary',
 		success: 'success',
 		alert: 'alert',
@@ -21,19 +25,19 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 		black: 'black',
 		disabledAlike: 'disabled-alike',
 		bitrixGpt: 'bitrix-gpt',
-	});
+	};
 
-	const SuggestSize = Object.freeze({
+	const SuggestSize = {
 		S: 'S',
 		M: 'M',
 		L: 'L',
-	});
+	};
 
-	const SuggestMode = Object.freeze({
+	const SuggestMode = {
 		solid: 'solid',
 		outline: 'outline',
 		tinted: 'tinted',
-	});
+	};
 
 	/**
 	 * @class SuggestsManager
@@ -205,9 +209,14 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 				},
 			};
 
+			const messages = MessengerParams.get('MESSAGES', {});
+			const greeting = new GreetingSelector(messages.COPILOT_GREETINGS ?? [], {
+				weekHolidays: messages.COPILOT_GREETING_WEEK_HOLIDAYS ?? [],
+			}).select();
+
 			return {
 				title: {
-					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_TITLE'),
+					text: greeting,
 				},
 				items: phrases.map((text, index) => {
 					const id = `copilot_suggest_${index + 1}`;

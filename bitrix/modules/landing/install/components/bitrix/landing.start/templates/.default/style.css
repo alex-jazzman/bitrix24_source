@@ -132,6 +132,12 @@
 	border-radius: 10px;
 	padding: 10px;
 }
+
+.landing-agreement-popup-content .landing-agreement-popup-content-1 p
+{
+	margin-top: 0;
+}
+
 .landing-agreement-popup-content .landing-agreement-popup-content-2
 {
 	padding: 10px;

@@ -22,34 +22,114 @@
 	z-index: 1000;
 }
 
+/* The field arrives rather than blinking into place: it is hidden outright while closed, so a
+   transition has nothing to run on and the beat has to be an animation. It travels a few
+   pixels from the button it replaces — the only motion in the dialog that is allowed a
+   distance, because this element is positioned absolutely and moves nothing beside it. */
 .disk-picker__filter-host.--open {
 	display: flex;
+	animation: disk-picker-search-in var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+@keyframes disk-picker-search-in {
+	from {
+		opacity: 0;
+		transform: translateX(12px) scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker__filter-host.--open {
+		animation: none;
+	}
 }
 
 /*
  * The relocated standard filter keeps its own natural width (~240px) inside the
  * host, so its search field must be stretched to fill the slot. Scoped to the
  * picker's own host so page-level filters are untouched.
+ *
+ * It is also dressed as a control of this header rather than as a field of a page: the
+ * filter brings the light surface it has everywhere else, and on the glass that plate
+ * stood out as something borrowed. A film of white, the ring the buttons beside it carry
+ * and the corner of a medium button put it on the same surface as they are.
  */
+/* The field fills the slot and, just as important, is allowed to leave it: a flex item does not
+   shrink past its content unless it is told to, and the filter brings a chip, an input and two
+   glyphs of content. Without this the field kept its natural width whatever the slot measured,
+   and on a long path it ran over the buttons at the end of the header. */
 .disk-picker__filter-host .main-ui-filter-search {
 	flex-grow: 1;
 	width: 100%;
+	min-width: 0;
 	max-width: none;
+	overflow: hidden;
+}
+
+.disk-picker__filter-host .main-ui-filter-search-wrap {
+	min-width: 0;
+	overflow: hidden;
+}
+
+
+/* The fill is written against the filter's own air theme, which paints the field through a
+   selector of the same weight as ours and is loaded after us. */
+.disk-picker__filter-host .main-ui-filter-search.main-ui-filter-theme-air {
+	box-sizing: border-box;
+	padding: 0 var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-vibrant-less-more);
+	box-shadow: inset 0 0 0 var(--ui-border-width-thin) var(--ui-color-divider-vibrant-accent-more);
 }
 
 .disk-picker__filter-host .main-ui-filter-search-filter {
 	flex-grow: 1;
 	width: 100%;
+	min-width: 0;
+	color: var(--ui-color-base-1);
+}
+
+/* The placeholder keeps the weight it has on a light field: one step down from the text. */
+.disk-picker__filter-host .main-ui-filter-search-filter::placeholder {
+	color: var(--ui-color-base-3);
+}
+
+/* The glyphs of the field — the magnifier, the clear cross — are masks painted through
+   `background`, so their shade is set there and not with `color`. */
+.disk-picker__filter-host .main-ui-item-icon {
+	background: var(--ui-color-base-3);
+}
+
+.disk-picker__filter-host .main-ui-item-icon:hover {
+	background: var(--ui-color-base-1);
+}
+
+/* A chosen filter value is a chip inside the field: on the glass its light-blue plate read as
+   a second surface, so it takes the glass of the field, a step denser. */
+.disk-picker__filter-host .main-ui-filter-search-square {
+	background: var(--ui-color-bg-vibrant-default);
+	color: var(--ui-color-base-1);
 }
 
 /*
  * Shared thin scrollbar for every scrolling surface: the file list/table, the
  * source sidebar and the preview panel. Styled through the ::-webkit-scrollbar
- * pseudo-elements only. The standard `scrollbar-width`/`scrollbar-color` are
- * deliberately not set: in current Chrome, once `scrollbar-width` is present the
- * browser draws the native scrollbar and ignores the custom pseudo-element width,
- * colour and radius, so the two cannot be combined. The transparent border with
- * `background-clip: padding-box` insets the thumb into a floating pill.
+ * pseudo-elements. The standard `scrollbar-width`/`scrollbar-color` are set only in the
+ * branch for browsers without that pseudo-element (Firefox): in current Chrome, once
+ * `scrollbar-width` is present the browser draws the native scrollbar and ignores the
+ * custom pseudo-element width, colour and radius, so the two cannot be combined. The
+ * transparent border with `background-clip: padding-box` insets the thumb into a
+ * floating pill.
+ *
+ * With a hovering pointer the thumb is shown only while its surface is hovered, dragged or
+ * keyboard-focused; only its colour toggles, the bar keeps its width so content never shifts.
+ * The state is a custom property on the surface: Chromium restyles a custom scrollbar only when
+ * its owner's computed style changes, and a panel can set its own colour the same way.
  */
 .disk-picker-item-browser::-webkit-scrollbar,
 .disk-picker-source-sidebar__scroll::-webkit-scrollbar,
@@ -66,15 +146,51 @@
 
 .disk-picker-item-browser::-webkit-scrollbar-thumb,
 .disk-picker-source-sidebar__scroll::-webkit-scrollbar-thumb,
+/* The colour comes from the surface: a light grey step on the plate, a white film on the glass
+   of the sources. The hover state below keeps the hue and only gains density. */
 .disk-picker-preview-panel::-webkit-scrollbar-thumb {
-	background-color: var(--ui-color-base-5);
+	background-color: var(--disk-picker-scrollbar-thumb-state, var(--disk-picker-scrollbar-thumb));
 	background-clip: padding-box;
 	border: 2px solid transparent;
 	border-radius: 8px;
 }
 
+@media (hover: hover) {
+	.disk-picker-item-browser,
+	.disk-picker-source-sidebar__scroll,
+	.disk-picker-preview-panel {
+		--disk-picker-scrollbar-thumb-state: transparent;
+	}
+
+	/* `:active` keeps the thumb while it is dragged past the surface edge. */
+	.disk-picker-item-browser:hover,
+	.disk-picker-item-browser:focus-visible,
+	.disk-picker-item-browser:has(:focus-visible),
+	.disk-picker-item-browser:active,
+	.disk-picker-source-sidebar__scroll:hover,
+	.disk-picker-source-sidebar__scroll:focus-visible,
+	.disk-picker-source-sidebar__scroll:has(:focus-visible),
+	.disk-picker-source-sidebar__scroll:active,
+	.disk-picker-preview-panel:hover,
+	.disk-picker-preview-panel:focus-visible,
+	.disk-picker-preview-panel:has(:focus-visible),
+	.disk-picker-preview-panel:active {
+		--disk-picker-scrollbar-thumb-state: var(--disk-picker-scrollbar-thumb);
+	}
+}
+
 .disk-picker-item-browser::-webkit-scrollbar-thumb:hover,
 .disk-picker-source-sidebar__scroll::-webkit-scrollbar-thumb:hover,
 .disk-picker-preview-panel::-webkit-scrollbar-thumb:hover {
-	background-color: var(--ui-color-base-4);
+	background-color: var(--disk-picker-scrollbar-thumb-hover);
+}
+
+/* Firefox: the bar keeps its system shape and reserved width; the same state toggles its colour. */
+@supports not selector(::-webkit-scrollbar) {
+	.disk-picker-item-browser,
+	.disk-picker-source-sidebar__scroll,
+	.disk-picker-preview-panel {
+		scrollbar-width: thin;
+		scrollbar-color: var(--disk-picker-scrollbar-thumb-state, var(--disk-picker-scrollbar-thumb)) transparent;
+	}
 }

@@ -51,7 +51,7 @@ export const AccessRightsBlock = {
 	},
 	computed: {
 		...mapState(useProjectStore, ['permissions', 'defaultPermissions']),
-		...mapState(useInterfaceStore, ['isAccessRestricted']),
+		...mapState(useInterfaceStore, ['isAccessRestricted', 'isActionCreate']),
 		groups(): Array
 		{
 			return AccessRightsMeta;
@@ -65,8 +65,19 @@ export const AccessRightsBlock = {
 			return this.defaultPermissions !== null;
 		},
 	},
+	watch: {
+		tabIndex(newValue: ?number, oldValue: ?number): void
+		{
+			// Remember the expansion for the project_create_finish analytics snapshot (access_rights_state).
+			if (newValue === 1 && oldValue !== 1 && this.isActionCreate)
+			{
+				this.markAccessRightsExpanded();
+			}
+		},
+	},
 	methods: {
 		...mapActions(useProjectStore, ['updatePermission']),
+		...mapActions(useInterfaceStore, ['markAccessRightsExpanded']),
 		resetAccessRights(): void
 		{
 			ResetAccessRights.execute();

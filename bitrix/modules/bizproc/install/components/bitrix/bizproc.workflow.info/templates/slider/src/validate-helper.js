@@ -1,5 +1,5 @@
 import { Type, Loc } from 'main.core';
-import { TaskField, TaskFieldError } from './types';
+import { type TaskField, type TaskFieldError } from './types';
 
 export class ValidateHelper
 {
@@ -80,11 +80,16 @@ export class ValidateHelper
 		return this.#isValueEmpty(field, values[0]);
 	}
 
+	/**
+	 * A file field carries its value as a string: the uploader submits the identifier of every attached
+	 * file in a hidden input, and an upload still running has no input yet. A File object comes from the
+	 * legacy control, drawn where the card has no uploader to mount; there an empty name means no pick.
+	 */
 	static #isValueEmpty(field: TaskField, value: any): boolean
 	{
-		if (field.Type === 'file')
+		if (field.Type === 'file' && Type.isFile(value))
 		{
-			return Type.isFile(value) && value.name === '';
+			return value.name === '';
 		}
 
 		return !Type.isStringFilled(value);

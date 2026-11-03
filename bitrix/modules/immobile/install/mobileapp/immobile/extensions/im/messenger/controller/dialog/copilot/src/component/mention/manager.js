@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 	const { MentionManager } = require('im/messenger/controller/dialog/lib/mention');
 	const { CopilotMentionProvider } = require('im/messenger/controller/dialog/copilot/component/mention/provider');
 	const { EventType, DialogType } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('mention');
 
@@ -13,6 +14,16 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 	 */
 	class CopilotMentionManager extends MentionManager
 	{
+		#mentionRequestId = 0;
+
+		#pendingFocusRequestId = 0;
+
+		#pendingExplicitRequestId = 0;
+
+		#pendingExplicitCursorPosition = null;
+
+		#participantsLoadPromise = null;
+
 		bindMethods()
 		{
 			super.bindMethods();
@@ -105,6 +116,15 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 		 */
 		unsubscribeEvents()
 		{
+			if (this.#hasPendingExplicitRequest())
+			{
+				this.finishMentioning();
+			}
+			else
+			{
+				this.#cancelMentionRequests();
+			}
+
 			BX.removeCustomEvent(EventType.dialog.external.mention, this.externalMention);
 
 			if (!this.canUse())
@@ -144,18 +164,35 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 		async onFocusInput()
 		{
 			logger.log(`${this.constructor.name}.onFocusInput`);
-			if (this.isMentionProcessed || this.isHasInputText())
+			const cursorIndex = this.view.textField.getCursorIndex();
+			if (!this.#canOpenMentionOnFocus(cursorIndex))
 			{
 				return;
 			}
 
-			const curIndex = this.view.textField.getCursorIndex();
-			this.mentionSymbolPosition = curIndex;
-			this.lastQuerySymbolPosition = curIndex;
+			const requestId = this.#claimMentionRequest();
+			this.#pendingFocusRequestId = requestId;
+			this.mentionSymbolPosition = cursorIndex;
+			this.lastQuerySymbolPosition = cursorIndex;
 			this.focusIndexPosition = 0;
-			const userIdList = await this.loadUsersForInitial();
+			const userIdList = await this.#loadParticipants();
 
-			this.drawUserFoInitial(userIdList);
+			const currentCursorIndex = this.view.textField.getCursorIndex();
+			if (requestId !== this.#mentionRequestId || !this.#canOpenMentionOnFocus(currentCursorIndex))
+			{
+				if (requestId === this.#pendingFocusRequestId)
+				{
+					this.#resetFocusRequestState();
+				}
+
+				return;
+			}
+
+			this.#pendingFocusRequestId = 0;
+			this.mentionSymbolPosition = currentCursorIndex;
+			this.lastQuerySymbolPosition = currentCursorIndex;
+			this.focusIndexPosition = 0;
+			this.drawParticipantsItems(userIdList);
 		}
 
 		isHasInputText()
@@ -165,11 +202,276 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 
 		/**
 		 * @private
+		 * @param {string} text
+		 * @param {string} inputCharacters
+		 * @param {number} cursorPosition
+		 */
+		onChangeText(text, inputCharacters, cursorPosition)
+		{
+			this.processTextChangeSideEffects(text);
+
+			const shouldOpenExplicitMention = !this.isMentionProcessed
+				&& this.checkToOpen(text, inputCharacters, cursorPosition)
+			;
+
+			this.#cancelFocusRequest();
+			if (shouldOpenExplicitMention)
+			{
+				void this.#openExplicitMention(cursorPosition);
+
+				return;
+			}
+
+			if (this.#hasPendingExplicitRequest())
+			{
+				if (this.checkToClose(text, inputCharacters, cursorPosition))
+				{
+					this.finishMentioning();
+
+					return;
+				}
+
+				this.#pendingExplicitCursorPosition = cursorPosition;
+
+				return;
+			}
+
+			this.processMentionTextChange(text, inputCharacters, cursorPosition);
+		}
+
+		/**
+		 * @private
 		 */
 		async onBlurInput()
 		{
 			logger.log(`${this.constructor.name}.onBlurInput`);
 			this.finishMentioning();
+		}
+
+		/**
+		 * @override
+		 */
+		finishMentioning()
+		{
+			this.#cancelMentionRequests();
+			super.finishMentioning();
+		}
+
+		/**
+		 * @private
+		 * @return {number}
+		 */
+		#claimMentionRequest()
+		{
+			this.#mentionRequestId += 1;
+
+			return this.#mentionRequestId;
+		}
+
+		/**
+		 * @private
+		 */
+		#cancelFocusRequest()
+		{
+			if (!this.#hasPendingFocusRequest())
+			{
+				return;
+			}
+
+			this.#claimMentionRequest();
+			this.#resetFocusRequestState();
+		}
+
+		/**
+		 * @private
+		 */
+		#resetFocusRequestState()
+		{
+			this.#pendingFocusRequestId = 0;
+			this.mentionSymbolPosition = null;
+			this.lastQuerySymbolPosition = null;
+			this.recoverFocusIndexPosition();
+		}
+
+		/**
+		 * @private
+		 */
+		#cancelMentionRequests()
+		{
+			this.#claimMentionRequest();
+			this.#resetFocusRequestState();
+			this.#pendingExplicitRequestId = 0;
+			this.#pendingExplicitCursorPosition = null;
+		}
+
+		/**
+		 * @private
+		 * @return {boolean}
+		 */
+		#hasPendingFocusRequest()
+		{
+			return this.#pendingFocusRequestId > 0;
+		}
+
+		/**
+		 * @private
+		 * @return {boolean}
+		 */
+		#hasPendingExplicitRequest()
+		{
+			return this.#pendingExplicitRequestId > 0;
+		}
+
+		/**
+		 * @private
+		 * @param {number} cursorIndex
+		 * @return {boolean}
+		 */
+		#canOpenMentionOnFocus(cursorIndex)
+		{
+			if (this.isMentionProcessed || this.isHasInputText())
+			{
+				return false;
+			}
+
+			if (!this.#isMultiUserCopilotDialog())
+			{
+				return false;
+			}
+
+			return this.#isCursorIndexValid(cursorIndex);
+		}
+
+		/**
+		 * @private
+		 * @return {boolean}
+		 */
+		#isMultiUserCopilotDialog()
+		{
+			const dialog = this.getStore().getters['dialoguesModel/getById'](this.dialogId);
+
+			return dialog?.type === DialogType.copilot && dialog?.userCounter > 2;
+		}
+
+		/**
+		 * @private
+		 * @param {number} cursorIndex
+		 * @return {boolean}
+		 */
+		#isCursorIndexValid(cursorIndex)
+		{
+			const textLength = this.view.textField.getText().length;
+
+			return Number.isInteger(cursorIndex)
+				&& cursorIndex >= 0
+				&& cursorIndex <= textLength
+			;
+		}
+
+		/**
+		 * @private
+		 * @return {Promise<Array<string>>|Array<string>}
+		 */
+		#loadParticipants()
+		{
+			if (!DialogHelper.isDialogId(this.dialogId))
+			{
+				return this.getRecentUsers();
+			}
+
+			if (this.#participantsLoadPromise)
+			{
+				return this.#participantsLoadPromise;
+			}
+
+			const participantsLoadPromise = Promise.resolve(this.provider.loadChatParticipants())
+				.finally(() => {
+					if (this.#participantsLoadPromise === participantsLoadPromise)
+					{
+						this.#participantsLoadPromise = null;
+					}
+				})
+			;
+			this.#participantsLoadPromise = participantsLoadPromise;
+
+			return participantsLoadPromise;
+		}
+
+		/**
+		 * @private
+		 * @param {number} cursorPosition
+		 */
+		async #openExplicitMention(cursorPosition)
+		{
+			if (!this.chatId)
+			{
+				return;
+			}
+
+			const requestId = this.#claimMentionRequest();
+			const mentionSymbolPosition = cursorPosition - 1;
+			const mentionSymbol = this.view.textField.getText()[mentionSymbolPosition];
+			this.#pendingExplicitRequestId = requestId;
+			this.#pendingExplicitCursorPosition = cursorPosition;
+			this.mentionSymbolPosition = mentionSymbolPosition;
+			this.lastQuerySymbolPosition = null;
+			this.focusIndexPosition = 1;
+			this.provider.setOptionConfig(this.chatId);
+			void this.initialUsersMembership();
+			this.openMentionLoadingPanel();
+
+			const userIdList = await this.#loadParticipants();
+			const currentText = this.view.textField.getText();
+			const currentCursorPosition = this.#pendingExplicitCursorPosition;
+			if (
+				requestId !== this.#mentionRequestId
+				|| requestId !== this.#pendingExplicitRequestId
+			)
+			{
+				return;
+			}
+
+			if (
+				this.mentionSymbolPosition !== mentionSymbolPosition
+				|| currentText[mentionSymbolPosition] !== mentionSymbol
+				|| !this.#isPendingExplicitRangeValid(currentText, currentCursorPosition, mentionSymbolPosition)
+			)
+			{
+				this.finishMentioning();
+
+				return;
+			}
+
+			this.#pendingExplicitRequestId = 0;
+			this.#pendingExplicitCursorPosition = null;
+			const query = currentText.slice(mentionSymbolPosition + 1, currentCursorPosition);
+			if (query.length > 0)
+			{
+				this.continueMentionSearch(currentText, currentCursorPosition);
+
+				return;
+			}
+
+			this.drawParticipantsItems(userIdList);
+		}
+
+		/**
+		 * @private
+		 * @param {string} text
+		 * @param {number} cursorPosition
+		 * @param {number} mentionSymbolPosition
+		 * @return {boolean}
+		 */
+		#isPendingExplicitRangeValid(text, cursorPosition, mentionSymbolPosition)
+		{
+			if (!this.#isCursorIndexValid(cursorPosition) || cursorPosition <= mentionSymbolPosition)
+			{
+				return false;
+			}
+
+			const query = text.slice(mentionSymbolPosition + 1, cursorPosition);
+
+			return !query.includes(' ') && !query.includes('\n');
 		}
 
 		/**
@@ -199,8 +501,13 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			logger.log(`${this.constructor.name}.drawParticipantsItems:`, result);
 
 			this.view.mentionPanel.setItems(result);
-			this.view.mentionPanel.hideLoader();
-			this.view.mentionPanel.open(result);
+			this.hideLoader();
+			if (!this.isProcessed)
+			{
+				this.view.mentionPanel.open(result);
+			}
+
+			this.isProcessed = true;
 		}
 	}
 

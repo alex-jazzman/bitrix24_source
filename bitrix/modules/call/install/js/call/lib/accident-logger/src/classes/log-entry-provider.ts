@@ -1,5 +1,15 @@
 import { Type } from 'main.core';
 
+// Standalone logger accepts any scalar call context fields. Kept local instead of
+// importing call.lib.settings-manager's CallLogContext: the declaration generator
+// emits a cross-extension named type import as an invalid namespace reference.
+type CallLogContextFields = {
+	roomId?: string;
+	callId?: number;
+	chatId?: number;
+	source?: string;
+};
+
 export interface LogEntry
 {
 	id: string;
@@ -62,7 +72,7 @@ export class LogEntryProvider
 		return sessionStorage.getItem(this.#storedSessionIdKey) || this.#generateSessionId();
 	}
 
-	async createLogEntry(error: Error | null, message: string): Promise<LogEntry>
+	async createLogEntry(error: Error | null, message: string, callContext: CallLogContextFields = {}): Promise<LogEntry>
 	{
 		const metadata = await this.#getMetadata();
 
@@ -99,6 +109,7 @@ export class LogEntryProvider
 			data: {
 				...safeError,
 				...metadata,
+				...this.#pickFilledContextFields(callContext),
 			},
 		};
 	}
@@ -107,6 +118,19 @@ export class LogEntryProvider
 	{
 		this.#browserMetadataSnapshotPromise = null;
 		this.onSnapshotError = null;
+	}
+
+	#pickFilledContextFields(callContext: CallLogContextFields): Record<string, string | number>
+	{
+		const filled: Record<string, string | number> = {};
+		Object.entries(callContext).forEach(([key, value]) => {
+			if (value !== undefined && value !== null && value !== '')
+			{
+				filled[key] = value;
+			}
+		});
+
+		return filled;
 	}
 
 	#generateSessionId(): string

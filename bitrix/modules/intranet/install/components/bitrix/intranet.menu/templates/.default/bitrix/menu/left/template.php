@@ -98,6 +98,10 @@ $getCounterId = function($item): string
 	return $counterId;
 };
 
+$APPLICATION->SetAdditionalCSS(
+	'/bitrix/templates/bitrix24/components/bitrix/menu/left_vertical/src/css/menu-item-icon.css'
+);
+
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.icon-set.main',

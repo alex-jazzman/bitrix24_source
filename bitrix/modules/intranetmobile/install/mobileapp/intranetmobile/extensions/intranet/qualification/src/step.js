@@ -9,6 +9,7 @@ jn.define('intranet/qualification/step', (require, exports, module) => {
 	const { AnalyticsHandler } = require('intranet/qualification/analytics-handler');
 	const { FieldsHandler } = require('intranet/qualification/fields-handler');
 	const { parseColorCode, getImageDimensions } = require('intranet/qualification/utils');
+	const { makeLibraryImagePath } = require('asset-manager');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const AppTheme = require('apptheme');
@@ -112,7 +113,23 @@ jn.define('intranet/qualification/step', (require, exports, module) => {
 		 */
 		getImage()
 		{
-			return this.props.image || null;
+			if (this.props.image?.uri?.[AppTheme.id])
+			{
+				return this.props.image;
+			}
+
+			if (this.getId() !== 'mobile-invitation')
+			{
+				return null;
+			}
+
+			return {
+				width: 375,
+				height: 200,
+				uri: {
+					[AppTheme.id]: makeLibraryImagePath('invitation.png', 'qualification', 'intranet'),
+				},
+			};
 		}
 
 		/**
@@ -199,13 +216,10 @@ jn.define('intranet/qualification/step', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {string} stepId
 		 * @return {boolean}
 		 */
-		onMoveToNextStep(stepId)
+		onMoveToNextStep()
 		{
-			this.getWizard().getStepById(stepId)?.resetFieldsValues();
-
 			return true;
 		}
 

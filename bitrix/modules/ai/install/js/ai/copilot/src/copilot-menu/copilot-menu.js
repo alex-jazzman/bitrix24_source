@@ -653,14 +653,9 @@ export class CopilotMenu extends EventEmitter
 			? 'ai__copilot-menu_role-left --bitrixgpt-default-avatar'
 			: 'ai__copilot-menu_role-left'
 		;
-		const roleTitle = Tag.render`
-			<span
-				class="ai__copilot-menu_role-title"
-				title="${name}"
-			>
-				${name}
-			</span>
-		`;
+		const roleTitle = Tag.render`<span class="ai__copilot-menu_role-title"></span>`;
+		Dom.attr(roleTitle, 'title', name);
+		roleTitle.textContent = name;
 		const roleSubtitle = Tag.render`<span class="ai__copilot-menu_role-subtitle">${subtitle}</span>`;
 		const roleTextContainer = Tag.render`<div class="ai__copilot-menu_role-right"></div>`;
 
@@ -901,7 +896,7 @@ export class CopilotMenu extends EventEmitter
 						const nameContainer = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-title');
 
 						Dom.attr(nameContainer, 'title', newValue);
-						nameContainer.innerText = newValue;
+						nameContainer.textContent = newValue;
 					}
 
 					if (this.#roleInfoContainer && p === 'avatar')

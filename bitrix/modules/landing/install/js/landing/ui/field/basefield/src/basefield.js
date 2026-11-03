@@ -212,9 +212,20 @@ export class BaseField extends EventEmitter
 
 	createInput(): HTMLDivElement
 	{
-		return Tag.render`
-			<div class="landing-ui-field-input">${this.content}</div>
-		`;
+		const input = Tag.render`<div class="landing-ui-field-input"></div>`;
+
+		// Content is user data: never pass it through the template parser,
+		// otherwise text like "a<b" is treated as a tag name.
+		if (Type.isDomNode(this.content))
+		{
+			Dom.append(this.content, input);
+		}
+		else if (Type.isString(this.content) || Type.isNumber(this.content))
+		{
+			input.innerHTML = this.content;
+		}
+
+		return input;
 	}
 
 	/**

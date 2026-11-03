@@ -3,7 +3,7 @@ import { type BaseCache, MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { Popup, type PopupOptions } from 'main.popup';
-import { FocusZone, type InputModality } from 'ui.a11y';
+import { FocusZone, LiveAnnouncer, type InputModality } from 'ui.a11y';
 
 import { type BasePicker } from './base-picker';
 
@@ -33,11 +33,13 @@ import { createUtcDate } from './helpers/create-utc-date';
 import { floorDate } from './helpers/floor-date';
 import { getDate, type DateComponents } from './helpers/get-date';
 import { getFocusableBoundaryElements } from './helpers/get-focusable-boundary-elements';
+import { getGridStartDate } from './helpers/get-grid-start-date';
 import { getPresetSubtitle } from './helpers/get-preset-subtitle';
 import { isDateLike } from './helpers/is-date-like';
 import { isDatesEqual } from './helpers/is-dates-equal';
 import { resolvePresetValue } from './helpers/resolve-preset-value';
 import { setTime } from './helpers/set-time';
+import { toComparable } from './helpers/to-comparable';
 import { isDateMatch } from './helpers/is-date-match';
 import { KeyboardNavigation } from './keyboard-navigation';
 import { MonthPicker } from './month-picker';
@@ -48,6 +50,30 @@ import { YearPicker } from './year-picker';
 import './css/date-picker.css';
 
 let singleOpenDatePicker: DatePicker = null;
+
+// Marks an input as bound to a widget instance: the popup focus trap keeps such inputs out of the isolation.
+const BOUND_INPUT_ATTRIBUTE = 'data-ui-date-picker-input';
+
+// The same for the label of a bound input: an isolated label is read as hidden and costs the field its name.
+const BOUND_INPUT_LABEL_ATTRIBUTE = 'data-ui-date-picker-input-label';
+
+// A year outside this range breaks the backend date types, so only a consumer bound may reach past it.
+const MIN_SUPPORTED_DATE: Date = createUtcDate(1900, 0, 1);
+const MAX_SUPPORTED_DATE: Date = createUtcDate(2100, 11, 31, 23, 59, 59, 999);
+
+// The widget bounds never change, so their comparable values are built once.
+const MIN_SUPPORTED_COMPARABLE = toComparableByPrecision(MIN_SUPPORTED_DATE);
+const MAX_SUPPORTED_COMPARABLE = toComparableByPrecision(MAX_SUPPORTED_DATE);
+
+function toComparableByPrecision(date: Date): { [string]: number }
+{
+	return {
+		year: toComparable(date, 'year'),
+		month: toComparable(date, 'month'),
+		day: toComparable(date, 'day'),
+		datetime: toComparable(date, 'datetime'),
+	};
+}
 
 /**
  * @namespace BX.UI.DatePicker
@@ -60,6 +86,8 @@ export class DatePicker extends EventEmitter
 	#selectedDates: Date[] = [];
 	#focusDate: Date = null;
 	#focusInputModality: InputModality | null = null;
+	#periodBoundaryAnnounced: boolean = false;
+	#markedInputLabels: Set<HTMLElement> = new Set();
 
 	#type: DatePickerType = 'date';
 	#currentView: 'day' | 'year' | 'month' | 'time' = null;
@@ -70,6 +98,7 @@ export class DatePicker extends EventEmitter
 	#showWeekDays: boolean = true;
 	#showWeekNumbers: boolean = false;
 	#showOutsideDays: boolean = true;
+	#showToday: boolean = true;
 	#numberOfMonths: number = 1;
 
 	#maxDays: number = Infinity;
@@ -95,6 +124,7 @@ export class DatePicker extends EventEmitter
 	#inputField: HTMLInputElement | HTMLTextAreaElement = null;
 	#rangeStartInput: HTMLInputElement | HTMLTextAreaElement = null;
 	#rangeEndInput: HTMLInputElement | HTMLTextAreaElement = null;
+	#originalInputAttributes: WeakMap<HTMLElement, { [name: string]: string | null }> = new WeakMap();
 	#useInputEvents: boolean = true;
 	#dateSeparator: string = ', ';
 
@@ -128,6 +158,7 @@ export class DatePicker extends EventEmitter
 
 	#keyboardNavigation: KeyboardNavigation = null;
 	#destroying: boolean = false;
+	#emittingViewDateChange: boolean = false;
 
 	constructor(pickerOptions: DatePickerOptions)
 	{
@@ -203,6 +234,7 @@ export class DatePicker extends EventEmitter
 
 		this.#showWeekDays = Type.isBoolean(options.showWeekDays) ? options.showWeekDays : this.#showWeekDays;
 		this.#showWeekNumbers = Type.isBoolean(options.showWeekNumbers) ? options.showWeekNumbers : this.#showWeekNumbers;
+		this.#showToday = Type.isBoolean(options.showToday) ? options.showToday : this.#showToday;
 
 		const defaultWeekends = settings.get('weekends', []);
 		this.#weekends = (
@@ -259,16 +291,85 @@ export class DatePicker extends EventEmitter
 
 		newDate = setTime(newDate, 0, 0, 0);
 
+		const prevViewDate = this.#viewDate;
 		this.#viewDate = newDate;
+		this.#resetPeriodBoundaryAnnounce();
 
 		if (this.isDateOutOfView(this.getFocusDate()))
 		{
+			const keepFocusInGrid = this.#isDayCellFocused();
 			this.setFocusDate(null, { adjustViewDate: false, render: false });
+
+			// Day cells are reused between periods, so a focused cell would keep the focus while showing another date.
+			if (keepFocusInGrid)
+			{
+				this.setFocusDate(this.getInitialFocusDate(), {
+					adjustViewDate: false,
+					render: false,
+					inputModality: 'keyboard',
+				});
+			}
 		}
 
 		if (this.isRendered())
 		{
 			this.getPicker().render();
+		}
+
+		this.#emitViewDateChange(prevViewDate);
+	}
+
+	#isDayCellFocused(): boolean
+	{
+		if (this.getCurrentView() !== 'day')
+		{
+			return false;
+		}
+
+		const rootContainer = this.getRootContainer();
+		const activeElement = rootContainer.ownerDocument.activeElement;
+
+		return (
+			Type.isElementNode(activeElement)
+			&& rootContainer.contains(activeElement)
+			&& activeElement.getAttribute('role') === 'gridcell'
+			&& activeElement.hasAttribute('data-day')
+		);
+	}
+
+	#emitViewDateChange(prevViewDate: Date | null): void
+	{
+		if (!this.isRendered() || isDatesEqual(prevViewDate, this.#viewDate, 'month'))
+		{
+			return;
+		}
+
+		// A handler is free to change the view date again; the outer call publishes the final state.
+		if (this.#emittingViewDateChange)
+		{
+			return;
+		}
+
+		this.#emittingViewDateChange = true;
+		try
+		{
+			let publishedViewDate = null;
+			while (publishedViewDate === null || !isDatesEqual(publishedViewDate, this.#viewDate, 'month'))
+			{
+				publishedViewDate = cloneDate(this.#viewDate);
+				const { dateFrom, dateTo } = this.getViewRange();
+
+				this.emit(DatePickerEvent.VIEW_DATE_CHANGE, {
+					viewDate: publishedViewDate,
+					dateFrom,
+					dateTo,
+					view: this.getCurrentView(),
+				});
+			}
+		}
+		finally
+		{
+			this.#emittingViewDateChange = false;
 		}
 	}
 
@@ -320,6 +421,19 @@ export class DatePicker extends EventEmitter
 	getViewDateParts(): DateComponents
 	{
 		return getDate(this.#viewDate);
+	}
+
+	getViewRange(): { dateFrom: Date, dateTo: Date }
+	{
+		const { year, month } = this.getViewDateParts();
+		const firstWeekDay = this.getFirstWeekDay();
+		const firstMonth = createUtcDate(year, month);
+		const lastMonth = createUtcDate(year, month + this.getNumberOfMonths() - 1);
+
+		return {
+			dateFrom: getGridStartDate(firstMonth, firstWeekDay),
+			dateTo: addDate(getGridStartDate(lastMonth, firstWeekDay), 'day', 41),
+		};
 	}
 
 	selectDate(date: DateLike, options = {}): boolean
@@ -504,19 +618,8 @@ export class DatePicker extends EventEmitter
 		}
 
 		const { emitEvents, updateInputs } = { emitEvents: true, updateInputs: true, ...options };
-		const deselectStart = (
-			currentStart !== null
-			&& emitEvents
-			&& !isDatesEqual(newStart, currentStart, 'datetime')
-			&& !isDatesEqual(newEnd, currentStart, 'datetime')
-		);
-
-		const deselectEnd = (
-			currentEnd !== null
-			&& emitEvents
-			&& !isDatesEqual(newStart, currentEnd, 'datetime')
-			&& !isDatesEqual(newEnd, currentEnd, 'datetime')
-		);
+		const deselectStart = emitEvents && this.#isBoundLeavingRange(currentStart, newStart, newEnd);
+		const deselectEnd = emitEvents && this.#isBoundLeavingRange(currentEnd, newStart, newEnd);
 
 		const selectStart = !this.isDateSelected(newStart, 'datetime');
 		const selectEnd = (
@@ -527,22 +630,12 @@ export class DatePicker extends EventEmitter
 			)
 		);
 
-		if (deselectStart && !this.#canDeselectDate(currentStart))
-		{
-			return false;
-		}
-
-		if (deselectEnd && !this.#canDeselectDate(currentEnd))
-		{
-			return false;
-		}
-
-		if (selectStart && !this.#canSelectDate(newStart))
-		{
-			return false;
-		}
-
-		if (selectEnd && !this.#canSelectDate(newEnd))
+		if (
+			(deselectStart && !this.#canDeselectDate(currentStart))
+			|| (deselectEnd && !this.#canDeselectDate(currentEnd))
+			|| (selectStart && !this.#canSelectDate(newStart))
+			|| (selectEnd && !this.#canSelectDate(newEnd))
+		)
 		{
 			return false;
 		}
@@ -659,6 +752,16 @@ export class DatePicker extends EventEmitter
 		return this.#selectedDates.length === 0;
 	}
 
+	// A bound the new range keeps on either side stays selected: only the one it drops gets deselected.
+	#isBoundLeavingRange(bound: Date | null, newStart: Date | null, newEnd: Date | null): boolean
+	{
+		return (
+			bound !== null
+			&& !isDatesEqual(newStart, bound, 'datetime')
+			&& !isDatesEqual(newEnd, bound, 'datetime')
+		);
+	}
+
 	#canSelectDate(date: Date): boolean
 	{
 		const event = new BaseEvent({ data: { date } });
@@ -710,6 +813,7 @@ export class DatePicker extends EventEmitter
 		}
 
 		this.#focusDate = date === null ? null : this.createDate(date);
+		this.#resetPeriodBoundaryAnnounce();
 
 		const { render, adjustViewDate, inputModality } = {
 			render: true,
@@ -824,12 +928,32 @@ export class DatePicker extends EventEmitter
 		return isOutOfView;
 	}
 
+	// A held arrow gives about thirty keydowns a second, and the live region would queue the phrase on every
+	// one of them, so the boundary is announced once and the announcement is unlocked by a real change.
+	announcePeriodBoundary(): void
+	{
+		if (this.#periodBoundaryAnnounced)
+		{
+			return;
+		}
+
+		this.#periodBoundaryAnnounced = true;
+		LiveAnnouncer.announce(Loc.getMessage('UI_DATE_PICKER_PERIOD_BOUNDARY_REACHED'), 'polite');
+	}
+
+	#resetPeriodBoundaryAnnounce(): void
+	{
+		this.#periodBoundaryAnnounced = false;
+	}
+
 	setCurrentView(view: string): void
 	{
 		if (this.#currentView === view)
 		{
 			return;
 		}
+
+		this.#resetPeriodBoundaryAnnounce();
 
 		const picker = this.getPicker(view);
 		if (picker === null)
@@ -915,6 +1039,26 @@ export class DatePicker extends EventEmitter
 	shouldShowOutsideDays(): boolean
 	{
 		return this.#showOutsideDays;
+	}
+
+	shouldShowToday(): boolean
+	{
+		return this.#showToday;
+	}
+
+	setShowToday(flag: boolean): void
+	{
+		if (!Type.isBoolean(flag))
+		{
+			return;
+		}
+
+		this.#showToday = flag;
+
+		if (this.isRendered())
+		{
+			this.getPicker()?.render();
+		}
 	}
 
 	getWeekends(): number[]
@@ -1058,9 +1202,12 @@ export class DatePicker extends EventEmitter
 			this.#minDate = this.createDate(date);
 		}
 
+		this.#resetPeriodBoundaryAnnounce();
+
 		if (this.isRendered())
 		{
 			this.getPicker()?.render();
+			this.#refreshPresetsActive();
 		}
 	}
 
@@ -1080,15 +1227,48 @@ export class DatePicker extends EventEmitter
 			this.#maxDate = this.createDate(date);
 		}
 
+		this.#resetPeriodBoundaryAnnounce();
+
 		if (this.isRendered())
 		{
 			this.getPicker()?.render();
+			this.#refreshPresetsActive();
 		}
 	}
 
 	getMaxDate(): Date | null
 	{
 		return this.#maxDate;
+	}
+
+	#getEffectiveMinDate(): Date
+	{
+		return cloneDate(this.#minDate ?? MIN_SUPPORTED_DATE);
+	}
+
+	#getEffectiveMaxDate(): Date
+	{
+		return cloneDate(this.#maxDate ?? MAX_SUPPORTED_DATE);
+	}
+
+	#getEffectiveMinComparable(precision: 'datetime' | 'day' | 'month' | 'year'): number
+	{
+		if (this.#minDate !== null)
+		{
+			return this.#toComparable(this.#minDate, precision);
+		}
+
+		return MIN_SUPPORTED_COMPARABLE[precision];
+	}
+
+	#getEffectiveMaxComparable(precision: 'datetime' | 'day' | 'month' | 'year'): number
+	{
+		if (this.#maxDate !== null)
+		{
+			return this.#toComparable(this.#maxDate, precision);
+		}
+
+		return MAX_SUPPORTED_COMPARABLE[precision];
 	}
 
 	setRestrictNavigation(flag: boolean): void
@@ -1108,53 +1288,48 @@ export class DatePicker extends EventEmitter
 		return this.#restrictNavigation;
 	}
 
-	isDateAllowed(date: Date, precision: 'datetime' | 'day' | 'month' | 'year' = 'datetime'): boolean
+	#toComparable(date: Date, precision: 'datetime' | 'day' | 'month' | 'year'): number
 	{
-		if (
-			this.#minDate === null
-			&& this.#maxDate === null
-			&& this.#disabledDateMatchers.length === 0
-		)
-		{
-			return true;
-		}
-
-		const toComparable = (d: Date): number => {
-			switch (precision)
-			{
-				case 'year':
-					return d.getUTCFullYear();
-				case 'month':
-					return (d.getUTCFullYear() * 12) + d.getUTCMonth();
-				case 'day':
-					return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-				default:
-					return d.getTime();
-			}
-		};
-
-		const ref = toComparable(date);
-		if (this.#minDate !== null && ref < toComparable(this.#minDate))
-		{
-			return false;
-		}
-
-		if (this.#maxDate !== null && ref > toComparable(this.#maxDate))
-		{
-			return false;
-		}
-
-		if (
-			(precision === 'day' || precision === 'datetime')
-			&& this.isDateDisabled(date)
-		)
-		{
-			return false;
-		}
-
-		return true;
+		return toComparable(date, precision);
 	}
 
+	clampDate(date: Date, precision: 'datetime' | 'day' | 'month' | 'year' = 'datetime'): Date
+	{
+		const ref = this.#toComparable(date, precision);
+
+		if (ref < this.#getEffectiveMinComparable(precision))
+		{
+			return this.#getEffectiveMinDate();
+		}
+
+		if (ref > this.#getEffectiveMaxComparable(precision))
+		{
+			return this.#getEffectiveMaxDate();
+		}
+
+		return cloneDate(date);
+	}
+
+	isDateAllowed(date: Date, precision: 'datetime' | 'day' | 'month' | 'year' = 'datetime'): boolean
+	{
+		const ref = this.#toComparable(date, precision);
+		if (ref < this.#getEffectiveMinComparable(precision))
+		{
+			return false;
+		}
+
+		if (ref > this.#getEffectiveMaxComparable(precision))
+		{
+			return false;
+		}
+
+		return !(
+			(precision === 'day' || precision === 'datetime')
+			&& this.isDateDisabled(date)
+		);
+	}
+
+	// Only the range bound stops the paging: the dates disabled inside the range still have a period to show.
 	canNavigate(view: 'day' | 'month' | 'year', direction: 'prev' | 'next'): boolean
 	{
 		if (!this.#restrictNavigation)
@@ -1162,31 +1337,45 @@ export class DatePicker extends EventEmitter
 			return true;
 		}
 
-		const bound = direction === 'prev' ? this.#minDate : this.#maxDate;
-		if (bound === null)
+		const edgeDate = this.#getNavigationEdgeDate(view, direction);
+		if (edgeDate === null)
 		{
 			return true;
 		}
 
+		const edgeRef = this.#toComparable(edgeDate, view);
+		const boundRef = direction === 'prev'
+			? this.#getEffectiveMinComparable(view)
+			: this.#getEffectiveMaxComparable(view)
+		;
+
+		return direction === 'prev' ? edgeRef >= boundRef : edgeRef <= boundRef;
+	}
+
+	// The cell of the target page closest to the current one.
+	#getNavigationEdgeDate(view: 'day' | 'month' | 'year', direction: 'prev' | 'next'): Date | null
+	{
 		if (view === 'day')
 		{
 			const { year, month } = this.getViewDateParts();
 			const numberOfMonths = this.getNumberOfMonths();
 			const firstDay = createUtcDate(year, month, 1);
 			const lastDay = addDate(createUtcDate(year, month + numberOfMonths, 1), 'day', -1);
-			const checkDate = direction === 'prev'
+
+			return direction === 'prev'
 				? addDate(firstDay, 'day', -1)
 				: addDate(lastDay, 'day', 1)
 			;
-
-			return this.isDateAllowed(checkDate, 'day');
 		}
 
 		if (view === 'month')
 		{
 			const viewYear = this.getViewDate().getUTCFullYear();
 
-			return direction === 'prev' ? bound.getUTCFullYear() < viewYear : bound.getUTCFullYear() > viewYear;
+			return direction === 'prev'
+				? createUtcDate(viewYear - 1, 11, 1)
+				: createUtcDate(viewYear + 1, 0, 1)
+			;
 		}
 
 		if (view === 'year')
@@ -1194,16 +1383,16 @@ export class DatePicker extends EventEmitter
 			const yearPicker = this.getPicker('year');
 			if (yearPicker === null)
 			{
-				return true;
+				return null;
 			}
 
 			return direction === 'prev'
-				? bound.getUTCFullYear() < yearPicker.getFirstYear()
-				: bound.getUTCFullYear() > yearPicker.getLastYear()
+				? createUtcDate(yearPicker.getFirstYear() - 1, 0, 1)
+				: createUtcDate(yearPicker.getLastYear() + 1, 0, 1)
 			;
 		}
 
-		return true;
+		return null;
 	}
 
 	isFullYear(): boolean
@@ -1436,6 +1625,8 @@ export class DatePicker extends EventEmitter
 			this.#disabledDateMatchers = this.#createDateMatchers(matcher);
 		}
 
+		this.#resetPeriodBoundaryAnnounce();
+
 		if (this.isRendered())
 		{
 			this.getPicker()?.render();
@@ -1518,10 +1709,12 @@ export class DatePicker extends EventEmitter
 
 	#createPresetsContainer(): HTMLElement
 	{
+		// The rail runs an action per button instead of marking an item selected, so it is a group, not a listbox.
 		const container = Tag.render`
 			<div
 				class="ui-date-picker-presets"
-				role="listbox"
+				data-testid="ui-date-picker-presets"
+				role="group"
 				aria-label="${Loc.getMessage('UI_DATE_PICKER_PRESETS_LABEL')}"
 			></div>
 		`;
@@ -1574,12 +1767,16 @@ export class DatePicker extends EventEmitter
 				: Tag.render`<span class="ui-date-picker-preset-subtitle">${subtitle}</span>`
 		);
 
-		const button = Tag.render`
+		// A preset stays reachable by keyboard just like an unavailable grid cell, so it is declared
+		// unavailable instead of being switched off natively.
+		return Tag.render`
 			<button
 				type="button"
 				class="${classes.join(' ')}"
+				data-testid="ui-date-picker-preset"
 				data-index="${index}"
 				aria-pressed="${isActive ? 'true' : 'false'}"
+				aria-disabled="${disabled ? 'true' : 'false'}"
 				onclick="${this.#handlePresetClick.bind(this, preset)}"
 				onmouseenter="${this.#handlePresetMouseEnter.bind(this, preset)}"
 				onmouseleave="${this.#handlePresetMouseLeave.bind(this)}"
@@ -1588,18 +1785,10 @@ export class DatePicker extends EventEmitter
 				${subtitleNode}
 			</button>
 		`;
-		button.disabled = disabled;
-
-		return button;
 	}
 
 	#isPresetAllowed(preset: DatePickerPreset, resolvedDates: Date[] | null = null): boolean
 	{
-		if (this.#minDate === null && this.#maxDate === null)
-		{
-			return true;
-		}
-
 		const dates = resolvedDates === null ? this.#resolvePresetValue(preset) : resolvedDates;
 		if (dates === null)
 		{
@@ -1795,7 +1984,7 @@ export class DatePicker extends EventEmitter
 			const disabled = !this.#isPresetAllowed(preset, dates);
 			const isActive = !disabled && this.#isPresetActive(preset, dates);
 
-			button.disabled = disabled;
+			button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
 			if (disabled)
 			{
 				Dom.addClass(button, '--disabled');
@@ -1923,6 +2112,9 @@ export class DatePicker extends EventEmitter
 
 		delete popupOptions.ariaLabel;
 
+		const focusTrap = this.#getFocusTrapOptions(popupOptions.focusTrap);
+		delete popupOptions.focusTrap;
+
 		this.#popup = new Popup({
 			contentPadding: 0,
 			padding: 0,
@@ -1936,9 +2128,6 @@ export class DatePicker extends EventEmitter
 			cacheable: this.isCacheable(),
 			content: this.getContainer(),
 			ariaLabel,
-			focusTrap: {
-				initialFocus: false,
-			},
 			autoHideHandler: this.#handleAutoHide.bind(this),
 			events: {
 				onFirstShow: this.#handlePopupFirstShow.bind(this),
@@ -1947,11 +2136,32 @@ export class DatePicker extends EventEmitter
 				onDestroy: this.#handlePopupDestroy.bind(this),
 			},
 			...popupOptions,
+			focusTrap,
 		});
 
 		this.#popup.subscribeFromOptions(userEvents);
 
 		return this.#popup;
+	}
+
+	// The outside content is isolated on purpose; aria-modal is left out just as deliberately, because the
+	// calendar popup is not a modal dialog. A consumer overrides single keys of the trap, and the rest stay.
+	#getFocusTrapOptions(options: boolean | Object | void): boolean | Object
+	{
+		if (options === false)
+		{
+			return false;
+		}
+
+		return {
+			initialFocus: false,
+			isolateOutside: true,
+			outsideExceptionSelectors: [
+				`[${BOUND_INPUT_ATTRIBUTE}="${this.getContainerId()}"]`,
+				`[${BOUND_INPUT_LABEL_ATTRIBUTE}="${this.getContainerId()}"]`,
+			],
+			...(Type.isPlainObject(options) ? options : {}),
+		};
 	}
 
 	#setSelectionMode(mode: DatePickerSelectionMode): void
@@ -2002,9 +2212,11 @@ export class DatePicker extends EventEmitter
 		const input = this.#getInputField(field);
 		if (input !== null)
 		{
+			const replaced = this.#inputField;
 			this.#inputField = input;
+			this.#releaseReplacedInput(replaced);
 			this.#bindInputEvents(input);
-			this.#applyInputAriaAttributes(input);
+			this.#applyInputAttributes(input);
 		}
 	}
 
@@ -2013,9 +2225,11 @@ export class DatePicker extends EventEmitter
 		const input = this.#getInputField(field);
 		if (input !== null)
 		{
+			const replaced = this.#rangeStartInput;
 			this.#rangeStartInput = input;
+			this.#releaseReplacedInput(replaced);
 			this.#bindInputEvents(input);
-			this.#applyInputAriaAttributes(input);
+			this.#applyInputAttributes(input);
 		}
 	}
 
@@ -2024,32 +2238,90 @@ export class DatePicker extends EventEmitter
 		const input = this.#getInputField(field);
 		if (input !== null)
 		{
+			const replaced = this.#rangeEndInput;
 			this.#rangeEndInput = input;
+			this.#releaseReplacedInput(replaced);
 			this.#bindInputEvents(input);
-			this.#applyInputAriaAttributes(input);
+			this.#applyInputAttributes(input);
 		}
 	}
 
-	#applyInputAriaAttributes(input: HTMLElement): void
+	#applyInputAttributes(input: HTMLElement): void
 	{
 		if (this.isInline())
 		{
 			return;
 		}
 
+		if (!this.#originalInputAttributes.has(input))
+		{
+			this.#originalInputAttributes.set(input, {
+				role: input.getAttribute('role'),
+				'aria-haspopup': input.getAttribute('aria-haspopup'),
+				'aria-expanded': input.getAttribute('aria-expanded'),
+				'aria-controls': input.getAttribute('aria-controls'),
+			});
+		}
+
+		input.setAttribute('role', 'combobox');
 		input.setAttribute('aria-haspopup', 'dialog');
-		input.setAttribute('aria-expanded', this.isOpen() ? 'true' : 'false');
+		input.setAttribute(BOUND_INPUT_ATTRIBUTE, this.getContainerId());
+		this.#applyInputExpanded(input, this.isOpen());
+
+		this.#refreshInputLabels();
 	}
 
-	#syncInputsAriaExpanded(open: boolean): void
+	// The labels of a field change without the widget: a consumer may re-render a label after the binding.
+	// The marks are restaked from the remembered set, so a node that stopped being a label keeps none.
+	#refreshInputLabels(): void
 	{
-		const expanded = open ? 'true' : 'false';
-		[this.#inputField, this.#rangeStartInput, this.#rangeEndInput].forEach((input) => {
-			if (input !== null && input.hasAttribute('aria-haspopup'))
+		if (this.isInline())
+		{
+			return;
+		}
+
+		const labels: Set<HTMLElement> = new Set();
+		[this.#inputField, this.#rangeStartInput, this.#rangeEndInput].forEach((input: HTMLElement | null): void => {
+			if (input !== null)
 			{
-				input.setAttribute('aria-expanded', expanded);
+				this.#getInputLabels(input).forEach((label: HTMLElement): void => {
+					labels.add(label);
+				});
 			}
 		});
+
+		this.#markedInputLabels.forEach((label: HTMLElement): void => {
+			if (!labels.has(label))
+			{
+				label.removeAttribute(BOUND_INPUT_LABEL_ATTRIBUTE);
+			}
+		});
+
+		labels.forEach((label: HTMLElement): void => {
+			label.setAttribute(BOUND_INPUT_LABEL_ATTRIBUTE, this.getContainerId());
+		});
+
+		this.#markedInputLabels = labels;
+	}
+
+	// The isolation of the open popup reaches the siblings of an excluded node, so the name source of a bound
+	// field has to be excluded as well: a label under inert is announced as hidden. An ancestor of the field
+	// is never isolated, and excluding it would take its own content out of the isolation too.
+	#getInputLabels(input: HTMLElement): HTMLElement[]
+	{
+		const labels: Set<HTMLElement> = new Set(input.labels ?? []);
+
+		const labelledBy = input.getAttribute('aria-labelledby') ?? '';
+		for (const id of labelledBy.split(/\s+/))
+		{
+			const element = Type.isStringFilled(id) ? document.getElementById(id) : null;
+			if (element !== null)
+			{
+				labels.add(element);
+			}
+		}
+
+		return [...labels].filter((label: HTMLElement): boolean => !label.contains(input));
 	}
 
 	#getInputField(field: string | HTMLElement): HTMLElement | null
@@ -2096,6 +2368,81 @@ export class DatePicker extends EventEmitter
 		}));
 	}
 
+	// The combobox role gives the open state a carrier the field is allowed to have, and the popup content
+	// is referenced only while it lives in the document.
+	#applyInputExpanded(input: HTMLElement, open: boolean): void
+	{
+		input.setAttribute('aria-expanded', open ? 'true' : 'false');
+		if (open)
+		{
+			input.setAttribute('aria-controls', this.getContainerId());
+		}
+		else
+		{
+			input.removeAttribute('aria-controls');
+		}
+	}
+
+	#syncInputsExpanded(open: boolean): void
+	{
+		[this.#inputField, this.#rangeStartInput, this.#rangeEndInput].forEach((input: HTMLElement | null): void => {
+			if (input !== null && input.hasAttribute(BOUND_INPUT_ATTRIBUTE))
+			{
+				this.#applyInputExpanded(input, open);
+			}
+		});
+	}
+
+	// A replaced field may stay bound in another slot, and the attributes of a still bound field have to stay.
+	#releaseReplacedInput(input: HTMLElement | null): void
+	{
+		const boundFields = [this.#inputField, this.#rangeStartInput, this.#rangeEndInput];
+		if (input === null || boundFields.includes(input))
+		{
+			return;
+		}
+
+		this.#releaseInput(input);
+	}
+
+	#releaseInput(input: HTMLElement | null): void
+	{
+		this.#unbindInputEvents(input);
+		if (input === null)
+		{
+			return;
+		}
+
+		this.#dropInputSlots(input);
+
+		input.removeAttribute(BOUND_INPUT_ATTRIBUTE);
+		const originalAttributes = this.#originalInputAttributes.get(input);
+		if (originalAttributes)
+		{
+			Object.entries(originalAttributes).forEach(([name, value]): void => {
+				if (value === null)
+				{
+					input.removeAttribute(name);
+				}
+				else
+				{
+					input.setAttribute(name, value);
+				}
+			});
+			this.#originalInputAttributes.delete(input);
+		}
+
+		this.#refreshInputLabels();
+	}
+
+	// A released field is bound no more, and the marks of the labels are restaked over the fields that are.
+	#dropInputSlots(input: HTMLElement): void
+	{
+		this.#inputField = this.#inputField === input ? null : this.#inputField;
+		this.#rangeStartInput = this.#rangeStartInput === input ? null : this.#rangeStartInput;
+		this.#rangeEndInput = this.#rangeEndInput === input ? null : this.#rangeEndInput;
+	}
+
 	#unbindInputEvents(input: HTMLElement): void
 	{
 		Event.unbind(input, 'click', this.#refs.get('click-handler'));
@@ -2122,6 +2469,8 @@ export class DatePicker extends EventEmitter
 
 	#handleInputFocusOut(event: MouseEvent): void
 	{
+		this.#restoreInputFields();
+
 		if (!this.getRootContainer().contains(event.relatedTarget))
 		{
 			this.hide();
@@ -2217,6 +2566,23 @@ export class DatePicker extends EventEmitter
 		}
 	}
 
+	// The widget never leaves a date it refuses to select in the bound field.
+	#restoreInputFields(): void
+	{
+		if (!this.shouldUseInputEvents() || !this.#hasRejectedInputDate())
+		{
+			return;
+		}
+
+		// A multiple selection refuses the rejected dates alone, the accepted ones of the field are kept.
+		if (this.isMultipleMode() && this.#hasAcceptedInputDate())
+		{
+			this.updateFromInputFields();
+		}
+
+		this.updateInputFields();
+	}
+
 	#focusInputField(): void
 	{
 		if (this.getInputField() !== null)
@@ -2245,12 +2611,7 @@ export class DatePicker extends EventEmitter
 		}
 		else if (this.isMultipleMode() && this.getInputField() !== null)
 		{
-			const value = this.getInputField().value.trim();
-			const inputDates: Date[] = value
-				.split(this.getDateSeparator().trim())
-				.map((part: string) => this.createDate(part.trim()))
-				.filter((date: Date | null) => date !== null)
-			;
+			const inputDates: Date[] = this.#getDatesFromInput(this.getInputField());
 
 			this.deselectAll({ updateInputs: false, emitEvents: false });
 			this.selectDates(inputDates, { updateInputs: false, emitEvents: false });
@@ -2290,6 +2651,60 @@ export class DatePicker extends EventEmitter
 		}
 
 		return this.createDate(value);
+	}
+
+	#getDatesFromInput(input: HTMLInputElement | HTMLTextAreaElement | null): Date[]
+	{
+		if (input === null)
+		{
+			return [];
+		}
+
+		const value = input.value.trim();
+		if (!Type.isStringFilled(value))
+		{
+			return [];
+		}
+
+		return value
+			.split(this.getDateSeparator().trim())
+			.map((part: string) => this.createDate(part.trim()))
+			.filter((date: Date | null) => date !== null)
+		;
+	}
+
+	#hasRejectedInputDate(): boolean
+	{
+		if (this.isRangeMode())
+		{
+			return (
+				this.#isInputDateRejected(this.getRangeStartInput())
+				|| this.#isInputDateRejected(this.getRangeEndInput())
+			);
+		}
+
+		if (this.isMultipleMode())
+		{
+			return this.#getDatesFromInput(this.getInputField()).some((date: Date): boolean => {
+				return !this.isDateAllowed(date);
+			});
+		}
+
+		return this.#isInputDateRejected(this.getInputField());
+	}
+
+	#hasAcceptedInputDate(): boolean
+	{
+		return this.#getDatesFromInput(this.getInputField()).some((date: Date): boolean => {
+			return this.isDateAllowed(date);
+		});
+	}
+
+	#isInputDateRejected(input: HTMLInputElement | HTMLTextAreaElement | null): boolean
+	{
+		const date = this.#getDateFromInput(input);
+
+		return date !== null && !this.isDateAllowed(date);
 	}
 
 	#setInputDate(input: HTMLInputElement | HTMLTextAreaElement | null, date: Date | null, format: string = null): void
@@ -2344,6 +2759,7 @@ export class DatePicker extends EventEmitter
 			const container = Tag.render`
 				<div
 					id="${this.getContainerId()}"
+					data-testid="ui-date-picker"
 					tabindex="-1"
 					onkeyup="${this.#handleContainerKeyUp.bind(this)}"
 					class="${classes.join(' ')}"
@@ -3135,7 +3551,8 @@ export class DatePicker extends EventEmitter
 			singleOpenDatePicker = this;
 		}
 
-		this.#syncInputsAriaExpanded(true);
+		this.#refreshInputLabels();
+		this.#syncInputsExpanded(true);
 		this.emit('onShow');
 	}
 
@@ -3148,6 +3565,8 @@ export class DatePicker extends EventEmitter
 
 	#handlePopupClose(): void
 	{
+		this.#restoreInputFields();
+
 		if (this.getType() === 'date')
 		{
 			this.setCurrentView('day');
@@ -3166,7 +3585,7 @@ export class DatePicker extends EventEmitter
 			this.#focusInputField();
 		}
 
-		this.#syncInputsAriaExpanded(false);
+		this.#syncInputsExpanded(false);
 		this.emit('onHide');
 	}
 
@@ -3192,9 +3611,9 @@ export class DatePicker extends EventEmitter
 			Dom.remove(this.getContainer());
 		}
 
-		this.#unbindInputEvents(this.getInputField());
-		this.#unbindInputEvents(this.getRangeStartInput());
-		this.#unbindInputEvents(this.getRangeEndInput());
+		this.#releaseInput(this.getInputField());
+		this.#releaseInput(this.getRangeStartInput());
+		this.#releaseInput(this.getRangeEndInput());
 
 		if (this.#popup !== null)
 		{

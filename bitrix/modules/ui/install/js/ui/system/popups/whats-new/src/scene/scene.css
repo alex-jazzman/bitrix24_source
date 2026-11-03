@@ -1,0 +1,147 @@
+/**
+ * The scene of the card: the graphics of the announcement, standing in the media zone or on the layer it
+ * flies out onto. This file owns where the parts of a scene lie and how they move; what is drawn in them
+ * comes from the consumer, so no picture is named here.
+ *
+ * Public CSS surface: none. The block is internal to ui.system.popups.whats-new.
+ */
+
+.ui-system-whats-new-scene {
+	/* Proportion of the frame a composition of layers is laid out in; the scene names its own. */
+	--ui-system-whats-new-scene-aspect: 1.4707;
+
+	/* The drift of a layer: how high it rises, how far it tilts at the top of the rise and how much it grows
+	   on the way - a layer named a spark grows, every other one keeps its size. The beat of the drift and the
+	   wait before the first one come with the layer as well. */
+	--ui-system-whats-new-scene-shift: 0px;
+	--ui-system-whats-new-scene-tilt: 0deg;
+	--ui-system-whats-new-scene-growth: 1;
+	--ui-system-whats-new-scene-period: 8s;
+	--ui-system-whats-new-scene-delay: 0s;
+
+	/* Where the pointer stands over the scene, in shares of the reach of it: the middle of the scene is zero
+	   and the ends of the reach are minus one and one. Until the pointer is heard of they are both zero, so
+	   the composition stands exactly where it was laid out. */
+	--ui-system-whats-new-scene-pointer-x: 0;
+	--ui-system-whats-new-scene-pointer-y: 0;
+
+	/* How far the graphics travels after the pointer; it comes with the plane the layer stands in. */
+	--ui-system-whats-new-scene-travel: 0px;
+
+	/* The room the clip of the frame leaves the layers that travelled beyond it. */
+	--ui-system-whats-new-scene-clearance: 0px;
+
+	/* The closer of the travel: a layer catches the pointer up with a delay, so the composition leans over
+	   after it instead of snapping to it. */
+	--ui-system-whats-new-scene-settle: 320ms;
+	--ui-system-whats-new-scene-settle-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	/* The scene is decoration whole: the pointer goes through it to the content of the card. */
+	pointer-events: none;
+	overflow: hidden;
+}
+
+/* The bare graphics of the layer it flies out onto: that layer is no zone and reserves no room, so it takes
+   the height of what is drawn in it. Nothing is clipped either - the whole point of the layer is to leave the
+   card. */
+.ui-system-whats-new-scene.--art {
+	height: auto;
+	overflow: visible;
+}
+
+/* The frame of a composition: it takes the height of the zone and gets its width from the proportion, so the
+   whole scene scales as one and the geometry of the layers stays in shares of it. */
+.ui-system-whats-new-scene__frame {
+	position: relative;
+	height: 100%;
+	margin: 0 auto;
+	aspect-ratio: var(--ui-system-whats-new-scene-aspect);
+	/* The composition is cut to the frame, but with the room the travel after the pointer needs: a cut along
+	   the very edge eats the edge of a layer that travelled, and the layer at the top edge loses its top. */
+	clip-path: inset(calc(-1 * var(--ui-system-whats-new-scene-clearance)));
+}
+
+/* The wrapper of a layer: the place of the layer in the frame, and the seat of the travel after the pointer.
+   The drift of the layer lives on the sprite inside it, because an element has a single transform.
+
+   The graphics travels against the pointer: a scene that leans away from the pointer reads as a camera
+   turning around it, and one that runs after the pointer reads as a picture being dragged. How far it
+   travels comes with the plane the layer stands in. */
+.ui-system-whats-new-scene__layer {
+	position: absolute;
+	transform: translate3d(
+		calc(var(--ui-system-whats-new-scene-pointer-x) * -1 * var(--ui-system-whats-new-scene-travel)),
+		calc(var(--ui-system-whats-new-scene-pointer-y) * -1 * var(--ui-system-whats-new-scene-travel)),
+		0
+	);
+	transition:
+		transform
+		var(--ui-system-whats-new-scene-settle)
+		var(--ui-system-whats-new-scene-settle-easing);
+	will-change: transform;
+}
+
+/* A layer that named no geometry covers the frame: the composition of it came cut to that very frame. */
+.ui-system-whats-new-scene__layer.--cover {
+	inset: 0;
+}
+
+/*
+ * The sprite of a layer, and with it the drift of the composition and the one keyframe of the component. What
+ * tells one sprite from another is the variables the keyframe reads and not a keyframe of its own for every
+ * one of them. Nothing but the transform is animated: a decoration that fades by opacity is what the rule of
+ * accessibility forbids.
+ */
+.ui-system-whats-new-scene__sprite {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	animation:
+		ui-system-whats-new-scene-drift
+		var(--ui-system-whats-new-scene-period)
+		ease-in-out
+		var(--ui-system-whats-new-scene-delay)
+		infinite;
+	will-change: transform;
+}
+
+@keyframes ui-system-whats-new-scene-drift {
+	0%,
+	100% {
+		transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+	}
+
+	50% {
+		transform:
+			translate3d(0, calc(-1 * var(--ui-system-whats-new-scene-shift)), 0)
+			rotate(var(--ui-system-whats-new-scene-tilt))
+			scale(var(--ui-system-whats-new-scene-growth));
+	}
+}
+
+/* A layer whose width came in shares of the frame keeps the proportion of the picture: the height of it is
+   the business of the picture and never of the frame. */
+.ui-system-whats-new-scene__layer:not(.--cover) .ui-system-whats-new-scene__sprite {
+	height: auto;
+}
+
+/* A user who asked to be spared the motion gets a scene that stands still: neither the drift nor the travel
+   after the pointer says anything of the announcement. The follow of the pointer is not taken up at all in
+   that mode, and the rule below is what holds the composition in place if the mode is asked for later. */
+@media (prefers-reduced-motion: reduce) {
+	.ui-system-whats-new-scene__sprite {
+		animation: none;
+	}
+
+	.ui-system-whats-new-scene__layer {
+		transform: none;
+		transition: none;
+	}
+}

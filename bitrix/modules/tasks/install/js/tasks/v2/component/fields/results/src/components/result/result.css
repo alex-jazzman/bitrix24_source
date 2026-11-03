@@ -15,6 +15,10 @@
 	border: var(--ui-color-accent-main-primary) 1px solid;
 }
 
+.tasks-field-results-hint-info.--from-message {
+	padding-right: var(--ui-space-inset-xl);
+}
+
 .tasks-field-results-result-content {
 	display: flex;
 	flex-direction: column;
@@ -48,6 +52,18 @@
 	flex-direction: row;
 	align-items: center;
 	cursor: pointer;
+}
+
+.tasks-field-results-result-author,
+.tasks-field-results-result-author-border-clickable {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
 }
 
 .tasks-field-results-result-author-name {
@@ -117,4 +133,11 @@
 	padding: 0 var(--ui-space-inset-xl);
 	margin-top: 40px;
 	gap: var(--ui-space-stack-sm);
+	overflow: hidden;
+}
+
+.tasks-field-results-result-author:focus-visible,
+.tasks-field-results-result-author-border-clickable:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }

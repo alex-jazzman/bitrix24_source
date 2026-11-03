@@ -3,6 +3,7 @@ function CrmWebForm(params)
 	this.init = function(params)
 	{
 		this.id = params.id || '';
+		this.sec = params.sec || '';
 		this.hash = params.hash || '';
 		this.postAjax = params.postAjax || false;
 		this.mess = params.mess || {sentError: '', sentSuccess: ''};
@@ -96,7 +97,11 @@ function CrmWebForm(params)
 					{
 						liveFormController = BX.Calendar.Resourcebooking.getLiveField({
 							wrap: BX(field.name),
-							field: field
+							field: field,
+							sourceType: 'crm-webform',
+							formId: this.id,
+							sec: this.sec,
+							fieldCode: field.name
 						});
 
 						if (liveFormController && BX.type.isFunction(liveFormController.check))
@@ -108,7 +113,11 @@ function CrmWebForm(params)
 					{
 						liveFormController = BX.Calendar.UserField.getResourceBookingFieldLive({
 							wrap: BX(field.name),
-							field: field
+							field: field,
+							sourceType: 'crm-webform',
+							formId: this.id,
+							sec: this.sec,
+							fieldCode: field.name
 						});
 						if (liveFormController && BX.type.isFunction(liveFormController.init))
 						{

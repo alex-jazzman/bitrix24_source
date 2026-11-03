@@ -1,6 +1,17 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/main/utils.js');
 CBPDocument::AddShowParameterInit($arParams["DOCUMENT_TYPE"][0], "only_users", $arParams["DOCUMENT_TYPE"][2], $arParams["DOCUMENT_TYPE"][1]);
+
+// template description is stored as BBCode; "~" fields hold values not escaped by GetNext()
+$toPlainDescription = static function ($description): string
+{
+	$description = (string)$description;
+
+	return \Bitrix\Main\Loader::includeModule('ui')
+		? \Bitrix\UI\Format\BBCode\Converter::toPlainText($description)
+		: $description
+	;
+};
 ?>
 <div class="bizproc-page-workflow-start">
 <?
@@ -34,7 +45,7 @@ elseif ($arResult["SHOW_MODE"] == "WorkflowParameters")
 	</legend>
 	<?if($arResult["TEMPLATES"][$arParams["TEMPLATE_ID"]]["DESCRIPTION"]!=''):?>
 	<div class="bizproc-item-description bizproc-workflow-template-description">
-		<?= $arResult["TEMPLATES"][$arParams["TEMPLATE_ID"]]["DESCRIPTION"] ?>
+		<?= htmlspecialcharsbx($toPlainDescription($arResult["TEMPLATES"][$arParams["TEMPLATE_ID"]]["~DESCRIPTION"])) ?>
 	</div>
 	<?endif;
 
@@ -103,7 +114,7 @@ elseif ($arResult["SHOW_MODE"] == "SelectWorkflow" && count($arResult["TEMPLATES
 				</div>
 				<?if ($arWorkflowTemplate["DESCRIPTION"] <> ''):?>
 				<div class="bizproc-item-description">
-					<?= $arWorkflowTemplate["DESCRIPTION"] ?>
+					<?= htmlspecialcharsbx($toPlainDescription($arWorkflowTemplate["~DESCRIPTION"])) ?>
 				</div>
 				<?endif;?>
 			</li>

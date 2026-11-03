@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.core',
 		'sign.type',
-		'sign.v2.api',
 		'ui.notification',
 		'ui.sidepanel-content',
 	],

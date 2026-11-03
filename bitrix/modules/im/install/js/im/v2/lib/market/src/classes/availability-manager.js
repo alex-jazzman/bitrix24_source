@@ -28,7 +28,7 @@ export class AvailabilityManager
 
 	#matchDialogType(marketType: string, dialogType: ChatTypeItem): boolean
 	{
-		switch (marketType)
+		switch (String(marketType).toLowerCase())
 		{
 			case MarketTypes.user:
 				return this.#isUser(dialogType);

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_provider_service_copilot, main_core, im_v2_lib_analytics, im_v2_lib_feature, im_v2_lib_menu, im_v2_component_list_items_elements_emptyState, im_v2_lib_copilot) {
+(function (exports, ui_vue3, im_v2_component_list_items_base, im_v2_component_list_items_elements_activeCallList, im_v2_const, im_v2_lib_draft, im_v2_provider_service_copilot, main_core, im_v2_lib_analytics, im_v2_lib_feature, im_v2_lib_menu, im_v2_component_list_items_elements_emptyState, im_v2_lib_copilot) {
 	'use strict';
 
 	class CopilotRecentMenu extends im_v2_lib_menu.RecentMenu {
@@ -66,6 +66,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const CopilotList = {
 		name: 'CopilotList',
 		components: {
+			ActiveCallList: im_v2_component_list_items_elements_activeCallList.ActiveCallList,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			EmptyState
 		},
@@ -74,7 +75,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return {
 				isLoading: false,
 				isLoadingNextPage: false,
-				firstPageLoaded: false
+				firstPageLoaded: false,
+				listIsScrolled: false
 			};
 		},
 		computed: {
@@ -85,9 +87,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		async created() {
-			this.contextMenuManager = new CopilotRecentMenu({
+			this.contextMenuManager = ui_vue3.markRaw(new CopilotRecentMenu({
 				emitter: this.getEmitter()
-			});
+			}));
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 		},
@@ -103,6 +105,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				await this.getRecentService().loadFirstPage();
 				this.firstPageLoaded = true;
 				this.isLoading = false;
+			},
+			onListScroll(isScrolled) {
+				this.listIsScrolled = isScrolled;
 			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
@@ -133,6 +138,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onCloseMenu() {
 				this.contextMenuManager.close();
 			},
+			onCallClick({
+				item
+			}) {
+				this.onSelectChat(item.dialogId);
+			},
 			getRecentService() {
 				if (!this.service) {
 					this.service = new im_v2_provider_service_copilot.CopilotRecentService();
@@ -148,11 +158,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<EmptyState />
 			</template>
@@ -162,5 +177,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotList = CopilotList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib);
 //# sourceMappingURL=copilot-list.bundle.js.map

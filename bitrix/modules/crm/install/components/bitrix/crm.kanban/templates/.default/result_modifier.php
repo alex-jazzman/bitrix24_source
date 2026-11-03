@@ -39,24 +39,11 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 
 	if (!$column['dropzone'])
 	{
-		$column = [
-			'id' => $column['id'],
-			'total' => (int) $column['count'],
-			'color' => $column['color'],
-			'name' => htmlspecialcharsback($column['name']),
-			'canAddItem' => $column['canAddItem'],
-			'canSort' => ($arResult['CONFIG_BY_VIEW_MODE']['accessConfigPerms'] && $column['type'] === 'PROGRESS'),
-			'data' => [
-				'sort' => $column['sort'],
-				'type' => $column['type'],
-				'sum' => round($column['total'] ?? 0),
-				'sum_init' => 0,
-				'sum_format' => $column['total_format'] ?? null,
-				'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
-				'hiddenTotalSum' => ($column['hiddenTotalSum'] ?? false),
-				'currencyFormat' => ($column['currencyFormat'] ?? false),
-			],
-		];
+		$canSort = (
+			$arResult['CONFIG_BY_VIEW_MODE']['accessConfigPerms']
+			&& $column['type'] === 'PROGRESS'
+		);
+		$column = CrmKanbanComponent::prepareColumnForClient($column, $canSort);
 	}
 }
 unset($column);

@@ -3,6 +3,9 @@
 	--im-round-video-player__stroke_loader-progress: var(--im-color-palette-white-base);
 	--im-round-video-player__background-color_time: rgba(var(--im-color-palette-black-solid-rgb), 0.30);
 	--im-round-video-player__background-color_mute: rgba(var(--im-color-palette-black-solid-rgb), 0.50);
+	--im-round-video-player__color_rate-button: var(--im-color-palette-white-base);
+	--im-round-video-player__background-color_rate-button: rgba(var(--im-color-palette-black-solid-rgb), 0.30);
+	--im-round-video-player__background-color_hover-rate-button: rgba(var(--im-color-palette-black-solid-rgb), 0.40);
 
 	position: relative;
 }
@@ -63,6 +66,33 @@
 	padding: 4px 6px;
 	border-radius: 12px;
 	background-color: var(--im-round-video-player__background-color_time);
+}
+
+/* Takes over the top slot of the mute indicator; left is the center of the circle, not of the wider container */
+.bx-im-round-video-player__rate-button {
+	position: absolute;
+	top: 7px;
+	left: 130px;
+	transform: translateX(-50%);
+	z-index: 1;
+	min-width: 38px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 8px;
+	border: none;
+	border-radius: 98px;
+	background-color: var(--im-round-video-player__background-color_rate-button);
+	color: var(--im-round-video-player__color_rate-button);
+	font-size: var(--im-font-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+
+.bx-im-round-video-player__rate-button:hover {
+	background-color: var(--im-round-video-player__background-color_hover-rate-button);
 }
 
 .bx-im-round-video-player__transcribe-button {

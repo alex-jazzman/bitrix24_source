@@ -1,7 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 ?>
-<span class="mail-contact-avatar mail-contact-avatar-icon"
+<span class="mail-contact-avatar mail-contact-avatar-icon"<?php if ($arResult['testId'] !== ''): ?> data-testid="<?= htmlspecialcharsbx($arResult['testId']) ?>"<?php endif ?>
 	  style="width: <?=$arResult['avatarSize'] ?>px;
 		  min-width: <?=$arResult['avatarSize'] ?>px;
 		  height: <?=$arResult['avatarSize'] ?>px;

@@ -1,0 +1,36 @@
+import { Type } from 'main.core';
+
+import type { GroupDto, StageDto } from 'tasks.v2.provider.service.group-service';
+import type { StageModel } from 'tasks.v2.model.stages';
+
+import type { GroupModel } from './types';
+
+export function mapDtoToModel(groupDto: GroupDto): GroupModel
+{
+	const stagesIds = (Type.isArray(groupDto.stages) ? groupDto.stages : [])
+		.map((stage) => Number(stage.id) || 0)
+		.filter((id) => id > 0)
+	;
+
+	return {
+		id: groupDto.id,
+		name: groupDto.name,
+		image: groupDto.image?.src,
+		type: groupDto.type,
+		isRestrictedView: groupDto.isRestrictedView,
+		stagesIds,
+	};
+}
+
+export function mapStageDtoToModel(stageDto: StageDto): StageModel
+{
+	const stage: StageModel = {
+		id: stageDto.id,
+		title: stageDto.title,
+		color: stageDto.color,
+		systemType: stageDto.systemType,
+		sort: stageDto.sort,
+	};
+
+	return Object.fromEntries(Object.entries(stage).filter(([, value]) => !Type.isNil(value)));
+}

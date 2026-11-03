@@ -19,5 +19,6 @@ return array(
 		'im_desktop_utils',
 		'intranet.desktop-download',
 		'disk.onlyoffice-promo-actions',
+		'disk.dialog-markup',
 	],
 );

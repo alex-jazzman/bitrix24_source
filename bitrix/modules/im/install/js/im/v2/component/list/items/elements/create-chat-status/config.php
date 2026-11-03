@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'im.v2.component.elements.avatar',
 		'im.v2.const',
+		'im.v2.css.classes',
 		'im.v2.lib.create-chat',
 		'main.core',
 		'ui.icon-set.api.vue',

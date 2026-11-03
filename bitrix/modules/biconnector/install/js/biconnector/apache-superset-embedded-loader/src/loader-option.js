@@ -7,5 +7,6 @@ export type LoaderOption = {
 	fetchGuestToken: string,
 	dashboardUiConfig: UiConfig,
 	debug: boolean,
+	title?: string,
 	onTokenExpired?: () => Promise<string>,
 }

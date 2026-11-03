@@ -7,6 +7,10 @@ export type FeaturePromoterConfiguration = {
 	analytics?: Analytics,
 }
 
+export type FeaturePromoterShowOptions = {
+	width?: number,
+}
+
 export type PopupProviderConfiguration = {
 	code: string,
 	featureId: string,

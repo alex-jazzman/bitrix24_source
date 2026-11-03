@@ -1,22 +1,53 @@
-import 'ui.fonts.opensans';
+import { AvatarSquare } from 'ui.avatar';
 
 import { ChatType } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
-import { ChannelManager } from 'im.v2.lib.channel';
+import { type ImModelChat } from 'im.v2.model';
 
 import { AvatarSize } from '../../const/const';
+import { BaseUiAvatar, AvatarType } from './base-ui-avatar';
 
 import './css/avatar.css';
 
-import type { ImModelChat } from 'im.v2.model';
+// Chat types rendered with a round avatar and letters/photo (i.e. not a square special placeholder).
+const COMMON_TYPES = new Set([
+	ChatType.user,
+	ChatType.chat,
+	ChatType.open,
+	ChatType.lines,
+	ChatType.copilot,
+	ChatType.taskComments,
+]);
 
+// Special types that still show letters (in a square) instead of a chat-type icon.
+const TYPES_WITH_LETTERS = new Set([
+	ChatType.openChannel,
+	ChatType.channel,
+	ChatType.taskComments,
+]);
+
+const SIZES_WITH_TEXT = new Set([AvatarSize.M, AvatarSize.L, AvatarSize.XL, AvatarSize.XXL, AvatarSize.XXXL]);
+
+/**
+ * Default avatar branch built on top of the design-system avatar (`ui.avatar`).
+ * Used instead of `LegacyAvatar` when the Air design is enabled.
+ *
+ * Content priority (mirrors the legacy component): photo -> initials -> chat-type icon placeholder.
+ * Regular users and group/open chats render as a round `AvatarRound`; special chat types
+ * render as a square `AvatarSquare` with the chat-type icon layered on top as an im overlay.
+ */
 // @vue/component
 export const Avatar = {
 	name: 'MessengerAvatar',
+	components: { BaseUiAvatar },
 	props: {
 		dialogId: {
 			type: [String, Number],
 			default: 0,
+		},
+		// Accepted for prop-compatibility with the dispatcher; not used by this branch.
+		contextDialogId: {
+			type: [String, Number, null],
+			default: null,
 		},
 		customSource: {
 			type: String,
@@ -50,130 +81,107 @@ export const Avatar = {
 	data(): Object
 	{
 		return {
-			imageLoadError: false,
+			isImageBroken: false,
 		};
 	},
-	computed:
-	{
+	computed: {
+		AvatarType: () => AvatarType,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		isChannel(): boolean
-		{
-			return ChannelManager.isChannel(this.dialogId);
-		},
 		isSpecialType(): boolean
 		{
-			const commonTypes = [
-				ChatType.user,
-				ChatType.chat,
-				ChatType.open,
-				ChatType.lines,
-				ChatType.copilot,
-				ChatType.taskComments,
-			];
-
-			return !commonTypes.includes(this.dialog.type);
+			return !COMMON_TYPES.has(this.dialog.type);
 		},
-		containerTitle(): string
+		isSquare(): boolean
 		{
-			if (!this.withTooltip)
-			{
-				return '';
-			}
-
-			return this.dialog.name;
+			return this.withSpecialTypes && this.isSpecialType;
 		},
-		containerClasses(): string[]
+		avatarClass(): ?Function
 		{
-			const classes = [`--size-${this.size.toLowerCase()}`];
-			if (this.withSpecialTypes && this.isSpecialType)
-			{
-				classes.push('--special');
-			}
-			const typeClass = ChatType[this.dialog.type] ? `--${this.dialog.type}` : '--default';
-			classes.push(typeClass);
-
-			return classes;
+			return this.isSquare ? AvatarSquare : null;
 		},
-		backgroundColorStyle(): {backgroundColor: string}
+		avatarUrl(): string
 		{
-			if (this.backgroundColor)
-			{
-				return { backgroundColor: this.backgroundColor };
-			}
-
-			return { backgroundColor: this.dialog.color };
+			return this.customSource.length > 0 ? this.customSource : this.dialog.avatar;
 		},
-		avatarText(): string
+		// An image that is still loading counts as displayed: it is already in the avatar,
+		// so nothing must take its place until we know it cannot be shown.
+		hasImage(): boolean
 		{
-			if (!this.showAvatarLetters || !this.isEnoughSizeForText)
-			{
-				return '';
-			}
-
-			return Utils.text.getFirstLetters(this.dialog.name);
+			return Boolean(this.avatarUrl) && !this.isImageBroken;
+		},
+		isEnoughSizeForText(): boolean
+		{
+			return SIZES_WITH_TEXT.has(this.size.toUpperCase());
 		},
 		showAvatarLetters(): boolean
 		{
-			const SPECIAL_TYPES_WITH_LETTERS = [ChatType.openChannel, ChatType.channel, ChatType.taskComments];
-			if (SPECIAL_TYPES_WITH_LETTERS.includes(this.dialog.type))
+			if (TYPES_WITH_LETTERS.has(this.dialog.type))
 			{
 				return true;
 			}
 
 			return !this.isSpecialType;
 		},
-		showSpecialTypeIcon(): boolean
+		hasLetters(): boolean
 		{
-			if (!this.withSpecialTypes || !this.withSpecialTypeIcon || this.isChannel)
-			{
-				return false;
-			}
+			return this.withAvatarLetters && this.showAvatarLetters && this.isEnoughSizeForText && Boolean(this.dialog.name);
+		},
+		showTypeIcon(): boolean
+		{
+			return !this.hasImage && !this.hasLetters;
+		},
+		avatarTitle(): string
+		{
+			// Pass the title only when initials should be shown, so the DS base doesn't
+			// derive initials where a chat-type icon must be rendered instead.
+			return this.hasLetters ? this.dialog.name : '';
+		},
+		// The base under the image is hidden once the image is painted, so the colour is always
+		// passed: while the image is pending it is the chat colour that fills the avatar.
+		computedBackgroundColor(): string
+		{
+			return this.backgroundColor || this.dialog.color;
+		},
+		typeIconClasses(): string[]
+		{
+			const typeClass = ChatType[this.dialog.type] ? `--${this.dialog.type}` : '--default';
 
-			return this.isSpecialType;
+			return [typeClass];
 		},
-		isEnoughSizeForText(): boolean
+		containerTitle(): string
 		{
-			const avatarSizesWithText = [AvatarSize.M, AvatarSize.L, AvatarSize.XL, AvatarSize.XXL, AvatarSize.XXXL];
-
-			return avatarSizesWithText.includes(this.size.toUpperCase());
-		},
-		avatarUrl(): string
-		{
-			return this.customSource.length > 0 ? this.customSource : this.dialog.avatar;
-		},
-		hasImage(): boolean
-		{
-			return this.avatarUrl && !this.imageLoadError;
+			return this.withTooltip ? this.dialog.name : '';
 		},
 	},
-	watch:
-	{
+	watch: {
 		avatarUrl()
 		{
-			this.imageLoadError = false;
+			this.isImageBroken = false;
 		},
 	},
-	methods:
-	{
-		onImageLoadError()
+	methods: {
+		handleImageDisplayStateChange(isDisplayed: boolean)
 		{
-			this.imageLoadError = true;
+			this.isImageBroken = !isDisplayed;
 		},
 	},
 	template: `
-		<div :title="containerTitle" :class="containerClasses" class="bx-im-avatar__scope bx-im-avatar__container">
-			<!-- Avatar -->
-			<template v-if="hasImage">
-				<img :src="avatarUrl" :alt="dialog.name" class="bx-im-avatar__content --image" @error="onImageLoadError" draggable="false"/>
-				<div v-if="showSpecialTypeIcon" :style="backgroundColorStyle" class="bx-im-avatar__special-type_icon"></div>
-			</template>
-			<div v-else-if="withAvatarLetters && avatarText" :style="backgroundColorStyle" class="bx-im-avatar__content --text">
-				{{ avatarText }}
-			</div>
-			<div v-else :style="backgroundColorStyle" class="bx-im-avatar__content bx-im-avatar__icon"></div>
+		<div class="bx-im-avatar__scope" :title="containerTitle">
+			<!-- The DS silhouette is never used here: the image, the letters or the type icon take its place -->
+			<BaseUiAvatar
+				:type="AvatarType.default"
+				:avatarClass="avatarClass"
+				:size="size"
+				:url="avatarUrl"
+				:title="avatarTitle"
+				:backgroundColor="computedBackgroundColor"
+				:withDefaultUserpic="false"
+				@imageDisplayStateChange="handleImageDisplayStateChange"
+			/>
+			<div v-if="showTypeIcon" class="bx-im-avatar__type-icon" :class="typeIconClasses"></div>
 		</div>
 	`,
 };

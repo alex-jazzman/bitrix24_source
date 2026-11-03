@@ -32,6 +32,10 @@ if (
 	$uploaderSettings = Crm\FileUploader\SiteFormFileUploaderController::getSettings();
 }
 
+$resourceVersion = Main\Loader::includeModule('crm')
+	? new Crm\WebForm\ResourceVersion(__DIR__ . '/dist/app.bundle')
+	: null;
+
 return [
 	'js' => [
 		'crm.site.form.js',
@@ -47,7 +51,8 @@ return [
 			"useLangCamelCase" => true,
 			"deleteLangPrefixes" => ["CRM_SITE_FORM_"],
 			"properties" => [
-				"isResourcesMinified" => Main\IO\File::isFileExists(__DIR__ . '/dist/app.bundle.min.js'),
+				"isResourcesMinified" => $resourceVersion !== null && $resourceVersion->isMinified(),
+				"appVersion" => $resourceVersion === null ? '' : $resourceVersion->getValue(),
 				"analytics" => Main\Loader::includeModule('crm')
 					? Crm\WebForm\Helper::getExternalAnalyticsData(null, true)
 					: [],

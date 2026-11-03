@@ -9,10 +9,10 @@ return [
 		'./dist/notifier.bundle.js',
 	],
 	'rel' => [
-		'im.public',
 		'im.v2.const',
 		'im.v2.lib.collab',
 		'main.core',
+		'ui.a11y',
 		'ui.notification',
 	],
 	'skip_core' => false,

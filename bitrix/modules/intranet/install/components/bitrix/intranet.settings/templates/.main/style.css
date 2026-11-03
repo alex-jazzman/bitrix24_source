@@ -565,8 +565,63 @@
 	cursor: pointer;
 }
 
+.intranet-settings__tools-description-more {
+	box-sizing: content-box;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-bottom: 1px solid rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-40));
+	background: none;
+	color: var(--ui-color-link-primary-base);
+	font: inherit;
+	text-align: inherit;
+}
+
+.intranet-settings__tools-description-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .ui-section__link_box .ui-section__link {
 	margin-left: auto;
+}
+
+.intranet-settings__tools-disclosure {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	color: inherit;
+	font: inherit;
+	background: none;
+	cursor: pointer;
+}
+
+.intranet-settings-iframe-popup .intranet-settings__tools-subgroup-description-link {
+	display: none;
+}
+
+.intranet-settings-iframe-popup
+	.ui-section__row-tool-selector.--tool-selector.--active:hover
+	.intranet-settings__tools-subgroup-description-link,
+.intranet-settings-iframe-popup
+	.ui-section__row-tool-selector.--tool-selector:focus-within
+	.intranet-settings__tools-subgroup-description-link {
+	display: block;
+}
+
+.intranet-settings-iframe-popup .intranet-settings__tools-switcher:focus-visible,
+.intranet-settings-iframe-popup .intranet-settings__tools-subgroup-description-link:focus-visible,
+.intranet-settings-iframe-popup .intranet-settings__page-header:focus-visible,
+.intranet-settings-iframe-popup .ui-section__title.--disclosure-focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.intranet-settings-iframe-popup .intranet-settings__page-header:focus-visible {
+	outline-offset: -2px;
 }
 
 .intranet-settings__page-header_wrap.--with-header-widget {
@@ -1084,6 +1139,65 @@
 	cursor: pointer;
 }
 
+.intranet-settings__menu-link {
+	background: none;
+	border: none;
+	text-align: inherit;
+	width: 100%;
+}
+
+.intranet-settings-iframe-popup .intranet-settings__menu-disclosure {
+	position: absolute;
+	top: 48px;
+	left: auto;
+	right: 9px;
+	bottom: auto;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	cursor: pointer;
+}
+
+.intranet-settings-iframe-popup .ui-sidepanel-menu-item:hover .intranet-settings__menu-disclosure,
+.intranet-settings-iframe-popup .intranet-settings__menu-disclosure:focus-visible {
+	max-width: 100%;
+	background: linear-gradient(
+		to bottom left,
+		rgba(227, 232, 235, 0) 0,
+		rgba(227, 232, 235, 0.7) 10%,
+		#e3e8eb 20%,
+		#e3e8eb 100%
+	);
+}
+
+.intranet-settings-iframe-popup .ui-sidepanel-menu-link:focus-visible,
+.intranet-settings-iframe-popup .ui-sidepanel-submenu-link:focus-visible,
+.intranet-settings-iframe-popup .intranet-settings__menu-link:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.intranet-settings-iframe-popup .intranet-settings__menu-disclosure:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.intranet-settings__save-error-summary {
+	margin: 0 0 16px;
+	padding: 10px 14px;
+	border-radius: var(--ui-border-radius-xs);
+	color: var(--ui-color-palette-red-80);
+	background-color: var(--ui-color-palette-red-10);
+}
+
+.intranet-settings__save-error-summary:focus-visible {
+	outline: 1px solid var(--ui-color-palette-red-60);
+	outline-offset: 2px;
+}
+
 .intranet-settings__menu-item:hover .intranet-settings__menu-link {
 	background-color: #e3e8eb;
 	color: var(--ui-color-base-70);
@@ -1091,6 +1205,26 @@
 }
 
 /* endregion */
+
+@media (max-width: 640px) {
+	.intranet-settings-iframe-popup .ui-slider-page,
+	.intranet-settings-iframe-popup .ui-side-panel-content {
+		flex-direction: column;
+	}
+
+	.intranet-settings-iframe-popup .ui-page-slider-left-panel,
+	.intranet-settings-iframe-popup .ui-side-panel-content,
+	.intranet-settings-iframe-popup .ui-page-slider-workarea,
+	.intranet-settings-iframe-popup .ui-side-panel-wrap-workarea {
+		width: 100%;
+	}
+
+	.intranet-settings-iframe-popup .main-ui-filter-search {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
+	}
+}
 
 .intranet-settings-main-title {
 	display: block;
@@ -1317,6 +1451,25 @@ search result items
 	align-items: center;
 }
 
+.search-title-top-item-link:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -1px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.intranet-settings__live-region {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
 /*.search-title-top-block-sonetgroups .search-title-top-item-link:hover {*/
 /*	padding-inline: 10px;*/
 /*	margin-inline: 6px;*/
@@ -1341,6 +1494,9 @@ search result items
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .search-title-top-block-tools .search-title-top-list {
@@ -1546,7 +1702,10 @@ search result items
 }
 
 .main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete {
+	padding: 0;
+	border: none;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2211%22%20viewBox%3D%220%200%2012%2011%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7.587%205.503l4.4-4.398-1.132-1.13-4.4%204.397L2.06-.026l-1.13%201.13%204.397%204.4L.927%209.9l1.13%201.132%204.4-4.398%204.398%204.398%201.13-1.13-4.398-4.4z%22/%3E%3C/svg%3E');
+	background-color: transparent;
 	background-repeat: no-repeat;
 	background-position: center 13px;
 	width: 20px;
@@ -1563,6 +1722,13 @@ search result items
 	right: 11px;
 	transition: right .3s, opacity .3s;
 	opacity: .3;
+}
+
+.main-ui-show.main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-2xs);
+	opacity: 1;
 }
 
 .main-ui-show.main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete:hover {

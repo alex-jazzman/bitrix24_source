@@ -1,27 +1,27 @@
-import {MarketShowMorePopupContentItem} from './market-show-more-popup-content-item';
+import { MarketShowMorePopupContentItem } from './market-show-more-popup-content-item';
 
 import '../../css/market-apps-panel/market-show-more-popup-content.css';
 
 // @vue/component
 export const MarketShowMorePopupContent = {
 	name: 'MarketShowMorePopupContent',
-	components: {MarketShowMorePopupContentItem},
+	components: { MarketShowMorePopupContentItem },
 	props:
 	{
 		marketApps: {
 			type: Array,
-			required: true
+			required: true,
 		},
 		dialogId: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
+	emits: ['appClick'],
 	data() {
 		return {
-			isLoading: true,
 			needTopShadow: false,
-			needBottomShadow: true
+			needBottomShadow: true,
 		};
 	},
 	methods:
@@ -33,6 +33,7 @@ export const MarketShowMorePopupContent = {
 			if (event.target.scrollTop === 0)
 			{
 				this.needTopShadow = false;
+
 				return;
 			}
 
@@ -47,14 +48,15 @@ export const MarketShowMorePopupContent = {
 			<div @scroll="onListScroll" class="bx-im-market-show-more-popup-content__items-container">
 				<MarketShowMorePopupContentItem
 					v-for="item in marketApps"
+					:key="item.id"
 					:item="item"
 					:dialogId="dialogId"
-					@onAppClick="$emit('close')"
+					@appClick="$emit('appClick', item)"
 				/>
 			</div>
 			<div v-if="needBottomShadow" class="bx-im-market-show-more-popup-content__shadow --bottom">
 				<div class="bx-im-market-show-more-popup-content__shadow-inner"></div>
 			</div>
 		</div>
-	`
+	`,
 };

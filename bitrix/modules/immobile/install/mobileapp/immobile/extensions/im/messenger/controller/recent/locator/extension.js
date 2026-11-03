@@ -14,6 +14,9 @@ jn.define('im/messenger/controller/recent/locator', (require, exports, module) =
 	{
 		const locator = new ServiceLocator();
 		locator.add('id', id);
+		// A composite tab ("All") is absent from RecentTabByNavigationTab on purpose: it has no
+		// recent section of its own, its list and its counters are made of the sections of its
+		// composition. Consumers must read that composition instead of a section of the tab.
 		locator.add('recentSection', RecentTabByNavigationTab[id]);
 		locator.add('ui', ui);
 		locator.add('parentChatId', parentChatId);

@@ -24,16 +24,37 @@ $request = Main\Application::getInstance()->getContext()->getRequest();
 if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templateId") && $request->getPost("siteId"))
 {
 	$theme = null;
-	try
+	$action = (string)$request->getPost("action");
+	$entityType = (string)$request->getPost("entityType");
+	$entityContext = ThemePicker::resolveAccessibleEntityContext(
+		$action,
+		$entityType,
+		(int)$request->getPost("entityId"),
+		(int)$USER->getID(),
+	);
+
+	if ($entityContext !== null)
 	{
-		$theme = new ThemePicker($request->getPost("templateId"), $request->getPost("siteId"), 0, $request->getPost("entityType"), $request->getPost("entityId"));
-	}
-	catch (ArgumentException $exception)
-	{
-		$result["error"] = $exception->getMessage();
+		$entityType = $entityContext['entityType'];
+		$entityId = $entityContext['entityId'];
+
+		try
+		{
+			$theme = new ThemePicker(
+				$request->getPost("templateId"),
+				$request->getPost("siteId"),
+				0,
+				$entityType,
+				$entityId,
+			);
+		}
+		catch (ArgumentException $exception)
+		{
+			$result["error"] = $exception->getMessage();
+		}
 	}
 
-	if ($theme && $request->getPost("action") === "save")
+	if ($theme && $action === "save")
 	{
 		$themeId = $request->getPost("themeId");
 		$analytics = new ThemePickerAnalytics($themeId);
@@ -54,7 +75,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 			Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 		}
 	}
-	else if ($theme && $request->getPost("action") === "save-blurred-image")
+	else if ($theme && $action === "save-blurred-image")
 	{
 		$success = false;
 		$themeId = $request->getPost("themeId");
@@ -81,7 +102,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 			$result["theme"] = $theme->getCustomTheme($themeId);
 		}
 	}
-	else if ($theme && $request->getPost("action") === "getlist")
+	else if ($theme && $action === "getlist")
 	{
 		$result = array(
 			"success" => true,
@@ -89,7 +110,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 			"baseThemes" => $theme->getBaseThemes()
 		);
 	}
-	else if ($theme && $request->getPost("action") === "create")
+	else if ($theme && $action === "create")
 	{
 		try
 		{
@@ -116,7 +137,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 			);
 		}
 	}
-	else if ($theme && $request->getPost("action") === "remove")
+	else if ($theme && $action === "remove")
 	{
 		$success = $theme->remove($request->getPost("themeId"));
 
@@ -124,7 +145,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 			"success" => $success,
 		);
 	}
-	else if ($theme && $request->getPost("action") === "hide-hint")
+	else if ($theme && $action === "hide-hint")
 	{
 		if (Bitrix\Main\Loader::includeModule("intranet"))
 		{

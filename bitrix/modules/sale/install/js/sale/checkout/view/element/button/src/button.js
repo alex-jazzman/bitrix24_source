@@ -14,10 +14,10 @@ BitrixVue.component('sale-checkout-view-element-button-shipping-button', {
 	},
 	// language=Vue
 	template: `
-      <div class="checkout-order-status-btn-container" @click="clickAction">
-      	<button :class="getObjectClass">
-          <slot name="button-title"/>
-		</button>
-      </div>
+		<div class="checkout-order-status-btn-container">
+			<button :class="getObjectClass" :aria-busy="ariaBusy" type="button" data-testid="sale-checkout-shipping-btn" @click="clickAction">
+				<slot name="button-title"/>
+			</button>
+		</div>
 	`
 });

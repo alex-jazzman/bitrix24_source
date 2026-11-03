@@ -255,7 +255,11 @@ export const GroupChatUpdating = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-update-chat"
+			@scroll="onScroll"
+		>
 			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
 			<template v-else>
 				<div class="bx-im-content-chat-forms__header">
@@ -272,6 +276,8 @@ export const GroupChatUpdating = {
 					<ChatMembersSelector
 						:customElements="collapsedUsers"
 						:chatMembers="chatMembers"
+						:chatType="chatType"
+						:dialogId="dialogId"
 						:allowTeamsSelect="dialog.type !== ChatType.videoconf"
 						@membersChange="onMembersChange"
 					/>

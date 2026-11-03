@@ -14,13 +14,7 @@ import {
 	type TemplateSearchController,
 	type TemplateSearchState,
 } from '../../feature/search-templates/search-templates';
-import {
-	createTemplatePreparationController,
-	type TemplatePreparationController,
-} from '../../feature/template-application/template-application';
-import { useComposeEditor } from '../../infrastructure/adapter/editor/editor';
 import { loc } from '../../lib/loc/loc';
-import { useComposeState } from '../../model/compose/compose';
 import { type TemplateListItem } from '../../model/compose/types';
 
 const TestId = Object.freeze({
@@ -33,7 +27,6 @@ const TestId = Object.freeze({
 	rowSubtitle: 'mail-compose-template-row-subtitle',
 	retry: 'mail-compose-templates-search-retry',
 	loadMore: 'mail-compose-templates-load-more',
-	applyRetry: 'mail-compose-templates-apply-retry',
 });
 
 const LockIconSize = 20;
@@ -56,10 +49,6 @@ export const TemplateAll = defineComponent({
 			type: String,
 			default: () => `mail-compose-templates-all-${Text.getRandom()}`,
 		},
-		formId: {
-			type: String,
-			required: true,
-		},
 	},
 
 	emits: ['close', 'select'],
@@ -67,8 +56,6 @@ export const TemplateAll = defineComponent({
 	setup()
 	{
 		return {
-			state: useComposeState(),
-			editor: useComposeEditor(),
 			loc,
 			searchSize: InputSize.Md,
 			searchIcon: Outline.SEARCH,
@@ -84,18 +71,12 @@ export const TemplateAll = defineComponent({
 		query: string,
 		search: TemplateSearchState,
 		controller: TemplateSearchController | null,
-		selectionController: TemplatePreparationController | null,
-		selectionError: boolean,
-		isSelectionPending: boolean,
 		}
 	{
 		return {
 			query: '',
 			search: { items: [], isLoading: false, error: false, nextOffset: null },
 			controller: null,
-			selectionController: null,
-			selectionError: false,
-			isSelectionPending: false,
 		};
 	},
 
@@ -163,7 +144,6 @@ export const TemplateAll = defineComponent({
 	beforeUnmount(): void
 	{
 		this.controller?.destroy();
-		this.selectionController?.destroy();
 		this.controller = null;
 	},
 
@@ -198,51 +178,19 @@ export const TemplateAll = defineComponent({
 
 		handleSelect(template: TemplateListItem): void
 		{
-			if (!template.canApply)
+			if (template.canApply)
 			{
-				return;
+				this.$emit('select', template.reference);
 			}
-
-			this.selectionError = false;
-			this.getSelectionController().select(template.reference);
-		},
-
-		getSelectionController(): TemplatePreparationController
-		{
-			this.selectionController ??= createTemplatePreparationController({
-				state: this.state,
-				editor: this.editor,
-				formId: this.formId,
-				onPendingChange: (isPending): void => {
-					this.isSelectionPending = isPending;
-					if (isPending)
-					{
-						this.selectionError = false;
-					}
-				},
-				onResult: (result): void => {
-					this.selectionError = false;
-					if (result.status === 'needsDecision')
-					{
-						this.$emit('select', result.template);
-					}
-					else if (result.status === 'applied')
-					{
-						this.$emit('close');
-					}
-				},
-				onError: (): void => {
-					this.selectionError = true;
-				},
-			});
-
-			return this.selectionController;
 		},
 	},
 
 	template: `
 		<Popup :id="popupId" :options="options" @close="$emit('close')">
-			<div class="mail-compose-templates-all" :data-testid="testId.screen">
+			<div
+				class="mail-compose-templates-all --ui-context-content-light"
+				:data-testid="testId.screen"
+			>
 				<BInput
 					v-model="query"
 					class="mail-compose-templates-all__search"
@@ -261,17 +209,6 @@ export const TemplateAll = defineComponent({
 					:data-testid="testId.status"
 				>{{ listStatus }}</div>
 				<div class="mail-compose-templates-all__list" :data-testid="testId.list">
-					<div v-if="selectionError" class="mail-compose-templates-all__state">
-						<TextMd>{{ loc('MAIL_COMPOSE_FORM_TEMPLATE_APPLY_ERROR') }}</TextMd>
-						<UiButton
-							:text="loc('MAIL_COMPOSE_FORM_TEMPLATES_RETRY')"
-							:style="buttonStyle"
-							:size="buttonSize"
-							:loading="isSelectionPending"
-							:dataset="{ testid: testId.applyRetry }"
-							@click="selectionController?.retry()"
-						/>
-					</div>
 					<TextMd v-if="search.isLoading" className="mail-compose-templates-all__note">
 						{{ loc('MAIL_COMPOSE_FORM_TEMPLATES_LOADING') }}
 					</TextMd>

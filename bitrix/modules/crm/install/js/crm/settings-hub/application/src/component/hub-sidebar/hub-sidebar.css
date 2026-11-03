@@ -1,0 +1,100 @@
+.crm-settings-hub-application__menu {
+	display: flex;
+	flex: 0 0 280px;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: 280px;
+	padding: 24px 20px;
+	border-right: 1px solid var(--ui-color-divider-default);
+}
+
+.crm-settings-hub-application__menu-title {
+	color: var(--ui-color-base-1);
+	font-size: 22px;
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	line-height: 28px;
+}
+
+.crm-settings-hub-application__search {
+	margin: 16px 0;
+}
+
+.crm-settings-hub-application__search .ui-system-input {
+	--min-height: 44px;
+	--font-size: 15px;
+	--border-color: var(--ui-color-base-6);
+	--border-color-active: var(--ui-color-accent-main-primary);
+}
+
+.crm-settings-hub-application__search .ui-system-input-value {
+	line-height: 20px;
+}
+
+.crm-settings-hub-application__search input[type='search']::-webkit-search-cancel-button {
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.crm-settings-hub-application__search .ui-system-input-container.--active {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-color-accent-main-primary) 16%, transparent);
+}
+
+.crm-settings-hub-application__menu-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.crm-settings-hub-application__menu-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	min-height: 36px;
+	padding: 4px 12px;
+	border: 0;
+	border-radius: 18px;
+	background: transparent;
+	color: var(--ui-color-base-2);
+	font: inherit;
+	font-size: 15px;
+	line-height: 20px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.crm-settings-hub-application__menu-item:hover {
+	background: var(--ui-color-base-7);
+}
+
+.crm-settings-hub-application__menu-item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-application__menu-item.--active {
+	background: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.crm-settings-hub-application__menu-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.crm-settings-hub-application__menu-empty {
+	padding: 8px;
+	color: var(--ui-color-base-4);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+@media (max-width: 760px) {
+	.crm-settings-hub-application__menu {
+		flex-basis: auto;
+		width: 100%;
+		border-right: 0;
+		border-bottom: 1px solid var(--ui-color-divider-default);
+	}
+}

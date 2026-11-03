@@ -75,6 +75,55 @@ Manager::setPageView(
 		)
 );
 
+// the portal is still deployed from a preset: show the placeholder instead of the (empty) site list.
+// the branch exits before the site list assets and before the section metrika: the section was not really opened
+if (($arParams['PRESET_SITES_EMPTY_STATE'] ?? false) && !$arResult['IS_DELETED'])
+{
+	Extension::load([
+		'ui.design-tokens',
+		'ui.fonts.opensans',
+		'landing.site-list.preset-empty-state',
+	]);
+	?>
+<div
+	class="landing-preset-empty"
+	data-testid="landing-sites-preset-empty"
+	data-preset-empty-state-remaining="<?= (int)($arParams['PRESET_SITES_EMPTY_STATE_REMAINING'] ?? 0) ?>"
+>
+	<div class="landing-preset-empty__card">
+		<div class="landing-preset-empty__image" aria-hidden="true">
+			<img src="<?= $templateFolder ?>/image/preset-empty-marshmallow.webp" alt="">
+		</div>
+		<div class="landing-preset-empty__title" role="status">
+			<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PRESET_EMPTY_STATE_TITLE') ?? '') ?>
+		</div>
+		<div class="landing-preset-empty__subtitle">
+			<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PRESET_EMPTY_STATE_SUBTITLE') ?? '') ?>
+		</div>
+	</div>
+</div>
+<script>
+	BX.ready(() => {
+		// the extension loaded above starts the observer itself, reading the window off the container
+		if (BX.Landing?.SiteList?.bootstrapPresetEmptyState)
+		{
+			return;
+		}
+
+		// the bundle never reached the page: the placeholder has no way out of its own, and the user
+		// would stay on it until the page is navigated away by hand. The window is waited out by a
+		// plain timer instead - the deadline owes the user the reload the same way it does through
+		// every failure the observer handles itself
+		const container = document.querySelector('[data-preset-empty-state-remaining]');
+		const remainingSeconds = parseInt(container?.dataset.presetEmptyStateRemaining, 10) || 0;
+
+		setTimeout(() => document.location.reload(), remainingSeconds * 1000);
+	});
+</script>
+	<?php
+	return;
+}
+
 Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
@@ -448,6 +497,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 			'DELETE_LOCKED' => $arResult['DELETE_LOCKED'],
 			'IS_DELETED' => $arResult['IS_DELETED'],
 			'TOTAL_COUNT' => $navigation ? (int)$navigation->getRecordCount() : count($arResult['SITES']),
+			'IS_SEARCH_REQUESTED' => $arResult['IS_SEARCH_REQUESTED'],
 		],
 		$component
 	);
@@ -509,7 +559,7 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 	</div>
 </div>
 <?php endif; ?>
-<div class="grid-tile-wrap" id="grid-tile-wrap">
+<div class="grid-tile-wrap" id="grid-tile-wrap" data-testid="landing-sites-list">
 	<div class="grid-tile-inner" id="grid-tile-inner">
 		<?php if ($arResult['ACCESS_SITE_NEW'] == 'Y' && $arParams['SHOW_MASTER_BUTTON'] == 'Y'):?>
 		<div class="landing-item landing-item-add-new landing-item-add-new-super">
@@ -606,7 +656,7 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 				<?php if ($item['DELETED'] === 'Y'):?>
 					<span class="landing-item-link"></span>
 				<?php elseif ($arParams['TILE_MODE'] === 'view' && $item['PUBLIC_URL']):?>
-					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) ?>" class="landing-item-link" data-testid="landing-sites-site-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span></a>
+					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme(str_replace(' ', '%20', $item['PUBLIC_URL']))) ?>" class="landing-item-link" data-testid="landing-sites-site-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span></a>
 				<?php elseif ($urlView):?>
 					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($urlView)) ?>" class="landing-item-link" data-testid="landing-sites-site-link">
 						<?php if ($arParams['OVER_TITLE']):?>
@@ -626,7 +676,7 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 							<span class="landing-item-status landing-item-status-unpublished"><?= Loc::getMessage('LANDING_TPL_UNPUBLIC');?></span>
 						<?php else:?>
 							<span class="landing-item-status landing-item-status-published">
-								<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) . '" target="_blank">' . htmlspecialcharsbx($item['DOMAIN_NAME']) . '</a>']);?>
+								<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme(str_replace(' ', '%20', $item['PUBLIC_URL']))) . '" target="_blank">' . htmlspecialcharsbx($item['DOMAIN_NAME']) . '</a>']);?>
 							</span>
 						<?php endif; ?>
 						<?php if ($item['DELETED'] == 'Y'):?>
@@ -689,7 +739,7 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 					</span>
 					</div>
 					<?php if ($item['PUBLIC_URL']):?>
-					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) ?>" target="_blank" class="landing-item-link" data-testid="landing-sites-site-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['NAME'])?></span></a>
+					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme(str_replace(' ', '%20', $item['PUBLIC_URL']))) ?>" target="_blank" class="landing-item-link" data-testid="landing-sites-site-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['NAME'])?></span></a>
 					<?php else:?>
 					<span class="landing-item-link"></span>
 					<?php endif;?>
@@ -699,7 +749,7 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 								<span class="landing-item-status landing-item-status-unpublished"><?= Loc::getMessage('LANDING_TPL_UNPUBLIC');?></span>
 							<?php else:?>
 								<span class="landing-item-status landing-item-status-published">
-									<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) . '" target="_blank">' . htmlspecialcharsbx($item['DOMAIN_NAME']) . '</a>']);?>
+									<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme(str_replace(' ', '%20', $item['PUBLIC_URL']))) . '" target="_blank">' . htmlspecialcharsbx($item['DOMAIN_NAME']) . '</a>']);?>
 								</span>
 							<?php endif;?>
 						</div>
@@ -1037,7 +1087,16 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 											{
 												BX.Landing.UI.Tool.ActionDialog.getInstance()
 													.show({
-														content: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_DELETE_CONFIRM'));?>'
+														content: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_DELETE_CONFIRM'));?>',
+														popupOptions: {
+															autoHide: true,
+															closeByEsc: true,
+															minHeight: false,
+															minWidth: 260,
+															maxWidth: 300,
+															width: false,
+															animation: 'fading-slide',
+														},
 													})
 													.then(
 														function() {
@@ -1055,7 +1114,16 @@ if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?
 						{
 							BX.Landing.UI.Tool.ActionDialog.getInstance()
 								.show({
-									content: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_DELETE_CONFIRM'));?>'
+									content: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_DELETE_CONFIRM'));?>',
+									popupOptions: {
+										autoHide: true,
+										closeByEsc: true,
+										minHeight: false,
+										minWidth: 260,
+										maxWidth: 300,
+										width: false,
+										animation: 'fading-slide',
+									},
 								})
 								.then(
 									function() {

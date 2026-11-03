@@ -52,6 +52,11 @@
 	background-color: color-mix(in srgb, var(--ui-color-design-outline-bg) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
 }
 
+.air-footer-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
 .air-footer-button-logo {
 	display: inline-flex;
 }

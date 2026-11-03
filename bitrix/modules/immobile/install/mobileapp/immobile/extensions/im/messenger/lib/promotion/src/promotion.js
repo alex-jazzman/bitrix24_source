@@ -4,15 +4,19 @@
 jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { BackgroundUI } = require('im/messenger/const');
+	const { BackgroundUI, EventType, Promo } = require('im/messenger/const');
 	const { PromotionRest } = require('im/messenger/provider/rest');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { CopilotPromotion } = require('im/messenger/lib/promotion/src/entities/copilot');
+	const { FolderAllPromotion } = require('im/messenger/lib/promotion/src/entities/folder-all');
 	const { TasksPromotion } = require('im/messenger/lib/promotion/src/entities/tasks');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const logger = getLoggerWithContext('promotion', 'Promotion');
 
 	const COMPONENT_NAME = 'im.messenger.Promotion';
+	// the close reaches the arbiter and the messenger in different contexts in no guaranteed order:
+	// a request sent at once could come before the slot is free and be dropped
+	const RETRY_DELAY = 300;
 
 	/**
 	 * @implements {Unsubscribable}
@@ -28,6 +32,9 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 			this.promoQueue = [];
 			this.pendingPromoQueue = [];
 			this.isPromoCollectionLoaded = false;
+			this.isShowing = false;
+			this.isOwnReleasePending = false;
+			this.retryTimer = null;
 			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.subscribeEvents();
 		}
@@ -35,7 +42,8 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 		subscribeEvents()
 		{
 			this.#subscribeInitMessengerEvent();
-			this.#subscribeToBackgroundUIManagerEvent();
+			this.#subscribeToBackgroundUIManagerEvents();
+			this.#subscribeAppActiveEvent();
 		}
 
 		unsubscribeEvents()
@@ -44,14 +52,25 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 				BackgroundUI.manager.openComponentInAnotherContext,
 				this.openPromotionFromBackgroundUIManagerEvent,
 			);
+			BX.removeCustomEvent(BackgroundUI.manager.onCloseActiveComponent, this.onActiveComponentClose);
+			BX.removeCustomEvent(EventType.app.active, this.scheduleRetry);
+			clearTimeout(this.retryTimer);
+			this.retryTimer = null;
 		}
 
-		#subscribeToBackgroundUIManagerEvent()
+		#subscribeToBackgroundUIManagerEvents()
 		{
 			BX.addCustomEvent(
 				BackgroundUI.manager.openComponentInAnotherContext,
 				this.openPromotionFromBackgroundUIManagerEvent,
 			);
+			BX.addCustomEvent(BackgroundUI.manager.onCloseActiveComponent, this.onActiveComponentClose);
+		}
+
+		// a request the arbiter dropped while the app was in background gets another chance on return
+		#subscribeAppActiveEvent()
+		{
+			BX.addCustomEvent(EventType.app.active, this.scheduleRetry);
 		}
 
 		#bindMethods()
@@ -59,6 +78,8 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 			this.handlePromotionGet = this.#handlePromotionGet.bind(this);
 			this.onReadPromo = this.#onReadPromo.bind(this);
 			this.openPromotionFromBackgroundUIManagerEvent = this.#openPromotionFromBackgroundUIManagerEvent.bind(this);
+			this.onActiveComponentClose = this.#onActiveComponentClose.bind(this);
+			this.scheduleRetry = this.#scheduleRetry.bind(this);
 			this.onShowPromoCallback = this.#onShowPromoCallback.bind(this);
 		}
 
@@ -69,13 +90,57 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 		{
 			logger.log('openPromotionFromBackgroundUIManagerEvent', componentName);
 
-			if (componentName !== COMPONENT_NAME || this.promoQueue.length === 0)
+			// a second grant while a promo is on screen would take the next one out of the queue on top of it
+			if (componentName !== COMPONENT_NAME || this.isShowing)
 			{
 				return;
 			}
 
+			// the arbiter holds the slot for us even when a retry has emptied the queue
+			if (this.promoQueue.length === 0)
+			{
+				this.#releaseScreen();
+
+				return;
+			}
+
+			this.isShowing = true;
 			const nextPromo = this.promoQueue.shift();
 			nextPromo.callback();
+		}
+
+		#onActiveComponentClose()
+		{
+			// the close carries no component name: ours is told apart by the flag set right before posting it
+			if (this.isOwnReleasePending)
+			{
+				this.isOwnReleasePending = false;
+
+				return;
+			}
+
+			this.#scheduleRetry();
+		}
+
+		#scheduleRetry()
+		{
+			clearTimeout(this.retryTimer);
+			this.retryTimer = setTimeout(() => this.#retry(), RETRY_DELAY);
+		}
+
+		#retry()
+		{
+			this.retryTimer = null;
+			if (this.isShowing)
+			{
+				return;
+			}
+
+			// the copilot request aims at a sidebar card that may be closed by now, and the sidebar asks again
+			// on open; nobody asks again for the others, so they stay
+			this.promoQueue = this.promoQueue.filter((request) => request.promoId !== Promo.copilotSidebarEngine);
+			this.#flushPendingPromoQueue();
+			this.#requestScreen();
 		}
 
 		#subscribeInitMessengerEvent()
@@ -92,15 +157,24 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 			{
 				this.promoCollection = data.promotion;
 				this.isPromoCollectionLoaded = true;
-
-				if (this.pendingPromoQueue.length > 0)
-				{
-					this.pendingPromoQueue.forEach((params) => {
-						this.addToPromoQueue(params);
-					});
-					this.pendingPromoQueue = [];
-				}
+				this.#flushPendingPromoQueue();
 			}
+		}
+
+		// the requests set aside - before the promo list came or by a postponed show - go through the
+		// regular check again, so a promo read in the meantime does not come back
+		#flushPendingPromoQueue()
+		{
+			if (!this.isPromoCollectionLoaded)
+			{
+				return;
+			}
+
+			const requests = this.pendingPromoQueue;
+			this.pendingPromoQueue = [];
+			requests.forEach((params) => {
+				this.addToPromoQueue(params);
+			});
 		}
 
 		/**
@@ -133,27 +207,35 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 			this.promoQueue.push({ promoId, callback });
 			if (this.promoQueue.length === 1)
 			{
-				this.#queueTickUp();
+				this.#requestScreen();
 			}
 		}
 
-		#queueTickUp()
+		#requestScreen()
 		{
-			logger.log('queueTickUp queue:', this.promoQueue);
-			BX.postComponentEvent(BackgroundUI.manager.onCloseActiveComponent, []);
+			logger.log('requestScreen queue:', this.promoQueue);
 
-			if (this.promoQueue.length > 0)
+			if (this.promoQueue.length === 0 || this.isShowing)
 			{
-				BX.postComponentEvent(
-					BackgroundUI.events.tryToOpenComponentFromAnotherContext,
-					[
-						{
-							componentName: COMPONENT_NAME,
-							priority: 1000,
-						},
-					],
-				);
+				return;
 			}
+
+			BX.postComponentEvent(
+				BackgroundUI.events.tryToOpenComponentFromAnotherContext,
+				[
+					{
+						componentName: COMPONENT_NAME,
+						priority: 1000,
+					},
+				],
+			);
+		}
+
+		// the slot is released only after it was given to us: a request must not close another feature's window
+		#releaseScreen()
+		{
+			this.isOwnReleasePending = true;
+			BX.postComponentEvent(BackgroundUI.manager.onCloseActiveComponent, []);
 		}
 
 		/**
@@ -180,7 +262,9 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 				this.onReadPromo(callbackData.promoId);
 			}
 
-			this.#queueTickUp();
+			this.isShowing = false;
+			this.#releaseScreen();
+			this.#requestScreen();
 		}
 
 		/**
@@ -192,6 +276,26 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 
 		showTasksRecentPromotion = () => {
 			TasksPromotion.showRecentAvailable(this.onShowPromoCallback);
+		};
+
+		// the onboarding takes several steps, and moving between them is not a refusal: the read mark and
+		// the queue release come from different points of it. A postponed show sets its request aside
+		// before the release, so the release does not ask for the screen for it at once
+		showFolderAllOnboardingPromotion = () => {
+			FolderAllPromotion.showOnboarding({
+				onRead: () => this.onReadPromo(Promo.folderAllOnboarding),
+				onFinish: (data) => {
+					if (data?.postponed)
+					{
+						this.pendingPromoQueue.push({
+							promoId: Promo.folderAllOnboarding,
+							callback: this.showFolderAllOnboardingPromotion,
+						});
+					}
+
+					this.onShowPromoCallback(data);
+				},
+			});
 		};
 	}
 

@@ -27,3 +27,6 @@ export const StakeholderActions = Object.freeze([
 	PanelAction.AssignAccomplice,
 	PanelAction.AssignAuditor,
 ]);
+
+// The panel keeps the icon color in a CSS variable so hover can darken it: BIcon writes the color prop inline.
+export const DefaultIconColor = 'var(--tasks-check-list-panel-icon-color, var(--ui-color-design-plain-content-icon))';

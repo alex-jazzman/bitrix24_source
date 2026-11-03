@@ -25,6 +25,7 @@ export const SharingAccessButtons = {
 		<div class="disk-sharing-access-popup__buttons">
 			<UiButton
 				text="${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_ACCESSIBILITY_BUTTON')}"
+				:dataset="{ testid: 'disk-sharing-access-tab-private' }"
 				:leftIcon="Outline.GROUP"
 				:size="ButtonSize.MEDIUM"
 				:style="!isPublic ? AirButtonStyle.SELECTION : AirButtonStyle.OUTLINE"
@@ -34,6 +35,7 @@ export const SharingAccessButtons = {
 			/>
 			<UiButton
 				text="${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_ACCESSIBILITY_BUTTON')}"
+				:dataset="{ testid: 'disk-sharing-access-tab-public' }"
 				:leftIcon="Outline.EARTH"
 				:size="ButtonSize.MEDIUM"
 				:style="isPublic ? AirButtonStyle.SELECTION : AirButtonStyle.OUTLINE"

@@ -1,7 +1,8 @@
 import { ajax } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-import type { ItemOptions } from 'ui.entity-selector';
-import { TagSelector, Dialog } from 'ui.entity-selector';
+import { type BaseEvent } from 'main.core.events';
+import { Dialog, TagSelector, type ItemOptions } from 'ui.entity-selector';
+
+import { syncPromptMasterOverlay } from '../helpers/prompt-master-overlay';
 
 export const PromptMasterCategoriesSelector = {
 	props: {
@@ -64,6 +65,8 @@ export const PromptMasterCategoriesSelector = {
 						},
 					],
 					events: {
+						onShow: this.handleCategoriesDialogVisibilityChange,
+						onHide: this.handleCategoriesDialogVisibilityChange,
 						'Item:onSelect': (event: BaseEvent) => {
 							this.selectCategory(event.getData().item);
 						},
@@ -77,6 +80,10 @@ export const PromptMasterCategoriesSelector = {
 			tagSelector.renderTo(this.$el);
 
 			return tagSelector;
+		},
+		handleCategoriesDialogVisibilityChange(): void
+		{
+			syncPromptMasterOverlay();
 		},
 	},
 	async mounted() {

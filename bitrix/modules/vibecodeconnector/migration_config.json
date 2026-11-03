@@ -2,6 +2,7 @@
     "defaultTableName": "b_vibecodeconnector_catalog",
     "installDirectoriesMapping": {
         "install/admin": "admin",
-        "install/js": "js"
+        "install/js": "js",
+        "install/routes": "routes"
     }
 }

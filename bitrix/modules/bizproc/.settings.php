@@ -8,6 +8,7 @@ use Bitrix\Bizproc\Integration\UI\EntitySelector\ScriptTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\StartWorkflowTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\StorageProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\SystemProvider;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\TemplateEditorProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\TemplateProvider;
 use Bitrix\Bizproc\Internal\Service\Trigger\SectionService;
 use Bitrix\Bizproc\Internal\Service\WorkflowTemplate\ManualStartTemplateAvailabilityService;
@@ -220,6 +221,9 @@ return [
 			'bizproc.service.activity.targetDocumentResolverRegistry' => [
 				'className' => \Bitrix\Bizproc\Public\Activity\Registry\TargetDocumentResolverRegistry::class,
 			],
+			'bizproc.service.activity.documentContextResolver' => [
+				'className' => \Bitrix\Bizproc\Public\Activity\Service\DocumentContextResolver::class,
+			],
 			'bizproc.service.activity.targetDocumentAccessGuardRegistry' => [
 				'className' => \Bitrix\Bizproc\Public\Activity\Registry\TargetDocumentAccessGuardRegistry::class,
 			],
@@ -349,6 +353,9 @@ return [
 			],
 			'bizproc.access.repository.mapper.permission' => [
 				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\Mapper\\AccessPermissionMapper',
+			],
+			'bizproc.access.template.authorship.provider' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Access\\Service\\TemplateAuthorshipProvider',
 			],
 			'bizproc.storage.item.repository.mapper' => [
 				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\Mapper\\StorageItemMapper',
@@ -640,6 +647,12 @@ return [
 					];
 				},
 			],
+			// Registered by class name so the transfer action of the controller and the grid action share
+			// one instance; the managed instance repository and the lifecycle service are resolved by the
+			// constructor itself, exactly as they are for the lifecycle participants above.
+			\Bitrix\Bizproc\Internal\Service\AiAgentGrid\OwnershipTransferService::class => [
+				'className' => \Bitrix\Bizproc\Internal\Service\AiAgentGrid\OwnershipTransferService::class,
+			],
 		],
 	],
 	'ui.entity-selector' => [
@@ -710,6 +723,18 @@ return [
 						'className' => AccessTemplateProvider::class,
 					],
 				],
+				[
+					// Literal, see above.
+					'entityId' => 'bizproc-template-editor',
+					// Mandatory: the substitution only happens while the entity being substituted names it back
+					// (Bitrix\UI\EntitySelector\Configuration::getProvider()). Without this line nothing is
+					// refused - the ordinary user provider is taken silently and the hint stops being narrowed.
+					'substitutes' => 'user',
+					'provider' => [
+						'moduleId' => 'bizproc',
+						'className' => TemplateEditorProvider::class,
+					],
+				],
 			],
 			'extensions' => ['bizproc.entity-selector'],
 		],
@@ -726,6 +751,8 @@ return [
 				['type' => 'date', 'extension' => 'bizproc.fields.date'],
 				['type' => 'datetime', 'extension' => 'bizproc.fields.datetime'],
 				['type' => 'select', 'extension' => 'bizproc.fields.select'],
+				['type' => 'user', 'extension' => 'bizproc.fields.user'],
+				['type' => 'file', 'extension' => 'bizproc.fields.file'],
 			],
 			'extensions' => [],
 		],

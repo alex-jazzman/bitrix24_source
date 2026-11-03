@@ -3,7 +3,7 @@ import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { AvatarSize, ChatAvatar } from 'im.v2.component.elements.avatar';
-import { EditableChatTitle } from 'im.v2.component.elements.chat-title';
+import { ChatTitle, EditableChatTitle } from 'im.v2.component.elements.chat-title';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { AiAssistantCreateChatButton } from 'im.v2.component.list.container.ai-assistant';
 import { type ImModelChat } from 'im.v2.model';
@@ -16,7 +16,7 @@ const MINIMIZE_EVENT_NAME = 'IM.AiAssistantWidget:minimize';
 // @vue/component
 export const AiAssistantWidgetChatHeader = {
 	name: 'AiAssistantWidgetChatHeader',
-	components: { BIcon, ChatAvatar, EditableChatTitle, AiAssistantCreateChatButton },
+	components: { BIcon, ChatAvatar, ChatTitle, EditableChatTitle, AiAssistantCreateChatButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -27,6 +27,10 @@ export const AiAssistantWidgetChatHeader = {
 			default: false,
 		},
 		isCreating: {
+			type: Boolean,
+			default: false,
+		},
+		isStartScreen: {
 			type: Boolean,
 			default: false,
 		},
@@ -50,6 +54,10 @@ export const AiAssistantWidgetChatHeader = {
 		closeIcon(): string
 		{
 			return this.isCopilot2026Styles ? OutlineIcons.CHEVRON_RIGHT_L : OutlineIcons.CROSS_L;
+		},
+		newChatTitle(): string
+		{
+			return this.loc('IM_AI_ASSISTANT_WIDGET_HEADER_NEW_CHAT');
 		},
 		subtitle(): string
 		{
@@ -104,7 +112,8 @@ export const AiAssistantWidgetChatHeader = {
 				/>
 			</div>
 			<div class="bx-im-ai-assistant-chat-header__info">
-				<EditableChatTitle :dialogId="dialogId" @newTitleSubmit="onNewTitleSubmit"/>
+				<ChatTitle v-if="isStartScreen" :dialogId="dialogId" :text="newChatTitle" :withLeftIcon="false"/>
+				<EditableChatTitle v-else :dialogId="dialogId" @newTitleSubmit="onNewTitleSubmit"/>
 				<div class="bx-im-ai-assistant-chat-header__subtitle">
 					{{ subtitle }}
 				</div>
@@ -116,10 +125,11 @@ export const AiAssistantWidgetChatHeader = {
 				/>
 			</div>
 			<BIcon
-				v-if="isInited"
+				v-if="isInited || isStartScreen"
 				:name="closeIcon"
 				:hoverable="true"
 				:title="loc('IM_AI_ASSISTANT_WIDGET_MINIMIZE')"
+				data-testid="ai-assistant-widget-minimize-button"
 				class="bx-im-ai-assistant-chat-header__icon"
 				@click="onMinimize"
 			/>

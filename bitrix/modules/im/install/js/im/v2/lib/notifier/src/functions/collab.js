@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Text, Type } from 'main.core';
 
 import { ErrorCode } from 'im.v2.const';
 import { type RunActionError } from 'im.v2.lib.rest';
@@ -18,6 +18,25 @@ const CollabErrorCode = {
 const NotEmptyCollabErrorCodes = new Set([
 	CollabErrorCode.tasksNotEmpty, CollabErrorCode.diskNotEmpty, CollabErrorCode.calendarNotEmpty,
 ]);
+
+const InvitationErrorCodes = new Set([
+	'COLLAB_INVITE_PORTAL_DISABLED',
+	'COLLAB_INVITE_ACCESS_DENIED',
+	'COLLAB_INVITE_MODULES_UNAVAILABLE',
+	'COLLAB_INVITE_TECHNICAL_DISABLED',
+	'COLLAB_INVITE_FEATURE_UNAVAILABLE',
+	'COLLAB_INVITE_EXTRANET_NOT_CONFIGURED',
+	'COLLAB_INVITE_GROUP_DISABLED',
+]);
+
+const getInvitationErrorMessage = (error: ?RunActionError): string => {
+	if (InvitationErrorCodes.has(error?.code) && Type.isStringFilled(error?.message) && error.message.trim().length > 0)
+	{
+		return Text.encode(error.message);
+	}
+
+	return Loc.getMessage('IM_NOTIFIER_DEFAULT_ERROR');
+};
 
 export const CollabNotifier = {
 	onBeforeDelete(): void
@@ -69,9 +88,21 @@ export const CollabNotifier = {
 		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
 	},
 
-	onCopyLinkError(): void
+	onCopyLinkError(error?: RunActionError): void
 	{
-		showNotification(CollabManager.getCopyLinkError());
+		if (Type.isNil(error?.code) || error.code === 0)
+		{
+			showNotification(CollabManager.getCopyLinkError());
+
+			return;
+		}
+
+		showNotification(getInvitationErrorMessage(error));
+	},
+
+	onUpdateLinkError(error?: RunActionError): void
+	{
+		showNotification(getInvitationErrorMessage(error));
 	},
 
 	handleCreateError(error: RunActionError): void

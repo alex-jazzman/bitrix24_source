@@ -1,7 +1,7 @@
 .tasks-check-list-list {
 	display: flex;
 	align-items: center;
-	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	background: var(--ui-color-bg-content-secondary);
 	border-radius: 10px;
 }
 
@@ -15,7 +15,7 @@
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	background: var(--ui-color-bg-content-secondary);
 	border-radius: 10px;
 }
 
@@ -105,12 +105,21 @@
 	width: 100%;
 }
 
-.tasks-check-list-list-content-row.--stub {
+.tasks-check-list-list-content-row.--stub,
+.tasks-check-list-list-content-row.--footer {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
 	cursor: pointer;
 }
 
-.tasks-check-list-list-content-row.--footer {
-	cursor: pointer;
+.tasks-check-list-list-content-row.--stub:disabled {
+	cursor: default;
 }
 
 .tasks-check-list-list-content-btn {
@@ -153,4 +162,10 @@
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
+}
+
+.tasks-check-list-list-content-row.--stub:focus-visible,
+.tasks-check-list-list-content-row.--footer:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }

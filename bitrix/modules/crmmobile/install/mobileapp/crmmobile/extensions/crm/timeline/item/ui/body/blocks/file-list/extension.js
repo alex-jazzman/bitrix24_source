@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/file-list
  */
 jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TodoActivityConfig, CommentConfig } = require('crm/timeline/services/file-selector-configs');
@@ -127,13 +128,12 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 						onClick: () => this.openFile(file),
 					},
 					this.renderFileIcon(file),
-					Text({
+					Text4({
 						text: file.name,
 						ellipsize: 'middle',
 						numberOfLines: 1,
 						style: {
 							color: AppTheme.colors.accentMainLinks,
-							fontSize: 14,
 							flexShrink: 2,
 						},
 					}),
@@ -191,11 +191,10 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 					{
 						style: Styles.borderDashed,
 					},
-					Text({
+					Text4({
 						text,
 						style: {
 							color: AppTheme.colors.base3,
-							fontSize: 14,
 						},
 					}),
 				),

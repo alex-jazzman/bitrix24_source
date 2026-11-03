@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
 		'im:messenger/view/dialog',
+		'im:messenger/controller/dialog/lib/audio-panel/audio-helper',
 		'im:messenger/controller/dialog/lib/message-player',
 		'im:messenger/provider/services/analytics',
 	],

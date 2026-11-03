@@ -1,9 +1,11 @@
 <?php
 
 use Bitrix\Crm\Activity\CallDeletionRestriction;
+use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -560,14 +562,18 @@ if(!empty($arGridFilter))
 		$prefixLength = mb_strlen($filterFieldPrefix);
 		foreach($arGridFilter as $key=>&$value)
 		{
-			if(mb_strpos($key, $filterFieldPrefix) === false)
+			$targetKey = mb_strpos($key, $filterFieldPrefix) === false
+				? $key
+				: mb_substr($key, $prefixLength);
+
+			// Stripping the prefix must not turn a user key into a service directive
+			// (e.g. TAB_ACTIVITY___CONDITIONS -> __CONDITIONS with raw SQL).
+			if (\Bitrix\Crm\Filter\UiFilterOptions::isServiceFilterKey($targetKey))
 			{
-				$arFilter[$key] = $value;
+				continue;
 			}
-			else
-			{
-				$arFilter[mb_substr($key, $prefixLength)] = $value;
-			}
+
+			$arFilter[$targetKey] = $value;
 		}
 		unset($value);
 	}
@@ -1151,8 +1157,31 @@ while($arRes = $dbRes->GetNext())
 
 	$description = isset($arRes['~DESCRIPTION']) ? $arRes['~DESCRIPTION'] : '';
 	$descriptionType = isset($arRes['DESCRIPTION_TYPE']) ? intval($arRes['DESCRIPTION_TYPE']) : CCrmContentType::PlainText;
+	$isMessageActivity = (
+		($arRes['PROVIDER_ID'] ?? null) === Provider\Sms::getId()
+		|| (
+			$descriptionType === CCrmContentType::PlainText
+			&& in_array(
+				$arRes['PROVIDER_ID'] ?? null,
+				[
+					Provider\Telegram::getId(),
+					Provider\WhatsApp::getId(),
+				],
+				true
+			)
+		)
+	);
 
-	if($descriptionType === CCrmContentType::BBCode)
+	if($isMessageActivity)
+	{
+		$description = Emoji::decode($description) ?? $description;
+		$descriptionHtml = \Bitrix\Crm\Activity\Provider\Sms\MessageDescriptionFormatter::prepareHtml(
+			$description
+		);
+		$arRes['DESCRIPTION_RAW'] = $descriptionHtml;
+		$arRes['DESCRIPTION_HTML'] = $descriptionHtml;
+	}
+	elseif($descriptionType === CCrmContentType::BBCode)
 	{
 		$arRes['DESCRIPTION_RAW'] = \Bitrix\Crm\Format\TextHelper::convertHtmlToText(
 			$bbCodeParser->convertText($description),

@@ -9,12 +9,12 @@ table.bx-interface-grid tr.bx-odd td {background-color:white;}
 table.bx-interface-grid tr.bx-odd td.bx-sorted {background-color:#F8F8F8;}
 
 table.bx-interface-grid tr.bx-grid-gutter td {background-color:#A69677; border-right:1px solid #BBB09A; border-top:1px solid #9E8E71;}
-table.bx-interface-grid tr.bx-grid-gutter td.bx-over {background-image:url(images/gutter_bg.png); border-top:none;}
+table.bx-interface-grid tr.bx-grid-gutter td.bx-over {background-image:url(images/gutter_bg.webp); border-top:none;}
 table.bx-interface-grid tr.bx-grid-gutter td.bx-sorted {background-color:#817250; border-top:1px solid #837453; border-right:1px solid #BBB09A;}
-table.bx-interface-grid tr.bx-grid-gutter td.bx-over-sorted {background-image:url(images/gutter_sort_bg.png); border-top:none;}
+table.bx-interface-grid tr.bx-grid-gutter td.bx-over-sorted {background-image:url(images/gutter_sort_bg.webp); border-top:none;}
 table.bx-interface-grid tr.bx-grid-gutter td.bx-left {border-left:1px solid #97896A; border-right:1px solid #BBB09A;}
 table.bx-interface-grid tr.bx-grid-gutter td.bx-right {border-right:1px solid #97896A;}
-table.bx-interface-grid tr.bx-grid-head td {color:white; border-right:1px solid #BBB09A; border-bottom:1px solid #867858; background-color:#8F7F5F; background-image:url(images/listhead.png);}
+table.bx-interface-grid tr.bx-grid-head td {color:white; border-right:1px solid #BBB09A; border-bottom:1px solid #867858; background-color:#8F7F5F; background-image:url(images/listhead.webp);}
 table.bx-interface-grid tr.bx-grid-head td.bx-sorted {background-color:#817250; border-bottom:1px solid #837453; border-right:1px solid #BBB09A;}
 table.bx-interface-grid tr.bx-grid-head td.bx-left {border-left:1px solid #97896A; border-bottom:1px solid #867858; border-right:1px solid #BBB09A;}
 table.bx-interface-grid tr.bx-grid-head td.bx-right {border-right:1px solid #97896A; border-bottom:1px solid #867858;}
@@ -56,10 +56,10 @@ table.bx-interface-grid table.bx-grid-sorting td.bx-sort-up {background-image:ur
 table.bx-interface-grid table.bx-grid-sorting td.bx-sort-down {background-image:url(images/sort_down.gif);}
 
 /* Drag-n-Drop*/
-div.bx-drag-object {border:1px solid #867858; color:white; background-color:#8F7F5F; background-image:url(images/listhead.png); }
+div.bx-drag-object {border:1px solid #867858; color:white; background-color:#8F7F5F; background-image:url(images/listhead.webp); }
 
 /* Filter */
-table.bx-interface-filter tr.bx-filter-header td {background-color:#9E8E6F; background-image:url(images/filter/bg.png); border:1px solid #867858; border-top:1px solid #988A6C; border-bottom:1px solid #7A6C4C;}
+table.bx-interface-filter tr.bx-filter-header td {background-color:#9E8E6F; background-image:url(images/filter/bg.webp); border:1px solid #867858; border-top:1px solid #988A6C; border-bottom:1px solid #7A6C4C;}
 a.bx-filter-show:hover, a.bx-filter-hide:hover, a.bx-filter-menu:hover, a.bx-filter-min:hover, a.bx-filter-max:hover {background-color:#B7AD96;}
 div.bx-filter-sep {background-color:#B9AE98;}
 div.bx-filter-off {background-image:url(images/filter/check-off.gif);}

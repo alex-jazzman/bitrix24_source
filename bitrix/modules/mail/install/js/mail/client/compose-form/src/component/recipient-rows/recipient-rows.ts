@@ -1,10 +1,6 @@
-import { Outline } from 'ui.icon-set.api.vue';
-import 'ui.icon-set.outline';
 import { TextSm } from 'ui.system.typography.vue';
 import { defineComponent } from 'ui.vue3';
-import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
 
-import { Phrase } from '../../const';
 import { loc } from '../../lib/loc/loc';
 import { type RecipientFieldKind, useComposeState } from '../../model/compose/compose';
 import { RecipientField, RecipientFieldPhrase } from '../recipient-field/recipient-field';
@@ -14,22 +10,10 @@ import './recipient-rows.css';
 /** Render order of the rows, top to bottom. */
 const FieldOrder: RecipientFieldKind[] = ['to', 'cc', 'bcc'];
 
-/** The add control of a row is reached by this id from the template and from the focus of a revealed row. */
-function addTestId(field: RecipientFieldKind): string
-{
-	return `mail-compose-recipient-add-${field}`;
-}
-
 type RecipientRow = {
 	field: RecipientFieldKind,
 	label: string,
 	labelId: string,
-	addTestId: string,
-};
-
-/** Part of `RecipientField` reached through refs. */
-type FieldInstance = {
-	openPicker(): void,
 };
 
 /**
@@ -46,19 +30,12 @@ export const RecipientRows = defineComponent({
 	components: {
 		RecipientField,
 		TextSm,
-		UiButton,
 	},
 
 	setup()
 	{
 		return {
 			state: useComposeState(),
-			addStyle: AirButtonStyle.PLAIN_ACCENT,
-			addSize: ButtonSize.SMALL,
-			addIcon: Outline.PLUS_M,
-			// Reached imperatively only, so kept out of the reactive state: a component proxy adds nothing
-			// here and hides what is really held.
-			fields: {} as Partial<Record<RecipientFieldKind, FieldInstance | null>>,
 		};
 	},
 
@@ -72,7 +49,6 @@ export const RecipientRows = defineComponent({
 						field,
 						label: loc(RecipientFieldPhrase[field]),
 						labelId: `mail-compose-form-recipient-label-${field}`,
-						addTestId: addTestId(field),
 					};
 				});
 		},
@@ -83,10 +59,6 @@ export const RecipientRows = defineComponent({
 			return this.state.bccExpanded;
 		},
 
-		addText(): string
-		{
-			return loc(Phrase.FieldAdd);
-		},
 	},
 
 	watch: {
@@ -103,26 +75,16 @@ export const RecipientRows = defineComponent({
 	},
 
 	methods: {
-		setFieldRef(field: RecipientFieldKind, instance: unknown): void
-		{
-			this.fields[field] = instance as FieldInstance | null;
-		},
-
-		openPicker(field: RecipientFieldKind): void
-		{
-			this.fields[field]?.openPicker();
-		},
-
-		/**
-		 * The add control is the only control of a row: the field around the addresses takes no focus. The
-		 * rendered button stands next to the placeholder of its Vue wrapper rather than inside it, so it is
-		 * located by `data-testid`.
-		 */
+		/** The built-in add control of the selector is the only control of a row and takes the focus. */
 		focusAddControl(field: RecipientFieldKind): void
 		{
 			const rows = this.$el as HTMLElement;
+			const control = rows.querySelector<HTMLElement>(
+				`[data-testid="mail-compose-recipient-field-${field}"]`
+				+ ' [data-testid="ui-tag-selector-add-item-button"] button',
+			);
 
-			rows.querySelector<HTMLElement>(`[data-testid="${addTestId(field)}"]`)?.focus();
+			control?.focus();
 		},
 	},
 
@@ -139,18 +101,8 @@ export const RecipientRows = defineComponent({
 					class-name="mail-compose-recipient-rows__label"
 				>{{ row.label }}:</TextSm>
 				<RecipientField
-					:ref="(instance) => setFieldRef(row.field, instance)"
 					:field="row.field"
 					:aria-labelledby="row.labelId"
-					@picker-close="focusAddControl(row.field)"
-				/>
-				<UiButton
-					:text="addText"
-					:style="addStyle"
-					:size="addSize"
-					:left-icon="addIcon"
-					:dataset="{ testid: row.addTestId }"
-					@click="openPicker(row.field)"
 				/>
 			</div>
 		</div>

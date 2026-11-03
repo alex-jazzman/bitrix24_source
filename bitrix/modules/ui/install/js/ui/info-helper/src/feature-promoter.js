@@ -4,7 +4,10 @@ import { Analytics } from './analytics';
 import { BaseProvider } from './providers/base-provider';
 import { PopupProvider } from './providers/popup-provider';
 import { SliderProvider } from './providers/slider-provider';
-import type { FeaturePromoterConfiguration } from './types/configurations';
+import {
+	type FeaturePromoterConfiguration,
+	type FeaturePromoterShowOptions,
+} from './types/configurations';
 
 export class FeaturePromoter
 {
@@ -48,9 +51,9 @@ export class FeaturePromoter
 		return this.#analytics;
 	}
 
-	show(): void
+	show(params: FeaturePromoterShowOptions = {}): void
 	{
-		return this.#provider.show(this.#code, {});
+		return this.#provider.show(this.#code, params);
 	}
 
 	close(): void

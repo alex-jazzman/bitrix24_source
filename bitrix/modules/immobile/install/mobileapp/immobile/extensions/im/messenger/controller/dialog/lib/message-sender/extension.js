@@ -7,18 +7,22 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 	const { PerfPoint } = require('debug/prism');
 
 	const {
+		DraftType,
 		ErrorCode,
 		MessageComponent,
 		OwnMessageStatus,
 		FileType,
+		CopilotGenerationStatus,
 	} = require('im/messenger/const');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { getSendBlockedText } = require('im/messenger/lib/copilot/file-validator');
 
-	const { MessageRest } = require('im/messenger/provider/rest');
+	const { MessageRest, CopilotRest } = require('im/messenger/provider/rest');
 	const { SendingService } = require('im/messenger/provider/services/sending');
 
 	const { AppRatingClient } = require('im/messenger/controller/dialog/lib/app-rating-client');
@@ -26,9 +30,45 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 	const logger = getLoggerWithContext('dialog--message-sender', 'MessageSender');
 
 	const { SenderEventHandler } = require('im/messenger/controller/dialog/lib/message-sender/src/event-handler');
+	const { getFailedForwardMessages } = require(
+		'im/messenger/controller/dialog/lib/message-sender/src/forward-result',
+	);
 	const { OutgoingMessageBuilder } = require('im/messenger/controller/dialog/lib/message-sender/src/outgoing-message-builder');
 	const { ForwardingMessageBuilder } = require('im/messenger/controller/dialog/lib/message-sender/src/forwarding-message-builder');
 	const { RecentMessageUpdater } = require('im/messenger/controller/dialog/lib/message-sender/src/recent-message-updater');
+
+	const createMessageMetadataForLog = (message = {}) => ({
+		id: message?.id ?? null,
+		templateId: message?.templateId ?? null,
+		chatId: message?.chatId ?? null,
+		type: message?.type ?? null,
+		componentId: message?.params?.COMPONENT_ID ?? null,
+		hasText: Type.isStringFilled(message?.text),
+		filesCount: Array.isArray(message?.files) ? message.files.length : 0,
+		sending: message?.sending === true,
+		error: message?.error === true,
+		errorReason: message?.errorReason ?? null,
+	});
+
+	const createSendMessageParamsForLog = (sendMessageParams = {}) => {
+		const requestParams = sendMessageParams.requestParams ?? {};
+		const forwardingMessages = Array.isArray(sendMessageParams.forwardingMessages)
+			? sendMessageParams.forwardingMessages
+			: [];
+
+		return {
+			request: {
+				dialogId: requestParams.dialogId ?? null,
+				templateId: requestParams.templateId ?? null,
+				hasText: Type.isStringFilled(requestParams.text),
+				hasContact: Type.isPlainObject(requestParams.contact),
+				hasSticker: Type.isPlainObject(requestParams.stickerParams),
+				forwardCount: Array.isArray(requestParams.forwardIds) ? requestParams.forwardIds.length : 0,
+			},
+			message: createMessageMetadataForLog(sendMessageParams.message),
+			forwardingMessages: forwardingMessages.map((message) => createMessageMetadataForLog(message)),
+		};
+	};
 
 	/**
 	 * @desc Handles message sending API operations.
@@ -41,6 +81,18 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 	 */
 	class MessageSender
 	{
+		/**
+		 * True only while a submit that came from attach state is being dispatched to
+		 * sendFilesWithText (message registration + first upload task start; the byte
+		 * upload itself is event-driven and NOT awaited, so the window is short and does
+		 * not grow with file size). During that window sendTextMessage drops any re-entrant
+		 * submit: the attach flag is reset synchronously before the async dispatch, so a
+		 * second rapid tap would otherwise fall through to the plain-text branch and send a
+		 * stray text-only copy. A genuine text sent after the dispatch is not blocked.
+		 * @type {boolean}
+		 */
+		#isDispatchingAttachSend = false;
+
 		/**
 		 * @param {DialogLocator} dialogLocator
 		 */
@@ -164,6 +216,15 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 		/**
 		 * @private
+		 * @return {MessengerCoreStoreManager}
+		*/
+		get storeManager()
+		{
+			return serviceLocator.get('core').getStoreManager();
+		}
+
+		/**
+		 * @private
 		 * @return {?DialoguesModelState}
 		*/
 		get dialog()
@@ -211,6 +272,66 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			this.eventHandler.unsubscribeExternalEvents();
 		}
 
+		subscribeStoreEvents()
+		{
+			this.eventHandler.subscribeStoreEvents();
+		}
+
+		unsubscribeStoreEvents()
+		{
+			this.eventHandler.unsubscribeStoreEvents();
+		}
+
+		/**
+		 * @desc The stop state is allowed only in a one-on-one copilot chat with an active
+		 * generation, and only when the feature is double-gated on (server + native flags).
+		 * The live predicate is read from the store and the gate, not from a cached flag.
+		 * @return {boolean}
+		 */
+		isStopStateActive()
+		{
+			if (!Feature.isStopGenerationAvailable)
+			{
+				return false;
+			}
+
+			if (!this.dialogHelper?.isCopilotDirect)
+			{
+				return false;
+			}
+
+			return this.dialog?.copilotGenerationState?.status === CopilotGenerationStatus.generating;
+		}
+
+		/**
+		 * @desc Requests the stop of the active BitrixGPT generation. On a server error the local
+		 * state is silently reset — chat-load and pull will restore the truth.
+		 * @return {Promise<void>}
+		 */
+		async stopGeneration()
+		{
+			logger.log(`${this.constructor.name}.stopGeneration`, this.dialogId);
+
+			try
+			{
+				const { status, initiatorId } = await CopilotRest.stopGeneration({ dialogId: this.dialogId });
+
+				await this.store.dispatch('dialoguesModel/setCopilotGenerationState', {
+					dialogId: this.dialogId,
+					status,
+					initiatorId,
+				});
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.stopGeneration error`, error);
+
+				await this.store.dispatch('dialoguesModel/clearCopilotGenerationState', {
+					dialogId: this.dialogId,
+				});
+			}
+		}
+
 		tryResendMessages()
 		{
 			this.#resendMessages()
@@ -228,9 +349,20 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		 */
 		async sendTextMessage(text, promptCode = null, shouldFinishTextFieldActions = true)
 		{
+			// Drop a repeated submit while a media-with-text send is still dispatching.
+			// Its first tap reset isAttachInProcess synchronously, so without this guard the
+			// second tap (which may still carry the same text) would send a stray text message.
+			if (this.#isDispatchingAttachSend)
+			{
+				return;
+			}
+
 			if (this.replyManager.isAttachInProcess)
 			{
-				void this.sendFilesWithText(text);
+				this.#isDispatchingAttachSend = true;
+				this.sendFilesWithText(text).finally(() => {
+					this.#isDispatchingAttachSend = false;
+				});
 
 				return;
 			}
@@ -250,7 +382,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			if (this.replyManager.isEditInProcess && shouldFinishTextFieldActions)
 			{
 				const messageId = this.replyManager.getEditMessage().id;
-				this.messageService.updateText(messageId, text, this.dialogId);
+				this.#updateMessageText(messageId, text);
 				this.replyManager.finishEditingMessage();
 
 				return;
@@ -275,6 +407,203 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		}
 
 		/**
+		 * @desc Saves the edited text and recovers it when saving failed. The edit mode is closed
+		 *   optimistically right after the call, so the outcome is applied when the answer comes.
+		 * @private
+		 * @param {MessageId} messageId
+		 * @param {string} text
+		 */
+		#updateMessageText(messageId, text)
+		{
+			// the type is taken now: by the time the answer comes the message may be gone from the model
+			const isVideoNote = Boolean(MessageHelper.createById(messageId)?.isVideoNote);
+
+			this.messageService.updateText(messageId, text, this.dialogId)
+				.then((outcome) => this.#handleUpdateTextOutcome({ messageId, text, isVideoNote }, outcome))
+				.catch((error) => logger.error('#updateMessageText error', error))
+			;
+		}
+
+		/**
+		 * @private
+		 * @param {{messageId: MessageId, text: string, isVideoNote: boolean}} attempt
+		 * @param {MessageUpdateTextResult} outcome
+		 */
+		#handleUpdateTextOutcome(attempt, outcome)
+		{
+			// a queued request is not a failure: it is accepted and goes to the server later, nothing to wait for.
+			// The answer of a superseded attempt must not overwrite the result of the newest one
+			if (outcome.success || outcome.queued || !outcome.isLatestAttempt)
+			{
+				return;
+			}
+
+			const { messageId, text, isVideoNote } = attempt;
+			if (!isVideoNote)
+			{
+				logger.error('#handleUpdateTextOutcome: updating the text failed', outcome.reason);
+
+				return;
+			}
+
+			this.#recoverEditedText(messageId, text);
+			this.#showUpdateTextFailureToast(outcome.reason);
+		}
+
+		/**
+		 * @desc Returns the user to the edit mode of the same message with the typed text, or keeps the text
+		 *   in the draft of the chat when the return is not allowed and the draft is free to take it.
+		 * @private
+		 * @param {MessageId} messageId
+		 * @param {string} text
+		 */
+		#recoverEditedText(messageId, text)
+		{
+			// the draft is keyed by the chat, so a busy field owns the draft too and neither may be written
+			if (this.#isInputFieldBusy(messageId))
+			{
+				return;
+			}
+
+			const messageModel = this.store.getters['messagesModel/getById'](messageId);
+			if (this.#isEditModeReturnAllowed(messageModel))
+			{
+				this.replyManager.startEditingMessage(messageModel);
+				// startEditingMessage fills the input and the draft from the model, the typed text goes on top
+				this.view.setInput(text);
+				this.#saveRecoveredTextToEditDraft(text);
+
+				return;
+			}
+
+			this.#saveEditedTextToDraft(text);
+		}
+
+		/**
+		 * @desc The input field of this dialog holds the user's own work: freshly typed text or the edit
+		 *   panel of another message. A field that is not alive holds nothing and is never busy.
+		 * @private
+		 * @param {MessageId} messageId
+		 * @return {boolean}
+		 */
+		#isInputFieldBusy(messageId)
+		{
+			if (!this.#isInputFieldAlive())
+			{
+				return false;
+			}
+
+			const editMessageId = this.replyManager.getEditMessage()?.id;
+			if (this.replyManager.isEditInProcess && String(editMessageId) !== String(messageId))
+			{
+				return true;
+			}
+
+			const inputText = this.view.getInput();
+			if (ObjectUtils.isStringFullSpace(inputText))
+			{
+				return false;
+			}
+
+			// finishEditingMessage returns the text that was in the field before the edit back into it,
+			// synchronously with the send: an untouched field holds that buffer, not new text of the user
+			return inputText !== this.replyManager.inputTextBuffer;
+		}
+
+		/**
+		 * @desc The field belongs to this very dialog instance: the live dialogCode of the chat separates
+		 *   the instance that still owns the field from one the user has left and come back to.
+		 * @private
+		 * @return {boolean}
+		 */
+		#isInputFieldAlive()
+		{
+			const liveDialogCode = serviceLocator.get(this.dialogId)?.dialogCode;
+
+			return Type.isStringFilled(liveDialogCode) && liveDialogCode === this.dialogLocator.get('dialogCode');
+		}
+
+		/**
+		 * @private
+		 * @param {MessagesModelState} messageModel
+		 * @return {boolean}
+		 */
+		#isEditModeReturnAllowed(messageModel)
+		{
+			// a message gone from the model or marked deleted has no edit panel to return to
+			if (Type.isNil(messageModel?.id) || MessageHelper.createByModel(messageModel)?.isDeleted)
+			{
+				return false;
+			}
+
+			if (!this.#isInputFieldAlive())
+			{
+				return false;
+			}
+
+			// startEditingMessage asks for the native keyboard, so the return needs the chat on screen
+			return this.#isDialogOnScreen();
+		}
+
+		/**
+		 * @desc The top of the stack of the open dialogs: a chat opened on top takes the screen from this one.
+		 * @private
+		 * @return {boolean}
+		 */
+		#isDialogOnScreen()
+		{
+			// openDialogId normalizes a chatId through Number(), so the ids are compared as strings
+			const openedDialogId = this.store.getters['applicationModel/getCurrentOpenedDialogId']();
+
+			return String(openedDialogId) === String(this.dialogId);
+		}
+
+		/**
+		 * @desc Brings the draft of the chat to the typed text: view.setInput emits textSet, which
+		 *   DraftManager does not listen to, so without this the draft keeps the text before the edit.
+		 * @private
+		 * @param {string} text
+		 */
+		#saveRecoveredTextToEditDraft(text)
+		{
+			// the same queue of DraftManager, so the record lands after the one of startEditingMessage
+			const editMessage = this.replyManager.getEditMessage();
+
+			this.draftManager.setQuotMessageInStore(editMessage, DraftType.edit, text)
+				.catch((error) => logger.error('#saveRecoveredTextToEditDraft error', error))
+			;
+		}
+
+		/**
+		 * @private
+		 * @param {string} text
+		 */
+		#saveEditedTextToDraft(text)
+		{
+			// the field holds nothing of the user's here. DraftManager.saveDraft() is muted until the
+			// next input change, so the record is set directly
+			this.draftManager.setInStore({
+				dialogId: this.dialogId,
+				type: DraftType.text,
+				text,
+			})
+				.catch((error) => logger.error('#saveEditedTextToDraft error', error))
+			;
+		}
+
+		/**
+		 * @private
+		 * @param {?RunActionError} reason
+		 */
+		#showUpdateTextFailureToast(reason)
+		{
+			// no new phrase: the reason comes from the answer, the generic wording is the toast default
+			const params = Type.isStringFilled(reason?.message) ? { message: reason.message } : {};
+
+			Notification.showErrorToast(params);
+		}
+
+		/**
 		 * @param {string} text
 		 */
 		async sendFilesWithText(text)
@@ -282,6 +611,15 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			const files = this.replyManager.attachFiles;
 			if (!Type.isArrayFilled(files))
 			{
+				return;
+			}
+
+			// Copilot client validation gate: block sending while any attach file is still being
+			// checked or failed validation. Non-copilot chats have no statuses, so this is a no-op.
+			if (this.replyManager.hasBlockingAttachFiles())
+			{
+				Notification.showToastWithParams({ message: getSendBlockedText() });
+
 				return;
 			}
 
@@ -305,6 +643,14 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				}
 			}
 
+			// Reset the attach state and clear the input synchronously, before the async upload.
+			// sendFiles() resolves only after the upload finishes, so leaving isAttachInProcess=true
+			// until then lets a repeated send tap re-enter this path and send the same files again.
+			this.inputActionManager.startSendingFile();
+			this.replyManager.finishAttachingFiles(false);
+			this.view.clearInput();
+			this.draftManager.clearDraft(this.dialogId);
+
 			const point = new PerfPoint('IM Reply With Media', 'sendFilesWithText').start();
 			try
 			{
@@ -316,11 +662,6 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			{
 				point.end();
 			}
-
-			this.inputActionManager.startSendingFile();
-			this.replyManager.finishAttachingFiles(false);
-			this.view.clearInput();
-			this.draftManager.clearDraft(this.dialogId);
 		}
 
 		/**
@@ -329,16 +670,45 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		 */
 		async sendStickerMessage(stickerParams)
 		{
+			// In reply-with-media mode, close the reply plaque after sticker send; input text is preserved.
+			const shouldFinishReply = Feature.isReplyWithMediaAvailable
+				&& this.replyManager.isQuoteInProcess;
+
 			const sendMessageParams = this.#prepareMessageToSend({
 				stickerParams,
 			});
 
 			await this.#sendMessage(sendMessageParams, {
 				shouldFinishTextFieldActions: false,
+				shouldFinishReplyOnly: shouldFinishReply,
 			})
 				.catch((error) => {
 					logger.error('#sendMessage error', error);
 				});
+		}
+
+		async sendContactMessage(contact)
+		{
+			const shouldFinishReply = this.replyManager.isQuoteInProcess;
+			const sendMessageParams = this.#prepareMessageToSend({ contact });
+			if (contact.photoId)
+			{
+				await this.store.dispatch('filesModel/set', {
+					id: contact.photoId,
+					chatId: this.chatId,
+					authorId: serviceLocator.get('core').getUserId(),
+					messageId: sendMessageParams.message.templateId,
+					type: FileType.image,
+					name: 'contact-photo.jpg',
+					urlPreview: contact.photoUrl || '',
+					urlDownload: contact.photoUrl || '',
+				});
+			}
+
+			await this.#sendMessage(sendMessageParams, {
+				shouldFinishTextFieldActions: false,
+				shouldFinishReplyOnly: shouldFinishReply,
+			});
 		}
 
 		/**
@@ -385,6 +755,13 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			if (messageHelper.isForward)
 			{
 				await this.#resendForwardMessage(index, modelMessage);
+
+				return;
+			}
+
+			if (messageHelper.getComponentId() === MessageComponent.contact)
+			{
+				await this.#resendContactMessage(index, modelMessage);
 
 				return;
 			}
@@ -443,7 +820,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 		/**
 		 * @param {SendMessageParams} sendMessageParams
-		 * @param {{shouldFinishTextFieldActions: boolean}} options
+		 * @param {{shouldFinishTextFieldActions: boolean, shouldFinishReplyOnly?: boolean}} options
 		 * @return {Promise<void>}
 		 */
 		async #sendMessage(sendMessageParams, options)
@@ -462,6 +839,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 					{
 						this.#cancelReplyHandler();
 						this.draftManager.clearDraft();
+					}
+					else if (options.shouldFinishReplyOnly)
+					{
+						this.#cancelReplyHandler();
 					}
 
 					if (!isCopilotAnimatedScroll)
@@ -558,6 +939,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			text = '',
 			stickerParams = null,
 			promptCode = null,
+			contact = null,
 			dialogId = this.dialogId,
 		})
 		{
@@ -598,11 +980,15 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				messageBuilder.addParam('STICKER_PARAMS', stickerParams);
 			}
 
+			if (Type.isPlainObject(contact))
+			{
+				requestParams.contact = messageBuilder.addContact(contact);
+			}
+
 			if (this.replyManager.isQuoteInProcess)
 			{
 				const quoteMessage = this.replyManager.getQuoteMessage();
 				const quoteMessageId = Number(quoteMessage.id);
-
 				requestParams.replyId = quoteMessageId;
 				messageBuilder.addParam('replyId', quoteMessageId);
 			}
@@ -727,7 +1113,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		 */
 		async #sendMessageToServer(sendMessageParams)
 		{
-			logger.log(`${this.constructor.name}.sendMessageToServer`, sendMessageParams);
+			logger.log(
+				`${this.constructor.name}.sendMessageToServer`,
+				createSendMessageParamsForLog(sendMessageParams),
+			);
 			let id = 0;
 
 			try
@@ -768,6 +1157,26 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 							},
 						});
 					}
+				}
+
+				const failedForwardMessages = getFailedForwardMessages(
+					sendMessageParams.forwardingMessages,
+					response.failureMap,
+				);
+				if (!id && Type.isArrayFilled(failedForwardMessages))
+				{
+					id = failedForwardMessages[0].templateId;
+				}
+				for (const failedForwardMessage of failedForwardMessages)
+				{
+					const code = ErrorCode[failedForwardMessage.code] || 0;
+					await this.store.dispatch('messagesModel/update', {
+						id: failedForwardMessage.templateId,
+						fields: {
+							error: true,
+							errorReason: code,
+						},
+					});
 				}
 			}
 			catch (response)
@@ -847,7 +1256,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		async #resendInternal()
 		{
 			const breakMessages = this.store.getters['messagesModel/getBreakMessages'](this.chatId);
-			logger.info(`${this.constructor.name}.resendMessages`, breakMessages);
+			logger.info(
+				`${this.constructor.name}.resendMessages`,
+				breakMessages.map((message) => createMessageMetadataForLog(message)),
+			);
 
 			for (const message of breakMessages)
 			{
@@ -874,7 +1286,11 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		{
 			const { message, messageIndex } = this.#prepareResendingParams(index, rawMessage);
 
-			logger.log(`${this.constructor.name}.resendMessage`, messageIndex, message);
+			logger.log(
+				`${this.constructor.name}.resendMessage`,
+				messageIndex,
+				createMessageMetadataForLog(message),
+			);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			const messageToSend = {
 				dialogId: this.dialogId,
@@ -916,7 +1332,11 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		{
 			const { message, messageIndex } = this.#prepareResendingParams(index, rawMessage);
 
-			logger.log(`${this.constructor.name}.resendMessage`, messageIndex, message);
+			logger.log(
+				`${this.constructor.name}.resendMessage`,
+				messageIndex,
+				createMessageMetadataForLog(message),
+			);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			const messageToSend = {
 				dialogId: this.dialogId,
@@ -939,6 +1359,39 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 			return this.#sendMessageToServer({
 				requestParams: messageToSend,
+				message: modelMessage,
+			});
+		}
+
+		async #resendContactMessage(index, rawMessage)
+		{
+			const { message, messageIndex } = this.#prepareResendingParams(index, rawMessage);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const params = modelMessage.params?.COMPONENT_PARAMS ?? {};
+			const photo = this.store.getters['filesModel/getListByMessageId'](message.id)?.find(
+				(file) => file.type === FileType.image,
+			);
+			const contact = {
+				...(params.firstName ? { firstName: params.firstName } : {}),
+				...(params.lastName ? { lastName: params.lastName } : {}),
+				phones: params.phones ?? [],
+				...(photo?.id ? { photoId: photo.id } : {}),
+			};
+			const replyId = modelMessage.params?.replyId;
+
+			if (messageIndex > 0)
+			{
+				await this.#rerenderResendingMessage(message.id, modelMessage);
+			}
+			await this.#markMessageAsSending(message.id);
+
+			return this.#sendMessageToServer({
+				requestParams: {
+					dialogId: this.dialogId,
+					templateId: message.id,
+					contact,
+					...(Number.isInteger(replyId) && replyId > 0 ? { replyId } : {}),
+				},
 				message: modelMessage,
 			});
 		}
@@ -998,7 +1451,11 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				forwardingMessages,
 			} = this.#prepareResendingParams(index, rawMessage);
 
-			logger.log(`${this.constructor.name}.resendMessage`, messageIndex, message);
+			logger.log(
+				`${this.constructor.name}.resendMessage`,
+				messageIndex,
+				createMessageMetadataForLog(message),
+			);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			const messageToSend = {
 				dialogId: this.dialogId,
@@ -1104,5 +1561,9 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		}
 	}
 
-	module.exports = { MessageSender };
+	module.exports = {
+		MessageSender,
+		createMessageMetadataForLog,
+		createSendMessageParamsForLog,
+	};
 });

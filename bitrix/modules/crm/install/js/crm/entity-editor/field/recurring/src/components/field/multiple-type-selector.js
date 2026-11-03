@@ -1,12 +1,15 @@
 import { getMultipleTypeByValue, multipleTypes } from '../../enum/multiple-type';
 import { showPopupMenu } from '../../helper';
 import { FieldTitle } from '../common/field-title';
+import { selectorA11yMixin } from '../common/selector-a11y';
 
 // @vue/component
 export const MultipleTypeSelector = {
 	components: {
 		FieldTitle,
 	},
+
+	mixins: [selectorA11yMixin],
 
 	props: {
 		type: {
@@ -42,7 +45,7 @@ export const MultipleTypeSelector = {
 	},
 
 	methods: {
-		showSelector(): void
+		showSelector(event: ?Event = null): void
 		{
 			const menu = [];
 
@@ -57,7 +60,8 @@ export const MultipleTypeSelector = {
 			const target = this.$refs.selector;
 			const id = 'crm-recurring-multiple-type-selector';
 
-			showPopupMenu(id, target, menu);
+			this.markSelectorOpened('multipleType');
+			showPopupMenu(id, target, menu, () => this.markSelectorClosed('multipleType'), event);
 		},
 
 		onChange(_, item): void
@@ -79,14 +83,24 @@ export const MultipleTypeSelector = {
 	// language=Vue
 	template: `
 		<div class="ui-entity-editor-content-block">
-			<FieldTitle :title="title"/>
+			<FieldTitle :title="title" :label-id="a11yId('multipleType-title')"/>
 
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('multipleType')"
+					:aria-labelledby="selectorLabelledBy('multipleType')"
+					@click="showSelector"
+					@keydown.enter.prevent="showSelector"
+					@keydown.space.prevent="showSelector"
+				>
 					<div
 						ref="selector"
+						:id="a11yId('multipleType-value')"
 						class="ui-ctl-element"
-						@click="showSelector"
 					>
 						{{currentMultipleTypeTitle}}
 					</div>

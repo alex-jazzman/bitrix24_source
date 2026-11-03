@@ -18,6 +18,10 @@ if ($arParams['GUEST_MODE'] !== 'Y')
 	Asset::getInstance()->addCss("/bitrix/components/bitrix/sale.order.payment.change/templates/bootstrap_v4/style.css");
 }
 CJSCore::Init(array('clipboard', 'fx'));
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\Main\UI\Extension::load('ui.a11y');
+}
 
 $APPLICATION->SetTitle("");
 
@@ -62,7 +66,7 @@ else
 	<div class="row sale-order-detail">
 		<div class="col">
 
-			<h1 class="mb-3">
+			<h1 class="mb-3" id="sale-order-detail-order-<?= (int)$arResult['ID'] ?>" tabindex="-1">
 				<?= Loc::getMessage('SPOD_LIST_MY_ORDER', array(
 					'#ACCOUNT_NUMBER#' => htmlspecialcharsbx($arResult["ACCOUNT_NUMBER"]),
 					'#DATE_ORDER_CREATE#' => $arResult["DATE_INSERT_FORMATED"]
@@ -144,9 +148,10 @@ else
 									</div>
 									<div class="pt-3">
 										<a href="" onclick="return false;"
-											class="sale-order-detail-more-info-less"><?= Loc::getMessage('SPOD_LIST_LESS') ?></a>
-										<a href="" onclick="return false;"
-											class="sale-order-detail-more-info-more"><?= Loc::getMessage('SPOD_LIST_MORE') ?></a>
+											class="sale-order-detail-more-info-more"
+											role="button"
+											aria-expanded="false"
+											aria-controls="sale-order-detail-more-info-details-<?= (int)$arResult['ID'] ?>"><?= Loc::getMessage('SPOD_LIST_MORE') ?></a>
 									</div>
 								</div>
 
@@ -196,7 +201,7 @@ else
 								?>
 							</div>
 
-							<div class="row m-0 sale-order-detail-more-info-details" style="display: none;">
+							<div class="row m-0 sale-order-detail-more-info-details" id="sale-order-detail-more-info-details-<?= (int)$arResult['ID'] ?>" style="display: none;">
 								<div class="col">
 									<h4 class="sale-order-detail-more-info-details-title"><?= Loc::getMessage('SPOD_USER_INFORMATION') ?></h4>
 
@@ -458,7 +463,7 @@ else
 														)
 														{
 															?>
-															<a href="#" id="<?=$payment['ACCOUNT_NUMBER']?>" class="sale-order-detail-payment-options-methods-info-change-link"><?=Loc::getMessage('SPOD_CHANGE_PAYMENT_TYPE')?></a>
+															<a href="#" id="sale-order-detail-change-payment-<?= (int)$payment['ID'] ?>" data-payment-account="<?= htmlspecialcharsbx($payment['ACCOUNT_NUMBER']) ?>" class="sale-order-detail-payment-options-methods-info-change-link"><?=Loc::getMessage('SPOD_CHANGE_PAYMENT_TYPE')?></a>
 															<?php
 														}
 
@@ -489,7 +494,7 @@ else
 																if ($payment["PAID"] === "Y" || $arResult["CANCELED"] === "Y" || $arResult["IS_ALLOW_PAY"] === "N")
 																{
 																	?>
-																	<button class="btn btn-primary btn-sm disabled"><?= Loc::getMessage('SPOD_ORDER_PAY') ?></button>
+																	<button class="btn btn-primary btn-sm disabled" aria-disabled="true"><?= Loc::getMessage('SPOD_ORDER_PAY') ?></button>
 																	<?php
 																}
 																else
@@ -519,8 +524,18 @@ else
 													&& $arResult["IS_ALLOW_PAY"] !== "N")
 												{
 													?>
-													<div class="row sale-order-detail-payment-options-methods-template">
-														<span class="sale-paysystem-close active-button">
+													<div
+														class="row sale-order-detail-payment-options-methods-template"
+														tabindex="-1"
+														role="group"
+														aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPOD_PAYMENT_FORM_ARIA', ['#BILL#' => $payment['ACCOUNT_NUMBER']])) ?>"
+													>
+														<span
+															class="sale-paysystem-close active-button"
+															role="button"
+															tabindex="0"
+															aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPOD_PAYMENT_CLOSE_ARIA')) ?>"
+														>
 															<span class="sale-paysystem-close-item sale-order-payment-cancel"></span> <!--sale-paysystem-close-item-->
 														</span><!--sale-paysystem-close-->
 														<div class="col">
@@ -643,7 +658,12 @@ else
 																class="sale-order-list-shipment-id-name"><?= Loc::getMessage('SPOD_ORDER_TRACKING_NUMBER_MSGVER_1') ?></span>
 															<span
 																class="sale-order-detail-shipment-id"><?= htmlspecialcharsbx($shipment['TRACKING_NUMBER']) ?></span>
-															<span class="sale-order-detail-shipment-id-icon"></span>
+															<span
+																class="sale-order-detail-shipment-id-icon"
+																role="button"
+																tabindex="0"
+																aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SPOD_COPY_TRACKING_ARIA', ['#NUMBER#' => $shipment['TRACKING_NUMBER']])) ?>"
+															></span>
 														</div>
 														<?php
 													}
@@ -662,14 +682,17 @@ else
 													?>
 
 													<div class="mt-3 mb-2 sale-order-detail-payment-options-methods-shipment-list-item-link">
-														<a href="" onclick="return false" class="sale-order-detail-show-link"><?= Loc::getMessage('SPOD_LIST_SHOW_ALL')?></a>
-														<a href="" onclick="return false" class="sale-order-detail-hide-link"><?= Loc::getMessage('SPOD_LIST_LESS')?></a>
+														<a href="" onclick="return false"
+															class="sale-order-detail-show-link"
+															role="button"
+															aria-expanded="false"
+															aria-controls="sale-order-detail-shipment-composition-<?= (int)$shipment['ID'] ?>"><?= Loc::getMessage('SPOD_LIST_SHOW_ALL')?></a>
 													</div>
 												</div>
 
 											</div>
 
-											<div class="row sale-order-detail-payment-options-shipment-composition-map" style="display: none;">
+											<div class="row sale-order-detail-payment-options-shipment-composition-map" id="sale-order-detail-shipment-composition-<?= (int)$shipment['ID'] ?>" style="display: none;">
 												<div class="col">
 													<?php
 													$store = null;
@@ -755,7 +778,7 @@ else
 																			?>
 																			<tr>
 																				<td class="sale-order-detail-order-item-img-block">
-																					<a href="<?=htmlspecialcharsbx($basketItem['DETAIL_PAGE_URL'])?>">
+																					<a href="<?=htmlspecialcharsbx($basketItem['DETAIL_PAGE_URL'])?>" tabindex="-1" aria-hidden="true">
 																						<?php
 																						if(is_array($basketItem['PICTURE']))
 																						{
@@ -850,7 +873,7 @@ else
 												?>
 												<tr>
 													<td class="sale-order-detail-order-item-img-block">
-														<a href="<?=$basketItem['DETAIL_PAGE_URL']?>">
+														<a href="<?=$basketItem['DETAIL_PAGE_URL']?>" tabindex="-1" aria-hidden="true">
 															<?php
 															if(is_array($basketItem['PICTURE']))
 															{
@@ -1018,8 +1041,10 @@ else
 		"returnUrl" => $arResult['RETURN_URL'],
 	);
 	$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
+	$messages = Loc::loadLanguageFile(__FILE__);
 	?>
 	<script>
+		BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 		BX.Sale.PersonalOrderComponent.PersonalOrderDetail.init(<?=$javascriptParams?>);
 	</script>
 <?php

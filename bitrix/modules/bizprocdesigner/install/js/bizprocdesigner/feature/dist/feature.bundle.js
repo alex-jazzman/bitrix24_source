@@ -53,7 +53,14 @@ this.BX = this.BX || {};
 		readableExpressions: 'readableExpressions',
 		lastRunValues: 'lastRunValues',
 		versionHistory: 'versionHistory',
-		pilotPublication: 'pilotPublication'
+		templateEditLock: 'templateEditLock',
+		pilotPublication: 'pilotPublication',
+		templateNotes: 'templateNotes',
+		rulesSummary: 'rulesSummary',
+		frameNodeSticking: 'frameNodeSticking',
+		nodeFilter: 'nodeFilter',
+		processData: 'processData',
+		componentLibrary: 'componentLibrary'
 	});
 
 	exports.Feature = Feature;

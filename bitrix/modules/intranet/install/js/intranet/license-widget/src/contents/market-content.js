@@ -1,7 +1,7 @@
 import { EventEmitter } from 'main.core.events';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 import { Content } from './content';
-import { Tag } from 'main.core';
+import { Loc, Tag } from 'main.core';
 
 export class MarketContent extends Content
 {
@@ -56,7 +56,14 @@ export class MarketContent extends Content
 	{
 		if (this.getOptions().isPaid || this.getOptions().isDemo)
 		{
-			return Tag.render`<span class="license-widget-item-help" onclick="${() => this.#showHelper()}"></span>`;
+			return Tag.render`
+				<button
+					type="button"
+					class="license-widget-item-help"
+					aria-label="${Loc.getMessage('INTRANET_LICENSE_WIDGET_MARKET_HELP_BUTTON')}"
+					onclick="${() => this.#showHelper()}"
+				></button>
+			`;
 		}
 
 		return '';
@@ -71,7 +78,7 @@ export class MarketContent extends Content
 	{
 		return this.cache.remember('icon', () => {
 			return Tag.render`
-				<div class="license-widget-item-icon license-widget-item-icon--mp"/>
+				<div class="license-widget-item-icon license-widget-item-icon--mp" aria-hidden="true"/>
 			`;
 		});
 	}
@@ -121,9 +128,9 @@ export class MarketContent extends Content
 		return this.cache.remember('description-link', () => {
 			return Tag.render`
 				<div class="license-widget-item-link">
-					<span class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
+					<button type="button" class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
 						${this.getOptions().description.text}
-					</span>
+					</button>
 				</div>
 			`;
 		});
@@ -137,7 +144,13 @@ export class MarketContent extends Content
 			};
 
 			return Tag.render`
-				<a onclick="${onclick}" href="${this.getOptions().button.link}" class="license-widget-item-btn" target="_blank">
+				<a
+					onclick="${onclick}"
+					href="${this.getOptions().button.link}"
+					class="license-widget-item-btn"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
 					${this.getOptions().button.text}
 				</a>
 			`;

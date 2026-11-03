@@ -53,10 +53,10 @@ type ApiClient = {
 	run(action: string, data?: Object): Promise<mixed>,
 };
 
-// [DTO-01] Cursor and target of the favorites list. entityType is the server's own wording.
+// Cursor and target of the favorites list. entityType is the server's own wording.
 type FavoriteCursor = { position: number, id: number };
 type FavoriteTarget = { entityType: string, entityId: number };
-type FavoriteNotifyState = {
+export type FavoriteNotifyState = {
 	mode: string | null,
 	subscribed: boolean,
 	muted: boolean,
@@ -166,7 +166,7 @@ export class SidebarApi
 		}
 	}
 
-	// [API-03] Pruned tree of documents reachable via document-level grants only (no collection VIEW),
+	// Pruned tree of documents reachable via document-level grants only (no collection VIEW),
 	// grouped by container collection. Flat keyset pagination over the whole accessible set; the
 	// cursor is {collectionId, id}, NOT per-parent — the client rebuilds the hierarchy from parentId.
 	async listAccessibleTree(
@@ -194,7 +194,7 @@ export class SidebarApi
 		return { containers, nextCursor };
 	}
 
-	// [API-03b] Direct children of one node of the accessible tree. Separate from listByParent,
+	// Direct children of one node of the accessible tree. Separate from listByParent,
 	// which gates on collection VIEW — a right this section's users do not hold by definition.
 	// The cursor is per-parent {position, id}, exactly like the collection tree's.
 	async listAccessibleChildren(
@@ -269,7 +269,7 @@ export class SidebarApi
 		return { collectionId, id };
 	}
 
-	// [API-04] One page of the personal favorites list. The end of the list is nextCursor === null:
+	// One page of the personal favorites list. The end of the list is nextCursor === null:
 	// the server refills a page whose rows the access filter dropped, so a short page is not the end.
 	async listFavorites(
 		{ limit = PAGE_SIZE, afterCursor = null, onlyNotified = false }: {
@@ -291,7 +291,7 @@ export class SidebarApi
 		return this.normalizeFavoritePage(data);
 	}
 
-	// [TPL-02] One mapper for both sources of a page: the list action and the payload the page carries
+	// One mapper for both sources of a page: the list action and the payload the page carries
 	// for the first one. Public because the store hydrates from the second without going through here.
 	normalizeFavoritePage(
 		data: mixed,
@@ -313,7 +313,7 @@ export class SidebarApi
 		};
 	}
 
-	// [API-01] position is the ordinal of the insertion point (1 - first row); null puts the row first.
+	// position is the ordinal of the insertion point (1 - first row); null puts the row first.
 	// `item` is the finished row, in the shape `list` hands out - null when the object is not visible to
 	// the caller any more (no rights, trashed, deleted), which is the caller's cue to re-read the list.
 	async addFavorite(
@@ -351,7 +351,7 @@ export class SidebarApi
 		return this.#normalizeFavoriteRow(item);
 	}
 
-	// [API-02] Reports the state that was taken away: the position of the row and its notification depth.
+	// Reports the state that was taken away: the position of the row and its notification depth.
 	async removeFavorite(
 		target: FavoriteTarget,
 	): Promise<{ position: number | null, notifyMode: string | null } | null>
@@ -371,7 +371,7 @@ export class SidebarApi
 		};
 	}
 
-	// [API-03] Reorders one row of the personal list; the response carries the recomputed positions.
+	// Reorders one row of the personal list; the response carries the recomputed positions.
 	async moveFavorite(
 		target: FavoriteTarget,
 		position: number | null,
@@ -393,7 +393,7 @@ export class SidebarApi
 		};
 	}
 
-	// [API-05] Subscription depth. The server invariant refuses a depth on an object that is not in the
+	// Subscription depth. The server invariant refuses a depth on an object that is not in the
 	// favorites list, so the row has to be there first (FAVORITE_REQUIRED).
 	setSubscription(target: FavoriteTarget, mode: string): Promise<mixed>
 	{
@@ -404,7 +404,7 @@ export class SidebarApi
 		});
 	}
 
-	// [API-05] Removes the caller's own subscription row - both "off" and lifting a mute.
+	// Removes the caller's own subscription row - both "off" and lifting a mute.
 	removeSubscription(target: FavoriteTarget): Promise<mixed>
 	{
 		return this.#client.run('note.infrastructure.SubscriptionController.remove', {
@@ -413,7 +413,7 @@ export class SidebarApi
 		});
 	}
 
-	// [API-06] Coverage states of the documents of one knowledge base. Documents the user cannot see are
+	// Coverage states of the documents of one knowledge base. Documents the user cannot see are
 	// absent from the answer, so an absent key means "no bell", not "no coverage".
 	//
 	// Asked in batches: the endpoint answers for STATES_BATCH_SIZE ids and drops the rest without saying
@@ -496,7 +496,7 @@ export class SidebarApi
 		};
 	}
 
-	// [DTO-02] Coverage state of one row. Absent state reads as "no notifications" - the safe default.
+	// Coverage state of one row. Absent state reads as "no notifications" - the safe default.
 	#normalizeNotifyState(notify: mixed): FavoriteNotifyState
 	{
 		const source = Type.isPlainObject(notify) ? notify : {};

@@ -42,3 +42,5 @@ $MESS['INTRANET_USER_MINI_PROFILE_ROLE_FIRST_ADMIN'] = 'Администрато
 $MESS['INTRANET_USER_MINI_PROFILE_ROLE_SYSTEM_USER'] = 'Системный пользователь';
 
 $MESS['INTRANET_USER_MINI_PROFILE_ROLE_FIRST_ADMIN_HINT'] = 'Главный администратор вашего Битрикс24. #HELP_LINK#Подробнее#HELP_LINK#';
+
+$MESS['INTRANET_USER_MINI_PROFILE_LOCATION_LOAD_ERROR'] = 'Не удалось загрузить геопозицию';

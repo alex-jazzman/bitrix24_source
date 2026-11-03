@@ -30,6 +30,13 @@ class call extends \CModule
 			'OnCallUserStateChange' => [[EventHandler::class, 'onCallUserStateChange']],
 			'OnChangeUserRoles' => [[EventHandler::class, 'onChangeUserRoles']],
 		],
+		'mobileapp' => [
+			// The application-wide data container: the only road by which the portal option reaches screens
+			// outside the calls component, the call log among them.
+			'onBuildEnvVariable' => [
+				[Integration\Mobileapp\EventHandler\OnBuildEnvVariable::class, 'handle'],
+			],
+		],
 		'pull' => [
 			'onGetMobileCounterTypes' => [[\Bitrix\Call\Counter::class, 'onGetMobileCounterTypes']],
 			'onGetMobileCounter' => [[\Bitrix\Call\Counter::class, 'onGetMobileCounter']],
@@ -86,27 +93,23 @@ class call extends \CModule
 
 	public function installDB()
 	{
-		global $APPLICATION, $DB;
+		global $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
-
-		$APPLICATION->resetException();
-		$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/call/install/db/' . $connection->getType() . '/install.sql');
-		if (!empty($errors))
+		// Intentional: install now fails on fulltext index errors too. The legacy install_ft.sql
+		// batch swallowed them; the only newly fatal case is a storage engine without FULLTEXT,
+		// which is already below the platform minimum.
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
-		}
-		else
-		{
-			$DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/call/install/db/' . $connection->getType() . '/install_ft.sql');
-		}
-		if (!empty($errors))
-		{
-			$APPLICATION->throwException(implode('', $errors));
 		}
 
 		\Bitrix\Main\ModuleManager::registerModule('call');
+
+		// Value above the last migration step: marks the migration as not needed for a fresh
+		// install and keeps ImCallMigration idle if it ever gets registered.
+		\Bitrix\Main\Config\Option::set('call', 'call_db_migrated', 6);
 
 		if (\Bitrix\Main\ORM\Fields\CryptoField::cryptoAvailable())
 		{
@@ -336,7 +339,7 @@ class call extends \CModule
 
 	public function unInstallDB(bool $saveData = true)
 	{
-		global $APPLICATION, $DB;
+		global $APPLICATION;
 
 		if (\Bitrix\Main\Loader::includeModule('call'))
 		{
@@ -351,17 +354,11 @@ class call extends \CModule
 			}
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = [];
-		if (!$saveData)
+		$dropTables = !$saveData;
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->resetException();
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/call/install/db/' . $connection->getType() . '/uninstall.sql');
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
 

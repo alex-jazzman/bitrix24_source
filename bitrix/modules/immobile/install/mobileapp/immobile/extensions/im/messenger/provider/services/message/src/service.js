@@ -155,9 +155,15 @@ jn.define('im/messenger/provider/services/message/service', (require, exports, m
 			return this.richService.deleteRichLink(messageId, attachId);
 		}
 
-		updateText(message, text, dialogId)
+		/**
+		 * @param {MessageId} messageId
+		 * @param {string} text
+		 * @param {DialogId} dialogId
+		 * @return {Promise<MessageUpdateTextResult>}
+		 */
+		updateText(messageId, text, dialogId)
 		{
-			return this.actionService.updateText(message, text, dialogId);
+			return this.actionService.updateText(messageId, text, dialogId);
 		}
 
 		delete(message, dialogId)

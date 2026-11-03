@@ -1,164 +1,143 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,main_core,landing_ui_form_baseform) {
+(function (exports, main_core, landing_loc, landing_ui_form_baseform) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
-	var depthKey = Symbol('depth');
-	var onHeaderClick = Symbol('onHeaderClick');
-	var onTextChange = Symbol('onTextChange');
+	const depthKey = Symbol('depth');
+	const onHeaderClick = Symbol('onHeaderClick');
+	const onTextChange = Symbol('onTextChange');
+	const NBSP = '\u00A0';
+	const NBSP_ENTITY_PATTERN = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
 
 	/**
 	 * @memberOf BX.Landing.UI.Form
 	 */
-	var MenuItemForm = /*#__PURE__*/function (_BaseForm) {
-	  babelHelpers.inherits(MenuItemForm, _BaseForm);
-	  function MenuItemForm() {
-	    var _this;
-	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	    babelHelpers.classCallCheck(this, MenuItemForm);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MenuItemForm).call(this, options));
-	    _this.setEventNamespace('BX.Landing.UI.Form.MenuItemForm');
-	    _this.cache = new main_core.Cache.MemoryCache();
-	    _this[onHeaderClick] = _this[onHeaderClick].bind(babelHelpers.assertThisInitialized(_this));
-	    _this[onTextChange] = _this[onTextChange].bind(babelHelpers.assertThisInitialized(_this));
-	    _this.onRemoveButtonClick = _this.onRemoveButtonClick.bind(babelHelpers.assertThisInitialized(_this));
-	    main_core.Dom.addClass(_this.layout, 'landing-ui-form-menuitem');
-	    main_core.Dom.append(_this.getHeaderLeftLayout(), _this.header);
-	    main_core.Dom.append(_this.getHeaderRightLayout(), _this.header);
-	    _this.setDepth(options.depth);
-	    var _this$fields = babelHelpers.slicedToArray(_this.fields, 1),
-	      firstField = _this$fields[0];
-	    if (firstField) {
-	      var _firstField$getValue = firstField.getValue(),
-	        text = _firstField$getValue.text;
-	      _this.setTitle(text);
-	      main_core.Event.bind(firstField.input.input, 'input', _this[onTextChange]);
-	    }
-	    main_core.Event.bind(_this.getHeader(), 'click', _this[onHeaderClick]);
-	    return _this;
-	  }
-	  babelHelpers.createClass(MenuItemForm, [{
-	    key: onHeaderClick,
-	    value: function value(event) {
-	      event.preventDefault();
-	      if (this.isFormShown()) {
-	        this.hideForm();
-	      } else {
-	        this.showForm();
-	      }
-	    }
-	  }, {
-	    key: onTextChange,
-	    value: function value() {
-	      var _this$fields2 = babelHelpers.slicedToArray(this.fields, 1),
-	        firstField = _this$fields2[0];
-	      if (firstField) {
-	        var _firstField$getValue2 = firstField.getValue(),
-	          text = _firstField$getValue2.text;
-	        this.setTitle(text);
-	      }
-	    }
-	  }, {
-	    key: "onRemoveButtonClick",
-	    value: function onRemoveButtonClick() {
-	      this.emit('remove', {
-	        form: this
-	      });
-	      main_core.Dom.remove(this.layout);
-	    }
-	  }, {
-	    key: "showForm",
-	    value: function showForm() {
-	      main_core.Dom.addClass(this.layout, 'landing-ui-form-menuitem-open');
-	      main_core.Dom.style(this.body, 'display', 'block');
-	    }
-	  }, {
-	    key: "hideForm",
-	    value: function hideForm() {
-	      main_core.Dom.removeClass(this.layout, 'landing-ui-form-menuitem-open');
-	      main_core.Dom.style(this.body, 'display', null);
-	    }
-	  }, {
-	    key: "isFormShown",
-	    value: function isFormShown() {
-	      return this.layout.classList.contains('landing-ui-form-menuitem-open');
-	    }
-	  }, {
-	    key: "getDragButton",
-	    value: function getDragButton() {
-	      return this.cache.remember('dragButton', function () {
-	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-form-header-drag-button landing-ui-drag\"></div>\n\t\t\t"])));
-	      });
-	    }
-	  }, {
-	    key: "getTitleLayout",
-	    value: function getTitleLayout() {
-	      var _this2 = this;
-	      return this.cache.remember('titleLayout', function () {
-	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-form-header-title\">", "</div>\n\t\t\t"])), main_core.Text.encode(_this2.title));
-	      });
-	    }
-	  }, {
-	    key: "getHeaderLeftLayout",
-	    value: function getHeaderLeftLayout() {
-	      var _this3 = this;
-	      return this.cache.remember('headerLeftLayout', function () {
-	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-form-header-left\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this3.getDragButton(), _this3.getTitleLayout());
-	      });
-	    }
-	  }, {
-	    key: "getRemoveButton",
-	    value: function getRemoveButton() {
-	      var _this4 = this;
-	      return this.cache.remember('removeButton', function () {
-	        var button = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"landing-ui-form-header-remove-button\"></div>"])));
-	        main_core.Event.bind(button, 'click', _this4.onRemoveButtonClick);
-	        return button;
-	      });
-	    }
-	  }, {
-	    key: "getHeaderRightLayout",
-	    value: function getHeaderRightLayout() {
-	      var _this5 = this;
-	      return this.cache.remember('headerRightLayout', function () {
-	        return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-form-header-right\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this5.getRemoveButton());
-	      });
-	    }
-	  }, {
-	    key: "setTitle",
-	    value: function setTitle(title) {
-	      if (main_core.Type.isString(title) || main_core.Type.isNumber(title)) {
-	        this.title = title;
-	        this.getTitleLayout().innerText = main_core.Text.decode(title);
-	      }
-	    }
-	  }, {
-	    key: "setDepth",
-	    value: function setDepth(depth) {
-	      var offset = 20;
-	      this[depthKey] = main_core.Text.toNumber(depth);
-	      main_core.Dom.style(this.layout, 'margin-left', "".concat(depth * offset, "px"));
-	      main_core.Dom.attr(this.layout, 'data-depth', depth);
-	    }
-	  }, {
-	    key: "getDepth",
-	    value: function getDepth() {
-	      return main_core.Text.toNumber(main_core.Dom.attr(this.layout, 'data-depth'));
-	    }
-	  }, {
-	    key: "serialize",
-	    value: function serialize() {
-	      var _this$fields3 = babelHelpers.slicedToArray(this.fields, 1),
-	        firstField = _this$fields3[0];
-	      return firstField.getValue();
-	    }
-	  }]);
-	  return MenuItemForm;
-	}(landing_ui_form_baseform.BaseForm);
+	class MenuItemForm extends landing_ui_form_baseform.BaseForm {
+		constructor(options = {}) {
+			super(options);
+			this.setEventNamespace('BX.Landing.UI.Form.MenuItemForm');
+			this.cache = new main_core.Cache.MemoryCache();
+			this[onHeaderClick] = this[onHeaderClick].bind(this);
+			this[onTextChange] = this[onTextChange].bind(this);
+			this.onRemoveButtonClick = this.onRemoveButtonClick.bind(this);
+			main_core.Dom.addClass(this.layout, 'landing-ui-form-menuitem');
+			main_core.Dom.append(this.getHeaderLeftLayout(), this.header);
+			main_core.Dom.append(this.getHeaderRightLayout(), this.header);
+			this.setDepth(options.depth);
+			const [firstField] = this.fields;
+			if (firstField) {
+				const {
+					text
+				} = firstField.getValue();
+				this.setTitle(text);
+				main_core.Event.bind(firstField.input.input, 'input', this[onTextChange]);
+			}
+			main_core.Event.bind(this.getHeader(), 'click', this[onHeaderClick]);
+		}
+		[onHeaderClick](event) {
+			event.preventDefault();
+			if (this.isFormShown()) {
+				this.hideForm();
+			} else {
+				this.showForm();
+			}
+		}
+		[onTextChange]() {
+			const [firstField] = this.fields;
+			if (firstField) {
+				const {
+					text
+				} = firstField.getValue();
+				this.setTitle(text);
+			}
+		}
+		onRemoveButtonClick() {
+			this.emit('remove', {
+				form: this
+			});
+			main_core.Dom.remove(this.layout);
+		}
+		showForm() {
+			main_core.Dom.addClass(this.layout, 'landing-ui-form-menuitem-open');
+			main_core.Dom.style(this.body, 'display', 'block');
+		}
+		hideForm() {
+			main_core.Dom.removeClass(this.layout, 'landing-ui-form-menuitem-open');
+			main_core.Dom.style(this.body, 'display', null);
+		}
+		isFormShown() {
+			return main_core.Dom.hasClass(this.layout, 'landing-ui-form-menuitem-open');
+		}
+		getDragButton() {
+			return this.cache.remember('dragButton', () => {
+				return main_core.Tag.render`
+				<div
+					class="landing-ui-form-header-drag-button landing-ui-drag"
+					role="button"
+					tabindex="0"
+					aria-label="${landing_loc.Loc.getMessage('LANDING_MENUITEM_DRAG_HANDLE_LABEL')}"
+					aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+				></div>
+			`;
+			});
+		}
+		getTitleLayout() {
+			return this.cache.remember('titleLayout', () => {
+				return main_core.Tag.render`
+				<div class="landing-ui-form-header-title">${main_core.Text.encode(this.title)}</div>
+			`;
+			});
+		}
+		getHeaderLeftLayout() {
+			return this.cache.remember('headerLeftLayout', () => {
+				return main_core.Tag.render`
+				<div class="landing-ui-form-header-left">
+					${this.getDragButton()}
+					${this.getTitleLayout()}
+				</div>
+			`;
+			});
+		}
+		getRemoveButton() {
+			return this.cache.remember('removeButton', () => {
+				const button = main_core.Tag.render`<div class="landing-ui-form-header-remove-button"></div>`;
+				main_core.Event.bind(button, 'click', this.onRemoveButtonClick);
+				return button;
+			});
+		}
+		getHeaderRightLayout() {
+			return this.cache.remember('headerRightLayout', () => {
+				return main_core.Tag.render`
+				<div class="landing-ui-form-header-right">
+					${this.getRemoveButton()}
+				</div>
+			`;
+			});
+		}
+		setTitle(title) {
+			if (main_core.Type.isString(title) || main_core.Type.isNumber(title)) {
+				this.title = main_core.Text.decode(String(title)).replaceAll(NBSP_ENTITY_PATTERN, NBSP);
+				this.getTitleLayout().innerText = this.title;
+			}
+		}
+		setDepth(depth) {
+			const offset = 20;
+			this[depthKey] = main_core.Text.toNumber(depth);
+			main_core.Dom.style(this.layout, 'margin-left', `${depth * offset}px`);
+			main_core.Dom.attr(this.layout, 'data-depth', depth);
+		}
+		getDepth() {
+			return main_core.Text.toNumber(main_core.Dom.attr(this.layout, 'data-depth'));
+		}
+		serialize() {
+			const [firstField] = this.fields;
+			return firstField.getValue();
+		}
+	}
 
 	exports.MenuItemForm = MenuItemForm;
 
-}((this.BX.Landing.UI.Form = this.BX.Landing.UI.Form || {}),BX,BX.Landing.UI.Form));
+})(this.BX.Landing.UI.Form = this.BX.Landing.UI.Form || {}, BX, BX.Landing, BX.Landing.UI.Form);
 //# sourceMappingURL=menuitemform.bundle.js.map

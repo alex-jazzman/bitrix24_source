@@ -27,31 +27,21 @@ export const TasksOpenerFullCard = {
 			return TaskCard.getUrl(this.taskId);
 		},
 	},
-	methods: {
-		openTaskInNewTab(): void
-		{
-			const newWindowUrl = this.urlTaskCard;
-			Object.assign(document.createElement('a'), {
-				target: '_blank',
-				href: newWindowUrl,
-			}).click();
-		},
-		handleClickOpener(): void
-		{
-			this.openTaskInNewTab();
-		},
-	},
 	template: `
-		<button
+		<a
 			class="tasks-opener-full-card"
-			@click="handleClickOpener"
+			:href="urlTaskCard"
+			target="_blank"
+			rel="noopener"
+			data-slider-ignore-autobinding="true"
 		>
 			<BIcon
 				:name="Outline.GO_TO_L"
 				class="tasks-opener-full-card__icon"
+				aria-hidden="true"
 				hoverable
 			/>
 			<span class="tasks-opener-full-card__text">{{ loc('TASKS_V2_TASK_FULL_CARD_OPEN_TASK_NEW_TAB') }}</span>
-		</button>
+		</a>
 	`,
 };

@@ -26,8 +26,8 @@ if (!\Bitrix\Main\Loader::includeModule('messageservice'))
 	return;
 }
 
-$scene = \Bitrix\Crm\MessageSender\UI\Factory::getInstance()->getScene($arResult['messageSenderSceneId'])
-	?? new \Bitrix\MessageService\Public\UI\MessageEditor\Scene\NullScene();
+$resolvedScene = \Bitrix\Crm\MessageSender\UI\Factory::getInstance()->getScene($arResult['messageSenderSceneId']);
+$scene = $resolvedScene ?? new \Bitrix\MessageService\Public\UI\MessageEditor\Scene\NullScene();
 $editor = \Bitrix\Crm\MessageSender\UI\Factory::getInstance()->createEditor(
 	$scene,
 	new Context(customData: [
@@ -40,6 +40,20 @@ $editor
 	->setDynamicLoad(false)
 	->setMessageText($arResult['text'])
 	->setAnalytics($arResult['analytics']);
+
+// Only the document scene exposes the template selector, and it hides the in-selector
+// "create" CTA: pre-filling a literal document link into a template body would be
+// meaningless, so document templates are authored only from the templates list page.
+if (
+	$resolvedScene instanceof \Bitrix\Crm\MessageSender\UI\Editor\Scene\DocumentView
+	&& \Bitrix\Crm\MessageSender\CustomTemplate\CrmZone::isSupportedByMessageService()
+)
+{
+	$editor->getLayout()
+		->setCustomTemplateSelectorShown(true)
+		->setCustomTemplateCreateInSelectorShown(false)
+	;
+}
 
 if (isset($arResult['templateCode']))
 {

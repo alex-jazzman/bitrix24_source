@@ -3,13 +3,29 @@
 	flex-direction: column;
 	padding: var(--ui-space-inset-xl);
 	background: var(--ui-color-bg-content-primary);
-	border-radius: var(--ui-border-radius-2xl);
-	box-shadow: 0 1px 2px var(--ui-color-area-box-shadow-secondary-color);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.crm-call-assessment-v2-client-types-card__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+	padding-bottom: var(--ui-space-stack-sm);
+}
+
+.crm-call-assessment-v2-client-types-card__title-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
 }
 
 .crm-call-assessment-v2-client-types-card__heading {
-	color: var(--ui-color-base-0);
-	padding-bottom: var(--ui-space-stack-sm);
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-client-types-card__heading.ui-headline.--accent {
+	font-weight: var(--ui-headline-sm-font-weight);
 }
 
 .crm-call-assessment-v2-client-types-card__row {

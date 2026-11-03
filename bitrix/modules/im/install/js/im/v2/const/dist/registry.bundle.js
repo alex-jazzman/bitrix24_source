@@ -5,7 +5,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports, imopenlines_v2_const) {
 	'use strict';
 
-	const RestMethod = Object.freeze({
+	const RestMethod = {
 		imV2ChatDetachToParent: 'im.v2.Chat.detachFromParent',
 		imV2ChatAttachToParent: 'im.v2.Chat.attachToParent',
 		imV2ChatLoad: 'im.v2.Chat.load',
@@ -15,6 +15,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
 		imV2ChatAdd: 'im.v2.Chat.add',
 		imV2ChatUpdate: 'im.v2.Chat.update',
+		imV2ChatAddUsers: 'im.v2.Chat.addUsers',
+		imV2ChatStructureLink: 'im.v2.Chat.Structure.link',
 		imV2ChatDelete: 'im.v2.Chat.delete',
 		imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 		imV2ChatRead: 'im.v2.Chat.read',
@@ -40,12 +42,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
 		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
 		imV2ChatMessageVoteSend: 'im.v2.Chat.Message.Vote.send',
+		imV2ChatMessageBlockFormSubmit: 'im.v2.Chat.Message.Block.Form.submit',
 		imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
 		imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
 		imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
+		imV2ChatMessageDateNavigationGetCalendar: 'im.v2.Chat.Message.DateNavigation.getCalendar',
+		imV2ChatMessageDateNavigationResolveDate: 'im.v2.Chat.Message.DateNavigation.resolveDate',
 		imV2ChatAnchorRead: 'im.v2.Chat.Anchor.read',
 		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 		imV2ChatMentionList: 'im.v2.Chat.Mention.list',
+		imV2ChatCommandList: 'im.v2.Chat.Command.list',
 		imV2ChatListShared: 'im.v2.Chat.listShared',
 		imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
 		imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
@@ -55,6 +61,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2ChatMessageDisappear: 'im.v2.Chat.Message.disappear',
 		imV2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
 		imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
+		imV2SettingsGeneralList: 'im.v2.Settings.General.list',
 		imV2SettingsNotifyUpdate: 'im.v2.Settings.Notify.update',
 		imV2SettingsNotifySwitchScheme: 'im.v2.Settings.Notify.switchScheme',
 		imV2DesktopLogout: 'im.v2.Desktop.logout',
@@ -62,6 +69,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2BetaEnable: 'im.v2.Beta.enable',
 		imV2BetaDisable: 'im.v2.Beta.disable',
 		imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
+		imV2ChatTaskCreateByAi: 'im.v2.Chat.Task.createByAi',
 		imV2ChatFlowPrepare: 'im.v2.Chat.Flow.prepare',
 		imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 		imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
@@ -70,7 +78,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2RecentLoad: 'im.v2.Recent.load',
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 		imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
+		imV2CopilotMessageRegenerate: 'im.v2.Copilot.Message.regenerate',
 		imV2CopilotDraftChatGet: 'im.v2.Copilot.DraftChat.get',
+		imV2CopilotGenerationStop: 'im.v2.Copilot.Generation.stop',
 		imV2AccessCheck: 'im.v2.Access.check',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 		imV2ChatMemberCheckMembership: 'im.v2.Chat.Member.checkMembership',
@@ -99,6 +109,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2FolderDelete: 'im.v2.Folder.delete',
 		imV2FolderSort: 'im.v2.Folder.sort',
 		imV2FolderAddChats: 'im.v2.Folder.addChats',
+		imV2FolderGetSources: 'im.v2.Folder.getSources',
+		imV2FolderUpdateSources: 'im.v2.Folder.updateSources',
 		imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
 		imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
 		imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
@@ -186,8 +198,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		socialnetworkMemberLeave: 'socialnetwork.collab.Member.leave',
 		intranetInviteGetLinkByCollabId: 'intranet.invite.getLinkByCollabId',
 		intranetInviteRegenerateLinkByCollabId: 'intranet.invite.regenerateLinkByCollabId',
-		imV2McpSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce'
-	});
+		imV2McpSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce',
+		imV2McpSelectionSave: 'aiassistant.api.McpSelection.save',
+		imV2McpSelectionClear: 'aiassistant.api.McpSelection.clear'
+	};
 
 	const EventType = {
 		// internal
@@ -199,7 +213,132 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onClickMessageContextMenu: 'IM:Dialog:onClickMessageContextMenu',
 			onCloseChat: 'IM:Dialog:onCloseChat',
 			scrollToBottom: 'IM:Dialog:scrollToBottom',
+			pinQuestion: 'IM:Dialog:pinQuestion',
+			/**
+			 * Sends the chat to a message, carried as `{ dialogId, messageId }` plus three optional
+			 * fields a jump by date fills in together. `date` marks the jump as date-driven for the
+			 * message list, which then lights up the divider of that day; `withMessageHighlight: false`
+			 * takes the ordinary highlight of the message off, so that the day and the message are not
+			 * lit up at once - a picked day is answered by its divider, a picked message by the message
+			 * itself; `jumpId` names this jump.
+			 *
+			 * The identifier is what tells two jumps apart, and the other fields cannot: the same day
+			 * picked twice in a row resolves to the same message, so the chat, the message and the day
+			 * of the two are identical. It is issued by the side that starts the jump, counted per page,
+			 * and travels on into `dateNavigationContextApplied` and back in
+			 * `dateNavigationJumpFinished`. A jump that is not date-driven carries none of the three.
+			 *
+			 * This is a REQUEST and not the jump itself: it asks whichever chat is on screen to go, and
+			 * it is not the only way of asking - the components around the chat hold it by ref and call
+			 * the same method directly. A side that has to see EVERY jump listens to
+			 * `messageContextJumpStarted` instead, which the chat sends whatever the jump came from.
+			 */
 			goToMessageContext: 'IM:Dialog:goToMessageContext',
+			/**
+			 * The chat has started a jump to a message context, carried as
+			 * `{ dialogId, messageId, date, jumpId }`. Sent by the chat itself, synchronously, from the
+			 * single method every jump goes through - so it covers the jumps asked for by
+			 * `goToMessageContext` and the ones started by a direct call alike: the comments button of a
+			 * channel, a chat opened on a message context, a pinned message.
+			 *
+			 * It is what the sides waiting for a jump by date measure against, and both of them wait for
+			 * something the NEXT jump invalidates: the panel of the sidebar is resolving the day the user
+			 * picked, the message list is waiting for the divider of a day to arrive. A jump they never
+			 * heard of would leave the first one applying an answer over the message the user went to
+			 * instead, and the second one waiting out its own bound for an anchor that is not coming any
+			 * more - and answering the panel with a failure over a screen the user asked for.
+			 *
+			 * `date` and `jumpId` are the fields of a jump by date and are empty for every other jump:
+			 * the day tells the message list that this jump is answered by a divider, and the identifier
+			 * names the jump for every report about it.
+			 */
+			messageContextJumpStarted: 'IM:Dialog:messageContextJumpStarted',
+			/**
+			 * The chat has TAKEN a jump by date on and is about to apply its context, carried as
+			 * `{ dialogId, jumpId }`. Sent synchronously right after `messageContextJumpStarted` of the
+			 * same jump and before the loading starts, for jumps by date alone - the same jumps
+			 * `dateNavigationContextApplied` answers for. The two travel together and in that order, so
+			 * a side told it may drop its bounds has by then been told which jump they belonged to.
+			 *
+			 * It is there because silence means two different things to the sides waiting for the jump:
+			 * a context that is still loading, and a jump nobody took at all - the chat of it is not on
+			 * screen, so no report is ever coming. Both sides bound their wait for the second case, and
+			 * that bound then cuts the first one short: a load longer than the bound is answered with a
+			 * failure and a retry while the chat is still on its way, and the chat then moves to the day
+			 * a moment later - an error standing next to the jump it says did not happen. This event
+			 * tells the two cases apart, and is the only thing that can: nothing else distinguishes work
+			 * in progress from nobody working.
+			 *
+			 * Read by the message list and by the side that started the jump, and both do the same with
+			 * it - take every bound off the jump it names. The list has two of them, a clock and a budget
+			 * of attempts, and both go: a chat busy enough to change its collection twenty times while
+			 * the context is loading would spend the budget on a jump that is still on its way, which is
+			 * the same false failure the clock is taken off for. Nothing else changes: the wait itself
+			 * goes on and ends where it ended before, on the outcome of the jump. Taking the bounds off is
+			 * safe exactly because the report becomes certain once the jump is taken:
+			 * `dateNavigationContextApplied` is sent on a settled promise, so it comes whether the
+			 * context loaded, failed, or was superseded.
+			 *
+			 * `jumpId` is the identifier the jump arrived with, and each side compares it against the
+			 * jump it is waiting for: a confirmation naming another jump, or naming none, takes nothing
+			 * off anywhere.
+			 *
+			 * The residual case is deliberate: a jump confirmed here whose promise then never settles is
+			 * waited for in silence - no error, no retry. It is the better half of the trade, a quiet
+			 * wait in front of a screen that is working against a false failure over a jump that did
+			 * happen; and the loading goes through a transport with a bound of its own, so a promise
+			 * that never settles takes the transport itself giving up on answering.
+			 */
+			dateNavigationContextApplying: 'IM:Dialog:dateNavigationContextApplying',
+			/**
+			 * The chat has finished applying the context of a jump by date, carried as
+			 * `{ dialogId, messageId, date, jumpId }` back to the message list. Sent for jumps by date
+			 * alone - the ones `goToMessageContext` carries a `date` in - so that the other jumps keep
+			 * the contract they have.
+			 *
+			 * "Finished" means settled and not succeeded: the page of the message arrived, or the loading
+			 * of it failed, or the jump was superseded and its answer refused. All three end the same way
+			 * for the list - the collection will not move for THIS jump any more - and that is what the
+			 * list needs to tell an anchor still on its way from an anchor that is never coming.
+			 *
+			 * `jumpId` is REQUIRED here and is the field the list decides by: a superseded jump reports
+			 * as well, and two jumps to the same day are alike in every other field. It is the identifier
+			 * the jump arrived with in `goToMessageContext`, carried back unchanged. The rest is the
+			 * context of the jump it names.
+			 */
+			dateNavigationContextApplied: 'IM:Dialog:dateNavigationContextApplied',
+			/**
+			 * The outcome of a jump by date, carried as `{ dialogId, date, jumpId, outcome }` from the
+			 * message list to the side that started the jump - `outcome` being a value of
+			 * `DateNavigationJumpOutcome`. A jump by date is finished only when the list has the day on
+			 * screen: the message may still have to be brought in from the server, and the loading of it
+			 * is not part of the event that starts the jump.
+			 *
+			 * Reported once per jump, and EVERY jump the list took on is reported - a jump superseded by
+			 * whatever came after it included, which ends as `cancelled`. Superseding is not something
+			 * the waiting side can see: told nothing about it, that side would sit out its own bound and
+			 * answer with a failure a jump the user replaced by going somewhere else on purpose.
+			 *
+			 * `jumpId` is REQUIRED here and is the field the waiting side decides by, together with
+			 * `dialogId`: it is the identifier the jump went out under in `goToMessageContext`, carried
+			 * back unchanged. `date` names no jump - two jumps to the same day are alike in it - and is
+			 * the context of the jump the identifier names, the day the outcome is spoken by. A report
+			 * carrying no identifier belongs to no jump and is left to the bound of the waiting side.
+			 */
+			dateNavigationJumpFinished: 'IM:Dialog:dateNavigationJumpFinished',
+			/**
+			 * Requests answered by the message list. The listener answers by RETURNING a value, and the
+			 * asking side collects the answers with `emitAsync`: several lists can be subscribed at once
+			 * (a channel and the comments opened over it), so the answer is the first filled one instead
+			 * of whatever the last subscriber left behind. Both requests carry `{ dialogId }` and are
+			 * answered with a day as `Y-m-d`; a list of another chat answers with an empty string.
+			 * `getTopVisibleDate` - the day of the group the user sees now; asked every time the calendar
+			 * is built and changes nothing in the list.
+			 * `getPendingDateNavigation` - the day of the divider that asked for the calendar; answered
+			 * once, the list gives the request away and forgets it.
+			 */
+			getTopVisibleDate: 'IM:Dialog:getTopVisibleDate',
+			getPendingDateNavigation: 'IM:Dialog:getPendingDateNavigation',
 			showForwardPopup: 'IM:Dialog:showForwardPopup',
 			openComments: 'IM:Dialog:openComments',
 			closeComments: 'IM:Dialog:closeComments',
@@ -216,26 +355,76 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			replyMessage: 'IM:Textarea:replyMessage',
 			insertText: 'IM:Textarea:insertText',
 			insertMention: 'IM:Textarea:insertMention',
+			selectSlashCommand: 'IM:Textarea:selectSlashCommand',
+			closeSlashCommandPopup: 'IM:Textarea:closeSlashCommandPopup',
 			insertForward: 'IM:Textarea:insertForward',
 			sendMessage: 'IM:Textarea:sendMessage',
 			openUploadPreview: 'IM:Textarea:openUploadPreview',
 			getText: 'IM:Textarea:getText',
-			closePanel: 'IM:Textarea:closePanel'
+			closePanel: 'IM:Textarea:closePanel',
+			/**
+			 * Asks the input of one chat to take the keyboard focus.
+			 * Payload: { dialogId: string }.
+			 *
+			 * Addressed by `dialogId` like the rest of this section: several textareas can be mounted at once,
+			 * and only the one of that chat may answer. It is the chat that is ALREADY open that needs asking --
+			 * a chat opened anew mounts its input, and the input focuses itself on mount.
+			 */
+			focusInput: 'IM:Textarea:focusInput'
 		},
 		sidebar: {
 			open: 'IM:Sidebar:open',
-			close: 'IM:Sidebar:close'
+			close: 'IM:Sidebar:close',
+			/**
+			 * Carries `{ dialogId, date }` to the message search panel of that chat. The listener answers
+			 * by RETURNING `true` when the calendar of that day opened, so the sender learns whether the
+			 * request was carried out at all; a panel of another chat answers nothing, and a panel with
+			 * nothing to open the calendar on answers `false` and leaves the request with the sender.
+			 */
+			openDateNavigation: 'IM:Sidebar:openDateNavigation'
 		},
 		header: {
 			openAddToChatPopup: 'IM:Header:openAddToChatPopup'
 		},
 		search: {
-			keyPressed: 'IM:Search:keyPressed'
+			keyPressed: 'IM:Search:keyPressed',
+			/**
+			 * The four events below are addressed with `searchAreaId`: several searches can be mounted at once,
+			 * and each reacts only to its own area, ignoring an event whose id is empty or foreign.
+			 *
+			 * Keydown in the search input, for subscribers that intercept a key before the field acts on it
+			 * (keyboard navigation over the results). Carries the keystroke that expands a collapsed search too:
+			 * a click produces no keydown, so this is the only sign of an entry from the keyboard.
+			 * Payload: { keyboardEvent: KeyboardEvent, searchAreaId: ?string }.
+			 *
+			 * MUST be emitted synchronously (`emit`, never `emitAsync`): `preventDefault()` of a subscriber only
+			 * works while the original keydown is still being dispatched.
+			 */
+			keyDown: 'IM:Search:keyDown',
+			/**
+			 * The input of a search area has lost the keyboard focus, so the keys of the navigation can no longer
+			 * reach the results through it: a subscriber holding a cursor learns that it is not movable any more.
+			 * Payload: { searchAreaId: ?string }.
+			 */
+			inputBlur: 'IM:Search:inputBlur',
+			/**
+			 * Announces the option represented by the visible cursor of an addressed search area.
+			 * Payload: { searchAreaId: string, activeDescendantId: string | null }.
+			 */
+			activeDescendantChanged: 'IM:Search:activeDescendantChanged',
+			/**
+			 * Asks a search area to take the keyboard focus back: the results know the moment (the chat opened
+			 * from them was exited and nothing holds the focus), the search decides which element takes it and
+			 * whether it may be taken at all.
+			 * Payload: { searchAreaId: string }.
+			 */
+			returnFocusToSearch: 'IM:Search:returnFocusToSearch'
 		},
 		recent: {
 			openSearch: 'IM.Recent:openSearch',
 			openNestedList: 'IM.Recent:openNestedList',
-			closeNestedList: 'IM.Recent:closeNestedList'
+			closeNestedList: 'IM.Recent:closeNestedList',
+			dayChanged: 'IM.Recent:dayChanged'
 		},
 		mention: {
 			selectItem: 'IM:Mention:selectItem',
@@ -255,7 +444,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onClickPlay: 'IM:RoundVideoPlayer:onClickPlay'
 		},
 		player: {
-			playNext: 'IM:Player:playNext'
+			playNext: 'IM:Player:playNext',
+			rateChange: 'IM:Player:rateChange'
+		},
+		playback: {
+			onServiceStart: 'IM:Playback:onServiceStart',
+			onExternalPlayerStart: 'IM:Playback:onExternalPlayerStart',
+			onTrackEnded: 'IM:Playback:onTrackEnded'
 		},
 		key: {
 			onBeforeEscape: 'IM:Keys:onBeforeEscape'
@@ -269,6 +464,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onFilterAuthorTagRemove: 'IM:Notification:Filter:onAuthorTagRemove'
 		},
 		// external
+		messenger: {
+			onReady: 'IM:Messenger:onReady',
+			// MessengerRoot is mounted
+			onClose: 'IM:Messenger:onClose' // the surface is gone: unmount or slider close
+		},
 		layout: {
 			onLayoutChange: 'IM.Layout:onLayoutChange',
 			onOpenNotifications: 'IM.Layout:onOpenNotifications'
@@ -324,6 +524,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
+	/**
+	 * How a jump by date ended, as reported by `EventType.dialog.dateNavigationJumpFinished`.
+	 *
+	 * `cancelled` is told apart from `failure` on purpose: the user leaving the chat, or the chat being
+	 * closed, is not a failure to report - an error spoken out loud in the chat the user has just opened
+	 * would be about a screen nobody is looking at any more.
+	 */
+	const DateNavigationJumpOutcome = Object.freeze({
+		success: 'success',
+		failure: 'failure',
+		cancelled: 'cancelled'
+	});
+
+	/**
+	 * How long the two sides of a jump by date wait for it, in milliseconds.
+	 *
+	 * They are kept together because their order is the contract: the list gives up first and says so,
+	 * and the panel only ever falls back to its own bound when no outcome arrived at all. Were the panel
+	 * the first to give up, the user would be told the jump failed while the list is still waiting - and
+	 * the list would then light the day up under a message that has already been withdrawn.
+	 *
+	 * Both are bounds on ONE case alone - the jump nobody took. A chat that takes the jump says so
+	 * through `dateNavigationContextApplying`, and both sides drop their bound the moment it does:
+	 * from there the outcome is certain however long the loading runs, and a bound left standing would
+	 * only ever cut a working jump short. What is left for the bounds is the case where the chat of the
+	 * jump is not on screen at all: no confirmation, no report, and nothing but these to end the wait.
+	 *
+	 * `anchorWait` - the message list waiting for the page of the anchor to arrive.
+	 * `panelWait` - the side that started the jump waiting for the outcome of it.
+	 */
+	const DateNavigationJumpTimeout = Object.freeze({
+		anchorWait: 9000,
+		panelWait: 10000
+	});
+
 	const ChatType = Object.freeze({
 		user: 'user',
 		chat: 'chat',
@@ -347,7 +582,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		openChannel: 'openChannel',
 		generalChannel: 'generalChannel',
 		comment: 'comment',
-		collab: 'collab'
+		collab: 'collab',
+		vibecodeApp: 'vibecodeApp'
 	});
 	const DialogScrollThreshold = Object.freeze({
 		none: 'none',
@@ -367,9 +603,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const DialogIdChatPrefix = 'chat';
 	const TempAiAssistantPrefix = 'temp-ai-assistant';
 
-	const CopilotRole = Object.freeze({
+	const CopilotRole = {
 		universalCode: 'copilot_assistant'
-	});
+	};
+	const CopilotGenerationStatus = {
+		generating: 'generating',
+		stopped: 'stopped',
+		completed: 'completed',
+		error: 'error'
+	};
+	const CopilotMcpSelectionStatus = {
+		restoring: 'restoring',
+		ready: 'ready',
+		error: 'error',
+		unavailable: 'unavailable'
+	};
+	const AiAssistantSearchBlockName = 'aiAssistantSearch';
+
+	// The server sends COPILOT_SIMPLE_REASONING_PLAN; the message model converts params keys to
+	// camelCase before the field whitelist sees them, so this is both the incoming key and the field.
+	const CopilotSimpleReasoningPlanField = 'copilotSimpleReasoningPlan';
+
+	// Seconds from startedAt past which a plan is no longer played. Normative and shared with the server
+	// (ReasoningPlanPosition::STALE_PLAN_LIMIT): the model refuses offsets beyond it, the show stops on it.
+	const CopilotSimpleReasoningStalePlanLimit = 900;
+
+	// Offsets are cumulative seconds from startedAt, rolled by the server once per turn. The first
+	// position has offset zero, so the show starts as soon as the placeholder arrives.
 
 	const FileStatus = Object.freeze({
 		upload: 'upload',
@@ -419,6 +679,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		chat: 'chat',
 		sidebar: 'sidebar'
 	};
+	const PlaybackTrackState = {
+		loading: 'loading',
+		playing: 'playing',
+		paused: 'paused',
+		loadingError: 'loadingError',
+		unsupportedFormat: 'unsupportedFormat',
+		fileProcessing: 'fileProcessing',
+		accessDenied: 'accessDenied',
+		messageDeleted: 'messageDeleted',
+		fileDeleted: 'fileDeleted'
+	};
 
 	const MessageType = Object.freeze({
 		self: 'self',
@@ -455,6 +726,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		channelCreationMessage: 'ChannelCreationMessage',
 		callMessage: 'CallMessage',
 		voteMessage: 'VoteMessage',
+		contactMessage: 'ContactMessage',
 		taskChatCreationMessage: 'TaskChatCreationMessage',
 		convertToCollabMessage: 'ConvertToCollabMessage',
 		collabCreationMessage: 'CollabCreationMessage',
@@ -490,15 +762,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		Month: 720
 	});
 
+	const DeliveryTimeout = Object.freeze({
+		Default: 300,
+		WithFiles: 3600
+	});
+
 	const RecentCallStatus = {
 		waiting: 'waiting',
 		joined: 'joined'
 	};
 	const RecentType = {
+		// `default` is the legacy Chats folder code, `chat` is the server chat section: not a duplicate.
 		default: 'default',
+		chat: 'chat',
+		channel: 'channel',
 		copilot: 'copilot',
 		openChannel: 'openChannel',
 		collab: 'collab',
+		vibecodeApp: 'vibecodeApp',
 		taskComments: 'tasksTask',
 		openlines: 'lines',
 		calendar: 'calendar',
@@ -530,9 +811,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		settings: 'settings',
 		copilot: 'copilot',
 		collab: 'collab',
+		vibecodeApp: 'vibecodeApp',
 		market: 'market',
 		taskComments: 'tasksTask',
-		folder: 'folder'
+		folder: 'folder',
+		// Distinct from the `all` server folder code on purpose: this value travels to the restored
+		// layout in local storage and to analytics, so it must not collide with a folder code.
+		folderAll: 'folderAll',
+		folderAllSettings: 'folderAllSettings'
 	};
 
 	const SearchEntityIdTypes = {
@@ -709,6 +995,38 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		dialog: 'DIALOG'
 	};
 
+	const HotkeyCombination = Object.freeze({
+		textDecoration: {
+			bold: 'Ctrl+B',
+			italic: 'Ctrl+I',
+			underline: 'Ctrl+U',
+			strikethrough: 'Ctrl+S'
+		},
+		sendMessage: {
+			byEnter: ['Enter', 'NumpadEnter'],
+			byCtrlEnter: ['Ctrl+Enter', 'Ctrl+NumpadEnter']
+		},
+		newLine: {
+			byShiftEnter: 'Shift+Enter',
+			byEnter: 'Enter',
+			byCtrlEnter: 'Ctrl+Enter'
+		},
+		editMessage: {
+			lastOwn: 'ArrowUp'
+		},
+		messageMenu: {
+			quote: 'Alt+Ctrl'
+		},
+		list: {
+			contextMenu: ['Shift+F10', 'ContextMenu'],
+			skipContextMenu: 'Alt+Shift'
+		},
+		desktop: {
+			logFolder: 'Ctrl+Shift+L',
+			devTools: 'Ctrl+Shift+D'
+		}
+	});
+
 	const WINDOW_ACTIVATION_DELAY = 300;
 	const DesktopBxLink = {
 		chat: 'chat',
@@ -752,14 +1070,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		taskCommentsSidebarOpened: 'taskCommentsSidebarOpened',
 		textareaMarketOpened: 'textareaMarketOpened',
 		textareaHeight: 'textareaHeight',
+		textareaHeightAiAssistantWidget: 'textareaHeightAiAssistantWidget',
+		textareaHeightAiAssistantEmptyState: 'textareaHeightAiAssistantEmptyState',
 		lastCallType: 'lastCallType',
 		lastNotificationId: 'lastNotificationId',
 		layoutConfig: 'layoutConfig',
 		audioPlaybackRate: 'audioPlaybackRate',
 		emotePopupTab: 'emotePopupTab',
 		invitePopupTab: 'invitePopupTab',
+		invitePopupGuestTabReset: 'invitePopupGuestTabReset',
 		taskCommentsCardOpened: 'taskCommentsCardOpened',
-		copilotWidgetLastDialogId: 'copilotWidgetLastDialogId'
+		copilotWidgetLastDialogId: 'copilotWidgetLastDialogId',
+		defaultReactionPending: 'defaultReactionPending'
 	});
 
 	const PlacementType = Object.freeze({
@@ -817,7 +1139,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			sendByEnter: 'sendByEnter'
 		},
 		message: {
-			bigSmiles: 'enableBigSmile'
+			bigSmiles: 'enableBigSmile',
+			defaultReaction: 'defaultReaction'
 		},
 		recent: {
 			showBirthday: 'viewBirthday',
@@ -881,7 +1204,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		taskSideCard: 'im:task-chat-side-card:24062026:all',
 		collabProjectAi: 'socialnetwork:collab-project-ai:28042026:all',
 		collabAi: 'socialnetwork:collab-project-ai:28042026:all',
-		bitrixGptAgent: 'im:bitrix-gpt-agent:20052026:all'
+		bitrixGptAgent: 'im:bitrix-gpt-agent:20052026:all',
+		folderAllOnboarding: 'im:folder-all-onboarding:12082026:all',
+		mainReactionOnboarding: 'im:main-reaction-onboarding:20072026:all',
+		voiceMessageRecording: 'im:voice-message-recording:26082026:old'
 	});
 
 	const ActionByRole = Object.freeze({
@@ -919,7 +1245,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		createDocumentSign: 'createDocumentSign',
 		createCalendarSlots: 'createCalendarSlots',
 		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
-		attachToParent: 'attachToParent'
+		attachToParent: 'attachToParent',
+		linkStructureNode: 'linkStructureNode'
 	});
 	const ChatActionGroup = Object.freeze({
 		manageSettings: 'manageSettings',
@@ -944,7 +1271,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		changeStickerPack: 'changeStickerPack',
 		createStickerPack: 'createStickerPack',
 		extend: 'extend',
-		manageGuestLink: 'manageGuestLink'
+		manageGuestLink: 'manageGuestLink',
+		linkStructureNode: 'linkStructureNode'
 	});
 
 	const RawBotType = Object.freeze({
@@ -1003,6 +1331,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		none: ''
 	};
 
+	// input field an insert event is addressed to; absence of the address means the main field
+	const TextareaTarget = {
+		main: 'main',
+		uploadCaption: 'uploadCaption'
+	};
+
 	const ChatEntityLinkType = Object.freeze({
 		tasks: 'TASKS',
 		sonetGroup: 'SONET_GROUP',
@@ -1011,7 +1345,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		contact: 'CONTACT',
 		deal: 'DEAL',
 		lead: 'LEAD',
-		dynamic: 'DYNAMIC'
+		dynamic: 'DYNAMIC',
+		vibecodeApp: 'VIBECODE_APP'
 	});
 
 	const MultidialogStatus = Object.freeze({
@@ -1049,10 +1384,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			accessDenied: 'ACCESS_DENIED',
 			notFound: 'CHAT_NOT_FOUND'
 		},
+		structureLink: {
+			chatTypeNotSupported: 'CHAT_TYPE_NOT_SUPPORTED',
+			tooManyNodes: 'TOO_MANY_NODES',
+			nodeNotAvailable: 'NODE_NOT_AVAILABLE',
+			structureNotAvailable: 'STRUCTURE_NOT_AVAILABLE'
+		},
 		message: {
 			accessDenied: 'MESSAGE_ACCESS_DENIED',
 			accessDeniedByTariff: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',
-			notFound: 'MESSAGE_NOT_FOUND'
+			notFound: 'MESSAGE_NOT_FOUND',
+			// the stored composition is verified after the message is saved, so this refusal comes back on an
+			// edit that went through
+			filesMismatch: 'MESSAGE_FILES_MISMATCH'
 		},
 		user: {
 			invitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
@@ -1061,13 +1405,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		file: {
 			maxFileSize: 'MAX_FILE_SIZE_EXCEEDED'
 		},
+		folder: {
+			chatNotEligible: 'FOLDER_CHAT_NOT_ELIGIBLE'
+		},
 		sticker: {
 			maxPacks: 'MAX_PACKS_ERROR',
 			maxStickers: 'MAX_STICKERS_ERROR'
+		},
+		aiTask: {
+			// the deduplication slot of the chat is still busy with this very selection
+			creationInProgress: 'AI_TASK_CREATION_IN_PROGRESS',
+			// no task can be made of such a source: a system message, a sticker, a deleted message,
+			// an open line, a support chat, a network dialog
+			sourceNotSupported: 'AI_TASK_SOURCE_NOT_SUPPORTED'
 		}
 	});
 
 	const NavigationMenuItem = Object.freeze({
+		messenger: 'messenger',
 		[Layout.chat]: Layout.chat,
 		[Layout.copilot]: Layout.copilot,
 		[Layout.collab]: Layout.collab,
@@ -1078,6 +1433,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		[Layout.market]: Layout.market,
 		[Layout.settings]: Layout.settings,
 		[Layout.taskComments]: Layout.taskComments,
+		[Layout.vibecodeApp]: Layout.vibecodeApp,
 		call: 'call',
 		timemanager: 'timemanager',
 		homepage: 'homepage'
@@ -1117,7 +1473,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const SelectorEntity = {
 		user: 'user',
+		bot: 'im-bot',
 		department: 'department',
+		structureNode: 'structure-node',
 		recent: 'im-recent-v2'
 	};
 
@@ -1134,6 +1492,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 	const MessageBuilderBackgroundPlainToken = 'plain';
 
+	// Mirrors SendContextualStatus::THINKING_SEARCH_BLOCK_ID. messages/builder/updateBlock silently
+	// does nothing on a mismatched id, so the plan player must address the block by the server's id.
+	const AiAssistantThinkingBlockId = 'aiassistant-thinking-search';
+	const FormFieldType = Object.freeze({
+		singleLineText: 'singleLineText',
+		multilineText: 'multilineText',
+		select: 'select',
+		radio: 'radio',
+		checkbox: 'checkbox'
+	});
+
 	const ParentChatScope = {
 		all: null,
 		topLevel: 0
@@ -1143,9 +1512,53 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		system: 'system',
 		personal: 'personal'
 	};
+	// Mirror of the system folder rest codes (`BaseFolder::getRestCode()`) - exactly what the server puts
+	// into the `code` field of a folder. Not the domain `CODE`: `OpenLineFolder` keeps `CODE = 'openlines'`
+	// but overrides `REST_CODE = 'lines'`, and the client only ever sees the rest code.
+	// Neither a subset nor a superset of recent sections: `all` has no section, `calendar` has no folder.
+	const SystemFolderCode = {
+		default: 'default',
+		chat: 'chat',
+		channel: 'channel',
+		openChannel: 'openChannel',
+		copilot: 'copilot',
+		collab: 'collab',
+		tasksTask: 'tasksTask',
+		tasksTaskRoot: 'tasksTaskRoot',
+		openlines: 'lines',
+		all: 'all',
+		vibecodeApp: 'vibecodeApp'
+	};
+
+	/**
+	 * Statuses and content types of the "AI task from messages" flow. Single source of truth
+	 * shared by im.v2.model (ai-task) and im.v2.provider.pull, so the client union cannot drift
+	 * from the backend.
+	 *
+	 * Backend counterparts:
+	 * - statuses: Bitrix\Im\V2\Integration\AI\TaskCreation\Status (enum Status: string)
+	 * - content types: Bitrix\Im\V2\Pull\Event\AutoTaskStatus::getMessageType()
+	 */
+	const AiTaskStatus = Object.freeze({
+		search: 'search',
+		taskCreationStarted: 'taskCreationStarted',
+		taskCreationCompleted: 'taskCreationCompleted',
+		resultCreationStarted: 'resultCreationStarted',
+		resultCreationCompleted: 'resultCreationCompleted',
+		notFound: 'notFound'
+	});
+	const AiTaskContentType = Object.freeze({
+		voiceNote: 'voiceNote',
+		videoNote: 'videoNote',
+		message: 'message'
+	});
 
 	exports.ActionByRole = ActionByRole;
 	exports.ActionByUserType = ActionByUserType;
+	exports.AiAssistantSearchBlockName = AiAssistantSearchBlockName;
+	exports.AiAssistantThinkingBlockId = AiAssistantThinkingBlockId;
+	exports.AiTaskContentType = AiTaskContentType;
+	exports.AiTaskStatus = AiTaskStatus;
 	exports.AnchorType = AnchorType;
 	exports.AttachDescription = AttachDescription;
 	exports.AttachType = AttachType;
@@ -1161,8 +1574,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.CollabEntityType = CollabEntityType;
 	exports.Color = Color;
 	exports.ColorToken = ColorToken;
+	exports.CopilotGenerationStatus = CopilotGenerationStatus;
+	exports.CopilotMcpSelectionStatus = CopilotMcpSelectionStatus;
 	exports.CopilotRole = CopilotRole;
+	exports.CopilotSimpleReasoningPlanField = CopilotSimpleReasoningPlanField;
+	exports.CopilotSimpleReasoningStalePlanLimit = CopilotSimpleReasoningStalePlanLimit;
 	exports.DataAttribute = DataAttribute;
+	exports.DateNavigationJumpOutcome = DateNavigationJumpOutcome;
+	exports.DateNavigationJumpTimeout = DateNavigationJumpTimeout;
+	exports.DeliveryTimeout = DeliveryTimeout;
 	exports.DesktopBroadcastAction = DesktopBroadcastAction;
 	exports.DesktopBxLink = DesktopBxLink;
 	exports.DialogAlignment = DialogAlignment;
@@ -1178,7 +1598,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.FileType = FileType;
 	exports.FileViewerContext = FileViewerContext;
 	exports.FolderType = FolderType;
+	exports.FormFieldType = FormFieldType;
 	exports.GetParameter = GetParameter;
+	exports.HotkeyCombination = HotkeyCombination;
 	exports.KeyboardButtonAction = KeyboardButtonAction;
 	exports.KeyboardButtonContext = KeyboardButtonContext;
 	exports.KeyboardButtonDisplay = KeyboardButtonDisplay;
@@ -1202,6 +1624,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.ParentChatScope = ParentChatScope;
 	exports.Path = Path;
 	exports.PlacementType = PlacementType;
+	exports.PlaybackTrackState = PlaybackTrackState;
 	exports.PlaylistScope = PlaylistScope;
 	exports.PopupType = PopupType;
 	exports.PromoId = PromoId;
@@ -1222,9 +1645,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.SpecialMentionDialogId = SpecialMentionDialogId;
 	exports.StickerPackType = StickerPackType;
 	exports.StickerType = StickerType;
+	exports.SystemFolderCode = SystemFolderCode;
 	exports.TabId = TabId;
 	exports.TempAiAssistantPrefix = TempAiAssistantPrefix;
 	exports.TextareaPanelType = TextareaPanelType;
+	exports.TextareaTarget = TextareaTarget;
 	exports.TranscriptionStatus = TranscriptionStatus;
 	exports.UserIdNetworkPrefix = UserIdNetworkPrefix;
 	exports.UserRole = UserRole;

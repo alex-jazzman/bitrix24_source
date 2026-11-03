@@ -24,7 +24,11 @@ if (is_string($arParams['INPUT_SCOPE_NAME']))
 $containerId = $prefix . $id;
 ?>
 
-<div id="<?=htmlspecialcharsbx($containerId)?>" class="rest-integration-selector-wrapper">
+<div
+	id="<?=htmlspecialcharsbx($containerId)?>"
+	class="rest-integration-selector-wrapper"
+	data-testid="<?=htmlspecialcharsbx($containerId)?>"
+>
 
 	<?if ($arParams['TITLE'] != ''):?>
 		<div class="rest-integration-selector-title">

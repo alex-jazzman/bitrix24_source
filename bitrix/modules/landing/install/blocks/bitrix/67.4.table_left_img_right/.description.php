@@ -18,7 +18,7 @@ return [
 			'type' => 'text',
 		],
 		'.landing-block-node-img' => [
-			'name' => Loc::getMessage('LANDING_BLOCK_67_4_IMG'),
+			'name' => Loc::getMessage('LANDING_BLOCK_67_4_JMG'),
 			'type' => 'img',
 			'dimensions' => ['width' => 540],
 		],
@@ -37,7 +37,7 @@ return [
 			'type' => ['container', 'padding-top', 'padding-bottom'],
 		],
 		'.landing-block-node-img' => [
-			'name' => Loc::getMessage('LANDING_BLOCK_67_4_IMG'),
+			'name' => Loc::getMessage('LANDING_BLOCK_67_4_JMG'),
 			'type' => 'animation',
 		],
 	],

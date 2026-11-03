@@ -1,9 +1,9 @@
-import { CheckListFlatTree, CheckListFlatTreeItem, ChecklistMemberType } from '../../../../checklist/types/common';
+import { ChecklistMemberType } from '../../../../checklist/types';
 import { LayoutWidget } from '../../../../../../../../../../mobile/dev/janative/api';
 import { Icon } from '../../../../../../../../../../mobile/dev/janative/types/enum/icon';
 
 export type ChecklistActionsMenuProps = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	ref?: (ref: Object) => void,
 	parentWidget?: LayoutWidget,
 	onTextFormat?: (type: string, item: CheckListFlatTreeItem | null) => void,
@@ -13,7 +13,7 @@ export type ChecklistActionsMenuProps = {
 	onMoveToCheckList?: (moveIds: Array<number | string>, targetRef: Object) => void,
 	openTariffRestrictionWidget: (memberType: ChecklistMemberType) => void,
 	openUserSelectionManager: (itemId: number | string, memberType: ChecklistMemberType) => void,
-	onTabMove?: (item: CheckListFlatTreeItem, direction: string) => void,
+	onTabMove?: (item: ChecklistItemView, direction: string) => void,
 };
 
 export type ChecklistActionsMenuToggleParams = {
@@ -34,7 +34,7 @@ export type ChecklistIconViewProps = {
 export type ChecklistsMenuProps = {
 	parentWidget?: LayoutWidget,
 	moveItemToChecklist?: (checklistId: number | string | undefined) => void,
-	checklists?: CheckListFlatTree[],
+	checklists?: ChecklistView[],
 	sourceChecklistId?: string | number,
 	targetRef?: Object,
 };

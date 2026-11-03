@@ -17,6 +17,10 @@ use Bitrix\Main\Web\Json;
 Extension::load([
 	'ui.vue3',
 	'ui.vue3.vuex',
+	'ui.vue3.components.switcher',
+	'ui.a11y',
+	'ui.system.skeleton.vue',
+	'ui.system.alert',
 	'ui.entity-selector',
 	'ui.alerts',
 	'ui.dialogs.messagebox',

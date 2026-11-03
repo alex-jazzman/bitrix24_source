@@ -14,8 +14,10 @@ export class SectionManager
 
 	constructor(data, config)
 	{
+		this.config = config;
 		this.setSections(data.sections);
 		this.setConfig(config);
+		this.setAccessNames(config.accessNames);
 		this.addTaskSection();
 		this.sortSections();
 		EventEmitter.subscribeOnce('BX.Calendar.Section:delete', (event) => {
@@ -100,6 +102,27 @@ export class SectionManager
 		return this.calendarType;
 	}
 
+	setAccessNames(accessNames = {})
+	{
+		if (!Type.isObjectLike(accessNames))
+		{
+			return;
+		}
+
+		this.config.accessNames = {
+			...(this.config.accessNames || {}),
+			...accessNames,
+		};
+
+		for (const code in accessNames)
+		{
+			if (accessNames.hasOwnProperty(code))
+			{
+				Util.setAccessName(code, accessNames[code]);
+			}
+		}
+	}
+
 	handlePullChanges(params)
 	{
 		if (params.command === 'delete_section')
@@ -147,6 +170,7 @@ export class SectionManager
 				}
 			})
 			.then(response => {
+					this.setAccessNames(response.data.accessNames);
 					this.setSections(response.data.sections || []);
 					this.sortSections();
 					if (response.data.config)
@@ -268,6 +292,7 @@ export class SectionManager
 						}
 
 						const sectionList = response.data.sectionList || [];
+						this.setAccessNames(response.data.accessNames);
 						this.setSections(sectionList);
 						this.sortSections();
 						this.addTaskSection();

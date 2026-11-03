@@ -9,7 +9,9 @@
 
 .landing-widget-kb-title {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
+	gap: var(--ui-space-stack-xs) var(--ui-space-inline-lg);
 	margin-bottom: 20px;
 	padding-bottom: 10px;
 	font-size: 28px;
@@ -135,6 +137,7 @@
 
 .landing-widget-kb-badge {
 	display: inline-flex;
+	flex-shrink: 0;
 	align-items: center;
 	padding: 0 8px;
 	height: 20px;
@@ -145,6 +148,7 @@
 	color: var(--ui-color-on-primary-alt);
 	box-sizing: border-box;
 	cursor: default;
+	white-space: nowrap;
 }
 
 .landing-widget-kb-badge.--yellow {
@@ -154,7 +158,6 @@
 }
 
 .landing-widget-kb-title .landing-widget-kb-badge {
-	margin-left: 20px;
 	margin-top: auto;
 	margin-bottom: auto;
 }
@@ -170,6 +173,7 @@
 }
 
 .landing-widget-view-sidebar .landing-widget-kb-title {
+	column-gap: var(--ui-space-inline-2xs2);
 	font-size: 17px;
 	font-weight: var(--ui-font-weight-medium);
 	padding-bottom: 18px;
@@ -178,7 +182,7 @@
 }
 
 .landing-widget-view-sidebar .landing-widget-kb-badge {
-	margin: 0 0 0 6px;
+	margin: 0;
 }
 
 .landing-widget-view-sidebar .landing-widget-kb-content-row {

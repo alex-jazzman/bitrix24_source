@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_popup, main_core_events, ui_lottie, ui_buttons, ui_avatar, ui_confetti, intranet_departmentControl) {
+(function (exports, main_core, main_popup, main_core_events, ui_lottie, ui_buttons, ui_avatar, ui_confetti, intranet_user_departmentPopup) {
 	'use strict';
 
 	var fr$1 = 60;
@@ -6687,7 +6687,7 @@ this.BX = this.BX || {};
 				signedParameters: this.#options.signedParameters,
 				mode: 'ajax',
 				data: this.#options.showDepartmentControl === false ? {} : {
-					departmentId: this.#departmentIds,
+					departmentIds: this.#departmentIds,
 					isEmail: 'N'
 				}
 			});
@@ -6910,170 +6910,19 @@ this.BX = this.BX || {};
 		}
 	}
 
-	class StartStep {
-		#options;
-		#content;
-		#department;
-		#parent;
-		#sendButton;
+	class StartStep extends intranet_user_departmentPopup.UserDepartmentPopup {
 		constructor(options, parent) {
-			this.#options = options;
-			this.#parent = parent;
-		}
-		render() {
-			if (!this.#content) {
-				this.#content = this.#renderBlock();
-			}
-			return this.#content;
-		}
-		#renderBlock() {
-			const modificator = this.#getModificator();
-			const departmentControl = this.#isDepartmentControlVisible() ? main_core.Tag.render`
-				<div class="transfer-start__department">
-					${this.#getDepartmentControl().render()}
-				</div>
-			` : '';
-			return main_core.Tag.render`
-			<div class="transfer-start">
-				<div class="transfer-start__title">
-					${this.#getTitle()}
-				</div>
-				<div class="transfer-start__account">
-					<div class="transfer-account transfer-account_${modificator}">
-						<div class="transfer-account-avatar">
-							${this.#getAvatar().getContainer()}
-						</div>
-						<div class="transfer-account-data">
-							<div class="account-data__name">
-								${this.#options.userName}
-							</div>
-							<div class="account-data__position account-data__position_${modificator}">
-								${this.#getPosition()}
-							</div>
-						</div>
-					</div>
-				</div>
-				${departmentControl}
-				<div class="transfer-start__action">
-					${this.#getSendButton().render()}
-					${this.#getCancelButton().render()}
-				</div>
-			</div>
-		`;
-		}
-		#getAvatar() {
-			const options = {
-				size: 40,
-				userpicPath: this.#options.userPhoto
-			};
-			let avatar = null;
-			switch (this.#options.userType) {
-				case 'extranet':
-					avatar = new ui_avatar.AvatarRoundExtranet(options);
-					break;
-				case 'collaber':
-					avatar = new ui_avatar.AvatarRoundGuest(options);
-					break;
-				default:
-					avatar = new ui_avatar.AvatarRound(options);
-					break;
-			}
-			return avatar;
-		}
-		#getDepartmentControl() {
-			if (!this.#isDepartmentControlVisible()) {
-				return null;
-			}
-			if (!this.#department) {
-				const rootDepartment = this.#options.rootDepartment;
-				this.#department = new intranet_departmentControl.DepartmentControl({
-					rootDepartment: main_core.Type.isObject(rootDepartment) ? rootDepartment : null,
-					description: main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_DEPARTMENT_DESCRIPTION')
-				});
-				this.#department.subscribe('onChange', this.#onChangeDepartments.bind(this));
-			}
-			return this.#department;
-		}
-		#getSendButton() {
-			const isDepartmentControlVisible = this.#isDepartmentControlVisible();
-			const departmentControl = isDepartmentControlVisible ? this.#getDepartmentControl() : null;
-			this.#sendButton ??= new ui_buttons.Button({
-				className: 'transfer-start__action-send',
-				text: this.#getActionButtonText(),
-				size: ui_buttons.Button.Size.LARGE,
-				style: '--style-filled',
-				useAirDesign: true,
-				noCaps: true,
-				isDependOnTheme: true,
-				state: !isDepartmentControlVisible || departmentControl.getValues().length > 0 ? null : ui_buttons.Button.State.DISABLED,
-				onclick: () => {
-					if (this.#sendButton.getState() === ui_buttons.Button.State.DISABLED) {
-						return;
-					}
-					this.#parent.emit('changestate', {
-						departmentValues: isDepartmentControlVisible ? departmentControl.getValues() : []
+			super({
+				...options,
+				sendButtonCallback: departmentIds => {
+					parent.emit('changestate', {
+						departmentValues: main_core.Type.isArray(departmentIds) ? departmentIds : []
 					});
+				},
+				closeButtonCallback: () => {
+					parent.emit('closepopup');
 				}
 			});
-			return this.#sendButton;
-		}
-		#getCancelButton() {
-			return new ui_buttons.Button({
-				useAirDesign: true,
-				text: main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_CANCEL'),
-				size: ui_buttons.Button.Size.LARGE,
-				style: ui_buttons.AirButtonStyle.OUTLINE,
-				onclick: () => {
-					this.#parent.emit('closepopup');
-				},
-				noCaps: true
-			});
-		}
-		#onChangeDepartments(event) {
-			if (!this.#isDepartmentControlVisible()) {
-				return;
-			}
-			const {
-				tags
-			} = event.data;
-			const state = tags?.length > 0 ? null : ui_buttons.Button.State.DISABLED;
-			this.#getSendButton().setState(state);
-		}
-		#getModificator() {
-			switch (this.#options.userType) {
-				case 'collaber':
-					return 'collaber';
-				case 'integrator':
-					return 'integrator';
-				default:
-					return 'extranet';
-			}
-		}
-		#getTitle() {
-			switch (this.#options.userType) {
-				case 'collaber':
-					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_COLLABA_TITLE');
-				case 'integrator':
-					return main_core.Extension.getSettings('intranet.transfer-to-intranet').isRenamedIntegrator === true ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_INTEGRATOR_TITLE_RENAMED') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_INTEGRATOR_TITLE');
-				default:
-					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TITLE');
-			}
-		}
-		#getPosition() {
-			switch (this.#options.userType) {
-				case 'collaber':
-					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_COLLABER');
-				case 'integrator':
-					return main_core.Extension.getSettings('intranet.transfer-to-intranet').isRenamedIntegrator === true ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_INTEGRATOR_RENAMED') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_INTEGRATOR');
-				default:
-					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_EXTRANET');
-			}
-		}
-		#getActionButtonText() {
-			return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TRANSFER');
-		}
-		#isDepartmentControlVisible() {
-			return this.#options.showDepartmentControl !== false;
 		}
 	}
 
@@ -7226,5 +7075,5 @@ this.BX = this.BX || {};
 	exports.PopupState = PopupState;
 	exports.TransferToIntranetPopup = TransferToIntranetPopup;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Main, BX.Event, BX.UI, BX.UI, BX.UI, BX.UI, BX.Intranet);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Main, BX.Event, BX.UI, BX.UI, BX.UI, BX.UI, BX.Intranet.User);
 //# sourceMappingURL=transfer-to-intranet.bundle.js.map

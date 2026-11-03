@@ -35,6 +35,7 @@ export const ReplicationSheet = {
 	template: `
 		<BottomSheet
 			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_REPLICATION_TITLE_SHEET')"
 			customClass="tasks-bottom-sheet-replicate-content"
 			@close="$emit('close')"
 		>

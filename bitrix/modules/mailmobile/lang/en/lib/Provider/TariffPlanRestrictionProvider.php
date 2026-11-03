@@ -1,0 +1,2 @@
+<?php
+$MESS["MAILMOBILE_TARIFF_PLAN_RESTRICTION_LARGE_ATTACHMENT"] = 'Send large files as links';

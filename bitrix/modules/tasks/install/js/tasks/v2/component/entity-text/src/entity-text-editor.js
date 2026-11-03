@@ -4,7 +4,7 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { toRaw } from 'ui.vue3';
 import { FileEvent, getFilesFromDataTransfer, isFilePasted, type UploaderFile, type UploaderFileInfo } from 'ui.uploader.core';
 import { COMMAND_PRIORITY_NORMAL, PASTE_COMMAND } from 'ui.lexical.core';
-import { TextEditor, Plugins, type TextEditorOptions } from 'ui.text-editor';
+import { TextEditor, Plugins, Commands, type TextEditorOptions } from 'ui.text-editor';
 import { type VueUploaderAdapter } from 'ui.uploader.vue';
 import { type Store } from 'ui.vue3.vuex';
 
@@ -13,7 +13,7 @@ import { EntitySelectorEntity } from 'tasks.v2.const';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
 
 import { ExtendedEditorOptions } from './default-editor-options';
-import { CheckListPlugin } from './editor-plugins/check-list-plugin';
+import { CheckListPlugin, CHECK_LIST_BUTTON } from './editor-plugins/check-list-plugin';
 
 export const EntityTextTypes = Object.freeze({
 	Task: 'task',
@@ -127,18 +127,33 @@ export class EntityTextEditor extends EventEmitter
 				},
 			},
 			removePlugins: [],
-			extraPlugins: [
-				CheckListPlugin,
-			],
+			// No "to checklist" button in results, so the plugin is skipped there.
+			extraPlugins: this.#isCheckListAvailable() ? [CheckListPlugin] : [],
 			copilot: this.#getCopilotParams(),
 		};
 
-		this.#editor = new TextEditor({ ...ExtendedEditorOptions, ...additionalEditorOptions });
+		const editorOptions = { ...ExtendedEditorOptions, ...additionalEditorOptions };
+
+		if (!this.#isCheckListAvailable())
+		{
+			// Remove the button in sync with the plugin, else the toolbar references an unregistered component.
+			editorOptions.floatingToolbar = ExtendedEditorOptions.floatingToolbar.filter(
+				(item) => item !== CHECK_LIST_BUTTON,
+			);
+		}
+
+		this.#editor = new TextEditor(editorOptions);
 	}
 
 	setEditorText(content): void
 	{
 		this.#editor.setText(content);
+	}
+
+	// Called from the Vue layer after the action completes; the plugin no longer hides the toolbar on click.
+	closeFloatingToolbar(): void
+	{
+		this.#editor?.dispatchCommand(Commands.HIDE_DIALOG_COMMAND);
 	}
 
 	getFiles(): UploaderFileInfo[]
@@ -155,8 +170,11 @@ export class EntityTextEditor extends EventEmitter
 
 	#subscribeToEvents(): void
 	{
-		const checkListPlugin: CheckListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
-		checkListPlugin.getEmitter().subscribe('checkListButtonClick', this.handleClickInCheckList);
+		if (this.#isCheckListAvailable())
+		{
+			const checkListPlugin: CheckListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
+			checkListPlugin.getEmitter().subscribe('checkListButtonClick', this.handleClickInCheckList);
+		}
 
 		this.#fileService.subscribe('onFileComplete', this.onFileComplete);
 		this.#fileService.subscribe('onFileRemove', this.onFileRemove);
@@ -166,8 +184,11 @@ export class EntityTextEditor extends EventEmitter
 
 	#unsubscribeToEvents(): void
 	{
-		const checkListPlugin: CheckListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
-		checkListPlugin.getEmitter().unsubscribe('checkListButtonClick', this.handleClickInCheckList);
+		if (this.#isCheckListAvailable())
+		{
+			const checkListPlugin: CheckListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
+			checkListPlugin.getEmitter().unsubscribe('checkListButtonClick', this.handleClickInCheckList);
+		}
 
 		this.#fileService.unsubscribe('onFileComplete', this.onFileComplete);
 		this.#fileService.unsubscribe('onFileRemove', this.onFileRemove);
@@ -270,7 +291,7 @@ export class EntityTextEditor extends EventEmitter
 					return {
 						copilotOptions: {
 							moduleId: 'tasks',
-							category: 'system',
+							category: 'tasks_results',
 							contextId: `tasks_result_${this.#entityId}`,
 							menuForceTop: false,
 						},
@@ -282,6 +303,12 @@ export class EntityTextEditor extends EventEmitter
 		}
 
 		return {};
+	}
+
+	#isCheckListAvailable(): boolean
+	{
+		// The button's event is only consumed by the task description, not the result editor.
+		return this.#entityType !== EntityTextTypes.Result;
 	}
 
 	handleEditorChange = (): void => {
@@ -299,9 +326,7 @@ export class EntityTextEditor extends EventEmitter
 	};
 
 	handleClickInCheckList = (baseEvent: BaseEvent): void => {
-		const selectionText = baseEvent.getData();
-
-		this.emit('addCheckList', selectionText);
+		this.emit('addCheckList', baseEvent.getData());
 	};
 
 	onFileComplete = (event: BaseEvent): void => {

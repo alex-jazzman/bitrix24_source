@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'assets/icons',
+		'debug/prism',
 		'haptics',
 		'type',
 		'im:messenger/const',
@@ -20,11 +21,15 @@ return [
 		'im:messenger/controller/sidebar-v2/user-actions/participants',
 		'im:messenger/controller/sidebar-v2/user-actions/user',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/rest',
 		'im:messenger/lib/ui/notification',
 		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/typography',
 	],
 	'bundle' => [
 		'./src/view',
 		'./src/permission-manager',
+		'./src/project-info/link',
 	],
 ];

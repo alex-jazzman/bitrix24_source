@@ -1,13 +1,12 @@
-import { Runtime } from 'main.core';
 import InputSimple from './input-simple';
 import InputExtendedForTrackedObject from './input-extended-for-tracked-object';
 import { BackendForTrackedObject } from './backend';
 
 export default class InputSimpleForTrackedObject extends InputSimple
 {
-	constructor(objectId, data)
+	constructor(objectId, data, options)
 	{
-		super(objectId, data);
+		super(objectId, data, options);
 	}
 
 	getBackend()
@@ -15,30 +14,12 @@ export default class InputSimpleForTrackedObject extends InputSimple
 		return BackendForTrackedObject;
 	}
 
-	openSettingsPopup()
+	getSharingAccessPopupObjectId(): ?number
 	{
-		void Runtime.loadExtension('disk.sharing-access-popup')
-			.then(({ SharingPopupDialog }) => {
-				const realObjectId = parseInt(this.data?.objectId, 10);
+		// the popup works with the real disk object, not with the tracked one
+		const realObjectId = parseInt(this.data?.objectId, 10);
 
-				if (!realObjectId)
-				{
-					this.constructor.showPopup(this.objectId, this.data);
-					return;
-				}
-
-				const popup = new SharingPopupDialog();
-				popup.open({
-					objectId: realObjectId,
-					initialTab: 'public',
-					onAfterHide: () => {
-						void this.reload();
-					},
-				});
-			})
-			.catch(() => {
-				this.constructor.showPopup(this.objectId, this.data);
-			});
+		return realObjectId > 0 ? realObjectId : null;
 	}
 
 	static getExtendedInputClass()

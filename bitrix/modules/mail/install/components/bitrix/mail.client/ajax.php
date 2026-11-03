@@ -8,13 +8,18 @@ use Bitrix\Mail\Helper\MailboxAccess;
 use Bitrix\Mail\Helper\Message;
 use Bitrix\Mail\Integration\Calendar\ICal\ICalMailManager;
 use Bitrix\Mail\Integration\Intranet\Secretary;
-use Bitrix\Mail\Internal\Service\LargeAttachment\LargeAttachmentService;
+use Bitrix\Mail\Internal\Service\MailTemplate\ComposedMessageTemplateSaver;
+use Bitrix\Mail\Internal\Service\Signature\Image\SignatureImageSendPreparation;
 use Bitrix\Mail\Internal\Service\SourceGeneration\MigrationActionGuard;
 use Bitrix\Mail\Internals\MessageAccessTable;
 use Bitrix\Mail\MailboxTable;
 use Bitrix\Mail\MailMessageTable;
 use Bitrix\Mail\Public\Service\LargeAttachment\Dto\SendContractResult;
 use Bitrix\Mail\Public\Service\LargeAttachment\SendContractValidator;
+use Bitrix\Mail\Service\Message\AttachmentContentId;
+use Bitrix\Mail\Service\Message\SendFailure;
+use Bitrix\Mail\Service\Message\SendMessageCommand;
+use Bitrix\Mail\Service\Message\SendMessageService;
 use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
@@ -40,6 +45,18 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	public const ERROR_LARGE_ATTACHMENT_INVALID_SEND_CONTRACT = SendContractValidator::ERROR_INVALID_SEND_CONTRACT;
 	public const ERROR_LARGE_ATTACHMENT_LINK_MISSING = SendContractValidator::ERROR_LINK_MISSING;
 
+	/**
+	 * Phrase for every refusal owned by the send service. Errors received from a transport already carry
+	 * user-facing messages and pass through unchanged.
+	 */
+	private const SEND_ERROR_PHRASE = [
+		SendMessageService::ERROR_INVALID_AUTHOR => 'MAIL_MESSAGE_SEND_INVALID_AUTHOR',
+		SendMessageService::ERROR_INVALID_SENDER => 'MAIL_MESSAGE_BAD_SENDER',
+		SendMessageService::ERROR_EMPTY_RECIPIENTS => 'MAIL_MESSAGE_EMPTY_RCPT',
+		SendMessageService::ERROR_TOO_MANY_RECIPIENTS => 'MAIL_MESSAGE_TO_MANY_RECIPIENTS',
+		SendMessageService::ERROR_INVALID_HEADER => 'MAIL_MESSAGE_SEND_INVALID_HEADER',
+		SendMessageService::ERROR_SEND_FAILED => 'MAIL_MESSAGE_SEND_ERROR',
+	];
 	/**
 	 * Initializes controller.
 	 * @return void
@@ -233,7 +250,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	 *
 	 * @param array $data
 	 *
-	 * @return void
+	 * @return array|null
 	 *
 	 * @throws Exception
 	 * @throws Main\NotImplementedException
@@ -443,6 +460,14 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			return;
 		}
 
+		$senderAddressMismatch = $this->findSenderAddressMismatch((string)$fromEmail, $senderIdentity);
+		if ($senderAddressMismatch !== null)
+		{
+			$this->errorCollection[] = $senderAddressMismatch;
+
+			return;
+		}
+
 		if ($this->isSenderLimitReached((string)$fromEmail, $totalRecipientsCount, $senderIdentity))
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_DAILY_SENDER_LIMIT_REACHED'));
@@ -467,32 +492,51 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 
 		$messageBody = (string) $decodedData['message'];
 		$messageBodyHtml = '';
+		$signatureImagePreparation = new SignatureImageSendPreparation();
 		if (!empty($messageBody))
 		{
-			$messageBody = preg_replace('/<!--.*?-->/is', '', $messageBody);
-			$messageBody = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $messageBody);
-			$messageBody = preg_replace('/<title[^>]*>.*?<\/title>/is', '', $messageBody);
-
-			$sanitizer = new \CBXSanitizer();
-			$sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
-			$sanitizer->applyDoubleEncode(false);
-			$sanitizer->addTags(Helper\Message::getWhitelistTagAttributes());
-
-			$messageBody = $sanitizer->sanitizeHtml($messageBody);
+			$messageBody = $signatureImagePreparation->sanitizeHtml($messageBody);
 			$messageBodyHtml = $messageBody;
-			$messageBody = preg_replace('/https?:\/\/bxacid:(n?\d+)/i', 'bxacid:\1', $messageBody);
 		}
+
+		$signatureImageResult = $signatureImagePreparation->prepare(
+			$messageBodyHtml,
+			$userId,
+			$hostname,
+		);
+		if (!$signatureImageResult->isSuccess())
+		{
+			foreach ($signatureImageResult->getErrors() as $error)
+			{
+				$this->errorCollection[] = new Error(
+					(string)Loc::getMessage('MAIL_MESSAGE_SEND_ERROR'),
+					$error->getCode(),
+				);
+			}
+
+			return;
+		}
+
+		/*
+		 * The body a template keeps is the letter as its author wrote it: below, the transport turns the
+		 * images of the signature into `cid:` parts, and those mean nothing outside the sent letter — a
+		 * template built on them would show an empty frame instead of the picture.
+		 */
+		$templateBodyHtml = $this->normalizeInlineAttachmentLinks($messageBodyHtml);
+
+		$signatureImageSnapshot = $signatureImageResult->getData();
+		$messageBodyHtml = (string)$signatureImageSnapshot['html'];
+		$messageBody = $this->normalizeInlineAttachmentLinks($messageBodyHtml);
 
 		$outgoingSubject = Helper\Message::getOutgoingSubject(
 			(string)($data['subject'] ?? ''),
 			$messageBodyHtml,
-			(string)(Loc::getMessage('MAIL_MESSAGE_EMPTY_SUBJECT_PLACEHOLDER') ?? '(no subject)'),
 		);
 
 		$outgoingBody = $messageBody;
 
-		$totalSize = 0;
-		$attachments = array();
+		$totalSize = (int)$signatureImageSnapshot['totalSize'];
+		$attachments = (array)$signatureImageSnapshot['attachments'];
 		$attachmentIds = array();
 
 		$largeAttachmentResult = $this->resolveLargeAttachmentsForSend(
@@ -564,11 +608,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 
 				$attachmentIds[] = $id;
 
-				$contentId = sprintf(
-					'bxacid.%s@%s.mail',
-					hash('crc32b', $file['external_id'].$file['size'].$file['name']),
-					hash('crc32b', $hostname)
-				);
+				$contentId = AttachmentContentId::build($file, $hostname);
 
 				$attachments[] = array(
 					'ID'           => $contentId,
@@ -656,6 +696,33 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			$outgoingParams['HEADER']['In-Reply-To']=sprintf('<%s>', $data['IN_REPLY_TO']);
 		}
 
+		$sendService = new SendMessageService();
+		$sendCommandArguments = [
+			'authorId' => $userId,
+			'mailbox' => $mailboxHelper,
+			'sender' => $fromEncoded ?: $fromEmail,
+			'recipients' => $toEncoded,
+			'cc' => $ccEncoded,
+			'bcc' => $bccEncoded,
+			'subject' => $outgoingSubject,
+			'body' => $outgoingBody,
+			'attachments' => $attachments,
+			'messageId' => '',
+			'inReplyTo' => isset($data['IN_REPLY_TO']) ? (string)$data['IN_REPLY_TO'] : null,
+			'externalLinkIds' => $externalLinkIds,
+			'senderIdentity' => $senderIdentity,
+		];
+		$validationResult = $sendService->validate(new SendMessageCommand(...$sendCommandArguments));
+		if (!$validationResult->isSuccess())
+		{
+			foreach ($validationResult->getErrors() as $error)
+			{
+				$this->errorCollection[] = $this->localizeSendError($error);
+			}
+
+			return;
+		}
+
 		$messageBindings = array();
 		$createdCrmActivityId = 0;
 
@@ -691,6 +758,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			foreach ($crmAttachmentIdMap as $sourceId => $copyId)
 			{
 				$crmMessageBody = preg_replace(
+
 					'/bxacid:n?' . preg_quote((string)$sourceId, '/') . '(?!\d)/i',
 					'bxacid:n' . $copyId,
 					$crmMessageBody,
@@ -728,18 +796,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 					);
 				}
 
-				if (!empty($activityFields['ERROR_TEXT']))
-				{
-					$this->errorCollection[] = new \Bitrix\Main\Error($activityFields['ERROR_TEXT']);
-				}
-				elseif (!empty($activityFields['ERROR_CODE']))
-				{
-					$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_' . $activityFields['ERROR_CODE']));
-				}
-				else
-				{
-					$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_ACTIVITY_CREATE_ERROR'));
-				}
+				$this->errorCollection[] = new \Bitrix\Main\Error($this->getCrmActivityErrorText($activityFields));
 
 				return;
 			}
@@ -758,135 +815,62 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 
 		$outgoingParams['HEADER']['Message-Id'] = $messageId;
 
-		if (empty($mailboxHelper))
+		$sendCommandArguments['messageId'] = $messageId;
+		$sendResult = $sendService->send(new SendMessageCommand(...$sendCommandArguments));
+		if (!$sendResult->isSuccess())
 		{
-			$context = new Main\Mail\Context();
-			$context->setCategory(Main\Mail\Context::CAT_EXTERNAL);
-			$context->setPriority(
-				isset($addressList) && count($addressList) > 2
-				? Main\Mail\Context::PRIORITY_LOW
-				: Main\Mail\Context::PRIORITY_NORMAL
-			);
-			$this->applySenderIdentity($context, $senderIdentity);
-
-			$mailParams = array_merge(
-				$outgoingParams,
-				array(
-					'CONTEXT' => $context,
-				)
-			);
-			if (method_exists(Main\Mail\Mail::class, 'sendResult'))
+			if ($createdCrmActivityId > 0 && $this->hasControlledSenderError($sendResult))
 			{
-				$sendResult = Main\Mail\Mail::sendResult($mailParams);
-				$result = $sendResult->isSuccess();
-				if (!$result)
-				{
-					$this->errorCollection->add($sendResult->getErrors());
-					if (
-						$createdCrmActivityId > 0
-						&& $this->hasControlledSenderError($sendResult)
-					)
-					{
-						\CCrmActivity::delete(
-							$createdCrmActivityId,
-							false,
-							false,
-							[
-								'CURRENT_USER' => $userId,
-								'RECYCLE_BIN_FORCE_USER_ID' => $userId,
-							],
-						);
-					}
-				}
-			}
-			else
-			{
-				$result = Main\Mail\Mail::send($mailParams);
-			}
-		}
-		else
-		{
-			$eventManager = Main\EventManager::getInstance();
-			$eventKey = $eventManager->addEventHandler(
-				'mail',
-				'onBeforeUserFieldSave',
-				function (\Bitrix\Main\Event $event) use (&$messageBindings)
-				{
-					$params = $event->getParameters();
-					$messageBindings[] = $params['entity_type'];
-				}
-			);
-
-			$markerEventKey = null;
-			if ($externalLinkIds)
-			{
-				$expectedMessageId = trim($messageId, '<>');
-				$markerEventKey = $eventManager->addEventHandler(
-					'mail',
-					'onMailMessageNew',
-					function (Main\Event $event) use ($expectedMessageId, $externalLinkIds)
-					{
-						$message = (array)$event->getParameter('message');
-						if ((string)($message['MSG_ID'] ?? '') !== $expectedMessageId)
-						{
-							return;
-						}
-
-						$result = LargeAttachmentService::registerMessageMarkers(
-							(int)($message['ID'] ?? 0),
-							$externalLinkIds,
-						);
-						if (!$result->isSuccess())
-						{
-							(new Main\Diag\LoggerFactory())->createById(
-								'mail.large_attachment',
-								[],
-								false,
-							)?->error(
-								'Could not register outgoing message markers: {error}',
-								['error' => $result->getErrors()[0]->getMessage()],
-							);
-						}
-					},
+				\CCrmActivity::delete(
+					$createdCrmActivityId,
+					false,
+					false,
+					['CURRENT_USER' => $userId, 'RECYCLE_BIN_FORCE_USER_ID' => $userId],
 				);
 			}
 
-			try
+			foreach ($sendResult->getErrors() as $error)
 			{
-				$mailboxHelper->mail(array_merge(
-					$outgoingParams,
-					array(
-						'HEADER' => array_merge(
-							$outgoingParams['HEADER'],
-							array(
-								'To' => $outgoingParams['TO'],
-								'Subject' => $outgoingParams['SUBJECT'],
-							)
-						),
-					)
-				));
-			}
-			finally
-			{
-				$eventManager->removeEventHandler('mail', 'onBeforeUserFieldSave', $eventKey);
-				if ($markerEventKey !== null)
-				{
-					$eventManager->removeEventHandler('mail', 'onMailMessageNew', $markerEventKey);
-				}
+				$this->errorCollection[] = $this->localizeSendError($error);
 			}
 
-			$result = true;
+			return;
 		}
 
-		if ($result === true)
-		{
-			\Bitrix\Mail\Internal\Service\Draft\DraftCompletion::afterSuccessfulSend(
+		/*
+		 * The files a template should keep are asked about before the send closes the draft: the copies of a
+		 * draft are released only while it is still active, and a template built on the copies would lose
+		 * its attachments to the cleanup of the drafts.
+		 */
+		$templateSaver = $this->createComposedMessageTemplateSaver();
+		$templateDiskObjectIds = $templateSaver->resolveAuthorObjectIds(
+			$userId,
+			isset($data['draftId']) ? (int)$data['draftId'] : null,
+			isset($data['draftRevision']) ? (int)$data['draftRevision'] : null,
+			array_map('intval', $attachmentIds),
+		);
+
+		$messageBindings = array_merge(
+			$messageBindings,
+			(array)($sendResult->getData()['messageBindings'] ?? []),
+		);
+
+		\Bitrix\Mail\Internal\Service\Draft\DraftCompletion::afterSuccessfulSend(
+			userId: $userId,
+			draftId: $data['draftId'] ?? null,
+			contextType: \Bitrix\Mail\Internals\DraftTable::CONTEXT_MAIL,
+			expectedRevision: $data['draftRevision'] ?? null,
+		);
+
+		$templateSaveWarning = $this->isTemplateSaveRequested($data)
+			&& !$templateSaver->save(
 				userId: $userId,
-				draftId: $data['draftId'] ?? null,
-				contextType: \Bitrix\Mail\Internals\DraftTable::CONTEXT_MAIL,
-				expectedRevision: $data['draftRevision'] ?? null,
-			);
-		}
+				subject: $outgoingSubject,
+				bodyHtml: $templateBodyHtml,
+				emailFrom: $fromEmail,
+				diskObjectIds: $templateDiskObjectIds,
+			)
+		;
 
 		addEventToStatFile(
 			'mail',
@@ -895,16 +879,43 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			trim(trim($messageId), '<>')
 		);
 
-		return;
+		return ['templateSaveWarning' => $templateSaveWarning];
+	}
+
+	protected function isTemplateSaveRequested(array $data): bool
+	{
+		return in_array($data['saveAsTemplate'] ?? null, [true, 1, '1'], true);
+	}
+
+	protected function createComposedMessageTemplateSaver(): ComposedMessageTemplateSaver
+	{
+		return new ComposedMessageTemplateSaver();
+	}
+
+	/**
+	 * Links of the attachments of the editor come from the browser as absolute ones; everything downstream —
+	 * the outgoing letter and the catalog of the templates alike — reads the short form.
+	 */
+	protected function normalizeInlineAttachmentLinks(string $html): string
+	{
+		return (string)preg_replace('/https?:\/\/bxacid:(n?\d+)/i', 'bxacid:\1', $html);
 	}
 
 	private function hasControlledSenderError(Main\Result $result): bool
 	{
+		if (SendFailure::getControlledError($result) !== null)
+		{
+			return true;
+		}
+
 		foreach ($result->getErrors() as $error)
 		{
 			if (in_array(
 				(string)$error->getCode(),
-				['MAIL_SENDER_ADDRESS_MISMATCH', 'MAIL_SENDER_UNAVAILABLE'],
+				[
+					SendMessageService::ERROR_INVALID_AUTHOR,
+					SendMessageService::ERROR_INVALID_SENDER,
+				],
 				true,
 			))
 			{
@@ -913,6 +924,40 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		return false;
+	}
+
+	/** An error code of crm without a phrase of its own falls back to the general one instead of an empty banner. */
+	private function getCrmActivityErrorText(array $activityFields): string
+	{
+		$text = trim((string)($activityFields['ERROR_TEXT'] ?? ''));
+		if ($text !== '')
+		{
+			return $text;
+		}
+
+		$code = (string)($activityFields['ERROR_CODE'] ?? '');
+		if ($code !== '')
+		{
+			$text = trim((string)Loc::getMessage('MAIL_CLIENT_' . $code));
+			if ($text !== '')
+			{
+				return $text;
+			}
+		}
+
+		return (string)Loc::getMessage('MAIL_CLIENT_ACTIVITY_CREATE_ERROR');
+	}
+
+	/** Keeps the machine-readable code of the service and replaces its English diagnostic with a user phrase. */
+	private function localizeSendError(Error $error): Error
+	{
+		$phrase = self::SEND_ERROR_PHRASE[(string)$error->getCode()] ?? null;
+		if ($phrase === null)
+		{
+			return $error;
+		}
+
+		return new Error((string)Loc::getMessage($phrase), $error->getCode());
 	}
 
 	/**
@@ -1141,6 +1186,33 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		return null;
 	}
 
+	/**
+	 * A letter of a mailbox is sent later by the queue agent, and a refusal of the kernel does not reach the
+	 * form from there. So the one refusal the kernel can already tell - the own SMTP record of the mailbox
+	 * carries another address than From - is asked here, before the letter is queued.
+	 */
+	private function findSenderAddressMismatch(string $fromEmail, ?Sender\Identity $identity): ?Error
+	{
+		if ($identity === null || !$identity->hasMailboxRef())
+		{
+			return null;
+		}
+
+		$customSmtp = Sender::getCustomSmtp($fromEmail, $identity);
+		if (!$customSmtp)
+		{
+			return null;
+		}
+
+		$senderEmail = (string)$customSmtp->getFrom();
+		if ($senderEmail !== '' && strcasecmp($fromEmail, $senderEmail) === 0)
+		{
+			return null;
+		}
+
+		return SendFailure::createSenderAddressMismatchError();
+	}
+
 	private function resolveOutgoingMailboxId(
 		?Sender\Identity $identity,
 		int $legacyMailboxId,
@@ -1253,6 +1325,14 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		if (!Loader::includeModule('crm'))
 		{
 			$this->errorCollection[] = new Main\Error(Loc::getMessage('MAIL_CLIENT_AJAX_ERROR'));
+
+			return;
+		}
+
+		if (!MailboxAccess::hasUserAccessToEditMailboxIntegrationCrm((int)$USER->getId()))
+		{
+			$this->errorCollection[] = new Main\Error(Loc::getMessage('MAIL_CLIENT_ELEMENT_DENIED'));
+
 			return;
 		}
 

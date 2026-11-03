@@ -1,0 +1,29 @@
+/* Laid out and measured for a single pair: the pilot hands over exactly one, and the multi-line
+   case of two and more is not designed. */
+.editor-chart-settings-summary {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.editor-chart-settings-summary__item {
+	display: flex;
+	gap: 4px;
+	min-width: 0;
+}
+
+/* The label names the value, so it is shown whole: it neither shrinks nor gets an ellipsis. */
+.editor-chart-settings-summary__label {
+	flex-shrink: 0;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.editor-chart-settings-summary__value {
+	min-width: 0;
+	color: var(--ui-color-palette-black-base);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

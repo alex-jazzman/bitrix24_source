@@ -1,17 +1,20 @@
 .ui-switcher.--air {
 	--ui-switcher-width: 30px;
 	--ui-switcher-height: 15px;
-	--ui-switcher-bg: var(--ui-color-design-filled-bg);
-	--ui-switcher-off-bg: var(--ui-color-base-6);
 	--ui-switcher-cursor-size: 11px;
-	--ui-switcher-cursor-bg: var(--ui-color-base-white-fixed);
 	--ui-switcher-off-cursor-translate: 2px;
 	--ui-switcher-on-cursor-translate: calc(var(--ui-switcher-width) - var(--ui-switcher-cursor-size) - var(--ui-switcher-off-cursor-translate));
 
 	width: var(--ui-switcher-width);
 	height: var(--ui-switcher-height);
-	background-color: var(--ui-switcher-bg);
+	/* The shorthand and not `background-color`: some designs paint the track with a gradient, and a
+	   colour property takes none - one variable has to carry both kinds. */
+	background: var(--ui-switcher-bg);
 	border-radius: 512px;
+	/* The ring is an inset shadow, not a border: a border is taken out of the track (`box-sizing:
+	   border-box` in style.css) and would leave the cursor no gap on the smaller sizes, while
+	   `outline` is already taken by the focus ring. */
+	box-shadow: inset 0 0 0 var(--ui-switcher-stroke-weight) var(--ui-switcher-stroke);
 }
 
 /* SIZE */
@@ -61,69 +64,301 @@
 .ui-switcher.--air,
 .ui-switcher.--air.--style-filled {
 	--ui-switcher-bg: var(--ui-color-design-filled-bg);
-	--ui-switcher-off-bg: var(--ui-color-base-6);
 	--ui-switcher-cursor-bg: var(--ui-color-design-filled-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-stroke-weight);
 }
 
 .ui-switcher.--air.--style-tinted {
+	--ui-switcher-bg: var(--ui-color-design-tinted-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-stroke-weight);
+}
+
+.ui-switcher.--air.--style-filled-success {
+	--ui-switcher-bg: var(--ui-color-design-filled-success-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-success-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-success-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-success-stroke-weight);
+}
+
+.ui-switcher.--air.--style-filled-alert {
+	--ui-switcher-bg: var(--ui-color-design-filled-alert-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-alert-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-alert-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-alert-stroke-weight);
+}
+
+.ui-switcher.--air.--style-filled-warning {
+	--ui-switcher-bg: var(--ui-color-design-filled-warning-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-warning-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-warning-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-warning-stroke-weight);
+}
+
+.ui-switcher.--air.--style-filled-black {
+	--ui-switcher-bg: var(--ui-color-design-filled-black-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-black-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-black-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-black-stroke-weight);
+}
+
+.ui-switcher.--air.--style-filled-white {
+	--ui-switcher-bg: var(--ui-color-design-filled-white-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-white-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-white-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-white-stroke-weight);
+}
+
+.ui-switcher.--air.--style-filled-na {
+	--ui-switcher-bg: var(--ui-color-design-filled-na-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-na-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-na-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-na-stroke-weight);
+}
+
+/* The gradient fills. The stops come from the group, but the type, the angle and the percentages are not
+   in the tokens: each recipe is taken whole from a component that already draws the group - these two
+   from the button of the same module (`ui.air-buttons.css`), the two below from the label. */
+.ui-switcher.--air.--style-filled-bitrix-gpt {
+	--ui-switcher-bg: linear-gradient(
+		263.02deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 25.99%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 86%
+	);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-bitrix-gpt-content);
+	/* the group carries no `-stroke`: its outline is a gradient, which a shadow cannot draw */
+	--ui-switcher-stroke: transparent;
+	--ui-switcher-stroke-weight: var(--ui-design-filled-bitrix-gpt-stroke-weight);
+}
+
+/* Radial and not linear: the shape belongs to the group, and the button draws this group radially. */
+.ui-switcher.--air.--style-filled-boost {
+	--ui-switcher-bg: radial-gradient(
+		110.42% 110.42% at -10.42% 31.25%,
+		var(--ui-color-design-filled-boost-bg-gradient-1) 0%,
+		var(--ui-color-design-filled-boost-bg-gradient-2) 58.65%,
+		var(--ui-color-design-filled-boost-bg-gradient-3) 100%
+	);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-boost-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-boost-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-boost-stroke-weight);
+}
+
+.ui-switcher.--air.--style-tinted-a1 {
 	--ui-switcher-bg: var(--ui-color-design-tinted-a1-bg);
-	--ui-switcher-off-bg: var(--ui-color-base-7);
 	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-a1-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-a1-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-a1-stroke-weight);
 }
 
-.ui-switcher.--air,
-.ui-switcher.--air.ui-switcher-size-xss,
-.ui-switcher.--air.ui-switcher-size-xs,
-.ui-switcher.--air.ui-switcher-size-sm,
-.ui-switcher.--air.ui-switcher-size-md,
-.ui-switcher.--air.ui-switcher-size-l,
-.ui-switcher.--air.ui-switcher-size-xl {
-	width: var(--ui-switcher-width);
-	height: var(--ui-switcher-height);
+.ui-switcher.--air.--style-tinted-success {
+	--ui-switcher-bg: var(--ui-color-design-tinted-success-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-success-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-success-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-success-stroke-weight);
 }
 
+.ui-switcher.--air.--style-tinted-alert {
+	--ui-switcher-bg: var(--ui-color-design-tinted-alert-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-alert-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-alert-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-alert-stroke-weight);
+}
+
+.ui-switcher.--air.--style-tinted-warning {
+	--ui-switcher-bg: var(--ui-color-design-tinted-warning-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-warning-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-warning-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-warning-stroke-weight);
+}
+
+.ui-switcher.--air.--style-tinted-green {
+	--ui-switcher-bg: var(--ui-color-design-tinted-green-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-green-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-green-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-green-stroke-weight);
+}
+
+.ui-switcher.--air.--style-tinted-violet {
+	--ui-switcher-bg: var(--ui-color-design-tinted-violet-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-violet-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-violet-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-violet-stroke-weight);
+}
+
+.ui-switcher.--air.--style-tinted-na {
+	--ui-switcher-bg: var(--ui-color-design-tinted-na-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-na-content);
+	--ui-switcher-stroke: var(--ui-color-design-tinted-na-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-na-stroke-weight);
+}
+
+/* The recipe of the label (`ui.system.label`), whole. The cursor takes `-content-icon` because this
+   group has no flat `-content` at all. */
+.ui-switcher.--air.--style-tinted-bitrix-gpt {
+	--ui-switcher-bg: linear-gradient(
+		269.5deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
+	--ui-switcher-cursor-bg: var(--ui-color-design-tinted-bitrix-gpt-content-icon);
+	--ui-switcher-stroke: transparent;
+	--ui-switcher-stroke-weight: var(--ui-design-tinted-bitrix-gpt-stroke-weight);
+}
+
+/* The designs the ring was introduced for: across the outline family the `-bg` equals the surface behind
+   them, so without the ring the track would be invisible. One group of the family is left out - it is
+   named after a product that no longer exists, and the guard over the build watches for that name. */
+.ui-switcher.--air.--style-outline {
+	--ui-switcher-bg: var(--ui-color-design-outline-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-a1 {
+	--ui-switcher-bg: var(--ui-color-design-outline-a1-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-a1-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-a1-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-a1-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-a2 {
+	--ui-switcher-bg: var(--ui-color-design-outline-a2-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-a2-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-a2-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-a2-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-alert {
+	--ui-switcher-bg: var(--ui-color-design-outline-alert-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-alert-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-alert-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-alert-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-boost {
+	--ui-switcher-bg: var(--ui-color-design-outline-boost-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-boost-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-boost-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-boost-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-na {
+	--ui-switcher-bg: var(--ui-color-design-outline-na-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-na-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-na-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-na-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-success {
+	--ui-switcher-bg: var(--ui-color-design-outline-success-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-success-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-success-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-success-stroke-weight);
+}
+
+.ui-switcher.--air.--style-outline-warning {
+	--ui-switcher-bg: var(--ui-color-design-outline-warning-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-warning-content);
+	--ui-switcher-stroke: var(--ui-color-design-outline-warning-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-outline-warning-stroke-weight);
+}
+
+/* The one design whose ring is a gradient, which `box-shadow` cannot draw: the ring moves to a layer of
+   its own (the technique of the label), so the geometry stays the one every design shares - a real
+   border would not, see the root rule. The thickness of this group lives in the colour namespace. */
+.ui-switcher.--air.--style-outline-bitrix-gpt {
+	--ui-switcher-bg: var(--ui-color-design-outline-bitrix-gpt-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-outline-bitrix-gpt-content-icon);
+	/* the ring below stands in for the shadow of the root */
+	--ui-switcher-stroke: transparent;
+	--ui-switcher-stroke-weight: var(--ui-color-design-outline-bitrix-gpt-stroke-weight);
+}
+
+/* The layer is cut down to a padding-sized frame by a pair of masks, and clicks go through it: the
+   track underneath is the control. */
+.ui-switcher.--air.--style-outline-bitrix-gpt::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-color-design-outline-bitrix-gpt-stroke-weight);
+	border-radius: inherit;
+	background: linear-gradient(
+		257.74deg,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1) 97.21%
+	);
+	/* a stencil and not a colour: the layers are subtracted from one another, so their fill never shows */
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+}
+
+.ui-switcher.--air.--style-selection {
+	--ui-switcher-bg: var(--ui-color-design-selection-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-selection-content);
+	--ui-switcher-stroke: var(--ui-color-design-selection-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-selection-stroke-weight);
+}
+
+/* One off position for the whole set: the state overrides the design entirely, so all four variables are
+   declared - leaving one out lets the design back in. The cursor and the ring come from `filled` and not
+   from `disabled`: the off look is the look of `filled`, and `-content` of `disabled` reads as blocked. */
 .ui-switcher.--air.ui-switcher-off {
-	--ui-switcher-bg: var(--ui-switcher-off-bg);
+	--ui-switcher-bg: var(--ui-color-design-disabled-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-filled-content);
+	--ui-switcher-stroke: var(--ui-color-design-filled-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-stroke-weight);
 }
 
-.ui-switcher.--air .ui-switcher-enabled,
-.ui-switcher.--air.ui-switcher-size-xss .ui-switcher-enabled,
-.ui-switcher.--air.ui-switcher-size-xs .ui-switcher-enabled,
-.ui-switcher.--air.ui-switcher-size-sm .ui-switcher-enabled,
-.ui-switcher.--air.ui-switcher-size-md .ui-switcher-enabled,
-.ui-switcher.--air.ui-switcher-size-l .ui-switcher-enabled,
-.ui-switcher.--air.ui-switcher-size-xl .ui-switcher-enabled,
-.ui-switcher.--air .ui-switcher-disabled,
-.ui-switcher.--air.ui-switcher-size-xss .ui-switcher-disabled,
-.ui-switcher.--air.ui-switcher-size-xs .ui-switcher-disabled,
-.ui-switcher.--air.ui-switcher-size-sm .ui-switcher-disabled,
-.ui-switcher.--air.ui-switcher-size-md .ui-switcher-disabled,
-.ui-switcher.--air.ui-switcher-size-l .ui-switcher-disabled,
-.ui-switcher.--air.ui-switcher-size-xl .ui-switcher-disabled {
-	font-size: 0;
-	padding: 0;
-}
-
+/* The track is painted once, on the root, and these two are stretched over it (style.css): `transparent`
+   keeps the alpha of a translucent token from stacking and hides the legacy fill of the same selectors. */
 .ui-switcher.--air .ui-switcher-enabled,
 .ui-switcher.--air .ui-switcher-disabled {
-	background-color: var(--ui-switcher-bg);
+	font-size: 0;
+	padding: 0;
+	background-color: transparent;
 }
 
+/* Blocked comes last on purpose: it holds the same specificity as the designs and as the off rule, so
+   only the order makes it win when the classes meet on one node. It declares all four as well - the
+   track and the cursor of `disabled`, and the ring of `filled`, the same one the off position takes. */
 .ui-switcher.--air.ui-switcher-lock {
-	--ui-switcher-bg: var(--ui-color-base-7);
-	--ui-switcher-cursor-bg: var(--ui-color-base-6);
+	--ui-switcher-bg: var(--ui-color-design-disabled-bg);
+	--ui-switcher-cursor-bg: var(--ui-color-design-disabled-content-alt);
+	--ui-switcher-stroke: var(--ui-color-design-filled-stroke);
+	--ui-switcher-stroke-weight: var(--ui-design-filled-stroke-weight);
 
 	opacity: 1;
 	cursor: not-allowed;
 }
 
-.ui-switcher.--air .ui-switcher-cursor,
-.ui-switcher.--air.ui-switcher-size-xss .ui-switcher-cursor,
-.ui-switcher.--air.ui-switcher-size-xs .ui-switcher-cursor,
-.ui-switcher.--air.ui-switcher-size-sm .ui-switcher-cursor,
-.ui-switcher.--air.ui-switcher-size-md .ui-switcher-cursor,
-.ui-switcher.--air.ui-switcher-size-l .ui-switcher-cursor,
-.ui-switcher.--air.ui-switcher-size-xl .ui-switcher-cursor {
+/* The ring drawn by a layer of its own answers to no variable, so the states take the layer off the
+   node instead of recolouring it - `display`, because the only alpha a component may paint with is the
+   one inside a token. Both classes are spelled out to outweigh the ring by specificity, not by order. */
+.ui-switcher.--air.ui-switcher-off.--style-outline-bitrix-gpt::after,
+.ui-switcher.--air.ui-switcher-lock.--style-outline-bitrix-gpt::after {
+	display: none;
+}
+
+.ui-switcher.--air .ui-switcher-cursor {
 	width: var(--ui-switcher-cursor-size);
 	height: var(--ui-switcher-cursor-size);
 	top: 50%;

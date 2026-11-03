@@ -283,8 +283,10 @@ this.BX = this.BX || {};
 		static EXTERNAL_TYPE_LOCAL = 'local';
 		static RELOAD_DELAY = 1000;
 		constructor(data, config) {
+			this.config = config;
 			this.setSections(data.sections);
 			this.setConfig(config);
+			this.setAccessNames(config.accessNames);
 			this.addTaskSection();
 			this.sortSections();
 			main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Section:delete', event => {
@@ -345,6 +347,20 @@ this.BX = this.BX || {};
 		getCalendarType() {
 			return this.calendarType;
 		}
+		setAccessNames(accessNames = {}) {
+			if (!main_core.Type.isObjectLike(accessNames)) {
+				return;
+			}
+			this.config.accessNames = {
+				...(this.config.accessNames || {}),
+				...accessNames
+			};
+			for (const code in accessNames) {
+				if (accessNames.hasOwnProperty(code)) {
+					calendar_util.Util.setAccessName(code, accessNames[code]);
+				}
+			}
+		}
 		handlePullChanges(params) {
 			if (params.command === 'delete_section') {
 				const sectionId = parseInt(params.fields.ID, 10);
@@ -375,6 +391,7 @@ this.BX = this.BX || {};
 					'ownerId': this.ownerId
 				}
 			}).then(response => {
+				this.setAccessNames(response.data.accessNames);
 				this.setSections(response.data.sections || []);
 				this.sortSections();
 				if (response.data.config) {
@@ -442,6 +459,7 @@ this.BX = this.BX || {};
 						return;
 					}
 					const sectionList = response.data.sectionList || [];
+					this.setAccessNames(response.data.accessNames);
 					this.setSections(sectionList);
 					this.sortSections();
 					this.addTaskSection();

@@ -2,19 +2,12 @@
  * @module layout/ui/fields/file-with-background-attach
  */
 jn.define('layout/ui/fields/file-with-background-attach', (require, exports, module) => {
-	const { FileFieldClass, itemsShape, FILE_TASK_ID_PREFIX } = require('layout/ui/fields/file');
-	const { Uuid } = require('utils/uuid');
+	const { FileFieldClass, itemsShape } = require('layout/ui/fields/file');
 	const { uniqBy } = require('utils/array');
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { Haptics } = require('haptics');
-	const { Events } = require('uploader/const');
-	const {
-		NativeViewerMediaTypes,
-		getMimeType,
-		getExtension,
-		prepareObjectId,
-	} = require('utils/file');
+	const { NativeViewerMediaTypes, prepareObjectId } = require('utils/file');
 	const { UnattachedFilesStorage } = require('files/background-manager/unattached-files-storage');
 	const { showToast } = require('toast');
 	const { Logger, LogType } = require('utils/logger');
@@ -310,49 +303,19 @@ jn.define('layout/ui/fields/file-with-background-attach', (require, exports, mod
 			}
 		}
 
-		prepareFileUploadTasks(files)
+		/**
+		 * The background manager attaches the uploaded file to the entity itself, so the task carries its controller.
+		 * @param {FileFieldUploadingItem} file
+		 * @return {FileFieldUploadTask}
+		 */
+		createFileUploadTask(file)
 		{
-			if (!files || !Array.isArray(files))
-			{
-				return [];
-			}
+			const { attachToEntityController } = this.getConfig();
 
-			const { controller: controllerConfig, attachToEntityController } = this.getConfig();
-			const { endpoint: controller, options: controllerOptions } = controllerConfig;
-
-			return (
-				files
-					.filter((file) => !file.isDiskFile)
-					.map((file) => {
-						const uuid = Uuid.getV4();
-						const taskId = FILE_TASK_ID_PREFIX + uuid;
-						const extension = getExtension(file.name);
-
-						let fileName = file.name;
-						if (extension === 'heic')
-						{
-							fileName = `${fileName.slice(0, Math.max(0, fileName.length - extension.length))}jpg`;
-						}
-
-						file.id = taskId;
-						file.uuid = this.uuid;
-						file.isUploading = true;
-
-						return {
-							taskId,
-							controller,
-							controllerOptions,
-							attachToEntityController,
-							params: file,
-							name: fileName,
-							type: file.type,
-							mimeType: getMimeType(file.type),
-							url: file.url,
-							resize: this.getResizeOptions(file.type),
-							onDestroyEventName: Events.FILE_CREATED,
-						};
-					})
-			);
+			return {
+				...super.createFileUploadTask(file),
+				attachToEntityController,
+			};
 		}
 
 		/**

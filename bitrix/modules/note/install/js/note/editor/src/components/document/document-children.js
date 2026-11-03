@@ -1,11 +1,10 @@
-import { BIcon, Set } from 'ui.icon-set.api.vue';
-import { DocumentList } from 'note.ui.document-list';
+import { DocumentList, DocumentSection } from 'note.ui.document-list';
 
 export const DocumentChildrenComponent = {
 	name: 'NoteEditorDocumentChildren',
 	components: {
-		BIcon,
 		DocumentList,
+		DocumentSection,
 	},
 	props: {
 		children: {
@@ -30,27 +29,15 @@ export const DocumentChildrenComponent = {
 		},
 	},
 	emits: ['open-child'],
-	data()
-	{
-		return {
-			collapsed: false,
-		};
-	},
 	computed: {
+		// Whether the block is shown at all stays here: the shared section renders whatever it is
+		// given and knows nothing about documents.
 		visible(): boolean
 		{
 			return this.children.length > 0;
 		},
-		toggleIcon(): string
-		{
-			return this.collapsed ? Set.CHEVRON_DOWN : Set.CHEVRON_UP;
-		},
 	},
 	methods: {
-		toggle(): void
-		{
-			this.collapsed = !this.collapsed;
-		},
 		onOpen(item): void
 		{
 			this.$emit('open-child', item);
@@ -62,23 +49,22 @@ export const DocumentChildrenComponent = {
 	},
 	// language=Vue
 	template: `
-		<div v-if="visible" class="note-editor-children-block">
-			<div class="note-editor-children-header" @click="toggle">
-				<span class="note-editor-children-header-label">{{ documentsLabel }}</span>
-				<button class="note-editor-children-toggle" type="button">
-					<BIcon :name="toggleIcon" :size="16" />
-				</button>
-			</div>
-			<template v-if="!collapsed">
-				<DocumentList
-					mode="compact"
-					:items="children"
-					:has-more="childrenHasMore"
-					:loading="childrenLoading"
-					@open="onOpen"
-					@load-more="onLoadMore"
-				/>
-			</template>
-		</div>
+		<DocumentSection
+			v-if="visible"
+			class="note-editor-children-block"
+			:label="documentsLabel"
+			:heading-level="2"
+			test-id="note-editor-children"
+		>
+			<DocumentList
+				mode="compact"
+				data-testid="note-editor-children-list"
+				:items="children"
+				:has-more="childrenHasMore"
+				:loading="childrenLoading"
+				@open="onOpen"
+				@load-more="onLoadMore"
+			/>
+		</DocumentSection>
 	`,
 };

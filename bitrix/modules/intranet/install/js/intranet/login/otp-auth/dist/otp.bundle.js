@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, ui_vue3, main_core, ui_vue3_pinia, pull_client, ui_system_typography_vue, ui_analytics, ui_vue3_components_button, ui_iconSet_api_core) {
+(function (exports, ui_vue3, main_core, ui_vue3_pinia, pull_client, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, ui_analytics, ui_vue3_components_button, ui_iconSet_api_core) {
 	'use strict';
 
 	function useOtpCaptchaFlow(options = {}) {
@@ -116,10 +116,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 				type: String,
 				default: ''
 			},
-			authLoginUrl: {
-				type: String,
-				default: ''
-			},
 			accountChangeUrl: {
 				type: String,
 				default: ''
@@ -131,14 +127,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 			captchaCode: {
 				type: String,
 				default: ''
-			},
-			notShowLinks: {
-				type: Boolean,
-				default: false
-			},
-			isBitrix24: {
-				type: Boolean,
-				default: false
 			},
 			userData: {
 				type: Object,
@@ -179,6 +167,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="OTP" />
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="otp" />
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')" />
 
 			<div v-show="isOtpBlockVisible">
@@ -257,14 +246,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_HELP') }}
 				</a>
 			</button>
-		</Teleport>
-
-		<Teleport to=".intranet-body__header-right" v-if="!notShowLinks && !isBitrix24">
-			<div class="intranet-text-btn intranet-text-btn--auth">
-				<a class="intranet-text-btn-link" :href="authLoginUrl" rel="nofollow">
-					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_LINK') }}
-				</a>
-			</div>
 		</Teleport>
 	`
 	};
@@ -367,18 +348,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	});
 
-	// @vue/component
+	const failureDetailsPopupId = 'intranet-push-otp-failure-details';
+	const failureDetailsPopupContainerId = `${failureDetailsPopupId}-popup`;
+	const failureDetailsCloseDelay = 200;
+	const failureDetailsPopupMaxWidth = 400;
+	const failureDetailsPopupViewportOffset = 32;
 
+	// @vue/component
 	const PushOtp = {
+		name: 'PushOtp',
 		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
 			Captcha,
-			Headline: ui_system_typography_vue.Headline
-		},
-		setup() {
-			const store = usePushOtpStore();
-			return {
-				store
-			};
+			Headline: ui_system_typography_vue.Headline,
+			Popup: ui_vue3.BitrixVue.defineAsyncComponent('ui.vue3.components.popup', 'Popup'),
+			Text2Xs: ui_system_typography_vue.Text2Xs,
+			TextSm: ui_system_typography_vue.TextSm
 		},
 		props: {
 			pushOtpConfig: {
@@ -405,10 +390,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 				type: String,
 				default: null
 			},
+			showPushOtpFailureDetails: {
+				type: Boolean,
+				default: false
+			},
 			isAlternativeMethodsAvailable: {
 				type: Boolean,
 				default: false
 			}
+		},
+		setup() {
+			const store = usePushOtpStore();
+			return {
+				Outline: ui_iconSet_api_vue.Outline,
+				store
+			};
 		},
 		data() {
 			const userDevice = this.userDevice ?? {};
@@ -416,10 +412,46 @@ this.BX.Intranet = this.BX.Intranet || {};
 				isPushBlockVisible: true,
 				isCaptchaBlockVisible: false,
 				isUserDeviceVisible: Object.keys(userDevice).length > 0,
-				isRememberChecked: localStorage.getItem('OTP_REMEMBER_CHECKED') === 'Y'
+				isRememberChecked: localStorage.getItem('OTP_REMEMBER_CHECKED') === 'Y',
+				isFailureDetailsShown: false,
+				isFailureDetailsPinned: false,
+				isFailureDetailsButtonHovered: false,
+				isFailureDetailsPopupHovered: false,
+				isFailureDetailsButtonFocused: false,
+				failureDetailsCloseTimer: null,
+				failureDetailsViewportWidth: window.innerWidth
 			};
 		},
 		computed: {
+			failureDetailsPopupId() {
+				return failureDetailsPopupId;
+			},
+			failureDetailsPopupOptions() {
+				return {
+					id: failureDetailsPopupContainerId,
+					bindElement: this.$refs.failureDetailsAnchor,
+					bindOptions: {
+						position: 'top',
+						forceBindPosition: true
+					},
+					width: this.failureDetailsPopupWidth,
+					padding: 0,
+					autoHide: true,
+					autoHideHandler: ({
+						target
+					}) => this.shouldAutoHideFailureDetails(target),
+					closeByEsc: true,
+					closeIcon: false,
+					angle: true,
+					offsetTop: 6,
+					targetContainer: document.body,
+					borderRadius: 'var(--ui-border-radius-3xl)',
+					className: 'intranet-push-otp-failure-details-popup'
+				};
+			},
+			failureDetailsPopupWidth() {
+				return Math.min(failureDetailsPopupMaxWidth, Math.max(0, this.failureDetailsViewportWidth - failureDetailsPopupViewportOffset));
+			},
 			deviceIconClass() {
 				return this.userDevice?.icon ? `intranet-island-otp__device-icon--${this.userDevice.icon}` : '';
 			},
@@ -434,9 +466,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 		},
 		mounted() {
+			main_core.Event.bind(window, 'resize', this.onFailureDetailsViewportResize);
 			sendOtpAnalytics({
 				event: 'show'
 			});
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(window, 'resize', this.onFailureDetailsViewportResize);
+			this.clearFailureDetailsCloseTimer();
 		},
 		methods: {
 			...useOtpCaptchaFlow({
@@ -470,12 +507,78 @@ this.BX.Intranet = this.BX.Intranet || {};
 				} else {
 					localStorage.removeItem('OTP_REMEMBER_CHECKED');
 				}
+			},
+			showFailureDetails() {
+				this.clearFailureDetailsCloseTimer();
+				this.isFailureDetailsShown = true;
+			},
+			onFailureDetailsButtonMouseEnter() {
+				this.isFailureDetailsButtonHovered = true;
+				this.showFailureDetails();
+			},
+			onFailureDetailsButtonMouseLeave() {
+				this.isFailureDetailsButtonHovered = false;
+				this.scheduleFailureDetailsClose();
+			},
+			onFailureDetailsButtonFocus() {
+				this.isFailureDetailsButtonFocused = true;
+				this.showFailureDetails();
+			},
+			onFailureDetailsButtonBlur() {
+				this.isFailureDetailsButtonFocused = false;
+				this.scheduleFailureDetailsClose();
+			},
+			onFailureDetailsButtonClick() {
+				this.isFailureDetailsPinned = !this.isFailureDetailsShown || !this.isFailureDetailsPinned;
+				this.isFailureDetailsShown = this.isFailureDetailsPinned;
+				this.clearFailureDetailsCloseTimer();
+			},
+			onFailureDetailsPopupMouseEnter() {
+				this.isFailureDetailsPopupHovered = true;
+				this.clearFailureDetailsCloseTimer();
+			},
+			onFailureDetailsPopupMouseLeave() {
+				this.isFailureDetailsPopupHovered = false;
+				this.scheduleFailureDetailsClose();
+			},
+			onFailureDetailsPopupClose() {
+				this.isFailureDetailsShown = false;
+				this.isFailureDetailsPinned = false;
+			},
+			onFailureDetailsViewportResize() {
+				this.failureDetailsViewportWidth = window.innerWidth;
+				this.$nextTick(() => {
+					const popup = this.$refs.failureDetailsPopup;
+					popup?.getPopupInstance().setWidth(this.failureDetailsPopupWidth);
+					popup?.adjustPosition();
+				});
+			},
+			shouldAutoHideFailureDetails(target) {
+				const button = this.$refs.failureDetailsButton;
+				const isButtonTarget = target === button || button?.contains(target);
+				const isPopupTarget = Boolean(target?.closest?.(`#${failureDetailsPopupContainerId}, #${failureDetailsPopupId}`));
+				return !isButtonTarget && !isPopupTarget;
+			},
+			scheduleFailureDetailsClose() {
+				this.clearFailureDetailsCloseTimer();
+				this.failureDetailsCloseTimer = setTimeout(() => {
+					if (!this.isFailureDetailsPinned && !this.isFailureDetailsButtonHovered && !this.isFailureDetailsPopupHovered && !this.isFailureDetailsButtonFocused) {
+						this.isFailureDetailsShown = false;
+					}
+				}, failureDetailsCloseDelay);
+			},
+			clearFailureDetailsCloseTimer() {
+				if (this.failureDetailsCloseTimer !== null) {
+					clearTimeout(this.failureDetailsCloseTimer);
+					this.failureDetailsCloseTimer = null;
+				}
 			}
 		},
 		template: `
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="OTP" />
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="push" />
 			<input type="hidden" name="USER_OTP" />
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
 
@@ -483,7 +586,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<Headline size='lg' class="intranet-form-title">
 					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_AUTH') }}
 				</Headline>
-				<div v-if="errorMessage" class="intranet-otp-error-block" v-html="errorMessage"></div>
+				<div v-if="!showPushOtpFailureDetails && errorMessage" class="intranet-otp-error-block" v-html="errorMessage"></div>
 				<div class="intranet-island-otp-push__main-content">
 					<div class="intranet-island-otp-push__description">
 						<span class="intranet-island-otp-push__description_text">
@@ -512,6 +615,101 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 					<div class="intranet-island-otp-push__mobile"></div>
 				</div>
+				<div
+					v-if="showPushOtpFailureDetails && errorMessage"
+					data-testid="intranet-push-otp-failure"
+					class="intranet-push-otp-failure"
+				>
+					<BIcon
+						class="intranet-push-otp-failure__icon"
+						:name="Outline.ALERT_ACCENT"
+						:size="24"
+						color="var(--ui-color-design-tinted-alert-content-icon)"
+					/>
+					<div class="intranet-push-otp-failure__content">
+						<Text2Xs>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_PUSH_FAILURE_MESSAGE') }}</Text2Xs>
+						<button
+							ref="failureDetailsButton"
+							type="button"
+							data-testid="intranet-push-otp-failure-details-button"
+							class="intranet-push-otp-failure__details-button"
+							:aria-expanded="isFailureDetailsShown"
+							:aria-controls="failureDetailsPopupId"
+							:aria-describedby="isFailureDetailsShown ? failureDetailsPopupId : null"
+							@mouseenter="onFailureDetailsButtonMouseEnter"
+							@mouseleave="onFailureDetailsButtonMouseLeave"
+							@focus="onFailureDetailsButtonFocus"
+							@blur="onFailureDetailsButtonBlur"
+							@click="onFailureDetailsButtonClick"
+						>
+							<Text2Xs class="intranet-push-otp-failure__details-label">
+								{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_MORE') }}
+							</Text2Xs>
+							<span
+								ref="failureDetailsAnchor"
+								aria-hidden="true"
+								class="intranet-push-otp-failure__details-anchor"
+							></span>
+						</button>
+					</div>
+				</div>
+				<Popup
+					v-if="isFailureDetailsShown"
+					ref="failureDetailsPopup"
+					:options="failureDetailsPopupOptions"
+					@close="onFailureDetailsPopupClose"
+				>
+					<div
+						:id="failureDetailsPopupId"
+						data-testid="intranet-push-otp-failure-details"
+						class="intranet-push-otp-failure-details"
+						role="tooltip"
+						@mouseenter="onFailureDetailsPopupMouseEnter"
+						@mouseleave="onFailureDetailsPopupMouseLeave"
+					>
+						<TextSm tag="div" accent class="intranet-push-otp-failure-details__title">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_PUSH_FAILURE_REASONS_TITLE') }}
+						</TextSm>
+						<ul class="intranet-push-otp-failure-details__list">
+							<li class="intranet-push-otp-failure-details__item">
+								<div class="intranet-push-otp-failure-details__icon-container">
+									<BIcon
+										:name="Outline.BROWSER"
+										:size="24"
+										color="var(--ui-color-accent-main-primary)"
+										class="intranet-push-otp-failure-details__icon"
+										aria-hidden="true"
+									/>
+								</div>
+								<TextSm>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_PUSH_FAILURE_REASON_MULTIPLE_SESSIONS') }}</TextSm>
+							</li>
+							<li class="intranet-push-otp-failure-details__item">
+								<div class="intranet-push-otp-failure-details__icon-container">
+									<BIcon
+										:name="Outline.CLOCK"
+										:size="24"
+										color="var(--ui-color-accent-main-primary)"
+										class="intranet-push-otp-failure-details__icon"
+										aria-hidden="true"
+									/>
+								</div>
+								<TextSm>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_PUSH_FAILURE_REASON_DELAY') }}</TextSm>
+							</li>
+							<li class="intranet-push-otp-failure-details__item">
+								<div class="intranet-push-otp-failure-details__icon-container">
+									<BIcon
+										:name="Outline.REFRESH"
+										:size="24"
+										color="var(--ui-color-accent-main-primary)"
+										class="intranet-push-otp-failure-details__icon"
+										aria-hidden="true"
+									/>
+								</div>
+								<TextSm>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_PUSH_FAILURE_REASON_STALE_PAGE') }}</TextSm>
+							</li>
+						</ul>
+					</div>
+				</Popup>
 				<div class="intranet-island-otp-push-links__wrapper">
 					<span 
 						data-testid="bx-intranet-2fa-main-push-resend-push-link"
@@ -557,6 +755,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			isRecoveryCodesEnabled: {
 				type: Boolean,
 				default: false
+			},
+			isDeviceConnectSkipped: {
+				type: Boolean,
+				default: false
 			}
 		},
 		mounted() {
@@ -598,10 +800,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 		},
 		template: `
-	
-			<div @click="showPushOtp" class="intranet-back-button">
-				<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
-			</div>
+		<div
+			v-if="!isDeviceConnectSkipped"
+			data-testid="bx-intranet-2fa-alternative-methods-back-to-push"
+			class="intranet-back-button"
+			@click="showPushOtp"
+		>
+			<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
+		</div>
 
 		<div class="intranet-island-otp-push-alternative__wrapper">
 			
@@ -622,7 +828,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<i class="ui-icon-set --o-key intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_RECOVERY_CODES') }}</span>
 				</div>
-				<div data-testid="bx-intranet-2fa-alternative-methods-offline-code" class="intranet-island-otp-push-alternative__item" @click="showApplicationOfflineCode">
+				<div data-testid="bx-intranet-2fa-alternative-methods-offline-code" v-if="!isDeviceConnectSkipped" class="intranet-island-otp-push-alternative__item" @click="showApplicationOfflineCode">
 					<i class="ui-icon-set --o-shield-checked intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE') }}</span>
 				</div>
@@ -1004,6 +1210,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y"/>
 			<input type="hidden" name="TYPE" value="OTP"/>
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="sms"/>
 			<input type="hidden" name="USER_OTP" :value="code"/>
 			<input type="hidden" name="CURRENT_STEP" value="sms"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
@@ -1166,6 +1373,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y"/>
 			<input type="hidden" name="TYPE" value="OTP"/>
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="email"/>
 			<input type="hidden" name="USER_OTP" :value="code"/>
 			<input type="hidden" name="CURRENT_STEP" value="email"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
@@ -1521,6 +1729,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="OTP"/>
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="recoveryCodes"/>
 			<input type="hidden" name="USER_OTP" :value="recoveryCode"/>
 			<input type="hidden" name="CURRENT_STEP" value="recoveryCodes"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
@@ -1791,6 +2000,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="OTP" />
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="applicationOfflineCode" />
 			<input type="hidden" name="USER_OTP" :value="code"/>
 			<input type="hidden" name="CURRENT_STEP" value="applicationOfflineCode"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
@@ -1917,10 +2127,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 				type: Boolean,
 				default: false
 			},
-			isBitrix24: {
-				type: Boolean,
-				default: false
-			},
 			canLoginBySms: {
 				type: Boolean,
 				default: false
@@ -1930,6 +2136,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 				default: false
 			},
 			isRecoveryCodesEnabled: {
+				type: Boolean,
+				default: false
+			},
+			isDeviceConnectSkipped: {
 				type: Boolean,
 				default: false
 			},
@@ -1961,6 +2171,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 				type: String,
 				default: ''
 			},
+			showPushOtpFailureDetails: {
+				type: Boolean,
+				default: false
+			},
 			errorMessageText: {
 				type: String,
 				default: null
@@ -1990,8 +2204,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				errorMessage: this.errorMessageText,
 				currentAuthStep: currentStep,
 				isAlternativeMethodsAvailable: this.canLoginBySms || this.canLoginByEmail || this.isRecoveryCodesEnabled,
-				pullClient: null,
-				pendingOtpCode: null
+				pullClient: null
 			};
 		},
 		computed: {
@@ -2017,6 +2230,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 					return helpButtonConfig;
 				}
 				return null;
+			},
+			isBackToLoginVisible() {
+				return !this.notShowLinks && main_core.Type.isStringFilled(this.authLoginUrl);
 			}
 		},
 		created() {
@@ -2083,7 +2299,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 					moduleId: 'security',
 					command: 'pushOtpCode',
 					callback: params => {
-						this.handlePushOtpCode(params);
+						this.handlePushOtpCode(params).catch(error => {
+							console.error('Push OTP handling failed', error);
+						});
 					}
 				});
 				try {
@@ -2092,30 +2310,35 @@ this.BX.Intranet = this.BX.Intranet || {};
 					console.error('Push OTP pull start failed', error);
 				}
 			},
-			handlePushOtpCode(params) {
+			async handlePushOtpCode(params) {
 				const code = params?.code;
 				if (!code) {
 					return;
 				}
-				const authComponent = this.$refs?.authComponent;
-				const form = authComponent?.$refs?.authForm ?? (main_core.Type.isUndefined(document) ? null : document.forms?.form_auth);
-				if (this.applyOtpCode(code, authComponent, form)) {
-					return;
-				}
-				this.pendingOtpCode = code;
 				this.currentAuthStep = 'push';
-				this.$nextTick(() => {
-					const pushComponent = this.$refs?.authComponent;
-					const pushForm = pushComponent?.$refs?.authForm ?? (main_core.Type.isUndefined(document) ? null : document.forms?.form_auth);
-					this.applyOtpCode(this.pendingOtpCode, pushComponent, pushForm);
-					this.pendingOtpCode = null;
-				});
+				await this.$nextTick();
+				const pushComponent = this.$refs?.authComponent;
+				const pushForm = pushComponent?.$refs?.authForm;
+				this.applyOtpCode(code, pushComponent, pushForm);
 			},
 			applyOtpCode(code, componentRef, formRef) {
 				if (!formRef || !formRef.USER_OTP) {
 					return false;
 				}
-				formRef.USER_OTP.value = code;
+				const {
+					USER_OTP: otpInput
+				} = formRef;
+				otpInput.value = code;
+				const otpSourceInput = formRef.OTP_SOURCE ?? main_core.Dom.create('input', {
+					attrs: {
+						type: 'hidden',
+						name: 'OTP_SOURCE'
+					}
+				});
+				if (!formRef.OTP_SOURCE) {
+					main_core.Dom.append(otpSourceInput, formRef);
+				}
+				otpSourceInput.value = 'push';
 				const hasCaptcha = Boolean(this.captchaCode);
 				if (hasCaptcha && componentRef?.showCaptcha) {
 					componentRef.showCaptcha();
@@ -2131,14 +2354,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 		 ref="authComponent"
 		 :authUrl="authUrl"
 		 :authOtpHelpLink="authOtpHelpLink"
-		 :authLoginUrl="authLoginUrl"
 		 :rememberOtp="rememberOtp"
 		 :captchaCode="captchaCode"
-		 :notShowLinks="notShowLinks"
-		 :isBitrix24="isBitrix24"
 		 :canLoginBySms="canLoginBySms"
 		 :canLoginByEmail="canLoginByEmail"
 		 :isRecoveryCodesEnabled="isRecoveryCodesEnabled"
+		 :isDeviceConnectSkipped="isDeviceConnectSkipped"
 		 :maskedUserAuthPhoneNumber="maskedUserAuthPhoneNumber"
 		 :maskedUserAuthEmail="maskedUserAuthEmail"
 		 :userDevice="userDevice"
@@ -2147,6 +2368,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		 :pushOtpConfig="pushOtpConfig"
 		 :recoveryCodesHelpLink="recoveryCodesHelpLink"
 		 :errorMessage="errorMessage"
+		 :showPushOtpFailureDetails="showPushOtpFailureDetails"
 		 :isAlternativeMethodsAvailable="isAlternativeMethodsAvailable"
 		 :canSendRequestRecoverAccess="canSendRequestRecoverAccess"
 		 @form-submit="onSubmitForm"
@@ -2160,6 +2382,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 		 @application-offline-code="onApplicationOfflineCode"
 		 @clear-errors="onClearErrors"
 		/>
+		<Teleport to=".intranet-body__header-right" v-if="isBackToLoginVisible">
+			<a
+				class="intranet-text-btn intranet-text-btn--auth"
+				:href="authLoginUrl"
+				rel="nofollow"
+				data-testid="bx-intranet-2fa-back-to-login"
+			>
+				{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_LINK') }}
+			</a>
+		</Teleport>
 		<Teleport to=".intranet-body__footer-right" v-if="currentHelpButtonConfig">
 			<button type="button" class="intranet-help-widget intranet-page-base__help" @click="onHelpButtonClick">
 				<i class="ui-icon-set intranet-help-widget__icon"></i>
@@ -2192,6 +2424,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				canLoginBySms: params.canLoginBySms,
 				canLoginByEmail: params.canLoginByEmail,
 				isRecoveryCodesEnabled: params.isRecoveryCodesEnabled,
+				isDeviceConnectSkipped: params.isDeviceConnectSkipped,
 				maskedUserAuthPhoneNumber: params.maskedUserAuthPhoneNumber,
 				maskedUserAuthEmail: params.maskedUserAuthEmail,
 				recoveryCodesHelpLink: params.recoveryCodesHelpLink,
@@ -2199,6 +2432,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				userData: params.userData,
 				accountChangeUrl: params.accountChangeUrl,
 				currentStep: params.currentStep,
+				showPushOtpFailureDetails: params.showPushOtpFailureDetails,
 				errorMessageText: params.errorMessage,
 				canSendRequestRecoverAccess: params.canSendRequestRecoverAccess,
 				userId: params.userId
@@ -2211,5 +2445,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.OtpAuth = OtpAuth;
 
-})(this.BX.Intranet.Login = this.BX.Intranet.Login || {}, BX.Vue3, BX, BX.Vue3.Pinia, BX, BX.UI.System.Typography.Vue, BX.UI.Analytics, BX.Vue3.Components, BX.UI.IconSet);
+})(this.BX.Intranet.Login = this.BX.Intranet.Login || {}, BX.Vue3, BX, BX.Vue3.Pinia, BX, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.UI.Analytics, BX.Vue3.Components, BX.UI.IconSet);
 //# sourceMappingURL=otp.bundle.js.map

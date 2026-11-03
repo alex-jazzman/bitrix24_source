@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

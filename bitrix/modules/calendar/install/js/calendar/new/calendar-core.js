@@ -100,9 +100,44 @@
 
 		this.reloadDebounce = BX.Runtime.debounce(this.reload, this.RELOAD_DELAY, this);
 		this.refreshDebounce = BX.Runtime.debounce(this.refresh, this.REFRESH_DELAY, this);
+
+		this.sendOpenSectionAnalytics();
 	}
 
 	Calendar.prototype = {
+		sendOpenSectionAnalytics: function()
+		{
+			if (this.util.type !== 'group' || !BX.Calendar.Analytics)
+			{
+				return;
+			}
+
+			BX.Calendar.Analytics.Analytics.sendEvent({
+				event: 'open_section',
+				cSection: 'project',
+				cSubSection: 'calendar',
+				cElement: 'calendar_view_button',
+				projectId: parseInt(this.util.ownerId, 10),
+				userType: this.getAnalyticsUserType(),
+				status: 'success',
+			});
+		},
+
+		getAnalyticsUserType: function()
+		{
+			if (this.util.isExtranetUser())
+			{
+				return 'user_extranet';
+			}
+
+			if (this.isCollabUser)
+			{
+				return 'user_collaber';
+			}
+
+			return 'user_intranet';
+		},
+
 		build: function()
 		{
 			this.mainCont = BX(this.id + '-main-container');

@@ -43,6 +43,11 @@ export class ReminderSelector
 		return this.#api.modifyReminderTypeForMemberRole(documentUid, memberRole, this.#chosenTypeId);
 	}
 
+	setType(reminderType: ReminderType): void
+	{
+		this.#chooseTypeById(reminderType);
+	}
+
 	#getItems(): Array<{ text: string; onclick: Function }>
 	{
 		return this.#getAvailableOptions().map((reminderType): MenuItemOptions => {

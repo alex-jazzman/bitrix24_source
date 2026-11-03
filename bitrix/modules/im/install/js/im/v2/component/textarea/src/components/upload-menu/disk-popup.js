@@ -1,7 +1,30 @@
 import 'file_dialog';
+import { DiskPicker, type PickerResultItem } from 'disk.disk-picker';
 import { ajax } from 'main.core';
 
 const FILE_DIALOG_ID = 'im-file-dialog';
+
+type LegacyDiskFile = {
+	id: string,
+	name: string,
+	ext: string,
+	sizeInt: number,
+};
+
+function mapPickerFiles(items: PickerResultItem[]): { [string]: LegacyDiskFile }
+{
+	return items.reduce((files, item) => {
+		const id = `n${item.objectId}`;
+		files[id] = {
+			id,
+			name: item.name,
+			ext: item.extension ?? '',
+			sizeInt: item.size,
+		};
+
+		return files;
+	}, {});
+}
 
 /* eslint-disable @bitrix24/bitrix24-rules/no-bx */
 // @vue/component
@@ -10,6 +33,36 @@ export const DiskPopup = {
 	emits: ['close', 'diskFileSelect'],
 	created()
 	{
+		if (DiskPicker.isEnabled())
+		{
+			const picker = new DiskPicker();
+			let isClosed = false;
+			const closeOnce = () => {
+				if (isClosed)
+				{
+					return;
+				}
+
+				isClosed = true;
+				this.$emit('close');
+			};
+			picker.open({
+				selectionMode: 'multiple',
+				onSelect: ({ items }) => {
+					if (items.length === 0)
+					{
+						return;
+					}
+
+					this.$emit('diskFileSelect', { files: mapPickerFiles(items) });
+				},
+				onClose: closeOnce,
+				onError: closeOnce,
+			});
+
+			return;
+		}
+
 		if (!BX.DiskFileDialog)
 		{
 			console.error('Couldn\'t initialize disk popup');

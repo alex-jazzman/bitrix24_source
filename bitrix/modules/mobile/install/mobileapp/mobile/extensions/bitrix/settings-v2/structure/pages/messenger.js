@@ -2,11 +2,19 @@
  * @module settings-v2/structure/pages/messenger
  */
 jn.define('settings-v2/structure/pages/messenger', (require, exports, module) => {
-	const { createToggle, createSection, createDescription } = require('settings-v2/structure/helpers/item-create-helper');
+	const {
+		createToggle,
+		createSection,
+		createDescription,
+		createReactionSelector,
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { ApplicationStorageSettingController } = require('settings-v2/controller/application-storage');
+	const { ReactionSettingController } = require('settings-v2/controller/reaction');
 	const { SettingsPageId, EventType } = require('settings-v2/const');
 	const { SettingEmitter } = require('settings-v2/emitter');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { DEFAULT_REACTION } = require('layout/ui/reaction/const');
+	const { Feature } = require('feature');
 	const { Loc } = require('loc');
 
 	const SETTING_SCOPE_ID = 'settings.chat';
@@ -86,6 +94,23 @@ jn.define('settings-v2/structure/pages/messenger', (require, exports, module) =>
 						id: 'message_video',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_MESSENGER_AUTOPLAY_VIDEO'),
 						controller: createMessengerController('autoplayVideo', true),
+					}),
+				],
+			}),
+			createSection({
+				id: 'messenger-reactions',
+				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_MESSENGER_REACTIONS'),
+				prefilter: () => Feature.isDefaultReactionAvailable(),
+				items: [
+					createReactionSelector({
+						id: 'messenger-quick_reaction',
+						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_MESSENGER_QUICK_REACTION'),
+						subtitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_MESSENGER_QUICK_REACTION_DESCRIPTION'),
+						controller: new ReactionSettingController({
+							settingId: 'defaultReaction',
+							fallbackValue: DEFAULT_REACTION,
+						}),
+						divider: false,
 					}),
 				],
 			}),

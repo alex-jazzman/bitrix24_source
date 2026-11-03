@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -32,6 +33,12 @@ export const FlowChip = {
 		return {
 			Outline,
 			flowMeta,
+		};
+	},
+	data(): Object
+	{
+		return {
+			isDialogShown: false,
 		};
 	},
 	computed: {
@@ -70,6 +77,20 @@ export const FlowChip = {
 
 			return this.loc('TASKS_V2_FLOW_TITLE_CHIP');
 		},
+		opensDialog(): boolean
+		{
+			return this.isAutonomous || !this.isSelected;
+		},
+	},
+	watch: {
+		isDialogShown(): void
+		{
+			this.syncAria();
+		},
+		opensDialog(): void
+		{
+			this.syncAria();
+		},
 	},
 	created(): void
 	{
@@ -78,7 +99,23 @@ export const FlowChip = {
 			void flowService.getFlow(this.task.flowId);
 		}
 	},
+	mounted(): void
+	{
+		this.syncAria();
+	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+		},
 		handleClick(): void
 		{
 			if (!this.isAutonomous && this.isSelected)
@@ -88,11 +125,27 @@ export const FlowChip = {
 				return;
 			}
 
+			this.isDialogShown = true;
 			flowDialog.show({
 				targetNode: this.$el,
 				taskId: this.taskId,
-				onClose: this.highlightField,
+				onClose: this.handleDialogClose,
+				onUpdate: this.highlightField,
 			});
+		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
+		handleDialogClose(): void
+		{
+			this.isDialogShown = false;
 		},
 		highlightField(): void
 		{
@@ -117,8 +170,11 @@ export const FlowChip = {
 			:data-task-id="taskId"
 			:data-task-chip-id="flowMeta.id"
 			:data-task-chip-value="task.flowId"
+			data-testid="tasks-flow-chip"
+			ref="chip"
 			@click="handleClick"
 			@clear="handleClear"
+			@keydown="handleKeydown"
 			:title="flow?.name ?? ''"
 		/>
 	`,

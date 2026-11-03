@@ -1,11 +1,15 @@
-import { mapWritableState } from 'ui.vue3.pinia';
+import { type ItemOptions } from 'ui.entity-selector';
+import { mapState, mapWritableState } from 'ui.vue3.pinia';
 
+import { Core } from 'socialnetwork.v2.core';
 import { EntitySelectorEntity } from 'socialnetwork.v2.const';
-import { UsersSelector } from 'socialnetwork.v2.components.selectors.users-selector';
+import { UsersSelector, type Item } from 'socialnetwork.v2.components.selectors.users-selector';
 import { useProjectStore } from 'socialnetwork.v2.model.project';
+import { useInterfaceStore } from 'socialnetwork.v2.model.interface';
 import { UiField } from 'socialnetwork.v2.components.elements.ui-field';
 
 import { InjectionKey } from '../../../../const/index.js';
+import { mapItemToProjectMember, mapProjectMemberToItemOptions } from '../user-selector-item';
 
 // @vue/component
 export const ModeratorsField = {
@@ -18,6 +22,7 @@ export const ModeratorsField = {
 	},
 	computed: {
 		...mapWritableState(useProjectStore, ['moderators']),
+		...mapState(useInterfaceStore, ['isActionUpdate']),
 	},
 	mounted(): void
 	{
@@ -33,16 +38,26 @@ export const ModeratorsField = {
 		{
 			return new UsersSelector({
 				context: 'socialnetworkProjectWizardModerators',
+				controlId: 'sonet-project-wizard-moderators',
+				ariaLabelledBy: 'sonet-project-wizard-moderators-label',
 				multiple: true,
-				preselectedItems: (this.moderators || []).map((m) => [m.type, m.id]),
+				preselectedItems: [],
+				selectedItems: this.getSelectedItems(),
+				intranetUsersOnly: !this.isActionUpdate && Core.getSettings().isExtranetConfigured === false,
 				targetContainer: this.getTargetContainer(),
-				onSelect: (userId: number) => {
-					this.select(userId);
+				onSelect: (userId: number, item: Item) => {
+					this.select(item);
 				},
-				onDeselect: (userId: number) => {
-					this.deselect(userId);
+				onDeselect: (userId: number, item: Item) => {
+					this.deselect(item);
 				},
 			});
+		},
+		getSelectedItems(): ItemOptions[]
+		{
+			return (this.moderators || [])
+				.filter((moderator) => moderator.type === EntitySelectorEntity.User)
+				.map((moderator) => mapProjectMemberToItemOptions(moderator));
 		},
 		getTargetContainer(): HTMLElement
 		{
@@ -57,22 +72,31 @@ export const ModeratorsField = {
 			this.selector.destroy();
 			this.selector = null;
 		},
-		select(userId: number): void
+		select(item: Item): void
 		{
-			if (this.moderators.some((m) => m.id === userId))
+			const member = mapItemToProjectMember(item);
+
+			if (this.moderators.some((moderator) => (
+				moderator.id === member.id && moderator.type === member.type
+			)))
 			{
 				return;
 			}
 
-			this.moderators.push({ id: userId, type: EntitySelectorEntity.User });
+			this.moderators.push(member);
 		},
-		deselect(userId: number): void
+		deselect(item: Item): void
 		{
-			this.moderators = this.moderators.filter((m) => m.id !== userId);
+			const member = mapItemToProjectMember(item);
+
+			this.moderators = this.moderators.filter(
+				(moderator) => !(moderator.id === member.id && moderator.type === member.type),
+			);
 		},
 	},
 	template: `
 		<UiField
+			data-testid="project-wizard-moderators-field"
 			:label="loc('SONET_EXT_PROJECT_WIZARD_MODERATORS_LABEL')"
 			labelFor="sonet-project-wizard-moderators"
 			:hint="loc('SONET_EXT_PROJECT_WIZARD_MODERATORS_HINT')"

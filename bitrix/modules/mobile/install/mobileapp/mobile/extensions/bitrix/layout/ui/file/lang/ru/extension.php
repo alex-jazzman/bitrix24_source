@@ -1,0 +1,2 @@
+<?php
+$MESS['UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE_MSGVER_1'] = 'Удалить файл?';

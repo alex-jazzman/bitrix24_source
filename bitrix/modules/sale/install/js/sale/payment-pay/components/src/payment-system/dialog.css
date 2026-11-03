@@ -1,0 +1,15 @@
+/* resets what the native button adds; the font, colour and opacity still come from the store template */
+.checkout-order-payment-close {
+	background: none;
+	border: none;
+	padding: 0;
+	text-align: inherit;
+}
+
+/* The layer and a stage swap move the focus to the stage itself, and
+ * `[tabindex="-1"]:focus { outline: 0 !important }` of the landing store theme
+ * (`landing24/assets/vendor/bootstrap/bootstrap.css:73`) is answered by nothing but `!important`. */
+[data-payment-stage][tabindex="-1"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset, 2px) !important;
+}

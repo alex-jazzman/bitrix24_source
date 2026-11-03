@@ -1,6 +1,6 @@
 import { ProductModel } from 'catalog.product-model';
 import { ProductSelector } from 'catalog.product-selector';
-import { ajax, Cache, Dom, Event, Runtime, Tag, Text, Type } from 'main.core';
+import { ajax, Cache, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Dialog, Item } from 'ui.entity-selector';
 import { DialogMode } from './dialog-mode';
@@ -41,6 +41,10 @@ export class ProductSearchInputBase
 		this.#clearInputCache();
 		const block = Tag.render`<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon"></div>`;
 
+		// Icons are absolutely positioned to the right of the field, so they must follow it in the
+		// DOM as well: otherwise Tab reaches them before the input they belong to (2.4.3).
+		Dom.append(this.getNameBlock(), block);
+
 		this.toggleIcon(this.getClearIcon(), 'none');
 		Dom.append(this.getClearIcon(), block);
 
@@ -79,8 +83,6 @@ export class ProductSearchInputBase
 		Event.bind(this.getNameInput(), 'click', this.iconsSwitchingOnNameInputHandler);
 		Event.bind(this.getNameInput(), 'input', this.iconsSwitchingOnNameInputHandler);
 		Event.bind(this.getNameInput(), 'change', this.nameInputChangeHandler);
-
-		Dom.append(this.getNameBlock(), block);
 
 		return block;
 	}
@@ -185,7 +187,9 @@ export class ProductSearchInputBase
 				<button
 					type="button"
 					class="ui-ctl-after ui-ctl-icon-clear"
+					aria-label="${Loc.getMessage('CATALOG_SELECTOR_CLEAR_ICON_LABEL')}"
 					onclick="${this.handleClearIconClick.bind(this)}"
+					onkeydown="${this.handleIconKeyDown.bind(this)}"
 				></button>
 			`;
 		});
@@ -433,9 +437,16 @@ export class ProductSearchInputBase
 
 	#handleIconsSwitchingOnNameInput(event: UIEvent): void
 	{
+		this.#applyActiveFieldIcons();
+	}
+
+	// Icon set shown while the name input itself holds focus: clear for a filled field,
+	// search for an empty one, never the detail link.
+	#applyActiveFieldIcons(): void
+	{
 		this.toggleIcon(this.#getArrowIcon(), 'none');
 
-		if (Type.isStringFilled(event.target.value))
+		if (Type.isStringFilled(this.getFilledValue()))
 		{
 			this.toggleIcon(this.getClearIcon(), 'block');
 			this.toggleIcon(this.getSearchIcon(), 'none');
@@ -447,6 +458,17 @@ export class ProductSearchInputBase
 			{
 				this.toggleIcon(this.getSearchIcon(), 'block');
 			}
+		}
+	}
+
+	// main.ui.grid's inline editor listens for Enter on the custom cell and preventDefault()s it to
+	// trigger a grid save, which also kills native activation of the icons. Keep the key from
+	// reaching it; the browser then activates the button or link on its own.
+	handleIconKeyDown(event: KeyboardEvent): void
+	{
+		if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+		{
+			event.stopPropagation();
 		}
 	}
 
@@ -598,42 +620,7 @@ export class ProductSearchInputBase
 	#handleNameInputBlur(event: UIEvent): void
 	{
 		// timeout to toggle clear icon handler while cursor is inside of name input
-		setTimeout(() => {
-			// display:none on a focused icon would drop keyboard focus to <body>;
-			// keep an icon (clear/search are real buttons) visible while it holds focus.
-			const hideIcon = (icon) => {
-				if (icon !== document.activeElement)
-				{
-					this.toggleIcon(icon, 'none');
-				}
-			};
-
-			hideIcon(this.getClearIcon());
-
-			if (this.showDetailLink() && Type.isStringFilled(this.getValue()))
-			{
-				if (this.isSearchEnabled())
-				{
-					hideIcon(this.getSearchIcon());
-				}
-				this.toggleIcon(this.#getArrowIcon(), 'block');
-			}
-			else
-			{
-				this.toggleIcon(this.#getArrowIcon(), 'none');
-				if (this.isSearchEnabled())
-				{
-					if (Type.isStringFilled(this.getFilledValue()))
-					{
-						hideIcon(this.getSearchIcon());
-					}
-					else
-					{
-						this.toggleIcon(this.getSearchIcon(), 'block');
-					}
-				}
-			}
-		}, 200);
+		setTimeout(() => this.#settleIcons(), 200);
 
 		if (this.isSearchEnabled() && this.selector.isEnabledEmptyProductError())
 		{
@@ -655,6 +642,53 @@ export class ProductSearchInputBase
 					this.selector.layoutErrors();
 				}
 			}, 200);
+		}
+	}
+
+	// The icons share one absolute slot, so exactly one of them may be visible. If the user tabbed
+	// onto an icon, keep it and settle the field only after it loses focus: display:none on a
+	// focused node would drop keyboard focus to <body>.
+	#settleIcons(): void
+	{
+		const focusedIcon = [this.getClearIcon(), this.getSearchIcon(), this.#getArrowIcon()]
+			.find((icon) => Type.isDomNode(icon) && icon.isConnected && icon === document.activeElement)
+		;
+
+		if (focusedIcon)
+		{
+			Event.bindOnce(focusedIcon, 'blur', () => setTimeout(() => this.#settleIcons(), 0));
+
+			return;
+		}
+
+		// Focus came back into the field itself (Shift+Tab off an icon): keep the editing icons.
+		if (this.getNameInput() === document.activeElement)
+		{
+			this.#applyActiveFieldIcons();
+
+			return;
+		}
+
+		this.toggleIcon(this.getClearIcon(), 'none');
+
+		if (this.showDetailLink() && Type.isStringFilled(this.getValue()))
+		{
+			if (this.isSearchEnabled())
+			{
+				this.toggleIcon(this.getSearchIcon(), 'none');
+			}
+			this.toggleIcon(this.#getArrowIcon(), 'block');
+
+			return;
+		}
+
+		this.toggleIcon(this.#getArrowIcon(), 'none');
+		if (this.isSearchEnabled())
+		{
+			this.toggleIcon(
+				this.getSearchIcon(),
+				Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block',
+			);
 		}
 	}
 
@@ -684,6 +718,8 @@ export class ProductSearchInputBase
 					href="${Text.encode(this.model.getDetailPath())}"
 					target="_blank"
 					class="ui-ctl-after ui-ctl-icon-forward"
+					aria-label="${Loc.getMessage('CATALOG_SELECTOR_DETAIL_LINK_LABEL')}"
+					onkeydown="${this.handleIconKeyDown.bind(this)}"
 				>
 			`;
 		});
@@ -696,7 +732,9 @@ export class ProductSearchInputBase
 				<button
 					type="button"
 					class="ui-ctl-after ui-ctl-icon-search"
+					aria-label="${Loc.getMessage('CATALOG_SELECTOR_SEARCH_ICON_LABEL')}"
 					onclick="${this.#handleSearchIconClick.bind(this)}"
+					onkeydown="${this.handleIconKeyDown.bind(this)}"
 				></button>
 			`;
 		});

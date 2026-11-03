@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/dev/menu/dialog/send-message', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SingleSelector } = require('im/messenger/lib/ui/selector');
-	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
+	const { Checkbox, CheckboxShape } = require('ui-system/form/checkbox');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const AppTheme = require('apptheme');
@@ -92,8 +92,11 @@ jn.define('im/messenger/lib/dev/menu/dialog/send-message', (require, exports, mo
 						Text({
 							text: 'With random message text',
 						}),
-						new CheckBox({
+						new Checkbox({
+							testId: 'im-dev-menu-send-message-random-text-checkbox',
 							checked: this.state.spam.withRandomMessageText,
+							size: 24,
+							shape: CheckboxShape?.CIRCLE,
 							onClick: () => {
 								this.state.spam.withRandomMessageText = !this.state.spam.withRandomMessageText;
 							},

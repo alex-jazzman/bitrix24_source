@@ -5,6 +5,8 @@
 
 global $APPLICATION;
 
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+
 $arDefaultUrlTemplates404 = array(
 	'list' => '#entity_type#/',
 	'edit' => '#entity_type#/edit/#preset_id#/',
@@ -21,7 +23,35 @@ $arComponentVariables = array(
 	'mode'
 );
 
-if($arParams['SEF_MODE'] == 'Y')
+if (!empty($arParams['SETTINGS_HUB_URL']))
+{
+	$componentPage = $arParams['MODE'];
+	$arVariables = ['entity_type' => $arParams['ENTITY_TYPE_ID']];
+	if ($componentPage === 'edit')
+	{
+		$arVariables['preset_id'] = $arParams['PRESET_ID'];
+	}
+
+	$arUrlTemplates = [];
+	foreach (['list', 'edit', 'ufields'] as $page)
+	{
+		$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+		$url->addParams([
+			'mode' => $page,
+			'entity_type' => $arVariables['entity_type'],
+		]);
+		$arUrlTemplates[$page] = $url->getUri();
+	}
+	$arUrlTemplates['edit'] .= '&preset_id=#preset_id#';
+
+	$arResult = [
+		'FOLDER' => '',
+		'URL_TEMPLATES' => $arUrlTemplates,
+		'VARIABLES' => $arVariables,
+		'ALIASES' => [],
+	];
+}
+elseif($arParams['SEF_MODE'] == 'Y')
 {
 	$arVariables = array();
 

@@ -49,6 +49,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 300,
 				),
 				new Complex\NodeAction(
+					activityCode: 'tasksaddresultactivity',
+					sort: 350,
+				),
+				new Complex\NodeAction(
 					activityCode: 'taskschangestatusactivity',
 					customName: Loc::getMessage('TASKS_COMPLEX_ACTIVITY_NODE_ACTION_CHANGE_STATUS'),
 					sort: 400,

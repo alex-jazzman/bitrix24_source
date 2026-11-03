@@ -9,17 +9,13 @@ export const VideoAttachmentNodeViewComponent = {
 	components: {
 		MediaResizeControls,
 	},
-	props: {
-		defaultTypeMessage: {
-			type: String,
-			default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO',
-		},
-	},
 	computed: {
 		videoUrl(): string
 		{
-			// `showUrl` is already checked by the base component, own `src` is not.
-			return sanitizeAttachmentUrl(this.attrs.src) || this.showUrl || '';
+			// `mediaUrl` is already checked by the base component, own `src` is not. A Disk video has
+			// no `src` of its own and plays through `mediaUrl`; when Disk offers no source for the file
+			// the block shows its meta without a player rather than an empty one.
+			return sanitizeAttachmentUrl(this.attrs.src) || this.mediaUrl || '';
 		},
 		// Required by ResizableMediaMixin to gate handles/overlay.
 		hasMedia(): boolean
@@ -29,8 +25,12 @@ export const VideoAttachmentNodeViewComponent = {
 	},
 	// language=Vue
 	template: `
-		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
-			<div v-if="isUnavailable" class="note-editor-video-meta">
+		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable, 'note-editor-attachment--deleted': isDeleted }">
+			<div v-if="isDeleted" class="note-editor-video-meta">
+				<div class="note-editor-video-name">{{ deletedMessage }}</div>
+				<a v-if="restoreUrl" class="note-editor-file-attachment-restore" :href="restoreUrl" target="_blank" rel="noopener noreferrer">{{ restoreMessage }}</a>
+			</div>
+			<div v-else-if="isUnavailable" class="note-editor-video-meta">
 				<div class="note-editor-video-name">{{ unavailableMessage }}</div>
 			</div>
 			<template v-else>
@@ -60,7 +60,8 @@ export const VideoAttachmentNodeViewComponent = {
 						<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
 						<template v-else>{{ fileName }}</template>
 					</div>
-					<div v-if="!isResolving" class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
+					<!-- Size only, as under a file: the mime type repeats the extension in the name. -->
+					<div v-if="!isResolving" class="note-editor-video-extra">{{ fileSize }}</div>
 				</div>
 			</template>
 		</div>

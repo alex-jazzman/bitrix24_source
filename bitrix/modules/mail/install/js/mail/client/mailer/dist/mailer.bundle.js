@@ -12,7 +12,7 @@ this.BX.Mail = this.BX.Mail || {};
 		#isMailboxGridButtonCounterRefreshQueued = false;
 		#migrationMailboxIds = [];
 		#migrationReloadStarted = false;
-		#migrationStatuses = new Map();
+		#migrationActiveMailboxIds = new Set();
 		#reloadPage;
 		focusReset = false;
 		constructor(config = {
@@ -37,6 +37,9 @@ this.BX.Mail = this.BX.Mail || {};
 				return;
 			}
 			this.#filter = BX.Main.filterManager.getById(config.filterId);
+			if (!this.#filter) {
+				return;
+			}
 			this.sendApplyFilterEventForMenuRefresh();
 
 			// Removing the focus from the filter field
@@ -48,7 +51,9 @@ this.BX.Mail = this.BX.Mail || {};
 			this.errorBox = new mail_client_errorbox.ErrorBox({
 				wrapper: mailErrorBoxWrapper,
 				errorLink: config.configPath,
-				currentMailboxId: this.#mailboxId
+				currentMailboxId: this.#mailboxId,
+				mailboxConnected: config.mailboxConnected,
+				migrationNotice: config.migrationNotice
 			});
 			const filterToolbar = new mail_client_filtertoolbar.FilterToolbar({
 				wrapper: mailCounterWrapper,
@@ -93,7 +98,7 @@ this.BX.Mail = this.BX.Mail || {};
 				const migrationState = mail_migrationState.getMigrationState(normalizedMailboxId);
 				migrationState.subscribe(change => this.#handleMigrationState(normalizedMailboxId, change));
 				if (migrationState.isActive()) {
-					this.#migrationStatuses.set(normalizedMailboxId, migrationState.getStatus().status);
+					this.#migrationActiveMailboxIds.add(normalizedMailboxId);
 				}
 				void migrationState.initialize();
 			});
@@ -101,11 +106,11 @@ this.BX.Mail = this.BX.Mail || {};
 		}
 		#handleMigrationState(mailboxId, change) {
 			if (change.active) {
-				this.#migrationStatuses.set(mailboxId, change.status.status);
+				this.#migrationActiveMailboxIds.add(mailboxId);
 				this.#renderMigrationBanner();
 				return;
 			}
-			this.#migrationStatuses.delete(mailboxId);
+			this.#migrationActiveMailboxIds.delete(mailboxId);
 			this.#renderMigrationBanner();
 			if ((change.previousActive || change.source === 'pull') && change.status.status === 'done' && !this.#migrationReloadStarted) {
 				this.#migrationReloadStarted = true;
@@ -118,27 +123,15 @@ this.BX.Mail = this.BX.Mail || {};
 			}
 		}
 		#renderMigrationBanner() {
-			const priorities = ['blocked', 'cancelling', 'switching', 'waiting', 'running'];
-			const status = priorities.find(candidate => [...this.#migrationStatuses.values()].includes(candidate));
-			if (status) {
-				this.#showMigrationBanner(status);
+			if (this.#migrationActiveMailboxIds.size > 0) {
+				this.#showMigrationBanner();
 				return;
 			}
 			this.#hideMigrationBanner();
 		}
-		#showMigrationBanner(status) {
-			const statusPhrases = {
-				running: 'MAIL_MESSAGE_LIST_MIGRATION_RUNNING',
-				waiting: 'MAIL_MESSAGE_LIST_MIGRATION_WAITING',
-				switching: 'MAIL_MESSAGE_LIST_MIGRATION_SWITCHING',
-				blocked: 'MAIL_MESSAGE_LIST_MIGRATION_BLOCKED',
-				cancelling: 'MAIL_MESSAGE_LIST_MIGRATION_CANCELLING'
-			};
-			const title = main_core.Loc.getMessage('MAIL_MESSAGE_LIST_MIGRATION_TITLE').trim();
-			const text = main_core.Loc.getMessage(statusPhrases[status] ?? statusPhrases.running).trim();
-
-			// A locale without these phrases would leave an empty warning stripe on the list.
-			if (title === '' && text === '') {
+		#showMigrationBanner() {
+			const text = (main_core.Loc.getMessage('MAIL_MIGRATION_IN_PROGRESS') ?? '').trim();
+			if (text === '') {
 				this.#hideMigrationBanner();
 				return;
 			}
@@ -146,7 +139,6 @@ this.BX.Mail = this.BX.Mail || {};
 			if (!banner) {
 				return;
 			}
-			banner.querySelector('[data-role="mail-migration-banner-title"]').textContent = title;
 			banner.querySelector('[data-role="mail-migration-banner-text"]').textContent = text;
 		}
 		#hideMigrationBanner() {
@@ -166,10 +158,7 @@ this.BX.Mail = this.BX.Mail || {};
 				data-role="mail-migration-banner"
 				data-testid="mail-migration-banner"
 			>
-				<span class="ui-alert-message">
-					<strong data-role="mail-migration-banner-title"></strong><br>
-					<span data-role="mail-migration-banner-text"></span>
-				</span>
+				<span class="ui-alert-message" data-role="mail-migration-banner-text"></span>
 			</div>
 		`;
 			main_core.Dom.prepend(banner, wrapper);

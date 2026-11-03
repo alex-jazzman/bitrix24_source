@@ -1511,7 +1511,7 @@ if (!$res->fetch())
 			'ACTIVE' => 'Y',
 			'IS_CASH' => 'Y',
 			'NEW_WINDOW' => 'N',
-			'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/cash.png',
+			'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/cash.webp',
 			'ENTITY_REGISTRY_TYPE' => 'ORDER',
 			'SORT' => 100,
 		]
@@ -1556,7 +1556,7 @@ if (!$res->fetch())
 				'DESCRIPTION' => \Bitrix\Main\Localization\Loc::getMessage('CRM_ORDER_PAY_SYSTEM_ORDERDOCUMENT_DESC'),
 				'ACTION_FILE' => 'orderdocument',
 				'ACTIVE' => 'Y',
-				'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/bill.png',
+				'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/bill.webp',
 				'PS_MODE' => $templateId,
 				'ENTITY_REGISTRY_TYPE' => 'ORDER',
 				'SORT' => 200,
@@ -1654,7 +1654,7 @@ if(!$res->fetch())
 			'CURRENCY' => $defCurrency,
 			'SORT' => 100,
 			'ACTIVE' => 'Y',
-			'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/courier_logo.png',
+			'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/courier_logo.webp',
 			'CONFIG' => [
 				'MAIN' => [
 					'PRICE' => $courierPrice,
@@ -1674,7 +1674,7 @@ if(!$res->fetch())
 			'CURRENCY' => $defCurrency,
 			'SORT' => 200,
 			'ACTIVE' => 'Y',
-			'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/self_logo.png',
+			'LOGOTIP' => $_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/self_logo.webp',
 			'CONFIG' => [
 				'MAIN' => [
 					'PRICE' => 0,

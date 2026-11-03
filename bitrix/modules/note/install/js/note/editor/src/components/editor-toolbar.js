@@ -56,10 +56,6 @@ export const EditorToolbarComponent = {
 			type: Number,
 			default: 0,
 		},
-		maxFileSize: {
-			type: Number,
-			default: 0,
-		},
 		fixed: {
 			type: Boolean,
 			default: false,
@@ -76,8 +72,13 @@ export const EditorToolbarComponent = {
 			type: Number,
 			default: 0,
 		},
+		// Whether the row offers the second file entry point — the one that picks a file already on Disk.
+		diskAttachmentsEnabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
-	emits: ['insertFileStub', 'insertImageStub', 'insertVideoStub'],
+	emits: ['insertFileStub', 'insertImageStub', 'insertVideoStub', 'pickDiskFile', 'insertDate'],
 	data()
 	{
 		return {
@@ -495,7 +496,11 @@ export const EditorToolbarComponent = {
 		},
 		insertFileStub(): void
 		{
-			void this.$emit?.('insertFileStub', this.maxFileSize);
+			void this.$emit?.('insertFileStub');
+		},
+		pickDiskFile(): void
+		{
+			void this.$emit?.('pickDiskFile');
 		},
 		insertImageStub(): void
 		{
@@ -503,7 +508,14 @@ export const EditorToolbarComponent = {
 		},
 		insertVideoStub(): void
 		{
-			void this.$emit?.('insertVideoStub', this.maxFileSize);
+			// No size limit travels with the intent: the limit is not the toolbar's to state, and the
+			// upload node reads it from the same constant this prop was filled from (see upload-asset.js
+			// and file-upload-service.js). The file intent stopped passing it, this one follows.
+			void this.$emit?.('insertVideoStub');
+		},
+		insertDate(): void
+		{
+			void this.$emit?.('insertDate');
 		},
 	},
 	// language=Vue
@@ -596,6 +608,9 @@ export const EditorToolbarComponent = {
 				:on-insert-file="insertFileStub"
 				:on-insert-image="insertImageStub"
 				:on-insert-video="insertVideoStub"
+				:on-insert-date="insertDate"
+				:disk-attachments-enabled="diskAttachmentsEnabled"
+				:on-pick-disk-file="pickDiskFile"
 			/>
 			</div>
 			<div class="note-editor-toolbar-thumb" aria-hidden="true" @pointerdown="handleThumbPointerDown"></div>

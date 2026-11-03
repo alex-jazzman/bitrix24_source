@@ -26,6 +26,7 @@ jn.define('im/messenger/controller/vote/result', (require, exports, module) => {
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { Pull } = require('im/messenger/controller/vote/result/pull');
 	const { UserList } = require('im/messenger/controller/vote/result/user-list');
+	const { calculateVotedPercent } = require('im/messenger/controller/vote/result/src/percent');
 
 	class VoteResult extends LayoutComponent
 	{
@@ -111,7 +112,7 @@ jn.define('im/messenger/controller/vote/result', (require, exports, module) => {
 						id: answerId,
 						text: String(answer.message),
 						votedCounter: answerVotedCounter,
-						votedPercent: Math.round(answerVotedCounter / questionVotedCounter * 100),
+						votedPercent: calculateVotedPercent(answerVotedCounter, questionVotedCounter),
 						votedUserIds: answerVotedUserIds,
 						isVotedByMe: voteModel.votedAnswerIds.has(answerId),
 					};
@@ -226,7 +227,7 @@ jn.define('im/messenger/controller/vote/result', (require, exports, module) => {
 								return {
 									...answer,
 									votedCounter: answerVotedCounter,
-									votedPercent: Math.round(answerVotedCounter / questionVotedCounter * 100),
+									votedPercent: calculateVotedPercent(answerVotedCounter, questionVotedCounter),
 									votedUserIds: answerVotedUserIds,
 									isVotedByMe: voteModel.votedAnswerIds.has(answerId),
 								};
@@ -540,7 +541,17 @@ jn.define('im/messenger/controller/vote/result', (require, exports, module) => {
 
 		get dialogId()
 		{
-			return this.props.dialogId;
+			// a link brings no dialog: the chat is taken from the vote message loaded by the attach id
+			return this.props.dialogId ?? this.#resolveDialogIdByVoteMessage();
+		}
+
+		#resolveDialogIdByVoteMessage()
+		{
+			const chatId = MessageHelper.createById(this.voteMessageId)?.messageModel?.chatId;
+
+			return chatId
+				? this.storeManager.store.getters['dialoguesModel/getByChatId'](chatId)?.dialogId
+				: undefined;
 		}
 
 		get parentWidget()

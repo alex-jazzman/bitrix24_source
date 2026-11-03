@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/value-change
  */
 jn.define('crm/timeline/item/ui/body/blocks/value-change', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { SnackbarText } = require('layout/ui/snackbar-text');
@@ -64,7 +65,7 @@ jn.define('crm/timeline/item/ui/body/blocks/value-change', (require, exports, mo
 							numberOfLines: 1,
 							ellipsize: 'end',
 							style: {
-								fontSize: 13,
+								...Typography.text5.getValue(),
 								color: AppTheme.colors.base2,
 							},
 						}),
@@ -92,7 +93,7 @@ jn.define('crm/timeline/item/ui/body/blocks/value-change', (require, exports, mo
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: {
-							fontSize: 12,
+							...Typography.text6.getValue(),
 							fontWeight: '400',
 							color: AppTheme.colors.base2,
 							textAlign: 'center',

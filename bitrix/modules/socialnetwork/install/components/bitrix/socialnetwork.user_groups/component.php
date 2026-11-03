@@ -20,6 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Socialnetwork\WorkgroupTagTable;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
@@ -764,8 +765,12 @@ if ($arResult["FatalError"] == '')
 			{
 				if ($arResult["USE_UI_FILTER"])
 				{
-					$operation = \Bitrix\Socialnetwork\WorkgroupTable::getEntity()->fullTextIndexEnabled("SEARCH_INDEX") ? '*' : '*%';
-					$arGroupFilter[$operation."SEARCH_INDEX"] = \Bitrix\Socialnetwork\Item\Workgroup::prepareToken($arResult["filter_name"]);
+					$searchToken = \Bitrix\Socialnetwork\Item\Workgroup::prepareSearchIndexQuery($arResult["filter_name"]);
+					if ($searchToken !== '')
+					{
+						$operation = \Bitrix\Socialnetwork\WorkgroupTable::getEntity()->fullTextIndexEnabled("SEARCH_INDEX") ? '*' : '*%';
+						$arGroupFilter[$operation."SEARCH_INDEX"] = $searchToken;
+					}
 				}
 				else
 				{
@@ -971,7 +976,16 @@ if ($arResult["FatalError"] == '')
 				&& $arResult["~tags"] <> ''
 			)
 			{
-				$arGroupFilter['Bitrix\Socialnetwork\WorkgroupTag:GROUP.NAME'] = mb_strtolower($arResult["~tags"]);
+				$tagName = WorkgroupTagTable::prepareNameForSearch($arResult["~tags"]);
+				if ($tagName !== '')
+				{
+					$arGroupFilter['Bitrix\Socialnetwork\WorkgroupTag:GROUP.NAME'] = $tagName;
+				}
+				else
+				{
+					// Keep empty result set when a tag filter was requested but normalized to empty.
+					$arGroupFilter['ID'] = 0;
+				}
 			}
 
 			if (

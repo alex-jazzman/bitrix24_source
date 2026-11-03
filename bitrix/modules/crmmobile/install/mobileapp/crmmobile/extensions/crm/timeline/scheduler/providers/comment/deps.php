@@ -7,6 +7,7 @@ return [
 		'haptics',
 		'apptheme',
 		'assets/icons',
+		'tokens',
 		'layout/ui/fields/file',
 		'layout/ui/textarea',
 		'selector/widget/factory',

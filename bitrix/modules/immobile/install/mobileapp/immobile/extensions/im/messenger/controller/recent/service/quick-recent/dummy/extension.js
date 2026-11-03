@@ -20,6 +20,19 @@ jn.define('im/messenger/controller/recent/service/quick-recent/dummy', (require,
 			this.logger.log('renderList');
 		}
 
+		/**
+		 * @return {boolean}
+		 */
+		isNotEmptySnapshotRendered()
+		{
+			return false;
+		}
+
+		invalidateSnapshot()
+		{
+			this.logger.log('invalidateSnapshot');
+		}
+
 		save(sections, items)
 		{
 			this.logger.log('save');

@@ -4,12 +4,14 @@
 jn.define('im/messenger/controller/recent/config', (require, exports, module) => {
 	const { NavigationTabId } = require('im/messenger/const');
 	// global navigation configs
+	const { AllConfig } = require('im/messenger/controller/recent/config/src/global/all');
 	const { ChannelConfig } = require('im/messenger/controller/recent/config/src/global/channel');
 	const { ChatsConfig } = require('im/messenger/controller/recent/config/src/global/chats');
 	const { CopilotConfig } = require('im/messenger/controller/recent/config/src/global/copilot');
 	const { CollabConfig } = require('im/messenger/controller/recent/config/src/global/collab');
 	const { OpenlinesConfig } = require('im/messenger/controller/recent/config/src/global/openlines');
 	const { TaskConfig } = require('im/messenger/controller/recent/config/src/global/task');
+	const { VibecodeAppConfig } = require('im/messenger/controller/recent/config/src/global/vibecode-app');
 	const { resolveFolderConfig } = require('im/messenger/controller/recent/config/src/global/folder');
 
 	// nested navigation configs
@@ -20,12 +22,16 @@ jn.define('im/messenger/controller/recent/config', (require, exports, module) =>
 	const { CalendarConfig } = require('im/messenger/controller/recent/config/src/nested/calendar');
 
 	const RecentConfig = {
+		// the "All" tab comes from the backend with its code as recentId, so it is resolved here;
+		// opening the same folder by its numeric id goes through resolveFolderConfig
+		[NavigationTabId.all]: AllConfig,
 		[NavigationTabId.chats]: ChatsConfig,
 		[NavigationTabId.channel]: ChannelConfig,
 		[NavigationTabId.copilot]: CopilotConfig,
 		[NavigationTabId.collab]: CollabConfig,
 		[NavigationTabId.openlines]: OpenlinesConfig,
 		[NavigationTabId.task]: TaskConfig,
+		[NavigationTabId.vibecodeApp]: VibecodeAppConfig,
 	};
 
 	const NestedRecentConfig = {

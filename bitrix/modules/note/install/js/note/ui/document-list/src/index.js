@@ -4,10 +4,15 @@ import 'ui.system.checkbox';
 // Bulk-actions bar renders Outline glyphs — declare the icon set here so chef records the dependency
 // (previously resolved only transitively through note.sidebar).
 import 'ui.icon-set.outline';
+// DocumentSection renders its collapse chevron from the Actions set — declare that one too
+// (previously resolved only transitively through main.sidepanel).
+import 'ui.icon-set.actions';
 import './styles/document-list.css';
 import './styles/bulk-actions-bar.css';
+import './styles/document-section.css';
 
 export { DocumentList } from './components/document-list';
 export { DocumentListItem } from './components/document-list-item';
 export { BulkActionsBar } from './components/bulk-actions-bar';
+export { DocumentSection } from './components/document-section';
 export { createSelection } from './composables/use-selection';

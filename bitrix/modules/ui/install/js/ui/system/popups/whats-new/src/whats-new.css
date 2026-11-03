@@ -1,0 +1,375 @@
+/**
+ * Public CSS surface: the block class .ui-system-whats-new on the window container, the element names
+ * below and the body class .ui-system-whats-new__disable-scrolling. Everything the window itself draws -
+ * background, radius, shadow - is written through the variables of main.popup, because the container is
+ * created by the window mechanism and not by this markup. Typography carries no font rules here: sizes,
+ * weights and line heights belong to ui.system.typography, this file only says where a text sits and which
+ * colour it takes.
+ */
+
+.ui-system-whats-new {
+	/* Width of the default size M from the mockup. The size axis overwrites this one variable. */
+	--ui-system-whats-new-width: 680px;
+
+	/* Height of the media zone. The graphics of the announcement fits into it; the zone itself is
+	   transparent. */
+	--ui-system-whats-new-media-height: 280px;
+
+	/* The share of the card the media column takes in a side layout. The grid below is written through it, so
+	   that the layer the graphics flies out onto can take the width of that very column. */
+	--ui-system-whats-new-media-column: 40%;
+
+	/* The window never grows past the screen: what does not fit is scrolled, there is no full-screen mode. */
+	--ui-system-whats-new-max-height: 86vh;
+
+	/* The room the card keeps from the side edges of the screen when the width of the mockup does not fit into
+	   it. Taken twice out of the width of the screen, it also covers the vertical scrollbar 100vw counts in. */
+	--ui-system-whats-new-viewport-space: var(--ui-space-inset-xl);
+
+	/* Room above the header. It depends on what stands over the header - an illustration, or nothing at all. */
+	--ui-system-whats-new-header-space: var(--ui-space-inset-5xl);
+
+	/* The blur radius of the window shadow, written here as a length: there is no shadow class in the
+	   tokens, only the per-part --ui-box-shadow-popup-default-*, and the blur one holds a filter function
+	   (blur(17px)) that box-shadow cannot take. */
+	--ui-system-whats-new-shadow-blur: 17px;
+
+	--popup-window-border-radius: var(--ui-border-radius-2xl);
+	--popup-window-box-shadow:
+		var(--ui-box-shadow-popup-default-x)
+		var(--ui-box-shadow-popup-default-y)
+		var(--ui-system-whats-new-shadow-blur)
+		var(--ui-box-shadow-popup-default-spread)
+		var(--ui-box-shadow-popup-default-color);
+
+	/* The width of the mockup is taken only while the screen has room for it: on a narrow screen the card is
+	   the screen less the room at its sides, so that the cross and the row of buttons stay where the user can
+	   reach them. */
+	width: min(
+		var(--ui-system-whats-new-width),
+		calc(100vw - (2 * var(--ui-system-whats-new-viewport-space)))
+	);
+}
+
+/* The tone of the surface. It is an invariant and not an axis: the card is always drawn on a filled
+   backdrop, and the palette of every slot below follows from that. The visible base of the card has one
+   source and it is the colour scheme of the backdrop, so the window itself paints nothing: a background of
+   its own would be a second source of the same base, and the one under the backdrop nobody ever sees. */
+.ui-system-whats-new.--tone-vibrant {
+	--popup-window-background-color: transparent;
+}
+
+.ui-system-whats-new.--size-l {
+	--ui-system-whats-new-width: 990px;
+}
+
+/* Two columns on 680 are cramped, so the medium size takes a width of its own as soon as the media moves
+   to the side. */
+.ui-system-whats-new.--size-m.--media-left,
+.ui-system-whats-new.--size-m.--media-right {
+	--ui-system-whats-new-width: 760px;
+}
+
+/* An illustration over the header leaves it less room than a header that opens the card. A video and a
+   gallery leave it more room than an illustration: the rule carries the weight of the one above, so it
+   stands below it. */
+.ui-system-whats-new.--media-top.--has-media {
+	--ui-system-whats-new-header-space: var(--ui-space-inset-lg);
+}
+
+.ui-system-whats-new.--media-top.--video,
+.ui-system-whats-new.--media-top.--gallery {
+	--ui-system-whats-new-header-space: var(--ui-space-inset-xl);
+}
+
+/* The page is held by taking it out of the flow, and a page out of the flow stands at its top. The place the
+   reader was at is handed over through the variable below and kept as a shift of the body, so that what he
+   was reading stays under the window; the component gives the place back to the page when the lock comes
+   off. */
+body.ui-system-whats-new__disable-scrolling {
+	position: fixed;
+	top: calc(-1 * var(--ui-system-whats-new-scroll-offset, 0px));
+	width: 100%;
+	scrollbar-gutter: stable;
+}
+
+/* The two floors of the window: the card, and the layer the graphics of it flies out onto. The frame cuts
+   nothing - that is the whole point of the layer over it. */
+.ui-system-whats-new__frame {
+	position: relative;
+}
+
+/* The surface of the card: the backdrop and the content over it, cut to the rounded corners of the window.
+   The window itself does not cut, so the cut is written here - the backdrop is painted out to the edge of the
+   card and would square off the corners without it. */
+.ui-system-whats-new__surface {
+	position: relative;
+	border-radius: var(--popup-window-border-radius);
+	overflow: hidden;
+}
+
+/* The content stands over the backdrop by the order of the nodes and never by a level of its own: a level
+   would make the content a floor of its own, and the cross inside it could no longer rise over the layer the
+   graphics flies out onto. */
+.ui-system-whats-new__content {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	max-height: var(--ui-system-whats-new-max-height);
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+/* Media at the side: the content becomes a grid of two columns, and the narrow one is always the media
+   column. The side only decides which column comes first; the markup is built in the same order, so the
+   visual order never disagrees with the order of the nodes. The proportions are the ones of the mockup. */
+.ui-system-whats-new.--media-left .ui-system-whats-new__content {
+	display: grid;
+	grid-template-columns: var(--ui-system-whats-new-media-column) 1fr;
+}
+
+.ui-system-whats-new.--media-right .ui-system-whats-new__content {
+	display: grid;
+	grid-template-columns: 1fr var(--ui-system-whats-new-media-column);
+}
+
+/* Every zone but the media: one column of the two-column layout, a plain stack when the media is on top. */
+.ui-system-whats-new__body {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+/* Keep scrolling text below the illustration, which lives outside the scrolling content. */
+.ui-system-whats-new.--media-top .ui-system-whats-new__body {
+	min-height: 0;
+	overflow-y: auto;
+}
+
+/* The cross lies over the media, so it leaves the flow and keeps its own stacking level - above the layer
+   an illustration flies out into, otherwise the flown graphics would take the click. Where it stands is all
+   this file says about it: the box, the states and the focus ring belong to the button of the design system.
+   The class is named twice for the same reason the slots of text are - a single class would tie with .ui-btn,
+   which places the button relatively, and the winner would then depend on the order of the stylesheets. */
+.ui-system-whats-new__close.ui-system-whats-new__close {
+	position: absolute;
+	top: var(--ui-space-inset-sm2);
+	right: var(--ui-space-inset-lg);
+	z-index: 40;
+}
+
+/* The zone paints nothing of its own: it holds a height for the graphics and lets the surface of the card
+   through. */
+.ui-system-whats-new__media {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	height: var(--ui-system-whats-new-media-height);
+}
+
+/* A gallery puts the row of its dots under the graphics, so the zone takes the height of the graphics and
+   of the row together. The graphics itself keeps the height of the zone of every other slot, and the layer it
+   flies out onto is built from that very height. */
+.ui-system-whats-new.--gallery .ui-system-whats-new__media {
+	height: auto;
+}
+
+.ui-system-whats-new__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-system-whats-new-header-space) var(--ui-space-inset-5xl) var(--ui-space-inset-none);
+}
+
+/* The title and the mark after it. The row wraps: a title too long for the width takes the mark onto the
+   next line instead of squeezing it. */
+.ui-system-whats-new__title-row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+/* A flex row makes the label hug its text: on its own it would stretch across the header column. Nothing
+   else is said about the mark - it is a label of the design system, and a label is no control. */
+.ui-system-whats-new__label {
+	display: flex;
+}
+
+/*
+ * Colours of the slots. The card is always drawn on a filled surface, so the palette is the one of that
+ * surface and there is no second set. The class of the tone is also what wins over .ui-text and .ui-headline:
+ * those paint the primary tone with a single class, and a slot named once would tie with them and let the
+ * order the stylesheets happened to load in decide.
+ */
+.ui-system-whats-new.--tone-vibrant .ui-system-whats-new__title,
+.ui-system-whats-new.--tone-vibrant .ui-system-whats-new__item-title {
+	color: var(--ui-color-design-filled-content);
+}
+
+/* The mark is a badge and not a control: the chip it is drawn with comes with the pointer of a control and an
+   answer to the hover, and neither belongs to a decorative mark. */
+.ui-system-whats-new__label .ui-chip {
+	--cursor: default;
+	pointer-events: none;
+}
+
+/* The mark on the vibrant surface: the tinted fill, the faint white stroke and the white text the design names
+   for this element. The chip paints from its own variables, so the tokens are handed to those. */
+.ui-system-whats-new.--tone-vibrant .ui-system-whats-new__label .ui-chip {
+	--background: var(--ui-color-design-tinted-content-icon-secondary);
+	--border-color: var(--ui-color-design-filled-content-divider);
+	--text-color: var(--ui-color-design-filled-content);
+	--text-color-hover: var(--text-color);
+}
+
+.ui-system-whats-new.--tone-vibrant .ui-system-whats-new__subtitle,
+.ui-system-whats-new.--tone-vibrant .ui-system-whats-new__item-desc {
+	color: var(--ui-color-design-filled-content-secondary);
+}
+
+/*
+ * The word of the brand in the title. The fill is a gradient clipped by the glyphs, the way the chips and the
+ * buttons of the design system draw theirs: the same five stops of the brand group at the same shares. Only
+ * the angle is of the mockup - it is the surface that decides which way the gradient runs, and the chips and
+ * the buttons name their own angles too.
+ */
+.ui-system-whats-new__title-brand {
+	background-image: linear-gradient(
+		223deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.ui-system-whats-new__list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-5xl) var(--ui-space-inset-none);
+}
+
+/* The row carries no plate of its own: it stands on the surface of the card. */
+.ui-system-whats-new__item {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+	padding:
+		var(--ui-space-inset-2xs2)
+		var(--ui-space-inset-xs)
+		var(--ui-space-inset-2xs2)
+		var(--ui-space-inset-none);
+	border: none;
+	border-radius: var(--ui-border-radius-lg);
+	background: transparent;
+	text-align: left;
+}
+
+/* Only a row the consumer gave a handler to is a control, and all it shows of that is the cursor: the card
+   stands on a filled backdrop, and on that surface the mockup gives the row no colour of the pointer at all -
+   the veils of the design system are drawn on a plain card and on it alone. What is left of the answer is the
+   cursor and the focus ring below. */
+.ui-system-whats-new__item.--clickable {
+	cursor: pointer;
+}
+
+.ui-system-whats-new__item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The plate under the icon is an invariant and not an axis, so the wrapper is always a square of its own;
+   the icon itself keeps the size it is drawn in. The row aligns the plate by its top, so the plate stands by
+   the title of the item and not in the middle of a two-line block. */
+.ui-system-whats-new__item-icon {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-4xl);
+	height: var(--ui-size-4xl);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.ui-system-whats-new.--tone-vibrant .ui-system-whats-new__item-icon {
+	background: var(--ui-color-design-filled-content-divider);
+}
+
+.ui-system-whats-new__item-body {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.ui-system-whats-new__actions {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-5xl) var(--ui-space-inset-5xl);
+}
+
+/* Only the edge the row hugs is a matter of style. The order of the buttons is a matter of the markup:
+   row-reverse would put the tab order against the visual one. */
+.ui-system-whats-new.--actions-left .ui-system-whats-new__actions {
+	justify-content: flex-start;
+}
+
+.ui-system-whats-new.--actions-center .ui-system-whats-new__actions {
+	justify-content: center;
+}
+
+/*
+ * The controls of the card stand on the dark edge of it and take their palette from that context: it is the
+ * one palette of the design system that answers a translucent control on a filled surface - white content,
+ * white state overlays, the darker accent of the target button and the light fill of the step the wizard
+ * stands on. The palette stays as it is, and it is what gives the outline button its own translucent
+ * background.
+ *
+ * The single declaration takes a decoration of the portal back off every control of the card. A Bitrix24 page
+ * turns an edge context into a pane of glass over the wallpaper of the theme: it feeds a pre-blurred copy of
+ * that wallpaper into --ui-btn-custom-background, and ui.buttons draws it as the second layer of the
+ * background of every air button, under the colour of the button itself. A header or a counter panel lies on
+ * the wallpaper and wants it; a card lies on its own backdrop and does not - so on a portal the wallpaper
+ * showed through the transparent buttons as a warm beige film, and the cross over the media changed colour
+ * with the theme of the portal instead of standing in the palette of the card. The declaration sits on the
+ * card and on every part of it that carries the edge context of its own: a rule of the portal matches such a
+ * part directly, and a value inherited from the card would lose to it - so the parts are named here by their
+ * own classes, which outweigh the single class of the portal. The layer comes off the way the content
+ * contexts of the design system take it off, with the initial value, which leaves var() with the `none` of
+ * its fallback.
+ */
+.ui-system-whats-new.--tone-vibrant,
+.ui-system-whats-new .ui-system-whats-new__actions,
+.ui-system-whats-new .ui-system-whats-new__close,
+.ui-system-whats-new .ui-system-whats-new-gallery__arrow {
+	--ui-btn-custom-background: initial;
+}
+
+/* The buttons keep a group of their own, so that in the wizard the row spreads its two groups and not the
+   buttons inside them. Inside the group the buttons stand closer to one another than the groups do to each
+   other: they are one answer of the card and read as a pair. */
+.ui-system-whats-new__buttons {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* Wizard: the indicator and the buttons stand at the two edges of the row. The rule carries the weight of
+   the rules above, so it has to stay below both of them - the one of the block and the one of the left
+   alignment - to overwrite them. */
+.ui-system-whats-new.--wizard .ui-system-whats-new__actions {
+	justify-content: space-between;
+}

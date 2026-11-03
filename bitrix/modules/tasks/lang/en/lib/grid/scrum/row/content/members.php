@@ -1,0 +1,2 @@
+<?php
+$MESS["TASKS_GRID_SCRUM_ROW_CONTENT_MEMBERS_OPEN_LIST"] = "Open member list";

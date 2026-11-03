@@ -43,6 +43,15 @@ export class CallStub
 		console.error("unexpected call to CallStub.addInvitedUsers");
 	}
 
+	// late pull events of a finished call are silently ignored
+	addDialogInfo(dialogInfo)
+	{
+	};
+
+	addLogToken(logToken)
+	{
+	};
+
 	destroy()
 	{
 		clearTimeout(this.deleteTimeout);

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['TSB1_YOUR_CART'] = "Ваша корзина";
 $MESS ['TSB1_CART'] = "Корзина";
 $MESS ['TSB1_TOTAL_PRICE'] = "на сумму";
@@ -18,4 +18,5 @@ $MESS ['TSB1_DELETE'] = "Удалить";
 $MESS ['TSB1_2ORDER'] = "Оформить заказ";
 
 $MESS ['TSB1_EXPAND'] = "Раскрыть";
+$MESS['TSB1_CART_ARIA'] = 'Корзина, #COUNT#';
 $MESS ['TSB1_COLLAPSE'] = "Скрыть";

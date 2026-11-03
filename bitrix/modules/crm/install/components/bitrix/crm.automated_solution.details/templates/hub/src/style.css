@@ -1,0 +1,254 @@
+/* Добавочный padding-top 17px снят: отступ до паспорта задаёт штатный padding-bottom
+   тулбара слайдера (20px) — как между карточками, без нашей надбавки. */
+
+.crm-automated-solution-details-hub__errors {
+	margin-bottom: 16px;
+}
+
+/* Error close is a real <button>: ui-alert-close-btn only draws the cross, the native chrome is reset here */
+.crm-automated-solution-details-hub__error-close {
+	appearance: none;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+/* Полоса действий — как в СП-хабе, дословно (crm.type.detail/templates/hub, style.css:35-53,
+   коммит 46bb928b6b19): «Сохранить» и «Отменить» кита — по центру полосы, «Удалить» — у правого
+   края. Закреплённая полоса поднята над прокручиваемым содержимым. */
+.crm-automated-solution-details-hub__panel {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+}
+
+.crm-automated-solution-details-hub__panel > .crm-settings-hub-save-panel {
+	grid-column: 2;
+}
+
+.crm-automated-solution-details-hub__delete-action {
+	grid-column: 3;
+	justify-self: end;
+}
+
+.crm-automated-solution-hub .crm-settings-hub-shell.--panel-fixed .crm-settings-hub-shell__panel {
+	z-index: 99;
+}
+
+/* Types control - three tag selectors (parity with .default types-tab) */
+.crm-automated-solution-details-hub-types__row {
+	margin-bottom: 20px;
+}
+
+.crm-automated-solution-details-hub-types__reset-alert {
+	margin-top: 12px;
+}
+
+/* Жёлоб полосы прокрутки зарезервирован, чтобы ширина колонки не менялась, когда прокрутка
+   пропадает и появляется: сворачивание карточек укорачивает экран, и без жёлоба контент дёргался
+   бы вбок. @supports — Safari умеет это только с 17. */
+@supports (scrollbar-gutter: stable) {
+	html {
+		scrollbar-gutter: stable;
+	}
+}
+
+/* Поверхность страницы принадлежит контейнеру, а не раскладке внутри него: покрашенная уровнем
+   ниже, она оставила бы собственный отступ контейнера СНАРУЖИ серого — полоской белой карточки
+   хоста со скруглёнными углами над контентом. Padding-top снят: отступ до паспорта даёт штатный
+   padding-bottom тулбара слайдера (20px), добавочный сверху не нужен. */
+.crm-automated-solution-hub-container {
+	background: var(--ui-color-drawer-bg-default);
+}
+
+.crm-automated-solution-hub {
+	padding-bottom: var(--ui-space-inset-xl);
+}
+
+/* ШИРИНА ЭКРАНА — одно правило на паспорт и карточки. Меню разделов нет, поэтому колонка — вся
+   рабочая область слайдера, и паспорт с карточками занимают её от края до края, как в СП-хабе
+   (там они равны колонке workarea, D-13). Правый край карточек совпадает с «Помощь» в тулбаре.
+   Снять потолок обязательно и у секции: кит по умолчанию держит её на 560px. Паспорт лежит в слоте
+   шелла, а не внутри секции, поэтому перечислен отдельным селектором — иначе он и карточки
+   разъехались бы по ширине.
+   Нужен потолок — меняется одно значение ниже (например, 700px): паспорт и карточки встанут
+   вровень у левого края. */
+.crm-automated-solution-hub .crm-settings-hub-section,
+.crm-automated-solution-hub .crm-settings-hub-shell__passport {
+	max-width: none;
+}
+
+/* Шелл фокусирует секцию на каждом переключении, чтобы скринридер попадал внутрь. Секция несёт
+   tabindex="-1" и кольцо фокуса кита — после любого взаимодействия с клавиатуры этот
+   программный фокус ещё и РИСУЕТ кольцо вокруг всей секции, из которого в экран влезает одна
+   верхняя дуга. Сам фокус остаётся (это affordance доступности), гасится только кольцо и только
+   внутри этого хаба. */
+.crm-automated-solution-hub .crm-settings-hub-section:focus-visible {
+	box-shadow: none;
+}
+
+/* Обе карточки единственного раздела — «Смарт-процессы» и «Главная страница» — через 20px: тот же
+   ритм, что паспорт → карточка (gap шелла) и карточки одного раздела СП-хаба
+   (.crm-type-hub-cards-section). Без обёртки они встали бы через 12px (gap __content секции кита). */
+.crm-automated-solution-hub-cards {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}
+
+.crm-automated-solution-hub-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}
+
+.crm-automated-solution-hub-section__rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/* Линии под заголовком раздела быть не должно (слово владельца). Её рисует кит: открытая
+   collapsible-карточка получает border-bottom у шапки (crm.settings-hub, hub-card.css), а оба наших
+   раздела — «Смарт-процессы» и «Главная страница» — собраны на ней с collapsible (section-card.ts).
+   Кит общий, его не правим: гасим под нашим корнем, ровно как СП-хаб гасит ту же линию под своим
+   (crm.type.detail/templates/hub, D-22). Убирается только линия — 12px отступа шапки кита остаются,
+   поэтому от заголовка до контента те же 12px, что в СП-хабе. Корень один на создание и настройку,
+   так что правило накрывает оба режима. */
+.crm-automated-solution-hub .crm-settings-hub-card.--collapsible.--open .crm-settings-hub-card__header {
+	border-bottom: 0;
+}
+
+/* Режим создания: содержимое разделов видно, но не срабатывает. Мёртвым его делает атрибут `inert`
+   на той же обёртке (section-card.ts), здесь — только вид. `disabled` заказчиком прямо запрещён: он
+   меняет отрисовку контролов, а раздел должен читаться обычным, просто погашенным.
+
+   Селектор узкий намеренно. Погасить сам корень-маркер нельзя: внутри него живут герой (он на
+   создании активен, это единственный рабочий блок экрана) и баннер ошибок — сиблинг шелла, который
+   показывает ошибку неудачного сохранения, и его крестик обязан нажиматься. The dimming follows inert: the home page
+   card stays alive on creation, where the page can be switched on. */
+.crm-automated-solution-hub--create .crm-automated-solution-hub-section[inert] {
+	opacity: .3;
+}
+
+/* Аватар паспорта — арт эталона создания СП (D-19), а не глиф ui.icon-set: проп icon кита принимает
+   только имя глифа, URL в него не передать. Поэтому так же, как в СП-хабе: фон плитки — два слоя
+   картинки, тонированная подложка и глиф под ними гасятся. Файлы — побайтные копии ассетов шаблона
+   СП, своими копиями: чужой шаблон ведёт другая сессия, и его файлы уже переименовывали.
+   Слой badge первым — он рисуется поверх. border-radius 0 — иначе радиус плитки кита срежет арт.
+
+   Путь ровно images/имя.png без ../, файлы в images/ шаблона, а НЕ в src/: chef резолвит путь от
+   этого файла, не находит src/images и оставляет строку в собранном style.css дословно, а браузер
+   считает её от собранного style.css — это и есть images/ шаблона. Найди chef файл, он вклеил бы
+   бейдж base64-строкой. */
+.crm-automated-solution-hub-passport .crm-settings-hub-passport-hero__avatar {
+	background:
+		url('images/passport-badge.png') right bottom / 46% no-repeat,
+		url('images/passport-main.png') left top / 78% no-repeat;
+	border-radius: 0;
+}
+
+.crm-automated-solution-hub-passport .crm-settings-hub-passport-hero__avatar-icon {
+	display: none;
+}
+
+/* Поле описания стоит в 16px от строки названия (слово владельца, D-19). Кит даёт между строками
+   колонки 8px; разница добирается на самом поле, а не на блоке описания, — статичная подпись
+   экрана настройки остаётся в 8px, как текст на эталоне. Блок описания — flex-элемент, margin не
+   схлопывается; у BInput без label рамка начинается прямо у верха корня. */
+.crm-automated-solution-hub-passport .crm-settings-hub-passport-hero__description > .ui-system-input {
+	margin-top: calc(var(--ui-space-stack-md) - var(--ui-space-stack-xs)); /* 16 − 8 (gap __content кита) */
+}
+
+/* Подпись рабочего места на экране настройки. Её рисует кит — span только для чтения, — а он берёт
+   шрифт и цвет от блока описания (font: inherit). Раньше подпись шла слотом через TextXs, и вид
+   должен остаться тем же, поэтому здесь повторены объявления .ui-text.--xs (ui.system.typography).
+   Их переменные --ui-text-xs-* объявлены на самом .ui-text и до чужого span не доходят, поэтому
+   значения стоят напрямую. font-family — та же ссылка, что у TextXs: она ведёт себя так же, в том
+   числе когда токен не объявлен. На создании этого span нет: там описание — поле. */
+.crm-automated-solution-hub-passport .crm-settings-hub-passport-hero__description-text.--read-only {
+	font-family: var(--ui-font-family-primary);
+	font-size: 13px;
+	font-weight: var(--ui-font-weight-regular, 400);
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-1);
+}
+
+/* Кнопки «Сохранить» и «Отменить» режима создания. Глобальной панели на создании нет в DOM, поэтому
+   кнопки живут ВНУТРИ карточки героя — в слоте details, прямо под верхним рядом, от левого края
+   карточки под картинкой, как «Сохранить» на эталоне создания СП (D-19). Своего отступа тут быть
+   не должно: расстояние от верхнего ряда задаёт корневой gap карточки кита. */
+.crm-automated-solution-hub-passport__save {
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+}
+
+.crm-automated-solution-hub-passport__address {
+	display: inline-flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+}
+
+.crm-automated-solution-hub-passport__address-label {
+	color: var(--ui-color-base-3);
+}
+
+/* Ниже — два правила про ПРЕДКОВ хаба: колонка слайдера и его врапper находятся выше нашего
+   корня, ни один селектор изнутри до них не достаёт. Поэтому они привязаны к маркеру, который
+   приложение вешает на <html> на время своей жизни, — и другие слайдеры портала не задеты. */
+
+/* Пол минимальной ширины у колонки слайдера гуляет, и вместе с ним ездит контентная колонка. */
+.crm-automated-solution-hub-host .ui-side-panel-content,
+.crm-automated-solution-hub-host .ui-page-slider-workarea {
+	min-width: 0;
+}
+
+/* Панель действий объявлена `position: sticky; bottom: 0` (hub-shell.css) и не липнет: предок
+   `.ui-side-panel-wrap-workarea` несёт `overflow-y: hidden`, а overflow-бокс становится
+   скроллпортом липкого элемента. Этот бокс не скроллится — скроллится документ, — поэтому липкий
+   элемент рисуется как статичный. */
+.crm-automated-solution-hub-host .ui-side-panel-wrap-workarea {
+	overflow: visible;
+}
+
+/* Раздел «Смарт-процессы»: строки-привязки, под ними кнопки выбора и создания. Значения плитки
+   строк сняты с эталонной карточки relations-sp СП-хаба дословно — раздел должен читаться как она. */
+.crm-automated-solution-hub-types {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.crm-automated-solution-hub-types__rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg);
+	background: var(--ui-color-accent-soft-blue-3);
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.crm-automated-solution-hub-types__actions {
+	display: inline-flex;
+	gap: var(--ui-space-inline-sm);
+}
+
+/* Home page section: the page switch with its embedded settings under it. The settings, their skeleton and the
+   empty or error alert take the width of the card column; the slider keeps the hub width (no setWidth). */
+.crm-automated-solution-hub-vibe {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.crm-automated-solution-hub-vibe__settings,
+.crm-automated-solution-hub-vibe__content {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.crm-automated-solution-hub-vibe__alert {
+	margin: 0;
+}

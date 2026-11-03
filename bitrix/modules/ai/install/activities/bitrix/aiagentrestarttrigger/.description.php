@@ -11,7 +11,9 @@ use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Bizproc\Public\Feature\AiAgent\AiAgentSectionFlag;
 use Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface;
+use Bitrix\Main\Config\Feature;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
@@ -52,7 +54,7 @@ $arActivityDescription =
 			],
 		])
 		->setExcluded(
-			\Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'N'
+			Feature::isDisabled(AiAgentSectionFlag::class)
 			|| !$isAiNodeAvailable
 		)
 		->setGroups([

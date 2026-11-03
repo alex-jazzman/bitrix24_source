@@ -59,5 +59,8 @@ $MESS["TASKS_BP_DOCUMENT_SCRUM_TEAM_ROLE"] = "Команда разработк�
 $MESS['TASKS_BP_DOCUMENT_CHAT_ID_INT'] = 'ID чата';
 
 
+$MESS['TASKS_BP_DOCUMENT_CRM_ITEMS'] = 'Элементы CRM';
+$MESS['TASKS_BP_DOCUMENT_DEPENDS_ON'] = 'Предыдущие задачи';
+$MESS['TASKS_BP_DOCUMENT_UPDATE_ERROR'] = 'Не удалось изменить задачу';
 $MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = 'Осталась половина срока на выполнение задачи [url=#TASK_URL#][#{taskId}] #TASK_TITLE#[/url]. Убедитесь, что успеваете завершить работу вовремя';
 $MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE'] = 'Никто не взял в работу задачу в потоке [url=#FLOW_URL#][#{flowId}] #FLOW_TITLE#[/url]. Назначьте исполнителя самостоятельно';

@@ -1,0 +1,26 @@
+<?php
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_CLOSE_BUTTON'] = 'Close';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_CLOSE_HINT'] = 'Close tip';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_DONE_BUTTON'] = 'Done';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_EMPTY_DASHBOARD_CTA_EDIT_BUTTON'] = 'Add chart';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_EMPTY_DASHBOARD_CTA_TEXT'] = 'This report is empty for now. Click this button to open edit mode, where you can add charts and tables.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_EMPTY_DASHBOARD_CTA_TITLE'] = 'Add your first chart';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_GOT_IT_BUTTON'] = 'Got it';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_NEXT_BUTTON'] = 'Next';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_NEXT_STEP'] = 'Next';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_PREVIOUS_STEP'] = 'Back';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_RESTART_HINT_TEXT'] = 'To see the hints again from the start, select "Show hints" in this button\'s menu.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_RESTART_HINT_TITLE'] = 'You can bring the hints back';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_ANNOUNCEMENT'] = 'Step #CURRENT# of #TOTAL#. #TITLE#';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_BITRIXGPT_TEXT'] = 'Ask a question in your own words, for example, why gross sales dropped or where deals are stuck. You will get an analysis based on the report data.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_BITRIXGPT_TITLE'] = 'CoPilot';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_EDIT_TEXT'] = 'Add charts and tables, rearrange them or rename the report.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_EDIT_TITLE'] = 'Edit dashboard';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_FILTERS_TEXT'] = 'Select filters and click "Apply" to keep only the data you need in the report.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_FILTERS_TITLE'] = 'Filters';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_INFO_TEXT'] = 'Open the report description to learn what it shows and which decisions it helps you make.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_INFO_TITLE'] = 'General';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_PRESETS_TEXT'] = 'Save the filters you use most often as a preset. Next time, you won\'t have to set them up again.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_PRESETS_TITLE'] = 'Filter presets';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_SHARE_TEXT'] = 'Send a dashboard image to a work chat or share a link with people who don\'t have access to Bitrix24.';
+$MESS['BICONNECTOR_DASHBOARD_ONBOARDING_STEP_SHARE_TITLE'] = 'Send report';

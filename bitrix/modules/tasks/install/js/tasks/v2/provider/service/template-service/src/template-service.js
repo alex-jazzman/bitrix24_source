@@ -16,6 +16,11 @@ import { type TaskModel } from 'tasks.v2.model.tasks';
 import { mapRights } from './mappers';
 import { permissionBuilder } from './mappers/permission-builder';
 
+// An empty member list in the request means "remove every member of this role" on the server, so a member
+// field that repeats the state before the edit must not travel: it carries no change, and if the model
+// holds an empty list for a role the person never touched, sending it would wipe that role.
+const MEMBER_FIELDS = ['responsibleIds', 'accomplicesIds', 'auditorsIds'];
+
 export const templateService = new class
 {
 	constructor()
@@ -130,10 +135,10 @@ export const templateService = new class
 
 			if (template.checklist?.length > 0)
 			{
-				void checkListService.save(
+				checkListService.save(
 					data.id,
 					this.$store.getters[`${Model.CheckList}/getByIds`](template.checklist),
-				);
+				).catch(() => {});
 			}
 
 			return [data.id, null];
@@ -167,10 +172,10 @@ export const templateService = new class
 
 			if (template.checklist?.length > 0)
 			{
-				void checkListService.save(
+				checkListService.save(
 					data.id,
 					this.$store.getters[`${Model.CheckList}/getByIds`](template.checklist),
-				);
+				).catch(() => {});
 			}
 
 			return [data.id, null];
@@ -262,6 +267,11 @@ export const templateService = new class
 		catch (error)
 		{
 			console.error(Endpoint.TaskFromTemplateGet, error);
+
+			if (error?.errors?.[0]?.code === 'access_denied')
+			{
+				taskService.updateStoreTask(taskId, { templateId: 0 });
+			}
 		}
 	}
 
@@ -291,7 +301,11 @@ export const templateService = new class
 		{
 			console.error(Endpoint.TaskFromTemplateAdd, error);
 
-			return [0, new Error(error.errors?.[0]?.message)];
+			const [firstError] = error.errors ?? [];
+			const resultError = new Error(firstError?.message);
+			resultError.code = firstError?.code;
+
+			return [0, resultError];
 		}
 	}
 
@@ -433,12 +447,13 @@ export const templateService = new class
 		delete this.#updatePromises[id];
 
 		const templateId = idUtils.unbox(id);
+		const fieldsToSend = this.#dropUnchangedMemberFields(fields, templateBefore);
 
 		try
 		{
 			await apiClient.post(
 				Endpoint.TemplateUpdate,
-				{ template: TaskMappers.mapModelToDto({ id: templateId, ...fields }) },
+				{ template: TaskMappers.mapModelToDto({ id: templateId, ...fieldsToSend }) },
 			);
 
 			promise.resolve({});
@@ -453,6 +468,39 @@ export const templateService = new class
 				[Endpoint.TemplateUpdate]: error.errors,
 			});
 		}
+	}
+
+	#dropUnchangedMemberFields(fields: TaskModel, templateBefore: ?TaskModel): TaskModel
+	{
+		if (!Type.isPlainObject(templateBefore))
+		{
+			return fields;
+		}
+
+		const fieldsToSend = { ...fields };
+
+		MEMBER_FIELDS.forEach((field: string) => {
+			if (Type.isArray(fieldsToSend[field]) && this.#isSameMemberList(fieldsToSend[field], templateBefore[field]))
+			{
+				delete fieldsToSend[field];
+			}
+		});
+
+		return fieldsToSend;
+	}
+
+	#isSameMemberList(left: number[], right: ?number[]): boolean
+	{
+		if (!Type.isArray(right) || left.length !== right.length)
+		{
+			return false;
+		}
+
+		const sortById = (a: number, b: number): number => a - b;
+		const sortedLeft = left.map(Number).sort(sortById);
+		const sortedRight = right.map(Number).sort(sortById);
+
+		return sortedLeft.every((id: number, index: number) => id === sortedRight[index]);
 	}
 
 	get $store(): Store

@@ -1,0 +1,16 @@
+.call-header-security-indicator {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.call-header-security-indicator__text {
+	color: rgba(255, 255, 255, 0.7);
+	text-align: center;
+	font: 400 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	letter-spacing: -0.05px;
+}
+
+.call-header-security-indicator__tooltip {
+	width: 390px;
+}

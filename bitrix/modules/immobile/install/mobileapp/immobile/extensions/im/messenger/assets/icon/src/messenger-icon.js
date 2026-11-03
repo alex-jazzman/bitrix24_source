@@ -24,6 +24,8 @@ jn.define('im/messenger/assets/icon/src/messenger-icon', (require, exports, modu
 		projectEmptyState: 'projectEmptyState',
 		taskEmptyState: 'taskEmptyState',
 		chatAttachEmptyState: 'chatAttachEmptyState',
+		chatBotCommandsEmptyState: 'chatBotCommandsEmptyState',
+		chatBotCommandsErrorState: 'chatBotCommandsErrorState',
 	});
 
 	const IconRegistry = Object.freeze({
@@ -44,6 +46,8 @@ jn.define('im/messenger/assets/icon/src/messenger-icon', (require, exports, modu
 		[IconType.projectEmptyState]: 'project-empty-state',
 		[IconType.taskEmptyState]: 'task-empty-state',
 		[IconType.chatAttachEmptyState]: 'chat-attach-empty-state',
+		[IconType.chatBotCommandsEmptyState]: 'chat-bot-commands-empty-state',
+		[IconType.chatBotCommandsErrorState]: 'chat-bot-commands-error-state',
 	});
 
 	class MessengerIcon

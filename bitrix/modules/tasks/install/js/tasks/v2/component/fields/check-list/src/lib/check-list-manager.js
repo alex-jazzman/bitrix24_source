@@ -1,3 +1,5 @@
+/* global Partial */
+
 import { Dom, Type } from 'main.core';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserModel } from 'tasks.v2.model.users';
@@ -333,34 +335,14 @@ export class CheckListManager
 
 	moveRight(item: CheckListModel, updateFn: (updates: CheckListModel[]) => void): void
 	{
-		if (item.parentId === 0 || this.getItemLevel(item) > 5)
+		const newParent = this.getIndentTarget(item);
+		if (!newParent)
 		{
 			return;
 		}
 
 		const itemsOnLevel = this.getItemsOnLevel(item.parentId);
-
 		const currentIndex = itemsOnLevel.findIndex((sibling: CheckListModel) => sibling.id === item.id);
-		if (currentIndex <= 0)
-		{
-			return;
-		}
-
-		let newParent = null;
-		for (let i = currentIndex - 1; i >= 0; i--)
-		{
-			const candidate = itemsOnLevel[i];
-			if (!this.isItemDescendant(candidate, item))
-			{
-				newParent = candidate;
-				break;
-			}
-		}
-
-		if (!newParent)
-		{
-			return;
-		}
 
 		const newParentChildren = this.#getCheckLists()
 			.filter((child: CheckListModel) => child.parentId === newParent.id)
@@ -387,7 +369,7 @@ export class CheckListManager
 
 	moveLeft(item: CheckListModel, updateFn: (updates: CheckListModel[]) => void): void
 	{
-		if (item.parentId === 0 || this.getItemLevel(item) <= 1)
+		if (!this.canMoveLeft(item))
 		{
 			return;
 		}
@@ -443,6 +425,122 @@ export class CheckListManager
 		};
 
 		updateFn([...currentSiblingsUpdates, movedItemUpdate]);
+	}
+
+	canMoveRight(item: CheckListModel): boolean
+	{
+		if (!item || item.parentId === 0 || this.getItemLevel(item) >= 5)
+		{
+			return false;
+		}
+
+		const itemsOnLevel = this.getItemsOnLevel(item.parentId);
+		const currentIndex = itemsOnLevel.findIndex((sibling: CheckListModel) => sibling.id === item.id);
+		if (currentIndex <= 0)
+		{
+			return false;
+		}
+
+		return this.getIndentTarget(item) !== null;
+	}
+
+	getIndentTarget(item: ?CheckListModel): ?CheckListModel
+	{
+		if (!item || item.parentId === 0 || this.getItemLevel(item) >= 5)
+		{
+			return null;
+		}
+
+		const itemsOnLevel = this.getItemsOnLevel(item.parentId);
+		const currentIndex = itemsOnLevel.findIndex((sibling: CheckListModel) => sibling.id === item.id);
+		for (let i = currentIndex - 1; i >= 0; i--)
+		{
+			const candidate = itemsOnLevel[i];
+			if (!candidate.hidden && !this.isItemDescendant(candidate, item))
+			{
+				return candidate;
+			}
+		}
+
+		return null;
+	}
+
+	canMoveLeft(item: CheckListModel): boolean
+	{
+		if (!item || item.parentId === 0 || this.getItemLevel(item) <= 1)
+		{
+			return false;
+		}
+
+		return this.#getCheckLists().some((parent: CheckListModel) => parent.id === item.parentId);
+	}
+
+	canMoveItemUp(item: CheckListModel): boolean
+	{
+		return this.#getVisibleSiblingIndex(item) > 0;
+	}
+
+	canMoveItemDown(item: CheckListModel): boolean
+	{
+		const visibleSiblings = this.#getVisibleSiblings(item);
+		const currentIndex = visibleSiblings.findIndex((sibling: CheckListModel) => sibling.id === item?.id);
+
+		return currentIndex >= 0 && currentIndex < visibleSiblings.length - 1;
+	}
+
+	moveItemUp(item: CheckListModel, updateFn: (updates: CheckListModel[]) => void): ?{ position: number, total: number }
+	{
+		return this.#reorderSibling(item, -1, updateFn);
+	}
+
+	moveItemDown(
+		item: CheckListModel,
+		updateFn: (updates: CheckListModel[]) => void,
+	): ?{ position: number, total: number }
+	{
+		return this.#reorderSibling(item, 1, updateFn);
+	}
+
+	#reorderSibling(
+		item: CheckListModel,
+		offset: number,
+		updateFn: (updates: CheckListModel[]) => void,
+	): ?{ position: number, total: number }
+	{
+		const visibleSiblings = this.#getVisibleSiblings(item);
+		const currentIndex = visibleSiblings.findIndex((sibling: CheckListModel) => sibling.id === item?.id);
+		const targetIndex = currentIndex + offset;
+		if (currentIndex < 0 || targetIndex < 0 || targetIndex >= visibleSiblings.length)
+		{
+			return null;
+		}
+
+		const target = visibleSiblings[targetIndex];
+		updateFn([
+			{ ...item, sortIndex: target.sortIndex },
+			{ ...target, sortIndex: item.sortIndex },
+		]);
+
+		return { position: targetIndex + 1, total: visibleSiblings.length };
+	}
+
+	#getVisibleSiblingIndex(item: CheckListModel): number
+	{
+		return this.#getVisibleSiblings(item)
+			.findIndex((sibling: CheckListModel) => sibling.id === item?.id)
+		;
+	}
+
+	#getVisibleSiblings(item: CheckListModel): CheckListModel[]
+	{
+		if (!item)
+		{
+			return [];
+		}
+
+		return this.getItemsOnLevel(item.parentId)
+			.filter((sibling: CheckListModel) => !sibling.hidden)
+		;
 	}
 
 	findNearestItem(

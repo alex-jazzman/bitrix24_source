@@ -32,10 +32,10 @@ jn.define('im/messenger/provider/services/analytics/src/reaction', (require, exp
 					return;
 				}
 
-				const dialogType = dialog.type;
+				const category = AnalyticsHelper.getCategoryByChat(dialog);
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
-					.setCategory(AnalyticsHelper.getCategoryByChatType(dialogType))
+					.setCategory(category)
 					.setEvent(Analytics.Event.expandReactionList)
 					.setP1(AnalyticsHelper.getP1ByDialog(dialog));
 

@@ -68,24 +68,30 @@ export const ReplicationSettingsMonthlyByDayOfMonth = {
 			@click.self="$emit('update:monthlyType', ReplicationMonthlyType.Absolute)"
 		>
 			<UiRadio
+				tag="label"
+				class="tasks-replication-sheet-action-row__option"
 				:modelValue="monthlyType"
 				:value="ReplicationMonthlyType.Absolute"
 				inputName="tasks-replication-sheet-monthly-type"
+				data-testid="tasks-replication-monthly-absolute-radio"
 				@update:modelValue="$emit('update:monthlyType', $event)"
-			/>
-			<RichLoc class="tasks-field-replication-row" :text="loc('TASKS_V2_REPLICATION_NTH_DAY')" placeholder="[day/]">
-				<template #day>
-					<BInput
-						:modelValue="String(dayNumber)"
-						:size="InputSize.Sm"
-						:design="!disabled ? InputDesign.Grey : InputDesign.Disabled"
-						:disabled
-						stretched
-						style="max-width: 4em; padding-bottom: 0;"
-						@update:modelValue="updateDayNumber"
-					/>
-				</template>
-			</RichLoc>
+			>
+				<RichLoc class="tasks-field-replication-row" :text="loc('TASKS_V2_REPLICATION_NTH_DAY')" placeholder="[day/]">
+					<template #day>
+						<BInput
+							:modelValue="String(dayNumber)"
+							:size="InputSize.Sm"
+							:design="!disabled ? InputDesign.Grey : InputDesign.Disabled"
+							:disabled
+							stretched
+							:ariaLabel="loc('TASKS_V2_REPLICATION_DAY_OF_MONTH_ARIA_LABEL')"
+							data-testid="tasks-replication-day-of-month-input"
+							style="max-width: 4em; padding-bottom: 0;"
+							@update:modelValue="updateDayNumber"
+						/>
+					</template>
+				</RichLoc>
+			</UiRadio>
 		</div>
 	`,
 };

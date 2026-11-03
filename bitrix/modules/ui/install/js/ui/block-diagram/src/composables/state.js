@@ -14,6 +14,13 @@ export function useState(): State
 {
 	return {
 		blockDiagramRef: null,
+		// The panel of the minimap, registered as a focus surface of the diagram; why - see
+		// `isFocusOnAnyOf` in composables/keyboard-pan.js.
+		canvasMapRef: null,
+		// The work area a consumer declares around the canvas: the catalog and the toolbars it places
+		// next to the diagram belong to it, the page around the editor does not. Read by the
+		// background Escape (composables/canvas-escape-fallback.js); null means the root itself.
+		focusScopeRef: null,
 		blockDiagramTop: 0,
 		blockDiagramLeft: 0,
 		blockDiagramWidth: 0,
@@ -21,7 +28,6 @@ export function useState(): State
 
 		cursorType: 'default',
 
-		isResizing: false,
 		isDisabled: false,
 
 		waitAllBlocksMounted: promiseWithResolvers(),
@@ -59,14 +65,21 @@ export function useState(): State
 
 		movingBlockId: null,
 		gestureBlockIds: new Set(),
+		isGestureElevated: false,
+
+		groupableBlockIds: new Set(),
+
+		hoveredBlockId: null,
 
 		resizingBlock: null,
 
 		canvasRef: null,
 		transformLayoutRef: null,
-		canvasInstance: null,
 		canvasWidth: 0,
 		canvasHeight: 0,
+		// Edges of the viewport the panels of a consumer cover: the canvas is drawn under them and
+		// knows nothing about them. The zoom bar publishes them, the fit reads them when it runs.
+		viewportInsets: { top: 0, right: 0, bottom: 0, left: 0 },
 		transformX: 0,
 		transformY: 0,
 		viewportX: 0,
@@ -105,6 +118,8 @@ export function useState(): State
 
 		highlitedBlockIds: [],
 		transientHighlightedBlockIds: [],
+		displacedBlockIds: [],
+		isPlacementRefused: false,
 		isSelectionActive: false,
 		selectionWorldRect: null,
 		groupDragOffset: { x: 0, y: 0 },
@@ -114,9 +129,6 @@ export function useState(): State
 		isPauseAnimation: false,
 		isStopAnimation: false,
 
-		shortcuts: [],
-		mousePosition: { x: 0, y: 0 },
-		isKeyboardInitialized: false,
 		isRenderOptimizationAvailable: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled,
 		connectionRouteHitTestEnabled: false,
 	};

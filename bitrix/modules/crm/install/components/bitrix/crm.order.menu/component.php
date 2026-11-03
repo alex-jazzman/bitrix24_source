@@ -297,6 +297,13 @@ if ($arParams['TYPE'] === 'list')
 
 		$stExportId = 'EXPORT_'.\CCrmOwnerType::OrderName;
 		$componentName = 'bitrix:crm.order.list';
+		$componentParams = [
+			'ORDER_COUNT' => '20',
+			'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'] ?? '',
+			'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'] ?? '',
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+			'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::OrderName
+		];
 
 		$arResult['EXPORT_CSV_PARAMS'] = [
 			'id' => $stExportId. '_CSV',
@@ -311,16 +318,9 @@ if ($arParams['TYPE'] === 'list')
 				'ENTITY_TYPE' => \CCrmOwnerType::OrderName,
 				'EXPORT_TYPE' => 'csv',
 				'COMPONENT_NAME' => $componentName,
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
-					$componentName,
-					array(
-						'ORDER_COUNT' => '20',
-						'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'] ?? '',
-						'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'] ?? '',
-						'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
-						'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::OrderName
-					)
-				),
+				'signedParameters' => method_exists(\Bitrix\Crm\Controller\Export::class, 'signExportParameters')
+					? \Bitrix\Crm\Controller\Export::signExportParameters($componentName, $componentParams)
+					: \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			],
 			'optionsFields' => array(
 				'EXPORT_ALL_FIELDS' => array(

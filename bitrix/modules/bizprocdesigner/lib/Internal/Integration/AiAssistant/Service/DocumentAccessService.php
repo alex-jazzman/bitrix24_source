@@ -5,16 +5,22 @@ namespace Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\Service;
 use Bitrix\Bizproc\Public\Entity\Document\Workflow;
 use Bitrix\Bizproc\Public\Provider\WorkflowTemplate\AiAgentProvider;
 use Bitrix\BizprocDesigner\Internal\Entity\DocumentDescription;
+use Bitrix\BizprocDesigner\Internal\Service\TemplateEditAccess;
 use Bitrix\Main\DI\ServiceLocator;
 
 final readonly class DocumentAccessService
 {
 	private AiAgentProvider $aiAgentProvider;
+	private TemplateEditAccess $templateEditAccess;
 
-	public function __construct(?AiAgentProvider $aiAgentProvider = null)
+	public function __construct(
+		?AiAgentProvider $aiAgentProvider = null,
+		?TemplateEditAccess $templateEditAccess = null,
+	)
 	{
 		$this->aiAgentProvider = $aiAgentProvider
 			?? ServiceLocator::getInstance()->get(AiAgentProvider::class);
+		$this->templateEditAccess = $templateEditAccess ?? new TemplateEditAccess();
 	}
 
 	public function canCreate(int $userId, DocumentDescription $documentType): bool
@@ -66,6 +72,28 @@ final readonly class DocumentAccessService
 		}
 
 		return $this->canCreate($userId, $documentType);
+	}
+
+	/**
+	 * The template ACL on top of the document guard, for the paths of the external agent that address a
+	 * template of the editor. The agent writes into the very draft a person is editing, and the graph of that
+	 * draft travels back to whoever holds the lease of the template; both belong to the right to edit that
+	 * template, which the wide CreateWorkflow right of the document type is not.
+	 *
+	 * The WORKFLOW pseudo type keeps the document guard alone: the ACL of a launched copy refuses its own
+	 * legitimate owner, whom canManageDocument admits on purpose. A template that has no id yet has no ACL
+	 * either — its creation is the boundary of canManageDocument.
+	 */
+	public function canEditTemplate(int $userId, DocumentDescription $documentType, int $templateId): bool
+	{
+		if ($templateId <= 0 || $this->isWorkflowPseudoType($documentType))
+		{
+			return true;
+		}
+
+		$tpl = $this->templateEditAccess->resolve($templateId);
+
+		return $tpl !== null && $this->templateEditAccess->canEdit($tpl, $userId);
 	}
 
 	private function isWorkflowPseudoType(DocumentDescription $documentType): bool

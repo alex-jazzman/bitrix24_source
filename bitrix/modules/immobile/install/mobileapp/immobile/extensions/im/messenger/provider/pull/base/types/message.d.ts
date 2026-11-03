@@ -172,6 +172,7 @@ declare type MessagePullHandlerUpdateParams = {
 	text: string,
 	textLegacy: string,
 	block?: BlockConfig,
+	files?: {[fileId: string]: RawFile} | [],
 }
 
 declare type MessagePullHandlerMessageParamsUpdateParams = {
@@ -207,9 +208,11 @@ declare type MessagePullHandlerAdditionalEntities = {
 
 declare type MessagePullHandleAutoTaskStatus = {
 	status: string,
-	messageId: number,
-	chatId: number,
-	type: string,
+	messageId: number, // anchor of the operation, counted by the backend over the surviving set
+	// Null on the terminal refusal: the source message is already gone, so the event carries no chat.
+	chatId: number | null,
+	type: string, // type of the anchor message, not of the operation
+	isPartial?: boolean, // sent with the task creation completion status only, absent everywhere else
 }
 
 declare type MessageAddParams = {

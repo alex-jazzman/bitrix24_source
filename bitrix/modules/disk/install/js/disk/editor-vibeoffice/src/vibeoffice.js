@@ -1,48 +1,57 @@
-import { Type, Loc, Tag, Text, Runtime, Event, ajax as Ajax } from 'main.core';
+import { Type, Loc, Tag, Text, Uri, Event, Page, ajax as Ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { ButtonManager } from 'ui.buttons';
-import type { Menu, MenuItem } from 'main.popup';
 import { PullClient } from 'pull.client';
-import { Users } from 'disk.users';
-import { PresenceManager, isEnabledPresenceConfig } from './presence-manager';
+import { LiveAnnouncer } from 'ui.a11y';
+import {
+	BeforeStartEditEvent,
+	HeaderElement,
+	ServerChosenEditor,
+	documentHeaderService,
+	mapCompositionDtoToModel,
+	openAccess,
+	startEdit,
+} from 'disk.document-header';
+import type { CompositionModel, StartEditOutcome } from 'disk.document-header';
 import type {
 	EditorOptions,
 	VibeOfficeEditor,
 	CreateEditor,
-	PanelButtonUniqIds,
 	ContentUpdatedMessage,
-	PresenceConfig,
-	PresenceRoster,
+	ConflictMessage,
+	EditorUser,
+	CurrentUserAvatar,
+	NativeEditorInstance,
 } from './types';
-
-type SharingPopupParams = {
-	objectId: ?number,
-	uniqueCode: ?string,
-	onAfterHide: () => void,
-};
-
-type SharingPopupDialog = {
-	open: (params: SharingPopupParams) => Promise<void>,
-	close: () => void,
-};
-
-type SharingPopupExtension = {
-	SharingPopupDialog: Class<SharingPopupDialog>,
-};
 
 const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
 
-// The one menu code that maps back to the CURRENT editor engine. In the "Open in..." split-menu
-// the "Битрикс24.Docs" item is emitted under OnlyOfficeHandler's code ('onlyoffice'); the backend
-// (DocumentHandlersManager::resolveEffectiveHandler) routes that code to the vibeoffice engine, so
-// picking it must open here in place (navigate to linkToEdit), exactly like the OnlyOffice sibling.
-// Every other code is a foreign engine and is delegated to BX.Disk.Viewer.Actions.runActionEdit.
-const EDIT_HERE_SERVICE_CODE = 'onlyoffice';
+/** The component serving the actions of this shell. */
+const COMPONENT_NAME = 'bitrix:disk.file.editor-vibeoffice';
+
+// The engine endpoint of ajax actions and the action ending an edit session, shared with the
+// OnlyOffice shell (@see BX.Disk.endEditSession in c_disk.js). Only the beacon of the unload path
+// addresses the action directly: `ajax.runAction` returns a promise nobody is left to await, and
+// the browser cancels its request together with the page.
+const AJAX_ENDPOINT = '/bitrix/services/main/ajax.php';
+const END_SESSION_ACTION = 'disk.api.onlyoffice.endSession';
+const SAVE_REFUSAL_REASON_ACTION = 'disk.api.vibeoffice.getSavedRefusalReason';
+const EXTERNAL_SAVE_REFUSAL_REASON_ACTION = 'disk.api.vibeoffice.getSavedRefusalReasonForExternalLink';
+
+const ACCESS_CONTROL_TYPES = Object.freeze([
+	'with-change-rights',
+	'with-sharing',
+	'without-edit',
+	'blocked-by-feature',
+]);
+
+// The shape of a path of this very portal: one leading slash, no host of its own and no backslash
+// (@see isSamePortalPath).
+const PORTAL_PATH_SHAPE = /^\/(?!\/)[^\\]*$/;
 
 // The helper facade events the wrapper reacts to (HelperEvents, types.ts:178-186). Recovery
-// itself is fully owned by the helper, as is the loading UI it drives through `stateChange`;
-// the wrapper subscribes only to what it turns into Disk-side UI/channels.
-const HELPER_EVENTS = ['documentReady', 'failover', 'sessionClosed', 'error'];
+// itself is fully owned by the helper, as is the loading UI; the wrapper subscribes only to what
+// it turns into Disk-side UI, so `stateChange` and `documentReady` are not among them.
+const HELPER_EVENTS = ['failover', 'sessionClosed', 'error', 'waiting'];
 
 // Session-close reasons the helper relays from the SSE channel (SseSessionClosed,
 // types.ts:116-119).
@@ -59,7 +68,10 @@ const SESSION_CLOSE_NAVIGATION_DELAY_MS = 3000;
 // `document.saved` is delivered asynchronously after the editor reports `sessionClosed('saved')`.
 // Poll the host-side content version before opening the view, with a bounded fallback for a save
 // that does not produce a new version or a temporarily unavailable AJAX endpoint.
-const SAVED_CONFIRMATION_POLL_INTERVAL_MS = 250;
+const SAVED_CONFIRMATION_INITIAL_POLL_INTERVAL_MS = 1000;
+const SAVED_CONFIRMATION_MAX_POLL_INTERVAL_MS = 5000;
+const SAVED_CONFIRMATION_POLL_BACKOFF_FACTOR = 1.5;
+const SAVED_CONFIRMATION_POLL_JITTER_RATIO = 0.2;
 const SAVED_CONFIRMATION_TIMEOUT_MS = 30000;
 
 // The helper emits error(...) and failover({recovered:false}) synchronously for one recovery
@@ -72,7 +84,9 @@ const FAILOVER_ERROR_DEDUP_WINDOW_MS = 1000;
 // longer usable → a blocking messagebox; `terminal: false` is a transient degradation → a toast.
 // `sse-degraded` is the only non-terminal code here: the live channel is degraded but editing can
 // continue, so the actual terminal point stays on `sessionClosed`/a terminal `error`.
-const ERROR_REACTIONS = {
+// Exported for the test that keeps every code covered by a phrase of the extension; the entry
+// point does not re-export it, so the public surface stays `BX.Disk.Editor.Vibeoffice`.
+export const ERROR_REACTIONS = {
 	'api-js-load-failed': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_API_JS_LOAD_FAILED', terminal: true },
 	'editor-create-failed': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_EDITOR_CREATE_FAILED', terminal: true },
 	'invalid-open-config': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_INVALID_OPEN_CONFIG', terminal: true },
@@ -81,10 +95,11 @@ const ERROR_REACTIONS = {
 	'sse-degraded': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_SSE_DEGRADED', terminal: false },
 	'recovery-failed': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_RECOVERY_FAILED', terminal: true },
 	'ds-error': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_DS_ERROR', terminal: true },
+	'save-refused': { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_SAVE_REFUSED', terminal: true },
 };
 
 // Fallback for an unknown / missing code: still surfaced (never silent), and treated as terminal.
-const ERROR_FALLBACK = { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_GENERIC', terminal: true };
+export const ERROR_FALLBACK = { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_GENERIC', terminal: true };
 
 /**
  * Disk wrapper around `@vibeoffice/helper`.
@@ -93,9 +108,9 @@ const ERROR_FALLBACK = { messageId: 'DISK_EDITOR_VIBEOFFICE_ERR_GENERIC', termin
  * `DocsAPI.DocEditor` is NEVER created here — the helper's `createEditor` owns api.js
  * loading, the SSE session channel and seamless failover/recreate. This class only:
  *   - feeds the platform-signed `openConfig` to `createEditor` as-is,
- *   - subscribes to the five facade events and maps them onto Disk UI/channels,
+ *   - subscribes to the facade events and maps them onto Disk UI/channels,
  *   - reuses the engine-orthogonal OnlyOffice behaviours (SidePanel close, endEditSession,
- *     markAsStillWorking, online user-box, onSaved/onClosed emits),
+ *     markAsStillWorking, onSaved/onClosed emits),
  *   - tears the editor (SSE + native) down via `editor.destroy()` on unmount.
  *
  * `#documentServerEvents` is the pass-through seam for api.js handlers not reserved by the
@@ -124,23 +139,20 @@ export class Vibeoffice
 	context: Object = null;
 	targetNode: HTMLElement = null;
 	editorNode: HTMLElement = null;
-	userBoxNode: HTMLElement = null;
 	elementId: string = null;
 	linkToView: string = null;
-	linkToEdit: string = null;
 	linkToDownload: string = null;
-	panelButtonUniqIds: ?PanelButtonUniqIds = null;
+	linkToEdit: string = null;
 	historyEnabled: boolean = false;
+	externalLinkMode: boolean = false;
 	texts: Object = {};
 	pullConfig: any = null;
 	publicChannel: ?string = null;
-	presenceConfig: ?PresenceConfig = null;
 
 	editor: ?VibeOfficeEditor = null;
-	usersBox: ?Users = null;
 	documentWasChanged: boolean = false;
-	dontEndCurrentDocumentSession: boolean = false;
 	#unsubscribers: Array<() => void> = [];
+	#conflictNotified: boolean = false;
 	#trackWorkTimer: ?IntervalID = null;
 	#documentServerEvents: Object = {};
 	// Only a real server answer resets this; cache hits issue no request and leave it untouched.
@@ -149,6 +161,8 @@ export class Vibeoffice
 	// the user alone - infoToken only authorizes the call). The promise is cached, not the value,
 	// so events arriving while a request is in flight join it instead of firing their own.
 	#userNameCache: Map<number, Promise<?string>> = new Map();
+	#currentUserAvatarPromise: ?Promise<?CurrentUserAvatar> = null;
+	#avatarRecipients: WeakSet<NativeEditorInstance> = new WeakSet();
 	// Timestamps of the native "editor settled" events, used to gate document-change tracking
 	// (see #handleDocumentStateChange). Parity with the OnlyOffice sibling.
 	#caughtDocumentReady: ?number = null;
@@ -157,27 +171,42 @@ export class Vibeoffice
 	// failover({recovered:false}) for the same recovery failure (helper.umd.cjs), so handleFailover
 	// uses this to suppress its duplicate toast.
 	#lastErrorNotifiedAt: ?number = null;
-	// Pending deferred session-close navigation (expired reload / standalone downgrade-to-view),
+	#notifiedUnsavedReopens: Set<string> = new Set();
+	// Pending deferred session-close navigation (expired / standalone downgrade-to-view),
 	// cleared on destroy so it never navigates a torn-down editor.
 	#pendingNavigationTimer: ?TimeoutID = null;
-	#pendingMenuBlurTimer: ?TimeoutID = null;
 	#lifecycleGeneration: number = 0;
+	#firstLoadController: AbortController = new AbortController();
+	#openingDeadline: number = Infinity;
+	#restartTarget: ?string = null;
+	#manualRestartBox: ?Object = null;
+	#manualRestartPending: boolean = false;
+	#manualRestartClosePromise: ?Promise<void> = null;
+	#waitingBox: ?Object = null;
+	#waitingFallback: ?HTMLDialogElement = null;
+	#waitingCode: ?string = null;
+	#waitingUnsavedChanges: boolean = false;
+	#saveRefusedShown: boolean = false;
+	#saveRefusedBox: ?Object = null;
 	#destroyed: boolean = false;
-	#sharingOperation: ?Promise<void> = null;
-	#sharingAttempt: number = 0;
-	#sharingDialog: ?SharingPopupDialog = null;
-	#menuWindow: ?Menu = null;
-	#initialEditorReady: boolean = false;
-	#presenceStarted: boolean = false;
-	#presenceManager: ?PresenceManager = null;
-	// Idempotency guard for handleClose(): three independent sources (SidePanel.Slider:onClose,
-	// beforeunload, postMessage 'closeIframe') can all fire it, but the teardown / endEditSession
-	// must run once. Never reset (a new wrapper is a new instance).
+	// The rename asked for last: the engine can ask again while the previous request is in flight
+	// (a repeated Enter), and the answers resolve in any order, so only the last one is applied.
+	#renameGeneration: number = 0;
+	// A transition to editing being made right now. The button of the engine draws no waiting of its
+	// own and the shell cannot disable it from outside the frame, so a repeated press is ignored: the
+	// press already under way answers the engine itself, with a refusal or with leaving the page.
+	#reopening: boolean = false;
+	// Idempotency guard for handleClose(): SidePanel.Slider:onClose,
+	// pagehide and postMessage 'closeIframe' can all fire it, but the teardown /
+	// endEditSession must run once. Never reset (a new wrapper is a new instance).
 	#closed: boolean = false;
 
 	constructor(editorOptions: EditorOptions)
 	{
 		const options = Type.isPlainObject(editorOptions) ? editorOptions : {};
+		this.#openingDeadline = openingDeadline(options.openingBudget);
+		this.#restartTarget = isSamePortalPath(options.restartTarget) ? options.restartTarget : null;
+		const headerComposition: ?CompositionModel = mapCompositionDtoToModel(options.headerComposition);
 
 		this.openConfig = options.openConfig;
 		this.documentSession = options.documentSession;
@@ -185,16 +214,14 @@ export class Vibeoffice
 		this.attachedObject = options.attachedObject || { id: null };
 		this.targetNode = options.targetNode;
 		this.editorNode = options.editorNode;
-		this.userBoxNode = options.userBoxNode;
 		this.linkToView = options.linkToView;
-		this.linkToEdit = options.linkToEdit;
 		this.linkToDownload = options.linkToDownload;
-		this.panelButtonUniqIds = Type.isPlainObject(options.panelButtonUniqIds) ? options.panelButtonUniqIds : null;
+		this.linkToEdit = options.linkToEdit;
 		this.historyEnabled = options.historyEnabled === true;
+		this.externalLinkMode = options.externalLinkMode === true;
 		this.texts = options.texts || {};
 		this.pullConfig = options.pullConfig || null;
 		this.publicChannel = Type.isStringFilled(options.publicChannel) ? options.publicChannel : null;
-		this.presenceConfig = options.presenceConfig || null;
 
 		this.context = {
 			currentUser: options.currentUser,
@@ -207,21 +234,47 @@ export class Vibeoffice
 		// it to its id (helper passes `element` straight into `new DocsAPI.DocEditor(id, ...)`).
 		this.elementId = this.#resolveElementId(options.element, this.editorNode);
 
-		// api.js handlers the helper does not reserve (vendor helper.umd.cjs only reserves
-		// onAppReady/onDocumentReady/onError/onRequestRefreshFile) flow through here to the native
-		// DocsAPI editor. We wire the same document-change signal the OnlyOffice sibling uses
-		// (onlyoffice.js:504-517): onDocumentStateChange marks the document as changed once the
-		// editor has settled, so endEditSession/emitEventOnClosed report a truthful
-		// `documentWasChanged` (drives the c_disk.js "document is being saved" balloon and its
-		// `vibeoffice` pull "saved" toast). onDocumentReady/onInfo only timestamp the guard.
+		// api.js handlers flow through here to the native DocsAPI editor: the helper (vendor
+		// helper.umd.cjs) passes them straight through, except onAppReady/onDocumentReady/onError/
+		// onRequestRefreshFile, which it wraps and calls ours after its own handling.
+		// We wire the same document-change signal the OnlyOffice sibling uses:
+		// onDocumentStateChange marks the document as changed once the editor has settled, so
+		// endEditSession/emitEventOnClosed report a truthful `documentWasChanged` (it drives the
+		// c_disk.js "document is being saved" balloon and its `vibeoffice` pull "saved" toast).
 		// P4 history wiring (onRequestHistory*, gated by `historyEnabled`) lands here later.
 		this.#documentServerEvents = {
 			onDocumentReady: this.#handleNativeDocumentReady.bind(this),
 			onInfo: this.#handleNativeInfo.bind(this),
 			onDocumentStateChange: this.#handleDocumentStateChange.bind(this),
 		};
+		if (
+			headerComposition !== null
+			&& headerComposition.elements.includes(HeaderElement.Access)
+			&& Number.isInteger(headerComposition.object.id)
+			&& headerComposition.object.id > 0
+			&& ACCESS_CONTROL_TYPES.includes(headerComposition.access.controlType)
+		)
+		{
+			this.#documentServerEvents.onRequestSharingSettings = () => openAccess(headerComposition);
+		}
 
-		this.#renderOnlineBox();
+		if (headerComposition !== null && headerComposition.elements.includes(HeaderElement.Rename))
+		{
+			this.#documentServerEvents.onRequestRename = (event) => {
+				void this.#handleRequestRename(event, headerComposition);
+			};
+		}
+
+		// The declaration itself is what offers the transition: the engine draws the button of editing
+		// in a viewing by the sole fact the handler is there, so the address the server gave for this
+		// opening is the whole condition - no right of its own is decided here.
+		if (Type.isStringFilled(this.linkToEdit))
+		{
+			this.#documentServerEvents.onRequestEditRights = () => {
+				void this.#handleRequestEditRights(headerComposition);
+			};
+		}
+
 		this.loadDiskExtensionInTopWindow();
 		if (this.isEditMode())
 		{
@@ -229,6 +282,10 @@ export class Vibeoffice
 		}
 		this.bindEvents();
 		this.#initPull();
+		if (options.initialNotice === true)
+		{
+			this.#notify(this.#text('openingNotice', ''));
+		}
 
 		void this.#createEditor();
 	}
@@ -236,6 +293,16 @@ export class Vibeoffice
 	async #createEditor(): Promise<void>
 	{
 		const lifecycleToken = this.#lifecycleGeneration;
+		const context = this.#openingDeadline === Infinity
+			? undefined
+			: firstLoadContext(this.#openingDeadline, performance.now());
+		if (context === null)
+		{
+			this.#handleError({ code: 'editor-create-failed' });
+
+			return;
+		}
+
 		const createEditor: ?CreateEditor = Vibeoffice.#helper?.createEditor;
 		if (!Type.isFunction(createEditor))
 		{
@@ -256,6 +323,18 @@ export class Vibeoffice
 				element: this.elementId,
 				openConfig: this.openConfig,
 				documentServerEvents: this.#documentServerEvents,
+				onFirstLoadProgress: (progress) => {
+					if (this.#isCurrent(lifecycleToken))
+					{
+						this.#handleWaiting({
+							code: progress?.waitCode,
+							stage: progress?.stage,
+							attempt: progress?.attempt,
+						});
+					}
+				},
+				signal: this.#firstLoadController.signal,
+				...(context === undefined ? {} : { firstLoadContext: context }),
 			});
 
 			if (!this.#isCurrent(lifecycleToken))
@@ -266,6 +345,8 @@ export class Vibeoffice
 			}
 
 			this.editor = editor;
+			// Initial onDocumentReady may precede the resolution of createEditor.
+			void this.#applyCurrentUserAvatar();
 		}
 		catch (error)
 		{
@@ -282,7 +363,6 @@ export class Vibeoffice
 		}
 
 		this.#subscribeFacadeEvents(lifecycleToken);
-		this.#markEditorReady();
 
 		if (this.isEditMode())
 		{
@@ -299,12 +379,6 @@ export class Vibeoffice
 		}
 
 		const handlers = {
-			documentReady: () => {
-				if (this.#isCurrentEditor(editor, lifecycleToken))
-				{
-					this.handleDocumentReady();
-				}
-			},
 			failover: (event) => {
 				if (this.#isCurrentEditor(editor, lifecycleToken))
 				{
@@ -323,6 +397,12 @@ export class Vibeoffice
 					this.#handleError(error);
 				}
 			},
+			waiting: (event) => {
+				if (this.#isCurrentEditor(editor, lifecycleToken))
+				{
+					this.#handleWaiting(event);
+				}
+			},
 		};
 
 		HELPER_EVENTS.forEach((event) => {
@@ -334,19 +414,120 @@ export class Vibeoffice
 		});
 	}
 
-	// region [P2.T2] facade event reactions ----------------------------------------------
-
-	handleDocumentReady(): void
+	#handleUnsavedReopen(event: ?Object): void
 	{
-		if (!this.#isActive())
+		const transitionId = Type.isStringFilled(event?.editorKey)
+			? `${this.documentSession?.id}:${event.editorKey}`
+			: null
+		;
+		if (transitionId !== null && this.#notifiedUnsavedReopens.has(transitionId))
 		{
 			return;
 		}
 
-		this.#markEditorReady();
+		if (transitionId !== null)
+		{
+			this.#notifiedUnsavedReopens.add(transitionId);
+			if (this.#notifiedUnsavedReopens.size > 64)
+			{
+				this.#notifiedUnsavedReopens.delete(this.#notifiedUnsavedReopens.values().next().value);
+			}
+		}
+		this.#notify(Loc.getMessage('DISK_EDITOR_VIBEOFFICE_REOPENED_UNSAVED_LOST'));
 	}
 
-	handleFailover(event: { recovered: boolean }): void
+	#handleWaiting(event: ?Object): void
+	{
+		if (event?.code !== 'saving' && event?.code !== 'loading_no_signal')
+		{
+			return;
+		}
+
+		const unsavedChanges = event.code === 'saving' && event.unsavedChanges === true;
+		const messageId = event.code === 'saving'
+			? 'DISK_EDITOR_VIBEOFFICE_WAITING_SAVING'
+			: 'DISK_EDITOR_VIBEOFFICE_WAITING_LOADING_NO_SIGNAL'
+		;
+		const message = [
+			Loc.getMessage(messageId),
+			unsavedChanges ? Loc.getMessage('DISK_EDITOR_VIBEOFFICE_WAITING_UNSAVED_CHANGES') : null,
+		].filter(Boolean).join(' ');
+		if (this.#waitingCode === event.code)
+		{
+			if (this.#waitingUnsavedChanges !== unsavedChanges)
+			{
+				this.#waitingUnsavedChanges = unsavedChanges;
+				this.#waitingBox?.setMessage(message);
+				if (this.#waitingFallback)
+				{
+					this.#waitingFallback.querySelector('p').textContent = message;
+				}
+			}
+
+			return;
+		}
+
+		this.#closeWaiting();
+		this.#waitingCode = event.code;
+		this.#waitingUnsavedChanges = unsavedChanges;
+		const MessageBox = BX.UI?.Dialogs?.MessageBox;
+		if (!Type.isFunction(MessageBox?.create))
+		{
+			const dialog = document.createElement('dialog');
+			const description = document.createElement('p');
+			const cancel = document.createElement('button');
+			description.textContent = message;
+			cancel.type = 'button';
+			cancel.textContent = Loc.getMessage('DISK_EDITOR_VIBEOFFICE_WAITING_CANCEL') || '';
+			dialog.append(description, cancel);
+			document.body.append(dialog);
+			Event.bind(cancel, 'click', () => this.handleClose());
+			Event.bind(dialog, 'cancel', (cancelEvent) => {
+				cancelEvent.preventDefault();
+				this.handleClose();
+			});
+			dialog.showModal();
+			this.#waitingFallback = dialog;
+
+			return;
+		}
+
+		this.#waitingBox = MessageBox.create({
+			message,
+			buttons: BX.UI.Dialogs.MessageBoxButtons.OK,
+			okCaption: Loc.getMessage('DISK_EDITOR_VIBEOFFICE_WAITING_CANCEL'),
+			onOk: () => {
+				this.#closeWaiting();
+				this.handleClose();
+			},
+			popupOptions: {
+				events: {
+					onPopupClose: () => {
+						if (this.#waitingBox !== null)
+						{
+							this.handleClose();
+						}
+					},
+				},
+			},
+		});
+		this.#waitingBox.show();
+	}
+
+	#closeWaiting(): void
+	{
+		this.#waitingCode = null;
+		this.#waitingUnsavedChanges = false;
+		const waitingBox = this.#waitingBox;
+		this.#waitingBox = null;
+		waitingBox?.close();
+		this.#waitingFallback?.remove();
+		this.#waitingFallback = null;
+	}
+
+	// region [P2.T2] facade event reactions ----------------------------------------------
+
+	handleFailover(event: { recovered: boolean, outcome?: string, editorKey?: string }): void
 	{
 		if (!this.#isActive())
 		{
@@ -357,10 +538,19 @@ export class Vibeoffice
 		// wrapper only reflects the outcome in the UI — it never touches the platform session.
 		if (event && event.recovered === true)
 		{
+			this.#closeWaiting();
+			if (event.outcome === 'reopened_unsaved_lost')
+			{
+				this.#handleUnsavedReopen(event);
+
+				return;
+			}
+
 			this.#notify(this.#text('failoverRecovered', 'DISK_EDITOR_VIBEOFFICE_FAILOVER_RECOVERED'), 'success');
 
 			return;
 		}
+		this.#closeWaiting();
 
 		// A failed recovery is emitted by the helper as error(...) immediately followed by
 		// failover({recovered:false}) for the SAME event (helper.umd.cjs cycle()), so #handleError
@@ -382,14 +572,13 @@ export class Vibeoffice
 		{
 			return;
 		}
-
-		this.#stopPresence();
+		this.#closeWaiting();
 
 		switch (reason)
 		{
 			case SESSION_CLOSED_SAVED:
 				// vibeoffice persists versions via webhook (backend), so the onSaved-equivalent
-				// is driven by sessionClosed('saved') / documentReady, NOT a pull command.
+				// is driven by sessionClosed('saved'), NOT a pull command.
 				this.emitEventOnSaved();
 				this.#waitForSavedThenClose();
 				break;
@@ -402,10 +591,11 @@ export class Vibeoffice
 
 			case SESSION_CLOSED_EXPIRED:
 				// 401/403 from refresh is folded into 'expired' by the helper; no HTTP-code
-				// handling needed on the front. Reload after a short delay so the message is seen
-				// (an immediate reload would navigate before the toast paints).
+				// handling needed on the front. Downgrade like 'revoked' does instead of reloading:
+				// the current address may open editing again and take a fresh session slot, while
+				// `linkToView` is pinned to viewing. Delayed so the message is seen first.
 				this.#notify(this.#text('sessionExpired', 'DISK_EDITOR_VIBEOFFICE_SESSION_EXPIRED'));
-				this.#scheduleNavigation(() => this.#reloadView());
+				this.#scheduleNavigation(() => this.#downgradeToView());
 				break;
 
 			default:
@@ -428,6 +618,7 @@ export class Vibeoffice
 		{
 			return;
 		}
+		this.#closeWaiting();
 
 		const reaction = this.#resolveErrorReaction(error);
 		const message = Loc.getMessage(reaction.messageId) || '';
@@ -435,17 +626,96 @@ export class Vibeoffice
 		// Mark that an error was just surfaced so a failover({recovered:false}) fired in the same
 		// helper cycle does not double-notify the user (see handleFailover).
 		this.#lastErrorNotifiedAt = Date.now();
-
-		if (reaction.terminal)
+		if (error?.code === 'save-refused')
 		{
-			// The editor is unusable from here on, so this tab must leave the roster instead of
-			// heartbeating behind a blocking messagebox.
-			this.#stopPresence();
-			this.#showErrorMessageBox(message);
+			if (!this.#saveRefusedShown)
+			{
+				this.#saveRefusedShown = true;
+				this.#showSaveRefused(message);
+			}
+
+			return;
+		}
+
+		if (reaction.terminal || hasManualHandoff(error))
+		{
+			if (!this.#showManualRestart(message, error))
+			{
+				this.#showErrorMessageBox(message);
+			}
 		}
 		else
 		{
 			this.#notify(message);
+		}
+	}
+
+	#showSaveRefused(message: string): void
+	{
+		const MessageBox = BX.UI?.Dialogs?.MessageBox;
+		if (!Type.isFunction(MessageBox?.create))
+		{
+			this.#showErrorMessageBox(message);
+
+			return;
+		}
+
+		const lifecycleToken = this.#lifecycleGeneration;
+		const box = MessageBox.create({
+			message,
+			buttons: BX.UI.Dialogs.MessageBoxButtons.OK,
+			popupOptions: {
+				events: {
+					onPopupClose: () => {
+						if (this.#saveRefusedBox === box)
+						{
+							this.#saveRefusedBox = null;
+						}
+					},
+				},
+			},
+		});
+		this.#saveRefusedBox = box;
+		box.show();
+		void this.#loadSaveRefusalReason(box, message, lifecycleToken);
+	}
+
+	async #loadSaveRefusalReason(box: Object, message: string, lifecycleToken: number): Promise<void>
+	{
+		try
+		{
+			const action = this.externalLinkMode
+				? EXTERNAL_SAVE_REFUSAL_REASON_ACTION
+				: SAVE_REFUSAL_REASON_ACTION
+			;
+			const response = await Ajax.runAction(action, {
+				data: {
+					documentSessionId: this.documentSession.id,
+					documentSessionHash: this.documentSession.hash,
+				},
+			});
+			const reason = response?.data?.reason;
+			if (
+				!this.#isCurrent(lifecycleToken)
+				|| this.#saveRefusedBox !== box
+				|| !Type.isStringFilled(reason)
+				|| !/^[a-z0-9_]+$/.test(reason)
+			)
+			{
+				return;
+			}
+
+			const reasonMessage = Loc.getMessage('DISK_EDITOR_VIBEOFFICE_SAVE_REFUSED_REASON', {
+				'#CODE#': Text.encode(reason),
+			});
+			if (Type.isStringFilled(reasonMessage) && Type.isFunction(box.setMessage))
+			{
+				box.setMessage(`${message}<br>${reasonMessage}`);
+			}
+		}
+		catch (error)
+		{
+			// The refusal remains visible when the diagnostic lookup is unavailable.
 		}
 	}
 
@@ -457,6 +727,86 @@ export class Vibeoffice
 		const code = error && Type.isStringFilled(error.code) ? error.code : null;
 
 		return (code && ERROR_REACTIONS[code]) ? ERROR_REACTIONS[code] : ERROR_FALLBACK;
+	}
+
+	#showManualRestart(message: string, error: ?Object): boolean
+	{
+		const MessageBox = BX.UI?.Dialogs?.MessageBox;
+		if (
+			!hasManualHandoff(error)
+			|| this.#caughtDocumentReady !== null
+			|| this.#restartTarget === null
+			|| this.#firstLoadController.signal.aborted
+			|| !Type.isFunction(MessageBox?.create)
+		)
+		{
+			return false;
+		}
+
+		if (this.#manualRestartBox !== null)
+		{
+			return true;
+		}
+
+		const lifecycleToken = this.#lifecycleGeneration;
+		const target = this.#restartTarget;
+		this.#manualRestartPending = true;
+		this.#manualRestartBox = MessageBox.create({
+			message,
+			buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+			okCaption: Loc.getMessage('DISK_EDITOR_VIBEOFFICE_OPEN_AGAIN'),
+			onOk: (_messageBox, button) => {
+				if (!this.#manualRestartPending || !this.#isCurrent(lifecycleToken) || this.#caughtDocumentReady !== null)
+				{
+					return false;
+				}
+
+				this.#manualRestartPending = false;
+				this.#manualRestartClosePromise = Promise.resolve(top.BX.Disk.endEditSession({
+					id: this.documentSession.id,
+					hash: this.documentSession.hash,
+					documentWasChanged: this.documentWasChanged,
+				})).then(() => {
+					if (!this.#isCurrent(lifecycleToken))
+					{
+						return;
+					}
+
+					this.#closed = true;
+					this.emitEventOnClosed();
+					this.destroy();
+					Page.redirect(target);
+				}, () => {
+					if (!this.#isCurrent(lifecycleToken))
+					{
+						return;
+					}
+
+					this.#manualRestartPending = true;
+					this.#manualRestartClosePromise = null;
+					button.setDisabled(false);
+				});
+
+				return false;
+			},
+			popupOptions: {
+				events: {
+					onPopupClose: () => {
+						this.#manualRestartPending = false;
+					},
+				},
+			},
+		});
+		this.#manualRestartBox.show();
+
+		return true;
+	}
+
+	#closeManualRestart(): void
+	{
+		this.#manualRestartPending = false;
+		this.#manualRestartBox?.close();
+		this.#manualRestartBox = null;
 	}
 
 	#showErrorMessageBox(message: ?string): void
@@ -484,9 +834,10 @@ export class Vibeoffice
 
 	// region [FF-V1] document-change tracking (parity with OnlyOffice handleDocumentStateChange) --
 
-	// Native api.js `onDocumentReady` / `onInfo`, forwarded by the helper (neither is reserved).
-	// They only timestamp the moment the editor settled so the load-time / co-editing state
-	// changes below are not mistaken for a genuine user edit.
+	// Native api.js `onDocumentReady` / `onInfo`: `onInfo` passes through the helper untouched,
+	// `onDocumentReady` is wrapped by it and called here after its own handling. They timestamp
+	// the moment the editor settled so the load-time / co-editing state changes below are not
+	// mistaken for a genuine user edit.
 	#handleNativeDocumentReady(): void
 	{
 		if (!this.#isActive())
@@ -495,6 +846,112 @@ export class Vibeoffice
 		}
 
 		this.#caughtDocumentReady = Date.now();
+		this.#closeWaiting();
+		this.#closeManualRestart();
+		this.#showDocumentName();
+		void this.#applyCurrentUserAvatar();
+	}
+
+	#getCurrentEditorUser(): ?EditorUser
+	{
+		const user = this.openConfig?.config?.editorConfig?.user;
+		if (
+			!Type.isStringFilled(user?.id)
+			|| !/^[1-9]\d*$/.test(user.id)
+			|| user.id !== String(this.context.currentUser?.id)
+			|| !Type.isString(user.name)
+		)
+		{
+			return null;
+		}
+
+		return { id: user.id, name: user.name };
+	}
+
+	async #loadCurrentUserAvatar(): Promise<?CurrentUserAvatar>
+	{
+		try
+		{
+			const response = await Ajax.runComponentAction(COMPONENT_NAME, 'getCurrentUserAvatar', {
+				mode: 'ajax',
+				json: {},
+			});
+
+			return response.data;
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	async #applyCurrentUserAvatar(): Promise<void>
+	{
+		const lifecycleToken = this.#lifecycleGeneration;
+		const editor = this.editor;
+		const nativeEditor = editor?.instance;
+		const user = this.#getCurrentEditorUser();
+		if (
+			!this.#isCurrent(lifecycleToken)
+			|| !nativeEditor
+			|| !user
+			|| !Type.isFunction(nativeEditor.setUsers)
+			|| this.#avatarRecipients.has(nativeEditor)
+		)
+		{
+			return;
+		}
+
+		this.#currentUserAvatarPromise ??= this.#loadCurrentUserAvatar();
+		const avatar = await this.#currentUserAvatarPromise;
+		const currentUser = this.#getCurrentEditorUser();
+		if (
+			!this.#isCurrentEditor(editor, lifecycleToken)
+			|| editor.instance !== nativeEditor
+			|| this.#avatarRecipients.has(nativeEditor)
+			|| currentUser?.id !== user.id
+			|| currentUser?.name !== user.name
+			|| avatar?.id !== user.id
+			|| !Type.isStringFilled(avatar.image)
+			|| !/^data:image\/(?:png|jpeg|gif|webp);base64,/.test(avatar.image)
+		)
+		{
+			return;
+		}
+
+		this.#avatarRecipients.add(nativeEditor);
+		try
+		{
+			nativeEditor.setUsers({ c: 'info', users: [{ ...user, image: avatar.image }] });
+		}
+		catch
+		{
+			// An optional avatar must not interrupt the document session.
+		}
+	}
+
+	// The two places the page shows the name of the document, named from one owner so a rename
+	// reaches both. The engine builds the iframe itself and leaves it without an accessible name,
+	// and the page around it carries no header any more; it REPLACES the placeholder node with that
+	// frame, so the search starts at the container around it - the only node of ours that survives
+	// the drawing. The title of the page is written by the server once, while the shell is rendered
+	// (`SetTitle` with the same stored name), and nothing else refreshes the tab afterwards.
+	// Called when the document is ready (again after a failover recreate, which builds a new frame)
+	// and after a rename, which is the other moment the name of the document changes.
+	#showDocumentName(): void
+	{
+		if (!Type.isStringFilled(this.object.name))
+		{
+			return;
+		}
+
+		const frame: ?HTMLIFrameElement = this.targetNode?.querySelector('iframe');
+		if (frame)
+		{
+			frame.title = this.object.name;
+		}
+
+		document.title = this.object.name;
 	}
 
 	#handleNativeInfo(): void
@@ -507,12 +964,12 @@ export class Vibeoffice
 		this.#caughtInfoEvent = Date.now();
 	}
 
-	// Native api.js `onDocumentStateChange`. Same guard as the OnlyOffice sibling
-	// (onlyoffice.js:504-517): ignore changes fired before the editor settled or within 500ms of
-	// it (load-time echoes, incoming co-editing deltas), then treat any change as a real edit.
-	// Once set, `documentWasChanged` makes handleClose → endEditSession create the "document is
-	// being saved" balloon in c_disk.js, which the `vibeoffice` pull command later turns into
-	// the "saved" toast; emitEventOnClosed also reports the truthful flag to the hosts.
+	// Native api.js `onDocumentStateChange`. Same guard as the OnlyOffice sibling: ignore changes
+	// fired before the editor settled or within 500ms of it (load-time echoes, incoming co-editing
+	// deltas), then treat any change as a real edit. Once set, `documentWasChanged` makes
+	// handleClose → endEditSession create the "document is being saved" balloon in c_disk.js, which
+	// the `vibeoffice` pull command later turns into the "saved" toast; emitEventOnClosed also
+	// reports the truthful flag to the hosts.
 	#handleDocumentStateChange(): void
 	{
 		if (!this.#isActive())
@@ -534,6 +991,186 @@ export class Vibeoffice
 	}
 
 	// endregion
+
+	/**
+	 * The rename the editor asks for. The name is sent without the extension - it is appended by the
+	 * server, so the entered one is stripped of it here; the server also makes an occupied name unique,
+	 * so the name the object carries afterwards is not always the entered one and the person is told
+	 * when it differs.
+	 *
+	 * The server also carries the stored name to the platform, which is what makes the header of the
+	 * engine keep it. `editorSynchronized: false` says it did not get there - the engine will fall
+	 * back to the name it was opened with on its next redraw - but the object is renamed either way,
+	 * so that is not a refusal and nothing is said about it.
+	 */
+	async #handleRequestRename(event: { data: string }, composition: CompositionModel): Promise<void>
+	{
+		if (!this.#isActive())
+		{
+			return;
+		}
+
+		this.#renameGeneration += 1;
+		const renameToken = this.#renameGeneration;
+		const enteredName = Type.isStringFilled(event?.data) ? event.data.trim() : '';
+		const newName = toEditableName(enteredName, composition.object.extension);
+		const result = await documentHeaderService.rename(this.documentSession.hash, newName);
+		if (!this.#isLastRename(renameToken))
+		{
+			return;
+		}
+
+		if (!result.success)
+		{
+			// The codes of the action are localized by the server; the two codes of the service itself
+			// (UNEXPECTED, INVALID_RESPONSE) carry no message and are told with our own.
+			const refusal = Type.isStringFilled(result.error.message)
+				? result.error.message
+				: this.#text('renameFailed', 'DISK_EDITOR_VIBEOFFICE_RENAME_FAILED')
+			;
+
+			this.#notify(refusal);
+
+			return;
+		}
+
+		// Our own view of the name feeds everything the page names after the document - the frame and
+		// the tab (`this.context.object` is the same object, so it follows along).
+		if (Type.isStringFilled(result.data.name))
+		{
+			this.object.name = result.data.name;
+			this.#showDocumentName();
+		}
+
+		const actualName = toEditableName(result.data.name, composition.object.extension);
+		if (actualName === newName)
+		{
+			return;
+		}
+
+		this.#notify(
+			Loc.getMessage('DISK_EDITOR_VIBEOFFICE_RENAMED_TO', { '#NAME#': Text.encode(actualName) }),
+			'success',
+		);
+	}
+
+	/**
+	 * Reopens the document by the edit address, where the server checks the rights again.
+	 */
+	async #handleRequestEditRights(composition: ?CompositionModel): Promise<void>
+	{
+		if (!this.#isActive() || this.#reopening)
+		{
+			return;
+		}
+
+		this.#reopening = true;
+		try
+		{
+			const outcome = isSamePortalPath(this.linkToEdit)
+				? await this.#reopenInEditing(composition)
+				: 'unavailable'
+			;
+
+			this.#answerTransition(outcome);
+		}
+		finally
+		{
+			this.#reopening = false;
+		}
+	}
+
+	/**
+	 * The button of the engine waits until it hears an answer, so every outcome but the leaving of the
+	 * page is answered. A refusal of the gate of the limit shows the scenario of the restriction itself,
+	 * and repeating the rights over it would name a reason the person does not have.
+	 */
+	#answerTransition(outcome: StartEditOutcome): void
+	{
+		if (outcome === 'opened')
+		{
+			return;
+		}
+
+		const refusal = outcome === 'refused'
+			? this.#text('editTransitionUnavailable', 'DISK_EDITOR_VIBEOFFICE_EDIT_TRANSITION_UNAVAILABLE')
+			: this.#text('editRightsDenied', 'DISK_EDITOR_VIBEOFFICE_EDIT_RIGHTS_DENIED')
+		;
+
+		this.#denyEditingRights(refusal);
+	}
+
+	/**
+	 * Reports how the transition ended. The leaving of the page is announced by the header, and the answer
+	 * of the transition tells the scenario of the restriction of the limit - which speaks to the person on
+	 * its own - apart from a transition which was never made at all.
+	 */
+	async #reopenInEditing(composition: ?CompositionModel): Promise<StartEditOutcome>
+	{
+		let leaving = false;
+		const onLeaving = () => {
+			leaving = true;
+		};
+
+		// The wait can outlive the shell, so the teardown owns the release of the subscription as well;
+		// whichever of the two comes first, the other one finds nothing left to release.
+		let released = false;
+		const release = () => {
+			if (released)
+			{
+				return;
+			}
+
+			released = true;
+			this.#unsubscribers = this.#unsubscribers.filter((off) => off !== release);
+			EventEmitter.unsubscribe(BeforeStartEditEvent, onLeaving);
+		};
+
+		EventEmitter.subscribe(BeforeStartEditEvent, onLeaving);
+		this.#unsubscribers.push(release);
+
+		let outcome: StartEditOutcome = 'unavailable';
+		try
+		{
+			outcome = await startEdit({
+				editorCode: ServerChosenEditor,
+				editUrl: this.linkToEdit,
+				composition,
+				// The button of the transition lives inside the engine, so the scenario of the restriction
+				// has no control of ours to bind itself to.
+				trigger: null,
+				// The press is waited out by the gate, and the shell can be taken down in the meantime -
+				// a document the person has just closed is not reopened in editing behind their back.
+				isStillWanted: () => this.#isActive(),
+			});
+		}
+		catch (error)
+		{
+			// A transition broken on its way is a transition not made; the refusal is the answer to it,
+			// but the breakage itself never disappears silently.
+			console.error('[vibeoffice] startEdit failed', error);
+
+			return 'unavailable';
+		}
+		finally
+		{
+			release();
+		}
+
+		return leaving ? 'opened' : outcome;
+	}
+
+	// The answer of a refusal belongs to the native editor: the facade of the helper carries its own
+	// methods only, and the rest of the api.js surface is reached through the index signature of its type.
+	#denyEditingRights(message: string): void
+	{
+		const instance = this.editor?.instance;
+		const deny = instance?.denyEditingRights;
+		if (Type.isFunction(deny))
+		{
+			deny.call(instance, message);
+		}
+	}
 
 	// region engine-orthogonal behaviours reused from the OnlyOffice wrapper ---------------
 
@@ -560,7 +1197,7 @@ export class Vibeoffice
 		// Mirrors the OnlyOffice wrapper's keep-alive: ping the component so the document
 		// session is not garbage-collected while the user keeps editing. Requires the
 		// `markAsStillWorkingSession` action on the vibeoffice component (backend).
-		Ajax.runComponentAction('bitrix:disk.file.editor-vibeoffice', 'markAsStillWorkingSession', {
+		Ajax.runComponentAction(COMPONENT_NAME, 'markAsStillWorkingSession', {
 			mode: 'ajax',
 			json: {
 				documentSessionId: this.documentSession.id,
@@ -575,313 +1212,36 @@ export class Vibeoffice
 		EventEmitter.subscribe('SidePanel.Slider:onClose', onSliderClose);
 		this.#unsubscribers.push(() => EventEmitter.unsubscribe('SidePanel.Slider:onClose', onSliderClose));
 
-		const onBeforeUnload = this.handleClose.bind(this);
-		EventEmitter.subscribe(window, 'beforeunload', onBeforeUnload);
-		this.#unsubscribers.push(() => EventEmitter.unsubscribe(window, 'beforeunload', onBeforeUnload));
-
-		if (window.top !== window)
-		{
-			const onMessage = (event: MessageEvent) => {
-				// Only the same-origin portal parent that hosts this editor iframe legitimately posts
-				// 'closeIframe' (disk.onlyoffice-im-integration/create-document.js sends it with
-				// targetOrigin '*'); the editor page is served from the portal, so a trusted message
-				// carries our own origin. Reject any other origin so a cross-origin frame cannot
-				// force-close the editor / end the edit session.
-				if (event.origin !== window.location.origin)
-				{
-					return;
-				}
-
-				if (event.data === 'closeIframe')
-				{
-					this.handleClose();
-				}
-			};
-			EventEmitter.subscribe(window, 'message', onMessage);
-			this.#unsubscribers.push(() => EventEmitter.unsubscribe(window, 'message', onMessage));
-		}
-
-		this.#bindEditButton();
-		this.#bindSharingButton();
-	}
-
-	// Wire the header "Edit" button (view mode only). The button and `linkToEdit` are both
-	// emitted by the template solely when the user may edit, so empty values are the normal
-	// "no edit affordance" case and must be a silent no-op — never a thrown error.
-	//
-	// Two shapes, parity with the OnlyOffice sibling:
-	//  - split button (in-portal editor): the main button opens the current editor in place
-	//    (`#navigateToEdit`); every "Open in..." menu sub-item is re-bound to
-	//    `#handleClickEditSubItems` so a foreign engine can be launched via runActionEdit;
-	//  - plain button (external-link viewer / no menu): a single click runs `#navigateToEdit`.
-	#bindEditButton(): void
-	{
-		const uniqId = this.panelButtonUniqIds?.edit;
-		if (!Type.isStringFilled(uniqId) || !Type.isStringFilled(this.linkToEdit))
-		{
-			return;
-		}
-
-		const button = ButtonManager.createByUniqId(uniqId);
-		if (!button)
-		{
-			return;
-		}
-
-		// A SplitButton owns a `mainButton`; a plain Button does not. Same probe as OnlyOffice.
-		if (Object.prototype.hasOwnProperty.call(button, 'mainButton'))
-		{
-			// Main button → open the current (vibeoffice) editor in place.
-			const mainButton = button.getMainButton();
-			const onMainClick = () => {
-				this.#navigateToEdit();
-			};
-			mainButton.bindEvent('click', onMainClick);
-			this.#unsubscribers.push(() => mainButton.unbindEvent('click'));
-
-			// Re-point every "Open in..." sub-item onclick at our handler. Rebuilding the item
-			// (remove + add with a cloned options object) is the same technique the OnlyOffice
-			// wrapper uses, because MenuItem options are frozen after construction.
-			const menuWindow = button.getMenuWindow();
-			if (menuWindow)
-			{
-				this.#menuWindow = menuWindow;
-				const menuItems = Runtime.clone(menuWindow.getMenuItems());
-				menuItems.forEach((menuItem: MenuItem) => {
-					const menuItemOptions = Runtime.clone(menuItem.options);
-					menuItemOptions.onclick = this.#handleClickEditSubItems.bind(this);
-
-					menuWindow.removeMenuItem(menuItem.getId());
-					menuWindow.addMenuItem(menuItemOptions);
-				});
-				this.#bindEditMenuWindowBlur();
-			}
-
-			return;
-		}
-
-		// Plain button: `linkToEdit` is a server-built navigable edit URL (no user input spliced
-		// in); `#navigateToEdit` performs the view→edit switch (OnlyOffice-parity).
-		button.bindEvent('click', () => {
-			this.#navigateToEdit();
-		});
-		this.#unsubscribers.push(() => button.unbindEvent('click'));
-	}
-
-	// View→edit switch, mirroring the OnlyOffice sibling (onlyoffice.js:627-666,
-	// handleRequestEditRights). Two things must happen before leaving the current view:
-	//  (a) set `dontEndCurrentDocumentSession = true` so the beforeunload → handleClose →
-	//      endEditSession chain does NOT force-end the view session while it is being upgraded
-	//      to an edit session;
-	//  (b) inside a slider, close the current slider and re-open `linkToEdit` as a fresh
-	//      full-width slider carrying `data.documentEditor` — a bare `document.location` swap
-	//      would reuse the old slider's params and drop the editor context.
-	// Outside a slider (external-link viewer / standalone page) a plain navigation is correct.
-	// `linkToEdit` is a server-built URL; an empty value is the normal "no edit affordance"
-	// case and is a silent no-op.
-	#navigateToEdit(): void
-	{
-		if (!this.#isActive() || !Type.isStringFilled(this.linkToEdit))
-		{
-			return;
-		}
-
-		this.dontEndCurrentDocumentSession = true;
-
-		const currentSlider = BX.SidePanel?.Instance?.getSliderByWindow(window);
-		if (!currentSlider)
-		{
-			document.location = this.linkToEdit;
-
-			return;
-		}
-
-		const customLeftBoundary = currentSlider.getCustomLeftBoundary();
-		currentSlider.close();
-
-		BX.SidePanel.Instance.open(this.linkToEdit, {
-			width: '100%',
-			customLeftBoundary,
-			cacheable: false,
-			allowChangeHistory: false,
-			data: {
-				documentEditor: true,
-			},
-		});
-	}
-
-	// "Open in..." sub-item click. The item id is the document-handler code. The "own" code
-	// (EDIT_HERE_SERVICE_CODE) opens the current editor in place; any other code is a foreign
-	// engine delegated to BX.Disk.Viewer.Actions.runActionEdit. Guarded so a missing menu item or
-	// object is a silent no-op. Parity with the OnlyOffice wrapper.
-	async #handleClickEditSubItems(event, menuItem: MenuItem): Promise<void>
-	{
-		if (!this.#isActive())
-		{
-			return;
-		}
-
-		const serviceCode = menuItem?.getId?.();
-		if (!Type.isStringFilled(serviceCode))
-		{
-			return;
-		}
-
-		if (serviceCode === EDIT_HERE_SERVICE_CODE)
-		{
-			this.#navigateToEdit();
-
-			return;
-		}
-
-		// `disk.viewer.actions` is only needed on this foreign-engine "Open in..." path, so it is
-		// loaded lazily here (mirroring the sharing-popup lazy-load in #handleClickSharing) instead
-		// of being pulled into the shell eagerly.
-		await Runtime.loadExtension('disk.viewer.actions');
-		if (!this.#isActive())
-		{
-			return;
-		}
-
-		const runActionEdit = BX.Disk?.Viewer?.Actions?.runActionEdit;
-		if (!Type.isFunction(runActionEdit))
-		{
-			return;
-		}
-
-		runActionEdit({
-			name: this.object?.name,
-			objectId: this.object?.id,
-			attachedObjectId: this.attachedObject?.id ?? 0,
-			serviceCode,
-		});
-	}
-
-	// Wire the header "Share by link" button. The button is emitted by the template only when the
-	// backend resolved a SHARING_CONTROL_TYPE (and did not disable it for external-link / non-intranet
-	// users), so an empty uniqId is the normal "no sharing affordance" case and must be a silent no-op
-	// — never a thrown error. Mirrors the OnlyOffice sibling: lazily load `disk.sharing-access-popup`
-	// and open `SharingPopupDialog` with this object's id + uniqueCode. The external-link feature gate
-	// stays entirely on the backend (getSharingControlType()/shouldDisableSharingButton()), exactly as
-	// in the OnlyOffice editor; no per-button blocker dataset is carried over from flipchart.
-	#bindSharingButton(): void
-	{
-		const uniqId = this.panelButtonUniqIds?.setupSharing;
-		if (!Type.isStringFilled(uniqId))
-		{
-			return;
-		}
-
-		const button = ButtonManager.createByUniqId(uniqId);
-		if (!button)
-		{
-			return;
-		}
-
-		button.bindEvent('click', () => this.#handleClickSharing());
-		this.#unsubscribers.push(() => button.unbindEvent('click'));
-	}
-
-	#handleClickSharing(): void
-	{
-		if (!this.#isActive() || this.#sharingOperation !== null)
-		{
-			return;
-		}
-
-		const lifecycleToken = this.#lifecycleGeneration;
-		this.#sharingOperation = this.#openSharing(lifecycleToken);
-	}
-
-	async #openSharing(lifecycleToken: number): Promise<void>
-	{
-		const popupParams = {
-			objectId: this.object?.id,
-			uniqueCode: this.object?.uniqueCode ?? null,
-		};
-
-		try
-		{
-			const extension: SharingPopupExtension = await Runtime.loadExtension('disk.sharing-access-popup');
-			if (!this.#isCurrent(lifecycleToken))
+		// beforeunload cannot distinguish navigation from a page entering the back/forward cache.
+		const onPageHide = (event: PageTransitionEvent) => {
+			// A page put into the back/forward cache is not closed: it can be shown again with the
+			// editor alive, so its session stays open.
+			if (event?.persisted === true)
 			{
 				return;
 			}
 
-			const dialog = this.#sharingDialog || new extension.SharingPopupDialog();
-			this.#sharingDialog = dialog;
-			const attempt = ++this.#sharingAttempt;
-			await dialog.open({
-				...popupParams,
-				onAfterHide: () => {
-					if (this.#isCurrent(lifecycleToken) && this.#sharingDialog === dialog)
-					{
-						this.#sharingAttempt += 1;
-						this.#sharingDialog = null;
-					}
-				},
-			});
+			this.handleClose(true);
+		};
+		Event.bind(window, 'pagehide', onPageHide);
+		this.#unsubscribers.push(() => Event.unbind(window, 'pagehide', onPageHide));
 
-			if (!this.#isCurrent(lifecycleToken)
-				|| this.#sharingDialog !== dialog
-				|| attempt !== this.#sharingAttempt)
-			{
-				dialog.close();
-			}
-		}
-		catch
-		{
-			// A new click can retry a failed extension load or an unexpected dialog failure.
-		}
-		finally
-		{
-			if (this.#isCurrent(lifecycleToken))
-			{
-				this.#sharingOperation = null;
-			}
-		}
-	}
-
-	#bindEditMenuWindowBlur(): void
-	{
-		const onWindowBlur = () => {
-			if (!this.#isActive())
+		// Native window events reach the page only through Event.bind: EventEmitter keeps a registry
+		// of its own and never calls addEventListener.
+		const onMessage = (event: MessageEvent) => {
+			// 'closeIframe' is posted by the portal page embedding this editor in an iframe
+			// (disk.onlyoffice-im-integration/create-document.js sends it with targetOrigin '*'). Both
+			// pages are served by this portal, so a trusted message carries our own origin; anything
+			// from another origin, or of another shape, is not ours and must not close the editor.
+			if (event.origin !== window.location.origin || event.data !== 'closeIframe')
 			{
 				return;
 			}
 
-			if (this.#pendingMenuBlurTimer !== null)
-			{
-				clearTimeout(this.#pendingMenuBlurTimer);
-			}
-
-			this.#pendingMenuBlurTimer = setTimeout(() => {
-				this.#pendingMenuBlurTimer = null;
-				this.#closeEditMenuForEditorIframe();
-			}, 0);
+			this.handleClose(false);
 		};
-
-		Event.bind(window, 'blur', onWindowBlur);
-		this.#unsubscribers.push(() => Event.unbind(window, 'blur', onWindowBlur));
-	}
-
-	#closeEditMenuForEditorIframe(): void
-	{
-		if (!this.#isActive() || !this.#menuWindow?.isShown())
-		{
-			return;
-		}
-
-		const activeElement = document.activeElement;
-		const editorContainer = this.targetNode || this.editorNode;
-		if (!Type.isDomNode(activeElement)
-			|| activeElement.tagName !== 'IFRAME'
-			|| !editorContainer?.contains(activeElement))
-		{
-			return;
-		}
-
-		this.#menuWindow.close();
+		Event.bind(window, 'message', onMessage);
+		this.#unsubscribers.push(() => Event.unbind(window, 'message', onMessage));
 	}
 
 	loadDiskExtensionInTopWindow(): void
@@ -958,10 +1318,23 @@ export class Vibeoffice
 		this.handleClose();
 	}
 
-	handleClose(): void
+	// `viaBeacon` tells the two ways out apart. Closing the slider and the 'closeIframe' message of
+	// the embedding page leave the page alive: the answer of the server is what draws the "document
+	// is being saved" balloon, so they keep the ordinary call. Leaving the page has nobody left to
+	// read an answer, so it hands the same action to the browser as a beacon.
+	handleClose(viaBeacon: boolean = false): void
 	{
 		if (this.#closed || !this.#isActive())
 		{
+			return;
+		}
+		const manualClosePending = this.#manualRestartClosePromise !== null;
+		if (manualClosePending && !viaBeacon)
+		{
+			this.#closed = true;
+			this.destroy();
+			this.emitEventOnClosed();
+
 			return;
 		}
 		this.#closed = true;
@@ -971,7 +1344,7 @@ export class Vibeoffice
 
 		this.emitEventOnClosed();
 
-		if (this.dontEndCurrentDocumentSession)
+		if (viaBeacon && (this.#sendEndSessionBeacon() || manualClosePending))
 		{
 			return;
 		}
@@ -983,95 +1356,41 @@ export class Vibeoffice
 		});
 	}
 
+	// Returns whether the browser took the beacon over; the delivery itself is never guaranteed, and
+	// a browser without sendBeacon returns false so the caller falls back to the ordinary call.
+	// A repeated end of an already finished session is not an error on the server side.
+	#sendEndSessionBeacon(): boolean
+	{
+		if (!Type.isFunction(navigator?.sendBeacon))
+		{
+			return false;
+		}
+
+		return navigator.sendBeacon(
+			Uri.addParam(AJAX_ENDPOINT, {
+				action: END_SESSION_ACTION,
+				sessid: Loc.getMessage('bitrix_sessid') ?? '',
+			}),
+			this.#buildEndSessionPayload(),
+		);
+	}
+
+	// `documentWasChanged` is left out on purpose: the action does not ask for it, and the balloon
+	// it drives needs a page that is still there to show it.
+	#buildEndSessionPayload(): Blob
+	{
+		return new Blob([JSON.stringify({
+			sessionId: this.documentSession.id,
+			documentSessionHash: this.documentSession.hash,
+		})], { type: 'application/json' });
+	}
+
 	// endregion
 
-	#renderOnlineBox(): void
-	{
-		if (!this.userBoxNode || !this.context.currentUser)
-		{
-			return;
-		}
-
-		// Until the authenticated Presence manager has a server roster, the box starts with the
-		// current user. Each accepted roster then replaces it through the public Users API.
-		this.usersBox = new Users([]);
-		this.usersBox.addUser(this.context.currentUser);
-		if (!this.userBoxNode.childElementCount)
-		{
-			this.userBoxNode.appendChild(this.usersBox.getContainer());
-		}
-	}
-
-	#markEditorReady(): void
-	{
-		if (!this.#isActive())
-		{
-			return;
-		}
-
-		this.#initialEditorReady = true;
-		this.#startPresence();
-	}
-
-	#startPresence(): void
-	{
-		if (!this.#isActive()
-			|| this.#presenceStarted
-			|| !this.#initialEditorReady
-			|| !isEnabledPresenceConfig(this.presenceConfig))
-		{
-			return;
-		}
-
-		this.#presenceStarted = true;
-		const manager = new PresenceManager({
-			config: this.presenceConfig,
-			onRoster: (roster: PresenceRoster) => {
-				if (this.#isActive() && this.#presenceManager === manager)
-				{
-					this.#replacePresenceRoster(roster);
-				}
-			},
-			onTerminal: () => {
-				if (this.#isActive() && this.#presenceManager === manager)
-				{
-					this.#clearPresenceUsers();
-				}
-			},
-		});
-		this.#presenceManager = manager;
-		manager.start();
-	}
-
-	#replacePresenceRoster(roster: PresenceRoster): void
-	{
-		// The popup keeps a DOM snapshot of the previous roster, so it is closed before the swap.
-		this.usersBox?.closePopup();
-		this.usersBox?.replaceUsers(roster.participants);
-	}
-
-	#clearPresenceUsers(): void
-	{
-		this.usersBox?.closePopup();
-		this.usersBox?.replaceUsers([]);
-	}
-
-	#stopPresence(): void
-	{
-		const manager = this.#presenceManager;
-		this.#presenceManager = null;
-		this.#presenceStarted = false;
-		manager?.stopWithBestEffortLeave();
-	}
-
-	// Subscribe to the existing Disk object pull channel (object_{id}) so a viewer already
-	// looking at the document gets a live "modified" toast when another user saves a new
-	// version, mirroring the OnlyOffice shell. The backend already emits the `contentUpdated`
-	// command from File::uploadVersion(); we only subscribe here. Silent no-op when the shell
-	// did not hand a pull config / publicChannel (e.g. pull module unavailable).
+	// The object channel carries viewer updates and conflict facts for exact editor sessions.
 	#initPull(): void
 	{
-		if (!this.#isActive() || !this.isViewMode())
+		if (!this.#isActive())
 		{
 			return;
 		}
@@ -1088,6 +1407,17 @@ export class Vibeoffice
 		// channel, so replacing `BX.PULL` with a client started from `this.pullConfig` is safe.
 		BX.PULL = new PullClient({ skipStorageInit: true });
 		BX.PULL.start(this.pullConfig);
+		if (!this.isViewMode())
+		{
+			this.#unsubscribers.push(BX.PULL.subscribe({
+				type: PullClient.SubscriptionType.Server,
+				moduleId: 'disk',
+				command: 'vibeoffice',
+				callback: this.#handleConflict.bind(this),
+			}));
+
+			return;
+		}
 
 		// params-form subscription on the object client we just started. A handler-literal
 		// (getModuleId/getSubscriptionType/getMap) is a plain object, so `subscribe()` skips the
@@ -1103,6 +1433,27 @@ export class Vibeoffice
 			callback: this.#handleContentUpdated.bind(this),
 		});
 		this.#unsubscribers.push(unsubscribe);
+	}
+
+	#handleConflict(data: ConflictMessage): void
+	{
+		const sessionId = Number(this.documentSession?.id);
+		if (
+			!this.#isActive() || this.#conflictNotified || data?.event !== 'conflict'
+			|| Number(data.object?.id) !== Number(this.object?.id)
+			|| !Number.isInteger(sessionId) || sessionId <= 0
+			|| !Array.isArray(data.documentSessionIds) || !data.documentSessionIds.includes(sessionId)
+		)
+		{
+			return;
+		}
+
+		this.#conflictNotified = true;
+		this.#notify(
+			Loc.getMessage('DISK_EDITOR_VIBEOFFICE_CONFLICT'),
+			null,
+			'disk-vibeoffice-conflict-notification',
+		);
 	}
 
 	// Live host notification that the object got a new version. Three guards, in order:
@@ -1189,7 +1540,7 @@ export class Vibeoffice
 				reject();
 			};
 
-			Ajax.runComponentAction('bitrix:disk.file.editor-vibeoffice', 'getUserInfo', {
+			Ajax.runComponentAction(COMPONENT_NAME, 'getUserInfo', {
 				mode: 'ajax',
 				json: {
 					documentSessionId: this.documentSession.id,
@@ -1277,10 +1628,11 @@ export class Vibeoffice
 			return;
 		}
 
-		const content = Tag.render`<span>${message}</span>`;
+		const content = Tag.render`<span data-testid="disk-vibeoffice-outdated-notification">${message}</span>`;
 		const refreshButton = content.querySelector('[data-refresh-btn]');
 		if (refreshButton)
 		{
+			refreshButton.setAttribute('data-testid', 'disk-vibeoffice-outdated-refresh-btn');
 			Tag.style(refreshButton)`
 				cursor: pointer;
 			`;
@@ -1304,14 +1656,22 @@ export class Vibeoffice
 		return Loc.getMessage(messageId) || '';
 	}
 
-	#notify(message: ?string, type: ?string = null): void
+	#notify(message: ?string, type: ?string = null, testId: ?string = null): void
 	{
 		if (!this.#isActive() || !Type.isStringFilled(message))
 		{
 			return;
 		}
 
-		BX.UI?.Notification?.Center?.notify({ content: message, autoHideDelay: type === 'success' ? 3000 : 5000 });
+		const content = testId === null
+			? message
+			: Tag.render`<span data-testid="${testId}">${Text.encode(message)}</span>`
+		;
+		BX.UI?.Notification?.Center?.notify({ content, autoHideDelay: type === 'success' ? 3000 : 5000 });
+
+		// The balloon carries no live region, so a screen reader gets nothing from it. The toast
+		// renders the message as HTML; the live region speaks plain text.
+		LiveAnnouncer.announce(Text.decode(message), type === 'success' ? 'polite' : 'assertive');
 	}
 
 	// Reaction to a closed session. Inside a slider we just close it (the host list / caller is
@@ -1348,6 +1708,33 @@ export class Vibeoffice
 	#waitForSavedThenClose(): void
 	{
 		const startedAt = Date.now();
+		let pollInterval = SAVED_CONFIRMATION_INITIAL_POLL_INTERVAL_MS;
+		const scheduleNextCheck = (check: () => void): void => {
+			const elapsed = Date.now() - startedAt;
+			if (elapsed >= SAVED_CONFIRMATION_TIMEOUT_MS)
+			{
+				this.#closeSliderOrDowngradeToView(false);
+
+				return;
+			}
+
+			const jitterMultiplier = 1 + ((Math.random() * 2 - 1) * SAVED_CONFIRMATION_POLL_JITTER_RATIO);
+			const delay = Math.min(
+				Math.max(
+					SAVED_CONFIRMATION_INITIAL_POLL_INTERVAL_MS,
+					Math.round(pollInterval * jitterMultiplier),
+				),
+				SAVED_CONFIRMATION_MAX_POLL_INTERVAL_MS,
+				SAVED_CONFIRMATION_TIMEOUT_MS - elapsed,
+			);
+
+			pollInterval = Math.min(
+				pollInterval * SAVED_CONFIRMATION_POLL_BACKOFF_FACTOR,
+				SAVED_CONFIRMATION_MAX_POLL_INTERVAL_MS,
+			);
+			setTimeout(check, delay);
+		};
+
 		const check = (): void => {
 			if (!this.#isActive())
 			{
@@ -1368,7 +1755,7 @@ export class Vibeoffice
 						return;
 					}
 
-					setTimeout(check, SAVED_CONFIRMATION_POLL_INTERVAL_MS);
+					scheduleNextCheck(check);
 				})
 				.catch(() => {
 					if (Date.now() - startedAt >= SAVED_CONFIRMATION_TIMEOUT_MS)
@@ -1378,7 +1765,7 @@ export class Vibeoffice
 						return;
 					}
 
-					setTimeout(check, SAVED_CONFIRMATION_POLL_INTERVAL_MS);
+					scheduleNextCheck(check);
 				});
 		};
 
@@ -1494,6 +1881,11 @@ export class Vibeoffice
 		return this.#isCurrent(lifecycleToken) && this.editor === editor;
 	}
 
+	#isLastRename(renameToken: number): boolean
+	{
+		return this.#isActive() && renameToken === this.#renameGeneration;
+	}
+
 	destroy(): void
 	{
 		if (!this.#isActive())
@@ -1501,20 +1893,13 @@ export class Vibeoffice
 			return;
 		}
 
-		this.#stopPresence();
-
 		this.#destroyed = true;
 		this.#lifecycleGeneration += 1;
-		this.#sharingAttempt += 1;
-
-		const dialog = this.#sharingDialog;
-		this.#sharingDialog = null;
-		this.#sharingOperation = null;
-		dialog?.close();
-
-		const menuWindow = this.#menuWindow;
-		this.#menuWindow = null;
-		menuWindow?.close();
+		this.#firstLoadController.abort();
+		this.#closeManualRestart();
+		this.#closeWaiting();
+		this.#saveRefusedBox?.close();
+		this.#saveRefusedBox = null;
 
 		if (this.#trackWorkTimer !== null)
 		{
@@ -1526,12 +1911,6 @@ export class Vibeoffice
 		{
 			clearTimeout(this.#pendingNavigationTimer);
 			this.#pendingNavigationTimer = null;
-		}
-
-		if (this.#pendingMenuBlurTimer !== null)
-		{
-			clearTimeout(this.#pendingMenuBlurTimer);
-			this.#pendingMenuBlurTimer = null;
 		}
 
 		this.#unsubscribers.forEach((off) => {
@@ -1547,6 +1926,8 @@ export class Vibeoffice
 		this.#unsubscribers = [];
 
 		this.#userNameCache.clear();
+		this.#currentUserAvatarPromise = null;
+		this.#avatarRecipients = new WeakSet();
 
 		if (this.editor)
 		{
@@ -1554,4 +1935,92 @@ export class Vibeoffice
 			this.editor = null;
 		}
 	}
+}
+
+/**
+ * Guards the transition against an open redirect. A control character is refused too, because a browser
+ * drops it and follows what is left as `//host`.
+ */
+function isSamePortalPath(link: ?string): boolean
+{
+	return Type.isStringFilled(link)
+		&& PORTAL_PATH_SHAPE.test(link)
+		&& !carriesControlCharacter(link)
+	;
+}
+
+function carriesControlCharacter(value: string): boolean
+{
+	return [...value].some((character: string) => {
+		const code = character.codePointAt(0);
+
+		return code < 0x20 || code === 0x7F;
+	});
+}
+
+/**
+ * The name as the person edits it. The extension belongs to the object and is appended by the server,
+ * so the name it answers with is compared with the entered one without the extension.
+ */
+function toEditableName(storedName: string, extension: string): string
+{
+	const suffix = `.${extension}`;
+
+	return extension !== '' && storedName.endsWith(suffix) ? storedName.slice(0, -suffix.length) : storedName;
+}
+
+function hasManualHandoff(error: ?Object): boolean
+{
+	if (!Type.isObject(error))
+	{
+		return false;
+	}
+
+	const handoff = error.handoff;
+
+	return handoff?.version === 1
+		&& handoff.action === 'manual'
+		&& handoff.automaticOpenAllowed === false
+		&& handoff.readyReached === false
+		&& handoff.terminal === true
+		&& handoff.cleanupComplete === true;
+}
+
+function openingDeadline(budget: ?Object): number
+{
+	if (budget === null || budget === undefined)
+	{
+		return Infinity;
+	}
+
+	if (!Type.isPlainObject(budget))
+	{
+		return 0;
+	}
+
+	const { version, totalMs, remainingMs } = budget;
+	if (
+		version !== 1
+		|| !Number.isSafeInteger(totalMs)
+		|| !Number.isSafeInteger(remainingMs)
+		|| totalMs <= 0
+		|| remainingMs < 0
+	)
+	{
+		return 0;
+	}
+
+	// performance.now() includes the navigation elapsed before the HTML reached this shell.
+	return Math.min(totalMs, remainingMs);
+}
+
+function firstLoadContext(deadline: number, navigationElapsed: number)
+{
+	const remainingMs = Math.floor(deadline - navigationElapsed);
+	if (remainingMs <= 0)
+	{
+		return null;
+	}
+
+	return { version: 1, remainingMs, helperRemainingMs: Math.min(150_000, remainingMs) };
 }

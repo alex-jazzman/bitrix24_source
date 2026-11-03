@@ -5,7 +5,7 @@
 jn.define('im/messenger/model/dialogues/validator', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper, Url } = require('im/messenger/lib/helper');
-	const { UserRole, DialogBackgroundId } = require('im/messenger/const');
+	const { UserRole, DialogBackgroundId, CopilotGenerationStatus } = require('im/messenger/const');
 	const { mergeImmutable } = require('utils/object');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -424,6 +424,16 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.guestCount = fields.guestCount;
 		}
 
+		if (Type.isPlainObject(fields.copilotGenerationState))
+		{
+			result.copilotGenerationState = prepareCopilotGenerationState(fields.copilotGenerationState);
+		}
+		else if (Type.isNull(fields.copilotGenerationState))
+		{
+			// server data is the source of truth: an explicit null resets the local state
+			result.copilotGenerationState = null;
+		}
+
 		return result;
 	}
 
@@ -577,6 +587,27 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 				userFirstName,
 				action,
 			}));
+	}
+
+	/**
+	 * The model keeps only an active generation: any terminal status
+	 * (stopped/completed/error) is normalized to null.
+	 * The server chat-load returns only { status: 'generating', initiatorId } or null.
+	 *
+	 * @param {CopilotGenerationState} rawState
+	 * @return {CopilotGenerationState | null}
+	 */
+	function prepareCopilotGenerationState(rawState)
+	{
+		if (rawState.status !== CopilotGenerationStatus.generating)
+		{
+			return null;
+		}
+
+		return {
+			status: CopilotGenerationStatus.generating,
+			initiatorId: Number.parseInt(rawState.initiatorId, 10) || 0,
+		};
 	}
 
 	/**

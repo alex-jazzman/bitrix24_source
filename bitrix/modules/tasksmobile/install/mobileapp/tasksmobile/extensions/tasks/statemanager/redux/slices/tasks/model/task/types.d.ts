@@ -58,7 +58,6 @@ declare type TaskReduxModel = {
 
 	checklist?: ChecklistDTO,
 	checklistDetails?: ChecklistDetailsDTO[],
-	checklistFlatTree?: object[],
 	counter?: CounterDTO,
 
 	canRead?: boolean,

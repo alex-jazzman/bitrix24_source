@@ -9,8 +9,9 @@ return [
 	'js' => 'dist/call-invite.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'call.component.call-invite',
+		'call.widget.call-invite',
 		'im.v2.component.message.default',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

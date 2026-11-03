@@ -74,6 +74,32 @@ jn.define('im/messenger/controller/dialog/lib/message-sender/src/outgoing-messag
 		{
 			this.state[name] = value;
 		}
+
+		addContact(contact)
+		{
+			const params = {
+				...(contact.firstName ? { firstName: contact.firstName } : {}),
+				...(contact.secondName ? { lastName: contact.secondName } : {}),
+				phones: contact.phones,
+			};
+			const name = [params.lastName, params.firstName].filter(Boolean).join(' ');
+			const text = [name, params.phones[0]].filter(Boolean).join(', ');
+
+			this.addProperty('text', text);
+			this.addParam('COMPONENT_ID', 'ContactMessage');
+			this.addParam('COMPONENT_PARAMS', params);
+			if (contact.photoId)
+			{
+				this.addProperty('files', [contact.photoId]);
+			}
+
+			return {
+				...(params.firstName ? { firstName: params.firstName } : {}),
+				...(params.lastName ? { lastName: params.lastName } : {}),
+				phones: params.phones,
+				...(contact.photoId ? { photoId: contact.photoId } : {}),
+			};
+		}
 	}
 
 	module.exports = { OutgoingMessageBuilder };

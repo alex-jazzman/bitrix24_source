@@ -35,6 +35,11 @@ $app = new App\IntegrationB24();
 $manager = new Connector\Manager();
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $server = \Bitrix\Main\Application::getInstance()->getContext()->getServer();
+$externalServerHost = (string)\Bitrix\Main\Config\Option::get(
+	'main',
+	'server_name',
+	$request->getHttpHost(),
+);
 
 $error = [];
 $message = [];
@@ -72,12 +77,14 @@ if ($isHttps
 
 			if($token)
             {
-				if($isNew)
+				if($isNew && !$manager->add($externalServerHost))
                 {
-					$manager->add();
+					$error[] = Loc::getMessage('SALE_SYNCHRONIZER_CREATE_TOKEN');
                 }
-
-				$message[] = Loc::getMessage('SALE_SYNCHRONIZER_CONNECTED');
+				else
+				{
+					$message[] = Loc::getMessage('SALE_SYNCHRONIZER_CONNECTED');
+				}
             }
             else
             {

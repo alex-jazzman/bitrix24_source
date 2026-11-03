@@ -71,6 +71,7 @@
 	var _getSelectedItems = /*#__PURE__*/new WeakSet();
 	var _drawMembers = /*#__PURE__*/new WeakSet();
 	var _createMemberElement = /*#__PURE__*/new WeakSet();
+	var _getMemberIconClass = /*#__PURE__*/new WeakSet();
 	var _createPlusButton = /*#__PURE__*/new WeakSet();
 	var _createNumberButton = /*#__PURE__*/new WeakSet();
 	var _showPopup = /*#__PURE__*/new WeakSet();
@@ -102,6 +103,7 @@
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _showPopup);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _createNumberButton);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _createPlusButton);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getMemberIconClass);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _createMemberElement);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _drawMembers);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getSelectedItems);
@@ -241,7 +243,7 @@
 	    });
 	    _this.setEventNamespace('BX.Ui.Form');
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _scopeId, options.scopeId || null);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _members, options.members || null);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _members, options.members || {});
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _node, BX("ui-editor-config-".concat(babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _scopeId))));
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _moduleId, options.moduleId || null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _config, Config);
@@ -271,7 +273,21 @@
 	    entities: [{
 	      id: 'user'
 	    }, {
-	      id: 'project'
+	      id: 'project',
+	      options: {
+	        closed: false,
+	        siteId: BX.message('SITE_ID')
+	      }
+	    }, {
+	      id: 'project-access-codes',
+	      searchable: false,
+	      options: {
+	        addAccessCodesTab: false,
+	        fillAccessCodesTab: false,
+	        fillRecentTab: false,
+	        closed: false,
+	        siteId: BX.message('SITE_ID')
+	      }
 	    }, {
 	      id: babelHelpers.classPrivateFieldGet(this, _useHumanResourcesModule) ? 'structure-node' : 'department',
 	      options: {
@@ -309,28 +325,61 @@
 	  if (withClean) {
 	    main_core.Dom.clean(babelHelpers.classPrivateFieldGet(this, _node));
 	  }
-	  var shownMembers = babelHelpers.classPrivateFieldGet(this, _members);
+	  var shownMembers = Object.entries(babelHelpers.classPrivateFieldGet(this, _members));
 	  var notShownMembersCount = 0;
-	  if (Object.values(babelHelpers.classPrivateFieldGet(this, _members)).length > MAX_SHOWN_MEMBERS) {
-	    shownMembers = Object.values(babelHelpers.classPrivateFieldGet(this, _members)).slice(0, MAX_SHOWN_MEMBERS);
+	  if (shownMembers.length > MAX_SHOWN_MEMBERS) {
+	    shownMembers = shownMembers.slice(0, MAX_SHOWN_MEMBERS);
 	    notShownMembersCount = Object.values(babelHelpers.classPrivateFieldGet(this, _members)).length - MAX_SHOWN_MEMBERS;
 	  }
-	  Object.values(shownMembers).forEach(function (item) {
-	    main_core.Dom.append(_classPrivateMethodGet(_this3, _createMemberElement, _createMemberElement2).call(_this3, item), babelHelpers.classPrivateFieldGet(_this3, _node));
+	  shownMembers.forEach(function (_ref3) {
+	    var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
+	      accessCode = _ref4[0],
+	      item = _ref4[1];
+	    main_core.Dom.append(_classPrivateMethodGet(_this3, _createMemberElement, _createMemberElement2).call(_this3, item, accessCode), babelHelpers.classPrivateFieldGet(_this3, _node));
 	  });
 	  if (notShownMembersCount > 0) {
 	    main_core.Dom.append(_classPrivateMethodGet(this, _createNumberButton, _createNumberButton2).call(this, notShownMembersCount), babelHelpers.classPrivateFieldGet(this, _node));
 	  }
 	  main_core.Dom.append(_classPrivateMethodGet(this, _createPlusButton, _createPlusButton2).call(this), babelHelpers.classPrivateFieldGet(this, _node));
 	}
-	function _createMemberElement2(member) {
-	  var children = member.avatar ? main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"ui-editor-config-item-avatar\"  title=\"", "\" style=\"background-image: url('", "')\"></a>"])), member.url, main_core.Text.encode(member.name), encodeURI(main_core.Text.encode(member.avatar))) : main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"ui-icon ui-icon-xs ui-icon-common-user\" title=\"", "\"><i></i></a>"])), member.url, main_core.Text.encode(member.name));
+	function _createMemberElement2(member, accessCode) {
+	  var iconClass = _classPrivateMethodGet(this, _getMemberIconClass, _getMemberIconClass2).call(this, member, accessCode);
+	  var children = member.avatar && iconClass === 'ui-icon-common-user' ? main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"ui-editor-config-item-avatar\"  title=\"", "\" style=\"background-image: url('", "')\"></a>"])), member.url, main_core.Text.encode(member.name), encodeURI(main_core.Text.encode(member.avatar))) : main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"ui-icon ui-icon-xs ", "\" title=\"", "\"><i></i></a>"])), member.url, iconClass, main_core.Text.encode(member.name));
 	  return main_core.Dom.create('div', {
 	    attrs: {
 	      "class": 'ui-editor-config-item'
 	    },
 	    children: [children]
 	  });
+	}
+	function _getMemberIconClass2(member, accessCode) {
+	  var memberType = main_core.Type.isStringFilled(member.type) ? member.type.toLowerCase() : '';
+	  var normalizedAccessCode = main_core.Type.isStringFilled(member.accessCode) ? member.accessCode : accessCode || '';
+	  if (memberType === 'users') {
+	    return 'ui-icon-common-user';
+	  }
+	  if (/^(SNT|SNTR)\d+$/.test(normalizedAccessCode)) {
+	    return 'ui-icon-common-company';
+	  }
+	  if (/^SG\d+(?:_[AEK])?$/.test(normalizedAccessCode)) {
+	    return 'ui-icon-common-company';
+	  }
+	  if (/^(D|DR|SND|SNDR)\d+$/.test(normalizedAccessCode)) {
+	    return 'ui-icon-common-company';
+	  }
+	  if (/^G\d+$/.test(normalizedAccessCode) || normalizedAccessCode.at(0) === 'A') {
+	    return 'ui-icon-common-user-group';
+	  }
+	  if (memberType === 'groups' || memberType === 'usergroups' || memberType === 'site-groups' || memberType === 'user-groups' || memberType === 'structure-role') {
+	    return 'ui-icon-common-user-group';
+	  }
+	  if (memberType === 'sonetgroups' || memberType === 'socnetgroup' || memberType === 'project' || memberType === 'project-access-codes' || memberType === 'structureteams') {
+	    return 'ui-icon-common-company';
+	  }
+	  if (memberType === 'departments' || memberType === 'department' || memberType === 'intranet' || memberType === 'structuredepartments' || memberType === 'structure-node') {
+	    return 'ui-icon-common-company';
+	  }
+	  return 'ui-icon-common-user';
 	}
 	function _createPlusButton2() {
 	  var _this4 = this;
@@ -388,20 +437,30 @@
 	    var groupId = _match3 ? _match3[1] : null;
 	    return ['site-groups', groupId];
 	  }
+	  if (/^SG(\d+)$/.test(accessCode)) {
+	    var _match4 = accessCode.match(/^SG(\d+)$/) || null;
+	    var projectId = _match4 ? _match4[1] : null;
+	    return ['project', projectId];
+	  }
 	  if (accessCode.at(0) === 'A') {
 	    return ['user-groups', accessCode];
+	  }
+	  if (/^SG(\d+)$/.test(accessCode)) {
+	    var _match4 = accessCode.match(/^SG(\d+)$/) || null;
+	    var projectId = _match4 ? _match4[1] : null;
+	    return ['project', projectId];
 	  }
 	  if (/^SG(\d+)_([AEK])$/.test(accessCode)) {
 	    return ['project-access-codes', accessCode];
 	  }
 	  if (/^SND(\d+)$/.test(accessCode)) {
-	    var _match4 = accessCode.match(/^SND(\d+)$/) || null;
-	    var structureNodeId = _match4 ? _match4[1] : null;
+	    var _match5 = accessCode.match(/^SND(\d+)$/) || null;
+	    var structureNodeId = _match5 ? _match5[1] : null;
 	    return ['structure-node', "".concat(structureNodeId, ":F")];
 	  }
 	  if (/^SNDR(\d+)$/.test(accessCode)) {
-	    var _match5 = accessCode.match(/^SNDR(\d+)$/) || null;
-	    var _structureNodeId = _match5 ? _match5[1] : null;
+	    var _match6 = accessCode.match(/^SNDR(\d+)$/) || null;
+	    var _structureNodeId = _match6 ? _match6[1] : null;
 	    return ['structure-node', _structureNodeId];
 	  }
 	  return ['unknown', accessCode];
@@ -410,6 +469,9 @@
 	  var entityId = item.entityId;
 	  if (entityId === 'user') {
 	    return "U".concat(item.id);
+	  }
+	  if (entityId === 'intranet') {
+	    return "DR".concat(item.id);
 	  }
 	  if (entityId === 'department') {
 	    if (main_core.Type.isString(item.id) && item.id.endsWith(':F')) {
@@ -431,11 +493,17 @@
 	    }
 	    return "SNDR".concat(item.id);
 	  }
+	  if (entityId === 'project' || entityId === 'socnetgroup') {
+	    return "SG".concat(item.id);
+	  }
 	  if (entityId === 'site-groups') {
 	    return "G".concat(item.id);
 	  }
 	  if (entityId === 'user-groups') {
 	    return item.id;
+	  }
+	  if (entityId === 'project') {
+	    return "SG".concat(item.id);
 	  }
 	  if (entityId === 'project-access-codes') {
 	    return item.id;

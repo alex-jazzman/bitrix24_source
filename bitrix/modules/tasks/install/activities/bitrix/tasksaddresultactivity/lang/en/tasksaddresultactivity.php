@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_ADD_RESULT_ACCESS_CHECK_ERROR"] = "Could not check permission to add task status summary.";
+$MESS["TASKS_ADD_RESULT_ACCESS_DENIED"] = "Insufficient permission to add task status summary.";
+$MESS["TASKS_ADD_RESULT_ACTOR_NOT_SINGLE"] = "Only one user can be selected to add status summary.";
+$MESS["TASKS_ADD_RESULT_ACTOR_RESOLVE_ERROR"] = "Task status summary author resolves to invalid user.";
+$MESS["TASKS_ADD_RESULT_ACTOR_UNAVAILABLE"] = "Could not find user to add task status summary.";
+$MESS["TASKS_ADD_RESULT_COMMAND_VALIDATION_ERROR"] = "Could not add task status summary. Check the parameters.";
+$MESS["TASKS_ADD_RESULT_INPUT_ERROR"] = "Could not get task status summary text.";
+$MESS["TASKS_ADD_RESULT_INVALID_TEXT_ENCODING"] = "Incorrect task status summary text.";
+$MESS["TASKS_ADD_RESULT_INVALID_TYPE"] = "Incorrect type of task status summary text.";
+$MESS["TASKS_ADD_RESULT_MODIFIED_BY"] = "Task status summary author";
+$MESS["TASKS_ADD_RESULT_MODIFIED_BY_DESCRIPTION"] = "User is subject to access permission checks.";
+$MESS["TASKS_ADD_RESULT_MODIFIED_BY_EMPTY_PROP"] = "Status summary author is required.";
+$MESS["TASKS_ADD_RESULT_MODIFIED_BY_NOT_SINGLE"] = "Select a user or a role with a single user.";
+$MESS["TASKS_ADD_RESULT_MODULE_NOT_AVAILABLE"] = "Could not add text to task status summary.";
+$MESS["TASKS_ADD_RESULT_RESULT_OUTCOME_UNKNOWN"] = "Task status summary might have been added. Check the task.";
+$MESS["TASKS_ADD_RESULT_TARGET_UNAVAILABLE"] = "Task was not found.";
+$MESS["TASKS_ADD_RESULT_TEXT"] = "Task status summary text";
+$MESS["TASKS_ADD_RESULT_TEXT_DESCRIPTION"] = "This text will be set as task status summary.";
+$MESS["TASKS_ADD_RESULT_TEXT_TOO_LONG"] = "Could not add text to task status summary.";

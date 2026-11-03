@@ -16,11 +16,15 @@ jn.define('im/messenger/model/recent/resolvers', (require, exports, module) => {
 	 * @param {Set<DialogId>} baseIds
 	 * @param {MessengerStore<RecentMessengerModel>['rootGetters']} rootGetters
 	 * @param {number} [parentChatId]
+	 * @param {Set<string>} [sections] recent sections of the tab; a tab with a section of its
+	 *   own may leave it out, the map answers for it
 	 * @returns {Set<DialogId>}
 	 */
-	function resolveUnreadFilter(tabId, baseIds, rootGetters, parentChatId = ROOT_PARENT_CHAT_ID)
+	function resolveUnreadFilter(tabId, baseIds, rootGetters, parentChatId = ROOT_PARENT_CHAT_ID, sections = null)
 	{
 		const result = new Set();
+		const ownSection = RecentTabByNavigationTab[tabId];
+		const tabSections = sections ?? new Set(ownSection === undefined ? [] : [ownSection]);
 		const getByChatId = rootGetters['counterModel/getByChatId'];
 		const getCounterByChatId = rootGetters['counterModel/getCounterByChatId'];
 		const getNumberChildCounters = rootGetters['counterModel/getNumberChildCounters'];
@@ -57,7 +61,7 @@ jn.define('im/messenger/model/recent/resolvers', (require, exports, module) => {
 				continue;
 			}
 
-			if (!counterModel?.recentSections.includes(RecentTabByNavigationTab[tabId]))
+			if (!counterModel?.recentSections.some((section) => tabSections.has(section)))
 			{
 				continue;
 			}

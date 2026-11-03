@@ -34,6 +34,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		Designer: 'designer',
 		NewDesigner: 'new-designer'
 	});
+	const NameBlockPlacement = Object.freeze({
+		Above: 'above',
+		InsideControlRow: 'inside-control-row'
+	});
+	const ValueMode = Object.freeze({
+		Value: 'value',
+		Expression: 'expression'
+	});
 	const EventName = Object.freeze({
 		BackendRenderFinished: 'bizproc.fields:backend:render-finished'
 	});
@@ -50,6 +58,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		return toBool(property.AllowSelection);
 	}
+	function isSelectionAllowed(property, renderMode) {
+		if (renderMode === RenderMode.Public) {
+			return toBool(property.AllowSelection);
+		}
+		return isSelectable(property);
+	}
 	function isRequired(property) {
 		return property.Required === true;
 	}
@@ -64,6 +78,32 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			return false;
 		}
 		return Boolean(value);
+	}
+
+	const EXPRESSION_MARKER = /^\s*[={]/;
+	function isExpressionValue(value) {
+		return main_core.Type.isStringFilled(value) && EXPRESSION_MARKER.test(value);
+	}
+	function splitTopLevelValues(text) {
+		const values = [];
+		let depth = 0;
+		let start = 0;
+		for (let index = 0; index < text.length; index += 1) {
+			const char = text[index];
+			if (char === '{') {
+				depth += 1;
+			} else if (char === '}') {
+				depth = Math.max(depth - 1, 0);
+			} else if (char === ',' && depth === 0) {
+				values.push(text.slice(start, index));
+				start = index + 1;
+			}
+		}
+		values.push(text.slice(start));
+		return values;
+	}
+	function getExpressionFieldName(fieldName) {
+		return `${fieldName}_text`;
 	}
 
 	function filterInput(raw, caret, sanitize) {
@@ -137,6 +177,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	const ADD_BUTTON_CLASS = 'bizproc-fields-multiple__add';
 	const ADD_BUTTON_SELECTOR = `.${ADD_BUTTON_CLASS}`;
+	const NAME_INSIDE_MODIFIER = '--name-inside';
 	function initFieldHints(container) {
 		const hint = main_core.Reflection.getClass('BX.UI.Hint');
 		if (!main_core.Type.isNull(hint) && main_core.Type.isFunction(hint.init)) {
@@ -150,7 +191,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (main_core.Type.isNull(nameNode) && main_core.Type.isNull(hintNode)) {
 				return null;
 			}
-			const block = params.isGroup ? main_core.Tag.render`<legend class="bizproc-fields-header"></legend>` : main_core.Tag.render`<label class="bizproc-fields-header"></label>`;
+			const block = params.isGroup ? main_core.Tag.render`<legend class="bizproc-fields-header" data-testid="bizproc-field-name-block"></legend>` : main_core.Tag.render`<label class="bizproc-fields-header" data-testid="bizproc-field-name-block"></label>`;
 			if (!params.isGroup && main_core.Type.isStringFilled(params.controlId)) {
 				main_core.Dom.attr(block, 'for', params.controlId);
 			}
@@ -159,6 +200,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}
 			if (!main_core.Type.isNull(hintNode)) {
 				main_core.Dom.append(hintNode, block);
+				if (block.hasAttribute('for')) {
+					main_core.Event.bind(hintNode, 'click', event => event.preventDefault());
+				}
 			}
 			return block;
 		}
@@ -167,11 +211,17 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (!main_core.Type.isString(name) || name.trim() === '') {
 				return null;
 			}
-			const required = isRequired(property);
+			const requiredMark = isRequired(property) ? main_core.Tag.render`
+				<span
+					class="bizproc-fields-label__required"
+					aria-hidden="true"
+					data-testid="bizproc-field-required-mark"
+				>*</span>
+			` : '';
 			return main_core.Tag.render`
-			<span class="bizproc-fields-label">
+			<span class="bizproc-fields-label" data-testid="bizproc-field-label">
 				${main_core.Text.encode(name)}
-				${required ? main_core.Tag.render`<span class="bizproc-fields-label__required" aria-hidden="true">*</span>` : ''}
+				${requiredMark}
 			</span>
 		`;
 		}
@@ -200,7 +250,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			return node;
 		}
 		static buildMultipleRow(control, params) {
-			const row = main_core.Tag.render`<div class="bizproc-fields-multiple__row"></div>`;
+			const row = main_core.Tag.render`
+			<div
+				class="bizproc-fields-multiple__row"
+				data-testid="${main_core.Text.encode(`bizproc-field-multiple-row-${params.fieldName}`)}"
+			></div>
+		`;
 			main_core.Dom.append(control, row);
 			if (!params.readOnly) {
 				const removeButton = main_core.Tag.render`
@@ -249,19 +304,35 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				nameBlockNode,
 				captionNode,
 				controlNode,
-				showLabels
+				showLabels,
+				expressionRowNode
 			} = params;
 			const isGroup = params.isGroup === true;
+			const nameBlockInsideControlRow = !isGroup && params.nameBlockPlacement === NameBlockPlacement.InsideControlRow;
 			if (!showLabels) {
-				return FieldLayout.#wrapControl(controlNode);
+				const bareControl = FieldLayout.#wrapControl(controlNode);
+				if (!main_core.Type.isNil(expressionRowNode) && !controlNode.contains(expressionRowNode)) {
+					main_core.Dom.append(expressionRowNode, bareControl);
+				}
+				return bareControl;
 			}
 			const row = isGroup ? main_core.Tag.render`
 				<fieldset class="bizproc-fields-row bizproc-fields-row--multiple" data-testid="bizproc-field-row"></fieldset>
 			` : main_core.Tag.render`<div class="bizproc-fields-row" data-testid="bizproc-field-row"></div>`;
+			const controlHolder = isGroup ? controlNode : FieldLayout.#wrapControl(controlNode);
 			if (!main_core.Type.isNull(nameBlockNode)) {
-				main_core.Dom.append(nameBlockNode, row);
+				if (nameBlockInsideControlRow) {
+					main_core.Dom.addClass(controlHolder, NAME_INSIDE_MODIFIER);
+				}
+				main_core.Dom.append(nameBlockNode, nameBlockInsideControlRow ? controlHolder : row);
+				if (nameBlockInsideControlRow && !main_core.Type.isNil(expressionRowNode)) {
+					main_core.Dom.append(expressionRowNode, controlHolder);
+				}
 			}
-			main_core.Dom.append(isGroup ? controlNode : FieldLayout.#wrapControl(controlNode), row);
+			main_core.Dom.append(controlHolder, row);
+			if (isGroup && !main_core.Type.isNil(expressionRowNode)) {
+				main_core.Dom.append(expressionRowNode, row);
+			}
 			if (!main_core.Type.isNil(captionNode)) {
 				main_core.Dom.append(captionNode, row);
 			}
@@ -287,9 +358,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		main_core.Dom.append(node, parent);
 	}
 
+	function isWriteTarget(node) {
+		return node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement;
+	}
+
 	const VALUE_NODE_MARKER = 'data-bizproc-field-value-node';
+	const EXPRESSION_NODE_MARKER = 'data-bizproc-field-expression-node';
 	function canApplySelectionDecorator(property, provider) {
-		return isSelectable(property) && provider.isAvailable() && provider.supports(property);
+		return !isReadOnly(property) && isSelectable(property) && provider.isAvailable() && provider.supports(property);
 	}
 	function applySelectionDecorator(control, property, provider, context) {
 		if (!canApplySelectionDecorator(property, provider)) {
@@ -307,35 +383,65 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		return main_core.Type.isUndefined(control.namedNode) || !anchor.contains(control.namedNode);
 	}
+	function withWriteTarget(context, node) {
+		return isWriteTarget(node) ? {
+			...context,
+			writeTarget: node
+		} : context;
+	}
 	function decorateInsertAnchor(control, anchor, property, provider, context) {
 		const parent = anchor.parentElement;
 		const next = anchor.nextElementSibling;
-		const decorated = provider.decorate(anchor, property, context);
+		const tracked = trackedExpressionNode(control, anchor);
+		if (!main_core.Type.isNull(tracked)) {
+			main_core.Dom.attr(tracked, EXPRESSION_NODE_MARKER, '');
+		}
+		const decorated = provider.decorate(anchor, property, withWriteTarget(context, tracked ?? anchor));
+		if (!main_core.Type.isNull(tracked)) {
+			main_core.Dom.attr(tracked, EXPRESSION_NODE_MARKER, null);
+		}
 		if (decorated === anchor) {
 			return control;
 		}
-		if (decorated.contains(anchor)) {
+		const moved = decorated.contains(anchor);
+		const marked = main_core.Type.isNull(tracked) ? null : findMarkedNode(decorated, EXPRESSION_NODE_MARKER);
+		if (!main_core.Type.isNull(tracked) && main_core.Type.isNull(marked) && !moved) {
+			console.error('[bizproc.fields] selection provider returned markup holding neither the anchor node ' + 'nor a copy of it; the decoration is dropped, see SelectionProvider.decorate');
+			return control;
+		}
+		if (moved) {
 			insertWhereNodeWas(decorated, parent, next);
 		} else {
 			main_core.Dom.replace(anchor, decorated);
 		}
+		if (!main_core.Type.isNull(marked)) {
+			main_core.Dom.attr(marked, EXPRESSION_NODE_MARKER, null);
+		}
 		return {
 			root: control.root,
 			valueNode: control.valueNode,
-			namedNode: control.namedNode
+			namedNode: control.namedNode,
+			expressionNode: main_core.Type.isNull(tracked) ? control.expressionNode : marked ?? tracked
 		};
+	}
+	function trackedExpressionNode(control, anchor) {
+		const expressionNode = control.expressionNode;
+		if (main_core.Type.isUndefined(expressionNode) || !anchor.contains(expressionNode)) {
+			return null;
+		}
+		return expressionNode;
 	}
 	function decorateValueNode(control, property, provider, context) {
 		const parent = control.valueNode.parentElement;
 		const next = control.valueNode.nextElementSibling;
 		main_core.Dom.attr(control.valueNode, VALUE_NODE_MARKER, '');
-		const decorated = provider.decorate(control.valueNode, property, context);
+		const decorated = provider.decorate(control.valueNode, property, withWriteTarget(context, control.valueNode));
 		main_core.Dom.attr(control.valueNode, VALUE_NODE_MARKER, null);
 		if (decorated === control.valueNode) {
 			return control;
 		}
 		const moved = decorated.contains(control.valueNode);
-		const marked = findValueNode(decorated);
+		const marked = findMarkedNode(decorated, VALUE_NODE_MARKER);
 		if (main_core.Type.isNull(marked) && !moved) {
 			console.error('[bizproc.fields] selection provider returned markup holding neither the control node ' + 'nor a copy of it; the decoration is dropped, see SelectionProvider.decorate');
 			return control;
@@ -349,7 +455,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			return {
 				root: decorated,
 				valueNode,
-				namedNode: control.namedNode
+				namedNode: control.namedNode,
+				expressionNode: control.expressionNode
 			};
 		}
 		if (moved) {
@@ -360,14 +467,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		return {
 			root: control.root,
 			valueNode,
-			namedNode: control.namedNode === control.valueNode ? valueNode : control.namedNode
+			namedNode: control.namedNode === control.valueNode ? valueNode : control.namedNode,
+			expressionNode: control.expressionNode
 		};
 	}
-	function findValueNode(decorated) {
-		if (decorated.matches(`[${VALUE_NODE_MARKER}]`)) {
+	function findMarkedNode(decorated, marker) {
+		if (decorated.matches(`[${marker}]`)) {
 			return decorated;
 		}
-		const found = decorated.querySelector(`[${VALUE_NODE_MARKER}]`);
+		const found = decorated.querySelector(`[${marker}]`);
 		return main_core.Type.isElementNode(found) ? found : null;
 	}
 
@@ -386,6 +494,124 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 	}
 
+	const TAB_CLASS = 'bizproc-fields-value-mode__tab';
+	const ACTIVE_MODIFIER = '--active';
+	const KEY_STEPS = {
+		ArrowLeft: -1,
+		ArrowUp: -1,
+		ArrowRight: 1,
+		ArrowDown: 1
+	};
+	function buildValueModeSwitcher(params) {
+		const modes = [ValueMode.Value, ValueMode.Expression];
+		const tabs = [];
+		let activeMode = params.activeMode;
+		const setActiveMode = mode => {
+			activeMode = mode;
+			tabs.forEach((tab, index) => {
+				const isActive = modes[index] === activeMode;
+				main_core.Dom.attr(tab, 'aria-checked', isActive ? 'true' : 'false');
+				main_core.Dom.attr(tab, 'tabindex', isActive ? '0' : '-1');
+				if (isActive) {
+					main_core.Dom.addClass(tab, ACTIVE_MODIFIER);
+				} else {
+					main_core.Dom.removeClass(tab, ACTIVE_MODIFIER);
+				}
+			});
+		};
+		const selectMode = mode => {
+			if (mode === activeMode) {
+				return;
+			}
+			setActiveMode(mode);
+			params.onSelect(mode);
+		};
+		const node = main_core.Tag.render`
+		<div
+			class="bizproc-fields-value-mode"
+			role="radiogroup"
+			aria-label="${main_core.Text.encode(params.groupLabel)}"
+			data-testid="${main_core.Text.encode(`bizproc-field-mode-switcher-${params.fieldName}`)}"
+		></div>
+	`;
+		modes.forEach(mode => {
+			const label = mode === ValueMode.Value ? params.labels.value : params.labels.expression;
+			const tab = main_core.Tag.render`
+			<button
+				type="button"
+				class="${TAB_CLASS}"
+				role="radio"
+				aria-checked="false"
+				tabindex="-1"
+				data-testid="${main_core.Text.encode(`bizproc-field-mode-${mode}-${params.fieldName}`)}"
+			>${main_core.Text.encode(label)}</button>
+		`;
+			if (params.readOnly) {
+				main_core.Dom.attr(tab, 'aria-disabled', 'true');
+			} else {
+				main_core.Event.bind(tab, 'click', () => {
+					selectMode(mode);
+				});
+			}
+			tabs.push(tab);
+			main_core.Dom.append(tab, node);
+		});
+		if (!params.readOnly) {
+			main_core.Event.bind(node, 'keydown', event => {
+				const step = KEY_STEPS[event.key];
+				if (main_core.Type.isUndefined(step)) {
+					return;
+				}
+				event.preventDefault();
+				const nextIndex = (modes.indexOf(activeMode) + step + modes.length) % modes.length;
+				selectMode(modes[nextIndex]);
+				tabs[nextIndex].focus();
+			});
+		}
+		setActiveMode(activeMode);
+		return {
+			node,
+			setActiveMode
+		};
+	}
+
+	const EXPRESSION_ROW_CLASS = 'bizproc-fields-expression';
+	function buildExpressionControl(params) {
+		const placeholder = main_core.Loc.getMessage('BIZPROC_FIELDS_EXPRESSION_PLACEHOLDER') ?? '';
+		const value = main_core.Type.isArray(params.value) ? params.value[0] ?? '' : params.value ?? '';
+		const input = main_core.Tag.render`
+		<input
+			type="text"
+			class="bizproc-fields-expression__input"
+			value="${main_core.Text.encode(value)}"
+			placeholder="${main_core.Text.encode(placeholder)}"
+			data-role="${params.readOnly ? '' : 'inline-selector-target'}"
+			data-testid="${main_core.Text.encode(`bizproc-field-expression-${params.fieldName}`)}"
+		/>
+	`;
+		if (params.readOnly) {
+			main_core.Dom.attr(input, 'readonly', '');
+		}
+		if (params.writeOver === true) {
+			main_core.Dom.attr(input, 'data-select-mode', 'replace');
+		}
+		const node = main_core.Tag.render`
+		<div
+			class="${EXPRESSION_ROW_CLASS}${params.readOnly ? ` ${EXPRESSION_ROW_CLASS}--readonly` : ''}"
+			data-testid="${main_core.Text.encode(`bizproc-field-expression-row-${params.fieldName}`)}"
+		>
+			${input}
+		</div>
+	`;
+		if (!main_core.Type.isNull(params.insertButton)) {
+			main_core.Dom.append(params.insertButton, node);
+		}
+		return {
+			node,
+			input
+		};
+	}
+
 	function buildTextControl(params) {
 		const stringValue = toSingleValue(params.value);
 		const valueNode = params.multiline === true ? renderTextarea(params, stringValue) : renderInput(params, stringValue);
@@ -394,6 +620,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		if (params.readOnly || params.nonEditable === true) {
 			main_core.Dom.attr(valueNode, 'readonly', '');
+		}
+		if (params.writeOver === true) {
+			main_core.Dom.attr(valueNode, 'data-select-mode', 'replace');
 		}
 		const control = main_core.Tag.render`
 		<div class="bizproc-fields-box ${params.blockClass}${params.readOnly ? ` ${params.blockClass}--readonly` : ''}">
@@ -462,6 +691,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		return params.selectable && !params.readOnly ? 'inline-selector-target' : '';
 	}
 
+	const CARRIER_CLASS = 'bizproc-fields-mode-carrier';
+	const INACTIVE_MODIFIER = '--inactive';
+	const ERROR_MODIFIER = '--error';
+	const ERROR_CAPTION_CLASS = 'bizproc-fields-error';
+	const EXPRESSION_INPUT_SELECTOR = `.${EXPRESSION_ROW_CLASS}__input`;
+	function isLabelable(node) {
+		const labels = node.labels;
+		return !main_core.Type.isUndefined(labels) && !main_core.Type.isNull(labels);
+	}
 	class BaseField {
 		static #instanceCounter = 0;
 		#property;
@@ -473,12 +711,21 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		#selectionProvider;
 		#value;
 		#valueNodes = [];
-		#rowNameNodes = [];
+		#namedNodes = [];
+		#expressionNodes = [];
+		#sharedExpressionNode = null;
+		#rowsWrapNode = null;
 		#valueNodeByRoot = new WeakMap();
+		#valueMode = ValueMode.Value;
+		#valueModeSwitcher = null;
+		#stashedValues = new WeakMap();
 		#captionRendered = false;
 		#rootNode = null;
+		#expressionCarrier = null;
+		#errorNode = null;
 		#controlId;
 		#captionId;
+		#errorId;
 		constructor(params) {
 			this.#property = params.property;
 			this.#fieldName = params.fieldName;
@@ -491,6 +738,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			const instanceIndex = ++BaseField.#instanceCounter;
 			this.#controlId = `bizproc-field-ctrl-${params.fieldName.replace(/[^a-zA-Z0-9_-]/g, '-')}-${instanceIndex}`;
 			this.#captionId = `${this.#controlId}-caption`;
+			this.#errorId = `${this.#controlId}-error`;
 		}
 		renderControl(value) {
 			const type = main_core.Text.encode(this.#property.Type);
@@ -517,59 +765,89 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		rendersGroup() {
 			return false;
 		}
+		getNameBlockPlacement() {
+			return NameBlockPlacement.Above;
+		}
+		supportsExpressionMode() {
+			return false;
+		}
+		getValueModeLabels() {
+			return {
+				value: main_core.Loc.getMessage('BIZPROC_FIELDS_VALUE_MODE_SWITCH') ?? '',
+				expression: main_core.Loc.getMessage('BIZPROC_FIELDS_VALUE_MODE_EXPRESSION') ?? ''
+			};
+		}
+		rendersOwnMultiple() {
+			return this.rendersGroup();
+		}
+		namedNodeCarriesRequired() {
+			return true;
+		}
 		getGroupRequiredNodes(root) {
 			return [];
 		}
 		render() {
 			this.release();
 			this.#valueNodes = [];
-			this.#rowNameNodes = [];
+			this.#namedNodes = [];
+			this.#expressionNodes = [];
+			this.#sharedExpressionNode = null;
+			this.#rowsWrapNode = null;
 			this.#valueNodeByRoot = new WeakMap();
+			this.#valueModeSwitcher = null;
+			this.#stashedValues = new WeakMap();
+			this.#expressionCarrier = null;
+			this.#errorNode = null;
 			const captionNode = this.#showLabels && this.#showDescriptions ? FieldLayout.renderCaption(this.#property, this.#captionId) : null;
 			this.#captionRendered = !main_core.Type.isNull(captionNode);
 			const multiple = isMultiple(this.#property);
 			const rendersOwnGroup = this.rendersGroup();
-			const isGroup = rendersOwnGroup || multiple;
+			const buildsRows = multiple && !this.rendersOwnMultiple();
+			const isGroup = rendersOwnGroup || buildsRows;
 			let controlNode;
 			let nameTarget = null;
-			if (multiple && !rendersOwnGroup) {
-				const values = this.#toValueList(this.#value);
-				const seed = values.length > 0 ? values : [null];
-				const roots = seed.map(presetValue => {
-					const control = this.#buildControl(presetValue);
-					this.#applyRowAria(control);
-					return control.root;
-				});
-				controlNode = this.wrapMultiple(roots);
-				this.#nameRows();
+			let expressionRowNode = null;
+			if (buildsRows) {
+				const rows = this.#buildRows();
+				controlNode = rows.controlNode;
+				expressionRowNode = rows.expressionRowNode;
 			} else {
 				const control = this.#buildControl(this.#value);
 				controlNode = control.root;
 				nameTarget = control.namedNode ?? control.valueNode;
+				expressionRowNode = main_core.Type.isUndefined(control.expressionNode) ? null : this.#expressionRowOf(control.expressionNode);
 			}
+			this.#nameExpressionNodes();
 			if (!isGroup && !main_core.Type.isNull(nameTarget)) {
 				main_core.Dom.attr(nameTarget, 'id', this.#controlId);
 				this.#applyAria(nameTarget);
 			}
+			const namesTarget = !isGroup && !main_core.Type.isNull(nameTarget) && isLabelable(nameTarget);
 			const nameBlockNode = this.#showLabels ? FieldLayout.renderNameBlock({
 				property: this.#property,
 				isGroup,
 				showDescription: this.#showDescriptions,
-				controlId: this.#controlId
+				controlId: namesTarget ? this.#controlId : undefined
 			}) : null;
 			const assembled = FieldLayout.assemble({
 				nameBlockNode,
 				captionNode,
 				controlNode,
 				showLabels: this.#showLabels,
-				isGroup
+				isGroup,
+				nameBlockPlacement: this.getNameBlockPlacement(),
+				expressionRowNode
 			});
 			if (rendersOwnGroup) {
 				this.#applyGroupAria(assembled);
 			}
+			this.#adoptRenderedValueMode();
+			this.#renderValueModeSwitcher(assembled);
+			this.#applyValueModeState();
 			initFieldHints(assembled);
 			main_core.Dom.attr(assembled, 'data-testid', `bizproc-field-${this.#fieldName}`);
 			this.#rootNode = assembled;
+			this.checkExpressionCarrier();
 			return assembled;
 		}
 		emitChange() {
@@ -581,6 +859,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}));
 		}
 		release() {}
+		releaseRow(valueNode) {}
 		getValue() {
 			if (this.isMultiple()) {
 				return this.#valueNodes.map(node => node.value ?? '').filter(item => item !== '');
@@ -592,8 +871,78 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			return node.value ?? '';
 		}
 		setValue(value) {
+			if (!this.#offersExpressionMode()) {
+				this.#writeValue(value);
+				return;
+			}
+			const listShaped = this.#buildsRows() || main_core.Type.isArray(value);
+			const {
+				values,
+				expression
+			} = this.#splitItems(listShaped ? this.#toValueList(value) : [value]);
+			if (main_core.Type.isStringFilled(expression)) {
+				this.#value = value;
+				if (this.#valueMode !== ValueMode.Expression) {
+					this.#valueNodes.forEach(valueNode => this.#setCarrierValue(valueNode, false));
+				}
+				this.setValueMode(ValueMode.Expression);
+				this.#applyExpression(expression);
+				return;
+			}
+			if (this.#valueMode !== ValueMode.Value) {
+				this.getExpressionNodes().forEach(node => this.#setCarrierValue(node, false));
+			}
+			this.setValueMode(ValueMode.Value);
+			this.#writeValue(listShaped ? values : value);
+		}
+		#writeValue(value) {
 			this.#value = value;
 			this.applyValue(value);
+			this.checkExpressionCarrier();
+		}
+		getValueState() {
+			return {
+				value: this.getValue(),
+				expression: this.#readExpression(),
+				mode: this.#valueMode
+			};
+		}
+		getEffectiveValue() {
+			const state = this.getValueState();
+			if (state.mode !== ValueMode.Expression) {
+				return state.value;
+			}
+			const listShaped = main_core.Type.isArray(state.value);
+			if (!isExpressionValue(state.expression)) {
+				return listShaped ? [] : '';
+			}
+			return listShaped ? [state.expression] : state.expression;
+		}
+		carriesExpression() {
+			const state = this.getValueState();
+			return state.mode === ValueMode.Expression && isExpressionValue(state.expression);
+		}
+		setValueState(state) {
+			this.#writeValue(state.value);
+			const mode = this.#offersExpressionMode() ? state.mode : ValueMode.Value;
+			this.#restoreExpression(state.expression, mode);
+			this.setValueMode(mode);
+		}
+		#restoreExpression(expression, mode) {
+			if (!this.#offersExpressionMode()) {
+				return;
+			}
+			const active = mode === ValueMode.Expression;
+			const stash = !active && main_core.Type.isStringFilled(expression);
+			this.getExpressionNodes().forEach(node => {
+				const input = node;
+				this.#stashedValues.delete(node);
+				input.value = active ? expression : '';
+				if (stash) {
+					this.#stashedValues.set(node, expression);
+				}
+			});
+			this.checkExpressionCarrier();
 		}
 		isMultiple() {
 			return isMultiple(this.#property);
@@ -640,10 +989,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		getSelectionContext() {
 			if (!main_core.Type.isUndefined(this.#documentType)) {
 				return {
+					fieldName: this.#fieldName,
 					documentType: this.#documentType
 				};
 			}
-			return {};
+			return {
+				fieldName: this.#fieldName
+			};
 		}
 		isReadOnly() {
 			return isReadOnly(this.#property);
@@ -661,6 +1013,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				const control = this.#buildControl(null);
 				this.#applyRowAria(control);
 				this.#nameRows();
+				this.#nameExpressionNodes();
 				const row = FieldLayout.buildMultipleRow(control.root, {
 					readOnly,
 					onRemove,
@@ -673,6 +1026,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				} else {
 					main_core.Dom.insertBefore(row, addButton);
 				}
+				this.#applyValueModeState();
 				this.emitChange();
 			};
 			return FieldLayout.wrapMultiple(controls, {
@@ -688,10 +1042,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (!this.decoratesSelection()) {
 				return control;
 			}
+			return this.#decorateSelection(control);
+		}
+		#decorateSelection(control) {
 			return applySelectionDecorator(control, this.#property, this.#selectionProvider, this.getSelectionContext());
 		}
 		decoratesSelection() {
-			if (this.#renderMode === RenderMode.Public && !toBool(this.#property.AllowSelection)) {
+			if (!isSelectionAllowed(this.#property, this.#renderMode)) {
 				return false;
 			}
 			if (this.isReadOnly()) {
@@ -699,9 +1056,29 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}
 			return canApplySelectionDecorator(this.#property, this.#selectionProvider);
 		}
+		decoratesSharedExpressionRow() {
+			return this.decoratesSelection();
+		}
 		getValueNodes() {
 			return [...this.#valueNodes];
 		}
+		getExpressionNodes() {
+			if (!main_core.Type.isNull(this.#sharedExpressionNode)) {
+				return [this.#sharedExpressionNode];
+			}
+			return this.#expressionNodes.filter(node => !main_core.Type.isNull(node));
+		}
+		getValueMode() {
+			return this.#valueMode;
+		}
+		setValueMode(mode) {
+			this.#valueMode = mode;
+			if (!main_core.Type.isNull(this.#valueModeSwitcher)) {
+				this.#valueModeSwitcher.setActiveMode(mode);
+			}
+			this.#applyValueModeState();
+		}
+		onValueModeChanged(mode) {}
 		splitsScalarValue() {
 			return true;
 		}
@@ -735,6 +1112,21 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				insertButton: ownInsertButton ? this.renderInsertButton() : null
 			});
 		}
+		renderExpressionControl(options) {
+			if (!this.#offersExpressionMode() || this.hasSharedExpressionRow()) {
+				return null;
+			}
+			const readOnly = this.isReadOnly();
+			const ownInsertButton = !readOnly && !this.decoratesSelection();
+			const control = buildExpressionControl({
+				...options,
+				fieldName: this.#fieldName,
+				readOnly,
+				insertButton: ownInsertButton ? this.renderInsertButton() : null
+			});
+			this.watchExpressionCarrier(control.node, EXPRESSION_INPUT_SELECTOR);
+			return control;
+		}
 		bindInputFilter(root, inputSelector, sanitize) {
 			if (this.isReadOnly()) {
 				return;
@@ -745,6 +1137,66 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					this.#applyInputFilter(input, sanitize);
 				}
 			});
+		}
+		watchExpressionCarrier(carrier, inputSelector) {
+			if (this.isReadOnly()) {
+				return;
+			}
+			this.#expressionCarrier = {
+				node: carrier,
+				inputSelector
+			};
+			main_core.Event.bind(carrier, 'focusout', this.#handleCarrierCommit);
+			main_core.Event.bind(carrier, 'change', this.#handleCarrierCommit);
+		}
+		checkExpressionCarrier() {
+			const carrier = this.#expressionCarrier;
+			if (main_core.Type.isNull(carrier)) {
+				return;
+			}
+			const input = carrier.node.querySelector(carrier.inputSelector);
+			if (main_core.Type.isNull(input)) {
+				return;
+			}
+			this.#markExpressionError(carrier.node, input, !this.isExpressionCarrierValid(input));
+		}
+		isExpressionCarrierValid(input) {
+			return !main_core.Type.isStringFilled(input.value) || isExpressionValue(input.value);
+		}
+		#handleCarrierCommit = () => {
+			this.checkExpressionCarrier();
+		};
+		#markExpressionError(carrier, input, invalid) {
+			if (!invalid) {
+				main_core.Dom.removeClass(carrier, ERROR_MODIFIER);
+				main_core.Dom.attr(input, 'aria-invalid', null);
+				this.#describeByError(input, false);
+				main_core.Dom.remove(this.#errorNode);
+				this.#errorNode = null;
+				return;
+			}
+			main_core.Dom.addClass(carrier, ERROR_MODIFIER);
+			main_core.Dom.attr(input, 'aria-invalid', 'true');
+			if (main_core.Type.isNull(this.#errorNode)) {
+				this.#errorNode = main_core.Tag.render`
+				<div
+					class="${ERROR_CAPTION_CLASS}"
+					data-testid="${main_core.Text.encode(`bizproc-field-error-${this.#fieldName}`)}"
+				>
+					${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_FIELDS_EXPRESSION_INVALID') ?? '')}
+				</div>
+			`;
+				main_core.Dom.attr(this.#errorNode, 'id', this.#errorId);
+				main_core.Dom.insertAfter(this.#errorNode, carrier);
+			}
+			this.#describeByError(input, true);
+		}
+		#describeByError(input, described) {
+			const ids = (input.getAttribute('aria-describedby') ?? '').split(' ').filter(id => id !== '' && id !== this.#errorId);
+			if (described) {
+				ids.push(this.#errorId);
+			}
+			main_core.Dom.attr(input, 'aria-describedby', ids.length > 0 ? ids.join(' ') : null);
 		}
 		splitOffset(value) {
 			return splitOffsetValue(value);
@@ -782,13 +1234,224 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (!main_core.Type.isStringFilled(value)) {
 				return [];
 			}
-			return this.splitsScalarValue() ? value.split(',') : [value];
+			return this.splitsScalarValue() ? splitTopLevelValues(value) : [value];
+		}
+		#splitItems(items) {
+			if (!this.#offersExpressionMode()) {
+				return {
+					values: items,
+					expression: ''
+				};
+			}
+			const values = items.filter(item => !isExpressionValue(item));
+			const expression = values.length > 0 ? '' : items.find(item => isExpressionValue(item)) ?? '';
+			return {
+				values,
+				expression
+			};
+		}
+		#buildRows() {
+			const {
+				values,
+				expression: seedExpression
+			} = this.#splitItems(this.#toValueList(this.#value));
+			const seed = values.length > 0 ? values : [null];
+			if (main_core.Type.isStringFilled(seedExpression)) {
+				this.setValueMode(ValueMode.Expression);
+			}
+			const roots = seed.map(presetValue => {
+				const control = this.#buildControl(presetValue);
+				this.#applyRowAria(control);
+				return control.root;
+			});
+			const controlNode = this.wrapMultiple(roots);
+			this.#rowsWrapNode = controlNode;
+			this.#nameRows();
+			return {
+				controlNode,
+				expressionRowNode: this.#buildSharedExpressionRow(seedExpression, controlNode)
+			};
 		}
 		#buildControl(value) {
 			const control = this.renderSelectionControl(this.renderControl(value));
 			this.#valueNodes.push(control.valueNode);
+			this.#namedNodes.push(control.namedNode ?? control.valueNode);
 			this.#valueNodeByRoot.set(control.root, control.valueNode);
+			this.#trackExpressionNode(control.expressionNode);
 			return control;
+		}
+		#buildsRows() {
+			return isMultiple(this.#property) && !this.rendersOwnMultiple();
+		}
+		hasSharedExpressionRow() {
+			return this.#buildsRows() && this.#offersExpressionMode();
+		}
+		#buildSharedExpressionRow(value, rowsWrapNode) {
+			if (!this.hasSharedExpressionRow()) {
+				return null;
+			}
+			const readOnly = this.isReadOnly();
+			const decorates = this.decoratesSharedExpressionRow();
+			const ownInsertButton = !readOnly && !decorates;
+			const row = buildExpressionControl({
+				value,
+				fieldName: this.#fieldName,
+				readOnly,
+				insertButton: ownInsertButton ? this.renderInsertButton() : null
+			});
+			const pair = {
+				root: row.node,
+				valueNode: rowsWrapNode,
+				insertAnchor: row.input,
+				expressionNode: row.input
+			};
+			const decorated = decorates ? this.#decorateSelection(pair) : pair;
+			const input = decorated.expressionNode ?? row.input;
+			main_core.Dom.attr(input, 'name', getExpressionFieldName(this.#fieldName));
+			this.#sharedExpressionNode = input;
+			this.watchExpressionCarrier(row.node, EXPRESSION_INPUT_SELECTOR);
+			return decorated.root;
+		}
+		#trackExpressionNode(expressionNode) {
+			if (main_core.Type.isUndefined(expressionNode)) {
+				this.#expressionNodes.push(null);
+				return;
+			}
+			main_core.Dom.attr(expressionNode, 'name', getExpressionFieldName(this.#fieldName));
+			this.#expressionNodes.push(expressionNode);
+		}
+		#readExpression() {
+			const node = this.getExpressionNodes()[0];
+			return main_core.Type.isUndefined(node) ? '' : this.#carrierValue(node);
+		}
+		#applyExpression(expression) {
+			this.getExpressionNodes().forEach(node => {
+				const input = node;
+				this.#stashedValues.delete(node);
+				input.value = expression;
+			});
+			this.checkExpressionCarrier();
+		}
+		#carrierValue(node) {
+			const stashed = this.#stashedValues.get(node);
+			return main_core.Type.isUndefined(stashed) ? node.value ?? '' : stashed;
+		}
+		#offersExpressionMode() {
+			return this.supportsExpressionMode() && isSelectionAllowed(this.#property, this.#renderMode);
+		}
+		#renderValueModeSwitcher(assembled) {
+			if (!this.#offersExpressionMode()) {
+				return;
+			}
+			const switcher = buildValueModeSwitcher({
+				labels: this.getValueModeLabels(),
+				activeMode: this.#valueMode,
+				groupLabel: main_core.Loc.getMessage('BIZPROC_FIELDS_VALUE_MODE_LABEL', {
+					'#NAME#': this.accessibleName()
+				}) ?? '',
+				fieldName: this.#fieldName,
+				readOnly: this.isReadOnly(),
+				onSelect: mode => {
+					this.#selectValueMode(mode);
+				}
+			});
+			this.#valueModeSwitcher = switcher;
+			const legend = assembled.querySelector(':scope > legend');
+			if (main_core.Type.isNull(legend)) {
+				main_core.Dom.prepend(switcher.node, assembled);
+				return;
+			}
+			main_core.Dom.insertAfter(switcher.node, legend);
+		}
+		#adoptRenderedValueMode() {
+			if (!this.#offersExpressionMode() || !main_core.Type.isStringFilled(this.#readExpression())) {
+				return;
+			}
+			const value = this.getValue();
+			const holdsNoValue = main_core.Type.isArray(value) ? value.length === 0 : value === '';
+			if (holdsNoValue) {
+				this.setValueMode(ValueMode.Expression);
+			}
+		}
+		#selectValueMode(mode) {
+			if (this.isReadOnly()) {
+				return;
+			}
+			if (mode === this.#valueMode) {
+				return;
+			}
+			this.#valueMode = mode;
+			this.#moveValueToActiveCarrier();
+			this.onValueModeChanged(mode);
+			this.#applyValueModeState();
+			this.emitChange();
+		}
+		#applyValueModeState() {
+			if (main_core.Type.isNull(this.#valueModeSwitcher)) {
+				return;
+			}
+			const expressionActive = this.#valueMode === ValueMode.Expression;
+			if (!main_core.Type.isNull(this.#sharedExpressionNode) && !main_core.Type.isNull(this.#rowsWrapNode)) {
+				this.#setCarrierActive(this.#rowsWrapNode, !expressionActive);
+				this.#setCarrierActive(this.#expressionRowOf(this.#sharedExpressionNode), expressionActive);
+				return;
+			}
+			this.#forEachCarrierPair(pair => {
+				this.#setCarrierActive(pair.namedNode, !expressionActive);
+				this.#setCarrierActive(this.#expressionRowOf(pair.expressionNode), expressionActive);
+			});
+		}
+		#moveValueToActiveCarrier() {
+			const expressionActive = this.#valueMode === ValueMode.Expression;
+			if (!main_core.Type.isNull(this.#sharedExpressionNode)) {
+				this.#valueNodes.forEach(valueNode => this.#setCarrierValue(valueNode, !expressionActive));
+				this.#setCarrierValue(this.#sharedExpressionNode, expressionActive);
+			} else {
+				this.#forEachCarrierPair(pair => {
+					this.#setCarrierValue(pair.valueNode, !expressionActive);
+					this.#setCarrierValue(pair.expressionNode, expressionActive);
+				});
+			}
+			this.checkExpressionCarrier();
+		}
+		#forEachCarrierPair(callback) {
+			this.#expressionNodes.forEach((expressionNode, index) => {
+				const valueNode = this.#valueNodes[index];
+				const namedNode = this.#namedNodes[index];
+				if (main_core.Type.isNull(expressionNode) || main_core.Type.isUndefined(valueNode) || main_core.Type.isUndefined(namedNode)) {
+					return;
+				}
+				callback({
+					valueNode,
+					expressionNode,
+					namedNode
+				});
+			});
+		}
+		#setCarrierActive(node, active) {
+			main_core.Dom.addClass(node, CARRIER_CLASS);
+			if (active) {
+				main_core.Dom.removeClass(node, INACTIVE_MODIFIER);
+			} else {
+				main_core.Dom.addClass(node, INACTIVE_MODIFIER);
+			}
+			node.toggleAttribute('inert', !active);
+		}
+		#setCarrierValue(node, active) {
+			const input = node;
+			if (!active) {
+				this.#stashedValues.set(node, input.value);
+				input.value = '';
+				return;
+			}
+			const stashed = this.#stashedValues.get(node);
+			if (!main_core.Type.isUndefined(stashed)) {
+				input.value = stashed;
+				this.#stashedValues.delete(node);
+			}
+		}
+		#expressionRowOf(expressionNode) {
+			return expressionNode.closest(`.${EXPRESSION_ROW_CLASS}`) ?? expressionNode;
 		}
 		#applyInputFilter(input, sanitize) {
 			const filtered = filterInput(input.value, input.selectionStart ?? input.value.length, sanitize);
@@ -799,7 +1462,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			input.setSelectionRange(filtered.caret, filtered.caret);
 		}
 		#applyAria(target) {
-			if (isRequired(this.#property)) {
+			if (isRequired(this.#property) && this.namedNodeCarriesRequired()) {
 				main_core.Dom.attr(target, 'aria-required', 'true');
 			}
 			if (this.#captionRendered) {
@@ -825,24 +1488,54 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (groupNode.tagName !== 'FIELDSET') {
 				main_core.Dom.attr(groupNode, 'role', 'group');
 			}
-			main_core.Dom.attr(groupNode, 'aria-label', this.#accessibleName());
+			main_core.Dom.attr(groupNode, 'aria-label', this.accessibleName());
 		}
 		#isNamedByLegend(groupNode) {
 			const legend = groupNode.querySelector(':scope > legend');
 			return !main_core.Type.isNull(legend) && main_core.Type.isStringFilled(legend.textContent?.trim());
 		}
-		#accessibleName() {
+		accessibleName() {
 			const name = main_core.Type.isString(this.#property.Name) ? this.#property.Name.trim() : '';
 			return main_core.Type.isStringFilled(name) ? name : this.#fieldName;
 		}
 		#applyRowAria(control) {
-			const target = control.namedNode ?? control.valueNode;
-			this.#applyAria(target);
-			this.#rowNameNodes.push(target);
+			this.#applyAria(control.namedNode ?? control.valueNode);
+		}
+		#nameExpressionNodes() {
+			if (!main_core.Type.isNull(this.#sharedExpressionNode)) {
+				const fieldLabel = main_core.Loc.getMessage('BIZPROC_FIELDS_EXPRESSION_LABEL', {
+					'#NAME#': this.accessibleName()
+				}) ?? '';
+				if (fieldLabel !== '') {
+					main_core.Dom.attr(this.#sharedExpressionNode, 'aria-label', fieldLabel);
+				}
+				return;
+			}
+			this.#expressionNodes.forEach((node, index) => {
+				if (main_core.Type.isNull(node)) {
+					return;
+				}
+				const label = main_core.Loc.getMessage('BIZPROC_FIELDS_EXPRESSION_LABEL', {
+					'#NAME#': this.#rowOwnerName(index)
+				}) ?? '';
+				if (label !== '') {
+					main_core.Dom.attr(node, 'aria-label', label);
+				}
+			});
+		}
+		#rowOwnerName(index) {
+			const name = this.accessibleName();
+			if (!this.isMultiple() || this.rendersGroup()) {
+				return name;
+			}
+			return main_core.Loc.getMessage('BIZPROC_FIELDS_MULTIPLE_ROW_LABEL', {
+				'#NAME#': name,
+				'#NUMBER#': String(index + 1)
+			}) ?? name;
 		}
 		#nameRows() {
-			const name = this.#accessibleName();
-			this.#rowNameNodes.forEach((node, index) => {
+			const name = this.accessibleName();
+			this.#namedNodes.forEach((node, index) => {
 				const label = main_core.Loc.getMessage('BIZPROC_FIELDS_MULTIPLE_ROW_LABEL', {
 					'#NAME#': name,
 					'#NUMBER#': String(index + 1)
@@ -860,9 +1553,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (index === -1) {
 				return;
 			}
+			this.releaseRow(valueNode);
 			this.#valueNodes.splice(index, 1);
-			this.#rowNameNodes.splice(index, 1);
+			this.#namedNodes.splice(index, 1);
+			this.#expressionNodes.splice(index, 1);
 			this.#nameRows();
+			this.#nameExpressionNodes();
 		}
 	}
 
@@ -887,6 +1583,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	}
 
 	const CHUNK_SIZE = 100;
+	const SERVER_SELECTOR_BUTTON_ROLE = 'bp-selector-button';
+	const INLINE_SELECTOR_TARGET_ROLE = 'inline-selector-target';
 	class BackendRenderer {
 		#options;
 		#selection;
@@ -965,7 +1663,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		#sendChunk(chunk, documentType) {
 			const controlsData = chunk.map(item => {
-				const isPublicMode = this.#isPublicMode(item);
+				const renderMode = this.#resolveRenderMode(item);
 				return {
 					property: item.property,
 					params: {
@@ -974,8 +1672,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 							Form: BackendForm.Sfa
 						},
 						Value: item.value ?? '',
-						Als: main_core.Type.isUndefined(item.property.AllowSelection) ? isPublicMode ? 0 : 1 : Number(isSelectable(item.property)),
-						RenderMode: isPublicMode ? 'public' : 'designer'
+						Als: Number(isSelectionAllowed(item.property, renderMode)),
+						RenderMode: renderMode === RenderMode.Public ? 'public' : 'designer'
 					}
 				};
 			});
@@ -1008,7 +1706,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					if (!main_core.Type.isString(runtimeResult)) {
 						renderPromises.push(runtimeResult.then(() => {
 							main_core.Dom.attr(item.placeholderNode, 'aria-busy', null);
-							this.#initSelectors(item.placeholderNode, item.property, documentType, this.#isPublicMode(item));
+							this.#initSelectors(item, documentType);
 						})
 						.catch(error => {
 							this.#markChunkError([item]);
@@ -1016,7 +1714,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 						}));
 					} else {
 						main_core.Dom.attr(item.placeholderNode, 'aria-busy', null);
-						this.#initSelectors(item.placeholderNode, item.property, documentType, this.#isPublicMode(item));
+						this.#initSelectors(item, documentType);
 					}
 				});
 				return Promise.all(renderPromises).then(() => undefined);
@@ -1025,9 +1723,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				console.error('[bizproc.fields] BackendRenderer: ajax render failed', error);
 			});
 		}
-		#isPublicMode(item) {
-			const renderMode = this.#options.renderMode ?? item.renderMode ?? RenderMode.NewDesigner;
-			return renderMode === RenderMode.Public;
+		#resolveRenderMode(item) {
+			return this.#options.renderMode ?? item.renderMode ?? RenderMode.NewDesigner;
 		}
 		#markChunkError(items) {
 			const errorMessage = main_core.Loc.getMessage('BIZPROC_FIELDS_BACKEND_RENDER_ERROR') ?? '';
@@ -1040,34 +1737,38 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				});
 			});
 		}
-		#initSelectors(containerNode, property, documentType, isPublicMode) {
+		#initSelectors(item, documentType) {
 			const selection = this.#selection;
-			if (main_core.Type.isNull(selection) || !selection.provider.isAvailable()) {
+			const {
+				fieldName,
+				property,
+				placeholderNode
+			} = item;
+			if (main_core.Type.isNull(selection) || !selection.canApply(property)) {
 				return;
 			}
 			const {
-				provider,
-				applyDecorator
+				provider
 			} = selection;
 			const context = {
+				fieldName,
 				documentType: documentType.length > 0 ? documentType : undefined
 			};
-			const childControlNodes = containerNode.querySelectorAll('[data-role]');
-			if (isPublicMode) {
-				applyDecorator({
-					root: containerNode,
-					valueNode: containerNode
-				}, property, provider, context);
-				return;
-			}
-			childControlNodes.forEach(node => {
+			placeholderNode.querySelectorAll('[data-role]').forEach(node => {
 				const parent = node.parentElement;
 				const next = node.nextElementSibling;
 				if (main_core.Type.isNull(parent)) {
 					return;
 				}
 				const role = main_core.Dom.attr(node, 'data-role') ?? '';
-				const decorated = provider.decorateByRole(role, node, property, context);
+				if (role === SERVER_SELECTOR_BUTTON_ROLE) {
+					return;
+				}
+				const nodeContext = role === INLINE_SELECTOR_TARGET_ROLE && isWriteTarget(node) ? {
+					...context,
+					writeTarget: node
+				} : context;
+				const decorated = provider.decorateByRole(role, node, property, nodeContext);
 				if (decorated === node) {
 					return;
 				}
@@ -1091,7 +1792,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.#selectionProvider = resolveSelectionProvider(options.selectionProvider);
 			this.#backendRenderer = new BackendRenderer(options, {
 				provider: this.#selectionProvider,
-				applyDecorator: applySelectionDecorator
+				canApply: property => canApplySelectionDecorator(property, this.#selectionProvider)
 			});
 		}
 		renderField(params) {
@@ -1130,11 +1831,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (main_core.Type.isNull(field) || property.Type !== field.getProperty().Type) {
 				return entry.node;
 			}
-			const carriedValue = FieldManager.#adaptValue(field.getValue(), property);
+			const state = field.getValueState();
+			const carriedState = {
+				...state,
+				value: FieldManager.#adaptValue(state.value, property)
+			};
 			field.setProperty(property);
-			field.setValue(carriedValue);
+			field.setValueState(carriedState);
 			const nextNode = field.render();
-			field.setValue(carriedValue);
+			field.setValueState(carriedState);
 			main_core.Dom.replace(entry.node, nextNode);
 			entry.node = nextNode;
 			return nextNode;
@@ -1144,14 +1849,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (main_core.Type.isNull(field)) {
 				return null;
 			}
-			return field.getValue();
+			return field.getEffectiveValue();
 		}
 		getFieldValue(fieldId) {
 			const entry = this.#entries.get(fieldId);
 			if (main_core.Type.isUndefined(entry) || main_core.Type.isNull(entry.field)) {
 				return null;
 			}
-			return entry.field.getValue();
+			return entry.field.getEffectiveValue();
 		}
 		setFieldValue(fieldId, value) {
 			const entry = this.#entries.get(fieldId);
@@ -1162,13 +1867,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		getValues() {
 			const result = {};
+			const expressions = {};
 			this.#entries.forEach(entry => {
 				if (main_core.Type.isNull(entry.field)) {
 					return;
 				}
-				const value = entry.field.getValue();
+				const value = entry.field.getEffectiveValue();
+				if (entry.field.carriesExpression()) {
+					expressions[entry.fieldName] = value;
+					return;
+				}
+				delete expressions[entry.fieldName];
 				const collected = result[entry.fieldName];
 				result[entry.fieldName] = main_core.Type.isArray(collected) && main_core.Type.isArray(value) ? [...collected, ...value] : value;
+			});
+			Object.entries(expressions).forEach(([fieldName, expression]) => {
+				const collected = result[fieldName];
+				result[fieldName] = main_core.Type.isArray(expression) && main_core.Type.isArray(collected) ? [...collected, ...expression] : expression;
 			});
 			return result;
 		}
@@ -1194,6 +1909,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		destroy() {
 			this.#backendRenderer.cancelPending();
 			[...this.#entries.keys()].forEach(fieldId => this.releaseField(fieldId));
+			this.#selectionProvider.release?.();
 		}
 		#track(fieldName, field, node) {
 			this.#fieldIdCounter += 1;
@@ -1230,10 +1946,35 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 	}
 
+	const BoolView = Object.freeze({
+		Switcher: 'switcher',
+		Checkbox: 'checkbox'
+	});
+	const VIEW_SETTING$1 = 'View';
+	function readBoolView(property) {
+		const settings = property.Settings;
+		const view = main_core.Type.isPlainObject(settings) ? settings[VIEW_SETTING$1] : null;
+		const known = Object.values(BoolView);
+		return main_core.Type.isString(view) && known.includes(view) ? view : BoolView.Switcher;
+	}
+
+	const SelectView = Object.freeze({
+		List: 'list',
+		Dropdown: 'menu'
+	});
+	const VIEW_SETTING = 'ViewType';
+	function readSelectView(property) {
+		const settings = property.Settings;
+		const view = main_core.Type.isPlainObject(settings) ? settings[VIEW_SETTING] : null;
+		const known = Object.values(SelectView);
+		return main_core.Type.isString(view) && known.includes(view) ? view : SelectView.List;
+	}
+
 	function isAutomationAvailable() {
 		return !main_core.Type.isNull(main_core.Reflection.getClass('BX.Bizproc.Automation'));
 	}
 
+	const serializedProperties = new WeakMap();
 	class AutomationSelectionProvider {
 		isAvailable() {
 			return isAutomationAvailable();
@@ -1244,7 +1985,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		decorate(controlNode, property, context) {
 			return this.decorateByRole(bizproc_automation.SelectorManager.SELECTOR_ROLE_INLINE, controlNode, property, context);
 		}
-		decorateByRole(role, controlNode, _property, context) {
+		decorateByRole(role, controlNode, property, context) {
+			if (main_core.Type.isNil(context.writeTarget)) {
+				return controlNode;
+			}
 			const globalContext = bizproc_automation.tryGetGlobalContext();
 			const document = globalContext?.document ?? null;
 			const userOptionsProp = main_core.Type.isNil(globalContext?.userOptions) ? {} : {
@@ -1266,18 +2010,39 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (!selector || !(selector instanceof bizproc_automation.InlineSelector)) {
 				return controlNode;
 			}
+			this.#writeTargetProperties(controlNode, property);
 			return selector.renderWith(controlNode);
+		}
+		#writeTargetProperties(controlNode, property) {
+			let serializedProperty = serializedProperties.get(property);
+			if (main_core.Type.isUndefined(serializedProperty)) {
+				serializedProperty = JSON.stringify(property);
+				serializedProperties.set(property, serializedProperty);
+			}
+			main_core.Dom.attr(controlNode, {
+				'data-property': serializedProperty,
+				'data-selector-type': property.Type
+			});
 		}
 	}
 
 	exports.AutomationSelectionProvider = AutomationSelectionProvider;
 	exports.BaseField = BaseField;
+	exports.BoolView = BoolView;
+	exports.EXPRESSION_ROW_CLASS = EXPRESSION_ROW_CLASS;
 	exports.EventName = EventName;
 	exports.FieldManager = FieldManager;
 	exports.FieldRegistry = FieldRegistry;
+	exports.NameBlockPlacement = NameBlockPlacement;
 	exports.NullSelectionProvider = NullSelectionProvider;
 	exports.RenderMode = RenderMode;
+	exports.SelectView = SelectView;
+	exports.ValueMode = ValueMode;
 	exports.initFieldHints = initFieldHints;
+	exports.isExpressionValue = isExpressionValue;
+	exports.readBoolView = readBoolView;
+	exports.readSelectView = readSelectView;
+	exports.splitTopLevelValues = splitTopLevelValues;
 
 })(this.BX.Bizproc.Fields = this.BX.Bizproc.Fields || {}, BX, BX.UI, window, BX.Event, BX.Bizproc.Automation);
 //# sourceMappingURL=fields.bundle.js.map

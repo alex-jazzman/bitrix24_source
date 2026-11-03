@@ -113,8 +113,16 @@ export const CheckListList = {
 				checkLists: () => this.checkLists,
 			},
 		});
+		const checkLists = this.checkLists;
+		if (
+			checkLists.length === this.task.checklist.length
+			&& (checkLists.length > 0 || !this.containsChecklist)
+		)
+		{
+			checkListService.initializeFromStore(this.taskId, checkLists);
+		}
 
-		if (this.containsChecklist && this.checkLists.length === 0)
+		if (this.containsChecklist && !checkListService.hasServerTree(this.taskId))
 		{
 			this.isLoading = true;
 
@@ -132,6 +140,7 @@ export const CheckListList = {
 	template: `
 		<div
 			class="tasks-check-list-list"
+			data-testid="tasks-check-list-list"
 			:class="{ '--default': loading || isFilledEmpty }"
 			data-field-container
 			:data-task-field-id="checkListMeta.id"
@@ -154,12 +163,15 @@ export const CheckListList = {
 						key="empty"
 						class="tasks-check-list-list-transition-content"
 					>
-						<div
+						<button
+							type="button"
 							class="tasks-check-list-list-content-row --stub"
-							@click="() => canCheckListAdd && $emit('addFastCheckList')"
+							data-testid="tasks-check-list-list-add-stub-btn"
+							:disabled="!canCheckListAdd"
+							@click="$emit('addFastCheckList')"
 						>
 							<div class="tasks-check-list-list-content-row-main">
-								<BIcon :name="Outline.CHECK_LIST"/>
+								<BIcon :name="Outline.CHECK_LIST" aria-hidden="true"/>
 								<div class="tasks-check-list-list-content-text">
 									{{ loc('TASKS_V2_CHECK_LIST_CHIP_TITLE') }}
 								</div>
@@ -171,10 +183,11 @@ export const CheckListList = {
 									v-hint="addTooltip"
 									:name="Outline.PLUS_L"
 									hoverable
+									aria-hidden="true"
 									ref="stubAddIcon"
 								/>
 							</div>
-						</div>
+						</button>
 					</div>
 				</Transition>
 				<div
@@ -183,21 +196,23 @@ export const CheckListList = {
 					class="tasks-check-list-list-transition-content"
 				>
 					<slot/>
-					<div
+					<button
 						v-if="canCheckListAdd"
+						type="button"
 						class="tasks-check-list-list-content-row --footer print-ignore"
+						data-testid="tasks-check-list-list-add-btn"
 						@click="$emit('addFastCheckList')"
 					>
 						<div
 							class="tasks-check-list-list-content-btn"
 							:class="{ '--empty': isEmpty }"
 						>
-							<BIcon :name="Outline.PLUS_L"/>
+							<BIcon :name="Outline.PLUS_L" aria-hidden="true"/>
 							<div class="tasks-check-list-list-content-btn-text">
 								{{ loc('TASKS_V2_CHECK_LIST_ADD_LABEL') }}
 							</div>
 						</div>
-					</div>
+					</button>
 				</div>
 			</div>
 		</div>

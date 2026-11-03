@@ -1,0 +1,24 @@
+<?php
+
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_TITLE'] = 'Общий доступ';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_LABEL_OWNER'] = 'Владелец';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_EMPLOYEES_LABEL'] = 'Добавьте сотрудников и отделы, которым хотите расширить доступ';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_EMPLOYEES_BUTTON'] = 'Выбрать';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_USERS_NAME'] = 'Пользователь';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ACCESS_LEVEL'] = 'Уровень доступа';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_MEMBER_ACCESS_LEVEL'] = '#LEVEL#, уровень доступа для «#NAME#»';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_RIGHT_READ'] = 'Чтение';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_RIGHT_ADD'] = 'Добавление';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_RIGHT_EDIT'] = 'Редактирование';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_RIGHT_FULL'] = 'Полный доступ';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_BUTTON_SAVE'] = 'Сохранить';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_BUTTON_CLOSE'] = 'Закрыть';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ANNOUNCE_MEMBER_ADDED'] = 'Доступ добавлен: «#NAME#»';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ANNOUNCE_MEMBER_REMOVED'] = 'Доступ убран: «#NAME#»';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ANNOUNCE_RIGHT_CHANGED'] = 'Уровень доступа для «#NAME#»: #LEVEL#';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_SUCCESS'] = 'Успешно';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_SUCCESS_FILE'] = 'Общий доступ к файлу «#FILE#» изменен';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_SUCCESS_BOARD'] = 'Доступ к доске «#FILE#» изменен';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ERROR_LOAD'] = 'Не удалось загрузить настройки общего доступа, попробуйте ещё раз';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ERROR_SAVE'] = 'Не удалось сохранить изменения, попробуйте ещё раз';
+$MESS['JS_DISK_SHARING_MEMBERS_POPUP_ERROR_ACCESS_DENIED'] = 'Недостаточно прав для настройки общего доступа';

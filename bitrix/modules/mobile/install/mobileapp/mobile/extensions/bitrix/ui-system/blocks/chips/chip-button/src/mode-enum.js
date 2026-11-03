@@ -14,6 +14,8 @@ jn.define('ui-system/blocks/chips/chip-button/src/mode-enum', (require, exports,
 		static SOLID = new ChipButtonMode('SOLID', 'solid');
 
 		static OUTLINE = new ChipButtonMode('OUTLINE', 'outline');
+
+		static TINTED = new ChipButtonMode('TINTED', 'tinted');
 	}
 
 	module.exports = {

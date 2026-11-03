@@ -64,7 +64,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 
 		/**
 		 * @param {?ShowToastParams} params
-		 * @param layoutWidget
+		 * @param [layoutWidget]
 		 */
 		static showErrorToast(params = {}, layoutWidget = null)
 		{

@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/rating.bundle.css',
 	'js' => 'dist/rating.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'ui.ears',
-		'ui.design-tokens',
-		'ui.vue3',
+		'main.core',
 		'market.rating-review',
+		'ui.design-tokens',
+		'ui.ears',
+		'ui.vue3',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

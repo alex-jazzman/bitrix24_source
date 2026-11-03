@@ -9,6 +9,7 @@ use Bitrix\Tasks\Flow\Integration\AI\Event\EfficiencyListener;
 use Bitrix\Tasks\Internals\Task\Event\View\OnTaskFirstViewEvent;
 use Bitrix\Tasks\Onboarding\Event\AddTaskEventListener;
 use Bitrix\Tasks\Onboarding\Event\DeleteTaskEventListener;
+use Bitrix\Tasks\Onboarding\Event\OnboardingCounterListener;
 use Bitrix\Tasks\Onboarding\Event\ExpiredSoonEventListener;
 use Bitrix\Tasks\Onboarding\Event\UpdateTaskEventListener;
 use Bitrix\Tasks\Onboarding\Event\ViewTaskEventListener;
@@ -53,6 +54,13 @@ $eventManager->addEventHandler(
 	'onTaskAdd',
 	static fn (int $taskId, array $fields): EventResult
 		=> AddTaskEventListener::getInstance()->onTaskAdd($taskId, $fields)
+);
+
+$eventManager->addEventHandler(
+	'tasks',
+	'onTaskAdd',
+	static fn (int $taskId, array $fields, array $parameters = []): EventResult
+		=> OnboardingCounterListener::getInstance()->onTaskAdd($taskId, $fields, $parameters)
 );
 
 $eventManager->addEventHandler(

@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -16,22 +17,33 @@ use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
-use Bitrix\Bizproc\Activity\Dto\Complex;
+use Bitrix\Bizproc\Activity\Dto\Complex\BlockAvailability;
+use Bitrix\Bizproc\Activity\Dto\Complex\Settings;
 use Bitrix\Bizproc\Activity\Dto\Complex\NodeActionDictionary;
 use Bitrix\Bizproc\Activity\Dto\Complex\NodeAction;
 
-// Filter is offered because the node publishes FilterReturnPropertiesMap; relations needs a
-// declared relationAction, which this node has none of. Everything else stays on the default.
-// Older bizproc versions have no BlockAvailability::legacyDefault().
+$relationActionArgs = [];
 $availableBlocksArgs = [];
-if (method_exists(Complex\BlockAvailability::class, 'legacyDefault'))
+$additionalResult = ['FilterReturnPropertiesMap'];
+if (property_exists(Settings::class, 'relationAction'))
 {
-	$availableBlocksArgs['availableBlocks'] = Complex\BlockAvailability::legacyDefault(filter: true, relations: false);
+	$relationActionArgs['relationAction'] = new NodeAction(
+		activityCode: 'crmgetrelationdataactivity',
+	);
+	$additionalResult[] = 'RelationReturnPropertiesMap';
+	if (method_exists(BlockAvailability::class, 'legacyDefault'))
+	{
+		$availableBlocksArgs['availableBlocks'] = BlockAvailability::legacyDefault(filter: true, relations: true);
+	}
+}
+elseif (method_exists(BlockAvailability::class, 'legacyDefault'))
+{
+	$availableBlocksArgs['availableBlocks'] = BlockAvailability::legacyDefault(filter: true, relations: false);
 }
 
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_SMART_INVOICE_NAME') ?? '',
-	description: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION') ?? '',
+	description: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_1') ?? '',
 	type: [ActivityType::NODE->value],
 ))
 	->setClass('CrmSmartInvoiceComplexActivity')
@@ -46,7 +58,8 @@ $arActivityDescription = (new ActivityDescription(
 		ActivityGroup::PAYMENT->value,
 	])
 	->setComplexActivitySettings(
-		new Complex\Settings(
+		new Settings(
+			...$relationActionArgs,
 			...$availableBlocksArgs,
 			actionDictionary: new NodeActionDictionary(
 				new NodeAction(
@@ -85,6 +98,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 700,
 				),
 				new NodeAction(
+					activityCode: 'crmcreaterequisiteactivity',
+					sort: 750,
+				),
+				new NodeAction(
 					activityCode: 'crmchangestatusactivity',
 					sort: 800,
 				),
@@ -102,6 +119,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 900,
 				),
 				new NodeAction(
+					activityCode: 'crmgetproductrowactivity',
+					sort: 950,
+				),
+				new NodeAction(
 					activityCode: 'crmremoveproductrow',
 					sort: 1000,
 				),
@@ -113,6 +134,7 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		),
 	)
-	->setAdditionalResult(['FilterReturnPropertiesMap'])
+	->setAdditionalResult($additionalResult)
+	->set('PROPERTIES', ['BaseSettingsAction' => 'setfieldactivity'])
 	->toArray()
 ;

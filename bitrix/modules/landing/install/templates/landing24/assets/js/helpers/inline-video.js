@@ -167,7 +167,7 @@
 	}
 
 	/**
-	 * Loader for YOutube
+	 * Loader for YouTube
 	 * @param {Element} playerPreview
 	 * @param {Object} additionalParams
 	 */

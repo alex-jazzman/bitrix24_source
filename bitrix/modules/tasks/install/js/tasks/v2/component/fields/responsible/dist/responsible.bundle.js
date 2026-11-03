@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, main_popup, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_absencePopup, tasks_v2_component_elements_participants, tasks_v2_component_elements_hint, tasks_v2_lib_ahaMoments, tasks_v2_lib_analytics, tasks_v2_lib_calendar, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_idUtils, tasks_v2_lib_userSelectorDialog, tasks_v2_provider_service_taskService, ui_vue3_directives_hint, ui_switcher, ui_vue3_components_switcher, tasks_v2_component_elements_questionMark, ui_vue3, tasks_v2_component_elements_userAvatarList) {
+(function (exports, main_core, main_popup, ui_vue3, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_absencePopup, tasks_v2_component_elements_participants, tasks_v2_component_elements_hint, tasks_v2_lib_ahaMoments, tasks_v2_lib_onboardingBanners, tasks_v2_lib_analytics, tasks_v2_lib_calendar, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_idUtils, tasks_v2_lib_userSelectorDialog, tasks_v2_provider_service_taskService, ui_vue3_directives_hint, ui_switcher, ui_vue3_components_switcher, tasks_v2_component_elements_questionMark, tasks_v2_component_elements_userAvatarList) {
 	'use strict';
 
 	const responsibleMeta = Object.freeze({
@@ -37,6 +37,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		emits: ['update:isChecked'],
 		setup() {},
+		data() {
+			return {
+				labelId: `tasks-for-new-user-switch-${main_core.Text.getRandom()}`
+			};
+		},
 		computed: {
 			disabled() {
 				return this.isTemplate && (this.task.replicate || tasks_v2_lib_idUtils.idUtils.isTemplate(this.task.parentId));
@@ -65,13 +70,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (!this.disabled) {
 					this.$emit('update:isChecked', !this.isChecked);
 				}
+			},
+			handleKeydown(event) {
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
 			}
 		},
 		template: `
 		<div :class="['tasks-field-responsible-new-user', { '--disabled': disabled }]">
-			<div v-hint="tooltip" class="tasks-field-responsible-new-user-switcher" @click="handleClick">
+			<div
+				v-hint="tooltip"
+				class="tasks-field-responsible-new-user-switcher"
+				role="switch"
+				:aria-checked="isChecked"
+				:aria-labelledby="labelId"
+				:aria-disabled="disabled ? 'true' : null"
+				tabindex="0"
+				@click="handleClick"
+				@keydown="handleKeydown"
+			>
 				<Switcher :isChecked :options/>
-				<TextSm className="tasks-field-responsible-new-user-text">
+				<TextSm :id="labelId" className="tasks-field-responsible-new-user-text">
 					{{ loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER') }}
 				</TextSm>
 			</div>
@@ -88,6 +110,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		readonly: true
 	});
 
+	// SC-002: carries the banner's async-load failure from ResponsibleBanner.onError (which
+	// has no component instance in scope) to the Responsible field's errorCaptured() below.
+	// The acquireSlot() mutex guarantees at most one banner load is ever in flight, so a
+	// single module-scoped slot needs no per-instance keying.
+	let responsibleBannerLoadError = null;
+
 	// @vue/component
 	const Responsible = {
 		name: 'TaskResponsible',
@@ -98,7 +126,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			ForNewUserSwitcher,
 			NewUserLabel,
 			Hint: tasks_v2_component_elements_hint.Hint,
-			TextXs: ui_system_typography_vue.TextXs
+			TextXs: ui_system_typography_vue.TextXs,
+			// SC-002: inline onboarding banner loaded lazily so its extension (banner/css/
+			// asset) stays out of the responsible field's rel; it renders only once the v-if
+			// gate arms it for an eligible new user on the create form.
+			// Built with a raw async component (not BitrixVue.defineAsyncComponent, whose loader
+			// swallows load failures) so a failed chunk load reaches onError and frees the
+			// onboarding slot mounted() grabbed — otherwise the mutex would suppress
+			// SC-001/SC-003 for the whole card session.
+			ResponsibleBanner: ui_vue3.defineAsyncComponent({
+				loader: () => main_core.Runtime.loadExtension('tasks.v2.component.onboarding.responsible-banner').then(exports => exports.ResponsibleBanner),
+				onError(error, retry, fail) {
+					// The banner chunk failed to load: the async component will never mount and
+					// the user can never dismiss it. Release the shared onboarding slot so the
+					// mutex stops suppressing SC-001/SC-003 (best-effort, mirrors
+					// onboardingBanners.setViewed()). fail() settles the wrapper (nulls Vue's
+					// cached request so a later card retries) and routes the error to the
+					// Responsible field's errorCaptured(), which disarms this instance's banner.
+					tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('responsible');
+					responsibleBannerLoadError = error;
+					fail(error);
+				}
+			})
 		},
 		inject: {
 			analytics: {},
@@ -128,6 +177,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		data() {
 			return {
 				isManyAhaShown: false,
+				isResponsibleOnboardingShown: false,
 				activePopups: new Set(),
 				activeAbsencePopups: new Set(),
 				shownAbsencePopupUserIds: new Set(),
@@ -182,6 +232,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			userAbsences() {
 				return this.$store.getters[`${tasks_v2_const.Model.Absences}/getByUserIds`](this.task.responsibleIds);
+			},
+			manyAhaHintOptions() {
+				return {
+					closeByEsc: true,
+					focusTrap: {
+						initialFocus: false
+					},
+					ariaLabel: this.loc('TASKS_V2_RESPONSIBLE_MANY_AHA')
+				};
+			}
+		},
+		watch: {
+			// SC-002: hide the banner after actual delegation (responsible changed to someone else).
+			'task.responsibleIds': function watchResponsibleIds(ids) {
+				if (!this.isResponsibleOnboardingShown) {
+					return;
+				}
+				const isSelfOnly = Array.isArray(ids) && ids.length === 1 && Number(ids[0]) === Number(this.currentUserId);
+				if (!isSelfOnly) {
+					this.isResponsibleOnboardingShown = false;
+					tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('responsible');
+				}
 			}
 		},
 		mounted() {
@@ -191,8 +263,61 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}) => {
 				this.armedAbsencePopupUserIds.add(userId);
 			});
+
+			// SC-002: on opening the create form, show the «delegate» banner under this field
+			// if the server-side trigger («3 self-assigned in a row») is met (ALG-01). Shown only
+			// in states where the Participants selector is actually rendered and editable — the CTA
+			// opens that selector, so it would be a no-op with the auto assignee (isFlowFilledOnAdd),
+			// the NewUserLabel (forNewUser) or without delegate rights (!canEdit).
+			// Skip when the assignee is already delegated to someone else (e.g. the create form was
+			// opened as a copy with a non-self responsible): the delegation is already done, so mirror
+			// the watcher's isSelfOnly check here and do not grab the slot for an already-done action.
+			const isSelfOnly = Array.isArray(this.task.responsibleIds) && this.task.responsibleIds.length === 1 && Number(this.task.responsibleIds[0]) === Number(this.currentUserId);
+			if (isSelfOnly && !this.isEdit && !this.isTemplate && !this.isFlowFilledOnAdd && !this.forNewUser && this.canEdit && tasks_v2_lib_onboardingBanners.onboardingBanners.shouldShow('responsible') && tasks_v2_lib_onboardingBanners.onboardingBanners.acquireSlot('responsible')) {
+				this.isResponsibleOnboardingShown = true;
+			}
+		},
+		beforeUnmount() {
+			// SC-002: release slot if banner is still shown on unmount.
+			if (this.isResponsibleOnboardingShown) {
+				tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('responsible');
+				this.isResponsibleOnboardingShown = false;
+			}
+		},
+		// SC-002: the async banner failed to load (its slot was already freed in
+		// ResponsibleBanner.onError). Disarm this instance's banner and stop the error here
+		// (return false) so it does not reach the global handler. Identity-matched against the
+		// banner load error so unrelated descendant errors keep propagating (return true).
+		errorCaptured(error) {
+			const isBannerLoadError = error === responsibleBannerLoadError;
+			if (isBannerLoadError) {
+				responsibleBannerLoadError = null;
+				this.isResponsibleOnboardingShown = false;
+			}
+			return !isBannerLoadError;
 		},
 		methods: {
+			// AC-010: user closed the SC-002 inline banner.
+			onResponsibleOnboardingClose() {
+				tasks_v2_lib_analytics.analytics.sendBannerInteraction(this.analytics, {
+					event: tasks_v2_const.Analytics.Event.CloseSuggestBanner,
+					element: tasks_v2_const.Analytics.Element.Executor,
+					cardType: this.cardType
+				});
+				tasks_v2_lib_onboardingBanners.onboardingBanners.setViewed('responsible');
+				this.isResponsibleOnboardingShown = false;
+				tasks_v2_lib_onboardingBanners.onboardingBanners.releaseSlot('responsible');
+			},
+			// AC-011: user clicked the CTA "Delegate tasks" in the SC-002 banner.
+			// Opens the responsible selector; banner hides only after actual delegation (watcher).
+			onResponsibleOnboardingAction() {
+				tasks_v2_lib_analytics.analytics.sendBannerInteraction(this.analytics, {
+					event: tasks_v2_const.Analytics.Event.ClickSuggestBanner,
+					element: tasks_v2_const.Analytics.Element.Executor,
+					cardType: this.cardType
+				});
+				this.$refs.participants?.showDialog?.();
+			},
 			armAbsenceForUsers(userIds) {
 				userIds.forEach(userId => {
 					this.armedAbsencePopupUserIds.add(userId);
@@ -313,9 +438,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<NewUserLabel v-else-if="forNewUser"/>
 			<Participants
 				v-else
+				ref="participants"
 				:taskId
 				:context="responsibleMeta.id"
 				:userIds="task.responsibleIds"
+				:ariaLabel="canEdit ? loc('TASKS_V2_RESPONSIBLE_ARIA_LABEL') : ''"
+				:userAriaLabelTemplate="canEdit ? loc('TASKS_V2_RESPONSIBLE_VALUE_ARIA_LABEL') : ''"
+				:addAriaLabel="canEdit ? loc('TASKS_V2_RESPONSIBLE_ADD_ARIA_LABEL') : ''"
+				:ariaHaspopup="canEdit ? 'dialog' : ''"
+				:clearAriaLabel="loc('TASKS_V2_RESPONSIBLE_CLEAR_ARIA_LABEL')"
 				:canAdd="canEdit"
 				:canRemove="canEdit"
 				:forceEdit="!isEdit"
@@ -348,14 +479,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				v-model:isChecked="forNewUser"
 			/>
 		</div>
+		<ResponsibleBanner
+			v-if="isResponsibleOnboardingShown"
+			@close="onResponsibleOnboardingClose"
+			@action="onResponsibleOnboardingAction"
+		/>
 		<Hint
 			v-if="isManyAhaShown"
 			:bindElement="$refs.container"
+			:options="manyAhaHintOptions"
 			@close="isManyAhaShown = false"
 		>
 			<div class="tasks-field-responsible-many-aha">
 				<div>{{ loc('TASKS_V2_RESPONSIBLE_MANY_AHA') }}</div>
-				<TextXs @click="stopManyAha">{{ loc('TASKS_V2_RESPONSIBLE_MANY_AHA_STOP') }}</TextXs>
+				<TextXs
+						tag="button"
+						type="button"
+						className="tasks-field-responsible-many-aha-stop"
+						@click="stopManyAha"
+					>{{ loc('TASKS_V2_RESPONSIBLE_MANY_AHA_STOP') }}</TextXs>
 			</div>
 		</Hint>
 	`
@@ -364,5 +506,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.Responsible = Responsible;
 	exports.responsibleMeta = responsibleMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Main, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Vue3.Directives, BX.UI, BX.UI.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Vue3, BX.Tasks.V2.Component.Elements);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Main, BX.Vue3, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Vue3.Directives, BX.UI, BX.UI.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements);
 //# sourceMappingURL=responsible.bundle.js.map

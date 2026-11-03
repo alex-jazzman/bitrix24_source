@@ -7,8 +7,7 @@ use Bitrix\Lists\Internals\Controller;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-if (!Loader::IncludeModule('lists') || !\Bitrix\Main\Application::getInstance()->getContext()
-		->getRequest()->getQuery('action'))
+if (!Loader::IncludeModule('lists'))
 {
 	return;
 }
@@ -323,6 +322,19 @@ class ListsElementEditAjaxController extends Controller
 
 		$userIdFrom = (int)$this->getUser()->getID();
 		$userIdTo = (int)$this->request->getPost('userId');
+		$elementUrl = $this->request->getPost('elementUrl');
+
+		if (!self::isSafeInternalUrl($elementUrl))
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('LISTS_NOTIFY_ERROR'))]);
+			$this->sendJsonErrorResponse();
+		}
+
+		if (!in_array($userIdTo, $this->getAdminUserIds(), true))
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('LISTS_NOTIFY_ERROR'))]);
+			$this->sendJsonErrorResponse();
+		}
 
 		$messageId = CIMNotify::Add([
 			'TO_USER_ID' => $userIdTo,
@@ -337,7 +349,7 @@ class ListsElementEditAjaxController extends Controller
 				'COMPONENT_PARAMS' => ['SUBJECT' => Loc::getMessage('LISTS_NOTIFY_MESSAGE_DEFAULT'),
 					'ENTITY' => [
 						'TITLE' => Loc::getMessage('LISTS_NOTIFY_MESSAGE_INFO'),
-						'HREF' => $this->request->getPost('elementUrl'),
+						'HREF' => $elementUrl,
 						'CONTENT_TYPE' => 'title',
 					],
 				],
@@ -353,6 +365,57 @@ class ListsElementEditAjaxController extends Controller
 			$this->errorCollection->add([new Error(Loc::getMessage('LISTS_NOTIFY_ERROR'))]);
 			$this->sendJsonErrorResponse();
 		}
+	}
+
+	/**
+	 * Accepts only an internal relative path (single leading slash, no scheme,
+	 * no protocol-relative form, no backslashes, no control characters, and no
+	 * HTML-attribute-breakout characters " ' < >).
+	 */
+	private static function isSafeInternalUrl($url): bool
+	{
+		if (!is_string($url) || $url === '')
+		{
+			return false;
+		}
+
+		if (preg_match('/[\x00-\x1F\x7F"\'<>]/', $url))
+		{
+			return false;
+		}
+
+		return $url[0] === '/'
+			&& !str_starts_with($url, '//')
+			&& !str_contains($url, '\\');
+	}
+
+	/**
+	 * @return int[] Ids of users with iblock_full right on the iblock plus active users of group 1.
+	 */
+	private function getAdminUserIds(): array
+	{
+		$rightObject = new CIBlockRights($this->iblockId);
+		$fullRightId = array_search('iblock_full', $rightObject->getRightsList(false), true);
+
+		$ids = [];
+		if ($fullRightId !== false)
+		{
+			foreach ($rightObject->getRights() as $right)
+			{
+				if ((int)$right['TASK_ID'] === (int)$fullRightId && str_starts_with($right['GROUP_CODE'], 'U'))
+				{
+					$ids[] = (int)mb_substr($right['GROUP_CODE'], 1);
+				}
+			}
+		}
+
+		$users = CUser::getList('ID', 'ASC', ['GROUPS_ID' => 1, 'ACTIVE' => 'Y'], ['FIELDS' => ['ID']]);
+		while ($user = $users->fetch())
+		{
+			$ids[] = (int)$user['ID'];
+		}
+
+		return array_values(array_unique($ids));
 	}
 
 	protected function fillDataForCheckPermission()
@@ -401,7 +464,11 @@ class ListsElementEditAjaxController extends Controller
 	}
 }
 
-$controller = new ListsElementEditAjaxController();
-$controller
-	->setActionName(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('action'))
-	->exec();
+$action = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('action');
+if ($action)
+{
+	$controller = new ListsElementEditAjaxController();
+	$controller
+		->setActionName($action)
+		->exec();
+}

@@ -25,7 +25,11 @@ export const ReplicationHistorySheets = {
 		},
 	},
 	template: `
-		<BottomSheet :sheetBindProps @close="$emit('close')">
+		<BottomSheet
+			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_REPLICATION_HISTORY_SHEET')"
+			@close="$emit('close')"
+		>
 			<div class="tasks-field-replication-sheet">
 				<ReplicationSheetHeader
 					:head="loc('TASKS_V2_REPLICATION_HISTORY_SHEET')"

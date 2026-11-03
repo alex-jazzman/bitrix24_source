@@ -5,6 +5,7 @@ return [
 		'native/memorystore',
 		'entity-ready',
 		'im:messenger/const',
+		'im:messenger/lib/logger',
 		'im:messenger/lib/rest',
 	],
 	'bundle' => [

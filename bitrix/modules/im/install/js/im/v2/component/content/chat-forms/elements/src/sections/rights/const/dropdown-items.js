@@ -11,7 +11,7 @@ export const rightsDropdownItems: DropdownItem[] = [
 	},
 	{
 		value: UserRole.manager,
-		text: Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_MANAGER_V2'),
+		text: Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_MANAGER_V2_MSGVER_1'),
 	},
 	{
 		value: UserRole.owner,

@@ -4,7 +4,8 @@ import { Core } from 'im.v2.application.core';
 import { type ImModelChat } from 'im.v2.model';
 
 import { AnalyticsTool, AnalyticsEvent, AnalyticsSection, AnalyticsSubSection } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
 
 export class ChatInviteLink
 {
@@ -39,11 +40,11 @@ export class ChatInviteLink
 
 		return {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.copyChatLink,
 			c_section: AnalyticsSection.sidebar,
 			c_sub_section: subSection,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 		};
 	}
 }

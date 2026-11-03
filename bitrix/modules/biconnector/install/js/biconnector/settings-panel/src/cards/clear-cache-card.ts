@@ -2,6 +2,7 @@ import { Dom, Tag, Event, Loc } from 'main.core';
 import { Button, AirButtonStyle, ButtonSize } from 'ui.buttons';
 import { Countdown } from 'ui.countdown';
 import 'ui.hint';
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { CollapsibleCard } from '../card/collapsible-card';
 import { CardHint } from '../card/card-hint';
 import { SettingsApi } from '../api/settings-api';
@@ -51,6 +52,7 @@ export class ClearCacheCard
 			style: AirButtonStyle.OUTLINE_ACCENT_2,
 			size: ButtonSize.SMALL,
 			icon: 'o-refresh',
+			dataset: { testid: 'biconnector-settings-clear-cache-btn' },
 			onclick: () => {
 				this.#clearCache();
 			},
@@ -133,12 +135,11 @@ export class ClearCacheCard
 			this.#timeout = response.data.timeoutToNextClearCache;
 			this.#initCountdown();
 		}
-		catch
+		catch (response)
 		{
 			this.#setButtonSpinning(false);
 			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_CLEAR_CACHE_ERROR'),
-				autoHideDelay: 2000,
+				content: resolveErrorHtml(response, Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_CLEAR_CACHE_ERROR')),
 			});
 			this.#button.setDisabled(false);
 			this.#canClear = true;

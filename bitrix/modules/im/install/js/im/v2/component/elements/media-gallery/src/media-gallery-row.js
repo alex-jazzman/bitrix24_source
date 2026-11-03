@@ -36,13 +36,29 @@ export const MediaGalleryRow = {
 			type: Boolean,
 			default: false,
 		},
+		removeItemLabel: {
+			type: String,
+			default: '',
+		},
 		allowSorting: {
 			type: Boolean,
 			default: false,
 		},
+		gridNavigation: {
+			type: Boolean,
+			default: false,
+		},
+		describedById: {
+			type: String,
+			default: null,
+		},
 		handleLoading: {
 			type: Boolean,
 			default: false,
+		},
+		allowCancelItem: {
+			type: Boolean,
+			default: true,
 		},
 		width: {
 			type: Number,
@@ -170,15 +186,19 @@ export const MediaGalleryRow = {
 		},
 	},
 	template: `
-		<div class="bx-im-elements-media-gallery__row">
+		<div class="bx-im-elements-media-gallery__row" :role="gridNavigation ? 'row' : null">
 			<MediaGalleryItem
 				v-for="(file, index) in files"
 				:key="file.id"
 				:file="file"
 				:size="sizes[index]"
 				:allowRemove="allowRemoveItem"
+				:removeButtonLabel="removeItemLabel"
 				:allowSorting="allowSorting"
+				:gridNavigation="gridNavigation"
+				:describedById="describedById"
 				:handleLoading="handleLoading"
+				:allowCancel="allowCancelItem"
 				:highlightDropzonePosition="getHighlightDropzonePosition(file)"
 				viewerGroupBy="viewerGroupBy"
 				@remove="onRemove"

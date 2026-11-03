@@ -11,4 +11,12 @@ export const titleMeta = Object.freeze({
 
 		return Loc.getMessage('TASKS_V2_TITLE_PLACEHOLDER');
 	},
+	getEditLabel: (isTemplate: boolean): string => {
+		if (isTemplate)
+		{
+			return Loc.getMessage('TASKS_V2_TEMPLATE_TITLE_EDIT_LABEL');
+		}
+
+		return Loc.getMessage('TASKS_V2_TITLE_EDIT_LABEL');
+	},
 });

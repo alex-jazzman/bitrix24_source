@@ -11,7 +11,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		UserRole,
 		DialogType,
 		MessagesAutoDeleteDelay,
-		RecentTab,
+		CopilotGenerationStatus,
 	} = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -58,7 +58,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 			if (previousParentChatId !== nextParentChatId)
 			{
-				await this.#migrateRecentConfigTabs(dialogId, previousParentChatId, nextParentChatId);
+				await this.#migrateRecentConfigTabs(dialogId, previousParentChatId);
 				await this.#reparentChatCounter(dialogId, nextParentChatId);
 			}
 		}
@@ -94,16 +94,14 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * Backend emits only `chatUpdate` (with new parent_chat_id) when the chat is
-		 * attached/detached from a project; no separate recentDelete/recentAdd event is sent.
-		 * The client is expected to migrate the recent item between scopes on its own.
+		 * The client removes the previous placement after a parent change. The following
+		 * system-message push restores the item with the complete server sections.
 		 *
 		 * @param {string} dialogId
 		 * @param {number} previousParentChatId
-		 * @param {number} nextParentChatId
 		 * @return {Promise<void>}
 		 */
-		async #migrateRecentConfigTabs(dialogId, previousParentChatId, nextParentChatId)
+		async #migrateRecentConfigTabs(dialogId, previousParentChatId)
 		{
 			const previousSections = this.store.getters['recentModel/getSectionsContainingItem'](
 				dialogId,
@@ -118,18 +116,6 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 					parentChatId: previousParentChatId,
 				});
 			}
-
-			const recentItem = this.store.getters['recentModel/getById'](dialogId);
-			if (!recentItem)
-			{
-				return;
-			}
-
-			await this.store.dispatch('recentModel/setByRecentConfigTabs', {
-				sections: [RecentTab.chat],
-				itemList: recentItem,
-				parentChatId: nextParentChatId,
-			});
 		}
 
 		/**
@@ -362,6 +348,8 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				participants: newUsers,
 				userCounter: userCount,
 			});
+
+			await this.#invalidateChatCommands(dialogId);
 		}
 
 		/**
@@ -433,6 +421,8 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 					fields: dialogUpdatingFields,
 				});
 			}
+
+			await this.#invalidateChatCommands(dialogId);
 		}
 
 		/**
@@ -618,6 +608,70 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 					},
 				},
 			);
+		}
+
+		/**
+		 * The model keeps only an active generation: 'generating' is stored,
+		 * any terminal status (stopped/completed/error) clears the state.
+		 * Foreign or unloaded chats are cut off by the model itself: the action is a no-op
+		 * for dialogs that are not loaded into the store.
+		 *
+		 * @param {CopilotGenerationStatePullHandlerParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		handleCopilotGenerationState(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+			this.logger.info('handleCopilotGenerationState:', params);
+
+			const dialogId = String(params.dialogId);
+			if (params.status === CopilotGenerationStatus.generating)
+			{
+				void this.store.dispatch('dialoguesModel/setCopilotGenerationState', {
+					dialogId,
+					status: params.status,
+					initiatorId: params.initiatorId,
+				});
+
+				return;
+			}
+
+			void this.store.dispatch('dialoguesModel/clearCopilotGenerationState', { dialogId });
+		}
+
+		/**
+		 * @desc Any change of the chat composition invalidates the bot-command cache. The
+		 * open "/" panel (if any) is closed first - its list would show a stale composition -
+		 * then the whole per-chat cache row is dropped; the next "/" refetches.
+		 * @param {DialogId} dialogId
+		 * @return {Promise<void>}
+		 */
+		async #invalidateChatCommands(dialogId)
+		{
+			this.#closeSlashCommandPanel(dialogId);
+
+			await serviceLocator.get('core').getRepository().chatCommand.deleteByDialogId(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		#closeSlashCommandPanel(dialogId)
+		{
+			const openDialog = serviceLocator.get('dialog-manager')?.getLastOpenDialog();
+			if (openDialog?.getDialogId() !== dialogId)
+			{
+				return;
+			}
+
+			const slashCommandManager = openDialog.slashCommandManager;
+			if (slashCommandManager?.hasActiveSession())
+			{
+				slashCommandManager.close();
+			}
 		}
 
 		/**

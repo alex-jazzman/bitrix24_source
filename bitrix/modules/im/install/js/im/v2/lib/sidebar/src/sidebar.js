@@ -11,7 +11,6 @@ import { isChat, chatPreset } from './configs/chat';
 import { isCollab, collabPreset } from './configs/collab';
 import { isComment, commentPreset } from './configs/comment';
 import { isCopilot, copilotPreset } from './configs/copilot';
-import { isLines, linesPreset } from './configs/lines';
 import { isSelfChat, selfChatPreset } from './configs/self-chat';
 import { isSupport, supportPreset } from './configs/support';
 import { isTaskComments, taskCommentsPreset } from './configs/task-comments';
@@ -48,6 +47,11 @@ export class SidebarManager
 
 	registerConfig(callback: ContextCheckFunction, sidebarPreset: SidebarPreset): void
 	{
+		if (this.#customConfigMap.has(callback))
+		{
+			return;
+		}
+
 		this.#customConfigMap.set(callback, sidebarPreset);
 	}
 
@@ -86,7 +90,6 @@ export class SidebarManager
 		this.#defaultConfigMap.set(isAiAssistantBot, aiAssistantBotPreset);
 		this.#defaultConfigMap.set(isBot, botPreset);
 		this.#defaultConfigMap.set(isSelfChat, selfChatPreset);
-		this.#defaultConfigMap.set(isLines, linesPreset);
 		this.#defaultConfigMap.set(isCollab, collabPreset);
 		this.#defaultConfigMap.set(isGuest, guestPreset);
 		this.#defaultConfigMap.set(isUser, userPreset);

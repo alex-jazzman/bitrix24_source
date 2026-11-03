@@ -139,6 +139,93 @@ export type AccessState = {
 	ownerId: number | null;
 };
 
+export type GeneralSettingsCrmConfig = {
+	crm_sync_days?: number | null;
+	crm_new_entity_in?: string;
+	crm_new_entity_out?: string;
+	crm_lead_source?: string;
+	crm_lead_resp?: number[];
+	crm_new_lead_for?: string[];
+	crm_public?: boolean;
+	crm_vcf?: boolean;
+};
+
+export type GeneralSettingsPatch = {
+	mailboxName?: string;
+	link?: string;
+	senderName?: string;
+	useSenderName?: boolean;
+	iCalAccess?: boolean;
+	shareAccess?: string[];
+	crmOptions?: {
+		enabled?: boolean;
+		config?: GeneralSettingsCrmConfig;
+	};
+};
+
+export type GeneralSettingsSnapshot = Required<Omit<GeneralSettingsPatch, 'crmOptions'>> & {
+	crmOptions: {
+		enabled: boolean;
+		config: Required<GeneralSettingsCrmConfig>;
+	};
+};
+
+export type MailboxAvatarData = {
+	mailboxId: number;
+	revision: number;
+	hasAvatar: boolean;
+	url: string | null;
+	supported: boolean;
+	canEdit: boolean;
+};
+
+export type AvatarChange = {
+	operation: 'replace';
+	expectedRevision: number;
+	uploadToken: string;
+} | {
+	operation: 'delete';
+	expectedRevision: number;
+};
+
+export type MailboxAvatarSaveSnapshot = {
+	mailboxId: number;
+	requestId: number;
+	resetKey: number;
+	selectionId: string | null;
+	change: AvatarChange;
+};
+
+export type MailboxAvatarIntent = AvatarChange | {
+	operation: 'replace';
+	expectedRevision: number;
+	uploadToken: null;
+};
+
+export type MailboxAvatarSelection = {
+	id: string;
+	status: 'loading' | 'complete' | 'error';
+	previewUrl: string;
+	uploadToken: string | null;
+	error: string;
+};
+
+export type MailboxAvatarState = {
+	mailboxId: number | null;
+	confirmed: MailboxAvatarData | null;
+	intent: MailboxAvatarIntent | null;
+	selection: MailboxAvatarSelection | null;
+	loading: boolean;
+	saving: boolean;
+	needsRefresh: boolean;
+	rejectedUploadId: string | null;
+	preservedUploadId: string | null;
+	error: string;
+	imageErrorUrl: string;
+	requestId: number;
+	resetKey: number;
+};
+
 export type ServiceSmtpSettings = {
 	server: string;
 	port: string | number;
@@ -160,6 +247,8 @@ export type ServiceState = {
 	upload_outgoing?: boolean | number | null;
 	oauth?: boolean;
 	oauth_smtp_enabled?: boolean;
+	// The service is handed its credentials from outside the portal, so the form shows none of them.
+	externalCredentials?: boolean;
 	smtp?: ServiceSmtpSettings;
 };
 
@@ -177,6 +266,7 @@ export type PermissionsInput = {
 	isSmtpAvailable: boolean;
 	isCrmAvailable: boolean;
 	isCalendarAvailable: boolean;
+	isAvatarAvailable: boolean;
 	syncOldLimit: number;
 	sharedMailboxLimit: number | null;
 	sharedMailboxLimitReached?: boolean;
@@ -215,6 +305,7 @@ export type FormState = {
 	connection: ConnectionState;
 	smtp: SmtpState;
 	mailbox: MailboxState;
+	avatar: MailboxAvatarState;
 	crmSettings: CrmSettingsState;
 	calendarSettings: CalendarSettingsState;
 	access: AccessState;
@@ -222,6 +313,9 @@ export type FormState = {
 	paths: InitialDataPaths;
 	changedDirs: boolean;
 	migrationActive: boolean;
+	sourceGenerationId: number | null;
+	hasSourceGenerationId: boolean;
+	generalSettingsBaseline: GeneralSettingsSnapshot | null;
 	permissions: PermissionsState;
 	loading: boolean;
 	isDataReady: boolean;

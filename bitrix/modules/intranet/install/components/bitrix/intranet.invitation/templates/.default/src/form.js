@@ -3,6 +3,7 @@ import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { ActiveDirectory } from './active-directory';
 import { Analytics } from './analytics';
+import { HIDE_FIELD_ERROR_EVENT, SHOW_FIELD_ERROR_EVENT } from './field-error-message';
 import { MessageBar } from './message-bar';
 import { Navigation } from './navigation';
 import { PageProvider } from './page-provider';
@@ -102,6 +103,7 @@ export default class Form extends EventEmitter
 		this.navigation?.subscribe('onAfterChangePage', this.onAfterChangePage.bind(this));
 
 		this.navigation.showFirst();
+		this.activeMenuItem(this.navigation.getCurrentCode());
 	}
 
 	subscribeEvents(): void
@@ -112,6 +114,15 @@ export default class Form extends EventEmitter
 
 		EventEmitter.subscribe('BX.Intranet.Invitation:clearError', () => {
 			this.messageBar.hideAll();
+		});
+
+		EventEmitter.subscribe(SHOW_FIELD_ERROR_EVENT, (event: BaseEvent) => {
+			const { id, message, announce } = event.getData();
+			this.messageBar.showFieldError(id, message, announce);
+		});
+
+		EventEmitter.subscribe(HIDE_FIELD_ERROR_EVENT, (event: BaseEvent) => {
+			this.messageBar.hideFieldError(event.getData().id);
 		});
 
 		EventEmitter.subscribe('BX.Intranet.Invitation:showSuccessPopup', (event: BaseEvent) => {
@@ -132,6 +143,7 @@ export default class Form extends EventEmitter
 	{
 		const section = this.getSubSection();
 		const page = event.getData().current;
+		page?.restoreErrors();
 		let subSection = null;
 		if (page)
 		{
@@ -165,43 +177,61 @@ export default class Form extends EventEmitter
 			return;
 		}
 
-		this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a'));
+		this.menuContainer.setAttribute('data-testid', 'invitation-menu-primary');
+		this.menuItems = Array.prototype.slice.call(
+			this.menuContainer.querySelectorAll('a[href^="#invitation-menu-"]'),
+		);
 		if (Type.isDomNode(this.subMenuContainer))
 		{
-			const subMenuItem = Array.prototype.slice.call(this.subMenuContainer.querySelectorAll('a'));
+			const subMenuItem = Array.prototype.slice.call(
+				this.subMenuContainer.querySelectorAll('a[href^="#invitation-menu-"]'),
+			);
 
 			this.menuItems = [...this.menuItems, ...subMenuItem];
 		}
 
 		(this.menuItems || []).forEach((item) => {
-			Event.bind(item, 'click', () => {
-				this.changeContent(item.getAttribute('data-action'));
+			Event.bind(item, 'click', (event) => {
+				event.preventDefault();
+
+				if (Dom.hasClass(item.parentElement, 'ui-sidepanel-menu-disabled'))
+				{
+					return;
+				}
+
+				const action = item.getAttribute('data-action');
+				if (!Type.isStringFilled(action))
+				{
+					return;
+				}
+
+				this.changeContent(action, {
+					focusFirstControl: true,
+					fallbackFocus: item,
+				});
 				this.activeMenuItem(this.navigation.getCurrentCode());
 			});
-
-			if (item.getAttribute('data-action') === this.firstInvitationBlock)
-			{
-				Dom.addClass(item.parentElement, 'ui-sidepanel-menu-active');
-			}
-			else
-			{
-				Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
-			}
 		});
 	}
 
 	activeMenuItem(itemType: string)
 	{
 		(this.menuItems || []).forEach((item) => {
-			Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
-			if (item.getAttribute('data-action') === itemType)
+			const isActive = item.getAttribute('data-action') === itemType;
+			if (isActive)
 			{
 				Dom.addClass(item.parentElement, 'ui-sidepanel-menu-active');
+				item.setAttribute('aria-current', 'page');
+			}
+			else
+			{
+				Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
+				item.removeAttribute('aria-current');
 			}
 		});
 	}
 
-	changeContent(action)
+	changeContent(action, options = {})
 	{
 		if (!Type.isStringFilled(action))
 		{
@@ -221,7 +251,7 @@ export default class Form extends EventEmitter
 			return;
 		}
 
-		this.navigation.show(action);
+		this.navigation.show(action, options);
 	}
 
 	createNavigation(): Navigation

@@ -75,23 +75,45 @@ export const MainHeader = {
 		{
 			return this.dialog.type === ChatType.collab ? AddToCollab : AddToChat;
 		},
+		menuClass(): typeof MainMenu
+		{
+			return this.sidebarConfig.getHeaderMenuClass() ?? MainMenu;
+		},
+	},
+	watch:
+	{
+		menuClass()
+		{
+			this.destroyContextMenu();
+			this.createContextMenu();
+		},
 	},
 	created()
 	{
-		this.contextMenu = new MainMenu({ emitter: this.getEmitter() });
-		this.contextMenu.subscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
-		this.contextMenu.subscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
-		this.contextMenu.subscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+		this.createContextMenu();
 	},
 	beforeUnmount()
 	{
-		this.contextMenu.destroy();
-		this.contextMenu.unsubscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
-		this.contextMenu.unsubscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
-		this.contextMenu.unsubscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+		this.destroyContextMenu();
 	},
 	methods:
 	{
+		createContextMenu()
+		{
+			const applicationContext = { emitter: this.getEmitter() };
+			const MenuClass = this.menuClass;
+			this.contextMenu = new MenuClass(applicationContext);
+			this.contextMenu.subscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
+			this.contextMenu.subscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+			this.contextMenu.subscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+		},
+		destroyContextMenu()
+		{
+			this.contextMenu.destroy();
+			this.contextMenu.unsubscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
+			this.contextMenu.unsubscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+			this.contextMenu.unsubscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+		},
 		onDetachFromCollabV2Show()
 		{
 			const detachFromCollabV2pPopup = new DetachFromCollabV2Popup({ dialogId: this.dialogId });

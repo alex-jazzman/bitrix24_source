@@ -1330,14 +1330,14 @@ return [
 
 		"light:mail" => [
 			"title" => Loc::getMessage("BITRIX24_THEME_MAIL"),
-			"prefetchImages" => ["mail.png", "mail-blurred.webp"],
+			"prefetchImages" => ["mail.webp", "mail-blurred.webp"],
 			"previewImage" => "mail-preview.jpg",
 		],
 
 		"light:robots" => [
 			"title" => Loc::getMessage("BITRIX24_THEME_ROBOTS"),
-			"prefetchImages" => ["robots.png", "robots-blurred.webp"],
-			"previewImage" => "robots-preview.png",
+			"prefetchImages" => ["robots.webp", "robots-blurred.webp"],
+			"previewImage" => "robots-preview.webp",
 		],
 
 		"light:pattern-hearts" => [

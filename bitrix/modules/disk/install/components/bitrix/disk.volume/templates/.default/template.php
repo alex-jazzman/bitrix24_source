@@ -14,11 +14,12 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \CDiskVolumeComponent $component */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Buttons\AirButtonStyle;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Size;
 
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans",]);
+\Bitrix\Main\UI\Extension::load(["ui.buttons",]);
 
 Loc::loadMessages(__FILE__);
 
@@ -94,7 +95,10 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				(new Button([
 					'text' => Loc::getMessage("DISK_VOLUME_MEASURE_DATA"),
 					'className' => 'disk-volume-button-margin-top',
-					'color' => Color::SUCCESS,
+					'air' => true,
+					'style' => AirButtonStyle::FILLED,
+					'color' => Color::PRIMARY,
+					'size' => Size::LARGE,
 				]))
 					->addAttribute('id', 'bx-disk-volume-link-measure')
 					->render(false)
@@ -199,8 +203,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				{
 					continue;
 				}
-				$indicatorId = $row['INDICATOR'];
-				$color = $component->pastelColors();
+				$step = $component->paletteStep($arResult['ADMIN_MODE'] ? $row['INDICATOR'] : $row['TYPE_FILE']);
 				$width = ($row['PERCENT'] > .1 ? $row['PERCENT'].'' : '0');
 				$percent = ($row['PERCENT'] < .1 ? '&lt; 0.1%' : $row['PERCENT'].'%');
 				$title = $row['TITLE']." ".$row["{$sizeField}_FORMAT"]." ({$percent})";
@@ -210,18 +213,18 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				$tt += $row[$sizeField];
 
 				$legend["$inx"] = array(
-					'color' => $color,
+					'step' => $step,
 					'title' => $row['TITLE'],
 					'alt' => $alt,
 				);
 				?>
-				<div class="bx-disk-interface-percent-part" style="flex:<?= $width ?>; background-color:<?= $color ?>;" title="<?= $title ?>"></div>
+				<div class="bx-disk-interface-percent-part --c<?= $step ?>" style="flex:<?= $width ?>;" title="<?= $title ?>"></div>
 				<?
 			}
 			if (isset($arResult[$plotIndicatorId]['OTHER']))
 			{
 				$row = $arResult[$plotIndicatorId]['OTHER'];
-				$color = $component->pastelColors(true);
+				$step = $component->paletteStep('other', true);
 				$width = ($row['PERCENT'] > .1 ? $row['PERCENT'].'' : '0');
 				$percent = ($row['PERCENT'] < .1 ? '&lt; 0.1%' : $row['PERCENT'].'%');
 				$title = $row['TITLE']." ".$row['DISK_SIZE_FORMAT']." ({$percent})";
@@ -237,10 +240,10 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 					$tt += $row['FILE_SIZE'];
 				}
 				?>
-				<div class="bx-disk-interface-percent-part" style="flex:<?= $width ?>; background-color:<?= $color ?>;" title="<?= $title ?>"></div>
+				<div class="bx-disk-interface-percent-part --c<?= $step ?>" style="flex:<?= $width ?>;" title="<?= $title ?>"></div>
 				<?
 				$legend['other'] = array(
-					'color' => $color,
+					'step' => $step,
 					'title' => $row['TITLE'],
 					'alt' => $alt,
 				);
@@ -259,7 +262,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				{
 					?>
 					<div class="bx-disk-interface-percent-legend-part">
-						<span class="bx-disk-interface-percent-legend-part-circle" style="background-color:<?=$row['color']?>;"></span>
+						<span class="bx-disk-interface-percent-legend-part-circle --c<?= $row['step'] ?>"></span>
 						<span class="bx-disk-interface-percent-legend-part-text" title="<?= $row['alt'] ?>"><?= $row['title'] ?></span>
 					</div>
 					<?
@@ -337,6 +340,8 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 					<?=
 					(new Button([
 						'text' => Loc::getMessage("DISK_VOLUME_RUN_CLEANER"),
+						'air' => true,
+						'style' => AirButtonStyle::FILLED,
 						'color' => Color::PRIMARY,
 						'size' => Size::LARGE,
 					]))
@@ -372,6 +377,8 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 					'text' => Loc::getMessage("DISK_VOLUME_MEASURE_DATA_REPEAT"),
 					'tag' => 'a',
 					'link' => $component->getActionUrl(array('reload' => 'Y', 'action' => $component::ACTION_DEFAULT)),
+					'air' => true,
+					'style' => AirButtonStyle::OUTLINE,
 					'color' => Color::LIGHT_BORDER,
 					'size' => Size::LARGE,
 				]))

@@ -23,6 +23,11 @@ export const userFieldsConfig: FieldsConfig = [
 		checkFunction: Utils.user.isNetworkUserId,
 	},
 	{
+		fieldName: 'active',
+		targetFieldName: 'active',
+		checkFunction: Type.isBoolean,
+	},
+	{
 		fieldName: 'firstName',
 		targetFieldName: 'firstName',
 		checkFunction: Type.isString,
@@ -78,6 +83,11 @@ export const userFieldsConfig: FieldsConfig = [
 		checkFunction: Type.isString,
 	},
 	{
+		fieldName: 'extranet',
+		targetFieldName: 'extranet',
+		checkFunction: Type.isBoolean,
+	},
+	{
 		fieldName: 'network',
 		targetFieldName: 'network',
 		checkFunction: Type.isBoolean,
@@ -91,6 +101,16 @@ export const userFieldsConfig: FieldsConfig = [
 		fieldName: 'externalAuthId',
 		targetFieldName: 'externalAuthId',
 		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'internalAccount',
+		targetFieldName: 'internalAccount',
+		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'intranetUser',
+		targetFieldName: 'intranetUser',
+		checkFunction: Type.isBoolean,
 	},
 	{
 		fieldName: 'status',

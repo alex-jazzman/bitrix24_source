@@ -98,10 +98,11 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 
 		foreach($arResult['FILES'] as $file)
 		{
+			$fileHref = $file['CAN_DOWNLOAD'] ? $file['DOWNLOAD_URL'] : 'javascript:void(0);';
 			?><div class="feed-com-file-wrap">
 				<span class="feed-con-file-icon feed-file-icon-<?=htmlspecialcharsbx($file['EXTENSION'])?>"></span>
 				<span class="feed-com-file-name-wrap">
-					<a <?= ($file['FROM_EXTERNAL_SYSTEM'] && $file['CAN_UPDATE'])? 'style="color:#d9930a;"' : '' ?> target="_blank" href="<?=htmlspecialcharsbx($file['DOWNLOAD_URL'])?>"<?
+					<a <?= ($file['FROM_EXTERNAL_SYSTEM'] && $file['CAN_UPDATE'])? 'style="color:#d9930a;"' : '' ?> target="_blank" href="<?=htmlspecialcharsbx($fileHref)?>"<?
 						?> id="disk-attach-<?=$file['ID']?>"<?
 						?> class="feed-com-file-name" <?
 						?> title="<?=htmlspecialcharsbx($file['NAME'])?>" <?
@@ -144,9 +145,13 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								return e.preventDefault();
 							}},
 							<? } ?>
-							{text : BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC'), className : "bx-viewer-popup-item item-download", href : "<?=$file["DOWNLOAD_URL"]?>", onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
+							<? if($file['CAN_DOWNLOAD']){ ?>
+							{text : BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC'), className : "bx-viewer-popup-item item-download", attrs : {'data-testid': 'disk-uf-comments-attached-object-download-menu-item'}, href : "<?=$file["DOWNLOAD_URL"]?>", onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							,
+							<? } ?>
+							<? } ?>
+							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							{text : '<?= GetMessageJS('DISK_UF_FILE_SETTINGS_DOCS') ?>', className : "bx-viewer-popup-item item-setting", href : "#", onclick: function(e){
 								BX.Disk.InformationPopups.openWindowForSelectDocumentService({viewInUf: true});
 								BX.PopupMenu.currentItem.popupWindow.close();
@@ -168,7 +173,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 		</div><?
 	}
 	?>
-	<? if((count($arResult['FILES']) + count($arResult['IMAGES'])) > 1 && $arResult['ENABLED_MOD_ZIP']){ ?>
+	<? if((count($arResult['FILES']) + count($arResult['IMAGES'])) > 1 && $arResult['ENABLED_MOD_ZIP'] && $arResult['CAN_DOWNLOAD_ARCHIVE']){ ?>
 		<div class="feed-com-info">
 			<div class="feed-com-info-download">
 				<span class="feed-com-download-link">

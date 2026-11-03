@@ -1,10 +1,26 @@
 .bx-im-ai-assistant-widget-empty-state {
 	display: flex;
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
 	flex-direction: column;
 	justify-content: flex-end;
-	padding: 16px 16px 36px;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xs2) 0 var(--ui-space-inset-xs2);
 }
 
 .bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__scope {
-	--bx-im-ai-assistant-empty-state-view-gap: 20px;
+	--bx-im-ai-assistant-empty-state-view-gap: var(--ui-space-stack-md);
+	--bx-im-ai-assistant-empty-state-view-textarea-margin-bottom: 0;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__title {
+	order: 1;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__suggestions {
+	order: 2;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__textarea {
+	order: 3;
 }

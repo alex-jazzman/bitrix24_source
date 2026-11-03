@@ -153,3 +153,38 @@ body {
 	vertical-align: middle;
 	width: 1px;
 }
+
+/*
+The exhausted view limit of a knowledge base. The message is printed through `AfterBodyOpen`,
+because the branch runs after `$landing->view()` and would otherwise land inside the dimmed area.
+*/
+.landing-pub-view-limit {
+	padding: 16px 20px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-bottom: 1px solid var(--ui-color-divider-default, #dfe0e3);
+	color: var(--ui-color-base-2, #525c69);
+	font-family: var(--ui-font-family-open-sans, 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif);
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: var(--ui-font-line-height-md, 1.4);
+	font-weight: var(--ui-font-weight-regular, 400);
+	text-align: center;
+}
+
+/* The template marks what the limit takes away as inert, and the message is left out of it. */
+.landing-mode-view-limit > [inert] {
+	opacity: .1;
+}
+
+/* A label out of sight, but inside the accessible name of the control that holds it. */
+.landing-pub-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

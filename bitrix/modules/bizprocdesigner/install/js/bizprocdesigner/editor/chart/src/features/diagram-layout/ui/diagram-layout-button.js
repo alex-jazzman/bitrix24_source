@@ -1,9 +1,12 @@
 /** Toolbar surface of the automatic diagram layout feature (TPL-02). */
 
+import './diagram-layout-button.css';
+
 import { UI } from 'ui.notification';
 import { defineComponent } from 'ui.vue3';
 import { Outline } from 'ui.icon-set.api.vue';
 import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
+import { hint } from 'ui.vue3.directives.hint';
 
 import { useLoc } from '../../../shared/composables';
 import { LAYOUT_REJECTED_REASON, LAYOUT_UNCHANGED_REASON } from '../model/types';
@@ -44,6 +47,7 @@ type DiagramLayoutButtonSetup = {
 export const DiagramLayoutButton = defineComponent({
 	name: 'BizprocdesignerDiagramLayoutButton',
 	components: { UiButton },
+	directives: { hint },
 	setup(): DiagramLayoutButtonSetup
 	{
 		const { getMessage } = useLoc();
@@ -78,6 +82,20 @@ export const DiagramLayoutButton = defineComponent({
 		{
 			return !this.layout.isAvailable();
 		},
+		buttonHint(): {
+			text: string,
+			timeout: number,
+			popupOptions: { closeByEsc: boolean, ariaLabel: string, role: string },
+		}
+		{
+			const text = this.getMessage('BIZPROCDESIGNER_EDITOR_DIAGRAM_LAYOUT_AUTO');
+
+			return {
+				text,
+				timeout: 2000,
+				popupOptions: { closeByEsc: true, ariaLabel: text, role: 'tooltip' },
+			};
+		},
 	},
 	methods: {
 		async handleButtonClick(): Promise<void>
@@ -100,14 +118,17 @@ export const DiagramLayoutButton = defineComponent({
 		},
 	},
 	template: `
-		<UiButton
-			:text="getMessage('BIZPROCDESIGNER_EDITOR_DIAGRAM_LAYOUT_AUTO')"
-			:size="buttonSize"
-			:style="buttonStyle"
-			:leftIcon="buttonIcon"
-			:disabled="isDisabled"
-			:dataset="buttonDataset"
-			@click="handleButtonClick"
-		/>
+		<div class="editor-chart-diagram-layout-button" v-hint="buttonHint">
+			<UiButton
+				:text="getMessage('BIZPROCDESIGNER_EDITOR_DIAGRAM_LAYOUT_AUTO')"
+				:size="buttonSize"
+				:style="buttonStyle"
+				:leftIcon="buttonIcon"
+				:disabled="isDisabled"
+				:dataset="buttonDataset"
+				:collapsed="true"
+				@click="handleButtonClick"
+			/>
+		</div>
 	`,
 });

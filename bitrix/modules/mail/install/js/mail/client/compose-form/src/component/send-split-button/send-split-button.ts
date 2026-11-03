@@ -29,8 +29,6 @@ const ScheduleClassName = 'mail-compose-send-split__schedule';
 /**
  * The split has no Vue wrapper: the Vue button declares `clickSecondary` but never emits it. The instance
  * is a vanilla one, kept out of the reactive state and rendered into its own node.
- *
- * Scheduling itself is implemented by a separate task: the right half only opens the popup.
  */
 // @vue/component
 export const SendSplitButton = defineComponent({
@@ -40,7 +38,7 @@ export const SendSplitButton = defineComponent({
 		SchedulePopup,
 	},
 
-	emits: ['send'],
+	emits: ['send', 'schedule'],
 
 	setup()
 	{
@@ -79,6 +77,11 @@ export const SendSplitButton = defineComponent({
 			;
 		},
 
+		sendUnavailableHint(): string
+		{
+			return isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_ACTION_UNAVAILABLE') : '';
+		},
+
 		/** The popup binds to the right half, not to the whole split. */
 		scheduleNode(): HTMLElement | null
 		{
@@ -93,6 +96,11 @@ export const SendSplitButton = defineComponent({
 		},
 
 		isSendDisabled(): void
+		{
+			this.syncSending();
+		},
+
+		sendUnavailableHint(): void
 		{
 			this.syncSending();
 		},
@@ -139,12 +147,12 @@ export const SendSplitButton = defineComponent({
 				menuButton: {
 					className: ScheduleClassName,
 					dataset: { testid: TestId.schedule },
-					// Icon-only half, so the name is set for screen readers.
+					// Icon-only half, so the name is set for screen readers. The half opens a dialog, and an open
+					// dialog is not an expanded state of the button itself, so it claims no `aria-expanded`.
 					props: {
 						type: 'button',
 						'aria-label': loc(Phrase.ScheduleButton),
 						'aria-haspopup': 'dialog',
-						'aria-expanded': 'false',
 					},
 					onclick: (): {} => {
 						this.handleSchedule();
@@ -174,7 +182,8 @@ export const SendSplitButton = defineComponent({
 				new Icon({
 					icon: Outline.CALENDAR,
 					size: ScheduleIconSize,
-					color: 'var(--ui-btn-color)',
+					// Follows the content colour of the half in every state, the disabled one included.
+					color: 'currentColor',
 				}).renderTo(half);
 			}
 		},
@@ -189,6 +198,12 @@ export const SendSplitButton = defineComponent({
 				return;
 			}
 
+			const sendHalf = control.getMainButton().getContainer();
+			if (this.isSending)
+			{
+				this.stepFocusOutOfSendHalf(sendHalf);
+			}
+
 			if (this.isSending)
 			{
 				control.setDisabled(false);
@@ -201,14 +216,27 @@ export const SendSplitButton = defineComponent({
 			}
 
 			// `setProps` of a half takes strings only, so the flag is written as an attribute.
-			Dom.attr(control.getMainButton().getContainer(), 'disabled', this.isSendDisabled ? true : null);
+			Dom.attr(sendHalf, 'disabled', this.isSendDisabled ? true : null);
 			Dom.attr(control.getMenuButton().getContainer(), 'disabled', this.isSendDisabled ? true : null);
-			const title = isSelectedSenderMigrationActive(this.state)
-				? loc('MAIL_MIGRATION_SEND_UNAVAILABLE')
-				: null
-			;
+			const title = this.sendUnavailableHint || null;
 			Dom.attr(control.getMainButton().getContainer(), 'title', title);
 			Dom.attr(control.getMenuButton().getContainer(), 'title', title);
+		},
+
+		/**
+		 * A node that has just been disabled drops the focus to the body, and the reader loses the place until
+		 * the form either closes or shows the error, so the focus steps up to the control before that happens.
+		 */
+		stepFocusOutOfSendHalf(sendHalf: HTMLElement): void
+		{
+			const container = this.control?.getContainer();
+			if (!container || !sendHalf.contains(document.activeElement))
+			{
+				return;
+			}
+
+			Dom.attr(container, 'tabindex', '-1');
+			container.focus();
 		},
 
 		/** `ui.buttons` has no destructor, so the instance goes away with its node. */
@@ -251,7 +279,6 @@ export const SendSplitButton = defineComponent({
 				(datePicker: DatePickerClass): void => {
 					this.datePicker = datePicker;
 					this.isScheduleShown = true;
-					this.syncScheduleState();
 				},
 				(): void => {},
 			);
@@ -260,13 +287,17 @@ export const SendSplitButton = defineComponent({
 		handleScheduleClose(): void
 		{
 			this.isScheduleShown = false;
-			this.syncScheduleState();
 		},
 
-		/** Keeps `aria-expanded` of the right half in step with the popup. */
-		syncScheduleState(): void
+		handleScheduleSubmit(payload: { scheduledAt: string, timezoneId: string }): void
 		{
-			this.control?.getMenuButton().setProps({ 'aria-expanded': this.isScheduleShown ? 'true' : 'false' });
+			if (this.isSending)
+			{
+				return;
+			}
+
+			this.handleScheduleClose();
+			this.$emit('schedule', payload);
 		},
 	},
 
@@ -277,6 +308,7 @@ export const SendSplitButton = defineComponent({
 			:bindElement="scheduleNode"
 			:datePicker="datePicker"
 			@close="handleScheduleClose"
+			@schedule="handleScheduleSubmit"
 		/>
 	`,
 });

@@ -29,6 +29,7 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { ErrorMessage } = require('im/messenger/lib/element/dialog/message/error');
 	const { CheckInMessageFactory } = require('im/messenger/lib/element/dialog/message/check-in/factory');
 	const { CheckInMessageHandler } = require('im/messenger/lib/element/dialog/message/check-in/handler');
+	const { ContactMessageFactory } = require('im/messenger/lib/element/dialog/message/contact/factory');
 	const { GalleryMessageFactory } = require('im/messenger/lib/element/dialog/message/gallery/factory');
 	const { GalleryMessageHandler } = require('im/messenger/lib/element/dialog/message/gallery/handler');
 	const { CreateBannerFactory } = require('im/messenger/lib/element/dialog/message/banner/factory');
@@ -70,6 +71,7 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		ErrorMessage,
 		CheckInMessageFactory,
 		CheckInMessageHandler,
+		ContactMessageFactory,
 		GalleryMessageFactory,
 		GalleryMessageHandler,
 		CreateBannerFactory,

@@ -9,6 +9,8 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
+		'tokens',
+		'ui-system/typography/text',
 		'analytics',
 		'event-emitter',
 		'notify-manager',

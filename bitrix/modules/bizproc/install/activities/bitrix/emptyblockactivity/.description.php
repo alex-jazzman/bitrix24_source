@@ -38,12 +38,13 @@ $arActivityDescription = (new ActivityDescription(
 			new NodeSettingsParam('frameSeparatorPosition', 100),
 			new NodeSettingsParam('frameContent', ''),
 			new NodeSettingsParam('frameContentFiles', []),
-		)
+		),
 	)
 	->setPresets([
 		[
 			'ID' => 'FRAME',
 			'NAME' => Loc::GetMessage('BPWA_DESCR_PRESET_FRAME_NAME'),
+			'TYPE' => [ActivityType::NODE->value],
 		],
 	])
 	->toArray()

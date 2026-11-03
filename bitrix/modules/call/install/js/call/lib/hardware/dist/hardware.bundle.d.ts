@@ -6,6 +6,11 @@ type CurrentDevices = {
 };
 
 declare namespace BX.Call.Lib {
+	const HardwareEvents: {
+		initialized: string;
+		deviceChanged: string;
+	};
+
 	class HardwareManager extends BX.Event.EventEmitter {
 		Events: {
 			initialized: string;

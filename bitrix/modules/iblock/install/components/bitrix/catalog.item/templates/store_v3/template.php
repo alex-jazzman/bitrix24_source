@@ -79,6 +79,13 @@ if (isset($arResult['ITEM']))
 		? $item['IPROPERTY_VALUES']['ELEMENT_PREVIEW_PICTURE_FILE_TITLE']
 		: $item['NAME'];
 
+	// the gallery caption is set from JS through setAttribute, which keeps entities literal
+	$sliderImageAlt = htmlspecialcharsback(
+		!empty($item['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'])
+			? $item['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT']
+			: $item['NAME']
+	);
+
 	$resizedSlider = [
 		'X' => [],
 		'X2' => [],
@@ -159,6 +166,10 @@ if (isset($arResult['ITEM']))
 			? $item['DISPLAY_PROPERTIES'][$arParams['BRAND_PROPERTY']]['DISPLAY_VALUE']
 			: null
 		),
+		'MESS' => [
+			'GALLERY_DOT_ARIA' => Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_DOT_ARIA'),
+			'SKU_SELECTED_ARIA' => Loc::getMessage('CT_BCI_TPL_MESS_SKU_SELECTED_ARIA'),
+		],
 		'VISUAL' => [
 			'ID' => $itemIds['ID'],
 			'NAME' => $itemIds['NAME'],
@@ -190,6 +201,7 @@ if (isset($arResult['ITEM']))
 			'MORE_PHOTO' => $item['MORE_PHOTO'],
 			'MORE_PHOTO_COUNT' => $item['MORE_PHOTO_COUNT'],
 			'RESIZED_SLIDER' => $resizedSlider,
+			'ALT' => $sliderImageAlt,
 		],
 		'BASKET' => [
 			'ADD_PROPS' => $arParams['ADD_PROPERTIES_TO_BASKET'] === 'Y',

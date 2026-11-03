@@ -1,6 +1,7 @@
-import { ContactsInput } from './contacts-input';
 import { Loc, Validation } from 'main.core';
+
 import { PhoneValidator } from '../../phone-validator';
+import { ContactsInput } from './contacts-input';
 
 export class EmailOrPhoneInput extends ContactsInput
 {
@@ -15,12 +16,24 @@ export class EmailOrPhoneInput extends ContactsInput
 
 	isValidValue(value: string): boolean
 	{
-		return PhoneValidator.isValid(value) || (Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value));
+		return PhoneValidator.isValid(value)
+			|| (Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value))
+		;
 	}
 
 	getPlaceholder(): string
 	{
 		return Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
+	}
+
+	getType(): string
+	{
+		return 'text';
+	}
+
+	getAutocomplete(): ?string
+	{
+		return null;
 	}
 
 	getValidationErrorMessage(): string

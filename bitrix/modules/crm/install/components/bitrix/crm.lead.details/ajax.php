@@ -7,10 +7,13 @@ define('DisableEventsCheck', true);
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 use Bitrix\Crm;
+use Bitrix\Crm\Service\ClientRecentCategoryResolver;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Integration\Analytics\KanbanCreateOrigin;
 use Bitrix\Crm\Tracking;
 use Bitrix\Location;
 use Bitrix\Main;
+use Bitrix\Main\DI\ServiceLocator;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -206,6 +209,7 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $_POST[$fieldName];
 		}
 	}
+	\CCrmUserType::NormalizeMoneyFieldsForSave($fields, $fieldsInfo);
 	/** @global $USER_FIELD_MANAGER CUserTypeManager */
 	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmLead::USER_FIELD_ENTITY_ID, $fields, [
@@ -276,6 +280,10 @@ elseif($action === 'SAVE')
 	$createdEntities = [];
 	$updateEntityInfos = [];
 	$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::Lead);
+	$clientRecentCategory = ServiceLocator::getInstance()
+		->get(ClientRecentCategoryResolver::class)
+		->resolve(CCrmOwnerType::Lead, 'crm.lead.details')
+	;
 
 	$companyID = 0;
 	$companyEntity = new \CCrmCompany(false);
@@ -328,7 +336,7 @@ elseif($action === 'SAVE')
 		if($fields['COMPANY_ID'] > 0)
 		{
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
-				'crm.lead.details',
+				$clientRecentCategory,
 				'company',
 				[
 					[
@@ -428,7 +436,7 @@ elseif($action === 'SAVE')
 				];
 			}
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
-				'crm.lead.details',
+				$clientRecentCategory,
 				'contact',
 				$contactBindings
 			);
@@ -620,6 +628,28 @@ elseif($action === 'SAVE')
 					'ANALYTICS' => $analytics,
 					'eventId' => $eventId,
 				];
+				$originViewMode = is_string($viewMode)
+					? $viewMode
+					: \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES
+				;
+				if (KanbanCreateOrigin::verifyForSave(
+					$_POST['KANBAN_CREATE_ORIGIN'] ?? null,
+					$currentUserID,
+					\CCrmOwnerType::Lead,
+					0,
+					KanbanCreateOrigin::resolveColumnForSave(
+						$originViewMode,
+						(string)($fields['STATUS_ID'] ?? ''),
+						$params,
+					),
+					$isNew,
+					$isCopyMode,
+					!empty($params['CONVERSION_SOURCE']) || !empty($_POST['CONVERSION_SOURCE']),
+					$originViewMode,
+				))
+				{
+					$options['ITEM_OPTIONS']['KANBAN_CREATE_ORIGIN'] = true;
+				}
 
 				if(!$enableRequiredUserFieldCheck)
 				{
@@ -1002,6 +1032,35 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	$component->setEntityID($ID);
 	$component->initializeData();
+	$entityControllers = $component->prepareEntityControllers();
+	$hostColumnId = $_POST['HOST_COLUMN_FOR_QUICK_EDITOR_ID'] ?? null;
+	$originViewMode = $context['PARAMS']['VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES;
+	if (
+		$ID === 0
+		&& $isEmbedded
+		&& empty($params['LEAD_ID'])
+		&& empty($params['CONVERSION_SOURCE'])
+		&& is_string($hostColumnId)
+		&& $hostColumnId !== ''
+		&& ($context['STATUS_ID'] ?? null) === $hostColumnId
+		&& is_string($originViewMode)
+		&& KanbanCreateOrigin::isValidColumn(\CCrmOwnerType::Lead, 0, $hostColumnId, $originViewMode)
+	)
+	{
+		$origin = KanbanCreateOrigin::issue($currentUserID, \CCrmOwnerType::Lead, 0, $hostColumnId, $originViewMode);
+		if ($origin !== null)
+		{
+			$context['PARAMS']['VIEW_MODE'] = $originViewMode;
+			$context['PARAMS']['KANBAN_CREATE_COLUMN_ID'] = $hostColumnId;
+			$entityControllers = KanbanCreateOrigin::appendLegacyEditorController(
+				$entityControllers,
+				is_array($_POST['POST_FORM_ANALYTICS_DATA']['data'] ?? null)
+					? $_POST['POST_FORM_ANALYTICS_DATA']['data']
+					: [],
+				$origin,
+			);
+		}
+	}
 
 	$context['SKIP_PRODUCT_DATA'] = 'Y';
 	if(!isset($context['PARAMS']))
@@ -1047,10 +1106,12 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		$entityConfig = array($sectionConfig);
 	}
 
-	$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
-	if(isset($_POST['SCOPE']) && \Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($_POST['SCOPE']))
+	$scope = isset($_POST['SCOPE']) && is_string($_POST['SCOPE'])
+		? mb_strtoupper($_POST['SCOPE'])
+		: \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+	if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
 	{
-		$scope = $_POST['SCOPE'];
+		$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
 	}
 
 	$scopePrefix = '';
@@ -1108,6 +1169,8 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
+			'MODULE_ID' => 'crm',
+			'ENTITY_CONTROLLERS' => $entityControllers,
 			'COMPONENT_AJAX_DATA' => [
 				'POST_FORM_ANALYTICS' => $_POST['POST_FORM_ANALYTICS_DATA']['data'] ?? [],
 			],

@@ -241,7 +241,7 @@ body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-last{
 	color:#555;
 	background-color:transparent;
 }
-body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-delimiter{background:url(images/bx-calendar-toolbar-td-border.png) no-repeat left center;}
+body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-delimiter{background:url(images/bx-calendar-toolbar-td-border.webp) no-repeat left center;}
 body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-last{background:transparent;}
 body .bx-calendar-layout table.bx-calendar-toolbar .bx-indicator-off{display:inline-block;background-position:center center;}
 body .bx-calendar-layout table.bx-calendar-toolbar select{font:14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));color:#555;}
@@ -272,7 +272,7 @@ body .bx-calendar-layout ul.bx-calendar-view-switcher  li.bx-absence-current-vie
 	height:27px;
 	font:var(--ui-font-weight-bold) 14px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color:#555;
-	background:#bce4f2 url(images/bx-current-c.png) repeat-x left top;
+	background:#bce4f2 url(images/bx-current-c.webp) repeat-x left top;
 }
 body .bx-calendar-layout tbody td.bx-table-main{
 	border-collapse:separate;

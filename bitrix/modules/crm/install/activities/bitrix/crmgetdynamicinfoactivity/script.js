@@ -64,11 +64,39 @@
 					const robot = dialog.robot;
 					if (template && robot) {
 						template.onOpenMenu(event, robot);
+						this.addTemplateFields(event.getData().selector, template);
 					}
 				};
 			} else {
 				this.onOpenFilterFieldsMenu = event => this.addBPFields(event.getData().selector);
 			}
+		}
+		addTemplateFields(selector, template) {
+			const getSelectorProperties = properties => {
+				if (main_core.Type.isArray(properties)) {
+					return properties.map(property => ({
+						id: property.SystemExpression,
+						title: property.Name,
+						customData: {
+							field: property
+						}
+					}));
+				}
+				return [];
+			};
+			selector.addGroup('workflowParameters', {
+				id: 'workflowParameters',
+				title: main_core.Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
+				children: [{
+					id: 'parameters',
+					title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+					children: getSelectorProperties(template.getParameters())
+				}, {
+					id: 'variables',
+					title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+					children: getSelectorProperties(template.getVariables())
+				}]
+			});
 		}
 		addBPFields(selector) {
 			const getSelectorProperties = ({

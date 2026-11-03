@@ -2,5 +2,9 @@
 	margin: 20px;
 	padding: 15px;
 	border-radius: 10px;
-	background: #fff;
+	background: var(--ui-color-bg-content-primary);
+}
+
+.ui-chip.tasks-field-comment-files-chip:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }

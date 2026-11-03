@@ -7,14 +7,25 @@
 .mail-compose-schedule
 {
 	display: flex;
+	/* the two columns stand side by side, the refusal of the chosen moment wraps under both of them */
+	flex-wrap: wrap;
 	gap: var(--ui-space-inline-md);
+	min-width: 0;
+}
+
+/* the calendar and the button that confirms the moment picked in it belong to one column */
+.mail-compose-schedule__date
+{
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
 	min-width: 0;
 }
 
 .mail-compose-schedule__calendar
 {
 	display: flex;
-	flex: 1 1 auto;
 	min-width: 0;
 }
 
@@ -26,4 +37,9 @@
 	flex-direction: column;
 	gap: var(--ui-space-stack-xs);
 	min-width: 0;
+}
+
+.mail-compose-schedule__error
+{
+	flex: 1 0 100%;
 }

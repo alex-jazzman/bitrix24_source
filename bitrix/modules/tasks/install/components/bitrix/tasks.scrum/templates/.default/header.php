@@ -18,8 +18,10 @@ use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Kanban\Sort\Item\MenuItem;
 use Bitrix\Tasks\Kanban\Sort\Menu;
+use Bitrix\Tasks\Promotion\ConsultationButton;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\Feedback\FeedbackSource;
 use Bitrix\UI\Buttons;
 
 Extension::load([
@@ -57,6 +59,7 @@ if (Loader::includeModule('disk'))
 	Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
 
 	Extension::load([
+		'disk.disk-picker',
 		'file_dialog',
 		'mobile_uploader',
 		'disk.document',
@@ -73,7 +76,9 @@ $viewName = $this->getComponent()->getTemplatePage();
 $messages = Loc::loadLanguageFile(__FILE__);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
-$feedbackParams = Json::encode(Container::getInstance()->getFeedbackService()->getParams());
+$feedbackParams = Json::encode(Container::getInstance()->getFeedbackService()->getParams(FeedbackSource::PROJECTS));
+
+$showConsultationAha = $isBitrix24Template && (new ConsultationButton())->shouldShow((int)($arParams['USER_ID'] ?? 0));
 
 /** @var Filter $filterInstance */
 $filterInstance = $arResult['filterInstance'];
@@ -128,7 +133,11 @@ switch ($viewName)
 			->setOrder(MenuItem::SORT_DESC)
 			->setClassName($order === MenuItem::SORT_DESC ? $styleAccepted : $styleNone)
 			->setHtml(
-				'<span data-id=\'kanban-sort-desc\'>' . Loc::getMessage('TASKS_KANBAN_SORT_DESC') . '</span>'
+				'<span data-id=\'kanban-sort-desc\' data-testid=\'tasks-kanban-sort-new-desc\' aria-label=\''
+				. htmlspecialcharsbx(Loc::getMessage('TASKS_KANBAN_A11Y_SORT_NEW_DESC'), ENT_QUOTES)
+				. '\'>'
+				. Loc::getMessage('TASKS_KANBAN_SORT_DESC')
+				. '</span>'
 			);
 
 		$sortAsc = (new MenuItem())
@@ -137,14 +146,20 @@ switch ($viewName)
 			->setOrder(MenuItem::SORT_ASC)
 			->setClassName($order === MenuItem::SORT_ASC ? $styleAccepted : $styleNone)
 			->setHtml(
-				'<span data-id=\'kanban-sort-asc\'>' . Loc::getMessage('TASKS_KANBAN_SORT_ASC') . '</span>'
+				'<span data-id=\'kanban-sort-asc\' data-testid=\'tasks-kanban-sort-new-asc\' aria-label=\''
+				. htmlspecialcharsbx(Loc::getMessage('TASKS_KANBAN_A11Y_SORT_NEW_ASC'), ENT_QUOTES)
+				. '\'>'
+				. Loc::getMessage('TASKS_KANBAN_SORT_ASC')
+				. '</span>'
 			);
 
 		$tasksTitle = (new MenuItem())
 			->setType(MenuItem::TYPE_SUB)
+			->setFocusable(false)
 			->setHtml('<b>' . Loc::getMessage('TASKS_KANBAN_NEW_TASKS_SORT_TITLE') . '</b>');
 
 		$sortTitle = (new MenuItem())
+			->setFocusable(false)
 			->setHtml('<b>' . Loc::getMessage('TASKS_KANBAN_SORT_TITLE') . '</b>');
 
 		$sortActual = (new MenuItem())
@@ -268,3 +283,14 @@ if ($isBitrix24Template)
 	$this->EndViewTarget();
 }
 ?>
+
+<?php if ($showConsultationAha): ?>
+<script>
+	BX.ready(function()
+	{
+		BX.Runtime.loadExtension('tasks.v2.component.onboarding.consultation-button').then((exports) => {
+			exports.ConsultationButton.show();
+		});
+	});
+</script>
+<?php endif; ?>

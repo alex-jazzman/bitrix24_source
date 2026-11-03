@@ -1,130 +1,110 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events,biconnector_dashboardParametersSelector,biconnector_apacheSupersetAnalytics,ui_buttons) {
+(function (main_core, main_core_events, biconnector_dashboardParametersSelector, biconnector_apacheSupersetAnalytics, biconnector_errorMessage, ui_buttons) {
 	'use strict';
 
-	var _templateObject, _templateObject2;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _props = /*#__PURE__*/new WeakMap();
-	var _node = /*#__PURE__*/new WeakMap();
-	var _paramsSelector = /*#__PURE__*/new WeakMap();
-	var _saveButton = /*#__PURE__*/new WeakMap();
-	var _render = /*#__PURE__*/new WeakSet();
-	var _getMainContent = /*#__PURE__*/new WeakSet();
-	var _getTopBlock = /*#__PURE__*/new WeakSet();
-	var _onParamSelectorInit = /*#__PURE__*/new WeakSet();
-	var _onSelectorChange = /*#__PURE__*/new WeakSet();
 	/**
 	 * @namespace BX.BIConnector
 	 */
-	var SupersetDashboardCreateManager = /*#__PURE__*/function () {
-	  function SupersetDashboardCreateManager(props) {
-	    babelHelpers.classCallCheck(this, SupersetDashboardCreateManager);
-	    _classPrivateMethodInitSpec(this, _onSelectorChange);
-	    _classPrivateMethodInitSpec(this, _onParamSelectorInit);
-	    _classPrivateMethodInitSpec(this, _getTopBlock);
-	    _classPrivateMethodInitSpec(this, _getMainContent);
-	    _classPrivateMethodInitSpec(this, _render);
-	    _classPrivateFieldInitSpec(this, _props, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _node, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _paramsSelector, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _saveButton, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _props, props);
-	    babelHelpers.classPrivateFieldSet(this, _node, document.querySelector("#".concat(babelHelpers.classPrivateFieldGet(this, _props).nodeId)));
-	    _classPrivateMethodGet(this, _render, _render2).call(this);
-	    babelHelpers.classPrivateFieldSet(this, _saveButton, ui_buttons.ButtonManager.createFromNode(document.querySelector('#dashboard-button-save')));
-	    babelHelpers.classPrivateFieldGet(this, _saveButton).setDisabled(true);
-	    main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:initCompleted', _classPrivateMethodGet(this, _onParamSelectorInit, _onParamSelectorInit2).bind(this));
-	    main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onChange', _classPrivateMethodGet(this, _onSelectorChange, _onSelectorChange2).bind(this));
-	  }
-	  babelHelpers.createClass(SupersetDashboardCreateManager, [{
-	    key: "onClickSave",
-	    // noinspection JSUnusedGlobalSymbols
-	    value: function onClickSave() {
-	      var _this = this;
-	      var titleField = document.querySelector('#dashboard-title-field');
-	      var saveData = {
-	        title: titleField.value
-	      };
-	      var selectorData = babelHelpers.classPrivateFieldGet(this, _paramsSelector).getValues();
-	      saveData.groups = babelHelpers.toConsumableArray(selectorData.groups);
-	      saveData.scopes = babelHelpers.toConsumableArray(selectorData.scopes);
-	      saveData.params = babelHelpers.toConsumableArray(selectorData.params);
-	      babelHelpers.classPrivateFieldGet(this, _saveButton).setWaiting(true);
-	      main_core.ajax.runComponentAction(babelHelpers.classPrivateFieldGet(this, _props).componentName, 'save', {
-	        mode: 'class',
-	        signedParameters: babelHelpers.classPrivateFieldGet(this, _props).signedParameters,
-	        data: {
-	          data: saveData
-	        }
-	      }).then(function (response) {
-	        var _window$open;
-	        biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('new', 'report_new', {
-	          type: 'custom',
-	          c_element: 'new_button'
-	        });
-	        (_window$open = window.open(response.data.dashboard.detailUrl, '_blank')) === null || _window$open === void 0 ? void 0 : _window$open.focus();
-	        parent.BX.Event.EventEmitter.emit('BIConnector.CreateForm:onDashboardCreated', {
-	          dashboard: response.data.dashboard
-	        });
-	        BX.SidePanel.Instance.getTopSlider().close();
-	      })["catch"](function (response) {
-	        BX.UI.Notification.Center.notify({
-	          content: response.errors[0].message
-	        });
-	        babelHelpers.classPrivateFieldGet(_this, _saveButton).setWaiting(false);
-	      });
-	    }
-	  }]);
-	  return SupersetDashboardCreateManager;
-	}();
-	function _render2() {
-	  main_core.Dom.append(_classPrivateMethodGet(this, _getTopBlock, _getTopBlock2).call(this), babelHelpers.classPrivateFieldGet(this, _node));
-	  main_core.Dom.append(_classPrivateMethodGet(this, _getMainContent, _getMainContent2).call(this), babelHelpers.classPrivateFieldGet(this, _node));
-	  babelHelpers.classPrivateFieldSet(this, _paramsSelector, new biconnector_dashboardParametersSelector.DashboardParametersSelector({
-	    groups: new Set(),
-	    scopes: new Set(),
-	    params: new Set(),
-	    paramList: babelHelpers.classPrivateFieldGet(this, _props).paramList,
-	    activeUrlParamsSelector: babelHelpers.classPrivateFieldGet(this, _props).activeUrlParamsSelector,
-	    isNewDashboard: true,
-	    requiredParamList: babelHelpers.classPrivateFieldGet(this, _props).requiredParamList,
-	    isNew: true
-	  }));
-	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _paramsSelector).getLayout(), babelHelpers.classPrivateFieldGet(this, _node));
-	}
-	function _getMainContent2() {
-	  return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"dashboard-params-title-container\">\n\t\t\t\t\t<div class=\"dashboard-params-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100 dashboard-title-wrapper\">\n\t\t\t\t\t<input type=\"text\" class=\"ui-ctl-element\" id=\"dashboard-title-field\" value=\"", "\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('DASHBOARD_CREATE_NAME'), babelHelpers.classPrivateFieldGet(this, _props).defaultValues.title);
-	}
-	function _getTopBlock2() {
-	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-create-top-block\">\n\t\t\t\t<div class=\"dashboard-create-top-block-image\"></div>\n\t\t\t\t<div class=\"dashboard-create-top-block-text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('DASHBOARD_CREATE_TOP_BLOCK'));
-	}
-	function _onParamSelectorInit2() {
-	  babelHelpers.classPrivateFieldGet(this, _paramsSelector).selectGroups(babelHelpers.classPrivateFieldGet(this, _props).groupIds);
-	  var isDisabled = babelHelpers.classPrivateFieldGet(this, _props).groupIds.length <= 0;
-	  babelHelpers.classPrivateFieldGet(this, _saveButton).setDisabled(isDisabled);
-	}
-	function _onSelectorChange2() {
-	  var _selectorData$groups$, _selectorData$groups;
-	  var selectorData = babelHelpers.classPrivateFieldGet(this, _paramsSelector).getValues();
-	  var isDisabled = ((_selectorData$groups$ = selectorData === null || selectorData === void 0 ? void 0 : (_selectorData$groups = selectorData.groups) === null || _selectorData$groups === void 0 ? void 0 : _selectorData$groups.size) !== null && _selectorData$groups$ !== void 0 ? _selectorData$groups$ : 0) <= 0;
-	  babelHelpers.classPrivateFieldGet(this, _saveButton).setDisabled(isDisabled);
+	class SupersetDashboardCreateManager {
+		#props;
+		#node;
+		#paramsSelector;
+		#saveButton;
+		constructor(props) {
+			this.#props = props;
+			this.#node = document.querySelector(`#${this.#props.nodeId}`);
+			this.#render();
+			this.#saveButton = ui_buttons.ButtonManager.createFromNode(document.querySelector('#dashboard-button-save'));
+			this.#saveButton.setDisabled(true);
+			main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:initCompleted', this.#onParamSelectorInit.bind(this));
+			main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onChange', this.#onSelectorChange.bind(this));
+		}
+		#render() {
+			main_core.Dom.append(this.#getTopBlock(), this.#node);
+			main_core.Dom.append(this.#getMainContent(), this.#node);
+			this.#paramsSelector = new biconnector_dashboardParametersSelector.DashboardParametersSelector({
+				groups: new Set(),
+				scopes: new Set(),
+				params: new Set(),
+				paramList: this.#props.paramList,
+				activeUrlParamsSelector: this.#props.activeUrlParamsSelector,
+				isNewDashboard: true,
+				requiredParamList: this.#props.requiredParamList,
+				isNew: true
+			});
+			main_core.Dom.append(this.#paramsSelector.getLayout(), this.#node);
+		}
+		#getMainContent() {
+			return main_core.Tag.render`
+			<div>
+				<div class="dashboard-params-title-container">
+					<div class="dashboard-params-title">
+						${main_core.Loc.getMessage('DASHBOARD_CREATE_NAME')}
+					</div>
+				</div>
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100 dashboard-title-wrapper">
+					<input type="text" class="ui-ctl-element" id="dashboard-title-field" value="${this.#props.defaultValues.title}">
+				</div>
+			</div>
+		`;
+		}
+		#getTopBlock() {
+			return main_core.Tag.render`
+			<div class="dashboard-create-top-block">
+				<div class="dashboard-create-top-block-image"></div>
+				<div class="dashboard-create-top-block-text">
+					${main_core.Loc.getMessage('DASHBOARD_CREATE_TOP_BLOCK')}
+				</div>
+			</div>
+		`;
+		}
+		#onParamSelectorInit() {
+			this.#paramsSelector.selectGroups(this.#props.groupIds);
+			const isDisabled = this.#props.groupIds.length <= 0;
+			this.#saveButton.setDisabled(isDisabled);
+		}
+		#onSelectorChange() {
+			const selectorData = this.#paramsSelector.getValues();
+			const isDisabled = (selectorData?.groups?.size ?? 0) <= 0;
+			this.#saveButton.setDisabled(isDisabled);
+		}
+
+		// noinspection JSUnusedGlobalSymbols
+		onClickSave() {
+			const titleField = document.querySelector('#dashboard-title-field');
+			const saveData = {
+				title: titleField.value
+			};
+			const selectorData = this.#paramsSelector.getValues();
+			saveData.groups = [...selectorData.groups];
+			saveData.scopes = [...selectorData.scopes];
+			saveData.params = [...selectorData.params];
+			this.#saveButton.setWaiting(true);
+			main_core.ajax.runComponentAction(this.#props.componentName, 'save', {
+				mode: 'class',
+				signedParameters: this.#props.signedParameters,
+				data: {
+					data: saveData
+				}
+			}).then(response => {
+				biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('new', 'report_new', {
+					type: 'custom',
+					c_element: 'new_button'
+				});
+				window.open(response.data.dashboard.detailUrl, '_blank')?.focus();
+				parent.BX.Event.EventEmitter.emit('BIConnector.CreateForm:onDashboardCreated', {
+					dashboard: response.data.dashboard
+				});
+				BX.SidePanel.Instance.getTopSlider().close();
+			}).catch(response => {
+				BX.UI.Notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('DASHBOARD_CREATE_SAVE_ERROR'))
+				});
+				this.#saveButton.setWaiting(false);
+			});
+		}
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardCreateManager = SupersetDashboardCreateManager;
 
-}((this.window = this.window || {}),BX,BX.Event,BX.BIConnector,BX.BIConnector,BX.UI));
+})(BX, BX.Event, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI);
 //# sourceMappingURL=script.js.map

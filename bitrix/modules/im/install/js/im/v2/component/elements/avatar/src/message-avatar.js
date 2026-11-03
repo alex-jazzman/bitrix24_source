@@ -2,9 +2,11 @@ import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import { UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelUser } from 'im.v2.model';
 
 import { MartaAvatar } from './components/marta-avatar';
+import { LegacyAvatar } from './components/base/legacy-avatar';
 import { Avatar } from './components/base/avatar';
 import { CollaberAvatar } from './components/collab/collaber';
 import { CopilotAvatar } from './components/copilot/copilot';
@@ -63,6 +65,14 @@ export const MessageAvatar = {
 		{
 			return this.$store.getters['users/get'](this.authorId, true);
 		},
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		defaultAvatarComponent(): BitrixVueComponentProps
+		{
+			return this.isAirDesignEnabled ? Avatar : LegacyAvatar;
+		},
 		avatarComponent(): BitrixVueComponentProps
 		{
 			const avatarMap = {
@@ -72,7 +82,7 @@ export const MessageAvatar = {
 				[UserType.bot]: this.getBotAvatar(),
 			};
 
-			return avatarMap[this.user.type] ?? Avatar;
+			return avatarMap[this.user.type] ?? this.defaultAvatarComponent;
 		},
 		isAiAssistantMarta(): boolean
 		{
@@ -90,7 +100,7 @@ export const MessageAvatar = {
 
 			const copilotManager = new CopilotManager();
 
-			return copilotManager.isCopilotChatOrBot(this.authorId) ? CopilotAvatar : Avatar;
+			return copilotManager.isCopilotChatOrBot(this.authorId) ? CopilotAvatar : this.defaultAvatarComponent;
 		},
 	},
 	template: `

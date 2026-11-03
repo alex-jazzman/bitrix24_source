@@ -24,6 +24,11 @@ $toolbarButtons = array(
 			array($arResult['ENTITY_TYPE_ID']),
 			$arResult['PRESET_LIST_URL']
 		),
+		'LINK_PARAM' => 'data-testid="crm-config-preset-ufields-back-btn"'
+			. (($arParams['IS_SETTINGS_HUB'] ?? false) === true
+				? ' data-slider-ignore-autobinding="true" target="_self"'
+				: ''
+			),
 		'ICON'=>'btn-view-elements'
 	)
 );

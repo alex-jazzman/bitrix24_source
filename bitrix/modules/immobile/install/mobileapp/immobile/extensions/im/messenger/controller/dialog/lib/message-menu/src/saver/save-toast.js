@@ -7,6 +7,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast'
 	const { FileDownloadType } = require('im/messenger/const');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
+	/**
+	 * What the saved set of files is. The phrase of the toast follows the files the action really
+	 * saves, block files included, and not the attachments of the message.
+	 */
+	const SavedFilesKind = Object.freeze({
+		mediaGallery: 'mediaGallery',
+		fileGallery: 'fileGallery',
+		image: 'image',
+		video: 'video',
+		default: 'default',
+	});
+
 	const phrasesSuccess = {
 		mediaGallery: {
 			[FileDownloadType.disk]: 'IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_FILES_TO_DISK_SUCCESS',
@@ -30,52 +42,31 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast'
 		},
 	};
 
+	const iconsSuccess = {
+		mediaGallery: Icon.IMAGE,
+		image: Icon.IMAGE,
+		video: Icon.IMAGE,
+	};
+
 	const phrasesFailure = {
 		[FileDownloadType.disk]: 'IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK_FAILURE',
 		[FileDownloadType.device]: 'IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DEVICE_FAILURE',
 	};
 
 	/**
-	 * @param {MessageHelper} messageHelper
-	 * @param view
+	 * @param {string} [kind] one of SavedFilesKind
+	 * @param parentWidget
 	 * @param {'DEVICE' | 'DISK'} to
 	 */
-	function showSuccessSaveToast({ messageHelper, parentWidget, to = FileDownloadType.device })
+	function showSuccessSaveToast({ kind = SavedFilesKind.default, parentWidget, to = FileDownloadType.device })
 	{
 		const defaultIcon = to === FileDownloadType.disk ? Icon.FOLDER_SUCCESS : Icon.DOWNLOAD;
-		const defaultMessageCode = phrasesSuccess.default[to];
-
-		let icon = defaultIcon;
-		let messageCode = defaultMessageCode;
-
-		if (messageHelper.isMediaGallery)
-		{
-			messageCode = phrasesSuccess.mediaGallery[to];
-			icon = Icon.IMAGE;
-		}
-		else if (messageHelper.isFileGallery)
-		{
-			messageCode = phrasesSuccess.fileGallery[to];
-			if (to === FileDownloadType.disk)
-			{
-				icon = Icon.FOLDER_SUCCESS;
-			}
-		}
-		else if (messageHelper.isImage)
-		{
-			messageCode = phrasesSuccess.image[to];
-			icon = Icon.IMAGE;
-		}
-		else if (messageHelper.isVideo)
-		{
-			messageCode = phrasesSuccess.video[to];
-			icon = Icon.IMAGE;
-		}
+		const phrases = phrasesSuccess[kind] ?? phrasesSuccess.default;
 
 		Notification.showToastWithParams(
 			{
-				icon,
-				message: Loc.getMessage(messageCode),
+				icon: iconsSuccess[kind] ?? defaultIcon,
+				message: Loc.getMessage(phrases[to]),
 			},
 			parentWidget,
 		);
@@ -96,6 +87,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast'
 	}
 
 	module.exports = {
+		SavedFilesKind,
 		showSaveFailureToast,
 		showSuccessSaveToast,
 	};

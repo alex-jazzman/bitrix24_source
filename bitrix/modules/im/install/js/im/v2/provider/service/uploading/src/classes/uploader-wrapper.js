@@ -136,6 +136,19 @@ export class UploaderWrapper extends EventEmitter
 		return this.#uploader.addFiles(filesEntries);
 	}
 
+	addDiskFiles(items: Array<{ id: string, name: string, customData?: { [key: string]: any } }>): Array<UploaderFile>
+	{
+		return items
+			.map((item) => {
+				return this.#uploader.addFile(item.id, {
+					name: item.name,
+					preload: true,
+					customData: item.customData ?? {},
+				});
+			})
+			.filter(Boolean);
+	}
+
 	removeFile(fileId: string)
 	{
 		this.#uploader.getFile(fileId)?.remove?.();
@@ -157,6 +170,18 @@ export class UploaderWrapper extends EventEmitter
 	{
 		return this.getFiles().every((currentFile: UploaderFile) => {
 			return currentFile.getStatus() === UploaderFileStatus.PENDING;
+		});
+	}
+
+	isAllLoadSettled(): boolean
+	{
+		return this.getFiles().every((currentFile: UploaderFile) => {
+			const status = currentFile.getStatus();
+
+			return status === UploaderFileStatus.PENDING
+				|| status === UploaderFileStatus.COMPLETE
+				|| status === UploaderFileStatus.LOAD_FAILED
+				|| status === UploaderFileStatus.UPLOAD_FAILED;
 		});
 	}
 
@@ -192,8 +217,12 @@ export class UploaderWrapper extends EventEmitter
 		this.#uploader.stop();
 	}
 
-	destroy()
+	// The files uploaded by this holder keep their copies in the chat folder unless the caller says
+	// otherwise: by the time a holder is destroyed they are usually part of a message already.
+	destroy(options: { removeFilesFromServer?: boolean } = {})
 	{
-		this.#uploader.destroy({ removeFilesFromServer: false });
+		const { removeFilesFromServer = false } = options;
+
+		this.#uploader.destroy({ removeFilesFromServer });
 	}
 }

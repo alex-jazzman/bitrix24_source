@@ -39,6 +39,13 @@ $document = [
 	'Default' => $documentType,
 ];
 
+if (!class_exists('CBPTasksExpiredTrigger'))
+{
+	\CBPRuntime::getRuntime()->includeActivityFile('tasksexpiredtrigger');
+}
+
+$taskStatusOptions = class_exists('CBPTasksExpiredTrigger') ? CBPTasksExpiredTrigger::getTaskStatusOptions() : [];
+
 $arActivityDescription =
 	(new ActivityDescription(
 		(string)Loc::getMessage('TASKS_EXPIRED_NAME'),
@@ -64,12 +71,21 @@ $arActivityDescription =
 				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_CREATED_DATE'),
 				'Type' => FieldType::DATETIME
 			],
+			'TASK_STATUS' => [
+				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_STATUS'),
+				'Type' => FieldType::SELECT,
+				'Options' => $taskStatusOptions,
+			],
+			'TASK_DEADLINE' => [
+				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_DEADLINE'),
+				'Type' => FieldType::DATETIME,
+			],
 			'TASK_RESPONSIBLE' => [
 				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_RESPONSIBLE'),
 				'Type' => FieldType::USER
 			],
 			'TASK_URL' => [
-				'Name' => Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_URL'),
+				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_URL'),
 				'Type' => FieldType::STRING,
 			],
 			'ReturnDocument' => $document,

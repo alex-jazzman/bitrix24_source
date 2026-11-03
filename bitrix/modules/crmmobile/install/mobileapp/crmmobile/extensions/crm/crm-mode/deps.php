@@ -3,20 +3,20 @@
 return [
 	'extensions' => [
 		'require-lazy',
+		'apptheme',
+		'haptics',
+		'layout/ui/wizard/backdrop',
 		'loc',
 		'notify',
-		'haptics',
-		'apptheme',
+		'notify-manager',
+		'rest',
+		'statemanager/redux/store',
+		'tokens',
 		'utils/color',
 		'utils/string',
-		'notify-manager',
-		'layout/ui/wizard/backdrop',
-		'statemanager/redux/store',
-
-		'crm:type',
 		'crm:conversion/utils',
 		'crm:crm-mode/wizard/steps',
 		'crm:statemanager/redux/slices/kanban-settings',
-		'rest',
+		'crm:type',
 	],
 ];

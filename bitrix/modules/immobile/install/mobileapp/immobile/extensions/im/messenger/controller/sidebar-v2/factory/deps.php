@@ -1,9 +1,8 @@
 <?php
 
 return [
-    'extensions' => [
+	'extensions' => [
 		'require-lazy',
 		'im:messenger/lib/helper',
-    ],
-    'bundle' => [],
+	],
 ];

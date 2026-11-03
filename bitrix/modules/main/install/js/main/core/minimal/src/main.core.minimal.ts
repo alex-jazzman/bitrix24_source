@@ -15,6 +15,7 @@ import BaseError from '../../src/lib/base-error';
 import ZIndexManager from '../../src/lib/z-index/z-index-manager';
 import Extension from '../../src/lib/extension/extension';
 import Collections from '../../src/lib/collections';
+import { Animation } from '../../src/lib/animation/animation';
 import { Easing } from '../../src/lib/animation/easing';
 import { LocalStorage, localStorage } from '../../src/lib/local-storage';
 import { Page } from '../../src/lib/page';
@@ -37,6 +38,7 @@ export {
 	ZIndexManager,
 	Extension,
 	Collections,
+	Animation,
 	Easing,
 	LocalStorage,
 	localStorage,

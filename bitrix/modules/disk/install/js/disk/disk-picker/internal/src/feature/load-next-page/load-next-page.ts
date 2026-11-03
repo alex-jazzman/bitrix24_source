@@ -144,7 +144,8 @@ export function loadNextPage(deps: NextPageDeps): Promise<void>
 	const item = useItemStore();
 
 	if (
-		!session.hasMore
+		session.navigationPending
+		|| !session.hasMore
 		|| session.loadingMore
 		|| session.paginationStalled
 		|| (session.stageType === StageType.Sources && !isSearchActive(session))

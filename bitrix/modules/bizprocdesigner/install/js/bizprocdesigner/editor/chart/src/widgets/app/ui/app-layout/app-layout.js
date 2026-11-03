@@ -5,12 +5,19 @@ import {
 } from '../../../../entities/app';
 import { useCatalogStore } from '../../../../entities/catalog';
 import { useDataViewDefinitionStore } from '../../../../features/data-view-editor';
+import { useProcessDataStore } from '../../../../features/process-data';
 
 // @vue/component
 export const AppLayout = {
 	name: 'AppLayoutWidget',
 	components: {
 		AppLayoutEntity,
+	},
+	props: {
+		hideWorkspacePanels: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed: {
 		...mapState(useAppStore, [
@@ -25,15 +32,20 @@ export const AppLayout = {
 		...mapState(useDataViewDefinitionStore, {
 			isTableSettingsPanelShown: 'isOpen',
 		}),
+		...mapState(useProcessDataStore, {
+			isProcessDataPanelShown: 'isOpen',
+		}),
 	},
 	template: `
 		<AppLayoutEntity
-			:showSettings="isShownRightPanel"
-			:showPreviewPanel="isShownPreviewPanel"
-			:showDebugBar="isShownDebugBar"
-			:catalogExpanded="isExpandedCatalog"
-			:isDataInspectorPanelShown="isDataInspectorPanelShown"
-			:isTableSettingsPanelShown="isTableSettingsPanelShown"
+			:showSettings="!hideWorkspacePanels && isShownRightPanel"
+			:showPreviewPanel="!hideWorkspacePanels && isShownPreviewPanel"
+			:showDebugBar="!hideWorkspacePanels && isShownDebugBar"
+			:catalogExpanded="!hideWorkspacePanels && isExpandedCatalog"
+			:isDataInspectorPanelShown="!hideWorkspacePanels && isDataInspectorPanelShown"
+			:isTableSettingsPanelShown="!hideWorkspacePanels && isTableSettingsPanelShown"
+			:isProcessDataPanelShown="!hideWorkspacePanels && isProcessDataPanelShown"
+			:mountWorkspacePanels="!hideWorkspacePanels"
 		>
 			<template #skeleton>
 				<slot name="skeleton" />
@@ -45,6 +57,10 @@ export const AppLayout = {
 
 			<template #diagram>
 				<slot name="diagram"/>
+			</template>
+
+			<template #notes-layer>
+				<slot name="notes-layer"/>
 			</template>
 
 			<template #catalog>
@@ -77,6 +93,10 @@ export const AppLayout = {
 
 			<template #settings-table-settings>
 				<slot name="settings-table-settings"/>
+			</template>
+
+			<template #settings-process-data>
+				<slot name="settings-process-data"/>
 			</template>
 
 		</AppLayoutEntity>

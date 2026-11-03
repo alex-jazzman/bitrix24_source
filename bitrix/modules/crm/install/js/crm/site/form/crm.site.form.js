@@ -23,7 +23,7 @@
 	function loadApp()
 	{
 		var min = b24form.common.properties.isResourcesMinified ? '.min' : '';
-		var time = Date.now() / (3600 * 24 * 1000) | 0;
+		var time = b24form.common.properties.appVersion || (Date.now() / (3600 * 24 * 1000) | 0);
 
 		var link = document.createElement('link');
 		link.type = 'text/css';

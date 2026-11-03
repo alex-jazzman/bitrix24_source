@@ -1,5 +1,6 @@
-import { HardwareManager } from 'call.lib.hardware'
+import { HardwareEvents, HardwareManager } from 'call.lib.hardware'
 import { NoiseSuppressionService } from './noiseSuppressionService';
+import { LOCAL_STREAM_QUALITY_HEIGHT } from './stream_quality';
 
 const lsKey = {
 	enableMicAutoParameters: 'bx-im-settings-enable-mic-auto-parameters',
@@ -7,11 +8,13 @@ const lsKey = {
 };
 
 const CallEvents = {
+	...HardwareEvents,
 	onChangeMirroringVideo: 'onChangeMirroringVideo',
 	onChangeMicrophoneMuted: 'onChangeMicrophoneMuted',
 	onChangeCameraOn: 'onChangeCameraOn',
 	onChangeMicrophonePermission: 'onChangeMicrophonePermission',
 	onChangeCameraPermission: 'onChangeCameraPermission',
+	onChangeMaxLocalStreamQualityHeight: 'onChangeMaxLocalStreamQualityHeight',
 };
 
 const CALL_HARDWARE_PERMISSIONS_STATE = Object.freeze({
@@ -22,14 +25,15 @@ const CALL_HARDWARE_PERMISSIONS_STATE = Object.freeze({
 
 class CallHardwareManager extends HardwareManager
 {
+	Events = CallEvents;
 	#noiseSuppression: NoiseSuppressionService;
+	#maxLocalStreamQualityHeight: number = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 	constructor()
 	{
 		super();
 
 		this._isCameraOn = false;
 		this._isMicrophoneMuted = false;
-		this.Events = Object.assign(this.Events, CallEvents);
 		this.#noiseSuppression = new NoiseSuppressionService();
 		this.CALL_HARDWARE_PERMISSIONS_STATE = CALL_HARDWARE_PERMISSIONS_STATE;
 	}
@@ -141,7 +145,15 @@ class CallHardwareManager extends HardwareManager
 			return stream;
 		}
 
-		return this.addNoiseSuppression(stream);
+		try
+		{
+			return await this.addNoiseSuppression(stream);
+		}
+		catch (error)
+		{
+			console.error('Call: noise suppression init failed, falling back to raw stream', error);
+			return stream;
+		}
 	}
 
 	async addNoiseSuppression(stream)
@@ -191,6 +203,20 @@ class CallHardwareManager extends HardwareManager
 	get noiseSuppressionOutputStream(): ?MediaStream
 	{
 		return this.#noiseSuppression.destination?.stream ?? null;
+	}
+
+	get maxLocalStreamQualityHeight(): number
+	{
+		return this.#maxLocalStreamQualityHeight;
+	}
+
+	set maxLocalStreamQualityHeight(value: number)
+	{
+		if (this.#maxLocalStreamQualityHeight !== value)
+		{
+			this.#maxLocalStreamQualityHeight = value;
+			this.emit(this.Events.onChangeMaxLocalStreamQualityHeight, { maxLocalStreamQualityHeight: value });
+		}
 	}
 
 	async checkPermissions()

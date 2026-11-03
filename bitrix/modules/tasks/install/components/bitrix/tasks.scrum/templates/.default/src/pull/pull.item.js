@@ -20,7 +20,8 @@ type Params = {
 	tagSearcher: TagSearcher,
 	itemMover: ItemMover,
 	currentUserId: number,
-	groupId: number
+	groupId: number,
+	requestPlacementResync: (force?: boolean) => void,
 }
 
 type PushParams = {
@@ -40,6 +41,7 @@ export class PullItem
 		this.itemMover = params.itemMover;
 		this.currentUserId = params.currentUserId;
 		this.groupId = params.groupId;
+		this.requestPlacementResync = params.requestPlacementResync;
 
 		this.listToAddAfterUpdate = new Set();
 
@@ -47,6 +49,8 @@ export class PullItem
 		this.listIdsToSkipUpdating = new Set();
 		this.listIdsToSkipRemoving = new Set();
 		this.listIdsToSkipSorting = new Set();
+		this.pendingHierarchyRequests = new Map();
+		this.pendingParentDataRequests = new Map();
 
 		this.itemMover.subscribe('calculateSort', this.onCalculateSort.bind(this));
 	}
@@ -62,9 +66,18 @@ export class PullItem
 			itemAdded: this.onItemAdded.bind(this),
 			itemUpdated: this.onItemUpdated.bind(this),
 			itemRemoved: this.onItemRemoved.bind(this),
+			itemPlacementChanged: this.onPlacementChanged.bind(this),
 			itemSortUpdated: this.onItemSortUpdated.bind(this),
 			comment_add: this.onCommentAdd.bind(this)
 		};
+	}
+
+	onPlacementChanged(params: PushParams): void
+	{
+		if (this.groupId === params.groupId)
+		{
+			this.requestPlacementResync();
+		}
 	}
 
 	onItemAdded(params: PushParams)
@@ -74,15 +87,27 @@ export class PullItem
 			return;
 		}
 
+		this.invalidatePendingHierarchyRequest(params.id);
+		const parentRequest = this.beginParentDataRequest(params.id);
 		this.setDelayedAdd(params.id);
 
 		this.externalAdd(params.id)
 			.finally(() => this.cleanDelayedAdd(params.id))
 			.then(() => {
-				this.requestSender.getItemData({
+				if (!this.isCurrentParentDataRequest(params.id, parentRequest))
+				{
+					return;
+				}
+
+				return this.requestSender.getItemData({
 					itemIds: [params.id]
 				})
 					.then((response) => {
+						if (!this.isCurrentParentDataRequest(params.id, parentRequest))
+						{
+							return;
+						}
+
 						const itemData = response.data
 							.find((itemData: ItemParams) => itemData.id === params.id)
 						;
@@ -93,6 +118,7 @@ export class PullItem
 				;
 			})
 			.catch(() => {})
+			.finally(() => this.finishParentDataRequest(params.id, parentRequest))
 		;
 	}
 
@@ -103,10 +129,17 @@ export class PullItem
 			return;
 		}
 
+		this.invalidatePendingHierarchyRequest(params.id);
+		const parentRequest = this.beginParentDataRequest(params.id);
 		this.requestSender.getItemData({
 			itemIds: [params.id]
 		})
 			.then((response) => {
+				if (!this.isCurrentParentDataRequest(params.id, parentRequest))
+				{
+					return;
+				}
+
 				const itemData = response.data
 					.find((itemData: ItemParams) => itemData.id === params.id)
 				;
@@ -131,6 +164,7 @@ export class PullItem
 				if (this.needSkipUpdate(item))
 				{
 					this.cleanSkipUpdate(item);
+					this.reconcileVisibleSubTasks(item);
 
 					return;
 				}
@@ -138,6 +172,7 @@ export class PullItem
 				this.updateItem(item);
 			})
 			.catch((response) => {})
+			.finally(() => this.finishParentDataRequest(params.id, parentRequest))
 		;
 	}
 
@@ -148,6 +183,7 @@ export class PullItem
 			return;
 		}
 
+		this.invalidatePendingHierarchyRequest(params.id);
 		if (this.needSkipRemove(params.id))
 		{
 			this.cleanSkipRemove(params.id);
@@ -156,6 +192,7 @@ export class PullItem
 		}
 
 		const item = this.entityStorage.findItemByItemId(params.id);
+		const wasParentTask = item?.isParentTask() ?? false;
 		if (item)
 		{
 			const entity = this.entityStorage.findEntityByItemId(item.getId());
@@ -164,6 +201,7 @@ export class PullItem
 
 			this.updateEntityCounters(entity);
 		}
+		this.requestPlacementResync(wasParentTask);
 	}
 
 	onItemSortUpdated(itemsSortInfo: ItemsSortInfo)
@@ -183,21 +221,40 @@ export class PullItem
 			return;
 		}
 
+		this.pendingSortHierarchyBatches = this.pendingSortHierarchyBatches || new Set();
+		const parentRequests = new Map();
+		itemsInfoToSort.forEach((info, itemId) => {
+			this.invalidatePendingHierarchyRequest(itemId);
+			parentRequests.set(itemId, this.beginParentDataRequest(itemId));
+		});
+		const batch = { invalidatedItemIds: new Set() };
+		this.pendingSortHierarchyBatches.add(batch);
+
 		this.requestSender.getItemData({
 			itemIds: [...itemsInfoToSort.keys()]
 		})
 			.then((response) => {
 				const itemsToSort = new Map();
+				const freshItems = new Map();
 				const newItems = new Set();
 				response.data
 					.forEach((itemData: ItemParams) => {
+						if (
+							batch.invalidatedItemIds.has(String(itemData.id))
+							|| !this.isCurrentParentDataRequest(itemData.id, parentRequests.get(itemData.id))
+						)
+						{
+							return;
+						}
+						const freshItem = Item.buildItem(itemData);
 						let item = this.entityStorage.findItemByItemId(itemData.id);
 						if (!item)
 						{
-							item = Item.buildItem(itemData);
+							item = freshItem;
 							newItems.add(item.getId());
 						}
 						itemsToSort.set(item.getId(), item);
+						freshItems.set(item.getId(), freshItem);
 					})
 				;
 				itemsToSort.forEach((item: Item) => {
@@ -223,9 +280,22 @@ export class PullItem
 						}
 						this.itemMover.moveToPosition(sourceEntity, targetEntity, item);
 					}
+
+					const freshItem = freshItems.get(item.getId());
+					if (item !== freshItem && freshItem.getSubTasksInfo())
+					{
+						item.setSubTasksInfo(freshItem.getSubTasksInfo());
+						item.setParentTask(freshItem.isParentTask() ? 'Y' : 'N');
+					}
 				});
+
+				return this.reconcileVisibleSubTasksBatch([...freshItems.values()], batch);
 			})
 			.catch((response) => {})
+			.finally(() => {
+				this.pendingSortHierarchyBatches.delete(batch);
+				parentRequests.forEach((request, itemId) => this.finishParentDataRequest(itemId, request));
+			})
 		;
 	}
 
@@ -288,10 +358,13 @@ export class PullItem
 			const existingItem = this.entityStorage.findItemBySourceId(item.getSourceId());
 			if (existingItem)
 			{
+				this.updateItem(item, existingItem);
+
 				return;
 			}
 
 			this.itemMover.moveToPosition(entity, entity, item);
+			this.reconcileVisibleSubTasks(item);
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -337,6 +410,11 @@ export class PullItem
 			}
 
 			item.updateYourself(tmpItem);
+			if (tmpItem.getSubTasksInfo())
+			{
+				item.setSubTasksInfo(tmpItem.getSubTasksInfo());
+			}
+			this.reconcileVisibleSubTasks(tmpItem);
 		}
 		else
 		{
@@ -352,6 +430,342 @@ export class PullItem
 				this.addItemToEntity(tmpItem);
 			}
 		}
+	}
+
+	beginParentDataRequest(itemId: number)
+	{
+		const request = {};
+		this.pendingParentDataRequests.set(String(itemId), request);
+
+		return request;
+	}
+
+	isCurrentParentDataRequest(itemId: number, request): boolean
+	{
+		return this.pendingParentDataRequests.get(String(itemId)) === request;
+	}
+
+	finishParentDataRequest(itemId: number, request)
+	{
+		if (this.isCurrentParentDataRequest(itemId, request))
+		{
+			this.pendingParentDataRequests.delete(String(itemId));
+		}
+	}
+
+	invalidatePendingHierarchyRequest(itemId: number)
+	{
+		this.pendingParentDataRequests.delete(String(itemId));
+
+		if (this.pendingSortHierarchyBatches)
+		{
+			this.pendingSortHierarchyBatches.forEach((batch) => {
+				batch.invalidatedItemIds.add(String(itemId));
+			});
+		}
+
+		this.pendingHierarchyRequests.forEach((request, parentItemId) => {
+			if (String(parentItemId) === String(itemId))
+			{
+				request.invalidated = true;
+				request.nextParentItem = null;
+			}
+			else if (request.itemIds.some((id) => String(id) === String(itemId)))
+			{
+				request.invalidated = true;
+			}
+		});
+	}
+
+	reconcileVisibleSubTasks(parentItem: Item)
+	{
+		const parentItemId = parentItem.getId();
+		const pendingRequest = this.pendingHierarchyRequests.get(parentItemId);
+		if (pendingRequest)
+		{
+			pendingRequest.invalidated = true;
+			pendingRequest.nextParentItem = parentItem;
+
+			return;
+		}
+
+		const visibleParent = this.entityStorage.findItemByItemId(parentItemId);
+		if (!visibleParent || visibleParent.getSourceId() !== parentItem.getSourceId())
+		{
+			return;
+		}
+		const parentEntity = this.entityStorage.findEntityByItemId(parentItemId);
+		if (!parentEntity || parentEntity.isCompleted())
+		{
+			return;
+		}
+
+		const subTasksInfo = parentItem.getSubTasksInfo();
+		if (!subTasksInfo)
+		{
+			return;
+		}
+		const childSourceIds = Object.keys(subTasksInfo);
+		if (childSourceIds.length === 0)
+		{
+			return;
+		}
+
+		const itemIds = this.entityStorage.findRootItemIdsBySourceIds(
+			new Set(childSourceIds)
+		);
+
+		if (itemIds.length === 0)
+		{
+			return;
+		}
+
+		const request = {
+			itemIds,
+			invalidated: false,
+			nextParentItem: parentItem,
+		};
+		this.pendingHierarchyRequests.set(parentItemId, request);
+
+		this.requestSender.getItemData({ itemIds })
+			.then((response) => {
+				if (request.invalidated)
+				{
+					return;
+				}
+
+				const currentParent = this.entityStorage.findItemByItemId(parentItemId);
+				if (!currentParent || currentParent.getSourceId() !== parentItem.getSourceId())
+				{
+					return;
+				}
+				const currentParentEntity = this.entityStorage.findEntityByItemId(parentItemId);
+				if (!currentParentEntity || currentParentEntity.isCompleted())
+				{
+					return;
+				}
+				const currentSubTasksInfo = currentParent.getSubTasksInfo() || {};
+				const removals = new Map();
+
+				response.data.forEach((itemData: ItemParams) => {
+					this.collectReconciledChild(removals, parentItem, currentSubTasksInfo, itemData);
+				});
+				this.removeReconciledChildren(removals);
+			})
+			.catch((response) => {})
+			.finally(() => {
+				if (this.pendingHierarchyRequests.get(parentItemId) !== request)
+				{
+					return;
+				}
+
+				this.pendingHierarchyRequests.delete(parentItemId);
+				if (request.invalidated && request.nextParentItem)
+				{
+					this.reconcileVisibleSubTasks(request.nextParentItem);
+				}
+			})
+		;
+	}
+
+	reconcileVisibleSubTasksBatch(parentItems: Array<Item>, batch): Promise
+	{
+		const parentsById = new Map();
+		const parentIdsByChildSourceId = new Map();
+		parentItems.forEach((parentItem: Item) => {
+			if (batch.invalidatedItemIds.has(String(parentItem.getId())))
+			{
+				return;
+			}
+
+			const subTasksInfo = parentItem.getSubTasksInfo();
+			if (!subTasksInfo)
+			{
+				return;
+			}
+			Object.keys(subTasksInfo).forEach((childSourceId) => {
+				if (!parentIdsByChildSourceId.has(childSourceId))
+				{
+					parentIdsByChildSourceId.set(childSourceId, new Set());
+				}
+				parentIdsByChildSourceId.get(childSourceId).add(parentItem.getId());
+			});
+			parentsById.set(parentItem.getId(), parentItem);
+		});
+
+		if (parentIdsByChildSourceId.size === 0)
+		{
+			return Promise.resolve();
+		}
+
+		const visibleParents = new Map();
+		const visibleRoots = new Map();
+		const visit = (item, entity) => {
+			const parentItem = parentsById.get(item.getId());
+			if (parentItem && item.getSourceId() === parentItem.getSourceId())
+			{
+				visibleParents.set(parentItem.getId(), { parentItem, item, entity });
+			}
+
+			const parentIds = parentIdsByChildSourceId.get(String(item.getSourceId()));
+			if (parentIds && !item.isSubTask())
+			{
+				visibleRoots.set(String(item.getId()), { item, entity, parentIds });
+			}
+		};
+
+		const backlog = this.entityStorage.backlog;
+		backlog.getItems().forEach((item) => visit(item, backlog));
+		this.entityStorage.sprints.forEach((sprint) => {
+			if (!sprint.isCompleted())
+			{
+				sprint.getItems().forEach((item) => visit(item, sprint));
+			}
+		});
+
+		const rootsToRefresh = new Map();
+		visibleRoots.forEach((root, id) => {
+			if ([...root.parentIds].some((parentId) => visibleParents.has(parentId)))
+			{
+				rootsToRefresh.set(id, root);
+			}
+		});
+		if (rootsToRefresh.size === 0)
+		{
+			return Promise.resolve();
+		}
+
+		const itemIds = [...rootsToRefresh.values()].map(({ item }) => item.getId());
+		return this.requestSender.getItemData({ itemIds }).then((response) => {
+			const currentParentsByTaskId = new Map();
+			visibleParents.forEach((parent, parentId) => {
+				if (
+					batch.invalidatedItemIds.has(String(parentId))
+					|| parent.entity.isCompleted()
+					|| !this.isEntityRegistered(parent.entity)
+					|| parent.entity.getItems().get(parentId) !== parent.item
+				)
+				{
+					return;
+				}
+				currentParentsByTaskId.set(String(parent.parentItem.getSourceId()), {
+					...parent,
+					subTasksInfo: parent.item.getSubTasksInfo() || {},
+				});
+			});
+
+			const removals = new Map();
+			response.data.forEach((itemData: ItemParams) => {
+				const root = rootsToRefresh.get(String(itemData.id));
+				if (
+					!root
+					|| batch.invalidatedItemIds.has(String(itemData.id))
+					|| root.entity.isCompleted()
+					|| !this.isEntityRegistered(root.entity)
+					|| root.entity.getItems().get(root.item.getId()) !== root.item
+				)
+				{
+					return;
+				}
+				const parent = currentParentsByTaskId.get(String(itemData.parentTaskId));
+				if (parent && root.parentIds.has(parent.parentItem.getId()))
+				{
+					this.collectReconciledChild(
+						removals,
+						parent.parentItem,
+						parent.subTasksInfo,
+						itemData,
+						root.item,
+						root.entity
+					);
+				}
+			});
+			this.removeReconciledChildren(removals);
+		});
+	}
+
+	isEntityRegistered(entity: Entity): boolean
+	{
+		return entity === this.entityStorage.backlog
+			|| this.entityStorage.sprints.get(entity.getId()) === entity
+		;
+	}
+
+	collectReconciledChild(
+		removals: Map<Entity, Set<Item>>,
+		parentItem: Item,
+		subTasksInfo,
+		itemData: ItemParams,
+		rootItem?: Item,
+		rootEntity?: Entity
+	)
+	{
+		if (itemData.isSubTask !== 'Y' || itemData.parentTaskId !== parentItem.getSourceId())
+		{
+			return;
+		}
+
+		const item = rootItem || this.entityStorage.findItemByItemId(itemData.id);
+		if (
+			!item
+			|| item.isSubTask()
+			|| !Object.prototype.hasOwnProperty.call(subTasksInfo, item.getSourceId())
+		)
+		{
+			return;
+		}
+
+		const entity = rootEntity || this.entityStorage.findEntityByItemId(item.getId());
+		if (!entity || entity.isCompleted())
+		{
+			return;
+		}
+
+		if (!removals.has(entity))
+		{
+			removals.set(entity, new Set());
+		}
+		removals.get(entity).add(item);
+	}
+
+	removeReconciledChildren(removals: Map<Entity, Set<Item>>)
+	{
+		removals.forEach((items, entity) => {
+			const itemsToRemove = [...items];
+			const activeElement = document.activeElement;
+			const focusedItem = itemsToRemove.find((item) => {
+				const node = item.getNode ? item.getNode() : null;
+
+				return node && node.contains(activeElement);
+			});
+			let focusTarget = null;
+			if (focusedItem)
+			{
+				const focusedNode = focusedItem.getNode();
+				const remainingNodes = [...entity.getItems().values()]
+					.filter((item) => !items.has(item) && !item.isSubTask())
+					.map((item) => item.getNode ? item.getNode() : null)
+					.filter((node) => node && node.isConnected)
+				;
+				focusTarget = remainingNodes.find((node) => (
+					focusedNode.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
+				)) ?? remainingNodes.at(-1) ?? entity.getListItemsNode();
+			}
+
+			if (entity.removeItems(itemsToRemove, true) > 0)
+			{
+				if (focusTarget && !activeElement.isConnected && document.activeElement === document.body)
+				{
+					if (!focusTarget.hasAttribute('tabindex'))
+					{
+						focusTarget.setAttribute('tabindex', '-1');
+						focusTarget.addEventListener('blur', () => focusTarget.removeAttribute('tabindex'), { once: true });
+					}
+					focusTarget.focus({ preventScroll: true });
+				}
+				this.updateEntityCounters(entity);
+			}
+		});
 	}
 
 	updateEntityCounters(sourceEntity: Entity, endEntity?: Entity)

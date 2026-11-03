@@ -1,0 +1,60 @@
+/* one circle for both buttons that stand in this place: the microphone of the composer and the round
+   actions the recording panel puts in its stead. The panel is loaded through this very extension, so
+   it reads the shape from here instead of repeating it */
+.bx-im-voice-recorder-button,
+.bx-im-voice-round-button {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: var(--ui-size-4xl);
+	height: var(--ui-size-4xl);
+	/* the circle is a button, and the browser dresses one of its own accord: it is measured by the
+	   icon inside it and by nothing the user agent adds around it */
+	padding: 0;
+	background-color: var(--ui-color-accent-main-primary);
+	border: none;
+	border-radius: var(--ui-border-radius-circle);
+	cursor: pointer;
+}
+
+.bx-im-voice-recorder-button {
+	/* the same step from the icon row the send button keeps in this very position */
+	margin-left: var(--ui-space-inline-2xs);
+	/* the hold owns the pointer: no page scrolling, no selection of the text around the button */
+	touch-action: none;
+	user-select: none;
+}
+
+/* the button starts the recording from the keyboard too, so focus has to be visible on it */
+.bx-im-voice-recorder-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+.bx-im-voice-recorder-button.--disabled,
+.bx-im-voice-round-button.--disabled {
+	--ui-icon-set__icon-color: var(--ui-color-design-disabled-content);
+
+	background-color: var(--ui-color-design-disabled-bg);
+	cursor: default;
+}
+
+.bx-im-voice-recorder-button.--recording {
+	position: relative;
+	cursor: default;
+}
+
+.bx-im-voice-recorder-button.--recording::after {
+	content: '';
+	position: absolute;
+	top: calc(var(--ui-size-3xs) * -1);
+	right: calc(var(--ui-size-3xs) * -1);
+	width: var(--ui-size-xs);
+	height: var(--ui-size-xs);
+	background-color: var(--ui-color-accent-main-alert);
+	border: var(--ui-size-3xs) solid var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-circle);
+}

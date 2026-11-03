@@ -11,6 +11,7 @@ return [
 		'src/is-room-closed-error',
 		'im:messenger/lib/ui/notification',
 		'loc',
+		'device/connection',
 	],
 	'bundle' => [
 		'./connection-error-status',

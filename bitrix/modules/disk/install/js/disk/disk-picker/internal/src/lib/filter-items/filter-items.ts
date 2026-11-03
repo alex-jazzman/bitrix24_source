@@ -27,3 +27,48 @@ export function applyLocalFilters(items: PickerItem[], filters: SessionFilters):
 		return true;
 	});
 }
+
+export function findItemsByName(
+	items: PickerItem[],
+	filters: SessionFilters,
+	query: string,
+): PickerItem[]
+{
+	const normalizedQuery = query.trim().toLocaleLowerCase();
+	if (normalizedQuery === '')
+	{
+		return [];
+	}
+
+	return applyLocalFilters(items, filters).filter(
+		(item) => item.name.toLocaleLowerCase().includes(normalizedQuery),
+	);
+}
+
+// The server answer with the rows it cannot reach appended after it. Chat files enter the
+// picker only through the recent feed, so a search over that feed is completed from the
+// snapshot rather than from a second search request. Rows the server already returned keep
+// their place and are not repeated.
+export function withLocalMatches(
+	serverItems: PickerItem[],
+	localCandidates: PickerItem[],
+	filters: SessionFilters,
+	query: string,
+): PickerItem[]
+{
+	const seenIds = new Set(serverItems.map((item) => item.objectId));
+
+	return [
+		...serverItems,
+		...findItemsByName(localCandidates, filters, query).filter((item) => {
+			if (seenIds.has(item.objectId))
+			{
+				return false;
+			}
+
+			seenIds.add(item.objectId);
+
+			return true;
+		}),
+	];
+}

@@ -20,17 +20,57 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				ChipDesign: ui_system_chip_vue.ChipDesign
 			};
 		},
+		data() {
+			return {
+				isPanelShown: false
+			};
+		},
+		watch: {
+			isPanelShown() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
 			handleClick() {
-				BX.SidePanel.Instance.open(`tasks-comment-files-${this.taskId}`, {
+				// SliderManager.open() returns false when nothing was opened, but also when the
+				// same slider is already on top, so a failed open may not announce the panel as
+				// closed either — that stays the job of onClose.
+				const isOpened = BX.SidePanel.Instance.open(`tasks-comment-files-${this.taskId}`, {
 					width: 800,
 					customLeftBoundary: 0,
 					customRightBoundary: 0,
 					contentCallback: async () => {
 						this.content ??= await this.getContent(this.taskId);
 						return this.content;
+					},
+					events: {
+						onClose: () => {
+							this.isPanelShown = false;
+						}
 					}
 				});
+				if (isOpened) {
+					this.isPanelShown = true;
+				}
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
+			},
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', 'dialog');
+				main_core.Dom.attr(el, 'aria-expanded', String(this.isPanelShown));
 			},
 			async getContent(taskId) {
 				const response = await BX.ajax.runComponentAction('bitrix:tasks.task', 'getFiles', {
@@ -56,10 +96,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<Chip
+			ref="chip"
+			class="tasks-field-comment-files-chip"
+			data-testid="tasks-comment-files-chip"
 			:text="loc('TASKS_V2_COMMENT_FILES_TITLE_CHIP')"
 			:icon="Outline.FILE"
 			:design="ChipDesign.ShadowAccent"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`
 	};

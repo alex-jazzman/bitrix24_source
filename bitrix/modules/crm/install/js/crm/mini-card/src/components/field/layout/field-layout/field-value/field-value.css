@@ -13,7 +13,7 @@
 .crm-mini-card__field-value a.--value-link {
 	display: flex;
 	align-items: center;
-	color: rgba(1, 84, 200, 1);
+	color: var(--ui-color-accent-main-link, rgba(1, 84, 200, 1));
 	cursor: pointer;
 	transition: text-decoration .15s linear;
 	max-width: 100%;
@@ -22,4 +22,14 @@
 
 .crm-mini-card__field-value a.--value-link:hover {
 	text-decoration: underline !important;
+}
+
+/* Visible keyboard focus indicator for card links, consistent with the board. */
+.crm-mini-card__field-value a.--value-link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+
+.crm-mini-card__field-value a.--value-link:focus:not(:focus-visible) {
+	outline: none;
 }

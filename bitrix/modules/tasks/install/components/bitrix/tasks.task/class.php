@@ -27,6 +27,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\ParameterDictionary;
 use Bitrix\Main\Web\Json;
@@ -109,6 +110,9 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\V2\Internal\DI\Container;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Ping\PingActionInterface;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Completion\CheckListCompletionService;
+use Bitrix\Tasks\V2\Internal\Service\Task\Completion\TaskCompletionService;
 
 Loc::loadMessages(__FILE__);
 
@@ -470,7 +474,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		TasksTaskFormState::set($state);
 	}
 
-	public function moveStageAction($taskId, $stageId, $before = 0, $after = 0)
+	public function moveStageAction($taskId, $stageId, $before = 0, $after = 0, bool $completeWithChecklist = false)
 	{
 		$taskId = (int)$taskId;
 		if (!$taskId)
@@ -519,6 +523,14 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$isScrumTask = ($group && $group->isScrumProject());
 		if ($isScrumTask)
 		{
+			$kanbanService = new KanbanService();
+			$isFinishStage = $stage['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH;
+			$isCompletionRequest = (
+				$completeWithChecklist
+				&& $isFinishStage
+				&& $stage['ENTITY_TYPE'] === StagesTable::WORK_MODE_ACTIVE_SPRINT
+			);
+
 			$featurePerms = CSocNetFeaturesPerms::currentUserCanPerformOperation(
 				SONET_ENTITY_GROUP,
 				[$task['GROUP_ID']],
@@ -530,22 +542,29 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 				&& isset($featurePerms[$task['GROUP_ID']])
 				&& $featurePerms[$task['GROUP_ID']]
 			);
+
+			if ($isCompletionRequest)
+			{
+				return $this->completeScrumTaskFromStage(
+					$kanbanService,
+					$taskId,
+					(int)$stage['ID'],
+					(int)$task['GROUP_ID'],
+					$isAccess,
+				);
+			}
+
 			if (!$isAccess)
 			{
+				$this->addForbiddenError();
+
 				return false;
 			}
 
-			$kanbanService = new KanbanService();
-
-			$result = $kanbanService->moveTask($taskId, $stage['ID']);
-
-			if ($stage['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
+			$result = $this->moveScrumTaskLegacy($kanbanService, $taskId, (int)$stage['ID'], $isFinishStage);
+			if ($result === false && $this->getErrors() === [])
 			{
-				$this->completeTask($taskId);
-			}
-			else
-			{
-				$this->renewTask($taskId);
+				$this->addScrumStageMoveError();
 			}
 
 			return $result;
@@ -579,72 +598,132 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			return $result;
 		}
 
-		// no errors - move task
-		if ($stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP)
+		$groupConnection = null;
+		$groupMoveFailed = false;
+		try
 		{
-			$taskObj = new CTasks;
-			$taskObj->update($task['ID'], [
-				'STAGE_ID' => $stageId,
-			]);
-		}
-		else
-		{
-			$resStg = TaskStageTable::getList([
-				'filter' => [
-					'TASK_ID' => $taskId,
-					'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_USER,
-					'STAGE.ENTITY_ID' => $stage['ENTITY_ID'],
-				],
-			]);
-			while ($rowStg = $resStg->fetch())
+			// no errors - move task
+			if ($stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP)
 			{
-				(new \Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand(
-					relationId: (int)$rowStg['ID'],
-					stageId: (int)$stageId
-				))->run();
+				$connection = \Bitrix\Main\Application::getConnection();
+				$connection->startTransaction();
+				$groupConnection = $connection;
 
-				if ($stageId !== (int)$rowStg['STAGE_ID'])
+				$currentStage = \Bitrix\Tasks\Internals\TaskTable::getRow([
+					'select' => ['STAGE_ID'],
+					'filter' => ['=ID' => $taskId],
+				]);
+				$groupMoveFailed = $currentStage === null;
+				if (!$groupMoveFailed && (int)$currentStage['STAGE_ID'] !== $stageId)
 				{
-					Integration\Bizproc\Listener::onPlanTaskStageUpdate(
-						$stage['ENTITY_ID'],
-						$rowStg['TASK_ID'],
-						$stageId
+					$taskObj = new CTasks;
+					$groupMoveFailed = $taskObj->update($taskId, [
+						'STAGE_ID' => $stageId,
+					]) === false;
+				}
+			}
+			else
+			{
+				$resStg = TaskStageTable::getList([
+					'filter' => [
+						'TASK_ID' => $taskId,
+						'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_USER,
+						'STAGE.ENTITY_ID' => $stage['ENTITY_ID'],
+					],
+				]);
+				while ($rowStg = $resStg->fetch())
+				{
+					(new \Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand(
+						relationId: (int)$rowStg['ID'],
+						stageId: (int)$stageId
+					))->run();
+
+					if ($stageId !== (int)$rowStg['STAGE_ID'])
+					{
+						Integration\Bizproc\Listener::onPlanTaskStageUpdate(
+							$stage['ENTITY_ID'],
+							$rowStg['TASK_ID'],
+							$stageId
+						);
+					}
+				}
+			}
+
+			if (!$groupMoveFailed)
+			{
+				// and set sorting
+				$sortingGroup = $stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP
+					? $task['GROUP_ID']
+					: 0;
+				// pin in new stage
+				if ($before == 0 && $after == 0)
+				{
+					StagesTable::pinInTheStage($taskId, $stageId);
+				}
+				elseif ($before > 0)
+				{
+					SortingTable::setSorting(
+						User::getId(),
+						$sortingGroup,
+						$taskId,
+						$before,
+						true
+					);
+				}
+				elseif ($after > 0)
+				{
+					SortingTable::setSorting(
+						User::getId(),
+						$sortingGroup,
+						$taskId,
+						$after,
+						false
 					);
 				}
 			}
 		}
+		catch (\Throwable $exception)
+		{
+			if ($groupConnection !== null)
+			{
+				$this->rollbackGroupStageMove($groupConnection);
+				\Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->drop($taskId);
+			}
 
-		// and set sorting
-		$sortingGroup = $stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP
-			? $task['GROUP_ID']
-			: 0;
-		// pin in new stage
-		if ($before == 0 && $after == 0)
-		{
-			StagesTable::pinInTheStage($taskId, $stageId);
+			throw $exception;
 		}
-		elseif ($before > 0)
+
+		if ($groupConnection !== null)
 		{
-			SortingTable::setSorting(
-				User::getId(),
-				$sortingGroup,
-				$taskId,
-				$before,
-				true
-			);
-		}
-		elseif ($after > 0)
-		{
-			SortingTable::setSorting(
-				User::getId(),
-				$sortingGroup,
-				$taskId,
-				$after,
-				false
-			);
+			if ($groupMoveFailed)
+			{
+				$this->rollbackGroupStageMove($groupConnection);
+				\Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->drop($taskId);
+				$this->addScrumStageMoveError();
+
+				return false;
+			}
+
+			$groupConnection->commitTransaction();
 		}
 
 		return true;
+	}
+
+	private function rollbackGroupStageMove(\Bitrix\Main\DB\Connection $connection): void
+	{
+		try
+		{
+			$connection->rollbackTransaction();
+		}
+		catch (\Bitrix\Main\DB\TransactionException $exception)
+		{
+			// MySQL rolls back to the savepoint before reporting an unsupported nested rollback.
+			if ($exception->getMessage() !== 'Nested rollbacks are unsupported.')
+			{
+				throw $exception;
+			}
+		}
 	}
 
 	public function canMoveStageAction($entityId, $entityType)
@@ -4986,16 +5065,324 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	 * @throws CTaskAssertException
 	 * @throws TasksException
 	 */
-	private function completeTask(int $taskId)
+	protected function completeTask(int $taskId): bool
 	{
-		$task = CTaskItem::getInstance($taskId, User::getId());
+		if (!$this->canCompleteOrApproveTask($taskId))
+		{
+			return false;
+		}
+
+		CTaskItem::getInstance($taskId, User::getId())->complete();
+
+		return true;
+	}
+
+	protected function completeTaskStrict(int $taskId): bool
+	{
+		$result = $this->getTaskCompletionService()->complete(
+			$taskId,
+			new UpdateConfig(
+				userId: $this->userId,
+				useConsistency: true,
+			),
+			withCheckList: false,
+		);
+
+		if (!$result->isSuccess())
+		{
+			$this->copyErrors($result->getErrors());
+
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function copyErrors(array $errors): void
+	{
+		foreach ($errors as $error)
+		{
+			$this->errorCollection->add($error);
+		}
+	}
+
+	protected function moveAndCompleteScrumTask(
+		KanbanService $kanbanService,
+		int $taskId,
+		int $stageId,
+	): bool
+	{
+		$previousStageId = $kanbanService->getTaskStageId($taskId);
+		if (!$kanbanService->moveTask($taskId, $stageId))
+		{
+			$this->addScrumStageMoveError();
+
+			return false;
+		}
+
+		try
+		{
+			if ($this->completeTaskStrict($taskId))
+			{
+				return true;
+			}
+		}
+		catch (\Throwable $completionException)
+		{
+			try
+			{
+				$this->rollbackScrumTaskStage($kanbanService, $taskId, $previousStageId);
+			}
+			catch (\Throwable)
+			{
+				$this->addScrumStageRollbackError();
+			}
+
+			throw $completionException;
+		}
+
+		$this->rollbackScrumTaskStage($kanbanService, $taskId, $previousStageId);
+
+		return false;
+	}
+
+	/**
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	protected function moveScrumTaskLegacy(
+		KanbanService $kanbanService,
+		int $taskId,
+		int $stageId,
+		bool $isFinishStage,
+	): bool
+	{
 		if (
-			$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE)
-			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+			!$isFinishStage
+			&& $this->hasFinalTaskStatus($taskId)
+			&& !$this->canPerformTaskAction($this->userId, ActionDictionary::ACTION_TASK_RENEW, $taskId)
 		)
 		{
-			$task->complete();
+			$this->addForbiddenError();
+
+			return false;
 		}
+
+		$previousStageId = $isFinishStage ? $kanbanService->getTaskStageId($taskId) : 0;
+
+		if (!$kanbanService->moveTask($taskId, $stageId))
+		{
+			foreach ($kanbanService->getErrors() as $error)
+			{
+				$this->errorCollection->add($error);
+			}
+
+			if ($this->getErrors() === [])
+			{
+				$this->addScrumStageMoveError();
+			}
+
+			return false;
+		}
+
+		if ($isFinishStage)
+		{
+			if (
+				!$this->getTaskCompletionService()->hasFinalStatus($taskId)
+				&& !$this->completeTask($taskId)
+			)
+			{
+				$this->addForbiddenError();
+				$this->rollbackScrumTaskStage($kanbanService, $taskId, $previousStageId);
+
+				return false;
+			}
+		}
+		else
+		{
+			$this->renewTask($taskId);
+		}
+
+		return true;
+	}
+
+	protected function rollbackScrumTaskStage(
+		KanbanService $kanbanService,
+		int $taskId,
+		int $previousStageId,
+	): void
+	{
+		if ($previousStageId <= 0)
+		{
+			return;
+		}
+
+		if (!$kanbanService->moveTask($taskId, $previousStageId))
+		{
+			$this->addScrumStageRollbackError();
+		}
+	}
+
+	protected function addScrumStageMoveError(): void
+	{
+		$this->errorCollection->add(new Error(
+			Loc::getMessage('TASKS_TT_STAGE_MOVE_FAILED'),
+			'TASK_STAGE_MOVE_FAILED',
+		));
+	}
+
+	protected function addScrumStageRollbackError(): void
+	{
+		$this->errorCollection->add(new Error(
+			Loc::getMessage('TASKS_TT_STAGE_ROLLBACK_FAILED'),
+			'TASK_STAGE_ROLLBACK_FAILED',
+		));
+	}
+
+	protected function canCompleteOrApproveTask(int $taskId): bool
+	{
+		$userId = User::getId();
+
+		return $this->canPerformTaskAction($userId, ActionDictionary::ACTION_TASK_COMPLETE, $taskId)
+			|| $this->canPerformTaskAction($userId, ActionDictionary::ACTION_TASK_APPROVE, $taskId);
+	}
+
+	protected function canCompleteTaskWithChecklist(int $taskId): bool
+	{
+		return $this->getTaskCompletionService()->canCompleteWithChecklist($taskId, User::getId());
+	}
+
+	protected function completeScrumTaskFromStage(
+		KanbanService $kanbanService,
+		int $taskId,
+		int $stageId,
+		int $groupId,
+		bool $canSort,
+	): bool
+	{
+		$isTaskCompleted = $this->hasFinalTaskStatus($taskId);
+		$currentStageId = $kanbanService->getTaskStageId($taskId);
+		if ($isTaskCompleted && $currentStageId === $stageId)
+		{
+			return true;
+		}
+
+		if ($isTaskCompleted)
+		{
+			if (!$canSort)
+			{
+				$this->addForbiddenError();
+
+				return false;
+			}
+
+			if (!$this->isActiveScrumStage($stageId, $groupId))
+			{
+				return false;
+			}
+
+			return $this->moveCompletedScrumTask($kanbanService, $taskId, $stageId);
+		}
+
+		if ($currentStageId <= 0)
+		{
+			$this->addScrumStageMoveError();
+
+			return false;
+		}
+
+		if (
+			!$this->canCompleteTaskWithChecklist($taskId)
+			|| !$this->canPerformTaskAction($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId)
+		)
+		{
+			$this->addForbiddenError();
+
+			return false;
+		}
+
+		if (
+			!$this->isActiveScrumStage($currentStageId, $groupId)
+			|| !$this->isActiveScrumStage($stageId, $groupId)
+		)
+		{
+			return false;
+		}
+
+		$completionResult = $this->completeChecklistForTask($taskId);
+		if (!$completionResult->isSuccess())
+		{
+			$this->copyErrors($completionResult->getErrors());
+
+			return false;
+		}
+
+		return $this->moveAndCompleteScrumTask($kanbanService, $taskId, $stageId);
+	}
+
+	protected function hasFinalTaskStatus(int $taskId): bool
+	{
+		return $this->getTaskCompletionService()->hasFinalStatus($taskId);
+	}
+
+	protected function isActiveScrumStage(int $stageId, int $groupId): bool
+	{
+		$stage = StagesTable::getById($stageId)->fetch();
+		$sprint = (new \Bitrix\Tasks\Scrum\Service\SprintService($this->userId))
+			->getActiveSprintByGroupId($groupId)
+		;
+		if (
+			!$stage
+			|| !$sprint->isActiveSprint()
+			|| $stage['ENTITY_TYPE'] !== StagesTable::WORK_MODE_ACTIVE_SPRINT
+			|| (int)$stage['ENTITY_ID'] !== $sprint->getId()
+		)
+		{
+			$this->addScrumStageMoveError();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function completeChecklistForTask(int $taskId): Result
+	{
+		return Container::getInstance()
+			->get(CheckListCompletionService::class)
+			->completeForTask($taskId, $this->userId)
+		;
+	}
+
+	protected function canPerformTaskAction(int $userId, string $action, int $taskId): bool
+	{
+		return CTaskItem::getInstance($taskId, $userId)->checkAccess($action);
+	}
+
+	protected function moveCompletedScrumTask(
+		KanbanService $kanbanService,
+		int $taskId,
+		int $stageId,
+	): bool
+	{
+		if ($kanbanService->getTaskStageId($taskId) === $stageId)
+		{
+			return true;
+		}
+
+		if (!$kanbanService->moveTask($taskId, $stageId))
+		{
+			$this->addScrumStageMoveError();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function getTaskCompletionService(): TaskCompletionService
+	{
+		return Container::getInstance()->get(TaskCompletionService::class);
 	}
 
 	/**
@@ -5005,10 +5392,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	private function renewTask(int $taskId)
 	{
 		$task = CTaskItem::getInstance($taskId, User::getId());
-		if (
-			$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
-			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
-		)
+		if ($task->checkAccess(ActionDictionary::ACTION_TASK_RENEW))
 		{
 			$queryObject = CTasks::getList(
 				[],

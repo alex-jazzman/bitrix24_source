@@ -33,6 +33,10 @@ export const TranscribedVideoNote = {
 			type: Boolean,
 			default: true,
 		},
+		showCaption: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed: {
 		file(): ImModelFile
@@ -45,7 +49,7 @@ export const TranscribedVideoNote = {
 		},
 	},
 	template: `
-		<BaseMessage :item="item" :dialogId="dialogId">
+		<BaseMessage :item="item" :dialogId="dialogId" data-testid="im-message-video-note-transcribed-root">
 			<div class="bx-im-transcribed-video-note-note__container">
 				<MessageHeader 
 					:withTitle="withTitle" 
@@ -55,12 +59,13 @@ export const TranscribedVideoNote = {
 				<TranscribedVideoPlayer
 					:item="file"
 					:message="message"
+					:withMessageText="showCaption"
 					@closeTranscription="$emit('closeTranscription')"
 					@clickPlay="$emit('clickPlay')"
 				/>
 			</div>
 			<div class="bx-im-transcribed-video-note__default-message-container">
-				<DefaultMessageContent :item="message" :dialogId="dialogId" :withText="false" />
+				<DefaultMessageContent :item="message" :dialogId="dialogId" :withText="showCaption" />
 			</div>
 			<MessageFooter :item="message" :dialogId="dialogId" />
 		</BaseMessage>

@@ -427,7 +427,13 @@
 			function getByParentId(groupId)
 			{
 				self.getBodyChild().forEach(function(row) {
-					if (row.getGroupId() === groupId && !row.isCustom()) {
+					if (row.isCustom()) {
+						return;
+					}
+
+					var rowGroupId = row.getGroupId();
+
+					if (rowGroupId !== null && rowGroupId === groupId) {
 						result.push(row);
 					}
 				}, self);
@@ -438,10 +444,27 @@
 			return result;
 		},
 
+		/**
+		 * Gets rows of a group which have no parent row inside the same group
+		 * @param {number|string} groupId
+		 * @return {BX.Grid.Row[]}
+		 */
+		getTopLevelRowsByGroupId: function(groupId)
+		{
+			var groupRows = this.getRowsByGroupId(groupId);
+			var ids = groupRows.map(function(row) {
+				return row.getId();
+			});
+
+			return groupRows.filter(function(row) {
+				return ids.indexOf(row.getParentId()) === -1;
+			});
+		},
+
 		getExpandedRows: function()
 		{
 			return this.getRows().filter(function(row) {
-				return row.isShown() && row.isExpand();
+				return row.isExpand();
 			});
 		},
 

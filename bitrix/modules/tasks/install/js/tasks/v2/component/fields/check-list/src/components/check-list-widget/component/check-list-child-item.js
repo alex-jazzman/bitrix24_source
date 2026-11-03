@@ -32,7 +32,7 @@ export const CheckListChildItem = {
 	mixins: [
 		CheckListItemMixin,
 	],
-	inject: ['setItemsRef'],
+	inject: ['setItemsRef', 'getItemsRef'],
 	props: {
 		itemOffset: {
 			type: String,
@@ -42,13 +42,23 @@ export const CheckListChildItem = {
 			type: [Number, String],
 			default: 0,
 		},
+		entityPanelActive: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: [
 		'toggleGroupModeSelected',
 		'openCheckList',
+		'indent',
+		'outdent',
+		'itemPointerEnter',
+		'itemPointerLeave',
+		'panelTab',
 	],
 	setup(props: Object): { uploaderAdapter: VueUploaderAdapter }
 	{
+		// eslint-disable-next-line vue/no-setup-props-reactivity-loss
 		const fileServiceInstance = fileService.get(
 			props.id,
 			EntityTypes.CheckListItem,
@@ -110,16 +120,6 @@ export const CheckListChildItem = {
 
 			return this.files.length;
 		},
-		hasTrashcanIcon(): boolean
-		{
-			return (
-				this.isHovered
-				&& this.canModify
-				&& !this.item.panelIsShown
-				&& !this.groupMode
-				&& !this.readOnly
-			);
-		},
 		toggleable(): boolean
 		{
 			if (this.isPreview)
@@ -128,6 +128,42 @@ export const CheckListChildItem = {
 			}
 
 			return this.canToggle;
+		},
+		// Preview opens the panel by Tab from the completion checkbox, and an item that cannot be
+		// toggled keeps that checkbox out of the Tab order. Such a row has no stop of its own --
+		// a title without links carries none either -- so the row itself becomes the one stop the
+		// panel can be reached from.
+		isPanelRowTabStop(): boolean
+		{
+			return (
+				this.isPreview
+				&& this.isEdit
+				&& !this.groupMode
+				&& !this.canToggle
+				&& (this.canModify || this.canRemove)
+			);
+		},
+	},
+	watch: {
+		async files(next: ?[], prev: ?[]): Promise<void>
+		{
+			const prevIds = (prev ?? []).map((file) => file?.id ?? file);
+			const nextIds = (next ?? []).map((file) => file?.id ?? file);
+
+			const prevIdSet = new Set(prevIds);
+			const nextIdSet = new Set(nextIds);
+
+			const newIds = nextIds.filter((id) => !prevIdSet.has(id));
+			if (newIds.length > 0)
+			{
+				await this.fileService.list(newIds);
+			}
+
+			const removedIds = prevIds.filter((id) => !nextIdSet.has(id));
+			if (removedIds.length > 0)
+			{
+				this.fileService.remove(removedIds);
+			}
 		},
 	},
 	created(): void
@@ -144,18 +180,11 @@ export const CheckListChildItem = {
 			this.setItemsRef(this.id, this);
 		}
 
-		if (this.checkListId === this.id)
-		{
-			setTimeout(() => {
-				this.$refs.growingTextArea?.focusTextarea();
-			}, 500);
-		}
-
 		this.subscribeToEvents();
 	},
 	beforeUnmount(): void
 	{
-		if (this.setItemsRef)
+		if (this.setItemsRef && this.getItemsRef?.(this.id) === this)
 		{
 			this.setItemsRef(this.id, null);
 		}
@@ -163,6 +192,48 @@ export const CheckListChildItem = {
 		this.unsubscribeToEvents();
 	},
 	methods: {
+		handlePointerEnter(): void
+		{
+			this.isHovered = true;
+			this.$emit('itemPointerEnter', { itemId: this.id, anchor: this.$refs.base });
+		},
+		handlePointerLeave(event: PointerEvent): void
+		{
+			this.isHovered = false;
+			this.$emit('itemPointerLeave', {
+				itemId: this.id,
+				anchor: this.$el,
+				relatedTarget: event.relatedTarget,
+			});
+		},
+		handlePanelTab({ shiftKey, event = null }: { shiftKey: boolean, event?: ?KeyboardEvent }): void
+		{
+			this.$emit('panelTab', { itemId: this.id, shiftKey, event });
+		},
+		handlePanelEntryTab(event: KeyboardEvent): void
+		{
+			if (
+				event.shiftKey
+				|| event.ctrlKey
+				|| event.metaKey
+				|| event.altKey
+				|| !(event.target instanceof Element)
+			)
+			{
+				return;
+			}
+
+			const fromRow = event.target === this.$refs.item;
+			const fromPreviewCheckbox = this.isPreview
+				&& event.target.closest('[data-testid="tasks-check-list-child-item-checkbox"]') !== null
+			;
+			if (!fromRow && !fromPreviewCheckbox)
+			{
+				return;
+			}
+
+			this.$emit('panelTab', { itemId: this.id, shiftKey: false, event });
+		},
 		subscribeToEvents(): void
 		{
 			EventEmitter.subscribe(EventName.HighlightCheckListItem + this.id, this.handleHighlightItemEvent);
@@ -206,6 +277,11 @@ export const CheckListChildItem = {
 		},
 		handleClick(event: PointerEvent): void
 		{
+			if (!this.item)
+			{
+				return;
+			}
+
 			const filesWidget = this.$refs['files-widget'];
 
 			if (this.isClickInsideFilesWidget(filesWidget?.$el, event.target))
@@ -250,20 +326,29 @@ export const CheckListChildItem = {
 	template: `
 		<div
 			ref="item"
+			:tabindex="isPanelRowTabStop ? 0 : -1"
 			class="check-list-widget-child-item print-no-before"
+			data-testid="tasks-check-list-child-item"
 			:class="{
 				'--complete': completed,
 				'--group-mode': groupMode,
 				'--group-mode-selected': groupModeSelected,
 				'--preview': isPreview,
 				'--toggleable': toggleable,
+				'--hovered': isHovered,
+				'--entity-panel-active': entityPanelActive,
 			}"
 			:style="{ marginLeft: itemOffset }"
-			@mouseover="isHovered = true"
-			@mouseleave="isHovered = false"
+			@pointerenter="handlePointerEnter"
+			@pointerleave="handlePointerLeave"
+			@keydown.tab="handlePanelEntryTab"
 			@click="handleClick"
 		>
-			<div class="check-list-widget-child-item-base">
+			<div
+				ref="base"
+				class="check-list-widget-child-item-base"
+				data-testid="tasks-check-list-child-item-base"
+			>
 				<div
 					v-if="!readOnly"
 					class="check-list-widget-item-drag"
@@ -275,15 +360,17 @@ export const CheckListChildItem = {
 				</div>
 				<CheckListCheckbox
 					:important="!item.isImportant"
+					data-testid="tasks-check-list-child-item-checkbox"
 					:disabled="!canToggle || groupMode"
 					:checked="completed"
+					:ariaLabel="plainTitle"
 					@click="complete(!completed)"
 				/>
 				<div
 					v-if="item.isImportant"
 					class="check-list-widget-child-item-important"
 				>
-					<BIcon :name="Outline.FIRE_SOLID"/>
+					<BIcon :name="Outline.FIRE_SOLID" aria-hidden="true"/>
 				</div>
 				<CheckListFormattingLayer
 					ref="growingTextArea"
@@ -291,11 +378,13 @@ export const CheckListChildItem = {
 					:data-check-list-id="'check-list-child-item-title-' + item.id"
 					:modelValue="item.title"
 					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
+					:keyboardInstructions="loc('TASKS_V2_CHECK_LIST_ITEM_KEYBOARD_INSTRUCTIONS')"
 					:readonly="textReadOnly"
 					:fontColor="textColor"
 					:linkColor
 					:fontSize="15"
 					:lineHeight="20"
+					:maxLines="6"
 					@update:modelValue="updateTitle"
 					@linkClick="handleLinkClick"
 					@input="handleInput"
@@ -305,32 +394,37 @@ export const CheckListChildItem = {
 					@emptyFocus="scrollToItem"
 					@enterBlur="handleEnter"
 					@selectionChange="handleFormattingSelectionChange"
+					@panelTab="handlePanelTab"
 				/>
-				<div
-					v-if="hasTrashcanIcon"
-					class="check-list-widget-child-item-action"
-					@click="removeItem"
-				>
-					<BIcon :name="Outline.TRASHCAN"/>
-				</div>
-				<template v-else-if="groupMode">
-					<CheckListCheckbox :checked="groupModeSelected" highlight @click="toggleGroupModeSelected"/>
+				<template v-if="groupMode">
+					<CheckListCheckbox
+						:checked="groupModeSelected"
+						highlight
+						data-testid="tasks-check-list-child-item-group-checkbox"
+						:ariaLabel="loc('TASKS_V2_CHECK_LIST_ITEM_SELECT_LABEL', { '#title#': plainTitle })"
+						@click="toggleGroupModeSelected"
+						@keydown.tab="(event) => handlePanelTab({ shiftKey: event.shiftKey, event })"
+					/>
 				</template>
 				<div v-else class="check-list-widget-child-item-action-stub"/>
 			</div>
 			<template v-if="hasAttachments">
-				<div class="check-list-widget-item-attach print-ignore">
+				<div class="check-list-widget-item-attach">
 					<div v-if="hasUsers" class="check-list-widget-item-attach-users">
 						<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
-							<BIcon :name="Outline.GROUP"/>
+							<BIcon :name="Outline.GROUP" aria-hidden="true"/>
 							<UserAvatarList :users="accomplices"/>
 						</div>
 						<div v-if="hasAuditors" class="check-list-widget-item-attach-users-list">
-							<BIcon :name="Outline.OBSERVER"/>
+							<BIcon :name="Outline.OBSERVER" aria-hidden="true"/>
 							<UserAvatarList :users="auditors"/>
 						</div>
 					</div>
-					<div v-if="hasFilesAttach" class="check-list-widget-item-attach-files">
+					<div v-if="hasUsers" class="check-list-widget-item-attach-users-print">
+						<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-print-group">{{ accomplicesLabel }}</div>
+						<div v-if="hasAuditors" class="check-list-widget-item-attach-users-print-group">{{ auditorsLabel }}</div>
+					</div>
+					<div v-if="hasFilesAttach" class="check-list-widget-item-attach-files print-ignore">
 						<div class="check-list-widget-item-attach-files-list">
 							<template v-if="filesLoading">
 								<div class="check-list-widget-item-attach-files-list-skeleton">

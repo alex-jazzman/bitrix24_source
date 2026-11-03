@@ -16,6 +16,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Application;
 use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
+use Bitrix\Socialnetwork\V2\Feature;
 
 $pageId = "group_calendar";
 $ownerId = $arResult["VARIABLES"]["group_id"];
@@ -43,6 +44,26 @@ if (
 	);
 	if ($calendar2)
 	{
+		$isNewProject = Feature::isSectionPinAvailableForFields($arResult['groupFields']);
+		$favoritesTitleTemplate = (
+			$isNewProject
+				? $arResult['FAVORITES_TITLE_TEMPLATE']
+				: (
+					($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
+						? $arResult['PAGES_TITLE_TEMPLATE']
+						: ''
+				)
+		);
+
+		$favoritesUrl = (
+			$isNewProject
+				? CComponentEngine::MakePathFromTemplate(
+					$arResult['PATH_TO_GROUP_CALENDAR'],
+					['group_id' => $ownerId],
+				)
+				: ''
+		);
+
 		$APPLICATION->IncludeComponent(
 			"bitrix:ui.sidepanel.wrapper",
 			"",
@@ -50,6 +71,7 @@ if (
 				'POPUP_COMPONENT_NAME' => "bitrix:calendar.grid",
 				"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 				"POPUP_COMPONENT_PARAMS" => [
+					'ALLOW_FAVORITE_STAR' => $isNewProject,
 					"CALENDAR_TYPE" => 'group',
 					"OWNER_ID" => $ownerId,
 					"ALLOW_SUPERPOSE" => $arParams['CALENDAR_ALLOW_SUPERPOSE'],
@@ -69,14 +91,13 @@ if (
 				'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
 				'USE_PADDING' => false,
 				'USE_UI_TOOLBAR' => 'Y',
-				'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => (isset($arParams['HIDE_OWNER_IN_TITLE'])
-				&& $arParams['HIDE_OWNER_IN_TITLE'] === 'Y' ? $arResult['PAGES_TITLE_TEMPLATE'] : ''),
+				'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
+				'UI_TOOLBAR_FAVORITES_URL' => $favoritesUrl,
 			]
 		);
 
-		$APPLICATION->SetPageProperty('FavoriteTitleTemplate',
-			(isset($arParams['HIDE_OWNER_IN_TITLE']) && $arParams['HIDE_OWNER_IN_TITLE'] === 'Y'
-				? $arResult['PAGES_TITLE_TEMPLATE'] : ''));
+		$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
+		$APPLICATION->SetPageProperty('FavoriteUrl', $favoritesUrl);
 	}
 	else
 	{

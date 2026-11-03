@@ -72,10 +72,17 @@ export const ReplicationStart = {
 					placeholder="[date/]"
 				>
 					<template #date>
-						<HoverPill textOnly noOffset ref="datepickerStartOpener">
-							<span class="tasks-field-replication-link" @click="isDatepickerOpened = true">
-								{{ startLabel }}
-							</span>
+						<HoverPill
+							textOnly
+							noOffset
+							:ariaLabel="loc('TASKS_V2_REPLICATION_START_DATE_ARIA_LABEL')"
+							:ariaHaspopup="'dialog'"
+							:ariaExpanded="isDatepickerOpened"
+							data-testid="tasks-replication-start-date-btn"
+							ref="datepickerStartOpener"
+							@click="isDatepickerOpened = true"
+						>
+							<span class="tasks-field-replication-link">{{ startLabel }}</span>
 						</HoverPill>
 						<ReplicationDatepicker
 							v-if="isDatepickerOpened"

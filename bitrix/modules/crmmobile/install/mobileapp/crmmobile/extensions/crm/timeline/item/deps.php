@@ -23,7 +23,6 @@ return [
 		'in-app-url/components/link',
 		'layout/ui/friendly-date',
 		'layout/ui/friendly-date/time-ago',
-		'layout/ui/file/icon',
 		'layout/ui/file/selector',
 		'utils/object',
 		'utils/random'

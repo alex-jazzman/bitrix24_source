@@ -1,4 +1,4 @@
-/* [P2.T2] Backlinks chip — a slot of the activity line like the eye and the bell. Positioning
+/* Backlinks chip — a slot of the activity line like the eye and the bell. Positioning
  * context only, so the sources popover can anchor to it; the chip itself is drawn by the shared
  * .note-activity-line__control rules above. */
 .note-backlinks-widget {
@@ -6,7 +6,7 @@
 	display: inline-flex;
 }
 
-/* [P4.T2] The chip is born the moment another document starts linking here — by push, while the
+/* The chip is born the moment another document starts linking here — by push, while the
  * reader is looking at the line. So it grows into the row instead of stepping in: both its own
  * width and the slot gap it claims (the 8px of .note-activity-line__actions, cancelled by the
  * negative margin below) are animated, and the star and the bell slide over rather than jump.
@@ -34,7 +34,7 @@
 	opacity: 1;
 }
 
-/* [P3.T1] Sources popover — same shell as the viewers list (fixed + JS-positioned, see
+/* Sources popover — same shell as the viewers list (fixed + JS-positioned, see
  * popover-position.js), one row per document that links here. */
 /* --note-popup-radius: the module's own value, not a design-system token — ui.design-tokens has no
  * radius for popups (main.popup sets --popup-window-border-radius from JS instead), and the 18px the
@@ -155,7 +155,7 @@
 	text-overflow: ellipsis;
 }
 
-/* [P4.T1] Same viewport cap for the sources popover — the mobile form of the backlinks list is the
+/* Same viewport cap for the sources popover — the mobile form of the backlinks list is the
  * desktop popover narrowed to the screen, the shape every other control of this line already takes.
  * The chip needs no mobile rule of its own: it is the shared .note-activity-line__control (30px
  * high, icon + count), so its tap target is by construction at least the eye's and the bell's. */

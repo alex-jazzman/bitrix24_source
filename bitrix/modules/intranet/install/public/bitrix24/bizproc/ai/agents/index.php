@@ -6,7 +6,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 
 if (
 	\Bitrix\Main\Loader::includeModule('bizproc')
-	&& Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'N'
+	&& \Bitrix\Main\Config\Feature::isDisabled(\Bitrix\Bizproc\Public\Feature\AiAgent\AiAgentSectionFlag::class)
 )
 {
 	localRedirect('/');

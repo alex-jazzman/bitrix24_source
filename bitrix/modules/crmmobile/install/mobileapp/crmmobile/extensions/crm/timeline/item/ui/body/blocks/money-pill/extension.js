@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/money-pill
  */
 jn.define('crm/timeline/item/ui/body/blocks/money-pill', (require, exports, module) => {
+	const { Text1 } = require('ui-system/typography/text');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const AppTheme = require('apptheme');
 	const { Money } = require('money');
@@ -59,11 +60,10 @@ jn.define('crm/timeline/item/ui/body/blocks/money-pill', (require, exports, modu
 							marginLeft: 6,
 						},
 					},
-					Text({
+					Text1({
 						style: {
 							color: AppTheme.colors.baseWhiteFixed,
 							fontWeight: '600',
-							fontSize: 19,
 							lineHeight: 12,
 
 						},

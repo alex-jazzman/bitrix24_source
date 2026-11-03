@@ -1,32 +1,24 @@
-import {MarketAppPopup} from './market-app-popup';
+import { MarketManager } from 'im.v2.lib.market';
+import { type ImModelMarketApplication } from 'im.v2.model';
 
 import '../../css/market-apps-panel/market-app-item.css';
-
-import type {ImModelMarketApplication} from 'im.v2.model';
 
 // @vue/component
 export const MarketAppItem = {
 	name: 'MarketAppItem',
-	components: {MarketAppPopup},
 	props: {
 		item: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		hideTitle: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		dialogId: {
 			type: String,
-			required: true
-		}
-	},
-	data()
-	{
-		return {
-			showApp: false
-		};
+			required: true,
+		},
 	},
 	computed:
 	{
@@ -41,19 +33,40 @@ export const MarketAppItem = {
 		iconColor(): string
 		{
 			return this.marketItem.options.color;
-		}
+		},
+		isOpened(): boolean
+		{
+			return this.$store.getters['market/getOpenedAppId'](this.dialogId) === this.marketItem.id;
+		},
 	},
 	methods:
 	{
 		onAppClick()
 		{
-			this.showApp = !this.showApp;
-		}
+			if (this.isOpened)
+			{
+				MarketManager.getInstance().closePlacement(this.dialogId, this.marketItem.id);
+
+				return;
+			}
+
+			this.showPlacement();
+		},
+		showPlacement()
+		{
+			MarketManager.getInstance().showPlacement({
+				dialogId: this.dialogId,
+				appId: this.marketItem.id,
+				bindElement: this.$refs['market-app'],
+				width: this.marketItem.options.width,
+				height: this.marketItem.options.height,
+			});
+		},
 	},
 	template: `
-		<div 
-			class="bx-im-market-app-item__container" 
-			:class="{'--short': hideTitle}" 
+		<div
+			class="bx-im-market-app-item__container"
+			:class="{'--short': hideTitle, '--opened': isOpened}"
 			:title="marketItem.title"
 			@click="onAppClick"
 			ref="market-app"
@@ -66,15 +79,6 @@ export const MarketAppItem = {
 					{{ marketItem.title }}
 				</div>
 			</div>
-			<MarketAppPopup 
-				v-if="showApp" 
-				:bindElement="$refs['market-app']" 
-				:entityId="marketItem.id"
-				:width="marketItem.options.width"
-				:height="marketItem.options.height"
-				:dialogId="dialogId"
-				@close="onAppClick"
-			/>
 		</div>
-	`
+	`,
 };

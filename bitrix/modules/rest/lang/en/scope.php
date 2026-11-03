@@ -78,6 +78,7 @@ $MESS["REST_SCOPE_SALESCENTER"] = "Chat enabled sales";
 $MESS["REST_SCOPE_SALESCENTER_DESCRIPTION"] = "reserved for future use";
 $MESS["REST_SCOPE_SALE_DESCRIPTION"] = "full access: view, create, edit and delete orders, order properties; order, shipment and payment statuses; view, create, edit and delete shopping cart items etc.";
 $MESS["REST_SCOPE_SIGN.B2E"] = "e-Signature for HR";
+$MESS["REST_SCOPE_SIGN.B2E_DESCRIPTION"] = "Sending and receiving HR documents, viewing their statuses and events, downloading signed documents and managing signature providers.";
 $MESS["REST_SCOPE_SMILE"] = "Emoticons";
 $MESS["REST_SCOPE_SMILE_DESCRIPTION"] = "not used in applications";
 $MESS["REST_SCOPE_SOCIALNETWORK"] = "Social Network";

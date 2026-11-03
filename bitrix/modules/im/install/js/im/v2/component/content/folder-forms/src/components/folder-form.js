@@ -82,6 +82,7 @@ export const FolderForm = {
 			:isCreating="isSubmitting"
 			:createButtonDisabled="!isTitleFilled"
 			:createButtonTitle="submitButtonTitle"
+			forceAirDesign
 			data-testid="folder-form-button-panel"
 			@create="$emit('submit')"
 			@cancel="$emit('cancel')"

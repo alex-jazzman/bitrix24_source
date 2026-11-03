@@ -12,11 +12,18 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $templateFolder */
 /** @var string $componentPath */
 
-$isGuideMustBeShown = !$arResult['BOARDS_GUIDE']['IS_VIEWED'];
+use Bitrix\Disk\Document\Flipchart\Configuration;
+
+$isBoardsPage = (bool)$arResult['BOARDS_GUIDE']['IS_BOARDS_PAGE'];
+
+// outside the boards page the target lives in the create panel of buttons.php, which renders the board
+// card only with the panel shown and boards enabled
+$isGuideTargetRendered = $isBoardsPage || (empty($arResult['HIDE_BUTTONS']) && Configuration::isBoardsEnabled());
+
+$isGuideMustBeShown = !$arResult['BOARDS_GUIDE']['IS_VIEWED'] && $isGuideTargetRendered;
 ?>
 
 <?php if ($isGuideMustBeShown):
-	$isBoardsPage = $arResult['BOARDS_GUIDE']['IS_BOARDS_PAGE'];
 	$guideTargetSelector = $isBoardsPage ? '.toolbar-button-create-new-board' : '.disk-documents-control-panel-card--board';
 	$guideSpotlightTargetSelector = $isBoardsPage ? $guideTargetSelector : '.disk-documents-control-panel-card--board .disk-documents-control-panel-card-btn';
 ?>

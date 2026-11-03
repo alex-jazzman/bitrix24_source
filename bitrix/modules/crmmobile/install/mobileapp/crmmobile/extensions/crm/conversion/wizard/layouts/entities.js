@@ -121,20 +121,32 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 					},
 				},
 				onClickCallback: async () => {
-					const show = await NotifyManager.showLoadingIndicator();
-					const layoutWidget = getLayoutWidget();
-					if (!layoutWidget)
+					try
 					{
-						return;
-					}
+						const show = await NotifyManager.showLoadingIndicator();
+						if (!show)
+						{
+							return;
+						}
 
-					if (show)
-					{
-						ConversionSelector.open({
+						const layoutWidget = getLayoutWidget();
+						if (!layoutWidget)
+						{
+							NotifyManager.showDefaultError();
+
+							return;
+						}
+
+						await ConversionSelector.open({
 							permissions,
 							layoutWidget,
 							onChange: this.onFinish.bind(this),
 						});
+					}
+					catch (error)
+					{
+						console.error('Failed to open conversion selector', error);
+						NotifyManager.showDefaultError();
 					}
 				},
 			});

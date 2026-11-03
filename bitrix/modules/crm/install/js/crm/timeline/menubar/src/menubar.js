@@ -92,12 +92,12 @@ export class MenuBar
 
 	setActiveItemById(selectedItemId: String): Boolean
 	{
-		if (!selectedItemId || this.#selectedItemId === selectedItemId)
+		if (!selectedItemId)
 		{
 			return false;
 		}
 		const menuBarItem = this.#items[selectedItemId];
-		if (!menuBarItem)
+		if (!menuBarItem || (this.#selectedItemId === selectedItemId && menuBarItem.isVisible()))
 		{
 			return false;
 		}

@@ -1,3 +1,85 @@
+/*region Service classes*/
+/* The three classes that dress a tag stand before every rule of the template on purpose. They are a
+   floor: they hand a control that changed its tag back what the tag took away, and any rule of this
+   file that follows outweighs them by order, so an element keeps the look its own class gives it. */
+
+/* Text for the reader and not for the eye: the headers of the columns of the table and the reason a
+   barred checkout button gives. Declared here rather than taken from the `.sr-only` of
+   `ui.bootstrap4`: the look of the storefront is the answer of this template alone. */
+.basket-visually-hidden {
+	position: absolute;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+	margin: -1px;
+	padding: 0;
+	width: 1px;
+	height: 1px;
+	border: 0;
+	white-space: nowrap;
+}
+
+/* Two cells a shop may drop from the narrow layout: the actions and the sum. The utilities that used
+   to hide and to show them hand a `<td>` `display: block !important`, and from 768 px - the width at
+   which this file turns the table back from a stack of blocks into a table (`@media (max-width:
+   767px)` below) - a row of blocks is no longer a table: the headers of the columns have nothing to
+   stand over. Below 768 px the stack is the layout of this template, and a block there is a block
+   among blocks, so each cell keeps the states it had. The weight of 0,2,0 is what it takes: the rules
+   of the narrow layout name these cells by their tag (0,1,1), and both breakpoints hold above 768 px,
+   so the order of the rules is the rule itself. */
+
+/* The actions: hidden up to 768 px, a cell of the table above it. */
+.basket-items-list-table .basket-cell-table-md { display: none; }
+
+/* The sum: hidden up to 576 px, a block of the stack up to 768 px, a cell of the table above it. */
+.basket-items-list-table .basket-cell-block-sm-table-md { display: none; }
+
+@media (min-width: 576px) {
+	.basket-items-list-table .basket-cell-block-sm-table-md { display: block; }
+}
+
+@media (min-width: 768px) {
+	.basket-items-list-table .basket-cell-table-md { display: table-cell; }
+	.basket-items-list-table .basket-cell-block-sm-table-md { display: table-cell; }
+}
+
+/* A `<span>` or an `<li>` that became a `<button>` keeps the look it had: the tag brings a frame, a
+   fill, padding and a font of its own. The family, the size and the height of the line come back
+   from the reboot of `ui.bootstrap4`; the rest is answered here. */
+.basket-btn-plain {
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	text-align: inherit;
+	font: inherit;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+/* One control of the page needs more than the plain class gives: the count of the goods asking for
+   attention. It was a link and reads as a part of the sentence around it, so `color: inherit` and the
+   bare `<button>` leave the eye nothing to tell it apart. The colour comes from the same variable a
+   theme of the storefront repaints its links with, and falls back to the colours the reboot of
+   `ui.bootstrap4` gives an `<a href>` where no theme declares it. */
+.basket-btn-plain[data-entity="basket-items-warning-count"] {
+	color: var(--theme-b-link, #0d6efd);
+	text-decoration: underline;
+}
+
+.basket-btn-plain[data-entity="basket-items-warning-count"]:hover {
+	color: var(--theme-b-link-hover, #024dbc);
+}
+
+/* The header of the gifts block became an `<h2>` and keeps the look of the `<div>` it was: the
+   heading brings margins of its own and a line height of 1.2 from `ui.bootstrap4`, while everything
+   else it wears comes from `.catalog-block-header` at the end of this file. */
+.basket-gifts-header-plain {
+	margin: 0;
+	font: inherit;
+}
+/*endregion*/
+
 .symbol_ruble { font-family: 'rubleBitrix', Arial, sans-serif }
 
 .basket-checkout-container {
@@ -493,6 +575,13 @@
 	width: 100%;
 	background-color: #fff;
 }
+
+/* The ring hangs outside the box of a control, and this container cuts it away: the fields of
+   quantity, the steps, the crosses of removal and the variants of a product all stand close to its
+   edges. It stops cutting only while the focus is inside, the way the card of `catalog.item` does it
+   (`catalog.item/bootstrap_v4/style.css:999`). Outside the focus the clipping is the one of today:
+   dropping it for good would let the row folding away after a removal spill out of the list. */
+.basket-items-list-container:has(:focus-visible) { overflow: visible; }
 
 .basket-items-list-overlay {
 	position: absolute;
@@ -1199,7 +1288,6 @@ h2.basket-item-info-name {
 	padding: 0;
 	width: 60px;
 	height: 28px;
-	outline: none;
 	border: 1px solid #e4e4e4;
 	border-radius: 1px;
 	vertical-align: middle;
@@ -1210,8 +1298,9 @@ h2.basket-item-info-name {
 
 .basket-item-block-amount.disabled .basket-item-amount-filed { background-color: #f3f3f3; }
 
-.basket-item-amount-filed:hover,
-.basket-item-amount-filed:focus { border-color: var(--primary); }
+.basket-item-amount-filed:hover { border-color: var(--primary); }
+
+.basket-item-amount-filed:focus-visible { border-color: var(--primary); }
 
 .basket-item-amount-filed::-webkit-outer-spin-button,
 .basket-item-amount-filed::-webkit-inner-spin-button {
@@ -1495,6 +1584,11 @@ h2.basket-item-info-name {
 .bx-touch .basket-item-block-actions,
 .basket-items-list-item-container:hover .basket-item-block-actions { opacity: 1; }
 
+/* The cross of removal comes up when the focus lands in the row and not by the hover of a mouse
+   alone: otherwise the keyboard walks onto a control nobody can see. This is the first of the three
+   changes the storefront shows (ADR, section 6). */
+.basket-items-list-item-container:focus-within .basket-item-block-actions { opacity: 1; }
+
 .basket-item-actions-remove {
 	position: relative;
 	display: block;
@@ -1677,6 +1771,11 @@ h2.basket-item-info-name {
 	height: 80px;
 	opacity: 0;
 }
+
+/* The same for the row folding away after a removal. The fold takes the content down to `opacity: 0`
+   along the way, so this answers for the one moment the focus is still inside a row that has already
+   begun to fold. */
+.basket-items-list-item-container.basket-items-list-item-container-collapse > td > div:has(:focus-visible) { overflow: visible; }
 
 .basket-items-list-item-removed-block {
 	display: -webkit-inline-box;
@@ -1975,6 +2074,9 @@ h2.basket-item-info-name {
 	align-items: center;
 }
 
+/* The card of a gift clips its own box just as the list of products does, and answers the same. */
+.basket-gifts-list-item-container:has(:focus-visible) { overflow: visible; }
+
 .basket-gifts-list-item-container:first-child { border-top: none; }
 
 .basket-gift-block-image {
@@ -2216,3 +2318,91 @@ body.bx-theme-blue .catalog-block-header{border-color:#006cc0;}
 body.bx-theme-green .catalog-block-header{border-color:#63aa28;}
 body.bx-theme-red .catalog-block-header{border-color:#da3737;}
 body.bx-theme-yellow .catalog-block-header{border-color:#f4b236;}
+
+/*region Focus ring*/
+/* One dark band outside the box of the control, drawn on the focus tokens of the design system. The
+   values the tokens hold on a light surface stand in the `var()` as fallbacks, and the extension
+   carrying them is not asked for: four variables is all this file takes from it, and it weighs
+   177 KB. The theme of the landing store draws its band inside the box, over the content of the control, and
+   hangs a halo outside it that every container clipping its overflow cuts away. The weight of the
+   rules below outruns the theme: this file goes into the head before `template_styles.css`, which
+   `Asset::addTemplateCss` adds last of all, so 1,1,0 is what it takes against the 0,2,0 of
+   `.btn:focus-visible` and the 0,2,1 of a button inside `.block-wrapper`, and against the
+   `a { outline: none }` and `.btn:focus { outline: 0 none; box-shadow: none }` of `theme.css`.
+   The stops are listed by element, so a control that a later change of the markup hands the
+   keyboard is dressed already; `[tabindex="-1"]` is left out on purpose - such a node is focused
+   from a script and is not a stop of the walk. The light gap of `--ui-color-base-8` that the cart
+   line of `store_v3` puts under its ring has nothing to answer for here: no surface of this page is
+   dark. The notice of the count limit and the empty cart stand outside `#basket-root` and carry a
+   link each, hence the two scopes of their own. */
+#basket-root a:focus-visible,
+#basket-root button:focus-visible,
+#basket-root input:focus-visible,
+#basket-root .basket-item-scu-item:focus-visible,
+#basket-root [tabindex]:not([tabindex="-1"]):focus-visible,
+#basket-item-message a:focus-visible,
+.bx-sbb-empty-cart-container a:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The row itself takes the focus after a redraw that changed its shape - a removal, a return of a
+   removed row - and it has to show where the focus went. The list of the enumeration above passes
+   the row over: it is `[tabindex="-1"]` and no stop of the walk, so the band is declared here. It
+   goes inside the box: the row is as wide as the table and a band outside it would stand on the row
+   above and be cut by the container of the list. */
+#basket-root .basket-items-list-item-container:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/* Four controls of the page stand right against what surrounds them, and a band drawn outside their
+   box lands on the neighbour: the steps of the quantity touch the field with no gap at all, the
+   cross of removal stands a pixel from the sum of the row and at the very edge of the table, and a
+   variant of a product is three pixels from the next variant while the band needs four. The field
+   of the quantity is painted after the step before it, so its white fill covers that side of the
+   band outright - the ring of the step looked cut rather than crowded. For these four the band goes
+   inside the box, on the inset offset token the design system carries for exactly this case: the
+   ring keeps its width and its tone, is measured from the same edge as every other ring of the page,
+   and not a pixel of the row moves. There is room inside each of them - the sign of a step is 10px
+   in a box of 28, the cross is 14px laid across a box of 25, and a swatch of a variant carries a
+   white border of 2px the band falls on. The attributes of a variant are weight and nothing else:
+   the rule above reaches it through `[tabindex]:not([tabindex="-1"])` and counts 1,3,0 there, so a
+   selector by its class alone would lose to it. */
+#basket-root .basket-item-amount-btn-minus:focus-visible,
+#basket-root .basket-item-amount-btn-plus:focus-visible,
+#basket-root .basket-item-actions-remove:focus-visible,
+#basket-root .basket-item-scu-item[tabindex][role="radio"]:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/* `ui.bootstrap4` is on this page - the search of the store header brings it - and its
+   `.btn-primary:focus` paints the fill and the border of a focused button with a blue of its own.
+   The theme of the store answers for every other state of that button and has no rule for this one,
+   so the button changed colour the moment the keyboard reached it. The colours of the theme are put
+   back, and the pressed and hovered states of a focused button with them. The weight of 1,2,0 is
+   what it takes against the 0,2,0 of `ui.bootstrap4`. Task 4a does the same for the buy button of a
+   card of the list (`catalog.item/bootstrap_v4/style.css`). */
+#basket-root .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+
+#basket-root .btn.btn-primary:focus:hover,
+#basket-root .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}
+
+/* The controls of this template and the buttons of the theme animate over `all`, and the ring goes
+   with them: `outline-style` does not animate, so the band turns up halfway through the transition
+   and only then grows to its width - a ring the eye cannot follow. Listed here is what these
+   controls really change, `outline` and `outline-offset` left out of it. */
+#basket-root a,
+#basket-root button,
+#basket-root input,
+#basket-root .basket-item-scu-item {
+	transition-property: color, background-color, border-color, box-shadow, opacity;
+}
+/*endregion*/

@@ -174,6 +174,11 @@ $arComponentParameters = Array(
 				'DEFAULT' => 'site/#site_show#/view/#landing_edit#/',
 				'VARIABLES' => array('site_show', 'landing_edit')
 			),
+			'landing_preview' => array(
+				'NAME' => getMessage('LANDING_CMP_PAR_SM_LANDING_VIEW'),
+				'DEFAULT' => 'site/#site_show#/preview/#landing_edit#/',
+				'VARIABLES' => array('site_show', 'landing_edit')
+			),
 			'landing_settings' => [
 				'NAME' => getMessage('LANDING_CMP_PAR_SM_LANDING_SETTINGS'),
 				'DEFAULT' => 'site/#site_show#/settings/#landing_edit#/',

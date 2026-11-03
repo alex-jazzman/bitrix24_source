@@ -18,12 +18,13 @@ function renderQuoteNode(editor: ComposeEditorAdapter, body: BodyState): string
 /** A folded quote goes in when the user unfolds it, and otherwise at the moment of sending. */
 export function buildInitialBody(editor: ComposeEditorAdapter, body: BodyState): string
 {
+	const content = body.content ?? '';
 	if (body.quoteFolded || body.quote === '')
 	{
-		return '';
+		return content;
 	}
 
-	return renderQuoteNode(editor, body);
+	return content + renderQuoteNode(editor, body);
 }
 
 /** The quote goes after the signature, so the order of the parts matches a folded send. */

@@ -6,6 +6,8 @@ import {
 	CheckboxListOption,
 	CheckboxListSection,
 } from 'ui.dialogs.checkbox-list';
+
+import { getColumnTitle, setColumnHeaderTitle } from './column-title';
 import type { PopupInterface } from './popup-interface';
 
 const namespace = Reflection.namespace('BX.Grid.SettingsWindow');
@@ -178,14 +180,9 @@ class CheckboxList implements PopupInterface
 			{
 				columnsWithSections[sectionName].forEach((column) => {
 					const { id, default: defaultValue } = column;
-					let { name: title } = column;
-					if (Type.isPlainObject(customNames) && Object.hasOwn(customNames, 'id'))
-					{
-						title = customNames[id];
-					}
 
 					result.push({
-						title: Text.decode(title),
+						title: Text.decode(getColumnTitle(column, customNames)),
 						value: this.isChecked(id),
 						categoryKey: sectionName,
 						defaultValue,
@@ -200,14 +197,10 @@ class CheckboxList implements PopupInterface
 		}
 
 		columns.forEach((column) => {
-			const {
-				id,
-				name: title,
-				default: defaultValue,
-			} = column;
+			const { id, default: defaultValue } = column;
 
 			result.push({
-				title: Text.decode(title),
+				title: Text.decode(getColumnTitle(column, customNames)),
 				value: this.isChecked(id),
 				defaultValue,
 				id,
@@ -266,6 +259,11 @@ class CheckboxList implements PopupInterface
 		}
 
 		return [];
+	}
+
+	getMainPopup(): Object
+	{
+		return this.getPopup().getPopup();
 	}
 
 	show(): void
@@ -371,7 +369,22 @@ class CheckboxList implements PopupInterface
 			});
 		}
 
-		options.batch(batch, () => this.grid.reloadTable());
+		options.batch(batch, () => {
+			// After the reload, not before: it replaces the whole head with the server's markup.
+			this.grid.reloadTable(null, null, () => this.applyColumnNamesToHead(columnNames));
+		});
+	}
+
+	applyColumnNamesToHead(columnNames: {[key: string]: string}): void
+	{
+		const columns = this.options.columns ?? [];
+
+		columns.forEach((column) => {
+			const { id } = column;
+			const title = id in columnNames ? columnNames[id] : column.name;
+
+			setColumnHeaderTitle(this.grid.getColumnHeaderCellByName(id), Text.decode(title));
+		});
 	}
 
 	getColumnNames(data): {[key: string]: string}[]
@@ -436,13 +449,80 @@ class CheckboxList implements PopupInterface
 		return event;
 	}
 
-	sortItems(): void
+	/**
+	 * Options are built once from the server payload, so a column moved in the grid has to be
+	 * moved here too; the popup is dropped to be rebuilt with the new order on the next show.
+	 *
+	 * @param {string[]} [columns] - showed column ids in the order chosen by the user
+	 */
+	sortItems(columns): void
 	{
-		// may be implemented
+		if (!Type.isArrayFilled(columns))
+		{
+			return;
+		}
+
+		this.options.columns = this.sortColumns(this.options.columns, columns);
+
+		const columnsWithSections = this.options.columnsWithSections;
+		if (Type.isObjectLike(columnsWithSections))
+		{
+			Object.keys(columnsWithSections).forEach((sectionName) => {
+				columnsWithSections[sectionName] = this.sortColumns(columnsWithSections[sectionName], columns);
+			});
+		}
+
+		if (this.popup)
+		{
+			this.popup.options = this.getOptions();
+		}
+	}
+
+	/**
+	 * Puts showed columns into the full list in the user order, keeping hidden ones at their
+	 * own places — the same way the grid table itself is ordered. A repeated id keeps its last
+	 * place, as the grid table does with such a column.
+	 */
+	sortColumns(columns: Object[], showedColumns: string[]): Object[]
+	{
+		if (!Type.isArrayFilled(columns))
+		{
+			return columns;
+		}
+
+		const byId = new Map(columns.map((column) => [String(column.id), column]));
+		const order = new Set();
+		showedColumns.forEach((columnId) => {
+			const id = String(columnId);
+			if (byId.has(id))
+			{
+				order.delete(id);
+				order.add(id);
+			}
+		});
+
+		const userOrder = [...order];
+		if (userOrder.length === 0)
+		{
+			return columns;
+		}
+
+		let userOrderIndex = 0;
+
+		return columns.map((column) => {
+			return userOrder.includes(String(column.id))
+				? byId.get(userOrder[userOrderIndex++])
+				: column;
+		});
 	}
 
 	reset(): void
 	{
+		if (!this.popup)
+		{
+			return;
+		}
+
 		this.options.checked = [];
 
 		this.popup.options
@@ -463,6 +543,12 @@ class CheckboxList implements PopupInterface
 	close(): void
 	{
 		this.popup?.destroy();
+	}
+
+	destroy(): void
+	{
+		this.popup?.destroy();
+		this.popup = null;
 	}
 
 	isForAll(): boolean

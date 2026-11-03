@@ -20,6 +20,7 @@ return [
 		'im.v2.lib.layout',
 		'im.v2.lib.logger',
 		'im.v2.lib.notifier',
+		'im.v2.lib.playback',
 		'im.v2.lib.rest',
 		'im.v2.lib.role-manager',
 		'im.v2.lib.unread-mode',

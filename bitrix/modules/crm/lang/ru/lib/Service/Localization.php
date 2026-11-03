@@ -315,4 +315,6 @@ $MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_SMART_INVOICE"] = "Нед
 $MESS["CRM_RECURRING_LIST_TITLE_DEAL"] = "Регулярные сделки";
 $MESS["CRM_RECURRING_LIST_TITLE_INVOICE"] = "Регулярные счета";
 $MESS["CRM_RECURRING_LIST_TITLE_SMART_INVOICE"] = "Регулярные счета";
+$MESS['CRM_COMMON_ERROR_ORDER_CREATION_ACCESS_DENIED'] = 'Недостаточно прав для создания заказа';
+$MESS['CRM_COMMON_ERROR_ORDER_READ_ACCESS_DENIED'] = 'Недостаточно прав для просмотра заказа';
 $MESS["CRM_RECURRING_LIST_TITLE"] = "Регулярные элементы";

@@ -25,7 +25,10 @@ if ($arResult['SECTIONS_COUNT'] > 0)
 {
 	?>
 	<div class="catalog-sections-list-menu">
-		<ul class="catalog-sections-list-menu-items">
+		<ul
+			class="catalog-sections-list-menu-items"
+			aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCSL_SECTIONS_LIST_ARIA'))?>"
+		>
 			<?php
 			$sectionEdit = CIBlock::GetArrayByID($arParams['IBLOCK_ID'], 'SECTION_EDIT');
 			$sectionDelete = CIBlock::GetArrayByID($arParams['IBLOCK_ID'], 'SECTION_DELETE');
@@ -37,12 +40,18 @@ if ($arResult['SECTIONS_COUNT'] > 0)
 			{
 				$this->addEditAction($section['ID'], $section['EDIT_LINK'], $sectionEdit);
 				$this->addDeleteAction($section['ID'], $section['DELETE_LINK'], $sectionDelete, $sectionDeleteParams);
+				$countLabel = Loc::getMessage('CT_BCSL_SECTION_COUNT_ARIA', ['#COUNT#' => $section['ELEMENT_CNT']]);
 				?>
 				<li class="catalog-sections-list-menu-item nav-item" id="<?=$this->getEditAreaId($section['ID'])?>">
 					<a href="<?=$section['SECTION_PAGE_URL']?>" class="catalog-sections-list-menu-item-link">
-						<span class="catalog-sections-list-menu-item-text"><?=$section['NAME'] ." <i>".$section['ELEMENT_CNT']. "</i>";?></span>
+						<span class="catalog-sections-list-menu-item-text">
+							<?=$section['NAME']?><span
+								class="catalog-sections-list-menu-visually-hidden"
+							><?=htmlspecialcharsbx($countLabel)?></span>
+							<i aria-hidden="true"><?=$section['ELEMENT_CNT']?></i>
+						</span>
 						<?php if($arParams['SHOW_ANGLE'] === 'Y'): ?>
-							<span class="catalog-sections-list-menu-item-angle"></span>
+							<span class="catalog-sections-list-menu-item-angle" aria-hidden="true"></span>
 						<?php endif; ?>
 					</a>
 				</li>

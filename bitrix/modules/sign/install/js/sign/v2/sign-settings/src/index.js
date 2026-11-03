@@ -14,11 +14,12 @@ import {
 	getFilledStringOrUndefined,
 	isTemplateMode,
 	setInitialNextButtonState,
+	waitForGroupPlaceholderValidation,
 } from './functions';
 import type { SignOptions, SignOptionsConfig } from './types';
 
 export type { SignOptions, SignOptionsConfig };
-export { decorateResultBeforeCompletion, isTemplateMode };
+export { decorateResultBeforeCompletion, isTemplateMode, waitForGroupPlaceholderValidation };
 
 export class SignSettings
 {

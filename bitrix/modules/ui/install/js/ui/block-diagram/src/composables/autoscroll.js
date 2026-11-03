@@ -17,8 +17,12 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 	let rafId = null;
 	let mouseX = 0;
 	let mouseY = 0;
-	let rect = null;
 	let activeCallback = null;
+
+	// Re-measured every frame: layout may shift or the page may scroll mid-gesture.
+	const getCanvasRect = (): DOMRect | null => {
+		return toValue(state.canvasRef)?.getBoundingClientRect() ?? null;
+	};
 
 	const getAxisSpeed = (penetration: number): number => {
 		if (penetration <= 0)
@@ -33,8 +37,12 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 	};
 
 	const scrollLoop = () => {
+		const rect = getCanvasRect();
 		if (!rect || !activeCallback)
 		{
+			// Leaving the loop must clear the frame id, otherwise the next start sees it as running.
+			rafId = null;
+
 			return;
 		}
 
@@ -66,13 +74,7 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 
 		if (dx !== 0 || dy !== 0)
 		{
-			const currentZoom = toValue(state.zoom);
-
-			actions.setCamera({
-				x: toValue(state.transformX) + (dx / currentZoom),
-				y: toValue(state.transformY) + (dy / currentZoom),
-				zoom: currentZoom,
-			});
+			actions.panCamera(dx, dy);
 			activeCallback(dx, dy);
 		}
 
@@ -96,7 +98,6 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 			cancelAnimationFrame(rafId);
 			rafId = null;
 		}
-		rect = null;
 		activeCallback = null;
 	};
 
@@ -109,18 +110,12 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 			return;
 		}
 
-		// The canvas is measured here rather than on the press: between the two the panel of the
-		// selected block opens and the canvas loses the width the press would have measured, so
-		// the edge threshold would be counted from a border that has moved.
-		const el = toValue(state.canvasRef);
-		if (!el)
+		// Nothing to measure against yet: a later move arms the loop.
+		if (!toValue(state.canvasRef))
 		{
-			// A frame without geometry would exit at once, leaving rafId set: every later move would
-			// then read the loop as running and the autoscroll would stay dead for the whole gesture.
 			return;
 		}
 
-		rect = el.getBoundingClientRect();
 		rafId = requestAnimationFrame(scrollLoop);
 	};
 

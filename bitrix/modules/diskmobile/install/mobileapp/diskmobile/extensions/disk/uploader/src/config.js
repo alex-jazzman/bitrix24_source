@@ -12,6 +12,7 @@ jn.define('disk/uploader/src/config', (require, exports, module) => {
 		CHUNK_SIZE: 5_242_880,
 	};
 
+	/** @type {DiskUploadStatusMap} */
 	const UploadStatus = {
 		PROGRESS: 'progress',
 		DONE: 'done',

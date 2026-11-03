@@ -52,6 +52,7 @@ $itemIds = array(
 	'BIG_SLIDER_ID' => $mainId.'_big_slider',
 	'BIG_IMG_CONT_ID' => $mainId.'_bigimg_cont',
 	'SLIDER_CONT_ID' => $mainId.'_slider_cont',
+	'SLIDER_PAGER_ID' => $mainId.'_slider_pager',
 	'BLOCK_PRICE_OLD' => $mainId.'_block_price',
 	'OLD_PRICE_ID' => $mainId.'_old_price',
 	'PRICE_ID' => $mainId.'_price',
@@ -74,6 +75,9 @@ $itemIds = array(
 	'TREE_ID' => $haveOffers && !empty($arResult['OFFERS_PROP']) ? $mainId.'_skudiv' : null,
 	'DISPLAY_PROP_DIV' => $mainId.'_sku_prop',
 	'DESCRIPTION_ID' => $mainId.'_description',
+	'DESCRIPTION_TAB_ID' => $mainId.'_description_tab',
+	'PROPERTIES_ID' => $mainId.'_properties',
+	'PROPERTIES_TAB_ID' => $mainId.'_properties_tab',
 	'DISPLAY_MAIN_PROP_DIV' => $mainId.'_main_sku_prop',
 	'OFFER_GROUP' => $mainId.'_set_group_',
 	'BASKET_PROP_DIV' => $mainId.'_basket_prop',
@@ -190,12 +194,12 @@ $arParams['MESS_RELATIVE_QUANTITY_FEW'] = $arParams['MESS_RELATIVE_QUANTITY_FEW'
 
 $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_THEME'] : '';
 ?>
-<div class="product-detail row <?=$themeClass?>" id="<?=$itemIds['ID']?>">
+<div class="product-detail row <?=$themeClass?>" id="<?=$itemIds['ID']?>" data-testid="catalog-element-detail">
 	<?php
 		//region COVER
 		?>
 		<div class="product-detail-slider-container col-12 col-md-6" id="<?=$itemIds['BIG_SLIDER_ID']?>">
-			<span class="product-detail-slider-close" data-entity="close-popup"></span>
+			<span class="product-detail-slider-close" data-entity="close-popup" data-testid="catalog-element-gallery-popup-close"></span>
 			<div class="product-detail-slider-block" data-entity="images-slider-block" style="<?=$percent; ?>">
 				<?php
 				//region LABEL
@@ -255,7 +259,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							$style .= "background-image: -webkit-image-set(url('{$xResizedImage}') 1x, url('{$x2ResizedImage}') 2x);";
 							$style .= "background-image: image-set(url('{$xResizedImage}') 1x, url('{$x2ResizedImage}') 2x);";
 							?>
-							<div class="product-detail-slider-image<?=($key == 0 ? ' active' : '')?>" data-entity="image" data-id="<?=$photo['ID']?>">
+							<div class="product-detail-slider-image<?=($key == 0 ? ' active' : '')?>" data-entity="image" data-id="<?=$photo['ID']?>"<?=($key == 0 ? '' : ' aria-hidden="true"')?>>
 								<img
 									src="<?= $xResizedImage ?>"
 									srcset="<?= $xResizedImage ?> 1x, <?= $x2ResizedImage ?> 2x"
@@ -294,7 +298,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							{
 								?>
 								<div class="catalog-section-item-slider-images-slider-pager-item"
-									data-entity="slider-control" data-value="<?=$offer['ID'].'_'.$photo['ID']?>">
+									data-entity="slider-control" data-value="<?=$offer['ID'].'_'.$photo['ID']?>"
+									tabindex="-1" aria-hidden="true">
 								</div>
 								<?php
 							}
@@ -306,7 +311,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				else
 				{
 					?>
-					<div class="catalog-section-item-slider-images-slider-pager d-none d-sm-flex" id="<?=$itemIds['SLIDER_CONT_ID']?>">
+					<div class="catalog-section-item-slider-images-slider-pager d-none d-sm-flex" id="<?=$itemIds['SLIDER_PAGER_ID']?>">
 						<?php
 						if (!empty($actualItem['MORE_PHOTO']))
 						{
@@ -314,7 +319,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 							{
 								?>
 								<div class="catalog-section-item-slider-images-slider-pager-item"
-									data-entity="slider-control" data-value="<?=$photo['ID']?>">
+									data-entity="slider-control" data-value="<?=$photo['ID']?>"
+									tabindex="-1" aria-hidden="true">
 								</div>
 								<?php
 							}
@@ -341,15 +347,21 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 
 						$strVisible = $arResult['OFFERS_SELECTED'] == $keyOffer ? '' : 'none';
 						?>
-						<div class="product-detail-slider-controls-block" id="<?=$itemIds['SLIDER_CONT_OF_ID'].$offer['ID']?>" style="display: <?=$strVisible?>;">
+						<div class="product-detail-slider-controls-block" id="<?=$itemIds['SLIDER_CONT_OF_ID'].$offer['ID']?>"
+							role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_GALLERY_ARIA'))?>" data-testid="catalog-element-gallery-dots"
+							style="display: <?=$strVisible?>;">
 							<?php
+							$photosTotal = count($offer['MORE_PHOTO']);
 							foreach ($offer['MORE_PHOTO'] as $keyPhoto => $photo)
 							{
 								?>
-								<div class="product-detail-slider-controls-image<?=($keyPhoto == 0 ? ' active' : '')?>"
-									data-entity="slider-control" data-value="<?=$offer['ID'].'_'.$photo['ID']?>">
+								<button type="button" class="product-detail-slider-controls-image<?=($keyPhoto == 0 ? ' active' : '')?>"
+									data-entity="slider-control" data-value="<?=$offer['ID'].'_'.$photo['ID']?>"
+									tabindex="-1"
+									<?=($keyPhoto == 0 ? 'aria-current="true"' : '')?>
+									aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_GALLERY_DOT_ARIA', ['#NUM#' => $keyPhoto + 1, '#TOTAL#' => $photosTotal]))?>" data-testid="catalog-element-gallery-dot">
 									<div class="product-detail-slider-controls-dot"></div>
-								</div>
+								</button>
 								<?php
 							}
 							?>
@@ -360,17 +372,22 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				else
 				{
 					?>
-					<div class="product-detail-slider-controls-block" id="<?=$itemIds['SLIDER_CONT_ID']?>">
+					<div class="product-detail-slider-controls-block" id="<?=$itemIds['SLIDER_CONT_ID']?>"
+						role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_GALLERY_ARIA'))?>" data-testid="catalog-element-gallery-dots">
 						<?php
 						if (!empty($actualItem['MORE_PHOTO']))
 						{
+							$photosTotal = count($actualItem['MORE_PHOTO']);
 							foreach ($actualItem['MORE_PHOTO'] as $key => $photo)
 							{
 								?>
-								<div class="product-detail-slider-controls-image<?=($key == 0 ? ' active' : '')?>"
-									data-entity="slider-control" data-value="<?=$photo['ID']?>">
+								<button type="button" class="product-detail-slider-controls-image<?=($key == 0 ? ' active' : '')?>"
+									data-entity="slider-control" data-value="<?=$photo['ID']?>"
+									tabindex="-1"
+									<?=($key == 0 ? 'aria-current="true"' : '')?>
+									aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_GALLERY_DOT_ARIA', ['#NUM#' => $key + 1, '#TOTAL#' => $photosTotal]))?>" data-testid="catalog-element-gallery-dot">
 									<div class="product-detail-slider-controls-dot"></div>
-								</div>
+								</button>
 								<?php
 							}
 						}
@@ -429,6 +446,14 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				//region SKU
 				if ($showOffersBlock)
 				{
+					$offerTreeValues = [];
+					foreach ($arResult['OFFERS'] as $offer)
+					{
+						foreach ($offer['TREE'] as $treeProperty => $treeValue)
+						{
+							$offerTreeValues[$treeProperty][$treeValue] = true;
+						}
+					}
 					?>
 					<div class="mb-3" id="<?=$itemIds['TREE_ID']?>">
 						<?php
@@ -444,24 +469,55 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 								'VALUES' => $skuProperty['VALUES'],
 								'VALUES_COUNT' => $skuProperty['VALUES_COUNT']
 							);
+
+							$skuTitleId = $itemIds['TREE_ID'].'_title_'.$propertyId;
+							$skuGroupName = (string)$skuProperty['NAME'] !== ''
+								? 'aria-labelledby="'.$skuTitleId.'"'
+								: 'aria-label="'.htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_SKU_GROUP_ARIA')).'"'
+							;
+							// a value carried by no offer is hidden by the script at once and takes no place in the set
+							$shownValues = [];
+							foreach ($skuProperty['VALUES'] as $skuValue)
+							{
+								if (isset($offerTreeValues['PROP_'.$propertyId][$skuValue['ID']]))
+								{
+									$shownValues[$skuValue['ID']] = true;
+								}
+							}
+							$skuValuesTotal = count($shownValues);
+							$skuValuePos = 0;
 							?>
 							<div data-entity="sku-line-block" class="mb-3">
-								<div class="product-detail-scu-container-title"><?=htmlspecialcharsEx($skuProperty['NAME'])?></div>
+								<div class="product-detail-scu-container-title" id="<?=$skuTitleId?>"><?=htmlspecialcharsEx($skuProperty['NAME'])?></div>
 								<div class="product-detail-scu-container">
 									<div class="product-detail-scu-block">
 										<div class="product-detail-scu-list">
-											<ul class="product-detail-scu-item-list">
+											<ul class="product-detail-scu-item-list" role="radiogroup" data-testid="catalog-element-sku-group" <?=$skuGroupName?>>
 												<?php
 												foreach ($skuProperty['VALUES'] as &$value)
 												{
 													$value['NAME'] = htmlspecialcharsbx($value['NAME']);
+													$skuValueName = $value['NAME'] !== ''
+														? $value['NAME']
+														: htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_SKU_VALUE_ARIA', ['#ID#' => $value['ID']]))
+													;
+													$skuValuePosition = '';
+													if (isset($shownValues[$value['ID']]))
+													{
+														$skuValuePos++;
+														$skuValuePosition = ' aria-setsize="'.$skuValuesTotal.'"'
+															.' aria-posinset="'.$skuValuePos.'"'
+														;
+													}
 
 													if ($skuProperty['SHOW_MODE'] === 'PICT')
 													{
 														?>
-														<li class="product-detail-scu-item-color-container" title="<?=$value['NAME']?>"
+														<li class="product-detail-scu-item-color-container" data-testid="catalog-element-sku-option"
 															data-treevalue="<?=$propertyId?>_<?=$value['ID']?>"
-															data-onevalue="<?=$value['ID']?>">
+															data-onevalue="<?=$value['ID']?>"
+															role="radio" tabindex="-1" aria-checked="false"
+															aria-label="<?=$skuValueName?>"<?=$skuValuePosition?>>
 															<div class="product-detail-scu-item-color-block">
 																<div class="product-detail-scu-item-color" title="<?=$value['NAME']?>"
 																	style="background-image: url('<?=$value['PICT']['SRC']?>');">
@@ -473,9 +529,11 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 													else
 													{
 														?>
-														<li class="product-detail-scu-item-text-container" title="<?=$value['NAME']?>"
+														<li class="product-detail-scu-item-text-container" data-testid="catalog-element-sku-option"
 															data-treevalue="<?=$propertyId?>_<?=$value['ID']?>"
-															data-onevalue="<?=$value['ID']?>">
+															data-onevalue="<?=$value['ID']?>"
+															role="radio" tabindex="-1" aria-checked="false"
+															aria-label="<?=$skuValueName?>"<?=$skuValuePosition?>>
 															<div class="product-detail-scu-item-text-block">
 																<div class="product-detail-scu-item-text"><?=$value['NAME']?></div>
 															</div>
@@ -604,24 +662,30 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 					//region USE_PRODUCT_QUANTITY
 					if ($arParams['USE_PRODUCT_QUANTITY'])
 					{
+						$quantityTitle = (string)Loc::getMessage('CATALOG_QUANTITY');
+						$quantityTitleId = $itemIds['QUANTITY_ID'].'_title';
+						$quantityFieldName = $quantityTitle !== ''
+							? 'aria-labelledby="'.$quantityTitleId.'"'
+							: ''
+						;
 						?>
 						<div class="product-item-detail-quantity-container" data-entity="quantity-block" <?= (!$actualItem['CAN_BUY'] ? ' style="display: none;"' : '') ?>>
 							<?php
-							if (Loc::getMessage('CATALOG_QUANTITY'))
+							if ($quantityTitle !== '')
 							{
 								?>
-								<div class="product-item-detail-quantity-title"><?= Loc::getMessage('CATALOG_QUANTITY') ?></div>
+								<div class="product-item-detail-quantity-title" id="<?=$quantityTitleId?>"><?= $quantityTitle ?></div>
 								<?php
 							}
 							?>
 							<div class="product-item-detail-quantity-field-container">
 								<?php //.product-item-detail-quantity-btn-disabled ?>
-								<div class="product-item-detail-quantity-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN_ID']?>"></div>
+								<button type="button" class="product-item-detail-quantity-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN_ID']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_QUANTITY_DOWN_ARIA'))?>" data-testid="catalog-element-quantity-down"></button>
 								<div class="product-item-detail-quantity-field-block">
-									<input class="product-item-detail-quantity-field" id="<?=$itemIds['QUANTITY_ID']?>" type="text" inputmode="numeric" value="<?=$measureRatio?>">
-									<div class="product-item-detail-quantity-field" id="<?=$itemIds['QUANTITY_COUNTER_ID']?>" contentEditable="true" inputmode="numeric" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value=""><?=$measureRatio?></div>
+									<input class="product-item-detail-quantity-field" id="<?=$itemIds['QUANTITY_ID']?>" type="text" inputmode="numeric" value="<?=$measureRatio?>" data-testid="catalog-element-quantity-field" <?=$quantityFieldName?>>
+									<div class="product-item-detail-quantity-field" id="<?=$itemIds['QUANTITY_COUNTER_ID']?>" aria-hidden="true"><?=$measureRatio?></div>
 								</div>
-								<div class="product-item-detail-quantity-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP_ID']?>"></div>
+								<button type="button" class="product-item-detail-quantity-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP_ID']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCE_CATALOG_QUANTITY_UP_ARIA'))?>" data-testid="catalog-element-quantity-up"></button>
 							</div>
 							<span class="product-item-detail-quantity-description" id="<?=$itemIds['QUANTITY_MEASURE_CONTAINER']?>">
 								<span class="product-item-detail-quantity-description-text" id="<?=$itemIds['QUANTITY_MEASURE']?>"><?=$actualItem['ITEM_MEASURE']['TITLE']?></span>
@@ -642,11 +706,10 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 						{
 							?>
 							<div class="mb-3">
-								<a class="product-item-detail-buy-button btn btn-md rounded-pill <?=$buyButtonClassName?>"
-									id="<?=$itemIds['ADD_BASKET_LINK']?>"
-									href="javascript:void(0);">
+								<button type="button" class="product-item-detail-buy-button btn btn-md rounded-pill <?=$buyButtonClassName?>"
+									id="<?=$itemIds['ADD_BASKET_LINK']?>" data-testid="catalog-element-add-to-basket">
 									<?=$arParams['MESS_BTN_ADD_TO_BASKET']?>
-								</a>
+								</button>
 							</div>
 							<?php
 						}
@@ -655,11 +718,10 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 						{
 							?>
 							<div class="mb-3">
-								<a class="product-item-detail-buy-button btn btn-md rounded-pill <?=$buyButtonClassName?>"
-									id="<?=$itemIds['BUY_LINK']?>"
-									href="javascript:void(0);">
+								<button type="button" class="product-item-detail-buy-button btn btn-md rounded-pill <?=$buyButtonClassName?>"
+									id="<?=$itemIds['BUY_LINK']?>" data-testid="catalog-element-buy">
 									<?=$arParams['MESS_BTN_BUY']?>
-								</a>
+								</button>
 							</div>
 							<?php
 						}
@@ -692,7 +754,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				}
 				?>
 				<div class="mb-3" id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" style="display: <?=(!$actualItem['CAN_BUY'] ? '' : 'none')?>;">
-					<a class="product-item-detail-buy-button btn btn-primary disabled rounded-pill" href="javascript:void(0)" rel="nofollow"><?=$arParams['MESS_NOT_AVAILABLE']?></a>
+					<button type="button" class="product-item-detail-buy-button btn btn-primary rounded-pill" disabled data-testid="catalog-element-not-available"><?=$arParams['MESS_NOT_AVAILABLE']?></button>
 				</div>
 				<?php //endregion
 
@@ -819,30 +881,43 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 			//endregion
 
 			//region TABS
+			$showProperties = !empty($arResult['DISPLAY_PROPERTIES']) || $arResult['SHOW_OFFERS_PROPS'];
+			// an empty strip gets no role: role="tablist" without tabs is an aria-required-children violation
+			$hasTabs = $showDescription || $showProperties;
 			?>
 			<div class="row" id="<?=$itemIds['TABS_ID']?>">
 				<div class="col">
 					<div class="product-item-detail-tabs-container">
-						<ul class="product-item-detail-tabs-list">
+						<ul class="product-item-detail-tabs-list"<?=($hasTabs ? ' role="tablist"' : '')?>>
 							<?php
 							if ($showDescription)
 							{
 								?>
-								<li class="product-item-detail-tab active" data-entity="tab" data-value="description">
-									<a href="javascript:void(0);" class="product-item-detail-tab-link">
+								<li class="product-item-detail-tab active" data-entity="tab" data-value="description" role="presentation">
+									<button type="button" class="product-item-detail-tab-link"
+										id="<?=$itemIds['DESCRIPTION_TAB_ID']?>"
+										role="tab" data-testid="catalog-element-tab-link"
+										aria-selected="true"
+										aria-controls="<?=$itemIds['DESCRIPTION_ID']?>"
+										tabindex="-1">
 										<span><?=$arParams['MESS_DESCRIPTION_TAB']?></span>
-									</a>
+									</button>
 								</li>
 								<?php
 							}
 
-							if (!empty($arResult['DISPLAY_PROPERTIES']) || $arResult['SHOW_OFFERS_PROPS'])
+							if ($showProperties)
 							{
 								?>
-								<li class="product-item-detail-tab" data-entity="tab" data-value="properties">
-									<a href="javascript:void(0);" class="product-item-detail-tab-link">
+								<li class="product-item-detail-tab" data-entity="tab" data-value="properties" role="presentation">
+									<button type="button" class="product-item-detail-tab-link"
+										id="<?=$itemIds['PROPERTIES_TAB_ID']?>"
+										role="tab" data-testid="catalog-element-tab-link"
+										aria-selected="false"
+										aria-controls="<?=$itemIds['PROPERTIES_ID']?>"
+										tabindex="-1">
 										<span><?=$arParams['MESS_PROPERTIES_TAB']?></span>
-									</a>
+									</button>
 								</li>
 								<?php
 							}
@@ -861,6 +936,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 						<div class="product-item-detail-tab-content active"
 							data-entity="tab-container"
 							data-value="description"
+							role="tabpanel" data-testid="catalog-element-tab-panel"
+							aria-labelledby="<?=$itemIds['DESCRIPTION_TAB_ID']?>"
 							id="<?=$itemIds['DESCRIPTION_ID']?>">
 							<?php
 							if (
@@ -883,10 +960,15 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 						<?php
 					}
 
-					if (!empty($arResult['DISPLAY_PROPERTIES']) || $arResult['SHOW_OFFERS_PROPS'])
+					if ($showProperties)
 					{
 						?>
-						<div class="product-item-detail-tab-content" data-entity="tab-container" data-value="properties">
+						<div class="product-item-detail-tab-content"
+							data-entity="tab-container"
+							data-value="properties"
+							role="tabpanel" data-testid="catalog-element-tab-panel"
+							aria-labelledby="<?=$itemIds['PROPERTIES_TAB_ID']?>"
+							id="<?=$itemIds['PROPERTIES_ID']?>">
 							<?php
 							if (!empty($arResult['DISPLAY_PROPERTIES']))
 							{
@@ -1922,6 +2004,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 		BTN_MESSAGE_COMPARE_REDIRECT: '<?=GetMessageJS('CT_BCE_CATALOG_BTN_MESSAGE_COMPARE_REDIRECT')?>',
 		PRODUCT_GIFT_LABEL: '<?=GetMessageJS('CT_BCE_CATALOG_PRODUCT_GIFT_LABEL')?>',
 		PRICE_TOTAL_PREFIX: '<?=GetMessageJS('CT_BCE_CATALOG_MESS_PRICE_TOTAL_PREFIX')?>',
+		SKU_SELECTED_ARIA: '<?=GetMessageJS('CT_BCE_CATALOG_SKU_SELECTED_ARIA')?>',
 		RELATIVE_QUANTITY_MANY: '<?=CUtil::JSEscape($arParams['MESS_RELATIVE_QUANTITY_MANY'])?>',
 		RELATIVE_QUANTITY_FEW: '<?=CUtil::JSEscape($arParams['MESS_RELATIVE_QUANTITY_FEW'])?>',
 		SITE_ID: '<?=CUtil::JSEscape($component->getSiteId())?>'

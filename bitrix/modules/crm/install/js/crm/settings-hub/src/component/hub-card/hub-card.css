@@ -1,0 +1,73 @@
+.crm-settings-hub-card {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.crm-settings-hub-card__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+	padding-bottom: var(--ui-space-inset-lg);
+}
+
+.crm-settings-hub-card__icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
+}
+
+.crm-settings-hub-card__title {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-card__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.crm-settings-hub-card.--collapsible .crm-settings-hub-card__header {
+	cursor: pointer;
+	user-select: none;
+}
+
+.crm-settings-hub-card.--collapsible .crm-settings-hub-card__header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-card.--collapsible.--open .crm-settings-hub-card__header {
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	padding-bottom: var(--ui-space-stack-sm);
+}
+
+/* A collapsed card ends at its header, so the header's own bottom padding is no longer a gap before
+   the content — it just doubles the card's inset (20px on top of 24px, a 92px card where 72px is the
+   whole of it). The gap belongs to the open state, which sets its own above. */
+.crm-settings-hub-card.--collapsible:not(.--open) .crm-settings-hub-card__header {
+	padding-bottom: 0;
+}
+
+.crm-settings-hub-card__chevron {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+/* The action takes the right edge instead of the chevron; a header without one keeps exactly the
+   layout it had. */
+.crm-settings-hub-card__action {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	margin-left: auto;
+}
+
+.crm-settings-hub-card__action ~ .crm-settings-hub-card__chevron {
+	margin-left: var(--ui-space-inset-2xs);
+}

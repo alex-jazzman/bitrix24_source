@@ -2170,6 +2170,105 @@ table.task-table-hide-first-column > tr > td:first-child {
     color: gray;
 }
 
+.tasks-list-crm {
+    align-items: center;
+}
+
+/* CRM chip reuses tasks-grid-username for colors/rounding/hover/active (see style.css). */
+
+/* Override the negative margin inherited from tasks-grid-username so CRM chips are not cramped
+   against each other; scoped to the CRM cell so ordinary username/group chips are unaffected. */
+.tasks-list-crm .tasks-grid-username {
+    margin: 2px;
+}
+
+.tasks-list-crm-item__icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+    flex-shrink: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.tasks-list-crm-item__icon.--deal {
+    background-image: url(/bitrix/images/crm/entity_provider_icons/deal.svg);
+}
+
+.tasks-list-crm-item__icon.--contact {
+    background-image: url(/bitrix/images/crm/entity_provider_icons/contact.svg);
+}
+
+.tasks-list-crm-item__icon.--company {
+    background-image: url(/bitrix/images/crm/entity_provider_icons/company.svg);
+}
+
+.tasks-list-crm-item__icon.--lead {
+    background-image: url(/bitrix/images/crm/entity_provider_icons/lead.svg);
+}
+
+.tasks-list-crm-item__icon.--invoice {
+    background-image: url(/bitrix/images/crm/entity_provider_icons/invoice.svg);
+}
+
+.tasks-list-crm-item__icon.--dynamic {
+    background-image: url(/bitrix/images/crm/entity_provider_icons/dynamic.svg);
+}
+
+/* The chip body is clickable to filter by its element. */
+.tasks-list-crm .tasks-grid-username[data-crm-filter-value] {
+    cursor: pointer;
+}
+
+/* Inaccessible element: name is shown but the chip is inert and visually muted. */
+.tasks-list-crm .tasks-grid-username.tasks-list-crm-item--locked {
+    cursor: default;
+    opacity: .6;
+}
+
+.tasks-list-crm .tasks-grid-username.tasks-list-crm-item--locked:hover {
+    background: transparent;
+}
+
+.tasks-list-crm-item__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Filter remove: reuse the shared .tasks-grid-filter-remove crossmark (visible only under
+   .tasks-grid-filter-active, see style.css). Strip native button chrome so it matches the span variant
+   used by username chips. */
+.tasks-list-crm button.tasks-grid-filter-remove {
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Inline bind "+" as a button: strip native chrome, keep the icon/shape from .main-grid-tag-add. */
+.tasks-list-crm .main-grid-tag-add {
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.tasks-list-crm .main-grid-tag-add:focus-visible {
+    opacity: 1;
+}
+
+.tasks-list-crm .tasks-grid-username[data-crm-filter-value]:focus-visible,
+.tasks-list-crm button.tasks-grid-filter-remove:focus-visible,
+.tasks-list-crm .main-grid-tag-add:focus-visible {
+    outline: 2px solid var(--ui-color-accent-main-primary, #2fc6f6);
+    outline-offset: 1px;
+    border-radius: 4px;
+}
+
 /* i like in detail */
 .task-inform-ilike-container{
     margin-top: 12px;

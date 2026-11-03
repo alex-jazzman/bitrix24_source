@@ -1,0 +1,4 @@
+<?php
+
+$MESS['VIBECODECONNECTOR_APP_CHAT_WELCOME_MESSAGE'] = 'Приложение опубликовано';
+$MESS['VIBECODECONNECTOR_APP_CHAT_OPEN_APP_BUTTON'] = 'Открыть приложение';

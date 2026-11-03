@@ -56,6 +56,12 @@
 }
 
 .ui-checkbox-list__sections-item {
+	/* native button reset: the section toggle keeps the look it had as a div */
+	appearance: none;
+	background: none;
+	margin-top: 0;
+	font-family: inherit;
+	text-align: inherit;
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -236,7 +242,6 @@
 
 .ui-checkbox-list__container {
 	overflow: auto;
-	outline: none;
 }
 
 .ui-checkbox-list__container::-webkit-scrollbar {
@@ -309,7 +314,8 @@
 }
 
 .ui-checkbox-list__field-item_label.--disabled input,
-.ui-checkbox-list__field-item_label.--disabled div{
+.ui-checkbox-list__field-item_label.--disabled div,
+.ui-checkbox-list__field-item_label.--disabled .ui-checkbox-list__field-item_locked{
 	opacity: var(--ui-opacity-70);
 }
 
@@ -331,19 +337,58 @@
 }
 
 .ui-checkbox-list__field-item_edit{
+	/* native button reset: the rename control keeps the look it had as a div, content-box
+	   included - the browser default of border-box would shrink it by its own padding */
+	appearance: none;
+	display: block;
+	box-sizing: content-box;
+	border: none;
+	margin: 0;
+	font: inherit;
+	color: inherit;
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 18 18'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='m6.618 13.419-2.28.523a.233.233 0 0 1-.28-.28l.524-2.28zm8.06-8.5a.31.31 0 0 1 0 .44l-7.304 7.366-2.036-2.036 7.303-7.366a.31.31 0 0 1 .44 0z' clip-rule='evenodd'/%3E%3C/svg%3E") center center;
 	width: 18px;
 	height: 18px;
-	opacity: 0;
 	padding: 2px;
+	cursor: pointer;
+	/* Hidden by the background rather than by opacity or visibility: the rename button is a member
+	   of the focus zone, and the zone collects only what `checkVisibility` calls visible - which
+	   both `opacity: 0` and `visibility: hidden` fail. The box keeps its geometry either way, so
+	   the row does not move when the pencil appears. */
+	background-image: none;
 }
 
-.ui-checkbox-list__field-item_label:hover .ui-checkbox-list__field-item_edit{
+/* Both hover rules are kept out of the row being renamed: there the button means "apply", and its
+   icon is set above with the same specificity but earlier in the file, so an unrestricted hover
+   rule would quietly replace the tick with a pencil - the button would advertise the wrong action
+   exactly while the pointer is on it. */
+.ui-checkbox-list__field-item_label:not(.--editable):hover .ui-checkbox-list__field-item_edit{
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 18 18'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='m6.618 13.419-2.28.523a.233.233 0 0 1-.28-.28l.524-2.28zm8.06-8.5a.31.31 0 0 1 0 .44l-7.304 7.366-2.036-2.036 7.303-7.366a.31.31 0 0 1 .44 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	opacity: .8;
 }
 
-.ui-checkbox-list__field-item_label:hover .ui-checkbox-list__field-item_edit:hover,
+.ui-checkbox-list__field-item_label:not(.--editable):hover .ui-checkbox-list__field-item_edit:hover{
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 18 18'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='m6.618 13.419-2.28.523a.233.233 0 0 1-.28-.28l.524-2.28zm8.06-8.5a.31.31 0 0 1 0 .44l-7.304 7.366-2.036-2.036 7.303-7.366a.31.31 0 0 1 .44 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	opacity: 1;
+}
+
+/* The row being renamed shows the apply icon set above, so only the opacity is raised here. */
 .ui-checkbox-list__field-item_label.--editable .ui-checkbox-list__field-item_edit{
+	opacity: 1;
+}
+
+/* Showing the pencil while the focus is inside its own row is what tells a keyboard user the row
+   can be renamed at all. The button carries its own `:focus-visible` as well as the row's `:has()`:
+   Firefox 115 ESR is a target browser and does not know `:has()`, and the pencil reached by the
+   arrows must be visible there too. The mouse behaviour is unchanged. */
+.ui-checkbox-list__field-item_label:not(.--editable):has(:focus-visible) .ui-checkbox-list__field-item_edit,
+.ui-checkbox-list__field-item_label:not(.--editable) .ui-checkbox-list__field-item_edit:focus-visible{
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 18 18'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='m6.618 13.419-2.28.523a.233.233 0 0 1-.28-.28l.524-2.28zm8.06-8.5a.31.31 0 0 1 0 .44l-7.304 7.366-2.036-2.036 7.303-7.366a.31.31 0 0 1 .44 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	opacity: 1;
+}
+
+/* The apply icon of the row being renamed stays put; reaching it by keyboard only reveals it. */
+.ui-checkbox-list__field-item_label.--editable .ui-checkbox-list__field-item_edit:focus-visible{
 	opacity: 1;
 }
 
@@ -381,6 +426,19 @@
 	transition: .2s;
 	padding-left: 30px;
 	margin-top: 1px;
+}
+
+/* native button reset: the text toggle of the footer keeps the look it had as a div. The padding
+   comes from the rule above, so the browser default of a button has to be dropped explicitly. */
+.ui-checkbox-list__footer-custom-element.--texttoggle {
+	appearance: none;
+	background: none;
+	border: none;
+	padding: 0 0 0 30px;
+	font-family: inherit;
+	font-size: inherit;
+	text-align: inherit;
+	align-items: flex-start;
 }
 
 .ui-checkbox-list__footer-custom-element:hover {
@@ -434,9 +492,13 @@
 	margin-top: -10px;
 }
 
+/* The vertical offset repeats the padding-top of the footer: without an explicit `top` an
+   absolutely positioned block falls back to its static position, which depends on the
+   preceding siblings, and the Tab order of the footer dictates that order. */
 .ui-checkbox-list__footer-block.--right{
 	position: absolute;
 	right: 3px;
+	top: 26px;
 }
 
 .ui-checkbox-list__footer-link {
@@ -452,6 +514,17 @@
 
 .ui-checkbox-list__footer-link:hover {
 	border-color: var(--ui-color-base-90);
+}
+
+/* native button reset: the "back to default" link is a button now and keeps the look it had as a
+   div. Its own rules already set margin, color and cursor. */
+.ui-checkbox-list__footer-link.--default {
+	appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: inherit;
+	text-align: inherit;
 }
 
 .ui-checkbox-list__footer-link.--select-all label {
@@ -474,9 +547,12 @@
 	display: flex;
 	justify-content: right;
 	align-items: center;
+	/* the row filled the width of its absolutely positioned parent as a div; a button sizes itself
+	   by its content, so the width is restored to keep the caption at the right edge */
+	width: 100%;
 	border: none;
 	color: var(--ui-color-palette-gray-60);
-	margin-right: 0;
+	margin: 0;
 }
 
 .ui-checkbox-list__footer-link.--default::before {
@@ -525,15 +601,25 @@
 	white-space: normal;
 }
 
-.ui-checkbox-list__field-item_text[contenteditable=true]:focus-visible,
-.ui-checkbox-list__field-item_text[contenteditable=true]:focus {
-	outline: none;
-}
-
 .ui-checkbox-list__field-item_locked{
+	display: block;
 	width: 18px;
 	height: 17px;
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='17' fill='none' viewBox='0 0 18 17'%3E%3Cpath fill='%232fc6f6' fill-rule='evenodd' d='M9.49 11.153v1.236h-.98v-1.236A.784.784 0 0 1 9 9.759a.784.784 0 0 1 .49 1.393M6.867 6.127A2.14 2.14 0 0 1 9 3.981a2.14 2.14 0 0 1 2.133 2.146v1.814H6.867zm5.393 1.814V6.127c0-1.812-1.46-3.28-3.26-3.28s-3.26 1.468-3.26 3.28V7.94h-.49a.5.5 0 0 0-.5.5v5.213a.5.5 0 0 0 .5.5h7.5a.5.5 0 0 0 .5-.5V8.44a.5.5 0 0 0-.5-.5z' clip-rule='evenodd'/%3E%3C/svg%3E") center center;
+}
+
+/* The reason a field is locked is announced through aria-describedby, not shown: the visible
+   affordance is the lock icon next to it. */
+.ui-checkbox-list__visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
 }
 
 .ui-checkbox-list__texttoggle__title {
@@ -543,3 +629,82 @@
 .ui-checkbox-list__texttoggle__value {
 	white-space: nowrap;
 }
+
+/* region focus ring */
+
+/*
+ * The ring goes inside the element: the wrapper of the list clips its content (overflow: hidden)
+ * and its gradients sit above it at z-index 9, so an outer ring would be cut off at the top and
+ * bottom edges of the scroll. --ui-focus-outline-offset-inset is the token for exactly that.
+ *
+ * The fields need their own rule: ui.forms drops the ring of .ui-ctl-element, and the template of
+ * the portal drops it for every input, so nothing paints it for them. The rings of the ui-btn
+ * buttons come from ui.buttons and are left alone.
+ */
+.ui-checkbox-list__search .ui-ctl-element:focus-visible,
+.ui-checkbox-list__sections-item:focus-visible,
+.ui-checkbox-list__footer-link.--default:focus-visible,
+.ui-checkbox-list__footer-custom-element:focus-visible,
+.ui-checkbox-list__field-item_edit:focus-visible,
+.ui-checkbox-list__field-item_text[contenteditable="true"]:focus-visible,
+.ui-checkbox-list__container:focus-visible {
+	outline-width: var(--ui-focus-outline-width);
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+/*
+ * The checkboxes of the footer carry the ring around their box, like the fields of the list and
+ * unlike everything above: a 13px box has no room for an inset ring, which lands on the tick itself
+ * and reads as decoration rather than as focus. The reason the ring goes inside above does not
+ * apply here - these boxes live in the footer, outside the wrapper that clips the scrolling list.
+ */
+.ui-checkbox-list__footer-link.--select-all input[type="checkbox"]:focus-visible,
+.ui-checkbox-list__footer-custom-element input[type="checkbox"]:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/*
+ * The clear button of the search needs !important of its own: it carries the .ui-ctl-after class of
+ * ui.forms, and that extension drops the ring of every such button with `outline: none !important`.
+ * Specificity cannot win against !important, so the ring has to answer in kind - this is the single
+ * place in the file where that is true, and it stays separate from the rule above for that reason.
+ */
+.ui-checkbox-list__search-clear:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline) !important;
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+/*
+ * The field carries the ring itself rather than lending it to its row through :has(): Firefox 115
+ * ESR is a target browser and does not know :has(), and a field left without a ring is the one Tab
+ * stop of the whole list. The ring is drawn around the box, not inside it - a 16px checkbox has no
+ * room for an inset ring - and the 6px padding of the row keeps it clear of the row edge.
+ */
+.ui-checkbox-list__field-item_input:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* The rename button is a small square as well, and it lives inside the row: an inset ring would be
+   invisible on 18px, so it keeps the ring around its own box. */
+.ui-checkbox-list__field-item_edit:focus-visible {
+	outline-offset: 0;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.ui-checkbox-list__sections-item:focus-visible {
+	border-radius: var(--ui-border-radius-xs);
+}
+
+/* The search field draws its own border, so the ring sits just outside it instead of on top. */
+.ui-checkbox-list__search .ui-ctl-element:focus-visible {
+	outline-offset: 0;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+/* endregion */

@@ -7,3 +7,7 @@ $MESS['MOBILE_MENU_AHA_MOMENT_CALL_LIST_DESCRIPTION'] = 'Так легко на�
 
 $MESS['MOBILE_MENU_AHA_MOMENT_MAIL_LIST_TITLE'] = 'Почту можно добавить в нижнее меню';
 $MESS['MOBILE_MENU_AHA_MOMENT_MAIL_LIST_DESCRIPTION'] = 'Так будет удобнее работать с письмами';
+
+$MESS['MOBILE_MENU_AHA_MOMENT_MY_COMPANY_RELOCATION_TITLE'] = 'Сотрудники теперь в Моей компании';
+$MESS['MOBILE_MENU_AHA_MOMENT_MY_COMPANY_INVITE_TITLE'] = 'Приглашать сотрудников теперь можно в Моей компании';
+$MESS['MOBILE_MENU_AHA_MOMENT_MY_COMPANY_MENU_DESCRIPTION'] = 'Список сотрудников и приглашения переехали в этот раздел';

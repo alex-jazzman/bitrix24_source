@@ -142,6 +142,35 @@
 	text-decoration: none;
 }
 
+/* Visible keyboard focus indicator of a card (WCAG 2.4.7). Keyboard focus of a
+   CRM card lives on its title link, while the card itself is what the ring has
+   to outline: the link is a floated run of clipped text, so a ring around it
+   would not read as the card. Engines without :has() keep the ring on the link
+   itself. */
+.crm-kanban-item-title:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+
+@supports selector(:has(*)) {
+	.crm-kanban-item:has(.crm-kanban-item-title:focus-visible) {
+		outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+		outline-offset: -2px;
+	}
+
+	.crm-kanban-item-title:focus-visible {
+		outline: none;
+	}
+}
+
+/* Card actions are separate controls, so each keeps a ring of its own. */
+.crm-kanban-item-activity:focus-visible,
+.crm-kanban-item-plan:focus-visible,
+.crm-kanban-item-industry-close:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+}
+
 .crm-kanban-item-total {
 	clear: both;
 	float: left;
@@ -294,7 +323,7 @@
 }
 
 .crm-kanban-item-activity-link {
-	display: inline-block;
+	display: inline;
 	border-bottom: 1px dashed rgba(83,92,106,.5);
 	cursor: pointer;
 }
@@ -1724,4 +1753,22 @@ a.crm-kanban-sidepanel:hover {
 
 .ui-action-panel-show.--crm-kanban-with-stepper {
 	border-radius: var(--ui-border-radius-md) var(--ui-border-radius-md) 0 0;
+}
+
+.main-kanban-column-edit {
+	/* Column-local base colors are inverted, so use the stable base-90 token. */
+	background: var(--ui-color-base-90);
+	-webkit-mask-image: url('/bitrix/js/ui/icon-set/outline/dist/images/edit-m.svg');
+	mask-image: url('/bitrix/js/ui/icon-set/outline/dist/images/edit-m.svg');
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: 18px;
+	mask-size: 18px;
+}
+
+.main-kanban-column-title-dark .main-kanban-column-edit {
+	background: var(--ui-color-palette-white-base);
+	background-image: none;
 }

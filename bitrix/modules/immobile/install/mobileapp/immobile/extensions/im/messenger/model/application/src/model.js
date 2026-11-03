@@ -6,7 +6,8 @@
 jn.define('im/messenger/model/application/model', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { AppStatus, RecordMediaType } = require('im/messenger/const');
+	const { AppStatus, AvailableAudioRates, RecordMediaType, ReactionType } = require('im/messenger/const');
+	const { normalizeAudioRate } = require('im/messenger/model/application/normalizer');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('model--application');
@@ -32,8 +33,9 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 				},
 			},
 			settings: {
-				audioRate: 1,
+				audioRate: AvailableAudioRates[0],
 				recordMediaType: RecordMediaType.audio,
+				defaultReaction: ReactionType.like,
 			},
 		}),
 		getters: {
@@ -101,6 +103,14 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 			getSettings: (state) => () => {
 				return state.settings;
 			},
+
+			/**
+			 * @function applicationModel/getDefaultReaction
+			 * @return {string}
+			 */
+			getDefaultReaction: (state) => () => {
+				return state.settings.defaultReaction;
+			},
 		},
 		actions: {
 			/** @function applicationModel/setStatus */
@@ -155,15 +165,10 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 
 			/** @function applicationModel/setAudioRateSetting */
 			setAudioRateSetting: (store, payload) => {
-				if (!Type.isNumber(payload))
-				{
-					return;
-				}
-
 				store.commit('setSettings', {
 					actionName: 'setAudioRateSetting',
 					data: {
-						audioRate: payload,
+						audioRate: normalizeAudioRate(payload),
 					},
 				});
 			},
@@ -179,6 +184,18 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 					actionName: 'setRecordMediaType',
 					data: {
 						recordMediaType: payload,
+					},
+				});
+			},
+
+			/** @function applicationModel/setDefaultReaction */
+			setDefaultReaction: (store, payload) => {
+				const reaction = Type.isStringFilled(payload) ? payload : ReactionType.like;
+
+				store.commit('setSettings', {
+					actionName: 'setDefaultReaction',
+					data: {
+						defaultReaction: reaction,
 					},
 				});
 			},

@@ -2,7 +2,6 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'assets/common',
 		'assets/icons',
 		'haptics',
 		'layout/ui/fields/base',
@@ -11,5 +10,7 @@ return [
 		'utils/prop',
 		'utils/object',
 		'utils/validation',
+		'tokens',
+		'ui-system/blocks/icon',
 	],
 ];

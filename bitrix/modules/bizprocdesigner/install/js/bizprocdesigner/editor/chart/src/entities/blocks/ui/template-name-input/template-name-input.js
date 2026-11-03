@@ -153,37 +153,46 @@ export const TemplateNameInput = {
 		<div
 			v-if="!isEditing"
 			class="ui-top-panel-editable-title-box"
+			data-testid="bizprocdesigner-editor-template-name-box"
 		>
 			<div class="ui-top-panel-editable-title">
-				<span @click="onStartEditing">{{ title }}</span>
+				<span
+					data-testid="bizprocdesigner-editor-template-name"
+					@click="onStartEditing"
+				>{{ title }}</span>
 			</div>
 			<MenuButton
 				v-if="!readonly"
 				:options="preparedOptions"
 				:icon="Outline.CHEVRON_DOWN_M"
 				:buttonStyle="AirButtonStyle.PLAIN_NO_ACCENT"
+				:dataset="{ testid: 'bizprocdesigner-editor-template-name-menu' }"
 			/>
 		</div>
 		<div
 			v-else
 			class="ui-top-panel-editable-title-edit-box"
+			data-testid="bizprocdesigner-editor-template-name-edit-box"
 		>
 			<input
 				v-model="editedTitle"
 				ref="editInput"
 				class="ui-top-panel-editable-title-edit-input"
+				data-testid="bizprocdesigner-editor-template-name-input"
 				@keydown.enter.prevent="onSaveTitle"
 			/>
 			<div class="ui-top-panel-editable-title-edit-buttons">
 				<UiButton
 					:leftIcon="Outline.CHECK_M"
 					:size="ButtonSize.EXTRA_EXTRA_SMALL"
+					:dataset="{ testid: 'bizprocdesigner-editor-template-name-save' }"
 					@click="onSaveTitle"
 				/>
 				<UiButton
 					:leftIcon="Outline.CROSS_L"
 					:size="ButtonSize.EXTRA_EXTRA_SMALL"
 					:style="AirButtonStyle.OUTLINE"
+					:dataset="{ testid: 'bizprocdesigner-editor-template-name-cancel' }"
 					@click="onCancelEditing"
 				/>
 			</div>

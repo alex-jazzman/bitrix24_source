@@ -128,6 +128,8 @@ else
 	$arResult['PATH_TO_EXCH1C_INDEX'] = $curPage;
 	$arResult['PATH_TO_EXCH1C_CAT'] = $curPage.'?catalog';
 	$arResult['PATH_TO_EXCH1C_INV'] = $curPage.'?invoice';
+	$arResult['PATH_TO_EXCH1C_CATALOG'] = $arResult['PATH_TO_EXCH1C_CAT'];
+	$arResult['PATH_TO_EXCH1C_INVOICE'] = $arResult['PATH_TO_EXCH1C_INV'];
 }
 
 $arResult =

@@ -13,6 +13,8 @@ use \Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 \Bitrix\Main\UI\Extension::load([
+	// the focus ring of the stylesheet is built from the tokens of this one
+	'ui.design-tokens.air',
 	'ui.icon-set.main',
 ]);
 
@@ -20,9 +22,9 @@ const DEFAULT_PREVIEW_PATH = 'https://cdn.bitrix24.site/bitrix/images/landing/wi
 const USER_LINK_PATH = '/company/personal/user/';
 
 $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
-if ($arParams['SOCNET_GROUP_ID'] > 0)
+if ((int)($arParams['SOCNET_GROUP_ID'] ?? 0) > 0)
 {
-	$groupLink = '/workgroups/group/' . $arParams['SOCNET_GROUP_ID'] . '/';
+	$groupLink = '/workgroups/group/' . (int)$arParams['SOCNET_GROUP_ID'] . '/';
 }
 else
 {
@@ -33,25 +35,49 @@ $texts = [
 ];
 $sidebarPosts = array_slice($arResult['POSTS'], 0, 3);
 $useDemoData = $arResult['USE_DEMO_DATA'];
-$phraseNavigatorButtonViewAll = $arResult['PHRASES']['NAVIGATOR_BUTTON']['VIEW_ALL'];
-$phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'];
+$phraseNavigatorButtonViewAll = htmlspecialcharsbx($arResult['PHRASES']['NAVIGATOR_BUTTON']['VIEW_ALL']);
+$phraseNavigatorButtonExtend = htmlspecialcharsbx($arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND']);
+
+// the locale picks the plural form, and the count - an integer - goes into the encoded phrase;
+// a form once encoded is kept for the rest of the list, so the phrase of a counter is read and
+// encoded once and not anew on every post; a phrase the locale has none of prints no attributes
+// at all: a role over a number with an empty name hides the number instead of naming it
+$countNameAttr = function(string $phraseCode, $count): string
+{
+	static $encodedForms = [];
+
+	$count = (int)$count;
+	$form = Loc::getPluralForm($count);
+	$phrase = $encodedForms[$phraseCode][$form]
+		??= \htmlspecialcharsbx((string)Loc::getMessagePlural($phraseCode, $count));
+	if ($phrase === '')
+	{
+		return '';
+	}
+
+	return ' role="img" aria-label="' . \str_replace('#COUNT#', (string)$count, $phrase) . '"';
+};
+
+// the warning stands inside the link as text of its own, so it is encoded as text
+$newTabHint = \htmlspecialcharsbx((string)Loc::getMessage('LANDING_WIDGET_LIVEFEED_V2_LINK_NEW_TAB'));
 ?>
 
 <div
 	class="landing-widget-v2<?= $useDemoData ? ' --demo-data' : '' ?>"
 	id="<?= $id ?>"
+	data-testid="mainpage-widget-livefeed-v2-root"
 >
 	<div class="landing-widget-view-main">
-		<div class="landing-widget-v2-title">
+		<h2 class="landing-widget-v2-title" data-testid="mainpage-widget-livefeed-v2-title">
 			<?= \htmlspecialcharsbx($arResult['TITLE']) ?>
 			<?php
 			if ($useDemoData): ?>
-				<div class="landing-widget-v2-badge --yellow">
+				<span class="landing-widget-v2-badge --yellow" data-testid="mainpage-widget-livefeed-v2-demo-badge">
 					<?= $texts['demoData'] ?>
-				</div>
+				</span>
 			<?php
 			endif; ?>
-		</div>
+		</h2>
 		<div class="landing-widget-v2-grid landing-widget-content-grid">
 			<?php
 			foreach ($arResult['POSTS'] as $post): ?>
@@ -59,38 +85,47 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 				$user = $arResult['USERS'][$post['AUTHOR_ID']] ?? [];
 				$likes = $post['RATING_TOTAL_VOTES'] ?? 0;
 				$comments = $post['NUM_COMMENTS'] ?? 0;
-				$previewImg = $post['IMG_SRC'] ?? DEFAULT_PREVIEW_PATH;
-				$postUrl = $post['PATH'] ?? null;
-				$userHrefAttr = '';
-				if ($post['AUTHOR_ID'] > 0)
-				{
-					$userLink = USER_LINK_PATH . $post['AUTHOR_ID'] . '/';
-					$userLink = $useDemoData ? '#' : $userLink;
-					$userHrefAttr = 'href="' . $userLink . '"';
-				}
+				// an icon and a number carry the meaning of a counter by sight alone, so each of
+				// them is named for the reader who never sees the icon
+				$likesNameAttr = $countNameAttr('LANDING_WIDGET_LIVEFEED_V2_LIKES', $likes);
+				$commentsNameAttr = $countNameAttr('LANDING_WIDGET_LIVEFEED_V2_COMMENTS', $comments);
+				// the preview only illustrates the post, its text says nothing new: decorative
+				$previewImg = \htmlspecialcharsbx((string)($post['IMG_SRC'] ?? DEFAULT_PREVIEW_PATH));
+				$postUrl = \htmlspecialcharsbx((string)($post['PATH'] ?? ''));
+				// no profile address: plain text, not a link that is announced but cannot be used
+				$hasUserLink = (int)($post['AUTHOR_ID'] ?? 0) > 0;
+				$userLink = $useDemoData ? '#' : USER_LINK_PATH . (int)$post['AUTHOR_ID'] . '/';
+				$userTag = $hasUserLink ? 'a' : 'div';
+				$userLinkAttr = $hasUserLink ? ' href="' . $userLink . '"' : '';
+				// the avatar duplicates the profile link beside it: it stays clickable, but leaves
+				// the accessibility tree and the keyboard path
+				$userPicHiddenAttr = ' aria-hidden="true"' . ($hasUserLink ? ' tabindex="-1"' : '');
 				?>
-				<div class="landing-widget-v2-item">
+				<div class="landing-widget-v2-item" data-testid="mainpage-widget-livefeed-v2-post-item">
 					<div class="landing-widget-v2-preview-box">
 						<?php
 						if ($post['IMPORTANT'] === true): ?>
-							<div class="landing-widget-v2-badge"><?= $arResult['PHRASES']['POST_IMPORTANT'] ?></div>
+							<div class="landing-widget-v2-badge" data-testid="mainpage-widget-livefeed-v2-important-badge">
+								<?= $arResult['PHRASES']['POST_IMPORTANT'] ?>
+							</div>
 						<?php
 						endif; ?>
 						<img
 							class="landing-widget-v2-preview"
-							src="<?= $previewImg ?>" alt="<?= \htmlspecialcharsbx($user['NAME']) ?>"
+							src="<?= $previewImg ?>" alt=""
 						/>
 					</div>
 					<div class="landing-widget-v2-body">
 						<div class="landing-widget-v2-body-title-container">
 							<?php if ($postUrl): ?>
-								<div class="landing-widget-v2-body-title">
-									<a href="<?= $postUrl ?>" target="_blank">
+								<h3 class="landing-widget-v2-body-title">
+									<a href="<?= $postUrl ?>" target="_blank" data-testid="mainpage-widget-livefeed-v2-post-link">
 										<?= \htmlspecialcharsbx($post['TITLE']) ?>
+										<span class="landing-widget-visually-hidden"><?= $newTabHint ?></span>
 									</a>
-								</div>
+								</h3>
 							<?php else: ?>
-								<div class="landing-widget-v2-body-title"><?= \htmlspecialcharsbx($post['TITLE']) ?></div>
+								<h3 class="landing-widget-v2-body-title"><?= \htmlspecialcharsbx($post['TITLE']) ?></h3>
 							<?php endif; ?>
 						</div>
 						<div class="landing-widget-v2-user-box">
@@ -98,25 +133,25 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 								$imgSrc = $user['PERSONAL_PHOTO']['IMG']['src'] ?? '';
 							?>
 							<?php if ($imgSrc !== ''): ?>
-								<a <?= $userHrefAttr ?>>
+								<?= '<' . $userTag . $userLinkAttr . $userPicHiddenAttr . '>' ?>
 									<img class="landing-widget-v2-user-pic"
-										src="<?= $user['PERSONAL_PHOTO']['IMG']['src'] ?>"
+										src="<?= \htmlspecialcharsbx($imgSrc) ?>"
 										alt="<?= \htmlspecialcharsbx($user['NAME']) ?>"
 									>
-								</a>
+								<?= '</' . $userTag . '>' ?>
 							<?php else: ?>
 								<div class="landing-widget-v2-user-pic-default"></div>
 							<?php endif; ?>
-							<a <?= $userHrefAttr ?> class="landing-widget-v2-user-text"><?= \htmlspecialcharsbx($user['NAME']) ?></a>
+							<?= '<' . $userTag . $userLinkAttr . ' class="landing-widget-v2-user-text" data-testid="mainpage-widget-livefeed-v2-author">' . \htmlspecialcharsbx($user['NAME']) . '</' . $userTag . '>' ?>
 						</div>
 					</div>
 					<div class="landing-widget-v2-bottom">
 						<div class="landing-widget-v2-reaction-box">
-							<div class="landing-widget-v2-reaction-like">
+							<div class="landing-widget-v2-reaction-like"<?= $likesNameAttr ?>>
 								<div class="ui-icon-set --like landing-widget-v2-reaction-like-icon"></div>
 								<?= $likes ?>
 							</div>
-							<div class="landing-widget-v2-comments-box">
+							<div class="landing-widget-v2-comments-box"<?= $commentsNameAttr ?>>
 								<div class="ui-icon-set --chat-message landing-widget-v2-comments-icon"></div>
 								<div><?= $comments ?></div>
 							</div>
@@ -128,30 +163,34 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 			endforeach; ?>
 		</div>
 		<div class="landing-widget-v2-button-box">
-			<button class="landing-widget-button extend-list-button">
+			<button type="button" class="landing-widget-button extend-list-button" data-testid="mainpage-widget-livefeed-v2-extend-btn">
 				<?= $phraseNavigatorButtonExtend ?>
 			</button>
 			<?php if (!$useDemoData): ?>
-				<button class="landing-widget-button view-all-button hide">
-					<a href="<?= $groupLink ?>" target="_blank">
-						<?= $phraseNavigatorButtonViewAll ?>
-					</a>
-				</button>
+				<a
+					class="landing-widget-button view-all-button hide"
+					href="<?= $groupLink ?>"
+					target="_blank"
+					data-testid="mainpage-widget-livefeed-v2-view-all-btn"
+				>
+					<?= $phraseNavigatorButtonViewAll ?>
+					<span class="landing-widget-visually-hidden"><?= $newTabHint ?></span>
+				</a>
 			<?php endif; ?>
 		</div>
 	</div>
 
 	<div class="landing-widget-view-sidebar">
-		<div class="landing-widget-v2-title">
+		<h2 class="landing-widget-v2-title" data-testid="mainpage-widget-livefeed-v2-title">
 			<?= \htmlspecialcharsbx($arResult['TITLE']) ?>
 			<?php
 			if ($useDemoData): ?>
-				<div class="landing-widget-v2-badge --yellow">
+				<span class="landing-widget-v2-badge --yellow" data-testid="mainpage-widget-livefeed-v2-demo-badge">
 					<?= $texts['demoData'] ?>
-				</div>
+				</span>
 			<?php
 			endif; ?>
-		</div>
+		</h2>
 		<div class="landing-widget-v2-grid landing-widget-content-grid">
 			<?php
 			foreach ($sidebarPosts as $post): ?>
@@ -159,38 +198,47 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 				$user = $arResult['USERS'][$post['AUTHOR_ID']] ?? [];
 				$likes = $post['RATING_TOTAL_VOTES'] ?? 0;
 				$comments = $post['NUM_COMMENTS'] ?? 0;
-				$previewImg = $post['IMG_SRC'] ?? DEFAULT_PREVIEW_PATH;
-				$postUrl = $post['PATH'] ?? null;
-				$userHrefAttr = '';
-				if ($post['AUTHOR_ID'] > 0)
-				{
-					$userLink = USER_LINK_PATH . $post['AUTHOR_ID'] . '/';
-					$userHrefAttr = 'href="' . $userLink . '"';
-				}
+				// an icon and a number carry the meaning of a counter by sight alone, so each of
+				// them is named for the reader who never sees the icon
+				$likesNameAttr = $countNameAttr('LANDING_WIDGET_LIVEFEED_V2_LIKES', $likes);
+				$commentsNameAttr = $countNameAttr('LANDING_WIDGET_LIVEFEED_V2_COMMENTS', $comments);
+				// the preview only illustrates the post, its text says nothing new: decorative
+				$previewImg = \htmlspecialcharsbx((string)($post['IMG_SRC'] ?? DEFAULT_PREVIEW_PATH));
+				$postUrl = \htmlspecialcharsbx((string)($post['PATH'] ?? ''));
+				// no profile address: plain text, not a link that is announced but cannot be used
+				$hasUserLink = (int)($post['AUTHOR_ID'] ?? 0) > 0;
+				$userTag = $hasUserLink ? 'a' : 'div';
+				$userLinkAttr = $hasUserLink ? ' href="' . USER_LINK_PATH . (int)$post['AUTHOR_ID'] . '/"' : '';
+				// the avatar duplicates the profile link beside it: it stays clickable, but leaves
+				// the accessibility tree and the keyboard path
+				$userPicHiddenAttr = ' aria-hidden="true"' . ($hasUserLink ? ' tabindex="-1"' : '');
 				?>
-				<div class="landing-widget-v2-item">
+				<div class="landing-widget-v2-item" data-testid="mainpage-widget-livefeed-v2-post-item">
 					<div class="landing-widget-v2-preview-box">
 						<?php
 						if ($post['IMPORTANT'] === true): ?>
-							<div class="landing-widget-v2-badge"><?= $arResult['PHRASES']['POST_IMPORTANT'] ?></div>
+							<div class="landing-widget-v2-badge" data-testid="mainpage-widget-livefeed-v2-important-badge">
+								<?= $arResult['PHRASES']['POST_IMPORTANT'] ?>
+							</div>
 						<?php
 						endif; ?>
 						<div class="landing-widget-v2-date"><?= \htmlspecialcharsbx($post['DATE_PUBLISH_SHORT']) ?></div>
 						<img
 							class="landing-widget-v2-preview"
-							src="<?= $previewImg ?>" alt="<?= \htmlspecialcharsbx($user['NAME']) ?>"
+							src="<?= $previewImg ?>" alt=""
 						/>
 					</div>
 					<div class="landing-widget-v2-body">
 						<div class="landing-widget-v2-body-title-container">
 							<?php if ($postUrl): ?>
-								<div class="landing-widget-v2-body-title">
-									<a href="<?= $postUrl ?>" target="_blank">
+								<h3 class="landing-widget-v2-body-title">
+									<a href="<?= $postUrl ?>" target="_blank" data-testid="mainpage-widget-livefeed-v2-post-link">
 										<?= \htmlspecialcharsbx($post['TITLE']) ?>
+										<span class="landing-widget-visually-hidden"><?= $newTabHint ?></span>
 									</a>
-								</div>
+								</h3>
 							<?php else: ?>
-								<div class="landing-widget-v2-body-title"><?= \htmlspecialcharsbx($post['TITLE']) ?></div>
+								<h3 class="landing-widget-v2-body-title"><?= \htmlspecialcharsbx($post['TITLE']) ?></h3>
 							<?php endif; ?>
 						</div>
 						<div class="landing-widget-v2-user-box">
@@ -198,22 +246,22 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 							$imgSrc = $user['PERSONAL_PHOTO']['IMG']['src'] ?? '';
 							?>
 							<?php if ($imgSrc !== ''): ?>
-								<a <?= $userHrefAttr ?>>
-									<img class="landing-widget-v2-user-pic" src="<?= $user['PERSONAL_PHOTO']['IMG']['src'] ?>" alt="<?= \htmlspecialcharsbx($user['NAME']) ?>">
-								</a>
+								<?= '<' . $userTag . $userLinkAttr . $userPicHiddenAttr . '>' ?>
+									<img class="landing-widget-v2-user-pic" src="<?= \htmlspecialcharsbx($imgSrc) ?>" alt="<?= \htmlspecialcharsbx($user['NAME']) ?>">
+								<?= '</' . $userTag . '>' ?>
 							<?php else: ?>
 								<div class="landing-widget-v2-user-pic-default"></div>
 							<?php endif; ?>
-							<a <?= $userHrefAttr ?> class="landing-widget-v2-user-text"><?= \htmlspecialcharsbx($user['NAME']) ?></a>
+							<?= '<' . $userTag . $userLinkAttr . ' class="landing-widget-v2-user-text" data-testid="mainpage-widget-livefeed-v2-author">' . \htmlspecialcharsbx($user['NAME']) . '</' . $userTag . '>' ?>
 						</div>
 					</div>
 					<div class="landing-widget-v2-bottom">
 						<div class="landing-widget-v2-reaction-box">
-							<div class="landing-widget-v2-reaction-like">
+							<div class="landing-widget-v2-reaction-like"<?= $likesNameAttr ?>>
 								<div class="ui-icon-set --like landing-widget-v2-reaction-like-icon"></div>
 								<?= $likes ?>
 							</div>
-							<div class="landing-widget-v2-comments-box">
+							<div class="landing-widget-v2-comments-box"<?= $commentsNameAttr ?>>
 								<div class="ui-icon-set --chat-message landing-widget-v2-comments-icon"></div>
 								<div><?= $comments ?></div>
 							</div>
@@ -224,17 +272,21 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 			endforeach; ?>
 		</div>
 		<div class="landing-widget-v2-button-box">
-			<button class="landing-widget-button view-all-button">
-				<?php if (!$useDemoData): ?>
-					<a href="<?= $groupLink ?>" target="_blank">
-						<?= $phraseNavigatorButtonViewAll ?>
-					</a>
-				<?php else: ?>
-					<div>
-						<?= $phraseNavigatorButtonViewAll ?>
-					</div>
-				<?php endif; ?>
-			</button>
+			<?php if (!$useDemoData): ?>
+				<a
+					class="landing-widget-button view-all-button"
+					href="<?= $groupLink ?>"
+					target="_blank"
+					data-testid="mainpage-widget-livefeed-v2-view-all-btn"
+				>
+					<?= $phraseNavigatorButtonViewAll ?>
+					<span class="landing-widget-visually-hidden"><?= $newTabHint ?></span>
+				</a>
+			<?php else: ?>
+				<div class="landing-widget-button view-all-button">
+					<?= $phraseNavigatorButtonViewAll ?>
+				</div>
+			<?php endif; ?>
 		</div>
 	</div>
 </div>

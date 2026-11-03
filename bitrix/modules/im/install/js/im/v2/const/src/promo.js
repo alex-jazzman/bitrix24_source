@@ -21,4 +21,7 @@ export const PromoId = Object.freeze({
 	collabProjectAi: 'socialnetwork:collab-project-ai:28042026:all',
 	collabAi: 'socialnetwork:collab-project-ai:28042026:all',
 	bitrixGptAgent: 'im:bitrix-gpt-agent:20052026:all',
+	folderAllOnboarding: 'im:folder-all-onboarding:12082026:all',
+	mainReactionOnboarding: 'im:main-reaction-onboarding:20072026:all',
+	voiceMessageRecording: 'im:voice-message-recording:26082026:old',
 });

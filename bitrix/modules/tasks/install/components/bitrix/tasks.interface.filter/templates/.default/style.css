@@ -20,7 +20,7 @@
 
 .menu-popup-item-sort-field-label {
 	padding: 0 6px;
-	background-color: #E5F6FC;
+	background-color: var(--ui-color-accent-soft-blue-2);
 	border-radius: 7px;
 	height: 14px;
 	line-height: 14px;
@@ -28,7 +28,7 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	font-size: 8px;
-	color: #2FC6F6;
+	color: var(--ui-color-accent-soft-element-blue);
 	letter-spacing: 0;
 	text-align: center;
 	display: inline-block;
@@ -47,4 +47,28 @@
 
 .tasks-interface-filter-btn-add {
 	margin-right: 12px
+}
+
+.tasks-interface-filter-footer-button {
+	background: transparent;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+}
+
+.tasks-interface-filter-footer-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+	.popup-window.tasks-interface-filter-popup-adaptive {
+		width: auto !important; /* overrides inline width set by main.popup setWidthProperty */
+		max-width: calc(100vw - 20px);
+	}
+
+	.tasks-interface-filter-popup-adaptive .popup-window-content {
+		overflow-x: visible !important; /* neutralizes inline overflow-x: auto from main.popup */
+	}
 }

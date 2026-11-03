@@ -56,7 +56,6 @@ return [
 	'bundle' => [
 		'./src/create/channel',
 		'./src/create/group-chat',
-		'./src/create/picker',
 		'./src/update/channel',
 		'./src/update/group-chat',
 		'./src/lib/user-list-builder',
@@ -66,7 +65,6 @@ return [
 		'./src/lib/view/managers',
 		'./src/lib/view/dialog-type',
 		'./src/lib/view/rules-list',
-		'./src/lib/view/rule-type',
 		'./src/lib/area/dialog-info',
 		'./src/lib/area/settings-panel',
 		'./src/lib/area/participants-list',

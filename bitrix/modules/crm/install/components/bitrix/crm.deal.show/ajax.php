@@ -90,7 +90,11 @@ if($mode === 'GET_CLIENT_INFO')
 		__CrmDealShowEndJsonResonse(array('ERROR' => 'Entity type is not supported in current context.'));
 	}
 
-	$entityID = $params['ENTITY_ID'] ?? null;
+	$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
+	if($entityID <= 0)
+	{
+		__CrmDealShowEndJsonResonse(array('ERROR' => 'Entity ID is not specified.'));
+	}
 
 	if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeID, $entityID, $userPermissions))
 	{
@@ -108,6 +112,41 @@ if($mode === 'GET_CLIENT_INFO')
 			'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 		]
 	);
+
+	// the description is assembled from the titles of the linked company and contact regardless of
+	// permissions on them, so its client part is rebuilt here from the same two sources: a company
+	// title may contain a comma, which makes splitting the ready description unreliable
+	$dbResult = CCrmDeal::GetListEx(
+		array(),
+		array('=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
+		false,
+		false,
+		array('COMPANY_ID', 'COMPANY_TITLE', 'CONTACT_ID', 'CONTACT_FULL_NAME')
+	);
+	$dealRow = is_object($dbResult) ? $dbResult->Fetch() : null;
+	if(is_array($dealRow))
+	{
+		$itemPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item();
+		$companyID = isset($dealRow['COMPANY_ID']) ? (int)$dealRow['COMPANY_ID'] : 0;
+		$contactID = isset($dealRow['CONTACT_ID']) ? (int)$dealRow['CONTACT_ID'] : 0;
+
+		CCrmComponentHelper::maskClientNameFields(
+			$dealRow,
+			'COMPANY_TITLE',
+			isCompanyReadable: $companyID <= 0 || $itemPermissions->canRead(CCrmOwnerType::Company, $companyID),
+			isContactReadable: $contactID <= 0 || $itemPermissions->canRead(CCrmOwnerType::Contact, $contactID)
+		);
+
+		$clientTitle = !empty($dealRow['COMPANY_TITLE']) ? (string)$dealRow['COMPANY_TITLE'] : '';
+		$clientTitle .= ($clientTitle !== '' && !empty($dealRow['CONTACT_FULL_NAME']) ? ', ' : '')
+			. (string)($dealRow['CONTACT_FULL_NAME'] ?? '');
+		$data['desc'] = $clientTitle;
+	}
+	else
+	{
+		// the row could not be read back, so the client part cannot be checked: drop it
+		$data['desc'] = '';
+	}
 
 	__CrmDealShowEndJsonResonse(array('DATA' => $data));
 
@@ -400,6 +439,41 @@ if($mode === 'GET_ENTITY_INFO')
 			'REQUIRE_MULTIFIELDS' => false
 		)
 	);
+
+	// the description is assembled from the titles of the linked company and contact regardless of
+	// permissions on them, so its client part is rebuilt here from the same two sources: a company
+	// title may contain a comma, which makes splitting the ready description unreliable
+	$dbResult = CCrmDeal::GetListEx(
+		array(),
+		array('=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
+		false,
+		false,
+		array('COMPANY_ID', 'COMPANY_TITLE', 'CONTACT_ID', 'CONTACT_FULL_NAME')
+	);
+	$dealRow = is_object($dbResult) ? $dbResult->Fetch() : null;
+	if(is_array($dealRow))
+	{
+		$itemPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item();
+		$companyID = isset($dealRow['COMPANY_ID']) ? (int)$dealRow['COMPANY_ID'] : 0;
+		$contactID = isset($dealRow['CONTACT_ID']) ? (int)$dealRow['CONTACT_ID'] : 0;
+
+		CCrmComponentHelper::maskClientNameFields(
+			$dealRow,
+			'COMPANY_TITLE',
+			isCompanyReadable: $companyID <= 0 || $itemPermissions->canRead(CCrmOwnerType::Company, $companyID),
+			isContactReadable: $contactID <= 0 || $itemPermissions->canRead(CCrmOwnerType::Contact, $contactID)
+		);
+
+		$clientTitle = !empty($dealRow['COMPANY_TITLE']) ? (string)$dealRow['COMPANY_TITLE'] : '';
+		$clientTitle .= ($clientTitle !== '' && !empty($dealRow['CONTACT_FULL_NAME']) ? ', ' : '')
+			. (string)($dealRow['CONTACT_FULL_NAME'] ?? '');
+		$data['desc'] = $clientTitle;
+	}
+	else
+	{
+		// the row could not be read back, so the client part cannot be checked: drop it
+		$data['desc'] = '';
+	}
 
 	__CrmDealShowEndJsonResonse(array('DATA' => $data));
 }

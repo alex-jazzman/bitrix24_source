@@ -1,0 +1,238 @@
+.crm-stage-final-transition {
+	box-sizing: border-box;
+	color: var(--ui-color-base-1);
+}
+
+.crm-stage-final-transition-dialog {
+	--crm-stage-final-transition-dialog-max-width: calc(100vw - 2 * var(--ui-space-inline-md));
+}
+
+/* ui.system.dialog hands its width option to the popup as inline min-width and max-width. */
+.crm-stage-final-transition-dialog.popup-window-fixed-width {
+	min-width: min(480px, var(--crm-stage-final-transition-dialog-max-width)) !important;
+	max-width: min(480px, var(--crm-stage-final-transition-dialog-max-width)) !important;
+}
+
+/* A long word wraps instead of pushing the close button out of the header. */
+.crm-stage-final-transition-dialog .ui-system-dialog__header-left {
+	min-width: 0;
+}
+
+/* Up to two lines, from the content edge to the close button. */
+.crm-stage-final-transition__title {
+	display: -webkit-box;
+	box-sizing: border-box;
+	overflow: hidden;
+	overflow-wrap: break-word;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+}
+
+/* Like the title, the subtitle ends at the close button. */
+.crm-stage-final-transition-dialog .ui-system-dialog__subtitle {
+	margin-top: var(--ui-space-stack-lg);
+	color: var(--ui-color-base-2);
+}
+
+/* The default base-4 icon color is below the 3:1 contrast of non-text content. */
+.crm-stage-final-transition-dialog .ui-system-dialog__header-close-btn {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	flex: none;
+}
+
+.crm-stage-final-transition-dialog .ui-system-dialog__left-buttons {
+	flex-wrap: wrap;
+	row-gap: var(--ui-space-stack-sm);
+	min-width: 0;
+}
+
+/* Any child, because the lead conversion button is a split button. */
+.crm-stage-final-transition-dialog .ui-system-dialog__left-buttons > * {
+	max-width: 100%;
+}
+
+.crm-stage-final-transition--outcome {
+	padding-top: var(--ui-space-stack-lg);
+}
+
+.crm-stage-final-transition--loss-reason {
+	padding-top: var(--ui-space-stack-xs);
+}
+
+.crm-stage-final-transition__field {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.crm-stage-final-transition__label {
+	margin-bottom: var(--ui-space-stack-xs);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.crm-stage-final-transition__reasons {
+	--crm-stage-final-transition-visible-reasons: 5;
+
+	position: relative;
+	align-self: stretch;
+	min-width: 0;
+}
+
+/* The list scrolls itself; the padding keeps room for the focus ring. */
+.crm-stage-final-transition__reasons-scroll {
+	/* Not --ui-space-stack-none: base tokens define it as a bare 0, which calc(100% - 0) rejects. */
+	--crm-stage-final-transition-fade-top: 0%;
+	--crm-stage-final-transition-fade-bottom: 0%;
+
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	max-height: calc(
+		var(--crm-stage-final-transition-visible-reasons) * var(--ui-size-5xl)
+		+ (var(--crm-stage-final-transition-visible-reasons) - 1) * var(--ui-space-stack-xs)
+		+ 2 * var(--ui-focus-outline-width)
+	);
+	margin: calc(-1 * var(--ui-focus-outline-width));
+	padding: var(--ui-focus-outline-width);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	list-style: none;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-base-5) transparent;
+
+	/* The edge with more reasons behind it fades out. */
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		transparent,
+		black var(--crm-stage-final-transition-fade-top),
+		black calc(100% - var(--crm-stage-final-transition-fade-bottom)),
+		transparent
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		transparent,
+		black var(--crm-stage-final-transition-fade-top),
+		black calc(100% - var(--crm-stage-final-transition-fade-bottom)),
+		transparent
+	);
+}
+
+.crm-stage-final-transition__reasons.--scrolled-from-top > .crm-stage-final-transition__reasons-scroll {
+	--crm-stage-final-transition-fade-top: var(--ui-space-stack-lg);
+}
+
+.crm-stage-final-transition__reasons.--more-below > .crm-stage-final-transition__reasons-scroll {
+	--crm-stage-final-transition-fade-bottom: var(--ui-space-stack-lg);
+}
+
+.crm-stage-final-transition__reason-wrap {
+	flex: none;
+	align-self: stretch;
+	min-width: 0;
+}
+
+/* The ring follows the arrow shape: the mask would cut off a border or a box-shadow. */
+.crm-stage-final-transition__reason-wrap:has(> .crm-stage-final-transition__reason:focus-visible) {
+	filter:
+		drop-shadow(var(--ui-focus-outline-width) 0 0 var(--ui-color-accent-main-link))
+		drop-shadow(calc(-1 * var(--ui-focus-outline-width)) 0 0 var(--ui-color-accent-main-link))
+		drop-shadow(0 var(--ui-focus-outline-width) 0 var(--ui-color-accent-main-link))
+		drop-shadow(0 calc(-1 * var(--ui-focus-outline-width)) 0 var(--ui-color-accent-main-link));
+}
+
+/* Match the Kanban column tip shape. Every reason is AIR tinted alert, whatever the stage color. */
+.crm-stage-final-transition__reason {
+	--crm-stage-final-transition-reason-base: var(--ui-color-design-tinted-alert-bg);
+	--crm-stage-final-transition-reason-color: var(--ui-color-design-tinted-alert-content);
+	--crm-stage-final-transition-reason-tip: var(--ui-size-2xl);
+
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	width: 100%;
+	min-height: var(--ui-size-5xl);
+	margin: 0;
+	padding:
+		var(--ui-space-stack-xs)
+		var(--ui-space-inline-2xl)
+		var(--ui-space-stack-xs)
+		var(--ui-space-inline-sm);
+	border: 0;
+	border-radius: var(--ui-border-radius-xs) 0 0 var(--ui-border-radius-xs);
+	background: var(--crm-stage-final-transition-reason-base);
+	color: var(--crm-stage-final-transition-reason-color);
+	font-family: var(--ui-font-family-primary);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	text-align: left;
+	cursor: pointer;
+	outline: none;
+
+	-webkit-mask-image:
+		linear-gradient(black, black),
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32' preserveAspectRatio='none'%3E%3Cpath d='M0 0H13.5678C17.2056 0 20.5565 1.97557 22.3177 5.15868L26.7072 13.092C27.5151 14.5521 27.5413 16.319 26.7771 17.8024L22.2557 26.5795C20.541 29.9082 17.1103 32 13.3659 32H0V0Z' fill='%23000'/%3E%3C/svg%3E");
+	mask-image:
+		linear-gradient(black, black),
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32' preserveAspectRatio='none'%3E%3Cpath d='M0 0H13.5678C17.2056 0 20.5565 1.97557 22.3177 5.15868L26.7072 13.092C27.5151 14.5521 27.5413 16.319 26.7771 17.8024L22.2557 26.5795C20.541 29.9082 17.1103 32 13.3659 32H0V0Z' fill='%23000'/%3E%3C/svg%3E");
+	-webkit-mask-size:
+		calc(100% - var(--crm-stage-final-transition-reason-tip) + var(--ui-border-width-thin)) 100%,
+		var(--crm-stage-final-transition-reason-tip) 100%;
+	mask-size:
+		calc(100% - var(--crm-stage-final-transition-reason-tip) + var(--ui-border-width-thin)) 100%,
+		var(--crm-stage-final-transition-reason-tip) 100%;
+	-webkit-mask-position: left center, right center;
+	mask-position: left center, right center;
+	-webkit-mask-repeat: no-repeat, no-repeat;
+	mask-repeat: no-repeat, no-repeat;
+}
+
+/* States follow the AIR button formula: a hover or click layer is mixed over the color. */
+.crm-stage-final-transition__reason:hover,
+.crm-stage-final-transition__reason:focus-visible {
+	background: color-mix(
+		in srgb,
+		var(--crm-stage-final-transition-reason-base) 100%,
+		var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity)
+	);
+}
+
+.crm-stage-final-transition__reason:active {
+	background: color-mix(
+		in srgb,
+		var(--crm-stage-final-transition-reason-base) 100%,
+		var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity)
+	);
+}
+
+.crm-stage-final-transition__toast .ui-notification-balloon-actions {
+	margin-right: 25px;
+}
+
+.crm-stage-final-transition__toast .ui-notification-balloon-action {
+	padding-right: 0;
+}
+
+.crm-stage-final-transition__reason.--disabled {
+	opacity: 0.6;
+	cursor: wait;
+	pointer-events: none;
+}
+
+.crm-stage-final-transition__reason.--permission-denied {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.crm-stage-final-transition__reason-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

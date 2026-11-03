@@ -2,6 +2,7 @@ import { type BaseEvent } from 'main.core.events';
 
 import 'im.v2.css.classes';
 
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { InitManager } from 'im.v2.lib.init';
 
 import { WidgetChatManager } from '../classes/widget-chat-manager';
@@ -88,6 +89,17 @@ export const AiAssistantWidgetChatOpener = {
 		},
 		async onCreateChat()
 		{
+			if (FeatureManager.isFeatureAvailable(Feature.isCopilotDraftChatAvailable))
+			{
+				const tempDialogId = WidgetChatManager.getInstance().startDraftChat();
+				if (tempDialogId)
+				{
+					this.selectedDialogId = tempDialogId;
+				}
+
+				return;
+			}
+
 			this.isCreatingChat = true;
 			try
 			{
@@ -104,7 +116,15 @@ export const AiAssistantWidgetChatOpener = {
 		},
 		selectSuggestion(text: string)
 		{
-			WidgetChatManager.getInstance().sendSuggestion(text);
+			const manager = WidgetChatManager.getInstance();
+			if (manager.hasActiveDraft())
+			{
+				void manager.sendFirstMessage(text);
+
+				return;
+			}
+
+			manager.sendSuggestion(text);
 		},
 	},
 	template: `

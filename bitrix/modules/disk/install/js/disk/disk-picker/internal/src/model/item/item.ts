@@ -16,8 +16,8 @@ export const useItemStore = defineStore('diskPickerItem', {
 		{
 			return this.items.length;
 		},
-		// O(1) lookup by object id, recomputed only when the feed changes; keeps the
-		// preview panel's selectedItems resolution linear instead of O(selected x items).
+		// O(1) lookup by object id, recomputed only when the feed changes; backs getById,
+		// through which the preview panel resolves the active object of the visible list.
 		byId(): Map<number, PickerItem>
 		{
 			return new Map(this.items.map((item) => [item.objectId, item]));

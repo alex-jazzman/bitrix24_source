@@ -250,6 +250,19 @@ if(check_bitrix_sessid())
 		}
 		else
 		{
+			$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+			if ($request->isAjaxRequest())
+			{
+				$APPLICATION->RestartBuffer();
+				header('Content-Type: application/json; charset=UTF-8');
+				echo \Bitrix\Main\Web\Json::encode([
+					'reference' => ['source' => 'crm', 'id' => (int)$elementID],
+					'operation' => $isNew ? 'create' : 'update',
+				]);
+				require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
+				die;
+			}
+
 			if(isset($_POST['apply']))
 			{
 				$target = \CComponentEngine::makePathFromTemplate(

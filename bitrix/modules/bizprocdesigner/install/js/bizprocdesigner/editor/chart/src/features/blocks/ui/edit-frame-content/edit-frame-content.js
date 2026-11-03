@@ -8,7 +8,7 @@ import {
 	FRAME_TEXT_ALIGN_OPTIONS,
 } from '../../../../entities/blocks';
 
-//@vue/component
+// @vue/component
 export const EditFrameContent = {
 	name: 'EditFrameContent',
 	components: {
@@ -49,6 +49,12 @@ export const EditFrameContent = {
 		};
 	},
 	computed: {
+		frameTextContentAttributes(): Object
+		{
+			return {
+				'data-bizprocdesigner-frame-text-content': true,
+			};
+		},
 		isEditing(): boolean
 		{
 			return this.textEditorService.isEdit.value;
@@ -58,7 +64,7 @@ export const EditFrameContent = {
 			return this.block?.node?.frameTextAlign ?? FRAME_TEXT_ALIGN_OPTIONS.NONE;
 		},
 		frameContent: {
-			get(): stirng
+			get(): string
 			{
 				return this.block.node.frameContent;
 			},
@@ -116,6 +122,7 @@ export const EditFrameContent = {
 			:zoom="zoom"
 			:contentScrollable="isEditing"
 			:resizing="resizing"
+			:contentAttributes="frameTextContentAttributes"
 		>
 			<template #content="{ height }">
 				<!--<EditFrameContent

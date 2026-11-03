@@ -1,8 +1,29 @@
+.bx-im-entity-selector-add-to-chat__header {
+	display: flex;
+	flex-direction: column;
+}
+
+/* The dialog keeps a slot of its own for the search field, but the header renders the field
+   where the layout wants it - above the history checkbox. The slot is left empty. */
+.bx-im-entity-selector-add-to-chat__scope .ui-selector-search:empty {
+	display: none;
+}
+
+.bx-im-entity-selector-add-to-chat__guest-tab .ui-selector-tab-labels {
+	display: none;
+}
+
+/* The stub of the guests tab wraps the block in a plain node of its own. Left without a height,
+   that node grows with the content and the block hangs out of the window instead of scrolling. */
+.bx-im-entity-selector-add-to-chat__guest-tab .ui-selector-tab-stub > div {
+	height: 100%;
+}
+
 .bx-im-add-to-chat-guest-tab__scope .bx-im-add-guest-content__description_icon {
 	background: url('images/add-guests-to-chat-icon.png') center / cover no-repeat;
 }
 
-.bx-im-add-to-chat-guest-tab__scope.bx-im-entity-selector-add-to-chat__container,
 .bx-im-add-to-chat-guest-tab__scope.bx-im-add-guest-content__container {
-	height: 438px;
+	width: 100%;
+	height: 100%;
 }

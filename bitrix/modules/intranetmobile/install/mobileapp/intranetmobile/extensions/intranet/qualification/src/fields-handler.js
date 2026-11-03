@@ -62,6 +62,7 @@ jn.define('intranet/qualification/fields-handler', (require, exports, module) =>
 			switch (type)
 			{
 				case FieldType.BALLOON_ONE_SELECT:
+				case FieldType.BALLOON_MULTIPLE_SELECT:
 					this.fieldsValidity.set(id, Type.isArrayFilled(Object.keys(value || {})));
 					break;
 
@@ -101,6 +102,7 @@ jn.define('intranet/qualification/fields-handler', (require, exports, module) =>
 				switch (type)
 				{
 					case FieldType.BALLOON_ONE_SELECT:
+					case FieldType.BALLOON_MULTIPLE_SELECT:
 					{
 						return {
 							id,
@@ -157,10 +159,12 @@ jn.define('intranet/qualification/fields-handler', (require, exports, module) =>
 			switch (type)
 			{
 				case FieldType.BALLOON_ONE_SELECT:
+				case FieldType.BALLOON_MULTIPLE_SELECT:
 					return new BalloonSelect({
 						testId,
 						onChange,
 						items: data,
+						multiple: type === FieldType.BALLOON_MULTIPLE_SELECT,
 						selectedItemIds: Object.keys(this.fieldsValues.get(id) || {}),
 					});
 

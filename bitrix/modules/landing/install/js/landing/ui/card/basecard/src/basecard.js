@@ -46,8 +46,10 @@ export class BaseCard extends EventEmitter
 		this.onCardFocusOut = this.onCardFocusOut.bind(this);
 		Event.bind(this.layout, 'click', this.onClick);
 
-		// Composite (roving) a11y is opt-in: the card becomes a focusable gridcell
-		// only when placed into a role="grid" container (e.g. the "Add block" panel).
+		// Composite (roving) a11y is opt-in: the card becomes a focusable listitem
+		// only when placed into a role="list" container (e.g. the "Add block" panel).
+		// setupGridcell keeps its historical name: the role it applies is taken from the
+		// options, so the method is not bound to the value it was first written for.
 		this.role = Type.isStringFilled(this.options.role) ? this.options.role : null;
 		if (this.role)
 		{

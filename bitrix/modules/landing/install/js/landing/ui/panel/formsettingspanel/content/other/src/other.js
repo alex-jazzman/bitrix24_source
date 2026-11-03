@@ -7,12 +7,12 @@ import {TextField} from 'landing.ui.field.textfield';
 import {ContentWrapper} from 'landing.ui.panel.basepresetpanel';
 import {BaseEvent} from 'main.core.events';
 import {Dom, Reflection, Type, Tag} from 'main.core';
-import UserSelectorField from './internal/userselectorfield/userselectorfield';
+import { UserSelectorField } from './internal/userselectorfield/userselectorfield';
 import {BaseCard} from "landing.ui.card.basecard";
 import './css/style.css';
 
 
-export default class Other extends ContentWrapper
+export class Other extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -170,3 +170,4 @@ export default class Other extends ContentWrapper
 		this.emit('onChange', {...event.getData(), skipPrepare: true});
 	}
 }
+export { Other as Content };

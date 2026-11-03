@@ -642,6 +642,7 @@ export class Backend
 			requestBody.fields.FOLDER_ID = folderId;
 		}
 
-		return this.action('Landing::addByTemplate', requestBody);
+		// the server prefers the site_id query param over siteId from the body
+		return this.action('Landing::addByTemplate', requestBody, {site_id: siteId});
 	}
 }

@@ -131,6 +131,32 @@ jn.define('im/messenger/provider/services/analytics/src/assistant-button', (requ
 				.send()
 			;
 		}
+
+		/**
+		 * @desc Fires when the author taps the stop button on the send-button spot during an active
+		 * BitrixGPT generation. The category follows the chat type (copilot for a direct copilot chat)
+		 * so the markup stays aligned with the web click_stop_generation event.
+		 * @param {DialogId} dialogId
+		 */
+		sendClickStopGeneration(dialogId)
+		{
+			/** @type {DialoguesModelState} */
+			const dialogModel = DialogHelper.createByDialogId(dialogId)?.dialogModel;
+			if (!dialogModel)
+			{
+				return;
+			}
+
+			new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(AnalyticsHelper.getCategoryByChatType(dialogModel.type))
+				.setEvent(Analytics.Event.clickStopGeneration)
+				.setSection(Analytics.Section.chatTextarea)
+				.setP1(AnalyticsHelper.getP1ByDialog(dialogModel))
+				.setP2(AnalyticsHelper.getP2ByUserType())
+				.send()
+			;
+		}
 	}
 
 	module.exports = {

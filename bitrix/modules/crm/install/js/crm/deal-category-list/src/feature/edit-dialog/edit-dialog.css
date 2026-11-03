@@ -1,0 +1,5 @@
+.crm-deal-category-list-edit-dialog__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}

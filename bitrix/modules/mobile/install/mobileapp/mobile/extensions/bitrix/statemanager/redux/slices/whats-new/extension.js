@@ -68,7 +68,11 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 	const whatsNewSlice = createSlice({
 		name: sliceName,
 		initialState,
-		reducers: {},
+		reducers: {
+			statusReset: (state) => {
+				state.status = STATUS.idle;
+			},
+		},
 		extraReducers: (builder) => {
 			builder
 				.addCase(fetchWhatsNewThunk.pending, (state) => {
@@ -185,7 +189,8 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		},
 	});
 
-	const { reducer } = whatsNewSlice;
+	const { reducer, actions } = whatsNewSlice;
+	const { statusReset } = actions;
 
 	ReducerRegistry.register(sliceName, createOptimisticUiSliceReducer(sliceName, reducer));
 
@@ -200,6 +205,8 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		sendReactionThunk,
 		updateReadNewsThunk,
 		updateLocalWhatsNewsParamsThunk,
+
+		statusReset,
 
 		selectAll,
 		selectById,

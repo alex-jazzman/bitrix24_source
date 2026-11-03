@@ -4,7 +4,7 @@ this.BX.Note = this.BX.Note || {};
 (function (exports, ui_vue3, ui_iconSet_api_vue, main_core, note_ui_assets, note_ui_loader, note_ui_popoverPosition, pull_client) {
 	'use strict';
 
-	// [API-01 / API-02] Client of the two backlink actions of DocumentController — one file per domain,
+	// Client of the two backlink actions of DocumentController - one file per domain,
 	// same shape as history-api.js / favorite-api.js. The server answers a missing document, a forbidden
 	// one and a switched-off feature identically with 403, so the client has nothing to tell apart here.
 	const NEUTRAL_COUNT = Object.freeze({
@@ -12,7 +12,7 @@ this.BX.Note = this.BX.Note || {};
 		isCapped: false
 	});
 	class BacklinksApi {
-		// [API-01] Keyset page of the documents that link here. `afterCursor` is the `nextCursor` of a
+		// Keyset page of the documents that link here. `afterCursor` is the `nextCursor` of a
 		// previous answer (a raw SOURCE_ID) — an opaque value handed back verbatim, never parsed or built
 		// locally. Guard on PRESENCE, not on a filled string: the cursor is a number, so a string check
 		// would drop it and refetch the first page forever. Rejects on failure: the list owns its retry.
@@ -33,7 +33,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-02] Personal counter of the chip. Never rejects: a refusal means "nothing to show" and
+		// Personal counter of the chip. Never rejects: a refusal means "nothing to show" and
 		// has to reach the chip as a zero, not as an error — naming the refusal would leak the very
 		// existence of the sources the server just hid.
 		static getBacklinksCount({
@@ -67,10 +67,10 @@ this.BX.Note = this.BX.Note || {};
 	// documents, not this one, so it is never matched against documentId.
 	const ACCESS_CASCADE_PUSH_COMMAND = 'documentAccessCascade';
 
-	// [EVENT-01] Subscribes to everything that can change what this reader sees as the backlinks of one
+	// Subscribes to everything that can change what this reader sees as the backlinks of one
 	// document: the "backlinks changed" signal on the document's own channel and the ACL cascade on the
 	// reader's. `onChange()` takes no argument on purpose: the counter is personal, so no signal carries
-	// a value and a consumer re-reads its own number through [API-02]. Returns a disposer. Safe to call
+	// a value and a consumer re-reads its own number through BacklinksApi.getBacklinksCount. Returns a disposer. Safe to call
 	// before BX.PULL exists (no-op disposer).
 	function subscribeDocumentBacklinks(documentId, onChange) {
 		const id = Number(documentId);
@@ -112,7 +112,7 @@ this.BX.Note = this.BX.Note || {};
 		};
 	}
 
-	// [P2.T2 / P3.T1 / TPL-01] Backlinks widget: the "link N" chip of the activity line, counting the
+	// Backlinks widget: the "link N" chip of the activity line, counting the
 	// documents that link to the open one, plus the popover listing those sources.
 	//
 	// Unlike the neighbouring views eye there is exactly one source of the number — the server. There is
@@ -120,23 +120,23 @@ this.BX.Note = this.BX.Note || {};
 	// another document, never by the reader sitting here.
 	//
 	// The number normally arrives with the document bootstrap payload as the `initialBacklinks` prop
-	// ([DTO-01], bundled by DocumentBacklinksSnapshotResolver), so no request is issued on mount. The
+	// (bundled by DocumentBacklinksSnapshotResolver), so no request is issued on mount. The
 	// prop is absent for an older caller and for a switched-off feature; that is not an error, the
-	// widget then asks for its own number through [API-02], which answers a refusal with a plain zero.
+	// widget then asks for its own number through BacklinksApi.getBacklinksCount, which answers a refusal with a plain zero.
 	//
-	// [EVENT-01] The pushed `documentBacklinksChanged` signal carries no value on purpose: the count is
+	// The pushed `documentBacklinksChanged` signal carries no value on purpose: the count is
 	// personal (it only counts sources the reader may see), so the signal is nothing but a reason to
 	// re-read our own number.
 	//
-	// [P3.T1] The list is read once and then kept: reopening the popover costs no request, because the
-	// only thing that can change it — a source appearing or leaving — arrives as the same [EVENT-01]
+	// The list is read once and then kept: reopening the popover costs no request, because the
+	// only thing that can change it - a source appearing or leaving - arrives as the same documentBacklinksChanged
 	// push. The signal marks the list stale; a closed list is simply dropped and re-read on the next
 	// open, an open one is refreshed in place so the reader sees the change happen. The exception is a
 	// reader who has already scrolled past the first window: re-reading would move the row they are
 	// about to press, so there the refresh waits for the next open.
 	const SOURCES_PAGE_SIZE = 20;
 	const SOURCES_SCROLL_THRESHOLD_PX = 80;
-	// [API-01] Rights are applied after the keyset window is read, so an answer may be short of the
+	// Rights are applied after the keyset window is read, so an answer may be short of the
 	// limit — or empty — while the cursor is still alive. The list then asks again instead of reporting
 	// the end, but never endlessly: a reader who may see almost nothing would otherwise walk the whole
 	// index on one scroll. Hitting the guard leaves a live cursor, so the next scroll resumes.
@@ -167,7 +167,7 @@ this.BX.Note = this.BX.Note || {};
 				type: Number,
 				required: true
 			},
-			// [DTO-01] `{ count: number, isCapped: boolean } | null` from the document bootstrap payload.
+			// `{ count: number, isCapped: boolean } | null` from the document bootstrap payload.
 			// `null` (older answer, feature off) makes the widget read the count itself.
 			initialBacklinks: {
 				type: Object,
@@ -193,7 +193,7 @@ this.BX.Note = this.BX.Note || {};
 				// itself, but it has to tell a real end of the index (cursor null) from a window that just
 				// held no visible rows (cursor alive) — see the "load more" prompt vs the terminal empty.
 				hasMoreSources: false,
-				// [P4.T2] Gate for the chip's grow/shrink transition — see settleInitialCount().
+				// Gate for the chip's grow/shrink transition - see settleInitialCount().
 				canAnimateChip: false,
 				// Roving focus of the sources menu: the row that currently owns tabindex=0. -1 while the
 				// keyboard has not entered the list, so the first arrow starts at the top instead of
@@ -306,7 +306,7 @@ this.BX.Note = this.BX.Note || {};
 				this.isCapped = snapshot?.isCapped === true;
 				this.settleInitialCount();
 			},
-			// [P4.T2] The first number the widget ever shows is not an appearance — it is the activity
+			// The first number the widget ever shows is not an appearance - it is the activity
 			// line arriving with the document. Only a count that changes while the reader is looking
 			// deserves the grow/shrink motion, so the transition stays switched off (`:css="false"`,
 			// which makes Vue skip the classes altogether) until one render has carried a real count.
@@ -318,7 +318,7 @@ this.BX.Note = this.BX.Note || {};
 					this.canAnimateChip = true;
 				});
 			},
-			// [API-02] Never rejects — a refusal reaches us as a neutral zero, which is exactly what the
+			// Never rejects - a refusal reaches us as a neutral zero, which is exactly what the
 			// chip should show for sources the reader may not know about.
 			async refreshCount() {
 				const documentId = Number(this.documentId);
@@ -385,7 +385,7 @@ this.BX.Note = this.BX.Note || {};
 					this.$nextTick(() => this.$refs.backlinksTrigger?.focus?.());
 				}
 			},
-			// [EVENT-01] The signal carries no payload, so "something changed" is all it says — the list has
+			// The signal carries no payload, so "something changed" is all it says - the list has
 			// to be read again. Which moment that happens in depends on where the reader is: see the class
 			// comment above.
 			invalidateSources() {
@@ -426,7 +426,7 @@ this.BX.Note = this.BX.Note || {};
 				this.isSourcesLoading = false;
 				this.isSourcesLoadingMore = false;
 			},
-			// [API-01] One visible page, possibly several requests: see MAX_PAGE_PASSES above for why an
+			// One visible page, possibly several requests: see MAX_PAGE_PASSES above for why an
 			// answer that adds no row is not the end of the list.
 			async loadSources(isFirstPage) {
 				const documentId = Number(this.documentId);
@@ -441,7 +441,7 @@ this.BX.Note = this.BX.Note || {};
 					this.isSourcesLoadingMore = true;
 				}
 				try {
-					// [API-01] Keep pulling windows until a full page is gathered, the cursor is spent or the
+					// Keep pulling windows until a full page is gathered, the cursor is spent or the
 					// pass budget runs out — a short page (say 3 visible of 20 read) with a live cursor is not
 					// enough to scroll, so stopping there would strand the accessible sources still ahead of it.
 					let passes = 0;
@@ -473,7 +473,7 @@ this.BX.Note = this.BX.Note || {};
 				}
 			},
 			// Returns how many rows the answer actually added. The cursor is stored exactly as it came:
-			// [API-01] it is an opaque value (a raw SOURCE_ID), never parsed or rebuilt from a row. A
+			// it is an opaque value (a raw SOURCE_ID), never parsed or rebuilt from a row. A
 			// missing cursor (null/undefined) is the one and only end-of-index signal — test on PRESENCE,
 			// not on a filled string, or a numeric cursor would read as "the end" and paging would stop.
 			appendSources(data) {
@@ -509,7 +509,7 @@ this.BX.Note = this.BX.Note || {};
 			retrySources() {
 				void this.loadSources(this.sources.length === 0);
 			},
-			// [API-01] The auto-pass budget ran out with nothing visible yet, but the cursor is alive — the
+			// The auto-pass budget ran out with nothing visible yet, but the cursor is alive - the
 			// index is not exhausted, the first sources just happen to sit past what the passes covered
 			// (they were all filtered out by ACL). Rather than stranding the reader on a false "no
 			// backlinks", let them spend another budget by hand. Each click is a fresh MAX_PAGE_PASSES run.
@@ -661,7 +661,7 @@ this.BX.Note = this.BX.Note || {};
 		// The whole wrapper is dropped for a zero count, the chip is not merely hidden: an empty flex item
 		// would still take a slot gap of the activity line and reserve room for a chip that isn't there.
 		//
-		// [P4.T2] Which is why coming and going is a transition and not a step: the first incoming link
+		// Which is why coming and going is a transition and not a step: the first incoming link
 		// arrives by push while the reader sits on the page, and a chip popping into the line would jump
 		// the star and the bell sideways. See the .note-backlinks-chip-* rules in style.css.
 		//

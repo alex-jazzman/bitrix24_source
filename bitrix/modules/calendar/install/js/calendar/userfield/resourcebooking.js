@@ -24,6 +24,17 @@
 	BX.Calendar.UserField.ResourceBooking = function(params)
 	{
 		this.params = params;
+		this.availabilityState = 'unknown';
+		this.availabilityStateData = {};
+		this.availabilityValidationRequested = false;
+		this.handleUserSelectorChange = BX.proxy(function()
+		{
+			var selectorId = arguments[1];
+			if (this.userSelector && selectorId === this.userSelector.id)
+			{
+				this.triggerUpdatePlanner();
+			}
+		}, this);
 
 		this.DOM = {
 			outerWrap: BX(params.controlId),
@@ -31,6 +42,7 @@
 		};
 
 		this.isNew = !this.params.value || !this.params.value.DATE_FROM;
+		this.availabilityCheckRequired = this.isNew;
 
 		if (this.params.socnetDestination)
 		{
@@ -299,8 +311,8 @@
 				checkLimitCallback: BX.proxy(this.checkResourceCountLimitForNewEntries, this)
 			});
 
-			BX.addCustomEvent('OnResourceBookDestinationAddNewItem', BX.proxy(this.triggerUpdatePlanner, this));
-			BX.addCustomEvent('OnResourceBookDestinationUnselect', BX.proxy(this.triggerUpdatePlanner, this));
+			BX.addCustomEvent('OnResourceBookDestinationAddNewItem', this.handleUserSelectorChange);
+			BX.addCustomEvent('OnResourceBookDestinationUnselect', this.handleUserSelectorChange);
 		}
 		// endregion
 
@@ -344,12 +356,29 @@
 		}
 		// endregion
 
+		this.DOM.availabilityWarning = this.DOM.outerWrap.appendChild(BX.create('div', {
+			attrs: {
+				role: 'status',
+				'aria-live': 'polite',
+				'aria-atomic': 'true'
+			},
+			props: {
+				className: 'calendar-resbook-availability-warning'
+			}
+		}));
+
 		var _this = this;
 		setTimeout(BX.delegate(function(){
 			BX.onCustomEvent(window, 'onCrmEntityEditorUserFieldSetValidator', [this.params.controlId, function(result)
 			{
-				if (!_this.params.allowOverbooking && _this.isOverbooked())
+				if (_this.shouldBlockBooking())
 				{
+					if (!_this.isAvailabilityConfirmed())
+					{
+						_this.availabilityValidationRequested = true;
+						_this.renderAvailabilityWarning();
+					}
+
 					if (result && result.addError && BX.Crm && BX.Crm.EntityValidationError)
 					{
 						result.addError(BX.Crm.EntityValidationError.create({field: this}));
@@ -460,6 +489,7 @@
 			selectorOnChangeCallback: BX.proxy(this.plannerSelectorOnChange, this),
 			selectEntriesOnChangeCallback: BX.proxy(this.plannerSelectedEntriesOnChange, this),
 			checkSelectorStatusCallback: BX.proxy(this.checkSelectorStatusCallback, this),
+			availabilityStateChangeCallback: BX.proxy(this.handleAvailabilityStateChange, this),
 			currentEventList: currentEventList
 		});
 
@@ -468,8 +498,11 @@
 
 	BX.Calendar.UserField.ResourceBooking.prototype.triggerUpdatePlanner = function()
 	{
-		if (BX.Calendar.UserField.ResourceBooking.plannerPopup.plannerId === this.params.plannerId
-			&& BX.Calendar.UserField.ResourceBooking.plannerPopup.isShown())
+		this.availabilityCheckRequired = true;
+		var plannerIsShown = BX.Calendar.UserField.ResourceBooking.plannerPopup.plannerId === this.params.plannerId
+			&& BX.Calendar.UserField.ResourceBooking.plannerPopup.isShown();
+
+		if (plannerIsShown)
 		{
 			BX.Calendar.UserField.ResourceBooking.plannerPopup.update({
 				plannerId: this.params.plannerId,
@@ -481,6 +514,13 @@
 				selectedUsers: this.userSelector ? this.userSelector.getSelectedValues() : false
 			},
 			true);
+		}
+		else
+		{
+			this.handleAvailabilityStateChange({
+				plannerId: this.params.plannerId,
+				state: 'unknown'
+			});
 		}
 
 		this.onChangeValues();
@@ -570,7 +610,7 @@
 			{
 				this.resourceSelector.setValues(selectedResources, false);
 			}
-			if (this.userSelector)
+			if (this.userSelector && this.isAvailabilityConfirmed())
 			{
 				this.userSelector.setValues(selectedUsers, false);
 			}
@@ -581,10 +621,14 @@
 
 	BX.Calendar.UserField.ResourceBooking.prototype.checkSelectorStatusCallback = function(params)
 	{
-		if (params.plannerId === this.params.plannerId && !this.params.allowOverbooking)
+		if (params.plannerId === this.params.plannerId)
 		{
 			var errorClass = 'calendar-resbook-error';
 			this.overbooked = params.status === 'busy';
+			if (this.params.allowOverbooking)
+			{
+				return;
+			}
 
 			if (this.overbooked)
 			{
@@ -624,6 +668,93 @@
 				}
 			}
 		}
+	};
+
+	BX.Calendar.UserField.ResourceBooking.prototype.handleAvailabilityStateChange = function(params)
+	{
+		if (params.plannerId !== this.params.plannerId)
+		{
+			return;
+		}
+
+		this.availabilityState = params.state;
+		this.availabilityStateData = {
+			maxPlannerUsers: parseInt(params.maxPlannerUsers, 10) || 0,
+			plannerPeopleCount: parseInt(params.plannerPeopleCount, 10) || 0
+		};
+
+		if (this.availabilityState === 'available')
+		{
+			this.availabilityValidationRequested = false;
+		}
+
+		this.renderAvailabilityWarning();
+	};
+
+	BX.Calendar.UserField.ResourceBooking.prototype.renderAvailabilityWarning = function()
+	{
+		if (!this.DOM.availabilityWarning)
+		{
+			return;
+		}
+
+		var message = this.getAvailabilityWarningMessage() || '';
+		if (this.DOM.availabilityWarning.textContent !== message)
+		{
+			this.DOM.availabilityWarning.textContent = message;
+		}
+	};
+
+	BX.Calendar.UserField.ResourceBooking.prototype.getAvailabilityWarningMessage = function()
+	{
+		if (this.availabilityState === 'limit-exceeded')
+		{
+			var limitMessage = BX.message('USER_TYPE_RESOURCE_PLANNER_LIMIT_WARNING') || '';
+
+			return limitMessage.replace('#COUNT#', this.availabilityStateData.maxPlannerUsers);
+		}
+
+		if (this.availabilityState === 'error')
+		{
+			return BX.message('USER_TYPE_RESOURCE_PLANNER_REQUEST_ERROR');
+		}
+
+		if (!this.availabilityValidationRequested)
+		{
+			return '';
+		}
+
+		if (this.availabilityState === 'loading')
+		{
+			return BX.message('USER_TYPE_RESOURCE_PLANNER_LOADING_ERROR');
+		}
+
+		if (this.availabilityState === 'unknown')
+		{
+			return BX.message('USER_TYPE_RESOURCE_PLANNER_UNKNOWN_ERROR');
+		}
+
+		return '';
+	};
+
+	BX.Calendar.UserField.ResourceBooking.prototype.isAvailabilityConfirmed = function()
+	{
+		return this.availabilityState === 'available';
+	};
+
+	BX.Calendar.UserField.ResourceBooking.prototype.shouldBlockBooking = function()
+	{
+		return this.hasSelectedBookingEntries()
+			&& !this.params.allowOverbooking
+			&& (
+				this.isOverbooked()
+				|| (this.availabilityCheckRequired && !this.isAvailabilityConfirmed())
+			);
+	};
+
+	BX.Calendar.UserField.ResourceBooking.prototype.hasSelectedBookingEntries = function()
+	{
+		return this.getSelectedResourceList().length > 0 || this.getSelectedUserList().length > 0;
 	};
 
 	BX.Calendar.UserField.ResourceBooking.prototype.getSelectorData = function()
@@ -1090,30 +1221,46 @@
 
 
 	// region ** Planner popup **
-	function PlannerPopup() {}
+	function PlannerPopup()
+	{
+		this.requestSequence = 0;
+		this.activeRequestId = 0;
+		this.availabilityState = 'unknown';
+		this.handleDocumentClick = BX.proxy(this.handleClick, this);
+		this.handlePopupClose = BX.proxy(function()
+		{
+			this.close({animation: false});
+		}, this);
+		this.handleScaleChanged = BX.proxy(this.handlePlannerScaleChanged, this);
+	}
 	PlannerPopup.prototype = {
 		show: function (params)
 		{
-			if (!params)
-			{
-				params = {};
-			}
-			this.params = params;
-			this.bindNode = params.bindNode;
-			this.plannerId = this.params.plannerId;
-			this.config = this.params.plannerConfig;
-
-			if (this.isShown() || !this.bindNode)
+			params = params || {};
+			if (!params.bindNode)
 			{
 				return;
 			}
 
-			if (this.lastPlannerIdShown && this.lastPlannerIdShown !== this.plannerId)
+			if (this.isShown() && this.plannerId === params.plannerId)
+			{
+				return;
+			}
+
+			if (this.popup)
 			{
 				this.close({animation: false});
 			}
 
+			this.params = params;
+			this.bindNode = params.bindNode;
+			this.plannerId = params.plannerId;
+			this.config = params.plannerConfig;
+
 			this.currentEntries = [];
+			this.currentAccessibility = {};
+			this.currentLoadedDataFrom = null;
+			this.currentLoadedDataTo = null;
 
 			this.plannerWrap = BX.create('DIV', {
 				attrs: {
@@ -1122,10 +1269,11 @@
 				}
 			});
 
-			this.popup = new BX.PopupWindow(this.plannerId + "_popup",
+			this.popup = new BX.PopupWindow(this.plannerId + '_popup',
 				this.bindNode,
 				{
 					autoHide: false,
+					ariaLabel: BX.message('USER_TYPE_RESOURCE_PLANNER_ARIA_LABEL'),
 					closeByEsc: true,
 					offsetTop: - parseInt(this.bindNode.offsetHeight) - 20,
 					offsetLeft: this.bindNode.offsetWidth + 38,
@@ -1144,24 +1292,33 @@
 			this.plannerWidth = winSize.innerWidth - bindPos.right - 160;
 			this.config.width = this.plannerWidth;
 
-			setTimeout(BX.delegate(function(){
+			this.preparePopupTimer = setTimeout(BX.delegate(function(){
 				if (this.popup && this.popup.popupContainer)
 				{
 					BX.addClass(this.popup.popupContainer, 'calendar-resbook-planner-popup');
 					this.popup.popupContainer.style.width = 0;
 				}
 			}, this), 1);
-			setTimeout(BX.delegate(function(){
+			this.expandPopupTimer = setTimeout(BX.delegate(function(){
 				if (this.popup && this.popup.popupContainer)
 				{
 					this.popup.popupContainer.style.width = (this.plannerWidth + 40) + 'px';
 					BX.addClass(this.popup.popupContainer, 'show');
 				}
-				BX.bind(document, 'click', BX.proxy(this.handleClick, this));
+				if (this.popup)
+				{
+					BX.bind(document, 'click', this.handleDocumentClick);
+				}
 			}, this), 50);
-			setTimeout(BX.proxy(this.showPlanner, this), 350);
+			this.showPlannerTimer = setTimeout(BX.proxy(function()
+			{
+				if (this.popup)
+				{
+					this.showPlanner();
+				}
+			}, this), 350);
 
-			BX.addCustomEvent(this.popup, 'onPopupClose', BX.proxy(this.close, this));
+			BX.addCustomEvent(this.popup, 'onPopupClose', this.handlePopupClose);
 		},
 
 		update: function (params, refreshParams)
@@ -1171,33 +1328,112 @@
 				return;
 			}
 
-			var
-				codes = [], i, k, code,
-				codeIndex = {},
-				_this = this,
-				plannerConfig = BX.clone(_this.config, true),
-				fromTimestamp, toTimestamp,
-				dateFrom, dateTo;
-
-			if (BX.type.isPlainObject(this.lastUpdateParams) && BX.type.isPlainObject(params) && refreshParams !== true)
+			if (!BX.type.isPlainObject(params))
 			{
-				for (k in params)
+				return;
+			}
+
+			var updateParams = {};
+			var key;
+			if (BX.type.isPlainObject(this.lastUpdateParams) && refreshParams !== true)
+			{
+				for (key in this.lastUpdateParams)
 				{
-					if (params.hasOwnProperty(k))
+					if (this.lastUpdateParams.hasOwnProperty(key))
 					{
-						this.lastUpdateParams[k] = params[k];
+						updateParams[key] = this.lastUpdateParams[key];
 					}
 				}
-				params = this.lastUpdateParams;
 			}
 
-			// Save selector information
-			if (BX.type.isPlainObject(params))
+			for (key in params)
 			{
-				this.lastUpdateParams = params;
+				if (params.hasOwnProperty(key))
+				{
+					updateParams[key] = params[key];
+				}
 			}
 
-			params.focusSelector = params.focusSelector !== false;
+			updateParams.focusSelector = updateParams.focusSelector !== false;
+			this.lastUpdateParams = updateParams;
+			var plannerConfig = BX.clone(this.config, true);
+			var dateRange = this.getDateRange(updateParams);
+			if (dateRange.updateScaleLimits)
+			{
+				plannerConfig.scaleDateFrom = dateRange.dateFrom;
+				plannerConfig.scaleDateTo = dateRange.dateTo;
+			}
+
+			var requestData = {
+				codes: this.getUserCodes(updateParams),
+				resources: BX.type.isArray(updateParams.resourceList) ? updateParams.resourceList : [],
+				from: BX.date.format(DATE_FORMAT, dateRange.fromTimestamp / 1000),
+				to: BX.date.format(DATE_FORMAT, dateRange.toTimestamp / 1000),
+				currentEventList: BX.type.isArray(this.params.currentEventList) ? this.params.currentEventList : []
+			};
+			var requestContext = {
+				params: updateParams,
+				plannerConfig: plannerConfig,
+				dateFrom: dateRange.dateFrom,
+				dateTo: dateRange.dateTo
+			};
+
+			if (this.checkUpdateParams(requestData, requestContext))
+			{
+				this.requestPlannerData(requestData, requestContext);
+			}
+			else if (BX.type.isPlainObject(this.lastRequestData.response))
+			{
+				this.applyPlannerResponse(this.lastRequestData.response, requestContext);
+			}
+		},
+
+		checkUpdateParams: function (requestData, requestContext)
+		{
+			var sameRequest = this.lastRequestPlannerId === this.plannerId
+				&& this.lastRequestData
+				&& requestData.from === this.lastRequestData.from
+				&& requestData.to === this.lastRequestData.to
+				&& this.areSetsEqual(requestData.codes, this.lastRequestData.codes, function(code)
+				{
+					return String(code);
+				})
+				&& this.areSetsEqual(requestData.resources, this.lastRequestData.resources, function(resource)
+				{
+					return resource.type + ':' + resource.id;
+				})
+				&& this.areSetsEqual(requestData.currentEventList, this.lastRequestData.currentEventList, function(eventId)
+				{
+					return String(eventId);
+				});
+
+			if (!sameRequest || (!this.lastRequestData.requesting && !this.lastRequestData.response))
+			{
+				this.lastRequestData = {
+					codes: requestData.codes,
+					resources: requestData.resources,
+					from: requestData.from,
+					to: requestData.to,
+					currentEventList: requestData.currentEventList,
+					requestContext: requestContext
+				};
+				this.lastRequestPlannerId = this.plannerId;
+
+				return true;
+			}
+
+			this.lastRequestData.requestContext = requestContext;
+
+			return false;
+		},
+
+		getDateRange: function(params)
+		{
+			var fromTimestamp;
+			var toTimestamp;
+			var dateFrom;
+			var dateTo;
+			var updateScaleLimits = false;
 
 			if (params.from && params.to)
 			{
@@ -1206,241 +1442,242 @@
 				fromTimestamp = dateFrom.getTime();
 				toTimestamp = dateTo.getTime();
 			}
+			else if (params.selector.fullDay)
+			{
+				fromTimestamp = params.selector.from.getTime() - DAY_LENGTH * 12;
+				toTimestamp = params.selector.from.getTime() + DAY_LENGTH * 14;
+			}
 			else
 			{
-				if (params.selector.fullDay)
-				{
-					fromTimestamp = params.selector.from.getTime() - DAY_LENGTH * 12;
-					toTimestamp = params.selector.from.getTime() + DAY_LENGTH * 14;
-				}
-				else
-				{
-					fromTimestamp = params.selector.from.getTime() - DAY_LENGTH * 3;
-					toTimestamp = params.selector.from.getTime() + DAY_LENGTH * 5;
-				}
+				fromTimestamp = params.selector.from.getTime() - DAY_LENGTH * 3;
+				toTimestamp = params.selector.from.getTime() + DAY_LENGTH * 5;
+			}
 
+			if (!dateFrom || !dateTo)
+			{
 				dateFrom = new Date(fromTimestamp);
 				dateTo = new Date(toTimestamp);
-
-				plannerConfig.scaleDateFrom = dateFrom;
-				plannerConfig.scaleDateTo = dateTo;
+				updateScaleLimits = true;
 			}
+
+			return {
+				fromTimestamp: fromTimestamp,
+				toTimestamp: toTimestamp,
+				dateFrom: dateFrom,
+				dateTo: dateTo,
+				updateScaleLimits: updateScaleLimits
+			};
+		},
+
+		getUserCodes: function(params)
+		{
+			var codes = [];
+			var codeIndex = {};
+			var addCode = function(userId)
+			{
+				var code = 'U' + userId;
+				if (!codeIndex[code])
+				{
+					codes.push(code);
+					codeIndex[code] = true;
+				}
+			};
 
 			if (BX.type.isArray(params.userList))
 			{
-				for (i = 0; i < params.userList.length; i++)
+				params.userList.forEach(function(user)
 				{
-					code = 'U' + params.userList[i].id;
-					if (!codeIndex[code])
-					{
-						codes.push(code);
-						codeIndex[code] = true;
-					}
-				}
+					addCode(user.id);
+				});
 			}
 
 			if (BX.type.isArray(params.selectedUsers))
 			{
-				for (i = 0; i < params.selectedUsers.length; i++)
+				params.selectedUsers.forEach(function(userId)
 				{
-					code = 'U' + params.selectedUsers[i];
-					if (!codeIndex[code])
-					{
-						codes.push(code);
-						codeIndex[code] = true;
-					}
-				}
-			}
-
-			var requestData = {
-				codes: codes,
-				resources: params.resourceList,
-				from: BX.date.format(DATE_FORMAT, fromTimestamp / 1000),
-				to: BX.date.format(DATE_FORMAT, toTimestamp / 1000),
-				currentEventList: this.params.currentEventList || []
-			};
-
-			if (this.checkUpdateParams(requestData) && this.isShown())
-			{
-				this.showPlannerLoader();
-				BX.ajax.runAction('calendar.api.resourcebookingajax.getplannerdata', {
-					data: requestData
-				}).then(function (response)
-				{
-					_this.hidePlannerLoader();
-
-					if (_this.lastRequestData)
-					{
-						_this.lastRequestData.response = response;
-					}
-
-					_this.currentEntries = response.data.entries;
-					_this.currentAccessibility = response.data.accessibility;
-					_this.currentLoadedDataFrom = dateFrom;
-					_this.currentLoadedDataTo = dateTo;
-
-					if (BX.type.isArray(response.data.entries))
-					{
-						response.data.entries.forEach(function(entry){
-							if ((entry.type === 'user'
-								&& params.selectedUsers.find(function(userId){return parseInt(entry.id) === parseInt(userId);}))
-								||
-								(entry.type === 'resource'
-								&& params.selectedResources.find(function(item){return entry.type === item.type && parseInt(entry.id) === parseInt(item.id);}))
-							)
-							{
-								entry.selected = true;
-							}
-							else
-							{
-								entry.selected = false;
-							}
-						});
-					}
-
-					if (_this.isShown())
-					{
-						BX.onCustomEvent('OnCalendarPlannerDoUpdate', [
-							{
-								plannerId: _this.plannerId,
-								config: plannerConfig,
-								focusSelector: params.focusSelector,
-								selector: {
-									from: params.selector.from,
-									to: params.selector.to,
-									fullDay: params.selector.fullDay,
-									animation: params.focusSelector,
-									updateScaleLimits: params.focusSelector
-								},
-								data: {
-									entries: response.data.entries,
-									accessibility: response.data.accessibility
-								},
-								loadedDataFrom: dateFrom,
-								loadedDataTo: dateTo,
-								show: false
-							}
-						]);
-					}
-				},
-				function (response) {
-					/**
-					 {
-						 "status": "error",
-						 "errors": [...]
-					 }
-					 **/
+					addCode(userId);
 				});
 			}
-			else if (BX.type.isPlainObject(this.lastRequestData.response))
-			{
-				var response = this.lastRequestData.response;
-				_this.currentEntries = response.data.entries;
-				_this.currentAccessibility = response.data.accessibility;
-				_this.currentLoadedDataFrom = dateFrom;
-				_this.currentLoadedDataTo = dateTo;
 
-				if (BX.type.isArray(response.data.entries))
-				{
-					response.data.entries.forEach(function(entry){
-						if ((entry.type === 'user'
-							&& params.selectedUsers.find(function(userId){return parseInt(entry.id) == parseInt(userId);}))
-							||
-							(entry.type === 'resource'
-							&& params.selectedResources.find(function(item){return entry.type === item.type && parseInt(entry.id) === parseInt(item.id);}))
-						)
-						{
-							entry.selected = true;
-						}
-						else
-						{
-							entry.selected = false;
-						}
-					});
-				}
-
-				if (this.isShown())
-				{
-					BX.onCustomEvent('OnCalendarPlannerDoUpdate', [
-						{
-							plannerId: _this.plannerId,
-							config: plannerConfig,
-							focusSelector: params.focusSelector,
-							selector: {
-								from: params.selector.from,
-								to: params.selector.to,
-								fullDay: params.selector.fullDay,
-								animation: params.focusSelector,
-								updateScaleLimits: params.focusSelector
-							},
-							data: {
-								entries: response.data.entries,
-								accessibility: response.data.accessibility
-							},
-							loadedDataFrom: dateFrom,
-							loadedDataTo: dateTo,
-							show: false
-						}
-					]);
-				}
-			}
+			return codes;
 		},
 
-		checkUpdateParams: function (requestData)
+		requestPlannerData: function(requestData, requestContext)
 		{
-			var requestPlannerUpdate = false;
-			if (!this.lastRequestData || this.lastRequestPlannerId !== this.plannerId)
-			{
-				requestPlannerUpdate = true;
-			}
+			var requestId = ++this.requestSequence;
+			var requestRecord = this.lastRequestData;
+			var _this = this;
+			requestRecord.requestContext = requestContext;
+			this.activeRequestId = requestId;
+			requestRecord.requesting = true;
+			delete requestRecord.response;
 
-			// 1. Compare dates
-			if (!requestPlannerUpdate && requestData.from !== this.lastRequestData.from)
-			{
-				requestPlannerUpdate = true;
-			}
-			// 2. Compare users
-			if (!requestPlannerUpdate
-				&& BX.type.isArray(requestData.codes) && BX.type.isArray(this.lastRequestData.codes)
-				&& BX.util.array_diff(requestData.codes, this.lastRequestData.codes).length > 0
-			)
-			{
-				requestPlannerUpdate = true;
-			}
+			this.setAvailabilityState('loading');
+			this.showPlannerLoader();
 
-			// 3. Compare resources
-			if (!requestPlannerUpdate && BX.type.isArray(requestData.resources) && BX.type.isArray(this.lastRequestData.resources))
-			{
-				if (requestData.resources.length !== this.lastRequestData.resources.length)
-				{
-					requestPlannerUpdate = true;
+			return BX.ajax.runAction('calendar.api.resourcebookingajax.getplannerdata', {
+				data: {
+					codes: requestData.codes,
+					resources: requestData.resources,
+					from: requestData.from,
+					to: requestData.to,
+					currentEventList: requestData.currentEventList
 				}
-				else
+			}).then(
+				function(response)
 				{
-					var resIndex = {};
-					requestData.resources.forEach(function (res)
+					if (!_this.isActiveRequest(requestId))
 					{
-						resIndex[res.type + '_' + res.id] = true
-					});
+						requestRecord.requesting = false;
 
-					this.lastRequestData.resources.forEach(function(res)
+						return response;
+					}
+
+					requestRecord.requesting = false;
+					_this.hidePlannerLoader();
+
+					if (!response
+						|| !BX.type.isPlainObject(response.data)
+						|| !BX.type.isArray(response.data.entries)
+					)
 					{
-						if (!resIndex[res.type + '_' + res.id])
-						{
-							requestPlannerUpdate = true;
-						}
-					});
+						_this.setAvailabilityState('error');
+
+						return response;
+					}
+
+					requestRecord.response = response;
+					_this.applyPlannerResponse(response, requestRecord.requestContext);
+
+					return response;
+				},
+				function(error)
+				{
+					if (!_this.isActiveRequest(requestId))
+					{
+						requestRecord.requesting = false;
+
+						return error;
+					}
+
+					requestRecord.requesting = false;
+					_this.hidePlannerLoader();
+					_this.setAvailabilityState('error');
+
+					return error;
 				}
-			}
+			);
+		},
 
-			// Save request data for future comparing
-			if (requestPlannerUpdate)
+		isActiveRequest: function(requestId)
+		{
+			return requestId === this.activeRequestId && this.isShown();
+		},
+
+		areSetsEqual: function(leftItems, rightItems, getKey)
+		{
+			var createIndex = function(items)
 			{
-				this.lastRequestData = requestData;
-				this.lastRequestPlannerId = this.plannerId;
+				var index = Object.create(null);
+				(BX.type.isArray(items) ? items : []).forEach(function(item)
+				{
+					index[getKey(item)] = true;
+				});
+
+				return index;
+			};
+			var leftIndex = createIndex(leftItems);
+			var rightIndex = createIndex(rightItems);
+			var leftKeys = Object.keys(leftIndex);
+			var rightKeys = Object.keys(rightIndex);
+
+			return leftKeys.length === rightKeys.length && leftKeys.every(function(key)
+			{
+				return rightIndex[key];
+			});
+		},
+
+		applyPlannerResponse: function(response, requestContext)
+		{
+			var responseData = response.data;
+			var entries = [];
+			var _this = this;
+			(BX.type.isArray(responseData.entries) ? responseData.entries : []).forEach(function(entry)
+			{
+				var clonedEntry = BX.clone(entry, true);
+				clonedEntry.selected = _this.isEntrySelected(entry, requestContext.params);
+				entries.push(clonedEntry);
+			});
+
+			this.currentEntries = entries;
+			this.currentAccessibility = responseData.accessibility || {};
+			this.currentLoadedDataFrom = requestContext.dateFrom;
+			this.currentLoadedDataTo = requestContext.dateTo;
+			this.setAvailabilityState(
+				responseData.plannerLimitExceeded === true ? 'limit-exceeded' : 'available',
+				responseData
+			);
+
+			if (!this.isShown())
+			{
+				return;
 			}
 
-			return requestPlannerUpdate;
+			var params = requestContext.params;
+			BX.onCustomEvent('OnCalendarPlannerDoUpdate', [{
+				plannerId: this.plannerId,
+				config: requestContext.plannerConfig,
+				focusSelector: params.focusSelector,
+				selector: {
+					from: params.selector.from,
+					to: params.selector.to,
+					fullDay: params.selector.fullDay,
+					animation: params.focusSelector,
+					updateScaleLimits: params.focusSelector
+				},
+				data: {
+					entries: entries,
+					accessibility: this.currentAccessibility
+				},
+				loadedDataFrom: requestContext.dateFrom,
+				loadedDataTo: requestContext.dateTo,
+				show: false
+			}]);
+		},
+
+		isEntrySelected: function(entry, params)
+		{
+			var selectedUsers = BX.type.isArray(params.selectedUsers) ? params.selectedUsers : [];
+			var selectedResources = BX.type.isArray(params.selectedResources) ? params.selectedResources : [];
+
+			if (entry.type === 'user')
+			{
+				return selectedUsers.some(function(userId)
+				{
+					return parseInt(entry.id, 10) === parseInt(userId, 10);
+				});
+			}
+
+			return selectedResources.some(function(resource)
+			{
+				return entry.type === resource.type && parseInt(entry.id, 10) === parseInt(resource.id, 10);
+			});
+		},
+
+		setAvailabilityState: function(state, responseData)
+		{
+			responseData = responseData || {};
+			this.availabilityState = state;
+
+			if (this.params && BX.type.isFunction(this.params.availabilityStateChangeCallback))
+			{
+				this.params.availabilityStateChangeCallback({
+					plannerId: this.plannerId,
+					state: state,
+					maxPlannerUsers: responseData.maxPlannerUsers,
+					plannerPeopleCount: responseData.plannerPeopleCount
+				});
+			}
 		},
 
 		showPlanner: function ()
@@ -1471,39 +1708,83 @@
 				}
 			);
 
-			// planner events
-			if (BX.type.isFunction(this.params.selectorOnChangeCallback))
+			this.bindPlannerEvents();
+			this.syncPlannerSelectorStatus();
+			if (this.availabilityState === 'loading')
 			{
-				BX.addCustomEvent('OnCalendarPlannerSelectorChanged', this.params.selectorOnChangeCallback);
+				this.showPlannerLoader();
 			}
-			if (BX.type.isFunction(this.params.selectEntriesOnChangeCallback))
-			{
-				BX.addCustomEvent('OnCalendarPlannerSelectedEntriesOnChange', this.params.selectEntriesOnChangeCallback);
-			}
-			if (BX.type.isFunction(this.params.checkSelectorStatusCallback))
-			{
-				BX.addCustomEvent('OnCalendarPlannerSelectorStatusOnChange', this.params.checkSelectorStatusCallback);
-			}
+		},
 
-			BX.addCustomEvent('OnCalendarPlannerScaleChanged', BX.proxy(function(params)
+		syncPlannerSelectorStatus: function()
+		{
+			if (
+				this.planner
+				&& typeof this.planner.selectorIsFree === 'boolean'
+				&& BX.type.isFunction(this.params.checkSelectorStatusCallback)
+			)
 			{
-				this.update({
-					from: params.from,
-					to: params.to,
-					focusSelector: params.focusSelector === true
+				this.params.checkSelectorStatusCallback({
+					plannerId: this.plannerId,
+					status: this.planner.selectorIsFree ? 'free' : 'busy'
 				});
-			}, this));
+			}
+		},
 
+		bindPlannerEvents: function()
+		{
+			this.unbindPlannerEvents();
+			this.plannerEventHandlers = [];
+			var events = [
+				['OnCalendarPlannerSelectorChanged', this.params.selectorOnChangeCallback],
+				['OnCalendarPlannerSelectedEntriesOnChange', this.params.selectEntriesOnChangeCallback],
+				['OnCalendarPlannerSelectorStatusOnChange', this.params.checkSelectorStatusCallback],
+				['OnCalendarPlannerScaleChanged', this.handleScaleChanged]
+			];
+
+			events.forEach(function(eventData)
+			{
+				if (BX.type.isFunction(eventData[1]))
+				{
+					BX.addCustomEvent(eventData[0], eventData[1]);
+					this.plannerEventHandlers.push(eventData);
+				}
+			}, this);
+		},
+
+		unbindPlannerEvents: function()
+		{
+			if (!BX.type.isArray(this.plannerEventHandlers))
+			{
+				return;
+			}
+
+			this.plannerEventHandlers.forEach(function(eventData)
+			{
+				BX.removeCustomEvent(eventData[0], eventData[1]);
+			});
+			this.plannerEventHandlers = [];
+		},
+
+		handlePlannerScaleChanged: function(params)
+		{
+			if (!this.isShown())
+			{
+				return;
+			}
+
+			this.update({
+				from: params.from,
+				to: params.to,
+				focusSelector: params.focusSelector === true
+			});
 		},
 
 		showPlannerLoader: function ()
 		{
 			if (this.planner && this.planner.outerWrap)
 			{
-				if (this.loader)
-				{
-					BX.remove(this.loader);
-				}
+				this.hidePlannerLoader();
 				this.loader = this.planner.outerWrap.appendChild(BX.Calendar.UserField.ResourceBooking.getLoader(150));
 			}
 		},
@@ -1513,32 +1794,59 @@
 			if (this.loader)
 			{
 				BX.remove(this.loader);
-				this.loader = false;
+				this.loader = null;
 			}
 		},
 
 		close: function(params)
 		{
-			if (this.popup)
+			params = params || {};
+			clearTimeout(this.closeAnimationTimer);
+			var availabilityWasLoading = this.availabilityState === 'loading';
+			this.activeRequestId = ++this.requestSequence;
+			if (this.lastRequestData && this.lastRequestData.requesting)
 			{
-				if (params && params.animation)
-				{
-					BX.removeClass(this.popup.popupContainer, 'show');
-					setTimeout(BX.delegate(function()
-					{
-						params.animation = false;
-						this.close(params);
-					}, this), 300);
-				}
-				else
-				{
-					BX.unbind(document, 'click', BX.proxy(this.handleClick, this));
-					BX.removeCustomEvent(this.popup, 'onPopupClose', BX.proxy(this.close, this));
-					this.popup.destroy();
-					this.planner = null;
-					this.popup = null;
-				}
+				this.lastRequestData.requesting = false;
+				delete this.lastRequestData.response;
 			}
+			this.hidePlannerLoader();
+			this.unbindPlannerEvents();
+			BX.unbind(document, 'click', this.handleDocumentClick);
+			clearTimeout(this.preparePopupTimer);
+			clearTimeout(this.expandPopupTimer);
+			clearTimeout(this.showPlannerTimer);
+
+			if (availabilityWasLoading)
+			{
+				this.setAvailabilityState('unknown');
+			}
+
+			if (!this.popup)
+			{
+				return;
+			}
+
+			if (params.animation)
+			{
+				this.lastPlannerIdShown = null;
+				BX.removeClass(this.popup.popupContainer, 'show');
+				this.closeAnimationTimer = setTimeout(BX.delegate(function()
+				{
+					this.close({animation: false});
+				}, this), 300);
+
+				return;
+			}
+
+			if (this.planner)
+			{
+				BX.onCustomEvent('OnCalendarPlannerDoUninstall', [{plannerId: this.plannerId}]);
+			}
+			BX.removeCustomEvent(this.popup, 'onPopupClose', this.handlePopupClose);
+			this.popup.destroy();
+			this.planner = null;
+			this.popup = null;
+			this.lastPlannerIdShown = null;
 		},
 
 		isShown: function()

@@ -40,7 +40,7 @@
 			data = typeof data === "object" ? data : {};
 			data.key = BX.Landing.Client.Google.key;
 			data.searchType = "image";
-			data.rights = "cc_attributte";
+			data.rights = "cc_attribute";
 			data.imgSize = "xxlarge";
 			data.cx = "001784514362171586730:5nd_tu8dtbw";
 			data.safe = "medium";

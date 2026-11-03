@@ -938,6 +938,24 @@ export class Guide extends Event.EventEmitter
 	/**
 	 * @private
 	 */
+	getNextBtnCaption()
+	{
+		if (this.simpleMode)
+		{
+			return Loc.getMessage("JS_UI_TOUR_BUTTON_SIMPLE");
+		}
+
+		if (this.currentStepIndex + 1 === this.steps.length && !this.finalStep && !this.onEvents)
+		{
+			return Loc.getMessage("JS_UI_TOUR_BUTTON_CLOSE");
+		}
+
+		return Loc.getMessage("JS_UI_TOUR_BUTTON");
+	}
+
+	/**
+	 * @private
+	 */
 	getBtnContainer()
 	{
 		if (this.layout.btnContainer === null)
@@ -948,7 +966,7 @@ export class Guide extends Event.EventEmitter
 
 			this.layout.nextBtn = Tag.render`
 				<button id="next" class="ui-tour-popup-btn-next">
-					${this.simpleMode ? Loc.getMessage("JS_UI_TOUR_BUTTON_SIMPLE") : Loc.getMessage("JS_UI_TOUR_BUTTON")}
+					${this.getNextBtnCaption()}
 				</button>
 			`;
 
@@ -1169,11 +1187,29 @@ export class Guide extends Event.EventEmitter
 	 */
 	isTargetVisible(node)
 	{
+		const { documentElement, body } = document;
+
+		// Dom.getPosition() gives document coordinates, so the page scroll is subtracted before the viewport check.
+		// The scroll math is copied from getPageScroll() of main.core (internal, not exported); keep it in sync.
+		const scrollTop = Math.max(
+			window.pageYOffset || 0,
+			documentElement ? documentElement.scrollTop : 0,
+			body ? body.scrollTop : 0,
+		);
+		const scrollLeft = Math.max(
+			window.pageXOffset || 0,
+			documentElement ? documentElement.scrollLeft : 0,
+			body ? body.scrollLeft : 0,
+		);
+
+		const viewportHeight = window.innerHeight || (documentElement ? documentElement.clientHeight : 0);
+		const viewportWidth = window.innerWidth || (documentElement ? documentElement.clientWidth : 0);
+
 		return (
-			node.top >= 0 &&
-			node.left >= 0 &&
-			node.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-			node.right <= (window.innerWidth || document.documentElement.clientWidth)
+			node.top - scrollTop >= 0
+			&& node.left - scrollLeft >= 0
+			&& node.bottom - scrollTop <= viewportHeight
+			&& node.right - scrollLeft <= viewportWidth
 		);
 	}
 

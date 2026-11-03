@@ -1,4 +1,13 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
+
+/**
+ * @global CUser $USER
+ */
+
+use Bitrix\Main\Web\Uri;
 
 $arParams['B_CUR_USER_LIST'] = ($arParams['B_CUR_USER_LIST'] ?? null) === 'Y';
 $arParams["FUTURE_MONTH_COUNT"] = (int)$arParams["FUTURE_MONTH_COUNT"];
@@ -58,10 +67,10 @@ elseif (is_array($eventsList))
 	$eventCount = count($eventsList);
 	for ($i = 0, $l = $eventCount; $i < $l; $i++)
 	{
-		$eventsList[$i]['_DETAIL_URL'] = CHTTP::urlAddParams($arParams['DETAIL_URL'], array(
+		$eventsList[$i]['_DETAIL_URL'] = (string)(new Uri($arParams['DETAIL_URL']))->addParams([
 			'EVENT_ID' => $eventsList[$i]['ID'],
 			'EVENT_DATE' => CCalendar::Date(CCalendar::Timestamp($eventsList[$i]['DATE_FROM']), false)
-		));
+		]);
 
 		if ($eventsList[$i]['IS_MEETING'] && $eventsList[$i]['MEETING_STATUS'] === 'Q')
 		{

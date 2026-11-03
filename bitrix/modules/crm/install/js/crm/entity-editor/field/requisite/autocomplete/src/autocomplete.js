@@ -95,11 +95,22 @@ export class RequisiteAutocompleteField extends EventEmitter
 		{
 			return;
 		}
+		// Both buttons carry their meaning in an icon only - no text, no title - so a screen
+		// reader announced them as an unnamed button (4.1.2). They are named rather than hidden
+		// because each does something the keyboard has no other way to reach: one opens the
+		// autocomplete list, the other drops the chosen requisite. refreshLayout() shows exactly
+		// one of them at a time with display: none, so this adds no second tab stop.
+		// type="button" is explicit because these live inside the editor's real <form>
+		// (company_N_details_editor_form) and a button with no type defaults to submit.
 		this._domNodes.requisiteClearButton = Tag.render`
-			<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.onSearchStringClear.bind(this)}"></button>`;
+			<button type="button" class="ui-ctl-after ui-ctl-icon-clear"
+				aria-label="${Text.encode(Loc.getMessage('REQUISITE_AUTOCOMPLETE_CLEAR_ARIA_LABEL'))}"
+				onclick="${this.onSearchStringClear.bind(this)}"></button>`;
 
 		this._domNodes.requisiteSearchButton = Tag.render`
-			<button class="ui-ctl-after ui-ctl-icon-search" onclick="${this.onSearchButtonClick.bind(this)}"></button>`;
+			<button type="button" class="ui-ctl-after ui-ctl-icon-search"
+				aria-label="${Text.encode(Loc.getMessage('REQUISITE_AUTOCOMPLETE_SEARCH_ARIA_LABEL'))}"
+				onclick="${this.onSearchButtonClick.bind(this)}"></button>`;
 
 		let placeholder = this._placeholderText;
 		this._domNodes.requisiteSearchString = Tag.render`

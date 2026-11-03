@@ -381,7 +381,9 @@
 
 		prepareButton()
 		{
-			if (this.isSetButtonDisabled())
+			const isDisabled = this.isSetButtonDisabled();
+
+			if (isDisabled)
 			{
 				BX.Dom.attr(this.button, 'data-onchange', []);
 				BX.Dom.addClass(this.button, 'ui-btn-disabled');
@@ -391,6 +393,11 @@
 				BX.Dom.attr(this.button, 'data-onchange', this.buttonOnChange);
 				BX.Dom.removeClass(this.button, 'ui-btn-disabled');
 			}
+
+			// The class only paints the button grey. Without the attribute the control keeps its
+			// place in the Tab order and still fires on Enter, so a keyboard user runs an action
+			// the pointer user cannot even click.
+			this.button.disabled = isDisabled;
 		},
 
 		isSetButtonDisabled()

@@ -2,22 +2,96 @@
  * @module mail/statemanager/redux/slices/messages/thunk
  */
 jn.define('mail/statemanager/redux/slices/messages/thunk', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { createAsyncThunk, createAction } = require('statemanager/redux/toolkit');
 	const { sliceName } = require('mail/statemanager/redux/slices/messages/meta');
 	const { AjaxMethod } = require('mail/const');
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { isOnline } = require('device/connection');
+	const connection = require('device/connection');
 	const { selectUidIdsByIds, selectOriginalReadStatuses, selectById } = require('mail/statemanager/redux/slices/messages/selector');
 	const { selectByPath } = require('mail/statemanager/redux/slices/folders/selector');
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
 
-	const condition = () => isOnline();
+	const condition = () => connection.isOnline();
+
+	const POST_FORM_DATA = {
+		attachmentArrowRightIcon: '/bitrix/js/mobile/images/postform/icon_arrow_right.svg',
+		attachmentCloseIcon: '/bitrix/js/mobile/images/postform/icon_close.png',
+		attachmentFileIconFolder: '/bitrix/js/mobile/images/postform/file/',
+		backgroundIcon: '/bitrix/js/mobile/images/postform/icon_background.png',
+		keyboardEllipsisIcon: '/bitrix/js/mobile/images/postform/icon_keyboard_ellipsis.svg',
+		menuDeleteIcon: '/bitrix/js/mobile/images/postform/icon_menu_delete.png',
+		menuDownIcon: '/bitrix/js/mobile/images/postform/icon_menu_down.png',
+		menuDownIconDisabled: '/bitrix/js/mobile/images/postform/icon_menu_down_disabled.png',
+		menuMedalIcon: '/bitrix/js/mobile/images/postform/icon_menu_medal.png',
+		menuMultiCheckIcon: '/bitrix/js/mobile/images/postform/icon_menu_multicheck.png',
+		menuPlusIcon: '/bitrix/js/mobile/images/postform/icon_menu_plus.png',
+		menuUpIcon: '/bitrix/js/mobile/images/postform/icon_menu_up.png',
+		menuUpIconDisabled: '/bitrix/js/mobile/images/postform/icon_menu_up_disabled.png',
+		titleIcon: '/bitrix/js/mobile/images/postform/icon_title.png',
+		userAvatar: '/bitrix/js/mobile/images/postform/avatar/user.png',
+	};
+
+	const openFeedPostForm = ({ messageId, title }) => {
+		PageManager.openComponent('JSStackComponent', {
+			name: 'JSStackComponent',
+			componentCode: 'livefeed.postform',
+			canOpenInDefault: true,
+			// eslint-disable-next-line no-undef
+			scriptPath: availableComponents['livefeed.postform'].publicUrl,
+			rootWidget: {
+				name: 'layout',
+				settings: {
+					objectName: 'postFormLayoutWidget',
+					useLargeTitleMode: true,
+					titleParams: {
+						text: '',
+						type: 'section',
+					},
+					modal: true,
+				},
+			},
+			params: {
+				SERVER_NAME: currentDomain,
+				DESTINATION_LIST: {},
+				DESTINATION_TO_ALL_DENY: false,
+				DESTINATION_TO_ALL_DEFAULT: true,
+				USE_IMPORTANT: 'N',
+				BACKGROUND_IMAGES_DATA: {},
+				POST_FORM_DATA,
+				POST_DATA: {
+					post: {
+						PostTitle: title,
+					},
+				},
+				MAIL_MESSAGE_ID: messageId,
+			},
+		});
+	};
 
 	const adjustUnreadCounters = createAction(`${sliceName}/adjustUnreadCounters`);
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
-		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
+	const runFavoriteActionPromise = ({ action, options }) => new Promise((resolve, reject) => {
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(reject);
+	});
+	const favoriteActionQueues = new Map();
+	const runQueuedFavoriteAction = ({ queueKey, action, options }) => {
+		const previousRequest = favoriteActionQueues.get(queueKey);
+		const request = previousRequest
+			? previousRequest.catch(() => {}).then(() => runFavoriteActionPromise({ action, options }))
+			: runFavoriteActionPromise({ action, options });
+		favoriteActionQueues.set(queueKey, request);
+
+		return request.finally(() => {
+			if (favoriteActionQueues.get(queueKey) === request)
+			{
+				favoriteActionQueues.delete(queueKey);
+			}
+		});
+	};
 
 	const invertDeltas = (deltas) => {
 		const inverted = {};
@@ -258,6 +332,19 @@ jn.define('mail/statemanager/redux/slices/messages/thunk', (require, exports, mo
 		{ condition },
 	);
 
+	const setFavoriteState = createAsyncThunk(
+		`${sliceName}/setFavoriteState`,
+		({ uidId, isFavorite }) => runQueuedFavoriteAction({
+			queueKey: uidId,
+			action: AjaxMethod.mailSetFavoriteState,
+			options: {
+				id: uidId,
+				isFavorite: isFavorite ? 'Y' : 'N',
+			},
+		}),
+		{ condition },
+	);
+
 	const addToTask = createAsyncThunk(
 		`${sliceName}/addToTask`,
 		async ({ objectId, title, description }) => {
@@ -282,6 +369,20 @@ jn.define('mail/statemanager/redux/slices/messages/thunk', (require, exports, mo
 				calendarEventId,
 			},
 		}),
+		{ condition },
+	);
+
+	const addToFeed = createAsyncThunk(
+		`${sliceName}/addToFeed`,
+		({ messageId }, { getState }) => {
+			const message = selectById(getState(), messageId);
+			const subject = message?.subject ?? '';
+
+			openFeedPostForm({
+				messageId,
+				title: Loc.getMessage('MAILMOBILE_FEED_POST_TITLE', { '#SUBJECT#': subject }),
+			});
+		},
 		{ condition },
 	);
 
@@ -376,11 +477,13 @@ jn.define('mail/statemanager/redux/slices/messages/thunk', (require, exports, mo
 		moveToFolder,
 		changeReadStatus,
 		addToCrm,
+		setFavoriteState,
 		addToChat,
 		discussInChat,
 		sendBindingEvent,
 		addToTask,
 		addToEvent,
+		addToFeed,
 		adjustUnreadCounters,
 	};
 });

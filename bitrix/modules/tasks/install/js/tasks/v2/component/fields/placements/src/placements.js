@@ -98,6 +98,7 @@ export const Placements = {
 			:data-task-id="taskId"
 			:data-task-field-id="placementsMeta.id"
 			data-field-container
+			data-testid="tasks-placements"
 		>
 			<template v-if="isLoading">
 				<div class="tasks-field-placements-empty-container">

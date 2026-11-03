@@ -9,5 +9,6 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/plan-limit',
+		'im:messenger/provider/services/analytics',
 	],
 ];

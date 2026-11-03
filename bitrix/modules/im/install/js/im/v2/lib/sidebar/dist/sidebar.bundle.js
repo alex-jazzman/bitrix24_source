@@ -73,7 +73,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				areSharedChatsEnabled: () => true,
 				areChatMembersEnabled: () => true,
 				isAutoDeleteEnabled: () => true,
-				getCustomDescription: () => ''
+				getCustomDescription: () => '',
+				getHeaderMenu: () => null,
+				getMembersMenu: () => null,
+				getCustomBlocks: () => []
 			};
 		}
 	}
@@ -87,6 +90,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#isHeaderMenuEnabled;
 		#areSharedChatsEnabled;
 		#isAutoDeleteEnabled;
+		#getHeaderMenu;
+		#getMembersMenu;
+		#getCustomBlocks;
 		constructor(dialogId, preset) {
 			const presetInstance = preset ?? new SidebarPreset();
 			const {
@@ -96,7 +102,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				getCustomDescription,
 				areSharedChatsEnabled,
 				areChatMembersEnabled,
-				isAutoDeleteEnabled
+				isAutoDeleteEnabled,
+				getHeaderMenu,
+				getMembersMenu,
+				getCustomBlocks
 			} = presetInstance.get();
 			this.#dialogId = dialogId;
 			this.#blocks = blocks;
@@ -106,6 +115,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#getCustomDescription = getCustomDescription;
 			this.#isHeaderMenuEnabled = isHeaderMenuEnabled;
 			this.#isAutoDeleteEnabled = isAutoDeleteEnabled;
+			this.#getHeaderMenu = getHeaderMenu;
+			this.#getMembersMenu = getMembersMenu;
+			this.#getCustomBlocks = getCustomBlocks;
 		}
 		getBlocks() {
 			return new BlockFilter(this.#dialogId, this.#blocks).run();
@@ -127,6 +139,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		areChatMembersEnabled() {
 			return this.#areChatMembersEnabled(this.#dialogId);
+		}
+		getHeaderMenuClass() {
+			return this.#getHeaderMenu();
+		}
+		getMembersMenuClass() {
+			return this.#getMembersMenu();
+		}
+		getCustomBlocks() {
+			return this.#getCustomBlocks();
 		}
 	}
 
@@ -176,12 +197,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		blocks: [im_v2_const.SidebarMainPanelBlock.copilot, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.copilotInfo, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList]
 	});
 
-	const isLines = chatContext => chatContext.type === im_v2_const.ChatType.lines;
-	const linesPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList],
-		isHeaderMenuEnabled: () => false
-	});
-
 	const isSelfChat = chatContext => {
 		return im_v2_application_core.Core.getStore().getters['chats/isSelfChat'](chatContext.dialogId);
 	};
@@ -228,6 +243,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#registerDefaultConfigs();
 		}
 		registerConfig(callback, sidebarPreset) {
+			if (this.#customConfigMap.has(callback)) {
+				return;
+			}
 			this.#customConfigMap.set(callback, sidebarPreset);
 		}
 		getConfig(dialogId) {
@@ -256,7 +274,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#defaultConfigMap.set(isAiAssistantBot, aiAssistantBotPreset);
 			this.#defaultConfigMap.set(isBot, botPreset);
 			this.#defaultConfigMap.set(isSelfChat, selfChatPreset);
-			this.#defaultConfigMap.set(isLines, linesPreset);
 			this.#defaultConfigMap.set(isCollab, collabPreset);
 			this.#defaultConfigMap.set(isGuest, guestPreset);
 			this.#defaultConfigMap.set(isUser, userPreset);

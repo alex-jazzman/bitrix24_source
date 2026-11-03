@@ -11,7 +11,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var string $templateFolder
  */
 
-use Bitrix\BIConnector\Internal\Integration\AiAssistant\BitrixGptChat;
 use Bitrix\BIConnector\Manager;
 use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\Main\Context;
@@ -67,8 +66,10 @@ Extension::load([
 	'biconnector.apache-superset-dashboard-selector',
 	'biconnector.apache-superset-feedback-form',
 	'biconnector.dashboard-export-master',
+	'biconnector.error-message',
 	'biconnector.share-popup',
 	'biconnector.aha-moment',
+	'biconnector.ai-digest-setup',
 	'ui.entity-selector',
 	'ui.feedback.form',
 	'ui.icons',
@@ -84,6 +85,20 @@ Extension::load([
 	'im.v2.application.quick-access',
 	'aiassistant.marta',
 ]);
+
+// Ready render branch only: on the startup and error screens the key is absent, so the
+// announcement bundle never reaches those pages and never spends the single show.
+$bitrixGptAnnouncement = $arResult['BITRIXGPT_BI_ANNOUNCEMENT'] ?? [];
+$canShowBitrixGptAnnouncement = ($bitrixGptAnnouncement['canShow'] ?? false) === true;
+
+if ($canShowBitrixGptAnnouncement)
+{
+	Extension::load('biconnector.bitrixgpt-bi-announce');
+}
+
+// Ready render branch only: the sign says that the feature is on. The popup extension is loaded by the
+// client on click, and the catalogue of the operations comes with it, so the page carries neither.
+$mcpBiConnection = ($arResult['MCP_BI_CONNECTION'] ?? false) === true;
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
 $APPLICATION->SetTitle($dashboardTitle);
@@ -110,8 +125,8 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 	]);
 }
 
-$isBitrixGptChatAvailable = BitrixGptChat::isAvailable();
-$bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
+$isBitrixGptChatAvailable = $arResult['BITRIX_GPT_CHAT']['IS_AVAILABLE'];
+$bitrixGptName = $arResult['BITRIX_GPT_CHAT']['NAME'];
 
 ?>
 
@@ -164,6 +179,17 @@ $bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
 					</span>
 				</button>
 			<?php endif; ?>
+			<?php if ($mcpBiConnection): ?>
+				<?php /* Whoever may not connect learns it from the popup: the refusal of the server is told by its own screen. */ ?>
+				<button
+					type="button"
+					class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-connect-agent"
+					data-testid="biconnector-report-header-connect-agent"
+				>
+					<div class="ui-icon-set --o-ai-robot"></div>
+					<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_CONNECT_AGENT') ?>
+				</button>
+			<?php endif; ?>
 			<div id="more-btn" class="ui-icon-set --more-l dashboard-header-buttons-more"></div>
 		</div>
 	</div>
@@ -189,15 +215,18 @@ $bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
 		BX.ajax.runAction('biconnector.superset.onStartupMetricSend');
 		<?php endif; ?>
 
-		BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
+		const detail = BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
 			<?= Json::encode([
 				'appNodeId' => 'dashboard',
 				'canExport' => $arResult['CAN_EXPORT'],
 				'canEdit' => $arResult['CAN_EDIT'],
 				'canShare' => $arResult['CAN_SHARE'],
 				'shareData' => $arResult['SHARE_DATA'],
+				'isShareBanned' => $arResult['IS_SHARE_BANNED'],
 				'analyticSource' => $analyticSource,
 				'analyticScope' => $analyticScope,
+				'digestSetup' => $arResult['DIGEST_SETUP'] ?? null,
+				'chartAnalysis' => $arResult['CHART_ANALYSIS'] ?? null,
 				'dashboardEmbeddedParams' => [
 					'guestToken' => $arResult['GUEST_TOKEN'],
 					'uuid' => $arResult['DASHBOARD_UUID'],
@@ -214,6 +243,8 @@ $bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
 				],
 				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
 				'infoAhaMoment' => $arResult['INFO_AHA_MOMENT'],
+				'mcpBiConnection' => $mcpBiConnection,
+				'dashboardOnboarding' => $arResult['DASHBOARD_ONBOARDING'],
 			]) ?>
 		);
 
@@ -225,5 +256,13 @@ $bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
 			'isMarketInstalled' => Loader::includeModule('market'),
 			'dashboardUrlParams' => $arResult['URL_PARAMS'],
 		]) ?>);
+
+		<?php if ($canShowBitrixGptAnnouncement): ?>
+		BX.BIConnector.BitrixGptBiAnnounce.init({
+			...<?= Json::encode($bitrixGptAnnouncement) ?>,
+			isEmbedReady: () => detail.isEmbedReady(),
+			isHintShown: () => detail.isInfoHintShown(),
+		});
+		<?php endif; ?>
 	});
 </script>

@@ -47,7 +47,7 @@ type ShowPartnerFormPopupOptions = {
 async function showPartnerFormPopup(options: ShowPartnerFormPopupOptions): Popup
 {
 	const partnerLogo = (options.partnerLogo === '' || Type.isNil(options.partnerLogo))
-		? '/bitrix/modules/intranet/install/templates/bitrix24/dist/dist/images/b24-partner__icon.svg'
+		? '/bitrix/js/intranet/license-widget/img/b24-license-widget_icon-partner.svg'
 		: options.partnerLogo
 	;
 

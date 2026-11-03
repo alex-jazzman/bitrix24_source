@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'tokens',
 		'crm:loc',
 		'crm:type',
 		'crm:communication/communication-selector',

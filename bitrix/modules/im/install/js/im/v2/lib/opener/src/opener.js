@@ -1,4 +1,4 @@
-import { Type, type JsonObject } from 'main.core';
+import { Runtime, Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { EventType, GetParameter, Layout, NavigationMenuItem, type OpenCollabOptions } from 'im.v2.const';
@@ -6,6 +6,7 @@ import { CallManager } from 'im.v2.lib.call';
 import { CreateChatManager, type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { type NavigationMenuItemParams, NavigationManager } from 'im.v2.lib.navigation';
@@ -18,9 +19,12 @@ import { ChatService } from 'im.v2.provider.service.chat';
 import { LinesService } from './classes/lines-service';
 import {
 	checkHistoryDialogId,
-	prepareHistorySliderLink,
+	openHistoryInSidePanel,
 	normalizeEntityId,
 	handleOpenTarget,
+	isChatNestedInCollab,
+	openChatInNewTab,
+	shouldOpenNewTab,
 } from './functions/helpers';
 
 export const Opener = {
@@ -33,7 +37,7 @@ export const Opener = {
 		}
 
 		const config = {
-			navigationItem: NavigationMenuItem.chat,
+			navigationItem: FolderManager.getRegularChatsLayout().name,
 			dialogId: preparedDialogId,
 			messageId,
 		};
@@ -77,15 +81,15 @@ export const Opener = {
 
 	async openCopilot(dialogId: string = '', contextId = 0): Promise
 	{
-		const preparedDialogId = dialogId.toString();
+		const config = {
+			navigationItem: NavigationMenuItem.copilot,
+			dialogId: dialogId.toString(),
+			messageId: contextId,
+		};
 
-		await MessengerSlider.getInstance().openSlider();
+		await handleOpenTarget(config);
 
-		return LayoutManager.getInstance().setLayout({
-			name: Layout.copilot,
-			entityId: preparedDialogId,
-			contextId,
-		});
+		return Promise.resolve();
 	},
 
 	async openCollab(dialogId: string = '', options: OpenCollabOptions = {}): Promise
@@ -99,7 +103,22 @@ export const Opener = {
 			return null;
 		}
 
+		if (shouldOpenNewTab())
+		{
+			openChatInNewTab({ navigationItem: NavigationMenuItem.collab, dialogId: preparedDialogId });
+
+			return Promise.resolve();
+		}
+
 		await MessengerSlider.getInstance().openSlider();
+
+		if (await isChatNestedInCollab(preparedDialogId))
+		{
+			return LayoutManager.getInstance().setLayout({
+				name: Layout.collab,
+				entityId: preparedDialogId,
+			});
+		}
 
 		const withCollabId = Type.isStringFilled(preparedDialogId);
 		const isCollabV2Available = FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
@@ -124,32 +143,27 @@ export const Opener = {
 
 	async openChannel(dialogId: string = ''): Promise
 	{
-		const preparedDialogId = dialogId.toString();
+		const config = {
+			navigationItem: NavigationMenuItem.channel,
+			dialogId: dialogId.toString(),
+		};
 
-		await MessengerSlider.getInstance().openSlider();
+		await handleOpenTarget(config);
 
-		return LayoutManager.getInstance().setLayout({
-			name: Layout.channel,
-			entityId: preparedDialogId,
-		});
+		return Promise.resolve();
 	},
 
 	async openTaskComments(dialogId: string = '', messageId: number = 0): Promise
 	{
-		const preparedDialogId = dialogId.toString();
-
-		await MessengerSlider.getInstance().openSlider();
-
-		const layoutParams = {
-			name: Layout.taskComments,
-			entityId: preparedDialogId,
+		const config = {
+			navigationItem: NavigationMenuItem.tasksTask,
+			dialogId: dialogId.toString(),
+			messageId,
 		};
-		if (messageId > 0)
-		{
-			layoutParams.contextId = messageId;
-		}
 
-		return LayoutManager.getInstance().setLayout(layoutParams);
+		await handleOpenTarget(config);
+
+		return Promise.resolve();
 	},
 
 	openHistory(dialogId: string | number = ''): Promise
@@ -164,13 +178,29 @@ export const Opener = {
 			return Promise.reject();
 		}
 
-		const sliderLink = prepareHistorySliderLink(dialogId);
-		BX.SidePanel.Instance.open(sliderLink, {
-			width: Utils.dialog.isLinesExternalId(dialogId) ? 700 : 1000,
-			allowChangeHistory: false,
-			allowChangeTitle: false,
-			cacheable: false,
-		});
+		if (FeatureManager.isFeatureAvailable(Feature.openLinesV2) && Utils.dialog.isLinesHistoryId(dialogId))
+		{
+			// history app ships with imopenlines, fall back to the legacy slider while that module lags behind
+			void Runtime.loadExtension('imopenlines.v2.application.history')
+				.then(({ LinesHistoryApplication }) => {
+					if (!LinesHistoryApplication)
+					{
+						openHistoryInSidePanel(dialogId);
+
+						return;
+					}
+
+					LinesHistoryApplication.openInSlider(dialogId);
+				})
+				.catch((error) => {
+					Logger.error('Opener: openHistory V2 delegation failed', error);
+					openHistoryInSidePanel(dialogId);
+				});
+
+			return Promise.resolve();
+		}
+
+		openHistoryInSidePanel(dialogId);
 
 		return Promise.resolve();
 	},
@@ -190,9 +220,9 @@ export const Opener = {
 	async openRecentSearch(): Promise
 	{
 		await MessengerSlider.getInstance().openSlider();
-		await LayoutManager.getInstance().setLayout({
-			name: Layout.chat,
-		});
+		// Search goes where plain chats live and not where the user is sent back: the default folder is
+		// whichever one the user put first, and the search event is heard by the chat lists alone.
+		await LayoutManager.getInstance().setLayout(FolderManager.getRegularChatsLayout());
 
 		EventEmitter.emit(EventType.recent.openSearch);
 
@@ -250,7 +280,7 @@ export const Opener = {
 		});
 	},
 
-	startVideoCall(dialogId: string = '', withVideo: boolean = true): Promise
+	startVideoCall(dialogId: string = '', withVideo: boolean = true, callOptions: ?Object = null): Promise
 	{
 		Logger.warn('Slider: onStartVideoCall', dialogId, withVideo);
 		if (!Utils.dialog.isDialogId(dialogId))
@@ -260,7 +290,7 @@ export const Opener = {
 			return false;
 		}
 
-		CallManager.getInstance().startCall(dialogId, withVideo);
+		CallManager.getInstance().startCall(dialogId, withVideo, callOptions);
 
 		return Promise.resolve();
 	},

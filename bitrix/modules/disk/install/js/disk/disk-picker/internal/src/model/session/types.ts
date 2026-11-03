@@ -54,6 +54,9 @@ export type SessionCallbacks = {
 	emitSelection: (result: PickerSelectionResult) => void,
 	// Requests a plain cancel-close (the footer Cancel button).
 	requestCancel: () => void,
+	// Tells the host whether the standard viewer covers the window: it shows itself in the
+	// page body, so a click on it happens outside the popup and is not a click past it.
+	setPreviewShown: (shown: boolean) => void,
 };
 
 // A feed is the identity of the main output: (stage type, storage, folder).

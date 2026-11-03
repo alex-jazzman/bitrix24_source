@@ -13,6 +13,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 		useCopilotInIframe = false;
 		copilotFinishInitPromise = new Promise(() => {});
 		isEditorSaved = false;
+		copilotSettingsEventsBound = false;
+		copilotScrollAnimationFrameId = null;
+		copilotScrollState = null;
 		static CONTEXT_TYPE_CONTENT = 'content';
 		static CONTEXT_TYPE_STYLE = 'style';
 		static CONTEXT_TYPE_SETTINGS = 'settings';
@@ -112,6 +115,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 				this.copilotContext = this.useCopilotInIframe ? BX : top.BX;
 				this.stylePanel = landing_ui_panel_stylepanel.StylePanel.getInstance().layout;
 				this.stylePanelContent = landing_ui_panel_stylepanel.StylePanel.getInstance().content;
+				this.settingsDocumentClickHandler = this.onClickStylePanel.bind(this);
+				this.settingsWindowScrollHandler = this.onScrollContentPanel.bind(this);
+				this.bindCopilotSettingsEvents();
 				this.copilotContext.Runtime.loadExtension('ai.copilot').then(({
 					Copilot,
 					CopilotEvents
@@ -488,17 +494,59 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			return this.aiButton;
 		}
 		showCopilot() {
+			this.cancelCopilotScrollAdjustment();
+			this.copilotScrollState = null;
 			this.copilotBindElement = this.aiButton.layout;
-			const offsetY = 3;
-			const copilotBindElementPosition = this.copilotBindElement.getBoundingClientRect();
 			this.imageCopilot.show({
 				width: 500,
-				bindElement: {
-					top: copilotBindElementPosition.bottom + offsetY,
-					left: copilotBindElementPosition.left
-				}
+				bindElement: this.getCopilotBindElementPosition()
 			});
-			this.imageCopilot.adjustPosition({});
+			if (Boolean(this.imageCopilot?.isShown()) === false) {
+				return;
+			}
+			if (this.contextType === Image.CONTEXT_TYPE_SETTINGS) {
+				this.imageCopilot.adjustPosition();
+			} else {
+				this.imageCopilot.adjustPosition({});
+			}
+		}
+		getCopilotBindElementPosition() {
+			const offsetY = 3;
+			const bindElementPosition = this.copilotBindElement.getBoundingClientRect();
+			const frameOffset = this.getCopilotFrameOffset();
+			return {
+				left: bindElementPosition.left + frameOffset.left,
+				top: bindElementPosition.bottom + frameOffset.top + offsetY
+			};
+		}
+		getCopilotFrameOffset() {
+			if (this.contextType !== Image.CONTEXT_TYPE_SETTINGS || this.useCopilotInIframe || !main_core.Type.isElementNode(window.frameElement)) {
+				return {
+					left: 0,
+					top: 0
+				};
+			}
+			const framePosition = window.frameElement.getBoundingClientRect();
+			return {
+				left: framePosition.left,
+				top: framePosition.top
+			};
+		}
+		bindCopilotSettingsEvents() {
+			if (this.contextType !== Image.CONTEXT_TYPE_SETTINGS || this.copilotSettingsEventsBound) {
+				return;
+			}
+			main_core.Event.bind(document, 'click', this.settingsDocumentClickHandler);
+			main_core.Event.bind(window, 'scroll', this.settingsWindowScrollHandler);
+			this.copilotSettingsEventsBound = true;
+		}
+		unbindCopilotSettingsEvents() {
+			if (this.contextType !== Image.CONTEXT_TYPE_SETTINGS || this.copilotSettingsEventsBound === false) {
+				return;
+			}
+			main_core.Event.unbind(document, 'click', this.settingsDocumentClickHandler);
+			main_core.Event.unbind(window, 'scroll', this.settingsWindowScrollHandler);
+			this.copilotSettingsEventsBound = false;
 		}
 		imageCopilotFinishInitHandler() {
 			this.copilotFinishInitPromise = Promise.resolve();
@@ -536,14 +584,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			}
 		}
 		closeCopilot() {
-			if (this.imageCopilot.isShown()) {
+			if (Boolean(this.imageCopilot?.isShown())) {
+				this.cancelCopilotScrollAdjustment();
+				this.copilotScrollState = null;
 				this.imageCopilot.hide();
 				main_core.Event.EventEmitter.unsubscribe('BX.Landing.UI.Panel.BasePanel:onHide', this.closeCopilot.bind(this));
 				main_core.Event.unbind(this.stylePanel, 'click', this.onClickStylePanel.bind(this));
 			}
 		}
 		onClickStylePanel(event) {
-			if (!this.aiButton.layout.contains(event.target)) {
+			if (Boolean(this.imageCopilot?.isShown()) && !this.aiButton.layout.contains(event.target)) {
 				this.closeCopilot();
 			}
 		}
@@ -554,27 +604,41 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 			}
 		}
 		onScrollContentPanel() {
+			if (Boolean(this.imageCopilot?.isShown()) === false || this.copilotScrollAnimationFrameId !== null) {
+				return;
+			}
+			this.copilotScrollAnimationFrameId = requestAnimationFrame(() => {
+				this.copilotScrollAnimationFrameId = null;
+				this.adjustCopilotOnScroll();
+			});
+		}
+		adjustCopilotOnScroll() {
 			if (Boolean(this.imageCopilot?.isShown()) === false) {
 				return;
 			}
 			this.copilotBindElement = this.aiButton.layout;
-			const offsetY = 3;
-			const copilotBindElementPosition = this.copilotBindElement.getBoundingClientRect();
-			const imageCopilotPosition = {
-				top: copilotBindElementPosition.bottom + offsetY,
-				left: copilotBindElementPosition.left
+			const imageCopilotPosition = this.getCopilotBindElementPosition();
+			const hide = this.imageCopilot.getPosition().inputField.top < 133;
+			const nextScrollState = {
+				hide,
+				left: imageCopilotPosition.left,
+				top: imageCopilotPosition.top
 			};
-			if (this.imageCopilot.getPosition().inputField.top < 133) {
-				this.imageCopilot.adjust({
-					hide: true,
-					position: imageCopilotPosition
-				});
-			} else {
-				this.imageCopilot.adjust({
-					hide: false,
-					position: imageCopilotPosition
-				});
+			if (this.copilotScrollState?.hide === nextScrollState.hide && this.copilotScrollState?.left === nextScrollState.left && this.copilotScrollState?.top === nextScrollState.top) {
+				return;
 			}
+			this.copilotScrollState = nextScrollState;
+			this.imageCopilot.adjust({
+				hide,
+				position: imageCopilotPosition
+			});
+		}
+		cancelCopilotScrollAdjustment() {
+			if (this.copilotScrollAnimationFrameId === null) {
+				return;
+			}
+			cancelAnimationFrame(this.copilotScrollAnimationFrameId);
+			this.copilotScrollAnimationFrameId = null;
 		}
 		defineCopilotCategory() {
 			this.copilotCategory = this.contextType === 'style' ? 'landing_designer' : this.useCopilotInIframe ? 'landing_setting' : 'landing_editor';

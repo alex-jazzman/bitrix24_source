@@ -46,3 +46,5 @@ $MESS["IM_TAB_TITLE_PATH"] = "Path template parameters for IM components";
 $MESS["IM_TAB_TITLE_SETTINGS"] = "Module Settings";
 $MESS["IM_VIEW_GROUP"] = "Hide user groups";
 $MESS["IM_VIEW_OFFLINE"] = "Hide offline users";
+$MESS['IM_VOICE_MESSAGE_RECORDING_AVAILABLE'] = 'Enable voice message recording';
+$MESS['IM_VOICE_MESSAGE_RECORDING_HTTPS_REQUIRED'] = 'This setting will not take effect: browsers allow microphone access only over a secure connection (https).';

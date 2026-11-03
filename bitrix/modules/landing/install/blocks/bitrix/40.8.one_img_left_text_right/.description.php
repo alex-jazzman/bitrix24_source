@@ -35,7 +35,7 @@ return [
 			'create2xByDefault' => false,
 		],
 		'.landing-block-link' => [
-			'name' => Loc::getMessage('LANDING_BLOCK_40_7_LINK'),
+			'name' => Loc::getMessage('LANDING_BLOCK_40_8_LINK'),
 			'type' => 'link',
 		],
 	],

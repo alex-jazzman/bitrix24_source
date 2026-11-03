@@ -1,10 +1,11 @@
-import { Loc, Tag, Type, Dom } from 'main.core';
+import { Browser, Loc, Tag, Type, Dom } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { AirButtonStyle, Button } from 'ui.buttons';
-import { BaseView } from './base-view';
+import { BaseView, MOBILE_POPUP_WIDTH } from './base-view';
 import { CodeInput } from '../code-input';
 import './css/enter-code.css';
 import { Analytics } from '../analytics';
+import { createSwitchChannelButton } from './switch-channel-button';
 
 export class EmailEnterCodeView extends BaseView
 {
@@ -20,6 +21,12 @@ export class EmailEnterCodeView extends BaseView
 	#email: string = '';
 	#signedData: string = '';
 	#backButton: Button;
+	#isMobile: boolean;
+	#onContactConfirmed: (flowId: ?string) => Promise;
+	#flowIdProvider: () => ?string;
+	#isContactConfirmed: boolean = false;
+	#canSwitchChannelProvider: () => boolean;
+	#switchChannelButton: Button;
 
 	constructor(options)
 	{
@@ -27,6 +34,15 @@ export class EmailEnterCodeView extends BaseView
 		this.#signedUserId = options.signedUserId || null;
 		this.#email = options.email || '';
 		this.#signedData = options.signedData || '';
+		this.#isMobile = Browser.isMobile();
+		this.#onContactConfirmed = Type.isFunction(options.onContactConfirmed)
+			? options.onContactConfirmed
+			: () => Promise.resolve();
+		this.#flowIdProvider = Type.isFunction(options.flowIdProvider) ? options.flowIdProvider : () => null;
+		this.#canSwitchChannelProvider = Type.isFunction(options.canSwitchChannelProvider)
+			? options.canSwitchChannelProvider
+			: () => false;
+		this.#switchChannelButton = createSwitchChannelButton(this, 'phone');
 		this.#backButton = this.#createBackBtn();
 		this.#input = new CodeInput({
 			codeLength: 6,
@@ -53,6 +69,11 @@ export class EmailEnterCodeView extends BaseView
 	render(): HTMLElement
 	{
 		return this.#container.remember('view', () => {
+			if (this.#isMobile)
+			{
+				return this.#renderMobileView();
+			}
+
 			return Tag.render`
 				<div class="intranet-push-otp-connect-popup__view-container">
 					<div>
@@ -70,12 +91,50 @@ export class EmailEnterCodeView extends BaseView
 						${this.#timerContainer}
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
+						${this.#renderSwitchChannelButton()}
 						${this.#backButton.render()}
 						${this.#button.render()}
 					</div>
 				</div>
 			`;
 		});
+	}
+
+	getPopupWidth(): ?number
+	{
+		return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+	}
+
+	#renderMobileView(): HTMLElement
+	{
+		return Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div>
+					<div class="intranet-push-otp-connect-popup__popup-title">
+						${this.#renderTitle()}
+					</div>
+					${this.renderStepIndicators()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${this.#getDescription()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-enter-code-container --content-center --mobile">
+					${this.#input.render()}
+					${this.#errorContainer}
+					${this.#timerContainer}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">
+					${this.#renderSwitchChannelButton()}
+					${this.#backButton.render()}
+					${this.#button.render()}
+				</div>
+			</div>
+		`;
+	}
+
+	#renderSwitchChannelButton(): string | HTMLElement
+	{
+		return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
 	}
 
 	beforeShow(option: Object): void
@@ -117,6 +176,7 @@ export class EmailEnterCodeView extends BaseView
 		Dom.clean(this.#errorContainer);
 		Dom.clean(this.#timerContainer);
 		this.#cooldown = 0;
+		this.#isContactConfirmed = false;
 		clearInterval(this.#cooldownInterval);
 		this.#input.clear();
 	}
@@ -136,6 +196,8 @@ export class EmailEnterCodeView extends BaseView
 			method: 'POST',
 			data: {
 				email: this.#email,
+				flowId: this.#flowIdProvider(),
+				signedUserId: this.#signedUserId,
 			},
 		}).then((response) => {
 			if (response.status === 'success')
@@ -174,14 +236,13 @@ export class EmailEnterCodeView extends BaseView
 
 	#createConfirmCodeBtn(): Button
 	{
-		return new Button({
+		const button = new Button({
 			text: Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN'),
 			noCaps: true,
 			size: Button.Size.MD,
 			useAirDesign: true,
-			disabled: true,
 			onclick: () => {
-				if (this.#codeSent)
+				if (!this.#codeSent)
 				{
 					return;
 				}
@@ -189,6 +250,9 @@ export class EmailEnterCodeView extends BaseView
 				this.#confirmCode();
 			},
 		});
+		button.setDisabled(true);
+
+		return button;
 	}
 
 	#canSendCode(): boolean
@@ -253,7 +317,7 @@ export class EmailEnterCodeView extends BaseView
 		})}</span>`;
 	}
 
-	#confirmCode(): void
+	async #confirmCode(): void
 	{
 		if (this.#button.isWaiting())
 		{
@@ -262,33 +326,54 @@ export class EmailEnterCodeView extends BaseView
 
 		this.#cleanError();
 		this.#button.setWaiting(true);
-		BX.ajax.runAction('intranet.v2.Otp.confirmationEmail', {
-			method: 'POST',
-			data: {
-				code: this.#input.getValue(),
-				signedData: this.#signedData,
-			},
-		}).then((response) => {
-			this.#button.setWaiting(false);
-			if (response.status === 'success')
+
+		try
+		{
+			const flowId = this.#flowIdProvider();
+			let response = { status: 'success' };
+			if (!this.#isContactConfirmed)
+			{
+				response = await BX.ajax.runAction('intranet.v2.Otp.confirmationEmail', {
+					method: 'POST',
+					data: {
+						code: this.#input.getValue(),
+						signedData: this.#signedData,
+						flowId,
+						signedUserId: this.#signedUserId,
+					},
+				});
+				if (response.status !== 'success')
+				{
+					return;
+				}
+
+				this.#isContactConfirmed = true;
+			}
+
+			response = await this.#onContactConfirmed(flowId) ?? response;
+			if (response?.status === 'success')
 			{
 				this.emit(
 					'onNextView',
 					{
-						viewCode: null,
+						viewCode: response.skipDeviceConnectCompleted === true
+							? (response.nextViewCode ?? 'success')
+							: null,
 						options: {
 							closeIfLast: true,
 						},
 					},
 				);
 			}
-		}, (response) => {
-			this.#setError(response.errors);
-			this.#button.setWaiting(false);
-		}).catch((response) => {
+		}
+		catch (response)
+		{
 			this.#setError(response?.errors ?? []);
+		}
+		finally
+		{
 			this.#button.setWaiting(false);
-		});
+		}
 	}
 
 	#setError(errors: Array): void

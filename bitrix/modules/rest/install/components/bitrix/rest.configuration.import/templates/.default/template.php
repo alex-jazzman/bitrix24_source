@@ -61,7 +61,7 @@ else
 }
 
 ?>
-<div id="<?=$containerId?>" class="rest-configuration">
+<div id="<?=$containerId?>" class="rest-configuration" data-testid="rest-configuration-import">
 	<div class="rest-configuration-wrapper">
 		<? if (!empty($titleBlock)):?>
 			<div class="rest-configuration-title"><?=htmlspecialcharsbx($titleBlock)?></div>
@@ -197,7 +197,12 @@ else
 					<?=bitrix_sessid_post()?>
 					<div class="rest-configuration-controls rest-configuration-upload-file">
 						<label class="ui-btn ui-btn-lg ui-btn-primary">
-							<input id="<?=$containerId?>-file-upload" type="file" name="CONFIGURATION" >
+							<input
+								id="<?=$containerId?>-file-upload"
+								type="file"
+								name="CONFIGURATION"
+								data-testid="rest-configuration-import-file"
+							>
 							<?=Loc::getMessage('REST_CONFIGURATION_IMPORT_SAVE_FILE_BTN')?>
 						</label>
 					</div>

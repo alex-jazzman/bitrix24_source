@@ -17,6 +17,7 @@ use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedLicenseView;
 use Bitrix\Main\Grid\Component\ComponentParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 $APPLICATION->SetTitle(Loc::getMessage('BIC_USAGE_STAT_PAGE_TITLE'));
 
@@ -33,10 +34,14 @@ if (!empty($arResult['ERROR_MESSAGES']))
 	return;
 }
 
-Extension::load([
+// the BI Builder slice logs queries permanently, so the collection window banner never applies there
+$hasExternalStatBanner = !$arResult['IS_BI_BUILDER_SERVICE'];
+
+$extensions = [
 	'sidepanel',
 	'ui.buttons',
 	'ui.fonts.opensans',
+	'biconnector.error-message',
 	'biconnector.grid',
 	'main.ui.filter',
 	'main.core',
@@ -44,8 +49,21 @@ Extension::load([
 	'ui.notification',
 	'ui.hint',
 	'ui.label',
+	'ui.system.chip',
 	'ui.alerts',
-]);
+	'ui.a11y',
+];
+
+$isOnboardingAvailable = ($arResult['EXT_STAT_ONBOARDING']['canShow'] ?? false) === true;
+if ($isOnboardingAvailable)
+{
+	// the hint is shown at most once per user, so its extensions are not needed on every hit
+	$extensions[] = 'main.popup';
+	$extensions[] = 'spotlight';
+	$extensions[] = 'biconnector.aha-moment';
+}
+
+Extension::load($extensions);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'pagetitle-toolbar-field-view');
@@ -61,6 +79,7 @@ if (!empty($arResult['GRID_STUB']))
 	$gridParams['STUB'] = $arResult['GRID_STUB'];
 }
 
+$externalStatBannerId = 'usage-stat-ext-collection-banner';
 ?>
 <?php if ($arResult['SELFHOST_LICENSE_NOTICE'] !== null): ?>
 	<?php $licenseNotice = $arResult['SELFHOST_LICENSE_NOTICE']; ?>
@@ -93,8 +112,20 @@ if (!empty($arResult['GRID_STUB']))
 		</span>
 	</div>
 <?php endif; ?>
+<?php if ($hasExternalStatBanner): ?>
+	<div
+		class="ui-alert ui-alert-primary"
+		id="<?= $externalStatBannerId ?>"
+		<?php if (!$arResult['IS_EXTERNAL_STAT_ENABLED']): ?>style="display: none;"<?php endif; ?>
+	>
+		<span class="ui-alert-message">
+			<?php if ($arResult['IS_EXTERNAL_STAT_ENABLED']): ?>
+				<?= Loc::getMessage('CT_BBSU_EXT_STAT_ACTIVE_BANNER', ['#HOURS#' => $arResult['EXTERNAL_STAT_HOURS_LEFT']]) ?>
+			<?php endif; ?>
+		</span>
+	</div>
+<?php endif; ?>
 <?php
-
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
@@ -116,9 +147,21 @@ $APPLICATION->IncludeComponent(
 	}
 
 	BX.ready(() => {
+		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		BX.BIConnector.UsageStatGridManager.Instance = new BX.BIConnector.UsageStatGridManager({
 			gridId: '<?= CUtil::JSEscape($grid->getId()) ?>',
+			externalStat: {
+				buttonId: '<?= CUtil::JSEscape($arResult['EXT_STAT_BUTTON_ID']) ?>',
+				bannerId: '<?= $hasExternalStatBanner ? CUtil::JSEscape($externalStatBannerId) : '' ?>',
+				active: <?= $arResult['IS_EXTERNAL_STAT_ENABLED'] ? 'true' : 'false' ?>,
+				hoursLeft: <?= (int)$arResult['EXTERNAL_STAT_HOURS_LEFT'] ?>,
+				labels: <?= Json::encode($arResult['EXT_STAT_BUTTON_LABELS']) ?>,
+				onboarding: <?= Json::encode($arResult['EXT_STAT_ONBOARDING']) ?>,
+			},
 		});
+		<?php if ($isOnboardingAvailable): ?>
+			BX.BIConnector.UsageStatGridManager.Instance.showOnboarding();
+		<?php endif; ?>
 	});
 </script>
 <?php

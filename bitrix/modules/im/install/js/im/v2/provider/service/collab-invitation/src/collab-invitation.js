@@ -1,20 +1,21 @@
-import { RestMethod } from 'im.v2.const';
+import { RestMethod, type SelectorEntityItem } from 'im.v2.const';
 import { runAction } from 'im.v2.lib.rest';
 import { Utils } from 'im.v2.lib.utils';
 
 type AddEmployeesToCollabRequest = {
 	dialogId: string,
 	members: number[],
+	structureNodes?: SelectorEntityItem[],
 };
 
 export class CollabInvitationService
 {
-	addEmployees({ dialogId, members }: AddEmployeesToCollabRequest): Promise
+	addEmployees({ dialogId, members, structureNodes = [] }: AddEmployeesToCollabRequest): Promise
 	{
 		const payload = {
 			data: {
 				dialogId,
-				members: Utils.user.prepareSelectorIds(members),
+				members: [...Utils.user.prepareSelectorIds(members), ...structureNodes],
 			},
 		};
 

@@ -37,7 +37,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div class="b24-content-resizer" @mousedown.left="startResize"/>
+		<div class="b24-content-resizer" aria-hidden="true" @mousedown.left="startResize"/>
 	`
 	};
 

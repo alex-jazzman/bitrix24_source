@@ -5,6 +5,9 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+?>
+<div data-testid="crm-config-bp-edit-editor">
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:bizproc.workflow.edit',
 	'',
@@ -26,3 +29,5 @@ $APPLICATION->IncludeComponent(
 	$component,
 	['HIDE_ICONS' => 'Y']
 );
+?>
+</div>

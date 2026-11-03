@@ -4,8 +4,8 @@ import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
 import 'ui.design-tokens';
 import { sendData } from 'ui.analytics';
 import { Footer } from '../footer';
-import type { WidgetParams, WidgetTypeEnum } from '../widget';
-import { WidgetType } from '../widget';
+import type { WidgetParams, WidgetTypeEnum } from '../types';
+import { WidgetType } from '../types';
 import { Base } from './base';
 
 export class Start extends Base
@@ -158,9 +158,12 @@ export class Start extends Base
 	{
 		if (this.#isFlowStarted)
 		{
-			const footer = new Footer(this.#showSettingsButton, {
-				type: this.getAnalyticsType(),
-				subSection: this.getAnalyticsSubSection(),
+			const footer = new Footer({
+				showSettingsButton: this.#showSettingsButton,
+				analytics: {
+					type: this.getAnalyticsType(),
+					subSection: this.getAnalyticsSubSection(),
+				},
 			});
 
 			return Tag.render`
@@ -177,7 +180,7 @@ export class Start extends Base
 				: 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS'
 		);
 
-		const content = Loc.getMessage(code, NameService.copilotNameReplacement(),);
+		const content = Loc.getMessage(code, NameService.copilotNameReplacement());
 
 		return Tag.render`
 			<div class="crm-rs__w-body-description ${hasClients ? '--has-clients' : ''}">
@@ -202,13 +205,14 @@ export class Start extends Base
 				.runAction('crm.repeatsale.flow.enable')
 				.then(
 					(response) => {
-						if (response.status === 'success')
+						if (response.status === 'success' && response.data === true)
 						{
 							this.#isFlowStarted = true;
 							this.setPopupContent(this.getPopupContent());
 
 							const instance = this.#getClickEventBuilder();
 							instance.setElement('start_flow');
+							instance.setEnableMode('manual');
 							sendData(instance.buildData());
 
 							return;

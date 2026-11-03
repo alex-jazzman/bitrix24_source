@@ -10,7 +10,9 @@
 
 .landing-widget-kb-v2-title {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
+	gap: var(--ui-space-stack-xs) var(--ui-space-inline-lg);
 	margin-bottom: 21px;
 	padding-bottom: 0;
 	font: var(--ui-font-weight-medium) 28px var(--ui-font-family-primary, var(--ui-font-family-system));
@@ -138,6 +140,7 @@
 
 .landing-widget-kb-v2-badge {
 	display: inline-flex;
+	flex-shrink: 0;
 	align-items: center;
 	padding: 0 8px;
 	height: 20px;
@@ -147,6 +150,7 @@
 	color: var(--ui-color-on-primary-alt);
 	box-sizing: border-box;
 	cursor: default;
+	white-space: nowrap;
 }
 
 .landing-widget-kb-v2-badge.--yellow {
@@ -155,7 +159,6 @@
 }
 
 .landing-widget-kb-v2-title .landing-widget-kb-v2-badge {
-	margin-left: 20px;
 	margin-top: auto;
 	margin-bottom: auto;
 }

@@ -12,24 +12,24 @@ global $APPLICATION;
 $APPLICATION->SetAdditionalCSS('/bitrix/js/disk/css/disk.css');
 ?>
 
-<div class="file-preview">
+<div class="file-preview" data-testid="disk-file-preview">
 	<div class="file-preview-header">
-		<span class="file-preview-header-icon bx-file-icon-container-small <?=$arResult["ICON_CLASS"]?>"></span>
+		<span class="file-preview-header-icon bx-file-icon-container-small <?=$arResult["ICON_CLASS"]?>" aria-hidden="true"></span>
 		<span class="file-preview-header-title">
 			<?=Loc::getMessage("FILE_PREVIEW_TITLE")?>:
-			<a href="<?=$arResult['URL_DOWNLOAD']?>" target="_blank"><?= $arResult['NAME']?></a>
+			<a href="<?=htmlspecialcharsbx($arResult['URL_DOWNLOAD'])?>" target="_blank" data-testid="disk-file-preview-download-link"><?=htmlspecialcharsbx($arResult['NAME'])?></a>
 		</span>
 	</div>
 
-	<table class="file-preview-info">
+	<table class="file-preview-info" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('FILE_PREVIEW_INFO_TABLE_LABEL'))?>">
 		<tr>
-			<td><?=Loc::getMessage('FILE_PREVIEW_SIZE')?>:</td>
+			<th scope="row"><?=Loc::getMessage('FILE_PREVIEW_SIZE')?>:</th>
 			<td>
 				<?=$arResult['SIZE']?>
 			</td>
 		</tr>
 		<tr>
-			<td><?=Loc::getMessage('FILE_PREVIEW_UPDATED')?>: </td>
+			<th scope="row"><?=Loc::getMessage('FILE_PREVIEW_UPDATED')?>: </th>
 			<td><?=$arResult['UPDATED']?></td>
 		</tr>
 	</table>

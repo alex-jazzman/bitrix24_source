@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
@@ -75,10 +76,12 @@ CJSCore::Init([
 			gridId: '<?= $arResult['VERSION_GRID']['ID'] ?>',
 			withoutEventBinding: true,
 			object: {
-				id: <?= $arResult['FILE']['ID'] ?>
-			}
+				id: <?= $arResult['FILE']['ID'] ?>,
+				uniqueCode: '<?= CUtil::JSEscape($arResult['FILE']['UNIQUE_CODE']) ?>',
+			},
+			isViewByUnifiedLink: <?= Json::encode($arResult['IS_VIEW_BY_UNIFIED_LINK']) ?>,
 		});
 	});
 
-	BX.message(<?=\Bitrix\Main\Web\Json::encode($messages)?>);
+	BX.message(<?=Json::encode($messages)?>);
 </script>

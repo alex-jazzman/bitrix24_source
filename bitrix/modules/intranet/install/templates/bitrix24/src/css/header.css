@@ -70,7 +70,16 @@
 	margin-right: 14px;
 }
 
-@container app-header (max-width: 968px) {
+/* Width mirrors .intranet-settings-widget__logo-btn: min-width 24px + margin-left 2px;
+	flex-shrink: 0 because an explicit min-width drops the flex default of min-width: auto. */
+.air-header__settings-slot {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	min-width: 26px;
+}
+
+@container app-header (max-width: 1200px) {
 	.air-header__logo {
 		display: none;
 	}
@@ -131,7 +140,7 @@
 	display: none;
 }
 
-@container app-header (max-width: 1200px) {
+@container app-header (max-width: 888px) {
 	.air-header-button__icon {
 		display: block;
 		--ui-icon-set__icon-size: 18px;
@@ -210,6 +219,11 @@
 .air-header-button:focus,
 .air-header-button:active {
 	background: var(--air-header-button-bg-active);
+}
+
+.air-header-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }
 
 .air-header-button.--color-accent,

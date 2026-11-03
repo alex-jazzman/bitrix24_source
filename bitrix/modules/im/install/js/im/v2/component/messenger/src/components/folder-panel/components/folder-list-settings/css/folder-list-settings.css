@@ -1,14 +1,94 @@
+.bx-im-folder-list__panel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	width: calc(var(--im-messenger__folder-panel_width) + var(--im-messenger__list_width));
+	height: 100%;
+	background-color: var(--ui-color-bg-content-primary);
+	/* the nested chat list of the column next door paints at z-index 1 and stands later in the DOM */
+	z-index: 2;
+}
+
+/*
+ * The panel comes in from the left edge the strip and the list stand against, and leaves the same
+ * way: it covers exactly those two columns, so arriving from the right would drive the whole panel
+ * across the list it is about to cover. The exit is the shorter of the two - what the user asked for
+ * is worth an unhurried entry, what they dismissed is not worth waiting through.
+ *
+ * The transform lives in the entry and exit classes alone: the dragged copy of a row is placed
+ * against the window, and a transform left on the panel at rest would make the panel its origin.
+ */
+.bx-im-folder-list-panel-enter-active {
+	transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease-out;
+}
+
+.bx-im-folder-list-panel-leave-active {
+	transition: transform 180ms cubic-bezier(0.55, 0, 1, 0.45), opacity 180ms ease-in;
+}
+
+/*
+ * The panel gives up the focus and the key the moment it starts leaving, and it has to give up the
+ * pointer with them: for the whole of the transition it is still on screen, still carrying "Save",
+ * "Cancel" and the row menus, and it drives right across the column it was covering.
+ */
+.bx-im-folder-list-panel-leave-active {
+	pointer-events: none;
+}
+
+.bx-im-folder-list-panel-enter-from,
+.bx-im-folder-list-panel-leave-to {
+	transform: translateX(-100%);
+	opacity: 0;
+}
+
+.bx-im-folder-list__header {
+	display: flex;
+	flex: 0 0 var(--im-messenger__list-header_height);
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 0 16px 0 24px;
+	border-bottom: 1px solid var(--ui-color-base-7);
+}
+
+.bx-im-folder-list__header-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.bx-im-folder-list__close-button {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+
+	display: flex;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	appearance: none;
+}
+
 .bx-im-folder-list__container {
-	margin: 18px 0;
-	padding: 20px 16px;
-	background-color: var(--ui-color-white-base);
-	border-radius: 20px;
+	flex: 1;
+	min-height: 0;
+	padding: 0 20px 24px;
+	overflow-y: auto;
+}
+
+/* The area fills the panel edge to edge, so the ring of the shared `.--focus-visible` would be drawn
+   past the panel on both sides and over the header and the footer. Draw it inside instead - the same
+   inset-offset approach the tile of the strip takes. Only the area itself: the menu button of a row
+   keeps the shared offset. */
+.bx-im-messenger__scope .bx-im-folder-list__container.--focus-visible:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .bx-im-folder-list__image {
-	width: 180px;
-	height: 120px;
-	margin: 0 auto 10px;
+	width: 104px;
+	height: 104px;
+	margin: 24px auto 16px;
 	background: url('./images/folder-settings.webp') center / contain no-repeat;
 }
 
@@ -19,5 +99,7 @@
 
 .bx-im-folder-list__footer {
 	display: flex;
+	flex: 0 0 71px;
 	gap: 12px;
+	padding: 16px 24px;
 }

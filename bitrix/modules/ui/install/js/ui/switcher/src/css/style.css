@@ -159,3 +159,11 @@
 	cursor: not-allowed;
 }
 /* endregion */
+
+/* The ring is drawn outside the box: `overflow: hidden` above clips the children, not the own
+   outline, and the switcher is too short for an inset ring to leave the cursor visible.
+   [role="switch"] keeps it away from the switchers that never asked for the semantics. */
+.ui-switcher[role="switch"]:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}

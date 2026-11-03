@@ -1,12 +1,13 @@
 import './style.css';
 
+import { EventEmitter } from 'main.core.events';
 import { mapActions, mapState } from 'ui.vue3.pinia';
 import { Popup } from 'ui.vue3.components.popup';
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { Text } from 'ui.system.typography.vue';
 
-import { useNodeSettingsStore } from '../../../../entities/node-settings';
+import { EVENT_NAMES, useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
 import { PORT_TYPES } from '../../../../shared/constants';
 
@@ -52,11 +53,6 @@ export const EditAuxPortSelector = {
 			type: Object,
 			required: true,
 		},
-		isScrolling:
-		{
-			type: Boolean,
-			required: true,
-		},
 	},
 	setup(): { getMessage: () => string; }
 	{
@@ -73,7 +69,7 @@ export const EditAuxPortSelector = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block']),
 		selectedPort:
 		{
 			get(): { portId: ?string, title: ?string }
@@ -156,18 +152,14 @@ export const EditAuxPortSelector = {
 			return this.auxPorts.length < MAX_AUX_PORTS;
 		},
 	},
-	watch:
-	{
-		isScrolling(isScrolling: boolean)
-		{
-			if (isScrolling && this.isPopupShown)
-			{
-				this.isPopupShown = false;
-			}
-		},
-	},
 	created(): void
 	{
+		// The dropdown hangs outside the scrolled flow and closes on a scroll of the panel. A
+		// subscription and not a prop: see EVENT_NAMES.SCROLL_EVENT.
+		this.closePopupOnScroll = () => {
+			this.isPopupShown = false;
+		};
+		EventEmitter.subscribe(EVENT_NAMES.SCROLL_EVENT, this.closePopupOnScroll);
 		this.allAuxPorts = this.block.ports.reduce((acc, port: Port) => {
 			if (port.type === PORT_TYPES.aux)
 			{
@@ -183,6 +175,10 @@ export const EditAuxPortSelector = {
 		}, []);
 
 		this.ensureDefaultPort();
+	},
+	unmounted(): void
+	{
+		EventEmitter.unsubscribe(EVENT_NAMES.SCROLL_EVENT, this.closePopupOnScroll);
 	},
 	methods: {
 		...mapActions(useNodeSettingsStore, {

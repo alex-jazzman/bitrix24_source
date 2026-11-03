@@ -11,7 +11,15 @@ use Bitrix\Disk\Realtime\Tags\AvailableDocumentSessionCountTag;
 $tag = new AvailableDocumentSessionCountTag();
 $tag->subscribe();
 
-$availableDocumentSessionCount = (new RestrictionManager())->getAvailableDocumentSessionCount();
+$availableDocumentSessionCount = null;
+try
+{
+	$availableDocumentSessionCount = (new RestrictionManager())->getAvailableDocumentSessionCount();
+}
+catch (RuntimeException)
+{
+	$availableDocumentSessionCount = null;
+}
 
 return [
 	'css' => 'dist/onlyoffice-session-restrictions.bundle.css',

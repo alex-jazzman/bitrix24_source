@@ -2,12 +2,16 @@
 $MESS["IM_LIB_INVITE_CANCEL"] = "Cancel invitation";
 $MESS["IM_LIB_INVITE_CANCEL_CONFIRM"] = "Are you sure you want to cancel invitation?";
 $MESS["IM_LIB_INVITE_RESEND"] = "Invite again";
+$MESS['IM_LIB_MENU_ADD_TO_FOLDER'] = 'Add to folder';
 $MESS["IM_LIB_MENU_AI_ASSISTANT_FEEDBACK"] = "Feedback";
 $MESS["IM_LIB_MENU_CALL_2"] = "Video call";
 $MESS["IM_LIB_MENU_CLEAR_RECENT_STICKERS"] = "Clear all recent stickers";
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "View in channel";
+$MESS['IM_LIB_MENU_CREATE_AI_TASK'] = 'Create AI task';
+$MESS['IM_LIB_MENU_CREATE_FOLDER'] = 'Create folder';
 $MESS["IM_LIB_MENU_EDIT_STICKER_PACK"] = "Edit";
 $MESS["IM_LIB_MENU_FIND_SHARED_CHATS"] = "Find chats with this user";
+$MESS['IM_LIB_MENU_FOLDER_FULL'] = 'Folder is full';
 $MESS["IM_LIB_MENU_HIDE_MSGVER_1"] = "Hide";
 $MESS["IM_LIB_MENU_LEAVE_CHANNEL"] = "Unsubscribe";
 $MESS["IM_LIB_MENU_LEAVE_MSGVER_1"] = "Leave";

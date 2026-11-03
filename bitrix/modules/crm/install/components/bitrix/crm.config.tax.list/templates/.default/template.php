@@ -4,6 +4,8 @@ global $APPLICATION;
 \Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+
 $arResult['GRID_DATA'] = $arColumns = array();
 foreach ($arResult['HEADERS'] as $arHead)
 {
@@ -27,7 +29,9 @@ foreach($arResult['TAXIES'] as $key => &$arTax)
 			'ICONCLASS' => 'view',
 			'TITLE' => GetMessage('CRM_TAX_EDIT_TITLE'),
 			'TEXT' => GetMessage('CRM_TAX_EDIT'),
-			'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape($arTax['PATH_TO_TAX_EDIT']).'\');',
+			'ONCLICK' => $isSettingsHub
+				? 'window.location.href = \'' . CUtil::JSEscape($arTax['PATH_TO_TAX_EDIT']) . '\';'
+				: 'jsUtils.Redirect([], \''.CUtil::JSEscape($arTax['PATH_TO_TAX_EDIT']).'\');',
 			'DEFAULT' => true
 		);
 	}
@@ -49,7 +53,12 @@ foreach($arResult['TAXIES'] as $key => &$arTax)
 		'data' => $arTax,
 		'editable' => $arResult['CAN_EDIT'] ? true : $arColumns,
 		'columns' => array(
-			'NAME' => '<a target="_self" href="'.$arTax['PATH_TO_TAX_EDIT'].'">'.htmlspecialcharsbx($arTax['NAME']).'</a>',
+			'NAME' => $isSettingsHub
+				? '<a data-testid="crm-config-tax-list-edit-link-' . (int)$arTax['ID'] . '"'
+					. ' data-slider-ignore-autobinding="true" target="_self" href="'
+					. htmlspecialcharsbx($arTax['PATH_TO_TAX_EDIT']) . '">'
+					. htmlspecialcharsbx($arTax['NAME']) . '</a>'
+				: '<a target="_self" href="'.$arTax['PATH_TO_TAX_EDIT'].'">'.htmlspecialcharsbx($arTax['NAME']).'</a>',
 			'TIMESTAMP_X' => $arTax['TIMESTAMP_X'],
 			'LID' => $arTax['LID'],
 			'CODE' => $arTax['CODE'],

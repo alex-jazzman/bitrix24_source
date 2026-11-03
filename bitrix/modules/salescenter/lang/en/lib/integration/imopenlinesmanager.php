@@ -8,6 +8,7 @@ $MESS["SALESCENTER_IMOPMANAGER_ORDER_ADD_MESSAGE_TOP"] = "Your order for #SUM# o
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM_2"] = "Drop us a line if you have any questions!";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_TOP_2"] = "Please use this link to pay for your order.";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW_2"] = "Please use this link to pay for your order. Drop us a line if you have any questions! #LINK#";
+$MESS['SALESCENTER_IMOPMANAGER_SESSION_ACCESS_DENIED'] = 'Insufficient permissions to access this Open Channel dialog.';
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_CLIENT_MAKE_ORDER"] = "Customer has placed an order.";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_LINK"] = "Payment ##DEAL_ID# of #DEAL_DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_TEXT"] = "Deal for #SUM# has been created";

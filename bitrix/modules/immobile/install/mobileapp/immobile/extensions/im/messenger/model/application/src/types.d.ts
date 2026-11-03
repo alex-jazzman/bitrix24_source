@@ -18,6 +18,7 @@ export type ApplicationModelState = {
 	settings: {
 		audioRate: AudioRate,
 		recordMediaType: RecordMediaType,
+		defaultReaction: string,
 	},
 }
 
@@ -38,6 +39,7 @@ export type ApplicationModelActions =
 	| 'applicationModel/setStatus'
 	| 'applicationModel/setAudioRateSetting'
 	| 'applicationModel/setRecordMediaType'
+	| 'applicationModel/setDefaultReaction'
 
 export type ApplicationModelMutation =
 	'applicationModel/openDialogId'
@@ -61,6 +63,7 @@ export interface ApplicationSetSettingsData extends PayloadData
 {
 	audioRate: AudioRate,
 	recordMediaType: RecordMediaType,
+	defaultReaction: string,
 }
 
 export type ApplicationOpenDialogIdActions = 'openDialogId';

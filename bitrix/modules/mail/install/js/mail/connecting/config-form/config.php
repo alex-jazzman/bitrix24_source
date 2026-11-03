@@ -16,6 +16,7 @@ return [
 		'mail.migration-state',
 		'main.core',
 		'main.core.events',
+		'ui.a11y',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
 		'ui.entity-selector',

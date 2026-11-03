@@ -24,6 +24,12 @@
 	border-radius: var(--ui-border-radius-sm);
 }
 
+/* Fixed set of rules: the field keeps the look of the control and loses the affordance - nothing
+   opens on click, so there is no pointer, and the element takes no focus for the ring below. */
+.editor-chart-node-settings-select-rule-port__control.--static {
+	cursor: default;
+}
+
 .editor-chart-node-settings-select-rule-port__control:focus-visible {
 	outline: 2px solid var(--ui-color-accent-main-primary);
 	outline-offset: 2px;

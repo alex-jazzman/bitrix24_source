@@ -646,11 +646,135 @@
 	--o-ui-icon-set__path_cookies: url('images/cookies.svg');
 	--o-ui-icon-set__path_pages: url('images/pages.svg');
 	--o-ui-icon-set__path_vibecode-catalog: url('images/vibecode-catalog.svg');
+	--o-ui-icon-set__path_vibe-blackhole: url('images/vibe-blackhole.svg');
 	--o-ui-icon-set__path_commands: url('images/commands.svg');
 	--o-ui-icon-set__path_file-with-calendar: url('images/file-with-calendar.svg');
 	--o-ui-icon-set__path_file-with-crown: url('images/file-with-crown.svg');
 	--o-ui-icon-set__path_file-with-person: url('images/file-with-person.svg');
 	--o-ui-icon-set__path_no-cloud-sync: url('images/no-cloud-sync.svg');
+	--o-ui-icon-set__path_a-letter-sort-down: url('images/a-letter-sort-down.svg');
+	--o-ui-icon-set__path_a-letter-sort-up: url('images/a-letter-sort-up.svg');
+	--o-ui-icon-set__path_add-to-chat: url('images/add-to-chat.svg');
+	--o-ui-icon-set__path_ai-projects: url('images/ai-projects.svg');
+	--o-ui-icon-set__path_ai-projects-2: url('images/ai-projects-2.svg');
+	--o-ui-icon-set__path_ai-stars-question-2: url('images/ai-stars-question-2.svg');
+	--o-ui-icon-set__path_ai-two-stars: url('images/ai-two-stars.svg');
+	--o-ui-icon-set__path_align-image-center: url('images/align-image-center.svg');
+	--o-ui-icon-set__path_align-image-left: url('images/align-image-left.svg');
+	--o-ui-icon-set__path_align-image-right: url('images/align-image-right.svg');
+	--o-ui-icon-set__path_back: url('images/back.svg');
+	--o-ui-icon-set__path_ball-one: url('images/ball-one.svg');
+	--o-ui-icon-set__path_beer: url('images/beer.svg');
+	--o-ui-icon-set__path_bitrix-gpt-round: url('images/bitrix-gpt-round.svg');
+	--o-ui-icon-set__path_block-insertion: url('images/block-insertion.svg');
+	--o-ui-icon-set__path_book-open: url('images/book-open.svg');
+	--o-ui-icon-set__path_bottom-top-collapse-l: url('images/bottom-top-collapse-l.svg');
+	--o-ui-icon-set__path_bottom-top-collapse-m: url('images/bottom-top-collapse-m.svg');
+	--o-ui-icon-set__path_bottom-top-collapse-s: url('images/bottom-top-collapse-s.svg');
+	--o-ui-icon-set__path_bottom-top-collapse-xs: url('images/bottom-top-collapse-xs.svg');
+	--o-ui-icon-set__path_branch-network: url('images/branch-network.svg');
+	--o-ui-icon-set__path_cake-celebrating: url('images/cake-celebrating.svg');
+	--o-ui-icon-set__path_change-places: url('images/change-places.svg');
+	--o-ui-icon-set__path_claw: url('images/claw.svg');
+	--o-ui-icon-set__path_cloud-sync-cross: url('images/cloud-sync-cross.svg');
+	--o-ui-icon-set__path_collection: url('images/collection.svg');
+	--o-ui-icon-set__path_columns-sidebar-pending-left: url('images/columns-sidebar-pending-left.svg');
+	--o-ui-icon-set__path_company-plus: url('images/company-plus.svg');
+	--o-ui-icon-set__path_company-send: url('images/company-send.svg');
+	--o-ui-icon-set__path_contact-send: url('images/contact-send.svg');
+	--o-ui-icon-set__path_copy-link: url('images/copy-link.svg');
+	--o-ui-icon-set__path_core: url('images/core.svg');
+	--o-ui-icon-set__path_crm-optional-accepted: url('images/crm-optional-accepted.svg');
+	--o-ui-icon-set__path_crm-optional-not-accepted: url('images/crm-optional-not-accepted.svg');
+	--o-ui-icon-set__path_crm-required-consent: url('images/crm-required-consent.svg');
+	--o-ui-icon-set__path_crown-forward: url('images/crown-forward.svg');
+	--o-ui-icon-set__path_cup-winner: url('images/cup-winner.svg');
+	--o-ui-icon-set__path_deep-search-ai: url('images/deep-search-ai.svg');
+	--o-ui-icon-set__path_desktop-macos: url('images/desktop-macos.svg');
+	--o-ui-icon-set__path_desktop-windows: url('images/desktop-windows.svg');
+	--o-ui-icon-set__path_discount: url('images/discount.svg');
+	--o-ui-icon-set__path_do-not-use-captcha: url('images/do-not-use-captcha.svg');
+	--o-ui-icon-set__path_employee: url('images/employee.svg');
+	--o-ui-icon-set__path_excel: url('images/excel.svg');
+	--o-ui-icon-set__path_export: url('images/export.svg');
+	--o-ui-icon-set__path_fill-out-again: url('images/fill-out-again.svg');
+	--o-ui-icon-set__path_flower: url('images/flower.svg');
+	--o-ui-icon-set__path_folders: url('images/folders.svg');
+	--o-ui-icon-set__path_function: url('images/function.svg');
+	--o-ui-icon-set__path_galaxy: url('images/galaxy.svg');
+	--o-ui-icon-set__path_galaxy-server: url('images/galaxy-server.svg');
+	--o-ui-icon-set__path_graphs-link: url('images/graphs-link.svg');
+	--o-ui-icon-set__path_handshake-send: url('images/handshake-send.svg');
+	--o-ui-icon-set__path_headlines: url('images/headlines.svg');
+	--o-ui-icon-set__path_headlines-h1: url('images/headlines-h1.svg');
+	--o-ui-icon-set__path_headlines-h2: url('images/headlines-h2.svg');
+	--o-ui-icon-set__path_headlines-h3: url('images/headlines-h3.svg');
+	--o-ui-icon-set__path_headlines-h4: url('images/headlines-h4.svg');
+	--o-ui-icon-set__path_headlines-h5: url('images/headlines-h5.svg');
+	--o-ui-icon-set__path_hide-1: url('images/hide-1.svg');
+	--o-ui-icon-set__path_hide-2: url('images/hide-2.svg');
+	--o-ui-icon-set__path_image-small: url('images/image-small.svg');
+	--o-ui-icon-set__path_import: url('images/import.svg');
+	--o-ui-icon-set__path_lead-send: url('images/lead-send.svg');
+	--o-ui-icon-set__path_library-base: url('images/library-base.svg');
+	--o-ui-icon-set__path_link-update: url('images/link-update.svg');
+	--o-ui-icon-set__path_list-tasks-add: url('images/list-tasks-add.svg');
+	--o-ui-icon-set__path_login-history: url('images/login-history.svg');
+	--o-ui-icon-set__path_martini-glass: url('images/martini-glass.svg');
+	--o-ui-icon-set__path_message-to: url('images/message-to.svg');
+	--o-ui-icon-set__path_messenger-send: url('images/messenger-send.svg');
+	--o-ui-icon-set__path_microphone-ai: url('images/microphone-ai.svg');
+	--o-ui-icon-set__path_microphone-sounds-ai: url('images/microphone-sounds-ai.svg');
+	--o-ui-icon-set__path_mobile-fill: url('images/mobile-fill.svg');
+	--o-ui-icon-set__path_money-prize: url('images/money-prize.svg');
+	--o-ui-icon-set__path_my-deals-send: url('images/my-deals-send.svg');
+	--o-ui-icon-set__path_online-bank: url('images/online-bank.svg');
+	--o-ui-icon-set__path_open-sequence: url('images/open-sequence.svg');
+	--o-ui-icon-set__path_outline-icon-business-process-progress: url('images/outline-icon-business-process-progress.svg');
+	--o-ui-icon-set__path_person-mention: url('images/person-mention.svg');
+	--o-ui-icon-set__path_person-office: url('images/person-office.svg');
+	--o-ui-icon-set__path_play-waves: url('images/play-waves.svg');
+	--o-ui-icon-set__path_plug-left: url('images/plug-left.svg');
+	--o-ui-icon-set__path_plug-right: url('images/plug-right.svg');
+	--o-ui-icon-set__path_previous: url('images/previous.svg');
+	--o-ui-icon-set__path_radiant: url('images/radiant.svg');
+	--o-ui-icon-set__path_recent-cards: url('images/recent-cards.svg');
+	--o-ui-icon-set__path_recent-chats: url('images/recent-chats.svg');
+	--o-ui-icon-set__path_record-video-ai: url('images/record-video-ai.svg');
+	--o-ui-icon-set__path_redirect: url('images/redirect.svg');
+	--o-ui-icon-set__path_reveal-1: url('images/reveal-1.svg');
+	--o-ui-icon-set__path_reveal-2: url('images/reveal-2.svg');
+	--o-ui-icon-set__path_save-template: url('images/save-template.svg');
+	--o-ui-icon-set__path_save-template-plus: url('images/save-template-plus.svg');
+	--o-ui-icon-set__path_screen-no-share: url('images/screen-no-share.svg');
+	--o-ui-icon-set__path_screen-share: url('images/screen-share.svg');
+	--o-ui-icon-set__path_search-and-rag: url('images/search-and-rag.svg');
+	--o-ui-icon-set__path_send-via-bitrix: url('images/send-via-bitrix.svg');
+	--o-ui-icon-set__path_service: url('images/service.svg');
+	--o-ui-icon-set__path_signal: url('images/signal.svg');
+	--o-ui-icon-set__path_slash: url('images/slash.svg');
+	--o-ui-icon-set__path_start-education: url('images/start-education.svg');
+	--o-ui-icon-set__path_stress-no: url('images/stress-no.svg');
+	--o-ui-icon-set__path_subscript: url('images/subscript.svg');
+	--o-ui-icon-set__path_subscription: url('images/subscription.svg');
+	--o-ui-icon-set__path_superscript: url('images/superscript.svg');
+	--o-ui-icon-set__path_switch-device: url('images/switch-device.svg');
+	--o-ui-icon-set__path_tariff: url('images/tariff.svg');
+	--o-ui-icon-set__path_teams: url('images/teams.svg');
+	--o-ui-icon-set__path_threads: url('images/threads.svg');
+	--o-ui-icon-set__path_three-squares: url('images/three-squares.svg');
+	--o-ui-icon-set__path_top-bottom-expand-l: url('images/top-bottom-expand-l.svg');
+	--o-ui-icon-set__path_top-bottom-expand-m: url('images/top-bottom-expand-m.svg');
+	--o-ui-icon-set__path_top-bottom-expand-s: url('images/top-bottom-expand-s.svg');
+	--o-ui-icon-set__path_top-bottom-expand-xs: url('images/top-bottom-expand-xs.svg');
+	--o-ui-icon-set__path_trashcan-timer: url('images/trashcan-timer.svg');
+	--o-ui-icon-set__path_vibe-plus: url('images/vibe-plus.svg');
+	--o-ui-icon-set__path_vibecode: url('images/vibecode.svg');
+	--o-ui-icon-set__path_video-record: url('images/video-record.svg');
+	--o-ui-icon-set__path_video-record-3: url('images/video-record-3.svg');
+	--o-ui-icon-set__path_video-record-4: url('images/video-record-4.svg');
+	--o-ui-icon-set__path_video-record-5: url('images/video-record-5.svg');
+	--o-ui-icon-set__path_voice-to-message: url('images/voice-to-message.svg');
 }
 
 .ui-icon-set.--o-double-gis {
@@ -3237,6 +3361,10 @@
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_vibecode-catalog);
 }
 
+.ui-icon-set.--o-vibe-blackhole {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_vibe-blackhole);
+}
+
 .ui-icon-set.--o-commands {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_commands);
 }
@@ -3255,4 +3383,496 @@
 
 .ui-icon-set.--o-no-cloud-sync {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_no-cloud-sync);
+}
+
+.ui-icon-set.--o-a-letter-sort-down {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_a-letter-sort-down);
+}
+
+.ui-icon-set.--o-a-letter-sort-up {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_a-letter-sort-up);
+}
+
+.ui-icon-set.--o-add-to-chat {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_add-to-chat);
+}
+
+.ui-icon-set.--o-ai-projects {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-projects);
+}
+
+.ui-icon-set.--o-ai-projects-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-projects-2);
+}
+
+.ui-icon-set.--o-ai-stars-question-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-stars-question-2);
+}
+
+.ui-icon-set.--o-ai-two-stars {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-two-stars);
+}
+
+.ui-icon-set.--o-align-image-center {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_align-image-center);
+}
+
+.ui-icon-set.--o-align-image-left {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_align-image-left);
+}
+
+.ui-icon-set.--o-align-image-right {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_align-image-right);
+}
+
+.ui-icon-set.--o-back {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_back);
+}
+
+.ui-icon-set.--o-ball-one {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ball-one);
+}
+
+.ui-icon-set.--o-beer {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_beer);
+}
+
+.ui-icon-set.--o-bitrix-gpt-round {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_bitrix-gpt-round);
+}
+
+.ui-icon-set.--o-block-insertion {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_block-insertion);
+}
+
+.ui-icon-set.--o-book-open {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_book-open);
+}
+
+.ui-icon-set.--o-bottom-top-collapse-l {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_bottom-top-collapse-l);
+}
+
+.ui-icon-set.--o-bottom-top-collapse-m {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_bottom-top-collapse-m);
+}
+
+.ui-icon-set.--o-bottom-top-collapse-s {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_bottom-top-collapse-s);
+}
+
+.ui-icon-set.--o-bottom-top-collapse-xs {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_bottom-top-collapse-xs);
+}
+
+.ui-icon-set.--o-branch-network {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_branch-network);
+}
+
+.ui-icon-set.--o-cake-celebrating {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_cake-celebrating);
+}
+
+.ui-icon-set.--o-change-places {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_change-places);
+}
+
+.ui-icon-set.--o-claw {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_claw);
+}
+
+.ui-icon-set.--o-cloud-sync-cross {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_cloud-sync-cross);
+}
+
+.ui-icon-set.--o-collection {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_collection);
+}
+
+.ui-icon-set.--o-columns-sidebar-pending-left {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_columns-sidebar-pending-left);
+}
+
+.ui-icon-set.--o-company-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_company-plus);
+}
+
+.ui-icon-set.--o-company-send {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_company-send);
+}
+
+.ui-icon-set.--o-contact-send {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_contact-send);
+}
+
+.ui-icon-set.--o-copy-link {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_copy-link);
+}
+
+.ui-icon-set.--o-core {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_core);
+}
+
+.ui-icon-set.--o-crm-optional-accepted {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crm-optional-accepted);
+}
+
+.ui-icon-set.--o-crm-optional-not-accepted {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crm-optional-not-accepted);
+}
+
+.ui-icon-set.--o-crm-required-consent {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crm-required-consent);
+}
+
+.ui-icon-set.--o-crown-forward {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crown-forward);
+}
+
+.ui-icon-set.--o-cup-winner {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_cup-winner);
+}
+
+.ui-icon-set.--o-deep-search-ai {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_deep-search-ai);
+}
+
+.ui-icon-set.--o-desktop-macos {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_desktop-macos);
+}
+
+.ui-icon-set.--o-desktop-windows {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_desktop-windows);
+}
+
+.ui-icon-set.--o-discount {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_discount);
+}
+
+.ui-icon-set.--o-do-not-use-captcha {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_do-not-use-captcha);
+}
+
+.ui-icon-set.--o-employee {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_employee);
+}
+
+.ui-icon-set.--o-excel {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_excel);
+}
+
+.ui-icon-set.--o-export {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_export);
+}
+
+.ui-icon-set.--o-fill-out-again {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_fill-out-again);
+}
+
+.ui-icon-set.--o-flower {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_flower);
+}
+
+.ui-icon-set.--o-folders {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_folders);
+}
+
+.ui-icon-set.--o-function {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_function);
+}
+
+.ui-icon-set.--o-galaxy {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_galaxy);
+}
+
+.ui-icon-set.--o-galaxy-server {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_galaxy-server);
+}
+
+.ui-icon-set.--o-graphs-link {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_graphs-link);
+}
+
+.ui-icon-set.--o-handshake-send {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_handshake-send);
+}
+
+.ui-icon-set.--o-headlines {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_headlines);
+}
+
+.ui-icon-set.--o-headlines-h1 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_headlines-h1);
+}
+
+.ui-icon-set.--o-headlines-h2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_headlines-h2);
+}
+
+.ui-icon-set.--o-headlines-h3 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_headlines-h3);
+}
+
+.ui-icon-set.--o-headlines-h4 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_headlines-h4);
+}
+
+.ui-icon-set.--o-headlines-h5 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_headlines-h5);
+}
+
+.ui-icon-set.--o-hide-1 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_hide-1);
+}
+
+.ui-icon-set.--o-hide-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_hide-2);
+}
+
+.ui-icon-set.--o-image-small {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_image-small);
+}
+
+.ui-icon-set.--o-import {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_import);
+}
+
+.ui-icon-set.--o-lead-send {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_lead-send);
+}
+
+.ui-icon-set.--o-library-base {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_library-base);
+}
+
+.ui-icon-set.--o-link-update {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_link-update);
+}
+
+.ui-icon-set.--o-list-tasks-add {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_list-tasks-add);
+}
+
+.ui-icon-set.--o-login-history {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_login-history);
+}
+
+.ui-icon-set.--o-martini-glass {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_martini-glass);
+}
+
+.ui-icon-set.--o-message-to {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_message-to);
+}
+
+.ui-icon-set.--o-messenger-send {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_messenger-send);
+}
+
+.ui-icon-set.--o-microphone-ai {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_microphone-ai);
+}
+
+.ui-icon-set.--o-microphone-sounds-ai {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_microphone-sounds-ai);
+}
+
+.ui-icon-set.--o-mobile-fill {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_mobile-fill);
+}
+
+.ui-icon-set.--o-money-prize {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_money-prize);
+}
+
+.ui-icon-set.--o-my-deals-send {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_my-deals-send);
+}
+
+.ui-icon-set.--o-online-bank {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_online-bank);
+}
+
+.ui-icon-set.--o-open-sequence {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_open-sequence);
+}
+
+.ui-icon-set.--o-outline-icon-business-process-progress {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_outline-icon-business-process-progress);
+}
+
+.ui-icon-set.--o-person-mention {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_person-mention);
+}
+
+.ui-icon-set.--o-person-office {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_person-office);
+}
+
+.ui-icon-set.--o-play-waves {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_play-waves);
+}
+
+.ui-icon-set.--o-plug-left {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_plug-left);
+}
+
+.ui-icon-set.--o-plug-right {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_plug-right);
+}
+
+.ui-icon-set.--o-previous {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_previous);
+}
+
+.ui-icon-set.--o-radiant {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_radiant);
+}
+
+.ui-icon-set.--o-recent-cards {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_recent-cards);
+}
+
+.ui-icon-set.--o-recent-chats {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_recent-chats);
+}
+
+.ui-icon-set.--o-record-video-ai {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_record-video-ai);
+}
+
+.ui-icon-set.--o-redirect {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_redirect);
+}
+
+.ui-icon-set.--o-reveal-1 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_reveal-1);
+}
+
+.ui-icon-set.--o-reveal-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_reveal-2);
+}
+
+.ui-icon-set.--o-save-template {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_save-template);
+}
+
+.ui-icon-set.--o-save-template-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_save-template-plus);
+}
+
+.ui-icon-set.--o-screen-no-share {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_screen-no-share);
+}
+
+.ui-icon-set.--o-screen-share {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_screen-share);
+}
+
+.ui-icon-set.--o-search-and-rag {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_search-and-rag);
+}
+
+.ui-icon-set.--o-send-via-bitrix {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_send-via-bitrix);
+}
+
+.ui-icon-set.--o-service {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_service);
+}
+
+.ui-icon-set.--o-signal {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_signal);
+}
+
+.ui-icon-set.--o-slash {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_slash);
+}
+
+.ui-icon-set.--o-start-education {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_start-education);
+}
+
+.ui-icon-set.--o-stress-no {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_stress-no);
+}
+
+.ui-icon-set.--o-subscript {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_subscript);
+}
+
+.ui-icon-set.--o-subscription {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_subscription);
+}
+
+.ui-icon-set.--o-superscript {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_superscript);
+}
+
+.ui-icon-set.--o-switch-device {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_switch-device);
+}
+
+.ui-icon-set.--o-tariff {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_tariff);
+}
+
+.ui-icon-set.--o-teams {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_teams);
+}
+
+.ui-icon-set.--o-threads {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_threads);
+}
+
+.ui-icon-set.--o-three-squares {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_three-squares);
+}
+
+.ui-icon-set.--o-top-bottom-expand-l {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_top-bottom-expand-l);
+}
+
+.ui-icon-set.--o-top-bottom-expand-m {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_top-bottom-expand-m);
+}
+
+.ui-icon-set.--o-top-bottom-expand-s {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_top-bottom-expand-s);
+}
+
+.ui-icon-set.--o-top-bottom-expand-xs {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_top-bottom-expand-xs);
+}
+
+.ui-icon-set.--o-trashcan-timer {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_trashcan-timer);
+}
+
+.ui-icon-set.--o-vibe-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_vibe-plus);
+}
+
+.ui-icon-set.--o-vibecode {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_vibecode);
+}
+
+.ui-icon-set.--o-video-record {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_video-record);
+}
+
+.ui-icon-set.--o-video-record-3 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_video-record-3);
+}
+
+.ui-icon-set.--o-video-record-4 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_video-record-4);
+}
+
+.ui-icon-set.--o-video-record-5 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_video-record-5);
+}
+
+.ui-icon-set.--o-voice-to-message {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_voice-to-message);
 }

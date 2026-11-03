@@ -1,0 +1,73 @@
+.bx-im-player-bar__container {
+	display: flex;
+	align-items: center;
+	gap: var(--im-space-inline-xs);
+	padding: var(--im-space-inset-2xs) var(--im-space-inset-sm);
+	box-sizing: border-box;
+	background: var(--ui-color-bg-content-primary);
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bx-im-player-bar__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--im-space-inline-2xs);
+	flex: 0 0 auto;
+}
+
+.bx-im-player-bar__controls > button {
+	flex: 0 0 auto;
+}
+
+.bx-im-player-bar__track-info {
+	display: flex;
+	align-items: baseline;
+	gap: var(--im-space-inline-2xs);
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.bx-im-player-bar__track-info_author {
+	flex: 0 1 auto;
+	min-width: 0;
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-player-bar__track-info_chat {
+	flex: 0 4 auto;
+	min-width: 0;
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-player-bar__playback {
+	display: flex;
+	align-items: center;
+	flex: 1 1 240px;
+	min-width: 64px;
+}
+
+.bx-im-player-bar__progress {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	border-radius: var(--im-border-radius-2xs);
+}
+
+.bx-im-player-bar__time {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+	font-variant-numeric: tabular-nums;
+}
+
+.bx-im-player-bar__track-state {
+	display: flex;
+	align-items: center;
+	gap: var(--im-space-inline-2xs);
+	min-width: 0;
+}
+
+.bx-im-player-bar__track-state_text {
+	min-width: 0;
+	color: var(--ui-color-base-2);
+}

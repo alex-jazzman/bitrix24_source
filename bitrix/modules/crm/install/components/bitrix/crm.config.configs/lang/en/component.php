@@ -103,3 +103,7 @@ $MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_HINT_MSGVER_1"] = "<b>Item respons
 <b>Activity responsible person</b>: use it to track your activities only. The user will see the counters for their activities, including those whose parent items are managed by other responsible persons.";
 $MESS["CRM_SM_LIST"] = "Settings";
 $MESS["SUBSCRIBE_MODULE_NOT_INSTALLED"] = "The Subscription module is not installed.";
+$MESS['CRM_FIELD_COPILOT_FILL_FIELDS_LEAD'] = 'Use #COPILOT_NAME# to complete fields';
+$MESS['CRM_FIELD_COPILOT_FILL_FIELDS_CONTACT'] = 'Use #COPILOT_NAME# to complete fields';
+$MESS['CRM_FIELD_COPILOT_FILL_FIELDS_COMPANY'] = 'Use #COPILOT_NAME# to complete fields';
+$MESS['CRM_FIELD_COPILOT_FILL_FIELDS_DEAL'] = 'Use #COPILOT_NAME# to complete fields';

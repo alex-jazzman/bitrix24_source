@@ -44,7 +44,7 @@ $MESS["CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2"] = "<div class=\"crm-history-tab-con
 		Bitrix24 keeps a detailed log of all CRM changes. When you upgrade to advanced CRM you will see the history of changes (i.e. who accessed or changed CRM entry) and be able to restore previous values, if necessary.
 	</div>
 	<div class=\"crm-history-tab-text\">This is what it looks like:</div>
-	<img alt=\"Tab History\" class=\"crm-history-tab-img\" src=\"/bitrix/js/crm/images/history-en.png\"/>
+	#HISTORY_IMAGE#
 	<div class=\"crm-history-tab-text\">
 		Add these and other great features to your Bitrix24! Advanced Telephony + Advanced CRM and other useful features are available in selected commercial plans. 
 	<a target=\"_blank\" href=\"https://www.bitrix24.com/pro/crm.php\">Find out more</a>
@@ -54,6 +54,7 @@ $MESS["CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2"] = "<div class=\"crm-history-tab-con
 		<span class=\"ui-btn ui-btn-lg ui-btn-light-border\" onclick=\"#DEMO_LICENSE_SCRIPT#\">Free for 30 days</span>
 	</div>
 </div>";
+$MESS["CRM_RESTR_MGR_HX_VIEW_MSG_IMAGE_ALT"] = "Tab History";
 $MESS["CRM_RESTR_MGR_INVOICE_RECURRING_POPUP_CONTENT"] = "Use Auto Invoicing feature to bill your customers on a regular basis and save your time.
 Create an invoice and specify how often you want it to be sent in future. The system will create and send a new invoice to the customer according to your timing preference.
 	<ul class=\"hide-features-list\">

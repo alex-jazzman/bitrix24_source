@@ -43,14 +43,16 @@ class CoreApplication
 
 	init(): Promise<void>
 	{
-		// eslint-disable-next-line no-async-promise-executor
-		this.#initPromise ??= new Promise(async (resolve) => {
-			this.#store = await this.#initStore();
-			this.#initPull();
-			resolve();
-		});
+		// a promise executor swallows its own rejection, so callers would await a forever pending init
+		this.#initPromise ??= this.#init();
 
 		return this.#initPromise;
+	}
+
+	async #init(): Promise<void>
+	{
+		this.#store = await this.#initStore();
+		this.#initPull();
 	}
 
 	async addDynamicModel(vuexBuilderModel: BuilderModel): Promise<void>

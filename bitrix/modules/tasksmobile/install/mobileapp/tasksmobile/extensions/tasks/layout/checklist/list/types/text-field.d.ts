@@ -1,8 +1,7 @@
 import { LayoutWidget } from '../../../../../../../../../../mobile/dev/janative/api';
-import { CheckListFlatTreeItem } from '../../../../checklist/types/common';
 
 export type ItemTextFieldProps = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	isFocused?: boolean,
 	parentWidget?: LayoutWidget,
 	enable?: boolean,

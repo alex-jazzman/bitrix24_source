@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports, main_core) {
+(function (exports, main_core, biconnector_errorMessage, ui_notification) {
 	'use strict';
 
 	class EditableColumnManager {
@@ -154,21 +154,17 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				}
 				this.#cancelEdit(rowId);
 			}).catch(response => {
-				if (response.errors) {
-					this.#notifyErrors(response.errors);
-				}
+				this.#notifyError(response);
 			});
 		}
-		#notifyErrors(errors) {
-			if (errors[0] && errors[0].message) {
-				BX.UI.Notification.Center.notify({
-					content: main_core.Text.encode(errors[0].message)
-				});
-			}
+		#notifyError(response) {
+			ui_notification.Center.notify({
+				content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_GRID_EDITABLE_COLUMN_SAVE_ERROR'))
+			});
 		}
 	}
 
 	exports.EditableColumnManager = EditableColumnManager;
 
-})(this.BX.BIConnector.Grid = this.BX.BIConnector.Grid || {}, BX);
+})(this.BX.BIConnector.Grid = this.BX.BIConnector.Grid || {}, BX, BX.BIConnector, BX.UI.Notification);
 //# sourceMappingURL=editable-columns.bundle.js.map

@@ -1,15 +1,17 @@
 import { Loc } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 
-import { EventType, SpecialMentionDialogId } from 'im.v2.const';
+import { EventType, SpecialMentionDialogId, type ApplicationContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { Core } from 'im.v2.application.core';
-import { type ApplicationContext } from 'im.v2.const';
 
 type InsertParams = {
 	id: string,
 	dialogId: string,
 	query: string,
+	target?: string,
+	isParticipant?: boolean,
+	suppressAddToChatPopup?: boolean,
 };
 
 export class MentionInsertManager
@@ -35,7 +37,7 @@ export class MentionInsertManager
 
 	#emitBaseEvent(params: InsertParams)
 	{
-		const { id, dialogId, query } = params;
+		const { id, dialogId, query, target, isParticipant, suppressAddToChatPopup } = params;
 
 		const mentionText = Core.getStore().getters['chats/get'](id, true).name;
 		const mentionReplacement = Utils.text.getMentionBbCode(id, mentionText);
@@ -45,12 +47,16 @@ export class MentionInsertManager
 			mentionReplacement,
 			textToReplace: query,
 			dialogId,
+			target,
+			mentionedUserId: id,
+			isParticipant,
+			suppressAddToChatPopup,
 		});
 	}
 
 	#emitAllParticipantsEvent(params: InsertParams)
 	{
-		const { dialogId, query } = params;
+		const { dialogId, query, target } = params;
 
 		const mentionText = Loc.getMessage('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TEXT');
 		const mentionReplacement = `[USER=${SpecialMentionDialogId.allParticipants}]${mentionText}[/USER]`;
@@ -60,6 +66,7 @@ export class MentionInsertManager
 			mentionReplacement,
 			textToReplace: query,
 			dialogId,
+			target,
 		});
 	}
 }

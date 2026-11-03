@@ -21,38 +21,44 @@ export class PurchaseHistoryContent extends Content
 	getLayout(): HTMLElement
 	{
 		return this.cache.remember('layout', () => {
-			const onclick = (event) => {
-				document.querySelector('#form-purchase-history').submit();
-			};
-
 			return Tag.render`
-				<div data-id="license-widget-block-orders" onclick="${onclick}" class="license-widget-item license-widget-item--secondary --pointer">
-					<div class="license-widget-inner">
-						<div class="license-widget-content">
-							<div class="license-widget-item-icon license-widget-item-icon--order"></div>
-							<div class="license-widget-item-content">
-								${this.getTitle()}
-							</div>
-						</div>
-						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
-					</div>
-					<form id="form-purchase-history" action="${this.getOptions().link}" method="post" target="_blank">
-						<input name="license_key" value="${this.getOptions().hashKey}" hidden>
-					</form>
-				</div>
+				<form
+					id="form-purchase-history"
+					class="license-widget-item-form --purchase-history"
+					action="${this.getOptions().link}"
+					method="post"
+					target="_blank"
+				>
+					<input type="hidden" name="license_key" value="${this.getOptions().hashKey}">
+					<button
+						type="submit"
+						data-id="license-widget-block-orders"
+						class="license-widget-item license-widget-item--secondary --pointer"
+					>
+						<span class="license-widget-inner">
+							<span class="license-widget-content">
+								<span class="license-widget-item-icon license-widget-item-icon--order" aria-hidden="true"></span>
+								<span class="license-widget-item-content">
+									${this.getTitle()}
+								</span>
+							</span>
+							<span class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right" aria-hidden="true"></span>
+						</span>
+					</button>
+				</form>
 			`;
 		});
 	}
 
-	getTitle(): HTMLDivElement
+	getTitle(): HTMLSpanElement
 	{
 		return this.cache.remember('title', () => {
 			return Tag.render`
-				<div class="license-widget-item-name">
+				<span class="license-widget-item-name">
 					<span>
 						${this.getOptions().text}
 					</span>
-				</div>
+				</span>
 			`;
 		});
 	}

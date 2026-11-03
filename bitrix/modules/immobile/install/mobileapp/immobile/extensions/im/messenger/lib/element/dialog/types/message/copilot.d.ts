@@ -18,6 +18,12 @@ export type CopilotMessagePromtData = {
 	text: string,
 }
 
+export type CopilotAiGlowData = {
+	animate: boolean,
+	gradientColors?: string[],
+	gradientStops?: number[],
+}
+
 export type InitialPromptMessageData = {
 	code: string,
 	isNew: boolean,

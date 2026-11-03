@@ -148,6 +148,11 @@ else
 							$leadData['MODIFY_BY'] = isset($arLead['MODIFY_BY_FORMATTED_NAME']) ? $arLead['MODIFY_BY_FORMATTED_NAME'] : '';
 							break;
 						}
+						case 'OPENED':
+						{
+							$leadData['OPENED'] = ($arLead['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+							break;
+						}
 						default:
 						{
 							if(isset($arResult['LEAD_UF'][$i]) && isset($arResult['LEAD_UF'][$i][$headerID]))

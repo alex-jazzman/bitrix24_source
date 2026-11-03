@@ -1,3 +1,25 @@
+button.license-widget-item,
+a.license-widget-item {
+	display: block;
+	width: 100%;
+	margin: 0;
+	background: none;
+	border: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.ui-popupcomponentmaker__content--section-item:has(> .license-widget-item:focus-visible) {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4a9dff);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	border-radius: var(--ui-border-radius-lg, 12px);
+}
+
+.ui-popupcomponentmaker__content--section-item > .license-widget-item:focus-visible {
+	outline: none;
+}
+
 .license-widget-item {
 	border-radius: 12px;
 	padding: 0 8px 0 10px;
@@ -70,6 +92,11 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
+.license-widget-item-name-controls {
+	display: flex;
+	align-items: center;
+}
+
 .license-widget-item-name__inner {
 	overflow: hidden;
 	white-space: nowrap;
@@ -88,6 +115,20 @@
 	background-position: center;
 	background-size: contain;
 	cursor: pointer;
+}
+
+button.license-widget-item-help {
+	padding: 0;
+	background-color: transparent;
+	border: none;
+	font: inherit;
+	color: inherit;
+}
+
+button.license-widget-item-help:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 }
 
 .license-widget-item-name.--flex {
@@ -114,6 +155,12 @@
 	color: #333;
 }
 
+.license-widget-item-name.--link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-lg, 12px);
+}
+
 .license-widget-item-btn {
 	height: 19px;
 	font: 10px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -130,6 +177,17 @@
 	transition: all .2s linear;
 	margin-top: 5px;
 	position: relative;
+}
+
+button.license-widget-item-btn {
+	appearance: none;
+	text-transform: none;
+}
+
+.license-widget-item-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 }
 
 .license-widget-item:hover .license-widget-inner .license-widget-item-btn-secondary {
@@ -286,11 +344,54 @@
 	cursor: pointer;
 }
 
+button.license-widget-item-link {
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+button.license-widget-item-link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-lg, 12px);
+}
+
 .license-widget-item-link-text {
 	color: var(--ui-color-palette-gray-50);
 	font-size: 12px;
 	border-bottom: 1px dashed rgba(140, 147, 156, .5);
 	transition: all .2s linear;
+}
+
+button.license-widget-item-link-text {
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	border-bottom: 1px dashed rgba(140, 147, 156, .5);
+	font-family: inherit;
+	line-height: inherit;
+	color: var(--ui-color-palette-gray-50);
+	text-align: inherit;
+}
+
+.license-widget-item-link-text:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-lg, 12px);
+}
+
+.license-widget-item-form {
+	margin: 0;
+}
+
+.license-widget-item-form.--purchase-history {
+	width: 100%;
+	height: 100%;
 }
 
 .license-widget-item-link-text:hover {
@@ -364,7 +465,7 @@
 }
 
 .license-widget-item--main .license-widget-item-content {
-	overflow: hidden;
+	min-width: 0;
 	padding: 0 0 5px;
 }
 
@@ -408,8 +509,8 @@
 .license-widget-item-icon--b24-partner {
 	background-size: contain;
 	background-image: image-set(
-		url(../img/b24-license-widget_icon-integrator.png) 1x,
-		url(../img/b24-license-widget_icon-integrator@2x.png) 2x
+		url(../img/b24-license-widget_icon-integrator.webp) 1x,
+		url(../img/b24-license-widget_icon-integrator@2x.webp) 2x
 	);
 }
 
@@ -1345,7 +1446,7 @@
 }
 
 .license-widget-partner-success-discontinue-popup-content-image {
-	background-image: url('../img/b24-license-widget_icon-partner-success-disconnect-popup.svg');
+	background-image: url('../img/b24-license-widget_icon-partner-success-disconnect-popup.webp');
 	width: 78px;
 	height: 78px;
 	background-size: contain;

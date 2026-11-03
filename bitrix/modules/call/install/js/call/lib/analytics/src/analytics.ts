@@ -5,6 +5,7 @@ import { ChatType } from 'im.v2.const';
 import { getCollabId, getUserType } from 'im.v2.lib.analytics';
 
 import { Sync } from './classes/sync';
+import { SyncTabBanner } from './classes/sync-tab-banner';
 import { CallTypes } from 'call.const';
 import { getCallTool } from './utils';
 
@@ -21,7 +22,12 @@ import {
 	AnalyticsSubSection,
 	AnalyticsAIStatus,
 	AnalyticsVpnStatus,
+	AnalyticsStorageType,
+	type AnalyticsElementValue,
 } from './const';
+
+export { shouldSendToggleMicrophone, toAnalyticsErrorStatus } from './utils';
+export type { ToggleMicrophoneCommand } from './utils';
 
 const CALL_ALREADY_FINISHED_STATUS = 'call_already_finished';
 
@@ -31,9 +37,9 @@ type MediaParams = {
 };
 
 type DialogData = {
-	type: string;
-	chatId?: string;
-	entityLink?: { id: string | number };
+	readonly type: string;
+	readonly chatId?: number;
+	readonly entityLink?: { readonly id: string | number };
 };
 
 type AssociatedEntity = {
@@ -83,6 +89,7 @@ type StartCallErrorParams = {
 	errorCode: string;
 	errorMessage?: string;
 	isVpnActive: boolean;
+	isOffline?: boolean;
 };
 
 type JoinCallParams = BaseCallTypeParams & {
@@ -103,13 +110,20 @@ type CallErrorParams = BaseCallTypeParams & {
 type JoinCallErrorParams = Omit<CallErrorParams, 'callId'> & {
 	callId?: CallIdentifier;
 	isRoomClosed?: boolean;
+	isOffline?: boolean;
 };
 
 type ReconnectParams = BaseCallTypeParams & {
 	reconnectionReason?: string;
 	reconnectionReasonInfo?: string;
 	isVpnActive: boolean;
-	reconnectionEventCount: number;
+};
+
+type ReconnectResultParams = BaseCallTypeParams & {
+	status: string;
+	reconnectionReason?: string;
+	attemptCount: number;
+	isVpnActive: boolean;
 };
 
 type InviteUserParams = BaseCallTypeParams & { chatId: string };
@@ -126,20 +140,30 @@ type FinishCallParams = BaseCallTypeParams & {
 	chatId: string;
 };
 
+type AnalyticsStorageTypeValue = typeof AnalyticsStorageType[keyof typeof AnalyticsStorageType];
 type RecordWithErrorParams = BaseCallTypeParams & { errorCode?: string };
-type RecordStartParams = RecordWithErrorParams & { recordType: string };
+type RecordStateParams = RecordWithErrorParams & { storageType?: AnalyticsStorageTypeValue };
+type RecordStartParams = RecordWithErrorParams & {
+	recordType: string;
+	storageType?: AnalyticsStorageTypeValue;
+};
 type RecordStopParams = BaseCallTypeParams & {
 	subSection?: string;
 	element?: string;
 	recordTime?: number;
+	storageType?: AnalyticsStorageTypeValue;
 };
 
 type ToggleCameraParams = BaseCallTypeParams & { video: boolean };
-type ToggleMicrophoneParams = BaseCallTypeParams & { muted: boolean };
+type ToggleMicrophoneParams = BaseCallTypeParams & {
+	muted: boolean;
+	source?: AnalyticsElementValue;
+};
 type ClickUserParams = BaseCallTypeParams & { layout: string };
 type DocumentWithTypeParams = BaseCallTypeParams & { type: string };
 
 type ChatCallClickParams = { callType: string; dialog: DialogData };
+type ChatMessageCallClickParams = { dialog: DialogData };
 type ContextMenuCallClickParams = { callType: string; context: DialogData };
 
 type ConferenceClickParams = { chatId: string };
@@ -169,9 +193,11 @@ export class Analytics
 	static AnalyticsSection = AnalyticsSection;
 	static AnalyticsElement = AnalyticsElement;
 	static AnalyticsSubSection = AnalyticsSubSection;
+	static AnalyticsStorageType = AnalyticsStorageType;
 
 	copilot: Copilot = new Copilot();
 	sync: Sync = new Sync();
+	syncTabBanner: SyncTabBanner = new SyncTabBanner();
 
 	#screenShareStarted: boolean = false;
 
@@ -220,6 +246,20 @@ export class Analytics
 	#buildErrorStatus(errorCode: string): string
 	{
 		return this.safeDecode(`error_${errorCode}`).replaceAll(/\s+/g, '_');
+	}
+
+	// Outcome of a failed connect. A closed room is a normal result (`call_already_finished`), sent as
+	// an outcome and not an `error_*` code so it stays off the connection-errors dashboard. Everything
+	// else keeps `error_${errorCode}`. An offline failure is not reported at all — see onJoinCallError.
+	// Agreed with analytics; do not "unify" this with the CamelCase server codes.
+	#buildJoinErrorStatus(params: JoinCallErrorParams): string
+	{
+		if (params.isRoomClosed)
+		{
+			return CALL_ALREADY_FINISHED_STATUS;
+		}
+
+		return this.#buildErrorStatus(params.errorCode);
 	}
 
 	onScreenShareBtnClick({ callId, callType }: BaseCallTypeParams)
@@ -376,6 +416,13 @@ export class Analytics
 
 	onStartCallError(params: StartCallErrorParams)
 	{
+		// A network failure while the client is confirmed offline is the user's own connectivity, not a
+		// server/infra error: it is not reported to analytics at all, so it never reaches the dashboard.
+		if (params.isOffline)
+		{
+			return;
+		}
+
 		const resultData = {
 			tool: getCallTool(),
 			category: AnalyticsCategory.call,
@@ -453,18 +500,20 @@ export class Analytics
 
 	onJoinCallError(params: JoinCallErrorParams)
 	{
+		// A network failure while the client is confirmed offline is the user's own connectivity, not a
+		// server/infra error: it is not reported to analytics at all, so it never reaches the dashboard.
+		// A closed room is a real server response (not an offline failure) and is still reported below.
+		if (params.isOffline && !params.isRoomClosed)
+		{
+			return;
+		}
+
 		const resultData = {
 			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.connect,
 			type: params.callType,
-			// Sent as an outcome (`call_already_finished`), not as an `error_*` code: a closed room is
-			// a normal result, alongside success/busy/decline/no_answer. An `error_` prefix would put it
-			// back on the connection-errors dashboard next to real transport failures.
-			// Agreed with analytics; do not "unify" it with the CamelCase error_* server codes.
-			status: params.isRoomClosed
-				? CALL_ALREADY_FINISHED_STATUS
-				: this.#buildErrorStatus(params.errorCode),
+			status: this.#buildJoinErrorStatus(params),
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			...buildCallIdParam(params.callId),
@@ -478,37 +527,65 @@ export class Analytics
 	{
 		const reconnectionReasonInfo = params.reconnectionReasonInfo
 			?.replace('Handling a remote offer failed: InvalidAccessError: ', '*')
-			.replaceAll('_', '')
+			.replaceAll('_', '-')
 			.slice(0, 100);
 
-		sendData({
+		const sendParams = {
 			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.reconnect,
 			type: params.callType,
-			c_section: AnalyticsSection.callWindow,
-			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
 			status: params.reconnectionReason || '',
 			p2: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
-			p3: `msg_${reconnectionReasonInfo}`,
-			p4: `attemptNumber_${params.reconnectionEventCount}`,
 			p5: `callId_${params.callId}`,
-		});
+		};
+
+		if (reconnectionReasonInfo)
+		{
+			// The key is left out rather than held with an undefined value: ui.analytics puts every key
+			// of the payload into the query string, so an undefined p3 would travel as the text
+			// `undefined`.
+			// @ts-expect-error [call-ts] property not in inferred sendParams type; wait ui.analytics to ts
+			sendParams.p3 = `msg_${reconnectionReasonInfo}`;
+		}
+
+		// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
+		sendData(sendParams);
 	}
 
-	onReconnectError(params: CallErrorParams)
+	/**
+	 * The outcome of a reconnect series, sent once per series. `status` carries the outcome itself,
+	 * so the reason the series started travels in `p3`; otherwise `success` and `not_recovered`
+	 * would not say what they are about. Underscores of the reason become hyphens in `p3`: a value
+	 * of p1-p5 with two of them drops the whole event, and the `msg_` prefix already spends the
+	 * only one allowed. A series that started without a reason leaves the key out altogether, the
+	 * same way the initiation does.
+	 */
+	onReconnectResult(params: ReconnectResultParams)
 	{
-		sendData({
+		const reconnectionReason = params.reconnectionReason?.replaceAll('_', '-').slice(0, 100);
+
+		const sendParams = {
 			tool: getCallTool(),
 			category: AnalyticsCategory.call,
-			event: AnalyticsEvent.reconnect,
+			event: AnalyticsEvent.reconnectResult,
 			type: params.callType,
-			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: this.#buildErrorStatus(params.errorCode),
-			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
-			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
+			// Whitespace is collapsed after decoding, the same way #buildErrorStatus does it for the
+			// connect event: a refusal that arrives percent-encoded must not split one status in two.
+			status: this.safeDecode(params.status).replaceAll(/\s+/g, '_'),
+			p2: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
+			p4: `attemptCount_${params.attemptCount}`,
 			p5: `callId_${params.callId}`,
-		});
+		};
+
+		if (reconnectionReason)
+		{
+			// @ts-expect-error [call-ts] property not in inferred sendParams type; wait ui.analytics to ts
+			sendParams.p3 = `msg_${reconnectionReason}`;
+		}
+
+		// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
+		sendData(sendParams);
 	}
 
 	onInviteUser(params: InviteUserParams)
@@ -583,11 +660,12 @@ export class Analytics
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
 			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 			p1: `recordType_${params.recordType}`,
+			p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}
 
-	onRecordPaused(params: RecordWithErrorParams)
+	onRecordPaused(params: RecordStateParams)
 	{
 		sendData({
 			tool: getCallTool(),
@@ -597,11 +675,12 @@ export class Analytics
 			c_section: AnalyticsSection.callWindow,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
 			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
+			p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}
 
-	onRecordResumed(params: RecordWithErrorParams)
+	onRecordResumed(params: RecordStateParams)
 	{
 		sendData({
 			tool: getCallTool(),
@@ -611,11 +690,12 @@ export class Analytics
 			c_section: AnalyticsSection.callWindow,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
 			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
+			p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}
 
-	onRecordDelete(params: RecordWithErrorParams)
+	onRecordDelete(params: RecordStateParams)
 	{
 		sendData({
 			tool: getCallTool(),
@@ -624,6 +704,7 @@ export class Analytics
 			type: params.callType,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
 			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
+			p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -639,6 +720,7 @@ export class Analytics
 			c_sub_section: params.subSection,
 			c_element: params.element,
 			p1: `recordLength_${params?.recordTime}`,
+			p3: params.storageType ? `recordType_${params.storageType}` : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -674,6 +756,7 @@ export class Analytics
 			event: params.muted ? AnalyticsEvent.micOff : AnalyticsEvent.micOn,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
+			c_element: params.source ?? AnalyticsElement.micButton,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -988,12 +1071,12 @@ export class Analytics
 		});
 	}
 
-	onStartCallMessageClick(params: ChatCallClickParams): void
+	onStartCallMessageClick(params: ChatMessageCallClickParams): void
 	{
 		this.#onCallMessageClick(params, AnalyticsElement.startMessage);
 	}
 
-	onFinishCallMessageClick(params: ChatCallClickParams): void
+	onFinishCallMessageClick(params: ChatMessageCallClickParams): void
 	{
 		this.#onCallMessageClick(params, AnalyticsElement.finishMessage);
 	}
@@ -1136,7 +1219,7 @@ export class Analytics
 		});
 	}
 
-	#onCallMessageClick(params: ChatCallClickParams, element: string): void
+	#onCallMessageClick(params: ChatMessageCallClickParams, element: string): void
 	{
 		// @ts-expect-error [call-ts] wait AnalyticsOptions from ui.analytics to ts
 		const resultData: Parameters<typeof sendData>[0] = {

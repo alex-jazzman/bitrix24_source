@@ -16,6 +16,9 @@ export type PickerItem = {
 	fileType: FileTypeFilterValue | null,
 	iconType: string,
 	previewUrl: string | null,
+	// Optimistic viewer support, false for a folder. The attributes action stays
+	// the only source of truth about whether a file really opens in the viewer.
+	previewable: boolean,
 	sourceTitle: string,
 	sourceId: number,
 };

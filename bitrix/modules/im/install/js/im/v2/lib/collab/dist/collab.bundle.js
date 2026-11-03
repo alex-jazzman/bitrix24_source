@@ -2,8 +2,58 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_lib_feature, im_v2_lib_theme, im_v2_const) {
+(function (exports, main_core, im_v2_application_core, im_v2_lib_feature, im_v2_lib_theme, im_v2_const, im_v2_lib_utils) {
 	'use strict';
+
+	const collectCollabTransitionCandidates = parentChatId => {
+		const chatIds = im_v2_application_core.Core.getStore().getters['counters/getTreeChatIdsWithUnread'](parentChatId);
+		const parentDialogId = im_v2_lib_utils.Utils.dialog.buildChatDialogId(parentChatId);
+		const shownChatId = im_v2_application_core.Core.getStore().getters['recent/getShownChatId'](parentDialogId);
+		return chatIds.map(chatId => {
+			const dialogId = im_v2_lib_utils.Utils.dialog.buildChatDialogId(chatId);
+			return {
+				chatId,
+				dialogId,
+				lastMessageId: getLastMessageId(dialogId),
+				isParent: chatId === parentChatId,
+				isShownInRecent: chatId === shownChatId
+			};
+		});
+	};
+	function getLastMessageId(dialogId) {
+		const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+		if (chat?.lastMessageId > 0) {
+			return chat.lastMessageId;
+		}
+		const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](dialogId);
+		return Number(recentItem?.ownMessageId) || 0;
+	}
+
+	const selectCollabTransitionTarget = candidates => {
+		if (candidates.length === 0) {
+			return null;
+		}
+		const shownInRecent = candidates.find(candidate => candidate.isShownInRecent);
+		if (shownInRecent) {
+			return shownInRecent;
+		}
+		const isOrderKnown = candidates.every(candidate => candidate.lastMessageId > 0);
+		return candidates.reduce((best, candidate) => {
+			return isNewer(candidate, best, isOrderKnown) ? candidate : best;
+		});
+	};
+
+	// Keys count only when every candidate has one; on a draw a child chat wins over the project
+	// chat, and among children the newer chat (the larger chatId) wins.
+	function isNewer(candidate, best, isOrderKnown) {
+		if (isOrderKnown && candidate.lastMessageId !== best.lastMessageId) {
+			return candidate.lastMessageId > best.lastMessageId;
+		}
+		if (candidate.isParent !== best.isParent) {
+			return best.isParent;
+		}
+		return candidate.chatId > best.chatId;
+	}
 
 	const CollabManager = {
 		isCurrentUserGuest() {
@@ -120,6 +170,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	exports.CollabManager = CollabManager;
+	exports.collectCollabTransitionCandidates = collectCollabTransitionCandidates;
+	exports.selectCollabTransitionTarget = selectCollabTransitionTarget;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
 //# sourceMappingURL=collab.bundle.js.map

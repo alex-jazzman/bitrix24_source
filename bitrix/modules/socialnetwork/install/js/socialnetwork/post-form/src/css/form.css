@@ -36,6 +36,13 @@
 	display: none;
 }
 
+/* a massive audience must not push the editor and the buttons out of the screen */
+.sn-post-form__discussion-row.--recipients {
+	align-items: flex-start;
+	max-height: 30vh;
+	overflow-y: auto;
+}
+
 .sn-post-form__discussion-row:last-of-type:not(.sn-post-form__discussion-row:first-of-type) {
 	border: none;
 }

@@ -1,2 +1,117 @@
-this.BX=this.BX||{},function(e,s,t,i){"use strict";var r=babelHelpers.classPrivateFieldLooseKey("cache"),a=babelHelpers.classPrivateFieldLooseKey("instance"),l=babelHelpers.classPrivateFieldLooseKey("getCounterWrapper"),o=babelHelpers.classPrivateFieldLooseKey("getCounter"),n=babelHelpers.classPrivateFieldLooseKey("getCounterValue"),b=babelHelpers.classPrivateFieldLooseKey("onFirstWatchNewStructure");class c{constructor(){Object.defineProperty(this,b,{value:d}),Object.defineProperty(this,n,{value:h}),Object.defineProperty(this,o,{value:p}),Object.defineProperty(this,l,{value:u}),Object.defineProperty(this,r,{writable:!0,value:new s.Cache.MemoryCache}),t.EventEmitter.subscribeOnce("HR.company-structure:first-popup-showed",babelHelpers.classPrivateFieldLooseBase(this,b)[b].bind(this))}static getInstance(){return babelHelpers.classPrivateFieldLooseBase(this,a)[a]||(babelHelpers.classPrivateFieldLooseBase(this,a)[a]=new this),babelHelpers.classPrivateFieldLooseBase(this,a)[a]}setOptions(e){return babelHelpers.classPrivateFieldLooseBase(this,r)[r].set("options",e),this}getOptions(){return babelHelpers.classPrivateFieldLooseBase(this,r)[r].get("options",{})}show(){babelHelpers.classPrivateFieldLooseBase(this,o)[o]().renderTo(babelHelpers.classPrivateFieldLooseBase(this,l)[l]())}onReceiveCounterValue(e){this.getOptions().shouldShowStructureCounter&&e++,babelHelpers.classPrivateFieldLooseBase(this,o)[o]().update(e),this.getOptions().invitationCounter=e,e>0?babelHelpers.classPrivateFieldLooseBase(this,o)[o]().renderTo(babelHelpers.classPrivateFieldLooseBase(this,l)[l]()):(babelHelpers.classPrivateFieldLooseBase(this,o)[o]().destroy(),babelHelpers.classPrivateFieldLooseBase(this,r)[r].delete("counter"))}}function u(){return babelHelpers.classPrivateFieldLooseBase(this,r)[r].remember("counter-wrapper",()=>this.getOptions().button.querySelector(".invitation-widget-counter"))}function p(){return babelHelpers.classPrivateFieldLooseBase(this,r)[r].remember("counter",()=>new i.Counter({value:babelHelpers.classPrivateFieldLooseBase(this,n)[n](),color:i.Counter.Color.DANGER}))}function h(){var e;let s=Number(this.getOptions().invitationCounter);return null!=(e=this.getOptions().shouldShowStructureCounter)&&e&&s++,s}function d(){let e=babelHelpers.classPrivateFieldLooseBase(this,o)[o]().value;s.Type.isNumber(e)&&this.getOptions().shouldShowStructureCounter&&(e--,this.getOptions().shouldShowStructureCounter=!1,babelHelpers.classPrivateFieldLooseBase(this,o)[o]().update(e),this.getOptions().invitationCounter=e,e>0?babelHelpers.classPrivateFieldLooseBase(this,o)[o]().renderTo(babelHelpers.classPrivateFieldLooseBase(this,l)[l]()):(babelHelpers.classPrivateFieldLooseBase(this,o)[o]().destroy(),babelHelpers.classPrivateFieldLooseBase(this,r)[r].delete("counter")))}Object.defineProperty(c,a,{writable:!0,value:void 0}),e.InvitationWidgetCounter=c}(this.BX.Intranet=this.BX.Intranet||{},BX,BX.Event,BX.UI);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_core_events, ui_cnt) {
+	'use strict';
+
+	function getCounterAccessibleName(value, messageCode = 'INTRANET_INVITATION_WIDGET_COUNTER') {
+		return main_core.Loc.getMessagePlural(messageCode, value, {
+			'#COUNT#': value
+		});
+	}
+	function updateCounterAccessibleName(counter, value, messageCode = 'INTRANET_INVITATION_WIDGET_COUNTER') {
+		main_core.Dom.attr(counter.getContainer(), 'aria-label', getCounterAccessibleName(value, messageCode));
+	}
+	function destroyAccessibleCounter(counter) {
+		main_core.Dom.attr(counter.getContainer(), 'aria-label', null);
+		counter.destroy();
+	}
+	class InvitationWidgetCounter {
+		#cache = new main_core.Cache.MemoryCache();
+		static #instance;
+		constructor() {
+			main_core_events.EventEmitter.subscribeOnce('HR.company-structure:first-popup-showed', this.#onFirstWatchNewStructure.bind(this));
+		}
+		static getInstance() {
+			if (!this.#instance) {
+				this.#instance = new this();
+			}
+			return this.#instance;
+		}
+		setOptions(options) {
+			this.#cache.set('options', options);
+			return this;
+		}
+		getOptions() {
+			return this.#cache.get('options', {});
+		}
+		show() {
+			this.#getCounter().renderTo(this.#getCounterWrapper());
+		}
+		onReceiveCounterValue(value) {
+			const invitationCounter = value;
+			if (this.getOptions().shouldShowStructureCounter) {
+				value++;
+			}
+			const counter = this.#getCounter();
+			counter.update(value);
+			this.#updateCounterAccessibleName(counter, invitationCounter);
+			this.getOptions().invitationCounter = value;
+			if (value > 0) {
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			} else {
+				destroyAccessibleCounter(counter);
+				this.#cache.delete('counter');
+			}
+		}
+		#getCounterWrapper() {
+			return this.#cache.remember('counter-wrapper', () => {
+				return this.getOptions().button.querySelector('.invitation-widget-counter');
+			});
+		}
+		#getCounter() {
+			return this.#cache.remember('counter', () => {
+				const value = this.#getCounterValue();
+				const counter = new ui_cnt.Counter({
+					value,
+					color: ui_cnt.Counter.Color.DANGER,
+					useAirDesign: this.getOptions().useAirDesign,
+					style: this.getOptions().useAirDesign ? ui_cnt.CounterStyle.FILLED_ALERT : ui_cnt.CounterStyle.FILLED
+				});
+				this.#updateCounterAccessibleName(counter, Number(this.getOptions().invitationCounter));
+				return counter;
+			});
+		}
+		#updateCounterAccessibleName(counter, invitationCounter) {
+			if (!this.getOptions().shouldShowStructureCounter) {
+				updateCounterAccessibleName(counter, invitationCounter);
+				return;
+			}
+			const accessibleName = [invitationCounter > 0 ? getCounterAccessibleName(invitationCounter) : null, getCounterAccessibleName(1, 'INTRANET_INVITATION_WIDGET_STRUCTURE_COUNTER')].filter(main_core.Type.isStringFilled).join('. ');
+			main_core.Dom.attr(counter.getContainer(), 'aria-label', accessibleName);
+		}
+		#getCounterValue() {
+			let counterValue = Number(this.getOptions().invitationCounter);
+			if (this.getOptions().shouldShowStructureCounter ?? false) {
+				counterValue++;
+			}
+			return counterValue;
+		}
+		#onFirstWatchNewStructure() {
+			let value = this.#getCounter().value;
+			if (!main_core.Type.isNumber(value)) {
+				return;
+			}
+			if (!this.getOptions().shouldShowStructureCounter) {
+				return;
+			}
+			value--;
+			this.getOptions().shouldShowStructureCounter = false;
+			const counter = this.#getCounter();
+			counter.update(value);
+			this.#updateCounterAccessibleName(counter, value);
+			this.getOptions().invitationCounter = value;
+			if (value > 0) {
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			} else {
+				destroyAccessibleCounter(counter);
+				this.#cache.delete('counter');
+			}
+		}
+	}
+
+	exports.InvitationWidgetCounter = InvitationWidgetCounter;
+	exports.destroyAccessibleCounter = destroyAccessibleCounter;
+	exports.updateCounterAccessibleName = updateCounterAccessibleName;
+
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI);
 //# sourceMappingURL=invitation-widget-counter.bundle.js.map

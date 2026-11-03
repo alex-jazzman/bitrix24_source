@@ -21,6 +21,14 @@ export const CarouselUser = {
 			type: Boolean,
 			default: false,
 		},
+		active: {
+			type: Boolean,
+			default: false,
+		},
+		navIndex: {
+			type: Number,
+			default: null,
+		},
 	},
 	emits: ['clickItem', 'openContextMenu'],
 	computed:
@@ -33,6 +41,10 @@ export const CarouselUser = {
 		name(): string
 		{
 			return this.user.firstName ?? this.user.name;
+		},
+		fullName(): string
+		{
+			return this.user.name || this.name;
 		},
 		isExtranet(): boolean
 		{
@@ -71,14 +83,18 @@ export const CarouselUser = {
 		},
 	},
 	template: `
-		<div 
+		<div
+			:data-id="userDialogId"
+			:data-testid="'im-search-carousel-item-' + userDialogId"
+			:data-nav-index="navIndex"
+			:aria-label="fullName"
 			class="bx-im-carousel-user__container bx-im-carousel-user__scope"
-			:class="{'--extranet': isExtranet, '--selected': selected}"
-			@click="onClick" 
+			:class="{'--extranet': isExtranet, '--selected': selected, '--keyboard-active': active}"
+			@click="onClick"
 			@click.right.prevent="onRightClick"
 		>
 			<div v-if="selected" class="bx-im-carousel-user__selected-mark"></div>
-			<ChatAvatar :avatarDialogId="userDialogId" :size="AvatarSize.XL" />
+			<ChatAvatar aria-hidden="true" :avatarDialogId="userDialogId" :size="AvatarSize.XL" />
 			<div class="bx-im-carousel-user__title" :title="name">
 				{{ name }}
 			</div>

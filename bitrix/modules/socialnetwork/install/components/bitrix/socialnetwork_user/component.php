@@ -153,6 +153,7 @@ $arDefaultUrlTemplates404 = array(
 	"user_tasks_projects_overview" => "user/#user_id#/tasks/projects/",
 	"user_tasks_flow" => "user/#user_id#/tasks/flow/",
 	"user_tasks_flow_create" => "tasks/flow/create/",
+	"user_tasks_regular" => "user/#user_id#/tasks/regular/",
 	"user_tasks_scrum_overview" => "user/#user_id#/tasks/scrum/",
 	"user_tasks_effective" => "user/#user_id#/tasks/effective/",
 	"user_tasks_effective_detail" => "user/#user_id#/tasks/effective/show/",
@@ -199,6 +200,7 @@ $taskPageTitles = array(
 	'user_tasks_report_construct' => GetMessage('SONET_TASKS_PAGE_TITLE_USER_TASKS_REPORT_CONSTRUCT'),
 	'user_tasks_report_view' => GetMessage('SONET_TASKS_PAGE_TITLE_USER_TASKS_REPORT_VIEW'),
 	'user_tasks_templates' => GetMessage('SONET_TASKS_PAGE_TITLE_USER_TASKS_TEMPLATES'),
+	'user_tasks_regular' => GetMessage('SONET_TASKS_PAGE_TITLE_USER_TASKS_REGULAR'),
 	'user_templates_template' => GetMessage('SONET_TASKS_PAGE_TITLE_USER_TEMPLATES_TEMPLATE'),
 );
 
@@ -378,6 +380,7 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_tasks_effective_detail"     => "page=user_tasks_effective_detail&user_id=#user_id#",
 	"user_tasks_effective_inprogress" => "page=user_tasks_effective_inprogress&user_id=#user_id#",
 	"user_tasks_templates" => "page=user_tasks_templates&user_id=#user_id#",
+	"user_tasks_regular" => "page=user_tasks_regular&user_id=#user_id#",
 	"user_tasks_employee_plan" => "page=user_tasks_employee_plan&user_id=#user_id#",
 	"user_templates_template" => "page=user_templates_template&user_id=#user_id#&action=#action#&template_id=#template_id#",
 

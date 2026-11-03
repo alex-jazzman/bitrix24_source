@@ -110,7 +110,7 @@ export class ConfirmStatusDialog extends EventEmitter
 	{
 		this.declined = true;
 		this.close();
-		const compactForm = EntryManager.getCompactViewForm();
+		const compactForm = EntryManager.getCompactViewForm(false);
 		if (
 			compactForm
 			&& compactForm.isShown()

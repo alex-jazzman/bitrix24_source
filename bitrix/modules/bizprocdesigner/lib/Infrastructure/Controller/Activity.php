@@ -6,10 +6,16 @@ namespace Bitrix\BizprocDesigner\Infrastructure\Controller;
 
 use Bitrix\Bizproc\Internal\Service\Container;
 use Bitrix\Bizproc\Public\Activity\ActivityControlsBuilder;
+use Bitrix\Bizproc\Public\Activity\ActivityControlsProjectContext;
 use Bitrix\Bizproc\Public\Activity\Interface\NodeFilterMetadataProvider;
+use Bitrix\Bizproc\Public\Service\TemplateAccessService;
+use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable;
+use Bitrix\Bizproc\Workflow\Template\WorkflowTemplateDraftTable;
 use Bitrix\BizprocDesigner\Internal\Trait\ActivitySettingsDecoder;
 use Bitrix\BizprocDesigner\Public\Command;
+use Bitrix\BizprocDesigner\Public\Document\DocumentFieldsResolver;
 use Bitrix\BizprocDesigner\Public\Service\Activity\TriggerUpgradeResolver;
+use Bitrix\Main\Engine\ActionFilter\Attribute\Rule\CloseSession;
 use Bitrix\Main\Engine\JsonController;
 use Bitrix\Main\Loader;
 use Bitrix\Bizproc\Api\Enum\ErrorMessage;
@@ -18,17 +24,21 @@ class Activity extends JsonController
 {
 	use ActivitySettingsDecoder;
 
+	private ?TemplateAccessService $accessService = null;
+
 	protected function init()
 	{
 		parent::init();
 		Loader::requireModule('bizproc');
 	}
 
+	#[CloseSession]
 	public function getNodeFilterMetadataAction(
 		string $activityType,
 		array $documentType = [],
 		bool $onlyDynamicEntities = false,
 		bool $includeRelatedEntityTypes = false,
+		?string $contextActivityType = null,
 	): ?array
 	{
 		$user = new \CBPWorkflowTemplateUser(\CBPWorkflowTemplateUser::CurrentUser);
@@ -59,26 +69,53 @@ class Activity extends JsonController
 			return null;
 		}
 
-		$metadata = $className::getNodeFilterMetadata($documentType, $onlyDynamicEntities, $includeRelatedEntityTypes);
-
-		$documentFields = [];
-		$documentName = '';
-		if (count($documentType) >= 2)
-		{
-			$documentFields = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields($documentType));
-			$documentName = (string)\CBPRuntime::getRuntime()
-				->getDocumentService()
-				->getEntityName((string)$documentType[0], (string)$documentType[1])
-			;
-		}
+		$metadata = self::requestNodeFilterMetadata(
+			$className,
+			$documentType,
+			$onlyDynamicEntities,
+			$includeRelatedEntityTypes,
+			$contextActivityType,
+		);
 
 		return [
 			'entityTypeOptions' => $metadata['entityTypeOptions'] ?? [],
 			'filterFieldsMap' => $metadata['filterFieldsMap'] ?? [],
 			'documentTypeMap' => $metadata['documentTypeMap'] ?? [],
-			'documentFields' => $documentFields,
-			'documentName' => $documentName,
+			// Optional part of the provider contract: an implementation that names no badge for its
+			// types answers the same as before, and the client reads the absence as an empty map.
+			'entityTypeBadges' => $metadata['entityTypeBadges'] ?? [],
 		];
+	}
+
+	private static function requestNodeFilterMetadata(
+		string $className,
+		array $documentType,
+		bool $onlyDynamicEntities,
+		bool $includeRelatedEntityTypes,
+		?string $contextActivityType,
+	): array
+	{
+		$parametersCount = (new \ReflectionMethod($className, 'getNodeFilterMetadata'))->getNumberOfParameters();
+		if ($parametersCount >= 4)
+		{
+			return $className::getNodeFilterMetadata(
+				$documentType,
+				$onlyDynamicEntities,
+				$includeRelatedEntityTypes,
+				$contextActivityType,
+			);
+		}
+
+		if ($parametersCount >= 3)
+		{
+			return $className::getNodeFilterMetadata(
+				$documentType,
+				$onlyDynamicEntities,
+				$includeRelatedEntityTypes,
+			);
+		}
+
+		return $className::getNodeFilterMetadata($documentType, $onlyDynamicEntities);
 	}
 
 	public function getSettingsControlsAction(
@@ -104,7 +141,7 @@ class Activity extends JsonController
 		}
 
 		$brokenLinks = [];
-		$activityName = $activity['Name'] ?? '';
+		$activityName = (string)($activity['Name'] ?? '');
 		$hideEditorComment = (bool)($options['hideEditorComment'] ?? false);
 		[
 			'template' => $workflowTemplate,
@@ -125,6 +162,7 @@ class Activity extends JsonController
 			$activity['Type'],
 			$activity['Properties'],
 			$documentType,
+			['Template' => $workflowTemplate],
 		);
 
 
@@ -133,8 +171,12 @@ class Activity extends JsonController
 			return $result;
 		}
 
+		$propertiesMap = $configurator->getPropertiesMap();
+
 		if ($activityName && $workflowTemplate)
 		{
+			$documentFieldsResolver = new DocumentFieldsResolver();
+
 			$analyzer =
 				(new \Bitrix\Bizproc\Public\Service\Template\ActivityUsageAnalyzer($workflowTemplate))
 					->setParameters($workflowParameters)
@@ -142,12 +184,35 @@ class Activity extends JsonController
 					->setConstants($workflowConstants)
 					->setGlobalConstants(\Bitrix\Bizproc\Workflow\Type\GlobalConst::getAll($documentType))
 					->setGlobalVariables(\Bitrix\Bizproc\Workflow\Type\GlobalVar::getAll($documentType))
-					->setDocumentFields(\Bitrix\Bizproc\Automation\Helper::getDocumentFields($documentType))
+					->setDocumentFields($documentFieldsResolver->getFields($documentType))
+					->setReturnDocumentFieldsResolver($documentFieldsResolver->getFields(...))
 			;
 			$brokenLinks = $analyzer->analyzeUsages($activityName);
 		}
 
-		$controlsBuilder = new ActivityControlsBuilder($configurator, $activity);
+		$trustedProjectContext = [
+			'properties' => [],
+			'constants' => [],
+		];
+		if (ActivityControlsBuilder::hasProjectControls($propertiesMap))
+		{
+			$trustedProjectContext = $this->loadTrustedProjectContext(
+				$options,
+				$activityName,
+				$documentType,
+				(int)$user->getId(),
+			);
+		}
+
+		$controlsBuilder = new ActivityControlsBuilder(
+			$configurator,
+			$activity,
+			new ActivityControlsProjectContext(
+				userId: (int)$user->getId(),
+				workflowConstants: $trustedProjectContext['constants'],
+				trustedPropertyValues: $trustedProjectContext['properties'],
+			),
+		);
 		$controls = $controlsBuilder->build();
 
 		if ($hideEditorComment)
@@ -247,5 +312,126 @@ class Activity extends JsonController
 		$activity['Properties'] = $upgradeResolver->applyUpgradeProperties($properties, $upgrade['properties']);
 
 		return $activity;
+	}
+
+	protected function accessService(): TemplateAccessService
+	{
+		return $this->accessService ??= new TemplateAccessService();
+	}
+
+	private function loadTrustedProjectContext(
+		array $options,
+		string $activityName,
+		array $documentType,
+		int $userId,
+	): array
+	{
+		$emptyContext = [
+			'properties' => [],
+			'constants' => [],
+		];
+		$templateId = (int)($options['templateId'] ?? 0);
+		if ($templateId <= 0 || $activityName === '')
+		{
+			return $emptyContext;
+		}
+
+		$templateData = $this->loadTrustedTemplateData(
+			$templateId,
+			(int)($options['draftId'] ?? 0),
+			$documentType,
+			$userId,
+		);
+		$template = $templateData['TEMPLATE'] ?? null;
+		if (!is_array($template))
+		{
+			return $emptyContext;
+		}
+
+		$activity = \CBPWorkflowTemplateLoader::findActivityByName($template, $activityName);
+		if (!is_array($activity))
+		{
+			return $emptyContext;
+		}
+
+		return [
+			'properties' => is_array($activity['Properties'] ?? null) ? $activity['Properties'] : [],
+			'constants' => is_array($templateData['CONSTANTS'] ?? null) ? $templateData['CONSTANTS'] : [],
+		];
+	}
+
+	private function loadTrustedTemplateData(int $templateId, int $draftId, array $documentType, int $userId): array
+	{
+		if (!$this->accessService()->canEdit($templateId, $userId, $documentType))
+		{
+			return [];
+		}
+
+		if ($draftId > 0)
+		{
+			$metadata = $this->loadTemplateMetadata($templateId);
+			if (!is_array($metadata) || !$this->isSameDocumentType($metadata, $documentType))
+			{
+				return [];
+			}
+
+			$templateData = $this->loadDraftTemplateData($templateId, $draftId);
+			if ($templateData !== [])
+			{
+				return $templateData;
+			}
+		}
+
+		$row = WorkflowTemplateTable::query()
+			->where('ID', $templateId)
+			->whereNull('SYSTEM_CODE')
+			->setSelect(['MODULE_ID', 'ENTITY', 'DOCUMENT_TYPE', 'TEMPLATE', 'CONSTANTS'])
+			->setLimit(1)
+			->fetch()
+		;
+
+		if (!is_array($row) || !$this->isSameDocumentType($row, $documentType))
+		{
+			return [];
+		}
+
+		return $row;
+	}
+
+	private function loadTemplateMetadata(int $templateId): array|false
+	{
+		return WorkflowTemplateTable::query()
+			->where('ID', $templateId)
+			->whereNull('SYSTEM_CODE')
+			->setSelect(['MODULE_ID', 'ENTITY', 'DOCUMENT_TYPE'])
+			->setLimit(1)
+			->fetch()
+		;
+	}
+
+	private function loadDraftTemplateData(int $templateId, int $draftId): array
+	{
+		if ($draftId <= 0)
+		{
+			return [];
+		}
+
+		$row = WorkflowTemplateDraftTable::query()
+			->where('ID', $draftId)
+			->where('TEMPLATE_ID', $templateId)
+			->setSelect(['TEMPLATE_DATA'])
+			->setLimit(1)
+			->fetch()
+		;
+
+		return is_array($row['TEMPLATE_DATA'] ?? null) ? $row['TEMPLATE_DATA'] : [];
+	}
+
+	private function isSameDocumentType(array $templateRow, array $documentType): bool
+	{
+		return (string)($templateRow['MODULE_ID'] ?? '') === (string)($documentType[0] ?? '')
+			&& (string)($templateRow['ENTITY'] ?? '') === (string)($documentType[1] ?? '')
+			&& (string)($templateRow['DOCUMENT_TYPE'] ?? '') === (string)($documentType[2] ?? '')
+		;
 	}
 }

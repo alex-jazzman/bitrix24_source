@@ -26,12 +26,25 @@ Extension::load([
 	'ui.a11y',
 	'main.popup',
 	'ui.icon-set.outline',
+	'ui.buttons',
+	'ui.design-tokens.air'
 ]);
 
 $isAjax = $component->isAjax();
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $zone = Manager::getZone();
-
+$isSearchEmptyState =
+	!empty($arParams['IS_SEARCH_REQUESTED'])
+	&& empty($arParams['IS_DELETED'])
+	&& $arParams['TOTAL_COUNT'] === 0
+	&& empty($arParams['ITEMS'])
+	&& $arParams['TYPE'] === 'PAGE';
+$isTrashSearchEmptyState =
+	!empty($arParams['IS_DELETED'])
+	&& !empty($arParams['IS_SEARCH_REQUESTED'])
+	&& empty($arParams['ITEMS'])
+	&& $arParams['TOTAL_COUNT'] === 0;
+$shouldAnnounceSearchEmptyState = $isAjax && ($isSearchEmptyState || $isTrashSearchEmptyState);
 ?>
 
 <script>
@@ -85,6 +98,23 @@ $isAiSiteChatAvailable =
 	($arParams['AI_SITE_CHAT_AVAILABLE'] ?? true) !== false
 	&& ($arParams['AI_SITE_CHAT_AVAILABLE'] ?? true) !== 'N'
 ;
+$searchEmptyTextCode = $isAiSiteChatAvailable
+	? 'LANDING_SITE_TILE_SEARCH_EMPTY_TEXT'
+	: 'LANDING_SITE_TILE_SEARCH_EMPTY_TEXT_WITHOUT_AI'
+;
+$searchEmptyAnnouncementTextCode = $isTrashSearchEmptyState
+	? 'LANDING_SITE_TILE_SEARCH_EMPTY_TEXT_WITHOUT_AI'
+	: $searchEmptyTextCode
+;
+
+$searchEmptyAnnouncement = '';
+if ($shouldAnnounceSearchEmptyState)
+{
+	$searchEmptyAnnouncement = Loc::getMessage('LANDING_SITE_TILE_SEARCH_EMPTY_TITLE')
+		. '. '
+		. Loc::getMessage($searchEmptyAnnouncementTextCode)
+	;
+}
 
 // every entry point of the tile opens the same address of the generation page, marked by the source of the entry
 $aiUrl = (string)($arParams['AI_URL'] ?? '');
@@ -92,8 +122,12 @@ $aiGenerationUrl = (new Uri($aiUrl !== '' ? $aiUrl : '/sites/ai/'))
 	->addParams([Sections::URL_PARAM => Sections::sites->value])
 	->getUri()
 ;
+$searchEmptyAiGenerationUrl = (new Uri($aiUrl !== '' ? $aiUrl : '/sites/ai/'))
+	->addParams([Sections::URL_PARAM => Sections::searchResult->value])
+	->getUri()
+;
 
-if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['IS_DELETED']))
+if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['IS_DELETED']) && !$isSearchEmptyState)
 {
 	$htmlItems = [];
 	$aiFirstVisitTooltipOptionName = LandingSiteTileComponent::getAiFirstVisitTooltipOptionName();
@@ -170,7 +204,7 @@ if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['I
 }
 ?>
 
-<?php if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['IS_DELETED'])): ?>
+<?php if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['IS_DELETED']) && !$isSearchEmptyState): ?>
 <script>
 	BX.ready(function()
 	{
@@ -329,7 +363,7 @@ if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['I
 </script>
 <?php endif; ?>
 
-<?php if (!empty($arParams['IS_DELETED']) && !$arParams['ITEMS'] && $arParams['TOTAL_COUNT'] === 0): ?>
+<?php if (!empty($arParams['IS_DELETED']) && empty($arParams['IS_SEARCH_REQUESTED']) && !$arParams['ITEMS'] && $arParams['TOTAL_COUNT'] === 0): ?>
 	<div class="landing-sites__trash-empty" data-testid="landing-sites-trash-empty">
 		<div class="landing-sites__trash-empty-card">
 			<div class="landing-sites__trash-empty-image" aria-hidden="true">
@@ -340,7 +374,21 @@ if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['I
 			</div>
 		</div>
 	</div>
-	<div class="landing-sites" id="landing-sites"></div>
+	<div class="landing-sites" id="landing-sites" data-testid="landing-sites-list"></div>
+<?php elseif ($isTrashSearchEmptyState): ?>
+	<div class="landing-sites__search-empty" data-testid="landing-sites-search-empty">
+		<div class="landing-sites__search-empty-card">
+			<div class="landing-sites__search-empty-image" aria-hidden="true">
+				<span class="ui-icon-set --o-search"></span>
+			</div>
+			<div class="landing-sites__search-empty-title" role="status">
+				<?= htmlspecialcharsbx(Loc::getMessage('LANDING_SITE_TILE_SEARCH_EMPTY_TITLE')) ?>
+			</div>
+			<div class="landing-sites__search-empty-text">
+				<?= htmlspecialcharsbx(Loc::getMessage('LANDING_SITE_TILE_SEARCH_EMPTY_TEXT_WITHOUT_AI')) ?>
+			</div>
+		</div>
+	</div>
 <?php elseif (!$arParams['ITEMS'] && $arParams['TYPE'] === 'STORE' ):
 	$features[] = $component->getMessageType('LANDING_SITE_TILE_EMPTY_FEAT1');
 	if ($zone === 'ru')
@@ -405,23 +453,49 @@ if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['I
 			</div>
 		</div>
 	</div>
+<?php elseif ($isSearchEmptyState):?>
+	<div class="landing-sites__search-empty" data-testid="landing-sites-search-empty">
+		<div class="landing-sites__search-empty-card">
+			<div class="landing-sites__search-empty-image" aria-hidden="true">
+				<span class="ui-icon-set --o-search"></span>
+			</div>
+			<div class="landing-sites__search-empty-title" role="status">
+				<?= htmlspecialcharsbx(Loc::getMessage('LANDING_SITE_TILE_SEARCH_EMPTY_TITLE')) ?>
+			</div>
+			<div class="landing-sites__search-empty-text">
+				<?= htmlspecialcharsbx(Loc::getMessage($searchEmptyTextCode)) ?>
+			</div>
+			<?php if ($isAiSiteChatAvailable): ?>
+				<div class="landing-sites__search-empty-button-container --ui-context-content-light" id="landing-sites-search-empty-button"></div>
+			<?php endif; ?>
+		</div>
+	</div>
 <?php else: ?>
-	<div class="landing-sites" id="landing-sites"></div>
+	<div class="landing-sites" id="landing-sites" data-testid="landing-sites-list"></div>
 <?php endif; ?>
 
 <script>
 	BX.message(<?= \CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)) ?>);
 	BX.ready(function()
 	{
+		const emptyStateButtonContainer = BX('landing-sites-search-empty-button');
+		if (emptyStateButtonContainer)
+		{
+			emptyStateButtonContainer.append(
+				BX.Landing.Component.createEmptystateButton(
+					'<?= CUtil::JSEscape($searchEmptyAiGenerationUrl) ?>'
+				),
+			);
+		}
 		let backend = BX.Landing.Backend.getInstance();
 		let items = <?= \CUtil::PhpToJSObject(array_values($arParams['ITEMS']))?>;
 		let switchDomainPage = '<?= \CUtil::jsEscape($arParams['PAGE_URL_SITE_DOMAIN_SWITCH'])?>';
-		const isNeedCopilotPopup = <?= ($isAiSiteChatAvailable && $request->get('preset') === 'sites_ai' && !$arParams['ITEMS']) ? 'true' : 'false' ?>;
+		const isNeedCopilotPopup = <?= ($isAiSiteChatAvailable && $request->get('preset') === 'sites_ai' && !$arParams['ITEMS'] && !$isSearchEmptyState) ? 'true' : 'false' ?>;
 		const createByCopilotText = '<?= CUtil::JSEscape(NameService::replaceCopilotName(Loc::getMessage('LANDING_SITE_TILE_COPILOT_LABEL_MSGVER_1')))?>';
 		const copilotGeneratedText = '<?= CUtil::JSEscape(NameService::replaceCopilotName(Loc::getMessage('LANDING_SITE_TILE_COPILOT_GENERATED_TEXT_MSGVER_1')))?>';
 		const lang = '<?= LANGUAGE_ID ?>';
 
-		<?if ($arParams['FEEDBACK_CODE']):?>
+		<?if ($arParams['FEEDBACK_CODE'] && !$isSearchEmptyState):?>
 		<?php
 		if ($arParams['TYPE'] === 'PAGE')
 		{
@@ -452,6 +526,7 @@ if ($arParams['TYPE'] === 'PAGE' && $isAiSiteChatAvailable && empty($arParams['I
 		const SiteTile = new BX.Landing.Component.SiteTile({
 			renderTo: BX('landing-sites'),
 			items: items,
+			announcement: <?= \CUtil::PhpToJSObject($searchEmptyAnnouncement) ?>,
 			scrollerText: '<?= CUtil::JSEscape($component->getMessageType('LANDING_SITE_TILE_SCROLLER'))?>',
 			notPublishedText: {
 				title: '<?= CUtil::JSEscape($component->getMessageType('LANDING_SITE_TILE_NOT_PUBLISHED_TITLE')) ?>',

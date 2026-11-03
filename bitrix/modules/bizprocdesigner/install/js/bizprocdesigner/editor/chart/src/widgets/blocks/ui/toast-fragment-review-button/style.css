@@ -1,0 +1,28 @@
+/* What belongs to the review pill alone. The shape shared with the pill of the publish errors lives in
+   ../toast-error-block-navigation-button/style.css. */
+
+/* The review pill wears its action on the title button, so its own box answers no click any more:
+   a pointer over the padding and over the counter would promise one. */
+.editor-chart-toast-block-navigation-button.--no-container-action {
+	cursor: default;
+}
+
+/* The review pill carries its title as a native button, so the main action is a control of its own.
+   The reset keeps the look the title had as a plain node. */
+.editor-chart-toast-block-navigation-button__action {
+	margin: 0 4px;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+/* The action is a Tab stop of its own, and the reset above leaves it without a ring of the browser,
+   so the focus is drawn back by the tokens of the design system - the same way the arrows draw it. */
+.editor-chart-toast-block-navigation-button__action:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}

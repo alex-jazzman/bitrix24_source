@@ -293,6 +293,7 @@ Class disk extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/public/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/webdav", $_SERVER["DOCUMENT_ROOT"]."/bitrix/webdav", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
+		$this->InstallRoutes();
 
 		CUrlRewriter::add(
 				array(
@@ -343,6 +344,22 @@ Class disk extends CModule
 
 		return true;
 	}
+	public function InstallRoutes(): void
+	{
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/disk/install/routes/flipchart-annotations.php',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes/flipchart-annotations.php',
+			true,
+		);
+		$this->registerRouteFile('flipchart-annotations.php');
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/disk/install/routes/flipchart-comments.php',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes/flipchart-comments.php',
+			true,
+		);
+		$this->registerRouteFile('flipchart-comments.php');
+	}
+
 	function UnInstallFiles()
 	{
 		global $APPLICATION;
@@ -351,11 +368,56 @@ Class disk extends CModule
 		DeleteDirFilesEx("/bitrix/js/disk/");
 		DeleteDirFilesEx("/bitrix/tools/disk/");
 		DeleteDirFilesEx("/bitrix/services/disk/");
+		DeleteDirFilesEx('/bitrix/routes/flipchart-annotations.php');
+		$this->unregisterRouteFile('flipchart-annotations.php');
+		DeleteDirFilesEx('/bitrix/routes/flipchart-comments.php');
+		$this->unregisterRouteFile('flipchart-comments.php');
 
 		$APPLICATION->SetFileAccessPermission('/bitrix/tools/disk/', array('*' => 'D'));
 		$APPLICATION->SetFileAccessPermission('/bitrix/services/disk/', array('*' => 'D'));
 
 		return true;
+	}
+
+	private function registerRouteFile(string $routeFile): void
+	{
+		if (!method_exists(\Bitrix\Main\Config\Configuration::class, 'getInstanceByPath'))
+		{
+			return;
+		}
+
+		$routesConfig = \Bitrix\Main\Config\Configuration::getInstanceByPath(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes/.settings.php',
+		);
+		$config = $routesConfig->get('routing')['config'] ?? [];
+		if (!in_array($routeFile, $config, true))
+		{
+			$config[] = $routeFile;
+			$routesConfig->add('routing', ['config' => $config]);
+			$routesConfig->saveConfiguration();
+		}
+	}
+
+	private function unregisterRouteFile(string $routeFile): void
+	{
+		if (!method_exists(\Bitrix\Main\Config\Configuration::class, 'getInstanceByPath'))
+		{
+			return;
+		}
+
+		$routesConfig = \Bitrix\Main\Config\Configuration::getInstanceByPath(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/routes/.settings.php',
+		);
+		$config = $routesConfig->get('routing')['config'] ?? [];
+		$filtered = array_values(array_filter(
+			$config,
+			static fn($file) => $file !== $routeFile,
+		));
+		if ($filtered !== $config)
+		{
+			$routesConfig->add('routing', ['config' => $filtered]);
+			$routesConfig->saveConfiguration();
+		}
 	}
 
 	public static function InstallUserFields($moduleId = "all")

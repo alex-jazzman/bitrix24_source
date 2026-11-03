@@ -9,15 +9,15 @@ import {IconButton} from 'landing.ui.component.iconbutton';
 import {ActionPanel} from 'landing.ui.component.actionpanel';
 import {fetchEventsFromOptions} from 'landing.ui.component.internal';
 import type {RuleGroupOptions} from '../../types';
-import RuleEntry from '../rule-entry/rule-entry';
-import RuleType from '../../rule-type';
+import { RuleEntry } from '../rule-entry/rule-entry';
+import { RuleType } from '../../rule-type';
 import {FieldElement} from '../field-element/field-element';
-import FieldValueElement from '../field-value-element/field-value-element';
-import FieldActionPanel from '../field-action-panel/field-action-panel';
+import { FieldValueElement } from '../field-value-element/field-value-element';
+import { FieldActionPanel } from '../field-action-panel/field-action-panel';
 
 import './css/style.css';
 
-export default class RuleGroup extends BaseField
+export class RuleGroup extends BaseField
 {
 	options: RuleGroupOptions;
 

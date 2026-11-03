@@ -155,7 +155,7 @@ else
 {
 	if (\Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn())
 	{
-		$projectHandler = "BX.Messenger.Public.openChatCreation('collab');";
+		$projectHandler = "BX.Socialnetwork.V2.Lib.trackProjectCreateStart({ element: '" . \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'] . "', kind: 'task' }); BX.Messenger.Public.openChatCreation('collab');";
 	}
 	else
 	{
@@ -168,6 +168,12 @@ $isCollaber = User::isCollaber($arParams['USER_ID']);
 if (!$isCollaber)
 {
 	$canCreateProject = \Bitrix\Socialnetwork\Helper\Workgroup\Access::canCreate();
+
+	if (\Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn())
+	{
+		Extension::load('socialnetwork.v2.lib.event-sender');
+	}
+
 	$subLink = (
 		$canCreateProject
 			? [
@@ -177,6 +183,12 @@ if (!$isCollaber)
 			: []
 	);
 
+	$projectsOpenSectionHandler = '';
+	if (\Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn())
+	{
+		$projectsOpenSectionHandler = "BX.Socialnetwork.V2.Lib.trackOpenSection({ tool: 'projects', category: 'project', event: 'open_section', cSection: '" . \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'] . "', cElement: '" . \Bitrix\Tasks\Helper\Analytics::ELEMENT['section_button'] . "' }); window.location.href = '" . \CUtil::JSEscape($projectsUrl) . "';";
+	}
+
 	$arResult['ITEMS'][] = [
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
 		"URL" => $projectsUrl,
@@ -185,6 +197,7 @@ if (!$isCollaber)
 		'SUB_LINK' => $subLink,
 		'COUNTER' => $arResult['PROJECTS_COUNTER'],
 		'COUNTER_ID' => 'tasks_projects_counter',
+		'ON_CLICK' => $projectsOpenSectionHandler,
 	];
 }
 

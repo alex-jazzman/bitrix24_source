@@ -11,6 +11,7 @@ jn.define('im/messenger/core/messenger/core', (require, exports, module) => {
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParamsWriter } = require('im/messenger/lib/params');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('core');
 
@@ -117,7 +118,18 @@ jn.define('im/messenger/core/messenger/core', (require, exports, module) => {
 				return false;
 			}
 
-			return updateDatabase();
+			/** @type {PerfPoint|null} */
+			const initPerfPoint = serviceLocator.get('messenger-init-perf-point');
+			initPerfPoint?.startPoint('db-migrations');
+
+			try
+			{
+				return await updateDatabase();
+			}
+			finally
+			{
+				initPerfPoint?.endPoint('db-migrations');
+			}
 		}
 	}
 

@@ -39,7 +39,6 @@ Class location extends CModule
 
 		$this->InstallFiles();
 		$this->InstallDB();
-		$this->InstallEvents();
 
 		$GLOBALS["errors"] = $this->errors;
 		$APPLICATION->IncludeAdminFile(Loc::getMessage("LOCATION_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/location/install/step1.php");
@@ -152,46 +151,6 @@ Class location extends CModule
 		", true);
 	}
 
-	public function installAreas()
-	{
-		\CTimeZone::Disable();
-
-		/**
-		 * @see \Bitrix\Location\Infrastructure\DataInstaller::installAreasAgent()
-		 */
-		CAgent::AddAgent(
-			"\\Bitrix\\Location\\Infrastructure\\DataInstaller::installAreasAgent();",
-			"location",
-			"N",
-			2,
-			'',
-			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 2, 'FULL')
-		);
-
-		\CTimeZone::Enable();
-	}
-
-	public function installRecentAddressesCleaner()
-	{
-		\CTimeZone::Disable();
-
-		/**
-		 * @see \Bitrix\Location\Infrastructure\Service\RecentAddressesService::cleanUp()
-		 */
-		CAgent::AddAgent(
-			"\\Bitrix\\Location\\Infrastructure\\Service\\RecentAddressesService::cleanUp();",
-			'location',
-			'N',
-			86400,
-			'',
-			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3600, 'FULL')
-		);
-
-		\CTimeZone::Enable();
-	}
-
 	public function DoUninstall()
 	{
 		global $APPLICATION, $step;
@@ -208,8 +167,6 @@ Class location extends CModule
 			));
 
 			$this->UnInstallFiles();
-			$this->UnInstallEvents();
-			\CAgent::RemoveModuleAgents('location');
 
 			$GLOBALS["errors"] = $this->errors;
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("LOCATION_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/location/install/unstep2.php");
@@ -220,17 +177,14 @@ Class location extends CModule
 
 	public function InstallDB()
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 
-		if (!$DB->TableExists('b_location'))
-		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/location/install/db/' . $connection->getType() . '/install.sql');
-		}
+		$migrationResult = $this->installMigrations();
 
-		if($this->errors !== false)
+		if (!$migrationResult->isSuccess())
 		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode("", $this->errors));
 			return false;
 		}
@@ -245,8 +199,6 @@ Class location extends CModule
 		}
 
 		$this->installSources();
-		$this->installAreas();
-		$this->installRecentAddressesCleaner();
 		$this->setDefaultFormatCode();
 
 		return true;
@@ -254,17 +206,16 @@ Class location extends CModule
 
 	public function UnInstallDB($arParams = Array())
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 
-		if (array_key_exists('savedata', $arParams) && $arParams['savedata'] !== 'Y')
-		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/location/install/db/".$connection->getType()."/uninstall.sql");
-		}
+		$dropTables = array_key_exists('savedata', $arParams) && $arParams['savedata'] !== 'Y';
 
-		if ($this->errors !== false)
+		$migrationResult = $this->uninstallMigrations($dropTables);
+
+		if (!$migrationResult->isSuccess())
 		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode('', $this->errors));
 			return false;
 		}
@@ -284,22 +235,6 @@ Class location extends CModule
 	public function UnInstallFiles()
 	{
 		DeleteDirFilesEx('/bitrix/js/location/');
-
-		return true;
-	}
-
-	public function InstallEvents()
-	{
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler("ui", "onUIFormInitialize", "location", "\\Bitrix\\Location\\Infrastructure\\EventHandler", "onUIFormInitialize");
-
-		return true;
-	}
-
-	public function UnInstallEvents()
-	{
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler("ui", "onUIFormInitialize", "location", "\\Bitrix\\Location\\Infrastructure\\EventHandler", "onUIFormInitialize");
 
 		return true;
 	}

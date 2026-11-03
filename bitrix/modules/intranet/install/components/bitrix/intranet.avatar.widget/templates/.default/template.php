@@ -21,6 +21,17 @@ Extension::load([
 $style = '';
 $hasMeridiem = IsAmPmMode();
 $workTimeClass = $arResult['workTimeData']['workTimeClass'] ?? '';
+$messages = [
+	'INTRANET_AVATAR_WIDGET_OPEN_PROFILE' => Loc::getMessage('INTRANET_AVATAR_WIDGET_OPEN_PROFILE'),
+	'INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_0' => Loc::getMessage('INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_0'),
+	'INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_1' => Loc::getMessage('INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_1'),
+	'INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_2' => Loc::getMessage('INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_2'),
+	'INTRANET_AVATAR_WIDGET_VERIFY_PHONE' => Loc::getMessage('INTRANET_AVATAR_WIDGET_VERIFY_PHONE'),
+	'INTRANET_AVATAR_WIDGET_LOADING' => Loc::getMessage('INTRANET_AVATAR_WIDGET_LOADING'),
+	'INTRANET_AVATAR_WIDGET_POPUP' => Loc::getMessage('INTRANET_AVATAR_WIDGET_POPUP'),
+	'INTRANET_AVATAR_WIDGET_OPENED' => Loc::getMessage('INTRANET_AVATAR_WIDGET_OPENED'),
+	'INTRANET_AVATAR_WIDGET_LOAD_ERROR' => Loc::getMessage('INTRANET_AVATAR_WIDGET_LOAD_ERROR'),
+];
 
 if (!empty($arResult['avatar']))
 {
@@ -169,6 +180,7 @@ $frame = $this->createFrame()->begin('');
 		const avatarWrapper = document.querySelector('[data-id="bx-avatar-widget"]');
 		BX.Dom.removeClass(avatarWrapper, '--no-transition');
 		BX.Intranet.Bitrix24.AvatarButton.init({
+			messages: <?= Json::encode($messages) ?>,
 			userId: <?= (int)$arResult['userId'] ?>,
 			skeleton: <?= Json::encode($arResult['skeleton']) ?>,
 			signDocumentsCounter: <?= (int)$arResult['signDocumentsCounter'] ?>,

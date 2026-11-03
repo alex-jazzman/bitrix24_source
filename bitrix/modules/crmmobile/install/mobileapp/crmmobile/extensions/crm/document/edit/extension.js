@@ -2,6 +2,7 @@
  * @module crm/document/edit
  */
 jn.define('crm/document/edit', (require, exports, module) => {
+	const { Text1 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { FadeView } = require('animation/components/fade-view');
@@ -15,6 +16,7 @@ jn.define('crm/document/edit', (require, exports, module) => {
 	const { Moment } = require('utils/date');
 	const { date } = require('utils/date/formats');
 	const { Alert } = require('alert');
+	const { Typography } = require('tokens');
 
 	const FieldTypes = {
 		IMAGE: 'IMAGE',
@@ -487,11 +489,13 @@ jn.define('crm/document/edit', (require, exports, module) => {
 				paddingHorizontal: 16,
 			},
 		},
-		Text({
+		Text1({
 			style: {
 				color: AppTheme.colors.base1,
 				fontWeight: level < 3 ? 'normal' : 'bold',
-				fontSize: level < 3 ? 18 : 16,
+				fontSize: level < 3
+				? Typography.text1.getValue().fontSize
+				: Typography.text3.getValue().fontSize,
 				width: '100%',
 				textAlign: 'left',
 				paddingTop: 0,

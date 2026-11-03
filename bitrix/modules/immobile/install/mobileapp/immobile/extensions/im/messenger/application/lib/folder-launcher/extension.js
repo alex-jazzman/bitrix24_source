@@ -28,8 +28,13 @@ jn.define('im/messenger/application/lib/folder-launcher', (require, exports, mod
 
 		async restoreModel()
 		{
-			if (!Feature.isChatFoldersAvailable)
+			// isChatFoldersAvailable is this very reason compared to null, so reading the reason instead
+			// of the predicate keeps the condition and the order of its checks as they are
+			const unavailabilityReason = Feature.getChatFoldersUnavailabilityReason();
+			if (unavailabilityReason !== null)
 			{
+				this.logger.log('restoreModel: folders are unavailable, reason:', unavailabilityReason);
+
 				return;
 			}
 
@@ -62,8 +67,11 @@ jn.define('im/messenger/application/lib/folder-launcher', (require, exports, mod
 
 		subscribeInitResult()
 		{
-			if (!Feature.isChatFoldersAvailable)
+			const unavailabilityReason = Feature.getChatFoldersUnavailabilityReason();
+			if (unavailabilityReason !== null)
 			{
+				this.logger.log('subscribeInitResult: folders are unavailable, reason:', unavailabilityReason);
+
 				return;
 			}
 

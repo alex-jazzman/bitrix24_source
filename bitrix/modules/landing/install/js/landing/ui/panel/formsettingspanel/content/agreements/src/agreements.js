@@ -7,12 +7,13 @@ import {AgreementsList} from 'landing.ui.field.agreementslist';
 import {ContentWrapper} from 'landing.ui.panel.basepresetpanel';
 import messageIcon from './images/message-icon.svg';
 
-export default class AgreementsContent extends ContentWrapper
+export class AgreementsContent extends ContentWrapper
 {
 	constructor(options)
 	{
 		super(options);
 		this.setEventNamespace('BX.Landing.UI.Panel.FormSettingsPanel.AgreementsContent');
+		Dom.attr(this.getLayout(), 'data-testid', 'landing-agreements-content');
 
 		const header = new HeaderCard({
 			title: Loc.getMessage('LANDING_AGREEMENTS_TITLE'),
@@ -26,6 +27,10 @@ export default class AgreementsContent extends ContentWrapper
 			restoreState: true,
 		});
 
+		Dom.attr(message.getLayout(), 'data-testid', 'landing-agreements-message');
+		Dom.attr(message.getCloseButton(), 'data-testid', 'landing-agreements-message-close-btn');
+		Dom.attr(message.getCloseLink(), 'data-testid', 'landing-agreements-message-hide-link');
+
 		const listForm = new FormSettingsForm({
 			id: 'agreementsList',
 			fields: [
@@ -37,6 +42,8 @@ export default class AgreementsContent extends ContentWrapper
 				}),
 			],
 		});
+
+		Dom.attr(listForm.getLayout(), 'data-testid', 'landing-agreements-form');
 
 		if (!message.isShown())
 		{
@@ -52,5 +59,21 @@ export default class AgreementsContent extends ContentWrapper
 		this.addItem(header);
 		this.addItem(message);
 		this.addItem(listForm);
+		this.listForm = listForm;
+	}
+
+	destroy()
+	{
+		this.listForm.fields.forEach((field) => field.destroy());
+		this.listForm.clear();
+		this.items.forEach((item) => {
+			item.unsubscribeAll('onChange');
+			item.unsubscribeAll('onClose');
+		});
+		this.items.clear();
+		this.unsubscribeAll('onChange');
+		this.clear();
 	}
 }
+
+export { AgreementsContent as Content };

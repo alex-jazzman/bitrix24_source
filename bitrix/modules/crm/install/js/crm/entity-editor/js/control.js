@@ -10,6 +10,108 @@ if(typeof BX.Crm.EntityEditorControl === "undefined")
 	BX.Crm.EntityEditorControl = BX.UI.EntityEditorControl;
 }
 
+if(typeof BX.Crm.EntityEditorControl.prototype.insertContextMenuButton !== "function")
+{
+	BX.Crm.EntityEditorControl.prototype.insertContextMenuButton = function(wrapper)
+	{
+		var button = this.createContextMenuButton();
+		wrapper.insertBefore(button, wrapper.firstChild);
+
+		return button;
+	};
+}
+
+if(typeof BX.Crm.EntityEditorControl.isActivationKey !== "function")
+{
+	BX.Crm.EntityEditorControl.isActivationKey = function(e)
+	{
+		return e.key === "Enter" || e.key === " " || e.key === "Spacebar";
+	};
+}
+
+if(typeof BX.Crm.EntityEditorControl.keyboardActivationDepth !== "number")
+{
+	BX.Crm.EntityEditorControl.keyboardActivationDepth = 0;
+}
+
+if(typeof BX.Crm.EntityEditorControl.activateOnKey !== "function")
+{
+	BX.Crm.EntityEditorControl.activateOnKey = function(e, handler, context)
+	{
+		if(!BX.Crm.EntityEditorControl.isActivationKey(e))
+		{
+			return false;
+		}
+
+		e.preventDefault();
+
+		BX.Crm.EntityEditorControl.keyboardActivationDepth++;
+		try
+		{
+			if(handler)
+			{
+				handler.call(context, e);
+			}
+			else
+			{
+				e.currentTarget.click();
+			}
+		}
+		finally
+		{
+			BX.Crm.EntityEditorControl.keyboardActivationDepth--;
+		}
+
+		return true;
+	};
+}
+
+if(typeof BX.Crm.EntityEditorControl.isKeyboardActivation !== "function")
+{
+	BX.Crm.EntityEditorControl.isKeyboardActivation = function()
+	{
+		return BX.Crm.EntityEditorControl.keyboardActivationDepth > 0;
+	};
+}
+
+if(typeof BX.Crm.EntityEditorControl.showMenuKeepingScroll !== "function")
+{
+	BX.Crm.EntityEditorControl.showMenuKeepingScroll = function(id, bindElement, menuItems, params)
+	{
+		var options = BX.Type.isPlainObject(params) ? Object.assign({}, params) : {};
+		if(BX.Crm.EntityEditorControl.isKeyboardActivation())
+		{
+			options.focusTrap = { initialFocus: "container" };
+		}
+
+		var scroller = document.scrollingElement;
+		var scrollTop = scroller ? scroller.scrollTop : 0;
+
+		BX.PopupMenu.show(id, bindElement, menuItems, options);
+
+		if(scroller)
+		{
+			scroller.scrollTop = scrollTop;
+		}
+	};
+}
+
+if(typeof BX.Crm.EntityEditorControl.prototype.activateOnKey !== "function")
+{
+	BX.Crm.EntityEditorControl.prototype.activateOnKey = function(e, handler)
+	{
+		return BX.Crm.EntityEditorControl.activateOnKey(e, handler, this);
+	};
+}
+
+if(typeof BX.Crm.EntityEditorControl.prototype.showMenuKeepingScroll !== "function")
+{
+	BX.Crm.EntityEditorControl.prototype.showMenuKeepingScroll = function(id, bindElement, menuItems, params)
+	{
+		BX.Crm.EntityEditorControl.showMenuKeepingScroll(id, bindElement, menuItems, params);
+	};
+}
+
 if(typeof BX.Crm.EntityEditorField === "undefined")
 {
 	/**
@@ -36,13 +138,23 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 	{
 		BX.Crm.EntityEditorSection.superclass.constructor.apply(this);
 		this.eventsNamespace = 'BX.Crm.EntityEditorSection';
+		this._aiFillPolicySave = null;
 	};
 	BX.extend(BX.Crm.EntityEditorSection, BX.UI.EntityEditorSection);
+	BX.Crm.EntityEditorSection.prototype.canChangeMode = function(mode)
+	{
+		return !this.isAiFillPolicySavePending()
+			&& BX.Crm.EntityEditorSection.superclass.canChangeMode.apply(this, arguments);
+	};
 	BX.Crm.EntityEditorSection.prototype.createFieldConfigurator = function(params)
 	{
 		if(!BX.type.isPlainObject(params))
 		{
 			throw "EntityEditorSection: The 'params' argument must be object.";
+		}
+		if(this.isAiFillPolicySavePending())
+		{
+			return;
 		}
 
 		params.mandatoryConfigurator = null;
@@ -102,6 +214,319 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 			BX.addCustomEvent(this._fieldConfigurator, "onCancel", BX.delegate(this.onFieldConfigurationCancel, this));
 		}
 	};
+	//region AI fill policy
+	BX.Crm.EntityEditorSection.prototype.onUserFieldConfigurationSave = function(sender, params)
+	{
+		if(sender !== this._fieldConfigurator)
+		{
+			return;
+		}
+
+		// a new field is already created, only its fill policy is not: repeating the save would duplicate
+		// the field, so the form is carried over to the created one instead.
+		// an existing field is updated again as usual, so the rest of the form is not lost
+		if(this._aiFillPolicySave && this._aiFillPolicySave.isNewField)
+		{
+			this.retryUserFieldSave(this._aiFillPolicySave, params);
+
+			return;
+		}
+
+		BX.Crm.EntityEditorSection.superclass.onUserFieldConfigurationSave.apply(this, arguments);
+	};
+	BX.Crm.EntityEditorSection.prototype.retryUserFieldSave = function(save, params)
+	{
+		var fieldData = this.prepareCreatedUserFieldData(save, params);
+		if(!fieldData)
+		{
+			this.applyAiFillPolicySave(save);
+
+			return;
+		}
+
+		save.configurator.setLocked(true);
+
+		this._editor.getUserFieldManager().updateField(fieldData, this._mode).then(
+			function(result)
+			{
+				var fieldInfo = BX.type.isPlainObject(result) ? this.getSavedUserFieldInfo(result) : null;
+				if(!fieldInfo)
+				{
+					save.configurator.setLocked(false);
+
+					return;
+				}
+
+				save.result = result;
+				save.fieldInfo = fieldInfo;
+				this.applyAiFillPolicySave(save);
+			}.bind(this)
+		);
+	};
+	BX.Crm.EntityEditorSection.prototype.prepareCreatedUserFieldData = function(save, params)
+	{
+		var fieldName = BX.prop.getString(save.fieldInfo, "FIELD", "");
+		if(fieldName === "")
+		{
+			return null;
+		}
+
+		// the type of the created field, not the one the form offers: the storage keeps the type and the
+		// multiplicity of an existing field, so neither is sent and the type decides how the rest is read
+		var typeId = BX.prop.getString(save.fieldInfo, "USER_TYPE_ID", "");
+		var label = BX.prop.getString(params, "label", "");
+
+		var fieldData = {
+			"FIELD": fieldName,
+			"ENTITY_VALUE_ID": BX.prop.getInteger(save.fieldInfo, "ENTITY_VALUE_ID", 0),
+			"VALUE": "",
+			"HELP_MESSAGE": BX.prop.getString(params, "HELP_MESSAGE", ""),
+			"EDIT_FORM_LABEL": label,
+			"LIST_COLUMN_LABEL": label,
+			"LIST_FILTER_LABEL": label
+		};
+
+		if(this._mandatoryConfigurator
+			&& this._mandatoryConfigurator.isPermitted()
+			&& this._mandatoryConfigurator.isEnabled()
+			&& this._mandatoryConfigurator.isCustomized()
+		)
+		{
+			if(this._mandatoryConfigurator.isChanged())
+			{
+				this._mandatoryConfigurator.acceptChanges();
+			}
+
+			fieldData["MANDATORY"] = "N";
+		}
+		else
+		{
+			fieldData["MANDATORY"] = BX.prop.getBoolean(params, "mandatory", false) ? "Y" : "N";
+		}
+
+		var settings = BX.prop.get(params, "settings", null);
+		if(settings)
+		{
+			fieldData["SETTINGS"] = settings;
+		}
+
+		var additional = BX.prop.getObject(params, "additional", null);
+		if(additional)
+		{
+			fieldData["ADDITIONAL"] = additional;
+		}
+
+		if(typeId === BX.UI.EntityUserFieldType.enumeration)
+		{
+			fieldData["ENUM"] = BX.prop.getArray(params, "enumeration", []);
+		}
+
+		if(typeId === BX.UI.EntityUserFieldType.enumeration
+			|| typeId === BX.UI.EntityUserFieldType.crmStatus
+		)
+		{
+			if(!BX.type.isPlainObject(fieldData["SETTINGS"]))
+			{
+				fieldData["SETTINGS"] = {};
+			}
+
+			fieldData["SETTINGS"]["DISPLAY"] = BX.prop.getString(params, "display", "UI");
+		}
+
+		// the flag the created field is registered with is read off the editor, so a form that changed it
+		// has to leave it there before the field is registered
+		var showAlways = BX.prop.getBoolean(params, "showAlways", null);
+		if(showAlways !== null)
+		{
+			this._editor.setOption("show_always", showAlways ? "Y" : "N");
+		}
+
+		return fieldData;
+	};
+	BX.Crm.EntityEditorSection.prototype.onUserFieldCreate = function(result)
+	{
+		this.processUserFieldSave(result, true);
+	};
+	BX.Crm.EntityEditorSection.prototype.onUserFieldUpdate = function(result)
+	{
+		this.processUserFieldSave(result, false);
+	};
+	BX.Crm.EntityEditorSection.prototype.removeFieldConfigurator = function()
+	{
+		if(this.isAiFillPolicySavePending())
+		{
+			return;
+		}
+
+		// every way out of the pending mode has to register the saved field in the local scheme
+		if(this._aiFillPolicySave)
+		{
+			this.completeUserFieldSave(this._aiFillPolicySave);
+		}
+
+		BX.Crm.EntityEditorSection.superclass.removeFieldConfigurator.apply(this);
+	};
+	BX.Crm.EntityEditorSection.prototype.processUserFieldSave = function(result, isNewField)
+	{
+		var save = {
+			result: result,
+			isNewField: isNewField,
+			fieldInfo: (BX.type.isPlainObject(result) ? this.getSavedUserFieldInfo(result) : null),
+			configurator: this._fieldConfigurator,
+			isPolicyRequestPending: false
+		};
+
+		this.applyAiFillPolicySave(save);
+	};
+	BX.Crm.EntityEditorSection.prototype.isAiFillPolicySavePending = function()
+	{
+		return !!(this._aiFillPolicySave && this._aiFillPolicySave.isPolicyRequestPending);
+	};
+	BX.Crm.EntityEditorSection.prototype.applyAiFillPolicySave = function(save)
+	{
+		// nothing to store means nothing to wait for: the field save completes as it always did
+		if(!save.configurator || !save.fieldInfo || !save.configurator.isAiFillPolicyChanged())
+		{
+			this.completeUserFieldSave(save);
+
+			return;
+		}
+
+		this.saveAiFillPolicy(save);
+	};
+	BX.Crm.EntityEditorSection.prototype.saveAiFillPolicy = function(save)
+	{
+		var configurator = save.configurator;
+		var isEnabled = configurator.isAiFillPolicyEnabled();
+
+		this._aiFillPolicySave = save;
+		save.isPolicyRequestPending = true;
+		configurator.setLocked(true);
+		configurator.setAiFillPolicyBusy(true);
+
+		var requestData = {
+			entityTypeId: this._editor.getEntityTypeId(),
+			fieldName: BX.prop.getString(save.fieldInfo, "FIELD", ""),
+			isEnabled: isEnabled
+		};
+
+		var categoryId = this.getAiFillPolicyCategoryId();
+		if(categoryId !== null)
+		{
+			requestData.categoryId = categoryId;
+		}
+
+		BX.ajax.runAction(
+			"crm.api.aiFieldFillPolicy.save",
+			{
+				data: requestData
+			}
+		).then(
+			function(response)
+			{
+				save.isPolicyRequestPending = false;
+				if(this._aiFillPolicySave !== save)
+				{
+					return;
+				}
+
+				configurator.setAiFillPolicyBusy(false);
+				configurator.setAiFillPolicyState(
+					BX.prop.getBoolean(BX.prop.getObject(response, "data", null), "isEnabled", isEnabled)
+				);
+				this.completeUserFieldSave(save);
+			}.bind(this),
+			function(response)
+			{
+				save.isPolicyRequestPending = false;
+				if(this._aiFillPolicySave !== save)
+				{
+					return;
+				}
+
+				configurator.setLocked(false);
+				configurator.setAiFillPolicyBusy(false);
+				configurator.onAiFillPolicySaveError(response);
+			}.bind(this)
+		);
+	};
+	BX.Crm.EntityEditorSection.prototype.getAiFillPolicyCategoryId = function()
+	{
+		// the permission of the switch is held per category as well, so the gate of the server is handed
+		// the category of the editor. The details components publish it in two shapes: under PARAMS of the
+		// context for contact and company, at the top level of it for the ones built by a factory
+		var context = this._editor.getContext();
+		var categoryId = BX.prop.getInteger(BX.prop.getObject(context, "PARAMS", null), "CATEGORY_ID", 0);
+		if(categoryId <= 0)
+		{
+			categoryId = BX.prop.getInteger(context, "CATEGORY_ID", 0);
+		}
+
+		// no category of its own is what the editor itself weighs a zero as, so nothing is sent instead
+		return categoryId > 0 ? categoryId : null;
+	};
+	BX.Crm.EntityEditorSection.prototype.completeUserFieldSave = function(save)
+	{
+		// the answer to a request still in flight owns the state: the local one would keep the value it replaces
+		var isPolicyRequestPending = save.isPolicyRequestPending;
+
+		this._aiFillPolicySave = null;
+
+		var isPolicyStateNeeded = !isPolicyRequestPending && this.isAiFillPolicyStateNeeded(save);
+		var isEnabled = save.configurator ? save.configurator.getSavedAiFillPolicyState() : true;
+
+		if(save.isNewField)
+		{
+			BX.Crm.EntityEditorSection.superclass.onUserFieldCreate.apply(this, [ save.result ]);
+		}
+		else
+		{
+			BX.Crm.EntityEditorSection.superclass.onUserFieldUpdate.apply(this, [ save.result ]);
+		}
+
+		if(isPolicyStateNeeded)
+		{
+			var field = this.getChildById(BX.prop.getString(save.fieldInfo, "FIELD", ""));
+			var schemeElement = field ? field.getSchemeElement() : null;
+			if(schemeElement)
+			{
+				schemeElement.setDataParam("aiFillPolicy", { available: true, enabled: isEnabled });
+			}
+		}
+	};
+	BX.Crm.EntityEditorSection.prototype.isAiFillPolicyStateNeeded = function(save)
+	{
+		if(!save.configurator || !save.fieldInfo)
+		{
+			return false;
+		}
+
+		// a field of an unsupported type keeps no policy key at all, just like in the server data
+		return save.isNewField
+			? save.configurator.isAiFillPolicySupportedForType(
+				BX.prop.getString(save.fieldInfo, "USER_TYPE_ID", "")
+			)
+			: save.configurator.isAiFillPolicyAvailable();
+	};
+	BX.Crm.EntityEditorSection.prototype.getSavedUserFieldInfo = function(result)
+	{
+		for(var key in result)
+		{
+			if(!result.hasOwnProperty(key))
+			{
+				continue;
+			}
+
+			var info = BX.prop.getObject(result[key], "FIELD", null);
+			if(info)
+			{
+				return info;
+			}
+		}
+
+		return null;
+	};
+	//endregion
 	BX.Crm.EntityEditorSection.create = function(id, settings)
 	{
 		var self = new BX.Crm.EntityEditorSection();
@@ -589,6 +1014,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 		var button = new BX.UI.Button({
 			text: this.getMessage('payButtonLabel'),
 			className: 'crm-entity-widget-content-block-inner-pay-button',
+			props: { type: 'button' },
 			useAirDesign: true,
 			style: BX.UI.Button.AirStyle.FILLED,
 			color: BX.UI.Button.Color.SUCCESS,
@@ -831,6 +1257,8 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 		this._userSelector = null;
 		this._selectedData = {};
 		this._editButtonClickHandler = BX.delegate(this.onEditBtnClick, this);
+		this._editButtonKeyHandler = BX.delegate(this.onEditBtnKeyDown, this);
+		this._openSelectorAfterSwitchToSingleEditMode = false;
 	};
 	BX.extend(BX.Crm.EntityEditorUser, BX.UI.EntityEditorField);
 	BX.Crm.EntityEditorUser.prototype.isSingleEditEnabled = function()
@@ -879,9 +1307,18 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 		var showUrl = this._model.getSchemeField(this._schemeElement, "showUrl", "", "");
 		var photoUrl = this._model.getSchemeField(this._schemeElement, "photoUrl", "");
 
+		// The avatar is a link with no text, no title and no image of its own - the photo is a
+		// background - so it reaches a screen reader as a nameless link (4.1.2), and it points at
+		// the very same profile as the named link right after it. It is taken out of the order
+		// rather than given a name: two stops onto one destination is the worse of the two.
+		// aria-hidden must not end up on a focused node, and a click focuses a link even at
+		// tabindex="-1"; mousedown is where that focus comes from, while the navigation is the
+		// default action of click, so suppressing the one keeps the other.
 		this._photoElement = BX.create("a",
 			{
 				props: { className: "crm-widget-employee-avatar-container", target: "_blank" },
+				attrs: { tabindex: "-1", "aria-hidden": "true" },
+				events: { mousedown: function(e) { e.preventDefault(); } },
 				style:
 					{
 						backgroundImage: BX.type.isNotEmptyString(photoUrl) ? "url('" + encodeURI(photoUrl) + "')" : "",
@@ -926,8 +1363,18 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 			this._input = BX.create("input", { attrs: { name: name, type: "hidden", value: value } });
 			this._wrapper.appendChild(this._input);
 
-			this._editButton = BX.create("span", { props: { className: "crm-widget-employee-change" }, text: this.getMessage("change") });
+			// The only way to reassign the field, and it was a bare span with a click handler:
+			// no tab stop, no role - 2.1.1 Keyboard. Its own visible text is the accessible name,
+			// unlike the icon-only controls nearby, so no label is added.
+			this._editButton = BX.create("span",
+				{
+					props: { className: "crm-widget-employee-change" },
+					attrs: { role: "button", tabindex: "0" },
+					text: this.getMessage("change")
+				}
+			);
 			BX.bind(this._editButton, "click", this._editButtonClickHandler);
+			BX.bind(this._editButton, "keydown", this._editButtonKeyHandler);
 			userElement.appendChild(this._editButton);
 		}
 
@@ -949,7 +1396,7 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -963,9 +1410,13 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 
 	BX.Crm.EntityEditorUser.prototype.doRegisterLayout = function()
 	{
+		var openSelectorAfterSwitchToSingleEditMode = this._openSelectorAfterSwitchToSingleEditMode;
+		this._openSelectorAfterSwitchToSingleEditMode = false;
+
 		if (
 			this.isInEditMode()
 			&& this.checkModeOption(BX.UI.EntityEditorModeOptions.individual)
+			&& (openSelectorAfterSwitchToSingleEditMode || !(this._selectedData["id"] > 0))
 		)
 		{
 			window.setTimeout(BX.delegate(this.openSelector, this), 0);
@@ -981,11 +1432,16 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 		this._positionElement = null;
 	};
 
+	BX.Crm.EntityEditorUser.prototype.onEditBtnKeyDown = function(event)
+	{
+		this.activateOnKey(event, this.onEditBtnClick);
+	};
 	BX.Crm.EntityEditorUser.prototype.onEditBtnClick = function(event)
 	{
 		//If any other control has changed try to switch to edit mode.
 		if(this._mode === BX.UI.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
 		{
+			this._openSelectorAfterSwitchToSingleEditMode = true;
 			this.switchToSingleEditMode();
 		}
 		else
@@ -1302,7 +1758,7 @@ if(typeof BX.Crm.EntityEditorAddress === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -1390,9 +1846,12 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 		this._valueInput = null;
 		this._valueTypeInput = null;
 		this._valueTypeSelector = null;
+		this._valueTypeMenuOpenedByKeyboard = false;
+		this._valueTypeMenuKeyDownHandler = BX.delegate(this.onValueTypeMenuKeyDown, this);
 
 		this._deleteButton = null;
 		this._deleteButtonHandler = BX.delegate(this.onDeleteButtonClick, this);
+		this._deleteButtonKeyHandler = BX.delegate(this.onDeleteButtonKeyDown, this);
 
 		this._isJunked = false;
 
@@ -1515,6 +1974,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 				this._valueInput = null;
 				this._valueTypeInput = null;
 				this._valueTypeSelector = null;
+				this._valueTypeMenuOpenedByKeyboard = false;
 				this._valueCountryCode = null;
 				this._deleteButton = null;
 				var valueTypeId = this.getValueTypeId();
@@ -1564,8 +2024,19 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 						"div",
 						{
 							props: { className: "crm-entity-widget-content-select" },
+							attrs:
+								{
+									role: "button",
+									tabindex: "0",
+									"aria-haspopup": "menu",
+									"aria-expanded": "false"
+								},
 							text: this.resolveValueTypeName(valueTypeId),
-							events: { click: BX.delegate(this.onValueTypeSelectorClick, this) }
+							events:
+								{
+									click: BX.delegate(this.onValueTypeSelectorClick, this),
+									keydown: BX.delegate(this.onValueTypeSelectorKeyDown, this)
+								}
 						}
 					);
 
@@ -1579,12 +2050,25 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 						)
 					);
 
+					// The cross that drops one value was a bare div with a click handler: no tab stop,
+					// no role, and no text of its own, so it reached a screen reader as nothing at
+					// all - 2.1.1 Keyboard and 4.1.2 Name, Role, Value. There is one per multifield
+					// block, so the name carries the block title; otherwise four of them read alike.
 					this._deleteButton = BX.create(
 						"div",
-						{ attrs: { className: "crm-entity-widget-content-remove-block" } }
+						{
+							attrs:
+								{
+									className: "crm-entity-widget-content-remove-block",
+									role: "button",
+									tabindex: "0",
+									"aria-label": this.getDeleteButtonLabel()
+								}
+						}
 					);
 					this._wrapper.appendChild(this._deleteButton);
 					BX.bind(this._deleteButton, "click", this._deleteButtonHandler);
+					BX.bind(this._deleteButton, "keydown", this._deleteButtonKeyHandler);
 
 					if(this._editor.isDuplicateControlEnabled())
 					{
@@ -1704,8 +2188,41 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 			{
 				this._parent.processItemChange(this);
 			},
-			onValueTypeSelectorClick: function(e)
+			setValueTypeSelectorExpanded: function(expanded)
 			{
+				if(this._valueTypeSelector)
+				{
+					this._valueTypeSelector.setAttribute("aria-expanded", expanded ? "true" : "false");
+				}
+			},
+			onValueTypeSelectorKeyDown: function(e)
+			{
+				if(e.repeat || (e.key !== "Enter" && e.key !== " " && e.key !== "Space"))
+				{
+					return;
+				}
+
+				BX.PreventDefault(e);
+				this.onValueTypeSelectorClick(e, true);
+			},
+			onValueTypeSelectorClick: function(e, focusFirstItem)
+			{
+				var valueTypeMenu = BX.PopupMenu.getMenuById(this._id);
+				if(
+					valueTypeMenu
+					&& valueTypeMenu.popupWindow
+					&& BX.type.isFunction(valueTypeMenu.popupWindow.isShown)
+					&& valueTypeMenu.popupWindow.isShown()
+				)
+				{
+					BX.removeClass(this._valueTypeSelector, "active");
+					this.setValueTypeSelectorExpanded(false);
+					this.unbindValueTypeMenuKeyboardHandler(valueTypeMenu);
+					this._valueTypeMenuOpenedByKeyboard = false;
+					BX.PopupMenu.destroy(this._id);
+					return;
+				}
+
 				var menu = [];
 				for(var i = 0, length = this._valueTypeItems.length; i < length; i++)
 				{
@@ -1732,25 +2249,150 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 					}
 				);
 
-				BX.PopupMenu.currentItem.popupWindow.setWidth(BX.pos(this._valueTypeSelector)["width"]);
+				this.setValueTypeSelectorExpanded(true);
+				this._valueTypeMenuOpenedByKeyboard = focusFirstItem === true;
+				valueTypeMenu = BX.PopupMenu.currentItem;
+				valueTypeMenu.popupWindow.setWidth(BX.pos(this._valueTypeSelector)["width"]);
+
+				if(focusFirstItem === true)
+				{
+					this.focusValueTypeMenu(valueTypeMenu);
+				}
+			},
+			focusValueTypeMenu: function(valueTypeMenu)
+			{
+				if(!valueTypeMenu)
+				{
+					return;
+				}
+
+				if(BX.type.isFunction(valueTypeMenu.getMenuContainer))
+				{
+					var menuContainer = valueTypeMenu.getMenuContainer();
+					if(menuContainer && BX.type.isFunction(menuContainer.focus))
+					{
+						menuContainer.focus();
+					}
+				}
+
+				if(BX.type.isFunction(valueTypeMenu.clearFocus))
+				{
+					valueTypeMenu.clearFocus();
+				}
+
+				this.bindValueTypeMenuKeyboardHandler(valueTypeMenu);
+			},
+			bindValueTypeMenuKeyboardHandler: function(valueTypeMenu)
+			{
+				if(valueTypeMenu && BX.type.isFunction(valueTypeMenu.getMenuContainer))
+				{
+					var menuContainer = valueTypeMenu.getMenuContainer();
+					if(menuContainer)
+					{
+						BX.unbind(menuContainer, "keydown", this._valueTypeMenuKeyDownHandler);
+						BX.bind(menuContainer, "keydown", this._valueTypeMenuKeyDownHandler);
+					}
+				}
+			},
+			unbindValueTypeMenuKeyboardHandler: function(valueTypeMenu)
+			{
+				if(valueTypeMenu && BX.type.isFunction(valueTypeMenu.getMenuContainer))
+				{
+					var menuContainer = valueTypeMenu.getMenuContainer();
+					if(menuContainer)
+					{
+						BX.unbind(menuContainer, "keydown", this._valueTypeMenuKeyDownHandler);
+					}
+				}
+			},
+			onValueTypeMenuKeyDown: function(e)
+			{
+				if(e.repeat || (e.key !== "Enter" && e.key !== " " && e.key !== "Space"))
+				{
+					return;
+				}
+
+				var valueTypeMenu = BX.PopupMenu.getMenuById(this._id);
+				if(
+					valueTypeMenu
+					&& BX.type.isFunction(valueTypeMenu.getFocusedItem)
+					&& valueTypeMenu.getFocusedItem()
+				)
+				{
+					return;
+				}
+
+				BX.PreventDefault(e);
+				if(valueTypeMenu && BX.type.isFunction(valueTypeMenu.close))
+				{
+					valueTypeMenu.close();
+				}
+				else
+				{
+					BX.PopupMenu.destroy(this._id);
+				}
 			},
 			onValueTypeMenuClose: function(e)
 			{
+				var valueTypeMenu = BX.PopupMenu.getMenuById(this._id);
+				this.unbindValueTypeMenuKeyboardHandler(valueTypeMenu);
+
+				var menuContainer = valueTypeMenu && BX.type.isFunction(valueTypeMenu.getMenuContainer)
+					? valueTypeMenu.getMenuContainer()
+					: null;
+				var returnFocusToSelector = this._valueTypeMenuOpenedByKeyboard
+					&& this._valueTypeSelector
+					&& BX.type.isFunction(this._valueTypeSelector.focus)
+					&& (
+						!menuContainer
+						|| (
+							BX.type.isFunction(menuContainer.contains)
+							&& menuContainer.contains(document.activeElement)
+						)
+					);
+
 				BX.removeClass(this._valueTypeSelector, "active");
+				this.setValueTypeSelectorExpanded(false);
+				this._valueTypeMenuOpenedByKeyboard = false;
+
+				if(returnFocusToSelector)
+				{
+					this._valueTypeSelector.focus();
+				}
 			},
 			onValueTypeSelect: function(e, item)
 			{
+				var returnFocusToSelector = this._valueTypeMenuOpenedByKeyboard;
+				var valueTypeMenu = BX.PopupMenu.getMenuById(this._id);
+				this.unbindValueTypeMenuKeyboardHandler(valueTypeMenu);
+
 				BX.removeClass(this._valueTypeSelector, "active");
+				this.setValueTypeSelectorExpanded(false);
 
 				this._valueTypeInput.value = item.value;
 				this._valueTypeSelector.innerHTML = BX.util.htmlspecialchars(item.text);
 
 				this._parent.processItemChange(this);
 				BX.PopupMenu.destroy(this._id);
+				this._valueTypeMenuOpenedByKeyboard = false;
+
+				if(returnFocusToSelector && this._valueTypeSelector && BX.type.isFunction(this._valueTypeSelector.focus))
+				{
+					this._valueTypeSelector.focus();
+				}
 			},
 			isJunked: function()
 			{
 				return this._isJunked;
+			},
+			getDeleteButton: function()
+			{
+				return this._deleteButton;
+			},
+			containsFocus: function()
+			{
+				return !!this._wrapper
+					&& (this._wrapper === document.activeElement || this._wrapper.contains(document.activeElement));
 			},
 			markAsJunked: function(junked)
 			{
@@ -1792,6 +2434,22 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 			onDeleteButtonClick: function(e)
 			{
 				this._parent.processItemDeletion(this);
+			},
+			onDeleteButtonKeyDown: function(e)
+			{
+				// Through the static with an explicit context: this class is a prototype literal
+				// without BX.extend, so it has no EntityEditorControl instance methods of its own.
+				BX.UI.EntityEditorControl.activateOnKey(e, this.onDeleteButtonClick, this);
+			},
+			getDeleteButtonLabel: function()
+			{
+				// Substitution goes through Loc, not String.replace(): the latter reads "$&", "$`"
+				// and "$'" in a title as backreferences. Without a title the bare "Удалить" is
+				// still a name, which is what matters here.
+				var title = this._parent ? this._parent.getTitle() : "";
+				return BX.type.isNotEmptyString(title)
+					? BX.Loc.getMessage("CRM_EDITOR_DELETE_VALUE_ARIA_LABEL", { "#TITLE#": title })
+					: BX.Loc.getMessage("CRM_EDITOR_DELETE");
 			}
 		};
 	BX.Crm.EntityEditorMultifieldItem.create = function(id, settings)
@@ -1827,6 +2485,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 		this._valueInput = null;
 		this._valueTypeInput = null;
 		this._valueTypeSelector = null;
+		this._valueTypeMenuOpenedByKeyboard = false;
 		this._valueCountryCode = null;
 
 		var valueTypeId = this.getValueTypeId();
@@ -1936,8 +2595,17 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 				"div",
 				{
 					props: {className: "crm-entity-widget-content-select"},
+					attrs: {
+						role: "button",
+						tabindex: "0",
+						"aria-haspopup": "menu",
+						"aria-expanded": "false"
+					},
 					text: this.resolveValueTypeName(valueTypeId),
-					events: {click: BX.delegate(this.onValueTypeSelectorClick, this)}
+					events: {
+						click: BX.delegate(this.onValueTypeSelectorClick, this),
+						keydown: BX.delegate(this.onValueTypeSelectorKeyDown, this)
+					}
 				}
 			);
 
@@ -1951,12 +2619,22 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 				)
 			);
 
+			// Same bare cross as in EntityEditorMultifieldItem above.
 			this._deleteButton = BX.create(
 				"div",
-				{ attrs: { className: "crm-entity-widget-content-remove-block" } }
+				{
+					attrs:
+						{
+							className: "crm-entity-widget-content-remove-block",
+							role: "button",
+							tabindex: "0",
+							"aria-label": this.getDeleteButtonLabel()
+						}
+				}
 			);
 			this._wrapper.appendChild(this._deleteButton);
 			BX.bind(this._deleteButton, "click", this._deleteButtonHandler);
+			BX.bind(this._deleteButton, "keydown", this._deleteButtonKeyHandler);
 
 			if (this._editor.isDuplicateControlEnabled())
 			{
@@ -2030,6 +2708,7 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 		BX.Crm.EntityEditorMultifield.superclass.constructor.apply(this);
 		this._items = null;
 		this._itemWrapper = null;
+		this._addButton = null;
 	};
 	BX.extend(BX.Crm.EntityEditorMultifield, BX.Crm.EntityEditorField);
 	BX.Crm.EntityEditorMultifield.prototype.doInitialize = function()
@@ -2218,22 +2897,33 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 
 		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
+			// Bare span with a click handler: no tab stop, no role (2.1.1). Its own visible text
+			// is the accessible name. Kept in a field because it is where the focus lands once
+			// the last remaining value has been deleted - see processItemDeletion().
+			this._addButton = BX.create(
+				"span",
+				{
+					attrs:
+						{
+							className: "crm-entity-widget-content-add-field",
+							role: "button",
+							tabindex: "0"
+						},
+					text: this.getMessage("add"),
+					events:
+						{
+							click: BX.delegate(this.onAddButtonClick, this),
+							keydown: BX.delegate(this.onAddButtonKeyDown, this)
+						}
+				}
+			);
+
 			this._wrapper.appendChild(
 				BX.create(
 					"div",
 					{
 						attrs: { className: "crm-entity-widget-content-block-add-field" },
-						children:
-							[
-								BX.create(
-									"span",
-									{
-										attrs: { className: "crm-entity-widget-content-add-field" },
-										text: this.getMessage("add"),
-										events: { click: BX.delegate(this.onAddButtonClick, this) }
-									}
-								)
-							]
+						children: [ this._addButton ]
 					}
 				)
 			);
@@ -2241,7 +2931,7 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -2338,6 +3028,10 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 
 		return item;
 	};
+	BX.Crm.EntityEditorMultifield.prototype.onAddButtonKeyDown = function(e)
+	{
+		this.activateOnKey(e, this.onAddButtonClick);
+	};
 	BX.Crm.EntityEditorMultifield.prototype.onAddButtonClick = function(e)
 	{
 		this.addItem({ "ID": "n" + this._items.length.toString() });
@@ -2348,8 +3042,47 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 	};
 	BX.Crm.EntityEditorMultifield.prototype.processItemDeletion = function(item)
 	{
+		// The cross is a tab stop, and deleting hides the whole row it sits in. The focus would
+		// then drop to <body> and a keyboard visitor would lose their place in the card, so it is
+		// handed over first: to the cross of the next row that survives, to the previous one when
+		// the last row was the one deleted, and to "Add" when no row is left. Only when the focus
+		// really was inside this row - a deletion started from anywhere else must not move it.
+		var focusTarget = item.containsFocus() ? this.findFocusTargetAfterDeletion(item) : null;
+
 		this.deleteItem(item);
 		this.markAsChanged();
+
+		if(focusTarget && BX.type.isFunction(focusTarget.focus))
+		{
+			focusTarget.focus();
+		}
+	};
+	BX.Crm.EntityEditorMultifield.prototype.findFocusTargetAfterDeletion = function(item)
+	{
+		var index = this.findItemIndex(item);
+		if(index < 0)
+		{
+			return this._addButton;
+		}
+
+		var i;
+		for(i = index + 1; i < this._items.length; i++)
+		{
+			if(!this._items[i].isJunked() && this._items[i].getDeleteButton())
+			{
+				return this._items[i].getDeleteButton();
+			}
+		}
+
+		for(i = index - 1; i >= 0; i--)
+		{
+			if(!this._items[i].isJunked() && this._items[i].getDeleteButton())
+			{
+				return this._items[i].getDeleteButton();
+			}
+		}
+
+		return this._addButton;
 	};
 	BX.Crm.EntityEditorMultifield.create = function(id, settings)
 	{
@@ -2460,7 +3193,7 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -2705,7 +3438,7 @@ if(typeof BX.Crm.EntityEditorHidden === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -4273,7 +5006,7 @@ if(typeof BX.Crm.EntityEditorRequisiteList === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -5705,6 +6438,11 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		this._changeRequisiteControlData = {};
 	};
 	BX.extend(BX.Crm.EntityEditorClientLight, BX.Crm.EntityEditorField);
+	BX.Crm.EntityEditorClientLight.prototype.onAddButtonKeyDown = function(event)
+	{
+		// No handler: activateOnKey raises a click, which keeps one path for both devices.
+		this.activateOnKey(event);
+	};
 	BX.Crm.EntityEditorClientLight.prototype.doInitialize = function()
 	{
 		BX.Crm.EntityEditorClientLight.superclass.doInitialize.apply(this);
@@ -6353,7 +7091,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -6512,15 +7250,20 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			);
 			this._contactWrapper.appendChild(this._contactTitleWrapper);
 
+			// "Add participant" was a bare span with a click handler: no tab stop, no role, so a
+			// keyboard visitor could not add one at all - 2.1.1 Keyboard. Its own visible text is
+			// the accessible name.
 			this._addContactButton = BX.create(
 				"span",
 				{
 					props: { className: "crm-entity-widget-actions-btn-add" },
+					attrs: { role: "button", tabindex: "0" },
 					text: this.getMessage("addParticipant")
 				}
 			);
 			this._contactWrapper.appendChild(this._addContactButton);
 			BX.bind(this._addContactButton, "click", BX.delegate(this.onContactAddButtonClick, this));
+			BX.bind(this._addContactButton, "keydown", BX.delegate(this.onAddButtonKeyDown, this));
 
 			this._contactSearchBoxes = [];
 			if(this._contactInfos.length() > 0)
@@ -6698,15 +7441,18 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 
 			if(this._enableCompanyMultiplicity)
 			{
+				// Same bare span as the contact one above.
 				this._addCompanyButton = BX.create(
 					"span",
 					{
 						props: { className: "crm-entity-widget-actions-btn-add" },
+						attrs: { role: "button", tabindex: "0" },
 						text: this.getMessage("addParticipant")
 					}
 				);
 				this._companyWrapper.appendChild(this._addCompanyButton);
 				BX.bind(this._addCompanyButton, "click", BX.delegate(this.onCompanyAddButtonClick, this));
+				BX.bind(this._addCompanyButton, "keydown", BX.delegate(this.onAddButtonKeyDown, this));
 			}
 
 			this._companySearchBoxes = [];
@@ -7883,6 +8629,37 @@ if(typeof BX.Crm.EntityEditorClient === "undefined")
 	{
 		return this._innerWrapper;
 	};
+	BX.Crm.EntityEditorClient.prototype.getTitleElementId = function()
+	{
+		return this._id.toLowerCase() + "_client_title";
+	};
+	BX.Crm.EntityEditorClient.prototype.prepareTitleLayout = function(title)
+	{
+		BX.Crm.EntityEditorClient.superclass.prepareTitleLayout.apply(this, arguments);
+
+		this._hasTitleElementId = false;
+
+		if(this._titleWrapper)
+		{
+			var titleText = this._titleWrapper.querySelector(".ui-entity-editor-block-title-text");
+			if(titleText)
+			{
+				titleText.id = this.getTitleElementId();
+				this._hasTitleElementId = true;
+			}
+		}
+	};
+	/**
+	 * Whether the title carrying getTitleElementId() has really been rendered.
+	 * The block title is optional, and aria-labelledby pointing at a missing id
+	 * leaves the group nameless instead of falling back to anything.
+	 *
+	 * @returns {boolean}
+	 */
+	BX.Crm.EntityEditorClient.prototype.hasTitleElementId = function()
+	{
+		return this._hasTitleElementId === true;
+	};
 	BX.Crm.EntityEditorClient.prototype.getEntityCreateUrl = function(entityTypeName)
 	{
 		return this._editor.getEntityCreateUrl(entityTypeName);
@@ -7986,10 +8763,23 @@ if(typeof BX.Crm.EntityEditorClient === "undefined")
 				this.createDataElement("secondaryEntityIds", this.getAllSecondaryEntityIds().join(","));
 			}
 
+			var editorWrapperAttrs = {
+				role: "group",
+				"data-testid": "crm-entity-editor-client-group"
+			};
+
+			// The title node is built above by createTitleNode(), so by this point it
+			// is already known whether there is an id to point at.
+			if(this.hasTitleElementId())
+			{
+				editorWrapperAttrs["aria-labelledby"] = this.getTitleElementId();
+			}
+
 			var editorWrapper = BX.create(
 				"div",
 				{
-					props: { className: this.isInEditMode() ? "crm-entity-widget-content-block-clients" : "" }
+					props: { className: this.isInEditMode() ? "crm-entity-widget-content-block-clients" : "" },
+					attrs: editorWrapperAttrs
 				}
 			);
 			this._innerWrapper.appendChild(editorWrapper);
@@ -8071,7 +8861,7 @@ if(typeof BX.Crm.EntityEditorClient === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -8784,7 +9574,7 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 		if(this.isDragEnabled())
 		{
@@ -9058,6 +9848,26 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 		this.onItemSelect = this.onItemSelect.bind(this);
 	};
 	BX.extend(BX.Crm.EntityEditorEntityTag, BX.Crm.EntityEditorEntity);
+	BX.Crm.EntityEditorEntityTag.prototype.getEntityIconClassName = function()
+	{
+		var entityTypeName = this._entityTypeName.toUpperCase();
+		if (entityTypeName.indexOf(BX.CrmEntityType.names.dynamic) === 0)
+		{
+			return 'ui-icon-set --o-smart-process';
+		}
+
+		var iconClassNames = {};
+		iconClassNames[BX.CrmEntityType.names.lead] = '--o-lead';
+		iconClassNames[BX.CrmEntityType.names.deal] = '--o-handshake';
+		iconClassNames[BX.CrmEntityType.names.quote] = '--o-issue-invoice';
+		iconClassNames[BX.CrmEntityType.names.order] = '--o-shopping-cart';
+		iconClassNames[BX.CrmEntityType.names.invoice] = '--o-invoice';
+		iconClassNames[BX.CrmEntityType.names.smartinvoice] = '--o-invoice';
+		iconClassNames[BX.CrmEntityType.names.contact] = '--o-person';
+		iconClassNames[BX.CrmEntityType.names.company] = '--o-company';
+
+		return 'ui-icon-set ' + BX.prop.getString(iconClassNames, entityTypeName, '--o-smart-process');
+	};
 	BX.Crm.EntityEditorEntityTag.prototype.layout = function(options)
 	{
 		if(this._hasLayout)
@@ -9069,15 +9879,7 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 
 		this.prepareLayout();
 
-		var iconClassName = 'ui-ctl-before ui-icon-border';
-		if (this._entityTypeName.toLowerCase().indexOf('dynamic') !== -1)
-		{
-			iconClassName += ' ui-ctl-icon-crm-dynamic';
-		}
-		else
-		{
-			iconClassName += ' ui-ctl-icon-crm-' + this._entityTypeName.toLowerCase();
-		}
+		var iconClassName = 'ui-ctl-before ui-icon-border crm-entity-selector-container__icon';
 		this._selectorNode = BX.create('div', {
 			attrs: {
 				className: 'ui-ctl ui-ctl-before-icon crm-entity-selector-container',
@@ -9086,7 +9888,14 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 				BX.create('div', {
 					attrs: {
 						className: iconClassName
-					}
+					},
+					children: [
+						BX.create('div', {
+							attrs: {
+								className: this.getEntityIconClassName()
+							}
+						})
+					]
 				})
 			]
 		});
@@ -9127,7 +9936,7 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 		if(this.isDragEnabled())
 		{

@@ -9,9 +9,15 @@ jn.define('crm/communication/button', (require, exports, module) => {
 	const { CommunicationMenu } = require('communication/menu');
 	const { Loc } = require('loc');
 	const { get, isObjectLike, mergeImmutable } = require('utils/object');
-	const { Icon } = require('assets/icons');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
+	const { Color } = require('tokens');
 
 	const connections = [PhoneType, EmailType, ImType];
+	const connectionIconsMap = {
+		[PhoneType]: Icon.PHONE_UP,
+		[EmailType]: Icon.MAIL,
+		[ImType]: Icon.CHATS,
+	};
 
 	const ICON_SIZE = 28;
 	const ICON_COLOR = {
@@ -108,6 +114,16 @@ jn.define('crm/communication/button', (require, exports, module) => {
 		getCommunicationIcons()
 		{
 			const { icon: iconStyle } = this.styles();
+			const { useOutlineIcons } = this.props;
+
+			if (useOutlineIcons)
+			{
+				return connections.map((connectionType) => IconView({
+					icon: connectionIconsMap[connectionType],
+					size: 20,
+					color: this.availableConnections[connectionType] ? Color.accentMainPrimary : Color.base6,
+				}));
+			}
 
 			return connections.map((connectionType) => {
 				const icon = communicationIcons[connectionType];

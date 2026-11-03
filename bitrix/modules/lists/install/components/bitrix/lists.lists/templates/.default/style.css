@@ -1,3 +1,20 @@
+.lists-project-header-avatar {
+	width: 42px;
+	height: 42px;
+	margin-right: 12px;
+	flex-shrink: 0;
+}
+
+.lists-project-header-name {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--ui-color-palette-gray-60, #959ca4);
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: 18px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .bp-bx-application {
 	position: relative;
 	background: #f2f6f7;

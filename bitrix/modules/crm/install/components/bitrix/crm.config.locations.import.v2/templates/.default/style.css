@@ -11,11 +11,22 @@
 }
 .adm-loc-i-selector-arrow{
 	background: url(/bitrix/panel/main/images/bx-admin-sprite-small-1.png) 1px -1138px no-repeat scroll;
+	border: 0;
+	cursor: pointer;
+	padding: 0;
 	width: 20px;
 	height: 20px;
 	position: absolute;
 	top: -2px;
 	left: 0px;
+}
+.adm-loc-i-selector-arrow:focus-visible {
+	outline: auto;
+	outline-offset: 2px;
+}
+.bx-tab-container[role="tab"]:focus-visible {
+	outline: auto;
+	outline-offset: 2px;
 }
 .adm-loc-i-selector-arrow.bx-ui-item-tree-expander{
 	background: url(/bitrix/panel/main/images/bx-admin-sprite.png) -6px -238px no-repeat scroll;
@@ -91,6 +102,18 @@
 .bx-ui-loc-i-delete-all-form .adm-btn-wrapper {
 	position: 		relative;
 	display: 		inline-block;
+}
+
+.bx-ui-loc-i-visually-hidden {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
 }
 
 /* component */

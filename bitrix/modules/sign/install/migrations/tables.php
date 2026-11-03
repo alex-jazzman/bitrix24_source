@@ -70,6 +70,11 @@ $migration->table('b_sign_document')->create(function (\Bitrix\Main\UpdateSystem
 	$columns->int('HCMLINK_DOCUMENT_TYPE_SETTING_ID')->unsigned();
 	$columns->datetime('DATE_SIGN_UNTIL');
 	$columns->varchar('CONFIGURED_DATE_FORMAT', 50);
+	$columns->smallInt('CREATION_SOURCE_TYPE')->notNull()->default('0');
+	$columns->varchar('CREATION_SOURCE_ID', 32);
+	$columns->int('CREATION_SOURCE_ENTITY_TYPE_ID');
+	$columns->int('CREATION_SOURCE_ENTITY_ID');
+	$columns->text('INVITE_MESSAGE');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_ENTITY', ['ENTITY_TYPE', 'ENTITY_ID']);
 	$table->addIndex('IX_B_HOST', ['HOST']);
@@ -80,6 +85,7 @@ $migration->table('b_sign_document')->create(function (\Bitrix\Main\UpdateSystem
 	$table->addIndex('IX_B_CREATED_BY_ID_DATE_CREATE', ['CREATED_BY_ID', 'DATE_CREATE']);
 	$table->addIndex('IX_B_TEMPLATE_ID_INITIATED_BY_TYPE', ['TEMPLATE_ID', 'INITIATED_BY_TYPE']);
 	$table->addIndex('IX_B_SIGN_DOCUMENT_REPRESENTATIVE_ID', ['REPRESENTATIVE_ID']);
+	$table->addIndex('IX_B_SIGN_DOCUMENT_CREATION_SRC', ['CREATION_SOURCE_ENTITY_TYPE_ID', 'CREATION_SOURCE_ENTITY_ID']);
 	$table->addUniqueIndex('UK_SIGN_DOCUMENT_HASH', ['HASH']);
 });
 
@@ -113,6 +119,7 @@ $migration->table('b_sign_member')->create(function (\Bitrix\Main\UpdateSystem\M
 	$columns->varchar('ENTITY_TYPE', 20);
 	$columns->bigInt('PRESET_ID')->unsigned();
 	$columns->tinyInt('ROLE');
+	$columns->varchar('SIGNING_METHOD', 20);
 	$columns->tinyInt('CONFIGURED');
 	$columns->tinyInt('REMINDER_TYPE')->default('0');
 	$columns->datetime('REMINDER_LAST_SEND_DATE');
@@ -402,4 +409,40 @@ $migration->table('b_sign_signers_list_user_option')->create(function (\Bitrix\M
 	$columns->datetime('DATE_CREATE')->notNull();
 	$table->addPrimaryKeys(['LIST_ID', 'USER_ID', 'OPTION_CODE']);
 	$table->addIndex('IX_B_SIGN_SLUO_USER_OPTION', ['USER_ID', 'OPTION_CODE', 'LIST_ID']);
+});
+
+// NORMATIVE SQL-01: both launch tables are declared a second time in dev/updates/current/updater.php,
+// which is what an already installed portal gets them from. Change the two declarations as a pair,
+// indexes included: a portal that got the table from the updater and one that got it from a fresh
+// install must end up with the same schema.
+$migration->table('b_sign_process_launch')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('CREATED_BY')->notNull();
+	$columns->int('TEMPLATE_ID')->notNull();
+	$columns->int('ENTITY_TYPE_ID')->notNull();
+	$columns->int('MEMBER_COUNT')->notNull();
+	$columns->varchar('STATUS', 20)->notNull();
+	$columns->text('PARAMETERS');
+	$columns->datetime('QUEUED_AT')->notNull();
+	$columns->datetime('EXPIRES_AT')->notNull();
+	$table->addPrimaryKey('ID');
+	$table->addIndex('IX_B_SIGN_PROCESS_LAUNCH_CREATED', ['CREATED_BY', 'QUEUED_AT']);
+	$table->addIndex('IX_B_SIGN_PROCESS_LAUNCH_EXPIRE', ['STATUS', 'EXPIRES_AT']);
+});
+
+$migration->table('b_sign_process_launch_item')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('LAUNCH_ID')->notNull();
+	$columns->int('EMPLOYEE_ID')->notNull();
+	$columns->int('ENTITY_ID');
+	$columns->varchar('WORKFLOW_ID', 32);
+	$columns->varchar('STATUS', 20)->notNull();
+	$columns->varchar('ERROR_MESSAGE', 255);
+	$table->addPrimaryKey('ID');
+	$table->addIndex('IX_B_SIGN_PROCESS_LAUNCH_ITEM_LAUNCH', ['LAUNCH_ID']);
+	$table->addIndex('IX_B_SIGN_PROCESS_LAUNCH_ITEM_WORKFLOW', ['WORKFLOW_ID']);
+	$table->addIndex('IX_B_SIGN_PROCESS_LAUNCH_ITEM_ENTITY', ['ENTITY_ID']);
+	$table->addIndex('IX_B_SIGN_PROCESS_LAUNCH_ITEM_QUEUE', ['STATUS', 'ID']);
 });

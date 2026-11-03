@@ -17,6 +17,7 @@ declare namespace BX.Socialnetwork.V2 {
 		MetaUser: "meta-user";
 		Project: "project";
 		ProjectTag: "project-tag";
+		StructureNode: "structure-node";
 		User: "user";
 	}>;
 
@@ -33,6 +34,17 @@ declare namespace BX.Socialnetwork.V2 {
 	enum ProjectErrorCode {
 		GroupNameExist = "ERROR_GROUP_NAME_EXISTS"
 	}
+
+	const ProjectMemberType: Readonly<{
+		Department: "department";
+		Team: "team";
+		User: "user";
+	}>;
+
+	const StructureNodeEntityType: Readonly<{
+		Department: "department";
+		Team: "team";
+	}>;
 
 	enum AccessRightsBoolKind {
 		Yes = "Y",

@@ -12,6 +12,12 @@ export const QuestionMark = defineComponent({
 		BIcon,
 	} as { BIcon: typeof BIcon },
 	directives: { hint },
+	inject: {
+		getWizardBodyContainer: {
+			from: 'getWizardBodyContainer',
+			default: null,
+		},
+	},
 	props: {
 		size: {
 			type: Number,
@@ -46,6 +52,9 @@ export const QuestionMark = defineComponent({
 					// @ts-ignore
 					offsetLeft: this.$el.offsetWidth / 2,
 					maxWidth: this.hintMaxWidth,
+					// resolve lazily on show: the wizard body ref is populated only after mount
+					// @ts-ignore
+					targetContainer: this.getWizardBodyContainer?.() ?? document.body,
 				},
 				timeout: 200,
 			});

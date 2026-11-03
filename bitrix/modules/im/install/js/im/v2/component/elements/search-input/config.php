@@ -11,6 +11,7 @@ return [
 		'main.polyfill.core',
 		'im.v2.component.elements.loader',
 		'im.v2.const',
+		'im.v2.lib.a11y',
 		'im.v2.lib.esc-manager',
 		'im.v2.lib.utils',
 		'ui.icon-set.api.vue',

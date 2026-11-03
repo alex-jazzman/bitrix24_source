@@ -1,6 +1,6 @@
 <?php
 $MESS["INTRANET_INVITATION_COLLAB_FOOTER_TITLE"] = "Bitrix24. Your ultimate workspace.";
-$MESS["INTRANET_INVITATION_COLLAB_INVITE_YOU"] = "invites you to join a сollab";
+$MESS["INTRANET_INVITATION_COLLAB_INVITE_YOU"] = "invites you to join a collab";
 $MESS["INTRANET_INVITATION_COLLAB_JOIN_BTN"] = "Join";
 $MESS["INTRANET_INVITATION_COLLAB_JOIN_US"] = "Join the collab \"#COLLAB_NAME#\" in the Bitrix24 online workspace to communicate and collaborate on various tasks.";
 $MESS["INTRANET_INVITATION_COLLAB_JOIN_US_WITHOUT_NAME"] = "Join the collab on our Bitrix24. We communicate in the chat, make calls and assign tasks.";

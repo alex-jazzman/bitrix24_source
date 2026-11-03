@@ -1,7 +1,11 @@
 import {BaseField} from 'landing.ui.field.basefield';
-import { Text, Type, Event, Dom, Runtime, Tag } from 'main.core';
+import { Type, Event, Dom, Runtime, Tag } from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {fetchEventsFromOptions} from 'landing.ui.component.internal';
+
+const NBSP = '\u00A0';
+const NBSP_ENTITY_PATTERN = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
+const EDGE_REGULAR_WHITESPACE_PATTERN = /^[\t\n\r ]+|[\t\n\r ]+$/g;
 
 export class TextField extends BaseField
 {
@@ -16,8 +20,14 @@ export class TextField extends BaseField
 		this.onInputHandler = Type.isFunction(this.options.onInput) ? this.options.onInput : () => {};
 		this.onValueChangeHandler = Type.isFunction(this.options.onValueChange) ? this.options.onValueChange : () => {};
 		this.textOnly = Type.isBoolean(this.options.textOnly) ? this.options.textOnly : false;
-		this.content = this.textOnly ? Text.encode(this.content) : this.content;
-		this.input.innerHTML = this.content;
+		if (this.textOnly)
+		{
+			this.input.textContent = this.decodeTextOnlyContent(this.content);
+		}
+		else
+		{
+			this.input.innerHTML = this.content;
+		}
 
 		this.#createFooter();
 		this.setFooterText(this.options.footerText ?? '');
@@ -47,6 +57,22 @@ export class TextField extends BaseField
 			Event.bind(editorPanelDocument, 'keydown', this.onDocumentKeydown);
 			Event.bind(editorPanelDocument, 'mouseup', this.onDocumentMouseup);
 		}
+	}
+
+	createInput(): HTMLDivElement
+	{
+		// BaseField calls createInput() from its constructor, before this.textOnly is set:
+		// text-only string content must never reach innerHTML, even for a moment.
+		const isTextOnly = this.options?.textOnly === true;
+		if (isTextOnly && (Type.isString(this.content) || Type.isNumber(this.content)))
+		{
+			const input = Tag.render`<div class="landing-ui-field-input"></div>`;
+			input.textContent = this.decodeTextOnlyContent(this.content);
+
+			return input;
+		}
+
+		return super.createInput();
 	}
 
 	onInputInput()
@@ -97,7 +123,7 @@ export class TextField extends BaseField
 	enableTextOnly()
 	{
 		this.textOnly = true;
-		this.input.innerHTML = `${this.input.innerText}`.trim();
+		this.input.textContent = this.trimTextOnlyValue(this.input.innerText);
 		Dom.attr(this.input, 'aria-multiline', null);
 	}
 
@@ -277,7 +303,41 @@ export class TextField extends BaseField
 			return this.input.innerText;
 		}
 
-		return this.adjustTags(Runtime.clone(this.input)).innerHTML.replace(/&nbsp;/g, '');
+		return this.adjustTags(Runtime.clone(this.input)).innerHTML;
+	}
+
+	isChanged(): boolean
+	{
+		if (this.textOnly)
+		{
+			const content = this.trimTextOnlyValue(this.decodeTextOnlyContent(this.content));
+			const value = this.trimTextOnlyValue(this.getValue());
+
+			return content !== value;
+		}
+
+		return super.isChanged();
+	}
+
+	setValue(value: any = '')
+	{
+		if (this.textOnly)
+		{
+			this.input.textContent = this.trimTextOnlyValue(this.decodeTextOnlyContent(value));
+			this.onValueChangeHandler(this);
+
+			const event = new BaseEvent({
+				data: { value: this.getValue() },
+				compatData: [this.getValue()],
+			});
+
+			this.emit('change', event);
+			this.emit('onChange', event);
+
+			return;
+		}
+
+		super.setValue(value);
 	}
 
 	#createFooter(): void
@@ -299,6 +359,16 @@ export class TextField extends BaseField
 	hideFooter(): void
 	{
 		Dom.hide(this.footer);
+	}
+
+	decodeTextOnlyContent(content: any): string
+	{
+		return String(content ?? '').replaceAll(NBSP_ENTITY_PATTERN, NBSP);
+	}
+
+	trimTextOnlyValue(content: any): string
+	{
+		return String(content ?? '').replaceAll(EDGE_REGULAR_WHITESPACE_PATTERN, '');
 	}
 
 	setWarningStatus(): void

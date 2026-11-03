@@ -11,7 +11,6 @@ export const TextToggleComponent = {
 	{
 		return {
 			dataTitle: this.title,
-			dataId: this.id,
 			value: null,
 		};
 	},
@@ -49,11 +48,18 @@ export const TextToggleComponent = {
 		},
 	},
 
+	// The hidden field the value used to be mirrored into is gone: an input inside a button is a
+	// nested interactive element, and the dialog is not a form - the value reaches the consumer
+	// through onToggled, so nothing read that field.
 	template: `
-		<div class="ui-checkbox-list__footer-custom-element --texttoggle" @click="handleClick">
+		<button
+			type="button"
+			data-testid="ui-checkbox-list-footer-texttoggle"
+			class="ui-checkbox-list__footer-custom-element --texttoggle"
+			@click="handleClick"
+		>
 			<span class="ui-checkbox-list__texttoggle__title">{{ dataTitle }}</span>
 			<span class="ui-checkbox-list__texttoggle__value">{{ currentLabel }}</span>
-			<input type="hidden" :name="dataId" v-model="value">
-		</div>
+		</button>
 	`,
 };

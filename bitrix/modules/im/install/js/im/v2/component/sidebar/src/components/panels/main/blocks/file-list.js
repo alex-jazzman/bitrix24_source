@@ -35,6 +35,13 @@ export const FileListPreview = {
 		{
 			return this.files.length > 0;
 		},
+		// The preview of the block leaves some of the files of the chat out - a video note has no
+		// rectangular preview to draw - so an empty preview is not an empty chat, and the panel behind
+		// the block has to stay reachable either way.
+		hasAnyFiles(): boolean
+		{
+			return this.$store.getters['sidebar/files/hasAnyFiles'](this.chatId);
+		},
 		isMigrationFinished(): boolean
 		{
 			return this.$store.state.sidebar.isFilesMigrated;
@@ -52,7 +59,7 @@ export const FileListPreview = {
 	{
 		onOpenDetail()
 		{
-			if (!this.hasFiles)
+			if (!this.hasAnyFiles)
 			{
 				return;
 			}
@@ -70,23 +77,28 @@ export const FileListPreview = {
 		},
 	},
 	template: `
-		<div class="bx-im-sidebar-file-preview__scope">
+		<div class="bx-im-sidebar-file-preview__scope" data-testid="im-sidebar-file-list">
 			<div class="bx-im-sidebar-file-preview__container">
-				<div 
-					class="bx-im-sidebar-file-preview__header_container" 
-					:class="[hasFiles ? '--active': '']" 
+				<div
+					class="bx-im-sidebar-file-preview__header_container"
+					:class="[hasAnyFiles ? '--active': '']"
+					data-testid="im-sidebar-file-list-header"
 					@click="onOpenDetail"
 				>
 					<span class="bx-im-sidebar-file-preview__title-text">
 						{{ $Bitrix.Loc.getMessage('IM_SIDEBAR_MEDIA_DETAIL_TITLE') }}
 					</span>
-					<div v-if="hasFiles" class="bx-im-sidebar__forward-icon"></div>
+					<div
+						v-if="hasAnyFiles"
+						class="bx-im-sidebar__forward-icon"
+						data-testid="im-sidebar-file-list-forward-icon"
+					></div>
 				</div>
 				<div v-if="hasFiles" class="bx-im-sidebar-file-preview__files-container">
 					<FilePreviewItem v-for="file in files" :fileItem="file" />
 				</div>
 				<DetailEmptyState
-					v-else
+					v-else-if="!hasAnyFiles"
 					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_MEDIA_AND_FILES_EMPTY')"
 					:iconType="SidebarDetailBlock.media"
 				/>

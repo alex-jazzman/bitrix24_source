@@ -39,7 +39,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				return {
 					id: 'tasks-templates-button-menu',
 					bindElement: this.$refs.button,
-					items: this.menuItems
+					items: this.menuItems,
+					targetContainer: document.body
 				};
 			},
 			menuItems() {
@@ -68,6 +69,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			hideHint() {
 				this.isHintShown = false;
 				this.unbindKeydownHandler();
+			},
+			handleMenuClose() {
+				this.isMenuShown = false;
+				this.$refs.pill?.$el?.querySelector('.b24-hover-pill-content')?.focus();
 			},
 			openTemplateSelector() {
 				const popupWidth = 385;
@@ -127,14 +132,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		},
 		template: `
 		<div ref="button">
-			<HoverPill @click="isMenuShown = true">
+			<HoverPill
+				ref="pill"
+				:ariaLabel="loc('TASKS_V2_TEMPLATES')"
+				ariaHaspopup="menu"
+				:ariaExpanded="isMenuShown"
+				@click="isMenuShown = true"
+			>
 				<div class="tasks-full-card-templates-button-container">
 					<div class="tasks-full-card-templates-button-container-text">{{ loc('TASKS_V2_TEMPLATES') }}</div>
 					<BIcon :name="Outline.CHEVRON_DOWN_L" color="var(--ui-color-design-plain-na-content)"/>
 				</div>
 			</HoverPill>
 		</div>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
 		<Hint v-if="isHintShown" :bindElement="hintContainer" @close="hideHint">
 			{{ hintText }}
 		</Hint>

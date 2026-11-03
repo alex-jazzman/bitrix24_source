@@ -54,6 +54,23 @@ class Analytics
 				break;
 			case Type.EventTypes.sendSuccess:
 				this.send('end');
+				if (data?.refill?.active)
+				{
+					this.#isStartSent = false;
+					this.#filledFields = [];
+				}
+				break;
+			case Type.EventTypes.sendError:
+				try
+				{
+					const request = this.#form.analyticsHandler(
+						'error',
+						this.#form.identification.id,
+						{ errorType: 'other' },
+					);
+					request?.catch?.(() => null);
+				}
+				catch {}
 				break;
 		}
 	}

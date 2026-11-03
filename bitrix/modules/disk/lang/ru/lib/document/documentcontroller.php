@@ -13,4 +13,3 @@ $MESS["DISK_DOC_CONTROLLER_ERROR_COULD_NOT_CREATE_FILE"] = "Не удалось 
 $MESS["DISK_DOC_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE"] = "Не настроен социальный сервис #NAME#. Пожалуйста, обратитесь к администратору портала.";
 $MESS["DISK_DOC_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24"] = "Не настроен социальный сервис #NAME#. Пожалуйста, обратитесь к администратору Битрикс24.";
 $MESS["DISK_DOC_CONTROLLER_ERROR_PLEASE_RELOAD_PAGE"] = "Чтобы просмотреть файл, обновите, пожалуйста, страницу.";
-?>

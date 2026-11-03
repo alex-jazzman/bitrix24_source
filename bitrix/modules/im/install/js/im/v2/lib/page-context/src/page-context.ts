@@ -22,11 +22,13 @@ const CONTEXT_KEY = 'currentChat';
 
 export class ChatPageContextManager
 {
-	static #instance: ChatPageContextManager;
+	static #instance: ChatPageContextManager | null = null;
+
+	#unwatch: (() => void) | null = null;
 
 	static init(): void
 	{
-		ChatPageContextManager.getInstance();
+		ChatPageContextManager.getInstance().subscribe();
 	}
 
 	static getInstance(): ChatPageContextManager
@@ -39,12 +41,17 @@ export class ChatPageContextManager
 		return ChatPageContextManager.#instance;
 	}
 
-	constructor()
+	static reset(): void
 	{
-		this.#subscribe();
+		if (ChatPageContextManager.#instance)
+		{
+			ChatPageContextManager.#instance.#dispose();
+		}
+
+		ChatPageContextManager.#instance = null;
 	}
 
-	#subscribe(): void
+	subscribe(): void
 	{
 		const watcher = (state: unknown, getters: Record<string, any>): string => {
 			const layout = getters['application/getLayout'];
@@ -60,8 +67,23 @@ export class ChatPageContextManager
 			].join('|');
 		};
 
-		Core.getStore().watch(watcher, () => this.#syncContext());
+		// Vue disposes watchers created in the messenger component scope on unmount,
+		// so every mount must re-subscribe instead of keeping the dead one.
+		this.#unwatch?.();
+		this.#unwatch = Core.getStore().watch(watcher, () => this.#syncContext());
+
+		// The messenger often reopens on the already selected chat: layout does not
+		// change, so the watcher alone would never fire.
 		this.#syncContext();
+	}
+
+	#dispose(): void
+	{
+		this.#unwatch?.();
+		this.#unwatch = null;
+		// A disposed manager must leave no trace: a stale record would keep travelling
+		// to the assistant as the currently open chat.
+		PageContext.delete(MODULE_ID, CONTEXT_KEY);
 	}
 
 	#syncContext(): void

@@ -1,0 +1,92 @@
+.crm-settings-hub-application__settings-panel > .crm-settings-hub-application__title {
+	margin: 0 0 24px;
+	color: var(--ui-color-base-1);
+	font-size: 28px;
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: 36px;
+}
+
+.crm-settings-hub-application__settings-block {
+	margin-bottom: 14px;
+	overflow: visible;
+	border-radius: var(--ui-border-radius-md, 8px);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.crm-settings-hub-application__settings-block:last-of-type {
+	margin-bottom: 0;
+}
+
+.crm-settings-hub-application__settings-block-header {
+	display: flex;
+	align-items: center;
+	padding: 24px 24px 20px;
+}
+
+.crm-settings-hub-application__settings-block-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.crm-settings-hub-application__settings-block-title {
+	margin: 0 0 0 10px;
+	color: var(--ui-color-base-0);
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: 23px;
+	letter-spacing: -0.1px;
+}
+
+.crm-settings-hub-application__settings-block-content > .crm-settings-hub-application__settings-row {
+	padding: 16px 24px 0;
+}
+
+.crm-settings-hub-application__settings-block-content > .crm-settings-hub-application__settings-row:last-child {
+	padding-bottom: 20px;
+}
+
+.crm-settings-hub-application__settings-block.--has-visible-settings > .crm-settings-hub-application__settings-block-content > .crm-settings-hub-application__settings-row:first-child,
+.crm-settings-hub-application__settings-block.--has-visible-settings > .crm-settings-hub-application__settings-block-content > .crm-settings-hub-application__settings-row:first-child .crm-settings-hub-application__setting-field {
+	padding-top: 0;
+}
+
+.crm-settings-hub-application__settings-block-content > .crm-settings-hub-application__settings-row:not(:first-child)::before {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 42px;
+	height: 1px;
+	background: var(--ui-color-divider-default);
+	content: '';
+}
+
+.crm-settings-hub-application__settings-row {
+	position: relative;
+}
+
+.crm-settings-hub-application__settings-row-action.--followable {
+	cursor: pointer;
+}
+
+.crm-settings-hub-application__settings-row-action.--followable:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-application__settings-row-action.--followable:hover .crm-settings-hub-application__setting-field-chevron {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.crm-settings-hub-application__setting-field-chevron {
+	flex: 0 0 auto;
+	margin-left: auto;
+
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+@media (max-width: 760px) {
+	.crm-settings-hub-application__panel {
+		padding: 16px;
+	}
+}

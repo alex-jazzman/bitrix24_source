@@ -21,6 +21,9 @@ jn.define('layout/ui/map/src/const/command-type', (require, exports, module) => 
 		UPDATE_CLUSTER_ICON: 'updateClusterIcon',
 		UPDATE_SETTINGS: 'updateSettings',
 		SET_GRAYSCALE: 'setGrayscale',
+		INTRO_REVEAL: 'introReveal',
+		MARKERS_HOLD: 'markersHold',
+		MARKERS_DROP: 'markersDrop',
 	};
 
 	module.exports = {

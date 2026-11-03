@@ -146,3 +146,82 @@
 	text-decoration-color: var(--im-content-create-chat__font-color_section-article-hover);
 }
 /* End external section */
+
+/* Air section */
+/* Wins over the folded, hover and per-name rules above by specificity: the air card keeps one
+   look in every state, and the section paddings move from the header to the card. */
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+	margin-bottom: var(--ui-space-stack-sm);
+	border-radius: var(--ui-border-radius-md);
+	background-color: var(--ui-color-bg-content-primary);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+
+/* The accordion draws its icon with a glyph of the icon set; the background image is left to the
+   external section, which still keeps its own graphics. */
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section_icon {
+	display: block;
+	flex-shrink: 0;
+	margin-right: 0;
+}
+
+.bx-im-chat-forms-section__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	width: 100%;
+	min-height: 38px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	text-align: left;
+}
+
+button.bx-im-chat-forms-section__header {
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-section__header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bx-im-chat-forms-section__title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bx-im-chat-forms-section__icon {
+	flex-shrink: 0;
+}
+
+.bx-im-chat-forms-section__chevron {
+	flex-shrink: 0;
+	transition: transform 200ms ease;
+}
+
+.bx-im-content-create-chat__section.--active .bx-im-chat-forms-section__chevron {
+	transform: rotate(180deg);
+}
+
+/* The top inset is the gap from the line above the content to the caption of the first field;
+   a section that draws no line keeps the same rhythm under its head. */
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section_content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+	padding: var(--ui-space-inset-md) 0 0;
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-content-create-chat__section_content.--divided {
+	margin-top: var(--ui-space-stack-sm);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+/* End air section */

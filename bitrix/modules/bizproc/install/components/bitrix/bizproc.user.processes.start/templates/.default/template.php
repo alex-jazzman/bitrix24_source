@@ -4,9 +4,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-?>
-<div id="bp-user-processes-errors-container"></div>
-<?php
 
 /**
  * @var array $arResult
@@ -35,7 +32,8 @@ global $APPLICATION;
 $pageNavigation = $arResult['pageNavigation'];
 
 ?>
-<section aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_USER_PROCESSES_START_GRID_ARIA_LABEL')) ?>">
+<section class="--ui-context-content-light" aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_USER_PROCESSES_START_GRID_ARIA_LABEL')) ?>">
+<div id="bp-user-processes-errors-container"></div>
 <?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',

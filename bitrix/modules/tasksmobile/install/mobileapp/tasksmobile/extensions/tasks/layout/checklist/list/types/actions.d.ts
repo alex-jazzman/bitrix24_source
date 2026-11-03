@@ -1,9 +1,9 @@
 import { LayoutWidget } from '../../../../../../../../../../mobile/dev/janative/api';
-import { CheckListFlatTreeItem, ChecklistMemberType } from '../../../../checklist/types/common';
+import { ChecklistMemberType } from '../../../../checklist/types';
 import { ChecklistChangeAttachmentsParams } from './list';
 
 export type ItemMembersProps = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	testId: string,
 	onClick: (itemId: number | string, memberType: ChecklistMemberType) => void,
 };
@@ -13,7 +13,7 @@ export type ItemAttachmentsDiskConfig = {
 };
 
 export type ItemAttachmentsProps = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	testId?: string,
 	parentWidget?: LayoutWidget,
 	diskConfig?: ItemAttachmentsDiskConfig,

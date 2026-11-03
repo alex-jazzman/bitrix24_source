@@ -9,10 +9,29 @@
 	margin: 0 0 0 6px;
 }
 
+/* users more button reset */
+.tasks-field-users-more {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+/* users more button reset end */
+
 .tasks-field-users-more {
 	color: var(--ui-color-base-4);
 	font-size: var(--ui-font-size-md);
 	cursor: pointer;
+}
+
+.tasks-field-users-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-users-more:hover {

@@ -383,7 +383,20 @@ class CrmActivityEmailAjax
 			{
 				\CCrmActivity::prepareCommunicationInfo($item);
 
-				$item['VIEW_URL'] = \CCrmOwnerType::GetEntityShowPath($item['ENTITY_TYPE_ID'], $item['ENTITY_ID']);
+				if (
+					(int)$item['ENTITY_ID'] > 0
+					&& \CCrmOwnerType::isDefined((int)$item['ENTITY_TYPE_ID'])
+				)
+				{
+					$item['VIEW_URL'] = \CCrmOwnerType::GetEntityShowPath(
+						$item['ENTITY_TYPE_ID'],
+						$item['ENTITY_ID']
+					);
+				}
+				else
+				{
+					unset($item['VIEW_URL']);
+				}
 
 				if (empty($activity['COMMUNICATIONS']) || \CCrmActivityDirection::Outgoing == $activity['DIRECTION'])
 				{

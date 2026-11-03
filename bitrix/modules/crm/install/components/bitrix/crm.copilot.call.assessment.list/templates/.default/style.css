@@ -145,10 +145,6 @@
 	background: url('./images/crm-copilot-call-assessment-list-schedule-icon.svg') center/contain no-repeat;
 }
 
-.crm-copilot-call-assessment-list-modified-field {
-	margin-top: -5px;
-}
-
 .crm-copilot-call-assessment-list-modified-field.--not-available {
 	color: var(--ui-color-palette-black-base);
 	opacity: var(--ui-opacity-40);

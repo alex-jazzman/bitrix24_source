@@ -14,6 +14,6 @@
 	min-height: 32px;
 	border-top: 1px solid var(--ui-color-divider-default);
 	border-bottom: 1px solid var(--ui-color-divider-default);
-	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 9px var(--ui-color-area-box-shadow-default-color);
 	z-index: 1;
 }

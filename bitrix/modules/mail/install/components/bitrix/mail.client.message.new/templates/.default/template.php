@@ -167,7 +167,8 @@ if (isset($message['__type']))
 			);
 
 			$attachedFiles = [];
-			foreach ((array)$message['__files'] as $item)
+			$composeFiles = $arResult['COMPOSE_FORM_DATA']['attachments']['files'] ?? $message['__files'];
+			foreach ((array)$composeFiles as $item)
 			{
 				if (preg_match('/^n\d+$/i', $item['id']))
 				{
@@ -405,7 +406,7 @@ if (isset($message['__type']))
 					sendButton.disabled = migrationActive || initiallyDisabled;
 					if (migrationActive)
 					{
-						sendButton.setAttribute('title', BX.Loc.getMessage('MAIL_MIGRATION_SEND_UNAVAILABLE') || '');
+						sendButton.setAttribute('title', BX.Loc.getMessage('MAIL_MIGRATION_ACTION_UNAVAILABLE') || '');
 					}
 					else if (initialTitle === null)
 					{
@@ -470,9 +471,6 @@ if (isset($message['__type']))
 
 					event.preventDefault();
 					event.stopImmediatePropagation();
-					BX.UI.Notification.Center.notify({
-						content: BX.Loc.getMessage('MAIL_MIGRATION_SEND_UNAVAILABLE'),
-					});
 				}, true);
 
 				BX.bind(sendButton, 'click', function() {

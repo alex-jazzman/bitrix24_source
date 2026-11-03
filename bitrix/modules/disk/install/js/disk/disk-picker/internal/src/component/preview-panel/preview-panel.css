@@ -6,23 +6,30 @@
 	width: 100%;
 	height: 100%;
 	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	/* No wash of its own: the preview is part of the plate and stands on its surface directly. */
 	overflow-y: auto;
 }
 
+/* The empty state grows into the free height instead of claiming 100% of it: the panel's
+   own padding is added on top of a percentage height, so the block overflowed the column
+   and its centre sat above the visible one. As a flex child it measures what is left. */
 .disk-picker-preview-panel__empty {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: var(--ui-space-stack-md);
-	height: 100%;
+	flex: 1;
+	min-height: 0;
 }
 
 .disk-picker-preview-panel__empty-graphic {
 	flex: none;
-	width: 120px;
-	height: 120px;
-	background: url('../../image/no-file.png') center / 120px 120px no-repeat;
+	width: 100px;
+	height: 100px;
+	/* `contain` and not a pair of pixel sizes: the artwork is not guaranteed to be square, and a
+	   fixed pair squashed it to the box instead of fitting it. */
+	background: url('../../image/no-file.webp') center / contain no-repeat;
 }
 
 .disk-picker-preview-panel__empty-hint {
@@ -32,40 +39,14 @@
 	gap: var(--ui-space-stack-2xs);
 	max-width: 360px;
 	text-align: center;
+}
+
+/* The colour goes on the typography components themselves, not on the block around them:
+   they carry their own, and a rule on the wrapper never reaches the text. A step down the
+   white scale — the hint explains the empty panel and should not compete with the file names
+   in the list beside it. */
+.disk-picker-preview-panel__empty-hint-text {
 	color: var(--ui-color-base-3);
-}
-
-.disk-picker-preview-panel__multi-hint {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--ui-space-stack-2xs);
-}
-
-.disk-picker-preview-panel__multi-hint-action {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--ui-space-inline-2xs);
-}
-
-.disk-picker-preview-panel__multi-hint-action kbd {
-	box-sizing: border-box;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
-	border: 0;
-	border-radius: var(--ui-border-radius-xs);
-	background: var(--ui-color-base-7);
-	color: inherit;
-	font: inherit;
-	text-align: center;
-}
-
-.disk-picker-preview-panel__click {
-	flex: none;
-	width: 17px;
-	height: 24px;
-	background: url('../../image/mouse.png') center / contain no-repeat;
 }
 
 .disk-picker-preview-panel__single,
@@ -75,32 +56,90 @@
 	gap: var(--ui-space-stack-md);
 }
 
+/* No card under the content: a picture and a format icon alike stand on the glass, which is
+   what the design shows. The fill that used to be here read as a slab the moment the image
+   stopped filling it edge to edge. */
 .disk-picker-preview-panel__thumb {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	height: 154px;
 	border-radius: var(--ui-border-radius-lg);
-	background: var(--ui-color-bg-content-primary);
 	overflow: hidden;
 }
 
+/* The placeholder holds the card's shape while the picture travels: on a slow connection the
+   panel used to stand empty between the click and the image. It fills the box, so nothing
+   moves when the picture takes its place.
+
+   This one keeps the light context and stays grey, unlike the placeholders in the list: the
+   panel is the palest surface of the dialog, and white on it read as nothing at all. */
+.disk-picker-preview-panel__thumb-skeleton {
+	/* A block and not a flex row: the skeleton takes its width from a percentage, and as a flex
+	   item it would have measured itself against its own content and come out empty. */
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* The corner belongs to the picture, not to the box around it: the picture is fitted whole,
+   so it reaches the edge on one axis only, and a corner clipped by the container rounded
+   just that pair of sides and left the other two square. */
 .disk-picker-preview-panel__image {
 	max-width: 100%;
 	max-height: 100%;
+	border-radius: var(--ui-border-radius-lg);
 	object-fit: contain;
 }
 
+/* The cards overlap instead of standing in a row: the selection is one stack, and the file
+   picked last is the one the panel describes. The stack is built with negative margins in
+   source order, so the newest card is painted last and needs no z-index of its own. */
 .disk-picker-preview-panel__fan {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	gap: var(--ui-space-inline-2xs);
+	position: relative;
 	height: 154px;
 }
 
-.disk-picker-preview-panel__name,
+/* Every card is pinned to the same centre and leans out from under the one in front, so the
+   stack stays put wherever it is: laid out in flow, the row grew to the left with each new
+   card and the whole group drifted off the panel's axis. Depth is read off the lean and the
+   strength together, and the transition carries a card between those steps as the selection
+   grows rather than snapping it into place. */
+.disk-picker-preview-panel__fan-thumb {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 250ms ease, opacity 250ms ease;
+}
+
+/* Counted from the end: the last card is the front of the stack, whatever the depth. It
+   stands straight, and the ones behind lean to either side of it. */
+.disk-picker-preview-panel__fan-thumb:nth-last-child(1) {
+	transform: translate(-50%, -50%);
+	opacity: 1;
+}
+
+.disk-picker-preview-panel__fan-thumb:nth-last-child(2) {
+	transform: translate(calc(-50% - 14px), -50%) rotate(-8deg);
+	opacity: 0.6;
+}
+
+.disk-picker-preview-panel__fan-thumb:nth-last-child(3) {
+	transform: translate(calc(-50% + 14px), -50%) rotate(8deg);
+	opacity: 0.35;
+}
+
+/* The stack still reads without the movement — the tilt and the fade do the work — so the
+   transition is the only thing dropped for those who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-preview-panel__fan-thumb {
+		transition: none;
+	}
+}
+
 .disk-picker-preview-panel__multi-title {
 	min-width: 0;
 	overflow: hidden;
@@ -109,11 +148,56 @@
 	color: var(--ui-color-base-1);
 }
 
-.disk-picker-preview-panel__props {
+/* The file name wraps onto a second line and is ellipsised only after it: a long name
+   is worth two lines here, unlike the single-line rows of the list. */
+/* The name and the format are one block: the column between them would otherwise put the
+   panel's own stack between the two lines, and the format belongs to the name. */
+.disk-picker-preview-panel__title {
 	display: flex;
 	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	min-width: 0;
 }
 
+.disk-picker-preview-panel__format {
+	color: var(--ui-color-base-3);
+}
+
+.disk-picker-preview-panel__name {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	min-width: 0;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	color: var(--ui-color-base-1);
+}
+
+/* Every group of properties opens with the same rule the dialog uses for its header and
+   footer, so a group is always cut off from the title above it: one flat grey divider, and a
+   one-pixel line on a pseudo-element because a `border` would sit inside the padding. */
+.disk-picker-preview-panel__props {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	padding-top: var(--ui-space-stack-md);
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+.disk-picker-preview-panel__props::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-accent);
+	pointer-events: none;
+}
+
+/* The rows are told apart by their spacing, not by a rule under each one: a line per row
+   turned the panel into a ledger, while the design keeps the list open. */
 .disk-picker-preview-panel__prop {
 	display: flex;
 	flex-direction: row;
@@ -121,11 +205,12 @@
 	justify-content: space-between;
 	gap: var(--ui-space-inline-sm);
 	min-height: 26px;
-	border-bottom: 1px solid var(--ui-color-divider-default);
 }
 
+/* The label yields to its value: both sat on the same step and the row read as one even
+   phrase, where the design puts the weight on what the value says. */
 .disk-picker-preview-panel__prop-label {
-	color: var(--ui-color-base-2);
+	color: var(--ui-color-base-3);
 }
 
 .disk-picker-preview-panel__prop-value {
@@ -133,5 +218,37 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	color: var(--ui-color-base-2);
+	color: var(--ui-color-base-1);
+}
+
+/* The panel replaces its whole content when the state changes — empty to one file, one file to
+   many — and without a beat of its own that replacement passed unnoticed. Each state carries a
+   key, so Vue builds a new node and the fade runs again. Opacity only: the panel scrolls, and
+   travel here would fight the scrollbar the way it did in the list.
+
+   The key of the many-files state names the state and not the count: keyed by the count, the
+   block was rebuilt on every added file, and the fan's cards — which slide and turn into their
+   new places by their own transitions — arrived already in position with nothing to see. */
+@keyframes disk-picker-preview-in {
+	from {
+		opacity: 0.4;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.disk-picker-preview-panel__empty,
+.disk-picker-preview-panel__multi,
+.disk-picker-preview-panel__single {
+	animation: disk-picker-preview-in var(--disk-picker-duration-swap) var(--disk-picker-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-preview-panel__empty,
+	.disk-picker-preview-panel__multi,
+	.disk-picker-preview-panel__single {
+		animation: none;
+	}
 }

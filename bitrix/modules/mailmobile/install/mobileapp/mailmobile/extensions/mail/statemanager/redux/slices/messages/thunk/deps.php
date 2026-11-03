@@ -10,5 +10,6 @@ return [
 		'device/connection',
 		'mail:statemanager/redux/slices/messages/selector',
 		'mail:statemanager/redux/slices/folders/selector',
+		'loc',
 	],
 ];

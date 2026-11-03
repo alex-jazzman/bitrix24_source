@@ -67,6 +67,23 @@ export class VotesModel extends BuilderModel
 
 				store.commit('delete', messageId);
 			},
+			/** @function copilot/votes/add */
+			add: (store: Store, payload: Array<JsonObject>) => {
+				if (!Type.isArrayFilled(payload))
+				{
+					return;
+				}
+
+				payload.forEach((item) => {
+					const preparedVote = this.formatFields(item);
+					if (Type.isUndefined(preparedVote.messageId) || Type.isUndefined(preparedVote.value))
+					{
+						return;
+					}
+
+					store.commit('set', preparedVote);
+				});
+			},
 		};
 	}
 

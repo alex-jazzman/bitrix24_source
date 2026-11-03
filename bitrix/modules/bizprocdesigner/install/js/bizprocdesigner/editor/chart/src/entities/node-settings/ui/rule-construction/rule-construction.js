@@ -161,6 +161,10 @@ export const RuleConstruction = {
 			return descriptions[this.construction.type] ?? '';
 		},
 	},
+	/**
+	 * The row is focusable programmatically and stays out of the Tab order: the approach of the panel
+	 * to a place of an error leads to this very row and puts the focus on it (leadToConstructionRow).
+	 */
 	template: `
 		<div
 			data-name="rule-construction"
@@ -172,6 +176,7 @@ export const RuleConstruction = {
 			:data-section="dragSection"
 			:role="groupRole"
 			:aria-labelledby="groupRole ? labelId : null"
+			tabindex="-1"
 		>
 			<div class="editor-chart-node-settings-rule-construction__top">
 				<BIcon

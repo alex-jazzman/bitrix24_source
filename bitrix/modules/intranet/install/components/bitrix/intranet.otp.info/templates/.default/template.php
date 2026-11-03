@@ -7,6 +7,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die;
 }
 
+$dayMonthFormat = \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat();
+
 if ($arResult['OLD_OTP_POPUP'] ?? true):
 CJSCore::Init(["popup", "ui.fonts.opensans"]);
 ?>
@@ -121,10 +123,8 @@ CJSCore::Init(["popup", "ui.fonts.opensans"]);
 
 				const popup = provider.full();
 
-				popup.subscribe('onClose', (event) => {
-					const context = event.getData()?.context;
-					const qrView = context?.getViewByCode('qr');
-					if (qrView?.isAppSuccessConnected() === true)
+				popup.subscribe('onClose', () => {
+					if (provider.isConnectionCompleted())
 					{
 						callback();
 					}
@@ -136,19 +136,38 @@ CJSCore::Init(["popup", "ui.fonts.opensans"]);
 	};
 
 	BX.ready(() => {
-		BX.Runtime.loadExtension('intranet.notify-banner.otp-info', 'ui.banner-dispatcher', 'intranet.push-otp.connect-popup')
-			.then((exports) => {
+		const mobilePopupPromise = typeof mobilePopupRegistrationPromise === 'undefined'
+			? Promise.resolve(true)
+			: mobilePopupRegistrationPromise
+		;
+		Promise.all([
+			BX.Runtime.loadExtension(
+				'intranet.notify-banner.otp-info',
+				'ui.banner-dispatcher',
+				'intranet.push-otp.connect-popup',
+			),
+			mobilePopupPromise,
+		])
+			.then(([exports, shouldRegisterOtp]) => {
+				if (shouldRegisterOtp === false)
+				{
+					return;
+				}
+
 				const { BannerFactory, BannerDispatcher } = exports;
 				BannerDispatcher.critical.toQueue((onDone) => {
 					const popup = new BannerFactory().create(<?= $arResult['pushOtpConfig']['type'] ?? '' ?>, {
 						endDate: <?= $arResult['pushOtpConfig']['gracePeriod'] ?? 'null' ?>,
-						formatEndDate: '<?= \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat() ?>',
+						formatEndDate: '<?= CUtil::JSEscape($dayMonthFormat) ?>',
 						settingsUrl: '<?= $arResult['pushOtpConfig']['settingsUrl'] ?? '' ?>',
 						promoteMode: '<?= $arResult['pushOtpConfig']['promoteMode'] ?? '' ?>',
 						pushOtpPopupProvider: pushOtpPopupProvider,
 					});
 					popup.subscribe('onClose', onDone);
 					popup.show();
+				}, {
+					// the banner must not overlap opened sliders
+					forceShowOnTop: false,
 				});
 			});
 	});

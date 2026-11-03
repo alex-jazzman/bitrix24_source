@@ -3,38 +3,45 @@
  */
 jn.define('more-menu/block/company', (require, exports, module) => {
 	const { isModuleInstalled } = require('module');
+	const { Indent } = require('tokens');
 
 	const { Area } = require('ui-system/layout/area');
 	const { CardList } = require('ui-system/layout/card-list');
 
+	const { MyCompanyEntryPlate } = require('my-company/entry-plate');
+	const { getMyCompanyCounter } = require('my-company/counter');
 	const { WhatsNewButton } = require('more-menu/block/company/whats-new');
 	const { MoreMenuUsers } = require('more-menu/block/company/users');
-	const { PersonalAccountSection } = require('more-menu/block/company/personal-account');
-	const { SupportButton } = require('more-menu/block/company/support');
+	const { SupportButton, subscribeToSupportRequests } = require('more-menu/block/company/support');
 	const { SupportBanners } = require('more-menu/block/company/support-banners');
+	const { resolveCardSet } = require('more-menu/block/company/tariff-plate');
+	const { DemoPlate } = require('more-menu/block/company/tariff-plate/demo/plate');
+	const { SubscriptionState } = require('more-menu/block/company/tariff-plate/subscription/plate');
+	const { connect } = require('statemanager/redux/connect');
+	const { selectNewCount } = require('statemanager/redux/slices/whats-new');
 
 	const { PropTypes } = require('utils/validation');
 	const { createTestIdGenerator } = require('utils/test');
 	const { PureComponent } = require('layout/pure-component');
 
 	/**
-	 * @typedef {Object} CompanyInfo
-	 * @property {array} users
-	 * @property {number} totalUsersCount
-	 * @property {boolean} canInvite
+	 * The counter of the plate sums up the counters the whole app shares and the one of the news. The
+	 * news counter lives in the slice the carousel of the section is drawn from, and the plate follows
+	 * that slice itself: the section is a context of its own, and a value carried over from it would
+	 * mean the menu showing whatever the section last told it rather than what the store holds.
+	 *
+	 * @type {function(object): object}
 	 */
+	const MyCompanyEntryPlateWithCounter = connect(
+		(state, { counters, shouldShowWhatsNew }) => ({
+			counter: getMyCompanyCounter(counters, shouldShowWhatsNew ? selectNewCount(state) : 0),
+		}),
+	)(MyCompanyEntryPlate);
 
 	/**
-	 * @typedef {Object} LicenseInfo
-	 * @property {string} licenseName
-	 * @property {?number} tillDate Unix timestamp or null
-	 * @property {boolean} isDemo
-	 * @property {boolean} isLicenseExpired
-	 * @property {boolean} isLicenseAlmostExpired
-	 * @property {string} type
-	 * @property {boolean} isFreeLicense
-	 * @property {boolean} isEnterprise
-	 * @property {boolean} isDemoTrialAvailable
+	 * @typedef {Object} EmployeesInfo
+	 * @property {array} users
+	 * @property {number} totalUsersCount
 	 */
 
 	/**
@@ -50,17 +57,17 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 	{
 		/**
 		 * @param props
-		 * @param {CompanyInfo} props.company
-		 * @param {LicenseInfo} props.license
+		 * @param {?EmployeesInfo} props.employees preview of the staff, the payload of the employees card
+		 * @param {string} [props.companyName] name of the portal, the title of the entry plate
 		 * @param {number} props.supportBotId
 		 * @param {SupportBannersInfo|null} props.supportBanners
+		 * @param {object|null} props.tariffPlate
 		 * @param {object} props.layout
 		 * @param {boolean} props.canUseSupport
 		 * @param {boolean} props.canInvite
 		 * @param {boolean} props.canUseTelephony
 		 * @param {boolean} props.shouldShowWhatsNew
-		 * @param {boolean} props.canUsePersonalAccount
-		 * @param {array} props.personalAccountCompanies
+		 * @param {boolean} props.canUseMyCompany
 		 * @param {string} props.testId
 		 * @param {string} props.helpdeskUrl
 		 * @param {object} props.counters
@@ -74,55 +81,147 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 				prefix: props.testId,
 			});
 
-			this.state = {
-				showResultYearButton: false,
-			};
+			this.unsubscribeFromSupportRequests = null;
+		}
+
+		/**
+		 * The menu is the context support is opened from while the section of the company is closed before
+		 * the panel goes up. Once the section stays behind the panel, it takes the request over and this
+		 * subscription goes away with the workaround that closes it.
+		 */
+		componentDidMount()
+		{
+			this.unsubscribeFromSupportRequests = subscribeToSupportRequests();
+		}
+
+		componentWillUnmount()
+		{
+			this.unsubscribeFromSupportRequests?.();
+			this.unsubscribeFromSupportRequests = null;
 		}
 
 		render()
 		{
-			const {
-				shouldShowWhatsNew,
-				canUseSupport,
-				helpdeskUrl,
-				supportBotId,
-				onWhatsNewCounterChange,
-			} = this.props;
+			const { canUseMyCompany } = this.props;
 
 			return Area(
 				{
 					excludePaddingSide: {
 						bottom: true,
 					},
-				},
-				CardList(
-					{
-						withScroll: false,
+					// The block above pays its own bottom padding, and the top one of this area lands on top
+					// of it: the two together read as a gap twice the one between the cards. The margin gives
+					// part of it back; the area keeps its padding, so nothing else in the block moves.
+					style: {
+						marginTop: -Indent.XL3.toNumber(),
 					},
-					this.#renderMoreMenuUsers(),
-					this.#renderPersonalAccount(),
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								justifyContent: 'center',
-								alignItems: 'center',
-							},
-						},
-						shouldShowWhatsNew && WhatsNewButton({
-							testId: this.getTestId('whats-new-button'),
-							onCounterChange: onWhatsNewCounterChange,
-						}),
-						(canUseSupport || helpdeskUrl) && new SupportButton({
-							testId: this.getTestId('support-button-2'),
-							canUseSupport,
-							helpdeskUrl,
-							supportBotId,
-						}),
-					),
-					this.#renderSupportBanners(),
-				),
+				},
+				canUseMyCompany ? this.#renderEntryCardList() : this.#renderLegacyCardList(),
 			);
+		}
+
+		/**
+		 * The block leads into the section and keeps only what the section does not carry: the demo tariff
+		 * offer and the third-party banners.
+		 */
+		#renderEntryCardList()
+		{
+			return CardList(
+				{
+					withScroll: false,
+				},
+				this.#renderMyCompany(),
+				this.#renderTariffDemoPlate(),
+				this.#renderSupportBanners(),
+			);
+		}
+
+		/**
+		 * Composition for portals without the section: exactly the blocks the menu had before the section
+		 * appeared, with nothing of the tariff domain. A new card belongs to the section alone and is
+		 * never added here.
+		 */
+		#renderLegacyCardList()
+		{
+			return CardList(
+				{
+					withScroll: false,
+				},
+				this.#renderMoreMenuUsers(),
+				this.#renderWhatsNewWithSupportRow(),
+				this.#renderSupportBanners(),
+			);
+		}
+
+		#renderMyCompany()
+		{
+			const { layout, companyName, counters, shouldShowWhatsNew } = this.props;
+
+			return MyCompanyEntryPlateWithCounter({
+				layout,
+				companyName,
+				counters,
+				shouldShowWhatsNew,
+				testId: this.getTestId('my-company'),
+			});
+		}
+
+		/**
+		 * Without the section the news stay in the menu as a compact button, and that button shares one
+		 * row with the support one.
+		 */
+		#renderWhatsNewWithSupportRow()
+		{
+			const {
+				shouldShowWhatsNew,
+				onWhatsNewCounterChange,
+				canUseSupport,
+				helpdeskUrl,
+				supportBotId,
+			} = this.props;
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						justifyContent: 'center',
+						alignItems: 'center',
+					},
+				},
+				shouldShowWhatsNew && WhatsNewButton({
+					testId: this.getTestId('whats-new-button'),
+					onCounterChange: onWhatsNewCounterChange,
+				}),
+				(canUseSupport || helpdeskUrl) && new SupportButton({
+					testId: this.getTestId('support-button-2'),
+					canUseSupport,
+					helpdeskUrl,
+					supportBotId,
+				}),
+			);
+		}
+
+		/**
+		 * The tariff cards belong to the section; the demo offer is the one the menu shows beside it, so
+		 * the block asks the card set rule about it and mounts the plate on its own.
+		 */
+		#renderTariffDemoPlate()
+		{
+			const { tariffPlate, layout } = this.props;
+
+			if (!resolveCardSet(tariffPlate, SubscriptionState).demo)
+			{
+				return null;
+			}
+
+			return new DemoPlate({
+				showPurchaseCta: Boolean(tariffPlate.tariff.cta),
+				isCtaForced: Boolean(tariffPlate.tariff.ctaForced),
+				layout,
+				// DemoPlate already prefixes its own locators with `demo-`, and the root stays the one of
+				// the tariff block, so the locators of the plate do not depend on who mounts it
+				testId: this.getTestId('tariff-plate'),
+			});
 		}
 
 		#renderSupportBanners()
@@ -143,40 +242,24 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 		{
 			const {
 				layout,
-				company,
+				employees,
 				canInvite,
 				canUseTelephony,
 				counters,
 			} = this.props;
 
-			if (!this.#isIntranetInstalled() || !company)
+			if (!this.#isIntranetInstalled() || !employees)
 			{
 				return null;
 			}
 
 			return new MoreMenuUsers({
-				company,
+				employees,
 				layout,
 				canInvite,
 				canUseTelephony,
 				testId: this.getTestId('users'),
 				counters,
-			});
-		}
-
-		#renderPersonalAccount()
-		{
-			const { canUsePersonalAccount, personalAccountCompanies, layout } = this.props;
-
-			if (!canUsePersonalAccount)
-			{
-				return null;
-			}
-
-			return new PersonalAccountSection({
-				layout,
-				companies: personalAccountCompanies,
-				testId: this.getTestId('personal-account'),
 			});
 		}
 
@@ -187,16 +270,16 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 	}
 
 	MoreMenuCompany.propTypes = {
-		company: PropTypes.object,
-		license: PropTypes.object,
+		employees: PropTypes.object,
+		companyName: PropTypes.string,
 		supportBotId: PropTypes.number,
+		tariffPlate: PropTypes.object,
 		layout: PropTypes.object.isRequired,
 		canUseSupport: PropTypes.bool,
 		canInvite: PropTypes.bool,
 		canUseTelephony: PropTypes.bool,
 		shouldShowWhatsNew: PropTypes.bool,
-		canUsePersonalAccount: PropTypes.bool,
-		personalAccountCompanies: PropTypes.array,
+		canUseMyCompany: PropTypes.bool,
 		testId: PropTypes.string,
 		helpdeskUrl: PropTypes.string,
 		counters: PropTypes.object,

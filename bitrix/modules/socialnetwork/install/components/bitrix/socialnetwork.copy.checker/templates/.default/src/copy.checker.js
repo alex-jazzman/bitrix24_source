@@ -7,15 +7,11 @@ export class CopyChecker
 	{
 		options = {...{
 			signedParameters: "",
-			moduleId: "",
-			errorOption: "",
 			errorAlertContainerId: "",
 			errorAlertCloseButtonId: ""
 		}, ...options};
 
 		this.signedParameters = options.signedParameters;
-		this.moduleId = options.moduleId;
-		this.errorOption = options.errorOption;
 
 		this.errorAlertContainerId = options.errorAlertContainerId;
 		this.errorAlertCloseButtonId = options.errorAlertCloseButtonId;
@@ -39,10 +35,7 @@ export class CopyChecker
 
 	onCloseAlert()
 	{
-		this.requestSender.deleteErrorOption({
-			"moduleId": this.moduleId,
-			"errorOption": this.errorOption
-		})
+		this.requestSender.deleteErrorOption()
 		.then((response) => {
 			this.errorAlertContainer.remove();
 		}).catch((response) => {});

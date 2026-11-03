@@ -39,7 +39,7 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector-enti
 		 */
 		static getEntityId()
 		{
-			return ['meta-user', 'department', 'user'];
+			return ['meta-user', 'department', 'structure-node', 'user'];
 		}
 
 		static getTitle()

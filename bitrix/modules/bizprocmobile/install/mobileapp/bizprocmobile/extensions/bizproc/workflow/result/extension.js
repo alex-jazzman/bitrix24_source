@@ -8,7 +8,7 @@ jn.define('bizproc/workflow/result', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { inAppUrl } = require('in-app-url');
 	const { throttle } = require('utils/function');
-	const { openNativeViewer } = require('utils/file');
+	const { getMimeType, getNativeViewerMediaType, openNativeViewer } = require('utils/file');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	class WorkflowResult extends PureComponent
@@ -85,7 +85,7 @@ jn.define('bizproc/workflow/result', (require, exports, module) => {
 						const file = this.state.files[url];
 						const openViewer = throttle(openNativeViewer, 500);
 						openViewer({
-							fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
+							fileType: getNativeViewerMediaType(getMimeType(file.type, file.name)),
 							url: file.url,
 							name: file.name,
 						});

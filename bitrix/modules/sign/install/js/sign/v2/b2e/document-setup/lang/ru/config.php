@@ -26,3 +26,4 @@ $MESS['SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_HINT'] = 'Вы редактируете 
 $MESS['SIGN_V2_B2E_DOCUMENT_SETUP_EDITOR_APPLY_ERROR'] = 'Не удалось применить изменения из редактора';
 $MESS['SIGN_V2_B2E_DOCUMENT_SETUP_BLOCK_EDITOR_UNAVAILABLE_HINT'] = 'Выберите провайдер и другие настройки подписания на следующих шагах, чтобы открыть редактор с блоками полей';
 $MESS['SIGN_DOCUMENT_SETUP_COMBINED_IMAGE_DOCUMENT'] = 'Объединённый документ';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_BATCH_COMMIT_ERROR'] = 'Не удалось добавить документы. Попробуйте ещё раз';

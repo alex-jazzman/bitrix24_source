@@ -1,0 +1,8 @@
+/* Just the save/cancel pair now. The surface it used to draw moved up to the shell's panel slot
+   (hub-shell.css): this component is one of two things standing in that bar, not the bar itself. */
+.crm-settings-hub-save-panel {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}

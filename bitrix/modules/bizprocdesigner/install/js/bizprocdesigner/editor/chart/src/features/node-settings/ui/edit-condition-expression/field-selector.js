@@ -3,9 +3,16 @@ import { Dialog, type EntityOptions, type Item, type ItemOptions, type TabOption
 
 import { diagramStore } from '../../../../entities/blocks';
 import { FIELD_OBJECT_TYPES, type ConditionExpressionField } from '../../../../entities/node-settings';
-import { isTemplateSourceAvailableForBlockType } from '../../../../shared/constants';
+import { DOCUMENT_FIELDS_ENTITY_ID, EVALUATION_STAGE } from '../../../../shared/constants';
 import { type PortId, type Block, type DocumentField } from '../../../../shared/types';
 import { documentFieldsCache } from '../../../../shared/utils';
+import {
+	buildProcessDataGroups,
+	loadProcessDataCatalog,
+	processDataMechanics,
+	type ProcessDataSelectorEntry,
+	type ProcessDataSelectorGroup,
+} from '../../../../entities/process-data/groups';
 
 const CustomDataFieldKey = 'field';
 
@@ -29,12 +36,14 @@ export class FieldSelector
 	// addresses none. Decided by the caller (see EditConditionExpression.conditionDocumentType): the
 	// selector only offers what it is given.
 	documentType: Array<string> | null;
+	selectedField: ConditionExpressionField | null;
 
 	constructor(
 		currentBlock: Block,
 		currentPortId: PortId | null = null,
 		connectedBlocks: Array<Block> | null = null,
 		documentType: Array<string> | null = null,
+		selectedField: ConditionExpressionField | null = null,
 	)
 	{
 		this.store = diagramStore();
@@ -42,6 +51,7 @@ export class FieldSelector
 		this.currentPortId = currentPortId;
 		this.connectedBlocks = connectedBlocks;
 		this.documentType = documentType;
+		this.selectedField = selectedField;
 	}
 
 	/**
@@ -65,7 +75,7 @@ export class FieldSelector
 
 	async #openDialog(targetElement: Element): Promise<ConditionExpressionField>
 	{
-		let items;
+		let items = [];
 		try
 		{
 			items = await this.getItems();
@@ -93,6 +103,9 @@ export class FieldSelector
 					cacheable: false,
 					showAvatars: false,
 					events: {
+						'ItemNode:onFocus': (event) => {
+							this.#selectDynamicDocumentItemOnLoad(dialog, event.getData().node, items);
+						},
 						'Item:onSelect': (event) => {
 							resolve(this.#getValue(event.getData().item));
 						},
@@ -117,22 +130,130 @@ export class FieldSelector
 	{
 		const field = { ...item.getCustomData().get(CustomDataFieldKey) };
 
-		if (item.getEntityId() === 'bizproc-document')
+		if (item.getEntityId() === DOCUMENT_FIELDS_ENTITY_ID)
 		{
+			const itemId = String(item.getId());
+			const objectPrefix = Type.isStringFilled(field.object) ? `${field.object}:` : '';
+
 			return {
 				...field,
-				fieldId: item.getId(),
+				fieldId: itemId.startsWith(objectPrefix) ? itemId.slice(objectPrefix.length) : itemId,
 			};
 		}
 
 		return field;
 	}
 
+	#isSelectedField(field: ConditionExpressionField): boolean
+	{
+		if (!this.selectedField)
+		{
+			return false;
+		}
+
+		return field.object === this.selectedField.object && field.fieldId === this.selectedField.fieldId;
+	}
+
+	#markSelected(itemOptions: ItemOptions): ItemOptions
+	{
+		const field = itemOptions.customData?.[CustomDataFieldKey];
+
+		return {
+			...itemOptions,
+			selected: field ? this.#isSelectedField(field) : false,
+		};
+	}
+
+	#selectDynamicDocumentItemOnLoad(dialog: Dialog, node, items: ItemOptions[]): void
+	{
+		const selectedDynamicDocumentItem = this.#findSelectedDynamicDocumentItem(items);
+		const item = node?.getItem?.();
+		if (
+			!selectedDynamicDocumentItem
+			|| item?.getEntityId?.() !== DOCUMENT_FIELDS_ENTITY_ID
+			|| String(item.getId()) !== String(selectedDynamicDocumentItem.parentId)
+		)
+		{
+			return;
+		}
+
+		const selectLoadedItem = () => {
+			dialog.getItem([DOCUMENT_FIELDS_ENTITY_ID, selectedDynamicDocumentItem.itemId])?.select(true);
+		};
+
+		if (node.isLoaded?.())
+		{
+			selectLoadedItem();
+
+			return;
+		}
+
+		if (node.isDynamic?.())
+		{
+			node.loadChildren().then(selectLoadedItem).catch(() => {});
+		}
+	}
+
+	#findSelectedDynamicDocumentItem(items: ItemOptions[]): { parentId: string | number, itemId: string } | null
+	{
+		for (const itemOptions of items)
+		{
+			const selectedDynamicDocumentItem = this.#getSelectedDynamicDocumentItem(itemOptions);
+			if (selectedDynamicDocumentItem)
+			{
+				return selectedDynamicDocumentItem;
+			}
+
+			if (Type.isArrayFilled(itemOptions.children))
+			{
+				const selectedChild = this.#findSelectedDynamicDocumentItem(itemOptions.children);
+				if (selectedChild)
+				{
+					return selectedChild;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	#getSelectedDynamicDocumentItem(itemOptions: ItemOptions): { parentId: string | number, itemId: string } | null
+	{
+		if (!this.selectedField || itemOptions.entityId !== DOCUMENT_FIELDS_ENTITY_ID)
+		{
+			return null;
+		}
+
+		const field = itemOptions.customData?.[CustomDataFieldKey];
+		const idTemplate = itemOptions.customData?.idTemplate;
+		const fieldIdTemplate = itemOptions.customData?.fieldIdTemplate ?? idTemplate;
+		const itemIdTemplate = Type.isStringFilled(idTemplate) ? idTemplate : fieldIdTemplate;
+		const templateIndex = Type.isStringFilled(fieldIdTemplate) ? fieldIdTemplate.indexOf('#FIELD#') : -1;
+		const selectedFieldId = this.selectedField.fieldId;
+		const fieldIdPrefix = templateIndex >= 0 ? fieldIdTemplate.slice(0, templateIndex) : '';
+
+		if (
+			field?.object !== this.selectedField.object
+			|| !Type.isStringFilled(selectedFieldId)
+			|| templateIndex < 0
+			|| !selectedFieldId.startsWith(fieldIdPrefix)
+		)
+		{
+			return null;
+		}
+
+		return {
+			parentId: itemOptions.id,
+			itemId: itemIdTemplate.replace('#FIELD#', selectedFieldId.slice(fieldIdPrefix.length)),
+		};
+	}
+
 	#getEntities(): EntityOptions[]
 	{
 		return [
 			{
-				id: 'bizproc-document',
+				id: DOCUMENT_FIELDS_ENTITY_ID,
+				dynamicLoad: true,
 			},
 		];
 	}
@@ -162,6 +283,8 @@ export class FieldSelector
 	{
 		const items = await this.getDocumentItems();
 		items.push(...this.getReturnItems());
+		// The catalog decides how the values are grouped, so the items are built only after it is read.
+		await loadProcessDataCatalog(this.store)?.catch(() => {});
 		this.addTemplateItems(items);
 
 		return items;
@@ -193,7 +316,7 @@ export class FieldSelector
 			tabs: 'documents',
 			title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT'),
 			searchable: false,
-			children: fields.map((field: DocumentField) => ({
+			children: fields.map((field: DocumentField) => this.#markSelected({
 				id: `${FIELD_OBJECT_TYPES.DOCUMENT}:${field.fieldKey}`,
 				entityId: 'document-field',
 				title: field.name,
@@ -225,59 +348,37 @@ export class FieldSelector
 
 	addTemplateItems(items: ItemOptions[]): void
 	{
-		const map = [
-			{
-				key: 'PARAMETERS',
-				idKey: 'Template',
-				title: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_ITEM_PARAMETERS'),
-			},
-			{
-				key: 'VARIABLES',
-				idKey: 'Variable',
-				title: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_ITEM_VARIABLES'),
-			},
-			{
-				key: 'CONSTANTS',
-				idKey: 'Constant',
-				title: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_ITEM_CONSTANTS'),
-			},
-		];
+		loadProcessDataCatalog(this.store);
 
-		map.filter(
-			(elem) => isTemplateSourceAvailableForBlockType(this.currentBlock?.type, elem.key),
-		).forEach((elem) => {
-			const collection = this.store.template[elem.key];
-			if (Type.isObject(collection) && Object.keys(collection).length > 0)
-			{
-				const children = [];
-				Object.keys(collection).forEach((key) => {
-					const item = collection[key];
-					const id = `${elem.idKey}:${key}`;
-					children.push({
-						id,
-						entityId: elem.key,
-						title: item.Name,
-						customData: {
-							[CustomDataFieldKey]: {
-								object: elem.idKey,
-								fieldId: key,
-								type: item.Type,
-								multiple: item.Multiple,
-								options: item.Options ?? null,
-								settings: item.Settings ?? null,
-							},
+		const groups = buildProcessDataGroups(
+			this.store.template,
+			this.currentBlock?.type,
+			EVALUATION_STAGE.BEFORE_WORKFLOW_START,
+			processDataMechanics(this.store),
+		);
+
+		groups.forEach((group: ProcessDataSelectorGroup) => {
+			items.push({
+				id: group.id,
+				entityId: 'template',
+				title: group.title,
+				tabs: 'template',
+				children: group.entries.map((entry: ProcessDataSelectorEntry) => this.#markSelected({
+					id: `${entry.idKey}:${entry.key}`,
+					entityId: entry.entityId,
+					title: entry.property.Name,
+					customData: {
+						[CustomDataFieldKey]: {
+							object: entry.idKey,
+							fieldId: entry.key,
+							type: entry.property.Type,
+							multiple: entry.property.Multiple,
+							options: entry.property.Options ?? null,
+							settings: entry.property.Settings ?? null,
 						},
-					});
-				});
-
-				items.push({
-					id: elem.idKey,
-					entityId: 'template',
-					title: elem.title,
-					tabs: 'template',
-					children,
-				});
-			}
+					},
+				})),
+			});
 		});
 	}
 
@@ -323,11 +424,12 @@ export class FieldSelector
 				{
 					res.documents.push({
 						id,
-						entityId: 'bizproc-document',
+						entityId: DOCUMENT_FIELDS_ENTITY_ID,
 						entityType: 'document',
 						title: fullTitle,
 						customData: {
-							idTemplate: `${property.Id}.#FIELD#`,
+							idTemplate: `${activityName}:${property.Id}.#FIELD#`,
+							fieldIdTemplate: `${property.Id}.#FIELD#`,
 							document: property.Default,
 							[CustomDataFieldKey]: {
 								object: activityName,
@@ -344,7 +446,7 @@ export class FieldSelector
 					return res;
 				}
 
-				res.properties.push({
+				res.properties.push(this.#markSelected({
 					id,
 					entityId: 'block-node-property',
 					title: property.Name,
@@ -360,7 +462,7 @@ export class FieldSelector
 							settings: property.Settings ?? null,
 						},
 					},
-				});
+				}));
 
 				return res;
 			},
@@ -407,7 +509,7 @@ export class FieldSelector
 			(res, child) => {
 				if (child)
 				{
-					if (child.entityId === 'bizproc-document')
+					if (child.entityId === DOCUMENT_FIELDS_ENTITY_ID)
 					{
 						res.documents.push(child);
 					}

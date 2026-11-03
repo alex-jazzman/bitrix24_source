@@ -322,7 +322,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 		newWindowLabel: true
 	}, {
 		focusTrap: {
-			outsideExceptionSelectors: ['.aiassistant-marta', '#right-bar', '#avatar-area', '.side-panel-toolbar', '#im-chat-menu', '#app__right-panel'],
+			outsideExceptionSelectors: ['.aiassistant-marta', '#right-bar', '#avatar-area', '.side-panel-toolbar', '#im-chat-menu', '#app__right-panel',
+			// The docked uploader outlives the page it was started from and keeps running
+			// while a slider is open, so it has to stay reachable like the bars above it.
+			'.disk-docked-uploader'],
 			looped: false
 		},
 		targetContainer: '#a11y-slider-container',

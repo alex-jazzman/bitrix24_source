@@ -8,7 +8,7 @@ let stack: Array<Function> = [];
  */
 export let isReady = false;
 
-export default function ready(handler: () => void)
+export default function ready(handler: () => void): void
 {
 	if (!Type.isFunction(handler))
 	{

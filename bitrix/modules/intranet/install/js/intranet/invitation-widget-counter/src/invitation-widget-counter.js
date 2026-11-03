@@ -1,6 +1,43 @@
-import { Cache, Type } from 'main.core';
+import { Cache, Type, Dom, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Counter } from 'ui.cnt';
+import { Counter, CounterStyle } from 'ui.cnt';
+
+type InvitationWidgetCounterOptions = {
+	button: HTMLElement,
+	counterId: string,
+	invitationCounter: number,
+	shouldShowStructureCounter: boolean,
+	useAirDesign?: boolean,
+};
+
+function getCounterAccessibleName(
+	value: number,
+	messageCode: string = 'INTRANET_INVITATION_WIDGET_COUNTER',
+): string
+{
+	return Loc.getMessagePlural(messageCode, value, {
+		'#COUNT#': value,
+	});
+}
+
+export function updateCounterAccessibleName(
+	counter: Counter,
+	value: number,
+	messageCode: string = 'INTRANET_INVITATION_WIDGET_COUNTER',
+): void
+{
+	Dom.attr(
+		counter.getContainer(),
+		'aria-label',
+		getCounterAccessibleName(value, messageCode),
+	);
+}
+
+export function destroyAccessibleCounter(counter: Counter): void
+{
+	Dom.attr(counter.getContainer(), 'aria-label', null);
+	counter.destroy();
+}
 
 export class InvitationWidgetCounter
 {
@@ -22,14 +59,14 @@ export class InvitationWidgetCounter
 		return this.#instance;
 	}
 
-	setOptions(options: {}): InvitationWidgetCounter
+	setOptions(options: InvitationWidgetCounterOptions): InvitationWidgetCounter
 	{
 		this.#cache.set('options', options);
 
 		return this;
 	}
 
-	getOptions(): {}
+	getOptions(): InvitationWidgetCounterOptions
 	{
 		return this.#cache.get('options', {});
 	}
@@ -39,14 +76,17 @@ export class InvitationWidgetCounter
 		this.#getCounter().renderTo(this.#getCounterWrapper());
 	}
 
-	onReceiveCounterValue(value): void
+	onReceiveCounterValue(value: number): void
 	{
+		const invitationCounter = value;
 		if (this.getOptions().shouldShowStructureCounter)
 		{
 			value++;
 		}
 
-		this.#getCounter().update(value);
+		const counter = this.#getCounter();
+		counter.update(value);
+		this.#updateCounterAccessibleName(counter, invitationCounter);
 		this.getOptions().invitationCounter = value;
 
 		if (value > 0)
@@ -55,7 +95,7 @@ export class InvitationWidgetCounter
 		}
 		else
 		{
-			this.#getCounter().destroy();
+			destroyAccessibleCounter(counter);
 			this.#cache.delete('counter');
 		}
 	}
@@ -70,11 +110,34 @@ export class InvitationWidgetCounter
 	#getCounter(): Counter
 	{
 		return this.#cache.remember('counter', () => {
-			return new Counter({
-				value: this.#getCounterValue(),
+			const value = this.#getCounterValue();
+			const counter = new Counter({
+				value,
 				color: Counter.Color.DANGER,
+				useAirDesign: this.getOptions().useAirDesign,
+				style: this.getOptions().useAirDesign ? CounterStyle.FILLED_ALERT : CounterStyle.FILLED,
 			});
+			this.#updateCounterAccessibleName(counter, Number(this.getOptions().invitationCounter));
+
+			return counter;
 		});
+	}
+
+	#updateCounterAccessibleName(counter: Counter, invitationCounter: number): void
+	{
+		if (!this.getOptions().shouldShowStructureCounter)
+		{
+			updateCounterAccessibleName(counter, invitationCounter);
+
+			return;
+		}
+
+		const accessibleName = [
+			invitationCounter > 0 ? getCounterAccessibleName(invitationCounter) : null,
+			getCounterAccessibleName(1, 'INTRANET_INVITATION_WIDGET_STRUCTURE_COUNTER'),
+		].filter(Type.isStringFilled).join('. ');
+
+		Dom.attr(counter.getContainer(), 'aria-label', accessibleName);
 	}
 
 	#getCounterValue(): number
@@ -104,7 +167,9 @@ export class InvitationWidgetCounter
 
 		value--;
 		this.getOptions().shouldShowStructureCounter = false;
-		this.#getCounter().update(value);
+		const counter = this.#getCounter();
+		counter.update(value);
+		this.#updateCounterAccessibleName(counter, value);
 		this.getOptions().invitationCounter = value;
 
 		if (value > 0)
@@ -113,7 +178,7 @@ export class InvitationWidgetCounter
 		}
 		else
 		{
-			this.#getCounter().destroy();
+			destroyAccessibleCounter(counter);
 			this.#cache.delete('counter');
 		}
 	}

@@ -12,7 +12,7 @@ import { normalizeUserValue } from '../../lib/user-value';
 import { toSingleDefaultValue } from '../../lib/constant-default';
 import './edit-constant-popup-form.css';
 // eslint-disable-next-line no-unused-vars
-import type { ConstantItem, ConstantConfiguration } from '../../types';
+import type { ConstantItem, ConstantConfiguration, ConstantSettings } from '../../types';
 
 type OptionModel = {
 	value: string,
@@ -20,6 +20,8 @@ type OptionModel = {
 };
 
 import { EntitySelectorConstantSettings } from '../constant-settings/entity-selector/entity-selector';
+import { ValueRuleIntConstantSettings } from '../constant-settings/value-rule/value-rule-int';
+import { ValueRuleLengthConstantSettings } from '../constant-settings/value-rule/value-rule-length';
 import { ConstantValueUser } from '../constant-value/user';
 import { ConstantValueBool } from '../constant-value/bool';
 import { ConstantValueDate } from '../constant-value/date';
@@ -27,6 +29,9 @@ import { ConstantValueDateTime } from '../constant-value/datetime';
 
 const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
 	[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings,
+	[CONSTANT_TYPES.INT]: ValueRuleIntConstantSettings,
+	[CONSTANT_TYPES.STRING]: ValueRuleLengthConstantSettings,
+	[CONSTANT_TYPES.TEXT]: ValueRuleLengthConstantSettings,
 });
 
 // Types whose default value is edited by a dedicated control instead of the plain text input.
@@ -49,8 +54,18 @@ type EditConstantPopupFormData = {
 	description: string;
 	defaultValue: string;
 	options: Array<OptionModel>;
+	settings: ConstantSettings;
 	required: boolean;
 };
+
+/**
+ * Settings as a map: a supplied constant may carry none, and the server encodes an empty settings
+ * map as a JSON array.
+ */
+function normalizeSettings(settings: mixed): ConstantSettings
+{
+	return Type.isPlainObject(settings) ? settings : {};
+}
 
 // @vue/component
 export const EditConstantPopupForm = {
@@ -90,6 +105,7 @@ export const EditConstantPopupForm = {
 	data(): EditConstantPopupFormData
 	{
 		const options = this.convertMapToOptionsModelArray(this.item.options);
+		const settings = normalizeSettings(this.item.settings);
 
 		return {
 			id: this.item.id,
@@ -99,9 +115,10 @@ export const EditConstantPopupForm = {
 			description: this.item.description,
 			defaultValue: this.item.default,
 			options,
-			settings: this.item.settings,
+			settings,
 			required: this.item.required,
 			initialOptionsSnapshot: JSON.stringify(options),
+			initialSettingsSnapshot: JSON.stringify(settings),
 			isDateMissing: false,
 			errors: {
 				id: '',
@@ -146,7 +163,8 @@ export const EditConstantPopupForm = {
 							!== JSON.stringify(normalizeUserValue(this.item.default, this.item.multiple))
 						: this.defaultValue !== this.item.default
 				)
-				|| JSON.stringify(this.options) !== this.initialOptionsSnapshot;
+				|| JSON.stringify(this.options) !== this.initialOptionsSnapshot
+				|| JSON.stringify(this.settings) !== this.initialSettingsSnapshot;
 		},
 		errorMessages(): string
 		{
@@ -199,6 +217,10 @@ export const EditConstantPopupForm = {
 		{
 			this.options = [];
 			this.defaultValue = '';
+			// the value rule of the previous type is not allowed on the new one and the server refuses to
+			// save a template carrying it, while the new type offers no control to clear it - so the
+			// settings are dropped as a whole
+			this.settings = {};
 			this.isDateMissing = false;
 			this.errors.value = '';
 		},

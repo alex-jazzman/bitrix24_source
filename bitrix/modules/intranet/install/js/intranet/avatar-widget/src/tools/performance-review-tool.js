@@ -7,9 +7,9 @@ export class PerformanceReviewTool extends BaseSecondaryTool
 		return '--o-feedback';
 	}
 
-	onClick(): void
+	getHref(): string
 	{
-		document.location.href = this.options.path;
+		return this.options.path;
 	}
 
 	getId(): string

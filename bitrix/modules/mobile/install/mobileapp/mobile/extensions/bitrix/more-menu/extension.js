@@ -2,6 +2,7 @@
  * @module more-menu
  */
 jn.define('more-menu', (require, exports, module) => {
+	const { animate } = require('animation');
 	const { Feature } = require('feature');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
@@ -13,6 +14,7 @@ jn.define('more-menu', (require, exports, module) => {
 	const { ToolsList } = require('more-menu/block/tools-list');
 	const { SettingsList, SETTINGS_SECTIONS } = require('more-menu/block/settings-list');
 	const { MoreMenuCompany } = require('more-menu/block/company');
+	const { storeAppFontScale } = require('more-menu/block/company/app-font-scale');
 
 	const { showAhaMoment } = require('more-menu/aha-moment');
 	const { SearchList } = require('more-menu/search-list');
@@ -20,12 +22,19 @@ jn.define('more-menu', (require, exports, module) => {
 	const { MoreMenuPanel } = require('more-menu/ui/panel');
 	const {
 		getMenuCounters,
+		getWhatsNewCounter,
 		updateMenuBadgeCounter,
 	} = require('more-menu/utils');
 
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const {
+		resolveAppearanceTextColorMode,
+		applyAppearanceTextColorMode,
+		subscribeToAppearanceTextColorModeChange,
+	} = require('user/theme');
 
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { requireLazy } = require('require-lazy');
 
 	const { usersUpserted } = require('statemanager/redux/slices/users');
 	const store = require('statemanager/redux/store');
@@ -59,6 +68,17 @@ jn.define('more-menu', (require, exports, module) => {
 	const SECONDS_IN_DAY = 86400;
 	const MORE_MENU_TEST_ID = 'more-menu';
 	const MORE_MENU_REFRESH_VIEW_REF_KEY = 'more_menu_refresh_view';
+	// how long the promo waits for the read of the scale of the app font, see whenAppFontScaleStored
+	const APP_FONT_SCALE_GIVE_UP_DELAY = 1000;
+
+	/**
+	 * The record lives in the storage the whole app shares, and that storage is split neither by portal
+	 * nor by user: both belong in the key, or the menu of one portal - its company name, its tariff, its
+	 * promo - would be read on another as its own under the same identifier of the user.
+	 *
+	 * @return {string}
+	 */
+	const getMenuCacheId = () => `mobile-more-menu_${currentDomain}_${env.userId}`;
 
 	/**
 	 * @class MoreMenu
@@ -76,12 +96,30 @@ jn.define('more-menu', (require, exports, module) => {
 
 			this.menuNavigator = props.menuNavigator;
 			this.isComponentMounted = false;
+			this.unsubscribeFromAppearanceTextColorModeChange = null;
 			this.ahaMomentCompletionCallback = null;
+
+			// kept out of state: the stub follows the floating layer by ref, without re-rendering the menu
+			this.floatingStubRef = null;
+			// the stub takes the other number of the banner once the promo has started to collapse
+			this.floatingPromoCollapsed = false;
+			// the guard of the import is an instance field: setState is applied asynchronously, so two
+			// renders in a row would both start it
+			this.floatingPromoRequested = false;
+			// and a promo whose import failed waits here until the menu asks for its data again
+			this.floatingPromoFailed = false;
+			// the read of the scale of the app font the mount starts: the promo waits for it, since its
+			// extension states the height of its card the moment it loads
+			this.appFontScaleStored = null;
 
 			this.state = {
 				menuList: [],
 				loading: true,
 				counters: {},
+				whatsNewCounter: getWhatsNewCounter(),
+				appearanceTextColorMode: null,
+				// the extension of the floating promo lands here once it is loaded
+				floatingPromoModule: null,
 			};
 
 			this.getTestId = createTestIdGenerator({
@@ -90,6 +128,7 @@ jn.define('more-menu', (require, exports, module) => {
 
 			this.handleUserCountersUpdate = this.handleUserCountersUpdate.bind(this);
 			this.handleWhatsNewCounterUpdate = this.handleWhatsNewCounterUpdate.bind(this);
+			this.handleFloatingBannerCollapseStarted = this.handleFloatingBannerCollapseStarted.bind(this);
 			this.processUsersDebaunced = debounce(this.processUsers.bind(this), 500);
 		}
 
@@ -170,9 +209,34 @@ jn.define('more-menu', (require, exports, module) => {
 			}, []);
 		}
 
+		get currentTheme()
+		{
+			return applyAppearanceTextColorMode(this.state.currentTheme, this.state.appearanceTextColorMode);
+		}
+
+		loadAppearanceTextColorMode()
+		{
+			void resolveAppearanceTextColorMode().then((appearanceTextColorMode) => {
+				this.applyAppearanceTextColorMode(appearanceTextColorMode);
+			});
+		}
+
+		applyAppearanceTextColorMode(appearanceTextColorMode)
+		{
+			if (this.isComponentMounted)
+			{
+				this.setState({ appearanceTextColorMode });
+			}
+		}
+
 		componentDidMount()
 		{
 			this.isComponentMounted = true;
+
+			// The scale of the app font is stored as the menu opens, and not on the path of the promo that
+			// reads it: the other consumer, the section of the company, states the height of its card in a
+			// context of its own, and the menu is the only way into it. A failed read leaves what is stored.
+			this.appFontScaleStored = storeAppFontScale().catch(console.error);
 
 			this.loadMenuList(false, true)
 				.then(() => {
@@ -187,29 +251,47 @@ jn.define('more-menu', (require, exports, module) => {
 					{
 						this.tryToOpenAhaMoment();
 					}
+					else if (this.state.shouldShowPresetBanner)
+					{
+						this.showToolUsageBanner();
+					}
 				})
 				.catch((error) => console.error(error));
 
 			BX.addCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
 			BX.addCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
-			BX.addCustomEvent('BackgroundUIManager::openComponentInAnotherContext', this.showAhaMoment);
+			BX.addCustomEvent('MoreMenu::Reload', this.reloadMenu);
+
+			this.loadAppearanceTextColorMode();
+
+			this.unsubscribeFromAppearanceTextColorModeChange = subscribeToAppearanceTextColorModeChange(
+				() => this.state.appearanceTextColorMode,
+				(appearanceTextColorMode) => this.applyAppearanceTextColorMode(appearanceTextColorMode),
+			);
 		}
 
 		componentWillUnmount()
 		{
 			this.isComponentMounted = false;
+			// the instance outlives its unmount, and the promo of the next mount is built expanded anew:
+			// the stub goes back with it, or it would hold the collapsed room under an expanded card
+			this.floatingPromoCollapsed = false;
 			this.ahaMomentCompletionCallback?.();
 			this.ahaMomentCompletionCallback = null;
+			this.props.onUnmount?.(this);
 
 			BX.removeCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
 			BX.removeCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
-			BX.removeCustomEvent('BackgroundUIManager::openComponentInAnotherContext', this.showAhaMoment);
+			BX.removeCustomEvent('MoreMenu::Reload', this.reloadMenu);
+
+			this.unsubscribeFromAppearanceTextColorModeChange?.();
+			this.unsubscribeFromAppearanceTextColorModeChange = null;
 		}
 
-		showAhaMoment = (componentName) => {
+		showAhaMoment = (componentName, ahaMoment = this.state.ahaMoment) => {
 			if (componentName !== MORE_MENU_TEST_ID)
 			{
-				return;
+				return false;
 			}
 
 			let isCompleted = false;
@@ -234,23 +316,16 @@ jn.define('more-menu', (require, exports, module) => {
 			{
 				onComplete();
 
-				return;
+				return false;
 			}
 
-			showAhaMoment(this.state.ahaMoment, this.menuNavigator, onComplete, canShow);
+			showAhaMoment(ahaMoment, this.menuNavigator, onComplete, canShow, this.layout);
+
+			return true;
 		};
 
 		tryToOpenAhaMoment = () => {
-			BX.postComponentEvent(
-				'BackgroundUIManagerEvents::tryToOpenComponentFromAnotherContext',
-				[
-					{
-						componentName: MORE_MENU_TEST_ID,
-						priority: 500,
-						debounceMs: 0,
-					},
-				],
-			);
+			this.props.requestAhaMoment?.(this.state.ahaMoment);
 		};
 
 		handleUserCountersUpdate(newCounters)
@@ -272,7 +347,16 @@ jn.define('more-menu', (require, exports, module) => {
 
 		handleWhatsNewCounterUpdate(whatsNewCounter)
 		{
-			this.updateMoreBadge(whatsNewCounter);
+			const nextCounter = Type.isNumber(whatsNewCounter) && whatsNewCounter > 0 ? whatsNewCounter : 0;
+
+			if (nextCounter === this.state.whatsNewCounter)
+			{
+				this.updateMoreBadge(nextCounter);
+
+				return;
+			}
+
+			this.setState({ whatsNewCounter: nextCounter }, () => this.updateMoreBadge(nextCounter));
 		}
 
 		updateMoreBadge(whatsNewCounter = null)
@@ -321,15 +405,16 @@ jn.define('more-menu', (require, exports, module) => {
 				loading,
 				menuList,
 				currentShift,
-				workTime,
 				user,
-				currentTheme,
 				restrictions,
 				isNewCheckInEnabled,
 			} = this.state;
+			const { currentTheme } = this;
 
 			if (loading && menuList.length === 0)
 			{
+				this.giveFloatingPromoRoomBack();
+
 				return View(
 					{
 						style: {
@@ -344,6 +429,8 @@ jn.define('more-menu', (require, exports, module) => {
 					}),
 				);
 			}
+
+			const floatingBanner = this.renderFloatingBanner();
 
 			return View(
 				{
@@ -370,9 +457,11 @@ jn.define('more-menu', (require, exports, module) => {
 					},
 					View(
 						{
+							// under the floating layer the column pays no bottom padding of its own: the stub
+							// inside it already holds the room the layer takes
 							style: {
 								backgroundColor: Color.bgContentPrimaryInvert.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
-								paddingBottom: Indent.XL3.toNumber(),
+								paddingBottom: floatingBanner ? 0 : Indent.XL3.toNumber(),
 							},
 						},
 						new MoreMenuHeader({
@@ -381,46 +470,204 @@ jn.define('more-menu', (require, exports, module) => {
 							canEditProfile: restrictions?.canEditProfile,
 							canUseTimeMan: restrictions?.canUseTimeMan,
 							canUseCheckIn: restrictions?.canUseCheckIn,
-							canManageWorkTimeOnMobile: restrictions?.canManageWorkTimeOnMobile,
 							isNewCheckInEnabled,
 							currentShift,
-							workTime,
 							userId: user?.id,
 							currentTheme,
 						}),
 						this.renderCompanyPanel(),
 						this.renderToolsPanel(),
 						this.renderSettingsPanel(),
+						floatingBanner ? this.renderFloatingStub() : null,
 					),
 				),
+				floatingBanner,
 			);
+		}
+
+		/**
+		 * The floating layer is the last child of the root view: the order in the tree already gives the overlap.
+		 * @returns {?object}
+		 */
+		renderFloatingBanner()
+		{
+			const { floatingPromo, restrictions, floatingPromoModule } = this.state;
+
+			// no section - no promo at all; with one, the invite promo still answers to its own rollout flag
+			// and to the right to invite
+			if (!restrictions?.canUseMyCompany || !floatingPromo?.usersBannerEnabled || !restrictions?.canInvite)
+			{
+				this.giveFloatingPromoRoomBack();
+
+				return null;
+			}
+
+			if (!floatingPromoModule)
+			{
+				this.loadFloatingBanner();
+
+				return null;
+			}
+
+			return floatingPromoModule.UsersFloatingBanner({
+				testId: this.getTestId('floating-promo-users'),
+				layout: this.layout,
+				onCollapseStarted: this.handleFloatingBannerCollapseStarted,
+			});
+		}
+
+		/**
+		 * The promo is a rare guest of the menu - it needs the section, the rollout flag and the right to
+		 * invite - so its extension is loaded on demand instead of weighing on every opening of the menu. It
+		 * mounts once the import is over, the way the stub follows it once its height is known.
+		 */
+		loadFloatingBanner()
+		{
+			if (this.floatingPromoRequested || this.floatingPromoFailed)
+			{
+				return;
+			}
+
+			this.floatingPromoRequested = true;
+
+			// The extension of the promo states the height of its card off the scale of the app font the
+			// moment it loads, and that scale is read from the native side as the menu opens: an import
+			// that overtook the read would hold the height of the normal scale until this context is built
+			// anew. No loading indicator either way: the promo is not what the screen is opened for.
+			void this.whenAppFontScaleStored()
+				.then(() => requireLazy('more-menu/block/company/users-floating-banner', false))
+				.then((promoModule) => {
+					if (!promoModule)
+					{
+						// A failed import is held rather than retried on the spot: the re-renders of the menu
+						// are driven by its counters and would spend an import on every one of them. The next
+						// load of the menu data asks for it again, see retryFailedFloatingBanners.
+						this.floatingPromoRequested = false;
+						this.floatingPromoFailed = true;
+
+						return;
+					}
+
+					if (!this.isComponentMounted)
+					{
+						// The import outlived the screen, and the instance survives its unmount, so it can
+						// be mounted again: the request is taken back, otherwise the guard above would keep
+						// the promo away from the very same instance for good.
+						this.floatingPromoRequested = false;
+
+						return;
+					}
+
+					this.setState({ floatingPromoModule: promoModule });
+				})
+			;
+		}
+
+		/**
+		 * The read of the scale of the app font the mount has started, waited for no longer than the
+		 * give-up delay: a native read that never answers must not cost the promo altogether. Before the
+		 * mount there is no read to wait for, and the scale of the launch before is what is stored.
+		 * @returns {Promise<void>}
+		 */
+		whenAppFontScaleStored()
+		{
+			if (!this.appFontScaleStored)
+			{
+				return Promise.resolve();
+			}
+
+			return Promise.race([
+				this.appFontScaleStored,
+				new Promise((resolve) => {
+					setTimeout(resolve, APP_FONT_SCALE_GIVE_UP_DELAY);
+				}),
+			]);
+		}
+
+		/**
+		 * A promo left out by a lost connection comes back with the next load of the menu data - the screen
+		 * is asking for its own data anyway - instead of waiting for the screen to be built anew: the
+		 * instance outlives its unmount, so the loss would otherwise last as long as the app does.
+		 */
+		retryFailedFloatingBanners()
+		{
+			this.floatingPromoFailed = false;
+		}
+
+		/**
+		 * The room the stub holds belongs to the promo that is really on the screen. Whichever way the
+		 * banner leaves it - a load of the data that takes the right to invite away, a screen fallen back
+		 * to its loader - the collapsed room goes back with it: the promo built after that is expanded
+		 * anew, and the stub would otherwise hold the collapsed room under an expanded card.
+		 */
+		giveFloatingPromoRoomBack()
+		{
+			this.floatingPromoCollapsed = false;
+		}
+
+		/**
+		 * Keeps the tail of the menu clear of the floating layer. The room is the one the banner states of
+		 * itself, so the stub holds it from the very frame the banner appears in and never starts at zero.
+		 * @returns {object}
+		 */
+		renderFloatingStub()
+		{
+			const { UsersFloatingBannerReserve: reserve } = this.state.floatingPromoModule;
+
+			return View({
+				ref: (ref) => {
+					this.floatingStubRef = ref;
+				},
+				style: {
+					width: '100%',
+					height: this.floatingPromoCollapsed ? reserve.collapsed : reserve.expanded,
+				},
+			});
+		}
+
+		/**
+		 * The stub goes to the other number of the banner the moment the transition starts, and over the
+		 * duration of that very transition: a time of its own would have the stub and the promo move apart.
+		 * Which of the two numbers is the taller one is none of the menu's business.
+		 *
+		 * @param {{ duration: number }} params
+		 */
+		handleFloatingBannerCollapseStarted({ duration })
+		{
+			const { UsersFloatingBannerReserve: reserve } = this.state.floatingPromoModule;
+
+			this.floatingPromoCollapsed = true;
+
+			void animate(this.floatingStubRef, { duration, height: reserve.collapsed });
 		}
 
 		renderCompanyPanel()
 		{
 			const {
-				company,
+				employees,
+				companyName,
 				supportBotId,
 				supportBanners,
+				tariffPlate,
 
 				restrictions,
-				personalAccount,
 				helpdeskUrl,
 				counters,
 			} = this.state;
 
 			return new MoreMenuCompany({
 				testId: this.getTestId('company'),
-				company,
+				employees,
+				companyName,
 				supportBotId,
 				supportBanners,
+				tariffPlate,
 				layout: this.layout,
 				canUseSupport: restrictions?.canUseSupport,
 				canInvite: restrictions?.canInvite,
 				canUseTelephony: restrictions?.canUseTelephony,
 				shouldShowWhatsNew: restrictions?.shouldShowWhatsNew,
-				canUsePersonalAccount: restrictions?.canUsePersonalAccount,
-				personalAccountCompanies: personalAccount?.companies,
+				canUseMyCompany: restrictions?.canUseMyCompany,
 				helpdeskUrl,
 				counters,
 				onWhatsNewCounterChange: this.handleWhatsNewCounterUpdate,
@@ -464,6 +711,7 @@ jn.define('more-menu', (require, exports, module) => {
 				canUseTabPresetSettings,
 				canUseNotificationSettings,
 				canGoToWeb,
+				canLoginOnOtherDevice,
 			} = restrictions;
 
 			return MoreMenuPanel(
@@ -477,6 +725,7 @@ jn.define('more-menu', (require, exports, module) => {
 							canUseTabPresetSettings,
 							canUseNotificationSettings,
 							canGoToWeb,
+							canLoginOnOtherDevice,
 							counters,
 						}),
 					],
@@ -521,7 +770,11 @@ jn.define('more-menu', (require, exports, module) => {
 				.catch((error) => console.error(error));
 		};
 
+		reloadMenu = () => this.loadMenuList(true, false);
+
 		loadMenuList = (forceRefresh = false, useCache = true) => {
+			this.retryFailedFloatingBanners();
+
 			return new Promise((resolve, reject) => {
 				this.setState(
 					{ loading: true },
@@ -534,7 +787,7 @@ jn.define('more-menu', (require, exports, module) => {
 								siteId: env.siteId,
 							},
 						)
-							.setCacheId(`mobile-more-menu${env.userId}`)
+							.setCacheId(getMenuCacheId())
 							.setCacheTtl(SECONDS_IN_DAY)
 							.setCacheHandler((cachedData) => {
 								const { preparedMenuList, state } = MoreMenu.mapResponseData(cachedData.data || {});
@@ -542,6 +795,7 @@ jn.define('more-menu', (require, exports, module) => {
 								const {
 									currentShift,
 									workTime,
+									shouldShowPresetBanner,
 									...cachedState
 								} = state;
 
@@ -582,7 +836,7 @@ jn.define('more-menu', (require, exports, module) => {
 								});
 							});
 
-						request.call(useCache);
+						request.call(useCache).catch(console.error);
 					},
 				);
 			});
@@ -598,7 +852,7 @@ jn.define('more-menu', (require, exports, module) => {
 				users.push(user);
 			}
 
-			const companyUsers = data?.company?.users || [];
+			const companyUsers = data?.company?.employees?.users || [];
 			if (!isEmpty(companyUsers))
 			{
 				users.push(...companyUsers);
@@ -622,16 +876,22 @@ jn.define('more-menu', (require, exports, module) => {
 				user: data.user || null,
 				menuList: preparedMenuList,
 				currentShift: data.currentShift || null,
-				workTime: data.workTime || null,
 				isNewCheckInEnabled: data.isNewCheckInEnabled || false,
-				company: data.company || null,
+				// the company block of the answer: what the menu draws of it depends on the section being
+				// on, so the block comes as one field and the menu picks what it needs out of it
+				employees: data.company?.employees || null,
+				// the entry plate of the "My company" section is the only reader of the portal line of the
+				// answer, and it shows the name alone; while the section is off the name comes empty
+				companyName: data.portal?.name || '',
 				helpdeskUrl: data.helpdeskUrl || null,
 				supportBotId: data.supportBotId || 0,
 				supportBanners: data.supportBanners || null,
+				tariffPlate: data.company?.tariffPlate || null,
+				floatingPromo: data.company?.floatingPromo || null,
 				restrictions: data.restrictions || {},
-				personalAccount: data.personalAccount || null,
 				ahaMoment: data.ahaMoment || null,
 				currentTheme: data.currentTheme || null,
+				shouldShowPresetBanner: data.shouldShowPresetBanner || false,
 			};
 
 			return {
@@ -639,12 +899,26 @@ jn.define('more-menu', (require, exports, module) => {
 				state,
 			};
 		}
+
+		async showToolUsageBanner()
+		{
+			const { ToolUsageBanner } = await requireLazy('layout/ui/tool-usage-banner', false).catch((error) => {
+				console.log('requireLazy tool-usage-banner', error);
+			});
+
+			if (ToolUsageBanner)
+			{
+				ToolUsageBanner.open(this.layout, true);
+			}
+		}
 	}
 
 	MoreMenu.propTypes = {
 		layout: PropTypes.object.isRequired,
 		menuNavigator: PropTypes.instanceOf(MenuNavigator),
 		counters: PropTypes.object,
+		requestAhaMoment: PropTypes.func,
+		onUnmount: PropTypes.func,
 	};
 
 	module.exports = { MoreMenu };

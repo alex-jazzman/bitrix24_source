@@ -1,14 +1,16 @@
 <?php
 
 return [
+	'components' => [
+		'settings', //@keep
+		'tab.presets', //@keep
+	],
 	'extensions' => [
-		'require-lazy',
 		'feature',
 		'feature-flag',
-	],
-	'components' => [
-		'tab.presets',
-		'settings',
-		'qrauth',
+		'in-app-url/widget-presenter',
+		'loc',
+		'require-lazy',
+		'toast',
 	],
 ];

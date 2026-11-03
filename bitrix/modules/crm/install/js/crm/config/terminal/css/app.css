@@ -304,7 +304,8 @@
 }
 
 .terminal-image {
-	background-image: url("../images/terminal.svg");
+	background-image: url("../images/terminal.webp");
+	background-image: image-set(url("../images/terminal.webp") 1x, url("../images/terminal@2x.webp") 2x);
 	width: 204px;
 	height: 326px;
 	background-size: cover;
@@ -379,19 +380,19 @@
 }
 
 .terminal-image-paysystem-sbp:before {
-	background-image: url("../images/sbp-mobile.png");
+	background-image: url("../images/sbp-mobile.webp");
 }
 
 .terminal-image-paysystem-sber-qr:before {
-	background-image: url("../images/sber-qr-mobile.png");
+	background-image: url("../images/sber-qr-mobile.webp");
 }
 
 .terminal-image-paysystem-link:before {
-	background-image: url("../images/link-mobile.png");
+	background-image: url("../images/link-mobile.webp");
 }
 
 .terminal-image-paysystem-wallet:before {
-	background-image: url("../images/wallet-mobile.png");
+	background-image: url("../images/wallet-mobile.webp");
 }
 
 .terminal-image-collapsed {

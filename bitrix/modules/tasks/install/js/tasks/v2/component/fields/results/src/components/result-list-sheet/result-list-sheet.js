@@ -9,11 +9,13 @@ import 'ui.icon-set.outline';
 import { Core } from 'tasks.v2.core';
 import { EventName, Model } from 'tasks.v2.const';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
+import { syncBottomSheetModality } from 'tasks.v2.lib.bottom-sheet-aria';
 import { highlighter } from 'tasks.v2.lib.highlighter';
 import { resultService } from 'tasks.v2.provider.service.result-service';
 import type { ResultId } from 'tasks.v2.provider.service.result-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
+import { captureFocusTrigger, restoreFocusTrigger } from '../../lib/results-focus';
 import { ResultListItem } from '../result/result-list-item';
 import { ResultSkeleton } from '../result/result-skeleton';
 import { ResultEditorSheet } from '../result-editor-sheet/result-editor-sheet';
@@ -62,6 +64,7 @@ export const ResultListSheet = {
 			editResultId: 0,
 			isResultEditorShown: false,
 			isResized: false,
+			editorFocusTrigger: null,
 		};
 	},
 	computed: {
@@ -99,6 +102,8 @@ export const ResultListSheet = {
 		{
 			void resultService.getAll(this.taskId);
 		}
+
+		void this.$nextTick(this.syncSheetModality);
 
 		this.focusTo(this.resultId);
 
@@ -149,7 +154,7 @@ export const ResultListSheet = {
 		scrollToTarget(targetId: string | number, offset: number, shouldHighlight: boolean): void
 		{
 			setTimeout(() => {
-				const targetNode = this.$refs.scrollContainer.querySelector(`[data-result-id="${targetId}"]`);
+				const targetNode = this.getResultNode(targetId);
 				if (!targetNode)
 				{
 					return;
@@ -160,12 +165,22 @@ export const ResultListSheet = {
 					this.highlightResult(targetId);
 				}
 
+				targetNode.focus({ preventScroll: true });
+
 				this.$refs.scrollContainer.scrollTop = targetNode.offsetTop - offset;
 			}, 0);
 		},
+		syncSheetModality(): void
+		{
+			syncBottomSheetModality(this.$refs.bottomSheet);
+		},
+		getResultNode(resultId: string | number): ?HTMLElement
+		{
+			return this.$refs.scrollContainer?.querySelector(`[data-result-id="${CSS.escape(String(resultId))}"]`);
+		},
 		highlightResult(targetId: string | number): void
 		{
-			const highlightElement = this.$refs.scrollContainer.querySelector(`[data-result-id="${targetId}"]`);
+			const highlightElement = this.getResultNode(targetId);
 
 			if (highlightElement)
 			{
@@ -174,6 +189,7 @@ export const ResultListSheet = {
 		},
 		openAddResultSheet(): void
 		{
+			this.editorFocusTrigger = captureFocusTrigger();
 			this.editResultId = Text.getRandom();
 
 			const payload = {
@@ -188,6 +204,7 @@ export const ResultListSheet = {
 		},
 		openEditResult(resultId: number): void
 		{
+			this.editorFocusTrigger = captureFocusTrigger();
 			this.editResultId = resultId;
 			this.isResultEditorShown = true;
 		},
@@ -195,6 +212,8 @@ export const ResultListSheet = {
 		{
 			this.isResultEditorShown = false;
 			this.editResultId = 0;
+			restoreFocusTrigger(this.editorFocusTrigger);
+			this.editorFocusTrigger = null;
 		},
 		handleResultAdded(event: BaseEvent): void
 		{
@@ -232,22 +251,34 @@ export const ResultListSheet = {
 	},
 	template: `
 		<BottomSheet
+			ref="bottomSheet"
 			:sheetBindProps
 			:isExpanded="isResized"
 			:padding="0"
 			:popupPadding="0"
+			:ariaLabel="loc('TASKS_V2_RESULT_LIST_SHEET_LABEL')"
 			@close="$emit('close')"
 		>
-			<div class="tasks-field-results-result-list" ref="main">
-				<div class="tasks-field-results-result-list-close-icon">
-					<BIcon :name="Outline.CROSS_L" hoverable @click="$emit('close')"/>
-				</div>
+			<div class="tasks-field-results-result-list" ref="main" data-testid="tasks-result-list">
+				<button
+					type="button"
+					class="tasks-field-results-result-list-close-icon"
+					data-testid="tasks-result-list-close-btn"
+					:aria-label="loc('TASKS_V2_RESULT_CLOSE_LABEL')"
+					@click="$emit('close')"
+				>
+					<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+				</button>
 				<div  v-if="isEmptyState" class="tasks-field-results-result-list-header">
 					<HeadlineMd className="tasks-field-results-result-list-title">
 						{{ loc('TASKS_V2_RESULT_LIST_EMPTY_TITLE') }}
 					</HeadlineMd>
 				</div>
-				<div class="tasks-field-results-result-list-content" ref="scrollContainer">
+				<div
+					class="tasks-field-results-result-list-content"
+					ref="scrollContainer"
+					:role="isEmptyState ? null : 'list'"
+				>
 					<ResultListEmpty v-if="isEmptyState" @addResult="openAddResultSheet"/>
 					<div
 						v-else
@@ -255,6 +286,8 @@ export const ResultListSheet = {
 						:key="result"
 						:data-result-id="result"
 						class="tasks-field-results-result-item"
+						role="listitem"
+						tabindex="-1"
 					>
 						<ResultListItem
 							v-if="isResultLoaded(result)"
@@ -276,6 +309,7 @@ export const ResultListSheet = {
 				<UiButton
 					:text="loc('TASKS_V2_RESULT_ADD')"
 					:style="AirButtonStyle.SELECTION"
+					:dataset="{ testid: 'tasks-result-list-add-btn' }"
 					:size="ButtonSize.SMALL"
 					@click="openAddResultSheet"
 				/>

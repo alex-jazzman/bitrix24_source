@@ -1,5 +1,6 @@
 import { BIcon } from 'ui.icon-set.api.vue';
 
+import { bindMultipleSelectBehavior } from '../../../../features/node-settings/utils/multiple-select-behavior';
 import { useLoc } from '../../../../shared/composables';
 import { useNodeSettingsStore } from '../../stores/node-settings-store';
 
@@ -33,6 +34,12 @@ export const NodeSettingsLayout = {
 
 		return { getMessage, settingsStore: useNodeSettingsStore() };
 	},
+	data(): { multipleSelectBehaviorDisposer: Function | null }
+	{
+		return {
+			multipleSelectBehaviorDisposer: null,
+		};
+	},
 	computed:
 	{
 		// Only an agent-driven show asks for the fade; a user click must stay instant. The flag has
@@ -45,6 +52,32 @@ export const NodeSettingsLayout = {
 			return this.settingsStore.shouldShowWithTransition === true;
 		},
 	},
+	watch:
+	{
+		isShown(value: boolean): void
+		{
+			if (value)
+			{
+				this.$nextTick(() => this.mountMultipleSelectBehavior());
+
+				return;
+			}
+
+			this.unmountMultipleSelectBehavior();
+		},
+	},
+	mounted(): void
+	{
+		this.mountMultipleSelectBehavior();
+	},
+	updated(): void
+	{
+		this.mountMultipleSelectBehavior();
+	},
+	beforeUnmount(): void
+	{
+		this.unmountMultipleSelectBehavior();
+	},
 	methods:
 	{
 		// The fade belongs to the show that asked for it, so the flag goes down as soon as it has
@@ -55,10 +88,30 @@ export const NodeSettingsLayout = {
 		{
 			this.settingsStore.finishShowTransition();
 		},
+		mountMultipleSelectBehavior(): void
+		{
+			if (this.multipleSelectBehaviorDisposer || !this.isShown || !this.$refs.layout)
+			{
+				return;
+			}
+
+			this.multipleSelectBehaviorDisposer = bindMultipleSelectBehavior({
+				roots: [this.$refs.layout],
+			});
+		},
+		unmountMultipleSelectBehavior(): void
+		{
+			if (this.multipleSelectBehaviorDisposer)
+			{
+				this.multipleSelectBehaviorDisposer();
+				this.multipleSelectBehaviorDisposer = null;
+			}
+		},
 	},
 	template: `
 		<div
 			v-if="isShown"
+			ref="layout"
 			class="editor-chart-node-settings-layout"
 			:class="{ '--saving': isSaving, '--loading': isLoading }"
 			:data-testid="$testId('bizprocdesigner-complex-node-settings')"

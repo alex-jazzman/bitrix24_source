@@ -2,9 +2,9 @@
 {
 	die();
 }
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -22,7 +22,7 @@ if (!CModule::IncludeModule('search'))
 }
 
 $exFILTER = CSearchParameters::ConvertParamsToFilter($arParams, 'arrFILTER');
-foreach ($exFILTER as $i => $subFilter)
+foreach ($exFILTER as $subFilter)
 {
 	if (
 		is_array($subFilter)
@@ -50,4 +50,4 @@ $arResult['~NAME'] = $arParams['~NAME'];
 $arResult['VALUE'] = $arParams['VALUE'];
 $arResult['~VALUE'] = $arParams['~VALUE'];
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

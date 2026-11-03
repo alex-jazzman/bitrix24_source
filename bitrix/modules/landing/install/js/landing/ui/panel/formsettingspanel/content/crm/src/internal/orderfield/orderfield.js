@@ -10,7 +10,7 @@ type OrderFieldOptions = {
 	selector: string,
 };
 
-export default class OrderField extends BaseField
+export class OrderField extends BaseField
 {
 	constructor(options: OrderFieldOptions)
 	{

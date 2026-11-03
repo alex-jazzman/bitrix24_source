@@ -6,4 +6,4 @@ $MESS['NOTE_FAVORITE_ADD_ERROR'] = 'Не удалось добавить в из
 $MESS['NOTE_FAVORITE_REMOVE_ERROR'] = 'Не удалось убрать из избранного, попробуйте ещё раз';
 $MESS['NOTE_FAVORITE_MOVE_ERROR'] = 'Не удалось изменить порядок в избранном, попробуйте ещё раз';
 $MESS['NOTE_FAVORITE_MAIN_DOCUMENT_NOT_ALLOWED'] = 'Описание базы знаний нельзя добавить в избранное';
-$MESS['NOTE_FAVORITE_DOCUMENT_TRASHED'] = 'Этот документ в корзине, восстановите его, чтобы добавить в избранное';
+$MESS['NOTE_FAVORITE_DOCUMENT_TRASHED'] = 'Эта статья в корзине, восстановите её, чтобы добавить в избранное';

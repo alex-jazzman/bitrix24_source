@@ -258,11 +258,19 @@ export class DesktopManager
 		return Promise.resolve();
 	}
 
-	redirectToVideoCall(dialogId: string = '', withVideo: boolean = true): Promise
+	redirectToVideoCall(dialogId: string = '', withVideo: boolean = true, callOptions: ?Object = null): Promise
 	{
-		Logger.warn('Desktop: redirectToVideoCall', dialogId, withVideo);
+		Logger.warn('Desktop: redirectToVideoCall', dialogId, withVideo, callOptions);
 		const withVideoParam = withVideo ? 'Y' : 'N';
-		this.openBxLink(`bx://${DesktopBxLink.call}/dialogId/${dialogId}/withVideo/${withVideoParam}`);
+		let link = `bx://${DesktopBxLink.call}/dialogId/${dialogId}/withVideo/${withVideoParam}`;
+		// The native bx:// parser breaks on long segments and on literal apostrophes,
+		// so only the known option is passed instead of an arbitrary object
+		const invitePeriod = callOptions?.invitePeriod;
+		if (Number.isInteger(invitePeriod) && invitePeriod > 0)
+		{
+			link += `/callOptions/${Encoder.encodeParamsJson({ invitePeriod })}`;
+		}
+		this.openBxLink(link);
 
 		return Promise.resolve();
 	}

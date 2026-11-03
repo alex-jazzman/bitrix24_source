@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/note
  */
 jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineItemUserAvatar } = require('crm/timeline/item/ui/user-avatar');
 	const { TextEditor } = require('layout/ui/text-editor');
@@ -115,7 +116,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 			return {
 				testId: 'TimelineItemBodyNoteText',
 				style: {
-					fontSize: 14,
+					...Typography.text4.getValue(),
 					fontWeight: '400',
 					color: AppTheme.colors.base1,
 				},

@@ -19,6 +19,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 		MetaUser: 'meta-user',
 		Project: 'project',
 		ProjectTag: 'project-tag',
+		StructureNode: 'structure-node',
 		User: 'user'
 	});
 
@@ -37,6 +38,17 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 		ProjectErrorCode["GroupNameExist"] = "ERROR_GROUP_NAME_EXISTS";
 	})(exports.ProjectErrorCode || (exports.ProjectErrorCode = {}));
 
+	const ProjectMemberType = Object.freeze({
+		Department: 'department',
+		Team: 'team',
+		User: 'user'
+	});
+
+	const StructureNodeEntityType = Object.freeze({
+		Department: 'department',
+		Team: 'team'
+	});
+
 	exports.AccessRightsRoleKind = void 0;
 	(function (AccessRightsRoleKind) {
 		AccessRightsRoleKind["AllParticipants"] = "K";
@@ -54,6 +66,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EventName = EventName;
 	exports.PrivacyType = PrivacyType;
+	exports.ProjectMemberType = ProjectMemberType;
+	exports.StructureNodeEntityType = StructureNodeEntityType;
 
 })(this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {});
 //# sourceMappingURL=const.bundle.js.map

@@ -21,24 +21,27 @@ export class TelephonyContent extends Content
 	getLayout(): HTMLElement
 	{
 		return this.cache.remember('layout', () => {
-			const onclick = () => {
-				document.location.href = this.getOptions().link;
-			};
-
 			return Tag.render`
-				<div data-id="license-widget-block-telephony" onclick="${onclick}" class="license-widget-item license-widget-item--secondary --pointer">
-					<div class="license-widget-inner">
-						<div class="license-widget-content">
-							<div class="license-widget-item-icon ${this.getOptions().isActive ? 'license-widget-item-icon--tel-active' : 'license-widget-item-icon--tel'}"/>
-							<div class="license-widget-item-content">
-								<div class="license-widget-item-name">
+				<a
+					href="${this.getOptions().link}"
+					data-id="license-widget-block-telephony"
+					class="license-widget-item license-widget-item--secondary --pointer"
+				>
+					<span class="license-widget-inner">
+						<span class="license-widget-content">
+							<span
+								class="license-widget-item-icon ${this.getOptions().isActive ? 'license-widget-item-icon--tel-active' : 'license-widget-item-icon--tel'}"
+								aria-hidden="true"
+							></span>
+							<span class="license-widget-item-content">
+								<span class="license-widget-item-name">
 									${this.getOptions().title}
-								</div>
-							</div>
-						</div>
-						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
-					</div>
-				</div>
+								</span>
+							</span>
+						</span>
+						<span class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right" aria-hidden="true"></span>
+					</span>
+				</a>
 			`;
 		});
 	}

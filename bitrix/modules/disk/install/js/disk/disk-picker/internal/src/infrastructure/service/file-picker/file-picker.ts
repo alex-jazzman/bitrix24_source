@@ -8,6 +8,7 @@ import {
 	mapListChildren,
 	mapResolveSelection,
 	mapSearch,
+	mapViewerAttributes,
 } from './mappers';
 import {
 	type InitialStageRequest,
@@ -18,6 +19,8 @@ import {
 	type ResolveSelectionResult,
 	type SearchRequest,
 	type SearchResult,
+	type ViewerAttributesRequest,
+	type ViewerAttributesResult,
 } from './types';
 
 const TRANSPORT_ERROR_CODE = 'transport';
@@ -133,6 +136,7 @@ export function loadInitialStage(request: InitialStageRequest): Promise<InitialS
 			objectTypeFilter: request.filters.objectTypeFilter,
 			fileTypeFilters: request.filters.fileTypeFilters,
 			allowedFileTypes: request.allowedFileTypes,
+			page: request.page,
 			pageSize: cappedPageSize(request.pageSize),
 			...(request.initialStage === null ? {} : { initialStage: request.initialStage }),
 		},
@@ -203,4 +207,17 @@ export function resolveSelection(request: ResolveSelectionRequest): Promise<Reso
 	);
 
 	return callAction(FilePickerAction.ResolveSelection, payload, mapResolveSelection);
+}
+
+export function getViewerAttributes(request: ViewerAttributesRequest): Promise<ViewerAttributesResult>
+{
+	// The caller already narrows the set to a window of at most PageSize.Max ids
+	// around the file being opened, so the cap only keeps a malformed caller away
+	// from the server-side 'too_many_items' rejection.
+	const payload = withSignedConfig(
+		{ objectIds: request.objectIds.slice(0, PageSize.Max) },
+		request.signedConfig,
+	);
+
+	return callAction(FilePickerAction.GetViewerAttributes, payload, mapViewerAttributes);
 }

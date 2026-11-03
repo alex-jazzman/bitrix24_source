@@ -356,21 +356,21 @@ var pulse_loading = {
 	{
 		var img,
 			img_list_src = [
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-close-btn.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-grey.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-blue.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-sidebar-percent-bg.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-grey.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-blue.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-big.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-normal.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-bg.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-shadow.png?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-close-btn.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-grey.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-blue.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-sidebar-percent-bg.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-grey.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-blue.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-big.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-normal.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-bg.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-shadow.webp?1407'),
 				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-involve-strip.gif?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-dark-grey.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bg.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-sprite.png?1407'),
-				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-main-bg.png?1407')
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-num-dark-grey.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bg.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-sprite.webp?1407'),
+				BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/pulse-main-bg.webp?1407')
 			];
 
 		var div = BX.create('div',{

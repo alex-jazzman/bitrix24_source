@@ -16,7 +16,6 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imChatMute: 'im.chat.mute',
 		imChatUpdateTitle: 'im.chat.updateTitle',
 		imChatParentJoin: 'im.chat.parent.join',
-		imChatFileCollectionGet: 'im.chat.file.collection.get',
 		imChatFileGet: 'im.chat.file.get',
 		imChatUrlGet: 'im.chat.url.get',
 		imChatUrlDelete: 'im.chat.url.delete',
@@ -48,9 +47,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2FolderUpdate: 'im.v2.Folder.update',
 		imV2FolderDelete: 'im.v2.Folder.delete',
 		imV2FolderSort: 'im.v2.Folder.sort',
-		imV2FolderAddChats: 'im.v2.Folder.addChats',
-		imV2FolderDeleteChats: 'im.v2.Folder.deleteChats',
 		imV2FolderSetChatFolders: 'im.v2.Folder.setChatFolders',
+		imV2FolderGetSources: 'im.v2.Folder.getSources',
+		imV2FolderUpdateSources: 'im.v2.Folder.updateSources',
 		imV2FolderRecentTail: 'im.v2.Folder.Recent.tail',
 
 		imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
@@ -64,7 +63,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatDetachFromParent: 'im.v2.Chat.detachFromParent',
 		imV2ChatRead: 'im.v2.Chat.read',
 		imV2ChatReadAll: 'im.v2.Chat.readAll',
-		imV2ChatReadAllByType: 'im.v2.Chat.readByType',
+		imV2ChatReadByRecentSection: 'im.v2.Chat.readByRecentSection',
 		imV2ChatUnread: 'im.v2.Chat.unread',
 		imV2ChatLoad: 'im.v2.Chat.load',
 		imV2ChatShallowLoad: 'im.v2.Chat.shallowLoad',
@@ -82,6 +81,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
 		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
 		imV2ChatMessageSearch: 'im.v2.Chat.Message.search',
+		imV2ChatMessageDateNavigationGetCalendar: 'im.v2.Chat.Message.DateNavigation.getCalendar',
+		imV2ChatMessageDateNavigationResolveDate: 'im.v2.Chat.Message.DateNavigation.resolveDate',
 		imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
 		imV2ChatMemberFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
 		imV2ChatMemberCheckMembership: 'im.v2.Chat.Member.checkMembership',
@@ -97,6 +98,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
 		imV2ChatUserList: 'im.v2.Chat.User.list',
 		imV2ChatMentionList: 'im.v2.Chat.Mention.list',
+		imV2ChatCommandList: 'im.v2.Chat.Command.list',
 		imV2ChatAddManagers: 'im.v2.Chat.addManagers',
 		imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
 
@@ -111,8 +113,10 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
 
 		imV2ChatMessageVoteSend: 'im.v2.Chat.Message.Vote.send',
+		imV2ChatMessageBlockFormSubmit: 'im.v2.Chat.Message.Block.Form.submit',
 		imV2CopilotMessageRegenerate: 'im.v2.Copilot.Message.regenerate',
 		imV2CopilotDraftChatGet: 'im.v2.Copilot.DraftChat.get',
+		imV2CopilotGenerationStop: 'im.v2.Copilot.Generation.stop',
 
 		imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
 		imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
@@ -120,7 +124,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 		imV2ChatCopilotUpdateEngine: 'im.v2.Chat.Copilot.updateEngine',
+		imV2ChatTaskCreateByAi: 'im.v2.Chat.Task.createByAi',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
+		imV2ChatStructureLink: 'im.v2.Chat.Structure.link',
 
 		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
 
@@ -207,6 +213,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2SyncList: 'im.v2.Sync.list',
 
+		imV2SettingsGeneralList: 'im.v2.Settings.General.list',
+		imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
+
 		mobileBrowserConstGet: 'mobile.browser.const.get',
 
 		userCounters: 'user.counters',
@@ -242,6 +251,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		voteAttachedVoteGetAnswerVoted: 'vote.AttachedVote.getAnswerVoted',
 
 		mobileOnboardingGetMessagesAmountByChatId: 'mobile.Onboarding.getMessagesAmountByChatId',
+		mobileProjectGetViewInfo: 'mobile.Project.getViewInfo',
 
 		aiAssistantApiMCPHintSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce',
 	});

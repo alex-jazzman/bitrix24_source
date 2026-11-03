@@ -1,5 +1,5 @@
-import { Tag, Runtime, Extension } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Tag, Runtime, Extension, Loc } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 import { MarketContent } from './market-content';
 
@@ -32,7 +32,14 @@ export class BaasContent extends MarketContent
 	{
 		if (this.getOptions().isActive)
 		{
-			return Tag.render`<span class="license-widget-item-help" onclick="${() => this.#showHelper()}"></span>`;
+			return Tag.render`
+				<button
+					type="button"
+					class="license-widget-item-help"
+					aria-label="${Loc.getMessage('INTRANET_LICENSE_WIDGET_BAAS_HELP_BUTTON')}"
+					onclick="${() => this.#showHelper()}"
+				></button>
+			`;
 		}
 
 		return '';
@@ -58,23 +65,23 @@ export class BaasContent extends MarketContent
 		return this.cache.remember('description-link', () => {
 			return Tag.render`
 				<div class="license-widget-item-link">
-					<span class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
+					<button type="button" class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
 						${this.getOptions().description.text}
-					</span>
+					</button>
 				</div>
 			`;
 		});
 	}
 
-	getReminderMessage(): ?HTMLDivElement
+	getReminderMessage(): ?HTMLButtonElement
 	{
 		return this.cache.remember('reminder-message', () => {
 			const node = Tag.render`
-				<div class="license-widget-item-link" onclick="${this.#showBaasWidget.bind(this)}">
+				<button type="button" class="license-widget-item-link" onclick="${this.#showBaasWidget.bind(this)}">
 					<span class="license-widget-item-link-text --active">
 						${this.getOptions().messages.remainder}
 					</span>
-				</div>
+				</button>
 			`;
 
 			if (BX.PULL && Extension.getSettings('baas.store').pull)
@@ -99,12 +106,12 @@ export class BaasContent extends MarketContent
 		return 'license-widget-block-baas';
 	}
 
-	getButton(): HTMLLinkElement
+	getButton(): HTMLButtonElement
 	{
 		return Tag.render`
-			<a class="license-widget-item-btn" onclick="${this.#showBaasWidget.bind(this)}">
+			<button type="button" class="license-widget-item-btn" onclick="${this.#showBaasWidget.bind(this)}">
 				${this.getOptions().button.text}
-			</a>
+			</button>
 		`;
 	}
 
@@ -127,7 +134,7 @@ export class BaasContent extends MarketContent
 	{
 		return this.cache.remember('icon', () => {
 			return Tag.render`
-				<div class="license-widget-item-icon license-widget-item-icon--baas"/>
+				<div class="license-widget-item-icon license-widget-item-icon--baas" aria-hidden="true"/>
 			`;
 		});
 	}

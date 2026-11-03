@@ -136,6 +136,16 @@ export class StatusInformer
 		Dom.adjust(this.DOM.statusWrap, {text: message});
 	}
 
+	setNotice(message)
+	{
+		if (this.DOM.labelWrap)
+		{
+			this.DOM.labelWrap.style.display = 'none';
+		}
+		Dom.removeClass(this.DOM.wrap, 'calendar-resbook-webform-block-result-error');
+		Dom.adjust(this.DOM.statusWrap, {text: message});
+	}
+
 	isErrorSet()
 	{
 		return this.shown && Dom.hasClass(this.DOM.wrap, 'calendar-resbook-webform-block-result-error');

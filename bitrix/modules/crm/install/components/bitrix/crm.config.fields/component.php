@@ -16,7 +16,46 @@ $arComponentVariables = array(
 	'mode',
 );
 
-if($arParams['SEF_MODE'] == 'Y')
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? null) === true;
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+
+if ($isSettingsHub)
+{
+	$mode = $arParams['MODE'] ?? 'entity_list';
+	$componentPage = match ($mode)
+	{
+		'list' => 'field_list',
+		'edit' => 'field_edit',
+		default => 'entity_list',
+	};
+	$arVariables = [
+		'mode' => $mode,
+		'entity_id' => $arParams['FIELS_ENTITY_ID'] ?? '',
+		'field_id' => $arParams['FIELS_FIELD_ID'] ?? 0,
+	];
+
+	$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+	$url->addParams([
+		'IFRAME' => 'Y',
+		'IFRAME_TYPE' => 'SIDE_SLIDER',
+	]);
+	$arUrlTemplates = ['entity_list' => $url->getUri()];
+	foreach (['list', 'edit'] as $page)
+	{
+		$pageUrl = clone $url;
+		$pageUrl->addParams(['mode' => $page]);
+		$arUrlTemplates['field_' . $page] = $pageUrl->getUri() . '&entity_id=#entity_id#';
+	}
+	$arUrlTemplates['field_edit'] .= '&field_id=#field_id#';
+
+	$arResult = [
+		'FOLDER' => '',
+		'URL_TEMPLATES' => $arUrlTemplates,
+		'VARIABLES' => $arVariables,
+		'ALIASES' => [],
+	];
+}
+elseif($arParams['SEF_MODE'] == 'Y')
 {
 	$arVariables = array();
 

@@ -1,0 +1,1 @@
+.block-store-breadcrumb .landing-breadcrumb-link:focus-visible{outline:var(--ui-focus-outline-width) solid var(--ui-color-base-1);outline-offset:var(--ui-focus-outline-offset);box-shadow:0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8)}.block-store-breadcrumb .landing-breadcrumb-link{transition-property:color,background-color,border-color,opacity}

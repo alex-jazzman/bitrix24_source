@@ -1,9 +1,13 @@
+.bx-im-message-base__wrap:hover {
+	z-index: 1;
+}
+
 .bx-im-reaction-selector__container {
 	position: absolute;
-	bottom: -3px;
-	right: -21px;
-	width: 28px;
-	height: 24px;
+	bottom: -12px;
+	right: -25px;
+	width: 37px;
+	height: 36px;
 	opacity: 0;
 	transition: opacity .3s;
 	z-index: 3;
@@ -11,6 +15,7 @@
 
 .bx-im-message-base__container:hover .bx-im-reaction-selector__container {
 	opacity: 1;
+	transition: opacity 0.3s ease-in-out;
 }
 
 .bx-im-reaction-selector__selector {
@@ -23,17 +28,34 @@
 	background-color: rgb(255 255 255 / 80%);
 	cursor: pointer;
 	box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+	opacity: 0.6;
+	transition: opacity 0.3s;
 }
 
 .bx-im-reaction-selector__icon {
-	width: 18px;
-	height: 18px;
+	width: 20px;
+	height: 20px;
 	border-radius: 50%;
-	background-image: url('./images/like.svg?v2');
 	background-position: center;
 	background-repeat: no-repeat;
 }
 
-.bx-im-reaction-selector__icon.--active {
-	background-image: url('./images/like-active.svg?v3');
+.bx-im-reaction-selector__selector .ui-reaction {
+	--ui-reaction-size: 20px;
+	width: 20px;
+	height: 20px;
+}
+
+.bx-im-reaction-selector__selector .ui-reaction__inner {
+	transform: scale(1.4);
+	transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-reaction-selector__selector:hover .ui-reaction__inner {
+	transform: scale(1.85);
+	transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-reaction-selector__selector:hover {
+	opacity: 1;
 }

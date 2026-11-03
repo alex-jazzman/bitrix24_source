@@ -118,7 +118,7 @@
 	color: var(--ui-color-base-90);
 	line-height: var(--ui-font-line-height-2xs);
 	margin: 0;
-	word-break: break-all;
+	overflow-wrap: break-word;
 }
 
 .bp-workflow-info__desc-inner br {

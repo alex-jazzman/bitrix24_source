@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, ui_avatar, ui_label, ui_dialogs_messagebox, ui_formElements_field, bitrix24_firstAdminGuard, intranet_fireEmployeeWizard, ui_cnt, intranet_reinvite, ui_iconSet_main, ui_entitySelector, ui_hint, ui_iconSet_api_core, ui_system_chip, im_public) {
+(function (exports, main_core, ui_avatar, ui_label, ui_dialogs_messagebox, ui_formElements_field, bitrix24_firstAdminGuard, intranet_fireEmployeeWizard, intranet_fireSystemUserWizard, ui_cnt, intranet_reinvite, ui_iconSet_main, ui_entitySelector, ui_hint, ui_iconSet_api_core, ui_system_chip, im_public) {
 	'use strict';
 
 	class BaseField {
@@ -73,6 +73,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 					main_core.Dom.append(this.#getCollaberBalloonContainer(), fullNameContainer);
 					break;
 			}
+			if (params.isSystemUser === true) {
+				main_core.Dom.append(this.#getSystemUserLabelContainer(), fullNameContainer);
+			}
 			switch (params.inviteStatus) {
 				case 'INVITE_AWAITING_APPROVE':
 					main_core.Dom.append(this.#getWaitingConfirmationLabelContainer(), fullNameContainer);
@@ -104,7 +107,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				size: ui_label.Label.Size.MD,
 				customClass: 'user-grid_label'
 			});
-			return label.render();
+			const node = label.render();
+			node.dataset.testid = 'intranet-user-grid-invited-badge';
+			return node;
 		}
 		#getWaitingConfirmationLabelContainer() {
 			const label = new ui_label.Label({
@@ -114,7 +119,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 				size: ui_label.Label.Size.MD,
 				customClass: 'user-grid_label'
 			});
-			return label.render();
+			const node = label.render();
+			node.dataset.testid = 'intranet-user-grid-waiting-confirmation-badge';
+			return node;
+		}
+		#getSystemUserLabelContainer() {
+			const label = new ui_label.Label({
+				text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_SYSTEM_USER'),
+				color: ui_label.LabelColor.LIGHT,
+				fill: true,
+				size: ui_label.Label.Size.MD,
+				customClass: 'user-grid_label user-grid_system-user-label'
+			});
+			const node = label.render();
+			node.dataset.testid = 'intranet-user-grid-system-user-badge';
+			return node;
 		}
 		#getPositionLabelContainer(position) {
 			return main_core.Tag.render`<div class="user-grid_position-label">${position}</div>`;
@@ -187,6 +206,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	function showFireConfigFailure() {
+		ui_dialogs_messagebox.MessageBox.show({
+			title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_CONFIG_ERROR_TITLE'),
+			message: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_CONFIG_ERROR_MESSAGE'),
+			buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+			yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+			onYes: messageBox => {
+				messageBox.close();
+			}
+		});
+	}
+
 	class GridManager {
 		static instances = [];
 		#grid;
@@ -233,9 +264,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 				}
 				return response;
 			}, response => {
-				const errors = response.errors.map(error => error.message);
-				ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
-				return response;
+				const errors = (response?.errors ?? []).map(error => error.message);
+				if (errors.length > 0) {
+					ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+				}
+				throw response;
 			});
 		}
 		static reinviteAction(userId, isExtranetUser) {
@@ -255,6 +288,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 					InviteAccessPopup.show();
 				}
 				return response;
+			}, response => {
+				const errors = (response?.errors ?? []).map(error => error.message);
+				if (errors.length > 0) {
+					ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+				}
+				throw response;
 			});
 		}
 		getGrid() {
@@ -304,26 +343,73 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.#grid.getLoader().show();
 				this.runFireWizard(userId).then(response => {
 					this.#grid.getLoader().hide();
-					const wizard = new intranet_fireEmployeeWizard.FireEmployeeWizard({
-						...response.data,
-						onConfirm: data => {
-							intranet_fireEmployeeWizard.MoveWebhookRequest.send(userId, data).then(() => {
-								this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, () => {
-									this.executeUserAction(userId, action, data);
-								});
-							}).catch(error => console.warn(error));
-						}
-					});
-					wizard.show();
+					this.showFireWizard(userId, action, params, response.data);
+				}).catch(() => {
+					this.#grid.getLoader().hide();
+					showFireConfigFailure();
+				});
+			} else if (action === 'restore' && params.requiresDepartmentSelection) {
+				this.#grid.getLoader().show();
+				main_core.ajax.runAction('intranet.v2.User.getVisitorData', {
+					data: {
+						userId
+					}
+				}).then(response => {
+					if (main_core.Type.isObjectLike(response.data)) {
+						return this.loadUserDepartmentPopup(userId, action, response.data).then(() => {
+							this.#grid.getLoader().hide();
+						});
+					}
+					this.#grid.getLoader().hide();
+					return null;
 				}).catch(response => {
 					this.#grid.getLoader().hide();
-					console.warn(response);
+					const errors = response.errors?.map(error => error.message) ?? [];
+					if (errors.length > 0) {
+						ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+					}
 				});
 			} else {
 				this.confirmUser(action, () => {
 					this.executeUserAction(userId, action);
 				});
 			}
+		}
+		loadUserDepartmentPopup(userId, action, data) {
+			return main_core.Runtime.loadExtension('intranet.user.department-popup').then(exports => {
+				const departmentPopup = new exports.UserDepartmentPopup({
+					...data,
+					userType: 'visitor',
+					sendButtonCallback: departmentIds => this.executeUserAction(userId, action, {
+						departmentIds
+					})
+				});
+				departmentPopup.show();
+			});
+		}
+		showFireWizard(userId, action, params, config) {
+			const fireWithFirstAdminGuard = options => {
+				this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, () => {
+					this.executeUserAction(userId, action, options);
+				});
+			};
+			intranet_fireSystemUserWizard.FireSystemUserWizard.showForConfig(config, {
+				onConfirm: () => {
+					fireWithFirstAdminGuard({
+						disableIntegrations: true
+					});
+				},
+				onFallback: () => {
+					new intranet_fireEmployeeWizard.FireEmployeeWizard({
+						...config,
+						onConfirm: data => {
+							intranet_fireEmployeeWizard.MoveWebhookRequest.send(userId, data).then(() => {
+								fireWithFirstAdminGuard(data);
+							}).catch(error => console.warn(error));
+						}
+					}).show();
+				}
+			});
 		}
 		handleFirstAdminFireSingle(userId, userFullName, currentUserId, fallbackAction) {
 			if (!this.isCloud || !this.isFirstAdminConfirmationEnabled) {
@@ -332,7 +418,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.checkIfFirstAdmin(userId).then(isFirstAdmin => {
 				if (!isFirstAdmin) {
-					throw new Error('User is not first admin');
+					fallbackAction();
+					return;
 				}
 				const guard = new bitrix24_firstAdminGuard.FirstAdminGuard(userFullName || '', currentUserId || 0, userId);
 				guard.confirmAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', () => {
@@ -380,34 +467,43 @@ this.BX.Intranet = this.BX.Intranet || {};
 				}
 			});
 		}
-		executeFireAction(userId, action) {
+		executeFireAction(userId, action, options = {}) {
 			const row = this.#grid.getRows().getById(userId);
 			row?.stateLoad();
 			main_core.ajax.runAction(`intranet.v2.User.${action}`, {
 				data: {
-					userId
+					userId,
+					disableIntegrations: options.disableIntegrations === true
 				}
 			}).then(() => {
 				row?.update();
 			}).catch(response => {
 				row?.stateUnload();
-				const errors = response.errors.map(error => error.message);
-				ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+				const errors = (response?.errors ?? []).map(error => error.message);
+				if (errors.length > 0) {
+					ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+				}
 			});
 		}
-		executeRestoreAction(userId, action) {
+		executeRestoreAction(userId, action, options = {}) {
 			const row = this.#grid.getRows().getById(userId);
 			row?.stateLoad();
+			const data = {
+				userId
+			};
+			if (main_core.Type.isArray(options?.departmentIds)) {
+				data.departmentIds = options.departmentIds;
+			}
 			main_core.ajax.runAction('intranet.v2.User.restore', {
-				data: {
-					userId
-				}
+				data
 			}).then(() => {
 				row?.update();
 			}).catch(response => {
 				row?.stateUnload();
-				const errors = response.errors.map(error => error.message);
-				ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+				const errors = (response?.errors ?? []).map(error => error.message);
+				if (errors.length > 0) {
+					ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+				}
 			});
 		}
 		createHandlerByAction(action) {
@@ -548,6 +644,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			GridManager.reinviteCloudAction(data).then(response => {
 				row?.update();
 				row?.stateUnload();
+			}).catch(() => {
+				row?.stateUnload();
 			});
 		}
 		#onClick(params, button) {
@@ -593,6 +691,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			} else {
 				button.setWaiting(true);
 				GridManager.reinviteAction(params.userId, params.isExtranet).then(() => {
+					button.setWaiting(false);
+				}).catch(() => {
 					button.setWaiting(false);
 				});
 			}
@@ -751,17 +851,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		handleSuccess(result) {
 			this.grid.reload();
-			if (this.showPopups) {
-				const {
-					skippedActiveUsers,
-					skippedFiredUsers
-				} = result.data;
+			const {
+				skippedActiveUsers,
+				skippedFiredUsers,
+				failedIntegrationUsers
+			} = result.data;
+			const showSkippedUsersPopup = () => {
+				if (!this.showPopups) {
+					return;
+				}
 				if (skippedActiveUsers && Object.keys(skippedActiveUsers).length > 0) {
 					this.showActiveUsersPopup(skippedActiveUsers);
 				} else if (skippedFiredUsers && Object.keys(skippedFiredUsers).length > 0) {
 					this.showFiredUsersPopup(skippedFiredUsers);
 				}
+			};
+			if (failedIntegrationUsers && Object.keys(failedIntegrationUsers).length > 0) {
+				this.showFailedIntegrationUsersPopup(failedIntegrationUsers, showSkippedUsersPopup);
+				return;
 			}
+			showSkippedUsersPopup();
 		}
 		handleError(result) {
 			this.grid.tableUnfade();
@@ -800,6 +909,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 				yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
 				onYes: messageBox => {
 					messageBox.close();
+				}
+			});
+		}
+		showFailedIntegrationUsersPopup(failedUsers, onClose = null) {
+			ui_dialogs_messagebox.MessageBox.show({
+				title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_INTEGRATION_FAILED_TITLE'),
+				message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_INTEGRATION_FAILED_MESSAGE', failedUsers),
+				buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+				yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+				onYes: messageBox => {
+					messageBox.close();
+					onClose?.();
 				}
 			});
 		}
@@ -846,29 +967,70 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return 'fire';
 		}
 		execute() {
-			const confirmationPopup = this.showPopups ? this.getConfirmationPopup() : null;
-			if (confirmationPopup) {
-				confirmationPopup.setOkCallback(() => {
-					confirmationPopup.close();
-					this.executeAfterConfirmation();
-				});
-				confirmationPopup.show();
-			} else {
-				this.executeAfterConfirmation();
-			}
+			this.grid.tableFade();
+			intranet_fireSystemUserWizard.SystemUserConfigProvider.fetchForList(this.collectFireFields()).then(response => {
+				this.grid.tableUnfade();
+				this.showConfirmation(response?.data);
+			}).catch(() => {
+				this.grid.tableUnfade();
+				this.showConfigFailure();
+			});
 		}
-		executeAfterConfirmation() {
+		showConfirmation(config) {
+			if (!this.showPopups) {
+				this.executeAfterConfirmation(intranet_fireSystemUserWizard.FireSystemUserWizard.hasSystemUsers(config));
+				return;
+			}
+			intranet_fireSystemUserWizard.FireSystemUserWizard.showForListConfig(config, {
+				onConfirm: () => {
+					this.executeAfterConfirmation(true);
+				},
+				onFallback: () => {
+					this.showDefaultConfirmation();
+				}
+			});
+		}
+		showDefaultConfirmation() {
+			const confirmationPopup = this.getConfirmationPopup();
+			confirmationPopup.setOkCallback(() => {
+				confirmationPopup.close();
+				this.executeAfterConfirmation(false);
+			});
+			confirmationPopup.show();
+		}
+		showConfigFailure() {
+			showFireConfigFailure();
+		}
+		collectFireFields() {
+			const selectedRows = this.selectedUsers ?? this.grid.getRows().getSelectedIds();
+			const isSelectedAllRows = this.grid.getRows().isAllSelected() ? 'Y' : 'N';
+			return {
+				userIds: selectedRows,
+				isSelectedAllRows,
+				filter: this.userFilter
+			};
+		}
+		sendActionRequest(disableIntegrations = false) {
+			this.grid.tableFade();
+			main_core.ajax.runAction(this.getAjaxMethod(), {
+				data: {
+					fields: this.collectFireFields(),
+					disableIntegrations: disableIntegrations === true
+				}
+			}).then(result => this.handleSuccess(result)).catch(result => this.handleError(result));
+		}
+		executeAfterConfirmation(disableIntegrations = false) {
 			if (this.firstAdminId) {
 				const selectedRows = this.selectedUsers ?? this.grid.getRows().getSelectedIds();
 				const isFirstAdminSelected = selectedRows.some(userId => Number(userId) === Number(this.firstAdminId));
 				if (isFirstAdminSelected) {
-					this.handleFirstAdminFire();
+					this.handleFirstAdminFire(disableIntegrations);
 					return;
 				}
 			}
-			this.sendActionRequest();
+			this.sendActionRequest(disableIntegrations);
 		}
-		handleFirstAdminFire() {
+		handleFirstAdminFire(disableIntegrations = false) {
 			const guard = new bitrix24_firstAdminGuard.FirstAdminGuard(this.currentUserName || '', this.currentUserId || 0, this.firstAdminId);
 			guard.confirmAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', () => {
 				main_core.ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', {
@@ -896,14 +1058,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 				const nonFirstAdminUsers = selectedRows.filter(userId => Number(userId) !== Number(this.firstAdminId));
 				if (nonFirstAdminUsers.length > 0) {
 					this.selectedUsers = nonFirstAdminUsers;
-					this.sendActionRequest();
+					this.sendActionRequest(disableIntegrations);
 				} else {
 					this.grid.reload();
 				}
 			}, () => {
 				const selectedRows = this.selectedUsers ?? this.grid.getRows().getSelectedIds();
 				this.selectedUsers = selectedRows.filter(id => Number(id) !== Number(this.firstAdminId));
-				this.sendActionRequest();
+				this.sendActionRequest(disableIntegrations);
 			});
 		}
 		getConfirmationPopup() {
@@ -1106,6 +1268,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.unselectRows(this.grid);
 		}
+		handleError(result) {
+			this.grid.tableUnfade();
+			this.unselectRows(this.grid);
+			console.error(result);
+			if (this.showPopups && Type.isArrayFilled(result.errors)) {
+				const errors = result.errors.map(error => error.message);
+				ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+			}
+		}
 		showWaitingUsersPopup(waitingUsers) {
 			ui_dialogs_messagebox.MessageBox.show({
 				title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_ALREADY_ACCEPT_INVITE_TITLE'),
@@ -1294,5 +1465,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.Panel = Panel;
 	exports.PhotoField = PhotoField;
 
-})(this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}, BX, BX.UI, BX.UI, BX.UI.Dialogs, BX.UI.FormElements, BX.Bitrix24, BX.Intranet, BX.UI, BX.Intranet.Reinvite, window, BX.UI.EntitySelector, BX.UI, BX.UI.IconSet, BX.UI.System.Chip, BX.Messenger.v2.Lib);
+})(this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}, BX, BX.UI, BX.UI, BX.UI.Dialogs, BX.UI.FormElements, BX.Bitrix24, BX.Intranet, BX.Intranet, BX.UI, BX.Intranet.Reinvite, window, BX.UI.EntitySelector, BX.UI, BX.UI.IconSet, BX.UI.System.Chip, BX.Messenger.v2.Lib);
 //# sourceMappingURL=grid.bundle.js.map

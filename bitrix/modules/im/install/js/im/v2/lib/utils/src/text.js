@@ -130,6 +130,10 @@ export const TextUtil = {
 
 	checkUrl(url): boolean
 	{
+		// Mirrored by URL_LIKE_PATTERN in im.v2.lib.parser
+		// (markdown/utils/link-boundary-scanner.js), which decides whether a Markdown title
+		// may stand behind an address. Adding a scheme here without adding it there makes
+		// "[t](scheme:x)" a link while "[t](scheme:x "hint")" stays plain text.
 		const allowList = [
 			"http:",
 			"https:",

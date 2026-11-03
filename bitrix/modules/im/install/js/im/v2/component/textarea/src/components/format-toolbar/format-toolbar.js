@@ -196,7 +196,7 @@ export const FormatToolbar = {
 			@close="$emit('close')"
 		>
 			<LinkInput v-if="linkMode" @insertLink="onInsertLink" @close="onCloseLinkMode" />
-			<div v-else class="bx-im-format-toolbar__container">
+			<div v-else class="bx-im-format-toolbar__container" data-testid="im-format-toolbar">
 				<template v-for="item in toolbarItems">
 					<div
 						v-if="item.name === ToolbarItem.separator"
@@ -209,6 +209,7 @@ export const FormatToolbar = {
 						:title="item.title"
 						:hoverableAlt="true"
 						class="bx-im-format-toolbar__item"
+						:data-testid="'im-format-toolbar-' + item.name"
 						@mousedown.prevent
 						@click="item.handler"
 					/>

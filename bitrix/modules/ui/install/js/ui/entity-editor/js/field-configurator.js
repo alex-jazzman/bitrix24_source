@@ -393,18 +393,24 @@ if (typeof BX.UI.EntityEditorFieldConfigurator === "undefined")
 	};
 	BX.UI.EntityEditorFieldConfigurator.prototype.getButtonContainer = function()
 	{
+		// Both were bare spans with a click handler: no tab stop, no role, no keyboard activation
+		// (2.1.1, 4.1.2), so a field opened for configuration could be neither saved nor cancelled
+		// without a mouse. A real button gives all three for free. type="button" is spelled out
+		// because the editor lays its blocks inside a form, where an untyped button would submit.
 		this._saveButton = BX.create(
-			"span",
+			"button",
 			{
 				props: { className: "ui-btn ui-btn-primary" },
+				attrs: { type: "button" },
 				text: BX.message("UI_ENTITY_EDITOR_SAVE"),
 				events: {  click: BX.delegate(this.onSaveButtonClick, this) }
 			}
 		);
 		this._cancelButton = BX.create(
-			"span",
+			"button",
 			{
 				props: { className: "ui-btn ui-btn-light-border" },
+				attrs: { type: "button" },
 				text: BX.message("UI_ENTITY_EDITOR_CANCEL"),
 				events: {  click: BX.delegate(this.onCancelButtonClick, this) }
 			}

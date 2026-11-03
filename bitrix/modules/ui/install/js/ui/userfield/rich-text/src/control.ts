@@ -2,11 +2,11 @@ import { Dom, Event, Reflection, Runtime, Type } from 'main.core';
 
 const INPUT_SELECTOR = '.ui-field-rich-text__input';
 const CONTAINER_SELECTOR = '.ui-field-rich-text__editor';
-const EDITABLE_SELECTOR = '.ui-text-editor-editable';
 const ITEM_SELECTOR = '.ui-field-rich-text-item';
 const USER_TYPE_ID = 'rich_text';
 const READY_FLAG = 'richTextReady';
 const EDITOR_MIN_HEIGHT = 100;
+const SYNC_DELAY = 500;
 
 type CopilotConfig = {
 	copilotOptions: Record<string, unknown>,
@@ -23,6 +23,7 @@ type EditorConfig = {
 type EditorOptions = {
 	toolbar: string[],
 	placeholder: string,
+	ariaLabel: string,
 	minHeight: number,
 	copilot?: CopilotConfig,
 };
@@ -86,9 +87,12 @@ export class RichTextControl
 			return false;
 		}
 
+		// EDIT_FORM_LABEL of the field: its own name, and the only one reaching the editor here
+		const label: string = Type.isStringFilled(config.placeholder) ? config.placeholder : '';
 		const options: EditorOptions = {
 			toolbar: Type.isArray(config.toolbar) ? config.toolbar : [],
-			placeholder: Type.isStringFilled(config.placeholder) ? config.placeholder : '',
+			placeholder: label,
+			ariaLabel: label,
 			minHeight: EDITOR_MIN_HEIGHT,
 		};
 
@@ -101,15 +105,6 @@ export class RichTextControl
 		this.#editor = editor;
 		Dom.clean(this.#container);
 		editor.renderTo(this.#container);
-
-		if (Type.isStringFilled(options.placeholder))
-		{
-			const editable = this.#container.querySelector(EDITABLE_SELECTOR);
-			if (Type.isElementNode(editable))
-			{
-				editable.setAttribute('aria-label', options.placeholder);
-			}
-		}
 
 		if (Type.isStringFilled(this.#textarea.value))
 		{
@@ -146,11 +141,12 @@ export class RichTextControl
 
 	#bindSync(editor: EditorInstance): void
 	{
-		editor.subscribe('onChange', this.#sync);
+		editor.subscribe('onChange', this.#syncDebounced);
 
 		const form = this.#textarea.closest('form');
 		if (Type.isElementNode(form))
 		{
+			// the last chance to sync, so it is never delayed
 			Event.bind(form, 'submit', this.#sync);
 		}
 	}
@@ -162,6 +158,11 @@ export class RichTextControl
 			this.#textarea.dispatchEvent(new window.Event('change', { bubbles: true, cancelable: true }));
 		}
 	};
+
+	// reading the value out of the editor exports the whole document to BBCode: on a document
+	// with a large code block that is thousands of nodes walked and as many BBCode nodes built,
+	// far too much to repeat on every keystroke
+	#syncDebounced: () => void = Runtime.debounce(this.#sync, SYNC_DELAY) as () => void;
 
 	static boot(): void
 	{

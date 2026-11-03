@@ -37,6 +37,7 @@ return [
 		'im:messenger/provider/services/vote',
 	],
 	'bundle' => [
+		'./src/percent',
 		'./src/pull',
 		'./src/user-list',
 		'./src/user-list-item',

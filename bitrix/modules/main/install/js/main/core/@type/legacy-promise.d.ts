@@ -3,7 +3,6 @@
  *
  * This is a custom promise implementation (NOT native Promise).
  * Used in legacy code for deferred resolution patterns.
- * For new code, prefer native `Promise`.
  *
  * Declared as `BXPromise` outside `namespace BX` to avoid shadowing the global `Promise`
  * inside other BX declarations. Use `BXPromise` in .d.ts files,
@@ -13,6 +12,9 @@
 export {};
 
 declare global {
+	/**
+	 * @deprecated use native `Promise`
+	 */
 	class BXPromise {
 		state: boolean | null;
 		value: any;

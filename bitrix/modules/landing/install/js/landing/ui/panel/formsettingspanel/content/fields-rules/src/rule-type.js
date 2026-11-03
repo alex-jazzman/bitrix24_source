@@ -1,4 +1,4 @@
-export default class RuleType
+export class RuleType
 {
 	static TYPE_0 = 0;
 	static TYPE_1 = 1;

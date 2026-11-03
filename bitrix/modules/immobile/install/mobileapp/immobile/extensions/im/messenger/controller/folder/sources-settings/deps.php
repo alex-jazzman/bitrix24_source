@@ -1,0 +1,30 @@
+<?php
+return [
+	'extensions' => [
+		'device/connection',
+		'type',
+		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/blocks/switcher',
+		'ui-system/typography/text',
+		'ui-system/layout/box',
+		'ui-system/layout/dialog-footer',
+		'im:messenger/loc',
+		'im:messenger/const',
+		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/logger',
+		'im:messenger/lib/ui/notification',
+		'im:messenger/assets/icon',
+		'im:messenger/controller/folder/lib/ui/loadable-button',
+		'im:messenger/controller/folder/lib/actions',
+		'im:messenger/controller/recent/service/lib/folder-composition',
+	],
+	'bundle' => [
+		'./src/draft',
+		'./src/source-icon',
+		'./src/source-item',
+		'./src/header',
+		'./src/settings-list',
+		'./src/settings',
+	],
+];

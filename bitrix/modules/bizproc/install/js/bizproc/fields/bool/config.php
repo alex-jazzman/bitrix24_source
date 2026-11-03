@@ -14,6 +14,7 @@ return [
 		'ui.design-tokens',
 		'ui.icon-set.outline',
 		'ui.switcher',
+		'ui.system.checkbox',
 	],
 	'skip_core' => false,
 ];

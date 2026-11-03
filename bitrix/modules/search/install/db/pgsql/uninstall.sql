@@ -8,6 +8,7 @@ DROP TABLE if exists b_search_suggest;
 DROP TABLE if exists b_search_content_title;
 DROP TABLE if exists b_search_content_param;
 DROP TABLE if exists b_search_user_right;
+DROP TABLE if exists b_search_content_right_sync;
 DROP TABLE if exists b_search_content_right;
 DROP TABLE if exists b_search_content_text;
 DROP TABLE if exists b_search_content;

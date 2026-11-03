@@ -5,5 +5,7 @@ import {RecentWidgetItem} from "../../../../../messenger/view/recent/types/recen
 export interface IQuickRecentService extends IBaseRecentService
 {
 	renderList(): Promise<void>;
+	isNotEmptySnapshotRendered(): boolean;
+	invalidateSnapshot(): void;
 	save(sections:Array<JNListWidgetSectionItem>, items:Array<RecentWidgetItem|RecentItem>): void;
 }

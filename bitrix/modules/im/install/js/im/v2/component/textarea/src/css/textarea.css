@@ -41,6 +41,25 @@
 	cursor: text;
 }
 
+/* the field takes no text while the window of the edit is open, so the panel stops promising it */
+.bx-im-textarea__content.--locked {
+	cursor: default;
+}
+
+/* The ring wraps the whole input area while the area itself holds focus: the area is the composer's Tab
+   stop, and Esc moves focus back to it from the field. The class only says the surface opted in (the
+   prop); :focus-visible does the rest, and it is what keeps the ring off a mouse click on the composer
+   padding while still showing it when Esc lands focus here programmatically after a keypress.
+   The ring is inset by its own width on top of the offset, which leaves a band of the composer background
+   outside it: the ring then reads against that band on one side and the input area on the other, instead
+   of against whatever is behind the chat. Staying off the clipped edge of .bx-im-textarea__container also
+   keeps the ring away from the rounded corner the container clips its descendants with. */
+.bx-im-textarea__content.--focus-outline:focus-visible {
+	border-radius: var(--im-border-radius-lg);
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+}
+
 .bx-im-textarea__top {
 	display: flex;
 	flex-grow: 1;
@@ -55,6 +74,19 @@
 }
 
 .bx-im-textarea__icon {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background-color: transparent;
+	-webkit-appearance: none;
+	appearance: none;
+	cursor: pointer;
+}
+
+.bx-im-textarea__slash-command-icon {
+	flex-shrink: 0;
+	align-self: flex-start;
+	margin-left: 4px;
 	cursor: pointer;
 }
 
@@ -68,6 +100,20 @@
 	color: var(--im-textarea__font-color_primary);
 	margin: 0 0 0 6px;
 	padding: 1px 0 0;
+}
+
+/* the edit of the attachments holds the text of the message in its own window: the field of the panel is
+   locked for as long as that window is open, and browsers grey a disabled field their own way */
+.bx-im-textarea__element:disabled {
+	background: transparent;
+	color: var(--im-textarea__font-color_primary);
+	-webkit-text-fill-color: var(--im-textarea__font-color_primary);
+	cursor: default;
+	opacity: 1;
+}
+
+.bx-im-textarea__element:disabled::placeholder {
+	-webkit-text-fill-color: var(--im-textarea__font-color_placeholder);
 }
 
 .bx-im-textarea__element::placeholder {
@@ -90,9 +136,25 @@
 	margin-left: 4px;
 }
 
+.bx-im-textarea__sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* The panel of an edit, a reply or a forward is a positioned sibling that comes after the handle in the
+   markup, so without a layer of its own the handle is painted and hit-tested under the panel. */
 .bx-im-textarea__drag-handle {
 	display: none;
 	position: absolute;
+	z-index: 1;
 	top: 0;
 	width: 100%;
 	height: 10px;

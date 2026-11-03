@@ -7,7 +7,9 @@ import { TextSm } from 'ui.system.typography.vue';
 import {
 	getSelectorItemByAccessCode,
 	getAccessCodeByDialogItem,
+	getOwnAvatarByDialogItem,
 } from '../../utils/private-members';
+import { normalizeSelectorType } from '../../utils/member-type';
 import { PrivateUserItem } from './private-users-selected';
 
 // @vue/component
@@ -69,6 +71,8 @@ export const PrivateAccessAddEmployess = {
 					entityId: item.entityId,
 					title: item.title,
 					avatar: item.avatar,
+					memberType: item.memberType ?? null,
+					ownAvatar: item.ownAvatar ?? null,
 				}));
 		},
 		getSelectionSignature(items)
@@ -97,6 +101,10 @@ export const PrivateAccessAddEmployess = {
 					entityId,
 					title: item.getTitle(),
 					avatar: item.getAvatar(),
+					memberType: normalizeSelectorType(item.getEntityId(), item.getEntityType()),
+					// getAvatar() falls back to the provider default, and the public field still needs
+					// the preset filtered out for entities whose provider puts one there
+					ownAvatar: getOwnAvatarByDialogItem(item),
 				};
 			}).filter(Boolean);
 		},
@@ -259,7 +267,7 @@ export const PrivateAccessAddEmployess = {
 		},
 	},
 	template: `
-		<div class="access-private-add-employess_wrapper">
+		<div class="access-private-add-employess_wrapper" data-testid="disk-sharing-members-add">
 			<TextSm
 				tag="div"
 				className="access-private-add-employess__description"
@@ -270,6 +278,7 @@ export const PrivateAccessAddEmployess = {
 				<UiButton
 					ref="selectButton"
 					text="${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_EMPLOYEES_BUTTON')}"
+					:dataset="{ testid: 'disk-sharing-access-private-add-employees' }"
 					:size="ButtonSize.MEDIUM"
 					:style="AirButtonStyle.OUTLINE_ACCENT_2"
 					:disabled="isSaving"
@@ -277,7 +286,11 @@ export const PrivateAccessAddEmployess = {
 				/>
 			</div>
 		</div>
-		<div v-if="items.length" class="access-private-add-employess__selected">
+		<div
+			v-if="items.length"
+			class="access-private-add-employess__selected"
+			data-testid="disk-sharing-members-selected"
+		>
 			<div class="access-private-head__menu">
 				<TextSm
 					tag="p"
@@ -292,11 +305,18 @@ export const PrivateAccessAddEmployess = {
 					${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_ACCESS_LEVEL')}
 				</TextSm>
 			</div>
-			<div class="access-private-user__users-container">
+			<div
+				class="access-private-user__users-container"
+				data-testid="disk-sharing-access-private-members"
+				role="list"
+			>
 				<PrivateUserItem
 					v-for="item in items"
 					:key="item.entityId"
+					:entityId="item.entityId"
 					:title="item.title"
+					:memberType="item.memberType"
+					:ownAvatar="item.ownAvatar"
 					:taskName="item.right"
 					:maxTaskName="item.maxTaskName"
 					:readOnly="item.readOnly"

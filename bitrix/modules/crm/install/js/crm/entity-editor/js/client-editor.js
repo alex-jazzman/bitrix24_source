@@ -61,6 +61,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 		this._inputFocusHandler = BX.delegate(this.onInputFocus, this);
 		this._inputBlurHandler = BX.delegate(this.onInputBlur, this);
 		this._inputDblClickHandler = BX.delegate(this.onInputDblClick, this);
+		this._inputKeyDownHandler = BX.delegate(this.onInputKeyDown, this);
 
 		this._mode = BX.Crm.EntityEditorClientMode.undefined;
 		this._multifieldChangeNotifier = null;
@@ -324,6 +325,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				}
 
 				this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-search-row" } });
+				this._wrapper.setAttribute('data-testid', 'crm-client-' + this._entityTypeName.toLowerCase() + '-search');
 				this.innerWrapper = BX.create("div", { props: { className: "crm-entity-widget-content-search-inner" } });
 
 				var anchor = BX.prop.getElementNode(options, "anchor", null);
@@ -353,6 +355,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 
 				this._searchInput = BX.create("input",
 					{
+						attrs: { 'data-testid': 'crm-client-search-input' },
 						props:
 							{
 								type: "text",
@@ -365,8 +368,10 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				BX.bind(this._searchInput, "focus", this._inputFocusHandler);
 				BX.bind(this._searchInput, "blur", this._inputBlurHandler);
 				BX.bind(this._searchInput, "dblclick", this._inputDblClickHandler);
+				BX.bind(this._searchInput, 'keydown', this._inputKeyDownHandler);
 
 				this._badgeElement = BX.create("div", { props: { className: "crm-entity-widget-badge" } });
+				this._badgeElement.setAttribute('data-testid', 'crm-client-status');
 
 				this._editButton = BX.create("div", { props: { className: "crm-entity-widget-btn-edit" } });
 
@@ -461,6 +466,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				BX.unbind(this._editButton, "click", this._editButtonHandler);
 				BX.unbind(this._deleteButton, "click", this._deleteButtonHandler);
 				BX.unbind(this._changeButton, "click", this._changeButtonHandler);
+				BX.unbind(this._searchInput, 'keydown', this._inputKeyDownHandler);
 
 				this._deleteButton = this._changeButton = this._searchControl = this._badgeElement = this._loadingIcon = null;
 				this._wrapper = BX.remove(this._wrapper);
@@ -1585,6 +1591,13 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 			},
 			onInputDblClick: function(e)
 			{
+			},
+			onInputKeyDown: function(e)
+			{
+				if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229)
+				{
+					e.preventDefault();
+				}
 			},
 			onEntityAdd: function(sender, item)
 			{
@@ -2718,6 +2731,7 @@ if(typeof BX.Crm.SecondaryClientEditor === "undefined")
 
 		this._addButton = null;
 		this._addButtonHandler = BX.delegate(this.onAddButtonClick, this);
+		this._addButtonKeyHandler = BX.delegate(this.onAddButtonKeyDown, this);
 
 		this._bindButton = null;
 		this._bindButtonClickHandler = BX.delegate(this.onBindButtonClick, this);
@@ -3057,11 +3071,13 @@ if(typeof BX.Crm.SecondaryClientEditor === "undefined")
 
 				if(!isViewMode)
 				{
+					// Same bare span as in EntityEditorClientLight: no tab stop, no role (2.1.1).
 					this._addButton = BX.create("span",
 						{
 							props: { className: "crm-entity-widget-actions-btn-add" },
+							attrs: { role: "button", tabindex: "0" },
 							text: this.getMessage('addParticipant'),
-							events: { click: this._addButtonHandler }
+							events: { click: this._addButtonHandler, keydown: this._addButtonKeyHandler }
 						}
 					);
 					this._wrapper.appendChild(this._addButton);
@@ -3170,6 +3186,12 @@ if(typeof BX.Crm.SecondaryClientEditor === "undefined")
 			onAddButtonClick: function(e)
 			{
 				this._searchWrapper.style.display = this._searchWrapper.style.display === "none" ? "" : "none";
+			},
+			onAddButtonKeyDown: function(e)
+			{
+				// Through the static rather than the prototype: this class has no editor control
+				// in its chain. No handler is passed, so the helper raises a click.
+				BX.UI.EntityEditorControl.activateOnKey(e);
 			},
 			onBindButtonClick: function(e)
 			{
@@ -3504,22 +3526,29 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 			{
 				if (!this._titleIcon && this._entityInfo)
 				{
-					var iconClass = null;
+					var iconClassName = null;
 					if (this._entityInfo.getTypeId() === BX.CrmEntityType.enumeration.lead)
 					{
-						iconClass = 'crm-entity-widget-client-box-icon--lead';
+						iconClassName = '--o-lead';
 					}
 					else if (this._entityInfo.getTypeId() === BX.CrmEntityType.enumeration.deal)
 					{
-						iconClass = 'crm-entity-widget-client-box-icon--deal';
+						iconClassName = '--o-handshake';
 					}
-					if (iconClass)
+					if (iconClassName)
 					{
 						this._titleIcon = BX.create("span", {
 							props: {
-								className: 'crm-entity-widget-client-box-icon ' + iconClass
-							}}
-						);
+								className: 'crm-entity-widget-client-box-icon crm-entity-widget-client-box-icon--outline'
+							},
+							children: [
+								BX.create("span", {
+									props: {
+										className: 'ui-icon-set ' + iconClassName
+									}
+								})
+							]
+						});
 					}
 				}
 
@@ -3564,6 +3593,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 
 				var titleWrapper = BX.create("div",
 					{
+						attrs: { 'data-testid': 'crm-client-' + this._entityInfo.getTypeName().toLowerCase() + '-result' },
 						props: { className: "crm-entity-widget-client-box-name-container" }
 					}
 				);
@@ -3688,13 +3718,14 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 
 					if(phones.length > 0)
 					{
+						var phoneFormattedValue = phones[0]["VALUE_FORMATTED"];
 						communicationContainer.appendChild(
 							BX.create("div",
 								{
 									props: { className: "crm-entity-widget-client-contact-item crm-entity-widget-client-contact-phone" },
 									//HACK: Disable autodetection of phone number for Microsoft Edge
-									attrs: { "x-ms-format-detection": "none" },
-									text: phones[0]["VALUE_FORMATTED"]
+									attrs: { "x-ms-format-detection": "none", title: phoneFormattedValue },
+									text: phoneFormattedValue
 								}
 							)
 						);
@@ -3968,14 +3999,44 @@ if(typeof BX.Crm.ClientEditorCommunicationButton === "undefined")
 					className = "crm-entity-widget-client-action-call";
 				}
 
+				var attrs = {};
 				if(this._items.length > 0)
 				{
 					className += " crm-entity-widget-client-action-available";
+					attrs = {
+						tabindex: "0",
+						role: "button",
+						"aria-label": this.getAccessibleName()
+					};
 				}
 
-				this._wrapper = BX.create("a", { props: { className: className } });
+				this._wrapper = BX.create("a", {
+					props: { className: className },
+					attrs: attrs
+				});
 				BX.bind(this._wrapper, "click", BX.delegate(this.onClick, this));
+				BX.bind(this._wrapper, "keydown", BX.delegate(this.onKeyDown, this));
 				this._container.appendChild(this._wrapper);
+			},
+			getAccessibleName: function()
+			{
+				if(this._type === "EMAIL")
+				{
+					return BX.message("CRM_EDITOR_EMAIL");
+				}
+				if(this._type === "IM")
+				{
+					return BX.message("CRM_EDITOR_IM");
+				}
+				return BX.message("CRM_EDITOR_PHONE");
+			},
+			onKeyDown: function(e)
+			{
+				if(e.key === "Enter" || e.key === " " || e.key === "Spacebar")
+				{
+					e.preventDefault();
+					this.onClick(e);
+				}
 			},
 			onClick: function(e)
 			{

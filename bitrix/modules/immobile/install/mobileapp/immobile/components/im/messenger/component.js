@@ -20,6 +20,33 @@ function destructMessengerIfExist()
 }
 
 /**
+ * @description The tab the native widget opens on. Runs before the messenger core is up,
+ * so it reads BX.componentParameters directly and repeats the rule of
+ * NavigationHelper.resolveFallbackTabId(): im/messenger/controller/navigation is not
+ * loaded at this point. Keep both in sync.
+ * @return {string|null}
+ */
+function resolveStartupTabId()
+{
+	const firstTabId = BX.componentParameters.get('FIRST_TAB_ID', '');
+	if (firstTabId)
+	{
+		return firstTabId;
+	}
+
+	const availableTabs = BX.componentParameters.get('AVAILABLE_TABS', {});
+	for (const [tabId, isAvailable] of Object.entries(availableTabs))
+	{
+		if (isAvailable)
+		{
+			return tabId;
+		}
+	}
+
+	return null;
+}
+
+/**
  * @description Perform actions before the messenger launch.
  * Attention! Adding resource-intensive operations to this method will degrade performance.
  */
@@ -36,7 +63,12 @@ function executeBeforeMessengerInit()
 	window.subscriptionManager ??= new SubscriptionManager();
 	serviceLocator.add('subscription-manager', window.subscriptionManager);
 
-	window.tabs?.setActiveItem(BX.componentParameters.get('FIRST_TAB_ID', 'chats'));
+	// No id at all: leave the choice to the native widget, it shows the first tab itself.
+	const startupTabId = resolveStartupTabId();
+	if (startupTabId)
+	{
+		window.tabs?.setActiveItem(startupTabId);
+	}
 
 	Loc.initMessages();
 
@@ -57,7 +89,10 @@ function executeBeforeMessengerInit()
 
 	window.messengerDebug.clearDatabaseAndRestart = async () => {
 		const { clearDatabaseAndRestart } = await requireLazy('im:messenger/api/cleaning');
-		void clearDatabaseAndRestart();
+		// a refusal is a normal outcome here: the cleaning declines to run while synchronization does
+		await clearDatabaseAndRestart().catch((error) => {
+			console.error('clearDatabaseAndRestart error:', error);
+		});
 	};
 
 	const { actionTimer } = require('im/messenger/lib/dev/action-timer');

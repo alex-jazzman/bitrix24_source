@@ -159,6 +159,9 @@ $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
 if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
+
+$arResult['ENABLE_GROUP_ACTIONS'] = (($arParams['ENABLE_GROUP_ACTIONS'] ?? 'N') === 'Y');
+
 if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
@@ -293,7 +296,7 @@ $factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quot
 //region Headers initialization
 $arResult['HEADERS'] = 	array(
 	// default fields
-	array('id' => 'QUOTE_SUMMARY', 'name' => GetMessage('CRM_COLUMN_QUOTE_MSGVER_1'), 'sort' => 'quote_summary', 'width' => 200, 'default' => true, 'editable' => false),
+	array('id' => 'QUOTE_SUMMARY', 'name' => GetMessage('CRM_COLUMN_QUOTE_MSGVER_1'), 'sort' => 'quote_summary', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => false),
 	array('id' => 'STATUS_ID', 'name' => GetMessage('CRM_COLUMN_STATUS_ID_MSGVER_2'), 'sort' => 'status_sort', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => array('items' => $arResult['STATUS_LIST_WRITE']), 'type' => 'list'),
 	array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 	array('id' => 'ENTITIES_LINKS', 'name' => GetMessage('CRM_COLUMN_ENTITIES_LINKS'), 'default' => true, 'editable' => false),
@@ -313,6 +316,12 @@ $arResult['HEADERS'] = 	array(
 	array('id' => 'DEAL_ID', 'name' => GetMessage('CRM_COLUMN_DEAL_ID'), 'sort' => 'deal_id', 'editable' => false),
 	array('id' => 'MYCOMPANY_ID', 'name' => GetMessage('CRM_COLUMN_MYCOMPANY_ID1'), 'sort' => 'mycompany_id', 'editable' => false),
 	array('id' => 'CLOSED', 'name' => GetMessage('CRM_COLUMN_CLOSED'), 'sort' => 'closed', 'align' => 'center', 'editable' => array('items' => array('' => '', 'Y' => GetMessage('MAIN_YES'), 'N' => GetMessage('MAIN_NO'))), 'type' => 'list'),
+	[
+		'id' => 'OPENED',
+		'name' => $factory->getFieldCaption('OPENED'),
+		'sort' => false,
+		'default' => false,
+	],
 	array('id' => 'DATE_CREATE', 'name' => $factory->getFieldCaption('DATE_CREATE'), 'sort' => 'date_create', 'first_order' => 'desc', 'default' => true,),
 	array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false),
 	array('id' => 'DATE_MODIFY', 'name' => GetMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc'),

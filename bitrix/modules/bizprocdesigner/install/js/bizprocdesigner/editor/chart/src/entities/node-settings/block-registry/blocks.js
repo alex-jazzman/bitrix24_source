@@ -1,11 +1,13 @@
+import { Feature, FeatureCode } from 'bizprocdesigner.feature';
 import { PORT_TYPES, PORTLESS_RULE_TYPE } from '../../../shared/constants';
 import { CONSTRUCTION_TYPES } from '../constants';
 import { NODE_BLOCK_TYPES } from './types';
 import { registerBlock } from './registry';
 
 /**
- * Registration of existing blocks: condition, action, filter, output.
- * Sort order: base-settings=5, condition=10, action=20, filter=30, output=40 —
+ * Registration of existing blocks: condition, action, output, filter.
+ * Sort order: base-settings=5, condition=10, action=20, output=30, filter=40 -
+ * the toolbar row of the mockup, where the filter chip follows the output one.
  * base-settings sorts first but has no toolbar button (re-add is via dedicated UI).
  */
 
@@ -58,12 +60,27 @@ registerBlock({
 	},
 });
 
+// Output
+registerBlock({
+	type: NODE_BLOCK_TYPES.OUTPUT,
+	surfaces: ['rules'],
+	sort: 30,
+	toolbar: {
+		constructionType: CONSTRUCTION_TYPES.OUTPUT,
+		labelMessageCode: 'BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_OUTPUT_TOOLBAR_ITEM',
+		className: 'output',
+		testId: 'complexNodeRuleSettingsToolbarItemConstructionOutput',
+		placement: 'button',
+	},
+});
+
 // Filter: rules of the node itself only (applies predicate); whether the node gets the block
-// at all is decided by the server descriptor.
+// at all is decided by the server descriptor. The chip is offered only under the node filter flag:
+// a node declaring the block bypasses the flag on the server, so filters already saved keep working.
 registerBlock({
 	type: NODE_BLOCK_TYPES.FILTER,
 	surfaces: ['rules'],
-	sort: 30,
+	sort: 40,
 	toolbar: {
 		constructionType: CONSTRUCTION_TYPES.FILTER,
 		labelMessageCode: 'BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_TOOLBAR_ITEM',
@@ -71,20 +88,8 @@ registerBlock({
 		testId: 'complexNodeRuleSettingsToolbarItemConstructionFilter',
 		placement: 'button',
 	},
-	applies: ({ currentRuleType }) => isNodeRuleType(currentRuleType),
-});
-
-// Output
-registerBlock({
-	type: NODE_BLOCK_TYPES.OUTPUT,
-	surfaces: ['rules'],
-	sort: 40,
-	toolbar: {
-		constructionType: CONSTRUCTION_TYPES.OUTPUT,
-		labelMessageCode: 'BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_OUTPUT_TOOLBAR_ITEM',
-		className: 'output',
-		testId: 'complexNodeRuleSettingsToolbarItemConstructionOutput',
-		placement: 'button',
+	applies: ({ currentRuleType }) => {
+		return isNodeRuleType(currentRuleType) && Feature.instance().isAvailable(FeatureCode.nodeFilter);
 	},
 });
 

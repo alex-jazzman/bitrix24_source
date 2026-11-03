@@ -1,5 +1,5 @@
 /* ================================================================
- * [P1.T5] Activity line — hub under the document title (chip / eye / bell).
+ * Activity line — hub under the document title (chip / eye / bell).
  * The caller (note.editor's DocumentEditorComponent) renders it directly between
  * the <h1> title block and the ProseMirror content wrapper — matches the
  * mockup's placement of #activity right under .prose h1.title.
@@ -28,7 +28,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	/* [P8.T6] Widen the gap from the chip avatars to the eye/bell group: the base 8px parent gap
+	/* Widen the gap from the chip avatars to the eye/bell group: the base 8px parent gap
 	 * alone read as too tight, so add 8px here (≈16px total) to visually separate the "who/when"
 	 * chip cluster from the views/subscription actions. */
 	margin-left: 8px;
@@ -63,7 +63,7 @@
 	border-radius: var(--ui-border-radius-sm, 8px);
 }
 
-/* [P8.T2] history_enabled off: the chip renders as a passive <span> label — no clickable
+/* history_enabled off: the chip renders as a passive <span> label — no clickable
  * affordance (no pointer cursor, no accent hover). It still live-updates its text. */
 .note-activity-line__chip--static {
 	cursor: default;
@@ -109,7 +109,7 @@
 	color: var(--ui-color-accent-main-primary);
 }
 
-/* [P3.T4] The views eye is a real control now — override the base slot's default cursor. */
+/* The views eye is a real control now — override the base slot's default cursor. */
 .note-activity-line__control.--interactive {
 	cursor: pointer;
 }
@@ -138,7 +138,7 @@
 }
 
 /* ================================================================
- * [P3.T4] Views widget — eye control (above) + viewers popover, "как в задачах"
+ * Views widget — eye control (above) + viewers popover, "как в задачах"
  * per mockup-activity-line.html (#eyeCtl / #popViews): avatar + name left, time right.
  * ================================================================ */
 
@@ -244,7 +244,7 @@
 }
 
 /* ================================================================
- * [P6.T4] Subscription bell — bell control (above, .note-activity-line__control)
+ * Subscription bell — bell control (above, .note-activity-line__control)
  * + scope popover per mockup-activity-line.html (#bellLine / #popSub): self/subtree
  * radio options + a "Не отслеживать" row shown only while subscribed.
  * ================================================================ */
@@ -390,7 +390,7 @@
 }
 
 /* ================================================================
- * [P1.T5] History sidebar — in-flow right column that pushes .note-editor-document-main,
+ * History sidebar — in-flow right column that pushes .note-editor-document-main,
  * one screen tall, pinned (sticky) with its own hidden internal scroll. Width animates
  * via --note-history-width.
  * ================================================================ */
@@ -469,7 +469,7 @@
 	transition: opacity 0.15s ease;
 }
 
-/* [P2.T4] The filter button takes the "push to the right" role — the mockup docks both
+/* The filter button takes the "push to the right" role — the mockup docks both
  * the funnel and the close icon at the head's right edge (#histFilter/#histClose). The
  * filter now renders on mobile too (the overlay is a full screen with room for it); the
  * fallback below still pushes the close button when the filter is absent. */
@@ -871,13 +871,13 @@ html.note-mobile .note-activity-line {
 	padding: 8px 12px 8px var(--note-heading-gutter, 40px);
 }
 
-/* [P3.T4] Views popover: cap to the viewport so it doesn't overflow on narrow screens —
+/* Views popover: cap to the viewport so it doesn't overflow on narrow screens —
  * the eye control itself already renders compact (icon + count) on both web and mobile. */
 html.note-mobile .note-views-widget__popover {
 	max-width: calc(100vw - 24px);
 }
 
-/* [P6.T4] Same viewport cap for the subscription-scope popover; the bell trigger
+/* Same viewport cap for the subscription-scope popover; the bell trigger
  * itself is already compact (icon-only, no count badge) on both web and mobile. */
 html.note-mobile .note-subscription-bell__popover {
 	max-width: calc(100vw - 24px);

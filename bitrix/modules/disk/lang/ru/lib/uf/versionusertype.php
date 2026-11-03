@@ -5,4 +5,3 @@ $MESS['DISK_VERSION_USER_TYPE_ERROR_INVALID_VALUE'] = "Неверное знач
 $MESS['DISK_VERSION_USER_TYPE_ERROR_USER_ID'] = "Пользователь не авторизован.";
 $MESS['DISK_VERSION_USER_TYPE_ERROR_BAD_RIGHTS'] = "Недостаточно прав.";
 $MESS['DISK_VERSION_USER_TYPE_NAME'] = "Версия файла (Диск)";
-?>

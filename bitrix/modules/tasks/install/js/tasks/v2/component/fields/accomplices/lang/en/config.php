@@ -1,3 +1,4 @@
 <?php
 $MESS["TASKS_V2_ACCOMPLICES_TITLE"] = "Participants:";
 $MESS["TASKS_V2_ACCOMPLICES_TITLE_CHIP"] = "Participants";
+$MESS["TASKS_V2_ACCOMPLICES_REMOVE_ARIA_LABEL"] = "Remove participant";

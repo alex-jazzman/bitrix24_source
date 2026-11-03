@@ -11,6 +11,7 @@ return [
 		'utils/uuid',
 		'uploader/client',
 		'im:messenger/view/dialog',
+		'im:messenger/loc',
 		'im:messenger/lib/helper',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
@@ -22,6 +23,7 @@ return [
 		'im:messenger/provider/services/sending/upload-manager',
 		'im:messenger/provider/services/sending/upload-task',
 		'im:messenger/provider/services/analytics',
+		'im:messenger/provider/rest',
 	],
 	'bundle' => [
 		'./src/file',

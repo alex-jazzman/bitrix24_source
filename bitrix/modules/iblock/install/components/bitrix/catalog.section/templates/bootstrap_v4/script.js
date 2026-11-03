@@ -4,6 +4,12 @@
 	if (!!window.JCCatalogSectionComponentBootstrapV4)
 		return;
 
+	// Without the extension the list keeps loading and loses only the spoken count.
+	var getAccessibility = function()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	};
+
 	window.JCCatalogSectionComponentBootstrapV4 = function(params) {
 		this.formPosting = false;
 		this.siteId = params.siteId || '';
@@ -23,9 +29,11 @@
 
 		this.bigData = params.bigData || {enabled: false};
 		this.container = document.querySelector('[data-entity="' + params.container + '"]');
+		this.itemsTotal = parseInt(params.itemsTotal) || 0;
 		this.lazyLoadContainer = document.querySelector('[data-entity="lazy-' + params.container + '"]');
 		this.showMoreButton = null;
 		this.showMoreButtonMessage = null;
+		this.showMoreListNumber = 0;
 
 		if (this.bigData.enabled && BX.util.object_keys(this.bigData.rows).length > 0)
 		{
@@ -60,19 +68,52 @@
 		{
 			BX.bind(window, 'scroll', BX.proxy(this.loadOnScroll, this));
 		}
+
+		BX.ready(BX.delegate(this.initShowMoreButtonName, this));
 	};
 
 	window.JCCatalogSectionComponentBootstrapV4.prototype =
 	{
-		checkButton: function()
+		// Two lists on one page give two buttons with the same caption; the number tells them apart.
+		initShowMoreButtonName: function()
+		{
+			var lists = document.querySelectorAll('.catalog-section[role="list"]');
+
+			if (!this.showMoreButton || lists.length < 2)
+				return;
+
+			this.showMoreListNumber = Array.prototype.indexOf.call(lists, this.container) + 1;
+			this.nameShowMoreButton();
+		},
+
+		// The caption stays part of the name, so it still matches what the visitor sees and says. It is
+		// rebuilt on every change of the caption: while loading the button reads "Loading".
+		nameShowMoreButton: function()
+		{
+			if (!this.showMoreButton || this.showMoreListNumber < 1)
+				return;
+
+			this.showMoreButton.setAttribute(
+				'aria-label',
+				BX.Loc.getMessage('CT_BCS_CATALOG_BTN_LAZY_LOAD_LIST_ARIA', {
+					'#TEXT#': this.showMoreButton.textContent.trim(),
+					'#NUM#': String(this.showMoreListNumber)
+				})
+			);
+		},
+
+		checkButton: function(keepButton)
 		{
 			if (this.showMoreButton)
 			{
 				if (this.navParams.NavPageNomer == this.navParams.NavPageCount)
 				{
-					BX.remove(this.showMoreButton);
+					if (!keepButton)
+					{
+						BX.remove(this.showMoreButton);
+					}
 				}
-				else
+				else if (this.showMoreButton.parentNode !== this.lazyLoadContainer)
 				{
 					this.lazyLoadContainer.appendChild(this.showMoreButton);
 				}
@@ -85,6 +126,9 @@
 			{
 				BX.removeClass(this.showMoreButton, 'disabled');
 				this.showMoreButton.innerHTML = this.showMoreButtonMessage;
+				this.nameShowMoreButton();
+				this.showMoreButton.removeAttribute('aria-disabled');
+				this.container.removeAttribute('aria-busy');
 			}
 		},
 
@@ -94,6 +138,9 @@
 			{
 				BX.addClass(this.showMoreButton, 'disabled');
 				this.showMoreButton.innerHTML = BX.message('BTN_MESSAGE_LAZY_LOAD_WAITER');
+				this.nameShowMoreButton();
+				this.showMoreButton.setAttribute('aria-disabled', 'true');
+				this.container.setAttribute('aria-busy', 'true');
 			}
 		},
 
@@ -185,16 +232,32 @@
 
 		processShowMoreAction: function(result)
 		{
+			// Chrome and Firefox focus a button on a click of the mouse, and such a visitor notices
+			// nothing of a focus carried away from under their hand: only a visible one is carried.
+			var seenFocus = document.activeElement === this.showMoreButton
+				&& this.showMoreButton.matches(':focus-visible')
+			;
+
 			this.formPosting = false;
 			this.enableButton();
 
 			if (result)
 			{
 				this.navParams.NavPageNomer++;
-				this.processItems(result.items);
+				var rows = this.processItems(result.items);
 				this.processPagination(result.pagination);
 				this.processEpilogue(result.epilogue);
-				this.checkButton();
+
+				// The portion arrives below the screen and pushes the button down with it, so the focus is
+				// carried onto the first card that came in, and before the button is taken away: the focus
+				// of a node taken out of the document falls back to the top of the page. A portion that
+				// took no focus, an empty one or a card of the row view with no page to link at, leaves the
+				// button where it is, with the focus still on it.
+				var keptFocus = seenFocus && !this.focusFirstEntry(rows, seenFocus);
+
+				this.checkButton(keptFocus);
+				this.renameList();
+				this.announceAddedItems(rows);
 			}
 		},
 
@@ -270,6 +333,86 @@
 			}
 
 			BX.ajax.processScripts(processed.SCRIPT);
+
+			return items;
+		},
+
+		// An entry the keyboard cannot reach, with no link of its own and no tab stop, takes no focus,
+		// and the answer says so, so that the button is not taken away from under the focus.
+		focusFirstEntry: function(rows, scroll)
+		{
+			var entry = this.firstEntry(rows);
+
+			if (!entry)
+			{
+				return false;
+			}
+
+			entry.focus({preventScroll: !scroll});
+
+			return document.activeElement === entry;
+		},
+
+		firstEntry: function(rows)
+		{
+			var k, item;
+
+			for (k in rows)
+			{
+				if (rows.hasOwnProperty(k))
+				{
+					item = rows[k].querySelector('[data-entity="item"]');
+
+					if (item)
+					{
+						return item.querySelector('h3.product-item-title a') || item;
+					}
+				}
+			}
+
+			return null;
+		},
+
+		// The name tells how many of the result the list holds: a reader says that number after the name.
+		renameList: function()
+		{
+			var line = this.container && this.container.id
+				? document.getElementById(this.container.id + '_count')
+				: null
+			;
+			if (!line || this.itemsTotal < 1)
+				return;
+
+			var shown = this.container.querySelectorAll('[data-entity="item"]').length;
+			line.textContent = (
+				shown < this.itemsTotal
+					? BX.Loc.getMessage('CT_BCS_CATALOG_ITEMS_SHOWN_ARIA', {
+						'#COUNT#': String(this.itemsTotal),
+						'#SHOWN#': String(shown)
+					})
+					: BX.Loc.getMessage('CT_BCS_CATALOG_ITEMS_COUNT_ARIA', {'#COUNT#': String(this.itemsTotal)})
+			);
+		},
+
+		announceAddedItems: function(rows)
+		{
+			var added = 0, k;
+
+			for (k in rows)
+			{
+				if (rows.hasOwnProperty(k))
+				{
+					added += rows[k].querySelectorAll('[data-entity="item"]').length;
+				}
+			}
+
+			var accessibility = getAccessibility();
+			if (added === 0 || !accessibility)
+				return;
+
+			accessibility.LiveAnnouncer.announce(
+				BX.Loc.getMessagePlural('CT_BCS_CATALOG_ITEMS_ADDED_ARIA', added, {'#COUNT#': String(added)})
+			);
 		},
 
 		processPagination: function(paginationHtml)

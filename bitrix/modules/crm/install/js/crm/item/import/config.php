@@ -25,7 +25,6 @@ return [
 		'ui.notification',
 		'ui.progressbar',
 		'ui.system.alert',
-		'ui.system.typography.vue',
 		'ui.uploader.core',
 		'ui.uploader.tile-widget',
 		'ui.vue3',

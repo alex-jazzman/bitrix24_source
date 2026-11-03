@@ -1,4 +1,5 @@
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { FocusNavigator } from 'ui.a11y';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 import type { TextEditor } from 'ui.text-editor';
 
@@ -62,6 +63,7 @@ export const DescriptionField = {
 			enableSaveButton: false,
 			hasFilesChanges: false,
 			files: this.fileService.getFiles(),
+			trigger: null,
 		};
 	},
 	computed: {
@@ -140,19 +142,26 @@ export const DescriptionField = {
 
 		this.fileService.subscribe('onFileRemove', this.onFileRemove);
 		this.fileService.subscribe('onFilesDetachComplete', this.reloadTaskOnFileRemove);
+
+		this.$bitrix.eventEmitter.subscribe(EventName.CheckListAddFromTextResolved, this.handleCheckListAddResolved);
 	},
 	beforeUnmount(): void
 	{
 		this.fileService.unsubscribe('onFileRemove', this.onFileRemove);
 		this.fileService.unsubscribe('onFilesDetachComplete', this.reloadTaskOnFileRemove);
+
+		this.$bitrix.eventEmitter.unsubscribe(EventName.CheckListAddFromTextResolved, this.handleCheckListAddResolved);
 	},
 	methods: {
 		expandDescription(): void
 		{
+			this.captureTrigger();
 			this.setSheetShown(true);
 		},
 		openEditMode(): void
 		{
+			this.captureTrigger();
+
 			if (this.editor && this.hasChanges() && !this.isSaving)
 			{
 				this.entityTextEditor.setEditorText(this.taskDescription);
@@ -176,12 +185,55 @@ export const DescriptionField = {
 			await this.handleSave();
 
 			this.setSheetShown(false);
-		},
-		async addCheckListFromSheet(checklistString: string): void
-		{
-			await this.closeEditMode();
 
-			this.addCheckList(checklistString);
+			await this.restoreTriggerFocus();
+		},
+		captureTrigger(): void
+		{
+			const active = document.activeElement;
+			this.trigger = (active && active !== document.body) ? active : null;
+		},
+		async restoreTriggerFocus(): Promise<void>
+		{
+			const trigger = this.trigger;
+			this.trigger = null;
+
+			if (trigger === null)
+			{
+				return;
+			}
+
+			await this.$nextTick();
+
+			if (document.body.contains(trigger))
+			{
+				FocusNavigator.restoreFocus(trigger);
+
+				return;
+			}
+
+			FocusNavigator.restoreFocus(this.getLiveTrigger());
+		},
+		getLiveTrigger(): ?HTMLElement
+		{
+			return this.$refs.field?.querySelector(
+				'.tasks-card-entity-collapsible-edit-button, .tasks-card-change-description-mini-btn',
+			) ?? null;
+		},
+		addCheckListFromSheet(payload: { text: string, anchor?: ?HTMLElement }): void
+		{
+			// Don't close the form yet: a picker may still appear. Close on CheckListAddFromTextResolved.
+			this.addCheckList(payload);
+		},
+		async handleCheckListAddResolved(): void
+		{
+			// Close the floating toolbar now the action finished; it stayed open as the picker's anchor.
+			this.entityTextEditor.closeFloatingToolbar();
+
+			if (this.isSheetShown)
+			{
+				await this.closeEditMode();
+			}
 		},
 		async handleTextChanges(): void
 		{
@@ -201,15 +253,16 @@ export const DescriptionField = {
 				await this.save();
 			}
 		},
-		async addCheckListFromMiniForm(checklistString: string): void
+		async addCheckListFromMiniForm(payload: { text: string, anchor?: ?HTMLElement }): void
 		{
 			await this.handleTextChanges();
 
-			this.addCheckList(checklistString);
+			this.addCheckList(payload);
 		},
-		addCheckList(checklistString: string): void
+		addCheckList(payload: { text: string, anchor?: ?HTMLElement }): void
 		{
-			this.$bitrix.eventEmitter.emit(EventName.AddCheckListFromText, checklistString);
+			// anchor is optional: without it the receiver creates a new checklist.
+			this.$bitrix.eventEmitter.emit(EventName.AddCheckListFromText, payload);
 		},
 		handleFilesChanges(): void
 		{
@@ -334,6 +387,7 @@ export const DescriptionField = {
 	template: `
 		<div
 			v-if="shouldShowDescriptionField"
+			ref="field"
 			class="tasks-card-description-field"
 			:data-task-id="taskId"
 			:data-task-field-id="'description'"

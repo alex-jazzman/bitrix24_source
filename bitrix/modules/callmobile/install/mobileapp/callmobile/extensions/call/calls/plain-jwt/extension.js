@@ -5,6 +5,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 	const { CallLogger } = require('call/calls/logger');
 	const { RecordStatus } = require('call/const');
 	const { ActiveCallNotification } = require('call/calls/active-call-notification');
+	const { stuckCallFinishTracker } = require('call/calls/stuck-call-finish-tracker');
 
 	const DoNothing = function ()
 	{
@@ -14,6 +15,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 	const signalingWaitReplyPeriod = 10000;
 	const ajaxActions = Object.freeze({
 		decline: "call.Call.decline",
+		finish: "call.CallManager.finish",
 	});
 
 	const clientEvents = {
@@ -39,6 +41,10 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		{
 			this.id = params.id;
 			this.uuid = params.uuid;
+			// Set by the controller from data.result.isNew; gates the forced finish in hangup().
+			this.isNew = false;
+			this.abandonedFinishSent = false;
+			this.teardownDone = false;
 			this.instanceId = params.instanceId;
 			this.parentUuid = params.parentUuid;
 			this.direction = params.direction;
@@ -50,6 +56,19 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			this.userId = parseInt(env.userId, 10);
 			this.usersAfterReconnect = null;
+			// Participant snapshot scoped to ONE reconnect (see `__onCallReconnecting`). Unlike
+			// `usersAfterReconnect`, which is never cleared and therefore holds the last joinResponse
+			// ever seen (including the initial join), this field is armed empty on every reconnect
+			// attempt, written ONLY by a joinResponse that lands while that reconnect is still in
+			// flight, and consumed by `__onCallReconnected`. Consumers may only treat it as "the
+			// state of the room at the end of THIS outage" because of that lifetime.
+			this.reconnectParticipantsSnapshot = null;
+			// The write gate of the field above, as one explicit state instead of a predicate over
+			// `_reconnectionEventCount`. Here the counter is even less suitable than in bitrix-jwt:
+			// it is zeroed ONLY in `__onCallReconnected`, so a reconnect cycle that never completes
+			// would keep a counter-derived gate open indefinitely. Armed only between entering a
+			// reconnect and resolving it, and explicitly disarmed once the initial connect is done.
+			this.isReconnectSnapshotArmed = false;
 
 			this.initiatorId = params.initiatorId || '';
 			Object.defineProperty(this, 'users', {
@@ -315,6 +334,19 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 					const onCallConnected = () => {
 						this.log('Call connected');
+
+						// `bindCallEvents()` above subscribes to Reconnecting/Reconnected before this
+						// handler ever runs, so a Reconnecting emitted while the FIRST connection is
+						// being established would arm the snapshot and let the initial joinResponse
+						// into it. That picture describes the room at entry ("nobody shares yet"), and
+						// a later Reconnected - the SDK does not guarantee a preceding Reconnecting -
+						// would consume it and tear down a screenshare started after the join. The
+						// initial connect is done here, so disarm and drop whatever was captured.
+						// (Unlike bitrix-jwt, this handler does not reset `_reconnectionEventCount`;
+						// that asymmetry is exactly why the gate is a field of its own.)
+						this.isReconnectSnapshotArmed = false;
+						this.reconnectParticipantsSnapshot = null;
+
 						this.plainCallJwt.off(JNBXCall.Events.Connected, onCallConnected);
 						this.plainCallJwt.off(JNBXCall.Events.Failed, onCallFailed);
 
@@ -418,6 +450,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				},
 				onStateChanged: this._onPeerStateChanged.bind(this),
 				onInviteTimeout: this._onPeerInviteTimeout.bind(this),
+				// Both reconnect callbacks below are currently unreachable: Peer never invokes
+				// `onReconnecting`, and its single `onReconnected` call site is dead too - see the
+				// DEAD PATH note in `Peer._onPeerConnectionIceConnectionStateChange`. The live
+				// reconnect edge is the SDK's Reconnecting/Reconnected subscription in
+				// `bindCallEvents()`.
 				onReconnecting: () =>
 				{
 					this.__onCallReconnecting();
@@ -894,13 +931,21 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				});
 		}
 
-		hangup()
+		hangup(force = false)
 		{
 			this.dismissActiveCallNotification();
-			if (!this.ready)
+
+			if (!this.ready && !force)
 			{
 				let error = new Error("Hangup in wrong state");
 				this.log(error);
+				if (!this.teardownDone)
+				{
+					// The room already exists on the server, but the call never got ready,
+					// so no signaling will close it.
+					this.finishAbandonedRoom();
+				}
+
 				return;
 			}
 
@@ -910,6 +955,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			this.ready = false;
 			this.connectionData = {};
+
+			if (force || !this.plainCallJwt)
+			{
+				this.finishAbandonedRoom();
+			}
 
 			if (this.plainCallJwt)
 			{
@@ -925,8 +975,41 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				this.plainCallJwt = null;
 			}
 
+			this.teardownDone = true;
 			this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id, callUuid: this.uuid }]);
 		};
+
+		// Finish only a fresh 1-1 room this client created: a group room or one we merely
+		// joined may already hold other participants.
+		finishAbandonedRoom()
+		{
+			const isGroupRoom = String(this.associatedEntity?.id ?? '').startsWith('chat');
+			if (!this.uuid || !this.isNew || isGroupRoom || this.abandonedFinishSent)
+			{
+				return;
+			}
+
+			this.abandonedFinishSent = true;
+
+			const callId = this.id;
+			const callUuid = this.uuid;
+			const sendFinish = () => callEngine.getRestClient()
+				.callMethod(ajaxActions.finish, { callUuid });
+
+			sendFinish().catch((error) => {
+				// A hangup in the first second outruns the call record on the server. Retry once
+				// through the shared tracker, which a Pull `Call::finish` can still cancel.
+				if (error?.answer?.error === 'call_not_found')
+				{
+					stuckCallFinishTracker.scheduleFinish(callId, callUuid, () => sendFinish()
+						.catch((e) => CallUtil.error('CallManager.finish retry failed', e)));
+
+					return;
+				}
+
+				CallUtil.error('CallManager.finish failed', error);
+			});
+		}
 
 		showActiveCallNotification(notificationParams)
 		{
@@ -1336,7 +1419,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			if (this.ready && headers.leaveInformation && headers.leaveInformation.reason !== BX.Call.CallError.SecurityKeyChanged)
 			{
-				this.hangup(headers.leaveInformation.code, headers.leaveInformation.reason);
+				this.hangup();
 			}
 
 			else if (headers.leaveInformation?.reason === BX.Call.CallError.RoomClosed)
@@ -1368,6 +1451,14 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			try
 			{
 				this.isSignalingReconnecting = true;
+
+				// Everything known before the outage is stale by definition, and a re-join that
+				// never lands must leave "no data" behind rather than an old picture. Arming the
+				// gate right after is what lets the re-join response of THIS outage - and only it -
+				// into the snapshot.
+				this.reconnectParticipantsSnapshot = null;
+				this.isReconnectSnapshotArmed = true;
+
 				this._reconnectionEventCount++;
 				console.log(`Trying to reconnect to signaling. Attempt ${this._reconnectionEventCount}`);
 				this.eventEmitter.emit(BX.Call.Event.onReconnecting, [{
@@ -1453,7 +1544,19 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		__onCallReconnected()
 		{
 			this._reconnectionEventCount = 0;
-			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{ reconnectedUsers: this.usersAfterReconnect }]);
+
+			// Consume the snapshot and close the gate: it describes this reconnect only, so it must
+			// not survive into the next one. Stays null when the re-join response has not arrived
+			// yet - consumers read that as "no data" and must not reconcile anything away. The
+			// layout logs which of the two flavours of "no data" this was (see [ALG-03] log line).
+			const participantsSnapshot = this.reconnectParticipantsSnapshot;
+			this.reconnectParticipantsSnapshot = null;
+			this.isReconnectSnapshotArmed = false;
+
+			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{
+				reconnectedUsers: this.usersAfterReconnect,
+				participantsSnapshot,
+			}]);
 		}
 
 		__onSwitchCallType()
@@ -1478,11 +1581,30 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					this.log(`Could not parse a socket message: ${response.response}`);
 					return;
 				}
+
+				// NOTE: no `if (data?.event) { data = data.event; }` unwrap here, unlike the
+				// otherwise twin handler in bitrix-jwt. The `{ event, mediaServerId }` envelope is a
+				// LARGE ROOM construct, and this provider has no large rooms at all: it serves
+				// `BX.Call.Provider.Plain` (one-to-one), has no `roomType` anywhere and pins
+				// `auto_subscribe=1` in `getSignalingUrl`. Payloads here are always flat; adding the
+				// unwrap would be dead code, and the asymmetry with bitrix-jwt is intentional.
 				if (data?.joinResponse)
 				{
 					if (data.joinResponse.otherParticipants)
 					{
 						this.usersAfterReconnect = [Object.values(data.joinResponse.otherParticipants)];
+
+						// Same shape, different lifetime: armed on entering a reconnect and written
+						// only here, so it is the only field that can be read as "the room right
+						// now". The write is gated because this handler also parses the joinResponse
+						// of the INITIAL join: a snapshot taken at entry (nobody sharing yet) would
+						// sit there until some later `Reconnected` and would tear down a screenshare
+						// started after the join. The gate is the explicit armed state, not
+						// `_reconnectionEventCount` - see the field declaration in the constructor.
+						if (this.isReconnectSnapshotArmed)
+						{
+							this.reconnectParticipantsSnapshot = [Object.values(data.joinResponse.otherParticipants)];
+						}
 					}
 
 					if (data?.joinResponse?.oneToOneType === 1)
@@ -2219,6 +2341,10 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		calculateState()
 		{
+			if (!this.call)
+			{
+				return BX.Call.UserState.Idle;
+			}
 			if (this.call.connectionType === 1 && this.endpoint)
 			{
 				return BX.Call.UserState.Connected;
@@ -2958,6 +3084,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				this.connectionAttempt = 0;
 				this.failureReason = "";
 
+				// DEAD PATH - do not "fix" without redesigning the reconnect edge. `this` is a Peer,
+				// and `_reconnectionEventCount` is declared on PlainCallJwt only (the call is
+				// reachable as `this.call._reconnectionEventCount`), so this reads undefined, the
+				// condition is always false and `onReconnected` never fires from here. Making it
+				// fire would call `__onCallReconnected` on the ICE-connected edge, i.e. necessarily
+				// BEFORE the joinResponse of the restored socket - which is what fills
+				// `reconnectParticipantsSnapshot`. The snapshot would then always be consumed empty
+				// and the ALG-03 screenshare reconciliation would degrade into a permanent no-op.
+				// Its twin `callbacks.onReconnecting` (wired in `createPeer`) is dead the same way:
+				// nothing in Peer ever invokes it.
 				if (this._reconnectionEventCount > 0)
 				{
 					this.callbacks.onReconnected();
@@ -3177,6 +3313,9 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
 			this.reconnectAfterDisconnectTimeout = null;
+
+			clearTimeout(this.callingTimeout);
+			this.callingTimeout = null;
 
 			this.callbacks.onStateChanged = DoNothing;
 			this.callbacks.onStreamReceived = DoNothing;

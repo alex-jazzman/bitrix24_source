@@ -1,4 +1,5 @@
 <?php
+$MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_ERROR"] = "Could not delete tag. Please try again.";
 $MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_POPUP"] = "Do you want to delete this tag? It will be deleted from all dashboards marked with this tag.";
 $MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_POPUP_YES"] = "Yes";
 $MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_SUCCESS"] = "Tag has been deleted from all dashboards.";

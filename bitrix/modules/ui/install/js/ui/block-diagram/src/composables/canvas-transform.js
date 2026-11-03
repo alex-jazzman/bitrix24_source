@@ -1,8 +1,8 @@
-import { ref, toValue, markRaw } from 'ui.vue3';
+import { ref, toValue, watch } from 'ui.vue3';
 import { Dom, Browser } from 'main.core';
 
 import { useBlockDiagram } from './block-diagram';
-import { Canvas, Grid, GRID_DEFAULT_SIZE, GRID_DEFAULT_ZOOM_STEPS } from '../utils';
+import { Grid, GRID_DEFAULT_SIZE, GRID_DEFAULT_ZOOM_STEPS } from '../utils';
 
 export type UseCanvasTransform = {
 	isDragging: boolean,
@@ -51,13 +51,11 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		transformX,
 		transformY,
 		zoom,
-		minZoom,
-		maxZoom,
 		canvasRef,
 		transformLayoutRef,
 		canvasWidth,
 		canvasHeight,
-		canvasInstance,
+		canvas,
 		blockIntersections,
 	} = useBlockDiagram();
 
@@ -66,6 +64,17 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 	const zooming = ref(false);
 
 	let requestAnimationId = null;
+	// The element the canvas was attached to. The detach names it so that a component unmounted
+	// after a later one mounted does not drop the binding that later one made.
+	let attachedCanvasElement = null;
+
+	watch(
+		[transformX, transformY, zoom, canvasWidth, canvasHeight],
+		() => {
+			blockIntersections.selectVisibleBlocks();
+			blockIntersections.selectVisibleConnections();
+		},
+	);
 
 	function getCanvasStyleOptions(canvasStyle: CanvasStyle): CanvasStyle | null
 	{
@@ -88,30 +97,20 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		canvasRef.value = newCanvasRef;
 		transformLayoutRef.value = newTransformLayoutRef;
 
-		canvasInstance.value = markRaw(new Canvas({
-			canvas: toValue(newCanvasRef),
-			canvasStyle: getCanvasStyleOptions(newCanvasStyle),
-			minZoom: toValue(minZoom),
-			maxZoom: toValue(maxZoom),
-		}));
-
-		toValue(canvasInstance).camera.setChangeTransformCallback((payload) => {
-			transformX.value = payload.x;
-			transformY.value = payload.y;
-			zoom.value = payload.zoom;
-			canvasWidth.value = payload.width;
-			canvasHeight.value = payload.height;
-			blockIntersections.selectVisibleBlocks();
-			blockIntersections.selectVisibleConnections();
-		});
+		attachedCanvasElement = toValue(newCanvasRef);
+		canvas.attach(
+			attachedCanvasElement,
+			getCanvasStyleOptions(newCanvasStyle),
+		);
 
 		render();
 	}
 
 	function onUnmounted(): void
 	{
-		toValue(canvasInstance)?.destroy();
 		cancelAnimationFrame(requestAnimationId);
+		canvas.detach(attachedCanvasElement);
+		attachedCanvasElement = null;
 	}
 
 	function onMouseDown(event: MouseEvent): void
@@ -122,7 +121,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		}
 
 		dragOn.value = true;
-		toValue(canvasInstance)?.setCameraPositionByMouseDown(event);
+		canvas.setCameraPositionByMouseDown(event);
 	}
 
 	function onMouseMove(event: MouseEvent): void
@@ -141,7 +140,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		}
 
 		isDragging.value = true;
-		toValue(canvasInstance)?.setCameraPositionByMouseMove(event);
+		canvas.setCameraPositionByMouseMove(event);
 	}
 
 	function onMouseUp(): void
@@ -171,7 +170,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 				: -Math.sign(event.deltaY) * toValue(zoomSensitivityMouse);
 
 			zooming.value = true;
-			toValue(canvasInstance)?.setCameraZoomByWheel(event, zoomChange);
+			canvas.setCameraZoomByWheel(event, zoomChange);
 
 			setTimeout(() => {
 				zooming.value = false;
@@ -179,27 +178,27 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		}
 		else
 		{
-			toValue(canvasInstance)?.setCameraPositionByWheel(event);
+			canvas.setCameraPositionByWheel(event);
 		}
 	}
 
-	function render(): void
+	// The timestamp of the frame is handed to the canvas: a move of the overview lives in this very
+	// loop, and the clock of the loop is the one it has to step by.
+	function render(now: number): void
 	{
-		if (canvasInstance)
-		{
-			toValue(canvasInstance)?.render();
-			const viewMatrix = toValue(canvasInstance).viewMatrix;
+		canvas.render(now);
 
-			Dom.style(
-				toValue(transformLayoutRef),
-				'transform',
-				`
-					matrix(
-						${viewMatrix[0]}, 0, 0, ${viewMatrix[4]}, ${viewMatrix[6]}, ${viewMatrix[7]}
-					)
-				`,
-			);
-		}
+		const viewMatrix = canvas.viewMatrix;
+
+		Dom.style(
+			toValue(transformLayoutRef),
+			'transform',
+			`
+				matrix(
+					${viewMatrix[0]}, 0, 0, ${viewMatrix[4]}, ${viewMatrix[6]}, ${viewMatrix[7]}
+				)
+			`,
+		);
 
 		requestAnimationId = requestAnimationFrame(render);
 	}

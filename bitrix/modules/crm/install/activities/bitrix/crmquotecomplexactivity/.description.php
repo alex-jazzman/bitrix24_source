@@ -21,18 +21,28 @@ use Bitrix\Bizproc\Activity\Dto\Complex\Settings;
 use Bitrix\Bizproc\Activity\Dto\Complex\NodeActionDictionary;
 use Bitrix\Bizproc\Activity\Dto\Complex\NodeAction;
 
-// Filter is offered because the node publishes FilterReturnPropertiesMap; relations needs a
-// declared relationAction, which this node has none of. Everything else stays on the default.
+// older bizproc versions have no $relationAction in Settings constructor
+$relationActionArgs = [];
+if (property_exists(Settings::class, 'relationAction'))
+{
+	$relationActionArgs['relationAction'] = new NodeAction(
+		activityCode: 'crmgetconversiondataactivity',
+	);
+}
+
+// Filter is offered because the node publishes FilterReturnPropertiesMap; relations is declared
+// because the node has a relationAction and stays subject to the complexNodeConnections
+// runtime gate. Everything else stays on the default.
 // Older bizproc versions have no BlockAvailability::legacyDefault().
 $availableBlocksArgs = [];
 if (method_exists(BlockAvailability::class, 'legacyDefault'))
 {
-	$availableBlocksArgs['availableBlocks'] = BlockAvailability::legacyDefault(filter: true, relations: false);
+	$availableBlocksArgs['availableBlocks'] = BlockAvailability::legacyDefault(filter: true, relations: true);
 }
 
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::getMessage('CRM_COMPLEX_ACTIVITY_QUOTE_NAME') ?? '',
-	description: Loc::getMessage('CRM_COMPLEX_ACTIVITY_QUOTE_DESCRIPTION') ?? '',
+	description: Loc::getMessage('CRM_COMPLEX_ACTIVITY_QUOTE_DESCRIPTION_1') ?? '',
 	type: [ActivityType::NODE->value],
 ))
 	->setClass('CrmQuoteComplexActivity')
@@ -47,6 +57,7 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setComplexActivitySettings(
 		new Settings(
+			...$relationActionArgs,
 			...$availableBlocksArgs,
 			actionDictionary: new NodeActionDictionary(
 				new NodeAction(
@@ -81,6 +92,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 600,
 				),
 				new NodeAction(
+					activityCode: 'crmcreaterequisiteactivity',
+					sort: 650,
+				),
+				new NodeAction(
 					activityCode: 'crmchangestatusactivity',
 					sort: 700,
 				),
@@ -98,6 +113,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 800,
 				),
 				new NodeAction(
+					activityCode: 'crmgetproductrowactivity',
+					sort: 850,
+				),
+				new NodeAction(
 					activityCode: 'crmremoveproductrow',
 					sort: 900,
 				),
@@ -109,6 +128,7 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		),
 	)
-	->setAdditionalResult(['FilterReturnPropertiesMap'])
+	->setAdditionalResult(['FilterReturnPropertiesMap', 'RelationReturnPropertiesMap'])
+	->set('PROPERTIES', ['BaseSettingsAction' => 'setfieldactivity'])
 	->toArray()
 ;

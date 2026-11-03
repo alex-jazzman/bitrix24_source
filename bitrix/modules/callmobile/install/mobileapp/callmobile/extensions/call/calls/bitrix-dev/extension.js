@@ -2,9 +2,14 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 	include('Calls');
 
 	const { CallLogger } = require('call/calls/logger');
-
+	const { CallSettingsManager } = require('call/settings-manager');
+	const { StreamQuality } = require('call/const');
+	const { NetworkQualityEvaluator } = require('call/network-quality-evaluator');
 
 	BX.DoNothing = function() {};
+
+	// NQE WebRTC stats polling interval (ms), aligned with web (SDD P2)
+	const NQE_STATS_INTERVAL_MS = 3000;
 
 	const ajaxActions = {
 		invite: 'call.CallManager.invite',
@@ -53,6 +58,164 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 	const backendPingPeriod = 25000;
 
 	const connectionRestoreTime = 15000;
+
+	const MAX_LOG_VALUE_LENGTH = 200;
+	const MAX_LOG_KEYS = 50;
+	// per nesting level, not for the whole log: the cap is checked before a key is added and the expanded
+	// nested map spends its own budget, so the resulting text stays under roughly three times this value
+	const MAX_LOG_LEVEL_TEXT_LENGTH = 2000;
+	const NESTED_LOG_DEPTH = 1;
+	const MAX_ERROR_CODE_LENGTH = 32;
+
+	// the log also goes to the server call-log, so values behind credential-looking names are never printed
+	const SENSITIVE_KEY_PATTERN = /token|jwt|secret|password|auth|credential|signature|key$/i;
+
+	// sibling maps such as the headers of the native Failed event carry access data under names this code
+	// does not control, so only the key the diagnostics needs is expanded; the rest stay collapsed
+	const EXPANDED_NESTED_KEY = 'error';
+
+	const truncate = (value, maxLength) => (value.length > maxLength ? `${value.slice(0, maxLength)}...` : value);
+
+	const printErrorValue = (val, depth) => {
+		if (val === null)
+		{
+			return 'null';
+		}
+
+		// message and stack of an Error are not enumerable, so Object.keys() would print it as an empty list
+		if (val instanceof Error)
+		{
+			return truncate(`${val.name}: ${String(val.message)}`, MAX_LOG_VALUE_LENGTH);
+		}
+
+		if (typeof val === 'object')
+		{
+			return depth > 0 ? printErrorObject(val, depth - 1) : '(object)';
+		}
+
+		if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean')
+		{
+			return truncate(String(val), MAX_LOG_VALUE_LENGTH);
+		}
+
+		return `(${typeof val})`;
+	};
+
+	const printErrorObject = (obj, depth) => {
+		let result = '[';
+		let printedKeys = 0;
+
+		for (const key of Object.keys(obj))
+		{
+			if (printedKeys >= MAX_LOG_KEYS || result.length >= MAX_LOG_LEVEL_TEXT_LENGTH)
+			{
+				result += '...(truncated); ';
+				break;
+			}
+
+			printedKeys++;
+
+			// the name is attacker-shaped data too: one oversized key would otherwise blow the level budget
+			const printedKey = truncate(key, MAX_LOG_VALUE_LENGTH);
+
+			if (SENSITIVE_KEY_PATTERN.test(key))
+			{
+				result += `${printedKey}: (redacted); `;
+				continue;
+			}
+
+			const valueDepth = key === EXPANDED_NESTED_KEY ? depth : 0;
+
+			try
+			{
+				result += `${printedKey}: ${printErrorValue(obj[key], valueDepth)}; `;
+			}
+			catch
+			{
+				result += `${printedKey}: (unreadable); `;
+			}
+		}
+
+		return `${result}]`;
+	};
+
+	// native client rejects with { error: { code, message } }, which CallUtil.printObject collapses to (object)
+	const formatFatalErrorForLog = (error) => {
+		// formatting precedes the hangup and must never cancel it, so an unenumerable error degrades to itself
+		try
+		{
+			if (error === null || typeof error !== 'object' || error instanceof Error)
+			{
+				return error;
+			}
+
+			return printErrorObject(error, NESTED_LOG_DEPTH);
+		}
+		catch
+		{
+			return error;
+		}
+	};
+
+	// returns the normalized code or '' — the value goes into an HTTP header, so nothing but code-shaped ASCII passes
+	const normalizeShortCode = (value) => {
+		const trimmed = value.trim();
+		const isShortCode = trimmed !== ''
+			&& trimmed.length <= MAX_ERROR_CODE_LENGTH
+			&& !/[^\w.:-]/.test(trimmed);
+
+		return isShortCode ? trimmed : '';
+	};
+
+	// a throwing getter must not cancel the hangup that carries the header, so an unreadable field means 'no code'
+	const readErrorField = (source, key) => {
+		try
+		{
+			return source[key];
+		}
+		catch
+		{
+			return '';
+		}
+	};
+
+	const extractFatalErrorCode = (error) => {
+		if (typeof error === 'string')
+		{
+			return normalizeShortCode(error);
+		}
+
+		if (error === null || typeof error !== 'object')
+		{
+			return '';
+		}
+
+		const nestedError = readErrorField(error, 'error');
+		const candidates = [
+			readErrorField(error, 'code'),
+			readErrorField(error, 'name'),
+			readErrorField(nestedError, 'code'),
+			readErrorField(nestedError, 'message'),
+		];
+
+		for (const candidate of candidates)
+		{
+			if (typeof candidate !== 'string' && typeof candidate !== 'number')
+			{
+				continue;
+			}
+
+			const code = normalizeShortCode(String(candidate));
+
+			if (code !== '')
+			{
+				return code;
+			}
+		}
+
+		return '';
+	};
+
 	class BitrixCallDev
 	{
 		constructor(params)
@@ -64,6 +227,19 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			this.direction = params.direction;
 			this.type = params.type || BX.Call.Type.Instant; // @see {BX.Call.Type}
 			this.scheme = params.scheme;
+
+			// NQE instance (will be initialized if config allows)
+			this.nqe = null;
+			this.peerConnectionStatsInterval = null;
+			this.currentQuality = StreamQuality.high;
+			// NQE quality ceiling applied to every native video subscription in the choke point.
+			// null = no cap (no native stats yet), so the grid emits pass through unchanged.
+			this.nqeQualityCeiling = null;
+
+			// Pull provider for the grid's per-user subscription snapshot, injected by the controller.
+			// Lets NQE auto-quality cap quality at min(grid, nqe) per shown user without a direct
+			// transport -> UI reference.
+			this.visibleUsersProvider = null;
 
 			this.ready = false;
 			this.userId = env.userId;
@@ -361,9 +537,203 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 
 		toggleSubscriptionRemoteVideo(toggleList)
 		{
+			const out = this.#applyNqeCeiling(toggleList);
 			if (this.bitrixCallDev && this.bitrixCallDev.toggleSubscriptionRemoteVideo)
 			{
-				this.bitrixCallDev.toggleSubscriptionRemoteVideo(toggleList);
+				this.bitrixCallDev.toggleSubscriptionRemoteVideo(out);
+			}
+		}
+
+		/**
+		 * Single choke point where the NQE quality ceiling is enforced on the way to native, so any
+		 * writer (grid emit via controller, or NQE re-emit) gets capped and cannot overwrite the NQE
+		 * ceiling. Only shown entries are capped; hidden ones and non-array input pass through, and
+		 * when there is no ceiling (null) the list is returned untouched.
+		 * @param {Array<{id: number, quality: number, isShowVideo: boolean}>} toggleList
+		 * @returns {*}
+		 */
+		#applyNqeCeiling(toggleList)
+		{
+			if (this.nqeQualityCeiling == null || !Array.isArray(toggleList))
+			{
+				return toggleList;
+			}
+
+			return toggleList.map((item) => (item && item.isShowVideo === true)
+				? { ...item, quality: Math.min(Number(item.quality), this.nqeQualityCeiling) }
+				: item);
+		}
+
+		/**
+		 * Registers a provider that returns the grid's per-user subscription snapshot (its
+		 * toggleList reduced by id).
+		 * @param {function(): (Array<{id: number, quality: number, isShowVideo: boolean}>|null|undefined)} provider
+		 */
+		setVisibleUsersProvider(provider)
+		{
+			this.visibleUsersProvider = typeof provider === 'function' ? provider : null;
+		}
+
+		/**
+		 * Reads the per-user subscription snapshot from the injected provider with a null-safe guard.
+		 * @returns {Array<{id: number, quality: number, isShowVideo: boolean}>|null}
+		 */
+		#getVisibleUsersSnapshot()
+		{
+			if (typeof this.visibleUsersProvider !== 'function')
+			{
+				return null;
+			}
+
+			const snapshot = this.visibleUsersProvider();
+
+			return Array.isArray(snapshot) && snapshot.length > 0 ? snapshot : null;
+		}
+
+		/**
+		 * Initializes Network Quality Evaluator if auto balance is available
+		 * @private
+		 */
+		#initializeNQE()
+		{
+			if (!CallSettingsManager.isAutoBalanceAvailable())
+			{
+				this.log('[NQE] Server-side flag disabled, auto-balance not available');
+				this.nqe = null;
+
+				return;
+			}
+
+			if (typeof this.bitrixCallDev?.getPeerConnectionStats !== 'function')
+			{
+				this.log('[NQE] Native getPeerConnectionStats not available, auto-balance not available');
+				this.nqe = null;
+
+				return;
+			}
+
+			this.nqe = new NetworkQualityEvaluator({
+				downgradeWindowSec: CallSettingsManager.nqeDowngradeWindowSec,
+				upgradeWindowSec: CallSettingsManager.nqeUpgradeWindowSec,
+				warmupSec: CallSettingsManager.nqeWarmupSec,
+				highToMedium: {
+					downgrade: {
+						packetsLostPct: CallSettingsManager.nqeHighDowngradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeHighDowngradeRttMs,
+						jitterMs: CallSettingsManager.nqeHighDowngradeJitterMs,
+					}
+				},
+				mediumToLow: {
+					downgrade: {
+						packetsLostPct: CallSettingsManager.nqeMedDowngradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeMedDowngradeRttMs,
+						jitterMs: CallSettingsManager.nqeMedDowngradeJitterMs,
+					}
+				},
+				mediumToHigh: {
+					upgrade: {
+						packetsLostPct: CallSettingsManager.nqeMedUpgradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeMedUpgradeRttMs,
+						jitterMs: CallSettingsManager.nqeMedUpgradeJitterMs,
+					}
+				},
+				lowToMedium: {
+					upgrade: {
+						packetsLostPct: CallSettingsManager.nqeLowUpgradePacketsLostPct,
+						rttMs: CallSettingsManager.nqeLowUpgradeRttMs,
+						jitterMs: CallSettingsManager.nqeLowUpgradeJitterMs,
+					}
+				}
+			});
+
+			// Reset tracked quality to match the freshly created evaluator's initial state
+			this.currentQuality = StreamQuality.high;
+			// New evaluator starts with no ceiling — grid emits pass through until NQE degrades.
+			this.nqeQualityCeiling = null;
+		}
+
+		/**
+		 * Gets peer connection WebRTC stats
+		 * @returns {Object} - Object with publisher and subscriber stats
+		 */
+		getPeerConnectionStats()
+		{
+			if (typeof this.bitrixCallDev?.getPeerConnectionStats === 'function')
+			{
+				return this.bitrixCallDev.getPeerConnectionStats();
+			}
+
+			return null;
+		}
+
+		/**
+		 * Processes one Network Quality Evaluator stats polling iteration.
+		 */
+		processPeerConnectionStats()
+		{
+			if (!this.nqe)
+			{
+				return;
+			}
+
+			try
+			{
+				const stats = this.getPeerConnectionStats();
+				if (!stats)
+				{
+					this.nqe.resetPendingWindow();
+
+					return;
+				}
+
+				const action = this.nqe.processStats(stats.SENDER, stats.RECEIVER);
+				if (action === 'downgrade' || action === 'upgrade')
+				{
+					this.#applyAutoQuality(this.nqe.getCurrentQuality());
+				}
+			}
+			catch (error)
+			{
+				this.nqe?.resetPendingWindow();
+				this.log(`[NQE] Failed to process peer connection stats: ${error}`);
+			}
+		}
+
+		/**
+		 * Applies automatic quality adjustment based on NQE evaluation
+		 * @param {number} quality - The quality level to apply (high, medium, low)
+		 * @private
+		 */
+		#applyAutoQuality(quality)
+		{
+			if (quality === this.currentQuality)
+			{
+				return;
+			}
+
+			if (!Object.values(StreamQuality).includes(quality))
+			{
+				this.log(`[NQE] Invalid quality value: ${quality}.`);
+
+				return;
+			}
+
+			const oldQuality = this.currentQuality;
+			const logEvent = quality < oldQuality ? 'AUTO_QUALITY_DEGRADED' : 'AUTO_QUALITY_IMPROVED';
+			this.log(`[NQE] ${logEvent} from ${oldQuality} to ${quality}, platform: mobile`);
+
+			// Set the ceiling: from now on every video subscription heading to native is capped in
+			// the choke point, so a subsequent grid emit can no longer overwrite the NQE quality.
+			this.nqeQualityCeiling = quality;
+			this.currentQuality = quality;
+
+			// Apply immediately to the users currently on screen. getVisibleUsers() returns the grid
+			// quality of the shown users; the choke (#applyNqeCeiling) caps it at min(grid, nqe). If
+			// no snapshot is available right now, the ceiling still applies on the next grid emit.
+			const visible = this.#getVisibleUsersSnapshot();
+			if (visible)
+			{
+				this.toggleSubscriptionRemoteVideo(visible);
 			}
 		}
 
@@ -702,6 +1072,21 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 						else if (BX.type.isArray(this.videoAllowedFrom))
 						{
 							this.signaling.sendShowUsers(this.videoAllowedFrom);
+						}
+
+						this.#initializeNQE();
+
+						if (this.peerConnectionStatsInterval)
+						{
+							clearInterval(this.peerConnectionStatsInterval);
+							this.peerConnectionStatsInterval = null;
+						}
+
+						if (this.nqe)
+						{
+							this.peerConnectionStatsInterval = setInterval(() => {
+								this.processPeerConnectionStats();
+							}, NQE_STATS_INTERVAL_MS);
 						}
 
 						resolve();
@@ -1239,8 +1624,9 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			{
 				delete error.call;
 			}
-			CallUtil.error('onFatalError', error);
-			this.log('onFatalError', error);
+			const errorForLog = formatFatalErrorForLog(error);
+			CallUtil.error('onFatalError', errorForLog);
+			this.log('onFatalError', errorForLog);
 
 			this.ready = false;
 			this.muted = false;
@@ -1253,7 +1639,7 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 				{
 					this.bitrixCallDev.hangup({
 						'X-Reason': 'Fatal error',
-						'X-Error': typeof (error) === 'string' ? error : error.code || error.name,
+						'X-Error': extractFatalErrorCode(error),
 					});
 				}
 				catch
@@ -1353,6 +1739,12 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			clearTimeout(this.lastSelfPingReceivedTimeout);
 			clearTimeout(this.pingUsersInterval);
 			clearTimeout(this.pingBackendInterval);
+
+			if (this.peerConnectionStatsInterval)
+			{
+				clearInterval(this.peerConnectionStatsInterval);
+				this.peerConnectionStatsInterval = null;
+			}
 
 			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callId: this.id, callUuid: this.uuid }]);
 			this.eventEmitter = null;

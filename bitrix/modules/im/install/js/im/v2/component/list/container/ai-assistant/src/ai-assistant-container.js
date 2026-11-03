@@ -1,3 +1,5 @@
+import { computed } from 'ui.vue3';
+
 import { Messenger } from 'im.public';
 import { CopilotList } from 'im.v2.component.list.items.copilot';
 import { ActionByUserType, ChatType, Layout } from 'im.v2.const';
@@ -16,6 +18,18 @@ import './css/ai-assistant-container.css';
 export const AiAssistantListContainer = {
 	name: 'AiAssistantListContainer',
 	components: { CopilotList, AiAssistantCreateChatButton },
+	provide(): { avatarsOnly: boolean }
+	{
+		return {
+			avatarsOnly: computed(() => this.avatarsOnly),
+		};
+	},
+	props: {
+		avatarsOnly: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	emits: ['selectChat'],
 	data()
 	{

@@ -1,7 +1,12 @@
 (() => {
 	const { mailsAddedFromServer } = jn.require('mail/statemanager/redux/slices/messages');
 	const { foldersAdded } = jn.require('mail/statemanager/redux/slices/folders');
-	const { getChainPromise } = jn.require('mail/message/tools/connector');
+	const {
+		buildMessageChainParams,
+		readMessageScreenParams,
+		requestMessageChain,
+	} = jn.require('mail/message/tools/screen-params');
+	const { getThemeRequestParams } = jn.require('mail/message/theme-request');
 	const { MessageChain } = jn.require('mail/chain');
 	const { MailDialog } = jn.require('mail/dialog');
 
@@ -11,13 +16,9 @@
 
 	layout.setTitle({ text: BX.message('MESSAGE_VIEW_TITLE') });
 
-	const id = BX.componentParameters.get('threadId', null);
-	const isCrmMessage = Number(BX.componentParameters.get('isCrmMessage', 1));
-	const folder = String(BX.componentParameters.get('folder', 'default'));
-	const source = String(BX.componentParameters.get('source', 'mail'));
-	const startEmailSender = BX.componentParameters.get('startEmailSender', null);
+	const params = readMessageScreenParams(BX.componentParameters);
 
-	getChainPromise(id, isCrmMessage).then((response) => {
+	requestMessageChain(params, getThemeRequestParams()).then((response) => {
 		if ((response?.data?.list?.length ?? 0) === 0)
 		{
 			MailDialog.show({
@@ -29,31 +30,20 @@
 		else
 		{
 			BX.onViewLoaded(() => {
-				const messageChainParams = {
-					isCrmMessage,
-					threadId: id,
-					chain: response.data,
-					widget: this.layout,
-					source: isCrmMessage ? 'crm' : source,
-				};
+				const messageChainParams = buildMessageChainParams(params, response.data, this.layout);
 
 				dispatch(mailsAddedFromServer(response.data.list));
-				if (!isCrmMessage)
+				if (!params.isCrmMessage)
 				{
 					dispatch(foldersAdded(response.data.properties.dirs));
-				}
-
-				if (startEmailSender)
-				{
-					messageChainParams.startEmailSender = startEmailSender;
 				}
 
 				new AnalyticsEvent({
 					tool: 'mail',
 					category: 'mail_general_ops',
 					event: 'mail_view',
-					c_section: isCrmMessage ? 'crm' : source,
-					c_sub_section: folder,
+					c_section: params.isCrmMessage ? 'crm' : params.source,
+					c_sub_section: params.folder,
 				}).send();
 
 				layout.showComponent(new MessageChain(messageChainParams));

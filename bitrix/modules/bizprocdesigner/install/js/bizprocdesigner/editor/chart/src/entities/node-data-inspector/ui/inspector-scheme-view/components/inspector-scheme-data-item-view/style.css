@@ -125,3 +125,10 @@
 .inspector-scheme-view__data-item-type::before {
 	content: '// ';
 }
+
+/* A leaf without an expression is no drag source. The icon stays in place and goes muted rather than
+   invisible: dropping it would shift every title of the level sideways as the position changes, and an
+   empty gutter reads as a missing icon. Same state colour the switcher chevrons use when unavailable. */
+.inspector-scheme-view__data-item-drag-icon.--inactive {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}

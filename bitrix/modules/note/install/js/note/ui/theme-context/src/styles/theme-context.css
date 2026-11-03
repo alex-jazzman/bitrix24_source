@@ -132,6 +132,66 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * ui.date-picker (note.editor date node calendar): the widget predates the air
+ * palette and paints its surfaces off legacy `--ui-color-*` tokens that never
+ * flip with the design-system context, plus a few literal `#fff` values and one
+ * `rgba(var(--ui-color-primary-rgb), …)` veil with no air `*-rgb` equivalent.
+ * Popup background itself is already covered by the generic
+ * `.popup-window.--ui-context-content-dark` rule above; here we chase what
+ * paints INSIDE it. The class itself is set by NoteDatePickerOwner (POPUP_CLASS,
+ * note-date-picker-owner.js) - the two spellings are paired by hand and must move together.
+ * ---------------------------------------------------------------------------*/
+
+/* Block 1: legacy tokens are declared once in `:root` (ui.design-tokens.css) and
+ * never redefined per design-system context — redirect them to their air
+ * equivalents. One declaration on the popup reaches every descendant through
+ * inheritance. */
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark {
+	--ui-color-text-primary: var(--ui-color-base-1);
+	--ui-color-text-secondary: var(--ui-color-base-3);
+	--ui-color-text-alert: var(--ui-color-accent-main-alert);
+	--ui-color-primary: var(--ui-color-accent-main-primary);
+	--ui-color-on-primary: var(--ui-color-base-white-fixed);
+	--ui-color-base-90: var(--ui-color-base-2); /* ui.icon-set month-switch arrows */
+	--ui-color-base-50: var(--ui-color-base-4);
+	--ui-color-base-40: var(--ui-color-base-5);
+	--ui-color-base-70: var(--ui-color-base-3);
+	--ui-color-base-60: var(--ui-color-base-4);
+	--ui-color-base-20: var(--ui-color-divider-default);
+	--ui-color-link-primary-base: var(--ui-color-accent-main-link);
+}
+
+/* Block 2: three of the calendar's own local variables are declared ON
+ * `.ui-date-picker` itself (day-picker.css/date-picker.css), so a redeclaration
+ * on the popup (an ancestor) loses to that declaration right where inheritance
+ * would start — it has to be redeclared on the same element, at higher
+ * specificity. `color` covers `.ui-year-picker-year { color: inherit }`, which
+ * otherwise falls through to the portal body's colour (dark text on a now-dark
+ * surface). */
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-date-picker {
+	--ui-date-picker-outiline-color: var(--ui-color-focus-outline);
+	--ui-date-picker-button-hover-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-1);
+}
+
+/* Block 3: no token to redirect — these paint literal values. Three surfaces
+ * hardcode `#fff`; the day/month/year hover-and-focus veil reads
+ * `rgba(var(--ui-color-primary-rgb), .20)`, and air has no `*-rgb` token to
+ * feed it, so the veil is repainted with the semantically equivalent hover
+ * surface instead of a literal RGB triple. */
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-day-picker,
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-month-picker,
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-year-picker {
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-day-picker-day.--focused:not(.--selected) .ui-day-picker-day-inner:after,
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-month-picker-month.--focused,
+.popup-window.note-editor-date-picker-popup.--ui-context-content-dark .ui-year-picker-year.--focused {
+	background-color: var(--ui-color-bg-state-hover-alt);
+}
+
+/* ---------------------------------------------------------------------------
  * BitrixGPT side-chat widget (im.v2 ai-assistant-widget) in the note rail.
  *
  * im's messenger palette is fixed light, and the widget additionally pins

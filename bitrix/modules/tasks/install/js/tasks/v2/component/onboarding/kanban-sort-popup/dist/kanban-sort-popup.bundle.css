@@ -1,0 +1,11 @@
+.tasks-onboarding-kanban-sort-popup-wrapper .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+}
+
+.tasks-onboarding-kanban-sort-popup {
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-3xl) var(--ui-space-inset-md) var(--ui-space-inset-md);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-white-fixed);
+}

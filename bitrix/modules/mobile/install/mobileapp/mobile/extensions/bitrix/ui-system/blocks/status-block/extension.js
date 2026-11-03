@@ -241,7 +241,6 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 				{
 					testId: `${this.testId}-list`,
 					style: {
-						width: '100%',
 						marginTop: Indent.L.toNumber(),
 						paddingTop: Indent.XL.toNumber(),
 					},
@@ -256,7 +255,6 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 				{
 					testId: `${this.testId}-list-item-${index}`,
 					style: {
-						width: '100%',
 						flexDirection: 'row',
 						alignItems: 'flex-start',
 						marginTop: index === 0 ? 0 : Indent.L.toNumber(),

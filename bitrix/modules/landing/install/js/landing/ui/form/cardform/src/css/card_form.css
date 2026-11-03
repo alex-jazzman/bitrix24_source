@@ -9,3 +9,29 @@
 .landing-ui-form-card .landing-ui-form-header {
 	display: none;
 }
+
+/* The card title and the drag handle of the header row are native buttons; strip the
+   user agent chrome so the row keeps the look it had with plain spans. Layout, size and
+   cursor stay with the class rules in cards_form.css. */
+button.landing-ui-form-card-item-header-title,
+button.landing-ui-form-card-item-header-drag {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background-color: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+button.landing-ui-form-card-item-header-title:focus {
+	outline: none;
+}
+
+button.landing-ui-form-card-item-header-title:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}

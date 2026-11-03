@@ -6,6 +6,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
 	const { inAppUrl } = require('in-app-url');
+	const { requireLazy } = require('require-lazy');
 
 	const { Text3, Text4 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
@@ -18,6 +19,11 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 	const { capitalize } = require('utils/string');
 	const { createTestIdGenerator } = require('utils/test');
 	const { isEqual } = require('utils/object');
+
+	const CHECK_IN_ANALYTICS_EXTENSION = 'stafftrack:check-in-v3/analytics';
+	// a value of CheckinSentElementEnum, the vocabulary the markup provider owns: it is spelled out here
+	// because the core must not depend on stafftrackmobile
+	const CHECK_IN_ANALYTICS_ELEMENT = 'workday_widget';
 
 	let StatusEnum = null;
 	let store = null;
@@ -202,9 +208,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 								flexShrink: 2,
 								marginRight: Indent.XS.toNumber(),
 							},
-							onClick: () => {
-								inAppUrl.open('/check-in', {});
-							},
+							onClick: this.#openCheckIn,
 						},
 						this.renderHeader(),
 						!isNewCheckInEnabled && this.renderStatus(),
@@ -216,6 +220,28 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 					this.renderActions(),
 				),
 			);
+		}
+
+		#openCheckIn = () => {
+			this.#sendDrawerOpen().catch(console.error);
+			inAppUrl.open('/check-in', { analyticsElement: CHECK_IN_ANALYTICS_ELEMENT });
+		};
+
+		/**
+		 * Analytics ships with stafftrackmobile, so it may be absent while modules are updated independently.
+		 */
+		async #sendDrawerOpen()
+		{
+			const {
+				CheckInV3Analytics,
+				DrawerOpenSectionEnum,
+				DrawerOpenElementEnum,
+			} = await requireLazy(CHECK_IN_ANALYTICS_EXTENSION, false) || {};
+
+			if (CheckInV3Analytics)
+			{
+				CheckInV3Analytics.sendDrawerOpen(DrawerOpenSectionEnum.AVA_MENU, DrawerOpenElementEnum.WORKDAY_WIDGET);
+			}
 		}
 
 		renderIcon()
@@ -232,9 +258,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 						height: 40,
 						marginRight: Indent.XS.toNumber(),
 					},
-					onClick: () => {
-						inAppUrl.open('/check-in', {});
-					},
+					onClick: this.#openCheckIn,
 				},
 				Image({
 					testId: this.getTestId('image'),
@@ -388,9 +412,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 					text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_BUTTON_DEFAULT'),
 					size: ButtonSize.M,
 					design: ButtonDesign.OUTLINE_ACCENT_2,
-					onClick: () => {
-						inAppUrl.open('/check-in', {});
-					},
+					onClick: this.#openCheckIn,
 				});
 			}
 
@@ -400,9 +422,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 				leftIcon: Icon.LOCATION,
 				size: ButtonSize.M,
 				design: ButtonDesign.OUTLINE_ACCENT_2,
-				onClick: () => {
-					inAppUrl.open('/check-in', {});
-				},
+				onClick: this.#openCheckIn,
 			});
 		}
 

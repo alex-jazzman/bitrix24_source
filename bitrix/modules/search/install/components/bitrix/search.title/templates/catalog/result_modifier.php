@@ -2,6 +2,8 @@
 {
 	die();
 }
+/** @var array $arParams */
+/** @var array $arResult */
 
 $PREVIEW_WIDTH = intval($arParams['PREVIEW_WIDTH']);
 if ($PREVIEW_WIDTH <= 0)
@@ -30,7 +32,7 @@ foreach ($arResult['CATEGORIES'] as $category_id => $arCategory)
 			$arResult['SEARCH'][] = &$arResult['CATEGORIES'][$category_id]['ITEMS'][$i];
 			if (
 				$arItem['MODULE_ID'] == 'iblock'
-				&& mb_substr($arItem['ITEM_ID'], 0, 1) !== 'S'
+				&& !str_starts_with($arItem['ITEM_ID'], 'S')
 			)
 			{
 				if ($arCatalogs === false)
@@ -90,7 +92,7 @@ if (!empty($arResult['ELEMENTS']) && CModule::IncludeModule('iblock'))
 		}
 	}
 
-	$useCatalogTab = (string)\Bitrix\Main\Config\Option::get('catalog', 'show_catalog_tab_with_offers') == 'Y';
+	$useCatalogTab = (string)\Bitrix\Main\Config\Option::get('catalog', 'show_catalog_tab_with_offers') === 'Y';
 
 	$obParser = new CTextParser;
 
@@ -148,26 +150,24 @@ if (!empty($arResult['ELEMENTS']) && CModule::IncludeModule('iblock'))
 
 foreach ($arResult['SEARCH'] as $i => $arItem)
 {
-	switch ($arItem['MODULE_ID'])
+	if ($arItem['MODULE_ID'] === 'iblock')
 	{
-		case 'iblock':
-			if (array_key_exists($arItem['ITEM_ID'], $arResult['ELEMENTS']))
-			{
-				$arElement = &$arResult['ELEMENTS'][$arItem['ITEM_ID']];
+		if (array_key_exists($arItem['ITEM_ID'], $arResult['ELEMENTS']))
+		{
+			$arElement = &$arResult['ELEMENTS'][$arItem['ITEM_ID']];
 
-				if ($arParams['SHOW_PREVIEW'] == 'Y')
+			if ($arParams['SHOW_PREVIEW'] == 'Y')
+			{
+				if ($arElement['PREVIEW_PICTURE'] > 0)
 				{
-					if ($arElement['PREVIEW_PICTURE'] > 0)
-					{
-						$arElement['PICTURE'] = CFile::ResizeImageGet($arElement['PREVIEW_PICTURE'], ['width' => $PREVIEW_WIDTH, 'height' => $PREVIEW_HEIGHT], BX_RESIZE_IMAGE_PROPORTIONAL, true);
-					}
-					elseif ($arElement['DETAIL_PICTURE'] > 0)
-					{
-						$arElement['PICTURE'] = CFile::ResizeImageGet($arElement['DETAIL_PICTURE'], ['width' => $PREVIEW_WIDTH, 'height' => $PREVIEW_HEIGHT], BX_RESIZE_IMAGE_PROPORTIONAL, true);
-					}
+					$arElement['PICTURE'] = CFile::ResizeImageGet($arElement['PREVIEW_PICTURE'], ['width' => $PREVIEW_WIDTH, 'height' => $PREVIEW_HEIGHT], BX_RESIZE_IMAGE_PROPORTIONAL, true);
+				}
+				elseif ($arElement['DETAIL_PICTURE'] > 0)
+				{
+					$arElement['PICTURE'] = CFile::ResizeImageGet($arElement['DETAIL_PICTURE'], ['width' => $PREVIEW_WIDTH, 'height' => $PREVIEW_HEIGHT], BX_RESIZE_IMAGE_PROPORTIONAL, true);
 				}
 			}
-			break;
+		}
 	}
 
 	$arResult['SEARCH'][$i]['ICON'] = true;

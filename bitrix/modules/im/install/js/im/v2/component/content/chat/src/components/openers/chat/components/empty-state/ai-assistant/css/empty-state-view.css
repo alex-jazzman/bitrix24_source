@@ -4,6 +4,7 @@
 
 	--bx-im-ai-assistant-empty-state-view-title-text-align: start;
 	--bx-im-ai-assistant-empty-state-view-title-margin-bottom: 0;
+	--bx-im-ai-assistant-empty-state-view-textarea-margin-bottom: var(--ui-space-stack-md);
 }
 
 .bx-im-ai-assistant-empty-state-view {
@@ -26,7 +27,7 @@
 
 .bx-im-ai-assistant-empty-state-view__textarea {
 	width: 100%;
-	margin-bottom: 16px;
+	margin-bottom: var(--bx-im-ai-assistant-empty-state-view-textarea-margin-bottom);
 }
 
 .bx-im-ai-assistant-empty-state-view__suggestions {

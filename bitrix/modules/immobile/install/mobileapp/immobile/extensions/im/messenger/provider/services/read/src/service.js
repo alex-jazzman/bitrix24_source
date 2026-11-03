@@ -2,9 +2,8 @@
  * @module im/messenger/provider/services/read/src/service
  */
 jn.define('im/messenger/provider/services/read/src/service', (require, exports, module) => {
+	const { Type } = require('type');
 	const {
-		RecentTab,
-		DialogType,
 		RestMethod,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -44,43 +43,77 @@ jn.define('im/messenger/provider/services/read/src/service', (require, exports, 
 			await serviceLocator.get('counters-update-system').readAllChats();
 		}
 
-		async readAllMessagesByDialogType(dialogType)
+		async readAllMessagesByRecentSection(recentSection, parentChatId = null)
 		{
-			if (dialogType !== DialogType.tasksTask)
+			if (!Type.isStringFilled(recentSection))
 			{
-				throw new Error('ReadMessageService.readAllMessagesByDialogType: unsupported dialogType', dialogType);
+				this.logger.error('readAllMessagesByRecentSection: invalid recentSection', recentSection);
+
+				return;
 			}
 
-			await this.#core.getStore().dispatch('counterModel/readByRecentSection', {
-				recentSection: RecentTab.tasksTask,
-			}).catch((error) => {
-				this.logger.error('readAllMessagesByDialogType counterModel/readByRecentSection error: ', error);
-			});
+			const countersUpdateSystem = serviceLocator.get('counters-update-system');
 
-			await this.#core.getStore().dispatch('recentModel/readByRecentSection', {
-				recentSection: RecentTab.tasksTask,
-			}).catch((error) => {
-				this.logger.error('readAllMessagesByDialogType recentModel/readByRecentSection error: ', error);
-			});
+			// Optimistic in-memory clear only; the local DB is updated after the backend call returns,
+			// so an interrupted request keeps the original counters for the next app start (same as readAllMessages).
+			const clearedChatIds = await countersUpdateSystem.readByRecentSectionInVuex(recentSection, parentChatId);
 
-			await this.#core.getStore().dispatch('anchorModel/clearByDialogType', {
-				dialogType,
-			}).catch((error) => {
-				this.logger.error('readAllMessagesByDialogType anchorModel/clearByDialogType error: ', error);
-			});
+			// Anchors are a separate data zone from counters and don't always go together: a REACTION anchor
+			// doesn't bump a counter, so we clear anchors for every chat of the recent section (from recentModel),
+			// not just the chats whose counters changed. Cleared here optimistically, like anchorModel/clear in readAllMessages.
+			const store = this.#core.getStore();
+			const anchorChatIdList = store.getters['recentModel/getChatIdListByRecentSection'](recentSection, parentChatId);
+			await store.dispatch('anchorModel/clearByChatIdList', { chatIdList: anchorChatIdList })
+				.catch((error) => {
+					this.logger.error('readAllMessagesByRecentSection anchorModel/clearByChatIdList error: ', error);
+				});
 
-			await runAction(RestMethod.imV2ChatReadAllByType, {
+			await runAction(RestMethod.imV2ChatReadByRecentSection, {
 				data: {
-					type: dialogType,
+					recentSection,
+					parentId: parentChatId,
 				},
 			}).catch((error) => {
-				this.logger.error('readAllMessagesByDialogType imV2ChatReadAllByType error: ', error);
+				this.logger.error('readAllMessagesByRecentSection imV2ChatReadByRecentSection error: ', error);
 			});
 
-			serviceLocator.get('counters-update-system').readByRecentSection(RecentTab.tasksTask)
-				.catch((error) => {
-					this.logger.error('readAllMessagesByDialogType readByRecentSection error', error);
-				});
+			await countersUpdateSystem.persistReadByRecentSection(clearedChatIds);
+		}
+
+		/**
+		 * @param {number} parentChatId
+		 * @return {Promise<void>}
+		 */
+		async readChatWithChildren(parentChatId)
+		{
+			if (!Type.isNumber(parentChatId) || parentChatId <= 0)
+			{
+				this.logger.error('readChatWithChildren: invalid parentChatId', parentChatId);
+
+				return;
+			}
+
+			const dialog = this.#core.getStore().getters['dialoguesModel/getByChatId'](parentChatId);
+			if (!dialog?.dialogId)
+			{
+				this.logger.error('readChatWithChildren: dialog not found for chatId', parentChatId);
+
+				return;
+			}
+
+			const countersUpdateSystem = serviceLocator.get('counters-update-system');
+			await countersUpdateSystem.readChat(parentChatId).catch((error) => {
+				this.logger.error('readChatWithChildren readChat error', error);
+			});
+			await countersUpdateSystem.readChildren(parentChatId).catch((error) => {
+				this.logger.error('readChatWithChildren readChildren error', error);
+			});
+
+			await runAction(RestMethod.imV2ChatRead, {
+				data: { dialogId: dialog.dialogId },
+			}).catch((error) => {
+				this.logger.error('readChatWithChildren imV2ChatRead error', error);
+			});
 		}
 	}
 

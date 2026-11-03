@@ -1,0 +1,50 @@
+/* The hint hangs on the wrapper, so it is shown over a button that is disabled as well. */
+.editor-chart-notes-mode-button {
+	display: inline-flex;
+}
+
+/* The button stands in the row of the canvas tools, so it keeps the height of that row. */
+.editor-chart-notes-mode-button__control {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: transparent;
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+/* The pointer is answered by the colour of the icon and by nothing else, as it is by the map button
+   and by the auto-layout button of the same row: this was the last plate left in it. */
+.editor-chart-notes-mode-button__control:hover:not(:disabled) {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-notes-mode-button__control:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.editor-chart-notes-mode-button__control:disabled {
+	cursor: default;
+	opacity: 0.4;
+}
+
+/*
+ * The mode that is on is told by the colour of the icon and by nothing else, the way the map button
+ * of the same row tells its own state: a plate here left the row looking of two minds about what a
+ * switched-on tool looks like. aria-pressed is what declares the state where nothing is drawn.
+ */
+.editor-chart-notes-mode-button__control.--active {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-notes-mode-button__control .ui-icon-set {
+	--ui-icon-set__icon-color: currentcolor;
+}

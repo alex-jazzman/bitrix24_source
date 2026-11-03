@@ -101,13 +101,16 @@ export const CopyInviteLink = {
 				:loading="isCopyingInviteLink"
 				:disabled="isUpdatingInviteLink"
 				:text="loc('IM_ENTITY_SELECTOR_ADD_GUEST_COPY_LINK')"
+				:dataset="{ testid: 'im-copy-invite-link-copy' }"
 				@click="$emit('onCopyInviteLink')"
 			/>
 			<button
 				v-if="canUpdateLink"
 				v-hint="updateLinkHint"
+				:aria-label="updateLinkHint.text"
 				:class="{'--loading': isUpdatingInviteLink}"
 				class="bx-im-copy-invite-link__update-link_button"
+				data-testid="im-copy-invite-link-update"
 				@click="confirmAndUpdateInviteLink"
 			>
 				<BIcon :name="refreshIcon" :size="20" />

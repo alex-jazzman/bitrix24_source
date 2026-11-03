@@ -12,7 +12,7 @@ export type FileTypeFilterValue =
 	| 'video'
 	| 'other';
 
-export type StorageTypeValue = 'user' | 'common' | 'group' | 'project' | 'collab';
+export type StorageTypeValue = 'user' | 'common' | 'group' | 'project' | 'collab' | 'im';
 
 export type OrderFieldValue = 'name' | 'createTime' | 'updateTime';
 

@@ -34,7 +34,7 @@ export class CheckListItemDragManager extends CheckListDragManager
 		this.#currentUserId = params.currentUserId;
 	}
 
-	init(container: HTMLElement, offsetX: number = 0, listDropzone: Array<HTMLElement> = []): void
+	init(container: HTMLElement, listDropzone: Array<HTMLElement> = []): void
 	{
 		this.#draggable = new Draggable({
 			container,
@@ -42,7 +42,6 @@ export class CheckListItemDragManager extends CheckListDragManager
 			dragElement: '.check-list-drag-item',
 			delay: 0,
 			type: Draggable.MOVE,
-			offset: { x: offsetX },
 			dropzone: listDropzone,
 		});
 
@@ -54,10 +53,13 @@ export class CheckListItemDragManager extends CheckListDragManager
 		this.#draggable.subscribe('drop', this.#handleDropEnd.bind(this));
 		this.#draggable.subscribe('dropzone:enter', this.#handleDropZoneEnter.bind(this));
 		this.#draggable.subscribe('dropzone:out', this.#handleDropZoneOut.bind(this));
+
+		this.initGhostOffsetTracking(this.#draggable, container);
 	}
 
 	destroy(): void
 	{
+		this.stopGhostOffsetTracking();
 		this.#draggable?.destroy();
 	}
 
@@ -81,6 +83,8 @@ export class CheckListItemDragManager extends CheckListDragManager
 
 			return;
 		}
+
+		this.updateGhostOffset();
 
 		this.#store.dispatch(`${Model.Interface}/setDisableCheckListAnimations`, true);
 		this.#store.dispatch(`${Model.Interface}/setDraggedCheckListId`, draggedItem.id);

@@ -13,6 +13,7 @@ return [
 		'tasks.v2.component.fields.relation-tasks',
 		'tasks.v2.const',
 		'tasks.v2.core',
+		'tasks.v2.lib.entity-selector-dialog',
 		'tasks.v2.lib.field-highlighter',
 		'tasks.v2.lib.relation-tasks-dialog',
 		'tasks.v2.provider.service.relation-service',

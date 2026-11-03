@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_lib_logger, im_v2_const, im_v2_lib_rest, im_v2_lib_notifier, im_v2_application_core, main_core, call_lib_callTokenManager, im_public, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_layout, im_v2_lib_user, im_v2_lib_utils, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_roleManager, ui_uploader_core, im_v2_lib_uuid, im_v2_lib_counter, im_v2_lib_unreadMode) {
+(function (exports, im_v2_lib_logger, im_v2_const, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_playback, im_v2_application_core, main_core, call_lib_callTokenManager, im_public, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_layout, im_v2_lib_user, im_v2_lib_utils, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_roleManager, ui_uploader_core, im_v2_lib_uuid, im_v2_lib_counter, im_v2_lib_unreadMode) {
 	'use strict';
 
 	class DeleteService {
@@ -54,6 +54,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			void this.#store.dispatch('messages/clearChatCollection', {
 				chatId: chat.chatId
 			});
+			im_v2_lib_playback.PlaybackService.getInstanceIfCreated()?.handleChatAccessLost(dialogId);
 		}
 	}
 
@@ -160,6 +161,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		getCopilot() {
 			return this.#restResult.copilot;
+		}
+		getCopilotGenerationState() {
+			return this.#restResult.chat.copilotGenerationState ?? null;
 		}
 		getAutoDeleteConfig() {
 			return this.#restResult.messagesAutoDeleteConfigs;
@@ -278,6 +282,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				dialogId,
 				messageId
 			} = params;
+			const copilotLoadStateSnapshot = this.#getCopilotLoadStateSnapshot(dialogId, params.chatId);
 			if (this.#affectsDialogLoadingState(actionName)) {
 				this.#markDialogAsLoading(dialogId);
 			}
@@ -303,7 +308,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const {
 				dialogId: loadedDialogId,
 				chatId
-			} = await this.#updateModels(actionResult);
+			} = await this.#updateModels(actionResult, copilotLoadStateSnapshot);
 			const {
 				callInfo
 			} = actionResult;
@@ -316,6 +321,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				dialogId: loadedDialogId,
 				chatId
+			};
+		}
+		#getCopilotLoadStateSnapshot(dialogId, chatId) {
+			const storedDialogId = main_core.Type.isStringFilled(dialogId) ? dialogId : this.#store.getters['chats/getByChatId'](chatId)?.dialogId ?? null;
+			if (!storedDialogId) {
+				return {
+					dialogId: null,
+					generationState: null,
+					inputActions: []
+				};
+			}
+			return {
+				dialogId: storedDialogId,
+				generationState: this.#store.getters['copilot/chats/getGenerationState']?.(storedDialogId) ?? null,
+				inputActions: [...(this.#store.getters['chats/inputActions/getByDialogId']?.(storedDialogId) ?? [])]
 			};
 		}
 		#markDialogAsLoading(dialogId) {
@@ -346,7 +366,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#affectsDialogLoadingState(actionName) {
 			return actionName !== im_v2_const.RestMethod.imV2ChatShallowLoad;
 		}
-		async #updateModels(restResult) {
+		async #updateModels(restResult, copilotLoadStateSnapshot) {
 			const extractor = new ChatDataExtractor(restResult);
 			const chatsPromise = this.#store.dispatch('chats/set', extractor.getChats());
 			const filesPromise = this.#store.dispatch('files/set', extractor.getFiles());
@@ -361,7 +381,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				pinnedMessages: extractor.getPinnedMessageIds()
 			}), this.#store.dispatch('messages/reactions/set', extractor.getReactions()), this.#store.dispatch('messages/comments/set', extractor.getCommentInfo())]);
 			const copilotManager = new im_v2_lib_copilot.CopilotManager();
-			const copilotPromise = copilotManager.handleChatLoadResponse(extractor.getCopilot());
+			const dialogId = extractor.getDialogId();
+			const copilotGenerationState = extractor.getCopilotGenerationState();
+			const isCopilotLoadStateActual = this.#isCopilotLoadStateActual(dialogId, copilotLoadStateSnapshot);
+			// chat-load is the source of truth for the generation state, but there is nothing to sync when
+			// the server sends none and the store has none either — skip the dispatch on every regular chat load
+			const hasStoredGenerationState = this.#store.getters['copilot/chats/getGenerationState'](dialogId) !== null;
+			const copilotPromise = Promise.all([copilotManager.handleChatLoadResponse(extractor.getCopilot()), isCopilotLoadStateActual && (copilotGenerationState || hasStoredGenerationState) ? this.#store.dispatch('copilot/chats/setGenerationState', {
+				dialogId,
+				generationState: copilotGenerationState
+			}) : null]);
 			const collabPromise = this.#store.dispatch('chats/collabs/set', {
 				chatId: extractor.getChatId(),
 				collabInfo: extractor.getCollabInfo()
@@ -370,17 +399,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const builderPromise = this.#store.dispatch('messages/builder/set', extractor.getMessages());
 			const customPromises = this.updateChatCustomModels(restResult);
 			await Promise.all([chatsPromise, filesPromise, usersPromise, messagesPromise, copilotPromise, collabPromise, autoDeletePromise, stickersPromise, builderPromise, ...customPromises]);
+			if (extractor.isCopilotChat() && isCopilotLoadStateActual && copilotGenerationState?.status !== im_v2_const.CopilotGenerationStatus.generating) {
+				copilotManager.stopCopilotTyping(dialogId, copilotLoadStateSnapshot.inputActions);
+			}
 			return {
 				dialogId: extractor.getDialogId(),
 				chatId: extractor.getChatId()
 			};
+		}
+		#isCopilotLoadStateActual(dialogId, snapshot) {
+			if (!snapshot.dialogId) {
+				return true;
+			}
+			return snapshot.dialogId === dialogId && this.#store.getters['copilot/chats/getGenerationState'](dialogId) === snapshot.generationState;
 		}
 		#needLayoutRedirect(actionResult) {
 			return this.#needRedirectToOpenLinesLayout(actionResult);
 		}
 		#redirectToLayout(actionResult) {
 			const extractor = new ChatDataExtractor(actionResult);
-			im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.chat, '');
+			const layoutManager = im_v2_lib_layout.LayoutManager.getInstance();
+			layoutManager.setLastOpenedElement(layoutManager.getLayout().name, '');
 			if (this.#needRedirectToOpenLinesLayout(actionResult)) {
 				return im_public.Messenger.openLines(extractor.getDialogId());
 			}
@@ -991,14 +1030,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	// join чата комментариев каскадно подписывает и на родительский канал — уведомления канальные
+	const CHANNEL_TYPES = new Set([im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel, im_v2_const.ChatType.generalChannel, im_v2_const.ChatType.comment]);
+	const UNREPORTED_CALL_ERROR = {
+		code: '',
+		customData: null,
+		message: ''
+	};
 	class UserService {
 		#store;
 		#restClient;
+
+		// static: every component creates its own service instance, but in-flight guards must be app-wide
+		static #joiningChats = new Set();
+		static #leavingChats = new Set();
 		constructor() {
 			this.#store = im_v2_application_core.Core.getStore();
 			this.#restClient = im_v2_application_core.Core.getRestClient();
 		}
 		async leaveChat(dialogId) {
+			if (UserService.#leavingChats.has(dialogId)) {
+				return;
+			}
+			UserService.#leavingChats.add(dialogId);
 			const queryParams = {
 				dialogId,
 				userId: im_v2_application_core.Core.getUserId()
@@ -1009,6 +1063,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} catch (result) {
 				console.error('UserService: leave chat error', result.error());
 				im_v2_lib_notifier.Notifier.chat.handleLeaveError(result.error());
+			} finally {
+				UserService.#leavingChats.delete(dialogId);
 			}
 		}
 		async leaveCollab(dialogId) {
@@ -1049,29 +1105,75 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 		}
 		addToChat(addConfig) {
-			const queryParams = {
-				chat_id: addConfig.chatId,
-				users: addConfig.members,
-				hide_history: !addConfig.showHistory
+			const {
+				chatId,
+				members,
+				showHistory
+			} = addConfig;
+			const payload = {
+				data: {
+					chatId,
+					userIds: members,
+					hideHistory: !showHistory
+				}
 			};
-			return this.#restClient.callMethod(im_v2_const.RestMethod.imChatUserAdd, queryParams).catch(result => {
-				console.error('UserService: error adding to chat', result.error());
-				throw result.error();
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatAddUsers, payload).catch(([error]) => {
+				console.error('UserService: error adding to chat', error);
+				throw error;
 			});
 		}
-		joinChat(dialogId) {
+		async addSelection(selectionConfig) {
+			const {
+				chatId,
+				userIds,
+				nodes,
+				showHistory
+			} = selectionConfig;
+			const [usersError, nodesError] = await Promise.all([this.#addUsers(chatId, userIds, showHistory), this.#linkNodes(chatId, nodes)]);
+			if (!usersError && !nodesError) {
+				return true;
+			}
+			im_v2_lib_notifier.Notifier.chat.handleSelectionAddError(usersError, nodesError);
+			return false;
+		}
+		async joinChat(dialogId) {
+			if (UserService.#joiningChats.has(dialogId)) {
+				return false;
+			}
+			UserService.#joiningChats.add(dialogId);
 			im_v2_lib_logger.Logger.warn(`UserService: join chat ${dialogId}`);
+			const {
+				role: previousRole,
+				type
+			} = this.#store.getters['chats/get'](dialogId, true);
+			const isChannel = CHANNEL_TYPES.has(type);
 			void this.#store.dispatch('chats/update', {
 				dialogId,
 				fields: {
 					role: im_v2_const.UserRole.member
 				}
 			});
-			this.#restClient.callMethod(im_v2_const.RestMethod.imV2ChatJoin, {
-				dialogId
-			}).catch(result => {
+			try {
+				await this.#restClient.callMethod(im_v2_const.RestMethod.imV2ChatJoin, {
+					dialogId
+				});
+				if (isChannel) {
+					im_v2_lib_notifier.Notifier.chat.onChannelSubscribeComplete();
+				}
+				return true;
+			} catch (result) {
 				console.error('UserService: error joining chat', result.error());
-			});
+				void this.#store.dispatch('chats/update', {
+					dialogId,
+					fields: {
+						role: previousRole
+					}
+				});
+				im_v2_lib_notifier.Notifier.chat.handleJoinError(isChannel);
+				return false;
+			} finally {
+				UserService.#joiningChats.delete(dialogId);
+			}
 		}
 		addManager(dialogId, userId) {
 			im_v2_lib_logger.Logger.warn(`UserService: add manager ${userId} to ${dialogId}`);
@@ -1123,10 +1225,42 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				console.error('UserService: remove manager error', error);
 			});
 		}
+		async #addUsers(chatId, userIds, showHistory) {
+			if (userIds.length === 0) {
+				return null;
+			}
+			return this.addToChat({
+				chatId,
+				members: userIds,
+				showHistory
+			}).then(() => null).catch(error => error ?? UNREPORTED_CALL_ERROR);
+		}
+		async #linkNodes(chatId, nodes) {
+			if (nodes.length === 0) {
+				return null;
+			}
+			const payload = {
+				data: {
+					chatId,
+					entities: nodes
+				}
+			};
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatStructureLink, payload).then(() => null).catch(([error]) => {
+				console.error('UserService: error linking structure nodes to chat', error);
+				return error ?? UNREPORTED_CALL_ERROR;
+			});
+		}
 		#onChatLeave(dialogId) {
+			// open channel stays readable after unsubscribe: keep its load state and show the join CTA again
+			const {
+				type
+			} = this.#store.getters['chats/get'](dialogId, true);
+			const isOpenChannel = type === im_v2_const.ChatType.openChannel;
 			void this.#store.dispatch('chats/update', {
 				dialogId,
-				fields: {
+				fields: isOpenChannel ? {
+					role: im_v2_const.UserRole.guest
+				} : {
 					inited: false,
 					role: im_v2_const.UserRole.guest
 				}
@@ -1138,10 +1272,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			void this.#store.dispatch('recent/hide', {
 				dialogId
 			});
-			const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
-			if (chatIsOpened) {
-				im_v2_lib_layout.LayoutManager.getInstance().clearCurrentLayoutEntityId();
-				void im_v2_lib_layout.LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
+			if (!isOpenChannel) {
+				im_v2_lib_layout.LayoutManager.getInstance().clearCurrentChat(dialogId);
 			}
 		}
 	}
@@ -1371,8 +1503,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		addToChat(addConfig) {
 			return this.#userService.addToChat(addConfig);
 		}
+		addSelection(selectionConfig) {
+			return this.#userService.addSelection(selectionConfig);
+		}
 		joinChat(dialogId) {
-			this.#userService.joinChat(dialogId);
+			return this.#userService.joinChat(dialogId);
 		}
 		addManager(dialogId, userId) {
 			this.#userService.addManager(dialogId, userId);
@@ -1405,5 +1540,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.ChatDataExtractor = ChatDataExtractor;
 	exports.ChatService = ChatService;
 	exports.LoadService = LoadService;
-})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Call?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
+})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Call?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
 //# sourceMappingURL=registry.bundle.js.map

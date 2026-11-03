@@ -47,6 +47,11 @@ $arActivityDescription = (new ActivityDescription(
 			'NAME' => Loc::getMessage('BPCDT_DESCR_MESSAGE_IS_GROUP_CHAT'),
 			'TYPE' => FieldType::BOOL,
 		],
+		'EventDateTime' => [
+			'Name' => Loc::getMessage('BPCDT_DESCR_EVENT_DATE_TIME') ?? '',
+			'Type' => FieldType::DATETIME,
+			'Default' => null,
+		],
 	])
 	->setAiDescription('The trigger fires when a new message is received from a bot')
 	->setGroups([

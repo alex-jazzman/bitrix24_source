@@ -2,9 +2,11 @@ import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import { ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
 import { MartaAvatar } from './components/marta-avatar';
+import { LegacyAvatar } from './components/base/legacy-avatar';
 import { Avatar } from './components/base/avatar';
 import { CollabChatAvatar } from './components/collab/collab-chat';
 import { CollaberAvatar } from './components/collab/collaber';
@@ -136,11 +138,19 @@ export const ChatAvatar = {
 				{ condition: () => this.isExtranetChat, component: ExtranetChatAvatar },
 			];
 		},
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		defaultAvatarComponent(): BitrixVueComponentProps
+		{
+			return this.isAirDesignEnabled ? Avatar : LegacyAvatar;
+		},
 		avatarComponent(): BitrixVueComponentProps
 		{
 			const matchingItem: ?AvatarComponentConfigItem = this.avatarComponentConfig.find((item) => item.condition());
 
-			return matchingItem ? matchingItem.component : Avatar;
+			return matchingItem ? matchingItem.component : this.defaultAvatarComponent;
 		},
 	},
 	created()

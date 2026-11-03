@@ -37,6 +37,8 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 				.on('recentModel/delete', this.recentDeleteHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
+				.on('dialoguesModel/addCollection', this.dialogCollectionUpdateHandler)
+				.on('dialoguesModel/updateCollection', this.dialogCollectionUpdateHandler)
 				.on('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
 				.on('counterModel/set', this.counterSetHandler)
 				.on('counterModel/delete', this.counterDeleteHandler)
@@ -54,6 +56,8 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 				.off('recentModel/delete', this.recentDeleteHandler)
 				.off('dialoguesModel/add', this.dialogUpdateHandler)
 				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('dialoguesModel/addCollection', this.dialogCollectionUpdateHandler)
+				.off('dialoguesModel/updateCollection', this.dialogCollectionUpdateHandler)
 				.off('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
 				.off('counterModel/set', this.counterSetHandler)
 				.off('counterModel/delete', this.counterDeleteHandler)
@@ -72,7 +76,12 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 				return;
 			}
 
-			this.#updateRecentItems(this.#getRecentItemsFromPayload(payload));
+			// the add mutation only fires for records new to the model, so an item that landed in
+			// the upsert bucket is a chat that appeared in this folder
+			if (this.#updateRecentItems(this.#getRecentItemsFromPayload(payload)))
+			{
+				this.#getRender()?.markCompositionChanged();
+			}
 		};
 
 		recentUpdateHandler = ({ payload }) => {
@@ -89,7 +98,7 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 
 		recentDeleteHandler = ({ payload }) => {
 			const itemId = String(payload?.data?.id ?? '');
-			if (!Type.isStringFilled(itemId) || !this.#getRender().hasItemRendered(itemId))
+			if (!Type.isStringFilled(itemId) || !this.#getRender().hasItemPending(itemId))
 			{
 				return;
 			}
@@ -106,6 +115,33 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 
 			const recentItem = this.store.getters['recentModel/getById'](dialogId) ?? { id: dialogId };
 			this.#updateRecentItems([recentItem]);
+		};
+
+		/**
+		 * A whole page of dialogues seeded at once: answered like a single record, once for the page.
+		 * The restore from the local database commits the same mutations and is left alone.
+		 *
+		 * @param {MutationPayload<DialoguesAddCollectionData|DialoguesUpdateCollectionData>} payload
+		 */
+		dialogCollectionUpdateHandler = ({ payload }) => {
+			if (payload?.actionName !== 'setCollection')
+			{
+				return;
+			}
+
+			const items = payload?.data?.addItems ?? payload?.data?.updateItems;
+			if (!Type.isArrayFilled(items))
+			{
+				return;
+			}
+
+			const recentItems = items
+				.map((item) => String(item.dialogId ?? ''))
+				.filter((dialogId) => Type.isStringFilled(dialogId))
+				.map((dialogId) => this.store.getters['recentModel/getById'](dialogId) ?? { id: dialogId })
+			;
+
+			this.#updateRecentItems(recentItems);
 		};
 
 		dialogReadAllCountersHandler = ({ payload }) => {
@@ -180,12 +216,13 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 
 		/**
 		 * @param {Array<RecentModelState>} items
+		 * @return {boolean} true when at least one item was queued for upsert
 		 */
 		#updateRecentItems(items)
 		{
 			if (!Type.isArrayFilled(items) || !this.recentLocator.has('render'))
 			{
-				return;
+				return false;
 			}
 
 			const render = this.#getRender();
@@ -209,7 +246,7 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 						toUpsert.push(recentItem);
 					}
 				}
-				else if (render.hasItemRendered(id))
+				else if (render.hasItemPending(id))
 				{
 					toDelete.push({ id });
 				}
@@ -224,6 +261,8 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 			{
 				render.deleteItems(toDelete);
 			}
+
+			return Type.isArrayFilled(toUpsert);
 		}
 
 		/**

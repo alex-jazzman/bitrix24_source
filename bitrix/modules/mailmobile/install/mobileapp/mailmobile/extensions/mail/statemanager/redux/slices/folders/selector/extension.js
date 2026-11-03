@@ -21,6 +21,8 @@ jn.define('mail/statemanager/redux/slices/folders/selector', (require, exports, 
 		return allFolders.filter((folder) => !folder.isHidden);
 	};
 	const selectCurrentVirtualFolderKey = (state) => state['mail:folders'].currentVirtualFolderKey;
+	const selectFavoritesAvailable = (state) => state['mail:folders'].favoritesAvailable === true;
+	const selectLabelsAvailable = (state) => state['mail:folders'].labelsAvailable === true;
 	const selectIsVirtualFolderMode = (state) => selectCurrentVirtualFolderKey(state) !== null;
 	const selectCurrentFolderPath = (state) => state['mail:folders'].currentFolderPath;
 	const selectCurrentFolder = (state) => {
@@ -124,6 +126,8 @@ jn.define('mail/statemanager/redux/slices/folders/selector', (require, exports, 
 		selectDefaultFolderByType,
 		selectCurrentFolderCounter,
 		selectCurrentVirtualFolderKey,
+		selectFavoritesAvailable,
+		selectLabelsAvailable,
 		selectIsVirtualFolderMode,
 		selectTotalUnreadCount,
 		selectTotalMessageCount,

@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/logout-all-confirm.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

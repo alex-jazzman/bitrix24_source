@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, ui_fonts_opensans, main_polyfill_intersectionobserver, im_v2_component_animation, im_v2_lib_utils, im_v2_lib_analytics, im_v2_lib_feature, ui_iconSet_api_vue, im_v2_const, ui_iconSet_smallOutline, im_v2_component_elements_loader, im_v2_provider_service_message, im_v2_component_elements_avatar, im_v2_lib_localStorage, ui_infoHelper, ui_vue3_components_richLoc, im_v2_lib_parser, im_v2_lib_copilot) {
+(function (exports, ui_fonts_opensans, main_polyfill_intersectionobserver, main_core_events, im_v2_component_animation, im_v2_const, im_v2_lib_utils, im_v2_lib_analytics, im_v2_lib_feature, im_v2_lib_playback, ui_iconSet_api_vue, ui_iconSet_smallOutline, im_v2_component_elements_loader, im_v2_provider_service_message, main_core, im_v2_component_elements_avatar, ui_infoHelper, ui_vue3_components_richLoc, im_v2_lib_parser, im_v2_lib_copilot) {
 	'use strict';
 
 	const State = Object.freeze({
@@ -126,11 +126,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					this.getObserver().unobserve(this.$refs.body);
 					this.pause();
 				} else {
+					this.notifyPlaybackServiceAboutStart();
 					this.play();
 				}
 			},
+			notifyPlaybackServiceAboutStart() {
+				main_core_events.EventEmitter.emit(im_v2_const.EventType.playback.onExternalPlayerStart, {
+					fileId: this.fileId
+				});
+			},
 			handleMuteClick() {
 				if (this.isMuted) {
+					this.notifyPlaybackServiceAboutStart();
 					this.unmute();
 				} else {
 					this.mute();
@@ -228,14 +235,28 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-video-player__container" @click.stop="handleContainerClick">
+		<div
+			class="bx-im-video-player__container"
+			data-testid="im-video-player"
+			@click.stop="handleContainerClick"
+		>
 			<FadeAnimation :duration="500">
-				<div v-if="showStartButton" class="bx-im-video-player__start-play_button" @click.stop="handleControlClick">
+				<div
+					v-if="showStartButton"
+					class="bx-im-video-player__start-play_button"
+					data-testid="im-video-player-start"
+					@click.stop="handleControlClick"
+				>
 					<span class="bx-im-video-player__start-play_icon"></span>
 				</div>
 			</FadeAnimation>
 			<FadeAnimation :duration="500">
-				<div v-if="showInterface" class="bx-im-video-player__control-button_container" @click.stop="handleControlClick">
+				<div
+					v-if="showInterface"
+					class="bx-im-video-player__control-button_container"
+					data-testid="im-video-player-play"
+					@click.stop="handleControlClick"
+				>
 					<button class="bx-im-video-player__control-button" :class="controlButtonClass"></button>
 				</div>
 			</FadeAnimation>
@@ -243,9 +264,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div 
 					v-if="showInterface" 
 					class="bx-im-video-player__info-container" 
+					data-testid="im-video-player-sound"
 					@click.stop="handleMuteClick"
 				>
-					<span class="bx-im-video-player__time">{{ formattedTime }}</span>
+					<span
+						class="bx-im-video-player__time"
+						data-testid="im-video-player-time"
+					>{{ formattedTime }}</span>
 					<span class="bx-im-video-player__sound" :class="{'--muted': isMuted}"></span>
 				</div>
 			</FadeAnimation>
@@ -256,6 +281,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					class="bx-im-video-player__video"
 					:poster="previewImageUrl"
 					ref="source"
+					data-testid="im-video-player-video"
 					:preload="preloadAttribute"
 					playsinline
 					loop
@@ -285,10 +311,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		[im_v2_const.PlaylistScope.chat]: Direction.asc,
 		[im_v2_const.PlaylistScope.sidebar]: Direction.desc
 	};
+
+	/**
+	 * A track is a file inside a particular message, not a file on its own: the same file can be
+	 * attached to several messages, and each of them is a separate player on the screen.
+	 */
+
 	class Playlist {
 		static #instances = new Map();
 		#scope;
-		#files = {};
+		#tracks = {};
 		constructor(scope) {
 			this.#scope = scope;
 		}
@@ -298,33 +330,45 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 			return this.#instances.get(scope);
 		}
-		register(file) {
-			if (!this.#files[file.chatId]) {
-				this.#files[file.chatId] = new Map();
+		register(track) {
+			const {
+				chatId
+			} = track.file;
+			if (!this.#tracks[chatId]) {
+				this.#tracks[chatId] = new Map();
 			}
-			this.#files[file.chatId].set(file.id, file);
+			this.#tracks[chatId].set(Playlist.#keyOf(track), track);
 		}
-		unregister(file) {
-			this.#files[file.chatId]?.delete(file.id);
+		unregister(track) {
+			this.#tracks[track.file.chatId]?.delete(Playlist.#keyOf(track));
 		}
 		onFileEnded(payload) {
 			const {
-				file,
 				context: {
 					emitter
 				}
 			} = payload;
-			const nextFile = this.#getNextFile(file);
-			if (!nextFile) {
+			const nextTrack = this.#getNextTrack(payload);
+			if (!nextTrack) {
 				return;
 			}
 			emitter.emit(im_v2_const.EventType.player.playNext, {
-				fileId: nextFile.id,
+				messageId: nextTrack.messageId,
+				fileId: nextTrack.file.id,
 				scope: this.#scope
 			});
 		}
-		#getNextFile(file) {
-			const chat = this.#files[file.chatId];
+
+		// The message is a part of the address, not a decoration: keyed by the file alone, two messages
+		// carrying the same file collapsed into one entry, so the round trip skipped one of them.
+		static #keyOf({
+			messageId,
+			file
+		}) {
+			return `${messageId}:${file.id}`;
+		}
+		#getNextTrack(current) {
+			const chat = this.#tracks[current.file.chatId];
 			if (!chat) {
 				return null;
 			}
@@ -332,13 +376,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			if (!direction) {
 				return null;
 			}
-			const sortCallback = direction === Direction.desc ? (a, b) => b.date - a.date : (a, b) => a.date - b.date;
-			const chatFiles = [...chat.values()].sort(sortCallback);
-			const currentIndex = chatFiles.findIndex(chatFile => chatFile.id === file.id);
+			const sortCallback = direction === Direction.desc ? (a, b) => b.file.date - a.file.date : (a, b) => a.file.date - b.file.date;
+			// Sort is stable, so tracks sharing a date keep the order they were registered in - for a
+			// producer uploading its files in one batch that is the only order there is.
+			const tracks = [...chat.values()].sort(sortCallback);
+			const currentKey = Playlist.#keyOf(current);
+			const currentIndex = tracks.findIndex(track => Playlist.#keyOf(track) === currentKey);
 			if (currentIndex === -1) {
 				return null;
 			}
-			return chatFiles[currentIndex + 1];
+			return tracks[currentIndex + 1];
 		}
 	}
 
@@ -540,7 +587,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				currentTime: 0,
 				duration: 0,
 				animationFrameId: null,
-				currentTimeSmoothed: 0
+				currentTimeSmoothed: 0,
+				currentRate: im_v2_const.AudioPlaybackRate['1']
 			};
 		},
 		computed: {
@@ -578,25 +626,51 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			isTranscriptionAvailable() {
 				return this.file.isTranscribable && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.videoNoteTranscriptionAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
+			},
+			isPlaybackRateFeatureAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isVideoNotePlaybackRateAvailable);
+			},
+			isPlaybackRateAvailable() {
+				return this.file.status === im_v2_const.FileStatus.done && this.isPlaybackRateFeatureAvailable;
+			},
+			currentRateLabel() {
+				return `${this.currentRate}x`;
+			},
+			rateControlAriaLabel() {
+				return this.loc('IM_ELEMENTS_PLAYER_ROUND_VIDEO_RATE_ARIA', {
+					'#RATE#': this.currentRateLabel
+				});
 			}
 		},
 		created() {
-			Playlist.getInstance(im_v2_const.PlaylistScope.chat).register(this.file);
+			Playlist.getInstance(im_v2_const.PlaylistScope.chat).register(this.playlistTrack());
 		},
 		mounted() {
 			this.getObserver().observe(this.$refs.body);
 			this.getEmitter().subscribe(im_v2_const.EventType.player.playNext, this.handlePlayNextRequest);
 			this.getEmitter().subscribe(im_v2_const.EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.playback.onServiceStart, this.handleServiceStarted);
+			this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.pause, this.handleOtherPlayerStarted);
+			if (this.isPlaybackRateFeatureAvailable) {
+				main_core_events.EventEmitter.subscribe(im_v2_const.EventType.player.rateChange, this.handleRateChange);
+			}
 			if (this.startWithSound) {
+				this.notifyPlaybackServiceAboutStart();
 				this.switchToManualMode();
 			}
 		},
 		beforeUnmount() {
 			this.stopProgressAnimation();
 			this.getObserver().unobserve(this.$refs.body);
-			Playlist.getInstance(im_v2_const.PlaylistScope.chat).unregister(this.file);
+			Playlist.getInstance(im_v2_const.PlaylistScope.chat).unregister(this.playlistTrack());
 			this.getEmitter().unsubscribe(im_v2_const.EventType.player.playNext, this.handlePlayNextRequest);
 			this.getEmitter().unsubscribe(im_v2_const.EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.playback.onServiceStart, this.handleServiceStarted);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.pause, this.handleOtherPlayerStarted);
+			// Unconditionally: the guard on the subscribe is enough, and unsubscribing a listener that was
+			// never subscribed is a no-op. A condition here would leak the listener the moment it names the
+			// neighbouring isPlaybackRateAvailable, which is reactive and can read differently than at mount.
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.player.rateChange, this.handleRateChange);
 		},
 		methods: {
 			togglePlayMode() {
@@ -605,6 +679,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				if (this.playbackMode === PlaybackMode.autoplay) {
 					im_v2_lib_analytics.Analytics.getInstance().player.onPlay(this.file.id);
+					this.notifyPlaybackServiceAboutStart();
 					this.switchToManualMode();
 					return;
 				}
@@ -613,14 +688,54 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					this.pauseVideo();
 				} else {
 					im_v2_lib_analytics.Analytics.getInstance().player.onPlay(this.file.id);
+					this.notifyPlaybackServiceAboutStart();
 					this.playVideo();
 				}
 			},
+			notifyPlaybackServiceAboutStart() {
+				main_core_events.EventEmitter.emit(im_v2_const.EventType.playback.onExternalPlayerStart, {
+					fileId: this.file.id
+				});
+			},
 			playVideo() {
+				if (this.isPlaybackRateFeatureAvailable) {
+					// every start goes through here, so the common rate is re-read at each of them, not kept from the mount
+					this.updateRate(im_v2_lib_playback.PlaybackRate.get());
+				}
+
+				// Only a start with sound claims the audible channel: a muted preview leaves the voice
+				// messages alone. The circle owns no file the voice players know, so their own guard by
+				// initiator keeps them from answering their own request - and keeps this one out of it.
+				if (!this.isAutoplay) {
+					this.getEmitter().emit(im_v2_const.EventType.audioPlayer.pause, {
+						initiator: this.file.id
+					});
+				}
 				void this.videoElement.play();
 			},
 			pauseVideo() {
 				this.videoElement.pause();
+			},
+			handleRateControlClick() {
+				// the new value comes back through the broadcast, so this player applies it the same way as the others
+				im_v2_lib_playback.PlaybackRate.set(im_v2_lib_playback.PlaybackRate.getNext(im_v2_lib_playback.PlaybackRate.get()));
+			},
+			handleRateChange(event) {
+				this.updateRate(event.getData().rate);
+			},
+			// A voice message has taken the audible channel, so this circle goes back to the muted preview -
+			// the same retreat as when another circle starts. Without it both play at once, and the chat
+			// playlist holds files of both kinds: the one that ends first sends playNext into the other,
+			// interrupting a play() with a pause() on a live element.
+			handleOtherPlayerStarted(event) {
+				if (event.getData().initiator === this.file.id || this.isAutoplay) {
+					return;
+				}
+				this.switchToAutoplayMode();
+			},
+			updateRate(newRate) {
+				this.currentRate = newRate;
+				this.videoElement.playbackRate = newRate;
 			},
 			handleLoadedMetaData() {
 				this.duration = this.videoElement.duration;
@@ -642,7 +757,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			handleEnded() {
 				this.switchToAutoplayMode();
 				Playlist.getInstance(im_v2_const.PlaylistScope.chat).onFileEnded({
-					file: this.file,
+					...this.playlistTrack(),
 					context: {
 						emitter: this.getEmitter()
 					}
@@ -657,12 +772,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.duration = 0;
 				this.stopProgressAnimation();
 			},
+			// See AudioPlayer.playlistTrack: the message is a part of the address of a track.
+			playlistTrack() {
+				return {
+					messageId: this.message.id,
+					file: this.file
+				};
+			},
 			handlePlayNextRequest(event) {
 				const {
+					messageId,
 					fileId,
 					scope
 				} = event.getData();
-				if (fileId !== this.file.id || scope !== im_v2_const.PlaylistScope.chat) {
+				if (fileId !== this.file.id || messageId !== this.message.id || scope !== im_v2_const.PlaylistScope.chat) {
 					return;
 				}
 				this.$refs.body.scrollIntoView({
@@ -680,7 +803,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				this.switchToAutoplayMode();
 			},
+			handleServiceStarted() {
+				if (this.playbackMode !== PlaybackMode.manual) {
+					return;
+				}
+				this.switchToAutoplayMode();
+			},
 			switchToAutoplayMode() {
+				this.keepFocusInsidePlayer();
 				this.playbackMode = PlaybackMode.autoplay;
 				this.videoElement.loop = true;
 				this.videoElement.muted = true;
@@ -692,6 +822,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.videoElement.loop = false;
 				this.videoElement.muted = false;
 				this.playVideo();
+			},
+			// autoplay unmounts the rate control, so the focus it holds is moved to the circle before that happens
+			keepFocusInsidePlayer() {
+				if (document.activeElement !== this.$refs.rateControl) {
+					return;
+				}
+
+				// preventScroll is deliberate: moving the focus must not pull the feed back to a circle
+				// the user has already scrolled away from
+				this.$refs.body.focus({
+					preventScroll: true
+				});
 			},
 			getObserver() {
 				if (this.observer) {
@@ -732,18 +874,34 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			getEmitter() {
 				return this.$Bitrix.eventEmitter;
+			},
+			loc(code, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(code, replacements);
 			}
 		},
 		template: `
-		<div class="bx-im-round-video-player__container">
+		<div class="bx-im-round-video-player__container" data-testid="im-round-video-player">
 			<FadeAnimation :duration="200">
-				<div v-if="isAutoplay" class="bx-im-round-video-player__mute">
+				<div
+					v-if="isAutoplay"
+					class="bx-im-round-video-player__mute"
+					data-testid="im-round-video-player-mute"
+				>
 					<BIcon
 						:name="OutlineIcons.SOUND_OFF"
 						:color="Color.white"
 						:size="MUTE_ICON_SIZE"
 					/>
 				</div>
+				<button
+					v-else-if="isPlaybackRateAvailable"
+					type="button"
+					class="bx-im-round-video-player__rate-button --focus-visible"
+					data-testid="im-round-video-player-rate-btn"
+					:aria-label="rateControlAriaLabel"
+					ref="rateControl"
+					@click="handleRateControlClick"
+				>{{ currentRateLabel }}</button>
 			</FadeAnimation>
 			<div v-if="isTranscriptionAvailable" class="bx-im-round-video-player__transcribe-button">
 				<TranscriptionButton
@@ -755,9 +913,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 			<div class="bx-im-round-video-player__time-container">
-				<div class="bx-im-round-video-player__time">{{ formattedTime }}</div>
+				<div
+					class="bx-im-round-video-player__time"
+					data-testid="im-round-video-player-time"
+				>{{ formattedTime }}</div>
 			</div>
-			<div class="bx-im-round-video-player__video-container" ref="body" @click.stop="togglePlayMode">
+			<div
+				class="bx-im-round-video-player__video-container"
+				data-testid="im-round-video-player-video-container"
+				ref="body"
+				tabindex="-1"
+				@click.stop="togglePlayMode"
+			>
 				<FadeAnimation :duration="200">
 					<div v-if="isPaused" class="bx-im-round-video-player__start-play_button"></div>
 				</FadeAnimation>
@@ -766,6 +933,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					class="bx-im-round-video-player__video"
 					:poster="file.urlPreview"
 					ref="videoElement"
+					data-testid="im-round-video-player-video"
 					preload="metadata"
 					playsinline
 					loop
@@ -790,10 +958,115 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const buildPlaybackView = (service, fileId, fallbackDuration) => {
+		const state = service.getState();
+		if (!service.isCurrentFile(fileId)) {
+			return {
+				isPlaying: false,
+				isLoading: false,
+				isLoaded: false,
+				timeCurrent: 0,
+				timeTotal: fallbackDuration,
+				rate: state.rate
+			};
+		}
+		const timeTotal = service.getSnapshot()?.duration || fallbackDuration;
+		return {
+			isPlaying: state.trackState === im_v2_const.PlaybackTrackState.playing,
+			isLoading: state.trackState === im_v2_const.PlaybackTrackState.loading,
+			isLoaded: timeTotal > 0,
+			timeCurrent: state.position,
+			timeTotal,
+			rate: state.rate
+		};
+	};
+	const buildPlaybackTrack = source => {
+		const {
+			file,
+			src,
+			messageId,
+			scope,
+			dialogId,
+			authorId,
+			waveformIndex
+		} = source;
+		return {
+			fileId: file.id,
+			src,
+			messageId,
+			scope,
+			dialogId,
+			chatId: file.chatId,
+			authorId,
+			authorName: file.authorName,
+			fileName: file.name,
+			isVideoNote: file.isVideoNote,
+			status: file.status,
+			waveformIndex
+		};
+	};
+
+	// @vue/component
+	const PlayerControlButton = {
+		name: 'PlayerControlButton',
+		props: {
+			isPlaying: {
+				type: Boolean,
+				default: false
+			},
+			isLoading: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['click'],
+		template: `
+		<button
+			class="bx-im-audio-player__control-button"
+			:class="{
+				'bx-im-audio-player__control-loader': isLoading,
+				'bx-im-audio-player__control-play': !isLoading && !isPlaying,
+				'bx-im-audio-player__control-pause': !isLoading && isPlaying,
+			}"
+			data-testid="im-audio-player-play"
+			@click="$emit('click')"
+		></button>
+	`
+	};
+
+	// @vue/component
+	const PlayerRateButton = {
+		name: 'PlayerRateButton',
+		props: {
+			rate: {
+				type: Number,
+				required: true
+			},
+			isHidden: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['click'],
+		template: `
+		<div class="bx-im-audio-player__rate-button-container">
+			<button
+				:class="{'--hidden': isHidden}"
+				data-testid="im-audio-player-rate"
+				@click="$emit('click')"
+			>
+				{{ rate }}x
+			</button>
+		</div>
+	`
+	};
+
 	const Wave = {
+		count: 5,
 		verticalShift: 44,
 		activeVerticalShift: 19
 	};
+	const getRandomWaveformIndex = () => Math.floor(Math.random() * Wave.count);
 
 	// @vue/component
 	const Timeline = {
@@ -814,12 +1087,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			withSeeking: {
 				type: Boolean,
 				default: true
+			},
+			waveformIndex: {
+				type: Number,
+				default: null
+			},
+			stretched: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['change'],
 		data() {
 			return {
-				seekerOffset: 0
+				seekerOffset: 0,
+				containerWidth: 0
 			};
 		},
 		computed: {
@@ -836,16 +1118,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					left: `${this.seekerOffset}px`
 				};
 			},
+			trackWidth() {
+				return this.containerWidth;
+			},
 			progressPosition() {
 				if (!this.loaded || this.timeCurrent === 0) {
 					return {
 						width: '100%'
 					};
 				}
-				const offset = Math.round(this.$refs.timeline.offsetWidth / 100 * this.progress);
+				const offset = Math.round(this.trackWidth / 100 * this.progress);
 				return {
 					width: `${offset}px`
 				};
+			},
+			waveType() {
+				return this.waveformIndex ?? this.ownWaveformIndex;
 			},
 			activeWaveStyles() {
 				const shift = this.waveType * Wave.verticalShift + Wave.activeVerticalShift;
@@ -862,14 +1150,30 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.waveType = Math.floor(Math.random() * 5);
+			this.ownWaveformIndex = getRandomWaveformIndex();
+		},
+		mounted() {
+			this.initResizeObserver();
+		},
+		beforeUnmount() {
+			this.getResizeObserver()?.disconnect();
 		},
 		methods: {
+			initResizeObserver() {
+				this.containerWidth = this.$refs.timeline.offsetWidth;
+				this.resizeObserver = new ResizeObserver(([entry]) => {
+					this.containerWidth = entry.contentRect.width;
+				});
+				this.resizeObserver.observe(this.$refs.timeline);
+			},
+			getResizeObserver() {
+				return this.resizeObserver;
+			},
 			setPosition() {
 				if (!this.loaded || !this.withSeeking) {
 					return;
 				}
-				const pixelPerPercent = this.$refs.timeline.offsetWidth / 100;
+				const pixelPerPercent = this.trackWidth / 100;
 				const progress = Math.round(this.seekerOffset / pixelPerPercent);
 				this.$emit('change', progress);
 			},
@@ -883,8 +1187,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		template: `
 		<div 
 			ref="timeline"
-			:class="{'--with-seeking': withSeeking}"
+			:class="{'--with-seeking': withSeeking, '--stretched': stretched}"
 			class="bx-im-player-timeline__container" 
+			data-testid="im-player-timeline"
 			@click="setPosition" 
 			@mousemove="updateSeekerPosition" 
 		>
@@ -920,6 +1225,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isOpened: {
 				type: Boolean,
 				required: true
+			},
+			// The consumer renders the message text below the transcription: the divider separates them
+			withMessageText: {
+				type: Boolean,
+				default: true
 			}
 		},
 		computed: {
@@ -947,7 +1257,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.loc(code);
 			},
 			needToShowDivider() {
-				return this.isOpened && Boolean(this.message.text);
+				return this.isOpened && this.withMessageText && Boolean(this.message.text);
 			},
 			needToShowDisclaimer() {
 				return !this.isError && Boolean(this.transcription?.transcriptText);
@@ -971,7 +1281,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-transcription-text__container">
+		<div class="bx-im-transcription-text__container" data-testid="im-transcription-text-root">
 			<ExpandAnimation>
 				<div
 					v-if="isOpened"
@@ -998,7 +1308,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</template>
 				</div>
 			</ExpandAnimation>
-			<div v-if="needToShowDivider" class="bx-im-transcription-text__divider"></div>
+			<div
+				v-if="needToShowDivider"
+				class="bx-im-transcription-text__divider"
+				data-testid="im-transcription-text-divider"
+			></div>
 		</div>
 	`
 	};
@@ -1008,6 +1322,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		name: 'AudioPlayer',
 		components: {
 			MessageAvatar: im_v2_component_elements_avatar.MessageAvatar,
+			PlayerControlButton,
+			PlayerRateButton,
 			Timeline,
 			TranscriptionButton,
 			TranscriptionText
@@ -1057,7 +1373,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				loading: false,
 				state: im_v2_const.AudioPlaybackState.none,
 				timeCurrent: 0,
-				timeTotal: 0,
+				mediaDuration: 0,
 				showContextButton: false,
 				currentRate: im_v2_const.AudioPlaybackRate['1'],
 				isTranscriptionOpened: false
@@ -1065,27 +1381,94 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			State: () => im_v2_const.AudioPlaybackState,
+			fileDuration() {
+				return main_core.Type.isNumber(this.file.duration) ? this.file.duration : 0;
+			},
+			// The duration fixed at send time wins over the media element: a record made by the browser
+			// often carries no duration in its container, and the element then reports Infinity.
+			// Files sent before the field appeared keep reading it from the media as before.
+			timeTotal() {
+				return this.fileDuration || this.mediaDuration;
+			},
+			// Only a voice message is watched: any other transcribable file waits exactly as it did before.
+			isWaitingForTranscription() {
+				if (!this.file.isVoiceNote) {
+					return false;
+				}
+				return this.$store.getters['files/getTranscription'](this.file.id)?.status === im_v2_const.TranscriptionStatus.PENDING;
+			},
+			isServicePlaybackEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBackgroundAudioPlaybackAvailable);
+			},
+			playbackService() {
+				return im_v2_lib_playback.PlaybackService.getInstance();
+			},
+			dialogId() {
+				return this.$store.getters['chats/getByChatId'](this.file.chatId)?.dialogId ?? '';
+			},
+			playback() {
+				return this.isServicePlaybackEnabled ? this.servicePlayback : this.legacyPlayback;
+			},
+			playbackCommands() {
+				if (this.isServicePlaybackEnabled) {
+					return {
+						toggle: this.toggleServicePlayback,
+						changeRate: this.changeServiceRate,
+						seek: this.seekServicePlayback,
+						playNext: this.startServicePlayback
+					};
+				}
+				return {
+					toggle: this.toggleLegacyPlayback,
+					changeRate: this.changeLegacyRate,
+					seek: this.seekLegacyPlayback,
+					playNext: this.play
+				};
+			},
+			servicePlayback() {
+				return buildPlaybackView(this.playbackService, this.file.id, this.timeTotal);
+			},
+			isCurrentRecordOfThisSurface() {
+				return this.playbackService.isCurrentFile(this.file.id) && this.playbackService.getSnapshot()?.scope === this.playlistScope;
+			},
+			waveformIndex() {
+				if (!this.isServicePlaybackEnabled || !this.playbackService.isCurrentFile(this.file.id)) {
+					return this.ownWaveformIndex;
+				}
+				return this.playbackService.getSnapshot()?.waveformIndex ?? this.ownWaveformIndex;
+			},
+			legacyPlayback() {
+				return {
+					isPlaying: this.state === im_v2_const.AudioPlaybackState.play,
+					isLoading: this.loading,
+					isLoaded: this.loaded,
+					timeCurrent: this.timeCurrent,
+					timeTotal: this.timeTotal,
+					rate: this.currentRate
+				};
+			},
 			isPlaying() {
-				return this.state === im_v2_const.AudioPlaybackState.play;
+				return this.playback.isPlaying;
 			},
 			labelTime() {
-				if (!this.loaded && !this.timeTotal) {
+				const {
+					timeTotal,
+					timeCurrent
+				} = this.playback;
+				if (!this.loaded && !timeTotal) {
 					return '--:--';
 				}
 				let time = 0;
 				if (this.isPlaying) {
-					time = this.timeTotal - this.timeCurrent;
+					time = timeTotal - timeCurrent;
 				} else {
-					time = this.timeTotal;
+					time = timeTotal;
 				}
 				return im_v2_lib_utils.Utils.date.formatMediaDurationTime(time);
 			},
 			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 			fileSize() {
 				return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
-			},
-			currentRateLabel() {
-				return `${this.currentRate}x`;
 			},
 			metaInfo() {
 				return `${this.fileSize}, ${this.labelTime}`;
@@ -1095,22 +1478,83 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.localStorageInst = im_v2_lib_localStorage.LocalStorageManager.getInstance();
-			this.currentRate = this.getRateFromLS();
-			Playlist.getInstance(this.playlistScope).register(this.file);
-			this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.pause, this.onPause);
-			this.getEmitter().subscribe(im_v2_const.EventType.player.playNext, this.onPlayNext);
+			this.currentRate = im_v2_lib_playback.PlaybackRate.get();
+			this.ownWaveformIndex = getRandomWaveformIndex();
+			Playlist.getInstance(this.playlistScope).register(this.playlistTrack());
+			this.subscribeToEvents();
 		},
 		mounted() {
-			this.getObserver().observe(this.$refs.body);
+			// Metadata is preloaded only to learn the duration, so a file that carries it is left alone.
+			if (!this.fileDuration) {
+				this.getObserver().observe(this.$refs.body);
+			}
 		},
 		beforeUnmount() {
-			Playlist.getInstance(this.playlistScope).unregister(this.file);
-			this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.pause, this.onPause);
-			this.getEmitter().unsubscribe(im_v2_const.EventType.player.playNext, this.onPlayNext);
-			this.getObserver().unobserve(this.$refs.body);
+			Playlist.getInstance(this.playlistScope).unregister(this.playlistTrack());
+			this.unsubscribeFromEvents();
+			// Unconditional: the duration can appear after mount, and unobserve of an unobserved element is a no-op.
+			this.observer?.unobserve(this.$refs.body);
 		},
 		methods: {
+			subscribeToEvents() {
+				this.getEmitter().subscribe(im_v2_const.EventType.player.playNext, this.onPlayNext);
+				if (this.isServicePlaybackEnabled) {
+					main_core_events.EventEmitter.subscribe(im_v2_const.EventType.playback.onTrackEnded, this.onTrackEnded);
+					return;
+				}
+				this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.pause, this.onPause);
+				main_core_events.EventEmitter.subscribe(im_v2_const.EventType.player.rateChange, this.onRateChange);
+			},
+			unsubscribeFromEvents() {
+				this.getEmitter().unsubscribe(im_v2_const.EventType.player.playNext, this.onPlayNext);
+				if (this.isServicePlaybackEnabled) {
+					main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.playback.onTrackEnded, this.onTrackEnded);
+					return;
+				}
+				this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.pause, this.onPause);
+				main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.player.rateChange, this.onRateChange);
+			},
+			toggleServicePlayback() {
+				if (!this.src) {
+					return;
+				}
+				if (this.playback.isPlaying) {
+					this.playbackService.pause(im_v2_lib_playback.PlaybackPauseReason.manual);
+					return;
+				}
+				this.startServicePlayback();
+			},
+			startServicePlayback() {
+				if (this.isCurrentRecordOfThisSurface && this.playbackService.canResume()) {
+					this.playbackService.resume();
+					return;
+				}
+				this.playbackService.play(this.getPlaybackTrack());
+			},
+			changeServiceRate() {
+				const {
+					rate
+				} = this.playbackService.getState();
+				this.playbackService.setRate(im_v2_lib_playback.PlaybackRate.getNext(rate));
+			},
+			seekServicePlayback(progress) {
+				const position = this.playback.timeTotal / 100 * progress;
+				if (!this.isCurrentRecordOfThisSurface) {
+					this.startServicePlayback();
+				}
+				this.playbackService.seek(position);
+			},
+			getPlaybackTrack() {
+				return buildPlaybackTrack({
+					file: this.file,
+					src: this.src,
+					messageId: this.messageId,
+					scope: this.playlistScope,
+					dialogId: this.dialogId,
+					authorId: this.authorId,
+					waveformIndex: this.waveformIndex
+				});
+			},
 			loadFile(play = false) {
 				if (this.loaded || this.loading && !play) {
 					return;
@@ -1124,7 +1568,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					void this.source().play();
 				}
 			},
-			clickToButton() {
+			toggleLegacyPlayback() {
 				if (!this.src) {
 					return;
 				}
@@ -1135,7 +1579,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 			},
 			play() {
-				this.updateRate(this.getRateFromLS());
+				this.updateRate(im_v2_lib_playback.PlaybackRate.get());
 				if (!this.loaded) {
 					this.loadFile(true);
 					return;
@@ -1149,31 +1593,25 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.state = im_v2_const.AudioPlaybackState.stop;
 				this.source().pause();
 			},
-			getRateFromLS() {
-				return this.localStorageInst.get(im_v2_const.LocalStorageKey.audioPlaybackRate) || im_v2_const.AudioPlaybackRate['1'];
-			},
-			setRateInLS(newRate) {
-				this.localStorageInst.set(im_v2_const.LocalStorageKey.audioPlaybackRate, newRate);
-			},
-			getNextPlaybackRate(currentRate) {
-				const rates = Object.values(im_v2_const.AudioPlaybackRate).sort();
-				const currentIndex = rates.indexOf(currentRate);
-				const nextIndex = (currentIndex + 1) % rates.length;
-				return rates[nextIndex];
-			},
-			changeRate() {
+			changeLegacyRate() {
 				if ([im_v2_const.AudioPlaybackState.pause, im_v2_const.AudioPlaybackState.none].includes(this.state)) {
 					return;
 				}
-				const commonCurrentRate = this.getRateFromLS();
-				const newRate = this.getNextPlaybackRate(commonCurrentRate);
+				const commonCurrentRate = im_v2_lib_playback.PlaybackRate.get();
+				const newRate = im_v2_lib_playback.PlaybackRate.getNext(commonCurrentRate);
 				im_v2_lib_analytics.Analytics.getInstance().player.onChangeRate(this.file.chatId, newRate);
-				this.setRateInLS(newRate);
-				this.updateRate(newRate);
+				// the new value comes back through the broadcast, so this player applies it the same way as the others
+				im_v2_lib_playback.PlaybackRate.set(newRate);
 			},
 			updateRate(newRate) {
 				this.currentRate = newRate;
-				this.source().playbackRate = newRate;
+				// a player mounted without a source has no media element to carry the rate
+				if (this.source()) {
+					this.source().playbackRate = newRate;
+				}
+			},
+			onRateChange(event) {
+				this.updateRate(event.getData().rate);
 			},
 			onPause(event) {
 				const data = event.getData();
@@ -1182,16 +1620,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				this.pause();
 			},
+			// The same file can hang in several messages, so the file alone does not say which player is
+			// meant: without the message every one of them would start and scroll the list to itself.
+			playlistTrack() {
+				return {
+					messageId: this.messageId,
+					file: this.file
+				};
+			},
 			onPlayNext(event) {
 				const data = event.getData();
-				if (data.fileId !== this.file.id || data.scope !== this.playlistScope) {
+				if (data.fileId !== this.file.id || data.messageId !== this.messageId || data.scope !== this.playlistScope) {
 					return;
 				}
 				this.$refs.body?.scrollIntoView({
 					behavior: 'smooth',
 					block: 'center'
 				});
-				this.play();
+				this.playbackCommands.playNext();
+			},
+			onTrackEnded(event) {
+				const {
+					fileId,
+					scope
+				} = event.getData();
+				if (fileId !== this.file.id || scope !== this.playlistScope) {
+					return;
+				}
+				Playlist.getInstance(scope).onFileEnded({
+					file: this.file,
+					context: {
+						emitter: this.getEmitter()
+					}
+				});
 			},
 			source() {
 				return this.$refs.source;
@@ -1205,14 +1666,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						if (!this.source()) {
 							return;
 						}
-						this.timeTotal = this.source().duration;
+						this.mediaDuration = this.source().duration;
 						break;
 					case 'abort':
 					case 'error':
 						console.error('BxAudioPlayer: load failed', this.file.id, event);
 						this.loading = false;
 						this.state = im_v2_const.AudioPlaybackState.none;
-						this.timeTotal = 0;
+						this.mediaDuration = 0;
 						this.preload = 'none';
 						break;
 					case 'canplaythrough':
@@ -1230,7 +1691,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						this.source().currentTime = 0;
 						this.state = im_v2_const.AudioPlaybackState.stop;
 						Playlist.getInstance(this.playlistScope).onFileEnded({
-							file: this.file,
+							...this.playlistTrack(),
 							context: {
 								emitter: this.getEmitter()
 							}
@@ -1268,7 +1729,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				return this.observer;
 			},
-			onTimelineClick(progress) {
+			seekLegacyPlayback(progress) {
 				this.play();
 				this.source().currentTime = this.timeTotal / 100 * progress;
 			},
@@ -1277,7 +1738,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-audio-player__scope">
+		<div class="bx-im-audio-player__scope" data-testid="im-audio-player">
 			<div
 				class="bx-im-audio-player__container"
 				ref="body"
@@ -1285,15 +1746,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				@mouseleave="showContextButton = false"
 			>
 				<div class="bx-im-audio-player__control-container">
-					<button
-						class="bx-im-audio-player__control-button"
-						:class="{
-							'bx-im-audio-player__control-loader': loading,
-							'bx-im-audio-player__control-play': !loading && !this.isPlaying,
-							'bx-im-audio-player__control-pause': !loading && this.isPlaying,
-						}"
-						@click="clickToButton"
-					></button>
+					<PlayerControlButton
+						:isPlaying="playback.isPlaying"
+						:isLoading="playback.isLoading"
+						@click="playbackCommands.toggle()"
+					/>
 					<div v-if="withAvatar" class="bx-im-audio-player__author-avatar-container">
 						<MessageAvatar
 							:messageId="messageId"
@@ -1305,12 +1762,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-audio-player__content-container">
 					<div class="bx-im-audio-player__timeline-container">
 						<Timeline
-							:loaded="loaded"
-							:timeCurrent="timeCurrent"
-							:timeTotal="timeTotal"
-							@change="onTimelineClick"
+							:loaded="playback.isLoaded"
+							:timeCurrent="playback.timeCurrent"
+							:timeTotal="playback.timeTotal"
+							:waveformIndex="waveformIndex"
+							@change="playbackCommands.seek($event)"
 						/>
-						<div class="bx-im-audio-player__timer-container --ellipsis">
+						<div
+							class="bx-im-audio-player__timer-container --ellipsis"
+							data-testid="im-audio-player-time"
+						>
 							{{ metaInfo }}
 						</div>
 					</div>
@@ -1322,20 +1783,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							@transcriptionToggle="isTranscriptionOpened = !isTranscriptionOpened"
 						/>
 					</div>
-					<div
-						v-if="!withPlaybackRateControl"
-						class="bx-im-audio-player__rate-button-container"
-					>
-						<button
-							:class="{'--hidden': !isPlaying}"
-							@click="changeRate"
-						>
-							{{ currentRateLabel }}
-						</button>
-					</div>
+					<PlayerRateButton
+						v-if="withPlaybackRateControl"
+						:rate="playback.rate"
+						:isHidden="!playback.isPlaying"
+						@click="playbackCommands.changeRate()"
+					/>
 					<button
 						v-if="showContextButton && withContextMenu"
 						class="bx-im-messenger__context-menu-icon bx-im-audio-player__context-menu-button"
+						data-testid="im-audio-player-context-menu"
 						@click="$emit('contextMenuClick', $event)"
 					></button>
 				</div>
@@ -1345,6 +1802,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					class="bx-im-audio-player__audio-source"
 					ref="source"
 					:preload="preload"
+					data-testid="im-audio-player-source"
 					@abort="audioEventRouter('abort', $event)"
 					@error="audioEventRouter('error', $event)"
 					@suspend="audioEventRouter('suspend', $event)"
@@ -1385,6 +1843,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			message: {
 				type: Object,
 				required: true
+			},
+			withMessageText: {
+				type: Boolean,
+				default: true
 			}
 		},
 		emits: ['closeTranscription', 'clickPlay'],
@@ -1420,6 +1882,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div
 					:style="playButtonStyles"
 					class="bx-im-transcribed-video-player__play"
+					data-testid="im-transcribed-video-player-play-btn"
 					@click="$emit('clickPlay')"
 				>
 					<div class="bx-im-transcribed-video-player__play-button-overlay"></div>
@@ -1435,7 +1898,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						/>
 						<div class="bx-im-transcribed-video-player__metainfo">{{ formattedTime }}</div>
 					</div>
-					<div class="bx-im-transcribed-video-player__transcription-button">
+					<div
+						class="bx-im-transcribed-video-player__transcription-button"
+						data-testid="im-transcribed-video-player-collapse-btn"
+					>
 						<TranscriptionButton
 							:file="file"
 							:isOpened="true"
@@ -1456,6 +1922,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:file="file"
 				:isOpened="true"
 				:messageId="message.id"
+				:withMessageText="withMessageText"
 				class="bx-im-transcribed-video-player__transcription-text"
 			/>
 		</div>
@@ -1465,7 +1932,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AudioPlayer = AudioPlayer;
 	exports.DefaultVideoPlayer = DefaultVideoPlayer;
 	exports.RoundVideoPlayer = RoundVideoPlayer;
+	exports.Timeline = Timeline;
 	exports.TranscribedVideoPlayer = TranscribedVideoPlayer;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Const, window, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI, BX.UI.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX, BX.Event, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, window, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Component.Elements, BX.UI, BX.UI.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

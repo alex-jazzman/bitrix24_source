@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/creation-menu.bundle.css',
 	'js' => 'dist/creation-menu.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.popup',
 		'ui.analytics',
-		'main.core',
 	],
 	'skip_core' => false,
 ];

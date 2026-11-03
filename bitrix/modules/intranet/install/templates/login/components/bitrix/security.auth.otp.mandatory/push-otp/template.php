@@ -12,6 +12,8 @@ Extension::load([
 	'intranet.notify-banner.otp-info',
 	'intranet.push-otp.connect-popup',
 ]);
+
+$dayMonthFormat = \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat();
 ?>
 <script>
 
@@ -58,7 +60,7 @@ Extension::load([
 				'dataType': 'json',
 				'url': '<?= $componentPath?>/ajax.php',
 				'data':  data,
-				'onsuccess': (response) => resolve(response),
+				'onsuccess': (response) => response?.status === 'ok' ? resolve(response) : reject(response),
 				'onfailure': (response) => reject(response),
 			});
 		});
@@ -71,14 +73,14 @@ Extension::load([
 					...response?.data,
 					linkProvider: linkProvider,
 					appConnectingProvider: appConnectingHandler,
+					enablePostConnectFlow: false,
+					mandatoryLoginMode: true,
 				});
 
 				const popup = provider.onlyPushOtp();
 
-				popup.subscribe('onClose', (event) => {
-					const context = event.getData()?.context;
-					const qrView = context?.getViewByCode('qr');
-					if (qrView?.isAppSuccessConnected() === true)
+				popup.subscribe('onClose', () => {
+					if (provider.isConnectionCompleted())
 					{
 						location.reload();
 					}
@@ -94,7 +96,7 @@ Extension::load([
 			signedUserId: '<?= $arResult['SIGNED_USER_ID']?>',
 			endDate: <?= $arResult['END_MANDATORY_PERIOD'] ?? time() ?>,
 			promoteMode: '<?= $arResult['PROMOTE_MODE'] ?>',
-			formatEndDate: '<?= \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat() ?>',
+			formatEndDate: '<?= CUtil::JSEscape($dayMonthFormat) ?>',
 			pushOtpPopupProvider: pushOtpPopupProvider,
 		});
 	popup.show();

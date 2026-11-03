@@ -75,6 +75,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 		static needUpdate = false;
 		static timeoutTTL = 5000;
 		#filterId;
+		#pendingCounterSync = false;
+		#pendingCounterSyncTimeout = null;
 		constructor(options) {
 			super({
 				target: options.renderTo,
@@ -115,6 +117,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 				moduleId: 'tasks',
 				callback: data => this.processPullEvent(data)
 			});
+			BX.PULL.subscribe({
+				moduleId: 'im',
+				callback: data => this.processImPullEvent(data)
+			});
 			this.extendWatch();
 		}
 		extendWatch() {
@@ -144,6 +150,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 					method.apply(this, [params]);
 				}
 			}
+		}
+		processImPullEvent(data) {
+			const {
+				command,
+				params
+			} = data;
+			if (command !== 'readAllChatsByRecentSection' || params?.recentSection !== 'tasksTask') {
+				return;
+			}
+			const isGlobalTaskChatScope = params?.parentChatId === 0 || params?.parentChatId === null;
+			if (isGlobalTaskChatScope) {
+				this.updateChatButtonCounter(0);
+			}
+			this.scheduleCounterSync();
 		}
 		bindEvents() {
 			main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
@@ -176,6 +196,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 		}
 		#onActivateItem(event) {
 			const item = event.getData();
+
+			// Read all is an action and not a filter, so it has nothing to toggle and no state to show. The
+			// collapsed panel serves its hidden items from a popup and activates whatever is picked there
+			// (ui.counterpanel), so the activation is undone here: otherwise the chip stays highlighted once
+			// the panel expands again, and the popup shows it as selected.
+			if (item.id === Counters.READ_ALL_ID) {
+				item.deactivate();
+				return;
+			}
 			const itemId = item.id;
 			let count = null;
 			Object.values(this.elements).forEach(element => {
@@ -204,6 +233,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 		}
 		#onDeactivateItem(event) {
 			const item = event.getData();
+			if (item.id === Counters.READ_ALL_ID) {
+				return;
+			}
 			let itemId = item.id;
 			let count = null;
 			if (item.parent) {
@@ -290,11 +322,41 @@ this.BX.Tasks = this.BX.Tasks || {};
 			this.role = this.filter.isFilteredByField('ROLEID') ? this.filter.fields.ROLEID : 'view_all';
 		}
 		onCommentReadAll(data) {
-			this.updateCountersData();
+			if (this.userId !== Number(data.USER_ID)) {
+				return;
+			}
+			const taskIds = Array.isArray(data.TASK_IDS) ? data.TASK_IDS : [];
+			const readsTaskSubset = Number(data.TASK_ID) > 0 || taskIds.length > 0;
+			const matchesGroup = this.groupId === Number(data.GROUP_ID ?? 0);
+			const readsAllRoles = data.ROLE === null;
+			if (matchesGroup && readsAllRoles && !readsTaskSubset) {
+				this.updateChatButtonCounter(0);
+			}
+			this.scheduleCounterSync();
+		}
+		scheduleCounterSync() {
+			if (this.#pendingCounterSync) {
+				return;
+			}
+			this.#pendingCounterSync = true;
+			this.#pendingCounterSyncTimeout = setTimeout(() => {
+				this.#pendingCounterSync = false;
+				this.#pendingCounterSyncTimeout = null;
+				this.updateCountersData();
+			}, Counters.timeoutTTL);
 		}
 		onUserCounter(data) {
 			const has = Object.prototype.hasOwnProperty;
-			if (!this.isUserTaskList() || !this.isMyTaskList() || !has.call(data, this.groupId) || this.userId !== Number(data.userId)) {
+			const matchesUser = this.userId === Number(data.userId);
+			const matchesGroup = has.call(data, this.groupId);
+			if (this.#pendingCounterSync && matchesUser && matchesGroup) {
+				this.#pendingCounterSync = false;
+				clearTimeout(this.#pendingCounterSyncTimeout);
+				this.#pendingCounterSyncTimeout = null;
+				this.updateCountersData();
+				return;
+			}
+			if (!this.isUserTaskList() || !this.isMyTaskList() || !matchesGroup || !matchesUser) {
 				// most likely project counters were updated, but due to 'isSonetEnable' flag only user counters are comming
 				this.updateCountersData();
 				return;
@@ -355,7 +417,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 					collapsed: !this.#isBigScreen(),
 					locked: false,
 					dataAttributes: {
-						role: 'tasks-counters--item-head-read-all'
+						role: 'tasks-counters--item-head-read-all',
+						testid: 'tasks-counters-read-all-button'
+					},
+					// An item without a value is interactive only when it carries consumer events, and just an
+					// interactive one becomes a native button reachable from the keyboard. The click itself is
+					// served by the panel-wide Item:click subscription, so this callback stays empty.
+					eventsForActive: {
+						click: () => {}
 					}
 				});
 			}
@@ -378,6 +447,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 				return main_core.Loc.getMessage('TASKS_COUNTER_EXPIRED');
 			}
 			if (Counters.counterTypes.comment.includes(type)) {
+				return main_core.Loc.getMessage('TASKS_COUNTER_NEW_COMMENTS');
+			}
+			if (type.endsWith('_expired')) {
+				return main_core.Loc.getMessage('TASKS_COUNTER_EXPIRED');
+			}
+			if (type.endsWith('_comments')) {
 				return main_core.Loc.getMessage('TASKS_COUNTER_NEW_COMMENTS');
 			}
 			return '';
@@ -407,11 +482,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 			});
 		}
 		readAllByRole() {
-			new tasks_viewed.Controller().userComments({
+			const reading = new tasks_viewed.Controller().userComments({
 				groupId: this.groupId,
 				userId: this.userId,
 				role: this.role
 			});
+			if (this.role === 'view_all') {
+				this.updateChatButtonCounter(0);
+			}
+			reading.catch(() => this.updateCountersData());
 		}
 		readAllForProjects() {
 			const allCounters = {
@@ -540,15 +619,42 @@ this.BX.Tasks = this.BX.Tasks || {};
 				return;
 			}
 			const value = Number(counterData.VALUE);
+			this.updateChatButtonCounter(value);
+		}
+		updateChatButtonCounter(value) {
+			if (!this.chatButton) {
+				return;
+			}
+			this.restoreVisibleChatButton();
 			if (this.chatButton.getRightCounter()) {
 				this.chatButton.getRightCounter().setValue(value);
 				this.chatButton.getRightCounter().setColor(this.getChatButtonCounterColor(value));
-				return;
+			} else {
+				this.chatButton.setRightCounter({
+					value,
+					color: this.getChatButtonCounterColor(value)
+				});
 			}
-			this.chatButton.setRightCounter({
-				value,
-				color: this.getChatButtonCounterColor(value)
-			});
+			this.updateChatButtonAccessibleName(this.getChatButtonDrawnCount() ?? value);
+		}
+		restoreVisibleChatButton() {
+			const rightCounter = this.chatButton.getRightCounter();
+			if (rightCounter && !this.chatButton.getContainer().contains(rightCounter.render())) {
+				this.chatButton = ui_buttons.ButtonManager.createFromNode(this.chatButton.getContainer());
+			}
+		}
+
+		// The name is built from the count the button actually shows because the counter clips values at its max.
+		getChatButtonDrawnCount() {
+			const counter = this.chatButton.getContainer().querySelector('.ui-counter');
+			return counter ? counter.textContent.replace(/\s+/g, '') : null;
+		}
+		updateChatButtonAccessibleName(drawnCount) {
+			const count = Number.parseInt(drawnCount, 10);
+			const accessibleName = count > 0 ? [main_core.Loc.getMessage('TASKS_COUNTERS_CHAT_BUTTON'), main_core.Loc.getMessagePlural('TASKS_COUNTERS_CHAT_BUTTON_UNREAD', count, {
+				'#COUNT#': drawnCount
+			})].filter(Boolean).join(', ') : null;
+			main_core.Dom.attr(this.chatButton.getContainer(), 'aria-label', accessibleName);
 		}
 		getChatButtonCounterColor(value) {
 			return value ? ui_buttons.ButtonCounterStyle.FILLED_SUCCESS : ui_buttons.ButtonCounterStyle.OUTLINE_NO_ACCENT;

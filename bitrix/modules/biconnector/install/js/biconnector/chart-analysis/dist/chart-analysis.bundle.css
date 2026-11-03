@@ -1,0 +1,39 @@
+.biconnector-chart-analysis-stub {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.biconnector-chart-analysis-stub__card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-md);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.biconnector-chart-analysis-stub__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-base-1);
+	overflow-wrap: anywhere;
+}
+
+.biconnector-chart-analysis-stub__period,
+.biconnector-chart-analysis-stub__filter {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-3);
+	overflow-wrap: anywhere;
+}
+
+.biconnector-chart-analysis-stub__filters {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.biconnector-chart-analysis-stub__line {
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-2);
+}

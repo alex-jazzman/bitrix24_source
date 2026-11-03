@@ -3,4 +3,4 @@ $MESS["CRM_AUTOMATION_TRIGGER_INVOICE_DESCRIPTION"] = "Changes the stage as soon
 $MESS["CRM_AUTOMATION_TRIGGER_INVOICE_EVENT_DATE_TIME"] = "Invoice paid date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_INVOICE_NAME"] = "Invoice payment";
 $MESS["CRM_AUTOMATION_TRIGGER_INVOICE_NAME_1"] = "Invoice was paid";
-$MESS["CRM_AUTOMATION_TRIGGER_INVOICE_NODE_DESCRIPTION"] = "Triggered after invoice status changed to Paid.";
+$MESS["CRM_AUTOMATION_TRIGGER_INVOICE_NODE_DESCRIPTION"] = 'Triggered in a deal when its linked invoice is paid.';

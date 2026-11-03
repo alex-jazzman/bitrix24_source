@@ -4,6 +4,8 @@ import { Timer } from './timer'
 import { Basket } from "./basket";
 import { Product } from "./product";
 import { History } from './history'
+import { Announcer } from './announcer';
+import { Shutter } from './shutter';
 
 export
 {
@@ -12,5 +14,7 @@ export
 	Timer,
 	Basket,
 	Product,
-	History
+	History,
+	Announcer,
+	Shutter,
 }

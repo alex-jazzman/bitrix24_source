@@ -15,6 +15,10 @@ this.BX.Note = this.BX.Note || {};
 			aliases: [],
 			command: null,
 			editorScoped: true,
+			// Name of the feature the entry belongs to, NULL for one that is always there. A consumer that
+			// knows which features are on (the help panel) hides the rest: a shortcut listed for a feature
+			// the portal has switched off would be a promise nothing keeps.
+			feature: null,
 			...record
 		});
 	}
@@ -189,6 +193,21 @@ this.BX.Note = this.BX.Note || {};
 		binding: 'new',
 		command: 'insertFileNode',
 		labelKey: 'NOTE_HOTKEYS_ACTION_ATTACHMENTS'
+	}), entry({
+		id: 'diskAttachment',
+		group: 'insert',
+		combo: 'Mod-Shift-d',
+		binding: 'new',
+		command: 'pickDiskFile',
+		labelKey: 'NOTE_HOTKEYS_ACTION_DISK_ATTACHMENT',
+		feature: 'diskAttachments'
+	}), entry({
+		id: 'date',
+		group: 'insert',
+		combo: 'Mod-;',
+		binding: 'new',
+		command: 'toggleDate',
+		labelKey: 'NOTE_HOTKEYS_ACTION_DATE'
 	}),
 	// Group: history — from the TipTap history package.
 	entry({
@@ -279,7 +298,7 @@ this.BX.Note = this.BX.Note || {};
 	//     round-trip through the markdown parser (paste / import / REST), never live input. That group
 	//     carries `hintKey` — the panel renders a ui.hint "?" spelling this out.
 	// Token shapes mirror the editor tokenizers: note-asset-tokenizer.js → [[image|video|file fileId=N]],
-	// mention-type-registry.js → @{user|document|collection|task:id}.
+	// mention-type-registry.js → @{user|document|collection|task|diskfolder:id}.
 	const MARKDOWN_GROUPS = Object.freeze([Object.freeze({
 		titleKey: 'NOTE_HOTKEYS_MD_GROUP_BLOCKS',
 		rows: Object.freeze([Object.freeze({
@@ -326,7 +345,7 @@ this.BX.Note = this.BX.Note || {};
 			syntax: '[текст](url)'
 		})])
 	}), Object.freeze({
-		titleKey: 'NOTE_HOTKEYS_MD_GROUP_ENTITIES',
+		titleKey: 'NOTE_HOTKEYS_MD_GROUP_INSERTS',
 		hintKey: 'NOTE_HOTKEYS_MD_ENTITIES_HINT',
 		rows: Object.freeze([Object.freeze({
 			labelKey: 'NOTE_HOTKEYS_MD_IMAGE',
@@ -349,13 +368,19 @@ this.BX.Note = this.BX.Note || {};
 		}), Object.freeze({
 			labelKey: 'NOTE_HOTKEYS_MD_MENTION_TASK',
 			syntax: '@{task:id}'
+		}), Object.freeze({
+			labelKey: 'NOTE_HOTKEYS_MD_MENTION_DISKFOLDER',
+			syntax: '@{diskfolder:id}'
+		}), Object.freeze({
+			labelKey: 'NOTE_HOTKEYS_MD_DATE',
+			syntax: '[[date 2026-09-03]]'
 		})])
 	})]);
 	function getMarkdownReference() {
 		return MARKDOWN_GROUPS;
 	}
 
-	// Presentation order of hotkey groups (AC-010). A group present in the descriptor but missing
+	// Presentation order of hotkey groups. A group present in the descriptor but missing
 	// here simply isn't rendered — keep in sync with the descriptor's `group` values.
 	const GROUP_ORDER = ['format', 'headings', 'lists', 'blocks', 'align', 'insert', 'history', 'global'];
 	const GROUP_TITLE_KEY = {
@@ -381,6 +406,13 @@ this.BX.Note = this.BX.Note || {};
 			open: {
 				type: Boolean,
 				default: false
+			},
+			// Features the portal has switched on. A shortcut tied to a feature outside this list is left
+			// out: the panel is a promise that the combo does something, and for a feature that is off it
+			// would not.
+			features: {
+				type: Array,
+				default: () => []
 			}
 		},
 		emits: ['close'],
@@ -401,7 +433,7 @@ this.BX.Note = this.BX.Note || {};
 			},
 			// Hotkey groups in presentation order; each carries its localized title and rendered rows.
 			comboGroups() {
-				const descriptor = getHotkeyDescriptor();
+				const descriptor = getHotkeyDescriptor().filter(item => item.feature === null || this.features.includes(item.feature));
 				return GROUP_ORDER.map(group => {
 					const items = descriptor.filter(item => item.group === group);
 					if (items.length === 0) {

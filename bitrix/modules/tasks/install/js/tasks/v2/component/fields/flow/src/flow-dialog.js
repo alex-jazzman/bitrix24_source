@@ -13,6 +13,7 @@ type Params = {
 	targetNode: HTMLElement,
 	taskId: number | string,
 	onClose: Function,
+	onUpdate?: Function,
 };
 
 class FlowDialog
@@ -20,11 +21,13 @@ class FlowDialog
 	#dialog: EntitySelectorDialog;
 	#taskId: number | string;
 	#onClose: Function | null;
+	#onUpdate: Function | null;
 
 	show(params: Params): void
 	{
 		this.#taskId = params.taskId;
 		this.#onClose = params.onClose;
+		this.#onUpdate = params.onUpdate;
 
 		this.#dialog ??= this.#createDialog();
 		this.#dialog.selectItemsByIds(this.#items);
@@ -75,26 +78,48 @@ class FlowDialog
 	}
 
 	#handleFlowSelect = async (): Promise<void> => {
-		if (!this.#dialog.isLoaded())
+		try
 		{
-			return;
+			if (!this.#dialog.isLoaded())
+			{
+				return;
+			}
+
+			// Singleton dialog: a show() for another card can overwrite this.#taskId while an await
+			// below is in flight, so capture the id and current flow synchronously and use only these.
+			const taskId = this.#taskId;
+			const currentFlowId = taskService.getStoreTask(taskId).flowId;
+
+			const flow = await this.#fillStore();
+
+			if (flow?.id === currentFlowId)
+			{
+				return;
+			}
+
+			if (flow)
+			{
+				const { id: flowId, templateId, groupId } = flow;
+				groupService.setHasScrumInfo(taskId);
+				const updatePromise = taskService.update(taskId, { flowId, templateId, groupId, stageId: 0 });
+
+				// Non-blocking so the flow popup closes immediately. Refetch canCreateEpic
+				// unconditionally: setHasScrumInfo() cleared it as a fail-safe, so on update failure
+				// (server unchanged) the refetch still restores the group's real right. Each call
+				// self-guards by task id kind: getScrumInfo for a real task, getEpicCreationRight for
+				// a create-mode draft.
+				void updatePromise.then(() => {
+					void groupService.getScrumInfo(taskId, { force: true });
+					void groupService.getEpicCreationRight(taskId);
+				});
+
+				this.#onUpdate?.();
+			}
 		}
-
-		const flow = await this.#fillStore();
-
-		if (flow?.id === this.#flowId)
+		finally
 		{
-			return;
+			this.#onClose?.();
 		}
-
-		if (flow)
-		{
-			const { id: flowId, templateId, groupId } = flow;
-			groupService.setHasScrumInfo(this.#taskId);
-			void taskService.update(this.#taskId, { flowId, templateId, groupId, stageId: 0 });
-		}
-
-		this.#onClose?.();
 	};
 
 	#fillStore = async (): Promise<?FlowModel> => {

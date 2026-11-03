@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_system_dialog, ui_vue3, ui_vue3_components_button, ui_iconSet_api_vue, ui_notificationPanel, ui_iconSet_api_core, ui_iconSet_main, ui_system_input_vue, ui_system_menu_vue, ui_datePicker, ui_system_typography_vue, main_date, ui_switcher, ui_entitySelector, main_loader) {
+(function (exports, main_core, main_popup, ui_system_dialog, ui_vue3, ui_vue3_components_button, ui_iconSet_api_vue, ui_notificationPanel, ui_iconSet_api_core, ui_iconSet_main, ui_system_input_vue, ui_system_menu_vue, ui_datePicker, ui_system_typography_vue, main_date, ui_vue3_components_switcher, ui_entitySelector, main_loader) {
 	'use strict';
 
 	const SharingAccessWrapper = {
@@ -39,6 +39,7 @@ this.BX = this.BX || {};
 		<div class="disk-sharing-access-popup__buttons">
 			<UiButton
 				text="${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_ACCESSIBILITY_BUTTON')}"
+				:dataset="{ testid: 'disk-sharing-access-tab-private' }"
 				:leftIcon="Outline.GROUP"
 				:size="ButtonSize.MEDIUM"
 				:style="!isPublic ? AirButtonStyle.SELECTION : AirButtonStyle.OUTLINE"
@@ -48,6 +49,7 @@ this.BX = this.BX || {};
 			/>
 			<UiButton
 				text="${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_ACCESSIBILITY_BUTTON')}"
+				:dataset="{ testid: 'disk-sharing-access-tab-public' }"
 				:leftIcon="Outline.EARTH"
 				:size="ButtonSize.MEDIUM"
 				:style="isPublic ? AirButtonStyle.SELECTION : AirButtonStyle.OUTLINE"
@@ -170,6 +172,11 @@ this.BX = this.BX || {};
 	};
 	const DEFAULT_MAX_TASK_NAME = 'disk_access_full';
 	const PREFERRED_DEFAULT_TASK_NAME = 'disk_access_edit';
+	const SWITCHER_OPTIONS = {
+		size: 'small',
+		showStateTitle: false,
+		useAirDesign: true
+	};
 	const TYPE_FILE_DOCUMENT = 4;
 	const TYPE_FILE_BOARD = 12;
 	const HELP_DESK_SLIDER_CODE_DESCRIPTION = '25483894';
@@ -816,6 +823,7 @@ this.BX = this.BX || {};
 			<TextXl
 				tag="p"
 				className="access-public-block__description-text"
+				data-testid="disk-sharing-access-public-description"
 			>
 				{{ publicDescriptionText }}
 			</TextXl>
@@ -823,8 +831,10 @@ this.BX = this.BX || {};
 		<button
 			v-if="isActive && !isFullSettings"
 			type="button"
+			data-testid="disk-sharing-public-settings-button"
 			@click="onToggleSettings"
 			class="access-public-block__open-settings"
+			data-testid="disk-sharing-access-public-settings-toggle"
 			:class="{ 'access-public-block__open-settings--disabled': isSettingsBlocked }"
 			:aria-disabled="isSettingsBlocked"
 		>
@@ -835,6 +845,7 @@ this.BX = this.BX || {};
 			type="button"
 			@click="openHelpDesk"
 			class="access-public-block__open-aside-popup"
+			data-testid="disk-sharing-access-public-details"
 		>
 			${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_DETAILS_BUTTON')}
 		</button>
@@ -851,9 +862,18 @@ this.BX = this.BX || {};
 			isDownload: {
 				type: Boolean,
 				required: true
+			},
+			isSaving: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['update:isDownload'],
+		data() {
+			return {
+				downloadCheckboxId: `disk-sharing-public-download-checkbox-${main_core.Text.getRandom()}`
+			};
+		},
 		methods: {
 			onToggle(event) {
 				this.$emit('update:isDownload', event.target.checked);
@@ -865,14 +885,16 @@ this.BX = this.BX || {};
 				<input
 					class="ui-ctl-element"
 					type="checkbox"
+					:id="downloadCheckboxId"
+					data-testid="disk-sharing-public-download-checkbox"
 					:checked="isDownload"
+					:disabled="isSaving"
 					@change="onToggle"
-					id="test"
 				>
 				<TextSm
 					tag="label"
+					:for="downloadCheckboxId"
 					className="access-public-block__download-label"
-					for="test"
 				>
 					${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_CHECKOUT_DOWNLOAD_ACTION')}
 				</TextSm>
@@ -885,6 +907,7 @@ this.BX = this.BX || {};
 	const PublicAccessHeader = {
 		name: 'PublicAccessHeader',
 		components: {
+			Switcher: ui_vue3_components_switcher.Switcher,
 			TextXl: ui_system_typography_vue.TextXl
 		},
 		props: {
@@ -899,88 +922,36 @@ this.BX = this.BX || {};
 			isToggleBlocked: {
 				type: Boolean,
 				default: false
-			},
-			isLoading: {
-				type: Boolean,
-				default: false
 			}
 		},
 		emits: ['toggle', 'blockedToggle'],
-		data() {
+		setup() {
 			return {
-				switcher: null
+				SWITCHER_OPTIONS
 			};
 		},
-		watch: {
-			isActive() {
-				this.syncSwitcherState();
-			},
-			isDisabled() {
-				this.syncSwitcherState();
-			},
-			isToggleBlocked() {
-				this.syncSwitcherState();
-			},
-			isLoading() {
-				this.syncSwitcherState();
-			}
-		},
-		mounted() {
-			this.initSwitcher();
-		},
-		beforeUnmount() {
-			this.destroySwitcher();
-		},
 		methods: {
-			initSwitcher() {
-				if (this.switcher || !this.$refs.switcherNode) {
+			handleToggle(value) {
+				// the wrapper has already rolled the widget back to isActive, so a blocked
+				// attempt only has to leave isActive untouched upstream
+				if (this.isToggleBlocked) {
+					this.$emit('blockedToggle', value);
 					return;
 				}
-				this.switcher = new ui_switcher.Switcher({
-					node: this.$refs.switcherNode,
-					checked: this.isActive,
-					disabled: this.isDisabled || this.isLoading,
-					size: 'small',
-					showStateTitle: false,
-					useAirDesign: true,
-					handlers: {
-						toggled: () => {
-							const nextValue = this.switcher.isChecked();
-							if (this.isToggleBlocked) {
-								this.$emit('blockedToggle', nextValue);
-								this.switcher.check(this.isActive, false);
-								return;
-							}
-							this.$emit('toggle', nextValue);
-						}
-					}
-				});
-				this.syncSwitcherState();
-			},
-			destroySwitcher() {
-				if (!this.switcher) {
-					return;
-				}
-				if (main_core.Type.isFunction(this.switcher.destroy)) {
-					this.switcher.destroy();
-				}
-				this.switcher = null;
-			},
-			syncSwitcherState() {
-				if (!this.switcher) {
-					return;
-				}
-				if (this.switcher.isLoading()) {
-					this.switcher.setLoading(false);
-				}
-				this.switcher.disable(this.isDisabled || this.isLoading, false);
-				this.switcher.check(this.isActive, false);
-				this.switcher.setLoading(this.isLoading);
+				this.$emit('toggle', value);
 			}
 		},
 		template: `
 		<div class="access-public-block__header">
-			<div class="access-public-block__switcher" ref="switcherNode"></div>
+			<Switcher
+				class="access-public-block__switcher"
+				data-testid="disk-sharing-access-public-switcher"
+				:isChecked="isActive"
+				:isDisabled="isDisabled"
+				:options="SWITCHER_OPTIONS"
+				@check="handleToggle(true)"
+				@uncheck="handleToggle(false)"
+			/>
 			<TextXl
 				tag="div"
 				className="access-public-block__title"
@@ -1085,6 +1056,7 @@ this.BX = this.BX || {};
 					type="checkbox"
 					:checked="isPassword"
 					:disabled="isSaving"
+					data-testid="disk-sharing-access-public-password-toggle"
 					@change="onToggle"
 				>
 				<TextSm
@@ -1114,10 +1086,12 @@ this.BX = this.BX || {};
 							:stretched="true"
 							:disabled="isSaving"
 							:placeholder="showPasswordStub ? '' : passwordPlaceholder"
+							data-testid="disk-sharing-access-public-password-input"
 						/>
 					</div>
 					<UiButton
 						text="${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_PASSWORD_SAVE_BUTTON')}"
+						:dataset="{ testid: 'disk-sharing-access-public-password-save' }"
 						:disabled="isSaveDisabled"
 						:loading="isSaving"
 						:size="ButtonSize.MEDIUM"
@@ -1259,6 +1233,7 @@ this.BX = this.BX || {};
 		template: `
 		<UiButton
 			:text="buttonText"
+			:dataset="{ testid: 'disk-sharing-access-copy-link' }"
 			:leftIcon="toggleIcon"
 			:size="ButtonSize.MEDIUM"
 			:style="buttonStyle"
@@ -1271,6 +1246,7 @@ this.BX = this.BX || {};
 	const extensionSettings$1 = main_core.Extension.getSettings('disk.sharing-access-popup');
 	const externalLinkDisableReasons = extensionSettings$1.get('externalLinkDisableReasons', {});
 	const limitSliders$1 = extensionSettings$1.get('limitSliders', {});
+	const SAVE_ACCESS_END_DATE_DELAY = 400;
 
 	// @vue/component
 	const SharingAccessPublicSettings = {
@@ -1285,10 +1261,6 @@ this.BX = this.BX || {};
 			AccessCopyLink
 		},
 		props: {
-			isPublic: {
-				type: Boolean,
-				required: true
-			},
 			accessRights: {
 				type: Object,
 				default: null
@@ -1304,22 +1276,28 @@ this.BX = this.BX || {};
 			entityType: {
 				type: String,
 				default: 'FILE'
+			},
+			// called directly instead of an event: saving may outlive the block on a tab switch
+			applyPublicLink: {
+				type: Function,
+				required: true
+			},
+			// its fields are set here and not reassigned: the block is destroyed on a tab switch, and what a
+			// saving in flight blocks has to be back with the tab
+			savingState: {
+				type: Object,
+				required: true
 			}
 		},
-		emits: ['publicLinkChange'],
 		data() {
 			return {
 				isActivePublicLink: false,
-				isActivePublicLinkSaving: false,
 				isFullSettings: false,
 				selectedAccessId: 'read',
-				isAccessRightsSaving: false,
 				isPassword: false,
 				publicPassword: '',
-				isPasswordSaving: false,
 				isDownload: true,
-				accessEndDate: false,
-				saveAccessEndDateDebounced: null
+				accessEndDate: false
 			};
 		},
 		computed: {
@@ -1330,10 +1308,10 @@ this.BX = this.BX || {};
 				return this.publicLink?.link ?? '';
 			},
 			isCopyLinkHiddenByDisableReason() {
-				return [externalLinkDisableReasons.option, externalLinkDisableReasons.feature, externalLinkDisableReasons.fileOption].includes(this.publicLinkDisabledReason);
+				return [externalLinkDisableReasons.option, externalLinkDisableReasons.feature, externalLinkDisableReasons.objectOption].includes(this.publicLinkDisabledReason);
 			},
 			visibleCopyLink() {
-				return this.isPublic && this.isActivePublicLink && !this.isCopyLinkHiddenByDisableReason;
+				return this.isActivePublicLink && !this.isCopyLinkHiddenByDisableReason;
 			},
 			hasSavedPassword() {
 				return Boolean(this.publicLink?.password);
@@ -1379,8 +1357,14 @@ this.BX = this.BX || {};
 				}
 			}
 		},
+		// the timer is held by hand and outside data(): a debounce of main.core cannot be stopped, and a save
+		// the user has already asked for has to be sent off when the tab goes away
 		created() {
-			this.saveAccessEndDateDebounced = main_core.Runtime.debounce(this.saveAccessEndDate, 400, this);
+			this.accessEndDateSaveTimer = null;
+			this.accessEndDateSave = null;
+		},
+		beforeUnmount() {
+			this.flushAccessEndDateSave();
 		},
 		methods: {
 			getTarget() {
@@ -1396,9 +1380,6 @@ this.BX = this.BX || {};
 				}
 				this.isFullSettings = !this.isFullSettings;
 			},
-			applyPublicLink(publicLink) {
-				this.$emit('publicLinkChange', publicLink);
-			},
 			getTariffSliderCode() {
 				return limitSliders$1.externalLinkFileTariff;
 			},
@@ -1413,7 +1394,7 @@ this.BX = this.BX || {};
 					helpDesk(this.getTariffSliderCode());
 					return;
 				}
-				if (reason === externalLinkDisableReasons.option || reason === externalLinkDisableReasons.fileOption) {
+				if (reason === externalLinkDisableReasons.option || reason === externalLinkDisableReasons.objectOption) {
 					return;
 				}
 				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
@@ -1437,7 +1418,7 @@ this.BX = this.BX || {};
 				this.isActivePublicLink = enabled;
 			},
 			async onTogglePublicLink(value) {
-				if (this.isActivePublicLinkSaving) {
+				if (this.savingState.publicLink) {
 					return;
 				}
 				if (this.isPublicLinkBlockedByPolicy) {
@@ -1446,7 +1427,7 @@ this.BX = this.BX || {};
 				}
 				const prev = this.isActivePublicLink;
 				this.isActivePublicLink = value;
-				this.isActivePublicLinkSaving = true;
+				this.savingState.publicLink = true;
 				try {
 					const publicLink = await postAccessPublicRights(this.getTarget(), {
 						enabled: value
@@ -1456,7 +1437,7 @@ this.BX = this.BX || {};
 					this.isActivePublicLink = prev;
 					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
 				} finally {
-					this.isActivePublicLinkSaving = false;
+					this.savingState.publicLink = false;
 				}
 			},
 			syncAccessRights(next) {
@@ -1489,7 +1470,7 @@ this.BX = this.BX || {};
 				this.selectedAccessId = items[0].id;
 			},
 			async onAccessRights(next) {
-				if (this.isAccessRightsSaving || this.isActivePublicLinkSaving) {
+				if (this.savingState.accessRights || this.savingState.publicLink) {
 					return;
 				}
 				if (!this.isActivePublicLink) {
@@ -1501,7 +1482,7 @@ this.BX = this.BX || {};
 				}
 				const prev = this.selectedAccessId;
 				this.selectedAccessId = next;
-				this.isAccessRightsSaving = true;
+				this.savingState.accessRights = true;
 				try {
 					const publicLink = await postAccessPublicRights(this.getTarget(), {
 						enabled: this.isActivePublicLink,
@@ -1512,7 +1493,7 @@ this.BX = this.BX || {};
 					this.selectedAccessId = prev;
 					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
 				} finally {
-					this.isAccessRightsSaving = false;
+					this.savingState.accessRights = false;
 				}
 			},
 			syncPassword(next) {
@@ -1528,7 +1509,7 @@ this.BX = this.BX || {};
 				return this.normalizeAccessEndDate(this.publicLink?.publicLinkTtl);
 			},
 			async onPasswordToggle(value) {
-				if (this.isPasswordSaving || this.isActivePublicLinkSaving || !this.isActivePublicLink) {
+				if (this.savingState.password || this.savingState.publicLink || !this.isActivePublicLink) {
 					return;
 				}
 				if (this.isPublicLinkSettingsBlocked) {
@@ -1545,7 +1526,7 @@ this.BX = this.BX || {};
 					this.isPassword = false;
 					return;
 				}
-				this.isPasswordSaving = true;
+				this.savingState.password = true;
 				try {
 					const publicLink = await postAccessPublicRights(this.getTarget(), {
 						enabled: this.isActivePublicLink,
@@ -1557,19 +1538,19 @@ this.BX = this.BX || {};
 					this.isPassword = true;
 					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
 				} finally {
-					this.isPasswordSaving = false;
+					this.savingState.password = false;
 				}
 			},
 			async savePublicPassword() {
 				const password = this.publicPassword.trim();
-				if (password.length < 8 || this.isPasswordSaving || !this.isActivePublicLink) {
+				if (password.length < 8 || this.savingState.password || !this.isActivePublicLink) {
 					return;
 				}
 				if (this.isPublicLinkSettingsBlocked) {
 					this.handleBlockedPublicLinkSettings();
 					return;
 				}
-				this.isPasswordSaving = true;
+				this.savingState.password = true;
 				try {
 					const publicLink = await postAccessPublicRights(this.getTarget(), {
 						enabled: this.isActivePublicLink,
@@ -1581,14 +1562,14 @@ this.BX = this.BX || {};
 				} catch {
 					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
 				} finally {
-					this.isPasswordSaving = false;
+					this.savingState.password = false;
 				}
 			},
 			syncAccessEndDate(next) {
 				this.accessEndDate = this.normalizeAccessEndDate(next?.publicLink?.publicLinkTtl);
 			},
 			onAccessEndDateChange(value) {
-				if (!this.isActivePublicLink || this.isActivePublicLinkSaving) {
+				if (!this.isActivePublicLink || this.savingState.publicLink) {
 					return;
 				}
 				if (this.isPublicLinkSettingsBlocked) {
@@ -1601,7 +1582,25 @@ this.BX = this.BX || {};
 				}
 				const previousValue = this.getPersistedAccessEndDate();
 				this.accessEndDate = nextValue;
-				this.saveAccessEndDateDebounced(nextValue, previousValue);
+				this.scheduleAccessEndDateSave(nextValue, previousValue);
+			},
+			scheduleAccessEndDateSave(value, previousValue) {
+				clearTimeout(this.accessEndDateSaveTimer);
+				this.accessEndDateSave = {
+					value,
+					previousValue
+				};
+				this.accessEndDateSaveTimer = setTimeout(() => this.flushAccessEndDateSave(), SAVE_ACCESS_END_DATE_DELAY);
+			},
+			// the save waiting for the timer is sent off, never dropped: the date is a change of the user
+			flushAccessEndDateSave() {
+				const scheduled = this.accessEndDateSave;
+				clearTimeout(this.accessEndDateSaveTimer);
+				this.accessEndDateSaveTimer = null;
+				this.accessEndDateSave = null;
+				if (scheduled) {
+					void this.saveAccessEndDate(scheduled.value, scheduled.previousValue);
+				}
 			},
 			async saveAccessEndDate(value, previousValue = this.getPersistedAccessEndDate()) {
 				const publicLinkTtl = this.normalizeAccessEndDate(value);
@@ -1619,82 +1618,105 @@ this.BX = this.BX || {};
 			syncIsDownload(next) {
 				this.isDownload = next?.publicLink?.canDownloadWithReadAccess ?? true;
 			},
+			saveDownloadSetting(value) {
+				return postAccessPublicRights(this.getTarget(), {
+					enabled: this.isActivePublicLink,
+					canDownloadWithReadAccess: value
+				});
+			},
 			async onToggleDownload(value) {
+				if (this.savingState.download || this.savingState.publicLink || !this.isActivePublicLink) {
+					return;
+				}
 				if (this.isPublicLinkSettingsBlocked) {
 					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				const prev = this.isDownload;
+				if (value === prev) {
+					return;
+				}
+				this.isDownload = value;
+				this.savingState.download = true;
 				try {
-					const publicLink = await postAccessPublicRights(this.getTarget(), {
-						enabled: this.isActivePublicLink,
-						canDownloadWithReadAccess: value
-					});
+					const publicLink = await this.saveDownloadSetting(value);
 					this.applyPublicLink(publicLink);
 				} catch {
 					this.isDownload = prev;
 					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+				} finally {
+					this.savingState.download = false;
 				}
 			}
 		},
-		// TODO: Открыть footer как будет готова настройка на скачивание на бэке
 		template: `
-		<div v-if="isPublic" class="access-public-block__wrapper">
-			<PublicAccessHeader
-				:isActive="isActivePublicLink"
-				:isDisabled="isActivePublicLinkSaving"
-				:isToggleBlocked="isPublicLinkBlockedByPolicy"
-				:isLoading="isActivePublicLinkSaving"
-				@toggle="onTogglePublicLink"
-				@blockedToggle="onBlockedToggleAttempt"
-
-			/>
-			<div class="access-public-block__main" :class="{ 'access-public-block__main--filtered': !isActivePublicLink }">
-			<PublicAccessDescription
-				:selectedAccessId="selectedAccessId"
-				:entityType="entityType"
-				:isActive="isActivePublicLink"
-				:isFullSettings="isFullSettings"
-				:accessEndDate="accessEndDate"
-				:isPassword="hasSavedPassword"
-				:isSettingsBlocked="isPublicLinkSettingsBlocked"
-				@toggleSettings="showSettings"
-				@blockedSettings="handleBlockedPublicLinkSettings"
-			/>
-				<div v-if="isActivePublicLink && isFullSettings" class="access-public-block__inputs">
-					<PublicAccessSelect
-						v-if="accessItems.length > 0"
-						:items="accessItems"
-						:selectedId="selectedAccessId"
-						variant="public"
-						@select="onAccessRights"
+		<div>
+			<div class="access-public-block__wrapper" data-testid="disk-sharing-access-public-block">
+				<PublicAccessHeader
+					:isActive="isActivePublicLink"
+					:isDisabled="savingState.publicLink"
+					:isToggleBlocked="isPublicLinkBlockedByPolicy"
+					@toggle="onTogglePublicLink"
+					@blockedToggle="onBlockedToggleAttempt"
+				/>
+				<div
+					class="access-public-block__main"
+					:class="{ 'access-public-block__main--filtered': !isActivePublicLink }"
+					data-testid="disk-sharing-access-public-main"
+				>
+					<PublicAccessDescription
+						:selectedAccessId="selectedAccessId"
+						:entityType="entityType"
+						:isActive="isActivePublicLink"
+						:isFullSettings="isFullSettings"
+						:accessEndDate="accessEndDate"
+						:isPassword="hasSavedPassword"
+						:isSettingsBlocked="isPublicLinkSettingsBlocked"
+						@toggleSettings="showSettings"
+						@blockedSettings="handleBlockedPublicLinkSettings"
 					/>
-					<div v-if="hasEmptyAccessItems">
-						${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_ACCESS_EMPTY')}
+					<div
+						v-if="isActivePublicLink && isFullSettings"
+						class="access-public-block__inputs"
+						data-testid="disk-sharing-access-public-extended-settings"
+					>
+						<PublicAccessSelect
+							v-if="accessItems.length > 0"
+							:items="accessItems"
+							:selectedId="selectedAccessId"
+							variant="public"
+							data-testid="disk-sharing-access-public-rights"
+							@select="onAccessRights"
+						/>
+						<div v-if="hasEmptyAccessItems">
+							${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_ACCESS_EMPTY')}
+						</div>
+						<PublicAccessDateRange
+							:modelValue="accessEndDate"
+							data-testid="disk-sharing-access-public-ttl"
+							@update:modelValue="onAccessEndDateChange"
+						/>
+						<PublicAccessPassword
+							:isPassword="isPassword"
+							:hasSavedPassword="hasSavedPassword"
+							:password="publicPassword"
+							:isSaving="savingState.password"
+							@update:isPassword="onPasswordToggle"
+							@update:password="publicPassword = $event"
+							@save="savePublicPassword"
+						/>
 					</div>
-					<PublicAccessDateRange 
-						:modelValue="accessEndDate"
-						@update:modelValue="onAccessEndDateChange"
-					/>
-					<PublicAccessPassword
-						:isPassword="isPassword"
-						:hasSavedPassword="hasSavedPassword"
-						:password="publicPassword"
-						:isSaving="isPasswordSaving"
-						@update:isPassword="onPasswordToggle"
-						@update:password="publicPassword = $event"
-						@save="savePublicPassword"
-					/>
 				</div>
+				<PublicAccessFooter
+					v-if="isActivePublicLink && isFullSettings && selectedAccessId === 'read'"
+					:isDownload="isDownload"
+					:isSaving="savingState.download"
+					@update:isDownload="onToggleDownload"
+				/>
 			</div>
-			<PublicAccessFooter
-				v-if="false"
-				:isDownload="isDownload"
-				@update:isDownload="onToggleDownload"
-			/>
-		</div>
-		<div v-if="visibleCopyLink" class="access-public-block__copy-link-wrapper">
-			<AccessCopyLink :link="getPublicLink" />
+			<div v-if="visibleCopyLink" class="access-public-block__copy-link-wrapper">
+				<AccessCopyLink :link="getPublicLink" />
+			</div>
 		</div>
 	`
 	};
@@ -1712,6 +1734,27 @@ this.BX = this.BX || {};
 		}
 		return null;
 	}
+
+	// The project provider keeps the workgroup avatar preset in the same `avatar` field as an
+	// uploaded image (Socialnetwork\Helper\Workgroup::getAvatarEntitySelectorUrl), while the server
+	// fills ownAvatar from IMAGE_ID only. Presets are static files shipped with the product, so the
+	// directory they live in is the only thing that tells them apart from an uploaded image.
+	const workgroupPresetAvatarPath = '/bitrix/images/socialnetwork/workgroup/';
+
+	/**
+	 * Returns the member own picture taken from a selector item, or null when the item carries
+	 * nothing but a provider preset.
+	 */
+	function getOwnAvatarByDialogItem(item) {
+		const avatar = item.avatar ?? null;
+		if (avatar === null) {
+			return null;
+		}
+		if (item.getEntityId() === 'project' && avatar.startsWith(workgroupPresetAvatarPath)) {
+			return null;
+		}
+		return avatar;
+	}
 	function getAccessCodeByDialogItem(item) {
 		const entityId = item.getEntityId();
 		const id = String(item.getId());
@@ -1727,17 +1770,142 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// Fallback for the dictionary served by SharingMemberType::forExtension(): the settings node
+	// still wins, the copy only keeps appearance working on a page cached without that node.
+	const fallbackMemberType = Object.freeze({
+		employee: 'employee',
+		extranet: 'extranet',
+		collaber: 'collaber',
+		group: 'group',
+		department: 'department'
+	});
+
+	/**
+	 * Builds the member type dictionary from the extension settings value,
+	 * filling missing entries from the fallback so every type keeps a usable value.
+	 */
+	function resolveMemberTypeDictionary(settingsMemberTypes) {
+		const settingsValues = main_core.Type.isPlainObject(settingsMemberTypes) ? settingsMemberTypes : {};
+		const dictionary = {};
+		for (const [key, fallbackValue] of Object.entries(fallbackMemberType)) {
+			dictionary[key] = main_core.Type.isStringFilled(settingsValues[key]) ? settingsValues[key] : fallbackValue;
+		}
+		return Object.freeze(dictionary);
+	}
+
+	// Dictionary of member type values, served by SharingMemberType::forExtension().
+	const MemberType = resolveMemberTypeDictionary(main_core.Extension.getSettings('disk.sharing-access-popup').get('memberTypes', null));
+	const MemberImageKey = Object.freeze({
+		Employee: 'employee',
+		Extranet: 'extranet',
+		Collaber: 'collaber',
+		Group: 'group',
+		Department: 'department',
+		Unknown: 'unknown'
+	});
+	const appearanceByKey = Object.freeze({
+		employee: {
+			labelKey: null,
+			labelColor: null,
+			nameColor: '--ui-color-base-1',
+			imageKey: MemberImageKey.Employee
+		},
+		extranet: {
+			labelKey: 'DISK_SHARING_ACCESS_POPUP_MEMBER_TYPE_EXTRANET',
+			labelColor: '--ui-color-accent-extra-orange',
+			nameColor: '--ui-color-accent-extra-orange',
+			imageKey: MemberImageKey.Extranet
+		},
+		collaber: {
+			labelKey: 'DISK_SHARING_ACCESS_POPUP_MEMBER_TYPE_COLLABER',
+			labelColor: '--ui-color-collab-element-1',
+			nameColor: '--ui-color-collab-element-1',
+			imageKey: MemberImageKey.Collaber
+		},
+		group: {
+			labelKey: 'DISK_SHARING_ACCESS_POPUP_MEMBER_TYPE_GROUP',
+			labelColor: '--ui-color-base-4',
+			nameColor: '--ui-color-base-1',
+			imageKey: MemberImageKey.Group
+		},
+		department: {
+			labelKey: 'DISK_SHARING_ACCESS_POPUP_MEMBER_TYPE_DEPARTMENT',
+			labelColor: '--ui-color-base-4',
+			nameColor: '--ui-color-base-1',
+			imageKey: MemberImageKey.Department
+		}
+	});
+	const unknownAppearance = Object.freeze({
+		labelKey: null,
+		labelColor: null,
+		nameColor: '--ui-color-base-1',
+		imageKey: MemberImageKey.Unknown
+	});
+
+	// Keyed by the member type value: a Map avoids computed object keys, which would collapse
+	// the whole map into one entry if the dictionary ever lost a value.
+	const appearanceByType = new Map(Object.keys(appearanceByKey).map(key => [MemberType[key], appearanceByKey[key]]));
+
+	/**
+	 * Resolves the row appearance (label phrase key, colors, default image key) for a member type.
+	 * `null` (chat branch or unrecognized selector type) resolves to the undefined appearance.
+	 * The image key names the `access-private-user__avatar--*` class that carries the default image.
+	 */
+	function resolveMemberAppearance(memberType) {
+		return appearanceByType.get(memberType) ?? unknownAppearance;
+	}
+
+	/**
+	 * Normalizes a selector entity into a domain member type.
+	 * Inputs come from UserProvider::getUserType(); the provider set is wider than the domain,
+	 * so values cannot be accepted as-is. Returns `null` for the undefined appearance.
+	 */
+	function normalizeSelectorType(entityId, entityType) {
+		if (entityId === 'project') {
+			return MemberType.group;
+		}
+		if (entityId === 'department') {
+			return MemberType.department;
+		}
+		switch (entityType) {
+			case 'collaber':
+				return MemberType.collaber;
+			case 'extranet':
+			case 'email':
+				return MemberType.extranet;
+			case 'employee':
+			case 'integrator':
+			case 'user':
+				return MemberType.employee;
+			default:
+				return null;
+		}
+	}
+
 	// @vue/component
 	const PrivateUserItem = {
 		name: 'PrivateUserItem',
 		components: {
-			TextSm: ui_system_typography_vue.TextSm,
+			TextXs: ui_system_typography_vue.TextXs,
+			Text3Xs: ui_system_typography_vue.Text3Xs,
 			BMenu: ui_system_menu_vue.BMenu
 		},
 		props: {
+			entityId: {
+				type: [String, Number],
+				default: ''
+			},
 			title: {
 				type: String,
 				default: ''
+			},
+			memberType: {
+				type: String,
+				default: null
+			},
+			ownAvatar: {
+				type: String,
+				default: null
 			},
 			taskName: {
 				type: String,
@@ -1762,6 +1930,29 @@ this.BX = this.BX || {};
 			};
 		},
 		computed: {
+			appearance() {
+				return resolveMemberAppearance(this.memberType);
+			},
+			avatarModifier() {
+				return `access-private-user__avatar--${this.appearance.imageKey}`;
+			},
+			rowColor() {
+				return `var(${this.appearance.nameColor})`;
+			},
+			memberLabelColor() {
+				return this.appearance.labelColor ? `var(${this.appearance.labelColor})` : null;
+			},
+			memberLabel() {
+				// missing phrase resolves to an empty label: the block must not render at all
+				return (this.appearance.labelKey ? main_core.Loc.getMessage(this.appearance.labelKey) : '') ?? '';
+			},
+			accessButtonLabel() {
+				// missing phrase must not strip the accessible name down to nothing
+				return main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_MEMBER_ACCESS_LEVEL_FOR', {
+					'#LEVEL#': this.selectedAccessLabel,
+					'#NAME#': this.title
+				}) ?? this.selectedAccessLabel;
+			},
 			selectedAccessLabel() {
 				return this.accessItemsShorts.find(item => item.id === this.taskName)?.title ?? this.accessItemsShorts[0]?.title ?? '';
 			},
@@ -1795,20 +1986,55 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div class="access-private-user__wrapper">
+		<div
+			class="access-private-user__wrapper"
+			:data-testid="'disk-sharing-access-private-member-' + entityId"
+			role="listitem"
+			:style="{ color: rowColor }"
+		>
+			<img
+				v-if="ownAvatar"
+				class="access-private-user__avatar"
+				data-testid="disk-sharing-member-avatar"
+				loading="lazy"
+				decoding="async"
+				:src="ownAvatar"
+				alt=""
+			>
+			<span
+				v-else
+				class="access-private-user__avatar"
+				data-testid="disk-sharing-member-avatar"
+				:class="avatarModifier"
+			></span>
 			<div class="access-private-user__info-wrapper">
-				<TextSm
+				<Text3Xs
+					v-if="memberLabel"
 					tag="p"
-					className="access-private-head__user-name"
+					wrap="truncate"
+					data-testid="disk-sharing-member-label"
+					:title="memberLabel"
+					:style="{ color: memberLabelColor }"
 				>
-					{{title}}
-				</TextSm>	
+					{{ memberLabel }}
+				</Text3Xs>
+				<TextXs
+					tag="p"
+					wrap="truncate"
+					data-testid="disk-sharing-member-name"
+					:title="title"
+					:style="{ color: 'inherit' }"
+				>
+					{{ title }}
+				</TextXs>
 			</div>
 			<div class="access-private-user__change-access">
 				<button
 					ref="accessButton"
 					type="button"
 					class="access-private-user__access-button"
+					:data-testid="'disk-sharing-access-private-member-right-' + entityId"
+					:aria-label="accessButtonLabel"
 					:disabled="readOnly"
 					@click="openMenu"
 				>
@@ -1876,7 +2102,9 @@ this.BX = this.BX || {};
 				return this.items.filter(item => !this.canUseInSelector(item)).map(item => ({
 					entityId: item.entityId,
 					title: item.title,
-					avatar: item.avatar
+					avatar: item.avatar,
+					memberType: item.memberType ?? null,
+					ownAvatar: item.ownAvatar ?? null
 				}));
 			},
 			getSelectionSignature(items) {
@@ -1894,7 +2122,11 @@ this.BX = this.BX || {};
 					return {
 						entityId,
 						title: item.getTitle(),
-						avatar: item.getAvatar()
+						avatar: item.getAvatar(),
+						memberType: normalizeSelectorType(item.getEntityId(), item.getEntityType()),
+						// getAvatar() falls back to the provider default, and the public field still needs
+						// the preset filtered out for entities whose provider puts one there
+						ownAvatar: getOwnAvatarByDialogItem(item)
 					};
 				}).filter(Boolean);
 			},
@@ -2012,7 +2244,7 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div class="access-private-add-employess_wrapper">
+		<div class="access-private-add-employess_wrapper" data-testid="disk-sharing-members-add">
 			<TextSm
 				tag="div"
 				className="access-private-add-employess__description"
@@ -2023,6 +2255,7 @@ this.BX = this.BX || {};
 				<UiButton
 					ref="selectButton"
 					text="${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_EMPLOYEES_BUTTON')}"
+					:dataset="{ testid: 'disk-sharing-access-private-add-employees' }"
 					:size="ButtonSize.MEDIUM"
 					:style="AirButtonStyle.OUTLINE_ACCENT_2"
 					:disabled="isSaving"
@@ -2030,7 +2263,11 @@ this.BX = this.BX || {};
 				/>
 			</div>
 		</div>
-		<div v-if="items.length" class="access-private-add-employess__selected">
+		<div
+			v-if="items.length"
+			class="access-private-add-employess__selected"
+			data-testid="disk-sharing-members-selected"
+		>
 			<div class="access-private-head__menu">
 				<TextSm
 					tag="p"
@@ -2045,11 +2282,18 @@ this.BX = this.BX || {};
 					${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_ACCESS_LEVEL')}
 				</TextSm>
 			</div>
-			<div class="access-private-user__users-container">
+			<div
+				class="access-private-user__users-container"
+				data-testid="disk-sharing-access-private-members"
+				role="list"
+			>
 				<PrivateUserItem
 					v-for="item in items"
 					:key="item.entityId"
+					:entityId="item.entityId"
 					:title="item.title"
+					:memberType="item.memberType"
+					:ownAvatar="item.ownAvatar"
 					:taskName="item.right"
 					:maxTaskName="item.maxTaskName"
 					:readOnly="item.readOnly"
@@ -2117,19 +2361,24 @@ this.BX = this.BX || {};
 				helpDesk(HELP_DESK_SLIDER_CODE_DESCRIPTION, true);
 			}
 		},
+		// the root is a fragment on purpose: the blocks below have to stay flex items of the parent
+		// wrapper to keep their own align-self and z-index
 		template: `
 		<div class="access-private-block__description-wrapper">
 			<TextXl
 				tag="p"
 				className="access-private-block__description-text"
+				data-testid="disk-sharing-access-private-description"
 			>
 				{{ privateDescriptionText }}
 			</TextXl>
 		</div>
 		<button
 			v-if="!isChangeSettings && (canChangeRights || isSettingsBlocked)"
+			data-testid="disk-sharing-private-settings-button"
 			@click="onChangeSettingsClick"
 			class="access-private-block__open-settings"
+			data-testid="disk-sharing-access-private-settings-toggle"
 			:class="{ 'access-private-block__open-settings--disabled': isSettingsBlocked }"
 			:aria-disabled="isSettingsBlocked"
 		>
@@ -2139,6 +2388,7 @@ this.BX = this.BX || {};
 			v-if="isChangeSettings"
 			@click="openHelpDesk"
 			class="access-private-block__open-aside-popup"
+			data-testid="disk-sharing-access-private-details"
 		>
 			${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_DETAILS_BUTTON')}
 		</button>
@@ -2148,6 +2398,7 @@ this.BX = this.BX || {};
 	const PrivateAccessFullSettingsSwitcher = {
 		name: 'PrivateAccessFullSettingsSwitcher',
 		components: {
+			Switcher: ui_vue3_components_switcher.Switcher,
 			TextXl: ui_system_typography_vue.TextXl
 		},
 		props: {
@@ -2157,56 +2408,21 @@ this.BX = this.BX || {};
 			}
 		},
 		emits: ['toggle'],
-		data() {
+		setup() {
 			return {
-				switcher: null
+				SWITCHER_OPTIONS
 			};
-		},
-		watch: {
-			isActive(next) {
-				if (!this.switcher) {
-					return;
-				}
-				this.switcher.check(next);
-			}
-		},
-		mounted() {
-			this.initSwitcher();
-		},
-		beforeUnmount() {
-			this.destroySwitcher();
-		},
-		methods: {
-			initSwitcher() {
-				if (this.switcher || !this.$refs.switcherNode) {
-					return;
-				}
-				this.switcher = new ui_switcher.Switcher({
-					node: this.$refs.switcherNode,
-					checked: this.isActive,
-					size: 'small',
-					showStateTitle: false,
-					useAirDesign: true,
-					handlers: {
-						toggled: () => {
-							this.$emit('toggle', this.switcher.isChecked());
-						}
-					}
-				});
-			},
-			destroySwitcher() {
-				if (!this.switcher) {
-					return;
-				}
-				if (main_core.Type.isFunction(this.switcher.destroy)) {
-					this.switcher.destroy();
-				}
-				this.switcher = null;
-			}
 		},
 		template: `
 		<div class="access-private-switcher__wrapper">
-			<div class="access-private-block__switcher" ref="switcherNode"></div>
+			<Switcher
+				class="access-private-block__switcher"
+				data-testid="disk-sharing-access-private-switcher"
+				:isChecked="isActive"
+				:options="SWITCHER_OPTIONS"
+				@check="$emit('toggle', true)"
+				@uncheck="$emit('toggle', false)"
+			/>
 			<TextXl
 				tag="p"
 				className="access-private-block__title"
@@ -2234,6 +2450,11 @@ this.BX = this.BX || {};
 			}
 		},
 		emits: ['update:isAllowControl', 'update:isDownload'],
+		data() {
+			return {
+				downloadCheckboxId: `disk-sharing-private-download-checkbox-${main_core.Text.getRandom()}`
+			};
+		},
 		methods: {
 			onToggleIsAllowControl(event) {
 				this.$emit('update:isAllowControl', event.target.checked);
@@ -2248,6 +2469,7 @@ this.BX = this.BX || {};
 				<input
 					type="checkbox"
 					:checked="isAllowControl"
+					data-testid="disk-sharing-access-private-allow-control"
 					@change="onToggleIsAllowControl"
 				>
 				<TextSm
@@ -2257,15 +2479,17 @@ this.BX = this.BX || {};
 					${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_CHECKOUT_ACCESS_CONTROL_LABEL')}
 				</TextSm>
 			</div>
-			<div v-if="false" class="ui-ctl ui-ctl-checkbox ui-ctl-xs access-private-block__download-wrapper">
+			<div class="ui-ctl ui-ctl-checkbox ui-ctl-xs access-private-block__download-wrapper">
 				<input
-					class="ui-ctl-element"
 					type="checkbox"
+					:id="downloadCheckboxId"
+					data-testid="disk-sharing-private-download-checkbox"
 					:checked="isDownload"
 					@change="onToggleIsDownload"
 				>
 				<TextSm
 					tag="label"
+					:for="downloadCheckboxId"
 					className="access-private-block__download-label"
 				>
 					${main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_CHECKOUT_DOWNLOAD_LABEL')}
@@ -2274,6 +2498,44 @@ this.BX = this.BX || {};
 		</div>
 	`
 	};
+
+	// Merge selector items into the members draft while keeping the current row order stable:
+	// retained members follow sourceMembersById order, new members are appended in items order,
+	// and readOnly members that dropped out of items are kept at the end.
+	function mergeMembersDraft(items, sourceMembersById, savedMembersById, maxTaskName, defaultRight) {
+		const itemById = {};
+		items.forEach(item => {
+			itemById[item.entityId] = item;
+		});
+		const orderedEntityIds = [...Object.keys(sourceMembersById).filter(entityId => itemById[entityId]), ...items.map(item => item.entityId).filter(entityId => !sourceMembersById[entityId])];
+		const nextDraftById = {};
+		orderedEntityIds.forEach(entityId => {
+			const item = itemById[entityId];
+			const existing = sourceMembersById[entityId] ?? savedMembersById[entityId];
+			// The selector classifies members by its own rules, so for a member we already have
+			// the server values stay authoritative, including a meaningful null.
+			const appearanceSource = existing ?? item;
+			nextDraftById[entityId] = {
+				entityId: item.entityId,
+				title: item.title,
+				avatar: item.avatar,
+				memberType: appearanceSource.memberType ?? null,
+				ownAvatar: appearanceSource.ownAvatar ?? null,
+				right: existing?.right ?? defaultRight,
+				maxTaskName: existing?.maxTaskName ?? maxTaskName,
+				readOnly: existing?.readOnly ?? false
+			};
+		});
+		Object.values({
+			...savedMembersById,
+			...sourceMembersById
+		}).forEach(member => {
+			if (member.readOnly && !nextDraftById[member.entityId]) {
+				nextDraftById[member.entityId] = member;
+			}
+		});
+		return nextDraftById;
+	}
 
 	const extensionSettings = main_core.Extension.getSettings('disk.sharing-access-popup');
 	const membersAccessDisableReasons = extensionSettings.get('membersAccessDisableReasons', {});
@@ -2300,6 +2562,8 @@ this.BX = this.BX || {};
 				entityId: member.entityId,
 				title: member.name,
 				avatar: member.avatar,
+				memberType: member.memberType ?? null,
+				ownAvatar: member.ownAvatar ?? null,
 				right: member.right,
 				maxTaskName,
 				readOnly
@@ -2309,6 +2573,12 @@ this.BX = this.BX || {};
 	}
 	function stringifyBoolean(value) {
 		return String(value === true);
+	}
+	function getAvailableAccessLevelIds(unifiedLink) {
+		if (!Array.isArray(unifiedLink?.availableAccessLevels)) {
+			return [];
+		}
+		return unifiedLink.availableAccessLevels.map(accessLevel => accessLevel.value);
 	}
 
 	// @vue/component
@@ -2334,14 +2604,17 @@ this.BX = this.BX || {};
 			entityType: {
 				type: String,
 				default: 'FILE'
+			},
+			// called directly instead of an event: saving may outlive the block on a tab switch
+			reloadAccessRights: {
+				type: Function,
+				required: true
 			}
 		},
-		emits: ['reloadAccessRights'],
 		data() {
 			return {
 				isChangeSettings: false,
 				selectedAccessId: 'D',
-				accessItems: ACCESS_PRIVATE_SELECT_ITEMS,
 				isAccessRightsSaving: false,
 				isActiveFullSettings: false,
 				isDownload: false,
@@ -2368,6 +2641,15 @@ this.BX = this.BX || {};
 			},
 			numberEmployees() {
 				return this.memberItems.length;
+			},
+			accessItems() {
+				const unifiedLink = this.accessRights?.membersAccess?.unifiedLink;
+				const availableAccessLevelIds = getAvailableAccessLevelIds(unifiedLink);
+				if (availableAccessLevelIds.length === 0) {
+					return ACCESS_PRIVATE_SELECT_ITEMS;
+				}
+				const items = ACCESS_PRIVATE_SELECT_ITEMS.filter(item => availableAccessLevelIds.includes(item.id));
+				return items.length > 0 ? items : ACCESS_PRIVATE_SELECT_ITEMS;
 			}
 		},
 		watch: {
@@ -2402,9 +2684,12 @@ this.BX = this.BX || {};
 			},
 			syncUnifiedLink(next) {
 				const currentAccessLevel = next?.membersAccess?.unifiedLink?.currentAccessLevel;
+				const fallbackAccessLevel = this.accessItems[0]?.id ?? 'D';
 				if (currentAccessLevel && this.accessItems.some(item => item.id === currentAccessLevel)) {
 					this.selectedAccessId = currentAccessLevel;
+					return;
 				}
+				this.selectedAccessId = fallbackAccessLevel;
 			},
 			syncMembers(next) {
 				this.membersDraftById = getMembersDraftByIdFromAccessRights(next);
@@ -2438,27 +2723,7 @@ this.BX = this.BX || {};
 				const owner = this.accessRights?.membersAccess?.owner ?? {};
 				const savedMembersById = getMembersDraftByIdFromAccessRights(this.accessRights);
 				const maxTaskName = owner.maxTaskName ?? DEFAULT_MAX_TASK_NAME;
-				const nextDraftById = {};
-				items.forEach(item => {
-					const existing = sourceMembersById[item.entityId] ?? savedMembersById[item.entityId];
-					nextDraftById[item.entityId] = {
-						entityId: item.entityId,
-						title: item.title,
-						avatar: item.avatar,
-						right: existing?.right ?? getDefaultTaskName(maxTaskName),
-						maxTaskName: existing?.maxTaskName ?? maxTaskName,
-						readOnly: existing?.readOnly ?? false
-					};
-				});
-				Object.values({
-					...savedMembersById,
-					...sourceMembersById
-				}).forEach(member => {
-					if (member.readOnly && !nextDraftById[member.entityId]) {
-						nextDraftById[member.entityId] = member;
-					}
-				});
-				return nextDraftById;
+				return mergeMembersDraft(items, sourceMembersById, savedMembersById, maxTaskName, getDefaultTaskName(maxTaskName));
 			},
 			buildEntityToNewShared(unifiedAccessLevel = this.selectedAccessId) {
 				const payload = {};
@@ -2488,7 +2753,7 @@ this.BX = this.BX || {};
 				this.isAccessRightsSaving = true;
 				try {
 					await postAccessPrivateRights(this.objectId, this.buildSavePayload(unifiedAccessLevel));
-					this.$emit('reloadAccessRights');
+					this.reloadAccessRights();
 				} catch (error) {
 					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
 					throw error;
@@ -2579,26 +2844,32 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div class="access-private-block__wrapper">
-			<PrivateAccessDescription
-				:isChangeSettings="isChangeSettings"
-				:entityType="entityType"
-				:selectedAccessId="selectedAccessId"
-				:numberEmployees="numberEmployees"
-				:canChangeRights="canChangeRights"
-				:isSettingsBlocked="isSettingsBlocked"
-				@changeSettings="toggleSettings"
-				@blockedSettings="handleBlockedPrivateSettings"
-			/>
-			<PrivateAccessSelect
-				v-if="isChangeSettings"
-				:items="accessItems"
-				variant="private"
-				:selectedId="selectedAccessId"
-				@select="onAccessRights"
+		<div>
+			<div class="access-private-block__wrapper" data-testid="disk-sharing-access-private-block">
+				<PrivateAccessDescription
+					:isChangeSettings="isChangeSettings"
+					:entityType="entityType"
+					:selectedAccessId="selectedAccessId"
+					:numberEmployees="numberEmployees"
+					:canChangeRights="canChangeRights"
+					:isSettingsBlocked="isSettingsBlocked"
+					@changeSettings="toggleSettings"
+					@blockedSettings="handleBlockedPrivateSettings"
+				/>
+				<PrivateAccessSelect
+					v-if="isChangeSettings"
+					:items="accessItems"
+					variant="private"
+					:selectedId="selectedAccessId"
+					data-testid="disk-sharing-access-private-rights"
+					@select="onAccessRights"
 				/>
 			</div>
-			<div v-if="isChangeSettings" class="access-private-full-settings__wrapper">
+			<div
+				v-if="isChangeSettings"
+				class="access-private-full-settings__wrapper"
+				data-testid="disk-sharing-access-private-extended-settings"
+			>
 				<PrivateAccessFullSettingsSwitcher
 					:isActive="isActiveFullSettings"
 					@toggle="onFullSettingsToggle"
@@ -2619,8 +2890,9 @@ this.BX = this.BX || {};
 					/>
 				</div>
 			</div>
-		<div class="access-private-block__copy-link-wrapper">
-			<AccessCopyLink :link="getLink" />
+			<div v-if="getLink" class="access-private-block__copy-link-wrapper" data-testid="disk-sharing-access-copy-link">
+				<AccessCopyLink :link="getLink" />
+			</div>
 		</div>
 	`
 	};
@@ -2654,10 +2926,12 @@ this.BX = this.BX || {};
 	const AnimateWrapper = {
 		data() {
 			return {
-				observer: null,
-				rafId: 0,
 				isReady: false
 			};
+		},
+		created() {
+			this.observer = null;
+			this.rafId = 0;
 		},
 		mounted() {
 			const outer = this.$refs.outer;
@@ -2744,7 +3018,15 @@ this.BX = this.BX || {};
 		data() {
 			return {
 				accessRights: this.initialAccessRights,
-				accessRightsLoading: this.initialAccessRights === null
+				accessRightsLoading: this.initialAccessRights === null,
+				// a saving of the public tab outlives the block that started it, so what it blocks is kept
+				// here, above the tabs, and comes back together with the tab
+				publicSavingState: {
+					publicLink: false,
+					accessRights: false,
+					password: false,
+					download: false
+				}
 			};
 		},
 		computed: {
@@ -2797,19 +3079,20 @@ this.BX = this.BX || {};
 		<div v-else-if="accessRights" class="disk-sharing-access-popup__state">
 			<AnimateWrapper>
 				<SharingAccessPublicSettings
+					v-if="isPublic"
 					:objectId="objectId"
 					:accessRights="accessRights"
 					:uniqueCode="uniqueCode"
-					:isPublic="isPublic"
 					:entityType="entityType"
-					@publicLinkChange="applyPublicLink"
+					:applyPublicLink="applyPublicLink"
+					:savingState="publicSavingState"
 				/>
-				<SharingAccessPrivateSettings 
-					v-if="!isPublic"
+				<SharingAccessPrivateSettings
+					v-else
 					:accessRights="accessRights"
 					:objectId="objectId"
 					:entityType="entityType"
-					@reloadAccessRights="loadAccessRights"
+					:reloadAccessRights="loadAccessRights"
 				/>
 			</AnimateWrapper>
 		</div>
@@ -2856,7 +3139,7 @@ this.BX = this.BX || {};
 			};
 		},
 		template: `
-		<SharingAccessWrapper>
+		<SharingAccessWrapper data-testid="disk-sharing-access-popup">
 			<SharingAccessButtons v-model:isPublic="isPublic" />
 			<SharingAccessMainSettings
 				:objectId="objectId"
@@ -2864,7 +3147,7 @@ this.BX = this.BX || {};
 				:initialAccessRights="initialAccessRights"
 				:mode="mode"
 				:closeDialog="closeDialog"
-				v-model:isPublic="isPublic"
+				:isPublic="isPublic"
 			/>
 		</SharingAccessWrapper>
 	`
@@ -2881,6 +3164,9 @@ this.BX = this.BX || {};
 		#onAfterHide = null;
 		#initialAccessRights = null;
 		#openGeneration = 0;
+		#pendingHide = null;
+		// a close of the window is under way and its handler has not been called yet
+		#hiding = false;
 		async open(params = {}) {
 			const openGeneration = ++this.#openGeneration;
 			const objectId = params.objectId;
@@ -2906,6 +3192,18 @@ this.BX = this.BX || {};
 			if (!this.#isCurrentOpen(openGeneration)) {
 				return;
 			}
+			if (this.#dialog && !this.#canShowDialog()) {
+				this.#discardDialog();
+
+				// the handler of the discarded close may have opened the popup anew
+				if (!this.#isCurrentOpen(openGeneration)) {
+					return;
+				}
+			} else if (this.#app) {
+				// the application is rebuilt inside a window that stays where it is: style.css keeps the window in
+				// the centre of the viewport on its own, so the content may change height without being repositioned
+				this.#unmount();
+			}
 			this.#objectId = objectId;
 			this.#uniqueCode = uniqueCode;
 			this.#initialTab = initialTab;
@@ -2922,11 +3220,9 @@ this.BX = this.BX || {};
 					background: ui_system_dialog.DialogBackground.vibrant,
 					events: {
 						onAfterShow: () => this.#markPopup(),
-						onAfterHide: () => {
-							const onAfterHide = this.#onAfterHide;
-							this.#reset();
-							this.#runAfterHide(onAfterHide);
-						}
+						// every hide is seen here first: close(), the close button, the overlay and Esc alike
+						onHide: () => this.#handleHide(),
+						onAfterHide: () => this.#handleAfterHide()
 					}
 				});
 			}
@@ -2935,19 +3231,80 @@ this.BX = this.BX || {};
 			}
 			this.#dialog.show();
 		}
+		#findPopupNode() {
+			return this.#container?.closest('.popup-window') ?? null;
+		}
 		#markPopup() {
-			const popup = this.#container?.closest('.popup-window');
+			const popup = this.#findPopupNode();
 			if (popup) {
 				main_core.Dom.addClass(popup, 'disk-sharing-access-popup');
+				// the window belongs to main.popup and is built outside the application tree
+				popup.dataset.testid = 'disk-sharing-access-popup';
 			}
 		}
 		close() {
-			this.#openGeneration += 1;
+			if (this.#hiding) {
+				// a hide is already under way and #pendingHide holds the debt of its close: asking for one more
+				// would land a second handler of the caller on a single close
+				return;
+			}
 			if (this.#dialog) {
+				// the hide begins here and #handleHide() captures it, as it does for a hide of the dialog itself
 				this.#dialog.hide();
 				return;
 			}
+
+			// there is no window to hide, so the openings in flight are devalued here
+			++this.#openGeneration;
+			const callback = this.#onAfterHide;
 			this.#reset();
+			this.#runAfterHide(callback);
+		}
+
+		// a window that is closing shows nothing on show(), and a destroyed one is gone from the popup registry
+		#canShowDialog() {
+			if (this.#hiding) {
+				return false;
+			}
+			const popupId = this.#findPopupNode()?.id;
+			return Boolean(popupId) && main_popup.PopupManager.getPopupById(popupId) !== null;
+		}
+
+		// the dialog is left behind for a new one: its close is settled here, so nothing of it lands on the next
+		#discardDialog() {
+			// a hide that began holds the debt of its close: the handler of the caller is still owed
+			const pendingHide = this.#pendingHide;
+			this.#dialog.unsubscribeAll();
+			this.#pendingHide = null;
+			this.#hiding = false;
+			this.#reset();
+			if (pendingHide) {
+				this.#runAfterHide(pendingHide.callback);
+			}
+		}
+
+		// the single place a hide is captured: the generation devalues the openings in flight and the handler
+		// is taken before a new open() replaces it
+		#handleHide() {
+			this.#pendingHide ??= {
+				generation: ++this.#openGeneration,
+				callback: this.#onAfterHide
+			};
+			this.#hiding = true;
+		}
+		#handleAfterHide() {
+			const pendingHide = this.#pendingHide;
+
+			// a hide that was captured is settled once: a landing of a hide nobody started is nothing to settle
+			if (!pendingHide) {
+				return;
+			}
+			this.#pendingHide = null;
+			this.#hiding = false;
+			if (pendingHide.generation === this.#openGeneration) {
+				this.#reset();
+			}
+			this.#runAfterHide(pendingHide.callback);
 		}
 		#mount() {
 			this.#app = ui_vue3.BitrixVue.createApp(RootApp, {
@@ -2975,11 +3332,24 @@ this.BX = this.BX || {};
 				this.#mode = 'default';
 			}
 		}
-		#reset() {
-			this.#openGeneration += 1;
-			this.#unmount();
+
+		// called after the app is unmounted, so unmounting still reaches its nodes; the release is explicit but
+		// idempotent today: ui.system.dialog builds its popup with cacheable: false, so main.popup destroys the
+		// window itself right after a close
+		#destroyDialog() {
+			const popupId = this.#findPopupNode()?.id;
+			if (popupId) {
+				// the dialog keeps its popup private, but the window node carries the popup id
+				main_popup.PopupManager.getPopupById(popupId)?.destroy();
+			}
 			this.#dialog = null;
 			this.#container = null;
+		}
+		#reset() {
+			// the generation is left alone: the start of the hide has already devalued the openings in flight,
+			// and one more increment would cancel an opening started after the close
+			this.#unmount();
+			this.#destroyDialog();
 			this.#objectId = null;
 			this.#initialTab = null;
 			this.#initialAccessRights = null;
@@ -2993,5 +3363,5 @@ this.BX = this.BX || {};
 
 	exports.SharingPopupDialog = SharingPopupDialog;
 
-})(this.BX.Disk = this.BX.Disk || {}, BX, BX.UI.System, BX.Vue3, BX.Vue3.Components, BX.UI.IconSet, BX.UI, BX.UI.IconSet, window, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.UI.DatePicker, BX.UI.System.Typography.Vue, BX.Main, BX.UI, BX.UI.EntitySelector, BX);
+})(this.BX.Disk = this.BX.Disk || {}, BX, BX.Main, BX.UI.System, BX.Vue3, BX.Vue3.Components, BX.UI.IconSet, BX.UI, BX.UI.IconSet, window, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.UI.DatePicker, BX.UI.System.Typography.Vue, BX.Main, BX.UI.Vue3.Components, BX.UI.EntitySelector, BX);
 //# sourceMappingURL=sharing-popup.bundle.js.map

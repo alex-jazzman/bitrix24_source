@@ -1,0 +1,19 @@
+/* the version name is a native button; the reset keeps the look of the plain text it replaced */
+.disk-file-history-version-name {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	line-height: inherit;
+	color: inherit;
+	text-align: inherit;
+	cursor: pointer;
+	appearance: none;
+}
+
+.disk-file-history-version-name:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-3xs);
+}

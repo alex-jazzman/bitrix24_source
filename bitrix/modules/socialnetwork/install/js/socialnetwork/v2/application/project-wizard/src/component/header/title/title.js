@@ -117,7 +117,7 @@ export const ProjectWizardTitle = {
 				'socialnetwork--project-title-wrapper',
 				{
 					'--keyboard-focus': keyboardFocus,
-						'socialnetwork--project--field-highlight': validation.title.invalid,
+					'socialnetwork--project--field-highlight': validation.title.invalid,
 					'socialnetwork--project--field-highlight__error': validation.title.uniq,
 				}
 			]"
@@ -127,9 +127,10 @@ export const ProjectWizardTitle = {
 				ref="growing"
 				:fontSize="25"
 				class="socialnetwork--project-title"
+				data-testid="socialnetwork-project-wizard-title"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_TITLE_PLACEHOLDER')"
-					@focus="onFieldFocus"
-					@blur="onFieldBlur"
+				@focus="onFieldFocus"
+				@blur="onFieldBlur"
 			/>
 		</div>
 		<UiHint

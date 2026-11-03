@@ -15,12 +15,16 @@ import {
 	AnalyticsSubSection,
 	AnalyticsTool,
 } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
-import { getCollabId } from '../helpers/get-collab-id.js';
+import { getProjectId } from '../helpers/get-collab-id.js';
+import { getFolderSection } from '../helpers/get-folder-section';
+import { getLayoutName } from '../helpers/get-layout-name';
 import { getUserType } from '../helpers/get-user-type.js';
 import { MessageForward } from './message-forward';
 import { MessagePins } from './message-pins';
+
+type MenuPlacementOptions = { isInNestedMenu?: boolean };
 
 const AnalyticsAmountFilesType = {
 	single: 'files_single',
@@ -41,16 +45,17 @@ export class MessageContextMenu
 
 	onSendFeedback(dialogId: string): void
 	{
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 		const role = Core.getStore().getters['copilot/chats/getRole'](dialogId);
 		const aiModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 		const aiModelName = aiModel.name ?? aiModel;
 
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 		const isMiniChat = Core.getStore().getters['copilot/isChatOpenedInWidget'](dialogId);
-		const cSectionValue = isMiniChat ? AnalyticsSection.miniChat : `${currentLayout}_tab`;
+		const cSectionValue = isMiniChat ? AnalyticsSection.miniChat : getFolderSection(currentLayout);
 
 		const params = {
-			category: AnalyticsCategory.copilot,
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.addFeedback,
 			c_section: cSectionValue,
 			...this.#getBaseParams(dialogId),
@@ -59,6 +64,10 @@ export class MessageContextMenu
 		if (!this.#isBitrixGptV2Available)
 		{
 			params.p2 = `provider_${aiModelName}`;
+		}
+
+		if (params.category !== AnalyticsCategory.collab && !this.#isBitrixGptV2Available)
+		{
 			params.p4 = `role_${Text.toCamelCase(role.code)}`;
 		}
 
@@ -98,7 +107,7 @@ export class MessageContextMenu
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
 		const params = {
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.downloadFile,
 			type: this.#getAnalyticsFileType(messageId),
 			c_section: AnalyticsSection.chatWindow,
@@ -108,9 +117,13 @@ export class MessageContextMenu
 			...this.#getBaseParams(dialogId),
 		};
 
-		if (chat.type === ChatType.collab)
+		if (params.category === AnalyticsCategory.collab)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);
@@ -121,7 +134,7 @@ export class MessageContextMenu
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
 		const params = {
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.saveToDisk,
 			type: this.#getAnalyticsFileType(messageId),
 			c_section: AnalyticsSection.chatWindow,
@@ -132,9 +145,13 @@ export class MessageContextMenu
 			...this.#getBaseParams(dialogId),
 		};
 
-		if (chat.type === ChatType.collab)
+		if (params.category === AnalyticsCategory.collab)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);
@@ -144,13 +161,15 @@ export class MessageContextMenu
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.copyLink,
 			c_section: AnalyticsSection.chatWindow,
 			c_element: AnalyticsElement.more,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onCopyFile({ dialogId, fileId }: {dialogId: string, fileId: string | number}): void
@@ -158,76 +177,103 @@ export class MessageContextMenu
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 		const file: ImModelFile = Core.getStore().getters['files/get'](fileId);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.copyFile,
 			type: file.type,
 			c_section: AnalyticsSection.chatWindow,
 			c_element: AnalyticsElement.more,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onEdit(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.clickEdit,
 			c_section: AnalyticsSection.chatWindow,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
-	onCreateTask(dialogId: string): void
+	onCreateTask(dialogId: string, { isInNestedMenu = false }: MenuPlacementOptions = {}): void
+	{
+		this.#sendTaskCreationEvent(dialogId, AnalyticsEvent.clickCreateTask, isInNestedMenu);
+	}
+
+	onCreateAiTask(dialogId: string, { isInNestedMenu = false }: MenuPlacementOptions = {}): void
+	{
+		this.#sendTaskCreationEvent(dialogId, AnalyticsEvent.clickCreateAiTask, isInNestedMenu);
+	}
+
+	#sendTaskCreationEvent(dialogId: string, event: string, isInNestedMenu: boolean): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
-			event: AnalyticsEvent.clickCreateTask,
+		const params = {
+			category: getCategoryByChat(chat),
+			event,
 			c_section: AnalyticsSection.chatWindow,
-			c_element: AnalyticsElement.more,
+			p2: getUserType(),
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		if (isInNestedMenu)
+		{
+			params.c_element = AnalyticsElement.more;
+		}
+
+		sendData(params);
 	}
 
 	onSelect(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.select,
 			c_section: AnalyticsSection.chatWindow,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onMark(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.seeLater,
 			c_section: AnalyticsSection.chatWindow,
 			c_element: AnalyticsElement.more,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onReply(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.clickReply,
 			c_section: AnalyticsSection.chatWindow,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onAddFavorite({ dialogId, messageId }: {dialogId: string, messageId: string | number}): void
@@ -236,27 +282,32 @@ export class MessageContextMenu
 		const message: ImModelMessage = Core.getStore().getters['messages/getById'](messageId);
 		const type = new MessageComponentManager(message).getName();
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.addToFav,
 			type,
 			c_section: AnalyticsSection.chatWindow,
 			c_element: AnalyticsElement.more,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onCreateEvent(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.clickCreateEvent,
 			c_section: AnalyticsSection.chatWindow,
 			c_element: AnalyticsElement.more,
+			p2: getUserType(),
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onCopyText({ dialogId, messageId }: {dialogId: string, messageId: string | number}): void
@@ -275,13 +326,15 @@ export class MessageContextMenu
 			return;
 		}
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.copyMessage,
 			type,
 			c_section: AnalyticsSection.chatWindow,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	onPin(dialogId: string): void
@@ -325,12 +378,14 @@ export class MessageContextMenu
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
-		sendData({
-			category: getCategoryByChatType(chat.type),
+		const params = {
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.askCopilot,
 			c_section: AnalyticsSection.chatWindow,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		sendData(params);
 	}
 
 	#onCopyTextCopilot({ dialogId, messageId }: {dialogId: string, messageId: string | number}): void
@@ -342,11 +397,11 @@ export class MessageContextMenu
 		const type = new MessageComponentManager(message).getName();
 		const aiModelName = aiModel.name ?? aiModel;
 		const isMiniChat = Core.getStore().getters['copilot/isChatOpenedInWidget'](dialogId);
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
-		const cSectionValue = isMiniChat ? AnalyticsSection.miniChat : `${currentLayout}_tab`;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
+		const cSectionValue = isMiniChat ? AnalyticsSection.miniChat : getFolderSection(currentLayout);
 
 		const params = {
-			category: AnalyticsCategory.copilot,
+			category: getCategoryByChat(chat),
 			event: AnalyticsEvent.copyMessage,
 			type,
 			c_section: cSectionValue,
@@ -357,6 +412,10 @@ export class MessageContextMenu
 		if (!this.#isBitrixGptV2Available)
 		{
 			params.p2 = `provider_${aiModelName}`;
+		}
+
+		if (params.category !== AnalyticsCategory.collab && !this.#isBitrixGptV2Available)
+		{
 			params.p4 = `role_${Text.toCamelCase(role.code)}`;
 		}
 

@@ -7,9 +7,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Call\Settings;
 use Bitrix\Call\Integration\AI\CallAISettings;
 use Bitrix\Call\Integration\AI\CallAIBaasService;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
+
+Loc::loadMessages(__FILE__);
 
 if (!Loader::includeModule('im') || !Loader::includeModule('call'))
 {
@@ -24,13 +28,14 @@ return [
 		'./dist/call.bundle.css',
 	],
 	'rel' => [
-		'call.adapter.desktop-api',
-		'call.adapter.utils',
+		'call.application.incoming',
 		'call.component.lobby',
-		'call.component.user-list',
-		'call.component.user-list-popup',
 		'call.infrastructure.broadcast-channel',
+		'call.legacy.component.user-list',
+		'call.legacy.component.user-list-popup',
+		'call.lib.a11y',
 		'call.lib.analytics',
+		'call.lib.background-dialog',
 		'call.lib.call-token-manager',
 		'call.lib.hardware',
 		'call.lib.media-registry',
@@ -38,24 +43,22 @@ return [
 		'call.lib.settings-manager',
 		'call.lib.stuck-call-finish-tracker',
 		'call.mapping',
-		'call.store',
 		'im.lib.localstorage',
 		'im.v2.const',
 		'im.v2.lib.desktop',
 		'im.v2.lib.desktop-api',
 		'im.v2.lib.promo',
-		'im.v2.lib.utils',
 		'loader',
 		'main.core',
 		'main.core.events',
 		'main.popup',
 		'resize_observer',
+		'ui.a11y',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
 		'ui.hint',
 		'ui.notification',
 		'ui.switcher',
-		'ui.vue3.pinia',
 		'voximplant',
 		'webrtc_adapter',
 	],
@@ -71,14 +74,32 @@ return [
 			];
 		}
 
-		// todo : remove it after optimizing the start/join call methods
-		$viewExtension = Settings::isVueEnabled() ? 'call.vue' : 'call.view';
+		$copilotNameReplace = ['#COPILOT_NAME#' => CallAISettings::getCopilotName()];
+		$copilotLangData = Loc::loadLanguageFile(__DIR__ . '/copilot.php');
+		$copilotPhrases = [];
+		foreach ($copilotLangData as $key => $template)
+		{
+			$copilotPhrases[$key] = strtr($template, $copilotNameReplace);
+		}
+
+		$rel = [
+			'call.view',
+		];
+
+		// The logger ships with the core so that it is already on the page once an error happens.
+		// Keep this condition no stricter than the client's own check in accident-manager.ts: a
+		// stricter one would leave the client collecting logs with no extension on the page.
+		if (
+			Settings::getAccidentLogSendIntervalSecs() > 0
+			&& Settings::getAccidentLogGroupMaxAgeSecs() > 0
+		)
+		{
+			$rel[] = 'call.lib.accident-logger';
+		}
 
 		return [
-			'rel' => [
-				$viewExtension,
-			],
-			'lang_additional' => [
+			'rel' => $rel,
+			'lang_additional' => array_merge($copilotPhrases, [
 				'turn_server' => Settings::getTurnServer(),
 				'turn_server_firefox' => Settings::getTurnServer(),
 				'turn_server_login' => Option::get('call', 'turn_server_login'),
@@ -97,7 +118,7 @@ return [
 				'conference_chat_enabled' => Settings::isConferenceChatEnabled(),
 				'call_use_tcp_sdp' => Settings::useTcpSdp(),
 				'user_jwt' => \Bitrix\Call\JwtCall::getUserJwt((int)CurrentUser::get()->getId()),
-			],
+			]),
 			'settings' => [
 				'ai' => [
 					'serviceEnabled' => Settings::isAIServiceEnabled(),
@@ -109,6 +130,7 @@ return [
 					'baasPromoSlider' => CallAIBaasService::getBaasSliderCode(),
 					'marketSubscriptionEnabled' => CallAISettings::checkMarketSubscription() ? CallAISettings::isMarketSubscriptionEnabled() : true,
 					'marketSubscriptionSlider' => CallAISettings::getMarketSliderCode(),
+					'copilotModelName' => (new CopilotNameService())->getCopilotName(),
 					'feedBackLink' => CallAISettings::getFeedBackLink(),
 					'helpSlider' => CallAISettings::checkMarketSubscription() ? CallAISettings::getMarketSliderCode() : CallAISettings::getHelpSliderCode(),
 					'disclaimerArticleCode' => CallAISettings::getDisclaimerArticleCode(),
@@ -130,16 +152,35 @@ return [
 					'bigRoomChats' => Settings::getBigRoomChats(),
 					'callInvitePeriod' => Settings::getCallInvitePeriod(),
 					'syncCallInvitePeriod' => Settings::getSyncCallInvitePeriod(),
+					'autoBalanceEnabled' => Settings::isAutoBalanceEnabled(),
+					'nqeDowngradeWindowSec' => Settings::getNqeDowngradeWindowSec(),
+					'nqeUpgradeWindowSec' => Settings::getNqeUpgradeWindowSec(),
+					'nqeWarmupSec' => Settings::getNqeWarmupSec(),
+					'nqeHighDowngradePacketsLostPct' => Settings::getNqeHighDowngradePacketsLostPct(),
+					// RTT is delivered for forward-compat only; not used by the v1 composite score (reserved for a future version).
+					'nqeHighDowngradeRttMs' => Settings::getNqeHighDowngradeRttMs(),
+					'nqeHighDowngradeJitterMs' => Settings::getNqeHighDowngradeJitterMs(),
+					'nqeMedDowngradePacketsLostPct' => Settings::getNqeMedDowngradePacketsLostPct(),
+					// RTT is delivered for forward-compat only; not used by the v1 composite score (reserved for a future version).
+					'nqeMedDowngradeRttMs' => Settings::getNqeMedDowngradeRttMs(),
+					'nqeMedDowngradeJitterMs' => Settings::getNqeMedDowngradeJitterMs(),
+					'nqeMedUpgradePacketsLostPct' => Settings::getNqeMedUpgradePacketsLostPct(),
+					// RTT is delivered for forward-compat only; not used by the v1 composite score (reserved for a future version).
+					'nqeMedUpgradeRttMs' => Settings::getNqeMedUpgradeRttMs(),
+					'nqeMedUpgradeJitterMs' => Settings::getNqeMedUpgradeJitterMs(),
+					'nqeLowUpgradePacketsLostPct' => Settings::getNqeLowUpgradePacketsLostPct(),
+					// RTT is delivered for forward-compat only; not used by the v1 composite score (reserved for a future version).
+					'nqeLowUpgradeRttMs' => Settings::getNqeLowUpgradeRttMs(),
+					'nqeLowUpgradeJitterMs' => Settings::getNqeLowUpgradeJitterMs(),
 				],
 				'isUserControlFeatureEnabled' => Settings::isNewCallsEnabled(),
 				'isPictureInPictureFeatureEnabled' => Settings::isNewCallsEnabled(),
 				'isStreamQualityFeatureEnabled' => Settings::isStreamQualityFeatureEnabled(),
 				'isDisableCameraNewJoinedUsersFeatureEnabled' => Settings::isDisableCameraNewJoinedUsersFeatureEnabled(),
+				'isWebPushToTalkEnabled' => Settings::isWebPushToTalkEnabled(),
 				'isKibanaLogsEnabled' => Settings::isKibanaLogsEnabled(),
 				'isConsoleLogsEnabled' => Settings::isConsoleLogsEnabled(),
 				'countDisableCameraNewJoinedUsersFeature' => Settings::countDisableCameraNewJoinedUsersFeature(),
-				'isMetricsEnabled' => Settings::isMetricsEnabled(),
-				'isMetricsLogsEnabled' => Settings::isMetricsLogsEnabled(),
 				'isAirDesignEnabled' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 				'shouldHideQuickAccess' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->shouldHideQuickAccess(),
 				'isCloudRecordEnabled' => Settings::isCloudRecordEnabled(),
@@ -147,8 +188,8 @@ return [
 				'isCloudRecordCisRegion' => Settings::isCisRegion(),
 				'isCloudRecordLogEnabled' => Settings::isCloudRecordingAvailable(),
 				'callInstalled' => \Bitrix\Main\ModuleManager::isModuleInstalled('call'),
-				'isVueEnabled' => Settings::isVueEnabled(),
 				'activePresetCode' => Settings::getActivePresetCode(),
+				'syncTabBannerNeedToShow' => \Bitrix\Call\Promotion\SyncTabBannerPromo::needToShow(),
 			],
 		];
 	},

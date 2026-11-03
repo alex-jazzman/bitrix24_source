@@ -19,4 +19,7 @@ return [
 		'crm:statemanager/redux/slices/kanban-settings',
 		'crm:statemanager/redux/slices/stage-settings',
 	],
+	'bundle' => [
+		'./permissions',
+	],
 ];

@@ -8,7 +8,17 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 	const Icons = require('icons/icons').Icons;
 
 	const Gradients = {
-		top: '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="60" fill="none"><path fill="url(#a)" d="M0 0h375v116H0V0Z"/><defs><linearGradient id="a" x1="0" x2="0" y1="60" y2="0" gradientUnits="userSpaceOnUse"><stop stop-opacity="0"/><stop offset="1" stop-opacity="0.36"/></linearGradient></defs></svg>',
+		top: `
+			<svg xmlns="http://www.w3.org/2000/svg" width="50" height="60" fill="none">
+						<path fill="url(#a)" d="M0 0h375v116H0V0Z"/>
+						<defs>
+							<linearGradient id="a" x1="0" x2="0" y1="60" y2="0" gradientUnits="userSpaceOnUse">
+								<stop offset="0" stop-opacity="0"/>
+								<stop offset="1" stop-opacity="0.36"/>
+							</linearGradient>
+						</defs>
+					</svg>
+		`,
 	};
 
 	const styles = {
@@ -19,10 +29,10 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 			width: '100%',
 			alignItems: 'center',
 		},
-		topChatCounter: {
+		backChatCounter: {
 			position: 'absolute',
-			left: 35,
 			top: 0,
+			right: 0,
 			height: 14,
 			minWidth: 14,
 			borderRadius: 7,
@@ -32,6 +42,7 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 			fontSize: 10,
 			fontWeight: 500,
 			lineHeight: 12,
+			zIndex: 20,
 		},
 		getHeaderLandscapeStyles() {
 			return {
@@ -53,7 +64,6 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 		render()
 		{
 			const {
-				isVisible,
 				associatedEntityAvatar,
 				associatedEntityName,
 				associatedEntityAvatarColor,
@@ -63,6 +73,10 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 				recordState,
 				showCopilot,
 				copilotEnabled,
+				showViewToggle,
+				viewToggleTargetsGrid,
+				viewToggleDisabled,
+				onViewToggleClick,
 				showFullHeader,
 				onClick,
 				isGroupCall,
@@ -96,7 +110,7 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 					{
 						style: styles.topRow,
 					},
-					this.renderBackButton(chatCounter, onChatClick),
+					this.renderBackButton(onChatClick, chatCounter),
 					showFullHeader && avatar,
 					showFullHeader && this.renderEntityInfo(
 						associatedEntityName,
@@ -106,6 +120,7 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 						onClick,
 						isGroupCall,
 					),
+					showViewToggle && this.renderViewToggleButton(viewToggleTargetsGrid, onViewToggleClick, viewToggleDisabled),
 					showCopilot && this.renderCopilotButton(copilotEnabled, onCopilotClick),
 				),
 				!showFullHeader && this.renderCollapsedHeader(
@@ -118,19 +133,27 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 			);
 		}
 
-		renderBackButton(chatCounter, onClick)
+		renderBackButton(onClick, chatCounter)
 		{
 			return View(
-				{},
-				chatCounter > 0 && Text({
-					style: styles.topChatCounter,
-					text: chatCounter.toString(),
-				}),
+				{
+					style: {
+						paddingTop: 8,
+						paddingBottom: 8,
+						paddingRight: 8,
+						marginRight: -8,
+						overflow: 'visible',
+					},
+					onClick,
+				},
 				Image({
 					testId: 'call-button-backToChat',
 					style: { width: 24, height: 24 },
 					svg: { content: Icons.arrowBack },
-					onClick: onClick,
+				}),
+				chatCounter > 0 && Text({
+					style: styles.backChatCounter,
+					text: chatCounter.toString(),
 				}),
 			);
 		}
@@ -142,12 +165,12 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 					style: {
 						marginLeft: 12,
 					},
-					onClick: onClick,
+					onClick,
 				},
 				Avatar({
 					testId: 'top-avatar',
 					uri: Utils.isAvatarBlank(uri) ? '' : encodeURI(uri),
-					name: BX.utils.html.htmlDecode(name),
+					name: Utils.htmlDecode(name),
 					size: 32,
 					backgroundColor: Utils.convertHexToColorEnum(color),
 				}),
@@ -164,13 +187,13 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 					{
 						testId: 'callTopPanel-userName',
 						style: { alignSelf: 'flex-start' },
-						onClick: onClick,
+						onClick,
 					},
 					Text({
 						style: { fontSize: 16, fontWeight: 500, color: '#FFFFFF' },
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: BX.utils.html.htmlDecode(name),
+						text: Utils.htmlDecode(name),
 					}),
 				),
 				View(
@@ -180,7 +203,7 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 					(isGroupCall || !recordState) && View(
 						{
 							style: { flexDirection: 'row' },
-							onClick: onClick,
+							onClick,
 						},
 						statusIcon && Image({
 							style: { width: 15, height: 14 },
@@ -200,7 +223,7 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 		{
 			return View(
 				{
-					style: { flexDirection: 'row', alignItems: 'center' },
+					style: { flexDirection: 'row', alignItems: 'center', marginLeft: this.props.isGroupCall ? 6 : 0 },
 				},
 				Image({
 					style: { width: 13, height: 13 },
@@ -219,14 +242,26 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 			return View(
 				{
 					style: { justifyContent: 'center', marginLeft: 12 },
-					ref: (ref) => {
-						this.copilotButtonRef = ref;
-					},
 				},
 				Image({
 					style: { width: 32, height: 32 },
 					svg: { content: copilotEnabled ? Icons.buttonCopilotOn : Icons.buttonCopilotOff },
-					onClick: onClick,
+					onClick,
+				}),
+			);
+		}
+
+		renderViewToggleButton(targetsGrid, onClick, disabled = false)
+		{
+			return View(
+				{
+					style: { justifyContent: 'center', marginLeft: 12, opacity: disabled ? 0.4 : 1 },
+				},
+				Image({
+					testId: 'call-button-viewToggle',
+					style: { width: 32, height: 32 },
+					svg: { content: targetsGrid ? Icons.buttonViewGrid : Icons.buttonViewFeatured },
+					onClick: disabled ? undefined : onClick,
 				}),
 			);
 		}
@@ -259,7 +294,7 @@ jn.define('call/calls/layout/call-top-panel', (require, exports, module) => {
 						style: { fontSize: 25, fontWeight: 500, color: '#FFFFFF', maxWidth: '90%' },
 						numberOfLines: 2,
 						ellipsize: 'end',
-						text: BX.utils.html.htmlDecode(name),
+						text: Utils.htmlDecode(name),
 					}),
 				),
 				this.renderCenterAvatar(avatar, name, color),

@@ -1,5 +1,5 @@
 import { ProgressBarRepository } from 'crm.autorun';
-import { Extension, Reflection, Type } from 'main.core';
+import { Extension, Type } from 'main.core';
 import { Router } from './event/router';
 
 import './event/handlers-registry';
@@ -11,17 +11,9 @@ const routers: Map<string, Router> = new Map();
  */
 export function init({ gridId, progressBarContainerId }): void
 {
-	if (!Reflection.getClass('BX.Main.gridManager.getInstanceById'))
+	if (!Type.isStringFilled(gridId))
 	{
-		console.error('BX.Main.gridManager is not found on page');
-
-		return;
-	}
-
-	const grid = BX.Main.gridManager.getInstanceById(gridId);
-	if (!grid)
-	{
-		console.error('grid not found', gridId);
+		console.error('entity list panel gridId is empty');
 
 		return;
 	}
@@ -29,23 +21,20 @@ export function init({ gridId, progressBarContainerId }): void
 	const progressBarContainer = document.getElementById(progressBarContainerId);
 	if (!Type.isElementNode(progressBarContainer))
 	{
-		console.error('progressBarContainer not found', progressBarContainerId);
+		console.error(`entity list panel progress bar container not found: ${progressBarContainerId}`);
 
 		return;
 	}
 
-	const existingRouter = routers.get(gridId);
-	if (existingRouter)
-	{
-		existingRouter.stopListening();
-		routers.delete(gridId);
-	}
-
-	const progressBarRepo = new ProgressBarRepository(progressBarContainer);
+	const progressBarRepo = new ProgressBarRepository(progressBarContainer, gridId);
 
 	const settings = Extension.getSettings('crm.entity-list.panel');
 
-	const eventRouter = new Router(grid, progressBarRepo, settings);
+	const eventRouter = new Router(gridId, progressBarRepo, settings);
+
+	// the working router is dropped only once its replacement stands: a panel left without one
+	// swallows every command of its grid
+	routers.get(gridId)?.stopListening();
 
 	eventRouter.startListening();
 

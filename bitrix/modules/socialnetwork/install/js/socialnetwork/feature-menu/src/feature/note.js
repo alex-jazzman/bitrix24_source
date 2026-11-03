@@ -5,6 +5,16 @@ import { Outline } from 'ui.icon-set.api.core';
 import { NavigationMode, type NavigationModeType } from './feature';
 import { Row } from './row';
 
+// socialnetwork.collab.Note.resolveSection: every field of the section may come back empty,
+// and `collectionId` is a part of the answer the row itself does not need.
+type SectionResponse = {
+	data?: ?{
+		url?: ?string,
+		collectionId?: ?number,
+		restriction?: ?string,
+	},
+};
+
 export class Note extends Row
 {
 	getIcon(): string
@@ -67,22 +77,33 @@ export class Note extends Row
 				{ data: { groupId: projectId } },
 			);
 
-			const url = response?.data?.url;
-			if (!url)
-			{
-				return;
-			}
-
-			SidePanel.Instance.open(url, this.getSliderOptions());
+			// Awaited, so the spinner stays until the answer has been acted upon —
+			// the restriction window may still have to load its own extension.
+			await this.handleSectionResponse(response);
 		}
 		catch (error)
 		{
-			console.error('Note: failed to resolve the knowledge-base section', error);
+			console.error('Note: failed to open the knowledge-base section', error);
 		}
 		finally
 		{
 			this.#setLoading(false);
 		}
+	}
+
+	handleSectionResponse(response: ?SectionResponse): Promise<void>
+	{
+		const url = response?.data?.url;
+		if (url)
+		{
+			SidePanel.Instance.open(url, this.getSliderOptions());
+
+			return Promise.resolve();
+		}
+
+		// The menu is cached until the page reloads, so the tariff may have closed
+		// after the row had been rendered as available.
+		return this.showRestriction(response?.data?.restriction);
 	}
 
 	#setLoading(loading: boolean): void

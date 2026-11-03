@@ -1,0 +1,3 @@
+<?php
+$MESS["CALL_BLOCK_MICROPHONE_BUTTON_LABEL"] = "Микрофон";
+$MESS["CALL_BLOCK_MICROPHONE_BUTTON_SPACE"] = "Пробел (удержание)";

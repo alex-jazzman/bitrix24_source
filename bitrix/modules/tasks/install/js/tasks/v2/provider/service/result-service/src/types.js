@@ -19,4 +19,5 @@ export type ResultDto = {
 	},
 	files: FileDto[],
 	messageId: ?number,
+	archiveLink: ?string,
 };

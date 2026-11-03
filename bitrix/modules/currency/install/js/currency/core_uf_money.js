@@ -57,6 +57,7 @@
 			var currencyList = BX.message('CURRENCY');
 			var currencyItems = [];
 			var defaultValue = null;
+			var configuredCurrency = node.parentNode.getAttribute('data-default-currency');
 
 			for (var currency in currencyList)
 			{
@@ -65,7 +66,7 @@
 					var item = {NAME: currencyList[currency].NAME, VALUE: currency};
 					currencyItems.push(item);
 
-					if (defaultValue === null)
+					if (defaultValue === null || currency === configuredCurrency)
 					{
 						defaultValue = item;
 					}

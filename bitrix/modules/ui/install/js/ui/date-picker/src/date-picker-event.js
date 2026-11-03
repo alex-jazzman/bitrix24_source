@@ -6,5 +6,6 @@ export const DatePickerEvent = {
 	BEFORE_DAY_SELECT: 'onBeforeDaySelect',
 	DESELECT: 'onDeselect',
 	PRESET_SELECT: 'onPresetSelect',
+	VIEW_DATE_CHANGE: 'onViewDateChange',
 	DESTROY: 'onDestroy',
 };

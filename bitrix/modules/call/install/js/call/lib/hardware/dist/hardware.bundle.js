@@ -9,7 +9,7 @@ this.BX.Call = this.BX.Call || {};
 		defaultCamera: 'bx-im-settings-default-camera',
 		defaultSpeaker: 'bx-im-settings-default-speaker'
 	};
-	const Events = {
+	const HardwareEvents = {
 		initialized: 'initialized',
 		deviceChanged: 'deviceChange'
 	};
@@ -17,7 +17,7 @@ this.BX.Call = this.BX.Call || {};
 		return Object.keys(deviceMap).filter(deviceId => deviceId !== '');
 	};
 	class HardwareManager extends main_core_events.EventEmitter {
-		Events = Events;
+		Events = HardwareEvents;
 		initialized = false;
 		updating = false;
 		initPromise = null;
@@ -41,7 +41,7 @@ this.BX.Call = this.BX.Call || {};
 					BX.debounce(this.onNavigatorDeviceChanged.bind(this), 500));
 					this.initialized = true;
 					this.initPromise = null;
-					this.emit(Events.initialized, {});
+					this.emit(HardwareEvents.initialized, {});
 					resolve();
 				}).catch(e => {
 					this.initPromise = null;
@@ -246,7 +246,7 @@ this.BX.Call = this.BX.Call || {};
 				});
 				this.#currentDeviceList = filteredDevices;
 				if (!shouldSkipDeviceChangedEvent) {
-					this.emit(Events.deviceChanged, {
+					this.emit(HardwareEvents.deviceChanged, {
 						added: addedDevices,
 						removed: removedDevices
 					});
@@ -329,6 +329,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 	}
 
+	exports.HardwareEvents = HardwareEvents;
 	exports.HardwareManager = HardwareManager;
 
 })(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX, BX.Event);

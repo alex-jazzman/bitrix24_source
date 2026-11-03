@@ -59,21 +59,27 @@
 	color: var(--widget-color-button-v2);
 }
 
-.landing-widget-button a {
+/* the descendant rules keep the widgets where a link still sits inside the button,
+   the :link / :visited / :hover ones do the same for a link carrying the button class itself:
+   they outweigh the global anchor colors of the page */
+.landing-widget-button a,
+.landing-widget-button:link,
+.landing-widget-button:visited {
 	color: var(--widget-color-button);
 }
-.landing-widget-button a:hover {
-	color: var(--widget-color-button);
-}
-
-.landing-widget-button.--v2 a {
-	color: var(--widget-color-button-v2);
-}
-.landing-widget-button.--v2 a:hover {
-	color: var(--widget-color-button-v2);
-}
-
+.landing-widget-button a:hover,
 .landing-widget-button:hover {
+	color: var(--widget-color-button);
+}
+
+.landing-widget-button.--v2 a,
+.landing-widget-button.--v2:link,
+.landing-widget-button.--v2:visited {
+	color: var(--widget-color-button-v2);
+}
+.landing-widget-button.--v2 a:hover,
+.landing-widget-button.--v2:hover {
+	color: var(--widget-color-button-v2);
 }
 
 .landing-widget-button:focus {
@@ -112,6 +118,21 @@
 .landing-main [class~='block-wrapper']:first-of-type .landing-block,
 .landing-sidebar [class~='block-wrapper']:first-of-type .landing-block {
 	margin-top: 0;
+}
+
+/* text that belongs to the name of a control but not to its look (standard clip pattern):
+   the base stylesheet is loaded by every widget, so every template reaches this class */
+.landing-widget-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 /* region show more buttons */

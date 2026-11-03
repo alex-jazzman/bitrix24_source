@@ -14,7 +14,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 	{
 		prepareProps(commonTabData)
 		{
-			const { gratitude, ownerId, efficiency, isEditMode, parentWidget } = commonTabData ?? {};
+			const { gratitude, owner, ownerId, efficiency, isEditMode, parentWidget } = commonTabData ?? {};
 
 			if (gratitude?.items?.length > 0)
 			{
@@ -26,6 +26,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 				parentWidget,
 				efficiency,
 				isEditMode,
+				isCollaber: owner?.isCollaber,
 				gratitudeTotalCount: gratitude?.totalCount,
 				gratitudes: gratitude?.items,
 				testId: 'gratitude-card',
@@ -38,7 +39,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 
 		isAvailable()
 		{
-			return !this.props.isEditMode;
+			return !this.props.isEditMode && !this.props.isCollaber;
 		}
 
 		getContentClass()

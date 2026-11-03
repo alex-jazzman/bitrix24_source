@@ -80,7 +80,7 @@ export default function registerBaseCommands(history: History)
 
 	history.registerCommand(
 		new Command({
-			id: 'cnangeNodeName',
+			id: 'changeNodeName',
 			command: changeNodeName,
 		}),
 	);

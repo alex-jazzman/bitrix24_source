@@ -13,6 +13,11 @@ BitrixVue.component('sale-checkout-view-element-button-checkout', {
 		},
 	computed:
 		{
+			// a string: Vue 2 drops an attribute bound to false
+			ariaBusy()
+			{
+				return this.wait ? 'true' : 'false';
+			},
 			getObjectClass()
 			{
 				const classes = [
@@ -31,8 +36,8 @@ BitrixVue.component('sale-checkout-view-element-button-checkout', {
 		},
 	// language=Vue
 	template: `
-		<div class="checkout-btn-container" @click="checkout">
-			<button :class="getObjectClass" >{{title}}</button>
+		<div class="checkout-btn-container">
+			<button :class="getObjectClass" :aria-busy="ariaBusy" type="button" data-testid="sale-checkout-submit-btn" @click="checkout">{{title}}</button>
 		</div>
 	`
 });

@@ -1,6 +1,6 @@
 /* eslint-disable @bitrix24/bitrix24-rules/no-style, @bitrix24/bitrix24-rules/no-native-dom-methods */
 
-import { Type, Text, Tag, Event, Dom, Reflection } from 'main.core';
+import { Type, Text, Tag, Event, Dom, Reflection, Animation, Loc } from 'main.core';
 import { FocusTrap, FocusNavigator, type FocusTrapOptions, AccessibilitySettings } from 'ui.a11y';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
@@ -207,6 +207,7 @@ export class Popup extends EventEmitter
 	declare private autoHideHandler: ((event: MouseEvent) => boolean) | null;
 	private isAutoHideBound: boolean = false;
 	declare private closeByEsc: boolean;
+	declare private blockBackgroundEsc: boolean;
 
 	private isCloseByEscBound: boolean = false;
 	private toFrontOnShow: boolean = true;
@@ -236,7 +237,7 @@ export class Popup extends EventEmitter
 
 	private animationShowClassName: string | null = null;
 	private animationCloseClassName: string | null = null;
-	private animationCloseEventType: string | null = null;
+	#hasDeclaredMovement: boolean = false;
 
 	declare private designSystemContext: string;
 	declare private contentContainer: HTMLElement | null;
@@ -306,6 +307,7 @@ export class Popup extends EventEmitter
 		this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
 		this.autoHideHandler = Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
 		this.closeByEsc = params.closeByEsc === true;
+		this.blockBackgroundEsc = params.blockBackgroundEsc !== false;
 		this.designSystemContext = params.darkMode ? '--ui-context-content-dark' : '--ui-context-content-light';
 
 		this.setTargetContainer(params.targetContainer);
@@ -364,7 +366,7 @@ export class Popup extends EventEmitter
 			<button
 				tabindex="0"
 				type="button"
-				aria-label="Close"
+				aria-label="${Loc.getMessage('MAIN_POPUP_CLOSE')}"
 				class="${className}"
 				onclick="${this.handleCloseIconClick.bind(this)}"
 			>
@@ -1958,18 +1960,26 @@ export class Popup extends EventEmitter
 
 	private bindAnimationEnd(className: string, callback: () => void): void
 	{
-		const eventName = `${this.animationCloseEventType}end`;
-		const popupContainer = this.getPopupContainer();
-		const handleTransitionEnd = (event: globalThis.Event): void => {
-			if (!Dom.hasClass(event.target, className))
-			{
-				return;
-			}
+		void this.#callAfterAnimationEnd(className, callback);
+	}
 
-			Event.unbind(popupContainer, eventName, handleTransitionEnd);
+	async #callAfterAnimationEnd(className: string, callback: () => void): Promise<void>
+	{
+		const popupContainer = this.getPopupContainer();
+
+		// The popup knows the class it has applied, not the kind of movement the consumer has
+		// written in CSS, so both kinds are awaited.
+		await Promise.all([
+			Animation.waitTransitionEnd(popupContainer),
+			Animation.waitAnimationEnd(popupContainer),
+		]);
+
+		// The class is off the container when another run has replaced this one, and then the
+		// callback of the replaced run must not run instead of the current one.
+		if (Dom.hasClass(popupContainer, className))
+		{
 			callback();
-		};
-		Event.bind(popupContainer, eventName, handleTransitionEnd);
+		}
 	}
 
 	private animateOpening(callback: () => void): void
@@ -1984,13 +1994,13 @@ export class Popup extends EventEmitter
 		{
 			Dom.addClass(this.getPopupContainer(), this.animationShowClassName);
 
-			if (this.animationCloseEventType === null)
+			if (this.#hasDeclaredMovement)
 			{
-				callback();
+				this.bindAnimationEnd(this.animationShowClassName, callback);
 			}
 			else
 			{
-				this.bindAnimationEnd(this.animationShowClassName, callback);
+				callback();
 			}
 		}
 	}
@@ -2007,13 +2017,13 @@ export class Popup extends EventEmitter
 		{
 			Dom.addClass(this.getPopupContainer(), this.animationCloseClassName);
 
-			if (this.animationCloseEventType === null)
+			if (this.#hasDeclaredMovement)
 			{
-				callback();
+				this.bindAnimationEnd(this.animationCloseClassName, callback);
 			}
 			else
 			{
-				this.bindAnimationEnd(this.animationCloseClassName, callback);
+				callback();
 			}
 		}
 	}
@@ -2024,10 +2034,8 @@ export class Popup extends EventEmitter
 		{
 			this.animationShowClassName = Type.isStringFilled(options.showClassName) ? options.showClassName : null;
 			this.animationCloseClassName = Type.isStringFilled(options.closeClassName) ? options.closeClassName : null;
-			this.animationCloseEventType = (
+			this.#hasDeclaredMovement = (
 				options.closeAnimationType === 'animation' || options.closeAnimationType === 'transition'
-					? options.closeAnimationType
-					: null
 			);
 		}
 		else if (Type.isStringFilled(options))
@@ -2038,19 +2046,19 @@ export class Popup extends EventEmitter
 				case 'fading':
 					this.animationShowClassName = 'popup-window-show-animation-opacity';
 					this.animationCloseClassName = 'popup-window-close-animation-opacity';
-					this.animationCloseEventType = 'animation';
+					this.#hasDeclaredMovement = true;
 					break;
 
 				case 'fading-slide':
 					this.animationShowClassName = 'popup-window-show-animation-opacity-transform';
 					this.animationCloseClassName = 'popup-window-close-animation-opacity';
-					this.animationCloseEventType = 'animation';
+					this.#hasDeclaredMovement = true;
 					break;
 
 				case 'scale':
 					this.animationShowClassName = 'popup-window-show-animation-scale';
 					this.animationCloseClassName = 'popup-window-close-animation-opacity';
-					this.animationCloseEventType = 'animation';
+					this.#hasDeclaredMovement = true;
 					break;
 
 				default:
@@ -2061,13 +2069,18 @@ export class Popup extends EventEmitter
 		{
 			this.animationShowClassName = null;
 			this.animationCloseClassName = null;
-			this.animationCloseEventType = null;
+			this.#hasDeclaredMovement = false;
 		}
 	}
 
 	isShown(): boolean
 	{
 		return !this.isDestroyed() && this.getPopupContainer()?.style.display === 'block';
+	}
+
+	shouldBlockBackgroundEsc(): boolean
+	{
+		return this.blockBackgroundEsc;
 	}
 
 	destroy(): void

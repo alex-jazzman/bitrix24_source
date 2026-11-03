@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, main_popup, ui_system_menu, im_v2_application_core, ui_dialogs_messagebox, im_public, im_v2_const, im_v2_lib_analytics, im_v2_lib_call, im_v2_lib_channel, im_v2_lib_confirm, im_v2_lib_feature, im_v2_lib_folder, im_v2_lib_invite, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_folder, im_v2_provider_service_recent, im_v2_lib_collab, im_v2_lib_copilot, ui_iconSet_api_core, im_v2_lib_feedback, im_v2_lib_chat, im_v2_lib_entityCreator, im_v2_lib_market, im_v2_lib_message, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_promo, im_v2_provider_service_disk, im_v2_provider_service_message, im_v2_provider_service_sticker, im_v2_provider_service_sending) {
+(function (exports, main_core, main_core_events, main_popup, ui_system_menu, im_v2_application_core, im_v2_const, im_v2_lib_analytics, im_v2_lib_unreadMode, im_v2_provider_service_chat, ui_iconSet_api_core, ui_dialogs_messagebox, im_public, im_v2_lib_call, im_v2_lib_channel, im_v2_lib_confirm, im_v2_lib_feature, im_v2_lib_folder, im_v2_lib_invite, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_folder, im_v2_provider_service_recent, im_v2_lib_collab, im_v2_lib_copilot, im_v2_lib_feedback, im_v2_lib_chat, im_v2_lib_entityCreator, im_v2_lib_market, im_v2_lib_message, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_promo, im_v2_provider_service_aiTask, im_v2_provider_service_disk, im_v2_provider_service_message, im_v2_provider_service_sticker, im_v2_provider_service_sending) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -32,6 +32,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.menuInstance = new ui_system_menu.Menu(this.getMenuOptions());
 			this.menuInstance.show(this.target);
 			this.#bindBlurEvent();
+		}
+
+		// public
+		// Keyboard path: anchor the menu to the focused element itself (not cursor coordinates)
+		// and return focus to it once the menu closes.
+		openMenuFromKeyboard(context, anchor) {
+			this.openMenu(context, anchor);
+			this.#restoreFocusOnClose(anchor);
 		}
 		getMenuOptions() {
 			return {
@@ -90,6 +98,94 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			main_core.Event.bindOnce(window, 'blur', () => {
 				this.destroy();
 			});
+		}
+		#restoreFocusOnClose(anchor) {
+			// This subscription is a fallback for a subclass that opts out of the trap via
+			// focusTrap: false. When a trap is present — and for menus built on ui.system.menu
+			// it always is — the popup already restores focus to this same anchor on its own,
+			// so subscribing here too would move it twice.
+			const focusTrap = this.menuInstance?.getPopup()?.getFocusTrap() ?? null;
+			if (focusTrap !== null) {
+				return;
+			}
+
+			// subscribeOnce auto-removes the listener after the first close, so repeated keyboard
+			// opens never accumulate subscriptions (both re-open and unmount emit close).
+			this.subscribeOnce(BaseMenu.events.close, () => {
+				anchor.focus();
+			});
+		}
+	}
+
+	// Sections readable in one server call, with the parent scope each one is read within. The list is
+	// explicit rather than "everything but a showcase": reading is irreversible, so a section added by a
+	// neighbouring release gets no read until it is put here deliberately.
+	const SectionScope = Object.freeze({
+		[im_v2_const.RecentType.taskComments]: im_v2_const.ParentChatScope.all,
+		[im_v2_const.RecentType.collab]: im_v2_const.ParentChatScope.topLevel,
+		[im_v2_const.RecentType.vibecodeApp]: im_v2_const.ParentChatScope.all
+	});
+	const SectionAnalytics = Object.freeze({
+		[im_v2_const.RecentType.default]: (analytics, section) => analytics.onReadAllChats(section),
+		[im_v2_const.RecentType.taskComments]: (analytics, section) => analytics.onReadAllTaskChats(section),
+		[im_v2_const.RecentType.collab]: (analytics, section) => analytics.onReadAllProjectTabChats(section),
+		[im_v2_const.RecentType.vibecodeApp]: (analytics, section) => analytics.onReadAllVibecodeAppChats(section)
+	});
+
+	// The read of a whole section, shared by every surface that offers it: the funnel of the list, the
+	// menu of a folder in the panel and the menu of the unread chip.
+	const ReadAllOperation = {
+		isSupported(section) {
+			if (!section) {
+				return false;
+			}
+			return section === im_v2_const.RecentType.default || Object.hasOwn(SectionScope, section);
+		},
+		run(section, analyticsSection) {
+			if (!this.isSupported(section)) {
+				return;
+			}
+			SectionAnalytics[section](im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu, analyticsSection);
+
+			// The recent list has no read of its own: it is served by the messenger-wide call. That call
+			// clears the counters of every section on the server, so the unread index is swept whole as
+			// well - a sweep of a single section would keep the chats of the neighbouring ones in their
+			// unread lists with a zero counter until the pull event arrives.
+			if (section === im_v2_const.RecentType.default) {
+				im_v2_lib_unreadMode.UnreadModeManager.removeAllClosedChats();
+				new im_v2_provider_service_chat.ChatService().readAll();
+				return;
+			}
+			new im_v2_provider_service_chat.ChatService().readAllByRecentType(section, SectionScope[section]);
+		}
+	};
+
+	// Test label of every item of this menu is `{menu id}-{action}` - the same rule the folder menus
+	// follow, so a label never has to be looked up to be known.
+	const MENU_ID = 'im-list-filter-unread-menu';
+
+	// The context menu of the unread chip: the chip itself is the filter, so the menu carries the one
+	// action the filter has no room for.
+	class UnreadFilterMenu extends BaseMenu {
+		static isAvailableFor(section) {
+			return ReadAllOperation.isSupported(section);
+		}
+		constructor() {
+			super();
+			this.id = MENU_ID;
+		}
+		getMenuItems() {
+			return [this.getReadAllItem()];
+		}
+		getReadAllItem() {
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_MENU_READ_ALL_CHATS'),
+				icon: ui_iconSet_api_core.Outline.CHATS_WITH_CHECK,
+				dataset: {
+					testid: `${MENU_ID}-read-all`
+				},
+				onClick: () => ReadAllOperation.run(this.context.section, im_v2_lib_analytics.AnalyticsSection.filterRow)
+			};
 		}
 	}
 
@@ -200,12 +296,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return null;
 			}
 			const {
-				chatId
+				chatId,
+				type
 			} = this.store.getters['chats/get'](this.context.dialogId, true);
 			if (!chatId) {
 				return null;
 			}
-			const personalFolders = this.store.getters['recent/folders/getList'].filter(folder => folder.type === im_v2_const.FolderType.personal);
+			if (!im_v2_lib_folder.FolderManager.canChatBeInFolder(type)) {
+				return null;
+			}
+			const personalFolders = this.store.getters['recent/folders/getPersonalList'];
 			const items = personalFolders.length === 0 ? [this.#getCreateFolderMenuItem()] : personalFolders.map(folder => this.#getFolderTargetMenuItem(folder, chatId));
 			return {
 				title: main_core.Loc.getMessage('IM_LIB_MENU_ADD_TO_FOLDER'),
@@ -480,6 +580,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				title: main_core.Loc.getMessage('IM_LIB_MENU_CREATE_FOLDER'),
 				onClick: () => {
+					im_v2_lib_analytics.Analytics.getInstance().folder.onClickCreateFolder();
 					im_v2_lib_folder.FolderManager.startCreation();
 					this.menuInstance.close();
 				}
@@ -517,6 +618,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				title: folder.title,
 				onClick: () => {
+					im_v2_lib_analytics.Analytics.getInstance().folder.onAddToFolder({
+						dialogId: this.context.dialogId,
+						subSection: im_v2_lib_analytics.AnalyticsSubSection.recentContextMenu
+					});
 					void new im_v2_provider_service_folder.FolderService().addChats(folder.id, [{
 						chatId,
 						dialogId: this.context.dialogId
@@ -628,8 +733,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		second: 'second',
 		third: 'third'
 	};
+
+	// Where the item is declared by the list that builds it. `nested` alone does not mean the item is
+	// rendered inside a submenu: a short nested list is flattened onto the top level.
+	const MenuItemPlacement = {
+		topLevel: 'top_level',
+		nested: 'nested'
+	};
+	const fileIdsFromList = block => {
+		return main_core.Type.isArrayFilled(block.fileIds) ? block.fileIds : [];
+	};
+
+	// Builder block files are not duplicated in `message.files`, so the menu joins both sources
+	// itself. One extractor per block type that carries files; other types contribute nothing.
+	const FileIdsByBlockType = {
+		file: fileIdsFromList,
+		gallery: fileIdsFromList,
+		audio: block => main_core.Type.isNumber(block.fileId) ? [block.fileId] : []
+	};
 	class MessageMenu extends BaseMenu {
 		maxPins = 20;
+		#areNestedItemsInSubMenu = false;
 		constructor(applicationContext) {
 			super();
 			this.id = 'bx-im-message-context-menu';
@@ -650,7 +774,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getMenuItems() {
-			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateAiTaskItem(), this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(), ...this.getAdditionalItems()];
 			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 		}
@@ -838,7 +962,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 			};
 		}
-		getCreateTaskItem() {
+		getCreateTaskItem(placement = MenuItemPlacement.topLevel) {
 			if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isCurrentUserGuest()) {
 				return null;
 			}
@@ -846,9 +970,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_TASK_MSGVER_1'),
 				icon: ui_iconSet_api_core.Outline.TASK,
 				onClick: () => {
-					im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId);
+					im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId, {
+						isInNestedMenu: this.#isItemInNestedMenu(placement)
+					});
 					const entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.context.chatId);
 					void entityCreator.createTaskForMessage(this.context.id);
+				}
+			};
+		}
+		isAiTaskFromMessageAvailable() {
+			return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAiTaskFromMessageAvailable);
+		}
+		getCreateAiTaskItem() {
+			if (!this.isAiTaskFromMessageAvailable()) {
+				return null;
+			}
+			if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isSystemMessage() || this.#isCurrentUserGuest()) {
+				return null;
+			}
+			const isBGPTv2 = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_MENU_CREATE_AI_TASK'),
+				icon: ui_iconSet_api_core.Outline.AI_STARS,
+				design: isBGPTv2 ? ui_system_menu.MenuItemDesign.BitrixGPT : ui_system_menu.MenuItemDesign.Copilot,
+				onClick: () => {
+					im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateAiTask(this.context.dialogId);
+					const messageId = this.context.id;
+					const chatId = this.context.chatId;
+					void new im_v2_provider_service_aiTask.AiTaskService().createForMessage(messageId, {
+						chatId
+					});
 				}
 			};
 		}
@@ -962,19 +1113,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return marketMenuItem.slice(0, MARKET_ITEMS_LIMIT);
 		}
 		getDownloadFileItem() {
-			if (!main_core.Type.isArrayFilled(this.context.files)) {
+			const files = this.#getAvailableFiles();
+			if (!main_core.Type.isArrayFilled(files)) {
 				return null;
 			}
-			if (this.#isSingleFile()) {
-				return this.#getDownloadSingleFileItem();
+			if (files.length === 1) {
+				return this.#getDownloadSingleFileItem(files[0]);
 			}
-			return this.#getDownloadSeveralFilesItem();
+			return this.#getDownloadSeveralFilesItem(files);
 		}
 		getSaveToDiskItem() {
-			if (!main_core.Type.isArrayFilled(this.context.files)) {
+			const files = this.#getAvailableFiles();
+			if (!main_core.Type.isArrayFilled(files)) {
 				return null;
 			}
-			const menuItemText = this.#isSingleFile() ? main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ON_DISK_MSGVER_1') : main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ALL_ON_DISK');
+			const isSingleFile = files.length === 1;
+			const menuItemText = isSingleFile ? main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ON_DISK_MSGVER_1') : main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ALL_ON_DISK');
 			return {
 				title: menuItemText,
 				icon: ui_iconSet_api_core.Outline.FOLDER_24,
@@ -983,14 +1137,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						messageId: this.context.id,
 						dialogId: this.context.dialogId
 					});
-					await this.diskService.save(this.context.files);
-					im_v2_lib_notifier.Notifier.file.onDiskSaveComplete(this.#isSingleFile());
+					try {
+						await this.diskService.save(files.map(file => file.id));
+						im_v2_lib_notifier.Notifier.file.onDiskSaveComplete(isSingleFile);
+					} catch {
+						im_v2_lib_notifier.Notifier.onDefaultError();
+					}
 				}.bind(this)
 			};
 		}
 		getAdditionalItems() {
 			const items = this.getNestedItems();
-			if (this.#needNestedMenu(items)) {
+			this.#areNestedItemsInSubMenu = this.#needNestedMenu(items);
+			if (this.#areNestedItemsInSubMenu) {
 				return [{
 					title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_MORE'),
 					subMenu: {
@@ -1002,7 +1161,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return items;
 		}
 		getNestedItems() {
-			const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+			const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null, this.getCreateMeetingItem()];
 			return [...this.groupItems(firstGroupItems, NestedMenuSectionCode.first), ...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.second)];
 		}
 		isOwnMessage() {
@@ -1022,18 +1181,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.send, this.context.dialogId);
 		}
 		#isStickerMessage() {
-			return this.store.getters['stickers/messages/isSticker'](this.context.id);
+			// A network sticker has no local pack, so it never gets a record in the sticker store.
+			return this.store.getters['stickers/messages/isSticker'](this.context.id) || this.context.componentId === im_v2_const.MessageComponent.NetworkStickerMessage;
+		}
+		#isSystemMessage() {
+			return this.context.authorId === 0;
+		}
+		#isItemInNestedMenu(placement) {
+			return placement === MenuItemPlacement.nested && this.#areNestedItemsInSubMenu;
 		}
 		#needNestedMenu(additionalItems) {
 			const NESTED_MENU_MIN_ITEMS = 3;
 			const menuItems = additionalItems.filter(item => item !== null);
 			return menuItems.length >= NESTED_MENU_MIN_ITEMS;
 		}
-		#getFirstFile() {
-			return this.store.getters['files/get'](this.context.files[0]);
+
+		// Block files join the menu only under the option that renders the blocks themselves. With the
+		// option off the menu stays what it was before the blocks feature: plain attachments only.
+		#getBlockFileIds() {
+			if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMessageFileAudioBlockAvailable)) {
+				return [];
+			}
+			const blocks = this.store.getters['messages/builder/getBlocks'](this.context.id) ?? [];
+			return blocks.flatMap(block => FileIdsByBlockType[block.type]?.(block) ?? []);
 		}
-		#isSingleFile() {
-			return this.context.files.length === 1;
+
+		// Every file of the message: plain attachments plus the files of its builder blocks.
+		#allFileIds() {
+			const messageFileIds = main_core.Type.isArray(this.context.files) ? this.context.files : [];
+			return [...new Set([...messageFileIds, ...this.#getBlockFileIds()])];
+		}
+
+		// A block can point at a file the store has no model for (deleted, no access). Such a file is not
+		// rendered in the message either, so the file items are built from the resolved models only.
+		#getAvailableFiles() {
+			return this.#allFileIds().map(fileId => this.store.getters['files/get'](fileId)).filter(file => file !== null);
 		}
 		async #onDelete() {
 			const {
@@ -1071,8 +1253,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return false;
 		}
-		#getDownloadSingleFileItem() {
-			const file = this.#getFirstFile();
+		#getDownloadSingleFileItem(file) {
 			return {
 				title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILE'),
 				icon: ui_iconSet_api_core.Outline.DOWNLOAD,
@@ -1085,10 +1266,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}.bind(this)
 			};
 		}
-		#getDownloadSeveralFilesItem() {
-			const files = this.context.files.map(fileId => {
-				return this.store.getters['files/get'](fileId);
-			});
+		#getDownloadSeveralFilesItem(files) {
 			return {
 				title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILES'),
 				icon: ui_iconSet_api_core.Outline.DOWNLOAD,
@@ -1117,11 +1295,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	class AiAssistantMessageMenu extends MessageMenu {
 		getMenuItems() {
-			const firstGroupItems = [this.getCopyItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+			const firstGroupItems = [this.getCopyItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getCreateAiTaskItem(), this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(), ...this.getAdditionalItems()];
 			return this.groupItems(firstGroupItems, MenuSectionCode$1.first);
 		}
 		getNestedItems() {
-			const firstGroupItems = [this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+			const firstGroupItems = [this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null, this.getCreateMeetingItem()];
 			return [...this.groupItems(firstGroupItems, NestedMenuSectionCode.first), ...this.groupItems([this.getSendFeedbackItem()], NestedMenuSectionCode.second), ...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.third)];
 		}
 		getNestedMenuGroups() {
@@ -1150,12 +1328,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	class ChannelMessageMenu extends MessageMenu {
 		getMenuItems() {
-			const firstGroupItems = [this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+			const firstGroupItems = [this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateAiTaskItem(), this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(), ...this.getAdditionalItems()];
 			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 		}
 		getNestedItems() {
-			const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+			const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null, this.getCreateMeetingItem()];
 			return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
 		}
 		getNestedMenuGroups() {
@@ -1175,7 +1353,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return this.#getDefaultMenuItems();
 		}
 		getNestedItems() {
-			const firstGroupItems = [this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+			const firstGroupItems = [this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null, this.getCreateMeetingItem()];
 			return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
 		}
 		getMenuGroups() {
@@ -1206,15 +1384,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const secondGroupItems = [this.getDownloadFileItem(), this.getSaveToDiskItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second), ...this.groupItems([this.getOpenInChannelItem()], MenuSectionCode$1.third)];
 		}
+
+		/**
+		 * The client rule repeats the server one: the ban on forwarding out of a discussion is lifted by
+		 * the threads feature alone, so an offered action is one the server will accept. Overrides the base
+		 * item instead of wrapping it, so the rule holds for callers in the base class as well.
+		 */
+		getForwardItem() {
+			if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatThreadsAvailable)) {
+				return null;
+			}
+			return super.getForwardItem();
+		}
 		#getDefaultMenuItems() {
-			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateAiTaskItem(), this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(), ...this.getAdditionalItems()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems([this.getDeleteItem()], MenuSectionCode$1.second)];
 		}
 	}
 
 	class CopilotMessageMenu extends MessageMenu {
 		getMenuItems() {
-			const firstGroupItems = [this.getCopyItem(), this.getMarkItem(), this.getFavoriteItem(), this.getForwardItem(), this.getSendFeedbackItem()];
+			const firstGroupItems = [this.getCopyItem(), this.getMarkItem(), this.getFavoriteItem(), this.getForwardItem(), this.getCreateAiTaskItem(), this.getSendFeedbackItem()];
 			const secondGroupItems = [this.getSelectItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 		}
@@ -1252,12 +1442,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	class TaskCommentsMessageMenu extends MessageMenu {
 		getMenuItems() {
-			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), this.getAddResultItem(), this.getRemoveResultItem(), ...this.getAdditionalItems()];
-			const secondGroupItems = [this.getDeleteItem()];
+			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateAiTaskItem(), this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(), this.getAddResultItem(), this.getRemoveResultItem(), ...this.getAdditionalItems()];
+			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 		}
 		getNestedItems() {
-			const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+			const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null, this.getCreateMeetingItem()];
 			return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
 		}
 		getMenuGroups() {
@@ -1392,6 +1582,55 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#getMenuForMessageType(messageType) {
 			return this.#menuByMessageType.get(messageType);
+		}
+	}
+
+	class BaseFileContextMenu extends BaseMenu {
+		id = im_v2_const.PopupType.messageBaseFileMenu;
+		constructor() {
+			super();
+			this.id = 'bx-im-message-file-context-menu';
+			this.diskService = new im_v2_provider_service_disk.DiskService();
+		}
+		getMenuItems() {
+			return [this.getDownloadFileItem(), this.getSaveToDiskItem()];
+		}
+		getDownloadFileItem() {
+			const file = this.#getMessageFile();
+			if (!file) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_DOWNLOAD_FILE'),
+				onClick: function () {
+					im_v2_lib_utils.Utils.file.downloadFiles([file]);
+					this.menuInstance.close();
+				}.bind(this)
+			};
+		}
+		getSaveToDiskItem() {
+			const file = this.#getMessageFile();
+			if (!file) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
+				onClick: async function () {
+					this.menuInstance.close();
+					try {
+						await this.diskService.save(this.context.files);
+						im_v2_lib_notifier.Notifier.file.onDiskSaveComplete();
+					} catch {
+						im_v2_lib_notifier.Notifier.onDefaultError();
+					}
+				}.bind(this)
+			};
+		}
+		#getMessageFile() {
+			if (!this.context.fileId) {
+				return null;
+			}
+			return this.store.getters['files/get'](this.context.fileId);
 		}
 	}
 
@@ -1617,14 +1856,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	exports.AiAssistantMessageMenu = AiAssistantMessageMenu;
+	exports.BaseFileContextMenu = BaseFileContextMenu;
 	exports.BaseMenu = BaseMenu;
 	exports.MessageMenu = MessageMenu;
 	exports.MessageMenuManager = MessageMenuManager;
+	exports.ReadAllOperation = ReadAllOperation;
 	exports.RecentMenu = RecentMenu;
 	exports.StickerMenu = StickerMenu;
 	exports.StickerPackMenu = StickerPackMenu;
 	exports.TaskCommentsMessageMenu = TaskCommentsMessageMenu;
+	exports.UnreadFilterMenu = UnreadFilterMenu;
 	exports.UserMenu = UserMenu;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.Messenger.v2.Application, BX.UI.Dialogs, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Provider.Service, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.IconSet, BX.UI.Dialogs, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Provider.Service, BX.Messenger.v2.Service);
 //# sourceMappingURL=registry.bundle.js.map

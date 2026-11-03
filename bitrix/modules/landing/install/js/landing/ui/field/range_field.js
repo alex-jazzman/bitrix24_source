@@ -57,6 +57,19 @@
 			{
 				this.sliderFrom.setAttribute("data-testid", this.testId + "-slider-from");
 			}
+
+			// The steppers are the keyboard way to change the value; createOutput() has already
+			// built them by now, but it runs before the testId is resolved, so they are marked here.
+			this.output
+				.querySelector(".landing-ui-field-range-output-arrows-up")
+				.setAttribute("data-testid", this.testId + "-step-up-btn");
+			this.output
+				.querySelector(".landing-ui-field-range-output-arrows-down")
+				.setAttribute("data-testid", this.testId + "-step-down-btn");
+
+			// The value the steppers and the slider move is printed here, so this is what a test
+			// reads back to see that a keyboard step changed anything.
+			this.outputInput.setAttribute("data-testid", this.testId + "-output");
 		}
 
 		if ((this.content === null || this.content === undefined || this.content === ""))

@@ -42,7 +42,10 @@ final class FrameStyleSanitizer
 
 		// The optional "=attribute" tolerates whitespace before "=" ("[url =javascript:...]"), so such a tag
 		// is still recognised and its scheme defused instead of being left as raw text.
-		$content = (string)preg_replace_callback(
+		// Null means PCRE itself gave up (backtrack or recursion limit, JIT stack): casting that to a string
+		// would store an empty frame, so the pass keeps its own input instead - an engine failure must never
+		// erase the author's content. The pass below still runs, so what the engine can clean is cleaned.
+		$content = preg_replace_callback(
 			'/\[(\/?)([a-zA-Z*][a-zA-Z0-9]*)(\s*=[^\[\]]*)?\]/',
 			static function (array $match): string {
 				$tagName = mb_strtolower($match[2]);
@@ -62,18 +65,19 @@ final class FrameStyleSanitizer
 				return '[' . $match[1] . $match[2] . $attribute . ']';
 			},
 			$content,
-		);
+		) ?? $content;
 
 		// Defuse dangerous schemes carried in the body of a url/img tag ("[img]javascript:...[/img]"), which
 		// the per-tag pass above only reaches through the =attribute. The closing tag is optional ("|$"): an
 		// unclosed "[url]javascript:..." must be defused too, not left intact just because "[/url]" is missing.
-		$content = (string)preg_replace_callback(
+		// Same null contract as the pass above: the engine giving up keeps the content, it does not blank it.
+		$content = preg_replace_callback(
 			'/(\[(?:url|img)(?:\s*=[^\[\]]*)?\])(.*?)(\[\/(?:url|img)\]|$)/is',
 			static function (array $match): string {
 				return $match[1] . self::neutralizeDangerousScheme($match[2]) . $match[3];
 			},
 			$content,
-		);
+		) ?? $content;
 
 		// Neutralising a disallowed "[tag]" into "&#91;tag]" GROWS the string (+4 chars), so the input length
 		// check upstream is not enough to keep the stored value within MAX_CONTENT_LENGTH. Re-bound the final
@@ -124,11 +128,16 @@ final class FrameStyleSanitizer
 	 * the browser ignores them when it resolves an href, so the scheme must be matched as if they were absent.
 	 * Mirrors the frontend ui.bbcode sanitizeUrl, which drops the same [\x00-\x20] run from a URL before it
 	 * decides the scheme is safe.
+	 *
+	 * A null from either replacement is PCRE giving up, not a cleaned value: the result is carried into the
+	 * frame content, so casting the null to a string would wipe the tag's url or body. The value is kept as it
+	 * stands instead - the defusing is defense-in-depth over a renderer that resolves urls safely on its own,
+	 * whereas erasing what the author wrote is not recoverable.
 	 */
 	private static function neutralizeDangerousScheme(string $value): string
 	{
-		$value = (string)preg_replace('/[\x00-\x20]/', '', $value);
+		$value = preg_replace('/[\x00-\x20]/', '', $value) ?? $value;
 
-		return (string)preg_replace('/(javascript|vbscript|data)\s*:/i', '$1_', $value);
+		return preg_replace('/(javascript|vbscript|data)\s*:/i', '$1_', $value) ?? $value;
 	}
 }

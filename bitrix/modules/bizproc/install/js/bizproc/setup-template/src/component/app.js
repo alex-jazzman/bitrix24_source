@@ -1,7 +1,11 @@
 import { ajax, Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { LiveAnnouncer } from 'ui.a11y';
-import { ITEM_TYPES, CONSTANT_TYPES, TEMPLATE_SETUP_EVENT_NAME } from '../constants';
+import { BitrixVue } from 'ui.vue3';
+import { ITEM_TYPES, CONSTANT_TYPES, TEMPLATE_SETUP_EVENT_NAME, VALUE_RULE_KEYS } from '../constants';
+import { getValueRuleKind, readRuleBound, VALUE_RULE_KINDS } from '../lib/constant-value-rule/constant-value-rule';
+import { type NodeFormatter } from 'ui.bbcode.formatter';
+import { createDescriptionNodeFormatters } from '../lib/description-markup/description-markup';
 import { FormElement } from './item';
 import 'ui.alerts';
 import 'ui.sidepanel-content';
@@ -9,18 +13,38 @@ import 'ui.forms';
 import 'ui.layout-form';
 import '../css/style.css';
 
-import type { Block, ConstantItem, FieldsSubmitReview } from '../types';
+import type { Block, ConstantItem, ConstantValueRule, FieldsSubmitReview } from '../types';
 
 const TOTAL_STEPS_COUNT = 2;
 
 const BEFORE_SUBMIT_EVENT = 'Bizproc:SetupTemplate:beforeSubmit';
+
+// The description editor gives the author emphasis, lists and links and nothing else (DTO-01), while
+// the formatter renders everything BBCode can express. Naming the nodes of the editor keeps the two
+// sides together: media, spoilers, code blocks and smileys reach the column through import, the REST
+// API and values stored before the editor existed, and the form shows them as the text they are.
+const DESCRIPTION_ALLOWED_NODES = Object.freeze(['b', 'i', 'u', 's', 'url', 'list', '*', 'p']);
+const DESCRIPTION_FORMATTER_OPTIONS = Object.freeze({
+	formatters: createDescriptionNodeFormatters(DESCRIPTION_ALLOWED_NODES),
+});
 
 const FOCUSABLE_SELECTOR = 'input:not([type="hidden"]), textarea, select, button, [role="button"], [tabindex]:not([tabindex="-1"])';
 
 // @vue/component
 export const ActivatorAppComponent = {
 	name: 'ActivatorAppComponent',
-	components: { FormElement },
+	components: {
+		FormElement,
+		// Loaded on demand: the html formatter drags code-parser, smiley, video-service and typography
+		// along, and this extension rides on the agents grid and the step editor, where the form is
+		// never mounted. The description block is the only user of it, and it is optional. The node
+		// formatters of the description are built here, so the formatter core it takes them from —
+		// with the model and the parser under it — is a dependency of this extension either way.
+		HtmlFormatterComponent: BitrixVue.defineAsyncComponent(
+			'ui.bbcode.formatter.html-formatter',
+			'HtmlFormatterComponent',
+		),
+	},
 	provide(): {templateId: number}
 	{
 		return {
@@ -105,6 +129,10 @@ export const ActivatorAppComponent = {
 	},
 	computed:
 	{
+		descriptionFormatterOptions(): { formatters: Array<NodeFormatter> }
+		{
+			return DESCRIPTION_FORMATTER_OPTIONS;
+		},
 		allConstants(): Array<ConstantItem>
 		{
 			return this.renderBlocks
@@ -417,6 +445,14 @@ export const ActivatorAppComponent = {
 				{
 					this.validationErrors[item.id] = this.$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_INT', { '#FIELD_NAME#': item.name });
 				}
+				else
+				{
+					const valueRuleError = this.getValueRuleError(item, value);
+					if (valueRuleError !== '')
+					{
+						this.validationErrors[item.id] = valueRuleError;
+					}
+				}
 			});
 
 			return Object.keys(this.validationErrors).length === 0;
@@ -438,6 +474,113 @@ export const ActivatorAppComponent = {
 			}
 
 			return check(value);
+		},
+		/**
+		 * The value rule of the constant settings (DTO-01). It warns earlier than the server and does
+		 * not replace it. A multiple constant carries one message for the whole set: the error
+		 * mechanism addresses a constant, not a row of it.
+		 */
+		getValueRuleError(item: ConstantItem, value: any): string
+		{
+			const rule = item.settings?.[VALUE_RULE_KEYS.ROOT];
+			if (!Type.isPlainObject(rule))
+			{
+				return '';
+			}
+
+			const values = Type.isArray(value) ? value : [value];
+			for (const single of values)
+			{
+				const error = this.getSingleValueRuleError(item, rule, single);
+				if (error !== '')
+				{
+					return error;
+				}
+			}
+
+			return '';
+		},
+		getSingleValueRuleError(item: ConstantItem, rule: ConstantValueRule, value: any): string
+		{
+			// An empty value is not checked against the rule: a required field is reported by its own
+			// check, and an optional one stays valid while empty.
+			if (this.isValueEmpty(value))
+			{
+				return '';
+			}
+
+			const kind = getValueRuleKind(item.constantType);
+			if (kind === VALUE_RULE_KINDS.BOUNDS)
+			{
+				return this.getValueBoundsError(item, rule, value);
+			}
+
+			if (kind === VALUE_RULE_KINDS.LENGTH)
+			{
+				return this.getValueLengthError(item, rule, value);
+			}
+
+			return '';
+		},
+		getValueBoundsError(item: ConstantItem, rule: ConstantValueRule, value: any): string
+		{
+			const number = Number(value);
+			// A value that is not a number at all is reported by the check of its own.
+			if (Number.isNaN(number))
+			{
+				return '';
+			}
+
+			const min = readRuleBound(rule, VALUE_RULE_KEYS.MIN);
+			if (min !== null && number < min)
+			{
+				return this.$Bitrix.Loc.getMessage(
+					'BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_VALUE_RULE_MIN',
+					{ '#FIELD_NAME#': item.name, '#MIN#': min },
+				);
+			}
+
+			const max = readRuleBound(rule, VALUE_RULE_KEYS.MAX);
+			if (max !== null && number > max)
+			{
+				return this.$Bitrix.Loc.getMessage(
+					'BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_VALUE_RULE_MAX',
+					{ '#FIELD_NAME#': item.name, '#MAX#': max },
+				);
+			}
+
+			return '';
+		},
+		getValueLengthError(item: ConstantItem, rule: ConstantValueRule, value: any): string
+		{
+			const maxLength = readRuleBound(rule, VALUE_RULE_KEYS.MAX_LENGTH);
+			if (maxLength === null)
+			{
+				return '';
+			}
+
+			// The length in code units is never below the number of code points, so a value short in
+			// units needs no counting at all.
+			const text = String(value);
+			if (text.length <= maxLength)
+			{
+				return '';
+			}
+
+			// The length is counted in Unicode code points, the way the server counts it: UTF-16 code
+			// units would disagree on composed characters and let through a value the server rejects.
+			// A code point takes at most two units, so the leading units able to hold the limit already
+			// tell whether the value is over it - the rest of the value is left alone.
+			const measured = text.slice(0, 2 * (maxLength + 1));
+			if ([...measured].length <= maxLength)
+			{
+				return '';
+			}
+
+			return this.$Bitrix.Loc.getMessage(
+				'BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_VALIDATION_ERROR_VALUE_RULE_MAX_LENGTH',
+				{ '#FIELD_NAME#': item.name, '#LENGTH#': maxLength },
+			);
 		},
 		proceedToNextStep(): void
 		{
@@ -554,9 +697,13 @@ export const ActivatorAppComponent = {
 							<div class="bizproc-setup-template__heading">
 								{{ templateName }}
 							</div>
-							<div class="bizproc-setup-template__subject">
-								{{ templateDescription }}
-							</div>
+							<HtmlFormatterComponent
+								v-if="templateDescription"
+								class="bizproc-setup-template__subject"
+								data-test-id="bizproc-setup-template__form-description"
+								:bbcode="templateDescription"
+								:options="descriptionFormatterOptions"
+							/>
 						</div>
 					</template>
 					<template v-else>

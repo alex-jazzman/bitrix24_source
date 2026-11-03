@@ -6,7 +6,8 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
 	const { Loc } = require('loc');
-	const { Color, Corner } = require('tokens');
+	const { Color, Corner, Indent, Typography } = require('tokens');
+	const { Text2 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
 	const NEXT_STEP_COLOR = Color.base6.toHex();
@@ -147,6 +148,7 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 				isEnabled: true,
 				title: {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_SERVICES_LIST_TITLE_1'),
+					style: Typography.text3Accent.getStyle(),
 				},
 				number: 1,
 				count: 3,
@@ -171,14 +173,14 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 					testId: `connecting-mailboxes-selecting-services-button-with-service-${key}`,
 					onClick: this.setService.bind(this, key, id, oauthMode),
 					style: {
-						paddingLeft: 12,
-						paddingRight: 12,
+						paddingLeft: Indent.XL.toNumber(),
+						paddingRight: Indent.XL.toNumber(),
 					},
 				},
 				View(
 					{
 						style: {
-							paddingLeft: 18,
+							paddingLeft: Indent.XL3.toNumber(),
 							justifyContent: 'center',
 							flexDirection: 'column',
 							width: '100%',
@@ -197,7 +199,7 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 									display: 'flex',
 									justifyContent: 'center',
 									alignItems: 'center',
-									marginRight: 16,
+									marginRight: Indent.XL3.toNumber(),
 									width: 34,
 									height: 34,
 									borderColor: Color.bgSeparatorPrimary.toHex(),
@@ -215,19 +217,16 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 								},
 							}),
 						),
-						Text({
-							style: {
-								color: AppTheme.colors.base2,
-								fontSize: 17,
-								fontWeight: 'regular',
-							},
+						Text2({
+							testId: 'mailmobile-connector-service-name',
+							color: Color.base2,
 							text: name,
 						}),
 					),
 					View(
 						{
 							style: {
-								right: 18,
+								right: Indent.XL3.toNumber(),
 								position: 'absolute',
 							},
 						},
@@ -252,8 +251,8 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 						width: '83%',
 						height: 1,
 						borderTopWidth: 1,
-						borderTopColor: AppTheme.colors.bgSeparatorSecondary,
-						marginLeft: 12,
+						borderTopColor: Color.bgSeparatorSecondary.toHex(),
+						marginLeft: Indent.XL.toNumber(),
 						alignSelf: 'flex-end',
 					},
 				}),
@@ -264,6 +263,13 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 		{
 			if (this.props.parent)
 			{
+				if (key === 'bitrix')
+				{
+					this.props.parent.goToCreateMailbox();
+
+					return;
+				}
+
 				this.props.parent.saveMailServiceKey(key);
 				this.props.parent.saveMailServiceId(id);
 
@@ -295,10 +301,20 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 					View(
 						{
 							style: {
-								paddingTop: 12,
+								paddingTop: Indent.XL.toNumber(),
 								paddingBottom: 50,
 							},
 						},
+						this.props.parent.isCreateBitrixEnabled()
+						&& (
+							this.serviceCard({
+								id: 0,
+								key: 'bitrix',
+								oauthMode: false,
+								name: Loc.getMessage('MAILBOX_CONNECTOR_SERVICE_NAME_BITRIX'),
+								svgContent: '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#2FC7F7"/><path d="M9 10.5C9 9.67157 9.67157 9 10.5 9H21.5C22.3284 9 23 9.67157 23 10.5V21.5C23 22.3284 22.3284 23 21.5 23H10.5C9.67157 23 9 22.3284 9 21.5V10.5Z" fill="white"/><path d="M13 14H19M13 16H19M13 18H17" stroke="#2FC7F7" stroke-width="1.5" stroke-linecap="round"/></svg>',
+							})
+						),
 						...this.props.parent.getServices().map((item) => {
 							const key = getServiceKeyByName(item.name);
 							if (services[key])

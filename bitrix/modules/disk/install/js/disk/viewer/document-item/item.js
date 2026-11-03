@@ -26,6 +26,7 @@
 		this.neededDelete = options.neededDelete;
 		this.objectId = options.objectId;
 		this.attachedObjectId = options.attachedObjectId;
+		this.uls = options.uls;
 	};
 
 	BX.Disk.Viewer.DocumentItem.prototype =
@@ -41,6 +42,7 @@
 			BX.UI.Viewer.Item.prototype.setPropertiesByNode.apply(this, arguments);
 			this.objectId = node.dataset.objectId;
 			this.attachedObjectId = node.dataset.attachedObjectId;
+			this.uls = node.dataset.uls;
 		},
 
 		buildUrlToShow: function ()
@@ -66,6 +68,10 @@
 				document_action: action,
 				primaryAction: action,
 				service: null
+			});
+
+			url = BX.util.add_url_param(url, {
+				_uls: this.uls || '',
 			});
 
 			return url;

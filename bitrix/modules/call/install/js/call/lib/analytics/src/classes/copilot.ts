@@ -8,7 +8,7 @@ import {
 	AnalyticsTool,
 	AnalyticsType,
 } from '../const';
-import { getCallTool } from '../utils';
+import { getCallTool, toAnalyticsErrorStatus } from '../utils';
 
 type BaseCallParams = {
 	callId: string;
@@ -18,16 +18,20 @@ type BaseCallTypeParams = BaseCallParams & {
 	callType: string;
 };
 
-type AIRecordStartParams = BaseCallTypeParams & {
+// a failure may carry no usable code, so the code alone cannot tell one from a success
+type FailureParams = {
+	isFailure: boolean;
+	errorCode?: unknown;
+};
+
+type AIRecordStartParams = BaseCallTypeParams & FailureParams & {
 	chatUserCount: number;
 	isAutostart?: boolean;
 	userCount?: number;
-	errorCode?: 'AI_UNAVAILABLE_ERROR' | 'AI_SETTINGS_ERROR' | 'AI_AGREEMENT_ERROR' | 'AI_NOT_ENOUGH_BAAS_ERROR';
 };
 
-type AIRecordStatusChangedParams = BaseCallTypeParams & {
+type AIRecordStatusChangedParams = BaseCallTypeParams & FailureParams & {
 	isAIOn: boolean;
-	error?: string;
 };
 
 type OpenFollowUpTabParams = BaseCallParams & {
@@ -55,13 +59,6 @@ export class Copilot
 
 		this.#callAutoStartRecordSent.push(params.callId);
 
-		const errorCodes = {
-			AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
-			AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
-			AI_AGREEMENT_ERROR: AnalyticsStatus.errorAgreement,
-			AI_NOT_ENOUGH_BAAS_ERROR: AnalyticsStatus.errorLimitBaas,
-		};
-
 		const resultData = {
 			tool: AnalyticsTool.ai,
 			category: AnalyticsCategory.callsOperations,
@@ -82,7 +79,7 @@ export class Copilot
 		}
 
 		// @ts-expect-error [call-ts] wait AnalyticsOptions from ui.analytics to ts
-		resultData.status = params?.errorCode ? errorCodes[params.errorCode] : AnalyticsStatus.success;
+		resultData.status = this.#getStatus(params);
 
 		sendData(resultData);
 	}
@@ -95,9 +92,14 @@ export class Copilot
 			event: params.isAIOn ? AnalyticsEvent.aiOn : AnalyticsEvent.aiOff,
 			type: params.callType,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: params?.error ? `error_${params.error}` : AnalyticsStatus.success,
+			status: this.#getStatus(params),
 			p5: `callId_${params.callId}`,
 		});
+	}
+
+	#getStatus(params: FailureParams): string
+	{
+		return params.isFailure ? toAnalyticsErrorStatus(params.errorCode) : AnalyticsStatus.success;
 	}
 
 	onOpenFollowUpTab(params: OpenFollowUpTabParams)

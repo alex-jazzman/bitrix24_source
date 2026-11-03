@@ -14,6 +14,11 @@
 	position: relative;
 }
 
+.catalog-entity-wrap .ui-entity-editor-content-block-inner-html {
+	overflow: hidden;
+	contain: paint;
+}
+
 .catalog-entity-section-tabs {
 	display: flex;
 	margin: 0 0 10px;

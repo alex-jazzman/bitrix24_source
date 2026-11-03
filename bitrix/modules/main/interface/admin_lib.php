@@ -1152,7 +1152,7 @@ class CAdminMenu
 
 		?><span class="adm-submenu-item-arrow"<?=$level > 0 ? ' style="width:'.$this->_get_menu_item_width($level).'px;"' : ''?><?=$onclick ? ' onclick="'.$onclick.'"' : ''?>><span class="adm-submenu-item-arrow-icon"></span></span><?
 
-		$menuText = htmlspecialcharsbx(htmlspecialcharsback($aMenu["text"]));
+		$menuText = htmlspecialcharsbx($aMenu["text"], ENT_COMPAT, false);
 		if(isset($aMenu["url"]) && $aMenu["url"] <> ""):
 			$menuUrl = htmlspecialcharsbx($aMenu["url"], ENT_COMPAT, false);
 			?><a class="adm-submenu-item-name-link<?=(isset($aMenu["readonly"]) && $aMenu["readonly"]? ' menutext-readonly':'')?>"<?=$level > 0 ? ' style="padding-left:'.$this->_get_menu_item_padding($level).'px;"' : ''?> href="<?=$menuUrl?>"><?=$icon?><span class="adm-submenu-item-name-link-text"><?=$menuText?></span></a><?
@@ -2408,7 +2408,7 @@ class CAdminChain
 
 			$className = !empty($item['CLASS'])?' '.htmlspecialcharsbx($item['CLASS']):'';
 
-			$text = htmlspecialcharsbx(htmlspecialcharsback($item["TEXT"]));
+			$text = htmlspecialcharsbx($item["TEXT"], ENT_COMPAT, false);
 			if (!empty($item['LINK']))
 			{
 				$link = htmlspecialcharsbx($item["LINK"], ENT_COMPAT, false);

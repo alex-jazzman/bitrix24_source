@@ -1,6 +1,7 @@
 <?php
 
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_UNKNOWN_DATASET_TYPE_MSGVER_1'] = 'Неизвестный тип таблицы';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_UNKNOWN_FIELD_TYPE'] = 'Неизвестный тип колонки';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_ADD_ERROR_MSGVER_1'] = 'Ошибка создания таблицы';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_UPDATE_ERROR_MSGVER_1'] = 'Ошибка обновления таблицы';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_DELETE_ERROR_MSGVER_1'] = 'Ошибка удаления таблицы';
@@ -10,9 +11,19 @@ $MESS['BICONNECTOR_EXTERNAL_SOURCE_EMPTY_SETTINGS'] = 'Не указан фор�
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'] = 'Попробуйте изменить данные в файле или выберите другой файл';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_EMPTY_DATA_ERROR'] = 'Не удалось прочитать файл';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_EMPTY_DATA_ERROR_1C'] = 'Таблица пуста';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_FILE_NOT_FOUND'] = 'Файл не найден. Выберите файл и попробуйте ещё раз';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DIFFERENT_COUNT_FIELDS_ERROR_MSGVER_1'] = 'Количество колонок в файле и таблице не совпадают. Попробуйте изменить настройки или выберите другой файл';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_ALREADY_EXIST_ERROR_MSGVER_1'] = 'Таблица с таким названием уже существует';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_NAME_LONG_ERROR'] = 'Название таблицы должно быть не более #MAX_LENGTH# символов';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_MAX_ROWS'] = 'В импортируемом файле должно быть не больше 300 000 строк';
 $MESS['BICONNECTOR_CONTROLLER_EXTERNAL_SOURCE_DATASET_ACCESS_ERROR_MSGVER_1'] = 'Недостаточно прав для работы с таблицей. Обратитесь к вашему руководителю или администратору Битрикс24';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_SYNC_FIELDS_ERROR'] = 'Не удалось синхронизировать колонки из источника';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_VIEW_ERROR'] = 'Не удалось получить данные таблицы. Проверьте настройки подключения';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_CREATE_URL_ERROR'] = 'Не удалось открыть создание датасета. Попробуйте позже';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_RELATED_SUPERSET_ERROR'] = 'Не удалось получить датасеты BI Конструктора. Попробуйте позже';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_EXPORT_ERROR_INVALID_DATASET'] = 'Экспорт доступен только для датасетов из файла CSV';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_EXPORT_ERROR_INVALID_FORMAT'] = 'Неизвестный формат выгрузки';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_NAME_RESERVED_ERROR'] = 'Этот код занят системной таблицей. Укажите другой код';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_TABLE_ACCESS_ERROR'] = 'Недостаточно прав для этого действия с таблицей. Обратитесь к администратору Битрикс24';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_TABLE_GROUPS_ACCESS_ERROR'] = 'Недостаточно прав, чтобы создать таблицу в одной или нескольких выбранных группах. Измените список групп или обратитесь к администратору Битрикс24';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_TABLE_GROUPS_REQUIRED_ERROR'] = 'Выберите хотя бы одну группу для таблицы';

@@ -8,33 +8,42 @@
 
 	BX.DocumentGenerator.Config.save = function()
 	{
-		var config = {document_enable_public_b24_sign: 'Y'};
-		if(!BX('document_enable_public_b24_sign'))
+		var publicSign = BX('document_enable_public_b24_sign');
+		var timezone = BX('document-timezone');
+		var config = {};
+		if(publicSign)
 		{
-			BX.DocumentGenerator.Config.close();
+			config.document_enable_public_b24_sign = publicSign.checked ? 'Y' : 'N';
 		}
-		if(!BX('document_enable_public_b24_sign').checked)
+		if(timezone)
 		{
-			config.document_enable_public_b24_sign = 'N';
+			config.document_timezone = timezone.value;
 		}
 
+		BX.addClass(BX('ui-button-panel-save'), 'ui-btn-wait');
 		BX.ajax.runComponentAction('bitrix:documentgenerator.config', 'saveConfig', {
 			mode: 'class',
 			data: {config: config}
 		}).then(function()
 		{
 			BX.DocumentGenerator.Config.close();
-		}).then(function(response)
+		}, function(response)
 		{
+			BX.DocumentGenerator.Config.stopWait();
 			BX.DocumentGenerator.Config.showError(response.errors.pop().message);
 		});
+	};
+
+	BX.DocumentGenerator.Config.stopWait = function()
+	{
+		BX.removeClass(BX('ui-button-panel-save'), 'ui-btn-wait');
+		BX.removeClass(BX('ui-button-panel-close'), 'ui-btn-wait');
 	};
 
 	BX.DocumentGenerator.Config.close = function()
 	{
 		BX.fireEvent(BX('ui-button-panel-close'), 'click');
-		BX.removeClass(BX('ui-button-panel-save'), 'ui-btn-wait');
-		BX.removeClass(BX('ui-button-panel-close'), 'ui-btn-wait');
+		BX.DocumentGenerator.Config.stopWait();
 	};
 
 	BX.DocumentGenerator.Config.showError = function(text)

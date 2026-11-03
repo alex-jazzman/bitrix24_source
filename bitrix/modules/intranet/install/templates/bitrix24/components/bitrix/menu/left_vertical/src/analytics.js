@@ -44,6 +44,46 @@ export class Analytics
 		});
 	}
 
+	sendMainToolPickerShown(openingReason: string): void
+	{
+		this.#sendData({
+			event: AnalyticEvent.SHOW,
+			tool: AnalyticTool,
+			category: AnalyticCategory.TOOL,
+			c_section: openingReason === 'auto' ? AnalyticSection.POPUP : AnalyticSection.MENU,
+			p1: this.#isAdmin,
+			p3: `openingReason_${openingReason}`,
+		});
+	}
+
+	sendMainToolPickerApplied(presetId: string, applyForAll: boolean, openingReason: string): void
+	{
+		this.#sendData({
+			type: presetId,
+			event: applyForAll ? AnalyticEvent.SELECT : AnalyticEvent.CHANGE,
+			tool: AnalyticTool,
+			category: applyForAll ? AnalyticCategory.TOOL : AnalyticCategory.MENU,
+			c_section: openingReason === 'auto' ? AnalyticSection.POPUP : AnalyticSection.MENU,
+			c_element: AnalyticActions.CONFIRM,
+			p1: this.#isAdmin,
+			p2: applyForAll ? 'scope_global' : 'scope_personal',
+			p3: `openingReason_${openingReason}`,
+		});
+	}
+
+	sendMainToolPickerClosed(openingReason: string): void
+	{
+		this.#sendData({
+			event: openingReason === 'auto' ? AnalyticEvent.SELECT : AnalyticEvent.CHANGE,
+			tool: AnalyticTool,
+			category: openingReason === 'auto' ? AnalyticCategory.TOOL : AnalyticCategory.MENU,
+			c_section: openingReason === 'auto' ? AnalyticSection.POPUP : AnalyticSection.MENU,
+			c_element: AnalyticActions.CLOSE,
+			p1: this.#isAdmin,
+			p3: `openingReason_${openingReason}`,
+		});
+	}
+
 	#sendData(data: any): void
 	{
 		Runtime.loadExtension('ui.analytics')

@@ -39,14 +39,14 @@ if(!$arResult['BUTTON']['ICON_COLOR'])
 $serverAddress = \Bitrix\Crm\SiteButton\ResourceManager::getServerAddress();
 $serverAddress .= $this->GetFolder() . '/images/';
 $arResult['HELLO']['ICONS'] = array(
-	array('PATH' => $serverAddress . 'upload-girl-mini-1.png'),
-	array('PATH' => $serverAddress . 'upload-girl-mini-2.png'),
-	array('PATH' => $serverAddress . 'upload-girl-mini-3.png'),
-	array('PATH' => $serverAddress . 'upload-girl-mini-4.png'),
-	array('PATH' => $serverAddress . 'upload-man-mini-1.png'),
-	array('PATH' => $serverAddress . 'upload-man-mini-2.png'),
-	array('PATH' => $serverAddress . 'upload-man-mini-3.png'),
-	array('PATH' => $serverAddress . 'upload-man-mini-4.png'),
+	array('PATH' => $serverAddress . 'upload-girl-mini-1.webp'),
+	array('PATH' => $serverAddress . 'upload-girl-mini-2.webp'),
+	array('PATH' => $serverAddress . 'upload-girl-mini-3.webp'),
+	array('PATH' => $serverAddress . 'upload-girl-mini-4.webp'),
+	array('PATH' => $serverAddress . 'upload-man-mini-1.webp'),
+	array('PATH' => $serverAddress . 'upload-man-mini-2.webp'),
+	array('PATH' => $serverAddress . 'upload-man-mini-3.webp'),
+	array('PATH' => $serverAddress . 'upload-man-mini-4.webp'),
 );
 
 $helloDefCond = array(

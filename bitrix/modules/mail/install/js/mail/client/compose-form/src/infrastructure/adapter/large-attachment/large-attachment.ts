@@ -90,6 +90,7 @@ type LargeAttachmentCore = {
 
 export type LargeAttachmentSendGate = {
 	prepareSend(): boolean,
+	getDraftState(): DraftLargeAttachment[],
 };
 
 /**

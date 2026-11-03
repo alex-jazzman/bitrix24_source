@@ -12,11 +12,20 @@ const ScopeDirection: { [scope: $Values<typeof PlaylistScope>]: $Values<typeof D
 	[PlaylistScope.sidebar]: Direction.desc,
 };
 
+/**
+ * A track is a file inside a particular message, not a file on its own: the same file can be
+ * attached to several messages, and each of them is a separate player on the screen.
+ */
+export type PlaylistTrack = {
+	messageId: string | number,
+	file: ImModelFile,
+};
+
 export class Playlist
 {
 	static #instances: Map<string, Playlist> = new Map();
 	#scope: $Values<typeof PlaylistScope>;
-	#files: { [chatId: string]: Map<string | number, ImModelFile> } = {};
+	#tracks: { [chatId: string]: Map<string, PlaylistTrack> } = {};
 
 	constructor(scope: string)
 	{
@@ -33,40 +42,49 @@ export class Playlist
 		return this.#instances.get(scope);
 	}
 
-	register(file: ImModelFile)
+	register(track: PlaylistTrack)
 	{
-		if (!this.#files[file.chatId])
+		const { chatId } = track.file;
+		if (!this.#tracks[chatId])
 		{
-			this.#files[file.chatId] = new Map();
+			this.#tracks[chatId] = new Map();
 		}
 
-		this.#files[file.chatId].set(file.id, file);
+		this.#tracks[chatId].set(Playlist.#keyOf(track), track);
 	}
 
-	unregister(file: ImModelFile)
+	unregister(track: PlaylistTrack)
 	{
-		this.#files[file.chatId]?.delete(file.id);
+		this.#tracks[track.file.chatId]?.delete(Playlist.#keyOf(track));
 	}
 
-	onFileEnded(payload: { file: ImModelFile, context: ApplicationContext })
+	onFileEnded(payload: PlaylistTrack & { context: ApplicationContext })
 	{
-		const { file, context: { emitter } } = payload;
+		const { context: { emitter } } = payload;
 
-		const nextFile = this.#getNextFile(file);
-		if (!nextFile)
+		const nextTrack = this.#getNextTrack(payload);
+		if (!nextTrack)
 		{
 			return;
 		}
 
 		emitter.emit(EventType.player.playNext, {
-			fileId: nextFile.id,
+			messageId: nextTrack.messageId,
+			fileId: nextTrack.file.id,
 			scope: this.#scope,
 		});
 	}
 
-	#getNextFile(file: ImModelFile): ImModelFile | null
+	// The message is a part of the address, not a decoration: keyed by the file alone, two messages
+	// carrying the same file collapsed into one entry, so the round trip skipped one of them.
+	static #keyOf({ messageId, file }: PlaylistTrack): string
 	{
-		const chat = this.#files[file.chatId];
+		return `${messageId}:${file.id}`;
+	}
+
+	#getNextTrack(current: PlaylistTrack): PlaylistTrack | null
+	{
+		const chat = this.#tracks[current.file.chatId];
 		if (!chat)
 		{
 			return null;
@@ -79,15 +97,18 @@ export class Playlist
 		}
 
 		const sortCallback = direction === Direction.desc
-			? (a, b) => b.date - a.date
-			: (a, b) => a.date - b.date;
-		const chatFiles = [...chat.values()].sort(sortCallback);
-		const currentIndex = chatFiles.findIndex((chatFile) => chatFile.id === file.id);
+			? (a, b) => b.file.date - a.file.date
+			: (a, b) => a.file.date - b.file.date;
+		// Sort is stable, so tracks sharing a date keep the order they were registered in - for a
+		// producer uploading its files in one batch that is the only order there is.
+		const tracks = [...chat.values()].sort(sortCallback);
+		const currentKey = Playlist.#keyOf(current);
+		const currentIndex = tracks.findIndex((track) => Playlist.#keyOf(track) === currentKey);
 		if (currentIndex === -1)
 		{
 			return null;
 		}
 
-		return chatFiles[currentIndex + 1];
+		return tracks[currentIndex + 1];
 	}
 }

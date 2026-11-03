@@ -5,6 +5,7 @@ export default {
 	output: 'dist/ui.text-editor.mobile.bundle.js',
 	sourceMaps: false,
 	minification: false,
+	production: true,
 	adjustConfigPhp: false,
 	treeshake: false,
 	protected: true,

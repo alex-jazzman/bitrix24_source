@@ -1,8 +1,10 @@
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
-import { Event, Reflection, Type, Text } from 'main.core';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { Event, Loc, Reflection, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Item, Dialog } from 'ui.entity-selector';
 import { FeaturePromoter } from 'ui.info-helper';
+import { Center as NotificationCenter } from 'ui.notification';
 
 type Props = {
 	containerId: string,
@@ -111,12 +113,9 @@ class SupersetDashboardSelector
 				return response;
 			})
 			.catch((response) => {
-				if (response.errors && Type.isStringFilled(response.errors[0]?.message))
-				{
-					BX.UI.Notification.Center.notify({
-						content: Text.encode(response.errors[0].message),
-					});
-				}
+				NotificationCenter.notify({
+					content: resolveErrorHtml(response, Loc.getMessage('BICONNECTOR_DASHBOARD_SELECTOR_LOAD_ERROR')),
+				});
 				throw response;
 			});
 	}

@@ -387,6 +387,7 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 							categories: kanbanSettingsList = [],
 							restrictions,
 							canUserEditCategory,
+							canCreateCategory,
 						},
 						status,
 						entityTypeId,
@@ -395,6 +396,7 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 					state.status = status;
 					state.restrictions = restrictions;
 					state.canUserEditCategory = canUserEditCategory;
+					state.canCreateCategory = canCreateCategory;
 
 					const preparedData = kanbanSettingsList.map((kanbanSettings) => {
 						const {
@@ -412,9 +414,24 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 
 						if (kanbanSettingsFromState)
 						{
+							// `Dto::toArray()` serializes every property the funnel DTO declares, while the
+							// payload of `getList` fills only some of them: the rest arrive as the declared
+							// defaults, which no client can tell from an answer. Merging those over a funnel
+							// a single `get` has already answered for would drop that answer, so only what
+							// the list itself states is merged.
+							const {
+								editable,
+								access,
+								categoriesSupported,
+								stagesEnabled,
+								tunnelsEnabled,
+								documentFields,
+								...statedFields
+							} = restFields;
+
 							return {
-								id,
-								restFields,
+								...statedFields,
+								id: preparedId,
 								tunnels: preparedTunnels,
 							};
 						}
@@ -618,6 +635,15 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 		(kanbanSettings) => kanbanSettings?.canUserEditCategory || false,
 	);
 
+	/**
+	 * `null` where the response states no capability at all - a refusal is `false`, and telling the
+	 * two apart is what lets a consumer fall back to `canUserEditCategory` as DTO-01 requires.
+	 */
+	const selectCanCreateCategory = createDraftSafeSelector(
+		(state) => state[reducerName],
+		(kanbanSettings) => kanbanSettings?.canCreateCategory ?? null,
+	);
+
 	const selectIsFetchedList = createDraftSafeSelector(
 		(state, entityTypeId) => {
 			return ({
@@ -647,6 +673,7 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 		selectRestrictions,
 		selectByEntityTypeId,
 		selectCanUserEditCategory,
+		selectCanCreateCategory,
 		selectIsFetchedList,
 		STATUS,
 	};

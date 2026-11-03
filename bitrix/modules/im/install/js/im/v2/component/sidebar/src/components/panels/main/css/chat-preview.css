@@ -27,7 +27,7 @@
 	padding: 2px 0;
 }
 
-.bx-im-sidebar-main-preview-group-chat__chat-user-avatar.bx-im-avatar__container {
+.bx-im-sidebar-main-preview-group-chat__chat-user-avatar.bx-im-legacy-avatar__container {
 	box-sizing: content-box;
 }
 

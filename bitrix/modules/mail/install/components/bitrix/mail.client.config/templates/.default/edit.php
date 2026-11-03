@@ -20,6 +20,8 @@ use Bitrix\Mail\Helper\OrphanedMailboxLifecycle;
 
 Extension::load([
 	'mail.setting-selector',
+	'mail.migration-state',
+	'main.loader',
 	'ui.info-helper',
 	'ui.alerts',
 	'ui.forms',
@@ -113,7 +115,7 @@ $isCrmSwitcherChecked = !empty($mailbox['__crm']);
 $senderNameBlockHtml = '
 <div class="mail-connect-form-item ui-form-content">
 	<div class="ui-form-row">
-		<div class="ui-form-label" data-form-row-hidden="">
+		<div class="ui-form-label">
 			<label class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
 				<input class="ui-ctl-element mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 					name="fields[use_sender_name]" id="mail_connect_mb_use_sender_name_field" value="Y"
@@ -122,7 +124,7 @@ $senderNameBlockHtml = '
 				<div class="ui-ctl-label-text">' . htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_MAILBOX_USE_SENDER_NAME')) . '</div>
 			</label>
 		</div>
-		<div class="mail-connect-form-limit-hidden-input ui-form-row-hidden">
+		<div class="mail-connect-form-limit-hidden-input" id="mail-connect-sender-name-fields">
 			<div class="mail-connect-form-limit-input ui-form-row">
 				<label class="mail-connect-form-label" for="mail_connect_mb_sender_field">' . Loc::getMessage('MAIL_CLIENT_CONFIG_MAILBOX_USERNAME') . '</label>
 				<input class="mail-connect-form-input ui-ctl-element" type="text"
@@ -138,6 +140,7 @@ $senderNameBlockHtml = '
 
 <div class="mail-connect mail-connect-slider">
 	<form id="mail_connect_form" method="POST"
+		<?php if (!empty($mailbox)): ?>style="visibility: hidden;"<?php endif; ?>
 		action="/bitrix/services/main/ajax.php?c=<?=rawurlencode($this->getComponent()->getName()) ?>&action=save&mode=class">
 
 		<?=bitrix_sessid_post() ?>
@@ -148,6 +151,7 @@ $senderNameBlockHtml = '
 			<input type="hidden" name="fields[pass_placeholder]" value="<?=htmlspecialcharsbx($arParams['PASSWORD_PLACEHOLDER']) ?>">
 		<? endif ?>
 
+		<div id="mail-migration-settings-notice" hidden></div>
 		<div class="ui-slider-section">
 			<div class="ui-slider-content-box">
 				<div class="ui-slider-paragraph-2">
@@ -189,7 +193,7 @@ $senderNameBlockHtml = '
 					</div>
 				<? endif ?>
 
-		<div class="mail-connect-section-block">
+		<div class="mail-connect-section-block" data-mail-connection-settings>
 			<? if (!empty($settings['oauth'])): ?>
 				<input type="hidden" name="fields[oauth_uid]" value="<?=htmlspecialcharsbx($settings['oauth']->getStoredUid()) ?>">
 				<input type="hidden" id="mail_connect_mb_oauth_url_field"
@@ -327,7 +331,7 @@ $senderNameBlockHtml = '
 						</div>
 					</div>
 				<? elseif (!$isPasswordlessMailbox): ?>
-					<div class="mail-connect-section-block">
+					<div class="mail-connect-section-block" data-mail-connection-settings>
 						<a
 								class="mail-connect-dashed-switch"
 								href="<?=(new Uri($arParams['PATH_TO_MAIL_CONFIG_DIRS']))
@@ -375,7 +379,7 @@ $senderNameBlockHtml = '
 			&& MailAccess::hasCurrentUserAdminAccess()
 			&& OrphanedMailboxLifecycle::isOrphan($mailbox)
 		): ?>
-		<div class="ui-slider-section">
+		<div class="ui-slider-section" data-mail-connection-settings>
 			<div class="mail-connect-section-block">
 				<div class="mail-connect-title-block">
 					<div class="mail-connect-title"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OWNER') ?></div>
@@ -397,12 +401,12 @@ $senderNameBlockHtml = '
 			<div class="ui-slider-section">
 				<?php $hasSmtpFields = empty($settings['smtp']['server']) || !$settings['smtp']['login'] || !$settings['smtp']['password']; ?>
 				<div id="mail-connect-section-smtp-block" class="mail-connect-section-block mail-connect-section-block-with-switcher">
-					<div class="mail-connect-title-block mail-connect-title-block-with-switcher">
+					<div class="mail-connect-title-block mail-connect-title-block-with-switcher" data-mail-connection-settings>
 						<div class="mail-connect-title"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_SMTP_MSGVER_1') ?></div>
 						<div id="mail-connect-smtp-settings-title"></div>
 					</div>
-					<div class="mail-connect-form-items">
-						<?= $senderNameBlockHtml ?>
+					<?= $senderNameBlockHtml ?>
+					<div id="mail-connect-smtp-fields" class="mail-connect-form-items" data-mail-connection-settings>
 						<div class="mail-connect-form-item ui-form-content">
 							<div class="ui-form-row">
 								<div class="ui-form-label" data-form-row-hidden="">
@@ -741,14 +745,14 @@ $senderNameBlockHtml = '
 			</div>
 		</div>
 
-		<div class="mail-connect-footer mail-connect-footer-fixed">
+		<div class="mail-connect-footer mail-connect-footer-fixed" style="visibility: visible;">
 			<div id="mail_connect_form_error"></div>
 			<div class="mail-connect-footer-container">
 				<button class="ui-btn ui-btn-md ui-btn-success ui-btn-success mail-connect-btn-connect"
-					type="submit" id="mail_connect_save_btn"><?=Loc::getMessage(empty($mailbox) ? 'MAIL_CLIENT_CONFIG_BTN_CONNECT' : 'MAIL_CLIENT_CONFIG_BTN_SAVE') ?></button>
+					type="submit" id="mail_connect_save_btn" <?php if (!empty($mailbox)): ?>disabled<?php endif; ?>><?=Loc::getMessage(empty($mailbox) ? 'MAIL_CLIENT_CONFIG_BTN_CONNECT' : 'MAIL_CLIENT_CONFIG_BTN_SAVE') ?></button>
 				<? if (!empty($mailbox)): ?>
 					<button class="ui-btn ui-btn-md ui-btn ui-btn-danger mail-connect-btn-disconnect"
-						type="button" id="mail_connect_disconnect_btn"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_BTN_DISCONNECT') ?></button>
+						type="button" id="mail_connect_disconnect_btn" data-mail-connection-settings style="display: none;"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_BTN_DISCONNECT') ?></button>
 				<? endif ?>
 				<button class="ui-btn ui-btn-md ui-btn-link mail-connect-btn-cancel"
 					type="reset" id="mail_connect_cancel_btn"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_BTN_CANCEL') ?></button>
@@ -869,6 +873,8 @@ $arJsParams = [
 	'crmQueueValueContainerId' => $crmQueueValueContainerId,
 	'serviceName' => $settings['name'],
 	'isNewMailbox' => empty($mailbox),
+	'mailboxId' => (int)($mailbox['ID'] ?? 0),
+	'formError' => Loc::getMessage('MAIL_CLIENT_FORM_ERROR'),
 ];
 ?>
 <script>
@@ -931,6 +937,7 @@ $arJsParams = [
 				}
 			});
 
+			BX.MailClientConfig.Edit.ownerSelector = tagSelector;
 			tagSelector.renderTo(ownerContainerNode);
 		};
 
@@ -940,8 +947,8 @@ $arJsParams = [
 
 			BX.MailClientConfig.Edit.init = (function(originalInit) {
 				return function(params) {
-					originalInit.apply(this, arguments);
 					initOwnerSelector(params);
+					originalInit.apply(this, arguments);
 				};
 			})(BX.MailClientConfig.Edit.init);
 		}
@@ -996,6 +1003,11 @@ $arJsParams = [
 
 			emailOauthField.onchange = function()
 			{
+				if (BX.MailClientConfig.Edit.isConnectionSettingsLocked())
+				{
+					return;
+				}
+				const revision = BX.MailClientConfig.Edit.migrationState?.getRevision();
 				BX.show(oauthWaitIcon);
 				BX.ajax.runComponentAction('bitrix:mail.client.config', 'checkAvailabilityEMail', {
 					mode: 'class',
@@ -1006,6 +1018,11 @@ $arJsParams = [
 					}
 				}).then(
 					function(response) {
+						if (BX.MailClientConfig.Edit.isConnectionSettingsLocked()
+							|| revision !== BX.MailClientConfig.Edit.migrationState?.getRevision())
+						{
+							return;
+						}
 						BX.hide(oauthWaitIcon);
 						if (response['data'] === false)
 						{
@@ -1024,11 +1041,17 @@ $arJsParams = [
 
 		var oauthHandler = function(uid, url, user, init)
 		{
+			if (BX.MailClientConfig.Edit.settingsDisposed
+				|| (!init && BX.MailClientConfig.Edit.isConnectionSettingsLocked()))
+			{
+				return;
+			}
 			if (uid != form.elements['fields[oauth_uid]'].value)
 			{
 				return;
 			}
 
+			const revision = BX.MailClientConfig.Edit.migrationState?.getRevision();
 			if(user['emailIsIntended'])
 			{
 				BX.addClass(oauthBtn, 'ui-btn-wait');
@@ -1044,6 +1067,11 @@ $arJsParams = [
 					}
 				}).then(
 					function(response) {
+						if (BX.MailClientConfig.Edit.isConnectionSettingsLocked()
+							|| revision !== BX.MailClientConfig.Edit.migrationState?.getRevision())
+						{
+							return;
+						}
 
 						BX('mail_connect_mb_oauth_status').style.display = '';
 						oauthBtn.style.display = 'none';
@@ -1151,6 +1179,7 @@ $arJsParams = [
 			}
 		};
 
+		BX.MailClientConfig.Edit.settingsOauthHandler = oauthHandler;
 		BX.addCustomEvent('OnMailOAuthBCompleted', oauthHandler);
 
 		var changedDirs = false;
@@ -1169,6 +1198,11 @@ $arJsParams = [
 			'click',
 			function (e)
 			{
+				if (BX.MailClientConfig.Edit.isConnectionSettingsLocked())
+				{
+					return;
+				}
+
 				BX.util.popup(BX('mail_connect_mb_oauth_url_field').value, 500, 600);
 
 				e.preventDefault();
@@ -1282,11 +1316,22 @@ $arJsParams = [
 		const setSenderNameCheckbox = BX('mail_connect_mb_use_sender_name_field');
 		if (setSenderNameCheckbox)
 		{
-			BX.bind(setSenderNameCheckbox, 'click', () => {
-				const limitSmtpField = BX('mail_connect_mb_sender_field');
-				limitSmtpField.disabled = !setLimitCheckbox.checked;
-				setLimitCheckbox.value = setLimitCheckbox.checked === true ? 'Y' : 'N';
-			});
+			const senderNameField = BX('mail_connect_mb_sender_field');
+			const senderNameFields = BX('mail-connect-sender-name-fields');
+			const updateSenderNameVisibility = () => {
+				senderNameField.disabled = !setSenderNameCheckbox.checked;
+				setSenderNameCheckbox.value = setSenderNameCheckbox.checked ? 'Y' : 'N';
+				if (setSenderNameCheckbox.checked)
+				{
+					BX.Dom.show(senderNameFields);
+				}
+				else
+				{
+					BX.Dom.hide(senderNameFields);
+				}
+			};
+			BX.bind(setSenderNameCheckbox, 'change', updateSenderNameVisibility);
+			updateSenderNameVisibility();
 		}
 
 		const setSmtpCheckbox = BX('mail_connect_mb_server_smtp_switch');
@@ -1545,6 +1590,7 @@ $arJsParams = [
 
 		var closeForm = function (id)
 		{
+			BX.MailClientConfig.Edit.disposeMigrationSettings();
 			id = id > 0 ? id : <?=intval($mailbox['ID']) ?>;
 
 			var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
@@ -1574,6 +1620,19 @@ $arJsParams = [
 			if (e && e.preventDefault)
 			{
 				e.preventDefault();
+			}
+
+			if (form.elements['fields[mailbox_id]'])
+			{
+				BX.MailClientConfig.Edit.saveSettings(checkForm, function(id) {
+					top.BX.SidePanel.Instance.postMessage(window, 'mail-mailbox-config-success', {
+						id: id,
+						changed: changedDirs,
+					});
+					closeForm(id);
+				});
+
+				return false;
 			}
 
 			var button = BX('mail_connect_save_btn');
@@ -1792,6 +1851,7 @@ $arJsParams = [
 			'click',
 			function (e)
 			{
+				e.preventDefault();
 				closeForm();
 			}
 		);
@@ -1803,6 +1863,11 @@ $arJsParams = [
 				"SidePanel.Slider:onClose",
 				function (event)
 				{
+					if (event.getSlider() !== top.BX.SidePanel.Instance.getSliderByWindow(window))
+					{
+						return;
+					}
+					BX.MailClientConfig.Edit.disposeMigrationSettings();
 					top.BX.SidePanel.Instance.postMessage(
 						window,
 						'mail-mailbox-config-close',
@@ -1817,6 +1882,12 @@ $arJsParams = [
 		<? if (!empty($mailbox)): ?>
 
 		var deletePopup = false;
+		BX.MailClientConfig.Edit.onConnectionSettingsHidden = function() {
+			if (deletePopup)
+			{
+				deletePopup.close();
+			}
+		};
 		BX.bind(
 			BX('mail_connect_disconnect_btn'),
 			'click',
@@ -1824,7 +1895,7 @@ $arJsParams = [
 			{
 				var button = BX('mail_connect_disconnect_btn');
 
-				if (button.disabled)
+				if (button.disabled || BX.MailClientConfig.Edit.isConnectionSettingsLocked())
 				{
 					return false;
 				}
@@ -1839,6 +1910,12 @@ $arJsParams = [
 						closeByEsc: true,
 						overlay: true,
 						lightShadow: true,
+						events: {
+							onPopupClose: function() {
+								button.disabled = false;
+								BX.removeClass(button, 'ui-btn-wait');
+							},
+						},
 						titleBar: '<?=\CUtil::jsEscape(getMessage('MAIL_MAILBOX_REMOVE_CONFIRM')) ?>',
 						content: '<?=\CUtil::jsEscape(getMessage('MAIL_MAILBOX_REMOVE_CONFIRM_TEXT')) ?>',
 						buttons: [
@@ -1849,6 +1926,10 @@ $arJsParams = [
 									click: function()
 									{
 										this.popupWindow.close();
+										if (BX.MailClientConfig.Edit.isConnectionSettingsLocked())
+										{
+											return;
+										}
 
 										var pr = BX.ajax.runComponentAction(
 											'bitrix:mail.client.config',
@@ -1864,6 +1945,10 @@ $arJsParams = [
 										pr.then(
 											function (json)
 											{
+												if (BX.MailClientConfig.Edit.settingsDisposed)
+												{
+													return;
+												}
 												top.BX.SidePanel.Instance.postMessage(
 													window,
 													'mail-mailbox-config-delete',
@@ -1876,8 +1961,13 @@ $arJsParams = [
 											},
 											function (json)
 											{
+												if (BX.MailClientConfig.Edit.settingsDisposed)
+												{
+													return;
+												}
 												button.disabled = false;
 												BX.removeClass(button, 'ui-btn-wait');
+												BX.MailClientConfig.Edit.showSettingsError(json);
 											}
 										);
 									}
@@ -1925,19 +2015,21 @@ $arJsParams = [
 
 		<?php if (!empty($mailbox) && isset($_REQUEST['open_dirs'])): ?>
 
-		top.BX.SidePanel.Instance.open(
-			BX.util.add_url_param(
-				'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_CONFIG_DIRS'])?>',
+		BX.MailClientConfig.Edit.onConnectionSettingsReady = function() {
+			top.BX.SidePanel.Instance.open(
+				BX.util.add_url_param(
+					'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_CONFIG_DIRS'])?>',
+					{
+						mailboxId: <?= (int)$mailbox['ID'] ?>,
+						INIT: 'Y',
+					}
+				),
 				{
-					mailboxId: <?= (int)$mailbox['ID'] ?>,
-					INIT: 'Y',
+					width: 640,
+					cacheable: false,
 				}
-			),
-			{
-				width: 640,
-				cacheable: false,
-			}
-		);
+			);
+		};
 
 		<?php endif ?>
 

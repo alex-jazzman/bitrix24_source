@@ -191,6 +191,19 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		}
 
 		/**
+		 * @returns {String}
+		 */
+		getTaxName()
+		{
+			if (this.props.hasOwnProperty('TAX_NAME'))
+			{
+				return String(this.props.TAX_NAME);
+			}
+
+			return '';
+		}
+
+		/**
 		 * @returns {Number}
 		 */
 		getTaxSum()

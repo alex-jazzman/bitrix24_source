@@ -8,6 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\UI\Extension;
 
 Extension::load([
+	'ui.design-tokens.air',
 	'ui.vue',
 	'documentpreview',
 	'salescenter.payment-pay.components',
@@ -18,6 +19,11 @@ Extension::load([
  * @var array $arParams
  * @global CMain $APPLICATION
  */
+
+// both themes of the component are dark surfaces, so the colour tokens resolve through the context
+$themeClasses = $arResult['COMPONENT_THEME'] === ''
+	? ''
+	: $arResult['COMPONENT_THEME'] . ' --ui-context-content-dark';
 
 if (!empty($arResult['errorMessage']))
 {

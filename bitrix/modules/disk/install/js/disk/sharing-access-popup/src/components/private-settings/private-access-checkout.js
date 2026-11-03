@@ -1,6 +1,6 @@
 // @vue/component
 import { TextSm } from 'ui.system.typography.vue';
-import { Loc } from 'main.core';
+import { Loc, Text } from 'main.core';
 
 export const PrivateAccessCheckout = {
 	name: 'PrivateAccessCheckout',
@@ -10,6 +10,12 @@ export const PrivateAccessCheckout = {
 		isAllowControl: { type: Boolean, required: true },
 	},
 	emits: ['update:isAllowControl', 'update:isDownload'],
+	data()
+	{
+		return {
+			downloadCheckboxId: `disk-sharing-private-download-checkbox-${Text.getRandom()}`,
+		};
+	},
 	methods: {
 		onToggleIsAllowControl(event)
 		{
@@ -26,6 +32,7 @@ export const PrivateAccessCheckout = {
 				<input
 					type="checkbox"
 					:checked="isAllowControl"
+					data-testid="disk-sharing-access-private-allow-control"
 					@change="onToggleIsAllowControl"
 				>
 				<TextSm
@@ -35,15 +42,17 @@ export const PrivateAccessCheckout = {
 					${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_CHECKOUT_ACCESS_CONTROL_LABEL')}
 				</TextSm>
 			</div>
-			<div v-if="false" class="ui-ctl ui-ctl-checkbox ui-ctl-xs access-private-block__download-wrapper">
+			<div class="ui-ctl ui-ctl-checkbox ui-ctl-xs access-private-block__download-wrapper">
 				<input
-					class="ui-ctl-element"
 					type="checkbox"
+					:id="downloadCheckboxId"
+					data-testid="disk-sharing-private-download-checkbox"
 					:checked="isDownload"
 					@change="onToggleIsDownload"
 				>
 				<TextSm
 					tag="label"
+					:for="downloadCheckboxId"
 					className="access-private-block__download-label"
 				>
 					${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PRIVATE_CHECKOUT_DOWNLOAD_LABEL')}

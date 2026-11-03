@@ -106,6 +106,7 @@ jn.define('call/callList/item', (require, exports, module) => {
 
 			return View(
 				{
+					testId: `call-list-item-${item.id}`,
 					style: {
 						paddingTop: 8,
 						paddingLeft: 18,

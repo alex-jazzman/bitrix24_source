@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_const, im_v2_lib_localStorage, im_v2_lib_logger, main_core, im_v2_lib_sidebar, im_v2_application_core, im_v2_lib_rest, im_v2_lib_user, im_v2_lib_guest, im_v2_lib_permission, im_v2_lib_feature, ui_iconSet_api_vue, im_v2_component_entitySelector, main_core_events, ui_buttons, ui_system_dialog, im_v2_provider_service_chat, ui_system_menu, im_v2_lib_analytics, im_v2_lib_chat, im_v2_lib_confirm, im_v2_lib_copilot, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_notifier, im_v2_lib_utils, ui_vue3_directives_hint, im_v2_lib_counter, im_v2_lib_parser, im_v2_lib_collab, ui_icons, ui_viewer, ui_vue3_directives_lazyload, im_v2_lib_entityCreator, im_v2_component_elements_button, ui_notification, ui_label, im_v2_component_elements_avatar, im_v2_lib_textHighlighter, im_v2_lib_market, main_date, im_v2_lib_dateFormatter, im_v2_component_elements_chatTitle, im_v2_component_elements_toggle, im_v2_component_elements_autoDelete, im_v2_lib_autoDelete, im_v2_lib_channel, im_v2_provider_service_guestInvitation, ui_iconSet_api_core, im_v2_component_elements_copilotRolesDialog, im_v2_lib_promo, ui_promoVideoPopup, im_v2_component_elements_popup, im_v2_lib_helpdesk, ui_manual, im_v2_component_elements_loader, im_v2_component_elements_searchInput, im_v2_provider_service_disk, im_v2_component_elements_player, im_v2_lib_call, im_v2_provider_service_message, im_public) {
+(function (exports, im_v2_const, im_v2_lib_localStorage, im_v2_lib_logger, main_core, im_v2_lib_sidebar, im_v2_application_core, im_v2_lib_rest, im_v2_lib_user, im_v2_lib_guest, im_v2_lib_permission, im_v2_lib_feature, ui_iconSet_api_vue, im_v2_component_entitySelector, main_core_events, ui_buttons, ui_system_dialog, im_v2_provider_service_chat, ui_system_menu, im_v2_lib_analytics, im_v2_lib_chat, im_v2_lib_confirm, im_v2_lib_copilot, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_notifier, im_v2_lib_utils, ui_vue3_directives_hint, im_v2_lib_counter, im_v2_lib_parser, im_v2_lib_collab, ui_icons, ui_viewer, ui_vue3_directives_lazyload, im_v2_lib_entityCreator, im_v2_component_elements_button, ui_notification, ui_label, im_v2_component_elements_avatar, im_v2_lib_textHighlighter, im_v2_lib_market, main_date, im_v2_lib_dateFormatter, im_v2_component_elements_chatTitle, im_v2_component_elements_toggle, im_v2_component_elements_autoDelete, im_v2_lib_autoDelete, im_v2_lib_channel, im_v2_provider_service_guestInvitation, ui_iconSet_api_core, im_v2_component_elements_copilotRolesDialog, im_v2_lib_promo, ui_promoVideoPopup, im_v2_component_elements_popup, im_v2_lib_helpdesk, ui_manual, im_v2_component_elements_loader, im_v2_component_elements_searchInput, im_v2_lib_playback, im_v2_provider_service_disk, ui_a11y, im_v2_lib_a11y, im_v2_component_elements_player, ui_iconSet_outline, im_v2_component_elements_progressbar, im_v2_css_classes, im_v2_css_tokens, im_v2_lib_call, im_v2_provider_service_message, im_v2_provider_service_dateNavigation, im_public) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -198,6 +198,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	// Paging by the date needs the date order: the server then continues the page by the pair
+	// LAST_DATE + LAST_ID and refuses either half alone (API-01).
+	const SidebarFileDateOrder = Object.freeze({
+		DATE_CREATE: 'DESC'
+	});
+	function usesDateOrder(group) {
+		return group === im_v2_const.SidebarFileGroups.audio;
+	}
+
+	/**
+	 * The smallest number of the collection would be a different record: one from a live update lands
+	 * there with a bigger number and an earlier date, and the next page would start from another place.
+	 */
+	function getPageCursor(list, withDate) {
+		if (!withDate) {
+			return {
+				lastId: getLastElementId(list),
+				lastDate: ''
+			};
+		}
+		const lastItem = list[list.length - 1];
+
+		// the date goes back to the server as it came, in RFC3339
+		return {
+			lastId: lastItem.id,
+			lastDate: lastItem.dateCreate
+		};
+	}
+
 	const REQUEST_ITEMS_LIMIT$c = 50;
 	class File {
 		constructor({
@@ -267,7 +296,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}), this.store.dispatch('sidebar/files/setLastId', {
 					chatId: this.chatId,
 					group: groupName,
-					lastId: getLastElementId(listByGroup)
+					...getPageCursor(listByGroup, usesDateOrder(group) && groupName === group)
 				}));
 			});
 			return Promise.all([setFilesPromise, addUsersPromise, historyLimitPromise, ...setSidebarFilesPromises]);
@@ -279,14 +308,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return this.loadNextPageByGroup(group);
 		}
 		loadFirstPageByGroup(group) {
+			// a fully loaded group is put in order by the client sorting, so a foreign cursor costs nothing here
+			if (!this.hasNextPage(group)) {
+				return Promise.resolve();
+			}
+			if (this.hasForeignCursor(group)) {
+				return this.requestPage(this.getQueryParams(group), {
+					withGroupReset: true
+				});
+			}
+
+			// a group already filled to the page holds its own first page: continuing the boundary of that
+			// page here would put the next one in the list without a scroll
 			const filesCount = this.getFilesCountFromModel(group);
-			if (filesCount > REQUEST_ITEMS_LIMIT$c) {
+			if (filesCount >= REQUEST_ITEMS_LIMIT$c) {
 				return Promise.resolve();
 			}
 			const queryParams = this.getQueryParams(group);
 			return this.requestPage(queryParams);
 		}
 		loadNextPageByGroup(group) {
+			if (this.hasForeignCursor(group)) {
+				return this.loadFirstPageByGroup(group);
+			}
 			const queryParams = this.getQueryParams(group);
 			return this.requestPage(queryParams);
 		}
@@ -297,14 +341,52 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				LIMIT: REQUEST_ITEMS_LIMIT$c
 			};
 			const lastId = this.store.getters['sidebar/files/getLastId'](this.chatId, group);
-			if (lastId > 0) {
+			if (!usesDateOrder(group)) {
+				if (lastId > 0) {
+					queryParams.LAST_ID = lastId;
+				}
+				return queryParams;
+			}
+			queryParams.ORDER = {
+				...SidebarFileDateOrder
+			};
+			const lastDate = this.store.getters['sidebar/files/getLastDate'](this.chatId, group);
+			// an incomplete pair is a wrong request, so the cursor goes in only once a page has come back
+			if (lastId > 0 && main_core.Type.isStringFilled(lastDate)) {
 				queryParams.LAST_ID = lastId;
+				queryParams.LAST_DATE = lastDate;
 			}
 			return queryParams;
 		}
-		requestPage(queryParams) {
+		hasNextPage(group) {
+			return this.store.getters['sidebar/files/hasNextPage'](this.chatId, group);
+		}
+		hasForeignCursor(group) {
+			if (!usesDateOrder(group)) {
+				return false;
+			}
+			const lastId = this.store.getters['sidebar/files/getLastId'](this.chatId, group);
+			const lastDate = this.store.getters['sidebar/files/getLastDate'](this.chatId, group);
+
+			// only the branch of the date order writes the date, so a boundary without one was left by the
+			// initial load of the sidebar: a boundary counted in the order by the record number (API-01)
+			return lastId > 0 && !main_core.Type.isStringFilled(lastDate);
+		}
+		resetGroup(group) {
+			return this.store.dispatch('sidebar/files/clearGroup', {
+				chatId: this.chatId,
+				group
+			});
+		}
+		requestPage(queryParams, {
+			withGroupReset = false
+		} = {}) {
 			return this.restClient.callMethod(im_v2_const.RestMethod.imChatFileGet, queryParams).then(response => {
-				return this.updateModels(response.data(), queryParams.GROUP);
+				// The group is replaced by the page, not emptied before it: the preview block of the sidebar
+				// reads the same collection, and a group emptied on its own tells it the chat holds no files.
+				// Both go in without an await in between, so no redraw falls between the two.
+				const resetPromise = withGroupReset ? this.resetGroup(queryParams.GROUP) : Promise.resolve();
+				return Promise.all([resetPromise, this.updateModels(response.data(), queryParams.GROUP)]);
 			}).catch(error => {
 				console.error('SidebarInfo: imChatFileGet: page request error', error);
 			});
@@ -971,6 +1053,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	// @vue/component
+	const SidebarSkeleton = {
+		name: 'SidebarSkeleton',
+		template: `
+		<div class="bx-im-sidebar-skeleton__container">
+			<div class="bx-im-sidebar-skeleton__block">
+				<div class="bx-im-sidebar-skeleton__avatar"></div>
+				<div class="bx-im-sidebar-skeleton__invite-button"></div>
+				<div class="bx-im-sidebar-skeleton__settings"></div>
+			</div>
+			<div class="bx-im-sidebar-skeleton__block">
+				<div class="bx-im-sidebar-skeleton__info"></div>
+			</div>
+			<div class="bx-im-sidebar-skeleton__block">
+				<div class="bx-im-sidebar-skeleton__files"></div>
+			</div>
+			<div class="bx-im-sidebar-skeleton__block">
+				<div class="bx-im-sidebar-skeleton__tasks"></div>
+			</div>
+		</div>
+	`
+	};
+
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Component.DetachFromCollabV2Popup';
 	class DetachFromCollabV2Popup extends main_core_events.EventEmitter {
 		#dialog;
@@ -1128,7 +1233,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getEditItem() {
-			if (!this.#canUpdateChat()) {
+			const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
+			if (dialog.type === im_v2_const.ChatType.vibecodeApp || !this.#canUpdateChat()) {
 				return null;
 			}
 			return {
@@ -1312,23 +1418,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			addMembersPopupComponent() {
 				return this.dialog.type === im_v2_const.ChatType.collab ? im_v2_component_entitySelector.AddToCollab : im_v2_component_entitySelector.AddToChat;
+			},
+			menuClass() {
+				return this.sidebarConfig.getHeaderMenuClass() ?? MainMenu;
+			}
+		},
+		watch: {
+			menuClass() {
+				this.destroyContextMenu();
+				this.createContextMenu();
 			}
 		},
 		created() {
-			this.contextMenu = new MainMenu({
-				emitter: this.getEmitter()
-			});
-			this.contextMenu.subscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
-			this.contextMenu.subscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
-			this.contextMenu.subscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+			this.createContextMenu();
 		},
 		beforeUnmount() {
-			this.contextMenu.destroy();
-			this.contextMenu.unsubscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
-			this.contextMenu.unsubscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
-			this.contextMenu.unsubscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+			this.destroyContextMenu();
 		},
 		methods: {
+			createContextMenu() {
+				const applicationContext = {
+					emitter: this.getEmitter()
+				};
+				const MenuClass = this.menuClass;
+				this.contextMenu = new MenuClass(applicationContext);
+				this.contextMenu.subscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
+				this.contextMenu.subscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+				this.contextMenu.subscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+			},
+			destroyContextMenu() {
+				this.contextMenu.destroy();
+				this.contextMenu.unsubscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
+				this.contextMenu.unsubscribe(MainMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+				this.contextMenu.unsubscribe(MainMenu.events.onDetachFromCollabV2Show, this.onDetachFromCollabV2Show);
+			},
 			onDetachFromCollabV2Show() {
 				const detachFromCollabV2pPopup = new DetachFromCollabV2Popup({
 					dialogId: this.dialogId
@@ -1702,13 +1825,108 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
+	const CollabV2Info = {
+		name: 'CollabV2Info',
+		components: {
+			ChatDescription
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				isLoading: true,
+				showFallback: false
+			};
+		},
+		computed: {
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			projectId() {
+				return Number(this.dialog.entityLink.id);
+			}
+		},
+		created() {
+			this.projectInfoInstance = null;
+		},
+		mounted() {
+			void this.mountProjectInfo();
+		},
+		beforeUnmount() {
+			this.unmountProjectInfo();
+		},
+		methods: {
+			async mountProjectInfo() {
+				try {
+					const extension = await main_core.Runtime.loadExtension('socialnetwork.v2.application.project-info-embed');
+					const container = this.$refs.embedContainer;
+					if (!container) {
+						return;
+					}
+					if (!extension.embedProjectInfo) {
+						this.handleExtensionLoadError(new Error('embedProjectInfo factory is not available'));
+						return;
+					}
+					this.projectInfoInstance = extension.embedProjectInfo({
+						projectId: this.projectId,
+						onReady: () => this.handleReady()
+					});
+					this.projectInfoInstance.mount(container);
+				} catch (error) {
+					this.handleExtensionLoadError(error);
+				}
+			},
+			handleReady() {
+				this.isLoading = false;
+			},
+			handleExtensionLoadError(error) {
+				im_v2_lib_logger.Logger.warn('Sidebar: failed to mount CollabV2Info:', error);
+				this.unmountProjectInfo();
+				this.isLoading = false;
+				this.showFallback = true;
+			},
+			unmountProjectInfo() {
+				this.projectInfoInstance?.unmount();
+				this.projectInfoInstance = null;
+			}
+		},
+		template: `
+		<ChatDescription
+			v-if="showFallback"
+			:dialogId="dialogId"
+		/>
+		<div
+			v-else
+			class="bx-im-sidebar-collab-v2-info__container"
+			data-testid="im-collab-v2-info"
+		>
+			<div
+				v-if="isLoading"
+				class="bx-im-sidebar-collab-v2-info__skeleton"
+				data-testid="im-collab-v2-info-skeleton"
+				aria-hidden="true"
+			></div>
+			<div
+				ref="embedContainer"
+				class="bx-im-sidebar-collab-v2-info__content"
+			></div>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const InfoPreview = {
 		name: 'InfoPreview',
 		components: {
 			ChatDescription,
 			ChatLinks,
 			ChatFavourites,
-			ChatShared
+			ChatShared,
+			CollabV2Info
 		},
 		props: {
 			dialogId: {
@@ -1732,6 +1950,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			isUserOrBot() {
 				return this.isUser && [im_v2_const.UserType.bot, im_v2_const.UserType.user].includes(this.user.type);
 			},
+			showCollabV2Info() {
+				return this.dialog.type === im_v2_const.ChatType.collab && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCollabV2Available);
+			},
 			showSharedChats() {
 				const sidebarConfig = im_v2_lib_sidebar.SidebarManager.getInstance().getConfig(this.dialogId);
 				const isSharedChatsEnabled = sidebarConfig.areSharedChatsEnabled();
@@ -1740,10 +1961,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		template: `
 		<div class="bx-im-sidebar-info-preview__container">
-			<ChatDescription :dialogId="dialogId" />
+			<CollabV2Info
+				v-if="showCollabV2Info"
+				:key="dialogId"
+				:dialogId="dialogId"
+			/>
+			<ChatDescription
+				v-else
+				:dialogId="dialogId"
+			/>
 			<ChatFavourites :dialogId="dialogId" />
 			<ChatLinks :dialogId="dialogId" />
-			<ChatShared v-if="showSharedChats" :dialogId="dialogId" />
+			<ChatShared
+				v-if="showSharedChats"
+				:dialogId="dialogId"
+			/>
 		</div>
 	`
 	};
@@ -1909,6 +2141,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			hasFiles() {
 				return this.files.length > 0;
 			},
+			// The preview of the block leaves some of the files of the chat out - a video note has no
+			// rectangular preview to draw - so an empty preview is not an empty chat, and the panel behind
+			// the block has to stay reachable either way.
+			hasAnyFiles() {
+				return this.$store.getters['sidebar/files/hasAnyFiles'](this.chatId);
+			},
 			isMigrationFinished() {
 				return this.$store.state.sidebar.isFilesMigrated;
 			},
@@ -1921,7 +2159,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		methods: {
 			onOpenDetail() {
-				if (!this.hasFiles) {
+				if (!this.hasAnyFiles) {
 					return;
 				}
 				const panel = this.isMigrationFinished ? im_v2_const.SidebarDetailBlock.file : im_v2_const.SidebarDetailBlock.fileUnsorted;
@@ -1935,23 +2173,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-sidebar-file-preview__scope">
+		<div class="bx-im-sidebar-file-preview__scope" data-testid="im-sidebar-file-list">
 			<div class="bx-im-sidebar-file-preview__container">
-				<div 
-					class="bx-im-sidebar-file-preview__header_container" 
-					:class="[hasFiles ? '--active': '']" 
+				<div
+					class="bx-im-sidebar-file-preview__header_container"
+					:class="[hasAnyFiles ? '--active': '']"
+					data-testid="im-sidebar-file-list-header"
 					@click="onOpenDetail"
 				>
 					<span class="bx-im-sidebar-file-preview__title-text">
 						{{ $Bitrix.Loc.getMessage('IM_SIDEBAR_MEDIA_DETAIL_TITLE') }}
 					</span>
-					<div v-if="hasFiles" class="bx-im-sidebar__forward-icon"></div>
+					<div
+						v-if="hasAnyFiles"
+						class="bx-im-sidebar__forward-icon"
+						data-testid="im-sidebar-file-list-forward-icon"
+					></div>
 				</div>
 				<div v-if="hasFiles" class="bx-im-sidebar-file-preview__files-container">
 					<FilePreviewItem v-for="file in files" :fileItem="file" />
 				</div>
 				<DetailEmptyState
-					v-else
+					v-else-if="!hasAnyFiles"
 					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_MEDIA_AND_FILES_EMPTY')"
 					:iconType="SidebarDetailBlock.media"
 				/>
@@ -3338,7 +3581,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<ChatAvatar :avatarDialogId="postDialog.dialogId" :size="AvatarSize.XXXL" />
 				</div>
 				<div class="bx-im-sidebar-main-preview-post__title">{{ loc('IM_SIDEBAR_COMMENTS_POST_PREVIEW_TITLE') }}</div>
-				<div class="bx-im-sidebar-main-preview-post__subtitle">{{ postDialog.name }}</div>
+				<div class="bx-im-sidebar-main-preview-post__subtitle --ellipsis">{{ postDialog.name }}</div>
 			</div>
 			<div class="bx-im-sidebar-main-preview-post__settings">
 				<!-- TODO: follow toggle -->
@@ -4382,29 +4625,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const SidebarSkeleton = {
-		name: 'SidebarSkeleton',
-		template: `
-		<div class="bx-im-sidebar-skeleton__container">
-			<div class="bx-im-sidebar-skeleton__block">
-				<div class="bx-im-sidebar-skeleton__avatar"></div>
-				<div class="bx-im-sidebar-skeleton__invite-button"></div>
-				<div class="bx-im-sidebar-skeleton__settings"></div>
-			</div>
-			<div class="bx-im-sidebar-skeleton__block">
-				<div class="bx-im-sidebar-skeleton__info"></div>
-			</div>
-			<div class="bx-im-sidebar-skeleton__block">
-				<div class="bx-im-sidebar-skeleton__files"></div>
-			</div>
-			<div class="bx-im-sidebar-skeleton__block">
-				<div class="bx-im-sidebar-skeleton__tasks"></div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
 	const MainPanel = {
 		name: 'MainPanel',
 		components: {
@@ -4425,10 +4645,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		computed: {
 			blocks() {
 				const sidebarConfig = im_v2_lib_sidebar.SidebarManager.getInstance().getConfig(this.dialogId);
-				const blocks = sidebarConfig.getBlocks(this.dialogId);
-				return blocks.map(block => {
-					return ComponentMap[block];
-				});
+				const defaultBlocks = sidebarConfig.getBlocks(this.dialogId).map(block => ComponentMap[block]);
+				const customBlocks = sidebarConfig.getCustomBlocks();
+				return [...defaultBlocks, ...customBlocks];
 			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
@@ -5047,6 +5266,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const ARROW_CONTROL_SIZE = 50;
 
+	// A tab renamed after its title has been translated gets a new version of the phrase, not a new code.
+	const TAB_TITLE_PHRASE_VERSION = Object.freeze({
+		AUDIO: '_MSGVER_1',
+		BRIEF: '_MSGVER_2'
+	});
+
 	// @vue/component
 	const DetailTabs = {
 		name: 'DetailTabs',
@@ -5110,11 +5335,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			getTabTitle(tab) {
 				const tabNameToUpperCase = tab.toUpperCase();
-				let langPhraseCode = `IM_SIDEBAR_FILES_${tabNameToUpperCase}_TAB`;
-				if (tabNameToUpperCase === 'BRIEF') {
-					langPhraseCode += '_MSGVER_2';
-				}
-				return this.$Bitrix.Loc.getMessage(langPhraseCode);
+				const phraseVersion = TAB_TITLE_PHRASE_VERSION[tabNameToUpperCase] ?? '';
+				return this.$Bitrix.Loc.getMessage(`IM_SIDEBAR_FILES_${tabNameToUpperCase}_TAB${phraseVersion}`);
 			},
 			isSelectedTab(index) {
 				return index === this.currentElementIndex;
@@ -5194,14 +5416,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} catch (error) {
 				console.error('SidebarSearch: Im.imChatFileGet: page request error', error);
 			}
-			return this.#processSearchResponse(responseData);
+			return this.#processSearchResponse(responseData, group);
 		}
-		#processSearchResponse(response) {
-			return this.updateModels(response).then(() => {
+		#processSearchResponse(response, group) {
+			return this.updateModels(response, group).then(() => {
 				return response.files.map(file => file.id);
 			});
 		}
-		updateModels(resultData) {
+		updateModels(resultData, group) {
 			const {
 				list,
 				users,
@@ -5223,20 +5445,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				sortedGroups[file.group].push(file);
 			});
 			const setSidebarFilesPromises = [];
-			Object.keys(sortedGroups).forEach(group => {
-				const listByType = sortedGroups[group];
+			Object.keys(sortedGroups).forEach(groupName => {
+				const listByType = sortedGroups[groupName];
 				setSidebarFilesPromises.push(this.store.dispatch('sidebar/files/setSearch', {
 					chatId: this.chatId,
 					files: listByType,
-					group
+					group: groupName
 				}), this.store.dispatch('sidebar/files/setHasNextPageSearch', {
 					chatId: this.chatId,
-					group,
+					group: groupName,
 					hasNextPage: listByType.length === REQUEST_ITEMS_LIMIT$5
 				}), this.store.dispatch('sidebar/files/setLastIdSearch', {
 					chatId: this.chatId,
-					group,
-					lastId: getLastElementId(listByType)
+					group: groupName,
+					...getPageCursor(listByType, usesDateOrder(group) && groupName === group)
 				}));
 			});
 			return Promise.all([setFilesPromise, addUsersPromise, historyLimitPromise, ...setSidebarFilesPromises]);
@@ -5255,8 +5477,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				LIMIT: REQUEST_ITEMS_LIMIT$5
 			};
 			const lastId = this.store.getters['sidebar/files/getSearchResultCollectionLastId'](this.chatId, group);
-			if (lastId > 0) {
+			if (!usesDateOrder(group)) {
+				if (lastId > 0) {
+					queryParams.LAST_ID = lastId;
+				}
+				return queryParams;
+			}
+
+			// the search over the tab goes by the same order and the same cursor, otherwise it shows the
+			// records in an order the tab itself does not have
+			queryParams.ORDER = {
+				...SidebarFileDateOrder
+			};
+			const lastDate = this.store.getters['sidebar/files/getSearchResultCollectionLastDate'](this.chatId, group);
+			// an incomplete pair is a wrong request, so the cursor goes in only once a page has come back
+			if (lastId > 0 && main_core.Type.isStringFilled(lastDate)) {
 				queryParams.LAST_ID = lastId;
+				queryParams.LAST_DATE = lastDate;
 			}
 			return queryParams;
 		}
@@ -5425,6 +5662,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.diskService = new im_v2_provider_service_disk.DiskService();
 		}
 		delete(sidebarFile) {
+			im_v2_lib_playback.PlaybackService.getInstanceIfCreated()?.handleFileDeleted(sidebarFile.fileId);
 			void this.store.dispatch('sidebar/files/delete', {
 				dialogId: sidebarFile.chatId,
 				id: sidebarFile.id
@@ -5449,7 +5687,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return [this.getOpenContextMessageItem(), this.getDownloadFileItem(), this.getSaveFileOnDiskItem(), this.getDeleteFileItem()];
 		}
 		getDownloadFileItem() {
-			if (!this.context.file.urlDownload) {
+			if (this.#isVideoNote() || !this.context.file.urlDownload) {
 				return null;
 			}
 			return {
@@ -5461,7 +5699,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getSaveFileOnDiskItem() {
-			if (!this.context.sidebarFile.fileId) {
+			if (this.#isVideoNote() || !this.context.sidebarFile.fileId) {
 				return null;
 			}
 			return {
@@ -5484,6 +5722,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					this.menuInstance.close();
 				}.bind(this)
 			};
+		}
+
+		// A video note has no download policy yet: both ways out stay closed until task 734392 brings one.
+		// A record outliving its Disk object has no file model behind it, and it is no video note either.
+		#isVideoNote() {
+			return Boolean(this.context.file?.isVideoNote);
 		}
 	}
 
@@ -5680,17 +5924,313 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-sidebar-file-audio-detail-item__container bx-im-sidebar-file-audio-detail-item__scope">
+		<div
+			class="bx-im-sidebar-file-audio-detail-item__container bx-im-sidebar-file-audio-detail-item__scope"
+			data-testid="im-sidebar-audio-item"
+		>
 			<AudioPlayer
 				:src="audioUrl"
 				:file="file"
 				:messageId="sidebarFileItem.messageId"
 				:authorId="sidebarFileItem.authorId"
-				:withPlaybackRateControl="true"
 				:withTranscription="false"
 				:playlistScope="PlaylistScope.sidebar"
 				@contextMenuClick="onContextMenuClick"
 			/>
+		</div>
+	`
+	};
+
+	// The activatable element of the row, the one the roving set of the tab is built from. Exported so
+	// that the filter of the focus zone names the same element the template does.
+	const VIDEO_NOTE_ROW_CLASS = 'bx-im-sidebar-file-video-note-detail-item__row';
+	const TYPE_ICON_SIZE = 22;
+	const PROCESSING_INDICATOR_SIZE = 'S';
+
+	// The transient statuses of an upload, listed one by one. `error` is not one of them: the record
+	// will not be processed any more, and the indicator of the design system spins without an end.
+	// A finished upload without an extracted frame is a missing preview, not processing either.
+	const PROCESSING_STATUSES = [im_v2_const.FileStatus.upload, im_v2_const.FileStatus.wait, im_v2_const.FileStatus.progress, im_v2_const.FileStatus.preparing];
+
+	/**
+	 * Row of a video note in the "Audio" tab. The tab offers no playback for it: the record has no
+	 * message model to feed a round player with, so a click goes to the message in the chat instead.
+	 * Having no player also keeps the row out of the tab playlist: the chain of voice records passes by.
+	 *
+	 * To the eye the row is the voice row of the same tab, and the block model below repeats the one of
+	 * `AudioPlayer` (`im.v2.component.elements.player`) element by element for that reason: the two are
+	 * meant to differ by the picture in the circle, by what a press does and by the items of the menu -
+	 * not by their metrics.
+	 */
+	// @vue/component
+	const VideoNoteDetailItem = {
+		name: 'VideoNoteDetailItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			MessageAvatar: im_v2_component_elements_avatar.MessageAvatar,
+			ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
+			Timeline: im_v2_component_elements_player.Timeline
+		},
+		directives: {
+			lazyload: ui_vue3_directives_lazyload.lazyload
+		},
+		props: {
+			fileItem: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			},
+			// the row carries no date of its own: it lives in the title of the date group above the row
+			dateText: {
+				type: String,
+				required: true
+			},
+			isTabActive: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['contextMenuClick'],
+		data() {
+			return {
+				videoDuration: 0,
+				isRowSeen: false
+			};
+		},
+		computed: {
+			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+			Outline: () => ui_iconSet_api_vue.Outline,
+			rowClass: () => VIDEO_NOTE_ROW_CLASS,
+			TYPE_ICON_SIZE: () => TYPE_ICON_SIZE,
+			PROCESSING_INDICATOR_SIZE: () => PROCESSING_INDICATOR_SIZE,
+			sidebarFileItem() {
+				return this.fileItem;
+			},
+			file() {
+				return this.$store.getters['files/get'](this.sidebarFileItem.fileId, true);
+			},
+			isProcessing() {
+				return PROCESSING_STATUSES.includes(this.file.status);
+			},
+			hasPreview() {
+				return main_core.Type.isStringFilled(this.file.urlPreview);
+			},
+			// The metadata request is the whole cost of the duration, and the list of the tab is not
+			// virtualised: a source handed to the browser right away is a request for every row of the page.
+			// So it waits for the row to be seen and leaves once the value is in — the source has nothing
+			// more to give.
+			hasDurationSource() {
+				return this.isRowSeen && this.videoDuration === 0 && !this.isProcessing && main_core.Type.isStringFilled(this.file.urlDownload);
+			},
+			fileSize() {
+				return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
+			},
+			durationText() {
+				return this.videoDuration > 0 ? im_v2_lib_utils.Utils.date.formatMediaDurationTime(this.videoDuration) : '--:--';
+			},
+			metaInfo() {
+				return `${this.fileSize}, ${this.durationText}`;
+			},
+			captionText() {
+				return this.isProcessing ? this.file.authorName : this.metaInfo;
+			},
+			processingStatusMap() {
+				// the row has no cancel action, so the ring shows the record type instead of a cross
+				return {
+					[this.file.status]: {
+						iconClass: ui_iconSet_api_vue.Outline.VIDEO_RECORD
+					}
+				};
+			},
+			// the type of the record, the round shape of the preview and the ring of the indicator are all
+			// visual: the name of the row is the only channel that carries them to a screen reader
+			accessibleName() {
+				const phraseCode = this.isProcessing ? 'IM_SIDEBAR_VIDEO_NOTE_ITEM_PROCESSING_ARIA_LABEL' : 'IM_SIDEBAR_VIDEO_NOTE_ITEM_ARIA_LABEL';
+				return this.loc(phraseCode, {
+					'#AUTHOR_NAME#': this.file.authorName,
+					'#DATE#': this.dateText
+				});
+			}
+		},
+		watch: {
+			// the record finishes processing on its own, with the focus never leaving where it is, so the
+			// change has nothing to carry it but an announcement. The tab left for another one keeps its
+			// rows mounted under KeepAlive, and what happens there is not on the screen to be announced.
+			isProcessing(isProcessing) {
+				if (isProcessing || !this.isTabActive) {
+					return;
+				}
+				ui_a11y.LiveAnnouncer.announce(this.accessibleName);
+			}
+		},
+		mounted() {
+			this.watchRowVisibility();
+		},
+		beforeUnmount() {
+			this.stopWatchingRowVisibility();
+		},
+		methods: {
+			watchRowVisibility() {
+				// without the observer the row behaves as it did before: the source is mounted right away
+				if (typeof IntersectionObserver === 'undefined') {
+					this.isRowSeen = true;
+					return;
+				}
+				this.rowObserver = new IntersectionObserver(entries => {
+					if (!entries.some(entry => entry.isIntersecting)) {
+						return;
+					}
+
+					// the row is seen once and for good: the duration is read a single time
+					this.isRowSeen = true;
+					this.stopWatchingRowVisibility();
+				});
+				this.rowObserver.observe(this.$refs.row);
+			},
+			stopWatchingRowVisibility() {
+				this.rowObserver?.disconnect();
+				this.rowObserver = null;
+			},
+			getProcessingStatuses() {
+				return PROCESSING_STATUSES;
+			},
+			onItemClick() {
+				this.getEmitter().emit(im_v2_const.EventType.dialog.goToMessageContext, {
+					messageId: this.sidebarFileItem.messageId,
+					dialogId: this.dialogId
+				});
+			},
+			onVideoMetadata() {
+				const duration = this.$refs.durationSource?.duration;
+				if (!Number.isFinite(duration) || duration <= 0) {
+					return;
+				}
+				this.videoDuration = duration;
+			},
+			onRowKeydown(event) {
+				// a div with `role="button"` gets no native activation by Enter and Space
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+
+				// Space would otherwise scroll the tab, Enter would otherwise leak into the chat input
+				event.preventDefault();
+				this.onItemClick();
+			},
+			onContextMenuClick(event) {
+				this.$emit('contextMenuClick', {
+					sidebarFile: this.sidebarFileItem,
+					file: this.file,
+					messageId: this.sidebarFileItem.messageId
+				}, event.currentTarget);
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
+		<div
+			class="bx-im-sidebar-file-video-note-detail-item__container bx-im-sidebar-file-video-note-detail-item__scope"
+		>
+			<!-- The menu button is a sibling of the activatable element, not its child: a focusable
+					 descendant of role="button" is presentational by ARIA (axe nested-interactive). -->
+			<div
+				ref="row"
+				:class="rowClass"
+				class="--focus-visible"
+				data-testid="im-sidebar-video-note-item"
+				role="button"
+				tabindex="-1"
+				:aria-label="accessibleName"
+				@click.stop="onItemClick"
+				@keydown="onRowKeydown"
+			>
+				<div class="bx-im-sidebar-file-video-note-detail-item__preview-wrap">
+					<div class="bx-im-sidebar-file-video-note-detail-item__preview">
+						<img
+							v-if="hasPreview"
+							v-lazyload
+							data-lazyload-dont-hide
+							:data-lazyload-src="file.urlPreview"
+							class="bx-im-sidebar-file-video-note-detail-item__frame"
+							data-testid="im-sidebar-video-note-item-preview"
+							alt=""
+						/>
+						<div
+							v-else
+							class="bx-im-sidebar-file-video-note-detail-item__type-icon"
+							data-testid="im-sidebar-video-note-item-type-icon"
+						>
+							<BIcon :name="Outline.VIDEO_RECORD" :size="TYPE_ICON_SIZE" />
+						</div>
+					</div>
+					<!-- The ring of the indicator is wider than the circle it surrounds, so it lies beside
+							 the clipped preview instead of inside it - the way the round message of the chat
+							 layers the same indicator over its player. -->
+					<div
+						v-if="isProcessing"
+						class="bx-im-sidebar-file-video-note-detail-item__processing"
+						data-testid="im-sidebar-video-note-item-processing"
+					>
+						<ProgressBar
+							:item="file"
+							:size="PROCESSING_INDICATOR_SIZE"
+							:handleStatus="getProcessingStatuses()"
+							:statusMap="processingStatusMap"
+						/>
+					</div>
+					<div class="bx-im-sidebar-file-video-note-detail-item__author-avatar">
+						<MessageAvatar
+							:messageId="sidebarFileItem.messageId"
+							:authorId="sidebarFileItem.authorId"
+							:size="AvatarSize.XS"
+							aria-hidden="true"
+						/>
+					</div>
+				</div>
+				<video
+					v-if="hasDurationSource"
+					ref="durationSource"
+					:src="file.urlDownload"
+					class="bx-im-sidebar-file-video-note-detail-item__duration-source"
+					preload="metadata"
+					@durationchange="onVideoMetadata"
+					@loadeddata="onVideoMetadata"
+					@loadedmetadata="onVideoMetadata"
+				></video>
+				<div class="bx-im-sidebar-file-video-note-detail-item__content">
+					<div class="bx-im-sidebar-file-video-note-detail-item__timeline">
+						<!-- The waveform is a sprite of five drawings, not the spectrum of this record: the
+								 row reads no samples and plays nothing. Being a picture, it stays away from a
+								 screen reader, and the processing of the record is drawn on the preview alone,
+								 so the shape of the row does not change under it. -->
+						<div
+							class="bx-im-sidebar-file-video-note-detail-item__waveform"
+							data-testid="im-sidebar-video-note-item-waveform"
+							aria-hidden="true"
+						>
+							<Timeline :timeCurrent="0" :timeTotal="0" :withSeeking="false" />
+						</div>
+						<div
+							class="bx-im-sidebar-file-video-note-detail-item__caption-text --ellipsis"
+							data-testid="im-sidebar-video-note-item-caption"
+						>{{ captionText }}</div>
+					</div>
+				</div>
+			</div>
+			<button
+				type="button"
+				class="bx-im-messenger__context-menu-icon bx-im-sidebar-file-video-note-detail-item__context-menu"
+				data-testid="im-sidebar-video-note-item-context-menu"
+				:aria-label="loc('IM_SIDEBAR_VIDEO_NOTE_ITEM_MENU_ARIA_LABEL')"
+				@click.stop="onContextMenuClick"
+			></button>
 		</div>
 	`
 	};
@@ -5703,6 +6243,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		components: {
 			DetailEmptyState,
 			AudioDetailItem,
+			VideoNoteDetailItem,
 			DateGroup,
 			StartState: DetailEmptyState,
 			DetailEmptySearchState,
@@ -5733,17 +6274,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		data() {
 			return {
-				isLoading: false,
-				minTokenSize: DEFAULT_MIN_TOKEN_SIZE$6
+				isLoadingFirstPage: false,
+				isLoadingNextPage: false,
+				minTokenSize: DEFAULT_MIN_TOKEN_SIZE$6,
+				isActive: true
 			};
 		},
 		computed: {
 			SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 			files() {
-				if (this.isSearch) {
-					return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileGroups.audio);
-				}
-				return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileGroups.audio);
+				const nameGetter = this.isSearch ? 'sidebar/files/getSearchResultCollection' : 'sidebar/files/get';
+				const collection = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileGroups.audio);
+
+				// the record of the panel outlives the Disk object it points at, and both kinds of row read
+				// the file itself: the shape of the row comes from there, and so does the url it plays
+				return collection.filter(fileItem => {
+					return this.$store.getters['files/isInCollection']({
+						fileId: fileItem.fileId
+					});
+				});
 			},
 			formattedCollection() {
 				return this.collectionFormatter.format(this.files);
@@ -5759,6 +6308,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			isSearchQueryMinimumSize() {
 				return this.searchQuery.length < this.minTokenSize;
+			},
+			// the first page and the next one are asked for by different entry points and can be in flight
+			// together: on a single flag the one finishing first takes the indicator away from the other
+			isLoading() {
+				return this.isLoadingFirstPage || this.isLoadingNextPage;
+			}
+		},
+		watch: {
+			// the tab lives under KeepAlive and is mounted once, so the first page skipped with the search
+			// open has nothing else left to ask for it
+			isSearch(isSearch) {
+				if (isSearch) {
+					return;
+				}
+				void this.loadFirstPage();
 			}
 		},
 		created() {
@@ -5773,8 +6337,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.contextMenu = new FileMenu({
 				emitter: this.getEmitter()
 			});
+			this.focusZone = null;
+		},
+		mounted() {
+			this.enableFocusZone();
+
+			// with the search open the list comes from the results of the search, so the main collection
+			// the first page would land in is not on the screen
+			if (this.isSearch) {
+				return;
+			}
+			void this.loadFirstPage();
+		},
+		// the panel keeps its tabs alive: a tab left for another one is not unmounted, so it has to give
+		// up its tab stop and take it back itself
+		activated() {
+			this.isActive = true;
+			this.enableFocusZone();
+		},
+		deactivated() {
+			this.isActive = false;
+			this.disableFocusZone();
 		},
 		beforeUnmount() {
+			this.destroyFocusZone();
 			this.collectionFormatter.destroy();
 			this.contextMenu.destroy();
 		},
@@ -5797,18 +6383,65 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const hasNextPage = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileGroups.audio);
 				return isAtThreshold && hasNextPage;
 			},
+			// A list of video note rows holds nothing focusable, which leaves the scrolling container, and
+			// the loading of the next page with it, unreachable by keyboard (axe: scrollable-region-focusable).
+			// The filter leaves the play button of a voice row and the menu button of a row out of the
+			// roving set: both are tab stops of their own.
+			enableFocusZone() {
+				const container = this.$refs.scrollContainer;
+				if (!container) {
+					return;
+				}
+				if (!this.focusZone) {
+					this.focusZone = im_v2_lib_a11y.createListFocusZone(container, {
+						focusableElementFilter: element => {
+							return element.classList.contains(VIDEO_NOTE_ROW_CLASS);
+						}
+					});
+				}
+				this.focusZone.activate();
+			},
+			disableFocusZone() {
+				this.focusZone?.deactivate();
+			},
+			destroyFocusZone() {
+				this.disableFocusZone();
+				this.focusZone = null;
+			},
+			// the tab asks the service for its own page: the boundary written by the initial load of the
+			// sidebar was counted in another order
+			async loadFirstPage() {
+				// mounting and the closing of the search both ask for the first page: a second request would
+				// go with the cursor of the one still in flight and replace the list twice
+				if (this.isLoadingFirstPage) {
+					return;
+				}
+				this.isLoadingFirstPage = true;
+				await this.service.loadFirstPage(im_v2_const.SidebarFileGroups.audio);
+				this.isLoadingFirstPage = false;
+
+				// the tab is opened by a click and loads its first page right away, so the answer arrives
+				// while the user is waiting for it: an empty tab has to say so, not just draw itself
+				if (this.isEmptyState) {
+					ui_a11y.LiveAnnouncer.announce(this.loc('IM_SIDEBAR_AUDIO_EMPTY_MSGVER_1'));
+				}
+			},
 			async onScroll(event) {
 				this.contextMenu.destroy();
 				if (this.isLoading || !this.needToLoadNextPage(event)) {
 					return;
 				}
-				this.isLoading = true;
+				this.isLoadingNextPage = true;
 				if (this.isSearchQueryMinimumSize) {
 					await this.service.loadNextPage(im_v2_const.SidebarFileGroups.audio);
 				} else {
 					await this.serviceSearch.loadNextPage(im_v2_const.SidebarFileGroups.audio, this.searchQuery);
 				}
-				this.isLoading = false;
+				this.isLoadingNextPage = false;
+			},
+			isVideoNote(fileItem) {
+				// the shape of the preview follows the file, not the server-side subtype of the record
+				return this.$store.getters['files/get'](fileItem.fileId, true).isVideoNote;
 			},
 			getEmitter() {
 				return this.$Bitrix.eventEmitter;
@@ -5818,19 +6451,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-sidebar-file-audio-detail__scope bx-im-sidebar-detail__container" @scroll="onScroll">
+		<div
+			ref="scrollContainer"
+			class="bx-im-sidebar-file-audio-detail__scope bx-im-sidebar-detail__container"
+			data-testid="im-sidebar-audio-tab"
+			@scroll="onScroll"
+		>
 			<div
 				v-for="dateGroup in formattedCollection"
 				:key="dateGroup.dateGroupTitle"
 				class="bx-im-sidebar-file-audio-detail__date-group_container"
+				data-testid="im-sidebar-audio-tab-date-group"
 			>
 				<DateGroup :dateText="dateGroup.dateGroupTitle" />
-				<AudioDetailItem
-					v-for="file in dateGroup.items"
-					:key="file.id"
-					:fileItem="file"
-					@contextMenuClick="onContextMenuClick"
-				/>
+				<template v-for="file in dateGroup.items" :key="file.id">
+					<VideoNoteDetailItem
+						v-if="isVideoNote(file)"
+						:fileItem="file"
+						:dialogId="dialogId"
+						:dateText="dateGroup.dateGroupTitle"
+						:isTabActive="isActive"
+						@contextMenuClick="onContextMenuClick"
+					/>
+					<AudioDetailItem
+						v-else
+						:fileItem="file"
+						@contextMenuClick="onContextMenuClick"
+					/>
+				</template>
 			</div>
 			<template v-if="!isLoading && !isLoadingSearch">
 				<template v-if="isSearch">
@@ -5838,20 +6486,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						v-if="searchQuery.length === 0"
 						:title="loc('IM_SIDEBAR_SEARCH_RESULT_START_TITLE')"
 						:iconType="SidebarDetailBlock.messageSearch"
+						data-testid="im-sidebar-audio-tab-search-start"
 					/>
 					<DetailEmptySearchState
 						v-else-if="isEmptyState"
 						:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
 						:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+						data-testid="im-sidebar-audio-tab-search-empty"
 					/>
 				</template>
 				<DetailEmptyState
 					v-else-if="isEmptyState"
-					:title="loc('IM_SIDEBAR_AUDIO_EMPTY')"
+					:title="loc('IM_SIDEBAR_AUDIO_EMPTY_MSGVER_1')"
 					:iconType="SidebarDetailBlock.audio"
+					data-testid="im-sidebar-audio-tab-empty"
 				/>
 			</template>
-			<Loader v-if="isLoading || isLoadingSearch" class="bx-im-sidebar-detail__loader-container" />
+			<Loader
+				v-if="isLoading || isLoadingSearch"
+				class="bx-im-sidebar-detail__loader-container"
+				data-testid="im-sidebar-audio-tab-loader"
+			/>
 		</div>
 	`
 	};
@@ -7581,6 +8236,131 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	class MembersMenu extends im_v2_lib_menu.UserMenu {
+		constructor(applicationContext) {
+			super(applicationContext);
+			this.chatService = new im_v2_provider_service_chat.ChatService();
+			this.callManager = im_v2_lib_call.CallManager.getInstance();
+			this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+		}
+		getMenuItems() {
+			if (this.context.user.id === im_v2_application_core.Core.getUserId()) {
+				return [this.getProfileItem(), this.getOpenUserCalendarItem(), this.getLeaveItem()];
+			}
+			return [this.getMentionItem(), this.getSendItem(), this.getManagerItem(), this.getCallItem(), this.getProfileItem(), this.getOpenUserCalendarItem(), this.getKickItem()];
+		}
+		getManagerItem() {
+			if (this.isGuest()) {
+				return null;
+			}
+			const isOwner = this.context.user.id === this.context.dialog.ownerId;
+			const canChangeManagers = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.changeManagers, this.context.dialog.dialogId);
+			if (isOwner || !canChangeManagers) {
+				return null;
+			}
+			const isManager = this.context.dialog.managerList.includes(this.context.user.id);
+			return {
+				title: isManager ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE_MSGVER_1') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD_MSGVER_1'),
+				onClick: () => {
+					if (isManager) {
+						this.chatService.removeManager(this.context.dialog.dialogId, this.context.user.id);
+					} else {
+						this.chatService.addManager(this.context.dialog.dialogId, this.context.user.id);
+					}
+					this.menuInstance.close();
+				}
+			};
+		}
+		getCallItem() {
+			const userDialogId = this.context.user.id.toString();
+			const chatCanBeCalled = this.callManager.chatCanBeCalled(userDialogId);
+			const chatIsAllowedToCall = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.call, userDialogId);
+			if (!chatCanBeCalled || !chatIsAllowedToCall) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_MENU_CALL_2'),
+				onClick: () => {
+					this.callManager.startCall(userDialogId);
+					this.menuInstance.close();
+				}
+			};
+		}
+		getOpenUserCalendarItem() {
+			if (this.isBot() || this.isGuest() || this.isCurrentUserGuest()) {
+				return null;
+			}
+			const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.user.id);
+			const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
+			const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_CALENDAR' : 'IM_LIB_MENU_OPEN_CALENDAR_V2';
+			return {
+				title: main_core.Loc.getMessage(phraseCode),
+				onClick: () => {
+					BX.SidePanel.Instance.open(profileUri);
+					this.menuInstance.close();
+				}
+			};
+		}
+		getLeaveItem() {
+			if (this.isCollabChat() && !this.canLeaveCollab()) {
+				return null;
+			}
+			const canLeaveChat = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.leave, this.context.dialog.dialogId);
+			if (!canLeaveChat) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
+				onClick: async () => {
+					this.menuInstance.close();
+					const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(this.context.dialog.dialogId);
+					if (!userChoice) {
+						return;
+					}
+					if (this.isCollabChat()) {
+						this.chatService.leaveCollab(this.context.dialog.dialogId);
+					} else {
+						this.chatService.leaveChat(this.context.dialog.dialogId);
+					}
+				}
+			};
+		}
+		isBot() {
+			return this.context.user.type === im_v2_const.UserType.bot;
+		}
+		canLeaveCollab() {
+			return this.permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.leaveCollab);
+		}
+	}
+
+	/**
+	 * Client-side members filter. Pure function: keeps the source order (server sort) and
+	 * matches the query against both the member name AND the member position, case-insensitively.
+	 * An empty query returns the full list unchanged.
+	 *
+	 * @param {MemberSearchItem[]} members ordered members list (server order)
+	 * @param {string} query raw search query
+	 * @returns {MemberSearchItem[]} filtered members preserving the source order
+	 */
+	function filterMembers(members, query) {
+		if (!Array.isArray(members)) {
+			return [];
+		}
+		const preparedQuery = (query ?? '').trim().toLowerCase();
+		if (preparedQuery.length === 0) {
+			return members;
+		}
+		return members.filter(member => {
+			const name = (member?.name ?? '').toLowerCase();
+			const position = (member?.position ?? '').toLowerCase();
+
+			// Whole-query substring match, intentionally stricter than the per-word highlighting: a member
+			// is kept only when the full query is a substring of the name or the position (so a multi-word
+			// query is not split across fields). Keep this in mind if the highlighting ever looks broader.
+			return name.includes(preparedQuery) || position.includes(preparedQuery);
+		});
+	}
+
 	// @vue/component
 	const DetailUser = {
 		name: 'DetailUser',
@@ -7712,131 +8492,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	/**
-	 * Client-side members filter. Pure function: keeps the source order (server sort) and
-	 * matches the query against both the member name AND the member position, case-insensitively.
-	 * An empty query returns the full list unchanged.
-	 *
-	 * @param {MemberSearchItem[]} members ordered members list (server order)
-	 * @param {string} query raw search query
-	 * @returns {MemberSearchItem[]} filtered members preserving the source order
-	 */
-	function filterMembers(members, query) {
-		if (!Array.isArray(members)) {
-			return [];
-		}
-		const preparedQuery = (query ?? '').trim().toLowerCase();
-		if (preparedQuery.length === 0) {
-			return members;
-		}
-		return members.filter(member => {
-			const name = (member?.name ?? '').toLowerCase();
-			const position = (member?.position ?? '').toLowerCase();
-
-			// Whole-query substring match, intentionally stricter than the per-word highlighting: a member
-			// is kept only when the full query is a substring of the name or the position (so a multi-word
-			// query is not split across fields). Keep this in mind if the highlighting ever looks broader.
-			return name.includes(preparedQuery) || position.includes(preparedQuery);
-		});
-	}
-
-	class MembersMenu extends im_v2_lib_menu.UserMenu {
-		constructor(applicationContext) {
-			super(applicationContext);
-			this.chatService = new im_v2_provider_service_chat.ChatService();
-			this.callManager = im_v2_lib_call.CallManager.getInstance();
-			this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
-		}
-		getMenuItems() {
-			if (this.context.user.id === im_v2_application_core.Core.getUserId()) {
-				return [this.getProfileItem(), this.getOpenUserCalendarItem(), this.getLeaveItem()];
-			}
-			return [this.getMentionItem(), this.getSendItem(), this.getManagerItem(), this.getCallItem(), this.getProfileItem(), this.getOpenUserCalendarItem(), this.getKickItem()];
-		}
-		getManagerItem() {
-			if (this.isGuest()) {
-				return null;
-			}
-			const isOwner = this.context.user.id === this.context.dialog.ownerId;
-			const canChangeManagers = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.changeManagers, this.context.dialog.dialogId);
-			if (isOwner || !canChangeManagers) {
-				return null;
-			}
-			const isManager = this.context.dialog.managerList.includes(this.context.user.id);
-			return {
-				title: isManager ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD'),
-				onClick: () => {
-					if (isManager) {
-						this.chatService.removeManager(this.context.dialog.dialogId, this.context.user.id);
-					} else {
-						this.chatService.addManager(this.context.dialog.dialogId, this.context.user.id);
-					}
-					this.menuInstance.close();
-				}
-			};
-		}
-		getCallItem() {
-			const userDialogId = this.context.user.id.toString();
-			const chatCanBeCalled = this.callManager.chatCanBeCalled(userDialogId);
-			const chatIsAllowedToCall = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.call, userDialogId);
-			if (!chatCanBeCalled || !chatIsAllowedToCall) {
-				return null;
-			}
-			return {
-				title: main_core.Loc.getMessage('IM_LIB_MENU_CALL_2'),
-				onClick: () => {
-					this.callManager.startCall(userDialogId);
-					this.menuInstance.close();
-				}
-			};
-		}
-		getOpenUserCalendarItem() {
-			if (this.isBot() || this.isGuest() || this.isCurrentUserGuest()) {
-				return null;
-			}
-			const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.user.id);
-			const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
-			const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_CALENDAR' : 'IM_LIB_MENU_OPEN_CALENDAR_V2';
-			return {
-				title: main_core.Loc.getMessage(phraseCode),
-				onClick: () => {
-					BX.SidePanel.Instance.open(profileUri);
-					this.menuInstance.close();
-				}
-			};
-		}
-		getLeaveItem() {
-			if (this.isCollabChat() && !this.canLeaveCollab()) {
-				return null;
-			}
-			const canLeaveChat = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.leave, this.context.dialog.dialogId);
-			if (!canLeaveChat) {
-				return null;
-			}
-			return {
-				title: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
-				onClick: async () => {
-					this.menuInstance.close();
-					const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(this.context.dialog.dialogId);
-					if (!userChoice) {
-						return;
-					}
-					if (this.isCollabChat()) {
-						this.chatService.leaveCollab(this.context.dialog.dialogId);
-					} else {
-						this.chatService.leaveChat(this.context.dialog.dialogId);
-					}
-				}
-			};
-		}
-		isBot() {
-			return this.context.user.type === im_v2_const.UserType.bot;
-		}
-		canLeaveCollab() {
-			return this.permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.leaveCollab);
-		}
-	}
-
 	const MemberTitleByChatType = {
 		[im_v2_const.ChatType.channel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
 		[im_v2_const.ChatType.openChannel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
@@ -7958,6 +8613,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			addMembersPopupComponent() {
 				return this.isCollab ? im_v2_component_entitySelector.AddToCollab : im_v2_component_entitySelector.AddToChat;
 			},
+			menuClass() {
+				const sidebarConfig = im_v2_lib_sidebar.SidebarManager.getInstance().getConfig(this.dialogId);
+				return sidebarConfig.getMembersMenuClass() ?? MembersMenu;
+			},
 			addPopupConfig() {
 				// The add-members icon sits at the right edge of the sidebar; AddToChat/AddToCollab
 				// content is ~400px, wider than the 320px sidebar. With offsetLeft 0 the popup would
@@ -7971,6 +8630,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		watch: {
+			menuClass() {
+				this.contextMenu.destroy();
+				this.createContextMenu();
+			},
 			dialogId(dialogId) {
 				this.isSearchHeaderOpened = false;
 				this.searchQuery = '';
@@ -8001,9 +8664,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		created() {
-			this.contextMenu = new MembersMenu({
-				emitter: this.getEmitter()
-			});
+			this.createContextMenu();
 			this.service = new MembersService({
 				dialogId: this.dialogId
 			});
@@ -8013,6 +8674,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.contextMenu.destroy();
 		},
 		methods: {
+			createContextMenu() {
+				const applicationContext = {
+					emitter: this.getEmitter()
+				};
+				const MenuClass = this.menuClass;
+				this.contextMenu = new MenuClass(applicationContext);
+			},
 			async loadFirstPage() {
 				if (this.panelInited || this.isLoading) {
 					return;
@@ -8822,7 +9490,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					messageId: this.messageId,
 					dialogId: this.dialogId
 				});
-				im_v2_lib_analytics.Analytics.getInstance().messageSearch.onSearchResultClick(this.dialogId);
+				im_v2_lib_analytics.Analytics.getInstance().messageSearch.onSearchResultClick(this.dialogId, this.message.date);
 			},
 			onMessageBodyClick(event) {
 				if (event.target.tagName === 'A') {
@@ -8869,6 +9537,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// @vue/component
 	const SearchHeader = {
 		name: 'SearchHeader',
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
 		components: {
 			SearchInput: im_v2_component_elements_searchInput.SearchInput,
 			BIcon: ui_iconSet_api_vue.BIcon
@@ -8877,19 +9548,73 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			secondLevel: {
 				type: Boolean,
 				default: false
+			},
+			isDateNavigationOpened: {
+				type: Boolean,
+				default: false
+			},
+			// the calendar is on its way and nothing of it is drawn yet: the button is busy, not expanded
+			isDateNavigationLoading: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['back', 'changeQuery'],
+		emits: ['back', 'changeQuery', 'dateNavigationClick'],
 		computed: {
 			Outline: () => ui_iconSet_api_vue.Outline,
-			ICON_SIZE: () => ICON_SIZE
+			ICON_SIZE: () => ICON_SIZE,
+			isDateNavigationAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMessageDateNavigationAvailable);
+			},
+			dateNavigationTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_TITLE');
+			},
+			// The leading button carries an icon alone, and the same button leaves the second level of the
+			// panel and closes the panel on the first one: a screen reader has to tell those two apart.
+			backTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_SEARCH_MESSAGE_BACK_ARIA');
+			},
+			closeTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_SEARCH_MESSAGE_CLOSE_ARIA');
+			}
+		},
+		watch: {
+			// The calendar is a dialog and takes the focus when it opens, while the search field focuses
+			// itself with a delay. The divider entry asks for both in one go, so that delayed focus would
+			// pull the focus out of the already open dialog.
+			isDateNavigationOpened(isOpened) {
+				if (isOpened) {
+					this.$refs.searchInput.cancelFocusOnStart();
+				}
+			},
+			// The wait for the extension outlasts that delayed focus, so the cancellation cannot wait for
+			// the dialog to exist: the field would take the focus and lose it again a moment later.
+			isDateNavigationLoading(isLoading) {
+				if (isLoading) {
+					this.$refs.searchInput.cancelFocusOnStart();
+				}
+			}
+		},
+		methods: {
+			// The popup binds to this button whichever entry opened it - the button, the day divider, a
+			// repeat after a failure - so the header owns the element and reports it on demand.
+			getDateNavigationTarget() {
+				return this.$refs['date-navigation'] ?? null;
+			},
+			// An opening that drew nothing leaves the focus where the click left it; the button is the place
+			// both entries can ask again from.
+			focusDateNavigation() {
+				this.$refs['date-navigation']?.focus();
+			}
 		},
 		template: `
 		<div class="bx-im-sidebar-search-header__container bx-im-sidebar-search-header__scope">
 			<div class="bx-im-sidebar-search-header__title-container">
 				<button
 					v-if="secondLevel"
+					type="button"
 					class="bx-im-sidebar-search-header__ds-icon"
+					:aria-label="backTitle"
 					@click="$emit('back')"
 					data-testid="im-sidebar-search-header-back-button"
 				>
@@ -8897,13 +9622,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</button>
 				<button
 					v-else
+					type="button"
 					class="bx-im-sidebar-search-header__ds-icon"
+					:aria-label="closeTitle"
 					@click="$emit('back')"
 					data-testid="im-sidebar-search-header-close-button"
 				>
 					<BIcon :name="Outline.CROSS_L" :size="ICON_SIZE" />
 				</button>
 				<SearchInput
+					ref="searchInput"
 					:placeholder="$Bitrix.Loc.getMessage('IM_SIDEBAR_SEARCH_MESSAGE_PLACEHOLDER')"
 					:withIcon="false"
 					:delayForFocusOnStart="300"
@@ -8912,8 +9640,91 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					class="bx-im-sidebar-search-header__input"
 				/>
 			</div>
+			<button
+				v-if="isDateNavigationAvailable"
+				ref="date-navigation"
+				type="button"
+				class="bx-im-sidebar-search-header__ds-icon"
+				:aria-label="dateNavigationTitle"
+				aria-haspopup="dialog"
+				:aria-expanded="isDateNavigationOpened ? 'true' : 'false'"
+				:aria-busy="isDateNavigationLoading ? 'true' : 'false'"
+				v-hint="dateNavigationTitle"
+				@click="$emit('dateNavigationClick')"
+				data-testid="im-sidebar-search-header-date-navigation-button"
+			>
+				<BIcon :name="Outline.CALENDAR" :size="ICON_SIZE" />
+			</button>
 		</div>
 	`
+	};
+
+	/* global $Values */
+	// ui.date-picker is needed by the calendar alone, and the panel loads for everyone who opens the
+	// messenger: hence a separate extension, arriving with the first opening.
+	const DATE_CALENDAR_EXTENSION = 'im.v2.component.elements.date-calendar';
+	const DATE_NAVIGATION_NOTIFICATION_ID = 'im-date-navigation-error';
+	const DATE_NAVIGATION_ERROR_TEST_ID = 'im-sidebar-search-date-navigation-error';
+	const DATE_NAVIGATION_RETRY_TEST_ID = 'im-sidebar-search-date-navigation-retry-button';
+
+	// The bound is for a jump no message list reported on at all, so it sits behind the one the list gives
+	// itself up by. It comes off once a chat says it has taken the jump on.
+	const DATE_NAVIGATION_JUMP_TIMEOUT = im_v2_const.DateNavigationJumpTimeout.panelWait;
+
+	/**
+	 * main.core answers loading with a promise that can stay pending forever: the request for the asset list
+	 * is retried outside any catch of its own (main/.../runtime/loadextension/internal/process-extensions.ts,
+	 * under a bare `void`). Bounded here is the wait, not the loading.
+	 */
+	const CALENDAR_LOAD_TIMEOUT = 15000;
+
+	// A calendar already there a moment later needs no announcement; a wait long enough to look like a
+	// dead button does.
+	const CALENDAR_LOAD_ANNOUNCE_DELAY = 400;
+
+	// The loading goes on untouched: its answer still counts for the opening after this one.
+	const waitAtMost = (promise, timeout) => {
+		let timer = null;
+		const deadline = new Promise((resolve, reject) => {
+			timer = setTimeout(() => {
+				reject(new Error(`${DATE_CALENDAR_EXTENSION} did not answer in ${timeout}ms`));
+			}, timeout);
+		});
+		return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
+	};
+	/**
+	 * Names one jump. The same day picked twice resolves to the same message, so chat, message and day
+	 * cannot tell two jumps apart - only the side starting them can, and the message list carries the
+	 * identifier through to the outcome. Counted per page: two panels of their own would name jumps alike.
+	 */
+	let lastDateNavigationJumpId = 0;
+
+	// The day the list is on its way to, and the day picked for it: a repeat asks about the picked one.
+
+	// Names one showing: the sidebar keeps the panel alive between showings, so the waits outlive a showing
+	// the way they outlive the panel. Zero while none is on screen.
+	let lastPanelShowingId = 0;
+
+	// Decided by the request itself, so a repeat of the same request answers the same code.
+	const FINAL_ERROR_CODES = new Set([im_v2_provider_service_dateNavigation.DateNavigationErrorCode.NotAvailable, im_v2_provider_service_dateNavigation.DateNavigationErrorCode.WrongDateFormat, im_v2_provider_service_dateNavigation.DateNavigationErrorCode.WrongRange, im_v2_provider_service_dateNavigation.DateNavigationErrorCode.WrongTimezone]);
+
+	// More than one list can be subscribed at once (a channel and the comments opened over it).
+	const firstFilledAnswer = answers => {
+		return answers.find(answer => main_core.Type.isStringFilled(answer)) ?? '';
+	};
+
+	// An empty tail of the history is a regular answer, not a failure: own wording, no retry.
+	const getDateNavigationErrorText = errorCode => {
+		if (errorCode === im_v2_provider_service_dateNavigation.DateNavigationErrorCode.MessageNotFound) {
+			return {
+				phraseCode: 'IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_EMPTY_ERROR',
+				canRetry: false
+			};
+		}
+		return {
+			phraseCode: 'IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_REQUEST_ERROR',
+			canRetry: !FINAL_ERROR_CODES.has(errorCode)
+		};
 	};
 
 	// @vue/component
@@ -8944,7 +9755,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				isLoading: false,
 				searchResult: [],
 				currentServerQueries: 0,
-				wasSearchStarted: false
+				wasSearchStarted: false,
+				isCalendarOpened: false,
+				// the calendar is on its way and nothing is drawn yet: the button is busy, not expanded
+				isCalendarLoading: false,
+				// remembered for the whole life of the panel, so only the first opening waits
+				calendarComponent: null,
+				calendarTarget: null,
+				calendarSelectedDate: '',
+				calendarViewDate: '',
+				calendarEntryPoint: im_v2_lib_analytics.DateNavigationEntryPoint.search
 			};
 		},
 		computed: {
@@ -8969,6 +9789,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			hasHistoryLimit() {
 				return this.$store.getters['sidebar/messageSearch/isHistoryLimitExceeded'](this.chatId);
+			},
+			isDateNavigationAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMessageDateNavigationAvailable);
 			}
 		},
 		watch: {
@@ -8985,10 +9808,65 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.service = new MessageSearch({
 				dialogId: this.dialogId
 			});
+			// the only service of this dialog: the same instance goes to the calendar, which keeps its markup in it
+			this.dateNavigationService = this.isDateNavigationAvailable ? new im_v2_provider_service_dateNavigation.DateNavigationService(this.dialogId) : null;
 			this.collectionFormatter = new SidebarCollectionFormatter();
 			this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 500, this);
+			// the jump started by the last picked day, and the bound of the wait for its outcome
+			this.pendingDateNavigationJump = null;
+			this.dateNavigationJumpTimer = null;
+			// the loading of the calendar extension while it is in flight
+			this.calendarComponentLoad = null;
+			/**
+			 * The panel is gone for good. A panel merely off screen keeps the calendar it loaded and still answers
+			 * for the jump it started; a panel that is gone keeps nothing and answers for nothing, and the flag is
+			 * never switched back.
+			 */
+			this.isPanelDestroyed = false;
+			// the showing on screen now, zero while none is
+			this.panelShowingId = 0;
+			/**
+			 * How many jumps this chat has been sent on, counted while the picked day is being resolved. The
+			 * calendar closes on the pick, so the whole wait is open to anything else the user does - and an answer
+			 * applied after one of those would undo a move made later and on purpose.
+			 */
+			this.dateResolveGeneration = 0;
+		},
+		mounted() {
+			this.startPanelShowing();
+			if (!this.isDateNavigationAvailable) {
+				return;
+			}
+			this.getEmitter().subscribe(im_v2_const.EventType.sidebar.openDateNavigation, this.onDateNavigationRequest);
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.dateNavigationJumpFinished, this.onDateNavigationJumpFinished);
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.messageContextJumpStarted, this.onMessageContextJumpStarted);
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.dateNavigationContextApplying, this.onDateNavigationContextApplying);
+			void this.takePendingDateNavigation();
+		},
+		// KeepAlive in sidebar-panel.js: the first showing is a mount, every next one an activation.
+		activated() {
+			this.startPanelShowing();
+			if (!this.isDateNavigationAvailable) {
+				return;
+			}
+			void this.takePendingDateNavigation();
+		},
+		// Everything asked of this showing ends with it; what the panel loaded stays.
+		deactivated() {
+			this.endPanelShowing();
 		},
 		beforeUnmount() {
+			// before anything else: the waits in flight are given up by the flag and the name of the showing
+			this.isPanelDestroyed = true;
+			this.endPanelShowing();
+
+			// unconditionally, unlike the subscription: a flag switched off within the session would leave the
+			// handlers of a destroyed panel in the emitter
+			this.getEmitter().unsubscribe(im_v2_const.EventType.sidebar.openDateNavigation, this.onDateNavigationRequest);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.dateNavigationJumpFinished, this.onDateNavigationJumpFinished);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.messageContextJumpStarted, this.onMessageContextJumpStarted);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.dateNavigationContextApplying, this.onDateNavigationContextApplying);
+			this.forgetDateNavigationJump();
 			this.collectionFormatter.destroy();
 		},
 		methods: {
@@ -9058,6 +9936,411 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onChangeQuery(query) {
 				this.searchQuery = query;
 			},
+			// Vue calls both hooks on the first showing, and one showing keeps one name: renaming here would make
+			// the request the mount is taking look like an answer of a showing already over.
+			startPanelShowing() {
+				this.panelShowingId ||= ++lastPanelShowingId;
+			},
+			// An opened calendar would otherwise come back with the next showing as the answer to a click abandoned
+			// long before. The loading behind the busy button goes on, remembered for the next opening.
+			endPanelShowing() {
+				this.panelShowingId = 0;
+				this.isCalendarLoading = false;
+				this.onCalendarClose();
+			},
+			async onDateNavigationClick() {
+				// the showing this click belongs to: the message list answers a microtask later at the earliest
+				const showingId = this.panelShowingId;
+				const viewDate = await this.getTopVisibleDate();
+				if (this.panelShowingId !== showingId) {
+					return;
+				}
+				this.openCalendarOnHeaderButton('', im_v2_lib_analytics.DateNavigationEntryPoint.search, viewDate);
+			},
+			// The month is the one of the messages the user sees, and that day belongs to the message list. An empty
+			// answer is the current month - not an error.
+			async getTopVisibleDate() {
+				const answers = await this.getEmitter().emitAsync(im_v2_const.EventType.dialog.getTopVisibleDate, {
+					dialogId: this.dialogId
+				});
+
+				// a panel not on screen has no calendar to build, and every caller already handles the empty answer
+				if (!this.panelShowingId) {
+					return '';
+				}
+				return firstFilledAnswer(answers);
+			},
+			// The second entry is the day divider. The answer reports whether the calendar opened, so a panel that
+			// found nothing to open it on does not cost the list the request it still keeps.
+			onDateNavigationRequest(event) {
+				const {
+					dialogId,
+					date
+				} = event.getData();
+				if (dialogId !== this.dialogId) {
+					return false;
+				}
+				return this.openCalendarOnHeaderButton(date, im_v2_lib_analytics.DateNavigationEntryPoint.dateDivider);
+			},
+			// The list keeps the request until a panel takes it, so this entry does not depend on the flush the
+			// panel appears in.
+			async takePendingDateNavigation() {
+				const showingId = this.panelShowingId;
+				const answers = await this.getEmitter().emitAsync(im_v2_const.EventType.dialog.getPendingDateNavigation, {
+					dialogId: this.dialogId
+				});
+
+				// the list hands the request over once and forgets it, so a showing that ended drops it, and
+				// one that came back asked the list for itself
+				if (this.panelShowingId !== showingId) {
+					return;
+				}
+				const date = firstFilledAnswer(answers);
+				if (!date) {
+					return;
+				}
+				this.openCalendarOnHeaderButton(date, im_v2_lib_analytics.DateNavigationEntryPoint.dateDivider);
+			},
+			// The header owns the element every entry binds the popup to; no button (feature off) means no opening.
+			openCalendarOnHeaderButton(selectedDate, entryPoint, viewDate = '') {
+				// The panel goes on listening off screen, and a calendar opened now would be drawn where nobody sees it.
+				if (!this.panelShowingId) {
+					return false;
+				}
+				const target = this.$refs.searchHeader?.getDateNavigationTarget();
+				if (!target) {
+					im_v2_lib_logger.Logger.warn('MessageSearchPanel: nothing to bind the date navigation calendar to', this.dialogId);
+					return false;
+				}
+				void this.openCalendar(target, selectedDate, entryPoint, viewDate);
+				return true;
+			},
+			// The day is fixed when the picker is built, and the click that brought the request here already
+			// asked that popup to close itself.
+			async openCalendar(target, selectedDate, entryPoint, viewDate) {
+				// neither dropping the picker nor waiting for the extension is instant
+				const showingId = this.panelShowingId;
+				if (this.isCalendarOpened) {
+					this.isCalendarOpened = false;
+					await this.$nextTick();
+					if (this.panelShowingId !== showingId) {
+						return;
+					}
+				}
+				this.calendarTarget = target;
+				this.calendarSelectedDate = selectedDate;
+				this.calendarViewDate = viewDate;
+				this.calendarEntryPoint = entryPoint;
+
+				// set after the wait: before it, aria-expanded said "expanded" over an empty screen
+				const calendarComponent = await this.waitForCalendarComponent();
+
+				// The showing ended while the extension was on its way. What it brought is kept regardless - it is
+				// remembered by the loading, not by this opening.
+				if (this.panelShowingId !== showingId) {
+					return;
+				}
+				if (calendarComponent) {
+					this.isCalendarOpened = true;
+					return;
+				}
+
+				// Nothing was drawn, so the opening ends the way a failed jump does and without bringing the calendar
+				// back - that is the very thing that has just failed. The focus goes where asking again starts from.
+				this.onCalendarClose();
+				this.showCalendarLoadError();
+				this.focusDateNavigationButton();
+			},
+			// The button reports itself busy at once, and a wait that drags on is spoken as well: on a bad line
+			// main.core retries the loading for about ten seconds before it gives up.
+			async waitForCalendarComponent() {
+				if (this.calendarComponent) {
+					return this.calendarComponent;
+				}
+				const showingId = this.panelShowingId;
+				this.isCalendarLoading = true;
+				const announceTimer = setTimeout(() => {
+					// the live region belongs to the document, not to this panel
+					if (this.panelShowingId !== showingId) {
+						return;
+					}
+					ui_a11y.LiveAnnouncer.announce(this.loc('IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_LOADING'));
+				}, CALENDAR_LOAD_ANNOUNCE_DELAY);
+				try {
+					return await this.loadCalendarComponent();
+				} finally {
+					clearTimeout(announceTimer);
+					// the busy button belongs to the panel and not to one showing of it
+					if (!this.isPanelDestroyed) {
+						this.isCalendarLoading = false;
+					}
+				}
+			},
+			/**
+			 * Remembered until the panel is gone; two openings in a row share the loading in flight.
+			 * A refused loading is forgotten here, but main.core keeps the rejected promise under the same name, so
+			 * the opening after a refusal gets that same refusal back without a request - hence the wording.
+			 */
+			async loadCalendarComponent() {
+				if (this.calendarComponent) {
+					return this.calendarComponent;
+				}
+				this.calendarComponentLoad ??= main_core.Runtime.loadExtension(DATE_CALENDAR_EXTENSION);
+				try {
+					const {
+						DateCalendar
+					} = await waitAtMost(this.calendarComponentLoad, CALENDAR_LOAD_TIMEOUT);
+
+					// the extension arrived for a panel that is gone: main.core keeps it for the next panel,
+					// and a panel merely off screen does remember it
+					if (this.isPanelDestroyed) {
+						return null;
+					}
+					if (!DateCalendar) {
+						throw new Error(`${DATE_CALENDAR_EXTENSION} brought no calendar component`);
+					}
+					this.calendarComponent = DateCalendar;
+				} catch (error) {
+					// not forgotten for a panel that is gone: it is a field of this panel alone
+					if (this.isPanelDestroyed) {
+						return null;
+					}
+					this.calendarComponentLoad = null;
+					im_v2_lib_logger.Logger.warn('MessageSearchPanel: date navigation calendar did not load', error);
+					return null;
+				}
+				return this.calendarComponent;
+			},
+			// the panel is open in both entries whenever the feature is on, so the button is always there
+			focusDateNavigationButton() {
+				this.$refs.searchHeader?.focusDateNavigation();
+			},
+			// the entry point outlives the closed calendar: a retry reports the entry the user came from
+			onCalendarClose() {
+				this.isCalendarOpened = false;
+				this.calendarTarget = null;
+				this.calendarSelectedDate = '';
+				this.calendarViewDate = '';
+			},
+			// The calendar closes itself on the pick, so the jump lives here and outlives both picker and request.
+			async onCalendarDaySelect(payload) {
+				im_v2_lib_analytics.Analytics.getInstance().messageSearch.onGoToDate({
+					dialogId: this.dialogId,
+					entryPoint: this.calendarEntryPoint,
+					day: payload.date
+				});
+
+				// taken before the request goes out and compared when it comes back
+				const generation = this.dateResolveGeneration;
+				const {
+					status,
+					errorCode,
+					resolvedDate
+				} = await this.dateNavigationService.resolveDate(payload.date);
+
+				// Only being gone ends it: the jump was asked of the chat and the chat is still on screen, so a user who
+				// left the panel for another one is taken to their day all the same.
+				if (this.isPanelDestroyed) {
+					return;
+				}
+
+				// Sending the chat to this day now would undo a move made later and on purpose: dropped, and
+				// without a word.
+				if (this.dateResolveGeneration !== generation) {
+					return;
+				}
+				if (status === im_v2_provider_service_dateNavigation.DateNavigationStatus.Cancelled) {
+					// a later pick superseded this one, and only the latest one is applied
+					return;
+				}
+				if (status !== im_v2_provider_service_dateNavigation.DateNavigationStatus.Success || !resolvedDate) {
+					// the failure answers the pick just made, so the calendar comes back on that day
+					this.showDateNavigationError(errorCode, payload.date, {
+						reopenCalendar: true
+					});
+					return;
+				}
+
+				// both halves travel on to a public event - the identifier into a selector of the message list, the day
+				// into what the list reports the finished jump by
+				const messageId = Number.parseInt(resolvedDate.messageId, 10);
+				if (!Number.isInteger(messageId) || messageId <= 0 || !main_core.Type.isStringFilled(resolvedDate.date)) {
+					// no code of the contract fits an answer that broke it
+					this.showDateNavigationError(null, payload.date, {
+						reopenCalendar: true
+					});
+					return;
+				}
+
+				// the wait is started before the jump: an outcome arriving with nothing waiting for it is thrown away
+				const jumpId = this.startDateNavigationJumpWait(payload.date, resolvedDate.date);
+				this.getEmitter().emit(im_v2_const.EventType.dialog.goToMessageContext, {
+					messageId,
+					dialogId: this.dialogId,
+					// the day divider has no message id of its own: the date marks the jump as date-driven for the list
+					date: resolvedDate.date,
+					jumpId,
+					// the divider is the whole answer: the ordinary highlight would light a second row up under it
+					withMessageHighlight: false
+				});
+			},
+			// The list may still have to bring the page of the message in, and it says whether the day showed up.
+			startDateNavigationJumpWait(pickedDate, date) {
+				this.forgetDateNavigationJump();
+				lastDateNavigationJumpId += 1;
+				this.pendingDateNavigationJump = {
+					id: lastDateNavigationJumpId,
+					date,
+					pickedDate
+				};
+				this.dateNavigationJumpTimer = setTimeout(this.onDateNavigationJumpTimeout, DATE_NAVIGATION_JUMP_TIMEOUT);
+				return lastDateNavigationJumpId;
+			},
+			/**
+			 * Every jump of this chat moves the generation, whoever started it - hence listening to the chat
+			 * announcing a jump and not to the event asking for one. The panel's own pick cannot invalidate itself:
+			 * the chat announces it within the emit, strictly after the comparison and with no await between.
+			 */
+			onMessageContextJumpStarted(event) {
+				if (event.getData().dialogId !== this.dialogId) {
+					return;
+				}
+				this.dateResolveGeneration += 1;
+			},
+			// From here the outcome is certain, and a timer left standing would answer a slow load with a failure.
+			onDateNavigationContextApplying(event) {
+				const {
+					dialogId,
+					jumpId
+				} = event.getData();
+				const jump = this.pendingDateNavigationJump;
+				if (dialogId !== this.dialogId || !jump || !jumpId || jump.id !== jumpId) {
+					return;
+				}
+				clearTimeout(this.dateNavigationJumpTimer);
+				this.dateNavigationJumpTimer = null;
+			},
+			// Matched by identifier and never by the day: two picks of the same day are alike in chat and in date.
+			// An outcome naming no jump - a message list of an older bundle - is left to the timer of the panel.
+			onDateNavigationJumpFinished(event) {
+				const {
+					dialogId,
+					date,
+					jumpId,
+					outcome
+				} = event.getData();
+				const jump = this.pendingDateNavigationJump;
+				if (dialogId !== this.dialogId || !jump || !jumpId || jump.id !== jumpId) {
+					return;
+				}
+				this.forgetDateNavigationJump();
+				if (outcome === im_v2_const.DateNavigationJumpOutcome.cancelled) {
+					// the user left the chat, or sent it somewhere else themselves, and that is the answer
+					return;
+				}
+				if (outcome !== im_v2_const.DateNavigationJumpOutcome.success) {
+					// a jump that did not finish carries no code of the contract, and the repeat asks about the
+					// day the user picked
+					this.showDateNavigationError(null, jump.pickedDate);
+					return;
+				}
+
+				// the failure of an earlier jump is answered by this one: its message would otherwise stay
+				// on screen next to a chat that has already moved
+				this.closeDateNavigationError();
+				this.announceDateNavigationJump(date);
+			},
+			// Only a jump no chat confirmed reaches this: a confirmed one takes the timer off.
+			onDateNavigationJumpTimeout() {
+				const jump = this.pendingDateNavigationJump;
+				if (!jump) {
+					return;
+				}
+				this.forgetDateNavigationJump();
+				this.showDateNavigationError(null, jump.pickedDate);
+			},
+			forgetDateNavigationJump() {
+				clearTimeout(this.dateNavigationJumpTimer);
+				this.dateNavigationJumpTimer = null;
+				this.pendingDateNavigationJump = null;
+			},
+			// The jump shows itself by scrolling and lighting the divider - nothing a screen reader would report.
+			announceDateNavigationJump(date) {
+				const dateText = im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(im_v2_provider_service_dateNavigation.parseCalendarDay(date), im_v2_lib_dateFormatter.DateTemplate.dateGroup);
+				ui_a11y.LiveAnnouncer.announce(this.loc('IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_JUMP_ANNOUNCEMENT', {
+					'#DATE#': dateText
+				}));
+			},
+			/**
+			 * The balloon carries no live region of its own, so the failure is spoken here. `reopenCalendar` is
+			 * asked for and never assumed: it moves the focus into a dialog, which is only right as the answer to
+			 * something the user did just now.
+			 */
+			showDateNavigationError(errorCode, date, {
+				reopenCalendar = false
+			} = {}) {
+				const {
+					phraseCode,
+					canRetry
+				} = getDateNavigationErrorText(errorCode);
+				const message = this.loc(phraseCode);
+				ui_a11y.LiveAnnouncer.announce(message, 'assertive');
+				ui_notification.Center.notify({
+					id: DATE_NAVIGATION_NOTIFICATION_ID,
+					content: message,
+					blinkOnUpdate: false,
+					actions: canRetry ? [this.getDateNavigationRetryAction(date)] : []
+				});
+				this.setDateNavigationErrorTestIds();
+				if (canRetry && reopenCalendar) {
+					// the entry the user came from outlives the closed calendar, and the repeated jump belongs to it
+					this.openCalendarOnHeaderButton(date, this.calendarEntryPoint);
+				}
+			},
+			// Not a failure of the jump and not its wording: no date was picked. No repeat either - main.core keeps
+			// the refused loading under the same name, so every later attempt gets the same refusal.
+			showCalendarLoadError() {
+				const message = this.loc('IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_LOAD_ERROR');
+				ui_a11y.LiveAnnouncer.announce(message, 'assertive');
+				ui_notification.Center.notify({
+					id: DATE_NAVIGATION_NOTIFICATION_ID,
+					content: message,
+					blinkOnUpdate: false,
+					actions: []
+				});
+				this.setDateNavigationErrorTestIds();
+			},
+			// the balloon lives outside the component and outlives the failure it was shown for
+			closeDateNavigationError() {
+				ui_notification.Center.getBalloonById(DATE_NAVIGATION_NOTIFICATION_ID)?.close();
+			},
+			// Neither the id of the balloon nor the id of an action reaches the DOM, so the autotest anchors go on
+			// the rendered nodes; a repeated failure rebuilds the actions, hence marking after every notify.
+			setDateNavigationErrorTestIds() {
+				const balloon = ui_notification.Center.getBalloonById(DATE_NAVIGATION_NOTIFICATION_ID);
+				if (!balloon) {
+					return;
+				}
+				main_core.Dom.attr(balloon.getContainer(), 'data-testid', DATE_NAVIGATION_ERROR_TEST_ID);
+				balloon.getActions().forEach(action => {
+					main_core.Dom.attr(action.getContainer(), 'data-testid', DATE_NAVIGATION_RETRY_TEST_ID);
+				});
+			},
+			// A picked day leaves no calendar behind: the grid closes itself, this one is closed here.
+			getDateNavigationRetryAction(date) {
+				return {
+					title: this.loc('IM_SIDEBAR_SEARCH_MESSAGE_DATE_NAVIGATION_RETRY'),
+					events: {
+						click: (event, balloon) => {
+							balloon.close();
+							this.onCalendarClose();
+							void this.onCalendarDaySelect({
+								date
+							});
+						}
+					}
+				};
+			},
 			onClickBack() {
 				this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 					panel: im_v2_const.SidebarDetailBlock.messageSearch
@@ -9071,8 +10354,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-message-search-detail__scope">
-			<SearchHeader :secondLevel="secondLevel" @changeQuery="onChangeQuery" @back="onClickBack" />
+		<div class="bx-im-message-search-detail__scope" data-testid="im-sidebar-search-panel">
+			<SearchHeader
+				ref="searchHeader"
+				:secondLevel="secondLevel"
+				:isDateNavigationOpened="isCalendarOpened"
+				:isDateNavigationLoading="isCalendarLoading"
+				@changeQuery="onChangeQuery"
+				@back="onClickBack"
+				@dateNavigationClick="onDateNavigationClick"
+			/>
 			<div class="bx-im-message-search-detail__container bx-im-sidebar-detail__container" @scroll="onScroll">
 				<StartState 
 					v-if="!isLoading && preparedQuery.length === 0"
@@ -9101,6 +10392,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					class="bx-im-message-search-detail__tariff-limit-container"
 				/>
 			</div>
+			<component
+				:is="calendarComponent"
+				v-if="isCalendarOpened && calendarComponent"
+				:service="dateNavigationService"
+				:bindElement="calendarTarget"
+				:selectedDate="calendarSelectedDate"
+				:viewDate="calendarViewDate"
+				@daySelect="onCalendarDaySelect"
+				@close="onCalendarClose"
+			/>
 		</div>
 	`
 	};
@@ -9858,6 +11159,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	exports.ChatSidebar = ChatSidebar;
+	exports.MainMenu = MainMenu;
+	exports.MembersMenu = MembersMenu;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Component.EntitySelector, BX.Event, BX.UI, BX.UI.System, BX.Messenger.v2.Service, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.UI.Viewer, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.Notification, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI.Manual, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Component.EntitySelector, BX.Event, BX.UI, BX.UI.System, BX.Messenger.v2.Service, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.UI.Viewer, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.Notification, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI.Manual, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.Accessibility, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, window, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib);
 //# sourceMappingURL=sidebar.bundle.js.map

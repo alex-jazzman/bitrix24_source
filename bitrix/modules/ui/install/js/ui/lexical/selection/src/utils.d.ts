@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { LexicalEditor, LexicalNode } from 'ui.lexical.core';
+import { type ElementNode, getStyleObjectFromCSS, type LexicalEditor, type LexicalNode } from 'ui.lexical.core';
 /**
  * Creates a selection range for the DOM.
  * @param editor - The lexical editor.
@@ -22,22 +22,34 @@ export declare function createDOMRange(editor: LexicalEditor, anchorNode: Lexica
  * @param range - A fragment of a document that can contain nodes and parts of text nodes.
  * @returns The selectionRects as an array.
  */
-export declare function createRectsFromDOMRange(editor: LexicalEditor, range: Range): Array<ClientRect>;
+export declare function createRectsFromDOMRange(editor: Pick<LexicalEditor, 'getRootElement'>, range: Range): DOMRect[];
 /**
- * Creates an object containing all the styles and their values provided in the CSS string.
- * @param css - The CSS string of styles and their values.
- * @returns The styleObject containing all the styles and their values.
+ * @deprecated Use {@link getStyleObjectFromCSS}, this is just an alias for backwards compatibility.
  */
-export declare function getStyleObjectFromRawCSS(css: string): Record<string, string>;
+export declare const getStyleObjectFromRawCSS: typeof getStyleObjectFromCSS;
 /**
- * Given a CSS string, returns an object from the style cache.
- * @param css - The CSS property as a string.
- * @returns The value of the given CSS property.
- */
-export declare function getStyleObjectFromCSS(css: string): Record<string, string>;
-/**
- * Gets the CSS styles from the style object.
- * @param styles - The style object containing the styles to get.
- * @returns A string containing the CSS styles and their values.
+ * Serializes a style object into a CSS declaration string, the inverse of
+ * {@link getStyleObjectFromCSS}.
+ * @param styles - An object mapping CSS property names to their values.
+ * @returns A CSS string of the form `prop: value;` for each entry, concatenated together.
  */
 export declare function getCSSFromStyleObject(styles: Record<string, string>): string;
+/**
+ * Gets the computed DOM styles of the element.
+ * @param element - The node to check the styles for.
+ * @returns the computed styles of the element or null if there is no DOM element or no default view for the document.
+ */
+export declare function $getComputedStyleForElement(element: ElementNode): CSSStyleDeclaration | null;
+/**
+ * Gets the computed DOM styles of the parent of the node.
+ * @param node - The node to check its parent's styles for.
+ * @returns the computed styles of the node, or null if the node has no parent,
+ * there is no DOM element, or there is no default view for the document.
+ */
+export declare function $getComputedStyleForParent(node: LexicalNode): CSSStyleDeclaration | null;
+/**
+ * Determines whether a node's parent is RTL.
+ * @param node - The node to check whether it is RTL.
+ * @returns whether the node is RTL.
+ */
+export declare function $isParentRTL(node: LexicalNode): boolean;

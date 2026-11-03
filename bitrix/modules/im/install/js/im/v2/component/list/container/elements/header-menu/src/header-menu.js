@@ -2,7 +2,7 @@ import { type JsonObject } from 'main.core';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { BaseMenu } from 'im.v2.lib.menu';
-import { RecentType } from 'im.v2.const';
+import { RecentType, SystemFolderCode } from 'im.v2.const';
 
 import { RecentHeaderMenu } from './classes/recent';
 import { TaskHeaderMenu } from './classes/task';
@@ -12,6 +12,7 @@ import { CollabDefaultHeaderMenu } from './classes/collab/default';
 import { CollabChatHeaderMenu } from './classes/collab/chat';
 import { CollabCalendarHeaderMenu } from './classes/collab/calendar';
 import { CollabCopilotHeaderMenu } from './classes/collab/copilot';
+import { AllFolderHeaderMenu } from './classes/all-folder';
 
 import './css/header-menu.css';
 
@@ -23,6 +24,7 @@ const MenuClass = {
 	[RecentType.collabChat]: CollabChatHeaderMenu,
 	[RecentType.calendar]: CollabCalendarHeaderMenu,
 	[RecentType.copilot]: CollabCopilotHeaderMenu,
+	[SystemFolderCode.all]: AllFolderHeaderMenu,
 };
 
 // @vue/component
@@ -36,7 +38,11 @@ export const HeaderMenu = {
 		},
 		recentSection: {
 			type: String,
-			required: true,
+			default: null,
+		},
+		menuKey: {
+			type: String,
+			default: null,
 		},
 		parentChatId: {
 			type: Number,
@@ -55,7 +61,7 @@ export const HeaderMenu = {
 	},
 	created()
 	{
-		this.contextMenuManager = new MenuClass[this.recentSection]();
+		this.contextMenuManager = new MenuClass[this.menuKey ?? this.recentSection]();
 
 		this.contextMenuManager.subscribe(BaseMenu.events.close, this.closeMenu);
 		this.contextMenuManager.subscribe(BaseRecentHeaderMenu.events.onToggleUnreadMode, this.onToggleUnreadMode);
@@ -65,6 +71,10 @@ export const HeaderMenu = {
 		this.contextMenuManager.destroy();
 	},
 	methods: {
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
+		},
 		onToggleUnreadMode()
 		{
 			this.$emit('toggleUnreadMode');
@@ -107,6 +117,7 @@ export const HeaderMenu = {
 		<button
 			class="bx-im-list-container-header-menu__container"
 			:class="{'--active': unreadMode, '--menu-opened': showMenu }" 
+			:aria-label="loc('IM_LIST_CONTAINER_HEADER_MENU_FILTER_ARIA')"
 			:aria-pressed="unreadMode"
 			@click="onClick"
 		>

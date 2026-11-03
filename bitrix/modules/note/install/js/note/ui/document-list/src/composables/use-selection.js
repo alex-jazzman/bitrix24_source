@@ -46,7 +46,7 @@ export function createSelection(): Object
 		{
 			this.mode = true;
 		},
-		// Leaving selection mode always drops the current selection (AC-003, ERR-010)
+		// Leaving selection mode always drops the current selection
 		exit(): void
 		{
 			this.mode = false;

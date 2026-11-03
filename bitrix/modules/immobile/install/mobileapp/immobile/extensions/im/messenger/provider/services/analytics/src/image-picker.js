@@ -5,7 +5,6 @@ jn.define('im/messenger/provider/services/analytics/image-picker', (require, exp
 	const { AnalyticsEvent } = require('analytics');
 
 	const { Analytics } = require('im/messenger/const');
-	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
@@ -26,22 +25,14 @@ jn.define('im/messenger/provider/services/analytics/image-picker', (require, exp
 		{
 			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
 
-			const analytics = new AnalyticsEvent()
+			new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setCategory(AnalyticsHelper.getCategoryByChat(dialog))
 				.setEvent(Analytics.Event.clickAttach)
 				.setSection(Analytics.Section.chatTextarea)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
-				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
-
-			const isCollab = DialogHelper.createByDialogId(dialogId)?.isCollab;
-			if (isCollab)
-			{
-				analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialog.dialogId));
-			}
-
-			analytics.send();
+				.send();
 		}
 	}
 

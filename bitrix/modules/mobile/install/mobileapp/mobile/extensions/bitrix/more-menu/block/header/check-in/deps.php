@@ -7,6 +7,7 @@ return [
 		'layout/ui/friendly-date',
 		'layout/ui/friendly-date/formatter-factory',
 		'loc',
+		'require-lazy',
 		'statemanager/redux/store',
 		'tokens',
 		'ui-system/blocks/icon',

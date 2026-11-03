@@ -1,5 +1,6 @@
 import {Dom, Event, Reflection, Tag, Text, Type} from 'main.core';
-import {type Property} from '../../const/type';
+import {type NameBlockPlacementValue, type Property} from '../../const/type';
+import {NameBlockPlacement} from '../../const/const';
 import {isRequired} from '../../lib/property/property';
 
 import 'ui.hint';
@@ -7,6 +8,7 @@ import 'ui.icon-set.outline';
 
 const ADD_BUTTON_CLASS = 'bizproc-fields-multiple__add';
 const ADD_BUTTON_SELECTOR = `.${ADD_BUTTON_CLASS}`;
+const NAME_INSIDE_MODIFIER = '--name-inside';
 
 type HintApi = {
 	init: (container: HTMLElement) => void,
@@ -59,9 +61,11 @@ export class FieldLayout
 			return null;
 		}
 
+		// The block is interactive where a type puts it beside a labelable control (bool in its
+		// checkbox view): a click on it toggles the flag through the `for` below.
 		const block = params.isGroup
-			? Tag.render`<legend class="bizproc-fields-header"></legend>`
-			: Tag.render`<label class="bizproc-fields-header"></label>`;
+			? Tag.render`<legend class="bizproc-fields-header" data-testid="bizproc-field-name-block"></legend>`
+			: Tag.render`<label class="bizproc-fields-header" data-testid="bizproc-field-name-block"></label>`;
 
 		if (!params.isGroup && Type.isStringFilled(params.controlId))
 		{
@@ -76,6 +80,17 @@ export class FieldLayout
 		if (!Type.isNull(hintNode))
 		{
 			Dom.append(hintNode, block);
+
+			// A click anywhere inside a `<label for>` activates the control it names, and the hint
+			// stands inside the block because that is where the mockup draws it. Left alone, opening
+			// the hint of a field whose named node is a native flag (bool in its checkbox view)
+			// would toggle the flag and announce a value change the user never asked for. The hint
+			// keeps its own click - ui.hint opens on it - and only the activation the label would
+			// add on top is taken away.
+			if (block.hasAttribute('for'))
+			{
+				Event.bind(hintNode, 'click', (event: MouseEvent) => event.preventDefault());
+			}
 		}
 
 		return block;
@@ -97,12 +112,20 @@ export class FieldLayout
 			return null;
 		}
 
-		const required = isRequired(property);
+		const requiredMark = isRequired(property)
+			? Tag.render`
+				<span
+					class="bizproc-fields-label__required"
+					aria-hidden="true"
+					data-testid="bizproc-field-required-mark"
+				>*</span>
+			`
+			: '';
 
 		return Tag.render`
-			<span class="bizproc-fields-label">
+			<span class="bizproc-fields-label" data-testid="bizproc-field-label">
 				${Text.encode(name)}
-				${required ? Tag.render`<span class="bizproc-fields-label__required" aria-hidden="true">*</span>` : ''}
+				${requiredMark}
 			</span>
 		`;
 	}
@@ -146,7 +169,14 @@ export class FieldLayout
 
 	static buildMultipleRow(control: HTMLElement, params: MultipleRowParams): HTMLElement
 	{
-		const row = Tag.render`<div class="bizproc-fields-multiple__row"></div>`;
+		// Carries the field name so that rows of different fields on one page are told apart; rows
+		// of the same field are told apart by their position, the way the row labels number them.
+		const row = Tag.render`
+			<div
+				class="bizproc-fields-multiple__row"
+				data-testid="${Text.encode(`bizproc-field-multiple-row-${params.fieldName}`)}"
+			></div>
+		`;
 		Dom.append(control, row);
 
 		if (!params.readOnly)
@@ -220,14 +250,32 @@ export class FieldLayout
 		controlNode: HTMLElement,
 		showLabels: boolean,
 		isGroup?: boolean,
+		nameBlockPlacement?: NameBlockPlacementValue,
+		expressionRowNode?: HTMLElement | null,
 	}): HTMLElement
 	{
-		const {nameBlockNode, captionNode, controlNode, showLabels} = params;
+		const {nameBlockNode, captionNode, controlNode, showLabels, expressionRowNode} = params;
 		const isGroup = params.isGroup === true;
+		// A group ignores what the type declares: a <legend> names its fieldset only while it is
+		// the direct first child of it (WCAG 1.3.1), and there is no control wrapper to move the
+		// block into either.
+		const nameBlockInsideControlRow = !isGroup
+			&& params.nameBlockPlacement === NameBlockPlacement.InsideControlRow;
 
 		if (!showLabels)
 		{
-			return FieldLayout.#wrapControl(controlNode);
+			const bareControl = FieldLayout.#wrapControl(controlNode);
+
+			// The one companion of a core-driven multiple stands beside the rows rather than inside
+			// one, so nothing else would mount it here: with no name block there is no row to put it
+			// behind, and the field would keep its tabs while losing the node the expression travels
+			// in. A type drawing its own companion has it inside the control already.
+			if (!Type.isNil(expressionRowNode) && !controlNode.contains(expressionRowNode))
+			{
+				Dom.append(expressionRowNode, bareControl);
+			}
+
+			return bareControl;
 		}
 
 		// A group of controls is named by <legend>, so it needs a <fieldset>. Same visual
@@ -239,14 +287,42 @@ export class FieldLayout
 			`
 			: Tag.render`<div class="bizproc-fields-row" data-testid="bizproc-field-row"></div>`;
 
-		// The name block comes first: a <legend> names its group only while it is the
-		// fieldset's direct first child (WCAG 1.3.1).
+		const controlHolder = isGroup ? controlNode : FieldLayout.#wrapControl(controlNode);
+
+		// The name block comes first, which for a group is the only place it may go (see above).
+		// Where the type asked for it inside the control row it lands in the wrapper instead,
+		// behind the control that is already there.
 		if (!Type.isNull(nameBlockNode))
 		{
-			Dom.append(nameBlockNode, row);
+			if (nameBlockInsideControlRow)
+			{
+				// The wrapper turns from a stack into a row, and only the core can say so: a type
+				// has no way to select the wrapper that the core renders around its control.
+				Dom.addClass(controlHolder, NAME_INSIDE_MODIFIER);
+			}
+
+			Dom.append(nameBlockNode, nameBlockInsideControlRow ? controlHolder : row);
+
+			// The mockup draws the expression row below the name, and reading order has to be the
+			// visual one (WCAG 1.3.2): the row moves out of the control and behind the name block
+			// instead of being ordered back down by CSS, where a screen reader would still meet
+			// the nameless companion before the name of the field.
+			if (nameBlockInsideControlRow && !Type.isNil(expressionRowNode))
+			{
+				Dom.append(expressionRowNode, controlHolder);
+			}
 		}
 
-		Dom.append(isGroup ? controlNode : FieldLayout.#wrapControl(controlNode), row);
+		Dom.append(controlHolder, row);
+
+		// A group has no control wrapper to move the row into, so the one companion of the field
+		// goes into the <fieldset> behind the rows it belongs to. Behind rather than in front:
+		// reading order has to be the visual one (WCAG 1.3.2), and the mockup order of a single
+		// field - tabs, then the control, then the expression - is what a group repeats.
+		if (isGroup && !Type.isNil(expressionRowNode))
+		{
+			Dom.append(expressionRowNode, row);
+		}
 
 		if (!Type.isNil(captionNode))
 		{

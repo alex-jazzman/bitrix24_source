@@ -1,0 +1,35 @@
+<?php
+
+$MESS['CRM_DEAL_CATEGORY_LIST_INVALID_DATA'] = 'Could not get pipeline data. Refresh the page and try again.';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_CREATE_TITLE'] = 'New pipeline';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_EDIT_TITLE'] = 'Edit pipeline';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_NAME'] = 'Name';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_SORT'] = 'Sort';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_NAME_REQUIRED'] = 'This field is required.';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_INVALID_SORT'] = 'Enter a non-negative integer.';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_SAVE'] = 'Save';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_CANCEL'] = 'Cancel';
+$MESS['CRM_DEAL_CATEGORY_LIST_EDIT_DIALOG_SAVE_ERROR'] = 'Could not save pipeline. Try again.';
+$MESS['CRM_DEAL_CATEGORY_LIST_DELETE_DIALOG_TITLE'] = 'Delete pipeline';
+$MESS['CRM_DEAL_CATEGORY_LIST_DELETE_DIALOG_CONTENT'] = 'Pipeline "#NAME#" cannot be restored after deletion.';
+$MESS['CRM_DEAL_CATEGORY_LIST_DELETE_DIALOG_DELETE'] = 'Delete';
+$MESS['CRM_DEAL_CATEGORY_LIST_DELETE_DIALOG_CANCEL'] = 'Cancel';
+$MESS['CRM_DEAL_CATEGORY_LIST_DELETE_DIALOG_ERROR'] = 'Could not delete pipeline. Try again.';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_TITLE'] = 'Delete pipelines';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_SELECTED_CONTENT'] =
+	'Selected pipelines: #COUNT#. They cannot be restored after deletion.'
+;
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_ALL_CONTENT'] =
+	'All pipelines except the default pipeline will be deleted. Deleted pipelines cannot be restored.'
+;
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_CONFIRM'] = 'Delete';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_CANCEL'] = 'Cancel';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_PROCESS_TITLE'] = 'Deleting pipelines';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_PROCESS_SUMMARY'] = 'Deleting pipelines';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_PROCESS_PROGRESS'] = 'Processed';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_CLOSE_TITLE'] = 'Stop deleting pipelines';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_CLOSE_CONTENT'] =
+	'Pipelines already deleted will remain deleted. The current operation may finish before it stops.'
+;
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_CLOSE_STOP'] = 'Stop and close';
+$MESS['CRM_DEAL_CATEGORY_LIST_BULK_DELETE_CLOSE_STAY'] = 'Continue';

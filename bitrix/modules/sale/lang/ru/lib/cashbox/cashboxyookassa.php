@@ -23,4 +23,5 @@ $MESS['SALE_CASHBOX_YOOKASSA_ERROR_CHECK_WAIT'] = 'Повторите запро
 $MESS['SALE_CASHBOX_YOOKASSA_ERROR_CHECK_NOT_FOUND'] = 'Чек не найден';
 
 $MESS['SALE_CASHBOX_YOOKASSA_STATUS_CHECK_PENDING'] = 'Данные чека в обработке';
+$MESS['SALE_CASHBOX_YOOKASSA_SETTINGS_MEASURE_SEND'] = 'Передавать единицу измерения';
 $MESS['SALE_CASHBOX_YOOKASSA_STATUS_CHECK_CANCELLED'] = 'Не удалось зарегистрировать чек';

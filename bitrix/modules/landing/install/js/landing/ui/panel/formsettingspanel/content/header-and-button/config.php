@@ -8,14 +8,14 @@ return [
 	'css' => 'dist/header-and-button.bundle.css',
 	'js' => 'dist/header-and-button.bundle.js',
 	'rel' => [
+		'helper',
 		'landing.ui.card.headercard',
-		'main.core',
 		'landing.ui.card.messagecard',
-		'landing.ui.form.formsettingsform',
 		'landing.ui.field.textfield',
 		'landing.ui.field.variablesfield',
+		'landing.ui.form.formsettingsform',
 		'landing.ui.panel.basepresetpanel',
-		'helper',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

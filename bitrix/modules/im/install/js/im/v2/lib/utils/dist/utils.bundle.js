@@ -386,6 +386,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return uuid.search(uuidV4pattern) === 0;
 		},
 		checkUrl(url) {
+			// Mirrored by URL_LIKE_PATTERN in im.v2.lib.parser
+			// (markdown/utils/link-boundary-scanner.js), which decides whether a Markdown title
+			// may stand behind an address. Adding a scheme here without adding it there makes
+			// "[t](scheme:x)" a link while "[t](scheme:x "hint")" stays plain text.
 			const allowList = ["http:", "https:", "ftp:", "file:", "tel:", "callto:", "mailto:", "skype:", "viber:"];
 			const checkCorrectStartLink = ['/', ...allowList].find(protocol => {
 				return url.startsWith(protocol);
@@ -769,6 +773,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const fileType = FileUtil.getFileTypeByExtension(extension);
 			return fileType === im_v2_const.FileType.image;
 		},
+		/**
+		 * An unfilled image size (null - a shortened payload of an old message) still goes to the gallery; only
+		 * a dropped one (false) does not. The message and the window editing it must not disagree here.
+		 */
+		isGallery(files) {
+			const galleryTypes = new Set([im_v2_const.FileType.image, im_v2_const.FileType.video]);
+			const isMediaOnly = files.every(file => galleryTypes.has(file.type));
+			const hasPreviewSize = files.some(file => file.image !== false);
+			return isMediaOnly && hasPreviewSize;
+		},
 		getBase64(file) {
 			const reader = new FileReader();
 			return new Promise(resolve => {
@@ -962,6 +976,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	const HotkeyOs = {
+		windows: 'windows',
+		macos: 'macos'
+	};
+	const KeyName = {
+		[HotkeyOs.windows]: {
+			NumpadEnter: 'Enter',
+			ArrowUp: '↑'
+		},
+		[HotkeyOs.macos]: {
+			NumpadEnter: 'Enter',
+			ArrowUp: '↑',
+			Ctrl: '⌘',
+			Alt: '⌥'
+		}
+	};
 	const KeyUtil = {
 		isCmdOrCtrl(event) {
 			return new KeyChecker(event).isCmdOrCtrl();
@@ -977,7 +1007,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		isExactCombination(event, rawCombinationList) {
 			return new KeyChecker(event).isExactCombination(rawCombinationList);
+		},
+		getCombinationText(combination, os = getCurrentOs()) {
+			return mainVariant(combination).split('+').map(key => KeyName[os]?.[key] ?? key).join(' + ');
 		}
+	};
+	const getCurrentOs = () => {
+		return PlatformUtil.isMac() ? HotkeyOs.macos : HotkeyOs.windows;
+	};
+	const mainVariant = combination => {
+		return Array.isArray(combination) ? combination[0] : combination;
 	};
 
 	const DomUtil = {
@@ -1080,6 +1119,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		call: CallUtil
 	};
 
+	exports.HotkeyOs = HotkeyOs;
 	exports.Utils = Utils;
 
 })(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Main, BX.Messenger.v2.Lib);

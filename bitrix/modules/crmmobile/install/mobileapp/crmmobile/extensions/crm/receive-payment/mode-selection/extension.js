@@ -63,6 +63,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 				.setCacheHandler(this.handleCacheResult)
 				.setHandler(this.handleModeSelectionResponse)
 				.call(true)
+				.catch(console.error)
 			;
 		}
 

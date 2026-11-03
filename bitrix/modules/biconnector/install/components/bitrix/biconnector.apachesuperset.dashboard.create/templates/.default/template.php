@@ -35,6 +35,7 @@ Loader::includeModule('ui');
 Extension::load([
 	'biconnector.apache-superset-analytics',
 	'biconnector.dashboard-parameters-selector',
+	'biconnector.error-message',
 	'ui.forms',
 	'ui.hint',
 	'ui.notification',

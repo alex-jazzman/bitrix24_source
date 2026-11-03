@@ -1,5 +1,5 @@
 // @flow
-import { Runtime, Type, Event, Loc, Dom, Tag, Text, Browser, Extension } from 'main.core';
+import { Runtime, Type, Event, Loc, Dom, Tag, Text, Browser } from 'main.core';
 import { Util } from 'calendar.util';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
@@ -51,13 +51,13 @@ export class Planner extends EventEmitter
 	checkTimeCache = {};
 	entriesIndex = new Map();
 	solidStatus = false;
+	destroyed = false;
 
 	constructor(params = {})
 	{
 		super();
 		this.setEventNamespace('BX.Calendar.Planner');
 		this.config = params;
-		this.setEntriesCount(params.entriesCount ?? 0);
 		this.id = params.id;
 		this.userId = parseInt(params.userId || Loc.getMessage('USER_ID'));
 		this.DOM.wrap = params.wrap;
@@ -69,18 +69,49 @@ export class Planner extends EventEmitter
 		this.expandTimelineDebounce = Runtime.debounce(this.expandTimeline, this.EXPAND_DELAY, this);
 		this.showMoreUsersBind = this.showMoreUsers.bind(this);
 		this.hideMoreUsersBind = this.hideMoreUsers.bind(this);
+		this.handleMousemoveBind = this.handleMousemove.bind(this);
+		this.handleMouseupBind = this.handleMouseup.bind(this);
 		this.setConfig(params);
 	}
 
-	static getMaxPlannerUsers(): number
+	destroy()
 	{
-		const settings = Extension.getSettings('calendar.planner');
+		this.destroyed = true;
 
-		return settings.maxPlannerUsers;
+		if (this.rebuildTimeout)
+		{
+			clearTimeout(this.rebuildTimeout);
+			this.rebuildTimeout = null;
+		}
+
+		clearTimeout(this.selectorPopupTimeout);
+		this.selectorPopupTimeout = null;
+
+		if (this.hideAnimation)
+		{
+			this.hideAnimation.stop();
+			this.hideAnimation = null;
+		}
+
+		if (this.showAnimation)
+		{
+			this.showAnimation.stop();
+			this.showAnimation = null;
+		}
+
+		Event.unbind(document, 'mousemove', this.handleMousemoveBind);
+		Event.unbind(document, 'mouseup', this.handleMouseupBind);
+
+		this.selector?.destroy();
 	}
 
 	show()
 	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
 		if (this.currentFromDate && this.currentToDate)
 		{
 			const hourFrom = this.currentFromDate.getHours();
@@ -185,15 +216,6 @@ export class Planner extends EventEmitter
 		}
 
 		this.shown = true;
-	}
-
-	setEntriesCount(entriesCount: number): void
-	{
-		const maxPlannerUsers = Planner.getMaxPlannerUsers();
-		if (maxPlannerUsers > 0 && entriesCount > 0)
-		{
-			this.setVisible(entriesCount <= maxPlannerUsers);
-		}
 	}
 
 	setVisible(isVisible: boolean): void
@@ -824,6 +846,15 @@ export class Planner extends EventEmitter
 	buildTimeline(clearCache)
 	{
 		if (
+			this.destroyed
+			|| !Type.isDate(this.scaleDateFrom)
+			|| !Type.isDate(this.scaleDateTo)
+		)
+		{
+			return;
+		}
+
+		if (
 			this.isBuilt()
 			&& (this.lastTimelineKey !== this.getTimelineShownKey()
 			|| clearCache === true)
@@ -1074,7 +1105,7 @@ export class Planner extends EventEmitter
 
 	extendTimeline(extendedTimeFrom, extendedTimeTo, isToRight = false)
 	{
-		if (!this.DOM.timelineScaleWrap)
+		if (this.destroyed || !this.DOM.timelineScaleWrap)
 		{
 			return;
 		}
@@ -1121,8 +1152,8 @@ export class Planner extends EventEmitter
 
 			for (let insertedTimestamp = fromTimestamp, i = 0; insertedTimestamp < toTimestamp; insertedTimestamp += this.scaleSize, i++)
 			{
-				const title = BX.date.format('i', insertedTimestamp) === '00'
-					? BX.date.format(this.SCALE_TIME_FORMAT, insertedTimestamp)
+				const title = DateTimeFormat.format('i', insertedTimestamp) === '00'
+					? DateTimeFormat.format(this.SCALE_TIME_FORMAT, insertedTimestamp)
 					: '';
 				if (insertedTimestamp < this.currentFromDate.getTime() / 1000 - (isToLeft ? 3600 * 12 : 0))
 				{
@@ -1219,6 +1250,11 @@ export class Planner extends EventEmitter
 
 	updateTimelineAfterExtend()
 	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
 		let mapDatePosRes = this.mapDatePos();
 		this.posDateMap = mapDatePosRes.posDateMap;
 		const timelineOffset = this.DOM.timelineScaleWrap.offsetWidth;
@@ -1235,6 +1271,11 @@ export class Planner extends EventEmitter
 
 	rebuild(params = {})
 	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
 		if (this.isBuilt())
 		{
 			this.buildTimeline(true);
@@ -1259,6 +1300,11 @@ export class Planner extends EventEmitter
 		this.scaleData = [];
 		this.scaleDayTitles = {};
 
+		if (!Type.isDate(this.scaleDateFrom) || !Type.isDate(this.scaleDateTo))
+		{
+			return this.scaleData;
+		}
+
 		let
 			ts, scaleFrom, scaleTo,
 			time, dayStamp, title,
@@ -1273,18 +1319,18 @@ export class Planner extends EventEmitter
 
 		for (ts = scaleFrom; ts < scaleTo; ts += this.scaleSize * 1000)
 		{
-			time = parseFloat(BX.date.format('H.i', ts / 1000));
+			time = parseFloat(DateTimeFormat.format('H.i', ts / 1000));
 
 			if (this.isOneDayScale())
-				title = BX.date.format('d F, D', ts / 1000);
+				title = DateTimeFormat.format('d F, D', ts / 1000);
 			else
-				title = BX.date.format('i', ts / 1000) === '00'
-					? BX.date.format(this.SCALE_TIME_FORMAT, ts / 1000)
+				title = DateTimeFormat.format('i', ts / 1000) === '00'
+					? DateTimeFormat.format(this.SCALE_TIME_FORMAT, ts / 1000)
 					: '';
 
 			if (this.isOneDayScale() || (time >= timeFrom && time < timeTo))
 			{
-				dayStamp = BX.date.format('d.m.Y', ts / 1000);
+				dayStamp = DateTimeFormat.format('d.m.Y', ts / 1000);
 				this.scaleData.push({
 					daystamp: dayStamp,
 					timestamp: ts,
@@ -1761,8 +1807,8 @@ export class Planner extends EventEmitter
 		Event.bind(this.DOM.wrap, 'click', this.handleClick.bind(this));
 		Event.bind(this.DOM.wrap, 'contextmenu', this.handleClick.bind(this));
 		Event.bind(this.DOM.wrap, 'mousedown', this.handleMousedown.bind(this));
-		Event.bind(document, 'mousemove', this.handleMousemove.bind(this));
-		Event.bind(document, 'mouseup', this.handleMouseup.bind(this));
+		Event.bind(document, 'mousemove', this.handleMousemoveBind);
+		Event.bind(document, 'mouseup', this.handleMouseupBind);
 
 		Event.bind(
 			this.DOM.timelineFixedWrap,
@@ -2365,6 +2411,16 @@ export class Planner extends EventEmitter
 
 		Event.unbind(this.selector.DOM.moreButton, 'click', this.showMoreUsersBind);
 		Event.bind(this.selector.DOM.moreButton, 'click', this.hideMoreUsersBind);
+
+		// Additive signal: emitted only on an explicit user toggle of the attendees list,
+		// not on generic rebuilds (build, date/timezone change), so consumers can lazily
+		// load the accessibility of the previously hidden attendees.
+		this.emit('onToggleAttendeesList', new BaseEvent({
+			data: {
+				expanded: true,
+				usersCount: this.getUsersCount(),
+			},
+		}));
 	}
 
 	hideMoreUsers()
@@ -2376,6 +2432,25 @@ export class Planner extends EventEmitter
 
 		Event.unbind(this.selector.DOM.moreButton, 'click', this.hideMoreUsersBind);
 		Event.bind(this.selector.DOM.moreButton, 'click', this.showMoreUsersBind);
+
+		// Additive signal (see showMoreUsers): the user collapsed the attendees list.
+		this.emit('onToggleAttendeesList', new BaseEvent({
+			data: {
+				expanded: false,
+				usersCount: this.getUsersCount(),
+			},
+		}));
+	}
+
+	getUsersCount()
+	{
+		if (!Type.isArray(this.entries))
+		{
+			return 0;
+		}
+
+		// Same source as the displayed users counter (see the display method): count entries of type 'user'.
+		return this.entries.filter((entry) => entry.type === 'user').length;
 	}
 
 	adjustHeight()
@@ -2464,6 +2539,11 @@ export class Planner extends EventEmitter
 
 	expandTimeline(scaleDateFrom, scaleDateTo)
 	{
+		if (this.destroyed)
+		{
+			return;
+		}
+
 		let loadedTimelineSize;
 		let scrollLeft;
 		const prevScaleDateFrom = this.scaleDateFrom;
@@ -2622,8 +2702,6 @@ export class Planner extends EventEmitter
 			return;
 		}
 
-		this.setEntriesCount(entries.length);
-
 		if (this.entries?.length !== entries.length)
 		{
 			this.doShowTimezoneNoticePopup = true;
@@ -2642,28 +2720,6 @@ export class Planner extends EventEmitter
 			entry.timezoneOffset = Util.getTimeZoneOffset(entry.timezoneName, this.currentFromDate);
 			entry.timezoneNameFormatted = Util.getFormattedTimezone(entry.timezoneName);
 			entry.offset = currentOffset - entry.timezoneOffset;
-		});
-
-		const userId = parseInt(this.userId);
-
-		// sort entries list by amount of accessibility data
-		// Entries without accessibility data should be in the end of the array
-		// But first in the list will be meeting room
-		// And second (or first) will be owner-host of the event
-		entries.sort((a, b) => {
-			if (b.status === 'h' || parseInt(b.id) === userId && a.status !== 'h')
-			{
-				return 1;
-			}
-			if (a.status === 'h' || parseInt(a.id) === userId && b.status !== 'h')
-			{
-				return  -1;
-			}
-			if (parseInt(a.id) < parseInt(b.id))
-			{
-				return -1;
-			}
-			return 1;
 		});
 
 		if (this.selectedEntriesWrap)

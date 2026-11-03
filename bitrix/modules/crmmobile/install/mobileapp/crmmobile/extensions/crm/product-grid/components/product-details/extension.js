@@ -447,6 +447,30 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			});
 		}
 
+		getCustomRateItem()
+		{
+			const productRowTaxRate = this.productRow.getTaxRate();
+			const productRowTaxName = this.productRow.getTaxName();
+			let name = '';
+			if (productRowTaxName)
+			{
+				name = productRowTaxName;
+			}
+			else
+			{
+				name = productRowTaxRate !== null
+					? `${this.productRow.getTaxRate()}%`
+					: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_TAX_RATE_TAX_EXCLUDED')
+				;
+			}
+
+			return {
+				id: 0,
+				name,
+				value: productRowTaxRate,
+			};
+		}
+
 		taxField()
 		{
 			if (this.productRow.isTaxMode())
@@ -456,23 +480,40 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 			let vatRates = this.getProps().vatRates;
 			let rateReadonly = this.isReadonly();
+
+			const vatIdByRate = () => {
+				const rate = this.productRow.getTaxRate();
+				const name = this.productRow.getTaxName();
+				const vatRate = vatRates.find((item) => {
+					if (item.value === rate)
+					{
+						if (!name)
+						{
+							return true;
+						}
+						else if (name === item.name)
+						{
+							return true;
+						}
+					}
+				});
+
+				return vatRate ? String(vatRate.id) : '0';
+			};
+
+			const selectedTaxId = vatIdByRate();
 			if (vatRates.length === 0)
 			{
-				vatRates = [
-					{
-						id: 0,
-						name: `${this.productRow.getTaxRate()}%`,
-						value: this.productRow.getTaxRate(),
-					},
-				];
+				vatRates = [this.getCustomRateItem()];
 				rateReadonly = true;
 			}
-
-			const vatIdByRate = (rate) => {
-				const vatRate = vatRates.find((item) => item.value === rate);
-
-				return vatRate ? String(vatRate.id) : '';
-			};
+			else if (!Number(selectedTaxId))
+			{
+				vatRates = [
+					this.getCustomRateItem(),
+					...vatRates,
+				];
+			}
 
 			const vatRateById = (id) => {
 				id = Number(id);
@@ -481,14 +522,23 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				return vatRate ? vatRate.value : 0;
 			};
 
+			const vatNameById = (id) => {
+				id = Number(id);
+				const vatRate = vatRates.find((item) => item.id === id);
+
+				return vatRate ? vatRate.name : '';
+			};
+
 			return CombinedField({
 				testId: 'ProductGridProductDetailsTaxField',
 				value: {
-					taxRate: vatIdByRate(this.productRow.getTaxRate()),
+					taxRate: selectedTaxId,
 					taxIncluded: this.productRow.isTaxIncluded(),
 				},
 				readOnly: this.isReadonly(),
 				onChange: (newVal) => {
+					this.setField('TAX_NAME', vatNameById(newVal.taxRate));
+
 					const taxRate = vatRateById(newVal.taxRate);
 					const taxIncluded = newVal.taxIncluded ? 'Y' : 'N';
 

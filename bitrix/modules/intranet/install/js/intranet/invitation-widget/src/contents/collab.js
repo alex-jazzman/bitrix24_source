@@ -67,32 +67,58 @@ export class CollabContent extends Content
 					? Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT')
 					: Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB')
 			);
+			const createActionLabelledBy = [
+				'intranet-invitation-widget-collab-name',
+				'intranet-invitation-widget-collab-create-action',
+			].join(' ');
 
 			return Tag.render`
-				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()} ${this.isNewProjectsAvailable ? '--project' : ''}">
+				<div
+					data-id="bx-invitation-widget-content-collab"
+					class="${this.getWrapperClass()} ${this.isNewProjectsAvailable ? '--project' : ''}"
+					data-testid="intranet-invitation-widget-collab"
+				>
 					<div class="intranet-invitation-widget-content">
-						<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--collab">
+						<div
+							class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--collab"
+							aria-hidden="true"
+						>
 							<div class="ui-icon-set --collab"></div>
 						</div>
 						<div class="intranet-invitation-widget-item-content">
 							<div class="intranet-invitation-widget-item-name">
-								<span>
+								<span id="intranet-invitation-widget-collab-name">
 									${itemNameMessage}
 								</span>
 							</div>
 							<div class="intranet-invitation-widget-item-link">
-								<span onclick="${showCollabHelper}" class="intranet-invitation-widget-item-link-text">
-									${
-										this.isNewProjectsAvailable
-										? Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT_DESC')
-										: Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')
-									}
-								</span>
+								<button
+									class="intranet-invitation-widget-item-link-button"
+									type="button"
+									onclick="${showCollabHelper}"
+									data-testid="intranet-invitation-widget-collab-details"
+								>
+									<span class="intranet-invitation-widget-item-link-text">
+										${
+											this.isNewProjectsAvailable
+											? Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT_DESC')
+											: Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')
+										}
+									</span>
+								</button>
 							</div>
 						</div>
 					</div>
-					<button onclick="${showInvitationSlider}" class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--collab">
-						${Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_CREATE')}
+					<button
+						class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--collab"
+						type="button"
+						onclick="${showInvitationSlider}"
+						aria-labelledby="${createActionLabelledBy}"
+						data-testid="intranet-invitation-widget-collab-create"
+					>
+						<span id="intranet-invitation-widget-collab-create-action">
+							${Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_CREATE')}
+						</span>
 					</button>
 				</div>
 			`;

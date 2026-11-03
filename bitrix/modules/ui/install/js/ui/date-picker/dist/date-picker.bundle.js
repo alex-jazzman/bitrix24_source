@@ -32,6 +32,7 @@ this.BX.UI = this.BX.UI || {};
 				<button
 					type="button"
 					class="ui-date-picker-button --left-arrow"
+					data-testid="ui-date-picker-prev-btn"
 					aria-label="${this.getPrevBtnLabel()}"
 					title="${this.getPrevBtnLabel()}"
 					onclick="${this.handlePrevBtnClick.bind(this)}"
@@ -47,6 +48,7 @@ this.BX.UI = this.BX.UI || {};
 				<button
 					type="button"
 					class="ui-date-picker-button --right-arrow"
+					data-testid="ui-date-picker-next-btn"
 					aria-label="${this.getNextBtnLabel()}"
 					title="${this.getNextBtnLabel()}"
 					onclick="${this.handleNextBtnClick.bind(this)}"
@@ -62,11 +64,40 @@ this.BX.UI = this.BX.UI || {};
 		getNextBtnLabel() {
 			return '';
 		}
+
+		// A navigation button becomes unavailable in the very render its own click causes, and the browser
+		// blurs a button it disables. Keeping it focusable and refusing the navigation here keeps the focus.
+		setPrevBtnDisabled(disabled) {
+			this.#setBtnDisabled(this.getPrevBtn(), disabled);
+		}
+		setNextBtnDisabled(disabled) {
+			this.#setBtnDisabled(this.getNextBtn(), disabled);
+		}
 		handlePrevBtnClick() {
+			if (this.#isBtnDisabled(this.getPrevBtn())) {
+				this.#announcePeriodBoundary();
+				return;
+			}
 			this.emit('onPrevBtnClick');
 		}
 		handleNextBtnClick() {
+			if (this.#isBtnDisabled(this.getNextBtn())) {
+				this.#announcePeriodBoundary();
+				return;
+			}
 			this.emit('onNextBtnClick');
+		}
+		#announcePeriodBoundary() {
+			this.getDatePicker().announcePeriodBoundary();
+		}
+		#setBtnDisabled(button, disabled) {
+			const ariaDisabled = disabled ? 'true' : 'false';
+			if (button.getAttribute('aria-disabled') !== ariaDisabled) {
+				button.setAttribute('aria-disabled', ariaDisabled);
+			}
+		}
+		#isBtnDisabled(button) {
+			return button.getAttribute('aria-disabled') === 'true';
 		}
 		render() {
 			throw new Error('You must implement render method');
@@ -89,12 +120,29 @@ this.BX.UI = this.BX.UI || {};
 		}
 	}
 
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 	function cloneDate(date) {
 		const newDate = new Date(date.getTime());
 		if (date.__utc) {
 			newDate.__utc = true;
 		}
 		return newDate;
+	}
+
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
+	function createUtcDate(year, monthIndex = 0, day = 1, hours = 0, minutes = 0, seconds = 0, ms = 0) {
+		const date = new Date(Date.UTC(year, monthIndex, day, hours, minutes, seconds, ms));
+
+		// The year from 0 to 99 will be incremented by 1900 automatically.
+		if (year < 100 && year >= 0) {
+			date.setUTCFullYear(year);
+		}
+		date.__utc = true;
+		return date;
 	}
 
 	function getDaysInMonth(date) {
@@ -106,6 +154,9 @@ this.BX.UI = this.BX.UI || {};
 		}
 		return 28;
 	}
+
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 
 	function addDate(date, unit, increment) {
 		let newDate = cloneDate(date);
@@ -135,7 +186,7 @@ this.BX.UI = this.BX.UI || {};
 				{
 					let day = date.getUTCDate();
 					if (day > 28) {
-						const firstDayOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+						const firstDayOfMonth = createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), 1);
 						day = Math.min(day, getDaysInMonth(addDate(firstDayOfMonth, 'month', increment)));
 					}
 					newDate.setUTCDate(day);
@@ -155,6 +206,9 @@ this.BX.UI = this.BX.UI || {};
 		}
 		return newDate;
 	}
+
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 
 	function floorDate(date, unit, firstWeekDay) {
 		let newDate = cloneDate(date);
@@ -187,7 +241,8 @@ this.BX.UI = this.BX.UI || {};
 				newDate.setUTCMilliseconds(0);
 				break;
 			case 'year':
-				newDate = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+				newDate.setUTCFullYear(date.getUTCFullYear(), 0, 1);
+				newDate.setUTCHours(0, 0, 0, 0);
 				break;
 			case 'quarter':
 				{
@@ -203,6 +258,9 @@ this.BX.UI = this.BX.UI || {};
 		}
 		return newDate;
 	}
+
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 
 	function getNextDate(date, unit, increment = 1, firstWeekDay = 0) {
 		let newDate = cloneDate(date);
@@ -225,7 +283,8 @@ this.BX.UI = this.BX.UI || {};
 				newDate = addDate(newDate, 'month', (increment - 1) * 3 + (3 - newDate.getUTCMonth() % 3));
 				break;
 			case 'year':
-				newDate = new Date(Date.UTC(newDate.getUTCFullYear() + increment, 0, 1));
+				newDate.setUTCFullYear(newDate.getUTCFullYear() + increment, 0, 1);
+				newDate.setUTCHours(0, 0, 0, 0);
 				break;
 			default:
 				newDate = addDate(date, unit, increment);
@@ -258,15 +317,11 @@ this.BX.UI = this.BX.UI || {};
 		return getNextDate(newDate, unit, increment);
 	}
 
-	function createUtcDate(year, monthIndex = 0, day = 1, hours = 0, minutes = 0, seconds = 0, ms = 0) {
-		const date = new Date(Date.UTC(year, monthIndex, day, hours, minutes, seconds, ms));
-
-		// The year from 0 to 99 will be incremented by 1900 automatically.
-		if (year < 100 && year >= 0) {
-			date.setUTCFullYear(year);
-		}
-		date.__utc = true;
-		return date;
+	function getGridStartDate(date, firstWeekDay) {
+		const firstMonthDay = floorDate(date, 'month');
+		let daysFromPrevMonth = firstMonthDay.getUTCDay() - firstWeekDay;
+		daysFromPrevMonth = daysFromPrevMonth < 0 ? daysFromPrevMonth + 7 : daysFromPrevMonth;
+		return addDate(firstMonthDay, 'day', -daysFromPrevMonth);
 	}
 
 	function getDate(date) {
@@ -332,6 +387,22 @@ this.BX.UI = this.BX.UI || {};
 		return false;
 	}
 
+	// A grid page keeps a single tab stop. It stays on the cell the picker focuses or opens on while that cell
+	// is available, and falls back to the first available cell of the page, so Tab always enters the grid.
+	function setTabAnchor(cells, isAnchorCandidate) {
+		const candidate = cells.find(cell => isAnchorCandidate(cell)) ?? null;
+		const firstAvailable = cells.find(cell => !cell.disabled) ?? null;
+		let anchor = null;
+		if (candidate === null) {
+			anchor = firstAvailable ?? cells[0] ?? null;
+		} else {
+			anchor = candidate.disabled ? firstAvailable ?? candidate : candidate;
+		}
+		for (const cell of cells) {
+			cell.tabIndex = cell === anchor ? 0 : -1;
+		}
+	}
+
 	class DayPicker extends BasePicker {
 		#refs = new main_core_cache.MemoryCache();
 		#weekdays = null;
@@ -339,7 +410,11 @@ this.BX.UI = this.BX.UI || {};
 		getContainer() {
 			return this.#refs.remember('container', () => {
 				return main_core.Tag.render`
-				<div class="ui-day-picker${this.getDatePicker().isFullYear() ? ' --full-year' : ''}" role="none">
+				<div
+					class="ui-day-picker${this.getDatePicker().isFullYear() ? ' --full-year' : ''}"
+					data-testid="ui-date-picker-day-view"
+					role="none"
+				>
 					${this.getHeader()}
 					${this.getContentContainer(this.getMonthContainer())}
 					${this.getDatePicker().isTimeEnabled() ? this.getDatePicker().isRangeMode() ? this.getTimeRangeContainer() : this.getTimeContainer() : null}
@@ -380,6 +455,7 @@ this.BX.UI = this.BX.UI || {};
 				<button
 					type="button"
 					class="ui-date-picker-header-month"
+					data-testid="ui-date-picker-month-view-btn"
 					aria-label="${main_core.Loc.getMessage('UI_DATE_PICKER_MONTH_VIEW_LABEL')}"
 					onclick="${this.#handleMonthClick.bind(this)}"
 				></button>
@@ -405,6 +481,7 @@ this.BX.UI = this.BX.UI || {};
 				<button 
 					type="button" 
 					class="ui-date-picker-header-year"
+					data-testid="ui-date-picker-year-view-btn"
 					aria-label="${main_core.Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
 					onclick="${this.#handleYearClick.bind(this)}"
 				></button>
@@ -557,7 +634,9 @@ this.BX.UI = this.BX.UI || {};
 				const dayContainer = main_core.Tag.render`
 				<button
 					type="button"
+					id="${this.getDatePicker().getContainerId()}-${id}"
 					class="ui-day-picker-day"
+					data-testid="ui-date-picker-day-cell"
 					data-day="${day.day}"
 					data-month="${day.month}"
 					data-year="${day.year}"
@@ -609,7 +688,9 @@ this.BX.UI = this.BX.UI || {};
 				'--range-in-end': day.rangeInEnd,
 				'--range-in-selected': day.rangeInSelected,
 				'--range-selected': day.rangeSelected,
-				'--focused': day.focused
+				'--focused': day.focused,
+				// Owned by KeyboardNavigation, kept so that rebuilding className does not drop the focus ring.
+				'--focus-visible': main_core.Dom.hasClass(button, '--focus-visible')
 			};
 			let classNames = 'ui-day-picker-day';
 			for (const [className, enabled] of Object.entries(statuses)) {
@@ -620,9 +701,16 @@ this.BX.UI = this.BX.UI || {};
 			if (button.className !== classNames) {
 				button.className = classNames;
 			}
-			button.disabled = Boolean(day.disabled);
-
-			// Day Colors
+			const ariaDisabled = day.disabled ? 'true' : 'false';
+			if (button.getAttribute('aria-disabled') !== ariaDisabled) {
+				button.setAttribute('aria-disabled', ariaDisabled);
+			}
+			this.#renderDayColors(button, day);
+			this.#renderDayMarks(button, day);
+			button.tabIndex = day.tabIndex;
+			return button;
+		}
+		#renderDayColors(button, day) {
 			const currentBgColor = button.dataset.bgColor || null;
 			const currentTextColor = button.dataset.textColor || null;
 			if (currentBgColor !== day.bgColor) {
@@ -633,22 +721,19 @@ this.BX.UI = this.BX.UI || {};
 				main_core.Dom.style(button.firstElementChild, '--ui-day-picker-day-text-color', day.textColor);
 				main_core.Dom.attr(button, 'data-text-color', day.textColor);
 			}
-
-			// Day Marks
+		}
+		#renderDayMarks(button, day) {
 			const currentMarks = button.dataset.marks || '';
-			if (currentMarks !== day.marks.toString()) {
-				main_core.Dom.clean(button.lastElementChild);
-				if (day.marks.length > 0) {
-					for (const mark of day.marks) {
-						main_core.Dom.append(main_core.Tag.render`
-							<span class="ui-day-picker-day-mark" style="background-color: ${mark}"></span>
-						`, button.lastElementChild);
-					}
-				}
-				main_core.Dom.attr(button, 'data-marks', day.marks.toString());
+			if (currentMarks === day.marks.toString()) {
+				return;
 			}
-			button.tabIndex = day.tabIndex;
-			return button;
+			main_core.Dom.clean(button.lastElementChild);
+			for (const mark of day.marks) {
+				main_core.Dom.append(main_core.Tag.render`
+					<span class="ui-day-picker-day-mark" style="background-color: ${mark}"></span>
+				`, button.lastElementChild);
+			}
+			main_core.Dom.attr(button, 'data-marks', day.marks.toString());
 		}
 		#renderTime() {
 			if (this.getDatePicker().isRangeMode()) {
@@ -725,17 +810,18 @@ this.BX.UI = this.BX.UI || {};
 			if (this.getDatePicker().isTimeEnabled()) {
 				this.#renderTime();
 			}
-			this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('day', 'prev');
-			this.getNextBtn().disabled = !this.getDatePicker().canNavigate('day', 'next');
+			this.setPrevBtnDisabled(!this.getDatePicker().canNavigate('day', 'prev'));
+			this.setNextBtnDisabled(!this.getDatePicker().canNavigate('day', 'next'));
 		}
 		getMonths() {
 			const months = [];
+			const tabCells = [];
 			const picker = this.getDatePicker();
 			let date = picker.getViewDate();
 			const numberOfMonths = picker.getNumberOfMonths();
 			const today = picker.getToday();
 			const focusDate = picker.getFocusDate();
-			const initialFocusDate = this.getDatePicker().getInitialFocusDate();
+			const anchorDate = picker.getInitialFocusDate();
 			const showOutsideDays = picker.shouldShowOutsideDays();
 			const {
 				year,
@@ -754,15 +840,8 @@ this.BX.UI = this.BX.UI || {};
 					const week = [];
 					let prevDay = null;
 					for (let weekDay = 0; weekDay < 7; weekDay++) {
-						let available = true;
 						const outside = date.getUTCMonth() !== currentMonthIndex;
-						if (outside) {
-							if (showOutsideDays && numberOfMonths > 1) {
-								available = date.getTime() < firstAvailableDay || date.getTime() >= lastAvailableDay;
-							} else if (!showOutsideDays) {
-								available = false;
-							}
-						}
+						const available = !outside || this.#isOutsideDayAvailable(date, firstAvailableDay, lastAvailableDay);
 						const disabled = available && !picker.isDateAllowed(date, 'day');
 						const selected = available && picker.isDateSelected(date, 'day');
 						const rangeFrom = available && from && to && isDatesEqual(date, from);
@@ -775,7 +854,6 @@ this.BX.UI = this.BX.UI || {};
 						}
 						const rangeInSelected = selected && rangeIn && !rangeFrom && !rangeTo;
 						const focused = available && isDatesEqual(date, focusDate, 'day');
-						const tabIndex = available && (isDatesEqual(date, focusDate, 'day') || isDatesEqual(date, initialFocusDate, 'day')) ? 0 : -1;
 						const dayColor = this.getDatePicker().getDayColor(date);
 						const marks = this.getDatePicker().getDayMarks(date).map(dayMark => {
 							return dayMark.bgColor;
@@ -786,14 +864,14 @@ this.BX.UI = this.BX.UI || {};
 							month: date.getUTCMonth(),
 							year: date.getUTCFullYear(),
 							outside,
-							current: isDatesEqual(date, today, 'day'),
+							current: picker.shouldShowToday() && isDatesEqual(date, today, 'day'),
 							selected,
 							disabled,
 							hidden: outside && !showOutsideDays,
 							dayOff: picker.isDayOff(date),
 							rangeSelected: selected && rangeSelected,
 							focused,
-							tabIndex,
+							tabIndex: -1,
 							rangeFrom,
 							rangeTo,
 							rangeIn,
@@ -806,6 +884,11 @@ this.BX.UI = this.BX.UI || {};
 						};
 						week.push(day);
 						prevDay = day;
+
+						// A hidden cell and a cell repeating a neighbour month are out of the tab order.
+						if (available) {
+							tabCells.push(day);
+						}
 						date = addDate(date, 'day', 1);
 					}
 					weeks.push(week);
@@ -815,15 +898,23 @@ this.BX.UI = this.BX.UI || {};
 					date: firstMonthDay
 				});
 			}
+			setTabAnchor(tabCells, cell => isDatesEqual(cell.date, anchorDate, 'day'));
 			return months;
 		}
-		#getStartMonthDate(date) {
+
+		// A day of a neighbour month is shown twice on a multi-month grid: the page it belongs to keeps it.
+		#isOutsideDayAvailable(date, firstAvailableDay, lastAvailableDay) {
 			const picker = this.getDatePicker();
-			const firstWeekDay = picker.getFirstWeekDay();
-			const firstMonthDay = floorDate(date, 'month');
-			let daysFromPrevMonth = firstMonthDay.getUTCDay() - firstWeekDay;
-			daysFromPrevMonth = daysFromPrevMonth < 0 ? daysFromPrevMonth + 7 : daysFromPrevMonth;
-			return addDate(firstMonthDay, 'day', -daysFromPrevMonth);
+			if (!picker.shouldShowOutsideDays()) {
+				return false;
+			}
+			if (picker.getNumberOfMonths() === 1) {
+				return true;
+			}
+			return date.getTime() < firstAvailableDay || date.getTime() >= lastAvailableDay;
+		}
+		#getStartMonthDate(date) {
+			return getGridStartDate(date, this.getDatePicker().getFirstWeekDay());
 		}
 		getFirstDay() {
 			const viewDate = this.getDatePicker().getViewDate();
@@ -859,33 +950,21 @@ this.BX.UI = this.BX.UI || {};
 				const range = this.getDatePicker().getSelectedDates();
 				from = range[0] || null;
 				to = range[1] || null;
-				if (focusDate !== null) {
-					if (range.length === 1) {
-						if (focusDate > from.getTime()) {
-							to = focusDate;
-						} else {
-							to = from;
-							from = focusDate;
-						}
+				if (focusDate !== null && range.length === 1) {
+					if (focusDate > from.getTime()) {
+						to = focusDate;
+					} else {
+						to = from;
+						from = focusDate;
 					}
-					/* else if (range.length === 2)
-					{
-						if (focusDate > to.getTime())
-						{
-							to = focusDate;
-						}
-						else if (focusDate < from.getTime())
-						{
-							from = focusDate;
-						}
-					} */
 				}
 			}
 			return [from, to];
 		}
 		#handleDayClick(event) {
 			const dayElement = event.target.closest('.ui-day-picker-day');
-			if (dayElement === null || dayElement.disabled) {
+			// Keyboard activation reaches the handler past the pointer-events guard, so the cell is refused here.
+			if (dayElement === null || ui_a11y.InteractivityChecker.isDisabled(dayElement)) {
 				return;
 			}
 			const dataset = dayElement.dataset;
@@ -974,6 +1053,7 @@ this.BX.UI = this.BX.UI || {};
 		BEFORE_DAY_SELECT: 'onBeforeDaySelect',
 		DESELECT: 'onDeselect',
 		PRESET_SELECT: 'onPresetSelect',
+		VIEW_DATE_CHANGE: 'onViewDateChange',
 		DESTROY: 'onDestroy'
 	};
 
@@ -1083,6 +1163,9 @@ this.BX.UI = this.BX.UI || {};
 	// 	'n/j/Y g:i a': 'MM/DD/YYYY H:MI:SS T',
 	// 	// 'n/j/Y g:i a': 'DD-MM-YYYY H:MI:SS T', // hi
 	// };
+
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 
 	const WORD_REGEX = /[^\p{L}\p{N}\u0600-\u06FF_]/u;
 	const YEAR_REGEX = /^[1-9]\d{3}$/;
@@ -1239,6 +1322,9 @@ this.BX.UI = this.BX.UI || {};
 		}
 	}
 
+	// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 	function createDate(value, formatDate = null) {
 		let date = null;
 		if (main_core.Type.isStringFilled(value) && main_core.Type.isStringFilled(formatDate)) {
@@ -1257,7 +1343,7 @@ this.BX.UI = this.BX.UI || {};
 		return date;
 	}
 	function createUTC(date) {
-		return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), 0));
+		return createUtcDate(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds());
 	}
 
 	const FOCUSABLE_ELEMENTS_SELECTOR = ['button:not([disabled]):not([tabindex="-1"])', '[tabindex]:not([tabindex="-1"]):not([disabled])'].join(', ');
@@ -1361,6 +1447,21 @@ this.BX.UI = this.BX.UI || {};
 		return newDate;
 	}
 
+	// Comparing two dates at a precision means comparing these numbers: the widget bounds and the consumer
+	// bounds are compared by the same formula, otherwise they disagree on the edge of the range.
+	function toComparable(date, precision) {
+		switch (precision) {
+			case 'year':
+				return date.getUTCFullYear();
+			case 'month':
+				return date.getUTCFullYear() * 12 + date.getUTCMonth();
+			case 'day':
+				return createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()).getTime();
+			default:
+				return date.getTime();
+		}
+	}
+
 	function isDateMatch(day, matchers) {
 		return matchers.some(matcher => {
 			if (main_core.Type.isFunction(matcher)) {
@@ -1408,6 +1509,21 @@ this.BX.UI = this.BX.UI || {};
 		return false;
 	}
 
+	const MS_IN_DAY = 86_400_000;
+
+	// The distance between two dates in whole units of the grid the cursor moves over.
+	function getDateOffset(from, to, unit) {
+		const fromParts = getDate(from);
+		const toParts = getDate(to);
+		if (unit === 'year') {
+			return toParts.year - fromParts.year;
+		}
+		if (unit === 'month') {
+			return (toParts.year - fromParts.year) * 12 + (toParts.month - fromParts.month);
+		}
+		return Math.round((floorDate(to, 'day').getTime() - floorDate(from, 'day').getTime()) / MS_IN_DAY);
+	}
+
 	const keyMap = {
 		ArrowRight: {
 			day: 1,
@@ -1438,6 +1554,9 @@ this.BX.UI = this.BX.UI || {};
 			minutes: 2
 		}
 	};
+
+	// How far an arrow may step over the dates disabled inside the range before the move is given up.
+	const MAX_FOCUS_DATE_SEARCH_STEPS = 100;
 	class KeyboardNavigation {
 		#datePicker = null;
 		#lastFocusElement = null;
@@ -1478,54 +1597,18 @@ this.BX.UI = this.BX.UI || {};
 				this.resetLastFocusElement();
 				const initialFocus = picker.getFocusDate() === null && this.#isRootContainerFocused();
 				if (view === 'time') {
-					const timePicker = this.#datePicker.getPicker('time');
-					let currentFocusDate = cloneDate(picker.getInitialFocusDate(timePicker.getMode()));
-					let {
-						hours,
-						minutes
-					} = getDate(currentFocusDate);
-					if (initialFocus) {
-						picker.setFocusDate(currentFocusDate, {
-							inputModality: 'keyboard'
-						});
-						this.#adjustLastFocusElement();
-					} else if (timePicker.getFocusColumn() === 'hours') {
-						const increment = keyMap[event.key].hours;
-						hours += increment;
-						if (hours < 0) {
-							hours += 24;
-						} else if (hours > 23) {
-							hours -= 24;
-						}
-						currentFocusDate = setTime(currentFocusDate, hours, null, null);
-						picker.setFocusDate(currentFocusDate, {
-							inputModality: 'keyboard'
-						});
-						this.#adjustLastFocusElement();
-					} else if (timePicker.getFocusColumn() === 'minutes') {
-						const increment = keyMap[event.key].minutes;
-						minutes += timePicker.getCurrentMinuteStep() * increment;
-						if (minutes < 0) {
-							minutes += 60;
-						} else if (minutes > 59) {
-							minutes -= 60;
-						}
-						currentFocusDate = setTime(currentFocusDate, null, minutes, null);
-						picker.setFocusDate(currentFocusDate, {
-							inputModality: 'keyboard'
-						});
-						timePicker.adjustMinuteFocusPosition();
-						this.#adjustLastFocusElement();
-					}
+					this.#moveTimeFocus(event.key, initialFocus);
 				} else {
-					const currentFocusDate = cloneDate(picker.getInitialFocusDate());
-					if (initialFocus) {
-						picker.setFocusDate(currentFocusDate, {
-							inputModality: 'keyboard'
-						});
+					// Entering the grid starts from the date the picker opened on: the cursor is not in the grid yet.
+					const openDate = cloneDate(picker.getInitialFocusDate());
+					const currentFocusDate = initialFocus ? openDate : this.#getCursorDate(openDate, view);
+					const focusDate = initialFocus ? this.#findInitialFocusDate(currentFocusDate, view) : this.#findAllowedFocusDate(currentFocusDate, view, keyMap[event.key][view]);
+
+					// The first arrow press only enters the grid: a date equal to the cursor is still a move.
+					const boundaryReached = focusDate === null || !initialFocus && isDatesEqual(focusDate, currentFocusDate, view);
+					if (boundaryReached) {
+						picker.announcePeriodBoundary();
 					} else {
-						const increment = keyMap[event.key][view];
-						const focusDate = addDate(currentFocusDate, view, increment);
 						picker.setFocusDate(focusDate, {
 							inputModality: 'keyboard'
 						});
@@ -1533,6 +1616,82 @@ this.BX.UI = this.BX.UI || {};
 					this.#adjustLastFocusElement();
 				}
 			}
+		}
+		#moveTimeFocus(key, initialFocus) {
+			const picker = this.#datePicker;
+			const timePicker = picker.getPicker('time');
+			let currentFocusDate = cloneDate(picker.getInitialFocusDate(timePicker.getMode()));
+			const {
+				hours,
+				minutes
+			} = getDate(currentFocusDate);
+			if (initialFocus) {
+				picker.setFocusDate(currentFocusDate, {
+					inputModality: 'keyboard'
+				});
+				this.#adjustLastFocusElement();
+			} else if (timePicker.getFocusColumn() === 'hours') {
+				currentFocusDate = setTime(currentFocusDate, this.#wrapHours(hours + keyMap[key].hours), null, null);
+				picker.setFocusDate(currentFocusDate, {
+					inputModality: 'keyboard'
+				});
+				this.#adjustLastFocusElement();
+			} else if (timePicker.getFocusColumn() === 'minutes') {
+				const increment = timePicker.getCurrentMinuteStep() * keyMap[key].minutes;
+				currentFocusDate = setTime(currentFocusDate, null, this.#wrapMinutes(minutes + increment), null);
+				picker.setFocusDate(currentFocusDate, {
+					inputModality: 'keyboard'
+				});
+				timePicker.adjustMinuteFocusPosition();
+				this.#adjustLastFocusElement();
+			}
+		}
+		#wrapHours(hours) {
+			if (hours < 0) {
+				return hours + 24;
+			}
+			return hours > 23 ? hours - 24 : hours;
+		}
+		#wrapMinutes(minutes) {
+			if (minutes < 0) {
+				return minutes + 60;
+			}
+			return minutes > 59 ? minutes - 60 : minutes;
+		}
+
+		// A changed boundary leaves the stored cursor outside the range, and the grid holds it at the bound.
+		// The move counts in units of the grid, so the parts of the date it does not show are kept.
+		#getCursorDate(openDate, view) {
+			const boundDate = this.#datePicker.clampDate(openDate, view);
+			return addDate(openDate, view, getDateOffset(openDate, boundDate, view));
+		}
+		#findAllowedFocusDate(currentFocusDate, view, increment) {
+			return this.#resolveAllowedDate(addDate(currentFocusDate, view, increment), view, increment);
+		}
+
+		// The first arrow press only moves the cursor into the grid: it starts from the date the picker opened on.
+		// Nothing available ahead of that date still leaves the range behind it, so the search turns back.
+		#findInitialFocusDate(focusDate, view) {
+			return this.#resolveAllowedDate(focusDate, view, 1) ?? this.#resolveAllowedDate(focusDate, view, -1);
+		}
+
+		// A cursor on a date the range does not offer leaves the grid without a cell to focus. A target beyond
+		// the bound goes to the bound itself, and the steps are left to the dates disabled inside the range.
+		#resolveAllowedDate(targetDate, view, increment) {
+			const picker = this.#datePicker;
+			let focusDate = picker.clampDate(targetDate, view);
+			const searchIncrement = focusDate.getTime() === targetDate.getTime() ? increment : Math.sign(focusDate.getTime() - targetDate.getTime());
+			for (let step = 0; step < MAX_FOCUS_DATE_SEARCH_STEPS; step++) {
+				if (picker.isDateAllowed(focusDate, view)) {
+					return focusDate;
+				}
+				const nextDate = picker.clampDate(addDate(focusDate, view, searchIncrement), view);
+				if (nextDate.getTime() === focusDate.getTime()) {
+					return null;
+				}
+				focusDate = nextDate;
+			}
+			return null;
 		}
 		#isRootContainerFocused() {
 			const rootContainer = this.#datePicker.getRootContainer();
@@ -1594,7 +1753,7 @@ this.BX.UI = this.BX.UI || {};
 		getContainer() {
 			return this.#refs.remember('container', () => {
 				return main_core.Tag.render`
-				<div class="ui-month-picker" role="none">
+				<div class="ui-month-picker" data-testid="ui-date-picker-month-view" role="none">
 					${this.getHeaderContainer(this.getPrevBtn(), this.getHeaderTitle(), this.getNextBtn())}
 					${this.getContentContainer(this.getYearContainer())}
 				</div>
@@ -1607,6 +1766,7 @@ this.BX.UI = this.BX.UI || {};
 				<button
 					type="button" 
 					class="ui-month-picker-header-title" 
+					data-testid="ui-date-picker-year-view-btn"
 					onclick="${this.#handleTitleClick.bind(this)}"
 					aria-live="polite" 
 					aria-label="${main_core.Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
@@ -1632,36 +1792,38 @@ this.BX.UI = this.BX.UI || {};
 			} = getDate(this.getDatePicker().getViewDate());
 			const today = this.getDatePicker().getToday();
 			const focusDate = this.getDatePicker().getFocusDate();
-			const initialFocusDate = this.getDatePicker().getInitialFocusDate();
+			const anchorDate = this.getDatePicker().getInitialFocusDate();
 			// const formatter = new Intl.DateTimeFormat(
 			// 	this.getDatePicker().getLocale(),
 			// 	{ month: 'short', timeZone: 'UTC' },
 			// );
 
 			const months = [];
+			const cells = [];
 			let currentMonthIndex = 0;
 			for (let quarterIndex = 0; quarterIndex < 4; quarterIndex++) {
 				const quarter = [];
 				for (let monthIndex = 0; monthIndex < 3; monthIndex++) {
 					const date = createUtcDate(year, currentMonthIndex);
-					const focused = isDatesEqual(date, focusDate, 'month');
 					const month = {
 						name: main_date.DateTimeFormat.format('f', date, null, true),
 						// name: formatter.format(date),
 						date,
 						year,
 						month: currentMonthIndex,
-						current: isDatesEqual(date, today, 'month'),
+						current: this.getDatePicker().shouldShowToday() && isDatesEqual(date, today, 'month'),
 						selected: this.getDatePicker().isDateSelected(date, 'month'),
 						disabled: !this.getDatePicker().isDateAllowed(date, 'month'),
-						focused,
-						tabIndex: focused || isDatesEqual(date, initialFocusDate, 'month') ? 0 : -1
+						focused: isDatesEqual(date, focusDate, 'month'),
+						tabIndex: -1
 					};
 					quarter.push(month);
+					cells.push(month);
 					currentMonthIndex++;
 				}
 				months.push(quarter);
 			}
+			setTabAnchor(cells, cell => isDatesEqual(cell.date, anchorDate, 'month'));
 			return months;
 		}
 		renderTo(container) {
@@ -1689,8 +1851,8 @@ this.BX.UI = this.BX.UI || {};
 				year: currentYear
 			} = getDate(this.getDatePicker().getViewDate());
 			this.getHeaderTitle().textContent = currentYear;
-			this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('month', 'prev');
-			this.getNextBtn().disabled = !this.getDatePicker().canNavigate('month', 'next');
+			this.setPrevBtnDisabled(!this.getDatePicker().canNavigate('month', 'prev'));
+			this.setNextBtnDisabled(!this.getDatePicker().canNavigate('month', 'next'));
 		}
 		#renderQuarter(index) {
 			return this.#refs.remember(`quarter-${index}`, () => {
@@ -1705,6 +1867,7 @@ this.BX.UI = this.BX.UI || {};
 				<button
 					type="button"
 					class="ui-month-picker-month"
+					data-testid="ui-date-picker-month-cell"
 					role="gridcell"
 					data-year="${month.year}"
 					data-month="${month.month}"
@@ -1754,7 +1917,10 @@ this.BX.UI = this.BX.UI || {};
 			} else {
 				main_core.Dom.removeClass(button, '--disabled');
 			}
-			button.disabled = Boolean(month.disabled);
+			const ariaDisabled = month.disabled ? 'true' : 'false';
+			if (button.getAttribute('aria-disabled') !== ariaDisabled) {
+				button.setAttribute('aria-disabled', ariaDisabled);
+			}
 			button.tabIndex = month.tabIndex;
 			return button;
 		}
@@ -1771,7 +1937,8 @@ this.BX.UI = this.BX.UI || {};
 			this.emit('onBlur');
 		}
 		#handleMonthClick(event) {
-			if (!main_core.Dom.hasClass(event.target, 'ui-month-picker-month') || event.target.disabled) {
+			// Keyboard activation reaches the handler past the pointer-events guard, so the cell is refused here.
+			if (!main_core.Dom.hasClass(event.target, 'ui-month-picker-month') || ui_a11y.InteractivityChecker.isDisabled(event.target)) {
 				return;
 			}
 			const year = main_core.Text.toInteger(event.target.dataset.year);
@@ -1913,7 +2080,16 @@ this.BX.UI = this.BX.UI || {};
 	class TimePickerWheel extends TimePickerBase {
 		#refs = new main_core_cache.MemoryCache();
 		#focusSelectorId = null;
-		#selectorScrollHandler = main_core.Runtime.debounce(this.#handleSelectorScroll, 200, this);
+		#scrollEndTimeouts = new Map();
+		#scrollingSelectorIds = new Set();
+		#adjustedScrollTops = new Map();
+		#destroyed = false;
+		constructor(datePicker) {
+			super(datePicker);
+			datePicker.subscribe('onShow', this.#handleDatePickerShow.bind(this));
+			datePicker.subscribe('onHide', this.#cancelPendingScrolls.bind(this));
+			datePicker.subscribe(DatePickerEvent.DESTROY, this.#handleDatePickerDestroy.bind(this));
+		}
 		getContainer() {
 			return this.#refs.remember('container', () => {
 				return main_core.Tag.render`
@@ -1936,7 +2112,7 @@ this.BX.UI = this.BX.UI || {};
 									tabindex="0"
 									role="listbox"
 									aria-labelledby="${this.getSelectorId('hours')}"
-									onscroll="${this.#selectorScrollHandler}"
+									onscroll="${this.#handleSelectorScroll.bind(this)}"
 									onfocus="${this.#handleFocus.bind(this)}"
 								>
 									${this.getHoursContainer()}
@@ -1959,7 +2135,7 @@ this.BX.UI = this.BX.UI || {};
 									tabindex="0"
 									role="listbox"
 									aria-labelledby="${this.getSelectorId('minutes')}"
-									onscroll="${this.#selectorScrollHandler}"
+									onscroll="${this.#handleSelectorScroll.bind(this)}"
 									onfocus="${this.#handleFocus.bind(this)}"
 								>
 									${this.getMinutesContainer()}
@@ -1982,7 +2158,7 @@ this.BX.UI = this.BX.UI || {};
 												tabindex="0"
 												role="listbox"
 												aria-labelledby="${this.getSelectorId('meridiem')}"
-												onscroll="${this.#selectorScrollHandler}"
+												onscroll="${this.#handleSelectorScroll.bind(this)}"
 												onfocus="${this.#handleFocus.bind(this)}"
 											>
 												${this.getMeridiemsContainer()}
@@ -2041,6 +2217,10 @@ this.BX.UI = this.BX.UI || {};
 				return main_core.Tag.render`<div class="ui-time-picker-time-highlighter" aria-hidden="true"></div>`;
 			});
 		}
+		onHide() {
+			super.onHide();
+			this.#cancelPendingScrolls();
+		}
 		onShow() {
 			super.onShow();
 			this.focusSelector('hour', !this.getDatePicker().isInline());
@@ -2062,7 +2242,7 @@ this.BX.UI = this.BX.UI || {};
 				}
 				this.#renderHour(hour);
 			});
-			this.#adjustScrollPosition(this.getHoursContainer(), selectedHourIndex, false);
+			this.#restoreScrollPosition(this.getHoursContainer(), selectedHourIndex);
 			let selectedMinuteIndex = 0;
 			this.getMinutes().forEach(minute => {
 				if (minute.selected) {
@@ -2070,7 +2250,7 @@ this.BX.UI = this.BX.UI || {};
 				}
 				this.#renderMinute(minute);
 			});
-			this.#adjustScrollPosition(this.getMinutesContainer(), selectedMinuteIndex, false);
+			this.#restoreScrollPosition(this.getMinutesContainer(), selectedMinuteIndex);
 			const picker = this.getDatePicker();
 			if (picker.isAmPmMode()) {
 				let selectedMeridiemIndex = 0;
@@ -2080,7 +2260,7 @@ this.BX.UI = this.BX.UI || {};
 					}
 					this.#renderMeridiem(meridiem);
 				});
-				this.#adjustScrollPosition(this.getMeridiemsContainer(), selectedMeridiemIndex, false);
+				this.#restoreScrollPosition(this.getMeridiemsContainer(), selectedMeridiemIndex);
 			}
 		}
 		getItemHeight() {
@@ -2185,10 +2365,20 @@ this.BX.UI = this.BX.UI || {};
 				marginBottom: `${offset}px`
 			});
 		}
+		#restoreScrollPosition(listContainer, index) {
+			const selectorId = listContainer.parentNode.parentNode.parentNode.dataset.selectorId;
+			if (!this.#scrollingSelectorIds.has(selectorId)) {
+				this.#adjustScrollPosition(listContainer, index, false);
+			}
+		}
 		#adjustScrollPosition(listContainer, index, smooth = true) {
 			const scrollContainer = listContainer.parentNode;
 			const scrollTop = this.getItemHeight() * index;
 			if (scrollContainer.scrollTop !== scrollTop) {
+				if (!smooth) {
+					const selectorId = listContainer.parentNode.parentNode.parentNode.dataset.selectorId;
+					this.#adjustedScrollTops.set(selectorId, scrollTop);
+				}
 				scrollContainer.scrollTo({
 					top: scrollTop,
 					behavior: smooth ? 'smooth' : 'instant'
@@ -2196,6 +2386,16 @@ this.BX.UI = this.BX.UI || {};
 				return true;
 			}
 			return false;
+		}
+
+		// An instant alignment fires a real scroll event; treating it as a user scroll would revert the selected time.
+		#isAdjustedScroll(selectorId, scrollTop) {
+			if (!this.#adjustedScrollTops.has(selectorId)) {
+				return false;
+			}
+			const adjustedScrollTop = this.#adjustedScrollTops.get(selectorId);
+			this.#adjustedScrollTops.delete(selectorId);
+			return Math.abs(scrollTop - adjustedScrollTop) <= 1;
 		}
 		#handleItemClick(event) {
 			const item = event.target;
@@ -2225,19 +2425,62 @@ this.BX.UI = this.BX.UI || {};
 			this.focusSelector(event.target.parentNode.parentNode.dataset.selectorId);
 		}
 		#handleSelectorScroll(event) {
+			if (this.#destroyed) {
+				return;
+			}
+			const selectorId = event.target.parentNode.parentNode.dataset.selectorId;
+			if (this.#isAdjustedScroll(selectorId, event.target.scrollTop)) {
+				return;
+			}
+			clearTimeout(this.#scrollEndTimeouts.get(selectorId));
+			this.#scrollingSelectorIds.add(selectorId);
+			this.#scrollEndTimeouts.set(selectorId, setTimeout(() => {
+				this.#scrollEndTimeouts.delete(selectorId);
+				this.#handleSelectorScrollEnd(event);
+			}, 200));
+		}
+		#cancelPendingScrolls() {
+			this.#scrollEndTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+			this.#scrollEndTimeouts.clear();
+			this.#scrollingSelectorIds.clear();
+		}
+
+		// A wheel scrolled while the picker was closing keeps its position, so align it with the selected time.
+		#handleDatePickerShow() {
+			if (this.isRendered() && this.getDatePicker().getPicker() === this) {
+				this.render();
+			}
+		}
+		#handleDatePickerDestroy() {
+			this.#cancelPendingScrolls();
+			this.#destroyed = true;
+		}
+		#handleSelectorScrollEnd(event) {
+			this.#scrollingSelectorIds.delete(event.target.parentNode.parentNode.dataset.selectorId);
+			const datePicker = this.getDatePicker();
+			const isHidden = !datePicker.isInline() && !datePicker.isOpen() || datePicker.getPicker() !== this;
+			if (isHidden) {
+				return;
+			}
 			const scrollContainer = event.target;
 			const scrollTop = scrollContainer.scrollTop;
-			const atSnappingPoint = scrollTop % this.getItemHeight() === 0;
+			const itemHeight = this.getItemHeight();
+			const atSnappingPoint = Math.abs(scrollTop - this.#getScrollIndex(scrollContainer) * itemHeight) <= 1;
 			if (atSnappingPoint) {
 				this.#selectTime(scrollContainer);
 			}
 		}
+		#getScrollIndex(scrollContainer) {
+			return Math.round(scrollContainer.scrollTop / this.getItemHeight());
+		}
 		#selectTime(scrollContainer) {
-			const scrollTop = scrollContainer.scrollTop;
-			const index = scrollTop / this.getItemHeight();
+			const index = this.#getScrollIndex(scrollContainer);
 			const selector = scrollContainer.parentNode.parentNode;
 			const selectorId = selector.dataset.selectorId;
 			const item = selector.querySelector(`[data-index="${index}"]`);
+			if (item === null) {
+				return;
+			}
 			const selectedDate = this.getTimeDate();
 			const currentHour = selectedDate === null ? -1 : selectedDate.getUTCHours();
 			const currentMinute = selectedDate === null ? -1 : selectedDate.getUTCMinutes();
@@ -2598,6 +2841,7 @@ this.BX.UI = this.BX.UI || {};
 				return main_core.Tag.render`
 				<div
 					class="ui-year-picker"
+					data-testid="ui-date-picker-year-view"
 					role="none"
 				>
 					${this.getHeaderContainer(this.getPrevBtn(), this.getHeaderTitle(), this.getNextBtn())}
@@ -2630,29 +2874,32 @@ this.BX.UI = this.BX.UI || {};
 				year: currentYear
 			} = getDate(this.getDatePicker().getToday());
 			const focusDate = this.getDatePicker().getFocusDate();
-			const initialFocusYear = this.getDatePicker().getInitialFocusDate().getUTCFullYear();
+			const anchorYear = this.getDatePicker().getInitialFocusDate().getUTCFullYear();
 			const years = [];
+			const cells = [];
 			let index = 0;
 			let year = this.#getStartYear();
 			for (let i = 0; i < 4; i++) {
 				const quarter = [];
 				for (let j = 0; j < 3; j++) {
-					const focused = focusDate !== null && focusDate.getUTCFullYear() === year;
-					quarter.push({
+					const cell = {
 						index,
 						year,
 						name: year,
-						current: currentYear === year,
+						current: this.getDatePicker().shouldShowToday() && currentYear === year,
 						selected: this.getDatePicker().isDateSelected(createUtcDate(year), 'year'),
 						disabled: !this.getDatePicker().isDateAllowed(createUtcDate(year), 'year'),
-						focused,
-						tabIndex: focused || year === initialFocusYear ? 0 : -1
-					});
+						focused: focusDate !== null && focusDate.getUTCFullYear() === year,
+						tabIndex: -1
+					};
+					quarter.push(cell);
+					cells.push(cell);
 					year++;
 					index++;
 				}
 				years.push(quarter);
 			}
+			setTabAnchor(cells, cell => cell.year === anchorYear);
 			return years;
 		}
 		#getStartYear() {
@@ -2697,8 +2944,8 @@ this.BX.UI = this.BX.UI || {};
 			const firstYear = years[0][0].name;
 			const lastYear = years.at(-1).at(-1).name;
 			this.getHeaderTitle().textContent = `${firstYear} — ${lastYear}`;
-			this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('year', 'prev');
-			this.getNextBtn().disabled = !this.getDatePicker().canNavigate('year', 'next');
+			this.setPrevBtnDisabled(!this.getDatePicker().canNavigate('year', 'prev'));
+			this.setNextBtnDisabled(!this.getDatePicker().canNavigate('year', 'next'));
 		}
 		#renderQuarter(index) {
 			return this.#refs.remember(`quarter-${index}`, () => {
@@ -2713,8 +2960,9 @@ this.BX.UI = this.BX.UI || {};
 				<button
 					type="button"
 					class="ui-year-picker-year"
+					data-testid="ui-date-picker-year-cell"
 					role="gridcell"
-					data-year="${year}"
+					data-year="${year.year}"
 					data-tab-priority="true"
 					onmouseenter="${this.#handleMouseEnter.bind(this)}"
 					onmouseleave="${this.#handleMouseLeave.bind(this)}"
@@ -2758,7 +3006,10 @@ this.BX.UI = this.BX.UI || {};
 			} else {
 				main_core.Dom.removeClass(button, '--disabled');
 			}
-			button.disabled = Boolean(year.disabled);
+			const ariaDisabled = year.disabled ? 'true' : 'false';
+			if (button.getAttribute('aria-disabled') !== ariaDisabled) {
+				button.setAttribute('aria-disabled', ariaDisabled);
+			}
 			button.tabIndex = year.tabIndex;
 			return button;
 		}
@@ -2773,7 +3024,8 @@ this.BX.UI = this.BX.UI || {};
 			this.emit('onBlur');
 		}
 		#handleYearClick(event) {
-			if (!main_core.Dom.hasClass(event.target, 'ui-year-picker-year') || event.target.disabled) {
+			// Keyboard activation reaches the handler past the pointer-events guard, so the cell is refused here.
+			if (!main_core.Dom.hasClass(event.target, 'ui-year-picker-year') || ui_a11y.InteractivityChecker.isDisabled(event.target)) {
 				return;
 			}
 			const year = main_core.Text.toInteger(event.target.dataset.year);
@@ -2791,6 +3043,28 @@ this.BX.UI = this.BX.UI || {};
 
 	let singleOpenDatePicker = null;
 
+	// Marks an input as bound to a widget instance: the popup focus trap keeps such inputs out of the isolation.
+	const BOUND_INPUT_ATTRIBUTE = 'data-ui-date-picker-input';
+
+	// The same for the label of a bound input: an isolated label is read as hidden and costs the field its name.
+	const BOUND_INPUT_LABEL_ATTRIBUTE = 'data-ui-date-picker-input-label';
+
+	// A year outside this range breaks the backend date types, so only a consumer bound may reach past it.
+	const MIN_SUPPORTED_DATE = createUtcDate(1900, 0, 1);
+	const MAX_SUPPORTED_DATE = createUtcDate(2100, 11, 31, 23, 59, 59, 999);
+
+	// The widget bounds never change, so their comparable values are built once.
+	const MIN_SUPPORTED_COMPARABLE = toComparableByPrecision(MIN_SUPPORTED_DATE);
+	const MAX_SUPPORTED_COMPARABLE = toComparableByPrecision(MAX_SUPPORTED_DATE);
+	function toComparableByPrecision(date) {
+		return {
+			year: toComparable(date, 'year'),
+			month: toComparable(date, 'month'),
+			day: toComparable(date, 'day'),
+			datetime: toComparable(date, 'datetime')
+		};
+	}
+
 	/**
 	 * @namespace BX.UI.DatePicker
 	 */
@@ -2801,6 +3075,8 @@ this.BX.UI = this.BX.UI || {};
 		#selectedDates = [];
 		#focusDate = null;
 		#focusInputModality = null;
+		#periodBoundaryAnnounced = false;
+		#markedInputLabels = new Set();
 		#type = 'date';
 		#currentView = null;
 		#selectionMode = 'single';
@@ -2809,6 +3085,7 @@ this.BX.UI = this.BX.UI || {};
 		#showWeekDays = true;
 		#showWeekNumbers = false;
 		#showOutsideDays = true;
+		#showToday = true;
 		#numberOfMonths = 1;
 		#maxDays = Infinity;
 		#minDays = 0;
@@ -2831,6 +3108,7 @@ this.BX.UI = this.BX.UI || {};
 		#inputField = null;
 		#rangeStartInput = null;
 		#rangeEndInput = null;
+		#originalInputAttributes = new WeakMap();
 		#useInputEvents = true;
 		#dateSeparator = ', ';
 		#popup = null;
@@ -2857,6 +3135,7 @@ this.BX.UI = this.BX.UI || {};
 		#presetsFocusZone = null;
 		#keyboardNavigation = null;
 		#destroying = false;
+		#emittingViewDateChange = false;
 		constructor(pickerOptions) {
 			super();
 			this.setEventNamespace('BX.UI.DatePicker');
@@ -2905,6 +3184,7 @@ this.BX.UI = this.BX.UI || {};
 			}
 			this.#showWeekDays = main_core.Type.isBoolean(options.showWeekDays) ? options.showWeekDays : this.#showWeekDays;
 			this.#showWeekNumbers = main_core.Type.isBoolean(options.showWeekNumbers) ? options.showWeekNumbers : this.#showWeekNumbers;
+			this.#showToday = main_core.Type.isBoolean(options.showToday) ? options.showToday : this.#showToday;
 			const defaultWeekends = settings.get('weekends', []);
 			this.#weekends = main_core.Type.isArray(options.weekends) ? options.weekends : main_core.Type.isArrayFilled(defaultWeekends) ? defaultWeekends : this.#weekends;
 			const defaultHolidays = settings.get('holidays', []);
@@ -2943,15 +3223,65 @@ this.BX.UI = this.BX.UI || {};
 				return;
 			}
 			newDate = setTime(newDate, 0, 0, 0);
+			const prevViewDate = this.#viewDate;
 			this.#viewDate = newDate;
+			this.#resetPeriodBoundaryAnnounce();
 			if (this.isDateOutOfView(this.getFocusDate())) {
+				const keepFocusInGrid = this.#isDayCellFocused();
 				this.setFocusDate(null, {
 					adjustViewDate: false,
 					render: false
 				});
+
+				// Day cells are reused between periods, so a focused cell would keep the focus while showing another date.
+				if (keepFocusInGrid) {
+					this.setFocusDate(this.getInitialFocusDate(), {
+						adjustViewDate: false,
+						render: false,
+						inputModality: 'keyboard'
+					});
+				}
 			}
 			if (this.isRendered()) {
 				this.getPicker().render();
+			}
+			this.#emitViewDateChange(prevViewDate);
+		}
+		#isDayCellFocused() {
+			if (this.getCurrentView() !== 'day') {
+				return false;
+			}
+			const rootContainer = this.getRootContainer();
+			const activeElement = rootContainer.ownerDocument.activeElement;
+			return main_core.Type.isElementNode(activeElement) && rootContainer.contains(activeElement) && activeElement.getAttribute('role') === 'gridcell' && activeElement.hasAttribute('data-day');
+		}
+		#emitViewDateChange(prevViewDate) {
+			if (!this.isRendered() || isDatesEqual(prevViewDate, this.#viewDate, 'month')) {
+				return;
+			}
+
+			// A handler is free to change the view date again; the outer call publishes the final state.
+			if (this.#emittingViewDateChange) {
+				return;
+			}
+			this.#emittingViewDateChange = true;
+			try {
+				let publishedViewDate = null;
+				while (publishedViewDate === null || !isDatesEqual(publishedViewDate, this.#viewDate, 'month')) {
+					publishedViewDate = cloneDate(this.#viewDate);
+					const {
+						dateFrom,
+						dateTo
+					} = this.getViewRange();
+					this.emit(DatePickerEvent.VIEW_DATE_CHANGE, {
+						viewDate: publishedViewDate,
+						dateFrom,
+						dateTo,
+						view: this.getCurrentView()
+					});
+				}
+			} finally {
+				this.#emittingViewDateChange = false;
 			}
 		}
 		getViewDate() {
@@ -2989,6 +3319,19 @@ this.BX.UI = this.BX.UI || {};
 		}
 		getViewDateParts() {
 			return getDate(this.#viewDate);
+		}
+		getViewRange() {
+			const {
+				year,
+				month
+			} = this.getViewDateParts();
+			const firstWeekDay = this.getFirstWeekDay();
+			const firstMonth = createUtcDate(year, month);
+			const lastMonth = createUtcDate(year, month + this.getNumberOfMonths() - 1);
+			return {
+				dateFrom: getGridStartDate(firstMonth, firstWeekDay),
+				dateTo: addDate(getGridStartDate(lastMonth, firstWeekDay), 'day', 41)
+			};
 		}
 		selectDate(date, options = {}) {
 			if (this.isRangeMode()) {
@@ -3122,20 +3465,11 @@ this.BX.UI = this.BX.UI || {};
 				updateInputs: true,
 				...options
 			};
-			const deselectStart = currentStart !== null && emitEvents && !isDatesEqual(newStart, currentStart, 'datetime') && !isDatesEqual(newEnd, currentStart, 'datetime');
-			const deselectEnd = currentEnd !== null && emitEvents && !isDatesEqual(newStart, currentEnd, 'datetime') && !isDatesEqual(newEnd, currentEnd, 'datetime');
+			const deselectStart = emitEvents && this.#isBoundLeavingRange(currentStart, newStart, newEnd);
+			const deselectEnd = emitEvents && this.#isBoundLeavingRange(currentEnd, newStart, newEnd);
 			const selectStart = !this.isDateSelected(newStart, 'datetime');
 			const selectEnd = newEnd !== null && (!this.isDateSelected(newEnd, 'datetime') || currentEnd === null && isDatesEqual(newEnd, newStart, 'datetime'));
-			if (deselectStart && !this.#canDeselectDate(currentStart)) {
-				return false;
-			}
-			if (deselectEnd && !this.#canDeselectDate(currentEnd)) {
-				return false;
-			}
-			if (selectStart && !this.#canSelectDate(newStart)) {
-				return false;
-			}
-			if (selectEnd && !this.#canSelectDate(newEnd)) {
+			if (deselectStart && !this.#canDeselectDate(currentStart) || deselectEnd && !this.#canDeselectDate(currentEnd) || selectStart && !this.#canSelectDate(newStart) || selectEnd && !this.#canSelectDate(newEnd)) {
 				return false;
 			}
 			if (deselectStart) {
@@ -3230,6 +3564,11 @@ this.BX.UI = this.BX.UI || {};
 			});
 			return this.#selectedDates.length === 0;
 		}
+
+		// A bound the new range keeps on either side stays selected: only the one it drops gets deselected.
+		#isBoundLeavingRange(bound, newStart, newEnd) {
+			return bound !== null && !isDatesEqual(newStart, bound, 'datetime') && !isDatesEqual(newEnd, bound, 'datetime');
+		}
 		#canSelectDate(date) {
 			const event = new main_core_events.BaseEvent({
 				data: {
@@ -3270,6 +3609,7 @@ this.BX.UI = this.BX.UI || {};
 				return;
 			}
 			this.#focusDate = date === null ? null : this.createDate(date);
+			this.#resetPeriodBoundaryAnnounce();
 			const {
 				render,
 				adjustViewDate,
@@ -3356,10 +3696,24 @@ this.BX.UI = this.BX.UI || {};
 			}
 			return isOutOfView;
 		}
+
+		// A held arrow gives about thirty keydowns a second, and the live region would queue the phrase on every
+		// one of them, so the boundary is announced once and the announcement is unlocked by a real change.
+		announcePeriodBoundary() {
+			if (this.#periodBoundaryAnnounced) {
+				return;
+			}
+			this.#periodBoundaryAnnounced = true;
+			ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessage('UI_DATE_PICKER_PERIOD_BOUNDARY_REACHED'), 'polite');
+		}
+		#resetPeriodBoundaryAnnounce() {
+			this.#periodBoundaryAnnounced = false;
+		}
 		setCurrentView(view) {
 			if (this.#currentView === view) {
 				return;
 			}
+			this.#resetPeriodBoundaryAnnounce();
 			const picker = this.getPicker(view);
 			if (picker === null) {
 				return;
@@ -3416,6 +3770,18 @@ this.BX.UI = this.BX.UI || {};
 		}
 		shouldShowOutsideDays() {
 			return this.#showOutsideDays;
+		}
+		shouldShowToday() {
+			return this.#showToday;
+		}
+		setShowToday(flag) {
+			if (!main_core.Type.isBoolean(flag)) {
+				return;
+			}
+			this.#showToday = flag;
+			if (this.isRendered()) {
+				this.getPicker()?.render();
+			}
 		}
 		getWeekends() {
 			return this.#weekends;
@@ -3505,8 +3871,10 @@ this.BX.UI = this.BX.UI || {};
 			} else if (isDateLike(date)) {
 				this.#minDate = this.createDate(date);
 			}
+			this.#resetPeriodBoundaryAnnounce();
 			if (this.isRendered()) {
 				this.getPicker()?.render();
+				this.#refreshPresetsActive();
 			}
 		}
 		getMinDate() {
@@ -3518,12 +3886,32 @@ this.BX.UI = this.BX.UI || {};
 			} else if (isDateLike(date)) {
 				this.#maxDate = this.createDate(date);
 			}
+			this.#resetPeriodBoundaryAnnounce();
 			if (this.isRendered()) {
 				this.getPicker()?.render();
+				this.#refreshPresetsActive();
 			}
 		}
 		getMaxDate() {
 			return this.#maxDate;
+		}
+		#getEffectiveMinDate() {
+			return cloneDate(this.#minDate ?? MIN_SUPPORTED_DATE);
+		}
+		#getEffectiveMaxDate() {
+			return cloneDate(this.#maxDate ?? MAX_SUPPORTED_DATE);
+		}
+		#getEffectiveMinComparable(precision) {
+			if (this.#minDate !== null) {
+				return this.#toComparable(this.#minDate, precision);
+			}
+			return MIN_SUPPORTED_COMPARABLE[precision];
+		}
+		#getEffectiveMaxComparable(precision) {
+			if (this.#maxDate !== null) {
+				return this.#toComparable(this.#maxDate, precision);
+			}
+			return MAX_SUPPORTED_COMPARABLE[precision];
 		}
 		setRestrictNavigation(flag) {
 			if (main_core.Type.isBoolean(flag)) {
@@ -3536,42 +3924,46 @@ this.BX.UI = this.BX.UI || {};
 		isNavigationRestricted() {
 			return this.#restrictNavigation;
 		}
-		isDateAllowed(date, precision = 'datetime') {
-			if (this.#minDate === null && this.#maxDate === null && this.#disabledDateMatchers.length === 0) {
-				return true;
-			}
-			const toComparable = d => {
-				switch (precision) {
-					case 'year':
-						return d.getUTCFullYear();
-					case 'month':
-						return d.getUTCFullYear() * 12 + d.getUTCMonth();
-					case 'day':
-						return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-					default:
-						return d.getTime();
-				}
-			};
-			const ref = toComparable(date);
-			if (this.#minDate !== null && ref < toComparable(this.#minDate)) {
-				return false;
-			}
-			if (this.#maxDate !== null && ref > toComparable(this.#maxDate)) {
-				return false;
-			}
-			if ((precision === 'day' || precision === 'datetime') && this.isDateDisabled(date)) {
-				return false;
-			}
-			return true;
+		#toComparable(date, precision) {
+			return toComparable(date, precision);
 		}
+		clampDate(date, precision = 'datetime') {
+			const ref = this.#toComparable(date, precision);
+			if (ref < this.#getEffectiveMinComparable(precision)) {
+				return this.#getEffectiveMinDate();
+			}
+			if (ref > this.#getEffectiveMaxComparable(precision)) {
+				return this.#getEffectiveMaxDate();
+			}
+			return cloneDate(date);
+		}
+		isDateAllowed(date, precision = 'datetime') {
+			const ref = this.#toComparable(date, precision);
+			if (ref < this.#getEffectiveMinComparable(precision)) {
+				return false;
+			}
+			if (ref > this.#getEffectiveMaxComparable(precision)) {
+				return false;
+			}
+			return !((precision === 'day' || precision === 'datetime') && this.isDateDisabled(date));
+		}
+
+		// Only the range bound stops the paging: the dates disabled inside the range still have a period to show.
 		canNavigate(view, direction) {
 			if (!this.#restrictNavigation) {
 				return true;
 			}
-			const bound = direction === 'prev' ? this.#minDate : this.#maxDate;
-			if (bound === null) {
+			const edgeDate = this.#getNavigationEdgeDate(view, direction);
+			if (edgeDate === null) {
 				return true;
 			}
+			const edgeRef = this.#toComparable(edgeDate, view);
+			const boundRef = direction === 'prev' ? this.#getEffectiveMinComparable(view) : this.#getEffectiveMaxComparable(view);
+			return direction === 'prev' ? edgeRef >= boundRef : edgeRef <= boundRef;
+		}
+
+		// The cell of the target page closest to the current one.
+		#getNavigationEdgeDate(view, direction) {
 			if (view === 'day') {
 				const {
 					year,
@@ -3580,21 +3972,20 @@ this.BX.UI = this.BX.UI || {};
 				const numberOfMonths = this.getNumberOfMonths();
 				const firstDay = createUtcDate(year, month, 1);
 				const lastDay = addDate(createUtcDate(year, month + numberOfMonths, 1), 'day', -1);
-				const checkDate = direction === 'prev' ? addDate(firstDay, 'day', -1) : addDate(lastDay, 'day', 1);
-				return this.isDateAllowed(checkDate, 'day');
+				return direction === 'prev' ? addDate(firstDay, 'day', -1) : addDate(lastDay, 'day', 1);
 			}
 			if (view === 'month') {
 				const viewYear = this.getViewDate().getUTCFullYear();
-				return direction === 'prev' ? bound.getUTCFullYear() < viewYear : bound.getUTCFullYear() > viewYear;
+				return direction === 'prev' ? createUtcDate(viewYear - 1, 11, 1) : createUtcDate(viewYear + 1, 0, 1);
 			}
 			if (view === 'year') {
 				const yearPicker = this.getPicker('year');
 				if (yearPicker === null) {
-					return true;
+					return null;
 				}
-				return direction === 'prev' ? bound.getUTCFullYear() < yearPicker.getFirstYear() : bound.getUTCFullYear() > yearPicker.getLastYear();
+				return direction === 'prev' ? createUtcDate(yearPicker.getFirstYear() - 1, 0, 1) : createUtcDate(yearPicker.getLastYear() + 1, 0, 1);
 			}
-			return true;
+			return null;
 		}
 		isFullYear() {
 			return this.#fullYear;
@@ -3749,6 +4140,7 @@ this.BX.UI = this.BX.UI || {};
 			} else {
 				this.#disabledDateMatchers = this.#createDateMatchers(matcher);
 			}
+			this.#resetPeriodBoundaryAnnounce();
 			if (this.isRendered()) {
 				this.getPicker()?.render();
 				this.#refreshPresetsActive();
@@ -3796,10 +4188,12 @@ this.BX.UI = this.BX.UI || {};
 			return this.#presets.length > 0 && this.#selectionMode !== 'none' && this.getType() === 'date';
 		}
 		#createPresetsContainer() {
+			// The rail runs an action per button instead of marking an item selected, so it is a group, not a listbox.
 			const container = main_core.Tag.render`
 			<div
 				class="ui-date-picker-presets"
-				role="listbox"
+				data-testid="ui-date-picker-presets"
+				role="group"
 				aria-label="${main_core.Loc.getMessage('UI_DATE_PICKER_PRESETS_LABEL')}"
 			></div>
 		`;
@@ -3834,12 +4228,17 @@ this.BX.UI = this.BX.UI || {};
 				classes.push('--disabled');
 			}
 			const subtitleNode = subtitle === null ? '' : main_core.Tag.render`<span class="ui-date-picker-preset-subtitle">${subtitle}</span>`;
-			const button = main_core.Tag.render`
+
+			// A preset stays reachable by keyboard just like an unavailable grid cell, so it is declared
+			// unavailable instead of being switched off natively.
+			return main_core.Tag.render`
 			<button
 				type="button"
 				class="${classes.join(' ')}"
+				data-testid="ui-date-picker-preset"
 				data-index="${index}"
 				aria-pressed="${isActive ? 'true' : 'false'}"
+				aria-disabled="${disabled ? 'true' : 'false'}"
 				onclick="${this.#handlePresetClick.bind(this, preset)}"
 				onmouseenter="${this.#handlePresetMouseEnter.bind(this, preset)}"
 				onmouseleave="${this.#handlePresetMouseLeave.bind(this)}"
@@ -3848,13 +4247,8 @@ this.BX.UI = this.BX.UI || {};
 				${subtitleNode}
 			</button>
 		`;
-			button.disabled = disabled;
-			return button;
 		}
 		#isPresetAllowed(preset, resolvedDates = null) {
-			if (this.#minDate === null && this.#maxDate === null) {
-				return true;
-			}
 			const dates = resolvedDates === null ? this.#resolvePresetValue(preset) : resolvedDates;
 			if (dates === null) {
 				return true;
@@ -3982,7 +4376,7 @@ this.BX.UI = this.BX.UI || {};
 				const dates = this.#resolvePresetValue(preset);
 				const disabled = !this.#isPresetAllowed(preset, dates);
 				const isActive = !disabled && this.#isPresetActive(preset, dates);
-				button.disabled = disabled;
+				button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
 				if (disabled) {
 					main_core.Dom.addClass(button, '--disabled');
 				} else {
@@ -4067,6 +4461,8 @@ this.BX.UI = this.BX.UI || {};
 			const defaultAriaLabel = this.getTitle();
 			const ariaLabel = main_core.Type.isStringFilled(popupOptions.ariaLabel) || main_core.Type.isStringFilled(popupOptions.title) ? popupOptions.ariaLabel : defaultAriaLabel;
 			delete popupOptions.ariaLabel;
+			const focusTrap = this.#getFocusTrapOptions(popupOptions.focusTrap);
+			delete popupOptions.focusTrap;
 			this.#popup = new main_popup.Popup({
 				contentPadding: 0,
 				padding: 0,
@@ -4080,9 +4476,6 @@ this.BX.UI = this.BX.UI || {};
 				cacheable: this.isCacheable(),
 				content: this.getContainer(),
 				ariaLabel,
-				focusTrap: {
-					initialFocus: false
-				},
 				autoHideHandler: this.#handleAutoHide.bind(this),
 				events: {
 					onFirstShow: this.#handlePopupFirstShow.bind(this),
@@ -4090,10 +4483,25 @@ this.BX.UI = this.BX.UI || {};
 					onClose: this.#handlePopupClose.bind(this),
 					onDestroy: this.#handlePopupDestroy.bind(this)
 				},
-				...popupOptions
+				...popupOptions,
+				focusTrap
 			});
 			this.#popup.subscribeFromOptions(userEvents);
 			return this.#popup;
+		}
+
+		// The outside content is isolated on purpose; aria-modal is left out just as deliberately, because the
+		// calendar popup is not a modal dialog. A consumer overrides single keys of the trap, and the rest stay.
+		#getFocusTrapOptions(options) {
+			if (options === false) {
+				return false;
+			}
+			return {
+				initialFocus: false,
+				isolateOutside: true,
+				outsideExceptionSelectors: [`[${BOUND_INPUT_ATTRIBUTE}="${this.getContainerId()}"]`, `[${BOUND_INPUT_LABEL_ATTRIBUTE}="${this.getContainerId()}"]`],
+				...(main_core.Type.isPlainObject(options) ? options : {})
+			};
 		}
 		#setSelectionMode(mode) {
 			if (this.getType() !== 'date') {
@@ -4124,41 +4532,90 @@ this.BX.UI = this.BX.UI || {};
 		setInputField(field) {
 			const input = this.#getInputField(field);
 			if (input !== null) {
+				const replaced = this.#inputField;
 				this.#inputField = input;
+				this.#releaseReplacedInput(replaced);
 				this.#bindInputEvents(input);
-				this.#applyInputAriaAttributes(input);
+				this.#applyInputAttributes(input);
 			}
 		}
 		setRangeStartInput(field) {
 			const input = this.#getInputField(field);
 			if (input !== null) {
+				const replaced = this.#rangeStartInput;
 				this.#rangeStartInput = input;
+				this.#releaseReplacedInput(replaced);
 				this.#bindInputEvents(input);
-				this.#applyInputAriaAttributes(input);
+				this.#applyInputAttributes(input);
 			}
 		}
 		setRangeEndInput(field) {
 			const input = this.#getInputField(field);
 			if (input !== null) {
+				const replaced = this.#rangeEndInput;
 				this.#rangeEndInput = input;
+				this.#releaseReplacedInput(replaced);
 				this.#bindInputEvents(input);
-				this.#applyInputAriaAttributes(input);
+				this.#applyInputAttributes(input);
 			}
 		}
-		#applyInputAriaAttributes(input) {
+		#applyInputAttributes(input) {
 			if (this.isInline()) {
 				return;
 			}
+			if (!this.#originalInputAttributes.has(input)) {
+				this.#originalInputAttributes.set(input, {
+					role: input.getAttribute('role'),
+					'aria-haspopup': input.getAttribute('aria-haspopup'),
+					'aria-expanded': input.getAttribute('aria-expanded'),
+					'aria-controls': input.getAttribute('aria-controls')
+				});
+			}
+			input.setAttribute('role', 'combobox');
 			input.setAttribute('aria-haspopup', 'dialog');
-			input.setAttribute('aria-expanded', this.isOpen() ? 'true' : 'false');
+			input.setAttribute(BOUND_INPUT_ATTRIBUTE, this.getContainerId());
+			this.#applyInputExpanded(input, this.isOpen());
+			this.#refreshInputLabels();
 		}
-		#syncInputsAriaExpanded(open) {
-			const expanded = open ? 'true' : 'false';
+
+		// The labels of a field change without the widget: a consumer may re-render a label after the binding.
+		// The marks are restaked from the remembered set, so a node that stopped being a label keeps none.
+		#refreshInputLabels() {
+			if (this.isInline()) {
+				return;
+			}
+			const labels = new Set();
 			[this.#inputField, this.#rangeStartInput, this.#rangeEndInput].forEach(input => {
-				if (input !== null && input.hasAttribute('aria-haspopup')) {
-					input.setAttribute('aria-expanded', expanded);
+				if (input !== null) {
+					this.#getInputLabels(input).forEach(label => {
+						labels.add(label);
+					});
 				}
 			});
+			this.#markedInputLabels.forEach(label => {
+				if (!labels.has(label)) {
+					label.removeAttribute(BOUND_INPUT_LABEL_ATTRIBUTE);
+				}
+			});
+			labels.forEach(label => {
+				label.setAttribute(BOUND_INPUT_LABEL_ATTRIBUTE, this.getContainerId());
+			});
+			this.#markedInputLabels = labels;
+		}
+
+		// The isolation of the open popup reaches the siblings of an excluded node, so the name source of a bound
+		// field has to be excluded as well: a label under inert is announced as hidden. An ancestor of the field
+		// is never isolated, and excluding it would take its own content out of the isolation too.
+		#getInputLabels(input) {
+			const labels = new Set(input.labels ?? []);
+			const labelledBy = input.getAttribute('aria-labelledby') ?? '';
+			for (const id of labelledBy.split(/\s+/)) {
+				const element = main_core.Type.isStringFilled(id) ? document.getElementById(id) : null;
+				if (element !== null) {
+					labels.add(element);
+				}
+			}
+			return [...labels].filter(label => !label.contains(input));
 		}
 		#getInputField(field) {
 			if (main_core.Type.isStringFilled(field)) {
@@ -4189,6 +4646,60 @@ this.BX.UI = this.BX.UI || {};
 				return this.#handleInputChange.bind(this);
 			}));
 		}
+
+		// The combobox role gives the open state a carrier the field is allowed to have, and the popup content
+		// is referenced only while it lives in the document.
+		#applyInputExpanded(input, open) {
+			input.setAttribute('aria-expanded', open ? 'true' : 'false');
+			if (open) {
+				input.setAttribute('aria-controls', this.getContainerId());
+			} else {
+				input.removeAttribute('aria-controls');
+			}
+		}
+		#syncInputsExpanded(open) {
+			[this.#inputField, this.#rangeStartInput, this.#rangeEndInput].forEach(input => {
+				if (input !== null && input.hasAttribute(BOUND_INPUT_ATTRIBUTE)) {
+					this.#applyInputExpanded(input, open);
+				}
+			});
+		}
+
+		// A replaced field may stay bound in another slot, and the attributes of a still bound field have to stay.
+		#releaseReplacedInput(input) {
+			const boundFields = [this.#inputField, this.#rangeStartInput, this.#rangeEndInput];
+			if (input === null || boundFields.includes(input)) {
+				return;
+			}
+			this.#releaseInput(input);
+		}
+		#releaseInput(input) {
+			this.#unbindInputEvents(input);
+			if (input === null) {
+				return;
+			}
+			this.#dropInputSlots(input);
+			input.removeAttribute(BOUND_INPUT_ATTRIBUTE);
+			const originalAttributes = this.#originalInputAttributes.get(input);
+			if (originalAttributes) {
+				Object.entries(originalAttributes).forEach(([name, value]) => {
+					if (value === null) {
+						input.removeAttribute(name);
+					} else {
+						input.setAttribute(name, value);
+					}
+				});
+				this.#originalInputAttributes.delete(input);
+			}
+			this.#refreshInputLabels();
+		}
+
+		// A released field is bound no more, and the marks of the labels are restaked over the fields that are.
+		#dropInputSlots(input) {
+			this.#inputField = this.#inputField === input ? null : this.#inputField;
+			this.#rangeStartInput = this.#rangeStartInput === input ? null : this.#rangeStartInput;
+			this.#rangeEndInput = this.#rangeEndInput === input ? null : this.#rangeEndInput;
+		}
 		#unbindInputEvents(input) {
 			main_core.Event.unbind(input, 'click', this.#refs.get('click-handler'));
 			main_core.Event.unbind(input, 'focusout', this.#refs.get('focusout-handler'));
@@ -4206,6 +4717,7 @@ this.BX.UI = this.BX.UI || {};
 			}
 		}
 		#handleInputFocusOut(event) {
+			this.#restoreInputFields();
 			if (!this.getRootContainer().contains(event.relatedTarget)) {
 				this.hide();
 			}
@@ -4259,6 +4771,19 @@ this.BX.UI = this.BX.UI || {};
 				this.#setInputDate(this.getRangeEndInput(), this.getRangeEnd());
 			}
 		}
+
+		// The widget never leaves a date it refuses to select in the bound field.
+		#restoreInputFields() {
+			if (!this.shouldUseInputEvents() || !this.#hasRejectedInputDate()) {
+				return;
+			}
+
+			// A multiple selection refuses the rejected dates alone, the accepted ones of the field are kept.
+			if (this.isMultipleMode() && this.#hasAcceptedInputDate()) {
+				this.updateFromInputFields();
+			}
+			this.updateInputFields();
+		}
 		#focusInputField() {
 			if (this.getInputField() !== null) {
 				this.getInputField().focus({
@@ -4285,8 +4810,7 @@ this.BX.UI = this.BX.UI || {};
 					});
 				}
 			} else if (this.isMultipleMode() && this.getInputField() !== null) {
-				const value = this.getInputField().value.trim();
-				const inputDates = value.split(this.getDateSeparator().trim()).map(part => this.createDate(part.trim())).filter(date => date !== null);
+				const inputDates = this.#getDatesFromInput(this.getInputField());
 				this.deselectAll({
 					updateInputs: false,
 					emitEvents: false
@@ -4324,6 +4848,36 @@ this.BX.UI = this.BX.UI || {};
 			}
 			return this.createDate(value);
 		}
+		#getDatesFromInput(input) {
+			if (input === null) {
+				return [];
+			}
+			const value = input.value.trim();
+			if (!main_core.Type.isStringFilled(value)) {
+				return [];
+			}
+			return value.split(this.getDateSeparator().trim()).map(part => this.createDate(part.trim())).filter(date => date !== null);
+		}
+		#hasRejectedInputDate() {
+			if (this.isRangeMode()) {
+				return this.#isInputDateRejected(this.getRangeStartInput()) || this.#isInputDateRejected(this.getRangeEndInput());
+			}
+			if (this.isMultipleMode()) {
+				return this.#getDatesFromInput(this.getInputField()).some(date => {
+					return !this.isDateAllowed(date);
+				});
+			}
+			return this.#isInputDateRejected(this.getInputField());
+		}
+		#hasAcceptedInputDate() {
+			return this.#getDatesFromInput(this.getInputField()).some(date => {
+				return this.isDateAllowed(date);
+			});
+		}
+		#isInputDateRejected(input) {
+			const date = this.#getDateFromInput(input);
+			return date !== null && !this.isDateAllowed(date);
+		}
 		#setInputDate(input, date, format = null) {
 			if (input !== null) {
 				let value = '';
@@ -4358,6 +4912,7 @@ this.BX.UI = this.BX.UI || {};
 				const container = main_core.Tag.render`
 				<div
 					id="${this.getContainerId()}"
+					data-testid="ui-date-picker"
 					tabindex="-1"
 					onkeyup="${this.#handleContainerKeyUp.bind(this)}"
 					class="${classes.join(' ')}"
@@ -4921,7 +5476,8 @@ this.BX.UI = this.BX.UI || {};
 				// eslint-disable-next-line unicorn/no-this-assignment
 				singleOpenDatePicker = this;
 			}
-			this.#syncInputsAriaExpanded(true);
+			this.#refreshInputLabels();
+			this.#syncInputsExpanded(true);
 			this.emit('onShow');
 		}
 		#handlePopupFirstShow() {
@@ -4929,6 +5485,7 @@ this.BX.UI = this.BX.UI || {};
 			this.emit('onFirstShow');
 		}
 		#handlePopupClose() {
+			this.#restoreInputFields();
 			if (this.getType() === 'date') {
 				this.setCurrentView('day');
 			}
@@ -4940,7 +5497,7 @@ this.BX.UI = this.BX.UI || {};
 			if (this.isFocused()) {
 				this.#focusInputField();
 			}
-			this.#syncInputsAriaExpanded(false);
+			this.#syncInputsExpanded(false);
 			this.emit('onHide');
 		}
 		#handlePopupDestroy() {
@@ -4956,9 +5513,9 @@ this.BX.UI = this.BX.UI || {};
 			if (this.isRendered()) {
 				main_core.Dom.remove(this.getContainer());
 			}
-			this.#unbindInputEvents(this.getInputField());
-			this.#unbindInputEvents(this.getRangeStartInput());
-			this.#unbindInputEvents(this.getRangeEndInput());
+			this.#releaseInput(this.getInputField());
+			this.#releaseInput(this.getRangeStartInput());
+			this.#releaseInput(this.getRangeEndInput());
 			if (this.#popup !== null) {
 				this.#popup.destroy();
 			}

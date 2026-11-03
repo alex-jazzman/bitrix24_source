@@ -4,6 +4,8 @@ import { Preset } from './preset';
 
 import './style.css';
 
+export { createMainToolPicker } from './application/menu-preset';
+
 export type MenuPresetParamsType = {
 	containerNode: HTMLElement,
 	presetData?: Object,

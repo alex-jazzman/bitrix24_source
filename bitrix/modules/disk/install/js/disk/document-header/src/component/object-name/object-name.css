@@ -1,0 +1,110 @@
+.disk-document-header-object-name {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	/* the name zone of the mockup is 300px wide; below that the name shrinks with the container */
+	max-width: 300px;
+	overflow: hidden;
+}
+
+.disk-document-header-object-name.--editing {
+	position: relative;
+	flex: 0 1 auto;
+	gap: var(--ui-space-inline-2xs);
+	max-width: 100%;
+	overflow: visible;
+}
+
+.disk-document-header-object-name__trigger {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-2xs);
+	border-radius: var(--ui-border-radius-2xs);
+	color: var(--ui-color-base-2);
+	cursor: default;
+	transition: background-color 200ms ease;
+}
+
+.disk-document-header-object-name__trigger.--renamable {
+	cursor: pointer;
+}
+
+.disk-document-header-object-name__trigger.--renamable:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.disk-document-header-object-name__trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* the typography of the design system carries a color of its own, and here it belongs to the block */
+.disk-document-header-object-name__text {
+	min-width: 0;
+	max-width: 100%;
+	color: inherit;
+}
+
+.disk-document-header-object-name__pencil {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-6);
+}
+
+.disk-document-header-object-name__field {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: calc(100% - 32px - var(--ui-space-inline-2xs));
+}
+
+.disk-document-header-object-name__field .ui-system-input-container {
+	min-height: 32px;
+	border-width: 0 0 1px;
+	border-color: var(--ui-color-base-5);
+	border-radius: 0;
+}
+
+.disk-document-header-object-name__field.--error .ui-system-input-container {
+	border-color: var(--ui-color-accent-main-alert);
+}
+
+.disk-document-header-object-name__measure {
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+	font-family: inherit;
+	font-size: var(--ui-font-size-lg);
+	font-weight: inherit;
+	line-height: var(--ui-font-line-height-sm);
+	white-space: pre;
+}
+
+.disk-document-header-object-name__submit {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+	cursor: pointer;
+}
+
+.disk-document-header-object-name__submit:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.disk-document-header-object-name__submit:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* the checkmark is never disabled while it saves - it keeps the focus - so the wait is drawn by hand */
+.disk-document-header-object-name__submit[aria-disabled="true"] {
+	cursor: default;
+	opacity: var(--ui-opacity-50);
+}

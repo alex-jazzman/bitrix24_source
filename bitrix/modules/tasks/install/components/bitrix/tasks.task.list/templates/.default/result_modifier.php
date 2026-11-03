@@ -192,6 +192,7 @@ if (!empty($arResult['LIST']))
 	$groups = SocialNetwork\Group::getData($groups, ['TYPE'], ['WITH_CHAT']);
 	$preparedRows = $grid->prepareRows();
 	$prevGroupId = $arResult['LAST_GROUP_ID'];
+	$deadlineUi = new UI\Task\Deadline();
 
 	foreach ($arResult['LIST'] as $key => $row)
 	{
@@ -228,6 +229,22 @@ if (!empty($arResult['LIST']))
 		$preparedRow = $preparedRows[$key];
 
 		$parentId = $row['PARENT_ID'] ?? 0;
+
+		// SC-005: mirror the deadline cell's own click gate (see
+		// Grid\Task\Row\Content\Date\Deadline::prepare()) so the hint highlight/CTA only arm
+		// on a row whose deadline can actually be set. A completed / deferred /
+		// supposedly-completed status (chip state not clickable) or a missing CHANGE_DEADLINE
+		// permission renders the chip read-only, and its picker never opens. REAL_STATUS is
+		// derived from STATUS exactly as the grid Content base does when absent. The chip is
+		// built without a deadline: the clickable flag depends on the status alone, so the
+		// date parsing and formatting the grid cell has already done are not repeated here.
+		$canChangeDeadline = false;
+		if (!empty($row['ACTION']['CHANGE_DEADLINE']))
+		{
+			$deadlineChipState = $deadlineUi->buildChipState((int)($row['REAL_STATUS'] ?? $row['STATUS'] ?? 0), null);
+			$canChangeDeadline = $deadlineChipState['clickable'] ?? true;
+		}
+
 		$arResult['ROWS'][] = [
 			'id' => $taskId,
 			'has_child' => array_key_exists($taskId, $arResult['SUB_TASK_COUNTERS']),
@@ -241,6 +258,10 @@ if (!empty($arResult['LIST']))
 				'data-type' => 'task',
 				'data-group-id' => $groupId,
 				'data-can-edit' => ($row['ACTION']['EDIT'] === true ? 'true' : 'false'),
+				// SC-005: deadlineless hint predicate data
+				'data-creator-id' => (int)($row['CREATED_BY'] ?? 0),
+				'data-has-deadline' => (empty($row['DEADLINE']) ? 'false' : 'true'),
+				'data-can-change-deadline' => ($canChangeDeadline ? 'true' : 'false'),
 			],
 		];
 

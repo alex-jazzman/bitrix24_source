@@ -48,5 +48,8 @@ return [
 		'./src/version/33',
 		'./src/version/34',
 		'./src/version/35',
+		'./src/version/36',
+		'./src/version/37',
+		'./src/version/38',
 	],
 ];

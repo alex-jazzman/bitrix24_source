@@ -32,6 +32,18 @@ export type CopilotMcpAuth = {
 	icon: ?string,
 };
 
+export type CopilotGenerationState = {
+	status: 'generating' | 'stopped' | 'completed' | 'error',
+	initiatorId: number,
+};
+
+export type CopilotGreeting = {
+	id: number,
+	text: string,
+	timeRange: ?string,
+	days: string[],
+};
+
 export type CopilotRoleCode = string;
 export type CopilotAIModelCode = string;
 

@@ -27,3 +27,6 @@ $MESS["SIGN_SEND_PROGRESS_TITLE"] = "Отправка документов";
 $MESS["SIGN_SEND_CLOSE_DESCRIPTION"] = "Отправка может занять продолжительное время. Вы можете закрыть эту страницу, отправка произойдет в фоновом режиме";
 $MESS["SIGN_SEND_CLOSE_BTN"] = "Закрыть страницу";
 $MESS['SIGN_DOCUMENT_SEND_REMINDER_TYPE_SELECTOR_HINT'] = 'HR-бот в течение 3-х дней будет напоминать ответственному о новом документе';
+$MESS['SIGN_DOCUMENT_SEND_MESSAGE_TITLE'] = 'Сообщение по документу';
+$MESS['SIGN_DOCUMENT_SEND_MESSAGE_PLACEHOLDER'] = 'Добавьте сообщение для сотрудника';
+$MESS['SIGN_DOCUMENT_SEND_MESSAGE_LENGTH_ERROR'] = 'Максимум #MAX_LENGTH# символов';

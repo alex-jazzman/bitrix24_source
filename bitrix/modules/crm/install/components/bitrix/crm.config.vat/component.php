@@ -1,6 +1,10 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+$arParams['ENABLE_CONTROL_PANEL'] = ($arParams['ENABLE_CONTROL_PANEL'] ?? true) !== false;
+$arParams['IS_SETTINGS_HUB'] = is_string($arParams['SETTINGS_HUB_URL'] ?? null)
+	&& $arParams['SETTINGS_HUB_URL'] !== '';
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -42,7 +46,31 @@ $arDefaultUrlTemplates404 = array(
 	'vat_show' => 'show/#vat_id#/'
 );
 
-if ($arParams['SEF_MODE'] === 'Y')
+if ($arParams['IS_SETTINGS_HUB'])
+{
+	$componentPage = match ($arParams['MODE'] ?? 'list')
+	{
+		'add' => 'vat_add',
+		'edit' => 'vat_edit',
+		'show' => 'vat_show',
+		default => 'vat_list',
+	};
+	$arVariables = ['vat_id' => (int)($arParams['VAT_ID'] ?? 0)];
+	$arVariableAliases = [];
+
+	$url = new \Bitrix\Main\Web\Uri($arParams['SETTINGS_HUB_URL']);
+	$arResult['PATH_TO_VAT_LIST'] = $url->getUri();
+	$addUrl = clone $url;
+	$addUrl->addParams(['add' => '']);
+	$arResult['PATH_TO_VAT_ADD'] = $addUrl->getUri();
+	$editUrl = clone $url;
+	$editUrl->addParams(['edit' => '']);
+	$arResult['PATH_TO_VAT_EDIT'] = $editUrl->getUri() . '&vat_id=#vat_id#';
+	$showUrl = clone $url;
+	$showUrl->addParams(['show' => '']);
+	$arResult['PATH_TO_VAT_SHOW'] = $showUrl->getUri() . '&vat_id=#vat_id#';
+}
+elseif ($arParams['SEF_MODE'] === 'Y')
 {
 	$arDefaultVariableAliases404 = array();
 	$arComponentVariables = array('vat_id');
@@ -85,6 +113,10 @@ else
 	elseif (isset($_REQUEST['show']))
 	{
 		$componentPage = 'vat_show';
+	}
+	elseif (isset($_REQUEST['add']))
+	{
+		$componentPage = 'vat_add';
 	}
 
 	$curPage = $APPLICATION->GetCurPage();

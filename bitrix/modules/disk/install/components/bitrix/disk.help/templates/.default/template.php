@@ -45,21 +45,21 @@ switch(LANGUAGE_ID)
 
 	<p class="bx-text-paragraph"><?= Loc::getMessage('DISK_HELP_8') ?></p>
 </div>
-<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/disk-img-<?= $langId ?>.png" alt="img"/>
+<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/disk-img-<?= $langId ?>.webp" alt="img"/>
 
 <div class="bx-text-block bx-disk-text-block" id="create_docs">
 	<h3 class="bx-text-title"><?= Loc::getMessage('DISK_HELP_9') ?></h3>
 
 	<p class="bx-text-paragraph"><?= Loc::getMessage('DISK_HELP_10') ?></p>
 </div>
-<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/create-file-img-<?= $langId ?>.png" alt="img"/>
+<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/create-file-img-<?= $langId ?>.webp" alt="img"/>
 
 <div class="bx-text-block bx-disk-text-block" id="what_is_it">
 	<h3 class="bx-text-title"><?= Loc::getMessage('DISK_HELP_11') ?></h3>
 
 	<p class="bx-text-paragraph"><?= Loc::getMessage('DISK_HELP_12') ?></p>
 </div>
-<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/desktop-img-<?= $langId ?>.png" alt="img"/>
+<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/desktop-img-<?= $langId ?>.webp" alt="img"/>
 
 
 <div class="bx-text-block bx-disk-text-block" id="common_docs">
@@ -72,14 +72,14 @@ switch(LANGUAGE_ID)
 
 	<p class="bx-text-paragraph"><?= Loc::getMessage('DISK_HELP_16') ?></p>
 </div>
-<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/file-add-popup-<?= $langId ?>.png" alt="img"/>
+<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/file-add-popup-<?= $langId ?>.webp" alt="img"/>
 
 <div class="bx-text-block bx-disk-text-block" id="docs_events">
 	<h3 class="bx-text-title"><?= Loc::getMessage('DISK_HELP_17') ?></h3>
 
 	<p class="bx-text-paragraph"><?= Loc::getMessage('DISK_HELP_18') ?></p>
 </div>
-<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/file-page-<?= $langId ?>.png" alt="img"/>
+<img class="disk-info-page-img" src="/bitrix/components/bitrix/disk.help/templates/.default/images/file-page-<?= $langId ?>.webp" alt="img"/>
 
 <div class="bx-text-block bx-disk-text-block">
 	<p class="bx-text-paragraph"><?= Loc::getMessage('DISK_HELP_19') ?></p>

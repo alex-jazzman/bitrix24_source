@@ -51,18 +51,22 @@ export type CopilotModelActions =
 	| 'dialoguesModel/copilotModel/updateTitleIsCustom'
 	| 'dialoguesModel/copilotModel/setCollection'
 	| 'dialoguesModel/copilotModel/setFromSync'
+	| 'dialoguesModel/copilotModel/updateVote'
 
 export type CopilotModelMutation =
 	'dialoguesModel/copilotModel/add'
 	| 'dialoguesModel/copilotModel/addCollection'
 	| 'dialoguesModel/copilotModel/update'
 	| 'dialoguesModel/copilotModel/updateCollection'
+	| 'dialoguesModel/copilotModel/setVote'
 
 export type CopilotUpdateActions =
 	'setCollection'
 	| 'update'
 	| 'updateRole'
 	| 'updateTitleIsCustom'
+	| 'updateVote'
+
 export interface CopilotUpdateData extends PayloadData
 {
 	dialogId: DialogId;
@@ -87,11 +91,24 @@ export interface CopilotAddCollectionData extends PayloadData
 	addItems: Array<CopilotPayloadDataItem>
 }
 
+export interface CopilotSetVoteData extends PayloadData
+{
+	dialogId: DialogId;
+	messageId: number;
+	message: MessageCopilotDataItem;
+}
+
+export type CopilotSetVoteActions =
+	'setVote'
+
 export interface MessageCopilotDataItem
 {
 	id: number;
 	role: string;
+	vote: Record<MessageVote, boolean> | null;
 }
+
+export type MessageVote = 'like' | 'dislike';
 
 export interface ChatsCopilotDataItem
 {

@@ -213,6 +213,28 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 	}
 
 	/**
+	 * @param {SettingFontSizeSwitch} props
+	 * @returns {SettingFontSizeSwitch}
+	 */
+	function createFontSizeSwitch(props)
+	{
+		const {
+			id,
+			controller,
+			divider,
+		} = props;
+
+		assertDefined(['id', 'controller'], props, 'FontSizeSwitch');
+
+		return {
+			id,
+			controller,
+			divider,
+			type: SettingItemType.FONT_SIZE,
+		};
+	}
+
+	/**
 	 * @param {SettingStyleSwitch} props
 	 * @returns {SettingStyleSwitch}
 	 */
@@ -229,6 +251,26 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 			id,
 			controller,
 			type: SettingItemType.STYLE,
+		};
+	}
+
+	/**
+	 * @param {SettingAppearanceBundleSwitch} props
+	 * @returns {SettingAppearanceBundleSwitch}
+	 */
+	function createAppearanceBundleSwitch(props)
+	{
+		const {
+			id,
+			controller,
+		} = props;
+
+		assertDefined(['id', 'controller'], props, 'AppearanceBundleSwitch');
+
+		return {
+			id,
+			controller,
+			type: SettingItemType.APPEARANCE_BUNDLE,
 		};
 	}
 
@@ -319,6 +361,32 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 	}
 
 	/**
+	 * @param {SettingReactionSelector} props
+	 * @return {SettingReactionSelector}
+	 */
+	function createReactionSelector(props)
+	{
+		const {
+			id,
+			controller,
+			title,
+			subtitle,
+			divider,
+		} = props;
+
+		assertDefined(['id', 'controller'], props, 'ReactionSelector');
+
+		return {
+			id,
+			controller,
+			title,
+			subtitle,
+			divider,
+			type: SettingItemType.REACTION_SELECTOR,
+		};
+	}
+
+	/**
 	 * @param {SettingBanner} props
 	 * @return {SettingBanner}
 	 */
@@ -397,11 +465,14 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 		createTextButton,
 		createLinkButton,
 		createThemeSwitch,
+		createFontSizeSwitch,
 		createStyleSwitch,
+		createAppearanceBundleSwitch,
 		createVideoQualitySwitch,
 		createDescription,
 		createVideoBanner,
 		createLocSelector,
+		createReactionSelector,
 		createBanner,
 		createImage,
 		createUserSelector,

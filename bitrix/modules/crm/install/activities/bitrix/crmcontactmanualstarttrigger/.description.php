@@ -16,6 +16,7 @@ if (
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Crm\Integration\BizProc\Trigger\TestRunDocument;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
@@ -28,7 +29,7 @@ $document = [
 $arActivityDescription =
 	(new \Bitrix\Bizproc\Activity\ActivityDescription(
 		Loc::getMessage('BP_CRM_CRM_CONTACT_START_TRIGGER_NAME_MSG_V1') ?? '',
-		Loc::getMessage('BP_CRM_CRM_CONTACT_START_TRIGGER_DESCR') ?? '',
+		Loc::getMessage('BP_CRM_CRM_CONTACT_START_TRIGGER_DESCR_1') ?? '',
 		[\Bitrix\Bizproc\Activity\Enum\ActivityType::TRIGGER->value],
 	))
 	->setClass('CrmContactManualStartTrigger')
@@ -53,5 +54,6 @@ $arActivityDescription =
 		],
 	])
 	->setAdditionalResult(['Return'])
+	->set('TEST_RUN_DOCUMENT', TestRunDocument::getDeclaration(\CCrmOwnerType::Contact))
 	->toArray()
 ;

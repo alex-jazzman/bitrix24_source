@@ -1,4 +1,5 @@
 <?php
+$MESS["KANBAN_CHECKLIST_COMPLETE_RETURN_BUTTON"] = "Open task";
 $MESS["KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Name";
 $MESS["KANBAN_ITEM_TITLE_PLACEHOLDER"] = "Name #tag";
 $MESS["KANBAN_NO_ACTIVE_SPRINT"] = "You don't have an active sprint yet. Create one using the Planning view.";

@@ -20,3 +20,16 @@
 .bx-im-chat-search__loader {
 	height: 55px;
 }
+
+.bx-im-chat-search__result-list .bx-im-search-item-layout__container.--selected .bx-im-search-item__date {
+	margin-right: var(--ui-space-inline-xl);
+}
+
+/* The result list scrolls inside ScrollWithGradient and its own section container hides the overflow,
+   so a ring drawn around a row would be cut off - it goes inside the row bounds instead. The selector
+   is semantic on purpose: the focusable root of a row is the layout element of the shared search item,
+   whose classes are not ours to hook into. */
+.bx-im-chat-search__result-list [role="option"]:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}

@@ -23,6 +23,13 @@
 	border-bottom: 1px solid var(--im-list-container-collab__background-color_separator);
 }
 
+/* The filter row carries the separator and sets the header height for every container. */
+.bx-im-list-container-collab__header_container.--with-filter-row {
+	height: auto;
+	padding: var(--im-messenger__list-header_padding_with-filter-row);
+	border-bottom: none;
+}
+
 .bx-im-list-container-collab__search-input_container {
 	flex-grow: 1;
 	margin-right: 16px;
@@ -53,6 +60,14 @@
 	align-items: center;
 	justify-content: space-between;
 	overflow: hidden;
+}
+
+/* The header clips overflow (overflow: hidden above), and the shared .--focus-visible
+   uses a positive outline-offset, so a focus ring on a control at the header edge (the
+   create-chat button) is cut off. Draw the ring inside instead - same inset-offset approach
+   as the recent-item row. Higher specificity than the shared rule, which stays untouched. */
+.bx-im-messenger__scope .bx-im-nested-list-collab__header .--focus-visible:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .bx-im-nested-list-collab__search {

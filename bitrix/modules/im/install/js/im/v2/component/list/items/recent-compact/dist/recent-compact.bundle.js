@@ -3,22 +3,22 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_css_tokens, im_v2_css_classes, im_v2_lib_menu, im_v2_lib_recent, im_v2_lib_utils, im_v2_provider_service_recent, call_component_compactActiveCallList, ui_designTokens_air, main_core, im_v2_lib_feature, ui_iconSet_api_vue, im_v2_lib_analytics, im_v2_lib_counter, im_v2_component_elements_avatar) {
+(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_css_tokens, im_v2_css_classes, im_v2_lib_menu, im_v2_lib_recent, im_v2_lib_utils, im_v2_provider_service_recent, call_widget_compactActiveCallList, ui_vue3, ui_designTokens_air, main_core, im_v2_lib_feature, ui_iconSet_api_vue, im_v2_lib_analytics, im_v2_lib_counter, im_v2_component_elements_avatar) {
 	'use strict';
 
 	// @vue/component
-	const CompactActiveCallList = {
+	const CompactActiveCallList = ui_vue3.defineComponent({
 		name: 'CompactActiveCallList',
 		emits: ['click'],
 		computed: {
 			componentToRender() {
-				return call_component_compactActiveCallList.CompactActiveCallList;
+				return call_widget_compactActiveCallList.CompactActiveCallList;
 			}
 		},
 		template: `
 		<component v-if="componentToRender" :is="componentToRender"  @click="$emit('click', $event)" />
 	`
-	};
+	});
 
 	const NavigationItemToIcon = Object.freeze({
 		[im_v2_const.NavigationMenuItem.notification]: ui_iconSet_api_vue.Outline.NOTIFICATION,
@@ -283,7 +283,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				void im_public.Messenger.openChat(item.dialogId);
 			},
 			onRightClick(item, event) {
-				if (im_v2_lib_utils.Utils.key.isCombination(event, 'Alt+Shift')) {
+				if (im_v2_lib_utils.Utils.key.isCombination(event, im_v2_const.HotkeyCombination.list.skipContextMenu)) {
 					return;
 				}
 				const context = {
@@ -346,5 +346,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.RecentList = RecentList;
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Component??{}, window??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});;
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Widget??{}, BX?.Vue3??{}, window??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});;
 //# sourceMappingURL=recent-compact.bundle.js.map

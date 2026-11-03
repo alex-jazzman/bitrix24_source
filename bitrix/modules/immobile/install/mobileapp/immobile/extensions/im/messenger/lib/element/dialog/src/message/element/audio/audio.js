@@ -7,10 +7,13 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('im/messenger/loc');
-	const { TranscriptStatus, AiTasksStatusType } = require('im/messenger/const');
+	const { TranscriptStatus, AiTasksStatusType, AiTaskIndicationRole } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { parser } = require('im/messenger/lib/parser');
 	const { parserCommon } = require('im/messenger/lib/parser/functions/common');
+	const {
+		normalizeTranscriptTextForDisplay,
+	} = require('im/messenger/lib/element/dialog/message/audio/transcript-text-normalizer');
 
 	const AiAnimationConfig = {
 		[AiTasksStatusType.search]: {
@@ -211,7 +214,9 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 				return transcript;
 			}
 
-			transcript.text = parserCommon.simplifyNewLine(this.transcriptModel.text, '\n');
+			transcript.text = normalizeTranscriptTextForDisplay(
+				parserCommon.simplifyNewLine(this.transcriptModel.text, '\n'),
+			);
 			transcript.text += Loc.getMessage(
 				'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_FOOTNOTE',
 				{
@@ -253,9 +258,15 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 			}
 
 			const status = this.messageModel.visualState?.aiTaskStatus;
-			const config = AiAnimationConfig[status];
 
-			return config || null;
+			// The status comes from a pull event payload, so an inherited key of Object.prototype
+			// (constructor, toString) would otherwise hand a function to the native side as a frame.
+			if (!Object.prototype.hasOwnProperty.call(AiAnimationConfig, status))
+			{
+				return null;
+			}
+
+			return AiAnimationConfig[status];
 		}
 
 		/**
@@ -271,7 +282,25 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 		 */
 		#canAiAnimation()
 		{
+			// An operation led by the message-level indication owns the message on its own: both tracks
+			// key their frames by the same aiTaskStatus values, so leaving this one on would draw two
+			// indications at once. The role is written by the indication manager alone, and pull offers
+			// every event to that manager first, so a status without a role is exactly what the new
+			// track did not take - on a build without the native indication, that is every status there is.
+			if (Feature.isAiTaskMessageIndicationSupported && this.#isLedByMessageIndication())
+			{
+				return false;
+			}
+
 			return Feature.isAiTaskCreationUISupported && Feature.isAiTaskCreationUIAvailable;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isLedByMessageIndication()
+		{
+			return AiTaskIndicationRole.isIndicationRole(this.messageModel.visualState?.aiTaskRole);
 		}
 	}
 

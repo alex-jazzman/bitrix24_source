@@ -112,7 +112,7 @@ export default class Spectrum extends BaseControl
 	}
 
 	/**
-	 * Set picker by absolut page coords
+	 * Set picker by absolute page coords
 	 * @param x
 	 * @param y
 	 */

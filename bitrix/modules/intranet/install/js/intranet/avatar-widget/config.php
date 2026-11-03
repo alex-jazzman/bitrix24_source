@@ -20,6 +20,7 @@ return [
 		'main.sidepanel',
 		'pull.client',
 		'timeman.work-status-control-panel',
+		'ui.a11y',
 		'ui.analytics',
 		'ui.avatar',
 		'ui.buttons',

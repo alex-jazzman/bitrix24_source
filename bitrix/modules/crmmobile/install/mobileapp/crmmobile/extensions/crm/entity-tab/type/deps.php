@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'alert',
-		'apptheme',
 		'communication/phone-menu',
 		'layout/ui/empty-screen',
 		'layout/ui/feature-banner',

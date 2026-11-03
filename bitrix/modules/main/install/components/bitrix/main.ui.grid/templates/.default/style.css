@@ -3,6 +3,216 @@
 	--main-grid-bottom-border-radius: var(--main-grid-border-radius);
 }
 
+/*
+ * Reset the browser button styling for controls that used to be spans. Listed by class on purpose:
+ * a blanket `.main-grid-table button` would also hit buttons placed into cells by consumers.
+ * The selectors carry no tag: with `button.` they would outweigh the plain class rules below and
+ * strip those controls of their own background, margins and borders.
+ */
+.main-grid-plus-button,
+.main-grid-head-sort-button,
+.main-grid-interface-settings-icon,
+.main-grid-resize-button,
+.main-grid-row-action-button,
+.main-grid-cell-content-action,
+.main-grid-tag-remove,
+.main-grid-tag-add,
+.main-grid-labels-remove-button,
+.main-grid-label-remove-button,
+.main-grid-settings-window-list-item-edit-button,
+.main-grid-settings-window-list-item-sticky-button,
+.main-grid-settings-window-select-link,
+.main-grid-settings-window-search-section-item,
+.main-grid-settings-window-actions-item-reset {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	text-align: inherit;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
+}
+
+/* Visible focus indicator for every control of the grid. Listed by class for the same reason as the
+   reset above: a blanket selector would force the ring of the grid onto buttons placed into cells by
+   consumers. The shape follows the design system: the token pair plus the paired input-modality
+   rules taken from the buttons of ui (ui.air-buttons.css) — the keyboard one draws the ring where
+   the engine did not raise :focus-visible by itself, which the grid needs because it moves the
+   focus on its own; the pointer one keeps a click from leaving a ring behind.
+
+   The radius is deliberately not set here: an outline already follows the corners of the box it
+   surrounds, and `border-radius: inherit` would take the radius of the PARENT instead — on a
+   dropdown sitting in a square container that squares off the control itself while it holds
+   the focus.
+
+   These controls sit inside .main-grid-wrapper and .main-grid-container, which clip their content
+   (overflow: hidden / overflow-y: hidden), so their ring is drawn inside the box: an outer one would
+   be cut off at the edges of the horizontal scroll. */
+.main-grid-control-panel-input-text:focus-visible,
+.main-grid-editor-text:focus-visible,
+.main-grid-editor-textarea:focus-visible,
+.main-grid-more-btn:focus-visible,
+.main-grid-link:focus-visible,
+.main-grid-buttons:focus-visible,
+.main-grid-panel-select:focus-visible,
+.main-dropdown:focus-visible,
+.main-grid-plus-button:focus-visible,
+.main-grid-interface-settings-icon:focus-visible,
+.main-grid-tag-remove:focus-visible,
+.main-grid-tag-add:focus-visible,
+.main-grid-labels-remove-button:focus-visible,
+html[data-input-modality="keyboard"] .main-grid-control-panel-input-text:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-editor-text:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-editor-textarea:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-more-btn:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-buttons:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-panel-select:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-dropdown:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-plus-button:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-interface-settings-icon:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-tag-remove:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-tag-add:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-labels-remove-button:focus:not(:focus-visible) {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+/* The sort button fills the whole head cell on purpose — it grows the way the container does, so a
+   consumer sizing the title in percentages keeps measuring the box it measured before the title
+   moved inside a button. A ring around that box would stretch across the empty half of the cell and
+   read as a selected column rather than as a focused control, so it is drawn around the title
+   instead. The ring goes outside it, the way the design system draws one: an inset ring on a box
+   that hugs the text of the title sits right on the letters. The button no longer clips its
+   overflow, so nothing cuts the ring away — the ellipsis of a long column name comes from the
+   title itself (`overflow: hidden` and `text-overflow` are its own), measured identical with the
+   clipping on and off. */
+.main-grid-head-sort-button:focus-visible .main-grid-head-title,
+html[data-input-modality="keyboard"] .main-grid-head-sort-button:focus:not(:focus-visible) .main-grid-head-title {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+html[data-input-modality="pointer"] .main-grid-head-sort-button:focus-visible .main-grid-head-title {
+	outline: none;
+}
+
+/* The button itself shows nothing: the ring belongs to the title above. */
+.main-grid-head-sort-button:focus-visible,
+html[data-input-modality="keyboard"] .main-grid-head-sort-button:focus:not(:focus-visible) {
+	outline: none;
+}
+
+/* The checkbox cell lays an invisible sheet over itself — `.main-grid-cell-content::before` with
+   `z-index: 111` — to make the click target the size of the cell. It is painted above the checkbox
+   and cuts off the left half of the focus ring: the ring starts 2px outside a box that sits 15px
+   from the edge of the cell, so the sheet covers exactly that strip. The focused checkbox is raised
+   above the sheet; the sheet keeps its click target, since it is the one taking the pointer. */
+.main-grid-row-checkbox:focus-visible,
+html[data-input-modality="keyboard"] .main-grid-row-checkbox:focus:not(:focus-visible) {
+	position: relative;
+	z-index: 112;
+}
+
+/* The row menu and the cell action are icons of 14x12 drawn at a third of the opacity, and the
+   opacity takes the ring down with the icon: it came out pale and, being inset on a box that small,
+   sat right on the glyph. The ring goes outside and the icon returns to full opacity while it holds
+   the focus — the cell no longer clips it (see the checkbox cell above). */
+.main-grid-row-action-button:focus-visible,
+.main-grid-cell-content-action:focus-visible,
+html[data-input-modality="keyboard"] .main-grid-row-action-button:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-cell-content-action:focus:not(:focus-visible) {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	opacity: 1;
+}
+
+html[data-input-modality="pointer"] .main-grid-row-action-button:focus-visible,
+html[data-input-modality="pointer"] .main-grid-cell-content-action:focus-visible {
+	outline: none;
+}
+
+/* Cells hold controls the grid never rendered: a link to the entity, the name of the assignee,
+   whatever a consumer puts in a column. They carry no class of the grid, so the rules above pass
+   them by and they keep the ring of the browser — a hairline at a different colour, drawn tight
+   against the text.
+ *
+ * The controls of the grid itself are left out by name: their rules stand above this one, and a
+ * selector this specific would otherwise win on sheer weight and undo what they set — the row menu
+ * lost the ring drawn outside its 14x12 icon that way. */
+.main-grid-row-body .main-grid-cell :where(a[href], button, [tabindex]:not([tabindex="-1"])):not(.main-grid-row-action-button):not(.main-grid-cell-content-action):not(.main-grid-row-checkbox):not(.main-grid-tag-remove):not(.main-grid-tag-add):not(.main-grid-labels-remove-button):not(.main-grid-link):not(.main-grid-more-btn):focus-visible,
+html[data-input-modality="keyboard"] .main-grid-row-body .main-grid-cell :where(a[href], button, [tabindex]:not([tabindex="-1"])):not(.main-grid-row-action-button):not(.main-grid-cell-content-action):not(.main-grid-row-checkbox):not(.main-grid-tag-remove):not(.main-grid-tag-add):not(.main-grid-labels-remove-button):not(.main-grid-link):not(.main-grid-more-btn):focus:not(:focus-visible) {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+html[data-input-modality="pointer"] .main-grid-row-body .main-grid-cell :where(a[href], button, [tabindex]:not([tabindex="-1"])):not(.main-grid-row-action-button):not(.main-grid-cell-content-action):not(.main-grid-row-checkbox):not(.main-grid-tag-remove):not(.main-grid-tag-add):not(.main-grid-labels-remove-button):not(.main-grid-link):not(.main-grid-more-btn):focus-visible {
+	outline: none;
+}
+
+/* The checkboxes and the controls of the settings window take the ring outside instead. A checkbox
+   is too small for an inset ring: it lands on the tick itself and reads as decoration rather than as
+   focus. The settings window is rendered by main.popup into the body, so nothing clips it either. */
+.main-grid-check-all:focus-visible,
+.main-grid-row-checkbox:focus-visible,
+.main-grid-panel-checkbox:focus-visible,
+.main-grid-settings-window-for-all-checkbox:focus-visible,
+.main-grid-settings-window-list-item-checkbox:focus-visible,
+.main-grid-settings-window-search-section-input:focus-visible,
+.main-grid-settings-window-list-item-label:focus-visible,
+.main-grid-settings-window-list-item-edit-button:focus-visible,
+.main-grid-settings-window-list-item-sticky-button:focus-visible,
+.main-grid-settings-window-select-link:focus-visible,
+.main-grid-settings-window-search-section-item:focus-visible,
+.main-grid-settings-window-actions-item-reset:focus-visible,
+html[data-input-modality="keyboard"] .main-grid-check-all:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-row-checkbox:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-panel-checkbox:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-for-all-checkbox:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-list-item-checkbox:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-search-section-input:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-list-item-label:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-list-item-edit-button:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-list-item-sticky-button:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-select-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-search-section-item:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-settings-window-actions-item-reset:focus:not(:focus-visible) {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* A ring left behind by a click reads as a stuck state, so the pointer never draws one. */
+html[data-input-modality="pointer"] .main-grid-control-panel-input-text:focus-visible,
+html[data-input-modality="pointer"] .main-grid-editor-text:focus-visible,
+html[data-input-modality="pointer"] .main-grid-editor-textarea:focus-visible,
+html[data-input-modality="pointer"] .main-grid-more-btn:focus-visible,
+html[data-input-modality="pointer"] .main-grid-link:focus-visible,
+html[data-input-modality="pointer"] .main-grid-buttons:focus-visible,
+html[data-input-modality="pointer"] .main-grid-panel-select:focus-visible,
+html[data-input-modality="pointer"] .main-dropdown:focus-visible,
+html[data-input-modality="pointer"] .main-grid-plus-button:focus-visible,
+html[data-input-modality="pointer"] .main-grid-interface-settings-icon:focus-visible,
+html[data-input-modality="pointer"] .main-grid-tag-remove:focus-visible,
+html[data-input-modality="pointer"] .main-grid-tag-add:focus-visible,
+html[data-input-modality="pointer"] .main-grid-labels-remove-button:focus-visible,
+html[data-input-modality="pointer"] .main-grid-check-all:focus-visible,
+html[data-input-modality="pointer"] .main-grid-row-checkbox:focus-visible,
+html[data-input-modality="pointer"] .main-grid-panel-checkbox:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-for-all-checkbox:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-list-item-checkbox:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-search-section-input:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-list-item-label:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-list-item-edit-button:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-list-item-sticky-button:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-select-link:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-search-section-item:focus-visible,
+html[data-input-modality="pointer"] .main-grid-settings-window-actions-item-reset:focus-visible {
+	outline: none;
+}
+
 .main-grid-panel-custom { max-width: 300px; }
 
 .main-grid-panel-custom select { max-width: 220px; }
@@ -83,8 +293,6 @@
 
 .main-dropdown:focus,
 .main-dropdown:hover { border-color: #7d7d7d; }
-
-.main-dropdown:focus { outline: none; }
 
 .main-dropdown::before {
 	position: absolute;
@@ -289,6 +497,35 @@
 
 .main-grid-fade-left .main-grid-fade-shadow-left::before { opacity: 1; }
 
+/* Right shadow next to a right-sticked column: mirror of the left shadow — a clipped
+   ::before blob so only a clean linear shadow shows (no visible rounded ellipse body). */
+.main-grid-fade-shadow-right.--sticked {
+	overflow: hidden;
+	border-right: 1px rgba(238, 242, 244, .5) solid;
+	border-radius: 0;
+	box-shadow: none;
+	opacity: 1;
+	transition: margin-right 200ms ease;
+	transform: translateX(1px);
+}
+
+.main-grid-fade-shadow-right.--sticked::before {
+	position: absolute;
+	top: 0;
+	right: -10px;
+	bottom: 0;
+	left: auto;
+	z-index: 1;
+	width: 10px;
+	border-radius: 80%;
+	box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+	content: '';
+	opacity: 0;
+	transition: opacity 200ms ease, margin-right 200ms ease;
+}
+
+.main-grid-fade-right .main-grid-fade-shadow-right.--sticked::before { opacity: 1; }
+
 .main-grid-row-body { font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 /* THEAD */
@@ -355,8 +592,26 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 	display: flex;
 }
 
+/*
+ * Wraps the title and the optional icon; keeps the flex layout the container expects.
+ *
+ * The button shrinks to its content instead of growing with the cell. The sort arrow is a sibling
+ * that follows it and is pulled back onto the title by `left: -18px`, so a button stretched across
+ * the cell left the arrow at the far edge of the column — measured at 124px away from the word it
+ * belongs to.
+ *
+ * Growing it was meant to keep the box a consumer measures, but the title inside never filled the
+ * button anyway: it is an inline-flex box of its own and sized by its text either way, so what a
+ * consumer measures is unchanged, while the arrow returns to the word.
+ */
+.main-grid-head-sort-button {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	min-width: 0;
+}
+
 .main-grid-head-title {
-	z-index: 7;
 	display: inline-flex;
 	align-items: center;
 	overflow: hidden;
@@ -504,10 +759,33 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 
 .main-grid-cell-content {
 	flex-grow: 1;
+	/* A flex item refuses to shrink below its content; let it follow a narrowed cell. */
+	min-width: 0;
+}
+
+/* The horizontal clipping below cuts the focus ring of whatever is focused at the edge of a cell —
+   measured on the assignee card, the ring is lost against the very edge with no gap on the left.
+   A cell stops clipping while it holds the focus: only one cell is focused at a time, and its
+   value is the one being read anyway, so the clipping of every other cell stays as it is. */
+.main-grid-row-body > .main-grid-cell > .main-grid-cell-inner:has(:focus-visible),
+.main-grid-row-body > .main-grid-cell > .main-grid-cell-content:has(:focus-visible),
+html[data-input-modality="keyboard"] .main-grid-row-body > .main-grid-cell > .main-grid-cell-inner:has(:focus:not(:focus-visible)),
+html[data-input-modality="keyboard"] .main-grid-row-body > .main-grid-cell > .main-grid-cell-content:has(:focus:not(:focus-visible)) {
+	overflow-x: visible;
 }
 
 .main-grid-cell-inner {
 	display: flex;
+}
+
+/* Clip horizontally at the cell edge only, so decoration in the container margins stays visible. */
+.main-grid-row-body > .main-grid-cell > .main-grid-cell-inner {
+	overflow-x: clip;
+}
+
+/* A ROW_LAYOUT cell has no inner wrapper, so its content container clips at its own edge. */
+.main-grid-row-body:not(.main-grid-row-custom) > .main-grid-cell:not(.main-grid-cell-drag):not(.main-grid-cell-checkbox):not(.main-grid-cell-action) > .main-grid-cell-content {
+	overflow-x: clip;
 }
 
 .main-grid-cell .main-grid-cell-content-actions {
@@ -548,7 +826,14 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 	opacity: 0;
 }
 
-.main-grid-row:hover .main-grid-cell-content-action-by-hover {
+/*
+ * These actions — pin a row, mute its notifications — appear on hover, so a keyboard user would
+ * otherwise focus a control nobody can see: the ring gets drawn around a transparent button.
+ * Unlike the resize handle they do something on Enter, so they stay in the tab order and show
+ * themselves instead.
+ */
+.main-grid-row:hover .main-grid-cell-content-action-by-hover,
+.main-grid-cell-content-action-by-hover:focus-visible {
 	opacity: 1;
 }
 
@@ -739,6 +1024,11 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 	top: -2px;
 	margin-right: 0;
 	margin-left: 0;
+	/* The clipping of .main-grid-cell-content keeps a long value of a narrowed column off its
+	   neighbour. These two cells hold a checkbox and the row actions — fixed boxes with nothing
+	   to clip — while the focus ring of the checkbox sits 2px outside its 14px box and was cut
+	   off on the left edge of the cell. */
+	overflow: visible;
 }
 
 .main-grid-panel-limit .main-grid-panel-content-title {
@@ -880,7 +1170,6 @@ input[type="file"].main-grid-cell-content-edit { display: none; }
 .main-grid-panel-select {
 	min-width: 130px;
 	height: 32px;
-	outline: none;
 	border: 1px solid #b5bac0;
 	border-radius: 1px;
 	background: #fff;
@@ -1281,6 +1570,39 @@ label.main-grid-checkbox {
 	pointer-events: none;
 }
 
+/*
+ * A way past the rows to the actions they were ticked for. Hidden until something is selected,
+ * and out of sight until focused: the mouse has no use for it, the keyboard would otherwise walk
+ * every row of the page to reach the panel.
+ */
+.main-grid-skip-to-actions {
+	position: absolute;
+	z-index: 200;
+	overflow: hidden;
+	clip-path: inset(50%);
+	width: 1px;
+	height: 1px;
+	white-space: nowrap;
+}
+
+/*
+ * Stays out of the flow while shown: returning it to static pushes the table down by its own
+ * height, and the grid jumps under the hand of whoever just tabbed onto it.
+ */
+.main-grid-skip-to-actions:focus {
+	top: 4px;
+	left: 4px;
+	overflow: visible;
+	clip-path: none;
+	padding: 6px 12px;
+	width: auto;
+	height: auto;
+	border: 1px solid var(--ui-color-link-primary-base, #2066b0);
+	border-radius: var(--ui-border-radius-2xs, 2px);
+	background: var(--ui-color-palette-white-base, #fff);
+	color: var(--ui-color-link-primary-base, #2066b0);
+}
+
 .main-grid-action-panel { border-top: 2px solid #eef2f4; }
 
 .main-grid-nav-panel,
@@ -1456,7 +1778,16 @@ label.main-grid-checkbox {
 }
 
 .main-grid-cell-checkbox .main-grid-cell-head-container {
+	align-items: center;
+	justify-content: center;
 	padding: 0;
+}
+
+/* when the checkbox column is sticked, the header cell becomes position:absolute (blockified out of table-cell), so vertical-align:middle no longer centers its content — center it via flex */
+.main-grid-cell-head.main-grid-cell-checkbox.main-grid-fixed-column {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .main-grid-cell-head-container .main-grid-checkbox.main-grid-row-checkbox.main-grid-check-all {
@@ -1558,7 +1889,6 @@ label.main-grid-checkbox {
 	box-sizing: border-box;
 	padding: 0 18px;
 	height: 34px;
-	outline: none;
 	border: 1px solid #c6cdd3;
 	border-radius: var(--main-grid-buttons-border-radius, var(--ui-border-radius-2xs, 2px));
 	background: none;
@@ -1756,7 +2086,6 @@ label.main-grid-checkbox {
 	min-height: 33px;
 	width: auto;
 	height: auto;
-	outline: none;
 	border: 1px transparent solid;
 	vertical-align: middle;
 	line-height: 19px;
@@ -1807,7 +2136,9 @@ label.main-grid-checkbox {
 	transition: background 200ms, opacity 200ms ease;
 }
 
-.main-grid-settings-window-list-item:hover .main-grid-settings-window-list-item-edit-button { opacity: .8; }
+/* Same as the row actions: shown on hover, so the keyboard needs its own way to see them. */
+.main-grid-settings-window-list-item:hover .main-grid-settings-window-list-item-edit-button,
+.main-grid-settings-window-list-item-edit-button:focus-visible { opacity: .8; }
 
 .main-grid-settings-window-list-item .main-grid-settings-window-list-item-edit-button:hover,
 .main-grid-settings-window-list-item-label[contenteditable="true"] + .main-grid-settings-window-list-item-edit-button { opacity: 1; }
@@ -1849,7 +2180,8 @@ label.main-grid-checkbox {
 	content: '';
 }
 
-.main-grid-settings-window-list-item:hover .main-grid-settings-window-list-item-sticky-button { opacity: .8; }
+.main-grid-settings-window-list-item:hover .main-grid-settings-window-list-item-sticky-button,
+.main-grid-settings-window-list-item-sticky-button:focus-visible { opacity: .8; }
 
 .main-grid-settings-window-list-item.main-grid-settings-window-list-item-sticked .main-grid-settings-window-list-item-sticky-button { opacity: 1; }
 
@@ -2194,7 +2526,8 @@ label.main-grid-checkbox {
 	height: 28px;
 }
 
-.main-grid-settings-window-search-section-item-icon>div{
+.main-grid-settings-window-search-section-item-icon>span{
+	display: block;
 	max-width: 300px;
 	max-height: 17px;
 	text-overflow: ellipsis;
@@ -2494,6 +2827,15 @@ label.main-grid-checkbox {
 
 .main-grid-fixed-column + * > * { opacity: 0; }
 
+/* right-sticked column: mirror of .main-grid-fixed-column, anchored to the right edge (offset set inline by JS) */
+.main-grid-fixed-column-right {
+	position: absolute !important;
+	right: 0;
+	z-index: 1;
+}
+
+.main-grid-fixed-column-right + * > * { opacity: 0; }
+
 .main-grid-reset-right { right: 0 !important; }
 
 .main-grid-image-editor {
@@ -2574,7 +2916,9 @@ label.main-grid-checkbox {
 
 .main-ui-grid-show-new-row {
 	animation: showNewRow 900ms ease;
-	z-index: 9999;
+	/* The row is lifted only above the neighbours it slides over while absolutely positioned:
+	   a higher value used to carry it over the side panel as well. */
+	z-index: 1;
 }
 
 .main-ui-grid-show-new-row td:not([style*="background-color"]) {
@@ -2719,6 +3063,29 @@ th[class*="main-grid-column-color-"]::before {
 
 .main-grid-label-remove-button {
 	cursor: pointer;
+}
+
+/*
+ * The remove control of a label used to be a span and is a button now. Only the browser styling of
+ * the button is dropped here: background and margins belong to .ui-label-icon of the ui module and
+ * are left to it, so that the cross keeps its icon and its place. Scoped to the labels of the grid —
+ * the class itself is global and serves consumers outside the grid as well.
+ */
+.main-grid-labels .ui-label-icon {
+	appearance: none;
+	padding: 0;
+	border: 0;
+	color: inherit;
+	text-align: inherit;
+	font: inherit;
+	line-height: inherit;
+}
+
+.main-grid-labels .ui-label-icon:focus-visible {
+	outline-width: var(--ui-focus-outline-width);
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .main-grid-label-remove-inside {

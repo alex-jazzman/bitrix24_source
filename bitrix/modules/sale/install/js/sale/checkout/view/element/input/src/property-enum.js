@@ -1,11 +1,19 @@
 import { BitrixVue } from 'ui.vue';
 import { Dom } from 'main.core'
-import { EventEmitter } from 'main.core.events'
-import { Property as Const, EventType } from 'sale.checkout.const';
+import { Property as Const } from 'sale.checkout.const';
 import { Dialog } from 'ui.entity-selector';
 
+import { MixinPropertyField } from './property-field';
+
+const openingKeys = ['Enter', ' ', 'ArrowDown'];
+
 BitrixVue.component('sale-checkout-view-element-input-property-enum', {
+	mixins: [MixinPropertyField],
 	props: ['item', 'index', 'variants'],
+	data()
+	{
+		return { expanded: false };
+	},
 	mounted()
 	{
 		this.createDialog();
@@ -24,8 +32,10 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 				events: {
 					'Item:onSelect': this.onSelect,
 					'Item:onDeselect': this.onDeselect,
+					onShow: this.onShow,
+					onHide: this.onHide,
 				},
-				footer: this.item.required === 'Y' ? '' : this.getFooter(),
+				footer: this.isRequired ? '' : this.getFooter(),
 			});
 
 			Dom.style(this.popupMenu.getContainer(), 'width', `${this.$el.clientWidth}px`);
@@ -72,6 +82,14 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 			this.popupMenu.hide();
 			this.validate();
 		},
+		onShow()
+		{
+			this.expanded = true;
+		},
+		onHide()
+		{
+			this.expanded = false;
+		},
 		getFooter()
 		{
 			return BX.Tag.render`
@@ -79,17 +97,14 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 					${this.localize.CHECKOUT_VIEW_PROPERTY_LIST_ENUM_RESET_CHOICE}
 					</span>`
 		},
-		validate()
-		{
-			EventEmitter.emit(EventType.property.validate, {index: this.index});
-		},
 		onKeyDown(e)
 		{
-			if (['Esc', 'Tab'].indexOf(e.key) >= 0)
+			if (openingKeys.indexOf(e.key) >= 0)
 			{
-				return;
+				// the field holds no text of its own, and Space alone would scroll the page
+				e.preventDefault();
+				this.render();
 			}
-			e.preventDefault();
 		},
 		render()
 		{
@@ -147,13 +162,13 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 		{
 			return this.item.value === '';
 		},
-		isRequired()
-		{
-			return this.item.required === 'Y';
-		},
 		isAsteriskShown()
 		{
 			return this.isEmpty && this.isRequired;
+		},
+		ariaExpanded()
+		{
+			return this.expanded ? 'true' : 'false';
 		},
 	},
 	// language=Vue
@@ -161,6 +176,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 		<div
             class="form-wrap form-asterisk"
 			:class="getObjectClass"
+			data-testid="sale-checkout-property-enum"
 			@blur="validate"
 		>
 			<div class="ui-ctl-after ui-ctl-icon-angle"></div>
@@ -169,11 +185,18 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 				@click="render"
 				@keydown="onKeyDown"
 				:class="getSelectClass"
+				role="combobox"
+				:aria-expanded="ariaExpanded"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
 				:placeholder="item.name"
 				:value="defaultValue"
 			>
             <span
 				class="asterisk-item"
+				aria-hidden="true"
 				v-if="isAsteriskShown"
 			>
 				{{item.name}}

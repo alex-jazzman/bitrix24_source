@@ -1,6 +1,6 @@
 import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 
-import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
+import { MessageMenu, MenuItemPlacement, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
 export class ChannelMessageMenu extends MessageMenu
 {
@@ -12,7 +12,8 @@ export class ChannelMessageMenu extends MessageMenu
 			this.getDownloadFileItem(),
 			this.getForwardItem(),
 			this.getAskCopilotItem(),
-			this.getCreateTaskItem(),
+			this.getCreateAiTaskItem(),
+			this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
 		];
 
@@ -36,6 +37,7 @@ export class ChannelMessageMenu extends MessageMenu
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
+			this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null,
 			this.getCreateMeetingItem(),
 		];
 

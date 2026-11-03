@@ -1,5 +1,5 @@
 import 'checkbox-list.css';
-import { Dom, Type } from 'main.core';
+import { Dom, Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup, PopupOptions } from 'main.popup';
 import 'ui.design-tokens';
@@ -143,6 +143,15 @@ export class CheckboxList extends EventEmitter
 				content: container,
 				closeIcon: true,
 				closeByEsc: true,
+				// The name of the dialog has to be an explicit contract: setTitleBar() only derives
+				// `aria-label` from a *string* titleBar, so a consumer passing a node leaves the modal
+				// dialog nameless.
+				ariaLabel: this.#getAriaLabel(),
+				// An explicit trap, so the dialog keeps the focus inside even on portals where the
+				// global setting for dialogs is off. Its defaults are the wanted ones: initial focus
+				// goes to `[data-autofocus]` and falls back to the container, and the focus returns to
+				// whatever was active on activation.
+				focusTrap: true,
 				...popupOptions,
 				events: {
 					onPopupClose: () => layoutComponent?.restoreOptionValues(),
@@ -184,6 +193,13 @@ export class CheckboxList extends EventEmitter
 		return this.popup;
 	}
 
+	#getAriaLabel(): string
+	{
+		return Type.isStringFilled(this.lang.title)
+			? this.lang.title
+			: Loc.getMessage('UI_CHECKBOX_LIST_DIALOG_LABEL');
+	}
+
 	#getColumnCount(): number
 	{
 		let { columnCount } = this;
@@ -204,7 +220,6 @@ export class CheckboxList extends EventEmitter
 	show(): void
 	{
 		this.getPopup().show();
-		this.#getLayoutComponent().setFocusToSearchInput();
 	}
 
 	hide(): void

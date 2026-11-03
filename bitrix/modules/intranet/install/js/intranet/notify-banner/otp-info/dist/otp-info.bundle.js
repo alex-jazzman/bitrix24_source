@@ -1,37 +1,400 @@
-this.BX=this.BX||{},this.BX.Intranet=this.BX.Intranet||{},function(e,t,s,a,n,i){"use strict";class r{}r.DISABLED_ALL_2FA=1,r.MANDATORY_2FA=2,r.ENABLED_OLD_2FA=3,r.ENABLED_OLD_2FA_AND_NEED_PUSH_2FA=4,r.ONLY_ADMIN_ENABLED_NEW_2FA=5;var o=babelHelpers.classPrivateFieldLooseKey("settingsUrl"),l=babelHelpers.classPrivateFieldLooseKey("pushOtpPopupProvider"),c=babelHelpers.classPrivateFieldLooseKey("content");class p{constructor(e,t){Object.defineProperty(this,o,{writable:!0,value:void 0}),Object.defineProperty(this,l,{writable:!0,value:void 0}),Object.defineProperty(this,c,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,o)[o]=n.Type.isStringFilled(e.settingsUrl)?e.settingsUrl:"",babelHelpers.classPrivateFieldLooseBase(this,l)[l]=n.Type.isFunction(e.pushOtpPopupProvider)?e.pushOtpPopupProvider:()=>new Promise,babelHelpers.classPrivateFieldLooseBase(this,c)[c]=t}createEnableBtn(){return new t.Button({text:n.Loc.getMessage("NOTIFY_BANNER_INFO_ENABLE_BTN"),size:BX.UI.Button.Size.LARGE,style:BX.UI.AirButtonStyle.FILLED,useAirDesign:!0,onclick:this.clickEnableOtp.bind(this),props:{"data-testid":"bx-notify-banner-info-enable-otp-btn"}})}createLaterBtn(){return new t.Button({text:n.Loc.getMessage("NOTIFY_BANNER_INFO_LATER_BTN"),size:BX.UI.Button.Size.LARGE,style:BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,useAirDesign:!0,onclick:e=>{var t;babelHelpers.classPrivateFieldLooseBase(this,c)[c].onClickLater(),null==(t=e.context)||t.close()},props:{"data-testid":"bx-notify-banner-info-later-btn"}})}createEnableMandatoryBtn(){return new t.Button({text:n.Loc.getMessage("NOTIFY_BANNER_INFO_ENABLE_ALL_BTN"),size:BX.UI.Button.Size.LARGE,style:BX.UI.AirButtonStyle.FILLED,useAirDesign:!0,onclick:e=>{var t;null==(t=e.context)||t.close(),babelHelpers.classPrivateFieldLooseBase(this,c)[c].onClickEnable(),BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this,o)[o]+"?page=security&analyticContext=popup_push_otp")},props:{"data-testid":"bx-notify-banner-info-enable-mandatory-otp-btn"}})}clickEnableOtp(e){e.isWaiting()||(babelHelpers.classPrivateFieldLooseBase(this,c)[c].onClickEnable(),e.setWaiting(!0),babelHelpers.classPrivateFieldLooseBase(this,l)[l](()=>{var t;return null==(t=e.context)?void 0:t.close()}).then(t=>{t.show(),e.setWaiting(!1)}).catch(()=>{e.setWaiting(!1)}))}}let _,d=e=>e;var u=babelHelpers.classPrivateFieldLooseKey("sendAnalytics");class b{constructor(e){Object.defineProperty(this,u,{value:B}),this.btnFactory=new p(e,this)}getId(){return""}getTitle(){return""}getFirstContentBlock(){return""}getSecondContentBlock(){return""}getButtons(){return[]}getAlertContentBlock(){return""}getMiddleBlock(){return n.Tag.render(_||(_=d``))}isTimeEnd(){return!1}onShow(){babelHelpers.classPrivateFieldLooseBase(this,u)[u]("show")}onClickEnable(){babelHelpers.classPrivateFieldLooseBase(this,u)[u]("click","on")}onClickLater(){babelHelpers.classPrivateFieldLooseBase(this,u)[u]("click","later")}getAnalyticsType(){return""}getAnalyticsCategory(){return""}}function B(e,t=null){const a={tool:"push",event:e};t&&(a.c_section=t),this.getAnalyticsType()&&(a.type=this.getAnalyticsType()),this.getAnalyticsCategory()&&(a.category=this.getAnalyticsCategory()),s.sendData(a)}let g,F=e=>e;class N extends b{getId(){return"admin-enable-mandatory"}getTitle(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_DEF_TITLE_MSGVER_1")}getFirstContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_ALL_EMPLOYEE_BLOCK")}getSecondContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_IS_PROJECT_BLOCK")}getMiddleBlock(){return n.Tag.render(g||(g=F`
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Intranet = this.BX.Intranet || {};
+(function (exports, main_core, ui_buttons, ui_analytics, main_popup, main_date) {
+	'use strict';
+
+	class BannerType {
+		static DISABLED_ALL_2FA = 1;
+		static MANDATORY_2FA = 2;
+		static ENABLED_OLD_2FA = 3;
+		static ENABLED_OLD_2FA_AND_NEED_PUSH_2FA = 4;
+		static ONLY_ADMIN_ENABLED_NEW_2FA = 5;
+	}
+
+	class ButtonFactory {
+		#settingsUrl;
+		#pushOtpPopupProvider;
+		#content;
+		constructor(options, content) {
+			this.#settingsUrl = main_core.Type.isStringFilled(options.settingsUrl) ? options.settingsUrl : '';
+			this.#pushOtpPopupProvider = main_core.Type.isFunction(options.pushOtpPopupProvider) ? options.pushOtpPopupProvider : () => new Promise();
+			this.#content = content;
+		}
+		createEnableBtn() {
+			return new ui_buttons.Button({
+				text: main_core.Loc.getMessage('NOTIFY_BANNER_INFO_ENABLE_BTN'),
+				size: BX.UI.Button.Size.LARGE,
+				style: BX.UI.AirButtonStyle.FILLED,
+				useAirDesign: true,
+				onclick: this.clickEnableOtp.bind(this),
+				props: {
+					'data-testid': 'bx-notify-banner-info-enable-otp-btn'
+				}
+			});
+		}
+		createLaterBtn() {
+			return new ui_buttons.Button({
+				text: main_core.Loc.getMessage('NOTIFY_BANNER_INFO_LATER_BTN'),
+				size: BX.UI.Button.Size.LARGE,
+				style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				useAirDesign: true,
+				onclick: event => {
+					this.#content.onClickLater();
+					event.context?.close();
+				},
+				props: {
+					'data-testid': 'bx-notify-banner-info-later-btn'
+				}
+			});
+		}
+		createEnableMandatoryBtn() {
+			return new ui_buttons.Button({
+				text: main_core.Loc.getMessage('NOTIFY_BANNER_INFO_ENABLE_ALL_BTN'),
+				size: BX.UI.Button.Size.LARGE,
+				style: BX.UI.AirButtonStyle.FILLED,
+				useAirDesign: true,
+				onclick: event => {
+					event.context?.close();
+					this.#content.onClickEnable();
+					BX.SidePanel.Instance.open(`${this.#settingsUrl}?page=security&analyticContext=popup_push_otp`);
+				},
+				props: {
+					'data-testid': 'bx-notify-banner-info-enable-mandatory-otp-btn'
+				}
+			});
+		}
+		clickEnableOtp(event) {
+			if (event.isWaiting()) {
+				return;
+			}
+			this.#content.onClickEnable();
+			event.setWaiting(true);
+			this.#pushOtpPopupProvider(() => event.context?.close()).then(popup => {
+				popup.show();
+				event.setWaiting(false);
+			}).catch(() => {
+				event.setWaiting(false);
+			});
+		}
+	}
+
+	class BaseContent {
+		constructor(options) {
+			this.btnFactory = new ButtonFactory(options, this);
+		}
+		getId() {
+			return '';
+		}
+		getTitle() {
+			return '';
+		}
+		getFirstContentBlock() {
+			return '';
+		}
+		getSecondContentBlock() {
+			return '';
+		}
+		getButtons() {
+			return [];
+		}
+		getAlertContentBlock() {
+			return '';
+		}
+		getMiddleBlock() {
+			return main_core.Tag.render``;
+		}
+		isTimeEnd() {
+			return false;
+		}
+		onShow() {
+			this.#sendAnalytics('show');
+		}
+		onClickEnable() {
+			this.#sendAnalytics('click', 'on');
+		}
+		onClickLater() {
+			this.#sendAnalytics('click', 'later');
+		}
+		getAnalyticsType() {
+			return '';
+		}
+		getAnalyticsCategory() {
+			return '';
+		}
+		#sendAnalytics(event, cSection = null) {
+			const options = {
+				tool: 'push',
+				event
+			};
+			if (cSection) {
+				options.c_section = cSection;
+			}
+			if (this.getAnalyticsType()) {
+				options.type = this.getAnalyticsType();
+			}
+			if (this.getAnalyticsCategory()) {
+				options.category = this.getAnalyticsCategory();
+			}
+			ui_analytics.sendData(options);
+		}
+	}
+
+	class AdminEnableMandatory extends BaseContent {
+		getId() {
+			return 'admin-enable-mandatory';
+		}
+		getTitle() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_DEF_TITLE_MSGVER_1');
+		}
+		getFirstContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_ALL_EMPLOYEE_BLOCK');
+		}
+		getSecondContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_IS_PROJECT_BLOCK');
+		}
+		getMiddleBlock() {
+			return main_core.Tag.render`
 			<ul class="intranet-otp-motivating-popup__list ui-text --md">
 				<li class="intranet-otp-motivating-popup__list-item">
 					<span class="ui-icon-set --lock-l"></span>
-					${0}
+					${main_core.Loc.getMessage('NOTIFY_BANNER_INFO_LEAK_OPT')}
 				</li>
 				<li class="intranet-otp-motivating-popup__list-item">
 					<span class="ui-icon-set --o-trend-down"></span>
-					${0}
+					${main_core.Loc.getMessage('NOTIFY_BANNER_INFO_FIN_OPT')}
 				</li>
 				<li class="intranet-otp-motivating-popup__list-item">
 					<span class="ui-icon-set --o-suitcase"></span>
-					${0}
+					${main_core.Loc.getMessage('NOTIFY_BANNER_INFO_LEGAL_OPT')}
 				</li>
 			</ul>
-		`),n.Loc.getMessage("NOTIFY_BANNER_INFO_LEAK_OPT"),n.Loc.getMessage("NOTIFY_BANNER_INFO_FIN_OPT"),n.Loc.getMessage("NOTIFY_BANNER_INFO_LEGAL_OPT"))}getButtons(){return[this.btnFactory.createEnableMandatoryBtn(),this.btnFactory.createLaterBtn()]}getAnalyticsCategory(){return"push_2fa_all"}}class L extends b{getId(){return"enable-otp"}getTitle(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE_MSGVER_1")}getFirstContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_WARNING_BLOCK_MSGVER_1")}getSecondContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_DESC_BLOCK_MSGVER_1")}getButtons(){return[this.btnFactory.createEnableBtn(),this.btnFactory.createLaterBtn()]}getAnalyticsType(){return"new_2fa"}getAnalyticsCategory(){return"push_2fa"}}class E extends b{getId(){return"enable-push-otp"}getTitle(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1",{"[SPAN]":'<span class="intranet-otp-motivating-popup__title--accent">',"[/SPAN]":"</span>"})}getFirstContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1")}getButtons(){return[this.btnFactory.createEnableBtn(),this.btnFactory.createLaterBtn()]}getAnalyticsType(){return"renew_2fa"}getAnalyticsCategory(){return"push_2fa"}}var v=babelHelpers.classPrivateFieldLooseKey("endDateTs"),h=babelHelpers.classPrivateFieldLooseKey("promoteMode"),y=babelHelpers.classPrivateFieldLooseKey("formatEndDate");class A extends b{constructor(e){super(e),Object.defineProperty(this,v,{writable:!0,value:void 0}),Object.defineProperty(this,h,{writable:!0,value:void 0}),Object.defineProperty(this,y,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,h)[h]=e.promoteMode,babelHelpers.classPrivateFieldLooseBase(this,v)[v]=e.endDate,babelHelpers.classPrivateFieldLooseBase(this,y)[y]=e.formatEndDate}getId(){return"mandatory-enable-otp"}getTitle(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE_MSGVER_1")}getFirstContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_WARNING_BLOCK_MSGVER_1")}getSecondContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_DESC_BLOCK_MSGVER_1")}getAlertContentBlock(){return babelHelpers.classPrivateFieldLooseBase(this,v)[v]?"high"===babelHelpers.classPrivateFieldLooseBase(this,h)[h]?n.Loc.getMessage("NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE_MSGVER_1",{"#END_DATE#":i.DateTimeFormat.format(babelHelpers.classPrivateFieldLooseBase(this,y)[y],babelHelpers.classPrivateFieldLooseBase(this,v)[v])}):n.Loc.getMessage("NOTIFY_BANNER_INFO_REQ_BLOCK_MSGVER_1",{"#END_DATE#":i.DateTimeFormat.format(babelHelpers.classPrivateFieldLooseBase(this,y)[y],babelHelpers.classPrivateFieldLooseBase(this,v)[v])}):""}isTimeEnd(){return new Date(1e3*babelHelpers.classPrivateFieldLooseBase(this,v)[v])<=new Date}getButtons(){const e=[this.btnFactory.createEnableBtn()];return this.isTimeEnd()&&babelHelpers.classPrivateFieldLooseBase(this,v)[v]||e.push(this.btnFactory.createLaterBtn()),e}getAnalyticsType(){return"new_2fa"}getAnalyticsCategory(){return"push_2fa_period"}}var O=babelHelpers.classPrivateFieldLooseKey("endDateTs"),T=babelHelpers.classPrivateFieldLooseKey("promoteMode"),P=babelHelpers.classPrivateFieldLooseKey("formatEndDate");class I extends b{constructor(e){super(e),Object.defineProperty(this,O,{writable:!0,value:void 0}),Object.defineProperty(this,T,{writable:!0,value:void 0}),Object.defineProperty(this,P,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,T)[T]=e.promoteMode,babelHelpers.classPrivateFieldLooseBase(this,O)[O]=e.endDate,babelHelpers.classPrivateFieldLooseBase(this,P)[P]=e.formatEndDate}getId(){return"mandatory-enable-push-otp"}getTitle(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1",{"[SPAN]":'<span class="intranet-otp-motivating-popup__title--accent">',"[/SPAN]":"</span>"})}getFirstContentBlock(){return n.Loc.getMessage("NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1")}getAlertContentBlock(){return"high"===babelHelpers.classPrivateFieldLooseBase(this,T)[T]?n.Loc.getMessage("NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE_MSGVER_1",{"#END_DATE#":i.DateTimeFormat.format(babelHelpers.classPrivateFieldLooseBase(this,P)[P],babelHelpers.classPrivateFieldLooseBase(this,O)[O])}):n.Loc.getMessage("NOTIFY_BANNER_INFO_REQ_BLOCK_MSGVER_1",{"#END_DATE#":i.DateTimeFormat.format(babelHelpers.classPrivateFieldLooseBase(this,P)[P],babelHelpers.classPrivateFieldLooseBase(this,O)[O])})}isTimeEnd(){return new Date(1e3*babelHelpers.classPrivateFieldLooseBase(this,O)[O])<=new Date}getButtons(){const e=[this.btnFactory.createEnableBtn()];return this.isTimeEnd()||e.push(this.btnFactory.createLaterBtn()),e}getAnalyticsType(){return"renew_2fa"}getAnalyticsCategory(){return"push_2fa_period"}}let m,M,H,D,f=e=>e;var R=babelHelpers.classPrivateFieldLooseKey("renderContent"),C=babelHelpers.classPrivateFieldLooseKey("renderVideo"),S=babelHelpers.classPrivateFieldLooseKey("renderAlertBlock"),w=babelHelpers.classPrivateFieldLooseKey("renderSecondContentBlock"),k=babelHelpers.classPrivateFieldLooseKey("createContent");function Y(e){return n.Tag.render(m||(m=f`
+		`;
+		}
+		getButtons() {
+			return [this.btnFactory.createEnableMandatoryBtn(), this.btnFactory.createLaterBtn()];
+		}
+		getAnalyticsCategory() {
+			return 'push_2fa_all';
+		}
+	}
+
+	class EnableOtp extends BaseContent {
+		getId() {
+			return 'enable-otp';
+		}
+		getTitle() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE_MSGVER_1');
+		}
+		getFirstContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_WARNING_BLOCK_MSGVER_1');
+		}
+		getSecondContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_DESC_BLOCK_MSGVER_1');
+		}
+		getButtons() {
+			return [this.btnFactory.createEnableBtn(), this.btnFactory.createLaterBtn()];
+		}
+		getAnalyticsType() {
+			return 'new_2fa';
+		}
+		getAnalyticsCategory() {
+			return 'push_2fa';
+		}
+	}
+
+	class EnablePushOtp extends BaseContent {
+		getId() {
+			return 'enable-push-otp';
+		}
+		getTitle() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1', {
+				'[SPAN]': '<span class="intranet-otp-motivating-popup__title--accent">',
+				'[/SPAN]': '</span>'
+			});
+		}
+		getFirstContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1');
+		}
+		getButtons() {
+			return [this.btnFactory.createEnableBtn(), this.btnFactory.createLaterBtn()];
+		}
+		getAnalyticsType() {
+			return 'renew_2fa';
+		}
+		getAnalyticsCategory() {
+			return 'push_2fa';
+		}
+	}
+
+	class MandatoryEnableOtp extends BaseContent {
+		#endDateTs;
+		#promoteMode;
+		#formatEndDate;
+		#blockMode;
+		constructor(options) {
+			super(options);
+			this.#promoteMode = options.promoteMode;
+			this.#endDateTs = options.endDate;
+			this.#formatEndDate = options.formatEndDate;
+			this.#blockMode = options.blockMode === true;
+		}
+		getId() {
+			return 'mandatory-enable-otp';
+		}
+		getTitle() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE_MSGVER_1');
+		}
+		getFirstContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_WARNING_BLOCK_MSGVER_1');
+		}
+		getSecondContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_DESC_BLOCK_MSGVER_1');
+		}
+		getAlertContentBlock() {
+			if (!this.#endDateTs) {
+				return '';
+			}
+			if (this.#promoteMode === 'high') {
+				return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE_MSGVER_1', {
+					'#END_DATE#': main_date.DateTimeFormat.format(this.#formatEndDate, this.#endDateTs)
+				});
+			}
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_MSGVER_1', {
+				'#END_DATE#': main_date.DateTimeFormat.format(this.#formatEndDate, this.#endDateTs)
+			});
+		}
+		isTimeEnd() {
+			const endDate = new Date(this.#endDateTs * 1000);
+			const now = new Date();
+			return endDate <= now;
+		}
+		getButtons() {
+			const buttons = [this.btnFactory.createEnableBtn()];
+			if (this.#blockMode) {
+				return buttons;
+			}
+			if (!this.isTimeEnd() || !this.#endDateTs) {
+				buttons.push(this.btnFactory.createLaterBtn());
+			}
+			return buttons;
+		}
+		getAnalyticsType() {
+			return 'new_2fa';
+		}
+		getAnalyticsCategory() {
+			return 'push_2fa_period';
+		}
+	}
+
+	class MandatoryEnablePushOtp extends BaseContent {
+		#endDateTs;
+		#promoteMode;
+		#formatEndDate;
+		constructor(options) {
+			super(options);
+			this.#promoteMode = options.promoteMode;
+			this.#endDateTs = options.endDate;
+			this.#formatEndDate = options.formatEndDate;
+		}
+		getId() {
+			return 'mandatory-enable-push-otp';
+		}
+		getTitle() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1', {
+				'[SPAN]': '<span class="intranet-otp-motivating-popup__title--accent">',
+				'[/SPAN]': '</span>'
+			});
+		}
+		getFirstContentBlock() {
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1');
+		}
+		getAlertContentBlock() {
+			if (this.#promoteMode === 'high') {
+				return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE_MSGVER_1', {
+					'#END_DATE#': main_date.DateTimeFormat.format(this.#formatEndDate, this.#endDateTs)
+				});
+			}
+			return main_core.Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_MSGVER_1', {
+				'#END_DATE#': main_date.DateTimeFormat.format(this.#formatEndDate, this.#endDateTs)
+			});
+		}
+		isTimeEnd() {
+			const endDate = new Date(this.#endDateTs * 1000);
+			const now = new Date();
+			return endDate <= now;
+		}
+		getButtons() {
+			const buttons = [this.btnFactory.createEnableBtn()];
+			if (!this.isTimeEnd()) {
+				buttons.push(this.btnFactory.createLaterBtn());
+			}
+			return buttons;
+		}
+		getAnalyticsType() {
+			return 'renew_2fa';
+		}
+		getAnalyticsCategory() {
+			return 'push_2fa_period';
+		}
+	}
+
+	class BannerFactory {
+		create(type, options = {}) {
+			const content = this.#createContent(type, options);
+			return main_popup.PopupWindowManager.create(content.getId(), null, {
+				content: this.#renderContent(content),
+				buttons: content.getButtons(),
+				closeByEsc: !content.isTimeEnd(),
+				padding: 24,
+				className: 'intranet-otp-motivating-popup',
+				overlay: true,
+				events: {
+					onPopupShow: () => {
+						BX.userOptions.save('intranet', 'push_otp_popup_last_show', null, BX.Main.DateTimeFormat.format('d.m.Y'));
+						BX.userOptions.save('intranet', 'push_otp_popup_last_show_type', null, type);
+						content.onShow();
+					}
+				}
+			});
+		}
+		createForBlockOtp(type, options = {}) {
+			const content = this.#createContent(type, {
+				...options,
+				blockMode: true
+			});
+			return main_popup.PopupWindowManager.create(content.getId(), null, {
+				content: this.#renderContent(content),
+				buttons: content.getButtons(),
+				closeByEsc: false,
+				padding: 24,
+				className: 'intranet-otp-motivating-popup',
+				overlay: true
+			});
+		}
+		#renderContent(content) {
+			return main_core.Tag.render`
 			<div id="popup-content-1" class="intranet-otp-motivating-popup__content-wrapper">
 				<div class="intranet-otp-motivating-popup__content">
 					<div class="intranet-otp-motivating-popup__main-content">
-						<h2 class="intranet-otp-motivating-popup__title ui-headline --lg">${0}</h2>
+						<h2 class="intranet-otp-motivating-popup__title ui-headline --lg">${content.getTitle()}</h2>
 						<div class="intranet-otp-motivating-popup__text-wrapper">
-							<p class="intranet-otp-motivating-popup__text ui-text --md">${0}</p>
-							${0}
-							${0}
+							<p class="intranet-otp-motivating-popup__text ui-text --md">${content.getFirstContentBlock()}</p>
+							${content.getMiddleBlock()}
+							${this.#renderSecondContentBlock(content)}
 						</div>
-						<a onclick="top.BX.Helper.show('redirect=detail&code=26676294')" class="intranet-otp-motivating-popup__link ui-link ui-link-dashed">${0}</a>
-						${0}
+						<a onclick="top.BX.Helper.show('redirect=detail&code=26676294')" class="intranet-otp-motivating-popup__link ui-link ui-link-dashed">${main_core.Loc.getMessage('NOTIFY_BANNER_INFO_MORE_BTN')}</a>
+						${this.#renderAlertBlock(content.getAlertContentBlock())}
 					</div>
 					<aside class="intranet-otp-motivating-popup__animation">
-						${0}
+						${this.#renderVideo()}
 					</aside>
 				</div>
 			</div>
-		`),e.getTitle(),e.getFirstContentBlock(),e.getMiddleBlock(),babelHelpers.classPrivateFieldLooseBase(this,w)[w](e),n.Loc.getMessage("NOTIFY_BANNER_INFO_MORE_BTN"),babelHelpers.classPrivateFieldLooseBase(this,S)[S](e.getAlertContentBlock()),babelHelpers.classPrivateFieldLooseBase(this,C)[C]())}function K(){const e=n.Tag.render(M||(M=f`
+		`;
+		}
+		#renderVideo() {
+			const videoElement = main_core.Tag.render`
 			<video
 				src="/bitrix/js/intranet/notify-banner/otp-info/video/2fa-animation.webm"
 				autoplay
@@ -41,11 +404,53 @@ this.BX=this.BX||{},this.BX.Intranet=this.BX.Intranet||{},function(e,t,s,a,n,i){
 				width="286"
 				height="400"
 			></video>
-		`));return n.Event.bindOnce(e,"canplay",()=>{e.muted=!0,e.play()}),e}function x(e){return e.length>0?n.Tag.render(H||(H=f`
+		`;
+			main_core.Event.bindOnce(videoElement, 'canplay', () => {
+				videoElement.muted = true;
+				videoElement.play();
+			});
+			return videoElement;
+		}
+		#renderAlertBlock(alertContent) {
+			if (alertContent.length > 0) {
+				return main_core.Tag.render`
 				<div data-testid="bx-notify-banner-otp-info-alert-block" class="ui-alert ui-alert-danger">
-					<span class="ui-alert-message ui-text --md">${0}</span>
+					<span class="ui-alert-message ui-text --md">${alertContent}</span>
 				</div>
-			`),e):null}function X(e){return e.getSecondContentBlock()?n.Tag.render(D||(D=f`
-			<p class="intranet-otp-motivating-popup__text ui-text --md">${0}</p>
-		`),e.getSecondContentBlock()):null}function G(e,t={}){if(e===r.DISABLED_ALL_2FA)return new L(t);if(e===r.MANDATORY_2FA)return new A(t);if(e===r.ENABLED_OLD_2FA)return new E(t);if(e===r.ENABLED_OLD_2FA_AND_NEED_PUSH_2FA)return new I(t);if(e===r.ONLY_ADMIN_ENABLED_NEW_2FA)return new N(t);throw new Error("Unexpected banner type: "+e)}e.BannerFactory=class{constructor(){Object.defineProperty(this,k,{value:G}),Object.defineProperty(this,w,{value:X}),Object.defineProperty(this,S,{value:x}),Object.defineProperty(this,C,{value:K}),Object.defineProperty(this,R,{value:Y})}create(e,t={}){const s=babelHelpers.classPrivateFieldLooseBase(this,k)[k](e,t);return a.PopupWindowManager.create(s.getId(),null,{content:babelHelpers.classPrivateFieldLooseBase(this,R)[R](s),buttons:s.getButtons(),closeByEsc:!s.isTimeEnd(),padding:24,className:"intranet-otp-motivating-popup",overlay:!0,events:{onPopupShow:()=>{BX.userOptions.save("intranet","push_otp_popup_last_show",null,BX.Main.DateTimeFormat.format("d.m.Y")),BX.userOptions.save("intranet","push_otp_popup_last_show_type",null,e),s.onShow()}}})}createForBlockOtp(e,t={}){const s=babelHelpers.classPrivateFieldLooseBase(this,k)[k](e,t);return a.PopupWindowManager.create(s.getId(),null,{content:babelHelpers.classPrivateFieldLooseBase(this,R)[R](s),buttons:s.getButtons(),closeByEsc:!s.isTimeEnd(),padding:24,className:"intranet-otp-motivating-popup",overlay:!0})}},e.BannerType=r}(this.BX.Intranet.NotifyBanner=this.BX.Intranet.NotifyBanner||{},BX.UI,BX.UI.Analytics,BX.Main,BX,BX.Main);
+			`;
+			}
+			return null;
+		}
+		#renderSecondContentBlock(content) {
+			if (!content.getSecondContentBlock()) {
+				return null;
+			}
+			return main_core.Tag.render`
+			<p class="intranet-otp-motivating-popup__text ui-text --md">${content.getSecondContentBlock()}</p>
+		`;
+		}
+		#createContent(type, options = {}) {
+			if (type === BannerType.DISABLED_ALL_2FA) {
+				return new EnableOtp(options);
+			}
+			if (type === BannerType.MANDATORY_2FA) {
+				return new MandatoryEnableOtp(options);
+			}
+			if (type === BannerType.ENABLED_OLD_2FA) {
+				return new EnablePushOtp(options);
+			}
+			if (type === BannerType.ENABLED_OLD_2FA_AND_NEED_PUSH_2FA) {
+				return new MandatoryEnablePushOtp(options);
+			}
+			if (type === BannerType.ONLY_ADMIN_ENABLED_NEW_2FA) {
+				return new AdminEnableMandatory(options);
+			}
+			throw new Error(`Unexpected banner type: ${type}`);
+		}
+	}
+
+	exports.BannerFactory = BannerFactory;
+	exports.BannerType = BannerType;
+
+})(this.BX.Intranet.NotifyBanner = this.BX.Intranet.NotifyBanner || {}, BX, BX.UI, BX.UI.Analytics, BX.Main, BX.Main);
 //# sourceMappingURL=otp-info.bundle.js.map

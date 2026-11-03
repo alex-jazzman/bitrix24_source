@@ -1334,6 +1334,11 @@ export class Row extends SettingsHolder
 		if (isInteractive)
 		{
 			node.setAttribute('href', '#');
+			const value = (node.textContent ?? '').trim();
+			node.setAttribute(
+				'aria-label',
+				Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_ARIA', {'#VALUE#': value}) ?? '',
+			);
 			Dom.addClass(node, 'store-available-popup-link');
 		}
 		else

@@ -148,6 +148,36 @@
 .sign-b2e-document-filling__header {
 	display: flex;
 }
+
+.sign-b2e-document-filling__message .sign-b2e-document-filling__item-text {
+	margin-top: 0;
+}
+
+.sign-b2e-document-filling__message-counter {
+	margin-top: var(--ui-space-stack-2xs);
+	text-align: right;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.sign-b2e-document-filling__message-counter.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* the error text is shown by the field itself; this node exists only to announce it */
+.sign-b2e-document-filling__message-error {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 .sign-b2e-regional-settings_apply_for_all_list {
 	padding: 8px 5px 8px 5px !important;
 }

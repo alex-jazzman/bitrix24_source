@@ -2057,7 +2057,7 @@ window._main_polyfill_core = true;
 			this.registry.delete(target);
 		}
 	}
-	var registry = new Registry();
+	const registry = new Registry();
 
 	function isOptionSupported(name) {
 		let isSupported = false;
@@ -2142,6 +2142,596 @@ window._main_polyfill_core = true;
 		bind$1(target, eventName, once, options);
 	}
 
+	const BX$1 = window.BX;
+
+	const util = {
+		array_values(ar) {
+			if (!BX$1.type.isArray(ar)) {
+				return util._array_values_ob(ar);
+			}
+			const arv = [];
+			for (let i = 0, l = ar.length; i < l; i++) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(ar[i]);
+				}
+			}
+			return arv;
+		},
+		_array_values_ob(ar) {
+			const arv = [];
+			for (const i in ar) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(ar[i]);
+				}
+			}
+			return arv;
+		},
+		array_keys(ar) {
+			if (!BX$1.type.isArray(ar)) {
+				return util._array_keys_ob(ar);
+			}
+			const arv = [];
+			for (let i = 0, l = ar.length; i < l; i++) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(i);
+				}
+			}
+			return arv;
+		},
+		_array_keys_ob(ar) {
+			const arv = [];
+			for (const i in ar) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(i);
+				}
+			}
+			return arv;
+		},
+		object_keys(obj) {
+			const arv = [];
+			for (const k in obj) {
+				if (Object.prototype.hasOwnProperty.call(obj, k)) {
+					arv.push(k);
+				}
+			}
+			return arv;
+		},
+		array_merge(first, second) {
+			if (!BX$1.type.isArray(first)) {
+				first = [];
+			}
+			if (!BX$1.type.isArray(second)) {
+				second = [];
+			}
+			let i = first.length;
+			let j = 0;
+			if (typeof second.length === 'number') {
+				for (let l = second.length; j < l; j++) {
+					first[i++] = second[j];
+				}
+			} else {
+				while (second[j] !== undefined) {
+					first[i++] = second[j++];
+				}
+			}
+			first.length = i;
+			return first;
+		},
+		array_flip(object) {
+			const newObject = {};
+			for (const key in object) {
+				newObject[object[key]] = key;
+			}
+			return newObject;
+		},
+		array_diff(ar1, ar2, hash) {
+			hash = BX$1.type.isFunction(hash) ? hash : null;
+			let i = 0;
+			let length = 0;
+			let v;
+			let h;
+			const map = {};
+			const result = [];
+			for (i = 0, length = ar2.length; i < length; i++) {
+				v = ar2[i];
+				h = hash ? hash(v) : v;
+				map[h] = true;
+			}
+			for (i = 0, length = ar1.length; i < length; i++) {
+				v = ar1[i];
+				h = hash ? hash(v) : v;
+				if (typeof map[h] === 'undefined') {
+					result.push(v);
+				}
+			}
+			return result;
+		},
+		array_unique(ar) {
+			let i = 0;
+			let j;
+			let len = ar.length;
+			if (len < 2) {
+				return ar;
+			}
+			for (; i < len - 1; i++) {
+				for (j = i + 1; j < len; j++) {
+					if (ar[i] == ar[j]) {
+						ar.splice(j--, 1);
+						len--;
+					}
+				}
+			}
+			return ar;
+		},
+		in_array(needle, haystack) {
+			for (let i = 0; i < haystack.length; i++) {
+				if (haystack[i] == needle) {
+					return true;
+				}
+			}
+			return false;
+		},
+		array_search(needle, haystack) {
+			for (let i = 0; i < haystack.length; i++) {
+				if (haystack[i] == needle) {
+					return i;
+				}
+			}
+			return -1;
+		},
+		object_search_key(needle, haystack) {
+			if (typeof haystack[needle] !== 'undefined') {
+				return haystack[needle];
+			}
+			for (const i in haystack) {
+				if (typeof haystack[i] === 'object') {
+					const result = util.object_search_key(needle, haystack[i]);
+					if (result !== false) {
+						return result;
+					}
+				}
+			}
+			return false;
+		},
+		trim(s) {
+			if (BX$1.type.isString(s)) {
+				return s.trim();
+			}
+			return s;
+		},
+		urlencode(s) {
+			return encodeURIComponent(s);
+		},
+		deleteFromArray(ar, ind) {
+			return ar.slice(0, ind).concat(ar.slice(ind + 1));
+		},
+		insertIntoArray(ar, ind, el) {
+			return ar.slice(0, ind).concat([el]).concat(ar.slice(ind));
+		},
+		htmlspecialchars(str) {
+			return BX$1.Text.encode(str);
+		},
+		htmlspecialcharsback(str) {
+			return BX$1.Text.decode(str);
+		},
+		preg_quote(str, delimiter) {
+			if (!str.replace) {
+				return str;
+			}
+			return str.replace(new RegExp(`[.\\\\+*?\\[\\^\\]$(){}=!<>|:\\${delimiter || ''}-]`, 'g'), '\\$&');
+		},
+		jsencode(str) {
+			if (!str || !str.replace) {
+				return str;
+			}
+			const escapes = [{
+				c: '\\\\',
+				r: '\\\\'
+			},
+			{
+				c: '\\t',
+				r: '\\t'
+			}, {
+				c: '\\n',
+				r: '\\n'
+			}, {
+				c: '\\r',
+				r: '\\r'
+			}, {
+				c: '"',
+				r: '\\"'
+			}, {
+				c: "'",
+				r: "\\'"
+			}, {
+				c: '<',
+				r: '\\x3C'
+			}, {
+				c: '>',
+				r: '\\x3E'
+			}, {
+				c: '\\u2028',
+				r: '\\u2028'
+			}, {
+				c: '\\u2029',
+				r: '\\u2029'
+			}];
+			for (const rule of escapes) {
+				str = str.replace(new RegExp(rule.c, 'g'), rule.r);
+			}
+			return str;
+		},
+		getCssName(jsName) {
+			if (!BX$1.type.isNotEmptyString(jsName)) {
+				return '';
+			}
+			return jsName.replaceAll(/[A-Z]/g, match => {
+				return `-${match.toLowerCase()}`;
+			});
+		},
+		getJsName(cssName) {
+			const regex = /-([a-z])/g;
+			if (regex.test(cssName)) {
+				return cssName.replaceAll(regex, (match, letter) => {
+					return letter.toUpperCase();
+				});
+			}
+			return cssName;
+		},
+		nl2br(str) {
+			if (!str || !str.replace) {
+				return str;
+			}
+			return str.replace(/([^>])\n/g, '$1<br/>');
+		},
+		str_pad(input, pad_length, pad_string, pad_type) {
+			pad_string = pad_string || ' ';
+			pad_type = pad_type || 'right';
+			input = input.toString();
+			if (pad_type === 'left') {
+				return util.str_pad_left(input, pad_length, pad_string);
+			}
+			return util.str_pad_right(input, pad_length, pad_string);
+		},
+		str_pad_left(input, pad_length, pad_string) {
+			return input.toString().padStart(pad_length, pad_string);
+		},
+		str_pad_right(input, pad_length, pad_string) {
+			return input.toString().padEnd(pad_length, pad_string);
+		},
+		strip_tags(str) {
+			return str.split(/<[^>]+>/g).join('');
+		},
+		strip_php_tags(str) {
+			return str.replaceAll(/<\?(.|[\n\r])*?\?>/g, '');
+		},
+		popup(url, width, height) {
+			let w = 0;
+			let h = 0;
+			if (BX$1.browser.IsOpera()) {
+				w = document.body.offsetWidth;
+				h = document.body.offsetHeight;
+			} else {
+				w = screen.width;
+				h = screen.height;
+			}
+			return window.open(url, '', `status=no,scrollbars=yes,resizable=yes,width=${width},height=${height},top=${Math.floor((h - height) / 2 - 14)},left=${Math.floor((w - width) / 2 - 5)}`);
+		},
+		shuffle(array) {
+			let temporaryValue = null;
+			let randomIndex = 0;
+			let currentIndex = array.length;
+			while (currentIndex !== 0) {
+				randomIndex = Math.floor(Math.random() * currentIndex);
+				currentIndex -= 1;
+				temporaryValue = array[currentIndex];
+				array[currentIndex] = array[randomIndex];
+				array[randomIndex] = temporaryValue;
+			}
+			return array;
+		},
+		objectSort(object, sortBy, sortDir) {
+			sortDir = sortDir == 'asc' ? 'asc' : 'desc';
+			const arItems = [];
+			for (const key in object) {
+				if (Object.prototype.hasOwnProperty.call(object, key) && object[key][sortBy]) {
+					arItems.push([key, object[key][sortBy]]);
+				}
+			}
+			const sortValue = item => {
+				if (BX$1.type.isDate(item[1])) {
+					return item[1].getTime();
+				}
+				if (isNaN(item[1])) {
+					return item[1].toString().toLowerCase();
+				}
+				return parseInt(item[1]);
+			};
+			if (sortDir == 'asc') {
+				arItems.sort((a, b) => {
+					const s1 = sortValue(a);
+					const s2 = sortValue(b);
+					if (s1 > s2) {
+						return 1;
+					}
+					if (s1 < s2) {
+						return -1;
+					}
+					return 0;
+				});
+			} else {
+				arItems.sort((a, b) => {
+					const s1 = sortValue(a);
+					const s2 = sortValue(b);
+					if (s1 < s2) {
+						return 1;
+					}
+					if (s1 > s2) {
+						return -1;
+					}
+					return 0;
+				});
+			}
+			const arReturnArray = [];
+			for (const item of arItems) {
+				arReturnArray.push(object[item[0]]);
+			}
+			return arReturnArray;
+		},
+		objectMerge() {
+			return BX$1.mergeEx.apply(window, arguments);
+		},
+		objectClone(object) {
+			return BX$1.clone(object, true);
+		},
+		hex2rgb(color) {
+			const rgb = color.replaceAll(/[ #]/g, '').replace(/^(.)(.)(.)$/, '$1$1$2$2$3$3').match(/.{2}/g);
+			for (let i = 0; i < 3; i++) {
+				rgb[i] = parseInt(rgb[i], 16);
+			}
+			return {
+				r: rgb[0],
+				g: rgb[1],
+				b: rgb[2]
+			};
+		},
+		remove_url_param(url, param) {
+			return BX$1.Uri.removeParam(url, param);
+		},
+		add_url_param(url, params) {
+			const preparedParams = Object.entries(params).reduce((acc, item) => {
+				acc[item[0]] = BX$1.type.isArray(item[1]) ? item[1].join(',') : item[1];
+				return acc;
+			}, {});
+			return BX$1.Uri.addParam(url, preparedParams);
+		},
+		buildQueryString(params) {
+			let result = '';
+			for (const key in params) {
+				const value = params[key];
+				if (BX$1.type.isArray(value)) {
+					value.forEach((valueElement, index) => {
+						const indexedKey = `${key}[${index}]`;
+						result += `${encodeURIComponent(indexedKey)}=${encodeURIComponent(valueElement)}&`;
+					});
+				} else {
+					result += `${encodeURIComponent(key)}=${encodeURIComponent(value)}&`;
+				}
+			}
+			if (result.length > 0) {
+				result = result.slice(0, -1);
+			}
+			return result;
+		},
+		even(digit) {
+			return parseInt(digit) % 2 == 0;
+		},
+		hashCode(str) {
+			if (!BX$1.type.isNotEmptyString(str)) {
+				return 0;
+			}
+			let hash = 0;
+			for (let i = 0; i < str.length; i++) {
+				const c = str.charCodeAt(i);
+				hash = (hash << 5) - hash + c;
+				hash &= hash;
+			}
+			return hash;
+		},
+		getRandomString(length) {
+			return BX$1.Text.getRandom(length);
+		},
+		number_format(number, decimals, dec_point, thousands_sep) {
+			let sign = '';
+			decimals = Math.abs(decimals);
+			if (isNaN(decimals) || decimals < 0) {
+				decimals = 2;
+			}
+			dec_point = dec_point || ',';
+			if (typeof thousands_sep === 'undefined') {
+				thousands_sep = '.';
+			}
+			number = (Number(number) || 0).toFixed(decimals);
+			if (number < 0) {
+				sign = '-';
+				number = -number;
+			}
+			const i = String(parseInt(number, 10));
+			const j = i.length > 3 ? i.length % 3 : 0;
+			const km = j ? i.slice(0, j) + thousands_sep : '';
+			const kw = i.slice(j).replaceAll(/(\d{3})(?=\d)/g, `$1${thousands_sep}`);
+			const kd = decimals ? dec_point + Math.abs(number - i).toFixed(decimals).replace(/-/, '0').slice(2) : '';
+			return sign + km + kw + kd;
+		},
+		getExtension(url) {
+			url = url || '';
+			const items = url.split('?')[0].split('.');
+			return items[items.length - 1].toLowerCase();
+		},
+		addObjectToForm(object, form, prefix) {
+			if (!BX$1.type.isString(prefix)) {
+				prefix = '';
+			}
+			for (const key in object) {
+				if (!Object.prototype.hasOwnProperty.call(object, key)) {
+					continue;
+				}
+				let value = object[key];
+				const name = prefix === '' ? key : `${prefix}[${key}]`;
+				if (BX$1.type.isArray(value)) {
+					const obj = {};
+					for (let i = 0; i < value.length; i++) {
+						obj[i] = value[i];
+					}
+					util.addObjectToForm(obj, form, name);
+				} else if (BX$1.type.isPlainObject(value)) {
+					util.addObjectToForm(value, form, name);
+				} else {
+					value = BX$1.type.isFunction(value.toString) ? value.toString() : '';
+					if (value !== '') {
+						form.appendChild(BX$1.create('INPUT', {
+							attrs: {
+								type: 'hidden',
+								name,
+								value
+							}
+						}));
+					}
+				}
+			}
+		},
+		observe(object, enable) {
+			console.error('BX.util.observe: function is no longer supported by browser.');
+			return false;
+		},
+		escapeRegExp(str) {
+			return str.replaceAll(/[$()*+./?[\\\]^{|}-]/g, '\\$&');
+		}
+	};
+
+	const DEFAULT_TEMPLATE_TYPES = ['text/html', 'text/template', 'extension/settings', 'importmap'];
+	const RUN_FIRST_ATTRIBUTE = 'bxrunfirst';
+	const EMPTY_RESULT = Object.freeze({
+		html: '',
+		scripts: Object.freeze([]),
+		styles: Object.freeze([])
+	});
+	function extractAssets(data, options = {}) {
+		if (!Type.isStringFilled(data)) {
+			return EMPTY_RESULT;
+		}
+		const scriptTag = /<script\b([^>]*)>/gi;
+		const scriptEnd = /<\/script(?=[\s/>])[^>]*>/gi;
+		const scripts = [];
+		const kept = [];
+		let copiedTo = 0;
+		const runFirstForAll = options.runFirst === true;
+		const templateTypes = options.templateTypes ?? DEFAULT_TEMPLATE_TYPES;
+		let match = scriptTag.exec(data);
+		for (; match !== null; match = scriptTag.exec(data)) {
+			const attributes = match[1] ?? '';
+			scriptEnd.lastIndex = scriptTag.lastIndex;
+			const end = scriptEnd.exec(data);
+			if (end === null) {
+				break;
+			}
+			const parsed = readAttributes(attributes);
+			const type = parsed.get('type') ?? null;
+			if (type !== null && templateTypes.includes(type)) {
+				scriptTag.lastIndex = scriptEnd.lastIndex;
+				continue;
+			}
+			kept.push(data.slice(copiedTo, match.index));
+			const src = parsed.get('src') ?? null;
+			const runFirst = runFirstForAll || parsed.has(RUN_FIRST_ATTRIBUTE);
+			if (Type.isStringFilled(src)) {
+				scripts.push({
+					isInternal: false,
+					src,
+					runFirst,
+					type
+				});
+			} else {
+				const body = data.slice(scriptTag.lastIndex, end.index);
+				scripts.push({
+					isInternal: true,
+					text: body,
+					runFirst,
+					type
+				});
+			}
+			copiedTo = scriptEnd.lastIndex;
+			scriptTag.lastIndex = scriptEnd.lastIndex;
+		}
+		kept.push(data.slice(copiedTo));
+		const {
+			html,
+			styles
+		} = collectStyles(kept.join(''));
+		return {
+			html,
+			scripts,
+			styles
+		};
+	}
+	function collectStyles(data) {
+		const linkTag = /<link\b([^>]*)>/gi;
+		const styles = [];
+		const kept = [];
+		let copiedTo = 0;
+		for (let link = linkTag.exec(data); link !== null; link = linkTag.exec(data)) {
+			const parsed = readAttributes(link[1] ?? '');
+			const href = parsed.get('href') ?? null;
+			if (!isStylesheetLink(parsed) || !Type.isStringFilled(href)) {
+				continue;
+			}
+			styles.push({
+				href,
+				media: parsed.get('media') ?? null
+			});
+			kept.push(data.slice(copiedTo, link.index));
+			copiedTo = linkTag.lastIndex;
+		}
+		kept.push(data.slice(copiedTo));
+		return {
+			html: kept.join(''),
+			styles
+		};
+	}
+	function readAttributes(attributes) {
+		const pair = /([^\s/=>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+		const result = new Map();
+		for (let match = pair.exec(attributes); match !== null; match = pair.exec(attributes)) {
+			const name = match[1].toLowerCase();
+			if (!result.has(name)) {
+				result.set(name, match[2] ?? match[3] ?? match[4] ?? '');
+			}
+		}
+		return result;
+	}
+	function isStylesheetLink(attributes) {
+		if (attributes.get('type') === 'text/css') {
+			return true;
+		}
+		const rel = attributes.get('rel');
+		return Type.isStringFilled(rel) && rel.toLowerCase().split(/\s+/).includes('stylesheet');
+	}
+
+	function evalGlobal(data) {
+		if (data) {
+			const head = document.getElementsByTagName('head')[0] || document.documentElement;
+			const script = document.createElement('script');
+			script.type = 'text/javascript';
+			if (!BX$1.browser.IsIE()) {
+				script.appendChild(document.createTextNode(data));
+			} else {
+				script.text = data;
+			}
+			head.insertBefore(script, head.firstChild);
+			head.removeChild(script);
+		}
+	}
+
 	let debugState = true;
 	function enableDebug() {
 		debugState = true;
@@ -2174,416 +2764,7 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	var debugNs = Object.freeze({
-		__proto__: null,
-		get debugState () { return debugState; },
-		default: debug$1,
-		disableDebug: disableDebug,
-		enableDebug: enableDebug,
-		isDebugEnabled: isDebugEnabled
-	});
-
 	const extensionsStorage = new Map();
-
-	const ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
-	function loadAssets(options) {
-		return new Promise((resolve, reject) => {
-			const getParameters = {
-				e: (options?.extension || []).join(',')
-			};
-			BX.ajax.runAction(ajaxController, {
-				data: options,
-				getParameters
-			}).then(result => {
-				resolve(result?.data);
-			}).catch(err => {
-				reject(err);
-			});
-		});
-	}
-
-	function fetchInlineScripts(acc, item) {
-		if (item.isInternal) {
-			acc.push(item.JS);
-		}
-		return acc;
-	}
-	function fetchExternalScripts(acc, item) {
-		if (!item.isInternal) {
-			acc.push(item.JS);
-		}
-		return acc;
-	}
-	function fetchExternalStyles(acc, item) {
-		if (Type.isString(item) && item !== '') {
-			acc.push(item);
-		}
-		return acc;
-	}
-	function fetchExtensionSettings(html) {
-		if (Type.isStringFilled(html)) {
-			const scripts = html.match(/<script type="extension\/settings" \b[^>]*>([\S\s]*?)<\/script>/g);
-			if (Type.isArrayFilled(scripts)) {
-				return scripts.map(script => {
-					const [, extension] = script.match(/data-extension="(.[\d._a-z-]+)"/);
-					return {
-						extension,
-						script
-					};
-				});
-			}
-		}
-		return [];
-	}
-	function loadAll(items) {
-		const itemsList = Type.isArray(items) ? items : [items];
-		if (itemsList.length === 0) {
-			return Promise.resolve();
-		}
-		return new Promise((resolve, reject) => {
-			BX.load(itemsList, resolve, document, reject);
-		});
-	}
-
-	function parseExtensionHtml(html) {
-		const result = window.BX.processHTML(html);
-		const inlinePreScripts = [];
-		const inlineAfterScripts = [];
-		result.SCRIPT.reduce((accumulator, element) => {
-			return fetchInlineScripts(accumulator, element);
-		}, []).forEach(script => {
-			if (script.startsWith('BX.Runtime.registerExtension')) {
-				inlineAfterScripts.push(script);
-			} else {
-				inlinePreScripts.push(script);
-			}
-		});
-		return {
-			inlinePreScripts,
-			inlineAfterScripts,
-			externalScripts: result.SCRIPT.reduce((accumulator, element) => {
-				return fetchExternalScripts(accumulator, element);
-			}, []),
-			externalStyles: result.STYLE.reduce((accumulator, element) => {
-				return fetchExternalStyles(accumulator, element);
-			}, []),
-			settingsScripts: fetchExtensionSettings(result.HTML)
-		};
-	}
-
-	function waitOnline() {
-		return new Promise(resolve => {
-			Event.bindOnce(window, 'online', () => resolve());
-		});
-	}
-
-	const TIMEOUTS = [1000, 3000, 5000];
-	async function tryLoad(extensions, callback) {
-		for (let i = 0; i <= TIMEOUTS.length; i++) {
-			try {
-				return await callback();
-			} catch {
-				if (navigator.onLine === false) {
-					console.warn(`Wait online for load ${extensions.join(', ')}`);
-					await waitOnline();
-					i--;
-					continue;
-				}
-				if (i === TIMEOUTS.length) {
-					throw new Error(`${extensions.join(', ')} loading failed...`);
-				}
-				const delay = TIMEOUTS[i];
-				const displayRetryCount = i + 1;
-				console.warn(`Retry load #${displayRetryCount}: ${extensions.join(', ')}`);
-				await new Promise(resolve => {
-					setTimeout(resolve, delay);
-				});
-			}
-		}
-		throw new Error('Unexpected end of retry loop');
-	}
-
-	async function processExtensions(map) {
-		const loadableExtensions = [...map.keys()];
-		const rawAssets = (await tryLoad(loadableExtensions, () => loadAssets({
-			extension: loadableExtensions
-		}))) ?? [];
-		rawAssets.forEach(rawAsset => {
-			const preparedHtml = rawAsset.html ?? '';
-			const extensionAssets = parseExtensionHtml(preparedHtml);
-			extensionAssets.settingsScripts.forEach(({
-				script
-			}) => {
-				document.body.insertAdjacentHTML('beforeend', script);
-			});
-			extensionAssets.inlinePreScripts.forEach(script => {
-				window.BX.evalGlobal(script);
-			});
-			const loadableExtensionEntry = map.get(rawAsset.extension);
-			void Promise.all([tryLoad(loadableExtensions, () => loadAll(extensionAssets.externalScripts)), tryLoad(loadableExtensions, () => loadAll(extensionAssets.externalStyles))]).then(() => {
-				extensionAssets.inlineAfterScripts.forEach(script => {
-					window.BX.evalGlobal(script);
-				});
-				const namespace = rawAsset?.config?.namespace ?? 'window';
-				loadableExtensionEntry.resolve(namespace);
-			}).catch(error => {
-				loadableExtensionEntry.reject(error);
-			});
-		});
-	}
-
-	const queue = new Map();
-	let timerId = null;
-	async function loadExtension(...name) {
-		if (Type.isNumber(timerId)) {
-			clearTimeout(timerId);
-		}
-		const requestedNames = name.flat();
-		const extensionsToLoad = requestedNames.filter(extensionName => {
-			return !extensionsStorage.has(extensionName);
-		});
-		extensionsToLoad.forEach(extensionName => {
-			let resolve = null;
-			let reject = null;
-			const loadableExtensionEntry = {
-				promise: new Promise((sourceResolve, sourceReject) => {
-					resolve = sourceResolve;
-					reject = sourceReject;
-				}),
-				resolve,
-				reject
-			};
-			extensionsStorage.set(extensionName, loadableExtensionEntry.promise);
-			queue.set(extensionName, loadableExtensionEntry);
-		});
-		timerId = setTimeout(() => {
-			if (queue.size > 0) {
-				void processExtensions(new Map(queue.entries()));
-				queue.clear();
-			}
-		});
-		const namespaces = await Promise.all(requestedNames.map(extensionName => {
-			return extensionsStorage.get(extensionName);
-		}));
-		return namespaces.reduce((acc, namespace) => {
-			return {
-				...acc,
-				...Reflection.getClass(namespace)
-			};
-		}, {});
-	}
-
-	const cloneableTags = new Set(['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]']);
-	function isCloneable(value) {
-		const isCloneableValue = Type.isObjectLike(value) && cloneableTags.has(getTag(value));
-		return isCloneableValue || Type.isDomNode(value);
-	}
-	function internalClone(value, map) {
-		if (map.has(value)) {
-			return map.get(value);
-		}
-		if (isCloneable(value)) {
-			if (Type.isArray(value)) {
-				const cloned = [...value];
-				map.set(value, cloned);
-				value.forEach((item, index) => {
-					cloned[index] = internalClone(item, map);
-				});
-				return map.get(value);
-			}
-			if (Type.isDomNode(value)) {
-				return value.cloneNode(true);
-			}
-			if (Type.isMap(value)) {
-				const result = new Map();
-				map.set(value, result);
-				value.forEach((item, key) => {
-					result.set(internalClone(key, map), internalClone(item, map));
-				});
-				return result;
-			}
-			if (Type.isSet(value)) {
-				const result = new Set();
-				map.set(value, result);
-				value.forEach(item => {
-					result.add(internalClone(item, map));
-				});
-				return result;
-			}
-			if (Type.isDate(value)) {
-				return new Date(value);
-			}
-			if (Type.isRegExp(value)) {
-				const regExpFlags = /\w*$/;
-				const flags = regExpFlags.exec(value);
-				let result = new RegExp(value.source);
-				if (flags && Type.isArray(flags)) {
-					result = new RegExp(value.source, flags[0]);
-				}
-				result.lastIndex = value.lastIndex;
-				return result;
-			}
-			const proto = Object.getPrototypeOf(value);
-			const result = Object.assign(Object.create(proto), value);
-			map.set(value, result);
-			Object.keys(value).forEach(key => {
-				result[key] = internalClone(value[key], map);
-			});
-			return result;
-		}
-		return value;
-	}
-	function clone$1(value) {
-		return internalClone(value, new WeakMap());
-	}
-
-	function merge(current, target) {
-		return Object.entries(target).reduce((acc, [key, value]) => {
-			if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
-				acc[key] = merge(acc[key], value);
-				return acc;
-			}
-			acc[key] = value;
-			return acc;
-		}, current);
-	}
-
-	function createComparator(fields, orders = []) {
-		return (a, b) => {
-			const field = fields[0];
-			const order = orders[0] || 'asc';
-			if (Type.isUndefined(field)) {
-				return 0;
-			}
-			let valueA = a[field];
-			let valueB = b[field];
-			if (Type.isString(valueA) && Type.isString(valueB)) {
-				valueA = valueA.toLowerCase();
-				valueB = valueB.toLowerCase();
-			}
-			if (valueA < valueB) {
-				return order === 'asc' ? -1 : 1;
-			}
-			if (valueA > valueB) {
-				return order === 'asc' ? 1 : -1;
-			}
-			return createComparator(fields.slice(1), orders.slice(1))(a, b);
-		};
-	}
-
-	function registerExtension(options) {
-		if (!extensionsStorage.has(options.name)) {
-			const namespace = options?.namespace ?? 'window';
-			extensionsStorage.set(options.name, Promise.resolve(namespace));
-		}
-	}
-
-	class Runtime {
-		static debug = debug$1;
-		static loadExtension = loadExtension;
-		static registerExtension = registerExtension;
-		static clone = clone$1;
-		static debounce(func, wait = 0, context = null) {
-			let timeoutId = null;
-			return function debounced(...args) {
-				if (Type.isNumber(timeoutId)) {
-					clearTimeout(timeoutId);
-				}
-				timeoutId = setTimeout(() => {
-					func.apply(context || this, args);
-				}, wait);
-			};
-		}
-		static throttle(func, wait = 0, context = null) {
-			let timer = null;
-			let invoke = false;
-			return function wrapper(...args) {
-				invoke = true;
-				if (!timer) {
-					const q = function q() {
-						if (invoke) {
-							func.apply(context || this, args);
-							invoke = false;
-							timer = setTimeout(q, wait);
-						} else {
-							timer = null;
-						}
-					};
-					q();
-				}
-			};
-		}
-		static html(node, html, params = {}) {
-			if (Type.isNil(html) && Type.isDomNode(node)) {
-				return node.innerHTML;
-			}
-			const parsedHtml = BX.processHTML(html);
-			const externalCss = parsedHtml.STYLE.reduce((acc, item) => fetchExternalStyles(acc, item), []);
-			const externalJs = parsedHtml.SCRIPT.reduce((acc, item) => fetchExternalScripts(acc, item), []);
-			const inlineJs = parsedHtml.SCRIPT.reduce((acc, item) => fetchInlineScripts(acc, item), []);
-			if (Type.isDomNode(node) && (params.htmlFirst || externalJs.length === 0 && externalCss.length === 0)) {
-				if (params.useAdjacentHTML) {
-					node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
-				} else {
-					node.innerHTML = parsedHtml.HTML;
-				}
-			}
-			return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(() => {
-				if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
-					if (params.useAdjacentHTML) {
-						node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
-					} else {
-						node.innerHTML = parsedHtml.HTML;
-					}
-				}
-				inlineJs.forEach(script => BX.evalGlobal(script));
-				if (Type.isFunction(params.callback)) {
-					params.callback();
-				}
-			});
-		}
-		static merge(...targets) {
-			if (Type.isArray(targets[0])) {
-				targets.unshift([]);
-			} else if (Type.isObject(targets[0])) {
-				targets.unshift({});
-			}
-			return targets.reduce((acc, item) => {
-				return merge(acc, item);
-			}, targets[0]);
-		}
-		static orderBy(collection, fields = [], orders = []) {
-			const comparator = createComparator(fields, orders);
-			return Object.values(collection).sort(comparator);
-		}
-		static destroy(target, errorMessage = 'Object is destroyed') {
-			if (Type.isObject(target)) {
-				const onPropertyAccess = () => {
-					throw new Error(errorMessage);
-				};
-				const ownProperties = Object.keys(target);
-				const prototypeProperties = (() => {
-					const targetPrototype = Object.getPrototypeOf(target);
-					if (Type.isObject(targetPrototype)) {
-						return Object.getOwnPropertyNames(targetPrototype);
-					}
-					return [];
-				})();
-				const uniquePropertiesList = [...new Set([...ownProperties, ...prototypeProperties])];
-				uniquePropertiesList.filter(name => {
-					const descriptor = Object.getOwnPropertyDescriptor(target, name);
-					return !/__(.+)__/.test(name) && (!Type.isObject(descriptor) || descriptor.configurable === true);
-				}).forEach(name => {
-					Object.defineProperty(target, name, {
-						get: onPropertyAccess,
-						set: onPropertyAccess,
-						configurable: false
-					});
-				});
-				Object.setPrototypeOf(target, null);
-			}
-		}
-	}
 
 	const isError = Symbol.for('BX.BaseError.isError');
 	class BaseError {
@@ -2751,6 +2932,837 @@ window._main_polyfill_core = true;
 			}
 		}]);
 	}();
+
+	const message$1 = function (value) {
+		if (Type.isString(value)) {
+			if (Type.isNil(message$1[value])) {
+				EventEmitter.emit('onBXMessageNotFound', new BaseEvent({
+					compatData: [value]
+				}));
+				if (Type.isNil(message$1[value])) {
+					Runtime.debug(`message undefined: ${value}`);
+					message$1[value] = '';
+				}
+			}
+			return message$1[value];
+		}
+		if (Type.isPlainObject(value)) {
+			Object.keys(value).forEach(key => {
+				message$1[key] = value[key];
+			});
+		}
+		return undefined;
+	};
+	if (!Type.isNil(window.BX) && Type.isFunction(window.BX.message)) {
+		Object.keys(window.BX.message).forEach(key => {
+			message$1({
+				[key]: window.BX.message[key]
+			});
+		});
+	}
+
+	class Loc {
+		static getMessage(messageId, replacements = null) {
+			let mess = message$1(messageId);
+			if (Type.isString(mess) && Type.isPlainObject(replacements)) {
+				const escape = str => String(str).replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
+				Object.keys(replacements).forEach(replacement => {
+					const globalRegexp = new RegExp(escape(replacement), 'gi');
+					mess = mess.replaceAll(globalRegexp, () => {
+						return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
+					});
+				});
+			}
+			return mess;
+		}
+		static hasMessage(messageId) {
+			return Type.isString(messageId) && !Type.isNil(message$1[messageId]);
+		}
+		static setMessage(id, value) {
+			if (Type.isString(id) && Type.isString(value)) {
+				message$1({
+					[id]: value
+				});
+			}
+			if (Type.isObject(id)) {
+				message$1(id);
+			}
+		}
+		static getMessagePlural(messageId, value, replacements = null) {
+			let result = '';
+			if (Type.isNumber(value)) {
+				if (this.hasMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`)) {
+					result = this.getMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`, replacements);
+				} else {
+					result = this.getMessage(`${messageId}_PLURAL_1`, replacements);
+				}
+			} else {
+				result = this.getMessage(messageId, replacements);
+			}
+			return result;
+		}
+		static getPluralForm(value, languageId) {
+			let pluralForm = 1;
+			let lang = languageId;
+			if (!Type.isStringFilled(lang)) {
+				lang = message$1('LANGUAGE_ID');
+			}
+			const absValue = Math.abs(value);
+			switch (lang) {
+				case 'ar':
+					pluralForm = absValue === 1 ? 0 : 1;
+					break;
+				case 'br':
+				case 'fr':
+				case 'tr':
+					pluralForm = absValue > 1 ? 1 : 0;
+					break;
+				case 'de':
+				case 'en':
+				case 'hi':
+				case 'it':
+				case 'la':
+					pluralForm = absValue === 1 ? 0 : 1;
+					break;
+				case 'ru':
+				case 'ua':
+					if (absValue % 10 === 1 && absValue % 100 !== 11) {
+						pluralForm = 0;
+					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
+						pluralForm = 1;
+					} else {
+						pluralForm = 2;
+					}
+					break;
+				case 'pl':
+					if (absValue === 1) {
+						pluralForm = 0;
+					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
+						pluralForm = 1;
+					} else {
+						pluralForm = 2;
+					}
+					break;
+				case 'id':
+				case 'ja':
+				case 'ms':
+				case 'sc':
+				case 'tc':
+				case 'th':
+				case 'vn':
+					pluralForm = 0;
+					break;
+				default:
+					pluralForm = 1;
+					break;
+			}
+			return pluralForm;
+		}
+	}
+
+	const ajaxController = 'main.bitrix.main.controller.loadext.resolveextensions';
+	function loadAssets(options) {
+		return new Promise((resolve, reject) => {
+			const extension = options?.extension || [];
+			const data = {
+				extension,
+				coreLoaded: options?.coreLoaded === true ? 'Y' : 'N',
+				loadedExtension: options?.loadedExtension || []
+			};
+			const getParameters = {
+				e: extension.join(',')
+			};
+			BX.ajax.runAction(ajaxController, {
+				data,
+				getParameters
+			}).then(result => {
+				resolve(result?.data);
+			}).catch(err => {
+				reject(err);
+			});
+		});
+	}
+
+	const coreExtensionName = 'main.core';
+	const registeredNames = new Set();
+	function isCoreRegistered() {
+		return registeredNames.has(coreExtensionName);
+	}
+	function getRegisteredNames() {
+		return [...registeredNames];
+	}
+	function markRegistered(name) {
+		if (typeof name === 'string' && name !== '') {
+			registeredNames.add(name);
+		}
+	}
+	function registerExtension(options) {
+		markRegistered(options?.name);
+		if (!extensionsStorage.has(options.name)) {
+			const namespace = options?.namespace ?? 'window';
+			extensionsStorage.set(options.name, Promise.resolve(namespace));
+		}
+	}
+
+	function waitOnline() {
+		return new Promise(resolve => {
+			Event.bindOnce(window, 'online', () => resolve());
+		});
+	}
+
+	const TIMEOUTS = [1000, 3000, 5000];
+	async function tryLoad(extensions, callback) {
+		for (let i = 0; i <= TIMEOUTS.length; i++) {
+			try {
+				return await callback();
+			} catch {
+				if (navigator.onLine === false) {
+					console.warn(`Wait online for load ${extensions.join(', ')}`);
+					await waitOnline();
+					i--;
+					continue;
+				}
+				if (i === TIMEOUTS.length) {
+					throw new Error(`${extensions.join(', ')} loading failed...`);
+				}
+				const delay = TIMEOUTS[i];
+				const displayRetryCount = i + 1;
+				console.warn(`Retry load #${displayRetryCount}: ${extensions.join(', ')}`);
+				await new Promise(resolve => {
+					setTimeout(resolve, delay);
+				});
+			}
+		}
+		throw new Error('Unexpected end of retry loop');
+	}
+
+	function DoNothing() {}
+
+	let cssList = [];
+	let cssInit = false;
+	let jsList = [];
+	let jsInit = false;
+	const LOADING = 3;
+	const LOADED = 4;
+	const assets = {};
+	const loadingAssetCallbacks = {};
+	function setJSList(scripts) {
+		if (BX$1.type.isArray(scripts)) {
+			scripts = scripts.map(function (script) {
+				return normalizeUrl(script);
+			});
+			jsList = jsList.concat(scripts);
+		}
+	}
+	function setCSSList(cssFiles) {
+		if (BX$1.type.isArray(cssFiles)) {
+			cssFiles = cssFiles.map(function (cssFile) {
+				return normalizeUrl(cssFile);
+			});
+			cssList = cssList.concat(cssFiles);
+		}
+	}
+	function load(items, callback, doc, reject) {
+		if (!BX$1.isReady) {
+			const _args = arguments;
+			BX$1.ready(function () {
+				BX$1.load.apply(this, _args);
+			});
+			return null;
+		}
+		doc = doc || document;
+		callback = BX$1.Type.isFunction(callback) ? callback : () => {};
+		return loadAsync(items, callback, doc, reject);
+	}
+	function loadAsync(items, callback, doc, reject) {
+		if (!BX$1.type.isArray(items)) {
+			callback();
+			return;
+		}
+		function onLoad() {
+			const nextAsset = queue.shift();
+			if (nextAsset) {
+				loadSingleAsset(nextAsset, onLoad, doc, reject);
+			} else if (allLoaded()) {
+				callback();
+			}
+		}
+		function allLoaded() {
+			for (const name in assetMap) {
+				if (assetMap[name].state !== LOADED) {
+					return false;
+				}
+			}
+			return true;
+		}
+		const queue = [];
+		const assetMap = {};
+		items.forEach(item => {
+			const asset = getAsset(item);
+			if (asset && asset.state !== LOADED) {
+				queue.push(asset);
+				assetMap[asset.name] = asset;
+			}
+		});
+		if (queue.length > 0) {
+			const maxParallelLoads = 6;
+			const parallelLoads = Math.min(queue.length, maxParallelLoads);
+			const firstPackage = queue.splice(0, parallelLoads);
+			firstPackage.forEach(asset => {
+				loadSingleAsset(asset, onLoad, doc, reject);
+			});
+		} else {
+			callback();
+		}
+	}
+	function loadSingleAsset(asset, callback, doc, reject) {
+		callback = callback || DoNothing;
+		if (asset.state === LOADED) {
+			callback();
+			return;
+		}
+		if (asset.state === LOADING) {
+			if (!BX$1.Type.isArray(loadingAssetCallbacks[asset.name])) {
+				loadingAssetCallbacks[asset.name] = [];
+			}
+			loadingAssetCallbacks[asset.name].push(callback);
+			return;
+		}
+		asset.state = LOADING;
+		const onReject = () => {
+			delete assets[asset.name];
+			delete loadingAssetCallbacks[asset.name];
+			reject();
+		};
+		loadAsset(asset, function () {
+			asset.state = LOADED;
+			callback();
+			if (BX$1.Type.isArrayFilled(loadingAssetCallbacks[asset.name])) {
+				for (const cb of loadingAssetCallbacks[asset.name]) {
+					cb();
+				}
+			}
+			delete loadingAssetCallbacks[asset.name];
+		}, doc, BX$1.Type.isFunction(reject) ? onReject : null);
+	}
+	function loadAsset(asset, callback, doc, reject) {
+		callback = callback || DoNothing;
+		function error(event) {
+			window.clearTimeout(asset.errorTimeout);
+			window.clearTimeout(asset.cssTimeout);
+			ele.onload = ele.onreadystatechange = ele.onerror = null;
+			if (BX$1.Type.isFunction(reject)) {
+				reject();
+			} else {
+				callback();
+			}
+		}
+		function process(event) {
+			if (ext === 'css') {
+				cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			} else {
+				jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			}
+			event = event || window.event;
+			if (event.type === 'load' || /loaded|complete/.test(ele.readyState) && (!doc.documentMode || doc.documentMode < 9)) {
+				window.clearTimeout(asset.errorTimeout);
+				window.clearTimeout(asset.cssTimeout);
+				ele.onload = ele.onreadystatechange = ele.onerror = null;
+				callback();
+			}
+		}
+		function pollStyleSheet() {
+			if (asset.state !== LOADED && asset.cssRetries <= 20) {
+				for (let i = 0, l = doc.styleSheets.length; i < l; i++) {
+					if (doc.styleSheets[i].href === ele.href) {
+						process({
+							type: 'load'
+						});
+						return;
+					}
+				}
+				asset.cssRetries++;
+				asset.cssTimeout = window.setTimeout(pollStyleSheet, 250);
+			}
+		}
+		let ele = null;
+		const ext = BX$1.type.isNotEmptyString(asset.ext) ? asset.ext : util.getExtension(asset.url);
+		if (ext === 'css') {
+			ele = doc.createElement('link');
+			ele.type = `text/${asset.type || 'css'}`;
+			ele.rel = 'stylesheet';
+			ele.href = asset.url;
+			asset.cssRetries = 0;
+			asset.cssTimeout = window.setTimeout(pollStyleSheet, 500);
+		} else {
+			ele = doc.createElement('script');
+			ele.type = `text/${asset.type || 'javascript'}`;
+			ele.src = asset.url;
+		}
+		ele.onload = ele.onreadystatechange = process;
+		ele.onerror = error;
+		ele.async = asset.async === true;
+		ele.defer = false;
+		asset.errorTimeout = window.setTimeout(function () {
+			error();
+		}, 7000);
+		let templateLink = null;
+		const head = doc.head || doc.getElementsByTagName('head')[0];
+		if (ext === 'css' && (templateLink = getTemplateLink(head)) !== null) {
+			templateLink.parentNode.insertBefore(ele, templateLink);
+		} else {
+			head.insertBefore(ele, head.lastChild);
+		}
+	}
+	function getAsset(item) {
+		let asset = {};
+		if (typeof item === 'object') {
+			asset = item;
+			asset.name = asset.name ? asset.name : util.hashCode(item.url);
+		} else {
+			asset = {
+				name: util.hashCode(item),
+				url: item
+			};
+		}
+		const ext = BX$1.type.isNotEmptyString(asset.ext) ? asset.ext : util.getExtension(asset.url);
+		if (ext === 'css' && isCssLoaded(asset.url) || isScriptLoaded(asset.url)) {
+			asset.state = LOADED;
+		}
+		const existing = assets[asset.name];
+		if (existing && existing.url === asset.url) {
+			return existing;
+		}
+		assets[asset.name] = asset;
+		return asset;
+	}
+	function normalizeUrl(url) {
+		if (!BX$1.type.isNotEmptyString(url)) {
+			return '';
+		}
+		url = BX$1.getJSPath(url);
+		url = url.replace(/\?[0-9]*$/, '');
+		return url;
+	}
+	function normalizeMinUrl(url) {
+		if (!BX$1.type.isNotEmptyString(url)) {
+			return '';
+		}
+		const minPos = url.indexOf('.min');
+		return minPos >= 0 ? url.substr(0, minPos) + url.substr(minPos + 4) : url;
+	}
+	function isCssLoaded(fileSrc) {
+		initCssList();
+		fileSrc = normalizeUrl(fileSrc);
+		const fileSrcMin = normalizeMinUrl(fileSrc);
+		return fileSrc !== fileSrcMin && util.in_array(fileSrcMin, cssList) || util.in_array(fileSrc, cssList);
+	}
+	function initCssList() {
+		if (!cssInit) {
+			const linksCol = document.getElementsByTagName('link');
+			if (!!linksCol && linksCol.length > 0) {
+				for (let i = 0; i < linksCol.length; i++) {
+					let href = linksCol[i].getAttribute('href');
+					if (BX$1.type.isNotEmptyString(href)) {
+						href = normalizeMinUrl(normalizeUrl(href));
+						cssList.push(href);
+					}
+				}
+			}
+			cssInit = true;
+		}
+	}
+	function getTemplateLink(head) {
+		const findLink = function (tag) {
+			const links = head.getElementsByTagName(tag);
+			for (let i = 0, length = links.length; i < length; i++) {
+				const templateStyle = links[i].getAttribute('data-template-style');
+				if (BX$1.type.isNotEmptyString(templateStyle) && templateStyle == 'true') {
+					return links[i];
+				}
+			}
+			return null;
+		};
+		let link = findLink('link');
+		if (link === null) {
+			link = findLink('style');
+		}
+		return link;
+	}
+	function isScriptLoaded(fileSrc) {
+		initJsList();
+		fileSrc = normalizeUrl(fileSrc);
+		const fileSrcMin = normalizeMinUrl(fileSrc);
+		return fileSrc !== fileSrcMin && util.in_array(fileSrcMin, jsList) || util.in_array(fileSrc, jsList);
+	}
+	function initJsList() {
+		if (!jsInit) {
+			const scriptCol = document.getElementsByTagName('script');
+			if (!!scriptCol && scriptCol.length > 0) {
+				for (let i = 0; i < scriptCol.length; i++) {
+					let src = scriptCol[i].getAttribute('src');
+					if (BX$1.type.isNotEmptyString(src)) {
+						src = normalizeMinUrl(normalizeUrl(src));
+						jsList.push(src);
+					}
+				}
+			}
+			jsInit = true;
+		}
+	}
+
+	function registerAssetsAsLoaded(js, css) {
+		if (Type.isArrayFilled(js)) {
+			setJSList(js);
+		}
+		if (Type.isArrayFilled(css)) {
+			setCSSList(css);
+		}
+	}
+	function loadAll(items) {
+		const itemsList = Type.isArray(items) ? items : [items];
+		if (itemsList.length === 0) {
+			return Promise.resolve();
+		}
+		return new Promise((resolve, reject) => {
+			load(itemsList, resolve, document, reject);
+		});
+	}
+
+	function isNotEmptyObject(value) {
+		return Type.isPlainObject(value) && Object.keys(value).length > 0;
+	}
+	function hasSettings(settings) {
+		return Type.isArrayFilled(settings) || isNotEmptyObject(settings);
+	}
+	function appendSettingsTag(entry) {
+		const script = document.createElement('script');
+		script.type = 'extension/settings';
+		script.dataset.extension = entry.extension;
+		script.textContent = JSON.stringify(entry.settings).replaceAll('<', '\\u003C');
+		document.head.append(script);
+	}
+	function collect(entries, field) {
+		return entries.flatMap(entry => entry[field] ?? []);
+	}
+	function collectCoreIncludes(entries, field) {
+		return entries.flatMap(entry => entry.coreIncludes?.[field] ?? []);
+	}
+	function findNamespace(entries, name) {
+		const entry = entries.find(item => item.extension === name);
+		return entry ? entry.namespace : null;
+	}
+	function registerInActiveRuntime(options) {
+		const runtime = BX?.Runtime;
+		if (typeof runtime?.registerExtension === 'function') {
+			runtime.registerExtension(options);
+			return;
+		}
+		registerExtension(options);
+	}
+	async function applyExtensions(entries, queue, loader = loadAll, retry = tryLoad) {
+		entries.forEach(entry => {
+			if (isNotEmptyObject(entry.messages)) {
+				Loc.setMessage(entry.messages);
+			}
+			if (hasSettings(entry.settings)) {
+				appendSettingsTag(entry);
+			}
+		});
+		const js = collect(entries, 'js');
+		const css = collect(entries, 'css');
+		const coreIncludesJs = collectCoreIncludes(entries, 'js');
+		const coreIncludesCss = collectCoreIncludes(entries, 'css');
+		const loadableExtensions = [...queue.keys()];
+		try {
+			await Promise.all([retry(loadableExtensions, () => loader(js)), retry(loadableExtensions, () => loader(css))]);
+		} catch (error) {
+			queue.forEach(item => item.reject(error));
+			return;
+		}
+		registerAssetsAsLoaded(coreIncludesJs, coreIncludesCss);
+		entries.forEach(entry => {
+			registerInActiveRuntime({
+				name: entry.extension,
+				namespace: entry.namespace ?? 'window'
+			});
+			markRegistered(entry.extension);
+		});
+		queue.forEach((item, name) => {
+			item.resolve(findNamespace(entries, name) ?? 'window');
+		});
+	}
+	async function processExtensions(queue, transport = loadAssets, retry = tryLoad) {
+		const loadableExtensions = [...queue.keys()];
+		const coreLoaded = isCoreRegistered();
+		const loadedExtension = getRegisteredNames();
+		let entries = [];
+		try {
+			entries = (await retry(loadableExtensions, () => transport({
+				extension: loadableExtensions,
+				coreLoaded,
+				loadedExtension
+			}))) ?? [];
+		} catch (error) {
+			queue.forEach(item => item.reject(error));
+			return;
+		}
+		try {
+			await applyExtensions(entries, queue, loadAll, retry);
+		} catch (error) {
+			queue.forEach(item => item.reject(error));
+		}
+	}
+
+	const queue = new Map();
+	let timerId = null;
+	async function loadExtension(...name) {
+		if (Type.isNumber(timerId)) {
+			clearTimeout(timerId);
+		}
+		const requestedNames = name.flat();
+		const extensionsToLoad = requestedNames.filter(extensionName => {
+			return !extensionsStorage.has(extensionName);
+		});
+		extensionsToLoad.forEach(extensionName => {
+			let resolve = null;
+			let reject = null;
+			const loadableExtensionEntry = {
+				promise: new Promise((sourceResolve, sourceReject) => {
+					resolve = sourceResolve;
+					reject = sourceReject;
+				}),
+				resolve,
+				reject
+			};
+			extensionsStorage.set(extensionName, loadableExtensionEntry.promise);
+			queue.set(extensionName, loadableExtensionEntry);
+		});
+		timerId = setTimeout(() => {
+			if (queue.size > 0) {
+				void processExtensions(new Map(queue.entries()));
+				queue.clear();
+			}
+		});
+		const namespaces = await Promise.all(requestedNames.map(extensionName => {
+			return extensionsStorage.get(extensionName);
+		}));
+		return namespaces.reduce((acc, namespace) => {
+			return {
+				...acc,
+				...Reflection.getClass(namespace)
+			};
+		}, {});
+	}
+
+	const cloneableTags = new Set(['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]']);
+	function isCloneable(value) {
+		const isCloneableValue = Type.isObjectLike(value) && cloneableTags.has(getTag(value));
+		return isCloneableValue || Type.isDomNode(value);
+	}
+	function internalClone(value, map) {
+		if (map.has(value)) {
+			return map.get(value);
+		}
+		if (isCloneable(value)) {
+			if (Type.isArray(value)) {
+				const cloned = [...value];
+				map.set(value, cloned);
+				value.forEach((item, index) => {
+					cloned[index] = internalClone(item, map);
+				});
+				return map.get(value);
+			}
+			if (Type.isDomNode(value)) {
+				return value.cloneNode(true);
+			}
+			if (Type.isMap(value)) {
+				const result = new Map();
+				map.set(value, result);
+				value.forEach((item, key) => {
+					result.set(internalClone(key, map), internalClone(item, map));
+				});
+				return result;
+			}
+			if (Type.isSet(value)) {
+				const result = new Set();
+				map.set(value, result);
+				value.forEach(item => {
+					result.add(internalClone(item, map));
+				});
+				return result;
+			}
+			if (Type.isDate(value)) {
+				return new Date(value);
+			}
+			if (Type.isRegExp(value)) {
+				const regExpFlags = /\w*$/;
+				const flags = regExpFlags.exec(value);
+				let result = new RegExp(value.source);
+				if (flags && Type.isArray(flags)) {
+					result = new RegExp(value.source, flags[0]);
+				}
+				result.lastIndex = value.lastIndex;
+				return result;
+			}
+			const proto = Object.getPrototypeOf(value);
+			const result = Object.assign(Object.create(proto), value);
+			map.set(value, result);
+			Object.keys(value).forEach(key => {
+				result[key] = internalClone(value[key], map);
+			});
+			return result;
+		}
+		return value;
+	}
+	function clone$1(value) {
+		return internalClone(value, new WeakMap());
+	}
+
+	function merge(current, target) {
+		return Object.entries(target).reduce((acc, [key, value]) => {
+			if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
+				acc[key] = merge(acc[key], value);
+				return acc;
+			}
+			acc[key] = value;
+			return acc;
+		}, current);
+	}
+
+	function createComparator(fields, orders = []) {
+		return (a, b) => {
+			const field = fields[0];
+			const order = orders[0] || 'asc';
+			if (Type.isUndefined(field)) {
+				return 0;
+			}
+			let valueA = a[field];
+			let valueB = b[field];
+			if (Type.isString(valueA) && Type.isString(valueB)) {
+				valueA = valueA.toLowerCase();
+				valueB = valueB.toLowerCase();
+			}
+			if (valueA < valueB) {
+				return order === 'asc' ? -1 : 1;
+			}
+			if (valueA > valueB) {
+				return order === 'asc' ? 1 : -1;
+			}
+			return createComparator(fields.slice(1), orders.slice(1))(a, b);
+		};
+	}
+
+	class Runtime {
+		static debug = debug$1;
+		static extractAssets = extractAssets;
+		static loadExtension = loadExtension;
+		static registerExtension = registerExtension;
+		static clone = clone$1;
+		static debounce(func, wait = 0, context = null) {
+			let timeoutId = null;
+			return function debounced(...args) {
+				if (Type.isNumber(timeoutId)) {
+					clearTimeout(timeoutId);
+				}
+				timeoutId = setTimeout(() => {
+					func.apply(context || this, args);
+				}, wait);
+			};
+		}
+		static throttle(func, wait = 0, context = null) {
+			let timer = null;
+			let invoke = false;
+			return function wrapper(...args) {
+				invoke = true;
+				if (!timer) {
+					const q = function q() {
+						if (invoke) {
+							func.apply(context || this, args);
+							invoke = false;
+							timer = setTimeout(q, wait);
+						} else {
+							timer = null;
+						}
+					};
+					q();
+				}
+			};
+		}
+		static html(node, html, params = {}) {
+			if (Type.isNil(html) && Type.isDomNode(node)) {
+				return node.innerHTML;
+			}
+			const assets = extractAssets(html);
+			const externalCss = assets.styles.map(item => ({
+				url: item.href,
+				ext: 'css'
+			}));
+			const externalJs = assets.scripts.filter(item => !item.isInternal).map(item => item.src);
+			const inlineJs = assets.scripts.filter(item => item.isInternal).map(item => item.text);
+			if (Type.isDomNode(node) && (params.htmlFirst || externalJs.length === 0 && externalCss.length === 0)) {
+				if (params.useAdjacentHTML) {
+					node.insertAdjacentHTML('beforeend', assets.html);
+				} else {
+					node.innerHTML = assets.html;
+				}
+			}
+			return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(() => {
+				if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
+					if (params.useAdjacentHTML) {
+						node.insertAdjacentHTML('beforeend', assets.html);
+					} else {
+						node.innerHTML = assets.html;
+					}
+				}
+				inlineJs.forEach(script => evalGlobal(script));
+				if (Type.isFunction(params.callback)) {
+					params.callback();
+				}
+			});
+		}
+		static merge(...targets) {
+			if (Type.isArray(targets[0])) {
+				targets.unshift([]);
+			} else if (Type.isObject(targets[0])) {
+				targets.unshift({});
+			}
+			return targets.reduce((acc, item) => {
+				return merge(acc, item);
+			}, targets[0]);
+		}
+		static orderBy(collection, fields = [], orders = []) {
+			const comparator = createComparator(fields, orders);
+			return Object.values(collection).sort(comparator);
+		}
+		static destroy(target, errorMessage = 'Object is destroyed') {
+			if (Type.isObject(target)) {
+				const onPropertyAccess = () => {
+					throw new Error(errorMessage);
+				};
+				const ownProperties = Object.keys(target);
+				const prototypeProperties = (() => {
+					const targetPrototype = Object.getPrototypeOf(target);
+					if (Type.isObject(targetPrototype)) {
+						return Object.getOwnPropertyNames(targetPrototype);
+					}
+					return [];
+				})();
+				const uniquePropertiesList = [...new Set([...ownProperties, ...prototypeProperties])];
+				uniquePropertiesList.filter(name => {
+					const descriptor = Object.getOwnPropertyDescriptor(target, name);
+					return !/__(.+)__/.test(name) && (!Type.isObject(descriptor) || descriptor.configurable === true);
+				}).forEach(name => {
+					Object.defineProperty(target, name, {
+						get: onPropertyAccess,
+						set: onPropertyAccess,
+						configurable: false
+					});
+				});
+				Object.setPrototypeOf(target, null);
+			}
+		}
+	}
 
 	class EventStore {
 		defaultMaxListeners;
@@ -4040,11 +5052,18 @@ window._main_polyfill_core = true;
 		}
 	}
 
+	function decodeSafely(value) {
+		try {
+			return decodeURIComponent(value);
+		} catch {
+			return value;
+		}
+	}
 	class Cookie {
 		static getList() {
 			return document.cookie.split(';').map(item => item.split('=')).map(item => item.map(subItem => subItem.trim())).reduce((acc, item) => {
 				const [key, value] = item;
-				acc[decodeURIComponent(key)] = decodeURIComponent(value);
+				acc[decodeSafely(key)] = decodeSafely(value);
 				return acc;
 			}, {});
 		}
@@ -4069,7 +5088,7 @@ window._main_polyfill_core = true;
 			if (Type.isDate(attributes.expires)) {
 				attributes.expires = attributes.expires.toUTCString();
 			}
-			const safeName = decodeURIComponent(String(name)).replaceAll(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent).replaceAll(/[()]/g, escape);
+			const safeName = decodeSafely(String(name)).replaceAll(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent).replaceAll(/[()]/g, escape);
 			const safeValue = encodeURIComponent(String(value)).replaceAll(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
 			const stringifiedAttributes = Object.keys(attributes).reduce((acc, key) => {
 				const attributeValue = attributes[key];
@@ -4136,133 +5155,6 @@ window._main_polyfill_core = true;
 	class Http {
 		static Cookie = Cookie;
 		static Data = Data;
-	}
-
-	const message$1 = function (value) {
-		if (Type.isString(value)) {
-			if (Type.isNil(message$1[value])) {
-				EventEmitter.emit('onBXMessageNotFound', new BaseEvent({
-					compatData: [value]
-				}));
-				if (Type.isNil(message$1[value])) {
-					Runtime.debug(`message undefined: ${value}`);
-					message$1[value] = '';
-				}
-			}
-			return message$1[value];
-		}
-		if (Type.isPlainObject(value)) {
-			Object.keys(value).forEach(key => {
-				message$1[key] = value[key];
-			});
-		}
-		return undefined;
-	};
-	if (!Type.isNil(window.BX) && Type.isFunction(window.BX.message)) {
-		Object.keys(window.BX.message).forEach(key => {
-			message$1({
-				[key]: window.BX.message[key]
-			});
-		});
-	}
-
-	class Loc {
-		static getMessage(messageId, replacements = null) {
-			let mess = message$1(messageId);
-			if (Type.isString(mess) && Type.isPlainObject(replacements)) {
-				const escape = str => String(str).replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
-				Object.keys(replacements).forEach(replacement => {
-					const globalRegexp = new RegExp(escape(replacement), 'gi');
-					mess = mess.replaceAll(globalRegexp, () => {
-						return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
-					});
-				});
-			}
-			return mess;
-		}
-		static hasMessage(messageId) {
-			return Type.isString(messageId) && !Type.isNil(message$1[messageId]);
-		}
-		static setMessage(id, value) {
-			if (Type.isString(id) && Type.isString(value)) {
-				message$1({
-					[id]: value
-				});
-			}
-			if (Type.isObject(id)) {
-				message$1(id);
-			}
-		}
-		static getMessagePlural(messageId, value, replacements = null) {
-			let result = '';
-			if (Type.isNumber(value)) {
-				if (this.hasMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`)) {
-					result = this.getMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`, replacements);
-				} else {
-					result = this.getMessage(`${messageId}_PLURAL_1`, replacements);
-				}
-			} else {
-				result = this.getMessage(messageId, replacements);
-			}
-			return result;
-		}
-		static getPluralForm(value, languageId) {
-			let pluralForm = 1;
-			let lang = languageId;
-			if (!Type.isStringFilled(lang)) {
-				lang = message$1('LANGUAGE_ID');
-			}
-			const absValue = Math.abs(value);
-			switch (lang) {
-				case 'ar':
-					pluralForm = absValue === 1 ? 0 : 1;
-					break;
-				case 'br':
-				case 'fr':
-				case 'tr':
-					pluralForm = absValue > 1 ? 1 : 0;
-					break;
-				case 'de':
-				case 'en':
-				case 'hi':
-				case 'it':
-				case 'la':
-					pluralForm = absValue === 1 ? 0 : 1;
-					break;
-				case 'ru':
-				case 'ua':
-					if (absValue % 10 === 1 && absValue % 100 !== 11) {
-						pluralForm = 0;
-					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
-						pluralForm = 1;
-					} else {
-						pluralForm = 2;
-					}
-					break;
-				case 'pl':
-					if (absValue === 1) {
-						pluralForm = 0;
-					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
-						pluralForm = 1;
-					} else {
-						pluralForm = 2;
-					}
-					break;
-				case 'id':
-				case 'ja':
-				case 'ms':
-				case 'sc':
-				case 'tc':
-				case 'th':
-				case 'vn':
-					pluralForm = 0;
-					break;
-				default:
-					pluralForm = 1;
-					break;
-			}
-			return pluralForm;
-		}
 	}
 
 	const voidElements = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
@@ -5630,11 +6522,52 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	var collections = {
+	const collections = {
 		OrderedArray,
 		SettingsCollection,
 		WeakRefMap
 	};
+
+	function isCssAnimation(animation) {
+		return 'animationName' in animation;
+	}
+	function isCssTransition(animation) {
+		return 'transitionProperty' in animation;
+	}
+	function isScriptAnimation(animation) {
+		return !isCssAnimation(animation) && !isCssTransition(animation);
+	}
+	class Animation {
+		static waitTransitionEnd(element, propertyName = null) {
+			return this.#waitForEnd(element, propertyName, isCssTransition, animation => isCssTransition(animation) ? animation.transitionProperty : null);
+		}
+		static waitAnimationEnd(element, animationName = null) {
+			return this.#waitForEnd(element, animationName, animation => isCssAnimation(animation) || isScriptAnimation(animation), animation => isCssAnimation(animation) ? animation.animationName : null);
+		}
+		static async #waitForEnd(element, names, isKind, readName) {
+			if (!Type.isElementNode(element)) {
+				return;
+			}
+			const targets = element.getAnimations().filter(animation => isKind(animation)).filter(animation => this.#matchesName(readName(animation), names)).filter(animation => this.#hasFiniteEnd(animation));
+			await Promise.allSettled(targets.map(animation => animation.finished));
+		}
+		static #matchesName(name, names) {
+			if (Type.isNil(names)) {
+				return true;
+			}
+			if (Type.isNil(name)) {
+				return false;
+			}
+			if (Type.isArray(names)) {
+				return names.includes(name);
+			}
+			return name === names;
+		}
+		static #hasFiniteEnd(animation) {
+			const endTime = animation.effect?.getComputedTiming().endTime;
+			return Type.isNumber(endTime) && Number.isFinite(endTime);
+		}
+	}
 
 	class Transition {
 		static linear(progress) {
@@ -6183,27 +7116,23 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	const {
-		getClass,
-		namespace
-	} = Reflection;
+	const getClass = Reflection.getClass;
+	const namespace = Reflection.namespace;
 	const message = message$1;
 	const easing = Easing;
 	const fx = FX;
 	const PageObject = Page;
-	const {
-		replace,
-		remove,
-		clean,
-		insertBefore,
-		insertAfter,
-		append,
-		prepend,
-		style,
-		adjust,
-		create,
-		isShown
-	} = Dom;
+	const replace = Dom.replace;
+	const remove = Dom.remove;
+	const clean = Dom.clean;
+	const insertBefore = Dom.insertBefore;
+	const insertAfter = Dom.insertAfter;
+	const append = Dom.append;
+	const prepend = Dom.prepend;
+	const style = Dom.style;
+	const adjust = Dom.adjust;
+	const create = Dom.create;
+	const isShown = Dom.isShown;
 	const addClass = function addClass() {
 		Dom.addClass(...Runtime.merge([], Array.from(arguments), [getElement(arguments[0])]));
 	};
@@ -6237,18 +7166,14 @@ window._main_polyfill_core = true;
 		}
 		Http.Cookie.set(name, value, attributes);
 	};
-	const {
-		bind,
-		unbind,
-		unbindAll,
-		bindOnce,
-		ready
-	} = Event;
-	const {
-		debugState: debugEnableFlag,
-		isDebugEnabled: debugStatus,
-		default: debug
-	} = debugNs;
+	const bind = Event.bind;
+	const unbind = Event.unbind;
+	const unbindAll = Event.unbindAll;
+	const bindOnce = Event.bindOnce;
+	const ready = Event.ready;
+	const debugEnableFlag = debugState;
+	const debugStatus = isDebugEnabled;
+	const debug = debug$1;
 	const debugEnable = value => {
 		if (value) {
 			enableDebug();
@@ -6256,13 +7181,11 @@ window._main_polyfill_core = true;
 			disableDebug();
 		}
 	};
-	const {
-		clone,
-		loadExtension: loadExt,
-		debounce,
-		throttle,
-		html
-	} = Runtime;
+	const clone = Runtime.clone;
+	const loadExt = Runtime.loadExtension;
+	const debounce = Runtime.debounce;
+	const throttle = Runtime.throttle;
+	const html = Runtime.html;
 	const type = {
 		...Object.getOwnPropertyNames(Type).filter(key => !['name', 'length', 'prototype', 'caller', 'arguments'].includes(key)).reduce((acc, key) => {
 			acc[key] = Type[key];
@@ -6463,6 +7386,7 @@ window._main_polyfill_core = true;
 		}
 	}
 
+	exports.Animation = Animation;
 	exports.BaseError = BaseError;
 	exports.Browser = Browser;
 	exports.Cache = Cache;

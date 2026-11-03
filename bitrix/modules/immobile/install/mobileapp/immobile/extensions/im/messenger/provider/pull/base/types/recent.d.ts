@@ -12,6 +12,7 @@ export type SectionRecentType = {
 	openChannel: 'openChannel',
 	collab: 'collab',
 	tasksTask: 'tasksTask',
+	vibecodeApp: 'vibecodeApp',
 	lines: 'lines',
 	collabDefault: 'collabDefault',
 	collabChats: 'collabChats',

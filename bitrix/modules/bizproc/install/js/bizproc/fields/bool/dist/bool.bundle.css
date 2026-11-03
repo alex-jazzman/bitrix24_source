@@ -1,7 +1,63 @@
+/* The control area of the field: the toggle with its hidden value input, and the expression
+   row wrapped onto a line of its own below them. */
 .bizproc-fields-bool-row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
+}
+
+/* A full basis is what puts the row on its own line. Only for the row of this type, which is
+   where the expression row stays while there is no name block for the core to move it behind;
+   the wrapper it lands in when there is one belongs to the core and is laid out there. */
+.bizproc-fields-bool-row > .bizproc-fields-expression {
+	flex-basis: 100%;
+	min-width: 0;
+}
+
+/*
+ * The name block is a child of the wrapper, the expression row a child of the control row, and
+ * the mockup has them on different lines: the name beside the toggle, the expression row across
+ * the whole field. Dissolving the control row into the wrapper puts all three into the one flex
+ * container the core lays out under the `--name-inside` modifier (see the extension stylesheet).
+ * Only here - a group and a field with its labels hidden have no such wrapper, and their control
+ * row keeps laying itself out.
+ */
+.bizproc-fields-control-wrap.--name-inside > .bizproc-fields-bool-row {
+	display: contents;
+}
+
+/*
+ * The switcher view keeps the control line of the mockup: 34px, the height every other type gives
+ * its control, with the 15px toggle and the 17px name centred in it by the wrapper. The line is
+ * held open by the name block, because the row itself dissolves into the wrapper (see above) and
+ * a toggle is all the height it would otherwise have. Not a rule of the `--name-inside` wrapper:
+ * the checkbox view wears the same modifier and stands 28px on the mockup, not 34px.
+ */
+.bizproc-fields-control-wrap.--name-inside > .bizproc-fields-bool-row:not(.bizproc-fields-bool-row--checkbox) + .bizproc-fields-header {
+	min-height: 34px;
+}
+
+/*
+ * The checkbox view: the name block standing beside the flag is the caption of the field, and the
+ * mockup draws that caption larger and darker than a name above a control. Selected from the
+ * control root of this view - the block is its DOM sibling inside the wrapper - so the classes of
+ * the design-system component are never reached for. The 12px gap to the flag is the one the
+ * wrapper already gives the name block in this placement.
+ */
+.bizproc-fields-bool-row--checkbox + .bizproc-fields-header .bizproc-fields-label {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-2);
+}
+
+/*
+ * The toggle in the expression mode: the core fades it and puts `inert` on it, which takes it out
+ * of reach of pointer and keyboard but leaves the pointer cursor the switcher draws itself - and a
+ * control that still looks clickable invites a click nothing answers.
+ */
+.bizproc-fields-bool__switch.--inactive {
+	cursor: default;
 }
 
 /* The switcher becomes keyboard-focusable (tabindex=0) but .ui-switcher has no

@@ -131,7 +131,11 @@ this.BX.Crm = this.BX.Crm || {};
 			return main_core.Tag.render`
 			<div class="crm-form-embed__customization-info">
 				<div class="crm-form-embed__customization-info--avatar">
-					<img src="/bitrix/js/crm/images/crm-form-info-avatar.svg" alt="avatar">
+					<img
+						src="/bitrix/js/crm/images/crm-form-info-avatar.webp"
+						srcset="/bitrix/js/crm/images/crm-form-info-avatar.webp 1x, /bitrix/js/crm/images/crm-form-info-avatar@2x.webp 2x"
+						alt="avatar"
+					>
 				</div>
 				<div class="crm-form-embed__customization-info--text ${withoutFrame ? '--without-frame' : ''}">${text}</div>
 			</div>
@@ -2313,6 +2317,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		load(force = false) {
 			return super.load(force).then(() => {
+				// controls are bound to the wizard on render, so recreate it only together with a re-render
+				if (this.#wizard && !force) {
+					return;
+				}
 				this.#wizard = new Wizard('auto', this.formId, this.dataProvider.getValues('auto'), this.dataProvider.getOptions('auto'), this.dataProvider.getDict());
 				this.#wizard.subscribe('BX:Crm:Form:Embed:needToSave', event => {
 					return this.save();
@@ -2461,6 +2469,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		load(force = false) {
 			return super.load(force).then(() => {
+				// controls are bound to the wizard on render, so recreate it only together with a re-render
+				if (this.#wizard && !force) {
+					return;
+				}
 				this.#wizard = new Wizard('click', this.formId, this.dataProvider.getValues('click'), this.dataProvider.getOptions('click'), this.dataProvider.getDict());
 				this.#wizard.subscribe('BX:Crm:Form:Embed:needToSave', event => {
 					return this.save();
@@ -2766,7 +2778,7 @@ this.BX.Crm = this.BX.Crm || {};
 			} else {
 				// update with actual help-center link
 				main_core.Dom.replace(headerSection, this.renderHeaderSection('linked-link', BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_TITLE'), BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_DESCRIPTION'), this.dataProvider.data.embed.helpCenterId, this.dataProvider.data.embed.helpCenterUrl));
-				main_core.Dom.append(this.renderPreviewSection(BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_QR_TITLE'), BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_QR_DESC'), BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_OPEN_IN_NEW_TAB'), this.dataProvider.data.embed.pubLink), this.#container);
+				main_core.Dom.append(this.renderPreviewSection(BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_QR_TITLE'), BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_QR_DESC'), BX.Loc.getMessage('EMBED_SLIDER_PUBLIC_LINK_OPEN_IN_NEW_TAB'), this.dataProvider.data.embed.qrLink), this.#container);
 				main_core.Dom.append(this.renderCopySection(null,
 				// BX.Loc.getMessage('EMBED_SLIDER_COPY_LINK'),
 				BX.Loc.getMessage('EMBED_SLIDER_COPY_LINK2'), this.dataProvider.data.embed.pubLink, null, 'ui-btn-icon-follow crm-form-embed__btn-icon--link'), this.#container);
@@ -2937,5 +2949,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Embed = Embed;
 
-})(this.BX.Crm.Form = this.BX.Crm.Form || {}, BX, BX.UI.SidePanel, BX, BX.UI, BX.UI, BX, BX, BX.Landing.UI.Field, BX.UI.Feedback, BX, BX.Event);
+})(this.BX.Crm.Form = this.BX.Crm.Form || {}, BX, BX.UI.SidePanel, BX, BX.UI, BX.UI, BX, BX.UI.Notification, BX.Landing.UI.Field, BX.UI.Feedback, BX, BX.Event);
 //# sourceMappingURL=embed.bundle.js.map

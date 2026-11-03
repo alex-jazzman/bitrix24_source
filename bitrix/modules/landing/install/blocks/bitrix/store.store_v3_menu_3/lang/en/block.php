@@ -1,0 +1,2 @@
+<?php
+$MESS['LNDBLCK_STOREMENUV3_3_PHONE_LABEL'] = 'Call';

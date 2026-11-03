@@ -1,5 +1,5 @@
 import { Content } from './content';
-import { Tag } from 'main.core';
+import { Loc, Tag } from 'main.core';
 import { AirButtonStyle, Button } from 'ui.buttons';
 import { EventEmitter } from 'main.core.events';
 
@@ -42,6 +42,7 @@ export class HeaderSubsectionContent extends Content
 				},
 			});
 			button.setCollapsed(true);
+			button.render().setAttribute('aria-label', Loc.getMessage('INTRANET_AVATAR_WIDGET_BACK'));
 
 			return button;
 		});

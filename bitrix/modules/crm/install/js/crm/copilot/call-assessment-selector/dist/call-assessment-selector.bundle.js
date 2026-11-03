@@ -198,7 +198,10 @@ this.BX.Crm = this.BX.Crm || {};
 			const {
 				target
 			} = clickEvent;
-			if (target?.closest('.call-quality__script-selector') === null && target?.closest('.ui-selector-dialog') === null && this.#displayStrategy.getTargetNode() !== target) {
+			const selectorTarget = this.#displayStrategy.getTargetNode();
+			const isSelectorClick = target instanceof Node && selectorTarget?.contains(target);
+			const isDialogClick = target instanceof Element && target.closest('.ui-selector-dialog') !== null;
+			if (!isSelectorClick && !isDialogClick) {
 				this.close();
 			}
 		}

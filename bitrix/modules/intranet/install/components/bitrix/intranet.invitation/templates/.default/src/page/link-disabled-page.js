@@ -26,13 +26,25 @@ export class LinkDisabledPage extends Page
 		}
 
 		this.#container = Tag.render`
-			<div class="intranet-invitation-block" data-role="self-block"></div>
+			<div
+				class="intranet-invitation-block"
+				data-role="self-block"
+				data-testid="invitation-link-disabled-page-root"
+			></div>
 		`;
 
 		const statusBlock = Tag.render`
-			<div class="intranet-invitation-status --invite-link-disabled">
+			<div
+				class="intranet-invitation-status --invite-link-disabled"
+				data-testid="invitation-link-disabled-page-status"
+			>
 				<div class="intranet-invitation-status__content">
-					<span class="intranet-invitation-status__title ui-headline --md">${Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</span>
+					<h2
+						class="intranet-invitation-status__title ui-headline --md"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-link-disabled-page-title"
+					>${Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</h2>
 					<p class="intranet-invitation-status__description ui-text --lg">
 						${Loc.getMessage(this.#isAdmin ? 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION' : 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION_NOT_ADMIN')}
 					</p>
@@ -64,6 +76,7 @@ export class LinkDisabledPage extends Page
 			style: AirButtonStyle.FILLED,
 			props: {
 				'data-test-id': 'invite-link-page-enable-button',
+				'data-testid': 'invitation-link-disabled-page-enable-button',
 			},
 			onclick: () => {
 				if (enableButton.isWaiting())

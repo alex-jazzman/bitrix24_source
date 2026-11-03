@@ -12,6 +12,8 @@ export const useInterfaceStore = defineStore('interface', {
 		isOldPortal: false,
 		action: '',
 		isAccessRestricted: false,
+		accessRightsExpanded: false,
+		additionalSettingsExpanded: false,
 		loading: false,
 		scrollToStartupTool: false,
 		validation: {
@@ -51,6 +53,14 @@ export const useInterfaceStore = defineStore('interface', {
 				isAccessRestricted: params.isAccessRestricted,
 				scrollToStartupTool: params.scrollToStartupTool === true,
 			});
+		},
+		markAccessRightsExpanded(): void
+		{
+			this.accessRightsExpanded = true;
+		},
+		markAdditionalSettingsExpanded(): void
+		{
+			this.additionalSettingsExpanded = true;
 		},
 		setValidation(field: $Keys<ProjectModel>, props: { [key: string]: boolean }): void
 		{

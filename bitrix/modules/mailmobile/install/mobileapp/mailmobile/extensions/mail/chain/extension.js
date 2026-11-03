@@ -2,7 +2,12 @@
  * @module mail/chain
  */
 jn.define('mail/chain', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color, Corner, Indent, Typography } = require('tokens');
+	const { Loc } = require('loc');
+	const { Text5 } = require('ui-system/typography/text');
+	const { Icon: UiIcon, IconView } = require('ui-system/blocks/icon');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
+	const { Button, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { Haptics } = require('haptics');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { Moment } = require('utils/date');
@@ -11,15 +16,207 @@ jn.define('mail/chain', (require, exports, module) => {
 	const { clone, isEqual } = require('utils/object');
 	const { ActionPanel } = require('mail/chain/action-panel');
 	const { Avatar } = require('mail/message/elements/avatar');
-	const { Icon, MoreButton } = require('mail/message/elements/icon');
 	const { ContactList } = require('mail/message/elements/contact/list');
 	const { getChainPromise, getMessagePromise, deleteMessage, getMessageNeighbors } = require('mail/message/tools/connector');
-	const { ActionMenu } = require('mail/simple-list/items/message-redux/src/action-menu');
+	const { getThemeRequestParams } = require('mail/message/theme-request');
+	const {
+		ActionMenu,
+		getFavoriteActionPayload,
+		isFavoriteActionVisible,
+	} = require('mail/simple-list/items/message-redux/src/action-menu');
 	const { MessageBody } = require('mail/message/elements/messagebody');
 	const { MailOpener } = require('mail/opener');
 	const { NotifyManager } = require('notify-manager');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { AjaxMethod } = require('mail/const');
+	const connection = require('device/connection');
+	const { selectById } = require('mail/statemanager/redux/slices/messages/selector');
+	const { setFavoriteState } = require('mail/statemanager/redux/slices/messages/thunk');
+	const store = require('statemanager/redux/store');
+	const { dispatch } = store;
+	const { showErrorToast } = require('toast');
+
+	function getChainFavoritePayload(chain, cardId)
+	{
+		const message = chain[cardId];
+
+		return message ? getFavoriteActionPayload(message) : null;
+	}
+
+	/**
+	 * The quote of a reply, of a reply to all and of a forward is built from the body of the card, and the
+	 * chain carries only two bodies: the opened letter and the last incoming one. Every other card gets its
+	 * body later, and until it arrives - or after its load has failed - there is nothing to quote.
+	 */
+	function canQuoteMessage(message)
+	{
+		return Boolean(message)
+			&& message.isBodyLoaded === true
+			&& message.isLoadingBody !== true
+			&& message.bodyLoadFailed !== true
+		;
+	}
+
+	/**
+	 * Opens the sending form for the card when there is a body to quote, and says why when there is none. A
+	 * form opened without it would show the user a reply to a letter they cannot see. The card itself already
+	 * carries the reason: the loader while the body is on its way, the error screen with the retry once the
+	 * load has failed. The openers are taken as arguments so that the rule can be asked about without a screen.
+	 */
+	function openSendFormWhenQuotable({
+		message,
+		getParams,
+		openSend = (params) => MailOpener.openSend(params),
+		showError = showErrorToast,
+	})
+	{
+		if (!canQuoteMessage(message))
+		{
+			showError({ message: Loc.getMessage('MESSAGE_VIEW_BODY_LOAD_ERROR_TITLE') });
+
+			return false;
+		}
+
+		openSend(getParams());
+
+		return true;
+	}
+
+	function getChainFavoriteActionTitle(message)
+	{
+		return BX.message(
+			message?.isFavorite
+				? 'MAILMOBILE_CHAIN_REMOVE_FROM_FAVORITES'
+				: 'MAILMOBILE_CHAIN_ADD_TO_FAVORITES',
+		);
+	}
+
+	function updateChainFavoriteState(chain, cardId, isFavorite)
+	{
+		const updatedChain = Array.isArray(chain) ? [...chain] : { ...chain };
+		if (updatedChain[cardId])
+		{
+			updatedChain[cardId] = {
+				...updatedChain[cardId],
+				isFavorite: Boolean(isFavorite),
+			};
+		}
+
+		return updatedChain;
+	}
+
+	function getChainFavoriteResult(message, action, latestRequestId = action?.meta?.requestId)
+	{
+		if (latestRequestId !== action?.meta?.requestId)
+		{
+			return null;
+		}
+
+		const { data, errors } = action?.payload ?? {};
+		if (errors?.length > 0)
+		{
+			return { isFavorite: Boolean(message.isFavorite), error: errors[0] };
+		}
+		if (action?.meta?.requestStatus === 'rejected')
+		{
+			return { isFavorite: Boolean(message.isFavorite), error: action.error };
+		}
+
+		return { isFavorite: Boolean(data?.isFavorite), error: null };
+	}
+
+	function applyChainFavoriteTransition(chain, requests, cardId, change)
+	{
+		const message = chain[cardId];
+		if (!message)
+		{
+			return { applied: false, chain, requests };
+		}
+
+		const nextRequests = { ...requests };
+		if (change.phase === 'optimistic')
+		{
+			nextRequests[message.id] = {
+				requestId: change.requestId,
+				previous: Boolean(message.isFavorite),
+			};
+
+			return {
+				applied: true,
+				chain: updateChainFavoriteState(chain, cardId, change.isFavorite),
+				requests: nextRequests,
+			};
+		}
+
+		if (nextRequests[message.id]?.requestId !== change.requestId)
+		{
+			return { applied: false, chain, requests };
+		}
+
+		delete nextRequests[message.id];
+
+		return {
+			applied: true,
+			chain: updateChainFavoriteState(chain, cardId, change.isFavorite),
+			requests: nextRequests,
+		};
+	}
+
+	async function executeChainFavoriteAction({
+		cardId,
+		readOnly,
+		getChain,
+		onStateChange,
+		getLatestRequestId,
+		getReduxMessage = (id) => selectById(store.getState(), id),
+		dispatchAction = dispatch,
+		createFavoriteAction = setFavoriteState,
+		showError = showErrorToast,
+		isOnline = connection.isOnline(),
+	})
+	{
+		const chainMessage = getChain()[cardId];
+		const reduxMessage = getReduxMessage(chainMessage?.id);
+		const message = reduxMessage
+			? { ...chainMessage, isFavorite: reduxMessage.isFavorite }
+			: chainMessage;
+		if (!isFavoriteActionVisible({ message, isOnline, readOnly }))
+		{
+			return null;
+		}
+
+		const payload = getFavoriteActionPayload(message);
+		const request = dispatchAction(createFavoriteAction(payload));
+		onStateChange(cardId, {
+			isFavorite: payload.isFavorite,
+			phase: 'optimistic',
+			requestId: request.requestId,
+		});
+
+		const action = await request;
+		if (getLatestRequestId(message.id) !== action.meta.requestId)
+		{
+			return action;
+		}
+
+		const currentReduxMessage = getReduxMessage(message.id);
+		const result = reduxMessage
+			? { isFavorite: currentReduxMessage?.isFavorite ?? message.isFavorite, error: null }
+			: getChainFavoriteResult(message, action, action.meta.requestId);
+
+		if (result.error)
+		{
+			showError(result.error);
+		}
+
+		onStateChange(cardId, {
+			isFavorite: result.isFavorite,
+			phase: 'settled',
+			requestId: action.meta.requestId,
+		});
+
+		return action;
+	}
 
 	const titles = {
 		fields: {
@@ -29,13 +226,13 @@ jn.define('mail/chain', (require, exports, module) => {
 		},
 	};
 
-	const paddingRightHeader = 18;
-	const paddingLeftHeader = 22;
+	const paddingRightHeader = Indent.XL3.toNumber();
+	const paddingLeftHeader = Indent.XL4.toNumber();
 	const avatarSize = 34;
-	const contactsBlockLeftPadding = 8;
-	const directorIconPaddingRight = 8;
+	const contactsBlockLeftPadding = Indent.M.toNumber();
+	const directorIconPaddingRight = Indent.M.toNumber();
 	const maxWidthDate = 100;
-	const directionItemWidth = 24;
+	const directionItemWidth = Indent.XL4.toNumber();
 
 	const allMarginsWidth = paddingRightHeader
 		+ paddingLeftHeader
@@ -53,14 +250,19 @@ jn.define('mail/chain', (require, exports, module) => {
 
 	const maxWidthTextFiled = deviceWidth - allMarginsWidth;
 
-	const icons = {
-		incoming: {
-			content: '<svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5895 11.0083L5.55807 11.0083C2.6143 11.0083 0.219447 8.61342 0.219447 5.66966C0.219447 2.72589 2.6143 0.331034 5.55807 0.331035L8.16949 0.331035L8.17809 2.46648L5.82683 2.46648C4.06115 2.46648 2.62366 3.90397 2.62366 5.66966C2.62366 7.43677 4.06115 8.87283 5.82683 8.87283L10.5852 8.87283L10.5752 4.35972L16.0012 9.78147L10.5995 15.2018L10.5895 11.0083Z" fill="#BDC1C6"/></svg>',
-		},
-		outgoing: {
-			content: '<svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.41049 4.99172H11.4419C14.3857 4.99172 16.7806 7.38658 16.7806 10.3303C16.7806 13.2741 14.3857 15.669 11.4419 15.669H8.83051L8.82192 13.5335H11.1732C12.9389 13.5335 14.3763 12.096 14.3763 10.3303C14.3763 8.56322 12.9389 7.12717 11.1732 7.12717H6.41479L6.42482 11.6403L0.998779 6.21853L6.40046 0.798218L6.41049 4.99172Z" fill="#BDC1C6"/></svg>',
-		},
-	};
+	const MESSAGE_DIRECTION_OUTGOING = 2;
+
+	/**
+	 * The arrow that tells where a message went: out of the mailbox or into it.
+	 *
+	 * @param {number} [direction]
+	 * @return {Icon}
+	 */
+	const messageDirectionIcon = (direction) => (
+		direction === MESSAGE_DIRECTION_OUTGOING
+			? UiIcon.SOLID_LOWER_LEFT_ARROW
+			: UiIcon.SOLID_LOWER_RIGHT_ARROW
+	);
 
 	function readMessage(message)
 	{
@@ -84,6 +286,26 @@ jn.define('mail/chain', (require, exports, module) => {
 		}
 	}
 
+	function BodyLoadError(props)
+	{
+		return StatusBlock({
+			testId: 'message-card-in-chain-body-load-error',
+			title: Loc.getMessage('MESSAGE_VIEW_BODY_LOAD_ERROR_TITLE'),
+			description: Loc.getMessage('MESSAGE_VIEW_BODY_LOAD_ERROR_DESCRIPTION'),
+			style: {
+				paddingBottom: Indent.XL3.toNumber(),
+			},
+			buttons: [
+				Button({
+					testId: 'message-card-in-chain-body-load-error-retry-button',
+					text: Loc.getMessage('MESSAGE_VIEW_BODY_LOAD_ERROR_RETRY'),
+					design: ButtonDesign.OUTLINE_ACCENT_2,
+					onClick: props.retryAction,
+				}),
+			],
+		});
+	}
+
 	function MessageCard(props)
 	{
 		const message = props.message;
@@ -95,32 +317,46 @@ jn.define('mail/chain', (require, exports, module) => {
 
 		const format = message.format;
 
-		let loader = null;
+		let bodyPlaceholder = null;
 		let subject = null;
 		let footer = null;
+		let messageBody = null;
+		const isBodyReady = message.isBodyLoaded === true
+			&& message.attachments !== undefined
+			&& message.isLoadingBody !== true
+		;
 
 		if (format === 'full')
 		{
-			footer = View(
-				{
-					style: {
-						height: 42,
-					},
-				},
-				MoreButton({
-					testId: 'message-card-in-chain-more-button-in-footer',
-					style: {
-						bottom: 5,
-						right: 18,
-						position: 'absolute',
-					},
-					action: props.showMenuAction.bind(null, props.id, message.id, message.subject, 'full'),
-				}),
-			);
-
-			if (message.body === undefined || message.attachments === undefined)
+			if (!props.readOnly)
 			{
-				loader = Loader({
+				footer = View(
+					{
+						style: {
+							height: 42,
+						},
+					},
+					MoreButton({
+						testId: 'message-card-in-chain-more-button-in-footer',
+						style: {
+							bottom: Indent.S.toNumber(),
+							right: Indent.XL3.toNumber(),
+							position: 'absolute',
+						},
+						action: props.showMenuAction.bind(null, props.id, message.id, message.subject, 'full'),
+					}),
+				);
+			}
+
+			if (message.bodyLoadFailed === true)
+			{
+				bodyPlaceholder = BodyLoadError({
+					retryAction: props.retryLoadAction.bind(null, props.id),
+				});
+			}
+			else if (!isBodyReady)
+			{
+				bodyPlaceholder = Loader({
 					style: {
 						width: 45,
 						height: 45,
@@ -134,13 +370,25 @@ jn.define('mail/chain', (require, exports, module) => {
 			subject = message.subject;
 		}
 
+		if (isBodyReady)
+		{
+			messageBody = new MessageBody({
+				subject,
+				files: message.attachments,
+				isHiddenField: false,
+				format: message.format,
+				content: message.body,
+				isBodyThemed: message.isBodyThemed === true,
+			});
+		}
+
 		return View(
 			{
 				style: {
-					backgroundColor: AppTheme.colors.bgContentPrimary,
-					marginBottom: 4,
-					marginTop: 4,
-					borderRadius: 12,
+					backgroundColor: Color.bgContentPrimary.toHex(),
+					marginBottom: Indent.XS.toNumber(),
+					marginTop: Indent.XS.toNumber(),
+					borderRadius: Corner.L.toNumber(),
 				},
 			},
 			Header({
@@ -154,53 +402,46 @@ jn.define('mail/chain', (require, exports, module) => {
 				bcc: message.bcc,
 				cc: message.cc,
 				id: message.id,
+				isFavorite: message.isFavorite,
+				isFavoriteAllowed: message.isFavoriteAllowed && !props.readOnly,
+				onFavoriteClick: props.onFavoriteClick,
 			}),
 			subject,
-			new MessageBody({
-				subject,
-				files: message.attachments,
-				isHiddenField: false,
-				format: message.format,
-				content: message.body,
-			}),
-			loader,
+			messageBody,
+			bodyPlaceholder,
 			footer,
 		);
 	}
 
+	function MoreButton(props)
+	{
+		return IconView({
+			icon: UiIcon.MORE,
+			color: Color.base5,
+			size: 30,
+			style: props.style,
+			testId: props.testId,
+			onClick: props.action,
+		});
+	}
+
 	function DirectionItem(props)
 	{
-		const styleImage = {
-			width: directionItemWidth,
-			height: 24,
-		};
-
-		const style = {
-			paddingTop: 17,
-			paddingRight: directorIconPaddingRight,
-		};
-
-		if (props.direction === 2)
-		{
-			return View(
-				{
-					style,
-				},
-				Image({
-					style: styleImage,
-					svg: icons.outgoing,
-				}),
-			);
-		}
+		const isOutgoing = props.direction === MESSAGE_DIRECTION_OUTGOING;
 
 		return View(
 			{
-				style,
-				testId: 'message-card-direction-incoming',
+				style: {
+					paddingTop: Indent.XL3.toNumber(),
+					paddingRight: directorIconPaddingRight,
+					width: directionItemWidth + directorIconPaddingRight,
+				},
+				testId: isOutgoing ? 'message-card-direction-outgoing' : 'message-card-direction-incoming',
 			},
-			Image({
-				style: styleImage,
-				svg: icons.incoming,
+			IconView({
+				icon: messageDirectionIcon(props.direction),
+				color: Color.base4,
+				size: 24,
 			}),
 		);
 	}
@@ -262,14 +503,14 @@ jn.define('mail/chain', (require, exports, module) => {
 		}
 		else
 		{
-			header.push(Text({
+			header.push(Text5({
+				testId: 'mail-chain-card-subject',
+				accent: true,
+				color: Color.base2,
 				style: {
 					textAlignVertical: 'top',
-					paddingRight: 18,
-					marginTop: 2,
-					fontWeight: '500',
-					fontSize: 14,
-					color: AppTheme.colors.base2,
+					paddingRight: Indent.XL3.toNumber(),
+					marginTop: Indent.XS2.toNumber(),
 				},
 				text: subject,
 			}));
@@ -296,13 +537,34 @@ jn.define('mail/chain', (require, exports, module) => {
 				useTimeAgo: true,
 				showTime: true,
 				style: {
+					...Typography.text5.getStyle(),
 					maxWidth: maxWidthDate,
 					lineHeightMultiple: 1.3,
 					textAlign: 'center',
-					fontWeight: '400',
-					fontSize: 13,
-					color: AppTheme.colors.base4,
+					color: Color.base4.toHex(),
 				},
+			});
+		}
+
+		function renderFavoriteIcon()
+		{
+			if (props.isFavoriteAllowed !== true)
+			{
+				return null;
+			}
+
+			const isFavorite = props.isFavorite === true;
+
+			return IconView({
+				testId: 'mailmobile-chain-message-favorite',
+				icon: UiIcon.FAVORITE,
+				solid: isFavorite,
+				size: 20,
+				color: isFavorite ? Color.accentMainWarning : Color.base4,
+				style: {
+					marginRight: Indent.S.toNumber(),
+				},
+				onClick: props.onFavoriteClick,
 			});
 		}
 
@@ -312,7 +574,7 @@ jn.define('mail/chain', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
-						paddingTop: 12,
+						paddingTop: Indent.XL.toNumber(),
 						paddingLeft: contactsBlockLeftPadding,
 					},
 				},
@@ -333,7 +595,7 @@ jn.define('mail/chain', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						paddingTop: 12,
+						paddingTop: Indent.XL.toNumber(),
 					},
 				},
 				Avatar({
@@ -347,12 +609,12 @@ jn.define('mail/chain', (require, exports, module) => {
 		return View(
 			{
 				style: {
-					paddingBottom: 12,
+					paddingBottom: Indent.XL.toNumber(),
 					flexDirection: 'row',
 					paddingLeft: paddingLeftHeader,
 					paddingRight: paddingRightHeader,
 					width: '100%',
-					backgroundColor: AppTheme.colors.bgContentPrimary,
+					backgroundColor: Color.bgContentPrimary.toHex(),
 				},
 			},
 			View(
@@ -371,9 +633,12 @@ jn.define('mail/chain', (require, exports, module) => {
 			View(
 				{
 					style: {
-						top: 11,
+						top: Indent.XL.toNumber(),
+						flexDirection: 'row',
+						alignItems: 'center',
 					},
 				},
+				renderFavoriteIcon(),
 				renderDate(date),
 			),
 		);
@@ -390,6 +655,9 @@ jn.define('mail/chain', (require, exports, module) => {
 				isCrmMessage,
 				startEmailSender = null,
 				source = 'mail',
+				readOnly = false,
+				act = '',
+				mailUfMessageToken = '',
 			} = props;
 
 			super();
@@ -398,17 +666,23 @@ jn.define('mail/chain', (require, exports, module) => {
 				isCrmMessage,
 				startEmailSender,
 				source,
+				readOnly,
+				act,
+				mailUfMessageToken,
 			};
 
 			this.threadId = threadId;
 			this.layout = widget;
 
-			this.actions = {
-				replyButton: () => this.replyMessageAction(),
-				replyAllButton: () => this.replyAllMessageAction(),
-				forwardButton: () => this.forwardAction(),
-				moreButton: isCrmMessage ? this.showContextMenu.bind(this) : this.openMoreMenuAction.bind(this),
-			};
+			this.actions = readOnly
+				? {}
+				: {
+					replyButton: () => this.replyMessageAction(),
+					replyAllButton: () => this.replyAllMessageAction(),
+					forwardButton: () => this.forwardAction(),
+					moreButton: isCrmMessage ? this.showContextMenu.bind(this) : this.openMoreMenuAction.bind(this),
+				}
+			;
 
 			this.setChain(threadId, chain.list, chain.properties, false);
 		}
@@ -460,77 +734,58 @@ jn.define('mail/chain', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * Flipping walks the neighbouring threads of a crm entity, so only a letter of one has
+		 * anywhere to flip to: a letter of a mailbox or one opened from a task card has not.
+		 */
+		canFlipChain()
+		{
+			return Boolean(this.constant.isCrmMessage) && !this.constant.readOnly;
+		}
+
 		getRightButtons(disabledButtons = false)
 		{
+			if (!this.canFlipChain())
+			{
+				return [];
+			}
+
 			const {
 				nextId = false,
 				prevId = false,
 			} = this.getNeighbors();
 
-			const buttons = [];
+			// both buttons hold their place in the header: one of them disappearing would move the
+			// other under the finger already reaching for it, so a flip with nowhere to go stays
+			// in place, dimmed and inert
+			const flipButton = (id, icon, targetId) => ({
+				id,
+				type: icon.getIconName(),
+				color: (targetId ? Color.base4 : Color.base6).toHex(),
+				testID: `right-button-${id}`,
+				callback: targetId && !disabledButtons
+					? this.flippingChain.bind(this, targetId)
+					: undefined,
+			});
 
-			if (nextId)
-			{
-				buttons.push(
-					{
-						id: 'flipping-up',
-						svg: {
-							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6676 7.15039L13.1405 11.6774L12 12.8003L10.8811 11.6774L6.35404 7.15039L4.75657 8.74786L12.0107 16.002L19.2649 8.74786L17.6676 7.15039Z" fill="${AppTheme.colors.base4}"/></svg>`,
-						},
-						testID: 'right-button-flipping-up',
-						callback: disabledButtons ? undefined : this.flippingChain.bind(this, nextId, this.constant.isCrmMessage),
-					},
-				);
-			}
-			else
-			{
-				buttons.push(
-					{
-						id: 'flipping-up',
-						svg: {
-							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6676 7.15039L13.1405 11.6774L12 12.8003L10.8811 11.6774L6.35404 7.15039L4.75657 8.74786L12.0107 16.002L19.2649 8.74786L17.6676 7.15039Z" fill="${AppTheme.colors.base6}"/></svg>`,
-						},
-						testID: 'right-button-flipping-up',
-					},
-				);
-			}
-
-			if (prevId)
-			{
-				buttons.push(
-					{
-						id: 'flipping-down',
-						svg: {
-							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.34319 15.9915L10.8702 11.4644L11.9893 10.3407L13.1296 11.4644L17.6567 15.9915L19.2542 14.394L12 7.13983L4.74585 14.394L6.34319 15.9915Z" fill="${AppTheme.colors.base4}"/></svg>`,
-						},
-						testID: 'right-button-flipping-down',
-						callback: disabledButtons ? undefined : this.flippingChain.bind(this, prevId, this.constant.isCrmMessage),
-					},
-				);
-			}
-			else
-			{
-				buttons.push(
-					{
-						id: 'flipping-down',
-						svg: {
-							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.34319 15.9915L10.8702 11.4644L11.9893 10.3407L13.1296 11.4644L17.6567 15.9915L19.2542 14.394L12 7.13983L4.74585 14.394L6.34319 15.9915Z" fill="${AppTheme.colors.base6}"/></svg>`,
-						},
-						testID: 'right-button-flipping-down',
-					},
-				);
-			}
-
-			return buttons;
+			return [
+				flipButton('flipping-up', UiIcon.CHEVRON_DOWN, nextId),
+				flipButton('flipping-down', UiIcon.CHEVRON_UP, prevId),
+			];
 		}
 
-		showContextMenu(
+		async showContextMenu(
 			id = this.lastIncomingCardId,
 			messageId = this.lastIncomingId,
 			title = this.lastIncomingTitle,
 			format = 'little',
 		)
 		{
+			if (this.constant.readOnly)
+			{
+				return;
+			}
+
 			if (title === undefined)
 			{
 				title = '';
@@ -541,9 +796,7 @@ jn.define('mail/chain', (require, exports, module) => {
 					id: 'reply',
 					title: BX.message('MESSAGE_VIEW_CONTEXT_MENU_REPLY'),
 					subTitle: '',
-					data: {
-						svgIcon: Icon('reply'),
-					},
+					icon: UiIcon.REPLY_2,
 					onClickCallback: () => {
 						menu.close(() => {
 							this.replyMessageAction(id);
@@ -554,9 +807,7 @@ jn.define('mail/chain', (require, exports, module) => {
 					id: 'reply-all',
 					title: BX.message('MESSAGE_VIEW_CONTEXT_MENU_REPLY_ALL'),
 					subTitle: '',
-					data: {
-						svgIcon: Icon('replyAll'),
-					},
+					icon: UiIcon.REPLY_TO_ALL,
 					onClickCallback: () => {
 						menu.close(() => {
 							this.replyAllMessageAction(id);
@@ -567,9 +818,7 @@ jn.define('mail/chain', (require, exports, module) => {
 					id: 'forward',
 					title: BX.message('MESSAGE_VIEW_CONTEXT_MENU_FORWARD'),
 					subTitle: '',
-					data: {
-						svgIcon: Icon('forward'),
-					},
+					icon: UiIcon.FORWARD,
 					onClickCallback: () => {
 						menu.close(() => {
 							this.forwardAction(id);
@@ -579,17 +828,33 @@ jn.define('mail/chain', (require, exports, module) => {
 			];
 
 			let moreActions = [];
+			const selectedMessage = this.state.chain[id];
+			if (isFavoriteActionVisible({
+				message: selectedMessage,
+				isOnline: connection.isOnline(),
+				readOnly: this.constant.readOnly,
+			}))
+			{
+				moreActions.push({
+					id: 'favorite',
+					title: getChainFavoriteActionTitle(selectedMessage),
+					subTitle: '',
+					onClickCallback: () => {
+						menu.close(() => {
+							void this.changeFavoriteState(id);
+						});
+					},
+				});
+			}
 
 			if (this.constant.isCrmMessage)
 			{
-				moreActions = [
+				moreActions.push(
 					{
 						id: 'exclude-from-crm',
 						title: BX.message('MESSAGE_VIEW_CONTEXT_MENU_EXCLUDE_FROM_CRM'),
 						subTitle: '',
-						data: {
-							svgIcon: Icon('exclude'),
-						},
+						icon: UiIcon.DELETE_PERSON,
 						onClickCallback: () => {
 							menu.close(() => {
 								this.deleteMessage(id, messageId, true);
@@ -600,9 +865,7 @@ jn.define('mail/chain', (require, exports, module) => {
 						id: 'mark-as-spam',
 						title: BX.message('MESSAGE_VIEW_CONTEXT_MENU_MARK_AS_SPAM'),
 						subTitle: '',
-						data: {
-							svgIcon: Icon('spam'),
-						},
+						icon: UiIcon.BAN,
 						onClickCallback: () => {
 							menu.close(() => {
 								this.deleteMessage(id, messageId, false, true);
@@ -613,21 +876,21 @@ jn.define('mail/chain', (require, exports, module) => {
 						id: 'delete-message',
 						title: BX.message('MESSAGE_VIEW_CONTEXT_MENU_DELETE'),
 						subTitle: '',
-						data: {
-							svgIcon: Icon('remove'),
-						},
+						icon: UiIcon.TRASHCAN,
 						onClickCallback: () => {
 							menu.close(() => {
 								this.deleteMessage(id, messageId);
 							});
 						},
 					},
-				];
+				);
 			}
 
 			let actions;
 
-			if (format === 'full')
+			// the three actions above quote the body of the card, so a card whose body has not arrived - or
+			// whose load has failed - offers only the actions that do not need it
+			if (format === 'full' && canQuoteMessage(this.state.chain?.[id]))
 			{
 				actions = [
 					...baseActions,
@@ -650,7 +913,35 @@ jn.define('mail/chain', (require, exports, module) => {
 				},
 			});
 
-			menu.show();
+			await menu.show();
+		}
+
+		async changeFavoriteState(cardId)
+		{
+			return executeChainFavoriteAction({
+				cardId,
+				readOnly: this.constant.readOnly,
+				getChain: () => this.state.chain,
+				onStateChange: this.onFavoriteStateChange.bind(this),
+				getLatestRequestId: (messageId) => this.favoriteRequests?.[messageId]?.requestId,
+			});
+		}
+
+		onFavoriteStateChange(cardId, change)
+		{
+			const transition = applyChainFavoriteTransition(
+				this.state.chain,
+				this.favoriteRequests ?? {},
+				cardId,
+				change,
+			);
+			if (!transition.applied)
+			{
+				return;
+			}
+
+			this.favoriteRequests = transition.requests;
+			this.setState({ chain: transition.chain });
 		}
 
 		getOwnerEntity(cardId)
@@ -740,6 +1031,7 @@ jn.define('mail/chain', (require, exports, module) => {
 				owner: header.owner,
 				contacts,
 				reply_message_body: this.getBodyHtml(cardId),
+				isBodyThemed: header.isBodyThemed === true,
 				element: 'reply',
 				source: this.constant.source,
 			};
@@ -782,6 +1074,7 @@ jn.define('mail/chain', (require, exports, module) => {
 				contacts: this.clearFromEmployeeEmails([...message.to, ...message.from], message.employees),
 				cc: this.clearFromEmployeeEmails([...message.cc, ...message.bcc], message.employees),
 				reply_message_body: this.getBodyHtml(cardId),
+				isBodyThemed: message.isBodyThemed === true,
 				source: this.constant.source,
 				element: 'reply_all',
 			};
@@ -802,6 +1095,7 @@ jn.define('mail/chain', (require, exports, module) => {
 				subject: `Fwd: ${this.getSubject(cardId)}`,
 				owner: message.owner,
 				reply_message_body: this.getBodyHtml(cardId),
+				isBodyThemed: message.isBodyThemed === true,
 				isForward: 1,
 				source: this.constant.source,
 				element: 'forward',
@@ -810,35 +1104,45 @@ jn.define('mail/chain', (require, exports, module) => {
 
 		getBodyHtml(cardId)
 		{
-			const chain = this.state.chain;
+			const body = this.state.chain[cardId].body;
 
-			if (chain[cardId].body === undefined)
-			{
-				chain[cardId].body = '';
-			}
+			return body === undefined ? '' : body;
+		}
 
-			return chain[cardId].body;
+		openSendForm(cardId, getParams)
+		{
+			return openSendFormWhenQuotable({
+				message: this.state.chain?.[cardId],
+				getParams,
+			});
 		}
 
 		replyMessageAction(cardId = this.lastIncomingCardId)
 		{
-			MailOpener.openSend(this.getReplyParams(cardId));
+			return this.openSendForm(cardId, () => this.getReplyParams(cardId));
 		}
 
 		replyAllMessageAction(cardId = this.lastIncomingCardId)
 		{
-			MailOpener.openSend(this.getReplyAllParams(cardId));
+			return this.openSendForm(cardId, () => this.getReplyAllParams(cardId));
 		}
 
 		forwardAction(cardId = this.lastIncomingCardId)
 		{
-			MailOpener.openSend(this.getForwardParams(cardId));
+			return this.openSendForm(cardId, () => this.getForwardParams(cardId));
 		}
 
 		openMoreMenuAction(target)
 		{
 			Haptics.impactLight();
-			void new ActionMenu(this.threadId).show({ target, isDetailCard: true });
+			const cardId = this.state.chain.findIndex((message) => Number(message.id) === Number(this.threadId));
+			void new ActionMenu(this.threadId).show({
+				target,
+				isDetailCard: true,
+				onFavoriteStateChange: cardId < 0
+					? () => {}
+					: (change) => this.onFavoriteStateChange(cardId, change),
+			});
 		}
 
 		hideChainItem(cardId)
@@ -903,28 +1207,71 @@ jn.define('mail/chain', (require, exports, module) => {
 			});
 		}
 
-		loadMessage(id)
+		loadMessage(id, chain = this.state.chain)
 		{
-			const chain = this.state.chain;
+			const message = chain[id];
+			const messageId = message.id;
 
 			if (
-				chain[id].body === undefined ||
-				(Array.isArray(chain[id].attachments) && chain[id].attachments.length === 0)
+				message.isLoadingBody === true
+				|| message.isBodyLoaded === true
 			)
 			{
-				chain[id].attachments = '';
-				chain[id].body = '';
-
-				getMessagePromise(chain[id].id, true, true, this.constant.isCrmMessage).then((response) => {
-					const chain = this.state.chain;
-					const message = response.data;
-					chain[id].body = message.body;
-					chain[id].attachments = message.attachments;
-					this.setState({
-						chain,
-					});
-				});
+				return;
 			}
+
+			message.isLoadingBody = true;
+			message.bodyLoadFailed = false;
+
+			getMessagePromise(
+				messageId,
+				true,
+				true,
+				this.constant.isCrmMessage,
+				this.constant.act,
+				this.constant.mailUfMessageToken,
+				getThemeRequestParams(),
+			).then((response) => {
+				const updatedChain = clone(this.state.chain);
+				const loadedMessage = response.data;
+				const targetIndex = updatedChain.findIndex((item) => String(item.id) === String(messageId));
+				if (targetIndex === -1)
+				{
+					return;
+				}
+
+				updatedChain[targetIndex].body = loadedMessage.body;
+				updatedChain[targetIndex].attachments = loadedMessage.attachments;
+				updatedChain[targetIndex].isBodyThemed = loadedMessage.isBodyThemed === true;
+				updatedChain[targetIndex].isBodyLoaded = true;
+				updatedChain[targetIndex].isLoadingBody = false;
+				this.setState({
+					chain: updatedChain,
+				});
+			}).catch(() => {
+				const updatedChain = clone(this.state.chain);
+				const targetIndex = updatedChain.findIndex((item) => String(item.id) === String(messageId));
+				if (targetIndex === -1)
+				{
+					return;
+				}
+
+				updatedChain[targetIndex].isLoadingBody = false;
+				updatedChain[targetIndex].bodyLoadFailed = true;
+				this.setState({
+					chain: updatedChain,
+				});
+			});
+		}
+
+		retryLoadMessage(id)
+		{
+			const chain = clone(this.state.chain);
+
+			this.loadMessage(id, chain);
+			this.setState({
+				chain,
+			});
 		}
 
 		cardTouch(id)
@@ -945,7 +1292,7 @@ jn.define('mail/chain', (require, exports, module) => {
 
 			if (cardHasChanged)
 			{
-				this.loadMessage(id);
+				this.loadMessage(id, chain);
 				this.setState({
 					chain,
 				});
@@ -954,7 +1301,13 @@ jn.define('mail/chain', (require, exports, module) => {
 
 		uploadChain(threadId)
 		{
-			return getChainPromise(threadId, this.constant.isCrmMessage).then(({ data }) => {
+			return getChainPromise(
+				threadId,
+				this.constant.isCrmMessage,
+				this.constant.act,
+				this.constant.mailUfMessageToken,
+				getThemeRequestParams(),
+			).then(({ data }) => {
 				this.setChain(threadId, data.list, data.properties, true);
 			});
 		}
@@ -987,6 +1340,13 @@ jn.define('mail/chain', (require, exports, module) => {
 			this.lastIncomingId = this.properties.lastIncomingId;
 
 			chain = chain.map((item, key) => {
+				// eslint-disable-next-line no-param-reassign
+				item.isBodyThemed = item.isBodyThemed === true;
+				// eslint-disable-next-line no-param-reassign
+				item.isBodyLoaded = Number(threadId) === Number(item.id)
+					|| (typeof item.body === 'string' && item.body.length > 0)
+				;
+
 				if (Number(item.id) === Number(this.properties.lastIncomingId))
 				{
 					this.lastIncomingCardId = key;
@@ -1025,7 +1385,7 @@ jn.define('mail/chain', (require, exports, module) => {
 					this.state.chain = chain;
 				}
 
-				if (this.constant.isCrmMessage)
+				if (this.canFlipChain())
 				{
 					this.uploadNeighbors(threadId);
 				}
@@ -1039,7 +1399,7 @@ jn.define('mail/chain', (require, exports, module) => {
 			let ActionPanelIndentStub = null;
 			let ActionPanelView = null;
 
-			if (this.properties.lastIncomingId !== null)
+			if (this.properties.lastIncomingId !== null && !this.constant.readOnly)
 			{
 				ActionPanelView = new ActionPanel({
 					actions: this.actions,
@@ -1078,6 +1438,9 @@ jn.define('mail/chain', (require, exports, module) => {
 						message: element,
 						id: i,
 						showMenuAction: this.showContextMenu.bind(this),
+						onFavoriteClick: () => this.changeFavoriteState(i),
+						retryLoadAction: this.retryLoadMessage.bind(this),
+						readOnly: this.constant.readOnly,
 					}),
 				));
 			}
@@ -1088,7 +1451,7 @@ jn.define('mail/chain', (require, exports, module) => {
 					{
 						style: {
 							height: '100%',
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 						},
 					},
 					View(
@@ -1108,5 +1471,16 @@ jn.define('mail/chain', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { MessageChain };
+	module.exports = {
+		MessageChain,
+		canQuoteMessage,
+		openSendFormWhenQuotable,
+		messageDirectionIcon,
+		getChainFavoriteActionTitle,
+		getChainFavoritePayload,
+		getChainFavoriteResult,
+		applyChainFavoriteTransition,
+		executeChainFavoriteAction,
+		updateChainFavoriteState,
+	};
 });

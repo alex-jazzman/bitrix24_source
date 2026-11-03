@@ -41,6 +41,14 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 		#chatService = new ChatService();
 		/** @type {Map<string, Promise<{ chatId: number }>>} */
 		#loadingPromises = new Map();
+		/**
+		 * Dialog ids whose open() is still in flight. VisibilityManager only starts
+		 * reporting a dialog as visible after its widget is ready, so without this guard
+		 * repeated taps (the recent throttle window is shorter than widget creation) open
+		 * the same dialog several times.
+		 * @type {Set<string>}
+		 */
+		#openingDialogIds = new Set();
 		/** @type {BaseNestedStrategy[]} */
 		#nestedStrategies = [
 			new NestedNavigationStrategy(),
@@ -86,19 +94,49 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 		 */
 		async openDialog(options, parentWidget = PageManager)
 		{
-			let normalizedOptions = normalizeOpenDialogOptions(options);
+			const normalizedOptions = normalizeOpenDialogOptions(options);
 			const dialogId = normalizedOptions.dialogId;
 			if (!Type.isStringFilled(dialogId))
 			{
 				return false;
 			}
 
-			const isVisible = await this.#isDialogVisible(dialogId);
-			if (isVisible)
+			// Claim the dialog id synchronously, before any await. The visibility check below
+			// yields, so adding to the set only after it would let a second concurrent call
+			// pass this guard before the first one claims the id (check-then-act race).
+			if (this.#openingDialogIds.has(dialogId))
 			{
+				this.logger.log('openDialog: skip, dialog is already opening', dialogId);
+
 				return false;
 			}
+			this.#openingDialogIds.add(dialogId);
 
+			try
+			{
+				const isVisible = await this.#isDialogVisible(dialogId);
+				if (isVisible)
+				{
+					return false;
+				}
+
+				return await this.#openDialogInternal(dialogId, normalizedOptions, options, parentWidget);
+			}
+			finally
+			{
+				this.#openingDialogIds.delete(dialogId);
+			}
+		}
+
+		/**
+		 * @param {string} dialogId
+		 * @param {DialogOpenOptions} normalizedOptions
+		 * @param {DialogOpenOptions} options
+		 * @param {PageManager} parentWidget
+		 * @return {Promise<boolean>}
+		 */
+		async #openDialogInternal(dialogId, normalizedOptions, options, parentWidget)
+		{
 			const openPerfPoint = new PerfPoint('open-dialog', `dialog ${dialogId}`).start();
 
 			if (normalizedOptions.makeTabActive)
@@ -115,6 +153,7 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 			}
 
 			const { dialog, dialogModel } = resolveResult;
+			// eslint-disable-next-line no-param-reassign
 			normalizedOptions = resolveResult.options;
 
 			const context = new DialogOpenContext({
@@ -126,6 +165,8 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 
 			if (!await this.#applyOpenFilters(context))
 			{
+				openPerfPoint.end();
+
 				return false;
 			}
 

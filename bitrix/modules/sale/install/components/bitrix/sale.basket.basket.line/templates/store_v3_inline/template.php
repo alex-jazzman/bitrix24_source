@@ -13,6 +13,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var string $templateName
  */
 
+\Bitrix\Main\Loader::includeModule('ui');
+\Bitrix\Main\UI\Extension::load(['ui.a11y', 'ui.design-tokens.air']);
+
 $cartId = 'bx_basket'.$this->randString();
 $arParams['cartId'] = $cartId;
 

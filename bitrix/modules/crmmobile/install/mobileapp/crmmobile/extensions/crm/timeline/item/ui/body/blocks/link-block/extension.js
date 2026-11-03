@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/link-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineFontWeight } = require('crm/timeline/item/ui/styles');
 	const AppTheme = require('apptheme');
@@ -19,12 +20,11 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 				{
 					onClick: () => this.onAction(),
 				},
-				Text({
+				Text4({
 					text: this.props.text,
 					ellipsize: 'end',
 					numberOfLines: rowLimit === 0 ? (this.props.inline ? 1 : 0) : rowLimit,
 					style: {
-						fontSize: 14,
 						color: AppTheme.colors.accentMainLinks,
 						fontWeight: this.props.bold ? TimelineFontWeight.BOLD : TimelineFontWeight.NORMAL,
 					},

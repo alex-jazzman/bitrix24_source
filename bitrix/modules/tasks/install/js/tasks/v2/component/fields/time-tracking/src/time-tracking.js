@@ -173,15 +173,20 @@ export const TimeTracking = {
 		<div
 			class="tasks-task-time-tracking"
 			:data-task-field-id="timeTrackingMeta.id"
+			data-testid="tasks-time-tracking"
 			@mouseover="isFieldHovered = true"
 			@mouseleave="isFieldHovered = false"
 		>
 			<HoverPill
 				:readonly
+				:ariaLabel="readonly ? '' : loc('TASKS_V2_TIME_TRACKING_ARIA_LABEL')"
+				:ariaHaspopup="readonly ? '' : 'dialog'"
+				:ariaExpanded="readonly ? null : isSheetShown"
+				data-testid="tasks-time-tracking-timer-btn"
 				@click="handleClick"
 				ref="timer"
 			>
-				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER"/>
+				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER" aria-hidden="true"/>
 				<TimeTrackingTimer
 					:timeSpent
 					:totalTime="task.estimatedTime"
@@ -192,11 +197,13 @@ export const TimeTracking = {
 			<div
 				v-if="task.rights.edit && !isTimeTrackingLocked"
 				class="tasks-task-time-tracking-settings"
+				:class="{ '--visible': isFieldHovered || isPopupShown }"
 				ref="settings"
 			>
 				<SettingsLabel
-					v-if="isFieldHovered || isPopupShown"
+					:ariaLabel="loc('TASKS_V2_TIME_TRACKING_SETTINGS_ARIA_LABEL')"
 					data-time-tracking-settings
+					data-testid="tasks-time-tracking-settings-btn"
 					@click="handleSettingsClick"
 				/>
 			</div>

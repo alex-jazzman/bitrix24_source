@@ -10,12 +10,13 @@ jn.define('call/callList/emptyView', (require, exports, module) => {
 	{
 		render()
 		{
-			const { text } = this.props;
+			const { text, showImage = true, testId = 'call-list-empty-view' } = this.props;
 			const pathToImg = '/bitrix/mobileapp/callmobile/extensions/call/callList/emptyView/img/';
 			const emptyImageUri = `${currentDomain}${pathToImg}empty-zephyr.png`;
 
 			return View(
 				{
+					testId,
 					style: {
 						flex: 1,
 						justifyContent: 'flex-start',
@@ -23,7 +24,7 @@ jn.define('call/callList/emptyView', (require, exports, module) => {
 						paddingTop: IS_IOS_PLATFORM ? '20%' : 80,
 					},
 				},
-				Image({
+				showImage && Image({
 					style: {
 						width: 146,
 						height: 136,

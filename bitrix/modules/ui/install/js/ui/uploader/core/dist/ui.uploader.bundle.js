@@ -3179,27 +3179,160 @@ this.BX.UI = this.BX.UI || {};
 		}
 	}
 
-	const jpg = new Jpeg();
-	const typeHandlers = {
-		gif: new Gif(),
-		png: new Png(),
-		bmp: new Bmp(),
-		jpg,
-		jpeg: jpg,
-		jpe: jpg,
-		webp: new Webp()
+	const ImageFormats = {
+		Gif: 'gif',
+		Png: 'png',
+		Bmp: 'bmp',
+		Jpeg: 'jpeg',
+		Webp: 'webp'
 	};
-	const getImageSize = file => {
+	const formatProperties = {
+		[ImageFormats.Gif]: {
+			mimeType: 'image/gif',
+			extensions: ['gif']
+		},
+		[ImageFormats.Png]: {
+			mimeType: 'image/png',
+			extensions: ['png']
+		},
+		[ImageFormats.Bmp]: {
+			mimeType: 'image/bmp',
+			extensions: ['bmp']
+		},
+		[ImageFormats.Jpeg]: {
+			mimeType: 'image/jpeg',
+			extensions: ['jpg', 'jpeg', 'jpe']
+		},
+		[ImageFormats.Webp]: {
+			mimeType: 'image/webp',
+			extensions: ['webp']
+		}
+	};
+	const getFormatProperties = format => {
+		return formatProperties[format];
+	};
+	const findFormatByExtension = extension => {
+		const format = Object.values(ImageFormats).find(candidate => {
+			return formatProperties[candidate].extensions.includes(extension);
+		});
+		return format ?? null;
+	};
+	const findFormatByMimeType = mimeType => {
+		return findFormatByExtension(mimeType.replace(/^image\//, ''));
+	};
+
+	const formatSignatures = [{
+		format: ImageFormats.Gif,
+		parts: [{
+			offset: 0,
+			bytes: convertStringToBuffer('GIF87a')
+		}]
+	}, {
+		format: ImageFormats.Gif,
+		parts: [{
+			offset: 0,
+			bytes: convertStringToBuffer('GIF89a')
+		}]
+	}, {
+		format: ImageFormats.Png,
+		parts: [{
+			offset: 0,
+			bytes: convertStringToBuffer('\x89PNG\r\n\x1A\n')
+		}]
+	}, {
+		format: ImageFormats.Bmp,
+		parts: [{
+			offset: 0,
+			bytes: convertStringToBuffer('BM')
+		}]
+	}, {
+		format: ImageFormats.Jpeg,
+		parts: [{
+			offset: 0,
+			bytes: [0xFF, 0xD8, 0xFF]
+		}]
+	}, {
+		format: ImageFormats.Webp,
+		parts: [{
+			offset: 0,
+			bytes: convertStringToBuffer('RIFF')
+		}, {
+			offset: 8,
+			bytes: convertStringToBuffer('WEBP')
+		}]
+	}];
+	const HEADER_LENGTH = Math.max(...formatSignatures.flatMap(({
+		parts
+	}) => {
+		return parts.map(({
+			offset,
+			bytes
+		}) => {
+			return offset + bytes.length;
+		});
+	}));
+	const matchesSignature = (view, parts) => {
+		return parts.every(({
+			offset,
+			bytes
+		}) => {
+			return offset + bytes.length <= view.byteLength && compareBuffers(view, bytes, offset);
+		});
+	};
+	const detectImageFormat = async file => {
+		const buffer = await getArrayBuffer(file.slice(0, HEADER_LENGTH));
+		const view = new DataView(buffer);
+		const signature = formatSignatures.find(({
+			parts
+		}) => {
+			return matchesSignature(view, parts);
+		});
+		return signature?.format ?? null;
+	};
+
+	const typeHandlers = {
+		[ImageFormats.Gif]: new Gif(),
+		[ImageFormats.Png]: new Png(),
+		[ImageFormats.Bmp]: new Bmp(),
+		[ImageFormats.Jpeg]: new Jpeg(),
+		[ImageFormats.Webp]: new Webp()
+	};
+	const getImageSize = async file => {
 		if (file.size === 0) {
-			return Promise.reject(new Error('Unknown image type.'));
+			throw new Error('Unknown image type.');
 		}
 		const extension = getFileExtension(file.name).toLowerCase();
-		const type = file.type.replace(/^image\//, '');
-		const typeHandler = typeHandlers[extension] || typeHandlers[type];
-		if (!typeHandler) {
-			return Promise.reject(new Error('Unknown image type.'));
+		const nameFormat = findFormatByExtension(extension) ?? findFormatByMimeType(file.type);
+		let primaryError = null;
+		if (nameFormat !== null) {
+			try {
+				return await typeHandlers[nameFormat].getSize(file);
+			} catch (error) {
+				primaryError = error;
+			}
 		}
-		return typeHandler.getSize(file);
+		const contentFormat = await detectImageFormat(file);
+		if (contentFormat === null || contentFormat === nameFormat) {
+			throw primaryError ?? new Error('Unknown image type.');
+		}
+		const size = await typeHandlers[contentFormat].getSize(file);
+		return {
+			...size,
+			contentFormat
+		};
+	};
+
+	const isAcceptedImageFormat = (format, acceptedFileTypes) => {
+		const {
+			mimeType,
+			extensions
+		} = getFormatProperties(format);
+		return extensions.some(extension => {
+			return isValidFileType({
+				name: `image.${extension}`,
+				type: mimeType
+			}, acceptedFileTypes);
+		});
 	};
 
 	class ImageSizeFilter extends Filter {
@@ -3233,8 +3366,18 @@ this.BX.UI = this.BX.UI || {};
 				getImageSize(file.getBinary()).then(({
 					width,
 					height,
-					animated
+					animated,
+					contentFormat
 				}) => {
+					if (!this.#isContentFormatAccepted(contentFormat)) {
+						if (this.getIgnoreUnknownImageTypes()) {
+							file.setTreatImageAsFile(true);
+							resolve();
+						} else {
+							reject(new UploaderError('FILE_TYPE_NOT_ALLOWED'));
+						}
+						return;
+					}
 					file.setWidth(width);
 					file.setHeight(height);
 					file.setAnimated(animated === true);
@@ -3273,6 +3416,12 @@ this.BX.UI = this.BX.UI || {};
 					}
 				});
 			});
+		}
+		#isContentFormatAccepted(contentFormat) {
+			if (contentFormat === undefined) {
+				return true;
+			}
+			return isAcceptedImageFormat(contentFormat, this.getUploader().getAcceptedFileTypes());
 		}
 		getImageMinWidth() {
 			return this.#imageMinWidth;

@@ -417,8 +417,32 @@
 	width:20px;
 }
 
+/* `display: none` would drop the input from the tab order and the accessibility tree, so it is hidden
+   visually instead: the styled label next to it keeps both the look and the clicks. */
 #bx-admin-prefix .adm-designed-checkbox {
-	display: none !important;
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0 0 0 0) !important;
+	clip-path: inset(50%) !important;
+	pointer-events: none !important;
+}
+
+/* The input itself is clipped to 1px, so the ring goes on the label: that is the box the user sees. */
+#bx-admin-prefix .adm-designed-checkbox:focus-visible + .adm-designed-checkbox-label {
+	outline: 2px solid #0154c8;
+	outline-offset: 2px;
+}
+
+/* The page of authorisation draws a ring of its own around this very label (`login.css`, a box-shadow
+   the form switches on the focus), and this file is loaded into that page too: the rule above would be
+   a second ring around one box. */
+#bx-admin-prefix .login-popup-checbox-block .adm-designed-checkbox:focus-visible + .adm-designed-checkbox-label {
+	outline: none;
 }
 
 #bx-admin-prefix .adm-designed-checkbox-label {
@@ -437,17 +461,6 @@
 	align-items: center;
 }
 
-.bx-opera #bx-admin-prefix .adm-designed-checkbox {
-	display: inline-block !important;
-	visibility: hidden !important;
-	width: 0 !important;
-	height: 0 !important;
-	padding: 0!important;
-	margin: 0!important;
-	font-size: 1px !important;
-	line-height: 1px !important;
-}
-
 #bx-admin-prefix .adm-designed-checkbox:checked + .adm-designed-checkbox-label {background-position:0 -1006px;}
 #bx-admin-prefix .adm-designed-checkbox:disabled + .adm-designed-checkbox-label {background-position:0 -1350px;}
 #bx-admin-prefix .adm-designed-checkbox:disabled:checked + .adm-designed-checkbox-label {background-position:0 -3459px;}
@@ -463,7 +476,6 @@
 	color:#000;
 	box-shadow:0 1px 0 0 rgba(255,255,255,0.3), inset 0 2px 2px -1px rgba(180,188,191,0.7);
 	display:inline-block;
-	outline:none;
 	vertical-align:middle;
 	-webkit-font-smoothing: antialiased;
 }

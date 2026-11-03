@@ -256,6 +256,7 @@ $MESS["SC_NOT_SETTED"] = "Not set";
 $MESS["SC_NO_FT_LIB_ER"] = "Free Type Library is not installed with PHP";
 $MESS["SC_NO_GD_LIB_ER"] = "GD Library is not enabled";
 $MESS["SC_NO_HASH"] = "Hash functions are not supported in PHP";
+$MESS["SC_NO_TOKENIZER_LIB_ER"] = "Tokenizer is not available in the current PHP installation.";
 $MESS["SC_NO_MBSTRING_LIB_ER"] = "mbstring is not available in the current PHP installation.";
 $MESS["SC_NO_MYS_LIB_ER"] = "MySQL functions are not enabled";
 $MESS["SC_NO_OPENSSL_LIB_ER"] = "OpenSSL is not available on your PHP.";

@@ -13,13 +13,13 @@ export class RequestSender extends Event.EventEmitter
 		this.signedParameters = options.signedParameters;
 	}
 
-	deleteErrorOption(requestData)
+	deleteErrorOption()
 	{
 		return new Promise((resolve, reject) => {
 			ajax.runComponentAction("bitrix:socialnetwork.copy.checker", "deleteErrorOption", {
 				mode: "class",
 				signedParameters: this.signedParameters,
-				data: requestData
+				data: {}
 			}).then(resolve, reject);
 		});
 	}

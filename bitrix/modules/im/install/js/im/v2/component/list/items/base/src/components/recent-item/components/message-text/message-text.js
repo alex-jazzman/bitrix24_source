@@ -1,7 +1,7 @@
 import { Loc } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, Settings } from 'im.v2.const';
+import { ChatType, MessageComponent, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { Parser } from 'im.v2.lib.parser';
 import { RecentManager } from 'im.v2.lib.recent';
@@ -40,9 +40,9 @@ export const MessageText = {
 			type: Object,
 			required: true,
 		},
-		withDraft: {
+		isDraftActive: {
 			type: Boolean,
-			default: true,
+			default: false,
 		},
 		forceOwnMessage: {
 			type: Boolean,
@@ -85,6 +85,10 @@ export const MessageText = {
 
 			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
 		},
+		shownChatId(): number
+		{
+			return this.$store.getters['recent/getShownChatId'](this.recentItem.dialogId);
+		},
 		isNestedPreviewSource(): boolean
 		{
 			if (this.forceOwnMessage || !this.isNestedPreviewAvailable)
@@ -92,13 +96,12 @@ export const MessageText = {
 				return false;
 			}
 
-			const messageChatId = this.message?.chatId;
-			if (!messageChatId || !this.dialog.chatId)
+			if (!this.shownChatId || !this.dialog.chatId)
 			{
 				return false;
 			}
 
-			return messageChatId !== this.dialog.chatId;
+			return this.shownChatId !== this.dialog.chatId;
 		},
 		previewSourceChat(): ?ImModelChat
 		{
@@ -107,7 +110,7 @@ export const MessageText = {
 				return null;
 			}
 
-			return this.$store.getters['chats/getByChatId'](this.message?.chatId) ?? null;
+			return this.$store.getters['chats/getByChatId'](this.shownChatId) ?? null;
 		},
 		needsInvitationPlaceholder(): boolean
 		{
@@ -163,7 +166,11 @@ export const MessageText = {
 				return this.loc('IM_LIST_RECENT_DELETED_MESSAGE');
 			}
 
-			const formattedText = Parser.purifyRecent(this.recentItemForPreview);
+			const isContactMessage = this.message.componentId === MessageComponent.contactMessage;
+			const formattedText = isContactMessage
+				? `${this.loc('IM_LIST_RECENT_CONTACT')} ${Parser.purifyText(this.message.text)}`.trim()
+				: Parser.purifyRecent(this.recentItemForPreview)
+			;
 			if (!this.showLastMessage || !formattedText)
 			{
 				return this.hiddenMessageText;
@@ -176,10 +183,6 @@ export const MessageText = {
 			const SPLIT_INDEX = 27;
 
 			return Utils.text.insertUnseenWhitespace(this.messageText, SPLIT_INDEX);
-		},
-		showDraft(): boolean
-		{
-			return this.withDraft && this.recentItem.draft.text;
 		},
 		isUser(): boolean
 		{
@@ -203,7 +206,7 @@ export const MessageText = {
 	template: `
 		<div class="bx-im-list-recent-item__message_container">
 			<span class="bx-im-list-recent-item__message_text">
-				<MessageDraft v-if="showDraft" :draftText="recentItem.draft.text" />
+				<MessageDraft v-if="isDraftActive" :draftText="recentItem.draft.text" />
 				<InvitationPlaceholder v-else-if="needsInvitationPlaceholder" />
 				<BirthdayPlaceholder v-else-if="needsBirthdayPlaceholder" />
 				<VacationPlaceholder v-else-if="needsVacationPlaceholder" :vacationDate="user.absent" />

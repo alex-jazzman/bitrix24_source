@@ -13,6 +13,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CDiskExternalLinkComponent $component */
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons\AirButtonStyle;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Tag;
@@ -45,6 +46,7 @@ $APPLICATION->SetAdditionalCSS($templateFolder . '/access-card.css');
 $APPLICATION->SetAdditionalCSS($templateFolder . '/folder-list.css');
 
 $langId = $component->getLangId();
+$unifiedLink = $arResult['UNIFIED_LINK'];
 ?>
 <!DOCTYPE html>
 <html lang="<?= mb_strtolower($langId) ?>">
@@ -54,7 +56,7 @@ $langId = $component->getLangId();
 	<title><?= $component->getMessage('DISK_EXT_LINK_FOLDER_TITLE') ?></title>
 	<meta http-equiv="Content-Type" content="text/html; charset=<?=SITE_CHARSET?>" />
 	<? if(!$arResult['PROTECTED_BY_PASSWORD']){ ?>
-		<meta content="<?= $arResult['FOLDER']['VIEW_URL'] ?>" property="og:url"/>
+		<meta content="<?= htmlspecialcharsbx($arResult['FOLDER']['VIEW_URL']) ?>" property="og:url"/>
 		<meta content="<?= htmlspecialcharsbx($arResult['SITE_NAME']) ?>" property="og:site_name"/>
 		<meta content="<?= htmlspecialcharsbx($arResult['FOLDER']['NAME']) ?>" property="og:title"/>
 		<meta content="website" property="og:type"/>
@@ -67,6 +69,13 @@ $langId = $component->getLangId();
 	?>
 </head>
 <body class="<?= $pageBodyClass ?>">
+	<script>
+		BX.ready(function(){
+			<?php if (!$arResult['FROM_UNIFIED_LINK'] && is_string($unifiedLink)) { ?>
+				window.history.replaceState({}, '', <?= Json::encode($unifiedLink) ?>);
+			<?php } ?>
+		});
+	</script>
 	<div class="bx-shared-wrap">
 		<?php if ($showExternalHeader): ?>
 			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-header.php'; ?>
@@ -80,6 +89,7 @@ $langId = $component->getLangId();
 		!empty($arResult['ENABLED_MOD_ZIP'])
 		&& !empty($arResult['FOLDER']['CREATED_BY'])
 		&& !empty($arResult['FOLDER']['SIZE'])
+		&& !empty($arResult['FOLDER']['CAN_DOWNLOAD'])
 	;
 
 	$downloadButton = null;

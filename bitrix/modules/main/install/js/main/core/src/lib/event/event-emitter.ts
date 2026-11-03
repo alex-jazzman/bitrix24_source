@@ -18,12 +18,21 @@ const isEmitterProperty = Symbol.for('BX.Event.EventEmitter.isEmitter');
 const namespaceProperty = Symbol('namespaceProperty');
 const targetProperty = Symbol('targetProperty');
 
+export type ListenerOptions = {
+	useGlobalNaming?: boolean,
+	compatMode?: boolean,
+	cloneData?: boolean,
+	thisArg?: any,
+};
+
+type CompatibleListener = (...args: any[]) => void;
+
 export default class EventEmitter
 {
 	[key: symbol]: any;
 
-	static GLOBAL_TARGET = globalTarget;
-	static DEFAULT_MAX_LISTENERS = eventStore.getDefaultMaxListeners();
+	static GLOBAL_TARGET: { GLOBAL_TARGET: string } = globalTarget;
+	static DEFAULT_MAX_LISTENERS: number = eventStore.getDefaultMaxListeners();
 
 	/** @private */
 	static sequenceValue = 1;
@@ -110,9 +119,35 @@ export default class EventEmitter
 	 * Subscribes listener on specified global event
 	 * @param {object} target
 	 * @param {string} eventName
-	 * @param {Function<BaseEvent>} listener
+	 * @param {Function} listener
 	 * @param {object} options
 	 */
+	static subscribe(
+		eventName: string,
+		listener: CompatibleListener,
+		options: ListenerOptions & { compatMode: true },
+	): void;
+
+	static subscribe(
+		target: object,
+		eventName: string,
+		listener: CompatibleListener,
+		options: ListenerOptions & { compatMode: true },
+	): void;
+
+	static subscribe<T = any>(
+		eventName: string,
+		listener: (event: BaseEvent<T>) => void,
+		options?: ListenerOptions,
+	): void;
+
+	static subscribe<T = any>(
+		target: object,
+		eventName: string,
+		listener: (event: BaseEvent<T>) => void,
+		options?: ListenerOptions,
+	): void;
+
 	static subscribe(
 		target: any,
 		eventName: any,
@@ -189,7 +224,7 @@ export default class EventEmitter
 	 * @param {Function<BaseEvent>} listener
 	 * @return {this}
 	 */
-	subscribe(eventName: string, listener: (event: BaseEvent) => void): this
+	subscribe<T = any>(eventName: string, listener: (event: BaseEvent<T>) => void): this
 	{
 		EventEmitter.subscribe(this, eventName, listener);
 
@@ -206,7 +241,7 @@ export default class EventEmitter
 		options: { [eventName: string]: Function } | Array<{ [eventName: string]: Function }>,
 		aliases?: { [alias: string]: { eventName: string; namespace: string } },
 		compatMode?: boolean,
-	)
+	): void
 	{
 		if (Type.isArrayFilled(options))
 		{
@@ -228,7 +263,9 @@ export default class EventEmitter
 
 		const optionsRecord = options as Record<string, any>;
 		Object.keys(optionsRecord).forEach((eventName) => {
-			const listener = EventEmitter.normalizeListener(optionsRecord[eventName]);
+			const listener = EventEmitter.normalizeListener(
+				optionsRecord[eventName],
+			) as (event: BaseEvent) => void;
 			eventName = EventEmitter.normalizeEventName(eventName);
 
 			if (normalizedAliases[eventName])
@@ -250,6 +287,12 @@ export default class EventEmitter
 	 * @param {string} eventName
 	 * @param {Function<BaseEvent>} listener
 	 */
+	static subscribeOnce<T = any>(eventName: string, listener: (event: BaseEvent<T>) => void): void;
+	static subscribeOnce<T = any>(
+		target: object,
+		eventName: string,
+		listener: (event: BaseEvent<T>) => void,
+	): void;
 	static subscribeOnce(target: any, eventName: any, listener?: any): void
 	{
 		if (Type.isString(target))
@@ -309,7 +352,7 @@ export default class EventEmitter
 	 * @param {Function<BaseEvent>} listener
 	 * @return {this}
 	 */
-	subscribeOnce(eventName: string, listener: (event: BaseEvent) => void): this
+	subscribeOnce<T = any>(eventName: string, listener: (event: BaseEvent<T>) => void): this
 	{
 		EventEmitter.subscribeOnce(this, eventName, listener);
 
@@ -320,9 +363,35 @@ export default class EventEmitter
 	 * Unsubscribes an event listener
 	 * @param {object} target
 	 * @param {string} eventName
-	 * @param {Function<BaseEvent>} listener
+	 * @param {Function} listener
 	 * @param options
 	 */
+	static unsubscribe(
+		eventName: string,
+		listener: CompatibleListener,
+		options?: ListenerOptions,
+	): void;
+
+	static unsubscribe(
+		target: object,
+		eventName: string,
+		listener: CompatibleListener,
+		options?: ListenerOptions,
+	): void;
+
+	static unsubscribe<T = any>(
+		eventName: string,
+		listener: (event: BaseEvent<T>) => void,
+		options?: ListenerOptions,
+	): void;
+
+	static unsubscribe<T = any>(
+		target: object,
+		eventName: string,
+		listener: (event: BaseEvent<T>) => void,
+		options?: ListenerOptions,
+	): void;
+
 	static unsubscribe(
 		target: any,
 		eventName: any,
@@ -373,7 +442,7 @@ export default class EventEmitter
 	 * @param {Function<BaseEvent>} listener
 	 * @return {this}
 	 */
-	unsubscribe(eventName: string, listener: (event: BaseEvent) => void): this
+	unsubscribe<T = any>(eventName: string, listener: (event: BaseEvent<T>) => void): this
 	{
 		EventEmitter.unsubscribe(this, eventName, listener);
 
@@ -386,6 +455,8 @@ export default class EventEmitter
 	 * @param {string} eventName
 	 * @param options
 	 */
+	static unsubscribeAll(eventName: string, options?: ListenerOptions): void;
+	static unsubscribeAll(target: object, eventName?: string, options?: ListenerOptions): void;
 	static unsubscribeAll(
 		target: any,
 		eventName?: any,
@@ -439,6 +510,13 @@ export default class EventEmitter
 	 * @param {object} options
 	 * @returns {Array}
 	 */
+	static emit<T = any>(eventName: string, event?: BaseEvent<T> | T, options?: ListenerOptions): Array<any>;
+	static emit<T = any>(
+		target: object,
+		eventName: string,
+		event?: BaseEvent<T> | T,
+		options?: ListenerOptions,
+	): Array<any>;
 	static emit(
 		target: any,
 		eventName?: any,
@@ -527,7 +605,7 @@ export default class EventEmitter
 	 * @param {BaseEvent | any} event
 	 * @return {this}
 	 */
-	emit(eventName: string, event?: BaseEvent | { [key: string]: any }): this
+	emit<T = any>(eventName: string, event?: BaseEvent<T> | T): this
 	{
 		if (this.getEventNamespace() === null)
 		{
@@ -698,7 +776,7 @@ export default class EventEmitter
 	 * @param {string} [eventName]
 	 * @returns {number}
 	 */
-	static getMaxListeners(target: any, eventName?: string): number
+	static getMaxListeners(target: any, eventName?: string | null): number
 	{
 		if (Type.isString(target))
 		{
@@ -760,7 +838,7 @@ export default class EventEmitter
 	 * @param args
 	 * @returns {number}
 	 */
-	static addMaxListeners(...args: any[])
+	static addMaxListeners(...args: any[]): number
 	{
 		const [target, eventName, increment] = this.destructMaxListenersArgs(...args);
 		const maxListeners = Math.max(this.getMaxListeners(target, eventName) + increment, 0);
@@ -848,14 +926,12 @@ export default class EventEmitter
 
 	/**
 	 * @private
-	 * @param {Array} args
-	 * @returns Array
 	 */
-	static destructMaxListenersArgs(...args: any[])
+	static destructMaxListenersArgs(...args: any[]): [object, string | null, number]
 	{
-		let eventName = null;
-		let increment = 1;
-		let target = this.GLOBAL_TARGET;
+		let eventName: string | null = null;
+		let increment: number = 1;
+		let target: object = this.GLOBAL_TARGET;
 
 		if (args.length === 1)
 		{
@@ -915,6 +991,8 @@ export default class EventEmitter
 	 * @param {object} target
 	 * @param {string} eventName
 	 */
+	static getListeners(eventName: string): Map<any, any>;
+	static getListeners(target: object, eventName?: string): Map<any, any>;
 	static getListeners(target: any, eventName?: any): Map<any, any>
 	{
 		if (Type.isString(target))
@@ -959,7 +1037,7 @@ export default class EventEmitter
 	 * @param {string} eventName
 	 * @returns {string}
 	 */
-	getFullEventName(eventName: string)
+	getFullEventName(eventName: string): string
 	{
 		if (!Type.isStringFilled(eventName))
 		{
@@ -1027,7 +1105,7 @@ export default class EventEmitter
 	/**
 	 * @private
 	 */
-	static mergeEventAliases(aliases: Record<string, any>)
+	static mergeEventAliases(aliases: Record<string, any>): void
 	{
 		const globalEvents = eventStore.get(this.GLOBAL_TARGET);
 		if (!globalEvents)
@@ -1071,7 +1149,7 @@ export default class EventEmitter
 	 * @param {object} target
 	 * @returns {boolean}
 	 */
-	static isEventEmitter(target: any)
+	static isEventEmitter(target: any): boolean
 	{
 		return Type.isObject(target) && (target as any)[isEmitterProperty] === true;
 	}
@@ -1116,7 +1194,7 @@ export default class EventEmitter
 	 * @param useGlobalNaming
 	 * @returns {string}
 	 */
-	static resolveEventName(eventName: string, target: any, useGlobalNaming: boolean = false)
+	static resolveEventName(eventName: string, target: any, useGlobalNaming: boolean = false): string
 	{
 		eventName = this.normalizeEventName(eventName);
 		if (!Type.isStringFilled(eventName))
@@ -1148,7 +1226,7 @@ export default class EventEmitter
 	 * @param {string} eventName
 	 * @returns {string}
 	 */
-	static makeFullEventName(namespace: string | null, eventName: string)
+	static makeFullEventName(namespace: string | null, eventName: string): string
 	{
 		const fullName = Type.isStringFilled(namespace) ? `${namespace}:${eventName}` : eventName;
 

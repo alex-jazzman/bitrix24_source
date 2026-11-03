@@ -33,6 +33,7 @@ $im_default_option = array(
 	'contact_list_show_all_bus' => false,
 	'path_to_user_profile' => (!IsModuleInstalled("intranet") ? '/club/user/#user_id#/' : ''),
 	'message_history_index' => false,
+	'forward_multiple_recipients_available' => IsModuleInstalled('bitrix24') ? 'N' : 'Y',
 );
 
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/im_options.php"))

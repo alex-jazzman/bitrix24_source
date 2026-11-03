@@ -31,6 +31,12 @@ if ($_REQUEST['IFRAME'] === 'Y')
 		'ui.design-tokens',
 		'ui.entity-selector',
 	]);
+
+// The very message the server answers with for a title of its own, so both refusals read alike.
+$titleRequiredMessage = (new CCrmMailTemplateError(
+	CCrmMailTemplateError::FieldNotSpecified,
+	['FIEILD_ID' => 'TITLE'],
+))->GetText();
 ?>
 
 <form id="<?=htmlspecialcharsbx($formId)?>">
@@ -285,7 +291,25 @@ BX.ready(function()
 		const button = BX.findChildByClassName(formNode, 'main-mail-form-submit-button', true);
 		BX.bind(formNode, 'submit', BX.proxy(sendForm, formNode));
 
+		const titleFieldNode = formNode.querySelector('[name="TITLE"]');
+
 		function sendForm(e){
+			/*
+			 * The title is marked required for the reader alone, so an empty one used to reach the server and
+			 * come back as an error page this handler drops, leaving the form silent about the refusal. It is
+			 * refused here instead, in the words the server would have answered with. The form marks the button
+			 * as waiting before the submit reaches us, hence the button is let go along with the refusal.
+			 */
+			if (titleFieldNode && titleFieldNode.value.trim() === '')
+			{
+				BX.removeClass(button, 'ui-btn-wait');
+				button.disabled = false;
+				mailForm.showError('<?=\CUtil::jsEscape($titleRequiredMessage) ?>');
+				titleFieldNode.focus();
+
+				return BX.PreventDefault(e);
+			}
+
 			BX.addClass(button, 'ui-btn-wait');
 			let data = new FormData(this);
 
@@ -296,9 +320,39 @@ BX.ready(function()
 				dataType: 'json',
 				processData: false,
 				preparePost: false,
-				onsuccess: function(){
+				onsuccess: function(response){
 					BX.removeClass(button, 'ui-btn-wait');
-					window.top.BX.SidePanel.Instance.postMessage(window, 'CrmMailTemplateEdit:onSubmit');
+					button.disabled = false;
+					const parseResponse = function(value)
+					{
+						if (typeof value !== 'string')
+						{
+							return value;
+						}
+
+						try
+						{
+							return JSON.parse(value);
+						}
+						catch (error)
+						{
+							return null;
+						}
+					};
+					let result = parseResponse(response);
+					result = parseResponse(result && result.data ? result.data : result);
+					const reference = result && result.reference;
+					const operation = result && result.operation;
+					if (!reference || reference.source !== 'crm' || Number(reference.id) <= 0
+						|| (operation !== 'create' && operation !== 'update'))
+					{
+						return;
+					}
+
+					window.top.BX.SidePanel.Instance.postMessage(window, 'CrmMailTemplateEdit:onSubmit', {
+						reference: { source: 'crm', id: Number(reference.id) },
+						operation: operation,
+					});
 					const slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
 					if (slider && slider.close)
 					{

@@ -5,7 +5,7 @@
 	gap: var(--ui-space-inline-sm);
 	min-width: 0;
 	padding: var(--ui-space-inset-xs) 0;
-	min-height: 40px;
+	min-height: var(--ui-size-5xl);
 	box-sizing: border-box;
 	border-bottom: 1px solid var(--ui-color-divider-default);
 }
@@ -13,7 +13,7 @@
 .mail-compose-sender-chip__label
 {
 	flex: 0 0 76px;
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-3);
 }
 
 .mail-compose-sender-chip__control

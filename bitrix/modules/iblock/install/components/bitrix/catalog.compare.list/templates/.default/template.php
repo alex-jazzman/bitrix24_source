@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\HttpRequest;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -21,7 +26,7 @@ if ($arParams['POSITION_FIXED'] == 'Y')
 	$mainClass .= ' fix '.($arParams['POSITION'][0] == 'bottom' ? 'bottom' : 'top').' '.($arParams['POSITION'][1] == 'right' ? 'right' : 'left');
 }
 $style = ($itemCount == 0 ? ' style="display: none;"' : '');
-?><div id="<?=$idCompareCount; ?>" class="<?=$mainClass; ?> "<?=$style; ?>><?
+?><div id="<?=$idCompareCount; ?>" class="<?=$mainClass; ?> " role="region" aria-label="<?=GetMessage('CP_BCCL_TPL_MESS_PANEL_NAME'); ?>"<?=$style; ?>><?
 unset($style, $mainClass);
 if ($needReload)
 {
@@ -45,13 +50,15 @@ if ($itemCount > 0)
 	</div>
 	<div class="bx_catalog_compare_form">
 	<table class="compare-items" data-block="item-list">
-	<thead><tr><td align="center" colspan="2"><?=GetMessage("CATALOG_COMPARE_ELEMENTS")?></td></tr></thead>
+	<thead><tr><th scope="col" colspan="2"><?=GetMessage("CATALOG_COMPARE_ELEMENTS")?></th></tr></thead>
 	<tbody><?
 	foreach($arResult as $arElement)
 	{
 		?><tr data-block="item-row" data-row-id="row<?=$arElement['PARENT_ID']; ?>">
 			<td><a href="<?=$arElement["DETAIL_PAGE_URL"]?>"><?=$arElement["NAME"]?></a></td>
-			<td><noindex><a href="javascript:void(0);" data-id="<?=$arElement['PARENT_ID']; ?>" rel="nofollow"><?=GetMessage("CATALOG_DELETE")?></a></noindex></td>
+			<td><noindex><a href="javascript:void(0);" data-id="<?=$arElement['PARENT_ID']; ?>" rel="nofollow"
+				aria-label="<?=htmlspecialcharsbx(GetMessage('CP_BCCL_TPL_MESS_DELETE_FOR', ['#NAME#' => $arElement['~NAME']])); ?>"
+			><?=GetMessage("CATALOG_DELETE")?></a></noindex></td>
 		</tr><?
 	}
 	?>
@@ -64,15 +71,16 @@ if ($needReload)
 {
 	die();
 }
-$currentPath = CHTTP::urlDeleteParams(
-	$APPLICATION->GetCurPageParam(),
-	array(
+$deleteParams = array_merge(
+	[
 		$arParams['PRODUCT_ID_VARIABLE'],
 		$arParams['ACTION_VARIABLE'],
 		'ajax_action'
-	),
-	array("delete_system_params" => true)
+	],
+ 	HttpRequest::getSystemParameters()
 );
+
+$currentPath = (string)(new Uri($APPLICATION->GetCurPageParam()))->deleteParams($deleteParams);
 
 $jsParams = array(
 	'VISUAL' => array(
@@ -96,6 +104,9 @@ $jsParams = array(
 			'vertical' => $arParams['POSITION'][0],
 			'horizontal' => $arParams['POSITION'][1]
 		)
+	),
+	'MESSAGES' => array(
+		'ANNOUNCE_COUNT' => GetMessage('CP_BCCL_TPL_MESS_ANNOUNCE_COUNT')
 	)
 );
 ?></div>

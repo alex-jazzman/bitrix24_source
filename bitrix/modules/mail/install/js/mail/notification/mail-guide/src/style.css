@@ -14,7 +14,7 @@
 }
 
 .mail-notification-container__image {
-	background: url("../images/mail_guide.svg") no-repeat center center;
+	background: url("../images/mail_guide.webp") no-repeat center center;
 	height: 70px;
 	width: 78px;
 	background-size: 100%;

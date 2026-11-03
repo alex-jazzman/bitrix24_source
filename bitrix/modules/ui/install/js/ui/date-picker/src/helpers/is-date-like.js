@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import type { DateLike } from '../date-picker-options';
+import { type DateLike } from '../date-picker-options';
 
 export function isDateLike(date: DateLike): boolean
 {

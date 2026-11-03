@@ -156,12 +156,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			class="tasks-user-field print-no-border --boolean"
 			:class="{ '--last': isLast }"
 		>
-			<div class="tasks-user-field-boolean-row">
-				<Checkbox :checked="preparedValue" disabled/>
+			<label class="tasks-user-field-boolean-row" data-testid="tasks-user-field-boolean">
+				<Checkbox tag="span" :checked="preparedValue" disabled/>
 				<TextMd :className="mandatoryClass">
 					{{ title }}
 				</TextMd>
-			</div>
+			</label>
 		</div>
 	`
 	};
@@ -169,24 +169,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	class UserFieldsManager {
 		getPreparedUserFields(userFields, userFieldScheme) {
 			const result = [];
-			for (const userField of userFields) {
+			for (const scheme of userFieldScheme) {
+				const userField = userFields.find(item => item.key === scheme.fieldName);
+				if (!userField) {
+					continue;
+				}
 				if (userField.value === null) {
 					continue;
 				}
-				const scheme = userFieldScheme.find(item => {
-					return item.fieldName === userField.key;
-				});
-				if (scheme) {
-					if (!this.validateField(userField.value, scheme.userTypeId)) {
-						continue;
-					}
-					result.push({
-						value: userField.value,
-						title: scheme.editFormLabel,
-						type: scheme.userTypeId,
-						mandatory: scheme.mandatory
-					});
+				if (!this.validateField(userField.value, scheme.userTypeId)) {
+					continue;
 				}
+				result.push({
+					value: userField.value,
+					title: scheme.editFormLabel,
+					type: scheme.userTypeId,
+					mandatory: scheme.mandatory
+				});
 			}
 			return result;
 		}
@@ -464,7 +463,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			},
 			onMouseMove() {
-				if (this.selectionMade || this.opened) {
+				if (this.selectionMade) {
 					return;
 				}
 				if (this.isMouseDown) {
@@ -490,23 +489,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			class="tasks-field-user-fields print-no-box-shadow"
 			:data-task-id="taskId"
 			:data-task-field-id="userFieldsMeta.id"
+			data-testid="tasks-user-fields"
 			@mousedown="onMouseDown"
 			@mousemove="onMouseMove"
 			@mouseup="onMouseUp"
 		>
-			<div
+			<component
+				:is="readonly ? 'div' : 'button'"
+				:type="readonly ? null : 'button'"
 				class="tasks-field-user-fields-title"
 				:class="{
 					'--readonly': readonly,
 					'--border-radius': preparedUserFieldsLength === 0,
 				}"
+				:aria-haspopup="readonly ? null : 'dialog'"
+				data-testid="tasks-user-fields-title"
+				@mousedown.stop
+				@mouseup.stop
+				@click="handleOpenSlider"
 			>
 				<BIcon
 					class="tasks-field-user-fields-title-icon"
 					:name="Outline.TOPIC"
+					aria-hidden="true"
 				/>
 				<TextMd accent>{{ userFieldsMeta.title }}</TextMd>
-			</div>
+			</component>
 			<template
 				v-for="(field, index) in preparedUserFields"
 				:key="index"
@@ -526,15 +534,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<TextXs className="tasks-field-user-fields-footer-text">
 					{{ footerText }}
 				</TextXs>
-				<div class="tasks-field-user-fields-footer-fill">
+				<button
+					type="button"
+					class="tasks-field-user-fields-footer-fill"
+					data-testid="tasks-user-fields-fill-btn"
+					@mousedown.stop
+					@mouseup.stop
+					@click="handleOpenSlider"
+				>
 					<TextXs className="tasks-field-user-fields-footer-fill-text">
 						{{ loc('TASKS_V2_USER_FIELDS_FILL') }}
 					</TextXs>
 					<BIcon
 						class="tasks-field-user-fields-footer-fill-icon"
 						:name="Outline.CHEVRON_RIGHT_L"
+						aria-hidden="true"
 					/>
-				</div>
+				</button>
 			</div>
 		</div>
 	`
@@ -583,15 +599,41 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			readonly() {
 				return !this.task.rights.edit;
+			},
+			opensEditor() {
+				return !this.isSelected;
 			}
 		},
+		watch: {
+			opensEditor() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensEditor ? 'dialog' : null);
+			},
 			handleClick() {
 				if (this.isSelected) {
 					this.highlightField();
 				} else {
 					this.$emit('open');
 				}
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(userFieldsMeta.id);
@@ -604,7 +646,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:icon="Outline.TOPIC"
 			:data-task-id="taskId"
 			:data-task-chip-id="userFieldsMeta.id"
+			data-testid="tasks-user-fields-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`
 	};

@@ -1,12 +1,8 @@
 .intranet-push-otp-connect-popup__view-email-container {
-	display: flex;
 	align-items: center;
 	gap: 40px;
 	height: 264px;
 	padding: 0 36px;
-	border-radius: 16px;
-	background: var(--ui-color-accent-soft-blue-3, #edf7ff);
-	box-sizing: border-box;
 	overflow: hidden;
 }
 
@@ -21,7 +17,7 @@
 }
 
 .intranet-push-otp-connect-popup__view-email-value {
-	font-weight: 500;
+	font-weight: var(--ui-font-weight-medium);
 	font-size: 21px;
 	line-height: 29px;
 	color: var(--ui-color-base-1, #333333);
@@ -37,7 +33,7 @@
 
 .intranet-push-otp-connect-popup__view-email-input-title {
 	font-size: 21px;
-	font-weight: 500;
+	font-weight: var(--ui-font-weight-medium);
 	line-height: 29px;
 	color: var(--ui-color-base-1, #333333);
 }
@@ -192,7 +188,7 @@
 	position: absolute;
 	top: 41px;
 	left: 125px;
-	font-weight: 500;
+	font-weight: var(--ui-font-weight-medium);
 	font-size: 23px;
 	line-height: 31px;
 	color: #1f86ff;
@@ -231,4 +227,83 @@
 	border-radius: 50%;
 	background: #aac9fa;
 	opacity: .5;
+}
+
+.intranet-push-otp-connect-popup__view-email-container.--mobile {
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+	width: min(100%, 340px);
+	height: auto;
+	min-height: 0;
+	margin: 0 auto;
+	padding: 32px 24px 16px;
+	gap: 28px;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.intranet-push-otp-connect-popup__view-email-container.--mobile .intranet-push-otp-connect-popup__view-email-info,
+.intranet-push-otp-connect-popup__view-email-container.--mobile .intranet-push-otp-connect-popup__view-email-input,
+.intranet-push-otp-connect-popup__view-email-container.--mobile .intranet-push-otp-connect-popup__view-email-input-box {
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.intranet-push-otp-connect-popup__view-email-container.--mobile .intranet-push-otp-connect-popup__view-email-info {
+	padding: 0;
+}
+
+.intranet-push-otp-connect-popup__view-email-container.--mobile .intranet-push-otp-connect-popup__view-email-input-title {
+	text-align: center;
+}
+
+.intranet-push-otp-connect-popup__view-email-container.--mobile .intranet-push-otp-connect-popup__view-email-graphic {
+	align-self: center;
+	width: 100%;
+	max-width: 280px;
+}
+
+.intranet-push-otp-connect-popup__view-button-container.--mobile {
+	justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+	.intranet-push-otp-connect-popup__view-email-info,
+	.intranet-push-otp-connect-popup__view-email-input,
+	.intranet-push-otp-connect-popup__view-email-input-box {
+		align-self: stretch;
+		width: 100%;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.intranet-push-otp-connect-popup__view-email-info {
+		padding: 0;
+	}
+
+	.intranet-push-otp-connect-popup__view-email-value,
+	.intranet-push-otp-connect-popup__view-email-input-title,
+	.intranet-push-otp-connect-popup__view-email-errors {
+		overflow-wrap: anywhere;
+	}
+
+	.intranet-push-otp-connect-popup__view-email-graphic {
+		align-self: center;
+	}
+}
+
+@media (max-width: 399px) {
+	.intranet-push-otp-connect-popup__view-email-graphic {
+		margin: -14px -21px;
+		transform: scale(.85);
+	}
+}
+
+@media (max-width: 340px) {
+	.intranet-push-otp-connect-popup__view-email-graphic {
+		margin: -30px -45px;
+		transform: scale(.68);
+	}
 }

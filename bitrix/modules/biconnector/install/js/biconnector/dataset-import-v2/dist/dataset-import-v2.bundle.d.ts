@@ -11,6 +11,7 @@ type AppConfig = {
 	connectionProperties?: ConnectionProperties;
 	fieldsSettings: Array<FieldSettings>;
 	sectionsConfig: SectionsConfig;
+	tableGroupIds: Array<number>;
 };
 
 type FileProperties = {
@@ -32,13 +33,23 @@ type DataFormats = {
 type DatasetProperties = {
 	id: number;
 	name: string;
+	verboseName: string;
 	description: string;
 	externalCode: string;
 	externalName: string;
 	externalDatasets: Array<Record<string, unknown>>;
 	isSystem?: boolean;
+	canEdit?: boolean;
+	canExport?: boolean;
+	tableGroups?: Array<TableGroupItem>;
 	createPhysicalDatasetUrl?: string;
 	createVirtualDatasetUrl?: string;
+};
+
+type TableGroupItem = {
+	id: number;
+	name: string;
+	type: 'SYSTEM' | 'CUSTOM';
 };
 
 type ConnectionProperties = {
@@ -76,6 +87,8 @@ type AppParams = {
 	reservedNames: Array<string>;
 	connections: Array<ExternalConnection>;
 	isSupersetReady: boolean;
+	isTablePermissionsEnabled?: boolean;
+	tableGroups?: Array<TableGroupItem>;
 };
 
 type DataFormatTemplates = Record<string, Array<FormatOption>>;

@@ -51,14 +51,14 @@ export function computeWorkdayTimers(
 			return { workingDayMs: 0, pauseMs: 0 };
 		}
 
-		if (canOpen === 'REOPEN')
+		if (canOpen === 'REOPEN' || canOpen === '')
 		{
-			// A reopened closed day shows only persisted values:
+			// A finished closed day shows only persisted values:
 			// worked time is RECORDED_DURATION, the break is accumulated leaks.
 			return { workingDayMs: durationMs, pauseMs: timeLeaksMs };
 		}
 
-		// Closed and not reopenable: no live timer, values stay at zero.
+		// Unknown action: no live timer, values stay at zero.
 		return { workingDayMs: 0, pauseMs: 0 };
 	}
 

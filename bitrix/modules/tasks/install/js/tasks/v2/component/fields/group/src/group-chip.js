@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Dom, Type } from 'main.core';
 
 import { Chip, ChipDesign, type ChipImage } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
@@ -49,6 +49,7 @@ export const GroupChip = {
 	{
 		return {
 			doShowHint: false,
+			isDialogShown: false,
 		};
 	},
 	computed: {
@@ -125,6 +126,36 @@ export const GroupChip = {
 		{
 			return !this.settings.restrictions.project.available;
 		},
+		opensDialog(): boolean
+		{
+			return (this.isAutonomous || !this.isSelected) && !this.isLocked && !this.isFlowFilled;
+		},
+		ariaLabel(): string
+		{
+			if (!this.isFilled)
+			{
+				return this.text;
+			}
+
+			return this.loc('TASKS_V2_GROUP_VALUE_ARIA_LABEL', {
+				'#TITLE#': groupMeta.getTitle(this.task.groupId),
+				'#VALUE#': this.text,
+			});
+		},
+	},
+	watch: {
+		isDialogShown(): void
+		{
+			this.syncAria();
+		},
+		opensDialog(): void
+		{
+			this.syncAria();
+		},
+		text(): void
+		{
+			this.syncAria();
+		},
 	},
 	async created(): Promise<void>
 	{
@@ -136,6 +167,10 @@ export const GroupChip = {
 				taskService.updateStoreTask(this.taskId, { groupId: 0, stageId: 0 });
 			}
 		}
+	},
+	mounted(): void
+	{
+		this.syncAria();
 	},
 	methods: {
 		handleClick(): void
@@ -163,17 +198,28 @@ export const GroupChip = {
 				return;
 			}
 
+			this.isDialogShown = true;
+			const targetNode = this.getChipElement();
+			if (!targetNode)
+			{
+				return;
+			}
+
 			groupDialog.show({
-				targetNode: this.$refs.chip.$el,
+				targetNode,
 				taskId: this.taskId,
 				onClose: this.handleDialogClose,
 			});
 		},
-		handleDialogClose(groupId: number): void
+		handleDialogClose(groupId?: number): void
 		{
-			if (this.isAutonomous)
+			this.isDialogShown = false;
+
+			this.$refs.chip?.$el?.focus();
+
+			if (groupId === undefined)
 			{
-				this.$refs.chip?.$el.focus();
+				return;
 			}
 
 			if (!this.isAutonomous && this.isSelected)
@@ -213,6 +259,33 @@ export const GroupChip = {
 				stageId: 0,
 			});
 		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
+		syncAria(): void
+		{
+			const el = this.getChipElement();
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+			Dom.attr(el, 'aria-label', this.ariaLabel);
+		},
+		getChipElement(): ?HTMLElement
+		{
+			return this.$refs.chip?.$el ?? null;
+		},
 	},
 	template: `
 		<Chip
@@ -229,17 +302,18 @@ export const GroupChip = {
 			ref="chip"
 			@click="handleClick"
 			@clear="handleClear"
+			@keydown="handleKeydown"
 		/>
 		<Hint
-			v-if="doShowHint"
-			:bindElement="$refs.chip.$el"
+			v-if="doShowHint && getChipElement()"
+			:bindElement="getChipElement()"
 			@close="doShowHint = false"
 		>
 			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
 		<GroupPopup
 			v-if="isAutonomous"
-			:getBindElement="() => $refs.chip.$el"
+			:getBindElement="getChipElement"
 			@openGroup="openGroup"
 		/>
 	`,

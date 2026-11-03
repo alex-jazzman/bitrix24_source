@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/interval-selector.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.popup',
 		'main.core.events',
+		'main.popup',
 	],
 	'skip_core' => false,
 ];

@@ -23,5 +23,6 @@ return [
 		'./src/openlines',
 		'./src/copilot',
 		'./src/onboarding',
+		'./src/ai-task',
 	],
 ];

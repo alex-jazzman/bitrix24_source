@@ -1,15 +1,13 @@
 import { BitrixVue } from 'ui.vue';
-import { EventEmitter } from 'main.core.events';
 import { PhoneFilter as Filter, PhoneFormatter as Formatter } from 'ui.type';
-import { Property as Const, EventType } from 'sale.checkout.const';
+import { Property as Const } from 'sale.checkout.const';
+
+import { isCaretKey, MixinPropertyField } from './property-field';
 
 BitrixVue.component('sale-checkout-view-element-input-property-phone', {
+	mixins: [MixinPropertyField],
 	props: ['item', 'index'],
 	methods: {
-		validate()
-		{
-			EventEmitter.emit(EventType.property.validate, { index: this.index });
-		},
 		onKeyDown(e)
 		{
 			let value = e.key;
@@ -19,7 +17,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-phone', {
 				return;
 			}
 
-			if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0)
+			if (isCaretKey(e.key) || ['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0)
 			{
 				return;
 			}
@@ -62,10 +60,6 @@ BitrixVue.component('sale-checkout-view-element-input-property-phone', {
 		{
 			return this.item.value === '';
 		},
-		isRequired()
-		{
-			return this.item.required === 'Y';
-		},
 		isAsteriskShown()
 		{
 			return this.isEmpty && this.isRequired;
@@ -73,9 +67,9 @@ BitrixVue.component('sale-checkout-view-element-input-property-phone', {
 	},
 	// language=Vue
 	template: `
-		<div class="form-wrap form-asterisk" :class="checkedClassObject">
-			<input 
-				class="form-control form-control-lg" 
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-phone">
+			<input
+				class="form-control form-control-lg"
 				:class="checkedClassObject"
 				@blur="validate"
 				@input="onInput"
@@ -83,10 +77,15 @@ BitrixVue.component('sale-checkout-view-element-input-property-phone', {
 				v-model="value"
 				autocomplete="tel"
 				inputmode="tel"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
 				:placeholder="item.name"
 			/>
 			<span
 				class="asterisk-item"
+				aria-hidden="true"
 				v-if="isAsteriskShown"
 			>
 				{{item.name}}

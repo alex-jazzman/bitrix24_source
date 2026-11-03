@@ -14,4 +14,7 @@ return array(
 		'html' => false,
 	),
 	'nodes' => array(),
+	'assets' => array(
+		'ext' => array('ui.design-tokens.air'),
+	),
 );

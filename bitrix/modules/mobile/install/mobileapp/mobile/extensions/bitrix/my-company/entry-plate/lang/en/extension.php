@@ -1,0 +1,2 @@
+<?php
+$MESS['MY_COMPANY_ENTRY_PLATE_TITLE'] = 'My company';

@@ -1,5 +1,5 @@
 import { Dom, Event, Runtime, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { type MessageEvent, SidePanel, type Slider, type SliderEvent } from 'main.sidepanel';
 import { BitrixVue } from 'ui.vue3';
@@ -13,16 +13,18 @@ import { getMigrationState } from 'mail.migration-state';
 
 import { App } from './app';
 import { ComposeFormEvent } from '../const/event';
-import { AutoApplyTemplate } from '../feature/auto-apply-template/auto-apply-template';
 import { closeComposeForm, closeComposeFormKey, releaseComposeForm } from '../feature/close-form/close-form';
 import { DraftIntegration } from '../feature/draft-integration/draft-integration';
 import { DraftBridgeEvent } from '../feature/draft-integration/draft-compose-adapter';
+import { destroySubjectGeneration, invalidateSubjectGeneration } from '../feature/generate-subject/generate-subject';
+import { Api } from '../infrastructure/service/compose/compose';
 import { type ComposeEditorAdapter, type EditorUnsubscribe } from '../infrastructure/adapter/editor/types';
 import {
 	largeAttachmentGateKey,
 	LargeAttachmentAdapter,
 	type LargeAttachmentSendGate,
 } from '../infrastructure/adapter/large-attachment/large-attachment';
+import { subscribeSubjectGeneration } from '../infrastructure/pull/subject-generation/subject-generation';
 import { loc } from '../lib/loc/loc';
 import { composeStateKey, createComposeState, isLargeAttachmentEnabled } from '../model/compose/compose';
 import { type ComposeInitialData, type ComposeState } from '../model/compose/types';
@@ -34,6 +36,8 @@ export type ComposeFormOptions = {
 	editorFormId: string,
 	editorId: string,
 	initialData: ComposeInitialData,
+	/** Markup for the head of the letter document; the template renders it with `Extension::getHtml()`. */
+	editorHeadHtml?: string,
 };
 
 /**
@@ -95,7 +99,6 @@ export class ComposeForm
 	#largeAttachment: LargeAttachmentAdapter | null = null;
 	#slider: Slider | null = null;
 	#draft: DraftIntegration | null = null;
-	#autoApply: AutoApplyTemplate | null = null;
 	#formNode: HTMLElement | null = null;
 	#editorSubscriptions: EditorUnsubscribe[] = [];
 	#draftLoader: Loader | null = null;
@@ -103,6 +106,7 @@ export class ComposeForm
 	#panelClosePending: boolean = false;
 	#panelCloseApproved: boolean = false;
 	#migrationStateUnsubscribes: Array<() => void> = [];
+	#unsubscribeSubjectGeneration: (() => void) | null = null;
 
 	constructor(options: ComposeFormOptions)
 	{
@@ -133,7 +137,9 @@ export class ComposeForm
 
 		this.#state = createComposeState(this.#options.initialData);
 		this.#subscribeToMigrationState(this.#state);
-		this.#state.draft.isLoading = Type.isStringFilled(this.#state.draft.clientId) && this.#state.draft.id > 0;
+		// The deferred result of the generation reaches the form that asked for it and no other.
+		this.#unsubscribeSubjectGeneration = subscribeSubjectGeneration(this.#state);
+		this.#state.draft.isLoading =Type.isStringFilled(this.#state.draft.clientId) && this.#state.draft.id > 0;
 		this.#draftLoaderTarget = this.#formNode ?? container.parentElement ?? container;
 		if (this.#state.draft.isLoading)
 		{
@@ -144,6 +150,7 @@ export class ComposeForm
 			formId: this.#options.formId,
 			// `main.post.form` names the Disk uploader control after the editor form, not after the form id.
 			uploaderControlId: this.#options.editorFormId,
+			editorHeadHtml: this.#options.editorHeadHtml ?? '',
 		}) as unknown as VueApplication;
 		this.#app.config.globalProperties.loc = loc;
 		this.#app.provide(composeStateKey, this.#state);
@@ -151,21 +158,19 @@ export class ComposeForm
 		this.#app.provide(closeComposeFormKey, this.#closeForm);
 		const root = this.#app.mount(container);
 		this.#editorSubscriptions = [
-			root.editor.subscribeContentChange(this.#handleUserInput),
+			root.editor.subscribeContentChange(this.#handleBodyChange),
 			root.editor.subscribeFileAdd(this.#handleUserInput),
 			root.editor.subscribeFileRemove(this.#handleUserInput),
 		];
 
-		EventEmitter.subscribe(SliderMessageEvent, this.#relaySliderMessage, { compatMode: true });
+		EventEmitter.subscribe(SliderMessageEvent, this.#relaySliderMessage);
 		this.#watchPanelClose();
 
-		this.#startDraftAndAutoApply(root, this.#state);
+		this.#startDraft(root, this.#state);
 	}
 
 	destroy(): void
 	{
-		this.#autoApply?.destroy();
-		this.#autoApply = null;
 		if (this.#formNode)
 		{
 			Event.unbind(this.#formNode, 'input', this.#handleUserInput);
@@ -173,6 +178,13 @@ export class ComposeForm
 		this.#formNode = null;
 		this.#editorSubscriptions.forEach((unsubscribe): void => unsubscribe());
 		this.#editorSubscriptions = [];
+		this.#unsubscribeSubjectGeneration?.();
+		this.#unsubscribeSubjectGeneration = null;
+		if (this.#state)
+		{
+			// The wait leaves no timer behind: the panel can be closed by its own control while it runs.
+			destroySubjectGeneration(this.#state);
+		}
 		EventEmitter.unsubscribe(SliderMessageEvent, this.#relaySliderMessage);
 		this.#unwatchPanelClose();
 
@@ -212,7 +224,7 @@ export class ComposeForm
 		});
 	}
 
-	#startDraftAndAutoApply(root: ComposeRootInstance, state: ComposeState): void
+	#startDraft(root: ComposeRootInstance, state: ComposeState): void
 	{
 		const draft = new DraftIntegration({
 			formId: this.#options.formId,
@@ -226,18 +238,7 @@ export class ComposeForm
 		});
 		this.#draft = draft;
 
-		// A restored draft owns the letter, so the last template is applied only to a compose that stayed
-		// empty: the gate waits for the restore to report itself either way.
-		const autoApply = new AutoApplyTemplate({
-			editor: root.editor,
-			state,
-			formId: this.#options.formId,
-			draftRestore: draft.restore,
-		});
-		this.#autoApply = autoApply;
-
 		void draft.start();
-		void autoApply.start();
 	}
 
 	#handleDraftLoadingChange = (loading: boolean): void => {
@@ -269,8 +270,27 @@ export class ComposeForm
 		this.#draftLoader = null;
 	}
 
+	/**
+	 * The body of the letter changed. Everything the draft does for any other input is done here as well, and
+	 * the generation of the subject is cancelled on top of it: the material the subject is built from is no
+	 * longer the one the request went with.
+	 *
+	 * The channel is the `input` event of the body and nothing else, so a programmatic write reaches it only
+	 * if it raises that event itself: the slots of the calendar do (`insert-calendar-slots.ts:242`), while a
+	 * template writes the body through the editor adapter and cancels the generation on its own
+	 * (`apply-template.ts`). The signature is written straight into the DOM and cancels nothing, which is
+	 * right, because the signature never travels to the generation.
+	 */
+	#handleBodyChange = (): void => {
+		if (this.#state)
+		{
+			invalidateSubjectGeneration(this.#state);
+		}
+
+		this.#handleUserInput();
+	};
+
 	#handleUserInput = (): void => {
-		this.#autoApply?.markUserInput();
 		if (!this.#state?.draft.isLoading)
 		{
 			EventEmitter.emit(ComposeFormEvent.Changed, {
@@ -393,7 +413,7 @@ export class ComposeForm
 		this.#slider = SidePanel.Instance.getSliderByWindow(window);
 		if (this.#slider)
 		{
-			EventEmitter.subscribe(this.#slider, SliderCanCloseEvent, this.#handlePanelCanClose, { compatMode: true });
+			EventEmitter.subscribe(this.#slider, SliderCanCloseEvent, this.#handlePanelCanClose);
 			EventEmitter.subscribe(this.#slider, SliderCloseEvent, this.#handlePanelClose);
 		}
 	}
@@ -410,7 +430,8 @@ export class ComposeForm
 		this.#panelCloseApproved = false;
 	}
 
-	#handlePanelCanClose = (sliderEvent: SliderEvent): void => {
+	#handlePanelCanClose = (event: BaseEvent<[SliderEvent]>): void => {
+		const sliderEvent = event.getData()?.[0];
 		if (!sliderEvent || this.#panelCloseApproved || !this.#state)
 		{
 			this.#panelCloseApproved = false;
@@ -456,11 +477,12 @@ export class ComposeForm
 	 */
 	#resolveLargeAttachmentGate = (): LargeAttachmentSendGate | null => this.#largeAttachment;
 
-	#relaySliderMessage = (event: MessageEvent): void => {
-		const eventId = event.getEventId();
-		if (eventId !== null && RelayedSliderMessages.has(eventId))
+	#relaySliderMessage = (event: BaseEvent<[MessageEvent]>): void => {
+		const messageEvent = event.getData()?.[0];
+		const eventId = messageEvent?.getEventId();
+		if (eventId && RelayedSliderMessages.has(eventId))
 		{
-			SidePanel.Instance.postMessage(window, eventId, event.getData() ?? {});
+			SidePanel.Instance.postMessage(window, eventId, messageEvent?.getData() ?? {});
 		}
 	};
 

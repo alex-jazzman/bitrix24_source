@@ -1,12 +1,42 @@
-/* Chips row inside the "Rules" card (mockup page-node-settings): compact left-aligned
-   layout with the node's min-gap 6px, wrapping to the next line when tight */
+/* Chips row inside the "Rules" card (mockup page-node-settings): one line at any width of the card.
+   A chip with no room left is taken off the row by the component and offered in the three-dot menu,
+   so nowrap costs the user nothing: position:relative and the clipping keep such a chip in this box. */
 .editor-chart-node-settings-add-construction-toolbar {
+	/* Room for the focus ring: 2px outline plus its 2px offset, given back to the card by the
+	   negative margins below - the clipping box would cut a whole segment of the ring off. */
+	--editor-chart-add-construction-focus-ring-room: 4px;
+	/* Side inset of the rules card, owned elsewhere: entities/node-settings/ui/
+	   node-settings-rules-layout/style.css, `__rules-card { margin: 18px 18px 0 }`
+	   and its `.--pinned` compensations. Changed there - change it here too. */
+	--editor-chart-add-construction-card-side-inset: 18px;
+
+	position: relative;
 	flex: none;
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
+	overflow: hidden;
 	align-items: center;
 	gap: var(--ui-space-inline-2xs2);
-	padding-top: var(--ui-space-inset-2xs);
+	/* The air above the chips matches the air below them: the card adds its own 18px gap above the
+	   toolbar, and the card's bottom inset is 20px, so 2px here evens the two out. The pinned strip
+	   overrides this with its own inset in node-settings-rules-layout */
+	padding-top: var(--ui-space-inset-3xs);
+	padding-bottom: var(--editor-chart-add-construction-focus-ring-room);
+	margin-bottom: calc(-1 * var(--editor-chart-add-construction-focus-ring-room));
+	/* The side room stays out of the measured width: the fit reads the content box
+	   (measureVisibleChipCount), not the padded one. */
+	padding-inline: var(--editor-chart-add-construction-focus-ring-room);
+	margin-inline: calc(-1 * var(--editor-chart-add-construction-focus-ring-room));
+}
+
+/* The pinned strip drops the side margins of the card, and the row takes them back, as the head of the
+   card does (-metrics): without it the row grows by both insets the moment the card pins, so a plain
+   scroll past the threshold moves a chip between the row and the menu. */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-add-construction-toolbar {
+	margin-inline: calc(
+		var(--editor-chart-add-construction-card-side-inset)
+		- var(--editor-chart-add-construction-focus-ring-room)
+	);
 }
 
 /* Native-button reset: chips and the more-trigger are <button> for a11y,
@@ -35,10 +65,16 @@
 .editor-chart-node-settings-add-construction-toolbar__item {
 	cursor: pointer;
 	box-sizing: border-box;
+	/* natural width, never squeezed: a chip that has no room is taken off the row whole */
+	flex: none;
 	min-height: var(--ui-size-xl2);
 	font-size: 13px;
 	font-weight: var(--ui-font-weight-medium);
 	line-height: 17px;
+	/* The case of the row comes from here and not from the phrases: «Общие настройки» of the
+	   base-settings chip is the same phrase the settings preview and the accessible names are built
+	   from, where the ordinary case is the right one. */
+	text-transform: uppercase;
 	padding: 0 var(--ui-space-inset-xs) 0 var(--ui-space-inset-2xs);
 	border: 1px solid;
 	border-radius: var(--ui-border-radius-xs);
@@ -49,26 +85,47 @@
 	min-width: 0;
 }
 
-.editor-chart-node-settings-add-construction-toolbar__item:hover {
-	box-shadow: var(--ui-shadow-bottom-s);
-}
-
-.editor-chart-node-settings-add-construction-toolbar__item:active {
-	box-shadow: var(--ui-shadow-bottom-xs);
+.editor-chart-node-settings-add-construction-toolbar__item {
+	transition: background-image 200ms ease;
 }
 
 
 /* Pending state of an add: the base settings an action inherits are being resolved. Kept
    focusable on purpose (aria-disabled, not disabled): focus stays on the pressed chip,
    which is what the addition is announced against. A press that still comes through (the
-   keyboard ignores pointer-events) is answered by an announcement, not by silence.
-   The more-trigger dims along with the chips: its menu items add constructions too. */
-.editor-chart-node-settings-add-construction-toolbar__item.--pending,
-.editor-chart-node-settings-add-construction-toolbar__more-trigger.--pending {
+   keyboard ignores pointer-events) is answered by an announcement, not by silence. */
+.editor-chart-node-settings-add-construction-toolbar__item.--pending {
 	cursor: default;
 	opacity: 0.4;
 	box-shadow: none;
 	pointer-events: none;
+}
+
+/* The same wait, shown on the trigger of a chip that left the row - and shown only. The menu behind
+   the trigger also holds items that wait for nothing (the group, any other chip off the row), and on
+   a narrow panel it is the only way to them, so the button keeps opening it by mouse as by keyboard.
+   A second add of the waiting item is answered by the guard in onAddConstruction. */
+.editor-chart-node-settings-add-construction-toolbar__more-trigger.--pending {
+	opacity: 0.4;
+}
+
+/* Out of sight but not out of the DOM: the width the fit is measured against is read off the chip
+   itself, and an element removed from the document has none. The same state hides the trigger while
+   its menu is empty - the fixed width of its own rule is what the row reserves for it. */
+.editor-chart-node-settings-add-construction-toolbar__item.--offscreen,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger.--offscreen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+/* Absolute positioning makes the width shrink-to-fit against the toolbar, which on a panel narrower
+   than the chip reads short and would keep the chip on the row, clipped. max-content is the width the
+   chip takes on the row (flex: none), so it is the width it is measured at here. */
+.editor-chart-node-settings-add-construction-toolbar__item.--offscreen {
+	width: max-content;
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--condition {
@@ -100,15 +157,14 @@
 }
 
 /* Green chip, truncated to «+ БАЗО…» per mockup node 935:29625 (width 77px).
-   A hard max-width is required: with flex-wrap on the row, items wrap
-   instead of shrinking, so flex-shrink alone never triggered the ellipsis. */
+   The hard max-width is what triggers the ellipsis: chips keep their natural width on the row
+   (flex: none), so nothing else ever shortens the label. */
 .editor-chart-node-settings-add-construction-toolbar__item.--base-settings {
 	color: var(--ui-color-designer-bp-rules-green-text);
 	border-color: var(--ui-color-designer-bp-rules-green-stroke);
 	background: var(--ui-color-designer-bp-rules-green-bg);
 	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-green-text);
 	max-width: 78px;
-	flex-shrink: 1;
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--base-settings span {
@@ -146,7 +202,56 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
-.editor-chart-node-settings-add-construction-menu-item.--group {
+/* A chip taken off the row keeps its colour in the menu: it is the same block, offered elsewhere */
+.editor-chart-node-settings-add-construction-menu-item.--group,
+.editor-chart-node-settings-add-construction-menu-item.--output {
 	color: var(--ui-color-designer-bp-rules-grey-text);
 	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--condition {
+	color: var(--ui-color-designer-bp-rules-blue-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-blue-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--action {
+	color: var(--designer-bp-rules-action-text);
+	--ui-icon-set__icon-color: var(--designer-bp-rules-action-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--filter {
+	color: var(--ui-color-designer-bp-rules-orange-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--base-settings {
+	color: var(--ui-color-designer-bp-rules-green-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-green-text);
+}
+
+
+/* State tint of a chip. It has to come after the type colours below and outweigh them: those set
+   the colour through the `background` shorthand, which resets background-image to none, and their
+   specificity matches a bare :hover. Laid over the colour instead of replacing it, so a chip keeps
+   telling its construction type while the pointer is on it. */
+.editor-chart-node-settings-add-construction-toolbar .editor-chart-node-settings-add-construction-toolbar__item:hover {
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-hover-default),
+		var(--ui-color-bg-state-hover-default)
+	);
+}
+
+.editor-chart-node-settings-add-construction-toolbar .editor-chart-node-settings-add-construction-toolbar__item:active {
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-click-default),
+		var(--ui-color-bg-state-click-default)
+	);
+}
+
+/* Hint of a chip with a clipped label: its content box is inset by ui.hint
+   (`.ui-hint-content { margin: 7px }`), which is too much air around a single short phrase. The
+   popup of the directive carries the class of the toolbar, and two classes outweigh that rule -
+   the file of ui.hint belongs to another module and stays untouched. */
+.editor-chart-node-settings-add-construction-hint .ui-hint-content {
+	margin: 3px;
 }

@@ -4,6 +4,22 @@ import { OverflowCalculator, PositionTracker } from 'ui.action-panel';
 
 'use strict';
 
+/**
+ * The keyboard entry point of the panel (getFirstFocusableNode, focusFirstItem) and
+ * what a hidden panel exposes to the keyboard (setPanelInteractive) are covered by
+ * unit tests that live in another module:
+ * crm/install/js/crm/kanban/tests/unit/action-panel-accessibility.test.js.
+ * This extension is legacy and has no bundle config of its own, so it cannot host
+ * a chef test suite; crm.kanban loads it and takes the classes from the BX
+ * namespace exactly as the product does.
+ *
+ * Run them when changing this file:
+ *   chef test unit crm.kanban --project chromium
+ *
+ * The panel sits under every list of Bitrix24, so a change here reaches far
+ * beyond the kanban the tests are named after.
+ */
+
 BX.namespace('BX.UI');
 
 // a parent container holds one live panel: the previous one is destroyed when a new panel is drawn
@@ -54,6 +70,7 @@ BX.UI.ActionPanel = function(options)
 	this.parentPosition = options.parentPosition;
 	this.panelIsFixed = null;
 	this.removeLeftPosition = options.removeLeftPosition;
+	this.panelInteractive = false;
 
 	this.positionTracker = null;
 	this.overflowCalculator = null;
@@ -209,6 +226,58 @@ BX.UI.ActionPanel.prototype =
 		});
 	},
 
+	/**
+	 * Returns the node of the first panel item that can take keyboard focus: enabled,
+	 * shown and reachable from the keyboard. Items that are disabled, hidden or have no
+	 * accessible name are skipped -- focus on them is either a dead end or a no-op.
+	 * A panel that is not shown returns null for the same reason.
+	 *
+	 * This is the supported way for a consumer to reach into the panel: the markup of
+	 * the panel (class names, data attributes, the node that actually holds focus for
+	 * an item) is internal and changes without notice.
+	 *
+	 * @returns {HTMLElement|null}
+	 */
+	getFirstFocusableNode: function()
+	{
+		// A hidden panel has nothing to offer: its actions are invisible, and the
+		// browser refuses focus inside an inert subtree anyway.
+		if (!this.panelInteractive)
+		{
+			return null;
+		}
+
+		for (var i = 0; i < this.items.length; i++)
+		{
+			var node = this.items[i].getFocusableNode();
+			if (node)
+			{
+				return node;
+			}
+		}
+
+		return null;
+	},
+
+	/**
+	 * Moves keyboard focus to the first focusable panel item, see getFirstFocusableNode().
+	 * Part of the panel contract.
+	 *
+	 * @returns {boolean} whether focus has been moved
+	 */
+	focusFirstItem: function()
+	{
+		var node = this.getFirstFocusableNode();
+		if (!node)
+		{
+			return false;
+		}
+
+		node.focus();
+
+		return document.activeElement === node;
+	},
+
 	addItems: function(items)
 	{
 		items.forEach(function (item) {
@@ -233,6 +302,13 @@ BX.UI.ActionPanel.prototype =
 
 			this.items.push(item);
 			this.layout.itemContainer.appendChild(item.render());
+
+			// The panel is filled and refilled while it is hidden, so an item has to
+			// arrive in the state the panel is in, see setPanelInteractive().
+			if (!this.panelInteractive)
+			{
+				item.setTabbable(false);
+			}
 		}
 	},
 
@@ -261,9 +337,25 @@ BX.UI.ActionPanel.prototype =
 				props: {
 					className: "ui-action-panel-more"
 				},
+				attrs: {
+					role: 'button',
+					// The block is built on demand, and a window resize builds it while
+					// the panel is hidden, see setPanelInteractive().
+					tabindex: this.panelInteractive ? '0' : '-1',
+					'aria-haspopup': 'menu',
+					'aria-expanded': 'false',
+					'data-testid': 'ui-action-panel-more-btn'
+				},
 				text: BX.message('JS_UI_ACTIONPANEL_MORE_BLOCK'),
 				events: {
-					click: this.handleClickMoreBlock.bind(this)
+					click: this.handleClickMoreBlock.bind(this),
+					keydown: function(event) {
+						if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+						{
+							event.preventDefault();
+							this.handleClickMoreBlock(event);
+						}
+					}.bind(this)
 				}
 			});
 		}
@@ -420,6 +512,7 @@ BX.UI.ActionPanel.prototype =
 					if (!this.destroyed)
 					{
 						BX.removeClass(this.getMoreBlock(), "ui-action-panel-item-active");
+						this.getMoreBlock().setAttribute('aria-expanded', 'false');
 					}
 				}.bind(this)
 			}
@@ -430,6 +523,7 @@ BX.UI.ActionPanel.prototype =
 		// menu up on every one of them costs more than the adjustment itself
 		this.moreMenuWindow = popupMenu;
 		popupMenu.show();
+		this.getMoreBlock().setAttribute('aria-expanded', 'true');
 	},
 
 	removeMoreBlock: function()
@@ -478,6 +572,47 @@ BX.UI.ActionPanel.prototype =
 		});
 
 		this.maxHeight ? this.layout.container.style.maxHeight = this.maxHeight + "px" : null;
+
+		// The panel is built hidden and is shown only once something is selected.
+		this.setPanelInteractive(false);
+	},
+
+	/**
+	 * Follows the visibility of the panel with its operability.
+	 *
+	 * A hidden panel is only faded out (.ui-action-panel has opacity: 0 and
+	 * pointer-events: none), so without this its actions and its "more" block keep
+	 * their place in the Tab order and in the accessibility tree: once the selection
+	 * is dropped, Tab would walk through actions nobody can see (WCAG 2.4.3, 4.1.2).
+	 *
+	 * Both mechanisms are used on purpose. 'inert' is the one that answers for the
+	 * whole subtree, whatever appears inside it later and however the panel is
+	 * filled, and it takes the panel out of the accessibility tree as well; the
+	 * tabindex switch keeps a browser that does not support the attribute out of the
+	 * same trap. Nothing else about an item is touched, so a panel shown again is
+	 * exactly the panel that was hidden.
+	 *
+	 * @param {boolean} interactive
+	 */
+	setPanelInteractive: function(interactive)
+	{
+		this.panelInteractive = interactive;
+
+		if (this.layout.container)
+		{
+			interactive
+				? this.layout.container.removeAttribute('inert')
+				: this.layout.container.setAttribute('inert', '');
+		}
+
+		this.items.forEach(function(item) {
+			item.setTabbable(interactive);
+		});
+
+		if (this.layout.more)
+		{
+			this.layout.more.setAttribute('tabindex', interactive ? '0' : '-1');
+		}
 	},
 
 	getItemContainer: function()
@@ -748,6 +883,10 @@ BX.UI.ActionPanel.prototype =
 			this.activatePanelItems();
 		}
 
+		// Before the early return below, so a panel that is already shown cannot be
+		// left inert by a state the caller did not expect.
+		this.setPanelInteractive(true);
+
 		if (BX.hasClass(this.layout.container, "ui-action-panel-show"))
 			return;
 
@@ -776,11 +915,15 @@ BX.UI.ActionPanel.prototype =
 	{
 		BX.onCustomEvent(this, 'BX.UI.ActionPanel:hidePanel', [this]);
 
+		// A pinned panel stays on the screen and only disables its items, so it keeps
+		// answering to the keyboard the same way it answers to the mouse.
 		if (this.pinnedMode)
 		{
 			this.disablePanelItems();
 			return;
 		}
+
+		this.setPanelInteractive(false);
 
 		BX.removeClass(this.layout.container, "ui-action-panel-show");
 		BX.removeClass(this.layout.container, "ui-action-panel-show-animate");

@@ -3,17 +3,20 @@ import { MessengerModel, PayloadData } from '../../base';
 export type FolderType = 'system' | 'personal';
 
 export type FolderCode = 'default' | 'tasksTask' | 'copilot'
-	| 'openChannel' | 'collab' | 'lines' | null;
+	| 'openChannel' | 'collab' | 'lines' | 'all' | 'vibecodeApp' | null;
 
 export interface FolderModelState {
 	id: number;
-	parentChatId: number;
+	parentChatId: number | null;
 	type: FolderType;
 	code: FolderCode;
 	title: string;
+	description: string | null;
 	sort: number;
+	visible: boolean;
 	chatIds: Array<number>;
 	recentSection: string | null;
+	sourceFolders: Array<string>;
 }
 
 /**
@@ -28,6 +31,8 @@ export interface FolderRestChatDto {
 export interface FolderRestDefinitionDto {
 	chats: Array<FolderRestChatDto>;
 	recentSection: string | null;
+	parentChatId: number | null;
+	sourceFolders: Array<string>;
 }
 
 /**
@@ -40,6 +45,7 @@ export interface FolderRestDto {
 	type: FolderType;
 	code: FolderCode;
 	title: string;
+	visible: boolean;
 	definition: FolderRestDefinitionDto;
 }
 

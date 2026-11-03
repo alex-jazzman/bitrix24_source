@@ -1,4 +1,4 @@
-import { Loc, Tag } from 'main.core';
+import { Loc, Tag, Type } from 'main.core';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
 import { NoteThemeContext } from 'note.ui.theme-context';
@@ -12,6 +12,8 @@ export type BulkRestorePopupResult = {
 export type BulkRestorePopupOptions = {
 	total: number,
 	orphanCount: number,
+	canCreateCollection?: boolean,
+	onCreateCollection?: (name: string) => Promise<{ id: number, title: string } | null>,
 };
 
 export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<BulkRestorePopupResult>
@@ -19,6 +21,8 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 	const total = Math.max(0, Number(options?.total) || 0);
 	const orphanCount = Math.max(0, Number(options?.orphanCount) || 0);
 	const hasOrphans = orphanCount > 0;
+	const onCreateCollection = Type.isFunction(options?.onCreateCollection) ? options.onCreateCollection : null;
+	const canCreateCollection = Boolean(options?.canCreateCollection && onCreateCollection);
 
 	return new Promise((resolve) => {
 		let isResolved = false;
@@ -74,7 +78,12 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 		const picker = hasOrphans
 			? createCollectionSelector({
 				placeholder: Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
+				accessLevel: 'manage',
 				mobileDropdownHeight: 240,
+				allowCreateItem: canCreateCollection,
+				createFooterLabel: Loc.getMessage('NOTE_SIDEBAR_PICK_COLLECTION_FOOTER_CREATE') || '',
+				onItemCreateAsync: onCreateCollection,
+				confirmAfterCreate: true,
 				onSelectionChange: () => updateRestoreState(),
 			})
 			: null

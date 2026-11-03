@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { Runtime } from 'main.core';
 import { createStore } from 'ui.vue3.vuex';
-import { type Group, type Dashboard, type Scope, GroupType, GroupAppState } from './type';
+import { type Group, type Dashboard, type Scope, type User, GroupType, GroupAppState } from './type';
 
 export class Store
 {

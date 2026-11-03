@@ -1,6 +1,7 @@
 import { ajax, Cache, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
+import { LiveAnnouncer } from 'ui.a11y';
 
 import { Analytics } from '../analytics';
 import { type ConfigContent } from '../types/content';
@@ -56,6 +57,8 @@ export class Content extends EventEmitter
 		return this.cache.remember(type, () => {
 			return new Popup(`bx-hint-${Text.getRandom()}`, element, {
 				content: text,
+				ariaLabel: text,
+				focusTrap: false,
 				className: 'bx-invitation-warning',
 				zIndex: 15000,
 				angle: true,
@@ -68,14 +71,15 @@ export class Content extends EventEmitter
 				maxWidth: 300,
 				events: {
 					onShow: (event) => {
+						LiveAnnouncer.announce(text);
 						EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.InvitationWidget.HintPopup:show', new BaseEvent({
 							data: {
 								popup: event.target,
-							}
+							},
 						}));
 						const timeout = setTimeout(() => {
 							event.target.close();
-						}, 4000)
+						}, 4000);
 						EventEmitter.subscribeOnce(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.InvitationWidget.HintPopup:close', () => {
 							clearTimeout(timeout);
 						});
@@ -83,7 +87,7 @@ export class Content extends EventEmitter
 					onClose: () => {
 						EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.InvitationWidget.HintPopup:close');
 					},
-				}
+				},
 			});
 		});
 	}
@@ -114,10 +118,14 @@ export class Content extends EventEmitter
 			link = `${link}&firstInvitationBlock=extranet`;
 		}
 
-		BX.SidePanel.Instance.open(
-			link,
-			{ cacheable: false, allowChangeHistory: false, width: 1100 }
-		);
+		BX.SidePanel.Instance.open(link, {
+			cacheable: false,
+			allowChangeHistory: false,
+			width: 1100,
+			focusTrap: {
+				restoreFocus: this.getOptions().button,
+			},
+		});
 	}
 
 	getConfig(): ConfigContent

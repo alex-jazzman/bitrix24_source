@@ -1,6 +1,7 @@
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { mapState, mapActions } from 'ui.vue3.pinia';
-import { Type } from 'main.core';
+import { LiveAnnouncer } from 'ui.a11y';
+import { Loc, Type } from 'main.core';
 
 import {
 	InspectorSearch,
@@ -10,6 +11,7 @@ import {
 	InspectorGridView,
 	InspectorCloseButton,
 	InspectorEmptyState,
+	InspectorSkeleton,
 	type InspectorViewItemBase,
 } from '../../../../entities/node-data-inspector';
 import { NavigateGridView, FilterGridView } from '../../../../features/node-data-inspector';
@@ -30,6 +32,7 @@ import {
 	ViewMode,
 	ViewModeConfigs,
 	SchemeViewGroupKey,
+	SKELETON_DELAY_MS,
 } from './const';
 import {
 	createPreparedItemsRequestState,
@@ -52,6 +55,7 @@ export const NodeDataInspector = {
 		InspectorGridView,
 		InspectorCloseButton,
 		InspectorEmptyState,
+		InspectorSkeleton,
 		NavigateGridView,
 		FilterGridView,
 	},
@@ -62,6 +66,8 @@ export const NodeDataInspector = {
 		providedItemsBlockId: ?string,
 		preparedItemsRequestState: PreparedItemsRequestState,
 		updateRafId: ?number,
+		skeletonDelayTimeoutId: ?number,
+		isSkeletonDelayElapsed: boolean,
 		} {
 		return {
 			searchValue: '',
@@ -70,6 +76,8 @@ export const NodeDataInspector = {
 			providedItemsBlockId: null,
 			preparedItemsRequestState: createPreparedItemsRequestState(),
 			updateRafId: null,
+			skeletonDelayTimeoutId: null,
+			isSkeletonDelayElapsed: false,
 		};
 	},
 	computed: {
@@ -83,7 +91,7 @@ export const NodeDataInspector = {
 		]),
 		...mapState(useNodeSettingsStore, ['ports']),
 		...mapState(diagramStore, ['templateId']),
-		templateData(): { groups: Array<TemplateDataGeneralGroup> }
+		mappedTemplateData(): { groups: Array<TemplateDataGeneralGroup> }
 		{
 			const items = this.providedItems;
 
@@ -94,10 +102,12 @@ export const NodeDataInspector = {
 				};
 			}
 
-			const mappedData = {
+			return {
 				groups: mapTemplateGroupsToView(items, this.ports ?? [], this.lastValues),
 			};
-
+		},
+		templateData(): { groups: Array<TemplateDataGeneralGroup> }
+		{
 			const normalizedSearchValue = Type.isStringFilled(this.searchValue)
 				? this.searchValue.trim().toLowerCase()
 				: ''
@@ -105,10 +115,10 @@ export const NodeDataInspector = {
 
 			if (!normalizedSearchValue)
 			{
-				return mappedData;
+				return this.mappedTemplateData;
 			}
 
-			return this.filterWorkflowData(mappedData, normalizedSearchValue);
+			return this.filterWorkflowData(this.mappedTemplateData, normalizedSearchValue);
 		},
 		viewModeConfigList(): $Values<typeof ViewModeConfigs>
 		{
@@ -117,6 +127,18 @@ export const NodeDataInspector = {
 		isEmpty(): boolean
 		{
 			return !this.templateData?.groups?.length;
+		},
+		// The snapshot of the selected block has not arrived yet. Never read `isEmpty` for this: it
+		// counts the tree already filtered by the search string, so a search without matches would
+		// look like loading.
+		isSnapshotPending(): boolean
+		{
+			if (!this.block)
+			{
+				return false;
+			}
+
+			return this.providedItems === null || this.providedItemsBlockId !== this.block.id;
 		},
 		gridTemplateData(): { groups: Array<TemplateDataGeneralGroup> }
 		{
@@ -143,6 +165,31 @@ export const NodeDataInspector = {
 		{
 			this.scheduleProvidedItemsUpdate();
 		},
+		// The pending state owns the delay before the skeleton: entering it starts the delay,
+		// leaving it drops both the delay and the placeholder.
+		isSnapshotPending: {
+			immediate: true,
+			handler(isPending: boolean, wasPending: boolean): void
+			{
+				if (isPending)
+				{
+					this.startSkeletonDelay();
+
+					return;
+				}
+
+				const wasSkeletonShown = this.isSkeletonDelayElapsed;
+				this.clearSkeletonDelay();
+
+				// Losing the block also ends the pending state, and that is not a result to
+				// announce. Neither is a snapshot that arrived before the placeholder was shown:
+				// there was no loading to report the end of.
+				if (wasPending && wasSkeletonShown && this.block)
+				{
+					this.announceSnapshotReady();
+				}
+			},
+		},
 	},
 	created()
 	{
@@ -157,6 +204,8 @@ export const NodeDataInspector = {
 		{
 			cancelAnimationFrame(this.updateRafId);
 		}
+
+		this.clearSkeletonDelay();
 	},
 	methods: {
 		...mapActions(useAppStore, ['toggleDataInspectorPanel']),
@@ -213,12 +262,56 @@ export const NodeDataInspector = {
 			this.providedItems = preparedItems;
 			this.providedItemsBlockId = block.id;
 		},
+		startSkeletonDelay(): void
+		{
+			this.clearSkeletonDelay();
+			this.skeletonDelayTimeoutId = setTimeout(() => {
+				this.skeletonDelayTimeoutId = null;
+				this.isSkeletonDelayElapsed = true;
+				this.announceSnapshotLoading();
+			}, SKELETON_DELAY_MS);
+		},
+		clearSkeletonDelay(): void
+		{
+			if (this.skeletonDelayTimeoutId !== null)
+			{
+				clearTimeout(this.skeletonDelayTimeoutId);
+				this.skeletonDelayTimeoutId = null;
+			}
+
+			this.isSkeletonDelayElapsed = false;
+		},
 		filterWorkflowData(
 			data: { groups: Array<InspectorViewItemBase> },
 			searchValue: string,
 		): { groups: Array<InspectorViewItemBase> }
 		{
 			return filterWorkflowData(data, searchValue);
+		},
+		// The placeholder appears without moving focus and carries no live region of its own, so
+		// the start of the loading reaches a screen reader only through the announcer.
+		announceSnapshotLoading(): void
+		{
+			const message = Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_DATA_INSPECTOR_LOADING_STATE_TITLE');
+
+			if (Type.isStringFilled(message))
+			{
+				LiveAnnouncer.announce(message);
+			}
+		},
+		// The replacement of the skeleton moves no focus, so without this the result of the
+		// loading never reaches a screen reader.
+		announceSnapshotReady(): void
+		{
+			const message = this.isEmpty
+				? Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_DATA_INSPECTOR_EMPTY_STATE_TITLE')
+				: Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_DATA_INSPECTOR_LOADED_ANNOUNCE')
+			;
+
+			if (Type.isStringFilled(message))
+			{
+				LiveAnnouncer.announce(message);
+			}
 		},
 		onClose(): void
 		{
@@ -262,7 +355,10 @@ export const NodeDataInspector = {
 				/>
 			</template>
 			<template #data-viewer>
-				<InspectorEmptyState v-if="isEmpty"/>
+				<template v-if="isSnapshotPending">
+					<InspectorSkeleton v-if="isSkeletonDelayElapsed"/>
+				</template>
+				<InspectorEmptyState v-else-if="isEmpty"/>
 				<InspectorSchemeView
 					v-else-if="viewMode === ViewMode.SCHEME"
 					:data="templateData"

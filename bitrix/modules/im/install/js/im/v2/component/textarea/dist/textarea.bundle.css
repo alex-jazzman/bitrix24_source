@@ -41,6 +41,25 @@
 	cursor: text;
 }
 
+/* the field takes no text while the window of the edit is open, so the panel stops promising it */
+.bx-im-textarea__content.--locked {
+	cursor: default;
+}
+
+/* The ring wraps the whole input area while the area itself holds focus: the area is the composer's Tab
+   stop, and Esc moves focus back to it from the field. The class only says the surface opted in (the
+   prop); :focus-visible does the rest, and it is what keeps the ring off a mouse click on the composer
+   padding while still showing it when Esc lands focus here programmatically after a keypress.
+   The ring is inset by its own width on top of the offset, which leaves a band of the composer background
+   outside it: the ring then reads against that band on one side and the input area on the other, instead
+   of against whatever is behind the chat. Staying off the clipped edge of .bx-im-textarea__container also
+   keeps the ring away from the rounded corner the container clips its descendants with. */
+.bx-im-textarea__content.--focus-outline:focus-visible {
+	border-radius: var(--im-border-radius-lg);
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+}
+
 .bx-im-textarea__top {
 	display: flex;
 	flex-grow: 1;
@@ -55,6 +74,18 @@
 }
 
 .bx-im-textarea__icon {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background-color: transparent;
+	appearance: none;
+	cursor: pointer;
+}
+
+.bx-im-textarea__slash-command-icon {
+	flex-shrink: 0;
+	align-self: flex-start;
+	margin-left: 4px;
 	cursor: pointer;
 }
 
@@ -68,6 +99,20 @@
 	color: var(--im-textarea__font-color_primary);
 	margin: 0 0 0 6px;
 	padding: 1px 0 0;
+}
+
+/* the edit of the attachments holds the text of the message in its own window: the field of the panel is
+   locked for as long as that window is open, and browsers grey a disabled field their own way */
+.bx-im-textarea__element:disabled {
+	background: transparent;
+	color: var(--im-textarea__font-color_primary);
+	-webkit-text-fill-color: var(--im-textarea__font-color_primary);
+	cursor: default;
+	opacity: 1;
+}
+
+.bx-im-textarea__element:disabled::placeholder {
+	-webkit-text-fill-color: var(--im-textarea__font-color_placeholder);
 }
 
 .bx-im-textarea__element::placeholder {
@@ -90,9 +135,25 @@
 	margin-left: 4px;
 }
 
+.bx-im-textarea__sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* The panel of an edit, a reply or a forward is a positioned sibling that comes after the handle in the
+   markup, so without a layer of its own the handle is painted and hit-tested under the panel. */
 .bx-im-textarea__drag-handle {
 	display: none;
 	position: absolute;
+	z-index: 1;
 	top: 0;
 	width: 100%;
 	height: 10px;
@@ -137,27 +198,36 @@
 }
 
 .bx-im-copilot-audio-input__container {
-	width: 24px;
-	height: 24px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23bdc1c6' fill-rule='evenodd' d='M11.994 2.833a3.37 3.37 0 0 0-3.369 3.368v5.404a3.368 3.368 0 1 0 6.737 0V6.201a3.37 3.37 0 0 0-3.369-3.368m1.968 8.772V6.201a1.968 1.968 0 1 0-3.937 0v5.404a1.968 1.968 0 0 0 3.937 0m-7.946-.6a.7.7 0 0 1 .685.715c-.05 2.237 1.79 5.274 5.289 5.274 3.513 0 5.413-3.08 5.307-5.253a.7.7 0 0 1 1.399-.068c.13 2.68-2.008 6.301-6 6.687v1.505h1.68a.7.7 0 1 1 0 1.4H9.617a.7.7 0 1 1 0-1.4h1.678v-1.503c-4.003-.377-6.053-3.99-5.995-6.672a.7.7 0 0 1 .715-.685' clip-rule='evenodd'/%3E%3C/svg%3E");
-	background-size: cover;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+	/* native button, not IconButton: needs its own round shape so the focus outline follows it */
+	border-radius: var(--ui-border-radius-circle);
 	cursor: pointer;
 	flex-shrink: 0;
 }
 
-.bx-im-copilot-audio-input__container:hover {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23a8adb4' fill-rule='evenodd' d='M11.994 2.833a3.37 3.37 0 0 0-3.369 3.368v5.404a3.368 3.368 0 1 0 6.737 0V6.201a3.37 3.37 0 0 0-3.369-3.368m1.968 8.772V6.201a1.968 1.968 0 1 0-3.937 0v5.404a1.968 1.968 0 0 0 3.937 0m-7.946-.6a.7.7 0 0 1 .685.715c-.05 2.237 1.79 5.274 5.289 5.274 3.513 0 5.413-3.08 5.307-5.253a.7.7 0 0 1 1.399-.068c.13 2.68-2.008 6.301-6 6.687v1.505h1.68a.7.7 0 1 1 0 1.4H9.617a.7.7 0 1 1 0-1.4h1.678v-1.503c-4.003-.377-6.053-3.99-5.995-6.672a.7.7 0 0 1 .715-.685' clip-rule='evenodd'/%3E%3C/svg%3E");
-}
-
+/* a running dictation reads as a control switched on: the tinted plate carries the state, the glyph
+   inside it names what the click does. Hover is the icon veil of the design system (`hoverable`) */
 .bx-im-copilot-audio-input__container.--active {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23e5f9ff' rx='12'/%3E%3Cpath fill='%2300ace3' fill-rule='evenodd' d='M7.125 8.625a1.5 1.5 0 0 1 1.5-1.5h6.752a1.5 1.5 0 0 1 1.5 1.5v6.752a1.5 1.5 0 0 1-1.5 1.5H8.625a1.5 1.5 0 0 1-1.5-1.5zm1.5-.45h6.752a.45.45 0 0 1 .45.45v6.752a.45.45 0 0 1-.45.45H8.625a.45.45 0 0 1-.45-.45V8.625a.45.45 0 0 1 .45-.45' clip-rule='evenodd'/%3E%3C/svg%3E");
+	--ui-icon-set__icon-color: var(--ui-color-design-tinted-content-icon);
+
+	background-color: var(--ui-color-design-tinted-bg);
+	border-radius: var(--ui-border-radius-circle);
 }
 
-.bx-im-copilot-audio-input__container.--active:hover {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23d3f4ff' rx='12'/%3E%3Cpath fill='%2311a9d9' fill-rule='evenodd' d='M7.125 8.625a1.5 1.5 0 0 1 1.5-1.5h6.752a1.5 1.5 0 0 1 1.5 1.5v6.752a1.5 1.5 0 0 1-1.5 1.5H8.625a1.5 1.5 0 0 1-1.5-1.5zm1.5-.45h6.752a.45.45 0 0 1 .45.45v6.752a.45.45 0 0 1-.45.45H8.625a.45.45 0 0 1-.45-.45V8.625a.45.45 0 0 1 .45-.45' clip-rule='evenodd'/%3E%3C/svg%3E");
+.bx-im-copilot-audio-input__container.--disabled {
+	opacity: 0.5;
+	pointer-events: none;
 }
 
 .bx-im-emote-popup__container {
+	--im-emote-popup__footer_height: 48px;
+
 	border-radius: inherit;
 }
 
@@ -169,7 +239,7 @@
 	align-items: center;
 	gap: 8px;
 	width: 100%;
-	height: 48px;
+	height: var(--im-emote-popup__footer_height);
 	border-bottom-left-radius: inherit;
 	border-bottom-right-radius: inherit;
 	border-top: 1px solid var(--ui-color-divider-vibrant-less);
@@ -186,7 +256,7 @@
 	box-sizing: border-box;
 	height: 440px;
 	overflow-y: auto;
-	padding: 10px;
+	padding: 10px 10px calc(10px + var(--im-emote-popup__footer_height));
 }
 
 .bx-im-emoji-content__box_category {
@@ -200,9 +270,18 @@
 	padding-left: 10px;
 }
 
+/*
+ * A content row of the grid: a flex row of eight cells. Each cell keeps its width and margin, so the
+ * eight of them fill the row exactly - the visual result is identical to the inline-block wrapping
+ * that laid them out before, only now each row is real role="row" markup the grid engine reads.
+ */
+.bx-im-emoji-content__box_category-row {
+	display: flex;
+}
+
 .bx-im-emoji-content__box_category-emoji {
+	border-radius: 4px;
 	cursor: pointer;
-	display: inline-block;
 	font-size: var(--im-emoji-content__size_emoji);
 	margin: 7px;
 	text-align: center;
@@ -222,7 +301,7 @@
 	height: 394px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding-bottom: 46px;
+	padding-bottom: var(--im-emote-popup__footer_height);
 	background-color: var(--ui-color-bg-vibrant-less);
 }
 
@@ -238,6 +317,13 @@
 }
 
 .bx-im-sticker-pack__header {
+	display: flex;
+}
+
+/* The single rowheader cell fills the header row and carries the layout the row used to: name on
+   the left, ... on the right. The visual result is unchanged. */
+.bx-im-sticker-pack__header-cell {
+	flex: 1;
 	padding-top: 8px;
 	display: flex;
 	justify-content: space-between;
@@ -254,8 +340,18 @@
 }
 
 .bx-im-sticker-pack__header-actions {
+	display: flex;
+	align-items: center;
 	margin: 8px 12px 8px 0;
+	padding: 0;
+	border: none;
+	/* literal 50%: the visible-focus outline hugs the round icon;
+		--im-border-radius-* tokens live only inside .bx-im-messenger__scope */
+	border-radius: 50%;
+	background: transparent;
+	color: inherit;
 	cursor: pointer;
+	appearance: none;
 }
 
 .bx-im-sticker-pack__stickers {
@@ -352,8 +448,13 @@
 	justify-content: center;
 	flex-shrink: 0;
 	padding: 4px;
+	border: none;
 	border-radius: 8px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	cursor: pointer;
+	appearance: none;
 }
 
 .bx-im-stickers-header__item:hover {
@@ -451,22 +552,20 @@
 	justify-content: space-between;
 }
 
-.bx-im-mention-popup-content__container > :only-child {
-	margin-top: auto;
-}
-
 .bx-im-mention-popup-content__loader {
 	display: flex;
 	justify-content: center;
 	height: 52px;
 }
 
+/* No clip of its own: the keyboard ring of a row reaches 4px out of that row, and the room for it above the
+   first row and below the last one is the vertical margin of the list, which lies outside a clip. Rows are
+   still clipped sideways, by the scrolling container. */
 .bx-im-mention-popup-content__items {
 	padding: 0 4px 0 6px;
 	margin: 6px 0;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
 }
 
 .bx-im-mention-content-footer__scope {
@@ -517,33 +616,6 @@
 .bx-im-mention-content-footer__loader {
 	margin-right: 17px;
 }
-.bx-im-mention-loading-state__scope {
-	--im-mention-loading-state__color_title: var(--ui-color-palette-gray-50, #a8adb4);
-}
-
-.bx-im-mention-loading-state__container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	gap: 4px;
-	height: 24px;
-	margin-top: 28px;
-	padding: 0 2px;
-}
-
-.bx-im-mention-loading-state__title {
-	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
-	font-weight: var(--im-font-weight-normal);
-	color: var(--im-mention-loading-state__color_title);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.bx-im-mention-loading-state__loader {
-	flex-grow: 0;
-}
-
 .bx-im-mention-item__scope {
 	--im-mention-item__background-color_container: var(--im-color-palette-white-base);
 	--im-mention-item__color_name: var(--im-color-palette-black-base);
@@ -565,8 +637,57 @@
 	padding: 4px;
 }
 
+/* Two modalities, two states. The pointer paints the row it is over and writes nothing into the
+   component, so it can no longer move the keyboard position or what the field announces. `--selected` is
+   that keyboard position, and the row shares the pointer's background - the ring below is what tells the
+   two apart. */
+.bx-im-mention-item__container:hover,
 .bx-im-mention-item__container.--selected {
 	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* The ring marks a keyboard walk, so it waits for the list to be walked: `--keyboard-traversal` appears with
+   the first movement key. Until then the background of the active row carries the state alone - it says what
+   Enter would insert, and aria-activedescendant names that row from the moment the list opens.
+   `--selected` already means "the keyboard is on the name cell of this row" (the row drops the class once the
+   action column takes over), so the ring needs no third condition. It goes around the whole row rather than
+   that cell: the name cell is narrower than the row wherever the "add to chat" button takes a share of it, so
+   a ring on the cell would change size as the arrows walk the list. No radius of its own - an outline follows
+   the rounding of the element it belongs to, and the row is already rounded.
+   Rows touch with no gap between them, and the ring reaches 4px out of the row, so the neighbours would
+   paint their own background over it: positioned siblings paint in tree order. The z-index lifts the row
+   that holds the ring above both, and only while it holds it. */
+.bx-im-mention-popup-content__items.--keyboard-traversal .bx-im-mention-item__container.--selected {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	z-index: 1;
+}
+
+/* gridcell wrappers are layout-neutral: the name cell reproduces the row's own flex box (same gap) so the
+   avatar and the text keep their places, the action cell hugs the button exactly as the bare button did */
+.bx-im-mention-item__name-cell {
+	display: flex;
+	gap: 12px;
+	flex: 1;
+	min-width: 0;
+}
+
+.bx-im-mention-item__action-cell {
+	display: flex;
+	border-radius: 6px;
+}
+
+.bx-im-mention-item__action-cell.--active {
+	background-color: var(--ui-color-bg-state-click-default);
+}
+
+/* The button is never a Tab stop - the whole grid runs under aria-activedescendant - so :focus-visible can
+   never match it. Its ring comes from the active column of the row, the same source as the pill behind it,
+   and the column can only be reached with an arrow - so this ring needs no walk condition of its own. */
+.bx-im-mention-item__action-cell.--active .bx-im-mention-chat-add-dropdown__container {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--im-border-radius-xs);
 }
 
 .bx-im-mention-item__avatar-container {
@@ -615,6 +736,13 @@
 .bx-im-mention-chat-add-dropdown__container {
 	display: flex;
 	align-items: center;
+	padding: 0;
+	border: none;
+	color: inherit;
+	font: inherit;
+	background: transparent;
+	cursor: pointer;
+	appearance: none;
 }
 
 .bx-im-mention-chat-add-dropdown__separator {
@@ -635,6 +763,7 @@
 }
 .bx-im-mention-empty-state__scope {
 	--im-mention-empty-state__color_title: var(--ui-color-palette-gray-50, #a8adb4);
+	--im-mention-empty-state__color_action: var(--ui-color-accent-main-link);
 }
 
 .bx-im-mention-empty-state__container {
@@ -647,13 +776,27 @@
 	padding: 0 2px;
 }
 
-.bx-im-mention-empty-state__title {
+.bx-im-mention-empty-state__title,
+.bx-im-mention-empty-state__action {
 	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-normal);
-	color: var(--im-mention-empty-state__color_title);
 	white-space: nowrap;
+}
+
+.bx-im-mention-empty-state__title {
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	color: var(--im-mention-empty-state__color_title);
+}
+
+.bx-im-mention-empty-state__action {
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--im-mention-empty-state__color_action);
+	cursor: pointer;
 }
 
 .bx-im-mention-empty-state__icon {
@@ -675,6 +818,10 @@
 	position: relative;
 	max-width: 100%;
 	padding: 11px 10px 0;
+}
+
+.bx-im-message-panel__container.--contact-message {
+	height: 63px;
 }
 
 .bx-im-message-panel__icon {
@@ -728,6 +875,10 @@
 	overflow: hidden;
 	white-space: nowrap;
 	max-width: 90%;
+}
+
+.bx-im-message-panel__text.--contact-message {
+	white-space: pre-line;
 }
 
 .bx-im-message-panel__bulk-forward-author {
@@ -792,6 +943,24 @@
 	right: 0;
 	top: 0;
 	object-fit: cover;
+}
+
+.bx-im-message-panel__image.--contact-message {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+}
+
+.bx-im-message-panel__contact-avatar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	margin-right: 8px;
+	overflow: hidden;
+	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 /* Video note: round poster thumbnail (no background — poster fills the circle). Fits the 47px panel row. */
@@ -913,12 +1082,11 @@
 	right: 10px;
 	width: 24px;
 	height: 24px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='m13.663 12 3.89 3.891a.6.6 0 0 1 0 .848l-.814.815a.6.6 0 0 1-.848 0l-3.89-3.89-3.891 3.89a.6.6 0 0 1-.849 0l-.814-.814a.6.6 0 0 1 0-.849l3.89-3.89-3.89-3.891a.6.6 0 0 1 0-.849l.814-.814a.6.6 0 0 1 .849 0l3.89 3.89 3.891-3.89a.6.6 0 0 1 .848 0l.815.814a.6.6 0 0 1 0 .849z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	opacity: 0.35;
-	cursor: pointer;
 }
 
-.bx-im-message-panel__close:hover {
+.bx-im-message-panel__close:hover,
+.bx-im-message-panel__close:focus-visible {
 	opacity: 0.7;
 }
 
@@ -966,6 +1134,11 @@
 .bx-im-market-apps-panel__more-items-button:hover {
 	background-color: var(--im-market-apps-panel__background-color_more-items-button-hover);
 	cursor: pointer;
+}
+
+.bx-im-market-apps-panel__more-items-button.--opened {
+	background-color: var(--im-market-apps-panel__background-color_more-items-button-hover);
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary);
 }
 
 /*empty state*/
@@ -1023,6 +1196,11 @@
 	cursor: pointer;
 }
 
+.bx-im-market-app-item__container.--opened {
+	background: var(--im-market-app-item__background-color_item);
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary);
+}
+
 .bx-im-market-app-item__icon-container {
 	width: 28px;
 	height: 28px;
@@ -1048,21 +1226,6 @@
 	overflow: hidden;
 	white-space: nowrap;
 }
-.bx-im-market-app-popup__container {
-	position: absolute;
-	inset: 0;
-	overflow: hidden;
-}
-
-.bx-im-market-app-popup__loader-container {
-	height: 100%;
-	display: flex;
-	align-items: center;
-}
-
-.bx-im-market-app-popup__placement-container {
-	height: 100%;
-}
 .bx-im-market-show-more-popup__scope .popup-window-titlebar-text {
 	font-size: var(--im-font-size-xl);
 	font-weight: var(--im-font-weight-semi-bold);
@@ -1076,6 +1239,9 @@
 }
 
 .bx-im-market-show-more-popup-content__items-container {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	padding: 0 14px 0 8px;
 	height: 100%;
 	overflow: hidden;
@@ -1128,8 +1294,8 @@
 }
 
 .bx-im-market-show-more-popup-content-item__container {
-	height: 32px;
-	padding: 8px;
+	min-height: 40px;
+	padding: 4px 8px;
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -1139,6 +1305,11 @@
 .bx-im-market-show-more-popup-content-item__container:hover {
 	background: var(--im-market-show-more-popup-content-item__background-color_item);
 	cursor: pointer;
+}
+
+.bx-im-market-show-more-popup-content-item__container.--opened {
+	background: var(--im-market-show-more-popup-content-item__background-color_item);
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary);
 }
 
 .bx-im-market-show-more-popup-content-item__icon-container {
@@ -1166,51 +1337,182 @@
 	overflow: hidden;
 	white-space: nowrap;
 }
+
+.bx-im-slash-command-content__container {
+	max-height: 200px;
+	width: 100%;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+/* the list needs a definite height so the inner ScrollWithGradient (height: 100%) can scroll */
+.bx-im-slash-command-content__container.--list {
+	height: 200px;
+}
+
+.bx-im-slash-command-content__list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.bx-im-slash-command-content__footer {
+	flex-shrink: 0;
+}
+
+.bx-im-slash-command-content__state {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+	padding: 16px;
+}
+
+.bx-im-slash-command-content__state-text {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--ui-color-base-4);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bx-im-slash-command-content__esc-hint {
+	display: flex;
+	align-items: flex-end;
+	gap: 4px;
+	flex-shrink: 0;
+	padding: 0 12px 8px 12px;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.bx-im-slash-command-content__esc-hint-key {
+	font: var(--im-font-size-3xs)/16px var(--im-font-family-system);
+	color: var(--im-color-palette-gray-80);
+}
+
+.bx-im-slash-command-content__esc-hint-description {
+	font: var(--im-font-size-3xs)/16px var(--im-font-family-system);
+	color: var(--im-color-palette-gray-50);
+}
+
+.bx-im-slash-command-item__container {
+	display: flex;
+	gap: 12px;
+	height: 44px;
+	border-radius: 6px;
+	transition: background .3s;
+	cursor: pointer;
+	flex-shrink: 0;
+	position: relative;
+	padding: 4px;
+}
+
+/* The shared items container stopped writing its state on hover, so the pointer feedback of this list is
+   its own :hover from here on; `--selected` is left to the keyboard position. */
+.bx-im-slash-command-item__container:hover,
+.bx-im-slash-command-item__container.--selected {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* Same ring as the mention list, and for the same reasons - see `mention-item.css`: `--selected` shares its
+   background with :hover above, and the ring is what tells the keyboard position from the pointer. Rows here
+   hold no cells, so the row is the only node the ring can hang on. */
+.bx-im-mention-popup-content__items.--keyboard-traversal .bx-im-slash-command-item__container.--selected {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	z-index: 1;
+}
+
+.bx-im-slash-command-item__command {
+	max-width: 262px;
+	font: var(--im-font-size-md)/17px var(--im-font-family-system);
+	color: var(--ui-color-base-1);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bx-im-slash-command-error-state__container {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 16px;
+}
+
+.bx-im-slash-command-error-state__icon {
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.bx-im-slash-command-error-state__content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	text-align: left;
+}
+
+.bx-im-slash-command-error-state__text {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-slash-command-empty-state__container {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 16px;
+}
+
+.bx-im-slash-command-empty-state__icon {
+	flex-shrink: 0;
+	width: 48px;
+	height: 48px;
+	background: url("data:image/png;base64,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") no-repeat center;
+	background-size: contain;
+}
+
+.bx-im-slash-command-empty-state__text-block {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: left;
+}
+
+.bx-im-slash-command-empty-state__title {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-slash-command-empty-state__text {
+	font: var(--im-font-size-md)/var(--im-font-line-height-md) var(--im-font-family-system);
+	color: var(--ui-color-base-4);
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar {
+	width: 6px;
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar-thumb {
+	background: rgb(82 92 105 / 20%);
+	border-radius: 32px;
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar-thumb:hover {
+	background: rgb(82 92 105 / 20%);
+}
+
+.bx-im-slash-command-popup__scope *::-webkit-scrollbar-thumb:active {
+	background: rgb(82 92 105 / 20%);
+}
+
 .bx-im-file-menu__scope {
-	--im-file-popup__font_title: var(--im-font-size-sm)/var(--im-font-line-height-md) var(--im-font-family-system);
-	--im-file-popup__font-color_title: var(--im-color-palette-black-base);
-	--im-file-popup__font_create-item: var(--im-font-size-3xs)/var(--im-font-line-height-md) var(--im-font-family-helvetica);
-	--im-file-popup__font-color_create-item: var(--im-color-palette-gray-60);
-	--im-file-popup__font-color_create-item-hover: var(--im-color-palette-gray-80);
 	--im-file-popup__background-color_separator: rgba(var(--im-color-palette-gray-90-rgb), 0.05);
-	--im-file-popup__background-color_item-hover: var(--im-color-palette-gray-03);
-}
-
-.bx-im-file-menu__document-panel_container {
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-	margin-top: 5px;
-	cursor: pointer;
-}
-
-.bx-im-file-menu__document-panel_title {
-	margin-left: 11px;
-	font: var(--im-file-popup__font_title);
-	font-weight: var(--im-font-weight-semi-bold);
-	color: var(--im-file-popup__font-color_title);
-	opacity: 0.3;
-}
-
-.bx-im-file-menu__document-panel_content {
-	width: 100%;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 12px 16px;
-	opacity: 0.3;
-}
-
-.bx-im-file-menu__document-panel_item {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	cursor: pointer;
-}
-
-.bx-im-file-menu__document-panel_item_title {
-	font: var(--im-file-popup__font_create-item);
-	color: var(--im-file-popup__font-color_create-item);
 }
 
 .bx-im-file-menu__file-input {
@@ -1219,40 +1521,58 @@
 
 .bx-im-textarea__upload-menu-wrapper--muted {
 	opacity: 0.5;
-	pointer-events: none;
+}
+
+/* Sits below the menu items, so it repeats their separator; the popup itself has no padding.
+   The menu container centers its children, so the note has to stretch to keep the item width. */
+.bx-im-file-menu__policy-note {
+	align-self: stretch;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xs);
+	border-top: 1px solid var(--im-file-popup__background-color_separator);
+	color: var(--ui-color-base-2);
 }
 
 .bx-im-upload-preview-popup-preparing {
 	display: flex;
+	align-items: center;
 	justify-content: center;
 	min-height: 300px;
 }
 
-.bx-im-upload-preview-popup-preparing .bx-im-elements-spinner__spinner,
-.bx-im-upload-preview-popup-preparing .bx-im-elements-loader__container {
-	position: relative;
-	top: -36px;
-}
-
 .bx-im-upload-preview__scope {
-	--im-upload-preview__color_title: var(--im-color-palette-gray-90);
 	--im-upload-preview__border-color_delimeter: #f1f2f3;
 	--im-upload-preview__border-color_message-input: var(--im-color-palette-gray-10);
 	--im-upload-preview__border-color_message-input-focused: var(--im-color-accent-blue);
 	--bx-im-elements-dynamic-gallery__item-cursor: default;
+	--bx-im-elements-dynamic-gallery__item-border-radius: var(--ui-border-radius-xs);
 }
 
 .bx-im-upload-preview__container {
 	display: flex;
 	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
 	box-sizing: border-box;
 	overflow: hidden;
 	width: 400px;
-	padding-bottom: 12px;
+	/* the window bounds the height: 40px go to the dialog header above this container, and
+	   16px to the gap that centering splits into 8px above and below */
+	max-height: calc(100vh - 56px);
+	padding: var(--ui-space-stack-sm) var(--ui-space-inset-md2) var(--ui-space-stack-lg);
 }
 
 .bx-im-upload-preview__container * {
 	box-sizing: border-box;
+}
+
+.bx-im-upload-preview__preview {
+	/* positioning context for the drop zone overlay, and the radius it is clipped by */
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-lg);
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
 }
 
 .bx-im-upload-preview__items-container {
@@ -1261,19 +1581,63 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	margin: 0 6px 0 12px;
+	flex: 1 1 auto;
+	min-height: 0;
+	/* balances the always reserved scrollbar gutter, so the media stays centered in the popup */
+	padding-left: 6px;
 }
 
-@media (max-height: 750px) {
-	.bx-im-upload-preview__items-container {
-		max-height: 400px;
-	}
+/* the edit left without attachments: the window stays open, so it says what happened */
+.bx-im-upload-preview__empty {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	/* the mockup gives the block the height of an attachment row, and no size token carries 44px */
+	min-height: 44px;
 }
 
-@media (max-height: 650px) {
-	.bx-im-upload-preview__items-container {
-		max-height: 300px;
-	}
+.bx-im-upload-preview__empty-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	min-width: 0;
+}
+
+/* the typography components pin their own colour, so both roles are restated on the texts */
+.bx-im-upload-preview__empty .bx-im-upload-preview__empty-title {
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-upload-preview__empty .bx-im-upload-preview__empty-hint {
+	color: var(--ui-color-base-4);
+}
+
+/* Keyboard-focus ring for a media tile - the roving stop of the media branch of the grid. Scoped to the
+   upload preview, so the shared media gallery keeps its markup and its looks untouched for its other
+   consumers. An inset outline would sit under the tile image (__item-source, z-index 1), so the ring is
+   drawn as an ::after overlay above both the image and the remove cross (z-index 20). Keyboard-only via
+   :focus-visible - no flash on click.
+   Two lines, not one: inside the tile the only neighbour of the ring is the preview itself, and a preview in
+   the colour of the focus token leaves nothing to see. The token keeps the outer band, on the border of the
+   preview, and the content background of the design system takes the band inside it, so the ring reads against
+   one of the two whatever the preview holds. The first layer is painted on top, hence the order: the other way
+   round the light line would sit next to the light background of the popup and the outer edge would be lost.
+   The width of the second band follows the token of the first, and its colour is a token rather than a literal
+   white, so both survive a change of the platform token and a dark theme. */
+.bx-im-upload-preview__items-container .bx-im-elements-media-gallery__item:focus-visible {
+	outline: none;
+}
+
+.bx-im-upload-preview__items-container .bx-im-elements-media-gallery__item:focus-visible::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	box-shadow:
+		inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-focus-outline),
+		inset 0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-bg-content-primary);
+	pointer-events: none;
+	z-index: 21;
 }
 
 .bx-im-upload-preview__upper-delimiter {
@@ -1286,37 +1650,57 @@
 	margin: 11px 20px 0;
 }
 
-.bx-im-upload-preview__control-form {
-	display: flex;
-	align-items: flex-end;
-	margin-top: 23px;
-}
-
-.bx-im-upload-preview__control-compress-image + .bx-im-upload-preview__control-form {
-	margin-top: 15px;
-}
-
 .bx-im-upload-preview__controls-container {
 	display: flex;
 	flex-direction: column;
-	margin: 0 12px;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bx-im-upload-preview__saving {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding-left: var(--ui-space-inset-3xs);
+}
+
+.bx-im-upload-preview__saving-text {
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-upload-preview__add-more {
+	display: flex;
+	/* the wrapper is the focus stop while the button inside is disabled, so it has to be the size of
+	   the button and not of the row: a ring around the whole row would point at nothing */
+	width: fit-content;
+	/* the radius of the S button of the design system, so the ring follows its corners */
+	border-radius: var(--ui-border-radius-sm);
+	padding-left: var(--ui-space-inset-3xs);
+}
+
+.bx-im-upload-preview__add-more:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bx-im-upload-preview__add-more-input {
+	display: none;
 }
 
 .bx-im-upload-preview__control-compress-image {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
-	margin: 23px 0 0 2px;
-	font: var(--im-font-size-md) var(--im-font-family-system);
-	color: var(--im-color-palette-gray-80);
+	gap: var(--ui-space-inline-xs);
+	/* its own 6px turn the 8px gap of the controls container into the 14px above and 18px below of the mockup */
+	padding: var(--ui-space-inset-2xs2) 0 var(--ui-space-inset-2xs2) var(--ui-space-inset-2xs2);
+}
+
+.bx-im-upload-preview__control-compress-image-label {
+	color: var(--ui-color-base-1);
+	cursor: pointer;
 	max-width: 360px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.bx-im-upload-preview__control-compress-image-checkbox {
-	margin-right: 8px;
-	margin-bottom: 1px;
 }
 
 .bx-im-upload-preview__controls-buttons {
@@ -1339,20 +1723,6 @@
 	border-radius: 32px;
 }
 
-.bx-im-upload-preview__scope .popup-window-titlebar {
-	height: 72px;
-	padding-top: 5px;
-}
-
-.bx-im-upload-preview__scope .popup-window-titlebar-text {
-	font-size: var(--ui-font-size-xl);
-	font-weight: var(--im-font-weight-semi-bold);
-	color: var(--im-upload-preview__color_title);
-	width: 100%;
-	padding-left: 20px;
-	text-align: center;
-}
-
 .bx-im-upload-preview__container .bx-im-elements-spinner__spinner {
 	margin-bottom: 0;
 }
@@ -1368,15 +1738,23 @@
 	color: var(--ui-color-palette-orange-90);
 	font-size: var(--im-font-size-sm);
 	padding: 4px 8px;
-	margin-top: 24px;
-	margin-bottom: 0;
+	margin: 0;
 	border-radius: var(--im-border-radius-xs);
 }
 
-.bx-im-upload-preview__controls-files-limit-message {
-	margin-top: var(--ui-space-inline-2xs);
+/* the same shape as the limit message, in the alert role: this one says the save is held back */
+.bx-im-upload-preview__controls-upload-error-message {
+	background-color: var(--ui-color-accent-soft-red-1);
+	display: flex;
+	align-items: center;
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--im-font-size-sm);
+	padding: 4px 8px;
+	margin: 0;
+	border-radius: var(--im-border-radius-xs);
 }
 
+.bx-im-upload-preview__controls-upload-error-message::before,
 .bx-im-upload-preview__controls-files-limit-message::before {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffa900' fill-rule='evenodd' d='M19.4 11.7a7.7 7.7 0 1 1-15.4 0 7.7 7.7 0 0 1 15.4 0m-1.83 0a5.87 5.87 0 1 1-11.74 0 5.87 5.87 0 0 1 11.74 0m-4.785-3.287a1.221 1.221 0 1 1-2.442 0 1.221 1.221 0 0 1 2.442 0m-2.108 2.259h2.09v4.338h.578v.868H9.809v-.868h.646V11.5h-.646v-.828z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	display: inline-block;
@@ -1386,18 +1764,39 @@
 	margin-right: var(--im-space-inline-2xs);
 }
 
+/* The ERR-001 toast of the mockup, which is of an edit. A send keeps the plate it always had, the
+   yellow icon it shares with the limit message included. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview__controls-upload-error-message {
+	gap: var(--ui-space-inline-xs);
+	/* the mockup keeps the plate this tall even when the hint fits on one line, and no token is 44px */
+	min-height: 44px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-accent-soft-red-3);
+}
+
+/* the edit draws the icon as an element of the icon set, so the shared pseudo-element steps aside */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview__controls-upload-error-message::before {
+	content: none;
+}
+
+.bx-im-upload-preview__controls-upload-error-message-icon {
+	--ui-icon-set__icon-size: var(--ui-size-lg);
+	--ui-icon-set__icon-color: currentcolor;
+}
+
+/* the typography component pins its own colour, so the alert role is restated on the text itself */
+.bx-im-upload-preview__controls-upload-error-message .bx-im-upload-preview__controls-upload-error-message-text {
+	color: var(--ui-color-accent-main-alert);
+}
+
 .bx-im-upload-preview__message-text {
-	flex-grow: 1;
 	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	color: var(--im-textarea__font-color_primary);
 	outline: none;
 	resize: none;
 	border: none;
-	padding-left: 13px;
-	padding-top: 10px;
-	padding-right: 10px;
-	margin-top: 3px;
-	margin-right: 3px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-2xs) var(--ui-space-inset-2xs2) var(--ui-space-inset-3xs);
 }
 
 .bx-im-upload-preview__message-text:focus {
@@ -1406,15 +1805,39 @@
 
 .bx-im-upload-preview__message-text__wrapper {
 	display: flex;
-	flex-grow: 1;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
 	position: relative;
-	min-height: 46px;
-	max-height: 232px;
-	margin-right: 8px;
-	border-radius: 8px;
+	/* on top of the 8px gap of the controls container it makes the 12px the mockup keeps here */
+	margin-top: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs) var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
 	border: 1px solid var(--im-upload-preview__border-color_message-input);
-	padding-bottom: 19px;
+	border-radius: var(--ui-border-radius-lg);
 	overflow: hidden;
+}
+
+/* Keyboard-focus ring for the caption field, drawn on the wrapper, because the field itself is borderless
+   and the border the ring belongs to is the wrapper's. Which descendant holds the focus decides it, and the
+   wrapper has two focusable children - the field and the send button, which carries a ring of its own - so
+   :focus-within would light both at once. Selecting a parent by its descendant needs the relational
+   pseudo-class, which the browser targets of the repo do not reach (Firefox 115 against the 121 it landed
+   in), hence the class: the component sets it from the focus of the field alone.
+   :focus-visible is no use here either: on a text field the browser matches it for a mouse focus too, so the
+   ring would flash on a plain click. The keyboard-only part comes from the platform instead - ui.a11y
+   publishes the last input modality on the root element. The offset is the plain outward one of the platform,
+   not the inset the composer uses: there the input area fills a rounded clipping container, here nothing does.
+   The own overflow of the wrapper clips its descendants, never its own outline, no ancestor clips the ring
+   either, and an inset would give the ring a 10px corner inside the 12px rounding of the wrapper. */
+html[data-input-modality="keyboard"] .bx-im-upload-preview__message-text__wrapper.--focus-outline {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bx-im-upload-preview__message-text__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs);
 }
 
 .bx-im-upload-preview__message-text__drag-handle {
@@ -1434,21 +1857,15 @@
 }
 
 .bx-im-upload-preview__message-text__counter {
-	position: absolute;
-	bottom: 4px;
-	right: 17px;
 	font-size: var(--ui-font-size-sm);
 	color: var(--ui-color-palette-gray-50);
 }
 
 .bx-im-upload-preview-file-item__scope {
 	--im-upload-preview-file-item__background-color_container: #f1f4f6;
-	--im-upload-preview-file-item__background-color_error: #ffe8e8;
-	--im-upload-preview-file-item__color_error-text: #959ca4;
 	--im-upload-preview-file-item__color_file-name: var(--im-color-palette-black-base);
 	--im-upload-preview-file-item__color_file-size: #858585;
 	--im-upload-preview-file-item__border-color_file-icon: var(--im-color-palette-gray-10);
-	--im-upload-preview-file-item__background_error-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' fill='none' viewBox='0 0 48 48'%3E%3Cpath fill='%23d5d7db' fill-rule='evenodd' d='M24 48c13.255 0 24-10.745 24-24S37.255 0 24 0 0 10.745 0 24s10.745 24 24 24m2.03-37.749L38.35 30.77c.97 1.616-.202 3.655-2.06 3.655H11.652c-1.879 0-3.05-2.04-2.08-3.655L21.89 10.25c.929-1.575 3.19-1.575 4.14 0m-2.2 5.514a1.63 1.63 0 0 0-1.636 1.635v6.12a1.63 1.63 0 0 0 1.636 1.636h.222a1.63 1.63 0 0 0 1.636-1.636V17.4c0-.908-.727-1.635-1.636-1.635zm.121 15.57a2.07 2.07 0 0 0 2.06-2.06c0-1.13-.93-2.06-2.06-2.06a2.07 2.07 0 0 0-2.06 2.06c0 1.131.929 2.06 2.06 2.06' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
 	--im-upload-preview-file-item__background-color_play-icon: rgb(0 0 0 / 50%);
 
 	font-family: var(--im-font-family-system);
@@ -1471,6 +1888,16 @@
 	border-bottom: 1px red solid;
 }
 
+/* Keyboard-focus ring for the file row - the roving stop of the file branch of the grid. The items
+   container clips overflow, so a positive outline-offset would be cut; the ring is pulled inside by its own
+   width instead. Keyboard-only comes for free: :focus-visible does not match a mouse focus on a row, so no
+   ring flashes on click. */
+.bx-im-upload-preview-file-item__scope:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+	border-radius: var(--ui-border-radius-sm);
+}
+
 
 .bx-im-upload-preview-file-item__drag {
 	display: flex;
@@ -1487,29 +1914,6 @@
 	height: 24px;
 }
 
-.bx-im-upload-preview-file-item__item-error {
-	background-color: var(--im-upload-preview-file-item__background-color_container);
-	width: 100%;
-	height: 57px;
-	display: flex;
-	align-items: center;
-	border-radius: 6px;
-}
-
-.bx-im-upload-preview-file-item__item-error-icon {
-	width: 48px;
-	height: 48px;
-	background: var(--im-upload-preview-file-item__background_error-icon);
-	margin-left: 8px;
-}
-
-.bx-im-upload-preview-file-item__item-error-text {
-	font-size: var(--im-font-size-xs);
-	color: var(--im-upload-preview-file-item__color_error-text);
-	max-width: 197px;
-	margin-left: 12px;
-}
-
 .bx-im-upload-preview-file-item__file-container {
 	display: flex;
 	gap: 8px;
@@ -1519,6 +1923,8 @@
 }
 
 .bx-im-upload-preview-file-item__icon {
+	/* positioning context for the loader of the row, which fills this box while the file goes up */
+	position: relative;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -1551,6 +1957,43 @@
 	color: rgba(var(--im-color-palette-gray-90-rgb), 0.5);
 }
 
+/* takes the place of the size on a row that has something to say about the file instead of its weight */
+.bx-im-upload-preview-file-item__status {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-accent-main-alert);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+/* an edit lays the line out as the mockup does: the reason, then the weight the file would have had */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__status {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.bx-im-upload-preview-file-item__status-icon {
+	/* the mockup sets the reason icon between the 12px and 16px steps of the size scale */
+	--ui-icon-set__icon-size: 14px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+/* the typography component pins its own colour, so both roles are restated on the texts themselves */
+.bx-im-upload-preview-file-item__status .bx-im-upload-preview-file-item__status-text {
+	color: var(--ui-color-accent-main-alert);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bx-im-upload-preview-file-item__status .bx-im-upload-preview-file-item__status-size {
+	color: var(--ui-color-base-4);
+	white-space: nowrap;
+}
+
 .bx-im-upload-preview-file-item__remove {
 	display: flex;
 	align-items: center;
@@ -1564,24 +2007,188 @@
 	transition: opacity 200ms ease;
 	opacity: 0;
 	cursor: pointer;
+
+	/* the control is a native button: the reset leaves it looking the way it did as a div */
+	padding: 0;
+	border: none;
+	background: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
 }
 
-.bx-im-upload-preview-file-item__item-error + .bx-im-upload-preview-file-item__remove {
-	top: 11px;
+/* the control shows itself on hover, and a keyboard has no hover to show it with */
+.bx-im-upload-preview-file-item__remove:focus-visible {
+	opacity: 1;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* a failed file always asks for a decision, so both of its actions are there without waiting for a hover,
+   and the row keeps a gutter wide enough for the two of them instead of stacking one over the other */
+.bx-im-upload-preview-file-item__scope.--has-upload-error {
+	padding-right: 70px;
+}
+
+.bx-im-upload-preview-file-item__scope.--has-upload-error .bx-im-upload-preview-file-item__remove {
 	right: 3px;
+	opacity: 1;
 }
 
-.bx-im-upload-preview-file-item__remove-icon {
-	width: 22px;
-	height: 22px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' viewBox='0 0 28 28'%3E%3Cpath fill='%23525c69' fill-opacity='.4' fill-rule='evenodd' d='M18.596 7.898h3.069v.012c.385 0 .7.315.7.7s-.315.7-.7.7H6.533a.7.7 0 0 1-.7-.7c0-.385.315-.7.7-.7h3.045l.397-2.007a3.025 3.025 0 0 1 2.975-2.438h2.228c1.423 0 2.66.992 2.963 2.38zm-7.245-1.726-.315 1.575v.011h6.09l-.35-1.61a1.636 1.636 0 0 0-1.598-1.283H12.95c-.77 0-1.447.548-1.599 1.307' clip-rule='evenodd'/%3E%3Cpath fill='%23525c69' fill-opacity='.4' d='M12.086 20.616c.385 0 .7-.316.7-.7v-5.134c0-.385-.315-.7-.7-.7s-.7.315-.7.7v5.134c0 .384.315.7.7.7m4.469-.7c0 .384-.315.7-.7.7a.7.7 0 0 1-.7-.7v-5.134c0-.385.315-.7.7-.7s.7.315.7.7z'/%3E%3Cpath fill='%23525c69' fill-opacity='.4' fill-rule='evenodd' d='M7.525 10.5H20.37c.712 0 1.26.63 1.155 1.33l-1.54 10.535a2.336 2.336 0 0 1-2.31 1.995h-7.583a2.33 2.33 0 0 1-2.31-2.018L6.37 11.819A1.16 1.16 0 0 1 7.525 10.5m10.15 12.46a.93.93 0 0 0 .922-.793h.011L20.102 11.9H7.793L9.17 22.155a.93.93 0 0 0 .922.805z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
-	transition: opacity 200ms ease;
+/* The metrics of the mockup belong to the whole composition of an edit: rows 0-3 of the page carry
+   the same geometry, whatever became of the file. A send has no mockup and keeps the window it always
+   had, so the geometry is gated on the mode. The window states the mode on its own container
+   (data-edit-mode), and the row reads it there instead of inferring it from its own props. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope
+	+ .bx-im-upload-preview-file-item__scope {
+	margin-top: var(--ui-space-stack-sm);
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__file-container {
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* the row height of the mockup; no size token carries 44px */
+	height: 44px;
+	padding-top: 0;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__icon {
+	/* the emblem of the mockup fills the row height; the scale of ui.icons has no 44px step */
+	--ui-icon-size: 44px;
+
+	width: 44px;
+	height: 44px;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__info {
+	gap: var(--ui-space-stack-2xs);
+	justify-content: center;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__name {
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+/* What the failure alone changes, and only in an edit: the mockup is of that window, and a send keeps
+   the row it always had. The other rows of the edit stay in their own colours. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__icon {
+	/* the file never arrived, so the mockup dims its emblem */
+	opacity: 0.45;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__name {
+	color: var(--ui-color-base-4);
+}
+
+/* Both exits of the failed row are plain controls of the mockup, and the mockup is of an edit: a send
+   keeps the round controls it always had, gutter included. */
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error {
+	/* the gutter clears both controls: 3px offset + 34px + 4px between them + 34px + 4px of air */
+	padding-right: 79px;
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__retry,
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__remove {
+	/* no token pair carries 34x28 */
+	width: 34px;
+	height: var(--ui-size-2xl);
+	/* centred on the 44px row, 1px of it taken by the transparent border of the row */
+	top: 7px;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__retry {
+	--ui-icon-set__icon-size: var(--ui-size-xl);
+}
+
+.bx-im-upload-preview__container[data-edit-mode="true"] .bx-im-upload-preview-file-item__scope.--has-upload-error
+	.bx-im-upload-preview-file-item__remove-icon {
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+}
+
+.bx-im-upload-preview-file-item__retry {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--im-color-palette-gray-90);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	top: 11px;
+	right: 41px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	cursor: pointer;
+
+	/* the control is a native button, as the removal beside it is: the reset leaves the icon alone */
+	padding: 0;
+	border: none;
+	background: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+}
+
+.bx-im-upload-preview-file-item__retry:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The row hover reveals the cross, dimmed until the pointer reaches the cross itself. The dimming used to
+   live on a nested icon div that the IconButton replaced, so it is expressed on the button now - the same
+   two steps, one node fewer. A focused cross goes to full opacity too: the removal moves focus onto it, and
+   a ring around an invisible button is no ring at all. Both rules are scoped through the row on purpose:
+   the two states now live on ONE node, so the fuller one has to outweigh the dimming rather than sit at a
+   lower specificity and lose to it. */
+.bx-im-upload-preview-file-item__scope:hover .bx-im-upload-preview-file-item__remove {
 	opacity: .8;
 }
 
-.bx-im-upload-preview-file-item__scope:hover .bx-im-upload-preview-file-item__remove,
-.bx-im-upload-preview-file-item__remove:hover .bx-im-upload-preview-file-item__remove-icon {
+.bx-im-upload-preview-file-item__scope .bx-im-upload-preview-file-item__remove:hover,
+.bx-im-upload-preview-file-item__scope .bx-im-upload-preview-file-item__remove:focus-visible {
 	opacity: 1;
+}
+
+/* The cross sits at right: -3px, overhanging the right edge of the items container, which clips overflow.
+   The --focus-visible utility of the icon button draws its ring at a positive offset, and that outward part
+   is cut off on the right. Pull the ring inside the button box instead - the same inset the row above uses,
+   plus 2px more to clear the overhang. The button itself is not moved. */
+.bx-im-messenger__scope .bx-im-upload-preview-file-item__remove.--focus-visible:focus-visible {
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width) - 2px);
+}
+
+.bx-im-upload-preview-file-item__content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+}
+
+.bx-im-upload-preview-file-item__validation-error {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-accent-main-alert);
+	padding: 0 0 3px var(--ui-space-inline-2xs);
+}
+
+.bx-im-upload-preview-file-item__scope.--has-validation-error {
+	border: 1px solid var(--ui-color-accent-main-alert);
+	border-radius: var(--ui-border-radius-sm);
+	padding-right: 38px;
+	margin: var(--ui-space-stack-2xs2) 0;
+}
+
+.bx-im-upload-preview-file-item__scope.--has-validation-error .bx-im-upload-preview-file-item__remove {
+	opacity: 1;
+	right: 3px;
 }
 
 .bx-im-upload-preview-file-item__preview {
@@ -1591,4 +2198,117 @@
 	width: 100%;
 	height: 100%;
 	border-radius: 8px;
+}
+
+.bx-im-upload-preview-drop-zone__container {
+	position: absolute;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: 0 var(--ui-space-inset-sm);
+	border: 1.5px dashed var(--ui-color-base-5);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-secondary);
+	/* the zone must not become a drag target itself, otherwise enter/leave flickers */
+	pointer-events: none;
+}
+
+.bx-im-upload-preview-drop-zone__text {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-sm);
+	text-align: center;
+}
+
+.preview-drop-zone-fade-enter-active,
+.preview-drop-zone-fade-leave-active {
+	transition: opacity 200ms linear;
+}
+
+.preview-drop-zone-fade-enter-from,
+.preview-drop-zone-fade-leave-to {
+	opacity: 0;
+}
+
+/* one circle for both buttons that stand in this place: the microphone of the composer and the round
+   actions the recording panel puts in its stead. The panel is loaded through this very extension, so
+   it reads the shape from here instead of repeating it */
+.bx-im-voice-recorder-button,
+.bx-im-voice-round-button {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: var(--ui-size-4xl);
+	height: var(--ui-size-4xl);
+	/* the circle is a button, and the browser dresses one of its own accord: it is measured by the
+	   icon inside it and by nothing the user agent adds around it */
+	padding: 0;
+	background-color: var(--ui-color-accent-main-primary);
+	border: none;
+	border-radius: var(--ui-border-radius-circle);
+	cursor: pointer;
+}
+
+.bx-im-voice-recorder-button {
+	/* the same step from the icon row the send button keeps in this very position */
+	margin-left: var(--ui-space-inline-2xs);
+	/* the hold owns the pointer: no page scrolling, no selection of the text around the button */
+	touch-action: none;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* the button starts the recording from the keyboard too, so focus has to be visible on it */
+.bx-im-voice-recorder-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+.bx-im-voice-recorder-button.--disabled,
+.bx-im-voice-round-button.--disabled {
+	--ui-icon-set__icon-color: var(--ui-color-design-disabled-content);
+
+	background-color: var(--ui-color-design-disabled-bg);
+	cursor: default;
+}
+
+.bx-im-voice-recorder-button.--recording {
+	position: relative;
+	cursor: default;
+}
+
+.bx-im-voice-recorder-button.--recording::after {
+	content: '';
+	position: absolute;
+	top: calc(var(--ui-size-3xs) * -1);
+	right: calc(var(--ui-size-3xs) * -1);
+	width: var(--ui-size-xs);
+	height: var(--ui-size-xs);
+	background-color: var(--ui-color-accent-main-alert);
+	border: var(--ui-size-3xs) solid var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.bx-im-voice-recorder-promo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	/* the close cross of the popup stands in the top right corner, and the text stops before it */
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xl) var(--ui-space-inset-sm) var(--ui-space-inset-sm);
+	color: var(--ui-color-base-0);
+}
+
+.bx-im-voice-recorder-promo__text {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-voice-recorder-promo-popup.popup-window .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
 }

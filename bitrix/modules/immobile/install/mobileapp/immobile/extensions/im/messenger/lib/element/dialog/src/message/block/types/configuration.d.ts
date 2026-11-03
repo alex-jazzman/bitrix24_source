@@ -3,7 +3,7 @@ export type EventButtonMetaData = {
 	callback: (arg: object) => void,
 }
 export type RequestButtonMetaData = {
-	callback: (arg: object) => Promise<any>,
+	callback: (arg: object) => Promise<{ status: string }> | null,
 }
 export type UrlButtonMetaData = {
 	callback: () => void,

@@ -10,6 +10,7 @@ import {
 } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
 import { ChatType } from 'im.v2.const';
+import { messageHasError } from 'im.v2.lib.message';
 
 import { MediaContent } from './media-content';
 
@@ -75,13 +76,17 @@ export const MediaMessage = {
 		{
 			return this.message.attach.length > 0;
 		},
+		hasBuilderBlocks(): boolean
+		{
+			return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+		},
 		hasReply(): boolean
 		{
 			return this.message.replyId !== 0;
 		},
 		hasError(): boolean
 		{
-			return this.message.error;
+			return messageHasError(this.message);
 		},
 		showContextMenu(): boolean
 		{
@@ -89,7 +94,9 @@ export const MediaMessage = {
 		},
 		showBottomContainer(): boolean
 		{
-			return this.hasText || this.hasAttach;
+			// Blocks live in the same container as the caption, so a message whose whole content is
+			// blocks needs it too - its own text may well be empty.
+			return this.hasText || this.hasAttach || this.hasBuilderBlocks;
 		},
 		isForward(): boolean
 		{
@@ -128,9 +135,12 @@ export const MediaMessage = {
 			:item="item"
 			:dialogId="dialogId"
 			:withBackground="needBackground"
+			:withMediaFrame="true"
 		>
-			<template v-if="hasReply && !isForward" #before-message>
+			<template #before-message>
+				<slot name="before-message"/>
 				<Reply
+					v-if="hasReply && !isForward"
 					class="bx-im-message-image__quote"
 					:dialogId="dialogId"
 					:replyId="message.replyId"
@@ -158,6 +168,7 @@ export const MediaMessage = {
 						:withText="hasText"
 						:withAttach="hasAttach"
 						:withReply="false"
+						:withBuilder="true"
 					/>
 				</div>
 				<MessageFooter :item="item" :dialogId="dialogId" />

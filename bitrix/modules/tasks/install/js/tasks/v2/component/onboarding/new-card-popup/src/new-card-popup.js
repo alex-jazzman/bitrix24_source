@@ -187,7 +187,7 @@ export class NewCardPopup
 
 	getCosmozephPath(): string
 	{
-		return '/bitrix/js/tasks/v2/component/onboarding/new-card-popup/src/cosmozeph.png';
+		return '/bitrix/js/tasks/v2/component/onboarding/new-card-popup/src/cosmozeph.webp';
 	}
 
 	getFeatures(): Array

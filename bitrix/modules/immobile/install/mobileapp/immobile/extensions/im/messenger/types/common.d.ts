@@ -3,6 +3,7 @@ import {BaseList, JNBaseClassInterface} from '../../../../../../../../mobile/dev
 
 export type DialogId = number | string;
 export type MessageId = number | string;
+export type ChatId = number;
 
 // @ts-ignore
 export declare interface JNChatBaseClassInterface<TEvent extends Record<string, Function>> extends JNBaseClassInterface {

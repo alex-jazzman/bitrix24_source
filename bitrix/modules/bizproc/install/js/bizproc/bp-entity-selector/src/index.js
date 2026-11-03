@@ -1,6 +1,9 @@
 import { Type, Tag, Dom } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import { TagSelector, type Item } from 'ui.entity-selector';
 import Footer from './footer';
+
+const ProjectEntityId = 'project';
 
 export type EntitySelectorOptions = {
 	containerId: string,
@@ -113,13 +116,173 @@ export class EntitySelector
 			return;
 		}
 
-		this.#selector.dialog.subscribe('Item:onSelect', (event) => {
-			this.#updateInputValues();
+		this.#selector.dialog.subscribe('Item:onSelect', (event: BaseEvent) => {
+			this.#handleItemSelect(event);
 		});
 
 		this.#selector.dialog.subscribe('Item:onDeselect', (event) => {
 			this.#updateInputValues();
 		});
+
+		if (this.#isProjectSelector())
+		{
+			this.#selector.dialog.subscribe('Tab:onSelect', () => {
+				this.#addSelectedProjectItemsToProjectTabs();
+			});
+		}
+	}
+
+	#isProjectSelector(): boolean
+	{
+		const entities = Type.isArray(this.#config.dialogOptions?.entities)
+			? this.#config.dialogOptions.entities
+			: []
+		;
+
+		return (
+			this.#config.entity?.id === ProjectEntityId
+			|| entities.some((entity) => entity.id === ProjectEntityId)
+			|| this.#getDialogEntityId() === ProjectEntityId
+		);
+	}
+
+	#handleItemSelect(event: BaseEvent): void
+	{
+		const item = this.#getEventItem(event);
+		if (this.#isProjectSelector() && this.#isProjectItem(item))
+		{
+			this.#addProjectItemToProjectTabs(item);
+		}
+
+		this.#updateInputValues();
+	}
+
+	#getEventItem(event: BaseEvent): ?Item
+	{
+		if (!event || !Type.isFunction(event.getData))
+		{
+			return null;
+		}
+
+		const data = event.getData();
+
+		return Type.isObjectLike(data) && this.#isProjectItem(data.item) ? data.item : null;
+	}
+
+	#addSelectedProjectItemsToProjectTabs(): void
+	{
+		const dialog = this.#selector?.getDialog();
+		if (!dialog)
+		{
+			return;
+		}
+
+		dialog
+			.getSelectedItems()
+			.filter((item: Item) => this.#isProjectItem(item))
+			.forEach((item: Item) => this.#addProjectItemToProjectTabs(item))
+		;
+	}
+
+	#addProjectItemToProjectTabs(item: Item): void
+	{
+		const tabIds = this.#getProjectTabIds();
+		if (tabIds.length === 0)
+		{
+			return;
+		}
+
+		if (Type.isFunction(item.getSort) && Type.isFunction(item.setSort) && item.getSort() === null)
+		{
+			item.setSort(2);
+		}
+
+		this.#addProjectItemToTabs(item, tabIds);
+	}
+
+	#isProjectItem(item: ?Item): boolean
+	{
+		if (!item || !Type.isFunction(item.getEntityId))
+		{
+			return false;
+		}
+
+		return item.getEntityId() === ProjectEntityId;
+	}
+
+	#addProjectItemToTabs(item: Item, tabIds: string[]): void
+	{
+		const dialog = this.#selector?.getDialog();
+		if (!dialog)
+		{
+			return;
+		}
+
+		tabIds.forEach((tabId) => {
+			if (this.#hasProjectItemNode(item, tabId))
+			{
+				return;
+			}
+
+			const tab = dialog.getTab(tabId);
+			if (tab)
+			{
+				tab.getRootNode().addItem(item);
+			}
+		});
+	}
+
+	#hasProjectItemNode(item: Item, tabId: string): boolean
+	{
+		return [...item.getNodes()].some((node) => {
+			return node.getTab().getId() === tabId;
+		});
+	}
+
+	#getProjectTabIds(): string[]
+	{
+		if (!this.#selector)
+		{
+			return [];
+		}
+
+		const dialog = this.#selector.getDialog();
+		if (!dialog)
+		{
+			return [];
+		}
+
+		const tabs = [
+			dialog.getTab(ProjectEntityId),
+			dialog.getTab('projects'),
+		];
+
+		const tabIds = [];
+		tabs.forEach((tab) => {
+			const tabId = tab ? tab.getId() : null;
+			if (Type.isStringFilled(tabId) && !tabIds.includes(tabId))
+			{
+				tabIds.push(tabId);
+			}
+		});
+
+		return tabIds;
+	}
+
+	#getDialogEntityId(): string
+	{
+		if (!this.#selector?.dialog)
+		{
+			return '';
+		}
+
+		const entity = this.#selector.dialog.getEntities()[0];
+		if (!entity)
+		{
+			return '';
+		}
+
+		return entity.id || (Type.isFunction(entity.getId) ? entity.getId() : '');
 	}
 
 	#updateInputValues(): void

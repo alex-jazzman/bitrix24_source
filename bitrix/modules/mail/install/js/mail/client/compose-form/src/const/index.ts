@@ -39,6 +39,9 @@ export const SlotsControlTestId = 'mail-compose-slots-action';
 /** Kept on both the plain and the split send control, so the send e2e spec matches either one. */
 export const SendControlTestId = 'mail-compose-send';
 
+export const SaveTemplateContainerTestId = 'mail-compose-save-template';
+export const SaveTemplateControlTestId = 'mail-compose-save-template-control';
+
 /**
  * Anchor of the large attachment hint. The node is rendered even when the message has no attachments,
  * otherwise the hint has nothing to point at.
@@ -58,6 +61,8 @@ export const Phrase = Object.freeze({
 	FieldCc: 'MAIL_COMPOSE_FORM_FIELD_CC',
 	FieldBcc: 'MAIL_COMPOSE_FORM_FIELD_BCC',
 	FieldAdd: 'MAIL_COMPOSE_FORM_FIELD_ADD',
+	/** Carries the number of hidden recipients: "+10" alone says nothing to a screen reader. */
+	RecipientsShowAll: 'MAIL_COMPOSE_FORM_RECIPIENTS_SHOW_ALL',
 	AddressBookAdd: 'MAIL_COMPOSE_FORM_ADDRESS_BOOK_ADD',
 	AddressBookAddFromSearch: 'MAIL_COMPOSE_FORM_ADDRESS_BOOK_ADD_FROM_SEARCH',
 	AddressBookEmptyTitle: 'MAIL_COMPOSE_FORM_ADDRESS_BOOK_EMPTY_TITLE',
@@ -94,21 +99,51 @@ export const Phrase = Object.freeze({
 	SlotsButton: 'MAIL_COMPOSE_FORM_SLOTS_BUTTON',
 	SendButton: 'MAIL_COMPOSE_FORM_SEND_BUTTON',
 	CancelButton: 'MAIL_COMPOSE_FORM_CANCEL_BUTTON',
+	SaveAsTemplate: 'MAIL_COMPOSE_FORM_SAVE_AS_TEMPLATE',
 	/** Phrases of the schedule and document controls that remain under `unfinishedElements`. */
 	CreateDocumentButton: 'MAIL_COMPOSE_FORM_CREATE_DOCUMENT_BUTTON',
 	ScheduleButton: 'MAIL_COMPOSE_FORM_SCHEDULE_BUTTON',
-	SchedulePresetToday: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_TODAY',
+	/** Sends the moment picked in the calendar of the popup, unlike the presets next to it. */
+	ScheduleConfirm: 'MAIL_COMPOSE_FORM_SCHEDULE_CONFIRM',
+	SchedulePresetInOneHour: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_IN_ONE_HOUR',
 	SchedulePresetTomorrow: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_TOMORROW',
 	SchedulePresetWeekEnd: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_WEEK_END',
 	SchedulePresetNextWeek: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_NEXT_WEEK',
 	SchedulePresetMonthEnd: 'MAIL_COMPOSE_FORM_SCHEDULE_PRESET_MONTH_END',
+	ScheduleErrorPastTime: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_PAST_TIME',
+	ScheduleErrorTime: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_TIME',
+	ScheduleErrorFeatureUnavailable: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_FEATURE_UNAVAILABLE',
+	ScheduleErrorAccessDenied: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ACCESS_DENIED',
+	ScheduleErrorNotFound: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_NOT_FOUND',
+	ScheduleErrorRevisionConflict: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_REVISION_CONFLICT',
+	ScheduleErrorAlreadySending: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ALREADY_SENDING',
+	ScheduleErrorAlreadySent: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ALREADY_SENT',
+	ScheduleErrorAlreadyCancelled: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ALREADY_CANCELLED',
+	ScheduleErrorMailboxUnavailable: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_MAILBOX_UNAVAILABLE',
+	ScheduleErrorMailboxAccess: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_MAILBOX_ACCESS',
+	ScheduleErrorSenderUnavailable: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_SENDER_UNAVAILABLE',
+	ScheduleErrorRecipients: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_RECIPIENTS',
+	ScheduleErrorSendLimit: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_SEND_LIMIT',
+	ScheduleErrorAttachmentLimit: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_LIMIT',
+	ScheduleErrorInvalidHeader: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_INVALID_HEADER',
+	ScheduleErrorAttachmentAccess: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_ACCESS',
+	ScheduleErrorAttachmentInvalid: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_INVALID',
+	ScheduleErrorAttachmentCopy: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_COPY',
+	ScheduleErrorAttachmentSize: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_ATTACHMENT_SIZE',
+	ScheduleErrorSaveFailed: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_SAVE_FAILED',
+	ScheduleErrorUnknown: 'MAIL_COMPOSE_FORM_SCHEDULE_ERROR_UNKNOWN',
+	ScheduleSuccess: 'MAIL_COMPOSE_FORM_SCHEDULE_SUCCESS',
 	/** Templates are a working capability independent from the unfinished controls. */
 	TemplatesButton: 'MAIL_COMPOSE_FORM_TEMPLATES_BUTTON',
 	TemplatesNewLabel: 'MAIL_COMPOSE_FORM_TEMPLATES_NEW_LABEL',
 	TemplatesMenuTitle: 'MAIL_COMPOSE_FORM_TEMPLATES_MENU_TITLE',
-	TemplatesRemember: 'MAIL_COMPOSE_FORM_TEMPLATES_REMEMBER',
 	TemplatesAllButton: 'MAIL_COMPOSE_FORM_TEMPLATES_ALL_BUTTON',
 	TemplatesConfigureButton: 'MAIL_COMPOSE_FORM_TEMPLATES_CONFIGURE_BUTTON',
+	TemplatesCreateButton: 'MAIL_COMPOSE_FORM_TEMPLATES_CREATE_BUTTON',
+	TemplatePreviewButton: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_BUTTON',
+	TemplatePreviewTitle: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_TITLE',
+	TemplatePreviewClose: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_CLOSE',
+	TemplatePreviewError: 'MAIL_COMPOSE_FORM_TEMPLATE_PREVIEW_ERROR',
 	TemplatesSearch: 'MAIL_COMPOSE_FORM_TEMPLATES_SEARCH',
 	TemplatesLoading: 'MAIL_COMPOSE_FORM_TEMPLATES_LOADING',
 	TemplatesEmpty: 'MAIL_COMPOSE_FORM_TEMPLATES_EMPTY',
@@ -123,6 +158,15 @@ export const Phrase = Object.freeze({
 	TemplateApplyInsert: 'MAIL_COMPOSE_FORM_TEMPLATE_APPLY_INSERT',
 	TemplateApplyReplace: 'MAIL_COMPOSE_FORM_TEMPLATE_APPLY_REPLACE',
 	TemplateApplyError: 'MAIL_COMPOSE_FORM_TEMPLATE_APPLY_ERROR',
+	SubjectGenerationButton: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_BUTTON',
+	/** Shown over the locked subject field while the generation runs, and announced at its start. */
+	SubjectGenerationRunning: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_RUNNING',
+	/** Notices of the subject generation; the wording repeats the mobile application. */
+	SubjectGenerationEmptyBody: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_EMPTY_BODY',
+	SubjectGenerationError: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_ERROR',
+	SubjectGenerationLimit: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_LIMIT',
+	/** Spoken to a screen reader when the ready subject lands in the field; nothing else reports it. */
+	SubjectGenerationDone: 'MAIL_COMPOSE_FORM_SUBJECT_GENERATION_DONE',
 	SlotsText: 'MAIL_COMPOSE_FORM_SLOTS_TEXT',
 	SlotsCalendarTitle: 'MAIL_COMPOSE_FORM_SLOTS_CALENDAR_TITLE',
 	SlotsCalendarText: 'MAIL_COMPOSE_FORM_SLOTS_CALENDAR_TEXT',
@@ -145,3 +189,31 @@ export const Phrase = Object.freeze({
 	ErrorSendFailed: 'MAIL_COMPOSE_FORM_ERROR_SEND_FAILED',
 	SendSuccess: 'MAIL_COMPOSE_FORM_SEND_SUCCESS',
 } as const);
+
+/**
+ * Phrase for every refusal the schedule and the change of a scheduled letter answer with, by the error code
+ * of the server. The messages of the service are English diagnostics and are shown to nobody: a code that is
+ * missing here is answered with `Phrase.ScheduleErrorUnknown`. A new code of the server is one line more.
+ */
+export const ScheduleErrorPhrase: Readonly<Record<string, string>> = Object.freeze({
+	feature_unavailable: Phrase.ScheduleErrorFeatureUnavailable,
+	invalid_time: Phrase.ScheduleErrorPastTime,
+	access_denied: Phrase.ScheduleErrorAccessDenied,
+	not_found: Phrase.ScheduleErrorNotFound,
+	revision_conflict: Phrase.ScheduleErrorRevisionConflict,
+	already_sending: Phrase.ScheduleErrorAlreadySending,
+	already_sent: Phrase.ScheduleErrorAlreadySent,
+	already_cancelled: Phrase.ScheduleErrorAlreadyCancelled,
+	mailbox_unavailable: Phrase.ScheduleErrorMailboxUnavailable,
+	mailbox_access_denied: Phrase.ScheduleErrorMailboxAccess,
+	sender_unavailable: Phrase.ScheduleErrorSenderUnavailable,
+	recipient_limit: Phrase.ScheduleErrorRecipients,
+	send_limit: Phrase.ScheduleErrorSendLimit,
+	attachment_limit: Phrase.ScheduleErrorAttachmentLimit,
+	invalid_header: Phrase.ScheduleErrorInvalidHeader,
+	attachment_access_denied: Phrase.ScheduleErrorAttachmentAccess,
+	attachment_invalid: Phrase.ScheduleErrorAttachmentInvalid,
+	attachment_copy_failed: Phrase.ScheduleErrorAttachmentCopy,
+	attachment_size_limit: Phrase.ScheduleErrorAttachmentSize,
+	save_failed: Phrase.ScheduleErrorSaveFailed,
+});

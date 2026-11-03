@@ -375,7 +375,7 @@ return [
 						<img data-fancybox="gallery" class="landing-block-node-img img-fluid g-object-fit-cover h-100 w-100 u-block-hover__main--zoom-v1" src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img6.jpg" alt="" data-fileid="-1" />
 						<div class="landing-block-node-img-title-container w-100 g-pos-abs g-bottom-0 g-left-0 g-top-0 g-flex-middle g-bg-black-opacity-0_5 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in">
 							<div class="h-100 g-flex-centered flex-column g-brd-white-opacity-0_2 text-uppercase">
-								<h3 class="landing-block-node-img-title text-center g-color-white g-line-height-1_4 g-letter-spacing-5 g-font-size-20">surpise!</h3>
+								<h3 class="landing-block-node-img-title text-center g-color-white g-line-height-1_4 g-letter-spacing-5 g-font-size-20">surprise!</h3>
 							</div>
 						</div>
 					</div>
@@ -388,7 +388,7 @@ return [
 						<img data-fancybox="gallery" class="landing-block-node-img img-fluid g-object-fit-cover h-100 w-100 u-block-hover__main--zoom-v1" src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img7.jpg" alt="" data-fileid="-1" />
 						<div class="landing-block-node-img-title-container w-100 g-pos-abs g-bottom-0 g-left-0 g-top-0 g-flex-middle g-bg-black-opacity-0_5 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transiti	on--ease-in">
 							<div class="h-100 g-flex-centered flex-column g-brd-white-opacity-0_2 text-uppercase">
-								<h3 class="landing-block-node-img-title text-center g-color-white g-line-height-1_4 g-letter-spacing-5 g-font-size-20">SURPISE!</h3>
+								<h3 class="landing-block-node-img-title text-center g-color-white g-line-height-1_4 g-letter-spacing-5 g-font-size-20">SURPRISE!</h3>
 							</div>
 						</div>
 					</div>
@@ -401,7 +401,7 @@ return [
 						<img data-fancybox="gallery" class="landing-block-node-img img-fluid g-object-fit-cover h-100 w-100 u-block-hover__main--zoom-v1" src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img8.jpg" alt="" data-fileid="-1" />
 						<div class="landing-block-node-img-title-container w-100 g-pos-abs g-bottom-0 g-left-0 g-top-0 g-flex-middle g-bg-black-opacity-0_5 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in">
 							<div class="h-100 g-flex-centered flex-column g-brd-white-opacity-0_2 text-uppercase">
-								<h3 class="landing-block-node-img-title text-center g-color-white g-line-height-1_4 g-letter-spacing-5 g-font-size-20">SURPISE!</h3>
+								<h3 class="landing-block-node-img-title text-center g-color-white g-line-height-1_4 g-letter-spacing-5 g-font-size-20">SURPRISE!</h3>
 							</div>
 						</div>
 					</div>

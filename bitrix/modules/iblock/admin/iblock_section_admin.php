@@ -1,4 +1,4 @@
-<?
+<?php
 /** @global CMain $APPLICATION */
 /** @global $DB CDatabase */
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
@@ -10,6 +10,7 @@ use Bitrix\Main,
 	Bitrix\Iblock,
 	Bitrix\Iblock\Grid\ActionType,
 	Bitrix\Catalog;
+use Bitrix\Main\Web\Uri;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 Loader::includeModule("iblock");
@@ -765,7 +766,7 @@ while ($arRes = $rsData->Fetch())
 
 	$row->AddViewField("ID", '<a href="'.$edit_url.'" title="'.GetMessage("IBSEC_A_EDIT").'">'.$arRes["ID"].'</a>');
 	$margin = max((int)$arRes['DEPTH_LEVEL'], 1) - 1;
-	$row->AddViewField("NAME", '<a href="'.CHTTP::URN2URI($sec_list_url).'" '.($useTree ? 'style="padding-left:'.($margin * 22).'px"' : '').' class="adm-list-table-icon-link" title="'.GetMessage("IBSEC_A_LIST").'"><span class="adm-submenu-item-link-icon adm-list-table-icon iblock-section-icon"></span><span class="adm-list-table-link">'.htmlspecialcharsbx($arRes["NAME"]).'</span></a>');
+	$row->AddViewField("NAME", '<a href="'.(new Uri($sec_list_url))->toAbsolute().'" '.($useTree ? 'style="padding-left:'.($margin * 22).'px"' : '').' class="adm-list-table-icon-link" title="'.GetMessage("IBSEC_A_LIST").'"><span class="adm-submenu-item-link-icon adm-list-table-icon iblock-section-icon"></span><span class="adm-list-table-link">'.htmlspecialcharsbx($arRes["NAME"]).'</span></a>');
 	if (isset($arVisibleColumnsMap["ELEMENT_CNT"]))
 	{
 		$elementSectionFilter['SECTION_ID'] = $arRes['ID'];
@@ -782,8 +783,8 @@ while ($arRes = $rsData->Fetch())
 			array()
 		);
 
-		$row->AddViewField("ELEMENT_CNT", '<a href="'.CHTTP::URN2URI($elementListUrl).'" title="'.GetMessage("IBSEC_A_ELLIST").'">'.$elementCount.'</a>'.
-			' (<a href="'.CHTTP::URN2URI($nestedElementListUrl).'" title="'.GetMessage("IBSEC_A_ELLIST_TITLE").'">'.$fullElementCount.'</a>)'.
+		$row->AddViewField("ELEMENT_CNT", '<a href="'.(new Uri($elementListUrl))->toAbsolute().'" title="'.GetMessage("IBSEC_A_ELLIST").'">'.$elementCount.'</a>'.
+			' (<a href="'.(new Uri($nestedElementListUrl))->toAbsolute().'" title="'.GetMessage("IBSEC_A_ELLIST_TITLE").'">'.$fullElementCount.'</a>)'.
 			' [<a href="'.$el_add_url.'" title="'.GetMessage("IBSEC_A_ELADD_TITLE").'">+</a>]'
 		);
 	}
@@ -793,7 +794,7 @@ while ($arRes = $rsData->Fetch())
 			"IBLOCK_ID" => $IBLOCK_ID,
 			"SECTION_ID" => $arRes["ID"],
 		);
-		$row->AddViewField("SECTION_CNT", '<a href="'.CHTTP::URN2URI($sec_list_url).'" title="'.GetMessage("IBSEC_A_LIST").'">'.intval(CIBlockSection::GetCount($arFilter)).'</a> [<a href="'.$sec_add_url.'" title="'.GetMessage("IBSEC_A_SECTADD_TITLE").'">+</a>]');
+		$row->AddViewField("SECTION_CNT", '<a href="'.(new Uri($sec_list_url))->toAbsolute().'" title="'.GetMessage("IBSEC_A_LIST").'">'.intval(CIBlockSection::GetCount($arFilter)).'</a> [<a href="'.$sec_add_url.'" title="'.GetMessage("IBSEC_A_SECTADD_TITLE").'">+</a>]');
 	}
 	if (isset($arVisibleColumnsMap["MODIFIED_BY"]))
 	{

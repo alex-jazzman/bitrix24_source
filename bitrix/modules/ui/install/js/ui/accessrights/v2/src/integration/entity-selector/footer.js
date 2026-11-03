@@ -7,31 +7,49 @@ export class Footer extends DefaultFooter
 	{
 		super(dialog, options);
 
-		this.selectAllButton = Tag.render`<div class="ui-selector-footer-link">${
+		this.selectAllButton = Tag.render`<div
+			class="ui-selector-footer-link"
+			data-testid="ui-accessrights-selector-footer-select-all"
+		>${
 			Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_SELECT_LABEL')
 		}</div>`;
 		Dom.style(this.selectAllButton, 'display', 'none');
 		Event.bind(this.selectAllButton, 'click', this.#selectAll.bind(this));
 
-		this.deselectAllButton = Tag.render`<div class="ui-selector-footer-link">${
+		this.deselectAllButton = Tag.render`<div
+			class="ui-selector-footer-link"
+			data-testid="ui-accessrights-selector-footer-deselect-all"
+		>${
 			Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_DESELECT_LABEL')
 		}</div>`;
 		Dom.style(this.deselectAllButton, 'display', 'none');
 		Event.bind(this.deselectAllButton, 'click', this.#deselectAll.bind(this));
 
-		this.getDialog().subscribe('Item:onSelect', this.#onItemStatusChange.bind(this));
-		this.getDialog().subscribe('Item:onDeselect', this.#onItemStatusChange.bind(this));
+		this.getDialog().subscribe('Item:onSelect', this.updateSelectButtons.bind(this));
+		this.getDialog().subscribe('Item:onDeselect', this.updateSelectButtons.bind(this));
+		// items of a server-fed dialog arrive after the footer is rendered and are selected silently
+		this.getDialog().subscribe('onLoad', this.updateSelectButtons.bind(this));
 	}
 
 	getContent(): HTMLElement | HTMLElement[] | string | null
 	{
-		this.#toggleSelectButtons();
+		this.updateSelectButtons();
 
 		return [this.selectAllButton, this.deselectAllButton];
 	}
 
-	#toggleSelectButtons(): void
+	// public because items put straight into the dialog raise no event: their owner asks for the recount
+	updateSelectButtons(): void
 	{
+		if (this.getOption('hasVariablesSource') === true)
+		{
+			// 'select all' would only cover the loaded page of a partially fetched source
+			Dom.style(this.selectAllButton, 'display', 'none');
+			Dom.style(this.deselectAllButton, 'display', this.getDialog().getSelectedItems().length > 0 ? '' : 'none');
+
+			return;
+		}
+
 		if (this.getDialog().getSelectedItems().length === this.getDialog().getItems().length)
 		{
 			Dom.style(this.selectAllButton, 'display', 'none');
@@ -64,10 +82,5 @@ export class Footer extends DefaultFooter
 				item.deselect();
 			})
 		;
-	}
-
-	#onItemStatusChange(): void
-	{
-		this.#toggleSelectButtons();
 	}
 }

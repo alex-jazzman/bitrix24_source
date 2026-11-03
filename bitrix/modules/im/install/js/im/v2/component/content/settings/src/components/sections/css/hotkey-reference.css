@@ -1,0 +1,49 @@
+.bx-im-settings-hotkey-reference__scroll {
+	--im-settings-hotkey-reference__font-color_header: var(--im-color-palette-gray-90);
+	--im-settings-hotkey-reference__font-color_cell: var(--im-color-palette-black-base);
+	--im-settings-hotkey-reference__background-color_divider: var(--im-settings-section-content__background-color_separator);
+
+	width: 100%;
+	overflow-x: auto;
+}
+
+.bx-im-settings-hotkey-reference {
+	display: grid;
+	/* fixed width keeps columns in place when send combination switches */
+	grid-template-columns: 320px minmax(280px, max-content) minmax(0, 1fr);
+	width: 100%;
+}
+
+.bx-im-settings-hotkey-reference.--two-columns {
+	grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.bx-im-settings-hotkey-reference__row {
+	display: contents;
+}
+
+.bx-im-settings-hotkey-reference__header {
+	padding: 0 24px 10px 0;
+	font: var(--im-font-size-md)/var(--im-font-line-height-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-settings-hotkey-reference__font-color_header);
+	white-space: nowrap;
+	border-bottom: 1px solid var(--im-settings-hotkey-reference__background-color_divider);
+}
+
+.bx-im-settings-hotkey-reference__action,
+.bx-im-settings-hotkey-reference__cell {
+	padding: 8px 24px 0 0;
+	font: var(--im-font-size-md)/var(--im-font-line-height-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-settings-hotkey-reference__font-color_cell);
+}
+
+.bx-im-settings-hotkey-reference__cell {
+	white-space: nowrap;
+}
+
+.bx-im-settings-hotkey-reference__header:last-child,
+.bx-im-settings-hotkey-reference__cell:last-child {
+	padding-right: 0;
+}

@@ -2,7 +2,14 @@ import { Type, type JsonObject } from 'main.core';
 import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { MessageComponent, MessageType, UserIdNetworkPrefix, type AttachConfig } from 'im.v2.const';
+import {
+	CopilotSimpleReasoningPlanField,
+	DeliveryTimeout,
+	MessageComponent,
+	MessageType,
+	UserIdNetworkPrefix,
+	type AttachConfig,
+} from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { UserManager } from 'im.v2.lib.user';
 import { Utils } from 'im.v2.lib.utils';
@@ -78,6 +85,8 @@ export class MessagesModel extends BuilderModel
 			viewedByOthers: false,
 			sending: false,
 			error: false,
+			notDelivered: false,
+			sendingTs: 0,
 			componentId: MessageComponent.default,
 			componentParams: {},
 			forward: {
@@ -86,6 +95,7 @@ export class MessagesModel extends BuilderModel
 			},
 			isEdited: false,
 			isDeleted: false,
+			[CopilotSimpleReasoningPlanField]: null,
 		};
 	}
 
@@ -207,6 +217,17 @@ export class MessagesModel extends BuilderModel
 
 				return this.#findLastOwnMessageId(state, chatId);
 			},
+			/** @function messages/getLastOwnMessage */
+			getLastOwnMessage: (state: MessagesState, getters: GetterTree) => (chatId: number): ?ImModelMessage => {
+				if (!state.chatCollection[chatId])
+				{
+					return null;
+				}
+
+				const lastOwnMessage = this.#findLastOwnMessage(getters.getByChatId(chatId));
+
+				return state.collection[lastOwnMessage?.id] ?? lastOwnMessage;
+			},
 			/** @function messages/getFirstUnread */
 			getFirstUnread: (state: MessagesState) => (chatId: number): number => {
 				if (!state.chatCollection[chatId])
@@ -239,9 +260,13 @@ export class MessagesModel extends BuilderModel
 					return [];
 				}
 
-				return state.collection[messageId].files.map((fileId) => {
-					return this.store.getters['files/get'](fileId, true);
-				});
+				// The composition can run ahead of the entities: an edit writes the saved file ids into
+				// the model at once, while the files themselves arrive with the pull event. Consumers
+				// read this as a list of files, so an id with nothing behind it is dropped, not passed
+				// on as a hole.
+				return state.collection[messageId].files
+					.map((fileId) => this.store.getters['files/get'](fileId, true))
+					.filter(Boolean);
 			},
 			/** @function messages/getMessageType */
 			getMessageType: (state: MessagesState) => (messageId: number): ?$Values<typeof MessageType> => {
@@ -761,6 +786,12 @@ export class MessagesModel extends BuilderModel
 			formattedFields.authorId = this.#prepareSwapAuthorId(formattedFields, messageParams);
 		}
 
+		const notDelivered = this.#computeNotDelivered(fields, messageParams);
+		if (!Type.isUndefined(notDelivered))
+		{
+			formattedFields.notDelivered = notDelivered;
+		}
+
 		return formattedFields;
 	}
 
@@ -769,6 +800,37 @@ export class MessagesModel extends BuilderModel
 		const { NAME: name, USER_ID: userId } = messageParams;
 
 		return Boolean(name && userId && formattedFields.authorId);
+	}
+
+	// Undefined means "no delivery parameter in this update": the caller keeps the stored value
+	// so the watchdog flag (messages/update with { notDelivered: true } and no params) survives.
+	#computeNotDelivered(fields: JsonObject, messageParams: JsonObject): boolean | void
+	{
+		if (Type.isUndefined(messageParams.SENDING))
+		{
+			return fields.notDelivered;
+		}
+
+		if (messageParams.SENDING !== 'Y')
+		{
+			return false;
+		}
+
+		const sendingTs = convertToNumber(messageParams.SENDING_TS);
+		if (!(sendingTs > 0))
+		{
+			return false;
+		}
+
+		const threshold = this.#messageHasFiles(messageParams) ? DeliveryTimeout.WithFiles : DeliveryTimeout.Default;
+		const nowInSeconds = Math.floor(Date.now() / 1000);
+
+		return (sendingTs + threshold) < nowInSeconds;
+	}
+
+	#messageHasFiles(messageParams: JsonObject): boolean
+	{
+		return Type.isArrayFilled(messageParams.FILE_ID) || Type.isArrayFilled(messageParams.FILES);
 	}
 
 	#prepareSwapAuthorId(formattedFields: ImModelMessage, messageParams: JsonObject): string
@@ -867,6 +929,20 @@ export class MessagesModel extends BuilderModel
 		}
 
 		return lastOwnMessageId;
+	}
+
+	#findLastOwnMessage(messages: ImModelMessage[]): ?ImModelMessage
+	{
+		for (let index = messages.length - 1; index >= 0; index--)
+		{
+			const message = messages[index];
+			if (message.authorId === Core.getUserId())
+			{
+				return message;
+			}
+		}
+
+		return null;
 	}
 
 	#findFirstUnread(state: MessagesState, chatId: number): number

@@ -100,7 +100,7 @@ this.BX = this.BX || {};
 			this._valueNode = main_core.Tag.render`<span></span>`;
 			this._wrapper.appendChild(this._valueNode);
 			if (this.isContextMenuEnabled()) {
-				this._wrapper.appendChild(this.createContextMenuButton());
+				this.insertContextMenuButton(this._wrapper);
 			}
 			if (this.isDragEnabled()) {
 				this.initializeDragDropAbilities();

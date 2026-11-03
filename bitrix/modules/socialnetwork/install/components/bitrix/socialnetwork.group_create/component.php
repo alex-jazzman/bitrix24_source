@@ -1,4 +1,6 @@
 <?
+
+use Bitrix\Socialnetwork\Collab\Control\ExternalMembershipValidator;
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("socialnetwork"))
@@ -241,6 +243,14 @@ else
 				foreach($arResult["GROUP_PROPERTIES"] as $field => $arUserField)
 					if (array_key_exists($field, $_POST))
 						$arFields[$field] = $_POST[$field];
+
+				$preflight = ExternalMembershipValidator::validateFields((int)$arParams['GROUP_ID'], $arFields);
+				if (!$preflight->isSuccess())
+				{
+					ShowError(implode('; ', $preflight->getErrorMessages()));
+
+					return;
+				}
 
 				$GLOBALS["USER_FIELD_MANAGER"]->EditFormAddFields("SONET_GROUP", $arFields);
 

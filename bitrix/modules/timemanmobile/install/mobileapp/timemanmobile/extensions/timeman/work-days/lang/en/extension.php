@@ -1,0 +1,3 @@
+<?php
+$MESS["M_TIMEMAN_WORK_DAYS_MORE_MENU_HELP"] = "How does it work?";
+$MESS["M_TIMEMAN_WORK_DAYS_MORE_MENU_SETTINGS"] = "Settings";

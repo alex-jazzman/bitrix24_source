@@ -5,7 +5,7 @@ import { CallTokenManager } from 'call.lib.call-token-manager';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { RestMethod, Layout, ErrorCode } from 'im.v2.const';
+import { RestMethod, ErrorCode, CopilotGenerationStatus } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
@@ -13,7 +13,12 @@ import { Notifier } from 'im.v2.lib.notifier';
 import { runAction, type RunActionError } from 'im.v2.lib.rest';
 import { UserManager } from 'im.v2.lib.user';
 import { Utils } from 'im.v2.lib.utils';
-import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
+import {
+	type ImModelChat,
+	type ImModelCopilotGenerationState,
+	type ImModelInputActions,
+	type ImModelMessage,
+} from 'im.v2.model';
 import { MessageService } from 'im.v2.provider.service.message';
 
 import { type ChatLoadRestResult, type CommentInfoRestResult } from '../types/chat';
@@ -27,6 +32,12 @@ type UpdateModelsResult = {
 };
 
 type ChatActionResult = RunActionError | ChatLoadRestResult;
+
+type CopilotLoadStateSnapshot = {
+	dialogId: ?string,
+	generationState: ?ImModelCopilotGenerationState,
+	inputActions: ImModelInputActions,
+};
 
 export class LoadService
 {
@@ -159,6 +170,7 @@ export class LoadService
 	async #requestChat(actionName: string, params: Object<string, any>): Promise<{ dialogId: string, chatId: number }>
 	{
 		const { dialogId, messageId } = params;
+		const copilotLoadStateSnapshot = this.#getCopilotLoadStateSnapshot(dialogId, params.chatId);
 		if (this.#affectsDialogLoadingState(actionName))
 		{
 			this.#markDialogAsLoading(dialogId);
@@ -193,7 +205,7 @@ export class LoadService
 		const {
 			dialogId: loadedDialogId,
 			chatId,
-		} = await this.#updateModels(actionResult);
+		} = await this.#updateModels(actionResult, copilotLoadStateSnapshot);
 
 		const { callInfo } = actionResult;
 
@@ -208,6 +220,23 @@ export class LoadService
 		}
 
 		return { dialogId: loadedDialogId, chatId };
+	}
+
+	#getCopilotLoadStateSnapshot(dialogId: ?string, chatId: ?number): CopilotLoadStateSnapshot
+	{
+		const storedDialogId = Type.isStringFilled(dialogId)
+			? dialogId
+			: this.#store.getters['chats/getByChatId'](chatId)?.dialogId ?? null;
+		if (!storedDialogId)
+		{
+			return { dialogId: null, generationState: null, inputActions: [] };
+		}
+
+		return {
+			dialogId: storedDialogId,
+			generationState: this.#store.getters['copilot/chats/getGenerationState']?.(storedDialogId) ?? null,
+			inputActions: [...(this.#store.getters['chats/inputActions/getByDialogId']?.(storedDialogId) ?? [])],
+		};
 	}
 
 	#markDialogAsLoading(dialogId: string)
@@ -242,7 +271,10 @@ export class LoadService
 		return actionName !== RestMethod.imV2ChatShallowLoad;
 	}
 
-	async #updateModels(restResult: ChatLoadRestResult): Promise<UpdateModelsResult>
+	async #updateModels(
+		restResult: ChatLoadRestResult,
+		copilotLoadStateSnapshot: CopilotLoadStateSnapshot,
+	): Promise<UpdateModelsResult>
 	{
 		const extractor = new ChatDataExtractor(restResult);
 
@@ -270,7 +302,21 @@ export class LoadService
 		]);
 
 		const copilotManager = new CopilotManager();
-		const copilotPromise = copilotManager.handleChatLoadResponse(extractor.getCopilot());
+		const dialogId = extractor.getDialogId();
+		const copilotGenerationState = extractor.getCopilotGenerationState();
+		const isCopilotLoadStateActual = this.#isCopilotLoadStateActual(dialogId, copilotLoadStateSnapshot);
+		// chat-load is the source of truth for the generation state, but there is nothing to sync when
+		// the server sends none and the store has none either — skip the dispatch on every regular chat load
+		const hasStoredGenerationState = this.#store.getters['copilot/chats/getGenerationState'](dialogId) !== null;
+		const copilotPromise = Promise.all([
+			copilotManager.handleChatLoadResponse(extractor.getCopilot()),
+			(isCopilotLoadStateActual && (copilotGenerationState || hasStoredGenerationState))
+				? this.#store.dispatch('copilot/chats/setGenerationState', {
+					dialogId,
+					generationState: copilotGenerationState,
+				})
+				: null,
+		]);
 
 		const collabPromise = this.#store.dispatch('chats/collabs/set', {
 			chatId: extractor.getChatId(),
@@ -298,7 +344,27 @@ export class LoadService
 			...customPromises,
 		]);
 
+		if (
+			extractor.isCopilotChat()
+			&& isCopilotLoadStateActual
+			&& copilotGenerationState?.status !== CopilotGenerationStatus.generating
+		)
+		{
+			copilotManager.stopCopilotTyping(dialogId, copilotLoadStateSnapshot.inputActions);
+		}
+
 		return { dialogId: extractor.getDialogId(), chatId: extractor.getChatId() };
+	}
+
+	#isCopilotLoadStateActual(dialogId: string, snapshot: CopilotLoadStateSnapshot): boolean
+	{
+		if (!snapshot.dialogId)
+		{
+			return true;
+		}
+
+		return snapshot.dialogId === dialogId
+			&& this.#store.getters['copilot/chats/getGenerationState'](dialogId) === snapshot.generationState;
 	}
 
 	#needLayoutRedirect(actionResult: ChatLoadRestResult): boolean
@@ -309,7 +375,8 @@ export class LoadService
 	#redirectToLayout(actionResult: ChatLoadRestResult): Promise
 	{
 		const extractor = new ChatDataExtractor(actionResult);
-		LayoutManager.getInstance().setLastOpenedElement(Layout.chat, '');
+		const layoutManager = LayoutManager.getInstance();
+		layoutManager.setLastOpenedElement(layoutManager.getLayout().name, '');
 
 		if (this.#needRedirectToOpenLinesLayout(actionResult))
 		{

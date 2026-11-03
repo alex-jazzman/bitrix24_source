@@ -3,23 +3,28 @@ import {MembersPopup} from './members-popup';
 
 export class ScrumMembersPopup extends MembersPopup
 {
+	getPopupAriaLabel()
+	{
+		return Loc.getMessage('TASKS_PROJECTS_SCRUM_MEMBERS_POPUP_ARIA_LABEL');
+	}
+
 	renderContainer()
 	{
 		return Tag.render`
-			<span class="tasks-projects-members-popup-container">
-				<span class="tasks-projects-members-popup-head">
+			<div class="tasks-projects-members-popup-container">
+				<div class="tasks-projects-members-popup-head">
 					${this.popupData.all.tab}
 					${this.popupData.scrumTeam.tab}
 					${this.popupData.members.tab}
-				</span>
-				<span class="tasks-projects-members-popup-body">
+				</div>
+				<div class="tasks-projects-members-popup-body">
 					<div class="tasks-projects-members-popup-content">
 						<div class="tasks-projects-members-popup-content-box">
 							${this.getCurrentPopupData().innerContainer}
 						</div>
 					</div>
-				</span>
-			</span>
+				</div>
+			</div>
 		`;
 	}
 
@@ -28,47 +33,26 @@ export class ScrumMembersPopup extends MembersPopup
 		this.popupData = {
 			all: {
 				currentPage: 1,
+				hasMore: true,
+				isLoading: false,
 				renderedUsers: [],
-				tab: Tag.render`
-					<span
-						class="tasks-projects-members-popup-head-item"
-						onclick="${this.changeType.bind(this, 'all')}"
-					>
-						<span class="tasks-projects-members-popup-head-text">
-							${Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL')}
-						</span>
-					</span>
-				`,
+				tab: this.renderTypeButton('all', 'TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL'),
 				innerContainer: Tag.render`<div class="tasks-projects-members-popup-inner"></div>`,
 			},
 			scrumTeam: {
 				currentPage: 1,
+				hasMore: true,
+				isLoading: false,
 				renderedUsers: [],
-				tab: Tag.render`
-					<span
-						class="tasks-projects-members-popup-head-item"
-						onclick="${this.changeType.bind(this, 'scrumTeam')}"
-					>
-						<span class="tasks-projects-members-popup-head-text">
-							${Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_TEAM')}
-						</span>
-					</span>
-				`,
+				tab: this.renderTypeButton('scrumTeam', 'TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_TEAM'),
 				innerContainer: Tag.render`<div class="tasks-projects-members-popup-inner"></div>`,
 			},
 			members: {
 				currentPage: 1,
+				hasMore: true,
+				isLoading: false,
 				renderedUsers: [],
-				tab: Tag.render`
-					<span
-						class="tasks-projects-members-popup-head-item"
-						onclick="${this.changeType.bind(this, 'members')}"
-					>
-						<span class="tasks-projects-members-popup-head-text">
-							${Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_MEMBERS')}
-						</span>
-					</span>
-				`,
+				tab: this.renderTypeButton('members', 'TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_MEMBERS'),
 				innerContainer: Tag.render`<div class="tasks-projects-members-popup-inner"></div>`,
 			}
 		};
@@ -106,10 +90,10 @@ export class ScrumMembersPopup extends MembersPopup
 					.appendChild(
 						Tag.render`
 							<a class="tasks-projects-members-popup-item" href="${user['HREF']}" target="_blank">
-								<span class="tasks-projects-members-popup-avatar-new">
+								<div class="tasks-projects-members-popup-avatar-new">
 									${this.getAvatar(user)}
 									<span class="tasks-projects-members-popup-avatar-status-icon"></span>
-								</span>
+								</div>
 								<span class="tasks-scrum-members-popup-name">${user['FORMATTED_NAME']}</span>
 							</a>
 						`
@@ -129,10 +113,10 @@ export class ScrumMembersPopup extends MembersPopup
 				this.getCurrentPopupData().innerContainer.appendChild(
 					Tag.render`
 					<a class="tasks-projects-members-popup-item" href="${user['HREF']}" target="_blank">
-						<span class="tasks-projects-members-popup-avatar-new">
+						<div class="tasks-projects-members-popup-avatar-new">
 							${this.getAvatar(user)}
 							<span class="tasks-projects-members-popup-avatar-status-icon"></span>
-						</span>
+						</div>
 						<span class="tasks-scrum-members-popup-name">${user['FORMATTED_NAME']}</span>
 					</a>
 				`

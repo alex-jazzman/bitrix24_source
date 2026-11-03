@@ -4,7 +4,7 @@ $MESS["ABOUT_INFO"] = "<p><b>Адрес центрального офиса:</b>
 Москва, Ленинский проспект, д. 63, стр. 2
 <p><b>Схема проезда к офису:</b></p>
 
-<p><img title='Как нас найти. Схема проезда.' height='379' alt='Как нас найти. Схема проезда.' src='#SITE#images/ru/company/about/address.png' width='416' /></p>
+<p><img title='Как нас найти. Схема проезда.' height='379' alt='Как нас найти. Схема проезда.' src='#SITE#images/ru/company/about/address.webp' width='416' /></p>
 
 <p></p>
 

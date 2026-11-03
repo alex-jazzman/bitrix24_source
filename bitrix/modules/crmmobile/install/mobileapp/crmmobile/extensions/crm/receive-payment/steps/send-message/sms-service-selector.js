@@ -2,6 +2,7 @@
  * @module crm/receive-payment/steps/send-message/sms-service-selector
  */
 jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const AppTheme = require('apptheme');
@@ -82,10 +83,9 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 						paddingHorizontal: 16,
 					},
 				},
-				Text({
+				Text6({
 					style: {
 						color: AppTheme.colors.base4,
-						fontSize: 12,
 					},
 					text: `${sendingMethodText} `,
 				}),
@@ -95,10 +95,9 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 							contextMenu.show();
 						},
 					},
-					Text({
+					Text6({
 						style: {
 							color: AppTheme.colors.base3,
-							fontSize: 12,
 							borderBottomWidth: 1,
 							borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 							borderStyle: 'dash',

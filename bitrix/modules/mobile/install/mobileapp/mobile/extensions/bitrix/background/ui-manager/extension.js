@@ -19,6 +19,7 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		constructor()
 		{
 			this.currentComponent = null;
+			this.pendingComponent = null;
 
 			this.defaultDebounce = 3000;
 			this.isComponentOpened = false;
@@ -109,10 +110,64 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		 */
 		onCloseActiveComponent()
 		{
+			const closedComponentName = this.currentComponent?.componentName;
+
 			this.isComponentOpened = false;
 			window.backgroundUiManager = window.backgroundUiManager || {};
-			window.backgroundUiManager[this.currentComponent?.componentName] = null;
+			window.backgroundUiManager[closedComponentName] = null;
 			this.currentComponent = null;
+
+			this.openPendingComponent();
+		}
+
+		openPendingComponent()
+		{
+			if (!this.pendingComponent)
+			{
+				return;
+			}
+
+			this.currentComponent = this.pendingComponent;
+			this.pendingComponent = null;
+
+			this.scheduleOpenComponent(
+				this.currentComponent.componentName,
+				this.currentComponent.debounceMs,
+			);
+		}
+
+		scheduleOpenComponent(componentName, debounceMs)
+		{
+			const delay = typeof debounceMs === 'number' ? debounceMs : this.defaultDebounce;
+
+			this.lastScheduledName = componentName;
+
+			const debounced = debounce(() => {
+				if (this.lastScheduledName !== componentName)
+				{
+					return;
+				}
+
+				this.openComponentCallback();
+			}, delay, this);
+
+			debounced();
+		}
+
+		enqueueComponent(component)
+		{
+			if (
+				this.currentComponent?.componentName === component.componentName
+				|| this.pendingComponent?.componentName === component.componentName
+			)
+			{
+				return;
+			}
+
+			if (!this.pendingComponent || this.pendingComponent.priority < component.priority)
+			{
+				this.pendingComponent = component;
+			}
 		}
 
 		/**
@@ -121,9 +176,18 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		 * @param {function} openCallback
 		 * @param {number} priority
 		 * @param {number} [debounceMs=3000]
+		 * @param {object} [options]
+		 * @param {boolean} [options.enqueueIfBusy=false]
 		 */
-		openComponent(componentName, openCallback, priority, debounceMs)
+		openComponent(componentName, openCallback, priority, debounceMs, options = {})
 		{
+			const component = {
+				componentName,
+				openCallback,
+				priority,
+				debounceMs,
+			};
+
 			if (
 				this.canOpenComponentInBackground()
 				|| (
@@ -133,27 +197,15 @@ jn.define('background/ui-manager', (require, exports, module) => {
 				)
 			)
 			{
-				this.currentComponent = {
-					componentName,
-					openCallback,
-					priority,
-				};
+				this.currentComponent = component;
+				this.scheduleOpenComponent(componentName, debounceMs);
 
-				const delay = typeof debounceMs === 'number' ? debounceMs : this.defaultDebounce;
+				return;
+			}
 
-				const scheduledName = componentName;
-				this.lastScheduledName = scheduledName;
-
-				const debounced = debounce(() => {
-					if (this.lastScheduledName !== scheduledName)
-					{
-						return;
-					}
-
-					this.openComponentCallback();
-				}, delay, this);
-
-				debounced();
+			if (options.enqueueIfBusy === true)
+			{
+				this.enqueueComponent(component);
 			}
 		}
 	}

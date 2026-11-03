@@ -1,10 +1,9 @@
 import { LayoutWidget } from '../../../../../../../../../../mobile/dev/janative/api';
-import { CheckListFlatTree } from '../../../types/common';
 
 export type ChecklistBottomSheetProps = {
 	layoutType?: string,
 	parentWidget?: LayoutWidget,
-	checklist?: CheckListFlatTree,
+	checklist?: ChecklistView,
 	component?: Object,
 	focusedItemId?: number | string,
 	highlightMoreButton?: boolean,

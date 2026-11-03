@@ -1,6 +1,6 @@
 import Type from '../lib/type';
 
-export default function getElement(element: string | HTMLElement)
+export default function getElement(element: string | HTMLElement): HTMLElement | null
 {
 	if (Type.isString(element))
 	{

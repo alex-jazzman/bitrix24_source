@@ -1,7 +1,6 @@
 <?php
 
-use Bitrix\Im\V2\Application\Context;
-use Bitrix\Im\V2\Application\Features;
+use Bitrix\Im\Internal\Integration\Intranet\CollaborationWebMenu;
 use Bitrix\Intranet\Integration\Templates\Air\ChatMenu;
 use Bitrix\Intranet\Site\Sections\CollaborationSection;
 use Bitrix\Main\Web\Json;
@@ -19,7 +18,7 @@ CModule::IncludeModule('voximplant');
 	'ls',
 	'ui.design-tokens',
 	'im.v2.application.messenger',
-	'im.v2.application.launch'
+	'im.v2.application.launch',
 ]);
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::disable();
@@ -27,14 +26,18 @@ CModule::IncludeModule('voximplant');
 $bodyClass = $APPLICATION->getPageProperty('BodyClass');
 $APPLICATION->setPageProperty(
 	'BodyClass',
-	($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-page-header no-footer-endless'
+	($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-page-header no-footer-endless',
 );
 
 $application = \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication();
 $config = Json::encode($application->getConfig());
+$collaborationWebMenu = CollaborationWebMenu::getMenu();
 ?>
 <div id="messenger-embedded-application"></div>
 <script>
+	<?php if ($collaborationWebMenu !== null): ?>
+	BX.message(<?= CUtil::PhpToJSObject($collaborationWebMenu['CLIENT_CONFIG']) ?>);
+	<?php endif ?>
 	BX.Messenger.v2.Application.Launch('messenger', <?=$config?>)
 		.then(application => {
 			application.initComponent('#messenger-embedded-application');
@@ -53,13 +56,15 @@ if (\Bitrix\Main\Loader::includeModule('intranet'))
 		'bitrix:main.interface.buttons',
 		'',
 		[
-			'ID' => $showCollaborationMenu ? 'top_menu_id_collaboration' : 'chat-menu',
-			'ITEMS' => $showCollaborationMenu ? CollaborationSection::getMenuItems() : ChatMenu::getMenuItems(),
+			'ID' => $collaborationWebMenu['ID']
+				?? ($showCollaborationMenu ? 'top_menu_id_collaboration' : 'chat-menu'),
+			'ITEMS' => $collaborationWebMenu['ITEMS']
+				?? ($showCollaborationMenu ? CollaborationSection::getMenuItems() : ChatMenu::getMenuItems()),
 			'THEME' => 'air',
-		]
+		],
 	);
 
-	if ($showCollaborationMenu === false): ?>
+	if ($collaborationWebMenu === null && $showCollaborationMenu === false): ?>
 	<script>
 		BX.ready(() => {
 			const promoId = BX.Messenger.v2.Const.PromoId.bitrixGptAgent;

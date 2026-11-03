@@ -77,6 +77,7 @@ export const PhoneField: BitrixVueComponentProps = {
 				<ShowMoreMenu
 					v-if="hiddenPhones.length > 0"
 					:items="hiddenPhoneItems" 
+					data-testid="crm-mini-card-phone-show-more-btn"
 				/>
 			</FieldValueList>
 		</Field>

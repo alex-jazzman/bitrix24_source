@@ -1,0 +1,137 @@
+@property --vibecode-state-overlay {
+	syntax: '<color>';
+	inherits: false;
+	initial-value: transparent;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]) {
+	--ui-btn-height: var(--ui-size-2xl);
+	--ui-btn-radius: var(--ui-border-radius-sm);
+	--ui-btn-min-width: 0;
+	--ui-btn-icon: var(--vibecode-mark);
+	--vibecode-state-overlay: transparent;
+	--vibecode-border-corner: var(--ui-color-base-4);
+	--vibecode-border-center: var(--ui-color-base-8);
+
+	box-sizing: border-box;
+	width: var(--vibecode-button-width);
+	min-width: var(--vibecode-button-width);
+	height: var(--ui-btn-height);
+	padding-right: var(--ui-space-inset-xs);
+	border: var(--ui-border-width-thin) solid transparent;
+	border-radius: var(--ui-border-radius-sm);
+	background-image:
+		linear-gradient(var(--vibecode-state-overlay), var(--vibecode-state-overlay)),
+		var(--vibecode-background),
+		linear-gradient(
+			135deg,
+			var(--vibecode-border-corner) 0%,
+			var(--vibecode-border-center) 50%,
+			var(--vibecode-border-corner) 100%
+		);
+	background-position: center;
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-attachment: scroll;
+	background-origin: padding-box, padding-box, border-box;
+	background-clip: padding-box, padding-box, border-box;
+	color: var(--ui-color-base-white-fixed);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-semi-bold);
+	text-transform: none;
+	transition: --vibecode-state-overlay 200ms ease;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button[data-vibecode-brand="bitrix24"] {
+	--vibecode-button-width: 173px;
+	--vibecode-background: url('../images/bitrix-bg.jpg');
+	--vibecode-background-collapsed: url('../images/bitrix-bg-collapsed.jpg');
+	--vibecode-mark: url('../images/bitrix-mark.svg');
+	--vibecode-mark-color: #3BF39C;
+	background-color: #090d30;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button[data-vibecode-brand="alaio"] {
+	--vibecode-button-width: 139px;
+	--vibecode-background: url('../images/alaio-bg.jpg');
+	--vibecode-background-collapsed: url('../images/alaio-bg-collapsed.jpg');
+	--vibecode-mark: url('../images/alaio-mark.svg');
+	--vibecode-mark-color: #BEFF33;
+	background-color: #160a35;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]):hover {
+	--vibecode-state-overlay: var(--ui-color-bg-state-hover-default);
+	--vibecode-border-center: var(--ui-color-base-4);
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]):active {
+	--vibecode-state-overlay: var(--ui-color-bg-state-click-default);
+	--vibecode-border-center: var(--ui-color-base-4);
+	--vibecode-border-corner: var(--ui-color-base-8);
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]):focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]).ui-btn-collapsed {
+	--vibecode-button-width: 38px;
+	--vibecode-background: var(--vibecode-background-collapsed);
+
+	padding: 0;
+	font-size: 0;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]).--air .ui-btn-text {
+	overflow: visible;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]).--air.--with-left-icon .ui-btn-text::before {
+	background-color: transparent;
+	background-image: var(--vibecode-mark);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	mask-image: none;
+	-webkit-mask-image: none;
+	animation: vibecodeconnector-vibecode-button-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes vibecodeconnector-vibecode-button-glow {
+	0%,
+	100% {
+		filter:
+			drop-shadow(0 0 2px color-mix(in srgb, var(--vibecode-mark-color) 22%, transparent))
+			drop-shadow(0 0 2px color-mix(in srgb, var(--vibecode-mark-color) 22%, transparent));
+	}
+
+	50% {
+		filter:
+			drop-shadow(0 0 2px color-mix(in srgb, var(--vibecode-mark-color) 65%, transparent))
+			drop-shadow(0 0 2px color-mix(in srgb, var(--vibecode-mark-color) 65%, transparent));
+	}
+}
+
+.ui-btn.vibecodeconnector-vibecode-button .ui-button__shimmer::before {
+	animation: ui-button-shimmer 4s linear 0s 1;
+}
+
+.ui-btn.vibecodeconnector-vibecode-button.ui-btn-collapsed .ui-button__shimmer::before {
+	animation: ui-button-shimmer 7s linear 0s 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ui-btn.vibecodeconnector-vibecode-button:is([data-vibecode-brand="bitrix24"], [data-vibecode-brand="alaio"]).--air.--with-left-icon .ui-btn-text::before {
+		animation: none;
+		filter:
+			drop-shadow(0 0 2px color-mix(in srgb, var(--vibecode-mark-color) 65%, transparent))
+			drop-shadow(0 0 2px color-mix(in srgb, var(--vibecode-mark-color) 65%, transparent));
+	}
+
+	.ui-btn.vibecodeconnector-vibecode-button .ui-button__shimmer::before,
+	.ui-btn.vibecodeconnector-vibecode-button.ui-btn-collapsed .ui-button__shimmer::before {
+		animation: none;
+	}
+}

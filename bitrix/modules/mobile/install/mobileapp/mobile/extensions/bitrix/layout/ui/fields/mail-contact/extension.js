@@ -6,10 +6,12 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 	const { Loc } = require('loc');
 	const { clone, isEqual } = require('utils/object');
+	const { Type } = require('type');
 	const { Haptics } = require('haptics');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { UserProfile } = require('user-profile');
 	const { Color } = require('tokens');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Avatar } = require('mail/message/elements/avatar');
 	const { EntitySelectorFactoryType } = require('selector/widget/factory');
 
@@ -23,6 +25,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 	}
 
 	const EMAIL_TYPE = 'email';
+	const DEVICE_CONTACTS_ACTION_ID = 'mail-device-contacts';
 
 	const compositeEmail = {
 		[EntitySelectorFactoryType.USER]: false,
@@ -35,6 +38,130 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 	function isCompositeEmail(type)
 	{
 		return (compositeEmail[type] === undefined || compositeEmail[type]);
+	}
+
+	function getEmailComparisonKey(email)
+	{
+		return Type.isStringFilled(email) ? email.trim().toLowerCase() : '';
+	}
+
+	/**
+	 * @param {object} recipient
+	 * @return {string}
+	 */
+	function getRecipientEmail(recipient)
+	{
+		const emailList = recipient.email;
+		const selectedEmailId = recipient.selectedEmailId || 0;
+
+		if (Array.isArray(emailList) && emailList[selectedEmailId])
+		{
+			return emailList[selectedEmailId].value;
+		}
+
+		return recipient.customData?.email ?? '';
+	}
+
+	/**
+	 * @param {{ email: string, name: string }} candidate
+	 * @return {object}
+	 */
+	function createEmailRecipient(candidate)
+	{
+		const email = candidate.email.trim();
+		const name = Type.isStringFilled(candidate.name) ? candidate.name.trim() : '';
+
+		return {
+			id: email,
+			type: EMAIL_TYPE,
+			title: name || email,
+			name,
+			email: [{ value: email }],
+			customData: { email, name },
+		};
+	}
+
+	/**
+	 * Keeps the candidate order, drops addresses already present in the message and cuts the tail
+	 * that does not fit the remaining limit.
+	 *
+	 * @param {Array<{ email: string, name: string }>} candidates
+	 * @param {string[]} existingEmails addresses of every recipient field of the message
+	 * @param {number} limitLeft
+	 * @return {{ accepted: Array<{ email: string, name: string }>, duplicates: number, skipped: number }}
+	 */
+	function selectRecipientsToAdd(candidates, existingEmails, limitLeft)
+	{
+		const known = new Set(existingEmails.map(getEmailComparisonKey).filter(Boolean));
+		const accepted = [];
+		let duplicates = 0;
+		let skipped = 0;
+
+		for (const candidate of candidates)
+		{
+			const key = getEmailComparisonKey(candidate?.email);
+
+			if (key === '')
+			{
+				continue;
+			}
+
+			if (known.has(key))
+			{
+				duplicates += 1;
+				continue;
+			}
+
+			if (accepted.length >= limitLeft)
+			{
+				skipped += 1;
+				continue;
+			}
+
+			known.add(key);
+			accepted.push(candidate);
+		}
+
+		return { accepted, duplicates, skipped };
+	}
+
+	/**
+	 * @param {{ added: number, duplicates: number, skipped: number }} result
+	 * @return {?string} null when every candidate has been added
+	 */
+	function getAddResultMessage({ added, duplicates, skipped })
+	{
+		if (duplicates === 0 && skipped === 0)
+		{
+			return null;
+		}
+
+		const parts = [];
+
+		if (added > 0)
+		{
+			parts.push(Loc.getMessagePlural('FIELDS_MAIL_CONTACT_ADD_RESULT_ADDED', added, {
+				'#COUNT#': added,
+			}));
+		}
+
+		if (duplicates > 0)
+		{
+			parts.push(Loc.getMessagePlural('FIELDS_MAIL_CONTACT_ADD_RESULT_DUPLICATE', duplicates, {
+				'#COUNT#': duplicates,
+			}));
+		}
+
+		if (skipped > 0)
+		{
+			parts.push(Loc.getMessagePlural('FIELDS_MAIL_CONTACT_ADD_RESULT_OVER_LIMIT', skipped, {
+				'#COUNT#': skipped,
+			}));
+		}
+
+		const message = parts.filter(Boolean).join(', ');
+
+		return message === '' ? null : message;
 	}
 
 	/**
@@ -51,6 +178,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 			this.contactMode = this.getConfig().contactMode ?? false;
 			this.crmMode = this.getConfig().crmMode ?? false;
 			this.addressBookMode = this.getConfig().addressBookMode ?? false;
+			this.hasAddResultMessage = false;
 		}
 
 		getConfig()
@@ -79,7 +207,117 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 				},
 				castType: CastType.STRING,
 				enableCreation: this.mode === EntitySelectorFactoryType.MAIL_ADDRESSBOOK_CONTACT,
+				deviceContactsMode: BX.prop.getBoolean(config, 'deviceContactsMode', false),
+				openDeviceContacts: BX.prop.getFunction(config, 'openDeviceContacts'),
+				getRecipientsLimitLeft: BX.prop.getFunction(config, 'getRecipientsLimitLeft'),
+				getRecipientsEmails: BX.prop.getFunction(config, 'getRecipientsEmails'),
 			};
+		}
+
+		/**
+		 * Appends recipients to the current list without removing or reordering the existing ones.
+		 * Unlike setStateEntityList it does not synchronize the list by entity type, so manually
+		 * typed addresses of the same "email" type survive.
+		 *
+		 * @public
+		 * @param {Array<{ email: string, name: string }>} candidates
+		 * @return {{ added: number, duplicates: number, skipped: number }}
+		 */
+		addRecipients(candidates)
+		{
+			const { accepted, duplicates, skipped } = selectRecipientsToAdd(
+				Array.isArray(candidates) ? candidates : [],
+				this.getMessageRecipientEmails(),
+				this.getRecipientsLimitLeft(),
+			);
+
+			if (accepted.length > 0)
+			{
+				const entityList = [
+					...clone(this.state.entityList),
+					...accepted.map(createEmailRecipient),
+				];
+
+				Haptics.impactLight();
+				this.setState({ entityList }, () => {
+					this.handleChange(
+						entityList,
+					);
+				});
+			}
+
+			const result = { added: accepted.length, duplicates, skipped };
+
+			this.showAddResultMessage(getAddResultMessage(result));
+
+			return result;
+		}
+
+		/**
+		 * @private
+		 * @return {string[]} addresses of every recipient field of the message
+		 */
+		getMessageRecipientEmails()
+		{
+			const ownEmails = this.state.entityList.map(getRecipientEmail);
+			const { getRecipientsEmails } = this.getConfig();
+
+			if (!getRecipientsEmails)
+			{
+				return ownEmails;
+			}
+
+			const messageEmails = getRecipientsEmails();
+
+			return Array.isArray(messageEmails) ? [...ownEmails, ...messageEmails] : ownEmails;
+		}
+
+		/**
+		 * @private
+		 * @return {number} Infinity when the consumer sets no client-side limit
+		 */
+		getRecipientsLimitLeft()
+		{
+			const { getRecipientsLimitLeft: getLimitLeft } = this.getConfig();
+
+			if (!getLimitLeft)
+			{
+				return Infinity;
+			}
+
+			const limitLeft = getLimitLeft();
+
+			return Type.isInteger(limitLeft) ? limitLeft : Infinity;
+		}
+
+		/**
+		 * Shows the result in the context of the field. The error channel is not used on purpose:
+		 * the value change that follows a successful add triggers validation, and it would wipe
+		 * the message with clearError().
+		 *
+		 * @private
+		 * @param {?string} message
+		 */
+		showAddResultMessage(message)
+		{
+			if (message === null && !this.hasAddResultMessage)
+			{
+				return;
+			}
+
+			this.hasAddResultMessage = message !== null;
+			this.setTooltip(
+				message === null
+					? null
+					: Text({
+						style: {
+							...this.styles.errorText,
+							flexShrink: 1,
+						},
+						text: message,
+					}),
+				Color.accentMainWarning.toHex(),
+			);
 		}
 
 		setStateEntityList(entities)
@@ -429,20 +667,10 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 						text: isEmailHidden ? Loc.getMessage('FIELDS_MAIL_CONTACT_RECIPIENT_HIDDEN') : recipientText,
 					}),
 				),
-				!isEmailHidden && Image({
-					style: {
-						width: 14,
-						height: 16,
-					},
-					svg: {
-						content: `
-							<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<g opacity="0.5">
-							<path fill-rule="evenodd" clip-rule="evenodd" d="M10.306 6.75439L7.66523 9.39517L6.99993 10.0502L6.34724 9.39517L3.70646 6.75439L2.77461 7.68625L7.0062 11.9178L11.2378 7.68625L10.306 6.75439Z" fill="#525C69"/>
-							</g>
-							</svg>
-						`,
-					},
+				!isEmailHidden && IconView({
+					icon: Icon.CHEVRON_DOWN,
+					color: Color.base4,
+					size: 16,
 				}),
 			);
 		}
@@ -515,6 +743,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 		async openTypeSelectionMenu()
 		{
 			const actions = [];
+			const { deviceContactsMode, openDeviceContacts } = this.getConfig();
 
 			if (this.addressBookMode)
 			{
@@ -535,6 +764,25 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 						menu.close(() => {
 							this.openEntitySelectionSlider(EntitySelectorFactoryType.MAIL_ADDRESSBOOK_CONTACT);
 						});
+					},
+				});
+			}
+
+			if (deviceContactsMode && Type.isFunction(openDeviceContacts))
+			{
+				actions.push({
+					id: DEVICE_CONTACTS_ACTION_ID,
+					title: Loc.getMessage('FIELDS_MAIL_CONTACT_SELECT_MENU_DEVICE_CONTACTS'),
+					subTitle: '',
+					data: {
+						svgIcon: `
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M5 4.75C5 3.7835 5.7835 3 6.75 3H17.25C18.2165 3 19 3.7835 19 4.75V19.25C19 20.2165 18.2165 21 17.25 21H6.75C5.7835 21 5 20.2165 5 19.25V4.75ZM8.5 8.5C8.5 6.84315 9.84315 5.5 11.5 5.5C13.1569 5.5 14.5 6.84315 14.5 8.5C14.5 10.1569 13.1569 11.5 11.5 11.5C9.84315 11.5 8.5 10.1569 8.5 8.5ZM7.5 17.75C7.5 14.9886 9.73858 12.75 12.5 12.75C15.2614 12.75 17.5 14.9886 17.5 17.75H7.5Z" fill="#6A737F"/>
+							</svg>
+						`,
+					},
+					onClickCallback: () => {
+						menu.close(openDeviceContacts);
 					},
 				});
 			}
@@ -645,6 +893,8 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 
 		handleAdditionalFocusActions()
 		{
+			this.showAddResultMessage(null);
+
 			return this.openTypeSelectionMenu();
 		}
 	}

@@ -107,386 +107,16 @@ Class socialnetwork extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $APPLICATION, $install_smiles;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
+		global $APPLICATION, $install_smiles;
 
-		if (!$DB->TableExists('b_sonet_group'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/socialnetwork/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		RegisterModule("socialnetwork");
-		RegisterModuleDependences("search", "OnBeforeFullReindexClear", "socialnetwork", "CSocNetSearchReindex", "OnBeforeFullReindexClear");
-		RegisterModuleDependences("search", "OnBeforeIndexDelete", "socialnetwork", "CSocNetSearchReindex", "OnBeforeIndexDelete");
-		RegisterModuleDependences("search", "OnReindex", "socialnetwork", "CSocNetSearch", "OnSearchReindex");
-		RegisterModuleDependences("search", "OnSearchCheckPermissions", "socialnetwork", "CSocNetSearch", "OnSearchCheckPermissions");
-		RegisterModuleDependences("search", "OnBeforeIndexUpdate", "socialnetwork", "CSocNetSearch", "OnBeforeIndexUpdate");
-		RegisterModuleDependences("search", "BeforeIndex", "socialnetwork", "CSocNetSearch", "BeforeIndexLast", 1000); // later than CSocNetSearch::BeforeIndex
-
-		RegisterModuleDependences("search", "OnAfterIndexAdd", "socialnetwork", "CSocNetSearch", "OnAfterIndexAdd");
-		RegisterModuleDependences("search", "OnSearchPrepareFilter", "socialnetwork", "CSocNetSearch", "OnSearchPrepareFilter");
-		RegisterModuleDependences("main", "OnUserDelete", "socialnetwork", "CSocNetUser", "OnUserDelete");
-		RegisterModuleDependences("main", "OnBeforeUserUpdate", "socialnetwork", "CSocNetUser", "OnBeforeUserUpdate");
-		RegisterModuleDependences("main", "OnAfterUserUpdate", "socialnetwork", "CSocNetUser", "OnAfterUserUpdate");
-		RegisterModuleDependences("main", "OnAfterUserAdd", "socialnetwork", "CSocNetUser", "OnAfterUserAdd");
-		RegisterModuleDependences("main", "OnAfterUserLogout", "socialnetwork", "CSocNetUser", "OnAfterUserLogout");
-		RegisterModuleDependences("main", "OnBeforeProlog", "main", "", "", 100, "/modules/socialnetwork/prolog_before.php");
-		RegisterModuleDependences("main", "OnBeforeLangDelete", "socialnetwork", "CSocNetGroup", "OnBeforeLangDelete");
-		RegisterModuleDependences("socialnetwork", "OnSocNetLogFormatEvent", "socialnetwork", "CSocNetLog", "OnSocNetLogFormatEvent");
-		RegisterModuleDependences("photogallery", "OnAfterUpload", "socialnetwork", "CSocNetLogTools", "OnAfterPhotoUpload");
-		RegisterModuleDependences("photogallery", "OnAfterPhotoDrop", "socialnetwork", "CSocNetLogTools", "OnAfterPhotoDrop");
-		RegisterModuleDependences("photogallery", "OnBeforeSectionDrop", "socialnetwork", "CSocNetLogTools", "OnBeforeSectionDrop");
-		RegisterModuleDependences("photogallery", "OnAfterSectionDrop", "socialnetwork", "CSocNetLogTools", "OnAfterSectionDrop");
-		RegisterModuleDependences("photogallery", "OnAfterSectionEdit", "socialnetwork", "CSocNetLogTools", "OnAfterSectionEdit");
-		RegisterModuleDependences("main", "OnAuthProvidersBuildList", "socialnetwork", "CSocNetGroupAuthProvider", "GetProviders");
-
-		RegisterModuleDependences("im", "OnBeforeConfirmNotify", "socialnetwork", "CSocNetUserToGroup", "OnBeforeConfirmNotify");
-		RegisterModuleDependences("im", "OnBeforeConfirmNotify", "socialnetwork", "CSocNetUserRelations", "OnBeforeConfirmNotify");
-		RegisterModuleDependences("im", "OnBeforeConfirmNotify", "socialnetwork", "CSocNetLogFollow", "OnBeforeConfirmNotify");
-		RegisterModuleDependences("im", "OnGetNotifySchema", "socialnetwork", "CSocNetNotifySchema", "OnGetNotifySchema");
-		RegisterModuleDependences("im", "OnAfterChatMuteNotify", "socialnetwork", "CSocNetSubscription", "OnAfterChatMuteNotify");
-
-		RegisterModuleDependences("pull", "OnGetDependentModule", "socialnetwork", "CSocNetPullSchema", "OnGetDependentModule");
-		RegisterModuleDependences("main", "OnUserInitialize", "socialnetwork", "CSocNetUser", "OnUserInitialize");
-		RegisterModuleDependences("blog", "OnBlogDelete", "socialnetwork", "CSocNetLogComments", "OnBlogDelete", 100);
-		RegisterModuleDependences("blog", "OnBlogDelete", "socialnetwork", "CSocNetLog", "OnBlogDelete", 200);
-		RegisterModuleDependences("blog", "OnBlogPostMentionNotifyIm", "socialnetwork", "CSocNetLogFollow", "OnBlogPostMentionNotifyIm");
-		RegisterModuleDependences("rest", "OnRestServiceBuildDescription", "socialnetwork", "CSocNetLogRestService", "OnRestServiceBuildDescription");
-		RegisterModuleDependences("main", "OnAfterRegisterModule", "main", "socialnetwork", "InstallUserFields", 100, "/modules/socialnetwork/install/index.php"); // check webdav UF
-		RegisterModuleDependences("forum", "OnAfterCommentAdd", "socialnetwork", "CSocNetForumComments", "onAfterCommentAdd");
-		RegisterModuleDependences("forum", "OnAfterCommentUpdate", "socialnetwork", "CSocNetForumComments", "OnAfterCommentUpdate");
-		RegisterModuleDependences("main", "OnAfterSetUserGroup", "socialnetwork", "CSocNetUser", "DeleteUserAdminCache");
-		RegisterModuleDependences("main", "OnAfterSetGroupRight", "socialnetwork", "CSocNetUser", "DeleteUserAdminCache");
-		RegisterModuleDependences("main", "OnAfterDelGroupRight", "socialnetwork", "CSocNetUser", "DeleteUserAdminCache");
-
-		RegisterModuleDependences("main", "OnAfterUserAdd", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\UserToGroup", "onAfterUserAdd");
-		RegisterModuleDependences("main", "OnAfterUserUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\UserToGroup", "onAfterUserUpdate");
-		RegisterModuleDependences("main", "OnGetRatingContentOwner", "socialnetwork", "\\Bitrix\\Socialnetwork\\Integration\\Main\\RatingVote", "onGetRatingContentOwner");
-		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onBeforeIBlockSectionUpdate");
-		RegisterModuleDependences("iblock", "OnAfterIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onAfterIBlockSectionUpdate");
-		RegisterModuleDependences("iblock", "onBeforeIBlockSectionDelete", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onBeforeIBlockSectionDelete");
-		RegisterModuleDependences("iblock", "OnAfterIBlockSectionDelete", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onAfterIBlockSectionDelete");
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler('mail', 'onReplyReceivedLOG_ENTRY', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\MailHandler', 'handleReplyReceivedLogEntry');
-		$eventManager->registerEventHandler('main', 'OnUISelectorActionProcessAjax', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UISelector\Handler', 'OnUISelectorActionProcessAjax');
-		$eventManager->registerEventHandler('main', 'OnUISelectorEntitiesGetList', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UISelector\Handler', 'OnUISelectorEntitiesGetList');
-		$eventManager->registerEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
-		$eventManager->registerEventHandler('main', 'OnBuildFilterFactoryMethods', 'socialnetwork', '\Bitrix\Socialnetwork\Filter\FactorySocialnetwork', 'onBuildFilterFactoryMethods');
-		$eventManager->registerEventHandler('main', 'onUserCounterGetValuesFromDb', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UserCounter', 'onUserCounterGetValuesFromDb');
-		$eventManager->registerEventHandler('main', 'onUserCounterProcessCategory', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UserCounter', 'onUserCounterProcessCategory');
-		$eventManager->registerEventHandler('main', 'onUserCounterClean', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UserCounter', 'onUserCounterClean');
-		$eventManager->registerEventHandler('main', 'OnAfterUserDelete', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'onAfterUserDelete');
-
-		$eventManager->registerEventHandler('tasks', 'OnTaskAdd', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'OnTaskAdd');
-		$eventManager->registerEventHandler('tasks', 'OnTaskUpdate', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'OnTaskUpdate');
-		$eventManager->registerEventHandler('tasks', 'OnTaskDelete', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'OnTaskDelete');
-		$eventManager->registerEventHandler('tasks', 'onTaskUpdateViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Tasks\Task', 'onTaskUpdateViewed');
-		$eventManager->registerEventHandler('calendar', 'onViewEvent', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Calendar\CalendarEvent', 'onViewEvent');
-		$eventManager->registerEventHandler('main', 'onRatingListViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\RatingVoteList', 'onViewed');
-		$eventManager->registerEventHandler('mobile', 'onSetContentView', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onSetContentView');
-		$eventManager->registerEventHandler('mobile', 'onGetContentId', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onGetContentId');
-		$eventManager->registerEventHandler('mobile', 'onTariffRestrictionsCollect', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\TariffPlanRestriction', 'getTariffPlanRestrictions');
-		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounter');
-		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounterTypes');
-		$eventManager->registerEventHandler('intranet', 'onEmployeeDepartmentsChanged', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Intranet\Structure\Employee', 'onEmployeeDepartmentsChanged');
-		$eventManager->registerEventHandler('socialnetwork', '\Bitrix\Socialnetwork\Log::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE, 'socialnetwork', '\Bitrix\Socialnetwork\Item\LogRight', 'OnAfterLogUpdate');
-		$eventManager->registerEventHandler('socialnetwork', '\Bitrix\Socialnetwork\Log::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE, 'socialnetwork', '\Bitrix\Socialnetwork\Item\LogIndex', 'OnAfterLogUpdate');
-		$eventManager->registerEventHandler('bitrix24', 'OnManualModuleAddDelete', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Bitrix24\Bitrix24Event', 'OnManualModuleAddDelete');
-		$eventManager->registerEventHandler('landing', 'OnBuildSourceList', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Landing\Livefeed', 'onBuildSourceListHandler');
-		$eventManager->registerEventHandler('forum', 'onTaskCommentContentViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Forum\TaskComment', 'onViewed');
-		$eventManager->registerEventHandler('im', 'onDiskRecordShare', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Im\Chat\CallRecord', 'onDiskRecordShare');
-		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\AI\Controller', 'onContextGetMessages');
-		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\AI\Settings', 'onTuningLoad');
-		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'socialnetwork', '\Bitrix\Socialnetwork\V2\Internal\EventHandler\HasCollabersHandler', 'onUserAdd');
-		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\Space\Counter\Cache', 'invalidateCache');
-		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupUpdate', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\Space\Counter\Cache', 'invalidateCache');
-		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'socialnetwork', '\Bitrix\Socialnetwork\V2\Internal\EventHandler\HasCollabersHandler', 'onUserDelete');
-		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\Space\Counter\Cache', 'invalidateCache');
-		$eventManager->registerEventHandler('intranet', 'onCopyCollabInviteLink', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'onCopyCollabInviteLink');
-		$eventManager->registerEventHandler('forum', 'OnAfterCommentAdd', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'OnAfterCommentAdd');
-		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventEdit', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'OnAfterCalendarEventEdit');
-		$eventManager->registerEventHandler('disk', 'onAfterAddFile', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'onAfterAddFile');
-		$eventManager->registerEventHandler('disk', 'onAfterDeleteFile', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'onAfterDeleteFile');
-		$eventManager->registerEventHandler('disk', 'onAfterAddExternalLinkToObject', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'onAfterAddExternalLinkToObject');
-
-		// collab
-		$eventManager->registerEventHandler(
-			'tasks',
-			'OnTaskAdd',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnTaskAdd',
-		);
-
-		$eventManager->registerEventHandler(
-			'tasks',
-			'OnTaskUpdate',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnTaskUpdate',
-		);
-
-		$eventManager->registerEventHandler(
-			'tasks',
-			'OnTaskDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnTaskDelete',
-		);
-
-		$eventManager->registerEventHandler(
-			'main',
-			'OnAfterUserDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onAfterUserDelete',
-		);
-
-		$eventManager->registerEventHandler(
-			'intranet',
-			'onCopyCollabInviteLink',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onCopyCollabInviteLink',
-		);
-
-		$eventManager->registerEventHandler(
-			'calendar',
-			'OnAfterCalendarEventDelete',
-			'socialnetwork',
-			'Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnAfterCalendarEventDelete',
-		);
-
-		$eventManager->registerEventHandler(
-			'intranet',
-			'onRegenerateCollabInviteLink',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onRegenerateCollabInviteLink',
-		);
-
-		$eventManager->registerEventHandler(
-			'main',
-			'OnAfterUserUpdate',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
-			'OnAfterUserFired',
-		);
-
-		$eventManager->registerEventHandler(
-			'main',
-			'OnAfterUserDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
-			'OnAfterUserDelete',
-		);
-
-		$eventManager->registerEventHandler(
-			'humanresources',
-			'OnRelationAdded',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'OnRelationAdded',
-		);
-
-		$eventManager->registerEventHandler(
-			'humanresources',
-			'OnRelationDeleted',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'OnRelationDeleted',
-		);
-
-		$eventManager->registerEventHandler(
-			'humanresources',
-			'OnMemberAdded',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'onMemberAdded'
-		);
-
-		$eventManager->registerEventHandler(
-			'humanresources',
-			'OnMemberDeleted',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'onMemberDeleted'
-		);
-
-		$eventManager->registerEventHandler(
-			'humanresources',
-			'OnMemberUpdated',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'onMemberUpdated'
-		);
-
-		// project 2.0
-		$eventManager->registerEventHandler(
-			'im',
-			'OnBeforeUsersAddExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersAddEvent\PrepareUsersAdd',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterUsersAddExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\SyncChatMembersWithProject',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterUsersAddExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\EnsureProjectCopilotChat',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnBeforeUsersDeleteExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersDeleteEvent\PrepareUsersDelete',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterUsersDeleteExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersDeleteEvent\SyncChatMembersWithProject',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterLoadExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterLoadEvent\TriggerLazyProjectConvert',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnResolveRecentFixedChatIdsExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnResolveRecentFixedChatIdsEvent\AddProjectFixedChatIds',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnFilterUsersByAccessExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnFilterUsersByAccessEvent\CheckAccess',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterAttachChildExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterAttachChildEvent\SendChildAttachedMessage',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterDetachChildExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterDetachChildEvent\SendChildDetachedMessage',
-			'execute',
-		);
-
-		$eventManager->registerEventHandler(
-			'im',
-			'OnCollectTariffRestrictions',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnCollectTariffRestrictions\TariffRestrictionHandler',
-			'execute',
-		);
-
-		// project feed counter sync (IM -> feed): reading the collab chat clears the feed counter.
-		/** @see \Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadMessagesEvent */
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterReadMessagesExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
-			'dispatch',
-		);
-
-		/** @see \Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadAllMessagesEvent */
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterReadAllMessagesExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
-			'dispatch',
-		);
-
-		// Global "read all chats": the bulk Reader::readAll path skips the per-chat
-		// read-all event, so the feed counter sync hooks the shared event here.
-		/** @see \Bitrix\Im\V2\Message\Event\AfterReadAllChatsEvent */
-		$eventManager->registerEventHandler(
-			'im',
-			'OnAfterReadAllChats',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
-			'dispatch',
-		);
-
-		// project feed counter sync: deleting a feed post clears IM unread on the linked message.
-		// Classic event (ExecuteModuleEventEx, scalar params) — NOT through the typed EventDispatcher.
-		$eventManager->registerEventHandler(
-			'socialnetwork',
-			'OnSocNetLogDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnLogDelete\ClearImUnread',
-			'onLogDelete',
-		);
-
-		// project feed counter sync: deleting a group/project cleans up orphaned links.
-		$eventManager->registerEventHandler(
-			'socialnetwork',
-			'OnSocNetGroupDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnGroupDelete\ClearImLinks',
-			'onGroupDelete',
-		);
-
-		CAgent::AddAgent("CSocNetMessages::SendEventAgent();", "socialnetwork", "N", 600);
-		CAgent::AddAgent(
-			"\Bitrix\Socialnetwork\Internals\EventService\CleanAgent::execute();",
-			"socialnetwork",
-			"N",
-			86400,
-			"",
-			"Y",
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, "FULL")
-		);
-		CAgent::AddAgent(
-			"\Bitrix\Socialnetwork\Internals\Space\LiveWatch\CleanAgent::execute();",
-			"socialnetwork",
-			"N",
-			900,
-			"",
-			"Y",
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, "FULL")
-		);
 
 		$arUserOptions = CUserOptions::GetOption("intranet", "~gadgets_sonet_user", false, 0);
 		if (!is_array($arUserOptions) || count($arUserOptions) <= 0)
@@ -503,12 +133,6 @@ Class socialnetwork extends CModule
 		static::__SetLogFilter();
 
 		CModule::IncludeModule("socialnetwork");
-		$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/socialnetwork/install/db/' . $connection->getType() . '/install_ft.sql');
-		if ($errors === false)
-		{
-			\Bitrix\Socialnetwork\WorkgroupTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
-			\Bitrix\Socialnetwork\LogIndexTable::getEntity()->enableFullTextIndex("CONTENT");
-		}
 
 		if (CModule::IncludeModule("search"))
 		{
@@ -631,368 +255,23 @@ Class socialnetwork extends CModule
 			CSearch::DeleteIndex("socialnetwork");
 
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
+
+		$dropTables = array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y";
+
+		if ($dropTables)
 		{
 			$this->UnInstallUserFields();
 
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/db/".$connection->getType()."/uninstall.sql");
-
-			if (!empty($errors))
-			{
-				$APPLICATION->ThrowException(implode("", $errors));
-				return false;
-			}
-
-			\Bitrix\Socialnetwork\WorkgroupTable::getEntity()->enableFullTextIndex("SEARCH_INDEX", false);
-			\Bitrix\Socialnetwork\LogIndexTable::getEntity()->enableFullTextIndex("CONTENT", false);
+			$DB->Query("DELETE FROM b_user_option WHERE NAME like '~gadgets_sonet_group%'");
+			$DB->Query("DELETE FROM b_user_option WHERE NAME like '~gadgets_sonet_user%'");
 		}
 
-		CAgent::RemoveAgent("CSocNetMessages::SendEventAgent();", "socialnetwork");
-		CAgent::RemoveAgent("\Bitrix\Socialnetwork\Internals\EventService\CleanAgent::execute();", "socialnetwork");
-		CAgent::RemoveAgent("\Bitrix\Socialnetwork\Internals\Space\LiveWatch\CleanAgent::execute();", "socialnetwork");
-
-		UnRegisterModuleDependences("main", "OnBeforeProlog", "main", "", "", "/modules/socialnetwork/prolog_before.php");
-		UnRegisterModuleDependences("search", "OnBeforeFullReindexClear", "socialnetwork", "CSocNetSearchReindex", "OnBeforeFullReindexClear");
-		UnRegisterModuleDependences("search", "OnBeforeIndexDelete", "socialnetwork", "CSocNetSearchReindex", "OnBeforeIndexDelete");
-		UnRegisterModuleDependences("search", "OnReindex", "socialnetwork", "CSocNetSearch", "OnSearchReindex");
-		UnRegisterModuleDependences("search", "OnSearchCheckPermissions", "socialnetwork", "CSocNetSearch", "OnSearchCheckPermissions");
-		UnRegisterModuleDependences("search", "OnBeforeIndexUpdate", "socialnetwork", "CSocNetSearch", "OnBeforeIndexUpdate");
-		UnRegisterModuleDependences("search", "OnAfterIndexAdd", "socialnetwork", "CSocNetSearch", "OnAfterIndexAdd");
-		UnRegisterModuleDependences("search", "OnSearchPrepareFilter", "socialnetwork", "CSocNetSearch", "OnSearchPrepareFilter");
-		UnRegisterModuleDependences("search", "BeforeIndex", "socialnetwork", "CSocNetSearch", "BeforeIndexLast");
-
-		UnRegisterModuleDependences("main", "OnUserDelete", "socialnetwork", "CSocNetUser", "OnUserDelete");
-		UnRegisterModuleDependences("main", "OnBeforeUserUpdate", "socialnetwork", "CSocNetUser", "OnBeforeUserUpdate");
-		UnRegisterModuleDependences("main", "OnAfterUserUpdate", "socialnetwork", "CSocNetUser", "OnAfterUserUpdate");
-		UnRegisterModuleDependences("main", "OnAfterUserAdd", "socialnetwork", "CSocNetUser", "OnAfterUserAdd");
-		UnRegisterModuleDependences("main", "OnBeforeLangDelete", "socialnetwork", "CSocNetGroup", "OnBeforeLangDelete");
-		UnRegisterModuleDependences("socialnetwork", "OnSocNetLogFormatEvent", "socialnetwork", "CSocNetLog", "OnSocNetLogFormatEvent");
-		UnRegisterModuleDependences("photogallery", "OnAfterUpload", "socialnetwork", "CSocNetLogTools", "OnAfterPhotoUpload");
-		UnRegisterModuleDependences("photogallery", "OnAfterPhotoDrop", "socialnetwork", "CSocNetLogTools", "OnAfterPhotoDrop");
-		UnRegisterModuleDependences("photogallery", "OnAfterSectionDrop", "socialnetwork", "CSocNetLogTools", "OnAfterSectionDrop");
-		UnRegisterModuleDependences("photogallery", "OnBeforeSectionDrop", "socialnetwork", "CSocNetLogTools", "OnBeforeSectionDrop");
-		UnRegisterModuleDependences("photogallery", "OnAfterSectionEdit", "socialnetwork", "CSocNetLogTools", "OnAfterSectionEdit");
-		UnRegisterModuleDependences("main", "OnAuthProvidersBuildList", "socialnetwork", "CSocNetGroupAuthProvider", "GetProviders");
-
-		UnRegisterModuleDependences("im", "OnBeforeConfirmNotify", "socialnetwork", "CSocNetUserToGroup", "OnBeforeConfirmNotify");
-		UnRegisterModuleDependences("im", "OnBeforeConfirmNotify", "socialnetwork", "CSocNetUserRelations", "OnBeforeConfirmNotify");
-		UnRegisterModuleDependences("im", "OnBeforeConfirmNotify", "socialnetwork", "CSocNetLogFollow", "OnBeforeConfirmNotify");
-		UnRegisterModuleDependences("im", "OnGetNotifySchema", "socialnetwork", "CSocNetNotifySchema", "OnGetNotifySchema");
-		UnRegisterModuleDependences("im", "OnAfterChatMuteNotify", "socialnetwork", "CSocNetSubscription", "OnAfterChatMuteNotify");
-
-		UnRegisterModuleDependences("pull", "OnGetDependentModule", "socialnetwork", "CSocNetPullSchema", "OnGetDependentModule");
-		UnRegisterModuleDependences("main", "OnUserInitialize", "socialnetwork", "CSocNetUser", "OnUserInitialize");
-		UnRegisterModuleDependences("blog", "OnBlogDelete", "socialnetwork", "CSocNetLog", "OnBlogDelete");
-		UnRegisterModuleDependences("blog", "OnBlogDelete", "socialnetwork", "CSocNetLogComments", "OnBlogDelete");
-		UnRegisterModuleDependences("blog", "OnBlogPostMentionNotifyIm", "socialnetwork", "CSocNetLogFollow", "OnBlogPostMentionNotifyIm");
-		UnRegisterModuleDependences("rest", "OnRestServiceBuildDescription", "socialnetwork", "CSocNetLogRestService", "OnRestServiceBuildDescription");
-		UnRegisterModuleDependences("main", "OnAfterRegisterModule", "main", "socialnetwork", "InstallUserFields", "/modules/socialnetwork/install/index.php"); // check webdav UF
-		UnRegisterModuleDependences("forum", "OnAfterCommentAdd", "socialnetwork", "CSocNetForumComments", "onAfterCommentAdd");
-		UnRegisterModuleDependences("forum", "OnAfterCommentUpdate", "socialnetwork", "CSocNetForumComments", "OnAfterCommentUpdate");
-		UnRegisterModuleDependences("main", "OnAfterSetUserGroup", "socialnetwork", "CSocNetUser", "DeleteUserAdminCache");
-		UnRegisterModuleDependences("main", "OnAfterSetGroupRight", "socialnetwork", "CSocNetUser", "DeleteUserAdminCache");
-		UnRegisterModuleDependences("main", "OnAfterDelGroupRight", "socialnetwork", "CSocNetUser", "DeleteUserAdminCache");
-		UnRegisterModuleDependences("main", "OnAfterUserAdd", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\UserToGroup", "onAfterUserAdd");
-		UnRegisterModuleDependences("main", "OnAfterUserUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\UserToGroup", "onAfterUserUpdate");
-		UnRegisterModuleDependences("main", "OnGetRatingContentOwner", "socialnetwork", "\\Bitrix\\Socialnetwork\\Integration\\Main\\RatingVote", "onGetRatingContentOwner");
-		UnRegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "OnBeforeIBlockSectionUpdate");
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onAfterIBlockSectionUpdate");
-		UnRegisterModuleDependences("iblock", "onBeforeIBlockSectionDelete", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onBeforeIBlockSectionDelete");
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockSectionDelete", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onAfterIBlockSectionDelete");
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unregisterEventHandler('mail', 'onReplyReceivedLOG_ENTRY', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\MailHandler', 'handleReplyReceivedLogEntry');
-		$eventManager->unregisterEventHandler('main', 'OnUISelectorActionProcessAjax', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UISelector\Handler', 'OnUISelectorActionProcessAjax');
-		$eventManager->unregisterEventHandler('main', 'OnUISelectorEntitiesGetList', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UISelector\Handler', 'OnUISelectorEntitiesGetList');
-		$eventManager->unregisterEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
-		$eventManager->unregisterEventHandler('main', 'OnBuildFilterFactoryMethods', 'socialnetwork', '\Bitrix\Socialnetwork\Filter\FactorySocialnetwork', 'onBuildFilterFactoryMethods');
-		$eventManager->unregisterEventHandler('main', 'onUserCounterGetValuesFromDb', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UserCounter', 'onUserCounterGetValuesFromDb');
-		$eventManager->unregisterEventHandler('main', 'onUserCounterProcessCategory', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UserCounter', 'onUserCounterProcessCategory');
-		$eventManager->unregisterEventHandler('main', 'onUserCounterClean', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\UserCounter', 'onUserCounterClean');
-		$eventManager->unregisterEventHandler('tasks', 'onTaskUpdateViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Tasks\Task', 'onTaskUpdateViewed');
-		$eventManager->unregisterEventHandler('calendar', 'onViewEvent', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Calendar\CalendarEvent', 'onViewEvent');
-		$eventManager->unregisterEventHandler('main', 'onRatingListViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\RatingVoteList', 'onViewed');
-		$eventManager->unregisterEventHandler('mobile', 'onSetContentView', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onSetContentView');
-		$eventManager->unregisterEventHandler('mobile', 'onGetContentId', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onGetContentId');
-		$eventManager->unregisterEventHandler('mobile', 'onTariffRestrictionsCollect', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\TariffPlanRestriction', 'getTariffPlanRestrictions');
-		$eventManager->unregisterEventHandler('pull', 'onGetMobileCounter', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounter');
-		$eventManager->unregisterEventHandler('pull', 'onGetMobileCounterTypes', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounterTypes');
-		$eventManager->unregisterEventHandler('intranet', 'onEmployeeDepartmentsChanged', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Intranet\Structure\Employee', 'onEmployeeDepartmentsChanged');
-		$eventManager->unregisterEventHandler('socialnetwork', '\Bitrix\Socialnetwork\Log::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE, 'socialnetwork', '\Bitrix\Socialnetwork\Item\LogRight', 'OnAfterLogUpdate');
-		$eventManager->unregisterEventHandler('socialnetwork', '\Bitrix\Socialnetwork\Log::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE, 'socialnetwork', '\Bitrix\Socialnetwork\Item\LogIndex', 'OnAfterLogUpdate');
-		$eventManager->unregisterEventHandler('bitrix24', 'OnManualModuleAddDelete', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Bitrix24\Bitrix24Event', 'OnManualModuleAddDelete');
-		$eventManager->unregisterEventHandler('landing', 'OnBuildSourceList', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Landing\Livefeed', 'onBuildSourceListHandler');
-		$eventManager->unregisterEventHandler('forum', 'onTaskCommentContentViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Forum\TaskComment', 'onViewed');
-		$eventManager->unregisterEventHandler('im', 'onDiskRecordShare', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Im\Chat\CallRecord', 'onDiskRecordShare');
-		$eventManager->unregisterEventHandler('ai', 'onContextGetMessages', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\AI\Controller', 'onContextGetMessages');
-		$eventManager->unregisterEventHandler('ai', 'onTuningLoad', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\AI\Settings', 'onTuningLoad');
-
-		// collab
-		$eventManager->unregisterEventHandler(
-			'intranet',
-			'onRegenerateCollabInviteLink',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onRegenerateCollabInviteLink',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'tasks',
-			'OnTaskAdd',
-			'socialnetwork',
-			'Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnTaskAdd'
-		);
-		$eventManager->unRegisterEventHandler(
-			'tasks',
-			'OnTaskUpdate',
-			'socialnetwork',
-			'Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnTaskUpdate'
-		);
-		$eventManager->unRegisterEventHandler(
-			'tasks',
-			'OnTaskDelete',
-			'socialnetwork',
-			'Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnTaskDelete'
-		);
-		$eventManager->unRegisterEventHandler(
-			'main',
-			'OnAfterUserDelete',
-			'socialnetwork',
-			'Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onAfterUserDelete'
-		);
-		$eventManager->unRegisterEventHandler(
-			'intranet',
-			'onCopyCollabInviteLink',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onCopyCollabInviteLink'
-		);
-		$eventManager->unRegisterEventHandler(
-			'forum',
-			'OnAfterCommentAdd',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnAfterCommentAdd'
-		);
-		$eventManager->unRegisterEventHandler(
-			'disk',
-			'onAfterAddFile',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onAfterAddFile'
-		);
-		$eventManager->unRegisterEventHandler(
-			'disk',
-			'onAfterDeleteFile',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onAfterDeleteFile',
-		);
-		$eventManager->unRegisterEventHandler(
-			'disk',
-			'onAfterAddExternalLinkToObject',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'onAfterAddExternalLinkToObject',
-		);
-		$eventManager->unRegisterEventHandler(
-			'calendar',
-			'OnAfterCalendarEventEdit',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
-			'OnAfterCalendarEventEdit'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'main',
-			'OnAfterUserUpdate',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
-			'OnAfterUserFired',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'main',
-			'OnAfterUserDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
-			'OnAfterUserDelete',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'humanresources',
-			'OnRelationAdded',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'OnRelationAdded',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'humanresources',
-			'OnRelationDeleted',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'OnRelationDeleted',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'humanresources',
-			'OnMemberAdded',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'onMemberAdded'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'humanresources',
-			'OnMemberDeleted',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'onMemberDeleted'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'humanresources',
-			'OnMemberUpdated',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
-			'onMemberUpdated'
-		);
-
-		// project 2.0
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnBeforeUsersAddExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersAddEvent\PrepareUsersAdd',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterUsersAddExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\SyncChatMembersWithProject',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterUsersAddExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\EnsureProjectCopilotChat',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnBeforeUsersDeleteExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersDeleteEvent\PrepareUsersDelete',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterUsersDeleteExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersDeleteEvent\SyncChatMembersWithProject',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterLoadExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterLoadEvent\TriggerLazyProjectConvert',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnResolveRecentFixedChatIdsExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnResolveRecentFixedChatIdsEvent\AddProjectFixedChatIds',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnFilterUsersByAccessExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnFilterUsersByAccessEvent\CheckAccess',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterAttachChildExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterAttachChildEvent\SendChildAttachedMessage',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterDetachChildExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterDetachChildEvent\SendChildDetachedMessage',
-			'execute',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnCollectTariffRestrictions',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnCollectTariffRestrictions\TariffRestrictionHandler',
-			'execute',
-		);
-
-		// project feed counter sync (IM -> feed)
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterReadMessagesExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
-			'dispatch',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterReadAllMessagesExternalChatSonetGroup',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
-			'dispatch',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'im',
-			'OnAfterReadAllChats',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
-			'dispatch',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'socialnetwork',
-			'OnSocNetLogDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnLogDelete\ClearImUnread',
-			'onLogDelete',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'socialnetwork',
-			'OnSocNetGroupDelete',
-			'socialnetwork',
-			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnGroupDelete\ClearImLinks',
-			'onGroupDelete',
-		);
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
+			return false;
+		}
 
 		UnRegisterModule("socialnetwork");
 		return true;
@@ -1193,9 +472,24 @@ Class socialnetwork extends CModule
 				}
 			}
 
-			if ($createIndex)
+			if (
+				$createIndex
+				&& $DB->TableExists('b_uts_blog_post')
+				&& !$DB->IndexExists(
+					'b_uts_blog_post',
+					(mb_strtolower($DB->type) === 'pgsql'
+						? ['uf_blog_post_imprtnt', 'uf_imprtant_date_end']
+						: ['UF_BLOG_POST_IMPRTNT', 'UF_IMPRTANT_DATE_END']),
+					true,
+				)
+			)
 			{
-				$DB->Query("CREATE INDEX UX_UF_BLOG_POST_IMPRTNT2 ON b_uts_blog_post(UF_IMPRTANT_DATE_END, UF_BLOG_POST_IMPRTNT)", true);
+				\Bitrix\Main\Application::getConnection()->runDdl(
+					(new \Bitrix\Main\DB\Ddl\Builder\AlterTableBuilder('b_uts_blog_post'))->addIndex(
+						'IX_UF_BLOG_POST_IMPRTNT_DATE',
+						['UF_BLOG_POST_IMPRTNT', 'UF_IMPRTANT_DATE_END'],
+					),
+				);
 			}
 		}
 
@@ -1417,21 +711,51 @@ Class socialnetwork extends CModule
 				$rsData = CUserTypeEntity::GetList(array("ID" => "ASC"), $arField);
 				if ($arRes = $rsData->Fetch())
 				{
-					$ent = new CUserTypeEntity;
-					$ent->Delete($arRes['ID']);
 					if (
 						$arField["FIELD_NAME"] == "UF_BLOG_POST_IMPRTNT"
 						&& $DB->TableExists("b_uts_blog_post")
 					)
 					{
-						if (
-							$DB->IndexExists('b_uts_blog_post', ['UF_IMPRTANT_DATE_END', 'UF_BLOG_POST_IMPRTNT'])
-							|| $DB->IndexExists('b_uts_blog_post', ['UF_IMPRTANT_DATE_END'])
-						)
+						$isPostgreSql = (mb_strtolower($DB->type) === 'pgsql');
+						$indexes = [
+							[
+								'columns' => ($isPostgreSql
+									? ['uf_blog_post_imprtnt', 'uf_imprtant_date_end']
+									: ['UF_BLOG_POST_IMPRTNT', 'UF_IMPRTANT_DATE_END']),
+								'name' => ($isPostgreSql
+									? 'ix_b_uts_blog_post_uf_blog_post_imprtnt_uf_imprtant_date_end'
+									: 'IX_UF_BLOG_POST_IMPRTNT_DATE'),
+							],
+						];
+						$indexes[] = [
+							'columns' => ($isPostgreSql
+								? ['uf_imprtant_date_end', 'uf_blog_post_imprtnt']
+								: ['UF_IMPRTANT_DATE_END', 'UF_BLOG_POST_IMPRTNT']),
+							'name' => ($isPostgreSql
+								? 'ux_uf_blog_post_imprtnt2'
+								: 'UX_UF_BLOG_POST_IMPRTNT2'),
+						];
+
+						$alterTableBuilder = new \Bitrix\Main\DB\Ddl\Builder\AlterTableBuilder('b_uts_blog_post');
+						$hasIndexesToDrop = false;
+						foreach ($indexes as $index)
 						{
-							$DB->Query("DROP INDEX UX_UF_BLOG_POST_IMPRTNT2 ON b_uts_blog_post", true);
+							$indexName = $DB->GetIndexName('b_uts_blog_post', $index['columns'], true);
+							if ($indexName !== $index['name'])
+							{
+								continue;
+							}
+
+							$alterTableBuilder->dropIndex($indexName);
+							$hasIndexesToDrop = true;
+						}
+						if ($hasIndexesToDrop)
+						{
+							\Bitrix\Main\Application::getConnection()->runDdl($alterTableBuilder);
 						}
 					}
+					$ent = new CUserTypeEntity;
+					$ent->Delete($arRes['ID']);
 				}
 			}
 		}

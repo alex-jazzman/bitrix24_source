@@ -602,6 +602,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				},
 				true,
 			);
+
+			this.analyticsService.sendCopyChatLink(this.dialogId, Analytics.SubSection.contextMenu);
 		};
 
 		handlePinDialogAction()
@@ -757,13 +759,20 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			else
 			{
 				const reason = this.permissionManager.getCallForbiddenReason();
-				const message = reason || Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_CALL_UNKNOWN_ERROR');
 
-				this.logger.error('Init call permission error', reason);
-				Notification.showErrorToast({
-					message,
-					offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
-				});
+				if (Type.isStringFilled(reason))
+				{
+					this.logger.error('Init call permission error', reason);
+					Notification.showErrorToast({
+						message: reason,
+						offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
+					});
+				}
+				else
+				{
+					// Without an explainable reason (a guest, for example) a tap on the disabled button stays silent
+					this.logger.warn('Init call permission error: reason is unknown', { dialogId: this.dialogId, reason });
+				}
 			}
 		}
 

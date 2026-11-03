@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+use Bitrix\Crm\V2\Internal\Access\Measure\MeasureAccess;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -13,8 +17,7 @@ if (!CModule::IncludeModule('catalog'))
 	return;
 }
 
-$userPermissions = CCrmAuthorizationHelper::GetUserPermissions();
-if (!CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($userPermissions))
+if (!(new MeasureAccess())->canEdit())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -153,14 +156,22 @@ if(check_bitrix_sessid())
 		}
 		else
 		{
-			LocalRedirect(
-				isset($_POST['apply'])
-					? CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_EDIT'], array('measure_id' => $elementID))
-					: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_LIST'])
-			);
+			$isSidePanel = in_array($arParams['IS_SIDE_PANEL'] ?? false, array(true, 'Y'), true);
+			if($isSidePanel && !isset($_POST['apply']))
+			{
+				$arResult['SAVE_SUCCEEDED'] = true;
+			}
+			else
+			{
+				LocalRedirect(
+					isset($_POST['apply'])
+						? CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_EDIT'], array('measure_id' => $elementID))
+						: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_LIST'])
+				);
+			}
 		}
 	}
-	elseif($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['delete']) && $elementID > 0)
+	elseif($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $elementID > 0)
 	{
 		CCatalogMeasure::delete($elementID);
 		LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_LIST']));
@@ -192,45 +203,75 @@ if($isEditMode)
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'IS_DEFAULT',
 	'name' =>  GetMessage('CRM_MEASURE_FIELD_IS_DEFAULT'),
+	'nameWrapper' => $arResult['FORM_ID'] . '_IS_DEFAULT_label',
 	'value' => isset($arResult['ELEMENT']['IS_DEFAULT']) ? $arResult['ELEMENT']['IS_DEFAULT'] : 'N',
-	'type' =>  'checkbox'
+	'type' =>  'checkbox',
+	'params' => array(
+		'aria-labelledby' => $arResult['FORM_ID'] . '_IS_DEFAULT_label',
+		'data-testid' => 'crm-measure-form-default-checkbox',
+	),
 );
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'CODE',
 	'name' =>  GetMessage('CRM_MEASURE_FIELD_CODE'),
+	'nameWrapper' => $arResult['FORM_ID'] . '_CODE_label',
 	'value' => isset($arResult['ELEMENT']['CODE']) ? $arResult['ELEMENT']['CODE'] : '',
 	'type' =>  'text',
-	'required' => true
+	'required' => true,
+	'params' => array(
+		'aria-labelledby' => $arResult['FORM_ID'] . '_CODE_label',
+		'data-testid' => 'crm-measure-form-code-input',
+	),
 );
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'MEASURE_TITLE',
 	'name' =>  GetMessage('CRM_MEASURE_FIELD_MEASURE_TITLE'),
+	'nameWrapper' => $arResult['FORM_ID'] . '_MEASURE_TITLE_label',
 	'value' => isset($arResult['ELEMENT']['MEASURE_TITLE']) ? $arResult['ELEMENT']['MEASURE_TITLE'] : '',
 	'type' =>  'text',
-	'required' => true
+	'required' => true,
+	'params' => array(
+		'aria-labelledby' => $arResult['FORM_ID'] . '_MEASURE_TITLE_label',
+		'data-testid' => 'crm-measure-form-title-input',
+	),
 );
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'SYMBOL_RUS',
 	'name' =>  GetMessage('CRM_MEASURE_FIELD_SYMBOL_RUS'),
+	'nameWrapper' => $arResult['FORM_ID'] . '_SYMBOL_RUS_label',
 	'value' => isset($arResult['ELEMENT']['SYMBOL_RUS']) ? $arResult['ELEMENT']['SYMBOL_RUS'] : '',
-	'type' =>  'text'
+	'type' =>  'text',
+	'params' => array(
+		'aria-labelledby' => $arResult['FORM_ID'] . '_SYMBOL_RUS_label',
+		'data-testid' => 'crm-measure-form-russian-symbol-input',
+	),
 );
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'SYMBOL_INTL',
 	'name' =>  GetMessage('CRM_MEASURE_FIELD_SYMBOL_INTL'),
+	'nameWrapper' => $arResult['FORM_ID'] . '_SYMBOL_INTL_label',
 	'value' => isset($arResult['ELEMENT']['SYMBOL_INTL']) ? $arResult['ELEMENT']['SYMBOL_INTL'] : '',
-	'type' =>  'text'
+	'type' =>  'text',
+	'params' => array(
+		'aria-labelledby' => $arResult['FORM_ID'] . '_SYMBOL_INTL_label',
+		'data-testid' => 'crm-measure-form-international-symbol-input',
+	),
 );
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'SYMBOL_LETTER_INTL',
 	'name' =>  GetMessage('CRM_MEASURE_FIELD_SYMBOL_LETTER_INTL'),
+	'nameWrapper' => $arResult['FORM_ID'] . '_SYMBOL_LETTER_INTL_label',
 	'value' => isset($arResult['ELEMENT']['SYMBOL_LETTER_INTL']) ? $arResult['ELEMENT']['SYMBOL_LETTER_INTL'] : '',
-	'type' =>  'text'
+	'type' =>  'text',
+	'params' => array(
+		'aria-labelledby' => $arResult['FORM_ID'] . '_SYMBOL_LETTER_INTL_label',
+		'data-testid' => 'crm-measure-form-international-letter-symbol-input',
+	),
 );
 
 $this->IncludeComponentTemplate();

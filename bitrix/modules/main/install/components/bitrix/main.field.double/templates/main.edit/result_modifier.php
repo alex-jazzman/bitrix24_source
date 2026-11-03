@@ -47,6 +47,12 @@ $attrList['placeholder'] = (
 
 $attrList['type'] = 'text';
 
+$precision = (int)($arResult['userField']['SETTINGS']['PRECISION'] ?? 0);
+$decimalSeparator = $component->getDecimalSeparator();
+// The form is redrawn after a failed check: the value comes from the request, not from the
+// storage (@see \Bitrix\Main\Component\BaseUfComponent::getFieldValue()), and is shown as typed.
+$isValueFromForm = !empty($arResult['additionalParameters']['bVarsFromForm']);
+
 foreach($arResult['value'] as $key => $value)
 {
 	if($component->isMobileMode())
@@ -54,6 +60,7 @@ foreach($arResult['value'] as $key => $value)
 		$attrList['name'] = str_replace('[]', '[' . $key . ']', $arResult['fieldName']);
 	}
 
+	$value = $component->formatValue($value, $precision, $decimalSeparator, $isValueFromForm);
 	$attrList['value'] = $value;
 
 	$arResult['value'][$key] = [

@@ -48,6 +48,7 @@ interface ConferenceCommonState {
 interface ConferenceUserData {
 	id: number;
 	hash: string;
+	hasCustomName: boolean | null;
 }
 
 declare namespace BX.Call.Model {
@@ -126,6 +127,7 @@ declare namespace BX.Call.Model {
 			user: {
 				id: number;
 				hash: string;
+				hasCustomName: null;
 			};
 		};
 		getActions(): {

@@ -1,25 +1,26 @@
+import { type ComponentOptions } from 'ui.vue3';
 import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
-import { type BitrixVueComponentProps } from 'ui.vue3';
 
-import { Analytics } from 'im.v2.lib.analytics';
-import { ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
-import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
-import { Loader } from 'im.v2.component.elements.loader';
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { Notifier } from 'im.v2.lib.notifier';
+import { Loader } from 'im.v2.component.elements.loader';
+import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
+import { ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { ChatManager } from 'im.v2.lib.chat';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Notifier } from 'im.v2.lib.notifier';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { SidebarManager } from 'im.v2.lib.sidebar';
 import { type ImModelChat } from 'im.v2.model';
 
-import { DetailUser } from './detail-user';
-import { DetailHeader } from '../../elements/detail-header/detail-header';
-import { DetailEmptyState } from '../../elements/detail-empty-state/detail-empty-state';
-import { DetailEmptySearchState } from '../../elements/detail-empty-search-state/detail-empty-search-state';
+import { MembersMenu } from '../../../classes/context-menu/main/members-menu';
 import { MembersService } from '../../../classes/panels/members';
 import { filterMembers } from '../../../classes/panels/helpers/filter-members';
-import { MembersMenu } from '../../../classes/context-menu/main/members-menu';
+import { DetailHeader } from '../../elements/detail-header/detail-header';
+import { DetailUser } from './detail-user';
+import { DetailEmptyState } from '../../elements/detail-empty-state/detail-empty-state';
+import { DetailEmptySearchState } from '../../elements/detail-empty-search-state/detail-empty-search-state';
 
 import './css/members-panel.css';
 
@@ -163,9 +164,15 @@ export const MembersPanel = {
 
 			return !this.isCollab;
 		},
-		addMembersPopupComponent(): BitrixVueComponentProps
+		addMembersPopupComponent(): ComponentOptions
 		{
 			return this.isCollab ? AddToCollab : AddToChat;
+		},
+		menuClass(): typeof MembersMenu
+		{
+			const sidebarConfig = SidebarManager.getInstance().getConfig(this.dialogId);
+
+			return sidebarConfig.getMembersMenuClass() ?? MembersMenu;
 		},
 		addPopupConfig(): {offsetTop: number, offsetLeft: number}
 		{
@@ -182,6 +189,11 @@ export const MembersPanel = {
 	},
 	watch:
 	{
+		menuClass()
+		{
+			this.contextMenu.destroy();
+			this.createContextMenu();
+		},
 		dialogId(dialogId: string)
 		{
 			this.isSearchHeaderOpened = false;
@@ -216,7 +228,7 @@ export const MembersPanel = {
 	},
 	created()
 	{
-		this.contextMenu = new MembersMenu({ emitter: this.getEmitter() });
+		this.createContextMenu();
 		this.service = new MembersService({ dialogId: this.dialogId });
 		void this.loadFirstPage();
 	},
@@ -226,6 +238,12 @@ export const MembersPanel = {
 	},
 	methods:
 	{
+		createContextMenu()
+		{
+			const applicationContext = { emitter: this.getEmitter() };
+			const MenuClass = this.menuClass;
+			this.contextMenu = new MenuClass(applicationContext);
+		},
 		async loadFirstPage()
 		{
 			if (this.panelInited || this.isLoading)

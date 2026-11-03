@@ -67,13 +67,10 @@ export type RecentModelActions =
 	| 'recentModel/setFirstPageByTab'
 	| 'recentModel/setByRecentConfigTabs'
 	| 'recentModel/setByRecentConfigTabsBatch'
-	| 'recentModel/setByNavigationTabs'
 	| 'recentModel/setGroupCollection'
 	| 'recentModel/hideByRecentConfigTabs'
-	| 'recentModel/hideByNavigationTabs'
 	| 'recentModel/delete'
 	| 'recentModel/deleteFromModel'
-	| 'recentModel/deleteOpenChannel'
 	| 'recentModel/update'
 	| 'recentModel/like'
 
@@ -84,7 +81,12 @@ type RecentItemListPayload = {
 
 export type RecentModelActionParams = {
 	'recentModel/set': Array<RecentModelState>;
-	'recentModel/syncFilteredIdCollection': { tabId: string };
+	'recentModel/syncFilteredIdCollection': {
+		tabId: string;
+		parentChatId?: number;
+		/** Recent sections of the tab: always sent, and a tab with its own section sends that one. */
+		sections?: Set<string>;
+	};
 	'recentModel/setChat': RecentItemListPayload;
 	'recentModel/setCopilot': RecentItemListPayload;
 	'recentModel/setChannel': RecentItemListPayload;
@@ -112,12 +114,6 @@ export type RecentModelActionParams = {
 	'recentModel/setByRecentConfigTabsBatch': {
 		items: Array<SetByRecentConfigTabsPayload>;
 	};
-	'recentModel/setByNavigationTabs': {
-		tabs: Array<string>;
-		itemList: RecentModelState | Array<RecentModelState>;
-		actionName?: string;
-		parentChatId?: number;
-	};
 	'recentModel/setGroupCollection': {
 		groups: Record<string, Array<RecentModelState>>;
 		parentChatId?: number;
@@ -127,15 +123,8 @@ export type RecentModelActionParams = {
 		fromSections: Array<SectionRecentValue>;
 		parentChatId?: number;
 	};
-	'recentModel/hideByNavigationTabs': {
-		id: string;
-		fromTabs: Array<string>;
-		actionName?: string;
-		parentChatId?: number;
-	};
 	'recentModel/delete': { id: string; actionName?: string };
 	'recentModel/deleteFromModel': { id: string; actionName?: string };
-	'recentModel/deleteOpenChannel': { id: string; parentChatId?: number; actionName?: string };
 	'recentModel/update': Array<Partial<RecentModelState>>;
 	'recentModel/like': { id: string; messageId: number; liked: boolean };
 }
@@ -158,7 +147,6 @@ export type RecentSetNestedIdCollectionActions =
 	| 'setCollab'
 	| 'setTask'
 	| 'setOpenline'
-	| 'setByNavigationTabs'
 	| 'setByRecentConfigTabs'
 	| 'setByRecentSection'
 	| 'setGroupCollection'
@@ -187,11 +175,7 @@ export interface RecentStoreNestedIdCollectionData extends PayloadData
 // endregion
 
 // region Mutation: deleteFromNestedIdCollection
-export type RecentDeleteFromNestedIdCollectionActions =
-	'deleteOpenChannel'
-	| 'hideByNavigationTabs'
-	| 'hideByRecentConfigTabs'
-	;
+export type RecentDeleteFromNestedIdCollectionActions = 'hideByRecentConfigTabs';
 
 export interface RecentDeleteFromNestedIdCollectionData extends PayloadData
 {

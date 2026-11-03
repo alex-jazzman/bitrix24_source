@@ -1,4 +1,5 @@
 import { Hardware } from '../../call_hardware';
+import { STREAM_QUALITY, LOCAL_STREAM_QUALITY_HEIGHT } from '../../stream_quality';
 
 // TODO: remove direct dependency on singletons, pass as parameters
 export const isNoiseSuppressionInputTrackOff = () => {
@@ -60,4 +61,22 @@ export const buildMediaConstraints = (
 	}
 
 	return constraints;
+};
+
+/**
+ * Get stream quality based on current max local stream quality height
+ *
+ * @returns {number} - STREAM_QUALITY value (HIGH, MEDIUM, or LOW)
+ */
+export const getStreamQualityFromHeight = (): number => {
+	if (Hardware.maxLocalStreamQualityHeight >= LOCAL_STREAM_QUALITY_HEIGHT.HIGH)
+	{
+		return STREAM_QUALITY.HIGH;
+	}
+	else if (Hardware.maxLocalStreamQualityHeight >= LOCAL_STREAM_QUALITY_HEIGHT.MEDIUM)
+	{
+		return STREAM_QUALITY.MEDIUM;
+	}
+
+	return STREAM_QUALITY.LOW;
 };

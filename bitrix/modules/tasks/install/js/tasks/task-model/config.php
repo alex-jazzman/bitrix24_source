@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
-		'tasks.task-model',
 		'main.core',
 		'main.core.events',
+		'tasks.task-model',
 	],
 	'skip_core' => false,
 ];

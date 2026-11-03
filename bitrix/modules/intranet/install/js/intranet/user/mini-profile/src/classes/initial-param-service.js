@@ -1,8 +1,16 @@
-type InitialParamType = 'right-side-expand';
+type InitialParamType = 'right-side-expand' | 'right-side-view';
 
 export const InitialParamDict: Record<string, InitialParamType> = {
 	RightSideExpand: 'right-side-expand',
+	RightSideView: 'right-side-view',
 };
+
+export type RightSideViewType = 'structure' | 'map';
+
+export const RightSideViewDict = Object.freeze({
+	Structure: 'structure',
+	Map: 'map',
+});
 
 const prefix = 'intranet-user-mini-profile';
 

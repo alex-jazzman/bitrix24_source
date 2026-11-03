@@ -1,6 +1,11 @@
 import { Type } from 'main.core';
 
-export const isValidFileType = (file: File, fileTypes: string[]): boolean => {
+export type FileDescription = {
+	name: string;
+	type: string;
+};
+
+export const isValidFileType = (file: FileDescription, fileTypes: string[]): boolean => {
 	if (!Type.isArrayFilled(fileTypes))
 	{
 		return true;

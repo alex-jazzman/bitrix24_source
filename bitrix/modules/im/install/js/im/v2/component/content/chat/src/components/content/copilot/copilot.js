@@ -19,15 +19,33 @@ export const CopilotContent = {
 			type: String,
 			default: null,
 		},
+		heightConfig: {
+			/** @type {{ storageKey?: string, minHeight?: number }} */
+			type: Object,
+			default: undefined,
+		},
+		// pass-through only: this content serves both the messenger copilot chat and the embeddable widget
+		withKeyboardNavigation: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed: {
 		isFileUploadEnabled(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isCopilotFileUploadAvailable);
 		},
+		isTempChat(): boolean
+		{
+			return this.$store.getters['copilot/chats/isTempChat'](this.dialogId);
+		},
+		withDropArea(): boolean
+		{
+			return this.dialogId !== '' && !this.isTempChat && this.isFileUploadEnabled;
+		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :backgroundId="backgroundId" :withDropArea="false">
+		<BaseChatContent :dialogId="dialogId" :backgroundId="backgroundId" :withDropArea="withDropArea">
 			<template #header>
 				<slot name="header">
 					<CopilotChatHeader :dialogId="dialogId" :key="dialogId"/>
@@ -36,12 +54,13 @@ export const CopilotContent = {
 			<template v-if="$slots.dialog" #dialog>
 				<slot name="dialog"></slot>
 			</template>
-			<template #textarea="{ onTextareaMount }">
+			<template #textarea>
 				<CopilotTextarea
 					:dialogId="dialogId"
 					:isFileUploadEnabled="isFileUploadEnabled"
+					:heightConfig="heightConfig"
+					:withKeyboardNavigation="withKeyboardNavigation"
 					:key="dialogId"
-					@mounted="onTextareaMount"
 				/>
 			</template>
 		</BaseChatContent>

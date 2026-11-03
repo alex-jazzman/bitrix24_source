@@ -579,7 +579,7 @@ endif;
 			BX.CrmWidgetTypeSelector.infos.push({
 				name: "custom_saletarget",
 				title: "<?=GetMessageJS('CRM_WGT_SELECTOR_TYPE_CUSTOM_SALETARGET')?>",
-				logo: "<?=$templateFolder?>/images/view-saletarget.png",
+				logo: "<?=$templateFolder?>/images/view-saletarget.webp",
 				params:
 				{
 					rowHeight: 360,

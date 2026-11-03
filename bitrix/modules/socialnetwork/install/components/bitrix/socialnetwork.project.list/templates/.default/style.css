@@ -16,7 +16,15 @@
 .socialnetwork-project-list-stub-img {
 	width: 132px;
 	height: 103px;
-	background-image: url('images/project-grid-empty-state.png');
+	background-image: url('images/project-grid-empty-state.webp');
+	background-image: -webkit-image-set(
+		url('images/project-grid-empty-state.webp') 1x,
+		url('images/project-grid-empty-state@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('images/project-grid-empty-state.webp') 1x,
+		url('images/project-grid-empty-state@2x.webp') 2x
+	);
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
@@ -61,6 +69,25 @@
 	display: flex;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
+}
+
+.socialnetwork-project-list-wrapper button.ui-label {
+	appearance: none;
+	box-sizing: border-box;
+	font: inherit;
+}
+
+.socialnetwork-project-list-wrapper .main-grid-cell-content-action-pin.main-grid-cell-content-action-by-hover:focus {
+	opacity: 1;
+}
+
+.socialnetwork-project-list-wrapper button.ui-label:focus-visible,
+.socialnetwork-project-list-wrapper .main-grid-cell-content-action-pin:focus-visible,
+.socialnetwork-project-list-wrapper .main-grid-tag[role="button"]:focus-visible,
+.socialnetwork-project-list-wrapper .main-grid-tag-add[role="button"]:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--ui-color-link-primary-base, #2066b0);
+	outline-offset: 2px;
 }
 
 .socialnetwork-project-list-wrapper .ui-label.sonet-ui-grid-role {

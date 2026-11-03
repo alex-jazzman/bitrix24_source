@@ -1,15 +1,16 @@
 import { BuilderEntityModel } from 'ui.vue3.vuex';
 import { Model } from 'tasks.v2.const';
-import { GroupMappers, type GroupDto } from 'tasks.v2.provider.service.group-service';
+import type { GroupDto } from 'tasks.v2.provider.service.group-service';
 
 import type { GroupModel, GroupsModelState } from './types';
+import { mapDtoToModel } from './mappers';
 
 export class Groups extends BuilderEntityModel<GroupsModelState, GroupModel>
 {
 	static createWithGroups(groups: GroupDto[]): BuilderEntityModel
 	{
 		return Groups.create().setVariables({
-			groups: groups.map((groupDto: GroupDto) => GroupMappers.mapDtoToModel(groupDto)),
+			groups: groups.map((groupDto: GroupDto) => mapDtoToModel(groupDto)),
 		});
 	}
 

@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/attach-chat/flow/src/workflow', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
-	const { RecentTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
+	const { ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -15,7 +15,8 @@ jn.define('im/messenger/controller/attach-chat/flow/src/workflow', (require, exp
 	const logger = getLogger('AttachChat.Workflow');
 
 	/**
-	 * Removes a recent item from all sections under a specific parent scope.
+	 * Removes the previous placement. The following system-message push restores the item
+	 * with the complete server sections.
 	 *
 	 * @param {string|number} dialogId
 	 * @param {number} parentChatId
@@ -34,31 +35,6 @@ jn.define('im/messenger/controller/attach-chat/flow/src/workflow', (require, exp
 		await store.dispatch('recentModel/hideByRecentConfigTabs', {
 			id: dialogId,
 			fromSections: sections.map((s) => s.recentSection),
-			parentChatId,
-		});
-	}
-
-	/**
-	 * Restores a recent item to a parent scope under the chat section using the existing
-	 * collection entry. No-op if the item is missing from the model.
-	 *
-	 * @param {string|number} dialogId
-	 * @param {number} parentChatId
-	 * @return {Promise<void>}
-	 */
-	async function showInRecent(dialogId, parentChatId)
-	{
-		const store = serviceLocator.get('core').getStore();
-		const recentItem = store.getters['recentModel/getById'](dialogId);
-
-		if (!recentItem)
-		{
-			return;
-		}
-
-		await store.dispatch('recentModel/setByRecentConfigTabs', {
-			sections: [RecentTab.chat],
-			itemList: recentItem,
 			parentChatId,
 		});
 	}
@@ -233,7 +209,6 @@ jn.define('im/messenger/controller/attach-chat/flow/src/workflow', (require, exp
 			await chatService.attachService.detachFromParent(chatId);
 
 			await hideFromRecent(dialog.dialogId, parentChatId);
-			await showInRecent(dialog.dialogId, ROOT_PARENT_CHAT_ID);
 
 			Notification.showToastWithParams(
 				{
@@ -317,7 +292,7 @@ jn.define('im/messenger/controller/attach-chat/flow/src/workflow', (require, exp
 			const chatService = new ChatService();
 			await chatService.attachService.attachToParent(chatId, parentChatId);
 
-			// Optimistic recent migration for the source chat (it leaves ROOT and lands under parent)
+			// Remove the old placement; the following system-message push restores the server sections.
 			await hideFromRecent(selectedChat.dialogId, ROOT_PARENT_CHAT_ID);
 
 			Notification.showToastWithParams({

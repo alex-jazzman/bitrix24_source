@@ -19,7 +19,7 @@ Main\Localization\Loc::loadMessages(__FILE__);
 $userId = \Bitrix\Intranet\CurrentUser::get()->getId();
 $defaultItems = $arResult;
 $menuUser = new LeftMenu\User();
-$menu = new LeftMenu\Menu($defaultItems, $menuUser);
+$menu = new LeftMenu\Menu($defaultItems, $menuUser, $userId);
 $isCollaber = Loader::includeModule('extranet')
 	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($userId);
 $activePreset = LeftMenu\Preset\Manager::getPreset($isCollaber ? 'collab' : null);

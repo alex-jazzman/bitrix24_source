@@ -3107,6 +3107,9 @@ CalendarPlanner.prototype =
 	{
 		if (params && this.id == params.plannerId)
 		{
+			BX.unbind(document, 'mousemove', BX.proxy(this.mouseMoveHandler, this));
+			BX.unbind(document, 'mousemove', BX.proxy(this.MouseMove, this));
+			BX.unbind(document, 'mouseup', BX.proxy(this.MouseUp, this));
 			BX.cleanNode(this.outerWrap, 1);
 			BX.removeCustomEvent('OnCalendarPlannerDoUpdate', BX.proxy(this.DoUpdate, this));
 			BX.removeCustomEvent('OnCalendarPlannerDoExpand', BX.proxy(this.DoExpand, this));

@@ -1,7 +1,7 @@
 /**
- * @module ui/system/blocks/entity-cell/src/entity-enum
+ * @module ui-system/blocks/entity-cell/src/entity-enum
  */
-jn.define('ui/system/blocks/entity-cell/src/entity-enum', (require, exports, module) => {
+jn.define('ui-system/blocks/entity-cell/src/entity-enum', (require, exports, module) => {
 	const { BaseEnum } = require('utils/enums/base');
 
 	/**

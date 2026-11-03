@@ -12,3 +12,5 @@ $MESS['BICONNECTOR_RELINK_POPUP_CREATE_NEW_DESCRIPTION'] = 'В этом Битр
 
 $MESS['BICONNECTOR_RELINK_POPUP_DISABLE_TITLE'] = 'Выключить BI Конструктор';
 $MESS['BICONNECTOR_RELINK_POPUP_DISABLE_DESCRIPTION'] = 'Выберите этот вариант, если не планируете использовать BI Конструктор в этом Битрикс24. Вы в любой момент сможете изменить своё решение';
+
+$MESS['BICONNECTOR_RELINK_POPUP_ERROR'] = 'Не удалось изменить настройки BI Конструктора. Обновите страницу и попробуйте ещё раз';

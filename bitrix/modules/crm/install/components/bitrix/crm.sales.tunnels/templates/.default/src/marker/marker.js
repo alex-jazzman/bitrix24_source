@@ -433,7 +433,7 @@ export default class Marker extends Event.EventEmitter
 		{
 			if (destinationMarker && !event.isDefaultPrevented())
 			{
-				if (!this.data.column.data.isCategoryEditable)
+				if (!this.data.column.data.areTunnelsEditable)
 				{
 					this.emit('Marker:error', {
 						message: Loc.getMessage('CRM_ST_TUNNEL_EDIT_ACCESS_DENIED'),
@@ -854,7 +854,7 @@ export default class Marker extends Event.EventEmitter
 
 	getTunnelButton()
 	{
-		const canEdit = this.data.column.data.isCategoryEditable;
+		const canEdit = this.data.column.data.areTunnelsEditable;
 		return this.cache.remember('tunnelButton', () => (
 			Tag.render`
 				<div class="crm-st-tunnel-button" 
@@ -863,6 +863,7 @@ export default class Marker extends Event.EventEmitter
 					 onclick="${this.onTunnelButtonClick.bind(this)}"
 					 title="${Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE')}"
 					 style="${!canEdit ? 'pointer-events: none;' : ''}"
+					 data-testid="crm-sales-tunnels-tunnel-btn"
 				>${Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL')}</div>
 			`
 		));

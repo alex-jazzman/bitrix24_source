@@ -1,7 +1,3 @@
-.crm-item-import__requisite-help {
-	--icon: url('settings.png'),
-}
-
 .crm-item-import__requisite-help .ui-system-alert-inner {
 	align-items: flex-start;
 }

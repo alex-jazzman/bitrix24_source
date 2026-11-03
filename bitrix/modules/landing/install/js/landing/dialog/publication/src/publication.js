@@ -1,4 +1,5 @@
 import { Tag, Uri } from 'main.core';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 type PublicationOptions = {
 	siteId: number,
@@ -26,7 +27,7 @@ instance.publication(
 export class Publication
 {
 	static instance: ?Publication = null;
-	dialog: ?BX.PopupWindow = null;
+	dialog: ?MessageBox = null;
 	siteId: number;
 	landingId: number;
 	url: string;
@@ -87,22 +88,20 @@ export class Publication
 	{
 		if (!this.dialog)
 		{
-			this.dialog = new BX.PopupWindow('landing-publication-confirm', null, {
-				content: '',
-				titleBar: {content: 'Publication'},
-				offsetLeft: 0,
-				offsetTop: 0,
-				buttons: [
-					new BX.PopupWindowButton({
-						text: 'OK',
-						events: {
-							click: function()
-							{
-								this.popupWindow.close();
-							}
-						}
-					})
-				]
+			this.dialog = new MessageBox({
+				title: 'Publication',
+				message: '',
+				useAirDesign: true,
+				buttons: MessageBoxButtons.OK,
+				onOk: () => this.dialog.close(),
+				popupOptions: {
+					closeByEsc: true,
+					minHeight: false,
+					minWidth: 260,
+					maxWidth: 300,
+					width: false,
+					animation: 'fading-slide',
+				},
 			});
 		}
 
@@ -112,8 +111,8 @@ export class Publication
 
 	renderContent(status: HTMLElement)
 	{
-		this.dialog.setContent(Tag.render`
-			<div class="ui-publication">
+		this.dialog.setMessage(Tag.render`
+			<div class="ui-publication" style="padding: 0 25px;">
 				<div>Publication dialog</div>
 				<div>URL: <a href="${this.url}" target="_blank">${this.url}</a></div>
 				${status}

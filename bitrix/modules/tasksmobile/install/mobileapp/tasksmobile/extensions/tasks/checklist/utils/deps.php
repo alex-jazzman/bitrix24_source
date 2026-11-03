@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'require-lazy',
 		'toast',
 		'tasks:checklist/controller',
 	],

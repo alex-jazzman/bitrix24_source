@@ -1,0 +1,209 @@
+/**
+ * The card is the bubble of the internal popover: the background, the radius and the shadow live here, and
+ * the arrow of the popover takes its colour from the computed background of this very node. The service root
+ * of the popover carries the position and belongs to it - nothing here reaches out to it.
+ */
+
+.ui-system-callout {
+	/* The close button is an icon of this size inside a hit area a band wider on every side, and the cross
+	   itself is painted a band inside that icon - the glyph of cross-m runs from 7.5px to 16.5px of its 24px
+	   box, rounded here to whole pixels so that what is aligned to it lands on them. All three stand on the
+	   card and not on the button: the line the buttons of the footer answer to is the end edge of the painted
+	   cross, and it is measured far from the button itself. The size mirrors the one the icon is rendered
+	   with. Internal to the card, unlike the inset of the left column below: nothing outside is meant to set
+	   them. */
+	--ui-system-callout-close-icon-size: 24px;
+	--ui-system-callout-close-hit-band: 2px;
+	--ui-system-callout-close-glyph-inset: 8px;
+
+	/* The inset of the card belongs to its parts and not to the card itself: the column and the body carry
+	   one each. A padding here would stand between the border of the card and everything inside it, and a
+	   slot that has to reach that border - an illustration pressed into the corner - could only get there by
+	   pulling itself out with negative margins. The geometry is the same either way: the parts carry the very
+	   token the card used to. */
+	position: relative;
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+	box-sizing: border-box;
+	max-width: 100%;
+	border-radius: var(--ui-border-radius-2xl);
+	background-color: var(--ui-color-accent-soft-element-blue);
+	color: var(--ui-color-design-filled-content);
+	/* drop-shadow and not box-shadow: the shadow follows the painted figure, so the arrow of the popover is
+	   not left with a rectangular shade of the card behind it. */
+	filter: drop-shadow(0 1px 2px var(--ui-color-box-shadow-contrast-accent-color));
+}
+
+/* Room for the close button, which sits above the inset of the body. */
+.ui-system-callout.--with-close .ui-system-callout__body {
+	padding-inline-end: var(--ui-space-inset-4xl);
+}
+
+/* The column has no width of its own - the slot is what makes it, and it neither shrinks below its content nor
+   holds room for content that is not there. fit-content and not auto: a slot too wide for the card wraps
+   inside the column instead of running past the background of the card. Content that cannot wrap - an image of
+   a width of its own, an unbreakable string - is cut at the edge of the column, so the card keeps the last word
+   on the width whatever the slot carries. clip and not hidden: hidden would make the column a scroll container,
+   and focusing anything cut off would take the content of the card out of place with nothing to bring it back.
+   The block axis stays visible, so a shadow or a focus ring of the slot is not cut along with it. */
+.ui-system-callout__left {
+	/* The inset of the column, and the one public knob of the layout: set it to zero and the content of the
+	   region stands against the border of the card. That is what an illustration pressed into the corner
+	   asks for, and it asks for nothing else - the body keeps its own inset whatever this one becomes. The
+	   end side is left out: the space between the column and the body is the gap of the card. */
+	padding-block: var(--ui-system-callout-left-inset, var(--ui-space-inset-md));
+	padding-inline-start: var(--ui-system-callout-left-inset, var(--ui-space-inset-md));
+	flex: none;
+	/* The inset counts inside the maximum below: without it a column filled to the brim would carry the
+	   padding past the width of the card. */
+	box-sizing: border-box;
+	width: fit-content;
+	max-width: 100%;
+	/* An automatic minimum size would let content that cannot wrap take the column past that maximum. */
+	min-width: 0;
+	overflow-x: clip;
+}
+
+/* One flex flow for the whole card: the title and the description take a line each, the regions of the
+   footer share the last one. Wrapping is what the footer does when the card is too narrow for it. */
+.ui-system-callout__body {
+	/* The inset of the card, carried by the body. The start side goes only where nothing stands before it:
+	   with a column beside it the space between the two is the gap, and a second inset there would double it. */
+	padding: var(--ui-space-inset-md);
+	display: flex;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs) var(--ui-space-inline-sm);
+	/* An automatic minimum size would let a long word push the card past the width it was given. */
+	min-width: 0;
+	overflow-wrap: break-word;
+}
+
+.ui-system-callout__left:not(:empty) + .ui-system-callout__body {
+	padding-inline-start: 0;
+}
+
+.ui-system-callout__title,
+.ui-system-callout__description {
+	flex: 1 0 100%;
+	min-width: 0;
+}
+
+/* Every region container is a stable node - the teleport target of BCallout - so an empty one is taken out
+   of the layout instead of leaving a gap behind. */
+.ui-system-callout__left:empty,
+.ui-system-callout__description:empty,
+.ui-system-callout__footer:empty,
+.ui-system-callout__footer-left:empty,
+.ui-system-callout__buttons:empty {
+	display: none;
+}
+
+/* A region that lost the priority of the footer. The content of the options is not rendered into it at all,
+   and the DOM a slot teleported there stays where it is - hidden, because taking it away belongs to Vue. */
+.ui-system-callout__footer.--suppressed,
+.ui-system-callout__footer-left.--suppressed {
+	display: none;
+}
+
+/* The subcontainer of the region holds the content of the options and nothing else, so that clearing the
+   region leaves a teleported slot beside it alone. It carries no layout of its own: prop content and slot
+   content are laid out by the container alike. */
+.ui-system-callout__owned {
+	display: contents;
+}
+
+/* The text side of the footer takes the free space, so a long word in it wraps instead of stretching the
+   card and the buttons keep to the right edge. */
+.ui-system-callout__footer,
+.ui-system-callout__footer-left {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.ui-system-callout__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	/* The buttons stand further from the content above them than the row gap of the body alone puts them.
+	   Additive to that gap, so a card that wrapped the buttons onto a line of their own keeps both. */
+	margin-block-start: var(--ui-space-stack-2xs2);
+	/* The end edge is kept whether the text region stands beside the buttons or they have wrapped onto a
+	   line of their own. */
+	margin-inline-start: auto;
+}
+
+/* The buttons answer to the close button and not to the inset of the body: their end edge stands on the end
+   edge of the painted cross, which leaves them a little past the title and the text above them - agreed with
+   design. The box of the icon is no line to align to: the cross is drawn well inside it, and buttons brought
+   to that box stand visibly past the cross itself. The pull is the distance between the two lines: the inset
+   the body keeps clear for the close button, and the cross, which is the inset of the button, the band of its
+   hit area and the band the glyph keeps inside its icon. Without the button there is no such line, and the
+   buttons keep the inset of the body. */
+.ui-system-callout.--with-close .ui-system-callout__buttons {
+	margin-inline-end: calc(
+		var(--ui-space-inset-xs)
+		+ var(--ui-system-callout-close-hit-band)
+		+ var(--ui-system-callout-close-glyph-inset)
+		- var(--ui-space-inset-4xl)
+	);
+}
+
+/* The typography components paint themselves in the text colour of a light surface; on the card they follow
+   the card. Two classes deep on purpose: the base class of the component weighs exactly one. */
+.ui-system-callout .ui-system-callout__title,
+.ui-system-callout .ui-system-callout__text {
+	color: inherit;
+}
+
+.ui-system-callout__close-button {
+	--ui-color: var(--ui-color-design-filled-content-icon);
+	--ui-icon-set__icon-color: var(--ui-color);
+
+	position: absolute;
+	inset-block-start: var(--ui-space-inset-xs);
+	inset-inline-end: var(--ui-space-inset-xs);
+	display: flex;
+	width: calc(var(--ui-system-callout-close-icon-size) + var(--ui-system-callout-close-hit-band) * 2);
+	height: calc(var(--ui-system-callout-close-icon-size) + var(--ui-system-callout-close-hit-band) * 2);
+	align-items: center;
+	justify-content: center;
+	border: none;
+	border-radius: var(--ui-border-radius-circle);
+	background: none;
+	cursor: pointer;
+}
+
+.ui-system-callout__close-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-hover);
+}
+
+/* The appearance of the whole figure: the card together with the arrow of the popover. It is written on the
+   group - the node of the popover holding both of them - and not on the card, which is only one half. On the
+   card alone the arrow stayed behind: opaque from the first frame while the card was still fading in, and
+   left standing in place while the card scaled away from it, opening the joint the overlap of the arrow is
+   there to close. The service root above the group carries the position, the inline transform of the area
+   mode among it, and nothing here reaches out to it. */
+@keyframes ui-system-callout-appear {
+	from {
+		opacity: 0;
+		transform: scale(0.97);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.ui-system-callout-popover .ui-system-popover__group.--visible {
+	animation: ui-system-callout-appear 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ui-system-callout-popover .ui-system-popover__group.--visible {
+		animation: none;
+	}
+}

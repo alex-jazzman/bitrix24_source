@@ -10,10 +10,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		callback: () => {},
 		duration: 500
 	};
+	const noopHandle = {
+		cancel: () => {}
+	};
 	const Animation = {
 		start(params) {
 			if (main_core.Type.isUndefined(params.start) || main_core.Type.isUndefined(params.end) || !params.element || !params.elementProperty) {
-				return 0;
+				return noopHandle;
 			}
 			params = {
 				...DEFAULT_ANIMATION_PARAMS,
@@ -21,7 +24,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 			const diff = params.end - params.start;
 			let currentValue = 0;
-			let frameId;
+			let frameId = null;
 			const animate = () => {
 				currentValue += params.increment;
 				params.element[params.elementProperty] = easeFunction(currentValue, params.start, diff, params.duration);
@@ -30,12 +33,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				} else {
 					params.callback();
 				}
-				return frameId;
 			};
-			return animate();
-		},
-		cancel() {
-			cancelAnimationFrame();
+			animate();
+			return {
+				cancel() {
+					if (frameId !== null) {
+						cancelAnimationFrame(frameId);
+						frameId = null;
+					}
+				}
+			};
 		}
 	};
 	const easeFunction = function (currentValue, start, diff, duration) {

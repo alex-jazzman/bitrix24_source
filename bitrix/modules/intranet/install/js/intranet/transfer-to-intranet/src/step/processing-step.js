@@ -35,7 +35,7 @@ export class ProcessingStep
 				data: this.#options.showDepartmentControl === false
 					? {}
 					: {
-						departmentId: this.#departmentIds,
+						departmentIds: this.#departmentIds,
 						isEmail: 'N',
 					},
 			});

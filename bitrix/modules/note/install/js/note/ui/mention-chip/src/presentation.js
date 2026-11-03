@@ -4,7 +4,7 @@ import { AssetUrl } from 'note.ui.assets';
 /**
  * Visual presentation map: wire type -> { colorToken, icon, iconUrl, marker, avatarShape }.
  *
- * Keys match REG-01 wire values exactly (user/document/collection/task).
+ * Keys match REG-01 wire values exactly (user/document/collection/task/diskfolder).
  * colorToken — CSS custom property from Air design tokens.
  * icon — icon name for BIcon (Outline set); null when iconUrl is used instead.
  * iconUrl — URL of a custom SVG mask-image glyph (collection); null for BIcon types.
@@ -44,6 +44,14 @@ export const MENTION_PRESENTATION = Object.freeze({
 		icon: Outline.TASK,
 		iconUrl: null,
 		marker: 'T',
+		avatarShape: 'square',
+	}),
+	diskfolder: Object.freeze({
+		// o-folder: stock folder glyph from the shared set — no custom note asset for this type.
+		colorToken: '--ui-color-accent-main-primary',
+		icon: Outline.FOLDER,
+		iconUrl: null,
+		marker: 'F',
 		avatarShape: 'square',
 	}),
 });

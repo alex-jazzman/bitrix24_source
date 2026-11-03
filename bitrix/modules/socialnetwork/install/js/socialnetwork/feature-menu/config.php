@@ -21,6 +21,7 @@ return [
 		'main.popup',
 		'main.sidepanel',
 		'marketplace',
+		'socialnetwork.v2.lib.event-sender',
 		'ui.icon-set.api.core',
 		'ui.popupcomponentsmaker',
 		'ui.system.menu',

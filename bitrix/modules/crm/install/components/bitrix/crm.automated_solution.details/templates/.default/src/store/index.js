@@ -3,11 +3,17 @@ import mutations from './mutations';
 
 export type StateShape = {
 	automatedSolutionOrigTypeIds: number[],
+	automatedSolutionOrigIsVibeEnabled: boolean,
 	automatedSolution: {
 		id?: ?number,
 		title?: ?string,
 		typeIds?: number[],
+		isVibeEnabled?: boolean,
+		vibeId?: number,
 	},
+
+	isVibeAvailable?: boolean,
+	isVibeFeatureEnabled: boolean,
 
 	permissions: {
 		canMoveSmartProcessFromCrm: boolean,
@@ -18,6 +24,8 @@ export type StateShape = {
 
 	errors: Error[],
 	isModified: boolean,
+	isVibeSettingsPending: boolean,
+	shouldCloseOnSave: boolean,
 	isPermissionsLayoutV2Enabled: boolean,
 };
 
@@ -33,11 +41,17 @@ export const store = {
 	{
 		return {
 			automatedSolutionOrigTypeIds: [],
+			automatedSolutionOrigIsVibeEnabled: false,
 			automatedSolution: {
 				id: null,
 				title: null,
 				typeIds: [],
+				isVibeEnabled: false,
+				vibeId: 0,
 			},
+
+			isVibeAvailable: false,
+			isVibeFeatureEnabled: false,
 
 			permissions: {
 				canMoveSmartProcessFromCrm: false,
@@ -49,6 +63,8 @@ export const store = {
 			errors: [],
 
 			isModified: false,
+			isVibeSettingsPending: false,
+			shouldCloseOnSave: true,
 			isPermissionsLayoutV2Enabled: false,
 		};
 	},

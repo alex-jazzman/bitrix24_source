@@ -136,7 +136,7 @@ export function applyLink(
 	{
 		editor.chain().focus().insertContent({
 			type: 'text',
-			text: safeHref,
+			text: linkValue,
 			marks: [{ type: 'link', attrs: { href: safeHref } }],
 		}).run();
 	}

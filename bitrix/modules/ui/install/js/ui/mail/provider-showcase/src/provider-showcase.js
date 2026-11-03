@@ -95,13 +95,16 @@ export class ProviderShowcase
 					},
 				},
 			)
-				.then((response) => {
+				.then(async (response) => {
 					const data = response.data;
 					if (!data)
 					{
 						return;
 					}
-					instance.setSender(data.id, data.name, data.email);
+					await instance.setSender(data.id, data.name, data.email, {
+						senderId: data.mailboxId ? null : data.id,
+						mailboxId: data.mailboxId ?? null,
+					});
 					if (instance.addSenderCallback || data.type === mailboxType)
 					{
 						return;
@@ -109,10 +112,11 @@ export class ProviderShowcase
 					AliasEditor.openSlider({
 						senderId: data.id,
 						email: data.email,
-						setSenderCallback: instance.setSenderCallback,
-						updateSenderList: () => {
-							void instance.updateSenderList();
+						setSenderCallback: async (id, name, email) => {
+							await instance.updateSenderList();
+							instance.setSenderCallback?.(id, name, email, { senderId: id, mailboxId: null });
 						},
+						updateSenderList: () => {},
 					});
 				})
 				.catch(() => {})
@@ -141,7 +145,7 @@ export class ProviderShowcase
 			events: {
 				onClose: () => {
 					top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onMessage', onSliderMessage);
-					if (instance.updateSenderList && instance.#wasSenderUpdated)
+					if (instance.updateSenderList && instance.#wasSenderUpdated && !instance.setSenderCallback)
 					{
 						instance.updateSenderList();
 					}
@@ -209,12 +213,15 @@ export class ProviderShowcase
 			if (slider)
 			{
 				SmtpEditor.openSlider({
-					setSenderCallback: (senderId?: string | number, senderName?: string, senderEmail?: string) => {
+					setSenderCallback: async (senderId?: string | number, senderName?: string, senderEmail?: string) => {
 						if (this.setSenderCallback && senderId && senderName && senderEmail)
 						{
-							this.setSenderCallback(senderId, senderName, senderEmail);
+							await this.updateSenderList();
+							this.setSenderCallback(senderId, senderName, senderEmail, {
+								senderId,
+								mailboxId: null,
+							});
 						}
-						this.updateSenderList();
 						slider.close();
 					},
 					addSenderCallback: this.addSenderCallback,
@@ -359,13 +366,14 @@ export class ProviderShowcase
 		Dom.append(this.promotionShowcaseNode, this.container);
 	}
 
-	setSender(id: number, senderName: string, senderEmail: string): void
+	async setSender(id: number, senderName: string, senderEmail: string, coordinate: ?Object = null): Promise<void>
 	{
 		const name = senderName;
 		const email = senderEmail;
 		if (this.setSenderCallback)
 		{
-			this.setSenderCallback(id, name, email);
+			await this.updateSenderList();
+			this.setSenderCallback(id, name, email, coordinate);
 		}
 
 		if (!this.addSenderCallback)

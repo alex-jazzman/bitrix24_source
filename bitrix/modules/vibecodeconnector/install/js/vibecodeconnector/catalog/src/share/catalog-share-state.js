@@ -64,7 +64,6 @@ export function createEnabledLinkPayload(
 
 export type CatalogShareViewStateValue =
 	| 'loading'
-	| 'loadError'
 	| 'audience'
 	| 'memberDraft'
 	| 'savingShare'
@@ -79,7 +78,6 @@ export type CatalogShareViewStateValue =
 
 export const CatalogShareViewState = Object.freeze({
 	Loading: 'loading',
-	LoadError: 'loadError',
 	Audience: 'audience',
 	MemberDraft: 'memberDraft',
 	SavingShare: 'savingShare',
@@ -98,11 +96,24 @@ export type CatalogShareSnapshot = {
 	linkState: CatalogLinkState | null,
 	draftShare: CatalogShareState | null,
 	errorCode: string | null,
+	shareErrorCode: string | null,
+	linkErrorCode: string | null,
+	isShareLoading: boolean,
+	isLinkLoading: boolean,
 	pendingAudience: AudienceValue | null,
+	pendingAudienceAddsCompanyToChat: boolean,
+	pendingAudienceRevokesLink: boolean,
 	ownerOnlyConfirmationRequired: boolean,
 	linkDraft: CatalogLinkDraft | null,
 	isShareDraftDirty: boolean,
 	isLinkDraftDirty: boolean,
+};
+
+export type CatalogShareLoadResult = {
+	share: CatalogShareState | null,
+	shareErrorCode: string | null,
+	linkState: CatalogLinkState | null,
+	linkErrorCode: string | null,
 };
 
 export type CatalogLinkDraft = {
@@ -112,6 +123,13 @@ export type CatalogLinkDraft = {
 };
 
 const GLOBAL_AUDIENCES = new Set([
+	Audience.Authenticated,
+	Audience.Public,
+]);
+
+// Audiences for which the backend adds every company employee to the app chat
+const COMPANY_AUDIENCES = new Set([
+	Audience.Portal,
 	Audience.Authenticated,
 	Audience.Public,
 ]);
@@ -172,7 +190,13 @@ export class CatalogShareStateMachine
 	};
 
 	#errorCode: string | null = null;
+	#shareErrorCode: string | null = null;
+	#linkErrorCode: string | null = null;
+	#shareLoading: boolean = true;
+	#linkLoading: boolean = true;
 	#pendingAudience: AudienceValue | null = null;
+	#pendingAudienceAddsCompanyToChat: boolean = false;
+	#pendingAudienceRevokesLink: boolean = false;
 	#ownerOnlyConfirmationRequired: boolean = false;
 	#previousEditableState: CatalogShareViewStateValue | null = null;
 	#linkSettingsReturnState: CatalogShareViewStateValue | null = null;
@@ -186,7 +210,13 @@ export class CatalogShareStateMachine
 			linkState: this.#linkState,
 			draftShare: this.#draftShare === null ? null : cloneShare(this.#draftShare),
 			errorCode: this.#errorCode,
+			shareErrorCode: this.#shareErrorCode,
+			linkErrorCode: this.#linkErrorCode,
+			isShareLoading: this.#shareLoading,
+			isLinkLoading: this.#linkLoading,
 			pendingAudience: this.#pendingAudience,
+			pendingAudienceAddsCompanyToChat: this.#pendingAudienceAddsCompanyToChat,
+			pendingAudienceRevokesLink: this.#pendingAudienceRevokesLink,
 			ownerOnlyConfirmationRequired: this.#ownerOnlyConfirmationRequired,
 			linkDraft: this.#linkDraft === null ? null : {
 				expiryEnabled: this.#linkDraft.expiryEnabled,
@@ -214,49 +244,116 @@ export class CatalogShareStateMachine
 
 		this.#status = CatalogShareViewState.Loading;
 		this.#errorCode = null;
+		this.#shareLoading = true;
+		this.#linkLoading = true;
+		this.#shareErrorCode = null;
+		this.#linkErrorCode = null;
 
 		return true;
 	}
 
-	completeLoading(share: CatalogShareState, linkState: CatalogLinkState): boolean
+	settleLoading(result: CatalogShareLoadResult): boolean
 	{
 		if (this.#status !== CatalogShareViewState.Loading)
 		{
 			return false;
 		}
 
-		this.#replaceCanonicalShare(share);
-		this.#linkState = linkState;
-		this.#status = share.audience === Audience.SpecificMembers
-			? CatalogShareViewState.MemberDraft
-			: CatalogShareViewState.Audience;
+		this.#shareLoading = false;
+		this.#linkLoading = false;
 		this.#errorCode = null;
+		this.#applyShareLoadResult(result.share, result.shareErrorCode);
+		this.#applyLinkLoadResult(result.linkState, result.linkErrorCode);
 
 		return true;
 	}
 
-	failLoading(errorCode: string): boolean
+	beginShareReload(): boolean
 	{
-		if (this.#status !== CatalogShareViewState.Loading)
+		if (this.#shareLoading || !this.#isEditorVisible())
 		{
 			return false;
 		}
 
-		this.#status = CatalogShareViewState.LoadError;
-		this.#errorCode = errorCode;
+		this.#shareLoading = true;
+		this.#shareErrorCode = null;
 
 		return true;
 	}
 
-	retryLoading(): boolean
+	completeShareReload(share: CatalogShareState): boolean
 	{
-		if (this.#status !== CatalogShareViewState.LoadError)
+		if (!this.#shareLoading)
 		{
 			return false;
 		}
 
-		this.#status = CatalogShareViewState.Loading;
-		this.#errorCode = null;
+		this.#shareLoading = false;
+
+		if (!this.#isEditorVisible())
+		{
+			return false;
+		}
+
+		this.#applyShareLoadResult(share, null);
+
+		return true;
+	}
+
+	failShareReload(errorCode: string): boolean
+	{
+		if (!this.#shareLoading)
+		{
+			return false;
+		}
+
+		this.#shareLoading = false;
+
+		if (!this.#isEditorVisible())
+		{
+			return false;
+		}
+
+		this.#applyShareLoadResult(null, errorCode);
+
+		return true;
+	}
+
+	beginLinkReload(): boolean
+	{
+		if (this.#linkLoading || !this.#isEditorVisible())
+		{
+			return false;
+		}
+
+		this.#linkLoading = true;
+		this.#linkErrorCode = null;
+
+		return true;
+	}
+
+	completeLinkReload(linkState: CatalogLinkState): boolean
+	{
+		if (!this.#linkLoading)
+		{
+			return false;
+		}
+
+		this.#linkLoading = false;
+		this.#applyLinkLoadResult(linkState, null);
+
+		return true;
+	}
+
+	failLinkReload(errorCode: string): boolean
+	{
+		if (!this.#linkLoading)
+		{
+			return false;
+		}
+
+		this.#linkLoading = false;
+		this.#applyLinkLoadResult(null, errorCode);
 
 		return true;
 	}
@@ -268,9 +365,15 @@ export class CatalogShareStateMachine
 			return false;
 		}
 
-		if (GLOBAL_AUDIENCES.has(audience) && this.#hasActiveLink())
+		const revokesLink = GLOBAL_AUDIENCES.has(audience) && this.#hasActiveLink();
+		const addsCompanyToChat = COMPANY_AUDIENCES.has(audience)
+			&& this.#share !== null
+			&& !COMPANY_AUDIENCES.has(this.#share.audience);
+		if (revokesLink || addsCompanyToChat)
 		{
 			this.#pendingAudience = audience;
+			this.#pendingAudienceAddsCompanyToChat = addsCompanyToChat;
+			this.#pendingAudienceRevokesLink = revokesLink;
 
 			return false;
 		}
@@ -288,7 +391,7 @@ export class CatalogShareStateMachine
 		}
 
 		const audience = this.#pendingAudience;
-		this.#pendingAudience = null;
+		this.#clearPendingAudience();
 		this.#applyAudience(audience);
 
 		return true;
@@ -301,7 +404,7 @@ export class CatalogShareStateMachine
 			return false;
 		}
 
-		this.#pendingAudience = null;
+		this.#clearPendingAudience();
 
 		return true;
 	}
@@ -403,6 +506,7 @@ export class CatalogShareStateMachine
 		}
 
 		this.#linkState = linkState;
+		this.#linkErrorCode = null;
 		this.#status = this.#draftShare?.audience === Audience.SpecificMembers
 			? CatalogShareViewState.MemberDraft
 			: CatalogShareViewState.Audience;
@@ -649,6 +753,7 @@ export class CatalogShareStateMachine
 		}
 
 		this.#linkState = linkState;
+		this.#linkErrorCode = null;
 		this.#status = CatalogShareViewState.LinkSettings;
 		if (linkState.link !== null)
 		{
@@ -687,7 +792,7 @@ export class CatalogShareStateMachine
 	close(): void
 	{
 		this.#status = CatalogShareViewState.Closed;
-		this.#pendingAudience = null;
+		this.#clearPendingAudience();
 		this.#ownerOnlyConfirmationRequired = false;
 		this.#linkSettingsReturnState = null;
 		this.#linkDraft = null;
@@ -702,8 +807,15 @@ export class CatalogShareStateMachine
 			users: share.audience === Audience.SpecificMembers ? cloneParticipants(share.users) : [],
 			departments: share.audience === Audience.SpecificMembers ? cloneParticipants(share.departments) : [],
 		};
-		this.#pendingAudience = null;
+		this.#clearPendingAudience();
 		this.#ownerOnlyConfirmationRequired = false;
+	}
+
+	#clearPendingAudience(): void
+	{
+		this.#pendingAudience = null;
+		this.#pendingAudienceAddsCompanyToChat = false;
+		this.#pendingAudienceRevokesLink = false;
 	}
 
 	#applyAudience(audience: AudienceValue): void
@@ -724,9 +836,54 @@ export class CatalogShareStateMachine
 		this.#ownerOnlyConfirmationRequired = false;
 	}
 
-	#isAudienceEditable(): boolean
+	#isEditorVisible(): boolean
 	{
 		return this.#status === CatalogShareViewState.Audience || this.#status === CatalogShareViewState.MemberDraft;
+	}
+
+	#isAudienceEditable(): boolean
+	{
+		return this.#isEditorVisible() && this.#share !== null && this.#draftShare !== null;
+	}
+
+	#applyShareLoadResult(share: CatalogShareState | null, errorCode: string | null): void
+	{
+		if (share === null)
+		{
+			this.#share = null;
+			this.#draftShare = null;
+			this.#specificMembersDraft = {
+				audience: Audience.SpecificMembers,
+				users: [],
+				departments: [],
+			};
+			this.#clearPendingAudience();
+			this.#ownerOnlyConfirmationRequired = false;
+			this.#status = CatalogShareViewState.Audience;
+			this.#shareErrorCode = errorCode ?? 'UNKNOWN_ERROR';
+
+			return;
+		}
+
+		this.#replaceCanonicalShare(share);
+		this.#status = share.audience === Audience.SpecificMembers
+			? CatalogShareViewState.MemberDraft
+			: CatalogShareViewState.Audience;
+		this.#shareErrorCode = null;
+	}
+
+	#applyLinkLoadResult(linkState: CatalogLinkState | null, errorCode: string | null): void
+	{
+		if (linkState === null)
+		{
+			this.#linkState = null;
+			this.#linkErrorCode = errorCode ?? 'UNKNOWN_ERROR';
+
+			return;
+		}
+
+		this.#linkState = linkState;
+		this.#linkErrorCode = null;
 	}
 
 	#isShareDraftDirty(): boolean

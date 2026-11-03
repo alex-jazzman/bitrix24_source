@@ -13,6 +13,15 @@ import { AuthorityTypes } from '../../consts';
 
 const HEAD_TYPE_ENTITY_ID = 'head-type';
 const USER_TYPE_ENTITY_ID = 'user';
+const EMPTY_WARNING_SUFFIX = '_EMPTY';
+const TEAM_REPORT_PHRASE_PREFIX = 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORT';
+
+type AuthorityWarningState = {
+	headSelected: boolean,
+	hasHead: boolean,
+	deputySelected: boolean,
+	hasDeputy: boolean,
+};
 
 // @vue/component
 export const Settings = {
@@ -145,17 +154,23 @@ export const Settings = {
 			const settingsType = NodeSettingsTypes.reportsAuthority;
 			const phrasePrefix = 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT';
 
+			// A team with nobody chosen at all keeps the department phrase on purpose: its text
+			// ("the higher-level manager will receive the reports") describes the team case just
+			// as well, so there is no team-specific phrase for this state.
 			if (this.isTeamEntity && this.settings[settingsType].size === 0)
 			{
-				return this.loc(`${phrasePrefix}_EMPTY`);
+				return this.loc(`${phrasePrefix}${EMPTY_WARNING_SUFFIX}`);
 			}
 
-			if (this.isTeamEntity || this.isReportSelectorLocked)
+			if (this.isReportSelectorLocked)
 			{
 				return null;
 			}
 
-			return this.getWarningText(settingsType, phrasePrefix);
+			return this.isTeamEntity
+				? this.getTeamReportWarningText(settingsType)
+				: this.getWarningText(settingsType, phrasePrefix)
+			;
 		},
 		isBpSelectorLocked(): boolean
 		{
@@ -390,41 +405,75 @@ export const Settings = {
 		getWarningText(settingsType: string, phrasePrefix: string): string | null
 		{
 			const memberRoles = getMemberRoles(this.entityType);
-			const hasHead = this.heads.some((item: UserData) => item.role === memberRoles.head);
-			const hasDeputy = this.heads.some((item: UserData) => item.role === memberRoles.deputyHead);
-			const headSelected = this.settings[settingsType].has(AuthorityTypes.departmentHead);
-			const deputySelected = this.settings[settingsType]
-				.has(AuthorityTypes.departmentDeputy)
-			;
+			const phraseSuffix = this.getAuthorityWarningSuffix({
+				headSelected: this.settings[settingsType].has(AuthorityTypes.departmentHead),
+				hasHead: this.heads.some((item: UserData) => item.role === memberRoles.head),
+				deputySelected: this.settings[settingsType].has(AuthorityTypes.departmentDeputy),
+				hasDeputy: this.heads.some((item: UserData) => item.role === memberRoles.deputyHead),
+			});
+
+			return phraseSuffix === null ? null : this.loc(`${phrasePrefix}${phraseSuffix}`);
+		},
+		/**
+		 * Team reports go to the team head or deputy actually assigned in the team; with none of
+		 * them left the recipient is looked up the chain of parent teams, and only when that
+		 * chain yields nobody does it fall back to the department heads.
+		 */
+		getTeamReportWarningText(settingsType: string): string | null
+		{
+			const memberRoles = getMemberRoles(this.entityType);
+			const settings = this.settings[settingsType];
+			const phraseSuffix = this.getAuthorityWarningSuffix({
+				headSelected: settings.has(AuthorityTypes.teamHead),
+				hasHead: this.heads.some((item: UserData) => item.role === memberRoles.head),
+				deputySelected: settings.has(AuthorityTypes.teamDeputy),
+				hasDeputy: this.heads.some((item: UserData) => item.role === memberRoles.deputyHead),
+			});
+
+			// department heads left alone in the list are an explicit choice, not a misconfiguration
+			if (phraseSuffix === null || phraseSuffix === EMPTY_WARNING_SUFFIX)
+			{
+				return null;
+			}
+
+			return this.loc(`${TEAM_REPORT_PHRASE_PREFIX}${phraseSuffix}`);
+		},
+		/**
+		 * Phrase suffix for the "selected authority role is not assigned" ladder,
+		 * shared by department and team settings.
+		 */
+		getAuthorityWarningSuffix(state: AuthorityWarningState): string | null
+		{
+			const { headSelected, hasHead, deputySelected, hasDeputy } = state;
 
 			if (headSelected && hasHead && deputySelected && !hasDeputy)
 			{
-				return this.loc(`${phrasePrefix}_HAS_HEAD_NO_DEPUTY`);
+				return '_HAS_HEAD_NO_DEPUTY';
 			}
 
 			if (headSelected && !hasHead && deputySelected && hasDeputy)
 			{
-				return this.loc(`${phrasePrefix}_NO_HEAD_HAS_DEPUTY`);
+				return '_NO_HEAD_HAS_DEPUTY';
 			}
 
 			if (headSelected && !hasHead && deputySelected && !hasDeputy)
 			{
-				return this.loc(`${phrasePrefix}_NO_HEAD_NO_DEPUTY`);
+				return '_NO_HEAD_NO_DEPUTY';
 			}
 
 			if (headSelected && !hasHead && !deputySelected)
 			{
-				return this.loc(`${phrasePrefix}_NO_HEAD`);
+				return '_NO_HEAD';
 			}
 
 			if (!headSelected && deputySelected && !hasDeputy)
 			{
-				return this.loc(`${phrasePrefix}_NO_DEPUTY`);
+				return '_NO_DEPUTY';
 			}
 
 			if (!headSelected && !deputySelected)
 			{
-				return this.loc(`${phrasePrefix}_EMPTY`);
+				return EMPTY_WARNING_SUFFIX;
 			}
 
 			return null;
@@ -803,6 +852,7 @@ export const Settings = {
 					<div
 						v-else-if="reportWarningText"
 						class="chart-wizard__settings__item-options-warning"
+						data-test-id="hr-company-structure__settings__report-warning"
 					>
 						<div class="ui-icon-set --warning"></div>
 						<span>

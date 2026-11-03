@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
 import { NodeSelection } from '@tiptap/pm/state';
 import { buildAttachmentAttrs } from './upload-node-view';
+import { DiskAttachmentStore } from '../../services/disk-attachment-store';
 
 // Float images cap at 70% of the container so wrapped text keeps a usable column; center/no-align
 // can fill the width.
@@ -31,11 +32,14 @@ export class VueAttachmentNodeView
 	className: string;
 	inline: boolean;
 	uploadService: Object | null;
+	getDocumentId: () => number;
+	unsubscribeDiskStore: (() => void) | null;
+	diskSubscriptionKey: string | null;
 	app: Object | null;
 	vm: Object | null;
 	dom: HTMLElement;
 
-	constructor({ node, editor, getPos, extension, dataType, className, inline, uploadService }: {
+	constructor({ node, editor, getPos, extension, dataType, className, inline, uploadService, getDocumentId }: {
 		node: Object,
 		editor: Object,
 		getPos: () => number | undefined,
@@ -44,6 +48,7 @@ export class VueAttachmentNodeView
 		className: string,
 		inline?: boolean,
 		uploadService?: Object | null,
+		getDocumentId?: () => number,
 	})
 	{
 		this.node = node;
@@ -54,6 +59,9 @@ export class VueAttachmentNodeView
 		this.className = className;
 		this.inline = inline === true;
 		this.uploadService = uploadService || null;
+		this.getDocumentId = typeof getDocumentId === 'function' ? getDocumentId : () => 0;
+		this.unsubscribeDiskStore = null;
+		this.diskSubscriptionKey = null;
 		// Capability flag: enables resize/align/stack logic for this node type.
 		this.resizable = Boolean(extension?.options?.resizable);
 		this.app = null;
@@ -115,8 +123,7 @@ export class VueAttachmentNodeView
 				AttachmentNodeViewComponent: component,
 			},
 			data: () => ({
-				attrs: this.node.attrs,
-				defaultTypeMessage: this.extension.options.defaultTypeMessage,
+				attrs: this.resolveAttrs(),
 				editable: Boolean(this.editor?.isEditable),
 				selected: false,
 				// onReplace is null unless an uploadService was injected (image node only).
@@ -144,7 +151,6 @@ export class VueAttachmentNodeView
 			template: `
 				<AttachmentNodeViewComponent
 					:attrs="attrs"
-					:default-type-message="defaultTypeMessage"
 					:editable="editable"
 					:selected="selected"
 					:on-resize="handleResize"
@@ -156,6 +162,68 @@ export class VueAttachmentNodeView
 			`,
 		});
 		this.vm = this.app.mount(this.dom);
+
+		this.syncDiskSubscription();
+	}
+
+	/**
+	 * A Disk attachment is described outside the document (see DiskAttachmentStore), so the resolve pass
+	 * produces no node update to re-render on — the store reports it instead.
+	 *
+	 * Reconciled rather than set up once: a node view survives an update into another node of the same
+	 * type, so the block this view draws can become a different attachment — or stop being a Disk one at
+	 * all — without the view being rebuilt. A subscription left pinned to the attributes the constructor
+	 * saw would then watch the wrong file, and the resolved answer for the right one would never reach
+	 * the block.
+	 */
+	syncDiskSubscription(): void
+	{
+		const documentId = this.getDocumentId();
+		const objectId = Number(this.node.attrs.diskObjectId);
+		const isDiskAttachment = Number.isInteger(objectId) && objectId > 0;
+		const key = isDiskAttachment ? `${documentId}:${objectId}` : null;
+
+		if (key === this.diskSubscriptionKey)
+		{
+			return;
+		}
+
+		this.unsubscribeDiskStore?.();
+		this.unsubscribeDiskStore = null;
+		this.diskSubscriptionKey = key;
+
+		if (key === null)
+		{
+			return;
+		}
+
+		this.unsubscribeDiskStore = DiskAttachmentStore.subscribe(documentId, objectId, () => this.syncAttrs());
+	}
+
+	/**
+	 * Node attributes as the block should see them: what the document holds, plus what the server
+	 * currently says about the Disk file behind it. The store wins on the fields it owns — the
+	 * document never carries them, and a stale copy there would outrank a fresh answer.
+	 */
+	resolveAttrs(): Object
+	{
+		const objectId = Number(this.node.attrs.diskObjectId);
+		if (!Number.isInteger(objectId) || objectId <= 0)
+		{
+			return this.node.attrs;
+		}
+
+		const entry = DiskAttachmentStore.get(this.getDocumentId(), objectId);
+
+		return entry === null ? this.node.attrs : { ...this.node.attrs, ...entry };
+	}
+
+	syncAttrs(): void
+	{
+		if (this.vm)
+		{
+			this.vm.attrs = this.resolveAttrs();
+		}
 	}
 
 	update(node: Object): boolean
@@ -168,10 +236,11 @@ export class VueAttachmentNodeView
 		this.node = node;
 		this.syncLayout();
 		this.syncDiffState();
+		this.syncDiskSubscription();
 		this.scheduleStackUpdate();
 		if (this.vm)
 		{
-			this.vm.attrs = node.attrs;
+			this.vm.attrs = this.resolveAttrs();
 			this.vm.editable = Boolean(this.editor?.isEditable);
 		}
 
@@ -605,7 +674,8 @@ export class VueAttachmentNodeView
 		return Boolean(
 			target.closest('.note-editor-image-attachment-link')
 			|| target.closest('.note-editor-file-attachment-link')
-			|| target.closest('.note-editor-video-player'),
+			|| target.closest('.note-editor-video-player')
+			|| target.closest('.note-editor-video-embed__frame'),
 		);
 	}
 
@@ -661,6 +731,10 @@ export class VueAttachmentNodeView
 			cancelAnimationFrame(this._stackRafId);
 			this._stackRafId = undefined;
 		}
+
+		this.unsubscribeDiskStore?.();
+		this.unsubscribeDiskStore = null;
+		this.diskSubscriptionKey = null;
 
 		this.app?.unmount();
 		this.app = null;

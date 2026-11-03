@@ -8,13 +8,15 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 	const {
 		FolderSchema,
 		FolderChatSchema,
+		FolderSourceSchema,
 	} = require('im/messenger/db/table-schema');
 	const { validateFolder } = require('im/messenger/db/repository/validators/folder');
 
 	class FolderRepository
 	{
 		/**
-		 * Batch upsert folders + replace their membership in FolderChatSchema.
+		 * Batch upsert folders + replace their membership in FolderChatSchema and
+		 * their source composition in FolderSourceSchema.
 		 *
 		 * @param {Array<FolderModelState>} folders
 		 * @return {Promise<void>}
@@ -28,8 +30,8 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 
 			await Query.insertOrReplace().from(FolderSchema).values(folders).execute();
 
-			// Single DELETE + single INSERT instead of N+1 saveChatIds calls.
-			// On 20 folders this is 2 queries vs 40 (and atomic at the table level).
+			// Single DELETE + single INSERT instead of N+1 per-folder calls.
+			// On 20 folders this is a handful of queries vs dozens (and atomic at the table level).
 			const folderIds = folders
 				.map((folder) => folder.id)
 				.filter((id) => Type.isNumber(id))
@@ -46,6 +48,12 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 				.execute()
 			;
 
+			await Query.delete()
+				.from(FolderSourceSchema)
+				.where(FolderSourceSchema.folderId.in(folderIds))
+				.execute()
+			;
+
 			const membershipRows = folders.flatMap((folder) => {
 				if (!Type.isNumber(folder.id) || !Type.isArrayFilled(folder.chatIds))
 				{
@@ -55,16 +63,32 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 				return folder.chatIds.map((chatId) => ({ folderId: folder.id, chatId }));
 			});
 
-			if (membershipRows.length === 0)
+			const sourceRows = folders.flatMap((folder) => {
+				if (!Type.isNumber(folder.id) || !Type.isArrayFilled(folder.sourceFolders))
+				{
+					return [];
+				}
+
+				return folder.sourceFolders.map((sourceFolderCode) => ({ folderId: folder.id, sourceFolderCode }));
+			});
+
+			if (membershipRows.length > 0)
 			{
-				return;
+				await Query.insertOrReplace()
+					.from(FolderChatSchema)
+					.values(membershipRows)
+					.execute()
+				;
 			}
 
-			await Query.insertOrReplace()
-				.from(FolderChatSchema)
-				.values(membershipRows)
-				.execute()
-			;
+			if (sourceRows.length > 0)
+			{
+				await Query.insertOrReplace()
+					.from(FolderSourceSchema)
+					.values(sourceRows)
+					.execute()
+				;
+			}
 		}
 
 		/**
@@ -79,6 +103,7 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 			}
 
 			await Query.delete().from(FolderChatSchema).execute();
+			await Query.delete().from(FolderSourceSchema).execute();
 			await Query.delete().from(FolderSchema).execute();
 
 			if (!Type.isArrayFilled(folders))
@@ -90,6 +115,9 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 
 			await Query.insertOrReplace().from(FolderSchema).values(normalizedFolders).execute();
 			await Promise.all(normalizedFolders.map((folder) => this.saveChatIds(folder.id, folder.chatIds || [])));
+			await Promise.all(
+				normalizedFolders.map((folder) => this.saveSourceFolders(folder.id, folder.sourceFolders || [])),
+			);
 		}
 
 		/**
@@ -123,6 +151,36 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 		}
 
 		/**
+		 * Replace the entire source composition of a folder.
+		 *
+		 * @param {number} folderId
+		 * @param {Array<string>} sourceFolders
+		 * @return {Promise<void>}
+		 */
+		async saveSourceFolders(folderId, sourceFolders)
+		{
+			if (!Feature.isLocalStorageEnabled || !Type.isNumber(folderId))
+			{
+				return;
+			}
+
+			await Query.delete()
+				.from(FolderSourceSchema)
+				.where(FolderSourceSchema.folderId.equal(folderId))
+				.execute();
+
+			if (!Type.isArrayFilled(sourceFolders))
+			{
+				return;
+			}
+
+			await Query.insertOrReplace()
+				.from(FolderSourceSchema)
+				.values(sourceFolders.map((sourceFolderCode) => ({ folderId, sourceFolderCode })))
+				.execute();
+		}
+
+		/**
 		 * @return {Promise<Array<FolderModelState>>}
 		 */
 		async getAll()
@@ -137,20 +195,34 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 
 			// chatIds — FolderChatSchema is the source of truth; we recompute the denormalized array
 			const chatRows = await Query.select().from(FolderChatSchema).execute();
-			const byFolder = new Map();
+			const chatsByFolder = new Map();
 			for (const row of chatRows)
 			{
 				const { folderId, chatId } = row.extract(FolderChatSchema);
-				if (!byFolder.has(folderId))
+				if (!chatsByFolder.has(folderId))
 				{
-					byFolder.set(folderId, []);
+					chatsByFolder.set(folderId, []);
 				}
-				byFolder.get(folderId).push(chatId);
+				chatsByFolder.get(folderId).push(chatId);
+			}
+
+			// sourceFolders - same rebuild, with FolderSourceSchema as the source of truth
+			const sourceRows = await Query.select().from(FolderSourceSchema).execute();
+			const sourcesByFolder = new Map();
+			for (const row of sourceRows)
+			{
+				const { folderId, sourceFolderCode } = row.extract(FolderSourceSchema);
+				if (!sourcesByFolder.has(folderId))
+				{
+					sourcesByFolder.set(folderId, []);
+				}
+				sourcesByFolder.get(folderId).push(sourceFolderCode);
 			}
 
 			return folders.map((folder) => ({
 				...folder,
-				chatIds: byFolder.get(folder.id) || [],
+				chatIds: chatsByFolder.get(folder.id) || [],
+				sourceFolders: sourcesByFolder.get(folder.id) || [],
 			}));
 		}
 
@@ -168,6 +240,11 @@ jn.define('im/messenger/db/repository/folder', (require, exports, module) => {
 			await Query.delete()
 				.from(FolderChatSchema)
 				.where(FolderChatSchema.folderId.equal(folderId))
+				.execute();
+
+			await Query.delete()
+				.from(FolderSourceSchema)
+				.where(FolderSourceSchema.folderId.equal(folderId))
 				.execute();
 
 			await Query.delete()

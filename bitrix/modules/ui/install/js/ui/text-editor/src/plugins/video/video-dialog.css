@@ -14,13 +14,13 @@
 
 .ui-text-editor-video-dialog-status {
 	font-size: var(--ui-font-size-4xs);
-	color: var(--ui-color-text-subtle);
+	color: var(--ui-color-base-3);
 	margin-top: var(--ui-space-inline-3xs);
 	margin-left: var(--ui-space-inline-3xs);
 }
 
 .ui-text-editor-video-dialog-status.--error {
-	color: var(--ui-color-text-alert);
+	color: var(--ui-color-accent-main-alert);
 }
 
 .ui-text-editor-video-dialog-textbox {

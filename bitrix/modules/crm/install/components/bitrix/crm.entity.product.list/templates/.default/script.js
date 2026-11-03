@@ -289,6 +289,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 						forceBindPosition: true
 					},
 					closeByEsc: true,
+					ariaLabel: main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_ARIA') ?? undefined,
 					focusTrap: {
 						initialFocus: true
 					},
@@ -1537,6 +1538,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		setStoreAvailableInteractive(node, isInteractive) {
 			if (isInteractive) {
 				node.setAttribute('href', '#');
+				const value = (node.textContent ?? '').trim();
+				node.setAttribute('aria-label', main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_ARIA', {
+					'#VALUE#': value
+				}) ?? '');
 				main_core.Dom.addClass(node, 'store-available-popup-link');
 			} else {
 				node.removeAttribute('href');
@@ -2017,6 +2022,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 						forceBindPosition: true
 					},
 					closeByEsc: true,
+					ariaLabel: main_core.Loc.getMessage('CRM_ENTITY_PL_SETTINGS_BUTTON_ARIA') ?? undefined,
 					focusTrap: {
 						initialFocus: true
 					},

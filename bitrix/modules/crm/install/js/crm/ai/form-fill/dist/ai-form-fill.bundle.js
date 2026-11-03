@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, crm_ai_call, crm_ai_nameService, crm_integration_ui_settings, main_core, ui_buttons, ui_vue3, ui_vue3_vuex, ui_notification, ui_dialogs_messagebox, crm_ai_feedback, crm_integration_analytics, ui_analytics) {
+(function (exports, crm_ai_call, crm_ai_nameService, crm_integration_ui_settings, crm_router, main_core, ui_buttons, ui_vue3, ui_vue3_vuex, ui_notification, ui_dialogs_messagebox, crm_ai_feedback, crm_integration_analytics, ui_analytics) {
 	'use strict';
 
 	const timeout = ms => {
@@ -328,11 +328,11 @@ this.BX = this.BX || {};
 			};
 		},
 		computed: {
-			...ui_vue3_vuex.mapGetters(['conflictFields', 'eeControlPosition', 'eeControlPositions', 'getMainLayoutScrollPosition'])
+			...ui_vue3_vuex.mapGetters(['conflictFieldsInEditor', 'eeControlPosition', 'eeControlPositions', 'getMainLayoutScrollPosition'])
 		},
 		methods: {
 			getControlTopOffset(field) {
-				return this.eeControlPositions.get(field.name, 0);
+				return this.eeControlPositions.get(field.name);
 			}
 		},
 		mounted() {
@@ -342,7 +342,7 @@ this.BX = this.BX || {};
 		<div ref="root" class="bx-crm-ai-merge-fields-merger ">
 			<MergeControl
 				v-if="isRootMounted"
-				v-for="field in conflictFields" :key="field.name"
+				v-for="field in conflictFieldsInEditor" :key="field.name"
 				class="bx-crm-ai-merge-fields-merger__field"
 				:style="{top: getControlTopOffset(field) + 'px'}"
 				:field="field"
@@ -355,12 +355,12 @@ this.BX = this.BX || {};
 	const ToolBar = {
 		name: 'ToolBar',
 		computed: {
-			...ui_vue3_vuex.mapGetters(['conflictFields']),
+			...ui_vue3_vuex.mapGetters(['conflictFieldsInEditor']),
 			conflictCount() {
-				return this.conflictFields.length;
+				return this.conflictFieldsInEditor.length;
 			},
 			resolvedCount() {
-				return this.conflictFields.filter(f => f.isAiValuesUsed).length;
+				return this.conflictFieldsInEditor.filter(f => f.isAiValuesUsed).length;
 			},
 			isApplyAllDisabled() {
 				return this.conflictCount === this.resolvedCount;
@@ -674,6 +674,12 @@ this.BX = this.BX || {};
 		conflictFields(state) {
 			return state.conflictFields.sort((a, b) => a.order - b.order);
 		},
+		// A conflict field the editor scheme has no control for (the user hid it from the card, or it
+		// lives in a configuration the slider does not show) has nothing to be aligned with and nothing
+		// to write the value into, so it stays out of the merge ui.
+		conflictFieldsInEditor(state, getters) {
+			return getters.conflictFields.filter(field => state.eeControlPositions.has(field.name));
+		},
 		mergeUuid(state) {
 			return state.mergeUuid;
 		},
@@ -897,6 +903,11 @@ this.BX = this.BX || {};
 
 	const EDITOR_DEPLOYED_EVENT = 'BX.Crm.EntityEditor:onUserFieldsDeployed';
 
+	// Crm\Entity\EntityEditorConfigScope::UNDEFINED. Makes the editor pick the configuration saved by
+	// the user (the personal one when it exists, the common one otherwise) — the same configuration the
+	// details card is opened with, so a field placed into the personal configuration gets into the scheme.
+	const ENTITY_EDITOR_SCOPE_UNDEFINED = '';
+
 	// Entity types whose details component still keeps its own ajax.php with PREPARE_EDITOR_HTML.
 	// Every other Factory based type (quote, smart invoice, smart document, smart process) is rendered
 	// by the universal crm.api.item.getEditor controller.
@@ -959,6 +970,7 @@ this.BX = this.BX || {};
 				ACTION_ENTITY_ID: params.entityId,
 				GUID: params.domContainerId,
 				CONFIG_ID: params.configId,
+				SCOPE: ENTITY_EDITOR_SCOPE_UNDEFINED,
 				FORCE_DEFAULT_CONFIG: 'N',
 				FORCE_DEFAULT_OPTIONS: 'Y',
 				IS_EMBEDDED: 'Y',
@@ -1227,7 +1239,7 @@ this.BX = this.BX || {};
 			dispatch,
 			getters
 		}) {
-			for (const field of getters.conflictFields) {
+			for (const field of getters.conflictFieldsInEditor) {
 				if (field.isAiValuesUsed) {
 					continue;
 				}
@@ -1238,7 +1250,7 @@ this.BX = this.BX || {};
 			dispatch,
 			getters
 		}) {
-			for (const field of getters.conflictFields) {
+			for (const field of getters.conflictFieldsInEditor) {
 				if (!field.isAiValuesUsed) {
 					continue;
 				}
@@ -1485,15 +1497,21 @@ this.BX = this.BX || {};
 				useAirDesign: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign),
 				style: ui_buttons.Button.AirStyle.OUTLINE,
 				onclick: () => {
-					if (top.BX.Helper) {
-						const transcription = new crm_ai_call.Call.Transcription({
-							activityId: this.#options.activityId,
-							ownerTypeId: this.#options.ownerTypeId,
-							ownerId: this.#options.ownerId,
-							languageTitle: this.#options.languageTitle
-						});
-						transcription.open();
-					}
+					crm_router.Router.Instance.openAiReportDrawerOrLegacy('transcript', {
+						activityId: this.#options.activityId,
+						ownerTypeId: this.#options.ownerTypeId,
+						ownerId: this.#options.ownerId
+					}, () => {
+						if (top.BX.Helper) {
+							const transcription = new crm_ai_call.Call.Transcription({
+								activityId: this.#options.activityId,
+								ownerTypeId: this.#options.ownerTypeId,
+								ownerId: this.#options.ownerId,
+								languageTitle: this.#options.languageTitle
+							});
+							transcription.open();
+						}
+					});
 				}
 			});
 			const resumeButton = new ui_buttons.Button({
@@ -1504,17 +1522,24 @@ this.BX = this.BX || {};
 				useAirDesign: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign),
 				style: ui_buttons.Button.AirStyle.OUTLINE,
 				onclick: () => {
-					if (top.BX.Helper) {
-						const resume = new crm_ai_call.Call.Summary({
-							activityId: this.#options.activityId,
-							ownerTypeId: this.#options.ownerTypeId,
-							ownerId: this.#options.ownerId,
-							languageTitle: this.#options.languageTitle,
-							activityProvider: this.#options.activityProvider,
-							jobId: this.#options.summarizeJobId
-						});
-						resume.open();
-					}
+					crm_router.Router.Instance.openAiReportDrawerOrLegacy('summary-history', {
+						activityId: this.#options.activityId,
+						ownerTypeId: this.#options.ownerTypeId,
+						ownerId: this.#options.ownerId,
+						jobId: this.#options.summarizeJobId
+					}, () => {
+						if (top.BX.Helper) {
+							const resume = new crm_ai_call.Call.Summary({
+								activityId: this.#options.activityId,
+								ownerTypeId: this.#options.ownerTypeId,
+								ownerId: this.#options.ownerId,
+								languageTitle: this.#options.languageTitle,
+								activityProvider: this.#options.activityProvider,
+								jobId: this.#options.summarizeJobId
+							});
+							resume.open();
+						}
+					});
 				}
 			});
 			let result = [resumeButton, ...toolbarButtons];
@@ -1612,5 +1637,5 @@ this.BX = this.BX || {};
 
 	exports.createAiFormFillApplicationInsideSlider = createAiFormFillApplicationInsideSlider;
 
-})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.AI, BX.Crm.AI, BX.Crm.Integration.UI, BX, BX.UI, BX.Vue3, BX.Vue3.Vuex, BX.UI.Notification, BX.UI.Dialogs, BX.Crm.AI.Feedback, BX.Crm.Integration.Analytics, BX.UI.Analytics);
+})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.AI, BX.Crm.AI, BX.Crm.Integration.UI, BX.Crm, BX, BX.UI, BX.Vue3, BX.Vue3.Vuex, BX.UI.Notification, BX.UI.Dialogs, BX.Crm.AI.Feedback, BX.Crm.Integration.Analytics, BX.UI.Analytics);
 //# sourceMappingURL=ai-form-fill.bundle.js.map

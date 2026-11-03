@@ -15,10 +15,13 @@ use Bitrix\Main\Web\Json;
  */
 
 Extension::load([
+	'biconnector.grid',
 	'biconnector.dataset-import-v2',
+	'biconnector.error-message',
 	'biconnector.file-export',
 	'biconnector.loading-popup',
 	'ui.hint',
+	'ui.notification',
 	'ui.buttons',
 	'ui.icons',
 	'ui.system.dialog',
@@ -62,6 +65,9 @@ if (!empty($arResult['ERROR_MESSAGE']))
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		BX.BIConnector.ExternalDatasetManager.Instance = new BX.BIConnector.ExternalDatasetManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
+			'isAvailableGroupManagement' => (bool)($arResult['IS_AVAILABLE_GROUP_MANAGEMENT'] ?? false),
+			'createMenuItems' => $arResult['CREATE_MENU_ITEMS'] ?? [],
+			'isGroupLevelSelected' => (bool)($arResult['IS_GROUP_LEVEL_SELECTED'] ?? false),
 		])?>);
 	});
 </script>

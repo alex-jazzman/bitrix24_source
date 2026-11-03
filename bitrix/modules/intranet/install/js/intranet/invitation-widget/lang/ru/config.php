@@ -11,6 +11,7 @@ $MESS["INTRANET_INVITATION_WIDGET_DISABLED_TEXT"] = "Приглашать нов
 $MESS["INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1"] = "Недостаточно прав на приглашение сотрудников. Обратитесь к администратору вашего Битрикс24";
 $MESS["INTRANET_INVITATION_WIDGET_SETTING_ALL_INVITE"] = "Приглашать могут все";
 $MESS["INTRANET_INVITATION_WIDGET_SETTING_ADMIN_INVITE"] = "Приглашать могут только администраторы";
+$MESS["INTRANET_INVITATION_WIDGET_SETTING_BUTTON_LABEL"] = "Настроить права на приглашение";
 $MESS["INTRANET_INVITATION_WIDGET_EXTRANET"] = "Экстранет";
 $MESS["INTRANET_INVITATION_WIDGET_EXTRANET_DESC"] = "что такое экстранет?";
 $MESS["INTRANET_INVITATION_WIDGET_COLLAB"] = "Коллабы";

@@ -25,23 +25,22 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		{
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			const category = AnalyticsHelper.getCategoryByChat(dialog);
 
-			new AnalyticsEvent()
+			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.clickCreatePoll)
 				.setSection()
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
-				.setP4(
-					DialogHelper.createByDialogId(dialogId)?.isCollab
-						? AnalyticsHelper.getFormattedCollabIdByDialogId(dialog.dialogId)
-						: AnalyticsHelper.getFormattedParentChatId(dialog.parentChatId)
-					,
-				)
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId))
-				.send()
 			;
+
+			this.#setProjectAwareP4(analytics, dialog, dialogHelper, category);
+
+			analytics.send();
 		}
 
 		/**
@@ -66,24 +65,23 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		{
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			const category = AnalyticsHelper.getCategoryByChat(dialog);
 
-			new AnalyticsEvent()
+			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.publishPoll)
 				.setType(isAnonymous ? Analytics.Type.voteAnonymous : Analytics.Type.votePublic)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
-				.setP4(
-					DialogHelper.createByDialogId(dialogId)?.isCollab
-						? AnalyticsHelper.getFormattedCollabIdByDialogId(dialog.dialogId)
-						: AnalyticsHelper.getFormattedParentChatId(dialog.parentChatId)
-					,
-				)
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId))
-				.send()
 			;
+
+			this.#setProjectAwareP4(analytics, dialog, dialogHelper, category);
+
+			analytics.send();
 		}
 
 		/**
@@ -147,16 +145,18 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		{
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const category = AnalyticsHelper.getCategoryByChat(dialog);
 
-			new AnalyticsEvent()
+			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.vote)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
-				.send()
 			;
+
+			analytics.send();
 		}
 
 		/**
@@ -169,9 +169,12 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			const category = AnalyticsHelper.getCategoryByChat(dialog);
+
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.finishPoll)
 				.setType(Analytics.Type.voteFinisherUser)
 				.setSection(Analytics.Section.chatWindow)
@@ -179,14 +182,12 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
-				.setP4(
-					DialogHelper.createByDialogId(dialogId)?.isCollab
-						? AnalyticsHelper.getFormattedCollabIdByDialogId(dialog.dialogId)
-						: AnalyticsHelper.getFormattedParentChatId(dialog.parentChatId)
-					,
-				)
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId))
 			;
+
+			// finish_poll reports no project axis, only the channel one (symmetric to the backend
+			// transcript events), so the projectId_ p4 is intentionally not set here.
+			this.#setParentChatP4(analytics, dialog, dialogHelper);
 
 			if (voteData.isNestedSection)
 			{
@@ -205,10 +206,11 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		{
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const category = AnalyticsHelper.getCategoryByChat(dialog);
 
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.cancelVote)
 				.setSection(Analytics.Section.chatWindow)
 				.setSubSection(Analytics.SubSection.contextMenu)
@@ -275,9 +277,10 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 			{
 				/** @type {DialoguesModelState} */
 				const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+				const category = AnalyticsHelper.getCategoryByChat(dialog);
 
 				analyticsEvent
-					.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+					.setCategory(category)
 					.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				;
 			}
@@ -288,6 +291,51 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		#getP3ByVoteId(voteId)
 		{
 			return `pollId_${voteId}`;
+		}
+
+		/**
+		 * @desc Sets p4 = parentChatId_ for a channel or a comment chat, the branch every poll
+		 *       event keeps. Events that also carry the project axis add it via #setProjectAwareP4.
+		 * @param {AnalyticsEvent} analytics
+		 * @param {DialoguesModelState} dialog
+		 * @param {DialogHelper|null} dialogHelper
+		 * @returns {boolean} whether p4 was set
+		 */
+		#setParentChatP4(analytics, dialog, dialogHelper)
+		{
+			if (!dialogHelper?.isChannelOrComment)
+			{
+				return false;
+			}
+
+			analytics.setP4(AnalyticsHelper.getFormattedParentChatId(dialog.parentChatId));
+
+			return true;
+		}
+
+		/**
+		 * @desc Sets p4 by chat-type priority: channel/comment -> parentChatId_, otherwise
+		 *       projectId_ for a chat inside a collab subtree (Variant B). No p4 elsewhere.
+		 * @param {AnalyticsEvent} analytics
+		 * @param {DialoguesModelState} dialog
+		 * @param {DialogHelper|null} dialogHelper
+		 * @param {string} category
+		 */
+		#setProjectAwareP4(analytics, dialog, dialogHelper, category)
+		{
+			if (this.#setParentChatP4(analytics, dialog, dialogHelper))
+			{
+				return;
+			}
+
+			if (category === Analytics.Category.project)
+			{
+				const projectId = AnalyticsHelper.getFormattedProjectId(dialog);
+				if (projectId)
+				{
+					analytics.setP4(projectId);
+				}
+			}
 		}
 	}
 

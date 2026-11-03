@@ -1,5 +1,13 @@
 .crm-rq-wrapper {}
 
+.crm-requisite-name-error-popup .popup-window-content {
+	padding-bottom: 8px;
+}
+
+.crm-requisite-name-error-popup .popup-window-buttons {
+	padding-top: 8px;
+}
+
 .crm-rq-org-list {}
 
 .crm-rq-org-item {

@@ -156,11 +156,11 @@ export const ProjectsTrialBanner = defineComponent({
 		},
 		bgSrc(): string
 		{
-			return `${ASSETS_BASE_URL}/images/bg.png`;
+			return `${ASSETS_BASE_URL}/images/bg.webp`;
 		},
 		characterSrc(): string
 		{
-			return `${ASSETS_BASE_URL}/images/zephyr.png`;
+			return `${ASSETS_BASE_URL}/images/zephyr.webp`;
 		},
 		videoSrc(): string
 		{

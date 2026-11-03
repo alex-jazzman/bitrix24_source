@@ -257,9 +257,12 @@
 	align-items: center;
 	justify-content: center;
 	height: 31px;
+	margin: 0;
 	line-height: 31px;
+	border: none;
 	background-color: rgba(255,255,255,.8);
 	font-size: 13px;
+	font-family: inherit;
 	border-radius: 3px;
 	padding: 0 5px 0 0;
 	position: relative;
@@ -268,6 +271,8 @@
 	text-align: center;
 	transition: .1s;
 	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 .bizproc-automation-robot-btn-prohibit {
@@ -338,6 +343,64 @@
 .bizproc-automation-btn-add:hover .bizproc-automation-btn-add-text,
 .bizproc-automation-robot-btn-add:hover .bizproc-automation-btn-add-text {
 	max-width: 120px;
+}
+
+.bizproc-automation-robot-btn-add:focus-visible {
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, var(--ui-color-link-primary-base, #2066b0));
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+.bizproc-automation-robot-add-insertion,
+.bizproc-automation-trigger-add-insertion {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 0;
+	margin: 0;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.bizproc-automation-robot-add-insertion.--last,
+.bizproc-automation-trigger-add-insertion.--last {
+	height: 31px;
+	margin: 0 0 6px 0;
+}
+
+.bizproc-automation-robot-add-insertion ~ *,
+.bizproc-automation-trigger-add-insertion ~ * {
+	transition: translate .2s ease;
+}
+
+.bizproc-automation-robot-add-insertion.--active:not(.--last) ~ :not(.--last),
+.bizproc-automation-robot-add-insertion:focus-within:not(.--last) ~ :not(.--last),
+.bizproc-automation-trigger-add-insertion.--active:not(.--last) ~ :not(.--last),
+.bizproc-automation-trigger-add-insertion:focus-within:not(.--last) ~ :not(.--last) {
+	translate: 0 37px;
+}
+
+.bizproc-automation-robot-add-insertion .bizproc-automation-robot-btn-add,
+.bizproc-automation-trigger-add-insertion .bizproc-automation-robot-btn-add {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	padding: 0;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity .2s, background-color .1s, box-shadow .1s;
+}
+
+.bizproc-automation-robot-add-insertion.--active .bizproc-automation-robot-btn-add,
+.bizproc-automation-robot-add-insertion:focus-within .bizproc-automation-robot-btn-add,
+.bizproc-automation-trigger-add-insertion.--active .bizproc-automation-robot-btn-add,
+.bizproc-automation-trigger-add-insertion:focus-within .bizproc-automation-robot-btn-add {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .bizpoc-automation-body .ui-side-panel-wrap-title-item {
@@ -674,6 +737,7 @@
 	z-index: 9;
 	display: block;
 	margin: 0 4px 0 0;
+	overflow-anchor: none;
 }
 
 

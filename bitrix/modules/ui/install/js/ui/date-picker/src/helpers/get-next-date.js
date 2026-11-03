@@ -1,3 +1,6 @@
+// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 import { addDate } from './add-date';
 import { cloneDate } from './clone-date';
 
@@ -32,7 +35,8 @@ export function getNextDate(date, unit, increment = 1, firstWeekDay = 0): Date
 			newDate = addDate(newDate, 'month', ((increment - 1) * 3) + (3 - (newDate.getUTCMonth() % 3)));
 			break;
 		case 'year':
-			newDate = new Date(Date.UTC(newDate.getUTCFullYear() + increment, 0, 1));
+			newDate.setUTCFullYear(newDate.getUTCFullYear() + increment, 0, 1);
+			newDate.setUTCHours(0, 0, 0, 0);
 			break;
 		default:
 			newDate = addDate(date, unit, increment);

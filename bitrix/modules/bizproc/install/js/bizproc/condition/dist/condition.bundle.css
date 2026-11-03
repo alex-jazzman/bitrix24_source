@@ -6,6 +6,423 @@
 	position: relative;
 }
 
+.bizproc-condition-group {
+	box-sizing: border-box;
+	/* The host owns the width (the chart mounts this inside its selection card). */
+	width: 100%;
+	margin-top: 0;
+	padding: 24px;
+	border: 1px solid var(--ui-color-designer-bp-rules-orange-stroke);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-designer-bp-rules-orange-bg);
+}
+
+.bizproc-condition-group__header {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 34px;
+	margin-top: -6px;
+	border-bottom: 1px solid var(--ui-color-designer-bp-rules-orange-stroke);
+}
+
+.bizproc-condition-group__drag {
+	flex: 0 0 auto;
+	width: 12px;
+	height: 16px;
+	background-image: radial-gradient(circle, var(--ui-color-designer-bp-rules-orange-text) 1px, transparent 1.5px);
+	background-position: 0 1px;
+	background-size: 6px 6px;
+	cursor: grab;
+}
+
+.bizproc-condition-group__drag:active {
+	cursor: grabbing;
+}
+
+.bizproc-condition-group__badge {
+	flex: 0 0 auto;
+	padding: 4px 8px;
+	border-radius: 6px;
+	background: var(--ui-color-designer-bp-rules-orange-text);
+	color: var(--ui-color-palette-white-base);
+	font-size: 13px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 17px;
+	/* The caps of the mockup are a look of this block, so the phrase stays in ordinary case. */
+	text-transform: uppercase;
+}
+
+/* The description beside it is the flexible part of the header. Squeezed along with it, the switch
+   breaks its second chip onto a line the 34px header has no room for, and the chip ends up across
+   the header border - so the switch keeps the width of its two chips. */
+.bizproc-condition-group__joiner {
+	display: flex;
+	flex: 0 0 auto;
+	/* Mockup gap between the chips; no token carries 11px. */
+	gap: 11px;
+}
+
+.bizproc-condition-group__description {
+	overflow: hidden;
+	flex: 1 1 auto;
+	color: var(--ui-color-base-40);
+	font-size: 13px;
+	line-height: 17px;
+	text-align: right;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bizproc-condition-group__header-action {
+	display: flex;
+	flex: 0 0 20px;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.bizproc-condition-group__header-action button {
+	/* The icon of the set paints itself with this colour; the button draws nothing of its own. */
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-orange-text);
+
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
+.bizproc-condition-group-list {
+	width: 100%;
+}
+
+.bizproc-condition-group__items {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.bizproc-condition-group--nested {
+	margin-top: 0;
+	margin-left: 0;
+}
+
+/* The row hides its remove button; the header of the card is where it is shown. */
+.bizproc-condition-group__header-action .bizproc-condition-row__remove {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bizproc-condition-row__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	margin-top: 18px;
+}
+
+.bizproc-condition-row__field-label {
+	color: var(--ui-color-base-50);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.bizproc-condition-row {
+	/* Single chevron for every closed control, identical to the designer's own dropdowns. */
+	--bizproc-condition-chevron: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14.5876 7.92068C14.8154 7.693 15.185 7.69292 15.4128 7.92068C15.6405 8.14846 15.6405 8.51809 15.4128 8.74588L10.4128 13.7459C10.185 13.9737 9.81543 13.9736 9.58762 13.7459L4.58762 8.74588C4.35981 8.51807 4.35981 8.14849 4.58762 7.92068C4.81543 7.693 5.18505 7.69292 5.41281 7.92068L9.99973 12.5086L14.5876 7.92068Z' fill='%23525C69'/%3E%3C/svg%3E");
+
+	/* Value picker icon, identical to the designer's `bp-selector-button`. */
+	--bizproc-condition-select-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.58267 7.79166C5.8023 7.79166 6.79166 8.78004 6.79166 9.99967C6.79166 11.2193 5.8023 12.2077 4.58267 12.2077C3.36319 12.2075 2.37466 11.2192 2.37466 9.99967C2.37466 8.78015 3.36319 7.79184 4.58267 7.79166ZM9.99966 7.79166C11.2193 7.79166 12.2077 8.78004 12.2077 9.99967C12.2077 11.2193 11.2193 12.2077 9.99966 12.2077C8.78004 12.2077 7.79166 11.2193 7.79166 9.99967C7.79166 8.78004 8.78004 7.79166 9.99966 7.79166ZM15.4167 7.79166C16.6361 7.79184 17.6247 8.78015 17.6247 9.99967C17.6247 11.2192 16.6361 12.2075 15.4167 12.2077C14.197 12.2077 13.2077 11.2193 13.2077 9.99967C13.2077 8.78004 14.197 7.79166 15.4167 7.79166ZM4.58267 8.95768C4.00753 8.95786 3.54166 9.42448 3.54166 9.99967C3.54166 10.5749 4.00753 11.0415 4.58267 11.0417C5.15797 11.0417 5.62466 10.575 5.62466 9.99967C5.62466 9.42438 5.15797 8.95768 4.58267 8.95768ZM9.99966 8.95768C9.42437 8.95768 8.95767 9.42438 8.95767 9.99967C8.95767 10.575 9.42437 11.0417 9.99966 11.0417C10.575 11.0417 11.0417 10.575 11.0417 9.99967C11.0417 9.42438 10.575 8.95768 9.99966 8.95768ZM15.4167 8.95768C14.8414 8.95768 14.3747 9.42438 14.3747 9.99967C14.3747 10.575 14.8414 11.0417 15.4167 11.0417C15.9918 11.0415 16.4577 10.5749 16.4577 9.99967C16.4577 9.42448 15.9918 8.95786 15.4167 8.95768Z' fill='%23525C69'/%3E%3C/svg%3E");
+}
+
+.bizproc-condition-row__field-control {
+	--ui-field-size: 34px;
+
+	width: 100%;
+	margin: 0;
+	cursor: pointer;
+}
+
+/* The designer panel that hosts this block re-declares the whole `.ui-ctl-element` box - its own
+   height, and an 8px bottom margin on every element but the last - through
+   `.node-settings-panel .ui-ctl-element`. The rules below are anchored on the root of the view so
+   that they outweigh it by specificity, and so that nothing they declare reaches the pages of the
+   robots or of the debugger, where the view is never built. */
+.bizproc-condition-group-list .bizproc-condition-row__field-control .ui-ctl-element {
+	/* The framework centres by line-height (32px here); the mockup asks for Text/text 5 (14/19),
+	   so the text is centred by flex instead and keeps the mockup's line-height. */
+	display: flex;
+	align-items: center;
+	height: var(--ui-field-size);
+	margin-bottom: 0;
+	border-color: var(--ui-color-base-20);
+	border-radius: var(--ui-border-radius-sm);
+	line-height: 19px;
+}
+
+.bizproc-condition-group-list .bizproc-condition-row__field-control .ui-ctl-icon-angle.ui-ctl-after {
+	right: 0;
+	/* The same panel hides every angle icon of the page with `display: none !important`, and an
+	   important declaration is answered by an important one - specificity alone cannot reach it. */
+	display: block !important;
+	background-image: var(--bizproc-condition-chevron);
+	/* Same inset as the operator chevron and the value picker icon. */
+	background-position: right 12px center;
+	background-size: 20px 20px;
+}
+
+.bizproc-condition-row__control-chevron {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	margin-left: 12px;
+	background-image: var(--bizproc-condition-chevron);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 20px 20px;
+}
+
+.bizproc-condition-row__operator {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	margin-top: 16px;
+}
+
+.bizproc-condition-row__operator-label {
+	color: var(--ui-color-base-50);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.bizproc-condition-row__operator-control {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	height: 34px;
+	margin: 0;
+	/* 11px + the 1px border = the mockup's 12px inset from the control edge. */
+	padding: 0 11px;
+	border: 1px solid var(--ui-color-base-20);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-background-primary);
+	color: var(--ui-color-base-90);
+	font-size: 14px;
+	line-height: 19px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.bizproc-condition-row__value {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	margin-top: 16px;
+}
+
+.bizproc-condition-row__value-label {
+	color: var(--ui-color-base-50);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+/* Value: the slot draws nothing of its own. What stands in it belongs to the host - a field
+   plus, for a type the registry has no local renderer for, the table the server wraps it in -
+   so the frame of the mockup is drawn on the field itself and the row carries exactly one. */
+.bizproc-condition-row__value-control {
+	/* Fallback anchor for a marker whose own cell is not positioned. */
+	position: relative;
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+	color: var(--ui-color-base-90);
+	font-size: 14px;
+	line-height: 19px;
+	text-align: left;
+}
+
+.bizproc-condition-row__value-control input:not([type="button"]):not([type="hidden"]),
+.bizproc-condition-row__value-control textarea,
+.bizproc-condition-row__value-control select {
+	box-sizing: border-box;
+	display: block;
+	overflow: hidden;
+	/* The stylesheet of the registry sizes its controls for the pages they were made for -
+	   a date field is capped at 180px there and carries a sprite of its own. Here the field
+	   is the frame of the row, so it takes the width of the row and only the marker of the row. */
+	width: 100%;
+	max-width: 100%;
+	height: 34px;
+	margin: 0;
+	/* 11px + the 1px border = the mockup's 12px inset; the right side keeps the marker's room. */
+	padding: 6px 32px 6px 11px;
+	border: 1px solid var(--ui-color-base-20);
+	border-radius: var(--ui-border-radius-sm);
+	outline: 0;
+	background-color: var(--ui-color-background-primary);
+	background-image: none;
+	color: inherit;
+	/* A form control does not inherit the font of the page on its own. */
+	font: inherit;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	resize: none;
+}
+
+/* A list type (`bool`, `select`) gets no value picker from the registry, so the chevron of the
+   row is its only marker - the browser arrow is dropped for it, the way the designer's own
+   lists do it, and not left to stand beside it. */
+.bizproc-condition-row__value-control select {
+	background-image: var(--bizproc-condition-chevron);
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	background-size: 20px 20px;
+	appearance: none;
+	cursor: pointer;
+}
+
+/* A list of several values is as tall as its rows and picks with a click, not with a chevron. */
+.bizproc-condition-row__value-control select[multiple] {
+	height: auto;
+	padding-right: 11px;
+	background-image: none;
+}
+
+/* The server renderer lays its field and its "..." button out in a table: the layout is
+   flattened to the field alone and the button is taken over it, the way the fields of the
+   action block do it. The renderer writes the spacings into the `style` attribute of the table
+   (`margin: 2px 0`) and of the cell (`padding-left: 4px`), and an inline declaration is answered
+   by an important one - specificity alone cannot reach it. */
+.bizproc-condition-group-list .bizproc-condition-row__value-control table {
+	width: 100%;
+	margin: 0 !important;
+	border-spacing: 0;
+}
+
+.bizproc-condition-group-list .bizproc-condition-row__value-control td {
+	padding: 0 !important;
+	vertical-align: middle;
+}
+
+.bizproc-condition-row__value-control td[width="30"] {
+	position: relative;
+	overflow: visible;
+	width: 0;
+}
+
+/* The wrapper the value selector puts around the field holds the marker over it. */
+.bizproc-condition-row__value-control .bizproc-automation-popup-select {
+	position: relative;
+	display: block;
+}
+
+/* The value picker uses the designer's own icon, the same one the neighbouring action
+   fields draw (`input[data-role="bp-selector-button"]`), not the legacy three CSS dots,
+   and it stands over the field at the inset the chevrons of the row keep. The button of the
+   server renderer is that same picker, so it is drawn as the same marker and not beside it. */
+.bizproc-condition-row__value-control .bizproc-automation-popup-select-dotted,
+.bizproc-condition-row__value-control input[data-role="bp-selector-button"] {
+	position: absolute;
+	top: 50%;
+	right: 12px;
+	box-sizing: border-box;
+	width: 20px;
+	min-width: 20px;
+	max-width: 20px;
+	height: 20px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	transform: translateY(-50%);
+	background-color: transparent;
+	background-image: var(--bizproc-condition-select-icon);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 20px 20px;
+	/* The button of the server renderer carries the "..." as its own caption. */
+	font-size: 0;
+	cursor: pointer;
+}
+
+.bizproc-condition-row__value-control .bizproc-automation-popup-select-dotted::before {
+	content: none;
+}
+
+.bizproc-condition-row__editor {
+	display: none;
+}
+
+.bizproc-condition-row__remove {
+	display: none;
+}
+
+.bizproc-condition-group__add {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	/* The content row of the mockup is the plus and the caption and nothing between them - the air
+	   around the plus belongs to the icon itself. */
+	gap: 0;
+	width: auto;
+	height: 28px;
+	margin-top: 25px;
+	margin-left: 6px;
+	/* 5px above and below the 18px content row = the 28px button of the mockup. */
+	padding: 5px 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-sm);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-md);
+	/* Line height 100% of the mockup: no token carries it, the tokens of the scale are ratios above
+	   one. Letter spacing has no scale of its own at all. */
+	line-height: 1;
+	letter-spacing: -0.05px;
+	text-align: left;
+	/* The caps of the mockup are a look of this block, so the phrase stays in ordinary case. */
+	text-transform: uppercase;
+	cursor: pointer;
+	transition: opacity 200ms ease;
+}
+
+/* The plus is filled with `currentColor` and takes the colour of the caption on its own; what it
+   asks of the stylesheet is only that a long caption never squeezes it. */
+.bizproc-condition-group__add-icon {
+	flex: 0 0 auto;
+}
+
+/* The button draws neither border nor background, so the caption itself answers the pointer. */
+.bizproc-condition-group__add:hover {
+	opacity: 0.7;
+}
+
+.bizproc-condition-row__joiner-button {
+	margin: 0;
+	padding: 4px 8px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--ui-color-base-50);
+	font-size: 13px;
+	line-height: 17px;
+	/* Lang keys are shared with the legacy renderer, so uppercase stays presentational. */
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+.bizproc-condition-row__joiner-button.--active {
+	background: var(--ui-color-designer-bp-rules-orange-text);
+	color: var(--ui-color-palette-white-base);
+}
+
 .bizproc-automation-popup-settings-title {
 	display: inline-block;
 	font-size: 14px;

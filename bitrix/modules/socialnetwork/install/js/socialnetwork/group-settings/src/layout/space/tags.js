@@ -1,8 +1,18 @@
-import { Loc, Tag } from 'main.core';
+import { Loc, Tag, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 import { Feature } from './feature';
 import { Controller } from 'socialnetwork.controller';
+
+export function normalizeTags(query: string): string[]
+{
+	return query
+		.toLowerCase()
+		.split(',')
+		.map((tag) => tag.trim())
+		.filter((tag) => Type.isStringFilled(tag))
+	;
+}
 
 export class Tags extends Feature
 {
@@ -105,11 +115,10 @@ export class Tags extends Feature
 					'Search:onItemCreateAsync': (event: BaseEvent) => {
 						return new Promise((resolve) => {
 							const { searchQuery } = event.getData();
-							const name = searchQuery.getQuery().toLowerCase();
 							const dialog = event.getTarget();
 
 							setTimeout(() => {
-								const tagsList = name.split(',');
+								const tagsList = normalizeTags(searchQuery.getQuery());
 
 								tagsList.forEach((tag) => {
 									const item = dialog.addItem({

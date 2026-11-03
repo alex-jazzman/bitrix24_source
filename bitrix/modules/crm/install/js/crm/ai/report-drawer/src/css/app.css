@@ -91,16 +91,23 @@
 	flex-shrink: 0;
 	height: 18px;
 	width: 18px;
-	cursor: pointer;
 }
 
 .crm-ai-report-drawer__spoiler-toggle-trigger {
+	display: flex;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	cursor: pointer;
 }
 
-.crm-ai-report-drawer__spoiler-toggle-trigger .crm-ai-report-drawer__content-block-header-search,
-.crm-ai-report-drawer__spoiler-toggle-trigger .crm-ai-report-drawer__content-block-header-search * {
-	cursor: auto;
+.crm-ai-report-drawer__spoiler-toggle-trigger:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .crm-ai-report-drawer__spoiler-content {

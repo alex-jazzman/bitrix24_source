@@ -21,7 +21,8 @@ const SAVE_ITEM_ENDPOINT = 'ui.entityselector.saveRecentItems';
 export class SearchService
 {
 	#localSearch: LocalSearch;
-	#localCollection: Map<string, Date> = new Map();
+	#localCollection: Map<string, SearchResultItem> = new Map();
+	#recentCollection: Map<string, SearchResultItem> = new Map();
 	#searchConfig: SearchConfig;
 	#storeUpdater: StoreUpdater;
 
@@ -45,12 +46,20 @@ export class SearchService
 		await this.#storeUpdater.update(itemsFromRecentItems);
 		await this.updateCustomStore(itemsFromRecentItems);
 
-		return this.#getDialogIdAndDate(itemsFromRecentItems);
+		const recentResult = this.#getDialogIdAndDate(itemsFromRecentItems);
+		recentResult.forEach((recentItem) => {
+			this.#recentCollection.set(recentItem.dialogId, recentItem);
+		});
+
+		return recentResult;
 	}
 
 	searchLocal(query: string): SearchResultItem[]
 	{
-		const localCollection = [...this.#localCollection.values()];
+		const localCollection = [
+			...this.#recentCollection.values(),
+			...this.#localCollection.values(),
+		];
 
 		return this.#localSearch.search(query, localCollection);
 	}

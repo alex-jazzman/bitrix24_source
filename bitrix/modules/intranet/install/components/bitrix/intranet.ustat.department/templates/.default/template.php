@@ -128,7 +128,7 @@ AmCharts.ready(function () {
 	graph2.bulletBorderColor = '#90b506';
 	graph2.bulletBorderThickness = 2;
 	graph2.bulletBorderAlpha = 1;
-	graph2.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-green.png?1407');
+	graph2.customBullet = BX.getCDNPath('/bitrix/components/bitrix/intranet.ustat/images/bullet-green.webp?1407');
 	graph2.lineColor = '#90b506';
 	graph2.balloonText = '<?=GetMessageJS('INTRANET_USTAT_COMPANY_GRAPH_ACTIVITY')?>: [[value]]';
 	graph2.dashLengthField = 'dash_length_line';
@@ -727,21 +727,21 @@ var pulse_loading = {
 	{
 		var img,
 			img_list_src = [
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-close-btn.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-grey.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-blue.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sidebar-percent-bg.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-grey.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-blue.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-big.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-normal.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-bg.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-shadow.png',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-close-btn.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-grey.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-sidebar-blue.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sidebar-percent-bg.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-grey.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-light-blue.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-big.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-blue-normal.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-bg.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bar-shadow.webp',
 				'/bitrix/components/bitrix/intranet.ustat/images/pulse-involve-strip.gif',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-dark-grey.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bg.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sprite.png',
-				'/bitrix/components/bitrix/intranet.ustat/images/pulse-main-bg.png'
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-num-dark-grey.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-percent-bg.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-sprite.webp',
+				'/bitrix/components/bitrix/intranet.ustat/images/pulse-main-bg.webp'
 			];
 
 		var div = BX.create('div',{

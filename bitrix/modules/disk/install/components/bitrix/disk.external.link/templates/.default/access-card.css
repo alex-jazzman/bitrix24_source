@@ -343,7 +343,9 @@
 	text-align: center;
 }
 
+/* The pages of a link give the title their page heading, so the browser margin of h1 has to go. */
 .disk-access-card__title {
+	margin: 0;
 	color: var(--ui-color-base-1);
 	font-size: 19px;
 	font-weight: 500;
@@ -366,6 +368,14 @@
 	width: 100%;
 }
 
+.disk-access-card__form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	width: 100%;
+	margin: 0;
+}
+
 /* The mockup keeps 14px between the field and the button: 8px reserved here for the error label
    of the input (it hangs 6px below the field and must not shift the layout when it appears)
    plus the 6px gap of the controls column. */
@@ -373,6 +383,73 @@
 	display: flex;
 	width: 100%;
 	padding-bottom: var(--ui-space-inset-xs);
+}
+
+.disk-access-card__captcha {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	width: 100%;
+}
+
+.disk-access-card__captcha.--hidden {
+	display: none;
+}
+
+.disk-access-card__captcha-label {
+	color: var(--ui-color-base-2);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.disk-access-card__captcha-image {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: 46px;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	object-fit: contain;
+}
+
+.disk-access-card__captcha-input {
+	box-sizing: border-box;
+	width: 100%;
+	height: 46px;
+	padding: 0 var(--ui-space-inset-sm);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	outline: none;
+	transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.disk-access-card__captcha-input::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.disk-access-card__captcha-input:focus-visible {
+	border-color: var(--ui-color-accent-main-primary);
+	box-shadow: 0 0 0 1px var(--ui-color-accent-main-primary);
+}
+
+.disk-access-card__captcha-error {
+	min-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-accent-main-alert);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.disk-access-card__captcha-error:empty {
+	visibility: hidden;
 }
 
 /* File screen. It has no mockup and follows the folder page: the same light surface of the

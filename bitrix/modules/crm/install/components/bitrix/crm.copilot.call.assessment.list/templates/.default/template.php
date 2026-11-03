@@ -13,8 +13,10 @@ $this->getComponent()->addToolbar($this);
 
 Extension::load([
 	'crm.badge',
+	'crm.integration.analytics',
 	'crm.router',
 	'main.core',
+	'ui.analytics',
 	'ui.icons',
 	'ui.sidepanel',
 	'ui.switcher',

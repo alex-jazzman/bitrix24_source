@@ -1,0 +1,68 @@
+.call-icon {
+	--call-icon-size: 24px;
+	--call-icon-gap: 0px;
+
+	--call-icon-color-default: #ffffff;
+	--call-icon-color-black: #000000;
+	--call-icon-color-gray: #b2bbc7;
+	--call-icon-color-yellow: #d29117;
+	--call-icon-color-purple: #853af5;
+	--call-icon-color-red: #ff5752;
+	--call-icon-color-green: #1BCE7B;
+
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--call-icon-size);
+	height: var(--call-icon-size);
+}
+
+.call-icon svg {
+	width: 100%;
+	max-width: 100%;
+	height: 100%;
+	max-height: 100%;
+	fill: var(--call-icon-color-default);
+}
+
+.call-icon.--black svg {
+	fill: var(--call-icon-color-black);
+}
+
+.call-icon.--gray svg {
+	fill: var(--call-icon-color-gray);
+}
+
+.call-icon.--purple svg {
+	fill: var(--call-icon-color-purple);
+}
+
+.call-icon.--yellow svg {
+	fill: var(--call-icon-color-yellow);
+}
+
+.call-icon.--red svg {
+	fill: var(--call-icon-color-red);
+}
+
+.call-icon.--green svg {
+	fill: var(--call-icon-color-green);
+}
+
+.call-icon use {
+	width: 100%;
+	height: 100%;
+}
+
+.call-icon-level {
+	display: inline-flex;
+	position: relative;
+}
+
+.call-icon-level__fill {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transition: clip-path 0.1s linear;
+}

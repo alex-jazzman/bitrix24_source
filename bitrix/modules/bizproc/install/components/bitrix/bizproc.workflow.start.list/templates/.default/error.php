@@ -9,9 +9,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.alerts',
 	'bizproc.workflow.starter',
 ]);
-
-foreach($this->getComponent()->getErrors() as $error):?>
+?>
+<div class="--ui-context-content-light">
+<?php foreach($this->getComponent()->getErrors() as $error):?>
 <div class="ui-alert ui-alert-danger">
 	<span class="ui-alert-message"><?= htmlspecialcharsbx($error->getMessage()) ?></span>
 </div>
 <?php endforeach;?>
+</div>

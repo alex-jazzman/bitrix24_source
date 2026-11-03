@@ -299,6 +299,10 @@ switch (LANGUAGE_ID)
 }
 
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+Main\Loader::includeModule('ui');
+// `ui.design-tokens.air` is deliberately absent: 177 KB of render-blocking CSS for the four ring
+// tokens the checkout reads, and each of them is written with a light-context fallback.
+Main\UI\Extension::load(['ui.a11y', 'sale.user-consent-a11y']);
 $this->addExternalJs($templateFolder.'/order_ajax.js');
 \Bitrix\Sale\PropertyValueCollection::initJs();
 $this->addExternalJs($templateFolder.'/script.js');
@@ -345,9 +349,10 @@ else
 				<!--	AUTH BLOCK	-->
 				<div id="bx-soa-auth" class="bx-soa-section bx-soa-auth" style="display: none;">
 					<div class="bx-soa-section-title-container">
-						<div class="bx-soa-section-title" data-entity="section-title">
+						<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 							<span class="bx-soa-section-title-count"></span>
 							<?=$arParams['MESS_AUTH_BLOCK_NAME']?>
+							<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 						</div>
 					</div>
 					<div class="bx-soa-section-content"></div>
@@ -362,11 +367,12 @@ else
 					<!--	BASKET ITEMS BLOCK	-->
 					<div id="bx-soa-basket" data-visited="false" class="bx-soa-section bx-active">
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span>
 								<?=$arParams['MESS_BASKET_BLOCK_NAME']?>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="javascript:void(0)" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="javascript:void(0)" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
@@ -377,10 +383,11 @@ else
 				<!--	REGION BLOCK	-->
 				<div id="bx-soa-region" data-visited="false" class="bx-soa-section bx-active">
 					<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-						<div class="bx-soa-section-title" data-entity="section-title">
+						<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 							<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_REGION_BLOCK_NAME']?>
+							<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 						</div>
-						<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+						<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 					</div>
 					<div class="bx-soa-section-content"></div>
 				</div>
@@ -391,30 +398,33 @@ else
 					<!--	PAY SYSTEMS BLOCK	-->
 					<div id="bx-soa-paysystem" data-visited="false" class="bx-soa-section bx-active">
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_PAYMENT_BLOCK_NAME']?>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
 					<!--	DELIVERY BLOCK	-->
 					<div id="bx-soa-delivery" data-visited="false" class="bx-soa-section bx-active" <?=($hideDelivery ? 'style="display:none"' : '')?>>
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_DELIVERY_BLOCK_NAME']?>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
 					<!--	PICKUP BLOCK	-->
 					<div id="bx-soa-pickup" data-visited="false" class="bx-soa-section" style="display:none">
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
@@ -424,30 +434,33 @@ else
 					<!--	DELIVERY BLOCK	-->
 					<div id="bx-soa-delivery" data-visited="false" class="bx-soa-section bx-active" <?=($hideDelivery ? 'style="display:none"' : '')?>>
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_DELIVERY_BLOCK_NAME']?>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
 					<!--	PICKUP BLOCK	-->
 					<div id="bx-soa-pickup" data-visited="false" class="bx-soa-section" style="display:none">
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
 					<!--	PAY SYSTEMS BLOCK	-->
 					<div id="bx-soa-paysystem" data-visited="false" class="bx-soa-section bx-active">
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_PAYMENT_BLOCK_NAME']?>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
@@ -457,10 +470,11 @@ else
 				<!--	BUYER PROPS BLOCK	-->
 				<div id="bx-soa-properties" data-visited="false" class="bx-soa-section bx-active">
 					<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-						<div class="bx-soa-section-title" data-entity="section-title">
+						<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 							<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_BUYER_BLOCK_NAME']?>
+							<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 						</div>
-						<div><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+						<div><a href="" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 					</div>
 					<div class="bx-soa-section-content"></div>
 				</div>
@@ -471,10 +485,11 @@ else
 					<!--	BASKET ITEMS BLOCK	-->
 					<div id="bx-soa-basket" data-visited="false" class="bx-soa-section bx-active">
 						<div class="bx-soa-section-title-container d-flex justify-content-between align-items-center flex-nowrap">
-							<div class="bx-soa-section-title" data-entity="section-title">
+							<div class="bx-soa-section-title" data-entity="section-title" role="heading" aria-level="2">
 								<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_BASKET_BLOCK_NAME']?>
+								<span class="bx-soa-visually-hidden" data-entity="section-state"></span>
 							</div>
-							<div><a href="javascript:void(0)" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div><a href="javascript:void(0)" class="bx-soa-editstep" role="button"><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content"></div>
 					</div>
@@ -515,7 +530,7 @@ else
 						}
 						?>
 					</div>
-					<a href="javascript:void(0)" style="margin: 10px 0" class="btn btn-primary btn-lg d-none d-sm-inline-block" data-save-button="true">
+					<a href="javascript:void(0)" style="margin: 10px 0" class="btn btn-primary btn-lg d-none d-sm-inline-block" data-save-button="true" role="button">
 						<?=$arParams['MESS_ORDER']?>
 					</a>
 				</div>

@@ -29,6 +29,14 @@ export const SharingAccessMainSettings = {
 		return {
 			accessRights: this.initialAccessRights,
 			accessRightsLoading: this.initialAccessRights === null,
+			// a saving of the public tab outlives the block that started it, so what it blocks is kept
+			// here, above the tabs, and comes back together with the tab
+			publicSavingState: {
+				publicLink: false,
+				accessRights: false,
+				password: false,
+				download: false,
+			},
 		};
 	},
 	computed: {
@@ -97,19 +105,20 @@ export const SharingAccessMainSettings = {
 		<div v-else-if="accessRights" class="disk-sharing-access-popup__state">
 			<AnimateWrapper>
 				<SharingAccessPublicSettings
+					v-if="isPublic"
 					:objectId="objectId"
 					:accessRights="accessRights"
 					:uniqueCode="uniqueCode"
-					:isPublic="isPublic"
 					:entityType="entityType"
-					@publicLinkChange="applyPublicLink"
+					:applyPublicLink="applyPublicLink"
+					:savingState="publicSavingState"
 				/>
-				<SharingAccessPrivateSettings 
-					v-if="!isPublic"
+				<SharingAccessPrivateSettings
+					v-else
 					:accessRights="accessRights"
 					:objectId="objectId"
 					:entityType="entityType"
-					@reloadAccessRights="loadAccessRights"
+					:reloadAccessRights="loadAccessRights"
 				/>
 			</AnimateWrapper>
 		</div>

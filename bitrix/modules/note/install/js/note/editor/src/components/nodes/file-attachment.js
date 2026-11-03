@@ -14,9 +14,14 @@ export const FileAttachmentNodeViewComponent = {
 			const attrs = { ...this.viewerDataAttrs };
 
 			attrs['data-viewer'] = true;
-			if (this.fileUrl)
+			// What the viewer READS, as opposed to where the block points. For a file of ours the two
+			// coincide; for a file on Disk the link is Disk's own HTML page, and a viewer told to read a
+			// page shows the page's markup instead of the file — a `.md` opens as portal page source,
+			// because Disk types it as `code` and the code viewer fetches this very url.
+			const sourceUrl = this.mediaUrl || this.fileUrl;
+			if (sourceUrl)
 			{
-				attrs['data-src'] = this.fileUrl;
+				attrs['data-src'] = sourceUrl;
 			}
 
 			if (Type.isStringFilled(this.fileName))
@@ -42,7 +47,19 @@ export const FileAttachmentNodeViewComponent = {
 	},
 	// language=Vue
 	template: `
+		<div v-if="isDeleted" class="note-editor-file-attachment-inner note-editor-attachment--deleted">
+			<div class="note-editor-file-attachment-icon" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+			</div>
+			<div class="note-editor-file-attachment-text">
+				<div class="note-editor-file-attachment-name">{{ deletedMessage }}</div>
+				<div v-if="restoreUrl" class="note-editor-file-attachment-extra">
+					<a class="note-editor-file-attachment-restore" :href="restoreUrl" target="_blank" rel="noopener noreferrer">{{ restoreMessage }}</a>
+				</div>
+			</div>
+		</div>
 		<a
+			v-else
 			class="note-editor-file-attachment-inner note-editor-file-attachment-link"
 			:class="{ 'note-editor-attachment--unavailable': isUnavailable }"
 			v-bind="fileViewerAttrs"
@@ -57,7 +74,9 @@ export const FileAttachmentNodeViewComponent = {
 					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
 					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
 				</div>
-				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileType }} · {{ fileSize }}</div>
+				<!-- Size only: the mime type says nothing the file name does not, and for an office
+				document it is a line of vendor gibberish wider than the block itself. -->
+				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileSize }}</div>
 			</div>
 		</a>
 	`,

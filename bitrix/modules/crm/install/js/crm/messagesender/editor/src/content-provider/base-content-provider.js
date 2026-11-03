@@ -10,5 +10,6 @@ export class BaseContentProvider<CustomData: Object = Object> extends ContentPro
 		return {};
 	}
 
-	resetSendData(): void {}
+	resetSendData(): void
+	{}
 }

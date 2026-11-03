@@ -290,6 +290,20 @@
 	padding: 10px 0;
 }
 
+/* the gap below the alert comes from the footer wrapper */
+.main-mail-form-error:not(:empty) {
+	padding-top: var(--ui-space-inset-sm);
+}
+
+.main-mail-form-error .ui-alert {
+	margin-bottom: 0;
+}
+
+/* the block takes the focus programmatically; keyboard navigation keeps the ring */
+.main-mail-form-error:focus:not(:focus-visible) {
+	outline: none;
+}
+
 .main-mail-form-footer {
 	display: -webkit-box;
 	display: -ms-flexbox;

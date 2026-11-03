@@ -81,6 +81,16 @@ elseif ($action === 'GET_FORMATTED_SUM')
 }
 elseif ($action === 'SAVE')
 {
+	CBitrixComponent::includeComponentClass("bitrix:crm.check.correction.details");
+	$component = new CCrmCheckCorrectionDetailsComponent();
+
+	if (!$component->checkEntityPermission(\Bitrix\Crm\Security\EntityPermissionType::UPDATE))
+	{
+		__CrmCheckCorrectionDetailsEndJsonResponse([
+			'ERROR' => Main\Localization\Loc::getMessage('CRM_ORDER_ACCESS_DENIED'),
+		]);
+	}
+
 	$fields = [
 		'CORRECTION_TYPE' => $request->get('CORRECTION_TYPE'),
 		'DOCUMENT_NUMBER' => $request->get('DOCUMENT_NUMBER'),
@@ -106,9 +116,6 @@ elseif ($action === 'SAVE')
 		];
 	}
 
-	CBitrixComponent::includeComponentClass("bitrix:crm.check.correction.details");
-	$component = new CCrmCheckCorrectionDetailsComponent();
-
 	foreach ($component->getVatList() as $vat)
 	{
 		$rate = (int)$vat['RATE'];
@@ -129,7 +136,16 @@ elseif ($action === 'SAVE')
 		];
 	}
 
-	$result = Cashbox\CheckManager::addCorrection($request->get('TYPE'), $request->get('CASHBOX_ID'), $fields);
+	$cashboxId = $request->get('CASHBOX_ID');
+	if (!CCrmCheckCorrectionDetailsComponent::isCorrectionCashboxAvailable($cashboxId))
+	{
+		__CrmCheckCorrectionDetailsEndJsonResponse([
+			'ERROR' => Main\Localization\Loc::getMessage('CRM_ORDER_ACCESS_DENIED'),
+		]);
+	}
+	$cashboxId = (int)$cashboxId;
+
+	$result = Cashbox\CheckManager::addCorrection($request->get('TYPE'), $cashboxId, $fields);
 	if (!$result->isSuccess())
 	{
 		__CrmCheckCorrectionDetailsEndJsonResponse(['ERROR' => implode("\n", $result->getErrorMessages())]);

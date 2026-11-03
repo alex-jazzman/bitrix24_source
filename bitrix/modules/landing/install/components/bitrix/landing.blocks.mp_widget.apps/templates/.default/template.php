@@ -12,6 +12,8 @@ use Bitrix\Main\UI\Extension;
 
 Extension::load([
 	'ui.qrauthorization',
+	// the focus ring of the stylesheet is built from the tokens of this one
+	'ui.design-tokens.air',
 	'ui.icon-set.main',
 	'ui.icon-set.social',
 	'ui.buttons',
@@ -20,14 +22,16 @@ Extension::load([
 Loc::loadMessages(__FILE__);
 
 $mobileText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_TEXT_1');
-$mobileButtonText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_BUTTON_TEXT');
-$mobileId = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
+$mobileButtonText = htmlspecialcharsbx(Loc::getMessage('BLOCK_MP_WIDGET_APPS_BUTTON_TEXT'));
+$mobileIdBase = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
+$mobileIdMain = $mobileIdBase . '-main';
+$mobileIdSidebar = $mobileIdBase . '-sidebar';
 
 $desktopText = Loc::getMessage('BLOCK_MP_WIDGET_APP_DESKTOP_TEXT_1', [
 	'#OS_NAME#' => $arResult['OS_NAME'],
 ]);
 $desktopButtonText = Loc::getMessage('BLOCK_MP_WIDGET_APP_DESKTOP_BUTTON_TEXT');
-$buttonLink = $arResult['DESKTOP_APP_LINK'];
+$buttonLink = htmlspecialcharsbx((string)$arResult['DESKTOP_APP_LINK']);
 $os = $arResult['OS'];
 $osIconClass = '';
 if ($os === 'MAC')
@@ -56,13 +60,13 @@ if ($type === '2')
 }
 
 ?>
-<div class="landing-widget-apps <?= $widgetTypeClass ?>" id="<?= $id ?>">
+<div class="landing-widget-apps <?= $widgetTypeClass ?>" id="<?= $id ?>" data-testid="mainpage-widget-apps-root">
 	<div class="landing-widget-view-main">
 		<div class="landing-widget-content">
-			<div class="landing-widget-app-mobile" id="<?= $mobileId ?>">
-				<div class="landing-widget-app-mobile-title">
+			<div class="landing-widget-app-mobile" id="<?= $mobileIdMain ?>">
+				<h2 class="landing-widget-app-mobile-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_MOBILE']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-mobile-content">
 					<?php
 					echo '<div class="landing-widget-app-mobile-main">';
@@ -76,7 +80,15 @@ if ($type === '2')
 					echo '</div>';
 					echo '</div>';
 					echo '<div class="landing-widget-app-mobile-qr-control-box">';
-					echo '<div class="landing-widget-qr-button">' . $mobileButtonText . '</div>';
+					?>
+					<button
+						type="button"
+						class="landing-widget-qr-button"
+						data-testid="mainpage-widget-apps-qr-btn"
+					>
+						<?= $mobileButtonText ?>
+					</button>
+					<?php
 					echo '</div>';
 					echo '</div>';
 					echo '</div>';
@@ -85,9 +97,9 @@ if ($type === '2')
 				</div>
 			</div>
 			<div class="landing-widget-app-desktop">
-				<div class="landing-widget-app-desktop-title">
+				<h2 class="landing-widget-app-desktop-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_DESKTOP']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-desktop-content">
 					<?php
 					echo '<div class="landing-widget-app-desktop-main">';
@@ -106,6 +118,7 @@ if ($type === '2')
 					<a
 						href="<?= $buttonLink ?>"
 						class="landing-widget-desktop-button"
+						data-testid="mainpage-widget-apps-desktop-link"
 					>
 						<?= $desktopButtonText ?>
 					</a>
@@ -120,10 +133,10 @@ if ($type === '2')
 	</div>
 	<div class="landing-widget-view-sidebar">
 		<div class="landing-widget-content">
-			<div class="landing-widget-app-mobile" id="<?= $mobileId ?>">
-				<div class="landing-widget-app-mobile-title">
+			<div class="landing-widget-app-mobile" id="<?= $mobileIdSidebar ?>">
+				<h2 class="landing-widget-app-mobile-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_MOBILE']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-mobile-content">
 					<?php
 					echo '<div class="landing-widget-app-mobile-main">';
@@ -137,7 +150,15 @@ if ($type === '2')
 					echo '</div>';
 					echo '</div>';
 					echo '<div class="landing-widget-app-mobile-qr-control-box">';
-					echo '<div class="landing-widget-qr-button">' . $mobileButtonText . '</div>';
+					?>
+					<button
+						type="button"
+						class="landing-widget-qr-button"
+						data-testid="mainpage-widget-apps-qr-btn"
+					>
+						<?= $mobileButtonText ?>
+					</button>
+					<?php
 					echo '</div>';
 					echo '</div>';
 					echo '</div>';
@@ -145,9 +166,9 @@ if ($type === '2')
 				</div>
 			</div>
 			<div class="landing-widget-app-desktop">
-				<div class="landing-widget-app-desktop-title">
+				<h2 class="landing-widget-app-desktop-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_DESKTOP']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-desktop-content">
 					<?php
 					echo '<div class="landing-widget-app-desktop-main">';
@@ -166,6 +187,7 @@ if ($type === '2')
 					<a
 						href="<?= $buttonLink ?>"
 						class="landing-widget-desktop-button"
+						data-testid="mainpage-widget-apps-desktop-link"
 					>
 						<?= $desktopButtonText ?>
 					</a>

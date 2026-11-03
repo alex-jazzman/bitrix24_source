@@ -1,14 +1,15 @@
 import {Model} from 'crm.model';
 
 export type StageModelData = {
-    id: ?number,
-    entityId: ?string,
+	id: ?number,
+	entityId: ?string,
 	statusId: ?string,
-    name: ?string,
-    sort: ?number,
+	name: ?string,
+	sort: ?number,
 	color: ?string,
 	semantics: ?string,
-    categoryId: ?number,
+	categoryId: ?number,
+	description: ?string,
 	stagesToMove: ?Array<string>,
 	allowMoveToAnyStage: ?boolean,
 };
@@ -37,6 +38,16 @@ export class StageModel extends Model
 	setName(name: string)
 	{
 		this.data.name = name;
+	}
+
+	getDescription(): string
+	{
+		return this.data.description ?? '';
+	}
+
+	setDescription(description: string)
+	{
+		this.data.description = description;
 	}
 
 	getEntityId(): string

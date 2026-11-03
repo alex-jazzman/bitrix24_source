@@ -14,8 +14,9 @@ $componentParameters = array(
 
 if ($iframe)
 {
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 	$APPLICATION->IncludeComponent(
-		'bitrix:intranet.pageslider.wrapper',
+		'bitrix:ui.sidepanel.wrapper',
 		'',
 		array(
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.currency.classifier',

@@ -51,12 +51,18 @@ $APPLICATION->IncludeComponent(
 				'TEXT' => GetMessage('CRM_PRESET_TOOLBAR_ADD'),
 				'TITLE' => GetMessage('CRM_PRESET_TOOLBAR_ADD_TITLE'),
 				'LINK' => htmlspecialcharsbx('javascript:BX.Crm["'.CUtil::JSEscape($presetListManagerId).'"].addPreset();'),
+				'LINK_PARAM' => 'data-testid="crm-config-preset-list-add-btn"',
 				'ICON' => 'btn-add-field'
 			),
 			array(
 				'TEXT' => GetMessage('CRM_PRESET_TOOLBAR_UFIELDS'),
 				'TITLE' => GetMessage('CRM_PRESET_TOOLBAR_UFIELDS_TITLE'),
 				'LINK' => htmlspecialcharsbx($presetUfieldsUrl),
+				'LINK_PARAM' => 'data-testid="crm-config-preset-list-ufields-btn"'
+					. (($arParams['IS_SETTINGS_HUB'] ?? false) === true
+						? ' data-slider-ignore-autobinding="true" target="_self"'
+						: ''
+					),
 				'ICON' => 'btn-view-elements'
 			),
 		)
@@ -145,7 +151,7 @@ foreach($arResult['LIST_DATA'] as $key => &$listRow)
 		'actions' => $itemActions,
 		'columns' => array(
 			/*'NAME' => '<a target="_self" href="'.$presetEditUrl.'">'.htmlspecialcharsbx($listRow['NAME']).'</a>',*/
-			'NAME' => '<span style="color: #2067b0; cursor: pointer;" onclick="'.htmlspecialcharsbx('javascript:BX.Crm["'.CUtil::JSEscape($presetListManagerId).'"].editPreset('.$key.');').'">'.htmlspecialcharsbx($listRow['NAME']).'</span>',
+			'NAME' => '<span data-testid="crm-config-preset-list-name-'.(int)$key.'" style="color: #2067b0; cursor: pointer;" onclick="'.htmlspecialcharsbx('javascript:BX.Crm["'.CUtil::JSEscape($presetListManagerId).'"].editPreset('.$key.');').'">'.htmlspecialcharsbx($listRow['NAME']).'</span>',
 			'ACTIVE' => $listRow['ACTIVE'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 			'COUNTRY_ID' => $countryValue
 		),

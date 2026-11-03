@@ -6,5 +6,5 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 return array(
 	'js' => '/bitrix/js/disk/model/sharing-item/sharing-item.js',
-	'rel' => ['disk.model.item'],
+	'rel' => ['disk', 'disk.model.item', 'ui.system.menu'],
 );

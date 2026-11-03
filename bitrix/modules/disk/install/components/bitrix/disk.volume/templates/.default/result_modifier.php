@@ -63,6 +63,35 @@ if (!isset($linkFolderReload) || !is_callable($linkFolderReload))
 }
 
 
+if (!isset($parentsHintFormat) || !is_callable($parentsHintFormat))
+{
+	/**
+	 * @param array $row Result row.
+	 * @return string
+	 */
+	$parentsHintFormat = function (&$row)
+	{
+		if (empty($row['PARENTS']))
+		{
+			return '';
+		}
+
+		// Parent name is parsed three times on its way to the hint: html attribute value, js string literal
+		// and hint innerHTML. It arrives html encoded from \CDiskVolumeComponent::decorateResult(),
+		// so all the three encodings are required - dropping any of them opens stored xss.
+		$parents = array_map(
+			static fn($parent) => htmlspecialcharsbx(CUtil::JSEscape($parent)),
+			$row['PARENTS']
+		);
+		// Hint title is set as text, not as html, so it needs no encoding for the innermost context.
+		$hintTitle = htmlspecialcharsbx(CUtil::JSEscape(Loc::getMessage('DISK_VOLUME_PARENT_FOLDER')));
+		$hintPath = '/&nbsp;'. implode('&nbsp;/&nbsp; ', $parents). '&nbsp;/';
+
+		return ' onmouseover="BX.hint(this, \''. $hintTitle. '\', \''. $hintPath. '\')"';
+	};
+}
+
+
 if (!isset($diskTitleFormat) || !is_callable($diskTitleFormat))
 {
 	/**
@@ -215,8 +244,14 @@ if (!isset($folderTitleFormat) || !is_callable($folderTitleFormat))
 	 * @param \Bitrix\Disk\Storage $storage|null
 	 * @return string
 	 */
-	$folderTitleFormat = function (&$row, &$storage) use ($arParams, $arResult, $component, $linkStorageReload, $linkFolderReload)
-	{
+	$folderTitleFormat = function (&$row, &$storage) use (
+		$arParams,
+		$arResult,
+		$component,
+		$linkStorageReload,
+		$linkFolderReload,
+		$parentsHintFormat,
+	) {
 		$entityType = '';
 		if ($storage instanceof \Bitrix\Disk\Storage)
 		{
@@ -252,11 +287,7 @@ if (!isset($folderTitleFormat) || !is_callable($folderTitleFormat))
 		}
 		else
 		{
-			$parentsHint = '';
-			if (!empty($row['PARENTS']))
-			{
-				$parentsHint = ' onmouseover="BX.hint(this, \''. Loc::getMessage('DISK_VOLUME_PARENT_FOLDER').'\', \'/&nbsp;'. addslashes(implode('&nbsp;/&nbsp; ', $row['PARENTS'])). '&nbsp;/\')"';
-			}
+			$parentsHint = $parentsHintFormat($row);
 
 			$titleFormat =
 				'<div class="tasks-grid-username-wrapper">'.
@@ -278,7 +309,7 @@ if (!isset($fileTitleFormat) || !is_callable($fileTitleFormat))
 	 * @param \Bitrix\Disk\Storage $storage|null
 	 * @return string
 	 */
-	$fileTitleFormat = function (&$row, &$storage) use ($arParams, $arResult, $component)
+	$fileTitleFormat = function (&$row, &$storage) use ($arParams, $arResult, $component, $parentsHintFormat)
 	{
 		/** @var \Bitrix\Disk\Volume\Fragment $fragment */
 		$fragment = $component->getFragmentResult($row);
@@ -315,21 +346,19 @@ if (!isset($fileTitleFormat) || !is_callable($fileTitleFormat))
 
 			if (in_array($entityType, \Bitrix\Disk\Volume\Module\Im::getEntityType()))
 			{
+				// Encoded for the attribute value; the phrase below sits in a text node and needs none.
+				$parentFolderTitle = htmlspecialcharsbx(Loc::getMessage('DISK_VOLUME_PARENT_FOLDER'));
+
 				$titleFormat =
 					'<span class="bx-file-icon-container-small bx-file-icon-tiny '.$iconClass.'"></span>'.
 					'<span class="bx-disk-file-title" id="disk_obj_'.$row['ID'].'" '. $dataAttributesForViewer .'>'.$row['TITLE'].'</span>'.
-					'<div class="disk-volume-folder-parent" title="'.Loc::getMessage('DISK_VOLUME_PARENT_FOLDER').'">'.
+					'<div class="disk-volume-folder-parent" title="'.$parentFolderTitle.'">'.
 					Loc::getMessage('DISK_VOLUME_USING_CHAT').': '. $row['PARENTS'][0].
 					'</div>';
 			}
 			else
 			{
-
-				$parentsHint = '';
-				if (!empty($row['PARENTS']))
-				{
-					$parentsHint = ' onmouseover="BX.hint(this, \''. Loc::getMessage('DISK_VOLUME_PARENT_FOLDER').'\', \'/&nbsp;'. addslashes(implode('&nbsp;/&nbsp; ', $row['PARENTS'])). '&nbsp;/\')"';
-				}
+				$parentsHint = $parentsHintFormat($row);
 
 				$titleFormat =
 					'<span class="bx-file-icon-container-small bx-file-icon-tiny '.$iconClass.'"></span>'.

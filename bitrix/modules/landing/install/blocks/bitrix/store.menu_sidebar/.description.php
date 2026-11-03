@@ -48,6 +48,6 @@ return [
 		],
 	],
 	'assets' => [
-		'ext' => ['landing_header_sidebar'],
+		'ext' => ['landing_header_sidebar', 'ui.design-tokens.air'],
 	],
 ];

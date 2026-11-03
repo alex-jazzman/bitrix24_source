@@ -53,7 +53,7 @@ export const NoteLayout = {
 			scrollAnchorY: 0,
 			scrollRaf: 0,
 			onWindowScroll: null,
-			// [ALG-01] Panel component, resolved after the lazy load of note.ai-chat. Null until the
+			// Panel component, resolved after the lazy load of note.ai-chat. Null until the
 			// first intent to open, which is what keeps the extension (and the whole widget stack)
 			// off an untouched page.
 			aiChatPanelComponent: null,
@@ -61,11 +61,11 @@ export const NoteLayout = {
 			aiChatMounted: false,
 			// Last owner seen on EVENT-02, including our own emissions.
 			aiChatRailOwner: null,
-			// [ALG-02] Mode and applied width as reported by the panel. Until it exists the shell
+			// Mode and applied width as reported by the panel. Until it exists the shell
 			// answers the same question itself (`railGeometry`), because the rail has to be reserved in
 			// flow from the first frame of opening, long before the panel extension is loaded.
 			aiChatGeometry: null,
-			// [ALG-02] Live input of that own computation. clientWidth, not innerWidth: the latter
+			// Live input of that own computation. clientWidth, not innerWidth: the latter
 			// counts the scrollbar and would move the overlay threshold by its width.
 			viewportWidth: document.documentElement.clientWidth,
 			onAiChatToggleRequested: null,
@@ -175,7 +175,7 @@ export const NoteLayout = {
 		aiChatLabel()
 		{
 			return String(Loc.getMessage('NOTE_APP_AI_CHAT_OPEN') ?? '')
-				.replace('#NAME#', String(this.aiChatName ?? ''));
+				.replace('#COPILOT_NAME#', String(this.aiChatName ?? ''));
 		},
 		aiChatOpen()
 		{
@@ -188,7 +188,7 @@ export const NoteLayout = {
 			return this.aiChatOpen && !this.aiChatMounted;
 		},
 		/**
-		 * [EVENT-02] Width the current rail resident takes up **in flow** — what a neighbour has to
+		 * Width the current rail resident takes up **in flow** - what a neighbour has to
 		 * step around, not the panel's width as such.
 		 *
 		 * `null` on purpose when the rail belongs to someone else: consumers read the variable with a
@@ -206,7 +206,7 @@ export const NoteLayout = {
 			return this.railGeometry.mode === 'inline' ? `${this.railGeometry.width}px` : '0px';
 		},
 		/**
-		 * [EVENT-02] The rail width is being dragged right now. Published next to the width itself,
+		 * The rail width is being dragged right now. Published next to the width itself,
 		 * because a neighbour that animates towards `--note-rail-width` — the right thing while the
 		 * panel slides open — visibly lags behind the pointer during a gesture.
 		 */
@@ -215,7 +215,7 @@ export const NoteLayout = {
 			return this.aiChatRailOwner === NoteRailOwner.AI_CHAT && this.aiChatGeometry?.dragging === true;
 		},
 		/**
-		 * [ALG-02] Effective geometry of the rail: the panel's answer when there is one, the shell's
+		 * Effective geometry of the rail: the panel's answer when there is one, the shell's
 		 * own otherwise. Same function and same inputs on both sides, so the handover from the
 		 * placeholder to the panel does not change the width.
 		 */
@@ -267,7 +267,7 @@ export const NoteLayout = {
 			glow.addEventListener('animationend', () => Dom.remove(glow), { once: true });
 			Dom.prepend(glow, wrapper);
 		},
-		// [ALG-01] EVENT-01 listener. The shell owns isOpen, the indicator and the rail signal;
+		// EVENT-01 listener. The shell owns isOpen, the indicator and the rail signal;
 		// idempotent in both directions, because "close the closed" really does arrive — the panel
 		// itself asks to close through this same public entry point.
 		async handleAiChatToggleRequested(event)
@@ -349,7 +349,7 @@ export const NoteLayout = {
 		notifyAiChatFailure()
 		{
 			const content = String(Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '')
-				.replace('#NAME#', String(this.aiChatName ?? ''))
+				.replace('#COPILOT_NAME#', String(this.aiChatName ?? ''))
 				.trim();
 			if (!content)
 			{

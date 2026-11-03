@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports, main_core, main_loader, disk_users, main_polyfill_intersectionobserver, disk_externalLink, main_core_events, main_popup, clipboard, ui_dialogs_messagebox, ui_ears, ui_navigationpanel) {
+(function (exports, main_core, main_loader, disk_users, main_polyfill_intersectionobserver, disk_externalLink, main_core_events, main_popup, clipboard, ui_buttons, disk_airMessageBox, ui_ears, ui_navigationpanel) {
 	'use strict';
 
 	let intersectionObserver;
@@ -704,6 +704,7 @@ this.BX.Disk = this.BX.Disk || {};
 			super(objectId, itemData);
 			this.data['dataset'] = this.data['dataset'] || {};
 			this.data['dataset']['preventCloseContextMenu'] = true;
+			this.data.dataset.testid = 'disk-documents-menu-share-section';
 		}
 		static detect(itemData) {
 			return itemData['id'] === 'share-section';
@@ -832,25 +833,21 @@ this.BX.Disk = this.BX.Disk || {};
 			const mode = dataset.type;
 			const uniqueCode = dataset.uniqueCode;
 			const supportsSharingAccessPopup = dataset.supportsSharingAccessPopup === 'true';
+			this.data.dataset = {
+				...dataset,
+				testid: 'disk-documents-menu-sharing'
+			};
 			this.data['onclick'] = () => {
 				this.emit('close');
 				if (!supportsSharingAccessPopup) {
-					const legacyMethodByMode = {
-						'without-edit': 'showSharingDetailWithoutEdit',
-						'with-change-rights': 'showSharingDetailWithChangeRights',
-						'with-sharing': 'showSharingDetailWithSharing'
-					};
-					const legacyMethod = legacyMethodByMode[mode] ?? 'showSharingDetailWithChangeRights';
-					BX.Runtime.loadExtension('disk.sharing-legacy-popup').then(({
-						LegacyPopup
+					BX.Runtime.loadExtension('disk.sharing-members-popup').then(({
+						SharingMembersPopup
 					}) => {
-						const popup = new LegacyPopup();
-						popup[legacyMethod]({
-							object: {
-								id: Number(objectId),
-								name: objectName,
-								isFolder: false
-							}
+						const popup = new SharingMembersPopup();
+						popup.open({
+							objectId: Number(objectId),
+							objectName,
+							mode
 						});
 					});
 					return;
@@ -882,30 +879,40 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 		handleClick() {
 			this.emit('close');
-			ui_dialogs_messagebox.MessageBox.show({
+			disk_airMessageBox.showAirMessageBox({
 				title: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_TITLE'),
-				message: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_MESSAGE', {
-					'#NAME#': this.object.name
-				}),
-				modal: true,
-				buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-				okCaption: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON'),
-				onOk: this.handleClickDelete.bind(this)
+				message: disk_airMessageBox.formatFileName(main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_MESSAGE'), this.object.name),
+				className: 'disk-air-message-box-equal-buttons',
+				buttonsFactory: messageBox => {
+					const cancelButton = messageBox.getCancelButton({
+						style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT
+					});
+					return [new ui_buttons.Button({
+						text: main_core.Loc.getMessage('DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON'),
+						useAirDesign: true,
+						style: ui_buttons.AirButtonStyle.FILLED,
+						onclick: button => {
+							button.setWaiting(true);
+							this.deleteObject(messageBox, button);
+						}
+					}), cancelButton];
+				}
 			});
 		}
-		handleClickDelete() {
-			main_core.ajax.runAction('disk.api.commonActions.markDeleted', {
+
+		// BX.Promise does not pass fulfillment down the chain, so the outcome is handled in a single then().
+		deleteObject(messageBox, button) {
+			return main_core.ajax.runAction('disk.api.commonActions.markDeleted', {
 				analyticsLabel: 'folder.list.dd',
 				data: {
 					objectId: this.object.id
 				}
-			}).then(response => {
-				if (response.status === 'success') {
-					const commonGrid = Options.getCommonGrid();
-					commonGrid.removeItemById(this.trackedObjectId);
-				}
+			}).then(() => {
+				messageBox.close();
+				Options.getCommonGrid().removeItemById(this.trackedObjectId);
+			}, () => {
+				button.setWaiting(false);
 			});
-			return true;
 		}
 		static detect(itemData) {
 			return itemData['id'] === 'delete';
@@ -1030,7 +1037,7 @@ this.BX.Disk = this.BX.Disk || {};
 	}
 	function generateBoardsEmptyBlock() {
 		return main_core.Tag.render`
-		<div class="disk-folder-list-no-data-inner">
+		<div class="disk-folder-list-no-data-inner disk-documents-tile-empty-block">
 			<div class="disk-folder-list-no-data-inner-message">
 				${main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BOARDS_TITLE')}
 			</div>
@@ -1272,13 +1279,17 @@ this.BX.Disk = this.BX.Disk || {};
 				}
 			});
 		}
-		if (document.querySelector('#disk-documents-control-panel')) {
+		const controlPanel = document.querySelector('#disk-documents-control-panel');
+		if (controlPanel) {
 			const ears = new ui_ears.Ears({
-				container: document.querySelector('#disk-documents-control-panel'),
+				container: controlPanel,
 				noScrollbar: false,
 				className: 'disk-documents-ears'
 			});
 			ears.init();
+
+			// Ears refresh themselves on container scroll only, so a resize would leave them stale.
+			new ResizeObserver(() => ears.toggleEars()).observe(controlPanel);
 		}
 		const func = (id, uploader) => {
 			uploader.limits["uploadFileExt"] = Options.getEditableExt().join(',');
@@ -1327,5 +1338,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.showExternalLink = showExternalLink;
 	exports.showShared = showShared;
 
-})(this.BX.Disk.Documents = this.BX.Disk.Documents || {}, BX, BX, BX.Disk, BX, BX.Disk, BX.Event, BX.Main, BX, BX.UI.Dialogs, BX.UI, BX.UI);
+})(this.BX.Disk.Documents = this.BX.Disk.Documents || {}, BX, BX, BX.Disk, BX, BX.Disk, BX.Event, BX.Main, BX, BX.UI, BX.Disk.AirMessageBox, BX.UI, BX.UI);
 //# sourceMappingURL=script.js.map

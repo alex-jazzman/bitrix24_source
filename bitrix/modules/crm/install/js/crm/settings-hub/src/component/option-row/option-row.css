@@ -1,0 +1,64 @@
+.crm-settings-hub-option-row {
+	padding: var(--ui-space-inset-sm2) 0;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.crm-settings-hub-option-row.--last {
+	border-bottom: none;
+}
+
+.crm-settings-hub-option-row__main {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-md);
+}
+
+.crm-settings-hub-option-row.--interactive .crm-settings-hub-option-row__main {
+	cursor: pointer;
+}
+
+.crm-settings-hub-option-row.--disabled {
+	opacity: .5;
+}
+
+/* Свитчер центрируется по первой строке заголовка, чтобы не «скакать» при длинном тексте. */
+.crm-settings-hub-option-row__switch {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	height: 20px;
+}
+
+.crm-settings-hub-option-row__switch:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-option-row__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.crm-settings-hub-option-row__title {
+	display: block;
+	color: var(--ui-color-base-1);
+	line-height: 20px;
+}
+
+.crm-settings-hub-option-row__description {
+	display: block;
+	margin-top: var(--ui-space-stack-3xs);
+	color: var(--ui-color-base-3);
+	line-height: 1.4;
+}
+
+.crm-settings-hub-option-row__action {
+	flex-shrink: 0;
+}
+
+.crm-settings-hub-option-row__details {
+	margin: 0 0 var(--ui-space-stack-sm2) 43px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+}

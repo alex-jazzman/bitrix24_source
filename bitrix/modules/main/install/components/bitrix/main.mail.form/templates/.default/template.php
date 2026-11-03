@@ -24,6 +24,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.tour',
 	'ui.mail.sender-selector',
 	'ui.system.chip',
+	'ui.system.alert',
 ]);
 
 \CJSCore::Init("loader");
@@ -526,7 +527,7 @@ $isDraftLoading = !empty($arParams['DRAFT_LOADING']);
 		<div class="main-mail-form-border-bottom"></div>
 	<?php endif ?>
 
-	<div class="main-mail-form-error" role="alert" aria-live="assertive"></div>
+	<div class="main-mail-form-error" role="alert" aria-live="assertive" data-testid="main-mail-form-error"></div>
 	<div class="main-mail-form-footer-wrapper">
 		<div class="main-mail-form-footer<?=$isDraftLoading ? ' main-mail-form-draft-loading-footer' : '' ?>">
 			<div class="main-mail-form-footer-buttons-wrapper">

@@ -1,5 +1,5 @@
 import { Text } from 'main.core';
-import { type PopupOptions } from 'main.popup';
+import { PopupManager, type PopupOptions } from 'main.popup';
 import { HeadlineSm, TextMd } from 'ui.system.typography.vue';
 import { defineComponent, type PropType } from 'ui.vue3';
 import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
@@ -78,7 +78,7 @@ export const TemplateApplyDialog = defineComponent({
 			return {
 				targetContainer: document.body,
 				overlay: true,
-				closeIcon: true,
+				closeIcon: false,
 				closeByEsc: true,
 				padding: DialogPadding,
 				focusTrap: true,
@@ -108,6 +108,15 @@ export const TemplateApplyDialog = defineComponent({
 				insert: loc(Phrase.TemplateApplyInsert),
 				replace: loc(Phrase.TemplateApplyReplace),
 			};
+		},
+	},
+
+	watch: {
+		isPending(pending: boolean): void
+		{
+			const popup = PopupManager.getPopupById(this.popupId);
+			popup?.setAutoHide(!pending);
+			popup?.setClosingByEsc(!pending);
 		},
 	},
 
@@ -213,7 +222,6 @@ export const TemplateApplyDialog = defineComponent({
 						:style="insertStyle"
 						:size="buttonSize"
 						:loading="isPending"
-						:disabled="isPending"
 						:dataset="{ testid: testId.insert }"
 						@click="handleInsert"
 					/>
@@ -222,7 +230,6 @@ export const TemplateApplyDialog = defineComponent({
 						:style="replaceStyle"
 						:size="buttonSize"
 						:loading="isPending"
-						:disabled="isPending"
 						:dataset="{ testid: testId.replace }"
 						@click="handleReplace"
 					/>

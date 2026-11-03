@@ -4,8 +4,8 @@ import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
 import 'ui.design-tokens';
 import { sendData } from 'ui.analytics';
 import { Footer } from '../footer';
-import type { WidgetParams, WidgetTypeEnum } from '../widget';
-import { WidgetType } from '../widget';
+import type { WidgetParams, WidgetTypeEnum } from '../types';
+import { WidgetType } from '../types';
 import { Base } from './base';
 
 // @todo need refactor and merge with start.js
@@ -35,7 +35,12 @@ export class ForceStart extends Base
 
 		void Ajax.runAction('crm.repeatsale.widget.incrementShowedFlowStartCount');
 
-		if (!this.#isFlowStarted && this.#flowExpectedEnableTimestamp === null && this.#canEnableFeature)
+		if (
+			this.#hasClients
+			&& !this.#isFlowStarted
+			&& this.#flowExpectedEnableTimestamp === null
+			&& this.#canEnableFeature
+		)
 		{
 			void Ajax.runAction('crm.repeatsale.flow.saveExpectedEnableDate');
 		}
@@ -50,7 +55,7 @@ export class ForceStart extends Base
 				const { isFlowStarted, canEnableFeature, flowExpectedEnableTimestamp } = data;
 				this.#isFlowStarted = isFlowStarted;
 				this.#canEnableFeature = canEnableFeature ?? false;
-				this.#flowExpectedEnableTimestamp = flowExpectedEnableTimestamp ?? null;
+				this.#flowExpectedEnableTimestamp = flowExpectedEnableTimestamp || null;
 			}
 
 			this.#hasClients = this.#isHasClients(data);
@@ -147,9 +152,12 @@ export class ForceStart extends Base
 	{
 		if (this.#isFlowStarted)
 		{
-			const footer = new Footer(this.#showSettingsButton, {
-				type: this.getAnalyticsType(),
-				subSection: this.getAnalyticsSubSection(),
+			const footer = new Footer({
+				showSettingsButton: this.#showSettingsButton,
+				analytics: {
+					type: this.getAnalyticsType(),
+					subSection: this.getAnalyticsSubSection(),
+				},
 			});
 
 			return Tag.render`
@@ -202,13 +210,12 @@ export class ForceStart extends Base
 		else if (this.#flowExpectedEnableTimestamp === null)
 		{
 			code = 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_TIME_AND_PERMISSIONS';
-			isNeedReplaceDate = true;
 		}
 		else if (this.#canEnableFeature)
 		{
 			if (this.params.isRepeatSaleGrid)
 			{
-				code = 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_TIME_IN_RS_GRID';
+				code = 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_TIME_AND_PERMISSIONS_IN_RS_GRID';
 			}
 			else
 			{
@@ -247,13 +254,14 @@ export class ForceStart extends Base
 			.runAction('crm.repeatsale.flow.enable')
 			.then(
 				(response) => {
-					if (response.status === 'success')
+					if (response.status === 'success' && response.data === true)
 					{
 						this.#isFlowStarted = true;
 						this.setPopupContent(this.getPopupContent());
 
 						const instance = this.#getClickEventBuilder();
 						instance.setElement('start_flow');
+						instance.setEnableMode('manual');
 						sendData(instance.buildData());
 
 						return;

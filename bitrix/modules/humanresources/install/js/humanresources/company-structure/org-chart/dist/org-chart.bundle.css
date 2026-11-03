@@ -7,6 +7,11 @@
 	pointer-events: none;
 }
 
+/* the canvas itself stays interactive: only its content drops hit testing while the canvas moves */
+.humanresources-chart.--canvas-transforming .ui-transform-canvas__transform {
+	pointer-events: none;
+}
+
 .humanresources-chart__back {
 	background: #f7faff;
 	position: absolute;

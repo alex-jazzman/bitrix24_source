@@ -2,14 +2,16 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_lib_utils, im_v2_provider_service_recent) {
+(function (exports, main_core, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_utils) {
 	'use strict';
 
 	const DAY = 1000 * 60 * 60 * 24;
 	class UserStatusManager {
 		static #instance;
 		#absentList = new Set();
+		#absentCheckTimeout = null;
 		#absentCheckInterval = null;
+		#birthdayLoadTimeout = null;
 		#birthdayLoadInterval = null;
 		static getInstance() {
 			if (!this.#instance) {
@@ -35,9 +37,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		clear() {
 			this.#absentList = new Set();
-			clearTimeout(this.#absentCheckInterval);
+			clearTimeout(this.#absentCheckTimeout);
+			clearInterval(this.#absentCheckInterval);
+			this.#absentCheckTimeout = null;
 			this.#absentCheckInterval = null;
-			clearTimeout(this.#birthdayLoadInterval);
+			clearTimeout(this.#birthdayLoadTimeout);
+			clearInterval(this.#birthdayLoadInterval);
+			this.#birthdayLoadTimeout = null;
 			this.#birthdayLoadInterval = null;
 		}
 		#setUserBirthdayFlag(userId, flag) {
@@ -58,12 +64,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#startAbsentCheckInterval(userId) {
 			this.#absentList.add(userId);
-			if (this.#absentCheckInterval) {
+			if (this.#absentCheckTimeout || this.#absentCheckInterval) {
 				return;
 			}
-			this.#absentCheckInterval = setTimeout(() => {
+			this.#absentCheckTimeout = setTimeout(() => {
+				this.#absentCheckTimeout = null;
 				this.#checkAbsentList();
-				setInterval(() => {
+				this.#absentCheckInterval = setInterval(() => {
 					this.#checkAbsentList();
 				}, DAY);
 			}, im_v2_lib_utils.Utils.date.getTimeToNextMidnight());
@@ -85,14 +92,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 			}
 		}
+
+		/**
+		 * Birthday marks belong to the day they were computed for. Which recent list is on screen the
+		 * status library does not know, so it announces the new day and the list reloads itself.
+		 */
+		#emitDayChanged() {
+			main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.dayChanged);
+		}
 		#startBirthdayLoadInterval() {
-			if (this.#birthdayLoadInterval) {
+			if (this.#birthdayLoadTimeout || this.#birthdayLoadInterval) {
 				return;
 			}
-			this.#birthdayLoadInterval = setTimeout(() => {
-				void im_v2_provider_service_recent.LegacyRecentService.getInstance().loadFirstPage();
-				setInterval(() => {
-					void im_v2_provider_service_recent.LegacyRecentService.getInstance().loadFirstPage();
+			this.#birthdayLoadTimeout = setTimeout(() => {
+				this.#birthdayLoadTimeout = null;
+				this.#emitDayChanged();
+				this.#birthdayLoadInterval = setInterval(() => {
+					this.#emitDayChanged();
 				}, DAY);
 			}, im_v2_lib_utils.Utils.date.getTimeToNextMidnight());
 		}
@@ -100,5 +116,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.UserStatusManager = UserStatusManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
 //# sourceMappingURL=user-status.bundle.js.map

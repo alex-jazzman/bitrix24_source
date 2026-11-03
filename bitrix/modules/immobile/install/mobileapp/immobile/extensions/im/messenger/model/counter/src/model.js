@@ -101,10 +101,48 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 
 			/**
 			 * @function counterModel/getDescendantChatIds
+			 * @param {number} rootChatId
+			 * @param {number} [maxDepth] number of descendant levels to traverse (default: unlimited).
 			 * @return {Set<number>}
 			 */
-			getDescendantChatIds: (state) => (rootChatId) => {
-				return getDescendantChatIds(state.childrenIndex, rootChatId);
+			getDescendantChatIds: (state) => (rootChatId, maxDepth) => {
+				return getDescendantChatIds(state.childrenIndex, rootChatId, maxDepth);
+			},
+
+			/**
+			 * @function counterModel/getAncestorChatIds
+			 * @return {Set<number>}
+			 */
+			getAncestorChatIds: (state) => (chatId) => {
+				return getAncestorChatIds(state.collection, chatId);
+			},
+
+			/**
+			 * @function counterModel/getTopLevelAncestorChatId
+			 * @return {?number} null if the chat is missing or its ancestor chain doesn't reach a top-level node.
+			 */
+			getTopLevelAncestorChatId: (state) => (chatId) => {
+				const self = state.collection[chatId];
+				if (!self)
+				{
+					return null;
+				}
+
+				if (self.parentChatId === 0)
+				{
+					return chatId;
+				}
+
+				const ancestors = getAncestorChatIds(state.collection, chatId);
+				if (ancestors.size === 0)
+				{
+					return null;
+				}
+
+				const topLevelId = [...ancestors].pop();
+				const topLevelState = state.collection[topLevelId];
+
+				return topLevelState && topLevelState.parentChatId === 0 ? topLevelId : null;
 			},
 
 			/**
@@ -243,7 +281,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 			setMarkedAsUnread: (store, payload) => {
 				const {
 					dialogId,
-					recentSection,
+					recentSections,
 					isMarkedAsUnread,
 				} = payload;
 
@@ -264,7 +302,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 					...existingCounterState,
 					chatId: dialog.chatId,
 					parentChatId: getParentChatId(existingCounterState, dialog),
-					recentSections: getRecentSections(existingCounterState, dialog, recentSection),
+					recentSections: getRecentSections(existingCounterState, dialog, recentSections),
 					isMarkedAsUnread,
 				};
 
@@ -344,69 +382,6 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 
 				store.commit('set', {
 					actionName: 'readAllChats',
-					data: {
-						counterList: uniqueCounterStates,
-					},
-				});
-			},
-
-			/** @function counterModel/readByRecentSection */
-			readByRecentSection: (store, payload) => {
-				const { recentSection } = payload;
-
-				const counterStatesToUpdate = [];
-				for (const counterState of Object.values(store.state.collection))
-				{
-					if (counterState.counter === 0 && !counterState.isMarkedAsUnread)
-					{
-						continue;
-					}
-
-					const recentSections = counterState.recentSections;
-					if (Type.isArrayFilled(recentSections) && !recentSections.includes(recentSection))
-					{
-						continue;
-					}
-
-					if (counterState.recentSections.includes(recentSection))
-					{
-						counterStatesToUpdate.push({
-							...counterState,
-							counter: 0,
-							isMarkedAsUnread: false,
-						});
-
-						continue;
-					}
-
-					if (!Type.isArrayFilled(counterState.recentSections))
-					{
-						const ancestorIds = getAncestorChatIds(store.state.collection, counterState.chatId);
-						for (const ancestorId of ancestorIds)
-						{
-							const ancestorState = store.state.collection[ancestorId];
-							if (ancestorState?.recentSections.includes(recentSection))
-							{
-								counterStatesToUpdate.push({
-									...counterState,
-									counter: 0,
-									isMarkedAsUnread: false,
-								});
-
-								break;
-							}
-						}
-					}
-				}
-
-				const uniqueCounterStates = uniqBy(counterStatesToUpdate, 'chatId');
-				if (!Type.isArrayFilled(uniqueCounterStates))
-				{
-					return;
-				}
-
-				store.commit('set', {
-					actionName: 'clearByRecentSection',
 					data: {
 						counterList: uniqueCounterStates,
 					},
@@ -565,10 +540,10 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 	/**
 	 * @param {?CounterModelState} counterState
 	 * @param {DialoguesModelState} dialog
-	 * @param {?string} recentSection
+	 * @param {Array<string>} [recentSections]
 	 * @return {Array<string>}
 	 */
-	function getRecentSections(counterState, dialog, recentSection)
+	function getRecentSections(counterState, dialog, recentSections)
 	{
 		if (Type.isArrayFilled(counterState?.recentSections))
 		{
@@ -580,32 +555,33 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 			return dialog.recentConfig.sections;
 		}
 
-		if (Type.isStringFilled(recentSection))
-		{
-			return [recentSection];
-		}
-
-		return [];
+		return Type.isArrayFilled(recentSections) ? recentSections : [];
 	}
 
 	/**
-	 * BFS: collects chatIds of all descendants of rootChatId at any depth.
-	 * Uses childrenIndex for O(D) traversal where D is the number of descendants.
+	 * BFS: collects chatIds of descendants of rootChatId.
+	 * Uses childrenIndex for O(D) traversal where D is the number of visited descendants.
 	 * @param {Map<number, Set<number>>} childrenIndex
 	 * @param {number} rootChatId
+	 * @param {number} [maxDepth=Infinity] number of descendant levels to traverse
+	 *   (1 = direct children, 2 = children and grandchildren, ...). Unlimited by default.
 	 * @returns {Set<number>}
 	 */
-	function getDescendantChatIds(childrenIndex, rootChatId)
+	function getDescendantChatIds(childrenIndex, rootChatId, maxDepth = Infinity)
 	{
 		const result = new Set();
-		const queue = [rootChatId];
+		const queue = [[rootChatId, 0]];
 		let head = 0;
 
 		while (head < queue.length)
 		{
-			const currentId = queue[head++];
-			const children = childrenIndex.get(currentId);
+			const [currentId, depth] = queue[head++];
+			if (depth >= maxDepth)
+			{
+				continue;
+			}
 
+			const children = childrenIndex.get(currentId);
 			if (!children)
 			{
 				continue;
@@ -616,7 +592,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 				if (!result.has(childId))
 				{
 					result.add(childId);
-					queue.push(childId);
+					queue.push([childId, depth + 1]);
 				}
 			}
 		}

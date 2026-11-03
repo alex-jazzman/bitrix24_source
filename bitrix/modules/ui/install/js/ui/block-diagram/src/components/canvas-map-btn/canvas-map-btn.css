@@ -18,12 +18,36 @@
 	stroke: none;
 }
 
-.ui-block-diagram-canvas-map-btn:not(:disabled) .ui-block-diagram-canvas-map-btn__icon:hover {
+.ui-block-diagram-canvas-map-btn:not(:disabled) .ui-block-diagram-canvas-map-btn__icon:hover,
+.ui-block-diagram-canvas-map-btn:not(:disabled):focus-visible .ui-block-diagram-canvas-map-btn__icon {
 	fill: var(--ui-color-accent-main-primary);
 }
 
 .ui-block-diagram-canvas-map-btn:focus-visible {
+	outline: none;
+}
+
+/*
+ * When the map is open, the icon already sits at the accent color the hover/focus highlight also
+ * uses, so a keyboard user who tabs back to this button while the panel stays open would otherwise
+ * see no change at all between "focused" and "not focused, but open". Restoring a ring only for this
+ * one combination keeps it distinguishable without bringing back the box the base (closed) state used
+ * to draw on every focus.
+ */
+.ui-block-diagram-canvas-map-btn.--active:not(:disabled):focus-visible {
 	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
 	outline-offset: var(--ui-focus-outline-offset);
 	border-radius: var(--ui-border-radius-2xs);
+}
+
+/*
+ * Forced-colors mode (Windows High Contrast) replaces background-color/fill with the system palette,
+ * so an icon-only highlight disappears there entirely. A visible ring is restored using system colors
+ * so keyboard focus stays perceivable in the base (inactive) state too - the active state above
+ * already gets its own ring from the higher-specificity `.--active` rule.
+ */
+@media (forced-colors: active) {
+	.ui-block-diagram-canvas-map-btn:focus-visible {
+		outline: 2px solid CanvasText;
+	}
 }

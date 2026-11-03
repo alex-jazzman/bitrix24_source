@@ -9,7 +9,7 @@
 	display: block;
 	max-height: 200px;
 	margin: 0 0 2px 0;
-	padding: 0 8px 8px 8px;
+	padding: 4px 8px 8px;
 	overflow-y: hidden;
 	overflow-x: hidden;
 	width: auto;
@@ -29,16 +29,27 @@
 }
 
 .sonet-ui-members-popup .sonet-ui-members-popup-head-item {
+	appearance: none;
 	display: flex;
 	align-items: center;
 	margin: 0 11px 0 0;
 	height: 35px;
 	border-bottom: 2px solid transparent;
+	border-top: 0;
+	border-right: 0;
+	border-left: 0;
+	padding: 0;
+	background: transparent;
 	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #525C69;
 	transition: all .3s;
 	white-space: nowrap;
 	cursor: pointer;
+}
+
+.sonet-ui-members-popup .sonet-ui-members-popup-head-item:focus-visible {
+	outline: 2px solid var(--ui-color-link-primary-base, #2066b0);
+	outline-offset: 2px;
 }
 
 .sonet-ui-members-popup .sonet-ui-members-popup-head-item:hover {
@@ -56,7 +67,6 @@
 .sonet-ui-members-popup .sonet-ui-members-popup-head-item-current {
 	border-color: #0063C6;
 	cursor: default;
-	pointer-events: none;
 }
 
 .sonet-ui-members-popup-body {
@@ -112,6 +122,10 @@
 	-webkit-scrollbar-highlight-color: #d4d7d9;
 	scrollbar-highlight-color: #d4d7d9;
 	overflow-y: auto;
+}
+
+.sonet-ui-members-popup-inner[hidden] {
+	display: none;
 }
 
 .sonet-ui-members-popup-inner::-webkit-scrollbar {

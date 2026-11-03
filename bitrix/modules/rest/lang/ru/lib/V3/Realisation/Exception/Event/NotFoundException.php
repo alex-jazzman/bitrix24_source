@@ -1,0 +1,3 @@
+<?php
+$MESS['REST_V3_REALISATION_EXCEPTION_EVENT_NOTFOUNDEXCEPTION'] = 'Событие #NAME# не найдено';
+

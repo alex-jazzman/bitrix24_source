@@ -13,7 +13,26 @@ form {border:none; margin:0; padding:0;}
 a {color:#2675d7;}
 a:hover {text-decoration:underline;}
 
-select, input, textarea {outline:none;}
+/* What the eye reads as the field of the search of the filter is the box around it: the field stands a
+   few pixels in from the edges of the box, so a ring around the field would read as a line drawn inside
+   it. The box carries the ring instead and the field gives its own up. `:focus-within` and not
+   `:has()`: the field is the only thing inside the box that takes the focus at all.
+   The offset takes the ring two pixels in, over the grey line of the box: that line is drawn as an
+   inset shadow a pixel in from the edge, so a ring sitting on the edge itself leaves it showing
+   through from within. Inside the box the ring also survives whatever clips the boxes above it, and
+   the box keeps its own clipping -- a filter with two or three values set would otherwise spill over
+   what stands to the right of it.
+   The colour is the one the product draws a link with, and it stands here as a number and not as the
+   token it comes from: the kernel of the admin area carries the older set of tokens, and a ring asking
+   for a token the page has not got is a ring the browser drops. */
+#bx-admin-prefix .adm-workarea .main-ui-filter-search:focus-within {
+	outline:2px solid #0154c8;
+	outline-offset:-2px;
+}
+
+#bx-admin-prefix .adm-workarea .main-ui-filter-search input[type="text"].main-ui-filter-search-filter:focus-visible {
+	outline:none;
+}
 
 
 h2 {
@@ -559,7 +578,6 @@ input[type="text"].adm-header-search {
 	font-family:Arial, "Helvetica Neue", sans-serif;
 	font-size:13px;
 	margin:0;
-	outline:none;
 	padding:0;
 	width:100%;
 	-webkit-font-smoothing: antialiased;
@@ -2649,6 +2667,13 @@ a.adm-navchain-item:hover {color:#0e3f82;}
 	color:#000;
 }
 
+/* The ring is drawn inside the tab: the neighbouring tabs overlap it and the active one is above by
+   z-index, so an outline outside the box would be cut off. */
+#bx-admin-prefix .adm-detail-tab:focus-visible {
+	outline:2px solid #0154c8;
+	outline-offset:-2px;
+}
+
 /*.adm-detail-tab:active,*/
 span.adm-detail-tab.adm-detail-tab-active {
 	background-position:0 -2473px;
@@ -2851,6 +2876,9 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 }
 
 .adm-detail-tabs-block-fixed .adm-detail-title-setting {display: none;}
+/* the strip is fixed while the page is scrolling, and hiding the element the keyboard stands on takes
+   the focus off it: the toggle stays as long as it holds the focus of the keyboard */
+.adm-detail-tabs-block-fixed .adm-detail-title-setting:focus-visible {display: block;}
 
 .adm-detail-title-setting-btn {
 	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -2630px;
@@ -3493,7 +3521,6 @@ it's made to prevent appearing of artefacts from old admin button icons.
 	line-height:15px;
 	height:29px;
 	text-shadow:0 1px #fff;
-	outline:none;
 	overflow:hidden;
 	padding:6px 19px 6px 5px;
 	min-width:44px;
@@ -3608,7 +3635,6 @@ it's made to prevent appearing of artefacts from old admin button icons.
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 	font-size:13px;
 	margin:0;
-	outline:none;
 	padding:0;
 	width:100%;
 }

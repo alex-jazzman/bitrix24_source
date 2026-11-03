@@ -16,11 +16,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @global CUser $USER
  */
 
+use Bitrix\Rest\Internal\Service\Placement\LegacyAppIdPresenter;
 use Bitrix\Rest\PlacementTable;
 
 $appId = 0;
 $placementId = 0;
 $placementCode = '';
+
+$legacyAppIdPresenter = new LegacyAppIdPresenter();
 
 if ($arResult["VARIABLES"]["PLACEMENT_ID"] > 0)
 {
@@ -28,7 +31,7 @@ if ($arResult["VARIABLES"]["PLACEMENT_ID"] > 0)
 	if ($placement = $res->fetch())
 	{
 		$placementCode = $placement['PLACEMENT'];
-		$appId = $placement['APP_ID'];
+		$appId = $legacyAppIdPresenter->encode($placement);
 		$placementId = $placement['ID'];
 	}
 }

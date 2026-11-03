@@ -13,8 +13,12 @@ use Bitrix\Currency;
 use Bitrix\Iblock;
 use Bitrix\Iblock\Grid\ActionType;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\Public\Command\Catalog\PriceInput;
+use Bitrix\Iblock\Public\Command\Catalog\PurchasingPriceInput;
+use Bitrix\Iblock\Public\Command\Catalog\SaveInlinePricesCommand;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 Loader::includeModule("iblock");
@@ -1048,6 +1052,7 @@ unset($arFProps);
 
 $arWFStatusAll = Array();
 $arWFStatusPerm = Array();
+$canMoveToUnpublishedStatus = false;
 if($bWorkFlow)
 {
 	$rsWF = CWorkflowStatus::GetDropDownList("Y");
@@ -1059,6 +1064,10 @@ if($bWorkFlow)
 	while($arWF = $rsWF->Fetch())
 	{
 		$arWFStatusPerm[$arWF["REFERENCE_ID"]] = $arWF["REFERENCE"];
+		if ((int)$arWF['REFERENCE_ID'] !== 1)
+		{
+			$canMoveToUnpublishedStatus = true;
+		}
 	}
 	unset($rsWF);
 }
@@ -1452,15 +1461,40 @@ if ($bCatalog)
 	);
 }
 
+$inlineEditRequest = null;
+// money cells are read from the request as posted: EditAction() rewrites them into the current row
+$rawEditFields = $_POST['FIELDS'] ?? null;
 if($lAdmin->EditAction())
 {
 	if (!empty($_FILES['FIELDS']) && is_array($_FILES['FIELDS']))
 		CFile::ConvertFilesToPost($_FILES['FIELDS'], $_POST['FIELDS']);
 
+	$inlineEditTargets = new Iblock\Public\Provider\Catalog\InlineEditTargetProvider();
+	$purchasingLockedRows = [];
 	if ($bCatalog)
 	{
 		Catalog\Product\Sku::enableDeferredCalculation();
+
+		$inlineEditRequestParser = new Iblock\Infrastructure\Admin\ElementList\InlineEdit\RequestParser('');
+		$inlineEditRequest = $inlineEditRequestParser->parse($rawEditFields);
+		// the purchasing price cell of such a row belongs to another element, not to the row element
+		$purchasingLockedRows = $inlineEditRequest->foreignPurchasingCellRowIds;
+		if ($boolSKU && $pageConfig['USE_NEW_CARD'])
+		{
+			array_push(
+				$purchasingLockedRows,
+				...$inlineEditTargets->getProductIdsWithOffers(
+					$IBLOCK_ID,
+					$inlineEditRequestParser->getPurchasingPriceRowIds($_POST['FIELDS'])
+				)
+			);
+		}
+		unset($inlineEditRequestParser);
+		$purchasingLockedRows = array_fill_keys($purchasingLockedRows, true);
 	}
+
+	// rows of elements are accepted only from the list iblock and the SKU iblock of its catalog
+	$editableElementIblocks = array_fill_keys($inlineEditTargets->getEditableIblockIds($IBLOCK_ID), true);
 
 	if (is_array($_POST['FIELDS']))
 	{
@@ -1478,6 +1512,14 @@ if($lAdmin->EditAction())
 				continue;
 
 			$elementIblockID = $arRes['IBLOCK_ID'];
+			if (!isset($editableElementIblocks[(int)$elementIblockID]))
+			{
+				continue;
+			}
+			if (isset($purchasingLockedRows[$ID]))
+			{
+				unset($arFields['CATALOG_PURCHASING_PRICE'], $arFields['CATALOG_PURCHASING_CURRENCY']);
+			}
 
 			$WF_ID = $ID;
 			if($bWorkFlow)
@@ -1865,271 +1907,87 @@ if($lAdmin->EditAction())
 
 	if ($bCatalog)
 	{
-		if (
-			$boolCatalogPrice
-			&& isset($_POST['CATALOG_PRICE'])
-			&& is_array($_POST['CATALOG_PRICE'])
-			&& isset($_POST['CATALOG_CURRENCY'])
-			&& is_array($_POST['CATALOG_CURRENCY'])
-		)
+		$priceTargetIds = [];
+		if ($boolCatalogProductEdit && $catalogPurchasInfoEdit)
 		{
-			$CATALOG_PRICE = $_POST["CATALOG_PRICE"];
-			$CATALOG_CURRENCY = $_POST["CATALOG_CURRENCY"];
-			$CATALOG_EXTRA = ($_POST["CATALOG_EXTRA"] ?? []);
-			if (!is_array($CATALOG_EXTRA))
+			foreach ($inlineEditRequest->purchasingPrices as $targetInput)
 			{
-				$CATALOG_EXTRA = [];
+				$priceTargetIds[] = $targetInput->offerId;
 			}
-			$CATALOG_PRICE_ID = $_POST["CATALOG_PRICE_ID"];
-			$CATALOG_QUANTITY_FROM = ($_POST["CATALOG_QUANTITY_FROM"] ?? []);
-			if (!is_array($CATALOG_QUANTITY_FROM))
-			{
-				$CATALOG_QUANTITY_FROM = [];
-			}
-			$CATALOG_QUANTITY_TO = ($_POST["CATALOG_QUANTITY_TO"] ?? []);
-			if (!is_array($CATALOG_QUANTITY_TO))
-			{
-				$CATALOG_QUANTITY_TO = [];
-			}
-			$CATALOG_PRICE_old = $_POST["CATALOG_old_PRICE"];
-			$CATALOG_CURRENCY_old = $_POST["CATALOG_old_CURRENCY"];
-
-			$arCatExtraUp = array();
-			$db_extras = CExtra::GetList(array("ID" => "ASC"));
-			while ($extras = $db_extras->Fetch())
-				$arCatExtraUp[$extras["ID"]] = $extras["PERCENTAGE"];
-
-			$checkBasePriceTypeId = Catalog\GroupTable::getBasePriceTypeId();
-			$arCatalogGroupList = Catalog\GroupTable::getTypeList();
-			foreach($CATALOG_PRICE as $elID => $arPrice)
-			{
-				if (!is_array($arPrice))
-				{
-					continue;
-				}
-				if (!(isset($CATALOG_CURRENCY[$elID]) && is_array($CATALOG_CURRENCY[$elID])))
-				{
-					continue;
-				}
-				if (!(
-					CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $elID, "element_edit")
-					&& CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $elID, "element_edit_price")
-				))
-				{
-					continue;
-				}
-
-				$bError = false;
-
-				if ($checkBasePriceTypeId !== null && $strSaveWithoutPrice !== 'Y')
-				{
-					if (isset($arPrice[$checkBasePriceTypeId]))
-					{
-						if ((float)$arPrice[$checkBasePriceTypeId] < 0)
-						{
-							$bError = true;
-							$lAdmin->AddGroupError($elID.': '.GetMessage('IB_CAT_NO_BASE_PRICE'), $elID);
-						}
-					}
-					else
-					{
-						$quantityFrom = null;
-						if (
-							isset($CATALOG_QUANTITY_FROM[$elID][$basePriceTypeId])
-							&& is_string($CATALOG_QUANTITY_FROM[$elID][$basePriceTypeId])
-							&& $CATALOG_QUANTITY_FROM[$elID][$basePriceTypeId] !== ''
-						)
-						{
-							$quantityFrom = (int)$CATALOG_QUANTITY_FROM[$elID][$basePriceTypeId];
-							if ($quantityFrom <= 0)
-							{
-								$quantityFrom = null;
-							}
-						}
-						$quantityTo = null;
-						if (
-							isset($CATALOG_QUANTITY_TO[$elID][$basePriceTypeId])
-							&& is_string($CATALOG_QUANTITY_TO[$elID][$basePriceTypeId])
-							&& $CATALOG_QUANTITY_TO[$elID][$basePriceTypeId] !== ''
-						)
-						{
-							$quantityTo = (int)$CATALOG_QUANTITY_TO[$elID][$basePriceTypeId];
-							if ($quantityTo <= 0)
-							{
-								$quantityTo = null;
-							}
-						}
-
-						$basePrice = Catalog\PriceTable::getRow([
-							'select' => [
-								'ID',
-								'PRICE',
-							],
-							'filter' => [
-								'=PRODUCT_ID' => $elID,
-								'=CATALOG_GROUP_ID' => $basePriceTypeId,
-								'=QUANTITY_FROM' => $quantityFrom,
-								'=QUANTITY_TO' => $quantityTo,
-							],
-						]);
-						if ($basePrice === null || (float)$basePrice['PRICE'] < 0)
-						{
-							$bError = true;
-							$lAdmin->AddGroupError($elID.': '.GetMessage('IB_CAT_NO_BASE_PRICE'), $elID);
-						}
-					}
-				}
-
-				if($bError)
-					continue;
-
-				$arCurrency = $CATALOG_CURRENCY[$elID];
-
-				if (!empty($arCatalogGroupList))
-				{
-					foreach ($arCatalogGroupList as $arCatalogGroup)
-					{
-						$priceTypeId = $arCatalogGroup['ID'];
-						if (!isset(
-							$arPrice[$priceTypeId],
-							$arCurrency[$priceTypeId],
-							$CATALOG_PRICE_old[$elID][$priceTypeId],
-							$CATALOG_CURRENCY_old[$elID][$priceTypeId]
-						))
-						{
-							continue;
-						}
-						if (!(is_string($arPrice[$priceTypeId]) && is_string($arCurrency[$priceTypeId])))
-						{
-							continue;
-						}
-
-						if (
-							$arPrice[$priceTypeId] != $CATALOG_PRICE_old[$elID][$priceTypeId]
-							|| $arCurrency[$priceTypeId] != $CATALOG_CURRENCY_old[$elID][$priceTypeId]
-						)
-						{
-							if ($arCatalogGroup['BASE'] === 'Y') // if base price check extra for other prices
-							{
-								$arFields = array(
-									"PRODUCT_ID" => $elID,
-									"CATALOG_GROUP_ID" => $priceTypeId,
-									"PRICE" => $arPrice[$priceTypeId],
-									"CURRENCY" => $arCurrency[$priceTypeId],
-									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$priceTypeId],
-									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$priceTypeId],
-								);
-								$deletePrice = false;
-								$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
-								if (trim($arFields['PRICE']) === '')
-								{
-									$deletePrice = true;
-								}
-								$arFields['PRICE'] = (float)$arFields['PRICE'];
-								if ($arFields['PRICE'] < 0)
-								{
-									$deletePrice = true;
-								}
-
-								if ($deletePrice)
-								{
-									CPrice::Delete($CATALOG_PRICE_ID[$elID][$priceTypeId]);
-								}
-								elseif ((int)($CATALOG_PRICE_ID[$elID][$priceTypeId] ?? null) > 0)
-								{
-									CPrice::Update($CATALOG_PRICE_ID[$elID][$priceTypeId], $arFields);
-								}
-								else
-								{
-									CPrice::Add($arFields);
-								}
-
-								$arPrFilter = array(
-									"PRODUCT_ID" => $elID,
-									"!CATALOG_GROUP_ID" => $priceTypeId,
-									"+QUANTITY_FROM" => "1",
-									"!EXTRA_ID" => false,
-								);
-								$db_res = CPrice::GetListEx(
-									array(),
-									$arPrFilter,
-									false,
-									false,
-									array("ID", "PRODUCT_ID", "CATALOG_GROUP_ID", "PRICE", "CURRENCY", "QUANTITY_FROM", "QUANTITY_TO", "EXTRA_ID")
-								);
-								while($ar_res = $db_res->Fetch())
-								{
-									if ($deletePrice)
-									{
-										$subPriceFields = array(
-											"EXTRA_ID" => false,
-										);
-										CPrice::Update($ar_res["ID"], $subPriceFields);
-									}
-									else
-									{
-										$subPriceFields = array(
-											"PRICE" => $arFields['PRICE'] * (1 + $arCatExtraUp[$ar_res["EXTRA_ID"]] / 100),
-											"EXTRA_ID" => $ar_res["EXTRA_ID"],
-											"CURRENCY" => $arCurrency[$priceTypeId],
-										);
-										if ($subPriceFields["PRICE"] <= 0)
-										{
-											CPrice::Delete($ar_res["ID"]);
-										}
-										else
-										{
-											CPrice::Update($ar_res["ID"], $subPriceFields);
-										}
-									}
-								}
-							}
-							elseif (!isset($CATALOG_EXTRA[$elID][$priceTypeId]))
-							{
-								$arFields = array(
-									"PRODUCT_ID" => $elID,
-									"CATALOG_GROUP_ID" => $priceTypeId,
-									"PRICE" => $arPrice[$priceTypeId],
-									"CURRENCY" => $arCurrency[$priceTypeId],
-									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$priceTypeId],
-									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$priceTypeId]
-								);
-								$deletePrice = false;
-								$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
-								if (trim($arFields['PRICE']) === '')
-								{
-									$deletePrice = true;
-								}
-								$arFields['PRICE'] = (float)$arFields['PRICE'];
-								if ($arFields['PRICE'] < 0)
-								{
-									$deletePrice = true;
-								}
-
-								if ($deletePrice)
-								{
-									CPrice::Delete($CATALOG_PRICE_ID[$elID][$priceTypeId]);
-								}
-								elseif ((int)($CATALOG_PRICE_ID[$elID][$priceTypeId] ?? null) > 0)
-								{
-									CPrice::Update($CATALOG_PRICE_ID[$elID][$priceTypeId], $arFields);
-								}
-								else
-								{
-									CPrice::Add($arFields);
-								}
-							}
-						}
-					}
-					unset($arCatalogGroup);
-				}
-
-				$ipropValues = new \Bitrix\Iblock\InheritedProperty\ElementValues($IBLOCK_ID, $elID);
-				$ipropValues->clearValues();
-				\Bitrix\Iblock\PropertyIndex\Manager::updateElementIndex($IBLOCK_ID, $elID);
-			}
-			unset($arCatalogGroupList);
 		}
+		if ($boolCatalogPrice)
+		{
+			foreach ($inlineEditRequest->prices as $targetInput)
+			{
+				$priceTargetIds[] = $targetInput->targetId;
+			}
+		}
+		// rights are checked by the iblock of the price target, not by the iblock of the list
+		$priceTargetIblocks = CIBlockElement::GetIBlockByIDList($priceTargetIds);
+		unset($priceTargetIds, $targetInput);
+
+		$priceEditRights = [];
+		$canEditPrice = static function (int $elementId) use (&$priceEditRights, $priceTargetIblocks): bool
+		{
+			if (!isset($priceEditRights[$elementId]))
+			{
+				$elementIblockId = (int)($priceTargetIblocks[$elementId] ?? 0);
+				$priceEditRights[$elementId] =
+					$elementIblockId > 0
+					&& CIBlockElementRights::UserHasRightTo($elementIblockId, $elementId, 'element_edit')
+					&& CIBlockElementRights::UserHasRightTo($elementIblockId, $elementId, 'element_edit_price')
+				;
+			}
+
+			return $priceEditRights[$elementId];
+		};
+
+		$inlinePurchasingPrices = [];
+		if ($boolCatalogProductEdit && $catalogPurchasInfoEdit)
+		{
+			$inlinePurchasingPrices = array_filter(
+				$inlineEditRequest->purchasingPrices,
+				static fn(PurchasingPriceInput $input): bool => $canEditPrice($input->offerId)
+			);
+		}
+		$inlinePrices = [];
+		if ($boolCatalogPrice)
+		{
+			$inlinePrices = array_filter(
+				$inlineEditRequest->prices,
+				static fn(PriceInput $input): bool => $canEditPrice($input->targetId)
+			);
+		}
+
+		$priceResult = (new SaveInlinePricesCommand(
+			listIblockId: $IBLOCK_ID,
+			useOffers: $boolSKU && $pageConfig['USE_NEW_CARD'],
+			prices: array_values($inlinePrices),
+			purchasingPrices: array_values($inlinePurchasingPrices),
+		))->run();
+		foreach ($priceResult->getErrors() as $priceError)
+		{
+			$elementId = (int)($priceError->getCustomData()['ELEMENT_ID'] ?? 0);
+			if ($priceError->getCode() === SaveInlinePricesCommand::ERROR_NO_BASE_PRICE)
+			{
+				$lAdmin->AddGroupError($elementId . ': ' . GetMessage('IB_CAT_NO_BASE_PRICE'), $elementId);
+			}
+			else
+			{
+				$lAdmin->AddGroupError(
+					GetMessage(
+						'IBEL_A_SAVE_ERROR',
+						[
+							'#ID#' => $elementId,
+							'#ERROR_TEXT#' => htmlspecialcharsbx($priceError->getMessage()),
+						]
+					),
+					$elementId
+				);
+			}
+		}
+		unset($priceTargetIblocks, $priceEditRights, $canEditPrice, $inlinePurchasingPrices, $inlinePrices);
+		unset($priceResult, $priceError, $elementId);
 
 		Catalog\Product\Sku::disableDeferredCalculation();
 		Catalog\Product\Sku::calculate();
@@ -3066,7 +2924,7 @@ foreach (array_keys($rawRows) as $rowId)
 				{
 					$arFile = CFile::GetFileArray($prop["VALUE"]);
 					if (is_array($arFile))
-						$arViewHTML[] = CHTTP::URN2URI($arFile["SRC"]);
+						$arViewHTML[] = (string)(new Uri($arFile["SRC"]))->toAbsolute();
 					else
 						$arViewHTML[] = "";
 				}
@@ -3901,7 +3759,7 @@ if ($arIBTYPE['SECTIONS'] == 'Y' && isset($arSelectedFieldsMap['SECTIONS']) && !
 					continue;
 				$row['LEFT_MARGIN'] = (int)$row['LEFT_MARGIN'];
 				$sectionLink = $urlBuilder->getElementListUrl($row['ID']);
-				$sectionList[$rowId] = '<a href="'.CHTTP::URN2URI($sectionLink).'" title="'.GetMessage('IBEL_SECTIONS_LINK_TITLE').'">'.htmlspecialcharsEx($row['NAME']).'</a>';
+				$sectionList[$rowId] = '<a href="'.(new Uri($sectionLink))->toAbsolute().'" title="'.GetMessage('IBEL_SECTIONS_LINK_TITLE').'">'.htmlspecialcharsEx($row['NAME']).'</a>';
 				foreach ($sectionToItem[$rowId] as $itemId)
 				{
 					if (!isset($itemSections[$itemId]))
@@ -4449,6 +4307,8 @@ foreach($arRows as $idRow => $row)
 		else
 			$STATUS_PERMISSION = CIBlockElement::WF_GetStatusPermission($row->arRes["WF_STATUS_ID"]);
 
+		$canEditCurrentStatus = $STATUS_PERMISSION >= 2;
+		$canCreateWorkflowVersion = (int)$row->arRes['WF_STATUS_ID'] === 1 && $canMoveToUnpublishedStatus;
 		$intMinPerm = 2;
 
 		$arUnLock = array(
@@ -4478,7 +4338,7 @@ foreach($arRows as $idRow => $row)
 			if (
 				isset($arElementOps[$idRow])
 				&& isset($arElementOps[$idRow]["element_edit"])
-				&& (2 <= $STATUS_PERMISSION)
+				&& ($canEditCurrentStatus || $canCreateWorkflowVersion)
 			)
 			{
 				if ($row->arRes['orig']['LOCK_STATUS'] == "yellow")
@@ -4491,12 +4351,20 @@ foreach($arRows as $idRow => $row)
 					"ICON" => "edit",
 					"TEXT" => GetMessage("IBEL_A_CHANGE"),
 					"DEFAULT" => true,
-					"LINK" => $urlBuilder->getElementDetailUrl($row->arRes['orig']['ID'], $elementUrlParams),
+					"LINK" => $urlBuilder->getElementDetailUrl(
+						$row->arRes['orig']['ID'],
+						$canEditCurrentStatus ? $elementUrlParams : ($elementUrlParams + ['WF_CREATE_VERSION' => 'Y'])
+					),
 				);
-				$arActions[] = $arActive;
-				if ($useElementTranslit)
-					$arActions[] = $elementCodeTranslitAction;
-				$arActions[] = $clearCounter;
+				if ($canEditCurrentStatus)
+				{
+					$arActions[] = $arActive;
+					if ($useElementTranslit)
+					{
+						$arActions[] = $elementCodeTranslitAction;
+					}
+					$arActions[] = $clearCounter;
+				}
 			}
 
 			if (

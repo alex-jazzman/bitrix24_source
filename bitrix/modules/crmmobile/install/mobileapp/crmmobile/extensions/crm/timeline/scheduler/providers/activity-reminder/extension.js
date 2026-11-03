@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/activity-reminder
  */
 jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, exports, module) => {
+	const { Text4, Text6 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
@@ -123,21 +124,19 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 				},
 				View(
 					{},
-					Text(
+					Text4(
 						{
 							style: {
-								fontSize: 14,
 								fontWeight: 600,
 								color: AppTheme.colors.base1,
 							},
 							text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_TITLE_MSGVER_1'),
 						},
 					),
-					Text(
+					Text6(
 						{
 							style: {
 								marginTop: 4,
-								fontSize: 12,
 								fontWeight: 400,
 								color: AppTheme.colors.base4,
 							},

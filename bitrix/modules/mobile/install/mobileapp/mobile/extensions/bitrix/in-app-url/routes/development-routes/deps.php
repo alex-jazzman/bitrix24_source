@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'helpers/component',
+		'in-app-url/widget-presenter',
 		'require-lazy',
 		'utils/url',
 	],

@@ -21,7 +21,6 @@ use Bitrix\Main\Localization\Loc;
  * @var array $morePhoto
  * @var bool $showSlider
  * @var bool $itemHasDetailUrl
- * @var string $imgTitle
  * @var string $productTitle
  * @var string $buttonSizeClass
  * @var string $discountPositionClass
@@ -32,8 +31,9 @@ use Bitrix\Main\Localization\Loc;
 
 <div class="product-item">
 	<? if ($itemHasDetailUrl): ?>
-	<a class="product-item-image-wrapper" href="<?=$item['DETAIL_PAGE_URL']?>" title="<?=$imgTitle?>"
-		data-entity="image-wrapper">
+	<div class="product-item-image-wrapper" data-entity="image-wrapper">
+		<a class="product-item-image-link" href="<?=$item['DETAIL_PAGE_URL']?>"
+			tabindex="-1" aria-hidden="true" data-testid="catalog-item-image-link">
 		<? else: ?>
 		<span class="product-item-image-wrapper" data-entity="image-wrapper">
 	<? endif; ?>
@@ -62,12 +62,26 @@ use Bitrix\Main\Localization\Loc;
 			<?
 		}
 
+		if ($arParams['SLIDER_PROGRESS'] === 'Y')
+		{
+			?>
+			<span class="product-item-image-slider-progress-bar-container">
+				<span class="product-item-image-slider-progress-bar" id="<?=$itemIds['PICT_SLIDER']?>_progress_bar" style="width: 0;"></span>
+			</span>
+			<?
+		}
+		?>
+		<? if ($itemHasDetailUrl): ?>
+		</a>
+		<? endif; ?>
+		<?
 		if ($arParams['SHOW_DISCOUNT_PERCENT'] === 'Y' && !empty($price))
 		{
 			?>
 			<div class="product-item-label-ring <?=$discountPositionClass?>" id="<?=$itemIds['DSC_PERC']?>"
 				<?=($price['PERCENT'] > 0 ? '' : 'style="display: none;"')?>>
-				<span><?=-$price['PERCENT']?>%</span>
+				<div class="sr-only"><?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_DISCOUNT_ARIA'))?></div>
+				<span data-entity="discount-value"><?=-$price['PERCENT']?>%</span>
 			</div>
 			<?
 		}
@@ -79,11 +93,14 @@ use Bitrix\Main\Localization\Loc;
 				<?
 				if (!empty($item['LABEL_ARRAY_VALUE']))
 				{
+					?>
+					<div class="sr-only"><?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_LABEL_ARIA'))?></div>
+					<?
 					foreach ($item['LABEL_ARRAY_VALUE'] as $code => $value)
 					{
 						?>
 						<div<?=(!isset($item['LABEL_PROP_MOBILE'][$code]) ? ' class="d-none d-sm-block"' : '')?>>
-							<span title="<?=$value?>"><?=$value?></span>
+							<span><?=$value?></span>
 						</div>
 						<?
 					}
@@ -94,37 +111,34 @@ use Bitrix\Main\Localization\Loc;
 		}
 		?>
 		<span class="product-item-image-slider-control-container" id="<?=$itemIds['PICT_SLIDER']?>_indicator"
+			role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_ARIA'))?>"
+			aria-hidden="true" data-testid="catalog-item-gallery-dots"
 			<?=($showSlider ? '' : 'style="display: none;"')?>>
 			<?
 			if ($showSlider)
 			{
+				$photosTotal = count($morePhoto);
 				foreach ($morePhoto as $key => $photo)
 				{
 					?>
-					<span class="product-item-image-slider-control<?=($key == 0 ? ' active' : '')?>" data-go-to="<?=$key?>"></span>
+					<button type="button" class="product-item-image-slider-control<?=($key == 0 ? ' active' : '')?>"
+						data-go-to="<?=$key?>" tabindex="-1"
+						aria-pressed="<?=($key == 0 ? 'true' : 'false')?>"
+						aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_DOT_ARIA', ['#NUM#' => $key + 1, '#TOTAL#' => $photosTotal]))?>"
+						data-testid="catalog-item-gallery-dot"></button>
 					<?
 				}
 			}
 			?>
 		</span>
-		<?
-		if ($arParams['SLIDER_PROGRESS'] === 'Y')
-		{
-			?>
-			<span class="product-item-image-slider-progress-bar-container">
-				<span class="product-item-image-slider-progress-bar" id="<?=$itemIds['PICT_SLIDER']?>_progress_bar" style="width: 0;"></span>
-			</span>
-			<?
-		}
-		?>
-			<? if ($itemHasDetailUrl): ?>
-	</a>
+	<? if ($itemHasDetailUrl): ?>
+	</div>
 <? else: ?>
 	</span>
 <? endif; ?>
-	<h3 class="product-item-title">
+	<h3 class="product-item-title" id="<?=htmlspecialcharsbx($itemIds['TITLE'])?>">
 		<? if ($itemHasDetailUrl): ?>
-		<a href="<?=$item['DETAIL_PAGE_URL']?>" title="<?=$productTitle?>">
+		<a href="<?=$item['DETAIL_PAGE_URL']?>" title="<?=$productTitle?>" data-testid="catalog-item-name-link">
 			<? endif; ?>
 			<?=$productTitle?>
 			<? if ($itemHasDetailUrl): ?>
@@ -144,10 +158,10 @@ use Bitrix\Main\Localization\Loc;
 						if ($arParams['SHOW_OLD_PRICE'] === 'Y' && !empty($price))
 						{
 							?>
-							<span class="product-item-price-old" id="<?=$itemIds['PRICE_OLD']?>"
+							<del class="product-item-price-old" id="<?=$itemIds['PRICE_OLD']?>"
 								<?=($price['RATIO_PRICE'] >= $price['RATIO_BASE_PRICE'] ? 'style="display: none;"' : '')?>>
 								<?=$price['PRINT_RATIO_BASE_PRICE']?>
-							</span>&nbsp;
+							</del>&nbsp;
 							<?
 						}
 						?>
@@ -247,15 +261,15 @@ use Bitrix\Main\Localization\Loc;
 							<div class="product-item-info-container product-item-hidden" data-entity="quantity-block">
 								<div class="product-item-amount">
 									<div class="product-item-amount-field-container">
-										<span class="product-item-amount-field-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>"></span>
+										<button type="button" class="product-item-amount-field-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_DOWN_ARIA'))?>" data-testid="catalog-item-quantity-down"></button>
 										<div class="product-item-amount-field-block">
-											<input class="product-item-amount-field" id="<?=$itemIds['QUANTITY']?>" type="number" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value="<?=$measureRatio?>">
-											<span class="product-item-amount-description-container">
+											<input class="product-item-amount-field" id="<?=$itemIds['QUANTITY']?>" type="number" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value="<?=$measureRatio?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_ARIA'))?>" aria-describedby="<?=$itemIds['QUANTITY_DESCRIPTION']?>" data-testid="catalog-item-quantity-field">
+											<span class="product-item-amount-description-container" id="<?=$itemIds['QUANTITY_DESCRIPTION']?>">
 												<span id="<?=$itemIds['QUANTITY_MEASURE']?>"><?=$actualItem['ITEM_MEASURE']['TITLE']?></span>
 												<span id="<?=$itemIds['PRICE_TOTAL']?>"></span>
 											</span>
 										</div>
-										<span class="product-item-amount-field-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>"></span>
+										<button type="button" class="product-item-amount-field-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_UP_ARIA'))?>" data-testid="catalog-item-quantity-up"></button>
 									</div>
 								</div>
 							</div>
@@ -270,15 +284,15 @@ use Bitrix\Main\Localization\Loc;
 							<div class="product-item-info-container product-item-hidden" data-entity="quantity-block">
 								<div class="product-item-amount">
 									<div class="product-item-amount-field-container">
-										<span class="product-item-amount-field-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>"></span>
+										<button type="button" class="product-item-amount-field-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_DOWN_ARIA'))?>" data-testid="catalog-item-quantity-down"></button>
 										<div class="product-item-amount-field-block">
-											<input class="product-item-amount-field" id="<?=$itemIds['QUANTITY']?>" type="number" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value="<?=$measureRatio?>">
-											<span class="product-item-amount-description-container">
+											<input class="product-item-amount-field" id="<?=$itemIds['QUANTITY']?>" type="number" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value="<?=$measureRatio?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_ARIA'))?>" aria-describedby="<?=$itemIds['QUANTITY_DESCRIPTION']?>" data-testid="catalog-item-quantity-field">
+											<span class="product-item-amount-description-container" id="<?=$itemIds['QUANTITY_DESCRIPTION']?>">
 												<span id="<?=$itemIds['QUANTITY_MEASURE']?>"><?=$actualItem['ITEM_MEASURE']['TITLE']?></span>
 												<span id="<?=$itemIds['PRICE_TOTAL']?>"></span>
 											</span>
 										</div>
-										<span class="product-item-amount-field-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>"></span>
+										<button type="button" class="product-item-amount-field-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_UP_ARIA'))?>" data-testid="catalog-item-quantity-up"></button>
 									</div>
 								</div>
 							</div>
@@ -298,8 +312,8 @@ use Bitrix\Main\Localization\Loc;
 							{
 								?>
 								<div class="product-item-button-container" id="<?=$itemIds['BASKET_ACTIONS']?>">
-									<button class="btn btn-primary <?=$buttonSizeClass?>" id="<?=$itemIds['BUY_LINK']?>"
-											href="javascript:void(0)" rel="nofollow">
+									<button type="button" class="btn btn-primary <?=$buttonSizeClass?>" id="<?=$itemIds['BUY_LINK']?>"
+											data-testid="catalog-item-buy">
 										<?=($arParams['ADD_TO_BASKET_ACTION'] === 'BUY' ? $arParams['MESS_BTN_BUY'] : $arParams['MESS_BTN_ADD_TO_BASKET'])?>
 									</button>
 								</div>
@@ -308,7 +322,8 @@ use Bitrix\Main\Localization\Loc;
 							else
 							{
 								?>
-								<div class="product-item-button-container">
+								<div class="product-item-button-container"
+										<?=($showSubscribe ? 'data-testid="catalog-item-subscribe"' : '')?>>
 									<?
 									if ($showSubscribe)
 									{
@@ -327,10 +342,10 @@ use Bitrix\Main\Localization\Loc;
 										);
 									}
 									?>
-									<button class="btn btn-link <?=$buttonSizeClass?>"
-											id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" href="javascript:void(0)" rel="nofollow">
+									<span class="btn btn-link <?=$buttonSizeClass?>"
+											id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" data-testid="catalog-item-not-available">
 										<?=$arParams['MESS_NOT_AVAILABLE']?>
-									</button>
+									</span>
 								</div>
 								<?
 							}
@@ -340,7 +355,8 @@ use Bitrix\Main\Localization\Loc;
 							if ($arParams['PRODUCT_DISPLAY_MODE'] === 'Y')
 							{
 								?>
-								<div class="product-item-button-container">
+								<div class="product-item-button-container"
+										<?=($showSubscribe ? 'data-testid="catalog-item-subscribe"' : '')?>>
 									<?
 									if ($showSubscribe)
 									{
@@ -359,14 +375,14 @@ use Bitrix\Main\Localization\Loc;
 										);
 									}
 									?>
-									<button class="btn btn-link <?=$buttonSizeClass?>"
-											id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" href="javascript:void(0)" rel="nofollow"
+									<span class="btn btn-link <?=$buttonSizeClass?>"
+											id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" data-testid="catalog-item-not-available"
 										<?=($actualItem['CAN_BUY'] ? 'style="display: none;"' : '')?>>
 										<?=$arParams['MESS_NOT_AVAILABLE']?>
-									</button>
+									</span>
 									<div id="<?=$itemIds['BASKET_ACTIONS']?>" <?=($actualItem['CAN_BUY'] ? '' : 'style="display: none;"')?>>
-										<button class="btn btn-primary <?=$buttonSizeClass?>" id="<?=$itemIds['BUY_LINK']?>"
-												href="javascript:void(0)" rel="nofollow">
+										<button type="button" class="btn btn-primary <?=$buttonSizeClass?>" id="<?=$itemIds['BUY_LINK']?>"
+												data-testid="catalog-item-buy">
 											<?=($arParams['ADD_TO_BASKET_ACTION'] === 'BUY' ? $arParams['MESS_BTN_BUY'] : $arParams['MESS_BTN_ADD_TO_BASKET'])?>
 										</button>
 									</div>
@@ -377,7 +393,8 @@ use Bitrix\Main\Localization\Loc;
 							{
 								?>
 								<div class="product-item-button-container">
-									<a class="btn btn-primary <?=$buttonSizeClass?>" href="<?=$item['DETAIL_PAGE_URL']?>">
+									<a class="btn btn-primary <?=$buttonSizeClass?>" href="<?=$item['DETAIL_PAGE_URL']?>"
+											data-testid="catalog-item-detail-link">
 										<?=$arParams['MESS_BTN_DETAIL']?>
 									</a>
 								</div>
@@ -551,13 +568,24 @@ use Bitrix\Main\Localization\Loc;
 								$skuProperty['NAME'] = htmlspecialcharsbx($skuProperty['NAME']);
 								if (!isset($item['SKU_TREE_VALUES'][$propertyId]))
 									continue;
+
+								$skuTitleId = $itemIds['PROP'].$propertyId.'_title';
+								// a radiogroup takes no name from its content: an empty title leaves the group unnamed
+								$skuGroupTitled = $skuProperty['NAME'] !== '';
+								$skuGroupLabel = $skuGroupTitled
+									? $skuTitleId
+									: Loc::getMessage('CT_BCI_TPL_MESS_SKU_GROUP_ARIA');
 								?>
 								<div data-entity="sku-block">
 									<div class="product-item-scu-container" data-entity="sku-line-block">
-										<div class="product-item-scu-block-title text-muted"><?=$skuProperty['NAME']?></div>
+										<div class="product-item-scu-block-title text-muted" id="<?=htmlspecialcharsbx($skuTitleId)?>">
+											<?=$skuProperty['NAME']?>
+										</div>
 										<div class="product-item-scu-block">
 											<div class="product-item-scu-list">
-												<ul class="product-item-scu-item-list">
+												<ul class="product-item-scu-item-list" role="radiogroup"
+													<?=$skuGroupTitled ? 'aria-labelledby' : 'aria-label'?>="<?=htmlspecialcharsbx($skuGroupLabel)?>"
+													data-testid="catalog-item-sku-group">
 													<?
 													foreach ($skuProperty['VALUES'] as $value)
 													{
@@ -566,12 +594,19 @@ use Bitrix\Main\Localization\Loc;
 
 														$value['NAME'] = htmlspecialcharsbx($value['NAME']);
 
+														$valueAriaLabel = $value['NAME'] !== ''
+															? $value['NAME']
+															: htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_SKU_VALUE_ARIA', ['#ID#' => $value['ID']]));
+
 														if ($skuProperty['SHOW_MODE'] === 'PICT')
 														{
 															?>
-															<li class="product-item-scu-item-color-container" title="<?=$value['NAME']?>" data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>">
+															<li class="product-item-scu-item-color-container" title="<?=$value['NAME']?>"
+																role="radio" tabindex="-1" aria-checked="false" aria-label="<?=$valueAriaLabel?>"
+																data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>"
+																data-testid="catalog-item-sku-option">
 																<div class="product-item-scu-item-color-block">
-																	<div class="product-item-scu-item-color" title="<?=$value['NAME']?>" style="background-image: url('<?=$value['PICT']['SRC']?>');"></div>
+																	<div class="product-item-scu-item-color" style="background-image: url('<?=$value['PICT']['SRC']?>');"></div>
 																</div>
 															</li>
 															<?
@@ -580,7 +615,9 @@ use Bitrix\Main\Localization\Loc;
 														{
 															?>
 															<li class="product-item-scu-item-text-container" title="<?=$value['NAME']?>"
-																data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>">
+																role="radio" tabindex="-1" aria-checked="false" aria-label="<?=$valueAriaLabel?>"
+																data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>"
+																data-testid="catalog-item-sku-option">
 																<div class="product-item-scu-item-text-block">
 																	<div class="product-item-scu-item-text"><?=$value['NAME']?></div>
 																</div>
@@ -653,7 +690,7 @@ use Bitrix\Main\Localization\Loc;
 			<div class="product-item-compare">
 				<div class="checkbox">
 					<label id="<?=$itemIds['COMPARE_LINK']?>">
-						<input type="checkbox" data-entity="compare-checkbox">
+						<input type="checkbox" data-entity="compare-checkbox" data-testid="catalog-item-compare">
 						<span data-entity="compare-title"><?=$arParams['MESS_BTN_COMPARE']?></span>
 					</label>
 				</div>

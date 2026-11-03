@@ -1,0 +1,4 @@
+<?php
+$MESS['CALL_USER_CARD_NO_NAME'] = 'No name';
+$MESS['CALL_USER_CARD_STATUS_RECONNECTING'] = 'Reconnecting...';
+$MESS['CALL_USER_CARD_STATUS_VIDEO_STOPPED'] = 'Video paused';

@@ -36,7 +36,7 @@ BitrixVue.component('sale-checkout-view-product', {
 	},
 	// language=Vue
 	template: `
-    	<div :class="getObjectClass" ref="container">
+    	<div :class="getObjectClass" :aria-busy="ariaBusy" data-testid="sale-checkout-basket" ref="container">
 			<sale-checkout-view-product-list :items="items" :errors="errors" :mode="mode"/>
 			<sale-checkout-view-product-summary :total="total" :mode="mode"/>
 		</div>

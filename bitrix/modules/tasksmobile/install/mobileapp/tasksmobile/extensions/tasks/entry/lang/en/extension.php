@@ -2,6 +2,12 @@
 $MESS["TASKSMOBILE_ENTRY_COLLAB_TASK_LIST_TITLE"] = "Collab tasks";
 $MESS["TASKSMOBILE_ENTRY_DEADLINE_PICKER_ACCESS_DENIED"] = "Insufficient permission to change deadline in this task";
 $MESS["TASKSMOBILE_ENTRY_EFFICIENCY_TITLE"] = "Efficiency";
+$MESS["TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_ALREADY_OBSERVER"] = "This user is already an observer.";
+$MESS["TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_ERROR"] = "Could not add observer. Try again.";
+$MESS["TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_NOT_ALLOWED"] = "Cannot make this user an observer.";
+$MESS["TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_NO_PERMISSION"] = "Insufficient permissions.";
+$MESS["TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_NO_REQUEST"] = "This request has expired.";
+$MESS["TASKSMOBILE_ENTRY_TASK_ADD_OBSERVER_USER_INACTIVE"] = "This user was dismissed.";
 $MESS["TASKSMOBILE_ENTRY_TASK_ALREADY_COMPLETED"] = "This task is already completed.";
 $MESS["TASKSMOBILE_ENTRY_TASK_COMPLETE_NOT_ACCESSIBLE"] = "Insufficient permission to complete the task.";
 $MESS["TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE"] = "Task";

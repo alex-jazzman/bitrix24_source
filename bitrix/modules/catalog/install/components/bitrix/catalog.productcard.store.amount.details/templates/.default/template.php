@@ -78,6 +78,7 @@ $APPLICATION->IncludeComponent(
 		BX.Catalog.StoreAmountDetails.Instance = new BX.Catalog.StoreAmountDetails(<?=Json::encode([
 			'gridId' => $arResult['GRID']['GRID_ID'],
 			'productId' => $arParams['PRODUCT_ID'],
+			'storeId' => $arResult['STORE_ID'],
 			'allowPurchasingPrice' => $arResult['ALLOW_PURCHASING_PRICE'],
 		])?>);
 	});

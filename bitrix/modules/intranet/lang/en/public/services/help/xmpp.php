@@ -119,8 +119,8 @@ Beginners</a>.<i>
        </td><td>
         <br />
        </td><td valign='top'>
-        <a href=\"javascript:ShowImg('#SITE#images/en/docs/cp/im2.png', 266, 405, 'Company contact list')\">
-        <img src='#SITE#images/en/docs/cp/im2-s.png' width='100' height='152' border='0' alt='Company contact list' title='Company contact list' />
+        <a href=\"javascript:ShowImg('#SITE#images/en/docs/cp/im2.webp', 266, 405, 'Company contact list')\">
+        <img src='#SITE#images/en/docs/cp/im2-s.webp' width='100' height='152' border='0' alt='Company contact list' title='Company contact list' />
         </a>
         <br />
 
@@ -138,8 +138,8 @@ Beginners</a>.<i>
     <tr><td valign='top'>
 
 
-    <a href=\"javascript:ShowImg('#SITE#images/en/docs/cp/cp8_miranda.png', 648, 472, 'Miranda settings')\">
-    <img src='#SITE#images/en/docs/cp/cp8_miranda-s.png' border='0' width='100' height='73' alt='Miranda settings' title='Miranda settings' />
+    <a href=\"javascript:ShowImg('#SITE#images/en/docs/cp/cp8_miranda.webp', 648, 472, 'Miranda settings')\">
+    <img src='#SITE#images/en/docs/cp/cp8_miranda-s.webp' border='0' width='100' height='73' alt='Miranda settings' title='Miranda settings' />
     </a>
         <br />
        </td><td valign='top'> <span class='text'>

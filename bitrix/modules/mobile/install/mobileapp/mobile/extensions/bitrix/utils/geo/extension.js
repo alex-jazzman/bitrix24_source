@@ -18,17 +18,93 @@ jn.define('utils/geo', (require, exports, module) => {
 
 	const toRadians = (degrees) => degrees * DEGREES_TO_RADIANS;
 
+	const OPTIONAL_POSITION_FIELDS = ['accuracyMeters', 'timestamp', 'speed', 'bearing'];
+
+	/**
+	 * Passes native position fields through without interpretation: an optional field is copied
+	 * only when the native app provided it (0 is a valid value, no defaults are substituted).
+	 * @param {GeoPosition} position
+	 * @return {GeoPosition}
+	 */
+	const normalizePosition = (position) => {
+		const result = {
+			latitude: position.latitude,
+			longitude: position.longitude,
+			accuracy: position.accuracy,
+		};
+
+		OPTIONAL_POSITION_FIELDS.forEach((field) => {
+			if (position[field] != null)
+			{
+				result[field] = position[field];
+			}
+		});
+
+		return result;
+	};
+
+	/** @type {WeakMap<function(GeoPosition): void, function(GeoPosition): void>} */
+	const locationChangedHandlers = new WeakMap();
+
+	/**
+	 * Phrases of the alert shown when the app itself has no location permission.
+	 * They also cover an unknown location status.
+	 */
+	const PERMISSION_PHRASES = Object.freeze({
+		title: 'MOBILE_GEO_PERMISSION_ALERT_TITLE',
+		description: 'MOBILE_GEO_PERMISSION_ALERT_DESCRIPTION',
+	});
+
+	/** Phrases of the alert shown when the location service of the device is off. */
+	const SERVICE_DISABLED_PHRASES = Object.freeze({
+		title: 'MOBILE_GEO_SERVICE_DISABLED_ALERT_TITLE',
+		description: 'MOBILE_GEO_SERVICE_DISABLED_ALERT_DESCRIPTION',
+	});
+
+	/**
+	 * Memoizes the native status read: the snapshot is asked for at most once per reader,
+	 * no matter how many times the returned function is called.
+	 * @return {function(): Promise<boolean>}
+	 */
+	const createServiceDisabledReader = () => {
+		let isDisabled = null;
+
+		return async () => {
+			isDisabled ??= await Geo.readLocationServiceDisabled();
+
+			return isDisabled;
+		};
+	};
+
+	/**
+	 * Normalized native position. An optional field is present only when the native app
+	 * provided a valid value (0 is valid); an absent field means the value is invalid.
+	 * @typedef {Object} GeoPosition
+	 * @property {number} [latitude]
+	 * @property {number} [longitude]
+	 * @property {GeoAccuracy} [accuracy] legacy accuracy mode
+	 * @property {number} [accuracyMeters] accuracy radius in meters
+	 * @property {number} [timestamp] unix ms provided by the native app
+	 * @property {number} [speed] meters per second
+	 * @property {number} [bearing] movement direction in degrees
+	 */
+
 	/**
 	 * @typedef {Object} GeoResult
 	 * @property {GeoStatus} status
 	 * @property {number} [latitude]
 	 * @property {number} [longitude]
-	 * @property {GeoAccuracy} [accuracy]
+	 * @property {GeoAccuracy} [accuracy] legacy accuracy mode
+	 * @property {number} [accuracyMeters] accuracy radius in meters
+	 * @property {number} [timestamp] unix ms provided by the native app
+	 * @property {number} [speed] meters per second; absent = invalid
+	 * @property {number} [bearing] movement direction in degrees; absent = invalid
 	 */
 	class Geo
 	{
 		#accuracy;
 		#shouldShowAlert;
+		#shouldShowUnavailableAlert;
 
 		/**
 		 * @param {number} lat1
@@ -114,9 +190,133 @@ jn.define('utils/geo', (require, exports, module) => {
 		}
 
 		/**
+		 * Strict comparison on purpose: an absent snapshot and a snapshot without the flag
+		 * mean "unknown", not "disabled".
+		 * @param {?{
+		 *     isLocationServiceEnabled?: boolean,
+		 *     isUserApproximatePermissionGranted?: boolean,
+		 *     isUserPrecisePermissionGranted?: boolean,
+		 * }} status
+		 * @return {boolean}
+		 */
+		static isLocationServiceDisabled(status)
+		{
+			return status?.isLocationServiceEnabled === false;
+		}
+
+		/**
+		 * Reads the snapshot and brings it to the unambiguous "off or not". A read the native app
+		 * refuses means "unknown", which is what the phrases about the app permission cover: the
+		 * flag decides the text of an alert, and nothing that asks for it may fail over that text.
+		 * @return {Promise<boolean>}
+		 */
+		static async readLocationServiceDisabled()
+		{
+			try
+			{
+				return Geo.isLocationServiceDisabled(await Geo.getLocationStatus());
+			}
+			catch (error)
+			{
+				console.error('Geo: getLocationStatus failed', error);
+
+				return false;
+			}
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		static isWatchSupported()
+		{
+			return Feature.isLocationWatchSupported();
+		}
+
+		/**
+		 * Starts continuous location tracking. Points are delivered to `locationChanged` listeners.
+		 * @param {Object} [options={}]
+		 * @param {GeoAccuracy} [options.accuracy]
+		 * @param {number} [options.distanceFilter] minimal distance in meters between points
+		 * @return {boolean} false if watch is not supported by the native app
+		 */
+		static startWatch(options = {})
+		{
+			if (!Geo.isWatchSupported())
+			{
+				return false;
+			}
+
+			device.watchLocation(options);
+
+			return true;
+		}
+
+		/**
+		 * Subscribes to points of continuous tracking. Does not start GPS by itself - use `startWatch`.
+		 * @param {function(GeoPosition): void} callback
+		 */
+		static onLocationChanged(callback)
+		{
+			if (!Geo.isWatchSupported())
+			{
+				return;
+			}
+
+			let handler = locationChangedHandlers.get(callback);
+			if (!handler)
+			{
+				handler = (position) => callback(normalizePosition(position));
+				locationChangedHandlers.set(callback, handler);
+			}
+
+			device.on('locationChanged', handler);
+		}
+
+		/**
+		 * Unsubscribes from points of continuous tracking. The native app stops GPS
+		 * when the last `locationChanged` listener is removed.
+		 * @param {function(GeoPosition): void} callback
+		 */
+		static offLocationChanged(callback)
+		{
+			const handler = locationChangedHandlers.get(callback);
+			if (handler)
+			{
+				device.off('locationChanged', handler);
+			}
+		}
+
+		/**
+		 * @param {function({code: number, message: string}): void} callback
+		 */
+		static onLocationError(callback)
+		{
+			if (!Geo.isWatchSupported())
+			{
+				return;
+			}
+
+			device.on('locationError', callback);
+		}
+
+		/**
+		 * @param {function({code: number, message: string}): void} callback
+		 */
+		static offLocationError(callback)
+		{
+			if (!Geo.isWatchSupported())
+			{
+				return;
+			}
+
+			device.off('locationError', callback);
+		}
+
+		/**
 		 * @param {Object} [props={}]
 		 * @param {GeoAccuracy} [props.accuracy=GeoAccuracy.PRECISE]
 		 * @param {boolean} [props.shouldShowAlert=true]
+		 * @param {boolean} [props.shouldShowUnavailableAlert=false]
 		 */
 		constructor(props = {})
 		{
@@ -124,6 +324,7 @@ jn.define('utils/geo', (require, exports, module) => {
 
 			this.#accuracy = props.accuracy ?? GeoAccuracy.PRECISE;
 			this.#shouldShowAlert = props.shouldShowAlert ?? true;
+			this.#shouldShowUnavailableAlert = props.shouldShowUnavailableAlert ?? false;
 		}
 
 		/**
@@ -132,12 +333,24 @@ jn.define('utils/geo', (require, exports, module) => {
 		async requestPosition()
 		{
 			const result = await this.#getLocation();
+			const isServiceDisabled = createServiceDisabledReader();
 
-			if (
+			const isAlertCandidate = (
 				result.status === GeoStatus.DENIED
 				&& this.#shouldShowAlert
 				&& !result.isFreshDenial
-				&& await this.#showPermissionAlert() === UserAction.SETTINGS
+			) || (
+				result.status === GeoStatus.UNAVAILABLE
+				&& this.#shouldShowUnavailableAlert
+			) || (
+				result.status === GeoStatus.UNAVAILABLE
+				&& this.#shouldShowAlert
+				&& await isServiceDisabled()
+			);
+
+			if (
+				isAlertCandidate
+				&& await this.#showPermissionAlert(await isServiceDisabled()) === UserAction.SETTINGS
 			)
 			{
 				await this.#waitForAppActive();
@@ -160,9 +373,7 @@ jn.define('utils/geo', (require, exports, module) => {
 					.then((position) => {
 						resolve({
 							status: GeoStatus.SUCCESS,
-							latitude: position.latitude,
-							longitude: position.longitude,
-							accuracy: position.accuracy,
+							...normalizePosition(position),
 						});
 					})
 					.catch((error) => {
@@ -184,12 +395,18 @@ jn.define('utils/geo', (require, exports, module) => {
 			});
 		}
 
-		#showPermissionAlert()
+		/**
+		 * @param {boolean} isServiceDisabled
+		 * @return {Promise<UserAction>}
+		 */
+		#showPermissionAlert(isServiceDisabled)
 		{
+			const pair = isServiceDisabled ? SERVICE_DISABLED_PHRASES : PERMISSION_PHRASES;
+
 			return new Promise((resolve) => {
 				Alert.confirm(
-					Loc.getMessage('MOBILE_GEO_PERMISSION_ALERT_TITLE'),
-					Loc.getMessage('MOBILE_GEO_PERMISSION_ALERT_DESCRIPTION'),
+					Loc.getMessage(pair.title),
+					Loc.getMessage(pair.description),
 					[
 						{
 							text: Loc.getMessage('MOBILE_GEO_PERMISSION_ALERT_SETTINGS'),
@@ -224,6 +441,7 @@ jn.define('utils/geo', (require, exports, module) => {
 	Geo.propTypes = {
 		accuracy: PropTypes.oneOf(Object.values(GeoAccuracy)),
 		shouldShowAlert: PropTypes.bool,
+		shouldShowUnavailableAlert: PropTypes.bool,
 	};
 
 	module.exports = {

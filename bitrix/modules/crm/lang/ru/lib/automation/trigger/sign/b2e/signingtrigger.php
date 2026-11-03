@@ -3,5 +3,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_B2E_SIGNING_NAME'] = 'Подписание док�
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_SIGNING_DESCRIPTION'] = 'Меняет стадию, когда документ переходит на подписание к представителю и сотруднику';
 
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_SIGNING_NODE_NAME'] = 'Отследить переход документа в КЭДО на подписание';
-$MESS['CRM_AUTOMATION_TRIGGER_B2E_SIGNING_NODE_DESCRIPTION'] = 'Запускает процесс, когда документ переходит на подписание';
+$MESS['CRM_AUTOMATION_TRIGGER_B2E_SIGNING_NODE_DESCRIPTION'] = 'Запускает процесс, когда кадровый документ перешёл на подписание';
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_SIGNING_EVENT_DATE_TIME'] = 'Дата и время подписания';

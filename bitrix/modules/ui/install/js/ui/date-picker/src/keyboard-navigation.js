@@ -1,12 +1,15 @@
 import { Type, Event, Dom } from 'main.core';
+
 import { addDate } from './helpers/add-date';
 import { cloneDate } from './helpers/clone-date';
 import { getDate } from './helpers/get-date';
+import { getDateOffset } from './helpers/get-date-offset';
 import { getFocusableBoundaryElements } from './helpers/get-focusable-boundary-elements';
+import { isDatesEqual } from './helpers/is-dates-equal';
 import { setTime } from './helpers/set-time';
 
-import type { DatePicker } from './date-picker';
-import type { TimePickerGrid } from './time-picker-grid';
+import { type DatePicker } from './date-picker';
+import { type TimePickerGrid } from './time-picker-grid';
 
 const keyMap = {
 	ArrowRight: {
@@ -38,6 +41,9 @@ const keyMap = {
 		minutes: 2,
 	},
 };
+
+// How far an arrow may step over the dates disabled inside the range before the move is given up.
+const MAX_FOCUS_DATE_SEARCH_STEPS = 100;
 
 export class KeyboardNavigation
 {
@@ -107,68 +113,134 @@ export class KeyboardNavigation
 
 			if (view === 'time')
 			{
-				const timePicker: TimePickerGrid = this.#datePicker.getPicker('time');
-				let currentFocusDate = cloneDate(picker.getInitialFocusDate(timePicker.getMode()));
-				let { hours, minutes } = getDate(currentFocusDate);
-
-				if (initialFocus)
-				{
-					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
-					this.#adjustLastFocusElement();
-				}
-				else if (timePicker.getFocusColumn() === 'hours')
-				{
-					const increment = keyMap[event.key].hours;
-					hours += increment;
-					if (hours < 0)
-					{
-						hours += 24;
-					}
-					else if (hours > 23)
-					{
-						hours -= 24;
-					}
-
-					currentFocusDate = setTime(currentFocusDate, hours, null, null);
-					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
-					this.#adjustLastFocusElement();
-				}
-				else if (timePicker.getFocusColumn() === 'minutes')
-				{
-					const increment = keyMap[event.key].minutes;
-					minutes += timePicker.getCurrentMinuteStep() * increment;
-					if (minutes < 0)
-					{
-						minutes += 60;
-					}
-					else if (minutes > 59)
-					{
-						minutes -= 60;
-					}
-
-					currentFocusDate = setTime(currentFocusDate, null, minutes, null);
-					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
-					timePicker.adjustMinuteFocusPosition();
-					this.#adjustLastFocusElement();
-				}
+				this.#moveTimeFocus(event.key, initialFocus);
 			}
 			else
 			{
-				const currentFocusDate = cloneDate(picker.getInitialFocusDate());
-				if (initialFocus)
+				// Entering the grid starts from the date the picker opened on: the cursor is not in the grid yet.
+				const openDate = cloneDate(picker.getInitialFocusDate());
+				const currentFocusDate = initialFocus ? openDate : this.#getCursorDate(openDate, view);
+				const focusDate = initialFocus
+					? this.#findInitialFocusDate(currentFocusDate, view)
+					: this.#findAllowedFocusDate(currentFocusDate, view, keyMap[event.key][view])
+				;
+
+				// The first arrow press only enters the grid: a date equal to the cursor is still a move.
+				const boundaryReached = focusDate === null
+					|| (!initialFocus && isDatesEqual(focusDate, currentFocusDate, view))
+				;
+
+				if (boundaryReached)
 				{
-					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
+					picker.announcePeriodBoundary();
 				}
 				else
 				{
-					const increment = keyMap[event.key][view];
-					const focusDate = addDate(currentFocusDate, view, increment);
 					picker.setFocusDate(focusDate, { inputModality: 'keyboard' });
 				}
 
 				this.#adjustLastFocusElement();
 			}
 		}
+	}
+
+	#moveTimeFocus(key: string, initialFocus: boolean): void
+	{
+		const picker = this.#datePicker;
+		const timePicker: TimePickerGrid = picker.getPicker('time');
+		let currentFocusDate = cloneDate(picker.getInitialFocusDate(timePicker.getMode()));
+		const { hours, minutes } = getDate(currentFocusDate);
+
+		if (initialFocus)
+		{
+			picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
+			this.#adjustLastFocusElement();
+		}
+		else if (timePicker.getFocusColumn() === 'hours')
+		{
+			currentFocusDate = setTime(currentFocusDate, this.#wrapHours(hours + keyMap[key].hours), null, null);
+			picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
+			this.#adjustLastFocusElement();
+		}
+		else if (timePicker.getFocusColumn() === 'minutes')
+		{
+			const increment = timePicker.getCurrentMinuteStep() * keyMap[key].minutes;
+			currentFocusDate = setTime(currentFocusDate, null, this.#wrapMinutes(minutes + increment), null);
+			picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
+			timePicker.adjustMinuteFocusPosition();
+			this.#adjustLastFocusElement();
+		}
+	}
+
+	#wrapHours(hours: number): number
+	{
+		if (hours < 0)
+		{
+			return hours + 24;
+		}
+
+		return hours > 23 ? hours - 24 : hours;
+	}
+
+	#wrapMinutes(minutes: number): number
+	{
+		if (minutes < 0)
+		{
+			return minutes + 60;
+		}
+
+		return minutes > 59 ? minutes - 60 : minutes;
+	}
+
+	// A changed boundary leaves the stored cursor outside the range, and the grid holds it at the bound.
+	// The move counts in units of the grid, so the parts of the date it does not show are kept.
+	#getCursorDate(openDate: Date, view: 'day' | 'month' | 'year'): Date
+	{
+		const boundDate = this.#datePicker.clampDate(openDate, view);
+
+		return addDate(openDate, view, getDateOffset(openDate, boundDate, view));
+	}
+
+	#findAllowedFocusDate(currentFocusDate: Date, view: 'day' | 'month' | 'year', increment: number): Date | null
+	{
+		return this.#resolveAllowedDate(addDate(currentFocusDate, view, increment), view, increment);
+	}
+
+	// The first arrow press only moves the cursor into the grid: it starts from the date the picker opened on.
+	// Nothing available ahead of that date still leaves the range behind it, so the search turns back.
+	#findInitialFocusDate(focusDate: Date, view: 'day' | 'month' | 'year'): Date | null
+	{
+		return this.#resolveAllowedDate(focusDate, view, 1) ?? this.#resolveAllowedDate(focusDate, view, -1);
+	}
+
+	// A cursor on a date the range does not offer leaves the grid without a cell to focus. A target beyond
+	// the bound goes to the bound itself, and the steps are left to the dates disabled inside the range.
+	#resolveAllowedDate(targetDate: Date, view: 'day' | 'month' | 'year', increment: number): Date | null
+	{
+		const picker = this.#datePicker;
+		let focusDate = picker.clampDate(targetDate, view);
+		const searchIncrement = focusDate.getTime() === targetDate.getTime()
+			? increment
+			: Math.sign(focusDate.getTime() - targetDate.getTime())
+		;
+
+		for (let step = 0; step < MAX_FOCUS_DATE_SEARCH_STEPS; step++)
+		{
+			if (picker.isDateAllowed(focusDate, view))
+			{
+				return focusDate;
+			}
+
+			const nextDate = picker.clampDate(addDate(focusDate, view, searchIncrement), view);
+			if (nextDate.getTime() === focusDate.getTime())
+			{
+				return null;
+			}
+
+			focusDate = nextDate;
+		}
+
+		return null;
 	}
 
 	#isRootContainerFocused(): boolean

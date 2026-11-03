@@ -1,6 +1,5 @@
 <?php
 $MESS["IM_MESSENGER_OPEN_CALL"] = "Make a call";
-$MESS["IM_MESSENGER_OPEN_COPILOT"] = "Open CoPilot";
 $MESS["IM_MESSENGER_OPEN_EMAIL"] = "View e-mail";
 $MESS["IM_MESSENGER_OPEN_MESSENGER"] = "Open Instant Messenger";
 $MESS["IM_MESSENGER_OPEN_MESSENGER_2"] = "Open Chat and Calls";

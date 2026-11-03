@@ -1,0 +1,101 @@
+/* The height of the header belongs to the header alone: the shells of the pages lay the editor
+   under it and take the value from here instead of repeating it. */
+:root {
+	--disk-document-header-height: 58px;
+}
+
+/* The place the header is mounted into: the styles of the extension reach the page before the
+   header does, so the place is held from the first paint. Only the height belongs here - the
+   background and the shadow come with the header, or an empty strip would show up before it. */
+.disk-document-header-container {
+	height: var(--disk-document-header-height);
+}
+
+.disk-document-header {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	height: var(--disk-document-header-height);
+	padding: 0 var(--ui-space-inset-lg) 0 var(--ui-space-inset-lg2);
+	background: var(--ui-color-bg-content-primary);
+	/* box-shadow-contrast-default of the design system: its blur token carries a filter function,
+	   so only the color of the shadow is taken from a token here */
+	box-shadow: 0 1px 2px 0 var(--ui-color-box-shadow-contrast-default-color, rgba(0, 0, 0, 0.1));
+	/* the header gives up information as it narrows and never grows a horizontal scrollbar */
+	overflow: hidden;
+}
+
+/* the words next to the icons are given up at this width, and the spacing around them with them:
+   every control has to fit into 320px, and what is left over goes to the name of the object */
+.disk-document-header.--compact {
+	gap: var(--ui-space-inline-2xs);
+	padding: 0 var(--ui-space-inset-sm);
+}
+
+.disk-document-header.--compact .disk-document-header__start {
+	gap: var(--ui-space-inline-2xs);
+}
+
+.disk-document-header.--compact .disk-document-header__end {
+	gap: var(--ui-space-inline-xs);
+}
+
+.disk-document-header__start {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	/* without it the name of the object refuses to shorten */
+	min-width: 0;
+}
+
+.disk-document-header__end {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+}
+
+.disk-document-header__logo {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 1px;
+	color: var(--ui-color-base-1);
+	text-decoration: none;
+}
+
+/* the typography of the design system carries a color of its own, and here it belongs to the mark */
+.disk-document-header__logo-name {
+	color: inherit;
+}
+
+/* The clock of the portal mark is a brand glyph and not a part of any icon set of the design
+   system, so it is drawn as a mask and takes the color of the mark itself. */
+.disk-document-header__logo-clock {
+	flex: 0 0 auto;
+	width: 10px;
+	height: 16px;
+	background: currentColor;
+	-webkit-mask-image: url(./images/logo-clock.svg);
+	mask-image: url(./images/logo-clock.svg);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: 10px 16px;
+	mask-size: 10px 16px;
+}
+
+.disk-document-header__logo:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+.disk-document-header__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 22px;
+	background: var(--ui-color-divider-accent);
+}

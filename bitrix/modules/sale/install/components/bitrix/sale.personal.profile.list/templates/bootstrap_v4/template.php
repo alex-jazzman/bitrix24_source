@@ -56,8 +56,8 @@ if (count($arResult["PROFILES"]))
 								?>
 								<th scope="col">
 									<?=Loc::getMessage("P_".$column)?>
-									<a class="sale-personal-profile-list-arrow-up" href="<?=$arResult['URL']?>by=<?=$column?>&order=asc#nav_start"><i class="fa fa-chevron-up"></i></a>
-									<a class="sale-personal-profile-list-arrow-down" href="<?=$arResult['URL']?>by=<?=$column?>&order=desc#nav_start"><i class="fa fa-chevron-down"></i></a>
+									<a class="sale-personal-profile-list-arrow-up" tabindex="-1" aria-hidden="true" href="<?=$arResult['URL']?>by=<?=$column?>&order=asc#nav_start"><i class="fa fa-chevron-up"></i></a>
+									<a class="sale-personal-profile-list-arrow-down" tabindex="-1" aria-hidden="true" href="<?=$arResult['URL']?>by=<?=$column?>&order=desc#nav_start"><i class="fa fa-chevron-down"></i></a>
 								</th>
 								<?
 							}
@@ -75,9 +75,11 @@ if (count($arResult["PROFILES"]))
 							<td><?= $val["NAME"] ?></td>
 							<td><?= $val["PERSON_TYPE"]["NAME"] ?></td>
 							<td class="text-right">
-								<a title="<?= Loc::getMessage("SALE_DETAIL_DESCR") ?>" href="<?= $val["URL_TO_DETAIL"] ?>"><?= GetMessage("SALE_DETAIL") ?></a>
+								<a aria-label="<?= Loc::getMessage("STPPL_DETAIL_ARIA", ["#NAME#" => $val["NAME"]]) ?>"
+									href="<?= $val["URL_TO_DETAIL"] ?>"><?= GetMessage("SALE_DETAIL") ?></a>
 								<span class="sale-personal-profile-list-border"></span>
-								<a class="sale-personal-profile-list-close-button" title="<?= Loc::getMessage("SALE_DELETE_DESCR") ?>"
+								<a class="sale-personal-profile-list-close-button"
+									aria-label="<?= Loc::getMessage("STPPL_DELETE_ARIA", ["#NAME#" => $val["NAME"]]) ?>"
 									href="javascript:if(confirm('<?= Loc::getMessage("STPPL_DELETE_CONFIRM") ?>')) window.location='<?= $val["URL_TO_DETELE"] ?>'">
 									<?= Loc::getMessage("SALE_DELETE") ?>
 								</a>

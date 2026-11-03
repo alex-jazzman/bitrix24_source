@@ -14,7 +14,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global CMain $APPLICATION
  * @global CUser $USER
  */
-
 use Bitrix\Rest\Internal\Service\MemoryLimitChecker;
 
 if (!CModule::IncludeModule('rest'))
@@ -135,6 +134,7 @@ $APPLICATION->RestartBuffer();
 $output = $server->output($result);
 if ($output instanceof \Bitrix\Main\HttpResponse)
 {
+	// such a response drops the portal buffer and terminates the request on its own
 	$server->sendHeadersAdditional();
 	$output->send();
 }
@@ -144,5 +144,7 @@ else
 	echo $output;
 }
 
+// a streamed response never gets here: it terminates the request itself. The file branch can,
+// when CFile::ViewByUser() bails out early, and it still needs the regular finalization.
 CMain::FinalActions();
 die;

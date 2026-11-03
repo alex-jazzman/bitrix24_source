@@ -14,11 +14,13 @@ use Bitrix\Vibecodeconnector\Internal\Entity\Catalog\CatalogListState;
 use Bitrix\Vibecodeconnector\Internal\Integration\Main\AccessCodes;
 use Bitrix\Vibecodeconnector\Internal\Integration\Main\IconStorageService;
 use Bitrix\Vibecodeconnector\Internal\Integration\Main\UserNameResolver;
+use Bitrix\Vibecodeconnector\Internal\Integration\Intranet\IntranetGate;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\CatalogItemFilter;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\CatalogItemPager;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\CatalogItemRepository;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\CatalogItemSort;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\ViewedRepository;
+use Bitrix\Vibecodeconnector\Internal\Service\Catalog\AppChat\AppChatOwnerFlagsResolver;
 use Bitrix\Vibecodeconnector\Internal\Service\Catalog\NewApps\BaselineResolver;
 use Bitrix\Vibecodeconnector\Internal\Service\Catalog\NewApps\NewAppsCountCache;
 use Bitrix\Vibecodeconnector\Public\Dto\CatalogItem;
@@ -34,6 +36,8 @@ final class CatalogProvider
 		private readonly BaselineResolver $baselineResolver = new BaselineResolver(),
 		private readonly NewAppsCountCache $countCache = new NewAppsCountCache(),
 		private readonly ViewedRepository $viewedRepository = new ViewedRepository(),
+		private readonly IntranetGate $intranetGate = new IntranetGate(),
+		private readonly AppChatOwnerFlagsResolver $appChatOwnerFlags = new AppChatOwnerFlagsResolver(),
 	) {}
 
 	/**
@@ -76,6 +80,7 @@ final class CatalogProvider
 			->accessibleToUser($userId, $userCodes)
 			->query($query)
 			->hiddenState($state->hiddenPredicate())
+			->favoriteState($state->favoritePredicate())
 		;
 
 		$views = iterator_to_array($this->itemRepository->getListForUser(
@@ -91,7 +96,7 @@ final class CatalogProvider
 		$pageItemIds = $this->pageItemIds($views, $pageSize);
 		$newAppItemIds = $this->itemRepository->getNewAppItemIds($userId, $userCodes, $baseline, $pageItemIds);
 
-		$collection = $this->toCollection($views, $newAppItemIds);
+		$collection = $this->toCollection($views, $userId, $userCodes, $newAppItemIds);
 		$this->markViewed($userId, $newAppItemIds, $markViewing);
 
 		return $collection;
@@ -135,7 +140,7 @@ final class CatalogProvider
 		// of the first page keeps the badge on the cards it has just marked.
 		$pageItemIds = $this->pageItemIds($views, $pageSize);
 
-		$collection = $this->toCollection($views, $pageItemIds);
+		$collection = $this->toCollection($views, $userId, $userCodes, $pageItemIds);
 		$this->markViewed($userId, $pageItemIds, $markViewing);
 
 		return $collection;
@@ -212,10 +217,11 @@ final class CatalogProvider
 
 	public function listDiscoverableToUser(int $userId, ?string $query = null, int $offset = 0, int $limit = 20): CatalogItemCollection
 	{
+		$userCodes = $this->accessCodes->getUserCodes($userId);
 		$filter = (new CatalogItemFilter())
 			->accessType(CatalogItemAccessType::ACL)
 			->ownerUserNotId($userId)
-			->notGrantedTo($this->accessCodes->getUserCodes($userId))
+			->notGrantedTo($userCodes)
 			->query($query)
 		;
 
@@ -226,12 +232,14 @@ final class CatalogProvider
 			new CatalogItemPager($offset, $limit),
 		);
 
-		return $this->toCollection($views);
+		return $this->toCollection($views, $userId, $userCodes);
 	}
 
 	public function listNonPrivate(int $userId, ?string $query = null, int $offset = 0, int $limit = 20): CatalogItemCollection
 	{
+		$userCodes = $this->accessCodes->getUserCodes($userId);
 		$filter = (new CatalogItemFilter())
+			->accessibleToUser($userId, $userCodes)
 			->accessTypeNot(CatalogItemAccessType::Private)
 			->query($query)
 		;
@@ -243,7 +251,7 @@ final class CatalogProvider
 			new CatalogItemPager($offset, $limit),
 		);
 
-		return $this->toCollection($views);
+		return $this->toCollection($views, $userId, $userCodes);
 	}
 
 	public function isEmptyForUser(int $userId): bool
@@ -267,7 +275,12 @@ final class CatalogProvider
 	 * @param iterable<CatalogItemForUser> $views
 	 * @param int[] $newAppItemIds
 	 */
-	private function toCollection(iterable $views, array $newAppItemIds = []): CatalogItemCollection
+	private function toCollection(
+		iterable $views,
+		int $userId,
+		array $userCodes,
+		array $newAppItemIds = [],
+	): CatalogItemCollection
 	{
 		$views = is_array($views) ? $views : iterator_to_array($views);
 
@@ -279,6 +292,14 @@ final class CatalogProvider
 
 		$iconUrls = $this->resolveIconUrls($views);
 		$newAppItemIdSet = array_flip($newAppItemIds);
+		$grantedAclItemIdSet = $this->resolveGrantedAclItemIds($views, $userCodes);
+		$isEmployee = $this->intranetGate->isIntranet($userId);
+		$ownAppChatFlags = $isEmployee
+			? $this->appChatOwnerFlags->resolve(
+				array_map(static fn(CatalogItemForUser $view): InternalCatalogItem => $view->item, $views),
+				$userId,
+			)
+			: [];
 
 		$dtos = [];
 		foreach ($views as $view)
@@ -287,10 +308,65 @@ final class CatalogProvider
 			$iconFileId = $view->item->getIconFileId();
 			$iconUrl = $iconFileId !== null ? ($iconUrls[$iconFileId] ?? null) : null;
 			$isNew = isset($newAppItemIdSet[$view->item->getId()]);
-			$dtos[] = $this->toDto($view, $ownerNames[$ownerId] ?? null, $iconUrl, $isNew);
+			$appChatAccessible = $this->isAppChatAccessible(
+				$view,
+				$userId,
+				$grantedAclItemIdSet,
+				$isEmployee,
+			);
+			$appChatFlags = $ownAppChatFlags[(int)$view->item->getId()] ?? null;
+			$dtos[] = $this->toDto(
+				$view,
+				$ownerNames[$ownerId] ?? null,
+				$iconUrl,
+				$isNew,
+				$appChatAccessible,
+				$appChatFlags['creatable'] ?? false,
+				$appChatFlags['writingAllowed'] ?? null,
+			);
 		}
 
 		return new CatalogItemCollection(...$dtos);
+	}
+
+	private function resolveGrantedAclItemIds(array $views, array $userCodes): array
+	{
+		$aclItemIds = [];
+		foreach ($views as $view)
+		{
+			if ($view->item->getAccessType() === CatalogItemAccessType::ACL)
+			{
+				$aclItemIds[] = (int)$view->item->getId();
+			}
+		}
+
+		return array_fill_keys($this->itemRepository->filterGrantedItemIds($aclItemIds, $userCodes), true);
+	}
+
+	private function isAppChatAccessible(
+		CatalogItemForUser $view,
+		int $userId,
+		array $grantedAclItemIdSet,
+		bool $isEmployee,
+	): bool
+	{
+		$item = $view->item;
+		if (!$isEmployee || $item->getAppChatId() === null)
+		{
+			return false;
+		}
+
+		if ($item->getOwnerId() === $userId)
+		{
+			return true;
+		}
+
+		return match ($item->getAccessType())
+		{
+			CatalogItemAccessType::Public => true,
+			CatalogItemAccessType::ACL => isset($grantedAclItemIdSet[(int)$item->getId()]),
+			CatalogItemAccessType::Private => false,
+		};
 	}
 
 	/**
@@ -346,6 +422,9 @@ final class CatalogProvider
 		?string $ownerName = null,
 		?string $iconUrl = null,
 		bool $isNew = false,
+		bool $appChatAccessible = false,
+		bool $appChatCreatable = false,
+		?bool $appChatWritingAllowed = null,
 	): CatalogItem
 	{
 		$item = $view->item;
@@ -361,6 +440,7 @@ final class CatalogProvider
 			editUrl: $item->getEditUrl(),
 			viewUrl: $item->getViewUrl(),
 			chatId: $item->getChatId(),
+			appChatId: $item->getAppChatId(),
 			externalId: $item->getExternalId(),
 			ownerId: $item->getOwnerId(),
 			ownerName: $ownerName,
@@ -368,7 +448,13 @@ final class CatalogProvider
 			isPinned: $view->isPinned,
 			isMine: $view->isOwnedByUser,
 			createdAt: $item->getCreatedAt()?->getTimestamp(),
+			accessType: $item->getAccessType()->value,
+			launched: $view->isLastOpened,
+			appChatAccessible: $appChatAccessible,
+			appChatCreatable: $appChatCreatable,
+			appChatWritingAllowed: $appChatWritingAllowed,
 			isHidden: $view->isHidden,
+			isFavorite: $view->isFavorite,
 			isNew: $isNew,
 			isDescriptionDefault: $isDescriptionDefault,
 		);

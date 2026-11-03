@@ -1,0 +1,21 @@
+.call-logo {
+	--call-logo-height: 22px;
+
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--call-logo-height);
+}
+
+.call-logo.--white svg{
+	fill: #fff;
+}
+
+.call-logo svg {
+	width: 100%;
+	max-width: 100%;
+	height: 100%;
+	max-height: 100%;
+	fill-opacity: 0.8;
+}

@@ -13,6 +13,7 @@ import {
 	Application as ApplicationModel,
 	Consent as ConsentModel,
 	PaySystem as PaySystemModel } from 'sale.checkout.model'
+import 'ui.design-tokens.air';
 
 import './view'
 

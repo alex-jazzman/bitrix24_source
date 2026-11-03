@@ -45,7 +45,7 @@ if ($arResult['FATAL'])
 			<?= Loc::getMessage('LANDING_TPL_COL_ACT_' . $item['ACTIVE'])?>
 		</td>
 		<td>
-			<a href="//<?= \htmlspecialcharsbx($item['DOMAIN'])?>" target="_bllank"><?= \htmlspecialcharsbx($item['DOMAIN'])?></a><br/>
+			<a href="//<?= \htmlspecialcharsbx($item['DOMAIN'])?>" target="_blank"><?= \htmlspecialcharsbx($item['DOMAIN'])?></a><br/>
 		</td>
 		<td>
 			<small>

@@ -1,15 +1,18 @@
-import { getCrmMode } from 'crm.integration.analytics';
-import { type EventHandler } from 'crm.template.editor';
-import { ajax as Ajax, Cache, Loc, Runtime, Type } from 'main.core';
+import { ajax as Ajax, Cache, Loc, Runtime, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import {
 	Editor as MessageServiceEditor,
 	type EditorOptions as MessageServiceEditorOptions,
-	type State as MessageServiceState,
 	replaceCustomMessagePlaceholders,
+	type State as MessageServiceState,
+	type TemplateBinding,
+	type TemplatePlaceholder,
 } from 'messageservice.message.editor';
 import { type FilledPlaceholder } from 'messageservice.template.editor';
+
+import { getCrmMode } from 'crm.integration.analytics';
+import { type EventHandler } from 'crm.template.editor';
 
 import { CrmValuesContentProvider } from './content-provider/crm-values-content-provider';
 import { DocumentsContentProvider } from './content-provider/documents-content-provider';
@@ -25,6 +28,8 @@ const SIMPLY_PROXIED_EVENTS = [
 	'onTemplateChange',
 	'onStateChange',
 ];
+const PAYMENT_SCENE_ID = 'crm.payment.details';
+const SALESCENTER_PAYMENT_LINK_ATTR = 'salescenterPaymentLink';
 
 export type EditorOptions = MessageServiceEditorOptions & {
 	analytics: Pick<MessageServiceEditorOptions['analytics'], 'c_section' | 'c_sub_section'>,
@@ -102,6 +107,21 @@ export class Editor extends EventEmitter
 				),
 			},
 		};
+	}
+
+	/**
+	 * Notify the editor that a real send attempt has started. Host scenes that
+	 * drive sending themselves (e.g. payment) call this in their send-attempt
+	 * point instead of using the editor footer. It does not emit `onSend`.
+	 * No-op until the editor is rendered.
+	 */
+	handleSendAttempt(): void
+	{
+		// handleSendAttempt() comes from a newer messageservice bundle.
+		if (Type.isFunction(this.#innerEditor?.handleSendAttempt))
+		{
+			this.#innerEditor.handleSendAttempt();
+		}
 	}
 
 	/**
@@ -228,11 +248,61 @@ export class Editor extends EventEmitter
 	#getEvents(): Object
 	{
 		const events = {
+			...this.#getTemplateEvents(),
 			onBeforeRender: async () => {
 				await this.#load();
 
 				this.#innerEditor.setOptions(this.#mapOptions());
 			},
+			onSend: () => {
+				return this.#locator.getSendService().sendMessage(this.getState());
+			},
+			onMessageBodyChange: (event: BaseEvent) => {
+				const { body, oldBody } = event.getData();
+				const escape = this.#locator.getEscapeService();
+				const knownCodes = this.#locator.getPlaceholderService().getKnownCodes(this.#innerEditor.getState());
+
+				this.emit('onMessageBodyChange', {
+					body: escape.encode(body ?? '', knownCodes),
+					oldBody: escape.encode(oldBody ?? '', knownCodes),
+				});
+			},
+			onBeforeAddChannelOpen: (event: BaseEvent) => {
+				event.preventDefault();
+
+				void Runtime.loadExtension('crm.router').then(({ Router }) => {
+					return Router.Instance.openMessageSenderConnectionsSlider({
+						c_section: this.#options.analytics?.c_section,
+						c_sub_section: this.#options.analytics?.c_sub_section,
+					});
+				}).then(() => {
+					void this.reload();
+				});
+			},
+			'CustomTemplate:onFormRequested': (event: BaseEvent) => {
+				this.#handleOpenForm(event.getData());
+			},
+			'CustomTemplate:onListRequested': (event: BaseEvent) => {
+				this.#handleOpenList(event.getData());
+			},
+			onTemplatePlaceholderInsert: (event: BaseEvent) => {
+				this.#handlePlaceholderInsert(event);
+			},
+		};
+
+		for (const eventName of SIMPLY_PROXIED_EVENTS)
+		{
+			events[eventName] = (event: BaseEvent) => {
+				this.emit(eventName, event.getData());
+			};
+		}
+
+		return events;
+	}
+
+	#getTemplateEvents(): Object
+	{
+		return {
 			onLoadPreview: async (event: BaseEvent) => {
 				const handler = await this.#getTemplateEventHandler();
 
@@ -310,41 +380,7 @@ export class Editor extends EventEmitter
 					});
 				});
 			},
-			onSend: () => {
-				return this.#locator.getSendService().sendMessage(this.getState());
-			},
-			onMessageBodyChange: (event: BaseEvent) => {
-				const { body, oldBody } = event.getData();
-				const escape = this.#locator.getEscapeService();
-				const knownCodes = this.#locator.getPlaceholderService().getKnownCodes(this.#innerEditor.getState());
-
-				this.emit('onMessageBodyChange', {
-					body: escape.encode(body ?? '', knownCodes),
-					oldBody: escape.encode(oldBody ?? '', knownCodes),
-				});
-			},
-			onBeforeAddChannelOpen: (event: BaseEvent) => {
-				event.preventDefault();
-
-				void Runtime.loadExtension('crm.router').then(({ Router }) => {
-					return Router.Instance.openMessageSenderConnectionsSlider({
-						c_section: this.#options.analytics?.c_section,
-						c_sub_section: this.#options.analytics?.c_sub_section,
-					});
-				}).then(() => {
-					void this.reload();
-				});
-			},
 		};
-
-		for (const eventName of SIMPLY_PROXIED_EVENTS)
-		{
-			events[eventName] = (event: BaseEvent) => {
-				this.emit(eventName, event.getData());
-			};
-		}
-
-		return events;
 	}
 
 	#getTemplateEventHandler(): Promise<EventHandler>
@@ -361,6 +397,139 @@ export class Editor extends EventEmitter
 
 			return this.#templateEventHandler;
 		});
+	}
+
+	/**
+	 * Bridge the inner editor's `CustomTemplate:onFormRequested` intent to the
+	 * single canonical form opener exported by `crm.messagesender.custom-template.editor`.
+	 *
+	 * The opener fetches its own editor options through the CRM AJAX endpoint
+	 * `crm.messagesender.editor.loadCustomTemplate` — so we don't have to forward
+	 * channels/providers/layout from this surface.
+	 */
+	#handleOpenForm(payload: {
+		mode: 'create' | 'edit',
+		templateId: ?number,
+		titleInitial?: string,
+		bodyInitial?: string,
+		bindElement?: ?HTMLElement,
+		binding: TemplateBinding,
+	}): void
+	{
+		void Runtime.loadExtension('crm.messagesender.custom-template.editor').then(({ openCustomTemplateForm }) => {
+			return openCustomTemplateForm({
+				mode: payload.mode,
+				templateId: payload.templateId,
+				scene: payload.binding.sceneId,
+				targetId: payload.binding.targetId,
+				titleInitial: payload.titleInitial ?? '',
+				bodyInitial: payload.bodyInitial ?? '',
+				bindElement: payload.bindElement ?? null,
+			});
+		});
+	}
+
+	#handleOpenList(payload: { binding: TemplateBinding }): void
+	{
+		const { sceneId, targetId } = payload.binding;
+		if (!Type.isStringFilled(sceneId) || !Type.isStringFilled(targetId))
+		{
+			return;
+		}
+
+		void Runtime.loadExtension('crm.router').then(({ Router }) => {
+			const url = `/crm/messagesender/templates/${encodeURIComponent(sceneId)}/${encodeURIComponent(targetId)}/`;
+
+			return Router.openSlider(url, {
+				allowChangeHistory: false,
+				cacheable: false,
+			});
+		});
+	}
+
+	/**
+	 * Per-placeholder insert hook of the inner editor. Decide keep/remove for the
+	 * current recipient by comparing the placeholder origin (stamped at pick time)
+	 * with the current context. Only this editor's own zone is handled; foreign
+	 * zones are left to their own subscribers.
+	 *
+	 * The string `targetId` is never parsed here — only the structural origin
+	 * attributes are read.
+	 */
+	#handlePlaceholderInsert(event: BaseEvent): void
+	{
+		const { placeholder, existingPlaceholders, binding } = event.getData();
+		if (binding?.zoneId !== this.#options.scene?.templateBinding?.zoneId)
+		{
+			return;
+		}
+
+		if (this.#shouldRemovePlaceholder(placeholder?.attrs ?? {}, existingPlaceholders ?? []))
+		{
+			event.preventDefault();
+		}
+	}
+
+	#shouldRemovePlaceholder(
+		attrs: { [key: string]: string },
+		existingPlaceholders: Array<TemplatePlaceholder>,
+	): boolean
+	{
+		if (Text.toBoolean(attrs[SALESCENTER_PAYMENT_LINK_ATTR]))
+		{
+			if (this.#options.scene?.templateBinding?.sceneId !== PAYMENT_SCENE_ID)
+			{
+				return true;
+			}
+
+			// The payment scene body holds at most one payment link: the link is
+			// non-removable, so a duplicate would be stuck in the message forever.
+			return existingPlaceholders.some(
+				(existing) => Text.toBoolean(existing.attrs?.[SALESCENTER_PAYMENT_LINK_ATTR]),
+			);
+		}
+
+		// No origin classification (legacy / context-free placeholder) → keep.
+		if (!Type.isStringFilled(attrs.entityTypeId))
+		{
+			return false;
+		}
+
+		const { entityTypeId } = this.#options.context.customData;
+		const entityTypeMatches = attrs.entityTypeId === String(entityTypeId);
+
+		// Base entity field — keep only when the entity type matches.
+		if (!Text.toBoolean(attrs.isUf))
+		{
+			return !entityTypeMatches;
+		}
+
+		// User fields whose visibility does not depend on the category (Deal, Lead,
+		// smart processes) are shared across categories — only the entity type must
+		// match.
+		if (!Text.toBoolean(attrs.categoryDependent))
+		{
+			return !entityTypeMatches;
+		}
+
+		// Category-governed user fields (Contact, Company) must match both the
+		// entity type and the category of the current recipient.
+		return !(entityTypeMatches && this.#categoryMatches(attrs.categoryId));
+	}
+
+	#categoryMatches(originCategoryId: ?string): boolean
+	{
+		const { categoryId } = this.#options.context.customData;
+
+		return this.#normalizeCategoryId(originCategoryId) === this.#normalizeCategoryId(categoryId);
+	}
+
+	#normalizeCategoryId(value: ?string | ?number): string
+	{
+		// A missing category means the default category. The picker stamps the
+		// default as '0' (binding is normalized to `...:0`), while a category-free
+		// CRM context leaves it nil, so both sides collapse to '0' here.
+		return Type.isStringFilled(value) || Type.isNumber(value) ? String(value) : '0';
 	}
 
 	#load(): Promise<void>

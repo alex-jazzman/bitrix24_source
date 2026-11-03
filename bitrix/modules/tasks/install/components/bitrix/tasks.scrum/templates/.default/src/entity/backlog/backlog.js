@@ -146,14 +146,16 @@ export class Backlog extends Entity
 		}
 	}
 
-	removeItem(item: Item)
+	removeItems(items: Array<Item>, removeNodes: boolean = false): number
 	{
-		super.removeItem(item);
+		const removedCount = super.removeItems(items, removeNodes);
 
 		if (this.isEmpty())
 		{
 			this.emit('showBlank');
 		}
+
+		return removedCount;
 	}
 
 	onAfterAppend()

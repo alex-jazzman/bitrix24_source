@@ -1,0 +1,55 @@
+/*
+ * The popup shell is given the 440px of the mockup and no inset of its own, so the
+ * dialog fills it edge to edge and carries the surface itself - the way the picker
+ * frame does inside its own popup.
+ */
+.disk-destination-picker-conflict-dialog {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-lg);
+	border-radius: var(--ui-border-radius-2xl);
+	background: var(--ui-color-bg-popup-primary);
+}
+
+.disk-destination-picker-conflict-dialog__header {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+}
+
+.disk-destination-picker-conflict-dialog__title {
+	flex-grow: 1;
+	min-width: 0;
+	color: var(--ui-color-base-1);
+}
+
+/* Same bare 24x24 control as the picker frame: no background, no hover highlight,
+   only the 20px glyph. */
+.disk-destination-picker-conflict-dialog__close {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	cursor: pointer;
+}
+
+.disk-destination-picker-conflict-dialog__text {
+	color: var(--ui-color-base-1);
+}
+
+/* [secondary][primary], as in the footer of the popup: the refusal is a control of
+   its own, so the single outcome does not agree on the person's behalf. */
+.disk-destination-picker-conflict-dialog__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	margin-top: var(--ui-space-stack-2xs);
+}

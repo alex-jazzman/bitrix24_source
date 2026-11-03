@@ -1,5 +1,9 @@
 
-.product-item-container { position: relative; }
+/* The red of the labels has no semantic token behind it: the alias carries the role, a token its value. */
+.product-item-container {
+	--iblock-bootstrap-v4-color-label: var(--ui-color-red-80);
+	position: relative;
+}
 
 .product-item-container.hover { z-index: 17; }
 
@@ -217,7 +221,6 @@
 	left: 0;
 	display: block;
 	height: 1px;
-	background-color: var(--theme-color-primary);
 	opacity: .8;
 }
 
@@ -242,18 +245,21 @@
 	display: inline-block;
 	width: 12px;
 	height: 12px;
+	padding: 0;
+	border: 0;
 	border-radius: 50%;
-	background-color: rgba(128, 128, 128, .8);
-	opacity: .6;
+	background-color: var(--ui-color-base-3);
 	cursor: pointer;
-	transition: all 300ms ease;
+	/* Only the colour is animated: a ring drawn over the dot has to appear the moment it is focused. */
+	transition: background-color 300ms ease;
 }
 
 .product-item-image-slider-control:hover,
 .product-item-image-slider-control.active:hover { cursor: pointer; }
 
-.product-item-image-slider-control.active,
-.product-item-image-slider-control:hover { background-color: var(--primary); }
+.product-item-image-slider-control.active { background-color: var(--ui-color-base-1); }
+
+.product-item-image-slider-control:hover { background-color: var(--ui-color-base-2); }
 
 /*Label*/
 .product-item-label-text,
@@ -267,8 +273,8 @@
 	display: inline-block;
 	clear: both;
 	margin-bottom: 2px;
-	background: #f42c2c;
-	color: #fff;
+	background: var(--iblock-bootstrap-v4-color-label);
+	color: var(--ui-color-base-white-fixed);
 	vertical-align: middle;
 	text-align: center;
 	transition: all 250ms ease;
@@ -345,66 +351,64 @@
 }
 
 /*RING*/
+/* The size below is the smallest the circle takes: bigger type widens it and the ratio keeps it round. */
 .product-item-label-ring {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	box-sizing: border-box;
+	aspect-ratio: 1;
 	border-radius: 50%;
 	font-weight: bold;
 }
 
 .product-item-label-ring.product-item-label-small,
 .product-item-scalable-card.hover .product-item-label-ring.product-item-label-small {
-	width: 40px;
-	height: 40px;
+	min-width: 40px;
+	min-height: 40px;
 	font-size: 14px;
-	line-height: 40px;
 }
 
 .product-item-big-card .product-item-label-ring.product-item-label-small {
-	width: 100px;
-	height: 100px;
+	min-width: 100px;
+	min-height: 100px;
 	font-size: 30px;
-	line-height: 100px;
 }
 
 .product-item-label-ring.product-item-label-big,
 .product-item-scalable-card.hover .product-item-label-ring.product-item-label-big {
-	width: 50px;
-	height: 50px;
+	min-width: 50px;
+	min-height: 50px;
 	font-size: 18px;
-	line-height: 50px;
 }
 
 .product-item-big-card .product-item-label-ring.product-item-label-big {
-	width: 120px;
-	height: 120px;
+	min-width: 120px;
+	min-height: 120px;
 	font-size: 42px;
-	line-height: 120px;
 }
 
 @media (max-width: 767px) {
 	.product-item-label-ring.product-item-label-small,
 	.product-item-scalable-card.hover .product-item-label-ring.product-item-label-small {
 		--product-item-label-ring-size: 40px;
-		width: var(--product-item-label-ring-size);
-		height: var(--product-item-label-ring-size);
-		line-height: var(--product-item-label-ring-size);
+		min-width: var(--product-item-label-ring-size);
+		min-height: var(--product-item-label-ring-size);
 		font-size: 14px;
 	}
 
 	.product-item-big-card .product-item-label-ring.product-item-label-small,
 	.product-item-label-ring.product-item-label-big,
 	.product-item-scalable-card.hover .product-item-label-ring.product-item-label-big {
-		width: 35px;
-		height: 35px;
+		min-width: 35px;
+		min-height: 35px;
 		font-size: 12px;
-		line-height: 35px;
 	}
 
 	.product-item-big-card .product-item-label-ring.product-item-label-big {
-		width: 70px;
-		height: 70px;
+		min-width: 70px;
+		min-height: 70px;
 		font-size: 24px;
-		line-height: 70px;
 	}
 }
 
@@ -454,8 +458,13 @@
 .product-item-title a {
 	color: #3f3f3f;
 	text-decoration: none;
-	transition: 250ms linear all;
+	transition: 250ms linear all, outline 0s, outline-offset 0s, box-shadow 0s;
 }
+
+/* The theme repaints a focused or hovered link in its own light blue, 2,44 on the white of a card,
+   and the name of an open card is such a link. Same weight as the rule above, and later. */
+.product-item .product-item-title a:hover,
+.product-item .product-item-title a:focus { color: var(--ui-color-base-1); }
 
 .product-item-line-card .product-item-title {
 	white-space: normal;
@@ -479,26 +488,30 @@
 }
 
 @media (max-width: 575px) {
-	.product-item-big-card .product-item-title a { font-size: 16px; }
+	.product-item-big-card .product-item-title a,
+	.product-item-small-card .product-item-title a { font-size: 16px; }
+
+	/* At this width the row is shorter than the name itself: it is unfolded, not cut off. */
+	.product-item-title { white-space: normal; }
 }
 
 /*Price*/
 .product-item-price-container {
 	text-align: center;
+	/* A price of many digits carries no space to break at, and the block is as narrow as the card. */
+	overflow-wrap: anywhere;
 	line-height: 1;
 }
 
 .product-item-price-current {
 	color: #3f3f3f;
-	white-space: nowrap;
 	font-weight: bold;
 	font-size: 13px;
 }
 
 .product-item-price-old {
-	color: #a5a5a5;
+	color: var(--ui-color-base-2);
 	text-decoration: line-through;
-	white-space: nowrap;
 	font-size: 12px;
 }
 
@@ -550,9 +563,11 @@
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
+	flex-wrap: wrap;
 	position: relative;
 	max-width: 150px;
-	margin: 0 auto 15px;
+	/* The caption stands in the flow and brings its own line, so no gap is held open for it. */
+	margin: 0 auto -4px;
 }
 
 
@@ -562,13 +577,16 @@
 	display: block;
 	min-width: 22px;
 	height: 22px;
+	padding: 0;
+	border: 1px solid var(--ui-color-base-3);
 	border-radius: 2px;
 	background-color: #f2f2f2;
 	color: #fff;
 	vertical-align: middle;
 	text-align: center;
+	font: inherit;
 	cursor: pointer;
-	transition: background 300ms ease, opacity 300ms ease;
+	transition: background 300ms ease, opacity 300ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .bx-retina .product-item-amount-field-btn-plus,
@@ -577,6 +595,7 @@
 .product-item-amount-field-btn-plus:hover,
 .product-item-amount-field-btn-minus:hover { background: #d3d3d3; }
 
+/* The sign is a mask, not a background image: a token does not reach inside a data: URI. */
 .product-item-amount-field-btn-plus:after,
 .product-item-amount-field-btn-minus:after {
 	position: absolute;
@@ -584,14 +603,22 @@
 	right: 0;
 	bottom: 0;
 	left: 0;
+	background-color: var(--ui-color-base-2);
+	-webkit-mask-image: var(--iblock-bootstrap-v4-step-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 10px;
+	mask-image: var(--iblock-bootstrap-v4-step-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 10px;
 	content: "";
-	opacity: .8;
-	transition: opacity 300ms ease, background 300ms ease;
+	transition: background-color 300ms ease;
 }
 
 .product-item-amount-field-btn-disabled.product-item-amount-field-btn-plus:after,
 .product-item-amount-field-btn-disabled.product-item-amount-field-btn-minus:after {
-	opacity: .3 !important;
+	background-color: var(--ui-color-base-3);
 	cursor: default;
 }
 
@@ -600,30 +627,23 @@
 	background-color: #f2f2f2;
 }
 
-.product-item-amount-field-btn-plus:after {
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxwYXRoIGZpbGw9IiM1MjVDNjgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE4LDEyIEwxOCwwIEwxMiwwIEwxMiwxMiBMMCwxMiBMMCwxOCBMMTIsMTggTDEyLDMwIEwxOCwzMCBMMTgsMTggTDMwLDE4IEwzMCwxMiBMMTgsMTIgWiIvPjwvc3ZnPg==) no-repeat center;
-	background-size: 10px;
-}
+.product-item-amount-field-btn-plus:after { --iblock-bootstrap-v4-step-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxwYXRoIGZpbGw9IiM1MjVDNjgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE4LDEyIEwxOCwwIEwxMiwwIEwxMiwxMiBMMCwxMiBMMCwxOCBMMTIsMTggTDEyLDMwIEwxOCwzMCBMMTgsMTggTDMwLDE4IEwzMCwxMiBMMTgsMTIgWiIvPjwvc3ZnPg==); }
 
-.product-item-amount-field-btn-minus:after {
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI2IiB5PSIxMiIgZmlsbD0iIzUyNUM2OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+) no-repeat center;
-	background-size: 10px;
-}
+.product-item-amount-field-btn-minus:after { --iblock-bootstrap-v4-step-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI2IiB5PSIxMiIgZmlsbD0iIzUyNUM2OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+); }
 
-.product-item-amount-field-btn-plus:hover:after,
-.product-item-amount-field-btn-minus:hover:after { opacity: 1; }
-
-.product-item-amount-field-block {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
-	flex: 1;
-}
+/* The caption inside belongs to the row of the buttons, so the wrapper draws no box between them. */
+.product-item-amount-field-block { display: contents; }
 
 .product-item-amount-field {
 	display: block;
+	flex: 1;
 	padding: 0;
+	/* The row packs the field against the step buttons, so the ring outside its box needs room taken
+	   from the field. The box carries no paint, so giving its sides away moves nothing on screen. */
+	margin: 0 calc(var(--ui-focus-outline-offset) + var(--ui-focus-outline-width));
+	/* Caps the automatic minimum of the field, which is otherwise wider than the whole row. */
 	width: 100%;
-	height: 22px;
+	min-height: 22px;
 	border: 1px solid transparent;
 	border-radius: 2px;
 	background: transparent !important;
@@ -631,13 +651,12 @@
 	vertical-align: middle;
 	text-align: center;
 	font-weight: bold;
-	line-height: 22px;
-	transition: border 300ms ease;
+	/* Tied to the type, and the tightest ratio the box still holds: the 1.6 of the theme grows it. */
+	line-height: 1.25;
+	transition: border 300ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .bx-retina .product-item-amount-field { border-width: .5px; }
-
-.product-item-amount-field:focus { outline: none !important; }
 
 .bx-no-touch input.product-item-amount-field::-webkit-outer-spin-button,
 .bx-no-touch input.product-item-amount-field::-webkit-inner-spin-button {
@@ -646,13 +665,11 @@
 	appearance: none
 }
 
+/* A line of its own under the row of the buttons: the caption grows with the type, it does not cross them. */
 .product-item-amount-description-container {
-	position: absolute;
-	top: 100%;
-	left: 0;
-	right: 0;
-	color: #a5a5a5;
-	white-space: nowrap;
+	order: 1;
+	flex-basis: 100%;
+	color: var(--ui-color-base-2);
 	font-size: 12px;
 }
 
@@ -661,13 +678,6 @@
 .product-item-amount-description-container strong {
 	color: #333;
 	white-space: nowrap;
-}
-
-.product-item-amount-label-container {
-	margin: 5px 0;
-	color: #a5a5a5;
-	font-weight: bold;
-	font-size: 12px;
 }
 
 /**/
@@ -744,8 +754,8 @@
 
 .product-item-scu-list { margin: 0; }
 
+/* No clipping: the ring of a focused value stands outside the swatch, at the very edge of the row. */
 .product-item-scu-item-list {
-	overflow: hidden;
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -769,7 +779,7 @@
 .product-item-scu-item-color-block {
 	position: relative;
 	padding-top: 100%;
-	outline: 1px solid #c0cfda;
+	outline: 1px solid var(--ui-color-base-3);
 	cursor: pointer;
 }
 
@@ -795,7 +805,7 @@
 .product-item-scu-item-text-block {
 	position: relative;
 	padding: 0 5px;
-	outline: 1px solid #c0cfda;
+	outline: 1px solid var(--ui-color-base-3);
 	cursor: pointer;
 }
 
@@ -807,33 +817,57 @@
 
 .bx-retina .product-item-scu-item.selected .product-item-scu-item-text-block { outline-width: 1px; }
 
+/* The value is read in full: the box is narrow, so a long one wraps inside instead of being cut. */
 .product-item-scu-item-text {
 	overflow: hidden;
 	max-width: 100%;
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 	font-size: 11px;
 	line-height: 18px;
 }
 
+/* The swatch is a positioned box of its own, so the veil and the cross are ordered by z-index. */
 .product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block,
 .product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block {
 	position: relative;
-	outline-color: #a9adb4 !important;
+	z-index: 0;
+	outline-color: var(--ui-color-base-2) !important;
 }
 
-.product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block:after,
-.product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block:after {
+.product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block:before,
+.product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block:before {
 	position: absolute;
+	z-index: 1;
 	top: -2px;
 	right: -2px;
 	bottom: -2px;
 	left: -2px;
-	background: rgba(255, 255, 255, 0.75) url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=) no-repeat center;
-	background-size: 80% 80%;
+	background: rgba(255, 255, 255, .75);
+	content: "";
+}
+
+/* The cross is a mask, not a background image: a token does not reach inside a data: URI. */
+.product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block:after,
+.product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block:after {
+	--iblock-bootstrap-v4-cross-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=);
+	position: absolute;
+	z-index: 2;
+	top: -2px;
+	right: -2px;
+	bottom: -2px;
+	left: -2px;
+	background-color: var(--ui-color-base-2);
+	-webkit-mask-image: var(--iblock-bootstrap-v4-cross-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 80% 80%;
+	mask-image: var(--iblock-bootstrap-v4-cross-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 80% 80%;
 	content: "";
 }
 
@@ -841,7 +875,9 @@
 .product-item-scu-item-text-block:hover,
 .product-item-scu-item-color-block:hover,
 .product-item-scu-item-text-container.selected .product-item-scu-item-text-block,
-.product-item-scu-item-color-container.selected .product-item-scu-item-color-block { outline-color: #000; }
+.product-item-scu-item-color-container.selected .product-item-scu-item-color-block {
+	outline-color: var(--ui-color-base-1);
+}
 
 /*Description*/
 .product-item-description-container { }
@@ -854,7 +890,39 @@
 /*Buttons*/
 .product-item-button-container { text-align: center; }
 
-.product-item-button-container .btn { margin-bottom: 2px; }
+/* The theme animates everything its buttons own over a fifth of a second, the focus ring with it,
+   and a ring that fades in cannot be followed. Listed here is what the theme really changes. */
+.product-item-button-container .btn {
+	margin-bottom: 2px;
+	transition: color 200ms, background-color 200ms, border-color 200ms, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* ui.bootstrap4, loaded by the search of the header, paints a button of its own blue on focus, and
+   the theme overrides every state of the button but that one. The theme colours are put back. */
+.product-item-button-container .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+
+.product-item-button-container .btn.btn-primary:focus:hover,
+.product-item-button-container .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}
+
+/* The layers of the card hang on the body, away from the rule above, and ui.bootstrap4 paints their
+   buttons the same blue. */
+[id^="CatalogSectionBasket_"] .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+[id^="CatalogSectionBasket_"] .btn.btn-primary:focus:hover,
+[id^="CatalogSectionBasket_"] .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}
 
 /*Stickers*/
 .product-item-sticker,
@@ -917,3 +985,79 @@ input[type='number'] { -moz-appearance: textfield; }
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/*Focus ring*/
+/* One band of the dark tone of the design system, outside the box of the control: the band the theme
+   of the landing store draws lies inside the box, on the content, and its halo goes with it. The
+   weight of 0,3,0 outruns the 0,2,0 of `.btn:focus-visible` and the 0,2,1 of a button inside a
+   block, and this file is included before the theme. */
+.product-item .product-item-title a:focus-visible,
+.product-item-container .product-item-button-container .btn:focus-visible,
+.product-item .product-item-amount-field:focus-visible,
+.product-item-amount-field-container .product-item-amount-field-btn-minus:focus-visible,
+.product-item-amount-field-container .product-item-amount-field-btn-plus:focus-visible,
+[id^="CatalogSectionBasket_"] .btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: none;
+}
+
+/* A card with no link takes the focus on its root. The open card lays its absolute body over the root
+   and covers a ring drawn there, so the ring goes on the body, open or not: a touch card never opens,
+   and a card the mouse has closed keeps the focus. 0,5,0 outweighs the ring the theme gives a stop of
+   a block (0,4,0). */
+.product-item-container[data-entity="item"][tabindex]:not([tabindex="-1"]):focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.product-item-container[data-entity="item"][tabindex]:not([tabindex="-1"]):focus-visible > .product-item {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The name is cut by the link and not by the heading, so the heading can stop clipping while the
+   link holds the focus. The heading keeps its own clipping for cards that carry no link. */
+.product-item-title a {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: inherit;
+}
+
+.product-item-title:has(a:focus-visible) { overflow: visible; }
+
+/* The ring of a variant goes on the swatch, not on the list item that takes the focus: the padding
+   of the item is the spacing of the row, 3px at the sides against 5px above and below, so a ring at
+   its edges would stand at two distances from the swatch at once. 0,5,0 outweighs the theme (0,4,0). */
+.product-item-container .product-item .product-item-scu-item-list .product-item-scu-item-color-container:focus-visible,
+.product-item-container .product-item .product-item-scu-item-list .product-item-scu-item-text-container:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+/* The swatch animates the very frame the ring is drawn with, which is how a chosen value lights up,
+   so the ring is taken out of the animation here and the frame keeps its own. */
+.product-item-scu-item-color-container:focus-visible .product-item-scu-item-color-block,
+.product-item-scu-item-text-container:focus-visible .product-item-scu-item-text-block {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	transition: outline 0s, outline-offset 0s;
+}
+
+/*Image link*/
+/* The link covers the frames of the wrapper, and the labels beside it stay out of its name. */
+.product-item-image-link {
+	position: absolute;
+	inset: 0;
+	display: block;
+}
+
+/* A label is painted over the link, so a click on one has to reach the link under it. */
+.product-item-label-text,
+.product-item-label-ring { pointer-events: none; }
+
+/* The same for the strip of the dots: the click is taken by a dot, never by the room around it. */
+.product-item-image-slider-control-container { pointer-events: none; }
+
+.product-item-image-slider-control { pointer-events: auto; }

@@ -44,8 +44,19 @@ export const RuleCard = {
 			type: [String, null],
 			default: null,
 		},
+		/**
+		 * True while the group is open. A collapsed one is hidden here and not dropped: the values
+		 * typed into the forms of its blocks live in the controls of the form, never in the data a
+		 * rebuilt form reads back. Hiding it here and not in a wrapper of the rule section keeps the
+		 * cards of one rule neighbours, which is what dropping one group onto another needs.
+		 */
+		isExpanded:
+		{
+			type: Boolean,
+			default: true,
+		},
 	},
-	emits: ['addConstruction', 'renameRuleCard'],
+	emits: ['addConstruction', 'renameRuleCard', 'toggle'],
 	setup(): {...}
 	{
 		const { getMessage } = useLoc();
@@ -185,6 +196,7 @@ export const RuleCard = {
 	},
 	template: `
 		<div
+			v-show="isExpanded"
 			data-name="rule-card"
 			class="editor-chart-node-settings-rule-card"
 			:data-test-id="$testId('complexNodeRuleSettingsRuleCard', ruleCard.id)"
@@ -194,6 +206,16 @@ export const RuleCard = {
 			:aria-busy="pendingGroupName !== null"
 		>
 			<div class="editor-chart-node-settings-rule-card__top">
+				<button
+					type="button"
+					class="editor-chart-node-settings-rule-card__toggle"
+					:aria-expanded="true"
+					:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_CARD_COLLAPSE')"
+					:data-test-id="$testId('complexNodeRuleCardToggle', ruleCard.id)"
+					@click.stop="$emit('toggle')"
+				>
+					<BIcon :name="iconSet.CHEVRON_DOWN_M" :size="18" :color="iconColor" aria-hidden="true"/>
+				</button>
 				<BIcon
 					:name="iconSet.DRAG_M"
 					class="editor-chart-node-settings-rule-card__dnd-icon"

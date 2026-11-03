@@ -1,4 +1,5 @@
 import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { AirSwitcherStyle } from 'ui.switcher';
 import type { AccessRightItem, Variable, VariableCollection } from './store/model/access-rights-model';
 
 export function shouldRowBeRendered(accessRightItem: AccessRightItem): boolean
@@ -60,7 +61,7 @@ export function getMultipleSelectedVariablesTitle(selectedVariables: VariableCol
 	);
 }
 
-function cutLongTitle(title: string): string
+export function cutLongTitle(title: string): string
 {
 	const VARIABLE_TITLE_MAX_LENGTH = 15;
 
@@ -77,9 +78,10 @@ export function getMultipleSelectedVariablesHintHtml(
 	hintTitle: string,
 	allVariables: VariableCollection,
 	isInherit: boolean = false,
+	restItemsCount: number = 0,
 ): string
 {
-	if (!isInherit && selectedVariables.size < 2)
+	if (!isInherit && !isHintWorthShowing(selectedVariables.size, restItemsCount))
 	{
 		return '';
 	}
@@ -90,10 +92,28 @@ export function getMultipleSelectedVariablesHintHtml(
 		listItems += `<li>${Text.encode(value.title)}</li>`;
 	}
 
+	if (restItemsCount > 0)
+	{
+		const restItems = Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_HINT_REST_ITEMS', { '#COUNT#': restItemsCount });
+		listItems += `<li>${Text.encode(restItems)}</li>`;
+	}
+
 	return `
 		<p>${Text.encode(hintTitle)}</p>
 		<ul>${listItems}</ul>
 	`;
+}
+
+// a single name is already shown in the cell itself, so the list pays off from the second one
+// or when the cell hides values whose names never arrived
+function isHintWorthShowing(shownCount: number, restItemsCount: number): boolean
+{
+	if (shownCount === 0)
+	{
+		return false;
+	}
+
+	return shownCount > 1 || restItemsCount > 0;
 }
 
 function makeSortedVariablesArray(toSort: VariableCollection, example: VariableCollection): Variable[]
@@ -157,4 +177,32 @@ export function saveSortConfigForAllUserGroups(categoryName: string, sortConfig:
 			userSortConfig: sortConfig,
 		},
 	});
+}
+
+// Shared Air-design switcher options (see #8). Pass a size to override the default 'extra-small'.
+export function createAirSwitcherOptions(size: string = 'extra-small'): Object
+{
+	return {
+		size,
+		useAirDesign: true,
+		style: AirSwitcherStyle.SOLID,
+	};
+}
+
+// Shared hint popup options for the dependent-variables popup (see #7).
+export function createHintOptions(text: string): Object
+{
+	return {
+		text,
+		popupOptions: {
+			bindOptions: {
+				position: 'bottom',
+			},
+			width: 262,
+			angle: {
+				position: 'top',
+				offset: 33,
+			},
+		},
+	};
 }

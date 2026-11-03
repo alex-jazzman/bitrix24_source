@@ -1,9 +1,9 @@
 <?php
 IncludeModuleLangFile(__FILE__);
-/** @global CMain $APPLICATION */
+/** @var CMain $APPLICATION */
 global $APPLICATION;
 
-if ($APPLICATION->GetGroupRight('search') != 'D')
+if (CMain::GetGroupRight('search') != 'D')
 {
 	$aMenu = [
 		'parent_menu' => 'global_menu_settings',

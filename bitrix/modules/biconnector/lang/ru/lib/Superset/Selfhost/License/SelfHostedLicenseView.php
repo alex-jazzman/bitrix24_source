@@ -5,3 +5,4 @@ $MESS['BIC_SELFHOST_LICENSE_NOTICE_WARNING_DESCRIPTION'] = 'Продлите р�
 $MESS['BIC_SELFHOST_LICENSE_NOTICE_WARNING_ACTION'] = 'Продлить расширение';
 $MESS['BIC_SELFHOST_LICENSE_NOTICE_GRACE_TITLE'] = 'Расширение для лицензии BI Конструктора закончилось #DATE#';
 $MESS['BIC_SELFHOST_LICENSE_NOTICE_GRACE_DESCRIPTION'] = 'Если не продлить расширение для лицензии до #BLOCK_DATE#, BI Конструктор будет заблокирован: отчёты станут недоступны, а передача данных на сервер аналитики прекратится';
+$MESS['BIC_SELFHOST_LICENSE_POPUP_ACTION'] = 'Продлить расширение';

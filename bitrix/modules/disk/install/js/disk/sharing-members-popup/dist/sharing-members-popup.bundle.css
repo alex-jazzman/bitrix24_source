@@ -1,0 +1,141 @@
+.popup-window.disk-sharing-members-popup {
+	position: fixed !important;
+	left: 50% !important;
+	top: 50% !important;
+	transform: translate(-50%, -50%);
+}
+
+/* the dialog sizes itself by its content, so the width of the reference popup is set here */
+.disk-sharing-members-popup__content {
+	width: 502px;
+	margin: 0 auto;
+}
+
+.disk-sharing-members-popup__body {
+	display: flex;
+	flex-direction: column;
+}
+
+/* a white card over the vibrant background of the dialog, as in disk.sharing-access-popup */
+.disk-sharing-members-popup__section {
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+/* the sections that pad themselves leave the card without padding of its own */
+.disk-sharing-members-popup__section.--padded {
+	padding: var(--ui-space-inset-md2);
+}
+
+.disk-sharing-members-popup__section + .disk-sharing-members-popup__section {
+	margin-top: var(--ui-space-stack-lg);
+}
+
+.disk-sharing-members-popup__label {
+	display: block;
+	margin-bottom: var(--ui-space-stack-xs);
+	color: var(--ui-color-base-3);
+}
+
+.disk-sharing-members-popup__list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs2);
+	max-height: 260px;
+	overflow-y: auto;
+}
+
+.disk-sharing-members-popup__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-2xs) 0;
+	color: var(--ui-color-base-1);
+	text-decoration: none;
+}
+
+.disk-sharing-members-popup__name {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.disk-sharing-members-popup-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-sm);
+	margin-top: var(--ui-space-stack-2xl);
+}
+
+.disk-sharing-members-popup-add {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-md2);
+}
+
+.disk-sharing-members-popup-add__description {
+	flex: 1 1 auto;
+	min-width: 0;
+	color: var(--ui-color-base-2);
+}
+
+.disk-sharing-members-popup-members {
+	padding: 0 var(--ui-space-inset-md2);
+}
+
+/* an empty list takes no room of its own: the card ends with the padding of the adding block */
+.disk-sharing-members-popup-members.--filled {
+	padding-top: var(--ui-space-inset-xs2);
+	padding-bottom: var(--ui-space-inset-xs2);
+}
+
+/* a mode without the adding block leaves the list alone in the card */
+.disk-sharing-members-popup-members.--filled:first-child {
+	padding-top: var(--ui-space-inset-md2);
+}
+
+.disk-sharing-members-popup-columns {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.disk-sharing-members-popup-columns__title {
+	color: var(--ui-color-base-4);
+}
+
+.disk-sharing-members-popup-columns + .disk-sharing-members-popup__list {
+	margin-top: var(--ui-space-stack-xs2);
+}
+
+.disk-sharing-members-popup-member {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: 0 var(--ui-space-inset-xs2);
+	color: var(--ui-color-base-1);
+}
+
+.disk-sharing-members-popup-member__name {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.disk-sharing-members-popup-member__right {
+	color: var(--ui-color-base-3);
+}
+
+/* the link-like trigger of the reference popup: .access-private-user__access-button */
+.disk-sharing-members-popup-right {
+	padding: 0;
+	background: transparent;
+	border: 0;
+	color: var(--ui-color-accent-main-link);
+	-webkit-text-decoration: underline dashed;
+	        text-decoration: underline dashed;
+	cursor: pointer;
+}

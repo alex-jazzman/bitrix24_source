@@ -373,7 +373,7 @@ export class DiskIcon
 	#validateOptions(options: FileIconOptions): boolean {
 		let isValid = true;
 
-		if (VariableType.isUndefined(options.type) !== false && !this.#isExistingIconType(options.type))
+		if (VariableType.isUndefined(options.type) === false && !this.#isExistingIconType(options.type))
 		{
 			console.warn(`DiskIcon: Type "${options.type}" is not supported`);
 
@@ -382,7 +382,7 @@ export class DiskIcon
 
 		if (
 			options.responsive === false
-			&& VariableType.isUndefined(options.size) !== false
+			&& VariableType.isUndefined(options.size) === false
 			&& (!VariableType.isNumber(options.size) || options.size <= 0)
 		)
 		{
@@ -396,19 +396,19 @@ export class DiskIcon
 			isValid = false;
 		}
 
-		if (VariableType.isUndefined(options.alt) !== false && !VariableType.isString(options.alt))
+		if (VariableType.isUndefined(options.alt) === false && !VariableType.isString(options.alt))
 		{
 			console.warn('DiskIcon: alt must be a string');
 			isValid = false;
 		}
 
-		if (VariableType.isUndefined(options.title) !== false && !VariableType.isString(options.title))
+		if (VariableType.isUndefined(options.title) === false && !VariableType.isString(options.title))
 		{
 			console.warn('DiskIcon: title must be a string');
 			isValid = false;
 		}
 
-		if (VariableType.isUndefined(options.responsive) !== false && !VariableType.isBoolean(options.responsive))
+		if (VariableType.isUndefined(options.responsive) === false && !VariableType.isBoolean(options.responsive))
 		{
 			console.warn('DiskIcon: responsive must be a boolean');
 			isValid = false;

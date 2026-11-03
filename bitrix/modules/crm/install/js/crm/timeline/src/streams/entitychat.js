@@ -28,6 +28,7 @@ export default class EntityChat extends Stream
 		this.isLoading = false;
 
 		this._openChatHandler = BX.delegate(this.onOpenChat, this);
+		this._keydownHandler = BX.delegate(this.onKeyDown, this);
 	}
 
 	doInitialize()
@@ -190,6 +191,11 @@ export default class EntityChat extends Stream
 		}
 
 		BX.bind(this._contentWrapper, "click", this._openChatHandler);
+		// The whole wrapper is click-to-open; expose it to the keyboard as a button.
+		// Accessible name comes from its text content ("invite" message / summary).
+		this._contentWrapper.setAttribute("tabindex", "0");
+		this._contentWrapper.setAttribute("role", "button");
+		BX.bind(this._contentWrapper, "keydown", this._keydownHandler);
 		BX.addCustomEvent("onPullEvent-im", this.onChatEvent.bind(this));
 	}
 
@@ -461,6 +467,15 @@ export default class EntityChat extends Stream
 				Dom.removeClass(this._contentWrapper, 'crm-entity-chat-loading');
 				this.isLoading = false;
 			}
+		}
+	}
+
+	onKeyDown(e)
+	{
+		if (e.key === "Enter" || e.key === " " || e.key === "Spacebar")
+		{
+			e.preventDefault();
+			this.onOpenChat(e);
 		}
 	}
 

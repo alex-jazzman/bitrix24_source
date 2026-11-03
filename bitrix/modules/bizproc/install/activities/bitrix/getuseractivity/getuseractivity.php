@@ -650,4 +650,20 @@ class CBPGetUserActivity extends CBPActivity
 
 		return array_merge($arErrors, parent::validateProperties($arTestProperties, $user));
 	}
+
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// Legacy dialog activity with no getPropertiesMap(): without a passthrough the reverse round-trip would
+		// reject every persisted setting as an unknown name.
+		return [
+			'UserType',
+			'MaxLevel',
+			'UserParameter',
+			'ReserveUserParameter',
+			'SkipAbsent',
+			'SkipAbsentReserve',
+			'SkipTimeman',
+			'SkipTimemanReserve',
+		];
+	}
 }

@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/created-date.bundle.js',
 	'rel' => [
 		'main.core',
-		'tasks.v2.component.elements.hover-pill',
 		'tasks.v2.component.tasks-button-copy',
 		'tasks.v2.const',
 		'tasks.v2.lib.calendar',

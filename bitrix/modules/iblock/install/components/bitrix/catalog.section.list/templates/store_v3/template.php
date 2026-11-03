@@ -38,14 +38,14 @@ if ($arResult['SECTIONS_COUNT'] > 0)
 	}
 
 	?>
-	<div id="<?=$visual['ID']; ?>" class="catalog-sections-list">
+	<div id="<?=$visual['ID']; ?>" class="catalog-sections-list" data-testid="catalog-section-list-root">
 		<?php
 		if ($arParams['SHOW_TITLE'] && !empty($arParams['TITLE_MESSAGE']))
 		{
 			?><h3 class="catalog-sections-list-title"><?=$arParams['TITLE_MESSAGE']?></h3><?php
 		}
 		?>
-		<ul class="catalog-sections-list-container" data-items-container="Y">
+		<ul class="catalog-sections-list-container" data-items-container="Y" data-testid="catalog-section-list-tiles">
 			<?php
 			$sectionEdit = CIBlock::GetArrayByID($arParams['IBLOCK_ID'], 'SECTION_EDIT');
 			$sectionDelete = CIBlock::GetArrayByID($arParams['IBLOCK_ID'], 'SECTION_DELETE');
@@ -118,11 +118,11 @@ if ($arResult['SECTIONS_COUNT'] > 0)
 					$style = "background-image: url('{$section['PICTURE']['SRC']}');";
 				}
 				?>
-				<li id="<?=$this->getEditAreaId($section['ID'])?>" class="catalog-section-list-item" data-item-number="<?=$sectionNumber; ?>">
+				<li id="<?=$this->getEditAreaId($section['ID'])?>" class="catalog-section-list-item" data-item-number="<?=$sectionNumber; ?>" data-testid="catalog-section-list-tile">
 					<div class="catalog-section-list-tile-img-container">
 						<a
 							href="<?= $section['SECTION_PAGE_URL'] ?>"
-							class="catalog-section-list-item-img"
+							class="catalog-section-list-item-img" data-testid="catalog-section-list-tile-link"
 							style="<?= $style ?>"
 							title="<?= $section['PICTURE']['TITLE'] ?>"
 						>

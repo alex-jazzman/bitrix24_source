@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["JSPOPUP_CANCEL_CAPTION"] = "Cancel";
 $MESS["JSPOPUP_CANCEL_TITLE"] = "Cancel changes";
 $MESS["JSPOPUP_CLOSE_CAPTION"] = "Close";
@@ -83,6 +83,7 @@ $MESS["admin_lib_list_all_title"] = "Total";
 $MESS["admin_lib_list_apply"] = "Apply";
 $MESS["admin_lib_list_check"] = "Check/Uncheck";
 $MESS["admin_lib_list_check_all"] = "Check all/Uncheck all";
+$MESS["admin_lib_list_check_row"] = "Check/Uncheck, record #ID#";
 $MESS["admin_lib_list_del"] = "Are you sure you want to delete all the records?";
 $MESS["admin_lib_list_del_sel"] = "Are you sure you want to delete the selected records?";
 $MESS["admin_lib_list_del_title"] = "Delete records";
@@ -226,4 +227,3 @@ $MESS["calend_th"] = "Th";
 $MESS["calend_title"] = "Calendar";
 $MESS["calend_tu"] = "Tu";
 $MESS["calend_we"] = "We";
-?>

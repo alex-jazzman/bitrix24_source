@@ -50,7 +50,7 @@ export const PublishUserDropdownOption = {
 	},
 	computed:
 	{
-		...mapState(useDiagramStore, ['templatePublishStatus']),
+		...mapState(useDiagramStore, ['templatePublishStatus', 'isWriteLocked']),
 		isActive(): boolean
 		{
 			return this.templatePublishStatus === TEMPLATE_PUBLISH_STATUSES.USER;
@@ -131,6 +131,7 @@ export const PublishUserDropdownOption = {
 	},
 	template: `
 		<DropdownMenuOption
+			:disabled="isWriteLocked"
 			data-testid="bizprocdesigner-editor-publish-user-option"
 			:title="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MENU_PERSONAL_TITLE')"
 			:description="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MENU_PERSONAL_DESCR')"

@@ -19,6 +19,13 @@ if (!CModule::IncludeModule("calendar") || !class_exists("CCalendar"))
 	return;
 }
 
+use Bitrix\Calendar\Core\Event\Tools\Dictionary;
+use Bitrix\Calendar\Core\Mappers\Factory;
+use Bitrix\Calendar\Internals\Helper\Analytics;
+use Bitrix\Calendar\Util;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\DI\ServiceLocator;
+
 $event_feed_action = $_REQUEST["event_feed_action"];
 if (!empty($event_feed_action) && check_bitrix_sessid())
 {
@@ -48,7 +55,7 @@ if (!empty($event_feed_action) && check_bitrix_sessid())
 
 		if ($status && $eventId)
 		{
-			CCalendarEvent::SetMeetingStatusEx([
+			$meetingStatusResult = CCalendarEvent::SetMeetingStatusEx([
 				'attendeeId' => $userId,
 				'eventId' => $eventId,
 				'parentId' => (int)($_REQUEST['parent_id'] ?? null),
@@ -59,6 +66,51 @@ if (!empty($event_feed_action) && check_bitrix_sessid())
 				,
 				'currentDateFrom' => CCalendar::Date(CCalendar::Timestamp($_REQUEST['current_date_from'] ?? null), false)
 			]);
+
+			if ($meetingStatusResult === false)
+			{
+				return;
+			}
+
+			/** @var Factory $mapperFactory */
+			$mapperFactory = ServiceLocator::getInstance()->get('calendar.service.mappers.factory');
+			$calendarEvent = $mapperFactory->getEvent()->getById($eventId);
+			$section = $calendarEvent?->getSection();
+			$isGroupSection = $section?->getType() === Dictionary::CALENDAR_TYPE['group'];
+			$groupId = $isGroupSection ? $section?->getOwnerId() : null;
+
+			if ($groupId)
+			{
+				$userType = match (true)
+				{
+					Util::isCollabUser((int)$userId) => Analytics::USER_TYPES['collaber'],
+					Util::isExtranetUser((int)$userId) => Analytics::USER_TYPES['extranet'],
+					default => Analytics::USER_TYPES['intranet'],
+				};
+
+				if ($status === 'Y')
+				{
+					Analytics::getInstance()->onEventAccept(
+						eventId: $eventId,
+						userId: $userId,
+						groupId: $groupId,
+						subSection: Analytics::SUB_SECTION['stream'],
+						userType: $userType,
+						status: AnalyticsEvent::STATUS_SUCCESS,
+					);
+				}
+				elseif ($status === 'N')
+				{
+					Analytics::getInstance()->onEventDecline(
+						eventId: $eventId,
+						userId: $userId,
+						groupId: $groupId,
+						subSection: Analytics::SUB_SECTION['stream'],
+						userType: $userType,
+						status: AnalyticsEvent::STATUS_SUCCESS,
+					);
+				}
+			}
 
 			$events = CCalendarEvent::GetList([
 				'arFilter' => [

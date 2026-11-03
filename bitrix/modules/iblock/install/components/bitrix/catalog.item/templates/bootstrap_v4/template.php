@@ -31,10 +31,12 @@ if (isset($arResult['ITEM']))
 		'PICT_SLIDER' => $areaId.'_pict_slider',
 		'STICKER_ID' => $areaId.'_sticker',
 		'SECOND_STICKER_ID' => $areaId.'_secondsticker',
+		'TITLE' => $areaId.'_title',
 		'QUANTITY' => $areaId.'_quantity',
 		'QUANTITY_DOWN' => $areaId.'_quant_down',
 		'QUANTITY_UP' => $areaId.'_quant_up',
 		'QUANTITY_MEASURE' => $areaId.'_quant_measure',
+		'QUANTITY_DESCRIPTION' => $areaId.'_quant_description',
 		'QUANTITY_LIMIT' => $areaId.'_quant_limit',
 		'BUY_LINK' => $areaId.'_buy_link',
 		'BASKET_ACTIONS' => $areaId.'_basket_actions',
@@ -112,10 +114,12 @@ if (isset($arResult['ITEM']))
 
 	$buttonSizeClass = isset($arResult['BIG_BUTTONS']) && $arResult['BIG_BUTTONS'] === 'Y' ? 'btn-md' : 'btn-sm';
 	$itemHasDetailUrl = isset($item['DETAIL_PAGE_URL']) && $item['DETAIL_PAGE_URL'] != '';
+	// without a detail link the collapsed card has no tab stop of its own
+	$itemIsFocusable = !$itemHasDetailUrl && $arResult['TYPE'] === 'CARD';
 	?>
 
 	<div class="product-item-container<?=(isset($arResult['SCALABLE']) && $arResult['SCALABLE'] === 'Y' ? ' product-item-scalable-card' : '')?>"
-		id="<?=$areaId?>" data-entity="item">
+		id="<?=$areaId?>" data-entity="item" data-testid="catalog-item-card"<?=($itemIsFocusable ? ' tabindex="0" role="group" aria-labelledby="'.htmlspecialcharsbx($itemIds['TITLE']).'"' : '')?>>
 		<?php
 		$documentRoot = Main\Application::getDocumentRoot();
 		$templatePath = mb_strtolower($arResult['TYPE']).'/template.php';
@@ -308,6 +312,16 @@ if (isset($arResult['ITEM']))
 		}
 		?>
 		<script>
+			// The card is printed by four more components, each with a message block of its own,
+			// so the phrases its own script reads are declared here and not by the list around it.
+			BX.message({
+				CT_BCI_TPL_MESS_COMPARE_REMOVED_ARIA: '<?=GetMessageJS('CT_BCI_TPL_MESS_COMPARE_REMOVED_ARIA')?>',
+				CT_BCI_TPL_MESS_GALLERY_DOT_ARIA: '<?=GetMessageJS('CT_BCI_TPL_MESS_GALLERY_DOT_ARIA')?>',
+				CT_BCI_TPL_MESS_QUANTITY_CHANGED_ARIA: '<?=GetMessageJS('CT_BCI_TPL_MESS_QUANTITY_CHANGED_ARIA')?>',
+				CT_BCI_TPL_MESS_SKU_CHANGED_ARIA: '<?=GetMessageJS('CT_BCI_TPL_MESS_SKU_CHANGED_ARIA')?>',
+				CT_BCI_TPL_MESS_SKU_CHANGED_NO_PRICE_ARIA: '<?=GetMessageJS('CT_BCI_TPL_MESS_SKU_CHANGED_NO_PRICE_ARIA')?>',
+				CT_BCI_TPL_MESS_SKU_SET_CHANGED_ARIA: '<?=GetMessageJS('CT_BCI_TPL_MESS_SKU_SET_CHANGED_ARIA')?>'
+			});
 			var <?=$obName?> = new JCCatalogItemBootstrapV4(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
 		</script>
 	</div>

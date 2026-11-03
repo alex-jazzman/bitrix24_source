@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_v2_component_message_unsupported, im_v2_const, im_v2_provider_service_uploading, im_v2_component_message_base, im_v2_component_message_elements, im_v2_provider_service_disk, im_v2_lib_menu, im_v2_lib_utils, im_v2_lib_notifier, im_v2_component_elements_mediaGallery, im_v2_component_elements_progressbar, im_v2_component_elements_player) {
+(function (exports, main_core, im_v2_component_message_unsupported, im_v2_const, im_v2_lib_utils, im_v2_provider_service_uploading, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_menu, im_v2_component_elements_mediaGallery, im_v2_lib_message, im_v2_lib_feature, im_v2_component_elements_player, im_v2_component_elements_progressbar) {
 	'use strict';
 
 	// @vue/component
@@ -58,6 +58,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
+			<template #before-message>
+				<slot name="before-message"/>
+			</template>
 			<div class="bx-im-message-audio__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-audio__header"/>
 				<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
@@ -69,57 +72,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 			<div class="bx-im-message-audio__default-message-container">
-				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" :withBuilder="true" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>
 	`
 	};
-
-	class BaseFileContextMenu extends im_v2_lib_menu.BaseMenu {
-		id = im_v2_const.PopupType.messageBaseFileMenu;
-		constructor() {
-			super();
-			this.id = 'bx-im-message-file-context-menu';
-			this.diskService = new im_v2_provider_service_disk.DiskService();
-		}
-		getMenuItems() {
-			return [this.getDownloadFileItem(), this.getSaveToDiskItem()];
-		}
-		getDownloadFileItem() {
-			const file = this.#getMessageFile();
-			if (!file) {
-				return null;
-			}
-			return {
-				title: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_DOWNLOAD_FILE'),
-				onClick: function () {
-					im_v2_lib_utils.Utils.file.downloadFiles([file]);
-					this.menuInstance.close();
-				}.bind(this)
-			};
-		}
-		getSaveToDiskItem() {
-			const file = this.#getMessageFile();
-			if (!file) {
-				return null;
-			}
-			return {
-				title: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
-				onClick: async function () {
-					this.menuInstance.close();
-					await this.diskService.save(this.context.files);
-					im_v2_lib_notifier.Notifier.file.onDiskSaveComplete();
-				}.bind(this)
-			};
-		}
-		#getMessageFile() {
-			if (!this.context.fileId) {
-				return null;
-			}
-			return this.store.getters['files/get'](this.context.fileId);
-		}
-	}
 
 	// @vue/component
 	const BaseFileMessage = {
@@ -164,7 +122,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.contextMenu = new BaseFileContextMenu();
+			this.contextMenu = new im_v2_lib_menu.BaseFileContextMenu();
 		},
 		beforeUnmount() {
 			this.contextMenu.destroy();
@@ -187,8 +145,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
-			<template v-if="isReply && !isForward" #before-message>
-				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			<template #before-message>
+				<slot name="before-message"/>
+				<Reply v-if="isReply && !isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 			</template>
 			<div class="bx-im-message-base-file__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-base-file__author-title" />
@@ -200,7 +159,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					@openContextMenu="onOpenContextMenu"
 					@cancelClick="onCancel"
 				/>
-				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" :withBuilder="true" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>
@@ -254,7 +213,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.contextMenu = new BaseFileContextMenu();
+			this.contextMenu = new im_v2_lib_menu.BaseFileContextMenu();
 		},
 		beforeUnmount() {
 			this.contextMenu.destroy();
@@ -277,8 +236,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
-			<template v-if="isReply && !isForward" #before-message>
-				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			<template #before-message>
+				<slot name="before-message"/>
+				<Reply v-if="isReply && !isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 			</template>
 			<div class="bx-im-message-file-collection__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-file-collection__author-title" />
@@ -297,6 +257,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:item="item"
 					:dialogId="dialogId"
 					:withReply="false"
+					:withBuilder="true"
 					class="bx-im-message-file-collection__default-content"
 				/>
 			</div>
@@ -348,9 +309,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.item;
 			},
 			files() {
-				return this.message.files.map(fileId => {
-					return this.$store.getters['files/get'](fileId);
-				});
+				return this.$store.getters['messages/getMessageFiles'](this.message.id);
 			},
 			filesCount() {
 				return this.files.length;
@@ -367,8 +326,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			hasAttach() {
 				return this.message.attach.length > 0;
 			},
+			hasBuilderBlocks() {
+				return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+			},
+			// Kept in step with MediaMessage.showBottomContainer: whatever puts content into the bubble
+			// footer takes the status with it, otherwise the overlay status would be a second one.
 			onlyMedia() {
-				return !this.hasText && !this.hasAttach;
+				return !this.hasText && !this.hasAttach && !this.hasBuilderBlocks;
 			},
 			isSingleVideo() {
 				return this.filesCount === 1 && this.firstFile.type === im_v2_const.FileType.video;
@@ -533,17 +497,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			hasAttach() {
 				return this.message.attach.length > 0;
 			},
+			hasBuilderBlocks() {
+				return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+			},
 			hasReply() {
 				return this.message.replyId !== 0;
 			},
 			hasError() {
-				return this.message.error;
+				return im_v2_lib_message.messageHasError(this.message);
 			},
 			showContextMenu() {
 				return this.onlyImage;
 			},
 			showBottomContainer() {
-				return this.hasText || this.hasAttach;
+				// Blocks live in the same container as the caption, so a message whose whole content is
+				// blocks needs it too - its own text may well be empty.
+				return this.hasText || this.hasAttach || this.hasBuilderBlocks;
 			},
 			isForward() {
 				return main_core.Type.isStringFilled(this.message.forward.id);
@@ -577,9 +546,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:item="item"
 			:dialogId="dialogId"
 			:withBackground="needBackground"
+			:withMediaFrame="true"
 		>
-			<template v-if="hasReply && !isForward" #before-message>
+			<template #before-message>
+				<slot name="before-message"/>
 				<Reply
+					v-if="hasReply && !isForward"
 					class="bx-im-message-image__quote"
 					:dialogId="dialogId"
 					:replyId="message.replyId"
@@ -607,6 +579,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:withText="hasText"
 						:withAttach="hasAttach"
 						:withReply="false"
+						:withBuilder="true"
 					/>
 				</div>
 				<MessageFooter :item="item" :dialogId="dialogId" />
@@ -621,16 +594,150 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const VideoNoteCircle = {
+		name: 'VideoNoteCircle',
+		components: {
+			ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
+			RoundVideoPlayer: im_v2_component_elements_player.RoundVideoPlayer
+		},
+		props: {
+			item: {
+				/** @type ImModelMessage */
+				type: Object,
+				required: true
+			},
+			fileId: {
+				type: [String, Number],
+				required: true
+			},
+			startWithSound: {
+				type: Boolean,
+				default: false
+			},
+			// The label came with the caption feature, so the views pass its availability down
+			showTypeLabel: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['cancelClick', 'openTranscription'],
+		computed: {
+			message() {
+				return this.item;
+			},
+			file() {
+				return this.$store.getters['files/get'](this.fileId, true);
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-im-video-note__container" data-testid="im-message-video-note-circle">
+			<span v-if="showTypeLabel" class="bx-im-video-note__type-label">{{ loc('IM_PARSER_ICON_TYPE_VIDEO_NOTE') }}</span>
+			<ProgressBar
+				:item="file"
+				@cancelClick="$emit('cancelClick')"
+			/>
+			<RoundVideoPlayer
+				:item="file"
+				:message="message"
+				:startWithSound="startWithSound"
+				@openTranscription="$emit('openTranscription')"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CaptionedVideoNote = {
+		name: 'CaptionedVideoNote',
+		components: {
+			BaseMessage: im_v2_component_message_base.BaseMessage,
+			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
+			MessageFooter: im_v2_component_message_elements.MessageFooter,
+			MessageHeader: im_v2_component_message_elements.MessageHeader,
+			Reply: im_v2_component_message_elements.Reply,
+			VideoNoteCircle
+		},
+		props: {
+			item: {
+				/** @type ImModelMessage */
+				type: Object,
+				required: true
+			},
+			fileId: {
+				type: [String, Number],
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			},
+			startWithSound: {
+				type: Boolean,
+				default: false
+			},
+			showTypeLabel: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['cancelClick', 'openTranscription'],
+		computed: {
+			message() {
+				return this.item;
+			},
+			hasReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
+			}
+		},
+		template: `
+		<BaseMessage :item="message" :dialogId="dialogId" data-testid="im-message-video-note-captioned-root">
+			<template #before-message>
+				<Reply
+					v-if="hasReply"
+					class="bx-im-captioned-video-note__quote"
+					:dialogId="dialogId"
+					:replyId="message.replyId"
+					:isForward="isForward"
+				/>
+				<div class="bx-im-video-note__header_container">
+					<MessageHeader :item="message" :isOverlay="true" />
+				</div>
+				<VideoNoteCircle
+					:item="message"
+					:fileId="fileId"
+					:startWithSound="startWithSound"
+					:showTypeLabel="showTypeLabel"
+					@cancelClick="$emit('cancelClick')"
+					@openTranscription="$emit('openTranscription')"
+				/>
+			</template>
+			<div class="bx-im-captioned-video-note__default-message-container">
+				<DefaultMessageContent :item="message" :dialogId="dialogId" :withReply="false" />
+			</div>
+			<MessageFooter :item="message" :dialogId="dialogId" />
+		</BaseMessage>
+	`
+	};
+
+	// @vue/component
 	const VideoNote = {
 		name: 'VideoNote',
 		components: {
-			ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
-			RoundVideoPlayer: im_v2_component_elements_player.RoundVideoPlayer,
 			BaseMessage: im_v2_component_message_base.BaseMessage,
 			ReactionList: im_v2_component_message_elements.ReactionList,
 			MessageStatus: im_v2_component_message_elements.MessageStatus,
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
-			CompactCommentsPanel: im_v2_component_message_elements.CompactCommentsPanel
+			CompactCommentsPanel: im_v2_component_message_elements.CompactCommentsPanel,
+			Reply: im_v2_component_message_elements.Reply,
+			VideoNoteCircle
 		},
 		props: {
 			item: {
@@ -652,41 +759,58 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			startWithSound: {
 				type: Boolean,
 				default: false
+			},
+			showTypeLabel: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['cancelClick', 'openTranscription'],
 		computed: {
-			file() {
-				return this.$store.getters['files/get'](this.fileId, true);
-			},
 			message() {
 				return this.item;
+			},
+			hasReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
 			}
 		},
 		template: `
-		<BaseMessage :item="message" :dialogId="dialogId" :withBackground="false">
+		<BaseMessage
+			:item="message"
+			:dialogId="dialogId"
+			:withBackground="false"
+			data-testid="im-message-video-note-root"
+		>
 			<template #before-message>
 				<div class="bx-im-video-note__header_container">
 					<MessageHeader :item="message" :isOverlay="true" />
 				</div>
 			</template>
-			<div class="bx-im-video-note__container">
-				<ProgressBar
-					:item="file"
-					@cancelClick="$emit('cancelClick')"
-				/>
-				<RoundVideoPlayer 
-					:item="file" 
-					:message="message"
+			<Reply
+				v-if="hasReply"
+				class="bx-im-video-note__reply"
+				:dialogId="dialogId"
+				:replyId="message.replyId"
+				:isForward="isForward"
+			/>
+			<div class="bx-im-video-note__frame">
+				<VideoNoteCircle
+					:item="message"
+					:fileId="fileId"
 					:startWithSound="startWithSound"
+					:showTypeLabel="showTypeLabel"
+					@cancelClick="$emit('cancelClick')"
 					@openTranscription="$emit('openTranscription')"
 				/>
-			</div>
-			<div class="bx-im-video-note__comments-panel">
-				<CompactCommentsPanel :item="message" :dialogId="dialogId" />
-			</div>
-			<div class="bx-im-video-note__status_container">
-				<MessageStatus :item="message" :isOverlay="true" />
+				<div class="bx-im-video-note__comments-panel">
+					<CompactCommentsPanel :item="message" :dialogId="dialogId" />
+				</div>
+				<div class="bx-im-video-note__status_container">
+					<MessageStatus :item="message" :isOverlay="true" />
+				</div>
 			</div>
 			<template #after-message>
 				<div class="bx-im-video-note__reaction-list-container">
@@ -723,6 +847,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			withTitle: {
 				type: Boolean,
 				default: true
+			},
+			showCaption: {
+				type: Boolean,
+				default: false
 			}
 		},
 		computed: {
@@ -734,7 +862,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<BaseMessage :item="item" :dialogId="dialogId">
+		<BaseMessage :item="item" :dialogId="dialogId" data-testid="im-message-video-note-transcribed-root">
 			<div class="bx-im-transcribed-video-note-note__container">
 				<MessageHeader 
 					:withTitle="withTitle" 
@@ -744,12 +872,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<TranscribedVideoPlayer
 					:item="file"
 					:message="message"
+					:withMessageText="showCaption"
 					@closeTranscription="$emit('closeTranscription')"
 					@clickPlay="$emit('clickPlay')"
 				/>
 			</div>
 			<div class="bx-im-transcribed-video-note__default-message-container">
-				<DefaultMessageContent :item="message" :dialogId="dialogId" :withText="false" />
+				<DefaultMessageContent :item="message" :dialogId="dialogId" :withText="showCaption" />
 			</div>
 			<MessageFooter :item="message" :dialogId="dialogId" />
 		</BaseMessage>
@@ -760,6 +889,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const VideoNoteMessage = {
 		name: 'VideoNoteMessage',
 		components: {
+			CaptionedVideoNote,
 			VideoNote,
 			TranscribedVideoNote
 		},
@@ -790,6 +920,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			firstFileId() {
 				return this.message.files[0];
+			},
+			hasText() {
+				return this.message.text.trim().length > 0;
+			},
+			isCaptionFeatureAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isVideoNoteCaptionAvailable);
+			},
+			hasCaption() {
+				return this.hasText && this.isCaptionFeatureAvailable;
 			}
 		},
 		methods: {
@@ -810,17 +949,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:dialogId="dialogId"
 				:item="item"
 				:withTitle="withTitle"
+				:showCaption="hasCaption"
 				@closeTranscription="isTranscriptionOpened = false"
 				@clickPlay="onTranscribedVideoPlayClick"
 				@cancelClick="$emit('cancelClick', $event)"
 			/>
-			<VideoNote 
+			<CaptionedVideoNote
+				v-else-if="hasCaption"
+				:startWithSound="startWithSound"
+				:fileId="firstFileId"
+				:dialogId="dialogId"
+				:item="item"
+				:showTypeLabel="isCaptionFeatureAvailable"
+				@openTranscription="onOpenTranscription"
+				@cancelClick="$emit('cancelClick', $event)"
+			/>
+			<VideoNote
 				v-else
 				:startWithSound="startWithSound"
 				:fileId="firstFileId"
 				:dialogId="dialogId"
 				:item="item"
 				:withTitle="withTitle"
+				:showTypeLabel="isCaptionFeatureAvailable"
 				@openTranscription="onOpenTranscription"
 				@cancelClick="$emit('cancelClick', $event)"
 			/>
@@ -871,34 +1022,35 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['messages/getById'](this.item.id);
 			},
 			messageFiles() {
-				const files = [];
-				if (this.message.files.length === 0) {
-					return files;
-				}
-				this.message.files.forEach(fileId => {
-					const file = this.$store.getters['files/get'](fileId, true);
-					files.push(file);
-				});
-				return files;
+				return this.$store.getters['messages/getMessageFiles'](this.item.id);
 			},
 			isGallery() {
-				const allowedGalleryTypes = new Set([im_v2_const.FileType.image, im_v2_const.FileType.video]);
-				const isMediaOnly = this.messageFiles.every(file => {
-					return allowedGalleryTypes.has(file.type);
-				});
-				const hasImageProp = this.messageFiles.some(file => {
-					return file.image !== false;
-				});
-				return isMediaOnly && hasImageProp;
+				return im_v2_lib_utils.Utils.file.isGallery(this.messageFiles);
 			},
 			componentName() {
 				if (this.messageFiles.length > 1) {
 					return this.isGallery ? FileMessageType.media : FileMessageType.collection;
 				}
 				const file = this.messageFiles[0];
+				// The composition of an edited message is in the model before the files it added are:
+				// until they arrive there is no attachment to pick a component for
+				if (!file) {
+					return null;
+				}
 				const hasPreview = Boolean(file.image);
 				if (file.isVideoNote) {
+					// VideoNoteMessage does not accept the before-message slot (it uses BaseMessage's
+					// before-message for its own overlay header), so forwarded slot content is dropped here.
 					return FileMessageType.videoNote;
+				}
+
+				// A record reaches the chat in whatever container the browser wrote it, and the storage
+				// reads the kind of a file from its extension: until the server brings the record to the
+				// target format, the very same voice message is typed as video. It is routed by what it
+				// is and not by the container it arrived in, or the player, the duration and the
+				// transcription of a record on the server path would all be lost.
+				if (file.isVoiceNote) {
+					return FileMessageType.audio;
 				}
 				if (file.type === im_v2_const.FileType.image && hasPreview) {
 					return FileMessageType.media;
@@ -959,20 +1111,25 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<component 
-			:is="componentName" 
-			:item="message" 
+		<component
+			v-if="componentName"
+			:is="componentName"
+			:item="message"
 			:dialogId="dialogId"
 			:withTitle="withTitle" 
 			:containerHeight="containerHeight"
 			:withContextMenu="isRealMessage"
 			@cancelClick="onCancel"
-		/>
+		>
+			<template v-if="$slots['before-message']" #before-message>
+				<slot name="before-message"/>
+			</template>
+		</component>
 	`
 	};
 
 	exports.FileMessage = FileMessage;
 	exports.MediaContent = MediaContent;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Const, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=file-message.bundle.js.map

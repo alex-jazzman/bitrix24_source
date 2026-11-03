@@ -1,0 +1,31 @@
+<?php
+
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_AUTHOR_NOT_FOUND'] = 'Автор реквизита не определён, реквизит создан от имени системного пользователя';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_DESCRIPTION'] = 'Создаёт реквизит выбранного шаблона. Если такой реквизит уже существует, возвращает его без изменений';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_ADDRESS_TYPE'] = 'Выберите тип адреса';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_BANK_DETAIL_NAME_EMPTY'] = 'Укажите название банковского счёта';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_BANK_DETAIL_NAME_NOT_CONFIGURED'] = 'Укажите название банковского счёта, если заполняете поля счёта';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_CLIENT_NOT_FOUND'] = 'Не удалось найти клиента для создания реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_LOCK'] = 'Не удалось начать создание реквизита. Попробуйте ещё раз';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_MODULES'] = 'Не установлены обязательные модули';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_NAME_EMPTY'] = 'Укажите название реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_PRESET_NOT_FOUND'] = 'Шаблон реквизита недоступен для выбранного клиента';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_REQUIRED_FIELD_NOT_CONFIGURED'] = 'Настройте обязательное поле «#FIELD#»';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_REQUISITE_ID'] = 'Не удалось получить ID созданного реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_SET_DEFAULT'] = 'Реквизит создан, но сделать его основным не удалось';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_UNEXPECTED'] = 'Не удалось создать реквизит. Попробуйте ещё раз';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_UNKNOWN'] = 'Не удалось создать реквизит. Попробуйте ещё раз';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_ADDRESS_TYPE'] = 'Тип адреса';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_BANK_DETAIL_NAME'] = 'Название банковского счёта';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_CLIENT_TYPE'] = 'Тип клиента';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_COUNTRY'] = 'Страна';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_MODIFIED_BY'] = 'Автор реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_REQUISITE_NAME'] = 'Название нового реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_REQUISITE_PRESET'] = 'Шаблон реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_NAME'] = 'Создать реквизит';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_RETURN_ERROR_MESSAGE'] = 'Сообщение об ошибке';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_RETURN_REQUISITE_ID'] = 'ID реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_RETURN_STATUS'] = 'Статус';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_STATUS_CREATED'] = 'Создан новый реквизит';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_STATUS_ERROR'] = 'Ошибка создания реквизита';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_STATUS_FOUND'] = 'Найден существующий реквизит';

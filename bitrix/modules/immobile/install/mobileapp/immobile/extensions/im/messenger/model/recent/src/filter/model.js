@@ -20,6 +20,7 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 				[ROOT_PARENT_CHAT_ID]: {
 					[NavigationTabId.chats]: createDefaultTabElement(),
 					[NavigationTabId.task]: createDefaultTabElement(),
+					[NavigationTabId.all]: createDefaultTabElement(),
 				},
 			},
 		}),
@@ -128,6 +129,16 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 				}
 
 				const parentChatId = normalized.parentChatId ?? ROOT_PARENT_CHAT_ID;
+				if (isSameIdCollection(
+					getTabIdCollection(store.state, normalized.tabId, parentChatId),
+					normalized.itemIds,
+				))
+				{
+					logger.log('setIdCollection: collection is not changed, skip commit');
+
+					return;
+				}
+
 				store.commit('setIdCollection', {
 					actionName: 'setIdCollection',
 					data: {
@@ -148,6 +159,13 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 				if (!Type.isStringFilled(tabId))
 				{
 					logger.warn('clearIdCollection: invalid payload', payload);
+
+					return;
+				}
+
+				if (getTabIdCollection(store.state, tabId, parentChatId).size === 0)
+				{
+					logger.log('clearIdCollection: collection is already empty, skip commit');
 
 					return;
 				}
@@ -230,6 +248,32 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			...recentFilterDefaultElement,
 			idCollection: new Set(),
 		};
+	}
+
+	/**
+	 * @param {RecentFilteredModelCollection} state
+	 * @param {string} tabId
+	 * @param {number} [parentChatId]
+	 * @returns {Set<string>}
+	 */
+	function getTabIdCollection(state, tabId, parentChatId = ROOT_PARENT_CHAT_ID)
+	{
+		return state.collection[parentChatId]?.[tabId]?.idCollection ?? new Set();
+	}
+
+	/**
+	 * @param {Set<string>} idCollection
+	 * @param {Array<string>} itemIds
+	 * @returns {boolean}
+	 */
+	function isSameIdCollection(idCollection, itemIds)
+	{
+		if (idCollection.size !== itemIds.length)
+		{
+			return false;
+		}
+
+		return itemIds.every((itemId) => idCollection.has(itemId));
 	}
 
 	/**

@@ -85,7 +85,8 @@ class SignDocumentView
 }
 
 declare type SignDocumentViewSendWidgetParameters = {
-	memberIds: Array<number>
+	memberIds: Array<number>,
+	documentSigned: boolean,
 }
 
 class SignDocumentViewSendWidget
@@ -94,10 +95,12 @@ class SignDocumentViewSendWidget
 	#button: HTMLElement = null;
 	#docSend: DocumentSend | undefined = undefined;
 	#memberIds: Array<number> = [];
+	#documentSigned: boolean = false;
 
 	constructor(options: SignDocumentViewSendWidgetParameters = {})
 	{
 		this.#memberIds = options?.memberIds ?? [];
+		this.#documentSigned = options?.documentSigned ?? false;
 		this.#button = this.#createButton();
 
 		if (!Type.isUndefined(BX?.Sign?.V2?.DocumentSend))
@@ -189,7 +192,7 @@ class SignDocumentViewSendWidget
 			>
 				<div class="crm__sign-document-view-resend--button-icon --service-sms"></div>
 				<div class="crm__sign-document-view-resend--button-main-title">
-					${Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN')}
+					${this.#createButtonText(0)}
 				</div>
 				<div class="crm__sign-document-view-resend--button-helper"></div>
 			</div>
@@ -198,10 +201,20 @@ class SignDocumentViewSendWidget
 
 	#createButtonText(remainingSeconds: number): string
 	{
-		return remainingSeconds > 0
-			? Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN_TIMER', {
-				'#COUNTDOWN#': this.#formatSeconds(remainingSeconds),
-			})
+		if (remainingSeconds > 0)
+		{
+			return this.#documentSigned
+				? Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_COPY_TIMER', {
+					'#COUNTDOWN#': this.#formatSeconds(remainingSeconds),
+				})
+				: Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN_TIMER', {
+					'#COUNTDOWN#': this.#formatSeconds(remainingSeconds),
+				})
+			;
+		}
+
+		return this.#documentSigned
+			? Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_COPY')
 			: Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN')
 		;
 	}

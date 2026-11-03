@@ -13,6 +13,7 @@ return [
 		'./src/main',
 		'./src/base',
 		'./src/outline',
+		'./src/file-type',
 		'./src/disk',
 		'./src/reaction',
 		'./src/gratitude',

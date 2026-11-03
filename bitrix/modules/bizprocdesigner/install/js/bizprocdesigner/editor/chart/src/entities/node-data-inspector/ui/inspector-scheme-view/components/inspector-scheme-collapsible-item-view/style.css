@@ -72,3 +72,8 @@
 	line-height: 19px;
 	font-weight: var(--ui-font-weight-normal);
 }
+
+/* The wrapper is rendered whenever the slot is passed, and its content may be conditional. */
+.inspector-scheme-view__collapsible-header__controls:empty {
+	display: none;
+}

@@ -47,6 +47,13 @@ $MESS["IBLOCK_OFFER_FIELD_BP_PUBLISHED"] = "SKU published";
 $MESS["IBLOCK_OFFER_FIELD_ACTIVE_PERIOD_FROM"] = "SKU active from";
 $MESS["IBLOCK_OFFER_FIELD_ACTIVE_PERIOD_TO"] = "SKU active until";
 $MESS["CP_TPL_CCR_RANGE_TO"] = "to #TO#";
+$MESS['CATALOG_COMPARE_ANNOUNCE_PARAMS'] = 'Characteristics updated, table rows: #COUNT#';
+$MESS['CATALOG_COMPARE_ANNOUNCE_REMOVED'] = 'Product removed from comparison, products remaining: #COUNT#';
+$MESS['CATALOG_COMPARE_BUY_FOR'] = 'Buy #NAME#';
+$MESS['CATALOG_COMPARE_NO_VALUE'] = 'No value';
+$MESS['CATALOG_COMPARE_SCROLL_REGION'] = 'Comparison table with horizontal scrolling';
+$MESS['CATALOG_COMPARE_TABLE_CAPTION'] = 'Product comparison by characteristics';
+$MESS['CATALOG_REMOVE_PRODUCT_FOR'] = 'Delete #NAME# from comparison';
 $MESS["CP_TPL_CCR_RANGE_FROM"] = "from #FROM#";
 $MESS["CP_TPL_CCR_RANGE_FULL"] = "from #FROM# to #TO#";
 ?>

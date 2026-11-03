@@ -22,6 +22,7 @@ export const ChatType = Object.freeze({
 	generalChannel: 'generalChannel',
 	comment: 'comment',
 	collab: 'collab',
+	vibecodeApp: 'vibecodeApp',
 });
 
 export type ChatTypeItem = $Values<typeof ChatType>;

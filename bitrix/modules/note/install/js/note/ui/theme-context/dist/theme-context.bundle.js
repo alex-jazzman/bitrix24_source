@@ -132,6 +132,35 @@ this.BX.Note = this.BX.Note || {};
 			}) => apply(data?.theme));
 		},
 		/**
+		 * Theme a foreign popup by its content container — used for Disk's file picker, which hands its
+		 * container back through an `onOpen` callback and knows nothing about the document theme (the
+		 * theme is a module setting, invisible to the portal). Its styles are built on design tokens, so
+		 * scoping the context class over the popup is enough; its own CSS is never touched.
+		 *
+		 * @returns A detach function. Call it when the popup closes — otherwise every reopen would leave
+		 *          another live theme subscription behind.
+		 */
+		themeForeignContainer(container) {
+			const popupEl = container?.closest?.('.popup-window') ?? container ?? null;
+			if (!popupEl) {
+				return () => {};
+			}
+			const apply = theme => {
+				main_core.Dom.removeClass(popupEl, DESIGN_CONTEXT_CLASS[NoteTheme.LIGHT]);
+				main_core.Dom.removeClass(popupEl, DESIGN_CONTEXT_CLASS[NoteTheme.DARK]);
+				main_core.Dom.addClass(popupEl, DESIGN_CONTEXT_CLASS[normalize(theme)]);
+			};
+			apply(currentTheme);
+			const unsubscribe = this.subscribe(({
+				data
+			}) => apply(data?.theme));
+			return () => {
+				unsubscribe();
+				main_core.Dom.removeClass(popupEl, DESIGN_CONTEXT_CLASS[NoteTheme.LIGHT]);
+				main_core.Dom.removeClass(popupEl, DESIGN_CONTEXT_CLASS[NoteTheme.DARK]);
+			};
+		},
+		/**
 		 * Theme an `ui.entity-selector` Dialog (the dropdown popup with tabs/search).
 		 * The selector's outer popup-window is created lazily on first open, so the
 		 * design-system context class is (re)applied every onShow and removed on hide.

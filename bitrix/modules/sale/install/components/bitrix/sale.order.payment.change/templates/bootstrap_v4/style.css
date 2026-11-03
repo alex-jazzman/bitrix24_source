@@ -14,7 +14,7 @@
 	padding: 7px;
 	height: auto;
 	border: 1px solid transparent;
-	transition: all 100ms ease;
+	transition: all 100ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .sale-order-payment-change-pp-company-graf-container {
@@ -25,7 +25,7 @@
 	border: 2px solid #c3cace;
 	border-radius: 2px;
 	background: #fff;
-	transition: all 100ms ease;
+	transition: all 100ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .sale-order-payment-change-pp-company:hover .sale-order-payment-change-pp-company-graf-container { border-color: var(--theme-color-primary); }
@@ -226,3 +226,65 @@
 	color: #80868e;
 	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
+
+/*region Focus ring*/
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later: the tiles of the choice and every stop of the result
+ * that replaces them. Tied to the roles and classes of this template, so other markup is left alone. */
+.row.sale-order-payment-change-pp-list > .sale-order-payment-change-pp-company[role="radio"][aria-checked][tabindex]:focus-visible::after,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp a:focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp .btn:focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp button:focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp input:focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp select:focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp textarea:focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp [tabindex]:not([tabindex="-1"]):focus-visible,
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp [role="button"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* A tile is a column of the grid: its box takes in the gutters at both sides and, stretched to the
+ * tallest tile of the line, the empty space under a short name, so a band around it ran over the frame
+ * of the block on the left and hung far below the name. The band goes around what is seen - the picture
+ * and the name - on a layer of the tile, set in by the gutter at the sides and by the room under the
+ * name (the `padding-bottom` of the tile and `mb-2` of the name) at the bottom. The focused tile stops
+ * stretching, so that its bottom edge is the one of its own name; nothing is painted in that space and
+ * nothing moves. The weight (0,7,0) outruns `[role="radio"]:focus-visible` (0,5,0) and
+ * `[tabindex]:not([tabindex="-1"]):focus-visible` (0,6,0) of the list and of the card the tiles come into,
+ * whatever order their stylesheets are loaded in. */
+.row.sale-order-payment-change-pp-list > .sale-order-payment-change-pp-company[role="radio"][aria-checked][tabindex]:focus-visible {
+	align-self: flex-start;
+	outline-width: 0;
+	box-shadow: none;
+}
+
+.row.sale-order-payment-change-pp-list > .sale-order-payment-change-pp-company[role="radio"][aria-checked][tabindex]:focus-visible::after {
+	position: absolute;
+	top: 0;
+	right: calc(var(--bs-gutter-x, 30px) / 2);
+	bottom: calc(10px + .5rem);
+	left: calc(var(--bs-gutter-x, 30px) / 2);
+	content: "";
+	pointer-events: none;
+}
+
+/* The script parks the focus on the result, and `[tabindex="-1"]:focus { outline: 0 !important }`
+ * of the landing store theme (`landing24/assets/vendor/bootstrap/bootstrap.css:73`) is answered by
+ * nothing but `!important`. */
+.sale-order-payment-change-pp-list > .sale-order-payment-change-pp[tabindex="-1"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset, 2px) !important;
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. */
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp .btn {
+	transition: all .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.row.sale-order-payment-change-pp-list > .col.sale-order-payment-change-pp .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+/*endregion*/

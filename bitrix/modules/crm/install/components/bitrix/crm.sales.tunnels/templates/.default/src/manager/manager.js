@@ -13,6 +13,8 @@ import type TunnelScheme from '../type/tunnel-scheme';
 import type AnalyticsLabels from '../type/analytics-labels';
 import createStageStubs from './internal/create-stage-stubs';
 import makeErrorMessageFromResponse from './internal/make-error-message';
+import StageEditorController from './internal/stage-editor-controller';
+import { createLazyStageEditorFactory, toStageEditorData } from './internal/stage-editor-adapter';
 
 export default class Manager
 {
@@ -34,7 +36,9 @@ export default class Manager
 
 		isCategoryEditable: boolean,
 		isCategoryCreatable: boolean,
+		isCategoryAccessEditable: boolean,
 		areStagesEditable: boolean,
+		areTunnelsEditable: boolean,
 		isAvailableGenerator: boolean,
 		isAutomationEnabled: boolean,
 		isStagesEnabled: boolean,
@@ -54,18 +58,37 @@ export default class Manager
 		this.tunnelScheme = options.tunnelScheme;
 		this.isCategoryEditable = Boolean(options.isCategoryEditable);
 		this.isCategoryCreatable = Boolean(options.isCategoryCreatable);
+		this.isCategoryAccessEditable = Boolean(options.isCategoryAccessEditable);
 		this.areStagesEditable = Boolean(options.areStagesEditable);
+		this.areTunnelsEditable = Boolean(options.areTunnelsEditable);
 		this.isAvailableGenerator = options.isAvailableGenerator;
 		this.isStagesEnabled = options.isStagesEnabled;
 		this.isAutomationEnabled = options.isAutomationEnabled && this.isStagesEnabled;
 		this.categories = new Map();
 		this.cache = new Cache.MemoryCache();
 		this.isChanged = false;
+		Backend.entityTypeId = this.entityTypeId;
+		this.stageEditorController = new StageEditorController({
+			entityTypeId: this.entityTypeId,
+			entityTypeName: this.documentType[2],
+			backend: Backend,
+			editorFactory: createLazyStageEditorFactory(),
+			getDeleteBlockReasons: () => [Loc.getMessage('CRM_ST_STAGE_DELETE_BLOCKED')],
+			createDraft: (column) => this.createStageEditorDraft(column),
+			removeDraft: (column) => this.removeStageEditorDraft(column),
+			onPreview: (column, stage) => this.updateColumnFromEditorData(column, stage),
+			onRestore: (column, stage) => this.updateColumnFromEditorData(column, stage),
+			onCreate: (draftColumn, sourceColumn, stage) => (
+				this.handleStageCreated(draftColumn, sourceColumn, stage)
+			),
+			onUpdate: (column, stage) => this.handleStageUpdated(column, stage),
+			onDelete: (column) => this.handleStageDeleted(column),
+			onOperationSuccess: (operation) => this.sendStageEditorAnalytics(operation, 'success'),
+			onOperationFailure: (operation) => this.sendStageEditorAnalytics(operation, 'error'),
+		});
 
 		this.initCategories();
 		this.initTunnels();
-
-		Backend.entityTypeId = this.entityTypeId;
 
 		if (this.isCategoryCreatable)
 		{
@@ -89,6 +112,27 @@ export default class Manager
 	hasTunnels(): boolean
 	{
 		return this.getTunnels().length > 0;
+	}
+
+	// Automation is the technical support of tunnels, the right is what makes them editable. The right
+	// belongs to one funnel; without one the page-wide right answers, as it does for the funnel the page
+	// offers to create.
+	canEditTunnels(areTunnelsEditable: boolean = this.areTunnelsEditable): boolean
+	{
+		return this.isAutomationEnabled && Boolean(areTunnelsEditable);
+	}
+
+	// A tunnel belongs to the funnel it starts in, the one the server resolves from the source stage.
+	canEditTunnelsOfLink(link: Link): boolean
+	{
+		return this.canEditTunnels(link.from.getData().column.getData().areTunnelsEditable);
+	}
+
+	// The right the server sent with the funnel, and the page-wide one for a funnel that arrives without
+	// it.
+	tunnelsEditableOf(options: CategorySourceOptions): boolean
+	{
+		return Boolean(options.ARE_TUNNELS_EDITABLE ?? this.areTunnelsEditable);
 	}
 
 	getContainer()
@@ -311,7 +355,9 @@ export default class Manager
 			generatorsCount: options.RC_COUNT,
 			generatorsListUrl: options.RC_LIST_URL,
 			isCategoryEditable: this.isCategoryEditable,
+			isCategoryAccessEditable: this.isCategoryAccessEditable,
 			areStagesEditable: this.areStagesEditable,
+			areTunnelsEditable: this.tunnelsEditableOf(options),
 			isAvailableGenerator: this.isAvailableGenerator,
 			isAutomationEnabled: this.isAutomationEnabled,
 			isStagesEnabled: this.isStagesEnabled,
@@ -425,7 +471,7 @@ export default class Manager
 					});
 			})
 			.subscribe('Column:link', (event) => {
-				if (!this.isAutomationEnabled)
+				if (!this.canEditTunnelsOfLink(event.data.link))
 				{
 					return;
 				}
@@ -482,7 +528,7 @@ export default class Manager
 				this.hideCategoryStub();
 			})
 			.subscribe('Column:removeLinkFrom', (event) => {
-				if (!this.isAutomationEnabled)
+				if (!this.canEditTunnelsOfLink(event.data.link))
 				{
 					return;
 				}
@@ -545,7 +591,7 @@ export default class Manager
 				}
 			})
 			.subscribe('Column:changeRobotAction', (event) => {
-				if (!this.isAutomationEnabled || event.data.preventSave)
+				if (!this.canEditTunnelsOfLink(event.data.link) || event.data.preventSave)
 				{
 					return;
 				}
@@ -609,7 +655,7 @@ export default class Manager
 				}
 			})
 			.subscribe('Column:editLink', (event) => {
-				if (!this.isAutomationEnabled)
+				if (!this.canEditTunnelsOfLink(event.data.link))
 				{
 					return;
 				}
@@ -624,14 +670,7 @@ export default class Manager
 						tunnel.robot = robot.serialize();
 
 						Backend
-							.request({
-								action: 'updateRobot',
-								analyticsLabel: {
-									component: Backend.component,
-									action: 'update.robot',
-								},
-								data: tunnel,
-							})
+							.updateRobot(tunnel)
 							.then(() => {
 								UI.Notification.Center.notify({
 									content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
@@ -728,6 +767,7 @@ export default class Manager
 						name: event.data.column.getName(),
 						sort: event.data.column.data.stage.SORT,
 						color: event.data.column.getColor(),
+						categoryId: event.data.column.getData().category.id,
 					})
 					.then(({ data }) => {
 						if (data.success)
@@ -750,70 +790,11 @@ export default class Manager
 						sendData(this.analyticsLabels.renameStageLabel);
 					});
 			})
+			.subscribe('Column:edit', (event) => {
+				this.stageEditorController.openEdit(event.data.column);
+			})
 			.subscribe('Column:addColumn', (event) => {
-				Backend
-					.addStage({
-						name: event.data.column.getGrid().getMessage('COLUMN_TITLE_PLACEHOLDER'),
-						sort: (() => {
-							const { column } = event.data;
-
-							return Number(column.data.stage.SORT) + 1;
-						})(),
-						entityId: (() => {
-							const { column } = event.data;
-
-							return column.data.stage.ENTITY_ID;
-						})(),
-						color: BX.Kanban.Column.DEFAULT_COLOR,
-						semantics: (() => {
-							const { column } = event.data;
-
-							return column.data.stage.SEMANTICS;
-						})(),
-						categoryId: (() => {
-							const { column } = event.data;
-
-							return column.data.category.id;
-						})(),
-					})
-					.then(({ data }) => {
-						UI.Notification.Center.notify({
-							content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-							autoHideDelay: 1500,
-							category: 'save',
-						});
-						this.isChanged = true;
-
-						const { stage } = data;
-						const prevColumn = event.data.column;
-						const grid = prevColumn.getGrid();
-						const category = this.getCategory(prevColumn.data.category.id);
-
-						stage.TUNNELS = [];
-
-						this.getStages().push(stage);
-
-						const targetId = grid.getNextColumnSibling(prevColumn);
-						// column.getGrid().removeColumn(column);
-						const column = grid.addColumn({
-							id: stage.STATUS_ID,
-							name: stage.NAME,
-							color: stage.COLOR.replace('#', ''),
-							data: category.getColumnData(stage),
-							targetId,
-						});
-						column.switchToEditMode();
-						Marker.adjustLinks();
-
-						this.analyticsLabels.createStageLabel.status = 'success';
-					})
-					.catch((response) => {
-						this.analyticsLabels.createStageLabel.status = 'error';
-						this.showErrorPopup(makeErrorMessageFromResponse(response));
-					})
-					.finally(() => {
-						sendData(this.analyticsLabels.createStageLabel);
-					});
+				this.stageEditorController.openCreate(event.data.column);
 			})
 			.subscribe('Column:sort', (event) => {
 				const sortData = event.data.columns.map((column, index) => {
@@ -825,6 +806,7 @@ export default class Manager
 						name: column.getName(),
 						sort: newSorting,
 						color: column.getColor(),
+						categoryId: column.getData().category.id,
 					};
 
 					column.data.stage.SORT = newSorting;
@@ -871,6 +853,154 @@ export default class Manager
 			});
 
 		this.categories.set(String(options.ID), category);
+	}
+
+	updateColumnFromEditorData(column, stageData)
+	{
+		const currentStage = column.getData().stage;
+		const stage = {
+			...currentStage,
+			NAME: stageData.name,
+			COLOR: stageData.color,
+			DESCRIPTION: stageData.description,
+		};
+		const data = {
+			...column.getData(),
+			stage,
+		};
+
+		column.getGrid().updateColumn(column, {
+			id: column.getId(),
+			name: stage.NAME,
+			color: stage.COLOR,
+			total: column.getTotal(),
+			data,
+		});
+		column.currentName = stage.NAME;
+	}
+
+	createStageEditorDraft(sourceColumn)
+	{
+		const grid = sourceColumn.getGrid();
+		const sourceStage = sourceColumn.getData().stage;
+		const category = this.getCategory(sourceColumn.getData().category.id);
+		const draftId = `kanban-new-column-${BX.util.getRandomString(5)}`;
+		const draftStage = {
+			...sourceStage,
+			ID: null,
+			STATUS_ID: draftId,
+			NAME: grid.getMessage('COLUMN_TITLE_PLACEHOLDER'),
+			COLOR: `#${sourceColumn.getColor()}`,
+			DESCRIPTION: '',
+			SORT: Number(sourceStage.SORT) + 1,
+			SYSTEM: 'N',
+			TUNNELS: [],
+		};
+
+		const draftColumn = grid.addColumn({
+			id: draftId,
+			name: draftStage.NAME,
+			color: sourceColumn.getColor(),
+			canSort: false,
+			canAddItem: false,
+			droppable: false,
+			data: category.getColumnData(draftStage),
+			targetId: grid.getNextColumnSibling(sourceColumn),
+		});
+		Marker.adjustLinks();
+
+		return draftColumn;
+	}
+
+	removeStageEditorDraft(draftColumn)
+	{
+		draftColumn.getGrid().removeColumn(draftColumn);
+		Marker.adjustLinks();
+	}
+
+	handleStageCreated(draftColumn, sourceColumn, stage)
+	{
+		const grid = draftColumn.getGrid();
+		const category = this.getCategory(sourceColumn.getData().category.id);
+		const targetId = grid.getNextColumnSibling(draftColumn);
+		stage.TUNNELS = [];
+		this.getStages().push(stage);
+		grid.removeColumn(draftColumn);
+		grid.addColumn({
+			id: stage.STATUS_ID,
+			name: stage.NAME,
+			color: stage.COLOR.replace('#', ''),
+			data: category.getColumnData(stage),
+			targetId,
+		});
+
+		this.notifyStageEditorSaved();
+		Marker.adjustLinks();
+
+		return toStageEditorData(stage);
+	}
+
+	handleStageUpdated(column, stage)
+	{
+		const oldStage = column.getData().stage;
+		stage.TUNNELS = stage.TUNNELS || oldStage.TUNNELS || [];
+		const category = column.getData().category;
+
+		column.getGrid().updateColumn(column, {
+			id: column.getId(),
+			name: stage.NAME,
+			color: stage.COLOR.replace('#', ''),
+			total: column.getTotal(),
+			data: category.getColumnData(stage),
+		});
+		column.currentName = stage.NAME;
+
+		this.notifyStageEditorSaved();
+		Marker.adjustLinks();
+
+		return toStageEditorData(stage);
+	}
+
+	handleStageDeleted(column)
+	{
+		Marker.getAllLinks().forEach((link) => {
+			if (link.from === column.marker || link.to === column.marker)
+			{
+				link.from.removeLink(link);
+			}
+		});
+		column.getGrid().removeColumn(column);
+
+		this.notifyStageEditorSaved();
+		setTimeout(() => {
+			Marker.removeAllLinks();
+			Marker.restoreAllLinks();
+		});
+	}
+
+	notifyStageEditorSaved()
+	{
+		UI.Notification.Center.notify({
+			content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+			autoHideDelay: 1500,
+			category: 'save',
+		});
+		this.isChanged = true;
+	}
+
+	sendStageEditorAnalytics(operation, status)
+	{
+		const labels = {
+			create: this.analyticsLabels.createStageLabel,
+			update: this.analyticsLabels.renameStageLabel,
+			delete: this.analyticsLabels.deleteStageLabel,
+		};
+		const label = labels[operation];
+		if (label)
+		{
+			label.status = status;
+			sendData(label);
+		}
 	}
 
 	showErrorPopup(message)

@@ -14,6 +14,7 @@ import ItemAdminCustom from '../items/item-admin-custom';
 import { Menu } from 'main.popup';
 import ItemGroup from '../items/item-group';
 import { Counter } from 'ui.cnt';
+import { handleCollaborationMenuItemClick, resolveFirstPageLink } from '../collaboration-menu-item';
 
 export default class ItemsController extends DefaultController{
 	parentContainer: Element;
@@ -88,7 +89,8 @@ export default class ItemsController extends DefaultController{
 						event.stopPropagation();
 						return false;
 					}
-				}, true)
+					handleCollaborationMenuItemClick(item.container, node, event);
+				}, true);
 			})
 		;
 		item.container
@@ -432,7 +434,7 @@ export default class ItemsController extends DefaultController{
 			.forEach(([counterId, counterValue]) => {
 				[...this.#getItemsByCounterId(counterId)]
 					.forEach((item) => {
-						const {oldValue, newValue} = item.updateCounter(counterValue);
+						const {oldValue, newValue} = item.updateCounter(counterValue, counterId);
 						const state = item.container.getAttribute('data-status');
 
 						if (
@@ -546,7 +548,7 @@ export default class ItemsController extends DefaultController{
 				const item = this.#getItemsByCounterId(counterId).shift();
 				if (item)
 				{
-					const value = item.getCounterValue();
+					const value = item.getCounterValue(counterId);
 					counters[counterId] = value > counterValue ? (value - counterValue) : 0;
 				}
 				else
@@ -563,9 +565,7 @@ export default class ItemsController extends DefaultController{
 		const result = [];
 		[...this.items.values()]
 			.forEach((item: Item) => {
-				const counter = Counter.initFromCounterNode(item.container.querySelector(`.${Counter.BaseClassname}`));
-
-				if (counter && counter.getId().includes(counterId))
+				if (item.hasCounterId(counterId))
 				{
 					result.push(item);
 				}
@@ -636,10 +636,7 @@ export default class ItemsController extends DefaultController{
 							customItems.push(item);
 						}
 
-						if (firstItemLink === null && Type.isStringFilled(node.getAttribute("data-link")))
-						{
-							firstItemLink = node.getAttribute("data-link");
-						}
+						firstItemLink = resolveFirstPageLink(firstItemLink, node);
 
 						if (node.closest(`[data-group-id="${currentGroupId}"][data-role="group-content"]`))
 						{

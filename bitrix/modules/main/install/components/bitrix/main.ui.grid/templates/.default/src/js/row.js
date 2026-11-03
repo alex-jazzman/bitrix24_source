@@ -321,77 +321,78 @@ import { Type } from 'main.core';
 				switch (element.tagName)
 				{
 					case 'SELECT':
-						if (element.multiple)
+					{
+						const selectValues = element.multiple
+							? [...element.selectedOptions].map((option) => option.value)
+							: [element.value];
+
+						if (this.isMultipleCustomValue(element.name))
 						{
-							const selectValues = [];
-							element.querySelectorAll('option').forEach((option) => {
-								if (option.selected)
-								{
-									selectValues.push(option.value);
-								}
-							});
+							resultObject = this.collectMultipleCustomValue(map, resultObject, selectValues);
+						}
+						else if (element.multiple)
+						{
 							resultObject.RAW_VALUE = selectValues;
-							resultObject.VALUE = selectValues;
-							map.set(element.name, resultObject);
+							resultObject.VALUE = [...selectValues];
 						}
-						else
-						{
-							map.set(element.name, resultObject);
-						}
+
+						map.set(element.name, resultObject);
 						break;
+					}
 					case 'INPUT':
 						switch (element.type.toUpperCase())
 						{
 							case 'RADIO':
-								if (element.checked)
-								{
-									map.set(element.name, resultObject);
-								}
-								break;
 							case 'CHECKBOX':
 								if (element.checked)
 								{
 									if (this.isMultipleCustomValue(element.name))
 									{
-										if (map.has(element.name))
-										{
-											resultObject = map.get(element.name);
-											resultObject.RAW_VALUE.push(element.value);
-											resultObject.VALUE.push(element.value);
-										}
-										else
-										{
-											resultObject.RAW_VALUE = [element.value];
-											resultObject.VALUE = [element.value];
-										}
+										resultObject = this.collectMultipleCustomValue(map, resultObject, [element.value]);
 									}
 									map.set(element.name, resultObject);
 								}
 								break;
 							case 'FILE':
-								resultObject.RAW_VALUE = element.files[0];
-								resultObject.VALUE = element.files[0];
+								if (this.isMultipleCustomValue(element.name))
+								{
+									const files = [...element.files];
+									if (files.length === 0)
+									{
+										// Consumers detect a file field by the name of an emptied uploader input
+										if (!map.has(element.name))
+										{
+											resultObject.RAW_VALUE = undefined;
+											resultObject.VALUE = undefined;
+											map.set(element.name, resultObject);
+										}
+
+										break;
+									}
+
+									resultObject = this.collectMultipleCustomValue(map, resultObject, files);
+								}
+								else
+								{
+									resultObject.RAW_VALUE = element.files[0];
+									resultObject.VALUE = element.files[0];
+								}
+
 								map.set(element.name, resultObject);
 								break;
 							default:
 								if (this.isMultipleCustomValue(element.name))
 								{
-									if (map.has(element.name))
-									{
-										resultObject = map.get(element.name);
-										resultObject.RAW_VALUE.push(element.value);
-										resultObject.VALUE.push(element.value);
-									}
-									else
-									{
-										resultObject.RAW_VALUE = [element.value];
-										resultObject.VALUE = [element.value];
-									}
+									resultObject = this.collectMultipleCustomValue(map, resultObject, [element.value]);
 								}
 								map.set(element.name, resultObject);
 						}
 						break;
 					default:
+						if (this.isMultipleCustomValue(element.name))
+						{
+							resultObject = this.collectMultipleCustomValue(map, resultObject, [element.value]);
+						}
 						map.set(element.name, resultObject);
 						break;
 				}
@@ -403,6 +404,28 @@ import { Type } from 'main.core';
 			});
 
 			return result;
+		},
+
+		/**
+		 * Appends the values of one input to the entry its array name already holds,
+		 * so that every input of a multiple property is kept instead of the last one.
+		 * Empty strings are dropped: markup of a multiple property carries a reset input
+		 * of its own, and an empty option of a select stands for no value at all.
+		 */
+		collectMultipleCustomValue(map, resultObject, values: Array): Object
+		{
+			const filtered = values.filter((value) => value !== '');
+			const collected = map.get(resultObject.RAW_NAME);
+
+			if (collected === undefined || !Array.isArray(collected.VALUE))
+			{
+				return { ...resultObject, RAW_VALUE: [...filtered], VALUE: [...filtered] };
+			}
+
+			collected.RAW_VALUE.push(...filtered);
+			collected.VALUE.push(...filtered);
+
+			return collected;
 		},
 
 		isMultipleCustomValue(elementName: string): boolean
@@ -595,21 +618,23 @@ import { Type } from 'main.core';
 
 		showChildRows()
 		{
-			const rows = this.getChildren();
-			const isCustom = this.isCustom();
-
-			rows.forEach((row) => {
-				row.show();
-				if (!isCustom && row.isExpand())
-				{
-					row.showChildRows();
-				}
-			});
+			this.showDirectChildRows();
 
 			this.parent.updateCounterDisplayed();
 			this.parent.updateCounterSelected();
 			this.parent.adjustCheckAllCheckboxes();
 			this.parent.adjustRows();
+		},
+
+		showDirectChildRows()
+		{
+			this.getDirectChildren().forEach((row) => {
+				row.show();
+				if (row.isExpand())
+				{
+					row.showDirectChildRows();
+				}
+			});
 		},
 
 		/**
@@ -623,12 +648,26 @@ import { Type } from 'main.core';
 			return this.parent.getRows()[functionName](id, true);
 		},
 
+		/**
+		 * Gets rows directly nested into this one
+		 * @return {BX.Grid.Row[]}
+		 */
+		getDirectChildren()
+		{
+			if (this.isCustom())
+			{
+				return this.parent.getRows().getTopLevelRowsByGroupId(this.getGroupId());
+			}
+
+			return this.parent.getRows().getRowsByParentId(this.getId());
+		},
+
 		hideChildRows()
 		{
-			const rows = this.getChildren();
-			rows.forEach((row) =>
-			{ row.hide();
+			this.getChildren().forEach((row) => {
+				row.hide();
 			});
+
 			this.parent.updateCounterDisplayed();
 			this.parent.updateCounterSelected();
 			this.parent.adjustCheckAllCheckboxes();
@@ -976,7 +1015,11 @@ import { Type } from 'main.core';
 
 		getGroupId()
 		{
-			return (BX.data(this.getNode(), 'group-id')).toString();
+			const groupId = BX.data(this.getNode(), 'group-id');
+
+			// The grid does not emit data-group-id itself: a list where only part of the rows
+			// are grouped is an ordinary shape, and such a row simply has no group.
+			return Type.isNil(groupId) ? null : groupId.toString();
 		},
 
 		getObserver()
@@ -1053,11 +1096,23 @@ import { Type } from 'main.core';
 		},
 
 		_onCloseMenu()
-		{},
+		{
+			const button = this.getActionsButton();
+			if (button)
+			{
+				button.setAttribute('aria-expanded', 'false');
+			}
+		},
 
 		_onPopupShow(popupMenu)
 		{
-			popupMenu.setBindElement(this.getActionsButton());
+			const button = this.getActionsButton();
+			popupMenu.setBindElement(button);
+
+			if (button)
+			{
+				button.setAttribute('aria-expanded', 'true');
+			}
 		},
 
 		actionsMenuIsShown()
@@ -1248,6 +1303,19 @@ import { Type } from 'main.core';
 			BX.Dom.attr(this.getNode(), 'data-id', id);
 		},
 
+		/**
+		 * Names the actions button after the row, the way the template does. The title of the
+		 * default action lives on the server only, so a row built by the script is named by its
+		 * id; a page cached before the phrase existed falls back to that id alone.
+		 */
+		getActionsLabel()
+		{
+			const phrase = BX.message('interface_grid_row_actions');
+			const id = String(this.getId());
+
+			return BX.Type.isStringFilled(phrase) ? phrase.replace('#ROW#', id) : id;
+		},
+
 		setActions(actions)
 		{
 			const actionCell = this.getNode().querySelector('.main-grid-cell-action');
@@ -1256,8 +1324,16 @@ import { Type } from 'main.core';
 				let actionButton = actionCell.querySelector('.main-grid-row-action-button');
 				if (!actionButton)
 				{
+					// The same markup the template renders: a row that got its actions from the
+					// script must reach the keyboard the way a rendered one does.
 					actionButton = BX.Dom.create({
-						tag: 'div',
+						tag: 'button',
+						attrs: {
+							type: 'button',
+							'aria-label': this.getActionsLabel(),
+							'aria-haspopup': 'menu',
+							'aria-expanded': 'false',
+						},
 						props: { className: 'main-grid-row-action-button' },
 					});
 
@@ -1266,7 +1342,6 @@ import { Type } from 'main.core';
 				}
 
 				BX.Dom.attr(actionButton, {
-					href: '#',
 					'data-actions': actions,
 				});
 
@@ -1358,16 +1433,23 @@ import { Type } from 'main.core';
 
 							if (BX.Type.isPlainObject(labelOptions.removeButton))
 							{
+								// The same markup the template renders: a label redrawn by the script
+								// keeps the remove control a named, focusable button.
+								const removeLabel = BX.message('interface_grid_label_remove') || '';
 								const button = (() => {
 									if (labelOptions.removeButton.type === BX.Grid.Label.RemoveButtonType.INSIDE)
 									{
 										return BX.Tag.render`
-											<span class="ui-label-icon"></span>
+											<button type="button" class="ui-label-icon" aria-label="${removeLabel}"></button>
 										`;
 									}
 
 									return BX.Tag.render`
-										<span class="main-grid-label-remove-button ${labelOptions.removeButton.type}"></span>
+										<button
+											type="button"
+											class="main-grid-label-remove-button ${labelOptions.removeButton.type}"
+											aria-label="${removeLabel}"
+										></button>
 									`;
 								})();
 
@@ -1450,15 +1532,16 @@ import { Type } from 'main.core';
 							<span class="main-grid-tags">${tags}</span>
 						`;
 
-						const addButton = BX.Tag.render`
-							<span class="main-grid-tag-add"></span>
-						`;
 						if (BX.Type.isPlainObject(cellContent.addButton))
 						{
-							this.bindOnEvents(addButton, cellContent.addButton.events);
-						}
+							const addButton = BX.Tag.render`
+								<span class="main-grid-tag-add"></span>
+							`;
 
-						BX.Dom.append(addButton, tagsContainer);
+							this.bindOnEvents(addButton, cellContent.addButton.events);
+
+							BX.Dom.append(addButton, tagsContainer);
+						}
 
 						const oldTagsContainer = container.querySelector('.main-grid-tags');
 						if (BX.Type.isDomNode(oldTagsContainer))
@@ -1812,31 +1895,19 @@ import { Type } from 'main.core';
 							}
 						}
 
-						if (BX.Text.toNumber(counter.value) > 0)
+						if (counter.type === BX.Grid.Counters.Type.RIGHT)
 						{
-							const align = counter.type === BX.Grid.Counters.Type.RIGHT ? 'right' : 'left';
-							if (align === 'left')
-							{
-								BX.Dom.prepend(counterContainer, cellInner);
-							}
-							else if (align === 'right')
-							{
-								BX.Dom.append(counterContainer, cellInner);
-							}
+							BX.Dom.append(counterContainer, cellInner);
 						}
 						else
 						{
-							const leftAlignedClass = (
-								`main-grid-cell-counter-${BX.Grid.Counters.Type.LEFT_ALIGNED}`
-							);
-							if (BX.Dom.hasClass(counterContainer, leftAlignedClass))
-							{
-								BX.remove(uiCounter);
-							}
-							else
-							{
-								BX.remove(counterContainer);
-							}
+							BX.Dom.prepend(counterContainer, cellInner);
+						}
+
+						// The container reserves the cell space, so only the counter goes at zero.
+						if (BX.Text.toNumber(counter.value) <= 0)
+						{
+							BX.remove(uiCounter);
 						}
 					}
 				});

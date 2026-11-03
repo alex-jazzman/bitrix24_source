@@ -14,3 +14,13 @@
 {
 	content: none !important;
 }
+
+/*
+ * The right half is a native button, so it does not inherit the colour of the split: the design system sets
+ * `color` on the half for hover and active only, and at rest the browser paints it black. The resting state
+ * takes the published button colour; the calendar icon follows it through `currentColor` in every state.
+ */
+.mail-compose-send-split__schedule
+{
+	color: var(--ui-btn-color);
+}

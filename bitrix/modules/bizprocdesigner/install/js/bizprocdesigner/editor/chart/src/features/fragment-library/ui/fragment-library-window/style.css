@@ -1,0 +1,141 @@
+/* One height for the window: the popup is centred once, when it is shown, and never re-centred, so a
+   growing list must not push the footer off the screen. */
+.bizprocdesigner-fragment-library
+{
+	display: flex;
+	flex-direction: column;
+	height: min(420px, 50vh);
+	overflow-y: auto;
+}
+
+.bizprocdesigner-fragment-library__skeleton
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding-top: var(--ui-space-inset-xs);
+}
+
+/* Pinned to the top of the list: a page may fail to load while the person is anywhere in it. */
+.bizprocdesigner-fragment-library__error
+{
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex-shrink: 0;
+	margin-bottom: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-alert);
+	background: var(--ui-color-accent-soft-red-3);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.bizprocdesigner-fragment-library__error-icon
+{
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-fragment-library__error-text
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-fragment-library__empty
+{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	margin: auto;
+	padding: var(--ui-space-inset-xl) 0;
+	color: var(--ui-color-base-2);
+}
+
+/* An icon instead of a 3D illustration: the square is held by equal insets around the icon, so its
+   side is set by the icon itself. */
+.bizprocdesigner-fragment-library__empty-icon
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	background: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-lg);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bizprocdesigner-fragment-library__table
+{
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.bizprocdesigner-fragment-library__table th,
+.bizprocdesigner-fragment-library__table td
+{
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm) var(--ui-space-inset-xs) 0;
+	text-align: start;
+	vertical-align: middle;
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bizprocdesigner-fragment-library__table th
+{
+	font-weight: inherit;
+}
+
+.bizprocdesigner-fragment-library__table thead th
+{
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	padding-top: 0;
+	color: var(--ui-color-base-4);
+	background: var(--ui-color-bg-content-primary);
+	border-bottom-color: var(--ui-color-divider-default);
+}
+
+.bizprocdesigner-fragment-library__table th:last-child,
+.bizprocdesigner-fragment-library__table td:last-child
+{
+	width: 1%;
+	padding-right: 0;
+}
+
+.bizprocdesigner-fragment-library__table tbody tr
+{
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-fragment-library__table tbody tr:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Auto layout keeps a column at least as wide as its content: without this cap a long name widens
+   the table instead of wrapping inside its cell. */
+.bizprocdesigner-fragment-library__table tbody td:not(:last-child),
+.bizprocdesigner-fragment-library__table tbody th
+{
+	max-width: 0;
+}
+
+.bizprocdesigner-fragment-library__table tbody tr:last-child td,
+.bizprocdesigner-fragment-library__table tbody tr:last-child th
+{
+	border-bottom: none;
+}
+
+.bizprocdesigner-fragment-library__more
+{
+	display: flex;
+	flex-shrink: 0;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-2xs);
+}

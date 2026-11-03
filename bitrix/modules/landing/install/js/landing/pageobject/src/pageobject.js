@@ -22,20 +22,70 @@ export class PageObject
 	static getRootWindow(): Window
 	{
 		return this.cache.remember('rootWindow', () => {
-			const frames = window.top.frames;
-			for (let i = frames.length - 1; i >= 0; i--)
+			const topWindow = window.top;
+			const directFrames = PageObject.#getSameOriginFrames(topWindow);
+			const directRoot = directFrames.find((frame) => PageObject.#hasEditorFrame(frame));
+			if (directRoot)
 			{
-				try
-				{
-					if (frames[i].document.body && frames[i].document.body.querySelector('.landing-ui-view'))
-					{
-						return frames[i];
-					}
-				} catch (e) {}
+				return directRoot;
 			}
 
-			return window.top;
+			if (PageObject.#hasEditorFrame(topWindow))
+			{
+				return topWindow;
+			}
+
+			// The editor may live deeper, e.g. the group page opened by a direct link
+			let frames = directFrames;
+			while (frames.length > 0)
+			{
+				frames = frames.flatMap((frame) => PageObject.#getSameOriginFrames(frame));
+				const nestedRoot = frames.find((frame) => PageObject.#hasEditorFrame(frame));
+				if (nestedRoot)
+				{
+					return nestedRoot;
+				}
+			}
+
+			return topWindow;
 		});
+	}
+
+	/**
+	 * Child frames of the window, from the last to the first; cross-origin ones are skipped with their subtree.
+	 */
+	static #getSameOriginFrames(parentWindow: Window): Array<Window>
+	{
+		const result = [];
+		const frames = parentWindow.frames;
+		for (let i = frames.length - 1; i >= 0; i--)
+		{
+			try
+			{
+				if (frames[i].document)
+				{
+					result.push(frames[i]);
+				}
+			}
+			catch
+			{
+				// cross-origin frame
+			}
+		}
+
+		return result;
+	}
+
+	static #hasEditorFrame(win: Window): boolean
+	{
+		try
+		{
+			return Boolean(win.document.body && win.document.body.querySelector('.landing-ui-view'));
+		}
+		catch
+		{
+			return false;
+		}
 	}
 
 	static getEditorWindow(): ?Window

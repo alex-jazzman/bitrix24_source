@@ -16,6 +16,9 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 		VibeCodeCatalogEmptyAppsState,
 	} = require('vibecode/catalog/src/empty-states/empty-apps-state');
 	const {
+		VibeCodeCatalogFavoriteEmptyState,
+	} = require('vibecode/catalog/src/empty-states/favorite-empty-state');
+	const {
 		VibeCodeCatalogHiddenEmptyState,
 	} = require('vibecode/catalog/src/empty-states/hidden-empty-state');
 	const {
@@ -235,6 +238,11 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 			return Loc.getMessage('MOBILE_VIBECODE_CATALOG_TITLE_TEXT');
 		}
 
+		isItemClickOpensChat()
+		{
+			return this.getListData().itemClickOpensChat === true;
+		}
+
 		isHeaderHidden()
 		{
 			return this.props.hideHeader === true;
@@ -253,6 +261,11 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 		getCatalogState()
 		{
 			return this.provider.normalizeState(this.state.catalogState);
+		}
+
+		shouldShowHiddenBadge()
+		{
+			return [CATALOG_STATE.ALL, CATALOG_STATE.FAVORITE].includes(this.getCatalogState());
 		}
 
 		getProviderParams(props = this.props)
@@ -365,6 +378,8 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 			{
 				return;
 			}
+
+			this.itemActionsController.applyPendingFavoriteGuards(responseData, config);
 
 			this.handleNewAppsResponseMeta(responseData, renderType, config);
 			this.onStatefulListItemsLoaded(responseData, config);
@@ -597,6 +612,7 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 					contentBottomPadding: CONTENT_BOTTOM_PADDING,
 					actionButtonClickHandler: this.itemActionsController.handleItemActionClick,
 					itemLongClickHandler: this.itemActionsController.handleItemLongClick,
+					showHiddenBadge: this.shouldShowHiddenBadge(),
 				},
 				itemDetailOpenHandler: this.itemActionsController.handleItemClick,
 				onBeforeItemsRender: this.prepareStatefulListItems,
@@ -659,6 +675,13 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 				return renderVibeCodeCatalogState({
 					testId: this.getTestId('empty'),
 					title: Loc.getMessage('MOBILE_VIBECODE_CATALOG_NEW_EMPTY_TITLE'),
+				});
+			}
+
+			if (this.getCatalogState() === CATALOG_STATE.FAVORITE)
+			{
+				return VibeCodeCatalogFavoriteEmptyState({
+					testId: this.getTestId('empty'),
 				});
 			}
 

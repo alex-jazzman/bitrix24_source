@@ -2077,7 +2077,7 @@ window._main_polyfill_core = true;
 			this.registry.delete(target);
 		}
 	}
-	var registry = new Registry();
+	const registry = new Registry();
 
 	function isOptionSupported(name) {
 		let isSupported = false;
@@ -2162,6 +2162,966 @@ window._main_polyfill_core = true;
 		bind$1(target, eventName, once, options);
 	}
 
+	const BX$1 = window.BX;
+	const resolve = BX$1;
+
+	const MSLEFT = 1;
+	const MSMIDDLE = 2;
+	const MSRIGHT = 4;
+	const AM_PM_UPPER = 1;
+	const AM_PM_LOWER = 2;
+	const AM_PM_NONE = false;
+	const eventTypes = {
+		click: 'MouseEvent',
+		dblclick: 'MouseEvent',
+		mousedown: 'MouseEvent',
+		mousemove: 'MouseEvent',
+		mouseout: 'MouseEvent',
+		mouseover: 'MouseEvent',
+		mouseup: 'MouseEvent',
+		focus: 'MouseEvent',
+		blur: 'MouseEvent'
+	};
+	const CHECK_FORM_ELEMENTS = {
+		tagName: /^INPUT|SELECT|TEXTAREA|BUTTON$/i
+	};
+
+	const util = {
+		array_values(ar) {
+			if (!BX$1.type.isArray(ar)) {
+				return util._array_values_ob(ar);
+			}
+			const arv = [];
+			for (let i = 0, l = ar.length; i < l; i++) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(ar[i]);
+				}
+			}
+			return arv;
+		},
+		_array_values_ob(ar) {
+			const arv = [];
+			for (const i in ar) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(ar[i]);
+				}
+			}
+			return arv;
+		},
+		array_keys(ar) {
+			if (!BX$1.type.isArray(ar)) {
+				return util._array_keys_ob(ar);
+			}
+			const arv = [];
+			for (let i = 0, l = ar.length; i < l; i++) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(i);
+				}
+			}
+			return arv;
+		},
+		_array_keys_ob(ar) {
+			const arv = [];
+			for (const i in ar) {
+				if (ar[i] !== null && typeof ar[i] !== 'undefined') {
+					arv.push(i);
+				}
+			}
+			return arv;
+		},
+		object_keys(obj) {
+			const arv = [];
+			for (const k in obj) {
+				if (Object.prototype.hasOwnProperty.call(obj, k)) {
+					arv.push(k);
+				}
+			}
+			return arv;
+		},
+		array_merge(first, second) {
+			if (!BX$1.type.isArray(first)) {
+				first = [];
+			}
+			if (!BX$1.type.isArray(second)) {
+				second = [];
+			}
+			let i = first.length;
+			let j = 0;
+			if (typeof second.length === 'number') {
+				for (let l = second.length; j < l; j++) {
+					first[i++] = second[j];
+				}
+			} else {
+				while (second[j] !== undefined) {
+					first[i++] = second[j++];
+				}
+			}
+			first.length = i;
+			return first;
+		},
+		array_flip(object) {
+			const newObject = {};
+			for (const key in object) {
+				newObject[object[key]] = key;
+			}
+			return newObject;
+		},
+		array_diff(ar1, ar2, hash) {
+			hash = BX$1.type.isFunction(hash) ? hash : null;
+			let i = 0;
+			let length = 0;
+			let v;
+			let h;
+			const map = {};
+			const result = [];
+			for (i = 0, length = ar2.length; i < length; i++) {
+				v = ar2[i];
+				h = hash ? hash(v) : v;
+				map[h] = true;
+			}
+			for (i = 0, length = ar1.length; i < length; i++) {
+				v = ar1[i];
+				h = hash ? hash(v) : v;
+				if (typeof map[h] === 'undefined') {
+					result.push(v);
+				}
+			}
+			return result;
+		},
+		array_unique(ar) {
+			let i = 0;
+			let j;
+			let len = ar.length;
+			if (len < 2) {
+				return ar;
+			}
+			for (; i < len - 1; i++) {
+				for (j = i + 1; j < len; j++) {
+					if (ar[i] == ar[j]) {
+						ar.splice(j--, 1);
+						len--;
+					}
+				}
+			}
+			return ar;
+		},
+		in_array(needle, haystack) {
+			for (let i = 0; i < haystack.length; i++) {
+				if (haystack[i] == needle) {
+					return true;
+				}
+			}
+			return false;
+		},
+		array_search(needle, haystack) {
+			for (let i = 0; i < haystack.length; i++) {
+				if (haystack[i] == needle) {
+					return i;
+				}
+			}
+			return -1;
+		},
+		object_search_key(needle, haystack) {
+			if (typeof haystack[needle] !== 'undefined') {
+				return haystack[needle];
+			}
+			for (const i in haystack) {
+				if (typeof haystack[i] === 'object') {
+					const result = util.object_search_key(needle, haystack[i]);
+					if (result !== false) {
+						return result;
+					}
+				}
+			}
+			return false;
+		},
+		trim(s) {
+			if (BX$1.type.isString(s)) {
+				return s.trim();
+			}
+			return s;
+		},
+		urlencode(s) {
+			return encodeURIComponent(s);
+		},
+		deleteFromArray(ar, ind) {
+			return ar.slice(0, ind).concat(ar.slice(ind + 1));
+		},
+		insertIntoArray(ar, ind, el) {
+			return ar.slice(0, ind).concat([el]).concat(ar.slice(ind));
+		},
+		htmlspecialchars(str) {
+			return BX$1.Text.encode(str);
+		},
+		htmlspecialcharsback(str) {
+			return BX$1.Text.decode(str);
+		},
+		preg_quote(str, delimiter) {
+			if (!str.replace) {
+				return str;
+			}
+			return str.replace(new RegExp(`[.\\\\+*?\\[\\^\\]$(){}=!<>|:\\${delimiter || ''}-]`, 'g'), '\\$&');
+		},
+		jsencode(str) {
+			if (!str || !str.replace) {
+				return str;
+			}
+			const escapes = [{
+				c: '\\\\',
+				r: '\\\\'
+			},
+			{
+				c: '\\t',
+				r: '\\t'
+			}, {
+				c: '\\n',
+				r: '\\n'
+			}, {
+				c: '\\r',
+				r: '\\r'
+			}, {
+				c: '"',
+				r: '\\"'
+			}, {
+				c: "'",
+				r: "\\'"
+			}, {
+				c: '<',
+				r: '\\x3C'
+			}, {
+				c: '>',
+				r: '\\x3E'
+			}, {
+				c: '\\u2028',
+				r: '\\u2028'
+			}, {
+				c: '\\u2029',
+				r: '\\u2029'
+			}];
+			for (const rule of escapes) {
+				str = str.replace(new RegExp(rule.c, 'g'), rule.r);
+			}
+			return str;
+		},
+		getCssName(jsName) {
+			if (!BX$1.type.isNotEmptyString(jsName)) {
+				return '';
+			}
+			return jsName.replaceAll(/[A-Z]/g, match => {
+				return `-${match.toLowerCase()}`;
+			});
+		},
+		getJsName(cssName) {
+			const regex = /-([a-z])/g;
+			if (regex.test(cssName)) {
+				return cssName.replaceAll(regex, (match, letter) => {
+					return letter.toUpperCase();
+				});
+			}
+			return cssName;
+		},
+		nl2br(str) {
+			if (!str || !str.replace) {
+				return str;
+			}
+			return str.replace(/([^>])\n/g, '$1<br/>');
+		},
+		str_pad(input, pad_length, pad_string, pad_type) {
+			pad_string = pad_string || ' ';
+			pad_type = pad_type || 'right';
+			input = input.toString();
+			if (pad_type === 'left') {
+				return util.str_pad_left(input, pad_length, pad_string);
+			}
+			return util.str_pad_right(input, pad_length, pad_string);
+		},
+		str_pad_left(input, pad_length, pad_string) {
+			return input.toString().padStart(pad_length, pad_string);
+		},
+		str_pad_right(input, pad_length, pad_string) {
+			return input.toString().padEnd(pad_length, pad_string);
+		},
+		strip_tags(str) {
+			return str.split(/<[^>]+>/g).join('');
+		},
+		strip_php_tags(str) {
+			return str.replaceAll(/<\?(.|[\n\r])*?\?>/g, '');
+		},
+		popup(url, width, height) {
+			let w = 0;
+			let h = 0;
+			if (BX$1.browser.IsOpera()) {
+				w = document.body.offsetWidth;
+				h = document.body.offsetHeight;
+			} else {
+				w = screen.width;
+				h = screen.height;
+			}
+			return window.open(url, '', `status=no,scrollbars=yes,resizable=yes,width=${width},height=${height},top=${Math.floor((h - height) / 2 - 14)},left=${Math.floor((w - width) / 2 - 5)}`);
+		},
+		shuffle(array) {
+			let temporaryValue = null;
+			let randomIndex = 0;
+			let currentIndex = array.length;
+			while (currentIndex !== 0) {
+				randomIndex = Math.floor(Math.random() * currentIndex);
+				currentIndex -= 1;
+				temporaryValue = array[currentIndex];
+				array[currentIndex] = array[randomIndex];
+				array[randomIndex] = temporaryValue;
+			}
+			return array;
+		},
+		objectSort(object, sortBy, sortDir) {
+			sortDir = sortDir == 'asc' ? 'asc' : 'desc';
+			const arItems = [];
+			for (const key in object) {
+				if (Object.prototype.hasOwnProperty.call(object, key) && object[key][sortBy]) {
+					arItems.push([key, object[key][sortBy]]);
+				}
+			}
+			const sortValue = item => {
+				if (BX$1.type.isDate(item[1])) {
+					return item[1].getTime();
+				}
+				if (isNaN(item[1])) {
+					return item[1].toString().toLowerCase();
+				}
+				return parseInt(item[1]);
+			};
+			if (sortDir == 'asc') {
+				arItems.sort((a, b) => {
+					const s1 = sortValue(a);
+					const s2 = sortValue(b);
+					if (s1 > s2) {
+						return 1;
+					}
+					if (s1 < s2) {
+						return -1;
+					}
+					return 0;
+				});
+			} else {
+				arItems.sort((a, b) => {
+					const s1 = sortValue(a);
+					const s2 = sortValue(b);
+					if (s1 < s2) {
+						return 1;
+					}
+					if (s1 > s2) {
+						return -1;
+					}
+					return 0;
+				});
+			}
+			const arReturnArray = [];
+			for (const item of arItems) {
+				arReturnArray.push(object[item[0]]);
+			}
+			return arReturnArray;
+		},
+		objectMerge() {
+			return BX$1.mergeEx.apply(window, arguments);
+		},
+		objectClone(object) {
+			return BX$1.clone(object, true);
+		},
+		hex2rgb(color) {
+			const rgb = color.replaceAll(/[ #]/g, '').replace(/^(.)(.)(.)$/, '$1$1$2$2$3$3').match(/.{2}/g);
+			for (let i = 0; i < 3; i++) {
+				rgb[i] = parseInt(rgb[i], 16);
+			}
+			return {
+				r: rgb[0],
+				g: rgb[1],
+				b: rgb[2]
+			};
+		},
+		remove_url_param(url, param) {
+			return BX$1.Uri.removeParam(url, param);
+		},
+		add_url_param(url, params) {
+			const preparedParams = Object.entries(params).reduce((acc, item) => {
+				acc[item[0]] = BX$1.type.isArray(item[1]) ? item[1].join(',') : item[1];
+				return acc;
+			}, {});
+			return BX$1.Uri.addParam(url, preparedParams);
+		},
+		buildQueryString(params) {
+			let result = '';
+			for (const key in params) {
+				const value = params[key];
+				if (BX$1.type.isArray(value)) {
+					value.forEach((valueElement, index) => {
+						const indexedKey = `${key}[${index}]`;
+						result += `${encodeURIComponent(indexedKey)}=${encodeURIComponent(valueElement)}&`;
+					});
+				} else {
+					result += `${encodeURIComponent(key)}=${encodeURIComponent(value)}&`;
+				}
+			}
+			if (result.length > 0) {
+				result = result.slice(0, -1);
+			}
+			return result;
+		},
+		even(digit) {
+			return parseInt(digit) % 2 == 0;
+		},
+		hashCode(str) {
+			if (!BX$1.type.isNotEmptyString(str)) {
+				return 0;
+			}
+			let hash = 0;
+			for (let i = 0; i < str.length; i++) {
+				const c = str.charCodeAt(i);
+				hash = (hash << 5) - hash + c;
+				hash &= hash;
+			}
+			return hash;
+		},
+		getRandomString(length) {
+			return BX$1.Text.getRandom(length);
+		},
+		number_format(number, decimals, dec_point, thousands_sep) {
+			let sign = '';
+			decimals = Math.abs(decimals);
+			if (isNaN(decimals) || decimals < 0) {
+				decimals = 2;
+			}
+			dec_point = dec_point || ',';
+			if (typeof thousands_sep === 'undefined') {
+				thousands_sep = '.';
+			}
+			number = (Number(number) || 0).toFixed(decimals);
+			if (number < 0) {
+				sign = '-';
+				number = -number;
+			}
+			const i = String(parseInt(number, 10));
+			const j = i.length > 3 ? i.length % 3 : 0;
+			const km = j ? i.slice(0, j) + thousands_sep : '';
+			const kw = i.slice(j).replaceAll(/(\d{3})(?=\d)/g, `$1${thousands_sep}`);
+			const kd = decimals ? dec_point + Math.abs(number - i).toFixed(decimals).replace(/-/, '0').slice(2) : '';
+			return sign + km + kw + kd;
+		},
+		getExtension(url) {
+			url = url || '';
+			const items = url.split('?')[0].split('.');
+			return items[items.length - 1].toLowerCase();
+		},
+		addObjectToForm(object, form, prefix) {
+			if (!BX$1.type.isString(prefix)) {
+				prefix = '';
+			}
+			for (const key in object) {
+				if (!Object.prototype.hasOwnProperty.call(object, key)) {
+					continue;
+				}
+				let value = object[key];
+				const name = prefix === '' ? key : `${prefix}[${key}]`;
+				if (BX$1.type.isArray(value)) {
+					const obj = {};
+					for (let i = 0; i < value.length; i++) {
+						obj[i] = value[i];
+					}
+					util.addObjectToForm(obj, form, name);
+				} else if (BX$1.type.isPlainObject(value)) {
+					util.addObjectToForm(value, form, name);
+				} else {
+					value = BX$1.type.isFunction(value.toString) ? value.toString() : '';
+					if (value !== '') {
+						form.appendChild(BX$1.create('INPUT', {
+							attrs: {
+								type: 'hidden',
+								name,
+								value
+							}
+						}));
+					}
+				}
+			}
+		},
+		observe(object, enable) {
+			console.error('BX.util.observe: function is no longer supported by browser.');
+			return false;
+		},
+		escapeRegExp(str) {
+			return str.replaceAll(/[$()*+./?[\\\]^{|}-]/g, '\\$&');
+		}
+	};
+
+	function firstChild(el) {
+		return BX$1.type.isDomNode(el) ? el.firstElementChild : null;
+	}
+	function lastChild(el) {
+		return BX$1.type.isDomNode(el) ? el.lastElementChild : null;
+	}
+	function previousSibling(el) {
+		return BX$1.type.isDomNode(el) ? el.previousElementSibling : null;
+	}
+	function nextSibling(el) {
+		return BX$1.type.isDomNode(el) ? el.nextElementSibling : null;
+	}
+	function findChildrenByClassName(obj, className, recursive) {
+		if (!obj || !obj.childNodes) {
+			return null;
+		}
+		let result = [];
+		if (typeof obj.getElementsByClassName == 'undefined') {
+			recursive = recursive !== false;
+			result = findChildren(obj, {
+				className
+			}, recursive);
+		} else {
+			const col = obj.getElementsByClassName(className);
+			for (let i = 0, l = col.length; i < l; i++) {
+				result[i] = col[i];
+			}
+		}
+		return result;
+	}
+	function findChildByClassName(obj, className, recursive) {
+		if (!obj || !obj.childNodes) {
+			return null;
+		}
+		let result = null;
+		if (typeof obj.getElementsByClassName == 'undefined') {
+			recursive = recursive !== false;
+			result = findChild(obj, {
+				className
+			}, recursive);
+		} else {
+			const col = obj.getElementsByClassName(className);
+			if (col && typeof col[0] != 'undefined') {
+				result = col[0];
+			} else {
+				result = null;
+			}
+		}
+		return result;
+	}
+	function findChildren(obj, params, recursive) {
+		return findChild(obj, params, recursive, true);
+	}
+	function findChild(obj, params, recursive, get_all) {
+		if (!obj || !obj.childNodes) {
+			return null;
+		}
+		recursive = Boolean(recursive);
+		get_all = Boolean(get_all);
+		const n = obj.childNodes.length;
+		let result = [];
+		for (let j = 0; j < n; j++) {
+			const child = obj.childNodes[j];
+			if (checkNode(child, params)) {
+				if (get_all) {
+					result.push(child);
+				} else {
+					return child;
+				}
+			}
+			if (recursive == true) {
+				const res = findChild(child, params, recursive, get_all);
+				if (res) {
+					if (get_all) {
+						result = util.array_merge(result, res);
+					} else {
+						return res;
+					}
+				}
+			}
+		}
+		if (get_all || result.length > 0) {
+			return result;
+		}
+		return null;
+	}
+	function findParent(obj, params, maxParent) {
+		if (!obj) {
+			return null;
+		}
+		let o = obj;
+		while (o.parentNode) {
+			const parent = o.parentNode;
+			if (checkNode(parent, params)) {
+				return parent;
+			}
+			o = parent;
+			if (maxParent && (BX$1.type.isFunction(maxParent) || typeof maxParent == 'object')) {
+				if (BX$1.type.isElementNode(maxParent)) {
+					if (o == maxParent) {
+						break;
+					}
+				} else if (checkNode(o, maxParent)) {
+					break;
+				}
+			}
+		}
+		return null;
+	}
+	function findNextSibling(obj, params) {
+		if (!obj) {
+			return null;
+		}
+		let o = obj;
+		while (o.nextSibling) {
+			const sibling = o.nextSibling;
+			if (checkNode(sibling, params)) {
+				return sibling;
+			}
+			o = sibling;
+		}
+		return null;
+	}
+	function findPreviousSibling(obj, params) {
+		if (!obj) {
+			return null;
+		}
+		let o = obj;
+		while (o.previousSibling) {
+			const sibling = o.previousSibling;
+			if (checkNode(sibling, params)) {
+				return sibling;
+			}
+			o = sibling;
+		}
+		return null;
+	}
+	function findFormElements(form) {
+		if (BX$1.type.isString(form)) {
+			form = document.forms[form] || resolve(form);
+		}
+		let res = [];
+		if (BX$1.type.isElementNode(form)) {
+			if (form.tagName.toUpperCase() == 'FORM') {
+				res = form.elements;
+			} else {
+				res = findChildren(form, CHECK_FORM_ELEMENTS, true);
+			}
+		}
+		return res;
+	}
+	function isParentForNode(whichNode, forNode) {
+		if (BX$1.type.isDomNode(whichNode) && BX$1.type.isDomNode(forNode)) {
+			return whichNode.contains(forNode);
+		}
+		return false;
+	}
+	function clearNodeCache() {
+		return false;
+	}
+	function createFragment(nodes) {
+		const fragment = document.createDocumentFragment();
+		if (!BX$1.type.isArray(nodes)) {
+			return fragment;
+		}
+		for (let i = 0; i < nodes.length; i++) {
+			fragment.appendChild(nodes[i]);
+		}
+		return fragment;
+	}
+	function isNodeInDom(node, doc) {
+		return node === (doc || document) ? true : node.parentNode ? isNodeInDom(node.parentNode) : false;
+	}
+	function isNodeHidden(node) {
+		if (node === document) {
+			return false;
+		}
+		if (BX$1.style(node, 'display') == 'none') {
+			return true;
+		}
+		return node.parentNode ? isNodeHidden(node.parentNode) : true;
+	}
+	function checkNode(obj, params) {
+		params = params || {};
+		if (BX$1.type.isFunction(params)) {
+			return params.call(window, obj);
+		}
+		if (!params.allowTextNodes && !BX$1.type.isElementNode(obj)) {
+			return false;
+		}
+		let j;
+		let len;
+		for (const i in params) {
+			if (Object.prototype.hasOwnProperty.call(params, i)) {
+				switch (i) {
+					case 'tag':
+					case 'tagName':
+						if (BX$1.type.isString(params[i])) {
+							if (obj.tagName.toUpperCase() != params[i].toUpperCase()) {
+								return false;
+							}
+						} else if (params[i] instanceof RegExp) {
+							if (!params[i].test(obj.tagName)) {
+								return false;
+							}
+						}
+						break;
+					case 'class':
+					case 'className':
+						if (BX$1.type.isString(params[i])) {
+							if (!BX$1.hasClass(obj, params[i])) {
+								return false;
+							}
+						} else if (params[i] instanceof RegExp) {
+							if (!BX$1.type.isString(obj.className) || !params[i].test(obj.className)) {
+								return false;
+							}
+						}
+						break;
+					case 'attr':
+					case 'attrs':
+					case 'attribute':
+						if (BX$1.type.isString(params[i])) {
+							if (!obj.getAttribute(params[i])) {
+								return false;
+							}
+						} else if (BX$1.type.isArray(params[i])) {
+							for (j = 0, len = params[i].length; j < len; j++) {
+								if (params[i] && !obj.getAttribute(params[i])) {
+									return false;
+								}
+							}
+						} else {
+							for (j in params[i]) {
+								if (Object.prototype.hasOwnProperty.call(params[i], j)) {
+									const q = obj.getAttribute(j);
+									if (params[i][j] instanceof RegExp) {
+										if (!BX$1.type.isString(q) || !params[i][j].test(q)) {
+											return false;
+										}
+									} else if (q != `${params[i][j]}`) {
+										return false;
+									}
+								}
+							}
+						}
+						break;
+					case 'property':
+					case 'props':
+						if (BX$1.type.isString(params[i])) {
+							if (!obj[params[i]]) {
+								return false;
+							}
+						} else if (BX$1.type.isArray(params[i])) {
+							for (j = 0, len = params[i].length; j < len; j++) {
+								if (params[i] && !obj[params[i]]) {
+									return false;
+								}
+							}
+						} else {
+							for (j in params[i]) {
+								if (BX$1.type.isString(params[i][j])) {
+									if (obj[j] != params[i][j]) {
+										return false;
+									}
+								} else if (params[i][j] instanceof RegExp) {
+									if (!BX$1.type.isString(obj[j]) || !params[i][j].test(obj[j])) {
+										return false;
+									}
+								}
+							}
+						}
+						break;
+					case 'callback':
+						return params[i](obj);
+				}
+			}
+		}
+		return true;
+	}
+
+	const DEFAULT_TEMPLATE_TYPES = ['text/html', 'text/template', 'extension/settings', 'importmap'];
+	const RUN_FIRST_ATTRIBUTE = 'bxrunfirst';
+	const EMPTY_RESULT = Object.freeze({
+		html: '',
+		scripts: Object.freeze([]),
+		styles: Object.freeze([])
+	});
+	function extractAssets(data, options = {}) {
+		if (!Type.isStringFilled(data)) {
+			return EMPTY_RESULT;
+		}
+		const scriptTag = /<script\b([^>]*)>/gi;
+		const scriptEnd = /<\/script(?=[\s/>])[^>]*>/gi;
+		const scripts = [];
+		const kept = [];
+		let copiedTo = 0;
+		const runFirstForAll = options.runFirst === true;
+		const templateTypes = options.templateTypes ?? DEFAULT_TEMPLATE_TYPES;
+		let match = scriptTag.exec(data);
+		for (; match !== null; match = scriptTag.exec(data)) {
+			const attributes = match[1] ?? '';
+			scriptEnd.lastIndex = scriptTag.lastIndex;
+			const end = scriptEnd.exec(data);
+			if (end === null) {
+				break;
+			}
+			const parsed = readAttributes(attributes);
+			const type = parsed.get('type') ?? null;
+			if (type !== null && templateTypes.includes(type)) {
+				scriptTag.lastIndex = scriptEnd.lastIndex;
+				continue;
+			}
+			kept.push(data.slice(copiedTo, match.index));
+			const src = parsed.get('src') ?? null;
+			const runFirst = runFirstForAll || parsed.has(RUN_FIRST_ATTRIBUTE);
+			if (Type.isStringFilled(src)) {
+				scripts.push({
+					isInternal: false,
+					src,
+					runFirst,
+					type
+				});
+			} else {
+				const body = data.slice(scriptTag.lastIndex, end.index);
+				scripts.push({
+					isInternal: true,
+					text: body,
+					runFirst,
+					type
+				});
+			}
+			copiedTo = scriptEnd.lastIndex;
+			scriptTag.lastIndex = scriptEnd.lastIndex;
+		}
+		kept.push(data.slice(copiedTo));
+		const {
+			html,
+			styles
+		} = collectStyles(kept.join(''));
+		return {
+			html,
+			scripts,
+			styles
+		};
+	}
+	function collectStyles(data) {
+		const linkTag = /<link\b([^>]*)>/gi;
+		const styles = [];
+		const kept = [];
+		let copiedTo = 0;
+		for (let link = linkTag.exec(data); link !== null; link = linkTag.exec(data)) {
+			const parsed = readAttributes(link[1] ?? '');
+			const href = parsed.get('href') ?? null;
+			if (!isStylesheetLink(parsed) || !Type.isStringFilled(href)) {
+				continue;
+			}
+			styles.push({
+				href,
+				media: parsed.get('media') ?? null
+			});
+			kept.push(data.slice(copiedTo, link.index));
+			copiedTo = linkTag.lastIndex;
+		}
+		kept.push(data.slice(copiedTo));
+		return {
+			html: kept.join(''),
+			styles
+		};
+	}
+	function readAttributes(attributes) {
+		const pair = /([^\s/=>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+		const result = new Map();
+		for (let match = pair.exec(attributes); match !== null; match = pair.exec(attributes)) {
+			const name = match[1].toLowerCase();
+			if (!result.has(name)) {
+				result.set(name, match[2] ?? match[3] ?? match[4] ?? '');
+			}
+		}
+		return result;
+	}
+	function isStylesheetLink(attributes) {
+		if (attributes.get('type') === 'text/css') {
+			return true;
+		}
+		const rel = attributes.get('rel');
+		return Type.isStringFilled(rel) && rel.toLowerCase().split(/\s+/).includes('stylesheet');
+	}
+
+	function processHTML(data, scriptsRunFirst) {
+		if (data === null || data === undefined) {
+			throw new TypeError('BX.processHTML: data is null or undefined');
+		}
+		const assets = extractAssets(data, {
+			runFirst: Boolean(scriptsRunFirst)
+		});
+		return {
+			HTML: assets.html,
+			SCRIPT: assets.scripts.map(item => ({
+				bRunFirst: item.runFirst,
+				isInternal: item.isInternal,
+				JS: item.isInternal ? item.text : item.src
+			})),
+			STYLE: assets.styles.map(item => item.href)
+		};
+	}
+	function parseJSON(data, context) {
+		let result = null;
+		if (BX$1.type.isNotEmptyString(data)) {
+			try {
+				if (data.indexOf('\n') >= 0) {
+					eval(`result = ${data}`);
+				} else {
+					result = new Function(`return ${data}`)();
+				}
+			} catch (e) {
+				BX$1.onCustomEvent(context, 'onParseJSONFailure', [data, context]);
+			}
+		} else if (BX$1.type.isPlainObject(data)) {
+			return data;
+		}
+		return result;
+	}
+	function evalPack(code) {
+		while (code.length > 0) {
+			const c = code.shift();
+			if (c.TYPE == 'SCRIPT_EXT' || c.TYPE == 'SCRIPT_SRC') {
+				BX$1.loadScript(c.DATA, function () {
+					evalPack(code);
+				});
+				return;
+			} else if (c.TYPE == 'SCRIPT') {
+				evalGlobal(c.DATA);
+			}
+		}
+	}
+	function evalGlobal(data) {
+		if (data) {
+			const head = document.getElementsByTagName('head')[0] || document.documentElement;
+			const script = document.createElement('script');
+			script.type = 'text/javascript';
+			if (!BX$1.browser.IsIE()) {
+				script.appendChild(document.createTextNode(data));
+			} else {
+				script.text = data;
+			}
+			head.insertBefore(script, head.firstChild);
+			head.removeChild(script);
+		}
+	}
+	function template(tpl, callback, bKillTpl) {
+		BX$1.ready(function () {
+			_processTpl(resolve(tpl), callback, bKillTpl);
+		});
+	}
+	function _processTpl(tplNode, cb, bKillTpl) {
+		if (tplNode) {
+			if (bKillTpl) {
+				tplNode.parentNode.removeChild(tplNode);
+			}
+			const res = {};
+			const nodes = findChildren(tplNode, {
+				attribute: 'data-role'
+			}, true);
+			for (let i = 0, l = nodes.length; i < l; i++) {
+				res[nodes[i].getAttribute('data-role')] = nodes[i];
+			}
+			cb.apply(tplNode, [res]);
+		}
+	}
+
 	let debugState = true;
 	function enableDebug() {
 		debugState = true;
@@ -2194,416 +3154,7 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	var debugNs = Object.freeze({
-		__proto__: null,
-		get debugState () { return debugState; },
-		default: debug$1,
-		disableDebug: disableDebug,
-		enableDebug: enableDebug,
-		isDebugEnabled: isDebugEnabled
-	});
-
 	const extensionsStorage = new Map();
-
-	const ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
-	function loadAssets(options) {
-		return new Promise((resolve, reject) => {
-			const getParameters = {
-				e: (options?.extension || []).join(',')
-			};
-			BX.ajax.runAction(ajaxController, {
-				data: options,
-				getParameters
-			}).then(result => {
-				resolve(result?.data);
-			}).catch(err => {
-				reject(err);
-			});
-		});
-	}
-
-	function fetchInlineScripts(acc, item) {
-		if (item.isInternal) {
-			acc.push(item.JS);
-		}
-		return acc;
-	}
-	function fetchExternalScripts(acc, item) {
-		if (!item.isInternal) {
-			acc.push(item.JS);
-		}
-		return acc;
-	}
-	function fetchExternalStyles(acc, item) {
-		if (Type.isString(item) && item !== '') {
-			acc.push(item);
-		}
-		return acc;
-	}
-	function fetchExtensionSettings(html) {
-		if (Type.isStringFilled(html)) {
-			const scripts = html.match(/<script type="extension\/settings" \b[^>]*>([\S\s]*?)<\/script>/g);
-			if (Type.isArrayFilled(scripts)) {
-				return scripts.map(script => {
-					const [, extension] = script.match(/data-extension="(.[\d._a-z-]+)"/);
-					return {
-						extension,
-						script
-					};
-				});
-			}
-		}
-		return [];
-	}
-	function loadAll(items) {
-		const itemsList = Type.isArray(items) ? items : [items];
-		if (itemsList.length === 0) {
-			return Promise.resolve();
-		}
-		return new Promise((resolve, reject) => {
-			BX.load(itemsList, resolve, document, reject);
-		});
-	}
-
-	function parseExtensionHtml(html) {
-		const result = window.BX.processHTML(html);
-		const inlinePreScripts = [];
-		const inlineAfterScripts = [];
-		result.SCRIPT.reduce((accumulator, element) => {
-			return fetchInlineScripts(accumulator, element);
-		}, []).forEach(script => {
-			if (script.startsWith('BX.Runtime.registerExtension')) {
-				inlineAfterScripts.push(script);
-			} else {
-				inlinePreScripts.push(script);
-			}
-		});
-		return {
-			inlinePreScripts,
-			inlineAfterScripts,
-			externalScripts: result.SCRIPT.reduce((accumulator, element) => {
-				return fetchExternalScripts(accumulator, element);
-			}, []),
-			externalStyles: result.STYLE.reduce((accumulator, element) => {
-				return fetchExternalStyles(accumulator, element);
-			}, []),
-			settingsScripts: fetchExtensionSettings(result.HTML)
-		};
-	}
-
-	function waitOnline() {
-		return new Promise(resolve => {
-			Event.bindOnce(window, 'online', () => resolve());
-		});
-	}
-
-	const TIMEOUTS = [1000, 3000, 5000];
-	async function tryLoad(extensions, callback) {
-		for (let i = 0; i <= TIMEOUTS.length; i++) {
-			try {
-				return await callback();
-			} catch {
-				if (navigator.onLine === false) {
-					console.warn(`Wait online for load ${extensions.join(', ')}`);
-					await waitOnline();
-					i--;
-					continue;
-				}
-				if (i === TIMEOUTS.length) {
-					throw new Error(`${extensions.join(', ')} loading failed...`);
-				}
-				const delay = TIMEOUTS[i];
-				const displayRetryCount = i + 1;
-				console.warn(`Retry load #${displayRetryCount}: ${extensions.join(', ')}`);
-				await new Promise(resolve => {
-					setTimeout(resolve, delay);
-				});
-			}
-		}
-		throw new Error('Unexpected end of retry loop');
-	}
-
-	async function processExtensions(map) {
-		const loadableExtensions = [...map.keys()];
-		const rawAssets = (await tryLoad(loadableExtensions, () => loadAssets({
-			extension: loadableExtensions
-		}))) ?? [];
-		rawAssets.forEach(rawAsset => {
-			const preparedHtml = rawAsset.html ?? '';
-			const extensionAssets = parseExtensionHtml(preparedHtml);
-			extensionAssets.settingsScripts.forEach(({
-				script
-			}) => {
-				document.body.insertAdjacentHTML('beforeend', script);
-			});
-			extensionAssets.inlinePreScripts.forEach(script => {
-				window.BX.evalGlobal(script);
-			});
-			const loadableExtensionEntry = map.get(rawAsset.extension);
-			void Promise.all([tryLoad(loadableExtensions, () => loadAll(extensionAssets.externalScripts)), tryLoad(loadableExtensions, () => loadAll(extensionAssets.externalStyles))]).then(() => {
-				extensionAssets.inlineAfterScripts.forEach(script => {
-					window.BX.evalGlobal(script);
-				});
-				const namespace = rawAsset?.config?.namespace ?? 'window';
-				loadableExtensionEntry.resolve(namespace);
-			}).catch(error => {
-				loadableExtensionEntry.reject(error);
-			});
-		});
-	}
-
-	const queue = new Map();
-	let timerId = null;
-	async function loadExtension(...name) {
-		if (Type.isNumber(timerId)) {
-			clearTimeout(timerId);
-		}
-		const requestedNames = name.flat();
-		const extensionsToLoad = requestedNames.filter(extensionName => {
-			return !extensionsStorage.has(extensionName);
-		});
-		extensionsToLoad.forEach(extensionName => {
-			let resolve = null;
-			let reject = null;
-			const loadableExtensionEntry = {
-				promise: new Promise((sourceResolve, sourceReject) => {
-					resolve = sourceResolve;
-					reject = sourceReject;
-				}),
-				resolve,
-				reject
-			};
-			extensionsStorage.set(extensionName, loadableExtensionEntry.promise);
-			queue.set(extensionName, loadableExtensionEntry);
-		});
-		timerId = setTimeout(() => {
-			if (queue.size > 0) {
-				void processExtensions(new Map(queue.entries()));
-				queue.clear();
-			}
-		});
-		const namespaces = await Promise.all(requestedNames.map(extensionName => {
-			return extensionsStorage.get(extensionName);
-		}));
-		return namespaces.reduce((acc, namespace) => {
-			return {
-				...acc,
-				...Reflection.getClass(namespace)
-			};
-		}, {});
-	}
-
-	const cloneableTags = new Set(['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]']);
-	function isCloneable(value) {
-		const isCloneableValue = Type.isObjectLike(value) && cloneableTags.has(getTag(value));
-		return isCloneableValue || Type.isDomNode(value);
-	}
-	function internalClone(value, map) {
-		if (map.has(value)) {
-			return map.get(value);
-		}
-		if (isCloneable(value)) {
-			if (Type.isArray(value)) {
-				const cloned = [...value];
-				map.set(value, cloned);
-				value.forEach((item, index) => {
-					cloned[index] = internalClone(item, map);
-				});
-				return map.get(value);
-			}
-			if (Type.isDomNode(value)) {
-				return value.cloneNode(true);
-			}
-			if (Type.isMap(value)) {
-				const result = new Map();
-				map.set(value, result);
-				value.forEach((item, key) => {
-					result.set(internalClone(key, map), internalClone(item, map));
-				});
-				return result;
-			}
-			if (Type.isSet(value)) {
-				const result = new Set();
-				map.set(value, result);
-				value.forEach(item => {
-					result.add(internalClone(item, map));
-				});
-				return result;
-			}
-			if (Type.isDate(value)) {
-				return new Date(value);
-			}
-			if (Type.isRegExp(value)) {
-				const regExpFlags = /\w*$/;
-				const flags = regExpFlags.exec(value);
-				let result = new RegExp(value.source);
-				if (flags && Type.isArray(flags)) {
-					result = new RegExp(value.source, flags[0]);
-				}
-				result.lastIndex = value.lastIndex;
-				return result;
-			}
-			const proto = Object.getPrototypeOf(value);
-			const result = Object.assign(Object.create(proto), value);
-			map.set(value, result);
-			Object.keys(value).forEach(key => {
-				result[key] = internalClone(value[key], map);
-			});
-			return result;
-		}
-		return value;
-	}
-	function clone$1(value) {
-		return internalClone(value, new WeakMap());
-	}
-
-	function merge(current, target) {
-		return Object.entries(target).reduce((acc, [key, value]) => {
-			if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
-				acc[key] = merge(acc[key], value);
-				return acc;
-			}
-			acc[key] = value;
-			return acc;
-		}, current);
-	}
-
-	function createComparator(fields, orders = []) {
-		return (a, b) => {
-			const field = fields[0];
-			const order = orders[0] || 'asc';
-			if (Type.isUndefined(field)) {
-				return 0;
-			}
-			let valueA = a[field];
-			let valueB = b[field];
-			if (Type.isString(valueA) && Type.isString(valueB)) {
-				valueA = valueA.toLowerCase();
-				valueB = valueB.toLowerCase();
-			}
-			if (valueA < valueB) {
-				return order === 'asc' ? -1 : 1;
-			}
-			if (valueA > valueB) {
-				return order === 'asc' ? 1 : -1;
-			}
-			return createComparator(fields.slice(1), orders.slice(1))(a, b);
-		};
-	}
-
-	function registerExtension(options) {
-		if (!extensionsStorage.has(options.name)) {
-			const namespace = options?.namespace ?? 'window';
-			extensionsStorage.set(options.name, Promise.resolve(namespace));
-		}
-	}
-
-	class Runtime {
-		static debug = debug$1;
-		static loadExtension = loadExtension;
-		static registerExtension = registerExtension;
-		static clone = clone$1;
-		static debounce(func, wait = 0, context = null) {
-			let timeoutId = null;
-			return function debounced(...args) {
-				if (Type.isNumber(timeoutId)) {
-					clearTimeout(timeoutId);
-				}
-				timeoutId = setTimeout(() => {
-					func.apply(context || this, args);
-				}, wait);
-			};
-		}
-		static throttle(func, wait = 0, context = null) {
-			let timer = null;
-			let invoke = false;
-			return function wrapper(...args) {
-				invoke = true;
-				if (!timer) {
-					const q = function q() {
-						if (invoke) {
-							func.apply(context || this, args);
-							invoke = false;
-							timer = setTimeout(q, wait);
-						} else {
-							timer = null;
-						}
-					};
-					q();
-				}
-			};
-		}
-		static html(node, html, params = {}) {
-			if (Type.isNil(html) && Type.isDomNode(node)) {
-				return node.innerHTML;
-			}
-			const parsedHtml = BX.processHTML(html);
-			const externalCss = parsedHtml.STYLE.reduce((acc, item) => fetchExternalStyles(acc, item), []);
-			const externalJs = parsedHtml.SCRIPT.reduce((acc, item) => fetchExternalScripts(acc, item), []);
-			const inlineJs = parsedHtml.SCRIPT.reduce((acc, item) => fetchInlineScripts(acc, item), []);
-			if (Type.isDomNode(node) && (params.htmlFirst || externalJs.length === 0 && externalCss.length === 0)) {
-				if (params.useAdjacentHTML) {
-					node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
-				} else {
-					node.innerHTML = parsedHtml.HTML;
-				}
-			}
-			return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(() => {
-				if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
-					if (params.useAdjacentHTML) {
-						node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
-					} else {
-						node.innerHTML = parsedHtml.HTML;
-					}
-				}
-				inlineJs.forEach(script => BX.evalGlobal(script));
-				if (Type.isFunction(params.callback)) {
-					params.callback();
-				}
-			});
-		}
-		static merge(...targets) {
-			if (Type.isArray(targets[0])) {
-				targets.unshift([]);
-			} else if (Type.isObject(targets[0])) {
-				targets.unshift({});
-			}
-			return targets.reduce((acc, item) => {
-				return merge(acc, item);
-			}, targets[0]);
-		}
-		static orderBy(collection, fields = [], orders = []) {
-			const comparator = createComparator(fields, orders);
-			return Object.values(collection).sort(comparator);
-		}
-		static destroy(target, errorMessage = 'Object is destroyed') {
-			if (Type.isObject(target)) {
-				const onPropertyAccess = () => {
-					throw new Error(errorMessage);
-				};
-				const ownProperties = Object.keys(target);
-				const prototypeProperties = (() => {
-					const targetPrototype = Object.getPrototypeOf(target);
-					if (Type.isObject(targetPrototype)) {
-						return Object.getOwnPropertyNames(targetPrototype);
-					}
-					return [];
-				})();
-				const uniquePropertiesList = [...new Set([...ownProperties, ...prototypeProperties])];
-				uniquePropertiesList.filter(name => {
-					const descriptor = Object.getOwnPropertyDescriptor(target, name);
-					return !/__(.+)__/.test(name) && (!Type.isObject(descriptor) || descriptor.configurable === true);
-				}).forEach(name => {
-					Object.defineProperty(target, name, {
-						get: onPropertyAccess,
-						set: onPropertyAccess,
-						configurable: false
-					});
-				});
-				Object.setPrototypeOf(target, null);
-			}
-		}
-	}
 
 	const isError = Symbol.for('BX.BaseError.isError');
 	class BaseError {
@@ -2771,6 +3322,1168 @@ window._main_polyfill_core = true;
 			}
 		}]);
 	}();
+
+	const message$1 = function (value) {
+		if (Type.isString(value)) {
+			if (Type.isNil(message$1[value])) {
+				EventEmitter.emit('onBXMessageNotFound', new BaseEvent({
+					compatData: [value]
+				}));
+				if (Type.isNil(message$1[value])) {
+					Runtime.debug(`message undefined: ${value}`);
+					message$1[value] = '';
+				}
+			}
+			return message$1[value];
+		}
+		if (Type.isPlainObject(value)) {
+			Object.keys(value).forEach(key => {
+				message$1[key] = value[key];
+			});
+		}
+		return undefined;
+	};
+	if (!Type.isNil(window.BX) && Type.isFunction(window.BX.message)) {
+		Object.keys(window.BX.message).forEach(key => {
+			message$1({
+				[key]: window.BX.message[key]
+			});
+		});
+	}
+
+	class Loc {
+		static getMessage(messageId, replacements = null) {
+			let mess = message$1(messageId);
+			if (Type.isString(mess) && Type.isPlainObject(replacements)) {
+				const escape = str => String(str).replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
+				Object.keys(replacements).forEach(replacement => {
+					const globalRegexp = new RegExp(escape(replacement), 'gi');
+					mess = mess.replaceAll(globalRegexp, () => {
+						return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
+					});
+				});
+			}
+			return mess;
+		}
+		static hasMessage(messageId) {
+			return Type.isString(messageId) && !Type.isNil(message$1[messageId]);
+		}
+		static setMessage(id, value) {
+			if (Type.isString(id) && Type.isString(value)) {
+				message$1({
+					[id]: value
+				});
+			}
+			if (Type.isObject(id)) {
+				message$1(id);
+			}
+		}
+		static getMessagePlural(messageId, value, replacements = null) {
+			let result = '';
+			if (Type.isNumber(value)) {
+				if (this.hasMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`)) {
+					result = this.getMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`, replacements);
+				} else {
+					result = this.getMessage(`${messageId}_PLURAL_1`, replacements);
+				}
+			} else {
+				result = this.getMessage(messageId, replacements);
+			}
+			return result;
+		}
+		static getPluralForm(value, languageId) {
+			let pluralForm = 1;
+			let lang = languageId;
+			if (!Type.isStringFilled(lang)) {
+				lang = message$1('LANGUAGE_ID');
+			}
+			const absValue = Math.abs(value);
+			switch (lang) {
+				case 'ar':
+					pluralForm = absValue === 1 ? 0 : 1;
+					break;
+				case 'br':
+				case 'fr':
+				case 'tr':
+					pluralForm = absValue > 1 ? 1 : 0;
+					break;
+				case 'de':
+				case 'en':
+				case 'hi':
+				case 'it':
+				case 'la':
+					pluralForm = absValue === 1 ? 0 : 1;
+					break;
+				case 'ru':
+				case 'ua':
+					if (absValue % 10 === 1 && absValue % 100 !== 11) {
+						pluralForm = 0;
+					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
+						pluralForm = 1;
+					} else {
+						pluralForm = 2;
+					}
+					break;
+				case 'pl':
+					if (absValue === 1) {
+						pluralForm = 0;
+					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
+						pluralForm = 1;
+					} else {
+						pluralForm = 2;
+					}
+					break;
+				case 'id':
+				case 'ja':
+				case 'ms':
+				case 'sc':
+				case 'tc':
+				case 'th':
+				case 'vn':
+					pluralForm = 0;
+					break;
+				default:
+					pluralForm = 1;
+					break;
+			}
+			return pluralForm;
+		}
+	}
+
+	const ajaxController = 'main.bitrix.main.controller.loadext.resolveextensions';
+	function loadAssets(options) {
+		return new Promise((resolve, reject) => {
+			const extension = options?.extension || [];
+			const data = {
+				extension,
+				coreLoaded: options?.coreLoaded === true ? 'Y' : 'N',
+				loadedExtension: options?.loadedExtension || []
+			};
+			const getParameters = {
+				e: extension.join(',')
+			};
+			BX.ajax.runAction(ajaxController, {
+				data,
+				getParameters
+			}).then(result => {
+				resolve(result?.data);
+			}).catch(err => {
+				reject(err);
+			});
+		});
+	}
+
+	const coreExtensionName = 'main.core';
+	const registeredNames = new Set();
+	function isCoreRegistered() {
+		return registeredNames.has(coreExtensionName);
+	}
+	function getRegisteredNames() {
+		return [...registeredNames];
+	}
+	function markRegistered(name) {
+		if (typeof name === 'string' && name !== '') {
+			registeredNames.add(name);
+		}
+	}
+	function registerExtension(options) {
+		markRegistered(options?.name);
+		if (!extensionsStorage.has(options.name)) {
+			const namespace = options?.namespace ?? 'window';
+			extensionsStorage.set(options.name, Promise.resolve(namespace));
+		}
+	}
+
+	function waitOnline() {
+		return new Promise(resolve => {
+			Event.bindOnce(window, 'online', () => resolve());
+		});
+	}
+
+	const TIMEOUTS = [1000, 3000, 5000];
+	async function tryLoad(extensions, callback) {
+		for (let i = 0; i <= TIMEOUTS.length; i++) {
+			try {
+				return await callback();
+			} catch {
+				if (navigator.onLine === false) {
+					console.warn(`Wait online for load ${extensions.join(', ')}`);
+					await waitOnline();
+					i--;
+					continue;
+				}
+				if (i === TIMEOUTS.length) {
+					throw new Error(`${extensions.join(', ')} loading failed...`);
+				}
+				const delay = TIMEOUTS[i];
+				const displayRetryCount = i + 1;
+				console.warn(`Retry load #${displayRetryCount}: ${extensions.join(', ')}`);
+				await new Promise(resolve => {
+					setTimeout(resolve, delay);
+				});
+			}
+		}
+		throw new Error('Unexpected end of retry loop');
+	}
+
+	function DataStorage() {
+		this.keyOffset = 1;
+		this.data = {};
+		this.uniqueTag = `BX-${Math.random()}`;
+		this.resolve = function (owner, create) {
+			if (typeof owner[this.uniqueTag] == 'undefined') {
+				if (create) {
+					try {
+						Object.defineProperty(owner, this.uniqueTag, {
+							value: this.keyOffset++
+						});
+					} catch (e) {
+						owner[this.uniqueTag] = this.keyOffset++;
+					}
+				} else {
+					return undefined;
+				}
+			}
+			return owner[this.uniqueTag];
+		};
+		this.get = function (owner, key) {
+			if (owner != document && !BX$1.type.isElementNode(owner) || typeof key == 'undefined') {
+				return undefined;
+			}
+			owner = this.resolve(owner, false);
+			if (typeof owner == 'undefined' || typeof this.data[owner] == 'undefined') {
+				return undefined;
+			}
+			return this.data[owner][key];
+		};
+		this.set = function (owner, key, value) {
+			if (owner != document && !BX$1.type.isElementNode(owner) || typeof value == 'undefined') {
+				return;
+			}
+			const o = this.resolve(owner, true);
+			if (typeof this.data[o] == 'undefined') {
+				this.data[o] = {};
+			}
+			this.data[o][key] = value;
+		};
+	}
+	const dataStorage = new DataStorage();
+	function data(node, key, value) {
+		if (typeof node == 'undefined') {
+			return undefined;
+		}
+		if (typeof key == 'undefined') {
+			return undefined;
+		}
+		if (typeof value != 'undefined') {
+			dataStorage.set(node, key, value);
+		} else {
+			let stored;
+			if ((stored = dataStorage.get(node, key)) != undefined) {
+				return stored;
+			}
+			if ('getAttribute' in node) {
+				stored = node.getAttribute(`data-${key.toString()}`);
+				if (stored === null) {
+					return undefined;
+				}
+				return stored;
+			}
+			return undefined;
+		}
+		return undefined;
+	}
+
+	const deniedEvents = [];
+	function getEventButton(e) {
+		e = e || window.event;
+		let flags = 0;
+		if (typeof e.which != 'undefined') {
+			switch (e.which) {
+				case 1:
+					flags |= BX$1.MSLEFT;
+					break;
+				case 2:
+					flags |= BX$1.MSMIDDLE;
+					break;
+				case 3:
+					flags |= BX$1.MSRIGHT;
+					break;
+			}
+		} else if (typeof e.button != 'undefined') {
+			flags = window.event.button;
+		}
+		return flags || BX$1.MSLEFT;
+	}
+	let captured_events = null;
+	let _bind = null;
+	function CaptureEvents(el_c, evname_c) {
+		if (_bind) {
+			return;
+		}
+		_bind = BX$1.bind;
+		captured_events = [];
+		BX$1.bind = function (el, evname, func) {
+			if (el === el_c && evname === evname_c) {
+				captured_events.push(func);
+			}
+			_bind.apply(this, arguments);
+		};
+	}
+	function CaptureEventsGet() {
+		if (_bind) {
+			BX$1.bind = _bind;
+			const captured = captured_events;
+			_bind = null;
+			captured_events = null;
+			return captured;
+		}
+		return null;
+	}
+	function fireEvent(ob, ev) {
+		let result = false;
+		let e = null;
+		if (BX$1.type.isDomNode(ob)) {
+			result = true;
+			if (document.createEventObject) {
+				if (eventTypes[ev] != 'MouseEvent') {
+					e = document.createEventObject();
+					e.type = ev;
+					result = ob.fireEvent(`on${ev}`, e);
+				}
+				if (ob[ev]) {
+					ob[ev]();
+				}
+			} else {
+				e = null;
+				switch (eventTypes[ev]) {
+					case 'MouseEvent':
+						e = document.createEvent('MouseEvent');
+						try {
+							e.initMouseEvent(ev, true, true, top, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
+						} catch (initException) {
+							e.initMouseEvent(ev, true, true, window, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
+						}
+						break;
+					default:
+						e = document.createEvent('Event');
+						e.initEvent(ev, true, true);
+				}
+				result = ob.dispatchEvent(e);
+			}
+		}
+		return result;
+	}
+	function getWheelData(e) {
+		e = e || window.event;
+		e.wheelData = e.detail ? e.detail * -1 : e.wheelDelta / 40;
+		return e.wheelData;
+	}
+	function False() {
+		return false;
+	}
+	function DoNothing() {}
+	function denyEvent(el, ev) {
+		deniedEvents.push([el, ev, el[`on${ev}`]]);
+		el[`on${ev}`] = DoNothing;
+	}
+	function allowEvent(el, ev) {
+		for (let i = 0, len = deniedEvents.length; i < len; i++) {
+			if (deniedEvents[i][0] == el && deniedEvents[i][1] == ev) {
+				el[`on${ev}`] = deniedEvents[i][2];
+				util.deleteFromArray(deniedEvents, i);
+				return;
+			}
+		}
+	}
+	function fixEventPageXY(event) {
+		BX$1.fixEventPageX(event);
+		BX$1.fixEventPageY(event);
+		return event;
+	}
+	function fixEventPageX(event) {
+		if (event.pageX == null && event.clientX != null) {
+			event.pageX = event.clientX + (document.documentElement && document.documentElement.scrollLeft || document.body && document.body.scrollLeft || 0) - (document.documentElement.clientLeft || 0);
+		}
+		return event;
+	}
+	function fixEventPageY(event) {
+		if (event.pageY == null && event.clientY != null) {
+			event.pageY = event.clientY + (document.documentElement && document.documentElement.scrollTop || document.body && document.body.scrollTop || 0) - (document.documentElement.clientTop || 0);
+		}
+		return event;
+	}
+	function PreventDefault(e) {
+		if (!e) {
+			e = window.event;
+		}
+		if (e.stopPropagation) {
+			e.preventDefault();
+			e.stopPropagation();
+		} else {
+			e.cancelBubble = true;
+			e.returnValue = false;
+		}
+		return false;
+	}
+	function eventReturnFalse(e) {
+		e = e || window.event;
+		if (e && e.preventDefault) {
+			e.preventDefault();
+		} else {
+			e.returnValue = false;
+		}
+		return false;
+	}
+	function eventCancelBubble(e) {
+		e = e || window.event;
+		if (e && e.stopPropagation) {
+			e.stopPropagation();
+		} else {
+			e.cancelBubble = true;
+		}
+	}
+	function bindDebouncedChange(node, fn, fnInstant, timeout, ctx) {
+		ctx = ctx || window;
+		timeout = timeout || 300;
+		const dataTag = 'bx-dc-previous-value';
+		data(node, dataTag, node.value);
+		const act = function (handler, val) {
+			const pVal = data(node, dataTag);
+			if (typeof pVal == 'undefined' || pVal != val) {
+				if (typeof ctx != 'object') {
+					handler(val);
+				} else {
+					handler.apply(ctx, [val]);
+				}
+			}
+		};
+		const actD = BX$1.debounce(function () {
+			const val = node.value;
+			act(fn, val);
+			data(node, dataTag, val);
+		}, timeout);
+		BX$1.bind(node, 'keyup', actD);
+		BX$1.bind(node, 'change', actD);
+		BX$1.bind(node, 'input', actD);
+		if (BX$1.type.isFunction(fnInstant)) {
+			const actI = function () {
+				act(fnInstant, node.value);
+			};
+			BX$1.bind(node, 'keyup', actI);
+			BX$1.bind(node, 'change', actI);
+			BX$1.bind(node, 'input', actI);
+		}
+	}
+	function getEventTarget(e) {
+		if (e.target) {
+			return e.target;
+		}
+		if (e.srcElement) {
+			return e.srcElement;
+		}
+		return null;
+	}
+
+	let cssList = [];
+	let cssInit = false;
+	let jsList = [];
+	let jsInit = false;
+	const LOADING = 3;
+	const LOADED = 4;
+	const assets = {};
+	const loadingAssetCallbacks = {};
+	function setJSList(scripts) {
+		if (BX$1.type.isArray(scripts)) {
+			scripts = scripts.map(function (script) {
+				return normalizeUrl(script);
+			});
+			jsList = jsList.concat(scripts);
+		}
+	}
+	function getJSList() {
+		initJsList();
+		return jsList;
+	}
+	function setCSSList(cssFiles) {
+		if (BX$1.type.isArray(cssFiles)) {
+			cssFiles = cssFiles.map(function (cssFile) {
+				return normalizeUrl(cssFile);
+			});
+			cssList = cssList.concat(cssFiles);
+		}
+	}
+	function getCSSList() {
+		initCssList();
+		return cssList;
+	}
+	function getJSPath(js) {
+		return js.replace(/^(http[s]*:)*\/\/[^/]+/i, '');
+	}
+	function getCSSPath(css) {
+		return css.replace(/^(http[s]*:)*\/\/[^/]+/i, '');
+	}
+	function getCDNPath(path) {
+		return path;
+	}
+	function loadScript$1(script, callback, doc) {
+		if (BX$1.type.isString(script)) {
+			script = [script];
+		}
+		return BX$1.load(script, callback, doc);
+	}
+	function loadCSS(css, doc, win) {
+		if (BX$1.type.isString(css)) {
+			css = [css];
+		}
+		if (BX$1.type.isArray(css)) {
+			css = css.map(function (url) {
+				return {
+					url,
+					ext: 'css'
+				};
+			});
+			BX$1.load(css, null, doc);
+		}
+	}
+	function load(items, callback, doc, reject) {
+		if (!BX$1.isReady) {
+			const _args = arguments;
+			BX$1.ready(function () {
+				BX$1.load.apply(this, _args);
+			});
+			return null;
+		}
+		doc = doc || document;
+		callback = BX$1.Type.isFunction(callback) ? callback : () => {};
+		return loadAsync(items, callback, doc, reject);
+	}
+	function loadAsync(items, callback, doc, reject) {
+		if (!BX$1.type.isArray(items)) {
+			callback();
+			return;
+		}
+		function onLoad() {
+			const nextAsset = queue.shift();
+			if (nextAsset) {
+				loadSingleAsset(nextAsset, onLoad, doc, reject);
+			} else if (allLoaded()) {
+				callback();
+			}
+		}
+		function allLoaded() {
+			for (const name in assetMap) {
+				if (assetMap[name].state !== LOADED) {
+					return false;
+				}
+			}
+			return true;
+		}
+		const queue = [];
+		const assetMap = {};
+		items.forEach(item => {
+			const asset = getAsset(item);
+			if (asset && asset.state !== LOADED) {
+				queue.push(asset);
+				assetMap[asset.name] = asset;
+			}
+		});
+		if (queue.length > 0) {
+			const maxParallelLoads = 6;
+			const parallelLoads = Math.min(queue.length, maxParallelLoads);
+			const firstPackage = queue.splice(0, parallelLoads);
+			firstPackage.forEach(asset => {
+				loadSingleAsset(asset, onLoad, doc, reject);
+			});
+		} else {
+			callback();
+		}
+	}
+	function loadSingleAsset(asset, callback, doc, reject) {
+		callback = callback || DoNothing;
+		if (asset.state === LOADED) {
+			callback();
+			return;
+		}
+		if (asset.state === LOADING) {
+			if (!BX$1.Type.isArray(loadingAssetCallbacks[asset.name])) {
+				loadingAssetCallbacks[asset.name] = [];
+			}
+			loadingAssetCallbacks[asset.name].push(callback);
+			return;
+		}
+		asset.state = LOADING;
+		const onReject = () => {
+			delete assets[asset.name];
+			delete loadingAssetCallbacks[asset.name];
+			reject();
+		};
+		loadAsset(asset, function () {
+			asset.state = LOADED;
+			callback();
+			if (BX$1.Type.isArrayFilled(loadingAssetCallbacks[asset.name])) {
+				for (const cb of loadingAssetCallbacks[asset.name]) {
+					cb();
+				}
+			}
+			delete loadingAssetCallbacks[asset.name];
+		}, doc, BX$1.Type.isFunction(reject) ? onReject : null);
+	}
+	function loadAsset(asset, callback, doc, reject) {
+		callback = callback || DoNothing;
+		function error(event) {
+			window.clearTimeout(asset.errorTimeout);
+			window.clearTimeout(asset.cssTimeout);
+			ele.onload = ele.onreadystatechange = ele.onerror = null;
+			if (BX$1.Type.isFunction(reject)) {
+				reject();
+			} else {
+				callback();
+			}
+		}
+		function process(event) {
+			if (ext === 'css') {
+				cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			} else {
+				jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			}
+			event = event || window.event;
+			if (event.type === 'load' || /loaded|complete/.test(ele.readyState) && (!doc.documentMode || doc.documentMode < 9)) {
+				window.clearTimeout(asset.errorTimeout);
+				window.clearTimeout(asset.cssTimeout);
+				ele.onload = ele.onreadystatechange = ele.onerror = null;
+				callback();
+			}
+		}
+		function pollStyleSheet() {
+			if (asset.state !== LOADED && asset.cssRetries <= 20) {
+				for (let i = 0, l = doc.styleSheets.length; i < l; i++) {
+					if (doc.styleSheets[i].href === ele.href) {
+						process({
+							type: 'load'
+						});
+						return;
+					}
+				}
+				asset.cssRetries++;
+				asset.cssTimeout = window.setTimeout(pollStyleSheet, 250);
+			}
+		}
+		let ele = null;
+		const ext = BX$1.type.isNotEmptyString(asset.ext) ? asset.ext : util.getExtension(asset.url);
+		if (ext === 'css') {
+			ele = doc.createElement('link');
+			ele.type = `text/${asset.type || 'css'}`;
+			ele.rel = 'stylesheet';
+			ele.href = asset.url;
+			asset.cssRetries = 0;
+			asset.cssTimeout = window.setTimeout(pollStyleSheet, 500);
+		} else {
+			ele = doc.createElement('script');
+			ele.type = `text/${asset.type || 'javascript'}`;
+			ele.src = asset.url;
+		}
+		ele.onload = ele.onreadystatechange = process;
+		ele.onerror = error;
+		ele.async = asset.async === true;
+		ele.defer = false;
+		asset.errorTimeout = window.setTimeout(function () {
+			error();
+		}, 7000);
+		let templateLink = null;
+		const head = doc.head || doc.getElementsByTagName('head')[0];
+		if (ext === 'css' && (templateLink = getTemplateLink(head)) !== null) {
+			templateLink.parentNode.insertBefore(ele, templateLink);
+		} else {
+			head.insertBefore(ele, head.lastChild);
+		}
+	}
+	function getAsset(item) {
+		let asset = {};
+		if (typeof item === 'object') {
+			asset = item;
+			asset.name = asset.name ? asset.name : util.hashCode(item.url);
+		} else {
+			asset = {
+				name: util.hashCode(item),
+				url: item
+			};
+		}
+		const ext = BX$1.type.isNotEmptyString(asset.ext) ? asset.ext : util.getExtension(asset.url);
+		if (ext === 'css' && isCssLoaded(asset.url) || isScriptLoaded(asset.url)) {
+			asset.state = LOADED;
+		}
+		const existing = assets[asset.name];
+		if (existing && existing.url === asset.url) {
+			return existing;
+		}
+		assets[asset.name] = asset;
+		return asset;
+	}
+	function normalizeUrl(url) {
+		if (!BX$1.type.isNotEmptyString(url)) {
+			return '';
+		}
+		url = BX$1.getJSPath(url);
+		url = url.replace(/\?[0-9]*$/, '');
+		return url;
+	}
+	function normalizeMinUrl(url) {
+		if (!BX$1.type.isNotEmptyString(url)) {
+			return '';
+		}
+		const minPos = url.indexOf('.min');
+		return minPos >= 0 ? url.substr(0, minPos) + url.substr(minPos + 4) : url;
+	}
+	function isCssLoaded(fileSrc) {
+		initCssList();
+		fileSrc = normalizeUrl(fileSrc);
+		const fileSrcMin = normalizeMinUrl(fileSrc);
+		return fileSrc !== fileSrcMin && util.in_array(fileSrcMin, cssList) || util.in_array(fileSrc, cssList);
+	}
+	function initCssList() {
+		if (!cssInit) {
+			const linksCol = document.getElementsByTagName('link');
+			if (!!linksCol && linksCol.length > 0) {
+				for (let i = 0; i < linksCol.length; i++) {
+					let href = linksCol[i].getAttribute('href');
+					if (BX$1.type.isNotEmptyString(href)) {
+						href = normalizeMinUrl(normalizeUrl(href));
+						cssList.push(href);
+					}
+				}
+			}
+			cssInit = true;
+		}
+	}
+	function getTemplateLink(head) {
+		const findLink = function (tag) {
+			const links = head.getElementsByTagName(tag);
+			for (let i = 0, length = links.length; i < length; i++) {
+				const templateStyle = links[i].getAttribute('data-template-style');
+				if (BX$1.type.isNotEmptyString(templateStyle) && templateStyle == 'true') {
+					return links[i];
+				}
+			}
+			return null;
+		};
+		let link = findLink('link');
+		if (link === null) {
+			link = findLink('style');
+		}
+		return link;
+	}
+	function isScriptLoaded(fileSrc) {
+		initJsList();
+		fileSrc = normalizeUrl(fileSrc);
+		const fileSrcMin = normalizeMinUrl(fileSrc);
+		return fileSrc !== fileSrcMin && util.in_array(fileSrcMin, jsList) || util.in_array(fileSrc, jsList);
+	}
+	function initJsList() {
+		if (!jsInit) {
+			const scriptCol = document.getElementsByTagName('script');
+			if (!!scriptCol && scriptCol.length > 0) {
+				for (let i = 0; i < scriptCol.length; i++) {
+					let src = scriptCol[i].getAttribute('src');
+					if (BX$1.type.isNotEmptyString(src)) {
+						src = normalizeMinUrl(normalizeUrl(src));
+						jsList.push(src);
+					}
+				}
+			}
+			jsInit = true;
+		}
+	}
+	function reloadInternal(back_url, bAddClearCache) {
+		if (back_url === true) {
+			bAddClearCache = true;
+			back_url = null;
+		}
+		const topWindow = function () {
+			if (BX$1.PageObject && BX$1.PageObject.getRootWindow) {
+				return BX$1.PageObject.getRootWindow();
+			}
+			return window.top;
+		}();
+		let new_href = back_url || topWindow.location.href;
+		const hashpos = new_href.indexOf('#');
+		let hash = '';
+		if (hashpos != -1) {
+			hash = new_href.substr(hashpos);
+			new_href = new_href.substr(0, hashpos);
+		}
+		if (bAddClearCache && new_href.indexOf('clear_cache=Y') < 0) {
+			new_href += (new_href.indexOf('?') == -1 ? '?' : '&') + 'clear_cache=Y';
+		}
+		if (hash) {
+			if (bAddClearCache && (hash.substr(0, 5) == 'view/' || hash.substr(0, 6) == '#view/') && hash.indexOf('clear_cache%3DY') < 0) {
+				hash += (hash.indexOf('%3F') == -1 ? '%3F' : '%26') + 'clear_cache%3DY';
+			}
+			new_href = new_href.replace(/([?&])_r=\d*/, '');
+			new_href += `${(new_href.indexOf('?') == -1 ? '?' : '&') + '_r='}${Math.round(Math.random() * 10000)}${hash}`;
+		}
+		topWindow.location.href = new_href;
+	}
+	function reload(back_url, bAddClearCache) {
+		reloadInternal(back_url, bAddClearCache);
+	}
+	function clearCache() {
+		BX$1.showWait();
+		BX$1.reload(true);
+	}
+
+	function registerAssetsAsLoaded(js, css) {
+		if (Type.isArrayFilled(js)) {
+			setJSList(js);
+		}
+		if (Type.isArrayFilled(css)) {
+			setCSSList(css);
+		}
+	}
+	function loadAll(items) {
+		const itemsList = Type.isArray(items) ? items : [items];
+		if (itemsList.length === 0) {
+			return Promise.resolve();
+		}
+		return new Promise((resolve, reject) => {
+			load(itemsList, resolve, document, reject);
+		});
+	}
+
+	function isNotEmptyObject(value) {
+		return Type.isPlainObject(value) && Object.keys(value).length > 0;
+	}
+	function hasSettings(settings) {
+		return Type.isArrayFilled(settings) || isNotEmptyObject(settings);
+	}
+	function appendSettingsTag(entry) {
+		const script = document.createElement('script');
+		script.type = 'extension/settings';
+		script.dataset.extension = entry.extension;
+		script.textContent = JSON.stringify(entry.settings).replaceAll('<', '\\u003C');
+		document.head.append(script);
+	}
+	function collect(entries, field) {
+		return entries.flatMap(entry => entry[field] ?? []);
+	}
+	function collectCoreIncludes(entries, field) {
+		return entries.flatMap(entry => entry.coreIncludes?.[field] ?? []);
+	}
+	function findNamespace(entries, name) {
+		const entry = entries.find(item => item.extension === name);
+		return entry ? entry.namespace : null;
+	}
+	function registerInActiveRuntime(options) {
+		const runtime = BX?.Runtime;
+		if (typeof runtime?.registerExtension === 'function') {
+			runtime.registerExtension(options);
+			return;
+		}
+		registerExtension(options);
+	}
+	async function applyExtensions(entries, queue, loader = loadAll, retry = tryLoad) {
+		entries.forEach(entry => {
+			if (isNotEmptyObject(entry.messages)) {
+				Loc.setMessage(entry.messages);
+			}
+			if (hasSettings(entry.settings)) {
+				appendSettingsTag(entry);
+			}
+		});
+		const js = collect(entries, 'js');
+		const css = collect(entries, 'css');
+		const coreIncludesJs = collectCoreIncludes(entries, 'js');
+		const coreIncludesCss = collectCoreIncludes(entries, 'css');
+		const loadableExtensions = [...queue.keys()];
+		try {
+			await Promise.all([retry(loadableExtensions, () => loader(js)), retry(loadableExtensions, () => loader(css))]);
+		} catch (error) {
+			queue.forEach(item => item.reject(error));
+			return;
+		}
+		registerAssetsAsLoaded(coreIncludesJs, coreIncludesCss);
+		entries.forEach(entry => {
+			registerInActiveRuntime({
+				name: entry.extension,
+				namespace: entry.namespace ?? 'window'
+			});
+			markRegistered(entry.extension);
+		});
+		queue.forEach((item, name) => {
+			item.resolve(findNamespace(entries, name) ?? 'window');
+		});
+	}
+	async function processExtensions(queue, transport = loadAssets, retry = tryLoad) {
+		const loadableExtensions = [...queue.keys()];
+		const coreLoaded = isCoreRegistered();
+		const loadedExtension = getRegisteredNames();
+		let entries = [];
+		try {
+			entries = (await retry(loadableExtensions, () => transport({
+				extension: loadableExtensions,
+				coreLoaded,
+				loadedExtension
+			}))) ?? [];
+		} catch (error) {
+			queue.forEach(item => item.reject(error));
+			return;
+		}
+		try {
+			await applyExtensions(entries, queue, loadAll, retry);
+		} catch (error) {
+			queue.forEach(item => item.reject(error));
+		}
+	}
+
+	const queue = new Map();
+	let timerId = null;
+	async function loadExtension(...name) {
+		if (Type.isNumber(timerId)) {
+			clearTimeout(timerId);
+		}
+		const requestedNames = name.flat();
+		const extensionsToLoad = requestedNames.filter(extensionName => {
+			return !extensionsStorage.has(extensionName);
+		});
+		extensionsToLoad.forEach(extensionName => {
+			let resolve = null;
+			let reject = null;
+			const loadableExtensionEntry = {
+				promise: new Promise((sourceResolve, sourceReject) => {
+					resolve = sourceResolve;
+					reject = sourceReject;
+				}),
+				resolve,
+				reject
+			};
+			extensionsStorage.set(extensionName, loadableExtensionEntry.promise);
+			queue.set(extensionName, loadableExtensionEntry);
+		});
+		timerId = setTimeout(() => {
+			if (queue.size > 0) {
+				void processExtensions(new Map(queue.entries()));
+				queue.clear();
+			}
+		});
+		const namespaces = await Promise.all(requestedNames.map(extensionName => {
+			return extensionsStorage.get(extensionName);
+		}));
+		return namespaces.reduce((acc, namespace) => {
+			return {
+				...acc,
+				...Reflection.getClass(namespace)
+			};
+		}, {});
+	}
+
+	const cloneableTags = new Set(['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]']);
+	function isCloneable(value) {
+		const isCloneableValue = Type.isObjectLike(value) && cloneableTags.has(getTag(value));
+		return isCloneableValue || Type.isDomNode(value);
+	}
+	function internalClone(value, map) {
+		if (map.has(value)) {
+			return map.get(value);
+		}
+		if (isCloneable(value)) {
+			if (Type.isArray(value)) {
+				const cloned = [...value];
+				map.set(value, cloned);
+				value.forEach((item, index) => {
+					cloned[index] = internalClone(item, map);
+				});
+				return map.get(value);
+			}
+			if (Type.isDomNode(value)) {
+				return value.cloneNode(true);
+			}
+			if (Type.isMap(value)) {
+				const result = new Map();
+				map.set(value, result);
+				value.forEach((item, key) => {
+					result.set(internalClone(key, map), internalClone(item, map));
+				});
+				return result;
+			}
+			if (Type.isSet(value)) {
+				const result = new Set();
+				map.set(value, result);
+				value.forEach(item => {
+					result.add(internalClone(item, map));
+				});
+				return result;
+			}
+			if (Type.isDate(value)) {
+				return new Date(value);
+			}
+			if (Type.isRegExp(value)) {
+				const regExpFlags = /\w*$/;
+				const flags = regExpFlags.exec(value);
+				let result = new RegExp(value.source);
+				if (flags && Type.isArray(flags)) {
+					result = new RegExp(value.source, flags[0]);
+				}
+				result.lastIndex = value.lastIndex;
+				return result;
+			}
+			const proto = Object.getPrototypeOf(value);
+			const result = Object.assign(Object.create(proto), value);
+			map.set(value, result);
+			Object.keys(value).forEach(key => {
+				result[key] = internalClone(value[key], map);
+			});
+			return result;
+		}
+		return value;
+	}
+	function clone$1(value) {
+		return internalClone(value, new WeakMap());
+	}
+
+	function merge$1(current, target) {
+		return Object.entries(target).reduce((acc, [key, value]) => {
+			if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
+				acc[key] = merge$1(acc[key], value);
+				return acc;
+			}
+			acc[key] = value;
+			return acc;
+		}, current);
+	}
+
+	function createComparator(fields, orders = []) {
+		return (a, b) => {
+			const field = fields[0];
+			const order = orders[0] || 'asc';
+			if (Type.isUndefined(field)) {
+				return 0;
+			}
+			let valueA = a[field];
+			let valueB = b[field];
+			if (Type.isString(valueA) && Type.isString(valueB)) {
+				valueA = valueA.toLowerCase();
+				valueB = valueB.toLowerCase();
+			}
+			if (valueA < valueB) {
+				return order === 'asc' ? -1 : 1;
+			}
+			if (valueA > valueB) {
+				return order === 'asc' ? 1 : -1;
+			}
+			return createComparator(fields.slice(1), orders.slice(1))(a, b);
+		};
+	}
+
+	class Runtime {
+		static debug = debug$1;
+		static extractAssets = extractAssets;
+		static loadExtension = loadExtension;
+		static registerExtension = registerExtension;
+		static clone = clone$1;
+		static debounce(func, wait = 0, context = null) {
+			let timeoutId = null;
+			return function debounced(...args) {
+				if (Type.isNumber(timeoutId)) {
+					clearTimeout(timeoutId);
+				}
+				timeoutId = setTimeout(() => {
+					func.apply(context || this, args);
+				}, wait);
+			};
+		}
+		static throttle(func, wait = 0, context = null) {
+			let timer = null;
+			let invoke = false;
+			return function wrapper(...args) {
+				invoke = true;
+				if (!timer) {
+					const q = function q() {
+						if (invoke) {
+							func.apply(context || this, args);
+							invoke = false;
+							timer = setTimeout(q, wait);
+						} else {
+							timer = null;
+						}
+					};
+					q();
+				}
+			};
+		}
+		static html(node, html, params = {}) {
+			if (Type.isNil(html) && Type.isDomNode(node)) {
+				return node.innerHTML;
+			}
+			const assets = extractAssets(html);
+			const externalCss = assets.styles.map(item => ({
+				url: item.href,
+				ext: 'css'
+			}));
+			const externalJs = assets.scripts.filter(item => !item.isInternal).map(item => item.src);
+			const inlineJs = assets.scripts.filter(item => item.isInternal).map(item => item.text);
+			if (Type.isDomNode(node) && (params.htmlFirst || externalJs.length === 0 && externalCss.length === 0)) {
+				if (params.useAdjacentHTML) {
+					node.insertAdjacentHTML('beforeend', assets.html);
+				} else {
+					node.innerHTML = assets.html;
+				}
+			}
+			return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(() => {
+				if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
+					if (params.useAdjacentHTML) {
+						node.insertAdjacentHTML('beforeend', assets.html);
+					} else {
+						node.innerHTML = assets.html;
+					}
+				}
+				inlineJs.forEach(script => evalGlobal(script));
+				if (Type.isFunction(params.callback)) {
+					params.callback();
+				}
+			});
+		}
+		static merge(...targets) {
+			if (Type.isArray(targets[0])) {
+				targets.unshift([]);
+			} else if (Type.isObject(targets[0])) {
+				targets.unshift({});
+			}
+			return targets.reduce((acc, item) => {
+				return merge$1(acc, item);
+			}, targets[0]);
+		}
+		static orderBy(collection, fields = [], orders = []) {
+			const comparator = createComparator(fields, orders);
+			return Object.values(collection).sort(comparator);
+		}
+		static destroy(target, errorMessage = 'Object is destroyed') {
+			if (Type.isObject(target)) {
+				const onPropertyAccess = () => {
+					throw new Error(errorMessage);
+				};
+				const ownProperties = Object.keys(target);
+				const prototypeProperties = (() => {
+					const targetPrototype = Object.getPrototypeOf(target);
+					if (Type.isObject(targetPrototype)) {
+						return Object.getOwnPropertyNames(targetPrototype);
+					}
+					return [];
+				})();
+				const uniquePropertiesList = [...new Set([...ownProperties, ...prototypeProperties])];
+				uniquePropertiesList.filter(name => {
+					const descriptor = Object.getOwnPropertyDescriptor(target, name);
+					return !/__(.+)__/.test(name) && (!Type.isObject(descriptor) || descriptor.configurable === true);
+				}).forEach(name => {
+					Object.defineProperty(target, name, {
+						get: onPropertyAccess,
+						set: onPropertyAccess,
+						configurable: false
+					});
+				});
+				Object.setPrototypeOf(target, null);
+			}
+		}
+	}
 
 	class EventStore {
 		defaultMaxListeners;
@@ -4060,11 +5773,18 @@ window._main_polyfill_core = true;
 		}
 	}
 
+	function decodeSafely(value) {
+		try {
+			return decodeURIComponent(value);
+		} catch {
+			return value;
+		}
+	}
 	class Cookie {
 		static getList() {
 			return document.cookie.split(';').map(item => item.split('=')).map(item => item.map(subItem => subItem.trim())).reduce((acc, item) => {
 				const [key, value] = item;
-				acc[decodeURIComponent(key)] = decodeURIComponent(value);
+				acc[decodeSafely(key)] = decodeSafely(value);
 				return acc;
 			}, {});
 		}
@@ -4089,7 +5809,7 @@ window._main_polyfill_core = true;
 			if (Type.isDate(attributes.expires)) {
 				attributes.expires = attributes.expires.toUTCString();
 			}
-			const safeName = decodeURIComponent(String(name)).replaceAll(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent).replaceAll(/[()]/g, escape);
+			const safeName = decodeSafely(String(name)).replaceAll(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent).replaceAll(/[()]/g, escape);
 			const safeValue = encodeURIComponent(String(value)).replaceAll(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
 			const stringifiedAttributes = Object.keys(attributes).reduce((acc, key) => {
 				const attributeValue = attributes[key];
@@ -4156,133 +5876,6 @@ window._main_polyfill_core = true;
 	class Http {
 		static Cookie = Cookie;
 		static Data = Data;
-	}
-
-	const message$1 = function (value) {
-		if (Type.isString(value)) {
-			if (Type.isNil(message$1[value])) {
-				EventEmitter.emit('onBXMessageNotFound', new BaseEvent({
-					compatData: [value]
-				}));
-				if (Type.isNil(message$1[value])) {
-					Runtime.debug(`message undefined: ${value}`);
-					message$1[value] = '';
-				}
-			}
-			return message$1[value];
-		}
-		if (Type.isPlainObject(value)) {
-			Object.keys(value).forEach(key => {
-				message$1[key] = value[key];
-			});
-		}
-		return undefined;
-	};
-	if (!Type.isNil(window.BX) && Type.isFunction(window.BX.message)) {
-		Object.keys(window.BX.message).forEach(key => {
-			message$1({
-				[key]: window.BX.message[key]
-			});
-		});
-	}
-
-	class Loc {
-		static getMessage(messageId, replacements = null) {
-			let mess = message$1(messageId);
-			if (Type.isString(mess) && Type.isPlainObject(replacements)) {
-				const escape = str => String(str).replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
-				Object.keys(replacements).forEach(replacement => {
-					const globalRegexp = new RegExp(escape(replacement), 'gi');
-					mess = mess.replaceAll(globalRegexp, () => {
-						return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
-					});
-				});
-			}
-			return mess;
-		}
-		static hasMessage(messageId) {
-			return Type.isString(messageId) && !Type.isNil(message$1[messageId]);
-		}
-		static setMessage(id, value) {
-			if (Type.isString(id) && Type.isString(value)) {
-				message$1({
-					[id]: value
-				});
-			}
-			if (Type.isObject(id)) {
-				message$1(id);
-			}
-		}
-		static getMessagePlural(messageId, value, replacements = null) {
-			let result = '';
-			if (Type.isNumber(value)) {
-				if (this.hasMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`)) {
-					result = this.getMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`, replacements);
-				} else {
-					result = this.getMessage(`${messageId}_PLURAL_1`, replacements);
-				}
-			} else {
-				result = this.getMessage(messageId, replacements);
-			}
-			return result;
-		}
-		static getPluralForm(value, languageId) {
-			let pluralForm = 1;
-			let lang = languageId;
-			if (!Type.isStringFilled(lang)) {
-				lang = message$1('LANGUAGE_ID');
-			}
-			const absValue = Math.abs(value);
-			switch (lang) {
-				case 'ar':
-					pluralForm = absValue === 1 ? 0 : 1;
-					break;
-				case 'br':
-				case 'fr':
-				case 'tr':
-					pluralForm = absValue > 1 ? 1 : 0;
-					break;
-				case 'de':
-				case 'en':
-				case 'hi':
-				case 'it':
-				case 'la':
-					pluralForm = absValue === 1 ? 0 : 1;
-					break;
-				case 'ru':
-				case 'ua':
-					if (absValue % 10 === 1 && absValue % 100 !== 11) {
-						pluralForm = 0;
-					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
-						pluralForm = 1;
-					} else {
-						pluralForm = 2;
-					}
-					break;
-				case 'pl':
-					if (absValue === 1) {
-						pluralForm = 0;
-					} else if (absValue % 10 >= 2 && absValue % 10 <= 4 && (absValue % 100 < 10 || absValue % 100 >= 20)) {
-						pluralForm = 1;
-					} else {
-						pluralForm = 2;
-					}
-					break;
-				case 'id':
-				case 'ja':
-				case 'ms':
-				case 'sc':
-				case 'tc':
-				case 'th':
-				case 'vn':
-					pluralForm = 0;
-					break;
-				default:
-					pluralForm = 1;
-					break;
-			}
-			return pluralForm;
-		}
 	}
 
 	const voidElements = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
@@ -5650,11 +7243,52 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	var collections = {
+	const collections = {
 		OrderedArray,
 		SettingsCollection,
 		WeakRefMap
 	};
+
+	function isCssAnimation(animation) {
+		return 'animationName' in animation;
+	}
+	function isCssTransition(animation) {
+		return 'transitionProperty' in animation;
+	}
+	function isScriptAnimation(animation) {
+		return !isCssAnimation(animation) && !isCssTransition(animation);
+	}
+	class Animation {
+		static waitTransitionEnd(element, propertyName = null) {
+			return this.#waitForEnd(element, propertyName, isCssTransition, animation => isCssTransition(animation) ? animation.transitionProperty : null);
+		}
+		static waitAnimationEnd(element, animationName = null) {
+			return this.#waitForEnd(element, animationName, animation => isCssAnimation(animation) || isScriptAnimation(animation), animation => isCssAnimation(animation) ? animation.animationName : null);
+		}
+		static async #waitForEnd(element, names, isKind, readName) {
+			if (!Type.isElementNode(element)) {
+				return;
+			}
+			const targets = element.getAnimations().filter(animation => isKind(animation)).filter(animation => this.#matchesName(readName(animation), names)).filter(animation => this.#hasFiniteEnd(animation));
+			await Promise.allSettled(targets.map(animation => animation.finished));
+		}
+		static #matchesName(name, names) {
+			if (Type.isNil(names)) {
+				return true;
+			}
+			if (Type.isNil(name)) {
+				return false;
+			}
+			if (Type.isArray(names)) {
+				return names.includes(name);
+			}
+			return name === names;
+		}
+		static #hasFiniteEnd(animation) {
+			const endTime = animation.effect?.getComputedTiming().endTime;
+			return Type.isNumber(endTime) && Number.isFinite(endTime);
+		}
+	}
 
 	class Transition {
 		static linear(progress) {
@@ -6059,6 +7693,1727 @@ window._main_polyfill_core = true;
 		}
 	}
 
+	const sensitiveParams = ['sessid', 'sessionid', 'access_token', 'refresh_token', 'token', 'tokens', 'auth', 'authtoken', 'bearer', 'jwt', 'sid', 'password', 'pwd', 'secret', 'signature', 'api_key', 'apikey', 'csrf'];
+	const nameSeparator = '(?:[_.\\-[\\]]|%5B|%5D)';
+	const queryPairPattern = /([?&])([^=&#]*)=([^&#]*)/g;
+	const sensitiveNamePattern = new RegExp(`(?:^|${nameSeparator})(?:${sensitiveParams.join('|')})(?:$|${nameSeparator})`, 'i');
+	function maskUrl(url) {
+		let masked = url;
+		try {
+			const parsed = new URL(url);
+			if (parsed.username !== '' || parsed.password !== '') {
+				parsed.username = '***';
+				parsed.password = '***';
+				masked = parsed.toString();
+			}
+		} catch {
+		}
+		return masked.replace(queryPairPattern, (pair, delimiter, name) => {
+			return sensitiveNamePattern.test(name) ? `${delimiter}${name}=***` : pair;
+		});
+	}
+	function withUrl(message, url) {
+		return url === '' ? message : `${message}: ${url}`;
+	}
+	class HttpClientError extends Error {
+		cause;
+		retryCount = 0;
+		constructor(message, options = {}) {
+			super(message);
+			this.name = 'HttpClientError';
+			if (!Type.isUndefined(options.cause)) {
+				this.cause = options.cause;
+			}
+		}
+	}
+	class HttpError extends HttpClientError {
+		status;
+		response;
+		constructor(status, response = null, options = {}) {
+			super(withUrl(`Request failed with status ${status}`, maskUrl(response?.raw?.url ?? '')), options);
+			this.name = 'HttpError';
+			this.status = status;
+			this.response = response;
+		}
+	}
+	class NetworkError extends HttpClientError {
+		url;
+		constructor(options = {}) {
+			const url = maskUrl(options.url ?? '');
+			super(withUrl('Network request failed', url), options);
+			this.name = 'NetworkError';
+			this.url = url;
+		}
+	}
+	class TimeoutError extends HttpClientError {
+		url;
+		timeout;
+		constructor(options = {}) {
+			const url = maskUrl(options.url ?? '');
+			const timeout = options.timeout ?? 0;
+			super(withUrl(`Request timed out after ${timeout}ms`, url), options);
+			this.name = 'TimeoutError';
+			this.url = url;
+			this.timeout = timeout;
+		}
+	}
+	class ParseError extends HttpClientError {
+		url;
+		responseType;
+		constructor(options = {}) {
+			const url = maskUrl(options.url ?? '');
+			const responseType = options.responseType ?? 'json';
+			super(withUrl(`Failed to parse response as "${responseType}"`, url), options);
+			this.name = 'ParseError';
+			this.url = url;
+			this.responseType = responseType;
+		}
+	}
+	class AssetLoadError extends HttpClientError {
+		url;
+		assetType;
+		constructor(options) {
+			const url = maskUrl(options.url ?? '');
+			super(withUrl('Failed to load asset', url), options);
+			this.name = 'AssetLoadError';
+			this.url = url;
+			this.assetType = options.assetType;
+		}
+	}
+	function hasCsrfCustomData(error) {
+		return Type.isPlainObject(error?.customData) && 'csrf' in error.customData;
+	}
+	function withoutCsrfCustomData(errors) {
+		if (!errors.some(error => hasCsrfCustomData(error))) {
+			return errors;
+		}
+		return errors.map(error => {
+			if (!hasCsrfCustomData(error)) {
+				return error;
+			}
+			const {
+				csrf,
+				...customData
+			} = error.customData;
+			return {
+				...error,
+				customData
+			};
+		});
+	}
+	class ControllerError extends HttpClientError {
+		errors;
+		envelope;
+		httpStatus;
+		constructor(options = {}) {
+			const envelope = options.envelope ?? null;
+			const errors = withoutCsrfCustomData(options.errors ?? envelope?.errors ?? []);
+			super(errors[0]?.message ?? 'Controller action failed', options);
+			this.name = 'ControllerError';
+			this.errors = errors;
+			this.envelope = ControllerError.#sanitizeEnvelope(envelope);
+			this.httpStatus = options.httpStatus ?? 200;
+		}
+		static #sanitizeEnvelope(envelope) {
+			if (envelope === null) {
+				return null;
+			}
+			const errors = withoutCsrfCustomData(envelope.errors ?? []);
+			return errors === envelope.errors ? envelope : {
+				...envelope,
+				errors
+			};
+		}
+	}
+
+	const retryableStatuses = new Set([408, 425, 429, 500, 502, 503, 504]);
+	const defaultPolicy = {
+		retries: 0,
+		idempotent: false,
+		delay: 300,
+		maxDelay: 10000,
+		respectRetryAfter: true,
+		totalTimeout: 0
+	};
+	const maxRetries = 100;
+	function pickNumber(value, fallback, upperBound = Number.MAX_SAFE_INTEGER) {
+		if (!Type.isNumber(value) || !Number.isFinite(value)) {
+			return fallback;
+		}
+		return Math.min(Math.max(0, value), upperBound);
+	}
+	function pickPositiveNumber(value, fallback) {
+		if (!Type.isNumber(value) || !Number.isFinite(value) || value <= 0) {
+			return fallback;
+		}
+		return value;
+	}
+	function pickBoolean(value, fallback) {
+		return Type.isBoolean(value) ? value : fallback;
+	}
+	function normalizeRetryPolicy(config) {
+		if (!Type.isPlainObject(config)) {
+			return {
+				...defaultPolicy
+			};
+		}
+		return {
+			retries: pickNumber(config.retries, defaultPolicy.retries, maxRetries),
+			idempotent: pickBoolean(config.idempotent, defaultPolicy.idempotent),
+			delay: pickNumber(config.delay, defaultPolicy.delay),
+			maxDelay: pickPositiveNumber(config.maxDelay, defaultPolicy.maxDelay),
+			respectRetryAfter: pickBoolean(config.respectRetryAfter, defaultPolicy.respectRetryAfter),
+			totalTimeout: pickNumber(config.totalTimeout, defaultPolicy.totalTimeout)
+		};
+	}
+	function isRetryableError(context) {
+		const {
+			error
+		} = context;
+		if (error instanceof NetworkError) {
+			return true;
+		}
+		if (error instanceof TimeoutError) {
+			return true;
+		}
+		if (error instanceof HttpError) {
+			return retryableStatuses.has(error.status);
+		}
+		return false;
+	}
+
+	const secondsPattern = /^\d+$/;
+	function parseRetryAfter(value, now) {
+		const header = value.trim();
+		if (header === '') {
+			return null;
+		}
+		if (secondsPattern.test(header)) {
+			return Number(header) * 1000;
+		}
+		const date = Date.parse(header);
+		if (Number.isNaN(date)) {
+			return null;
+		}
+		return Math.max(0, date - now);
+	}
+	function getRetryAfter(error) {
+		if (!(error instanceof HttpError)) {
+			return null;
+		}
+		const header = error.response?.headers?.get('Retry-After') ?? null;
+		return Type.isString(header) ? parseRetryAfter(header, Date.now()) : null;
+	}
+	function calculateDelay(context) {
+		const {
+			error,
+			policy,
+			retryCount
+		} = context;
+		if (policy.respectRetryAfter) {
+			const retryAfter = getRetryAfter(error);
+			if (!Type.isNull(retryAfter)) {
+				return Math.min(retryAfter, policy.maxDelay);
+			}
+		}
+		const exponential = policy.delay * 2 ** retryCount;
+		return Math.round(Math.random() * Math.min(exponential, policy.maxDelay));
+	}
+
+	function getAbortReason(signal) {
+		return signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
+	}
+	function sleep(delay, signal = null) {
+		if (!Type.isNil(signal) && signal.aborted) {
+			return Promise.reject(getAbortReason(signal));
+		}
+		return new Promise((resolve, reject) => {
+			let timer = 0;
+			const onAbort = () => {
+				window.clearTimeout(timer);
+				reject(getAbortReason(signal));
+			};
+			timer = window.setTimeout(() => {
+				signal?.removeEventListener('abort', onAbort);
+				resolve();
+			}, delay);
+			signal?.addEventListener('abort', onAbort, {
+				once: true
+			});
+		});
+	}
+
+	const safeMethods = new Set(['GET', 'HEAD', 'OPTIONS']);
+	function isRetryableMethod(method, policy) {
+		return policy.idempotent || safeMethods.has(method);
+	}
+	function isNonReusableBody(body) {
+		return !Type.isUndefined(globalThis.ReadableStream) && body instanceof ReadableStream;
+	}
+	function isAbortError(error) {
+		return error instanceof DOMException && error.name === 'AbortError';
+	}
+	function withRetryCount(error, retryCount) {
+		if (error instanceof HttpClientError) {
+			error.retryCount = retryCount;
+		}
+		return error;
+	}
+	function publishRetryCount(options, result, retryCount) {
+		options.publishRetryCount?.(result, retryCount);
+		return result;
+	}
+	function notifyRetry(strategies, context) {
+		try {
+			strategies.onRetry?.(context);
+		} catch (error) {
+			console.error('main.core HttpClient: the {retry.onRetry} callback has thrown, the retry goes on.', error);
+		}
+	}
+	function spentBefore(options) {
+		return Type.isNumber(options.spentRetries) ? options.spentRetries : 0;
+	}
+	function isRetryAllowed(context, options) {
+		const {
+			policy,
+			strategies,
+			method,
+			config,
+			userSignal
+		} = options;
+		if (userSignal?.aborted) {
+			return false;
+		}
+		if (isAbortError(context.error)) {
+			return false;
+		}
+		if (context.attempt > policy.retries) {
+			return false;
+		}
+		if (!isRetryableMethod(method, policy)) {
+			return false;
+		}
+		if (isNonReusableBody(config.body)) {
+			return false;
+		}
+		const shouldRetry = Type.isFunction(strategies.shouldRetry) ? strategies.shouldRetry : isRetryableError;
+		return shouldRetry(context);
+	}
+	async function runAttempts(options, attemptFn) {
+		const {
+			policy,
+			strategies,
+			method,
+			config,
+			userSignal
+		} = options;
+		const startedAt = Type.isNumber(options.startedAt) ? options.startedAt : Date.now();
+		let attempt = spentBefore(options);
+		for (;;) {
+			attempt += 1;
+			try {
+				return publishRetryCount(options, await attemptFn(), attempt - 1);
+			} catch (error) {
+				const context = {
+					error,
+					attempt,
+					retryCount: attempt - 1,
+					method,
+					config,
+					policy
+				};
+				if (!isRetryAllowed(context, options)) {
+					throw withRetryCount(error, context.retryCount);
+				}
+				const calculateDelay$1 = Type.isFunction(strategies.calculateDelay) ? strategies.calculateDelay : calculateDelay;
+				const delay = calculateDelay$1(context);
+				if (policy.totalTimeout > 0 && Date.now() - startedAt + delay >= policy.totalTimeout) {
+					throw withRetryCount(error, context.retryCount);
+				}
+				notifyRetry(strategies, {
+					...context,
+					delay
+				});
+				await sleep(delay, userSignal);
+			}
+		}
+	}
+	function runWithRetry(options, attemptFn) {
+		const spent = spentBefore(options);
+		if (options.policy.retries <= 0) {
+			if (spent === 0) {
+				return attemptFn();
+			}
+			return attemptFn().then(result => publishRetryCount(options, result, spent), error => {
+				throw withRetryCount(error, spent);
+			});
+		}
+		return runAttempts(options, attemptFn);
+	}
+
+	function isSameOrigin(url, baseUrl) {
+		if (typeof url !== 'string' || url.trim() === '') {
+			return false;
+		}
+		try {
+			const base = new URL(baseUrl ?? '', window.location.href);
+			const target = new URL(url, base);
+			return target.origin === window.location.origin;
+		} catch {
+			return false;
+		}
+	}
+
+	const settingsScriptType = 'extension/settings';
+	const inFlightAssets = new Map();
+	const loadedAssets = new Set();
+	function loadOnce(url, load) {
+		const pending = inFlightAssets.get(url);
+		if (!Type.isUndefined(pending)) {
+			return pending;
+		}
+		const promise = load(url).finally(() => inFlightAssets.delete(url));
+		inFlightAssets.set(url, promise);
+		return promise;
+	}
+	function resolveAssetUrl(url) {
+		if (!Type.isStringFilled(url)) {
+			return null;
+		}
+		if (!isSameOrigin(url)) {
+			console.error(`main.core HttpClient: a cross-origin asset is skipped: ${maskUrl(url)}`);
+			return null;
+		}
+		return new URL(url, window.location.href).toString();
+	}
+	function collectAssetUrls(urls) {
+		if (!Type.isArray(urls)) {
+			return [];
+		}
+		const result = new Set();
+		urls.forEach(url => {
+			const resolved = resolveAssetUrl(url);
+			if (!Type.isNull(resolved)) {
+				result.add(resolved);
+			}
+		});
+		return [...result];
+	}
+	function findAssetElement(selector, urlProperty, url) {
+		const found = [...document.querySelectorAll(selector)].find(element => {
+			return element[urlProperty] === url;
+		});
+		return found ?? null;
+	}
+	function toLegacyRegistryUrl(url) {
+		return url.replace(/^(?:https?:)?\/\/[^/]+/i, '').replace(/\?\d*$/, '');
+	}
+	function dropMinMarker(url) {
+		const minPosition = url.indexOf('.min');
+		return minPosition >= 0 ? url.slice(0, minPosition) + url.slice(minPosition + 4) : url;
+	}
+	const legacyRegistryGetters = {
+		css: 'getCSSList',
+		js: 'getJSList'
+	};
+	const legacyRegistrySetters = {
+		css: 'setCSSList',
+		js: 'setJSList'
+	};
+	function isInLegacyRegistry(url, assetType) {
+		const bx = window.BX;
+		const getList = bx?.[legacyRegistryGetters[assetType]];
+		if (!Type.isFunction(getList)) {
+			return false;
+		}
+		const list = getList.call(bx);
+		if (!Type.isArray(list)) {
+			return false;
+		}
+		const normalized = toLegacyRegistryUrl(url);
+		const normalizedMin = dropMinMarker(normalized);
+		return list.includes(normalized) || normalized !== normalizedMin && list.includes(normalizedMin);
+	}
+	function registerLoadedAsset(url, assetType) {
+		loadedAssets.add(url);
+		const bx = window.BX;
+		const setList = bx?.[legacyRegistrySetters[assetType]];
+		if (Type.isFunction(setList)) {
+			setList.call(bx, [dropMinMarker(toLegacyRegistryUrl(url))]);
+		}
+	}
+	function assetLoadingFailure(url, assetType) {
+		return new AssetLoadError({
+			url,
+			assetType
+		});
+	}
+	const assetLoadTimeout = 7000;
+	function watchAssetElement(element, url, assetType, removeOnFailure) {
+		return new Promise((resolve, reject) => {
+			let cleanup = () => {};
+			const succeed = () => {
+				cleanup();
+				registerLoadedAsset(url, assetType);
+				resolve();
+			};
+			const fail = () => {
+				cleanup();
+				if (removeOnFailure) {
+					element.remove();
+				}
+				reject(assetLoadingFailure(url, assetType));
+			};
+			const timer = window.setTimeout(fail, assetLoadTimeout);
+			cleanup = () => {
+				window.clearTimeout(timer);
+				element.removeEventListener('load', succeed);
+				element.removeEventListener('error', fail);
+			};
+			element.addEventListener('load', succeed);
+			element.addEventListener('error', fail);
+		});
+	}
+	function awaitAssetElement(element, url, assetType) {
+		const settlement = watchAssetElement(element, url, assetType, true);
+		document.head.append(element);
+		return settlement;
+	}
+	function awaitForeignAssetElement(element, url, assetType) {
+		if (assetType === 'css' && element.sheet !== null) {
+			registerLoadedAsset(url, assetType);
+			return Promise.resolve();
+		}
+		return watchAssetElement(element, url, assetType, false);
+	}
+	function loadStyle(url) {
+		if (loadedAssets.has(url) || isInLegacyRegistry(url, 'css')) {
+			return Promise.resolve();
+		}
+		const existing = findAssetElement('link[rel="stylesheet"]', 'href', url);
+		if (existing !== null) {
+			return awaitForeignAssetElement(existing, url, 'css');
+		}
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = url;
+		return awaitAssetElement(link, url, 'css');
+	}
+	function loadScript(url) {
+		if (loadedAssets.has(url) || isInLegacyRegistry(url, 'js')) {
+			return Promise.resolve();
+		}
+		const existing = findAssetElement('script[src]', 'src', url);
+		if (existing !== null) {
+			return awaitForeignAssetElement(existing, url, 'js');
+		}
+		const script = document.createElement('script');
+		script.src = url;
+		script.async = false;
+		return awaitAssetElement(script, url, 'js');
+	}
+	const assetListCallPattern = /^BX\.set(JS|CSS)List\((\[[\s\S]*\])\);?$/;
+	function rebuildSettingsScript(source) {
+		const script = document.createElement('script');
+		script.type = settingsScriptType;
+		script.textContent = source.textContent;
+		[...source.attributes].forEach(attribute => {
+			if (attribute.name.startsWith('data-')) {
+				script.setAttribute(attribute.name, attribute.value);
+			}
+		});
+		return script;
+	}
+	function parseAssetListCall(source) {
+		const match = assetListCallPattern.exec(source.textContent?.trim() ?? '');
+		if (match === null) {
+			return null;
+		}
+		let files;
+		try {
+			files = JSON.parse(match[2]);
+		} catch {
+			return null;
+		}
+		if (!Type.isArray(files) || files.some(file => !Type.isString(file))) {
+			return null;
+		}
+		return {
+			registry: match[1] === 'JS' ? 'setJSList' : 'setCSSList',
+			files: files
+		};
+	}
+	function parseSettingsString(item) {
+		const template = document.createElement('template');
+		template.innerHTML = item;
+		const operations = [];
+		for (const node of template.content.childNodes) {
+			if (node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() === '') {
+				continue;
+			}
+			if (!(node instanceof HTMLScriptElement)) {
+				return null;
+			}
+			if (node.getAttribute('type') === settingsScriptType) {
+				if ([...node.childNodes].some(child => child.nodeType !== Node.TEXT_NODE)) {
+					return null;
+				}
+				operations.push({
+					insert: rebuildSettingsScript(node)
+				});
+				continue;
+			}
+			if (node.hasAttribute('type')) {
+				return null;
+			}
+			const call = parseAssetListCall(node);
+			if (call === null) {
+				return null;
+			}
+			operations.push(call);
+		}
+		return operations;
+	}
+	function applyAssetListCall(registry, files) {
+		const bx = window.BX;
+		const register = bx?.[registry];
+		if (Type.isFunction(register)) {
+			register.call(bx, files);
+		}
+	}
+	const settingsStringStates = new Map();
+	function insertSettingsStrings(strings) {
+		if (!Type.isArray(strings)) {
+			return [];
+		}
+		const pending = [];
+		const unique = new Set(strings.filter(item => Type.isStringFilled(item)));
+		unique.forEach(item => {
+			if (settingsStringStates.get(item) === 'applied') {
+				return;
+			}
+			const operations = parseSettingsString(item);
+			if (operations === null) {
+				console.error('main.core HttpClient: an inline script asset is skipped, response code is never executed.');
+				return;
+			}
+			if (!settingsStringStates.has(item)) {
+				operations.forEach(operation => {
+					if ('insert' in operation) {
+						document.head.append(operation.insert);
+					}
+				});
+				settingsStringStates.set(item, 'inserted');
+			}
+			pending.push({
+				item,
+				registryCalls: operations.filter(operation => 'registry' in operation)
+			});
+		});
+		return pending;
+	}
+	function applySettingsRegistryCalls(pending) {
+		pending.forEach(({
+			item,
+			registryCalls
+		}) => {
+			if (settingsStringStates.get(item) === 'applied') {
+				return;
+			}
+			registryCalls.forEach(({
+				registry,
+				files
+			}) => applyAssetListCall(registry, files));
+			settingsStringStates.set(item, 'applied');
+		});
+	}
+	async function processAssets(assets) {
+		if (!Type.isPlainObject(assets)) {
+			return;
+		}
+		const pendingSettings = insertSettingsStrings(assets.string);
+		await Promise.all(collectAssetUrls(assets.css).map(url => loadOnce(url, loadStyle)));
+		await Promise.all(collectAssetUrls(assets.js).map(url => loadOnce(url, loadScript)));
+		applySettingsRegistryCalls(pendingSettings);
+	}
+
+	const csrfTokenMessageId = 'bitrix_sessid';
+	const siteIdMessageId = 'SITE_ID';
+	function getMessageValue(messageId) {
+		if (!Loc.hasMessage(messageId)) {
+			return null;
+		}
+		const value = Loc.getMessage(messageId);
+		return Type.isStringFilled(value) ? value : null;
+	}
+	function getCsrfToken() {
+		return getMessageValue(csrfTokenMessageId);
+	}
+	function setCsrfToken(token) {
+		Loc.setMessage(csrfTokenMessageId, token);
+	}
+	function getSiteId() {
+		return getMessageValue(siteIdMessageId);
+	}
+
+	const envelopeStatuses = new Set(['success', 'denied', 'error']);
+	function isAjaxEnvelope(value) {
+		return Type.isPlainObject(value) && envelopeStatuses.has(value.status) && Object.hasOwn(value, 'data');
+	}
+	function parseEnvelope(response) {
+		const body = response.data;
+		if (!isAjaxEnvelope(body)) {
+			return null;
+		}
+		return {
+			status: body.status,
+			data: body.data,
+			errors: Type.isArray(body.errors) ? body.errors : []
+		};
+	}
+
+	const csrfHeaderName = 'X-Bitrix-Csrf-Token';
+	const bxAjaxHeaderName = 'Bx-ajax';
+	const siteIdHeaderName = 'X-Bitrix-Site-Id';
+	const portalHeaderNames = [csrfHeaderName, bxAjaxHeaderName, siteIdHeaderName];
+
+	const defaultControllerEndpoint = '/bitrix/services/main/ajax.php';
+	const actionNamePattern = /^(?:[a-zA-Z0-9_.-]+:)?[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)+$/;
+	function isValidAnalytics(analytics) {
+		const requiredFields = ['event', 'tool', 'category'];
+		const invalidRequired = requiredFields.find(field => !Type.isStringFilled(analytics[field]));
+		if (!Type.isUndefined(invalidRequired)) {
+			console.error(`main.core HttpClient: the "${invalidRequired}" property in the {analytics} object must be a non-empty string.`);
+			return false;
+		}
+		const additionalFields = ['p1', 'p2', 'p3', 'p4', 'p5'];
+		const invalidAdditional = additionalFields.find(field => {
+			const value = analytics[field];
+			return !Type.isUndefined(value) && (!Type.isString(value) || value.split('_').length > 2);
+		});
+		if (!Type.isUndefined(invalidAdditional)) {
+			console.error(`main.core HttpClient: the "${invalidAdditional}" property in the {analytics} object` + ' must be a string containing at most one underscore.');
+			return false;
+		}
+		return true;
+	}
+	function buildAnalyticsParams(options) {
+		const params = {};
+		const label = options.analyticsLabel;
+		if (Type.isStringFilled(label) || Type.isPlainObject(label)) {
+			params.analyticsLabel = label;
+		}
+		if (Type.isUndefined(options.analytics)) {
+			return params;
+		}
+		if (!Type.isPlainObject(options.analytics)) {
+			console.error('main.core HttpClient: {analytics} must be an object and is skipped.');
+			return params;
+		}
+		if (!Type.isUndefined(params.analyticsLabel)) {
+			delete params.analyticsLabel;
+			console.error('main.core HttpClient: only {analytics} or {analyticsLabel} should be used.' + ' If both are present, {analyticsLabel} will be ignored.');
+		}
+		if (isValidAnalytics(options.analytics)) {
+			params.st = options.analytics;
+		} else {
+			console.error('main.core HttpClient: {analytics} is invalid and is skipped.');
+		}
+		return params;
+	}
+	function buildNavigationValue(navigation) {
+		if (!Type.isPlainObject(navigation)) {
+			return null;
+		}
+		const parts = [];
+		if (navigation.page) {
+			parts.push(`page-${navigation.page}`);
+		}
+		if (navigation.size) {
+			parts.push(`size-${navigation.size}`);
+		}
+		return parts.length > 0 ? parts.join('-') : null;
+	}
+	function spentRetriesOf(error) {
+		return error instanceof HttpClientError ? error.retryCount : 0;
+	}
+	function carryOverSpentBudget(config, csrfRetry) {
+		if (csrfRetry === null) {
+			return;
+		}
+		const internal = config;
+		internal.startedAt = csrfRetry.startedAt;
+		if (csrfRetry.spentRetries > 0) {
+			internal.spentRetries = csrfRetry.spentRetries;
+		}
+	}
+	function extractCsrfRetryToken(envelope) {
+		const csrfError = envelope.errors.find(error => error?.code === 'invalid_csrf');
+		if (Type.isUndefined(csrfError)) {
+			return null;
+		}
+		const {
+			customData
+		} = csrfError;
+		if (!Type.isPlainObject(customData) || !Type.isStringFilled(customData.csrf)) {
+			return null;
+		}
+		return customData.csrf;
+	}
+	async function loadResponseAssets(response) {
+		if (!isSameOrigin(response.raw?.url) || !response.headers.get('X-Process-Assets')) {
+			return;
+		}
+		const envelopeData = parseEnvelope(response)?.data;
+		if (Type.isPlainObject(envelopeData)) {
+			await processAssets(envelopeData.assets);
+		}
+	}
+	class ActionRunner {
+		#client;
+		#endpoint;
+		#sameOrigin;
+		constructor(client, config) {
+			this.#client = client;
+			this.#endpoint = new URL(config.controllerEndpoint ?? defaultControllerEndpoint, window.location.href).toString();
+			this.#sameOrigin = isSameOrigin(this.#endpoint);
+		}
+		run(name, options = {}) {
+			return this.#send(name, options, null);
+		}
+		async #send(name, options, csrfRetry) {
+			if (!Type.isString(name) || !actionNamePattern.test(name)) {
+				throw new TypeError(`main.core HttpClient: invalid action name: "${String(name)}".`);
+			}
+			const startedAt = csrfRetry === null ? Date.now() : csrfRetry.startedAt;
+			const config = this.#buildRequestConfig(name, options, csrfRetry);
+			let response;
+			try {
+				response = await this.#client.request(config);
+			} catch (error) {
+				const errorResponse = error instanceof HttpError ? error.response : null;
+				const errorEnvelope = errorResponse === null ? null : parseEnvelope(errorResponse);
+				if (errorResponse === null || errorEnvelope === null) {
+					throw error;
+				}
+				return this.#resolveEnvelope(errorEnvelope, errorResponse, name, options, csrfRetry, {
+					spentRetries: spentRetriesOf(error),
+					startedAt
+				});
+			}
+			const envelope = parseEnvelope(response);
+			if (envelope === null) {
+				throw withRetryCount(new ParseError({
+					url: response.raw?.url,
+					responseType: 'json'
+				}), response.retryCount);
+			}
+			return this.#resolveEnvelope(envelope, response, name, options, csrfRetry, {
+				spentRetries: response.retryCount,
+				startedAt
+			});
+		}
+		async #resolveEnvelope(envelope, response, name, options, csrfRetry, spent) {
+			const csrfRetried = csrfRetry !== null;
+			if (!csrfRetried && isSameOrigin(response.raw?.url)) {
+				const freshToken = extractCsrfRetryToken(envelope);
+				if (freshToken !== null) {
+					setCsrfToken(freshToken);
+					return this.#send(name, options, {
+						...spent,
+						token: freshToken
+					});
+				}
+			}
+			if (envelope.status !== 'success' || !response.ok) {
+				throw withRetryCount(new ControllerError({
+					envelope,
+					httpStatus: response.status
+				}), spent.spentRetries);
+			}
+			try {
+				await loadResponseAssets(response);
+			} catch (error) {
+				throw withRetryCount(error, spent.spentRetries);
+			}
+			return envelope;
+		}
+		#buildRequestConfig(name, options, csrfRetry) {
+			const query = {
+				...options.query,
+				...buildAnalyticsParams(options)
+			};
+			const navigation = buildNavigationValue(options.navigation);
+			if (navigation !== null) {
+				query.nav = navigation;
+			}
+			query.action = name;
+			const headers = new Headers(options.headers);
+			if (this.#sameOrigin) {
+				const siteId = getSiteId();
+				if (siteId !== null) {
+					headers.set(siteIdHeaderName, siteId);
+				}
+				headers.set(bxAjaxHeaderName, 'true');
+				const csrfToken = csrfRetry?.token ?? getCsrfToken();
+				if (csrfToken !== null) {
+					headers.set(csrfHeaderName, csrfToken);
+				}
+			}
+			const config = {
+				url: this.#endpoint,
+				method: options.method ?? 'POST',
+				query,
+				headers,
+				redirect: 'error'
+			};
+			if (!Type.isUndefined(options.data)) {
+				config.body = options.data;
+			}
+			if (!Type.isUndefined(options.json)) {
+				config.json = options.json;
+			}
+			if (!Type.isUndefined(options.timeout)) {
+				config.timeout = options.timeout;
+			}
+			if (!Type.isUndefined(options.signal)) {
+				config.signal = options.signal;
+			}
+			if (!Type.isUndefined(options.retry)) {
+				config.retry = options.retry;
+			}
+			if (!Type.isUndefined(options.crossTabLockKey)) {
+				config.crossTabLockKey = options.crossTabLockKey;
+			}
+			if (!Type.isUndefined(options.crossTabLockTimeout)) {
+				config.crossTabLockTimeout = options.crossTabLockTimeout;
+			}
+			carryOverSpentBudget(config, csrfRetry);
+			return config;
+		}
+	}
+
+	const transferableResponseTypes = new Set(['json', 'text', 'blob']);
+	const transferableHeaderNames = ['content-type', 'content-language', 'content-length', 'etag', 'last-modified', 'x-bitrix-composite'];
+	function isLocksApiAvailable() {
+		return !Type.isUndefined(globalThis.navigator?.locks) && Type.isFunction(globalThis.navigator.locks.request);
+	}
+	function isChannelApiAvailable() {
+		return Type.isFunction(globalThis.BroadcastChannel);
+	}
+	function isApplicable(options) {
+		return Type.isStringFilled(options.key) && transferableResponseTypes.has(options.responseType ?? 'json') && isLocksApiAvailable() && isChannelApiAvailable();
+	}
+	function snapshotHeaders(headers) {
+		if (Type.isNil(headers)) {
+			return [];
+		}
+		return transferableHeaderNames.reduce((pairs, name) => {
+			const value = headers.get(name);
+			if (!Type.isNull(value)) {
+				pairs.push([name, value]);
+			}
+			return pairs;
+		}, []);
+	}
+	function toSnapshot(response) {
+		return {
+			status: response.status,
+			ok: response.ok,
+			headers: snapshotHeaders(response.headers),
+			data: response.data
+		};
+	}
+	function fromSnapshot(snapshot) {
+		const headers = new Headers(snapshot.headers);
+		const raw = new Response(null, {
+			status: snapshot.status,
+			headers
+		});
+		return {
+			status: snapshot.status,
+			ok: snapshot.ok,
+			headers,
+			data: snapshot.data,
+			raw,
+			retryCount: 0
+		};
+	}
+	function toMessage(error) {
+		if (error instanceof HttpError) {
+			return {
+				outcome: 'error',
+				errorKind: 'http',
+				message: error.message,
+				response: toSnapshot(error.response)
+			};
+		}
+		if (error instanceof TimeoutError) {
+			return {
+				outcome: 'error',
+				errorKind: 'timeout',
+				message: error.message
+			};
+		}
+		if (error instanceof NetworkError) {
+			return {
+				outcome: 'error',
+				errorKind: 'network',
+				message: error.message
+			};
+		}
+		if (error instanceof ParseError) {
+			return {
+				outcome: 'error',
+				errorKind: 'parse',
+				message: error.message
+			};
+		}
+		return {
+			outcome: 'leaderGone'
+		};
+	}
+	function parseMessage(raw) {
+		if (!Type.isPlainObject(raw)) {
+			return null;
+		}
+		const message = raw;
+		if (message.outcome === 'leaderGone') {
+			return {
+				outcome: 'leaderGone'
+			};
+		}
+		if (message.outcome === 'response') {
+			const snapshot = parseSnapshot(message);
+			return snapshot === null ? null : {
+				outcome: 'response',
+				...snapshot
+			};
+		}
+		if (message.outcome !== 'error' || !Type.isString(message.message)) {
+			return null;
+		}
+		if (message.errorKind === 'http') {
+			const response = parseSnapshot(message.response);
+			return response === null ? null : {
+				outcome: 'error',
+				errorKind: 'http',
+				message: message.message,
+				response
+			};
+		}
+		if (message.errorKind === 'network' || message.errorKind === 'timeout' || message.errorKind === 'parse') {
+			return {
+				outcome: 'error',
+				errorKind: message.errorKind,
+				message: message.message
+			};
+		}
+		return null;
+	}
+	function parseSnapshot(raw) {
+		if (!Type.isPlainObject(raw)) {
+			return null;
+		}
+		const snapshot = raw;
+		if (!Type.isNumber(snapshot.status) || snapshot.status < 200 || snapshot.status > 599) {
+			return null;
+		}
+		if (!Type.isBoolean(snapshot.ok) || !Type.isArray(snapshot.headers)) {
+			return null;
+		}
+		const headers = [];
+		for (const pair of snapshot.headers) {
+			if (!Type.isArray(pair) || pair.length !== 2 || !Type.isString(pair[0]) || !Type.isString(pair[1])) {
+				return null;
+			}
+			if (transferableHeaderNames.includes(pair[0].toLowerCase())) {
+				headers.push([pair[0], pair[1]]);
+			}
+		}
+		return {
+			status: snapshot.status,
+			ok: snapshot.ok,
+			headers,
+			data: snapshot.data
+		};
+	}
+	function rebuildError(message) {
+		if (message.errorKind === 'http') {
+			const response = fromSnapshot(message.response);
+			return new HttpError(response.status, response);
+		}
+		if (message.errorKind === 'timeout') {
+			return new TimeoutError({
+				cause: message.message
+			});
+		}
+		if (message.errorKind === 'network') {
+			return new NetworkError({
+				cause: message.message
+			});
+		}
+		return new ParseError({
+			cause: message.message
+		});
+	}
+	function createSettled() {
+		let settled = false;
+		return {
+			get value() {
+				return settled;
+			},
+			mark: () => {
+				settled = true;
+			}
+		};
+	}
+	function abortReason(signal) {
+		return signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
+	}
+	function withCrossTabLock(options, execute, signal = null) {
+		if (!isApplicable(options)) {
+			return execute();
+		}
+		return runCoordinated(options.key, options.guardTimeout ?? 0, execute, signal);
+	}
+	async function runCoordinated(key, guardTimeout, execute, signal) {
+		const channel = new BroadcastChannel(key);
+		const delivered = new Delivery();
+		const settled = new AbortController();
+		const done = createSettled();
+		channel.onmessage = ({
+			data
+		}) => {
+			if (delivered.accept(data)) {
+				done.mark();
+			}
+		};
+		const guard = createGuard(key, guardTimeout, done);
+		const abort = createAbortWatch(signal, done);
+		try {
+			const outcome = await Promise.race([lead(key, channel, execute, settled.signal, done, guard.cancel), delivered.promise, guard.promise, abort.promise]);
+			return await outcome();
+		} finally {
+			settled.abort();
+			guard.cancel();
+			abort.cancel();
+			channel.close();
+		}
+	}
+	async function lead(key, channel, execute, settled, done, stopGuard) {
+		let outcome = null;
+		try {
+			await globalThis.navigator.locks.request(key, {
+				signal: settled
+			}, async () => {
+				if (settled.aborted || done.value) {
+					return;
+				}
+				stopGuard();
+				outcome = await runAsLeader(channel, execute);
+			});
+		} catch {
+		}
+		return outcome ?? new Promise(() => {});
+	}
+	async function runAsLeader(channel, execute) {
+		let response;
+		try {
+			response = await execute();
+		} catch (error) {
+			channel.postMessage(toMessage(error));
+			await settleBroadcast();
+			return () => Promise.reject(error);
+		}
+		channel.postMessage({
+			outcome: 'response',
+			...toSnapshot(response)
+		});
+		await settleBroadcast();
+		return () => Promise.resolve(response);
+	}
+	function settleBroadcast() {
+		return new Promise(resolve => {
+			globalThis.setTimeout(resolve, 0);
+		});
+	}
+	class Delivery {
+		promise;
+		#resolve = () => {};
+		constructor() {
+			this.promise = new Promise(resolve => {
+				this.#resolve = resolve;
+			});
+		}
+		accept(raw) {
+			const message = parseMessage(raw);
+			if (message === null) {
+				return false;
+			}
+			if (message.outcome === 'response') {
+				this.#resolve(() => Promise.resolve(fromSnapshot(message)));
+				return true;
+			}
+			if (message.outcome === 'error') {
+				const error = rebuildError(message);
+				this.#resolve(() => Promise.reject(error));
+				return true;
+			}
+			return false;
+		}
+	}
+	function createGuard(key, guardTimeout, done) {
+		if (!(guardTimeout > 0)) {
+			return {
+				promise: new Promise(() => {}),
+				cancel: () => {}
+			};
+		}
+		let timer = 0;
+		const promise = new Promise(resolve => {
+			timer = globalThis.setTimeout(() => {
+				const error = new TimeoutError({
+					timeout: guardTimeout,
+					cause: `Waiting for the cross-tab lock "${key}" timed out`
+				});
+				done.mark();
+				resolve(() => Promise.reject(error));
+			}, guardTimeout);
+		});
+		return {
+			promise,
+			cancel: () => globalThis.clearTimeout(timer)
+		};
+	}
+	function createAbortWatch(signal, done) {
+		if (Type.isNull(signal)) {
+			return {
+				promise: new Promise(() => {}),
+				cancel: () => {}
+			};
+		}
+		if (signal.aborted) {
+			const reason = abortReason(signal);
+			done.mark();
+			return {
+				promise: Promise.resolve(() => Promise.reject(reason)),
+				cancel: () => {}
+			};
+		}
+		let listener = () => {};
+		const promise = new Promise(resolve => {
+			listener = () => {
+				const reason = abortReason(signal);
+				done.mark();
+				resolve(() => Promise.reject(reason));
+			};
+			signal.addEventListener('abort', listener, {
+				once: true
+			});
+		});
+		return {
+			promise,
+			cancel: () => signal.removeEventListener('abort', listener)
+		};
+	}
+
+	class InterceptorChain {
+		#handlers = [];
+		#nextId = 0;
+		use(onFulfilled, onRejected) {
+			this.#nextId += 1;
+			this.#handlers.push({
+				id: this.#nextId,
+				onFulfilled,
+				onRejected: onRejected ?? null
+			});
+			return this.#nextId;
+		}
+		eject(id) {
+			this.#handlers = this.#handlers.filter(record => record.id !== id);
+		}
+		run(initial) {
+			return this.#handlers.reduce((promise, record) => promise.then(record.onFulfilled, record.onRejected ?? undefined), Promise.resolve(initial));
+		}
+	}
+
+	const blockedKeys = new Set(['__proto__', 'constructor', 'prototype']);
+	function cloneValue(value) {
+		if (Type.isPlainObject(value)) {
+			return mergeInto(Object.create(null), value);
+		}
+		if (Type.isArray(value)) {
+			return value.map(item => cloneValue(item));
+		}
+		return value;
+	}
+	function mergeInto(target, source) {
+		Object.keys(source).forEach(key => {
+			if (blockedKeys.has(key)) {
+				return;
+			}
+			const value = source[key];
+			if (Type.isUndefined(value)) {
+				return;
+			}
+			const existing = target[key];
+			if (Type.isPlainObject(value) && Type.isPlainObject(existing)) {
+				mergeInto(existing, value);
+				return;
+			}
+			target[key] = cloneValue(value);
+		});
+		return target;
+	}
+	function mergeConfig(...sources) {
+		return sources.reduce((acc, source) => {
+			if (Type.isPlainObject(source)) {
+				mergeInto(acc, source);
+			}
+			return acc;
+		}, Object.create(null));
+	}
+
+	function serializeEntry(name, value, pairs) {
+		if (Type.isUndefined(value)) {
+			return;
+		}
+		if (Type.isNull(value)) {
+			pairs.push(`${name}=`);
+			return;
+		}
+		if (Type.isArray(value)) {
+			value.forEach((item, index) => serializeEntry(`${name}[${index}]`, item, pairs));
+			return;
+		}
+		if (Type.isDate(value)) {
+			pairs.push(`${name}=${encodeURIComponent(value.toISOString())}`);
+			return;
+		}
+		if (Type.isPlainObject(value)) {
+			Object.keys(value).forEach(key => {
+				serializeEntry(`${name}[${encodeURIComponent(key)}]`, value[key], pairs);
+			});
+			return;
+		}
+		pairs.push(`${name}=${encodeURIComponent(String(value))}`);
+	}
+	function serializeQuery(data) {
+		if (!Type.isPlainObject(data)) {
+			return '';
+		}
+		const pairs = [];
+		Object.keys(data).forEach(key => {
+			serializeEntry(encodeURIComponent(key), data[key], pairs);
+		});
+		return pairs.join('&');
+	}
+	function getBodyContentType(body, json) {
+		if (!Type.isUndefined(json)) {
+			return 'application/json';
+		}
+		if (Type.isPlainObject(body)) {
+			return 'application/x-www-form-urlencoded';
+		}
+		return null;
+	}
+	function prepareBody(body, json) {
+		const contentType = getBodyContentType(body, json);
+		if (!Type.isUndefined(json)) {
+			return {
+				body: JSON.stringify(json),
+				contentType
+			};
+		}
+		if (Type.isNil(body)) {
+			return {
+				body: null,
+				contentType
+			};
+		}
+		if (Type.isPlainObject(body)) {
+			return {
+				body: serializeQuery(body),
+				contentType
+			};
+		}
+		return {
+			body,
+			contentType
+		};
+	}
+
+	function createTimeoutSignal(timeout) {
+		if (Type.isFunction(AbortSignal.timeout)) {
+			return {
+				signal: AbortSignal.timeout(timeout),
+				cancel: () => {}
+			};
+		}
+		const controller = new AbortController();
+		const timer = window.setTimeout(() => {
+			controller.abort(new DOMException(`The operation timed out after ${timeout}ms`, 'TimeoutError'));
+		}, timeout);
+		return {
+			signal: controller.signal,
+			cancel: () => window.clearTimeout(timer)
+		};
+	}
+	function combineSignals(signals) {
+		if (signals.length === 0) {
+			return {
+				signal: null,
+				cleanup: () => {}
+			};
+		}
+		if (signals.length === 1) {
+			return {
+				signal: signals[0],
+				cleanup: () => {}
+			};
+		}
+		if (Type.isFunction(AbortSignal.any)) {
+			return {
+				signal: AbortSignal.any(signals),
+				cleanup: () => {}
+			};
+		}
+		const controller = new AbortController();
+		const subscriptions = [];
+		signals.forEach(signal => {
+			if (controller.signal.aborted) {
+				return;
+			}
+			if (signal.aborted) {
+				controller.abort(signal.reason);
+				return;
+			}
+			const listener = () => controller.abort(signal.reason);
+			signal.addEventListener('abort', listener, {
+				once: true
+			});
+			subscriptions.push(() => signal.removeEventListener('abort', listener));
+		});
+		return {
+			signal: controller.signal,
+			cleanup: () => subscriptions.forEach(unsubscribe => unsubscribe())
+		};
+	}
+	function buildUrl(url, baseUrl, query) {
+		const base = new URL(baseUrl ?? '', window.location.href);
+		const target = new URL(url, base);
+		const queryString = serializeQuery(query);
+		if (queryString !== '') {
+			target.search = target.search === '' ? queryString : `${target.search.slice(1)}&${queryString}`;
+		}
+		return target.toString();
+	}
+	function mergeHeaders(...inits) {
+		const result = new Headers();
+		inits.forEach(init => {
+			if (Type.isNil(init)) {
+				return;
+			}
+			new Headers(init).forEach((value, name) => {
+				result.set(name, value);
+			});
+		});
+		return result;
+	}
+	function dropInstanceIdempotent(config) {
+		const retry = config.retry;
+		if (!Type.isPlainObject(retry) || Type.isUndefined(retry.idempotent)) {
+			return;
+		}
+		delete retry.idempotent;
+		console.error('main.core HttpClient: {retry.idempotent} of the instance config is ignored — ' + 'the statement that a call is safe to repeat belongs to that call, ' + 'declare it in the request config or the action options.');
+	}
+	class HttpClient {
+		static #defaultInstance = null;
+		static HttpClientError = HttpClientError;
+		static HttpError = HttpError;
+		static NetworkError = NetworkError;
+		static TimeoutError = TimeoutError;
+		static ParseError = ParseError;
+		static ControllerError = ControllerError;
+		static AssetLoadError = AssetLoadError;
+		static isAjaxEnvelope = isAjaxEnvelope;
+		static parseEnvelope = parseEnvelope;
+		#config;
+		#requestInterceptors;
+		#responseInterceptors;
+		#actionRunner = null;
+		interceptors;
+		constructor(config = {}) {
+			this.#config = mergeConfig(config);
+			dropInstanceIdempotent(this.#config);
+			this.#requestInterceptors = new InterceptorChain();
+			this.#responseInterceptors = new InterceptorChain();
+			this.interceptors = {
+				request: this.#requestInterceptors,
+				response: this.#responseInterceptors
+			};
+		}
+		request(config) {
+			const response = this.#requestInterceptors.run(this.#mergeRequestConfig(config))
+			.then(finalConfig => withCrossTabLock({
+				key: finalConfig.crossTabLockKey,
+				guardTimeout: finalConfig.crossTabLockTimeout ?? finalConfig.timeout ?? 0,
+				responseType: finalConfig.responseType
+			}, () => this.#runRequest(finalConfig), finalConfig.signal ?? null));
+			return this.#responseInterceptors.run(response);
+		}
+		get(url, config = {}) {
+			return this.request({
+				...config,
+				url,
+				method: 'GET'
+			});
+		}
+		delete(url, config = {}) {
+			return this.request({
+				...config,
+				url,
+				method: 'DELETE'
+			});
+		}
+		head(url, config = {}) {
+			return this.request({
+				...config,
+				url,
+				method: 'HEAD'
+			});
+		}
+		post(url, body = null, config = {}) {
+			return this.request({
+				...config,
+				url,
+				body,
+				method: 'POST'
+			});
+		}
+		put(url, body = null, config = {}) {
+			return this.request({
+				...config,
+				url,
+				body,
+				method: 'PUT'
+			});
+		}
+		patch(url, body = null, config = {}) {
+			return this.request({
+				...config,
+				url,
+				body,
+				method: 'PATCH'
+			});
+		}
+		async action(name, options = {}) {
+			const envelope = await this.#getActionRunner().run(name, options);
+			return envelope.data;
+		}
+		async actionRaw(name, options = {}) {
+			return this.#getActionRunner().run(name, options);
+		}
+		static get interceptors() {
+			return HttpClient.#getDefaultInstance().interceptors;
+		}
+		static request(config) {
+			return HttpClient.#getDefaultInstance().request(config);
+		}
+		static get(url, config) {
+			return HttpClient.#getDefaultInstance().get(url, config);
+		}
+		static delete(url, config) {
+			return HttpClient.#getDefaultInstance().delete(url, config);
+		}
+		static head(url, config) {
+			return HttpClient.#getDefaultInstance().head(url, config);
+		}
+		static post(url, body, config) {
+			return HttpClient.#getDefaultInstance().post(url, body, config);
+		}
+		static put(url, body, config) {
+			return HttpClient.#getDefaultInstance().put(url, body, config);
+		}
+		static patch(url, body, config) {
+			return HttpClient.#getDefaultInstance().patch(url, body, config);
+		}
+		static action(name, options) {
+			return HttpClient.#getDefaultInstance().action(name, options);
+		}
+		static actionRaw(name, options) {
+			return HttpClient.#getDefaultInstance().actionRaw(name, options);
+		}
+		static #getDefaultInstance() {
+			HttpClient.#defaultInstance ??= new HttpClient();
+			return HttpClient.#defaultInstance;
+		}
+		#getActionRunner() {
+			this.#actionRunner ??= new ActionRunner(this, this.#config);
+			return this.#actionRunner;
+		}
+		#mergeRequestConfig(config) {
+			const merged = mergeConfig(this.#config, {
+				...config,
+				headers: undefined,
+				body: undefined,
+				json: undefined
+			});
+			merged.headers = mergeHeaders(this.#config.headers, config.headers);
+			if (!Type.isUndefined(config.body)) {
+				merged.body = config.body;
+			}
+			if (!Type.isUndefined(config.json)) {
+				merged.json = config.json;
+			}
+			const contentType = getBodyContentType(merged.body, merged.json);
+			if (!Type.isNull(contentType) && !merged.headers.has('Content-Type')) {
+				merged.headers.set('Content-Type', contentType);
+			}
+			return merged;
+		}
+		#runRequest(config) {
+			const retry = config.retry;
+			if (Type.isNil(retry)) {
+				return this.#execute(config);
+			}
+			const method = (config.method ?? 'GET').toUpperCase();
+			return runWithRetry({
+				policy: normalizeRetryPolicy(retry),
+				strategies: {
+					shouldRetry: retry.shouldRetry,
+					calculateDelay: retry.calculateDelay,
+					onRetry: retry.onRetry
+				},
+				method,
+				config,
+				userSignal: config.signal ?? null,
+				spentRetries: config.spentRetries,
+				startedAt: config.startedAt,
+				publishRetryCount: (result, retryCount) => {
+					result.retryCount = retryCount;
+				}
+			}, () => this.#execute(config));
+		}
+		async #execute(config) {
+			const prepared = this.#prepareRequest(config);
+			try {
+				const response = await fetch(prepared.url, prepared.init);
+				return await this.#buildResponse(response, prepared.responseType);
+			} catch (error) {
+				throw this.#mapFetchError(error, prepared);
+			} finally {
+				prepared.timeoutController?.cancel();
+				prepared.cleanupSignals();
+			}
+		}
+		#prepareRequest(merged) {
+			const method = merged.method ?? 'GET';
+			if (['GET', 'HEAD'].includes(method.toUpperCase()) && (!Type.isNil(merged.body) || !Type.isUndefined(merged.json))) {
+				throw new TypeError(`main.core HttpClient: a ${method.toUpperCase()} request cannot have a body.`);
+			}
+			const url = buildUrl(merged.url, merged.baseUrl, merged.query);
+			const headers = mergeHeaders(merged.headers);
+			if (!isSameOrigin(url)) {
+				portalHeaderNames.forEach(name => headers.delete(name));
+			}
+			const prepared = prepareBody(merged.body, merged.json);
+			const userSignal = merged.signal ?? null;
+			const timeout = merged.timeout ?? 0;
+			const signals = [];
+			if (!Type.isNull(userSignal)) {
+				signals.push(userSignal);
+			}
+			let timeoutController = null;
+			if (timeout > 0) {
+				timeoutController = createTimeoutSignal(timeout);
+				signals.push(timeoutController.signal);
+			}
+			const carriesPortalHeaders = portalHeaderNames.some(name => headers.has(name));
+			const combinedSignal = combineSignals(signals);
+			const init = {
+				method,
+				headers,
+				body: prepared.body,
+				signal: combinedSignal.signal,
+				credentials: 'same-origin',
+				redirect: carriesPortalHeaders ? 'error' : merged.redirect ?? 'follow'
+			};
+			return {
+				url,
+				init,
+				responseType: merged.responseType ?? 'json',
+				timeout,
+				timeoutController,
+				userSignal,
+				cleanupSignals: combinedSignal.cleanup
+			};
+		}
+		#mapFetchError(error, prepared) {
+			if (prepared.userSignal?.aborted) {
+				return error;
+			}
+			if (prepared.timeoutController?.signal.aborted) {
+				return new TimeoutError({
+					url: prepared.url,
+					timeout: prepared.timeout,
+					cause: error
+				});
+			}
+			if (error instanceof TypeError) {
+				return new NetworkError({
+					url: prepared.url,
+					cause: error
+				});
+			}
+			return error;
+		}
+		async #buildResponse(response, responseType) {
+			const data = await this.#parseResponse(response, responseType);
+			const result = {
+				status: response.status,
+				ok: response.ok,
+				headers: response.headers,
+				data,
+				raw: response,
+				retryCount: 0
+			};
+			if (!response.ok) {
+				throw new HttpError(response.status, result);
+			}
+			return result;
+		}
+		async #parseResponse(response, responseType) {
+			try {
+				if (responseType === 'text') {
+					return await response.text();
+				}
+				if (responseType === 'blob') {
+					return await response.blob();
+				}
+				if (responseType === 'formData') {
+					return await response.formData();
+				}
+				const text = await response.text();
+				return text === '' ? null : JSON.parse(text);
+			} catch (error) {
+				if (error instanceof DOMException && ['AbortError', 'TimeoutError'].includes(error.name)) {
+					throw error;
+				}
+				if (response.ok) {
+					throw new ParseError({
+						url: response.url,
+						responseType,
+						cause: error
+					});
+				}
+				return null;
+			}
+		}
+	}
+
 	function getElement(element) {
 		if (Type.isString(element)) {
 			return document.getElementById(element);
@@ -6203,27 +9558,23 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	const {
-		getClass,
-		namespace
-	} = Reflection;
+	const getClass = Reflection.getClass;
+	const namespace = Reflection.namespace;
 	const message = message$1;
 	const easing = Easing;
 	const fx = FX;
 	const PageObject = Page;
-	const {
-		replace,
-		remove,
-		clean,
-		insertBefore,
-		insertAfter,
-		append,
-		prepend,
-		style,
-		adjust,
-		create,
-		isShown
-	} = Dom;
+	const replace = Dom.replace;
+	const remove = Dom.remove;
+	const clean = Dom.clean;
+	const insertBefore = Dom.insertBefore;
+	const insertAfter = Dom.insertAfter;
+	const append = Dom.append;
+	const prepend = Dom.prepend;
+	const style = Dom.style;
+	const adjust = Dom.adjust;
+	const create = Dom.create;
+	const isShown = Dom.isShown;
 	const addClass = function addClass() {
 		Dom.addClass(...Runtime.merge([], Array.from(arguments), [getElement(arguments[0])]));
 	};
@@ -6257,18 +9608,14 @@ window._main_polyfill_core = true;
 		}
 		Http.Cookie.set(name, value, attributes);
 	};
-	const {
-		bind,
-		unbind,
-		unbindAll,
-		bindOnce,
-		ready
-	} = Event;
-	const {
-		debugState: debugEnableFlag,
-		isDebugEnabled: debugStatus,
-		default: debug
-	} = debugNs;
+	const bind = Event.bind;
+	const unbind = Event.unbind;
+	const unbindAll = Event.unbindAll;
+	const bindOnce = Event.bindOnce;
+	const ready = Event.ready;
+	const debugEnableFlag = debugState;
+	const debugStatus = isDebugEnabled;
+	const debug = debug$1;
 	const debugEnable = value => {
 		if (value) {
 			enableDebug();
@@ -6276,13 +9623,11 @@ window._main_polyfill_core = true;
 			disableDebug();
 		}
 	};
-	const {
-		clone,
-		loadExtension: loadExt,
-		debounce,
-		throttle,
-		html
-	} = Runtime;
+	const clone = Runtime.clone;
+	const loadExt = Runtime.loadExtension;
+	const debounce = Runtime.debounce;
+	const throttle = Runtime.throttle;
+	const html = Runtime.html;
 	const type = {
 		...Object.getOwnPropertyNames(Type).filter(key => !['name', 'length', 'prototype', 'caller', 'arguments'].includes(key)).reduce((acc, key) => {
 			acc[key] = Type[key];
@@ -6483,2338 +9828,546 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	exports.BaseError = BaseError;
-	exports.Browser = Browser;
-	exports.Cache = Cache;
-	exports.Collections = collections;
-	exports.Dom = Dom;
-	exports.Easing = Easing;
-	exports.Event = Event;
-	exports.Extension = Extension;
-	exports.GetContext = GetContext;
-	exports.GetWindowInnerSize = GetWindowInnerSize;
-	exports.GetWindowScrollPos = GetWindowScrollPos;
-	exports.GetWindowScrollSize = GetWindowScrollSize;
-	exports.GetWindowSize = GetWindowSize;
-	exports.Http = Http;
-	exports.Loc = Loc;
-	exports.LocalStorage = LocalStorage;
-	exports.Page = Page;
-	exports.PageObject = PageObject;
-	exports.Reflection = Reflection;
-	exports.Runtime = Runtime;
-	exports.Tag = Tag;
-	exports.Text = Text;
-	exports.Type = Type;
-	exports.Uri = Uri;
-	exports.Validation = Validation;
-	exports.ZIndexManager = ZIndexManager;
-	exports.addClass = addClass;
-	exports.addCustomEvent = addCustomEvent;
-	exports.adjust = adjust;
-	exports.ajax = ajax;
-	exports.append = append;
-	exports.bind = bind;
-	exports.bindOnce = bindOnce;
-	exports.browser = browser;
-	exports.clean = clean;
-	exports.cleanNode = cleanNode;
-	exports.clone = clone;
-	exports.create = create;
-	exports.debounce = debounce;
-	exports.debug = debug;
-	exports.debugEnable = debugEnable;
-	exports.debugEnableFlag = debugEnableFlag;
-	exports.debugStatus = debugStatus;
-	exports.easing = easing;
-	exports.fx = fx;
-	exports.getClass = getClass;
-	exports.getCookie = getCookie;
-	exports.hasClass = hasClass;
-	exports.html = html;
-	exports.insertAfter = insertAfter;
-	exports.insertBefore = insertBefore;
-	exports.isShown = isShown;
-	exports.loadExt = loadExt;
-	exports.localStorage = localStorage$1;
-	exports.message = message;
-	exports.namespace = namespace;
-	exports.onCustomEvent = onCustomEvent;
-	exports.onGlobalCustomEvent = onGlobalCustomEvent;
-	exports.pos = pos;
-	exports.prepend = prepend;
-	exports.ready = ready;
-	exports.remove = remove;
-	exports.removeAllCustomEvents = removeAllCustomEvents;
-	exports.removeClass = removeClass;
-	exports.removeCustomEvent = removeCustomEvent;
-	exports.replace = replace;
-	exports.setCookie = setCookie;
-	exports.style = style;
-	exports.throttle = throttle;
-	exports.toggleClass = toggleClass;
-	exports.type = type;
-	exports.unbind = unbind;
-	exports.unbindAll = unbindAll;
-
-})(this.BX = this.BX || {});
-
-
-
-(function(BX) {
-	/* list of registered proxy functions */
-	var proxyList = new WeakMap();
-	var deferList = new WeakMap();
-
-	/* List of denied event handlers */
-	var deniedEvents = [];
-
-	/* list of registered custom events */
-	var customEvents = new WeakMap();
-	var customEventsCnt = 0;
-
-	/* list of external garbage collectors */
-	var garbageCollectors = [];
-
-	/* list of loaded CSS files */
-	var cssList = [];
-	var cssInit = false;
-
-	/* list of loaded JS files */
-	var jsList = [];
-	var jsInit = false;
-
-	var eventTypes = {
-		click: 'MouseEvent',
-		dblclick: 'MouseEvent',
-		mousedown: 'MouseEvent',
-		mousemove: 'MouseEvent',
-		mouseout: 'MouseEvent',
-		mouseover: 'MouseEvent',
-		mouseup: 'MouseEvent',
-		focus: 'MouseEvent',
-		blur: 'MouseEvent'
-	};
-
-	var lastWait = [];
-
-	var CHECK_FORM_ELEMENTS = {tagName: /^INPUT|SELECT|TEXTAREA|BUTTON$/i};
-
-	BX.MSLEFT = 1;
-	BX.MSMIDDLE = 2;
-	BX.MSRIGHT = 4;
-
-	BX.AM_PM_UPPER = 1;
-	BX.AM_PM_LOWER = 2;
-	BX.AM_PM_NONE = false;
-
-	BX.ext = function(ob)
-	{
-		for (var i in ob)
-		{
-			if(ob.hasOwnProperty(i))
-			{
+	function ext(ob) {
+		for (const i in ob) {
+			if (Object.prototype.hasOwnProperty.call(ob, i)) {
 				this[i] = ob[i];
 			}
 		}
-	};
-
-	var r = {
-		script: /<script([^>]*)>/ig,
-		script_end: /<\/script>/ig,
-		script_src: /src=["\']([^"\']+)["\']/i,
-		script_type: /type=["\']([^"\']+)["\']/i,
-		space: /\s+/,
-		ltrim: /^[\s\r\n]+/g,
-		rtrim: /[\s\r\n]+$/g,
-		style: /<link[^>]*?(rel="stylesheet"|type="text\/css")[^>]*>/i,
-		style_href: /href=["\']([^"\']+)["\']/i
-	};
-
-	BX.processHTML = function(data, scriptsRunFirst)
-	{
-		var matchScript, matchStyle, matchSrc, matchHref, matchType, scripts = [], styles = [];
-		var textIndexes = [];
-		var lastIndex = r.script.lastIndex = r.script_end.lastIndex = 0;
-
-		while ((matchScript = r.script.exec(data)) !== null)
-		{
-			r.script_end.lastIndex = r.script.lastIndex;
-			var matchScriptEnd = r.script_end.exec(data);
-			if (matchScriptEnd === null)
-			{
-				break;
-			}
-
-			// skip script tags of special types
-			var skipTag = false;
-			if ((matchType = matchScript[1].match(r.script_type)) !== null)
-			{
-				if(
-					matchType[1] == 'text/html'
-					|| matchType[1] == 'text/template'
-					|| matchType[1] == 'extension/settings'
-				)
-				{
-					skipTag = true;
-				}
-			}
-
-			if(skipTag)
-			{
-				textIndexes.push([lastIndex, r.script_end.lastIndex - lastIndex]);
-			}
-			else
-			{
-				textIndexes.push([lastIndex, matchScript.index - lastIndex]);
-
-				var bRunFirst = scriptsRunFirst || (matchScript[1].indexOf('bxrunfirst') != '-1');
-
-				if ((matchSrc = matchScript[1].match(r.script_src)) !== null)
-				{
-					scripts.push({"bRunFirst": bRunFirst, "isInternal": false, "JS": matchSrc[1]});
-				}
-				else
-				{
-					var start = matchScript.index + matchScript[0].length;
-					var js = data.substr(start, matchScriptEnd.index-start);
-
-					scripts.push({"bRunFirst": bRunFirst, "isInternal": true, "JS": js});
-				}
-			}
-
-			lastIndex = matchScriptEnd.index + 9;
-			r.script.lastIndex = lastIndex;
-		}
-
-		textIndexes.push([lastIndex, lastIndex === 0 ? data.length : data.length - lastIndex]);
-		var pureData = "";
-		for (var i = 0, length = textIndexes.length; i < length; i++)
-		{
-			if (BX.type.isString(data) && BX.type.isFunction(data.substr))
-			{
-				pureData += data.substr(textIndexes[i][0], textIndexes[i][1]);
-			}
-		}
-
-		while ((matchStyle = pureData.match(r.style)) !== null)
-		{
-			if ((matchHref = matchStyle[0].match(r.style_href)) !== null && matchStyle[0].indexOf('media="') < 0)
-			{
-				styles.push(matchHref[1]);
-			}
-
-			pureData = pureData.replace(matchStyle[0], '');
-		}
-
-		return {'HTML': pureData, 'SCRIPT': scripts, 'STYLE': styles};
-	};
-
-	/* OO emulation utility */
-	BX.extend = function(child, parent)
-	{
-		var f = function() {};
+	}
+	function extend(child, parent) {
+		const f = function () {};
 		f.prototype = parent.prototype;
-
 		child.prototype = new f();
 		child.prototype.constructor = child;
-
 		child.superclass = parent.prototype;
 		child.prototype.superclass = parent.prototype;
-		if(parent.prototype.constructor == Object.prototype.constructor)
-		{
+		if (parent.prototype.constructor == Object.prototype.constructor) {
 			parent.prototype.constructor = parent;
 		}
-	};
-
-	BX.is_subclass_of = function(ob, parent_class)
-	{
-		if (ob instanceof parent_class)
-			return true;
-
-		if (parent_class.superclass)
-			return BX.is_subclass_of(ob, parent_class.superclass);
-
-		return false;
-	};
-
-	BX.clearNodeCache = function()
-	{
-		return false;
-	};
-
-	BX.bitrix_sessid = function() {return BX.message("bitrix_sessid"); };
-
-	/**
-	 * Creates document fragment with child nodes.
-	 *
-	 * @param {Node[]} nodes
-	 * @return {DocumentFragment}
-	 */
-	BX.createFragment = function(nodes)
-	{
-		var fragment = document.createDocumentFragment();
-
-		if(!BX.type.isArray(nodes))
-		{
-			return fragment;
-		}
-		for(var i = 0; i < nodes.length; i++)
-		{
-			fragment.appendChild(nodes[i]);
-		}
-
-		return fragment;
-	};
-
-	/**
-	 * @deprecated
-	 * @use BX.style
-	 * @param element
-	 * @param opacity
-	 */
-	BX.setOpacity = function(element, opacity)
-	{
-		var opacityValue = parseFloat(opacity);
-
-		if (!isNaN(opacityValue) && BX.type.isDomNode(element))
-		{
-			opacityValue = opacityValue < 1 ? opacityValue : opacityValue / 100;
-			BX.style(element, 'opacity', opacityValue);
-		}
-	};
-
-	/**
-	 * @deprecated
-	 * @param el
-	 * @return {*}
-	 */
-	BX.hoverEvents = function(el)
-	{
-		if (el)
-			return BX.adjust(el, {events: BX.hoverEvents()});
-		else
-			return {mouseover: BX.hoverEventsHover, mouseout: BX.hoverEventsHout};
-	};
-
-	/**
-	 * @deprecated
-	 */
-	BX.hoverEventsHover = function(){BX.addClass(this,'bx-hover');this.BXHOVER=true;};
-	/**
-	 * @deprecated
-	 */
-	BX.hoverEventsHout = function(){BX.removeClass(this,'bx-hover');this.BXHOVER=false;};
-
-	/**
-	 * @deprecated
-	 */
-	BX.focusEvents = function(el)
-	{
-		if (el)
-			return BX.adjust(el, {events: BX.focusEvents()});
-		else
-			return {mouseover: BX.focusEventsFocus, mouseout: BX.focusEventsBlur};
-	};
-
-	/**
-	 * @deprecated
-	 */
-	BX.focusEventsFocus = function(){BX.addClass(this,'bx-focus');this.BXFOCUS=true;};
-	/**
-	 * @deprecated
-	 */
-	BX.focusEventsBlur = function(){BX.removeClass(this,'bx-focus');this.BXFOCUS=false;};
-
-	BX.setUnselectable = function(node)
-	{
-		BX.style(node, {
-			'userSelect': 'none',
-			'MozUserSelect': 'none',
-			'WebkitUserSelect': 'none',
-			'KhtmlUserSelect': 'none',
-		});
-		node.setAttribute('unSelectable', 'on');
-	};
-
-	BX.setSelectable = function(node)
-	{
-		BX.style(node, {
-			'userSelect': null,
-			'MozUserSelect': null,
-			'WebkitUserSelect': null,
-			'KhtmlUserSelect': null,
-		});
-		node.removeAttribute('unSelectable');
-	};
-
-	BX.styleIEPropertyName = function(name)
-	{
-		if (name == 'float')
-			name = BX.browser.IsIE() ? 'styleFloat' : 'cssFloat';
-		else
-		{
-			var res = BX.browser.isPropertySupported(name);
-			if (res)
-			{
-				name = res;
-			}
-			else
-			{
-				var reg = /(\-([a-z]){1})/g;
-				if (reg.test(name))
-				{
-					name = name.replace(reg, function () {return arguments[2].toUpperCase();});
-				}
-			}
-		}
-		return name;
-	};
-
-	BX.focus = function(el)
-	{
-		try
-		{
-			el.focus();
+	}
+	function is_subclass_of(ob, parent_class) {
+		if (ob instanceof parent_class) {
 			return true;
 		}
-		catch (e)
-		{
-			return false;
+		if (parent_class.superclass) {
+			return is_subclass_of(ob, parent_class.superclass);
 		}
-	};
-
-	BX.firstChild = function(el)
-	{
-		return BX.type.isDomNode(el) ? el.firstElementChild : null;
-	};
-
-	BX.lastChild = function(el)
-	{
-		return BX.type.isDomNode(el) ? el.lastElementChild : null;
-	};
-
-	BX.previousSibling = function(el)
-	{
-		return BX.type.isDomNode(el) ? el.previousElementSibling : null;
-	};
-
-	BX.nextSibling = function(el)
-	{
-		return BX.type.isDomNode(el) ? el.nextElementSibling : null;
-	};
-
-	/*
-		params: {
-			obj : html node
-			className : className value
-			recursive : used only for older browsers to optimize the tree traversal, in new browsers the search is always recursively, default - true
-		}
-
-		Search all nodes with className
-	*/
-	/**
-	 * @deprecated
-	 * @use .querySelectorAll
-	 * @param obj
-	 * @param className
-	 * @param recursive
-	 * @return {*}
-	 */
-	BX.findChildrenByClassName = function(obj, className, recursive)
-	{
-		if(!obj || !obj.childNodes) return null;
-
-		var result = [];
-		if (typeof(obj.getElementsByClassName) == 'undefined')
-		{
-			recursive = recursive !== false;
-			result = BX.findChildren(obj, {className : className}, recursive);
-		}
-		else
-		{
-			var col = obj.getElementsByClassName(className);
-			for (i=0,l=col.length;i<l;i++)
-			{
-				result[i] = col[i];
-			}
-		}
-		return result;
-	};
-
-	/*
-		params: {
-			obj : html node
-			className : className value
-			recursive : used only for older browsers to optimize the tree traversal, in new browsers the search is always recursively, default - true
-		}
-
-		Search first node with className
-	*/
-	/**
-	 * @deprecated
-	 * @use .querySelector
-	 * @param obj
-	 * @param className
-	 * @param recursive
-	 * @return {*}
-	 */
-	BX.findChildByClassName = function(obj, className, recursive)
-	{
-		if(!obj || !obj.childNodes) return null;
-
-		var result = null;
-		if (typeof(obj.getElementsByClassName) == 'undefined')
-		{
-			recursive = recursive !== false;
-			result = BX.findChild(obj, {className : className}, recursive);
-		}
-		else
-		{
-			var col = obj.getElementsByClassName(className);
-			if (col && typeof(col[0]) != 'undefined')
-			{
-				result = col[0];
-			}
-			else
-			{
-				result = null;
-			}
-		}
-		return result;
-	};
-
-	/*
-		params: {
-			tagName|tag : 'tagName',
-			className|class : 'className',
-			attribute : {attribute : value, attribute : value} | attribute | [attribute, attribute....],
-			property : {prop: value, prop: value} | prop | [prop, prop]
-		}
-
-		all values can be RegExps or strings
-	*/
-	/**
-	 * @deprecated
-	 * @use .querySelectorAll
-	 * @param obj
-	 * @param params
-	 * @param recursive
-	 * @return {*|Node}
-	 */
-	BX.findChildren = function(obj, params, recursive)
-	{
-		return BX.findChild(obj, params, recursive, true);
-	};
-
-	/**
-	 * @deprecated
-	 * @use .querySelectorAll
-	 * @param obj
-	 * @param params
-	 * @param recursive
-	 * @param get_all
-	 * @return {*}
-	 */
-	BX.findChild = function(obj, params, recursive, get_all)
-	{
-		if(!obj || !obj.childNodes) return null;
-
-		recursive = !!recursive; get_all = !!get_all;
-
-		var n = obj.childNodes.length, result = [];
-
-		for (var j=0; j<n; j++)
-		{
-			var child = obj.childNodes[j];
-
-			if (_checkNode(child, params))
-			{
-				if (get_all)
-					result.push(child);
-				else
-					return child;
-			}
-
-			if(recursive == true)
-			{
-				var res = BX.findChild(child, params, recursive, get_all);
-				if (res)
-				{
-					if (get_all)
-						result = BX.util.array_merge(result, res);
-					else
-						return res;
-				}
-			}
-		}
-
-		if (get_all || result.length > 0)
-			return result;
-		else
-			return null;
-	};
-
-	/**
-	 * @deprecated
-	 * @use .closest()
-	 * @param obj
-	 * @param params
-	 * @param maxParent
-	 * @return {*}
-	 */
-	BX.findParent = function(obj, params, maxParent)
-	{
-		if(!obj)
-			return null;
-
-		var o = obj;
-		while(o.parentNode)
-		{
-			var parent = o.parentNode;
-
-			if (_checkNode(parent, params))
-				return parent;
-
-			o = parent;
-
-			if (!!maxParent &&
-				(BX.type.isFunction(maxParent)
-					|| typeof maxParent == 'object'))
-			{
-				if (BX.type.isElementNode(maxParent))
-				{
-					if (o == maxParent)
-						break;
-				}
-				else
-				{
-					if (_checkNode(o, maxParent))
-						break;
-				}
-			}
-		}
-		return null;
-	};
-
-	/**
-	 * @deprecated
-	 * @use .querySelector
-	 * @param obj
-	 * @param params
-	 * @return {*}
-	 */
-	BX.findNextSibling = function(obj, params)
-	{
-		if(!obj)
-			return null;
-		var o = obj;
-		while(o.nextSibling)
-		{
-			var sibling = o.nextSibling;
-			if (_checkNode(sibling, params))
-				return sibling;
-			o = sibling;
-		}
-		return null;
-	};
-
-	/**
-	 * @deprecated
-	 * @use .querySelector
-	 * @param obj
-	 * @param params
-	 * @return {*}
-	 */
-	BX.findPreviousSibling = function(obj, params)
-	{
-		if(!obj)
-			return null;
-
-		var o = obj;
-		while(o.previousSibling)
-		{
-			var sibling = o.previousSibling;
-			if(_checkNode(sibling, params))
-				return sibling;
-			o = sibling;
-		}
-		return null;
-	};
-
-	BX.checkNode = function(obj, params)
-	{
-		return _checkNode(obj, params);
-	};
-
-	/**
-	 * @deprecated
-	 * @use .querySelectorAll
-	 * @param form
-	 * @return {Array}
-	 */
-	BX.findFormElements = function(form)
-	{
-		if (BX.type.isString(form))
-			form = document.forms[form]||BX(form);
-
-		var res = [];
-
-		if (BX.type.isElementNode(form))
-		{
-			if (form.tagName.toUpperCase() == 'FORM')
-			{
-				res = form.elements;
-			}
-			else
-			{
-				res = BX.findChildren(form, CHECK_FORM_ELEMENTS, true);
-			}
-		}
-
-		return res;
-	};
-
-	/**
-	 * @deprecated
-	 * @use .contains()
-	 * @param whichNode
-	 * @param forNode
-	 * @return {boolean}
-	 */
-	BX.isParentForNode = function(whichNode, forNode)
-	{
-		if (BX.type.isDomNode(whichNode) && BX.type.isDomNode(forNode))
-		{
-			return whichNode.contains(forNode);
-		}
-
 		return false;
-	};
-
-	BX.getCaretPosition = function(node)
-	{
-		var pos = 0;
-
-		if(node.selectionStart || node.selectionStart == 0)
-		{
-			pos = node.selectionStart;
-		}
-		else if(document.selection)
-		{
-			node.focus();
-			var selection = document.selection.createRange();
-			selection.moveStart('character', -node.value.length);
-			pos = selection.text.length;
-		}
-
-		return (pos);
-	};
-
-	BX.setCaretPosition = function(node, pos)
-	{
-		if(!BX.isNodeInDom(node) || BX.isNodeHidden(node) || node.disabled)
-		{
-			return;
-		}
-
-		if(node.setSelectionRange)
-		{
-			node.focus();
-			node.setSelectionRange(pos, pos);
-		}
-		else if(node.createTextRange)
-		{
-			var range = node.createTextRange();
-			range.collapse(true);
-			range.moveEnd('character', pos);
-			range.moveStart('character', pos);
-			range.select();
-		}
-	};
-
-	// access private. use BX.mergeEx instead.
-	// todo: refactor BX.merge, make it work through BX.mergeEx
-	BX.merge = function(){
-		var arg = Array.prototype.slice.call(arguments);
-
-		if(arg.length < 2)
+	}
+	function merge(...arg) {
+		if (arg.length < 2) {
 			return {};
-
-		var result = arg.shift();
-
-		for(var i = 0; i < arg.length; i++)
-		{
-			for(var k in arg[i]){
-
-				if(typeof arg[i] == 'undefined' || arg[i] == null)
+		}
+		const result = arg.shift();
+		for (const element of arg) {
+			for (const k in element) {
+				if (typeof element === 'undefined' || element == null) {
 					continue;
-
-				if(arg[i].hasOwnProperty(k)){
-
-					if(typeof arg[i][k] == 'undefined' || arg[i][k] == null)
+				}
+				if (Object.prototype.hasOwnProperty.call(element, k)) {
+					if (typeof element[k] === 'undefined' || element[k] == null) {
 						continue;
-
-					if(typeof arg[i][k] == 'object' && !BX.type.isDomNode(arg[i][k]) && (typeof arg[i][k]['isUIWidget'] == 'undefined')){
-
-						// go deeper
-
-						var isArray = 'length' in arg[i][k];
-
-						if(typeof result[k] != 'object')
+					}
+					if (typeof element[k] === 'object' && !BX$1.type.isDomNode(element[k]) && typeof element[k].isUIWidget === 'undefined') {
+						const isArray = 'length' in element[k];
+						if (typeof result[k] !== 'object') {
 							result[k] = isArray ? [] : {};
-
-						if(isArray)
-							BX.util.array_merge(result[k], arg[i][k]);
-						else
-							BX.merge(result[k], arg[i][k]);
-
-					}else
-						result[k] = arg[i][k];
+						}
+						if (isArray) {
+							BX$1.util.array_merge(result[k], element[k]);
+						} else {
+							merge(result[k], element[k]);
+						}
+					} else {
+						result[k] = element[k];
+					}
 				}
 			}
 		}
-
 		return result;
-	};
-
-	BX.mergeEx = function()
-	{
-		var arg = Array.prototype.slice.call(arguments);
-		if(arg.length < 2)
-		{
+	}
+	function mergeEx(...arg) {
+		if (arg.length < 2) {
 			return {};
 		}
-
-		var result = arg.shift();
-		for (var i = 0; i < arg.length; i++)
-		{
-			for (var k in arg[i])
-			{
-				if (typeof arg[i] == "undefined" || arg[i] == null || !arg[i].hasOwnProperty(k))
-				{
+		const result = arg.shift();
+		for (const element of arg) {
+			for (const k in element) {
+				if (typeof element === 'undefined' || element == null || !Object.prototype.hasOwnProperty.call(element, k)) {
 					continue;
 				}
-
-				if (BX.type.isPlainObject(arg[i][k]) && BX.type.isPlainObject(result[k]))
-				{
-					BX.mergeEx(result[k], arg[i][k]);
-				}
-				else
-				{
-					result[k] = BX.type.isPlainObject(arg[i][k]) ? BX.clone(arg[i][k]) : arg[i][k];
+				if (BX$1.type.isPlainObject(element[k]) && BX$1.type.isPlainObject(result[k])) {
+					mergeEx(result[k], element[k]);
+				} else {
+					result[k] = BX$1.type.isPlainObject(element[k]) ? BX$1.clone(element[k]) : element[k];
 				}
 			}
 		}
-
 		return result;
-	};
+	}
 
-	BX.getEventButton = function(e)
-	{
-		e = e || window.event;
-
-		var flags = 0;
-
-		if (typeof e.which != 'undefined')
-		{
-			switch (e.which)
-			{
-				case 1: flags = flags|BX.MSLEFT; break;
-				case 2: flags = flags|BX.MSMIDDLE; break;
-				case 3: flags = flags|BX.MSRIGHT; break;
+	const prop = {
+		get(object, key, defaultValue) {
+			return object && Object.prototype.hasOwnProperty.call(object, key) ? object[key] : defaultValue;
+		},
+		getObject(object, key, defaultValue) {
+			return object && BX$1.type.isPlainObject(object[key]) ? object[key] : defaultValue;
+		},
+		getElementNode(object, key, defaultValue) {
+			return object && BX$1.type.isElementNode(object[key]) ? object[key] : defaultValue;
+		},
+		getArray(object, key, defaultValue) {
+			return object && BX$1.type.isArray(object[key]) ? object[key] : defaultValue;
+		},
+		getFunction(object, key, defaultValue) {
+			return object && BX$1.type.isFunction(object[key]) ? object[key] : defaultValue;
+		},
+		getNumber(object, key, defaultValue) {
+			if (!(object && Object.prototype.hasOwnProperty.call(object, key))) {
+				return defaultValue;
 			}
-		}
-		else if (typeof e.button != 'undefined')
-		{
-			flags = event.button;
-		}
-
-		return flags || BX.MSLEFT;
-	};
-
-	var captured_events = null, _bind = null;
-	BX.CaptureEvents = function(el_c, evname_c)
-	{
-		if (_bind)
-			return;
-
-		_bind = BX.bind;
-		captured_events = [];
-
-		BX.bind = function(el, evname, func)
-		{
-			if (el === el_c && evname === evname_c)
-				captured_events.push(func);
-
-			_bind.apply(this, arguments);
-		}
-	};
-
-	BX.CaptureEventsGet = function()
-	{
-		if (_bind)
-		{
-			BX.bind = _bind;
-
-			var captured = captured_events;
-
-			_bind = null;
-			captured_events = null;
-			return captured;
-		}
-		return null;
-	};
-
-	// Don't even try to use it for submit event!
-	BX.fireEvent = function(ob,ev)
-	{
-		var result = false, e = null;
-		if (BX.type.isDomNode(ob))
-		{
-			result = true;
-			if (document.createEventObject)
-			{
-				// IE
-				if (eventTypes[ev] != 'MouseEvent')
-				{
-					e = document.createEventObject();
-					e.type = ev;
-					result = ob.fireEvent('on' + ev, e);
-				}
-
-				if (ob[ev])
-				{
-					ob[ev]();
-				}
+			let value = object[key];
+			if (BX$1.type.isNumber(value)) {
+				return value;
 			}
-			else
-			{
-				// non-IE
-				e = null;
-
-				switch (eventTypes[ev])
-				{
-					case 'MouseEvent':
-						e = document.createEvent('MouseEvent');
-						try
-						{
-							e.initMouseEvent(ev, true, true, top, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
-						}
-						catch (initException)
-						{
-							e.initMouseEvent(ev, true, true, window, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
-						}
-
-					break;
-					default:
-						e = document.createEvent('Event');
-						e.initEvent(ev, true, true);
-				}
-
-				result = ob.dispatchEvent(e);
+			value = parseFloat(value);
+			return isNaN(value) ? defaultValue : value;
+		},
+		getInteger(object, key, defaultValue) {
+			if (!(object && Object.prototype.hasOwnProperty.call(object, key))) {
+				return defaultValue;
 			}
+			let value = object[key];
+			if (BX$1.type.isNumber(value)) {
+				return value;
+			}
+			value = parseInt(value);
+			return isNaN(value) ? defaultValue : value;
+		},
+		getBoolean(object, key, defaultValue) {
+			if (!(object && Object.prototype.hasOwnProperty.call(object, key))) {
+				return defaultValue;
+			}
+			const value = object[key];
+			return BX$1.type.isBoolean(value) ? value : BX$1.type.isString(value) ? value.toLowerCase() === 'true' : Boolean(value);
+		},
+		getString(object, key, defaultValue) {
+			if (!(object && Object.prototype.hasOwnProperty.call(object, key))) {
+				return defaultValue;
+			}
+			const value = object[key];
+			return BX$1.type.isString(value) ? value : value ? value.toString() : '';
+		},
+		extractDate(datetime) {
+			if (!BX$1.type.isDate(datetime)) {
+				datetime = new Date();
+			}
+			datetime.setHours(0);
+			datetime.setMinutes(0);
+			datetime.setSeconds(0);
+			datetime.setMilliseconds(0);
+			return datetime;
 		}
-
-		return result;
 	};
 
-	BX.getWheelData = function(e)
-	{
-		e = e || window.event;
-		e.wheelData = e.detail ? e.detail * -1 : e.wheelDelta / 40;
-		return e.wheelData;
-	};
-
-	BX.proxy_context = null;
-
-	BX.delegate = function (func, thisObject)
-	{
-		if (!func || !thisObject)
+	const proxyList = new WeakMap();
+	const deferList = new WeakMap();
+	const garbageCollectors = [];
+	BX$1.proxy_context = null;
+	function delegate(func, thisObject) {
+		if (!func || !thisObject) {
 			return func;
-
-		return function() {
-			var cur = BX.proxy_context;
-			BX.proxy_context = this;
-			var res = func.apply(thisObject, arguments);
-			BX.proxy_context = cur;
-			return res;
 		}
-	};
-
-	BX.delegateLater = function (func_name, thisObject, contextObject)
-	{
-		return function()
-		{
-			if (thisObject[func_name])
-			{
-				var cur = BX.proxy_context;
-				BX.proxy_context = this;
-				var res = thisObject[func_name].apply(contextObject||thisObject, arguments);
-				BX.proxy_context = cur;
+		return function () {
+			const cur = BX$1.proxy_context;
+			BX$1.proxy_context = this;
+			const res = func.apply(thisObject, arguments);
+			BX$1.proxy_context = cur;
+			return res;
+		};
+	}
+	function delegateLater(func_name, thisObject, contextObject) {
+		return function () {
+			if (thisObject[func_name]) {
+				const cur = BX$1.proxy_context;
+				BX$1.proxy_context = this;
+				const res = thisObject[func_name].apply(contextObject || thisObject, arguments);
+				BX$1.proxy_context = cur;
 				return res;
 			}
 			return null;
-		}
-	};
-
-	BX.proxy = function(func, thisObject)
-	{
+		};
+	}
+	function proxy(func, thisObject) {
 		return getObjectDelegate(func, thisObject, proxyList);
-	};
-
-	BX.defer = function(func, thisObject)
-	{
-		if (!!thisObject)
-			return BX.defer_proxy(func, thisObject);
-		else
-			return function() {
-				var arg = arguments;
-				setTimeout(function(){func.apply(this,arg)}, 10);
-			};
-	};
-
-	BX.defer_proxy = function(func, thisObject)
-	{
-		return getObjectDelegate(func, thisObject, deferList, BX.defer);
-	};
-
-	/**
-	 *
-	 * @private
-	 */
-	function getObjectDelegate(func, thisObject, collection, decorator)
-	{
-		if (!BX.type.isFunction(func) || !BX.type.isMapKey(thisObject))
-		{
+	}
+	function defer(func, thisObject) {
+		if (thisObject) {
+			return defer_proxy(func, thisObject);
+		}
+		return function () {
+			const arg = arguments;
+			setTimeout(function () {
+				func.apply(this, arg);
+			}, 10);
+		};
+	}
+	function defer_proxy(func, thisObject) {
+		return getObjectDelegate(func, thisObject, deferList, defer);
+	}
+	function getObjectDelegate(func, thisObject, collection, decorator) {
+		if (!BX$1.type.isFunction(func) || !BX$1.type.isMapKey(thisObject)) {
 			return func;
 		}
-
-		var objectDelegates = collection.get(thisObject);
-		if (!objectDelegates)
-		{
+		let objectDelegates = collection.get(thisObject);
+		if (!objectDelegates) {
 			objectDelegates = new WeakMap();
 			collection.set(thisObject, objectDelegates);
 		}
-
-		var delegate = objectDelegates.get(func);
-		if (!delegate)
-		{
-			delegate = decorator ? decorator(BX.delegate(func, thisObject)) : BX.delegate(func, thisObject);
-			objectDelegates.set(func, delegate);
+		let cached = objectDelegates.get(func);
+		if (!cached) {
+			cached = decorator ? decorator(delegate(func, thisObject)) : delegate(func, thisObject);
+			objectDelegates.set(func, cached);
 		}
-
-		return delegate;
+		return cached;
 	}
-
-	BX.once = function(el, evname, func)
-	{
-		var fn = function()
-		{
-			BX.unbind(el, evname, fn);
+	function once(el, evname, func) {
+		const fn = function () {
+			BX$1.unbind(el, evname, fn);
 			func.apply(this, arguments);
 		};
-
 		return fn;
-	};
-
-	BX.bindDelegate = function (elem, eventName, isTarget, handler)
-	{
-		var h = BX.delegateEvent(isTarget, handler);
-		BX.bind(elem, eventName, h);
+	}
+	function bindDelegate(elem, eventName, isTarget, handler) {
+		const h = delegateEvent(isTarget, handler);
+		BX$1.bind(elem, eventName, h);
 		return h;
-	};
-
-	BX.delegateEvent = function(isTarget, handler)
-	{
-		return function(e)
-		{
+	}
+	function delegateEvent(isTarget, handler) {
+		return function (e) {
 			e = e || window.event;
-			var target = e.target || e.srcElement;
-
-			while (target != this)
-			{
-				if (_checkNode(target, isTarget))
-				{
+			let target = e.target || e.srcElement;
+			while (target != this) {
+				if (checkNode(target, isTarget)) {
 					return handler.call(target, e);
 				}
-				if (target && target.parentNode)
+				if (target && target.parentNode) {
 					target = target.parentNode;
-				else
+				} else {
 					break;
+				}
 			}
 			return null;
-		}
-	};
-
-	BX.False = function() {return false;};
-	BX.DoNothing = function() {};
-
-	// TODO: also check event handlers set via BX.bind()
-	BX.denyEvent = function(el, ev)
-	{
-		deniedEvents.push([el, ev, el['on' + ev]]);
-		el['on' + ev] = BX.DoNothing;
-	};
-
-	BX.allowEvent = function(el, ev)
-	{
-		for(var i=0, len=deniedEvents.length; i<len; i++)
-		{
-			if (deniedEvents[i][0] == el && deniedEvents[i][1] == ev)
-			{
-				el['on' + ev] = deniedEvents[i][2];
-				BX.util.deleteFromArray(deniedEvents, i);
-				return;
-			}
-		}
-	};
-
-	BX.fixEventPageXY = function(event)
-	{
-		BX.fixEventPageX(event);
-		BX.fixEventPageY(event);
-		return event;
-	};
-
-	BX.fixEventPageX = function(event)
-	{
-		if (event.pageX == null && event.clientX != null)
-		{
-			event.pageX =
-				event.clientX +
-				(document.documentElement && document.documentElement.scrollLeft || document.body && document.body.scrollLeft || 0) -
-				(document.documentElement.clientLeft || 0);
-		}
-
-		return event;
-	};
-
-	BX.fixEventPageY = function(event)
-	{
-		if (event.pageY == null && event.clientY != null)
-		{
-			event.pageY =
-				event.clientY +
-				(document.documentElement && document.documentElement.scrollTop || document.body && document.body.scrollTop || 0) -
-				(document.documentElement.clientTop || 0);
-		}
-
-		return event;
-	};
-
-	/**
-	 * @deprecated
-	 * @see e.preventDefault()
-	 */
-	BX.PreventDefault = function(e)
-	{
-		if(!e) e = window.event;
-		if(e.stopPropagation)
-		{
-			e.preventDefault();
-			e.stopPropagation();
-		}
-		else
-		{
-			e.cancelBubble = true;
-			e.returnValue = false;
-		}
-		return false;
-	};
-
-	/**
-	 * @deprecated
-	 * @see e.preventDefault();
-	 *
-	 * @param e
-	 * @return {boolean}
-	 */
-	BX.eventReturnFalse = function(e)
-	{
-		e=e||window.event;
-		if (e && e.preventDefault) e.preventDefault();
-		else e.returnValue = false;
-		return false;
-	};
-
-	/**
-	 * @deprecated
-	 * @see e.stopPropagation()
-	 * @param e
-	 */
-	BX.eventCancelBubble = function(e)
-	{
-		e=e||window.event;
-		if(e && e.stopPropagation)
-			e.stopPropagation();
-		else
-			e.cancelBubble = true;
-	};
-
-	BX.bindDebouncedChange = function(node, fn, fnInstant, timeout, ctx)
-	{
-		ctx = ctx || window;
-		timeout = timeout || 300;
-
-		var dataTag = 'bx-dc-previous-value';
-		BX.data(node, dataTag, node.value);
-
-		var act = function(fn, val){
-
-			var pVal = BX.data(node, dataTag);
-
-			if(typeof pVal == 'undefined' || pVal != val){
-				if(typeof ctx != 'object')
-					fn(val);
-				else
-					fn.apply(ctx, [val]);
-			}
 		};
-
-		var actD = BX.debounce(function(){
-			var val = node.value;
-			act(fn, val);
-			BX.data(node, dataTag, val);
-		}, timeout);
-
-		BX.bind(node, 'keyup', actD);
-		BX.bind(node, 'change', actD);
-		BX.bind(node, 'input', actD);
-
-		if(BX.type.isFunction(fnInstant)){
-
-			var actI = function(){
-				act(fnInstant, node.value);
-			};
-
-			BX.bind(node, 'keyup', actI);
-			BX.bind(node, 'change', actI);
-			BX.bind(node, 'input', actI);
-		}
-	};
-
-	BX.parseJSON = function(data, context)
-	{
-		var result = null;
-		if (BX.type.isNotEmptyString(data))
-		{
+	}
+	function garbage(call, thisObject) {
+		garbageCollectors.push({
+			callback: call,
+			context: thisObject
+		});
+	}
+	window.addEventListener('pagehide', () => {
+		garbageCollectors.forEach(({
+			callback,
+			context = window
+		}) => {
 			try {
-				if (data.indexOf("\n") >= 0)
-					eval('result = ' + data);
-				else
-					result = (new Function("return " + data))();
-			} catch(e) {
-				BX.onCustomEvent(context, 'onParseJSONFailure', [data, context])
-			}
+				callback.apply(context);
+			} catch (err) {}
+		});
+	});
+
+	function setOpacity(element, opacity) {
+		let opacityValue = Number.parseFloat(opacity);
+		if (!isNaN(opacityValue) && BX$1.type.isDomNode(element)) {
+			opacityValue = opacityValue < 1 ? opacityValue : opacityValue / 100;
+			BX$1.style(element, 'opacity', opacityValue);
 		}
-		else if(BX.type.isPlainObject(data))
-		{
-			return data;
-		}
-
-		return result;
-	};
-
-	BX.submit = function(obForm, action_name, action_value, onAfterSubmit)
-	{
-		action_name = action_name || 'save';
-		if (!obForm['BXFormSubmit_' + action_name])
-		{
-			obForm['BXFormSubmit_' + action_name] = obForm.appendChild(BX.create('INPUT', {
-				'props': {
-					'type': 'submit',
-					'name': action_name,
-					'value': action_value || 'Y'
-				},
-				'style': {
-					'display': 'none'
-				}
-			}));
-		}
-
-		if (obForm.sessid)
-			obForm.sessid.value = BX.bitrix_sessid();
-
-		setTimeout(BX.delegate(function() {BX.fireEvent(this, 'click'); if (onAfterSubmit) onAfterSubmit();}, obForm['BXFormSubmit_' + action_name]), 10);
-	};
-
-	BX.show = function(ob, displayType)
-	{
-		if (ob.BXDISPLAY || !_checkDisplay(ob, displayType))
-		{
+	}
+	function show(ob, displayType) {
+		if (ob.BXDISPLAY || !_checkDisplay(ob, displayType)) {
 			ob.style.display = ob.BXDISPLAY;
 		}
-	};
-
-	BX.hide = function(ob, displayType)
-	{
-		if (!ob.BXDISPLAY)
+	}
+	function hide(ob, displayType) {
+		if (!ob.BXDISPLAY) {
 			_checkDisplay(ob, displayType);
-
-		ob.style.display = 'none';
-	};
-
-	BX.toggle = function(ob, values)
-	{
-		if (!values && BX.type.isElementNode(ob))
-		{
-			var bShow = true;
-			if (ob.BXDISPLAY)
-				bShow = !_checkDisplay(ob);
-			else
-				bShow = ob.style.display == 'none';
-
-			if (bShow)
-				BX.show(ob);
-			else
-				BX.hide(ob);
 		}
-		else if (BX.type.isArray(values))
-		{
-			for (var i=0,len=values.length; i<len; i++)
-			{
-				if (ob == values[i])
-				{
-					ob = values[i==len-1 ? 0 : i+1];
+		ob.style.display = 'none';
+	}
+	function toggle(ob, values) {
+		if (!values && BX$1.type.isElementNode(ob)) {
+			let bShow = true;
+			if (ob.BXDISPLAY) {
+				bShow = !_checkDisplay(ob);
+			} else {
+				bShow = ob.style.display == 'none';
+			}
+			if (bShow) {
+				BX$1.show(ob);
+			} else {
+				BX$1.hide(ob);
+			}
+		} else if (BX$1.type.isArray(values)) {
+			let i;
+			let len;
+			for (i = 0, len = values.length; i < len; i++) {
+				if (ob == values[i]) {
+					ob = values[i == len - 1 ? 0 : i + 1];
 					break;
 				}
 			}
-			if (i==len)
+			if (i == len) {
 				ob = values[0];
+			}
 		}
-
 		return ob;
-	};
-
-	function _checkDisplay(ob, displayType)
-	{
-		if (typeof displayType != 'undefined')
+	}
+	function _checkDisplay(ob, displayType) {
+		if (typeof displayType != 'undefined') {
 			ob.BXDISPLAY = displayType;
-
-		var d = ob.style.display || BX.style(ob, 'display');
-		if (d != 'none')
-		{
+		}
+		const d = ob.style.display || BX$1.style(ob, 'display');
+		if (d != 'none') {
 			ob.BXDISPLAY = ob.BXDISPLAY || d;
 			return true;
 		}
-		else
-		{
-			ob.BXDISPLAY = ob.BXDISPLAY || 'block';
-			return false;
-		}
+		ob.BXDISPLAY = ob.BXDISPLAY || 'block';
+		return false;
 	}
-
-	/* some useful util functions */
-
-	BX.util = {
-		/**
-		 * @deprecated
-		 * @use [].filter(value => !BX.Type.isNil(value))
-		 * @param ar
-		 * @return {*}
-		 */
-		array_values: function(ar)
-		{
-			if (!BX.type.isArray(ar))
-				return BX.util._array_values_ob(ar);
-			var arv = [];
-			for(var i=0,l=ar.length;i<l;i++)
-				if (ar[i] !== null && typeof ar[i] != 'undefined')
-					arv.push(ar[i]);
-			return arv;
-		},
-
-		/**
-		 * @deprecated
-		 * @use Object.values([]).filter(value => !BX.Type.isNil(value))
-		 * @param ar
-		 * @return {Array}
-		 * @private
-		 */
-		_array_values_ob: function(ar)
-		{
-			var arv = [];
-			for(var i in ar)
-				if (ar[i] !== null && typeof ar[i] != 'undefined')
-					arv.push(ar[i]);
-			return arv;
-		},
-
-		/**
-		 * @deprecated
-		 * @use
-		 * @param ar
-		 * @return {*}
-		 */
-		array_keys: function(ar)
-		{
-			if (!BX.type.isArray(ar))
-				return BX.util._array_keys_ob(ar);
-			var arv = [];
-			for(var i=0,l=ar.length;i<l;i++)
-				if (ar[i] !== null && typeof ar[i] != 'undefined')
-					arv.push(i);
-			return arv;
-		},
-
-		_array_keys_ob: function(ar)
-		{
-			var arv = [];
-			for(var i in ar)
-				if (ar[i] !== null && typeof ar[i] != 'undefined')
-					arv.push(i);
-			return arv;
-		},
-
-		object_keys: function(obj)
-		{
-			var arv = [];
-			for(var k in obj)
-			{
-				if(obj.hasOwnProperty(k))
-				{
-					arv.push(k);
-				}
-			}
-			return arv;
-		},
-
-		/**
-		 * @deprecated
-		 * @use firstArr.concat(secondArr);
-		 * @param first
-		 * @param second
-		 * @return {*[]}
-		 */
-		array_merge: function(first, second)
-		{
-			if (!BX.type.isArray(first)) first = [];
-			if (!BX.type.isArray(second)) second = [];
-
-			var i = first.length, j = 0;
-
-			if (typeof second.length === "number")
-			{
-				for (var l = second.length; j < l; j++)
-				{
-					first[i++] = second[j];
-				}
-			}
-			else
-			{
-				while (second[j] !== undefined)
-				{
-					first[i++] = second[j++];
-				}
-			}
-
-			first.length = i;
-
-			return first;
-		},
-
-		array_flip: function (object)
-		{
-			var newObject = {};
-
-			for (var key in object)
-			{
-				newObject[object[key]] = key;
-			}
-
-			return newObject;
-		},
-
-		array_diff: function(ar1, ar2, hash)
-		{
-			hash = BX.type.isFunction(hash) ? hash : null;
-			var i, length, v, h, map = {}, result = [];
-			for(i = 0, length = ar2.length; i < length; i++)
-			{
-				v = ar2[i];
-				h = hash ? hash(v) : v;
-				map[h] = true;
-			}
-
-			for(i = 0, length = ar1.length; i < length; i++)
-			{
-				v = ar1[i];
-				h = hash ? hash(v) : v;
-				if(typeof(map[h]) === "undefined")
-				{
-					result.push(v);
-				}
-			}
-			return result;
-		},
-
-		/**
-		 * @deprecated
-		 * @use Set
-		 */
-		array_unique: function(ar)
-		{
-			var i=0,j,len=ar.length;
-			if(len<2) return ar;
-
-			for (; i<len-1;i++)
-			{
-				for (j=i+1; j<len;j++)
-				{
-					if (ar[i]==ar[j])
-					{
-						ar.splice(j--,1); len--;
-					}
-				}
-			}
-
-			return ar;
-		},
-
-		/**
-		 * @deprecated
-		 * @use myArr.includes(needle)
-		 */
-		in_array: function(needle, haystack)
-		{
-			for(var i=0; i<haystack.length; i++)
-			{
-				if(haystack[i] == needle)
-					return true;
-			}
-			return false;
-		},
-
-		/**
-		 * @deprecated
-		 * @use myArr.findIndex(item => item === needle);
-		 */
-		array_search: function(needle, haystack)
-		{
-			for(var i=0; i<haystack.length; i++)
-			{
-				if(haystack[i] == needle)
-					return i;
-			}
-			return -1;
-		},
-
-		object_search_key: function(needle, haystack)
-		{
-			if (typeof haystack[needle] != 'undefined')
-				return haystack[needle];
-
-			for(var i in haystack)
-			{
-				if (typeof haystack[i] == "object")
-				{
-					var result = BX.util.object_search_key(needle, haystack[i]);
-					if (result !== false)
-						return result;
-				}
-			}
-			return false;
-		},
-
-		trim: function(s)
-		{
-			if (BX.type.isString(s))
-			{
-				return s.trim();
-			}
-
-			return s;
-		},
-
-		urlencode: function(s){return encodeURIComponent(s);},
-
-		// it may also be useful. via sVD.
-		deleteFromArray: function(ar, ind) {return ar.slice(0, ind).concat(ar.slice(ind + 1));},
-		insertIntoArray: function(ar, ind, el) {return ar.slice(0, ind).concat([el]).concat(ar.slice(ind));},
-
-		htmlspecialchars: function(str)
-		{
-			return BX.Text.encode(str);
-		},
-
-		htmlspecialcharsback: function(str)
-		{
-			return BX.Text.decode(str);
-		},
-
-		// Quote regular expression characters plus an optional character
-		preg_quote: function(str, delimiter)
-		{
-			if(!str.replace)
-				return str;
-			return str.replace(new RegExp('[.\\\\+*?\\[\\^\\]$(){}=!<>|:\\' + (delimiter || '') + '-]', 'g'), '\\$&');
-		},
-
-		jsencode: function(str)
-		{
-			if (!str || !str.replace)
-				return str;
-
-			var escapes =
-				[
-					{ c: "\\\\", r: "\\\\" }, // should be first
-					{ c: "\\t", r: "\\t" },
-					{ c: "\\n", r: "\\n" },
-					{ c: "\\r", r: "\\r" },
-					{ c: "\"", r: "\\\"" },
-					{ c: "'", r: "\\'" },
-					{ c: "<", r: "\\x3C" },
-					{ c: ">", r: "\\x3E" },
-					{ c: "\\u2028", r: "\\u2028" },
-					{ c: "\\u2029", r: "\\u2029" }
-				];
-			for (var i = 0; i < escapes.length; i++)
-				str = str.replace(new RegExp(escapes[i].c, 'g'), escapes[i].r);
-			return str;
-		},
-
-		getCssName: function(jsName)
-		{
-			if (!BX.type.isNotEmptyString(jsName))
-			{
-				return "";
-			}
-
-			return jsName.replace(/[A-Z]/g, function(match) {
-				return "-" + match.toLowerCase();
-			});
-		},
-
-		getJsName: function(cssName)
-		{
-			var regex = /\-([a-z]){1}/g;
-			if (regex.test(cssName))
-			{
-				return cssName.replace(regex, function(match, letter) {
-					return letter.toUpperCase();
-				});
-			}
-
-			return cssName;
-		},
-
-		nl2br: function(str)
-		{
-			if (!str || !str.replace)
-				return str;
-
-			return str.replace(/([^>])\n/g, '$1<br/>');
-		},
-
-		/**
-		 * @deprecated
-		 * @use .padStart() / .padEnd()
-		 * @param input
-		 * @param pad_length
-		 * @param pad_string
-		 * @param pad_type
-		 * @return {*}
-		 */
-		str_pad: function(input, pad_length, pad_string, pad_type)
-		{
-			pad_string = pad_string || ' ';
-			pad_type = pad_type || 'right';
-			input = input.toString();
-
-			if (pad_type === 'left')
-			{
-				return BX.util.str_pad_left(input, pad_length, pad_string);
-			}
-
-			return BX.util.str_pad_right(input, pad_length, pad_string);
-		},
-
-		str_pad_left: function(input, pad_length, pad_string)
-		{
-			return input.toString().padStart(pad_length, pad_string);
-		},
-
-		str_pad_right: function(input, pad_length, pad_string)
-		{
-			return input.toString().padEnd(pad_length, pad_string);
-		},
-
-		strip_tags: function(str)
-		{
-			return str.split(/<[^>]+>/g).join('');
-		},
-
-		strip_php_tags: function(str)
-		{
-			return str.replace(/<\?(.|[\r\n])*?\?>/g, '');
-		},
-
-		popup: function(url, width, height)
-		{
-			var w, h;
-			if(BX.browser.IsOpera())
-			{
-				w = document.body.offsetWidth;
-				h = document.body.offsetHeight;
-			}
-			else
-			{
-				w = screen.width;
-				h = screen.height;
-			}
-			return window.open(url, '', 'status=no,scrollbars=yes,resizable=yes,width='+width+',height='+height+',top='+Math.floor((h - height)/2-14)+',left='+Math.floor((w - width)/2-5));
-		},
-
-		shuffle: function(array)
-		{
-			var temporaryValue, randomIndex;
-			var currentIndex = array.length;
-
-			while (0 !== currentIndex)
-			{
-				randomIndex = Math.floor(Math.random() * currentIndex);
-				currentIndex -= 1;
-
-				temporaryValue = array[currentIndex];
-				array[currentIndex] = array[randomIndex];
-				array[randomIndex] = temporaryValue;
-			}
-
-			return array;
-		},
-
-		// BX.util.objectSort(object, sortBy, sortDir) - Sort object by property
-		// function params: 1 - object for sort, 2 - sort by property, 3 - sort direction (asc/desc)
-		// return: sort array [[objectElement], [objectElement]] in sortDir direction
-
-		// example: BX.util.objectSort({'L1': {'name': 'Last'}, 'F1': {'name': 'First'}}, 'name', 'asc');
-		// return: [{'name' : 'First'}, {'name' : 'Last'}]
-		objectSort: function(object, sortBy, sortDir)
-		{
-			sortDir = sortDir == 'asc'? 'asc': 'desc';
-
-			var arItems = [], i;
-			for (i in object)
-			{
-				if (object.hasOwnProperty(i) && object[i][sortBy])
-				{
-					arItems.push([i, object[i][sortBy]]);
-				}
-			}
-
-			if (sortDir == 'asc')
-			{
-				arItems.sort(function(i, ii) {
-					var s1, s2;
-					if (BX.type.isDate(i[1]))
-					{
-						s1 = i[1].getTime();
-					}
-					else if (!isNaN(i[1]))
-					{
-						s1 = parseInt(i[1]);
-					}
-					else
-					{
-						s1 = i[1].toString().toLowerCase();
-					}
-
-					if (BX.type.isDate(ii[1]))
-					{
-						s2 = ii[1].getTime();
-					}
-					else if (!isNaN(ii[1]))
-					{
-						s2 = parseInt(ii[1]);
-					}
-					else
-					{
-						s2 = ii[1].toString().toLowerCase();
-					}
-
-					if (s1 > s2)
-						return 1;
-					else if (s1 < s2)
-						return -1;
-					else
-						return 0;
-				});
-			}
-			else
-			{
-				arItems.sort(function(i, ii) {
-					var s1, s2;
-					if (BX.type.isDate(i[1]))
-					{
-						s1 = i[1].getTime();
-					}
-					else if (!isNaN(i[1]))
-					{
-						s1 = parseInt(i[1]);
-					}
-					else
-					{
-						s1 = i[1].toString().toLowerCase();
-					}
-
-					if (BX.type.isDate(ii[1]))
-					{
-						s2 = ii[1].getTime();
-					}
-					else if (!isNaN(ii[1]))
-					{
-						s2 = parseInt(ii[1]);
-					}
-					else
-					{
-						s2 = ii[1].toString().toLowerCase();
-					}
-
-					if (s1 < s2)
-						return 1;
-					else if (s1 > s2)
-						return -1;
-					else
-						return 0;
-				});
-			}
-
-			var arReturnArray = Array();
-			for (i = 0; i < arItems.length; i++)
-			{
-				arReturnArray.push(object[arItems[i][0]]);
-			}
-
-			return arReturnArray;
-		},
-
-		objectMerge: function()
-		{
-			return BX.mergeEx.apply(window, arguments);
-		},
-
-		objectClone : function(object)
-		{
-			return BX.clone(object, true);
-		},
-
-		// #fdf9e5 => {r=253, g=249, b=229}
-		hex2rgb: function(color)
-		{
-			var rgb = color.replace(/[# ]/g,"").replace(/^(.)(.)(.)$/,'$1$1$2$2$3$3').match(/.{2}/g);
-			for (var i=0;  i<3; i++)
-			{
-				rgb[i] = parseInt(rgb[i], 16);
-			}
-			return {'r':rgb[0],'g':rgb[1],'b':rgb[2]};
-		},
-
-		/**
-		 * @deprecated
-		 * @use BX.Uri
-		 * @param url
-		 * @param param
-		 * @return {string}
-		 */
-		remove_url_param: function(url, param)
-		{
-			return BX.Uri.removeParam(url, param);
-		},
-
-		/*
-		{'param1': 'value1', 'param2': 'value2'}
-		 */
-		/**
-		 * @deprecated
-		 * @use BX.Uri
-		 * @param url
-		 * @param params
-		 * @return {string}
-		 */
-		add_url_param: function(url, params)
-		{
-			var preparedParams = Object.entries(params).reduce(function(acc, item) {
-				acc[item[0]] = BX.type.isArray(item[1]) ? item[1].join() : item[1];
-				return acc;
-			}, {});
-
-			return BX.Uri.addParam(url, preparedParams);
-		},
-
-		/*
-	{'param1': 'value1', 'param2': 'value2'}
-	 */
-		buildQueryString: function(params)
-		{
-			var result = '';
-			for (var key in params)
-			{
-				var value = params[key];
-				if(BX.type.isArray(value))
-				{
-					value.forEach(function(valueElement, index)
-					{
-						result += encodeURIComponent(key + "[" + index + "]") + "=" + encodeURIComponent(valueElement) + "&";
-					});
-				}
-				else
-				{
-					result += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
-				}
-			}
-
-			if(result.length > 0)
-			{
-				result = result.substr(0, result.length - 1);
-			}
-			return result;
-		},
-
-		even: function(digit)
-		{
-			return (parseInt(digit) % 2 == 0);
-		},
-
-		hashCode: function(str)
-		{
-			if(!BX.type.isNotEmptyString(str))
-			{
-				return 0;
-			}
-
-			var hash = 0;
-			for (var i = 0; i < str.length; i++)
-			{
-				var c = str.charCodeAt(i);
-				hash = ((hash << 5) - hash) + c;
-				hash = hash & hash;
-			}
-			return hash;
-		},
-
-		getRandomString: function (length)
-		{
-			return BX.Text.getRandom(length);
-		},
-
-		number_format: function(number, decimals, dec_point, thousands_sep)
-		{
-			var i, j, kw, kd, km, sign = '';
-			decimals = Math.abs(decimals);
-			if (isNaN(decimals) || decimals < 0)
-			{
-				decimals = 2;
-			}
-			dec_point = dec_point || ',';
-			if (typeof thousands_sep === 'undefined')
-				thousands_sep = '.';
-
-			number = (+number || 0).toFixed(decimals);
-			if (number < 0)
-			{
-				sign = '-';
-				number = -number;
-			}
-
-			i = parseInt(number, 10) + '';
-			j = (i.length > 3 ? i.length % 3 : 0);
-
-			km = (j ? i.substr(0, j) + thousands_sep : '');
-			kw = i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands_sep);
-			kd = (decimals ? dec_point + Math.abs(number - i).toFixed(decimals).replace(/-/, '0').slice(2) : '');
-
-			return sign + km + kw + kd;
-		},
-
-		getExtension: function (url)
-		{
-			url = url || "";
-			var items = url.split("?")[0].split(".");
-			return items[items.length-1].toLowerCase();
-		},
-		addObjectToForm: function(object, form, prefix)
-		{
-			if(!BX.type.isString(prefix))
-			{
-				prefix = "";
-			}
-
-			for(var key in object)
-			{
-				if(!object.hasOwnProperty(key))
-				{
-					continue;
-				}
-
-				var value = object[key];
-				var name = prefix !== "" ? (prefix + "[" + key + "]") : key;
-				if(BX.type.isArray(value))
-				{
-					var obj = {};
-					for(var i = 0; i < value.length; i++)
-					{
-						obj[i] = value[i];
-					}
-
-					BX.util.addObjectToForm(obj, form, name);
-				}
-				else if(BX.type.isPlainObject(value))
-				{
-					BX.util.addObjectToForm(value, form, name);
-				}
-				else
-				{
-					value = BX.type.isFunction(value.toString) ? value.toString() : "";
-					if(value !== "")
-					{
-						form.appendChild(BX.create("INPUT", { attrs: { type: "hidden", name: name, value: value } }));
-					}
-				}
-			}
-		},
-
-		observe: function(object, enable)
-		{
-			console.error('BX.util.observe: function is no longer supported by browser.');
-			return false;
-		},
-
-		escapeRegExp: function(str)
-		{
-			return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-		}
-	};
-
-	BX.validation = {
-		checkIfEmail: function(s)
-		{
-			var atom = "[=a-z0-9_+~'!$&*^`|#%/?{}-]";
-			return (new RegExp('^\\s*'+atom+'+(\\.'+atom+'+)*@([a-z0-9-]+\\.)+[a-z0-9-]{2,20}\\s*$', 'i')).test(s);
-		},
-		checkIfPhone: function(s)
-		{
-			var regexp = new RegExp(
-				typeof(BX.PhoneNumber) === "undefined"
-					? BX.PhoneNumber.getValidNumberPattern()
-					: '^\\s*\\+?\s*[0-9(-)\\s]+\\s*$',
-				'i'
-			);
-			return regexp.test(s);
-		}
-	};
-
-	BX.prop =
-		{
-			get: function(object, key, defaultValue)
-			{
-				return object && object.hasOwnProperty(key) ? object[key] : defaultValue;
-			},
-			getObject: function(object, key, defaultValue)
-			{
-				return object && BX.type.isPlainObject(object[key]) ? object[key] : defaultValue;
-			},
-			getElementNode: function(object, key, defaultValue)
-			{
-				return object && BX.type.isElementNode(object[key]) ? object[key] : defaultValue;
-			},
-			getArray: function(object, key, defaultValue)
-			{
-				return object && BX.type.isArray(object[key]) ? object[key] : defaultValue;
-			},
-			getFunction: function(object, key, defaultValue)
-			{
-				return object && BX.type.isFunction(object[key]) ? object[key] : defaultValue;
-			},
-			getNumber: function(object, key, defaultValue)
-			{
-				if(!(object && object.hasOwnProperty(key)))
-				{
-					return defaultValue;
-				}
-
-				var value = object[key];
-				if(BX.type.isNumber(value))
-				{
-					return value;
-				}
-
-				value = parseFloat(value);
-				return !isNaN(value) ? value : defaultValue;
-			},
-			getInteger: function(object, key, defaultValue)
-			{
-				if(!(object && object.hasOwnProperty(key)))
-				{
-					return defaultValue;
-				}
-
-				var value = object[key];
-				if(BX.type.isNumber(value))
-				{
-					return value;
-				}
-
-				value = parseInt(value);
-				return !isNaN(value) ? value : defaultValue;
-			},
-			getBoolean: function(object, key, defaultValue)
-			{
-				if(!(object && object.hasOwnProperty(key)))
-				{
-					return defaultValue;
-				}
-
-				var value = object[key];
-				return (BX.type.isBoolean(value)
-						? value
-						: (BX.type.isString(value) ? (value.toLowerCase() === "true") : !!value)
-				);
-			},
-			getString: function(object, key, defaultValue)
-			{
-				if(!(object && object.hasOwnProperty(key)))
-				{
-					return defaultValue;
-				}
-
-				var value = object[key];
-				return BX.type.isString(value) ? value : (value ? value.toString() : '');
-			},
-			extractDate: function(datetime)
-			{
-				if(!BX.type.isDate(datetime))
-				{
-					datetime = new Date();
-				}
-
-				datetime.setHours(0);
-				datetime.setMinutes(0);
-				datetime.setSeconds(0);
-				datetime.setMilliseconds(0);
-
-				return datetime;
-			}
-		};
-
-	BX.isNodeInDom = function(node, doc)
-	{
-		return node === (doc || document) ? true :
-			(node.parentNode ? BX.isNodeInDom(node.parentNode) : false);
-	};
-
-	BX.isNodeHidden = function(node)
-	{
-		if (node === document)
-			return false;
-		else if (BX.style(node, 'display') == 'none')
-			return true;
-		else
-			return (node.parentNode ? BX.isNodeHidden(node.parentNode) : true);
-	};
-
-	BX.evalPack = function(code)
-	{
-		while (code.length > 0)
-		{
-			var c = code.shift();
-
-			if (c.TYPE == 'SCRIPT_EXT' || c.TYPE == 'SCRIPT_SRC')
-			{
-				BX.loadScript(c.DATA, function() {BX.evalPack(code)});
-				return;
-			}
-			else if (c.TYPE == 'SCRIPT')
-			{
-				BX.evalGlobal(c.DATA);
-			}
-		}
-	};
-
-	BX.evalGlobal = function(data)
-	{
-		if (data)
-		{
-			var head = document.getElementsByTagName("head")[0] || document.documentElement,
-				script = document.createElement("script");
-
-			script.type = "text/javascript";
-
-			if (!BX.browser.IsIE())
-			{
-				script.appendChild(document.createTextNode(data));
-			}
-			else
-			{
-				script.text = data;
-			}
-
-			head.insertBefore(script, head.firstChild);
-			head.removeChild(script);
-		}
-	};
-
-	BX.garbage = function(call, thisObject)
-	{
-		garbageCollectors.push({callback: call, context: thisObject});
-	};
-
-	BX.GetDocElement = function (pDoc)
-	{
+	function GetDocElement(pDoc) {
 		pDoc = pDoc || document;
-		return (BX.browser.IsDoctype(pDoc) ? pDoc.documentElement : pDoc.body);
-	};
-
-	BX.scrollTop = function(node, val){
-		if(typeof val != 'undefined'){
-
-			if(node == window){
+		return BX$1.browser.IsDoctype(pDoc) ? pDoc.documentElement : pDoc.body;
+	}
+	function scrollTop(node, val) {
+		if (typeof val != 'undefined') {
+			if (node == window) {
 				throw new Error('scrollTop() for window is not implemented');
-			}else
-				node.scrollTop = parseInt(val);
-
-		}else{
-
-			if(node == window)
-				return BX.GetWindowScrollPos().scrollTop;
-
-			return node.scrollTop;
+			}
+			node.scrollTop = Number.parseInt(val);
+			return undefined;
 		}
-	};
-
-	BX.scrollLeft = function(node, val){
-		if(typeof val != 'undefined'){
-
-			if(node == window){
+		if (node == window) {
+			return BX$1.GetWindowScrollPos().scrollTop;
+		}
+		return node.scrollTop;
+	}
+	function scrollLeft(node, val) {
+		if (typeof val != 'undefined') {
+			if (node == window) {
 				throw new Error('scrollLeft() for window is not implemented');
-			}else
-				node.scrollLeft = parseInt(val);
-
-		}else{
-
-			if(node == window)
-				return BX.GetWindowScrollPos().scrollLeft;
-
-			return node.scrollLeft;
+			}
+			node.scrollLeft = Number.parseInt(val);
+			return undefined;
 		}
-	};
-
-	BX.hide_object = function(ob)
-	{
-		ob = BX(ob);
+		if (node == window) {
+			return BX$1.GetWindowScrollPos().scrollLeft;
+		}
+		return node.scrollLeft;
+	}
+	function hide_object(ob) {
+		ob = resolve(ob);
 		ob.style.position = 'absolute';
 		ob.style.top = '-1000px';
 		ob.style.left = '-1000px';
 		ob.style.height = '10px';
 		ob.style.width = '10px';
-	};
-
-	BX.is_relative = function(el)
-	{
-		var p = BX.style(el, 'position');
+	}
+	function is_relative(el) {
+		const p = BX$1.style(el, 'position');
 		return p == 'relative' || p == 'absolute';
-	};
-
-	BX.is_float = function(el)
-	{
-		var p = BX.style(el, 'float');
+	}
+	function is_float(el) {
+		const p = BX$1.style(el, 'float');
 		return p == 'right' || p == 'left';
-	};
-
-	BX.is_fixed = function(el)
-	{
-		var p = BX.style(el, 'position');
+	}
+	function is_fixed(el) {
+		const p = BX$1.style(el, 'position');
 		return p == 'fixed';
-	};
-
-	BX.width = function(node, val){
-		if(typeof val != 'undefined')
-			BX.style(node, 'width', parseInt(val)+'px');
-		else{
-
-			if(node == window)
-				return window.innerWidth;
-
-			//return parseInt(BX.style(node, 'width'));
-			return BX.pos(node).width;
+	}
+	function width(node, val) {
+		if (typeof val != 'undefined') {
+			BX$1.style(node, 'width', `${Number.parseInt(val)}px`);
+			return undefined;
 		}
-	};
-
-	BX.height = function(node, val){
-		if(typeof val != 'undefined')
-			BX.style(node, 'height', parseInt(val)+'px');
-		else{
-
-			if(node == window)
-				return window.innerHeight;
-
-			//return parseInt(BX.style(node, 'height'));
-			return BX.pos(node).height;
+		if (node == window) {
+			return window.innerWidth;
 		}
-	};
-
-	BX.align = function(pos, w, h, type)
-	{
-		if (type)
+		return BX$1.pos(node).width;
+	}
+	function height(node, val) {
+		if (typeof val != 'undefined') {
+			BX$1.style(node, 'height', `${Number.parseInt(val)}px`);
+			return undefined;
+		}
+		if (node == window) {
+			return window.innerHeight;
+		}
+		return BX$1.pos(node).height;
+	}
+	function align(pos, w, h, type) {
+		if (type) {
 			type = type.toLowerCase();
-		else
+		} else {
 			type = '';
-
-		var pDoc = document;
-		if (BX.type.isElementNode(pos))
-		{
+		}
+		let pDoc = document;
+		if (BX$1.type.isElementNode(pos)) {
 			pDoc = pos.ownerDocument;
-			pos = BX.pos(pos);
+			pos = BX$1.pos(pos);
 		}
-
-		var x = pos["left"], y = pos["bottom"];
-
-		var scroll = BX.GetWindowScrollPos(pDoc);
-		var size = BX.GetWindowInnerSize(pDoc);
-
-		if((size.innerWidth + scroll.scrollLeft) - (pos["left"] + w) < 0)
-		{
-			if(pos["right"] - w >= 0 )
-				x = pos["right"] - w;
-			else
+		let x = pos.left;
+		let y = pos.bottom;
+		const scroll = BX$1.GetWindowScrollPos(pDoc);
+		const size = BX$1.GetWindowInnerSize(pDoc);
+		if (size.innerWidth + scroll.scrollLeft - (pos.left + w) < 0) {
+			if (pos.right - w >= 0) {
+				x = pos.right - w;
+			} else {
 				x = scroll.scrollLeft;
+			}
 		}
-
-		if(((size.innerHeight + scroll.scrollTop) - (pos["bottom"] + h) < 0) || ~type.indexOf('top'))
-		{
-			if(pos["top"] - h >= 0 || ~type.indexOf('top'))
-				y = pos["top"] - h;
-			else
+		if (size.innerHeight + scroll.scrollTop - (pos.bottom + h) < 0 || ~type.indexOf('top')) {
+			if (pos.top - h >= 0 || ~type.indexOf('top')) {
+				y = pos.top - h;
+			} else {
 				y = scroll.scrollTop;
+			}
 		}
-
-		return {'left':x, 'top':y};
-	};
-
-	BX.scrollToNode = function(node)
-	{
-		var obNode = BX(node);
-
-		if (obNode.scrollIntoView)
+		return {
+			left: x,
+			top: y
+		};
+	}
+	function scrollToNode(node) {
+		const obNode = resolve(node);
+		if (obNode.scrollIntoView) {
 			obNode.scrollIntoView(true);
-		else
-		{
-			var arNodePos = BX.pos(obNode);
+		} else {
+			const arNodePos = BX$1.pos(obNode);
 			window.scrollTo(arNodePos.left, arNodePos.top);
 		}
-	};
+	}
+	function styleIEPropertyName(name) {
+		if (name == 'float') {
+			name = BX$1.browser.IsIE() ? 'styleFloat' : 'cssFloat';
+		} else {
+			const res = BX$1.browser.isPropertySupported(name);
+			if (res) {
+				name = res;
+			} else {
+				const reg = /(-([a-z]){1})/g;
+				if (reg.test(name)) {
+					name = name.replace(reg, function () {
+						return arguments[2].toUpperCase();
+					});
+				}
+			}
+		}
+		return name;
+	}
 
-	/* non-xhr loadings */
-	BX.showWait = function(node, msg)
-	{
-		node = BX(node) || document.body || document.documentElement;
-		msg = msg || BX.message('JS_CORE_LOADING');
+	function focus(el) {
+		try {
+			el.focus();
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+	function hoverEvents(el) {
+		if (el) {
+			return BX$1.adjust(el, {
+				events: hoverEvents()
+			});
+		}
+		return {
+			mouseover: hoverEventsHover,
+			mouseout: hoverEventsHout
+		};
+	}
+	function hoverEventsHover() {
+		BX$1.addClass(this, 'bx-hover');
+		this.BXHOVER = true;
+	}
+	function hoverEventsHout() {
+		BX$1.removeClass(this, 'bx-hover');
+		this.BXHOVER = false;
+	}
+	function focusEvents(el) {
+		if (el) {
+			return BX$1.adjust(el, {
+				events: focusEvents()
+			});
+		}
+		return {
+			mouseover: focusEventsFocus,
+			mouseout: focusEventsBlur
+		};
+	}
+	function focusEventsFocus() {
+		BX$1.addClass(this, 'bx-focus');
+		this.BXFOCUS = true;
+	}
+	function focusEventsBlur() {
+		BX$1.removeClass(this, 'bx-focus');
+		this.BXFOCUS = false;
+	}
+	function setUnselectable(node) {
+		BX$1.style(node, {
+			userSelect: 'none',
+			MozUserSelect: 'none',
+			WebkitUserSelect: 'none',
+			KhtmlUserSelect: 'none'
+		});
+		node.setAttribute('unSelectable', 'on');
+	}
+	function setSelectable(node) {
+		BX$1.style(node, {
+			userSelect: null,
+			MozUserSelect: null,
+			WebkitUserSelect: null,
+			KhtmlUserSelect: null
+		});
+		node.removeAttribute('unSelectable');
+	}
+	function getCaretPosition(node) {
+		let pos = 0;
+		if (node.selectionStart || node.selectionStart == 0) {
+			pos = node.selectionStart;
+		} else if (document.selection) {
+			node.focus();
+			const selection = document.selection.createRange();
+			selection.moveStart('character', -node.value.length);
+			pos = selection.text.length;
+		}
+		return pos;
+	}
+	function setCaretPosition(node, pos) {
+		if (!isNodeInDom(node) || isNodeHidden(node) || node.disabled) {
+			return;
+		}
+		if (node.setSelectionRange) {
+			node.focus();
+			node.setSelectionRange(pos, pos);
+		} else if (node.createTextRange) {
+			const range = node.createTextRange();
+			range.collapse(true);
+			range.moveEnd('character', pos);
+			range.moveStart('character', pos);
+			range.select();
+		}
+	}
 
-		var container_id = node.id || Math.random();
-
-		var obMsg = node.bxmsg = document.body.appendChild(BX.create('DIV', {
+	let lastWait = [];
+	function showWait(node, msg) {
+		node = resolve(node) || document.body || document.documentElement;
+		msg = msg || BX$1.message('JS_CORE_LOADING');
+		const container_id = node.id || Math.random();
+		const obMsg = node.bxmsg = document.body.appendChild(BX$1.create('DIV', {
 			props: {
-				id: 'wait_' + container_id
+				id: `wait_${container_id}`
 			},
 			style: {
 				background: 'url("/bitrix/js/main/core/images/wait.gif") no-repeat scroll 10px center #fcf7d1',
@@ -8824,1117 +10377,252 @@ window._main_polyfill_core = true;
 				fontSize: '11px',
 				padding: '10px 30px 10px 37px',
 				position: 'absolute',
-				textAlign:'center'
+				textAlign: 'center'
 			},
 			text: msg
 		}));
-
-		BX.ZIndexManager.register(obMsg);
-		BX.ZIndexManager.bringToFront(obMsg);
-
-		setTimeout(BX.delegate(_adjustWait, node), 10);
-
+		BX$1.ZIndexManager.register(obMsg);
+		BX$1.ZIndexManager.bringToFront(obMsg);
+		setTimeout(delegate(_adjustWait, node), 10);
 		lastWait[lastWait.length] = obMsg;
 		return obMsg;
-	};
-
-	BX.closeWait = function(node, obMsg)
-	{
-		if(node && !obMsg)
+	}
+	function closeWait(node, obMsg) {
+		if (node && !obMsg) {
 			obMsg = node.bxmsg;
-		if(node && !obMsg && BX.hasClass(node, 'bx-core-waitwindow'))
+		}
+		if (node && !obMsg && BX$1.hasClass(node, 'bx-core-waitwindow')) {
 			obMsg = node;
-		if(node && !obMsg)
-			obMsg = BX('wait_' + node.id);
-		if(!obMsg)
+		}
+		if (node && !obMsg) {
+			obMsg = resolve(`wait_${node.id}`);
+		}
+		if (!obMsg) {
 			obMsg = lastWait.pop();
-
-		if (obMsg && obMsg.parentNode)
-		{
-			for (var i=0,len=lastWait.length;i<len;i++)
-			{
-				if (obMsg == lastWait[i])
-				{
-					lastWait = BX.util.deleteFromArray(lastWait, i);
+		}
+		if (obMsg && obMsg.parentNode) {
+			for (let i = 0, len = lastWait.length; i < len; i++) {
+				if (obMsg == lastWait[i]) {
+					lastWait = util.deleteFromArray(lastWait, i);
 					break;
 				}
 			}
-
-			BX.ZIndexManager.unregister(obMsg);
+			BX$1.ZIndexManager.unregister(obMsg);
 			obMsg.parentNode.removeChild(obMsg);
-			if (node) node.bxmsg = null;
-			BX.cleanNode(obMsg, true);
+			if (node) {
+				node.bxmsg = null;
+			}
+			BX$1.cleanNode(obMsg, true);
 		}
-	};
-
-	BX.setJSList = function(scripts)
-	{
-		if (BX.type.isArray(scripts))
-		{
-			scripts = scripts.map(function(script) {
-				return normalizeUrl(script)
-			});
-
-			jsList = jsList.concat(scripts);
-		}
-	};
-
-	BX.getJSList = function()
-	{
-		initJsList();
-		return jsList;
-	};
-
-	BX.setCSSList = function(cssFiles)
-	{
-		if (BX.type.isArray(cssFiles))
-		{
-			cssFiles = cssFiles.map(function(cssFile) {
-				return normalizeUrl(cssFile);
-			});
-
-			cssList = cssList.concat(cssFiles);
-		}
-	};
-
-	BX.getCSSList = function()
-	{
-		initCssList();
-		return cssList;
-	};
-
-	BX.getJSPath = function(js)
-	{
-		return js.replace(/^(http[s]*:)*\/\/[^\/]+/i, '');
-	};
-
-	BX.getCSSPath = function(css)
-	{
-		return css.replace(/^(http[s]*:)*\/\/[^\/]+/i, '');
-	};
-
-	BX.getCDNPath = function(path)
-	{
-		return path;
-	};
-
-	BX.loadScript = function(script, callback, doc)
-	{
-		if (BX.type.isString(script))
-		{
-			script = [script];
-		}
-
-		return BX.load(script, callback, doc);
-	};
-
-	BX.loadCSS = function(css, doc, win)
-	{
-		if (BX.type.isString(css))
-		{
-			css = [css];
-		}
-
-		if (BX.type.isArray(css))
-		{
-			css = css.map(function(url) {
-				return { url: url, ext: "css" }
-			});
-
-			BX.load(css, null, doc);
-		}
-	};
-
-	const LOADING = 3;
-	const LOADED = 4;
-	const assets = {};
-	const loadingAssetCallbacks = {};
-
-	BX.load = function(items, callback, doc, reject)
-	{
-		if (!BX.isReady)
-		{
-			var _args = arguments;
-			BX.ready(function() {
-				BX.load.apply(this, _args);
-			});
-
-			return null;
-		}
-
-		doc = doc || document;
-
-		callback = BX.Type.isFunction(callback) ? callback : () => {};
-
-		return loadAsync(items, callback, doc, reject);
-	};
-
-	function loadAsync(items, callback, doc, reject)
-	{
-		if (!BX.type.isArray(items))
-		{
-			callback();
-
+	}
+	function _adjustWait() {
+		if (!this.bxmsg) {
 			return;
 		}
-
-		function onLoad()
-		{
-			const nextAsset = queue.shift();
-			if (nextAsset)
-			{
-				load(nextAsset, onLoad, doc, reject);
-			}
-			else if (allLoaded())
-			{
-				callback();
-			}
+		const arContainerPos = BX$1.pos(this);
+		let div_top = arContainerPos.top;
+		if (div_top < BX$1.GetDocElement().scrollTop) {
+			div_top = BX$1.GetDocElement().scrollTop + 5;
 		}
-
-		function allLoaded()
-		{
-			for (const name in assetMap)
-			{
-				if (assetMap[name].state !== LOADED)
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		const queue = [];
-		const assetMap = {};
-		items.forEach(item => {
-			const asset = getAsset(item);
-			if (asset && asset.state !== LOADED)
-			{
-				queue.push(asset);
-				assetMap[asset.name] = asset;
-			}
-		});
-
-		if (queue.length > 0)
-		{
-			const maxParallelLoads = 6;
-			const parallelLoads = Math.min(queue.length, maxParallelLoads);
-			const firstPackage = queue.splice(0, parallelLoads);
-			firstPackage.forEach(asset => {
-				load(asset, onLoad, doc, reject);
-			});
-		}
-		else
-		{
-			callback();
+		this.bxmsg.style.top = `${div_top + 5}px`;
+		if (this == BX$1.GetDocElement()) {
+			this.bxmsg.style.right = '5px';
+		} else {
+			this.bxmsg.style.left = `${arContainerPos.right - this.bxmsg.offsetWidth - 5}px`;
 		}
 	}
 
-	function load(asset, callback, doc, reject)
-	{
-		callback = callback || BX.DoNothing;
-
-		if (asset.state === LOADED)
-		{
-			callback();
-			return;
+	function isAmPmMode(returnConst) {
+		if (returnConst === true) {
+			return BX$1.message.AMPM_MODE;
 		}
-
-		if (asset.state === LOADING)
-		{
-			if (!BX.Type.isArray(loadingAssetCallbacks[asset.name]))
-			{
-				loadingAssetCallbacks[asset.name] = [];
-			}
-
-			loadingAssetCallbacks[asset.name].push(callback);
-
-			return;
-		}
-
-		asset.state = LOADING;
-
-		const onReject = () => {
-			delete assets[asset.name];
-			delete loadingAssetCallbacks[asset.name];
-			reject();
-		};
-
-		loadAsset(
-			asset,
-			function () {
-				asset.state = LOADED;
-				callback();
-				if (BX.Type.isArrayFilled(loadingAssetCallbacks[asset.name]))
-				{
-					for (const cb of loadingAssetCallbacks[asset.name])
-					{
-						cb();
-					}
-				}
-
-				delete loadingAssetCallbacks[asset.name];
-			},
-			doc,
-			BX.Type.isFunction(reject) ? onReject : null,
-		);
+		return BX$1.message.AMPM_MODE !== false;
 	}
-
-	function loadAsset(asset, callback, doc, reject)
-	{
-		callback = callback || BX.DoNothing;
-
-		function error(event)
-		{
-			window.clearTimeout(asset.errorTimeout);
-			window.clearTimeout(asset.cssTimeout);
-			ele.onload = ele.onreadystatechange = ele.onerror = null;
-			if (BX.Type.isFunction(reject))
-			{
-				reject();
-			}
-			else
-			{
-				callback();
-			}
-		}
-
-		function process(event)
-		{
-			if (ext === "css")
-			{
-				cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
-			}
-			else
-			{
-				jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
-			}
-
-			event = event || window.event;
-			if (event.type === "load" || (/loaded|complete/.test(ele.readyState) && (!doc.documentMode || doc.documentMode < 9)))
-			{
-				window.clearTimeout(asset.errorTimeout);
-				window.clearTimeout(asset.cssTimeout);
-				ele.onload = ele.onreadystatechange = ele.onerror = null;
-				callback();
-			}
-		}
-
-		function isCssLoaded()
-		{
-			if (asset.state !== LOADED && asset.cssRetries <= 20)
-			{
-				for (var i = 0, l = doc.styleSheets.length; i < l; i++)
-				{
-					if (doc.styleSheets[i].href === ele.href)
-					{
-						process({"type": "load"});
-						return;
-					}
-				}
-
-				asset.cssRetries++;
-				asset.cssTimeout = window.setTimeout(isCssLoaded, 250);
-			}
-		}
-
-		let ele = null;
-		const ext = BX.type.isNotEmptyString(asset.ext) ? asset.ext : BX.util.getExtension(asset.url);
-
-		if (ext === "css")
-		{
-			ele = doc.createElement("link");
-			ele.type = "text/" + (asset.type || "css");
-			ele.rel = "stylesheet";
-			ele.href = asset.url;
-
-			asset.cssRetries = 0;
-			asset.cssTimeout = window.setTimeout(isCssLoaded, 500);
-		}
-		else
-		{
-			ele = doc.createElement("script");
-			ele.type = "text/" + (asset.type || "javascript");
-			ele.src = asset.url;
-		}
-
-		ele.onload = ele.onreadystatechange = process;
-		ele.onerror = error;
-
-		ele.async = asset.async === true;
-		ele.defer = false;
-
-		asset.errorTimeout = window.setTimeout(function () {
-			error({type: "timeout"});
-		}, 7000);
-
-		let templateLink = null;
-		const head = doc.head || doc.getElementsByTagName("head")[0];
-		if (ext === "css" && (templateLink = getTemplateLink(head)) !== null)
-		{
-			templateLink.parentNode.insertBefore(ele, templateLink);
-		}
-		else
-		{
-			head.insertBefore(ele, head.lastChild);
-		}
-	}
-
-	function getAsset(item)
-	{
-		var asset = {};
-		if (typeof item === "object")
-		{
-			asset = item;
-			asset.name = asset.name ? asset.name : BX.util.hashCode(item.url);
-		}
-		else
-		{
-			asset = { name: BX.util.hashCode(item), url : item };
-		}
-
-		var ext = BX.type.isNotEmptyString(asset.ext) ? asset.ext : BX.util.getExtension(asset.url);
-		if ((ext === "css" && isCssLoaded(asset.url)) || isScriptLoaded(asset.url))
-		{
-			asset.state = LOADED;
-		}
-
-		var existing = assets[asset.name];
-		if (existing && existing.url === asset.url)
-		{
-			return existing;
-		}
-
-		assets[asset.name] = asset;
-
-		return asset;
-	}
-
-	function normalizeUrl(url)
-	{
-		if (!BX.type.isNotEmptyString(url))
-		{
-			return "";
-		}
-
-		url = BX.getJSPath(url);
-		url = url.replace(/\?[0-9]*$/, "");
-
-		return url;
-	}
-
-	function normalizeMinUrl(url)
-	{
-		if (!BX.type.isNotEmptyString(url))
-		{
-			return "";
-		}
-
-		var minPos = url.indexOf(".min");
-		return minPos >= 0 ? url.substr(0, minPos) + url.substr(minPos + 4) : url;
-	}
-
-	function isCssLoaded(fileSrc)
-	{
-		initCssList();
-
-		fileSrc = normalizeUrl(fileSrc);
-		var fileSrcMin = normalizeMinUrl(fileSrc);
-
-		return (fileSrc !== fileSrcMin && BX.util.in_array(fileSrcMin, cssList)) || BX.util.in_array(fileSrc, cssList);
-	}
-
-	function initCssList()
-	{
-		if(!cssInit)
-		{
-			var linksCol = document.getElementsByTagName('link');
-
-			if(!!linksCol && linksCol.length > 0)
-			{
-				for(var i = 0; i < linksCol.length; i++)
-				{
-					var href = linksCol[i].getAttribute('href');
-					if (BX.type.isNotEmptyString(href))
-					{
-						href = normalizeMinUrl(normalizeUrl(href));
-						cssList.push(href);
-					}
-				}
-			}
-			cssInit = true;
-		}
-	}
-
-	function getTemplateLink(head)
-	{
-		var findLink = function(tag)
-		{
-			var links = head.getElementsByTagName(tag);
-			for (var i = 0, length = links.length; i < length; i++)
-			{
-				var templateStyle = links[i].getAttribute("data-template-style");
-				if (BX.type.isNotEmptyString(templateStyle) && templateStyle == "true")
-				{
-					return links[i];
-				}
-			}
-
-			return null;
-		};
-
-		var link = findLink("link");
-		if (link === null)
-		{
-			link = findLink("style");
-		}
-
-		return link;
-	}
-
-	function isScriptLoaded(fileSrc)
-	{
-		initJsList();
-
-		fileSrc = normalizeUrl(fileSrc);
-		var fileSrcMin = normalizeMinUrl(fileSrc);
-
-		return (fileSrc !== fileSrcMin && BX.util.in_array(fileSrcMin, jsList)) || BX.util.in_array(fileSrc, jsList);
-	}
-
-	function initJsList()
-	{
-		if(!jsInit)
-		{
-			var scriptCol = document.getElementsByTagName('script');
-
-			if(!!scriptCol && scriptCol.length > 0)
-			{
-				for(var i=0; i<scriptCol.length; i++)
-				{
-					var src = scriptCol[i].getAttribute('src');
-
-					if (BX.type.isNotEmptyString(src))
-					{
-						src = normalizeMinUrl(normalizeUrl(src));
-						jsList.push(src);
-					}
-				}
-			}
-			jsInit = true;
-		}
-	}
-
-	function reloadInternal(back_url, bAddClearCache)
-	{
-		if (back_url === true)
-		{
-			bAddClearCache = true;
-			back_url = null;
-		}
-
-		var topWindow = (function() {
-			if (BX.PageObject && BX.PageObject.getRootWindow)
-			{
-				return BX.PageObject.getRootWindow();
-			}
-
-			return window.top;
-		})();
-		var new_href = back_url || topWindow.location.href;
-
-		var hashpos = new_href.indexOf('#'), hash = '';
-
-		if (hashpos != -1)
-		{
-			hash = new_href.substr(hashpos);
-			new_href = new_href.substr(0, hashpos);
-		}
-
-		if (bAddClearCache && new_href.indexOf('clear_cache=Y') < 0)
-			new_href += (new_href.indexOf('?') == -1 ? '?' : '&') + 'clear_cache=Y';
-
-		if (hash)
-		{
-			// hack for clearing cache in ajax mode components with history emulation
-			if (bAddClearCache && (hash.substr(0, 5) == 'view/' || hash.substr(0, 6) == '#view/') && hash.indexOf('clear_cache%3DY') < 0)
-				hash += (hash.indexOf('%3F') == -1 ? '%3F' : '%26') + 'clear_cache%3DY';
-
-			new_href = new_href.replace(/(\?|\&)_r=[\d]*/, '');
-			new_href += (new_href.indexOf('?') == -1 ? '?' : '&') + '_r='+Math.round(Math.random()*10000) + hash;
-		}
-
-		topWindow.location.href = new_href;
-	}
-
-	BX.reload = function(back_url, bAddClearCache)
-	{
-		reloadInternal(back_url, bAddClearCache);
-	};
-
-	BX.clearCache = function()
-	{
-		BX.showWait();
-		BX.reload(true);
-	};
-
-	BX.template = function(tpl, callback, bKillTpl)
-	{
-		BX.ready(function() {
-			_processTpl(BX(tpl), callback, bKillTpl);
-		});
-	};
-
-	BX.isAmPmMode = function(returnConst)
-	{
-		if (returnConst === true)
-		{
-			return BX.message.AMPM_MODE;
-		}
-		return BX.message.AMPM_MODE !== false;
-	};
-
-	BX.formatDate = function(date, format)
-	{
+	function formatDate(date, format) {
 		date = date || new Date();
-
-		var bTime = date.getHours() || date.getMinutes() || date.getSeconds(),
-			str = !!format
-				? format :
-				(bTime ? BX.message('FORMAT_DATETIME') : BX.message('FORMAT_DATE')
-				);
-
-		return str.replace(/YYYY/ig, date.getFullYear())
-			.replace(/MMMM/ig, BX.util.str_pad_left((date.getMonth()+1).toString(), 2, '0'))
-			.replace(/MM/ig, BX.util.str_pad_left((date.getMonth()+1).toString(), 2, '0'))
-			.replace(/DD/ig, BX.util.str_pad_left(date.getDate().toString(), 2, '0'))
-			.replace(/HH/ig, BX.util.str_pad_left(date.getHours().toString(), 2, '0'))
-			.replace(/MI/ig, BX.util.str_pad_left(date.getMinutes().toString(), 2, '0'))
-			.replace(/SS/ig, BX.util.str_pad_left(date.getSeconds().toString(), 2, '0'));
-	};
-	BX.formatName = function(user, template, login)
-	{
+		const bTime = date.getHours() || date.getMinutes() || date.getSeconds();
+		const str = format ? format : bTime ? BX$1.message('FORMAT_DATETIME') : BX$1.message('FORMAT_DATE');
+		return str.replace(/YYYY/ig, date.getFullYear()).replace(/MMMM/ig, util.str_pad_left((date.getMonth() + 1).toString(), 2, '0')).replace(/MM/ig, util.str_pad_left((date.getMonth() + 1).toString(), 2, '0')).replace(/DD/ig, util.str_pad_left(date.getDate().toString(), 2, '0')).replace(/HH/ig, util.str_pad_left(date.getHours().toString(), 2, '0')).replace(/MI/ig, util.str_pad_left(date.getMinutes().toString(), 2, '0')).replace(/SS/ig, util.str_pad_left(date.getSeconds().toString(), 2, '0'));
+	}
+	function formatName(user, template, login) {
 		user = user || {};
-		template = (template || '');
-		var replacement = {
-			TITLE : (user["TITLE"] || ''),
-			NAME : (user["NAME"] || ''),
-			LAST_NAME : (user["LAST_NAME"] || ''),
-			SECOND_NAME : (user["SECOND_NAME"] || ''),
-			LOGIN : (user["LOGIN"] || ''),
-			NAME_SHORT : user["NAME"] ? user["NAME"].substr(0, 1) + '.' : '',
-			LAST_NAME_SHORT : user["LAST_NAME"] ? user["LAST_NAME"].substr(0, 1) + '.' : '',
-			SECOND_NAME_SHORT : user["SECOND_NAME"] ? user["SECOND_NAME"].substr(0, 1) + '.' : '',
-			EMAIL : (user["EMAIL"] || ''),
-			ID : (user["ID"] || ''),
-			NOBR : "",
-			'/NOBR' : ""
-		}, result = template;
-		for (var ii in replacement)
-		{
-			if (replacement.hasOwnProperty(ii))
-			{
-				result = result.replace("#" + ii+ "#", replacement[ii])
+		template = template || '';
+		const replacement = {
+			TITLE: user.TITLE || '',
+			NAME: user.NAME || '',
+			LAST_NAME: user.LAST_NAME || '',
+			SECOND_NAME: user.SECOND_NAME || '',
+			LOGIN: user.LOGIN || '',
+			NAME_SHORT: user.NAME ? `${user.NAME.substr(0, 1)}.` : '',
+			LAST_NAME_SHORT: user.LAST_NAME ? `${user.LAST_NAME.substr(0, 1)}.` : '',
+			SECOND_NAME_SHORT: user.SECOND_NAME ? `${user.SECOND_NAME.substr(0, 1)}.` : '',
+			EMAIL: user.EMAIL || '',
+			ID: user.ID || '',
+			NOBR: '',
+			'/NOBR': ''
+		};
+		let result = template;
+		for (const ii in replacement) {
+			if (Object.prototype.hasOwnProperty.call(replacement, ii)) {
+				result = result.replace(`#${ii}#`, replacement[ii]);
 			}
 		}
-		result = result.replace(/([\s]+)/gi, " ").trim();
-		if (result == "")
-		{
-			result = (login == "Y" ? replacement["LOGIN"] : "");
-			result = (result == "" ? "Noname" : result);
+		result = result.replace(/(\s+)/gi, ' ').trim();
+		if (result == '') {
+			result = login == 'Y' ? replacement.LOGIN : '';
+			result = result == '' ? 'Noname' : result;
 		}
 		return result;
-	};
-
-	BX.getNumMonth = function(month)
-	{
-		var wordMonthCut = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-		var wordMonth = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-
-		var q = month.toUpperCase();
-		for (i = 1; i <= 12; i++)
-		{
-			if (q == BX.message('MON_'+i).toUpperCase() || q == BX.message('MONTH_'+i).toUpperCase() || q == wordMonthCut[i-1].toUpperCase() || q == wordMonth[i-1].toUpperCase())
-			{
+	}
+	function getNumMonth(month) {
+		const wordMonthCut = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+		const wordMonth = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+		const q = month.toUpperCase();
+		let i;
+		for (i = 1; i <= 12; i++) {
+			if (q == BX$1.message(`MON_${i}`).toUpperCase() || q == BX$1.message(`MONTH_${i}`).toUpperCase() || q == wordMonthCut[i - 1].toUpperCase() || q == wordMonth[i - 1].toUpperCase()) {
 				return i;
 			}
 		}
 		return month;
-	};
-
-	BX.parseDate = function(str, bUTC, formatDate, formatDatetime)
-	{
-		if (BX.type.isNotEmptyString(str))
-		{
-			if (!formatDate)
-				formatDate = BX.message('FORMAT_DATE');
-			if (!formatDatetime)
-				formatDatetime = BX.message('FORMAT_DATETIME');
-
-			var regMonths = '';
-			for (i = 1; i <= 12; i++)
-			{
-				regMonths = regMonths + '|' + BX.message('MON_'+i);
+	}
+	function parseDate(str, bUTC, dateFormat, formatDatetime) {
+		if (BX$1.type.isNotEmptyString(str)) {
+			if (!dateFormat) {
+				dateFormat = BX$1.message('FORMAT_DATE');
 			}
-
-			var expr = new RegExp('([0-9]+|[a-z]+' + regMonths + ')', 'ig');
-			var aDate = str.match(expr),
-				aFormat = formatDate.match(/(DD|MI|MMMM|MM|M|YYYY)/ig),
-				i, cnt,
-				aDateArgs=[], aFormatArgs=[],
-				aResult={};
-
-			if (!aDate)
+			if (!formatDatetime) {
+				formatDatetime = BX$1.message('FORMAT_DATETIME');
+			}
+			let i;
+			let cnt;
+			let regMonths = '';
+			for (i = 1; i <= 12; i++) {
+				regMonths = `${regMonths}|${BX$1.message(`MON_${i}`)}`;
+			}
+			const expr = new RegExp(`([0-9]+|[a-z]+${regMonths})`, 'ig');
+			const aDate = str.match(expr);
+			let aFormat = dateFormat.match(/(DD|MI|MMMM|MM|M|YYYY)/ig);
+			const aDateArgs = [];
+			const aFormatArgs = [];
+			const aResult = {};
+			if (!aDate) {
 				return null;
-
-			if(aDate.length > aFormat.length)
-			{
+			}
+			if (aDate.length > aFormat.length) {
 				aFormat = formatDatetime.match(/(DD|MI|MMMM|MM|M|YYYY|HH|H|SS|TT|T|GG|G)/ig);
 			}
-
-			for(i = 0, cnt = aDate.length; i < cnt; i++)
-			{
-				if(BX.util.trim(aDate[i]) != '')
-				{
+			for (i = 0, cnt = aDate.length; i < cnt; i++) {
+				if (util.trim(aDate[i]) != '') {
 					aDateArgs[aDateArgs.length] = aDate[i];
 				}
 			}
-
-			for(i = 0, cnt = aFormat.length; i < cnt; i++)
-			{
-				if(BX.util.trim(aFormat[i]) != '')
-				{
+			for (i = 0, cnt = aFormat.length; i < cnt; i++) {
+				if (util.trim(aFormat[i]) != '') {
 					aFormatArgs[aFormatArgs.length] = aFormat[i];
 				}
 			}
-
-
-			var m = BX.util.array_search('MMMM', aFormatArgs);
-			if (m > 0)
-			{
-				aDateArgs[m] = BX.getNumMonth(aDateArgs[m]);
-				aFormatArgs[m] = "MM";
-			}
-			else
-			{
-				m = BX.util.array_search('M', aFormatArgs);
-				if (m > 0)
-				{
-					aDateArgs[m] = BX.getNumMonth(aDateArgs[m]);
-					aFormatArgs[m] = "MM";
+			let m = util.array_search('MMMM', aFormatArgs);
+			if (m > 0) {
+				aDateArgs[m] = getNumMonth(aDateArgs[m]);
+				aFormatArgs[m] = 'MM';
+			} else {
+				m = util.array_search('M', aFormatArgs);
+				if (m > 0) {
+					aDateArgs[m] = getNumMonth(aDateArgs[m]);
+					aFormatArgs[m] = 'MM';
 				}
 			}
-
-			for(i = 0, cnt = aFormatArgs.length; i < cnt; i++)
-			{
-				var k = aFormatArgs[i].toUpperCase();
+			for (i = 0, cnt = aFormatArgs.length; i < cnt; i++) {
+				const k = aFormatArgs[i].toUpperCase();
 				aResult[k] = k == 'T' || k == 'TT' ? aDateArgs[i] : parseInt(aDateArgs[i], 10);
 			}
-
-			if(aResult['DD'] > 0 && aResult['MM'] > 0 && aResult['YYYY'] > 0)
-			{
-				var d = new Date();
-
-				if(bUTC)
-				{
+			if (aResult.DD > 0 && aResult.MM > 0 && aResult.YYYY > 0) {
+				const d = new Date();
+				if (bUTC) {
 					d.setUTCDate(1);
-					d.setUTCFullYear(aResult['YYYY']);
-					d.setUTCMonth(aResult['MM'] - 1);
-					d.setUTCDate(aResult['DD']);
+					d.setUTCFullYear(aResult.YYYY);
+					d.setUTCMonth(aResult.MM - 1);
+					d.setUTCDate(aResult.DD);
 					d.setUTCHours(0, 0, 0, 0);
-				}
-				else
-				{
+				} else {
 					d.setDate(1);
-					d.setFullYear(aResult['YYYY']);
-					d.setMonth(aResult['MM'] - 1);
-					d.setDate(aResult['DD']);
+					d.setFullYear(aResult.YYYY);
+					d.setMonth(aResult.MM - 1);
+					d.setDate(aResult.DD);
 					d.setHours(0, 0, 0, 0);
 				}
-
-				if(
-					(!isNaN(aResult['HH']) || !isNaN(aResult['GG']) || !isNaN(aResult['H']) || !isNaN(aResult['G']))
-					&& !isNaN(aResult['MI'])
-				)
-				{
-					if (!isNaN(aResult['H']) || !isNaN(aResult['G']))
-					{
-						var bPM = (aResult['T']||aResult['TT']||'am').toUpperCase()=='PM';
-						var h = parseInt(aResult['H']||aResult['G']||0, 10);
-						if(bPM)
-						{
-							aResult['HH'] = h + (h == 12 ? 0 : 12);
+				if ((!isNaN(aResult.HH) || !isNaN(aResult.GG) || !isNaN(aResult.H) || !isNaN(aResult.G)) && !isNaN(aResult.MI)) {
+					if (!isNaN(aResult.H) || !isNaN(aResult.G)) {
+						const bPM = (aResult.T || aResult.TT || 'am').toUpperCase() == 'PM';
+						const h = parseInt(aResult.H || aResult.G || 0, 10);
+						if (bPM) {
+							aResult.HH = h + (h == 12 ? 0 : 12);
+						} else {
+							aResult.HH = h < 12 ? h : 0;
 						}
-						else
-						{
-							aResult['HH'] = h < 12 ? h : 0;
-						}
+					} else {
+						aResult.HH = parseInt(aResult.HH || aResult.GG || 0, 10);
 					}
-					else
-					{
-						aResult['HH'] = parseInt(aResult['HH']||aResult['GG']||0, 10);
+					if (isNaN(aResult.SS)) {
+						aResult.SS = 0;
 					}
-
-					if (isNaN(aResult['SS']))
-						aResult['SS'] = 0;
-
-					if(bUTC)
-					{
-						d.setUTCHours(aResult['HH'], aResult['MI'], aResult['SS']);
-					}
-					else
-					{
-						d.setHours(aResult['HH'], aResult['MI'], aResult['SS']);
+					if (bUTC) {
+						d.setUTCHours(aResult.HH, aResult.MI, aResult.SS);
+					} else {
+						d.setHours(aResult.HH, aResult.MI, aResult.SS);
 					}
 				}
-
 				return d;
 			}
 		}
-
 		return null;
-	};
+	}
 
-	BX.selectUtils =
-		{
-			addNewOption: function(oSelect, opt_value, opt_name, do_sort, check_unique)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					var n = oSelect.length;
-					if(check_unique !== false)
-					{
-						for(var i=0;i<n;i++)
-						{
-							if(oSelect[i].value==opt_value)
-							{
-								return;
-							}
-						}
-					}
-
-					oSelect.options[n] = new Option(opt_name, opt_value, false, false);
-				}
-
-				if(do_sort === true)
-				{
-					this.sortSelect(oSelect);
-				}
-			},
-
-			deleteOption: function(oSelect, opt_value)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					for(var i=0;i<oSelect.length;i++)
-					{
-						if(oSelect[i].value==opt_value)
-						{
-							oSelect.remove(i);
-							break;
-						}
-					}
-				}
-			},
-
-			deleteSelectedOptions: function(oSelect)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					var i=0;
-					while(i<oSelect.length)
-					{
-						if(oSelect[i].selected)
-						{
-							oSelect[i].selected=false;
-							oSelect.remove(i);
-						}
-						else
-						{
-							i++;
-						}
-					}
-				}
-			},
-
-			deleteAllOptions: function(oSelect)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					for(var i=oSelect.length-1; i>=0; i--)
-					{
-						oSelect.remove(i);
-					}
-				}
-			},
-
-			optionCompare: function(record1, record2)
-			{
-				var value1 = record1.optText.toLowerCase();
-				var value2 = record2.optText.toLowerCase();
-				if (value1 > value2) return(1);
-				if (value1 < value2) return(-1);
-				return(0);
-			},
-
-			sortSelect: function(oSelect)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					var myOptions = [];
-					var n = oSelect.options.length;
-					var i;
-					for (i=0;i<n;i++)
-					{
-						myOptions[i] = {
-							optText:oSelect[i].text,
-							optValue:oSelect[i].value
-						};
-					}
-					myOptions.sort(this.optionCompare);
-					oSelect.length=0;
-					n = myOptions.length;
-					for(i=0;i<n;i++)
-					{
-						oSelect[i] = new Option(myOptions[i].optText, myOptions[i].optValue, false, false);
-					}
-				}
-			},
-
-			selectAllOptions: function(oSelect)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					var n = oSelect.length;
-					for(var i=0;i<n;i++)
-					{
-						oSelect[i].selected=true;
-					}
-				}
-			},
-
-			selectOption: function(oSelect, opt_value)
-			{
-				oSelect = BX(oSelect);
-				if(oSelect)
-				{
-					var n = oSelect.length;
-					for(var i=0;i<n;i++)
-					{
-						oSelect[i].selected = (oSelect[i].value == opt_value);
-					}
-				}
-			},
-
-			addSelectedOptions: function(oSelect, to_select_id, check_unique, do_sort)
-			{
-				oSelect = BX(oSelect);
-				if(!oSelect)
-					return;
-				var n = oSelect.length;
-				for(var i=0; i<n; i++)
-					if(oSelect[i].selected)
-						this.addNewOption(to_select_id, oSelect[i].value, oSelect[i].text, do_sort, check_unique);
-			},
-
-			moveOptionsUp: function(oSelect)
-			{
-				oSelect = BX(oSelect);
-				if(!oSelect)
-					return;
-				var n = oSelect.length;
-				for(var i=0; i<n; i++)
-				{
-					if(oSelect[i].selected && i>0 && oSelect[i-1].selected == false)
-					{
-						var option = new Option(oSelect[i].text, oSelect[i].value);
-						oSelect[i] = new Option(oSelect[i-1].text, oSelect[i-1].value);
-						oSelect[i].selected = false;
-						oSelect[i-1] = option;
-						oSelect[i-1].selected = true;
-					}
-				}
-			},
-
-			moveOptionsDown: function(oSelect)
-			{
-				oSelect = BX(oSelect);
-				if(!oSelect)
-					return;
-				var n = oSelect.length;
-				for(var i=n-1; i>=0; i--)
-				{
-					if(oSelect[i].selected && i<n-1 && oSelect[i+1].selected == false)
-					{
-						var option = new Option(oSelect[i].text, oSelect[i].value);
-						oSelect[i] = new Option(oSelect[i+1].text, oSelect[i+1].value);
-						oSelect[i].selected = false;
-						oSelect[i+1] = option;
-						oSelect[i+1].selected = true;
-					}
-				}
-			}
-		};
-
-	BX.getEventTarget = function(e)
-	{
-		if(e.target)
-		{
-			return e.target;
+	BX$1.CHint = function (params) {
+		if (BX$1.CHint.cssLoaded === false) {
+			load(['/bitrix/js/main/core/css/core_hint.css']);
+			BX$1.CHint.cssLoaded = true;
 		}
-		else if(e.srcElement)
-		{
-			return e.srcElement;
-		}
-		return null;
-	};
-
-	BX.convert = {
-		toNumber: function(value)
-		{
-			if(BX.type.isNumber(value))
-			{
-				return value;
-			}
-
-			value = Number(value);
-			return !isNaN(value) ? value : 0;
-		},
-		nodeListToArray: function(nodes)
-		{
-			try
-			{
-				return (Array.prototype.slice.call(nodes, 0));
-			}
-			catch (ex)
-			{
-				var ary = [];
-				for(var i = 0, l = nodes.length; i < l; i++)
-				{
-					ary.push(nodes[i]);
-				}
-				return ary;
-			}
-		}
-	};
-
-	/******* HINT ***************/
-// if function has 2 params - the 2nd one is hint html. otherwise hint_html is third and hint_title - 2nd;
-// '<div onmouseover="BX.hint(this, 'This is &lt;b&gt;Hint&lt;/b&gt;')"'>;
-// BX.hint(el, 'This is <b>Hint</b>') - this won't work, use constructor
-	BX.hint = function(el, hint_title, hint_html, hint_id)
-	{
-		if (null == hint_html)
-		{
-			hint_html = hint_title;
-			hint_title = '';
-		}
-
-		if (null == el.BXHINT)
-		{
-			el.BXHINT = new BX.CHint({
-				parent: el, hint: hint_html, title: hint_title, id: hint_id
-			});
-			el.BXHINT.Show();
-		}
-	};
-
-	BX.hint_replace = function(el, hint_title, hint_html)
-	{
-		if (null == hint_html)
-		{
-			hint_html = hint_title;
-			hint_title = '';
-		}
-
-		if (!el || !el.parentNode || !hint_html)
-			return null;
-
-		var obHint = new BX.CHint({
-			hint: hint_html,
-			title: hint_title
-		});
-
-		obHint.CreateParent();
-
-		el.parentNode.insertBefore(obHint.PARENT, el);
-		el.parentNode.removeChild(el);
-
-		obHint.PARENT.style.marginLeft = '5px';
-
-		return el;
-	};
-
-	BX.CHint = function(params)
-	{
-		if (BX.CHint.cssLoaded === false)
-		{
-			BX.load(['/bitrix/js/main/core/css/core_hint.css']);
-			BX.CHint.cssLoaded = true;
-		}
-
-		this.PARENT = BX(params.parent);
-
+		this.PARENT = resolve(params.parent);
 		this.HINT = params.hint;
 		this.HINT_TITLE = params.title;
-
 		this.PARAMS = {};
-		for (var i in this.defaultSettings)
-		{
-			if (null == params[i])
+		for (const i in this.defaultSettings) {
+			if (params[i] == null) {
 				this.PARAMS[i] = this.defaultSettings[i];
-			else
+			} else {
 				this.PARAMS[i] = params[i];
+			}
 		}
-
-		if (null != params.id)
+		if (params.id != null) {
 			this.ID = params.id;
-
+		}
 		this.timer = null;
 		this.bInited = false;
 		this.msover = true;
-
-		if (this.PARAMS.showOnce)
-		{
+		if (this.PARAMS.showOnce) {
 			this.__show();
 			this.msover = false;
-			this.timer = setTimeout(BX.proxy(this.__hide, this), this.PARAMS.hide_timeout);
-		}
-		else if (this.PARENT)
-		{
-			BX.bind(this.PARENT, 'mouseover', BX.proxy(this.Show, this));
-			BX.bind(this.PARENT, 'mouseout', BX.proxy(this.Hide, this));
+			this.timer = setTimeout(proxy(this.__hide, this), this.PARAMS.hide_timeout);
+		} else if (this.PARENT) {
+			BX$1.bind(this.PARENT, 'mouseover', proxy(this.Show, this));
+			BX$1.bind(this.PARENT, 'mouseout', proxy(this.Hide, this));
 		}
 	};
-
-	BX.CHint.cssLoaded = false;
-
-	BX.CHint.openHints = new Set();
-
-	BX.CHint.globalDisabled = false;
-
-	BX.CHint.handleMenuOpen = function() {
-		BX.CHint.globalDisabled = true;
-
-		BX.CHint.openHints.forEach(function(hint) {
-			hint.__hide_immediately();
+	BX$1.CHint.cssLoaded = false;
+	BX$1.CHint.openHints = new Set();
+	BX$1.CHint.globalDisabled = false;
+	BX$1.CHint.handleMenuOpen = function () {
+		BX$1.CHint.globalDisabled = true;
+		BX$1.CHint.openHints.forEach(function (openHint) {
+			openHint.__hide_immediately();
 		});
 	};
-
-	BX.CHint.handleMenuClose = function() {
-		BX.CHint.globalDisabled = false;
+	BX$1.CHint.handleMenuClose = function () {
+		BX$1.CHint.globalDisabled = false;
 	};
-
-	BX.addCustomEvent('onMenuOpen', BX.CHint.handleMenuOpen);
-	BX.addCustomEvent('onMenuClose', BX.CHint.handleMenuClose);
-
-	BX.CHint.prototype.defaultSettings = {
+	BX$1.CHint.prototype.defaultSettings = {
 		show_timeout: 1000,
 		hide_timeout: 500,
 		dx: 2,
@@ -9942,610 +10630,734 @@ window._main_polyfill_core = true;
 		preventHide: true,
 		min_width: 250
 	};
-
-	BX.CHint.prototype.CreateParent = function(element, params)
-	{
-		if (this.PARENT)
-		{
-			BX.unbind(this.PARENT, 'mouseover', BX.proxy(this.Show, this));
-			BX.unbind(this.PARENT, 'mouseout', BX.proxy(this.Hide, this));
+	BX$1.CHint.prototype.CreateParent = function (element, params) {
+		if (this.PARENT) {
+			BX$1.unbind(this.PARENT, 'mouseover', proxy(this.Show, this));
+			BX$1.unbind(this.PARENT, 'mouseout', proxy(this.Hide, this));
 		}
-
-		if (!params) params = {};
-		var type = 'icon';
-
-		if (params.type && (params.type == "link" || params.type == "icon"))
+		if (!params) {
+			params = {};
+		}
+		let type = 'icon';
+		if (params.type && (params.type == 'link' || params.type == 'icon')) {
 			type = params.type;
-
-		if (element)
-			type = "element";
-
-		if (type == "icon")
-		{
-			element = BX.create('IMG', {
+		}
+		if (element) {
+			type = 'element';
+		}
+		if (type == 'icon') {
+			element = BX$1.create('IMG', {
 				props: {
-					src: params.iconSrc
-						? params.iconSrc
-						: "/bitrix/js/main/core/images/hint.gif"
+					src: params.iconSrc ? params.iconSrc : '/bitrix/js/main/core/images/hint.gif'
 				}
 			});
-		}
-		else if (type == "link")
-		{
-			element = BX.create("A", {
-				props: {href: 'javascript:void(0)'},
+		} else if (type == 'link') {
+			element = BX$1.create('A', {
+				props: {
+					href: 'javascript:void(0)'
+				},
 				html: '[?]'
 			});
 		}
-
 		this.PARENT = element;
-
-		BX.bind(this.PARENT, 'mouseover', BX.proxy(this.Show, this));
-		BX.bind(this.PARENT, 'mouseout', BX.proxy(this.Hide, this));
-
+		BX$1.bind(this.PARENT, 'mouseover', proxy(this.Show, this));
+		BX$1.bind(this.PARENT, 'mouseout', proxy(this.Hide, this));
 		return this.PARENT;
 	};
-
-	BX.CHint.prototype.Show = function()
-	{
+	BX$1.CHint.prototype.Show = function () {
 		this.msover = true;
-
-		if (null != this.timer)
+		if (this.timer != null) {
 			clearTimeout(this.timer);
-
-		this.timer = setTimeout(BX.proxy(this.__show, this), this.PARAMS.show_timeout);
+		}
+		this.timer = setTimeout(proxy(this.__show, this), this.PARAMS.show_timeout);
 	};
-
-	BX.CHint.prototype.Hide = function()
-	{
+	BX$1.CHint.prototype.Hide = function () {
 		this.msover = false;
-
-		if (null != this.timer)
+		if (this.timer != null) {
 			clearTimeout(this.timer);
-
-		this.timer = setTimeout(BX.proxy(this.__hide, this), this.PARAMS.hide_timeout);
+		}
+		this.timer = setTimeout(proxy(this.__hide, this), this.PARAMS.hide_timeout);
 	};
-
-	BX.CHint.prototype.__show = function()
-	{
-		if (!this.msover || this.disabled || BX.CHint.globalDisabled) return;
-		if (!this.bInited) this.Init();
-
-		if (this.prepareAdjustPos())
-		{
+	BX$1.CHint.prototype.__show = function () {
+		if (!this.msover || this.disabled || BX$1.CHint.globalDisabled) {
+			return;
+		}
+		if (!this.bInited) {
+			this.Init();
+		}
+		if (this.prepareAdjustPos()) {
 			this.DIV.style.display = 'block';
-			BX.ZIndexManager.bringToFront(this.DIV);
-
+			BX$1.ZIndexManager.bringToFront(this.DIV);
 			this.adjustPos();
-
-			BX.CHint.openHints.add(this);
-
-			BX.bind(window, 'scroll', BX.proxy(this.__onscroll, this));
-
-			if (this.PARAMS.showOnce)
-			{
-				this.timer = setTimeout(BX.proxy(this.__hide, this), this.PARAMS.hide_timeout);
+			BX$1.CHint.openHints.add(this);
+			BX$1.bind(window, 'scroll', proxy(this.__onscroll, this));
+			if (this.PARAMS.showOnce) {
+				this.timer = setTimeout(proxy(this.__hide, this), this.PARAMS.hide_timeout);
 			}
 		}
 	};
-
-	BX.CHint.prototype.__onscroll = function()
-	{
-		if (!BX.admin || !BX.admin.panel || !BX.admin.panel.isFixed()) return;
-
-		if (this.scrollTimer) clearTimeout(this.scrollTimer);
-
-		this.DIV.style.display = 'none';
-		this.scrollTimer = setTimeout(BX.proxy(this.Reopen, this), this.PARAMS.show_timeout);
-	};
-
-	BX.CHint.prototype.Reopen = function()
-	{
-		if (null != this.timer) clearTimeout(this.timer);
-		this.timer = setTimeout(BX.proxy(this.__show, this), 50);
-	};
-
-	BX.CHint.prototype.__hide = function()
-	{
-		if (this.msover) return;
-		if (!this.bInited) return;
-
-		BX.unbind(window, 'scroll', BX.proxy(this.Reopen, this));
-
-		BX.CHint.openHints.delete(this);
-
-		if (this.PARAMS.showOnce)
-		{
-			this.Destroy();
+	BX$1.CHint.prototype.__onscroll = function () {
+		if (!BX$1.admin || !BX$1.admin.panel || !BX$1.admin.panel.isFixed()) {
+			return;
 		}
-		else
-		{
+		if (this.scrollTimer) {
+			clearTimeout(this.scrollTimer);
+		}
+		this.DIV.style.display = 'none';
+		this.scrollTimer = setTimeout(proxy(this.Reopen, this), this.PARAMS.show_timeout);
+	};
+	BX$1.CHint.prototype.Reopen = function () {
+		if (this.timer != null) {
+			clearTimeout(this.timer);
+		}
+		this.timer = setTimeout(proxy(this.__show, this), 50);
+	};
+	BX$1.CHint.prototype.__hide = function () {
+		if (this.msover) {
+			return;
+		}
+		if (!this.bInited) {
+			return;
+		}
+		BX$1.unbind(window, 'scroll', proxy(this.Reopen, this));
+		BX$1.CHint.openHints.delete(this);
+		if (this.PARAMS.showOnce) {
+			this.Destroy();
+		} else {
 			this.DIV.style.display = 'none';
 		}
 	};
-
-	BX.CHint.prototype.__hide_immediately = function()
-	{
+	BX$1.CHint.prototype.__hide_immediately = function () {
 		this.msover = false;
 		this.__hide();
 	};
-
-	BX.CHint.prototype.Init = function()
-	{
-		this.DIV = document.body.appendChild(BX.create('DIV', {
-			props: {className: 'bx-panel-tooltip'},
+	BX$1.CHint.prototype.Init = function () {
+		this.DIV = document.body.appendChild(BX$1.create('DIV', {
+			props: {
+				className: 'bx-panel-tooltip'
+			},
 			style: {
 				display: 'none',
 				position: 'absolute',
 				visibility: 'hidden'
 			},
-			children: [
-				(this.CONTENT = BX.create('DIV', {
-					props: {className: 'bx-panel-tooltip-content'},
-					children: [
-						BX.create('DIV', {
-							props: {className: 'bx-panel-tooltip-underlay'},
-							children: [
-								BX.create('DIV', {props: {className: 'bx-panel-tooltip-underlay-bg'}})
-							]
-						})
-					]
-				}))
-			]
+			children: [this.CONTENT = BX$1.create('DIV', {
+				props: {
+					className: 'bx-panel-tooltip-content'
+				},
+				children: [BX$1.create('DIV', {
+					props: {
+						className: 'bx-panel-tooltip-underlay'
+					},
+					children: [BX$1.create('DIV', {
+						props: {
+							className: 'bx-panel-tooltip-underlay-bg'
+						}
+					})]
+				})]
+			})]
 		}));
-
-		BX.ZIndexManager.register(this.DIV);
-
-		if (this.ID)
-		{
-			this.CONTENT.insertBefore(BX.create('A', {
-				attrs: {href: 'javascript:void(0)'},
-				props: {className: 'bx-panel-tooltip-close'},
-				events: {click: BX.delegate(this.Close, this)}
+		BX$1.ZIndexManager.register(this.DIV);
+		if (this.ID) {
+			this.CONTENT.insertBefore(BX$1.create('A', {
+				attrs: {
+					href: 'javascript:void(0)'
+				},
+				props: {
+					className: 'bx-panel-tooltip-close'
+				},
+				events: {
+					click: delegate(this.Close, this)
+				}
 			}), this.CONTENT.firstChild);
 		}
-
-		if (this.HINT_TITLE)
-		{
-			this.CONTENT.appendChild(
-				BX.create('DIV', {
-					props: {className: 'bx-panel-tooltip-title'},
-					text: this.HINT_TITLE
-				})
-			);
+		if (this.HINT_TITLE) {
+			this.CONTENT.appendChild(BX$1.create('DIV', {
+				props: {
+					className: 'bx-panel-tooltip-title'
+				},
+				text: this.HINT_TITLE
+			}));
 		}
-
-		if (this.HINT)
-		{
-			this.CONTENT_TEXT = this.CONTENT.appendChild(BX.create('DIV', {props: {className: 'bx-panel-tooltip-text'}})).appendChild(BX.create('SPAN', {html: this.HINT}));
+		if (this.HINT) {
+			this.CONTENT_TEXT = this.CONTENT.appendChild(BX$1.create('DIV', {
+				props: {
+					className: 'bx-panel-tooltip-text'
+				}
+			})).appendChild(BX$1.create('SPAN', {
+				html: this.HINT
+			}));
 		}
-
-		if (this.PARAMS.preventHide)
-		{
-			BX.bind(this.DIV, 'mouseout', BX.proxy(this.Hide, this));
-			BX.bind(this.DIV, 'mouseover', BX.proxy(this.Show, this));
+		if (this.PARAMS.preventHide) {
+			BX$1.bind(this.DIV, 'mouseout', proxy(this.Hide, this));
+			BX$1.bind(this.DIV, 'mouseover', proxy(this.Show, this));
 		}
-
 		this.bInited = true;
 	};
-
-	BX.CHint.prototype.setContent = function(content)
-	{
+	BX$1.CHint.prototype.setContent = function (content) {
 		this.HINT = content;
-
-		if (this.CONTENT_TEXT)
+		if (this.CONTENT_TEXT) {
 			this.CONTENT_TEXT.innerHTML = this.HINT;
-		else
-			this.CONTENT_TEXT = this.CONTENT.appendChild(BX.create('DIV', {props: {className: 'bx-panel-tooltip-text'}})).appendChild(BX.create('SPAN', {html: this.HINT}));
+		} else {
+			this.CONTENT_TEXT = this.CONTENT.appendChild(BX$1.create('DIV', {
+				props: {
+					className: 'bx-panel-tooltip-text'
+				}
+			})).appendChild(BX$1.create('SPAN', {
+				html: this.HINT
+			}));
+		}
 	};
-
-	BX.CHint.prototype.prepareAdjustPos = function()
-	{
-		this._wnd = {scrollPos: BX.GetWindowScrollPos(),scrollSize:BX.GetWindowScrollSize()};
-		return BX.style(this.PARENT, 'display') != 'none';
+	BX$1.CHint.prototype.prepareAdjustPos = function () {
+		this._wnd = {
+			scrollPos: BX$1.GetWindowScrollPos(),
+			scrollSize: BX$1.GetWindowScrollSize()
+		};
+		return BX$1.style(this.PARENT, 'display') != 'none';
 	};
-
-	BX.CHint.prototype.getAdjustPos = function()
-	{
-		var res = {}, pos = BX.pos(this.PARENT), min_top = 0;
-
+	BX$1.CHint.prototype.getAdjustPos = function () {
+		const res = {};
+		const pos = BX$1.pos(this.PARENT);
+		let min_top = 0;
 		res.top = pos.bottom + this.PARAMS.dx;
-
-		if (BX.admin && BX.admin.panel.DIV)
-		{
-			min_top = BX.admin.panel.DIV.offsetHeight + this.PARAMS.dx;
-
-			if (BX.admin.panel.isFixed())
-			{
+		if (BX$1.admin && BX$1.admin.panel.DIV) {
+			min_top = BX$1.admin.panel.DIV.offsetHeight + this.PARAMS.dx;
+			if (BX$1.admin.panel.isFixed()) {
 				min_top += this._wnd.scrollPos.scrollTop;
 			}
 		}
-
-		if (res.top < min_top)
+		if (res.top < min_top) {
 			res.top = min_top;
-		else
-		{
-			if (res.top + this.DIV.offsetHeight > this._wnd.scrollSize.scrollHeight)
-				res.top = pos.top - this.PARAMS.dx - this.DIV.offsetHeight;
+		} else if (res.top + this.DIV.offsetHeight > this._wnd.scrollSize.scrollHeight) {
+			res.top = pos.top - this.PARAMS.dx - this.DIV.offsetHeight;
 		}
-
 		res.left = pos.left;
-		if (pos.left < this.PARAMS.dx)
-			pos.left = this.PARAMS.dx;
-		else
-		{
-			var floatWidth = this.DIV.offsetWidth;
-
-			var max_left = this._wnd.scrollSize.scrollWidth - floatWidth - this.PARAMS.dx;
-
-			if (res.left > max_left)
+		if (pos.left >= this.PARAMS.dx) {
+			const floatWidth = this.DIV.offsetWidth;
+			const max_left = this._wnd.scrollSize.scrollWidth - floatWidth - this.PARAMS.dx;
+			if (res.left > max_left) {
 				res.left = max_left;
+			}
 		}
-
 		return res;
 	};
-
-	BX.CHint.prototype.adjustWidth = function()
-	{
-		if (this.bWidthAdjusted) return;
-
-		var w = this.DIV.offsetWidth, h = this.DIV.offsetHeight;
-
-		if (w > this.PARAMS.min_width)
-			w = Math.round(Math.sqrt(1.618*w*h));
-
-		if (w < this.PARAMS.min_width)
-			w = this.PARAMS.min_width;
-
-		this.DIV.style.width = w + "px";
-
-		if (this._adjustWidthInt)
-			clearInterval(this._adjustWidthInt);
-		this._adjustWidthInt = setInterval(BX.delegate(this._adjustWidthInterval, this), 5);
-
-		this.bWidthAdjusted = true;
-	};
-
-	BX.CHint.prototype._adjustWidthInterval = function()
-	{
-		if (!this.DIV || this.DIV.style.display == 'none')
-			clearInterval(this._adjustWidthInt);
-
-		var
-			dW = 20,
-			maxWidth = 1500,
-			w = this.DIV.offsetWidth,
-			w1 = this.CONTENT_TEXT.offsetWidth;
-
-		if (w > 0 && w1 > 0 && w - w1 < dW && w < maxWidth)
-		{
-			this.DIV.style.width = (w + dW) + "px";
+	BX$1.CHint.prototype.adjustWidth = function () {
+		if (this.bWidthAdjusted) {
 			return;
 		}
-
+		let w = this.DIV.offsetWidth;
+		const h = this.DIV.offsetHeight;
+		if (w > this.PARAMS.min_width) {
+			w = Math.round(Math.sqrt(1.618 * w * h));
+		}
+		if (w < this.PARAMS.min_width) {
+			w = this.PARAMS.min_width;
+		}
+		this.DIV.style.width = `${w}px`;
+		if (this._adjustWidthInt) {
+			clearInterval(this._adjustWidthInt);
+		}
+		this._adjustWidthInt = setInterval(delegate(this._adjustWidthInterval, this), 5);
+		this.bWidthAdjusted = true;
+	};
+	BX$1.CHint.prototype._adjustWidthInterval = function () {
+		if (!this.DIV || this.DIV.style.display == 'none') {
+			clearInterval(this._adjustWidthInt);
+		}
+		const dW = 20;
+		const maxWidth = 1500;
+		const w = this.DIV.offsetWidth;
+		const w1 = this.CONTENT_TEXT.offsetWidth;
+		if (w > 0 && w1 > 0 && w - w1 < dW && w < maxWidth) {
+			this.DIV.style.width = `${w + dW}px`;
+			return;
+		}
 		clearInterval(this._adjustWidthInt);
 	};
-
-	BX.CHint.prototype.adjustPos = function()
-	{
+	BX$1.CHint.prototype.adjustPos = function () {
 		this.adjustWidth();
-
-		var pos = this.getAdjustPos();
-
-		this.DIV.style.top = pos.top + 'px';
-		this.DIV.style.left = pos.left + 'px';
+		const pos = this.getAdjustPos();
+		this.DIV.style.top = `${pos.top}px`;
+		this.DIV.style.left = `${pos.left}px`;
 	};
-
-	BX.CHint.prototype.Close = function()
-	{
-		if (this.ID && BX.WindowManager)
-			BX.WindowManager.saveWindowOptions(this.ID, {display: 'off'});
+	BX$1.CHint.prototype.Close = function () {
+		if (this.ID && BX$1.WindowManager) {
+			BX$1.WindowManager.saveWindowOptions(this.ID, {
+				display: 'off'
+			});
+		}
 		this.__hide_immediately();
 		this.Destroy();
 	};
-
-	BX.CHint.prototype.Destroy = function()
-	{
-		if (this.PARENT)
-		{
-			BX.unbind(this.PARENT, 'mouseover', BX.proxy(this.Show, this));
-			BX.unbind(this.PARENT, 'mouseout', BX.proxy(this.Hide, this));
+	BX$1.CHint.prototype.Destroy = function () {
+		if (this.PARENT) {
+			BX$1.unbind(this.PARENT, 'mouseover', proxy(this.Show, this));
+			BX$1.unbind(this.PARENT, 'mouseout', proxy(this.Hide, this));
 		}
-
-		if (this.DIV)
-		{
-			BX.unbind(this.DIV, 'mouseover', BX.proxy(this.Show, this));
-			BX.unbind(this.DIV, 'mouseout', BX.proxy(this.Hide, this));
-
-			BX.ZIndexManager.unregister(this.DIV);
-
-			BX.cleanNode(this.DIV, true);
+		if (this.DIV) {
+			BX$1.unbind(this.DIV, 'mouseover', proxy(this.Show, this));
+			BX$1.unbind(this.DIV, 'mouseout', proxy(this.Hide, this));
+			BX$1.ZIndexManager.unregister(this.DIV);
+			BX$1.cleanNode(this.DIV, true);
 		}
 	};
-
-	BX.CHint.prototype.enable = function(){this.disabled = false;};
-	BX.CHint.prototype.disable = function(){this.__hide_immediately(); this.disabled = true;};
-
-
-	function _adjustWait()
-	{
-		if (!this.bxmsg) return;
-
-		var arContainerPos = BX.pos(this),
-			div_top = arContainerPos.top;
-
-		if (div_top < BX.GetDocElement().scrollTop)
-			div_top = BX.GetDocElement().scrollTop + 5;
-
-		this.bxmsg.style.top = (div_top + 5) + 'px';
-
-		if (this == BX.GetDocElement())
-		{
-			this.bxmsg.style.right = '5px';
+	BX$1.CHint.prototype.enable = function () {
+		this.disabled = false;
+	};
+	BX$1.CHint.prototype.disable = function () {
+		this.__hide_immediately();
+		this.disabled = true;
+	};
+	function hint(el, hint_title, hint_html, hint_id) {
+		if (hint_html == null) {
+			hint_html = hint_title;
+			hint_title = '';
 		}
-		else
-		{
-			this.bxmsg.style.left = (arContainerPos.right - this.bxmsg.offsetWidth - 5) + 'px';
+		if (el.BXHINT == null) {
+			el.BXHINT = new BX$1.CHint({
+				parent: el,
+				hint: hint_html,
+				title: hint_title,
+				id: hint_id
+			});
+			el.BXHINT.Show();
 		}
 	}
-
-	function _processTpl(tplNode, cb, bKillTpl)
-	{
-		if (tplNode)
-		{
-			if (bKillTpl)
-				tplNode.parentNode.removeChild(tplNode);
-
-			var res = {}, nodes = BX.findChildren(tplNode, {attribute: 'data-role'}, true);
-
-			for (var i = 0, l = nodes.length; i < l; i++)
-			{
-				res[nodes[i].getAttribute('data-role')] = nodes[i];
-			}
-
-			cb.apply(tplNode, [res]);
+	function hint_replace(el, hint_title, hint_html) {
+		if (hint_html == null) {
+			hint_html = hint_title;
+			hint_title = '';
 		}
-	}
-
-	function _checkNode(obj, params)
-	{
-		params = params || {};
-
-		if (BX.type.isFunction(params))
-			return params.call(window, obj);
-
-		if (!params.allowTextNodes && !BX.type.isElementNode(obj))
-			return false;
-		var i,j,len;
-		for (i in params)
-		{
-			if(params.hasOwnProperty(i))
-			{
-				switch(i)
-				{
-					case 'tag':
-					case 'tagName':
-						if (BX.type.isString(params[i]))
-						{
-							if (obj.tagName.toUpperCase() != params[i].toUpperCase())
-								return false;
-						}
-						else if (params[i] instanceof RegExp)
-						{
-							if (!params[i].test(obj.tagName))
-								return false;
-						}
-						break;
-
-					case 'class':
-					case 'className':
-						if (BX.type.isString(params[i]))
-						{
-							if (!BX.hasClass(obj, params[i]))
-								return false;
-						}
-						else if (params[i] instanceof RegExp)
-						{
-							if (!BX.type.isString(obj.className) || !params[i].test(obj.className))
-								return false;
-						}
-						break;
-
-					case 'attr':
-					case 'attrs':
-					case 'attribute':
-						if (BX.type.isString(params[i]))
-						{
-							if (!obj.getAttribute(params[i]))
-								return false;
-						}
-						else if (BX.type.isArray(params[i]))
-						{
-							for (j = 0, len = params[i].length; j < len; j++)
-							{
-								if (params[i] && !obj.getAttribute(params[i]))
-									return false;
-							}
-						}
-						else
-						{
-							for (j in params[i])
-							{
-								if(params[i].hasOwnProperty(j))
-								{
-									var q = obj.getAttribute(j);
-									if (params[i][j] instanceof RegExp)
-									{
-										if (!BX.type.isString(q) || !params[i][j].test(q))
-										{
-											return false;
-										}
-									}
-									else
-									{
-										if (q != '' + params[i][j])
-										{
-											return false;
-										}
-									}
-								}
-							}
-						}
-						break;
-
-					case 'property':
-					case 'props':
-						if (BX.type.isString(params[i]))
-						{
-							if (!obj[params[i]])
-								return false;
-						}
-						else if (BX.type.isArray(params[i]))
-						{
-							for (j = 0, len = params[i].length; j < len; j++)
-							{
-								if (params[i] && !obj[params[i]])
-									return false;
-							}
-						}
-						else
-						{
-							for (j in params[i])
-							{
-								if (BX.type.isString(params[i][j]))
-								{
-									if (obj[j] != params[i][j])
-										return false;
-								}
-								else if (params[i][j] instanceof RegExp)
-								{
-									if (!BX.type.isString(obj[j]) || !params[i][j].test(obj[j]))
-										return false;
-								}
-							}
-						}
-						break;
-
-					case 'callback':
-						return params[i](obj);
-				}
-			}
+		if (!el || !el.parentNode || !hint_html) {
+			return null;
 		}
-
-		return true;
-	}
-
-	window.addEventListener('pagehide', () => {
-		garbageCollectors.forEach(({ callback, context = window }) => {
-			try
-			{
-				callback.apply(context);
-			} catch (err) {}
+		const obHint = new BX$1.CHint({
+			hint: hint_html,
+			title: hint_title
 		});
-	});
+		obHint.CreateParent();
+		el.parentNode.insertBefore(obHint.PARENT, el);
+		el.parentNode.removeChild(el);
+		obHint.PARENT.style.marginLeft = '5px';
+		return el;
+	}
 
-	// set empty ready handler
-	BX(BX.DoNothing);
-	window.BX = BX;
-
-	BX.browser.addGlobalClass();
-
-	/* data storage */
-	BX.data = function(node, key, value)
-	{
-		if(typeof node == 'undefined')
-			return undefined;
-
-		if(typeof key == 'undefined')
-			return undefined;
-
-		if(typeof value != 'undefined')
-		{
-			// write to manager
-			dataStorage.set(node, key, value);
-		}
-		else
-		{
-			var data;
-
-			// from manager
-			if((data = dataStorage.get(node, key)) != undefined)
-			{
-				return data;
-			}
-			else
-			{
-				// from attribute data-*
-				if('getAttribute' in node)
-				{
-					data = node.getAttribute('data-'+key.toString());
-					if(data === null)
-					{
-						return undefined;
-					}
-					return data;
-				}
-			}
-
-			return undefined;
+	const validation = {
+		checkIfEmail(s) {
+			const atom = "[=a-z0-9_+~'!$&*^`|#%/?{}-]";
+			return new RegExp(`^\\s*${atom}+(\\.${atom}+)*@([a-z0-9-]+\\.)+[a-z0-9-]{2,20}\\s*$`, 'i').test(s);
+		},
+		checkIfPhone(s) {
+			const regexp = new RegExp(typeof BX$1.PhoneNumber === 'undefined' ? BX$1.PhoneNumber.getValidNumberPattern()
+			: '^\\s*\\+?\s*[0-9(-)\\s]+\\s*$', 'i');
+			return regexp.test(s);
 		}
 	};
 
-	BX.DataStorage = function()
-	{
+	const convert = {
+		toNumber(value) {
+			if (type.isNumber(value)) {
+				return value;
+			}
+			value = Number(value);
+			return !isNaN(value) ? value : 0;
+		},
+		nodeListToArray(nodes) {
+			try {
+				return Array.prototype.slice.call(nodes, 0);
+			} catch (ex) {
+				const ary = [];
+				for (let i = 0, l = nodes.length; i < l; i++) {
+					ary.push(nodes[i]);
+				}
+				return ary;
+			}
+		}
+	};
 
-		this.keyOffset = 1;
-		this.data = {};
-		this.uniqueTag = 'BX-'+Math.random();
-
-		this.resolve = function(owner, create){
-			if(typeof owner[this.uniqueTag] == 'undefined')
-				if(create)
-				{
-					try
-					{
-						Object.defineProperty(owner, this.uniqueTag, {
-							value: this.keyOffset++
-						});
-					}
-					catch(e)
-					{
-						owner[this.uniqueTag] = this.keyOffset++;
+	const selectUtils = {
+		addNewOption(oSelect, opt_value, opt_name, do_sort, check_unique) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				const n = oSelect.length;
+				if (check_unique !== false) {
+					for (let i = 0; i < n; i++) {
+						if (oSelect[i].value == opt_value) {
+							return;
+						}
 					}
 				}
-				else
-					return undefined;
-
-			return owner[this.uniqueTag];
-		};
-		this.get = function(owner, key){
-			if((owner != document && !BX.type.isElementNode(owner)) || typeof key == 'undefined')
-				return undefined;
-
-			owner = this.resolve(owner, false);
-
-			if(typeof owner == 'undefined' || typeof this.data[owner] == 'undefined')
-				return undefined;
-
-			return this.data[owner][key];
-		};
-		this.set = function(owner, key, value){
-
-			if((owner != document && !BX.type.isElementNode(owner)) || typeof value == 'undefined')
+				oSelect.options[n] = new Option(opt_name, opt_value, false, false);
+			}
+			if (do_sort === true) {
+				this.sortSelect(oSelect);
+			}
+		},
+		deleteOption(oSelect, opt_value) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				for (let i = 0; i < oSelect.length; i++) {
+					if (oSelect[i].value == opt_value) {
+						oSelect.remove(i);
+						break;
+					}
+				}
+			}
+		},
+		deleteSelectedOptions(oSelect) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				let i = 0;
+				while (i < oSelect.length) {
+					if (oSelect[i].selected) {
+						oSelect[i].selected = false;
+						oSelect.remove(i);
+					} else {
+						i++;
+					}
+				}
+			}
+		},
+		deleteAllOptions(oSelect) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				for (let i = oSelect.length - 1; i >= 0; i--) {
+					oSelect.remove(i);
+				}
+			}
+		},
+		optionCompare(record1, record2) {
+			const value1 = record1.optText.toLowerCase();
+			const value2 = record2.optText.toLowerCase();
+			if (value1 > value2) {
+				return 1;
+			}
+			if (value1 < value2) {
+				return -1;
+			}
+			return 0;
+		},
+		sortSelect(oSelect) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				const myOptions = [];
+				let n = oSelect.options.length;
+				let i;
+				for (i = 0; i < n; i++) {
+					myOptions[i] = {
+						optText: oSelect[i].text,
+						optValue: oSelect[i].value
+					};
+				}
+				myOptions.sort(this.optionCompare);
+				oSelect.length = 0;
+				n = myOptions.length;
+				for (i = 0; i < n; i++) {
+					oSelect[i] = new Option(myOptions[i].optText, myOptions[i].optValue, false, false);
+				}
+			}
+		},
+		selectAllOptions(oSelect) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				const n = oSelect.length;
+				for (let i = 0; i < n; i++) {
+					oSelect[i].selected = true;
+				}
+			}
+		},
+		selectOption(oSelect, opt_value) {
+			oSelect = resolve(oSelect);
+			if (oSelect) {
+				const n = oSelect.length;
+				for (let i = 0; i < n; i++) {
+					oSelect[i].selected = oSelect[i].value == opt_value;
+				}
+			}
+		},
+		addSelectedOptions(oSelect, to_select_id, check_unique, do_sort) {
+			oSelect = resolve(oSelect);
+			if (!oSelect) {
 				return;
-
-			var o = this.resolve(owner, true);
-
-			if(typeof this.data[o] == 'undefined')
-				this.data[o] = {};
-
-			this.data[o][key] = value;
-		};
+			}
+			const n = oSelect.length;
+			for (let i = 0; i < n; i++) {
+				if (oSelect[i].selected) {
+					this.addNewOption(to_select_id, oSelect[i].value, oSelect[i].text, do_sort, check_unique);
+				}
+			}
+		},
+		moveOptionsUp(oSelect) {
+			oSelect = resolve(oSelect);
+			if (!oSelect) {
+				return;
+			}
+			const n = oSelect.length;
+			for (let i = 0; i < n; i++) {
+				if (oSelect[i].selected && i > 0 && oSelect[i - 1].selected == false) {
+					const option = new Option(oSelect[i].text, oSelect[i].value);
+					oSelect[i] = new Option(oSelect[i - 1].text, oSelect[i - 1].value);
+					oSelect[i].selected = false;
+					oSelect[i - 1] = option;
+					oSelect[i - 1].selected = true;
+				}
+			}
+		},
+		moveOptionsDown(oSelect) {
+			oSelect = resolve(oSelect);
+			if (!oSelect) {
+				return;
+			}
+			const n = oSelect.length;
+			for (let i = n - 1; i >= 0; i--) {
+				if (oSelect[i].selected && i < n - 1 && oSelect[i + 1].selected == false) {
+					const option = new Option(oSelect[i].text, oSelect[i].value);
+					oSelect[i] = new Option(oSelect[i + 1].text, oSelect[i + 1].value);
+					oSelect[i].selected = false;
+					oSelect[i + 1] = option;
+					oSelect[i + 1].selected = true;
+				}
+			}
+		}
 	};
 
-// some internal variables for new logic
-	var dataStorage = new BX.DataStorage();	// manager which BX.data() uses to keep data
-})(window.BX);
+	function bitrix_sessid() {
+		return BX$1.message('bitrix_sessid');
+	}
+	function submit(obForm, action_name, action_value, onAfterSubmit) {
+		action_name = action_name || 'save';
+		if (!obForm[`BXFormSubmit_${action_name}`]) {
+			obForm[`BXFormSubmit_${action_name}`] = obForm.appendChild(BX$1.create('INPUT', {
+				props: {
+					type: 'submit',
+					name: action_name,
+					value: action_value || 'Y'
+				},
+				style: {
+					display: 'none'
+				}
+			}));
+		}
+		if (obForm.sessid) {
+			obForm.sessid.value = bitrix_sessid();
+		}
+		setTimeout(delegate(function () {
+			fireEvent(this, 'click');
+			if (onAfterSubmit) {
+				onAfterSubmit();
+			}
+		}, obForm[`BXFormSubmit_${action_name}`]), 10);
+	}
+
+	addCustomEvent('onMenuOpen', BX$1.CHint.handleMenuOpen);
+	addCustomEvent('onMenuClose', BX$1.CHint.handleMenuClose);
+	ready(DoNothing);
+	browser.addGlobalClass();
+
+	exports.AM_PM_LOWER = AM_PM_LOWER;
+	exports.AM_PM_NONE = AM_PM_NONE;
+	exports.AM_PM_UPPER = AM_PM_UPPER;
+	exports.Animation = Animation;
+	exports.AssetLoadError = AssetLoadError;
+	exports.BaseError = BaseError;
+	exports.Browser = Browser;
+	exports.Cache = Cache;
+	exports.CaptureEvents = CaptureEvents;
+	exports.CaptureEventsGet = CaptureEventsGet;
+	exports.Collections = collections;
+	exports.ControllerError = ControllerError;
+	exports.DataStorage = DataStorage;
+	exports.DoNothing = DoNothing;
+	exports.Dom = Dom;
+	exports.Easing = Easing;
+	exports.Event = Event;
+	exports.Extension = Extension;
+	exports.False = False;
+	exports.GetContext = GetContext;
+	exports.GetDocElement = GetDocElement;
+	exports.GetWindowInnerSize = GetWindowInnerSize;
+	exports.GetWindowScrollPos = GetWindowScrollPos;
+	exports.GetWindowScrollSize = GetWindowScrollSize;
+	exports.GetWindowSize = GetWindowSize;
+	exports.Http = Http;
+	exports.HttpClient = HttpClient;
+	exports.HttpClientError = HttpClientError;
+	exports.HttpError = HttpError;
+	exports.Loc = Loc;
+	exports.LocalStorage = LocalStorage;
+	exports.MSLEFT = MSLEFT;
+	exports.MSMIDDLE = MSMIDDLE;
+	exports.MSRIGHT = MSRIGHT;
+	exports.NetworkError = NetworkError;
+	exports.Page = Page;
+	exports.PageObject = PageObject;
+	exports.ParseError = ParseError;
+	exports.PreventDefault = PreventDefault;
+	exports.Reflection = Reflection;
+	exports.Runtime = Runtime;
+	exports.Tag = Tag;
+	exports.Text = Text;
+	exports.TimeoutError = TimeoutError;
+	exports.Type = Type;
+	exports.Uri = Uri;
+	exports.Validation = Validation;
+	exports.ZIndexManager = ZIndexManager;
+	exports.addClass = addClass;
+	exports.addCustomEvent = addCustomEvent;
+	exports.adjust = adjust;
+	exports.ajax = ajax;
+	exports.align = align;
+	exports.allowEvent = allowEvent;
+	exports.append = append;
+	exports.bind = bind;
+	exports.bindDebouncedChange = bindDebouncedChange;
+	exports.bindDelegate = bindDelegate;
+	exports.bindOnce = bindOnce;
+	exports.bitrix_sessid = bitrix_sessid;
+	exports.browser = browser;
+	exports.checkNode = checkNode;
+	exports.clean = clean;
+	exports.cleanNode = cleanNode;
+	exports.clearCache = clearCache;
+	exports.clearNodeCache = clearNodeCache;
+	exports.clone = clone;
+	exports.closeWait = closeWait;
+	exports.convert = convert;
+	exports.create = create;
+	exports.createFragment = createFragment;
+	exports.data = data;
+	exports.debounce = debounce;
+	exports.debug = debug;
+	exports.debugEnable = debugEnable;
+	exports.debugEnableFlag = debugEnableFlag;
+	exports.debugStatus = debugStatus;
+	exports.defer = defer;
+	exports.defer_proxy = defer_proxy;
+	exports.delegate = delegate;
+	exports.delegateEvent = delegateEvent;
+	exports.delegateLater = delegateLater;
+	exports.denyEvent = denyEvent;
+	exports.easing = easing;
+	exports.evalGlobal = evalGlobal;
+	exports.evalPack = evalPack;
+	exports.eventCancelBubble = eventCancelBubble;
+	exports.eventReturnFalse = eventReturnFalse;
+	exports.ext = ext;
+	exports.extend = extend;
+	exports.findChild = findChild;
+	exports.findChildByClassName = findChildByClassName;
+	exports.findChildren = findChildren;
+	exports.findChildrenByClassName = findChildrenByClassName;
+	exports.findFormElements = findFormElements;
+	exports.findNextSibling = findNextSibling;
+	exports.findParent = findParent;
+	exports.findPreviousSibling = findPreviousSibling;
+	exports.fireEvent = fireEvent;
+	exports.firstChild = firstChild;
+	exports.fixEventPageX = fixEventPageX;
+	exports.fixEventPageXY = fixEventPageXY;
+	exports.fixEventPageY = fixEventPageY;
+	exports.focus = focus;
+	exports.focusEvents = focusEvents;
+	exports.focusEventsBlur = focusEventsBlur;
+	exports.focusEventsFocus = focusEventsFocus;
+	exports.formatDate = formatDate;
+	exports.formatName = formatName;
+	exports.fx = fx;
+	exports.garbage = garbage;
+	exports.getCDNPath = getCDNPath;
+	exports.getCSSList = getCSSList;
+	exports.getCSSPath = getCSSPath;
+	exports.getCaretPosition = getCaretPosition;
+	exports.getClass = getClass;
+	exports.getCookie = getCookie;
+	exports.getEventButton = getEventButton;
+	exports.getEventTarget = getEventTarget;
+	exports.getJSList = getJSList;
+	exports.getJSPath = getJSPath;
+	exports.getNumMonth = getNumMonth;
+	exports.getWheelData = getWheelData;
+	exports.hasClass = hasClass;
+	exports.height = height;
+	exports.hide = hide;
+	exports.hide_object = hide_object;
+	exports.hint = hint;
+	exports.hint_replace = hint_replace;
+	exports.hoverEvents = hoverEvents;
+	exports.hoverEventsHout = hoverEventsHout;
+	exports.hoverEventsHover = hoverEventsHover;
+	exports.html = html;
+	exports.insertAfter = insertAfter;
+	exports.insertBefore = insertBefore;
+	exports.isAjaxEnvelope = isAjaxEnvelope;
+	exports.isAmPmMode = isAmPmMode;
+	exports.isNodeHidden = isNodeHidden;
+	exports.isNodeInDom = isNodeInDom;
+	exports.isParentForNode = isParentForNode;
+	exports.isShown = isShown;
+	exports.is_fixed = is_fixed;
+	exports.is_float = is_float;
+	exports.is_relative = is_relative;
+	exports.is_subclass_of = is_subclass_of;
+	exports.lastChild = lastChild;
+	exports.load = load;
+	exports.loadCSS = loadCSS;
+	exports.loadExt = loadExt;
+	exports.loadScript = loadScript$1;
+	exports.localStorage = localStorage$1;
+	exports.merge = merge;
+	exports.mergeEx = mergeEx;
+	exports.message = message;
+	exports.namespace = namespace;
+	exports.nextSibling = nextSibling;
+	exports.onCustomEvent = onCustomEvent;
+	exports.onGlobalCustomEvent = onGlobalCustomEvent;
+	exports.once = once;
+	exports.parseDate = parseDate;
+	exports.parseEnvelope = parseEnvelope;
+	exports.parseJSON = parseJSON;
+	exports.pos = pos;
+	exports.prepend = prepend;
+	exports.previousSibling = previousSibling;
+	exports.processHTML = processHTML;
+	exports.prop = prop;
+	exports.proxy = proxy;
+	exports.ready = ready;
+	exports.reload = reload;
+	exports.remove = remove;
+	exports.removeAllCustomEvents = removeAllCustomEvents;
+	exports.removeClass = removeClass;
+	exports.removeCustomEvent = removeCustomEvent;
+	exports.replace = replace;
+	exports.scrollLeft = scrollLeft;
+	exports.scrollToNode = scrollToNode;
+	exports.scrollTop = scrollTop;
+	exports.selectUtils = selectUtils;
+	exports.setCSSList = setCSSList;
+	exports.setCaretPosition = setCaretPosition;
+	exports.setCookie = setCookie;
+	exports.setJSList = setJSList;
+	exports.setOpacity = setOpacity;
+	exports.setSelectable = setSelectable;
+	exports.setUnselectable = setUnselectable;
+	exports.show = show;
+	exports.showWait = showWait;
+	exports.style = style;
+	exports.styleIEPropertyName = styleIEPropertyName;
+	exports.submit = submit;
+	exports.template = template;
+	exports.throttle = throttle;
+	exports.toggle = toggle;
+	exports.toggleClass = toggleClass;
+	exports.type = type;
+	exports.unbind = unbind;
+	exports.unbindAll = unbindAll;
+	exports.util = util;
+	exports.validation = validation;
+	exports.width = width;
+
+})(this.BX = this.BX || {});
+
 
 
 ;(function(window)
@@ -10562,6 +11374,15 @@ window._main_polyfill_core = true;
 
 	var BX = window.BX;
 
+	/**
+	 * A custom deferred implementation written before native Promise was available.
+	 * It is not Promises/A+ compliant: then() returns a preallocated next promise
+	 * instead of a new one, and settling is done from the outside via
+	 * fulfill(), reject() and resolve().
+	 *
+	 * @deprecated
+	 * @use Promise
+	 */
 	BX.Promise = function(fn, ctx) // fn is future-reserved
 	{
 		this.state = null;
@@ -11497,13 +12318,15 @@ BX.ajax.promise = function(config)
 	{
 		result.fulfill(data);
 	};
-	config.onfailure = function(reason, httpStatus, config)
+	config.onfailure = function(reason, httpStatus, failedConfig)
 	{
+		var ajaxConfig = failedConfig || config;
+
 		result.reject({
 			reason: reason,
 			data: httpStatus,
-			ajaxConfig: config,
-			xhr: config.xhr
+			ajaxConfig: ajaxConfig,
+			xhr: ajaxConfig.xhr
 		});
 	};
 

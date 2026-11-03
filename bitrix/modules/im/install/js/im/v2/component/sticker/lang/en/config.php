@@ -10,3 +10,4 @@ $MESS["IM_STICKER_PACK_FORM_UPDATE_TITLE"] = "Edit sticker pack";
 $MESS["IM_STICKER_PACK_FORM_UPLOADING_LIMITS_WEBP"] = "WEBP files up to 500 KB and resolution of up to 512 by 512 pixels are supported.";
 $MESS["IM_STICKER_PACK_FORM_WELCOME_BODY"] = "This sticker pack will remain private until the moment you posted one of the stickers to the chat.";
 $MESS["IM_STICKER_PACK_FORM_WELCOME_TITLE"] = "Sticker pack";
+$MESS["IM_STICKER_PACK_ADD_STICKER_ARIA"] = "Add stickers";

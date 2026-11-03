@@ -43,7 +43,6 @@ $arTemplateParameters = [
 	],
 	'COLOR_TYPE' => [
 		'NAME' => GetMessage('SEARCH_COLOR_TYPE'),
-		'TYPE' => 'LIST',
 		'TYPE' => 'CHECKBOX',
 		'MULTIPLE' => 'N',
 		'DEFAULT' => 'Y',

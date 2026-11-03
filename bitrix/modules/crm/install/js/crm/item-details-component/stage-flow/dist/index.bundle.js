@@ -6,28 +6,73 @@ this.BX.Crm = this.BX.Crm || {};
 
 	class Chart extends ui_stageflow.StageFlow.Chart {
 		isNewItem = false;
+		stageDescriptionTooltip = null;
 		#isLoadingCallback;
 		#showLoadingNotificationCallback;
+		#openFinalTransitionCallback = null;
+		#stageDescriptionTooltipPromise = null;
+		#stageDescriptionTooltipRequestId = 0;
 		constructor(params, /** @see StageFlow.Chart */
-		stages, permissionChecker, gettingStageModelCallback, isLoadingCallback, showLoadingNotificationCallback, isNewItem = false) {
+		stages, permissionChecker, gettingStageModelCallback, isLoadingCallback, showLoadingNotificationCallback, openFinalTransitionCallback = null, isNewItem = false) {
 			super(params, stages);
 			this.permissionChecker = permissionChecker;
 			this.getStageModelCallback = gettingStageModelCallback;
 			this.isNewItem = isNewItem;
 			this.#isLoadingCallback = isLoadingCallback;
 			this.#showLoadingNotificationCallback = showLoadingNotificationCallback;
+			this.#openFinalTransitionCallback = openFinalTransitionCallback;
 			if (!this.isNewItem) {
 				this.#adjustDisableStages();
 			}
 		}
+		render() {
+			const container = super.render();
+			this.stages.forEach(stage => this.#bindStageKeyboardEvents(stage));
+			return container;
+		}
+		#bindStageKeyboardEvents(stage) {
+			if (!main_core.Type.isElementNode(stage.node) || stage.node.dataset.crmStageKeyboardInitialized === 'Y') {
+				return;
+			}
+			stage.node.dataset.crmStageKeyboardInitialized = 'Y';
+			stage.node.dataset.testid = `crm-item-details-stage-${stage.getId()}`;
+			stage.node.addEventListener('focusin', () => this.onStageFocusIn(stage));
+			stage.node.addEventListener('focusout', () => this.onStageFocusOut(stage));
+			stage.node.addEventListener('keydown', event => this.onStageKeyDown(event, stage));
+			if (this.isActive) {
+				stage.node.setAttribute('role', 'button');
+				stage.node.setAttribute('tabindex', '0');
+			} else if (main_core.Type.isStringFilled(this.#getStageDescription(stage))) {
+				stage.node.setAttribute('tabindex', '0');
+			}
+		}
+		onStageFocusIn(stage) {
+			this.showStageDescriptionTooltip(stage);
+		}
+		onStageFocusOut(stage) {
+			this.hideStageDescriptionTooltip();
+		}
+		onStageKeyDown(event, stage) {
+			if (!this.isActive || !['Enter', ' '].includes(event.key)) {
+				return;
+			}
+			event.preventDefault();
+			this.onStageClick(stage);
+		}
 		onStageMouseHover(stage) {
+			this.showStageDescriptionTooltip(stage);
 			this.increaseStageWidthForNameVisibility(stage);
 			if (stage.isDisabled()) {
 				return;
 			}
 			super.onStageMouseHover(stage);
 		}
+		onStageMouseLeave(stage) {
+			this.hideStageDescriptionTooltip();
+			super.onStageMouseLeave(stage);
+		}
 		onStageClick(stage) {
+			this.closeStageDescriptionTooltip();
 			if (this.isLoading()) {
 				this.showLoadingNotification();
 				return;
@@ -39,6 +84,7 @@ this.BX.Crm = this.BX.Crm || {};
 			super.onStageClick(stage);
 		}
 		onFinalStageClick(stage) {
+			this.closeStageDescriptionTooltip();
 			if (this.isLoading()) {
 				this.showLoadingNotification();
 				return;
@@ -47,12 +93,20 @@ this.BX.Crm = this.BX.Crm || {};
 				this.permissionChecker.showMissPermissionError();
 				return;
 			}
+			if (main_core.Type.isFunction(this.#openFinalTransitionCallback)) {
+				this.onStageMouseLeave(stage);
+				this.#openFinalTransitionCallback();
+				return;
+			}
 			super.onFinalStageClick(stage);
 		}
 		setCurrentStageId(stageId) {
 			super.setCurrentStageId(stageId);
 			this.adjust();
 			return this;
+		}
+		restoreCurrentStageView() {
+			super.setCurrentStageId(this.currentStage);
 		}
 		getSemanticPopupSuccessButton() {
 			const successButton = super.getSemanticPopupSuccessButton();
@@ -124,6 +178,56 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		#getStage(id) {
 			return this.getStageModelCallback(id);
+		}
+		#getStageDescription(stage) {
+			const descriptionStage = stage === this.getFinalStage() ? this.getSuccessStage() : stage;
+			return descriptionStage ? this.#getStage(descriptionStage.getId())?.getDescription() ?? '' : '';
+		}
+		showStageDescriptionTooltip(stage) {
+			if (!main_core.Type.isElementNode(stage.node)) {
+				this.closeStageDescriptionTooltip();
+				return;
+			}
+			const options = {
+				bindElement: stage.node,
+				name: stage.getName(),
+				description: this.#getStageDescription(stage),
+				showName: false
+			};
+			if (!main_core.Type.isStringFilled(options.description)) {
+				this.closeStageDescriptionTooltip();
+				return;
+			}
+			const requestId = ++this.#stageDescriptionTooltipRequestId;
+			this.#loadStageDescriptionTooltip().then(tooltip => {
+				if (tooltip && requestId === this.#stageDescriptionTooltipRequestId) {
+					tooltip.show(options);
+				}
+			});
+		}
+		hideStageDescriptionTooltip() {
+			this.#stageDescriptionTooltipRequestId++;
+			this.stageDescriptionTooltip?.hide();
+		}
+		closeStageDescriptionTooltip() {
+			this.#stageDescriptionTooltipRequestId++;
+			this.stageDescriptionTooltip?.hideImmediately();
+		}
+		#loadStageDescriptionTooltip() {
+			if (this.stageDescriptionTooltip) {
+				return Promise.resolve(this.stageDescriptionTooltip);
+			}
+			this.#stageDescriptionTooltipPromise ??= main_core.Runtime.loadExtension('crm.stage.description-tooltip').then(exports => {
+				if (!main_core.Type.isFunction(exports?.StageDescriptionTooltip)) {
+					return null;
+				}
+				this.stageDescriptionTooltip = new exports.StageDescriptionTooltip();
+				return this.stageDescriptionTooltip;
+			}).catch(() => {
+				this.#stageDescriptionTooltipPromise = null;
+				return null;
+			});
+			return this.#stageDescriptionTooltipPromise;
 		}
 		#isHasPermissionToMove(stageFlowId) {
 			const compareStage = this.#getStage(stageFlowId);

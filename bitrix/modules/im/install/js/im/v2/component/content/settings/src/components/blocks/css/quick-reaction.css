@@ -1,0 +1,124 @@
+.bx-im-settings-section-content__block-reaction {
+	width: 100%;
+}
+
+.bx-im-settings-alignment-quick-reaction__preview {
+	position: relative;
+}
+
+.bx-im-settings-quick-reaction__alignment.--left-align {
+	max-width: 485px;
+	position: relative;
+}
+
+.bx-im-settings-quick-reaction__alignment.--center-align {
+	position: absolute;
+	left: 18px;
+	right: 0;
+	width: calc(100% - 18px);
+	max-width: calc(
+		var(--im-content-chat__max-width_message_container) - 18px
+	);
+	margin-inline: auto;
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector-container {
+	position: absolute;
+	width: 37px;
+	height: 36px;
+	top: auto;
+	right: 15px;
+	bottom: 38px;
+	opacity: 1;
+	z-index: 3;
+	cursor: pointer;
+}
+
+.bx-im-settings-quick-reaction__alignment.--left-align > .bx-im-settings-quick-reaction__selector-container
+{
+	top: auto;
+	right: 15px;
+	bottom: 38px;
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--ui-border-radius-circle);
+	opacity: 0.6;
+	transition: opacity 0.3s;
+	background-color: rgb(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-80));
+	cursor: pointer;
+	box-shadow: var(--ui-shadow-bottom-xs);
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector .ui-reaction__inner {
+	transform: scale(1.4);
+	transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector:hover{
+	opacity: 1;
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector:hover .ui-reaction__inner {
+	transform: scale(1.85);
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector-icon {
+	width: 20px;
+	height: 20px;
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.bx-im-settings-alignment-quick-reaction__preview .bx-im-settings-quick-reaction__selector .ui-reaction {
+	--ui-reaction-size: 20px;
+	width: 20px;
+	height: 20px;
+}
+
+.bx-im-settings-section-content__block_subtitle {
+	font: var(--im-font-size-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--ui-color-gray-70);
+	margin-top: var(--ui-space-stack-xs2);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bx-im-settings-section-content__choice {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.bx-im-settings-section-content__choice_button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 100px;
+	min-height: 36px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs);
+	background: var(--ui-color-base-white-fixed);
+	border: 2px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-pill);
+	cursor: pointer;
+}
+
+.bx-im-settings-section-content__choice_button .ui-reaction{
+	--ui-reaction-size: 24px;
+	width: 24px;
+	height: 24px;
+}
+
+.bx-im-settings-section-content__choice_button-title {
+	font-weight: var(--im-font-weight-medium);
+}
+
+.bx-im-settings-section-content__choice_button-arrow {
+	width: 18px;
+	height: 18px;
+}

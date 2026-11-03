@@ -9,3 +9,5 @@ $MESS["IM_MESSAGE_IMAGE"] = "Photo";
 $MESS["IM_MESSAGE_QUOTE"] = "Quote";
 $MESS["IM_MESSAGE_SYSTEM"] = "System message";
 $MESS["IM_MESSAGE_VIDEO"] = "Video";
+$MESS['IM_MESSAGE_VOICE_NOTE'] = 'Voice message';
+$MESS['IM_MESSAGE_VOICE_NOTE_WITH_DURATION'] = 'Voice message (#DURATION#)';

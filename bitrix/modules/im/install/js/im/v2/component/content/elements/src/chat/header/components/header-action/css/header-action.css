@@ -1,0 +1,93 @@
+/*
+ * The header action primitive. Every declaration that only undoes the browser default sits inside
+ * :where() - zero specificity - so the geometry classes the consumer puts on the very same element
+ * (bx-im-chat-header__icon, the subtitle row, the entity button) keep winning without an override war.
+ */
+:where(.bx-im-chat-header-action) {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+:where(.bx-im-chat-header-action:disabled) {
+	cursor: default;
+}
+
+/* The decorative content of a control that already carries its own accessible name. No box of its own,
+   so the consumer geometry is untouched, and the subtree is pruned from the tree by aria-hidden. */
+.bx-im-chat-header-action__content {
+	display: contents;
+}
+
+/* A round control gets a round ring, a text or outlined one keeps the form it draws itself: a radius
+   set here loses to any radius of the consumer, and applies only where the consumer sets none. */
+:where(.bx-im-chat-header-action.--shape-circle) {
+	border-radius: var(--ui-border-radius-circle);
+}
+
+:where(.bx-im-chat-header-action.--shape-rounded) {
+	border-radius: var(--im-focus-ring__border-radius);
+}
+
+:where(.bx-im-chat-header-action.--shape-text) {
+	border-radius: var(--im-focus-ring__border-radius_text);
+}
+
+/*
+ * The other half of the text shape, and the reason it is a shape and not just a radius: a border-radius
+ * on the very element that carries a clipping overflow cuts the content along the arcs of the corners, so
+ * the last glyph of a line loses its corner. The control keeps the radius, because the ring follows the
+ * element that takes the focus, and gives the clip up: what has to be cut off with an ellipsis is cut by
+ * the content box above. Unlike the resets of this file this one has to win over the consumer, since it
+ * is the consumer that used to clip - hence the full selector instead of :where().
+ *
+ * The zero minimum comes with it. A clipping flex item has an automatic minimum size of zero, and that is
+ * what used to let the counter of a collab give its width away to the row; take the clip off and the item
+ * goes back to refusing to shrink below its own text, so the ellipsis never appears. The clip is gone from
+ * here, so the side effect it carried has to be stated.
+ */
+.bx-im-messenger__scope .bx-im-chat-header-action.--shape-text {
+	min-width: 0;
+	overflow: visible;
+}
+
+/*
+ * The picture of a chat is drawn in several shapes - round, a square with rounded corners, a hexagon -
+ * and which one it took is decided by `ui.avatar` and shows as a class on the root it renders. So the
+ * ring of an avatar stop is drawn on that root instead of on the control: it reads the shape from the
+ * very place the picture takes it, and no second rule by chat type can drift away from the first. The
+ * box of the control is not the box of the picture either - the picture is an inline-flex, so the line
+ * box adds a descender under it - and the ring has to hug the picture and not the line.
+ */
+.bx-im-messenger__scope .bx-im-chat-header-action.--shape-avatar:focus-visible {
+	outline: none;
+}
+
+.bx-im-messenger__scope .bx-im-chat-header-action.--shape-avatar:focus-visible .ui-avatar,
+.bx-im-messenger__scope .bx-im-chat-header-action.--shape-avatar:focus-visible .bx-im-legacy-avatar__content {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/*
+ * The design-system avatar cuts its silhouette with an SVG mask and carries no radius of its own, so the
+ * radius of its ring is named per shape it reports: round is its own default and stays the default here,
+ * and the square of a channel takes the token nearest to the corner of its mask (12 of the 102 units of
+ * the path, i.e. 5.2px at the 44px step of the header). A hexagon keeps the round ring - no radius
+ * follows a hexagon, and the round one lies outside it everywhere, so it cuts nothing off. The legacy
+ * avatar draws its own radius on the very element the ring is on and is therefore left alone.
+ */
+.bx-im-messenger__scope .bx-im-chat-header-action.--shape-avatar:focus-visible .ui-avatar {
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.bx-im-messenger__scope .bx-im-chat-header-action.--shape-avatar:focus-visible .ui-avatar.--square {
+	border-radius: var(--ui-border-radius-xs);
+}

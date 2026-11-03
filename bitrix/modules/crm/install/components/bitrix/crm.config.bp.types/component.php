@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
 use Bitrix\Crm\Settings\InvoiceSettings;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -26,7 +28,13 @@ if (!CModule::IncludeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
  * @var CUser $USER
  */
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+// The section itself is a CRM surface; every type below is then asked through its own document gate.
+$canManageSection = \Bitrix\Crm\Service\Container::getInstance()
+	->getUserPermissions()
+	->configuration()
+	->canManageBizprocTemplates(ConfigurationCallSite::BizprocTemplateComponent, ConfigurationScope::ofCrm())
+;
+if (!$canManageSection)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -36,27 +44,37 @@ $arTypes = [
 	'CRM_LEAD' => [
 		'ID' => 'CRM_LEAD',
 		'NAME' => GetMessage('CRM_BP_LEAD'),
-		'DESC' => GetMessage('CRM_BP_LEAD_DESC')
+		'DESC' => GetMessage('CRM_BP_LEAD_DESC'),
+		'DOCUMENT' => 'CCrmDocumentLead',
+		'TYPE' => 'LEAD',
 	],
 	'CRM_CONTACT' => [
 		'ID' => 'CRM_CONTACT',
 		'NAME' => GetMessage('CRM_BP_CONTACT'),
-		'DESC' => GetMessage('CRM_BP_CONTACT_DESC')
+		'DESC' => GetMessage('CRM_BP_CONTACT_DESC'),
+		'DOCUMENT' => 'CCrmDocumentContact',
+		'TYPE' => 'CONTACT',
 	],
 	'CRM_COMPANY' => [
 		'ID' => 'CRM_COMPANY',
 		'NAME' => GetMessage('CRM_BP_COMPANY'),
-		'DESC' => GetMessage('CRM_BP_COMPANY_DESC')
+		'DESC' => GetMessage('CRM_BP_COMPANY_DESC'),
+		'DOCUMENT' => 'CCrmDocumentCompany',
+		'TYPE' => 'COMPANY',
 	],
 	'CRM_DEAL'=> [
 		'ID' => 'CRM_DEAL',
 		'NAME' => GetMessage('CRM_BP_DEAL'),
-		'DESC' => GetMessage('CRM_BP_DEAL_DESC')
+		'DESC' => GetMessage('CRM_BP_DEAL_DESC'),
+		'DOCUMENT' => 'CCrmDocumentDeal',
+		'TYPE' => 'DEAL',
 	],
 	'CRM_QUOTE' => [
 		'ID' => 'CRM_QUOTE',
 		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_QUOTE_MSGVER_1'),
 		'DESC' => GetMessage('CRM_BP_QUOTE_DESC_MSGVER_1'),
+		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Quote::class,
+		'TYPE' => 'QUOTE',
 	],
 ];
 
@@ -66,6 +84,8 @@ if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 		'ID' => 'CRM_SMART_INVOICE',
 		'NAME' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::SmartInvoice),
 		'DESC' => GetMessage('CRM_BP_SMART_INVOICE_DESC'),
+		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class,
+		'TYPE' => 'SMART_INVOICE',
 	];
 }
 
@@ -86,12 +106,26 @@ foreach ($dynamicTypesMap->getTypes() as $type)
 			'ID' => $typeId,
 			'NAME' => $typeName,
 			'DESC' => GetMessage('CRM_BP_DYNAMIC_DESC', ['#DYNAMIC_TYPE_NAME#' => $typeName]),
+			'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class,
+			'TYPE' => CCrmOwnerType::ResolveName($type->getEntityTypeId()),
 		];
 	}
 }
 
-foreach ($arTypes as $key => $ar)
+$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+$arResult['ROWS'] = [];
+foreach ($arTypes as $ar)
 {
+	$canManageTemplates = CBPDocument::CanUserOperateDocumentType(
+		CBPCanUserOperateOperation::CreateWorkflow,
+		$userId,
+		['crm', $ar['DOCUMENT'], $ar['TYPE']],
+	);
+	if (!$canManageTemplates)
+	{
+		continue;
+	}
+
 	$arResult['ROWS'][$ar['ID']] = $ar;
 	$arResult['ROWS'][$ar['ID']]['LINK_LIST'] = str_replace('#entity_id#', $ar['ID'], $arParams['~BP_LIST_URL']);
 	$arResult['ROWS'][$ar['ID']]['LINK_ADD'] = str_replace(

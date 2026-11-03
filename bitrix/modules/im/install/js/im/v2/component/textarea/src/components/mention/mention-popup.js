@@ -2,7 +2,7 @@ import { type PopupOptions } from 'main.popup';
 import { type EventEmitter } from 'main.core.events';
 
 import { MessengerPopup } from 'im.v2.component.elements.popup';
-import { ChatType, EventType } from 'im.v2.const';
+import { ChatType, EventType, TextareaTarget } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat } from 'im.v2.model';
@@ -34,6 +34,14 @@ export const MentionPopup = {
 		withCopilot: {
 			type: Boolean,
 			default: true,
+		},
+		targetContainer: {
+			type: Object,
+			default: null,
+		},
+		target: {
+			type: String,
+			default: TextareaTarget.main,
 		},
 	},
 	emits: ['close', 'onFocusTextarea'],
@@ -67,24 +75,47 @@ export const MentionPopup = {
 		},
 		config(): PopupOptions
 		{
-			return {
+			const config: PopupOptions = {
 				height: 200,
 				width: 426,
 				padding: 0,
 				bindElement: this.bindElement,
 				offsetTop: 2,
 				offsetLeft: 0,
-				fixed: true,
+				fixed: !this.targetContainer || this.targetContainer === document.body,
 				bindOptions: {
 					position: 'top',
 				},
 				className: 'bx-im-mention-popup__scope',
+				// the list is opened from the message field and typing goes on in it, so the trap only
+				// remembers the field and gives the focus back when the popup closes: it takes no initial
+				// focus and does not loop Tab inside the popup
+				focusTrap: {
+					initialFocus: false,
+					looped: false,
+				},
 			};
+
+			if (this.targetContainer)
+			{
+				config.targetContainer = this.targetContainer;
+			}
+
+			return config;
 		},
 	},
 	created()
 	{
 		this.getEmitter().subscribe(EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+	},
+	mounted()
+	{
+		// the owner swallows the keys while it counts the popup as open,
+		// so a popup that renders nothing has to report itself closed
+		if (!this.needToShowMentionPopup)
+		{
+			this.$emit('close');
+		}
 	},
 	beforeUnmount()
 	{
@@ -113,8 +144,10 @@ export const MentionPopup = {
 				:query="query"
 				:searchChats="searchChats"
 				:withCopilot="withCopilot"
+				:target="target"
 				@close="$emit('close');"
 				@adjustPosition="adjustPosition()"
+				@focusTextarea="onFocusTextarea"
 			/>
 		</MessengerPopup>
 	`,

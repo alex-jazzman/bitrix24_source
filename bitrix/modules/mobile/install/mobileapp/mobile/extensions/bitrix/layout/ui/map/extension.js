@@ -8,6 +8,7 @@ jn.define('layout/ui/map', (require, exports, module) => {
 	const { createTestIdGenerator } = require('utils/test');
 	const { Indent, Color, Component } = require('tokens');
 	const AppTheme = require('apptheme');
+	const { getMapBackgroundColor } = require('layout/ui/map/background');
 	const { Icon } = require('assets/icons');
 	const { PropTypes } = require('utils/validation');
 	const {
@@ -83,11 +84,13 @@ jn.define('layout/ui/map', (require, exports, module) => {
 			const { mapUrl, isLoading, loadingOverlayImageUri } = this.props;
 
 			return View(
-				{},
+				{
+					testId: this.getTestId(),
+				},
 				WebView({
 					style: {
 						height: '100%',
-						backgroundColor: '#DDDDDD',
+						backgroundColor: getMapBackgroundColor(),
 					},
 					data: {
 						url: mapUrl,
@@ -137,42 +140,94 @@ jn.define('layout/ui/map', (require, exports, module) => {
 					},
 					this.#renderZoomButtons(),
 				),
-				this.#renderFitButton(),
+				this.#renderBottomControls(),
 			);
 		}
 
-		#renderFitButton()
+		// Bottom-anchored control column: fit-to-layers keeps the bottom slot; when the consumer
+		// opts into a fit-to-me button (via onFitToMeClick), it is stacked ABOVE fit-to-layers.
+		#renderBottomControls()
 		{
 			return View(
 				{
 					style: {
 						position: 'absolute',
 						bottom: 100,
+						alignItems: 'center',
 					},
 				},
-				ChipButton({
-					testId: this.getTestId('fit-to-layers-button'),
-					text: '',
-					icon: Icon.MOBILE_FILL,
-					rounded: false,
-					size: ChipButtonSize.L,
-					mode: ChipButtonMode.SOLID,
-					design: ChipButtonDesign.PRIMARY,
-					backgroundColor: Color.bgContentPrimary,
-					iconColor: Color.base1,
-					ellipsize: Ellipsize.END,
-					onClick: this.onFitToLayersButtonClick,
-					style: {
-						borderWidth: 1,
-						borderColor: Color.base7.toHex(),
-						borderRadius: Component.chipsLCorner.toNumber(),
-					},
-				}),
+				this.#hasFitToMeButton() && this.#renderFitToMeButton(),
+				this.#shouldShowFitButton() && this.#renderFitButton(),
 			);
+		}
+
+		#shouldShowFitButton()
+		{
+			// Opt-out via showFitToLayers: false; defaults to shown so existing consumers are unaffected.
+			return this.props.showFitToLayers !== false;
+		}
+
+		#renderFitButton()
+		{
+			return ChipButton({
+				testId: this.getTestId('fit-to-layers-button'),
+				text: '',
+				icon: Icon.MOBILE_FILL,
+				rounded: false,
+				size: ChipButtonSize.L,
+				mode: ChipButtonMode.SOLID,
+				design: ChipButtonDesign.PRIMARY,
+				backgroundColor: Color.bgContentPrimary,
+				iconColor: Color.base1,
+				ellipsize: Ellipsize.END,
+				onClick: this.onFitToLayersButtonClick,
+				style: {
+					borderWidth: 1,
+					borderColor: Color.base7.toHex(),
+					borderRadius: Component.chipsLCorner.toNumber(),
+				},
+			});
+		}
+
+		#hasFitToMeButton()
+		{
+			return Type.isFunction(this.props.onFitToMeClick);
+		}
+
+		// ChipButton carries neither `selected` nor `toggle`, so the pressed state of an opt-in
+		// fit-to-me button is worn by the icon colour. The pressed testId keeps the released one as
+		// its prefix: consumers that never pass isFitToMeActive address the very locator they did.
+		#renderFitToMeButton()
+		{
+			const isActive = this.props.isFitToMeActive === true;
+
+			return ChipButton({
+				testId: this.getTestId(isActive ? 'fit-to-me-button-active' : 'fit-to-me-button'),
+				text: '',
+				icon: Icon.LOCATION,
+				rounded: false,
+				size: ChipButtonSize.L,
+				mode: ChipButtonMode.SOLID,
+				design: ChipButtonDesign.PRIMARY,
+				backgroundColor: Color.bgContentPrimary,
+				iconColor: isActive ? Color.accentMainSuccess : Color.base1,
+				ellipsize: Ellipsize.END,
+				onClick: this.onFitToMeButtonClick,
+				style: {
+					marginBottom: Indent.M.toNumber(),
+					borderWidth: 1,
+					borderColor: Color.base7.toHex(),
+					borderRadius: Component.chipsLCorner.toNumber(),
+				},
+			});
 		}
 
 		onFitToLayersButtonClick = () => {
 			this.fitToLayers();
+		};
+
+		onFitToMeButtonClick = () => {
+			this.props.onFitToMeClick?.();
 		};
 
 		#renderZoomButtons()
@@ -251,6 +306,7 @@ jn.define('layout/ui/map', (require, exports, module) => {
 		 * @param {Number} [props.mapZoom] - Range: 0..22
 		 * @param {Array<Number>} [props.fitBoundsPadding] - [vertical, horizontal] or [top, right, bottom, left]
 		 * @param {Number} [props.fitBoundsMaxZoom] - Range: 0..22
+		 * @param {Boolean} [props.grayscale]
 		 */
 		initMap(props = {})
 		{
@@ -265,6 +321,38 @@ jn.define('layout/ui/map', (require, exports, module) => {
 					base3: Color.base3.toHex(),
 					base7: Color.base7.toHex(),
 					success: Color.accentMainSuccess.toHex(),
+					// Check-in marker palette. The page is a WebView and has no AppTheme of its own,
+					// so the only way its markers can follow the theme is to be handed the resolved
+					// tokens here. The literals in check-in-map.css stay as light-theme fallbacks.
+					checkInBlue: Color.accentMainPrimary.toHex(),
+					checkInGreen: Color.accentMainSuccess.toHex(),
+					checkInGrey: Color.base3.toHex(),
+					checkInAmber: Color.accentMainWarning.toHex(),
+					checkInWhite: Color.baseWhiteFixed.toHex(),
+					// The big heading arrow beside a route. base2 is the one grey that inverts the right way -
+					// dark over a light map, light over a darkened one - so the arrow stays legible without
+					// competing with the route's own blue.
+					checkInHeading: Color.base2.toHex(),
+					// The photo-less employee placeholder is the app's own asset (mobile
+					// assets/empty-avatar/person.svg), and every colour in it turns out to be a token, in both
+					// themes: the card is accentSoftBlue2, the figure accentSoftBlue1, its outline the accent blue
+					// already sent above. So the map can redraw that asset rather than approximate it.
+					checkInSoftBlue1: Color.accentSoftBlue1.toHex(),
+					checkInSoftBlue2: Color.accentSoftBlue2.toHex(),
+					// Kant around a marker: one themed token, white on a light map and near-black on a darkened
+					// one. Design calls this out explicitly - an earlier guess that the ring had to stay fixed white
+					// was wrong.
+					checkInKant: Color.base8.toHex(),
+					// The digits in a disc (dot cluster, avatar badge) and the endpoint glyphs. They used
+					// to ride on the kant token; the design split them so that on the dark map the numbers
+					// and the start/finish icons stay white for accent while the kant stays near-black.
+					checkInGlyph: Color.baseWhiteFixed.toHex(),
+					// Surface of an avatar pin and of a cluster disc. No single token spans both
+					// themes here: the design pairs a white disc in light with the lens blue in dark,
+					// so the pair is resolved by theme rather than by one token.
+					checkInSurface: String(AppTheme.id).includes('dark')
+						? Color.bgDarkLensGradient2.toHex()
+						: Color.baseWhiteFixed.toHex(),
 				},
 			};
 			this.sendEvent(CommandType.INIT_MAP, preparedProps);
@@ -276,6 +364,29 @@ jn.define('layout/ui/map', (require, exports, module) => {
 		clearMarkers()
 		{
 			this.sendEvent(CommandType.CLEAR_MARKERS);
+		}
+
+		/**
+		 * The host's intro cover over the map has finished: tell the page to hand the day over
+		 * (it holds its markers hidden while the intro runs and drops them into place on this).
+		 */
+		introReveal()
+		{
+			this.sendEvent(CommandType.INTRO_REVEAL);
+		}
+
+		/**
+		 * Hold every marker added from now on out of sight; dropMarkers lets the whole set fall into
+		 * place. The pair is what choreographs an appearing route: dots first, then the growing line.
+		 */
+		holdMarkers()
+		{
+			this.sendEvent(CommandType.MARKERS_HOLD);
+		}
+
+		dropMarkers()
+		{
+			this.sendEvent(CommandType.MARKERS_DROP);
 		}
 
 		/**
@@ -441,12 +552,19 @@ jn.define('layout/ui/map', (require, exports, module) => {
 		mapUrl: PropTypes.string.isRequired,
 		isLoading: PropTypes.bool,
 		loadingOverlayImageUri: PropTypes.string,
+		showFitToLayers: PropTypes.bool,
 		onReceiveEvent: PropTypes.func,
+		onFitToMeClick: PropTypes.func,
+		isFitToMeActive: PropTypes.bool,
 	};
 
 	module.exports = {
 		Map: (props) => new Map(props),
 		EventType,
 		CommandType,
+		// Re-exported so that a caller holding the component has one place to ask for the colour it
+		// stands on, instead of a second copy of it. A caller that needs nothing else of the map takes
+		// it from layout/ui/map/background directly and does not load this component at all.
+		getMapBackgroundColor,
 	};
 });

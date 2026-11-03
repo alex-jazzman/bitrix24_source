@@ -80,6 +80,7 @@ declare interface IDialogEmitter
 declare type DialogLocatorServices = Partial<{
 	'configurator': DialogConfigurator,
 	'context-manager': ContextManager,
+	'date-calendar-jump': DateCalendarJump,
 	'chat-service': ChatService,
 	'disk-service': DiskService,
 	'mention-manager': MentionManager,
@@ -91,6 +92,7 @@ declare type DialogLocatorServices = Partial<{
 	'vote-manager': VoteManager,
 	'action-button-manager': ActionButtonManager,
 	'input-action-manager': InputActionManager,
+	'audio-player': AudioPanel | AudioMessagePlayer,
 	'text-field-manager': DialogTextFieldManager,
 	'header-buttons': HeaderButtonsController,
 	'message-sender': MessageSender,

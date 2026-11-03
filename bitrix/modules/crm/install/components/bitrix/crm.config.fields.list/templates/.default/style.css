@@ -2,3 +2,28 @@
 .btn-edit-list {background-image:url(images/edit_list.gif);}
 .btn-view-elements {background-image:url(images/view_elements.gif);}
 .btn-view-fields {background-image:url(images/view_fields.gif);}
+
+.crm-config-fields-list {
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.crm-config-fields-list .bx-interface-grid {
+	box-sizing: border-box;
+	max-width: 100%;
+	width: 100%;
+}
+
+body .crm-config-fields-list table.bx-interface-grid input[type="checkbox"] {
+	box-sizing: border-box !important;
+	width: 13px !important;
+	height: 13px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	max-width: none !important;
+	max-height: none !important;
+	margin: 3px 3px 3px 4px !important;
+	padding: 0 !important;
+	vertical-align: middle !important;
+}

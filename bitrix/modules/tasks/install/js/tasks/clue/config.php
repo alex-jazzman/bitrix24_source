@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/clue.bundle.css',
 	'js' => 'dist/clue.bundle.js',
 	'rel' => [
-		'ui.tour',
-		'ui.banner-dispatcher',
-		'spotlight',
 		'main.core',
+		'spotlight',
+		'ui.banner-dispatcher',
+		'ui.tour',
 	],
 	'skip_core' => false,
 	'settings' => [

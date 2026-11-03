@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -45,8 +46,38 @@ export const DatePlanChip = {
 		{
 			return this.task.filledFields[datePlanMeta.id];
 		},
+		opensSheet(): boolean
+		{
+			return !this.isSelected;
+		},
+	},
+	watch: {
+		isSheetShown(): void
+		{
+			this.syncAria();
+		},
+		opensSheet(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
 	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensSheet ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensSheet ? String(this.isSheetShown) : null);
+		},
 		handleClick(): void
 		{
 			if (this.isSelected)
@@ -56,7 +87,18 @@ export const DatePlanChip = {
 				return;
 			}
 
+			this.$refs.chip?.$el.focus({ preventScroll: true });
 			this.setSheetShown(true);
+		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
 		},
 		highlightField(): void
 		{
@@ -77,8 +119,11 @@ export const DatePlanChip = {
 			:data-task-chip-id="datePlanMeta.id"
 			:data-task-plan-start="task.startPlanTs"
 			:data-task-plan-end="task.endPlanTs"
+			data-testid="tasks-date-plan-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
-		<DatePlanSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
+		<DatePlanSheet v-if="isSheetShown && opensSheet" :sheetBindProps @close="setSheetShown(false)"/>
 	`,
 };

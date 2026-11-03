@@ -500,6 +500,24 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 		];
 	}
 
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// Derived settings the dialog persists on save (json path map, pseudonymizer flag) rather than fields
+		// the agent configures - not part of getPropertiesMap(). Passed through by name so the reverse
+		// round-trip keeps them instead of rejecting them as unknown setting names.
+		return [
+			self::PARAM_JSON_PATH,
+			self::PARAM_USE_PSEUDONYMIZER,
+		];
+	}
+
+	public static function getAiEnforcedSettingValues(array $documentType): array
+	{
+		// The dialog hard-writes this flag on every save, so the agent path - which never opens the dialog -
+		// has to apply the same value itself.
+		return [self::PARAM_USE_PSEUDONYMIZER => 'Y'];
+	}
+
 	private function getUserPromptWithSystemPrePrompt(): string
 	{
 		$userPrompt = (string)$this->{self::PARAM_PROMPT};

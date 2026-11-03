@@ -3,6 +3,9 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
 global $APPLICATION;
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', trim($bodyClass . ' biconnector-settings-slider'));
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',

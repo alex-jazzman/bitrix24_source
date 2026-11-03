@@ -12,3 +12,7 @@ $MESS["MAIN_KANBAN_RELOAD"] = "Перезагрузить страницу";
 $MESS["MAIN_KANBAN_ERROR_OK"] = "OK";
 $MESS["MAIN_KANBAN_ERROR_CLOSE"] = "Закрыть";
 $MESS["MAIN_KANBAN_DROPZONE_CANCEL"] = "Отмена";
+$MESS["MAIN_KANBAN_BOARD_ARIA_LABEL"] = "Доска";
+$MESS["MAIN_KANBAN_COLUMN_EMPTY"] = "В колонке нет элементов";
+$MESS["MAIN_KANBAN_SCROLL_LEFT"] = "Прокрутить влево";
+$MESS["MAIN_KANBAN_SCROLL_RIGHT"] = "Прокрутить вправо";

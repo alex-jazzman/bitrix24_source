@@ -1,4 +1,4 @@
-import { Extension, Tag, Uri, Dom } from 'main.core';
+import { Extension, Loc, Tag, Uri, Dom } from 'main.core';
 import { Popup, PopupManager } from 'main.popup';
 import { type Slider, type LinkOptions, type SliderEvent } from 'main.sidepanel';
 
@@ -108,6 +108,10 @@ export class TaskCard
 			content,
 			cacheable: false,
 			closeByEsc: true,
+			autoHide: true,
+			// Keep and restore focus regardless of the server-side accessibility default (trap is off by default).
+			focusTrap: true,
+			ariaLabel: Loc.getMessage('TASKS_V2_TC_COMPACT_DIALOG_LABEL'),
 			events: {
 				onAfterClose: (): void => card?.unmount(),
 			},
@@ -122,6 +126,9 @@ export class TaskCard
 			card = new exports.TaskCompactCard(params);
 			card.mount(popup);
 		});
+
+		// main.popup does not set aria-modal; set it before show() so the dialog is modal even if the app fails to load.
+		Dom.attr(popup.getPopupContainer(), 'aria-modal', 'true');
 
 		popup.show();
 	}
@@ -166,6 +173,7 @@ export class TaskCard
 			mount: (container: HTMLElement) => {
 				const skeleton = Tag.render`<div style="width: 100%; height: 100%" />`;
 
+				Dom.attr(container, 'aria-busy', 'true');
 				Dom.append(skeleton, container);
 
 				void renderSkeleton(
@@ -180,6 +188,7 @@ export class TaskCard
 					}
 
 					Dom.remove(skeleton, container);
+					Dom.attr(container, 'aria-busy', null);
 
 					card = new exports.TaskFullCard(params);
 					void card.mountEmbedded(container);

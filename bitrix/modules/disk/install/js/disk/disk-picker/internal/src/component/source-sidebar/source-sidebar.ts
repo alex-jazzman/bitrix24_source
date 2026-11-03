@@ -1,32 +1,45 @@
 import { Loc } from 'main.core';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import 'main.polyfill.intersectionobserver';
+import { BIcon, Solid } from 'ui.icon-set.api.vue';
 import { defineComponent } from 'ui.vue3';
 import { Avatar } from 'ui.vue3.components.avatar';
-import { TextSm, TextXs } from 'ui.system.typography.vue';
+import { Text3Xs, TextSm, TextXs } from 'ui.system.typography.vue';
 
 import { StageType, StorageType } from '../../const/picker';
 import { retrySources } from '../../feature/load-initial-stage/load-initial-stage';
+import { loadNextSourcePage, retrySourcePage } from '../../feature/load-source-page/load-source-page';
 import { switchSource } from '../../feature/switch-source/switch-source';
 import { switchToRecent } from '../../feature/switch-to-recent/switch-to-recent';
 import {
 	focusCompositeItem,
 	resolveCompositeNavigationIndex,
+	resolveFallbackId,
 	scrollOffsetForEntry,
 	type CompositeNavigationKey,
 } from '../../lib/composite-navigation/composite-navigation';
+import { DEFAULT_METRICS, readMetrics, type PickerMetrics } from '../../lib/metrics/metrics';
+import { resolveAvatarInitials, resolveAvatarTint } from '../../lib/source-avatar/source-avatar';
 import { useSessionStore } from '../../model/session/session';
 import { useSourceStore } from '../../model/source/source';
 import { type PickerSource } from '../../model/source/types';
+import { SourceRowSkeleton } from '../source-row-skeleton/source-row-skeleton';
 
 import './source-sidebar.css';
 
-const SOURCE_ROW_HEIGHT = 40;
-const SOURCE_GROUP_HEIGHT = 28;
+// Row and group advances are not declared here: they are read off the layout at mount, from the
+// same custom properties the stylesheet lays the rows out with (see lib/metrics).
 const SOURCE_VIEWPORT_HEIGHT = 640;
 const SOURCE_OVERSCAN = 200;
+const SOURCE_PAGINATION_ROOT_MARGIN = '120px 0px';
+const SOURCE_SKELETON_WIDTHS = Object.freeze([126, 110, 122]);
+// Retry is the last stop of the vertical axis, after the rows.
+const RETRY_KEY = 'retry';
+const VERTICAL_KEYS = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'];
 
 type SourceGroup = {
 	titleKey: string,
+	// The collapsed rail shows the short title: the full one does not fit 56px.
+	shortTitleKey: string,
 	sources: PickerSource[],
 };
 
@@ -40,6 +53,7 @@ type SourceEntry = {
 	key: string,
 	type: 'group' | 'source',
 	titleKey: string,
+	shortTitleKey: string,
 	source: PickerSource | null,
 	top: number,
 	height: number,
@@ -77,32 +91,49 @@ export const SourceSidebar = defineComponent({
 	components: {
 		Avatar,
 		BIcon,
+		Text3Xs,
 		TextSm,
 		TextXs,
+		SourceRowSkeleton,
 	},
 	setup(): Object
 	{
-		return { recentIcon: Outline.RECENT_ITEMS };
+		return { recentIcon: Solid.CLOCK, personalIcon: Solid.STORAGE };
 	},
 	data(): {
-		focusHandled: boolean,
 		focusedSourceKey: string | null,
 		scrollTop: number,
 		pendingScrollTop: number,
 		scrollFrame: number | null,
+		sourcePaginationObserver: IntersectionObserver | null,
+		metrics: PickerMetrics,
 		}
 	{
 		return {
-			focusHandled: false,
 			focusedSourceKey: null,
 			scrollTop: 0,
 			pendingScrollTop: 0,
 			scrollFrame: null,
+			sourcePaginationObserver: null,
+			metrics: { ...DEFAULT_METRICS },
 		};
 	},
 	mounted(): void
 	{
-		this.maybeFocusFirstStorage();
+		this.metrics = readMetrics(this.$el as Element);
+		this.sourcePaginationObserver = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((entry) => entry.isIntersecting))
+				{
+					void loadNextSourcePage();
+				}
+			},
+			{
+				root: this.$refs.sourceScroll as HTMLElement,
+				rootMargin: SOURCE_PAGINATION_ROOT_MARGIN,
+			},
+		);
+		this.observeSourceSentinel();
 	},
 	computed: {
 		isRecentActive(): boolean
@@ -116,6 +147,22 @@ export const SourceSidebar = defineComponent({
 		loading(): boolean
 		{
 			return useSourceStore().sourcesLoading;
+		},
+		loadingMore(): boolean
+		{
+			return useSourceStore().sourcesLoadingMore;
+		},
+		pageError(): string | null
+		{
+			return useSourceStore().sourcesPageError;
+		},
+		hasMore(): boolean
+		{
+			return useSourceStore().sourcesHasMore;
+		},
+		skeletonWidths(): readonly number[]
+		{
+			return SOURCE_SKELETON_WIDTHS;
 		},
 		sourceCount(): number
 		{
@@ -136,16 +183,19 @@ export const SourceSidebar = defineComponent({
 			return [
 				{
 					titleKey: 'DISK_PICKER_SOURCE_GROUP_COMPANY',
+					shortTitleKey: 'DISK_PICKER_SOURCE_GROUP_COMPANY_SHORT',
 					sources: sources.filter((source) => source.storageType === StorageType.Common),
 				},
 				{
 					titleKey: 'DISK_PICKER_SOURCE_GROUP_GROUPS',
+					shortTitleKey: 'DISK_PICKER_SOURCE_GROUP_GROUPS_SHORT',
 					sources: sources.filter(
 						(source) => source.storageType === StorageType.Group || source.storageType === StorageType.Project,
 					),
 				},
 				{
 					titleKey: 'DISK_PICKER_SOURCE_GROUP_COLLABS',
+					shortTitleKey: 'DISK_PICKER_SOURCE_GROUP_COLLABS_SHORT',
 					sources: sources.filter((source) => source.storageType === StorageType.Collab),
 				},
 			].filter((group) => group.sources.length > 0);
@@ -159,11 +209,12 @@ export const SourceSidebar = defineComponent({
 					key: `source-${source.storageId}`,
 					type: 'source',
 					titleKey: '',
+					shortTitleKey: '',
 					source,
 					top,
-					height: SOURCE_ROW_HEIGHT,
+					height: this.metrics.sourceRow,
 				});
-				top += SOURCE_ROW_HEIGHT;
+				top += this.metrics.sourceRow;
 			};
 			this.personal.forEach((source) => addSource(source));
 			this.groups.forEach((group) => {
@@ -171,11 +222,12 @@ export const SourceSidebar = defineComponent({
 					key: `group-${group.titleKey}`,
 					type: 'group',
 					titleKey: group.titleKey,
+					shortTitleKey: group.shortTitleKey,
 					source: null,
 					top,
-					height: SOURCE_GROUP_HEIGHT,
+					height: this.metrics.sourceGroup,
 				});
-				top += SOURCE_GROUP_HEIGHT;
+				top += this.metrics.sourceGroup;
 				group.sources.forEach((source) => addSource(source));
 			});
 
@@ -183,13 +235,19 @@ export const SourceSidebar = defineComponent({
 		},
 		visibleSourceEntries(): ReturnType<typeof sourceWindow>
 		{
-			return sourceWindow(this.sourceEntries, Math.max(0, this.scrollTop - SOURCE_ROW_HEIGHT));
+			return sourceWindow(this.sourceEntries, Math.max(0, this.scrollTop - this.metrics.sourceRow));
 		},
 		sourceNavigationKeys(): string[]
 		{
-			return ['recent', ...this.sourceEntries
+			const keys = ['recent', ...this.sourceEntries
 				.filter((entry) => entry.type === 'source')
 				.map((entry) => entry.key)];
+			if (this.error || this.pageError)
+			{
+				keys.push(RETRY_KEY);
+			}
+
+			return keys;
 		},
 		sourceFocusKey(): string
 		{
@@ -206,51 +264,49 @@ export const SourceSidebar = defineComponent({
 	watch: {
 		sourceCount(): void
 		{
-			this.maybeFocusFirstStorage();
 			this.$nextTick(() => this.revealActiveSource());
+			this.$nextTick(() => this.observeSourceSentinel());
+		},
+		hasMore(): void
+		{
+			this.$nextTick(() => this.observeSourceSentinel());
+		},
+		loadingMore(): void
+		{
+			this.$nextTick(() => this.observeSourceSentinel());
+		},
+		pageError(): void
+		{
+			this.$nextTick(() => this.observeSourceSentinel());
 		},
 		activeStorageId(): void
 		{
 			this.$nextTick(() => this.revealActiveSource());
+		},
+		// ALG-01 when the focused row leaves the axis, e.g. Retry after a load succeeded.
+		sourceNavigationKeys(keys: string[], previousKeys: string[]): void
+		{
+			const focusedKey = this.focusedSourceKey;
+			if (focusedKey === null || keys.includes(focusedKey))
+			{
+				return;
+			}
+
+			const root = this.$el as HTMLElement | undefined;
+			const active = document.activeElement;
+			if (!root || !(active === document.body || root.contains(active)))
+			{
+				return;
+			}
+
+			const fallbackKey = resolveFallbackId(keys, null, previousKeys.indexOf(focusedKey));
+			this.$nextTick(() => this.moveFocusTo(fallbackKey as string));
 		},
 	},
 	methods: {
 		loc(messageCode: string): string
 		{
 			return Loc.getMessage(messageCode) ?? '';
-		},
-		// Once sources arrive, focus the first storage button, but only if the user or
-		// onOpen has not already moved focus off the popup container. An empty or failed
-		// list keeps the container focused.
-		maybeFocusFirstStorage(): void
-		{
-			if (this.focusHandled || this.sourceCount === 0)
-			{
-				return;
-			}
-
-			this.$nextTick(() => {
-				const container = (this.$el as HTMLElement).closest('.disk-picker');
-				const active = document.activeElement;
-				const focusOnContainer = active === null || active === document.body || active === container;
-				if (!focusOnContainer)
-				{
-					// Focus already moved intentionally; do not steal it, but stop trying.
-					this.focusHandled = true;
-
-					return;
-				}
-
-				// Recent is the first item but focus must land on the first storage.
-				const first = (this.$el as HTMLElement)
-					.querySelector<HTMLElement>('.disk-picker-source-sidebar__item:not(.--recent)');
-				if (first)
-				{
-					this.focusedSourceKey = first.dataset.compositeId ?? null;
-					first.focus();
-					this.focusHandled = true;
-				}
-			});
 		},
 		avatarType(source: PickerSource): string
 		{
@@ -265,12 +321,28 @@ export const SourceSidebar = defineComponent({
 			return {
 				title: source.title,
 				picPath: source.avatarUrl ?? undefined,
-				size: 24,
+				// Mirrors --ui-size-2xl used by the avatar box in source-sidebar.css:
+				// the component takes a number, so both places move together.
+				size: 28,
 			};
 		},
 		isPersonalSource(source: PickerSource): boolean
 		{
 			return source.storageType === StorageType.User;
+		},
+		// A collab keeps the design-system avatar: its green hexagon carries the meaning
+		// of the storage type, and a storage with a picture of its own shows the picture.
+		hasLetterAvatar(source: PickerSource): boolean
+		{
+			return source.avatarUrl === null && source.storageType !== StorageType.Collab;
+		},
+		letterAvatarClass(source: PickerSource): string
+		{
+			return `--tint-${resolveAvatarTint(source.storageId)}`;
+		},
+		sourceInitials(source: PickerSource): string
+		{
+			return resolveAvatarInitials(source.title);
 		},
 		isActive(source: PickerSource): boolean
 		{
@@ -307,8 +379,7 @@ export const SourceSidebar = defineComponent({
 		},
 		handleCompositeKeydown(event: KeyboardEvent): void
 		{
-			const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'];
-			if (!keys.includes(event.key))
+			if (!VERTICAL_KEYS.includes(event.key))
 			{
 				return;
 			}
@@ -323,22 +394,40 @@ export const SourceSidebar = defineComponent({
 
 			event.preventDefault();
 			const scroll = this.$refs.sourceScroll as HTMLElement;
-			const pageSize = Math.max(1, Math.floor((scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT) / SOURCE_ROW_HEIGHT));
+			const metrics = this.metrics ?? DEFAULT_METRICS;
+			const pageSize = Math.max(1, Math.floor((scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT) / metrics.sourceRow));
 			const nextIndex = resolveCompositeNavigationIndex(
 				currentIndex,
 				this.sourceNavigationKeys.length,
 				event.key as CompositeNavigationKey,
 				pageSize,
 			);
-			const key = this.sourceNavigationKeys[nextIndex];
+			this.moveFocusTo(this.sourceNavigationKeys[nextIndex]);
+		},
+		// Entry point of the storage group for Tab: the roving row.
+		focusEntry(): boolean
+		{
+			if (!this.$refs.sourceScroll)
+			{
+				return false;
+			}
+
+			this.moveFocusTo(this.sourceFocusKey);
+
+			return true;
+		},
+		// Scrolls a row into the virtual window and focuses it once mounted.
+		moveFocusTo(key: string): void
+		{
+			const scroll = this.$refs.sourceScroll as HTMLElement;
+			const viewportHeight = scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT;
+			// A method may be called on a bare object in a test, where no data is set up.
+			const metrics = this.metrics ?? DEFAULT_METRICS;
 			const entry = this.sourceEntries.find((sourceEntry) => sourceEntry.key === key);
-			const entryTop = key === 'recent' ? 0 : SOURCE_ROW_HEIGHT + (entry?.top ?? 0);
-			const nextScrollTop = scrollOffsetForEntry(
-				entryTop,
-				SOURCE_ROW_HEIGHT,
-				scroll.scrollTop,
-				scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT,
-			);
+			const entryTop = key === 'recent' ? 0 : metrics.sourceRow + (entry?.top ?? 0);
+			const nextScrollTop = key === RETRY_KEY
+				? Math.max(0, scroll.scrollHeight - viewportHeight)
+				: scrollOffsetForEntry(entryTop, metrics.sourceRow, scroll.scrollTop, viewportHeight);
 			this.focusedSourceKey = key;
 			scroll.scrollTop = nextScrollTop;
 			this.scrollTop = nextScrollTop;
@@ -348,6 +437,19 @@ export const SourceSidebar = defineComponent({
 		handleRetrySources(): void
 		{
 			void retrySources();
+		},
+		handleRetrySourcePage(): void
+		{
+			void retrySourcePage();
+		},
+		observeSourceSentinel(): void
+		{
+			const sentinel = this.$refs.sourceSentinel as HTMLElement | undefined;
+			this.sourcePaginationObserver?.disconnect();
+			if (sentinel)
+			{
+				this.sourcePaginationObserver?.observe(sentinel);
+			}
 		},
 		revealActiveSource(): void
 		{
@@ -364,10 +466,11 @@ export const SourceSidebar = defineComponent({
 				return;
 			}
 
-			const activeTop = SOURCE_ROW_HEIGHT + active.top;
+			const metrics = this.metrics ?? DEFAULT_METRICS;
+			const activeTop = metrics.sourceRow + active.top;
 			if (activeTop < scroll.scrollTop || activeTop + active.height > scroll.scrollTop + scroll.clientHeight)
 			{
-				scroll.scrollTop = Math.max(0, activeTop - SOURCE_GROUP_HEIGHT);
+				scroll.scrollTop = Math.max(0, activeTop - metrics.sourceGroup);
 				this.scrollTop = scroll.scrollTop;
 				this.pendingScrollTop = scroll.scrollTop;
 			}
@@ -375,6 +478,8 @@ export const SourceSidebar = defineComponent({
 	},
 	beforeUnmount(): void
 	{
+		this.sourcePaginationObserver?.disconnect();
+		this.sourcePaginationObserver = null;
 		if (this.scrollFrame !== null)
 		{
 			cancelAnimationFrame(this.scrollFrame);
@@ -382,7 +487,11 @@ export const SourceSidebar = defineComponent({
 		}
 	},
 	template: `
-		<div class="disk-picker-source-sidebar" data-testid="universal-disk-picker-sidebar">
+		<div
+			class="disk-picker-source-sidebar"
+			data-disk-picker-group="storage"
+			data-testid="universal-disk-picker-sidebar"
+		>
 			<div
 				ref="sourceScroll"
 				class="disk-picker-source-sidebar__scroll"
@@ -394,21 +503,40 @@ export const SourceSidebar = defineComponent({
 					type="button"
 					class="disk-picker-source-sidebar__item --recent"
 					:class="{ '--active': isRecentActive }"
+					:title="loc('DISK_PICKER_SOURCE_RECENT')"
 					:aria-current="isRecentActive ? 'page' : null"
 					:tabindex="sourceFocusKey === 'recent' ? 0 : -1"
 					data-composite-id="recent"
 					data-testid="universal-disk-picker-source-recent"
 					@click="handleSelectRecent"
 				>
-					<BIcon :name="recentIcon" :size="24"/>
+					<span
+						class="disk-picker-source-sidebar__icon-avatar --recent --ui-context-content-light"
+						aria-hidden="true"
+					>
+						<BIcon :name="recentIcon" :size="20"/>
+					</span>
 					<TextSm class="disk-picker-source-sidebar__name">{{ loc('DISK_PICKER_SOURCE_RECENT') }}</TextSm>
 				</button>
-				<div v-if="error" class="disk-picker-source-sidebar__error">
+				<div
+					v-if="loading && sourceCount === 0"
+					class="disk-picker-source-sidebar__skeleton"
+					data-testid="universal-disk-picker-source-skeleton"
+				>
+					<SourceRowSkeleton
+						v-for="(width, index) in skeletonWidths"
+						:key="index"
+						:width="width"
+					/>
+				</div>
+				<div v-else-if="error" class="disk-picker-source-sidebar__error">
 					<TextXs>{{ loc('DISK_PICKER_SOURCE_LOAD_FAILED') }}</TextXs>
 					<button
 						type="button"
 						class="disk-picker-source-sidebar__retry"
 						:disabled="loading"
+						:tabindex="sourceFocusKey === 'retry' ? 0 : -1"
+						data-composite-id="retry"
 						data-testid="universal-disk-picker-sources-retry"
 						@click="handleRetrySources"
 					>
@@ -425,12 +553,15 @@ export const SourceSidebar = defineComponent({
 						<TextXs
 							v-if="entry.type === 'group'"
 							class="disk-picker-source-sidebar__group-title"
-						>{{ loc(entry.titleKey) }}</TextXs>
+						><span class="disk-picker-source-sidebar__group-title-full">{{ loc(entry.titleKey) }}</span><span
+							class="disk-picker-source-sidebar__group-title-short"
+						>{{ loc(entry.shortTitleKey) }}</span></TextXs>
 						<button
 							v-else
 							type="button"
 							class="disk-picker-source-sidebar__item"
 							:class="{ '--active': isActive(entry.source) }"
+							:title="entry.source.title"
 							:aria-current="isActive(entry.source) ? 'page' : null"
 							:tabindex="sourceFocusKey === entry.key ? 0 : -1"
 							:data-composite-id="entry.key"
@@ -438,14 +569,26 @@ export const SourceSidebar = defineComponent({
 							@click="handleSelect(entry.source)"
 						>
 							<span
-								class="disk-picker-source-sidebar__avatar"
+								class="disk-picker-source-sidebar__avatar --ui-context-content-light"
 								:data-testid="'universal-disk-picker-source-' + entry.source.storageId + '-avatar'"
 								aria-hidden="true"
 							>
 								<span
 									v-if="isPersonalSource(entry.source)"
-									class="disk-picker-source-sidebar__personal-avatar"
-								></span>
+									class="disk-picker-source-sidebar__icon-avatar --personal"
+								>
+									<BIcon :name="personalIcon" :size="20"/>
+								</span>
+								<span
+									v-else-if="hasLetterAvatar(entry.source)"
+									class="disk-picker-source-sidebar__icon-avatar"
+									:class="letterAvatarClass(entry.source)"
+								>
+									<Text3Xs
+										accent
+										class="disk-picker-source-sidebar__initials"
+									>{{ sourceInitials(entry.source) }}</Text3Xs>
+								</span>
 								<Avatar
 									v-else
 									:key="avatarKey(entry.source)"
@@ -459,6 +602,36 @@ export const SourceSidebar = defineComponent({
 					<div
 						class="disk-picker-source-sidebar__spacer"
 						:style="{ height: visibleSourceEntries.bottom + 'px' }"
+						aria-hidden="true"
+					></div>
+					<div
+						v-if="loadingMore"
+						class="disk-picker-source-sidebar__skeleton"
+						data-testid="universal-disk-picker-source-more-skeleton"
+					>
+						<SourceRowSkeleton
+							v-for="(width, index) in skeletonWidths"
+							:key="index"
+							:width="width"
+						/>
+					</div>
+					<div v-else-if="pageError" class="disk-picker-source-sidebar__error --page">
+						<button
+							type="button"
+							class="disk-picker-source-sidebar__retry"
+							:tabindex="sourceFocusKey === 'retry' ? 0 : -1"
+							data-composite-id="retry"
+							data-testid="universal-disk-picker-source-page-retry"
+							@click="handleRetrySourcePage"
+						>
+							<TextXs>{{ loc('DISK_PICKER_RETRY') }}</TextXs>
+						</button>
+					</div>
+					<div
+						v-if="hasMore && !pageError"
+						ref="sourceSentinel"
+						class="disk-picker-source-sidebar__sentinel"
+						data-testid="universal-disk-picker-source-sentinel"
 						aria-hidden="true"
 					></div>
 				</template>

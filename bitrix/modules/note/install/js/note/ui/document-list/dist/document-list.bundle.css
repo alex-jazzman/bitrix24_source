@@ -98,7 +98,24 @@ html.note-mobile .note-document-card__select {
 }
 
 .note-document-card--hover-select:hover .note-document-card__select,
-.note-document-card--hover-select:focus-within .note-document-card__select {
+.note-document-card--hover-select:focus-visible .note-document-card__select {
+	width: 20px;
+	margin-right: 0;
+	opacity: 1;
+	overflow: visible;
+	pointer-events: auto;
+}
+
+/* Keyboard focus, and only it. `:focus-within` also matched the card itself, and the card root is
+   focusable (DocumentList parks the focus there on a paging retry), so a click on a raised child
+   with nothing focusable of its own left the checkbox out - 32px of the title shifted under a
+   pointer that had long left the card. The card has to answer for what is focused inside it, and
+   nothing but `:has()` can say that; a rule of its own, so a browser that does not know `:has()`
+   loses the checkbox behind a keyboard-focused link instead of taking the hover rule down with it.
+   There the collapsed checkbox also keeps its place in the tab order with no visible focus at all
+   (WCAG 2.4.7, which `:focus-within` did cover) - out of reach in practice, since the selector
+   ships from Chrome 105, Safari 15.4 and Firefox 121 and note.sidebar already leans on it. */
+.note-document-card--hover-select:has(:focus-visible) .note-document-card__select {
 	width: 20px;
 	margin-right: 0;
 	opacity: 1;
@@ -304,6 +321,22 @@ a.note-document-card__collection-link .note-document-card__collection-name {
 	padding: 0.5rem;
 }
 
+.note-document-cards__load-more-error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1rem 0.5rem;
+}
+
+/* base-3 stays under 4.5:1 on the page background, and an error has to be readable. */
+.note-document-cards__load-more-error-text {
+	color: var(--ui-color-base-2);
+	font-size: 0.875rem;
+	line-height: 1.4;
+	text-align: center;
+}
+
 .note-bulk-actions-bar {
 	position: fixed;
 	/* Desktop centers over the content area, compensating for the sidebar */
@@ -476,4 +509,51 @@ a.note-document-card__collection-link .note-document-card__collection-name {
 	.note-bulk-actions-bar {
 		transition: none;
 	}
+}
+
+.note-document-section__header {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+	cursor: pointer;
+}
+
+.note-document-section__header::before {
+	content: '';
+	order: 1;
+	flex: 1;
+	height: 1px;
+	background: var(--ui-color-divider-accent);
+}
+
+.note-document-section__label {
+	margin: 0;
+	font-size: 0.875rem;
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-base-2);
+	white-space: nowrap;
+}
+
+.note-document-section__toggle {
+	order: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.125rem;
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+}
+
+.note-document-section__toggle:hover {
+	color: var(--ui-color-base-2);
+	background: var(--ui-color-base-7);
+}
+
+.note-document-section__toggle:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }

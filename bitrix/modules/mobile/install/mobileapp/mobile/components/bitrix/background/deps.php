@@ -30,6 +30,7 @@ return [
 		'crm:in-app-url/background',
 		'im:in-app-url/background',
 		'in-app-url/deeplink',
+		'intent/entry',
 		"sign:background",
 		"mail:background",
 
@@ -50,9 +51,12 @@ return [
 		'pull-listener/aiassistant-client',
 
 		'timeman:background',
+		'stafftrack:check-in-v3/background',
+		// starts nothing by itself: the background of v3 is what hands the session over to it
 		'stafftrack:check-in-v2/background',
 
 		'bitrix-gpt-onboarding/background',
 		'new-projects-promo/background',
+		'tool-usage/background',
 	],
 ];

@@ -20,9 +20,9 @@ export class CopilotUiService extends EventEmitter
 	 * @param {HTMLElement} config.container
 	 * @param {Function} config.CopilotPopupClass — constructor for the copilot popup (injected to allow test isolation)
 	 * @param {Function} [config.onTariffGate] — called when the tariff gate fires
-	 * @param {*} [config.callStore]
+	 * @param {?string} [config.copilotModelName] — portal-specific model label for the notify text
 	 */
-	constructor({ viewPort, container, CopilotPopupClass, onTariffGate, callStore })
+	constructor({ viewPort, container, CopilotPopupClass, onTariffGate, copilotModelName = null })
 	{
 		super();
 		this.setEventNamespace('BX.Call.CopilotUiService');
@@ -32,7 +32,7 @@ export class CopilotUiService extends EventEmitter
 		this.copilotPopup = null;
 		this.CopilotPopupClass = CopilotPopupClass;
 		this.onTariffGate = onTariffGate ?? null;
-		this.callStore = callStore ?? null;
+		this.copilotModelName = copilotModelName;
 	}
 
 	/**
@@ -71,8 +71,8 @@ export class CopilotUiService extends EventEmitter
 				{
 					this.viewPort
 						?.showConfirmModal({
-							title: Loc.getMessage('CALL_AI_RECORD_STOP_TITLE'),
-							message: Loc.getMessage('CALL_AI_RECORD_STOP_MESSAGE'),
+							title: Loc.getMessage('CALL_AI_RECORD_STOP_TITLE_MSGVER_1'),
+							message: Loc.getMessage('CALL_AI_RECORD_STOP_MESSAGE_MSGVER_1'),
 							yesButtonText: Loc.getMessage('CALL_AI_RECORD_STOP_YES_BUTTON'),
 							noButtonText: Loc.getMessage('CALL_AI_RECORD_STOP_NO_BUTTON'),
 						})
@@ -126,11 +126,6 @@ export class CopilotUiService extends EventEmitter
 		if (isCopilotActive)
 		{
 			this.viewPort.showCopilotNotify(callId);
-
-			if (this.callStore)
-			{
-				this.callStore.addNotification('copilot', { callId });
-			}
 		}
 		else
 		{
@@ -152,12 +147,11 @@ export class CopilotUiService extends EventEmitter
 	{
 		if ((isCopilotActive || force) && provider !== Provider.Plain && this.viewPort)
 		{
-			this.viewPort.showCopilotNotify(callId, errorCode);
+			const notifyText = this.copilotModelName
+				? Loc.getMessage('CALL_COPILOT_POPUP_NOTIFY_TEXT').replace('#MODEL_NAME#', this.copilotModelName)
+				: null;
 
-			if (this.callStore)
-			{
-				this.callStore.addNotification('copilot', { callId, errorCode });
-			}
+			this.viewPort.showCopilotNotify(callId, errorCode, notifyText);
 		}
 	}
 
@@ -200,8 +194,6 @@ export class CopilotUiService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
-
 		if (this.copilotPopup !== null)
 		{
 			this.copilotPopup.close();

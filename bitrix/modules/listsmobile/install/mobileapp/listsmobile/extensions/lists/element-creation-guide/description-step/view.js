@@ -7,6 +7,8 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 	const { PureComponent } = require('layout/pure-component');
 	const { EventEmitter } = require('event-emitter');
 	const { inAppUrl } = require('in-app-url');
+	const { Text3, Text4, Text5 } = require('ui-system/typography/text');
+	const { Color, Typography } = require('tokens');
 	const { Random } = require('utils/random');
 	const { Stub } = require('lists/element-creation-guide/stub');
 	const { DescriptionStepSkeleton } = require('lists/element-creation-guide/description-step/skeleton');
@@ -73,21 +75,18 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 				{
 					style: { marginHorizontal: 16, marginVertical: 12 },
 				},
-				Text({
+				Text3({
 					testId: 'elementCreationGuide_DescriptionStep_title',
 					text: this.props.name,
-					style: {
-						fontSize: 16,
-						fontWeight: '500',
-						color: AppTheme.colors.base1,
-					},
+					accent: true,
+					color: Color.base1,
 				}),
 				description && BBCodeText({
 					testId: 'elementCreationGuide_DescriptionStep_description',
 					value: description,
 					style: {
 						marginTop: 10,
-						fontSize: 14,
+						fontSize: Typography.text4.getValue().fontSize,
 						fontWeight: '400',
 						color: AppTheme.colors.base2,
 						lineHeightMultiple: 1.1,
@@ -190,11 +189,10 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 						flexDirection: 'row',
 					},
 				},
-				Text({
+				Text4({
+					accent: true,
+					color: Color.base2,
 					style: {
-						fontWeight: '500',
-						fontSize: 14,
-						color: AppTheme.colors.base2,
 						lineHeightMultiple: 1.1,
 						flexShrink: 1,
 					},
@@ -211,12 +209,11 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 							justifyContent: 'flex-end',
 						},
 					},
-					Text({
+					Text5({
+						accent: true,
+						color: formattedTime ? Color.base2 : Color.base4,
 						style: {
 							flexShrink: 1,
-							color: formattedTime ? AppTheme.colors.base2 : AppTheme.colors.base4,
-							fontSize: 14,
-							fontWeight: '500',
 						},
 						text: (
 							formattedTime
@@ -261,12 +258,10 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 
 		renderExecuteTimeDescription()
 		{
-			return Text({
+			return Text4({
+				color: Color.base2,
 				style: {
 					marginTop: 10,
-					color: AppTheme.colors.base2,
-					fontWeight: '400',
-					fontSize: 14,
 					lineHeightMultiple: 1.1,
 				},
 				text: (
@@ -285,12 +280,10 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 						helpdesk.openHelpArticle('18783714');
 					},
 				},
-				Text({
+				Text4({
+					color: Color.accentMainLinks,
 					style: {
 						marginTop: 10,
-						fontWeight: '400',
-						fontSize: 14,
-						color: AppTheme.colors.accentMainLinks,
 						lineHeightMultiple: 1.1,
 					},
 					text: Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_TO_OPTIMIZE_LINK_TITLE'),

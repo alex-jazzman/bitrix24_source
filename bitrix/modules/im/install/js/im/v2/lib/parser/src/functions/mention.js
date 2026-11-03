@@ -4,10 +4,17 @@ import { ParserUtils } from '../utils/utils';
 import { getCore, getConst } from '../utils/core-proxy';
 import { MentionHandler } from '../classes/mention-handler';
 
-const { UserType, MessageMentionType, SpecialMentionDialogId = {} } = getConst();
+let specialMentionHandlers = null;
+const getSpecialMentionHandlers = () => {
+	if (specialMentionHandlers === null)
+	{
+		const { SpecialMentionDialogId = {} } = getConst();
+		specialMentionHandlers = {
+			[SpecialMentionDialogId.allParticipants]: (userName) => ParserMention.renderAllParticipantsMention(userName),
+		};
+	}
 
-const SpecialMentionHandlers = {
-	[SpecialMentionDialogId.allParticipants]: (userName) => ParserMention.renderAllParticipantsMention(userName),
+	return specialMentionHandlers;
 };
 
 const MENTION_BASE_CLASS = 'bx-im-mention';
@@ -19,10 +26,12 @@ const MentionModifier = {
 export const ParserMention = {
 	decode(text): string
 	{
+		const specialMentionHandlers = getSpecialMentionHandlers();
+		const { UserType, MessageMentionType } = getConst();
 		text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
-			if (SpecialMentionHandlers[userId])
+			if (specialMentionHandlers[userId])
 			{
-				return SpecialMentionHandlers[userId](userName);
+				return specialMentionHandlers[userId](userName);
 			}
 
 			userId = Number.parseInt(userId, 10);
@@ -196,6 +205,7 @@ export const ParserMention = {
 
 	renderAllParticipantsMention(userName: string): string
 	{
+		const { MessageMentionType, SpecialMentionDialogId = {} } = getConst();
 		const className = `${MENTION_BASE_CLASS} ${MentionModifier.highlight}`;
 
 		return Dom.create({

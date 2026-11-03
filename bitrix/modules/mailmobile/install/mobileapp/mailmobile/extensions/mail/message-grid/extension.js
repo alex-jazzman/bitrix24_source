@@ -3,6 +3,7 @@
  */
 jn.define('mail/message-grid', (require, exports, module) => {
 	const { Selector: FolderSelector } = require('mail/folder/selector');
+	const { DraftAhaMomentController } = require('mail/draft/aha');
 
 	const {
 		MessageGridFilterController,
@@ -15,7 +16,17 @@ jn.define('mail/message-grid', (require, exports, module) => {
 	} = require('mail/message-grid/navigation');
 	const { MessageGridController } = require('mail/message-grid/src/controller');
 	const { MessageGridEventBinder } = require('mail/message-grid/src/event-binder');
-	const { MessageGridListAdapter } = require('mail/message-grid/src/list-adapter');
+	const {
+		deleteDrafts,
+		getDraftSwipeActions,
+		MessageGridListAdapter,
+		MessageGridMode,
+		adaptDraftListResponse,
+		adaptDraftToMessageViewModel,
+		isDraftPageFullyLoaded,
+		prepareDraftListActionParams,
+		toggleDraftSelection,
+	} = require('mail/message-grid/src/list-adapter');
 	const { MessageGridNavigator } = require('mail/message-grid/src/navigator');
 	const { AjaxMethod } = require('mail/const');
 
@@ -24,6 +35,32 @@ jn.define('mail/message-grid', (require, exports, module) => {
 	const { BottomPanel } = require('native/bottom-panel');
 	const { Box } = require('ui-system/layout/box');
 	const { Color } = require('tokens');
+	const { Loc } = require('loc');
+
+	function switchMessageGridMode({
+		currentMode,
+		nextMode,
+		listAdapter,
+		eventBinder,
+		setState,
+		onModeApplied,
+		schedule = (callback) => setTimeout(callback, 0),
+	})
+	{
+		if (nextMode === currentMode)
+		{
+			return false;
+		}
+
+		listAdapter.setMode(nextMode);
+		eventBinder.setReduxObserversEnabled(nextMode === MessageGridMode.MESSAGES);
+		setState({ mode: nextMode }, () => {
+			onModeApplied(nextMode);
+			schedule(() => listAdapter.reload({ skipUseCache: true }));
+		});
+
+		return true;
+	}
 
 	/**
 	 * @class MessageGrid
@@ -38,6 +75,11 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			this.parentWidget = props.layout;
 			const mailboxId = props.mailboxId ?? 0;
 			this.searchMailboxId = mailboxId;
+			this.state = {
+				mode: MessageGridMode.MESSAGES,
+				isDraftMultiSelectMode: false,
+				selectedDraftIds: [],
+			};
 
 			this.sorting = new MessageGridSorting({
 				type: MessageGridSorting.types.RECEIVE_DATE,
@@ -47,6 +89,8 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			this.moreMenu = new MessageGridMoreMenu({
 				selectedSorting: this.sorting.getType(),
 				isASC: this.sorting.getIsASC(),
+				isDraftMode: () => this.state.mode === MessageGridMode.DRAFTS,
+				onCheckDrafts: this.toggleDraftMultiSelectMode,
 			});
 			this.#createSearch({ disablePresets: false });
 			this.filterController = new MessageGridFilterController({
@@ -57,7 +101,14 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			if (MobileFeature.isNativeBottomPanelApiSupported())
 			{
 				this.panel = new BottomPanel();
-				this.actionMenu = new MessageGridGroupActionsMenu({ parentWidget: this.parentWidget, panel: this.panel });
+				this.actionMenu = new MessageGridGroupActionsMenu({
+					parentWidget: this.parentWidget,
+					panel: this.panel,
+					isDraftMode: () => this.state.mode === MessageGridMode.DRAFTS,
+					getDraftSelectedCount: () => this.state.selectedDraftIds.length,
+					onRemoveDrafts: this.removeSelectedDrafts,
+					onToggleDraftMultiSelectMode: this.toggleDraftMultiSelectMode,
+				});
 				this.panel.setComponent(this.actionMenu);
 			}
 			else
@@ -65,12 +116,16 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				this.parentWidget.setLeftButtons(this.leftMenuButtons);
 				this.multiSelectMenu = new MessageGridMultiSelectMenu({
 					parentWidget: this.parentWidget,
+					isDraftMode: () => this.state.mode === MessageGridMode.DRAFTS,
+					onRemoveDrafts: this.removeSelectedDrafts,
+					onToggleDraftMultiSelectMode: this.toggleDraftMultiSelectMode,
 				});
 			}
 
 			this.folderSelector = new FolderSelector({
 				parentWidget: this.parentWidget,
 			});
+			this.draftAhaMomentController = new DraftAhaMomentController();
 			this.navigator = new MessageGridNavigator({
 				parentWidget: this.parentWidget,
 			});
@@ -86,6 +141,10 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				onWriteEmail: this.navigator.openWriteEmail,
 				onListReloaded: () => this.controller.handleListReloaded(),
 				requestRender: () => this.setState({}),
+				getDraftSelectionState: this.getDraftSelectionState,
+				onToggleDraftSelection: this.toggleDraftSelection,
+				onEnterDraftMultiSelectMode: this.enterDraftMultiSelectMode,
+				onResetDraftSelection: this.resetDraftSelection,
 			});
 			this.header = new MessageGridHeader({
 				parentWidget: this.parentWidget,
@@ -95,6 +154,8 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				tabs: this.tabs,
 				getRightButtons: () => this.rightMenuButtons,
 				getLeftButtons: () => this.leftMenuButtons,
+				isDraftMode: () => this.state.mode === MessageGridMode.DRAFTS,
+				getDraftSelectedCount: () => this.state.selectedDraftIds.length,
 				setFloatingButtonVisibility: (isVisible) => this.listAdapter.setFloatingButtonVisibility(isVisible),
 			});
 			this.controller = new MessageGridController({
@@ -110,14 +171,17 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			this.eventBinder = new MessageGridEventBinder({
 				parentWidget: this.parentWidget,
 				onBindingSent: this.controller.handleBindingSent,
+				onFeedPostBound: this.controller.handleFeedPostBound,
 				onMailboxStructureChanged: this.controller.handleMailboxStructureChanged,
 				onTabsSelected: this.controller.handleTabsSelected,
-				onViewHidden: this.controller.handleViewHidden,
-				onOpenFolderMenu: this.navigator.openFolderMenu,
+				onViewHidden: this.handleViewHidden,
+				onOpenFolderMenu: this.openFolderMenu,
 				onVisibleMailboxesChange: this.controller.handleVisibleMailboxesChange,
 				onVisibleMailsChange: this.controller.handleVisibleMailsChange,
 				onVisibleFoldersChange: this.controller.handleVisibleFoldersChange,
+				onLabelsChange: this.controller.handleLabelsChange,
 				onPullCallback: this.controller.handlePullCallback,
+				onLabelCountersUpdated: this.controller.handleLabelCountersUpdated,
 			});
 			this.parentWidget.setBackButtonHandler(() => this.controller.handleSystemBackButton());
 		}
@@ -126,15 +190,30 @@ jn.define('mail/message-grid', (require, exports, module) => {
 		{
 			this.controller.syncMailboxes(this.mailboxes);
 			this.eventBinder.bind();
+			this.parentWidget.on('onViewShown', this.handleViewShown);
+			this.draftAhaMomentController.mount();
 
 			this.header.setInitialTitle();
 		}
 
 		componentWillUnmount()
 		{
+			this.parentWidget.removeEventListener?.('onViewShown', this.handleViewShown);
+			this.draftAhaMomentController.destroy();
 			this.eventBinder.unbind();
 			this.controller.destroy();
+			this.listAdapter.destroy();
+			this.moreMenu.destroy();
 		}
+
+		handleViewShown = () => {
+			this.draftAhaMomentController.onViewShown();
+		};
+
+		handleViewHidden = () => {
+			this.draftAhaMomentController.onViewHidden();
+			this.controller.handleViewHidden();
+		};
 
 		render()
 		{
@@ -150,7 +229,8 @@ jn.define('mail/message-grid', (require, exports, module) => {
 							backgroundColor: Color.bgPrimary,
 						},
 					},
-					this.tabs.render(),
+					this.state.mode === MessageGridMode.MESSAGES && this.tabs.render(),
+					this.listAdapter.renderMigrationBanner(),
 					this.listAdapter.render(),
 				),
 			);
@@ -160,15 +240,117 @@ jn.define('mail/message-grid', (require, exports, module) => {
 		{
 			return [
 				this.search.getSearchButton(),
-				this.folderSelector.getMenuButton(this.navigator.openFolderMenu),
+				this.folderSelector.getMenuButton(this.openFolderMenu),
 				this.moreMenu.getMenuButton(),
 			];
 		}
+
+		openFolderMenu = () => {
+			this.navigator.openFolderMenu({
+				onModeSelect: this.setMode,
+				isDraftsSelected: this.state.mode === MessageGridMode.DRAFTS,
+			});
+		};
+
+		setMode = (mode) => {
+			if (mode !== MessageGridMode.DRAFTS)
+			{
+				this.resetDraftSelection();
+			}
+
+			switchMessageGridMode({
+				currentMode: this.state.mode,
+				nextMode: mode,
+				listAdapter: this.listAdapter,
+				eventBinder: this.eventBinder,
+				setState: (state, callback) => this.setState(state, callback),
+				onModeApplied: (appliedMode) => {
+					const isDraftsMode = appliedMode === MessageGridMode.DRAFTS;
+
+					// drafts have no filter presets, and a new search layout drops the previous phrase
+					this.#createSearch({ disablePresets: isDraftsMode });
+
+					if (!isDraftsMode)
+					{
+						// The search layout is recreated empty and without a preset chip, so the message
+						// filter is reset whole: a preset kept in the filter alone would be invisible.
+						this.filterController.handleSearch({ text: '', presetId: null });
+					}
+
+					if (isDraftsMode)
+					{
+						this.parentWidget.setTitle({
+							text: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_DRAFTS_TITLE'),
+							type: 'section',
+						});
+					}
+					else
+					{
+						this.header.updateTitle(true);
+					}
+				},
+			});
+		};
 
 		get leftMenuButtons()
 		{
 			return [];
 		}
+
+		getDraftSelectionState = () => {
+			return {
+				isMultiSelectMode: this.state.isDraftMultiSelectMode,
+				selectedIds: this.state.selectedDraftIds,
+			};
+		};
+
+		toggleDraftMultiSelectMode = () => {
+			this.setDraftSelectionState({
+				isMultiSelectMode: !this.state.isDraftMultiSelectMode,
+				selectedIds: [],
+			});
+		};
+
+		enterDraftMultiSelectMode = (draftId) => {
+			this.setDraftSelectionState({
+				isMultiSelectMode: true,
+				selectedIds: [draftId],
+			});
+		};
+
+		resetDraftSelection = () => {
+			if (!this.state.isDraftMultiSelectMode && this.state.selectedDraftIds.length === 0)
+			{
+				return;
+			}
+
+			this.setDraftSelectionState({ isMultiSelectMode: false, selectedIds: [] });
+		};
+
+		toggleDraftSelection = (draftId) => {
+			this.setDraftSelectionState(toggleDraftSelection(this.state.selectedDraftIds, draftId));
+		};
+
+		setDraftSelectionState = ({ isMultiSelectMode, selectedIds }) => {
+			this.setState({
+				isDraftMultiSelectMode: isMultiSelectMode,
+				selectedDraftIds: selectedIds,
+			}, () => {
+				this.actionMenu?.updateDraftSelection();
+				this.header.applyMode(!isMultiSelectMode);
+			});
+		};
+
+		removeSelectedDrafts = () => {
+			const draftIds = [...this.state.selectedDraftIds];
+			if (draftIds.length === 0)
+			{
+				return;
+			}
+
+			this.setDraftSelectionState({ isMultiSelectMode: false, selectedIds: [] });
+			void this.listAdapter.deleteDraftList(draftIds);
+		};
 
 		#createSearch({ disablePresets })
 		{
@@ -193,5 +375,16 @@ jn.define('mail/message-grid', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { MessageGrid };
+	module.exports = {
+		deleteDrafts,
+		getDraftSwipeActions,
+		MessageGrid,
+		MessageGridMode,
+		adaptDraftListResponse,
+		adaptDraftToMessageViewModel,
+		isDraftPageFullyLoaded,
+		prepareDraftListActionParams,
+		switchMessageGridMode,
+		toggleDraftSelection,
+	};
 });

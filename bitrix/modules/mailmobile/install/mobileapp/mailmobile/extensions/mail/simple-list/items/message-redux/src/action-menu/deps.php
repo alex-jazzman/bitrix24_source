@@ -11,6 +11,9 @@ return [
 		'ui-system/popups/popup-menu',
 		'layout/ui/list/base-more-menu',
 		'statemanager/redux/store',
+		'in-app-url',
+		'device/connection',
+		'require-lazy',
 		'mail:message/actions',
 		'mail:enum/default-folder-type',
 		'mail:message/elements/contact/card',
@@ -18,5 +21,8 @@ return [
 		'mail:statemanager/redux/slices/messages/thunk',
 		'mail:statemanager/redux/slices/messages/selector',
 		'mail:statemanager/redux/slices/folders/selector',
+	],
+	'bundle' => [
+		'./src/label-action',
 	],
 ];

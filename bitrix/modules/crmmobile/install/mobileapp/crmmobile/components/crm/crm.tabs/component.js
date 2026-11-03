@@ -20,7 +20,7 @@
 	const { Type } = require('crm/type');
 	const { LoadingProgressBar } = require('crm/ui/loading-progress');
 	const { getEntityMessage } = require('crm/loc');
-	const { SearchBar } = require('layout/ui/search-bar');
+	const { SearchBar, SearchLayout } = require('layout/ui/search-bar');
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
@@ -53,10 +53,16 @@
 			this.kanbanTabRef = null;
 			this.listTabRef = null;
 
+			// Bodies of the tabs of other modules, by extension name: undefined - not loaded yet,
+			// null - there is nothing to load on this portal.
+			this.externalTabBodies = {};
+			this.loadingExternalTabBodies = new Set();
+
 			/** @type {SearchBar|null} */
 			this.searchRef = null;
+			this.unifiedSearch = null;
 
-			const tabsCacheName = `crm:crm.tabs.list.${env.userId}.v2`;
+			const tabsCacheName = `crm:crm.tabs.list.${env.userId}.v3`;
 			this.tabsCacheName = (
 				props.customSectionId
 					? `${tabsCacheName}.customSection.${props.customSectionId}`
@@ -71,6 +77,7 @@
 				connectors = {},
 				permissions = {},
 				restrictions = {},
+				crmMode = null,
 			} = data;
 
 			this.prepareTabs(props, tabs);
@@ -80,11 +87,13 @@
 
 			this.state = {
 				tabs,
-				activeTabTypeName: activeTab && activeTab.typeName,
+				activeTabTypeName: this.resolveActiveTabTypeName(activeTab),
 				activeTabId: activeTab && activeTab.id,
 				permissions,
 				connectors,
 				restrictions,
+				crmMode,
+				unifiedFilters: null,
 			};
 
 			this.currentMoneyFormats = Money.formats;
@@ -101,9 +110,12 @@
 			this.updateCounters = this.updateCounters.bind(this);
 			this.setActiveTab = this.setActiveTab.bind(this);
 			this.updateEntityTypeData = this.updateEntityTypeData.bind(this);
+			this.updateEntityTypeViewType = this.updateEntityTypeViewType.bind(this);
 			this.bindKanbanRef = this.bindKanbanRef.bind(this);
 			this.bindListRef = this.bindListRef.bind(this);
 			this.bindSearchRef = this.bindSearchRef.bind(this);
+			this.onFilterModeChange = this.onFilterModeChange.bind(this);
+			this.showUnifiedSearch = this.showUnifiedSearch.bind(this);
 			this.onMoreButtonClick = this.onMoreButtonClick.bind(this);
 			this.onCheckRestrictions = this.onCheckRestrictions.bind(this);
 			this.onItemsLoaded = this.onItemsLoaded.bind(this);
@@ -145,6 +157,8 @@
 			}
 
 			const preparedCounters = {};
+			// Entity tabs are keyed by entityTypeId; an external tab has no entity counters to reload.
+			const activeEntityTypeId = this.isExternalTab(this.getActiveTab()) ? null : this.state.activeTabId;
 
 			for (const counter of Object.keys(counters))
 			{
@@ -152,11 +166,11 @@
 				{
 					preparedCounters[counter] = counters[counter];
 				}
-				else if (counters[counter] === -1)
+				else if (counters[counter] === -1 && activeEntityTypeId)
 				{
 					BX.ajax.runAction('crm.counter.list', {
 						data: {
-							entityTypeId: (this.kanbanTabRef || this.listTabRef).props.entityTypeId,
+							entityTypeId: activeEntityTypeId,
 							extras: data.ex,
 							withExcludeUsers: Boolean(this.props.withExcludeUsers),
 						},
@@ -179,6 +193,7 @@
 			BX.addCustomEvent('Money::onLoad', this.onMoneyLoad);
 			BX.addCustomEvent('CrmTabs::loadTabs', this.loadTabs);
 			BX.addCustomEvent('CrmTabs::reloadKanbanTab', this.reloadKanbanTab);
+			BX.addCustomEvent('UI.SearchBar::show', this.showUnifiedSearch);
 
 			ActivityCountersStoreManager
 				.subscribe('activityCountersModel/setCounters', this.updateCounters)
@@ -192,6 +207,8 @@
 				this.pullUnsubscribe();
 			}
 
+			this.bindSearchRef(null);
+			this.unifiedSearch = null;
 			this.unbindEvents();
 		}
 
@@ -201,6 +218,7 @@
 			BX.removeCustomEvent('Money::onLoad', this.onMoneyLoad);
 			BX.removeCustomEvent('CrmTabs::loadTabs', this.loadTabs);
 			BX.removeCustomEvent('CrmTabs::reloadKanbanTab', this.reloadKanbanTab);
+			BX.removeCustomEvent('UI.SearchBar::show', this.showUnifiedSearch);
 
 			ActivityCountersStoreManager
 				.unsubscribe('activityCountersModel/setCounters', this.updateCounters)
@@ -238,6 +256,11 @@
 		updateTabs(counters)
 		{
 			this.state.tabs.forEach((tab) => {
+				if (this.isExternalTab(tab))
+				{
+					return;
+				}
+
 				const code = `crm_${tab.typeName.toLowerCase()}_all`;
 
 				if (counters.hasOwnProperty(code) && counters[code] >= 0)
@@ -340,6 +363,7 @@
 					resizableByKeyboard: true,
 				},
 				TabView({
+					testId: 'CRM_ENTITY_TABS',
 					style: {
 						height: 50,
 						backgroundColor: AppTheme.realColors.bgNavigation,
@@ -358,7 +382,7 @@
 					onTabSelected: (tab, changed) => this.handleTabSelected(tab, changed),
 				}),
 				activeTabTypeName && activeTab && this.renderTab(),
-				activeTabTypeName && activeTab && new SearchBar({
+				!this.isExternalTab(activeTab) && this.state.unifiedFilters === false && new SearchBar({
 					id: `${entityTypeName}_${categoryId}`,
 					cacheId: `Crm.SearchBar.${entityTypeName}.${categoryId || 'all'}.${env.userId}`,
 					searchDataAction: result.actions.getSearchData,
@@ -396,10 +420,103 @@
 
 		bindSearchRef(ref)
 		{
-			if (ref)
+			if (this.searchRef && this.searchRef !== ref)
 			{
-				this.searchRef = ref;
+				// SearchBar does not remove its component event subscription on unmount.
+				BX.removeCustomEvent('UI.SearchBar::show', this.searchRef.show);
 			}
+
+			this.searchRef = ref;
+		}
+
+		onFilterModeChange(tab)
+		{
+			const activeTab = this.kanbanTabRef || this.listTabRef;
+			if (tab !== activeTab || this.isExternalTab(this.getActiveTab()))
+			{
+				return;
+			}
+
+			const unifiedFilters = tab.isUnifiedFilters();
+			if (this.state.unifiedFilters === unifiedFilters)
+			{
+				return;
+			}
+
+			this.unifiedSearch = null;
+			if (unifiedFilters)
+			{
+				this.bindSearchRef(null);
+			}
+
+			this.setState({ unifiedFilters });
+		}
+
+		getSearchBarId()
+		{
+			const tab = this.getActiveTab();
+
+			return `${tab?.typeName}_${get(tab, 'data.currentCategoryId', null)}`;
+		}
+
+		showUnifiedSearch({ searchBarId, search: text = '' } = {})
+		{
+			if (
+				!this.state.unifiedFilters
+				|| this.isExternalTab(this.getActiveTab())
+				|| searchBarId !== this.getSearchBarId()
+			)
+			{
+				return;
+			}
+
+			let appliedText = text;
+			const isCurrent = () => this.unifiedSearch === search
+				&& this.state.unifiedFilters && searchBarId === this.getSearchBarId()
+			;
+			const applySearch = (value, isCancel = false) => {
+				if (!isCurrent() || value === appliedText)
+				{
+					return;
+				}
+
+				appliedText = value;
+				BX.postComponentEvent('UI.SearchBar::onSearch', [{
+					searchBarId,
+					text: value,
+					isCancel,
+					data: { background: value ? Color.accentMainPrimary.toHex() : null },
+				}]);
+			};
+			const search = new SearchLayout({
+				id: searchBarId,
+				layout,
+				disablePresets: true,
+				onSearch: ({ text: value }) => applySearch(value),
+				onCancel: () => applySearch('', true),
+				onHide: () => {
+					if (isCurrent())
+					{
+						BX.postComponentEvent('UI.SearchBar::onSearchHide', [{ searchBarId }]);
+					}
+				},
+				onCheckRestrictions: () => isCurrent() && search.text.length >= 3 && this.onCheckRestrictions(),
+			});
+
+			this.unifiedSearch = search;
+			search.text = text;
+			search.show();
+		}
+
+		/**
+		 * Without the presets strip the entity tabs stay reachable under an open search, and a search
+		 * left open for the previous list would take text nobody applies.
+		 */
+		closeUnifiedSearch()
+		{
+			const search = this.unifiedSearch;
+			this.unifiedSearch = null;
+			search?.close();
 		}
 
 		onMoreButtonClick()
@@ -442,8 +559,28 @@
 			return this.state.tabs.find(({ typeName }) => typeName === entityTypeName);
 		}
 
+		isExternalTab(tab)
+		{
+			return Boolean(tab) && tab.type === 'external';
+		}
+
+		getExternalTabById(tabId)
+		{
+			const tab = this.getTabById(tabId);
+
+			return this.isExternalTab(tab) ? tab : null;
+		}
+
+		resolveActiveTabTypeName(tab)
+		{
+			// External tabs have no entityType; their string id doubles as the active-tab key.
+			return this.isExternalTab(tab) ? tab.id : (tab && tab.typeName);
+		}
+
 		onPanBySearchHandler()
 		{
+			this.unifiedSearch?.close();
+
 			if (this.searchRef && this.searchRef.isVisible())
 			{
 				void this.searchRef.fadeOut();
@@ -456,9 +593,24 @@
 
 			if (changed)
 			{
+				this.closeUnifiedSearch();
 				featureCounter = 0;
 
 				this.rightButtonsIsSet = false;
+
+				// External (non-entity) tab: no kanban/list, no entity reload, no search.
+				const selectedExternalTab = this.getExternalTabById(tab.id);
+				if (selectedExternalTab)
+				{
+					this.searchRef = null;
+					this.setState({
+						activeTabTypeName: selectedExternalTab.id,
+						activeTabId: selectedExternalTab.id,
+					});
+
+					return;
+				}
+
 				const typeId = this.getTabByTypeName(tab.id).id;
 
 				let promise;
@@ -472,8 +624,10 @@
 				}
 				else
 				{
+					const previousTab = this.getTabByTypeName(activeTabTypeName);
 					if (
-						this.getTabByTypeName(activeTabTypeName).isStagesEnabled
+						previousTab
+						&& previousTab.isStagesEnabled
 						&& this.getTabByTypeName(tab.id).isStagesEnabled
 					)
 					{
@@ -567,17 +721,44 @@
 		{
 			const { customSectionId } = this.props;
 			const ajaxParams = { customSectionId };
+			const { crmMode } = params;
+			const loadVersion = (this.tabsLoadVersion ?? 0) + 1;
+			this.tabsLoadVersion = loadVersion;
+			if (crmMode)
+			{
+				this.latestCrmMode = crmMode;
+				this.setState({ crmMode });
+			}
+			const setTabsFromResponse = (response, useResponseMode) => {
+				const responseMode = useResponseMode
+					? response.data.crmMode
+					: (this.latestCrmMode ?? this.state.crmMode)
+				;
+				if (useResponseMode)
+				{
+					this.latestCrmMode = responseMode;
+				}
+
+				this.setTabs({
+					...response,
+					...params,
+					data: { ...response.data, crmMode: responseMode },
+				});
+			};
 
 			new RunActionExecutor(result.actions.loadTabs, ajaxParams)
 				.setCacheId(this.tabsCacheName)
-				.setCacheHandler((response) => this.setTabs({ ...response, ...params }))
-				.setHandler((response) => this.setTabs({ ...response, ...params }))
+				.setCacheHandler((response) => setTabsFromResponse(
+					response,
+					!crmMode && loadVersion === this.tabsLoadVersion,
+				))
+				.setHandler((response) => setTabsFromResponse(response, loadVersion === this.tabsLoadVersion))
 				.call(true);
 		}
 
 		setTabs(response)
 		{
-			const { tabs, permissions, connectors } = this.state;
+			const { tabs, permissions, connectors, crmMode } = this.state;
 			const { data } = response;
 
 			if (data.tabs && !isEqual(data.tabs, tabs))
@@ -587,11 +768,12 @@
 
 				this.setState({
 					tabs: data.tabs,
-					activeTabTypeName: tab.typeName,
+					activeTabTypeName: this.resolveActiveTabTypeName(tab),
 					activeTabId: tab.id,
 					permissions: data.permissions,
 					connectors: data.connectors,
 					restrictions: data.restrictions,
+					crmMode: data.crmMode,
 					remindersList: data.remindersList,
 				});
 			}
@@ -599,13 +781,19 @@
 			{
 				this.setState({
 					permissions: data.permissions,
+					crmMode: data.crmMode,
 				});
 			}
 			else if (data.connectors && !isEqual(data.connectors, connectors))
 			{
 				this.setState({
 					connectors: data.connectors,
+					crmMode: data.crmMode,
 				});
+			}
+			else if (data.crmMode !== crmMode)
+			{
+				this.setState({ crmMode: data.crmMode });
 			}
 
 			const { user } = data;
@@ -634,6 +822,12 @@
 
 		renderTab()
 		{
+			const activeTab = this.getActiveTab();
+			if (this.isExternalTab(activeTab))
+			{
+				return this.renderExternalTab(activeTab);
+			}
+
 			return (
 				this.isUseColumns()
 					? this.createKanban()
@@ -641,9 +835,80 @@
 			);
 		}
 
+		renderExternalTab(tab)
+		{
+			this.kanbanTabRef = null;
+			this.listTabRef = null;
+
+			const { module: moduleId, component: componentName, params } = tab.externalRender || {};
+			if (!moduleId || !componentName)
+			{
+				return null;
+			}
+
+			const tabBody = this.externalTabBodies[moduleId];
+			if (tabBody === undefined)
+			{
+				void this.loadExternalTabBody(moduleId);
+
+				return null;
+			}
+
+			if (tabBody === null)
+			{
+				// The load has already reported that this portal has no such body.
+				return null;
+			}
+
+			const ExternalComponent = tabBody[componentName];
+			if (!ExternalComponent)
+			{
+				console.error(`CRM tabs: tab body ${moduleId}::${componentName} is not available`);
+
+				return null;
+			}
+
+			return new ExternalComponent({ layout, ...params });
+		}
+
+		/**
+		 * A tab body lives in the module that contributed the tab, and that module is not necessarily on the
+		 * portal. Declaring its extension in deps.php of this component would make the component unbuildable
+		 * there: janative resolves the whole dependency list before it builds the script, and a missing
+		 * extension breaks the panel rather than the tab. Hence on demand: a body that cannot be loaded costs
+		 * an empty tab, nothing more.
+		 *
+		 * @param {string} moduleId extension of the body in the slash form, as the tab descriptor names it
+		 */
+		async loadExternalTabBody(moduleId)
+		{
+			if (this.loadingExternalTabBodies.has(moduleId))
+			{
+				return;
+			}
+
+			this.loadingExternalTabBodies.add(moduleId);
+
+			// requireLazy takes the colon form and never rejects: an extension the portal does not have
+			// resolves to undefined.
+			const tabBody = await requireLazy(moduleId.replace('/', ':'));
+			if (!tabBody)
+			{
+				// Reported once, on the load: a render of its own would repeat the same line on every frame.
+				console.error(`CRM tabs: tab body ${moduleId} is not available on this portal`);
+			}
+
+			this.externalTabBodies[moduleId] = tabBody ?? null;
+			this.loadingExternalTabBodies.delete(moduleId);
+
+			this.setState({
+				externalTabBodyRevision: (this.state.externalTabBodyRevision ?? 0) + 1,
+			});
+		}
+
 		isUseColumns()
 		{
-			const { isStagesEnabled } = this.getActiveTab();
+			const { isStagesEnabled } = this.getActiveTab() ?? {};
 
 			return isStagesEnabled;
 		}
@@ -665,6 +930,10 @@
 		bindKanbanRef(ref)
 		{
 			this.kanbanTabRef = ref;
+			if (ref)
+			{
+				this.onFilterModeChange(ref);
+			}
 		}
 
 		createList()
@@ -697,6 +966,10 @@
 		bindListRef(ref)
 		{
 			this.listTabRef = ref;
+			if (ref)
+			{
+				this.onFilterModeChange(ref);
+			}
 		}
 
 		getTabItems()
@@ -706,6 +979,18 @@
 
 		getPreparedTabItem(tab)
 		{
+			if (this.isExternalTab(tab))
+			{
+				// External descriptor: string id and title map straight to the tab item;
+				// entity-only fields (restrictions/label/icon) degrade to absent.
+				return {
+					id: tab.id,
+					title: tab.title,
+					active: Boolean(tab?.active),
+					selectable: true,
+				};
+			}
+
 			let tabItem = {
 				id: tab.typeName,
 				title: tab.titleInPlural,
@@ -713,7 +998,7 @@
 				selectable: Boolean(tab.selectable),
 				label: this.getPreparedLabel(tab.label, tab.id),
 			};
-			const { hasRestrictions } = this.getTabByTypeName(tabItem.id);
+			const { hasRestrictions } = this.getTabByTypeName(tabItem.id) ?? {};
 
 			if (hasRestrictions)
 			{
@@ -749,12 +1034,14 @@
 
 		getEntityTypes()
 		{
-			return this.state.tabs.map((tab) => {
-				return {
-					...tab,
-					name: tab.title,
-				};
-			});
+			return this.state.tabs
+				.filter((tab) => !this.isExternalTab(tab))
+				.map((tab) => {
+					return {
+						...tab,
+						name: tab.title,
+					};
+				});
 		}
 
 		getEntityTabConfig(ref)
@@ -770,7 +1057,9 @@
 				entityTypeName: activeTabTypeName,
 				entityTypeId: activeTabId,
 				entityTypes: this.getEntityTypes(),
+				crmMode: this.state.crmMode,
 				updateEntityTypeData: this.updateEntityTypeData,
+				updateEntityTypeViewType: this.updateEntityTypeViewType,
 				setActiveTab: this.setActiveTab,
 				actions: result.actions || {},
 				actionParams: {
@@ -795,6 +1084,7 @@
 				needInitMenu: !rightButtonsIsSet,
 				onPanList: this.onPanBySearch,
 				searchRef: this.searchRef,
+				onFilterModeChange: this.onFilterModeChange,
 				searchBarId: `${activeTabTypeName}_${categoryId}`,
 				userInfo: this.userInfo,
 				remindersList,
@@ -809,7 +1099,7 @@
 		 */
 		onItemsLoaded(data, renderType, config)
 		{
-			if (data?.event === 'refreshPresets')
+			if (!this.state.unifiedFilters && data?.event === 'refreshPresets')
 			{
 				this.searchRef?.refreshPresets();
 			}
@@ -977,6 +1267,39 @@
 					}
 				});
 			}
+		}
+
+		/**
+		 * @param {Number} entityTypeId
+		 * @param {String} viewType
+		 * @param {Function|null} callback
+		 */
+		updateEntityTypeViewType(entityTypeId, viewType, callback = null)
+		{
+			const tabs = clone(this.state.tabs);
+			const tab = tabs.find((currentTab) => currentTab.id === entityTypeId);
+
+			if (!tab || tab.data.viewType === viewType)
+			{
+				// the tab state already matches, but the view still has to be reloaded
+				if (callback)
+				{
+					callback(this.state.tabs);
+				}
+
+				return;
+			}
+
+			tab.data.viewType = viewType;
+			this.modifyCache({ data: { viewType } }, tab.id);
+			this.rightButtonsIsSet = false;
+
+			this.setState({ tabs }, () => {
+				if (callback)
+				{
+					callback(tabs);
+				}
+			});
 		}
 
 		/**

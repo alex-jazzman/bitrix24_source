@@ -13,7 +13,10 @@ export { MarketModel } from './market/market';
 export { CountersModel } from './counters/counters';
 export { CopilotModel } from './copilot/copilot';
 export { AiAssistantModel } from './ai-assistant/ai-assistant';
+export { AiTaskModel } from './ai-task/ai-task';
+export type { AiTaskOperation } from './ai-task/ai-task';
 export { StickersModel } from './stickers/stickers';
+export { CommandsModel } from './commands/commands';
 
 export { formatFieldsWithConfig } from './utils/validate';
 export type { FieldsConfig } from './utils/validate';
@@ -23,6 +26,7 @@ export type {
 	CollabInfo as ImModelCollabInfo,
 	Folder as ImModelFolder,
 	FolderChat as ImModelFolderChat,
+	FolderDefinition as ImModelFolderDefinition,
 } from './type/chat';
 export type { InputActionState, ChatInputActions as ImModelInputActions } from './chats/nested-modules/input-actions';
 export type { User as ImModelUser, Bot as ImModelBot } from './type/user';
@@ -53,6 +57,8 @@ export type {
 	CopilotPrompt as ImModelCopilotPrompt,
 	CopilotAIModel as ImModelCopilotAIModel,
 	CopilotMcpAuth as ImModelCopilotMcpAuth,
+	CopilotGenerationState as ImModelCopilotGenerationState,
+	CopilotGreeting as ImModelCopilotGreeting,
 	AvatarSize as ImModelCopilotAvatarSize,
 } from './type/copilot';
 export type { SidebarMultidialogItem as ImModelSidebarMultidialogItem } from './type/sidebar/multidialog';
@@ -68,3 +74,4 @@ export type {
 	StickerIdentifier as ImModelStickerIdentifier,
 } from './type/stickers';
 export type { CounterItem as ImModelCounter } from './type/counter';
+export type { Command as ImModelCommand } from './type/command';

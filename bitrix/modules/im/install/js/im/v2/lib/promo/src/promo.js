@@ -11,6 +11,7 @@ export class PromoManager
 	static #instance: PromoManager;
 
 	#promoList: Promo[];
+	#claimedPromos: Promo[] = [];
 
 	static getInstance(): PromoManager
 	{
@@ -36,14 +37,29 @@ export class PromoManager
 
 	needToShow(promoId: $Values<typeof PromoId>, promoParams: PromoParams = {}): boolean
 	{
-		const promo: Promo = new Promo(promoId, promoParams);
+		const promo = new Promo(promoId, promoParams);
 
-		return Boolean(this.#get(promo));
+		return Boolean(this.#get(promo)) && !this.#hasClaimed(promo);
+	}
+
+	confirmShown(promoId: $Values<typeof PromoId>, promoParams: PromoParams = {}): boolean
+	{
+		const promo = new Promo(promoId, promoParams);
+		if (!this.#get(promo) || this.#hasClaimed(promo))
+		{
+			return false;
+		}
+
+		this.#claimedPromos.push(promo);
+		this.#remove(promo);
+		void PromoService.markAsWatched(promo);
+
+		return true;
 	}
 
 	async markAsWatched(promoId: $Values<typeof PromoId>, promoParams: PromoParams = {}): Promise<void>
 	{
-		const promo: Promo = new Promo(promoId, promoParams);
+		const promo = new Promo(promoId, promoParams);
 
 		if (this.#get(promo))
 		{
@@ -60,9 +76,10 @@ export class PromoManager
 
 		this.#removeByPromotionList(deletedPromotions);
 
-		const addedPromotions: Promo[] = params.addedPromotions.map(
-			(promoData: RawPromoData) => Promo.createFromRawPromoData(promoData),
-		);
+		const addedPromotions: Promo[] = params.addedPromotions
+			.map((promoData: RawPromoData) => Promo.createFromRawPromoData(promoData))
+			.filter((promo: Promo) => !this.#hasClaimed(promo))
+		;
 
 		this.#promoList = [...this.#promoList, ...addedPromotions];
 	}
@@ -75,6 +92,11 @@ export class PromoManager
 	#get(promo: Promo): ?Promo
 	{
 		return this.#promoList.find((item: Promo) => item.isEqual(promo));
+	}
+
+	#hasClaimed(promo: Promo): boolean
+	{
+		return this.#claimedPromos.some((claimedPromo: Promo) => claimedPromo.isEqual(promo));
 	}
 
 	#remove(promo: Promo): void

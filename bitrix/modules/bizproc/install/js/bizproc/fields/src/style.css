@@ -43,6 +43,37 @@ legend.bizproc-fields-header {
 	margin: 0 0 var(--ui-space-stack-2xs);
 }
 
+/*
+ * A type may ask for its name block to stand beside its control rather than above it
+ * (NameBlockPlacement.InsideControlRow, see FieldLayout.assemble): the block then lands inside the
+ * control wrapper, and the wrapper - a plain block for every other field - lays its children out in
+ * one row. Both halves of that mechanic belong here: the modifier is put on by the core, which is
+ * the only side that can reach the wrapper it renders around the control, so a type declaring the
+ * placement gets the layout with it instead of bringing a copy of these rules along.
+ */
+.bizproc-fields-control-wrap.--name-inside {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: var(--ui-space-inline-sm);
+	row-gap: var(--ui-space-stack-xs);
+}
+
+/* The inline padding of the name block aligns a name standing ABOVE a control with the text
+   inside it; next to the control it would only widen the gap the mockup measures at 12px. */
+.bizproc-fields-control-wrap.--name-inside > .bizproc-fields-header {
+	padding: 0;
+}
+
+/* The other half of the same mechanic: where there is a name block, assemble() moves the
+   expression row out of the control and into this wrapper, and the mockup draws it across the
+   whole field. A full basis is what puts it on a line of its own, and the core owes it to every
+   type that declares the placement - the type never sees the wrapper the row lands in. */
+.bizproc-fields-control-wrap.--name-inside > .bizproc-fields-expression {
+	flex-basis: 100%;
+	min-width: 0;
+}
+
 .bizproc-fields-label {
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-normal);
@@ -193,5 +224,189 @@ legend.bizproc-fields-header {
  */
 .bizproc-fields-box > .bizproc-automation-popup-select {
 	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/*
+ * The row of mode tabs (see buildValueModeSwitcher): a segmented control of two, standing on a
+ * line of its own above the control and above the name block beside it. `ui` carries no
+ * segmented control of its own yet, so it is built here on design tokens.
+ * The mockup leaves 8px under the tab row, twice the gap the field row stacks its children with
+ * (4px is what a name block above a control gets there), so the row carries the other half itself.
+ */
+.bizproc-fields-value-mode {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
+.bizproc-fields-value-mode__tab {
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	/* 20px: mockup height of the tab row; DS has no control-height size token. */
+	height: 20px;
+	padding: 0 var(--ui-space-inset-xs2);
+	/* Both states carry the border and only its color changes: a border appearing with the state
+	   would shrink the content box of a tab whose height is fixed, and the two tabs of the pair
+	   would no longer sit their labels on the same line. */
+	border: 1px solid var(--ui-color-base-7);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-bg-content-primary);
+	/* N-1 exception (as in every control of the extension): font-family resets the browser default
+	   a <button> comes with; --ui-font-family-primary is not a standard DS token. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	/* 16px: --ui-font-line-height-* are unitless ratios, none of which yields 16px on a 12px font. */
+	line-height: 16px;
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+/*
+ * A read-only field keeps its tabs so the mode it stands in stays readable, but nothing there
+ * answers a click: buildValueModeSwitcher binds neither the click nor the keys in that state.
+ * The pointer cursor and the hover of the pair are what still promise a switch that will not
+ * happen, so both are taken away. Selected by the attribute rather than by a class of our own:
+ * `aria-disabled` is where the switcher already keeps that state.
+ */
+.bizproc-fields-value-mode__tab[aria-disabled="true"] {
+	cursor: default;
+}
+
+.bizproc-fields-value-mode__tab:not(.--active):not([aria-disabled="true"]):hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Filled content color rather than a base one: it stays white in the dark theme too, where the
+   accent below it stays blue. */
+.bizproc-fields-value-mode__tab.--active {
+	background: var(--ui-color-accent-main-primary);
+	border-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-design-filled-content);
+}
+
+.bizproc-fields-value-mode__tab:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/*
+ * The carrier the mode left behind: still on screen, still holding its node, only faded - the
+ * `inert` attribute the core puts on it is what takes it out of reach of pointer and keyboard.
+ */
+.bizproc-fields-mode-carrier {
+	transition: opacity .15s ease;
+}
+
+.bizproc-fields-mode-carrier.--inactive {
+	opacity: var(--ui-opacity-40);
+}
+
+/*
+ * The expression row (see buildExpressionControl): the second line of a field whose own control
+ * holds no expression. The companion input fills the row and the "..." button stands beside it,
+ * outside the border and on its bottom edge - which is also what leaves room for the value
+ * constructor to join the row later. Nothing separates the row from the control above it: the
+ * mockup draws no divider between the two, and the whole gap is the row gap of the container.
+ */
+.bizproc-fields-expression {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--ui-space-inline-xs2);
+}
+
+/* The input is the anchor the selection provider wraps, so its wrapper takes the input's place
+   as the flex child of the row and has to carry the stretching. Same consumer-side compensation
+   as `.bizproc-fields-box > .bizproc-automation-popup-select` above. */
+.bizproc-fields-expression > .bizproc-automation-popup-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bizproc-fields-expression__input {
+	box-sizing: border-box;
+	flex: 1 1 auto;
+	min-width: 0;
+	/* 34px: mockup height of the expression input; DS has no control-height size token. */
+	height: 34px;
+	padding: 0 var(--ui-space-inset-xs2);
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-sm);
+	outline: none;
+	background: var(--ui-color-bg-content-primary);
+	/* N-1 exception (as in every input of the extension): font-family resets the browser default;
+	   --ui-font-family-primary is not a standard DS token - inherit is the DS-compliant fallback. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-1);
+	transition: border-color .15s ease;
+}
+
+.bizproc-fields-expression__input:focus {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+/* Keyboard focus ring, the same one every other control of the extension gets (WCAG 2.4.7): the
+   `outline: none` above drops the UA default, and the 1px border colour swapped under a transition
+   is too weak an indicator to stand alone - a read-only input does not even change it. */
+.bizproc-fields-expression__input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bizproc-fields-expression__input::placeholder {
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-fields-expression--readonly .bizproc-fields-expression__input {
+	background: var(--ui-color-design-disabled-bg);
+	border-color: var(--ui-color-design-disabled-stroke);
+	cursor: default;
+}
+
+/* The shared insert button, sized to the footprint the mockup gives it beside the expression
+   input: 20x34, its height matching the input it stands next to. */
+.bizproc-fields-expression > .bizproc-fields-insert {
+	width: 20px;
+	height: 34px;
+}
+
+/*
+ * ERR-01: the carrier of an expression holds text standing in for no value.
+ *
+ * The input is selected by `aria-invalid` and not by the `--error` flag the carrier wears: that is
+ * where the state already lives, the same reading as the mode tab styled off `aria-disabled` above.
+ * The `--error` flag stays the mark of the carrier itself.
+ *
+ * Named one by one, and every one of them under the row it belongs to: `aria-invalid` on any other
+ * input inside a field is the business of the widget that put it there, and the two classes keep
+ * the rule above the `:focus` border of the carrier, which the stylesheet of select restates.
+ */
+.bizproc-fields-expression .bizproc-fields-expression__input[aria-invalid="true"],
+.bizproc-fields-select__insert-row .bizproc-fields-select__insert-input[aria-invalid="true"],
+.bizproc-fields-select-dropdown .bizproc-fields-select-dropdown__input[aria-invalid="true"] {
+	border-color: var(--ui-color-accent-main-alert);
+}
+
+/* The reason, standing under the carrier it belongs to: the metrics of the field caption, painted
+   in the alert colour so it reads as the error rather than as another hint. */
+.bizproc-fields-error {
+	font-size: var(--ui-font-size-xs);
+	/* 16px: --ui-font-line-height-* are unitless ratios, none of which yields 16px on a 12px font. */
+	line-height: 16px;
+	color: var(--ui-color-accent-main-alert);
+	padding-left: var(--ui-space-inset-3xs);
+	margin-top: var(--ui-space-stack-3xs);
+}
+
+/* Same as for the expression row above it: where the name block stands beside the control the
+   wrapper is a row, and the reason has to take a line of its own under the carrier it explains. */
+.bizproc-fields-control-wrap.--name-inside > .bizproc-fields-error {
+	flex-basis: 100%;
 	min-width: 0;
 }

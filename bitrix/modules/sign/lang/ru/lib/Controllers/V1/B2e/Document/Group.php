@@ -1,0 +1,6 @@
+<?php
+$MESS['SIGN_CONTROLLERS_V1_B2E_DOCUMENT_GROUP_MESSAGE_FEATURE_DISABLED'] = 'Сообщение по документу недоступно';
+$MESS['SIGN_CONTROLLERS_V1_B2E_DOCUMENT_GROUP_DOCUMENT_NOT_FOUND'] = 'Документ не найден';
+$MESS['SIGN_CONTROLLERS_V1_B2E_DOCUMENT_GROUP_ACCESS_DENIED'] = 'Недостаточно прав для изменения документа';
+$MESS['SIGN_CONTROLLERS_V1_B2E_DOCUMENT_GROUP_WRONG_INPUT'] = 'Некорректный список документов';
+$MESS['SIGN_CONTROLLERS_V1_B2E_DOCUMENT_GROUP_NOTHING_TO_PROCESS'] = 'Нет документов для отправки';

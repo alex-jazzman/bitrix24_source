@@ -204,3 +204,89 @@
 		max-width: none;
 	}
 }
+
+/*region Focus ring*/
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later: every stop of an order, the payment form and the result
+ * of a payment change that arrive into it included, lies in a `.row` of the container. */
+.col.sale-order-list-inner-container .row a:focus-visible,
+.col.sale-order-list-inner-container .row .btn:focus-visible,
+.col.sale-order-list-inner-container .row button:focus-visible,
+.col.sale-order-list-inner-container .row input:focus-visible,
+.col.sale-order-list-inner-container .row select:focus-visible,
+.col.sale-order-list-inner-container .row textarea:focus-visible,
+.col.sale-order-list-inner-container .row [tabindex]:not([tabindex="-1"]):focus-visible,
+.col.sale-order-list-inner-container .row [role="button"]:focus-visible,
+.col.sale-order-list-inner-container .row [role="radio"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The links of the filter above the list and the link to the catalog under an empty list stand outside
+ * the containers of the orders and carry no class of the template of their own. */
+.row.mb-3 > .col > a.mr-4[href]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The script parks the focus on these nodes, and `[tabindex="-1"]:focus { outline: 0 !important }`
+ * of the landing store theme (`landing24/assets/vendor/bootstrap/bootstrap.css:73`) is answered by
+ * nothing but `!important`. */
+.sale-order-list-inner-container .sale-order-list-inner-row-template[tabindex="-1"]:focus-visible,
+.sale-order-list-title-container h3[id^="sale-order-list-order-"][tabindex="-1"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset, 2px) !important;
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. */
+.col.sale-order-list-inner-container .row .btn {
+	transition: all .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.col.sale-order-list-inner-container .row .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button (0,2,0), and the theme repaints the text of a focused link (0,1,1). The resting colours are
+ * put back, and the hovered ones over a hovered or pressed focused button. */
+.col.sale-order-list-inner-container .row .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.col.sale-order-list-inner-container .row .btn.btn-primary:focus:hover,
+.col.sale-order-list-inner-container .row .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+	color: #fff;
+}
+
+.col.sale-order-list-inner-container .row .btn.btn-success:focus {
+	background-color: #28a745;
+	border-color: #28a745;
+	color: #fff;
+}
+
+.col.sale-order-list-inner-container .row .btn.btn-success:focus:hover,
+.col.sale-order-list-inner-container .row .btn.btn-success:focus:active {
+	background-color: #218838;
+	border-color: #1e7e34;
+	color: #fff;
+}
+
+/* A link without `href` is painted by `a:not([href]):not([tabindex])` of bootstrap, which a
+ * `tabindex` switches off: its values are repeated. */
+.col.sale-order-list-inner-container .row a.btn.btn-primary.disabled[tabindex],
+.col.sale-order-list-inner-container .row a.btn.btn-primary.disabled[tabindex]:hover,
+.col.sale-order-list-inner-container .row a.btn.btn-primary.disabled[tabindex]:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: inherit;
+	text-decoration: none;
+}
+/*endregion*/

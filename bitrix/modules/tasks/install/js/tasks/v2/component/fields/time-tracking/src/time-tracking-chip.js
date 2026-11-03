@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Dom, Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
@@ -80,6 +80,34 @@ export const TimeTrackingChip = {
 		{
 			return !Core.getParams().restrictions.timeTracking.available;
 		},
+		opensDialog(): boolean
+		{
+			if (this.isLocked)
+			{
+				return false;
+			}
+
+			if (this.canOnlyAddFirstElapsedTime())
+			{
+				return true;
+			}
+
+			return !this.isSelected && !this.isTimeTrackingLocked;
+		},
+		isDialogShown(): boolean
+		{
+			return this.isSheetShown || this.isPopupShown;
+		},
+	},
+	watch: {
+		isDialogShown(): void
+		{
+			this.syncAria();
+		},
+		opensDialog(): void
+		{
+			this.syncAria();
+		},
 	},
 	created(): void
 	{
@@ -94,7 +122,23 @@ export const TimeTrackingChip = {
 
 		this.localTimeSpent = Type.isNumber(localTimeSpent) ? localTimeSpent : 0;
 	},
+	mounted(): void
+	{
+		this.syncAria();
+	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+		},
 		handleClick(): void
 		{
 			if (this.isLocked)
@@ -131,6 +175,16 @@ export const TimeTrackingChip = {
 
 			this.isPopupShown = true;
 		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
 		handleClosePopup(): void
 		{
 			this.isPopupShown = false;
@@ -144,6 +198,10 @@ export const TimeTrackingChip = {
 		highlightField(): void
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(timeTrackingMeta.id);
+		},
+		getChipElement(): ?HTMLElement
+		{
+			return this.$refs.chip?.$el ?? null;
 		},
 		canOnlyAddFirstElapsedTime(): boolean
 		{
@@ -165,11 +223,13 @@ export const TimeTrackingChip = {
 			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="timeTrackingMeta.id"
+			data-testid="tasks-time-tracking-chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 		<TaskTrackingPopup
-			v-if="isPopupShown"
-			:bindElement="$refs.chip.$el"
+			v-if="isPopupShown && getChipElement()"
+			:bindElement="getChipElement()"
 			:timeSpent="localTimeSpent"
 			@close="handleClosePopup"
 		/>

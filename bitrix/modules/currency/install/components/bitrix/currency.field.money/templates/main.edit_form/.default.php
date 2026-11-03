@@ -13,9 +13,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\Main\Security\Random;
+use Bitrix\Main\Text\HtmlFilter;
 
 ?>
-<span class="fields money field-wrap">
+<span
+	class="fields money field-wrap"
+	data-default-currency="<?= HtmlFilter::encode($arResult['defaultCurrency']) ?>"
+>
 	<?php
 	foreach ($arResult['value'] as $value)
 	{
@@ -29,6 +33,7 @@ use Bitrix\Main\Security\Random;
 						'CONTROL_ID' => $arResult['userField']['FIELD_NAME'] . '_' . Random::getString(5),
 						'FIELD_NAME' => $arResult['fieldName'],
 						'VALUE' => $value,
+						'CURRENCY' => $arResult['defaultCurrency'],
 						'EXTENDED_CURRENCY_SELECTOR' => 'Y',
 					],
 					null,

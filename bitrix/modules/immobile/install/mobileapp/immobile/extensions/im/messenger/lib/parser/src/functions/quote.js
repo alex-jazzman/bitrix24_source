@@ -17,25 +17,30 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const { QuoteActive } = require('im/messenger/lib/parser/elements/dialog/message/quote-active');
 	const { QuoteInactive } = require('im/messenger/lib/parser/elements/dialog/message/quote-inactive');
 	const { Code } = require('im/messenger/lib/parser/elements/dialog/message/code');
+	const { Table } = require('im/messenger/lib/parser/elements/dialog/message/table');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserImage } = require('im/messenger/lib/parser/functions/image');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { NEW_LINE } = require('im/messenger/lib/parser/const');
-	const { FileType } = require('im/messenger/const');
+	const { FileType, MessageComponent } = require('im/messenger/const');
 	const logger = getLogger('parser');
 
 	const QUOTE_SIGN = '>>';
+	const QUOTE_SIGN_PATTERN = new RegExp(`^${QUOTE_SIGN}\\s*`);
 
 	/**
 	 * Build a structured media preview object for the quote block.
 	 * The preview is additive — native renders it if supported; older native
 	 * falls back to the existing text field (no regression).
 	 *
-	 * Preview shape (QuotePreview):
-	 *   { type: string, urlPreview?: string, name?: string, count?: number }
+	 * Preview shape (QuotePreview): field names match the native ChatMessageQuoteFactory contract:
+	 *   { type: string, urlPreview?: string, name?: string, size?: number, galleryCount?: number }
 	 *
 	 * Possible type values:
-	 *   'image' | 'video' | 'videoNote' | 'audio' | 'file' | 'files' | 'sticker' | 'gallery' | 'deleted_sticker'
+	 *   Contract types (sent to native): 'contact' | 'image' | 'video' | 'videoNote' | 'audio' | 'file' | 'files' | 'sticker' | 'gallery'.
+	 *   'deleted_sticker' is an INTERNAL-ONLY marker, NOT a contract type and never sent to native. Callers consume
+	 *   it to place the DELETED_STICKER phrase into the quote text, then drop the preview so no out-of-enum type
+	 *   reaches native (see createQuote and ReplyManager.#attachMediaPreview).
 	 *
 	 * @param {string|number} messageId — original message id (replyId)
 	 * @return {object|null} preview object or null if no structured preview is applicable
@@ -62,25 +67,49 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 		// --- Sticker (must check before files) ---
 		if (Type.isPlainObject(stickerParams))
 		{
-			// Check if sticker data exists in the pack model (isDeletedSticker detection)
 			const stickerData = store.getters['stickerPackModel/getStickerData'](stickerParams);
-			point.end();
-			if (!Type.isPlainObject(stickerData))
+			if (Type.isPlainObject(stickerData))
 			{
-				// Deleted sticker — LBS п.16 [I]: use DELETED_STICKER phrase (p5.T2)
+				point.end();
+
 				return {
-					type: 'deleted_sticker',
+					type: 'sticker',
+					urlPreview: stickerData?.uri || null,
 				};
 			}
 
+			// No sticker data. Distinguish a genuinely deleted sticker (pack loaded, sticker removed)
+			// from a pack that is not cached yet; for the latter return null so the plaque keeps its
+			// text fallback and refreshQuoteMediaPreviewIfNeeded rebuilds the preview once the pack loads.
+			const isPackLoaded = store.getters['stickerPackModel/isPackLoaded'](
+				stickerParams.packId,
+				stickerParams.packType,
+			);
+			point.end();
+
+			if (!isPackLoaded)
+			{
+				return null;
+			}
+
+			// Deleted sticker: use the DELETED_STICKER phrase
 			return {
-				type: 'sticker',
-				urlPreview: stickerData?.uri || null,
+				type: 'deleted_sticker',
 			};
 		}
 
 		const files = store.getters['messagesModel/getMessageFiles'](modelMessage.id);
 		point.end();
+
+		if (modelMessage.params?.componentId === MessageComponent.contact)
+		{
+			const image = Type.isArray(files) ? files.find((file) => file.type === FileType.image) : null;
+
+			return {
+				type: 'contact',
+				urlPreview: image?.urlPreview || null,
+			};
+		}
 
 		if (Type.isArray(files) && files.length > 0)
 		{
@@ -88,7 +117,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			{
 				const file = files[0];
 
-				// Priority: videoNote > video (LBS п.15 [!])
+				// Priority: videoNote > video
 				if (file.isVideoNote)
 				{
 					return {
@@ -119,22 +148,32 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					return { type: 'audio' };
 				}
 
-				// Generic file: icon + name (AC-011 — only metadata, no full download)
+				// Generic file: icon + name + size (metadata only, no full download)
 				return {
 					type: 'file',
 					name: file.name || null,
+					size: file.size ?? null,
 				};
 			}
 
-			// Multiple files — gallery if all are media, else files (AC-009)
-			const media = files.filter((f) => f?.type === FileType.image || f?.type === FileType.video);
-			const isOnlyMedia = media.length === files.length;
+			// Multiple files: classify by the FIRST file:
+			// first is media -> gallery (first thumbnail + count); otherwise -> files (several files whose first is
+			// not media: group icon + count). Native supports 'files'; the contract enum covers it.
 			const firstFile = files[0];
+			const isFirstMedia = firstFile?.type === FileType.image || firstFile?.type === FileType.video;
+			if (isFirstMedia)
+			{
+				return {
+					type: 'gallery',
+					galleryCount: files.length,
+					urlPreview: firstFile.urlPreview || null,
+				};
+			}
 
 			return {
-				type: isOnlyMedia ? 'gallery' : 'files',
-				count: files.length,
-				urlPreview: isOnlyMedia && firstFile ? (firstFile.urlPreview || null) : null,
+				type: 'files',
+				galleryCount: files.length,
+				urlPreview: null,
 			};
 		}
 
@@ -164,11 +203,11 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				}
 
 				const quoteStartIndex = i;
-				let quoteText = textLines[quoteStartIndex].replace(QUOTE_SIGN, '');
-				// remove >> from all next lines
+				let quoteText = textLines[quoteStartIndex].replace(QUOTE_SIGN_PATTERN, '');
+				// remove >> and leading whitespace from all next lines
 				while (++i < textLines.length && textLines[i].startsWith(QUOTE_SIGN))
 				{
-					textLines[i] = textLines[i].replace(QUOTE_SIGN, '');
+					textLines[i] = textLines[i].replace(QUOTE_SIGN_PATTERN, '');
 					quoteText += NEW_LINE + textLines[i];
 				}
 
@@ -372,23 +411,35 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			{
 				restoredTagQuoteText = restoredTagQuoteText.replace(
 					/####REPLACEMENT_(\d+)/g,
-					(match, id) => parsedElements._list[Number(id)]?.text || '',
+					(match, id) => {
+						const element = parsedElements._list[Number(id)];
+						// A table carries no text of its own, so it degrades to the label simplify uses.
+						if (element?.type === Table.getType())
+						{
+							return `[${Loc.getMessage('IMMOBILE_PARSER_MARKDOWN_TABLE_PLACEHOLDER')}]`;
+						}
+
+						return element?.text || '';
+					},
 				);
 			}
 			restoredTagQuoteText = parserImage.decodeIcon(restoredTagQuoteText);
 			restoredTagQuoteText = parserImage.simplifyImage(restoredTagQuoteText);
 
-			// Build structured media preview for native layer (P5 / AC-007..010, AC-009).
-			// preview is additive — native renders it if CAP-01 is supported (Q-3 / P6 gate);
+			// Build structured media preview for native layer.
+			// preview is additive — native renders it if CAP-01 is supported;
 			// older native ignores the unknown field and falls back to restoredTagQuoteText (degradation).
 			// We only build a preview when we know the original message id (contextMessageId).
-			const preview = contextMessageId ? buildQuotePreview(contextMessageId) : null;
+			const rawPreview = contextMessageId ? buildQuotePreview(contextMessageId) : null;
 
-			// For deleted sticker: replace text with the reserved phrase (LBS п.16 [I], p5.T2).
+			// For deleted sticker: replace text with the reserved phrase and drop the preview.
+			// 'deleted_sticker' is an internal marker, never sent to native: the quote degrades to a plain text quote.
+			let preview = rawPreview;
 			let finalQuoteText = restoredTagQuoteText;
-			if (preview?.type === 'deleted_sticker')
+			if (rawPreview?.type === 'deleted_sticker')
 			{
 				finalQuoteText = Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_DELETED_STICKER');
+				preview = null;
 			}
 
 			let quoteMark = '';
@@ -467,13 +518,14 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			let prevPhraseFirstIndex = 0;
 
 			result = result.replaceAll(
-				/\[code](.*?)\[\/code]?/gis,
+				/(?:^ +)?\[code](.*?)\[\/code]?/gims,
 				(textWithTag, context, index) => {
-					const textBeforeTag = text.slice(prevPhraseFirstIndex, index).replaceAll(' ', '');
+					const textBeforeTag = text.slice(prevPhraseFirstIndex, index);
 					const textAfterTag = text.slice(index + textWithTag.length).replaceAll(' ', '');
 
-					const startTag = /((.*\n)|^)$/gi.test(textBeforeTag) ? '' : '\n';
-					const endTag = /^((\n.*)|$)/gi.test(textAfterTag) ? '' : '\n';
+					const startsOnNewLine = textBeforeTag === '' || textBeforeTag.endsWith(NEW_LINE);
+					const startTag = startsOnNewLine ? '' : NEW_LINE;
+					const endTag = /^(?:\r\n|\n|$)/.test(textAfterTag) ? '' : NEW_LINE;
 					const formattedContext = context.replace(/(^\n\s*)|(\n\s*$)/, '');
 					const code = new Code(formattedContext);
 					const codeId = parsedElements.add(code);
@@ -521,5 +573,6 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 	module.exports = {
 		parserQuote,
+		buildQuotePreview,
 	};
 });

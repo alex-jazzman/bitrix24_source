@@ -1,5 +1,24 @@
 (function(){
 	var BX = window.BX;
+
+	function getProjectWizardBX()
+	{
+		try
+		{
+			const rootWindow = BX.Page ? BX.Page.getRootWindow() : window.top;
+			if (rootWindow.BX && rootWindow.BX.Runtime)
+			{
+				return rootWindow.BX;
+			}
+		}
+		catch
+		{
+			return BX;
+		}
+
+		return BX;
+	}
+
 	if (BX.SocialnetworkLandingLivefeedSelector)
 	{
 		return;
@@ -17,13 +36,19 @@
 		return BX.SocialnetworkLandingLivefeedSelector.Instance;
 	};
 
-	BX.SocialnetworkLandingLivefeedSelector.createWorkgroup = function()
+	BX.SocialnetworkLandingLivefeedSelector.createWorkgroup = async function()
 	{
 		if (this.isNewProjectsOn)
 		{
-			const action = BX.Socialnetwork.V2.Model.TYPES_PROJECT_WIZARD_ACTION.CREATE;
+			const projectWizardBX = getProjectWizardBX();
+			const exports = await projectWizardBX.Runtime.loadExtension(
+				'socialnetwork.v2.application.project-wizard',
+			);
+			const ProjectWizard = exports.ProjectWizard
+				|| projectWizardBX.Socialnetwork.V2.Application.ProjectWizard;
+			const action = projectWizardBX.Socialnetwork.V2.Model.TYPES_PROJECT_WIZARD_ACTION.CREATE;
 
-			const wizard = new BX.Socialnetwork.V2.Application.ProjectWizard({
+			const wizard = new ProjectWizard({
 				action,
 				publication: true,
 				onSave: ({ id, name }) => {
@@ -201,4 +226,3 @@
 		},
 	};
 })();
-

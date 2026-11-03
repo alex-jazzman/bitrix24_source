@@ -1,7 +1,8 @@
 .editor-chart-toast-layout {
 	display: flex;
 	align-items: center;
-	height: 28px;
+	/* A summary of several counters is several lines tall, so the height is a floor and not a cap. */
+	min-height: 28px;
 	/* Content color is set by the toast scheme (--warning/--processing/--completed); default is white. */
 	color: var(--bizprocdesigner-editor-toast-content-color, var(--ui-color-base-8));
 	width: 700px;
@@ -32,7 +33,7 @@
 }
 
 .editor-chart-toast-layout__content {
-	height: 19px;
+	min-height: 19px;
 	display: flex;
 	align-items: center;
 	width: 100%;
@@ -46,4 +47,7 @@
 
 .editor-chart-toast-layout__content__end {
 	margin-left: auto;
+	/* The message takes the room it needs; what stands beside it keeps its own width instead of
+	   being squeezed into a column of characters. */
+	flex-shrink: 0;
 }

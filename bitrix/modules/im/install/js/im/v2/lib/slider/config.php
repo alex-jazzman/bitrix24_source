@@ -21,6 +21,7 @@ return [
 		'im.v2.lib.call',
 		'im.v2.lib.confirm',
 		'im.v2.lib.desktop',
+		'im.v2.lib.folder',
 		'im.v2.lib.layout',
 		'im.v2.lib.logger',
 		'im.v2.lib.opener',

@@ -20,6 +20,8 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAd
 	return;
 }
 
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Model\Field\DefaultValue\CloseDateConfigurator;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings;
@@ -53,6 +55,9 @@ if (empty($sMailFrom) && !IsModuleInstalled('bitrix24'))
 
 $dupControl = \Bitrix\Crm\Integrity\DuplicateControl::getCurrent();
 $closeDateConfigurator = ServiceLocator::getInstance()->get(CloseDateConfigurator::class);
+$copilotSettings = Settings\CopilotSettings::getCurrent();
+$isCopilotFillFieldsGloballyEnabled = AIManager::isEnabledInGlobalSettings(GlobalSetting::FillItemFromCall);
+$copilotFillFieldsGlobalStateField = 'COPILOT_FILL_FIELDS_GLOBAL_ENABLED';
 
 $arResult['FORM_ID'] = 'CRM_SM_CONFIG';
 if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
@@ -486,6 +491,44 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
+			if (
+				$isCopilotFillFieldsGloballyEnabled
+				&& mb_strtoupper((string)($_POST[$copilotFillFieldsGlobalStateField] ?? '')) === 'Y'
+			)
+			{
+				if (isset($_POST['COPILOT_FILL_FIELDS_LEAD']))
+				{
+					$copilotSettings->setFillFieldsEnabledFor(
+						CCrmOwnerType::Lead,
+						mb_strtoupper($_POST['COPILOT_FILL_FIELDS_LEAD']) === 'Y',
+					);
+				}
+
+				if (isset($_POST['COPILOT_FILL_FIELDS_DEAL']))
+				{
+					$copilotSettings->setFillFieldsEnabledFor(
+						CCrmOwnerType::Deal,
+						mb_strtoupper($_POST['COPILOT_FILL_FIELDS_DEAL']) === 'Y',
+					);
+				}
+
+				if (isset($_POST['COPILOT_FILL_FIELDS_CONTACT']))
+				{
+					$copilotSettings->setFillFieldsEnabledFor(
+						CCrmOwnerType::Contact,
+						mb_strtoupper($_POST['COPILOT_FILL_FIELDS_CONTACT']) === 'Y',
+					);
+				}
+
+				if (isset($_POST['COPILOT_FILL_FIELDS_COMPANY']))
+				{
+					$copilotSettings->setFillFieldsEnabledFor(
+						CCrmOwnerType::Company,
+						mb_strtoupper($_POST['COPILOT_FILL_FIELDS_COMPANY']) === 'Y',
+					);
+				}
+			}
+
 			if (isset($_POST['ENABLE_FULL_CATALOG']))
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableFullCatalog(
@@ -602,6 +645,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 }
 
 $arResult['FIELDS'] = array();
+$isAiCallProcessingEnabled = AIManager::isAiCallProcessingEnabled();
+$copilotFillFieldsParams = $isCopilotFillFieldsGloballyEnabled ? [] : ['disabled' => 'disabled'];
+$copilotName = AIManager::getCopilotName();
+
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => $copilotFillFieldsGlobalStateField,
+	'type' => 'custom',
+	'value' => '<input type="hidden" name="' . $copilotFillFieldsGlobalStateField . '" value="'
+		. ($isCopilotFillFieldsGloballyEnabled ? 'Y' : 'N') . '">',
+	'colspan' => true,
+	'show' => 'N',
+];
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'LAYOUT_CONFIG',
@@ -728,6 +783,16 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'required' => false
 );
 
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => 'COPILOT_FILL_FIELDS_LEAD',
+	'name' => Loc::getMessage('CRM_FIELD_COPILOT_FILL_FIELDS_LEAD', ['#COPILOT_NAME#' => $copilotName]),
+	'type' => 'checkbox',
+	'show' => $isAiCallProcessingEnabled ? 'Y' : 'N',
+	'value' => $copilotSettings->isFillFieldsEnabledFor(CCrmOwnerType::Lead),
+	'params' => $copilotFillFieldsParams,
+	'required' => false,
+];
+
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'CONTACT_CONFIG',
 	'name' => GetMessage('CRM_SECTION_CONTACT_CONFIG2'),
@@ -751,6 +816,16 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'required' => false
 );
 
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => 'COPILOT_FILL_FIELDS_CONTACT',
+	'name' => Loc::getMessage('CRM_FIELD_COPILOT_FILL_FIELDS_CONTACT', ['#COPILOT_NAME#' => $copilotName]),
+	'type' => 'checkbox',
+	'show' => $isAiCallProcessingEnabled ? 'Y' : 'N',
+	'value' => $copilotSettings->isFillFieldsEnabledFor(CCrmOwnerType::Contact),
+	'params' => $copilotFillFieldsParams,
+	'required' => false,
+];
+
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'COMPANY_CONFIG',
 	'name' => GetMessage('CRM_SECTION_COMPANY_CONFIG2'),
@@ -773,6 +848,16 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'value' => \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getDefaultListViewID(),
 	'required' => false
 );
+
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => 'COPILOT_FILL_FIELDS_COMPANY',
+	'name' => Loc::getMessage('CRM_FIELD_COPILOT_FILL_FIELDS_COMPANY', ['#COPILOT_NAME#' => $copilotName]),
+	'type' => 'checkbox',
+	'show' => $isAiCallProcessingEnabled ? 'Y' : 'N',
+	'value' => $copilotSettings->isFillFieldsEnabledFor(CCrmOwnerType::Company),
+	'params' => $copilotFillFieldsParams,
+	'required' => false,
+];
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'DEAL_CONFIG',
@@ -820,6 +905,16 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isProductRowExportEnabled(),
 	'required' => false
 );
+
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => 'COPILOT_FILL_FIELDS_DEAL',
+	'name' => Loc::getMessage('CRM_FIELD_COPILOT_FILL_FIELDS_DEAL', ['#COPILOT_NAME#' => $copilotName]),
+	'type' => 'checkbox',
+	'show' => $isAiCallProcessingEnabled ? 'Y' : 'N',
+	'value' => $copilotSettings->isFillFieldsEnabledFor(CCrmOwnerType::Deal),
+	'params' => $copilotFillFieldsParams,
+	'required' => false,
+];
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'INVOICE_CONFIG',

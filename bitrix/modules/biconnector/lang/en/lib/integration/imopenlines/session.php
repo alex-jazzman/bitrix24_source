@@ -56,3 +56,4 @@ $MESS["IMOPENLINES_SESSION_FIELD_VOTE_FULL"] = "Customer submitted rating: 5 for
 $MESS["IMOPENLINES_SESSION_FIELD_WAIT_ANSWER"] = "Pending agent response";
 $MESS["IMOPENLINES_SESSION_FIELD_WAIT_ANSWER_FULL"] = "Pending agent response, Y/N.";
 $MESS["IMOPENLINES_SESSION_TABLE"] = "Open Channel conversations";
+$MESS["IMOPENLINES_SESSION_TABLE_DESCRIPTION_FULL"] = "Open Channels conversation data: request sources and channels, customers, agents, statuses, response time, duration, and customer ratings.";

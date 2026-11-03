@@ -1814,5 +1814,5 @@
 	`
 	});
 
-})(BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.View, BX.Vue, BX.Messenger.Lib, BX.Main, BX, BX, window, window, BX.Messenger.Const, BX.Messenger.Lib, BX.Event);
+})(window, BX, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.View, BX.Vue, BX.Messenger.Lib, BX.Main, BX, BX, window, window, BX.Messenger.Const, BX.Messenger.Lib, BX.Event);
 //# sourceMappingURL=notifications.bundle.js.map

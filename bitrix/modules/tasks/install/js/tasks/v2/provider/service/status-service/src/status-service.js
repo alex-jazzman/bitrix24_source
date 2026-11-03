@@ -1,4 +1,4 @@
-import { Event, Loc } from 'main.core';
+import { Event, Loc, Runtime } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Core } from 'tasks.v2.core';
@@ -10,9 +10,9 @@ import { idUtils } from 'tasks.v2.lib.id-utils';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
-export const statusService = new class
+export class StatusService
 {
 	async start(id: number): Promise<void>
 	{
@@ -98,7 +98,7 @@ export const statusService = new class
 
 	async pauseTimer(id: number): Promise<void>
 	{
-		await this.#updateStatus(id, Endpoint.TaskTrackingTimerStop, TaskStatus.Pending);
+		await this.#updateStatus(id, Endpoint.TaskTrackingTimerStop);
 	}
 
 	async complete(
@@ -135,23 +135,38 @@ export const statusService = new class
 			groupId: task.groupId,
 		});
 
-		let canComplete = true;
-		if (scrumManager.isScrum(group?.type))
-		{
-			canComplete = await scrumManager.handleDodDisplay();
-		}
-
-		if (!canComplete)
-		{
-			return null;
-		}
-
 		const status = task.needsControl ? TaskStatus.SupposedlyCompleted : TaskStatus.Completed;
-
-		const error = await this.#updateStatus(id, Endpoint.TaskStatusComplete, status, true);
-
-		if (error)
+		try
 		{
+			const { checkListCompletionService, isCompletionSuccessful } = await Runtime.loadExtension(
+				'tasks.v2.lib.check-list-completion',
+			);
+			// V2 always delegates checklist completion to the server, even for an empty client snapshot
+			const completeTask = () => this.#updateStatus(
+				id,
+				Endpoint.TaskStatusComplete,
+				status,
+				true,
+				{ completeWithChecklist: true },
+			);
+			const completionResult = await checkListCompletionService.run({
+				taskId: id,
+				complete: completeTask,
+				completeWithChecklist: completeTask,
+				beforeComplete: () => (scrumManager.isScrum(group?.type)
+					? scrumManager.handleDodDisplay()
+					: Promise.resolve(true)),
+			});
+
+			if (!isCompletionSuccessful(completionResult))
+			{
+				return completionResult.error;
+			}
+		}
+		catch (error)
+		{
+			console.error('StatusService: complete error', error);
+
 			return error;
 		}
 
@@ -179,30 +194,47 @@ export const statusService = new class
 		await this.#updateStatus(id, Endpoint.TaskStatusRenew, TaskStatus.Pending);
 	}
 
-	async #updateStatus(id: number, action: string, status: string, silent: boolean = false): Promise<{ error: ?Error }>
+	async #updateStatus(
+		id: number,
+		action: string,
+		status: ?string = null,
+		silent: boolean = false,
+		actionData: Object = {},
+	): Promise<?Error>
 	{
 		const taskBeforeUpdate = taskService.getStoreTask(id);
 
 		if (!idUtils.isReal(id))
 		{
-			taskService.updateStoreTask(id, { status });
+			if (status !== null)
+			{
+				taskService.updateStoreTask(id, { status });
+			}
 
 			return null;
 		}
 
 		try
 		{
-			const data = await apiClient.post(action, { task: { id } });
+			await taskService.withStageSnapshot(async (snapshot) => {
+				const data = await apiClient.post(action, { task: { id }, ...actionData });
 
-			taskService.updateStoreTask(id, { status });
+				if (status !== null)
+				{
+					taskService.updateStoreTask(id, { status });
+				}
 
-			taskService.extractTask(data);
+				taskService.extractTask(data, true, snapshot);
+			});
 
 			return null;
 		}
 		catch (error)
 		{
-			taskService.updateStoreTask(id, taskBeforeUpdate);
+			if (status !== null)
+			{
+				taskService.updateStoreTask(id, { status: taskBeforeUpdate.status });
+			}
 
 			if (!silent)
 			{
@@ -212,4 +244,6 @@ export const statusService = new class
 			return new Error(error.errors?.[0]?.message);
 		}
 	}
-}();
+}
+
+export const statusService = new StatusService();

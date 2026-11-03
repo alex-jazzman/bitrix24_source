@@ -1,10 +1,12 @@
-import { Loc, Tag } from 'main.core';
+import { Tag, Text } from 'main.core';
 import type { OverwriteScreenState } from '../type';
 import { renderCollectionCard } from './parts/collection-card';
+import { importTermMessage } from '../constants';
 
 export type OverwriteConfirmScreenHandlers = {
 	onToggleCollectionExpanded: (collectionId: string) => void,
 	onRetryTreeLoad: (collectionId: string) => void,
+	sourceType?: string,
 };
 
 export function renderOverwriteConfirmScreen(
@@ -14,8 +16,13 @@ export function renderOverwriteConfirmScreen(
 {
 	const container = Tag.render`<div class="note-import-screen note-import-screen-overwrite-confirm"></div>`;
 
+	const warning = importTermMessage(
+		'NOTE_IMPORT_OVERWRITE_WARNING',
+		handlers.sourceType ?? '',
+		state.collections.length,
+	);
 	container.append(
-		Tag.render`<div class="note-import-overwrite-message">${Loc.getMessage('NOTE_IMPORT_OVERWRITE_WARNING')}</div>`,
+		Tag.render`<div class="note-import-overwrite-message">${Text.encode(warning)}</div>`,
 	);
 
 	const list = Tag.render`<div class="note-import-collection-list"></div>`;

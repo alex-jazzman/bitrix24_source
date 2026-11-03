@@ -2,6 +2,7 @@ import { BotType, UserType } from 'im.v2.const';
 
 export type User = {
 	id: number,
+	active: boolean,
 	name: string,
 	firstName: string,
 	lastName: string,
@@ -10,9 +11,12 @@ export type User = {
 	workPosition: string,
 	gender: 'M' | 'F',
 	type: $Values<typeof UserType>,
+	extranet: boolean,
 	network: boolean,
 	connector: boolean,
 	externalAuthId: string,
+	internalAccount: boolean,
+	intranetUser: boolean,
 	status: string,
 	idle: boolean,
 	lastActivityDate: false | Date,

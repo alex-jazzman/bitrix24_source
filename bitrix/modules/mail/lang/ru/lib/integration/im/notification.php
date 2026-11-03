@@ -1,5 +1,8 @@
 <?php
 
+$MESS['MAIL_NOTIFY_PRODUCT_SOURCE_NAME'] = 'Почта';
+$MESS['MAIL_NOTIFY_PRODUCT_SOURCE_DESCRIPTION'] = 'Письма из подключённых ящиков';
+
 $MESS["MAIL_NOTIFY_NEW_MESSAGE"] = "Новое письмо";
 $MESS["MAIL_NOTIFY_IMPOSE_TARIFF_RESTRICTIONS_ON_THE_MAILBOX"] = "Превышен тарифный лимит";
 $MESS["MAIL_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT_1"] = "Новое письмо: <a target=\"_blank\" href=\"#VIEW_URL#\">\"#SUBJECT#\"</a>";
@@ -38,10 +41,14 @@ $MESS["MAIL_NOTIFY_ACCESS_REVOKED_MESSAGE_F"] = "Закрыла вам дост�
 $MESS["MAIL_NOTIFY_ACCESS_REVOKED_SUBJECT_M"] = "#AUTHOR# закрыл вам доступ к почте #EMAIL#. Вы больше не можете просматривать и писать письма с этого ящика";
 $MESS["MAIL_NOTIFY_ACCESS_REVOKED_SUBJECT_F"] = "#AUTHOR# закрыла вам доступ к почте #EMAIL#. Вы больше не можете просматривать и писать письма с этого ящика";
 $MESS["MAIL_NOTIFY_ORPHAN_MAILBOX_AUTODISCONNECT_7D_MESSAGE"] = "Почтовый ящик #EMAIL# будет отключён от вашего Битрикс24 через 7 дней. Выберите нового владельца или отключите ящик вручную";
+$MESS["MAIL_NOTIFY_SCHEDULED_MESSAGE_FAILED"] = 'Не удалось отправить письмо «#SUBJECT#» по расписанию. #ERROR#';
+$MESS["MAIL_NOTIFY_SCHEDULED_MESSAGE_FAILED_WITH_LINK"] = 'Не удалось отправить письмо «[URL=#VIEW_URL#]#SUBJECT#[/URL]» по расписанию. #ERROR#';
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_M"] = "Подключил вам почтовый ящик #EMAIL#";
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_F"] = "Подключила вам почтовый ящик #EMAIL#";
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_SUBJECT_M"] = "#AUTHOR# подключил вам почтовый ящик #EMAIL#";
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_SUBJECT_F"] = "#AUTHOR# подключила вам почтовый ящик #EMAIL#";
-$MESS['MAIL_NOTIFY_MIGRATION_CANCELLED'] = 'Перенос почтового ящика #EMAIL# отменён';
-$MESS['MAIL_NOTIFY_MIGRATION_DONE'] = 'Почтовый ящик #EMAIL# перенесён на новый почтовый сервер';
-$MESS['MAIL_NOTIFY_MIGRATION_STARTED'] = 'Начался перенос почтового ящика #EMAIL#';
+$MESS['MAIL_NOTIFY_MESSAGE_SEND_FAILED'] = 'Не удалось отправить письмо «#SUBJECT#». #ERROR#';
+$MESS['MAIL_NOTIFY_MESSAGE_SEND_FAILED_WITH_LINK'] = 'Не удалось отправить письмо «[URL=#VIEW_URL#]#SUBJECT#[/URL]». #ERROR#';
+$MESS['MAIL_NOTIFY_MIGRATION_DONE'] = 'Почтовым ящиком #EMAIL# снова можно пользоваться';
+$MESS['MAIL_NOTIFY_MIGRATION_STARTED'] = 'Администратор Битрикс24 начал перенос почтового ящика #EMAIL# на другой почтовый сервер. Отправка и некоторые действия с письмами временно недоступны. Вы получите уведомление, когда работа ящика восстановится';
+$MESS['MAIL_NOTIFY_MAILHOST_MAILBOX_DELETED'] = 'Ящик #EMAIL# удалён в Mailhost. Подключение отключено. Письма и настройки сохранены.';

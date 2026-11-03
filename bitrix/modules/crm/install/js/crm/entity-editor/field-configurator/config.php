@@ -12,6 +12,7 @@ return [
 		'crm.entity-selector',
 		'main.core',
 		'main.core.events',
+		'ui.entity-editor',
 	],
 	'skip_core' => false,
 ];

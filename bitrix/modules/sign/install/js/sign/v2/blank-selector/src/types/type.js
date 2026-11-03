@@ -11,6 +11,7 @@ export type BlankSelectorConfig = {
 		maxFileCount: number,
 		imageMaxFileSize: number,
 		maxTotalFileSize: number,
+		maxBatchTotalFileSize?: number,
 	},
 	portalConfig: {
 		isUnsecuredScheme: boolean,
@@ -25,6 +26,16 @@ export type BlankSelectorConfig = {
 	isOpenedFromRobot?: boolean,
 	isOpenedFromTemplateFolder?: boolean,
 	initiatedByType?: DocumentInitiatedType,
+	batchUploadEnabled?: boolean,
+};
+
+/**
+ * The running batch as the selector sees it: it never learns how a batch is uploaded.
+ */
+export type BatchUploadState = {
+	isActive: boolean,
+	/** Bytes of the files already in the batch, the ones a new selection joins. */
+	totalSize: number,
 };
 
 export type BlankData = {

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MAIN_UI_FILTER__YES"] = "Да";
 $MESS["MAIN_UI_FILTER__NO"] = "Нет";
 $MESS["MAIN_UI_FILTER__NONE"] = "Любая дата";
@@ -18,8 +18,7 @@ $MESS["MAIN_UI_FILTER__NUMBER_LESS"] = "Меньше чем";
 $MESS["MAIN_UI_FILTER__DEFAULT_FILTER_NAME"] = "Фильтр";
 $MESS["MAIN_UI_FILTER__FILTER_ID_NOT_SET"] = "Не установлен обязательный параметр FILTER_ID";
 $MESS["MAIN_UI_FILTER__DEFAULT_FILTER_TITLE"] = "Фильтр";
-$MESS["MAIN_UI_FILTER__AND"] = "и";
-$MESS["MAIN_UI_FILTER__MORE"] = "ещё";
+$MESS["MAIN_UI_FILTER__AND_MORE"] = "и ещё #N#";
 $MESS["MAIN_UI_FILTER__PLACEHOLDER"] = "Фильтр";
 $MESS["MAIN_UI_FILTER__PLACEHOLDER_DEFAULT"] = "Фильтр + поиск";
 $MESS["MAIN_UI_FILTER__PLACEHOLDER_WITH_FILTER"] = "поиск";

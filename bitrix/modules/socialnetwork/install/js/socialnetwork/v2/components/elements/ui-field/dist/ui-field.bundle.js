@@ -35,6 +35,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				<slot name="label">
 					<label
 						v-if="label"
+						:id="labelFor ? labelFor + '-label' : null"
 						:for="labelFor"
 						class="socialnetwork--project-wizard--ui-field_label"
 					>

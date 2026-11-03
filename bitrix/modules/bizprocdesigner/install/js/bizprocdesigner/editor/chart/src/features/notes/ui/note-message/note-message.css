@@ -1,0 +1,101 @@
+/*
+ * One message of a note: a line with the author, the time and the actions, the text under it, and the
+ * status line an answer of the server is told on. Typography is set by the components of the design
+ * system, so nothing here touches the font.
+ */
+.editor-chart-note-message {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	width: 100%;
+	/* lets the message shrink to the thread so the text wraps instead of widening the popup */
+	min-width: 0;
+}
+
+.editor-chart-note-message__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+/* The name may be long enough to push the time and the actions out of the row on its own. */
+.editor-chart-note-message__author {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-note-message__time,
+.editor-chart-note-message__edited {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}
+
+/* The actions stand at the end of the row, away from the name they belong to. */
+.editor-chart-note-message__actions {
+	flex: 0 0 auto;
+	margin-inline-start: auto;
+}
+
+/*
+ * ui.text-editor owns everything inside this node. A saved message is drawn without the frame, the
+ * ground and the paddings of a field (the visual options of the editor); the field of an edit is drawn
+ * back around it here, so the text keeps its place while the frame appears around it.
+ */
+.editor-chart-note-message__text {
+	min-width: 0;
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-md);
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.editor-chart-note-message.--editing .editor-chart-note-message__text {
+	padding: var(--ui-space-inset-2xs);
+	border-color: var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+}
+
+/*
+ * The visual options of the editor take away the frame ui.text-editor answers the focus with, so the
+ * field of an edit is left with no sign of being the one in focus. The frame drawn here answers it
+ * instead, in the width and the colour the rest of the notes are focused by.
+ *
+ * The offset goes inward, and by the width of the outline past the inset token. A message stands in
+ * the scrolling .editor-chart-note-thread__messages (note-thread.css), which asks for overflow-y: auto
+ * alone - a visible axis computes to auto once the other one is not visible, so the sides of the list
+ * are cut as well, and a message is as wide as the list. An outline set outside the field loses its
+ * left and right side to that cut; the inset offset on its own keeps the outline in, but lays it over
+ * the border of the field and leaves the field looking frameless. Taking the width off drops the
+ * outline below that border, so the two are seen whole. The thread is focused with the outward offset
+ * of the token instead: the padding of the popup stands around it and cuts nothing.
+ */
+.editor-chart-note-message.--editing .editor-chart-note-message__text:focus-within {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+}
+
+.editor-chart-note-message__form {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs);
+}
+
+/* Always rendered: a live region has to stand in the document before its text changes to be read out.
+   With nothing in it the column has no children and no height of its own. */
+.editor-chart-note-message__status {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+/* A refusal leaves the edit open, so it is read next to the field it keeps the message in. */
+.editor-chart-note-message__error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* The edit is saved and only its notifications are not: that is a warning, not a failure. */
+.editor-chart-note-message__notice {
+	color: var(--ui-color-accent-main-warning);
+}

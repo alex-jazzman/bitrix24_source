@@ -6,6 +6,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/controller/dialog/chat',
+		'im:messenger/controller/vote/result',
 		'im:messenger/lib/clear-database-handler',
 		'im:messenger/application/lib/component-request-handler',
 	],

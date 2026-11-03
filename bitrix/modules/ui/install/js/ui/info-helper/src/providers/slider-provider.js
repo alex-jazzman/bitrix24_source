@@ -89,6 +89,8 @@ export class SliderProvider extends BaseProvider
 			params = {};
 		}
 
+		const width = Type.isNumber(params.width) && params.width > 0 ? params.width : this.width;
+
 		if (!code && !params.featureId && !this.constructorParams.featureId && !this.constructorParams.dataSource)
 		{
 			return;
@@ -129,7 +131,7 @@ export class SliderProvider extends BaseProvider
 		this.#openSlider({
 			id: this.getId(),
 			contentCallback: this.contentCallback,
-			width: this.width,
+			width,
 			events: {
 				onLoad: () => this.showFrame(),
 				onClose: () => {

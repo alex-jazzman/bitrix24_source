@@ -2,22 +2,22 @@ import Type from '../type';
 
 export let debugState = true;
 
-export function enableDebug()
+export function enableDebug(): void
 {
 	debugState = true;
 }
 
-export function disableDebug()
+export function disableDebug(): void
 {
 	debugState = false;
 }
 
-export function isDebugEnabled()
+export function isDebugEnabled(): boolean
 {
 	return debugState;
 }
 
-export default function debug(...args: any[])
+export default function debug(...args: any[]): void
 {
 	if (!isDebugEnabled() || !Type.isObject(window.console))
 	{

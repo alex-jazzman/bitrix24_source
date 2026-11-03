@@ -148,7 +148,7 @@
 }
 
 
-.bx-im-content-notification-item-avatar__container .bx-im-avatar__container.--user .bx-im-avatar__icon {
+.bx-im-content-notification-item-avatar__container .bx-im-legacy-avatar__container.--user .bx-im-legacy-avatar__icon {
 	background-size: 28px 28px;
 	background-position: center;
 }

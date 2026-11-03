@@ -33,6 +33,82 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('converter--ui-recent');
+
+	const USER_ITEM_CONSTRUCTOR_SET = new Set([UserItem, ExtranetUserItem, InvitedUserItem]);
+
+	/**
+	 * @param {string} recentItemId
+	 * @return {?Function} class of the personal dialog item, null when the element is not a personal
+	 * dialog or its user is missing in the model
+	 */
+	function getUserItemClass(recentItemId)
+	{
+		if (!DialogHelper.isChatId(recentItemId))
+		{
+			return null;
+		}
+
+		const store = serviceLocator.get('core').getStore();
+		const user = store.getters['usersModel/getById'](recentItemId);
+		if (!user)
+		{
+			return null;
+		}
+
+		if (user.id === serviceLocator.get('core').getUserId())
+		{
+			return CurrentUserItem;
+		}
+
+		const modelItem = store.getters['recentModel/getById'](recentItemId);
+		// eslint-disable-next-line es/no-optional-chaining
+		if (modelItem?.invitation?.isActive === true && user.lastActivityDate === false)
+		{
+			return InvitedUserItem;
+		}
+
+		if (user.botData.type === BotType.support24)
+		{
+			return SupportBotItem;
+		}
+
+		if (user.network === true)
+		{
+			return NetworkUserItem;
+		}
+
+		if (user.bot === true)
+		{
+			return BotItem;
+		}
+
+		if (user.type === UserType.collaber)
+		{
+			return CollaberUserItem;
+		}
+
+		if (user.extranet === true)
+		{
+			return ExtranetUserItem;
+		}
+
+		if (user.connector === true)
+		{
+			return ConnectorUserItem;
+		}
+
+		return UserItem;
+	}
+
+	/**
+	 * @param {string} recentItemId
+	 * @return {boolean} true for a personal dialog of a regular, extranet or invited user
+	 */
+	function isRecentUserItem(recentItemId)
+	{
+		return USER_ITEM_CONSTRUCTOR_SET.has(getUserItemClass(recentItemId));
+	}
+
 	/**
 	 * @class RecentUiConverter
 	 */
@@ -62,12 +138,21 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		toItem(item, options = {})
 		{
 			const modelItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id);
+			const { getRecentItemButton, ...nativeItemOptions } = options;
+			const preparedOptions = typeof getRecentItemButton === 'function'
+				? {
+					...nativeItemOptions,
+					button: getRecentItemButton(modelItem.id),
+				}
+				: nativeItemOptions
+			;
+
 			if (DialogHelper.isChatId(modelItem.id))
 			{
-				return this.#toUserItem(modelItem, options);
+				return this.#toUserItem(modelItem, preparedOptions);
 			}
 
-			return this.#toChatItem(modelItem, options);
+			return this.#toChatItem(modelItem, preparedOptions);
 		}
 
 		/**
@@ -136,56 +221,15 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		 */
 		#toUserItem(modelItem, options = {})
 		{
-			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](modelItem.id);
-			if (!user)
+			const UserItemClass = getUserItemClass(modelItem.id);
+			if (!UserItemClass)
 			{
 				logger.error(`${this.constructor.name}.toUserItem: there is no user "${modelItem.id}" in model`);
 
 				return new RecentItem(modelItem, options);
 			}
 
-			if (user.id === serviceLocator.get('core').getUserId())
-			{
-				return new CurrentUserItem(modelItem, options);
-			}
-
-			// eslint-disable-next-line es/no-optional-chaining
-			if (modelItem?.invitation?.isActive === true && user.lastActivityDate === false)
-			{
-				return new InvitedUserItem(modelItem, options);
-			}
-
-			if (user.botData.type === BotType.support24)
-			{
-				return new SupportBotItem(modelItem, options);
-			}
-
-			if (user.network === true)
-			{
-				return new NetworkUserItem(modelItem, options);
-			}
-
-			if (user.bot === true)
-			{
-				return new BotItem(modelItem, options);
-			}
-
-			if (user.type === UserType.collaber)
-			{
-				return new CollaberUserItem(modelItem, options);
-			}
-
-			if (user.extranet === true)
-			{
-				return new ExtranetUserItem(modelItem, options);
-			}
-
-			if (user.connector === true)
-			{
-				return new ConnectorUserItem(modelItem, options);
-			}
-
-			return new UserItem(modelItem, options);
+			return new UserItemClass(modelItem, options);
 		}
 
 		/**
@@ -209,5 +253,8 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		}
 	}
 
-	module.exports = { RecentUiConverter: new RecentUiConverter() };
+	module.exports = {
+		RecentUiConverter: new RecentUiConverter(),
+		isRecentUserItem,
+	};
 });

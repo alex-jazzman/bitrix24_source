@@ -122,6 +122,51 @@
 }
 /* End compact mode */
 
+/* Collab entities panel (isAirDesignEnabled flag). The --air class is added by
+   the panel itself, so the air styles do not depend on a DOM wrapper. */
+.bx-im-collab-header__links-container.--air {
+	margin-right: 0;
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-2xl);
+}
+
+.bx-im-collab-header__links-container.--air:not(.--compact) {
+	padding: var(--ui-space-stack-2xs) 0;
+}
+
+.bx-im-collab-header__links-container.--air .bx-im-collab-header__link-text {
+	font-size: var(--ui-font-size-xs);
+	line-height: 15px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-collab-header__links-container.--air .bx-im-collab-header__link:hover .bx-im-collab-header__link-text {
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-collab-header__links-container.--air .bx-im-collab-header__link:after {
+	background: var(--ui-color-base-6);
+	opacity: 0.6;
+}
+
+.bx-im-collab-header__links-container.--air .bx-im-collab-header__link-counter {
+	top: -11px;
+	min-width: 14px;
+	padding: 0 var(--ui-space-inset-2xs);
+	border-radius: var(--ui-border-radius-xl);
+	background-color: var(--ui-color-design-filled-alert-bg);
+	font-size: var(--ui-font-size-4xs);
+	line-height: 12px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-design-filled-alert-content);
+}
+
+.bx-im-collab-header__link-icon-air {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
 .bx-im-collab-header__links-container.--highlight {
 	position: relative;
 }

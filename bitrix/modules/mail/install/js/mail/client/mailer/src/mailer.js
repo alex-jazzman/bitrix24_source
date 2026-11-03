@@ -16,7 +16,7 @@ export class Mailer
 	#isMailboxGridButtonCounterRefreshQueued = false;
 	#migrationMailboxIds = [];
 	#migrationReloadStarted = false;
-	#migrationStatuses = new Map();
+	#migrationActiveMailboxIds = new Set();
 	#reloadPage;
 	focusReset = false;
 
@@ -48,6 +48,11 @@ export class Mailer
 		}
 
 		this.#filter = BX.Main.filterManager.getById(config.filterId);
+		if (!this.#filter)
+		{
+			return;
+		}
+
 		this.sendApplyFilterEventForMenuRefresh();
 
 		// Removing the focus from the filter field
@@ -64,6 +69,8 @@ export class Mailer
 			wrapper: mailErrorBoxWrapper,
 			errorLink: config.configPath,
 			currentMailboxId: this.#mailboxId,
+			mailboxConnected: config.mailboxConnected,
+			migrationNotice: config.migrationNotice,
 		});
 
 		const filterToolbar = new FilterToolbar({
@@ -122,7 +129,7 @@ export class Mailer
 			migrationState.subscribe((change) => this.#handleMigrationState(normalizedMailboxId, change));
 			if (migrationState.isActive())
 			{
-				this.#migrationStatuses.set(normalizedMailboxId, migrationState.getStatus().status);
+				this.#migrationActiveMailboxIds.add(normalizedMailboxId);
 			}
 			void migrationState.initialize();
 		});
@@ -133,13 +140,13 @@ export class Mailer
 	{
 		if (change.active)
 		{
-			this.#migrationStatuses.set(mailboxId, change.status.status);
+			this.#migrationActiveMailboxIds.add(mailboxId);
 			this.#renderMigrationBanner();
 
 			return;
 		}
 
-		this.#migrationStatuses.delete(mailboxId);
+		this.#migrationActiveMailboxIds.delete(mailboxId);
 		this.#renderMigrationBanner();
 		if (
 			(change.previousActive || change.source === 'pull')
@@ -159,13 +166,9 @@ export class Mailer
 
 	#renderMigrationBanner()
 	{
-		const priorities = ['blocked', 'cancelling', 'switching', 'waiting', 'running'];
-		const status = priorities.find((candidate) => (
-			[...this.#migrationStatuses.values()].includes(candidate)
-		));
-		if (status)
+		if (this.#migrationActiveMailboxIds.size > 0)
 		{
-			this.#showMigrationBanner(status);
+			this.#showMigrationBanner();
 
 			return;
 		}
@@ -173,20 +176,10 @@ export class Mailer
 		this.#hideMigrationBanner();
 	}
 
-	#showMigrationBanner(status)
+	#showMigrationBanner()
 	{
-		const statusPhrases = {
-			running: 'MAIL_MESSAGE_LIST_MIGRATION_RUNNING',
-			waiting: 'MAIL_MESSAGE_LIST_MIGRATION_WAITING',
-			switching: 'MAIL_MESSAGE_LIST_MIGRATION_SWITCHING',
-			blocked: 'MAIL_MESSAGE_LIST_MIGRATION_BLOCKED',
-			cancelling: 'MAIL_MESSAGE_LIST_MIGRATION_CANCELLING',
-		};
-		const title = Loc.getMessage('MAIL_MESSAGE_LIST_MIGRATION_TITLE').trim();
-		const text = Loc.getMessage(statusPhrases[status] ?? statusPhrases.running).trim();
-
-		// A locale without these phrases would leave an empty warning stripe on the list.
-		if (title === '' && text === '')
+		const text = (Loc.getMessage('MAIL_MIGRATION_IN_PROGRESS') ?? '').trim();
+		if (text === '')
 		{
 			this.#hideMigrationBanner();
 
@@ -199,7 +192,6 @@ export class Mailer
 			return;
 		}
 
-		banner.querySelector('[data-role="mail-migration-banner-title"]').textContent = title;
 		banner.querySelector('[data-role="mail-migration-banner-text"]').textContent = text;
 	}
 
@@ -227,10 +219,7 @@ export class Mailer
 				data-role="mail-migration-banner"
 				data-testid="mail-migration-banner"
 			>
-				<span class="ui-alert-message">
-					<strong data-role="mail-migration-banner-title"></strong><br>
-					<span data-role="mail-migration-banner-text"></span>
-				</span>
+				<span class="ui-alert-message" data-role="mail-migration-banner-text"></span>
 			</div>
 		`;
 		Dom.prepend(banner, wrapper);

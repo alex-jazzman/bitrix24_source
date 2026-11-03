@@ -223,12 +223,6 @@ BX.namespace('Tasks.Component');
 							roleId = 'view_all';
 						}
 						BX.addClass(BX('tasks_panel_menu_' + roleId), 'main-buttons-item-active');
-
-						var toolbar = BX.Tasks.Component.TasksToolbar.getInstance();
-						if (toolbar)
-						{
-							toolbar.rerender(roleId);
-						}
 					}
 				}
 				catch (e)

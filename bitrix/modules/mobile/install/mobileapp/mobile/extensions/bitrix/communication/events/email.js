@@ -7,6 +7,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 	const { inAppUrl } = require('in-app-url');
 	const { Type } = require('type');
 	const { stringify } = require('utils/string');
+	const { requireLazy } = require('require-lazy');
 
 	class EmailEvent extends BaseEvent
 	{

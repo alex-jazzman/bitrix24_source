@@ -141,8 +141,12 @@ if(CModule::IncludeModule("socialnetwork"))
 		$arResult[0] = "*";
 	elseif ($action == "add_comment")
 	{
-		$log_id = $_REQUEST["log_id"];
-		if ($arLog = CSocNetLog::GetByID($log_id))
+		$log_id = (int)$_REQUEST["log_id"];
+		$arLog = \Bitrix\Mobile\Livefeed\LegacyCommentAccess::getVisibleLog(
+			$log_id,
+			$currentUserExternalAuthId
+		);
+		if ($arLog)
 		{
 			$arCommentEvent = CSocNetLogTools::FindLogCommentEventByLogEventID($arLog["EVENT_ID"]);
 			if ($arCommentEvent)
@@ -367,10 +371,16 @@ if(CModule::IncludeModule("socialnetwork"))
 	{
 		$arResult["arComments"] = array();
 
-		$log_tmp_id = $_REQUEST["logid"];
+		$log_tmp_id = (int)$_REQUEST["logid"];
 		$last_comment_id = $_REQUEST["last_comment_id"];
 
-		if (intval($log_tmp_id) > 0)
+		if (
+			$log_tmp_id > 0
+			&& \Bitrix\Mobile\Livefeed\LegacyCommentAccess::getVisibleLog(
+				$log_tmp_id,
+				$currentUserExternalAuthId
+			)
+		)
 		{
 			$arParams = array(
 				"PATH_TO_USER" => $_REQUEST["p_user"],

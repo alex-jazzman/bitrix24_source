@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, ui_vue3_pinia, ui_vue3, main_core) {
+(function (exports, main_core, ui_vue3_pinia, ui_vue3) {
 	'use strict';
 
 	const MARKET_APPLICATION_LIMIT_EXCEEDED = 'MARKET_APPLICATION_LIMIT_EXCEEDED';
@@ -18,18 +18,33 @@ this.BX = this.BX || {};
 			return false;
 		}
 	}
+	function getCurrentSlider() {
+		return BX.SidePanel?.Instance?.getSliderByWindow(window) ?? null;
+	}
+	const INSTALL_POPUP_WIDTH = 508;
+	const INSTALLING_POPUP_WIDTH = 480;
+	const INSTALLING_POPUP_HEIGHT = 288;
+	const SUCCESS_POPUP_WIDTH = 480;
+	const INSTALLING_POPUP_CLASS = '--installation-progress';
+	const DEFAULT_OPEN_APP_AFTER_INSTALL = 15;
 	const marketInstallState = ui_vue3_pinia.defineStore('market-install', {
 		state: () => ({
 			appInfo: [],
 			installStep: 1,
-			popupInstallButton: null,
+			licenseInfo: {},
+			licenseAgreements: {
+				tos: false,
+				eula: false,
+				privacy: false
+			},
 			licenseError: '',
-			installLoader: null,
+			installPopup: null,
 			installResult: {},
 			redirectPriority: false,
-			openAppAfterInstall: 15,
+			openAppAfterInstall: DEFAULT_OPEN_APP_AFTER_INSTALL,
 			timer: null,
 			installError: false,
+			requestSent: false,
 			slider: {
 				install: 'install',
 				support: 'support',
@@ -37,21 +52,10 @@ this.BX = this.BX || {};
 			},
 			popupNodes: {},
 			versionSlider: {
-				container: false,
-				slideBox: false,
-				items: false,
-				navBox: false,
-				navArItems: false,
-				column: 1,
-				count: 0,
-				currentItem: 0
+				currentItem: 0,
+				count: 0
 			}
 		}),
-		getters: {
-			double() {
-				return this.counter * 2;
-			}
-		},
 		actions: {
 			cleanLicenseError() {
 				this.licenseError = '';
@@ -61,9 +65,39 @@ this.BX = this.BX || {};
 			},
 			setAppInfo(appInfo) {
 				this.appInfo = appInfo;
+				this.requestSent = !!(appInfo && appInfo.HAS_ACTIVE_INSTALL_REQUEST === 'Y');
 			},
-			isRestOnlyApp() {
-				return this.appInfo.OPEN_API === 'Y';
+			prepareInstallContext(appInfo, licenseInfo) {
+				this.$patch(state => {
+					state.appInfo = appInfo;
+					state.installStep = 1;
+					state.licenseInfo = licenseInfo ?? {};
+					state.licenseAgreements = {
+						tos: false,
+						eula: false,
+						privacy: false
+					};
+					state.licenseError = '';
+				});
+			},
+			setLicenseInfo(licenseInfo) {
+				this.licenseInfo = licenseInfo;
+			},
+			setLicenseAgreement(key, value) {
+				if (!Object.prototype.hasOwnProperty.call(this.licenseAgreements, key)) {
+					return;
+				}
+				this.licenseAgreements[key] = Boolean(value);
+			},
+			resetLicenseAgreements() {
+				this.licenseAgreements = {
+					tos: false,
+					eula: false,
+					privacy: false
+				};
+			},
+			willOpenAppAfterInstall() {
+				return !!this.installResult.open;
 			},
 			isSubscriptionApp() {
 				return this.appInfo.BY_SUBSCRIPTION === 'Y';
@@ -73,75 +107,66 @@ this.BX = this.BX || {};
 			},
 			resetInstallStep() {
 				this.installStep = 1;
+				this.resizeInstallPopup(INSTALL_POPUP_WIDTH, null, true);
 			},
 			showInstallPopup(isUpdate = false) {
 				if (!this.popupNodes[this.appInfo.CODE]) {
 					return;
 				}
-				new BX.Main.Popup({
+				if (isUpdate) {
+					this.initSlider();
+				}
+				this.installPopup?.close();
+				this.installPopup = ui_vue3.markRaw(new BX.Main.Popup({
 					content: this.popupNodes[this.appInfo.CODE],
+					ariaLabel: BX.message(isUpdate ? 'MARKET_INSTALL_POPUP_UPDATE_ARIA_LABEL' : 'MARKET_INSTALL_POPUP_INSTALL_ARIA_LABEL'),
 					overlay: true,
 					closeIcon: true,
 					autoHide: true,
 					closeByEsc: true,
-					width: 469,
-					borderRadius: 12,
+					width: INSTALL_POPUP_WIDTH,
+					borderRadius: 20,
 					padding: 0,
-					className: 'market-popup__window',
-					buttons: [this.popupInstallButton = new BX.UI.Button({
-						text: isUpdate ? BX.message('MARKET_DETAIL_ACTION_JS_REFRESH') : BX.message('MARKET_DETAIL_ACTION_JS_INSTALL'),
-						color: BX.UI.Button.Color.SUCCESS,
-						size: BX.UI.Button.Size.SMALL,
-						events: {
-							click: () => {
-								if (!this.checkLicense()) {
-									return;
-								}
-								this.goToInstallStep2();
-							}
-						}
-					})]
-				}).show();
-				if (isUpdate && this.popupNodes[this.appInfo.CODE]) {
-					const target = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-popup__versions-slider"]');
-					if (target) {
-						this.sliderInit({
-							target: target
-						});
-					}
-				}
+					className: 'market-popup__window'
+				}));
+				this.installPopup.getPopupContainer().querySelector('.popup-window-close-icon')?.setAttribute('data-testid', 'market-popup-install-close-button');
+				this.installPopup.show();
+			},
+			closeInstallPopup() {
+				this.installPopup?.close();
+				this.installPopup = null;
+			},
+			isInstallPopupEvent(event) {
+				return this.installPopup !== null && event?.getTarget?.() === this.installPopup;
 			},
 			checkLicense() {
-				if (!this.popupNodes[this.appInfo.CODE]) {
+				if (this.installStep !== 1) {
 					return false;
 				}
-				const tosLicense = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-tos-license"]');
-				const license = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-install-license"]');
-				const confidentiality = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-install-confidentiality"]');
-				if (tosLicense && !tosLicense.checked) {
+				const needTos = Boolean(this.licenseInfo.TERMS_OF_SERVICE_TEXT);
+				const needEula = Boolean(this.licenseInfo.EULA_TEXT);
+				const needPrivacy = Boolean(this.licenseInfo.PRIVACY_TEXT);
+				if (needTos && !this.licenseAgreements.tos) {
 					this.licenseError = BX.message('MARKET_INSTALL_TOS_ERROR_MSGVER_2');
 					return false;
 				}
-				if (license && !license.checked || confidentiality && !confidentiality.checked) {
+				if (needEula && !this.licenseAgreements.eula || needPrivacy && !this.licenseAgreements.privacy) {
 					this.licenseError = BX.message('MARKET_INSTALL_LICENSE_ERROR');
 					return false;
 				}
-				return this.installStep === 1;
+				return true;
+			},
+			submitInstallStep() {
+				if (!this.checkLicense()) {
+					return;
+				}
+				this.goToInstallStep2();
 			},
 			goToInstallStep2() {
+				this.installError = false;
+				this.installResult = {};
 				this.installStep = 2;
-				this.popupInstallButton.button.parentElement.classList.add('--hidden');
-				ui_vue3.nextTick(() => {
-					if (!this.installLoader) {
-						this.installLoader = new BX.Loader({
-							target: this.popupNodes[this.appInfo.CODE].querySelector('.market-install-loader'),
-							size: 50
-						});
-					}
-					if (!this.installLoader.isShown()) {
-						this.installLoader.show();
-					}
-				});
+				this.resizeInstallPopup(INSTALLING_POPUP_WIDTH, INSTALLING_POPUP_HEIGHT, false);
 				let params = this.appInfo.INSTALL_INFO;
 				params.IFRAME = location.href.indexOf("IFRAME=Y") > 0;
 				this.queryInstall(params);
@@ -158,10 +183,10 @@ this.BX = this.BX || {};
 					queryParam.checkHash = params.CHECK_HASH;
 					queryParam.installHash = params.INSTALL_HASH;
 				}
-				BX.ajax.runAction('market.Application.install', {
+				return BX.ajax.runAction('market.Application.install', {
 					data: queryParam,
 					analyticsLabel: analytics
-				}).then(response => this.installFinish(response));
+				}).then(response => this.installFinish(response), () => this.handleInstallError());
 			},
 			async installFinish(response) {
 				const result = !!response.data ? response.data : response;
@@ -176,13 +201,8 @@ this.BX = this.BX || {};
 						this.installError = true;
 						return;
 					}
-					if (!!result.helperCode && result.helperCode !== '') {
-						top.BX.UI.InfoHelper.show(result.helperCode);
-					} else {
-						this.installError = true;
-						this.showError(result.error + (!!result.errorDescription ? '<br />' + result.errorDescription : ''));
-						setTimeout(() => this.reloadSlider(), 12000);
-					}
+					const errorMessage = result.error + (!!result.errorDescription ? '<br />' + result.errorDescription : '');
+					this.handleInstallError(errorMessage, result.helperCode);
 				} else if (!!result.redirect && this.redirectPriority === true) {
 					top.location.href = result.redirect;
 				} else {
@@ -198,12 +218,11 @@ this.BX = this.BX || {};
 						this.reloadSlider();
 						return;
 					}
-					const timerAfterInstall = parseInt(this.appInfo.INSTALL_INFO.OPEN_APP_AFTER_INSTALL, 10);
-					if (Number.isInteger(timerAfterInstall) && timerAfterInstall > 0) {
-						this.openAppAfterInstall = timerAfterInstall;
-					}
+					this.openAppAfterInstall = this.getOpenAppAfterInstallDelay();
 					this.installStep = 3;
-					if (!this.isRestOnlyApp()) {
+					this.resizeInstallPopup(SUCCESS_POPUP_WIDTH, null, true);
+					this.stopOpenAppAfterInstall();
+					if (this.willOpenAppAfterInstall()) {
 						this.timer = setInterval(() => {
 							this.openAppAfterInstall--;
 							if (this.openAppAfterInstall === 0) {
@@ -213,29 +232,49 @@ this.BX = this.BX || {};
 					}
 				}
 			},
+			handleInstallError(errorMessage = '', helperCode = '') {
+				this.installError = true;
+				this.resetInstallStep();
+				if (helperCode) {
+					top.BX.UI.InfoHelper.show(helperCode);
+				}
+				this.showError(errorMessage || main_core.Loc.getMessage('MARKET_INSTALL_REQUEST_ERROR'));
+			},
 			showError: function (message) {
 				BX.UI.Notification.Center.notify({
 					content: message,
 					autoHideDelay: 12000
 				});
 			},
+			getOpenAppAfterInstallDelay() {
+				const delay = parseInt(this.appInfo?.INSTALL_INFO?.OPEN_APP_AFTER_INSTALL, 10);
+				return Number.isInteger(delay) && delay > 0 ? delay : DEFAULT_OPEN_APP_AFTER_INSTALL;
+			},
+			stopOpenAppAfterInstall() {
+				if (this.timer === null) {
+					return;
+				}
+				clearInterval(this.timer);
+				this.timer = null;
+				this.openAppAfterInstall = this.getOpenAppAfterInstallDelay();
+			},
 			openApplication: function () {
-				clearTimeout(this.timer);
-				let closeCallback = this.closeDetailAfterInstall() ? this.closePreviousSlider : false;
-				if (!!this.installResult.open) {
+				this.stopOpenAppAfterInstall();
+				let closeCallback = this.closeDetailAfterInstall() ? this.closeSliderUnderApplication : false;
+				const current = getCurrentSlider();
+				const previous = current ? BX.SidePanel.Instance.getPreviousSlider(current) : null;
+				if (this.willOpenAppAfterInstall()) {
 					top.BX.rest.AppLayout.openApplication(this.installResult.id, this.appInfo.INSTALL_INFO.PLACEMENT_OPTIONS, false, closeCallback);
 				}
-				const current = BX.SidePanel.Instance.getTopSlider();
-				const previous = BX.SidePanel.Instance.getPreviousSlider(current);
 				if (previous && !this.closeDetailAfterInstall()) {
 					previous.reload();
 				}
-				current.reload();
+				current?.reload();
 				if (this.isConfigurationAppInstall()) {
 					BX.SidePanel.Instance.open(this.installResult.openSlider);
 				}
 			},
-			closePreviousSlider: function () {
+			closeSliderUnderApplication: function () {
 				const current = BX.SidePanel.Instance.getTopSlider();
 				const previous = BX.SidePanel.Instance.getPreviousSlider(current);
 				if (previous) {
@@ -252,7 +291,29 @@ this.BX = this.BX || {};
 				return !!this.installResult.canShowForm;
 			},
 			reloadSlider: function () {
-				BX.SidePanel.Instance.getTopSlider().reload();
+				getCurrentSlider()?.reload();
+			},
+			resizeInstallPopup(width, height = null, canClose = true) {
+				const popup = this.installPopup;
+				if (!popup) {
+					return;
+				}
+				popup.setWidth(width);
+				popup.setHeight(height);
+				popup.setAutoHide(canClose);
+				popup.setClosingByEsc(canClose);
+				const popupContainer = popup.getPopupContainer();
+				if (canClose) {
+					popupContainer.classList.remove(INSTALLING_POPUP_CLASS);
+				} else {
+					popupContainer.classList.add(INSTALLING_POPUP_CLASS);
+				}
+				ui_vue3.nextTick(() => {
+					if (this.installPopup !== popup) {
+						return;
+					}
+					popup.adjustPosition();
+				});
 			},
 			openSliderWithContent: function (contentCode, width) {
 				BX.SidePanel.Instance.open("market-detail-" + contentCode, {
@@ -268,59 +329,57 @@ this.BX = this.BX || {};
 					width: width || 650
 				});
 			},
-			sliderInit: function (options) {
-				this.versionSlider.container = options.target;
-				this.versionSlider.slideBox = options.target.querySelector(".market-popup__versions-content");
-				this.versionSlider.items = options.target.querySelectorAll(".market-popup__versions-content_item");
-				this.versionSlider.navBox = options.target.querySelector(".market-popup__versions-nav");
-				this.versionSlider.navArItems = options.target.querySelectorAll(".market-popup__versions-nav_item");
-				this.versionSlider.count = this.versionSlider.items.length;
-				this.versionSlider.currentItem = this.versionSlider.items.length - 1;
-				this.versionSlider.column = options.column || 1;
-				this.create();
+			initSlider() {
+				const versions = Array.isArray(this.appInfo.VERSIONS_FORMAT) ? this.appInfo.VERSIONS_FORMAT : [];
+				this.versionSlider.count = versions.length;
+				this.versionSlider.currentItem = this.versionSlider.count - 1;
 			},
-			create: function () {
-				if (!BX.type.isDomNode(this.versionSlider.container) || !BX.type.isDomNode(this.versionSlider.slideBox)) {
+			prevVersion() {
+				if (this.versionSlider.count <= 0) {
 					return;
 				}
-				this.versionSlider.slideBox.style.width = 100 * this.versionSlider.items.length / this.versionSlider.column + "%";
-				this.versionSlider.slideBox.style.left = -(100 * (this.versionSlider.items.length - 1) / this.versionSlider.column) + "%";
-				let navArItemsWidth = this.getNavBoxShift(this.versionSlider.navArItems.length);
-				this.versionSlider.navBox.style.width = navArItemsWidth + "px";
-				this.versionSlider.navBox.style.left = 'calc(50% - ' + navArItemsWidth + 'px)';
+				this.versionSlider.currentItem = (this.versionSlider.currentItem - 1 + this.versionSlider.count) % this.versionSlider.count;
 			},
-			goTo: function (itemTarget) {
-				this.versionSlider.slideBox.style.left = itemTarget * (-100 / this.versionSlider.column) + '%';
-				this.versionSlider.navBox.style.left = 'calc(50% - ' + this.getNavBoxShift(itemTarget) + 'px)';
-				this.versionSlider.currentItem = itemTarget;
-			},
-			getNavBoxShift: function (itemTarget) {
-				let navBoxShift = 0;
-				for (let i = 0; i < itemTarget; i++) {
-					navBoxShift += this.versionSlider.navArItems[i].offsetWidth + 6;
+			nextVersion() {
+				if (this.versionSlider.count <= 0) {
+					return;
 				}
-				return navBoxShift;
-			},
-			prevVersion: function () {
-				let prevItem = this.versionSlider.currentItem - 1;
-				if (prevItem < 0) {
-					prevItem = this.versionSlider.count - 1;
-				}
-				this.goTo(prevItem);
-			},
-			nextVersion: function () {
-				let nextItem = this.versionSlider.currentItem + 1;
-				if (nextItem >= this.versionSlider.count) {
-					nextItem = 0;
-				}
-				this.goTo(nextItem);
+				this.versionSlider.currentItem = (this.versionSlider.currentItem + 1) % this.versionSlider.count;
 			},
 			buildAppForm: function (clientId) {
 				return top.BX.Rest.AppForm.buildByApp(clientId, top.BX.Rest.EventType.INSTALL);
+			},
+			requestInstall(code, version = null, checkHash = null, installHash = null) {
+				const data = {
+					code
+				};
+				if (version !== null) {
+					data.version = version;
+				}
+				if (checkHash !== null) {
+					data.checkHash = checkHash;
+					data.installHash = installHash;
+				}
+				return BX.ajax.runAction('market.Application.requestInstall', {
+					data
+				}).then(() => {
+					this.requestSent = true;
+					return true;
+				}, response => {
+					const message = response && BX.Type.isArrayFilled(response.errors) && response.errors[0].message ? response.errors[0].message : BX.message('MARKET_DETAIL_ACTION_JS_REQUEST_ERROR');
+					const notificationCenter = top.BX?.UI?.Notification?.Center;
+					if (notificationCenter) {
+						notificationCenter.notify({
+							content: message,
+							autoHideDelay: 12000
+						});
+					}
+					return false;
+				});
 			}
 		}
 	});
 
 	exports.marketInstallState = marketInstallState;
 
-})(this.BX.Market = this.BX.Market || {}, BX.Vue3.Pinia, BX.Vue3, BX);
+})(this.BX.Market = this.BX.Market || {}, BX, BX.Vue3.Pinia, BX.Vue3);

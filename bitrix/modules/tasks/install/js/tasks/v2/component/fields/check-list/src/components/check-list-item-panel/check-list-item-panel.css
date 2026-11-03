@@ -2,14 +2,43 @@
 	display: flex;
 	position: absolute;
 	left: 10px;
-	z-index: 2;
+	z-index: 4;
 	background: var(--ui-color-base-white-fixed);
+	height: 48px;
+	box-sizing: border-box;
 	padding: 8px 0;
 	border: 1px solid var(--ui-color-divider-default);
 	border-radius: 10px;
 	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.11);
 	justify-content: center;
 	align-items: center;
+}
+
+.check-list-widget-item-panel[data-placement="entity"] .check-list-widget-item-panel-section {
+	padding: 0 2px;
+}
+
+/* Every entity action is its own section, so the section divider would land between all icons. */
+.check-list-widget-item-panel[data-placement="entity"] .check-list-widget-item-panel-section:not(:last-child) {
+	border-right: none;
+}
+
+.check-list-widget-item-panel.--entity {
+	/* The panel is toggled through display, which no transition can follow -- an animation runs
+	   on every appearance instead. */
+	animation: tasks-check-list-item-panel-appear 140ms ease-out;
+}
+
+@keyframes tasks-check-list-item-panel-appear {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.check-list-widget-item-panel.--entity {
+		animation: none;
+	}
 }
 
 .check-list-widget-item-panel-section {
@@ -32,11 +61,6 @@
 	gap: 6px;
 }
 
-.check-list-widget-item-panel-section.--formatting .check-list-widget-item-panel-section-item {
-	width: 30px;
-	height: 30px;
-}
-
 .check-list-widget-item-panel-section-separator {
 	width: 1px;
 	height: 20px;
@@ -51,7 +75,11 @@
 }
 
 .check-list-widget-item-panel-section-item {
+	--tasks-check-list-panel-icon-color: var(--ui-color-design-plain-content-icon);
+
 	display: flex;
+	width: 30px;
+	height: 30px;
 	justify-content: center;
 	align-items: center;
 	background: none;
@@ -69,12 +97,19 @@
 }
 
 .check-list-widget-item-panel-section-item:hover {
+	--tasks-check-list-panel-icon-color: var(--ui-color-base-0);
+
 	opacity: 1;
 }
 
 .check-list-widget-item-panel-section-item.--active {
 	background-color: var(--ui-color-palette-blue-25, #d3f1fb);
 	opacity: 1;
+}
+
+/* The solid fire icon already reads as on, so it needs no plate under it. */
+.check-list-widget-item-panel-section-item.--important.--active {
+	background-color: transparent;
 }
 
 .check-list-widget-item-panel-section-item.--disabled {
@@ -97,7 +132,8 @@
 }
 
 .tasks-check-list-link-popup .ui-text-editor-link-form {
-	width: 300px;
+	width: 100%;
+	max-width: 300px;
 	display: flex;
 	align-items: center;
 	flex: 1;

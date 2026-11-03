@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/function',
+		'utils/object',
 		'layout/ui/reaction/picker',
 		'im:messenger/const',
 		'im:messenger/lib/di/service-locator',

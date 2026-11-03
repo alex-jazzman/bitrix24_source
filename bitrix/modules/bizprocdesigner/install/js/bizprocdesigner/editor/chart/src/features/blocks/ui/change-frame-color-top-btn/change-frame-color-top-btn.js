@@ -49,30 +49,18 @@ export const ChangeFrameColorTopBtn = {
 	},
 	methods: {
 		...mapActions(useDiagramStore, [
-			'beginSaveRun',
-			'publicDraft',
-			'updateStatus',
+			'saveDraftWithStatus',
 		]),
 		async onUpdateFrameColor(frameColorName: string): Promise<void>
 		{
-			// Reserved before the request: a save started after this one owns the status, so a
-			// late answer here must not overwrite it.
-			const runId = this.beginSaveRun();
-			try
-			{
-				this.updateBlock({
-					...this.block,
-					node: {
-						...this.block.node,
-						frameColorName,
-					},
-				});
-				this.updateStatus(await this.publicDraft(), runId);
-			}
-			catch
-			{
-				this.updateStatus(false, runId);
-			}
+			this.updateBlock({
+				...this.block,
+				node: {
+					...this.block.node,
+					frameColorName,
+				},
+			});
+			await this.saveDraftWithStatus();
 		},
 	},
 	template: `

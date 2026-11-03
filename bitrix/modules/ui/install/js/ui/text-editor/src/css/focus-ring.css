@@ -1,0 +1,31 @@
+/*
+	The keyboard focus ring of every focusable control the editor draws itself.
+
+	One rule for all of them on purpose: the ring is a single decision, and it was copied into five
+	component files before. The selectors stay as they are — other modules build markup on these
+	class names (`ui-text-editor-link-form-button` in tasks) and select them in tests, so an opt-in
+	utility class would have quietly left their controls without a ring.
+
+	The table picker grid needs a second selector: it opens from a click and then moves the focus
+	itself, and WebKit (unlike the other two engines) does not upgrade such a programmatic focus
+	to :focus-visible once an arrow key moves it, so there the ring goes by the keyboard modality
+	ui.a11y keeps on <html>.
+*/
+.ui-text-editor-toolbar-button:focus-visible,
+.ui-text-editor-image-dialog-button:focus-visible,
+.ui-text-editor-video-dialog-button:focus-visible,
+.ui-text-editor-link-form-button:focus-visible,
+.ui-text-editor-table-dialog-box:focus-visible,
+html[data-input-modality="keyboard"] .ui-text-editor-table-dialog-box:focus:not(:focus-visible) {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 1px;
+	opacity: 1;
+}
+
+/*
+	The ring is drawn inside the button box: a collapsed toolbar row is exactly as tall as its
+	buttons and clips anything drawn outside with overflow: hidden.
+*/
+.ui-text-editor-toolbar-button:focus-visible {
+	outline-offset: -1px;
+}

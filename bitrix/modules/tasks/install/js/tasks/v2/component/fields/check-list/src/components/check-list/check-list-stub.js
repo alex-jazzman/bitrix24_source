@@ -16,14 +16,15 @@ export const CheckListStub = {
 		};
 	},
 	template: `
-		<div class="check-list-stub">
-			<div class="check-list-stub-icon"/>
+		<div class="check-list-stub" data-testid="tasks-check-list-stub">
+			<div class="check-list-stub-icon" aria-hidden="true"/>
 			<div class="check-list-stub-title">
 				{{ loc('TASKS_V2_CHECK_LIST_STUB_TITLE') }}
 			</div>
 			<div class="check-list-stub-btn">
 				<UiButton
 					:text="loc('TASKS_V2_CHECK_LIST_STUB_BTN')"
+					:dataset="{ testid: 'tasks-check-list-stub-btn' }"
 					:size="ButtonSize.MEDIUM"
 					:leftIcon="Outline.PLUS_L"
 					@click="$emit('click')"

@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'ui-system/typography/text',
+		'tokens',
 		'crm:timeline/item/ui/body/blocks/audio-block',
 		'crm:timeline/item/ui/body/blocks/base',
 		'crm:timeline/item/ui/body/blocks/base-editable-block',

@@ -15,10 +15,13 @@ use Bitrix\Main\Web\Json;
  */
 
 Extension::load([
+	'biconnector.grid',
 	'biconnector.grid.editable-columns',
 	'biconnector.apache-superset-analytics',
+	'biconnector.error-message',
 	'ui.dialogs.messagebox',
 	'ui.hint',
+	'ui.notification',
 	'ui.buttons',
 	'ui.icons',
 	'ui.alerts',

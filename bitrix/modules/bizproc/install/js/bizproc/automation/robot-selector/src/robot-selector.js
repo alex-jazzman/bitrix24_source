@@ -54,6 +54,11 @@ export class RobotSelector extends EventEmitter
 	#viewedEventTimerId = null;
 
 	#itemsById = new Map();
+	#entityType: ?string = null;
+	#filterOptions = {
+		filterItems: [],
+		multiple: false,
+	};
 
 	recentGroupIdsSort: Map<string, number>;
 	#observeItemsTimer: number;
@@ -103,6 +108,8 @@ export class RobotSelector extends EventEmitter
 		{
 			this.#showNewGroups = true;
 		}
+
+		this.#updateFilterOptions();
 	}
 
 	#mergeCacheViewedIdsWithIdsFromSettings()
@@ -144,6 +151,17 @@ export class RobotSelector extends EventEmitter
 		}
 	}
 
+	setEntityType(entityType: ?string): void
+	{
+		this.#entityType = Type.isStringFilled(entityType) ? entityType : null;
+		this.#updateFilterOptions();
+
+		const visibleItems = this.#getVisibleItems();
+		const catalog = this.#getCatalog();
+		catalog.setItems(visibleItems);
+		catalog.setGroups(this.#getGroups(visibleItems));
+	}
+
 	show()
 	{
 		this.#getCatalog().show();
@@ -164,20 +182,17 @@ export class RobotSelector extends EventEmitter
 	{
 		if (Type.isNil(this.#catalog))
 		{
-			const items = this.#getItems();
-
-			const headerGroups = this.#prepareHeaderGroups(this.#getDefaultHeaderGroups());
-			const groups = [...headerGroups, ...this.#getDefaultRobotGroups()];
+			const items = this.#getVisibleItems();
 
 			this.#catalog = new EntityCatalog({
-				groups: groups,
+				groups: this.#getGroups(items),
 				items: items,
 				canDeselectGroups: false,
 				customTitleBar: this.#getTitleBar(),
 				slots: this.#getSlots(),
 				showEmptyGroups: false,
 				showSearch: true,
-				filterOptions: this.#getFilterOptions(),
+				filterOptions: this.#filterOptions,
 				popupOptions: this.#getPopupOptions(),
 				customComponents: { EmptyGroupStub },
 				events: {
@@ -221,15 +236,21 @@ export class RobotSelector extends EventEmitter
 		return Text.encode(Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_ROBOT_AND_TRIGGER_GROUP'));
 	}
 
-	#prepareHeaderGroups(headerGroups: Array<Array<GroupData>>): Array<Array<GroupData>>
+	#prepareHeaderGroups(
+		headerGroups: Array<Array<GroupData>>,
+		items: Array<ItemData> = this.#getItems(),
+	): Array<Array<GroupData>>
 	{
 		const headerList = (headerGroups && headerGroups[0]) ? headerGroups[0] : [];
 
 		const newEntitiesGroup = headerList.find(g => String(g.id) === String(RobotSelector.NEW_ENTITY_GROUP_ID));
 		const recentGroup = headerList.find(g => String(g.id) === String(RobotSelector.RECENT_GROUP_ID));
 
-		const newRobotsCount = this.getUnviewedNewRobotsCount()
+		const newRobotsCount = this.#getUnviewedNewRobotsCount(items);
 		const recentEntities = this.#getRecentEntities();
+		const hasVisibleRecentEntities = items.some((item) => (
+			item.groupIds.includes(RobotSelector.RECENT_GROUP_ID)
+		));
 
 		if (newEntitiesGroup)
 		{
@@ -251,11 +272,64 @@ export class RobotSelector extends EventEmitter
 			// select recent only if newEntities wasn't selected
 			if (!(newEntitiesGroup && newEntitiesGroup.selected))
 			{
-				recentGroup.selected = (recentEntities.length > 0);
+				recentGroup.selected = Type.isStringFilled(this.#entityType)
+					? hasVisibleRecentEntities
+					: recentEntities.length > 0
+				;
 			}
 		}
 
 		return headerGroups;
+	}
+
+	#getGroups(items: Array<ItemData>): Array<Array<GroupData>>
+	{
+		const headerGroups = this.#prepareHeaderGroups(this.#getDefaultHeaderGroups(), items);
+		const regularGroups = this.#getDefaultRobotGroups();
+
+		if (!Type.isStringFilled(this.#entityType))
+		{
+			return [...headerGroups, ...regularGroups];
+		}
+
+		const visibleGroupIds = new Set(
+			items.flatMap((item) => item.groupIds.map((groupId) => String(groupId))),
+		);
+		const visibleHeaderGroups = this.#filterGroupsByIds(headerGroups, visibleGroupIds);
+		const visibleRegularGroups = this.#filterGroupsByIds(regularGroups, visibleGroupIds);
+		const groups = [...visibleHeaderGroups, ...visibleRegularGroups];
+
+		if (!groups.flat().some((group) => group.selected))
+		{
+			const defaultGroup = visibleRegularGroups.flat()[0];
+			if (defaultGroup)
+			{
+				defaultGroup.selected = true;
+			}
+		}
+
+		return groups;
+	}
+
+	#filterGroupsByIds(
+		groups: Array<Array<GroupData>>,
+		visibleGroupIds: Set<string>,
+	): Array<Array<GroupData>>
+	{
+		return groups
+			.map((groupList) => groupList.filter((group) => visibleGroupIds.has(String(group.id))))
+			.filter((groupList) => groupList.length > 0)
+		;
+	}
+
+	#getVisibleItems(): Array<ItemData>
+	{
+		const items = this.#getItems();
+
+		return Type.isStringFilled(this.#entityType)
+			? items.filter((item) => item.customData?.type === this.#entityType)
+			: items
+		;
 	}
 
 	#getDefaultRobotGroups(): Array<Array<GroupData>>
@@ -998,15 +1072,17 @@ export class RobotSelector extends EventEmitter
 		`;
 	}
 
-	#getFilterOptions(): Object
+	#updateFilterOptions(): void
 	{
-		return {
-			filterItems: [
-				(new B24RobotsFilter()).getData(),
-				(new B24TriggersFilter()).getData(),
-			],
-			multiple: false,
+		const filtersByEntityType = {
+			robot: (new B24RobotsFilter()).getData(),
+			trigger: (new B24TriggersFilter()).getData(),
 		};
+
+		this.#filterOptions.filterItems = Type.isStringFilled(this.#entityType)
+			? [filtersByEntityType[this.#entityType]].filter(Boolean)
+			: Object.values(filtersByEntityType)
+		;
 	}
 
 	#getPopupOptions(): PopupOptions

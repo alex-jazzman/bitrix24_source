@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, tasks_v2_core, tasks_v2_component_elements_participants, tasks_v2_lib_idUtils, tasks_v2_provider_service_taskService, tasks_v2_lib_analytics, tasks_v2_const, ui_system_chip_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_showLimit, tasks_v2_lib_userSelectorDialog) {
+(function (exports, main_core, tasks_v2_core, tasks_v2_component_elements_participants, tasks_v2_lib_idUtils, tasks_v2_provider_service_taskService, tasks_v2_lib_analytics, tasks_v2_const, ui_system_chip_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_showLimit, tasks_v2_lib_entitySelectorDialog, tasks_v2_lib_userSelectorDialog) {
 	'use strict';
 
 	const auditorsMeta = Object.freeze({
@@ -78,6 +78,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:dataset
 			:isLocked
 			:featureId
+			:ariaLabel="loc('TASKS_V2_AUDITORS_TITLE')"
+			ariaHaspopup="dialog"
+			:clearAriaLabel="loc('TASKS_V2_AUDITORS_REMOVE_ARIA_LABEL')"
 			useRemoveAll
 			@update="update"
 		/>
@@ -101,6 +104,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				auditorsMeta
 			};
 		},
+		data() {
+			return {
+				isDialogShown: false
+			};
+		},
 		computed: {
 			design() {
 				return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
@@ -110,7 +118,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isLocked() {
 				return !tasks_v2_core.Core.getParams().restrictions.stakeholder.available;
+			},
+			opensDialog() {
+				return !this.isSelected && !this.isLocked;
+			},
+			ariaLabel() {
+				return this.loc('TASKS_V2_AUDITORS_TITLE_CHIP');
 			}
+		},
+		watch: {
+			isDialogShown() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
+		updated() {
+			this.syncAria();
 		},
 		methods: {
 			handleClick() {
@@ -125,6 +150,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					});
 					return;
 				}
+				this.isDialogShown = true;
 				void tasks_v2_lib_userSelectorDialog.usersDialog.show({
 					targetNode: this.$el,
 					ids: this.task.auditorsIds,
@@ -132,6 +158,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			},
 			handleClose(auditorsIds) {
+				this.isDialogShown = false;
 				if (!this.isSelected && auditorsIds.length > 0) {
 					this.highlightField();
 					tasks_v2_lib_analytics.analytics.sendAddViewer(this.analytics, {
@@ -144,9 +171,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 					auditorsIds
 				});
+				tasks_v2_lib_entitySelectorDialog.restoreOpenerFocus(this.$el);
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(auditorsMeta.id);
+			},
+			syncAria() {
+				const el = this.$el;
+				if (!(el instanceof Element)) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+				main_core.Dom.attr(el, 'aria-label', this.ariaLabel);
 			}
 		},
 		template: `
@@ -168,5 +206,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.AuditorsChip = AuditorsChip;
 	exports.auditorsMeta = auditorsMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Tasks.V2, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.Tasks.V2.Const, BX.UI.System.Chip.Vue, BX.UI.IconSet, window, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Tasks.V2, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.Tasks.V2.Const, BX.UI.System.Chip.Vue, BX.UI.IconSet, window, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib);
 //# sourceMappingURL=auditors.bundle.js.map

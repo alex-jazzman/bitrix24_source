@@ -8,6 +8,7 @@ export type Tunnel = {
 
 type Stage = {
 	COLOR: string,
+	DESCRIPTION?: string,
 	ENTITY_ID: string,
 	ID: string,
 	NAME: string,

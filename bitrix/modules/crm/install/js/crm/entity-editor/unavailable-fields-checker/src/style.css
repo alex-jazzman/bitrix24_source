@@ -8,7 +8,7 @@
 
 .crm-unavailable-fields-checker-popup {
 	padding-left: 110px;
-	background: url('../images/unavailable-source-fields-popup.png') no-repeat left center;
+	background: url('../images/unavailable-source-fields-popup.webp') no-repeat left center;
 	color: var(--ui-color-white-base);
 }
 

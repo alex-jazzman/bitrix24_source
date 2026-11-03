@@ -14,11 +14,15 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Text\HtmlFilter;
 
-Extension::load(["ui.fonts.ruble", "ui.icons.disk", "ui.icons.generator"]);
+Extension::load(["ui.design-tokens.air", "ui.fonts.ruble", "ui.icons.disk", "ui.icons.generator"]);
 
 CJSCore::Init(array('clipboard', 'fx'));
 
 $APPLICATION->SetTitle("");
+
+// the dark theme of the template is a dark surface: the context makes the colour tokens resolve dark
+$themeClass = ($arParams['TEMPLATE_MODE'] === 'darkmode') ? 'bx-dark' : '';
+$contextClass = ($themeClass === '') ? '' : '--ui-context-content-dark';
 
 if (!empty($arResult['ERRORS']['FATAL']))
 {
@@ -26,7 +30,7 @@ if (!empty($arResult['ERRORS']['FATAL']))
 	foreach ($arResult['ERRORS']['FATAL'] as $code => $error)
 	{
 		?>
-		<div class="page-description"><?= $error ?></div>
+		<div class="page-description <?= $contextClass ?>"><?= $error ?></div>
 		<?php
 	}
 }
@@ -37,16 +41,16 @@ else
 		foreach ($arResult['ERRORS']['NONFATAL'] as $error)
 		{
 			?>
-			<div class="page-description"><?= $error ?></div>
+			<div class="page-description <?= $contextClass ?>"><?= $error ?></div>
 			<?php
 		}
 	}
 	?>
-	<section class="order row <?= ($arParams['TEMPLATE_MODE'] === 'darkmode') ? 'bx-dark' : '' ?>">
+	<section class="order row <?= $themeClass ?> <?= $contextClass ?>" data-testid="salescenter-order-details">
 		<div class="col p-0">
 			<?php if ($arParams['SHOW_HEADER'] === 'Y'): ?>
 				<div class="order-list-header d-flex justify-content-between align-items-center">
-					<div class="order-list-header-title">
+					<div class="order-list-header-title" role="heading" aria-level="1">
 						<?= $arParams['HEADER_TITLE'] ?>
 					</div>
 					<div class="order-list-header-order">
@@ -60,7 +64,12 @@ else
 
 			<!--region cart-->
 			<div class="order-list-container">
-				<div class="order-list">
+				<div
+					class="order-list"
+					role="list"
+					data-testid="salescenter-order-basket-list"
+					aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SOD_BASKET_LIST_TITLE')) ?>"
+				>
 					<?php foreach ($arResult['BASKET'] as $basketItem)
 					{
 						if (empty($basketItem['PICTURE']['SRC']))
@@ -73,16 +82,16 @@ else
 							$src = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
 						}
 						?>
-						<div class="order-list-item d-flex justify-content-start align-items-start">
+						<div class="order-list-item d-flex justify-content-start align-items-start" role="listitem" data-testid="salescenter-order-basket-item">
 							<div class="col-auto pl-0 pr-0 order-item-image-container">
 								<img class="order-item-image" src="<?= $src ?>" alt="">
 							</div>
 							<div class="col order-item-title">
-								<?= htmlspecialcharsbx($basketItem['NAME']) ?>
+								<span role="heading" aria-level="3"><?= htmlspecialcharsbx($basketItem['NAME']) ?></span>
 								<?php if (isset($basketItem['PROPERTIES']) && count($basketItem['PROPERTIES']) > 0):?>
-									<div class="order-item-properties">
+									<div class="order-item-properties" role="list">
 										<?php foreach ($basketItem['PROPERTIES'] as $property):?>
-											<div class="order-item-property">
+											<div class="order-item-property" role="listitem">
 												<?= htmlspecialcharsbx($property['NAME']) ?>: <?= htmlspecialcharsbx($property['VALUE']) ?>
 											</div>
 										<?php endforeach; ?>
@@ -112,11 +121,11 @@ else
 			<!--region total-->
 			<div class="order-total-container">
 				<div class="order-total">
-					<table>
+					<table aria-label="<?= htmlspecialcharsbx(Loc::getMessage('SOD_TOTALS_TABLE_TITLE')) ?>">
 						<tr class="order-total-price-row">
-							<td class="order-total-item order-total-item-total-price">
+							<th class="order-total-item order-total-item-total-price" scope="row">
 								<?= Loc::getMessage('SOD_COMMON_SUM_NEW') ?>
-							</td>
+							</th>
 							<td class="order-total-value">
 								<div class="order-total-price"><?= $arResult['PRODUCT_SUM_FORMATED'] ?></div>
 								<?php if (
@@ -130,9 +139,9 @@ else
 						</tr>
 						<?php if (!empty($arResult["DISCOUNT_VALUE_FORMATED"])) : ?>
 							<tr class="order-total-price-old-row">
-								<td class="order-total-item"><?= Loc::getMessage(
+								<th class="order-total-item" scope="row"><?= Loc::getMessage(
 										'SOD_COMMON_DISCOUNT'
-									) ?></td>
+									) ?></th>
 								<td class="order-total-value">
 									<div class="order-total-sale-price"><?= $arResult['DISCOUNT_VALUE_FORMATED'] ?></div>
 								</td>
@@ -141,9 +150,9 @@ else
 
 						<?php if (!empty($arResult['SHIPMENT'])): ?>
 							<tr class="order-total-delivery-row">
-								<td class="order-total-item">
+								<th class="order-total-item" scope="row">
 									<?= Loc::getMessage('SOD_DELIVERY') ?> (<?= HtmlFilter::encode($arResult['SHIPMENT']['DELIVERY_NAME']) ?>)
-								</td>
+								</th>
 								<?
 								$deliveryText = Loc::getMessage('SOD_FREE');
 								$deliveryClass = 'order-total-delivery-price';
@@ -176,7 +185,7 @@ else
 				<div class="page-section order-document-container">
 					<div class="page-section-title"><?=Loc::getMessage('SPOD_DOCUMENT_TITLE');?></div>
 					<div class="order-document">
-						<div class="order-document-file-icon"></div>
+						<div class="order-document-file-icon" aria-hidden="true"></div>
 						<script>
 							BX.ready(function()
 							{
@@ -199,6 +208,7 @@ else
 									<a
 										target="_blank"
 										href="<?=$arResult['DOCUMENT']['showUrl']?>"
+										data-testid="salescenter-order-document-open-link"
 									>
 										<?=Loc::getMessage('SPOD_DOCUMENT_ACTION_OPEN')?>
 									</a>
@@ -208,6 +218,7 @@ else
 								<a
 									target="_blank"
 									href="<?=$arResult['DOCUMENT'][$extension]['url']?>"
+									data-testid="salescenter-order-document-download-link"
 								>
 									<?=Loc::getMessage('SPOD_DOCUMENT_ACTION_DOWNLOAD')?>
 								</a>
@@ -218,7 +229,7 @@ else
 								data-title="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['title'])?>"
 								data-url="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['url'])?>"
 							>
-								<a href="javascript:void(0);"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_SHARE')?></a>
+								<button type="button" data-testid="salescenter-order-document-share-btn"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_SHARE')?></button>
 							</div>
 						</div>
 					</div>

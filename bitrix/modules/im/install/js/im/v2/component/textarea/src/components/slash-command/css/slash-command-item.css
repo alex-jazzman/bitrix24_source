@@ -1,0 +1,36 @@
+.bx-im-slash-command-item__container {
+	display: flex;
+	gap: 12px;
+	height: 44px;
+	border-radius: 6px;
+	transition: background .3s;
+	cursor: pointer;
+	flex-shrink: 0;
+	position: relative;
+	padding: 4px;
+}
+
+/* The shared items container stopped writing its state on hover, so the pointer feedback of this list is
+   its own :hover from here on; `--selected` is left to the keyboard position. */
+.bx-im-slash-command-item__container:hover,
+.bx-im-slash-command-item__container.--selected {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* Same ring as the mention list, and for the same reasons - see `mention-item.css`: `--selected` shares its
+   background with :hover above, and the ring is what tells the keyboard position from the pointer. Rows here
+   hold no cells, so the row is the only node the ring can hang on. */
+.bx-im-mention-popup-content__items.--keyboard-traversal .bx-im-slash-command-item__container.--selected {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	z-index: 1;
+}
+
+.bx-im-slash-command-item__command {
+	max-width: 262px;
+	font: var(--im-font-size-md)/17px var(--im-font-family-system);
+	color: var(--ui-color-base-1);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

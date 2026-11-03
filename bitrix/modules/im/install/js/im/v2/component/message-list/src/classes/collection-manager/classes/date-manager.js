@@ -8,7 +8,7 @@ export class DateManager
 
 	getDateTitle(date: Date): string
 	{
-		const shortDate = this.#getLocalShortDate(date);
+		const shortDate = this.getLocalShortDate(date);
 
 		if (this.cachedDateGroups[shortDate])
 		{
@@ -20,7 +20,9 @@ export class DateManager
 		return this.cachedDateGroups[shortDate];
 	}
 
-	#getLocalShortDate(date: Date): string
+	// The day of a message in the user's own day boundaries: the server groups the history by the
+	// offset the client sends, so a UTC day would miss by one around midnight.
+	getLocalShortDate(date: Date): string
 	{
 		const timestampWithTimezoneOffset = date.getTime() - (date.getTimezoneOffset() * 60000);
 		const localDateInJSON = new Date(timestampWithTimezoneOffset).toJSON();

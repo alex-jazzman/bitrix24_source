@@ -13,6 +13,7 @@ return [
 		'im.v2.component.message.base',
 		'im.v2.component.message.default',
 		'im.v2.component.message.elements',
+		'im.v2.lib.parser',
 		'im.v2.lib.utils',
 		'main.core',
 	],

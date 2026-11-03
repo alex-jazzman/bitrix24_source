@@ -48,13 +48,13 @@ export const GroupList = {
 		},
 	},
 	methods: {
-		handleGroupSelected(group: GroupData)
+		handleGroupSelected(group: GroupData, activatedByKeyboard: boolean = false)
 		{
-			this.$emit('groupSelected', group);
+			this.$emit('groupSelected', group, activatedByKeyboard);
 		},
-		handleGroupUnselected(group: GroupData)
+		handleGroupUnselected(group: GroupData, activatedByKeyboard: boolean = false)
 		{
-			this.$emit('groupUnselected', group);
+			this.$emit('groupUnselected', group, activatedByKeyboard);
 		},
 	},
 	template: `

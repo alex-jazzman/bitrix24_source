@@ -1,6 +1,7 @@
 import { Hardware } from './call_hardware';
 import { removeUdpFromSdp } from './sdk/helpers/sdp';
 import { MediaStreamsKinds, MONITORING_EVENTS_NAME_LIST, LOG_LEVEL } from './sdk/const';
+import { NetworkQualityEvaluator } from './network-quality-evaluator.js';
 
 export class MediaServer
 {
@@ -37,6 +38,17 @@ export class MediaServer
 
 		this.callStatsInterval = null;
 		this.statsTimeout = 3000;
+
+		if (config.autoBalanceEnabled)
+		{
+			this.nqe = new NetworkQualityEvaluator({
+				...config,
+			});
+		}
+		else
+		{
+			this.nqe = null;
+		}
 	}
 
 	updateConfig(config)
@@ -548,6 +560,8 @@ export class MediaServer
 			}
 			catch
 			{
+				this.nqe?.resetPendingWindow();
+
 				// if we're here it's almost okay
 				// we tried to get stats during reconnection
 			}
@@ -659,18 +673,14 @@ export class MediaServer
 
 	#getMaxEncodingsByVideoWidth(width)
 	{
-		const aspectRation = 16 / 9;
-		const maxWidth = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
-		const optimizedWidth = maxWidth <= width ? maxWidth : width;
-
 		// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=76;
 
-		if (optimizedWidth >= 960)
+		if (width >= 960)
 		{
 			return 3;
 		}
 
-		if (optimizedWidth >= 480)
+		if (width >= 480)
 		{
 			return 2;
 		}
@@ -684,12 +694,18 @@ export class MediaServer
 		const rids: string[] = ['q', 'h', 'f'];
 		const encodings: any[] = [];
 
+		const aspectRation: number = 16 / 9;
+		const maxWidthLimited: number = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
+		const maxEncodingsLimited: number = maxWidthLimited < width
+			? this.#getMaxEncodingsByVideoWidth(maxWidthLimited)
+			: maxEncodings;
+
 		for (let i = 0; i < 3; i++)
 		{
 			const rid: string = rids[i];
 			encodings.push({
 				rid,
-				active: i < maxEncodings && this.trackActivity[MediaStreamsKinds.Camera],
+				active: i < maxEncodingsLimited && this.trackActivity[MediaStreamsKinds.Camera],
 				maxBitrate: this.publicationParams.videoBitrate[rid],
 				scaleResolutionDownBy: 2 ** Math.max(0, (maxEncodings - 1 - i)),
 			});

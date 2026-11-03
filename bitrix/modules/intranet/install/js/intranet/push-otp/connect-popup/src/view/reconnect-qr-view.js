@@ -1,16 +1,18 @@
-import { Loc, Tag, Type, Dom, Text } from 'main.core';
+import { Browser, Loc, Tag, Type, Dom, Text } from 'main.core';
 import { Loader } from 'main.loader';
 import 'main.qrcode';
 import './css/reconnect-qr-view.css';
 import './css/qr-view.css';
 import { PullClient } from 'pull.client';
-import { BaseView } from './base-view';
+import { BaseView, MOBILE_POPUP_WIDTH } from './base-view';
 import { Button, AirButtonStyle } from 'ui.buttons';
 import 'ui.icon-set.outline';
 import { deeplinkRequest } from '../request';
 import { RepeatingRequest } from '../repeating-request';
 import { Analytics } from '../analytics';
 import { makeQrCodeTo } from '../util';
+
+export const getReconnectQrViewPopupWidth = (isMobile) => (isMobile ? MOBILE_POPUP_WIDTH : null);
 
 export class ReconnectQrView extends BaseView
 {
@@ -22,6 +24,9 @@ export class ReconnectQrView extends BaseView
 	#devicePlatform: string;
 	#qrContainer: HTMLElement;
 	#loader: Loader;
+	#openAppButton: Button;
+	#deeplink: string = '';
+	#isMobile: boolean;
 	#isQrRevealed: boolean = false;
 	#pull: ?PullClient = null;
 	#unsubscribePull: ?Function = null;
@@ -37,6 +42,7 @@ export class ReconnectQrView extends BaseView
 		this.#intent = options.intent || '';
 		this.#deviceName = options.deviceName || '';
 		this.#devicePlatform = options.devicePlatform || '';
+		this.#isMobile = Browser.isMobile();
 		this.#qrContainer = Tag.render`<div class="intranet-push-otp-connect-popup__qr-container"></div>`;
 		this.#repeatingRequest = new RepeatingRequest(this.#defaultTtl * 1000);
 		this.#loader = new Loader({
@@ -44,10 +50,16 @@ export class ReconnectQrView extends BaseView
 			mode: 'inline',
 			size: 120,
 		});
+		this.#openAppButton = this.#createOpenAppButton();
 	}
 
 	render(): HTMLElement
 	{
+		if (this.#isMobile)
+		{
+			return this.#renderMobileView();
+		}
+
 		this.#renderQRPlaceholder();
 
 		const deviceIconClass = this.#devicePlatform.toLowerCase() === 'ios'
@@ -95,6 +107,60 @@ export class ReconnectQrView extends BaseView
 		`;
 	}
 
+	getPopupWidth(): ?number
+	{
+		return getReconnectQrViewPopupWidth(this.#isMobile);
+	}
+
+	#renderMobileView(): HTMLElement
+	{
+		return Tag.render`
+			<div data-testid="bx-intranet-push-otp-connect-popup-reconnect-mobile" class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div class="intranet-push-otp-connect-popup__popup-title">
+					${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_RECONNECT_TITLE')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_RECONNECT_MOBILE_DESC')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-connect-container --mobile">
+					<div class="intranet-push-otp-connect-popup__mobile-phone"></div>
+					<div class="intranet-push-otp-connect-popup__open-app-button-container">
+						${this.#openAppButton.render()}
+					</div>
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --center">
+					${this.#createRemindLaterButton().render()}
+				</div>
+			</div>
+		`;
+	}
+
+	#createOpenAppButton(): Button
+	{
+		const button = new Button({
+			text: Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_OPEN_APP_BTN'),
+			className: 'intranet-push-otp-connect-popup__open-app-button',
+			noCaps: true,
+			size: Button.Size.MD,
+			useAirDesign: true,
+			props: {
+				'data-testid': 'bx-intranet-push-otp-connect-popup-reconnect-open-app-button',
+			},
+			onclick: () => {
+				if (!Type.isStringFilled(this.#deeplink))
+				{
+					return;
+				}
+
+				Analytics.sendEventWithCSection(Analytics.RECONNECT_CLICK, 'app');
+				window.open(this.#deeplink, '_blank');
+			},
+		});
+		button.setDisabled(true);
+
+		return button;
+	}
+
 	#renderQRPlaceholder(): void
 	{
 		const placeholder = Tag.render`<i class="intranet-push-otp-connect-popup__reconnect-qr-placeholder-image">`;
@@ -132,19 +198,34 @@ export class ReconnectQrView extends BaseView
 
 	#fetchQrCode(): Promise
 	{
-		Dom.clean(this.#qrContainer);
-		this.#loader.show();
+		if (this.#isMobile)
+		{
+			this.#deeplink = '';
+			this.#openAppButton.setDisabled(true);
+		}
+		else
+		{
+			Dom.clean(this.#qrContainer);
+			this.#loader.show();
+		}
 
 		return deeplinkRequest(this.#intent, this.#defaultTtl)
 			.then((response) => {
 				const link = response.data?.link;
-				if (link)
+				if (this.#isMobile)
+				{
+					this.#deeplink = Type.isStringFilled(link) ? link : '';
+					this.#openAppButton.setDisabled(!Type.isStringFilled(this.#deeplink));
+				}
+				else if (link)
 				{
 					makeQrCodeTo(this.#qrContainer, link);
 				}
 				this.#loader.hide();
 			})
 			.catch(() => {
+				this.#deeplink = '';
+				this.#openAppButton.setDisabled(true);
 				this.#loader.hide();
 			});
 	}
@@ -188,6 +269,12 @@ export class ReconnectQrView extends BaseView
 	{
 		Analytics.sendEvent(Analytics.SHOW_RECONNECT_DEVICE);
 		BX.userOptions.save('intranet', 'push_otp_device_lost', null, 'N');
+
+		if (this.#isMobile)
+		{
+			this.#subscribeToScanQr();
+			this.#repeatingRequest.start(this.#fetchQrCode.bind(this));
+		}
 	}
 
 	beforeDismiss(option: Object): void
@@ -199,5 +286,8 @@ export class ReconnectQrView extends BaseView
 			this.#unsubscribePull();
 			this.#unsubscribePull = null;
 		}
+
+		this.#pull?.stop();
+		this.#pull = null;
 	}
 }

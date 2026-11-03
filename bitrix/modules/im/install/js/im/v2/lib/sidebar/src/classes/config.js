@@ -1,8 +1,11 @@
+import { type ComponentOptions } from 'ui.vue3';
+
+import { type SidebarMainPanelBlockType } from 'im.v2.const';
+
+import { type BaseMenu } from 'im.v2.lib.menu';
+
 import { BlockFilter } from './block-filter';
-
 import { SidebarPreset } from './preset';
-
-import type { SidebarMainPanelBlockType } from 'im.v2.const';
 
 export class SidebarConfig
 {
@@ -14,6 +17,9 @@ export class SidebarConfig
 	#isHeaderMenuEnabled: () => boolean;
 	#areSharedChatsEnabled: boolean;
 	#isAutoDeleteEnabled: boolean;
+	#getHeaderMenu: () => ?typeof BaseMenu;
+	#getMembersMenu: () => ?typeof BaseMenu;
+	#getCustomBlocks: () => ComponentOptions[];
 
 	constructor(dialogId: string, preset: ?SidebarPreset)
 	{
@@ -27,6 +33,9 @@ export class SidebarConfig
 			areSharedChatsEnabled,
 			areChatMembersEnabled,
 			isAutoDeleteEnabled,
+			getHeaderMenu,
+			getMembersMenu,
+			getCustomBlocks,
 		} = presetInstance.get();
 
 		this.#dialogId = dialogId;
@@ -37,6 +46,9 @@ export class SidebarConfig
 		this.#getCustomDescription = getCustomDescription;
 		this.#isHeaderMenuEnabled = isHeaderMenuEnabled;
 		this.#isAutoDeleteEnabled = isAutoDeleteEnabled;
+		this.#getHeaderMenu = getHeaderMenu;
+		this.#getMembersMenu = getMembersMenu;
+		this.#getCustomBlocks = getCustomBlocks;
 	}
 
 	getBlocks(): SidebarMainPanelBlockType[]
@@ -72,5 +84,20 @@ export class SidebarConfig
 	areChatMembersEnabled(): boolean
 	{
 		return this.#areChatMembersEnabled(this.#dialogId);
+	}
+
+	getHeaderMenuClass(): ?typeof BaseMenu
+	{
+		return this.#getHeaderMenu();
+	}
+
+	getMembersMenuClass(): ?typeof BaseMenu
+	{
+		return this.#getMembersMenu();
+	}
+
+	getCustomBlocks(): ComponentOptions[]
+	{
+		return this.#getCustomBlocks();
 	}
 }

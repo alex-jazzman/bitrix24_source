@@ -1,0 +1,10 @@
+/*
+ * The field draws no control of its own: the dropzone and the tiles are the markup of
+ * ui.uploader.tile-widget, and the expression row below them is the markup of the core (see
+ * buildExpressionControl). Only the field container is styled here, and only to stay shrinkable -
+ * it is a flex item of the field row, and a flex item does not shrink below its content unless
+ * min-width says so (the core resets the same on its fieldset, see fields/src/style.css).
+ */
+.bizproc-fields-file {
+	min-width: 0;
+}

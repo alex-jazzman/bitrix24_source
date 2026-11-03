@@ -30,22 +30,26 @@
 			data.description
 			|| "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage(descriptionMessageId)+"</span>";
 
-		BX.Landing.UI.Field.Text.apply(this, arguments);
+		// Text is a native ES class: it cannot be called through apply(), so the instance is built
+		// with Reflect.construct and returned from this legacy constructor
+		var self = Reflect.construct(BX.Landing.UI.Field.Text, [data], new.target || BX.Landing.UI.Field.Embed);
 
 		// Input event handler already set in parent TextField
 
-		this.hiddenInput = create("input", {
-			props: {type: "hidden", value: content.src || this.input.innerText}
+		self.hiddenInput = create("input", {
+			props: {type: "hidden", value: content.src || self.input.innerText}
 		});
 
-		this.error = BX.create('div', {props: {className: 'landing-ui-field-error'}});
-		this.error.setAttribute('id', this.selector + '_error');
-		this.shownErrorMessage = null;
-		BX.Dom.append(this.error, this.layout);
+		self.error = BX.create('div', {props: {className: 'landing-ui-field-error'}});
+		self.error.setAttribute('id', self.selector + '_error');
+		self.shownErrorMessage = null;
+		BX.Dom.append(self.error, self.layout);
 
-		BX.Dom.style(this.description, 'margin-bottom', '0px');
+		BX.Dom.style(self.description, 'margin-bottom', '0px');
 
-		this.adjustForm();
+		self.adjustForm();
+
+		return self;
 	};
 
 	BX.Landing.UI.Field.Embed.isBgVideo = false;

@@ -511,9 +511,10 @@ this.BX = this.BX || {};
 	var _autoOffset = new WeakMap();
 	var _focusTrap = new WeakMap();
 	var _targetContainer = new WeakMap();
+	var _loadedDocument = new WeakMap();
 	var _Slider_brand = new WeakSet();
 	var _handleCrossOriginWindowMessage = new WeakMap();
-	var _handleFrameUnload = new WeakMap();
+	var _handleFramePageHide = new WeakMap();
 	var _handleFrameKeyDown = new WeakMap();
 	var _handlePopupInit = new WeakMap();
 	var _handleFrameFocus = new WeakMap();
@@ -565,6 +566,7 @@ this.BX = this.BX || {};
 			babelHelpers.defineProperty(this, "destroyed", false);
 			babelHelpers.defineProperty(this, "loaded", false);
 			babelHelpers.defineProperty(this, "loadedCnt", 0);
+			_classPrivateFieldInitSpec$1(this, _loadedDocument, null);
 			babelHelpers.defineProperty(this, "minimizing", false);
 			babelHelpers.defineProperty(this, "maximizing", false);
 			babelHelpers.defineProperty(this, "layout", void 0);
@@ -625,7 +627,10 @@ this.BX = this.BX || {};
 						}
 				}
 			});
-			_classPrivateFieldInitSpec$1(this, _handleFrameUnload, () => {
+			_classPrivateFieldInitSpec$1(this, _handleFramePageHide, event => {
+				if (event.persisted) {
+					return;
+				}
 				this.loaded = false;
 				_assertClassBrand$1(_Slider_brand, this, _listenIframeLoading).call(this);
 			});
@@ -822,6 +827,10 @@ this.BX = this.BX || {};
 				});
 				const clipboard = main_core.Reflection.getClass('BX.clipboard');
 				clipboard?.bindCopyClick(this.copyLinkLabel.getContainer(), {
+					popup: {
+						offsetTop: -10,
+						offsetLeft: 17
+					},
 					text: () => {
 						const link = document.createElement('a');
 						link.href = main_core.Type.isStringFilled(options.newWindowUrl) ? options.newWindowUrl : this.getUrl();
@@ -1444,7 +1453,7 @@ this.BX = this.BX || {};
 				if (frameWindow && !this.allowCrossOrigin) {
 					main_core.Event.unbind(frameWindow, 'keydown', _classPrivateFieldGet$1(_handleFrameKeyDown, this));
 					main_core.Event.unbind(frameWindow, 'focus', _classPrivateFieldGet$1(_handleFrameFocus, this));
-					main_core.Event.unbind(frameWindow, 'unload', _classPrivateFieldGet$1(_handleFrameUnload, this));
+					main_core.Event.unbind(frameWindow, 'pagehide', _classPrivateFieldGet$1(_handleFramePageHide, this));
 				} else if (this.allowCrossOrigin) {
 					main_core.Event.unbind(window, 'message', _classPrivateFieldGet$1(_handleCrossOriginWindowMessage, this));
 				}
@@ -1456,6 +1465,7 @@ this.BX = this.BX || {};
 					_classPrivateFieldGet$1(_focusTrap, this).destroy();
 				}
 				_classPrivateFieldSet$1(_focusTrap, this, null);
+				_classPrivateFieldSet$1(_loadedDocument, this, null);
 				main_core.Dom.remove(this.layout.overlay);
 				this.layout.container = null;
 				this.layout.overlay = null;
@@ -2095,7 +2105,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "handleFrameLoad",
 			value: function handleFrameLoad(event) {
-				if (this.loaded) {
+				if (this.loaded && this.allowCrossOrigin) {
 					return;
 				}
 				const frameWindow = this.iframe.contentWindow;
@@ -2116,9 +2126,14 @@ this.BX = this.BX || {};
 					console.warn('SidePanel: Try to use "allowCrossOrigin: true" option.');
 					throw e;
 				}
+				const frameDocument = frameWindow.document;
+				if (_classPrivateFieldGet$1(_loadedDocument, this) === frameDocument) {
+					this.loaded = true;
+					return;
+				}
 				main_core.Event.bind(frameWindow, 'keydown', _classPrivateFieldGet$1(_handleFrameKeyDown, this));
 				main_core.Event.bind(frameWindow, 'focus', _classPrivateFieldGet$1(_handleFrameFocus, this));
-				main_core.Event.bind(frameWindow, 'unload', _classPrivateFieldGet$1(_handleFrameUnload, this));
+				main_core.Event.bind(frameWindow, 'pagehide', _classPrivateFieldGet$1(_handleFramePageHide, this));
 				if (main_core.Browser.isMobile()) {
 					frameWindow.document.body.style.paddingBottom = `${window.innerHeight * 2 / 3}px`;
 				}
@@ -2129,6 +2144,7 @@ this.BX = this.BX || {};
 					_assertClassBrand$1(_Slider_brand, this, _injectPrintStyles).call(this);
 				}
 				this.loaded = true;
+				_classPrivateFieldSet$1(_loadedDocument, this, frameDocument);
 				this.loadedCnt++;
 				ui_a11y.FocusMonitor.Instance.detachIframe(this.getFrame());
 				ui_a11y.FocusMonitor.Instance.attachIframe(this.getFrame());

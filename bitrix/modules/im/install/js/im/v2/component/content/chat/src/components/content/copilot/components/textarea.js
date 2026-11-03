@@ -22,12 +22,27 @@ export const CopilotTextarea = {
 			default: false,
 		},
 		withDraft: {
-			type: Boolean,
+			/** @type boolean | { draftDialogId: string } */
+			type: [Boolean, Object],
 			default: true,
+		},
+		// pass-through only: this wrapper serves both the messenger and the embeddable widget
+		withKeyboardNavigation: {
+			type: Boolean,
+			default: false,
 		},
 		deferredDialogPromise: {
 			type: Object,
 			default: null,
+		},
+		allowBeforeSendOnUninitedTemp: {
+			type: Boolean,
+			default: false,
+		},
+		heightConfig: {
+			/** @type {{ storageKey?: string, minHeight?: number }} */
+			type: Object,
+			default: undefined,
 		},
 	},
 	computed: {
@@ -65,7 +80,10 @@ export const CopilotTextarea = {
 			:withSmileSelector="false"
 			:disabled="disabled"
 			:withDraft="withDraft"
+			:withKeyboardNavigation="withKeyboardNavigation"
 			:deferredDialogPromise="deferredDialogPromise"
+			:allowBeforeSendOnUninitedTemp="allowBeforeSendOnUninitedTemp"
+			:heightConfig="heightConfig"
 		>
 			<template #bottom-panel-buttons>
 				<ToolbarButtons

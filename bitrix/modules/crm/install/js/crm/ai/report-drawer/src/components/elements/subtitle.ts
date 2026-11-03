@@ -3,12 +3,12 @@ import { Type, Loc, Tag, Dom, Event, Text } from 'main.core';
 import { type Menu, MenuManager } from 'main.popup';
 import { EntityMiniCard } from 'crm.mini-card';
 import { ManagerPopupContent } from '../popups/manager-popup-content';
-import { PopupController } from '../popups/popup-controller';
+import { PopupController } from '../../lib/popup-controller';
 
 import {
 	type SubtitleData,
 	type CallSubtitleData,
-	type OpenLinesSubtitleData,
+	type ConversationSubtitleData,
 	type ClientData,
 	type ResponsibleData,
 } from '../../types';
@@ -43,7 +43,7 @@ export const Subtitle = defineComponent({
 	methods: {
 		getCallSubtitleData(): CallSubtitleData | null
 		{
-			if (this.subtitleData.type === 'open-lines')
+			if (this.subtitleData.type === 'open-lines' || this.subtitleData.type === 'email')
 			{
 				return null;
 			}
@@ -51,21 +51,28 @@ export const Subtitle = defineComponent({
 			return this.subtitleData.data as CallSubtitleData;
 		},
 
-		getOpenLinesSubtitleData(): OpenLinesSubtitleData | null
+		getConversationSubtitleData(): ConversationSubtitleData | null
 		{
-			if (this.subtitleData.type !== 'open-lines')
+			if (this.subtitleData.type !== 'open-lines' && this.subtitleData.type !== 'email')
 			{
 				return null;
 			}
 
-			return this.subtitleData.data as OpenLinesSubtitleData;
+			return this.subtitleData.data as ConversationSubtitleData;
+		},
+
+		getConversationManagersData(): ResponsibleData[]
+		{
+			const managers = this.getConversationSubtitleData()?.managers;
+
+			return Array.isArray(managers) ? managers : [];
 		},
 
 		getCurrentClientData(): ClientData | null
 		{
-			if (this.subtitleData.type === 'open-lines')
+			if (this.subtitleData.type === 'open-lines' || this.subtitleData.type === 'email')
 			{
-				return this.getOpenLinesSubtitleData()?.client ?? null;
+				return this.getConversationSubtitleData()?.client ?? null;
 			}
 
 			return this.getCallSubtitleData()?.client ?? null;
@@ -78,9 +85,9 @@ export const Subtitle = defineComponent({
 
 		getPrimaryManagerData(): ResponsibleData | null
 		{
-			if (this.subtitleData.type === 'open-lines')
+			if (this.subtitleData.type === 'open-lines' || this.subtitleData.type === 'email')
 			{
-				return this.getOpenLinesSubtitleData()?.managers[0] ?? null;
+				return this.getConversationManagersData()[0] ?? null;
 			}
 
 			return this.getResponsibleData();
@@ -88,12 +95,12 @@ export const Subtitle = defineComponent({
 
 		getAdditionalManagersData(): ResponsibleData[]
 		{
-			if (this.subtitleData.type !== 'open-lines')
+			if (this.subtitleData.type !== 'open-lines' && this.subtitleData.type !== 'email')
 			{
 				return [];
 			}
 
-			return this.getOpenLinesSubtitleData()?.managers.slice(1) ?? [];
+			return this.getConversationManagersData().slice(1);
 		},
 
 		getClientLinkMarkup(client: ClientData): string
@@ -104,6 +111,7 @@ export const Subtitle = defineComponent({
 					<span
 						id="${CLIENT_LINK_ID}"
 						class="crm-ai-report-drawer__subtitle-highlight"
+						data-testid="crm-ai-report-drawer-subtitle-client-mini-card-trigger"
 					>
 						${Text.encode(client.clientName)}
 					</span>
@@ -115,6 +123,7 @@ export const Subtitle = defineComponent({
 					href="${client.clientDetailsUrl}"
 					id="${CLIENT_LINK_ID}"
 					class="crm-ai-report-drawer__subtitle-highlight"
+					data-testid="crm-ai-report-drawer-subtitle-client-link"
 				>
 					${Text.encode(client.clientName)}
 				</a>
@@ -139,6 +148,7 @@ export const Subtitle = defineComponent({
 					<span
 						id="${MANAGER_LINK_ID}"
 						class="crm-ai-report-drawer__subtitle-highlight"
+						data-testid="crm-ai-report-drawer-subtitle-primary-manager-popup-trigger"
 					>
 						${Text.encode(responsible.responsibleName)}
 					</span>
@@ -150,6 +160,7 @@ export const Subtitle = defineComponent({
 					href="${responsible.responsibleProfileUrl}"
 					id="${MANAGER_LINK_ID}"
 					class="crm-ai-report-drawer__subtitle-highlight"
+					data-testid="crm-ai-report-drawer-subtitle-primary-manager-link"
 				>
 					${Text.encode(responsible.responsibleName)}
 				</a>
@@ -163,6 +174,9 @@ export const Subtitle = defineComponent({
 					type="button"
 					id="${MORE_MANAGERS_LINK_ID}"
 					class="crm-ai-report-drawer__subtitle-more-managers"
+					data-testid="crm-ai-report-drawer-subtitle-more-managers-button"
+					aria-haspopup="menu"
+					aria-expanded="false"
 				>
 			`.trim();
 		},
@@ -214,21 +228,104 @@ export const Subtitle = defineComponent({
 			);
 		},
 
-		getOpenLinesSubtitle(): null | HTMLElement
+		getAdditionalManagersButtonMarkup(
+			primaryManagerMarkup: string,
+			additionalManagerCount: number,
+			multipleManagersMessageCode: string,
+		): string
 		{
-			const data = this.getOpenLinesSubtitleData();
+			const stringElement = Loc.getMessage(
+				multipleManagersMessageCode,
+				{
+					'#CLIENT_NAME#': '',
+					'#MANAGER_NAME#': primaryManagerMarkup,
+					'#BUTTON_START#': this.getMoreManagersButtonOpenMarkup(),
+					'#BUTTON_END#': '</button>',
+					'#MANAGER_COUNT#': String(additionalManagerCount),
+				},
+			) ?? '';
+			const element = Tag.render`<span>${stringElement}</span>`;
+			const button = element.querySelector(`#${MORE_MANAGERS_LINK_ID}`);
+
+			return button instanceof HTMLElement ? button.outerHTML : '';
+		},
+
+		getManagerGroupMarkup(
+			primaryManager: ResponsibleData,
+			additionalManagerCount: number,
+			multipleManagersMessageCode: string,
+		): string
+		{
+			const primaryManagerMarkup = this.getManagerLinkMarkup(primaryManager);
+			if (additionalManagerCount <= 0)
+			{
+				return primaryManagerMarkup;
+			}
+
+			return [
+				primaryManagerMarkup,
+				this.getAdditionalManagersButtonMarkup(
+					primaryManagerMarkup,
+					additionalManagerCount,
+					multipleManagersMessageCode,
+				),
+			]
+				.filter((part) => Type.isStringFilled(part))
+				.join(' ')
+			;
+		},
+
+		renderPartialConversationSubtitle(
+			client: ClientData | null,
+			primaryManager: ResponsibleData | null,
+			additionalManagerCount: number,
+			multipleManagersMessageCode: string,
+		): HTMLElement
+		{
+			const stringElement = [
+				Type.isNil(client) ? '' : this.getClientMarkup(client),
+				Type.isNil(primaryManager)
+					? ''
+					: this.getManagerGroupMarkup(primaryManager, additionalManagerCount, multipleManagersMessageCode),
+			]
+				.filter((part) => Type.isStringFilled(part))
+				.join(' ')
+			;
+
+			return Tag.render`<span>${stringElement}</span>`;
+		},
+
+		renderConversationSubtitle(singleManagerMessageCode: string, multipleManagersMessageCode: string): null | HTMLElement
+		{
+			const data = this.getConversationSubtitleData();
 			if (Type.isNil(data))
 			{
 				return null;
 			}
 
-			const clientMarkup = this.getClientMarkup(data.client);
-			const primaryManager = data.managers[0];
+			const client = data.client;
+			const primaryManager = this.getPrimaryManagerData();
+			if (Type.isNil(client) && Type.isNil(primaryManager))
+			{
+				return null;
+			}
+
 			const additionalManagerCount = this.getAdditionalManagersData().length;
 			const hasAdditionalManagers = additionalManagerCount > 0;
+			if (Type.isNil(client) || Type.isNil(primaryManager))
+			{
+				return this.renderPartialConversationSubtitle(
+					client,
+					primaryManager,
+					additionalManagerCount,
+					multipleManagersMessageCode,
+				);
+			}
+
+			const clientMarkup = this.getClientMarkup(client);
 			const messageCode = hasAdditionalManagers
-				? 'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_MULTIPLE_MANAGERS'
-				: 'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_SINGLE_MANAGER'
+				? multipleManagersMessageCode
+				: singleManagerMessageCode
 			;
 
 			const stringElement = Loc.getMessage(
@@ -243,6 +340,22 @@ export const Subtitle = defineComponent({
 			) ?? '';
 
 			return Tag.render`<span>${stringElement}</span>`;
+		},
+
+		getOpenLinesSubtitle(): null | HTMLElement
+		{
+			return this.renderConversationSubtitle(
+				'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_SINGLE_MANAGER',
+				'CRM_AI_REPORT_DRAWER_HEADER_OPEN_LINES_MULTIPLE_MANAGERS',
+			);
+		},
+
+		getEmailSubtitle(): null | HTMLElement
+		{
+			return this.renderConversationSubtitle(
+				'CRM_AI_REPORT_DRAWER_HEADER_EMAIL_SINGLE_MANAGER',
+				'CRM_AI_REPORT_DRAWER_HEADER_EMAIL_MULTIPLE_MANAGERS',
+			);
 		},
 
 		bindClientMiniCard(): void
@@ -352,31 +465,17 @@ export const Subtitle = defineComponent({
 
 		renderMoreManagersMenuItem(manager: ResponsibleData): HTMLElement
 		{
-			const itemContainer = Tag.render`<div class="crm-ai-report-drawer__managers-menu-item"></div>`;
+			const itemContainer = Tag.render`<span class="crm-ai-report-drawer__managers-menu-item"></span>`;
 			const avatarContainer = Tag.render`
 				<span class="ui-icon ui-icon-common-user crm-ai-report-drawer__managers-menu-item-avatar">
 					<i></i>
 				</span>
 			`;
-			const nameContainer = Type.isStringFilled(manager.responsibleProfileUrl)
-				? Tag.render`
-					<a
-						href="${manager.responsibleProfileUrl}"
-						class="crm-ai-report-drawer__managers-menu-item-link"
-						data-manager-id="${manager.responsibleId}"
-					>
-						${Text.encode(manager.responsibleName)}
-					</a>
-				`
-				: Tag.render`
-					<span
-						class="crm-ai-report-drawer__managers-menu-item-link"
-						data-manager-id="${manager.responsibleId}"
-					>
-						${Text.encode(manager.responsibleName)}
-					</span>
-				`
-			;
+			const nameContainer = Tag.render`
+				<span class="crm-ai-report-drawer__managers-menu-item-link">
+					${Text.encode(manager.responsibleName)}
+				</span>
+			`;
 
 			if (Type.isStringFilled(manager.responsibleAvatarUrl))
 			{
@@ -426,7 +525,7 @@ export const Subtitle = defineComponent({
 
 		bindMoreManagersMenu(): void
 		{
-			if (this.subtitleData.type !== 'open-lines')
+			if (this.subtitleData.type !== 'open-lines' && this.subtitleData.type !== 'email')
 			{
 				return;
 			}
@@ -454,7 +553,13 @@ export const Subtitle = defineComponent({
 				},
 				items: managers.map((manager) => ({
 					html: this.renderMoreManagersMenuItem(manager) as any,
-					attrs: {},
+					href: Type.isStringFilled(manager.responsibleProfileUrl)
+						? manager.responsibleProfileUrl
+						: undefined,
+					dataset: {
+						managerId: String(manager.responsibleId),
+						testid: `crm-ai-report-drawer-subtitle-additional-manager-link-${manager.responsibleId}`,
+					},
 					onclick: () => {
 						menu.close();
 
@@ -462,6 +567,7 @@ export const Subtitle = defineComponent({
 					},
 				})),
 			});
+			Dom.attr(moreManagersLinkContainer, 'aria-controls', menuId);
 
 			const popupContainer = menu.getPopupWindow().getPopupContainer();
 			Event.bind(popupContainer, 'mouseenter', () => {
@@ -473,16 +579,41 @@ export const Subtitle = defineComponent({
 
 			menu.subscribe('onShow', () => {
 				this.cancelMoreManagersMenuClose();
+				Dom.attr(moreManagersLinkContainer, 'aria-expanded', 'true');
 				this.destroyAdditionalManagerPopups();
 				this.bindAdditionalManagerPopups(menu, managers);
 			});
 
 			menu.subscribe('onClose', () => {
 				this.cancelMoreManagersMenuClose();
+				Dom.attr(moreManagersLinkContainer, 'aria-expanded', 'false');
 				this.destroyAdditionalManagerPopups();
+
+				if (popupContainer.contains(document.activeElement))
+				{
+					moreManagersLinkContainer.focus();
+				}
 			});
 
 			this.runtime.moreManagersMenu = menu;
+
+			Event.bind(
+				moreManagersLinkContainer,
+				'click',
+				() => {
+					this.cancelMoreManagersMenuClose();
+
+					if (menu.getPopupWindow().isShown())
+					{
+						menu.close();
+					}
+					else
+					{
+						menu.show();
+						menu.getNavigation().focusFirst();
+					}
+				},
+			);
 
 			Event.bind(
 				moreManagersLinkContainer,
@@ -517,6 +648,9 @@ export const Subtitle = defineComponent({
 			case 'open-lines':
 				subtitleElement = this.getOpenLinesSubtitle();
 				break;
+			case 'email':
+				subtitleElement = this.getEmailSubtitle();
+				break;
 			default:
 				return;
 		}
@@ -539,6 +673,10 @@ export const Subtitle = defineComponent({
 	},
 
 	template: `
-		<span class="crm-ai-report-drawer__subtitle ui-typography-text-md" ref="subtitleSection" />
+		<span
+			class="crm-ai-report-drawer__subtitle ui-typography-text-md"
+			data-testid="crm-ai-report-drawer-subtitle"
+			ref="subtitleSection"
+		/>
 	`,
 });

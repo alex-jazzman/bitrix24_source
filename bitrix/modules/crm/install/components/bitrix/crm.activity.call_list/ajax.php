@@ -96,11 +96,13 @@ switch ($action)
 		}
 		catch (\Bitrix\Main\SystemException $e)
 		{
+			if (!in_array((int)$e->getCode(), [403, 404], true))
+			{
+				throw $e;
+			}
+
 			$response = array(
-				'ERROR' => array(
-					'CODE' => $e->getCode(),
-					'MESSAGE' => $e->getMessage()
-				)
+				'ERROR' => true
 			);
 		}
 		echo \Bitrix\Main\Web\Json::encode($response);

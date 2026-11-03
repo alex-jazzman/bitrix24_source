@@ -22,11 +22,11 @@ export class InvitationContent extends Content
 	getLayout(): HTMLDivElement
 	{
 		return this.cache.remember('layout', () => {
-			const showInvitationSlider = (e) => {
-				e.stopPropagation();
+			const showInvitationSlider = (event) => {
+				event.stopPropagation();
 				this.showInvitationPlace(
 					Loc.getMessage('INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1'),
-					e.target,
+					event.currentTarget,
 					'default-invitation'
 				);
 			}
@@ -36,11 +36,18 @@ export class InvitationContent extends Content
 			}
 
 			return Tag.render`
-				<div data-id="bx-invitation-widget-content-invitation" class="intranet-invitation-widget-invite">
+				<div
+					data-id="bx-invitation-widget-content-invitation"
+					class="intranet-invitation-widget-invite"
+					data-testid="intranet-invitation-widget-invitation"
+				>
 					<div class="intranet-invitation-widget-invite-main">
 						<div class="intranet-invitation-widget-inner">
 							<div class="intranet-invitation-widget-content">
-								<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--invite"></div>
+								<div
+									class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--invite"
+									aria-hidden="true"
+								></div>
 								<div class="intranet-invitation-widget-item-content">
 									<div class="intranet-invitation-widget-item-name">
 										<span>
@@ -48,15 +55,25 @@ export class InvitationContent extends Content
 										</span>
 									</div>
 									<div class="intranet-invitation-widget-item-link">
-										<span onclick="${showInvitationHelper}" class="intranet-invitation-widget-item-link-text">
+										<button
+											class="intranet-invitation-widget-item-link-text intranet-invitation-widget-item-link-button"
+											type="button"
+											onclick="${showInvitationHelper}"
+											data-testid="intranet-invitation-widget-invitation-details"
+										>
 											${Loc.getMessage('INTRANET_INVITATION_WIDGET_DESC')}
-										</span>
+										</button>
 									</div>
 								</div>
 							</div>
-							<a onclick="${showInvitationSlider}" class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--invite"> 
+							<button
+								class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--invite"
+								type="button"
+								onclick="${showInvitationSlider}"
+								data-testid="intranet-invitation-widget-invitation-invite"
+							>
 								${Loc.getMessage('INTRANET_INVITATION_WIDGET_INVITE')}
-							</a>
+							</button>
 						</div>
 					</div>
 				</div>

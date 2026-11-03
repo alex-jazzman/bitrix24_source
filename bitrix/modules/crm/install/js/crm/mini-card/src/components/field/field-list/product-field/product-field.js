@@ -56,12 +56,12 @@ export const ProductField: BitrixVueComponentProps = {
 						<ValueEllipsis :title="product.title">{{ product.title }}</ValueEllipsis>
 					</a>
 				</FieldValue>
-				<a
+				<ShowMore
 					v-if="isDisplayShowMore"
+					:count="productsLeftCount"
 					:href="productsLeftUrl"
-				>
-					<ShowMore :count="productsLeftCount" />
-				</a>
+					data-testid="crm-mini-card-products-show-more-link"
+				/>
 			</FieldValueList>
 		</Field>
 	`,

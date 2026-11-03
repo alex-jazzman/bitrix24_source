@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_css_classes, im_v2_css_icons, im_v2_css_tokens, im_v2_lib_logger, im_v2_provider_service_chat, main_core_events, im_v2_const, im_v2_lib_theme, im_v2_component_content_elements, im_v2_component_textarea, im_v2_component_dialog_chat, im_v2_lib_messageNotifier, im_v2_component_elements_loader, im_v2_component_animation, im_v2_lib_demo) {
+(function (exports, main_core, im_v2_application_core, im_v2_css_classes, im_v2_css_icons, im_v2_css_tokens, im_v2_lib_logger, im_v2_provider_service_chat, main_core_events, im_v2_component_content_elements, im_v2_component_textarea, im_v2_component_dialog_chat, im_v2_const, im_v2_lib_taskResultButton, im_v2_lib_messageNotifier, im_v2_component_elements_loader, im_v2_component_animation, im_v2_lib_theme, im_v2_lib_demo) {
 	'use strict';
 
 	// @vue/component
@@ -26,6 +26,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			isInited() {
 				return this.dialog.inited;
+			},
+			isMuted() {
+				return this.dialog.isMuted;
 			}
 		},
 		methods: {
@@ -39,7 +42,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<div class="bx-im-task-chat-header__left_container">
 					<div class="bx-im-task-chat-header__avatar"></div>
 					<div class="bx-im-task-chat-header__info">
-						<div class="bx-im-task-chat-header__title">{{ loc('IM_TASK_CHAT_HEADER_TITLE') }}</div>
+						<div class="bx-im-task-chat-header__title">
+							{{ loc('IM_TASK_CHAT_HEADER_TITLE') }}
+							<span
+								v-if="isMuted"
+								class="bx-im-task-chat-header__muted-icon"
+								data-testid="task-chat-header-muted-icon"
+								role="img"
+								:aria-label="loc('IM_TASK_CHAT_HEADER_MUTED_ICON')"
+							></span>
+						</div>
 						<LineLoader v-if="!isInited" :width="50" :height="16" />
 						<FadeAnimation :duration="100">
 							<UserCounter v-if="isInited" :dialogId="dialogId" />
@@ -70,13 +82,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: true
 			}
 		},
+		computed: {
+			taskId() {
+				const dialog = this.$store.getters['chats/get'](this.dialogId, true);
+				return Number(dialog?.entityLink?.id);
+			}
+		},
+		watch: {
+			dialogId() {
+				this.destroyResultButton();
+				this.initResultButton();
+			}
+		},
 		created() {
+			this.initResultButton();
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.onBeforeNotificationShow);
 		},
 		beforeUnmount() {
+			this.destroyResultButton();
 			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.onBeforeNotificationShow);
 		},
 		methods: {
+			initResultButton() {
+				this.taskResultButtonController = new im_v2_lib_taskResultButton.TaskResultButtonController();
+				void this.$nextTick(() => {
+					this.taskResultButtonController.mount(this.$refs['result-button-container'], {
+						taskId: this.taskId,
+						dialogId: this.dialogId
+					});
+				});
+			},
+			destroyResultButton() {
+				this.taskResultButtonController?.destroy();
+				this.taskResultButtonController = null;
+			},
 			onBeforeNotificationShow(event) {
 				const eventData = event.getData();
 				if (eventData.dialogId !== this.dialogId) {
@@ -95,16 +134,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:dialogId="dialogId"
 					:key="dialogId"
 					:reloadOnExit="false"
+					:directForward="true"
 				/>
 			</template>
-			<template #textarea="{ onTextareaMount }">
+			<template #textarea>
 				<ChatTextarea
 					:dialogId="dialogId"
 					:key="dialogId"
 					:withMarket="true"
 					:withAutoFocus="false"
-					@mounted="onTextareaMount"
-				/>
+					:withKeyboardNavigation="true"
+				>
+					<template #bottom-panel-buttons>
+						<div ref="result-button-container"></div>
+					</template>
+				</ChatTextarea>
 			</template>
 		</BaseChatContent>
 	`
@@ -304,5 +348,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.TaskApplication = TaskApplication;
 
-})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Event, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Const, BX.IM.V2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=task.bundle.js.map

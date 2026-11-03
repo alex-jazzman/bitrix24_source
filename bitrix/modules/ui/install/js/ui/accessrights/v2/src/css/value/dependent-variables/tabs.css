@@ -1,0 +1,15 @@
+.ui-access-rights-v2-dv-tabs {
+	display: flex;
+	gap: var(--ui-space-inline-xs, 8px);
+	overflow-x: auto;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.ui-access-rights-v2-dv-tabs::-webkit-scrollbar {
+	display: none;
+}
+
+.ui-access-rights-v2-dv-tabs-button {
+	flex-shrink: 0;
+}

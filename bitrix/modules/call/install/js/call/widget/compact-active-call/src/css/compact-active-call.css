@@ -1,0 +1,18 @@
+/* The chip is a native button: reset the browser defaults here, the geometry stays on the list item class */
+.bx-call-compact-active-call__button {
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	appearance: none;
+	cursor: pointer;
+}
+
+/* the calls container clips its rows with a ~7px inner radius, so the ring is offset inwards */
+.bx-call-compact-active-call__button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: -3px;
+}

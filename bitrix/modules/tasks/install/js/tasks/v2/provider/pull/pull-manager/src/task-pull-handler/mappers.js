@@ -1,9 +1,9 @@
 import { Type } from 'main.core';
 import { TaskStatus, Mark } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
-import { TaskPush } from './types';
+import { type TaskPush } from './types';
 
 export function mapInstantFields(model: TaskModel): TaskModel
 {
@@ -13,6 +13,8 @@ export function mapInstantFields(model: TaskModel): TaskModel
 		status: model.status,
 		stageId: model.stageId,
 		auditorsIds: model.auditorsIds,
+		canCreateEpic: model.canCreateEpic,
+		canUpdateScrumFields: model.canUpdateScrumFields,
 		needsControl: model.needsControl,
 		requireResult: model.requireResult,
 		requireDeadlineChangeReason: model.requireDeadlineChangeReason,
@@ -35,8 +37,10 @@ export function mapPushToModel(id: number, data: TaskPush): TaskModel
 		startPlanTs: mapValue(data.START_DATE_PLAN, data.START_DATE_PLAN * 1000),
 		endPlanTs: mapValue(data.END_DATE_PLAN, data.END_DATE_PLAN * 1000),
 		groupId: data.GROUP_ID,
-		epicId: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask.groupId ? undefined : 0),
-		storyPoints: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask.groupId ? undefined : ''),
+		epicId: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : 0),
+		storyPoints: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : ''),
+		canCreateEpic: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : false),
+		canUpdateScrumFields: mapValue(data.GROUP_ID, data.GROUP_ID === storeTask?.groupId ? undefined : false),
 		stageId: mapValue(data.STAGE_INFO, data.STAGE_INFO?.id ?? 0),
 		flowId: data.FLOW_ID,
 		status: mapValue(data.STATUS, mapStatus(data.STATUS)),
@@ -47,14 +51,17 @@ export function mapPushToModel(id: number, data: TaskPush): TaskModel
 		tags: mapValue(data.TAGS, data.TAGS ? data.TAGS.split(',') : []),
 		mark: mapValue(data.MARK, mapMark(data.MARK)),
 		fileIds: mapValue(data.UF_TASK_WEBDAV_FILES, mapFileIds(data.UF_TASK_WEBDAV_FILES)),
-		crmItemIds: mapCrmItemIds(storeTask.crmItemIds, data.UF_CRM_TASK_ADDED, data.UF_CRM_TASK_DELETED),
+		crmItemIds: mapCrmItemIds(storeTask?.crmItemIds, data.UF_CRM_TASK_ADDED, data.UF_CRM_TASK_DELETED),
 		estimatedTime: data.TIME_ESTIMATE,
 		needsControl: data.TASK_CONTROL,
 		requireResult: mapValue(data.taskRequireResult, data.taskRequireResult === 'Y'),
 		requireDeadlineChangeReason: data.taskRequireDeadlineChangeReason,
 	};
 
-	return Object.fromEntries(Object.entries(task).filter(([, value]) => !Type.isUndefined(value)));
+	return Object.fromEntries(Object.entries(task).filter(([field, value]) => (
+		!Type.isUndefined(value)
+		&& (field !== 'creatorId' || (Type.isInteger(value) && value > 0))
+	)));
 }
 
 const mapStatus = (status: number): string => ({

@@ -1,6 +1,9 @@
-import { Dom, Loc, Runtime, Tag } from 'main.core';
+import { Dom, Loc, Tag } from 'main.core';
 import { type BaseCache, MemoryCache } from 'main.core.cache';
 import { DateTimeFormat } from 'main.date';
+
+import { type DatePicker } from './date-picker';
+import { DatePickerEvent } from './date-picker-event';
 import { createUtcDate } from './helpers/index.js';
 import {
 	TimePickerBase,
@@ -15,7 +18,19 @@ export class TimePickerWheel extends TimePickerBase
 {
 	#refs: BaseCache<HTMLElement> = new MemoryCache();
 	#focusSelectorId: string = null;
-	#selectorScrollHandler = Runtime.debounce(this.#handleSelectorScroll, 200, this);
+	#scrollEndTimeouts: Map<string, number> = new Map();
+	#scrollingSelectorIds: Set<string> = new Set();
+	#adjustedScrollTops: Map<string, number> = new Map();
+	#destroyed: boolean = false;
+
+	constructor(datePicker: DatePicker)
+	{
+		super(datePicker);
+
+		datePicker.subscribe('onShow', this.#handleDatePickerShow.bind(this));
+		datePicker.subscribe('onHide', this.#cancelPendingScrolls.bind(this));
+		datePicker.subscribe(DatePickerEvent.DESTROY, this.#handleDatePickerDestroy.bind(this));
+	}
 
 	getContainer(): HTMLElement
 	{
@@ -44,7 +59,7 @@ export class TimePickerWheel extends TimePickerBase
 									tabindex="0"
 									role="listbox"
 									aria-labelledby="${this.getSelectorId('hours')}"
-									onscroll="${this.#selectorScrollHandler}"
+									onscroll="${this.#handleSelectorScroll.bind(this)}"
 									onfocus="${this.#handleFocus.bind(this)}"
 								>
 									${this.getHoursContainer()}
@@ -67,7 +82,7 @@ export class TimePickerWheel extends TimePickerBase
 									tabindex="0"
 									role="listbox"
 									aria-labelledby="${this.getSelectorId('minutes')}"
-									onscroll="${this.#selectorScrollHandler}"
+									onscroll="${this.#handleSelectorScroll.bind(this)}"
 									onfocus="${this.#handleFocus.bind(this)}"
 								>
 									${this.getMinutesContainer()}
@@ -92,7 +107,7 @@ export class TimePickerWheel extends TimePickerBase
 												tabindex="0"
 												role="listbox"
 												aria-labelledby="${this.getSelectorId('meridiem')}"
-												onscroll="${this.#selectorScrollHandler}"
+												onscroll="${this.#handleSelectorScroll.bind(this)}"
 												onfocus="${this.#handleFocus.bind(this)}"
 											>
 												${this.getMeridiemsContainer()}
@@ -166,6 +181,12 @@ export class TimePickerWheel extends TimePickerBase
 		});
 	}
 
+	onHide()
+	{
+		super.onHide();
+		this.#cancelPendingScrolls();
+	}
+
 	onShow()
 	{
 		super.onShow();
@@ -198,7 +219,7 @@ export class TimePickerWheel extends TimePickerBase
 			this.#renderHour(hour);
 		});
 
-		this.#adjustScrollPosition(this.getHoursContainer(), selectedHourIndex, false);
+		this.#restoreScrollPosition(this.getHoursContainer(), selectedHourIndex);
 
 		let selectedMinuteIndex = 0;
 		this.getMinutes().forEach((minute: TimePickerMinute) => {
@@ -210,7 +231,7 @@ export class TimePickerWheel extends TimePickerBase
 			this.#renderMinute(minute);
 		});
 
-		this.#adjustScrollPosition(this.getMinutesContainer(), selectedMinuteIndex, false);
+		this.#restoreScrollPosition(this.getMinutesContainer(), selectedMinuteIndex);
 
 		const picker = this.getDatePicker();
 		if (picker.isAmPmMode())
@@ -225,7 +246,7 @@ export class TimePickerWheel extends TimePickerBase
 				this.#renderMeridiem(meridiem);
 			});
 
-			this.#adjustScrollPosition(this.getMeridiemsContainer(), selectedMeridiemIndex, false);
+			this.#restoreScrollPosition(this.getMeridiemsContainer(), selectedMeridiemIndex);
 		}
 	}
 
@@ -390,12 +411,27 @@ export class TimePickerWheel extends TimePickerBase
 		});
 	}
 
+	#restoreScrollPosition(listContainer: HTMLElement, index: number): void
+	{
+		const selectorId = listContainer.parentNode.parentNode.parentNode.dataset.selectorId;
+		if (!this.#scrollingSelectorIds.has(selectorId))
+		{
+			this.#adjustScrollPosition(listContainer, index, false);
+		}
+	}
+
 	#adjustScrollPosition(listContainer: HTMLElement, index: number, smooth: boolean = true): boolean
 	{
 		const scrollContainer: HTMLElement = listContainer.parentNode;
 		const scrollTop = this.getItemHeight() * index;
 		if (scrollContainer.scrollTop !== scrollTop)
 		{
+			if (!smooth)
+			{
+				const selectorId = listContainer.parentNode.parentNode.parentNode.dataset.selectorId;
+				this.#adjustedScrollTops.set(selectorId, scrollTop);
+			}
+
 			scrollContainer.scrollTo({
 				top: scrollTop,
 				behavior: smooth ? 'smooth' : 'instant',
@@ -405,6 +441,20 @@ export class TimePickerWheel extends TimePickerBase
 		}
 
 		return false;
+	}
+
+	// An instant alignment fires a real scroll event; treating it as a user scroll would revert the selected time.
+	#isAdjustedScroll(selectorId: string, scrollTop: number): boolean
+	{
+		if (!this.#adjustedScrollTops.has(selectorId))
+		{
+			return false;
+		}
+
+		const adjustedScrollTop = this.#adjustedScrollTops.get(selectorId);
+		this.#adjustedScrollTops.delete(selectorId);
+
+		return Math.abs(scrollTop - adjustedScrollTop) <= 1;
 	}
 
 	#handleItemClick(event: MouseEvent): void
@@ -450,24 +500,87 @@ export class TimePickerWheel extends TimePickerBase
 		this.focusSelector(event.target.parentNode.parentNode.dataset.selectorId);
 	}
 
-	#handleSelectorScroll(event: MouseEvent): void
+	#handleSelectorScroll(event: Event): void
 	{
+		if (this.#destroyed)
+		{
+			return;
+		}
+
+		const selectorId = event.target.parentNode.parentNode.dataset.selectorId;
+		if (this.#isAdjustedScroll(selectorId, event.target.scrollTop))
+		{
+			return;
+		}
+
+		clearTimeout(this.#scrollEndTimeouts.get(selectorId));
+
+		this.#scrollingSelectorIds.add(selectorId);
+		this.#scrollEndTimeouts.set(selectorId, setTimeout(() => {
+			this.#scrollEndTimeouts.delete(selectorId);
+			this.#handleSelectorScrollEnd(event);
+		}, 200));
+	}
+
+	#cancelPendingScrolls(): void
+	{
+		this.#scrollEndTimeouts.forEach((timeoutId: number) => clearTimeout(timeoutId));
+		this.#scrollEndTimeouts.clear();
+		this.#scrollingSelectorIds.clear();
+	}
+
+	// A wheel scrolled while the picker was closing keeps its position, so align it with the selected time.
+	#handleDatePickerShow(): void
+	{
+		if (this.isRendered() && this.getDatePicker().getPicker() === this)
+		{
+			this.render();
+		}
+	}
+
+	#handleDatePickerDestroy(): void
+	{
+		this.#cancelPendingScrolls();
+		this.#destroyed = true;
+	}
+
+	#handleSelectorScrollEnd(event: Event): void
+	{
+		this.#scrollingSelectorIds.delete(event.target.parentNode.parentNode.dataset.selectorId);
+
+		const datePicker = this.getDatePicker();
+		const isHidden = (!datePicker.isInline() && !datePicker.isOpen()) || datePicker.getPicker() !== this;
+		if (isHidden)
+		{
+			return;
+		}
+
 		const scrollContainer = event.target;
 		const scrollTop = scrollContainer.scrollTop;
-		const atSnappingPoint = scrollTop % this.getItemHeight() === 0;
+		const itemHeight = this.getItemHeight();
+		const atSnappingPoint = Math.abs(scrollTop - this.#getScrollIndex(scrollContainer) * itemHeight) <= 1;
 		if (atSnappingPoint)
 		{
 			this.#selectTime(scrollContainer);
 		}
 	}
 
+	#getScrollIndex(scrollContainer: HTMLElement): number
+	{
+		return Math.round(scrollContainer.scrollTop / this.getItemHeight());
+	}
+
 	#selectTime(scrollContainer: HTMLElement): void
 	{
-		const scrollTop = scrollContainer.scrollTop;
-		const index = scrollTop / this.getItemHeight();
+		const index = this.#getScrollIndex(scrollContainer);
 		const selector: HTMLElement = scrollContainer.parentNode.parentNode;
 		const selectorId = selector.dataset.selectorId;
 		const item: HTMLElement = selector.querySelector(`[data-index="${index}"]`);
+		if (item === null)
+		{
+			return;
+		}
+
 		const selectedDate = this.getTimeDate();
 		const currentHour = selectedDate === null ? -1 : selectedDate.getUTCHours();
 		const currentMinute = selectedDate === null ? -1 : selectedDate.getUTCMinutes();

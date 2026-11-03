@@ -464,16 +464,48 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 				before({
 					node
 				}) {
-					return normalizeLineBreaks(node);
+					return node.clone({
+						deep: true
+					});
 				},
 				convert({
 					node
 				}) {
 					const content = node.getTextContent();
+					// Keep the final empty line visible without adding it to the copied text.
+					const layoutLineBreak = document.createElement('br');
 					const code = main_core.Dom.create({
 						tag: 'code',
 						attrs: {
 							className: 'ui-typography-code'
+						},
+						dataset: {
+							decorator: true
+						},
+						children: [...getCodeTokenNodes(this.#codeParser.parse(content)), layoutLineBreak]
+					});
+					const button = main_core.Tag.render`
+					<button type="button"
+						class="ui-typography-code-copy-button"
+						onclick="${this.#handleCopyButtonClick.bind(this, code, layoutLineBreak)}"
+						title="${main_core.Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
+						aria-label="${main_core.Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
+					>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copy"></span>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copied"></span>
+					</button>
+				`;
+					const buttonOverlay = main_core.Dom.create({
+						tag: 'div',
+						attrs: {
+							className: 'ui-typography-code-copy-button-overlay'
+						},
+						children: [button]
+					});
+					return main_core.Dom.create({
+						tag: 'div',
+						attrs: {
+							className: 'ui-typography-code-container'
 						},
 						events: {
 							mouseenter: () => {
@@ -487,29 +519,18 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 						dataset: {
 							decorator: true
 						},
-						children: getCodeTokenNodes(this.#codeParser.parse(content))
+						children: [code, buttonOverlay]
 					});
-					const button = main_core.Tag.render`
-					<button type="button" 
-						class="ui-typography-code-copy-button" 
-						onclick="${this.#handleCopyButtonClick.bind(this)}" 
-						title="${main_core.Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
-						aria-label="${main_core.Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
-					>
-						<span class="ui-typography-code-copy-icon ui-icon-set --o-copy"></span>
-						<span class="ui-typography-code-copy-icon ui-icon-set --o-copied"></span>
-					</button>
-				`;
-					code.append(button);
-					return code;
 				},
 				...options
 			});
 		}
-		#handleCopyButtonClick(event) {
+		#handleCopyButtonClick(code, layoutLineBreak, event) {
 			const button = event.currentTarget;
-			const codeElement = button.parentElement;
-			const text = codeElement.innerText;
+			let text = code.innerText;
+			if (code.lastChild === layoutLineBreak && text.endsWith('\n')) {
+				text = text.slice(0, -1);
+			}
 			event.stopPropagation();
 			if (navigator.clipboard && window.isSecureContext) {
 				void navigator.clipboard.writeText(text);
@@ -521,10 +542,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 					left: '-9999px'
 				});
 				main_core.Dom.attr(textarea, 'aria-hidden', 'true');
-				document.body.appendChild(textarea);
+				main_core.Dom.append(textarea, document.body);
 				textarea.select();
 				document.execCommand('copy');
-				document.body.removeChild(textarea);
+				main_core.Dom.remove(textarea);
 			}
 			main_core.Dom.addClass(button, '--copied');
 		}

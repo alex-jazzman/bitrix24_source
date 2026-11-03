@@ -1,0 +1,25 @@
+.crm__document-view--creation-retry {
+	display: block;
+	margin: var(--ui-space-stack-sm) auto 0;
+}
+
+.crm__document-view--creation-retry[hidden] {
+	display: none;
+}
+
+.crm__document-view--link-text.--disabled {
+	opacity: var(--ui-opacity-40);
+	pointer-events: none;
+}
+
+#crm-document-view-root[data-state="assemblingDocx"] .crm__document-view--skeleton {
+	display: flex;
+}
+
+#crm-document-view-root[data-state="assemblingDocx"] .crm__document-view--sidebar-pending > :not(.crm__document-view--skeleton) {
+	visibility: hidden;
+}
+
+#crm-document-view-root[data-state="assemblingDocx"] #crm-document-speedup-in-placeholder {
+	display: none;
+}

@@ -119,7 +119,11 @@ export const ReplicationSettingsMonth = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-sheet__stack">
+		<div
+			class="tasks-field-replication-sheet__stack"
+			role="radiogroup"
+			:aria-label="loc('TASKS_V2_REPLICATION_MONTHLY_RADIOGROUP_ARIA_LABEL')"
+		>
 			<ReplicationSettingsMonthlyByDayOfMonth
 				v-model:monthlyType="monthlyType"
 				v-model:dayNumber="monthlyDayNum"

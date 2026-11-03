@@ -10,7 +10,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat/src/permission-man
 	{
 		canCall()
 		{
-			return this.userPermission.canCall(this.dialogId);
+			return this.userPermission.canCall(Number(this.dialogId));
 		}
 
 		canOpenProfile()
@@ -33,7 +33,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat/src/permission-man
 
 		getCallForbiddenReason()
 		{
-			const currentContext = this.userPermission.canCall(this.dialogId, true);
+			const currentContext = this.userPermission.canCall(Number(this.dialogId), true);
 
 			if (currentContext && currentContext.isLive === false)
 			{

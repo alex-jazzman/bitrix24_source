@@ -12,19 +12,21 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		SelectorDataProviderClass,
 	} = require('ui-system/blocks/avatar/src/providers/selector');
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
+	const { commonDefaultProps } = require('ui-system/blocks/avatar/src/defaults');
+	const { EmptyAvatar } = require('ui-system/blocks/avatar/src/enums/empty-avatar');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
-	const { AvatarAccentType } = require('ui-system/blocks/avatar/src/enums/accent-type')
+	const { AvatarAccentType } = require('ui-system/blocks/avatar/src/enums/accent-type');
 
 	/**
-	 * @class Avatar
+	 * @extends {PureComponent<AvatarComponentProps>}
 	 */
 	class Avatar extends PureComponent
 	{
 		/**
 		 * @param {boolean} rounded
 		 * @param {number} size
-		 * @returns number
+		 * @return {number}
 		 */
 		static resolveBorderRadius(rounded, size)
 		{
@@ -32,9 +34,8 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {SelectorParams} params
-		 *
-		 * @return {Omit<*, 'onUriLoadFailure'|'onAvatarClick'>}
+		 * @param {AvatarSelectorParams} params
+		 * @return {Partial<AvatarComponentProps>}
 		 */
 		static resolveEntitySelectorParams(params)
 		{
@@ -47,6 +48,9 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			return restParams;
 		}
 
+		/**
+		 * @return {AvatarRendered}
+		 */
 		render()
 		{
 			if (this.withRedux())
@@ -57,6 +61,9 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			return Avatar.getAvatar(this.props);
 		}
 
+		/**
+		 * @return {AvatarConnected}
+		 */
 		#renderWithRedux()
 		{
 			const stateConnector = this.getStateConnector();
@@ -65,8 +72,8 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {Omit<*, 'onUriLoadFailure'|'onAvatarClick'>} props
-		 * @returns {AvatarView|AvatarView}
+		 * @param {AvatarComponentProps} props
+		 * @return {AvatarView}
 		 */
 		static getAvatar = (props) => {
 			const {
@@ -80,9 +87,6 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 				...restEntityParams
 			} = AvatarEntityType.resolveType(entityType).getValue();
 
-			/**
-			 * @type {AvatarView}
-			 */
 			return new AvatarView({
 				...restEntityParams,
 				...restParams,
@@ -93,6 +97,9 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			});
 		};
 
+		/**
+		 * @return {boolean}
+		 */
 		withRedux()
 		{
 			const { withRedux } = this.props;
@@ -100,49 +107,63 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			return Boolean(withRedux);
 		}
 
+		/**
+		 * @return {AvatarStateConnector}
+		 */
 		getStateConnector()
 		{
 			return reduxConnect;
 		}
 	}
 
-	AvatarView.defaultProps = {
-		size: 32,
-		icon: null,
-		outline: null,
+	// Avatar is the public component: it reads withRedux, so the defaults have to reach it and not
+	// only the view, which keeps its own pair next to its class
+	Avatar.defaultProps = {
+		...commonDefaultProps,
 		withRedux: true,
-		useLetterImage: true,
-		backBorderWidth: null,
 	};
 
-	AvatarView.propTypes = {
-		forwardRef: PropTypes.func,
+	Avatar.propTypes = {
 		testId: PropTypes.string.isRequired,
-		outline: PropTypes.number,
 		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-		size: PropTypes.number,
-		name: PropTypes.string,
-		emptyAvatar: PropTypes.string,
 		uri: PropTypes.string,
+		name: PropTypes.string,
+		size: PropTypes.number,
+		outline: PropTypes.number,
+		backBorderWidth: PropTypes.number,
 		shape: PropTypes.instanceOf(AvatarShape),
 		entityType: PropTypes.instanceOf(AvatarEntityType),
+		// the view resolves a filled string as a ready path and an object as a library entry
+		emptyAvatar: PropTypes.oneOfType([
+			PropTypes.string,
+			PropTypes.shape({
+				uri: PropTypes.string,
+				named: PropTypes.instanceOf(EmptyAvatar),
+			}),
+		]),
 		accent: PropTypes.bool,
-		icon: PropTypes.object,
+		accentType: PropTypes.instanceOf(AvatarAccentType),
+		accentColor: PropTypes.instanceOf(Color),
 		accentGradient: PropTypes.instanceOf(AvatarAccentGradient),
-		backgroundColor: PropTypes.instanceOf(Color),
 		accentGradientColors: PropTypes.arrayOf(PropTypes.string),
-		withRedux: PropTypes.bool,
+		backgroundColor: PropTypes.instanceOf(Color),
 		useLetterImage: PropTypes.bool,
+		withRedux: PropTypes.bool,
+		icon: PropTypes.object,
 		style: PropTypes.object,
+		forwardRef: PropTypes.func,
 		onClick: PropTypes.func,
 	};
 
 	module.exports = {
 		/**
-		 * @param {AvatarViewProps} props
+		 * @param {AvatarComponentProps} props
+		 * @return {Avatar}
 		 */
 		Avatar: (props) => new Avatar(props),
 		AvatarClass: Avatar,
+		// Props contract of the rendered view, so composite blocks describe an avatar without copying it
+		propTypes: AvatarView.propTypes,
 		AvatarShape,
 		AvatarEntityType,
 		AvatarAccentType,

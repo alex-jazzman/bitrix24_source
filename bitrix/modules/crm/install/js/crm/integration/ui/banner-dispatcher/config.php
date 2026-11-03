@@ -11,7 +11,6 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.auto-launch',
-		'ui.banner-dispatcher',
 	],
 	'skip_core' => false,
 ];

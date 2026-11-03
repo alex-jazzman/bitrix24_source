@@ -4,19 +4,21 @@ this.BX = this.BX || {};
 	'use strict';
 
 	const StatusBatchSize = 100;
-	const ActiveStatuses = new Set(['running', 'waiting', 'switching', 'blocked', 'cancelling']);
+	const ActiveStatuses = new Set(['running', 'waiting', 'manual_waiting', 'switching', 'blocked', 'cancelling']);
 	const TerminalStatuses = new Set(['done', 'cancelled']);
 	let pendingStatusRequests = new Map();
 	let statusBatchScheduled = false;
+	const watchConsumers = new Map();
 	async function requestStatusChunk(ids) {
 		const response = await main_core.ajax.runAction('mail.Migration.getStatuses', {
 			data: {
 				mailboxIds: ids
 			}
 		});
+		const statuses = response?.data?.statuses ?? {};
 		return {
 			ids,
-			statuses: response?.data?.statuses ?? {}
+			statuses
 		};
 	}
 	function requestStatus(mailboxId) {
@@ -111,10 +113,12 @@ this.BX = this.BX || {};
 		#initialization = null;
 		#initialized = false;
 		#fingerprint = '';
+		#revision = 0;
 		#pullRevision = 0;
 		#retryTimer = null;
 		#retryAttempts = 0;
 		#destroyed = false;
+		#watching = false;
 		#onUnused;
 		constructor(mailboxId, onUnused = () => {}) {
 			if (!Number.isInteger(mailboxId) || mailboxId <= 0) {
@@ -126,7 +130,7 @@ this.BX = this.BX || {};
 			this.#onUnused = onUnused;
 		}
 		initialize() {
-			if (this.#initialized) {
+			if (this.#destroyed || this.#initialized) {
 				return Promise.resolve(this.#status);
 			}
 			if (this.#initialization) {
@@ -137,15 +141,20 @@ this.BX = this.BX || {};
 				if (this.#destroyed) {
 					return this.#status;
 				}
-				if (pullRevision === this.#pullRevision) {
-					this.#apply(status ?? createHiddenStatus(this.#mailboxId), 'initial');
+				if (pullRevision === this.#pullRevision && !this.#apply(status, 'initial')) {
+					throw new Error(`Migration status for mailbox ${this.#mailboxId} is invalid.`);
 				}
-				this.#initialized = true;
-				this.#retryAttempts = 0;
-				this.#clearRetry();
+				if (!this.#destroyed && !this.#watching) {
+					const consumers = watchConsumers.get(this.#mailboxId) ?? 0;
+					watchConsumers.set(this.#mailboxId, consumers + 1);
+					this.#watching = true;
+					if (consumers === 0) {
+						BX.PULL.extendWatch(`mail_mailbox_migration_${this.#mailboxId}`);
+					}
+				}
 				return this.#status;
 			}).catch(() => {
-				if (!this.#destroyed) {
+				if (!this.#destroyed && !this.#initialized) {
 					this.#scheduleRetry();
 				}
 				return this.#status;
@@ -166,13 +175,19 @@ this.BX = this.BX || {};
 		isInitialized() {
 			return this.#initialized;
 		}
+		getRevision() {
+			return this.#revision;
+		}
 		subscribe(listener) {
+			if (this.#destroyed) {
+				return () => {};
+			}
 			this.#listeners.add(listener);
 			this.#listenerSubscriptions.set(listener, (this.#listenerSubscriptions.get(listener) ?? 0) + 1);
 			this.#subscriptionCount++;
 			let subscribed = true;
 			return () => {
-				if (!subscribed) {
+				if (!subscribed || this.#destroyed) {
 					return;
 				}
 				subscribed = false;
@@ -193,17 +208,24 @@ this.BX = this.BX || {};
 		}
 		destroy() {
 			this.#destroyed = true;
+			if (this.#watching) {
+				this.#watching = false;
+				const consumers = (watchConsumers.get(this.#mailboxId) ?? 1) - 1;
+				if (consumers === 0) {
+					watchConsumers.delete(this.#mailboxId);
+					BX.PULL.clearWatch(`mail_mailbox_migration_${this.#mailboxId}`);
+				} else {
+					watchConsumers.set(this.#mailboxId, consumers);
+				}
+			}
 			this.#clearRetry();
 			this.#listeners.clear();
 			this.#listenerSubscriptions.clear();
 			this.#subscriptionCount = 0;
 		}
 		applyPull(payload) {
-			if (!this.#destroyed && this.#apply(payload, 'pull')) {
-				this.#pullRevision++;
-				this.#initialized = true;
-				this.#retryAttempts = 0;
-				this.#clearRetry();
+			if (!this.#destroyed) {
+				this.#apply(payload, 'pull');
 			}
 		}
 		#apply(payload, source) {
@@ -212,7 +234,18 @@ this.BX = this.BX || {};
 				return false;
 			}
 			const fingerprint = this.#getFingerprint(status);
-			if (fingerprint === this.#fingerprint) {
+			const changed = fingerprint !== this.#fingerprint;
+			const recovered = !this.#initialized && this.#retryAttempts > 0;
+			if (changed || !this.#initialized) {
+				this.#revision++;
+			}
+			if (source === 'pull') {
+				this.#pullRevision++;
+			}
+			this.#initialized = true;
+			this.#retryAttempts = 0;
+			this.#clearRetry();
+			if (!changed && !recovered) {
 				if (source === 'pull' && status.visibility === 'terminal' && status.status === 'done') {
 					const change = {
 						status: {
@@ -225,15 +258,11 @@ this.BX = this.BX || {};
 					this.#listeners.forEach(listener => listener(change));
 					return true;
 				}
-				return false;
+				return true;
 			}
 			const previousActive = this.#active;
 			this.#status = status;
 			this.#fingerprint = fingerprint;
-			if (status.visibility === 'hidden') {
-				this.#active = false;
-				return true;
-			}
 			const active = status.visibility === 'active';
 			if (active) {
 				this.#active = true;
@@ -246,8 +275,9 @@ this.BX = this.BX || {};
 				previousActive,
 				source
 			};
+			const revision = this.#revision;
 			this.#listeners.forEach(listener => listener(change));
-			if (!active) {
+			if (!active && revision === this.#revision) {
 				this.#active = false;
 			}
 			return true;

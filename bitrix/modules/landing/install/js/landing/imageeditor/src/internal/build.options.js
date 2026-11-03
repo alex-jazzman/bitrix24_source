@@ -1,13 +1,13 @@
-import {Loc, Type} from 'main.core';
+import { Loc, Type } from 'main.core';
 import pathResolver from './path.resolver';
 import getMimeType from './get.mime.type';
 
 const proxyPath = '/bitrix/tools/landing/proxy.php';
-const isValidDimensions = ({width, height} = {}) => {
-	return Type.isNumber(width) && Type.isNumber(height);
+const isValidDimensions = ({ width, height } = {}) => {
+	return Type.isNumber(width) && width > 0 && Type.isNumber(height) && height > 0;
 };
 
-export default function buildOptions({image, dimensions} = {})
+export default function buildOptions({ image, dimensions = {} } = {})
 {
 	const preparedDimensions = {
 		width: dimensions.width || dimensions.maxWidth || dimensions.minWidth,
@@ -43,7 +43,7 @@ export default function buildOptions({image, dimensions} = {})
 										return preparedDimensions.width / preparedDimensions.height;
 									}
 
-									return undefined;
+									return '*';
 								})(),
 							},
 							{

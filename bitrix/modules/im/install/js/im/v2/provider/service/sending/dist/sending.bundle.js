@@ -2,9 +2,89 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, ui_pageContext, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_utils, im_v2_provider_service_message) {
+(function (exports, main_core, main_core_events, ui_pageContext, im_v2_application_core, im_v2_const, im_v2_lib_feature, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_utils, im_v2_provider_service_message) {
 	'use strict';
 
+	/**
+	 * Mirrors the canonical scroll-pin policy (im.v2.component.dialog.chat/scroll-pin-policy).
+	 * Kept here inline because the sending service cannot import the dialog.chat extension
+	 * without creating a dependency cycle (dialog.chat -> entity-selector -> sending).
+	 */
+	function isQuestionPinApplicable(dialogId) {
+		if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptScrollPinAvailable) || !im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+			return false;
+		}
+		const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+		return dialog?.type === im_v2_const.ChatType.copilot;
+	}
+
+	/**
+	 * Starts pinning of a just-sent question for applicable chats (EVENT-01).
+	 * Returns whether the pin event was emitted, so callers can fall back to the
+	 * legacy scroll-to-bottom for non-applicable chats.
+	 *
+	 * Contract: only genuine send/retry paths call this. A future answer-regeneration
+	 * method must NOT emit pinQuestion — a regenerated answer is not a question.
+	 */
+	function emitQuestionPin(params) {
+		const {
+			dialogId,
+			messageId
+		} = params;
+		if (!isQuestionPinApplicable(dialogId)) {
+			return false;
+		}
+		main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.pinQuestion, {
+			dialogId,
+			messageId
+		});
+		return true;
+	}
+
+	const EXTENSION_NAME = 'im.v2.provider.service.sending.forward';
+	class LazyForwardOperation {
+		#options;
+		#operation = null;
+		#loadingPromise = null;
+		constructor(options) {
+			this.#options = options;
+		}
+		async run() {
+			const operation = await this.#getOperation();
+			return operation.run();
+		}
+		async retry() {
+			const operation = await this.#getOperation();
+			return operation.retry();
+		}
+		canRetry() {
+			return this.#operation?.canRetry() ?? false;
+		}
+		async #getOperation() {
+			if (this.#operation) {
+				return this.#operation;
+			}
+			this.#loadingPromise ??= main_core.Runtime.loadExtension(EXTENSION_NAME).then(({
+				ForwardOperation
+			}) => {
+				return new ForwardOperation(this.#options);
+			});
+			try {
+				this.#operation = await this.#loadingPromise;
+			} catch (error) {
+				this.#loadingPromise = null;
+				throw error;
+			}
+			return this.#operation;
+		}
+	}
+
+	// upper bound for the copilot MCP selection to reach the ready status before a send leaves for the
+	// server: the only thing waited for here is a write of the selection still in flight, which takes
+	// hundreds of milliseconds, since the chat data is always in before a send is possible at all. The
+	// one case that runs to the timeout is a server reporting no selection whatsoever, so the shorter
+	// the bound, the sooner such a message goes out
+	const MCP_SELECTION_READY_TIMEOUT = 2000;
 	class SendingService {
 		#store;
 		static instance = null;
@@ -42,10 +122,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			await this.#addLoadingMessage(message);
 			await this.#addMessageToRecent(message);
 			await this.#clearLastMessageViews(message.dialogId);
-			this.#sendScrollEvent({
-				force: true,
-				dialogId: message.dialogId
-			});
+			this.#emitSendScroll(message.dialogId, message.temporaryId);
 			return Promise.resolve();
 		}
 		async sendMessageWithSticker(params) {
@@ -75,7 +152,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				commentMessage = this.#prepareMessage(params);
 				await this.#addMessageToModels(commentMessage);
 			}
-			const sortForwardIds = [...forwardIds].sort();
+			const sortForwardIds = [...forwardIds].sort((firstId, secondId) => firstId - secondId);
 			const forwardUuidMap = this.#getForwardUuidMap(sortForwardIds);
 			const forwardedMessages = this.#prepareForwardMessages(params, forwardUuidMap);
 			await this.#addForwardsToModels(forwardedMessages);
@@ -87,6 +164,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				forwardUuidMap,
 				commentMessage,
 				dialogId
+			});
+		}
+		createForwardOperation(params) {
+			return new LazyForwardOperation({
+				operationId: im_v2_lib_utils.Utils.text.getUuidV4(),
+				messageIds: params.forwardIds,
+				recipientDialogIds: params.recipientDialogIds,
+				uuidFactory: () => im_v2_lib_utils.Utils.text.getUuidV4(),
+				deliver: (dialogId, forwardUuidMap) => {
+					return this.#sendForwardDelivery(dialogId, forwardUuidMap);
+				},
+				getRecipientTitle: dialogId => this.#getDialog(dialogId)?.name ?? dialogId
 			});
 		}
 		async retrySendMessage(params) {
@@ -115,6 +204,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					dialogId
 				});
 			}
+
+			// AC-018: retrying a question re-pins it (applicable chats only); other
+			// chats keep the prior behaviour of not emitting a scroll event on retry.
+			emitQuestionPin({
+				dialogId,
+				messageId: message.temporaryId
+			});
 			return this.#sendAndProcessMessage(message);
 		}
 		async sendCopilotPrompt(copilotPromptMessageParams) {
@@ -140,13 +236,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		async #handleAddingMessageToModels(message) {
 			await this.#handlePagination(message.dialogId);
 			await this.#addMessageToModels(message);
-			this.#sendScrollEvent({
-				force: true,
-				dialogId: message.dialogId
-			});
+			this.#emitSendScroll(message.dialogId, message.temporaryId);
 		}
 		async #sendAndProcessMessage(message) {
-			const sendResult = await this.#sendMessageToServer(message).catch(errors => {
+			const mcpAuthId = await this.#resolveConfirmedMcpAuthId(message.dialogId);
+			const sendResult = await this.#sendMessageToServer(message, mcpAuthId).catch(errors => {
 				this.#updateMessageError(message.temporaryId);
 				this.#logSendErrors(errors, 'sendAndProcessMessage');
 			});
@@ -290,7 +384,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			}
 		}
-		#sendMessageToServer(message) {
+		#sendMessageToServer(message, mcpAuthId = null) {
 			const fields = {};
 			if (message.replyId) {
 				fields.replyId = message.replyId;
@@ -303,7 +397,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				fields.templateId = message.temporaryId;
 			}
 			if (message.copilot) {
-				fields.copilot = message.copilot;
+				fields.copilot = mcpAuthId ? {
+					...message.copilot,
+					mcpAuthId
+				} : message.copilot;
 			}
 			if (message.aiAssistant) {
 				fields.aiAssistant = message.aiAssistant;
@@ -385,6 +482,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				threshold: force ? im_v2_const.DialogScrollThreshold.none : im_v2_const.DialogScrollThreshold.halfScreenUp
 			});
 		}
+
+		// Pin the just-sent question for applicable chats, otherwise fall back to the
+		// legacy force scroll-to-bottom. The question keeps its own scroll behaviour.
+		#emitSendScroll(dialogId, messageId) {
+			if (emitQuestionPin({
+				dialogId,
+				messageId
+			})) {
+				return;
+			}
+			this.#sendScrollEvent({
+				force: true,
+				dialogId
+			});
+		}
 		#getDialog(dialogId) {
 			return this.#store.getters['chats/get'](dialogId, true);
 		}
@@ -402,7 +514,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} = params;
 			const {
 				id,
-				uuidMap
+				uuidMap = {},
+				failureMap = {}
 			} = response;
 			if (id) {
 				this.#updateModels({
@@ -418,6 +531,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					dialogId
 				});
 			});
+			Object.keys(failureMap).forEach(uuid => {
+				this.#updateMessageError(uuid);
+			});
+			return Object.keys(failureMap).length === 0;
 		}
 		#handleForwardMessageError({
 			commentMessage,
@@ -439,6 +556,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 				});
 			});
+		}
+		#sendForwardDelivery(dialogId, forwardUuidMap) {
+			const requestParams = this.#prepareSendForwardRequest({
+				forwardUuidMap,
+				commentMessage: null,
+				dialogId
+			});
+			return this.#sendMessageToServer(requestParams);
 		}
 		#prepareForwardMessages(params, forwardUuidMap) {
 			const {
@@ -491,19 +616,46 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#prepareForwardParams(messageId) {
 			const message = this.#store.getters['messages/getById'](messageId);
-			const chat = this.#getDialogByChatId(message.chatId);
 			const isForward = this.#store.getters['messages/isForward'](messageId);
-			const userId = isForward ? message.forward.userId : message.authorId;
-			const chatType = isForward ? message.forward.chatType : chat.type;
-			let chatTitle = isForward ? message.forward.chatTitle : chat.name;
-			if (chatType === im_v2_const.ChatType.channel) {
-				chatTitle = null;
-			}
+			// a fragment forwarded on keeps the context of its first source, so it is carried over
+			const source = isForward ? message.forward : this.#describeForwardSource(this.#getDialogByChatId(message.chatId));
 			return {
 				id: this.#buildForwardContextId(message.chatId, messageId),
-				userId,
-				chatType,
-				chatTitle
+				userId: isForward ? message.forward.userId : message.authorId,
+				chatType: source.chatType,
+				chatTitle: source.chatType === im_v2_const.ChatType.channel ? null : source.chatTitle ?? null,
+				parentChatId: source.parentChatId ?? 0,
+				parentMessageId: source.parentMessageId ?? 0,
+				parentChatType: source.parentChatType ?? null
+			};
+		}
+
+		/**
+		 * A discussion is named by its parent chat rather than by itself, and the server resolves that
+		 * name only when the feed is read. Taking the whole context from the store leaves the caption of
+		 * the optimistic message the one the answer brings, instead of letting it change twice.
+		 */
+		#describeForwardSource(chat) {
+			if (chat.type !== im_v2_const.ChatType.comment) {
+				return {
+					chatType: chat.type,
+					chatTitle: chat.name,
+					parentChatId: 0,
+					parentMessageId: 0,
+					parentChatType: null
+				};
+			}
+
+			// No confirmed state is asked of the parent, unlike the reader path in im.v2.provider.pull: the
+			// block is optimistic, it is built for the author, whose access the forward itself has proved,
+			// and never reaches the server. Requiring inited here would only make the caption change twice.
+			const parentChat = this.#store.getters['chats/getByChatId'](chat.parentChatId);
+			return {
+				chatType: chat.type,
+				chatTitle: main_core.Type.isStringFilled(parentChat?.name) ? parentChat.name : null,
+				parentChatId: chat.parentChatId,
+				parentMessageId: this.#store.getters['messages/comments/getMessageIdByChatId'](chat.chatId) ?? 0,
+				parentChatType: parentChat?.type ?? null
 			};
 		}
 		#prepareSendForwardRequest(params) {
@@ -567,7 +719,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 				const response = await this.#sendMessageToServer(requestParams);
 				im_v2_lib_logger.Logger.warn('SendingService: forwardMessage result -', response);
-				this.#handleForwardMessageResponse({
+				return this.#handleForwardMessageResponse({
 					response,
 					dialogId,
 					commentMessage
@@ -578,8 +730,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					forwardUuidMap
 				});
 				this.#logSendErrors(errors, 'forwardMessage');
+				return false;
 			}
-			return Promise.resolve();
 		}
 		#prepareCopilotMessageParams(dialogId) {
 			const isAiAssistantChat = this.#getDialog(dialogId).type === im_v2_const.ChatType.copilot;
@@ -590,7 +742,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const isReasoningEnabled = store.getters['copilot/chats/isReasoningEnabled'](dialogId);
 			const isForceSearchEnabled = store.getters['copilot/chats/isForceSearchEnabled'](dialogId);
 			const isAgentModeEnabled = store.getters['copilot/chats/isAgentModeEnabled'](dialogId);
-			const mcpAuthId = store.getters['copilot/chats/getMcpAuth'](dialogId)?.id;
 			const copilot = {};
 			if (isReasoningEnabled) {
 				copilot.reasoning = 'Y';
@@ -601,13 +752,77 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (isAgentModeEnabled) {
 				copilot.agentMode = 'Y';
 			}
-			if (mcpAuthId) {
-				copilot.mcpAuthId = mcpAuthId;
-			}
 			copilot.pageContext = ui_pageContext.PageContext.getAll();
 			return {
 				copilot
 			};
+		}
+		#getConfirmedMcpAuthId(dialogId) {
+			const mcpAuth = this.#store.getters['copilot/chats/getMcpAuth'](dialogId);
+			if (!mcpAuth?.id) {
+				return null;
+			}
+			if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAiAssistantMcpSelectionRestoreAvailable)) {
+				return mcpAuth.id;
+			}
+			return this.#isMcpAuthConfirmedByServer(dialogId) ? mcpAuth.id : null;
+		}
+		#isMcpAuthConfirmedByServer(dialogId) {
+			return Boolean(this.#store.getters['copilot/chats/isMcpAuthConfirmed'](dialogId));
+		}
+
+		// ALG-01: the confirmed selection is an asynchronous value - in a copilot chat under the restore
+		// flag it arrives once the selection has settled and comes back empty if it never does. The
+		// message is therefore prepared and shown without it, and only the request waits for it
+		async #resolveConfirmedMcpAuthId(dialogId) {
+			if (this.#isMcpSelectionGateActive(dialogId)) {
+				await this.#waitForMcpSelectionReady(dialogId);
+			}
+			return this.#getConfirmedMcpAuthId(dialogId);
+		}
+		#isMcpSelectionGateActive(dialogId) {
+			if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAiAssistantMcpSelectionRestoreAvailable)) {
+				return false;
+			}
+			return this.#getDialog(dialogId).type === im_v2_const.ChatType.copilot;
+		}
+
+		// the wait never blocks the send: on timeout the selection goes to the error status and the
+		// message leaves without MCP, which the chip reports
+		#waitForMcpSelectionReady(dialogId) {
+			const readStatus = () => this.#store.getters['copilot/chats/getMcpSelectionStatus'](dialogId);
+			// only a selection being written is worth waiting for: a settled one (ready, error or
+			// unavailable) is the answer already, so a failed selection does not delay the next send
+			if (readStatus() !== im_v2_const.CopilotMcpSelectionStatus.restoring) {
+				return Promise.resolve();
+			}
+			return new Promise(resolve => {
+				let unwatch = null;
+				let timeoutId = null;
+				const settle = () => {
+					clearTimeout(timeoutId);
+					unwatch?.();
+					resolve();
+				};
+				unwatch = this.#store.watch(readStatus, status => {
+					if (status !== im_v2_const.CopilotMcpSelectionStatus.restoring) {
+						settle();
+					}
+				});
+
+				// the selection never settled: the message leaves without MCP. The chip reports a failure
+				// only once the chat data is in: a chat still waiting for its data has nothing that failed
+				// yet, so its chip keeps loading until the data arrives
+				timeoutId = setTimeout(() => {
+					if (this.#store.getters['copilot/chats/isMcpSelectionLoaded'](dialogId)) {
+						void this.#store.dispatch('copilot/chats/setMcpSelectionStatus', {
+							dialogId,
+							status: im_v2_const.CopilotMcpSelectionStatus.error
+						});
+					}
+					settle();
+				}, MCP_SELECTION_READY_TIMEOUT);
+			});
 		}
 		#prepareAiAssistantMessageParams(dialogId) {
 			const isAiAssistant = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
@@ -628,5 +843,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.SendingService = SendingService;
 
-})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX, BX.Event, BX.UI.PageContext, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX, BX.Event, BX.UI.PageContext, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
 //# sourceMappingURL=sending.bundle.js.map

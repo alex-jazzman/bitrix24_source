@@ -1,10 +1,12 @@
 import { Dom, Loc, Tag, Event, Text } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
+import { InteractivityChecker } from 'ui.a11y';
 
 import { BasePicker } from './base-picker';
 
 import { createUtcDate } from './helpers/create-utc-date';
 import { getDate } from './helpers/get-date';
+import { setTabAnchor } from './helpers/set-tab-anchor';
 
 import './css/year-picker.css';
 
@@ -29,6 +31,7 @@ export class YearPicker extends BasePicker
 			return Tag.render`
 				<div
 					class="ui-year-picker"
+					data-testid="ui-date-picker-year-view"
 					role="none"
 				>
 					${this.getHeaderContainer(
@@ -69,9 +72,10 @@ export class YearPicker extends BasePicker
 	{
 		const { year: currentYear } = getDate(this.getDatePicker().getToday());
 		const focusDate = this.getDatePicker().getFocusDate();
-		const initialFocusYear = this.getDatePicker().getInitialFocusDate().getUTCFullYear();
+		const anchorYear = this.getDatePicker().getInitialFocusDate().getUTCFullYear();
 
 		const years = [];
+		const cells: YearPickerYear[] = [];
 		let index = 0;
 		let year = this.#getStartYear();
 		for (let i = 0; i < 4; i++)
@@ -79,23 +83,27 @@ export class YearPicker extends BasePicker
 			const quarter: YearPickerYear[] = [];
 			for (let j = 0; j < 3; j++)
 			{
-				const focused = focusDate !== null && focusDate.getUTCFullYear() === year;
-				quarter.push({
+				const cell: YearPickerYear = {
 					index,
 					year,
 					name: year,
-					current: currentYear === year,
+					current: this.getDatePicker().shouldShowToday() && currentYear === year,
 					selected: this.getDatePicker().isDateSelected(createUtcDate(year), 'year'),
 					disabled: !this.getDatePicker().isDateAllowed(createUtcDate(year), 'year'),
-					focused,
-					tabIndex: focused || year === initialFocusYear ? 0 : -1,
-				});
+					focused: focusDate !== null && focusDate.getUTCFullYear() === year,
+					tabIndex: -1,
+				};
+
+				quarter.push(cell);
+				cells.push(cell);
 				year++;
 				index++;
 			}
 
 			years.push(quarter);
 		}
+
+		setTabAnchor(cells, (cell: YearPickerYear): boolean => cell.year === anchorYear);
 
 		return years;
 	}
@@ -153,8 +161,8 @@ export class YearPicker extends BasePicker
 		const lastYear = years.at(-1).at(-1).name;
 		this.getHeaderTitle().textContent = `${firstYear} — ${lastYear}`;
 
-		this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('year', 'prev');
-		this.getNextBtn().disabled = !this.getDatePicker().canNavigate('year', 'next');
+		this.setPrevBtnDisabled(!this.getDatePicker().canNavigate('year', 'prev'));
+		this.setNextBtnDisabled(!this.getDatePicker().canNavigate('year', 'next'));
 	}
 
 	#renderQuarter(index: number): HTMLElement
@@ -174,8 +182,9 @@ export class YearPicker extends BasePicker
 				<button
 					type="button"
 					class="ui-year-picker-year"
+					data-testid="ui-date-picker-year-cell"
 					role="gridcell"
-					data-year="${year}"
+					data-year="${year.year}"
 					data-tab-priority="true"
 					onmouseenter="${this.#handleMouseEnter.bind(this)}"
 					onmouseleave="${this.#handleMouseLeave.bind(this)}"
@@ -244,7 +253,12 @@ export class YearPicker extends BasePicker
 			Dom.removeClass(button, '--disabled');
 		}
 
-		button.disabled = Boolean(year.disabled);
+		const ariaDisabled = year.disabled ? 'true' : 'false';
+		if (button.getAttribute('aria-disabled') !== ariaDisabled)
+		{
+			button.setAttribute('aria-disabled', ariaDisabled);
+		}
+
 		button.tabIndex = year.tabIndex;
 
 		return button;
@@ -264,7 +278,8 @@ export class YearPicker extends BasePicker
 
 	#handleYearClick(event: MouseEvent): void
 	{
-		if (!Dom.hasClass(event.target, 'ui-year-picker-year') || event.target.disabled)
+		// Keyboard activation reaches the handler past the pointer-events guard, so the cell is refused here.
+		if (!Dom.hasClass(event.target, 'ui-year-picker-year') || InteractivityChecker.isDisabled(event.target))
 		{
 			return;
 		}

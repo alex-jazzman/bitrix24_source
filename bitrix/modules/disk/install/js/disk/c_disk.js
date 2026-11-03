@@ -8,6 +8,9 @@ if (!BX.Disk.pathToUser)
 
 		const windowsWithoutManager = {};
 
+		// The rights window of disk.folder.list builds its recipient selector under this id.
+		const rightsSelectorDialogId = 'disk-folder-list-rights-selector';
+
 		const insertInTooltipLockedInfo = function(tooltip) {
 			if (!tooltip.RealAnchor || !BX.hasClass(tooltip.RealAnchor, 'js-disk-locked-document-tooltip'))
 			{
@@ -36,6 +39,9 @@ if (!BX.Disk.pathToUser)
 			);
 		};
 
+		/** `DocumentInfo::CONTENT_STATUS_NO_CHANGES`: the session ended with nothing to save. */
+		const contentStatusNoChanges = 6;
+
 		const onPullDiskEvent = function(command, params)
 		{
 			params = params || {};
@@ -50,9 +56,34 @@ if (!BX.Disk.pathToUser)
 				const notify = BX.UI.Notification.Center.getBalloonById(`session-${params.documentSession.hash}`);
 				if (notify)
 				{
-					BX.UI.Notification.Center.notify({
-						content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name),
-					});
+					// the channel also speaks on a session which ended without reaching Disk, so the save is
+					// confirmed only by a message reporting the write itself: the event of the participants
+					// is sent after the version is uploaded, the report of the session end tells it apart
+					const wasSaved = params.event === 'saved' || params.documentSessionInfo?.wasFinallySaved === true;
+					if (wasSaved)
+					{
+						BX.UI.Notification.Center.notify({
+							content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name),
+						});
+					}
+					// the session ended without the write to Disk, and the tab which closed the editor is the
+					// only place left to say so: the status of no changes is not a refusal, there was simply
+					// nothing to save
+					else if (
+						command === 'onlyoffice'
+						&& params.documentSessionInfo
+						&& params.documentSessionInfo.contentStatus !== contentStatusNoChanges
+					)
+					{
+						BX.UI.Notification.Center.notify({
+							autoHide: false,
+							content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_FAILED').replace(
+								'#name#',
+								BX.util.htmlspecialchars(notify.getData().file.name),
+							),
+						});
+					}
+
 					notify.close();
 
 					return;
@@ -174,9 +205,10 @@ if (!BX.Disk.pathToUser)
 		Object.assign(BX.Disk, {
 			apiVersion: 22,
 			pathToUser: '/company/personal/user/#user_id#/',
+			rightsSelectorDialogId,
 			endEditSession(session)
 			{
-				BX.ajax.runAction('disk.api.onlyoffice.endSession', {
+				return BX.ajax.runAction('disk.api.onlyoffice.endSession', {
 					json: {
 						sessionId: session.id,
 						documentSessionHash: session.hash,
@@ -333,12 +365,24 @@ if (!BX.Disk.pathToUser)
 
 				return true;
 			},
+			_isRightsSelectorOpened()
+			{
+				const dialogClass = BX.UI && BX.UI.EntitySelector && BX.UI.EntitySelector.Dialog;
+				if (!dialogClass)
+				{
+					return false;
+				}
+
+				const dialog = dialogClass.getById(rightsSelectorDialogId);
+
+				return Boolean(dialog && dialog.isOpen());
+			},
 			_keyPress(e)
 			{
 				const destDialog = BX.SocNetLogDestination && (BX.SocNetLogDestination.isOpenDialog() || BX.SocNetLogDestination.isOpenSearch());
 				const key = (e || window.event).keyCode || (e || window.event).charCode;
-				// enter
-				if (key == 13 && firstButtonInModalWindow && !destDialog)
+				// enter; an opened recipient selector owns it and must not press the first button of the window
+				if (key == 13 && firstButtonInModalWindow && !destDialog && !this._isRightsSelectorOpened())
 				{
 					BX.fireEvent(firstButtonInModalWindow.buttonNode, 'click');
 
@@ -1423,6 +1467,7 @@ if (!BX.Disk.pathToUser)
 					BX.create('tr', {
 						attrs: {
 							'data-dest-id': entityId,
+							'data-testid': 'disk-rights-member-row',
 						},
 						children: [
 							BX.create('td', {
@@ -1457,11 +1502,17 @@ if (!BX.Disk.pathToUser)
 										props: {
 											className: 'bx-disk-filepage-used-people-permission-read-only',
 										},
+										attrs: {
+											'data-testid': 'disk-rights-member-level',
+										},
 										text: rightLabel,
 									})
 										: BX.create('a', {
 											props: {
 												className: 'bx-disk-filepage-used-people-permission',
+											},
+											attrs: {
+												'data-testid': 'disk-rights-member-level',
 											},
 											text: rightLabel,
 											events: {
@@ -1482,6 +1533,9 @@ if (!BX.Disk.pathToUser)
 										props: {
 											className: 'bx-disk-filepage-used-people-del',
 										},
+										attrs: {
+											'data-testid': 'disk-rights-member-remove',
+										},
 										events: {
 											click: BX.delegate((e) => {
 												BX.onCustomEvent('onDetachSystemRight', [entityId]);
@@ -1494,205 +1548,6 @@ if (!BX.Disk.pathToUser)
 							}),
 						],
 					}),
-				);
-			},
-
-			showSharingDetailWithoutEdit(params) {
-				params = params || {};
-
-				const objectId = params.object.id;
-				const ajaxUrl = params.ajaxUrl;
-
-				BX.Disk.modalWindowLoader(
-					BX.Disk.addToLinkParam(ajaxUrl, 'action', 'showSharingDetail'),
-					{
-						id: `folder_list_sharing_detail_object_${objectId}`,
-						responseType: 'json',
-						postData: {
-							objectId,
-						},
-						afterSuccessLoad: BX.delegate(function(response)
-						{
-							if (response.status != 'success')
-							{
-								response.errors = response.errors || [{}];
-								BX.Disk.showModalWithStatusAction({
-									status: 'error',
-									message: response.errors.pop().message,
-								});
-							}
-
-							const objectOwner = {
-								name: response.owner.name,
-								avatar: response.owner.avatar,
-								link: response.owner.link,
-							};
-
-							if (response.unifiedLink)
-							{
-								const accessLevel = response.unifiedLink.availableAccessLevels.find((accessLevel) => { // eslint-disable-next-line no-mixed-spaces-and-tabs
-									return accessLevel.value === response.unifiedLink.currentAccessLevel;
-								});
-
-								const accessLevelNode = BX.create('span', {
-									props: {
-										className: 'bx-disk-filepage-used-people-permission-read-only',
-									},
-									text: accessLevel.name,
-								});
-
-								var unifiedLinkElement = BX.create('table', {
-									props: {
-										id: 'bx-disk-popup-shared-universal-list',
-										className: 'bx-disk-popup-shared-people-list',
-									},
-									children: [
-										BX.create('thead', {
-											children: [
-												BX.create('tr', {
-													children: [
-														BX.create('td', {
-															props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
-														}),
-														BX.create('td', {
-															props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
-															text: BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS'),
-														}),
-														BX.create('td', {
-															props: { className: 'bx-disk-popup-shared-people-list-head-col3' },
-														}),
-													],
-												}),
-												BX.create('tr', {
-													children: [
-														BX.create('td', {
-															props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
-															children: [
-																BX.create('span', {
-																	props: { className: 'bx-disk-filepage-used-people-link' },
-																	children: [
-																		BX.create('span', {
-																			props: {
-																				className: 'bx-disk-filepage-used-people-avatar link',
-																				style: '--ui-icon-set__icon-size: 15px;',
-																			},
-																		}),
-																		BX.create('span', {
-																			text: BX.message('DISK_JS_SHARING_UNIFIED_RIGHT_USERS'),
-																		}),
-																	],
-																}),
-															],
-														}),
-														BX.create('td', {
-															props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
-															children: [accessLevelNode],
-														}),
-														BX.create('td', {
-															props: { className: 'bx-disk-popup-shared-people-list-head-col3' },
-														}),
-													],
-												}),
-											],
-										}),
-									],
-								});
-							}
-
-							BX.Disk.modalWindow({
-								modalId: 'bx-disk-detail-sharing-folder',
-								title: BX.message('DISK_JS_SHARING_LABEL_TITLE_MODAL_3'),
-								contentClassName: '',
-								contentStyle: {
-									// paddingTop: '30px',
-									// paddingBottom: '70px'
-								},
-								events: {
-									onAfterPopupShow: BX.delegate(function() {
-										for (const i in response.members)
-										{
-											if (!response.members.hasOwnProperty(i))
-											{
-												continue;
-											}
-											BX.Disk.appendNewShared({
-												destFormName: this.destFormName,
-												readOnly: true,
-												item: {
-													id: response.members[i].entityId,
-													name: response.members[i].name,
-													avatar: response.members[i].avatar,
-												},
-												type: response.members[i].type,
-												right: response.members[i].right,
-											});
-										}
-									}, this),
-									onPopupClose() {
-										this.destroy();
-									},
-								},
-								content: [
-									BX.create('div', {
-										props: {
-											className: 'bx-disk-popup-content',
-										},
-										children: [
-											BX.create('table', {
-												props: {
-													className: 'bx-disk-popup-shared-people-list',
-												},
-												children: [
-													BX.create('thead', {
-														html: '<tr>'
-															+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_JS_SHARING_LABEL_OWNER')}</td>`
-														+ '</tr>',
-													}),
-													BX.create('tr', {
-														html: '<tr>'
-															+ `<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="${objectOwner.link}"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url('${encodeURI(objectOwner.avatar)}');"></span>${BX.util.htmlspecialchars(objectOwner.name)}</a></td>`
-														+ '</tr>',
-													}),
-												],
-											}),
-											unifiedLinkElement,
-											BX.create('table', {
-												props: {
-													id: 'bx-disk-popup-shared-people-list',
-													className: 'bx-disk-popup-shared-people-list',
-												},
-												children: [
-													BX.create('thead', {
-														html: '<tr>'
-															+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
-															+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS')}</td>`
-															+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
-														+ '</tr>',
-													}),
-												],
-											}),
-											BX.create('div', {
-												html:
-														'<span class="feed-add-destination-input-box" id="feed-add-post-destination-input-box">'
-															+ '<input autocomplete="off" type="text" value="" class="feed-add-destination-inp" id="feed-add-post-destination-input"/>'
-														+ '</span>',
-											}),
-										],
-									}),
-								],
-								buttons: [
-									new BX.PopupWindowButton({
-										text: BX.message('DISK_JS_BTN_CLOSE'),
-										events: {
-											click() {
-												BX.PopupWindowManager.getCurrentPopup().close();
-											},
-										},
-									}),
-								],
-							});
-						}, this),
-					},
 				);
 			},
 		});

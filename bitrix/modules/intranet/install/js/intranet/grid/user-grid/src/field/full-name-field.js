@@ -10,6 +10,7 @@ export type FullNameFieldType = {
 	role: string,
 	inviteStatus: string,
 	isFirstAdmin: ?boolean,
+	isSystemUser: ?boolean,
 }
 
 export class FullNameField extends BaseField
@@ -41,6 +42,11 @@ export class FullNameField extends BaseField
 				break;
 			default:
 				break;
+		}
+
+		if (params.isSystemUser === true)
+		{
+			Dom.append(this.#getSystemUserLabelContainer(), fullNameContainer);
 		}
 
 		switch (params.inviteStatus)
@@ -83,7 +89,10 @@ export class FullNameField extends BaseField
 			customClass: 'user-grid_label',
 		});
 
-		return label.render();
+		const node = label.render();
+		node.dataset.testid = 'intranet-user-grid-invited-badge';
+
+		return node;
 	}
 
 	#getWaitingConfirmationLabelContainer(): HTMLElement
@@ -96,7 +105,26 @@ export class FullNameField extends BaseField
 			customClass: 'user-grid_label',
 		});
 
-		return label.render();
+		const node = label.render();
+		node.dataset.testid = 'intranet-user-grid-waiting-confirmation-badge';
+
+		return node;
+	}
+
+	#getSystemUserLabelContainer(): HTMLElement
+	{
+		const label = new Label({
+			text: Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_SYSTEM_USER'),
+			color: LabelColor.LIGHT,
+			fill: true,
+			size: Label.Size.MD,
+			customClass: 'user-grid_label user-grid_system-user-label',
+		});
+
+		const node = label.render();
+		node.dataset.testid = 'intranet-user-grid-system-user-badge';
+
+		return node;
 	}
 
 	#getPositionLabelContainer(position: string): HTMLElement

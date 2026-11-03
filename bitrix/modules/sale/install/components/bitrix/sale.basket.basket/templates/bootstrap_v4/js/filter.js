@@ -302,6 +302,8 @@
 			{
 				this.component.showSimilarCount(true);
 			}
+
+			this.announceFoundItems(this.component.sortedItems.length);
 		}
 		else
 		{
@@ -326,9 +328,19 @@
 
 			this.component.editBasketItems(BX.util.array_values(this.realShownItems));
 			window.scrollTo(0, this.realScrollTop);
+
+			this.announceFoundItems(this.component.sortedItems.length);
 		}
 
 		this.component.hideItemsOverlay();
+	};
+
+	// The list is rebuilt silently: the rows go and come back without a word of their own, so the
+	// number found is the only thing that tells a reader what the search has done. It speaks on a
+	// changed set of rows alone, or every letter typed would repeat the same count.
+	BX.Sale.BasketFilter.prototype.announceFoundItems = function(count)
+	{
+		this.component.announce(BX.message('SBB_FILTER_FOUND_ARIA').replace('#COUNT#', count));
 	};
 
 	BX.Sale.BasketFilter.prototype.searchItems = function()

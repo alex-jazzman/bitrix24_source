@@ -1,18 +1,8 @@
-.disk-picker-skeleton__sidebar-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: var(--ui-space-inline-xs);
-	padding: 0 var(--ui-space-inset-xs);
-	height: 36px;
-}
-
-.disk-picker-skeleton__sidebar-row:first-child {
-	height: 44px;
-}
-
+/* The same side inset the list has, so the placeholders start where the rows and the group
+   labels will: in the loaded dialog that inset lives on the scrolling item-browser, which the
+   skeleton does not render. */
 .disk-picker-skeleton__group-title {
-	padding: 0 var(--ui-space-inset-xs);
+	padding: 0 var(--ui-space-inset-lg);
 	margin-top: var(--ui-space-stack-md);
 	margin-bottom: var(--ui-space-stack-xs);
 }
@@ -35,7 +25,7 @@
 	flex-direction: row;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
-	padding: 0 var(--ui-space-inset-xs);
+	padding: 0 var(--ui-space-inset-lg);
 	height: 44px;
 }
 
@@ -56,4 +46,11 @@
 	gap: var(--ui-space-stack-xs);
 	width: 100%;
 	max-width: 240px;
+}
+
+.disk-picker-skeleton__footer-actions {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
 }

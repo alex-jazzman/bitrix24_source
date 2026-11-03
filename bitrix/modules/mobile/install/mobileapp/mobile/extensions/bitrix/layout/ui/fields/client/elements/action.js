@@ -3,7 +3,10 @@
  */
 jn.define('layout/ui/fields/client/elements/action', (require, exports, module) => {
 	const { AppTheme } = require('apptheme/extended');
-	const { pen } = require('assets/common');
+	const { Color } = require('tokens');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
+
+	const EDIT_ICON_SIZE = 21;
 
 	/**
 	 * @function ClientItemAction
@@ -28,14 +31,11 @@ jn.define('layout/ui/fields/client/elements/action', (require, exports, module) 
 						alignItems: 'center',
 					},
 				},
-				Image({
-					style: {
-						height: 15,
-						width: 15,
-					},
-					svg: {
-						content: pen(),
-					},
+				IconView({
+					testId: 'ClientFieldEdit_icon',
+					icon: Icon.EDIT,
+					size: EDIT_ICON_SIZE,
+					color: Color.base3,
 				}),
 			),
 		);

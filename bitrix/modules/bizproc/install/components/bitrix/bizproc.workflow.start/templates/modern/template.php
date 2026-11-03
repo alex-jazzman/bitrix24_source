@@ -3,6 +3,17 @@
 CModule::IncludeModule('socialnetwork');
 CUtil::InitJSCore(array('socnetlogdest'));
 \Bitrix\Main\Localization\Loc::loadMessages(__DIR__.DIRECTORY_SEPARATOR.'script.js.php');
+
+// template description is stored as BBCode; "~" fields hold values not escaped by GetNext()
+$toPlainDescription = static function ($description): string
+{
+	$description = (string)$description;
+
+	return \Bitrix\Main\Loader::includeModule('ui')
+		? \Bitrix\UI\Format\BBCode\Converter::toPlainText($description)
+		: $description
+	;
+};
 ?>
 <div class="bizproc-page-workflow-start">
 <?
@@ -36,7 +47,7 @@ elseif ($arResult["SHOW_MODE"] == "WorkflowParameters")
 	</legend>
 	<?if($arResult["TEMPLATES"][$arParams["TEMPLATE_ID"]]["DESCRIPTION"]!=''):?>
 	<div class="bizproc-item-description bizproc-workflow-template-description">
-		<?= $arResult["TEMPLATES"][$arParams["TEMPLATE_ID"]]["DESCRIPTION"] ?>
+		<?= htmlspecialcharsbx($toPlainDescription($arResult["TEMPLATES"][$arParams["TEMPLATE_ID"]]["~DESCRIPTION"])) ?>
 	</div>
 	<?endif;
 
@@ -109,7 +120,7 @@ elseif ($arResult["SHOW_MODE"] == "SelectWorkflow" && count($arResult["TEMPLATES
 				</div>
 				<?if ($arWorkflowTemplate["DESCRIPTION"] <> ''):?>
 				<div class="bizproc-item-description">
-					<?= $arWorkflowTemplate["DESCRIPTION"] ?>
+					<?= htmlspecialcharsbx($toPlainDescription($arWorkflowTemplate["~DESCRIPTION"])) ?>
 				</div>
 				<?endif;?>
 			</li>

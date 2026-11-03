@@ -2,40 +2,28 @@
  * @module im/messenger/lib/quick-recent-load
  */
 jn.define('im/messenger/lib/quick-recent-load', (require, exports, module) => {
-	/* global dialogList */
 	const { RecentViewCache } = require('im/messenger/cache');
-	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const logger = getLogger('recent--quick-load');
 
 	/**
 	 * @class QuickRecentLoader
 	 */
 	class QuickRecentLoader
 	{
-		#ui = null;
-
 		constructor(ui, cacheName = this.getCacheName())
 		{
-			this.#ui = ui;
-
 			/** @typedef {RecentViewCache}  */
 			this.cache = new RecentViewCache(cacheName);
+		}
+
+		destructor()
+		{
+			this.cache.destructor();
 		}
 
 		getCacheName()
 		{
 			return `${MessengerParams.getComponentCode() || 'im.messenger'}/recent`;
-		}
-
-		/**
-		 * @void
-		 */
-		static renderItemsOnViewLoaded(ui)
-		{
-			logger.warn('QuickRecentLoader.renderCachedItems');
-
-			new QuickRecentLoader(ui).renderWhenViewIsReady();
 		}
 
 		/**
@@ -48,40 +36,26 @@ jn.define('im/messenger/lib/quick-recent-load', (require, exports, module) => {
 		}
 
 		/**
-		 * @void
+		 * @desc Reads the snapshot without showing it: the tab path puts it through the render
+		 * queue instead of calling the native list directly. The read is also the validation point of
+		 * the item button contract: an incompatible profile drops the whole snapshot here, so a
+		 * `button` the current client no longer accepts never reaches the render queue.
+		 * @return {RecentViewCacheData|boolean} false when there is no snapshot, or the theme, the
+		 * database generation or the item button contract profile changed
 		 */
-		renderWhenViewIsReady()
+		getCachedSnapshot()
 		{
-			const cache = this.cache.get();
-
-			BX.onViewLoaded(() => {
-				if (cache)
-				{
-					this.renderCachedItems(cache);
-				}
-			});
+			return this.cache.get();
 		}
 
 		/**
-		 * @param {RecentViewCacheData|boolean} [cacheData]
-		 * @void
+		 * @desc Drops the stored snapshot. The snapshot lives in its own storage, so wiping the local
+		 * database leaves it behind: without this the next start shows chats of a database that no
+		 * longer exists.
 		 */
-		renderCachedItems(cacheData = this.cache.get())
+		clearCache()
 		{
-			if (!cacheData)
-			{
-				return;
-			}
-
-			try
-			{
-				this.#ui.setItems(cacheData.items, cacheData.sections);
-				logger.log(`${this.constructor.name}.renderCachedItems dialogList.setItems:`, cacheData.items, cacheData.sections);
-			}
-			catch (error)
-			{
-				logger.error(`${this.constructor.name}.renderCachedItems dialogList.setItems.catch:`, error);
-			}
+			this.cache.clear();
 		}
 	}
 

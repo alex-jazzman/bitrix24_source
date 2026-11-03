@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_system_dialog, ui_system_typography) {
+(function (exports, main_core, ui_system_dialog, ui_system_typography, biconnector_errorMessage, ui_notification) {
 	'use strict';
 
 	class LoadingPopup {
@@ -34,10 +34,10 @@ this.BX = this.BX || {};
 				} else {
 					this.#callbacks.onFail();
 				}
-			}).catch(() => {
+			}).catch(response => {
 				this.#hideLoadingPopup();
-				BX.UI.Notification.Center.notify({
-					content: this.#errorMessage
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, this.#errorMessage)
 				});
 			});
 		}
@@ -74,7 +74,7 @@ this.BX = this.BX || {};
 				<div class="biconnector-loading-popup-spinner-wrapper">
 					<img
 						class="biconnector-loading-popup-spinner"
-						src="/bitrix/js/biconnector/loading-popup/src/images/spinner.png"
+						src="/bitrix/js/biconnector/loading-popup/src/images/spinner.webp"
 						alt="Loading"
 					/>
 				</div>
@@ -88,4 +88,4 @@ this.BX = this.BX || {};
 
 	exports.LoadingPopup = LoadingPopup;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.UI.System, BX.UI.System.Typography);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.UI.System, BX.UI.System.Typography, BX.BIConnector, BX.UI.Notification);

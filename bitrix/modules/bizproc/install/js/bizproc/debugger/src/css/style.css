@@ -116,11 +116,7 @@
 .bizproc-debugger-automation__titlebar--button-close {
 	right: 18px;
 	top: 14px;
-}
-
-.bizproc-debugger-automation__titlebar--button-close.popup-window-close-icon:after {
-	width: 15px;
-	height: 15px;
+	--ui-icon-set__icon-size: 24px;
 }
 
 .bizproc-debugger-automation__content {

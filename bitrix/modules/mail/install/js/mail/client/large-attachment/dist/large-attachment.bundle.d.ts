@@ -18,6 +18,7 @@ type LargeAttachmentParams = {
 
 type DraftLargeAttachment = ConvertResult & {
 	sourceFileIds: number[];
+	tokenFileIds?: number[];
 	valid?: boolean;
 };
 
@@ -26,6 +27,7 @@ type ConvertResult = {
 	token: string;
 	fileIds: number[];
 	sourceFileIds?: number[];
+	tokenFileIds?: number[];
 	folderName: string;
 };
 
@@ -69,6 +71,7 @@ type FormAttachment = {
 type LargeAttachmentSendContract = {
 	token: string;
 	fileIds: number[];
+	sourceFileIds?: number[];
 };
 
 type AttachmentChangeType = 'add' | 'complete' | 'remove';

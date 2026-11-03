@@ -206,13 +206,7 @@ $arJSCoreConfig = array(
 		)
 	),
 	'resize_observer' => array(
-		'js' => array(
-			$pathJS.'/resize_observer/resize_observer_collection.js',
-			$pathJS.'/resize_observer/resize_observer_item_collection.js',
-			$pathJS.'/resize_observer/resize_observer_item_rect.js',
-			$pathJS.'/resize_observer/resize_observer_item.js',
-			$pathJS.'/resize_observer/resize_observer.js'
-		)
+		'js' => $pathJS.'/resize_observer/resize_observer.js'
 	),
 	'decl' => array(
 		'js' => $pathJS.'/core_decl.js'
@@ -331,7 +325,6 @@ $arJSCoreConfig = array(
 			'/bitrix/js/main/loadext/loadext.js',
 			'/bitrix/js/main/loadext/extension.js',
 		),
-		'rel' => array('main.polyfill.promise'),
 	),
 
 	/* external libs */

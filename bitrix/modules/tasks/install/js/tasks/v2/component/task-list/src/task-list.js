@@ -87,12 +87,26 @@ export const TaskList = {
 
 			return this.ids.length > 0 || this.loadingIds.length > 0;
 		},
+		isBusy(): boolean
+		{
+			return !this.idsLoaded || this.loadingIds.length > 0;
+		},
+	},
+	methods: {
+		handleMoreClick(): void
+		{
+			if (this.canOpenMore)
+			{
+				this.$emit('openMore');
+			}
+		},
 	},
 	template: `
 		<div
 			v-if="shouldShow"
 			class="tasks-task-list print-no-box-shadow"
 			:style="{ '--fields-count': fields.size }"
+			:aria-busy="isBusy ? 'true' : null"
 		>
 			<template v-if="ids.length === 0 && !idsLoaded">
 				<div class="tasks-task-line-separator print-background-white"/>
@@ -107,11 +121,15 @@ export const TaskList = {
 				/>
 			</template>
 		</div>
-		<div
+		<component
+			:is="canOpenMore ? 'button' : 'div'"
 			v-if="ids.length > limit"
+			:type="canOpenMore ? 'button' : null"
+			data-testid="task-list-more-btn"
 			class="tasks-task-list-more print-background-white"
 			:class="{ '--readonly': !canOpenMore }"
-			@click="$emit('openMore')"
+			:aria-haspopup="canOpenMore ? 'dialog' : null"
+			@click="handleMoreClick"
 		>
 			<div class="tasks-task-list-more-text print-font-color-base-1">{{ moreText }}</div>
 			<BIcon
@@ -119,7 +137,8 @@ export const TaskList = {
 				class="tasks-task-list-icon print-ignore"
 				:name="Outline.CHEVRON_RIGHT_L"
 				hoverable
+				aria-hidden="true"
 			/>
-		</div>
+		</component>
 	`,
 };

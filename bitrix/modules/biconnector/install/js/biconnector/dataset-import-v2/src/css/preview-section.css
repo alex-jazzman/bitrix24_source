@@ -59,6 +59,37 @@
 	border-radius: 12px;
 }
 
+.biconnector-dataset-import-v2-preview__empty--error {
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm, 12px);
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-preview__error-icon {
+	--ui-icon-set__icon-size: 32px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-preview__error-text {
+	max-width: 480px;
+}
+
+.biconnector-dataset-import-v2-preview__retry {
+	height: 32px;
+	padding: 0 var(--ui-space-inset-md, 16px);
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: var(--ui-border-radius-md, 10px);
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font-weight: var(--ui-font-weight-medium, 500);
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-preview__retry:hover {
+	background: var(--ui-color-bg-state-hover-default, #00000008);
+}
+
 .biconnector-dataset-import-v2-preview__scroll-wrapper {
 	position: relative;
 	flex: 1 1 auto;
@@ -248,6 +279,11 @@
 	align-items: center;
 	gap: 12px;
 	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-preview__loader-indicator--inline {
+	position: static;
+	transform: none;
 }
 
 .biconnector-dataset-import-v2-preview__loader-spinner {

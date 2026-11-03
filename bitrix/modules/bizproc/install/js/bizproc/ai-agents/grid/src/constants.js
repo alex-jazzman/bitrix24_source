@@ -9,6 +9,7 @@ export const ACTION_TYPE = {
 	EDIT: 'edit',
 	RESTART: 'restart',
 	UPGRADE: 'upgrade',
+	CHANGE_OWNER: 'change-owner',
 };
 
 export const UPGRADE_STATUS = {
@@ -37,11 +38,17 @@ export const GRID_API_ACTION = {
 	RESTART: 'Integration.AiAgent.Template.start',
 	UPGRADE: 'Integration.AiAgent.Template.upgrade',
 	CHECK_EXISTING_RUNS: 'Integration.AiAgent.Template.checkExistingRuns',
+	CHANGE_OWNER: 'Integration.AiAgent.Template.changeOwner',
 };
 
 export const EXISTING_RUNS_WARNING_OUTCOME = {
 	VIEW_LAUNCHED: 'view-launched',
 	LAUNCH_NEW: 'launch-new',
+	CANCELLED: 'cancelled',
+};
+
+export const CHANGE_OWNER_DIALOG_OUTCOME = {
+	CONFIRMED: 'confirmed',
 	CANCELLED: 'cancelled',
 };
 

@@ -2,16 +2,15 @@
  * @module crm/timeline/scheduler/providers/activity
  */
 jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	include('InAppNotifier');
 
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
-	const {
-		dateTimeOutline: dateTimeOutlineSvg,
-		clipOutline,
-		clockOutline: clockOutlineSvg,
-	} = require('assets/common');
 	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
+	const { IconView } = require('ui-system/blocks/icon');
 	const AppTheme = require('apptheme');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { ResponsibleSelector } = require('crm/timeline/services/responsible-selector');
@@ -30,6 +29,10 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { clone } = require('utils/object');
 
 	const INITIAL_HEIGHT = 1000;
+	const ATTACH_BADGE_ICON_SIZE = 26;
+	const ROW_ICON_SIZE = 24;
+	const ROW_ICON_GAP = 9;
+	const ROW_PADDING_HORIZONTAL = 16;
 
 	const isAndroid = Application.getPlatform() === 'android';
 
@@ -201,17 +204,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					},
 					this.renderTextField(),
 					this.renderAttachments(),
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								alignItems: 'center',
-								paddingHorizontal: isAndroid ? 16 : 12,
-								paddingBottom: 14,
-							},
-						},
-						this.renderReminders(),
-					),
+					this.renderReminders(),
 					this.renderBottom(),
 				),
 				// this.renderToolbar(),
@@ -304,30 +297,23 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					style: {
 						flexDirection: 'row',
 						alignItems: 'center',
+						paddingHorizontal: ROW_PADDING_HORIZONTAL,
+						paddingBottom: 14,
 					},
 				},
 				View(
 					{
-						style: {
-							marginRight: 4,
-							justifyContent: 'center',
-						},
+						style: { marginRight: ROW_ICON_GAP },
 					},
-					Image(
-						{
-							tintColor: AppTheme.colors.base4,
-							svg: {
-								content: clockOutlineSvg(),
-							},
-							style: {
-								width: 24,
-								height: 24,
-							},
-						},
-					),
+					IconView({
+						testId: 'TimelineProviderActivityReminders_icon',
+						icon: Icon.ALARM,
+						size: ROW_ICON_SIZE,
+						color: Color.base4,
+					}),
 				),
 				new ItemSelector({
-					fontSize: 14,
+					fontSize: Typography.text4.getValue().fontSize,
 					imageSize: 14,
 					value: this.entity.reminders?.selectedValues,
 					ref: (ref) => {
@@ -356,17 +342,17 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						alignItems: 'center',
 					},
 				},
-				Image({
-					tintColor: AppTheme.colors.base4,
-					svg: {
-						content: dateTimeOutlineSvg(),
+				View(
+					{
+						style: { marginRight: ROW_ICON_GAP },
 					},
-					style: {
-						width: 14.67,
-						height: 14.73,
-						alignSelf: 'center',
-					},
-				}),
+					IconView({
+						testId: 'TimelineProviderActivityDeadline_icon',
+						icon: Icon.CALENDAR_WITH_SLOTS,
+						size: ROW_ICON_SIZE,
+						color: Color.base4,
+					}),
+				),
 				View(
 					{
 						testId: 'TimelineProviderActivityDeadline',
@@ -374,13 +360,12 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 							flexDirection: 'row',
 							justifyContent: 'center',
 							alignItems: 'center',
-							marginLeft: 9,
 						},
 					},
 					new DatePill({
-						textColor: AppTheme.colors.base3,
+						textColor: Color.base3,
 						backgroundColor: AppTheme.colors.bgContentTertiary,
-						fontSize: 14,
+						fontSize: Typography.text4.getValue().fontSize,
 						imageSize: 14,
 						fontWeight: 500,
 						isReadonly: false,
@@ -408,7 +393,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						alignItems: 'center',
 						flexDirection: 'row',
 						justifyContent: 'space-between',
-						paddingHorizontal: 16,
+						paddingHorizontal: ROW_PADDING_HORIZONTAL,
 						paddingBottom: 14,
 					},
 				},
@@ -483,11 +468,10 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 							marginRight: 12,
 						},
 					},
-					Text(
+					Text6(
 						{
 							style: {
 								color: AppTheme.colors.baseWhiteFixed,
-								fontSize: 11,
 								fontWeight: 500,
 								textAlign: 'center',
 							},
@@ -495,16 +479,11 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						},
 					),
 				),
-				Image({
-					style: {
-						width: 26,
-						height: 27,
-					},
-					tintColor: AppTheme.colors.base3,
-					resizeMode: 'contain',
-					svg: {
-						content: clipOutline(),
-					},
+				IconView({
+					testId: 'TimelineSchedulerActivityAttachedFiles_icon',
+					icon: Icon.ATTACH,
+					size: ATTACH_BADGE_ICON_SIZE,
+					color: Color.base3,
 				}),
 			);
 		}
@@ -593,6 +572,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					ref: (ref) => {
 						this.createButtonRef = ref;
 					},
+					testId: 'TimelineSchedulerActivitySave',
 					text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_SAVE'),
 					loadingText: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_SAVE_PROGRESS'),
 					disabled: !this.isSaveAllowed(),
@@ -603,9 +583,8 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						style: { flexDirection: 'row' },
 					},
 					ToolbarIcon({
-						svg: clipOutline(),
-						width: 17,
-						height: 19,
+						testId: 'TimelineSchedulerActivityAttach',
+						icon: Icon.ATTACH,
 						onClick: () => {
 							if (this.fileFieldRef)
 							{
@@ -625,9 +604,8 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						},
 					}),
 					ToolbarIcon({
-						svg: `<svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.8209 8.6302C13.4064 8.61776 13.8912 9.08233 13.9036 9.66785C13.9607 12.3582 11.9789 15.5172 8.13976 16.039L8.13894 17.4335L8.59835 17.4339C9.12608 17.4339 9.55389 17.8617 9.55389 18.3894C9.55389 18.9171 9.12608 19.3449 8.59835 19.3449H5.40111C4.87338 19.3449 4.44557 18.9171 4.44557 18.3894C4.44557 17.8617 4.87338 17.4339 5.40111 17.4339L5.85906 17.4335L5.85898 16.0381C2.02549 15.5205 0.0658277 12.4368 0.0956103 9.67891C0.101934 9.0933 0.581793 8.62369 1.1674 8.62989C1.71398 8.63592 2.15949 9.05432 2.21132 9.58621L2.2163 9.70181C2.21036 10.2519 2.51762 11.3083 3.08472 12.1298C3.8989 13.3093 5.15055 13.9929 7.01102 13.9929C8.86116 13.9929 10.1084 13.2962 10.924 12.0939C11.4448 11.3263 11.7482 10.351 11.7806 9.82579L11.7833 9.71288C11.7708 9.12737 12.2354 8.64263 12.8209 8.6302ZM6.99973 0.29834C8.59695 0.29834 9.89175 1.59314 9.89175 3.19036V9.28705C9.89175 10.8843 8.59695 12.1791 6.99973 12.1791C5.40252 12.1791 4.10772 10.8843 4.10772 9.28705V3.19036C4.10772 1.59314 5.40252 0.29834 6.99973 0.29834Z" fill="${AppTheme.colors.base6}"/></svg>`,
-						width: 14,
-						height: 20,
+						testId: 'TimelineSchedulerActivityVoiceNote',
+						icon: Icon.MICROPHONE_ON,
 						onClick: () => {
 							InAppNotifier.showNotification({
 								title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_VOICE_NOTES_TITLE'),

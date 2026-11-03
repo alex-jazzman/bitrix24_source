@@ -1,8 +1,8 @@
-import { Dom, Text } from 'main.core';
+import { Dom, Runtime, Text, Type } from 'main.core';
 import { StageFlow } from 'ui.stageflow';
-import { Button } from 'ui.buttons';
-import { PermissionChecker as StagePermissionChecker } from 'crm.stage.permission-checker';
-import { StageModel } from 'crm.stage-model';
+import type { Button } from 'ui.buttons';
+import type { PermissionChecker as StagePermissionChecker } from 'crm.stage.permission-checker';
+import type { StageModel } from 'crm.stage-model';
 
 import './css/chart.css';
 
@@ -11,9 +11,13 @@ export class Chart extends StageFlow.Chart
 	permissionChecker: StagePermissionChecker;
 	getStageModelCallback: (id: number) => ?StageModel;
 	isNewItem: boolean = false;
+	stageDescriptionTooltip: ?Object = null;
 
 	#isLoadingCallback: () => boolean;
 	#showLoadingNotificationCallback: () => void;
+	#openFinalTransitionCallback: ?() => void = null;
+	#stageDescriptionTooltipPromise: ?Promise = null;
+	#stageDescriptionTooltipRequestId: number = 0;
 
 	constructor(
 		params: Object, /** @see StageFlow.Chart */
@@ -22,6 +26,7 @@ export class Chart extends StageFlow.Chart
 		gettingStageModelCallback: (id: number) => StageModel,
 		isLoadingCallback: () => boolean,
 		showLoadingNotificationCallback: () => void,
+		openFinalTransitionCallback: ?() => void = null,
 		isNewItem: boolean = false,
 	)
 	{
@@ -33,6 +38,7 @@ export class Chart extends StageFlow.Chart
 
 		this.#isLoadingCallback = isLoadingCallback;
 		this.#showLoadingNotificationCallback = showLoadingNotificationCallback;
+		this.#openFinalTransitionCallback = openFinalTransitionCallback;
 
 		if (!this.isNewItem)
 		{
@@ -40,8 +46,62 @@ export class Chart extends StageFlow.Chart
 		}
 	}
 
+	render(): Element
+	{
+		const container = super.render();
+		this.stages.forEach((stage: Stage) => this.#bindStageKeyboardEvents(stage));
+
+		return container;
+	}
+
+	#bindStageKeyboardEvents(stage: Stage): void
+	{
+		if (!Type.isElementNode(stage.node) || stage.node.dataset.crmStageKeyboardInitialized === 'Y')
+		{
+			return;
+		}
+
+		stage.node.dataset.crmStageKeyboardInitialized = 'Y';
+		stage.node.dataset.testid = `crm-item-details-stage-${stage.getId()}`;
+		stage.node.addEventListener('focusin', () => this.onStageFocusIn(stage));
+		stage.node.addEventListener('focusout', () => this.onStageFocusOut(stage));
+		stage.node.addEventListener('keydown', (event) => this.onStageKeyDown(event, stage));
+
+		if (this.isActive)
+		{
+			stage.node.setAttribute('role', 'button');
+			stage.node.setAttribute('tabindex', '0');
+		}
+		else if (Type.isStringFilled(this.#getStageDescription(stage)))
+		{
+			stage.node.setAttribute('tabindex', '0');
+		}
+	}
+
+	onStageFocusIn(stage: Stage): void
+	{
+		this.showStageDescriptionTooltip(stage);
+	}
+
+	onStageFocusOut(stage: Stage): void
+	{
+		this.hideStageDescriptionTooltip();
+	}
+
+	onStageKeyDown(event: KeyboardEvent, stage: Stage): void
+	{
+		if (!this.isActive || !['Enter', ' '].includes(event.key))
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.onStageClick(stage);
+	}
+
 	onStageMouseHover(stage: Stage): void
 	{
+		this.showStageDescriptionTooltip(stage);
 		this.increaseStageWidthForNameVisibility(stage);
 		if (stage.isDisabled())
 		{
@@ -51,8 +111,16 @@ export class Chart extends StageFlow.Chart
 		super.onStageMouseHover(stage);
 	}
 
+	onStageMouseLeave(stage: Stage): void
+	{
+		this.hideStageDescriptionTooltip();
+		super.onStageMouseLeave(stage);
+	}
+
 	onStageClick(stage: Stage): void
 	{
+		this.closeStageDescriptionTooltip();
+
 		if (this.isLoading())
 		{
 			this.showLoadingNotification();
@@ -72,6 +140,8 @@ export class Chart extends StageFlow.Chart
 
 	onFinalStageClick(stage: Stage): void
 	{
+		this.closeStageDescriptionTooltip();
+
 		if (this.isLoading())
 		{
 			this.showLoadingNotification();
@@ -86,6 +156,14 @@ export class Chart extends StageFlow.Chart
 			return;
 		}
 
+		if (Type.isFunction(this.#openFinalTransitionCallback))
+		{
+			this.onStageMouseLeave(stage);
+			this.#openFinalTransitionCallback();
+
+			return;
+		}
+
 		super.onFinalStageClick(stage);
 	}
 
@@ -96,6 +174,11 @@ export class Chart extends StageFlow.Chart
 		this.adjust();
 
 		return this;
+	}
+
+	restoreCurrentStageView(): void
+	{
+		super.setCurrentStageId(this.currentStage);
 	}
 
 	getSemanticPopupSuccessButton(): Button
@@ -206,6 +289,90 @@ export class Chart extends StageFlow.Chart
 	#getStage(id: number): ?StageModel
 	{
 		return this.getStageModelCallback(id);
+	}
+
+	#getStageDescription(stage: Stage): string
+	{
+		const descriptionStage = stage === this.getFinalStage()
+			? this.getSuccessStage()
+			: stage
+		;
+
+		return descriptionStage
+			? this.#getStage(descriptionStage.getId())?.getDescription() ?? ''
+			: ''
+		;
+	}
+
+	showStageDescriptionTooltip(stage: Stage): void
+	{
+		if (!Type.isElementNode(stage.node))
+		{
+			this.closeStageDescriptionTooltip();
+
+			return;
+		}
+		const options = {
+			bindElement: stage.node,
+			name: stage.getName(),
+			description: this.#getStageDescription(stage),
+			showName: false,
+		};
+		if (!Type.isStringFilled(options.description))
+		{
+			this.closeStageDescriptionTooltip();
+
+			return;
+		}
+
+		const requestId = ++this.#stageDescriptionTooltipRequestId;
+
+		this.#loadStageDescriptionTooltip().then((tooltip) => {
+			if (tooltip && requestId === this.#stageDescriptionTooltipRequestId)
+			{
+				tooltip.show(options);
+			}
+		});
+	}
+
+	hideStageDescriptionTooltip(): void
+	{
+		this.#stageDescriptionTooltipRequestId++;
+		this.stageDescriptionTooltip?.hide();
+	}
+
+	closeStageDescriptionTooltip(): void
+	{
+		this.#stageDescriptionTooltipRequestId++;
+		this.stageDescriptionTooltip?.hideImmediately();
+	}
+
+	#loadStageDescriptionTooltip(): Promise
+	{
+		if (this.stageDescriptionTooltip)
+		{
+			return Promise.resolve(this.stageDescriptionTooltip);
+		}
+
+		this.#stageDescriptionTooltipPromise ??= Runtime.loadExtension('crm.stage.description-tooltip')
+			.then((exports) => {
+				if (!Type.isFunction(exports?.StageDescriptionTooltip))
+				{
+					return null;
+				}
+
+				this.stageDescriptionTooltip = new exports.StageDescriptionTooltip();
+
+				return this.stageDescriptionTooltip;
+			})
+			.catch(() => {
+				this.#stageDescriptionTooltipPromise = null;
+
+				return null;
+			})
+		;
+
+		return this.#stageDescriptionTooltipPromise;
 	}
 
 	#isHasPermissionToMove(stageFlowId: number): boolean

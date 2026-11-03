@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_ACTIVITY_OBJECT_TASK"] = "Task";
 $MESS["TASKS_GLDA_CATEGORY"] = "Tasks";
 $MESS["TASKS_GLDA_DESC"] = "Obtains field values of a specified task for further use";
 $MESS["TASKS_GLDA_DESC_1"] = "Sends task field values to other automation rules.";

@@ -29,6 +29,7 @@ use \Bitrix\Landing\Landing;
 /** @var array $arResult */
 /** @var array $arParams */
 
+Loc::loadMessages(__FILE__);
 \Bitrix\Main\Loader::includeModule('landing');
 
 // vars
@@ -61,6 +62,13 @@ if ($request->get('IFRAME') == 'N')
 	</script>
 	<?
 	include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/landing.start/templates/.default/slider_header.php';
+	?>
+	<noscript>
+		<a href="<?= htmlspecialcharsbx($redirect->getUri());?>" target="_top">
+			<?= Loc::getMessage('LANDING_ADMIN_VIEW_NOSCRIPT_LINK');?>
+		</a>
+	</noscript>
+	<?
 	\CMain::finalActions();
 	die();
 }

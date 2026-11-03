@@ -1,7 +1,15 @@
 import { toValue, markRaw } from 'ui.vue3';
 import { Type } from 'main.core';
 import { PORT_POSITION } from '../constants';
-import { commandToArray, promiseWithResolvers, getCanvasRect, snapValueToGrid, snapPointToGrid } from '../utils';
+import {
+	commandToArray,
+	promiseWithResolvers,
+	getCanvasRect,
+	getOwnRecord,
+	snapValueToGrid,
+	snapPointToGrid,
+	clampZoom,
+} from '../utils';
 import { useAutoScroll } from './autoscroll';
 import { type HandlerOptions } from './history';
 import {
@@ -46,8 +54,12 @@ export type UseActions = {
 	setMovingBlock: (block: DiagramBlock) => void,
 	updateMovingBlockPosition: (x: number, y: number) => void,
 	resetMovingBlock: () => void,
+	setHoveredBlock: (blockId: DiagramBlockId) => void,
+	resetHoveredBlock: () => void,
 	setGestureBlocks: (blockIds: DiagramBlockId[]) => void,
 	resetGestureBlocks: () => void,
+	setGestureElevated: (isElevated: boolean) => void,
+	resetGestureElevated: () => void,
 	setGroupDragOffset: (offset: Point) => void,
 	resetGroupDragOffset: () => void,
 	setHistoryHandlers: (HandlerOptions) => void,
@@ -59,6 +71,7 @@ export type UseActions = {
 	purgeBlockGeometryExcept: (keepBlockIds: DiagramBlockId[]) => void;
 	snapValue: (value: number, isSnapRequested?: boolean) => number;
 	snapPoint: (point: Point, isSnapRequested?: boolean) => Point;
+	panCamera: (dx: number, dy: number) => void;
 };
 
 export function createConnectionsOffsetMap(
@@ -210,8 +223,10 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		state.blocks = toValue(options.blocks);
 		state.connections = toValue(options.connections);
 		state.transformX = options.transform.x;
-		state.transformY = options.transfrom.y;
-		state.zoom = toValue(options.zoom);
+		state.transformY = options.transform.y;
+		// The scale is written straight into the state here, bypassing the camera, so the floor has
+		// to be applied on the spot: everything that divides by the published scale reads this field.
+		state.zoom = clampZoom(toValue(options.zoom), state.minZoom, state.maxZoom, state.zoom);
 	}
 
 	function setUnmountedBlocks(newBlocks: DiagramBlock[], oldBlocks: DiagramBlock[] = []): void
@@ -329,7 +344,7 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		state.transformY = y;
 		state.viewportX = viewportX;
 		state.viewportY = viewportY;
-		state.zoom = zoom;
+		state.zoom = clampZoom(zoom, state.minZoom, state.maxZoom, state.zoom);
 	}
 
 	const isExistConnection = (connection: DiagramConnection): boolean => {
@@ -542,6 +557,8 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		return { x: transformedX, y: transformedY };
 	};
 
+	// The node a single drag leads: it stands for the visual effects of that drag alone. What a
+	// gesture holds is `setGestureBlocks` below.
 	const setMovingBlock = (blockId: DiagramBlockId): void => {
 		state.movingBlockId = toValue(blockId);
 	};
@@ -550,9 +567,17 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		state.movingBlockId = null;
 	};
 
-	// Every node of the running gesture, whatever leads it: the frame drag moves a whole selection
-	// and the node drag takes its group members along, while the model keeps their pre-gesture
-	// positions until the commit. The set is replaced rather than mutated - a reactive Set read
+	// A new value evicts the previous one: only the node the cursor is on stays raised.
+	const setHoveredBlock = (blockId: DiagramBlockId): void => {
+		state.hoveredBlockId = toValue(blockId);
+	};
+
+	const resetHoveredBlock = (): void => {
+		state.hoveredBlockId = null;
+	};
+
+	// Every node of the running gesture, whatever leads it: the model keeps their pre-gesture
+	// geometry until the commit. The set is replaced rather than mutated - a reactive Set read
 	// inside an animation frame only needs its current value.
 	const setGestureBlocks = (blockIds: DiagramBlockId[]): void => {
 		state.gestureBlockIds = new Set(
@@ -562,6 +587,16 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 
 	const resetGestureBlocks = (): void => {
 		state.gestureBlockIds = new Set();
+	};
+
+	// Whether the running gesture raises the set above the rest of the canvas. No second set of ids:
+	// the raised nodes are the ones above, and this answers only whether they are raised.
+	const setGestureElevated = (isElevated: boolean): void => {
+		state.isGestureElevated = toValue(isElevated) === true;
+	};
+
+	const resetGestureElevated = (): void => {
+		state.isGestureElevated = false;
 	};
 
 	// The shift the frame drag has drawn and not yet committed. It belongs to the diagram instance:
@@ -574,11 +609,20 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		state.groupDragOffset = { x: 0, y: 0 };
 	};
 
+	// An existing record is merged in place: replacing it would republish every field of the rect
+	// on a write that touched one of them, and a gesture writes the coordinates of its nodes on
+	// every frame while their size stands still.
 	const updateBlockRectById = (blockId: DiagramBlockId, rect): void => {
-		state.blocksRectMap[blockId] = {
-			...state.blocksRectMap[blockId],
-			...rect,
-		};
+		const storedRect = getOwnRecord(state.blocksRectMap, blockId);
+
+		if (storedRect === null)
+		{
+			state.blocksRectMap[blockId] = { ...rect };
+
+			return;
+		}
+
+		Object.assign(storedRect, rect);
 	};
 
 	// Reports that a port registered or dropped its own rect. Neither the coordinates of an
@@ -619,15 +663,8 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		state.revertHandler = newRevertHandler || state.revertHandler;
 	};
 
-	// Block ids come from an untrusted graph, so a rect is only ever taken as an own property.
-	const getOwnRect = (rectMap, key) => {
-		const map = toValue(rectMap) ?? {};
-
-		return Object.hasOwn(map, key) ? map[key] : null;
-	};
-
 	const translatePortRects = (blockId: DiagramBlockId, offset: Point): void => {
-		const ports = getOwnRect(state.portsRectMap, blockId) ?? {};
+		const ports = getOwnRecord(state.portsRectMap, blockId) ?? {};
 
 		Object.values(ports).forEach((portRect) => {
 			portRect.x += offset.x;
@@ -648,7 +685,7 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 	// changed, and the first-measure path measures such a block again on its next mount. So for
 	// blocks outside the viewport correctness rests on that path, not on this translation.
 	const translateBlockGeometry = (blockId: DiagramBlockId, offset: Point): void => {
-		const blockRect = getOwnRect(state.blocksRectMap, blockId);
+		const blockRect = getOwnRecord(state.blocksRectMap, blockId);
 
 		if (blockRect)
 		{
@@ -785,10 +822,14 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 	};
 
 	const setCamera = (params): void => {
-		toValue(state.canvasInstance)?.setCamera(params);
+		instances?.canvas.setCamera(params);
 	};
 
-	const autoScroll = useAutoScroll(state, { setCamera });
+	const panCamera = (dx: number, dy: number): void => {
+		instances?.canvas.panBy(dx, dy);
+	};
+
+	const autoScroll = useAutoScroll(state, { panCamera });
 
 	const transformMouseEventToPoint = (event: MouseEvent): Point => {
 		const {
@@ -859,8 +900,12 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		transformEventToPoint,
 		setMovingBlock,
 		resetMovingBlock,
+		setHoveredBlock,
+		resetHoveredBlock,
 		setGestureBlocks,
 		resetGestureBlocks,
+		setGestureElevated,
+		resetGestureElevated,
 		setGroupDragOffset,
 		resetGroupDragOffset,
 		setHistoryHandlers,
@@ -880,6 +925,7 @@ export function useActions({ state, getters, hooks, instances = null }): UseActi
 		stopAutoScroll: autoScroll.stop,
 		updateMousePosition: autoScroll.updateMousePosition,
 		setCamera,
+		panCamera,
 		transformMouseEventToPoint,
 		snapValue,
 		snapPoint,

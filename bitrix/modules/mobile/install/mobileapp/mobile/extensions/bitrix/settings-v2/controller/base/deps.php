@@ -5,4 +5,7 @@ return [
 		'alert',
 		'loc',
 	],
+	'bundle' => [
+		'./src/setting-change-confirm-navigator',
+	],
 ];

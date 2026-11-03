@@ -480,6 +480,10 @@ this.BX.Landing = this.BX.Landing || {};
 				this.helper.refuseSubmit(event);
 				return;
 			}
+			if (this.refuseName(this.idDomainName.value)) {
+				this.helper.refuseSubmit(event);
+				return;
+			}
 			if (this.helper.isInvalid()) {
 				if (this.checkedDomainName === this.idDomainName.value) {
 					this.helper.refuseSubmit(event);
@@ -502,6 +506,38 @@ this.BX.Landing = this.BX.Landing || {};
 		}
 
 		/**
+		 * Returns the reason to refuse the name without asking the server, or null to leave it to Domain::check.
+		 * Tabs with their own rules of the name override it.
+		 * @param {string} domainName Trimmed name from the field.
+		 * @return {string|null}
+		 */
+		getNameError(domainName) {
+			return null;
+		}
+
+		/**
+		 * Shows the error of the name refused by getNameError, if any.
+		 * @param {string} domainName Trimmed name from the field.
+		 * @return {boolean} True if the name is refused.
+		 */
+		refuseName(domainName) {
+			const error = this.getNameError(domainName);
+			if (error === null) {
+				return false;
+			}
+
+			// a running check is about another value: its answer must not overwrite this refusal
+			this.checkGeneration++;
+			this.previousDomainName = null;
+			this.checkedDomainName = null;
+			this.helper.hideLoader();
+			this.helper.hideLength();
+			// the refusal must not depend on whether the phrase is translated into the portal language
+			this.helper.setError(error || main_core.Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_INCORRECT'));
+			return true;
+		}
+
+		/**
 		 * Checks the current value right away, ignoring both the debounce and the cache of the last checked value.
 		 */
 		restartCheck() {
@@ -520,6 +556,9 @@ this.BX.Landing = this.BX.Landing || {};
 				return;
 			}
 			const domainName = this.idDomainName.value;
+			if (this.refuseName(domainName)) {
+				return;
+			}
 			if (this.previousDomainName === domainName) {
 				return;
 			}
@@ -654,6 +693,16 @@ this.BX.Landing = this.BX.Landing || {};
 		 */
 		constructor(params) {
 			super(params);
+		}
+
+		/**
+		 * Refuses a name with a character outside ASCII: Domain::check would turn it into punycode.
+		 * @param {string} domainName Trimmed name from the field.
+		 * @return {string|null}
+		 */
+		getNameError(domainName) {
+			const hasNonAscii = [...domainName].some(char => char.codePointAt(0) > 0x7F);
+			return hasNonAscii ? main_core.Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_NOT_ASCII') : null;
 		}
 	}
 

@@ -4,6 +4,7 @@
 jn.define('mail/message-grid/navigation/src/filter', (require, exports, module) => {
 	const { BaseListFilter } = require('layout/ui/list/base-filter');
 	const { MESSAGE_GRID_TAB_IDS } = require('mail/message-grid/navigation/src/tabs');
+	const { LABEL } = require('mail/folder/virtual/src/keys');
 
 	class MessageGridFilter extends BaseListFilter
 	{
@@ -19,6 +20,7 @@ jn.define('mail/message-grid/navigation/src/filter', (require, exports, module) 
 			searchString = '',
 			folderPath = null,
 			virtualFolderKey = null,
+			labelId = null,
 		} = {})
 		{
 			super(presetId, searchString, false);
@@ -27,6 +29,7 @@ jn.define('mail/message-grid/navigation/src/filter', (require, exports, module) 
 			this.setMailboxId(mailboxId);
 			this.setFolderPath(folderPath);
 			this.setVirtualFolderKey(virtualFolderKey);
+			this.setLabelId(labelId);
 		}
 
 		getDefaultPreset()
@@ -89,6 +92,27 @@ jn.define('mail/message-grid/navigation/src/filter', (require, exports, module) 
 			return this.virtualFolderKey;
 		}
 
+		setLabelId(labelId = null)
+		{
+			this.labelId = labelId ? Number(labelId) : null;
+		}
+
+		getLabelId()
+		{
+			return this.labelId;
+		}
+
+		isLabelMode()
+		{
+			return this.getVirtualFolderKey() === LABEL && this.getLabelId() !== null;
+		}
+
+		isSentTabAvailable()
+		{
+			// A label gathers messages of the whole mailbox, so the sent-folder tab is off in this mode.
+			return !this.isLabelMode();
+		}
+
 		applyUpdates(updates = {})
 		{
 			if (Object.prototype.hasOwnProperty.call(updates, 'mailboxId'))
@@ -120,19 +144,27 @@ jn.define('mail/message-grid/navigation/src/filter', (require, exports, module) 
 			{
 				this.setVirtualFolderKey(updates.virtualFolderKey);
 			}
+
+			if (Object.prototype.hasOwnProperty.call(updates, 'labelId'))
+			{
+				this.setLabelId(updates.labelId);
+			}
 		}
 
 		getActionParams()
 		{
+			const isLabelMode = this.isLabelMode();
 			const loadItems = {
 				mailboxId: this.getMailboxId(),
 				presetId: this.getPresetId() || null,
 				tabId: this.getTabId() || null,
 				virtualFolderKey: this.getVirtualFolderKey() ?? null,
+				labelId: isLabelMode ? this.getLabelId() : null,
 				filterParams: {},
 			};
 
-			if (this.getFolderPath())
+			// A label filter replaces the folder filter, so DIR is not sent in the label mode.
+			if (!isLabelMode && this.getFolderPath())
 			{
 				loadItems.filterParams.DIR = this.getFolderPath();
 			}

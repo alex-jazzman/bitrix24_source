@@ -1,264 +1,349 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events) {
+(function (exports, main_core) {
 	'use strict';
 
-	const AirSwitcherStyle = Object.freeze({
-	  SOLID: 'SOLID',
-	  TINTED: 'TINTED'
-	});
+	const SwitcherSize = {
+		extraLarge: 'extra-large',
+		large: 'large',
+		medium: 'medium',
+		small: 'small',
+		extraSmall: 'extra-small',
+		extraExtraSmall: 'extra-extra-small'
+	};
+	const SwitcherColor = {
+		primary: 'primary',
+		green: 'green'
+	};
+	const AirSwitcherStyle = {
+		FILLED: 'FILLED',
+		SOLID: 'SOLID',
+		TINTED: 'TINTED',
+		FILLED_SUCCESS: 'FILLED_SUCCESS',
+		FILLED_ALERT: 'FILLED_ALERT',
+		FILLED_WARNING: 'FILLED_WARNING',
+		FILLED_BLACK: 'FILLED_BLACK',
+		FILLED_WHITE: 'FILLED_WHITE',
+		FILLED_NO_ACCENT: 'FILLED_NO_ACCENT',
+		FILLED_BITRIX_GPT: 'FILLED_BITRIX_GPT',
+		FILLED_BOOST: 'FILLED_BOOST',
+		TINTED_ACCENT_1: 'TINTED_ACCENT_1',
+		TINTED_SUCCESS: 'TINTED_SUCCESS',
+		TINTED_ALERT: 'TINTED_ALERT',
+		TINTED_WARNING: 'TINTED_WARNING',
+		TINTED_GREEN: 'TINTED_GREEN',
+		TINTED_VIOLET: 'TINTED_VIOLET',
+		TINTED_NO_ACCENT: 'TINTED_NO_ACCENT',
+		TINTED_BITRIX_GPT: 'TINTED_BITRIX_GPT',
+		OUTLINE: 'OUTLINE',
+		OUTLINE_ACCENT_1: 'OUTLINE_ACCENT_1',
+		OUTLINE_ACCENT_2: 'OUTLINE_ACCENT_2',
+		OUTLINE_ALERT: 'OUTLINE_ALERT',
+		OUTLINE_BOOST: 'OUTLINE_BOOST',
+		OUTLINE_NO_ACCENT: 'OUTLINE_NO_ACCENT',
+		OUTLINE_SUCCESS: 'OUTLINE_SUCCESS',
+		OUTLINE_WARNING: 'OUTLINE_WARNING',
+		OUTLINE_BITRIX_GPT: 'OUTLINE_BITRIX_GPT',
+		SELECTION: 'SELECTION'
+	};
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3;
-
-	/*
-	* extraLarge, large, extraExtraSmall options supported only by the air button
-	* */
-	const SwitcherSize = Object.freeze({
-	  extraLarge: 'extra-large',
-	  large: 'large',
-	  medium: 'medium',
-	  small: 'small',
-	  extraSmall: 'extra-small',
-	  extraExtraSmall: 'extra-extra-small'
-	});
-	const SwitcherColor = Object.freeze({
-	  primary: 'primary',
-	  green: 'green'
-	});
-	var _classNameSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("classNameSize");
-	var _classNameColor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("classNameColor");
-	var _classNameStyle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("classNameStyle");
-	var _useAirDesign = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useAirDesign");
-	var _disabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabled");
-	var _inputName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputName");
-	var _loading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loading");
-	var _classNameOff = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("classNameOff");
-	var _classNameLock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("classNameLock");
-	var _attributeName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("attributeName");
-	var _showStateTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showStateTitle");
-	var _attributeInitName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("attributeInitName");
-	var _initNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initNode");
-	var _fireEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fireEvent");
 	class Switcher {
-	  /**
-	   * Switcher.
-	   *
-	   * @param {object} [options] - Options.
-	   * @param {string} [options.attributeName] - Name of switcher attribute.
-	   * @param {Element} [options.node] - Node.
-	   * @param {string} [options.id] - ID.
-	   * @param {123} [options.checked] - Checked.
-	   * @param {string} [options.inputName] - Input name.
-	   * @constructor
-	   */
-	  constructor(options) {
-	    Object.defineProperty(this, _fireEvent, {
-	      value: _fireEvent2
-	    });
-	    Object.defineProperty(this, _initNode, {
-	      value: _initNode2
-	    });
-	    Object.defineProperty(this, _classNameSize, {
-	      writable: true,
-	      value: {
-	        [SwitcherSize.extraExtraSmall]: 'ui-switcher-size-xss',
-	        [SwitcherSize.extraSmall]: 'ui-switcher-size-xs',
-	        [SwitcherSize.small]: 'ui-switcher-size-sm',
-	        [SwitcherSize.medium]: 'ui-switcher-size-md',
-	        [SwitcherSize.large]: 'ui-switcher-size-lg',
-	        [SwitcherSize.extraLarge]: 'ui-switcher-size-xl'
-	      }
-	    });
-	    Object.defineProperty(this, _classNameColor, {
-	      writable: true,
-	      value: {
-	        [SwitcherColor.primary]: '',
-	        [SwitcherColor.green]: 'ui-switcher-color-green'
-	      }
-	    });
-	    Object.defineProperty(this, _classNameStyle, {
-	      writable: true,
-	      value: {
-	        [AirSwitcherStyle.SOLID]: '--style-solid',
-	        [AirSwitcherStyle.TINTED]: '--style-tinted'
-	      }
-	    });
-	    Object.defineProperty(this, _useAirDesign, {
-	      writable: true,
-	      value: false
-	    });
-	    this.node = null;
-	    this.checked = false;
-	    this.id = '';
-	    Object.defineProperty(this, _disabled, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _inputName, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _loading, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _classNameOff, {
-	      writable: true,
-	      value: 'ui-switcher-off'
-	    });
-	    Object.defineProperty(this, _classNameLock, {
-	      writable: true,
-	      value: 'ui-switcher-lock'
-	    });
-	    Object.defineProperty(this, _attributeName, {
-	      writable: true,
-	      value: 'data-switcher'
-	    });
-	    Object.defineProperty(this, _showStateTitle, {
-	      writable: true,
-	      value: true
-	    });
-	    this.init(options);
-	    Switcher.list.push(this);
-	  }
-	  static getById(id) {
-	    return Switcher.list.find(item => item.id === id) || null;
-	  }
-	  static initByClassName() {
-	    const nodes = document.getElementsByClassName(Switcher.className);
-	    Array.from(nodes).forEach(function (node) {
-	      if (node.getAttribute(babelHelpers.classPrivateFieldLooseBase(Switcher, _attributeInitName)[_attributeInitName])) {
-	        return;
-	      }
-	      new Switcher({
-	        node: node
-	      });
-	    });
-	  }
-	  static getList() {
-	    return Switcher.list;
-	  }
-	  init(options = {}) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _attributeName)[_attributeName] = main_core.Type.isString(options.attributeName) ? options.attributeName : babelHelpers.classPrivateFieldLooseBase(this, _attributeName)[_attributeName];
-	    this.handlers = main_core.Type.isPlainObject(options.handlers) ? options.handlers : {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName] = main_core.Type.isString(options.inputName) ? options.inputName : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _loading)[_loading] = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _showStateTitle)[_showStateTitle] = main_core.Type.isBoolean(options.showStateTitle) ? options.showStateTitle : true;
-	    this.events = {
-	      toggled: 'toggled',
-	      checked: 'checked',
-	      unchecked: 'unchecked',
-	      lock: 'lock',
-	      unlock: 'unlock'
-	    };
-	    if (options.node) {
-	      if (!main_core.Type.isDomNode(options.node)) {
-	        throw new Error('Parameter `node` DOM Node expected.');
-	      }
-	      this.node = options.node;
-	      let data = this.node.getAttribute(babelHelpers.classPrivateFieldLooseBase(this, _attributeName)[_attributeName]);
-	      try {
-	        data = JSON.parse(data) || {};
-	      } catch (e) {
-	        data = {};
-	      }
-	      if (data.id) {
-	        this.id = data.id;
-	      }
-	      this.checked = Boolean(data.checked);
-	      babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName] = data.inputName;
-	      if (main_core.Type.isString(data.color) && Object.values(SwitcherColor).includes(data.color)) {
-	        options.color = data.color;
-	      }
-	      if (main_core.Type.isString(data.size) && Object.values(SwitcherSize).includes(data.size)) {
-	        options.size = data.size;
-	      }
-	      if (main_core.Dom.hasClass(this.node, '--air')) {
-	        options.useAirDesign = true;
-	      }
-	    } else {
-	      this.node = document.createElement('span');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _useAirDesign)[_useAirDesign] = options.useAirDesign === true;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _useAirDesign)[_useAirDesign]) {
-	      var _babelHelpers$classPr;
-	      this.setAirDesign();
-	      main_core.Dom.addClass(this.node, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _classNameStyle)[_classNameStyle][options.style]) != null ? _babelHelpers$classPr : '');
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _classNameSize)[_classNameSize][options.size]) {
-	      main_core.Dom.addClass(this.node, babelHelpers.classPrivateFieldLooseBase(this, _classNameSize)[_classNameSize][options.size]);
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _classNameColor)[_classNameColor][options.color] && babelHelpers.classPrivateFieldLooseBase(this, _useAirDesign)[_useAirDesign] === false) {
-	      main_core.Dom.addClass(this.node, babelHelpers.classPrivateFieldLooseBase(this, _classNameColor)[_classNameColor][options.color]);
-	    }
-	    if (main_core.Type.isString(options.id) || main_core.Type.isNumber(options.id)) {
-	      this.id = options.id;
-	    } else if (!this.id) {
-	      this.id = Math.random();
-	    }
-	    if (main_core.Type.isString(options.inputName)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName] = options.inputName;
-	    }
-	    this.checked = main_core.Type.isBoolean(options.checked) ? options.checked : this.checked;
-	    babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled] = main_core.Type.isBoolean(options.disabled) ? options.disabled : babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled];
-	    babelHelpers.classPrivateFieldLooseBase(this, _initNode)[_initNode]();
-	    this.check(this.checked, false);
-	    this.disable(babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled], false);
-	  }
-	  disable(disabled, fireEvents = true, event = {}) {
-	    if (this.isLoading()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled] = disabled;
-	    fireEvents = fireEvents !== false;
-	    if (disabled) {
-	      main_core.Dom.addClass(this.node, babelHelpers.classPrivateFieldLooseBase(this, _classNameLock)[_classNameLock]);
-	      fireEvents ? babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent](this.events.lock, event) : null;
-	    } else {
-	      main_core.Dom.removeClass(this.node, babelHelpers.classPrivateFieldLooseBase(this, _classNameLock)[_classNameLock]);
-	      fireEvents ? babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent](this.events.unlock, event) : null;
-	    }
-	  }
-	  check(checked, fireEvents = true, event = {}) {
-	    if (this.isLoading()) {
-	      return;
-	    }
-	    this.checked = !!checked;
-	    if (this.inputNode) {
-	      this.inputNode.value = this.checked ? 'Y' : 'N';
-	    }
-	    fireEvents = fireEvents !== false;
-	    if (this.checked) {
-	      main_core.Dom.removeClass(this.node, babelHelpers.classPrivateFieldLooseBase(this, _classNameOff)[_classNameOff]);
-	      fireEvents ? babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent](this.events.unchecked, event) : null;
-	    } else {
-	      main_core.Dom.addClass(this.node, babelHelpers.classPrivateFieldLooseBase(this, _classNameOff)[_classNameOff]);
-	      fireEvents ? babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent](this.events.checked, event) : null;
-	    }
-	    if (fireEvents) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent](this.events.toggled, event);
-	    }
-	  }
-	  isDisabled() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled];
-	  }
-	  isChecked() {
-	    return this.checked;
-	  }
-	  toggle(event) {
-	    if (this.isDisabled()) {
-	      return;
-	    }
-	    this.check(!this.isChecked(), true, event);
-	  }
-	  setLoading(mode) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _loading)[_loading] = Boolean(mode);
-	    const cursor = this.getNode().querySelector('.ui-switcher-cursor');
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _loading)[_loading]) {
-	      const svg = main_core.Tag.render(_t || (_t = _`
+		#classNameSize = {
+			[SwitcherSize.extraExtraSmall]: 'ui-switcher-size-xss',
+			[SwitcherSize.extraSmall]: 'ui-switcher-size-xs',
+			[SwitcherSize.small]: 'ui-switcher-size-sm',
+			[SwitcherSize.medium]: 'ui-switcher-size-md',
+			[SwitcherSize.large]: 'ui-switcher-size-lg',
+			[SwitcherSize.extraLarge]: 'ui-switcher-size-xl'
+		};
+		#classNameColor = {
+			[SwitcherColor.primary]: '',
+			[SwitcherColor.green]: 'ui-switcher-color-green'
+		};
+		#classNameStyle = {
+			[AirSwitcherStyle.FILLED]: '--style-filled',
+			[AirSwitcherStyle.SOLID]: '--style-filled',
+			[AirSwitcherStyle.TINTED]: '--style-tinted',
+			[AirSwitcherStyle.FILLED_SUCCESS]: '--style-filled-success',
+			[AirSwitcherStyle.FILLED_ALERT]: '--style-filled-alert',
+			[AirSwitcherStyle.FILLED_WARNING]: '--style-filled-warning',
+			[AirSwitcherStyle.FILLED_BLACK]: '--style-filled-black',
+			[AirSwitcherStyle.FILLED_WHITE]: '--style-filled-white',
+			[AirSwitcherStyle.FILLED_NO_ACCENT]: '--style-filled-na',
+			[AirSwitcherStyle.FILLED_BITRIX_GPT]: '--style-filled-bitrix-gpt',
+			[AirSwitcherStyle.FILLED_BOOST]: '--style-filled-boost',
+			[AirSwitcherStyle.TINTED_ACCENT_1]: '--style-tinted-a1',
+			[AirSwitcherStyle.TINTED_SUCCESS]: '--style-tinted-success',
+			[AirSwitcherStyle.TINTED_ALERT]: '--style-tinted-alert',
+			[AirSwitcherStyle.TINTED_WARNING]: '--style-tinted-warning',
+			[AirSwitcherStyle.TINTED_GREEN]: '--style-tinted-green',
+			[AirSwitcherStyle.TINTED_VIOLET]: '--style-tinted-violet',
+			[AirSwitcherStyle.TINTED_NO_ACCENT]: '--style-tinted-na',
+			[AirSwitcherStyle.TINTED_BITRIX_GPT]: '--style-tinted-bitrix-gpt',
+			[AirSwitcherStyle.OUTLINE]: '--style-outline',
+			[AirSwitcherStyle.OUTLINE_ACCENT_1]: '--style-outline-a1',
+			[AirSwitcherStyle.OUTLINE_ACCENT_2]: '--style-outline-a2',
+			[AirSwitcherStyle.OUTLINE_ALERT]: '--style-outline-alert',
+			[AirSwitcherStyle.OUTLINE_BOOST]: '--style-outline-boost',
+			[AirSwitcherStyle.OUTLINE_NO_ACCENT]: '--style-outline-na',
+			[AirSwitcherStyle.OUTLINE_SUCCESS]: '--style-outline-success',
+			[AirSwitcherStyle.OUTLINE_WARNING]: '--style-outline-warning',
+			[AirSwitcherStyle.OUTLINE_BITRIX_GPT]: '--style-outline-bitrix-gpt',
+			[AirSwitcherStyle.SELECTION]: '--style-selection'
+		};
+		#useAirDesign = false;
+		node;
+		checked = false;
+		id = '';
+		handlers = {};
+		inputNode;
+		#disabled = false;
+		#inputName = '';
+		#loading = false;
+		events = {
+			toggled: 'toggled',
+			checked: 'checked',
+			unchecked: 'unchecked',
+			lock: 'lock',
+			unlock: 'unlock'
+		};
+		#classNameOff = 'ui-switcher-off';
+		#classNameLock = 'ui-switcher-lock';
+		#attributeName = 'data-switcher';
+		#showStateTitle = true;
+		#accessible = false;
+		#semanticsNode = null;
+		#ariaLabel = '';
+		#ariaLabelledBy = '';
+		#clickHandler = null;
+		#keydownHandler = null;
+		static #attributeInitName = 'data-switcher-init';
+		static list = [];
+		static className = 'ui-switcher';
+		static classNameOff = 'ui-switcher-off';
+		constructor(options) {
+			this.init(options);
+			Switcher.list.push(this);
+		}
+		static getById(id) {
+			return Switcher.list.find(item => item.id === id) || null;
+		}
+		static initByClassName() {
+			const nodes = document.getElementsByClassName(Switcher.className);
+			[...nodes].forEach(node => {
+				if (node.getAttribute(Switcher.#attributeInitName)) {
+					return;
+				}
+				new Switcher({
+					node: node
+				});
+			});
+		}
+		static getList() {
+			return Switcher.list;
+		}
+		init(options = {}) {
+			this.#attributeName = main_core.Type.isString(options.attributeName) ? options.attributeName : this.#attributeName;
+			this.handlers = main_core.Type.isPlainObject(options.handlers) ? options.handlers : {};
+			this.#inputName = main_core.Type.isString(options.inputName) ? options.inputName : '';
+			this.#loading = false;
+			this.#showStateTitle = main_core.Type.isBoolean(options.showStateTitle) ? options.showStateTitle : true;
+			this.events = {
+				toggled: 'toggled',
+				checked: 'checked',
+				unchecked: 'unchecked',
+				lock: 'lock',
+				unlock: 'unlock'
+			};
+			let accessibleFromNode = false;
+			if (options.node) {
+				if (!main_core.Type.isDomNode(options.node)) {
+					throw new Error('Parameter `node` DOM Node expected.');
+				}
+				if (this.#semanticsNode !== null && this.#semanticsNode !== options.node) {
+					this.#clearAccessibility(this.#semanticsNode);
+				}
+				this.node = options.node;
+				const attributeValue = this.node.getAttribute(this.#attributeName);
+				let data = {};
+				try {
+					data = JSON.parse(attributeValue ?? '') || {};
+				} catch {
+					data = {};
+				}
+				if (data.id) {
+					this.id = data.id;
+				}
+				this.checked = Boolean(data.checked);
+				this.#inputName = data.inputName;
+				if (main_core.Type.isString(data.color) && Object.values(SwitcherColor).includes(data.color)) {
+					options.color = data.color;
+				}
+				if (main_core.Type.isString(data.size) && Object.values(SwitcherSize).includes(data.size)) {
+					options.size = data.size;
+				}
+				accessibleFromNode = data.accessible === true;
+				if (main_core.Type.isString(data.ariaLabel) && data.ariaLabel.trim() !== '') {
+					this.#ariaLabel = data.ariaLabel.trim();
+				}
+				if (main_core.Type.isString(data.ariaLabelledBy) && data.ariaLabelledBy.trim() !== '') {
+					this.#ariaLabelledBy = data.ariaLabelledBy.trim();
+				}
+				if (main_core.Dom.hasClass(this.node, '--air')) {
+					options.useAirDesign = true;
+				}
+			} else {
+				this.node = document.createElement('span');
+			}
+			this.#useAirDesign = options.useAirDesign === true;
+			if (this.#useAirDesign) {
+				this.setAirDesign();
+				this.#applyLookClassName(this.#classNameStyle, options.style ?? '');
+			}
+			this.#applyLookClassName(this.#classNameSize, options.size ?? '');
+			if (this.#useAirDesign === false) {
+				this.#applyLookClassName(this.#classNameColor, options.color ?? '');
+			}
+			if (main_core.Type.isString(options.id) || main_core.Type.isNumber(options.id)) {
+				this.id = options.id;
+			} else if (!this.id) {
+				this.id = Math.random();
+			}
+			if (main_core.Type.isString(options.inputName)) {
+				this.#inputName = options.inputName;
+			}
+			this.checked = main_core.Type.isBoolean(options.checked) ? options.checked : this.checked;
+			this.#disabled = main_core.Type.isBoolean(options.disabled) ? options.disabled : this.#disabled;
+			if (main_core.Type.isString(options.ariaLabel) && options.ariaLabel.trim() !== '') {
+				this.#ariaLabel = options.ariaLabel.trim();
+			}
+			if (main_core.Type.isString(options.ariaLabelledBy) && options.ariaLabelledBy.trim() !== '') {
+				this.#ariaLabelledBy = options.ariaLabelledBy.trim();
+			}
+			const accessibleRequested = options.accessible === true || accessibleFromNode || this.#accessible;
+			this.#accessible = this.#resolveAccessible(accessibleRequested);
+			this.#initNode();
+			this.#applyAccessibility();
+			this.check(this.checked, false);
+			this.disable(this.#disabled, false);
+		}
+		#applyLookClassName(dictionary, value) {
+			const className = dictionary[value];
+			if (!className) {
+				return;
+			}
+			main_core.Dom.removeClass(this.node, Object.values(dictionary).filter(Boolean));
+			main_core.Dom.addClass(this.node, className);
+		}
+		#initNode() {
+			if (this.node.getAttribute(Switcher.#attributeInitName)) {
+				return;
+			}
+			this.node.setAttribute(Switcher.#attributeInitName, 'y');
+			main_core.Dom.addClass(this.node, Switcher.className);
+			if (this.#useAirDesign) {
+				this.setAirDesign();
+			}
+			const element = main_core.Tag.render`
+			<div>
+				<span class="ui-switcher-cursor"></span>
+				<span class="ui-switcher-enabled">
+					${this.#showStateTitle ? main_core.Loc.getMessage('UI_SWITCHER_ON') : ''}
+				</span>
+				<span class="ui-switcher-disabled">
+					${this.#showStateTitle ? main_core.Loc.getMessage('UI_SWITCHER_OFF') : ''}
+				</span>
+			</div>
+		`;
+			this.node.innerHTML = element.innerHTML;
+			if (this.#inputName) {
+				this.inputNode = main_core.Tag.render`
+				<input type="hidden" name="${this.#inputName}" />
+			`;
+				main_core.Dom.append(this.inputNode, this.node);
+			}
+			this.#clickHandler = this.toggle.bind(this);
+			main_core.bind(this.node, 'click', this.#clickHandler);
+		}
+		destroy() {
+			const index = Switcher.list.indexOf(this);
+			if (index !== -1) {
+				Switcher.list.splice(index, 1);
+			}
+			if (this.#clickHandler) {
+				main_core.unbind(this.node, 'click', this.#clickHandler);
+				this.#clickHandler = null;
+			}
+			if (this.#keydownHandler) {
+				main_core.unbind(this.node, 'keydown', this.#keydownHandler);
+				this.#keydownHandler = null;
+			}
+			this.#clearAccessibility(this.node);
+			this.#loading = false;
+			this.#accessible = false;
+			this.node?.removeAttribute(Switcher.#attributeInitName);
+			this.handlers = {};
+		}
+		disable(disabled, fireEvents = true, event = {}) {
+			if (this.isLoading()) {
+				return;
+			}
+			this.#disabled = disabled;
+			if (this.#accessible) {
+				main_core.Dom.attr(this.node, 'aria-disabled', String(disabled));
+			}
+			fireEvents = fireEvents !== false;
+			if (disabled) {
+				main_core.Dom.addClass(this.node, this.#classNameLock);
+				fireEvents ? this.#fireEvent(this.events.lock, event) : null;
+			} else {
+				main_core.Dom.removeClass(this.node, this.#classNameLock);
+				fireEvents ? this.#fireEvent(this.events.unlock, event) : null;
+			}
+		}
+		check(checked, fireEvents = true, event = {}) {
+			if (this.isLoading()) {
+				return;
+			}
+			this.checked = !!checked;
+			if (this.inputNode) {
+				this.inputNode.value = this.checked ? 'Y' : 'N';
+			}
+			if (this.#accessible) {
+				main_core.Dom.attr(this.node, 'aria-checked', String(this.checked));
+			}
+			fireEvents = fireEvents !== false;
+			if (this.checked) {
+				main_core.Dom.removeClass(this.node, this.#classNameOff);
+				fireEvents ? this.#fireEvent(this.events.unchecked, event) : null;
+			} else {
+				main_core.Dom.addClass(this.node, this.#classNameOff);
+				fireEvents ? this.#fireEvent(this.events.checked, event) : null;
+			}
+			if (fireEvents) {
+				this.#fireEvent(this.events.toggled, event);
+			}
+		}
+		isDisabled() {
+			return this.#disabled;
+		}
+		isChecked() {
+			return this.checked;
+		}
+		toggle(event) {
+			if (this.isDisabled()) {
+				return;
+			}
+			this.check(!this.isChecked(), true, event);
+		}
+		setLoading(mode) {
+			this.#loading = Boolean(mode);
+			if (this.#accessible) {
+				main_core.Dom.attr(this.node, 'aria-busy', String(this.#loading));
+			}
+			const cursor = this.getNode().querySelector('.ui-switcher-cursor');
+			if (this.#loading) {
+				const svg = main_core.Tag.render`
 				<svg viewBox="25 25 50 50">
 					<circle
 						class="ui-sidepanel-wrapper-loader-path"
@@ -271,85 +356,139 @@ this.BX = this.BX || {};
 					>
 					</circle>
 				</svg>
-			`));
-	      main_core.Dom.append(svg, cursor);
-	    } else {
-	      cursor.innerHTML = '';
-	    }
-	  }
-	  isLoading() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _loading)[_loading];
-	  }
-	  setAirDesign(flag = true) {
-	    if (flag) {
-	      main_core.Dom.addClass(this.node, '--air');
-	    } else {
-	      main_core.Dom.removeClass(this.node, '--air');
-	    }
-	  }
-	  renderTo(targetNode) {
-	    if (!main_core.Type.isDomNode(targetNode)) {
-	      throw new Error('Target node must be HTMLElement');
-	    }
-	    return main_core.Dom.append(this.getNode(), targetNode);
-	  }
-	  getNode() {
-	    return this.node;
-	  }
-	  getAttributeName() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _attributeName)[_attributeName];
-	  }
-	  getInputName() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName];
-	  }
+			`;
+				main_core.Dom.append(svg, cursor);
+			} else {
+				cursor.innerHTML = '';
+			}
+		}
+		isLoading() {
+			return this.#loading;
+		}
+		setAirDesign(flag = true) {
+			if (flag) {
+				main_core.Dom.addClass(this.node, '--air');
+			} else {
+				main_core.Dom.removeClass(this.node, '--air');
+			}
+		}
+		#applyAccessibility() {
+			if (!this.#accessible) {
+				return;
+			}
+			this.#applyAccessibleName();
+			main_core.Dom.attr(this.node, 'aria-busy', String(this.#loading));
+			if (this.#semanticsNode === this.node) {
+				return;
+			}
+			this.#semanticsNode = this.node;
+			main_core.Dom.attr(this.node, 'role', 'switch');
+			main_core.Dom.attr(this.node, 'tabindex', '0');
+			main_core.Dom.attr(this.node, 'aria-checked', String(this.checked));
+			[...this.node.children].forEach(child => {
+				main_core.Dom.attr(child, 'aria-hidden', 'true');
+			});
+			if (this.#keydownHandler === null) {
+				this.#keydownHandler = this.#handleKeydown.bind(this);
+				main_core.bind(this.node, 'keydown', this.#keydownHandler);
+			}
+		}
+		#clearAccessibility(node) {
+			if (!node || this.#semanticsNode !== node) {
+				return;
+			}
+			if (this.#keydownHandler) {
+				main_core.unbind(node, 'keydown', this.#keydownHandler);
+				this.#keydownHandler = null;
+			}
+			['role', 'tabindex', 'aria-checked', 'aria-disabled', 'aria-busy', 'aria-label', 'aria-labelledby'].forEach(name => {
+				main_core.Dom.attr(node, name, null);
+			});
+			[...node.children].forEach(child => {
+				main_core.Dom.attr(child, 'aria-hidden', null);
+			});
+			this.#semanticsNode = null;
+		}
+		#applyAccessibleName() {
+			main_core.Dom.attr(this.node, 'aria-labelledby', this.#ariaLabelledBy === '' ? null : this.#ariaLabelledBy);
+			main_core.Dom.attr(this.node, 'aria-label', this.#ariaLabel === '' ? null : this.#ariaLabel);
+		}
+		#handleKeydown(event) {
+			if (event.key !== ' ' && event.key !== 'Spacebar' && event.key !== 'Enter') {
+				return;
+			}
+			if (this.isDisabled() || this.isLoading()) {
+				return;
+			}
+			event.preventDefault();
+			this.toggle(event);
+		}
+		#canDropName(other) {
+			if (!this.#accessible || other.trim() !== '') {
+				return true;
+			}
+			console.warn('ui.switcher: `ariaLabel` or `ariaLabelledBy` is required while accessible, name kept');
+			return false;
+		}
+		#resolveAccessible(requested) {
+			if (!requested) {
+				return false;
+			}
+			if (this.#ariaLabel.trim() === '' && this.#ariaLabelledBy.trim() === '') {
+				console.warn('ui.switcher: `accessible` needs `ariaLabel` or `ariaLabelledBy`, semantics not applied');
+				return false;
+			}
+			return true;
+		}
+		#fireEvent(eventName, event) {
+			main_core.onCustomEvent(this, eventName);
+			if (this.handlers[eventName]) {
+				this.handlers[eventName].call(this, event);
+			}
+		}
+		renderTo(targetNode) {
+			if (!main_core.Type.isDomNode(targetNode)) {
+				throw new Error('Target node must be HTMLElement');
+			}
+			main_core.Dom.append(this.getNode(), targetNode);
+		}
+		getNode() {
+			return this.node;
+		}
+		getAttributeName() {
+			return this.#attributeName;
+		}
+		getInputName() {
+			return this.#inputName;
+		}
+		setAriaLabel(value) {
+			const next = main_core.Type.isString(value) ? value.trim() : '';
+			if (next === '' && !this.#canDropName(this.#ariaLabelledBy)) {
+				return;
+			}
+			this.#ariaLabel = next;
+			this.#applyAccessibility();
+		}
+		getAriaLabel() {
+			return this.#ariaLabel;
+		}
+		setAriaLabelledBy(value) {
+			const next = main_core.Type.isString(value) ? value.trim() : '';
+			if (next === '' && !this.#canDropName(this.#ariaLabel)) {
+				return;
+			}
+			this.#ariaLabelledBy = next;
+			this.#applyAccessibility();
+		}
+		getAriaLabelledBy() {
+			return this.#ariaLabelledBy;
+		}
 	}
-	function _initNode2() {
-	  if (this.node.getAttribute(babelHelpers.classPrivateFieldLooseBase(Switcher, _attributeInitName)[_attributeInitName])) {
-	    return;
-	  }
-	  this.node.setAttribute(babelHelpers.classPrivateFieldLooseBase(Switcher, _attributeInitName)[_attributeInitName], 'y');
-	  main_core.Dom.addClass(this.node, Switcher.className);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useAirDesign)[_useAirDesign]) {
-	    this.setAirDesign();
-	  }
-	  const element = main_core.Tag.render(_t2 || (_t2 = _`
-			<div>
-				<span class="ui-switcher-cursor"></span>
-				<span class="ui-switcher-enabled">
-					${0}
-				</span>
-				<span class="ui-switcher-disabled">
-					${0}
-				</span>
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _showStateTitle)[_showStateTitle] ? main_core.Loc.getMessage('UI_SWITCHER_ON') : '', babelHelpers.classPrivateFieldLooseBase(this, _showStateTitle)[_showStateTitle] ? main_core.Loc.getMessage('UI_SWITCHER_OFF') : '');
-	  this.node.innerHTML = element.innerHTML;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName]) {
-	    this.inputNode = main_core.Tag.render(_t3 || (_t3 = _`
-				<input type="hidden" name="${0}" />
-			`), babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName]);
-	    main_core.Dom.append(this.inputNode, this.node);
-	  }
-	  main_core.bind(this.node, 'click', this.toggle.bind(this));
-	}
-	function _fireEvent2(eventName, event) {
-	  main_core.onCustomEvent(this, eventName);
-	  if (this.handlers[eventName]) {
-	    this.handlers[eventName].call(this, event);
-	  }
-	}
-	Object.defineProperty(Switcher, _attributeInitName, {
-	  writable: true,
-	  value: 'data-switcher-init'
-	});
-	Switcher.list = [];
-	Switcher.className = 'ui-switcher';
-	Switcher.classNameOff = 'ui-switcher-off';
 
-	exports.SwitcherSize = SwitcherSize;
-	exports.SwitcherColor = SwitcherColor;
-	exports.Switcher = Switcher;
 	exports.AirSwitcherStyle = AirSwitcherStyle;
+	exports.Switcher = Switcher;
+	exports.SwitcherColor = SwitcherColor;
+	exports.SwitcherSize = SwitcherSize;
 
-}((this.BX.UI = this.BX.UI || {}),BX,BX.Event));
+})(this.BX.UI = this.BX.UI || {}, BX);
 //# sourceMappingURL=ui.switcher.bundle.js.map

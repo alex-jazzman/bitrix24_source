@@ -1,0 +1,3 @@
+<?php
+$MESS['M_CRM_LIST_ITEM_COMPACT_ACTUAL_DATE'] = 'Valid until #DATE#';
+$MESS['M_CRM_LIST_ITEM_COMPACT_CLOSE_DATE'] = 'Pay before #DATE#';

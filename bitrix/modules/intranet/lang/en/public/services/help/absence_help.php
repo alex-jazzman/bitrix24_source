@@ -4,11 +4,11 @@ $MESS["SERVICES_INFO"] = "Planning a meeting and cracking your head over proper 
 <ul>
   <li>Start by creating a new calendar event. Click <b>Add</b> and select <b>event in scheduler</b>:
 
-<p><img height='236' border='0' width='328' src='#SITE#images/en/docs/event_plan1.png' /></p>
+<p><img height='236' border='0' width='328' src='#SITE#images/en/docs/event_plan1.webp' /></p>
 
 <p>This will open the event scheduler form:</p>
 
-<p><img height='496' border='0' width='704' src='#SITE#images/en/docs/event_plan.png' /></p>
+<p><img height='496' border='0' width='704' src='#SITE#images/en/docs/event_plan.webp' /></p>
 
 </li>
 
@@ -26,7 +26,7 @@ What if you are so busy that you won?t be able to attend the meeting? Make other
           <li>open your personal calendar;</li>
 
           <li>create a new event and select <b>Away</b> in the <b>User's availability</b> field;
-<p><img height='387' border='0' width='532' src='#SITE#images/en/docs/new_personal_absence.png' /></p>
+<p><img height='387' border='0' width='532' src='#SITE#images/en/docs/new_personal_absence.webp' /></p>
 </li>
 
           <li>save changes.</li>
@@ -36,7 +36,7 @@ What if you are so busy that you won?t be able to attend the meeting? Make other
 
 <p>Now, you can see the <b>Absence Chart</b> showing your away status (in the <b>Month</b> tab).</p>
 
-<p><img height='294' border='0' width='853' src='#SITE#images/en/docs/graph.png' /></p>
+<p><img height='294' border='0' width='853' src='#SITE#images/en/docs/graph.webp' /></p>
 
 <p>Whether you are planning a leave, a public event or a visit to your doctor ? reflect your activity in the calendar. For you, this is definitely the best way to avoid cavils and chicanery. For the company, it is a convenience to streamline event planning and simplify personnel controlling. Make your life comfortable. </p>
 

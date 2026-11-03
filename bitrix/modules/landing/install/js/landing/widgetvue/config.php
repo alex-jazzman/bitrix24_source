@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/widgetvue.bundle.css',
 	'js' => 'dist/widgetvue.bundle.js',
 	'rel' => [
+		'landing.ui.a11y',
 		'main.core',
 	],
 	'skip_core' => false,

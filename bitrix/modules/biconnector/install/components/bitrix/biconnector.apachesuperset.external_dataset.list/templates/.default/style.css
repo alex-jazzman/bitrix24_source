@@ -94,3 +94,47 @@
 	color: #555555;
 }
 
+#biconnector-external-dataset-grid .main-grid-row-head {
+	background-color: var(--ui-color-bg-vibrant-default);
+}
+
+#biconnector-external-dataset-grid .main-grid-cell-head {
+	background-color: transparent;
+}
+
+#ui-page-slider-content .ui-page-slider-workarea
+{
+	margin-top: var(--ui-space-stack-xs);
+}
+
+#biconnector-external-dataset-grid td[data-column-id="DESCRIPTION"] .main-grid-cell-content
+{
+	width: 0;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.bi-table-group-name {
+	display: flex;
+}
+
+.bi-table-group-name-subtitle {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.bi-table-group-icon {
+	min-width: 28px;
+	max-width: 28px;
+	margin-right: 8px;
+	margin-top: -2px;
+}
+
+.bi-table-group-name-link {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	color: var(--ui-color-link-primary-base);
+}

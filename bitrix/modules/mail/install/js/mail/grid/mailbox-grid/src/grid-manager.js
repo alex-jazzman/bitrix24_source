@@ -1,7 +1,9 @@
 import { Event, Loc } from 'main.core';
-import { getMigrationState, type MigrationState } from 'mail.migration-state';
+import { getMigrationState, type MigrationState, type MigrationStatusDto } from 'mail.migration-state';
+import { Chip } from 'ui.system.chip';
 
 import { ActionFactory } from './action/action-factory';
+import { MigrationProgressPanelLoader } from './migration-progress-panel-loader';
 
 type runActionConfig = {
 	actionId: string,
@@ -18,6 +20,13 @@ type MigrationStateFactory = (mailboxId: number) => MigrationState;
 
 const createdActionPanels = new Map();
 const migrationRestrictedActions = new Set(['disconnectMailbox']);
+const migrationStatusMessages = {
+	waiting: 'MAIL_MIGRATION_PROGRESS_STATUS_WAITING',
+	manual_waiting: 'MAIL_MIGRATION_PROGRESS_STATUS_MANUAL_WAITING',
+	blocked: 'MAIL_MIGRATION_PROGRESS_STATUS_BLOCKED',
+	cancelling: 'MAIL_MIGRATION_PROGRESS_STATUS_CANCELLING',
+	switching: 'MAIL_MIGRATION_PROGRESS_STATUS_SWITCHING',
+};
 
 export function isMigrationRestrictedAction(actionId: string): boolean
 {
@@ -35,13 +44,12 @@ BX.addCustomEvent('BX.UI.ActionPanel:created', (panel) => {
 export class GridManager
 {
 	static instances: Array<GridManager> = [];
-	#grid: BX.Main.grid;
 	#gridId: string;
 	#migrationStateFactory: MigrationStateFactory;
 	#migrationStateSubscriptions: Map<number, { state: MigrationState, unsubscribe: () => void }> = new Map();
 	#actionPanel: ?BX.UI.ActionPanel = null;
 	#panelObserver: ?MutationObserver = null;
-	#migrationDisconnectWasDisabled: ?boolean = null;
+	#migrationDisconnectState: WeakMap<BX.UI.ActionPanel.Item, { disabled: boolean, title: ?string }> = new WeakMap();
 	#handleSelectedRows: Function;
 	#handleGridUpdated: Function;
 	#handleActionPanelCreated: Function;
@@ -75,6 +83,7 @@ export class GridManager
 		BX.addCustomEvent('Grid::allRowsSelected', this.#handleSelectedRows);
 		BX.addCustomEvent('Grid::allRowsUnselected', this.#handleSelectedRows);
 		BX.addCustomEvent('Grid::updated', this.#handleGridUpdated);
+		BX.addCustomEvent('BX.UI.ActionPanel:created', this.#handleActionPanelCreated);
 		Event.bind(window, 'pagehide', this.#handlePageHide, { once: true });
 		this.#syncMigrationStateSubscriptions();
 
@@ -82,19 +91,21 @@ export class GridManager
 		if (existingPanel)
 		{
 			this.#setupActionPanel(existingPanel);
-
-			return;
 		}
-
-		BX.addCustomEvent('BX.UI.ActionPanel:created', this.#handleActionPanelCreated);
 	}
 
 	destroy(): void
 	{
+		MigrationProgressPanelLoader.destroyInstance(this.#gridId);
 		this.#migrationStateSubscriptions.forEach(({ unsubscribe }) => unsubscribe());
 		this.#migrationStateSubscriptions.clear();
 		this.#panelObserver?.disconnect();
 		this.#panelObserver = null;
+		if (createdActionPanels.get(this.#gridId) === this.#actionPanel)
+		{
+			createdActionPanels.delete(this.#gridId);
+		}
+		this.#actionPanel = null;
 		BX.removeCustomEvent('Grid::thereSelectedRows', this.#handleSelectedRows);
 		BX.removeCustomEvent('Grid::allRowsSelected', this.#handleSelectedRows);
 		BX.removeCustomEvent('Grid::allRowsUnselected', this.#handleSelectedRows);
@@ -121,14 +132,27 @@ export class GridManager
 		});
 
 		mailboxIds.forEach((mailboxId): void => {
-			if (this.#migrationStateSubscriptions.has(mailboxId))
+			const subscription = this.#migrationStateSubscriptions.get(mailboxId);
+			if (subscription)
 			{
+				if (subscription.state.isInitialized())
+				{
+					this.#applyMailboxMigrationState(
+						mailboxId,
+						subscription.state.isActive(),
+						subscription.state.getStatus(),
+					);
+				}
+
 				return;
 			}
 
 			const state = this.#migrationStateFactory(mailboxId);
-			const unsubscribe = state.subscribe(({ active }): void => {
-				this.#applyMailboxMigrationState(mailboxId, active);
+			const unsubscribe = state.subscribe(({ active, status }): void => {
+				if (this.#migrationStateSubscriptions.get(mailboxId)?.state === state)
+				{
+					this.#applyMailboxMigrationState(mailboxId, active, status);
+				}
 			});
 			this.#migrationStateSubscriptions.set(mailboxId, { state, unsubscribe });
 			void state.initialize().then((): void => {
@@ -137,30 +161,94 @@ export class GridManager
 					&& state.isInitialized()
 				)
 				{
-					this.#applyMailboxMigrationState(mailboxId, state.isActive());
+					this.#applyMailboxMigrationState(mailboxId, state.isActive(), state.getStatus());
 				}
 			});
 		});
 	}
 
-	#applyMailboxMigrationState(mailboxId: number, active: boolean): void
+	#applyMailboxMigrationState(mailboxId: number, active: boolean, status: MigrationStatusDto): void
 	{
 		const rowNode = this.getGrid()?.getRows().getById(mailboxId)?.getNode?.();
 		if (rowNode)
 		{
 			rowNode.dataset.mailboxMigrationActive = active ? 'Y' : 'N';
+			const migrationStatus = rowNode.querySelector('[data-role="mailbox-grid-migration-status"]');
+			const regularStatus = rowNode.querySelector('[data-role="mailbox-grid-regular-sync-status"]');
+			if (migrationStatus && regularStatus)
+			{
+				const showMigration = this.#updateMigrationStatus(
+					migrationStatus,
+					mailboxId,
+					active,
+					status,
+				);
+				migrationStatus.hidden = !showMigration;
+				regularStatus.hidden = showMigration;
+			}
 		}
 
 		this.#syncMigrationRestrictions();
 	}
 
+	#updateMigrationStatus(
+		migrationStatus: HTMLElement,
+		mailboxId: number,
+		active: boolean,
+		status: MigrationStatusDto,
+	): boolean
+	{
+		if (status.visibility === 'terminal')
+		{
+			migrationStatus.dataset.mailboxAdminProgress = 'N';
+		}
+
+		const hasAdminProgress = migrationStatus.dataset.mailboxAdminProgress === 'Y';
+		const canOpenAdminProgress = migrationStatus.dataset.mailboxAdminProgressAllowed === 'Y';
+		const canShowHiddenAdminProgress = migrationStatus.dataset.mailboxAdminProgressEarlyVisible === 'Y';
+		const chip = migrationStatus.querySelector('.ui-chip');
+		if (chip && active)
+		{
+			const messageKey = Object.hasOwn(migrationStatusMessages, status.status)
+				? migrationStatusMessages[status.status]
+				: 'MAIL_MIGRATION_STATUS';
+			Chip.getByNode(chip)?.setText(Loc.getMessage(messageKey) ?? '');
+			if (canOpenAdminProgress)
+			{
+				MigrationProgressPanelLoader.getInstance(this.#gridId).bindAnchor(chip, mailboxId);
+			}
+			else
+			{
+				MigrationProgressPanelLoader.getInstance(this.#gridId).unbindAnchor(chip);
+			}
+		}
+		else if (chip && status.visibility === 'hidden')
+		{
+			if (hasAdminProgress && canShowHiddenAdminProgress && canOpenAdminProgress)
+			{
+				Chip.getByNode(chip)?.setText(migrationStatus.dataset.mailboxAdminProgressText ?? '');
+				MigrationProgressPanelLoader.getInstance(this.#gridId).bindAnchor(chip, mailboxId);
+			}
+			else
+			{
+				migrationStatus.dataset.mailboxAdminProgress = 'N';
+				MigrationProgressPanelLoader.getInstance(this.#gridId).unbindAnchor(chip);
+			}
+		}
+
+		const hasOpenProgress = migrationStatus.querySelector('[aria-expanded="true"]') !== null;
+
+		return active || (hasAdminProgress && canShowHiddenAdminProgress) || hasOpenProgress;
+	}
+
 	#setupActionPanel(panel: BX.UI.ActionPanel): void
 	{
-		if (this.#actionPanel)
+		if (this.#actionPanel === panel)
 		{
 			return;
 		}
 
+		this.#panelObserver?.disconnect();
 		this.#actionPanel = panel;
 
 		// On single-row selection ActionPanel rebuilds from that row's actions,
@@ -175,7 +263,10 @@ export class GridManager
 		const container = panel.getPanelContainer();
 		container.dataset.testid = 'mail-mailbox-grid-bulk-panel';
 
-		this.#panelObserver = new MutationObserver(() => this.#applyPanelTestIds());
+		this.#panelObserver = new MutationObserver(() => {
+			this.#applyPanelTestIds();
+			this.#syncMigrationRestrictions();
+		});
 		this.#panelObserver.observe(container, { childList: true, subtree: true });
 
 		this.#applyPanelTestIds();
@@ -192,19 +283,26 @@ export class GridManager
 
 		if (this.#hasSelectedActiveMigration())
 		{
-			this.#migrationDisconnectWasDisabled ??= item.isDisabled();
+			if (!this.#migrationDisconnectState.has(item))
+			{
+				this.#migrationDisconnectState.set(item, {
+					disabled: item.isDisabled(),
+					title: item.layout?.container?.getAttribute('title') ?? null,
+				});
+			}
 			item.disable();
 			item.layout?.container?.setAttribute(
 				'title',
-				Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_ACTION_UNAVAILABLE') ?? '',
+				Loc.getMessage('MAIL_MIGRATION_ACTION_UNAVAILABLE') ?? '',
 			);
 
 			return;
 		}
 
-		if (this.#migrationDisconnectWasDisabled !== null)
+		const previousState = this.#migrationDisconnectState.get(item);
+		if (previousState)
 		{
-			if (this.#migrationDisconnectWasDisabled)
+			if (previousState.disabled)
 			{
 				item.disable();
 			}
@@ -212,8 +310,15 @@ export class GridManager
 			{
 				item.enable();
 			}
-			this.#migrationDisconnectWasDisabled = null;
-			item.layout?.container?.removeAttribute('title');
+			this.#migrationDisconnectState.delete(item);
+			if (previousState.title === null)
+			{
+				item.layout?.container?.removeAttribute('title');
+			}
+			else
+			{
+				item.layout?.container?.setAttribute('title', previousState.title);
+			}
 		}
 	}
 
@@ -230,15 +335,6 @@ export class GridManager
 		const row = this.getGrid()?.getRows().getById(mailboxId);
 
 		return row?.getNode?.()?.dataset?.mailboxMigrationActive === 'Y';
-	}
-
-	#notifyMigrationRestriction(): void
-	{
-		BX.UI.Notification.Center.notify({
-			content: Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_ACTION_UNAVAILABLE'),
-			position: 'top-right',
-			autoHideDelay: 3000,
-		});
 	}
 
 	#applyPanelTestIds(): void
@@ -289,8 +385,6 @@ export class GridManager
 			&& mailboxIds.some((mailboxId) => manager.#isMailboxMigrationActive(mailboxId))
 		)
 		{
-			manager.#notifyMigrationRestriction();
-
 			return;
 		}
 
@@ -304,7 +398,7 @@ export class GridManager
 
 	getGrid(): BX.Main.grid
 	{
-		return this.#grid ??= BX.Main.gridManager.getById(this.#gridId)?.instance;
+		return BX.Main.gridManager.getById(this.#gridId)?.instance;
 	}
 
 	runAction(config: runActionConfig): void
@@ -315,8 +409,6 @@ export class GridManager
 			&& this.#isMailboxMigrationActive(config.params.mailboxId)
 		)
 		{
-			this.#notifyMigrationRestriction();
-
 			return;
 		}
 		const options = config.options;

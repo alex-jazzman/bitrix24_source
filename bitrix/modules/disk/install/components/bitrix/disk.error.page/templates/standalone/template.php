@@ -39,7 +39,12 @@ $langId = LANGUAGE_ID;
 
 $illustration = $accessCardTemplatePath . '/images/access-lock.png';
 // Own phrases: the _V2 ones of the .default template are shared with its other consumers.
-$title = Loc::getMessage('DISK_ERROR_PAGE_STANDALONE_DENIED_TITLE');
+$titleMessageCode = $arParams['TITLE_MESSAGE_CODE'] ?? null;
+if (!is_string($titleMessageCode) || $titleMessageCode === '')
+{
+	$titleMessageCode = 'DISK_ERROR_PAGE_STANDALONE_DENIED_TITLE';
+}
+$title = Loc::getMessage($titleMessageCode) ?: Loc::getMessage('DISK_ERROR_PAGE_STANDALONE_DENIED_TITLE');
 $description = Loc::getMessage('DISK_ERROR_PAGE_STANDALONE_DENIED_DESCRIPTION');
 $mode = 'denied';
 $slotHtml = '';

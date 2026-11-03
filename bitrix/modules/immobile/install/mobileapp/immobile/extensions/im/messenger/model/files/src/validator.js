@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 /**
  * @module im/messenger/model/files/validator
  */
@@ -7,6 +5,7 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { FileStatus, FileType, FileImageType } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	function validate(store, fields)
 	{
@@ -51,10 +50,7 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 		{
 			result.extension = fields.extension.toString().toLowerCase();
 
-			if (result.type === FileType.image
-				&& Application.getPlatform() !== 'ios'
-				&& (result.extension === FileImageType.heic || result.extension === FileImageType.heif)
-			)
+			if (result.type === FileType.image && isUnsupportedHeicOrHeifImage(result.extension))
 			{
 				result.type = FileType.file;
 			}
@@ -182,11 +178,14 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 			}
 		}
 
-		// it is necessary for the native dialog on iOS to display heic as an image message
-		if (Application.getPlatform() === 'ios' && result.extension === 'heic' && !result.urlPreview)
+		// Supported HEIC/HEIF must stay an image message after the final server payload.
+		if (Feature.isHeicImageSupported && isHeicOrHeifImage(result.extension))
 		{
 			result.type = FileType.image;
-			result.urlPreview = result.urlShow;
+			if (!result.urlPreview)
+			{
+				result.urlPreview = result.urlShow;
+			}
 		}
 
 		if (Type.isObject(fields.uploadData))
@@ -237,6 +236,25 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 	function isLocalFileByUrl(url)
 	{
 		return Type.isString(url) && url.startsWith('file');
+	}
+
+	/**
+	 * @param {string} extension
+	 * @return {boolean}
+	 */
+	function isUnsupportedHeicOrHeifImage(extension)
+	{
+		return !Feature.isHeicImageSupported
+			&& isHeicOrHeifImage(extension);
+	}
+
+	/**
+	 * @param {string} extension
+	 * @return {boolean}
+	 */
+	function isHeicOrHeifImage(extension)
+	{
+		return extension === FileImageType.heic || extension === FileImageType.heif;
 	}
 
 	module.exports = { validate };

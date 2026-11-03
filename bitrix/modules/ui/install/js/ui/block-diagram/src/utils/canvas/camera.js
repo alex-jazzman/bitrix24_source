@@ -1,19 +1,14 @@
-import { mat3, vec2 } from '../../lib/gl-matrix';
-
-declare type Landmark = {
-	zoom: number,
-	x: number,
-	y: number,
-	rotation: number,
-	viewportX: number,
-	viewportY: number,
-};
+import { mat3 } from '../../lib/gl-matrix';
+import { clampZoom } from '../zoom-bounds';
+import { viewportToCanvas } from './viewport';
+import type { CameraLandmark, DiagramInstancesContext, State } from '../../types';
 
 export class Camera
 {
+	#state: State | null = null;
+
 	#x: number = 0;
 	#y: number = 0;
-	#rotation: number = 0;
 	#zoom: number = 1;
 	#width: number = 0;
 	#height: number = 0;
@@ -23,20 +18,10 @@ export class Camera
 	#viewProjectionMatrix: Float32Array = mat3.create();
 	#viewProjectionMatrixInv: Float32Array = mat3.create();
 
-	#changeCallback: (...args: any) => void | null = null;
-
-	constructor(options)
+	constructor(ctx: DiagramInstancesContext)
 	{
-		const {
-			width,
-			height,
-			onChangeCallback,
-		} = options;
-
-		this.#changeCallback = onChangeCallback;
-		this.projection(width, height);
-		this.updateMatrix();
-		this.#onChangedTransformParams({ width, height });
+		this.#state = ctx.state;
+		this.#updateMatrix();
 	}
 
 	get projectionMatrix(): Float32Array
@@ -59,11 +44,6 @@ export class Camera
 		return this.#viewProjectionMatrixInv;
 	}
 
-	get matrix(): Float32Array
-	{
-		return this.#matrix;
-	}
-
 	get zoom(): number
 	{
 		return this.#zoom;
@@ -71,11 +51,13 @@ export class Camera
 
 	set zoom(zoom: number): void
 	{
-		if (this.#zoom !== zoom)
+		const clampedZoom = this.#clampZoom(zoom);
+
+		if (this.#zoom !== clampedZoom)
 		{
-			this.#zoom = zoom;
-			this.#onChangedTransformParams({ zoom });
-			this.updateMatrix();
+			this.#zoom = clampedZoom;
+			this.#updateMatrix();
+			this.#publishTransform();
 		}
 	}
 
@@ -89,8 +71,8 @@ export class Camera
 		if (this.#x !== x)
 		{
 			this.#x = x;
-			this.#onChangedTransformParams({ x });
-			this.updateMatrix();
+			this.#updateMatrix();
+			this.#publishTransform();
 		}
 	}
 
@@ -104,22 +86,8 @@ export class Camera
 		if (this.#y !== y)
 		{
 			this.#y = y;
-			this.#onChangedTransformParams({ y });
-			this.updateMatrix();
-		}
-	}
-
-	get rotation(): number
-	{
-		return this.#rotation;
-	}
-
-	set rotation(rotation: number): void
-	{
-		if (this.#rotation !== rotation)
-		{
-			this.#rotation = rotation;
-			this.updateMatrix();
+			this.#updateMatrix();
+			this.#publishTransform();
 		}
 	}
 
@@ -133,64 +101,123 @@ export class Camera
 		return this.#height;
 	}
 
-	setChangeTransformCallback(callback: ({ x: number, y: number, zoom: number }) => any): void
-	{
-		this.#changeCallback = callback;
-	}
-
-	#onChangedTransformParams(params: {...}): void
-	{
-		this.#changeCallback({
-			x: this.#x,
-			y: this.#y,
-			zoom: this.#zoom,
-			width: this.#width,
-			height: this.#height,
-			...params,
-		});
-	}
-
-	clone(width = null, height = null): Camera
-	{
-		const camera = new Camera({
-			width: width || this.#width,
-			height: height || this.#height,
-			onChangeCallback: this.#changeCallback,
-		});
-		camera.#x = this.#x;
-		camera.#y = this.#y;
-		camera.#zoom = this.#zoom;
-		camera.#rotation = this.#rotation;
-		camera.updateMatrix();
-		camera.#onChangedTransformParams({
-			x: camera.#x,
-			y: camera.#y,
-			zoom: camera.#zoom,
-		});
-
-		return camera;
-	}
-
-	projection(width, height): void
+	resize(width: number, height: number): void
 	{
 		this.#width = width;
 		this.#height = height;
 		mat3.projection(this.#projectionMatrix, width, height);
-		this.updateViewProjectionMatrix();
+		this.#updateViewProjectionMatrix();
+		this.#publishViewportSize();
 	}
 
-	updateMatrix(): void
+	createLandmark(params: Partial<CameraLandmark> = {}): CameraLandmark
+	{
+		return {
+			zoom: this.#zoom,
+			x: this.#x,
+			y: this.#y,
+			anchorToViewport: false,
+			viewportX: 0,
+			viewportY: 0,
+			...params,
+		};
+	}
+
+	applyLandmark(landmark: CameraLandmark): void
+	{
+		const { x, y, zoom, anchorToViewport, viewportX, viewportY } = landmark;
+		// Anchoring needs a sized viewport: the reverse projection divides by it.
+		const canAnchor = anchorToViewport && this.#width > 0 && this.#height > 0;
+		const anchor = canAnchor
+			? this.#viewportToCanvas({ x: viewportX, y: viewportY })
+			: null;
+
+		this.#zoom = this.#clampZoom(zoom);
+		this.#x = x;
+		this.#y = y;
+		this.#updateMatrix();
+
+		if (anchor)
+		{
+			const shifted = this.#viewportToCanvas({ x: viewportX, y: viewportY });
+			this.#x += anchor.x - shifted.x;
+			this.#y += anchor.y - shifted.y;
+			this.#updateMatrix();
+		}
+
+		this.#publishTransform();
+	}
+
+	// Both axes at once: the pair of setters rebuilds the matrices and publishes the
+	// state twice, and a drag asks for a new position on every pointer move.
+	setPosition(x: number, y: number): void
+	{
+		if (this.#x === x && this.#y === y)
+		{
+			return;
+		}
+
+		this.#x = x;
+		this.#y = y;
+		this.#updateMatrix();
+		this.#publishTransform();
+	}
+
+	// Screen pixels in: the delta becomes world units inside the camera. Callers tick
+	// every frame, so an idle delta must leave the matrices and the state untouched.
+	panBy(dxScreen: number, dyScreen: number): void
+	{
+		if (dxScreen === 0 && dyScreen === 0)
+		{
+			return;
+		}
+
+		this.#x += dxScreen / this.#zoom;
+		this.#y += dyScreen / this.#zoom;
+		this.#updateMatrix();
+		this.#publishTransform();
+	}
+
+	#viewportToCanvas(point: { x: number, y: number }): { x: number, y: number }
+	{
+		return viewportToCanvas(
+			point,
+			{ width: this.#width, height: this.#height },
+			this.#viewProjectionMatrixInv,
+		);
+	}
+
+	// Bounds are re-read from the state on every call rather than cached: the consumer changes them
+	// on the fly, and the clamp runs on every frame of a gesture.
+	#clampZoom(zoom: number): number
+	{
+		return clampZoom(zoom, this.#state.minZoom, this.#state.maxZoom, this.#zoom);
+	}
+
+	#publishTransform(): void
+	{
+		this.#state.transformX = this.#x;
+		this.#state.transformY = this.#y;
+		this.#state.zoom = this.#zoom;
+	}
+
+	#publishViewportSize(): void
+	{
+		this.#state.canvasWidth = this.#width;
+		this.#state.canvasHeight = this.#height;
+	}
+
+	#updateMatrix(): void
 	{
 		const zoomScale = 1 / this.#zoom;
 		mat3.identity(this.#matrix);
 		mat3.translate(this.#matrix, this.#matrix, [this.#x, this.#y]);
-		mat3.rotate(this.#matrix, this.#matrix, this.#rotation);
 		mat3.scale(this.#matrix, this.#matrix, [zoomScale, zoomScale]);
 		mat3.invert(this.#viewMatrix, this.#matrix);
-		this.updateViewProjectionMatrix();
+		this.#updateViewProjectionMatrix();
 	}
 
-	updateViewProjectionMatrix(): void
+	#updateViewProjectionMatrix(): void
 	{
 		mat3.multiply(
 			this.#viewProjectionMatrix,
@@ -198,76 +225,5 @@ export class Camera
 			this.#viewMatrix,
 		);
 		mat3.invert(this.#viewProjectionMatrixInv, this.#viewProjectionMatrix);
-	}
-
-	createLandmark(params: Partial<Landmark> = {}): Landmark
-	{
-		return {
-			zoom: this.#zoom,
-			x: this.#x,
-			y: this.#y,
-			rotation: this.#rotation,
-			...params,
-		};
-	}
-
-	viewportToCanvas(
-		{ x, y }: { x: number, y: number },
-		camera: Camera,
-	): { x: number, y: number }
-	{
-		const { width, height, viewProjectionMatrixInv } = camera || this;
-		const canvas = vec2.transformMat3(
-			vec2.create(),
-			[(x / width) * 2 - 1, (1 - y / height) * 2 - 1],
-			viewProjectionMatrixInv,
-		);
-
-		return { x: canvas[0], y: canvas[1] };
-	}
-
-	applyLandmark(landmark: Landmark): void
-	{
-		const { x, y, zoom, rotation, viewportX, viewportY } = landmark;
-		const useFixedViewport = viewportX || viewportY;
-		let preZoomX = 0;
-		let preZoomY = 0;
-
-		if (useFixedViewport)
-		{
-			const canvas = this.viewportToCanvas({
-				x: viewportX,
-				y: viewportY,
-			});
-			preZoomX = canvas.x;
-			preZoomY = canvas.y;
-		}
-
-		this.#zoom = zoom;
-		this.#rotation = rotation;
-		this.#x = x;
-		this.#y = y;
-		this.updateMatrix();
-		this.#onChangedTransformParams({
-			x: this.#x,
-			y: this.#y,
-			zoom: this.#zoom,
-		});
-
-		if (useFixedViewport)
-		{
-			const { x: postZoomX, y: postZoomY } = this.viewportToCanvas({
-				x: viewportX,
-				y: viewportY,
-			});
-			this.#x += preZoomX - postZoomX;
-			this.#y += preZoomY - postZoomY;
-			this.updateMatrix();
-			this.#onChangedTransformParams({
-				x: this.#x,
-				y: this.#y,
-				zoom: this.#zoom,
-			});
-		}
 	}
 }

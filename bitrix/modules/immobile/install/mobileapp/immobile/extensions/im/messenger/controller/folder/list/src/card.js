@@ -24,6 +24,7 @@ jn.define('im/messenger/controller/folder/list/card', (require, exports, module)
 		 * @param {string} props.title
 		 * @param {string} props.description
 		 * @param {boolean} props.isSystem
+		 * @param {boolean} props.hasSettingsEntry
 		 * @param {Function} [props.onMorePress] - (moreButtonRef) => void
 		 */
 		constructor(props)
@@ -33,9 +34,11 @@ jn.define('im/messenger/controller/folder/list/card', (require, exports, module)
 			this.moreButtonRef = null;
 		}
 
+		// A system folder keeps the button hidden unless it has a settings entry:
+		// the composite folder is the only system one with an action behind it.
 		renderMoreButton()
 		{
-			if (this.props.isSystem)
+			if (this.props.isSystem && !this.props.hasSettingsEntry)
 			{
 				return null;
 			}

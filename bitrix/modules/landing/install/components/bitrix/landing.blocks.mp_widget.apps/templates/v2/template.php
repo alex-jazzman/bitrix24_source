@@ -12,6 +12,8 @@ use Bitrix\Main\UI\Extension;
 
 Extension::load([
 	'ui.qrauthorization',
+	// the focus ring of the stylesheet is built from the tokens of this one
+	'ui.design-tokens.air',
 	'ui.icon-set.main',
 	'ui.icon-set.social',
 	'ui.buttons',
@@ -20,14 +22,16 @@ Extension::load([
 Loc::loadMessages(__FILE__);
 
 $mobileText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_V2_TEXT_1');
-$mobileButtonText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_V2_BUTTON_TEXT');
-$mobileId = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
+$mobileButtonText = htmlspecialcharsbx(Loc::getMessage('BLOCK_MP_WIDGET_APPS_V2_BUTTON_TEXT'));
+$mobileIdBase = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
+$mobileIdMain = $mobileIdBase . '-main';
+$mobileIdSidebar = $mobileIdBase . '-sidebar';
 
 $desktopText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_V2_DESKTOP_TEXT_1', [
 	'#OS_NAME#' => $arResult['OS_NAME'],
 ]);
 $desktopButtonText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_V2_DESKTOP_BUTTON_TEXT');
-$buttonLink = $arResult['DESKTOP_APP_LINK'];
+$buttonLink = htmlspecialcharsbx((string)$arResult['DESKTOP_APP_LINK']);
 $os = $arResult['OS'];
 $osIconClass = '';
 if ($os === 'MAC')
@@ -44,16 +48,16 @@ if ($os === 'LIN')
 }
 $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 ?>
-<div class="landing-widget-apps-v2" id="<?= $id ?>">
+<div class="landing-widget-apps-v2" id="<?= $id ?>" data-testid="mainpage-widget-apps-v2-root">
 	<div class="landing-widget-view-main">
 		<div class="landing-widget-content">
-			<div class="landing-widget-app-v2-mobile" id="<?= $mobileId ?>">
+			<div class="landing-widget-app-v2-mobile" id="<?= $mobileIdMain ?>">
 				<div class="landing-widget-app-v2-mobile-logo-container">
 					<div class="landing-widget-app-v2-mobile-logo"></div>
 				</div>
-				<div class="landing-widget-app-v2-mobile-title">
+				<h2 class="landing-widget-app-v2-mobile-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_MOBILE']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-v2-mobile-text-box">
 					<div class="landing-widget-app-v2-mobile-text">
 						<?= $mobileText ?>
@@ -66,9 +70,13 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 						</div>
 					</div>
 					<div class="landing-widget-app-v2-mobile-qr-control-box">
-						<div class="landing-widget-qr-button">
+						<button
+							type="button"
+							class="landing-widget-qr-button"
+							data-testid="mainpage-widget-apps-v2-qr-btn"
+						>
 							<?= $mobileButtonText ?>
-						</div>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -76,9 +84,9 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 				<div class="landing-widget-app-v2-desktop-logo-container">
 					<div class="landing-widget-app-v2-desktop-logo"></div>
 				</div>
-				<div class="landing-widget-app-v2-desktop-title">
+				<h2 class="landing-widget-app-v2-desktop-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_DESKTOP']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-v2-desktop-text-box">
 					<div class="landing-widget-app-v2-desktop-text">
 						<?= $desktopText ?>
@@ -93,6 +101,7 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 					<a
 						href="<?= $buttonLink ?>"
 						class="landing-widget-desktop-button"
+						data-testid="mainpage-widget-apps-v2-desktop-link"
 					>
 						<?= $desktopButtonText ?>
 					</a>
@@ -102,13 +111,13 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 	</div>
 	<div class="landing-widget-view-sidebar">
 		<div class="landing-widget-content">
-			<div class="landing-widget-app-v2-mobile" id="<?= $mobileId ?>">
+			<div class="landing-widget-app-v2-mobile" id="<?= $mobileIdSidebar ?>">
 				<div class="landing-widget-app-v2-mobile-logo-container">
 					<div class="landing-widget-app-v2-mobile-logo"></div>
 				</div>
-				<div class="landing-widget-app-v2-mobile-title">
+				<h2 class="landing-widget-app-v2-mobile-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_MOBILE']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-v2-mobile-content">
 					<div class="landing-widget-app-v2-mobile-main">
 						<div class="landing-widget-app-v2-mobile-text-box">
@@ -123,9 +132,13 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 								</div>
 							</div>
 							<div class="landing-widget-app-v2-mobile-qr-control-box">
-								<div class="landing-widget-qr-button">
+								<button
+									type="button"
+									class="landing-widget-qr-button"
+									data-testid="mainpage-widget-apps-v2-qr-btn"
+								>
 									<?= $mobileButtonText ?>
-								</div>
+								</button>
 							</div>
 						</div>
 					</div>
@@ -135,9 +148,9 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 				<div class="landing-widget-app-v2-desktop-logo-container">
 					<div class="landing-widget-app-v2-desktop-logo"></div>
 				</div>
-				<div class="landing-widget-app-v2-desktop-title">
+				<h2 class="landing-widget-app-v2-desktop-title">
 					<?= \htmlspecialcharsbx($arResult['TITLE_DESKTOP']) ?>
-				</div>
+				</h2>
 				<div class="landing-widget-app-v2-desktop-content">
 					<div class="landing-widget-app-v2-desktop-main">
 						<div class="landing-widget-app-v2-desktop-text-box">
@@ -154,6 +167,7 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 							<a
 								href="<?= $buttonLink ?>"
 								class="landing-widget-desktop-button"
+								data-testid="mainpage-widget-apps-v2-desktop-link"
 							>
 								<?= $desktopButtonText ?>
 							</a>

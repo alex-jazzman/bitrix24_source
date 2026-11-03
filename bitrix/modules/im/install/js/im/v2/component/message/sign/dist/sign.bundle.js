@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_v2_application_core, im_v2_component_elements_button, im_v2_component_message_base, im_v2_component_message_default, im_v2_component_message_elements, im_v2_lib_utils) {
+(function (exports, main_core, im_v2_application_core, im_v2_component_elements_button, im_v2_component_message_base, im_v2_component_message_default, im_v2_component_message_elements, im_v2_lib_parser, im_v2_lib_utils) {
 	'use strict';
 
 	const Await = Object.freeze({
@@ -24,7 +24,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		byEmployeeInviteCompany: 'byEmployeeInviteCompany',
 		byEmployeeInviteReviewer: 'byEmployeeInviteReviewer',
 		byEmployeeInviteEmployee: 'byEmployeeInviteEmployee',
-		byEmployeeSignedByEmployee: 'byEmployeeSignedByEmployee'
+		byEmployeeSignedByEmployee: 'byEmployeeSignedByEmployee',
+		byEmployeeReceivedByCompany: 'byEmployeeReceivedByCompany',
+		// KEDO annulment (STAGE-01): the annulment mark is cleared, signing is valid again
+		annulmentCanceledToEmployee: 'annulmentCanceledToEmployee',
+		annulmentCanceledToInitiator: 'annulmentCanceledToInitiator'
 	});
 	const Success = Object.freeze({
 		// initiated by company
@@ -34,6 +38,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		doneFromAssignee: 'doneFromAssignee',
 		doneFromEditor: 'doneFromEditor',
 		doneFromReviewer: 'doneFromReviewer',
+		doneEmployeeReceivedByCompany: 'doneEmployeeReceivedByCompany',
 		// initiated by employee
 		byEmployeeDoneEmployee: 'byEmployeeDoneEmployee',
 		byEmployeeDoneEmployeeM: 'byEmployeeDoneEmployeeM',
@@ -71,6 +76,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		stoppedToEmployeeF: 'stoppedToEmployeeF',
 		signingError: 'signingError',
 		repeatSigning: 'repeatSigning',
+		documentPreparationFailed: 'documentPreparationFailed',
+		// KEDO annulment (STAGE-01)
+		documentAnnulledToEmployee: 'documentAnnulledToEmployee',
+		documentAnnulledToInitiator: 'documentAnnulledToInitiator',
 		// initiated by employee
 		byEmployeeStoppedToEmployee: 'byEmployeeStoppedToEmployee',
 		byEmployeeStoppedToEmployeeM: 'byEmployeeStoppedToEmployeeM',
@@ -280,10 +289,44 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				color: im_v2_component_elements_button.ButtonColor.PrimaryBorder
 			}
 		},
+		[Await.byEmployeeReceivedByCompany]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE'),
+			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION'),
+			button: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT'),
+				callback: ({
+					user,
+					document
+				}) => {
+					goToPrimaryLink(document, true);
+				},
+				color: im_v2_component_elements_button.ButtonColor.PrimaryBorder
+			}
+		},
 		[Await.inviteB2bDocumentSigning]: {
 			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_TITLE'),
 			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION'),
 			button: null
+		},
+		[Await.annulmentCanceledToEmployee]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_TITLE'),
+			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_DESCRIPTION')
+		},
+		[Await.annulmentCanceledToInitiator]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_TITLE'),
+			description: annulledCount => main_core.Loc.getMessagePlural('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_DESCRIPTION', annulledCount, {
+				'#COUNT#': annulledCount
+			}),
+			button: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_BUTTON_TEXT'),
+				callback: ({
+					user,
+					document
+				}) => {
+					goToPrimaryLink(document, true);
+				},
+				color: im_v2_component_elements_button.ButtonColor.Primary
+			}
 		},
 		[Success.doneCompany]: {
 			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_COMPANY_TITLE_MSGVER_1'),
@@ -341,6 +384,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_TITLE'),
 			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION_MSGVER_1'),
 			button: null
+		},
+		[Success.doneEmployeeReceivedByCompany]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE'),
+			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION'),
+			button: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT'),
+				callback: ({
+					user,
+					document
+				}) => {
+					goToPrimaryLink(document, true);
+				},
+				color: im_v2_component_elements_button.ButtonColor.PrimaryBorder
+			}
 		},
 		[Success.doneB2bDocumentSigning]: {
 			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_TITLE'),
@@ -663,6 +720,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				color: im_v2_component_elements_button.ButtonColor.Primary
 			}
 		},
+		[Failure.documentAnnulledToEmployee]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_TITLE'),
+			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_DESCRIPTION')
+		},
+		[Failure.documentAnnulledToInitiator]: {
+			title: annulledCount => main_core.Loc.getMessagePlural('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_TITLE', annulledCount),
+			description: annulledCount => main_core.Loc.getMessagePlural('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_DESCRIPTION', annulledCount, {
+				'#COUNT#': annulledCount
+			}),
+			button: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_BUTTON_TEXT'),
+				callback: ({
+					user,
+					document
+				}) => {
+					goToPrimaryLink(document, true);
+				},
+				color: im_v2_component_elements_button.ButtonColor.Primary
+			}
+		},
 		[Failure.signingError]: {
 			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_TITLE'),
 			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_DESCRIPTION'),
@@ -682,6 +759,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_REPEAT_DESCRIPTION'),
 			button: {
 				text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_REPEAT_BUTTON_TEXT'),
+				callback: ({
+					user,
+					document
+				}) => {
+					goToPrimaryLink(document, true);
+				},
+				color: im_v2_component_elements_button.ButtonColor.Primary
+			}
+		},
+		[Failure.documentPreparationFailed]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_TITLE'),
+			description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_DESCRIPTION'),
+			button: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DOCUMENT_PREPARATION_FAILED_BUTTON_TEXT'),
 				callback: ({
 					user,
 					document
@@ -743,7 +834,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		USER: 'user',
 		INITIATOR: 'initiator',
 		DOCUMENT: 'document',
-		HELP_ARTICLE: 'helpArticle'
+		HELP_ARTICLE: 'helpArticle',
+		USER_MESSAGE: 'userMessage',
+		ANNULLED_COUNT: 'annulledCount',
+		ACTION_COMPLETED: 'actionCompleted'
 	};
 
 	// @vue/component
@@ -788,6 +882,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			helpArticle() {
 				return this.componentParams[PARAMS_KEY.HELP_ARTICLE] ?? '';
 			},
+			userMessage() {
+				return this.componentParams[PARAMS_KEY.USER_MESSAGE] ?? '';
+			},
+			// The text comes as a safe BB-code representation, the parser escapes HTML before parsing
+			// markup. Image embedding is off on purpose: the author's link to an image would otherwise
+			// load remote content into the card for every signer (a tracking pixel), while links,
+			// line breaks and emoji keep working.
+			formattedUserMessage() {
+				return im_v2_lib_parser.Parser.decode({
+					text: this.userMessage,
+					showImageFromLink: false
+				});
+			},
+			// Marks where the system text ends and the sender's own text begins.
+			userMessageHeader() {
+				return main_core.Loc.getMessage('IM_MESSAGE_SIGN_USER_MESSAGE_HEADER');
+			},
+			annulledCount() {
+				const count = this.componentParams[PARAMS_KEY.ANNULLED_COUNT];
+				return main_core.Type.isNumber(count) ? count : null;
+			},
+			// The server marks a card once this recipient is no longer expected to act. A card sent before
+			// the feature, or by an older server, carries no mark and keeps asking for the action.
+			isActionCompleted() {
+				return this.componentParams[PARAMS_KEY.ACTION_COMPLETED] === true;
+			},
+			// A card nobody has to act on loses the accent of its button, the same way the mobile card does.
+			// The muted look is a ready colour of the button, not transparency over the accent one: opacity
+			// takes the contrast of the label below the WCAG AA threshold, while this colour keeps it at
+			// 5.85:1 over the muted background - above the accent button of an active card at 1.99:1.
+			buttonColor() {
+				return this.isActionCompleted ? im_v2_component_elements_button.ButtonColor.LightBorder : this.button?.color;
+			},
 			signData() {
 				const data = metaData[this.stageId];
 				if (!data) {
@@ -796,10 +923,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return data;
 			},
 			title() {
-				return this.signData?.title ?? '';
+				return this.resolvePhrase(this.signData?.title);
 			},
 			description() {
-				return this.signData?.description ?? '';
+				return this.resolvePhrase(this.signData?.description);
 			},
 			button() {
 				return this.signData?.button;
@@ -821,11 +948,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					'--self': this.isSelfMessage,
 					'--await': this.isAwaitSign,
 					'--success': this.isSuccessSign,
-					'--failure': this.isFailureSign
+					'--failure': this.isFailureSign,
+					'--completed': this.isActionCompleted
 				};
 			}
 		},
 		methods: {
+			// A card whose text depends on the number of annulled signings declares the
+			// phrase as a function of that number and picks the plural form itself; every
+			// other card is a plain string. A message written before the number existed
+			// carries none, and such an action affected a single signing.
+			resolvePhrase(phrase) {
+				if (main_core.Type.isFunction(phrase)) {
+					return phrase(this.annulledCount ?? 1) ?? '';
+				}
+				return phrase ?? '';
+			},
 			replacePhrase(phrase) {
 				let text = phrase ?? '';
 				const userLink = im_v2_lib_utils.Utils.user.getProfileLink(this.user?.id);
@@ -857,21 +995,45 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:withBackground="false"
 			class="bx-im-message-sign__scope"
 		>
-			<div :class="['bx-im-message-sign__container', containerClasses]">
+			<div
+				:class="['bx-im-message-sign__container', containerClasses]"
+				:data-stage-id="stageId"
+				:data-action-completed="isActionCompleted"
+				data-testid="im-message-sign-root"
+			>
 				<div class="bx-im-message-sign__image" />
 				<div class="bx-im-message-sign__content">
-					<div class="bx-im-message-sign__title">
+					<div class="bx-im-message-sign__title" data-testid="im-message-sign-title">
 						{{ title }}
 					</div>
-					<div class="bx-im-message-sign__description" v-html="replacePhrase(description)" />
+					<div
+						class="bx-im-message-sign__description"
+						data-testid="im-message-sign-description"
+						v-html="replacePhrase(description)"
+					/>
 					<div class="bx-im-message-sign__buttons_container">
 						<ChatButton
 							v-if="button"
 							:size="ButtonSize.L"
 							isRounded
 							:text="button.text"
-							:color="button.color"
+							:color="buttonColor"
+							data-testid="im-message-sign-action-btn"
 							@click="button.callback({ user, document })"
+						/>
+					</div>
+					<div
+						v-if="formattedUserMessage"
+						class="bx-im-message-sign__user_message"
+						data-testid="im-message-sign-user-message"
+					>
+						<div v-if="userMessageHeader" class="bx-im-message-sign__user_message-header">
+							{{ userMessageHeader }}
+						</div>
+						<div
+							class="bx-im-message-sign__user_message-text"
+							data-testid="im-message-sign-user-message-text"
+							v-html="formattedUserMessage"
 						/>
 					</div>
 				</div>
@@ -888,5 +1050,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.SignMessage = SignMessage;
 	exports.Success = Success;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=sign.bundle.js.map

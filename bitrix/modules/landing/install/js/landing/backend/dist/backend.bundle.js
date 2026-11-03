@@ -502,7 +502,11 @@ this.BX = this.BX || {};
 			if (main_core.Type.isNumber(folderId)) {
 				requestBody.fields.FOLDER_ID = folderId;
 			}
-			return this.action('Landing::addByTemplate', requestBody);
+
+			// the server prefers the site_id query param over siteId from the body
+			return this.action('Landing::addByTemplate', requestBody, {
+				site_id: siteId
+			});
 		}
 	}
 

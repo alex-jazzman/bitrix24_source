@@ -5,34 +5,49 @@ import { Jpeg } from './types/jpeg';
 import { Webp } from './types/webp';
 
 import { getFileExtension } from '../get-file-extension';
+import { detectImageFormat } from './detect-image-format';
+import { findFormatByExtension, findFormatByMimeType, ImageFormats, type ImageFormat } from './image-format';
 import { type ImageSize } from './image-size-type';
 
 type ImageSizeHandler = { getSize: (file: File) => Promise<ImageSize> };
 
-const jpg = new Jpeg();
-const typeHandlers: Record<string, ImageSizeHandler> = {
-	gif: new Gif(),
-	png: new Png(),
-	bmp: new Bmp(),
-	jpg,
-	jpeg: jpg,
-	jpe: jpg,
-	webp: new Webp(),
+const typeHandlers: Record<ImageFormat, ImageSizeHandler> = {
+	[ImageFormats.Gif]: new Gif(),
+	[ImageFormats.Png]: new Png(),
+	[ImageFormats.Bmp]: new Bmp(),
+	[ImageFormats.Jpeg]: new Jpeg(),
+	[ImageFormats.Webp]: new Webp(),
 };
 
-export const getImageSize = (file: File): Promise<ImageSize> => {
+export const getImageSize = async (file: File): Promise<ImageSize> => {
 	if (file.size === 0)
 	{
-		return Promise.reject(new Error('Unknown image type.'));
+		throw new Error('Unknown image type.');
 	}
 
 	const extension = getFileExtension(file.name).toLowerCase();
-	const type = file.type.replace(/^image\//, '');
-	const typeHandler = typeHandlers[extension] || typeHandlers[type];
-	if (!typeHandler)
+	const nameFormat = findFormatByExtension(extension) ?? findFormatByMimeType(file.type);
+
+	let primaryError: unknown = null;
+	if (nameFormat !== null)
 	{
-		return Promise.reject(new Error('Unknown image type.'));
+		try
+		{
+			return await typeHandlers[nameFormat].getSize(file);
+		}
+		catch (error)
+		{
+			primaryError = error;
+		}
 	}
 
-	return typeHandler.getSize(file);
+	const contentFormat = await detectImageFormat(file);
+	if (contentFormat === null || contentFormat === nameFormat)
+	{
+		throw primaryError ?? new Error('Unknown image type.');
+	}
+
+	const size = await typeHandlers[contentFormat].getSize(file);
+
+	return { ...size, contentFormat };
 };

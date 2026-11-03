@@ -18,6 +18,11 @@ $entityTypeID = $arResult['ENTITY_TYPE_ID'];
 $currentStepID = $arResult['CURRENT_STEP_ID'];
 $currentSemantics = $arResult['CURRENT_SEMANTICS'];
 
+//In "read only" mode stage selection is blocked in processStepSelect,
+//so the stage gets neither button semantics nor a spot in the keyboard tab order:
+//otherwise it would be a dead stop when tabbing (WCAG 4.1.2, 2.4.3).
+$isStageSelectable = !$arResult['READ_ONLY'];
+
 $currentColor = $arResult['CURRENT_COLOR'];
 $defaultBackgroundColor = $arResult['DEFAULT_BACKGROUND_COLOR'];
 if($currentColor === '')
@@ -26,7 +31,10 @@ if($currentColor === '')
 }
 
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load('main.core');
 \Bitrix\Main\UI\Extension::load('crm.stage.permission-checker');
+//Stage text colors are calculated on BX.ready, so the shared contrast rule is needed synchronously.
+\Bitrix\Main\UI\Extension::load('crm.stage.color');
 
 //Render progress manager settings
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
@@ -112,7 +120,7 @@ $backgroundImageCss = "url('data:image/svg+xml;charset=UTF-8,%3csvg width=%27295
 </script>
 <div class="crm-entity-section crm-entity-section-status-wrap">
 	<div class="crm-entity-section-status-container">
-		<div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-entity-section-status-container-flex">
+		<div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-entity-section-status-container-flex" role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CRM_ENTITY_PROGRESSBAR_STAGES_ARIA'))?>">
 			<?foreach($items as $item)
 			{
 				$statusID = htmlspecialcharsbx($item['STATUS_ID']);
@@ -121,7 +129,7 @@ $backgroundImageCss = "url('data:image/svg+xml;charset=UTF-8,%3csvg width=%27295
 				$isPassed = $item['IS_PASSED'];
 				$isVisible = $item['IS_VISIBLE'];
 
-				?><div data-id="<?=$statusID?>" class="crm-entity-section-status-step"<?=!$isVisible ? ' style="display:none;"' : ''?>>
+				?><div data-id="<?=$statusID?>" class="crm-entity-section-status-step"<?=$item['STATUS_ID'] === $currentStepID ? ' aria-current="step"' : ''?><?=$isStageSelectable ? ' role="button" tabindex="0" aria-disabled="false"' : ''?><?=!$isVisible ? ' style="display:none;"' : ''?>>
 				<div class="crm-entity-section-status-step-item"><?
 					if($isPassed)
 					{

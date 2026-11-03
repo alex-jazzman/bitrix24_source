@@ -1,7 +1,5 @@
 import { type EventEmitter } from 'main.core.events';
 
-import { Core } from 'im.v2.application.core';
-
 import { SearchContextMenu } from '../../classes/search-context-menu';
 
 import '../css/self-chat.css';
@@ -9,13 +7,25 @@ import '../css/self-chat.css';
 // @vue/component
 export const SelfChat = {
 	name: 'SelfChat',
+	props: {
+		// Comes from the composition of the carousel and is not worked out here: the chat this tile opens
+		// by click has to be the very chat the traversal order opens by Enter.
+		dialogId: {
+			type: String,
+			required: true,
+		},
+		active: {
+			type: Boolean,
+			default: false,
+		},
+		navIndex: {
+			type: Number,
+			default: null,
+		},
+	},
 	emits: ['clickItem'],
 	computed:
 	{
-		dialogId(): number
-		{
-			return Core.getUserId().toString();
-		},
 		name(): string
 		{
 			return this.$Bitrix.Loc.getMessage('IM_SEARCH_MY_NOTES');
@@ -44,9 +54,13 @@ export const SelfChat = {
 		},
 	},
 	template: `
-		<div 
+		<div
+			:data-id="dialogId"
+			:data-testid="'im-search-carousel-item-' + dialogId"
+			:data-nav-index="navIndex"
 			class="bx-im-search-self-chat__container bx-im-search-self-chat__scope"
-			@click="onClick" 
+			:class="{'--keyboard-active': active}"
+			@click="onClick"
 			@click.right.prevent
 		>
 			<div class="bx-im-search-self-chat__avatar"></div>

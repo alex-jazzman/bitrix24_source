@@ -139,7 +139,9 @@
 	flex-shrink: 0;
 }
 
-.bx-im-sidebar-detail__container .bx-im-audio-player__timeline-container {
+/* one owner for both rows of the "Audio" tab: a second value would drift out of this one */
+.bx-im-sidebar-detail__container .bx-im-audio-player__timeline-container,
+.bx-im-sidebar-detail__container .bx-im-sidebar-file-video-note-detail-item__timeline {
 	padding-left: 20px;
 }
 
@@ -170,6 +172,57 @@
 .bx-im-sidebar-main-panel__block:last-child {
 	margin-bottom: 0;
 }
+
+.bx-im-sidebar-skeleton__container {
+	--im-sidebar-skeleton__background-color_block: var(--im-color-palette-white-base, #fff);
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 6px 0 6px 6px;
+	height: calc(100% - 64px);
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.bx-im-sidebar-skeleton__block {
+	width: 100%;
+	background-color: var(--im-sidebar-skeleton__background-color_block);
+	margin-bottom: 6px;
+	border-radius: 8px;
+	box-shadow: 0 1px 1px rgb(0 0 0 / 5%);
+}
+
+.bx-im-sidebar-skeleton__avatar {
+	height: 172px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Ccircle cx='154' cy='72' r='47' fill='%23eeeff0'/%3E%3Crect width='132' height='8' x='88' y='138' fill='%23eeeff0' rx='2'/%3E%3Crect width='70' height='8' x='119' y='156' fill='%23eeeff0' rx='2'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
+.bx-im-sidebar-skeleton__invite-button {
+	height: 36px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Crect width='141' height='18' x='84' y='8' fill='%23eeeff0' rx='9'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
+.bx-im-sidebar-skeleton__settings {
+	height: 54px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Csvg xmlns='http://www.w3.org/2000/svg' width='310' height='42' viewBox='0 0 310 42'%3E%3Ccircle cx='27' cy='15' r='11' fill='%23eeeff0'/%3E%3Crect width='71' height='8' x='49' y='11' fill='%23eeeff0' rx='2'/%3E%3C/svg%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
+.bx-im-sidebar-skeleton__files {
+	height: 130px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:130px' viewBox='0 0 100%25 130'%3E%3Csvg height='1285'%3E%3Cdefs%3E%3Cpath id='a' stroke='%23dfe0e3' d='M90 87.5H22a9.5 9.5 0 0 1-9.5-9.5V52a9.5 9.5 0 0 1 9.5-9.5h68a9.5 9.5 0 0 1 9.5 9.5v26a9.5 9.5 0 0 1-9.5 9.5Z'/%3E%3C/defs%3E%3Cpath fill='%23fff' d='M308 122a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8h292a8 8 0 0 1 8 8z'/%3E%3Cuse xlink:href='%23a'/%3E%3Cuse xlink:href='%23a' x='98'/%3E%3Cuse xlink:href='%23a' x='196'/%3E%3C/svg%3E%3Csvg id='f' height='1285'%3E%3Cdefs%3E%3Cg id='c'%3E%3Crect width='65' height='5' x='24' y='98' fill='%23eeeff0' rx='2'/%3E%3Crect width='53' height='5' x='30' y='110' fill='%23eeeff0' rx='2'/%3E%3Cpath fill='%23e5e8eb' fill-rule='evenodd' d='M46.18 51.455c0-.804.651-1.455 1.455-1.455H59.4c.386 0 .756.153 1.029.426l4.967 4.968c.273.273.427.643.427 1.029v17.585c0 .803-.652 1.455-1.455 1.455H47.635a1.455 1.455 0 0 1-1.455-1.455z' clip-rule='evenodd'/%3E%3Cmask id='b' width='20' height='26' x='46' y='50' maskUnits='userSpaceOnUse' style='mask-type:alpha'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M46.18 51.455c0-.804.651-1.455 1.455-1.455H59.4c.386 0 .756.153 1.029.426l4.967 4.968c.273.273.427.643.427 1.029v17.585c0 .803-.652 1.455-1.455 1.455H47.635a1.455 1.455 0 0 1-1.455-1.455z' clip-rule='evenodd'/%3E%3C/mask%3E%3Cg mask='url(%23b)'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M59.37 50h6.452v6.466c0-.215-.183-.282-.293-.282h-5.164a.726.726 0 0 1-.727-.727v-5.185c0-.082-.09-.272-.267-.272' clip-rule='evenodd' opacity='.15'/%3E%3C/g%3E%3C/g%3E%3C/defs%3E%3Crect width='127' height='8' x='14' y='16' fill='%23eeeff0' rx='2'/%3E%3Cuse xlink:href='%23c'/%3E%3Cuse xlink:href='%23c' x='98'/%3E%3Cuse xlink:href='%23c' x='196'/%3E%3C/svg%3E%3Crect id='g' width='100%25' height='1270' fill='url(%23d)' mask='url(%23e)'/%3E%3Cmask id='e' fill='%23fff'%3E%3Cuse xlink:href='%23f'/%3E%3C/mask%3E%3ClinearGradient id='d' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23g' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
+.bx-im-sidebar-skeleton__info {
+	height: 118px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg height='162'%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Ccircle cx='28' cy='68' r='11' fill='%23eeeff0'/%3E%3Crect width='71' height='8' x='49' y='64' fill='%23eeeff0' rx='2'/%3E%3Ccircle cx='28' cy='23' r='11' fill='%23eeeff0'/%3E%3Crect width='241' height='8' x='49' y='19' fill='%23eeeff0' rx='2'/%3E%3Crect width='116' height='8' x='49' y='34' fill='%23eeeff0' rx='2'/%3E%3Ccircle cx='28' cy='96' r='11' fill='%23eeeff0'/%3E%3Crect width='71' height='8' x='49' y='92' fill='%23eeeff0' rx='2'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
+.bx-im-sidebar-skeleton__tasks {
+	height: 118px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:118px' viewBox='0 0 100%25 118'%3E%3Csvg height='118'%3E%3Cpath fill='%23fff' d='M308 110a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8h292a8 8 0 0 1 8 8z'/%3E%3Cpath fill='%23f5f7f8' d='M296 92c0 5.523-4.477 10-10 10H22c-5.523 0-10-4.477-10-10V52c0-5.523 4.477-10 10-10h264c5.523 0 10 4.477 10 10z'/%3E%3Cpath fill='%23a8adb4' fill-rule='evenodd' d='m47.4 79.643 1.887 1.886.488.47-.488.472-1.887 1.886.666.666L51.089 82l-3.023-3.022z' clip-rule='evenodd' opacity='.2'/%3E%3C/svg%3E%3Csvg id='c' height='118'%3E%3Crect width='127' height='8' x='14' y='16' fill='%23eeeff0' rx='2'/%3E%3Crect width='127' height='8' x='22' y='52.5' fill='%23e5e9ea' rx='2'/%3E%3Ccircle cx='31' cy='82' r='9' fill='%23e5e9ea'/%3E%3Ccircle cx='67' cy='82' r='9' fill='%23e5e9ea'/%3E%3Crect width='77' height='8' x='85' y='78' fill='%23e5e9ea' rx='2'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
 
 .bx-im-sidebar-header__scope {
 	--im-sidebar-header__background-color_left-border: #e6e7e9;
@@ -485,6 +538,27 @@
 	width: 20px;
 	height: 20px;
 	background: var(--im-sidebar-chat-shared__background_link-icon_arrow);
+}
+
+.bx-im-sidebar-collab-v2-info__container {
+	--sonet-project-info-link-color: var(--im-color-accent-blue);
+
+	margin-bottom: 20px;
+}
+
+.bx-im-sidebar-collab-v2-info__skeleton {
+	height: 214px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='none' viewBox='0 0 294 214'%3E%3Cpath fill='%23fff' d='M0 0h294v214H0z'/%3E%3Cg id='c' fill='%23eeeff0'%3E%3Ccircle cx='10' cy='10' r='10'/%3E%3Crect width='190' height='8' x='30' y='4' rx='2'/%3E%3Crect width='250' height='8' x='30' y='32' rx='2'/%3E%3Crect width='230' height='8' x='30' y='48' rx='2'/%3E%3Crect width='178' height='8' x='30' y='64' rx='2'/%3E%3Crect width='60' height='8' x='30' y='84' rx='2'/%3E%3Crect width='42' height='6' x='30' y='116' rx='2'/%3E%3Crect width='180' height='8' x='30' y='133' rx='2'/%3E%3Crect width='30' height='6' x='30' y='169' rx='2'/%3E%3Crect width='70' height='22' x='30' y='184' rx='8'/%3E%3Crect width='82' height='22' x='106' y='184' rx='8'/%3E%3Crect width='54' height='22' x='194' y='184' rx='8'/%3E%3C/g%3E%3Cpath id='d' fill='url(%23a)' d='M0 0h294v214H0z' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-294' repeatCount='indefinite' to='294'/%3E%3C/svg%3E") no-repeat top left / 100% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-sidebar-collab-v2-info__skeleton {
+		background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' preserveAspectRatio='none' viewBox='0 0 294 214'%3E%3Cpath fill='%23fff' d='M0 0h294v214H0z'/%3E%3Cg fill='%23eeeff0'%3E%3Ccircle cx='10' cy='10' r='10'/%3E%3Crect width='190' height='8' x='30' y='4' rx='2'/%3E%3Crect width='250' height='8' x='30' y='32' rx='2'/%3E%3Crect width='230' height='8' x='30' y='48' rx='2'/%3E%3Crect width='178' height='8' x='30' y='64' rx='2'/%3E%3Crect width='60' height='8' x='30' y='84' rx='2'/%3E%3Crect width='42' height='6' x='30' y='116' rx='2'/%3E%3Crect width='180' height='8' x='30' y='133' rx='2'/%3E%3Crect width='30' height='6' x='30' y='169' rx='2'/%3E%3Crect width='70' height='22' x='30' y='184' rx='8'/%3E%3Crect width='82' height='22' x='106' y='184' rx='8'/%3E%3Crect width='54' height='22' x='194' y='184' rx='8'/%3E%3C/g%3E%3C/svg%3E");
+	}
+}
+
+.bx-im-sidebar-collab-v2-info__content {
+	min-width: 0;
 }
 
 .bx-im-sidebar-file-preview__scope {
@@ -1079,7 +1153,7 @@
 	padding: 2px 0;
 }
 
-.bx-im-sidebar-main-preview-group-chat__chat-user-avatar.bx-im-avatar__container {
+.bx-im-sidebar-main-preview-group-chat__chat-user-avatar.bx-im-legacy-avatar__container {
 	box-sizing: content-box;
 }
 
@@ -1288,7 +1362,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	height: 172px;
+	min-height: 172px;
 	padding: 25px 16px 0;
 }
 
@@ -1309,6 +1383,7 @@
 }
 
 .bx-im-sidebar-main-preview-post__subtitle {
+	max-width: 275px;
 	font: var(--im-font-size-xs) var(--im-font-family-system);
 	color: var(--im-color-palette-gray-60);
 }
@@ -1319,6 +1394,7 @@
 	gap: 8px;
 	padding: 5px 16px 14px;
 }
+
 .bx-im-sidebar-main-preview__scope {
 	--im-sidebar-main-preview__color_position: #828b95;
 }
@@ -1917,57 +1993,6 @@
 	height: 16px;
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath fill='%23bdc1c6' fill-rule='evenodd' d='m5.44 4.229 3.018 3.018L9.24 8l-.782.753-3.018 3.018 1.065 1.065L11.341 8 6.505 3.164z' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
-.bx-im-sidebar-skeleton__container {
-	--im-sidebar-skeleton__background-color_block: var(--im-color-palette-white-base, #fff);
-
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	padding: 6px 0 6px 6px;
-	height: calc(100% - 64px);
-	overflow-y: scroll;
-	overflow-x: hidden;
-}
-
-.bx-im-sidebar-skeleton__block {
-	width: 100%;
-	background-color: var(--im-sidebar-skeleton__background-color_block);
-	margin-bottom: 6px;
-	border-radius: 8px;
-	box-shadow: 0 1px 1px rgb(0 0 0 / 5%);
-}
-
-.bx-im-sidebar-skeleton__avatar {
-	height: 172px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Ccircle cx='154' cy='72' r='47' fill='%23eeeff0'/%3E%3Crect width='132' height='8' x='88' y='138' fill='%23eeeff0' rx='2'/%3E%3Crect width='70' height='8' x='119' y='156' fill='%23eeeff0' rx='2'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
-}
-
-.bx-im-sidebar-skeleton__invite-button {
-	height: 36px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Crect width='141' height='18' x='84' y='8' fill='%23eeeff0' rx='9'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
-}
-
-.bx-im-sidebar-skeleton__settings {
-	height: 54px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Csvg xmlns='http://www.w3.org/2000/svg' width='310' height='42' viewBox='0 0 310 42'%3E%3Ccircle cx='27' cy='15' r='11' fill='%23eeeff0'/%3E%3Crect width='71' height='8' x='49' y='11' fill='%23eeeff0' rx='2'/%3E%3C/svg%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
-}
-
-.bx-im-sidebar-skeleton__files {
-	height: 130px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:130px' viewBox='0 0 100%25 130'%3E%3Csvg height='1285'%3E%3Cdefs%3E%3Cpath id='a' stroke='%23dfe0e3' d='M90 87.5H22a9.5 9.5 0 0 1-9.5-9.5V52a9.5 9.5 0 0 1 9.5-9.5h68a9.5 9.5 0 0 1 9.5 9.5v26a9.5 9.5 0 0 1-9.5 9.5Z'/%3E%3C/defs%3E%3Cpath fill='%23fff' d='M308 122a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8h292a8 8 0 0 1 8 8z'/%3E%3Cuse xlink:href='%23a'/%3E%3Cuse xlink:href='%23a' x='98'/%3E%3Cuse xlink:href='%23a' x='196'/%3E%3C/svg%3E%3Csvg id='f' height='1285'%3E%3Cdefs%3E%3Cg id='c'%3E%3Crect width='65' height='5' x='24' y='98' fill='%23eeeff0' rx='2'/%3E%3Crect width='53' height='5' x='30' y='110' fill='%23eeeff0' rx='2'/%3E%3Cpath fill='%23e5e8eb' fill-rule='evenodd' d='M46.18 51.455c0-.804.651-1.455 1.455-1.455H59.4c.386 0 .756.153 1.029.426l4.967 4.968c.273.273.427.643.427 1.029v17.585c0 .803-.652 1.455-1.455 1.455H47.635a1.455 1.455 0 0 1-1.455-1.455z' clip-rule='evenodd'/%3E%3Cmask id='b' width='20' height='26' x='46' y='50' maskUnits='userSpaceOnUse' style='mask-type:alpha'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M46.18 51.455c0-.804.651-1.455 1.455-1.455H59.4c.386 0 .756.153 1.029.426l4.967 4.968c.273.273.427.643.427 1.029v17.585c0 .803-.652 1.455-1.455 1.455H47.635a1.455 1.455 0 0 1-1.455-1.455z' clip-rule='evenodd'/%3E%3C/mask%3E%3Cg mask='url(%23b)'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M59.37 50h6.452v6.466c0-.215-.183-.282-.293-.282h-5.164a.726.726 0 0 1-.727-.727v-5.185c0-.082-.09-.272-.267-.272' clip-rule='evenodd' opacity='.15'/%3E%3C/g%3E%3C/g%3E%3C/defs%3E%3Crect width='127' height='8' x='14' y='16' fill='%23eeeff0' rx='2'/%3E%3Cuse xlink:href='%23c'/%3E%3Cuse xlink:href='%23c' x='98'/%3E%3Cuse xlink:href='%23c' x='196'/%3E%3C/svg%3E%3Crect id='g' width='100%25' height='1270' fill='url(%23d)' mask='url(%23e)'/%3E%3Cmask id='e' fill='%23fff'%3E%3Cuse xlink:href='%23f'/%3E%3C/mask%3E%3ClinearGradient id='d' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23g' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
-}
-
-.bx-im-sidebar-skeleton__info {
-	height: 118px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:100%25' viewBox='0 0 100%25 100%25'%3E%3Csvg height='162'%3E%3Crect width='100%25' height='100%25' fill='%23fff'/%3E%3C/svg%3E%3Csvg id='c' height='100%25'%3E%3Ccircle cx='28' cy='68' r='11' fill='%23eeeff0'/%3E%3Crect width='71' height='8' x='49' y='64' fill='%23eeeff0' rx='2'/%3E%3Ccircle cx='28' cy='23' r='11' fill='%23eeeff0'/%3E%3Crect width='241' height='8' x='49' y='19' fill='%23eeeff0' rx='2'/%3E%3Crect width='116' height='8' x='49' y='34' fill='%23eeeff0' rx='2'/%3E%3Ccircle cx='28' cy='96' r='11' fill='%23eeeff0'/%3E%3Crect width='71' height='8' x='49' y='92' fill='%23eeeff0' rx='2'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
-}
-
-.bx-im-sidebar-skeleton__tasks {
-	height: 118px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:118px' viewBox='0 0 100%25 118'%3E%3Csvg height='118'%3E%3Cpath fill='%23fff' d='M308 110a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8h292a8 8 0 0 1 8 8z'/%3E%3Cpath fill='%23f5f7f8' d='M296 92c0 5.523-4.477 10-10 10H22c-5.523 0-10-4.477-10-10V52c0-5.523 4.477-10 10-10h264c5.523 0 10 4.477 10 10z'/%3E%3Cpath fill='%23a8adb4' fill-rule='evenodd' d='m47.4 79.643 1.887 1.886.488.47-.488.472-1.887 1.886.666.666L51.089 82l-3.023-3.022z' clip-rule='evenodd' opacity='.2'/%3E%3C/svg%3E%3Csvg id='c' height='118'%3E%3Crect width='127' height='8' x='14' y='16' fill='%23eeeff0' rx='2'/%3E%3Crect width='127' height='8' x='22' y='52.5' fill='%23e5e9ea' rx='2'/%3E%3Ccircle cx='31' cy='82' r='9' fill='%23e5e9ea'/%3E%3Ccircle cx='67' cy='82' r='9' fill='%23e5e9ea'/%3E%3Crect width='77' height='8' x='85' y='78' fill='%23e5e9ea' rx='2'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='1270' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
-}
-
-
 .bx-im-sidebar-task-detail__date-group_container {
 	display: flex;
 	flex-direction: column;
@@ -2342,12 +2367,141 @@
 	flex-direction: column;
 }
 
+/* The tab mixes two row components, so a gap hung on a same-class adjacent-sibling selector of
+   either of them collapses where the kinds meet. The list owns the gap for both. */
+.bx-im-sidebar-file-audio-detail-item__container + .bx-im-sidebar-file-audio-detail-item__container,
+.bx-im-sidebar-file-audio-detail-item__container + .bx-im-sidebar-file-video-note-detail-item__container,
+.bx-im-sidebar-file-video-note-detail-item__container + .bx-im-sidebar-file-audio-detail-item__container,
+.bx-im-sidebar-file-video-note-detail-item__container + .bx-im-sidebar-file-video-note-detail-item__container {
+	margin-top: var(--ui-space-stack-sm2);
+}
+
 .bx-im-sidebar-file-audio-detail-item__container {
 	margin: 0 8px 0 16px;
 }
 
-.bx-im-sidebar-file-audio-detail-item__container + .bx-im-sidebar-file-audio-detail-item__container {
-	margin-top: 14px;
+/* Block model copied from `AudioPlayer` (`.../elements/player/src/components/css/audio-player.css`):
+   both rows of the tab are one widget, and the sample is shared with the chat messages. A test
+   measures the rows against each other. */
+.bx-im-sidebar-file-video-note-detail-item__scope {
+	--im-sidebar-file-video-note-item__size_preview: 36px;
+	--im-sidebar-file-video-note-item__offset_content: 5px;
+	/* hard-coded in `progressbar.css` (`.--size-s`) */
+	--im-sidebar-file-video-note-item__size_processing-ring: 38px;
+}
+
+/* no align-items: the badge hangs off the row bottom; no gap: it would shrink the caption */
+.bx-im-sidebar-file-video-note-detail-item__container {
+	display: flex;
+	margin: 0 8px 0 16px;
+}
+
+.bx-im-sidebar-file-video-note-detail-item__row {
+	display: flex;
+	flex: 1 1 auto;
+	/* not overflow: hidden - it would cut the focus outline; the caption truncates in its own cell */
+	min-width: 0;
+	cursor: pointer;
+}
+
+.bx-im-sidebar-file-video-note-detail-item__preview-wrap {
+	position: relative;
+	flex: 0 0 auto;
+}
+
+/* the clipping stays here: badge and indicator ring are siblings of the circle */
+.bx-im-sidebar-file-video-note-detail-item__preview {
+	width: var(--im-sidebar-file-video-note-item__size_preview);
+	height: var(--im-sidebar-file-video-note-item__size_preview);
+	border-radius: var(--ui-border-radius-circle);
+	overflow: hidden;
+}
+
+.bx-im-sidebar-file-video-note-detail-item__author-avatar {
+	position: absolute;
+	border: 2px solid var(--ui-color-base-white-fixed);
+	border-radius: var(--ui-border-radius-circle);
+	z-index: 1;
+	bottom: -2px;
+	right: -12px;
+}
+
+/* the rounding stays on the wrapper: the intersection observer of the lazyload directive works
+   incorrectly when the element it watches has a border-radius of its own */
+.bx-im-sidebar-file-video-note-detail-item__frame {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.bx-im-sidebar-file-video-note-detail-item__duration-source {
+	display: none;
+}
+
+.bx-im-sidebar-file-video-note-detail-item__type-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background: var(--ui-color-accent-main-primary-alt);
+}
+
+/* box of the ring, not of the circle: inside the circle the ring is clipped and squeezed to 38x36 */
+.bx-im-sidebar-file-video-note-detail-item__processing {
+	--im-sidebar-file-video-note-item__offset_processing-ring: calc(
+		(var(--im-sidebar-file-video-note-item__size_preview)
+			- var(--im-sidebar-file-video-note-item__size_processing-ring)) / 2
+	);
+
+	position: absolute;
+	top: var(--im-sidebar-file-video-note-item__offset_processing-ring);
+	left: var(--im-sidebar-file-video-note-item__offset_processing-ring);
+	width: var(--im-sidebar-file-video-note-item__size_processing-ring);
+	height: var(--im-sidebar-file-video-note-item__size_processing-ring);
+}
+
+.bx-im-sidebar-file-video-note-detail-item__content {
+	display: flex;
+	width: 100%;
+	/* the sample gets this from the overflow of its container, which the row cannot have */
+	min-width: 0;
+	padding-top: var(--im-sidebar-file-video-note-item__offset_content);
+}
+
+/* flex: 1 - the caption spans the row; the indent from the circle is set in `src/css/detail.css` */
+.bx-im-sidebar-file-video-note-detail-item__timeline {
+	flex: 1;
+	padding-top: 5px;
+	overflow: hidden;
+}
+
+/* a token and not the literal of the sample's timer: that literal ignores a dark theme */
+.bx-im-sidebar-file-video-note-detail-item__caption-text {
+	font: var(--im-font-size-4xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-3);
+	margin-top: 3px;
+}
+
+/* a sibling of the row, not a child of the content cell, so it takes that cell's offset */
+.bx-im-sidebar-file-video-note-detail-item__context-menu {
+	flex: 0 0 auto;
+	margin-top: var(--im-sidebar-file-video-note-item__offset_content);
+	margin-left: auto;
+	background-position: initial;
+}
+
+/* The button stays in the DOM and in the tab order: display and visibility would take it out of both,
+   and the keyboard would lose the menu. Only the hidden state carries a declaration, so the opacity
+   of the shared icon class keeps governing the visible one, its own :hover included. The focus is
+   read by :focus-within, not by a relational selector on :focus-visible: Firefox 115 of the
+   browserslist drops such a selector whole (chef CF1021) and the button would stay visible there. */
+.bx-im-sidebar-file-video-note-detail-item__container:not(:hover):not(:focus-within)
+	.bx-im-sidebar-file-video-note-detail-item__context-menu {
+	opacity: 0;
 }
 
 .bx-im-sidebar-brief-detail__date-group_container {
@@ -3081,23 +3235,19 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap: var(--ui-space-inline-xs2);
 	height: 65px;
-	padding-left: 16px;
+	padding-left: var(--ui-space-inset-md);
+	padding-right: var(--ui-space-inset-md);
 	border-bottom: 1px solid var(--im-sidebar-search-header__border-color_separator);
 }
 
 .bx-im-sidebar-search-header__title-container {
 	display: flex;
 	align-items: center;
+	flex: 1;
+	min-width: 0;
 	overflow: hidden;
-}
-
-.bx-im-sidebar-search-header__calendar-icon {
-	margin: 0 20px 0 10px;
-	width: 24px;
-	height: 24px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%232fc6f6' fill-rule='evenodd' d='M17.875 17.799H6.13V9.057h11.744zM16.813 6.243v-.55h1.223c1.118.07 1.984 1.04 1.964 2.2V18.9c0 .608-.475 1.101-1.063 1.101H5.07c-.587 0-1.063-.493-1.063-1.1V7.893A2 2 0 0 1 4 7.724c.002-1.124.884-2.034 1.97-2.031h1.224v.55c0 .911.712 1.65 1.593 1.65.88 0 1.594-.739 1.594-1.65v-.55h3.244v.55c0 .911.714 1.65 1.594 1.65s1.594-.739 1.594-1.65M9.567 4.814v1.211c0 .447-.35.809-.78.809a.796.796 0 0 1-.782-.809V4.803A.795.795 0 0 1 8.792 4c.432.003.778.368.776.814m6.388.03v1.148c0 .422-.33.764-.738.764a.75.75 0 0 1-.736-.765V4.844a.75.75 0 0 1 .737-.764.75.75 0 0 1 .737.764m-7.422 6.183a.5.5 0 0 0-.5.5v.997a.5.5 0 0 0 .5.5h1.01a.5.5 0 0 0 .5-.5v-.997a.5.5 0 0 0-.5-.5zm0 2.995a.5.5 0 0 0-.5.5v.997a.5.5 0 0 0 .5.5h1.01a.5.5 0 0 0 .5-.5v-.997a.5.5 0 0 0-.5-.5zm2.515-2.495a.5.5 0 0 1 .5-.5h1.01a.5.5 0 0 1 .5.5v.997a.5.5 0 0 1-.5.5h-1.01a.5.5 0 0 1-.5-.5zm.5 2.495a.5.5 0 0 0-.5.5v.997a.5.5 0 0 0 .5.5h1.01a.5.5 0 0 0 .5-.5v-.997a.5.5 0 0 0-.5-.5zm2.515-2.495a.5.5 0 0 1 .5-.5h1.01a.5.5 0 0 1 .5.5v.997a.5.5 0 0 1-.5.5h-1.01a.5.5 0 0 1-.5-.5z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
-	cursor: pointer;
 }
 
 .bx-im-sidebar-search-header__title-text {
@@ -3109,9 +3259,20 @@
 	overflow: hidden;
 }
 
+/* The detail header of the other panels borrows this class for a row of its own. */
 .bx-im-sidebar-search-header__input {
 	margin-left: 11px;
 	width: 246px;
+}
+
+/* Here the row is shared with the leading button, the calendar button, the gap and the padding, and
+   the field takes what is left of it: 246px is the width it reaches only while the row is wide
+   enough for it, not a width it always has. */
+.bx-im-sidebar-search-header__title-container > .bx-im-sidebar-search-header__input {
+	flex: 1;
+	width: auto;
+	min-width: 0;
+	max-width: 246px;
 }
 
 .bx-im-sidebar-search-header__ds-icon {

@@ -13,6 +13,9 @@ import type { DocumentField, EntitySelectorItem } from '../types';
 // reads per key, and the fields themselves stay raw objects — they are handed to legacy BP controls
 // as they are.
 const cache: Map<string, Array<DocumentField>> = shallowReactive(new Map());
+// A refusal is kept apart from the list of fields: the readers that do not need the difference keep
+// seeing an empty list, and a surface that does can tell "did not load" from "no fields at all".
+const refusedKeys: Set<string> = shallowReactive(new Set());
 const pendingRequests = new Cache.MemoryCache();
 
 export function getDocumentTypeKey(documentType: string | Array<string>): string
@@ -59,6 +62,7 @@ function handleFetchSuccess(key: string, items: Array<EntitySelectorItem>): Arra
 	}, []);
 
 	cache.set(key, fields);
+	refusedKeys.delete(key);
 
 	pendingRequests.delete(key);
 
@@ -70,6 +74,7 @@ function handleFetchError(key: string, error: Error): Array<DocumentField>
 	console.error('documentFieldsCache: failed to fetch document fields', error);
 
 	cache.set(key, []);
+	refusedKeys.add(key);
 	pendingRequests.delete(key);
 
 	return [];
@@ -88,7 +93,30 @@ export const documentFieldsCache = {
 
 	set(documentType: string | Array<string>, fields: Array<DocumentField>): void
 	{
-		cache.set(getDocumentTypeKey(documentType), fields);
+		const key = getDocumentTypeKey(documentType);
+
+		cache.set(key, fields);
+		refusedKeys.delete(key);
+	},
+
+	hasFailed(documentType: string | Array<string>): boolean
+	{
+		return refusedKeys.has(getDocumentTypeKey(documentType));
+	},
+
+	// The one way back to a refused schema, and only by an action of the user: a schema that loaded
+	// empty is a final state and is never read anew.
+	async refetchFailedFields(documentType: string | Array<string>): Promise<Array<DocumentField>>
+	{
+		const key = getDocumentTypeKey(documentType);
+
+		if (refusedKeys.has(key))
+		{
+			refusedKeys.delete(key);
+			cache.delete(key);
+		}
+
+		return this.fetchFields(documentType);
 	},
 
 	async fetchFields(documentType: string | Array<string>): Promise<Array<DocumentField>>

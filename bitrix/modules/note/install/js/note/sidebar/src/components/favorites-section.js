@@ -2,6 +2,7 @@ import { BIcon, Outline, Solid } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 import 'ui.icon-set.solid';
 import { NoteThemeContext } from 'note.ui.theme-context';
+import { hasSubscriptionSurface, SUBSCRIPTION_SCOPE_DOCUMENT } from 'note.ui.document-history';
 
 import { ExpandTransition } from './expand-transition';
 import { FavoriteRow } from './favorite-row';
@@ -64,7 +65,7 @@ export const FavoritesSection = {
 		return {
 			rowTransition: ROW_TRANSITION,
 			scrollRaf: 0,
-			// [P4.T1] The depth popover of a row is teleported out of the panel (which clips it and
+			// The depth popover of a row is teleported out of the panel (which clips it and
 			// stands in the way of viewport positioning), so it no longer inherits the design-system
 			// context of the application - the block carries the class for it, one subscription for
 			// every row instead of one per row.
@@ -114,11 +115,18 @@ export const FavoritesSection = {
 		{
 			return this.state.favorites.onlyNotified;
 		},
-		// Hiding the filter cannot strand the list in a filtered state: onlyNotified is held in the
-		// store for the life of the page, so the next load starts unfiltered.
+		// Bootstrap flag off the sidebar root state - the same value the rows of the block read.
 		notificationsEnabled(): boolean
 		{
 			return this.state.notificationsEnabled === true;
+		},
+		// The filter shows the rows delivery reaches, and only an article followed with `self` is such
+		// a row today - and only while the notifications option is on. Hiding the filter cannot strand
+		// the list in a filtered state: onlyNotified is held in the store for the life of the page, so
+		// the next load starts unfiltered.
+		hasNotifyFilter(): boolean
+		{
+			return hasSubscriptionSurface(SUBSCRIPTION_SCOPE_DOCUMENT, this.notificationsEnabled);
 		},
 		loadError(): string | null
 		{
@@ -319,7 +327,7 @@ export const FavoritesSection = {
 					? this.actions.loadMoreSharedChildren(doc)
 					: this.actions.loadMoreChildren(doc)
 				;
-				// [API-06] The next page of a branch arrives without notification states - one request
+				// The next page of a branch arrives without notification states - one request
 				// per page brings them, or the new rows would show no bell where a bell belongs.
 				void Promise.resolve(page).then(() => this.actions.refreshFavoriteCoverage({
 					collectionId,
@@ -367,7 +375,7 @@ export const FavoritesSection = {
 					/>
 					<span class="sidebar-section-header__title">{{ messages.favorites }}</span>
 				</button>
-				<span v-if="notificationsEnabled" class="sidebar-section-header__filter">
+				<span v-if="hasNotifyFilter" class="sidebar-section-header__filter">
 					<button
 						type="button"
 						:class="filterClass"

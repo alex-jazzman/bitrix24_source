@@ -82,7 +82,9 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 	};
 
 	const headerControllerConfig = {
+		[NavigationTabId.all]: chatsConfig,
 		[NavigationTabId.chats]: chatsConfig,
+		[NavigationTabId.vibecodeApp]: chatsConfig,
 		[NavigationTabId.copilot]: copilotConfig,
 		[NavigationTabId.channel]: channelConfig,
 		[NavigationTabId.collab]: collabConfig,
@@ -99,7 +101,9 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 	};
 
 	const systemFolderHeaderConfigMap = {
+		all: chatsConfig,
 		default: chatsConfig,
+		vibecodeApp: chatsConfig,
 		copilot: copilotConfig,
 		openChannel: channelConfig,
 		collab: collabConfig,

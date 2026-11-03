@@ -209,9 +209,10 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 
 	?>
 	<button type="button" class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-select crm-activity-email-create-template"
+		data-testid="crm-email-template-control"
 		aria-haspopup="true">
 		<span class="crm-activity-planner-slider-header-control-description"><?=getMessage('CRM_ACT_EMAIL_CREATE_TEMPLATE') ?>:</span>
-		<span class="crm-activity-planner-slider-header-control-text"><?=htmlspecialcharsbx($arParams['LAST_USED_TEMPLATE_TITLE'] ?? \Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE'))?></span>
+		<span class="crm-activity-planner-slider-header-control-text" data-testid="crm-email-template-control-title"><?=htmlspecialcharsbx($arParams['LAST_USED_TEMPLATE_TITLE'] ?? \Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE'))?></span>
 		<span class="crm-activity-planner-slider-header-control-triangle"></span>
 	</button>
 	<?
@@ -504,7 +505,8 @@ BX.message({
 	CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE')) ?>',
 	CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE')) ?>',
 	CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE_MSGVER_1')) ?>',
-	CRM_ACT_EMAIL_DRAFT_LOAD_ERROR: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_DRAFT_LOAD_ERROR')) ?>'
+	CRM_ACT_EMAIL_DRAFT_LOAD_ERROR: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_DRAFT_LOAD_ERROR')) ?>',
+	CRM_ACT_EMAIL_TEMPLATE_APPLY_ERROR: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_TEMPLATE_APPLY_ERROR')) ?>'
 });
 
 BX.ready(function ()
@@ -578,7 +580,7 @@ BX.ready(function ()
 
 	<?php if ($arParams['SAVE_LAST_USED_TEMPLATE'] === 'Y' && $arParams['LAST_USED_TEMPLATE_ID'] > 0):?>
 	instance.activateTemplate(null,
-		{__id: <?=(int)$arParams['LAST_USED_TEMPLATE_ID']?>},
+		{__id: <?=(int)$arParams['LAST_USED_TEMPLATE_ID']?>, auto: true},
 		'<?=\CUtil::jsEscape($formId) ?>',
 		'<?=\CUtil::jsEscape($activity['INITIAL_OWNER_TYPE']) ?>',
 		<?=(int)$activity['INITIAL_OWNER_ID'] ?>,

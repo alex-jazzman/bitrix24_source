@@ -43,7 +43,7 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 	 * @class ActionMenu
 	 * @param {number} objectId
 	 * @param {Order} order
-	 * @param {{ storageId: number }} context
+	 * @param {FolderScreenContext} context
 	 * @param {number|null} relativeFolderId
 	 * @param {object} parentWidget
 	 */
@@ -68,7 +68,44 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 		 */
 		get rights()
 		{
+			if (this.isUnifiedLinkMode)
+			{
+				return this.context?.rights ?? {};
+			}
+
 			return this.object?.rights ?? {};
+		}
+
+		/**
+		 * @type {boolean}
+		 */
+		get isUnifiedLinkMode()
+		{
+			return Boolean(this.context?.uniqueCode);
+		}
+
+		/**
+		 * @type {string|null}
+		 */
+		get unifiedLinkOperationCode()
+		{
+			return this.isUnifiedLinkMode ? (this.object?.uniqueCode ?? null) : null;
+		}
+
+		/**
+		 * @type {boolean}
+		 */
+		get isUnifiedLinkWritable()
+		{
+			return !this.isUnifiedLinkMode || this.rights.canAdd === true;
+		}
+
+		/**
+		 * @type {boolean}
+		 */
+		get isObjectAddressable()
+		{
+			return !this.isUnifiedLinkMode || Boolean(this.unifiedLinkOperationCode);
 		}
 
 		get actions()
@@ -128,7 +165,7 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 				);
 			}
 
-			if (this.rights.canRename)
+			if (this.rights.canRename && this.isObjectAddressable)
 			{
 				actions.push(
 					{
@@ -139,13 +176,14 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 						onItemSelected: () => {
 							RenameDialog.open({
 								objectId: this.objectId,
+								uniqueCode: this.unifiedLinkOperationCode,
 							});
 						},
 					},
 				);
 			}
 
-			if (this.rights.canMarkDeleted)
+			if (this.rights.canMarkDeleted && this.isObjectAddressable)
 			{
 				actions.push(
 					{
@@ -154,28 +192,35 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 						sectionCode: Sections.SHARING,
 						iconName: Icon.FOLDER_SUCCESS,
 						onItemSelected: () => {
-							moveObject(this.objectId, this.order, this.context, this.parentWidget);
+							void moveObject(this.objectId, this.order, this.context, this.parentWidget);
 						},
 						sort: 300,
 					},
 				);
 			}
 
-			actions.push({
-				id: 'shareLink',
-				title: Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_LINK'),
-				sectionCode: Sections.SHARING,
-				iconName: Icon.LINK,
-				onItemSelected: () => {
-					ExternalLinkDialog.open({
-						objectId: this.objectId,
-						onSave: () => {},
-					}, this.parentWidget);
-				},
-				sort: 350,
-			});
+			if (!this.isUnifiedLinkMode)
+			{
+				actions.push({
+					id: 'shareLink',
+					title: Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_LINK'),
+					sectionCode: Sections.SHARING,
+					iconName: Icon.LINK,
+					onItemSelected: () => {
+						ExternalLinkDialog.open({
+							objectId: this.objectId,
+							onSave: () => {},
+						}, this.parentWidget);
+					},
+					sort: 350,
+				});
+			}
 
-			if (this.object.id === this.object.realObjectId)
+			if (
+				this.object.id === this.object.realObjectId
+				&& this.isObjectAddressable
+				&& this.isUnifiedLinkWritable
+			)
 			{
 				actions.push(
 					{
@@ -184,14 +229,18 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 						sectionCode: Sections.SHARING,
 						iconName: Icon.COPY,
 						onItemSelected: () => {
-							copyObject(this.objectId, this.order, this.context, this.parentWidget);
+							void copyObject(this.objectId, this.order, this.context, this.parentWidget);
 						},
 						sort: 400,
 					},
 				);
 			}
 
-			if (this.object.parentId && this.relativeFolderId !== this.object.parentId)
+			if (
+				this.object.parentId
+				&& this.relativeFolderId !== this.object.parentId
+				&& !this.isUnifiedLinkMode
+			)
 			{
 				actions.push(
 					{
@@ -207,7 +256,11 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 				);
 			}
 
-			if (this.rights.canMarkDeleted && this.object.code !== FolderCode.FOR_UPLOADED_FILES)
+			if (
+				this.rights.canMarkDeleted
+				&& this.object.code !== FolderCode.FOR_UPLOADED_FILES
+				&& this.isObjectAddressable
+			)
 			{
 				actions.push(
 					{
@@ -229,6 +282,7 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 									removeObject(this.objectId, {
 										relativeFolderId: this.relativeFolderId,
 										parentWidget: this.parentWidget,
+										uniqueCode: this.unifiedLinkOperationCode,
 									});
 								},
 							});
@@ -251,7 +305,7 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 
 		async show(target)
 		{
-			if (isEmpty(this.rights))
+			if (isEmpty(this.rights) && !this.isUnifiedLinkMode)
 			{
 				this.object = await fetchObjectWithRights(this.objectId);
 			}

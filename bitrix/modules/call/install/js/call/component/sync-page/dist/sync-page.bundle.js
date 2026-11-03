@@ -1,10 +1,10 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports, im_public, rest_client, main_core, call_lib_callManager, call_core, calendar_compacteventformLauncher, calendar_sharing_interface, call_lib_analytics, call_adapter_logger, call_adapter_clipboard, ui_bannerDispatcher, call_component_elements, ui_vue3_components_button) {
+(function (exports, im_public, rest_client, main_core, main_core_events, call_lib_callManager, call_core, calendar_compacteventformLauncher, calendar_sharing_interface, call_lib_analytics, call_adapter_logger, call_adapter_clipboard, call_legacy_component_elements, call_lib_syncTabBannerLauncher) {
 	'use strict';
 
-	const VALID_SIZES = ['large', 'medium', 'small'];
+	const VALID_SIZES = new Set(['large', 'medium', 'small']);
 	const VALID_ACTION_TYPES = ['start-call', 'join-meeting', 'schedule-meeting', 'call-with-me', 'free-slots'];
 	const VALID_ICONS = VALID_ACTION_TYPES;
 
@@ -15,7 +15,7 @@ this.BX.Call = this.BX.Call || {};
 			size: {
 				type: String,
 				required: true,
-				validator: value => VALID_SIZES.includes(value)
+				validator: value => VALID_SIZES.has(value)
 			},
 			// block identifier emitted on click and routed in the service actionMap (required for every size)
 			actionType: {
@@ -38,7 +38,8 @@ this.BX.Call = this.BX.Call || {};
 				required: true
 			},
 			badge: {
-				type: String
+				type: String,
+				default: ''
 			},
 			disabled: {
 				type: Boolean,
@@ -71,6 +72,7 @@ this.BX.Call = this.BX.Call || {};
 			:tabindex="tabIndex"
 			:aria-disabled="disabled ? 'true' : null"
 			:aria-label="title"
+			:data-testid="'call-sync-page-block-' + actionType"
 			@click="onClick"
 			@keydown.enter="onClick"
 			@keydown.space.prevent="onClick"
@@ -99,16 +101,15 @@ this.BX.Call = this.BX.Call || {};
 	`
 	};
 
-	const SYNC_PROMO_ID = 'call:sync-promo-popup:05052026:all';
-
-	// give the banner dispatcher a pause before it shows the next queued banner
-	const PROMO_QUEUE_RELEASE_DELAY_MS = 1000;
+	// CompactEventForm sets this namespace and emits 'onClose' when it is really closed
+	const COMPACT_FORM_CLOSE_EVENT = 'BX.Calendar.CompactEventForm:onClose';
 	class SyncPageService {
 		#actionMap;
 		#isStarting = false;
-		#promoOnDone = null;
-		#promoViewedSent = false;
-		#promoQueued = false;
+		#isOpeningMeetingForm = false;
+		#isOpeningFreeSlots = false;
+		#meetingFormLauncher = null;
+		#meetingFormCloseSubscribed = false;
 		constructor() {
 			this.#actionMap = {
 				'start-call': () => this.#handleStartCall(),
@@ -210,19 +211,60 @@ this.BX.Call = this.BX.Call || {};
 				autoHideDelay: 5000
 			});
 		}
+		#notifyScheduleMeetingError() {
+			BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CALL_SYNC_PAGE_SCHEDULE_MEETING_ERROR'),
+				autoHideDelay: 5000
+			});
+		}
+		#notifyFreeSlotsError() {
+			BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CALL_SYNC_PAGE_FREE_SLOTS_ERROR'),
+				autoHideDelay: 5000
+			});
+		}
 		#handleJoinMeeting() {
 			// the component opens the join popup itself (local UI state); the service only reports analytics
 			call_lib_analytics.Analytics.getInstance().sync.onJoinClick();
 		}
-		#handleScheduleMeeting() {
+		async #handleScheduleMeeting() {
 			call_lib_analytics.Analytics.getInstance().sync.onCreateEventClick();
 			if (!calendar_compacteventformLauncher.CompactFormLauncher) {
 				call_adapter_logger.Logger.error('SyncPage: CompactFormLauncher is not available');
 				return;
 			}
-			const form = new calendar_compacteventformLauncher.CompactFormLauncher();
-			void form.showNewEventForm({
-				eventType: '#call_sync#'
+
+			// the guard is held until the form is actually closed, not just until it opens:
+			// re-showing the reused launcher would destroy the open form's unsaved input,
+			// bypassing its own "discard changes?" confirmation
+			if (this.#isOpeningMeetingForm) {
+				return;
+			}
+			this.#isOpeningMeetingForm = true;
+			this.#subscribeMeetingFormClose();
+			try {
+				// a single launcher reuses its own form, so a repeated show replaces the popup
+				// instead of stacking an independent one
+				this.#meetingFormLauncher ??= new calendar_compacteventformLauncher.CompactFormLauncher();
+				await this.#meetingFormLauncher.showNewEventForm({
+					eventType: '#call_sync#'
+				});
+
+				// the form stays open now; the guard is released by the form's close event
+			} catch (error) {
+				call_adapter_logger.Logger.error('SyncPage: failed to open schedule meeting form', error);
+				this.#notifyScheduleMeetingError();
+				// the form never opened, so no close event will arrive to release the guard
+				this.#isOpeningMeetingForm = false;
+			}
+		}
+		#subscribeMeetingFormClose() {
+			if (this.#meetingFormCloseSubscribed) {
+				return;
+			}
+			this.#meetingFormCloseSubscribed = true;
+			main_core_events.EventEmitter.subscribe(COMPACT_FORM_CLOSE_EVENT, () => {
+				this.#isOpeningMeetingForm = false;
 			});
 		}
 		async #handleFreeSlots() {
@@ -236,62 +278,19 @@ this.BX.Call = this.BX.Call || {};
 				call_adapter_logger.Logger.warn('SyncPage: USER_ID is not a valid positive integer', userId);
 				return;
 			}
+			if (this.#isOpeningFreeSlots) {
+				return;
+			}
+			this.#isOpeningFreeSlots = true;
 			try {
 				const userSharing = await calendar_sharing_interface.UserSharingController.getUserSharing(userId);
 				userSharing.openDialog();
 			} catch (error) {
 				call_adapter_logger.Logger.warn('SyncPage: failed to open free slots dialog', error);
+				this.#notifyFreeSlotsError();
+			} finally {
+				this.#isOpeningFreeSlots = false;
 			}
-		}
-		async initPromo(showCallback) {
-			if (this.#promoQueued) {
-				return;
-			}
-			const isActive = await this.#isPromoActive();
-			if (!isActive) {
-				return;
-			}
-			this.#promoQueued = true;
-			ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
-				this.#promoOnDone = onDone;
-				showCallback();
-			});
-		}
-		closePromo() {
-			// the popup emits 'close' twice on button close (component + container unmount):
-			// mark the promo as viewed only once per show
-			if (!this.#promoViewedSent) {
-				this.#promoViewedSent = true;
-				void this.#markPromoViewed();
-			}
-			if (this.#promoOnDone) {
-				const onDone = this.#promoOnDone;
-				this.#promoOnDone = null;
-				setTimeout(onDone, PROMO_QUEUE_RELEASE_DELAY_MS);
-			}
-		}
-		async #isPromoActive() {
-			try {
-				const response = await main_core.ajax.runAction('im.v2.Promotion.listActive', {
-					data: {
-						type: 'web'
-					}
-				});
-				const list = response?.data ?? [];
-				return list.some(promo => promo?.id === SYNC_PROMO_ID);
-			} catch (error) {
-				call_adapter_logger.Logger.error('SyncPage: failed to check promo status', error);
-				return false;
-			}
-		}
-		#markPromoViewed() {
-			return main_core.ajax.runAction('im.v2.Promotion.read', {
-				data: {
-					id: SYNC_PROMO_ID
-				}
-			}).catch(error => {
-				call_adapter_logger.Logger.error('SyncPage: failed to mark promo as viewed', error);
-			});
 		}
 	}
 
@@ -326,8 +325,8 @@ this.BX.Call = this.BX.Call || {};
 		}
 	};
 
-	const POPUP_ID$1 = 'call-join-meeting-popup';
-	const POPUP_CONFIG$1 = {
+	const POPUP_ID = 'call-join-meeting-popup';
+	const POPUP_CONFIG = {
 		width: 420,
 		padding: 0,
 		overlay: true,
@@ -342,13 +341,13 @@ this.BX.Call = this.BX.Call || {};
 	const JoinMeetingPopup = {
 		name: 'JoinMeetingPopup',
 		components: {
-			CallPopupContainer: call_component_elements.CallPopupContainer
+			CallPopupContainer: call_legacy_component_elements.CallPopupContainer
 		},
 		emits: ['close', 'join'],
 		setup() {
 			return {
-				popupId: POPUP_ID$1,
-				popupConfig: POPUP_CONFIG$1
+				popupId: POPUP_ID,
+				popupConfig: POPUP_CONFIG
 			};
 		},
 		data() {
@@ -399,149 +398,12 @@ this.BX.Call = this.BX.Call || {};
 	`
 	};
 
-	const ILLUSTRATION_BASE_PATH = '/bitrix/js/call/component/sync-page/src/components/sync-promo-popup';
-	const PROMO_FEATURES = [{
-		id: 'guest',
-		titleCode: 'CALL_SYNC_PROMO_POPUP_FEATURE_GUEST_TITLE',
-		descCode: 'CALL_SYNC_PROMO_POPUP_FEATURE_GUEST_DESC'
-	}, {
-		id: 'schedule',
-		titleCode: 'CALL_SYNC_PROMO_POPUP_FEATURE_SCHEDULE_TITLE',
-		descCode: 'CALL_SYNC_PROMO_POPUP_FEATURE_SCHEDULE_DESC'
-	}, {
-		id: 'link',
-		titleCode: 'CALL_SYNC_PROMO_POPUP_FEATURE_LINK_TITLE',
-		descCode: 'CALL_SYNC_PROMO_POPUP_FEATURE_LINK_DESC'
-	}];
-	const PROMO_BADGES = [{
-		id: 'guest-access',
-		locCode: 'CALL_SYNC_PROMO_POPUP_BADGE_GUEST_ACCESS'
-	}, {
-		id: 'no-registration',
-		locCode: 'CALL_SYNC_PROMO_POPUP_BADGE_NO_REGISTRATION'
-	}, {
-		id: 'meeting-chat',
-		locCode: 'CALL_SYNC_PROMO_POPUP_BADGE_MEETING_CHAT'
-	}, {
-		id: 'cloud-record',
-		locCode: 'CALL_SYNC_PROMO_POPUP_BADGE_CLOUD_RECORD'
-	}];
-	const POPUP_ID = 'call-sync-promo-popup';
-
-	// width is intentionally not set: main.popup forces inline overflow-x on the content
-	// container for fixed-width popups, which would clip the mascot panel sticking out
-	const POPUP_CONFIG = {
-		padding: 0,
-		overlay: true,
-		autoHide: true,
-		closeByEsc: true,
-		closeIcon: true,
-		focusTrap: true,
-		ariaLabelledBy: 'call-sync-promo-popup-title',
-		contentBorderRadius: '32px',
-		angle: false,
-		className: 'call-sync-promo-popup-wrapper'
-	};
-
-	// @vue/component
-	const SyncPromoPopup = {
-		name: 'SyncPromoPopup',
-		components: {
-			CallPopupContainer: call_component_elements.CallPopupContainer,
-			UiButton: ui_vue3_components_button.Button
-		},
-		emits: ['close'],
-		setup() {
-			return {
-				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-				ButtonSize: ui_vue3_components_button.ButtonSize,
-				features: PROMO_FEATURES,
-				badges: PROMO_BADGES,
-				illustrationVideoSrc: `${ILLUSTRATION_BASE_PATH}/videos/call-sync-page-promo-illustration.mp4`,
-				illustrationPosterSrc: `${ILLUSTRATION_BASE_PATH}/images/call-sync-page-promo-illustration.webp`,
-				popupId: POPUP_ID,
-				popupConfig: POPUP_CONFIG
-			};
-		},
-		mounted() {
-			// WCAG 2.2.2: do not auto-play the looped decorative video for users with reduced motion
-			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-				this.$refs.illustrationVideo?.pause();
-			}
-		},
-		methods: {
-			onClose() {
-				this.$emit('close');
-			}
-		},
-		template: /* HTML */`
-		<CallPopupContainer :config="popupConfig" :id="popupId" @close="onClose">
-			<div class="call-sync-promo-popup --ui-context-content-light" data-testid="sync-promo-popup">
-				<div class="call-sync-promo-popup__content">
-					<div id="call-sync-promo-popup-title" class="call-sync-promo-popup__title">
-						{{ $Bitrix.Loc.getMessage('CALL_SYNC_PROMO_POPUP_TITLE') }}
-					</div>
-					<div class="call-sync-promo-popup__features">
-						<div
-							v-for="feature in features"
-							:key="feature.id"
-							class="call-sync-promo-popup__feature"
-						>
-							<div class="call-sync-promo-popup__feature-icon" :class="\`--\${feature.id}\`"></div>
-							<div class="call-sync-promo-popup__feature-body">
-								<div class="call-sync-promo-popup__feature-title">
-									{{ $Bitrix.Loc.getMessage(feature.titleCode) }}
-								</div>
-								<div class="call-sync-promo-popup__feature-desc">
-									{{ $Bitrix.Loc.getMessage(feature.descCode) }}
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="call-sync-promo-popup__footer">
-						<UiButton
-							:text="$Bitrix.Loc.getMessage('CALL_SYNC_PROMO_POPUP_BUTTON_OK')"
-							:style="AirButtonStyle.FILLED"
-							:size="ButtonSize.EXTRA_LARGE"
-							:dataset="{ autofocus: '', testid: 'sync-promo-popup-ok-button' }"
-							@click="onClose"
-						/>
-					</div>
-				</div>
-				<div class="call-sync-promo-popup__illustration" aria-hidden="true">
-					<div class="call-sync-promo-popup__illustration-panel">
-						<video
-							ref="illustrationVideo"
-							class="call-sync-promo-popup__illustration-video"
-							:src="illustrationVideoSrc"
-							:poster="illustrationPosterSrc"
-							autoplay
-							loop
-							muted
-							playsinline
-						></video>
-					</div>
-					<div
-						v-for="badge in badges"
-						:key="badge.id"
-						class="call-sync-promo-popup__badge"
-						:class="\`--\${badge.id}\`"
-					>
-						{{ $Bitrix.Loc.getMessage(badge.locCode) }}
-					</div>
-				</div>
-			</div>
-		</CallPopupContainer>
-	`
-	};
-
 	// @vue/component
 	const SyncPage = {
 		name: 'SyncPage',
 		components: {
 			SyncPageBlock,
-			JoinMeetingPopup,
-			SyncPromoPopup
+			JoinMeetingPopup
 		},
 		setup() {
 			// non-reactive service instance, assigned in created()
@@ -551,8 +413,7 @@ this.BX.Call = this.BX.Call || {};
 		},
 		data() {
 			return {
-				showJoinMeetingPopup: false,
-				showPromoPopup: false
+				showJoinMeetingPopup: false
 			};
 		},
 		computed: {
@@ -572,9 +433,13 @@ this.BX.Call = this.BX.Call || {};
 		},
 		mounted() {
 			call_lib_analytics.Analytics.getInstance().sync.onOpenSection();
-			void this.syncPageService.initPromo(() => {
-				this.showPromoPopup = true;
-			});
+			// The page has no messenger, so the launcher gets no lifecycle event here and has to be
+			// started by hand. The promo stays one per user: the view mark lives on the server and
+			// knows nothing about surfaces, so a banner already seen in chats will not come up again.
+			call_lib_syncTabBannerLauncher.SyncTabBannerLauncher.startOnSyncPage();
+		},
+		beforeUnmount() {
+			call_lib_syncTabBannerLauncher.SyncTabBannerLauncher.cancel();
 		},
 		methods: {
 			onBlockClick(blockType) {
@@ -587,10 +452,6 @@ this.BX.Call = this.BX.Call || {};
 			},
 			onJoinMeetingPopupClose() {
 				this.showJoinMeetingPopup = false;
-			},
-			onPromoPopupClose() {
-				this.syncPageService.closePromo();
-				this.showPromoPopup = false;
 			},
 			onJoinMeeting(meetingInput) {
 				// security guard at the sink: never open an arbitrary URL even if the emitter changes
@@ -659,15 +520,11 @@ this.BX.Call = this.BX.Call || {};
 				@close="onJoinMeetingPopupClose"
 				@join="onJoinMeeting"
 			/>
-			<SyncPromoPopup
-				v-if="showPromoPopup"
-				@close="onPromoPopupClose"
-			/>
 		</div>
 	`
 	};
 
 	exports.SyncPage = SyncPage;
 
-})(this.BX.Call.Component = this.BX.Call.Component || {}, BX.Messenger.v2.Lib, BX, BX, BX.Call.Lib, BX.Call, BX.Calendar, BX.Calendar.Sharing, BX.Call.Lib, BX.Call.Adapter, BX.Call.Adapter, BX.UI, BX.Call.Component.Elements, BX.Vue3.Components);
+})(this.BX.Call.Component = this.BX.Call.Component || {}, BX.Messenger.v2.Lib, BX, BX, BX.Event, BX.Call.Lib, BX.Call, BX.Calendar, BX.Calendar.Sharing, BX.Call.Lib, BX.Call.Adapter, BX.Call.Adapter, BX.Call.Legacy.Component.Elements, BX.Call.Lib);
 //# sourceMappingURL=sync-page.bundle.js.map

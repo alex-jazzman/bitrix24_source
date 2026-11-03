@@ -1,4 +1,5 @@
 export const PSEUDO_SELF_CHAT_TYPE = 'notes';
+export const PROJECT_CHAT_TYPE = 'project';
 export const AI_ASSISTANT_CHAT_TYPE = 'chatType_aiAssistant';
 
 export const CopilotChatType = Object.freeze({
@@ -11,6 +12,7 @@ export const AnalyticsEvent = Object.freeze({
 	createNewChat: 'create_new_chat',
 	audioUse: 'audio_use',
 	openTab: 'open_tab',
+	useChatFilter: 'use_chat_filter',
 	popupOpen: 'popup_open',
 	openPrices: 'open_prices',
 	openSettings: 'open_settings',
@@ -35,6 +37,7 @@ export const AnalyticsEvent = Object.freeze({
 	openFiles: 'open_files',
 	clickCreatePoll: 'click_create_poll',
 	clickCreateTask: 'click_create_task',
+	clickCreateAiTask: 'click_create_ai_task',
 	clickCreateEvent: 'click_create_event',
 	clickAttach: 'click_attach',
 	downloadFile: 'download_file',
@@ -47,6 +50,7 @@ export const AnalyticsEvent = Object.freeze({
 	searchResult: 'search_result',
 	selectSearchResult: 'select_search_result',
 	selectRecipient: 'select_recipient',
+	forwardResult: 'forward_result',
 	selectUser: 'select_user',
 	openCreateMenu: 'open_create_menu',
 	clickUpdate: 'click_update',
@@ -90,18 +94,30 @@ export const AnalyticsEvent = Object.freeze({
 	closeSearch: 'cancel_search',
 	selectSearchRecent: 'click_recent_suggest',
 	openTaskCard: 'open_task_description',
+	openSideCard: 'open_side_card',
+	closeSideCard: 'close_side_card',
 	addUser: 'add_mentioned_user',
 	openUnreadMode: 'show_unread',
 	readAllChats: 'read_all',
 	viewJoinPopup: 'view_join_popup',
 	copyGuestLink: 'copy_guest_link',
 	openMiniChat: 'open_mini_chat',
-	bitrixGptAgentPromoView: 'banner_view',
+	bitrixGptAgentPromoView: 'popup_view',
 	bitrixGptAgentPromoButtonClick: 'button_click',
-	bitrixGptAgentPromoClose: 'banner_close',
+	bitrixGptAgentPromoClose: 'popup_close',
 	suggestsShow: 'suggests_show',
 	suggestsClick: 'suggests_click',
 	modeChange: 'mode_change',
+	clickStopGeneration: 'click_stop_generation',
+	clickCreateFolder: 'click_create_folder',
+	openList: 'open_list',
+	addToFolder: 'add_to_folder',
+	deleteFromFolder: 'delete_from_folder',
+	chatLimitException: 'chat_limit_exception',
+	folderLimitException: 'folder_limit_exception',
+	openFolder: 'open_folder',
+	goToDate: 'go_to_date',
+	record: 'record',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -111,6 +127,7 @@ export const AnalyticsTool = Object.freeze({
 	infoHelper: 'InfoHelper',
 	inform: 'inform',
 	notification: 'notification',
+	tasks: 'tasks',
 });
 
 export const AnalyticsCategory = Object.freeze({
@@ -127,12 +144,14 @@ export const AnalyticsCategory = Object.freeze({
 	message: 'message',
 	chatPopup: 'chat_popup',
 	call: 'call',
-	collab: 'collab',
+	collab: 'project',
 	updateAppPopup: 'update_app_popup',
 	audioMessage: 'audiomessage',
 	videoMessage: 'videomessage',
 	notificationOperations: 'notif_ops',
-	banners: 'banners',
+	popups: 'popups',
+	taskOperations: 'task_operations',
+	folders: 'folders',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -158,11 +177,19 @@ export const AnalyticsType = Object.freeze({
 	formatLink: 'link',
 	formatCode: 'code',
 	tasks: 'tasks',
+	chatTask: 'chat_task',
 	ahaSpringRelease2026: 'ahaspringrelease2026',
+	empty: 'empty',
+	nonEmpty: 'non_empty',
+	hotkeys: 'hotkeys',
+	quickRecord: 'quick',
+	lockedRecord: 'locked',
 });
 
 export const AnalyticsSection = Object.freeze({
 	copilotTab: 'copilot_tab',
+	projectTab: 'project_tab',
+	project: 'project',
 	chat: 'chat',
 	chatStart: 'chat_start',
 	chatHistory: 'chat_history',
@@ -182,11 +209,18 @@ export const AnalyticsSection = Object.freeze({
 	settings: 'settings',
 	miniChat: 'mini_chat',
 	stickerPackPopup: 'stickerpack_popup',
-	chatLayout: 'chat_tab',
 	taskCommentsLayout: 'tasksTask_tab',
-	notificationLayout: 'notification_tab',
 	mentionPopup: 'mention_popup',
+	textareaMentionPopup: 'textarea_mention_popup',
 	im: 'im',
+	chatTasks: 'chat_tasks',
+	createMenu: 'create_menu',
+	folderList: 'folder_list',
+	chatList: 'chat_list',
+	filterRow: 'filter_row',
+	folderMenu: 'folder_menu',
+	search: 'search',
+	dateDivider: 'dateDivider',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -206,6 +240,32 @@ export const AnalyticsSubSection = Object.freeze({
 	sharedLink: 'link',
 	sharedLinkMenu: 'link_context_menu',
 	sharedLinkCompactMenu: 'link_menu',
+	chatTaskCard: 'chat_task_card',
+	multiselectPanel: 'multiselect_panel',
+	folderContextMenu: 'folder_context_menu',
+	folderList: 'folder_list',
+});
+
+export const AnalyticsForwardTab = Object.freeze({
+	all: 'all',
+	chats: 'chats',
+	tasks: 'tasks',
+	projects: 'projects',
+	channels: 'channels',
+	copilot: 'copilot',
+});
+
+// Literals intentionally match AnalyticsForwardTab: the two objects answer different questions
+// and are never merged. Change a value only together with the server and mobile folder maps.
+export const AnalyticsFolderType = Object.freeze({
+	all: 'all',
+	userFolder: 'user_folder',
+	tasks: 'tasks',
+	channels: 'channels',
+	projects: 'projects',
+	copilot: 'copilot',
+	lines: 'lines',
+	vibecodeApp: 'vibecode',
 });
 
 export const AnalyticsElement = Object.freeze({
@@ -215,16 +275,19 @@ export const AnalyticsElement = Object.freeze({
 	startButton: 'start_button',
 	more: 'more',
 	taskButton: 'task_button',
+	openButton: 'open_button',
+	closeButton: 'close_button',
 });
 
 export const AnalyticsStatus = Object.freeze({
 	success: 'success',
+	error: 'error',
 	errorTurnedOff: 'error_turnedoff',
 	notFound: 'not_found',
 });
 
 export const CreateChatContext = Object.freeze({
-	collabEmptyState: 'collab_empty_state',
+	projectEmptyState: 'project_empty_state',
 });
 
 export const MessagePinsTypes = Object.freeze({
@@ -235,4 +298,11 @@ export const MessagePinsTypes = Object.freeze({
 
 export const NotificationEntryPoint = Object.freeze({
 	quickAccessLabel: 'bell_button',
+});
+
+// The entry the jump was started from is reported as the section of the event, so the values are
+// read from AnalyticsSection: two dictionaries holding the same wire value would drift apart.
+export const DateNavigationEntryPoint = Object.freeze({
+	search: AnalyticsSection.search,
+	dateDivider: AnalyticsSection.dateDivider,
 });

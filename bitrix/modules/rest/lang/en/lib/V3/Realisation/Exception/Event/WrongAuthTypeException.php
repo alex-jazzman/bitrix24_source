@@ -1,0 +1,2 @@
+<?php
+$MESS['REST_V3_REALISATION_EXCEPTION_EVENT_WRONGAUTHTYPEEXCEPTION'] = 'Wrong authorization type, must be "#TYPE#"';

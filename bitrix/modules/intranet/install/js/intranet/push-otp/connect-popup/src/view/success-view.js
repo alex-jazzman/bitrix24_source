@@ -1,5 +1,5 @@
 import { Tag, Loc, Browser, Dom } from 'main.core';
-import { BaseView } from './base-view';
+import { BaseView, MOBILE_POPUP_WIDTH } from './base-view';
 import { Confetti } from 'ui.confetti';
 import { Analytics } from '../analytics';
 
@@ -9,12 +9,19 @@ export class SuccessView extends BaseView
 	{
 		// eslint-disable-next-line no-undef
 		return Tag.render`
-			<div class="intranet-push-otp-connect-popup-success-box">
-				<div class="intranet-push-otp-connect-popup-success-logo"></div>
+			<div class="intranet-push-otp-connect-popup-success-box ${Browser.isMobile() ? '--mobile' : ''}">
+				<div class="intranet-push-otp-connect-popup-success-graphic">
+					<div class="intranet-push-otp-connect-popup-success-logo"></div>
+				</div>
 				<div class="intranet-push-otp-connect-popup-success-title">${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_TITLE')}</div>
 				<div class="intranet-push-otp-connect-popup-success-subtitle">${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_SUBTITLE')}</div>
 			</div>
 		`;
+	}
+
+	getPopupWidth(): ?number
+	{
+		return Browser.isMobile() ? MOBILE_POPUP_WIDTH : null;
 	}
 
 	afterShow(option: Object)

@@ -105,6 +105,7 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 			await this.fillDialogues(syncListResult);
 			await this.fillReactions(syncListResult);
 			await this.fillMessages(syncListResult);
+			await this.fillCommentInfo(syncListResult);
 			await this.fillPins(syncListResult);
 			await this.fillRecent(syncListResult);
 			await this.fillCopilot(syncListResult);
@@ -268,6 +269,71 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 			}
 
 			await this.messageRepository.saveFromRest(recentMessages);
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
+		 * @return {Promise<void>}
+		 */
+		async fillCommentInfo(syncListResult)
+		{
+			const { commentInfo, messages } = syncListResult;
+			if (!Type.isArrayFilled(commentInfo))
+			{
+				return;
+			}
+
+			const point = new PerfPoint('sync-fill-comment-info', `cells ${commentInfo.length}`).start();
+			try
+			{
+				const commentInfoList = await this.addParentChatIds(commentInfo, messages);
+
+				if (Type.isArrayFilled(commentInfoList))
+				{
+					await this.commentRepository.saveFromRest(commentInfoList);
+				}
+			}
+			finally
+			{
+				point.end();
+			}
+		}
+
+		/**
+		 * @private
+		 * @desc the cell carries the comment chat and the post, the row of the table needs the parent
+		 * chat too, so it is taken from the post itself - from the page or from the local messages
+		 * @param {Array<CommentInfoModelState>} commentInfo
+		 * @param {Array<SyncRawMessage>} messages
+		 * @return {Promise<Array<RestCommentInfo>>}
+		 */
+		async addParentChatIds(commentInfo, messages)
+		{
+			const parentChatIdByPostId = new Map(messages.map((message) => [message.id, message.chat_id]));
+
+			const postIdsOutOfPage = commentInfo
+				.filter((cell) => !parentChatIdByPostId.has(cell.messageId))
+				.map((cell) => cell.messageId)
+			;
+
+			if (Type.isArrayFilled(postIdsOutOfPage))
+			{
+				const storedPosts = await Promise.all(
+					postIdsOutOfPage.map((postId) => this.messageRepository.getMessageById(postId)),
+				);
+
+				storedPosts.forEach((post) => {
+					if (post)
+					{
+						parentChatIdByPostId.set(post.id, post.chatId);
+					}
+				});
+			}
+
+			return commentInfo
+				.filter((cell) => parentChatIdByPostId.has(cell.messageId))
+				.map((cell) => ({ ...cell, parentChatId: parentChatIdByPostId.get(cell.messageId) }))
+			;
 		}
 
 		/**

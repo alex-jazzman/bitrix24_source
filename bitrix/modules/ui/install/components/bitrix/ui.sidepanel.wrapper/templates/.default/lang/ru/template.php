@@ -1,0 +1,2 @@
+<?php
+$MESS['UI_SIDEPANEL_WRAPPER_LEFT_PANEL_RESIZER_ACCESSIBLE_NAME'] = 'Ширина левой панели';

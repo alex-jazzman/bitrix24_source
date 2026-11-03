@@ -12,6 +12,7 @@ return [
 		'im.v2.component.message.base',
 		'im.v2.component.message.elements',
 		'im.v2.const',
+		'im.v2.lib.copilot',
 		'im.v2.lib.helpdesk',
 		'im.v2.lib.notifier',
 		'im.v2.lib.utils',

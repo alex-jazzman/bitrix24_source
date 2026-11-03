@@ -9,13 +9,16 @@ return [
 		'apptheme',
 		'in-app-url',
 		'loc',
-		'rest',
 		'haptics',
 		'event-emitter',
 		'notify-manager',
 		'toast',
 		'tokens',
 		'qrauth',
+		// BX.ajax appears only for whoever requires rest; the screen completes and delegates tasks with it
+		'rest', // @keep
+		'require-lazy',
+		'type',
 		'ui-system/typography/heading',
 		'ui-system/typography/text',
 

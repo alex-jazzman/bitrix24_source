@@ -3,6 +3,7 @@ export type MigrationVisibility = 'hidden' | 'active' | 'terminal';
 export type MigrationPublicStatus =
 	| 'running'
 	| 'waiting'
+	| 'manual_waiting'
 	| 'switching'
 	| 'blocked'
 	| 'cancelling'

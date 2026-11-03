@@ -1070,10 +1070,20 @@ else
 			$ID = isset($arResult['ELEMENT']['ID']) ? $arResult['ELEMENT']['ID'] : 0;
 			if($arResult['CALL_LIST_ID'] > 0 && $arResult['CALL_LIST_ELEMENT'] > 0)
 			{
-				$callList = \Bitrix\Crm\CallList\CallList::createWithId($arResult['CALL_LIST_ID']);
-				if($callList && $ID > 0)
+				try
 				{
-					$callList->addCreatedEntity($arResult['CALL_LIST_ELEMENT'], CCrmOwnerType::DealName, $ID);
+					$callList = \Bitrix\Crm\CallList\CallList::createWithId($arResult['CALL_LIST_ID']);
+					if($callList && $ID > 0)
+					{
+						$callList->addCreatedEntity($arResult['CALL_LIST_ELEMENT'], CCrmOwnerType::DealName, $ID);
+					}
+				}
+				catch (\Bitrix\Main\SystemException $exception)
+				{
+					if (!in_array((int)$exception->getCode(), [403, 404], true))
+					{
+						throw $exception;
+					}
 				}
 			}
 

@@ -51,14 +51,13 @@ export const EmptyAvatar = {
 		{
 			return this.type === EmptyAvatarType.collab;
 		},
+		isCollabPlaceholder(): boolean
+		{
+			return !Type.isStringFilled(this.url);
+		},
 		collabEmptyAvatarUrl(): string
 		{
-			if (!Type.isStringFilled(this.url))
-			{
-				return COLLAB_EMPTY_AVATAR_URL;
-			}
-
-			return this.url;
+			return this.isCollabPlaceholder ? COLLAB_EMPTY_AVATAR_URL : this.url;
 		},
 		containerClasses(): string[]
 		{
@@ -79,6 +78,7 @@ export const EmptyAvatar = {
 			:size="size"
 			:title="title"
 			:backgroundColor="Color.collab10"
+			:class="{ '--placeholder-image': isCollabPlaceholder }"
 		/>
 		<div v-else class="bx-im-empty-avatar__container" :class="containerClasses">
 			<div v-if="!url" class="bx-im-empty-avatar__avatar --default"></div>

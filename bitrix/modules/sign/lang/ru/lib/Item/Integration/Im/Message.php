@@ -8,6 +8,8 @@ $MESS['SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_SES_WITH_INITIATOR_MSGVER_1'] = '[b]П
 $MESS['SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_GOS_KEY_MSGVER_3'] = '[b]Подпишите документ в Госключе[/b][br][br]Подпишите документ #DOC_NAME#. Перейдите в приложение Госключ и подпишите документ в течение 24 часов. Если не подписать за это время, документ удалится. [url=#HELPDESK_URL#]Как подписать документ в Госключе[/url][br][br][url=#SIGN_URL#]Открыть документ[/url]';
 $MESS['SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_GOS_KEY_INITIATOR'] = '[b]Подпишите документ в Госключе[/b][br][br]#INITIATOR_NAME# просит вас подписать документ #DOC_NAME#. Перейдите в приложение Госключ и подпишите документ в течение 24 часов. Если не подписать за это время, документ удалится. [url=#HELPDESK_URL#]Как подписать документ в Госключе[/url][br][br][url=#SIGN_URL#]Открыть документ[/url]';
 
+$MESS['SIGN_CALLBACK_CHAT_INVITE_USER_MESSAGE'] = '[b]Сообщение по документу[/b][br]#USER_MESSAGE#';
+
 $MESS['SIGN_CALLBACK_CHAT_DONE_COMPANY_MSGVER_2'] = '[b]Документ подписан[/b][br][br]Документ #DOC_NAME# подписан и доступен в разделе Сейф компании[br][br][url=#SAFE_URL#]В сейф компании[/url]';
 
 $MESS['SIGN_CALLBACK_CHAT_DONE_EMPLOYEE_MSGVER_2'] = '[b]Документ подписан[/b][br][br]Документ #DOC_NAME# подписан и доступен в вашем профиле в разделе Мои документы[br][br][url=#SIGN_URL#]Открыть документ[/url]';

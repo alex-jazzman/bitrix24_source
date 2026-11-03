@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/radiobuttonfield.bundle.css',
 	'js' => 'dist/radiobuttonfield.bundle.js',
 	'rel' => [
+		'landing.loc',
+		'landing.ui.component.internal',
+		'landing.ui.field.basefield',
+		'main.core',
+		'ui.buttons',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
-		'main.core',
-		'landing.ui.field.basefield',
-		'ui.buttons',
-		'landing.ui.component.internal',
-		'landing.loc',
 	],
 	'skip_core' => false,
 ];

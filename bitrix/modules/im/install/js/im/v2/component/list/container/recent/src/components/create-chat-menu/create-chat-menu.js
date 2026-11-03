@@ -1,13 +1,17 @@
 import { type JsonObject } from 'main.core';
 import { type MenuOptions } from 'main.popup';
 import { FeaturePromoter } from 'ui.info-helper';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
+import { MenuItemDesign } from 'ui.system.menu.vue';
+import { markRaw } from 'ui.vue3';
 
 import { Messenger } from 'im.public';
 import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
 import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements.menu';
 import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
 import { PromoId, ChatType, ActionByUserType, CopilotRole, SliderCode, type ChatTypeItem } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
+import { Analytics, AnalyticsSection } from 'im.v2.lib.analytics';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -20,6 +24,7 @@ import { DescriptionBanner } from './components/collab/description-banner';
 import { CopilotRoleSelectionButton } from './components/copilot-role-selection-button';
 import { CreateChatHelp } from './components/create-chat-help';
 import { InvitePromo } from './components/invite-promo';
+import { CreateChatMenuAir, type CreateChatMenuAirItem } from './create-chat-menu-air';
 
 import './css/create-chat-menu.css';
 
@@ -28,6 +33,15 @@ const PromoByChatType = {
 	[ChatType.videoconf]: PromoId.createConference,
 	[ChatType.channel]: PromoId.createChannel,
 };
+
+const AirMenuItemId = Object.freeze({
+	chat: 'im-create-chat-menu-item-chat',
+	copilot: 'im-create-chat-menu-item-copilot',
+	channel: 'im-create-chat-menu-item-channel',
+	collab: 'im-create-chat-menu-item-collab',
+	conference: 'im-create-chat-menu-item-conference',
+	folder: 'im-create-chat-menu-item-folder',
+});
 
 // @vue/component
 export const CreateChatMenu = {
@@ -40,6 +54,8 @@ export const CreateChatMenu = {
 		CopilotRolesDialog,
 		InvitePromo,
 		DescriptionBanner,
+		CreateChatMenuAir,
+		BIcon,
 	},
 	data(): JsonObject
 	{
@@ -51,12 +67,18 @@ export const CreateChatMenu = {
 			showCopilotRolesDialog: false,
 			showCollabPromo: false,
 			isLoading: false,
+			airMenuItems: [],
 		};
 	},
 	computed:
 	{
 		ChatType: () => ChatType,
 		MenuItemIcon: () => MenuItemIcon,
+		Outline: () => Outline,
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
 		hasMenuAccess(): boolean
 		{
 			const actions = [
@@ -154,6 +176,16 @@ export const CreateChatMenu = {
 			});
 		},
 	},
+	watch:
+	{
+		showMenu(isVisible: boolean)
+		{
+			if (!isVisible)
+			{
+				this.airMenuItems = [];
+			}
+		},
+	},
 	created()
 	{
 		this.showCollabPromo = PromoManager.getInstance().needToShow(PromoId.createCollabDescription);
@@ -181,6 +213,7 @@ export const CreateChatMenu = {
 		},
 		onFolderCreateClick()
 		{
+			Analytics.getInstance().folder.onClickCreateFolder(AnalyticsSection.createMenu);
 			FolderManager.startCreation();
 			this.showMenu = false;
 		},
@@ -194,6 +227,30 @@ export const CreateChatMenu = {
 			}
 
 			this.onChatCreateClick(ChatType.collab);
+		},
+		onAirMenuItemSelect(itemId: string)
+		{
+			const scenarios = {
+				[AirMenuItemId.chat]: () => this.onChatCreateClick(ChatType.chat),
+				[AirMenuItemId.copilot]: () => {
+					void this.onDefaultCopilotCreateClick();
+				},
+				[AirMenuItemId.channel]: () => this.onChatCreateClick(ChatType.channel),
+				[AirMenuItemId.collab]: () => {
+					if (this.isCollabV2Available)
+					{
+						this.onCollabV2CreateClick();
+
+						return;
+					}
+
+					this.onChatCreateClick(ChatType.collab);
+				},
+				[AirMenuItemId.conference]: () => this.onChatCreateClick(ChatType.videoconf),
+				[AirMenuItemId.folder]: () => this.onFolderCreateClick(),
+			};
+
+			scenarios[itemId]?.();
 		},
 		showCopilotPromoter()
 		{
@@ -328,28 +385,139 @@ export const CreateChatMenu = {
 
 			return this.copilotService;
 		},
+		collectAirMenuItems(): CreateChatMenuAirItem[]
+		{
+			const items: CreateChatMenuAirItem[] = [];
+
+			if (this.canCreateChat)
+			{
+				items.push({
+					id: AirMenuItemId.chat,
+					title: this.loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2'),
+					subtitle: this.loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_MSGVER_1'),
+					design: MenuItemDesign.Default,
+					icon: Outline.CHATS,
+				});
+			}
+
+			if (this.isCopilotAvailableAndCreatable)
+			{
+				items.push({
+					id: AirMenuItemId.copilot,
+					title: this.createCopilotTitle,
+					subtitle: this.loc('IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1'),
+					// The design paints the icon, so it needs no chat type.
+					design: this.isBitrixGptV2Available ? MenuItemDesign.BitrixGPT : MenuItemDesign.Copilot,
+					icon: this.isBitrixGptV2Available ? Outline.BITRIX_GPT : Outline.COPILOT,
+				});
+			}
+
+			if (this.canCreateChannel)
+			{
+				items.push({
+					id: AirMenuItemId.channel,
+					title: this.loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2'),
+					subtitle: this.loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1'),
+					design: MenuItemDesign.Default,
+					icon: Outline.SPEAKER,
+				});
+			}
+
+			if (this.isCollabAvailable)
+			{
+				if (this.isCollabV2Available)
+				{
+					items.push({
+						id: AirMenuItemId.collab,
+						title: this.loc('IM_RECENT_CREATE_COLLAB_V2_TITLE'),
+						subtitle: this.loc('IM_RECENT_CREATE_COLLAB_V2_SUBTITLE'),
+						design: MenuItemDesign.Default,
+						icon: Outline.COLLAB,
+						isLocked: !this.isCollabV2AvailableByTariff,
+						disabled: !this.isCollabV2AvailableByTariff,
+					});
+				}
+				else
+				{
+					items.push({
+						id: AirMenuItemId.collab,
+						title: this.loc('IM_RECENT_CREATE_COLLAB_TITLE'),
+						subtitle: this.loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1'),
+						design: MenuItemDesign.Default,
+						icon: Outline.COLLAB,
+					});
+				}
+			}
+
+			if (this.canCreateConference)
+			{
+				items.push({
+					id: AirMenuItemId.conference,
+					title: this.loc('IM_RECENT_CREATE_CONFERENCE_TITLE'),
+					subtitle: this.loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_MSGVER_1'),
+					design: MenuItemDesign.Default,
+					icon: Outline.RECORD_VIDEO,
+				});
+			}
+
+			if (this.isFolderAvailable)
+			{
+				items.push({
+					id: AirMenuItemId.folder,
+					title: this.loc('IM_RECENT_CREATE_FOLDER_TITLE'),
+					subtitle: this.loc('IM_RECENT_CREATE_FOLDER_SUBTITLE'),
+					design: MenuItemDesign.Default,
+					icon: Outline.FOLDER,
+				});
+			}
+
+			return items;
+		},
 		handleShowPopup()
 		{
 			Analytics.getInstance().chatCreate.onMenuCreateClick();
+			if (this.isAirDesignEnabled)
+			{
+				// The set is taken once, so the items do not change under an open menu.
+				this.airMenuItems = markRaw(this.collectAirMenuItems());
+			}
+
 			this.showMenu = true;
 		},
 	},
 	template: `
+		<!-- In the Air branch BMenu owns aria-expanded (it restores the attribute it saw before showing), so Vue must not render it. -->
 		<div
 			v-if="hasMenuAccess"
-			class="bx-im-list-container-recent__create-chat_icon"
+			class="bx-im-list-container-recent__create-chat_icon --focus-visible"
 			:class="{'--active': showMenu}"
+			role="button"
+			tabindex="0"
+			data-testid="im-create-chat-menu-trigger"
+			:aria-label="loc('IM_RECENT_CREATE_CHAT_MENU_BUTTON_ARIA')"
+			:aria-expanded="isAirDesignEnabled ? null : showMenu"
+			:aria-haspopup="isAirDesignEnabled ? 'menu' : null"
 			@click="handleShowPopup"
+			@keydown.enter.prevent="handleShowPopup"
+			@keydown.space.prevent="handleShowPopup"
 			ref="icon"
 		>
+			<BIcon
+				v-if="isAirDesignEnabled && !isLoading"
+				:name="Outline.CREATE_CHAT"
+				class="bx-im-list-container-recent__create-chat_icon-air"
+			/>
 			<div
+				v-else
 				class="bx-im-list-container-recent__create-chat_icon_status"
 				:class="iconStatusClasses"
 			></div>
 		</div>
+		<template v-if="!isAirDesignEnabled">
 		<MessengerMenu v-if="showMenu" :config="menuConfig" @close="showMenu = false">
 			<MenuItem
 				v-if="canCreateChat"
+				data-testid="im-create-chat-menu-item-chat"
 				:icon="MenuItemIcon.chat"
 				:title="loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2')"
 				:subtitle="loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_MSGVER_1')"
@@ -357,9 +525,11 @@ export const CreateChatMenu = {
 			/>
 			<MenuItem
 				v-if="isCopilotAvailableAndCreatable"
+				data-testid="im-create-chat-menu-item-copilot"
 				:icon="copilotIcon"
 				:title="createCopilotTitle"
 				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1')"
+				hasInteractiveAfterContent
 				@click.stop="onDefaultCopilotCreateClick"
 			>
 				<template #after-content>
@@ -368,6 +538,7 @@ export const CreateChatMenu = {
 			</MenuItem>
 			<MenuItem
 				v-if="canCreateChannel"
+				data-testid="im-create-chat-menu-item-channel"
 				:icon="MenuItemIcon.channel"
 				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1')"
@@ -377,6 +548,7 @@ export const CreateChatMenu = {
 				<MenuItem
 					v-if="isCollabV2Available"
 					:disabled="!isCollabV2AvailableByTariff"
+					data-testid="im-create-chat-menu-item-collab"
 					:icon="MenuItemIcon.collabV2"
 					:title="loc('IM_RECENT_CREATE_COLLAB_V2_TITLE')"
 					:subtitle="loc('IM_RECENT_CREATE_COLLAB_V2_SUBTITLE')"
@@ -384,6 +556,7 @@ export const CreateChatMenu = {
 				/>
 				<MenuItem
 					v-else
+					data-testid="im-create-chat-menu-item-collab"
 					:icon="MenuItemIcon.collab"
 					:title="loc('IM_RECENT_CREATE_COLLAB_TITLE')"
 					:subtitle="loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1')"
@@ -396,6 +569,7 @@ export const CreateChatMenu = {
 			</template>
 			<MenuItem
 				v-if="canCreateConference"
+				data-testid="im-create-chat-menu-item-conference"
 				:icon="MenuItemIcon.conference"
 				:title="loc('IM_RECENT_CREATE_CONFERENCE_TITLE')"
 				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_MSGVER_1')"
@@ -407,6 +581,7 @@ export const CreateChatMenu = {
 				:icon="MenuItemIcon.folder"
 				:title="loc('IM_RECENT_CREATE_FOLDER_TITLE')"
 				:subtitle="loc('IM_RECENT_CREATE_FOLDER_SUBTITLE')"
+				data-testid="im-create-chat-menu-item-folder"
 				@click="onFolderCreateClick"
 			/>
 			<InvitePromo v-if="showInvitePromo" @close="showInvitePromo = false" />
@@ -414,6 +589,14 @@ export const CreateChatMenu = {
 				<CreateChatHelp @articleOpen="showMenu = false" />
 			</template>
 		</MessengerMenu>
+		</template>
+		<CreateChatMenuAir
+			v-else-if="showMenu"
+			:items="airMenuItems"
+			:bindElement="$refs.icon"
+			@select="onAirMenuItemSelect"
+			@close="showMenu = false"
+		/>
 		<CreateChatPromo
 			v-if="showCreateChatPromo"
 			:chatType="chatTypeToCreate"

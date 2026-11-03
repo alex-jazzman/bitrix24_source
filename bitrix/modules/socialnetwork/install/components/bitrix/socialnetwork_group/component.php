@@ -18,9 +18,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\Component\Workgroup\FavoritesTitleTemplateResolver;
 use Bitrix\Socialnetwork\Integration\Intranet\Settings;
 use Bitrix\Socialnetwork\Item\Workgroup\Type;
 use Bitrix\Socialnetwork\Promotion\ProjectAi;
+use Bitrix\Socialnetwork\V2\Internal\DI\Container;
+use Bitrix\Socialnetwork\V2\Internal\Service\ProjectAnalytics;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -707,15 +710,24 @@ $arParams["NOTE_MESSAGE"] = "";
 
 $arResult['groupFields'] = [];
 $arResult['PAGES_TITLE_TEMPLATE'] = '';
-if ((int) ($arResult['VARIABLES']['group_id'] ?? 0) > 0)
+$arResult['FAVORITES_TITLE_TEMPLATE'] = '';
+$groupId = (int)($arResult['VARIABLES']['group_id'] ?? 0);
+$isNewProjectsOn = $groupId > 0 && \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn();
+if ($groupId > 0)
 {
-	$groupFields = CSocNetGroup::getById((int)$arResult['VARIABLES']['group_id']);
+	$groupFields = CSocNetGroup::getById($groupId);
 	if (!empty($groupFields))
 	{
 		$arResult['groupFields'] = $groupFields;
 		$arResult['PAGES_TITLE_TEMPLATE'] = Loc::getMessage('SONET_GROUP_PAGES_TITLE_TEMPLATE', [
 			'#GROUP_NAME#' => htmlspecialcharsback($groupFields['NAME']),
 		]);
+
+		$arResult['FAVORITES_TITLE_TEMPLATE'] = (new FavoritesTitleTemplateResolver())->resolve(
+			groupId: $groupId,
+			groupFields: $groupFields,
+			titleTemplate: $arResult['PAGES_TITLE_TEMPLATE'],
+		);
 	}
 }
 
@@ -1089,53 +1101,38 @@ elseif (mb_strpos($componentPage, "user_photo") !== false || mb_strpos($componen
 
 	$arParams["FATAL_ERROR"] = ($res <= 0 ? "Y" : "N");
 
-	if (mb_strpos($componentPage, "group_photo") !== false && CModule::IncludeModule('iblock'))
+	if (
+		mb_strpos($componentPage, 'group_photo') !== false
+		&& (int)($arParams['PHOTO_GROUP_IBLOCK_ID'] ?? 0) > 0
+		&& isset($arParams['PHOTO']['ALL'])
+		&& CModule::IncludeModule('iblock')
+	)
 	{
-		$arPhotoIBlockID = array();
-		$rsIBlock = CIBlock::GetList(array(), array("ACTIVE" => "Y", "CODE"=>"group_photogallery%"));
-		while($arIBlock = $rsIBlock->Fetch())
-			$arPhotoIBlockID[] = $arIBlock["ID"];
-
-		if (count($arPhotoIBlockID) > 0)
+		if (
+			intval($_GET['ELEMENT_ID'] ?? null) > 0
+			&& intval($arParams['PHOTO']['ALL']['FORUM_ID']) > 0
+			&& $arParams['PHOTO']['ALL']['COMMENTS_TYPE'] === 'FORUM'
+			&& CModule::IncludeModule('forum')
+		)
 		{
-			$rsPhotoSection = CIBlockSection::GetList(
-				array("timestamp_x"=>"desc"),
+			$rsIBlockElement = CIBlockElement::GetList(
+				array(),
 				array(
-					"IBLOCK_ID" => $arPhotoIBlockID,
-					"SOCNET_GROUP_ID" => $arResult["VARIABLES"]["group_id"]
-				)
+					'IBLOCK_ID' => $arParams['PHOTO_GROUP_IBLOCK_ID'],
+					'ID' => $_GET['ELEMENT_ID']
+				),
+				false,
+				false,
+				array('IBLOCK_ID', 'PROPERTY_FORUM_TOPIC_ID')
 			);
-			if ($arPhotoSection = $rsPhotoSection->Fetch())
+
+			if (
+				($arIBlockElement = $rsIBlockElement->Fetch())
+				&& array_key_exists('PROPERTY_FORUM_TOPIC_ID_VALUE', $arIBlockElement)
+			)
 			{
-				$arParams["PHOTO_GROUP_IBLOCK_ID"] = $arPhotoSection["IBLOCK_ID"];
-
-				if (
-					intval($_GET["ELEMENT_ID"] ?? null) > 0
-					&& intval($arParams["PHOTO"]["ALL"]["FORUM_ID"]) > 0
-					&& $arParams["PHOTO"]["ALL"]["COMMENTS_TYPE"] === "FORUM"
-					&& CModule::IncludeModule("forum")
-				)
-				{
-					$rsIBlockElement = CIBlockElement::GetList(
-						array(),
-						array(
-							"IBLOCK_ID" => $arParams["PHOTO_GROUP_IBLOCK_ID"],
-							"ID" => $_GET["ELEMENT_ID"]
-						),
-						false,
-						false,
-						array("IBLOCK_ID", "PROPERTY_FORUM_TOPIC_ID")
-					);
-
-					if (
-						($arIBlockElement = $rsIBlockElement->Fetch())
-						&& array_key_exists("PROPERTY_FORUM_TOPIC_ID_VALUE", $arIBlockElement)
-					)
-					{
-						$arForumTopic = CForumTopic::GetByID($arIBlockElement["PROPERTY_FORUM_TOPIC_ID_VALUE"]);
-						$arParams["PHOTO"]["ALL"]["FORUM_ID"] = $arForumTopic["FORUM_ID"] ?? null;
-					}
-				}
+				$arForumTopic = CForumTopic::GetByID($arIBlockElement['PROPERTY_FORUM_TOPIC_ID_VALUE']);
+				$arParams['PHOTO']['ALL']['FORUM_ID'] = $arForumTopic['FORUM_ID'] ?? null;
 			}
 		}
 	}
@@ -1235,17 +1232,31 @@ Extension::load('socialnetwork.slider');
 
 $arResult['componentPage'] = $componentPage;
 
-$groupId = (int)($arResult["VARIABLES"]["group_id"] ?? null);
-if ($groupId && \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn())
+if ($groupId && $isNewProjectsOn)
 {
 	$convertService = new \Bitrix\Socialnetwork\V2\Public\Service\Project\Convert();
 	$convertService->ensureProjectExists($groupId, $USER->GetID());
+	$groupFields = CSocNetGroup::getById($groupId);
+	if (!empty($groupFields))
+	{
+		$arResult['groupFields'] = $groupFields;
+	}
 }
 
 $userId = (int)$USER->GetID();
 if ($userId > 0 && (new ProjectAi())->shouldShow($userId))
 {
 	Extension::load('socialnetwork.v2.components.popup.new-projects-popup');
+}
+
+// Must run before IncludeComponentTemplate: in slider mode (IFRAME=Y) the template renders
+// ui.sidepanel.wrapper and ends the request via exit, so anything after it would not execute.
+if ($componentPage === 'group_disk')
+{
+	Container::getInstance()
+		->get(ProjectAnalytics::class)
+		->trackOpenFilesSectionFromRequest((int)$groupId, (int)$userId)
+	;
 }
 
 $this->IncludeComponentTemplate($componentPage, array_key_exists($componentPage, $arCustomPagesPath) ? $arCustomPagesPath[$componentPage] : '');

@@ -4,14 +4,14 @@ IncludeModuleLangFile(__FILE__);
 
 class search extends CModule
 {
-	var $MODULE_ID = 'search';
-	var $MODULE_VERSION;
-	var $MODULE_VERSION_DATE;
-	var $MODULE_NAME;
-	var $MODULE_DESCRIPTION;
-	var $MODULE_CSS;
+	public $MODULE_ID = 'search';
+	public $MODULE_VERSION;
+	public $MODULE_VERSION_DATE;
+	public $MODULE_NAME;
+	public $MODULE_DESCRIPTION;
+	public $MODULE_CSS;
 
-	var $errors;
+	public $errors;
 
 	public function __construct()
 	{
@@ -19,6 +19,7 @@ class search extends CModule
 
 		include __DIR__ . '/version.php';
 
+		// @phpstan-ignore-next-line
 		if (is_array($arModuleVersion) && array_key_exists('VERSION', $arModuleVersion))
 		{
 			$this->MODULE_VERSION = $arModuleVersion['VERSION'];
@@ -29,9 +30,10 @@ class search extends CModule
 		$this->MODULE_DESCRIPTION = GetMessage('SEARCH_MODULE_DESC');
 	}
 
-	function InstallDB($arParams = [])
+	public function InstallDB($arParams = [])
 	{
 		global $APPLICATION;
+		/** @var \Bitrix\Main\DB\Connection $connection */
 		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
@@ -46,7 +48,7 @@ class search extends CModule
 		}
 
 		// Database tables creation
-		if (!$DB->TableExists("b_search_content"))
+		if (!$DB->TableExists('b_search_content'))
 		{
 			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/install/db/' . $connection->getType() . '/install.sql');
 		}
@@ -99,9 +101,10 @@ class search extends CModule
 		}
 	}
 
-	function UnInstallDB($arParams = [])
+	public function UnInstallDB($arParams = [])
 	{
 		global $APPLICATION;
+		/** @var \Bitrix\Main\DB\Connection $connection */
 		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 		$DB = CDatabase::GetModuleConnection('search', true);
@@ -143,7 +146,7 @@ class search extends CModule
 		return true;
 	}
 
-	function InstallFiles($arParams = [])
+	public function InstallFiles($arParams = [])
 	{
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/install/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin');
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/search', true, true);
@@ -198,7 +201,7 @@ class search extends CModule
 		return true;
 	}
 
-	function UnInstallFiles()
+	public function UnInstallFiles()
 	{
 		DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/search/install/admin/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin');
 		DeleteDirFilesEx('/bitrix/images/search/');
@@ -207,7 +210,7 @@ class search extends CModule
 		return true;
 	}
 
-	function DoInstall()
+	public function DoInstall()
 	{
 		global $APPLICATION, $step;
 
@@ -233,7 +236,7 @@ class search extends CModule
 		}
 	}
 
-	function DoUninstall()
+	public function DoUninstall()
 	{
 		global $APPLICATION, $step;
 
@@ -261,6 +264,7 @@ class search extends CModule
 			'TABLES' => [
 				'b_search_content' => 'ID',
 				'b_search_content_right' => 'SEARCH_CONTENT_ID',
+				'b_search_content_right_sync' => 'SEARCH_CONTENT_ID',
 				'b_search_content_site' => 'SEARCH_CONTENT_ID',
 				'b_search_content_stem' => 'SEARCH_CONTENT_ID',
 				'b_search_content_title' => 'SEARCH_CONTENT_ID',

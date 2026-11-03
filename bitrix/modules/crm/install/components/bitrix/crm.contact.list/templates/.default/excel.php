@@ -104,6 +104,9 @@ else
 				case 'EXPORT':
 					$result = isset($arContact['EXPORT']) ? $arResult['EXPORT_LIST'][$arContact['EXPORT']] : '';
 					break;
+				case 'OPENED':
+					$result = ($arContact['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+					break;
 				case 'COMMENTS':
 					$result = isset($arContact['COMMENTS']) ? htmlspecialcharsback($arContact['COMMENTS']) : '';
 					break;

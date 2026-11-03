@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/publication.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 ];

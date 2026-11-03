@@ -3,9 +3,11 @@ this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
-(function (exports, ui_entitySelector, socialnetwork_v2_const) {
+(function (exports, main_core, ui_entitySelector, socialnetwork_v2_const) {
 	'use strict';
 
+	// humanresources StructureAction the org structure provider checks before it offers a node
+	const STRUCTURE_VIEW_ACTION = 'view';
 	class UsersSelector {
 		constructor(options) {
 			this.options = options;
@@ -24,8 +26,9 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				popupOptions: {
 					targetContainer: this.options.targetContainer
 				},
-				entities: this.#getEntities(),
+				entities: UsersSelector.getEntities(this.options),
 				preselectedItems: this.getPreselectedItems(),
+				selectedItems: this.options.selectedItems,
 				events: {
 					'Item:onSelect': event => {
 						const item = event.getData().item;
@@ -44,22 +47,54 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				showCreateButton: false,
 				dialogOptions
 			};
-			return new ui_entitySelector.TagSelector(tagSelectionOptions);
+			const selector = new ui_entitySelector.TagSelector(tagSelectionOptions);
+			if (main_core.Type.isStringFilled(this.options.controlId)) {
+				selector.getAddButtonLink().id = this.options.controlId;
+			}
+			if (main_core.Type.isStringFilled(this.options.ariaLabelledBy)) {
+				const addButtonLabelledBy = main_core.Type.isStringFilled(this.options.controlId) ? `${this.options.controlId} ${this.options.ariaLabelledBy}` : this.options.ariaLabelledBy;
+				main_core.Dom.attr(selector.getAddButtonLink(), 'aria-labelledby', addButtonLabelledBy);
+				main_core.Dom.attr(selector.getTextBox(), 'aria-labelledby', this.options.ariaLabelledBy);
+			}
+			return selector;
 		}
-		#getEntities() {
+		static getEntities(options) {
 			const entities = [{
 				id: socialnetwork_v2_const.EntitySelectorEntity.User,
 				dynamicLoad: true,
-				dynamicSearch: true
+				dynamicSearch: true,
+				...(options.intranetUsersOnly === true ? {
+					options: {
+						intranetUsersOnly: true
+					}
+				} : {})
 			}];
-			const optionsEntities = this.options.entities || [];
-			if (optionsEntities.includes(socialnetwork_v2_const.EntitySelectorEntity.Department)) {
+			const requestedEntities = options.entities || [];
+			if (requestedEntities.includes(socialnetwork_v2_const.EntitySelectorEntity.Department)) {
 				entities.push({
 					id: socialnetwork_v2_const.EntitySelectorEntity.Department,
 					options: {
 						selectMode: 'usersAndDepartments',
 						allowFlatDepartments: true,
 						allowSelectRootDepartment: true
+					}
+				});
+			}
+			if (requestedEntities.includes(socialnetwork_v2_const.EntitySelectorEntity.StructureNode) && options.isTeamsAvailable === true) {
+				entities.push({
+					id: socialnetwork_v2_const.EntitySelectorEntity.StructureNode,
+					options: {
+						includedNodeEntityTypes: [socialnetwork_v2_const.StructureNodeEntityType.Team],
+						// without it the provider builds the tree with no access filter at all
+						restricted: STRUCTURE_VIEW_ACTION,
+						// own tabs keep teams and departments in separate trees
+						useMultipleTabs: true,
+						selectMode: 'usersAndDepartments',
+						allowFlatDepartments: true,
+						visual: {
+							avatarMode: 'node',
+							tagStyle: 'none'
+						}
 					}
 				});
 			}
@@ -78,11 +113,26 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			if (Array.isArray(preselectedIds)) {
 				return preselectedIds;
 			}
+			if (main_core.Type.isNil(preselectedIds)) {
+				return [];
+			}
 			return [preselectedIds];
 		}
 		renderTo(container) {
 			this.container = container;
 			this.selector.renderTo(container);
+			this.bindFieldLabel();
+		}
+
+		// the tag selector names its input after its own search placeholder, so an outer field label has to take over
+		bindFieldLabel() {
+			const textBox = this.selector.getTextBox();
+			if (main_core.Type.isStringFilled(this.options.inputId)) {
+				main_core.Dom.attr(textBox, 'id', this.options.inputId);
+			}
+			if (main_core.Type.isStringFilled(this.options.inputLabel)) {
+				main_core.Dom.attr(textBox, 'aria-label', this.options.inputLabel);
+			}
 		}
 		destroy() {
 			this.selector.getDialog()?.destroy();
@@ -96,5 +146,5 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 
 	exports.UsersSelector = UsersSelector;
 
-})(this.BX.Socialnetwork.V2.Components.Selectors = this.BX.Socialnetwork.V2.Components.Selectors || {}, BX.UI.EntitySelector, BX.Socialnetwork.V2);
+})(this.BX.Socialnetwork.V2.Components.Selectors = this.BX.Socialnetwork.V2.Components.Selectors || {}, BX, BX.UI.EntitySelector, BX.Socialnetwork.V2);
 //# sourceMappingURL=users-selector.bundle.js.map

@@ -1,0 +1,4 @@
+<?php
+
+$MESS['M_CRM_LIST_ITEM_COMPACT_ACTUAL_DATE'] = 'Актуально до #DATE#';
+$MESS['M_CRM_LIST_ITEM_COMPACT_CLOSE_DATE'] = 'Оплатить до #DATE#';

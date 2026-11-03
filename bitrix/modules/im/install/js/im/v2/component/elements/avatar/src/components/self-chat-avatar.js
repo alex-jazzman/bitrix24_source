@@ -1,4 +1,6 @@
-import { AvatarSize, AvatarSizeMap } from '../const/const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+
+import { AvatarSize, getAvatarPixelSize } from '../const/const';
 
 import '../css/self-chat-avatar.css';
 
@@ -13,11 +15,17 @@ export const SelfChatAvatar = {
 		},
 	},
 	computed: {
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
 		sizeStyles(): { width: string, height: string }
 		{
+			const pixelSize = getAvatarPixelSize(this.size, this.isAirDesignEnabled);
+
 			return {
-				width: `${AvatarSizeMap[this.size]}px`,
-				height: `${AvatarSizeMap[this.size]}px`,
+				width: `${pixelSize}px`,
+				height: `${pixelSize}px`,
 			};
 		},
 	},

@@ -52,3 +52,19 @@
 .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--viewed {
 	background-image: url(./images/message-status/viewed-hover.svg);
 }
+
+/* Air status icon (isAirDesignEnabled flag): size/color driven by CSS vars on the
+   BIcon root. --accent lifts viewed to the accent primary; --selected inverts to
+   white and is listed last so a selected row wins over viewed. */
+.bx-im-list-recent-item__status-icon.--air {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-list-recent-item__status-icon.--air.--accent {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-list-recent-item__status-icon.--air.--selected {
+	--ui-icon-set__icon-color: var(--ui-color-white-base);
+}

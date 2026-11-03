@@ -1,2 +1,2 @@
 <?php
-$MESS["AUTH_HELP"] = 'Helpdesk';
+$MESS["AUTH_HELP"] = "Helpdesk";

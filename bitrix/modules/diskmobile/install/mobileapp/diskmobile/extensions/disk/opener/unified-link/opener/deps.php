@@ -12,6 +12,7 @@ return [
 		'utils/object',
 		'utils/url',
 		'disk:enum',
+		'disk:opener/folder',
 		'disk:opener/unified-link/rest',
 	],
 ];

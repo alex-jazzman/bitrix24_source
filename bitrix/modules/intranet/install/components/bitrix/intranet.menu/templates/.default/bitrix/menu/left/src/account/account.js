@@ -4,11 +4,16 @@ import { showDesktopDeleteConfirm } from 'im.v2.lib.confirm';
 import { Menu, Popup, PopupManager } from 'main.popup';
 import { PopupType } from 'im.v2.const';
 import { Loader } from 'main.loader';
+import {
+	DEFAULT_AVATAR,
+	DEFAULT_DESKTOP_AVATAR,
+	resolveAvatarUrl,
+} from './avatar';
 
 export class Account
 {
-	static defaultAvatar = '/bitrix/js/im/images/blank.gif';
-	static defaultAvatarDesktop = '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
+	static defaultAvatar = DEFAULT_AVATAR;
+	static defaultAvatarDesktop = DEFAULT_DESKTOP_AVATAR;
 
 	accounts: DesktopAccount[] = [];
 	currentUser: ?Object = null;
@@ -250,18 +255,7 @@ export class Account
 
 	getAvatarUrl(account): string
 	{
-		let avatarUrl = '';
-
-		if (account.avatar.includes('http://') || account.avatar.includes('https://'))
-		{
-			avatarUrl = account.avatar;
-		}
-		else
-		{
-			avatarUrl = `${account.protocol}://${account.portal}${account.avatar}`;
-		}
-
-		return `url('${BX.util.htmlspecialchars(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesktop : BX.util.htmlspecialchars(avatarUrl))}')`;
+		return `url('${BX.util.htmlspecialchars(resolveAvatarUrl(account))}')`;
 	}
 
 	viewPopupAccounts(): void

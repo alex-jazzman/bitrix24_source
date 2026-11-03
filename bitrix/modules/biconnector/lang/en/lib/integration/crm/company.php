@@ -1,4 +1,5 @@
 <?php
+$MESS['CRM_BIC_COMPANY_CATEGORY_DEFAULT_NAME'] = 'Main';
 $MESS["CRM_BIC_COMPANY_FIELD_ADDRESS_1"] = "Address 1";
 $MESS["CRM_BIC_COMPANY_FIELD_ADDRESS_2"] = "Address 2";
 $MESS["CRM_BIC_COMPANY_FIELD_ADDRESS_CITY"] = "City";
@@ -14,6 +15,10 @@ $MESS["CRM_BIC_COMPANY_FIELD_ASSIGNED_BY_ID_FULL"] = "The ID of the user who was
 $MESS["CRM_BIC_COMPANY_FIELD_ASSIGNED_BY_NAME"] = "Responsible person first name";
 $MESS["CRM_BIC_COMPANY_FIELD_ASSIGNED_BY_NAME_FULL"] = "The name of the user who was assigned as responsible for this company";
 $MESS["CRM_BIC_COMPANY_FIELD_BANKING_DETAILS"] = "Banking details";
+$MESS['CRM_BIC_COMPANY_FIELD_CATEGORY'] = 'Company category';
+$MESS['CRM_BIC_COMPANY_FIELD_CATEGORY_FULL'] = 'The ID and name of the company category';
+$MESS['CRM_BIC_COMPANY_FIELD_CATEGORY_ID'] = 'Company category ID';
+$MESS['CRM_BIC_COMPANY_FIELD_CATEGORY_NAME'] = 'Company category name';
 $MESS["CRM_BIC_COMPANY_FIELD_COMMENTS"] = "Comments";
 $MESS["CRM_BIC_COMPANY_FIELD_COMPANY_TYPE"] = "Company type";
 $MESS["CRM_BIC_COMPANY_FIELD_COMPANY_TYPE_ID"] = "Company type ID";
@@ -58,4 +63,4 @@ $MESS["CRM_BIC_COMPANY_FIELD_UTM_SOURCE"] = "Ad source (utm_source)";
 $MESS["CRM_BIC_COMPANY_FIELD_UTM_TERM"] = "Ad term (utm_term)";
 $MESS["CRM_BIC_COMPANY_FIELD_WEB"] = "URL (multiple)";
 $MESS["CRM_BIC_COMPANY_TABLE"] = "Company";
-$MESS["CRM_BIC_COMPANY_TABLE_DESCRIPTION_FULL"] = "Includes basic information about companies, such as their names, industry, details, and responsible users.";
+$MESS["CRM_BIC_COMPANY_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Data from CRM company system fields: names, types and industries, persons in charge, addresses, company details, annual turnover, and contact information.";

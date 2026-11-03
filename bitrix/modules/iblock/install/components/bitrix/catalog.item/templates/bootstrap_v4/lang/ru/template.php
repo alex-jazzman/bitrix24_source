@@ -1,2 +1,16 @@
 <?php
+$MESS['CT_BCI_TPL_MESS_COMPARE_REMOVED_ARIA'] = 'Товар удалён из списка сравнения';
+$MESS['CT_BCI_TPL_MESS_DISCOUNT_ARIA'] = 'Скидка';
+$MESS['CT_BCI_TPL_MESS_GALLERY_ARIA'] = 'Фотографии товара';
+$MESS['CT_BCI_TPL_MESS_GALLERY_DOT_ARIA'] = 'Фото #NUM# из #TOTAL#';
+$MESS['CT_BCI_TPL_MESS_LABEL_ARIA'] = 'Метки товара';
 $MESS["CT_BCI_TPL_MESS_PRICE_SIMPLE_MODE"] = "от #PRICE# за #VALUE# #UNIT#";
+$MESS['CT_BCI_TPL_MESS_QUANTITY_ARIA'] = 'Количество';
+$MESS['CT_BCI_TPL_MESS_QUANTITY_CHANGED_ARIA'] = 'Количество: #QUANTITY# #MEASURE#';
+$MESS['CT_BCI_TPL_MESS_QUANTITY_DOWN_ARIA'] = 'Уменьшить количество';
+$MESS['CT_BCI_TPL_MESS_QUANTITY_UP_ARIA'] = 'Увеличить количество';
+$MESS['CT_BCI_TPL_MESS_SKU_CHANGED_ARIA'] = 'Выбрано: #VALUE#. Цена: #PRICE#';
+$MESS['CT_BCI_TPL_MESS_SKU_CHANGED_NO_PRICE_ARIA'] = 'Выбрано: #VALUE#';
+$MESS['CT_BCI_TPL_MESS_SKU_GROUP_ARIA'] = 'Вариант';
+$MESS['CT_BCI_TPL_MESS_SKU_SET_CHANGED_ARIA'] = '#PROPERTY#, доступно вариантов: #COUNT#';
+$MESS['CT_BCI_TPL_MESS_SKU_VALUE_ARIA'] = 'Вариант #ID#';

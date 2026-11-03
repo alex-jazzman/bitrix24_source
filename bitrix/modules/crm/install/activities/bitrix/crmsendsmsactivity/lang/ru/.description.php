@@ -8,3 +8,4 @@ $MESS['CRM_SSMSA_ROBOT_TITLE_EMPLOYEE_1'] = 'Отправить СМС сотр�
 $MESS['CRM_SSMSA_ROBOT_TITLE_CLIENT_1'] = 'Отправить СМС клиенту';
 $MESS['CRM_SSMA_ROBOT_DESCRIPTION_EMPLOYEE'] = 'Отправляет СМС сотруднику от выбранного отправителя';
 $MESS['CRM_SSMA_ROBOT_DESCRIPTION_CLIENT'] = 'В нужный момент отправляет СМС клиенту, чтобы передать информацию или сообщить об изменениях';
+$MESS['CRM_SSMSA_NODE_DESCRIPTION'] = 'Отправляет СМС клиенту на номер из карточки или сотруднику через выбранного провайдера';

@@ -40,6 +40,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	const POINTER_OVERLAP = 1;
 	const POINTER_PROTRUSION = POINTER_DEPTH - POINTER_OVERLAP;
 	const POINTER_WIDTH = 36;
+	const BUBBLE_ATTRIBUTE = 'data-ui-system-popover-bubble';
 
 	const LABEL = 'BX.UI.System.Popover';
 	const warnOnce = () => {
@@ -781,7 +782,6 @@ this.BX.UI.System = this.BX.UI.System || {};
 	const GESTURE_EVENTS = new Set(['mousedown', 'pointerdown', 'touchstart', 'mouseup', 'pointerup', 'touchend']);
 	const AREA_INLINE_PROPS = ['left', 'top', 'right', 'bottom', 'transform', 'width', 'minWidth', 'height', 'maxWidth', 'maxHeight'];
 	const SIZE_INLINE_PROPS = ['width', 'minWidth', 'height', 'maxWidth', 'maxHeight'];
-	const BUBBLE_ATTRIBUTE = 'data-ui-system-popover-bubble';
 	const CONTENT_SHAPE = 'the "content" option must resolve to exactly one element - that element becomes the ' + 'bubble of the popover and belongs to the consumer entirely';
 	const parseMarkupRoots = markup => {
 		const template = document.createElement('template');
@@ -899,6 +899,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 		#closeByClickOutside;
 		#closeByEsc;
 		#element = null;
+		#group = null;
 		#pointer = null;
 		#body = null;
 		#appliedClassNames = [];
@@ -998,6 +999,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 				main_core.Dom.remove(this.#element);
 			}
 			this.#element = null;
+			this.#group = null;
 			this.#pointer = null;
 			this.#body = null;
 			this.#destroyed = true;
@@ -1533,6 +1535,9 @@ this.BX.UI.System = this.BX.UI.System || {};
 			if (state.positioned) {
 				this.#writeAppliedAttributes(element, state);
 				main_core.Dom.removeClass(element, '--measuring');
+				if (this.#group) {
+					main_core.Dom.addClass(this.#group, '--visible');
+				}
 			} else {
 				this.#clearAppliedState(element);
 			}
@@ -1582,14 +1587,20 @@ this.BX.UI.System = this.BX.UI.System || {};
 			}
 			const body = this.#resolveBody();
 			const pointer = main_core.Tag.render`<div class="ui-system-popover__pointer"></div>`;
-			const element = main_core.Tag.render`
-			<div class="ui-system-popover">
+			const group = main_core.Tag.render`
+			<div class="ui-system-popover__group">
 				${pointer}
 			</div>
 		`;
-			main_core.Dom.append(body, element);
+			const element = main_core.Tag.render`
+			<div class="ui-system-popover">
+				${group}
+			</div>
+		`;
+			main_core.Dom.append(body, group);
 			this.#prepareBody(body);
 			this.#element = element;
+			this.#group = group;
 			this.#pointer = pointer;
 			this.#body = body;
 			this.#applyAppearance(element);
@@ -1639,6 +1650,9 @@ this.BX.UI.System = this.BX.UI.System || {};
 				main_core.Dom.addClass(this.#element, '--hidden');
 				main_core.Dom.removeClass(this.#element, '--measuring');
 				main_core.Dom.removeClass(this.#element, '--anchor-hidden');
+			}
+			if (this.#group) {
+				main_core.Dom.removeClass(this.#group, '--visible');
 			}
 		}
 		#bindCloseHandlers() {
@@ -1757,6 +1771,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 		}
 	}
 
+	exports.BUBBLE_ATTRIBUTE = BUBBLE_ATTRIBUTE;
 	exports.POINTER_DEPTH = POINTER_DEPTH;
 	exports.POINTER_PROTRUSION = POINTER_PROTRUSION;
 	exports.POINTER_WIDTH = POINTER_WIDTH;

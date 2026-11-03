@@ -1,3 +1,4 @@
 <?php
 $MESS["TASKS_V2_AUDITORS_TITLE"] = "Observers:";
 $MESS["TASKS_V2_AUDITORS_TITLE_CHIP"] = "Observers";
+$MESS["TASKS_V2_AUDITORS_REMOVE_ARIA_LABEL"] = "Remove observer";

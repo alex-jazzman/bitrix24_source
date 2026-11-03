@@ -13,6 +13,21 @@ jn.define('im/messenger/assets/promotion', (require, exports, module) => {
 		{
 			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/promotion/png/tasks-recent-tab.png`;
 		}
+
+		static get folderAllOnboardingFolderUrl()
+		{
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/promotion/png/folder-all-onboarding-folder.png`;
+		}
+
+		static get folderAllOnboardingTasksUrl()
+		{
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/promotion/png/folder-all-onboarding-tasks.png`;
+		}
+
+		static get folderAllOnboardingSettingsUrl()
+		{
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/promotion/png/folder-all-onboarding-settings.png`;
+		}
 	}
 
 	module.exports = { PromotionAsset };

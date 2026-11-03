@@ -2,18 +2,19 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Text\HtmlFilter;
+
 /**
+ * @var DoubleUfComponent $component
  * @var array $arResult
  */
 
-$value = '';
+$component = $this->getComponent();
+$value = $component->formatValue(
+	$arResult['additionalParameters']['VALUE'],
+	(int)($arResult['userField']['SETTINGS']['PRECISION'] ?? 0),
+	null,
+	true,
+);
 
-if($arResult['additionalParameters']['VALUE'] <> '')
-{
-	$value = round(
-		(double)$arResult['additionalParameters']['VALUE'],
-		$arResult['userField']['SETTINGS']['PRECISION']
-	);
-}
-
-$arResult['value'] = $value;
+$arResult['value'] = HtmlFilter::encode($value);

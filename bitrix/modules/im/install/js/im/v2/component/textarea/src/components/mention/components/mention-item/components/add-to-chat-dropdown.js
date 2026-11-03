@@ -4,7 +4,7 @@ import { type EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { BaseMenu } from 'im.v2.lib.menu';
-import { ChatType, EventType } from 'im.v2.const';
+import { ChatType, EventType, TextareaTarget } from 'im.v2.const';
 import { type ImModelChat } from 'im.v2.model';
 
 import { AddToChatDropdownMenu } from '../classes/add-to-chat-dropdown-menu';
@@ -20,7 +20,16 @@ const DropdownTitleByChatType = {
 export const AddToChatDropdown = {
 	name: 'AddToChatDropdown',
 	components: { BIcon },
+	inject: {
+		mentionInsertTarget: {
+			default: TextareaTarget.main,
+		},
+	},
 	props: {
+		buttonId: {
+			type: String,
+			required: true,
+		},
 		userId: {
 			type: String,
 			required: true,
@@ -71,6 +80,8 @@ export const AddToChatDropdown = {
 				dialogId: this.dialogId,
 				userId: this.userId,
 				searchQuery: this.searchQuery,
+				target: this.mentionInsertTarget,
+				targetContainer: this.$el.closest('[aria-modal="true"]') ?? document.body,
 			};
 
 			this.contextMenuManager.openMenu(context, event.currentTarget);
@@ -98,19 +109,31 @@ export const AddToChatDropdown = {
 		},
 	},
 	template: `
-		<div class="bx-im-mention-chat-add-dropdown__container" @mousedown.prevent @click.stop="toggleMenu">
-			<div class="bx-im-mention-chat-add-dropdown__separator"></div>
-			<div :title="title" class="bx-im-mention-chat-add-dropdown__title">{{ title }}</div>
+		<button
+			:id="buttonId"
+			type="button"
+			class="bx-im-mention-chat-add-dropdown__container"
+			tabindex="-1"
+			aria-haspopup="menu"
+			:aria-expanded="showMenu ? 'true' : 'false'"
+			data-testid="im-mention-add-to-chat-btn"
+			@mousedown.prevent
+			@click.stop="toggleMenu"
+		>
+			<span class="bx-im-mention-chat-add-dropdown__separator" aria-hidden="true"></span>
+			<span :title="title" class="bx-im-mention-chat-add-dropdown__title">{{ title }}</span>
 			<BIcon
 				v-if="!showMenu"
 				class="bx-im-mention-chat-add-dropdown__icon"
 				:name="OutlineIcons.CHEVRON_DOWN_S"
+				aria-hidden="true"
 			/>
 			<BIcon
 				v-else
 				class="bx-im-mention-chat-add-dropdown__icon"
 				:name="OutlineIcons.CHEVRON_TOP_S"
+				aria-hidden="true"
 			/>
-		</div>
+		</button>
 	`,
 };

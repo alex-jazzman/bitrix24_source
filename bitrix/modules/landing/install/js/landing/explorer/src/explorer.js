@@ -1,18 +1,18 @@
 import { Backend } from 'landing.backend';
 import { Loc } from 'landing.loc';
 import { Dom, Event } from 'main.core';
-import { Popup } from 'main.popup';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
 import { ExplorerUI, DataType, FolderType } from './ui';
 
 import './explorer.css';
+import 'ui.design-tokens.air';
 
 type ExplorerOptions = {
 	type: string,
 	siteId: number,
 	folderId: ?number,
-	startBreadCrumbs: ?Array<FolderType>
+	startBreadCrumbs: ?Array<FolderType>,
 };
 
 type ErrorType = {
@@ -47,16 +47,28 @@ export class Explorer
 	{
 		if (this.popupWindow === null)
 		{
-			this.popupWindow = new Popup({
-				bindElement: null,
-				className: 'ui-message-box landing-explorer--copy-page',
-				content: null,
-				titleBar: '&nbsp;',
-				overlay: { opacity: 30 },
-				closeIcon: false,
-				contentBackground: 'transparent',
-				padding: 0
+			const dialog = new MessageBox({
+				title: '&nbsp;',
+				message: '',
+				useAirDesign: true,
+				cacheable: true,
+				mediumButtonSize: false,
+				popupOptions: {
+					closeIcon: false,
+					minWidth: false,
+					maxWidth: false,
+					minHeight: false,
+					contentBackground: 'transparent',
+					overlay: { opacity: 30 },
+					padding: 0,
+				},
 			});
+			this.popupWindow = dialog.getPopupWindow();
+			const container = this.popupWindow.getPopupContainer();
+			if (container)
+			{
+				Dom.addClass(container, 'landing-explorer--copy-page');
+			}
 		}
 
 		return this.popupWindow;

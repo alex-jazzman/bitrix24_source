@@ -4,7 +4,7 @@
 jn.define('im/messenger/const', (require, exports, module) => {
 	const { AiAssistantButtonType } = require('im/messenger/const/ai-assistant-button');
 	const { MessageActionType, MessageActionVoteValue } = require('im/messenger/const/message-action');
-	const { AiTasksStatusType } = require('im/messenger/const/ai-task');
+	const { AiTasksStatusType, AiTaskIndicationRole, AiTaskIndicationStatus } = require('im/messenger/const/ai-task');
 	const { AppStatus } = require('im/messenger/const/app-status');
 	const {
 		AttachType,
@@ -13,6 +13,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		AttachColorToken,
 	} = require('im/messenger/const/attach');
 	const { AttachPickerId } = require('im/messenger/const/attach-picker');
+	const { AttachFileStatus } = require('im/messenger/const/attach-file-status');
 	const {
 		CacheNamespace,
 		CacheName,
@@ -26,6 +27,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const {
 		BackgroundUI,
 	} = require('im/messenger/const/background-ui');
+	const { CallJoinStatus } = require('im/messenger/const/call-join-status');
 	const { ConnectionStatus } = require('im/messenger/const/connection-status');
 	const { EventType } = require('im/messenger/const/event-type');
 	const { EventFilterType } = require('im/messenger/const/event-filter');
@@ -35,6 +37,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const {
 		ChatTypes,
 		RecentTab,
+		RecentSectionCode,
 		RecentTabByNavigationTab,
 		NavigationTabByRecentTab,
 		NavigationTabByFolderCode,
@@ -95,10 +98,12 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BlockButtonDesignMap,
 	} = require('im/messenger/const/block');
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
+	const { CopilotGenerationStatus } = require('im/messenger/const/copilot-generation-status');
 	const { CopilotRoleType } = require('im/messenger/const/copilot-role');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
 	const { ChatEntityType } = require('im/messenger/const/src/chat-entity-link');
+	const { NativeFeatureName } = require('im/messenger/const/native-feature-name');
 	const { NavigationTabId, NonSelectableNavigationTabId, ROOT_PARENT_CHAT_ID } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
@@ -115,22 +120,31 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { MessengerInitRestMethod } = require('im/messenger/const/messenger-init-rest');
 	const { DialogPermissions, RightsLevel } = require('im/messenger/const/permission');
 	const { WidgetTitleParamsType } = require('im/messenger/const/widget');
-	const { EntitySelectorElementType } = require('im/messenger/const/entity-selector');
+	const {
+		EntitySelectorElementType,
+		StructureNodeElementTypes,
+		EntitySelectorContext,
+	} = require('im/messenger/const/entity-selector');
 	const { MessagesAutoDeleteDelay, MessagesAutoDeleteMenuIds } = require('im/messenger/const/messages-auto-delete');
 	const { MessageMenuActionType } = require('im/messenger/const/message-menu-action-type');
 	const { MessageMenuSectionId } = require('im/messenger/const/message-menu-section-id');
 	const { AnchorType } = require('im/messenger/const/anchor-type');
 	const { FileDownloadType } = require('im/messenger/const/src/file-download-types');
-	const { MAX_PERSONAL_FOLDERS } = require('im/messenger/const/src/folder');
+	const {
+		MAX_PERSONAL_FOLDERS,
+		getMaxPersonalFolders,
+		getMaxChatsPerFolder,
+		getMaxFolderTitleLength,
+	} = require('im/messenger/const/src/folder');
 	const { PinCount } = require('im/messenger/const/pin');
-	const { AudioEvents } = require('im/messenger/const/src/audio');
+	const { AudioEvents, AudioPlayingState, AvailableAudioRates } = require('im/messenger/const/src/audio');
 	const { RefreshMode } = require('im/messenger/const/refresher');
 	const { TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const/transcript-status');
 	const { MessengerComponentRequestMethod } = require('im/messenger/const/messenger-component-request-method');
 	const { OpenlineStatus } = require('im/messenger/const/openline');
 	const { RecordMediaType } = require('im/messenger/const/record-media-type');
 	const { UploaderClientEvent } = require('im/messenger/const/upload');
-	const { COUNTER_OVERFLOW_LIMIT } = require('im/messenger/const/src/counter');
+	const { COUNTER_OVERFLOW_LIMIT, SUBTREE_MAX_DEPTH } = require('im/messenger/const/src/counter');
 	const { ChatSearchSelectorSection } = require('im/messenger/const/chat-search-selector-section');
 	const { RecentFilterId, RecentActionId } = require('im/messenger/const/recent-filter');
 	const { RecentMenuSection } = require('im/messenger/const/recent-menu-section');
@@ -140,12 +154,17 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageActionType,
 		MessageActionVoteValue,
 		AiTasksStatusType,
+		AiTaskIndicationRole,
+		AiTaskIndicationStatus,
 		AppStatus,
 		AudioEvents,
+		AudioPlayingState,
+		AvailableAudioRates,
 		Analytics,
 		ChatEntityType,
 		AttachType,
 		AttachPickerId,
+		AttachFileStatus,
 		AttachDescription,
 		AttachGridItemDisplay,
 		AttachColorToken,
@@ -156,11 +175,13 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BotCode,
 		BotCommand,
 		BackgroundUI,
+		CallJoinStatus,
 		ConnectionStatus,
 		EventType,
 		EventFilterType,
 		ChatTypes,
 		RecentTab,
+		RecentSectionCode,
 		RecentTabByNavigationTab,
 		NavigationTabByRecentTab,
 		NavigationTabByFolderCode,
@@ -210,8 +231,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		ButtonDesignType,
 		CopilotButtonType,
 		CopilotPromptType,
+		CopilotGenerationStatus,
 		CopilotRoleType,
 		ComponentCode,
+		NativeFeatureName,
 		NavigationTabId,
 		NonSelectableNavigationTabId,
 		ROOT_PARENT_CHAT_ID,
@@ -230,6 +253,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RightsLevel,
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
+		StructureNodeElementTypes,
+		EntitySelectorContext,
 		MessagesAutoDeleteDelay,
 		MessagesAutoDeleteMenuIds,
 		MessageMenuActionType,
@@ -237,6 +262,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		AnchorType,
 		FileDownloadType,
 		MAX_PERSONAL_FOLDERS,
+		getMaxPersonalFolders,
+		getMaxChatsPerFolder,
+		getMaxFolderTitleLength,
 		RefreshMode,
 		TranscriptStatus,
 		TranscriptResponseStatus,
@@ -245,6 +273,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RecordMediaType,
 		UploaderClientEvent,
 		COUNTER_OVERFLOW_LIMIT,
+		SUBTREE_MAX_DEPTH,
 		ChatSearchSelectorSection,
 		RecentFilterId,
 		RecentActionId,

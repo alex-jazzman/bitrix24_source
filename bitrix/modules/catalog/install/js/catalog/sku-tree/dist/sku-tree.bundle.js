@@ -100,7 +100,19 @@ this.BX.Catalog = this.BX.Catalog || {};
 			}
 			if (main_core.Type.isStringFilled(propertyValue.NAME)) {
 				main_core.Dom.attr(node, 'aria-label', propertyValue.NAME);
+			} else {
+				// No admin-entered name (e.g. a color swatch with only a picture): a picture
+				// radio then has no text content, so synthesize a name to satisfy 4.1.2.
+				main_core.Dom.attr(node, 'aria-label', this.#getValueFallbackName(propertyValue));
 			}
+		}
+		#getValueFallbackName(propertyValue) {
+			return main_core.Loc.getMessage('CATALOG_SKU_TREE_PROPERTY_VALUE_FALLBACK_NAME', {
+				'#ID#': propertyValue.ID
+			});
+		}
+		#getPropertyName() {
+			return main_core.Type.isStringFilled(this.property.NAME) ? this.property.NAME : main_core.Loc.getMessage('CATALOG_SKU_TREE_PROPERTY_FALLBACK_NAME');
 		}
 		layout() {
 			if (!this.hasSkuValues()) {
@@ -116,9 +128,12 @@ this.BX.Catalog = this.BX.Catalog || {};
 				title = main_core.Tag.render`<div class="product-item-detail-info-container-title" id="${titleId}">${main_core.Text.encode(this.property.NAME)}</div>`;
 				if (hasName) {
 					main_core.Dom.attr(this.skuList, 'aria-labelledby', titleId);
+				} else {
+					// radiogroup has no name-from-content: with an empty title, name the group directly.
+					main_core.Dom.attr(this.skuList, 'aria-label', this.#getPropertyName());
 				}
-			} else if (hasName) {
-				main_core.Dom.attr(this.skuList, 'aria-label', this.property.NAME);
+			} else {
+				main_core.Dom.attr(this.skuList, 'aria-label', this.#getPropertyName());
 			}
 			this.#activateFocusZone();
 			return main_core.Tag.render`

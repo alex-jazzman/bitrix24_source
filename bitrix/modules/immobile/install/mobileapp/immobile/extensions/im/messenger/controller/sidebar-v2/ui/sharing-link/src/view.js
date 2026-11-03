@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 	const { isOnline } = require('device/connection');
 
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
-	const { ActionByUserType } = require('im/messenger/const');
+	const { ActionByUserType, Analytics } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
@@ -15,6 +15,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { showRegenerateSharingLinkAlert } = require('im/messenger/lib/ui/alert');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { SharingLinkService } = require('im/messenger/provider/services/sharing-link');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
@@ -155,7 +156,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 		{
 			if (!this.canInviteGuests)
 			{
-				this.#copyOrSchedule(LinkKind.employee);
+				this.#copyOrSchedule(LinkKind.employee, Analytics.SubSection.sharingLinkRow);
 
 				return;
 			}
@@ -178,7 +179,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 		#showSelectMenu()
 		{
 			const menu = new PopupMenu([
-				this.#createCopyEmployeeItem(),
+				this.#createCopyEmployeeItem(Analytics.SubSection.sharingLinkSelectMenu),
 				this.#createCopyGuestItem(),
 			]);
 
@@ -200,7 +201,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 
 		#showFullMoreMenu()
 		{
-			const items = [this.#createCopyEmployeeItem()];
+			const items = [this.#createCopyEmployeeItem(Analytics.SubSection.sharingLinkMoreMenu)];
 			if (this.#canRegenerate())
 			{
 				items.push(this.#createRegenerateEmployeeItem());
@@ -224,7 +225,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 				testId: this.getTestId(MenuItemId.copy),
 				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_SHARING_LINK_MENU_COPY'),
 				iconName: Icon.COPY,
-				onItemSelected: () => this.#copyOrSchedule(LinkKind.employee),
+				onItemSelected: () => this.#copyOrSchedule(LinkKind.employee, Analytics.SubSection.sharingLinkMoreMenu),
 			};
 		}
 
@@ -239,7 +240,10 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 			};
 		}
 
-		#createCopyEmployeeItem()
+		/**
+		 * @param {string} subSection
+		 */
+		#createCopyEmployeeItem(subSection)
 		{
 			return {
 				id: MenuItemId.copyEmployee,
@@ -247,7 +251,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_SHARING_LINK_MENU_EMPLOYEE_LINK'),
 				iconName: Icon.LINK,
 				sectionCode: SectionCode.employee,
-				onItemSelected: () => this.#copyOrSchedule(LinkKind.employee),
+				onItemSelected: () => this.#copyOrSchedule(LinkKind.employee, subSection),
 			};
 		}
 
@@ -289,7 +293,11 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 			};
 		}
 
-		async #copyOrSchedule(kind)
+		/**
+		 * @param {LinkKind} kind
+		 * @param {string} [subSection]
+		 */
+		async #copyOrSchedule(kind, subSection)
 		{
 			if (!isOnline())
 			{
@@ -301,7 +309,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 			const link = this.#getLink(kind);
 			if (Type.isStringFilled(link?.url))
 			{
-				this.#doCopy(link.url);
+				this.#doCopy(link.url, kind, subSection);
 
 				return;
 			}
@@ -318,7 +326,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 				const freshLink = this.#getLink(kind);
 				if (Type.isStringFilled(freshLink?.url))
 				{
-					this.#doCopy(freshLink.url);
+					this.#doCopy(freshLink.url, kind, subSection);
 				}
 			}
 			catch (error)
@@ -331,7 +339,12 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 			}
 		}
 
-		#doCopy(url)
+		/**
+		 * @param {string} url
+		 * @param {LinkKind} kind
+		 * @param {string} [subSection]
+		 */
+		#doCopy(url, kind, subSection)
 		{
 			DialogTextHelper.copyToClipboard(
 				url,
@@ -343,6 +356,24 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sharing-link/src/view', (requir
 				true,
 			);
 			Haptics.notifySuccess();
+
+			this.#sendCopyAnalytics(kind, subSection);
+		}
+
+		/**
+		 * @param {LinkKind} kind
+		 * @param {string} [subSection]
+		 */
+		#sendCopyAnalytics(kind, subSection)
+		{
+			// The guest link keeps its own contract and its own owner: it is reported from the
+			// invite screen only, and this section leaves it untouched.
+			if (kind !== LinkKind.employee)
+			{
+				return;
+			}
+
+			AnalyticsService.getInstance().sendCopyChatLink(this.dialogId, subSection);
 		}
 
 		#confirmRegenerate(kind)

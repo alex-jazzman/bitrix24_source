@@ -9,6 +9,12 @@ $MESS['BP_BIC_TASK_STATUS_3'] = "Выполнено";
 $MESS['BP_BIC_TASK_STATUS_4'] = "Таймаут";
 $MESS['BP_BIC_TASK_STATUS_5'] = "Отменено";
 
+$MESS['BP_BIC_TASK_USER_STATUS_0'] = "Ожидает ответа";
+$MESS['BP_BIC_TASK_USER_STATUS_1'] = "Утверждено";
+$MESS['BP_BIC_TASK_USER_STATUS_2'] = "Отклонено";
+$MESS['BP_BIC_TASK_USER_STATUS_3'] = "Выполнено";
+$MESS['BP_BIC_TASK_USER_STATUS_4'] = "Отменено";
+
 $MESS['BP_BIC_TASK_TYPE_ANY'] = "Любой";
 $MESS['BP_BIC_TASK_TYPE_ALL'] = "Все";
 $MESS['BP_BIC_TASK_TYPE_VOTE'] = "Голосование";
@@ -47,8 +53,11 @@ $MESS['BP_BIC_TASK_FIELD_STATUS'] = 'Статус';
 $MESS['BP_BIC_TASK_FIELD_STATUS_FULL'] = 'Идентификатор и название статуса выполнения задания';
 $MESS['BP_BIC_TASK_FIELD_USER_ID'] = 'Идентификатор участника';
 $MESS['BP_BIC_TASK_FIELD_USER_ID_FULL'] = 'Идентификатор участника задания';
+$MESS['BP_BIC_TASK_FIELD_USER_STATUS_ID'] = 'Идентификатор статуса участника';
+$MESS['BP_BIC_TASK_FIELD_USER_STATUS_NAME'] = 'Название статуса участника';
+$MESS['BP_BIC_TASK_FIELD_USER_STATUS'] = 'Статус участника';
 $MESS['BP_BIC_TASK_FIELD_USER_NAME'] = 'Имя участника';
 $MESS['BP_BIC_TASK_FIELD_USER_NAME_FULL'] = 'Имя участника задания';
 $MESS['BP_BIC_TASK_FIELD_USER'] = 'Участник';
 $MESS['BP_BIC_TASK_FIELD_USER_FULL'] = 'Идентификатор и имя участника задания';
-$MESS['BP_BIC_TASK_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о заданиях в бизнес-процессах: их названия, типы, статусы и время выполнения.";
+$MESS['BP_BIC_TASK_TABLE_DESCRIPTION_FULL_MSGVER_1'] = "Данные о заданиях бизнес-процессов: названия, типы, статусы, участники, даты и время выполнения.";

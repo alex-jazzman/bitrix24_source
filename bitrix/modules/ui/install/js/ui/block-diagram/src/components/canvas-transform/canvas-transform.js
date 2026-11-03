@@ -7,8 +7,15 @@ import {
 	ref,
 } from 'ui.vue3';
 import { Event } from 'main.core';
-import { useCanvasTransfrom, useCanvasSelection, type UseCanvasTransform } from '../../composables';
-import { INPUT_TAGS } from '../../constants';
+import {
+	useBlockDiagram,
+	useCanvasTransfrom,
+	useCanvasSelection,
+	clearSelection,
+	type UseCanvasTransform,
+} from '../../composables';
+import { clearTextSelection, isInputEventTarget, KEY_TOKEN } from '../../utils';
+import { MOUSE_BUTTON } from '../../constants';
 import './canvas-transform.css';
 
 type CanvasTransformSetup = {
@@ -25,6 +32,8 @@ type CanvasTransformSetup = {
 	openContextMenu: (event: MouseEvent) => void,
 };
 
+const CAPTURE_LISTENER_OPTIONS = Object.freeze({ capture: true });
+
 const CANVAS_TRANSFORM_CLASS_NAMES = {
 	base: 'ui-block-diagram-canvas-transform',
 	dragging: '--dragging',
@@ -32,7 +41,22 @@ const CANVAS_TRANSFORM_CLASS_NAMES = {
 	grab: '--grab',
 };
 
-const KEY_SPACE = 'Space';
+/**
+ * Drops the text selection the way the browser would on a press. The canvas suppresses the browser
+ * action on mousedown - panning and the selection box both need it - and takes this with it, so
+ * the component gives it back. Bound on the capture phase: a node starting its gesture stops the
+ * press from propagating, so a bubbling handler on the root would never see such a press. A field
+ * on the canvas owns its own selection and is left alone.
+ */
+function clearTextSelectionOnCanvasPress(event: MouseEvent): void
+{
+	if (isInputEventTarget(event))
+	{
+		return;
+	}
+
+	clearTextSelection();
+}
 
 // @vue/component
 export const CanvasTransform = {
@@ -65,6 +89,8 @@ export const CanvasTransform = {
 
 		const isSpacePressed = ref(false);
 		const isPanning = ref(false);
+
+		const { inputState, highlitedBlockIds, isOpenContextMenu } = useBlockDiagram();
 
 		const {
 			isDragging,
@@ -100,27 +126,87 @@ export const CanvasTransform = {
 			[CANVAS_TRANSFORM_CLASS_NAMES.grab]: toValue(isSpacePressed) && !toValue(isPanning),
 		}));
 
+		let unsubscribeSpaceHold = () => {};
+
+		let unsubscribeEscape = () => {};
+		let pressListenerTarget = null;
+
 		onMounted(() => {
 			onMountedCanvasTransform();
-			Event.bind(window, 'keydown', onKeyDown);
-			Event.bind(window, 'keyup', onKeyUp);
+
+			pressListenerTarget = toValue(rootRef);
+			Event.bind(
+				pressListenerTarget,
+				'mousedown',
+				clearTextSelectionOnCanvasPress,
+				CAPTURE_LISTENER_OPTIONS,
+			);
+
+			// A forced release - the window losing focus, the tab going away - arrives here as well,
+			// so the panning cursor never outlives the hold that turned it on. Only the press is
+			// ignored for a field: a release always applies, or the hold would stick.
+			unsubscribeSpaceHold = inputState.onChange(KEY_TOKEN.SPACE, (
+				isPressed: boolean,
+				event: KeyboardEvent | PointerEvent | null,
+			) => {
+				if (isPressed && isInputEventTarget(event))
+				{
+					return;
+				}
+
+				isSpacePressed.value = isPressed;
+			});
+
+			// Plain, not exclusive: the component lives as long as the canvas is shown, so an exclusive
+			// claim would hold Escape away from the layers above it even with nothing selected. On the
+			// bubbling phase the key still reaches them, and an operation that claims Escape for itself
+			// - a gesture, the search - runs before this handler is ever asked. The browser action is
+			// left alone for the same reason: dropping a selection is not a claim on the key.
+			unsubscribeEscape = inputState.on(KEY_TOKEN.ESCAPE, (event: KeyboardEvent) => {
+				// A held key repeats, and a repeat is the same press: the selection drops once.
+				if (event.repeat === true)
+				{
+					return;
+				}
+
+				// The canvas menu listens for Escape on its own, outside the input state, so one press
+				// closes it - and the selection it was opened on has to survive that press.
+				if (toValue(isOpenContextMenu))
+				{
+					return;
+				}
+
+				if (toValue(highlitedBlockIds).length === 0)
+				{
+					return;
+				}
+
+				clearSelection(highlitedBlockIds);
+			}, { preventDefault: false });
 		});
 
 		onUnmounted(() => {
 			onUnmountedCanvasTransform();
-			Event.unbind(window, 'keydown', onKeyDown);
-			Event.unbind(window, 'keyup', onKeyUp);
+			Event.unbind(
+				pressListenerTarget,
+				'mousedown',
+				clearTextSelectionOnCanvasPress,
+				CAPTURE_LISTENER_OPTIONS,
+			);
+			pressListenerTarget = null;
+			unsubscribeSpaceHold();
+			unsubscribeEscape();
 		});
 
 		function onMouseDown(event: MouseEvent): void
 		{
-			if (event.button === 2)
+			if (event.button === MOUSE_BUTTON.RIGHT)
 			{
 				return;
 			}
 
-			const isMiddleClick = event.button === 1;
-			const isLeftClick = event.button === 0;
+			const isMiddleClick = event.button === MOUSE_BUTTON.MIDDLE;
+			const isLeftClick = event.button === MOUSE_BUTTON.LEFT;
 			const isSpace = toValue(isSpacePressed);
 			const shouldPan = isMiddleClick || (isLeftClick && (isSpace || !props.selectionEnabled));
 			const shouldSelect = isLeftClick && !isSpace && props.selectionEnabled;
@@ -185,35 +271,6 @@ export const CanvasTransform = {
 				onPanEnd();
 			}
 		}
-
-		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.code !== KEY_SPACE)
-			{
-				return;
-			}
-
-			if (event.repeat)
-			{
-				return;
-			}
-
-			const target = event.target;
-			const isInputActive = (target.tagName in INPUT_TAGS) || target.isContentEditable;
-
-			if (isInputActive)
-			{
-				return;
-			}
-
-			isSpacePressed.value = true;
-		};
-
-		const onKeyUp = (event: KeyboardEvent) => {
-			if (event.code === KEY_SPACE)
-			{
-				isSpacePressed.value = false;
-			}
-		};
 
 		function openContextMenu(event: MouseEvent): void
 		{

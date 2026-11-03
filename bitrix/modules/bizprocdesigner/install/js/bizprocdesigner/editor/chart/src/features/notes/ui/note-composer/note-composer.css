@@ -1,0 +1,83 @@
+/*
+ * The pin and the window of the form are placed apart over the canvas: the pin stands at the point of
+ * the click, and the window beside it or on the other side of it, wherever it fits whole. The wrapper
+ * spans the layer and takes no pointer of its own - the window is what takes it back, the same way a
+ * marker does.
+ */
+.editor-chart-note-composer {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+/* The draft of the marker: it stands where the note will be pinned and is not a control of its own. */
+.editor-chart-note-composer__pin {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 12px;
+	height: 12px;
+	border: 1px solid var(--ui-color-accent-soft-border-blue);
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-accent-main-primary);
+	box-shadow: var(--ui-shadow-bottom-xs);
+	box-sizing: border-box;
+}
+
+/* The width is the width of the thread of a note (note-thread.css): the form and the thread are the
+   two windows of one discussion, and a form narrower than the thread cut the prompt of its own
+   field in half. */
+.editor-chart-note-composer__form {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	width: 320px;
+	padding: var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-m);
+	box-sizing: border-box;
+	pointer-events: auto;
+}
+
+/* own node so Vue and ui.text-editor never share children */
+.editor-chart-note-composer__editor {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
+}
+
+/* The note is written: the field is taken out of the way and not out of the document, so the editor
+   is destroyed by the form alone and nothing is left rendering into a detached node. */
+.editor-chart-note-composer__editor.--hidden {
+	display: none;
+}
+
+.editor-chart-note-composer__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs);
+}
+
+/* Always rendered: a live region has to stand in the document before its text changes to be read out.
+   With nothing in it the column has no children and no height of its own. */
+.editor-chart-note-composer__status {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+/* A refusal keeps the message in the field, so it is the field it is read next to. */
+.editor-chart-note-composer__error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* The note is created and only the notification of its mention is not: a warning, not a failure. */
+.editor-chart-note-composer__notice {
+	color: var(--ui-color-accent-main-warning);
+}

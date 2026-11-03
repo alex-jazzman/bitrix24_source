@@ -51,6 +51,8 @@
 		this.pangramIndex = -1;
 
 		addClass(this.layout, "landing-ui-panel-google-fonts");
+		// Stable hooks for e2e tests: the panel is a singleton, so a single set of ids is enough.
+		this.layout.setAttribute("data-testid", "landing-fonts-panel");
 		addClass(this.overlay, "landing-ui-panel-google-fonts-overlay");
 		this.client = new BX.Landing.Client.GoogleFonts();
 		var rootWindow = BX.Landing.PageObject.getRootWindow();
@@ -94,6 +96,7 @@
 			return BX.Dom.create({
 				tag: 'div',
 				props: {classList: 'landing-ui-panel-fonts-list'},
+				attrs: {'data-testid': 'landing-fonts-panel-list'},
 			});
 		},
 
@@ -113,7 +116,7 @@
 				children: [
 					BX.Dom.create({
 						tag: 'button',
-						attrs: {type: 'button'},
+						attrs: {type: 'button', 'data-testid': 'landing-fonts-panel-more-btn'},
 						props: {className: 'ui-btn ui-btn-lg ui-btn-light-border'},
 						text: BX.Landing.Loc.getMessage('LANDING_FONTS_PANEL_MORE_BUTTON_LABEL'),
 					}),
@@ -473,12 +476,12 @@
 			}
 
 			return (
-				"<div class=\"landing-ui-font-preview\">" +
+				"<div class=\"landing-ui-font-preview\" data-testid=\"landing-fonts-panel-item\">" +
 					"<div class=\"landing-ui-font-preview-font-name\">"+options.family+"</div>" +
 					"<div class=\"landing-ui-font-preview-font-button\">" +
-						"<button type=\"button\" class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round\">"+BX.Landing.Loc.getMessage("LANDING_GOOGLE_FONT_SELECT_BUTTON")+"</button>" +
+						"<button type=\"button\" class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round\" data-testid=\"landing-fonts-panel-select-btn\">"+BX.Landing.Loc.getMessage("LANDING_GOOGLE_FONT_SELECT_BUTTON")+"</button>" +
 					"</div>" +
-					"<div style=\"font-family: "+options.family+"; direction: "+direction+"; text-align: "+align+";\" class=\"landing-ui-font-preview-pangram\" contenteditable=\"true\" onpaste=\"return false;\">" +
+					"<div style=\"font-family: "+options.family+"; direction: "+direction+"; text-align: "+align+";\" class=\"landing-ui-font-preview-pangram\" contenteditable=\"true\" onpaste=\"return false;\" data-testid=\"landing-fonts-panel-pangram\">" +
 						pangram +
 					"</div>" +
 				"</div>"
@@ -570,6 +573,7 @@
 			return BX.Dom.create({
 				tag: 'div',
 				props: {className: 'landing-ui-fonts-panel-empty-stub'},
+				attrs: {'data-testid': 'landing-fonts-panel-empty-stub'},
 				text: BX.Landing.Loc.getMessage('LANDING_FONTS_PANEL_EMPTY_STUB')
 			});
 		},
@@ -616,19 +620,20 @@
 		createSearchForm: function()
 		{
 			var debouncedRuntime = BX.Runtime.debounce(this.onFilterChange, 500, this);
+			var searchField = new BX.Landing.UI.Field.Text({
+				selector: 'searchQuery',
+				textOnly: true,
+				onValueChange: function() {
+					void this.showLoader();
+					debouncedRuntime();
+				}.bind(this),
+				placeholder: BX.Loc.getMessage('LANDING_GOOGLE_FONT_SEARCH_PLACEHOLDER'),
+			});
+			searchField.input.setAttribute("data-testid", "landing-fonts-panel-search-input");
+
 			return new BX.Landing.UI.Form.StyleForm({
 				title: BX.Landing.Loc.getMessage("LANDING_GOOGLE_FONT_SEARCH_TITLE"),
-				fields: [
-					new BX.Landing.UI.Field.Text({
-						selector: 'searchQuery',
-						textOnly: true,
-						onValueChange: function() {
-							void this.showLoader();
-							debouncedRuntime();
-						}.bind(this),
-						placeholder: BX.Loc.getMessage('LANDING_GOOGLE_FONT_SEARCH_PLACEHOLDER'),
-					})
-				]
+				fields: [searchField]
 			});
 		},
 

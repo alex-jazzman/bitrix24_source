@@ -18,6 +18,7 @@ use Bitrix\Main\Text\HtmlFilter;
 
 $safeCountrolId = HtmlFilter::encode($arParams['CONTROL_ID']);
 $jsSafeControlId = \CUtil::JSEscape($arParams['CONTROL_ID']);
+$jsSafeCurrency = \CUtil::JSEscape($arResult['VALUE_CURRENCY']);
 
 ?>
 <div
@@ -37,6 +38,16 @@ $jsSafeControlId = \CUtil::JSEscape($arParams['CONTROL_ID']);
 		value="<?= \Bitrix\Main\Text\HtmlFilter::encode($arResult['VALUE_NUMBER']) ?>"
 	/> <?php
 	if ($arParams['EXTENDED_CURRENCY_SELECTOR'] === 'Y'):
+		if ($arParams['FIELD_NAME_CURRENCY'] !== ''):
+			?>
+			<input
+				id="<?= $safeCountrolId ?>_currency_value"
+				type="hidden"
+				name="<?= HtmlFilter::encode($arParams['FIELD_NAME_CURRENCY']) ?>"
+				value="<?= HtmlFilter::encode($arResult['VALUE_CURRENCY']) ?>"
+			>
+			<?php
+		endif;
 		?>
 		<span
 			class="money-editor-currency-selector-wrap"
@@ -136,7 +147,21 @@ $jsSafeControlId = \CUtil::JSEscape($arParams['CONTROL_ID']);
 		controlId: '<?= $jsSafeControlId ?>',
 		input: BX('<?= $jsSafeControlId ?>_number'),
 		resultInput: BX('<?= $jsSafeControlId ?>_value'),
-		currency: '<?=$arResult['VALUE_CURRENCY']?>'
+		currencyInput: <?php
+			if ($arParams['FIELD_NAME_CURRENCY'] === '')
+			{
+				echo 'null';
+			}
+			elseif ($arParams['EXTENDED_CURRENCY_SELECTOR'] === 'Y')
+			{
+				echo "BX('{$jsSafeControlId}_currency_value')";
+			}
+			else
+			{
+				echo "BX('{$jsSafeControlId}_currency')";
+			}
+		?>,
+		currency: '<?= $jsSafeCurrency ?>'
 	});
 
 </script>

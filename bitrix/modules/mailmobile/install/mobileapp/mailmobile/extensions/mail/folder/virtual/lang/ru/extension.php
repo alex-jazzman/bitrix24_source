@@ -1,3 +1,4 @@
 <?php
 
 $MESS['MAIL_FOLDER_VIRTUAL_ALL_MESSAGES_NAME'] = "Вся почта";
+$MESS['MAIL_FOLDER_VIRTUAL_FAVORITES_NAME'] = 'Избранное';

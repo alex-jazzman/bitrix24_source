@@ -1,0 +1,23 @@
+<?php
+$MESS['BICONNECTOR_AGENT_CONNECTION_AUTH_REQUIRED'] = 'Сессия истекла. Войдите в Битрикс24 снова, чтобы продолжить';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BOUNDARY_WARNING'] = 'После подключения AI-агент сможет работать со всеми отчётами и данными BI Конструктора, доступными вам, а не только с текущим отчётом';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BTN_CONNECT'] = 'Получить команду';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BTN_REGENERATE'] = 'Перевыпустить';
+$MESS['BICONNECTOR_AGENT_CONNECTION_BTN_RETRY'] = 'Попробовать снова';
+$MESS['BICONNECTOR_AGENT_CONNECTION_COMMAND_SECRET_WARNING'] = 'Эта команда содержит секретную ссылку для доступа. Передавайте её только AI-агенту, которого подключаете';
+$MESS['BICONNECTOR_AGENT_CONNECTION_ERROR'] = 'Не удалось выполнить действие. Попробуйте ещё раз';
+$MESS['BICONNECTOR_AGENT_CONNECTION_HINT_CONNECTED'] = 'Подключение действует. Чтобы получить новую команду, перевыпустите его';
+$MESS['BICONNECTOR_AGENT_CONNECTION_REGENERATE_CONFIRM'] = 'Текущая команда перестанет работать. AI-агента нужно будет подключить заново';
+$MESS['BICONNECTOR_AGENT_CONNECTION_REGENERATE_CONFIRM_UNKNOWN'] = 'Подключение могло быть уже заменено. После перевыпуска AI-агента нужно будет подключить заново';
+$MESS['BICONNECTOR_AGENT_CONNECTION_SCOPE_TITLE'] = 'Доступ AI-агента';
+$MESS['BICONNECTOR_AGENT_CONNECTION_SCOPE_UNKNOWN'] = 'Не удалось загрузить список доступов';
+$MESS['BICONNECTOR_AGENT_CONNECTION_SECRET_WARNING'] = 'Команда подключения содержит секретную ссылку для доступа и будет показана только один раз';
+$MESS['BICONNECTOR_AGENT_CONNECTION_STATUS_CONNECTED_UNTIL'] = 'Действует до #DATE#';
+$MESS['BICONNECTOR_AGENT_CONNECTION_STATUS_ISSUED_AT'] = 'Выпущено #DATE#';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TERMINAL_CLIENT_HINT'] = 'Передайте команду AI-клиенту с поддержкой MCP';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TITLE'] = 'Подключить AI-агента';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_CHARTS'] = 'Графики';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_DASHBOARDS'] = 'Отчёты';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_DATASETS'] = 'Датасеты';
+$MESS['BICONNECTOR_AGENT_CONNECTION_TOOL_SET_BI_TABLES'] = 'Таблицы';
+$MESS['BICONNECTOR_AGENT_CONNECTION_UNKNOWN_RESULT'] = 'Результат неизвестен: подключение могло быть создано или заменено, но команда не была получена. Вернуть её нельзя. Чтобы получить рабочую команду, перевыпустите подключение';

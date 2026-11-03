@@ -1,14 +1,14 @@
-import { Dom, Type } from 'main.core';
+import { Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { EventName, Model } from 'tasks.v2.const';
+import { CheckListBbCode } from 'tasks.v2.lib.check-list-bb-code';
 import { highlighter } from 'tasks.v2.lib.highlighter';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 
-import { Context } from '../../lib/check-list-const';
 import { CheckListItemDragManager } from '../../lib/check-list-item-drag-manager';
 import { CheckListListDragManager } from '../../lib/check-list-list-drag-manager';
 import { CheckListManager } from '../../lib/check-list-manager';
@@ -21,6 +21,8 @@ import { CheckListDropItem } from './component/check-list-drop-item';
 import { CheckListGroupCompletedList } from './component/check-list-group-completed-list';
 
 import './check-list-widget.css';
+
+const closeButtonSelector = '[data-testid="task-check-list-close-btn"]';
 
 // @vue/component
 export const CheckListWidget = {
@@ -38,10 +40,6 @@ export const CheckListWidget = {
 		taskId: {},
 	},
 	props: {
-		context: {
-			type: String,
-			required: true,
-		},
 		checkListId: {
 			type: [Number, String],
 			default: 0,
@@ -51,6 +49,14 @@ export const CheckListWidget = {
 			default: 0,
 		},
 		isPreview: {
+			type: Boolean,
+			default: false,
+		},
+		entityPanelItemId: {
+			type: [Number, String],
+			default: null,
+		},
+		showCloseButton: {
 			type: Boolean,
 			default: false,
 		},
@@ -68,12 +74,17 @@ export const CheckListWidget = {
 		'startGroupMode',
 		'toggleGroupModeSelected',
 		'openCheckList',
+		'itemPointerEnter',
+		'itemPointerLeave',
+		'panelTab',
+		'close',
 	],
 	setup(): { task: TaskModel } {},
 	data(): Object
 	{
 		return {
 			scrollContainer: null,
+			stickyParentItemIds: [],
 		};
 	},
 	computed: {
@@ -124,6 +135,20 @@ export const CheckListWidget = {
 		parentItemDragged(): boolean
 		{
 			return this.checkListManager.isParentItem(this.draggedCheckListId);
+		},
+		closeButtonParentItemId(): number | string | null
+		{
+			if (!this.showCloseButton || this.parentCheckLists.length === 0)
+			{
+				return null;
+			}
+
+			const stickyParentItemIds = new Set(this.stickyParentItemIds.map((id: number | string) => String(id)));
+			const stickyParentCheckLists = this.parentCheckLists.filter((checkList: CheckListModel) => {
+				return stickyParentItemIds.has(String(checkList.id));
+			});
+
+			return stickyParentCheckLists[stickyParentCheckLists.length - 1]?.id ?? this.parentCheckLists[0].id;
 		},
 	},
 	created(): void
@@ -187,6 +212,7 @@ export const CheckListWidget = {
 	},
 	beforeUnmount(): void
 	{
+		this.listDragManager?.destroy();
 		this.itemDragManager?.destroy();
 		this.unsubscribeFromEvents();
 	},
@@ -277,6 +303,18 @@ export const CheckListWidget = {
 
 			return `${(level - 1) * 28}px`;
 		},
+		getItemLevel(item: CheckListModel): number
+		{
+			return this.checkListManager.getItemLevel(item);
+		},
+		getChildItemKey(rootItemId: number | string, itemId: number | string): string
+		{
+			return JSON.stringify(['child', rootItemId, itemId]);
+		},
+		getListName(parentItem: CheckListModel): string
+		{
+			return CheckListBbCode.toPlainText(parentItem.title) || this.loc('TASKS_V2_CHECK_LIST_TITLE');
+		},
 		handleDropException(): void
 		{
 			const container = this.$el.closest('[data-list]');
@@ -307,6 +345,13 @@ export const CheckListWidget = {
 				.sort((a: CheckListModel, b: CheckListModel) => a.sortIndex - b.sortIndex);
 
 			return completedCheckLists[0];
+		},
+		isEntityPanelActive(itemId: number | string): boolean
+		{
+			return (
+				this.entityPanelItemId !== null
+				&& String(this.entityPanelItemId) === String(itemId)
+			);
 		},
 		handleShowCheckListEvent(event: BaseEvent): void
 		{
@@ -347,36 +392,50 @@ export const CheckListWidget = {
 
 			this.$emit('openCheckList', firstCompletedCheckList.id);
 		},
-		initDragManager(): void
+		handleParentStickinessChange({ id, isSticky }: { id: number | string, isSticky: boolean }): void
 		{
-			let offsetX = 0;
-			if (
-				this.context !== Context.Popup
-				&& Type.isElementNode(this.$root.$el)
-			)
-			{
-				const parentRect = Dom.getPosition(this.$el);
-				const parentRelativeRect = Dom.getRelativePosition(
-					this.$el,
-					this.$root.$el,
-				);
+			const shouldRestoreCloseButtonFocus = (
+				this.showCloseButton
+				&& document.activeElement?.matches(closeButtonSelector)
+				&& this.$el.contains(document.activeElement)
+			);
 
-				offsetX = parentRelativeRect.left - parentRect.left;
+			this.stickyParentItemIds = this.stickyParentItemIds.filter((stickyId: number | string) => {
+				return String(stickyId) !== String(id);
+			});
+
+			if (isSticky)
+			{
+				this.stickyParentItemIds = [...this.stickyParentItemIds, id];
 			}
 
-			this.listDragManager.init(this.scrollContainer, offsetX);
+			if (shouldRestoreCloseButtonFocus)
+			{
+				this.restoreCloseButtonFocus();
+			}
+		},
+		restoreCloseButtonFocus(): void
+		{
+			void this.$nextTick(() => {
+				this.$el.querySelector(closeButtonSelector)?.focus({ preventScroll: true });
+			});
+		},
+		initDragManager(): void
+		{
+			this.listDragManager.init(this.scrollContainer);
 
 			const listDropzone = this.canAddItem ? this.$refs.parentComponents?.map((parent) => parent.$el) : [];
 
-			this.itemDragManager.init(this.scrollContainer, offsetX, listDropzone);
+			this.itemDragManager.init(this.scrollContainer, listDropzone);
 		},
 	},
 	template: `
-		<div class="check-list-widget-container">
+		<div class="check-list-widget-container" data-testid="tasks-check-list-widget">
 			<TransitionGroup
 				:css="!disableCheckListAnimations"
 				name="check-list"
 				tag="ul"
+				role="list"
 				class="check-list-widget --parent"
 				:class="{
 					'--preview': isPreview,
@@ -386,6 +445,7 @@ export const CheckListWidget = {
 				<li
 					v-for="(parentItem, parentItemIndex) in parentCheckLists"
 					:key="'parent-' + parentItem.id + parentItemIndex"
+					role="listitem"
 					class="check-list-widget-item --parent check-list-draggable-list print-no-page-break print-no-box-shadow print-font-color-base-1-recursive"
 					:class="{
 						'--preview': isPreview,
@@ -405,6 +465,7 @@ export const CheckListWidget = {
 							:id="parentItem.id"
 							:isPreview
 							:positionIndex="parentItemIndex"
+							:showCloseButton="String(parentItem.id) === String(closeButtonParentItemId)"
 							@update="(id) => $emit('update', id)"
 							@removeItem="(id) => $emit('removeItem', id)"
 							@focus="(id) => $emit('focus', id)"
@@ -413,6 +474,9 @@ export const CheckListWidget = {
 							@formattingSelectionChange="(itemId, actions) => $emit('formattingSelectionChange', itemId, actions)"
 							@startGroupMode="(id) => $emit('startGroupMode', id)"
 							@openCheckList="(id) => $emit('openCheckList', id)"
+							@panelTab="(data) => $emit('panelTab', data)"
+							@close="$emit('close')"
+							@stickinessChange="handleParentStickinessChange"
 						/>
 					</template>
 					<TransitionGroup
@@ -420,13 +484,17 @@ export const CheckListWidget = {
 						:css="!disableCheckListAnimations"
 						name="check-list"
 						tag="ul"
+						role="list"
+						:aria-label="getListName(parentItem)"
 						class="check-list-widget"
 					>
-						<li
-							v-if="!isCollapsed(parentItem, parentItemIndex)"
-							v-for="(childItem, childIndex) in getChildren(parentItem)"
-							:key="'child-' + parentItem.id + childItem.id + childIndex"
+					<li
+						v-if="!isCollapsed(parentItem, parentItemIndex)"
+						v-for="childItem in getChildren(parentItem)"
+						:key="getChildItemKey(parentItem.id, childItem.id)"
 							:data-id="childItem.id"
+							role="listitem"
+							:aria-level="getItemLevel(childItem)"
 							class="check-list-widget-item check-list-draggable-item"
 							:class="{
 								'--dragged_item': childItem.id === draggedCheckListId,
@@ -441,6 +509,7 @@ export const CheckListWidget = {
 									:itemOffset="getItemOffset(childItem)"
 									:isPreview
 									:checkListId
+									:entityPanelActive="isEntityPanelActive(childItem.id)"
 									@update="(id) => $emit('update', id)"
 									@addItem="(data) => $emit('addItem', data)"
 									@removeItem="(id) => $emit('removeItem', id)"
@@ -450,6 +519,9 @@ export const CheckListWidget = {
 									@formattingSelectionChange="(itemId, actions) => $emit('formattingSelectionChange', itemId, actions)"
 									@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
 									@openCheckList="(id) => $emit('openCheckList', id)"
+									@itemPointerEnter="(data) => $emit('itemPointerEnter', data)"
+									@itemPointerLeave="(data) => $emit('itemPointerLeave', data)"
+									@panelTab="(data) => $emit('panelTab', data)"
 								/>
 							</template>
 						</li>
@@ -458,6 +530,7 @@ export const CheckListWidget = {
 							:key="'add-' + parentItem.id + parentItemIndex"
 							data-id="add-item"
 							:data-parent-id="parentItem.id"
+							role="listitem"
 							class="check-list-widget-item check-list-draggable-item"
 						>
 							<CheckListAddItem
@@ -471,6 +544,7 @@ export const CheckListWidget = {
 				<li
 					v-if="isPreview && totalCompletedParents > 0"
 					key="completed-list"
+					role="listitem"
 					class="check-list-widget-item --completed-list print-no-box-shadow"
 				>
 					<CheckListGroupCompletedList :totalCompletedParents @click="showFirstCompletedCheckList"/>

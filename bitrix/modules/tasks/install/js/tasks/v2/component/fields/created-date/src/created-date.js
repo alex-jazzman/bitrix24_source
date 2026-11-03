@@ -3,7 +3,6 @@ import { Dom } from 'main.core';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { TasksButtonCopy } from 'tasks.v2.component.tasks-button-copy';
 import { calendar } from 'tasks.v2.lib.calendar';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -17,7 +16,6 @@ export const CreatedDate = {
 	components: {
 		BIcon,
 		TextMd,
-		HoverPill,
 		TasksButtonCopy,
 	},
 	inject: {
@@ -76,12 +74,13 @@ export const CreatedDate = {
 			:data-task-field-id="createdDateMeta.id"
 			:data-task-field-value="task.createdTs"
 		>
-			<BIcon class="tasks-field-created-date-icon" :name="Outline.CALENDAR_SHARE"/>
+			<BIcon class="tasks-field-created-date-icon" :name="Outline.CALENDAR_SHARE" aria-hidden="true"/>
 			<TextMd class="tasks-field-created-date-text">{{ createdDateFormatted }}</TextMd>
 			<TextMd class="tasks-field-created-date-separator print-font-color-base-1">/</TextMd>
 			<TasksButtonCopy
 				:name="loc('TASKS_V2_CREATED_DATE_TASK_ID')"
 				:value="idTaskFormatted"
+				:ariaLabel="loc('TASKS_V2_CREATED_DATE_COPY_ARIA_LABEL')"
 				:notification="loc('TASKS_V2_CREATED_DATE_COPY_TASK_ID_NOTIF')"
 			/>
 		</div>

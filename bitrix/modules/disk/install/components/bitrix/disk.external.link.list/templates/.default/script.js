@@ -39,22 +39,40 @@ BX.Disk.ExternalLinkListClass = (function ()
 				}
 			},
 			content: [
-				BX.create('label', {
-					props: {
-						className: 'bx-disk-popup-label',
-						"for": 'disk-get-external-link'
-					}
-				}),
-				BX.create('input', {
-					style: {
-						marginTop: '10px'
+				BX.create('div', {
+					attrs: {
+						'data-testid': 'disk-ext-link-window'
 					},
-					props: {
-						id: 'disk-get-external-link',
-						className: 'bx-viewer-inp',
-						type: 'text',
-						value: link
-					}
+					children: [
+						BX.create('label', {
+							style: {
+								display: 'block'
+							},
+							props: {
+								className: 'bx-disk-popup-label'
+							},
+							attrs: {
+								// a property named "for" is an expando on the node: the binding of a
+								// label to its field is the attribute
+								"for": 'disk-get-external-link'
+							},
+							text: BX.message("DISK_EXTERNAL_LINK_LIST_LINK_FIELD_LABEL")
+						}),
+						BX.create('input', {
+							style: {
+								marginTop: '10px'
+							},
+							attrs: {
+								'data-testid': 'disk-ext-link-field'
+							},
+							props: {
+								id: 'disk-get-external-link',
+								className: 'bx-viewer-inp',
+								type: 'text',
+								value: link
+							}
+						})
+					]
 				})
 			],
 			buttons: [

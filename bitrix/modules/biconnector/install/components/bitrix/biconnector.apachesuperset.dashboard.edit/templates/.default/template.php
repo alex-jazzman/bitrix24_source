@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
+use Bitrix\BIConnector\Internal\Services\DashboardSettings\DashboardSettingsMode;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
@@ -34,12 +35,34 @@ if (!empty($arResult['ERROR_MESSAGES']))
 
 Loader::includeModule('ui');
 
+if (($arResult['SETTINGS_MODE'] ?? '') === DashboardSettingsMode::Reduced->value)
+{
+	Extension::load(['biconnector.share-setting']);
+	Toolbar::deleteFavoriteStar();
+	$APPLICATION->setTitle(htmlspecialcharsbx($arResult['TITLE']));
+	$containerId = 'biconnector-dashboard-reduced-settings';
+	?>
+	<div id="<?= $containerId ?>"></div>
+	<script>
+		BX.ready(() => {
+			new BX.BIConnector.ShareSetting.ReducedSettings({
+				...<?= Json::encode($arResult['REDUCED_SETTINGS']) ?>,
+				container: document.getElementById('<?= $containerId ?>'),
+			}).render();
+		});
+	</script>
+	<?php
+
+	return;
+}
+
 CJSCore::Init(['spotlight']);
 
 Extension::load([
 	'biconnector.aha-moment',
 	'biconnector.apache-superset-analytics',
 	'biconnector.dashboard-parameters-selector',
+	'biconnector.error-message',
 	'ui.entity-editor',
 	'ui.entity-selector',
 	'ui.icon-set.outline',
@@ -72,7 +95,12 @@ if (!$isEditMode && SupersetInitializer::isSupersetExist())
 }
 
 $settings = $arResult['SETTINGS'];
-$settings['emptyCoverIconPath'] = $templateFolder . '/images/icon_empty.png';
+if (!empty($arResult['SHARE_SETTING']))
+{
+	Extension::load(['biconnector.share-setting']);
+	$settings['shareSetting'] = $arResult['SHARE_SETTING'];
+}
+$settings['emptyCoverIconPath'] = $templateFolder . '/images/icon_empty.webp';
 
 ?>
 

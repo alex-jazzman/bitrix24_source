@@ -1,0 +1,39 @@
+/* the button and the arrow of the menu read as one control, so nothing stands between them */
+.disk-document-header-edit-action {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+}
+
+/**
+ * The mockup carries the arrow not as a button of its own but as the narrow section of a single
+ * control: a square as wide as the control is tall, with the thin line of a split button and the
+ * arrow in the middle. A captionless button of the design system is that square only while nothing
+ * else on the page says otherwise - the legacy stylesheet of the icon buttons (ui.buttons.icons,
+ * loaded by the neighbours of the header on most portal pages) doubles it. The size of the section
+ * is therefore fixed here through the basis of the flex item, which no width of theirs overrides.
+ */
+.disk-document-header-edit-action .disk-document-header-edit-action__menu[data-header-action] {
+	position: relative;
+	flex: 0 0 var(--ui-btn-height);
+}
+
+/* the same node once drew the arrow of the older buttons, so what it was given for that is undone */
+.disk-document-header-edit-action .disk-document-header-edit-action__menu[data-header-action]::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	right: auto;
+	left: 0;
+	width: 1px;
+	height: var(--ui-btn-split-divider-height);
+	margin: 0;
+	background: var(--ui-btn-split-divider-color);
+	border: none;
+	transform: translateY(-50%);
+}
+
+/* the arrow of a button with a caption stands off its text, and alone in a section it stands centred */
+.disk-document-header-edit-action .disk-document-header-edit-action__menu[data-header-action]::after {
+	margin-left: 0;
+}

@@ -14,5 +14,6 @@ return [
 		'im:messenger/lib/reaction-assets-manager',
 		'im:messenger/lib/helper',
 		'im:messenger/application/lib/message-queue-request-manager',
+		'im:messenger/application/lib/refresher/ready-state',
 	],
 ];

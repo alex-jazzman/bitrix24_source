@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/service/action/common', (require, exports, module) => {
 	const { isOnline } = require('device/connection');
-	const { EventType } = require('im/messenger/const');
+	const { Analytics, EventType } = require('im/messenger/const');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
@@ -31,7 +31,20 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 		 * @param {ItemActionEventData} itemActionData
 		 */
 		onItemAction = async (itemActionData) => {
-			this.logger.log('onItemAction', itemActionData);
+			await this.#runAction(itemActionData, Analytics.SubSection.recentSwipeMenu);
+		};
+
+		/**
+		 * @desc One action, two surfaces to reach it from - the swipe of an item and its long tap - and
+		 *       the labels of the actions are read by that difference. The value is decided here, where
+		 *       the two entries are still apart, and travels to the handler: below this point the event
+		 *       of the swipe and the tap of the menu are the same call.
+		 * @param {ItemActionEventData} itemActionData
+		 * @param {string} subSection
+		 */
+		async #runAction(itemActionData, subSection)
+		{
+			this.logger.log('onItemAction', itemActionData, subSection);
 
 			if (!isOnline())
 			{
@@ -58,13 +71,21 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 
 			try
 			{
-				await handlers[action]({ store: this.store, logger: this.logger, recentLocator: this.recentLocator }, itemId);
+				await handlers[action](
+					{
+						store: this.store,
+						logger: this.logger,
+						recentLocator: this.recentLocator,
+						subSection,
+					},
+					itemId,
+				);
 			}
 			catch (error)
 			{
 				this.logger.error(`onItemAction error handling action "${action}":`, error);
 			}
-		};
+		}
 
 		/**
 		 * @return {MessengerCoreStore}
@@ -86,7 +107,7 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 				item: { params: { id: itemId } },
 			};
 
-			await this.onItemAction(itemActionData);
+			await this.#runAction(itemActionData, Analytics.SubSection.recentContextMenu);
 		};
 
 		subscribeEvents(ui)

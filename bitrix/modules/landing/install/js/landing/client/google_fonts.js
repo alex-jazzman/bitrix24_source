@@ -16,9 +16,8 @@
 	{
 		this.key = "AIzaSyCqOG-HakgzOQh9prxtkuWLA16lnkNZvsg";
 		this.patch = "https://www.googleapis.com/webfonts/v1/webfonts?sort=popularity&key=";
-		this.fontUrl = 'https://';
-		this.fontUrl += window.fontsProxyUrl || 'fonts.googleapis.com';
-		this.fontUrl += '/css2';
+		// Canonical URL: stored in settings as is; zone proxy host is applied when the font is loaded (FontManager.addFont)
+		this.fontUrl = 'https://fonts.googleapis.com/css2';
 		this.response = {};
 	};
 

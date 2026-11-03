@@ -3,7 +3,7 @@ import {TagSelector} from 'ui.entity-selector';
 import {PageObject} from 'landing.pageobject';
 import {Dom} from 'main.core';
 
-export default class UserSelectorField extends BaseField
+export class UserSelectorField extends BaseField
 {
 	constructor(options)
 	{

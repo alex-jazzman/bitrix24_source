@@ -24,6 +24,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
+use Bitrix\ImMobile\Public\Feature\AudioPlayerV2Flag;
 use Bitrix\Security\Mfa\Otp;
 use Bitrix\Security\Mfa\OtpType;
 use Bitrix\Security\Controller\PushOtp;
@@ -39,8 +40,11 @@ use Bitrix\Mobile;
 use Bitrix\Mobile\Auth;
 use Bitrix\Mobile\AvaMenu;
 use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Context\PortalLanguageResolver;
 use Bitrix\Mobile\Feature\MenuFeature;
 use Bitrix\Mobile\Auth\GuestCheckout;
+use Bitrix\Mobile\Tab\Preset\Service\ActiveTabProvider;
+use Bitrix\Mobile\Tab\Preset\Service\CompatibleTabPresetStateWriter;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -97,14 +101,20 @@ if (array_key_exists("servercheck", $_REQUEST))
 	return $data;
 }
 
+$portalLanguageResolver = new PortalLanguageResolver();
 $guestCode = $_REQUEST['guest_code'] ?? null;
 if (is_string($guestCode) && $guestCode !== '' && Loader::includeModule('im'))
 {
 	$guestName = is_string($_REQUEST['guest_name'] ?? null) ? $_REQUEST['guest_name'] : null;
+	$guestSiteFields = CSite::getById(SITE_ID)->fetch();
+	$guestPortalLanguage = $portalLanguageResolver->resolve(
+		is_array($guestSiteFields) ? $guestSiteFields : [],
+		LANGUAGE_ID,
+	);
 
 	// Guest checkout (warm-start same-chat validation / join-by-code). Returns the native
 	// response, or null for a PORTAL_USER who followed a guest link — fall through to standard auth.
-	$guestResponse = (new GuestCheckout($USER))->handle($guestCode, $guestName);
+	$guestResponse = (new GuestCheckout($USER, $guestPortalLanguage))->handle($guestCode, $guestName);
 	if ($guestResponse !== null)
 	{
 		return $guestResponse;
@@ -227,17 +237,19 @@ else
 	);
 
 	$siteDir = SITE_DIR;
-	if ($bExtranetUser)
+	$siteFields = CSite::getById($siteId)->fetch();
+	if (
+		$bExtranetUser
+		&& is_array($siteFields)
+		&& ($siteFields["ACTIVE"] != "N")
+	)
 	{
-		$res = CSite::getById($extranetSiteId);
-		if (
-			($extranetSiteFields = $res->fetch())
-			&& ($extranetSiteFields["ACTIVE"] != "N")
-		)
-		{
-			$siteDir = $extranetSiteFields["DIR"];
-		}
+		$siteDir = $siteFields["DIR"];
 	}
+	$portalLanguage = $portalLanguageResolver->resolve(
+		is_array($siteFields) ? $siteFields : [],
+		LANGUAGE_ID,
+	);
 
 	$moduleVersion = (defined("MOBILE_MODULE_VERSION") ? MOBILE_MODULE_VERSION : "default");
 	if (array_key_exists("IS_WKWEBVIEW", $_COOKIE) && $_COOKIE["IS_WKWEBVIEW"] == "Y")
@@ -252,7 +264,8 @@ else
 		"version" => $moduleVersion,
 	]);
 
-	$manager = new Mobile\Tab\Manager($context);
+	$activeTabProvider = ActiveTabProvider::forContext($context);
+	$manager = $activeTabProvider->getManager();
 
 	if ($intent)
 	{
@@ -275,14 +288,24 @@ else
 		if (preg_match('/^preset_custom_section_id(\d+)$/', $intent, $match))
 		{
 			$customSectionId = $match[1];
-
-			$manager->setCustomConfig([
+			$config = [
 				'crm_custom_section-' . $customSectionId => 1,
 				'chat' => 2,
 				'task' => 3,
 				'stream' => 4,
 				'menu' => 5,
-			]);
+			];
+
+			if ($activeTabProvider->isManagedTabPresetsEnabled())
+			{
+				(new CompatibleTabPresetStateWriter($manager, (int)$context->userId, (string)$context->siteId))
+					->setCustomConfig($config, false)
+				;
+			}
+			else
+			{
+				$manager->setCustomConfig($config);
+			}
 		}
 		elseif (str_starts_with($intent, 'preset_'))
 		{
@@ -290,12 +313,22 @@ else
 			if (count($components) >= 2)
 			{
 				$preset = $components[1];
-				$manager->setPresetName($preset);
+				if ($activeTabProvider->isManagedTabPresetsEnabled())
+				{
+					(new CompatibleTabPresetStateWriter($manager, (int)$context->userId, (string)$context->siteId))
+						->setPreset($preset, false)
+					;
+				}
+				else
+				{
+					$manager->setPresetName($preset);
+				}
 			}
 		}
 	}
-	else if (
-		Loader::includeModule('intranet')
+	elseif (
+		!$activeTabProvider->isManagedTabPresetsEnabled()
+		&& Loader::includeModule('intranet')
 		&& !$manager->isPresetManuallySet()
 		&& $manager->canSyncWithWebPresetForUser()
 	)
@@ -314,7 +347,7 @@ else
 		$runnerService->registerBackgroundTriggerActivation('/mobile/');
 	}
 
-	$menuTabs = $manager->getActiveTabsData();
+	$menuTabs = $activeTabProvider->getActiveTabsData();
 
 	$voximplantOptions = [
 		'voximplantInstalled' => false,
@@ -411,11 +444,7 @@ else
 		}
 	}
 
-	$themeProvider = new Mobile\Provider\ThemeProvider((int)$USER->GetID(), 'bitrix24');
-	$currentTheme = $themeProvider->getCurrentTheme();
-	$currentTheme = $themeProvider->isSvgTheme($currentTheme)
-		? $themeProvider->getFallbackTheme()
-		: $currentTheme;
+	$currentTheme = (new Mobile\Provider\ThemeProvider((int)$USER->GetID(), 'bitrix24'))->getCurrentTheme();
 
 	$data = [
 		"status" => "success",
@@ -424,6 +453,7 @@ else
 		"name" => $userName,
 		"sessid_md5" => bitrix_sessid(),
 		"cloud" => ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y',
+		"portalLanguage" => $portalLanguage,
 		"backend_version" => ModuleManager::getVersion('mobile'),
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
@@ -487,6 +517,10 @@ else
 		"isCollabToolEnabled" => $isCollabToolEnabled,
 		'featureFlags' => [
 			'disableAvaMenu' => Feature::isEnabled(MenuFeature::class),
+			// The flag lives in immobile, and an unresolvable flag class reads as enabled, so a
+			// portal without that module would advertise the audio panel instead of hiding it.
+			'global_audio_player' => ModuleManager::isModuleInstalled('immobile')
+				&& Main\Config\Feature::isEnabled(AudioPlayerV2Flag::class),
 		],
 	];
 
@@ -498,6 +532,21 @@ else
 
 	$needAppPass = Context::getCurrent()->getServer()->get("HTTP_BX_APP_PASS");
 	$appUUID = Context::getCurrent()->getServer()->get("HTTP_BX_APP_UUID");
+	$isTrustedOtpDevice = false;
+	$hasTrustedOtpDevice = false;
+	if (Loader::includeModule('security'))
+	{
+		$otp = Otp::getByUser((int)$USER->GetID());
+		$hasTrustedOtpDevice = Bitrix\Mobile\Helpers\Auth::hasTrustedOtpDevice($otp);
+
+		if (is_string($appUUID) && $appUUID !== '')
+		{
+			$isTrustedOtpDevice = Bitrix\Mobile\Helpers\Auth::isTrustedOtpDevice($appUUID, $otp);
+		}
+	}
+	$data['isTrustedOtpDevice'] = $isTrustedOtpDevice;
+	$data['hasTrustedOtpDevice'] = $hasTrustedOtpDevice;
+
 	$deviceName = Context::getCurrent()->getServer()->get("HTTP_BX_DEVICE_NAME");
 	$hitHash = trim($_REQUEST["bx_hit_hash"] ?? '');
 	$forceGenerate = Auth::removeOneTimeAuthHash($hitHash);

@@ -1,7 +1,9 @@
 .call-sync-page-block {
 	--call-sync-page-block-border-radius: 16px;
 	--call-sync-page-block-blur: 52.2px;
-	--call-sync-page-block-title-color: var(--ui-color-design-filled-market-content, #f8f8f8);
+	--call-sync-page-block-small-height: 52px;
+	--call-sync-page-block-bg: var(--ui-color-bg-vibrant-less);
+	--call-sync-page-block-title-color: var(--ui-color-base-1);
 	--call-sync-page-block-gradient-start: #3F97FD;
 	--call-sync-page-block-gradient-end: #076DFF;
 
@@ -11,15 +13,19 @@
 	align-items: flex-start;
 	box-sizing: border-box;
 	border-radius: var(--call-sync-page-block-border-radius);
-	background: rgba(var(--ui-color-palette-white-base-rgb), 0.2);
-	box-shadow: -0.816px 6.53px 15.508px 0 rgba(var(--ui-color-palette-black-solid-rgb), 0.05);
+	background: var(--call-sync-page-block-bg);
+	box-shadow: -0.816px 6.53px 15.508px 0 var(--ui-color-box-shadow-graphic-glass-content-default-color);
 	backdrop-filter: blur(var(--call-sync-page-block-blur));
 	cursor: pointer;
 	transition: background 0.2s ease, transform 0.2s ease, filter 0.2s ease;
 }
 
 .call-sync-page-block:not(.--large):hover {
-	background: rgba(var(--ui-color-palette-white-base-rgb), 0.35);
+	background: color-mix(
+		in srgb,
+		var(--call-sync-page-block-bg) 100%,
+		var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity)
+	);
 	transform: translateY(-2px);
 }
 
@@ -36,7 +42,9 @@
 	overflow: hidden;
 	background: linear-gradient(90deg, var(--call-sync-page-block-gradient-start) 0%, var(--call-sync-page-block-gradient-end) 100%);
 	border: none;
-	box-shadow: inset 0 0 0 1px rgba(var(--ui-color-palette-white-base-rgb), 0.20), -0.816px 6.53px 15.508px 0 rgba(var(--ui-color-palette-black-solid-rgb), 0.05);
+	box-shadow:
+		inset 0 0 0 1px color-mix(in srgb, var(--ui-color-base-white-fixed) 20%, transparent),
+		-0.816px 6.53px 15.508px 0 var(--ui-color-box-shadow-graphic-glass-content-default-color);
 }
 
 .call-sync-page-block.--large::before {
@@ -108,7 +116,7 @@
 }
 
 .call-sync-page-block.--large .call-sync-page-block__title {
-	color: var(--ui-color-design-outline-a1-content, #f8f8f8);
+	color: var(--ui-color-design-filled-content);
 	text-align: left;
 	font-family: var(--ui-headline-lg-font-family, var(--ui-font-family-primary));
 	font-size: var(--ui-headline-lg-font-size, 21px);
@@ -120,7 +128,7 @@
 
 .call-sync-page-block.--large .call-sync-page-block__description {
 	text-align: left;
-	color: rgba(var(--ui-color-palette-white-base-rgb), 0.70);
+	color: var(--ui-color-design-filled-content-secondary);
 }
 
 .call-sync-page-block__cta {
@@ -182,6 +190,7 @@
 	max-width: 322px;
 	min-width: 0;
 	padding: 13px 60px 21px;
+	will-change: backdrop-filter;
 }
 
 .call-sync-page-block__content.--medium {
@@ -201,14 +210,18 @@
 }
 
 .call-sync-page-block.--small {
+	--call-sync-page-block-bg: var(--ui-color-bg-content-primary);
+	/* blur over half the height makes Chrome clamp the sampled backdrop and draw a hard band at the edges */
+	--call-sync-page-block-blur: calc(var(--call-sync-page-block-small-height) / 2);
+
 	flex: 1 1 0;
 	min-width: 0;
 	padding: 0 16px 0 23px;
-	height: 52px;
+	height: var(--call-sync-page-block-small-height);
 	align-items: center;
 	border-radius: var(--call-sync-page-block-border-radius);
-	backdrop-filter: blur(100px);
 	box-shadow: none;
+	will-change: backdrop-filter;
 }
 
 .call-sync-page-block__content.--small {
@@ -239,7 +252,7 @@
 }
 
 .call-sync-page-block.--disabled:not(.--large):hover {
-	background: rgba(var(--ui-color-palette-white-base-rgb), 0.2);
+	background: var(--call-sync-page-block-bg);
 	transform: none;
 }
 
@@ -302,12 +315,23 @@
 	background-image: url(./images/call-sync-page-schedule-meeting.png);
 }
 
+/* the SVG supplies only the shape, the color comes from the surface context */
+/* base-2 is the token for control icons, chosen by that role rather than by matching the mockup pixels */
+/* the mask reads only the alpha channel: both SVG files must stay fully opaque, a fill-opacity would dim them */
+.call-sync-page-block__icon.--call-with-me,
+.call-sync-page-block__icon.--free-slots {
+	background-color: var(--ui-color-base-2);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+}
+
 .call-sync-page-block__icon.--call-with-me {
-	background-image: url(./images/call-sync-page-call-with-me.svg);
+	mask-image: url(./images/call-sync-page-call-with-me.svg);
 }
 
 .call-sync-page-block__icon.--free-slots {
-	background-image: url(./images/call-sync-page-free-slots.svg);
+	mask-image: url(./images/call-sync-page-free-slots.svg);
 }
 
 .call-sync-page-block__title {
@@ -320,7 +344,7 @@
 }
 
 .call-sync-page-block__description {
-	color: rgba(var(--ui-color-palette-white-base-rgb), 0.8);
+	color: var(--ui-color-base-2);
 	text-align: center;
 	font-size: var(--ui-font-size-md, 14px);
 	font-weight: var(--ui-font-weight-normal, 400);

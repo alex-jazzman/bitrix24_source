@@ -1,3 +1,13 @@
+/* button reset */
+.tasks-field-placement-item {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	border: none;
+}
+/* button reset end */
+
 .tasks-field-placement-item {
 	display: flex;
 	flex-direction: column;
@@ -7,7 +17,12 @@
 
 	background: var(--ui-color-base-8);
 	border-radius: 10px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 1px var(--ui-color-area-box-shadow-default-color);
+}
+
+.tasks-field-placement-item:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .tasks-field-placement-item-header {

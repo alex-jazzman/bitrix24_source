@@ -29,11 +29,16 @@
 }
 
 .b24-hover-pill:focus-visible {
-	outline: 2px solid var(--ui-color-design-outline-a1-content-divider);
+	outline: 2px solid var(--ui-color-accent-main-link);
 }
 
 .b24-hover-pill.--readonly:focus-visible {
 	outline: none;
+}
+
+.b24-hover-pill-content:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	border-radius: var(--ui-border-radius-pill);
 }
 
 .b24-hover-pill.--text-only:not(.--no-offset) {
@@ -56,6 +61,18 @@
 	--b24-hover-pill-content-pr: 2px;
 }
 
+/* remover button reset */
+.b24-hover-pill-remover {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* remover button reset end */
+
 /* remover */
 .b24-hover-pill-remover {
 	position: absolute;
@@ -71,8 +88,14 @@
 	cursor: pointer;
 }
 
-.b24-hover-pill:hover .b24-hover-pill-remover {
+.b24-hover-pill:hover .b24-hover-pill-remover,
+.b24-hover-pill:focus-within .b24-hover-pill-remover {
 	opacity: 1;
+}
+
+.b24-hover-pill-remover:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .b24-hover-pill-remover .ui-icon-set {

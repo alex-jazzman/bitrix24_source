@@ -6,6 +6,7 @@ return [
 		'utils/object',
 		'utils/uuid',
 		'analytics',
+		'debug/prism',
 		'im:messenger/const',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/element/dialog',

@@ -2,6 +2,120 @@
 (function (main_core_events, main_core, ui_alerts, ui_formElements_view, ui_section, ai_ui_field_selectorfield, ui_formElements_field) {
 	'use strict';
 
+	class ScenarioDisableTracker {
+		#baseline;
+		#pending = null;
+		constructor(baseline = {}) {
+			this.#baseline = ScenarioDisableTracker.#normalizeBaseline(baseline);
+		}
+		prepare(aiData = {}) {
+			const submitted = {
+				...this.#baseline
+			};
+			const data = main_core.Type.isPlainObject(aiData) ? aiData : {};
+			Object.keys(this.#baseline).forEach(code => {
+				if (data[code] === 'Y' || data[code] === 'N') {
+					submitted[code] = data[code] === 'Y';
+				}
+			});
+			const disabledCodes = Object.keys(this.#baseline).filter(code => this.#baseline[code] && !submitted[code]).sort();
+			this.#pending = {
+				submitted,
+				disabledCodes
+			};
+		}
+		commit() {
+			if (!this.#pending) {
+				return [];
+			}
+			const {
+				submitted,
+				disabledCodes
+			} = this.#pending;
+			this.#pending = null;
+			this.#baseline = submitted;
+			return disabledCodes;
+		}
+		rollback() {
+			this.#pending = null;
+		}
+		static #normalizeBaseline(baseline) {
+			const normalized = {};
+			Object.entries(baseline).forEach(([code, value]) => {
+				if (main_core.Type.isBoolean(value)) {
+					normalized[code] = value;
+				}
+			});
+			return normalized;
+		}
+	}
+
+	const BEFORE_SAVE_EVENT = 'BX.Intranet.Settings:onBeforeSave';
+	const SUCCESS_SAVE_EVENT = 'BX.Intranet.Settings:onSuccessSave';
+	const FAILED_SAVE_EVENT = 'BX.UI.FormElement.Field:onFailedSave';
+	class ScenarioDisableFeedback {
+		#settings;
+		constructor(settings) {
+			this.#settings = {
+				enabled: settings?.enabled === true,
+				idPrefix: main_core.Type.isString(settings?.idPrefix) ? settings.idPrefix : '',
+				forms: main_core.Type.isArray(settings?.forms) ? settings.forms : []
+			};
+		}
+		async open(disabledCodes) {
+			if (!this.#settings.enabled || this.#settings.idPrefix === '' || this.#settings.forms.length === 0 || disabledCodes.length === 0) {
+				return;
+			}
+			try {
+				const {
+					Form
+				} = await main_core.Runtime.loadExtension('ui.feedback.form');
+				if (!main_core.Type.isFunction(Form?.open)) {
+					return;
+				}
+				Form.open({
+					id: `${this.#settings.idPrefix}-${main_core.Text.getRandom(8)}`,
+					forms: this.#settings.forms,
+					presets: {
+						from_domain: window.location.hostname,
+						switcher_type: disabledCodes.join(',')
+					}
+				});
+			} catch {
+				// Feedback is optional and must not affect a completed settings save.
+			}
+		}
+	}
+	function createScenarioDisableFeedbackLifecycle(feedback, eventEmitter = main_core_events.EventEmitter) {
+		let tracker = null;
+		let isBound = false;
+		const handleBeforeSave = event => {
+			const eventData = event?.getData();
+			tracker?.prepare(eventData?.data?.ai ?? {});
+		};
+		const handleSuccessSave = () => {
+			const disabledCodes = tracker?.commit() ?? [];
+			void feedback.open(disabledCodes);
+		};
+		const handleFailedSave = () => {
+			tracker?.rollback();
+		};
+		return {
+			setTracker(newTracker) {
+				tracker = newTracker;
+			},
+			bind() {
+				if (isBound) {
+					return;
+				}
+				isBound = true;
+				eventEmitter.subscribe(eventEmitter.GLOBAL_TARGET, BEFORE_SAVE_EVENT, handleBeforeSave);
+				eventEmitter.subscribe(eventEmitter.GLOBAL_TARGET, SUCCESS_SAVE_EVENT, handleSuccessSave);
+				eventEmitter.subscribe(FAILED_SAVE_EVENT, handleFailedSave);
+			}
+		};
+	}
+
 	class AiPage extends ui_formElements_field.BaseSettingsPage {
 		static #groupIconDefaultSet = 'ui.icon-set.main';
 		static #groupIconDefaultIcon = '--copilot-ai';
@@ -13,9 +127,13 @@
 		#agreementCheckers = [];
 		#isAgreementAccepted = false;
 		#isSwitcherProgrammaticChange = false;
+		#scenarioBooleanValues = {};
+		#scenarioDisableFeedbackLifecycle;
 		constructor() {
 			super();
-			const copilotName = main_core.Extension.getSettings('ai.integration.intranet-settings').copilotName;
+			const extensionSettings = main_core.Extension.getSettings('ai.integration.intranet-settings');
+			const copilotName = extensionSettings.copilotName;
+			this.#scenarioDisableFeedbackLifecycle = createScenarioDisableFeedbackLifecycle(new ScenarioDisableFeedback(extensionSettings.scenarioDisableFeedback));
 			this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_MSGVER_1', {
 				'#COPILOT_NAME#': copilotName
 			});
@@ -27,6 +145,7 @@
 			return 'ai';
 		}
 		appendSections(contentNode) {
+			this.#scenarioBooleanValues = {};
 			const groups = this.getValue('fields');
 			if (groups) {
 				this.isOpen = true;
@@ -45,6 +164,8 @@
 					}
 				}
 			}
+			this.#scenarioDisableFeedbackLifecycle.setTracker(new ScenarioDisableTracker(this.#scenarioBooleanValues));
+			this.#scenarioDisableFeedbackLifecycle.bind();
 			this.#bindEvents();
 		}
 		#buildGroup(group) {
@@ -129,6 +250,7 @@
 					checkerOptions.bannerCode = restriction.bannerCode;
 				}
 				field = new ui_formElements_view.Checker(checkerOptions);
+				this.#scenarioBooleanValues[code] = field.isChecked();
 				if (!restriction) {
 					this.#agreementCheckers.push(field);
 				}

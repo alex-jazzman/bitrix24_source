@@ -71,7 +71,7 @@ export class RadioButtonField extends BaseField
 	{
 		return this.cache.remember('remember', () => {
 			return Tag.render`
-				<div class="landing-ui-field-radio-button-layout" data-selector="${this.selector}"></div>
+				<div class="landing-ui-field-radio-button-layout" data-selector="${this.selector}" data-testid="landing-radiobuttonfield-root"></div>
 			`;
 		});
 	}
@@ -80,8 +80,10 @@ export class RadioButtonField extends BaseField
 	{
 		const element = Tag.render`
 			<div 
-				class="landing-ui-field-radio-button-item${options.disabled ? ' landing-ui-disabled' : ''}" 
+				class="landing-ui-field-radio-button-item${options.disabled ? ' landing-ui-disabled' : ''}"
 				data-value="${options.id}"
+				data-testid="landing-radiobuttonfield-item-${options.id}"
+				aria-disabled="${options.disabled === true ? 'true' : 'false'}"
 				onclick="${this.onItemClick.bind(this, options)}"
 			>
 				<div class="landing-ui-field-radio-button-item-icon ${options.icon}"></div>
@@ -113,6 +115,11 @@ export class RadioButtonField extends BaseField
 	onItemClick(item: ItemOptions, event: MouseEvent)
 	{
 		event.preventDefault();
+
+		if (item.disabled)
+		{
+			return;
+		}
 
 		if (this.options.selectable !== false)
 		{

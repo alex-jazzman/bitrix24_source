@@ -9,10 +9,14 @@
 
 	function Wrapper (parameters)
 	{
+		this.leftPanelResizer = null;
+		this.leftPanelResizerPage = null;
+		this.handleWindowUnload = this.destroyLeftPanelResizer.bind(this);
 	}
 
 	Wrapper.prototype.init = function (parameters)
 	{
+		this.destroyLeftPanelResizer();
 		this.container = BX(parameters.containerId);
 		this.isCloseAfterSave = parameters.isCloseAfterSave || false;
 		this.isReloadGridAfterSave = parameters.isReloadGridAfterSave || false;
@@ -72,6 +76,65 @@
 		if (this.useLinkTargetsReplacing)
 		{
 			this.initLinkTargetsReplacing();
+		}
+
+		this.initLeftPanelResizer(parameters.leftPanelResizable);
+	};
+
+	Wrapper.prototype.initLeftPanelResizer = function (options)
+	{
+		if (!options || !BX.UI.SidePanel.LeftPanelResizer)
+		{
+			return;
+		}
+
+		var page = document.querySelector('.ui-slider-page');
+		var panel = BX('left-panel');
+		var separator = document.querySelector('.ui-page-slider-left-panel-resizer');
+		var content = BX('ui-page-slider-content');
+		if (
+			!page
+			|| !panel
+			|| !separator
+			|| !content
+			|| panel.nextElementSibling !== separator
+			|| separator.nextElementSibling !== content
+		)
+		{
+			return;
+		}
+
+		BX.addClass(page, '--left-panel-resizable');
+		this.leftPanelResizerPage = page;
+		this.leftPanelResizer = new BX.UI.SidePanel.LeftPanelResizer({
+			panel: panel,
+			separator: separator,
+			container: page,
+			INITIAL_WIDTH: options.INITIAL_WIDTH,
+			MIN_WIDTH: options.MIN_WIDTH,
+			MAX_WIDTH: options.MAX_WIDTH,
+			MIN_CONTENT_WIDTH: options.MIN_CONTENT_WIDTH,
+			KEYBOARD_STEP: options.KEYBOARD_STEP,
+			ACCESSIBLE_NAME: options.ACCESSIBLE_NAME,
+			STORAGE: options.STORAGE,
+		});
+		BX.bind(window, 'unload', this.handleWindowUnload);
+	};
+
+	Wrapper.prototype.destroyLeftPanelResizer = function ()
+	{
+		BX.unbind(window, 'unload', this.handleWindowUnload);
+
+		if (this.leftPanelResizer)
+		{
+			this.leftPanelResizer.destroy();
+			this.leftPanelResizer = null;
+		}
+
+		if (this.leftPanelResizerPage)
+		{
+			BX.removeClass(this.leftPanelResizerPage, '--left-panel-resizable');
+			this.leftPanelResizerPage = null;
 		}
 	};
 

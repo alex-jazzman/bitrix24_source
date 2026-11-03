@@ -10,7 +10,11 @@ import { Criterion } from '../elements/criterion';
 import { ScriptName } from '../elements/script-name';
 
 import { type AssessmentBlockData, type AssessmentSettingData } from '../../types';
-import { formatAssessmentDate } from '../../lib/datetime';
+import { formatAssessmentDate, formatCreatedAt } from '../../lib/datetime';
+import { buildAssessmentMarkdown } from '../../lib/assessment-markdown';
+import { copyToClipboard } from '../../lib/clipboard';
+import { showCopiedInformer } from '../../lib/copied-informer';
+import { sendReaction, type ReactionType } from '../../feature/send-reaction/send-reaction';
 
 export const Assessment = defineComponent({
 	name: 'Assessment',
@@ -33,11 +37,15 @@ export const Assessment = defineComponent({
 			type: Object as PropType<AssessmentSettingData | null>,
 			default: null,
 		},
+		ownerTypeId: {
+			type: Number,
+			required: true,
+		},
 	},
 
 	emits: ['showReassessmentPopup'],
 
-	setup(): Object
+	setup()
 	{
 		return {
 			AirButtonStyle,
@@ -48,6 +56,11 @@ export const Assessment = defineComponent({
 	},
 
 	computed: {
+		testIdPrefix(): string
+		{
+			return `crm-ai-report-drawer-assessment-${this.assessmentBlockData.blockId}`;
+		},
+
 		chartColor(): string
 		{
 			if (this.assessmentBlockData.callScore <= this.assessmentBlockData.lowerScoreBoundary)
@@ -76,6 +89,16 @@ export const Assessment = defineComponent({
 		assessmentDate(): string
 		{
 			return formatAssessmentDate(this.assessmentBlockData.createdAt);
+		},
+
+		hasCreatedAt(): boolean
+		{
+			return Type.isInteger(this.assessmentBlockData.createdAt) && this.assessmentBlockData.createdAt > 0;
+		},
+
+		createdAtText(): string
+		{
+			return formatCreatedAt(this.assessmentBlockData.createdAt);
 		},
 
 		isHistory(): boolean
@@ -170,16 +193,44 @@ export const Assessment = defineComponent({
 		},
 	},
 
-	data(): { minimized: boolean, isCompletedCriteriaHidden: boolean, isUnusedCriteriaHidden: boolean }
+	data(): {
+		minimized: boolean,
+		isCompletedCriteriaHidden: boolean,
+		isUnusedCriteriaHidden: boolean,
+		selectedReaction: ReactionType | null,
+	}
 	{
 		return {
 			minimized: !this.assessmentBlockData.useInRating,
 			isCompletedCriteriaHidden: true,
 			isUnusedCriteriaHidden: true,
+			selectedReaction: null,
 		};
 	},
 
 	methods: {
+		handleReactionClick(type: ReactionType): void
+		{
+			if (this.selectedReaction !== null)
+			{
+				return;
+			}
+
+			this.selectedReaction = type;
+			sendReaction(type, 'call_scoring', this.ownerTypeId);
+		},
+
+		async copyAssessment(event: MouseEvent): Promise<void>
+		{
+			// Read before the await: currentTarget is nulled once the event finishes dispatching.
+			const icon = event.currentTarget as HTMLElement;
+
+			if (await copyToClipboard(buildAssessmentMarkdown(this.assessmentBlockData)))
+			{
+				showCopiedInformer(icon);
+			}
+		},
+
 		handleHowItWorksClick(): Object
 		{
 			const topWindow = window.top as any;
@@ -288,16 +339,26 @@ export const Assessment = defineComponent({
 	},
 
 	template: `
-		<div :class="['crm-ai-report-drawer__content-block', 'crm-ai-report-drawer__assessment-block', '--ui-context-edge-dark', minimized ? '--minimized' : '']">
+		<div
+			:class="[
+				'crm-ai-report-drawer__content-block',
+				'crm-ai-report-drawer__assessment-block',
+				'--ui-context-edge-dark',
+				{ '--minimized': minimized },
+			]"
+			:data-testid="testIdPrefix"
+		>
 			<div
 				v-if="hasChevron"
 				class="crm-ai-report-drawer__content-block-assessment-header crm-ai-report-drawer__content-block-assessment-header--collapsible"
+				:data-testid="testIdPrefix + '-header'"
 			>
 				<div
 					class="crm-ai-report-drawer__content-block-assessment-header-main crm-ai-report-drawer__spoiler-toggle-trigger"
 					@click="toggleContentSpoiler"
+					:data-testid="testIdPrefix + '-collapse-toggle'"
 				>
-					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4">
+					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4" :data-testid="testIdPrefix + '-title'">
 						{{ headerTitle }}
 					</h4>
 					<div
@@ -321,7 +382,10 @@ export const Assessment = defineComponent({
 						class="crm-ai-report-drawer__content-block-header-assessment-badge crm-ai-report-drawer__content-block-header-assessment-not-used-in-rating-badge"
 						@click="handleHowItWorksClick"
 					/>
-					<div class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg">
+					<div
+						class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg"
+						:data-testid="testIdPrefix + '-recommendation'"
+					>
 						{{ assessmentBlockData.recommendation }}
 					</div>
 				</div>
@@ -329,9 +393,10 @@ export const Assessment = defineComponent({
 			<div
 				v-else
 				class="crm-ai-report-drawer__content-block-assessment-header"
+				:data-testid="testIdPrefix + '-header'"
 			>
 				<div class="crm-ai-report-drawer__content-block-assessment-header-text">
-					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4">
+					<h4 class="crm-ai-report-drawer__content-block-header-title ui-typography-heading-h4" :data-testid="testIdPrefix + '-title'">
 						{{ headerTitle }}
 					</h4>
 					<ScriptName
@@ -349,7 +414,10 @@ export const Assessment = defineComponent({
 						class="crm-ai-report-drawer__content-block-header-assessment-badge crm-ai-report-drawer__content-block-header-assessment-script-updated-badge"
 						@click="handleShowReassessmentPopup"
 					/>
-					<div class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg">
+				<div
+					class="crm-ai-report-drawer__content-block-header-assessment-review ui-typography-text-lg"
+					:data-testid="testIdPrefix + '-recommendation'"
+				>
 						{{ assessmentBlockData.recommendation }}
 					</div>
 				</div>
@@ -370,15 +438,21 @@ export const Assessment = defineComponent({
 						'crm-ai-report-drawer__spoiler-content',
 						minimized ? '--hidden' : '',
 					]"
+					:aria-hidden="minimized ? 'true' : 'false'"
+					:inert="minimized"
 				>
 					<div class="crm-ai-report-drawer__spoiler-content-inner">
-						<div class="crm-ai-report-drawer__content-block-assessment-criteria-failures-list">
+						<div
+						class="crm-ai-report-drawer__content-block-assessment-criteria-failures-list"
+						:data-testid="testIdPrefix + '-criteria-list'"
+						>
 							<FailedCriterion
 								v-for="(failedCriterion, index) in assessmentBlockData.failedCriteria"
 								:key="index"
 								:title="failedCriterion.title"
 								:description="failedCriterion.description"
 								:summary="failedCriterion.summary"
+								:data-testid="testIdPrefix + '-failed-criterion-' + index"
 							/>
 							<div class="crm-ai-report-drawer__content-block-assessment-criteria-footer --ui-context-content-light">
 								<div
@@ -387,6 +461,7 @@ export const Assessment = defineComponent({
 										successCriteriaCount !== 0 ? 'crm-ai-report-drawer__spoiler-toggle-trigger' : '',
 									]"
 									@click="toggleCompletedCriteriaSpoiler(successCriteriaCount !== 0)"
+									:data-testid="testIdPrefix + '-success-toggle'"
 								>
 									<div class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title">
 										<span class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title-check" />
@@ -406,6 +481,7 @@ export const Assessment = defineComponent({
 												:status="criterion.status"
 												:name="criterion.title"
 												:text="criterion.summary"
+												:data-testid="testIdPrefix + '-success-criterion-' + index"
 											/>
 										</div>
 									</div>
@@ -417,6 +493,7 @@ export const Assessment = defineComponent({
 										unusedCriteriaCount !== 0 ? 'crm-ai-report-drawer__spoiler-toggle-trigger' : '',
 									]"
 									@click="toggleUnusedCriteriaSpoiler(unusedCriteriaCount !== 0)"
+									:data-testid="testIdPrefix + '-unused-toggle'"
 								>
 									<div class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title">
 										<span class="crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title-circle-minus" />
@@ -436,11 +513,63 @@ export const Assessment = defineComponent({
 												:status="criterion.status"
 												:name="criterion.title"
 												:text="criterion.summary"
+												:data-testid="testIdPrefix + '-unused-criterion-' + index"
 											/>
 										</div>
 									</div>
 								</div>
 							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div
+				v-if="hasCreatedAt"
+				:class="['crm-ai-report-drawer__spoiler-content', minimized ? '--hidden' : '']"
+				:aria-hidden="minimized ? 'true' : 'false'"
+				:inert="minimized"
+			>
+				<div class="crm-ai-report-drawer__spoiler-content-inner">
+					<div class="crm-ai-report-drawer__content-block-footer" :data-testid="testIdPrefix + '-footer'">
+						<div class="crm-ai-report-drawer__content-block-actions">
+							<button
+								type="button"
+								class="crm-ai-report-drawer__content-block-action --copy"
+								:data-testid="testIdPrefix + '-copy-button'"
+								:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_COPY')"
+								@click="copyAssessment"
+							/>
+							<button
+								v-if="selectedReaction !== 'like'"
+								type="button"
+								:data-testid="testIdPrefix + '-dislike-button'"
+								:class="[
+									'crm-ai-report-drawer__content-block-action',
+									'--dislike',
+									{ '--selected': selectedReaction === 'dislike' },
+								]"
+								:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_DISLIKE')"
+								:aria-pressed="selectedReaction === 'dislike'"
+								:disabled="selectedReaction !== null"
+								@click="handleReactionClick('dislike')"
+							/>
+							<button
+								v-if="selectedReaction !== 'dislike'"
+								type="button"
+								:data-testid="testIdPrefix + '-like-button'"
+								:class="[
+									'crm-ai-report-drawer__content-block-action',
+									'--like',
+									{ '--selected': selectedReaction === 'like' },
+								]"
+								:aria-label="loc('CRM_AI_REPORT_DRAWER_ACTION_LIKE')"
+								:aria-pressed="selectedReaction === 'like'"
+								:disabled="selectedReaction !== null"
+								@click="handleReactionClick('like')"
+							/>
+						</div>
+						<div class="crm-ai-report-drawer__content-block-date ui-typography-text-xs" :data-testid="testIdPrefix + '-date'">
+							{{ createdAtText }}
 						</div>
 					</div>
 				</div>

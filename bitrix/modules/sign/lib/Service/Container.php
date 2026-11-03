@@ -9,6 +9,7 @@ use Bitrix\Sign\Access\Service\AccessService;
 use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Debug;
 use Bitrix\Sign\Factory\Access\AccessibleItemFactory;
+use Bitrix\Sign\Integration;
 use Bitrix\Sign\Repository;
 use Bitrix\Sign\Connector;
 use Bitrix\Sign\Service;
@@ -183,6 +184,36 @@ class Container
 		return self::getService('sign.service.integration.crm.entity.relation');
 	}
 
+	public function getCrmProcessTypeService(): Service\Integration\Crm\ProcessTypeService
+	{
+		return self::getService('sign.service.integration.crm.processType');
+	}
+
+	public function getCrmProcessActivityHandler(): Integration\CRM\Activity\ProcessActivityHandler
+	{
+		return self::getService('sign.service.integration.crm.processActivity');
+	}
+
+	public function getBizprocProcessCatalogService(): Service\Integration\Bizproc\ProcessCatalogService
+	{
+		return self::getService('sign.service.integration.bizproc.processCatalog');
+	}
+
+	public function getProcessLaunchRepository(): Repository\Process\LaunchRepository
+	{
+		return self::getService('sign.repository.process.launch');
+	}
+
+	public function getProcessLaunchService(): Service\Process\LaunchService
+	{
+		return self::getService('sign.service.process.launch');
+	}
+
+	public function getRunningProcessService(): Service\Process\RunningProcessService
+	{
+		return self::getService('sign.service.process.running');
+	}
+
 	public function getCrmAccessService(): Service\Integration\Crm\AccessService
 	{
 		return self::getService('sign.service.integration.crm.access');
@@ -198,9 +229,34 @@ class Container
 		return self::getService('sign.service.integration.im');
 	}
 
+	public function getMessageTextSanitizer(): Service\Integration\Im\MessageTextSanitizer
+	{
+		return self::getService('sign.service.integration.im.messageTextSanitizer');
+	}
+
+	public function getInviteCardService(): Service\Integration\Im\InviteCardService
+	{
+		return self::getService('sign.service.integration.im.inviteCard');
+	}
+
 	public function getDiskService(): Service\Integration\Disk\DiskService
 	{
 		return self::getService('sign.service.integration.disk');
+	}
+
+	public function getDocumentDraftCreator(): Service\Integration\Bizproc\DocumentDraftCreator
+	{
+		return self::getService('sign.service.integration.bizproc.documentDraftCreator');
+	}
+
+	public function getDraftFileSourceResolver(): Service\Integration\Bizproc\DraftFileSourceResolver
+	{
+		return self::getService('sign.service.integration.bizproc.draftFileSourceResolver');
+	}
+
+	public function getDraftIdempotencyService(): Service\Integration\Bizproc\DraftIdempotencyService
+	{
+		return self::getService('sign.service.integration.bizproc.draftIdempotencyService');
 	}
 
 	public function getFeedPostService(): Service\Integration\Socialnetwork\FeedPostService
@@ -389,6 +445,11 @@ class Container
 	public function getProviderCodeService(): Service\Sign\Document\ProviderCodeService
 	{
 		return static::getService('sign.service.sign.document.providerCode');
+	}
+
+	public function getDirectorSigningGuardService(): Service\Sign\Document\DirectorSigningGuardService
+	{
+		return static::getService('sign.service.sign.document.directorSigningGuard');
 	}
 
 	public function getRequiredFieldRepository(): Repository\RequiredFieldRepository

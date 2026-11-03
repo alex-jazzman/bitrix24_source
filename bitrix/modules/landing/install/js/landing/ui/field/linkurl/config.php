@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'landing.ui.field.textfield',
 		'main.core',
+		'ui.design-tokens',
 		'ui.entity-selector',
 		'ui.fonts.opensans',
-		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'tokens',
 		'utils/prop',
+		'utils/uuid',
 		'require-lazy',
 		'utils/function',
 		'notify-manager',

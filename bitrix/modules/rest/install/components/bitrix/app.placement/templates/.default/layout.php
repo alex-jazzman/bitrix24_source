@@ -27,7 +27,7 @@ foreach($arResult['APPLICATION_LIST'] as $app)
 	}
 }
 
-if($appId > 0)
+if((int)$appId !== 0)
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:app.layout',

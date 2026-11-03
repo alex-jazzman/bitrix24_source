@@ -64,6 +64,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
+	const OPEN_KEYS = ['Enter', ' ', 'ArrowDown'];
+	const VISIBLE_LABEL_SELECTOR = '.ui-system-input-label:not(.--error)';
 	// @vue/component
 	const ReminderSheetContent = {
 		components: {
@@ -83,6 +85,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				type: [Number, String],
 				required: true
 			},
+			title: {
+				type: String,
+				required: true
+			},
 			close: {
 				type: Function,
 				required: true
@@ -95,7 +101,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline,
 				ChipDesign: ui_system_chip_vue.ChipDesign,
 				RemindBy: tasks_v2_const.RemindBy,
-				remindersMeta
+				remindersMeta,
+				typeMenuId: `tasks-reminder-type-menu-${main_core.Text.getRandom()}`,
+				viaMenuId: `tasks-reminder-via-menu-${main_core.Text.getRandom()}`,
+				pickerPopupId: `tasks-reminder-picker-${main_core.Text.getRandom()}`
 			};
 		},
 		data() {
@@ -105,10 +114,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				dateTs: null,
 				duration: 0,
 				remindVia: tasks_v2_const.RemindVia.Notification,
+				dialogPopupId: null,
 				isDialogShown: false,
 				isPickerShown: false,
 				isTypeMenuShown: false,
-				isViaMenuShown: false
+				isViaMenuShown: false,
+				mountedMenuIds: []
 			};
 		},
 		computed: {
@@ -169,11 +180,70 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					withClear: true
 				}));
 			},
-			title() {
-				if (this.reminderId) {
-					return this.loc('TASKS_V2_REMINDERS_UPDATE_SHEET');
-				}
-				return this.loc('TASKS_V2_REMINDERS_ADD_SHEET');
+			triggers() {
+				return [{
+					ref: 'recipient',
+					label: this.loc('TASKS_V2_REMINDERS_RECIPIENT'),
+					inputValue: '',
+					haspopup: 'dialog',
+					controls: this.dialogPopupId,
+					isOpen: this.isDialogShown,
+					isExpanded: this.isDialogShown,
+					open: () => this.showDialog({
+						currentTarget: this.triggerEl('recipient')
+					}),
+					close: () => this.dialog?.hide()
+				}, {
+					ref: 'type',
+					label: this.loc('TASKS_V2_REMINDERS_TYPE'),
+					inputValue: remindersMeta.by[this.remindBy],
+					haspopup: 'menu',
+					controls: this.typeMenuId,
+					isOpen: this.isTypeMenuShown,
+					isExpanded: this.isMenuMounted(this.typeMenuId),
+					open: () => {
+						this.isTypeMenuShown = true;
+					},
+					close: () => {
+						this.isTypeMenuShown = false;
+					}
+				}, {
+					ref: 'date',
+					label: this.loc('TASKS_V2_REMINDERS_REMIND_BY_DATE_TITLE'),
+					inputValue: this.formatDate(this.dateTs),
+					haspopup: 'dialog',
+					controls: this.pickerPopupId,
+					isOpen: this.isPickerShown,
+					isExpanded: this.isPickerShown,
+					open: () => this.showPicker({
+						currentTarget: this.triggerEl('date')
+					}),
+					close: () => this.picker?.hide()
+				}, {
+					ref: 'via',
+					label: this.loc('TASKS_V2_REMINDERS_SEND_VIA'),
+					inputValue: remindersMeta.via[this.remindVia].title,
+					haspopup: 'menu',
+					controls: this.viaMenuId,
+					isOpen: this.isViaMenuShown,
+					isExpanded: this.isMenuMounted(this.viaMenuId),
+					open: () => {
+						this.isViaMenuShown = true;
+					},
+					close: () => {
+						this.isViaMenuShown = false;
+					}
+				}];
+			}
+		},
+		watch: {
+			// The sheet body renders through a slot, so the component's own updated() hook
+			// is not guaranteed to run; post-flush watchers sync after the DOM settles.
+			triggers: {
+				handler() {
+					this.syncAria();
+				},
+				flush: 'post'
 			}
 		},
 		created() {
@@ -188,7 +258,124 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.duration = this.reminder.before ?? this.task.deadlineTs - this.reminder.nextRemindTs;
 			}
 		},
+		mounted() {
+			this.syncAria();
+			this.observeTriggerAria();
+
+			// main.popup closes the sheet from a capture-phase keyup listener on the document,
+			// so an Escape that only dismisses a dropdown has to be claimed earlier: capture at
+			// the window always runs before capture at the document, whatever the bind order.
+			main_core.Event.bind(window, 'keyup', this.handleWindowKeyUp, true);
+		},
+		beforeUnmount() {
+			this.triggerAriaObservers?.forEach(observer => observer.disconnect());
+			main_core.Event.unbind(window, 'keyup', this.handleWindowKeyUp, true);
+		},
 		methods: {
+			triggerEl(ref) {
+				return this.$refs[ref]?.$el;
+			},
+			/**
+			 * BMenu snapshots aria-expanded of its bind element when it mounts and puts that
+			 * snapshot back when it is destroyed, so a trigger that already reads "true" while
+			 * the menu is mounting gets "true" handed back onto the closed combobox and keeps
+			 * it. A menu trigger may therefore report itself expanded only from the moment its
+			 * menu is really mounted, never from the flag that mounts it.
+			 */
+			isMenuMounted(menuId) {
+				return this.mountedMenuIds.includes(menuId);
+			},
+			handleMenuMounted(menuId) {
+				this.mountedMenuIds = [...this.mountedMenuIds, menuId];
+			},
+			handleMenuUnmounted(menuId) {
+				this.mountedMenuIds = this.mountedMenuIds.filter(id => id !== menuId);
+			},
+			/**
+			 * A closed menu hands the aria-expanded it snapshotted on open back to the trigger
+			 * once its popup is destroyed, past the closing animation. By then the trigger may
+			 * already own a newer menu, so what it reports is whatever the gone menu remembered:
+			 * the state is written again here, whoever overwrote it and whenever. Only a menu
+			 * keeps such a snapshot, so the dialog and the picker triggers need no watching.
+			 */
+			observeTriggerAria() {
+				this.triggerAriaObservers = [];
+				const menuRefs = this.triggers.filter(trigger => trigger.haspopup === 'menu').map(trigger => trigger.ref);
+				for (const ref of menuRefs) {
+					const node = this.triggerEl(ref);
+					if (!node) {
+						continue;
+					}
+					const observer = new MutationObserver(() => {
+						const {
+							isExpanded
+						} = this.triggers.find(trigger => trigger.ref === ref);
+						if (node.getAttribute('aria-expanded') !== (isExpanded ? 'true' : 'false')) {
+							this.syncAria();
+						}
+					});
+					observer.observe(node, {
+						attributeFilter: ['aria-expanded']
+					});
+					this.triggerAriaObservers.push(observer);
+				}
+			},
+			/**
+			 * The trigger is the input wrapper, not the inner input: BInput blurs the input
+			 * on focus in the clickable mode, so a tab stop on it swallows the focus.
+			 *
+			 * A combobox reads its value off the text of its own subtree, so whatever is not
+			 * the value has to leave the accessibility tree: the visible label would repeat
+			 * the name in place of the value, and an input showing nothing adds its name on
+			 * top of that. The recipient input is always empty - its value is the chips.
+			 */
+			syncAria() {
+				for (const trigger of this.triggers) {
+					const node = this.triggerEl(trigger.ref);
+					const input = node?.querySelector('input');
+					if (!input) {
+						continue;
+					}
+					main_core.Dom.attr(node, 'role', 'combobox');
+					main_core.Dom.attr(node, 'aria-label', trigger.label);
+					main_core.Dom.attr(node, 'aria-haspopup', trigger.haspopup);
+					main_core.Dom.attr(node, 'aria-expanded', trigger.isExpanded ? 'true' : 'false');
+					main_core.Dom.attr(node, 'aria-controls', trigger.isExpanded ? trigger.controls : null);
+					main_core.Dom.attr(node, 'tabindex', '0');
+					main_core.Dom.attr(node.querySelector(VISIBLE_LABEL_SELECTOR), 'aria-hidden', 'true');
+					main_core.Dom.attr(input, 'tabindex', '-1');
+					main_core.Dom.attr(input, 'aria-hidden', trigger.inputValue ? null : 'true');
+				}
+			},
+			handleKeydown(event, ref) {
+				if (!OPEN_KEYS.includes(event.key)) {
+					return;
+				}
+				const trigger = this.triggers.find(item => item.ref === ref);
+
+				// Neither BMenu nor the open picker takes arrow navigation from here, so ArrowDown
+				// has nothing to move: cancelling the page default would leave the key doing nothing.
+				if (trigger.isOpen && event.key === 'ArrowDown') {
+					return;
+				}
+				event.preventDefault();
+				if (trigger.isOpen) {
+					trigger.close();
+					return;
+				}
+				trigger.open();
+			},
+			handleWindowKeyUp(event) {
+				if (event.key !== 'Escape') {
+					return;
+				}
+				const trigger = this.triggers.find(item => item.isOpen);
+				if (!trigger) {
+					return;
+				}
+				event.stopImmediatePropagation();
+				trigger.close();
+			},
 			save() {
 				const reminder = {
 					id: this.reminderId || `tmp${Date.now()}`,
@@ -241,7 +428,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						tabs: ['recents']
 					}))
 				});
-				dialog.getPopup().subscribeFromOptions({
+
+				// The popupOptions whitelist of ui.entity-selector drops id, so the popup names
+				// itself; getPopup() builds it here and its node carries that id from then on.
+				const popup = dialog.getPopup();
+				this.dialogPopupId = popup.getId();
+				popup.subscribeFromOptions({
 					onClose: () => {
 						this.recipients = dialog.getSelectedItems().map(item => item.getId());
 						this.isDialogShown = false;
@@ -280,6 +472,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						}
 					},
 					popupOptions: {
+						id: this.pickerPopupId,
 						animation: 'fading',
 						targetContainer: document.body
 					}
@@ -307,55 +500,79 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div class="tasks-field-reminder-sheet">
+		<div class="tasks-field-reminder-sheet" data-testid="tasks-reminder-sheet">
 			<div class="tasks-field-reminder-sheet-header">
 				<HeadlineMd>{{ title }}</HeadlineMd>
-				<BIcon :name="Outline.CROSS_L" hoverable @click="close"/>
+				<button
+					type="button"
+					class="tasks-field-reminder-sheet-close"
+					:aria-label="loc('TASKS_V2_REMINDERS_CLOSE_ARIA_LABEL')"
+					data-testid="tasks-reminder-sheet-close-btn"
+					@click="close"
+				>
+					<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+				</button>
 			</div>
 			<BInput
 				:label="loc('TASKS_V2_REMINDERS_RECIPIENT')"
+				:ariaLabel="loc('TASKS_V2_REMINDERS_RECIPIENT')"
 				:placeholder="loc('TASKS_V2_REMINDERS_RECIPIENT_PLACEHOLDER')"
 				:chips="usersChips"
 				clickable
 				:active="isDialogShown"
+				ref="recipient"
+				data-testid="tasks-reminders-recipient-input"
 				@click="showDialog"
 				@chipClear="handleUserClear"
+				@keydown="handleKeydown($event, 'recipient')"
 			/>
 			<BInput
 				:modelValue="remindersMeta.by[remindBy]"
 				:label="loc('TASKS_V2_REMINDERS_TYPE')"
+				:ariaLabel="loc('TASKS_V2_REMINDERS_TYPE')"
 				dropdown
 				clickable
 				:active="isTypeMenuShown"
 				ref="type"
+				data-testid="tasks-reminders-type-select"
 				@click="isTypeMenuShown = true"
+				@keydown="handleKeydown($event, 'type')"
 			/>
 			<BInput
 				v-if="remindBy === RemindBy.Date"
 				:modelValue="formatDate(dateTs)"
 				:label="loc('TASKS_V2_REMINDERS_REMIND_BY_DATE_TITLE')"
+				:ariaLabel="loc('TASKS_V2_REMINDERS_REMIND_BY_DATE_TITLE')"
 				:icon="Outline.CALENDAR_WITH_SLOTS"
 				:withClear="dateTs > 0"
 				clickable
 				:active="isPickerShown"
+				ref="date"
+				data-testid="tasks-reminders-date-input"
 				@clear="handleDateClear"
 				@click="showPicker"
+				@keydown="handleKeydown($event, 'date')"
 			/>
 			<Duration
 				v-else
 				v-model="duration"
 				:label="loc('TASKS_V2_REMINDERS_REMIND_BY_DEADLINE_TITLE')"
+				:unitAriaLabel="loc('TASKS_V2_REMINDERS_DURATION_UNIT_ARIA_LABEL')"
+				data-testid="tasks-reminders-duration"
 			/>
 			<BInput
 				:modelValue="remindersMeta.via[remindVia].title"
 				:label="loc('TASKS_V2_REMINDERS_SEND_VIA')"
+				:ariaLabel="loc('TASKS_V2_REMINDERS_SEND_VIA')"
 				dropdown
 				clickable
 				:active="isViaMenuShown"
 				ref="via"
+				data-testid="tasks-reminders-via-select"
 				@click="isViaMenuShown = true"
+				@keydown="handleKeydown($event, 'via')"
 			/>
-			<div class="tasks-field-reminders-sheet-footer">
+			<div class="tasks-field-reminders-sheet-footer" data-testid="tasks-reminder-sheet-footer">
 				<UiButton
 					:text="loc('TASKS_V2_REMINDERS_SAVE')"
 					:style="AirButtonStyle.PRIMARY"
@@ -371,8 +588,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				/>
 			</div>
 		</div>
-		<BMenu v-if="isTypeMenuShown" :options="typeMenuOptions()" @close="isTypeMenuShown = false"/>
-		<BMenu v-if="isViaMenuShown" :options="viaMenuOptions()" @close="isViaMenuShown = false"/>
+		<BMenu
+			v-if="isTypeMenuShown"
+			:id="typeMenuId"
+			:options="typeMenuOptions()"
+			@vue:mounted="handleMenuMounted(typeMenuId)"
+			@vue:unmounted="handleMenuUnmounted(typeMenuId)"
+			@close="isTypeMenuShown = false"
+		/>
+		<BMenu
+			v-if="isViaMenuShown"
+			:id="viaMenuId"
+			:options="viaMenuOptions()"
+			@vue:mounted="handleMenuMounted(viaMenuId)"
+			@vue:unmounted="handleMenuUnmounted(viaMenuId)"
+			@close="isViaMenuShown = false"
+		/>
 	`
 	};
 
@@ -394,10 +625,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		emits: ['close'],
+		computed: {
+			title() {
+				return this.reminderId ? this.loc('TASKS_V2_REMINDERS_UPDATE_SHEET') : this.loc('TASKS_V2_REMINDERS_ADD_SHEET');
+			}
+		},
 		template: `
-		<BottomSheet :sheetBindProps @close="$emit('close')">
+		<BottomSheet :sheetBindProps :ariaLabel="title" @close="$emit('close')">
 			<ReminderSheetContent
 				:reminderId
+				:title
 				:close="() => $emit('close')"
 			/>
 		</BottomSheet>
@@ -438,7 +675,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		data() {
 			return {
-				isItemHovered: false,
 				isSheetShown: false
 			};
 		},
@@ -490,11 +726,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div
-			class="tasks-field-reminders-row"
-			@mouseover="isItemHovered = true"
-			@mouseleave="isItemHovered = false"
-		>
+		<div class="tasks-field-reminders-row" data-testid="tasks-reminders-list-item">
 			<div class="tasks-field-reminders-column --via">
 				<BIcon v-hint="viaTooltip" :name="remindersMeta.via[reminder.remindVia].icon" ref="via"/>
 			</div>
@@ -507,13 +739,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</div>
 				<TextMd>{{ recipient.title }}</TextMd>
 			</div>
-			<div class="tasks-field-reminders-column --action" v-if="isItemHovered">
-				<div ref="edit" @click="isSheetShown = true">
-					<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable/>
-				</div>
-				<div ref="remove" @click="removeItem">
-					<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable/>
-				</div>
+			<div class="tasks-field-reminders-column --action">
+				<button
+					type="button"
+					class="tasks-field-reminders-action"
+					:aria-label="loc('TASKS_V2_REMINDERS_LIST_ACTION_EDIT')"
+					data-testid="tasks-reminders-edit-btn"
+					ref="edit"
+					@click="isSheetShown = true"
+				>
+					<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable aria-hidden="true"/>
+				</button>
+				<button
+					type="button"
+					class="tasks-field-reminders-action"
+					:aria-label="loc('TASKS_V2_REMINDERS_LIST_ACTION_REMOVE')"
+					data-testid="tasks-reminders-remove-btn"
+					ref="remove"
+					@click="removeItem"
+				>
+					<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable aria-hidden="true"/>
+				</button>
 			</div>
 		</div>
 		<ReminderSheet
@@ -634,16 +880,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			this.isLoading = false;
 		},
 		template: `
-		<BottomSheet :sheetBindProps @close="$emit('close')">
-			<div class="tasks-field-reminders-sheet">
+		<BottomSheet
+			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_REMINDERS_TITLE_SHEET')"
+			@close="$emit('close')"
+		>
+			<div class="tasks-field-reminders-sheet" data-testid="tasks-reminders-sheet">
 				<div class="tasks-field-reminders-sheet-header">
 					<HeadlineMd>{{ loc('TASKS_V2_REMINDERS_TITLE_SHEET') }}</HeadlineMd>
-					<BIcon
+					<button
+						type="button"
 						class="tasks-field-reminders-sheet-close"
-						:name="Outline.CROSS_L"
-						hoverable
+						:aria-label="loc('TASKS_V2_REMINDERS_CLOSE_ARIA_LABEL')"
+						data-testid="tasks-reminders-sheet-close-btn"
 						@click="$emit('close')"
-					/>
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 				<div class="tasks-field-reminders-sheet-content">
 					<List
@@ -652,7 +905,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						:sheetBindProps
 					/>
 				</div>
-				<div class="tasks-field-reminders-sheet-footer">
+				<div class="tasks-field-reminders-sheet-footer" data-testid="tasks-reminders-sheet-footer">
 					<UiButton
 						:text="loc('TASKS_V2_REMINDERS_ADD')"
 						:size="ButtonSize.SMALL"
@@ -720,7 +973,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return () => tasks_v2_component_elements_hint.tooltip({
 					text: this.loc('TASKS_V2_REMINDERS_ADD'),
 					popupOptions: {
-						offsetLeft: this.$refs.add.$el.offsetWidth / 2
+						offsetLeft: this.$refs.add.offsetWidth / 2
 					}
 				});
 			}
@@ -734,29 +987,38 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div class="tasks-field-reminders" :data-task-id="taskId" :data-task-field-id="remindersMeta.id">
+		<div class="tasks-field-reminders" :data-task-id="taskId" :data-task-field-id="remindersMeta.id" data-testid="tasks-reminders">
 			<div class="tasks-field-reminders-title">
-				<div
+				<button
+					type="button"
 					class="tasks-field-reminders-main"
 					:class="{ '--readonly': readonly }"
 					ref="title"
+					aria-haspopup="dialog"
+					:aria-expanded="isListSheetShown"
+					data-testid="tasks-reminders-open-btn"
 					@click="setListSheetShown(true)"
 				>
-					<BIcon :name="Outline.NOTIFICATION"/>
+					<BIcon :name="Outline.NOTIFICATION" aria-hidden="true"/>
 					<TextMd accent>{{ text }}</TextMd>
-				</div>
+				</button>
 				<div
 					v-if="!readonly"
 					v-hint="tooltip"
 					class="tasks-field-reminders-edit-container"
 				>
-					<BIcon
+					<button
+						type="button"
 						class="tasks-field-reminders-icon"
-						:name="Outline.PLUS_L"
-						hoverable
+						:aria-label="loc('TASKS_V2_REMINDERS_ADD')"
+						aria-haspopup="dialog"
+						:aria-expanded="isSheetShown"
+						data-testid="tasks-reminders-add-btn"
 						ref="add"
 						@click="setSheetShown(true)"
-					/>
+					>
+						<BIcon :name="Outline.PLUS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</div>
 		</div>
@@ -807,15 +1069,45 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isSelected() {
 				return this.task.filledFields[remindersMeta.id];
+			},
+			opensSheet() {
+				return !this.isSelected;
 			}
 		},
+		watch: {
+			isSheetShown() {
+				this.syncAria();
+			},
+			opensSheet() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensSheet ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensSheet ? String(this.isSheetShown) : null);
+			},
 			handleClick() {
 				if (this.isSelected) {
 					this.highlightField();
 					return;
 				}
 				this.setSheetShown(true);
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(remindersMeta.id);
@@ -832,7 +1124,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:text="loc('TASKS_V2_REMINDERS_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="remindersMeta.id"
+			data-testid="tasks-reminders-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 		<ReminderSheet
 			v-if="isSheetShown"

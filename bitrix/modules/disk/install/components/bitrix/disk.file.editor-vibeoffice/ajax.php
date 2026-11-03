@@ -5,11 +5,11 @@ use Bitrix\Disk\Document\DocumentEditorUser;
 use Bitrix\Disk\Document\Online\UserInfoToken;
 use Bitrix\Disk\Document\OnlyOffice\Editor\ConfigBuilder;
 use Bitrix\Disk\Document\OnlyOffice\Filters\DocumentSessionCheck;
+use Bitrix\Disk\Document\Vibeoffice\CurrentUserAvatarProvider;
 use Bitrix\Disk\Document\Vibeoffice\DocumentSessionManager;
 use Bitrix\Disk\Document\Vibeoffice\PullInitializationSuppressor;
 use Bitrix\Disk\Document\Vibeoffice\SavedContentSynchronizer;
 use Bitrix\Disk\Document\Vibeoffice\VibeofficeHandler;
-use Bitrix\Disk\Document\Vibeoffice\Service\PresenceService;
 use Bitrix\Disk\User;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Engine;
@@ -57,6 +57,13 @@ class DiskFileEditorVibeofficeController extends Engine\Controller
 	public function configureActions()
 	{
 		return [
+			'getCurrentUserAvatar' => [
+				'+prefilters' => [
+					new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
+					new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+					new ActionFilter\CloseSession(),
+				],
+			],
 			'showNotFound' => [
 				'-prefilters' => [
 					ActionFilter\Csrf::class,
@@ -109,25 +116,19 @@ class DiskFileEditorVibeofficeController extends Engine\Controller
 					,
 				],
 			],
-			'presenceEnter' => $this->getPresenceActionConfiguration(),
-			'presenceHeartbeat' => $this->getPresenceActionConfiguration(),
-			'presenceLeave' => $this->getPresenceActionConfiguration(),
 		];
 	}
 
-	public function presenceEnterAction(string $presenceContext, int $clientRevision = 0): ?array
+	public function getCurrentUserAvatarAction(): array
 	{
-		return $this->handlePresenceAction(PresenceService::ACTION_ENTER, $presenceContext, $clientRevision);
-	}
+		$userId = (int)$this->getCurrentUser()->getId();
 
-	public function presenceHeartbeatAction(string $presenceContext, int $clientRevision = 0): ?array
-	{
-		return $this->handlePresenceAction(PresenceService::ACTION_HEARTBEAT, $presenceContext, $clientRevision);
-	}
-
-	public function presenceLeaveAction(string $presenceContext, int $clientRevision = 0): ?array
-	{
-		return $this->handlePresenceAction(PresenceService::ACTION_LEAVE, $presenceContext, $clientRevision);
+		return [
+			'id' => (string)$userId,
+			'image' => $this->isCurrentUserDocumentEditor()
+				? null
+				: (new CurrentUserAvatarProvider())->getImage($userId),
+		];
 	}
 
 	public function markAsStillWorkingSessionAction(Disk\Document\Models\DocumentSession $documentSession): ?array
@@ -193,10 +194,27 @@ class DiskFileEditorVibeofficeController extends Engine\Controller
 		];
 	}
 
-	public function getSliderContentAction(Disk\Document\Models\DocumentSession $documentSession, int $editorMode = ConfigBuilder::VISUAL_MODE_USUAL): HttpResponse
+	public function getSliderContentAction(
+		Disk\Document\Models\DocumentSession $documentSession,
+		int $editorMode = ConfigBuilder::VISUAL_MODE_USUAL,
+		?string $restrictionOutcome = null,
+		string $openingContext = '',
+	): HttpResponse
 	{
 		$this->suppressGlobalPullInitialization();
 		$documentSession = $this->refreshViewSession($documentSession);
+		$trustedOpening = Disk\Document\Vibeoffice\RestartTarget::restore(
+			$openingContext,
+			(int)$this->getCurrentUser()?->getId(),
+			$documentSession,
+		);
+		$openingBudget = null;
+		if ($trustedOpening !== [])
+		{
+			$editorMode = $trustedOpening['editorMode'];
+			$openingBudget = Disk\Document\Vibeoffice\OpeningBudget::fromTrustedOpening($trustedOpening);
+		}
+
 
 		$content = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:ui.sidepanel.wrapper',
@@ -208,6 +226,9 @@ class DiskFileEditorVibeofficeController extends Engine\Controller
 				'POPUP_COMPONENT_PARAMS' => [
 					'DOCUMENT_SESSION' => $documentSession,
 					'EDITOR_MODE' => $editorMode,
+					'TRUSTED_OPENING' => $trustedOpening,
+					'OPENING_BUDGET' => $openingBudget,
+					'RESTRICTION_OUTCOME' => $restrictionOutcome,
 				],
 				'PLAIN_VIEW' => true,
 				'IFRAME_MODE' => true,
@@ -314,34 +335,5 @@ class DiskFileEditorVibeofficeController extends Engine\Controller
 	private function suppressGlobalPullInitialization(): void
 	{
 		PullInitializationSuppressor::suppressForDocumentEditor($this->isCurrentUserDocumentEditor());
-	}
-
-	private function getPresenceActionConfiguration(): array
-	{
-		return [
-			'+prefilters' => [
-				new ActionFilter\CloseSession(),
-				new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
-				new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-			],
-		];
-	}
-
-	private function handlePresenceAction(string $action, string $presenceContext, int $clientRevision): ?array
-	{
-		$result = (new PresenceService())->handle(
-			$action,
-			$presenceContext,
-			(int)($this->getCurrentUser()?->getId() ?? 0),
-			$clientRevision,
-		);
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
-
-			return null;
-		}
-
-		return $result->getData();
 	}
 }

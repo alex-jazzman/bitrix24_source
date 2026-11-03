@@ -14,6 +14,10 @@ BitrixVue.component('sale-checkout-view-product-item_deleted', {
 		},
 	computed:
 		{
+			titleId()
+			{
+				return `sale-checkout-deleted-item-title-${this.index}`;
+			},
 			localize() {
 				return Object.freeze(
 					BitrixVue.getFilteredPhrases('CHECKOUT_VIEW_PRODUCT_INFO_DELETED_'))
@@ -29,13 +33,13 @@ BitrixVue.component('sale-checkout-view-product-item_deleted', {
 			</div>
 			<div class="checkout-table-td">
 				<div class="checkout-basket-item-info-container">
-					<h2 class="checkout-basket-item-name-block">
+					<h2 class="checkout-basket-item-name-block" :id="titleId">
 						<span class="checkout-basket-item-name-text"><strong>{{localize.CHECKOUT_VIEW_PRODUCT_INFO_DELETED_WAS_DELETED}}</strong> {{item.name}}</span>
 					</h2>
 				</div>
 			</div>
 			<div class="checkout-table-td">
-				<sale-checkout-view-element-button-restore :index="index"/>
+				<sale-checkout-view-element-button-restore :index="index" :describedBy="titleId"/>
 			</div>
 		</div>
 	`

@@ -30,6 +30,7 @@ export const SmtpSettings = defineComponent({
 
 	props: {
 		passwordPlaceholder: { type: String, default: '' },
+		connectionSettingsLocked: { type: Boolean, default: false },
 	},
 
 	computed: {
@@ -39,7 +40,7 @@ export const SmtpSettings = defineComponent({
 		},
 		credentialsReadOnly(): boolean
 		{
-			return this.state.migrationActive;
+			return this.connectionSettingsLocked || this.state.migrationActive;
 		},
 		isOAuthService(): boolean
 		{
@@ -57,17 +58,23 @@ export const SmtpSettings = defineComponent({
 				useAirDesign: true,
 			};
 		},
+		// The credentials of the mailbox come from outside the portal and cannot be changed here, so
+		// the form draws none of them. The server refuses such a change whether or not this holds.
+		credentialsAreExternal(): boolean
+		{
+			return Boolean(this.state.service?.externalCredentials);
+		},
 		showServerFields(): boolean
 		{
-			return !this.state.service?.smtp?.server;
+			return !this.credentialsAreExternal && !this.state.service?.smtp?.server;
 		},
 		showLoginField(): boolean
 		{
-			return !this.isOAuthService && !this.state.service?.smtp?.login;
+			return !this.credentialsAreExternal && !this.isOAuthService && !this.state.service?.smtp?.login;
 		},
 		showPasswordField(): boolean
 		{
-			return !this.isOAuthService && !this.state.service?.smtp?.password;
+			return !this.credentialsAreExternal && !this.isOAuthService && !this.state.service?.smtp?.password;
 		},
 		smtpPortModel: {
 			get(): string
@@ -117,7 +124,6 @@ export const SmtpSettings = defineComponent({
 	template: `
 		<div
 			class="mail-config-form__section"
-			:class="{ '--disabled': !state.smtp.enabled }"
 			data-test-id="mail_config-form__smtp-section"
 		>
 			<div class="mail-config-form__section-header" data-test-id="mail_config-form__smtp-header">
@@ -127,9 +133,8 @@ export const SmtpSettings = defineComponent({
 				</div>
 				<div class="mail-config-form__switcher-container">
 					<Switcher
-						v-if="isEditMode || !isOAuthService"
+						v-if="!credentialsReadOnly && (isEditMode || !isOAuthService)"
 						:isChecked="state.smtp.enabled"
-						:is-disabled="credentialsReadOnly"
 						:options="switcherOptions"
 						@click="toggleSmtp"
 						data-test-id="mail_config-form__smtp-switcher"
@@ -139,7 +144,6 @@ export const SmtpSettings = defineComponent({
 			<transition name="mail-config-form__collapse">
 				<div
 					class="mail-config-form__section-content"
-					v-if="state.smtp.enabled"
 					data-test-id="mail_config-form__smtp-content"
 				>
 					<div class="mail-config-form__checkbox-row">
@@ -166,120 +170,117 @@ export const SmtpSettings = defineComponent({
 							/>
 						</div>
 					</transition>
-					<div class="mail-config-form__checkbox-row">
-						<input
-							type="checkbox"
-							id="mail-config-smtp-use-limit"
-							class="mail-config-form__checkbox"
-							v-model="state.smtp.useLimit"
-							data-test-id="mail_config-form__smtp-use-limit_checkbox"
-						/>
-						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-use-limit">
-							{{ loc('MAIL_CONFIG_FORM_SMTP_LIMIT_LABEL') }}
-						</label>
-					</div>
-					<transition name="mail-config-form__collapse">
-						<div v-if="state.smtp.useLimit" class="mail-config-form__collapse-field">
+					<template v-if="!credentialsReadOnly && state.smtp.enabled">
+						<div class="mail-config-form__checkbox-row">
+							<input
+								type="checkbox"
+								id="mail-config-smtp-use-limit"
+								class="mail-config-form__checkbox"
+								v-model="state.smtp.useLimit"
+								data-test-id="mail_config-form__smtp-use-limit_checkbox"
+							/>
+							<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-use-limit">
+								{{ loc('MAIL_CONFIG_FORM_SMTP_LIMIT_LABEL') }}
+							</label>
+						</div>
+						<transition name="mail-config-form__collapse">
+							<div v-if="state.smtp.useLimit" class="mail-config-form__collapse-field">
+								<BInput
+									type="number"
+									:size="InputSize.Md"
+									:design="InputDesign.DEFAULT"
+									v-model="limitModel"
+									:stretched="true"
+									:error="state.errors.smtpLimit"
+									data-test-id="mail_config-form__smtp-limit_field"
+								/>
+							</div>
+						</transition>
+						<div
+							class="mail-config-form__alert-container"
+							v-if="showServerFields"
+							data-test-id="mail_config-form__smtp-warning"
+						>
+							<span class="mail-config-form__alert-message">{{ loc('MAIL_CONFIG_FORM_SMTP_WARNING_ALERT') }}</span>
+						</div>
+						<div
+							class="mail-config-form__input-group"
+							v-if="showServerFields"
+							data-test-id="mail_config-form__smtp-server-group"
+						>
 							<BInput
+								class="mail-config-form__input-group_main"
+								:label="loc('MAIL_CONFIG_FORM_SMTP_SERVER_LABEL')"
+								:size="InputSize.Md"
+								:design="InputDesign.DEFAULT"
+								v-model="state.smtp.server"
+								data-test-id="mail_config-form__smtp-server_field"
+							/>
+							<BInput
+								class="mail-config-form__input-group_port"
+								:label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
+								:aria-label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
 								type="number"
 								:size="InputSize.Md"
 								:design="InputDesign.DEFAULT"
-								v-model="limitModel"
-								:stretched="true"
-								:error="state.errors.smtpLimit"
-								data-test-id="mail_config-form__smtp-limit_field"
+								v-model="smtpPortModel"
+								placeholder="587"
+								data-test-id="mail_config-form__smtp-port_field"
 							/>
 						</div>
-					</transition>
-					<div
-						class="mail-config-form__alert-container"
-						v-if="showServerFields"
-						data-test-id="mail_config-form__smtp-warning"
-					>
-						<span class="mail-config-form__alert-message">{{ loc('MAIL_CONFIG_FORM_SMTP_WARNING_ALERT') }}</span>
-					</div>
-					<div
-						class="mail-config-form__input-group"
-						v-if="showServerFields"
-						data-test-id="mail_config-form__smtp-server-group"
-					>
+						<div class="mail-config-form__checkbox-row" v-if="showServerFields">
+							<input
+								type="checkbox"
+								id="mail-config-smtp-ssl"
+								class="mail-config-form__checkbox"
+								v-model="state.smtp.ssl"
+								data-test-id="mail_config-form__smtp-ssl_checkbox"
+							/>
+							<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-ssl">
+								{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
+							</label>
+						</div>
 						<BInput
-							class="mail-config-form__input-group_main"
-							:label="loc('MAIL_CONFIG_FORM_SMTP_SERVER_LABEL')"
+							v-if="showLoginField"
+							:label="loc('MAIL_CONFIG_FORM_SMTP_LOGIN_LABEL')"
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
-							v-model="state.smtp.server"
-							:disabled="credentialsReadOnly"
-							data-test-id="mail_config-form__smtp-server_field"
+							:model-value="state.smtp.login"
+							data-test-id="mail_config-form__smtp-login_field"
+							@update:model-value="onSmtpLoginChange"
 						/>
 						<BInput
-							class="mail-config-form__input-group_port"
-							:label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
-							:aria-label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
-							type="number"
+							v-if="showPasswordField"
+							:label="loc('MAIL_CONFIG_FORM_SMTP_PASSWORD_LABEL')"
+							type="password"
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
-							v-model="smtpPortModel"
-							:disabled="credentialsReadOnly"
-							placeholder="587"
-							data-test-id="mail_config-form__smtp-port_field"
+							:model-value="state.smtp.password"
+							:placeholder="isEditMode ? passwordPlaceholder : ''"
+							data-test-id="mail_config-form__smtp-password_field"
+							@update:model-value="onSmtpPasswordChange"
+							:error="state.errors.smtpPassword"
 						/>
-					</div>
-					<div class="mail-config-form__checkbox-row" v-if="showServerFields">
-						<input
-							type="checkbox"
-							id="mail-config-smtp-ssl"
-							class="mail-config-form__checkbox"
-							v-model="state.smtp.ssl"
-							:disabled="credentialsReadOnly"
-							data-test-id="mail_config-form__smtp-ssl_checkbox"
-						/>
-						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-ssl">
-							{{ loc('MAIL_CONFIG_FORM_USE_SSL_LABEL') }}
-						</label>
-					</div>
-					<BInput
-						v-if="showLoginField"
-						:label="loc('MAIL_CONFIG_FORM_SMTP_LOGIN_LABEL')"
-						:size="InputSize.Md"
-						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-						:model-value="state.smtp.login"
-						:disabled="credentialsReadOnly"
-						data-test-id="mail_config-form__smtp-login_field"
-						@update:model-value="onSmtpLoginChange"
-					/>
-					<BInput
-						v-if="showPasswordField"
-						:label="loc('MAIL_CONFIG_FORM_SMTP_PASSWORD_LABEL')"
-						type="password"
-						:size="InputSize.Md"
-						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
-						:model-value="state.smtp.password"
-						:disabled="credentialsReadOnly"
-						:placeholder="isEditMode ? passwordPlaceholder : ''"
-						data-test-id="mail_config-form__smtp-password_field"
-						@update:model-value="onSmtpPasswordChange"
-						:error="state.errors.smtpPassword"
-					/>
-					<div class="mail-config-form__checkbox-row" v-if="!isOAuthService">
-						<input
-							type="checkbox"
-							id="mail-config-smtp-upload-outgoing"
-							class="mail-config-form__checkbox"
-							v-model="state.smtp.uploadOutgoing"
-							data-test-id="mail_config-form__smtp-upload-outgoing_checkbox"
-						/>
-						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-upload-outgoing">
-							{{ loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_LABEL') }}
-						</label>
-						<BIcon
-							class="mail-config-form__checkbox-hint-icon"
-							:name="outline.ALERT"
-							:size="16"
-							color="var(--ui-color-base-5)"
-							v-hint="loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_HINT')"
-						/>
-					</div>
+						<div class="mail-config-form__checkbox-row" v-if="!isOAuthService">
+							<input
+								type="checkbox"
+								id="mail-config-smtp-upload-outgoing"
+								class="mail-config-form__checkbox"
+								v-model="state.smtp.uploadOutgoing"
+								data-test-id="mail_config-form__smtp-upload-outgoing_checkbox"
+							/>
+							<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-upload-outgoing">
+								{{ loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_LABEL') }}
+							</label>
+							<BIcon
+								class="mail-config-form__checkbox-hint-icon"
+								:name="outline.ALERT"
+								:size="16"
+								color="var(--ui-color-base-5)"
+								v-hint="loc('MAIL_CONFIG_FORM_SMTP_UPLOAD_OUTGOING_HINT')"
+							/>
+						</div>
+					</template>
 				</div>
 			</transition>
 		</div>

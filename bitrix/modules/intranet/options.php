@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Intranet\Integration\Sharepoint\ServerAllowList;
+use Bitrix\Main\ArgumentException;
+
 if(!$USER->IsAdmin())
 	return;
 
@@ -22,6 +25,9 @@ $aTabs = array(
 	),
 	array(
 		"DIV" => "edit5", "TAB" => GetMessage("INTR_SETTINGS_MAIL"), "ICON" => "intranet_settings", "TITLE" => GetMessage("INTR_SETTINGS_MAIL_TITLE"),
+	),
+	array(
+		"DIV" => "edit6", "TAB" => GetMessage("INTR_SETTINGS_SHAREPOINT"), "ICON" => "intranet_settings", "TITLE" => GetMessage("INTR_SETTINGS_SHAREPOINT_TITLE"),
 	),
 );
 
@@ -70,16 +76,39 @@ foreach ($arSites as $SITE_ID => $SITE_NAME)
 $childTabControl = new CAdminViewTabControl("childTabControl", $aSubTabs);
 $childTabControl_1 = new \CAdminViewTabControl('childTabControl_1', $aSubTabs_1);
 $childTabControl_2 = new \CAdminViewTabControl('childTabControl_2', $aSubTabs_2);
+$sharepointAllowListError = null;
+$update = is_string($_REQUEST['Update'] ?? null) ? $_REQUEST['Update'] : '';
+$apply = is_string($_REQUEST['Apply'] ?? null) ? $_REQUEST['Apply'] : '';
+$restoreDefaults = is_string($_REQUEST['RestoreDefaults'] ?? null) ? $_REQUEST['RestoreDefaults'] : '';
+$moduleId = is_string($_REQUEST['mid'] ?? null) ? $_REQUEST['mid'] : '';
 
-if($_SERVER['REQUEST_METHOD']=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD']=="POST" && $update.$apply.$restoreDefaults <> '' && check_bitrix_sessid())
 {
-	if($RestoreDefaults <> '')
+	if($restoreDefaults <> '')
 	{
 		COption::RemoveOption("intranet");
 		COption::SetOptionString('intranet', 'options_restore', date('c'));
 	}
 	else
 	{
+		try
+		{
+			ServerAllowList::replace(
+				is_string($_POST['SHAREPOINT_SERVER_ALLOWLIST'] ?? null)
+					? $_POST['SHAREPOINT_SERVER_ALLOWLIST']
+					: ''
+			);
+		}
+		catch (ArgumentException $exception)
+		{
+			$sharepointAllowListError = GetMessage(
+				'INTR_OPTION_SHAREPOINT_ALLOWLIST_ERROR',
+				['#ERROR#' => $exception->getMessage()]
+			);
+		}
+
+		if ($sharepointAllowListError === null)
+		{
 		COption::SetOptionString("intranet", 'iblock_type', $_REQUEST['IBLOCK_TYPE'], GetMessage('INTR_OPTION_IBLOCK_TYPE'));
 		COption::SetOptionInt("intranet", 'iblock_structure', $_REQUEST['IBLOCK_STRUCTURE'], GetMessage('INTR_OPTION_IBLOCK_STRUCTURE'));
 		COption::SetOptionInt("intranet", 'iblock_honour', $_REQUEST['IBLOCK_HONOUR'], GetMessage('INTR_OPTION_IBLOCK_HONOUR'));
@@ -177,16 +206,33 @@ if($_SERVER['REQUEST_METHOD']=="POST" && $Update.$Apply.$RestoreDefaults <> '' &
 
 		COption::SetOptionString('intranet', 'allow_external_mail', $_REQUEST['allow_external_mail'] == 'Y' ? 'Y' : 'N');
 		COption::SetOptionInt('intranet', 'mail_check_period', intval($_REQUEST['mail_check_period']));
+		}
 	}
 
-	if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
+	if($sharepointAllowListError === null && $update <> '' && $_REQUEST["back_url_settings"] <> '')
 	{
 		LocalRedirect($_REQUEST["back_url_settings"]);
 	}
-	else
+	elseif ($sharepointAllowListError === null)
 	{
-		LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
+		LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($moduleId)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
 	}
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $restoreDefaults <> '')
+{
+	$sharepointServerAllowList = '';
+}
+elseif ($sharepointAllowListError === null)
+{
+	$sharepointServerAllowList = implode("\n", ServerAllowList::list());
+}
+else
+{
+	$sharepointServerAllowList = is_string($_POST['SHAREPOINT_SERVER_ALLOWLIST'] ?? null)
+		? $_POST['SHAREPOINT_SERVER_ALLOWLIST']
+		: ''
+	;
 }
 
 if (\Bitrix\Main\Loader::includeModule('iblock'))
@@ -316,7 +362,7 @@ function BXChangeSite(type, site)
 	document.getElementById(type + '_site_row_' + site).style.display = '';
 }
 </script>
-<form method="post" name="intr_opt_form" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=urlencode($mid)?>&amp;lang=<?echo LANGUAGE_ID?>">
+<form method="post" name="intr_opt_form" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=urlencode($moduleId)?>&amp;lang=<?echo LANGUAGE_ID?>">
 <? echo bitrix_sessid_post();?>
 <?
 $tabControl->BeginNextTab();
@@ -1000,6 +1046,19 @@ $childTabControl_1->End();
 				</table>
 			<? endforeach ?>
 			<? $childTabControl_2->end(); ?>
+		</td>
+	</tr>
+<?$tabControl->BeginNextTab();?>
+	<?if ($sharepointAllowListError !== null):?>
+	<tr>
+		<td colspan="2"><?ShowError($sharepointAllowListError);?></td>
+	</tr>
+	<?endif?>
+	<tr>
+		<td valign="top" width="45%"><?=GetMessage('INTR_OPTION_SHAREPOINT_ALLOWLIST')?>:</td>
+		<td>
+			<textarea name="SHAREPOINT_SERVER_ALLOWLIST" rows="12" cols="80"><?=htmlspecialcharsbx($sharepointServerAllowList)?></textarea>
+			<br><?=GetMessage('INTR_OPTION_SHAREPOINT_ALLOWLIST_HINT')?>
 		</td>
 	</tr>
 <?$tabControl->Buttons();?>

@@ -6,3 +6,4 @@ export * from './js/landing.pub.disk.file.js';
 export * from './js/landing.pub.analytics';
 export * from './js/landing.pub.pseudolinks';
 export * from './js/landing.pub.processing';
+export * from './js/landing.pub.alert';

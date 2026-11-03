@@ -58,4 +58,8 @@ $MESS["SALE_SLI_LOCATION_PACK_EXTENDED"] = "Extended";
 $MESS["SALE_SLI_EXCLUDE_AREAS"] = "Do not load regions";
 $MESS["SALE_SLI_LOAD_LOCATIONS_TILL_INCLUSIVELY"] = "Import locations to (incl.)";
 $MESS["SALE_SLI_HEAVY_DUTY_HOST_NOTICE"] = "Importing locations may briefly increase database and web server load. We recommend that you consult your hosting service helpdesk before importing large location sets.";
-?>
+$MESS['SALE_SLI_TABS_LABEL'] = 'Location actions';
+$MESS['SALE_SLI_EXPAND_LOCATION_SET'] = 'Show nested locations';
+$MESS['SALE_SLI_COLLAPSE_LOCATION_SET'] = 'Hide nested locations';
+$MESS['SALE_SLI_IMPORT_FILE_LABEL'] = 'Locations file';
+$MESS['SALE_SLI_IMPORT_PROGRESS'] = 'Importing';

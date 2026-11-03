@@ -2,9 +2,8 @@
  * @module mail/simple-list/items/message-redux/src/message-bindings
  */
 jn.define('mail/simple-list/items/message-redux/src/message-bindings', (require, exports, module) => {
-	const { Text } = require('ui-system/typography/text');
-	const AppTheme = require('apptheme');
-	const { Color } = require('tokens');
+	const { Text5 } = require('ui-system/typography/text');
+	const { Color, Indent } = require('tokens');
 	const { Loc } = require('loc');
 
 	const { ActionMenu } = require('mail/simple-list/items/message-redux/src/action-menu');
@@ -14,6 +13,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-bindings', (require,
 		{ key: 'chatBindId', type: 'chat', locKey: 'MAILMOBILE_GRID_MESSAGE_BINDING_CHAT_TITLE' },
 		{ key: 'taskBindId', type: 'task', locKey: 'MAILMOBILE_GRID_MESSAGE_BINDING_TASK_TITLE' },
 		{ key: 'eventBindId', type: 'event', locKey: 'MAILMOBILE_GRID_MESSAGE_BINDING_EVENT_TITLE' },
+		{ key: 'blogPostBindId', type: 'blog', locKey: 'MAILMOBILE_GRID_MESSAGE_BINDING_BLOG_POST_TITLE' },
 	];
 
 	function openBindingEntity(itemId, type)
@@ -34,6 +34,9 @@ jn.define('mail/simple-list/items/message-redux/src/message-bindings', (require,
 			case 'event':
 				actionMenu.openEventEntity();
 				break;
+			case 'blog':
+				actionMenu.openFeedPostEntity();
+				break;
 			default:
 				break;
 		}
@@ -47,21 +50,19 @@ jn.define('mail/simple-list/items/message-redux/src/message-bindings', (require,
 					borderWidth: 1,
 					borderColor: Color.accentSoftBorderBlue.toHex(),
 					borderRadius: 100,
-					paddingTop: 4,
-					paddingBottom: 4,
-					paddingLeft: 10,
-					paddingRight: 10,
-					marginRight: 6,
+					paddingTop: Indent.XS.toNumber(),
+					paddingBottom: Indent.XS.toNumber(),
+					paddingLeft: Indent.L.toNumber(),
+					paddingRight: Indent.L.toNumber(),
+					marginRight: Indent.S.toNumber(),
 				},
 				onClick,
 			},
-			Text({
+			Text5({
+				testId: 'mailmobile-message-list-item-binding-capsule',
+				color: Color.accentMainPrimary,
 				style: {
 					alignSelf: 'center',
-					fontSize: 13,
-					color: AppTheme.colors.accentMainPrimary,
-					height: 16,
-					fontWeight: '400',
 				},
 				text,
 			}),
@@ -75,6 +76,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-bindings', (require,
 	 * @param {number} props.chatBindId
 	 * @param {number} props.taskBindId
 	 * @param {number} props.eventBindId
+	 * @param {number} props.blogPostBindId
 	 */
 	function MessageBindings(props)
 	{
@@ -95,7 +97,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-bindings', (require,
 		return View(
 			{
 				style: {
-					marginTop: 6,
+					marginTop: Indent.S.toNumber(),
 					flexDirection: 'row',
 				},
 			},

@@ -1,5 +1,8 @@
 import { h } from 'ui.vue3';
+
+import { Model } from 'tasks.v2.const';
 import { AbsencePopupInstance } from './absence-popup-instance';
+import { announceAbsentParticipant } from './lib/absence-announcer';
 
 export { loadUsersAbsenceInfo } from './lib/load-users-absence-info';
 
@@ -33,6 +36,7 @@ export const AbsencePopup = {
 	mounted(): void
 	{
 		this.showPopup();
+		this.announceAbsence();
 	},
 	methods: {
 		showPopup(): void
@@ -41,6 +45,16 @@ export const AbsencePopup = {
 				this.shown = true;
 				this.$emit('open', this.userId);
 			}, this.delay);
+		},
+		announceAbsence(): void
+		{
+			const user = this.$store.getters[`${Model.Users}/getById`](this.userId);
+			if (!user?.name)
+			{
+				return;
+			}
+
+			announceAbsentParticipant(user.name);
 		},
 	},
 	render(): Object

@@ -310,13 +310,14 @@ class CUITooltipComponentAjaxController extends \Bitrix\Main\Engine\Controller
 						}
 						break;
 					case 'WORK_POSITION':
-						if (
-							$val <> ''
-							&& ModuleManager::isModuleInstalled('intranet')
-							&& !$this->isExtranetUser()
-						)
+						if ($val <> '')
 						{
-							$val = '';
+							$val = (
+								ModuleManager::isModuleInstalled('intranet')
+								&& !$this->isExtranetUser()
+									? ''
+									: htmlspecialcharsbx($val)
+							);
 						}
 						break;
 					case 'LAST_LOGIN':
@@ -724,7 +725,7 @@ class CUITooltipComponentAjaxController extends \Bitrix\Main\Engine\Controller
 
 			foreach($result as $key => $manager)
 			{
-				$result[$key]["NAME_FORMATTED"] = CUser::formatName($this->getNameTemplate(), $manager, true, false);
+				$result[$key]["NAME_FORMATTED"] = CUser::formatName($this->getNameTemplate(), $manager, true);
 				$result[$key]["URL"] = CComponentEngine::makePathFromTemplate($this->getUserUrlTemplate(), array(
 					"user_id" => $manager["ID"],
 					"USER_ID" => $manager["ID"],

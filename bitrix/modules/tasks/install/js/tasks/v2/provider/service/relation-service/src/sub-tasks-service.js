@@ -19,7 +19,15 @@ export class SubTasksService extends RelationService
 			return;
 		}
 
-		const parent = await this.#requestParent(parentId);
+		const parent = await taskService.withStageSnapshot(async (snapshot) => {
+			const data = await this.#requestParent(parentId);
+			if (data)
+			{
+				taskService.extractTask(data, true, snapshot);
+			}
+
+			return data;
+		});
 		if (!parent)
 		{
 			void taskService.updateStoreTask(taskId, { parentId: 0 });
@@ -32,7 +40,6 @@ export class SubTasksService extends RelationService
 			return;
 		}
 
-		taskService.extractTask(parent);
 		void this.$store.dispatch(`${Model.Tasks}/addPartiallyLoaded`, parentId);
 	}
 

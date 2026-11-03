@@ -6,7 +6,9 @@ import type {
 	AccessRightSection,
 	AccessRightSectionAction,
 	AccessRightSectionIcon,
+	Preset,
 	Variable,
+	VariablesSource,
 } from '../../access-rights-model';
 import type { Transformer } from '../transformer';
 
@@ -39,8 +41,12 @@ export type ExternalAccessRightItem = {
 	setEmptyOnSetMinMaxValueInColumn: ?any,
 
 	variables?: ExternalVariable[],
+	presets?: ExternalPreset[],
 
 	allSelectedCode: ?any,
+	allSelectedTitle: ?any,
+	variablesSource: ?any,
+	unloadedVariableTitlePattern: ?any,
 	selectedVariablesAliases: {[key: string]: string} & {separator?: string},
 	enableSearch?: any,
 	showAvatars?: any,
@@ -68,6 +74,15 @@ export type ExternalVariable = {
 	secondary: ?any,
 	hint: ?any,
 	isUseGroupHeadValuesInHint: ?any,
+}
+
+export type ExternalPreset = {
+	id: any,
+	title: any,
+	icon?: ?any,
+	description?: ?any,
+	showGroupHeadItems?: ?any,
+	variableIds?: any[],
 }
 
 export class AccessRightsInternalizer implements Transformer<ExternalAccessRightSection[], AccessRightsCollection>
@@ -160,8 +175,14 @@ export class AccessRightsInternalizer implements Transformer<ExternalAccessRight
 			nothingSelectedValue: this.#internalizeValueSet(externalItem.nothingSelectedValue),
 			setEmptyOnSetMinMaxValueInColumn: this.#internalizeSetEmptyOnSetMinMaxValueInColumn(externalItem),
 			variables: Type.isArray(externalItem.variables) || Type.isMap(externalItem.variables) ? new Map() : null,
+			presets: new Map(),
 
 			allSelectedCode: Type.isStringFilled(externalItem.allSelectedCode) ? externalItem.allSelectedCode : null,
+			allSelectedTitle: Type.isStringFilled(externalItem.allSelectedTitle) ? externalItem.allSelectedTitle : null,
+			variablesSource: this.#internalizeVariablesSource(externalItem.variablesSource),
+			unloadedVariableTitlePattern: Type.isStringFilled(externalItem.unloadedVariableTitlePattern)
+				? externalItem.unloadedVariableTitlePattern
+				: null,
 			selectedVariablesAliases: aliases,
 			selectedVariablesAliasesSeparator: separator,
 			enableSearch: Type.isBoolean(externalItem.enableSearch) ? externalItem.enableSearch : null,
@@ -199,6 +220,21 @@ export class AccessRightsInternalizer implements Transformer<ExternalAccessRight
 				const normalizedVariable = this.#internalizeExternalVariable(variable);
 
 				normalizedItem.variables.set(normalizedVariable.id, normalizedVariable);
+			}
+		}
+
+		const knownVariableIds: Set<string> = new Set(
+			normalizedItem.variables ? normalizedItem.variables.keys() : [],
+		);
+		const externalPresets = Type.isMap(externalItem.presets)
+			? [...externalItem.presets.values()]
+			: (Type.isArray(externalItem.presets) ? externalItem.presets : []);
+		for (const preset of externalPresets)
+		{
+			const normalizedPreset = this.#internalizePreset(preset, knownVariableIds);
+			if (normalizedPreset)
+			{
+				normalizedItem.presets.set(normalizedPreset.id, normalizedPreset);
 			}
 		}
 
@@ -261,6 +297,32 @@ export class AccessRightsInternalizer implements Transformer<ExternalAccessRight
 		return boolOrNull(externalItem.setEmptyOnGroupActions);
 	}
 
+	#internalizePreset(externalPreset: ?any, knownVariableIds: Set<string>): ?Preset
+	{
+		if (!Type.isPlainObject(externalPreset) || Type.isNil(externalPreset.id))
+		{
+			return null;
+		}
+
+		const variableIds = (Type.isArray(externalPreset.variableIds) ? externalPreset.variableIds : [])
+			.map((x) => String(x))
+			.filter((id) => knownVariableIds.has(id));
+
+		if (variableIds.length === 0)
+		{
+			return null;
+		}
+
+		return {
+			id: String(externalPreset.id),
+			title: Type.isStringFilled(externalPreset.title) ? String(externalPreset.title) : '',
+			icon: Type.isStringFilled(externalPreset.icon) ? externalPreset.icon : null,
+			description: Type.isStringFilled(externalPreset.description) ? externalPreset.description : null,
+			showGroupHeadItems: Type.isBoolean(externalPreset.showGroupHeadItems) ? externalPreset.showGroupHeadItems : false,
+			variableIds,
+		};
+	}
+
 	#internalizeExternalVariable(externalVariable: ExternalVariable): Variable
 	{
 		return {
@@ -282,6 +344,37 @@ export class AccessRightsInternalizer implements Transformer<ExternalAccessRight
 			secondary: Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null,
 			hint: Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null,
 			isUseGroupHeadValuesInHint: Type.isBoolean(externalVariable.isUseGroupHeadValuesInHint) ? externalVariable.isUseGroupHeadValuesInHint : false,
+		};
+	}
+
+	#internalizeVariablesSource(externalSource: ?any): ?VariablesSource
+	{
+		if (!Type.isPlainObject(externalSource) || !Type.isStringFilled(externalSource.entityId))
+		{
+			return null;
+		}
+
+		if (externalSource.dynamicLoad === false)
+		{
+			// nothing else fills such a dialog, so the host module gets an empty list instead of its source
+			console.warn(
+				'ui.accessrights.v2: variablesSource with dynamicLoad disabled leaves the dialog without items',
+				{ entityId: externalSource.entityId },
+			);
+		}
+
+		return {
+			entityId: externalSource.entityId,
+			dynamicLoad: Type.isBoolean(externalSource.dynamicLoad) ? externalSource.dynamicLoad : true,
+			dynamicSearch: Type.isBoolean(externalSource.dynamicSearch) ? externalSource.dynamicSearch : true,
+			dynamicSearchMatchMode: Type.isStringFilled(externalSource.dynamicSearchMatchMode)
+				? externalSource.dynamicSearchMatchMode
+				: null,
+			providerOptions: Type.isPlainObject(externalSource.providerOptions) ? externalSource.providerOptions : {},
+			fillRecentItems: Type.isBoolean(externalSource.fillRecentItems) ? externalSource.fillRecentItems : false,
+			itemEntityId: Type.isStringFilled(externalSource.itemEntityId)
+				? externalSource.itemEntityId
+				: externalSource.entityId,
 		};
 	}
 }

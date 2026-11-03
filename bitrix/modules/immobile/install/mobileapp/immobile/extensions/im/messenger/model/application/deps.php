@@ -9,5 +9,6 @@ return [
 	],
 	'bundle' => [
 		'./src/model',
+		'./src/normalizer',
 	],
 ];

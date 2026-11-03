@@ -37,7 +37,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-payment_i
 	},
 	// language=Vue
 	template: `
-		<button :class="classes" @click="onClick($event)">
+		<button :class="classes" data-testid="salescenter-payment-info-btn" :aria-busy="ariaBusy" @click="onClick($event)">
 			<slot></slot>
 		</button>
 	`,

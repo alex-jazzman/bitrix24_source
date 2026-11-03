@@ -2,7 +2,9 @@
  * @module crm/document/details/download-link
  */
 jn.define('crm/document/details/download-link', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
+
 	class CrmDocumentDownloadLink extends LayoutComponent
 	{
 		constructor(props)
@@ -35,11 +37,10 @@ jn.define('crm/document/details/download-link', (require, exports, module) => {
 					},
 					onClick: () => this.onClick(),
 				},
-				Text({
+				Text3({
 					text: this.state.text,
 					style: {
 						color: AppTheme.colors.base3,
-						fontSize: 16,
 					},
 				}),
 			);

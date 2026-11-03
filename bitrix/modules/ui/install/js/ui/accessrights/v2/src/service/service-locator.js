@@ -2,6 +2,7 @@ import { Cache } from 'main.core';
 import type { AccessRightItem } from '../store/model/access-rights-model';
 import type { AdditionalMembersParams } from '../store/model/application-model';
 import { DependentVariables } from './value/type/dependent-variables';
+import { SingleDependentVariables } from './value/type/single-dependent-variables';
 import { Multivariables } from './value/type/multivariables';
 import { Toggler } from './value/type/toggler';
 import type { ValueType } from './value/type/value-type';
@@ -50,6 +51,11 @@ export class ServiceLocator
 			if (stringType === 'dependent_variables')
 			{
 				return new DependentVariables();
+			}
+
+			if (stringType === 'single_dependent_variables')
+			{
+				return new SingleDependentVariables();
 			}
 
 			if (stringType === 'multivariables')

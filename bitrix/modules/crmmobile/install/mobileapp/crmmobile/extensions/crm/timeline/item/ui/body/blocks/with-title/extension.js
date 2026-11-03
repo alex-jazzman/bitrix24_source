@@ -4,6 +4,7 @@
 jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
+	const { Typography } = require('tokens');
 
 	/**
 	 * @class TimelineItemBodyWithTitleBlock
@@ -13,7 +14,7 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 		constructor(props, factory)
 		{
 			super(props, factory);
-			this.fontSize = 13;
+			this.fontSize = Typography.text5.getValue().fontSize;
 		}
 
 		render()

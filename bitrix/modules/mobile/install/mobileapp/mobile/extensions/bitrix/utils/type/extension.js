@@ -56,6 +56,33 @@ jn.define('utils/type', (require, exports, module) => {
 		return value === true || value === false;
 	}
 
+	/**
+	 * A scalar carries a value: neither nil nor an empty string. Zero and `false` are values.
+	 *
+	 * @param {any} value
+	 * @return {boolean}
+	 */
+	function isFilledScalar(value)
+	{
+		if (isNil(value))
+		{
+			return false;
+		}
+
+		return typeof value !== 'string' || value !== '';
+	}
+
+	/**
+	 * A boolean flag as the backend spells it: `Y`, `1` and `true` all mean yes.
+	 *
+	 * @param {any} value
+	 * @return {boolean}
+	 */
+	function isTruthyFlag(value)
+	{
+		return value === true || value === 1 || value === '1' || value === 'Y';
+	}
+
 	module.exports = {
 		isNil,
 		isRegExp,
@@ -63,5 +90,7 @@ jn.define('utils/type', (require, exports, module) => {
 		isBoolean,
 		isValidDateObject,
 		isNotEmptyString,
+		isFilledScalar,
+		isTruthyFlag,
 	};
 });

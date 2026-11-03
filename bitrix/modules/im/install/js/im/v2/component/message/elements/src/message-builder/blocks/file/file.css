@@ -1,0 +1,41 @@
+/*
+	The design gives the file row a fixed 280px and does not stretch the block with the bubble, so
+	the download icon stays next to the name. Here it is a max-width, not a width: a sibling block
+	may widen the bubble past 280px, and a narrow chat panel may leave less than that (the tile
+	keeps its own min-width then, exactly as in a plain file message).
+*/
+.bx-im-message-block-file__container {
+	display: flex;
+	flex-direction: column;
+	max-width: 280px;
+	padding: 2px 0;
+	gap: 12px;
+}
+
+.bx-im-message-block-file__divider {
+	height: 1px;
+	background: var(--ui-color-divider-accent);
+}
+
+.bx-im-message-block-file__download-all {
+	align-self: flex-start;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--ui-color-base-3);
+	font-family: var(--im-font-family-system);
+	font-size: var(--im-font-size-md);
+	font-weight: var(--im-font-weight-normal);
+	line-height: var(--im-font-line-height-2xs);
+	transition: color 200ms ease;
+}
+
+.bx-im-message-block-file__download-all:hover {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-message-block-file__download-all:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}

@@ -19,3 +19,5 @@ $MESS['TASKS_TASK_TAG_ACCESS_DENIED'] = 'Недостаточно прав';
 $MESS['TASKS_TASK_TAG_UNKNOWN_ERROR'] = 'Не удалось добавить тег, попробуйте ещё раз';
 $MESS['TASKS_TASK_FLOW_DEADLINE_LABEL'] = 'Устанавливается автоматически';
 $MESS['TASKS_TASK_FLOW_SECRET_PROJECT_LABEL'] = 'Скрытый проект';
+$MESS['TASKS_TT_STAGE_MOVE_FAILED'] = 'Не удалось переместить задачу на финальную стадию';
+$MESS['TASKS_TT_STAGE_ROLLBACK_FAILED'] = 'Не удалось вернуть задачу на предыдущую стадию';

@@ -5,115 +5,105 @@ jn.define('more-menu/block/company/whats-new', (require, exports, module) => {
 	const { inAppUrl } = require('in-app-url');
 	const { Loc } = require('loc');
 	const { PureComponent } = require('layout/pure-component');
+	const { ShimmerView } = require('layout/polyfill');
 	const { connect } = require('statemanager/redux/connect');
-	const { selectNewCount } = require('statemanager/redux/slices/whats-new');
-	const { Indent, Color } = require('tokens');
+	const store = require('statemanager/redux/store');
+	const {
+		fetchWhatsNewThunk,
+		fetchUrlParamsThunk,
+		selectAll,
+		selectCategories,
+		selectIsFailedStatus,
+		selectIsIdleStatus,
+		selectIsLoadingStatus,
+		selectIsSuccessStatus,
+		selectNewCount,
+		selectUrlParams,
+		statusReset,
+		updateLocalWhatsNewsParamsThunk,
+		updateReadNewsThunk,
+	} = require('statemanager/redux/slices/whats-new');
+	const carouselModel = require('more-menu/block/company/whats-new/src/carousel-model');
+	const { createWhatsNewButton } = require('more-menu/block/company/whats-new/src/whats-new-button');
+	const { Indent, Color, Corner } = require('tokens');
 	const { MoreMenuAnalytics } = require('more-menu/analytics');
+	const { getCardBorderColor } = require('more-menu/block/company/card-border');
+	const { WhatsNewAnalytics } = require('layout/ui/whats-new/analytics');
 	const { PropTypes } = require('utils/validation');
-	const { Card, CardCorner } = require('ui-system/layout/card');
+	const { Card, CardCorner, CardDesign } = require('ui-system/layout/card');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Text3 } = require('ui-system/typography/text');
+	const { Text2, Text3 } = require('ui-system/typography/text');
 	const { BadgeCounter, BadgeCounterSize, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
-
-	/**
-	 * @class WhatsNewButton
-	 */
-	class WhatsNewButton extends PureComponent
-	{
-		componentDidUpdate(prevProps)
-		{
-			if (prevProps.counter !== this.props.counter && this.props.onCounterChange)
-			{
-				this.props.onCounterChange(this.props.counter);
-			}
-		}
-
-		render()
-		{
-			const {
-				testId,
-				counter,
-			} = this.props;
-
-			return View(
-				{
-					testId: `${testId}-wrapper`,
-					style: {
-						paddingRight: Indent.XS.toNumber(),
-						marginRight: Indent.XS.toNumber(),
-						flexGrow: 2,
-					},
-				},
-				Card(
-					{
-						testId,
-						onClick: this.openWhatsNew,
-						corner: CardCorner.XL,
-						style: {
-							backgroundColor: Color.bgContentSecondaryInvert.toHex(),
-						},
-					},
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-							},
-						},
-						IconView({
-							testId: `${testId}-icon`,
-							size: 26,
-							icon: Icon.FAVORITE,
-							color: Color.accentMainPrimary,
-							style: {
-								marginRight: Indent.XS.toNumber(),
-							},
-						}),
-						Text3({
-							testId: `${testId}-text`,
-							color: Color.base1,
-							text: Loc.getMessage('MORE_MENU_COMPANY_WHATS_NEW'),
-						}),
-					),
-				),
-				counter && BadgeCounter({
-					testId: `${testId}-counter`,
-					value: counter,
-					size: BadgeCounterSize.M,
-					showRawValue: true,
-					design: BadgeCounterDesign.ALERT,
-					style: {
-						position: 'absolute',
-						top: 0,
-						right: 0,
-					},
-				}),
-			);
-		}
-
-		openWhatsNew = () => {
-			inAppUrl.open('/whats-new/', {
-				title: Loc.getMessage('MORE_MENU_COMPANY_WHATS_NEW'),
-			});
-
-			MoreMenuAnalytics.sendDrawerOpenEvent();
-		};
-	}
-
-	WhatsNewButton.propTypes = {
-		testId: PropTypes.string,
-		counter: PropTypes.number,
-		onCounterChange: PropTypes.func,
+	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
+	const { SwipeSlider, SliderNavigationMode } = require('ui-system/layout/swipe-slider');
+	const { SafeImage } = require('layout/ui/safe-image');
+	const sendHelpdeskAnalytics = (articleId) => {
+		new WhatsNewAnalytics()
+			.setEvent(WhatsNewAnalytics.Event.openHelpdesk)
+			.setP4(WhatsNewAnalytics.getWhatsNewItemId(articleId))
+			.send();
 	};
+
+	const BaseWhatsNewButton = createWhatsNewButton({
+		PureComponent,
+		View,
+		helpdesk,
+		inAppUrl,
+		Loc,
+		ShimmerView,
+		carouselModel,
+		Indent,
+		Color,
+		Corner,
+		MoreMenuAnalytics,
+		getCardBorderColor,
+		sendHelpdeskAnalytics,
+		PropTypes,
+		Card,
+		CardCorner,
+		CardDesign,
+		IconView,
+		Icon,
+		Text2,
+		Text3,
+		BadgeCounter,
+		BadgeCounterSize,
+		BadgeCounterDesign,
+		ChipStatus,
+		ChipStatusDesign,
+		ChipStatusMode,
+		SwipeSlider,
+		SliderNavigationMode,
+		SafeImage,
+	});
 
 	const mapStateToProps = (state) => {
-		const counter = selectNewCount(state);
-
 		return {
-			counter,
+			articles: selectAll(state),
+			categories: selectCategories(state),
+			counter: selectNewCount(state),
+			isFailed: selectIsFailedStatus(state),
+			isIdle: selectIsIdleStatus(state),
+			isLoading: selectIsLoadingStatus(state),
+			isSucceeded: selectIsSuccessStatus(state),
+			urlParams: selectUrlParams(state),
 		};
 	};
 
+	const dispatchProps = {
+		fetchWhatsNewThunk: (...args) => store.dispatch(fetchWhatsNewThunk(...args)),
+		fetchUrlParamsThunk: (...args) => store.dispatch(fetchUrlParamsThunk(...args)),
+		statusReset: (...args) => store.dispatch(statusReset(...args)),
+		updateLocalWhatsNewsParamsThunk: (...args) => store.dispatch(updateLocalWhatsNewsParamsThunk(...args)),
+		updateReadNewsThunk: (...args) => store.dispatch(updateReadNewsThunk(...args)),
+	};
+	const mapDispatchToProps = () => dispatchProps;
+
 	module.exports = {
-		WhatsNewButton: connect(mapStateToProps)(WhatsNewButton),
+		/**
+		 * The articles of the card live in a slice of the whole app, so the card fills itself in wherever
+		 * it is mounted: the answer of the section carries no news.
+		 */
+		WhatsNewButton: connect(mapStateToProps, mapDispatchToProps)(BaseWhatsNewButton),
 	};
 });

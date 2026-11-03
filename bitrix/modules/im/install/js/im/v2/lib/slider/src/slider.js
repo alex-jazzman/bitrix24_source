@@ -7,6 +7,7 @@ import { EventType, Layout, PromoId } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Launch } from 'im.v2.application.launch';
 import { DesktopManager } from 'im.v2.lib.desktop';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { CallManager } from 'im.v2.lib.call';
 import { showCloseWithActiveCallConfirm } from 'im.v2.lib.confirm';
@@ -219,9 +220,7 @@ export class MessengerSlider
 
 		EventEmitter.emit(EventType.slider.onClose);
 
-		void LayoutManager.getInstance().setLayout({
-			name: Layout.chat,
-		});
+		void LayoutManager.getInstance().setLayout(FolderManager.getDefaultLayout() ?? { name: Layout.chat });
 	}
 
 	onCloseByEsc({ data: event })

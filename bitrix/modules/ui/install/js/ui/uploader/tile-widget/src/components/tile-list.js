@@ -54,6 +54,15 @@ export const TileList: BitrixVueComponentProps = {
 			type: Boolean,
 			default: false,
 		},
+		/**
+		 * The name of the list. Undefined keeps the default one; null drops the name altogether -
+		 * a list rendered inside an already named dialog would otherwise be announced right after
+		 * the name of that dialog, twice about the same thing.
+		 */
+		ariaLabel: {
+			type: String,
+			default: undefined,
+		},
 	},
 	data: (): Object => ({
 		pageSize: 5,
@@ -162,9 +171,9 @@ export const TileList: BitrixVueComponentProps = {
 		{
 			return Text.getRandom(16);
 		},
-		listLabel(): string
+		listLabel(): ?string
 		{
-			return Loc.getMessage('TILE_UPLOADER_FILE_LIST_LABEL');
+			return this.ariaLabel === undefined ? Loc.getMessage('TILE_UPLOADER_FILE_LIST_LABEL') : this.ariaLabel;
 		},
 	},
 	methods: {

@@ -14,17 +14,25 @@ readonly class SaveWorkflowValidator
 	private AgentFrameMembershipValidator $frameMembershipValidator;
 	private GraphLimitsValidator $limitsValidator;
 
+	/**
+	 * Origin of the write, read from the context; the frame membership overlay is the one REST-only branch it
+	 * drives. Fail-closed like {@see ValidationContext::__construct()}: no context at all means the least, not
+	 * the most, permissive source.
+	 */
+	private RequestSource $source;
+
 	public function __construct(
 		public array $input,
 		public DocumentDescription $documentType,
 		?AgentConnectionsValidator $connectionsValidator =  null,
 		?AgentBlocksValidator $blocksValidator = null,
-		public RequestSource $source = RequestSource::Rest,
+		public ?ValidationContext $context = null,
 		?AgentFrameMembershipValidator $frameMembershipValidator = null,
 		?GraphLimitsValidator $limitsValidator = null,
 	) {
+		$this->source = $context?->source ?? RequestSource::Marta;
 		$this->connectionsValidator = $connectionsValidator ?? new AgentConnectionsValidator();
-		$this->blocksValidator = $blocksValidator ?? new AgentBlocksValidator(source: $this->source);
+		$this->blocksValidator = $blocksValidator ?? new AgentBlocksValidator(context: $context);
 		$this->frameMembershipValidator = $frameMembershipValidator ?? new AgentFrameMembershipValidator();
 		$this->limitsValidator = $limitsValidator ?? new GraphLimitsValidator();
 	}
@@ -78,6 +86,7 @@ readonly class SaveWorkflowValidator
 			return new AgentWorkflowValidationResult(
 				connections: $this->connectionsValidator->getValidConnections(),
 				blocks: $this->blocksValidator->getValidBlocks(),
+				setupConstantDeclarations: $this->blocksValidator->getSetupConstantDeclarations(),
 			);
 		}
 

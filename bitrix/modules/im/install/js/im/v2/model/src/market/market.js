@@ -23,6 +23,8 @@ export class MarketModel extends BuilderModel
 				[PlacementType.sidebar]: new Set(),
 				[PlacementType.smilesSelector]: new Set()
 			},
+			openedPlacements: {},
+			livePlacements: [],
 		};
 	}
 
@@ -65,6 +67,14 @@ export class MarketModel extends BuilderModel
 			{
 				return state.collection.get(id);
 			},
+			getOpenedAppId: (state) => (dialogId: string): ?string =>
+			{
+				return state.openedPlacements[dialogId] ?? null;
+			},
+			getLivePlacements: (state): {dialogId: string, appId: string}[] =>
+			{
+				return state.livePlacements;
+			},
 		};
 	}
 
@@ -80,6 +90,23 @@ export class MarketModel extends BuilderModel
 					store.commit('setCollection', item);
 				});
 			},
+			setOpenedPlacement: (store, payload: {dialogId: string, appId: string}) =>
+			{
+				store.commit('setOpenedPlacement', payload);
+			},
+			clearOpenedPlacement: (store, payload: {dialogId: string, appId: string}) =>
+			{
+				if (store.state.openedPlacements[payload.dialogId] !== payload.appId)
+				{
+					return;
+				}
+
+				store.commit('clearOpenedPlacement', payload);
+			},
+			setLivePlacements: (store, payload: {placements: {dialogId: string, appId: string}[]}) =>
+			{
+				store.commit('setLivePlacements', payload);
+			},
 		};
 	}
 
@@ -93,6 +120,18 @@ export class MarketModel extends BuilderModel
 			setCollection: (state, payload: MarketApplication) =>
 			{
 				state.collection.set(payload.id, {...this.getElementState(), ...this.#validate(payload)});
+			},
+			setOpenedPlacement: (state, payload: {dialogId: string, appId: string}) =>
+			{
+				state.openedPlacements[payload.dialogId] = payload.appId;
+			},
+			clearOpenedPlacement: (state, payload: {dialogId: string, appId: string}) =>
+			{
+				delete state.openedPlacements[payload.dialogId];
+			},
+			setLivePlacements: (state, payload: {placements: {dialogId: string, appId: string}[]}) =>
+			{
+				state.livePlacements = payload.placements;
 			},
 		};
 	}

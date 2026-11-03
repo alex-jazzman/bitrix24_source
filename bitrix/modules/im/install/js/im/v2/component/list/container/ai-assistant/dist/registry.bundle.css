@@ -98,6 +98,11 @@
 	pointer-events: none;
 }
 
+.bx-im-ai-assistant-create-chat-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
 .bx-im-ai-assistant-create-chat-button:hover::after {
 	opacity: 1;
 }

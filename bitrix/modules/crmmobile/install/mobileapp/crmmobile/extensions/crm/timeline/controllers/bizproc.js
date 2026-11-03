@@ -4,6 +4,7 @@
 jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { inAppUrl } = require('in-app-url');
+	const { requireLazy } = require('require-lazy');
 	const { Type } = require('type');
 	const { NotifyManager } = require('notify-manager');
 	const { Loc } = require('loc');
@@ -37,7 +38,7 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 					this.#openTimeline(actionParams);
 					break;
 				case SUPPORTED_ACTIONS.WORKFLOW_OPEN:
-					this.#openWorkflow(actionParams);
+					void this.#openWorkflow(actionParams);
 					break;
 				case SUPPORTED_ACTIONS.WORKFLOW_TERMINATE:
 					this.#terminateWorkflow(actionParams);
@@ -61,9 +62,7 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 				.then((result) => {
 					if (result?.WorkflowInfo)
 					{
-						result.WorkflowInfo.open({ taskId, targetUserId: userId > 0 ? userId : null });
-
-						return;
+						return result.WorkflowInfo.open({ taskId, targetUserId: userId > 0 ? userId : null });
 					}
 
 					let url = `/company/personal/bizproc/${taskId}/`;
@@ -72,7 +71,7 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 						url += `?USER_ID=${userId}`;
 					}
 
-					inAppUrl.open(url);
+					return inAppUrl.open(url);
 				})
 				.catch((error) => {
 					console.error(error);
@@ -134,7 +133,7 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 			;
 		}
 
-		#openWorkflow(data)
+		async #openWorkflow(data)
 		{
 			const workflowId = this.#getWorkflowId(data);
 			if (!Type.isStringFilled(workflowId))
@@ -142,25 +141,24 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 				return;
 			}
 
-			void requireLazy('bizproc:workflow/info')
-				.then((result) => {
-					if (result?.WorkflowInfo)
-					{
-						result.WorkflowInfo.open({ workflowId });
+			try
+			{
+				const { WorkflowInfo } = await requireLazy('bizproc:workflow/info') ?? {};
+				if (WorkflowInfo)
+				{
+					await WorkflowInfo.open({ workflowId });
 
-						return;
-					}
+					return;
+				}
 
-					const { WorkflowDetails } = requireLazy('bizproc:workflow/details');
-					if (WorkflowDetails)
-					{
-						WorkflowDetails.open({ workflowId });
-					}
-				})
-				.catch((error) => {
-					console.error(error);
-				})
-			;
+				// requireLazy resolves with the extension, so the details were awaited, not destructured
+				const { WorkflowDetails } = await requireLazy('bizproc:workflow/details') ?? {};
+				WorkflowDetails?.open({ workflowId });
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
 		}
 
 		#terminateWorkflow(data)

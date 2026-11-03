@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
 this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
-(function (exports, main_core, main_core_events, ui_a11y, ui_dialogs_messagebox, ui_infoHelper, bizproc_setupTemplate, ui_notification, ui_system_typography, main_popup, main_sidepanel, ui_entitySelector, im_public, humanresources_companyStructure_public, ui_avatar, main_date, ui_buttons) {
+(function (exports, main_core, main_core_events, ui_a11y, ui_notification, ui_infoHelper, ui_buttons, ui_entitySelector, ui_system_typography, ui_dialogs_messagebox, bizproc_setupTemplate, main_popup, main_sidepanel, im_public, humanresources_companyStructure_public, ui_avatar, main_date, ui_system_label) {
 	'use strict';
 
 	const AJAX_REQUEST_TYPE = {
@@ -14,7 +14,8 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 		GROUP_DELETE: 'group-delete',
 		EDIT: 'edit',
 		RESTART: 'restart',
-		UPGRADE: 'upgrade'
+		UPGRADE: 'upgrade',
+		CHANGE_OWNER: 'change-owner'
 	};
 	const UPGRADE_STATUS = {
 		UPDATED: 'updated',
@@ -37,11 +38,16 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 		DELETE: 'Integration.AiAgent.Template.delete',
 		RESTART: 'Integration.AiAgent.Template.start',
 		UPGRADE: 'Integration.AiAgent.Template.upgrade',
-		CHECK_EXISTING_RUNS: 'Integration.AiAgent.Template.checkExistingRuns'
+		CHECK_EXISTING_RUNS: 'Integration.AiAgent.Template.checkExistingRuns',
+		CHANGE_OWNER: 'Integration.AiAgent.Template.changeOwner'
 	};
 	const EXISTING_RUNS_WARNING_OUTCOME = {
 		VIEW_LAUNCHED: 'view-launched',
 		LAUNCH_NEW: 'launch-new',
+		CANCELLED: 'cancelled'
+	};
+	const CHANGE_OWNER_DIALOG_OUTCOME = {
+		CONFIRMED: 'confirmed',
 		CANCELLED: 'cancelled'
 	};
 
@@ -137,6 +143,422 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 		}
 		getHandlerByMessage(errorMessage) {
 			return new Base();
+		}
+	}
+
+	const EXISTING_RUNS_CHECK_TIMEOUT = 8000;
+	const NO_WARNING_DECISION = Object.freeze({
+		showWarning: false,
+		systemCode: null
+	});
+
+	/**
+	 * onRefusal only observes: reporting the refusal to the user stays with the shared error handler, and
+	 * the answer is null for every refusal either way. It exists for a caller that has something to do
+	 * about a particular code beyond the balloon.
+	 */
+	const post = async (action, data, onRefusal = null) => {
+		try {
+			const response = await main_core.ajax.runAction(`bizproc.v2.${action}`, {
+				method: 'POST',
+				json: data || {}
+			});
+			return response.data;
+		} catch (error) {
+			const ajaxErrorHandler = new AjaxErrorHandler();
+			ajaxErrorHandler.handle(action, error);
+			onRefusal?.(error);
+		}
+		return null;
+	};
+	const isTemplateStaleRefusal = error => {
+		return (error?.errors ?? []).some(item => item?.code === ErrorCode.TEMPLATE_STALE);
+	};
+	const withTimeout = async (request, timeout) => {
+		let timeoutId = null;
+		try {
+			return await Promise.race([request, new Promise((resolve, reject) => {
+				timeoutId = setTimeout(() => reject(new Error('timeout')), timeout);
+			})]);
+		} finally {
+			clearTimeout(timeoutId);
+		}
+	};
+
+	/**
+	 * The only place where the raw pre-flight answer becomes a decision: "show" requires
+	 * showWarning === true together with a non-empty systemCode, anything else means "do not show".
+	 */
+	const toExistingRunsDecision = response => {
+		const data = response?.data;
+		if (data?.showWarning !== true || !main_core.Type.isStringFilled(data?.systemCode)) {
+			return {
+				...NO_WARNING_DECISION
+			};
+		}
+		return {
+			showWarning: true,
+			systemCode: data.systemCode
+		};
+	};
+	const gridApi = {
+		startTemplate: templateId => {
+			return post(GRID_API_ACTION.START_TEMPLATE, {
+				templateId
+			});
+		},
+		copyAndStartTemplate: templateId => {
+			return post(GRID_API_ACTION.COPY_AND_START_TEMPLATE, {
+				templateId
+			});
+		},
+		fetchRow: templateId => {
+			return post(GRID_API_ACTION.FETCH_ROW, {
+				templateId
+			});
+		},
+		/**
+		 * Hands a launched copy over to another employee. expectedOwnerId is the owner the grid was
+		 * rendered with: the server refuses the write as templateStale instead of transferring the copy
+		 * on top of an ownership that changed meanwhile, so it is passed as seen and never recomputed here.
+		 *
+		 * onStaleData tells that one refusal apart from the rest for the caller: the answer is null for
+		 * every refusal, but only this one means the list on screen no longer matches the server.
+		 */
+		changeOwner: (templateId, expectedOwnerId, newOwnerId, onStaleData = null) => {
+			return post(GRID_API_ACTION.CHANGE_OWNER, {
+				templateId,
+				expectedOwnerId,
+				newOwnerId
+			}, error => {
+				if (isTemplateStaleRefusal(error)) {
+					onStaleData?.();
+				}
+			});
+		},
+		/**
+		 * Pre-flight check before launching a system template (API-01). Deliberately bypasses post():
+		 * a failed auxiliary check must not notify the user and must not block the launch, so every
+		 * failure - network, contract or timeout - degrades to "do not show the warning".
+		 *
+		 * A positive answer spends the personal right to see the warning on the server, so the method
+		 * must not be replayed "just in case".
+		 */
+		checkExistingRuns: async templateId => {
+			try {
+				const response = await withTimeout(main_core.ajax.runAction(`bizproc.v2.${GRID_API_ACTION.CHECK_EXISTING_RUNS}`, {
+					method: 'POST',
+					json: {
+						templateId
+					}
+				}), EXISTING_RUNS_CHECK_TIMEOUT);
+				return toExistingRunsDecision(response);
+			} catch {
+				return {
+					...NO_WARNING_DECISION
+				};
+			}
+		}
+	};
+
+	const DIALOG_EXTENSION$1 = 'ui.system.dialog';
+	const DIALOG_WIDTH$1 = 480;
+	const DIALOG_CONTAINER_SELECTOR$1 = '.ui-system-dialog';
+	const DIALOG_CLOSE_BUTTON_SELECTOR$1 = '.ui-system-dialog__header-close-btn';
+	const SELECTOR_ENTITY_USER = 'user';
+	const SELECTOR_CONTEXT = 'BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER';
+	const SELECTOR_WIDTH = 440;
+	const SELECTOR_HEIGHT = 250;
+	const TEST_ID$2 = {
+		DIALOG: 'bizproc-ai-agents-grid-change-owner-dialog',
+		CONTENT: 'bizproc-ai-agents-grid-change-owner',
+		CLOSE: 'bizproc-ai-agents-grid-change-owner-close',
+		WARNING: 'bizproc-ai-agents-grid-change-owner-warning',
+		SELECTOR: 'bizproc-ai-agents-grid-change-owner-selector',
+		ERROR: 'bizproc-ai-agents-grid-change-owner-error',
+		CONFIRM: 'bizproc-ai-agents-grid-change-owner-confirm',
+		CANCEL: 'bizproc-ai-agents-grid-change-owner-cancel'
+	};
+
+	// Same budget as the existing runs warning: above the loader's own three retries (1 + 3 + 5 s
+	// backoff), so a slow but succeeding load is not cut short, and still bounded - a load that never
+	// settles would otherwise hold the caller's action forever.
+	const DIALOG_LOAD_TIMEOUT$1 = 20000;
+
+	// ui.system.dialog is loaded on demand: the transfer is a rare action, so its classes are
+	// described locally instead of being imported (a static import would put the extension back into
+	// the grid dependencies).
+
+	const CANCELLED_RESULT = Object.freeze({
+		outcome: CHANGE_OWNER_DIALOG_OUTCOME.CANCELLED,
+		userId: null
+	});
+
+	/**
+	 * No promise cache around the loader: it deduplicates parallel loads by itself, while a cached
+	 * rejection would keep the transfer unavailable until a page reload.
+	 *
+	 * The wait is bounded because the loader can leave its promise unsettled forever (a failed assets
+	 * batch rejects outside the promise chain). Only the load is bounded: the shown dialog waits for
+	 * the user for as long as it takes.
+	 */
+	const loadDialogClass$1 = async () => {
+		const {
+			Dialog
+		} = await withTimeout(main_core.Runtime.loadExtension(DIALOG_EXTENSION$1), DIALOG_LOAD_TIMEOUT$1);
+		if (!main_core.Type.isFunction(Dialog)) {
+			throw new Error(`${DIALOG_EXTENSION$1} is loaded but exports no Dialog`);
+		}
+		return Dialog;
+	};
+	const renderWarning = () => {
+		const warning = ui_system_typography.Text.render(main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_WARNING'), {
+			size: 'md',
+			tag: 'div'
+		});
+		main_core.Dom.attr(warning, 'data-test-id', TEST_ID$2.WARNING);
+		return warning;
+	};
+
+	/**
+	 * The validation message lives in a live region that is present from the start and empty until the
+	 * confirmation is attempted without a recipient - a region inserted together with its text is not
+	 * announced by screen readers.
+	 */
+	const renderError = () => {
+		const error = ui_system_typography.Text.render('', {
+			size: 'sm',
+			tag: 'div',
+			className: 'bizproc-ai-agents__change-owner-error'
+		});
+		main_core.Dom.attr(error, 'data-test-id', TEST_ID$2.ERROR);
+		main_core.Dom.attr(error, 'role', 'alert');
+		return error;
+	};
+	const createUserSelector = onSelect => {
+		return new ui_entitySelector.TagSelector({
+			multiple: false,
+			showCreateButton: false,
+			placeholder: main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_SELECTOR_PLACEHOLDER'),
+			addButtonCaption: main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_SELECTOR_ADD_BUTTON'),
+			dialogOptions: {
+				context: SELECTOR_CONTEXT,
+				multiple: false,
+				showAvatars: true,
+				dropdownMode: true,
+				compactView: true,
+				width: SELECTOR_WIDTH,
+				height: SELECTOR_HEIGHT,
+				entities: [{
+					id: SELECTOR_ENTITY_USER,
+					options: {
+						inviteEmployeeLink: false
+					}
+				}]
+			},
+			events: {
+				onAfterTagAdd: onSelect
+			}
+		});
+	};
+
+	/**
+	 * Departments are not offered by the selector, so a tag of another entity can only appear if the
+	 * selector configuration changes - such a tag is not a recipient and is ignored here.
+	 */
+	const getSelectedUserId = tagSelector => {
+		const [tag] = tagSelector.getTags();
+		if (!tag || tag.getEntityId() !== SELECTOR_ENTITY_USER) {
+			return null;
+		}
+		const userId = Number.parseInt(tag.getId(), 10);
+		return userId > 0 ? userId : null;
+	};
+	const createButton$1 = (phraseCode, style, testId, onclick) => {
+		const button = new ui_buttons.Button({
+			text: main_core.Loc.getMessage(phraseCode),
+			size: ui_buttons.ButtonSize.LARGE,
+			style,
+			useAirDesign: true,
+			onclick
+		});
+		main_core.Dom.attr(button.getContainer(), 'data-test-id', testId);
+		return button;
+	};
+
+	/**
+	 * ui.system.dialog renders its cross as an icon-only button without an accessible name, and the
+	 * title makes that cross the first stop of the dialog's Tab order - so it is named here, with the
+	 * shared close phrase of ui.buttons. An existing name is left alone: naming the cross belongs to
+	 * the component, and once it does so its own label must win.
+	 *
+	 * The cross comes from the component too, so its test marker is set from here as well.
+	 */
+	const prepareCloseButton$1 = container => {
+		const closeButton = container.querySelector(DIALOG_CLOSE_BUTTON_SELECTOR$1);
+		if (!closeButton) {
+			return;
+		}
+		main_core.Dom.attr(closeButton, 'data-test-id', TEST_ID$2.CLOSE);
+		if (main_core.Type.isStringFilled(main_core.Dom.attr(closeButton, 'aria-label'))) {
+			return;
+		}
+		main_core.Dom.attr(closeButton, 'aria-label', main_core.Loc.getMessage('UI_BUTTONS_CLOSE_BTN_TEXT'));
+	};
+
+	/**
+	 * ui.system.dialog builds its popup options internally and gives no way to enable focus retention
+	 * from outside, so the trap is attached to the rendered popup container. The selector dropdown is
+	 * driven from the text box inside the container (arrow keys and typing), so it stays reachable
+	 * with the trap active.
+	 */
+	const trapFocus$1 = container => {
+		const focusTrap = new ui_a11y.FocusTrap(container, {
+			initialFocus: 'first-tabbable',
+			restoreFocus: true
+		});
+		focusTrap.activate();
+		return focusTrap;
+	};
+
+	/**
+	 * Asks for the employee the launched agent is handed over to and confirms the transfer. Shows the
+	 * warning about the transfer being irreversible in every scenario and resolves with the chosen
+	 * recipient; the cross, Esc, a click outside and the cancel button all resolve with a cancellation
+	 * and leave the agent alone. The request itself belongs to the caller.
+	 *
+	 * Rejects when the dialog cannot be loaded or rendered - the caller reports the failure, so it
+	 * must not be swallowed here.
+	 */
+	const showChangeOwnerDialog = async () => {
+		const Dialog = await loadDialogClass$1();
+		const title = main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_TITLE');
+		const error = renderError();
+		const selectorContainer = main_core.Tag.render`<div></div>`;
+		main_core.Dom.attr(selectorContainer, 'data-test-id', TEST_ID$2.SELECTOR);
+		const content = main_core.Tag.render`
+		<div class="bizproc-ai-agents__change-owner">
+			${renderWarning()}
+			${selectorContainer}
+			${error}
+		</div>
+	`;
+		main_core.Dom.attr(content, 'data-test-id', TEST_ID$2.CONTENT);
+		const tagSelector = createUserSelector(() => {
+			error.textContent = '';
+		});
+		tagSelector.renderTo(selectorContainer);
+		return new Promise(resolve => {
+			let result = CANCELLED_RESULT;
+			let focusTrap = null;
+			let dialog = null;
+			const confirm = () => {
+				const userId = getSelectedUserId(tagSelector);
+				if (!userId) {
+					error.textContent = main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_NO_RECIPIENT_ERROR');
+
+					// The selector is shown without its text box, and a hidden box takes no focus - so the
+					// keyboard goes to the add button, the same target the component itself falls back to
+					// while the box is hidden.
+					tagSelector.getAddButtonLink().focus();
+					return;
+				}
+				result = {
+					outcome: CHANGE_OWNER_DIALOG_OUTCOME.CONFIRMED,
+					userId
+				};
+				dialog.hide();
+			};
+			dialog = new Dialog({
+				// The header carries the cross of the layout: ui.system.dialog hides the whole header
+				// while its left part is empty, so without a title the dialog has no close control at all.
+				title,
+				content,
+				centerButtons: [createButton$1('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_BUTTON_CONFIRM', ui_buttons.AirButtonStyle.FILLED, TEST_ID$2.CONFIRM, confirm), createButton$1('BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_BUTTON_CANCEL', ui_buttons.AirButtonStyle.PLAIN, TEST_ID$2.CANCEL, () => dialog.hide())],
+				width: DIALOG_WIDTH$1,
+				events: {
+					onAfterShow: () => {
+						const container = content.closest(DIALOG_CONTAINER_SELECTOR$1);
+						if (!container) {
+							return;
+						}
+
+						// ui.system.dialog renders the title as a heading inside the popup but leaves the
+						// role=dialog container itself unnamed, so the name is set here.
+						main_core.Dom.attr(container, 'aria-label', title);
+						main_core.Dom.attr(container, 'data-test-id', TEST_ID$2.DIALOG);
+						prepareCloseButton$1(container);
+						focusTrap = trapFocus$1(container);
+					},
+					onHide: () => {
+						// The outcome is resolved first: a throw while tearing the selector or the trap
+						// down would otherwise leave the promise unsettled forever.
+						resolve(result);
+						tagSelector.getDialog()?.destroy();
+						focusTrap?.destroy();
+					}
+				}
+			});
+			dialog.show();
+		});
+	};
+
+	class RowHelper {
+		#grid;
+		constructor(grid) {
+			this.#grid = grid;
+		}
+		setGrid(grid) {
+			this.#grid = grid;
+		}
+		static prepareNewRowParams(columns, rowActions) {
+			return {
+				id: columns?.ID,
+				columns,
+				actions: rowActions,
+				prepend: true,
+				animation: true
+			};
+		}
+		getByTemplateId(templateId) {
+			const rowsCollectionWrapper = this.#grid?.getRows();
+			return rowsCollectionWrapper?.getById(templateId);
+		}
+		markAsLoading(row) {
+			if (!row) {
+				return;
+			}
+			row.stateLoad();
+		}
+		markAsLoaded(row) {
+			if (!row) {
+				return;
+			}
+			row.stateUnload();
+		}
+		addToGrid(addRowOptions) {
+			this.#grid?.getRealtime()?.addRow(addRowOptions);
+		}
+		update(row, updateColumns) {
+			if (!row) {
+				return;
+			}
+			row.setCellsContent(updateColumns);
+		}
+		updateActions(row, actions) {
+			if (!row || !main_core.Type.isArrayFilled(actions)) {
+				return;
+			}
+			row.setActions(actions);
+		}
+		highlight(row) {
+			if (!row) {
+				return;
+			}
+			main_core.Dom.addClass(row.getNode(), 'ai-agents-grid-row-highlighted');
+			setTimeout(() => {
+				main_core.Dom.removeClass(row.getNode(), 'ai-agents-grid-row-highlighted');
+			}, 2500);
 		}
 	}
 
@@ -244,6 +666,125 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 		}
 		getConfirmationPopup() {
 			return null;
+		}
+	}
+
+	// Template ids whose transfer is currently in flight. A fresh action instance is created per grid
+	// click, so the guard against a second transfer of the same copy must live outside the instance.
+	const transfersInFlight = new Set();
+
+	/**
+	 * Hands a launched AI-agent copy over to another employee: asks for the recipient, sends the
+	 * transfer and reads the row back. Nothing about the transfer is decided here - the right, the
+	 * eligibility of the recipient and the actuality of the copy all stay on the server.
+	 */
+	class ChangeOwnerAction extends BaseAction {
+		templateId = 0;
+		expectedOwnerId = 0;
+		static getActionId() {
+			return ACTION_TYPE.CHANGE_OWNER;
+		}
+		setActionParams(params) {
+			super.setActionParams(params);
+			this.templateId = main_core.Text.toInteger(params.templateId);
+
+			// The owner as the grid was rendered with it, passed on as seen: it is the write condition of
+			// the request, so an empty one stays 0 and is not guessed at here.
+			this.expectedOwnerId = main_core.Text.toInteger(params.expectedOwnerId);
+		}
+
+		/**
+		 * Blocks a second transfer of the same copy while the first one is still going, the way
+		 * RestartAction blocks a repeated restart. The release in the finally is correct for the same
+		 * reason: the action has no confirmation popup, so super.execute() awaits the whole cycle - the
+		 * dialog, the request and the row refresh - and every exit path, a failed dialog included,
+		 * releases the guard for the captured id only.
+		 */
+		async execute() {
+			if (!this.templateId || transfersInFlight.has(this.templateId)) {
+				return;
+			}
+			const capturedTemplateId = this.templateId;
+			transfersInFlight.add(capturedTemplateId);
+			try {
+				await super.execute();
+			} finally {
+				transfersInFlight.delete(capturedTemplateId);
+			}
+		}
+		async run() {
+			const recipientId = await this.#askForRecipient();
+			if (!recipientId) {
+				return;
+			}
+			await this.#transfer(recipientId);
+		}
+
+		/**
+		 * The chosen recipient, or null for both outcomes that must leave the agent alone. A cancellation
+		 * is silent by contract - no request, no notification, nothing repainted. A dialog that could not
+		 * be loaded or rendered is reported instead: the click would otherwise look like a dead menu item.
+		 */
+		async #askForRecipient() {
+			let result = null;
+			try {
+				result = await showChangeOwnerDialog();
+			} catch {
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR')
+				});
+				return null;
+			}
+			return result?.outcome === CHANGE_OWNER_DIALOG_OUTCOME.CONFIRMED ? result.userId : null;
+		}
+
+		/**
+		 * The row keeps its loading state for the whole write: the transfer takes a lock on a managed
+		 * copy, and the menu the click came from is already closed by then.
+		 */
+		async #transfer(newOwnerId) {
+			const rowHelper = new RowHelper(this.grid);
+			const row = rowHelper.getByTemplateId(this.templateId);
+			rowHelper.markAsLoading(row);
+			try {
+				let staleData = false;
+				const result = await gridApi.changeOwner(this.templateId, this.expectedOwnerId, newOwnerId, () => {
+					staleData = true;
+				});
+
+				// A refusal arrives as null and is already reported by the api client through the shared
+				// error handler, so the row is left exactly as it was. The one exception is a refusal over
+				// stale data: the copy was changed or removed meanwhile, so what is on screen is known to
+				// be wrong and the list is reloaded on top of the message.
+				if (!result) {
+					if (staleData) {
+						this.grid?.reload();
+					}
+					return;
+				}
+				await this.#refreshRow(rowHelper, row);
+			} finally {
+				rowHelper.markAsLoaded(row);
+			}
+		}
+
+		/**
+		 * The transferred row is read back rather than patched from the answer: the transfer changes both
+		 * the owner cell and the actions the current user is left with, and the server owns both.
+		 *
+		 * Anything that stops the point update - a row that has left the grid, a row payload that did not
+		 * arrive - falls back to reloading the list. The copy has already changed hands, so keeping the
+		 * previous owner on screen as the current one is the single outcome that is not acceptable.
+		 */
+		async #refreshRow(rowHelper, row) {
+			const rowData = row ? await gridApi.fetchRow(this.templateId) : null;
+			if (!row || !rowData?.columns) {
+				this.grid?.reload();
+				return;
+			}
+			rowHelper.update(row, rowData.columns);
+			rowHelper.updateActions(row, rowData.actions);
+			rowHelper.highlight(row);
 		}
 	}
 
@@ -407,65 +948,6 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 			BX.UI.Notification.Center.notify({
 				content: main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_RESTART_ACTION_NOTIFICATION_TITLE')
 			});
-		}
-	}
-
-	class RowHelper {
-		#grid;
-		constructor(grid) {
-			this.#grid = grid;
-		}
-		setGrid(grid) {
-			this.#grid = grid;
-		}
-		static prepareNewRowParams(columns, rowActions) {
-			return {
-				id: columns?.ID,
-				columns,
-				actions: rowActions,
-				prepend: true,
-				animation: true
-			};
-		}
-		getByTemplateId(templateId) {
-			const rowsCollectionWrapper = this.#grid?.getRows();
-			return rowsCollectionWrapper?.getById(templateId);
-		}
-		markAsLoading(row) {
-			if (!row) {
-				return;
-			}
-			row.stateLoad();
-		}
-		markAsLoaded(row) {
-			if (!row) {
-				return;
-			}
-			row.stateUnload();
-		}
-		addToGrid(addRowOptions) {
-			this.#grid?.getRealtime()?.addRow(addRowOptions);
-		}
-		update(row, updateColumns) {
-			if (!row) {
-				return;
-			}
-			row.setCellsContent(updateColumns);
-		}
-		updateActions(row, actions) {
-			if (!row || !main_core.Type.isArrayFilled(actions)) {
-				return;
-			}
-			row.setActions(actions);
-		}
-		highlight(row) {
-			if (!row) {
-				return;
-			}
-			main_core.Dom.addClass(row.getNode(), 'ai-agents-grid-row-highlighted');
-			setTimeout(() => {
-				main_core.Dom.removeClass(row.getNode(), 'ai-agents-grid-row-highlighted');
-			}, 2500);
 		}
 	}
 
@@ -719,7 +1201,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 		}
 	}
 
-	const actionMap = new Map([[EditAction.getActionId(), EditAction], [DeleteAction.getActionId(), DeleteAction], [RestartAction.getActionId(), RestartAction], [UpgradeAction.getActionId(), UpgradeAction]]);
+	const actionMap = new Map([[EditAction.getActionId(), EditAction], [DeleteAction.getActionId(), DeleteAction], [RestartAction.getActionId(), RestartAction], [UpgradeAction.getActionId(), UpgradeAction], [ChangeOwnerAction.getActionId(), ChangeOwnerAction]]);
 	const groupActionMap = new Map([[GroupDeleteAction.getActionId(), GroupDeleteAction]]);
 
 	class ActionFactory {
@@ -734,92 +1216,6 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 			return this.createFromMap(groupActionMap, actionId);
 		}
 	}
-
-	const EXISTING_RUNS_CHECK_TIMEOUT = 8000;
-	const NO_WARNING_DECISION = Object.freeze({
-		showWarning: false,
-		systemCode: null
-	});
-	const post = async (action, data) => {
-		try {
-			const response = await main_core.ajax.runAction(`bizproc.v2.${action}`, {
-				method: 'POST',
-				json: data || {}
-			});
-			return response.data;
-		} catch (error) {
-			const ajaxErrorHandler = new AjaxErrorHandler();
-			ajaxErrorHandler.handle(action, error);
-		}
-		return null;
-	};
-	const withTimeout = async (request, timeout) => {
-		let timeoutId = null;
-		try {
-			return await Promise.race([request, new Promise((resolve, reject) => {
-				timeoutId = setTimeout(() => reject(new Error('timeout')), timeout);
-			})]);
-		} finally {
-			clearTimeout(timeoutId);
-		}
-	};
-
-	/**
-	 * The only place where the raw pre-flight answer becomes a decision: "show" requires
-	 * showWarning === true together with a non-empty systemCode, anything else means "do not show".
-	 */
-	const toExistingRunsDecision = response => {
-		const data = response?.data;
-		if (data?.showWarning !== true || !main_core.Type.isStringFilled(data?.systemCode)) {
-			return {
-				...NO_WARNING_DECISION
-			};
-		}
-		return {
-			showWarning: true,
-			systemCode: data.systemCode
-		};
-	};
-	const gridApi = {
-		startTemplate: templateId => {
-			return post(GRID_API_ACTION.START_TEMPLATE, {
-				templateId
-			});
-		},
-		copyAndStartTemplate: templateId => {
-			return post(GRID_API_ACTION.COPY_AND_START_TEMPLATE, {
-				templateId
-			});
-		},
-		fetchRow: templateId => {
-			return post(GRID_API_ACTION.FETCH_ROW, {
-				templateId
-			});
-		},
-		/**
-		 * Pre-flight check before launching a system template (API-01). Deliberately bypasses post():
-		 * a failed auxiliary check must not notify the user and must not block the launch, so every
-		 * failure - network, contract or timeout - degrades to "do not show the warning".
-		 *
-		 * A positive answer spends the personal right to see the warning on the server, so the method
-		 * must not be replayed "just in case".
-		 */
-		checkExistingRuns: async templateId => {
-			try {
-				const response = await withTimeout(main_core.ajax.runAction(`bizproc.v2.${GRID_API_ACTION.CHECK_EXISTING_RUNS}`, {
-					method: 'POST',
-					json: {
-						templateId
-					}
-				}), EXISTING_RUNS_CHECK_TIMEOUT);
-				return toExistingRunsDecision(response);
-			} catch {
-				return {
-					...NO_WARNING_DECISION
-				};
-			}
-		}
-	};
 
 	class TemplateSetupHandler {
 		#grid;
@@ -845,6 +1241,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 				return;
 			}
 			rowHelper.update(row, updatedTemplateRow.columns);
+			rowHelper.updateActions(row, updatedTemplateRow.actions);
 			rowHelper.markAsLoaded(row);
 			rowHelper.highlight(row);
 		}
@@ -2288,6 +2685,79 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 		}
 	}
 
+	// Allowlist of the DTO-11 state codes: a code coming from the server only picks an entry here and
+	// never reaches the markup. A code missing from the list renders the dash and not an empty cell -
+	// an empty place reads as a broken render.
+	const STATE_MESSAGE_IDS = new Map([['upToDate', 'BIZPROC_AI_AGENTS_GRID_VERSION_UP_TO_DATE'], ['upgradeAvailable', 'BIZPROC_AI_AGENTS_GRID_VERSION_UPGRADE_AVAILABLE'], ['customized', 'BIZPROC_AI_AGENTS_GRID_VERSION_CUSTOMIZED'], ['customizedUpgradeAvailable', 'BIZPROC_AI_AGENTS_GRID_VERSION_CUSTOMIZED_UPGRADE_AVAILABLE'], ['undetermined', 'BIZPROC_AI_AGENTS_GRID_VERSION_UNDETERMINED'], ['manualBuild', 'BIZPROC_AI_AGENTS_GRID_VERSION_MANUAL_BUILD']]);
+
+	// The states shown as plain text: each of them points at nothing the reader has to notice, so the
+	// label is left to the states that do.
+	const PLAIN_TEXT_STATES = new Set(['upToDate', 'undetermined', 'manualBuild']);
+	const NO_STATE = 'none';
+	const DASH = '\u2014';
+	const TEXT_CLASS = 'bizproc-ai-agents-grid-version-text';
+
+	// The short date the upgrade dialog shows.
+	const DATE_FORMAT = 'd.m.Y';
+
+	/**
+	 * Version cell of an AI-agents grid row (DTO-10). The two params are independent axes: a state is
+	 * shown as its own text, a date on its own is shown as a date, and neither leaves a dash.
+	 *
+	 * The cell is a pure function of its params and holds no state of its own, so a row repaint after
+	 * an upgrade costs nothing. It is also deliberately non-interactive: the column is visible to
+	 * users who may not upgrade at all, and an upgrade overwrites the owner's own edits.
+	 */
+	class VersionField extends BaseField {
+		render(params) {
+			const state = this.#resolveState(params?.state);
+			main_core.Dom.attr(this.getFieldNode(), {
+				'data-test-id': 'bizproc-ai-agents-grid-version',
+				'data-version-state': state ?? NO_STATE
+			});
+			this.appendToFieldNode(this.#renderContent(state, params?.date));
+		}
+
+		/**
+		 * A known state code or null: an unknown code carries nothing the cell can render, and the
+		 * attribute must not report a state that is not shown.
+		 */
+		#resolveState(state) {
+			return main_core.Type.isStringFilled(state) && STATE_MESSAGE_IDS.has(state) ? state : null;
+		}
+		#renderContent(state, date) {
+			if (state) {
+				const text = main_core.Loc.getMessage(STATE_MESSAGE_IDS.get(state));
+
+				// A phrase missing from the bundle comes back as an empty string, so the cell falls
+				// back to the same dash an unknown code gets.
+				if (!main_core.Type.isStringFilled(text)) {
+					return this.#renderText(DASH);
+				}
+				return PLAIN_TEXT_STATES.has(state) ? this.#renderText(text) : this.#renderLabel(text);
+			}
+			if (main_core.Type.isNumber(date) && date > 0) {
+				return this.#renderText(main_date.DateTimeFormat.format(DATE_FORMAT, date));
+			}
+			return this.#renderText(DASH);
+		}
+		#renderText(text) {
+			return ui_system_typography.Text.render(text, {
+				size: 'xs',
+				tag: 'div',
+				className: TEXT_CLASS
+			});
+		}
+		#renderLabel(text) {
+			const label = new ui_system_label.Label({
+				value: text,
+				size: ui_system_label.LabelSize.SM,
+				style: ui_system_label.LabelStyle.TINTED_NO_ACCENT
+			});
+			return label.render();
+		}
+	}
+
 	exports.AgentInfoField = AgentInfoField;
 	exports.BaseField = BaseField;
 	exports.EmployeeField = EmployeeField;
@@ -2295,6 +2765,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	exports.LaunchControlField = LaunchControlField;
 	exports.LoadIndicatorField = LoadIndicatorField;
 	exports.UsedByField = UsedByField;
+	exports.VersionField = VersionField;
 
-})(this.BX.Bizproc.Ai.Agents = this.BX.Bizproc.Ai.Agents || {}, BX, BX.Event, BX.UI.Accessibility, BX.UI.Dialogs, BX.UI, BX.Bizproc, BX.UI.Notification, BX.UI.System.Typography, BX.Main, BX.SidePanel, BX.UI.EntitySelector, BX.Messenger.v2.Lib, BX.Humanresources.CompanyStructure, BX.UI, BX.Main, BX.UI);
+})(this.BX.Bizproc.Ai.Agents = this.BX.Bizproc.Ai.Agents || {}, BX, BX.Event, BX.UI.Accessibility, BX.UI.Notification, BX.UI, BX.UI, BX.UI.EntitySelector, BX.UI.System.Typography, BX.UI.Dialogs, BX.Bizproc, BX.Main, BX.SidePanel, BX.Messenger.v2.Lib, BX.Humanresources.CompanyStructure, BX.UI, BX.Main, BX.UI.System.Label);
 //# sourceMappingURL=grid.bundle.js.map

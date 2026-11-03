@@ -1,8 +1,8 @@
 <?php
 $MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_NAME'] = 'Счёт';
-$MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION'] = 'Создаёт и изменяет счета, назначает ответственных, меняет стадии и делает многое другое в счетах';
 $MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_CHANGE'] = 'Изменить счёт';
 $MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_DELETE'] = 'Удалить счёт';
 $MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_SET_COMPANY'] = 'Изменить связанную компанию';
 $MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_SET_CONTACT'] = 'Изменить связанный контакт';
+$MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_1'] = 'Создаёт и изменяет счета: меняет стадию, назначает ответственного, редактирует товары, привязывает клиента и формирует документы';
 $MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_ADD_COMMENT'] = 'Добавить комментарий';

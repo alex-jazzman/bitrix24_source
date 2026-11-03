@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -252,7 +254,7 @@ if($this->StartResultCache(false, array(($arParams["CACHE_GROUPS"]==="N"? false:
 
 		if (mb_strpos($_SERVER['HTTP_HOST'], 'xn--') !== false) // It's cyrilyc site
 		{
-			$PathToFile = CHTTP::URN2URI($PathToFile);
+			$PathToFile = (string)(new Uri($PathToFile))->toAbsolute();
 		}
 
 

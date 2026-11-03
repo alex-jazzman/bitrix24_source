@@ -4,10 +4,10 @@ this.BX.Call = this.BX.Call || {};
 (function (exports, main_core, call_lib_settingsManager) {
 	'use strict';
 
-	function groupLogs(logs, hashProp = 'message') {
+	function groupLogs(logs) {
 		const groups = new Map();
 		for (const log of logs) {
-			const hash = log[hashProp];
+			const hash = getGroupKey(log);
 			const existing = groups.get(hash);
 			if (existing) {
 				existing.count++;
@@ -21,6 +21,10 @@ this.BX.Call = this.BX.Call || {};
 			}
 		}
 		return [...groups.values()];
+	}
+	function getGroupKey(entry) {
+		const callIdentifier = entry.data?.roomId ?? entry.data?.callId ?? '';
+		return JSON.stringify([entry.message, callIdentifier, entry.data?.source ?? '']);
 	}
 
 	function isStorageLimitError(error) {
@@ -63,6 +67,8 @@ this.BX.Call = this.BX.Call || {};
 		}
 	}
 
+	const startupIdleTimeout = 5000;
+	const startupFallbackDelay = 2000;
 	class AccidentManager {
 		#logEntryProvider;
 		#storage;
@@ -70,6 +76,7 @@ this.BX.Call = this.BX.Call || {};
 		#bufferedEntries = [];
 		#bufferFlushTimeout;
 		#isBufferFlushing = false;
+		#cancelSendingLoopStart;
 		localStorageSendingSessionIdKey;
 		minLogLifetime;
 		sendInterval;
@@ -93,8 +100,8 @@ this.BX.Call = this.BX.Call || {};
 			}
 			this.sendingLoop = this.sendingLoop.bind(this);
 			this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
-			void this.sendingLoop();
 			this.#setupGlobalErrorHandlers();
+			this.#startSendingLoopWhenIdle();
 		}
 		get sessionId() {
 			return this.#logEntryProvider.sessionId;
@@ -105,6 +112,31 @@ this.BX.Call = this.BX.Call || {};
 		}
 		set isSending(value) {
 			localStorage.setItem(this.localStorageSendingSessionIdKey, value ? this.sessionId : '');
+		}
+		#startSendingLoopWhenIdle() {
+			const start = () => {
+				this.#cancelSendingLoopStart = undefined;
+				void this.sendingLoop();
+			};
+			if (main_core.Type.isFunction(window.requestIdleCallback)) {
+				const handle = requestIdleCallback(start, {
+					timeout: startupIdleTimeout
+				});
+				this.#cancelSendingLoopStart = () => {
+					if (main_core.Type.isFunction(window.cancelIdleCallback)) {
+						cancelIdleCallback(handle);
+					}
+				};
+				return;
+			}
+			const timeout = setTimeout(start, startupFallbackDelay);
+			this.#cancelSendingLoopStart = () => clearTimeout(timeout);
+		}
+		#cancelPendingSendingLoopStart() {
+			if (main_core.Type.isFunction(this.#cancelSendingLoopStart)) {
+				this.#cancelSendingLoopStart();
+				this.#cancelSendingLoopStart = undefined;
+			}
 		}
 		async sendingLoop() {
 			if (!this.isEnabled) {
@@ -124,13 +156,18 @@ this.BX.Call = this.BX.Call || {};
 			}
 			this.sendingLoopTimeout = setTimeout(this.sendingLoop, this.sendInterval);
 		}
-		async addLog(error = null, message = '') {
+		async addLog(error = null, message = '', source = '') {
 			if (!this.isEnabled) {
 				return;
 			}
+			const callContext = call_lib_settingsManager.CallLogContextRegistry.getContext();
+			const context = source ? {
+				...callContext,
+				source
+			} : callContext;
 			let entry = null;
 			try {
-				entry = await this.#logEntryProvider.createLogEntry(error, message);
+				entry = await this.#logEntryProvider.createLogEntry(error, message, context);
 			} catch (creationError) {
 				console.error(message, error);
 				console.error('[accident-logger] log entry creation error', creationError);
@@ -216,6 +253,7 @@ this.BX.Call = this.BX.Call || {};
 			if (!this.isEnabled) {
 				return;
 			}
+			this.#cancelPendingSendingLoopStart();
 			if (main_core.Type.isNumber(this.sendingLoopTimeout)) {
 				clearTimeout(this.sendingLoopTimeout);
 				this.sendingLoopTimeout = undefined;
@@ -324,6 +362,7 @@ this.BX.Call = this.BX.Call || {};
 			}
 		}
 		destroy() {
+			this.#cancelPendingSendingLoopStart();
 			clearTimeout(this.sendingLoopTimeout);
 			this.sendingLoopTimeout = undefined;
 			if (main_core.Type.isNumber(this.#bufferFlushTimeout)) {
@@ -627,7 +666,7 @@ this.BX.Call = this.BX.Call || {};
 		get sessionId() {
 			return sessionStorage.getItem(this.#storedSessionIdKey) || this.#generateSessionId();
 		}
-		async createLogEntry(error, message) {
+		async createLogEntry(error, message, callContext = {}) {
 			const metadata = await this.#getMetadata();
 			let safeMessage = '';
 			if (message) {
@@ -653,13 +692,23 @@ this.BX.Call = this.BX.Call || {};
 				timestamp: new Date().toISOString(),
 				data: {
 					...safeError,
-					...metadata
+					...metadata,
+					...this.#pickFilledContextFields(callContext)
 				}
 			};
 		}
 		destroy() {
 			this.#browserMetadataSnapshotPromise = null;
 			this.onSnapshotError = null;
+		}
+		#pickFilledContextFields(callContext) {
+			const filled = {};
+			Object.entries(callContext).forEach(([key, value]) => {
+				if (value !== undefined && value !== null && value !== '') {
+					filled[key] = value;
+				}
+			});
+			return filled;
 		}
 		#generateSessionId() {
 			const id = new Date().toISOString() + Math.random().toString(36).slice(2, 11);

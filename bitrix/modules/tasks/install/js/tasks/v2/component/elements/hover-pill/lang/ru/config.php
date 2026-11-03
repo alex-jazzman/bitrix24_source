@@ -1,0 +1,4 @@
+<?php
+
+$MESS['TASKS_V2_HOVER_PILL_CLEAR_ARIA_LABEL'] = 'Очистить';
+$MESS['TASKS_V2_HOVER_PILL_SETTINGS_ARIA_LABEL'] = 'Настройки';

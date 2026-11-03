@@ -13,22 +13,22 @@ export class DeleteProjectPopup
 {
 	#messageBox: MessageBox | null = null;
 
-	deleteProject(projectId: number): Promise<boolean>
+	deleteProject(projectId: number): Promise<boolean | null>
 	{
 		return this.#delete({ projectId });
 	}
 
-	deleteScrum(scrumId: number): Promise<boolean>
+	deleteScrum(scrumId: number): Promise<boolean | null>
 	{
 		return this.#delete({ scrumId });
 	}
 
-	#delete({ projectId, scrumId }: { projectId?: number, scrumId?: number }): Promise<boolean>
+	#delete({ projectId, scrumId }: { projectId?: number, scrumId?: number }): Promise<boolean | null>
 	{
 		return new Promise((resolve) => {
 			if (!projectId && !scrumId)
 			{
-				resolve(false);
+				resolve(null);
 
 				return;
 			}
@@ -42,7 +42,7 @@ export class DeleteProjectPopup
 				onclick: () => {
 					this.#messageBox?.close();
 					this.#messageBox = null;
-					resolve(false);
+					resolve(null);
 				},
 				useAirDesign: true,
 			});

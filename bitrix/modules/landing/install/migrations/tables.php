@@ -551,6 +551,7 @@ $migration->table('b_landing_copilot_generations')->create(function (\Bitrix\Mai
 	$columns->datetime('DATE_CREATE')->notNull();
 	$columns->datetime('DATE_FINISHED');
 	$table->addIndex('IX_LANDING_COPILOT_GENERATION_SITE', ['SITE_ID']);
+	$table->addIndex('IX_LANDING_COPILOT_GENERATION_SCENARIO_ID', ['SCENARIO', 'ID']);
 });
 
 $migration->table('b_landing_copilot_requests')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {

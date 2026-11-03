@@ -1,6 +1,10 @@
+import { CounterStyle, CounterSize } from 'ui.cnt';
+import { Counter as BCounter } from 'ui.vue3.components.counter';
+
 import { Core } from 'im.v2.application.core';
 import { ChatType, AnchorType } from 'im.v2.const';
 import { CounterManager } from 'im.v2.lib.counter';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat, type ImModelRecentItem, type ImModelUser } from 'im.v2.model';
 
 import '../css/item-counter.css';
@@ -8,6 +12,7 @@ import '../css/item-counter.css';
 // @vue/component
 export const ItemCounters = {
 	name: 'ItemCounters',
+	components: { BCounter },
 	props:
 	{
 		item: {
@@ -18,6 +23,10 @@ export const ItemCounters = {
 			type: Boolean,
 			required: true,
 		},
+		isSelected: {
+			type: Boolean,
+			default: false,
+		},
 		withPinStatus: {
 			type: Boolean,
 			default: true,
@@ -26,6 +35,18 @@ export const ItemCounters = {
 			type: Boolean,
 			default: true,
 		},
+		withCounter: {
+			type: Boolean,
+			default: true,
+		},
+		compactMode: {
+			type: Boolean,
+			default: false,
+		},
+	},
+	setup(): Object
+	{
+		return { CounterSize };
 	},
 	computed:
 	{
@@ -78,9 +99,50 @@ export const ItemCounters = {
 		{
 			return this.formatCounter(this.totalCounter);
 		},
+		maxCounterValue(): number
+		{
+			return CounterManager.getCounterDisplayLimit() - 1;
+		},
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		isChildrenOnly(): boolean
+		{
+			return this.chatCounter === 0 && this.childrenCounter > 0;
+		},
+		hasChildrenLayer(): boolean
+		{
+			return this.chatCounter > 0 && this.childrenCounter > 0;
+		},
+		counterStyle(): string
+		{
+			if (this.isSelected)
+			{
+				return CounterStyle.FILLED_INVERTED;
+			}
+
+			if (this.isChatMuted)
+			{
+				return CounterStyle.FILLED_NO_ACCENT;
+			}
+
+			if (this.isChildrenOnly)
+			{
+				return CounterStyle.FILLED_SUCCESS;
+			}
+
+			return CounterStyle.FILLED;
+		},
+		canShowCounters(): boolean
+		{
+			return this.withCounter && !this.invitation.isActive;
+		},
 		showCounterContainer(): boolean
 		{
-			return !this.invitation.isActive;
+			const hasVisibleCounter = this.showMention || this.isChatMarkedUnread || this.showCounter;
+
+			return this.canShowCounters && (!this.compactMode || hasVisibleCounter);
 		},
 		showPinnedIcon(): boolean
 		{
@@ -123,15 +185,14 @@ export const ItemCounters = {
 		},
 		containerClasses(): { [className: string]: boolean }
 		{
-			const childrenOnly = this.chatCounter === 0 && this.childrenCounter > 0;
-			const withChildren = this.chatCounter > 0 && this.childrenCounter > 0;
 			const withMentionAndCounter = this.chatCounter > 0 && this.showMention;
 
 			return {
 				'--muted': this.isChatMuted,
-				'--children-only': childrenOnly,
-				'--with-children': withChildren,
+				'--children-only': this.isChildrenOnly,
+				'--with-children': this.hasChildrenLayer,
 				'--with-mention-and-counter': withMentionAndCounter,
+				'--compact': this.compactMode,
 			};
 		},
 	},
@@ -143,22 +204,35 @@ export const ItemCounters = {
 		},
 	},
 	template: `
-		<div v-if="showCounterContainer" :class="containerClasses" class="bx-im-list-recent-item__counters_wrap">
-			<div class="bx-im-list-recent-item__counters_container">
+		<div
+			v-if="showCounterContainer || compactMode"
+			:class="containerClasses"
+			class="bx-im-list-recent-item__counters_wrap"
+		>
+			<div v-if="showCounterContainer" class="bx-im-list-recent-item__counters_container">
 				<div v-if="showPinnedIcon" class="bx-im-list-recent-item__pinned-icon"></div>
 				<div v-else class="bx-im-list-recent-item__counters">
 					<div v-if="showMention" class="bx-im-list-recent-item__mention">
 						<div class="bx-im-list-recent-item__mention-icon"></div>
 					</div>
 					<div v-if="showUnreadWithoutCounter" class="bx-im-list-recent-item__counter_number --no-counter"></div>
-					<div v-else-if="showUnreadWithCounter" class="bx-im-list-recent-item__counter_number --with-unread">
-						{{ formattedCounter }}
-					</div>
-					<div v-else-if="showCounter" class="bx-im-list-recent-item__counter_number">
-						{{ formattedCounter }}
+					<div
+						v-else-if="showUnreadWithCounter || showCounter"
+						class="bx-im-list-recent-item__counter_number"
+						:class="{ '--with-unread': showUnreadWithCounter, '--air-counter': isAirDesignEnabled }"
+					>
+						<BCounter
+							v-if="isAirDesignEnabled"
+							:value="totalCounter"
+							:maxValue="maxCounterValue"
+							:style="counterStyle"
+							:size="CounterSize.LARGE"
+						/>
+						<template v-else>{{ formattedCounter }}</template>
 					</div>
 				</div>
 			</div>
+			<slot/>
 		</div>
 	`,
 };

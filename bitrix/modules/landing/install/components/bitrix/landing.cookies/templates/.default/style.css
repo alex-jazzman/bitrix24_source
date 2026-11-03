@@ -25,8 +25,24 @@
 }
 
 .bx-landing-cookies-popup-warning-link {
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
 	cursor: pointer;
 	color: #0b66c3;
+	text-align: inherit;
+	white-space: normal;
+}
+
+.bx-landing-cookies-popup-warning-link:focus:not(:focus-visible) {
+	outline: none;
+}
+
+.bx-landing-cookies-popup-warning-link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .bx-landing-cookies-popup-warning-right {
@@ -34,9 +50,14 @@
 	margin-left: 46px;
 }
 
-.bx-landing-cookies-popup-warning-right span {
+.bx-landing-cookies-popup-warning-right .ui-btn {
 	height: 45px;
 	padding: 0 30px;
+}
+
+/* the site template outlines every button on :focus, the ring of these ones comes from ui.buttons */
+.bx-landing-cookies-popup-warning-right .ui-btn:focus:not(:focus-visible) {
+	outline: none;
 }
 
 .bx-landing-cookies-button-close {
@@ -49,10 +70,24 @@
 	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23707880%22%20fill-rule%3D%22evenodd%22%20d%3D%22M17.813%200L19%201.188%2010.687%209.5%2019%2017.813%2017.812%2019%209.5%2010.687%201.187%2019%200%2017.812%208.313%209.5%200%201.187%201.188%200%209.5%208.313%2017.813%200z%22%20opacity%3D%221%22/%3E%3C/svg%3E);
 	transition: opacity .2s linear;
 	opacity: .3;
+	padding: 0;
+	border: none;
 }
 
 .bx-landing-cookies-button-close:hover {
 	opacity: 1;
+}
+
+.bx-landing-cookies-button-close:focus:not(:focus-visible) {
+	outline: none;
+}
+
+/* the button keeps 28px from every edge of the popup, so its ring is not cut by the popup overflow */
+.bx-landing-cookies-button-close:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .bx-landing-cookies-popup {
@@ -76,14 +111,31 @@
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	max-height: 460px;
 	overflow-y: auto;
+	/* the ring of a control is drawn outside its box, so the focus scroll stops short of the edge that clips it */
+	scroll-padding: 6px;
 	padding: 0 18px 25px 0;
+}
+
+/* the headings of the popup are real heading tags, and the theme of the client site reaches bare h2-h4 */
+.bx-landing-cookies-popup-title,
+.bx-landing-cookies-popup-subtitle,
+.bx-landing-cookies-main-agreement-block-name {
+	text-align: inherit;
+	text-transform: none;
+	letter-spacing: normal;
+	text-shadow: none;
+	text-decoration: none;
+	border: none;
+	padding: 0;
 }
 
 .bx-landing-cookies-popup-title {
 	font: 30px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: inherit;
 	padding-left: 49px;
 	position: relative;
+	margin-top: 0;
 	margin-bottom: 26px;
 	margin-left: 9px;
 }
@@ -109,6 +161,8 @@
 .bx-landing-cookies-popup-subtitle {
 	font: 19px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: inherit;
+	margin-top: 0;
 	margin-bottom: 8px;
 	padding-left: 9px;
 }
@@ -133,19 +187,35 @@
 	font: 15px/21px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
+	margin: 0;
 }
 
 .bx-landing-cookies-switcher {
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	border-bottom: 1px dashed rgba(32, 102, 176, .4);
 	color: #2066B0;
+	font-family: inherit;
 	font-size: 14px;
 	line-height: 18px;
 	cursor: pointer;
-	border-bottom: 1px dashed rgba(32, 102, 176, .4);
 	transition: border .2s linear;
 }
 
 .bx-landing-cookies-switcher:hover {
 	border-bottom-color: rgba(32, 102, 176, 1);
+}
+
+.bx-landing-cookies-switcher:focus:not(:focus-visible) {
+	outline: none;
+}
+
+.bx-landing-cookies-switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .bx-landing-cookies-analytics-title {
@@ -189,8 +259,22 @@
 	color: #0b66c3;
 }
 
+/* the site template drops the ring of every link of the page, and the texts of the agreements are built of links */
+.bx-landing-cookies-popup a:focus:not(:focus-visible),
+.bx-landing-cookies-popup-warning a:focus:not(:focus-visible) {
+	outline: none;
+}
+
+.bx-landing-cookies-popup a:focus-visible,
+.bx-landing-cookies-popup-warning a:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .bx-landing-cookies-popup-notice {
 	height: 27px;
+	border: none;
 	border-radius: 14px;
 	background: #00C1FF;
 	color: #fff;
@@ -201,9 +285,27 @@
 	overflow: hidden;
 	display: none;
 	transition: width .2s linear;
+	margin: 0;
 	padding: 0 4px 0 6px;
 	width: 27px;
 	z-index: 11;
+}
+
+.bx-landing-cookies-popup-notice:focus:not(:focus-visible) {
+	outline: none;
+}
+
+/*
+ * The notice clips its content, so the ring is drawn inside it. The colors of the notice belong to
+ * the site owner, so the ring takes neither of them and pairs a white line with a black one: of the
+ * two, one always holds 3:1 against whatever color the notice is painted (WCAG 1.4.11), and they
+ * hold 21:1 against each other. The outline is painted over the inset shadow, so the black line
+ * stays inside the white one instead of covering it.
+ */
+.bx-landing-cookies-popup-notice:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: -2px;
+	box-shadow: inset 0 0 0 4px #000;
 }
 
 .bx-landing-cookies-popup-notice-text-wrap {
@@ -243,9 +345,19 @@
 	pointer-events: none;
 }
 
+.bx-landing-cookies-analytics-header .ui-switcher:focus:not(:focus-visible) {
+	outline: none;
+}
+
+/* the switcher became a tab stop, and ui.switcher draws no ring of its own; its own radius shapes the outline */
+.bx-landing-cookies-analytics-header .ui-switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+}
+
 @media (max-width: 750px) {
 
-	.bx-landing-cookies-popup-warning-right span {
+	.bx-landing-cookies-popup-warning-right .ui-btn {
 		padding: 0 26px;
 	}
 

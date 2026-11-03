@@ -20,6 +20,7 @@ $MESS["IM_CREATE_COLLAB_BANNER_TEXT_1"] = "Создайте коллабу, чт
 
 $MESS["IM_CREATE_COLLAB_CHAT_BANNER_TITLE"] = "Групповые чаты в проекте";
 $MESS["IM_CREATE_COLLAB_CHAT_BANNER_TEXT_MSGVER_1"] = "Чаты находятся только внутри проекта, доступ к ним получают участники, добавленные в групповой чат.#BR#Если пригласить в чат коллегу вне проекта, он автоматически станет участником проекта";
+$MESS["IM_CREATE_COLLAB_CHAT_BANNER_CLOSE_ARIA"] = "Закрыть";
 $MESS["IM_CREATE_COLLAB_TITLE_PLACEHOLDER"] = "Название коллабы";
 $MESS["IM_CREATE_COLLAB_DESCRIPTION_TITLE"] = "Описание";
 $MESS["IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER"] = "Расскажите, над чем будете работать в коллабе. Так у участников будет меньше вопросов. Например: «Здесь будем работать над запуском нового продукта»";

@@ -10,25 +10,31 @@ type AnimationParams = {
 	callback: Function
 };
 
+export type AnimationHandle = {
+	cancel: () => void,
+};
+
 const DEFAULT_ANIMATION_PARAMS = {
 	increment: 20,
 	callback: () => {},
 	duration: 500
 };
 
+const noopHandle: AnimationHandle = { cancel: () => {} };
+
 export const Animation = {
-	start(params: AnimationParams): number
+	start(params: AnimationParams): AnimationHandle
 	{
 		if (Type.isUndefined(params.start) || Type.isUndefined(params.end) || !params.element || !params.elementProperty)
 		{
-			return 0;
+			return noopHandle;
 		}
 
 		params = {...DEFAULT_ANIMATION_PARAMS, ...params};
 		const diff = params.end - params.start;
 		let currentValue = 0;
+		let frameId = null;
 
-		let frameId;
 		const animate = () =>
 		{
 			currentValue += params.increment;
@@ -42,16 +48,20 @@ export const Animation = {
 			{
 				params.callback();
 			}
-
-			return frameId;
 		};
 
-		return animate();
-	},
+		animate();
 
-	cancel()
-	{
-		cancelAnimationFrame();
+		return {
+			cancel(): void
+			{
+				if (frameId !== null)
+				{
+					cancelAnimationFrame(frameId);
+					frameId = null;
+				}
+			},
+		};
 	}
 };
 

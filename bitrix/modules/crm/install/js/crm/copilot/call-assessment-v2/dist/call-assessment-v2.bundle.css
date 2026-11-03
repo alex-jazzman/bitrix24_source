@@ -29,7 +29,7 @@
 	flex: 1 1 auto;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--ui-space-stack-lg);
 	padding: 12px var(--ui-space-inset-xl) var(--ui-space-inset-xl);
 	min-height: 0;
 	overflow-y: auto;
@@ -54,11 +54,11 @@
 .crm-call-assessment-v2__card {
 	display: flex;
 	flex-direction: column;
-	gap: 11px;
+	gap: var(--ui-space-stack-sm);
 	padding: var(--ui-space-inset-xl);
 	background: var(--ui-color-bg-content-primary);
-	border-radius: var(--ui-border-radius-2xl);
-	box-shadow: 0 1px 2px var(--ui-color-area-box-shadow-secondary-color);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
 }
 
 .crm-call-assessment-v2-action-bar {
@@ -78,13 +78,29 @@
 	flex-direction: column;
 	padding: var(--ui-space-inset-xl);
 	background: var(--ui-color-bg-content-primary);
-	border-radius: var(--ui-border-radius-2xl);
-	box-shadow: 0 1px 2px var(--ui-color-area-box-shadow-secondary-color);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.crm-call-assessment-v2-client-types-card__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+	padding-bottom: var(--ui-space-stack-sm);
+}
+
+.crm-call-assessment-v2-client-types-card__title-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
 }
 
 .crm-call-assessment-v2-client-types-card__heading {
-	color: var(--ui-color-base-0);
-	padding-bottom: var(--ui-space-stack-sm);
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-client-types-card__heading.ui-headline.--accent {
+	font-weight: var(--ui-headline-sm-font-weight);
 }
 
 .crm-call-assessment-v2-client-types-card__row {
@@ -358,7 +374,57 @@
 }
 
 .crm-call-assessment-v2-callout-hint.--variant-step .crm-call-assessment-v2-callout-hint__icon {
-	background-image: url("images/step-tooltip-icon.png");
+	background-image: url("data:image/webp;base64,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");
+}
+
+.crm-call-assessment-v2-hint-card__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xl);
+}
+
+.crm-call-assessment-v2-hint-card__heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.crm-call-assessment-v2-hint-card__heading > * {
+	margin: 0;
+}
+
+.crm-call-assessment-v2-hint-card__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+}
+
+.crm-call-assessment-v2-hint-card__title-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
+}
+
+.crm-call-assessment-v2-hint-card__heading .ui-headline {
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-hint-card__heading .ui-headline.--accent {
+	font-weight: var(--ui-headline-sm-font-weight);
+}
+
+.crm-call-assessment-v2-hint-card__toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex: 0 0 auto;
+	/* The L button (38px) is taller than the title row (24px): centre it on the title, not on the header top. */
+	margin-block: -7px;
+}
+
+.crm-call-assessment-v2-hint-card__editor {
+	min-width: 0;
 }
 
 .crm-call-assessment-v2-loading-state {
@@ -396,7 +462,7 @@
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: var(--ui-space-inline-md);
-	padding-bottom: var(--ui-space-stack-lg);
+	padding-bottom: var(--ui-space-stack-md);
 }
 
 .crm-call-assessment-v2-scenario-card__header-text {
@@ -413,12 +479,23 @@
 	gap: var(--ui-space-inline-2xs);
 }
 
+.crm-call-assessment-v2-scenario-card__heading-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	flex: 0 0 auto;
+}
+
 .crm-call-assessment-v2-scenario-card__heading {
-	color: var(--ui-color-base-0);
-	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-scenario-card__heading.ui-headline.--accent {
+	font-weight: var(--ui-headline-sm-font-weight);
 }
 
 .crm-call-assessment-v2-scenario-card__heading-info {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+
 	color: var(--ui-color-design-outline-content);
 	margin-top: 2px;
 }
@@ -435,7 +512,7 @@
 .crm-call-assessment-v2-scenario-card__list {
 	display: flex;
 	flex-direction: column;
-	gap: 19px;
+	gap: 10px;
 	position: relative;
 }
 
@@ -478,8 +555,8 @@
 	display: flex;
 	align-items: flex-start;
 	gap: var(--ui-space-inline-2xs2);
-	padding: var(--ui-space-inset-sm2) 11px 21px;
-	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg) var(--ui-space-inset-xl) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-3xl);
 	background: linear-gradient(267deg,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
@@ -489,6 +566,7 @@
 
 .crm-call-assessment-v2-step-edit__handle {
 	flex: 0 0 24px;
+	margin-top: 17px;
 	width: 24px;
 	height: 30px;
 	padding: 3px 0;
@@ -510,15 +588,15 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 11px;
-	padding: var(--ui-space-inset-md) 10px var(--ui-space-inset-md) 19px;
+	gap: var(--ui-space-stack-2xs);
+	padding: 18px var(--ui-space-inset-sm2) 10px;
 	background: var(--ui-color-bg-content-primary);
-	border: 1px solid var(--ui-color-design-outline-stroke);
-	border-radius: var(--ui-border-radius-sm);
+	border-radius: var(--ui-border-radius-3xl);
 }
 
 .crm-call-assessment-v2-step-edit__remove {
 	flex: 0 0 32px;
+	margin-top: 17px;
 	width: 32px;
 	height: 30px;
 	padding: 3px 0 0 8px;
@@ -538,7 +616,7 @@
 	--padding-horizontal: 0;
 	--padding-vertical: 0;
 	--min-height: 23px;
-	--font-size: var(--ui-font-size-xl);
+	--font-size: var(--ui-font-size-2xl);
 }
 
 .crm-call-assessment-v2-step-edit__description-input {
@@ -549,6 +627,7 @@
 }
 
 .crm-call-assessment-v2-step-edit__description-input textarea {
+	field-sizing: content;
 	max-height: 200px;
 	transition: height 120ms ease;
 }
@@ -565,8 +644,8 @@
 	display: flex;
 	gap: var(--ui-space-inline-sm2);
 	align-items: flex-start;
-	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-sm2) var(--ui-space-inset-md) 11px;
-	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-lg);
+	border-radius: var(--ui-border-radius-3xl);
 	background: linear-gradient(265.76deg,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
@@ -610,14 +689,31 @@
 	color: var(--ui-color-base-0);
 }
 
+/* One step up the scale from the component's own size: HeadlineXs 15 → sm 17, TextXs 13 → sm 14. */
+.crm-call-assessment-v2-step-view__title.ui-headline.--xs {
+	font-size: var(--ui-headline-sm-font-size);
+	line-height: var(--ui-headline-sm-line-height);
+	letter-spacing: var(--ui-headline-sm-letter-spacing);
+}
+
 .crm-call-assessment-v2-step-view__description {
 	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-step-view__description.ui-text.--xs {
+	font-size: var(--ui-text-sm-font-size);
+	line-height: var(--ui-text-sm-line-height);
+	letter-spacing: var(--ui-text-sm-letter-spacing);
 }
 
 .crm-call-assessment-v2-info-card {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+}
+
+.crm-call-assessment-v2-info-card:empty {
+	display: none;
 }
 
 .crm-call-assessment-v2-info-card__title-row {
@@ -659,7 +755,7 @@
 	gap: var(--ui-space-inline-2xs);
 	padding: 0 var(--ui-space-inset-sm) 0 var(--ui-space-inset-sm);
 	border-radius: var(--ui-border-radius-sm);
-	color: var(--ui-color-design-outline-content);
+	color: var(--ui-color-base-1);
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-regular);
 	line-height: 20px;
@@ -683,6 +779,11 @@
 	padding-left: 0;
 }
 
+/* The first chip starts on the left edge of the card text, under the title icon and the description. */
+.crm-call-assessment-v2-info-card__info-chip:first-child {
+	padding-left: 0;
+}
+
 .crm-call-assessment-v2-info-card__info-chip-text {
 	display: inline-flex;
 	align-items: center;
@@ -694,6 +795,10 @@
 	-webkit-background-clip: text;
 	background-clip: text;
 	-webkit-text-fill-color: transparent;
+}
+
+.crm-call-assessment-v2-info-card__info-chip-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
 .crm-call-assessment-v2-info-card__info-chip-icon.--gradient {

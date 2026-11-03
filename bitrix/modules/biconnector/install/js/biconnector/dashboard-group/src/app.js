@@ -2,12 +2,15 @@ import { ajax as Ajax, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { Center as NotificationCenter } from 'ui.notification';
 import type { BitrixVueComponentProps } from 'ui.vue3';
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { DashboardItem } from './components/dashboard-item';
 import { DashboardSelector } from './components/dashboard-selector';
 import { DeletionWarningPopup } from './components/deletion-warning-popup';
 import { GroupScopeSelector } from './components/group-scope-selector';
 import { TitleEditor } from './components/title-editor';
+import { GROUP_POPUP_ID } from './const';
 import type { Dashboard } from './type';
 
 export const App: BitrixVueComponentProps = {
@@ -147,8 +150,8 @@ export const App: BitrixVueComponentProps = {
 					});
 				})
 				.catch((response) => {
-					BX.UI.Notification.Center.notify({
-						content: response.errors[0]?.message,
+					NotificationCenter.notify({
+						content: resolveErrorHtml(response, this.$Bitrix.Loc.getMessage('BI_GROUP_SAVE_ERROR')),
 					});
 					this.$store.commit('setIsLoading', false);
 				})
@@ -163,7 +166,7 @@ export const App: BitrixVueComponentProps = {
 		},
 		closePopup(): void
 		{
-			const popup: Popup = PopupManager.getPopupById('biconnector-dashboard-group');
+			const popup: Popup = PopupManager.getPopupById(GROUP_POPUP_ID);
 			popup.close();
 		},
 		onGroupPopupClose(): void
@@ -193,6 +196,7 @@ export const App: BitrixVueComponentProps = {
 					:size="20"
 					color="var(--ui-color-base-4)"
 					:class="'group-close'"
+					data-testid="biconnector-dashboard-group-close"
 					@click="closePopup"
 				></BIcon>
 			</div>

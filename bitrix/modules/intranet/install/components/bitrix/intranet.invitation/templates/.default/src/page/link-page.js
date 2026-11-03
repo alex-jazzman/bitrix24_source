@@ -27,7 +27,6 @@ export class LinkPage extends Page
 	#inviteLinkRequestId: number = 0;
 	#isDepartmentControlSubscribed: boolean = false;
 	#whiteList: string = '';
-	#linkRegisterEnabled: boolean = false;
 
 	#analytics: Analytics;
 	#transport: Transport;
@@ -54,7 +53,6 @@ export class LinkPage extends Page
 		this.#inviteLink = Type.isString(options.invitationLink) ? options.invitationLink : '';
 		this.#isLinkLoading = !Type.isStringFilled(this.#inviteLink);
 		this.#whiteList = Type.isStringFilled(options.whiteList) ? options.whiteList : '';
-		this.#linkRegisterEnabled = options.linkRegisterEnabled === true;
 		this.#analytics = options.analytics;
 		this.#transport = options.transport;
 	}
@@ -67,15 +65,30 @@ export class LinkPage extends Page
 		}
 
 		this.#container = Tag.render`
-			<div class="intranet-invitation-block" data-role="self-block">
+			<div
+				class="intranet-invitation-block"
+				data-role="self-block"
+				data-testid="invitation-link-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-link-page-form"
+				>
 					<div class="intranet-invitation-block__header">
-						<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE')}</span>
+						<h2
+							class="intranet-invitation-status__title ui-headline --sm"
+							tabindex="-1"
+							data-role="page-title"
+							data-testid="invitation-link-page-title"
+						>${Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE')}</h2>
 					</div>
 					<div class="intranet-invitation-block__copy-link-wrapper">
-						<div class="intranet-invitation-block__copy-link-input-wrapper">
-							${this.#getLinkInput().render()}
+						<div
+							class="intranet-invitation-block__copy-link-input-wrapper"
+							data-testid="invitation-link-page-link-input-container"
+						>
+							${this.#renderLinkInput()}
 						</div>
 						${this.#getCopyLinkButton().render()}
 					</div>
@@ -108,6 +121,25 @@ export class LinkPage extends Page
 		return this.#loader;
 	}
 
+	#renderLinkInput(): HTMLElement
+	{
+		const inputContainer = this.#getLinkInput().render();
+		const input = inputContainer.querySelector('.ui-system-input-value');
+
+		if (input)
+		{
+			Dom.attr(input, {
+				id: 'invitation-link-page-link-input',
+				type: 'url',
+				autocomplete: 'off',
+				'aria-label': Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE'),
+				'data-testid': 'invitation-link-page-link-input',
+			});
+		}
+
+		return inputContainer;
+	}
+
 	#setConfirmRegistrationLoadingState(isLoading: boolean): void
 	{
 		if (!this.#container)
@@ -134,6 +166,8 @@ export class LinkPage extends Page
 			design: this.#isLinkLoading ? InputDesign.Disabled : InputDesign.Grey,
 			value: this.#inviteLink,
 			readonly: true,
+			type: 'url',
+			ariaLabel: Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE'),
 		});
 
 		return this.#linkInput;
@@ -151,6 +185,9 @@ export class LinkPage extends Page
 			props: {
 				'data-test-id': 'invite-link-page-copy-link-button',
 			},
+			dataset: {
+				testid: 'invitation-link-page-copy-link-button',
+			},
 		});
 
 		return this.#copyLinkButton;
@@ -164,14 +201,17 @@ export class LinkPage extends Page
 		}
 
 		this.#linkOptionsButton ??= Tag.render`
-			<div
+			<button
+				type="button"
 				class="intranet-invitation-link__footer-link ${this.#isLinkOptionsExpanded ? '--expanded' : ''}"
 				data-test-id="invite-link-page-option-button"
+				data-testid="invitation-link-page-options-action"
+				aria-expanded="${this.#isLinkOptionsExpanded}"
 				onclick="${() => this.#toggleLinkOptionsSection()}"
 			>
 				<span class="ui-link ui-link-secondary ui-link-dashed">${Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS')}</span>
-				<i class="ui-icon-set --chevron-down-l"></i>
-			</div>
+				<i class="ui-icon-set --chevron-down-l" aria-hidden="true"></i>
+			</button>
 		`;
 
 		return this.#linkOptionsButton;
@@ -184,7 +224,7 @@ export class LinkPage extends Page
 			isCloud: this.#isCloud,
 			needConfirmRegistration: this.#needConfirmRegistration,
 			whiteList: this.#whiteList,
-			linkRegisterEnabled: this.#linkRegisterEnabled,
+			linkRegisterEnabled: true,
 			analytics: this.#analytics,
 			transport: this.#transport,
 			onRegenerateStart: () => {
@@ -230,7 +270,16 @@ export class LinkPage extends Page
 	#setLinkOptionsButtonExpandedState(isExpanded: boolean): void
 	{
 		this.#isLinkOptionsExpanded = isExpanded === true;
-		Dom.toggleClass(this.#isLinkOptionsExpanded, '--expanded');
+		if (this.#isLinkOptionsExpanded)
+		{
+			Dom.addClass(this.#linkOptionsButton, '--expanded');
+		}
+		else
+		{
+			Dom.removeClass(this.#linkOptionsButton, '--expanded');
+		}
+
+		Dom.attr(this.#linkOptionsButton, 'aria-expanded', this.#isLinkOptionsExpanded ? 'true' : 'false');
 	}
 
 	#copyRegisterUrl(copyLinkButton: Button): void

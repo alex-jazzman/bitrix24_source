@@ -1,0 +1,31 @@
+<?php
+
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_AUTHOR_NOT_FOUND'] = 'Details author could not be determined, so the details were created by the system user.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_DESCRIPTION'] = 'Creates details using the selected template. If matching details already exist, returns them without changes.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_ADDRESS_TYPE'] = 'Select the address type.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_BANK_DETAIL_NAME_EMPTY'] = 'Specify the banking details name.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_BANK_DETAIL_NAME_NOT_CONFIGURED'] = 'Specify the banking details name if banking details fields are configured.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_CLIENT_NOT_FOUND'] = 'Could not find a customer to create details for.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_LOCK'] = 'Could not start creating details. Try again.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_MODULES'] = 'Required modules are not installed.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_NAME_EMPTY'] = 'Specify the details name.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_PRESET_NOT_FOUND'] = 'Details template is not available for the selected customer.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_REQUIRED_FIELD_NOT_CONFIGURED'] = 'Configure the required field "#FIELD#".';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_REQUISITE_ID'] = 'Could not get created details ID.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_SET_DEFAULT'] = 'Details were created, but could not be set as default.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_UNEXPECTED'] = 'Could not create details. Try again.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_ERROR_UNKNOWN'] = 'Could not create details. Try again.';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_ADDRESS_TYPE'] = 'Address type';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_BANK_DETAIL_NAME'] = 'Banking details name';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_CLIENT_TYPE'] = 'Customer type';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_COUNTRY'] = 'Country';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_MODIFIED_BY'] = 'Details author';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_REQUISITE_NAME'] = 'New details name';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_FIELD_REQUISITE_PRESET'] = 'Details template';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_NAME'] = 'Create details';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_RETURN_ERROR_MESSAGE'] = 'Error message';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_RETURN_REQUISITE_ID'] = 'Details ID';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_RETURN_STATUS'] = 'Status';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_STATUS_CREATED'] = 'New details created';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_STATUS_ERROR'] = 'Details creation error';
+$MESS['CRM_CREATE_REQUISITE_ACTIVITY_STATUS_FOUND'] = 'Existing details found';

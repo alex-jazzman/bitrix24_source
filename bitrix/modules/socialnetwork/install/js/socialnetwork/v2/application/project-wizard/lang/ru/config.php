@@ -1,5 +1,8 @@
 <?php
 
+$MESS['SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_CREATE'] = 'Создание проекта';
+$MESS['SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_UPDATE'] = 'Настройки проекта';
+$MESS['SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_COPY'] = 'Копирование проекта';
 $MESS['SONET_EXT_PROJECT_WIZARD_TITLE_PLACEHOLDER'] = 'Название проекта';
 $MESS['SONET_EXT_PROJECT_WIZARD_TITLE_REQUIRED_ERROR_MSG'] = 'Укажите название проекта';
 $MESS['SONET_EXT_PROJECT_WIZARD_TITLE_UNIQ_ERROR_MSG'] = 'Проект с таким названием уже существует. Придумайте другое название';
@@ -9,6 +12,7 @@ $MESS['SONET_EXT_PROJECT_WIZARD_DESCRIPTION_LABEL'] = 'Описание';
 $MESS['SONET_EXT_PROJECT_WIZARD_DESCRIPTION_PLACEHOLDER'] = 'Описание подскажет участникам, для чего этот проект. Оно будет видно всем';
 $MESS['SONET_EXT_PROJECT_WIZARD_COPY_OPTIONS_LABEL'] = 'Что скопировать в проект';
 $MESS['SONET_EXT_PROJECT_WIZARD_OWNER_LABEL'] = 'Владелец проекта';
+$MESS['SONET_EXT_PROJECT_WIZARD_HIDDEN_USER'] = 'Скрытый пользователь';
 $MESS['SONET_EXT_PROJECT_WIZARD_MODERATORS_LABEL'] = 'Модераторы';
 $MESS['SONET_EXT_PROJECT_WIZARD_MODERATORS_HINT'] = 'Модераторы — это помощники владельца с расширенными правами';
 $MESS['SONET_EXT_PROJECT_WIZARD_MEMBERS_LABEL'] = 'Участники проекта';
@@ -100,7 +104,7 @@ $MESS['SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_DRAWER_CANCEL'] = 'Отмена';
 
 $MESS['SONET_EXT_PROJECT_WIZARD_CREATE_BUTTON'] = 'Создать проект';
 $MESS['SONET_EXT_PROJECT_WIZARD_UPDATE_BUTTON'] = 'Сохранить изменения';
-$MESS['SONET_EXT_PROJECT_WIZARD_COPY_BUTTON'] = 'Создать проект';
+$MESS['SONET_EXT_PROJECT_WIZARD_COPY_BUTTON'] = 'Копировать проект';
 $MESS['SONET_EXT_PROJECT_WIZARD_CANCEL_BUTTON'] = 'Отмена';
 $MESS['SONET_EXT_PROJECT_WIZARD_UPDATED'] = 'Изменения сохранены';
 $MESS['SONET_EXT_PROJECT_WIZARD_COPIED'] = 'Проект скопирован';

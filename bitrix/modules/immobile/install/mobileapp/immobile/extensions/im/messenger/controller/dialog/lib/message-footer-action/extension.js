@@ -28,13 +28,6 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 		neutral: ColorTokens.chatOtherCopilot2.toHex(),
 	});
 
-	const ActionIconName = Object.freeze({
-		like: 'like',
-		likeSolid: 'solid_like',
-		dislike: 'dislike',
-		dislikeSolid: 'solid_disike',
-	});
-
 	/**
 	 * @class MessageFooterActionManager
 	 */
@@ -52,9 +45,6 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 
 			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
-
-			/** @type {Map<string, 'like'|'dislike'|null>} */
-			this.voteState = new Map();
 
 			/** @type {MessageFooterActionService} */
 			this.feedbackService = new MessageFooterActionService();
@@ -98,9 +88,18 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 			this.view.off(EventType.dialog.actionTap, this.onActionTap);
 		}
 
-		destructor()
+		subscribeStoreEvents()
 		{
-			this.voteState.clear();
+			serviceLocator.get('core').getStoreManager()
+				.on('dialoguesModel/copilotModel/setVote', this.#handleUpdateVote)
+			;
+		}
+
+		unsubscribeStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.off('dialoguesModel/copilotModel/setVote', this.#handleUpdateVote)
+			;
 		}
 
 		/**
@@ -141,16 +140,13 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 		/**
 		 * @param {string} messageId
 		 */
-		handleLike(messageId)
+		async handleLike(messageId)
 		{
 			logger.log('MessageFooterActionManager.handleLike', messageId);
 
-			const currentVote = this.voteState.get(messageId);
-			const newVote = currentVote === MessageActionVoteValue.like ? null : MessageActionVoteValue.like;
-			this.voteState.set(messageId, newVote);
-			this.#updateActionsTint(messageId);
+			await this.#updateVote(MessageActionVoteValue.like, messageId);
 
-			if (newVote)
+			if (this.#getVote(MessageActionVoteValue.like, messageId))
 			{
 				this.feedbackService.sendVote(messageId, MessageActionVoteValue.like)
 					.catch(() => Notification.showErrorToast())
@@ -161,16 +157,13 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 		/**
 		 * @param {string} messageId
 		 */
-		handleDislike(messageId)
+		async handleDislike(messageId)
 		{
 			logger.log('MessageFooterActionManager.handleDislike', messageId);
 
-			const currentVote = this.voteState.get(messageId);
-			const newVote = currentVote === MessageActionVoteValue.dislike ? null : MessageActionVoteValue.dislike;
-			this.voteState.set(messageId, newVote);
-			this.#updateActionsTint(messageId);
+			await this.#updateVote(MessageActionVoteValue.dislike, messageId);
 
-			if (newVote)
+			if (this.#getVote(MessageActionVoteValue.dislike, messageId))
 			{
 				this.feedbackService.sendVote(messageId, MessageActionVoteValue.dislike)
 					.catch(() => Notification.showErrorToast())
@@ -193,7 +186,7 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 				return;
 			}
 
-			this.#updateActionsTint(messageId, {
+			this.#updateRegenerateAction(messageId, {
 				[MessageActionType.regenerate]: { tint: ActionTint.active },
 			});
 			this.feedbackService.sendRegenerate(messageId)
@@ -237,6 +230,20 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 		}
 
 		/**
+		 * @param state
+		 * @param {MutationPayload<CopilotSetVoteData, CopilotSetVoteActions>} payload
+		 */
+		#handleUpdateVote = ({ payload }) => {
+			const { dialogId, messageId } = payload.data;
+			if (dialogId !== this.dialogId)
+			{
+				return;
+			}
+
+			this.#updateFeedbackActions(messageId);
+		}
+
+		/**
 		 * @param {string} messageId
 		 */
 		#openFeedbackForm(messageId)
@@ -265,10 +272,37 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 		}
 
 		/**
+		 * @param {MessageVote} action
+		 * @param {number} messageId
+		 * @return {boolean}
+		 */
+		#getVote(action, messageId)
+		{
+			const vote = this.store.getters['dialoguesModel/copilotModel/getVoteByMessageId'](this.dialogId, Number(messageId));
+
+			return Boolean(vote?.[action]);
+		}
+
+		/**
+		 * @param {MessageVote} action
+		 * @param {number} messageId
+		 * @return {Promise<boolean>}
+		 */
+		#updateVote(action, messageId)
+		{
+			return this.store.dispatch('dialoguesModel/copilotModel/updateVote', {
+				dialogId: this.dialogId,
+				messageId: Number(messageId),
+				vote: action,
+				value: !this.#getVote(action, messageId),
+			});
+		}
+
+		/**
 		 * @param {string} messageId
 		 * @param {Object} [overrides]
 		 */
-		#updateActionsTint(messageId, overrides = {})
+		#updateRegenerateAction(messageId, overrides = {})
 		{
 			const message = this.messageRenderer.viewMessageCollection[messageId];
 			if (!Type.isArrayFilled(message?.actions))
@@ -276,40 +310,30 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 				return;
 			}
 
-			const currentVote = this.voteState.get(messageId);
-
 			message.actions = message.actions.map((action) => {
 				if (overrides[action.id])
 				{
 					return { ...action, ...overrides[action.id] };
 				}
 
-				if (action.id === MessageActionType.like)
-				{
-					const isActive = currentVote === MessageActionVoteValue.like;
-
-					return {
-						...action,
-						tint: isActive ? ActionTint.active : ActionTint.neutral,
-						iconName: isActive ? ActionIconName.likeSolid : ActionIconName.like,
-					};
-				}
-
-				if (action.id === MessageActionType.dislike)
-				{
-					const isActive = currentVote === MessageActionVoteValue.dislike;
-
-					return {
-						...action,
-						tint: isActive ? ActionTint.active : ActionTint.neutral,
-						iconName: isActive ? ActionIconName.dislikeSolid : ActionIconName.dislike,
-					};
-				}
-
 				return action;
 			});
 
 			void this.view.updateMessageById(messageId, message, 'actions');
+		}
+
+		/**
+		 * @param {string} messageId
+		 */
+		#updateFeedbackActions(messageId)
+		{
+			const message = this.messageRenderer.viewMessageCollection[messageId];
+			if (!Type.isArrayFilled(message?.actions))
+			{
+				return;
+			}
+
+			this.messageRenderer.updateViewMessages([message]);
 		}
 	}
 

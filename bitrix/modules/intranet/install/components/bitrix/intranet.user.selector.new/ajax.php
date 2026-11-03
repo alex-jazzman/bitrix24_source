@@ -53,6 +53,7 @@ elseif($SITE_ID != '')
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 require_once("functions.php");
+require_once(__DIR__ . '/department_access.php');
 
 CModule::IncludeModule('intranet');
 
@@ -98,8 +99,26 @@ if (($arDepartments = CIntranetUtils::getUserDepartments($USER->GetID())) && is_
 if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 	&& (!CModule::IncludeModule('extranet') || CExtranet::IsIntranetUser() || $sectionId == 'extranet'))
 {
-	if ($sectionId != 'extranet')
-		$sectionId = intval($sectionId);
+	if ($sectionId !== 'extranet')
+	{
+		$sectionId ??= '0';
+		$sectionId = $sectionId === '' ? '0' : $sectionId;
+		$sectionId = (is_int($sectionId) || is_string($sectionId))
+			&& preg_match('/^[0-9]+$/D', (string)$sectionId) === 1
+			? (int)$sectionId
+			: -1
+		;
+		if ($sectionId < 0)
+		{
+			$APPLICATION->RestartBuffer();
+			Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
+			echo CUtil::PhpToJsObject([
+				'STRUCTURE' => [],
+				'USERS' => [],
+			]);
+			die;
+		}
+	}
 
 	$arFilter = array(
 		'ACTIVE' => $showActiveUsers
@@ -277,6 +296,55 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 				$userRow['USER_PROFILE_URL'] = htmlspecialcharsbx($userRow['~USER_PROFILE_URL']);
 			}
 			$arUsers[] = $userRow;
+		}
+	}
+
+	if ($sectionId !== 'extranet')
+	{
+		$departmentIds = [$sectionId => $sectionId];
+		foreach ($arStructure['DATA'] ?? [] as $department)
+		{
+			$departmentIds[(int)$department['ID']] = (int)$department['ID'];
+		}
+		foreach ($arUsers as $user)
+		{
+			foreach ((array)$user['UF_DEPARTMENT'] as $id)
+			{
+				$departmentIds[(int)$id] = (int)$id;
+			}
+		}
+		$departmentIds = array_values(array_filter(
+			$departmentIds,
+			static fn(int $id): bool => $id > 0,
+		));
+		$allowedDepartmentIds = IntranetUserSelectorDepartmentAccess::getAllowedDepartmentIdMap($departmentIds);
+
+		if ($sectionId > 0 && !isset($allowedDepartmentIds[$sectionId]))
+		{
+			$arStructure = [];
+			$arUsers = [];
+		}
+		else
+		{
+			$arStructure['DATA'] = array_filter(
+				$arStructure['DATA'] ?? [],
+				static fn(array $department): bool => isset($allowedDepartmentIds[(int)$department['ID']]),
+			);
+			foreach ($arUsers as $index => $user)
+			{
+				$departments = array_values(array_filter(
+					(array)$user['UF_DEPARTMENT'],
+					static fn($id): bool => isset($allowedDepartmentIds[(int)$id]),
+				));
+				if ($departments === [] && !($sectionId > 0 && $user['HEAD']))
+				{
+					unset($arUsers[$index]);
+				}
+				else
+				{
+					$arUsers[$index]['UF_DEPARTMENT'] = $departments;
+				}
+			}
 		}
 	}
 

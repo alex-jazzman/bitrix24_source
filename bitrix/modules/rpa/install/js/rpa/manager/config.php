@@ -11,9 +11,10 @@ return [
 	'js' => '/bitrix/js/rpa/manager/dist/manager.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
+		'sidepanel',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
-		'sidepanel',
 	],
 	'skip_core' => false,
 ];

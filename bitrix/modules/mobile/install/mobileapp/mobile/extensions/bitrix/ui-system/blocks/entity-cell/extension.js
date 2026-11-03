@@ -8,7 +8,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Text2, Text3, Text5 } = require('ui-system/typography/text');
 	const { PropTypes } = require('utils/validation');
-	const { EntityCellMode } = require('ui/system/blocks/entity-cell/src/entity-enum');
+	const { EntityCellMode } = require('ui-system/blocks/entity-cell/src/entity-enum');
 	const { Checkbox } = require('ui-system/form/checkbox');
 	const { Ellipsize } = require('utils/enums/style');
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
@@ -23,6 +23,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 	 * @property {boolean} [divider=true]
 	 *
 	 * @property {object} [icon]
+	 * @property {Color} [iconColor=Color.accentMainPrimary]
 	 * @property {object} [avatar]
 	 *
 	 * @property {string} title
@@ -35,6 +36,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 	 *
 	 * @property {string} [subtitle]
 	 * @property {Ellipsize} [subtitleEllipsize]
+	 * @property {number} [subtitleNumberOfLines=1]
 	 *
 	 * @property {boolean} [checked=false]
 	 * @property {boolean} [indeterminate]
@@ -145,7 +147,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 
 		renderLeftContent()
 		{
-			const { avatar, icon } = this.props;
+			const { avatar, icon, iconColor } = this.props;
 
 			if (avatar)
 			{
@@ -169,7 +171,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 				return IconView({
 					testId: this.getTestId('icon-left'),
 					icon: iconValue,
-					color: Color.accentMainPrimary,
+					color: Color.resolve(iconColor, Color.accentMainPrimary),
 					size: 28,
 					style: {
 						marginRight: Indent.XL.toNumber(),
@@ -197,6 +199,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 				titleEllipsize = Ellipsize.MIDDLE,
 				subtitle,
 				subtitleEllipsize = Ellipsize.MIDDLE,
+				subtitleNumberOfLines = 1,
 				extraName,
 				badgeHeader,
 			} = this.props;
@@ -235,7 +238,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 					text: subtitle,
 					testId: this.getTestId('subtitle'),
 					color: Color.base3,
-					numberOfLines: 1,
+					numberOfLines: subtitleNumberOfLines,
 					style: {
 						flexShrink: 2,
 					},
@@ -349,8 +352,10 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 	}
 
 	EntityCell.defaultProps = {
+		iconColor: Color.accentMainPrimary,
 		titleEllipsize: Ellipsize.MIDDLE,
 		subtitleEllipsize: Ellipsize.MIDDLE,
+		subtitleNumberOfLines: 1,
 	};
 
 	EntityCell.propTypes = {
@@ -362,6 +367,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 			PropTypes.instanceOf(Icon),
 			PropTypes.string,
 		]),
+		iconColor: PropTypes.instanceOf(Color),
 		avatar: PropTypes.string,
 
 		// header properties
@@ -375,6 +381,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 
 		subtitle: PropTypes.string,
 		subtitleEllipsize: PropTypes.instanceOf(Ellipsize),
+		subtitleNumberOfLines: PropTypes.number,
 
 		// checkbox properties
 		checked: PropTypes.bool,

@@ -93,6 +93,26 @@
 	bottom: 0;
 }
 
+/* Visible keyboard focus indicator for the board (WCAG 2.4.7). */
+.main-kanban-item:focus-visible,
+.main-kanban-column:focus-visible,
+.main-kanban-column-edit:focus-visible,
+.main-kanban-column-title-add-column:focus-visible,
+.main-kanban-ear-left:focus-visible,
+.main-kanban-ear-right:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: -2px;
+}
+
+.main-kanban-item:focus:not(:focus-visible),
+.main-kanban-column:focus:not(:focus-visible),
+.main-kanban-column-edit:focus:not(:focus-visible),
+.main-kanban-column-title-add-column:focus:not(:focus-visible),
+.main-kanban-ear-left:focus:not(:focus-visible),
+.main-kanban-ear-right:focus:not(:focus-visible) {
+	outline: none;
+}
+
 .main-kanban-grid {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -131,6 +151,12 @@
 	transition: .2s;
 }
 
+/*
+	Scroll ears are <button> elements, so the native button chrome is reset here
+	to keep them looking exactly like the <div> they replaced. The arrow is set
+	below through the "background" shorthand, which also drops the native button
+	background - do not split it into background-image.
+*/
 .main-kanban-ear-left,
 .main-kanban-ear-right {
 	position: absolute;
@@ -140,6 +166,14 @@
 	width: 50px;
 	opacity: 0;
 	pointer-events: none;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
 	-webkit-transition: .2s;
 	transition: .2s;
 }
@@ -370,6 +404,17 @@
 	opacity: 1;
 }
 
+/*
+	The control is laid out collapsed and transparent until the title is hovered,
+	so keyboard focus has to reveal it as well - otherwise the focus indicator
+	lands on a zero-width invisible box (WCAG 2.4.7). Kept at the same
+	specificity as the :hover rules above so the two do not fight.
+*/
+.main-kanban-column-title .main-kanban-column-edit:focus-visible {
+	width: 19px;
+	opacity: 1;
+}
+
 .main-kanban-column-title-edit {
 	display: block;
 	position: relative;
@@ -415,6 +460,11 @@
 .main-kanban-column:last-child .main-kanban-column-title-add-column {
 	width: 18px;
 	right: 10px;
+}
+
+/* Same reason as for the edit control: reveal on keyboard focus, not only on hover. */
+.main-kanban-column .main-kanban-column-title-add-column:focus-visible {
+	opacity: .7;
 }
 
 .main-kanban-column-title-add-column-before,
@@ -2092,4 +2142,36 @@
 
 .main-kanban.--columns-revert .main-kanban-column:first-child .main-kanban-column-title-text {
 	padding-left: 2px;
+}
+
+/* WCAG 2.2.2 / 2.3.3: honor the reduced-motion setting on the board.
+   Decorative motion is switched off: infinite pulsations settle on their
+   resting frame, one-shot animations jump straight to their final state and
+   transitions become instant, so nothing moves while every end state (colors,
+   sizes, visibility) stays exactly as it is without the setting.
+   The reach is deliberately wide: the selector covers every descendant of the
+   board, including widgets embedded into a card by other modules, because the
+   setting is a user request for the whole surface and card content is not
+   controlled from here. Motion that carries information has to be exempted
+   explicitly, the way the busy indicator is below. */
+@media (prefers-reduced-motion: reduce) {
+	.main-kanban,
+	.main-kanban *,
+	.main-kanban *::before,
+	.main-kanban *::after {
+		animation-delay: -0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+
+	/* The busy indicator keeps spinning: its motion is the only cue that a
+	   request is still running, so freezing it would remove information. */
+	.main-kanban .main-kanban-loader-circular {
+		animation: main-kanban-loader-rotate 2s linear infinite !important;
+	}
+
+	.main-kanban .main-kanban-loader-path {
+		animation: main-kanban-loader-dash 1.5s ease-in-out infinite !important;
+	}
 }

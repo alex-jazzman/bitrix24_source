@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Dom, Type } from 'main.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -7,6 +7,7 @@ import { Core } from 'tasks.v2.core';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { showLimit } from 'tasks.v2.lib.show-limit';
+import { restoreOpenerFocus } from 'tasks.v2.lib.entity-selector-dialog';
 import { usersDialog, type UserDialogItem } from 'tasks.v2.lib.user-selector-dialog';
 import { loadUsersAbsenceInfo } from 'tasks.v2.component.absence-popup';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -33,6 +34,12 @@ export const AccomplicesChip = {
 			accomplicesMeta,
 		};
 	},
+	data(): Object
+	{
+		return {
+			isDialogShown: false,
+		};
+	},
 	computed: {
 		design(): string
 		{
@@ -46,6 +53,28 @@ export const AccomplicesChip = {
 		{
 			return !Core.getParams().restrictions.stakeholder.available;
 		},
+		opensDialog(): boolean
+		{
+			return !this.isSelected && !this.isLocked;
+		},
+		ariaLabel(): string
+		{
+			return this.loc('TASKS_V2_ACCOMPLICES_TITLE_CHIP');
+		},
+	},
+	watch: {
+		isDialogShown(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
+	},
+	updated(): void
+	{
+		this.syncAria();
 	},
 	methods: {
 		handleClick(): void
@@ -67,6 +96,7 @@ export const AccomplicesChip = {
 				return;
 			}
 
+			this.isDialogShown = true;
 			void usersDialog.show({
 				targetNode: this.$el,
 				ids: this.task.accomplicesIds,
@@ -75,6 +105,8 @@ export const AccomplicesChip = {
 		},
 		handleClose(accomplicesIds: number[], items: UserDialogItem[]): void
 		{
+			this.isDialogShown = false;
+
 			if (!this.isSelected && accomplicesIds.length > 0)
 			{
 				this.highlightField();
@@ -90,10 +122,25 @@ export const AccomplicesChip = {
 			}
 
 			void taskService.update(this.taskId, { accomplicesIds });
+
+			restoreOpenerFocus(this.$el);
 		},
 		highlightField(): void
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(accomplicesMeta.id);
+		},
+		syncAria(): void
+		{
+			const el = this.$el;
+			if (!(el instanceof Element))
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+			Dom.attr(el, 'aria-label', this.ariaLabel);
 		},
 	},
 	template: `

@@ -513,7 +513,10 @@
 }
 
 .inventory-management__card-solo-icon.--ru {
-	background: url(./../images/card.png) no-repeat;
+	background: image-set(
+		url(./../images/card-1x.webp) 1x,
+		url(./../images/card-2x.webp) 2x
+	) no-repeat;
 	background-size: 320px 628px;
 }
 

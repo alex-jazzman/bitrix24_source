@@ -1,9 +1,10 @@
 import { Loc, Type } from 'main.core';
 import { SidePanel } from 'main.sidepanel';
-import { ImportDialog } from 'note.import';
 import { App as PermissionsApp } from 'note.permissions';
 import { BIcon } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
+import 'ui.notification';
+import { ensureImportDialog } from '../services/import-dialog-loader';
 
 export const SidebarFooter = {
 	name: 'SidebarFooter',
@@ -16,6 +17,14 @@ export const SidebarFooter = {
 		themeActions: { type: Object, default: null },
 	},
 	emits: ['toggle-collapsed'],
+	data(): Object
+	{
+		return {
+			// Fetching the extension takes a moment during which the button looks unanswered, and a
+			// second click there would stack a second dialog with a polling loop of its own.
+			importOpening: false,
+		};
+	},
 	computed: {
 		canEditGlobalPermissions(): boolean
 		{
@@ -79,21 +88,28 @@ export const SidebarFooter = {
 		},
 	},
 	methods: {
-		openImportDialog(): void
+		async openImportDialog(): Promise<void>
 		{
+			if (this.importOpening)
+			{
+				return;
+			}
+
+			this.importOpening = true;
 			try
 			{
-				if (!Type.isFunction(ImportDialog))
-				{
-					throw new TypeError('note.import extension API is not available');
-				}
-
+				const ImportDialog = await ensureImportDialog();
 				const dialog = new ImportDialog({
 					wikiImportEnabled: Boolean(this.state?.permissions?.canImportWiki),
-					onComplete: async () => {
+					landingImportEnabled: Boolean(this.state?.permissions?.canImportLanding),
+					onComplete: async (collectionId) => {
 						if (Type.isFunction(this.actions?.refreshCollections))
 						{
 							await this.actions.refreshCollections();
+						}
+						if (collectionId && Type.isFunction(this.actions?.navigateToWorkspace))
+						{
+							this.actions.navigateToWorkspace(collectionId);
 						}
 					},
 				});
@@ -101,8 +117,23 @@ export const SidebarFooter = {
 			}
 			catch (error)
 			{
+				this.notifyImportFailure();
 				console.error('note.sidebar: failed to open import dialog', error);
 			}
+			finally
+			{
+				this.importOpening = false;
+			}
+		},
+		notifyImportFailure(): void
+		{
+			const content = Loc.getMessage('NOTE_SIDEBAR_IMPORT_OPEN_FAILED') || '';
+			if (!content)
+			{
+				return;
+			}
+
+			BX.UI.Notification.Center.notify({ content, position: 'top-right' });
 		},
 		onToggleCollapsed(): void
 		{

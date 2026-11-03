@@ -54,7 +54,9 @@ jn.define('testing/matchers', (require, exports, module) => {
 
 		isObject(value)
 		{
-			return typeof value === 'object';
+			// `typeof null` is 'object', and a null taken for an object reaches Object.keys(null):
+			// the whole test breaks instead of the expectation answering that null equals null
+			return typeof value === 'object' && value !== null;
 		}
 
 		isArray(value)

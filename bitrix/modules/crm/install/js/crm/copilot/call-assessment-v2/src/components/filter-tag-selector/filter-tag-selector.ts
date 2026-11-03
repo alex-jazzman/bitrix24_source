@@ -138,7 +138,7 @@ export const FilterTagSelector = defineComponent({
 					onTagAdd: () => this.handleChange(),
 					onTagRemove: () => this.handleChange(),
 				},
-			} as ConstructorParameters<typeof TagSelector>[0]));
+			} as unknown as ConstructorParameters<typeof TagSelector>[0]));
 
 			const container = this.$refs.container as HTMLElement | undefined;
 			if (container)

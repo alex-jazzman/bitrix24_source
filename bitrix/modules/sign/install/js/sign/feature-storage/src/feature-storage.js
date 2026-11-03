@@ -28,4 +28,14 @@ export class FeatureStorage
 	{
 		return settings.get('isTemplateFolderGroupingAllowed');
 	}
+
+	static isDocumentMessageEnabled(): boolean
+	{
+		return settings.get('isDocumentMessageEnabled', false);
+	}
+
+	static isKedoRunProcessEnabled(): boolean
+	{
+		return settings.get('isKedoRunProcessEnabled', false);
+	}
 }

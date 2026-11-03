@@ -12,7 +12,10 @@ return [
 		'disk:statemanager/redux/slices/storages',
 
 		'toast',
+		'type',
+		'require-lazy',
 		'disk:opener/folder',
 		'disk:rights',
+		'disk:storage/personal',
 	],
 ];

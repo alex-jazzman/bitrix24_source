@@ -3,9 +3,8 @@
 IncludeModuleLangFile(__FILE__);
 
 // Compose string in compliance with selected type of condition
-function ConditionCompose($arRequest, $i = 0)
+function ConditionCompose($arRequest, $type)
 {
-	$type = $_REQUEST['selected_type'][$i];
 	if ($type == 'folder' && $arRequest['CONDITION_folder'] <> '')
 	{
 		$cond = 'CSite::InDir(\'' . addslashes($arRequest['CONDITION_folder']) . '\')';

@@ -14,11 +14,31 @@
 	overflow: hidden;
 }
 
+/* collapsible action button reset */
+.tasks-card-entity-collapsible-edit-button,
+.tasks-card-entity-collapsible-collapse-button {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* collapsible action button reset end */
+
 .tasks-card-entity-collapsible-edit-button,
 .tasks-card-entity-collapsible-collapse-button {
 	display: flex;
 	cursor: pointer;
 	align-items: center;
+}
+
+.tasks-card-entity-collapsible-edit-button:focus-visible,
+.tasks-card-entity-collapsible-collapse-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-card-entity-collapsible-edit-button {
@@ -176,6 +196,12 @@
 	border-radius: var(--ui-border-radius-3xs);
 }
 
+.tasks-card-entity-text-action-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-card-entity-text-action-button-icon {
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
@@ -190,4 +216,23 @@
 
 .tasks-card-entity-text-action-button-text-copilot {
 	color: var(--ui-color-copilot-primary);
+}
+
+/* Blue accent for quotes in task card rich-text zones (description/result). SC-003 / AC-011. */
+.tasks-card-entity-collapsible-text .ui-typography-quote,
+.tasks-entity-text-area-wrapper .ui-typography-quote {
+	background-color: var(--ui-color-accent-soft-blue-3);
+	border-color: var(--ui-color-accent-soft-blue-2);
+}
+
+/* Quote icon: recolor via mask + token color (base style uses a hex-baked SVG background). */
+.tasks-card-entity-collapsible-text .ui-typography-quote:before,
+.tasks-entity-text-area-wrapper .ui-typography-quote:before {
+	--tasks-quote-icon-mask: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2214%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M0%2011.813C2.563%2010.6%203.844%209.171%203.844%207.531c-1.104-.121-2.01-.551-2.719-1.29C.417%205.5.063%204.646.063%203.675c0-1.033.348-1.903%201.046-2.612C1.807.354%202.677%200%203.72%200c1.146%200%202.146.46%203%201.382C7.573%202.303%208%203.422%208%204.738%208%208.685%205.74%2011.773%201.219%2014L0%2011.813z%22/%3E%3C/svg%3E');
+	background-image: none;
+	background-color: var(--ui-color-accent-soft-blue-1);
+	-webkit-mask-image: var(--tasks-quote-icon-mask);
+	-webkit-mask-repeat: no-repeat;
+	mask-image: var(--tasks-quote-icon-mask);
+	mask-repeat: no-repeat;
 }

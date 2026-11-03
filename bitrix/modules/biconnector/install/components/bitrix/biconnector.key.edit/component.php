@@ -13,9 +13,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\BIConnector\Services\ApacheSuperset;
+use Bitrix\Main\Application;
+use Bitrix\Main\Context;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\BiConnector\Settings;
+
+Loc::loadMessages(Application::getDocumentRoot() . '/bitrix/js/biconnector/settings-panel/config.php');
 
 if (!$USER->CanDoOperation('biconnector_key_manage'))
 {
@@ -39,71 +45,30 @@ if (empty($arResult['CONNECTIONS']))
 
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimit())
 {
-		$arResult['ERRORS'][] = [
-			'MESSAGE' => Loc::getMessage(
-				'CC_BBKE_ERROR_LIMIT_EXCEEDED_MSGVER_1',
-				[
-					'[helpdesk_link]' => '<a class="biconnector-key-edit_link" href="https://helpdesk.bitrix24.ru/open/26703738/" target="_blank">',
-					'[/helpdesk_link]' => '</a>',
-				]
-			),
-			'IS_HTML' => true,
-		];
+	$arResult['ERRORS'][] = [
+		'MESSAGE' => Loc::getMessage(
+			'CC_BBKE_ERROR_LIMIT_EXCEEDED_MSGVER_1',
+			[
+				'[helpdesk_link]' => '<a class="biconnector-key-edit_link" href="https://helpdesk.bitrix24.ru/open/26703738/" target="_blank">',
+				'[/helpdesk_link]' => '</a>',
+			]
+		),
+		'IS_HTML' => true,
+	];
 }
 
-if (
-	$_SERVER['REQUEST_METHOD'] === 'POST'
+$submittedFormData = null;
+$request = Context::getCurrent()->getRequest();
+$isSaveRequest =
+	$request->isPost()
 	&& check_bitrix_sessid()
-	&& $_POST['save'] === 'Y'
-)
-{
-	if (empty($arResult['ERRORS']))
-	{
-		$data = [
-			'ID' => (int)$_POST['ID'],
-			'ACTIVE' => $_POST['ACTIVE'] === 'Y',
-			'CONNECTION' => $_POST['CONNECTION'],
-			'USER_ID' => $USER->GetID(),
-		];
-		if (isset($_POST['USERS']))
-		{
-			$data['USERS'] = explode(',', $_POST['USERS']);
-		}
-
-		$resultSave = \Bitrix\BIConnector\KeyManager::save($data);
-
-		if ($resultSave instanceof \Bitrix\Main\ErrorCollection)
-		{
-			foreach ($resultSave->getValues() as $error)
-			{
-				if ($error instanceof \Bitrix\Main\Error)
-				{
-					ShowError(
-						$error->getCode()
-						. ($error->getMessage() !== '' ? ': ' . $error->getMessage() : '')
-					);
-				}
-			}
-			return;
-		}
-		else
-		{
-			$redirectUrl = str_replace('#ID#', $resultSave, $arParams['KEY_EDIT_URL']);
-			if (($_REQUEST['IFRAME'] == 'Y') && ($_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER'))
-			{
-				$redirectUrl = (new \Bitrix\Main\Web\Uri($redirectUrl))
-					->addParams([
-						'IFRAME' => 'Y',
-						'IFRAME_TYPE' => 'SIDE_SLIDER',
-						'sidePanelAction' => 'close',
-					])
-					->getUri()
-				;
-			}
-			LocalRedirect($redirectUrl);
-		}
-	}
-}
+	&& $request->getPost('save') === 'Y'
+;
+$submittedAccessKey = $isSaveRequest ? $request->getPost('ACCESS_KEY') : null;
+$isSubmittedAccessKeyValid =
+	is_string($submittedAccessKey)
+	&& preg_match('/^[A-Za-z0-9]{32}$/D', $submittedAccessKey) === 1
+;
 
 $arResult['GRID_ID'] = 'biconnector_key_list';
 $arResult['FORM_ID'] = 'biconnector_key_edit';
@@ -125,18 +90,110 @@ $converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
 if ($aKey = $keyList->fetch($converter))
 {
 	$APPLICATION->SetTitle(Loc::getMessage('CC_BBKE_TITLE_EDIT'));
+	$arResult['FORM_STATE'] = 'edit';
 	$arResult['FORM_DATA'] = $aKey;
 }
 else
 {
 	$APPLICATION->SetTitle(Loc::getMessage('CC_BBKE_TITLE_CREATE'));
+	$arResult['FORM_STATE'] = 'create';
 	$arResult['FORM_DATA'] = [
 		'ID' => 0,
 		'CONNECTION' => key($arResult['CONNECTIONS']),
-		'ACCESS_KEY' => \Bitrix\BIConnector\KeyManager::generateAccessKey(),
+		'ACCESS_KEY' => $isSubmittedAccessKeyValid
+			? $submittedAccessKey
+			: \Bitrix\BIConnector\KeyManager::generateAccessKey(),
 		'ACTIVE' => 'Y',
 		'APP_ID' => 0,
 	];
+}
+
+$buildKeyUrl = static function (int $keyId) use ($arParams, $request): string
+{
+	$url = new Uri(str_replace('#ID#', (string)$keyId, $arParams['KEY_EDIT_URL']));
+	if (
+		$request->getQuery('IFRAME') === 'Y'
+		&& $request->getQuery('IFRAME_TYPE') === 'SIDE_SLIDER'
+	)
+	{
+		$url->addParams([
+			'IFRAME' => 'Y',
+			'IFRAME_TYPE' => 'SIDE_SLIDER',
+			'sidePanelAction' => 'close',
+		]);
+	}
+
+	return $url->getUri();
+};
+
+$getSubmittedUsers = static function () use ($request): array
+{
+	$users = [];
+	foreach (explode(',', (string)$request->getPost('USERS')) as $userId)
+	{
+		$userId = (int)$userId;
+		if ($userId > 0)
+		{
+			$users[] = $userId;
+		}
+	}
+
+	return $users;
+};
+
+if ($isSaveRequest)
+{
+	$submittedFormData = [
+		'ACTIVE' => $request->getPost('ACTIVE') === 'Y' ? 'Y' : 'N',
+		'CONNECTION' => (string)($request->getPost('CONNECTION') ?? key($arResult['CONNECTIONS'])),
+		'USERS' => $getSubmittedUsers(),
+	];
+	$data = [
+		'ACTIVE' => $submittedFormData['ACTIVE'] === 'Y',
+		'CONNECTION' => $submittedFormData['CONNECTION'],
+		'USER_ID' => (int)$USER->GetID(),
+	];
+	if ($request->getPost('USERS') !== null)
+	{
+		$data['USERS'] = $submittedFormData['USERS'];
+	}
+
+	if ($arResult['FORM_STATE'] === 'edit')
+	{
+		$data['ID'] = (int)$arResult['FORM_DATA']['ID'];
+	}
+	else
+	{
+		if (!$isSubmittedAccessKeyValid)
+		{
+			$arResult['ERRORS'][] = new Error(
+				Loc::getMessage('BICONNECTOR_SETTINGS_PANEL_SAVE_ERROR'),
+				'INVALID_ACCESS_KEY',
+			);
+		}
+		else
+		{
+			$data['ID'] = 0;
+			$data['ACCESS_KEY'] = $submittedAccessKey;
+		}
+	}
+
+	if (empty($arResult['ERRORS']))
+	{
+		$resultSave = \Bitrix\BIConnector\KeyManager::save($data);
+	}
+
+	if (isset($resultSave))
+	{
+		if (!$resultSave->isSuccess())
+		{
+			$arResult['ERRORS'][] = Loc::getMessage('BICONNECTOR_SETTINGS_PANEL_SAVE_ERROR');
+		}
+		else
+		{
+			LocalRedirect($buildKeyUrl((int)$resultSave->getData()['ID']));
+		}
+	}
 }
 
 $arResult['FORM_DATA']['USERS'] = [];
@@ -155,19 +212,11 @@ if ($arResult['FORM_DATA']['ID'] > 0)
 	}
 }
 
-if ($arResult['ERRORS'])
+if ($submittedFormData !== null)
 {
-	$arResult['FORM_DATA']['CONNECTION'] = $_POST['CONNECTION'];
-	$arResult['FORM_DATA']['ACCESS_KEY'] = $_POST['ACCESS_KEY'];
-	$arResult['FORM_DATA']['ACTIVE'] = $_POST['ACTIVE'];
-	$arResult['FORM_DATA']['USERS'] = [];
-	foreach (explode(',', $_POST['USERS']) as $userId)
-	{
-		if ($userId > 0)
-		{
-			$arResult['FORM_DATA']['USERS'][] = $userId;
-		}
-	}
+	$arResult['FORM_DATA']['CONNECTION'] = $submittedFormData['CONNECTION'];
+	$arResult['FORM_DATA']['ACTIVE'] = $submittedFormData['ACTIVE'];
+	$arResult['FORM_DATA']['USERS'] = $submittedFormData['USERS'];
 }
 
 Toolbar::addButton(new Settings\Buttons\Implementation());

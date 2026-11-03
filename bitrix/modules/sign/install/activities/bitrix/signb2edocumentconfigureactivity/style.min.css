@@ -1,0 +1,1 @@
+.sign-b2e-configure-activity__dictionary{display:flex;align-items:center;gap:var(--ui-space-inline-xs)}.sign-b2e-configure-activity__dictionary>input{flex:1 1 auto;min-width:0;box-sizing:border-box}.sign-b2e-configure-activity__dictionary-button{flex:0 0 auto;transition:opacity .2s ease}.sign-b2e-configure-activity__dictionary-button.--wait{opacity:.6;pointer-events:none}

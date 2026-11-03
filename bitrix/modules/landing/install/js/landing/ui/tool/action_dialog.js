@@ -4,30 +4,42 @@
 	BX.namespace("BX.Landing.UI.Tool");
 
 
-	function createPopup()
+	function createPopup(options = {})
 	{
-		return new BX.PopupWindow("action_dialog_" + (+new Date()), null, {
-			titleBar: BX.Landing.Loc.getMessage("LANDING_ACTION_DIALOG_TITLE"),
-			overlay: 0.5
+		return new BX.UI.Dialogs.MessageBox({
+			title: options.title || BX.Landing.Loc.getMessage("LANDING_ACTION_DIALOG_TITLE"),
+			message: options.content || "",
+			useAirDesign: true,
+			modal: true,
+			popupOptions: {
+				autoHide: true,
+				...options.popupOptions,
+			},
 		});
 	}
 
-	function createConfirmButton(text, callback)
+	function createConfirmButton(text, callback, options = {})
 	{
-		return new BX.PopupWindowButton({
+		return new BX.UI.Button({
 			id: "action_dialog_confirm",
-			className: "popup-window-button-accept",
+			props: {id: 'action_dialog_confirm'},
 			text: text || BX.Landing.Loc.getMessage("LANDING_ACTION_DIALOG_CONFIRM_BUTTON"),
-			events: {click: callback}
+			events: {click: callback},
+			useAirDesign: true,
+			style: BX.UI.Button.AirStyle.FILLED,
+			wide: options.wide === true,
 		});
 	}
 
 	function createCancelButton(text, callback)
 	{
-		return new BX.PopupWindowButtonLink({
+		return new BX.UI.Button({
 			id: "action_dialog_cancel",
+			props: {id: 'action_dialog_cancel'},
 			text: text || BX.Landing.Loc.getMessage("LANDING_ACTION_DIALOG_CANCEL_BUTTON"),
-			events: {click: callback}
+			events: {click: callback},
+			useAirDesign: true,
+			style: BX.UI.Button.AirStyle.OUTLINE,
 		});
 	}
 
@@ -36,10 +48,8 @@
 	 * Implements interface of confirm / alert dialog
 	 * @constructor
 	 */
-	BX.Landing.UI.Tool.ActionDialog = function()
-	{
-		this.popup = createPopup();
-		this.popup.popupContainer.classList.add("landing-ui-dialog-action");
+	BX.Landing.UI.Tool.ActionDialog = function() {
+		this.popup = null;
 	};
 
 
@@ -84,32 +94,15 @@
 			options = typeof options === "object" ? options : {};
 			options.title = options.title || BX.Landing.Loc.getMessage("LANDING_ACTION_DIALOG_TITLE");
 			options.content = options.content || BX.Landing.Loc.getMessage("LANDING_ACTION_DIALOG_CONTENT");
-
-			if (BX.type.isNotEmptyString(options.content))
-			{
-				options.content = BX.create("div", {
-					props: {className: "landing-ui-dialog-action-content"},
-					html: options.content
-				});
-			}
-			else if (BX.type.isDomNode(options.content))
-			{
-				options.content.style.display = null;
-				options.content = BX.create("div", {
-					props: {className: "landing-ui-dialog-action-content"},
-					children: [options.content]
-				});
-			}
-
-			this.popup.setTitleBar(options.title);
-			this.popup.setContent(options.content);
-
+			this.popup = createPopup(options);
 			return new Promise(function(resolve, reject) {
 				this.popup.setButtons([
 					createConfirmButton(options.confirm, function() {
 						resolve();
 						this.close();
-					}.bind(this)),
+					}.bind(this), {
+						wide: options.type === 'alert',
+					}),
 					options.type !== "alert" ?
 						createCancelButton(options.cancel, function() {
 							reject();
@@ -127,7 +120,11 @@
 		 */
 		close: function()
 		{
-			this.popup.close();
+			if (this.popup)
+			{
+				this.popup.close();
+			}
 		}
+
 	};
 })();

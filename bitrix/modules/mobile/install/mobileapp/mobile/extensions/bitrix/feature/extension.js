@@ -3,6 +3,7 @@
  */
 jn.define('feature', (require, exports, module) => {
 	const { feature } = require('native/feature');
+	const { requireLazy } = require('require-lazy');
 	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
@@ -87,6 +88,16 @@ jn.define('feature', (require, exports, module) => {
 			return Boolean(feature?.isFeatureEnabled('cache_module_api'));
 		}
 
+		static isAppFontSizeEnabled()
+		{
+			return Boolean(feature?.isFeatureEnabled('app_font_size_enabled'));
+		}
+
+		static isDefaultReactionAvailable()
+		{
+			return Boolean(feature?.isFeatureEnabled('chat_primary_reaction'));
+		}
+
 		static isNewReactionVersionSupported()
 		{
 			// api 61
@@ -122,14 +133,29 @@ jn.define('feature', (require, exports, module) => {
 			return Boolean(feature?.isFeatureEnabled('widget_background_layout'));
 		}
 
+		static isAppearanceBundlesEnabled()
+		{
+			return Boolean(feature?.isFeatureEnabled('app_appearance_bundles'));
+		}
+
 		static isLocationStatusSupported()
 		{
 			return Boolean(feature?.isFeatureEnabled('device_location_status'));
 		}
 
+		static isLocationWatchSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('device_location_watch'));
+		}
+
 		static isPersistentScreenSupported()
 		{
 			return Boolean(feature?.isFeatureEnabled('persistent_screen'));
+		}
+
+		static isTextEditorSupported()
+		{
+			return feature?.isFeatureEnabled('text_editor_v1') === true;
 		}
 	}
 

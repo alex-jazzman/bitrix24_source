@@ -30,12 +30,13 @@ export class Collection
 		return this.#currentDateTitles.has(dateTitle);
 	}
 
-	addDateGroup(dateTitle: string): void
+	addDateGroup(dateTitle: string, date: string): void
 	{
 		this.#currentDateTitles.add(dateTitle);
 		this.#lastDateItems = [];
 		this.#collection.push({
 			dateTitle,
+			date,
 			items: this.#lastDateItems,
 		});
 		this.#clearLastAuthor();

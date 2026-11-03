@@ -20,9 +20,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					this.getEditor().update(() => {
 						const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
 						if (ui_lexical_core.$isRangeSelection(selection)) {
-							this.#eventEmitter.emit('checkListButtonClick', selection.getTextContent());
-							this.getEditor().blur();
-							this.getEditor().dispatchCommand(ui_textEditor.Commands.HIDE_DIALOG_COMMAND);
+							// Keep the toolbar open so the picker can anchor to the live button.
+							// It closes on CheckListAddFromTextResolved, not on this click.
+							this.#eventEmitter.emit('checkListButtonClick', {
+								text: selection.getTextContent(),
+								// Live node stays valid while the toolbar is open; the popup recomputes position.
+								anchor: button.getContainer()
+							});
 						}
 					});
 				});
@@ -154,16 +158,27 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					}
 				},
 				removePlugins: [],
-				extraPlugins: [CheckListPlugin],
+				// No "to checklist" button in results, so the plugin is skipped there.
+				extraPlugins: this.#isCheckListAvailable() ? [CheckListPlugin] : [],
 				copilot: this.#getCopilotParams()
 			};
-			this.#editor = new ui_textEditor.TextEditor({
+			const editorOptions = {
 				...ExtendedEditorOptions,
 				...additionalEditorOptions
-			});
+			};
+			if (!this.#isCheckListAvailable()) {
+				// Remove the button in sync with the plugin, else the toolbar references an unregistered component.
+				editorOptions.floatingToolbar = ExtendedEditorOptions.floatingToolbar.filter(item => item !== CHECK_LIST_BUTTON);
+			}
+			this.#editor = new ui_textEditor.TextEditor(editorOptions);
 		}
 		setEditorText(content) {
 			this.#editor.setText(content);
+		}
+
+		// Called from the Vue layer after the action completes; the plugin no longer hides the toolbar on click.
+		closeFloatingToolbar() {
+			this.#editor?.dispatchCommand(ui_textEditor.Commands.HIDE_DIALOG_COMMAND);
 		}
 		getFiles() {
 			return this.#uploaderAdapter.getItems();
@@ -174,15 +189,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			this.#editor = null;
 		}
 		#subscribeToEvents() {
-			const checkListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
-			checkListPlugin.getEmitter().subscribe('checkListButtonClick', this.handleClickInCheckList);
+			if (this.#isCheckListAvailable()) {
+				const checkListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
+				checkListPlugin.getEmitter().subscribe('checkListButtonClick', this.handleClickInCheckList);
+			}
 			this.#fileService.subscribe('onFileComplete', this.onFileComplete);
 			this.#fileService.subscribe('onFileRemove', this.onFileRemove);
 			main_core.Event.bind(document, 'visibilitychange', this.onVisibilityChange);
 		}
 		#unsubscribeToEvents() {
-			const checkListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
-			checkListPlugin.getEmitter().unsubscribe('checkListButtonClick', this.handleClickInCheckList);
+			if (this.#isCheckListAvailable()) {
+				const checkListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
+				checkListPlugin.getEmitter().unsubscribe('checkListButtonClick', this.handleClickInCheckList);
+			}
 			this.#fileService.unsubscribe('onFileComplete', this.onFileComplete);
 			this.#fileService.unsubscribe('onFileRemove', this.onFileRemove);
 			main_core.Event.unbind(document, 'visibilitychange', this.onVisibilityChange);
@@ -257,7 +276,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						return {
 							copilotOptions: {
 								moduleId: 'tasks',
-								category: 'system',
+								category: 'tasks_results',
 								contextId: `tasks_result_${this.#entityId}`,
 								menuForceTop: false
 							},
@@ -268,6 +287,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				}
 			}
 			return {};
+		}
+		#isCheckListAvailable() {
+			// The button's event is only consumed by the task description, not the result editor.
+			return this.#entityType !== EntityTextTypes.Result;
 		}
 		handleEditorChange = () => {
 			this.#syncHighlightsDebounced();
@@ -280,8 +303,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			this.emit('editorBlurred');
 		};
 		handleClickInCheckList = baseEvent => {
-			const selectionText = baseEvent.getData();
-			this.emit('addCheckList', selectionText);
+			this.emit('addCheckList', baseEvent.getData());
 		};
 		onFileComplete = event => {
 			const file = event.getData();
@@ -500,24 +522,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	};
 
 	// @vue/component
-	const CollapseButton = {
-		components: {
-			TextMd: ui_system_typography_vue.TextMd
-		},
-		template: `
-		<div class="tasks-card-entity-collapsible-collapse-button">
-			<TextMd className="tasks-card-entity-collapsible-collapse-button-text">
-				{{ loc('TASKS_V2_ENTITY_TEXT_COLLAPSE') }}
-			</TextMd>
-		</div>
-	`
-	};
-
-	// @vue/component
 	const EditButton = {
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
 			TextMd: ui_system_typography_vue.TextMd
+		},
+		props: {
+			ariaLabel: {
+				type: String,
+				default: ''
+			}
 		},
 		setup() {
 			return {
@@ -525,26 +539,35 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			};
 		},
 		template: `
-		<div class="tasks-card-entity-collapsible-edit-button">
+		<button
+			type="button"
+			class="tasks-card-entity-collapsible-edit-button"
+			:aria-label="ariaLabel || null"
+		>
 			<BIcon
 				class="tasks-card-entity-collapsible-edit-button-icon"
 				:name="Outline.EDIT_L"
 				:size="20"
+				aria-hidden="true"
 			/>
 			<TextMd className="tasks-card-entity-collapsible-edit-button-text">
 				{{ loc('TASKS_V2_ENTITY_TEXT_EDIT') }}
 			</TextMd>
-		</div>
+		</button>
 	`
 	};
 
 	// @vue/component
-	const ExpandButton = {
+	const ToggleButton = {
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
 			TextMd: ui_system_typography_vue.TextMd
 		},
 		props: {
+			opened: {
+				type: Boolean,
+				default: false
+			},
 			showFilesIndicator: {
 				type: Boolean,
 				default: false
@@ -559,25 +582,38 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
+		computed: {
+			label() {
+				return this.opened ? this.loc('TASKS_V2_ENTITY_TEXT_COLLAPSE') : this.loc('TASKS_V2_ENTITY_TEXT_EXPAND');
+			},
+			showFiles() {
+				return !this.opened && this.showFilesIndicator && this.filesCount > 0;
+			}
+		},
 		template: `
-		<div class="tasks-card-entity-collapsible-collapse-button">
+		<button
+			type="button"
+			class="tasks-card-entity-collapsible-collapse-button"
+			:aria-expanded="opened"
+		>
 			<span
-				v-if="showFilesIndicator && filesCount"
+				v-if="showFiles"
 				class="tasks-card-entity-collapsible-collapse-button-files"
 			>
 				<BIcon
 					:name="Outline.ATTACH"
 					:size="20"
 					class="tasks-card-entity-collapsible-collapse-button-icon"
+					aria-hidden="true"
 				/>
 				<TextMd className="tasks-card-entity-collapsible-collapse-button-text">
 					{{ filesCount }}
 				</TextMd>
 			</span>
 			<TextMd className="tasks-card-entity-collapsible-collapse-button-text">
-				{{ loc('TASKS_V2_ENTITY_TEXT_EXPAND') }}
+				{{ label }}
 			</TextMd>
-		</div>
+		</button>
 	`
 	};
 
@@ -597,8 +633,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			BIcon: ui_iconSet_api_vue.BIcon,
 			TextMd: ui_system_typography_vue.TextMd,
 			EditButton,
-			ExpandButton,
-			CollapseButton
+			ToggleButton
 		},
 		inject: {
 			task: {}
@@ -635,6 +670,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			stickyFooter: {
 				type: Boolean,
 				default: false
+			},
+			enableClickToExpand: {
+				type: Boolean,
+				default: false
+			},
+			editButtonLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['editButtonClick', 'update:opened'],
@@ -647,7 +690,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		data() {
 			return {
 				isOverflowing: false,
-				isOverflowChecked: false
+				isOverflowChecked: false,
+				hadSelectionOnMouseDown: false
 			};
 		},
 		computed: {
@@ -676,6 +720,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			},
 			showCollapseButton() {
 				return this.opened && !this.openByDefault;
+			},
+			showToggleButton() {
+				return Boolean(this.hidden) || this.showCollapseButton;
 			},
 			showEditButton() {
 				return !this.readonly;
@@ -769,9 +816,35 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			handleClickCollapser(targetEvent) {
 				this.setPreviewShown(false, targetEvent);
 			},
-			handleMouseDownText() {},
+			handleToggle() {
+				if (this.opened) {
+					this.handleClickCollapser(EntityCollapsibleTextEvent.CollapseButtonClick);
+					return;
+				}
+				this.handleClickOpener(EntityCollapsibleTextEvent.ExpandButtonClick);
+			},
+			handleMouseDownText() {
+				const selection = window.getSelection();
+				const preview = this.$refs.preview;
+				this.hadSelectionOnMouseDown = Boolean(selection?.toString().trim() && selection.rangeCount > 0 && preview && selection.getRangeAt(0).intersectsNode(preview));
+			},
 			handleMouseMoveText() {},
-			handleMouseUpText() {},
+			handleMouseUpText(event) {
+				if (event.button !== 0 || !this.enableClickToExpand || !this.hidden) {
+					return;
+				}
+				if (event.target.closest('a, button, img, video')) {
+					return;
+				}
+				const dismissedSelection = this.hadSelectionOnMouseDown;
+				this.hadSelectionOnMouseDown = false;
+				setTimeout(() => {
+					const textSelected = window.getSelection()?.toString().trim();
+					if (!textSelected && !dismissedSelection) {
+						this.setPreviewShown(true, EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp);
+					}
+				}, 0);
+			},
 			handleSelectionStart() {
 				this.removeHandlerSelectionFinish();
 				this.addHandlerSelectionFinish();
@@ -799,6 +872,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			class="tasks-card-entity-collapsible-text print-fit-height"
 			:class="{ '--disable-animation': openByDefault }"
 			:style="{ 'maxHeight': maxHeightStyle }"
+			data-testid="tasks-entity-collapsible-text"
 			ref="preview"
 		>
 			<HtmlFormatterComponent
@@ -828,9 +902,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				'--sticky': stickyFooter,
 			}"
 		>
-			<EditButton v-if="showEditButton" @click="$emit('editButtonClick')" />
-			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="handleClickOpener(EntityCollapsibleTextEvent.ExpandButtonClick)" />
-			<CollapseButton v-if="showCollapseButton" @click="handleClickCollapser(EntityCollapsibleTextEvent.CollapseButtonClick)" />
+			<EditButton
+				v-if="showEditButton"
+				data-testid="tasks-entity-collapsible-text-edit-btn"
+				:ariaLabel="editButtonLabel"
+				@click="$emit('editButtonClick')"
+			/>
+			<ToggleButton v-if="showToggleButton" :opened :showFilesIndicator :filesCount data-testid="tasks-entity-collapsible-text-toggle-btn" @click="handleToggle" />
 		</div>
 	`
 	};
@@ -864,6 +942,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			iconSize: {
 				type: Number,
 				default: null
+			},
+			ariaHaspopup: {
+				type: String,
+				default: ''
+			},
+			ariaExpanded: {
+				type: Boolean,
+				default: null
 			}
 		},
 		setup() {
@@ -889,13 +975,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			class="tasks-card-entity-text-action-button-container"
 			v-hint="showTooltip ? tooltip : null"
 		>
-			<button class="tasks-card-entity-text-action-button" type="button">
+			<button
+				class="tasks-card-entity-text-action-button"
+				type="button"
+				:aria-label="title || copilotText || null"
+				:aria-haspopup="ariaHaspopup || null"
+				:aria-expanded="ariaExpanded"
+			>
 				<BIcon
 					:name="iconName"
 					:color="iconColor"
 					:size="iconSize"
 					hoverable
 					class="tasks-card-entity-text-action-button-icon"
+					aria-hidden="true"
 				/>
 			</button>
 			<TextSm
@@ -1018,9 +1111,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			}
 		},
 		template: `
-		<ActionButton 
-			:iconName="Outline.MORE_L" 
-			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_MORE')" 
+		<ActionButton
+			:iconName="Outline.MORE_L"
+			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_MORE')"
+			ariaHaspopup="menu"
+			:ariaExpanded="isMenuShown"
 			@click="isMenuShown = true"
 			ref="actionButton"
 		/>

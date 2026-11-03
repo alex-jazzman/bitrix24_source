@@ -76,7 +76,8 @@ export const CollabNavigation = {
 						:text="getTitle()"
 						:isSelected="currentSection === type"
 						:counter="getSectionCounter(type)"
-						@click="onSelectSection(type)"
+						:data-testid="'im-navigation-section-' + type"
+						@activate="onSelectSection(type)"
 					/>
 				</div>
 			</div>

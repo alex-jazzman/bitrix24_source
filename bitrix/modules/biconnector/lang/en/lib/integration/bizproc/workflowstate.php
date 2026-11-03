@@ -32,4 +32,4 @@ $MESS["BP_BIC_WF_STATE_MODULE_LISTS"] = "Lists";
 $MESS["BP_BIC_WF_STATE_MODULE_RPA"] = "RPA";
 $MESS["BP_BIC_WF_STATE_MODULE_TASKS"] = "Tasks and Projects";
 $MESS["BP_BIC_WF_STATE_TABLE"] = "Workflow";
-$MESS["BP_BIC_WF_STATE_TABLE_DESCRIPTION_FULL"] = "Includes information on active workflows, such as their statuses, execution times, and details about the users who started or edited them.";
+$MESS["BP_BIC_WF_STATE_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Data on running business processes: completion status, dates and times, templates, element types, and users.";

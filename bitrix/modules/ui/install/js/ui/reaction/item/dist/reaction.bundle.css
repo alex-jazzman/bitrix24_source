@@ -175,7 +175,6 @@
 
 .ui-reaction__inner.--foldedHands {
 	background-image: url("images/folded-hands.svg");
-	transform: scale(1.07);
 }
 
 .ui-reaction__inner.--faceWithStuckOutTongue {

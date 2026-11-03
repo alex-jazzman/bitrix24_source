@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.v2.lib.counter',
+		'im.v2.lib.utils',
 		'ui.system.chip.vue',
 	],
 	'skip_core' => true,

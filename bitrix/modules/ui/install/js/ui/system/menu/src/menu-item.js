@@ -7,7 +7,7 @@ import 'ui.icon-set.outline';
 import { Menu } from './menu';
 import { mouse } from './mouse';
 import { MenuItemDesign } from './const';
-import type { MenuItemOptions, MenuItemCallbacks } from './types';
+import { type MenuItemOptions, type MenuItemCallbacks } from './types';
 
 import './menu-item.css';
 
@@ -27,6 +27,7 @@ export class MenuItem
 	#closeTimeout: number;
 	#subMenuHovered: boolean;
 	#subMenuOutdated: boolean = false;
+	#appliedDatasetKeys: string[] = [];
 
 	constructor(options: MenuItemOptions, callbacks: MenuItemCallbacks)
 	{
@@ -88,6 +89,7 @@ export class MenuItem
 		`;
 
 		this.#applyAccessibilityAttributes();
+		this.#applyDataset();
 
 		return this.#element;
 	}
@@ -135,6 +137,39 @@ export class MenuItem
 			// tariff hint, a "why is this off" popup).
 			action.setAttribute('aria-disabled', 'true');
 		}
+	}
+
+	#applyDataset(): void
+	{
+		if (this.#options.uiButtonOptions)
+		{
+			// The action node belongs to ui.buttons, which applies its own
+			// uiButtonOptions.dataset; the menu never writes over it.
+			return;
+		}
+
+		const dataset = Type.isPlainObject(this.#options.dataset) ? { ...this.#options.dataset } : {};
+		if (Type.isStringFilled(this.#options.id) && !('testid' in dataset))
+		{
+			dataset.testid = this.#options.id;
+		}
+
+		const map = this.#action.dataset;
+
+		// The previous generation's keys must not leak through, same as the ARIA
+		// states in #refreshElement.
+		this.#appliedDatasetKeys.forEach((key: string): void => delete map[key]);
+		this.#appliedDatasetKeys = [];
+
+		Object.entries(dataset).forEach(([key, value]: [string, string | number | null]): void => {
+			if (Type.isNil(value))
+			{
+				return;
+			}
+
+			map[key] = value;
+			this.#appliedDatasetKeys.push(key);
+		});
 	}
 
 	#handleClick = (): void => {
@@ -199,6 +234,8 @@ export class MenuItem
 		{
 			this.#action.setAttribute('aria-expanded', 'true');
 		}
+
+		this.#applyDataset();
 	}
 
 	showSubMenu = (options: { viaKeyboard?: boolean } = {}): void => {

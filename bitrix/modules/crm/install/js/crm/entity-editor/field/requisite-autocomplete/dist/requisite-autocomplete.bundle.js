@@ -68,7 +68,7 @@ this.BX = this.BX || {};
 				main_core.Dom.append(autocompleteContainer, this._wrapper);
 			}
 			if (this.isContextMenuEnabled()) {
-				this._wrapper.appendChild(this.createContextMenuButton());
+				this.insertContextMenuButton(this._wrapper);
 			}
 			if (this.isDragEnabled()) {
 				this.initializeDragDropAbilities();

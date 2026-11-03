@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/button', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 	const { Avatar } = require('ui-system/blocks/avatar');
@@ -10,6 +11,8 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/button
 	const { resolveSidebarType, SidebarType } = require('im/messenger/controller/sidebar-v2/factory');
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const { ParticipantBaseItem } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base');
+
+	const logger = getLogger('sidebar--participants-service');
 
 	/**
 	 * @class ParticipantButtonItem
@@ -59,10 +62,12 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/button
 				? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_ADD_SUBSCRIBERS')
 				: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_ADD_PARTICIPANTS');
 
-			void onAddParticipants({
+			onAddParticipants({
 				store: this.store,
 				dialogId: this.getDialogId(),
 				widgetTitle,
+			}).catch((error) => {
+				logger.error(`${this.constructor.name}.handleOnClick`, error);
 			});
 		}
 	}

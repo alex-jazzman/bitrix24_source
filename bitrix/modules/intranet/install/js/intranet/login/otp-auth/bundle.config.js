@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/otp.bundle.js',
 	namespace: 'BX.Intranet.Login',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

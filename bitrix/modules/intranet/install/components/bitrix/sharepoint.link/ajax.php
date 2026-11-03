@@ -1,11 +1,11 @@
 <?
-define("STOP_STATISTICS", true);
+defined('STOP_STATISTICS') || define('STOP_STATISTICS', true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-$MODE = $_REQUEST['mode'];
-$IBLOCK_ID = intval($_REQUEST['ID']);
-if ($MODE && $IBLOCK_ID > 0 || $MODE == 'test')
+$MODE = is_string($_REQUEST['mode'] ?? null) ? $_REQUEST['mode'] : '';
+$IBLOCK_ID = is_string($_REQUEST['ID'] ?? null) ? intval($_REQUEST['ID']) : 0;
+if ($MODE && $IBLOCK_ID > 0)
 {
 	$APPLICATION->RestartBuffer();
 	$APPLICATION->IncludeComponent('bitrix:sharepoint.link', '', array(
@@ -15,4 +15,3 @@ if ($MODE && $IBLOCK_ID > 0 || $MODE == 'test')
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");
-?>

@@ -1,4 +1,4 @@
-import { Dom, Tag, Loc } from 'main.core';
+import { Dom, Event, Tag, Loc, Text } from 'main.core';
 
 import './css/style.css';
 
@@ -39,14 +39,22 @@ export class MailboxSelector
 		const mailboxId = Number(selectorConfig.currentMailboxId) || 0;
 		const unseenInOthers = Number(selectorConfig.unseenCountInOtherMailboxes) || 0;
 		const markerHidden = (this.isAllMailMode || unseenInOthers <= 0) ? 'mail-hidden-element' : '';
+		const avatar = this.isAllMailMode
+			? null
+			: this.#renderMailboxAvatar(
+				selectorConfig.currentMailboxAvatarUrl,
+				'mail-mailbox-selector-current-avatar',
+			)
+		;
 
 		const button = Tag.render`
 			<button class="mailbox-panel ui-btn ui-btn-light-border --air ui-btn-no-caps --style-outline mail-btn-dropdown"
 				data-role="mailbox-current-title"
 				data-mailbox-id="${mailboxId}"
-				data-test-id="mail_sync-panel__mailbox-select"
+				data-testid="mail-mailbox-selector-button"
 				title="${hoverText}">
 				<span class="mail-btn-dropdown-title">
+					${avatar}
 					<span class="mail-btn-dropdown-title-mail-name" title="${titleText}">${titleText}</span>
 				</span>
 				<span class="ui-icon-set --chevron-down-m mail-btn-dropdown-arrow" aria-hidden="true"></span>
@@ -54,9 +62,52 @@ export class MailboxSelector
 			</button>
 		`;
 
-		root.replaceChildren(button);
+		Dom.clean(root);
+		Dom.append(button, root);
 		this.mailboxMenuToggle = button;
 		this.unreadMarker = button.querySelector('[data-role="unreadMessageMailboxesMarker"]');
+	}
+
+	/**
+	 * Avatars of the menu items wait for the menu to show them: the protected URL answers with no-store,
+	 * and the menu is rebuilt on every counter change, so eager items would request every mailbox anew.
+	 */
+	#renderMailboxAvatar(avatarUrl, testId, { bindFallback = true, lazy = false } = {})
+	{
+		if (!avatarUrl)
+		{
+			return null;
+		}
+
+		const image = Tag.render`
+			<img class="mail-mailbox-avatar" data-testid="${testId}" alt="" aria-hidden="true"
+				loading="${lazy ? 'lazy' : 'eager'}" decoding="async">
+		`;
+		Dom.attr(image, 'src', avatarUrl);
+		if (bindFallback)
+		{
+			this.#bindAvatarFallback(image);
+		}
+
+		return image;
+	}
+
+	#bindAvatarFallback(image)
+	{
+		if (image.dataset.avatarFallbackBound === 'true')
+		{
+			return;
+		}
+
+		Dom.attr(image, 'data-avatar-fallback-bound', 'true');
+		Event.bindOnce(image, 'error', () => Dom.remove(image));
+	}
+
+	#bindMenuAvatarFallbacks(container)
+	{
+		container?.querySelectorAll('[data-testid^="mail-mailbox-selector-menu-avatar-"]').forEach(
+			(image) => this.#bindAvatarFallback(image),
+		);
 	}
 
 	subscribeToOpenMessage()
@@ -161,7 +212,12 @@ export class MailboxSelector
 
 		const wrapper = Tag.render`
 			<span class="mail-menu-popup-item-text-wrapper">
-				<span class="main-buttons-item-text">${mailbox.name}</span>
+				${this.#renderMailboxAvatar(
+					mailbox.avatarUrl,
+					`mail-mailbox-selector-menu-avatar-${mailbox.id}`,
+					{ bindFallback: false, lazy: true },
+				)}
+				<span class="main-buttons-item-text">${Text.encode(mailbox.name)}</span>
 			</span>
 		`;
 		if (mailbox.isLocked)
@@ -235,6 +291,7 @@ export class MailboxSelector
 			{
 				events: {
 					onPopupFirstShow: () => {
+						this.#bindMenuAvatarFallbacks(popup.getMenuContainer?.());
 						popup.getMenuItems().forEach((menuItem) => {
 							if (menuItem.options.dataset?.isLocked !== true)
 							{
@@ -251,7 +308,7 @@ export class MailboxSelector
 		const menuContainer = popup.getMenuContainer?.();
 		if (menuContainer)
 		{
-			Dom.attr(menuContainer, 'data-test-id', 'mail_sync-panel__mailbox-menu');
+			Dom.attr(menuContainer, 'data-testid', 'mail-mailbox-selector-menu');
 		}
 
 		popup.popupWindow.isShown() ? popup.close() : popup.show();

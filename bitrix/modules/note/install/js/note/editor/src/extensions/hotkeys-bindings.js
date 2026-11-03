@@ -70,6 +70,24 @@ const EDITOR_COMMANDS = {
 
 		return true;
 	},
+
+	// The Disk picker is host-owned UI as well: the intent goes to note-editor.js, which opens the very
+	// picker its toolbar button opens. The combo is bound only where the feature is on (see
+	// buildHotkeyShortcuts), so consuming the key here always leads to a picker.
+	pickDiskFile: (editor) => {
+		editor.emit('note:hotkey', { action: 'pickDiskFile' });
+
+		return true;
+	},
+
+	// date node (note-date-node.js): a plain toggle, entirely owned by the extension's own
+	// `toggleDate` command - no host intent needed, unlike the two entries above. The calendar
+	// itself only opens by a click on the node, never by this hotkey.
+	toggleDate: (editor) => {
+		editor.chain().focus().toggleDate().run();
+
+		return true;
+	},
 };
 
 // Builtin combos are bound by the official TipTap packages; only the extra aliases the descriptor
@@ -96,26 +114,38 @@ function resolveHandler(command: string | null): Function | null
 // `editorHotkeys` are the note-added `binding:'new'` editor-scoped entries; `descriptor` is the
 // full list, used only to pick up the extra aliases on builtin entries. Builtin primary combos are
 // intentionally NOT rebound here (one keymap per key) — the TipTap packages own them.
-export function buildHotkeyShortcuts({ editorHotkeys, descriptor }: {
+//
+// `features` are the features this portal has switched on. An entry tied to one that is off is not
+// bound at all, by the same rule the help panel lists them: a bound combo is consumed, so binding an
+// action nothing will perform would take the key away from the browser and give nothing back —
+// Ctrl+Shift+D would stop bookmarking and start doing nothing.
+export function buildHotkeyShortcuts({ editorHotkeys, descriptor, features = [] }: {
 	editorHotkeys: Array<Object>,
 	descriptor: Array<Object>,
+	features?: Array<string>,
 }): Object
 {
+	const isAvailable = (entry) => entry.feature === null || features.includes(entry.feature);
 	const shortcuts = {};
 
-	for (const { combo, command } of editorHotkeys)
+	for (const entry of editorHotkeys)
 	{
-		const handler = resolveHandler(command);
+		if (!isAvailable(entry))
+		{
+			continue;
+		}
+
+		const handler = resolveHandler(entry.command);
 		if (handler)
 		{
-			shortcuts[combo] = handler;
+			shortcuts[entry.combo] = handler;
 		}
 	}
 
 	for (const entry of descriptor)
 	{
 		const run = BUILTIN_ALIAS_COMMANDS[entry.id];
-		if (entry.binding !== 'builtin' || !run || entry.aliases.length === 0)
+		if (entry.binding !== 'builtin' || !run || entry.aliases.length === 0 || !isAvailable(entry))
 		{
 			continue;
 		}

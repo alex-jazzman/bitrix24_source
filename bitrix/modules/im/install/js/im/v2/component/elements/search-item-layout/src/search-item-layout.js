@@ -15,6 +15,10 @@ export const SearchItemLayout = {
 			type: Boolean,
 			default: false,
 		},
+		keyboardActive: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['click', 'contextmenu'],
 	computed:
@@ -24,11 +28,13 @@ export const SearchItemLayout = {
 	template: `
 		<div
 			class="bx-im-search-item-layout__container bx-im-search-item-layout__scope"
-			:class="{ '--selected': selected }"
+			:class="{ '--selected': selected, '--keyboard-active': keyboardActive }"
 			@click="$emit('click', $event)"
 			@contextmenu.prevent="$emit('contextmenu', $event)"
 		>
-			<div class="bx-im-search-item-layout__avatar-container">
+			<!-- Decoration only: the avatar repeats what the header already says, so its initials must not
+			     end up in the accessible name of the row. -->
+			<div class="bx-im-search-item-layout__avatar-container" aria-hidden="true">
 				<slot name="avatar" />
 			</div>
 			<div class="bx-im-search-item-layout__content-container" :class="{ '--centered': centered }">

@@ -2,67 +2,241 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 36px;
-	height: 36px;
+	width: var(--ui-size-4xl);
+	height: var(--ui-size-4xl);
 	cursor: pointer;
-	transition: all 0.2s ease;
-	background: var(--ui-color-palette-white-base);
-	border-radius: 8px;
+	transition: background-color 200ms ease;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-sm);
 	border-color: transparent;
 }
 
 .bp-connect-agent-button:hover:not(:disabled) {
-	background-color: var(--ui-color-base-30);
+	background-color: var(--ui-color-base-7);
 }
 
 .bp-connect-agent-button:active:not(:disabled) {
-	background-color: var(--ui-color-base-40);
+	background-color: var(--ui-color-base-6);
 }
 
 .bp-connect-agent-button:focus-visible {
-	outline: 1px solid var(--ui-color-accent-main-link);
-	outline-offset: 2px;
-	border-radius: 8px;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .bp-connect-agent-button--loading {
-	opacity: 0.6;
 	cursor: not-allowed;
 }
 
-.bp-connect-agent-button--locked {
-	opacity: 0.5;
-	cursor: pointer;
+/* Only the icon turns accent while the popup is open: the toolbar keeps its
+   row of white buttons, the colour of the icon reports the open panel. */
+.bp-connect-agent-button--active:hover:not(:disabled) {
+	background-color: var(--ui-color-bg-content-primary);
 }
 
 .bp-connect-agent-popup {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 16px;
 	width: 100%;
 	box-sizing: border-box;
+	/* A ceiling, not a height: the popup keeps the height of its content up to the room
+	   the trigger leaves under itself, so a low window gets a shorter popup instead of one
+	   hanging past the bottom of the canvas. Only the top edge of the popup is measured
+	   (--bp-connect-agent-popup-top, see getPopupStyle), the rest is counted here, so a
+	   window resized in height re-fits the popup on its own.
+	   What scrolls is __body, so the vertical scroll here stays inert - it only takes over
+	   on a window so low that the promo header alone fills the ceiling and __body has
+	   nothing left to scroll. Neither axis is visible, so the corners stay rounded. */
+	max-height: calc(100vh - var(--bp-connect-agent-popup-top, 0px) - var(--ui-space-stack-md));
+	border-radius: var(--ui-border-radius-lg);
+	overflow: hidden auto;
 }
 
-.bp-connect-agent-popup__title {
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--ui-color-base-90);
+/* Soft BitrixGPT background for a custom AI surface: the gradient stops are
+   tokens, only the geometry is ours (see bitrix-gpt design guidelines). */
+.bp-connect-agent-popup__promo {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	/* Keeps the header whole above the scrolling body instead of being squeezed with it
+	   once the popup is at its ceiling: the chip reports the state of the access. */
+	flex: 0 0 auto;
+	padding: var(--ui-space-inset-lg2) var(--ui-space-inset-lg2) var(--ui-space-inset-lg);
+	background: linear-gradient(
+		269.7deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.38%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
 }
 
-.bp-connect-agent-popup__hint {
-	font-size: 13px;
-	color: var(--ui-color-base-60);
+.bp-connect-agent-popup__promo-content {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-xs);
+	flex-grow: 1;
+	min-width: 0;
+}
+
+/* Decorative watermark: sits behind the header content, hence the explicit
+   stacking order on the text column above. */
+.bp-connect-agent-popup__watermark {
+	position: absolute;
+	top: -30px;
+	right: -36px;
+	display: flex;
+}
+
+.bp-connect-agent-popup__spark {
+	position: absolute;
+	display: flex;
+}
+
+.bp-connect-agent-popup__spark--lower {
+	right: 132px;
+	bottom: 10px;
+}
+
+.bp-connect-agent-popup__spark--upper {
+	top: 16px;
+	right: 156px;
+}
+
+.bp-connect-agent-popup__kicker {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+.bp-connect-agent-popup__kicker-text {
+	color: var(--ui-color-base-2);
+}
+
+.bp-connect-agent-popup__promo-text {
+	color: var(--ui-color-base-2);
 }
 
 .bp-connect-agent-popup__status {
-	font-size: 14px;
-	font-weight: 500;
-	color: var(--ui-color-base-80);
+	display: flex;
+	margin-top: var(--ui-space-stack-xs);
+}
+
+/* The status chip only reports state, so it must not look clickable. The override
+   goes on the chip itself: it declares --cursor: pointer on its own element, and
+   an own declaration beats any value inherited from an ancestor. */
+.bp-connect-agent-popup__status .ui-chip {
+	--cursor: default;
+}
+
+/* Everything under the promo header, and what scrolls once the popup is at its ceiling:
+   the steps, the command and the row of buttons stay reachable instead of being clipped.
+   min-height:0 is what lets a flex item shrink below its content and scroll. */
+.bp-connect-agent-popup__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	gap: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-lg2);
+}
+
+/* Same design as Alert tintedWarning, hand-built: the component hardcodes
+   18px 22px paddings with neither a prop nor a variable to change them. */
+.bp-connect-agent-popup__warning {
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	border: var(--ui-border-width-thin) solid var(--ui-color-design-tinted-warning-stroke-alt);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-design-tinted-warning-bg);
+	color: var(--ui-color-base-1);
+}
+
+.bp-connect-agent-popup__benefits {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.bp-connect-agent-popup__benefit {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bp-connect-agent-popup__step {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+}
+
+.bp-connect-agent-popup__step-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-design-tinted-na-bg);
+	color: var(--ui-color-design-tinted-na-content);
+}
+
+.bp-connect-agent-popup__step-content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bp-connect-agent-popup__step-title {
+	color: var(--ui-color-base-1);
+}
+
+/* The step captions and the note about the secret link are read before the
+   command is copied, so they stay one step brighter than the hint. */
+.bp-connect-agent-popup__step-text,
+.bp-connect-agent-popup__secret-note {
+	color: var(--ui-color-base-2);
+}
+
+.bp-connect-agent-popup__hint {
+	color: var(--ui-color-base-3);
+}
+
+.bp-connect-agent-popup__secret-accent {
+	color: var(--ui-color-base-1);
+}
+
+/* The connect command carries an unbreakable secret URL: the textarea wraps
+   on whitespace only, so without this the tail is clipped out of view. */
+.bp-connect-agent-popup__step-content textarea {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+/* BInput centers its copy button, which parks the icon in the middle of a
+   multi-row command; pin it to the first line instead. */
+.bp-connect-agent-popup__step-content button {
+	align-self: flex-start;
+	margin-top: var(--ui-space-stack-2xs);
 }
 
 .bp-connect-agent-popup__actions {
 	display: flex;
-	gap: 8px;
+	flex-direction: row;
+	gap: var(--ui-space-inline-xs);
 	align-items: center;
+	margin-top: var(--ui-space-stack-xs);
 }

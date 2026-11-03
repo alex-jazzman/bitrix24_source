@@ -1,0 +1,9 @@
+<?php
+
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_LOADER'] = 'Приложение загружается';
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_EXPAND'] = 'Развернуть на весь экран';
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_COLLAPSE'] = 'Вернуть обычный размер';
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_LOAD_ERROR'] = 'Не удалось загрузить приложение. Попробуйте открыть его ещё раз.';
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_AUTHOR'] = '#NAME# — автор приложения';
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_DEFAULT_TITLE'] = 'Приложение';
+$MESS['VIBECODECONNECTOR_CATALOG_OPEN_APP_RESTART'] = 'Перезапустить';

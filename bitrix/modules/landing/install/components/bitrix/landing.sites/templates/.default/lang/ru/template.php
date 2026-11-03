@@ -60,3 +60,5 @@ $MESS['LANDING_TPL_ACTION_ORDERS'] = 'Заказы';
 $MESS['LANDING_TPL_ACTION_DEALS'] = 'Сделки';
 $MESS['LANDING_TPL_FEEDBACK_FORM_TITLE'] = 'Оставить заявку';
 $MESS['LANDING_TPL_TRASH_EMPTY_TITLE'] = 'В корзине пока пусто';
+$MESS['LANDING_TPL_PRESET_EMPTY_STATE_TITLE'] = 'Настраиваем сайты';
+$MESS['LANDING_TPL_PRESET_EMPTY_STATE_SUBTITLE'] = 'Подождите немного';

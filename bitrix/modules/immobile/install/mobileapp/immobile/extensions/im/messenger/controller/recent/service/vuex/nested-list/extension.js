@@ -25,7 +25,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		onInit()
 		{
 			this.logger.log('onInit');
-			this.recentFilteredSync = new RecentFilteredSync(this.recentLocator, this.logger);
+			this.recentFilteredSync = new RecentFilteredSync(
+				this.recentLocator,
+				this.logger,
+				this.recentSection,
+			);
 
 			this.#scheduleRefreshFirstPage = debounce(() => this.#refreshFirstPage(), REFRESH_DEBOUNCE_MS);
 			this.#hadPinnedChildren = this.#computeHasPinnedChildren();
@@ -38,6 +42,14 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		get storeManager()
 		{
 			return serviceLocator.get('core').getStoreManager();
+		}
+
+		/**
+		 * @return {string}
+		 */
+		get recentSection()
+		{
+			return this.props.recentSection ?? this.recentLocator.get('recentSection');
 		}
 
 		get #emitter()
@@ -155,7 +167,9 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			{
 				if (render.hasItemRendered(String(item.id)))
 				{
-					render.deleteItems([{ id: String(item.id) }]);
+					// the fixed parent row carries the id of a real chat, so it is the caller who
+					// marks it as a service row: it is not part of the tab composition
+					render.deleteItems([{ id: String(item.id) }], { isServiceRow: true });
 				}
 
 				return;
@@ -195,7 +209,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 		#computeHasPinnedChildren()
 		{
-			const recentSection = this.recentLocator.get('recentSection');
+			const recentSection = this.recentSection;
 			if (recentSection !== RecentTab.collabDefault)
 			{
 				return false;
@@ -289,6 +303,9 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 			this.#updateItems(recentItems);
 			this.#refreshParentFakeIfPinnedToggled();
+			// the add mutation only fires for records new to the model, and the items are already
+			// filtered by the nested collection: a chat appeared in the tab set
+			this.recentLocator.get('render')?.markCompositionChanged();
 		};
 
 		/**
@@ -367,7 +384,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 			const parentChatId = this.recentLocator.get('parentChatId');
 			const tabId = this.recentLocator.get('id');
-			const recentSection = this.recentLocator.get('recentSection');
+			const recentSection = this.recentSection;
 
 			if ((payload?.data.parentChatId ?? ROOT_PARENT_CHAT_ID) !== parentChatId)
 			{
@@ -385,7 +402,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 			this.#hadPinnedChildren = this.#computeHasPinnedChildren();
 
-			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](tabId, parentChatId);
+			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](
+				tabId,
+				parentChatId,
+				this.recentSection,
+			);
 			const firstPageItems = this.storeManager.store.getters['recentModel/getFirstPageByIdCollection'](collection);
 
 			if (firstPageItems.length === 0)
@@ -429,6 +450,14 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			}
 
 			serviceLocator.get('messenger-header-manager').redrawNestedRightButtonsIfNeeded(this.recentLocator.get('id'));
+
+			// the filtered item list is recalculated by the sync subscribed to this mutation before this handler
+			if (this.#isFilterChangedBySelf() && this.recentLocator.has('render'))
+			{
+				this.#refreshFirstPage();
+				// an explicit filter change is a direct user action: the call goes through a scope
+				void this.recentLocator.get('render').renderInstant({ force: true });
+			}
 		};
 
 		/**
@@ -514,6 +543,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			return this.storeManager.store.getters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId, parentChatId);
 		}
 
+		/**
+		 * @desc Puts the set in the render queue without an immediate pass: the delivery is kept, the
+		 * immediacy is not. The immediate pass is added by the caller only when the user changed the
+		 * filter, so the compensation after the return to the project delivers on the queue tick.
+		 */
 		#refreshFirstPage()
 		{
 			if (!this.recentLocator.has('render'))
@@ -526,14 +560,30 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			const parentChatId = this.recentLocator.get('parentChatId');
 			const tabId = this.recentLocator.get('id');
 
-			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](tabId, parentChatId);
+			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](
+				tabId,
+				parentChatId,
+				this.recentSection,
+			);
 			const firstPageItems = this.storeManager.store.getters['recentModel/getFirstPageByIdCollection'](collection);
 
 			const parentFakeItem = this.#shouldRenderParentFakeItem() ? this.#parentRecentItem : null;
 			const allItems = parentFakeItem ? [parentFakeItem, ...firstPageItems] : firstPageItems;
 
 			this.recentLocator.get('render').setItems(allItems);
-			void this.recentLocator.get('render').renderInstant();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isFilterChangedBySelf()
+		{
+			if (!this.recentLocator.has('filter'))
+			{
+				return false;
+			}
+
+			return this.recentLocator.get('filter').consumeChangedBySelf();
 		}
 
 		/**
@@ -559,7 +609,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
-			if (!this.recentLocator.get('render').hasItemRendered(itemId))
+			if (!this.recentLocator.get('render').hasItemPending(itemId))
 			{
 				this.logger.log('recentDeleteHandler: item not rendered in this nested tab, skipping', itemId);
 
@@ -576,7 +626,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			this.logger.log('recentDeleteFromIdCollectionHandler', payload);
 
 			const parentChatId = this.recentLocator.get('parentChatId');
-			const recentSection = this.recentLocator.get('recentSection');
+			const recentSection = this.recentSection;
 
 			if (
 				(payload.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== parentChatId
@@ -603,7 +653,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
-			if (!this.recentLocator.get('render').hasItemRendered(itemId))
+			if (!this.recentLocator.get('render').hasItemPending(itemId))
 			{
 				this.logger.log('recentDeleteFromIdCollectionHandler: item not rendered in this nested tab, skipping', itemId);
 
@@ -826,7 +876,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 			const tabId = this.recentLocator.get('id');
 			const parentChatId = this.recentLocator.get('parentChatId');
-			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](tabId, parentChatId);
+			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](
+				tabId,
+				parentChatId,
+				this.recentSection,
+			);
 			const render = this.recentLocator.get('render');
 			const { toUpsert, toDelete } = this.#partitionItemsForUpdate(items, collection, render);
 
@@ -863,7 +917,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				{
 					toUpsert.push(item);
 				}
-				else if (render.hasItemRendered(id))
+				else if (render.hasItemPending(id))
 				{
 					toDelete.push({ id });
 				}
@@ -886,7 +940,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 			const tabId = this.recentLocator.get('id');
 			const parentChatId = this.recentLocator.get('parentChatId');
-			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](tabId, parentChatId);
+			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](
+				tabId,
+				parentChatId,
+				this.recentSection,
+			);
 
 			return items.filter((item) => {
 				const id = idExtractor(item);

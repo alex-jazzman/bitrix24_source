@@ -1,11 +1,16 @@
-import { defineComponent, onBeforeUnmount, onMounted, ref, type PropType } from 'ui.vue3';
+import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, type PropType } from 'ui.vue3';
 import { Loc } from 'main.core';
 import { Outline } from 'ui.icon-set.api.core';
 import { AirButtonStyle, Button, ButtonIcon, ButtonSize } from 'ui.vue3.components.button';
 
 import { CallInfoPopupContent } from '../popups/call-info-popup-content';
+import { EmailInfoPopupContent } from '../popups/email-info-popup-content';
 import { OpenLinesInfoPopupContent } from '../popups/open-lines-info-popup-content';
-import { PopupController } from '../popups/popup-controller';
+import {
+	resolveInfoPopupButtonMessageCode,
+	resolveInfoPopupTypeConfig,
+} from '../../lib/info-popup-type-config';
+import { PopupController } from '../../lib/popup-controller';
 
 import { type InfoPopupData } from '../../types';
 
@@ -34,26 +39,43 @@ export const InfoButton = defineComponent({
 				return;
 			}
 
-			const popupComponent = props.infoPopupData.type === 'open-lines'
-				? OpenLinesInfoPopupContent
-				: CallInfoPopupContent
-			;
+			const button = bindElement.querySelector('button');
+			if (!(button instanceof HTMLButtonElement))
+			{
+				return;
+			}
+
+			const config = resolveInfoPopupTypeConfig(props.infoPopupData.type);
+			const ariaLabel = Loc.getMessage(config.messageCode) ?? '';
+			const component = {
+				call: CallInfoPopupContent,
+				email: EmailInfoPopupContent,
+				'open-lines': OpenLinesInfoPopupContent,
+			}[props.infoPopupData.type];
 
 			popup = new PopupController({
-				bindElement,
-				trigger: 'hover',
-				component: popupComponent,
+				bindElement: button,
+				trigger: config.trigger,
+				component,
 				props: {
 					infoPopupData: props.infoPopupData,
 				},
 				popupOptions: {
 					width: 320,
 					className: 'crm-ai-report-drawer__popup-wrapper --info',
+					ariaLabel,
+					role: 'dialog',
+					closeByEsc: true,
+					focusTrap: config.trigger === 'click'
+						? { initialFocus: 'first-tabbable', restoreFocus: true }
+						: false,
 				},
 			});
 		};
 
-		onMounted(() => initPopup(container.value));
+		onMounted(() => {
+			void nextTick(() => initPopup(container.value));
+		});
 		onBeforeUnmount(() => popup?.destroy());
 
 		return {
@@ -68,23 +90,25 @@ export const InfoButton = defineComponent({
 	computed: {
 		buttonText(): string
 		{
-			const messageCode = this.infoPopupData.type === 'open-lines'
-				? 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_OPEN_LINES'
-				: 'CRM_AI_REPORT_DRAWER_INFO_POPUP_BUTTON_CALL'
-			;
+			const messageCode = resolveInfoPopupButtonMessageCode(this.infoPopupData.type);
 
 			return Loc.getMessage(messageCode) ?? '';
 		},
 	},
 
 	template: `
-		<div class="crm-ai-report-drawer__toolbar-info-button" ref="container">
+		<div
+			class="crm-ai-report-drawer__toolbar-info-button"
+			data-testid="crm-ai-report-drawer-info-button"
+			ref="container"
+		>
 			<Button
 				:text="buttonText"
 				:style="AirButtonStyle.OUTLINE"
 				:size="ButtonSize.SMALL"
 				:leftIcon="Outline.INFO_CIRCLE"
 				class="ui-btn-round"
+				:dataset="{ testid: 'crm-ai-report-drawer-info-button-trigger' }"
 			/>
 		</div>
 	`,

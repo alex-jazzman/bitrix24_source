@@ -68,6 +68,9 @@ export const AudioMessage = {
 	},
 	template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
+			<template #before-message>
+				<slot name="before-message"/>
+			</template>
 			<div class="bx-im-message-audio__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-audio__header"/>
 				<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
@@ -79,7 +82,7 @@ export const AudioMessage = {
 				/>
 			</div>
 			<div class="bx-im-message-audio__default-message-container">
-				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" :withBuilder="true" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>

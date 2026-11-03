@@ -280,11 +280,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 				dialogId
 			});
-			const chatIsOpened = im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId);
-			if (chatIsOpened) {
-				im_v2_lib_layout.LayoutManager.getInstance().clearCurrentLayoutEntityId();
-				void im_v2_lib_layout.LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
-			}
+			im_v2_lib_layout.LayoutManager.getInstance().clearCurrentChat(dialogId);
 			im_v2_application_core.Core.getRestClient().callMethod(im_v2_const.RestMethod.imRecentHide, {
 				DIALOG_ID: dialogId
 			}).catch(result => {
@@ -482,26 +478,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		async #requestItems({
 			firstPage = false
 		} = {}) {
-			const queryParams = {
-				data: this.getQueryParams(firstPage)
-			};
-			const result = await im_v2_lib_rest.runAction(this.getRestMethodName(firstPage), queryParams).catch(([error]) => {
-				console.error('BaseRecentList: page request error', error);
-				throw error;
-			});
-			this.#pagesLoaded++;
-			im_v2_lib_logger.Logger.warn(`BaseRecentList: ${firstPage ? 'First' : this.#pagesLoaded} page request result`, result);
-			const {
-				hasNextPage
-			} = result;
-			this.handlePaginationField(result);
-			this.#hasMoreItemsToLoad = hasNextPage;
-			this.#isLoading = false;
-			this.onAfterRequest(firstPage);
-			if (firstPage) {
-				await this.saveFirstPageData(result);
+			try {
+				const queryParams = {
+					data: this.getQueryParams(firstPage)
+				};
+				const result = await im_v2_lib_rest.runAction(this.getRestMethodName(firstPage), queryParams).catch(([error]) => {
+					console.error('BaseRecentList: page request error', error);
+					throw error;
+				});
+				this.#pagesLoaded++;
+				im_v2_lib_logger.Logger.warn(`BaseRecentList: ${firstPage ? 'First' : this.#pagesLoaded} page request result`, result);
+				const {
+					hasNextPage
+				} = result;
+				this.handlePaginationField(result);
+				this.#hasMoreItemsToLoad = hasNextPage;
+				this.onAfterRequest(firstPage);
+				if (firstPage) {
+					await this.saveFirstPageData(result);
+				}
+				return this.#updateModels(result, firstPage);
+			} finally {
+				this.#isLoading = false;
 			}
-			return this.#updateModels(result, firstPage);
 		}
 		#updateModels(restResult) {
 			const {
@@ -522,9 +521,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 			const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
 			const recentPromise = this.saveRecentItems(restResult);
+			// sticker messages have no text, recent preview detects them through the stickers model
+			const stickerMessages = this.#getStickerMessages(messages);
+			const stickersPromise = im_v2_application_core.Core.getStore().dispatch('stickers/messages/set', stickerMessages);
 			const copilotManager = new im_v2_lib_copilot.CopilotManager();
 			const copilotPromise = copilotManager.handleRecentListResponse(copilot);
-			return Promise.all([usersPromise, chatsPromise, messagesPromise, filesPromise, recentPromise, autoDeletePromise, copilotPromise]);
+			return Promise.all([usersPromise, chatsPromise, messagesPromise, filesPromise, recentPromise, autoDeletePromise, copilotPromise, stickersPromise]);
+		}
+		#getStickerMessages(messages) {
+			const stickerMessages = [];
+			if (!messages) {
+				return stickerMessages;
+			}
+			messages.forEach(message => {
+				const stickerParams = message.params?.STICKER_PARAMS;
+				if (!main_core.Type.isPlainObject(stickerParams)) {
+					return;
+				}
+				stickerMessages.push({
+					messageId: message.id,
+					...stickerParams
+				});
+			});
+			return stickerMessages;
 		}
 		#getChatsWithCounters(chats, recentItems) {
 			const chatMap = {};
@@ -548,14 +567,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#setLastMessageDate(restResult) {
 			const {
-				messages,
 				recentItems,
 				sectionMeta
 			} = restResult;
 			const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
-			const messagesById = new Map(messages.map(message => [message.id, message]));
 
-			// Cursor uses each row's own message (always in its own chat), not the preview (may be a foreign chat).
+			// The REST filter field is named lastMessageDate, but the server matches it against
+			// DATE_LAST_ACTIVITY - the field it sorts and cuts the page by. So the cursor is the oldest
+			// activity date of the page, not the date of any message.
 			let lastMessageDate = '';
 			recentItems.forEach(recentItem => {
 				const isPinnedItem = recentItem.pinned === true;
@@ -563,15 +582,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (isPinnedItem || isFixedItem) {
 					return;
 				}
-				const ownMessageId = recentItem.ownMessageId || recentItem.messageId;
-				const message = messagesById.get(ownMessageId);
-				if (!message) {
+				const {
+					dateLastActivity
+				} = recentItem;
+				if (!dateLastActivity) {
 					return;
 				}
 
 				// comparing strings in atom format works correctly because the format is lexically sortable
-				if (lastMessageDate === '' || message.date < lastMessageDate) {
-					lastMessageDate = message.date;
+				if (lastMessageDate === '' || dateLastActivity < lastMessageDate) {
+					lastMessageDate = dateLastActivity;
 				}
 			});
 			this.#lastMessageDate = lastMessageDate;

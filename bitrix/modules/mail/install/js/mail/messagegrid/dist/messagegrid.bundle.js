@@ -50,7 +50,14 @@ this.BX = this.BX || {};
 				id,
 				isFavorite: target ? 'Y' : 'N'
 			}
-		}).catch(() => {
+		}).then(() => {
+			// announced only once the state is stored, so a listener counting favorites never
+			// counts a state the server has rejected
+			main_core_events.EventEmitter.emit('BX.Mail.Favorites:onChange', {
+				id,
+				isFavorite: target
+			});
+		}, () => {
 			applyToStar(star, !target);
 			say(messages.error);
 		});

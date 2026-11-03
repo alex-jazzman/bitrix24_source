@@ -10,9 +10,12 @@ return [
 	'css' => './dist/call-assessment-v2.bundle.css',
 	'rel' => [
 		'crm.ai.name-service',
+		'crm.integration.analytics',
 		'main.core',
 		'main.core.events',
 		'main.date',
+		'ui.analytics',
+		'ui.buttons',
 		'ui.design-tokens',
 		'ui.draganddrop.draggable',
 		'ui.entity-selector',

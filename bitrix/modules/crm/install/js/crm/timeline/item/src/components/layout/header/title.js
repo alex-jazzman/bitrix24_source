@@ -55,8 +55,11 @@ export const Title = {
 		<span
 			v-else
 			@click="executeAction"
+			@keydown.enter="executeAction"
+			@keydown.space.prevent="executeAction"
 			:class="className"
-			tabindex="0"
+			:tabindex="action ? 0 : null"
+			:role="action ? 'button' : null"
 			:title="title"
 		>
 			{{title}}

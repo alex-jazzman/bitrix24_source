@@ -92,7 +92,7 @@ class mobile extends CModule
 
 	function UnInstallDB($arParams = [])
 	{
-		$migrationResult = $this->uninstallMigrations(false);
+		$migrationResult = $this->uninstallMigrations(true);
 		if (!$migrationResult->isSuccess())
 		{
 			$this->errors = $migrationResult->getErrorMessages();

@@ -9,8 +9,14 @@
 	justify-content: center;
 	flex-shrink: 0;
 	padding: 4px;
+	border: none;
 	border-radius: 8px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 .bx-im-stickers-header__item:hover {

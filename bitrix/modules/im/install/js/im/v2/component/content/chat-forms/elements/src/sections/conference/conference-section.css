@@ -16,3 +16,34 @@
 .bx-im-chat-forms-chat-settings__password-container {
 	margin-top: 14px;
 }
+
+.bx-im-chat-forms-conference__password-toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bx-im-chat-forms-conference__switcher {
+	display: inline-flex;
+	align-items: center;
+	height: var(--ui-size-lg);
+	border-radius: var(--ui-border-radius-pill);
+}
+
+.bx-im-chat-forms-conference__switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* The caption fills the row so that the whole line stays clickable, as it is in the legacy form. */
+.bx-im-chat-forms-conference__caption {
+	flex-grow: 1;
+	cursor: pointer;
+}
+
+/* The cap keeps the field off the whole width of the row: it repeats the 260px the selects of the
+   rights are capped to in select-input.css, which the field of the password is asked to match, and
+   the token scale has no field widths. */
+.bx-im-chat-forms-conference__password-field {
+	max-width: 260px;
+}

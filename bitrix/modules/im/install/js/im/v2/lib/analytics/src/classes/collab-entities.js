@@ -1,10 +1,11 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, CollabEntityType } from 'im.v2.const';
+import { CollabEntityType } from 'im.v2.const';
 
 import { AnalyticsEvent, AnalyticsTool, AnalyticsSection, AnalyticsCategory } from '../const';
-import { getCollabId } from '../helpers/get-collab-id';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
+import { getProjectId } from '../helpers/get-collab-id';
 import { getUserType } from '../helpers/get-user-type';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -29,16 +30,20 @@ export class CollabEntities
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: AnalyticsCategory.collab,
+			category: getCategoryByChat(chat),
 			event,
 			c_section: AnalyticsSection.chatHeader,
 			p2: getUserType(),
 			p5: `chatId_${chat.chatId}`,
 		};
 
-		if (chat.type === ChatType.collab)
+		if (params.category === AnalyticsCategory.collab)
 		{
-			params.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				params.p4 = projectId;
+			}
 		}
 
 		sendData(params);

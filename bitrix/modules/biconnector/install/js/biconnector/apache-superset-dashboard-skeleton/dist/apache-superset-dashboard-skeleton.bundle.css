@@ -25,9 +25,12 @@
 }
 
 .dashboard-header-logo {
-	width: 283px;
+	box-sizing: border-box;
+	width: 284px;
+	flex-shrink: 0;
+	padding-right: 16px;
 	margin-right: 20px;
-	border-right: 1px solid #F0F0F0;
+	border-right: 1px solid var(--ui-color-divider-default, #E2E2E2);
 	display: flex;
 	align-items: flex-end;
 	gap: 6px;
@@ -40,6 +43,36 @@
 	flex-grow: 1;
 	min-width: 0;
 	margin-right: 20px;
+}
+
+.dashboard-header-selector-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	cursor: pointer;
+	min-width: 0;
+}
+
+.dashboard-header-selector-icon {
+	width: 18px;
+	height: 18px;
+	color: var(--ui-color-link-primary-base, #2066B0);
+	margin-left: 8px;
+	margin-top: 2px;
+}
+
+.dashboard-header-selector-text {
+	font-weight: var(--ui-font-weight-medium, 500);
+	font-size: 19px;
+	line-height: 26px;
+	text-align: center;
+	color: var(--ui-color-bg-content-inapp, #085DC1);
+	font-style: normal;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex-shrink: 1;
+	min-width: 0;
 }
 
 .biconnector-dashboard__animation {
@@ -134,7 +167,7 @@
 }
 
 .biconnector-dashboard__limit__exceeded__warning__logo {
-	background: url("images/warning.png") center/contain no-repeat;
+	background: url("images/warning.webp") center/contain no-repeat;
 	width: 260px;
 	height: 128px;
 }

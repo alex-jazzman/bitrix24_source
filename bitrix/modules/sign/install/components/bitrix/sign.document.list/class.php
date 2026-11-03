@@ -1078,8 +1078,18 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 	 *
 	 * Default (empty filter / "signed" mode) excludes annulled records; the
 	 * "annulled" value shows only annulled records; "all" applies no predicate.
-	 * The mark now lives on the member record, so the predicate targets the
-	 * member's own ANNULLED column (the safe query is built over MemberTable).
+	 * The condition is not a plain read of the shown row's ANNULLED column: the
+	 * company side row of an employee initiated document speaks about the signer's
+	 * signing, whose row the safe listing excludes, so the repository asks the
+	 * document instead (ALG-01 of MemberRepository::buildSafeAnnulmentCondition,
+	 * the same substitution class AnnulmentTargetService uses for the row mark).
+	 * It lives in the condition set this component builds and not in the shared safe
+	 * base query: moved there it would leak to the MySafe REST surface and to the
+	 * folder moves, and neither of them has a mode of its own.
+	 * It goes in as a nested node, because the collector that registers the join for
+	 * the company reference columns reads the top level of a condition set only
+	 * (MemberRepository::updateQueryByRefFields()); the column check inside that
+	 * collector is the primary defence and the nesting the second one.
 	 */
 	private function applyAnnulmentFilter(ConditionTree $filter, array $requestFilter): void
 	{
@@ -1089,7 +1099,11 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 			return;
 		}
 
-		$filter->where('ANNULLED', $annulStatus === self::FILTER_ANNUL_STATUS_ANNULLED);
+		$filter->where(
+			$this->memberRepository->buildSafeAnnulmentCondition(
+				$annulStatus === self::FILTER_ANNUL_STATUS_ANNULLED,
+			),
+		);
 	}
 
 	/**

@@ -4,9 +4,9 @@ import { type State, type StateFlags } from './types';
 
 export class StateService
 {
-	async set(state: State): Promise<void>
+	async set(state: State): Promise<any>
 	{
-		await apiClient.post(Endpoint.TaskStateSet, { state });
+		return apiClient.post(Endpoint.TaskStateSet, { state });
 	}
 
 	async setTemplateFlags(flags: StateFlags): Promise<void>

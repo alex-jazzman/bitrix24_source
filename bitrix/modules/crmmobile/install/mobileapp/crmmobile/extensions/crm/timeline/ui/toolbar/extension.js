@@ -2,8 +2,15 @@
  * @module crm/timeline/ui/toolbar
  */
 jn.define('crm/timeline/ui/toolbar', (require, exports, module) => {
+	const { Text1 } = require('ui-system/typography/text');
 	const { AppTheme } = require('apptheme/extended');
+	const { Color } = require('tokens');
+	const { IconView } = require('ui-system/blocks/icon');
 	const safeArea = { bottom: true };
+
+	// registry icons are drawn in a 24x24 box with padding: the glyph fills about 16 units of it,
+	// so 28 reproduces the ~19 px the hand-made toolbar svg had
+	const DEFAULT_ICON_SIZE = 28;
 
 	function Toolbar({ left, center, right })
 	{
@@ -79,26 +86,36 @@ jn.define('crm/timeline/ui/toolbar', (require, exports, module) => {
 		);
 	}
 
-	function ToolbarIcon({ svg, width, height, onClick, tintColor })
+	function ToolbarIcon({ testId, icon, color, solid, svg, width, height, onClick, tintColor })
 	{
 		return View(
 			{
+				testId,
 				onClick,
 				style: {
 					paddingHorizontal: 16,
 					paddingVertical: 16,
 				},
 			},
-			Image({
-				tintColor: tintColor || AppTheme.colors.base3,
-				svg: {
-					content: svg,
-				},
-				style: {
-					width,
-					height,
-				},
-			}),
+			icon
+				? IconView({
+					testId: testId && `${testId}_icon`,
+					icon,
+					solid,
+					size: DEFAULT_ICON_SIZE,
+					color: color || Color.base3,
+				})
+				// callers without a registry counterpart still pass their own svg
+				: Image({
+					tintColor: tintColor || AppTheme.colors.base3,
+					svg: {
+						content: svg,
+					},
+					style: {
+						width,
+						height,
+					},
+				}),
 		);
 	}
 
@@ -163,8 +180,11 @@ jn.define('crm/timeline/ui/toolbar', (require, exports, module) => {
 
 		render()
 		{
+			const { testId } = this.props;
+
 			return View(
 				{
+					testId,
 					onClick: () => {
 						if (this.state.disabled || this.state.loading)
 						{
@@ -176,12 +196,12 @@ jn.define('crm/timeline/ui/toolbar', (require, exports, module) => {
 						this.props.onClick().finally(() => this.stopLoading());
 					},
 				},
-				Text({
+				Text1({
 					text: this.state.text,
+					testId: testId && `${testId}_caption`,
 					style: {
 						color: this.state.disabled ? AppTheme.colors.base4 : AppTheme.colors.accentMainLinks,
 						opacity: this.state.loading ? 0.5 : 1,
-						fontSize: 18,
 						fontWeight: '500',
 					},
 				}),

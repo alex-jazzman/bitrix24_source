@@ -36,17 +36,17 @@ $migration->table('b_note_document')->create(function (\Bitrix\Main\UpdateSystem
 	$columns->int('UPDATED_BY')->notNull();
 	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
 	$columns->datetime('UPDATED_AT')->notNull()->defaultCurrentTimestamp();
-	// [SQL-01] Moment the MARKDOWN projection was built. Distinct from UPDATED_AT, which structural
+	// Moment the MARKDOWN projection was built. Distinct from UPDATED_AT, which structural
 	// operations (archive/move) also bump. Nullable, no backfill: an old row's projection predates
 	// this column, so NULL reads as "projection age unknown". No DB default: writers set it explicitly.
 	$columns->datetime('CONTENT_UPDATED_AT');
-	// [SQL-01] Internal cursor: id of the last patch folded into the projection (meaningful for yjs only).
+	// Internal cursor: id of the last patch folded into the projection (meaningful for yjs only).
 	// bigint, not int: the value is an id from b_note_document_updates, and the forward-only guard makes
 	// a truncated cursor permanent - once a value above every real patch id is stored, no later
 	// projection write is ever accepted and MARKDOWN freezes. The journal is still int; when it grows to
 	// bigint this column must already be wide enough to hold what it stores.
 	$columns->bigInt('MATERIALIZED_UPTO_ID');
-	// [SQL-01] Dirty flag "derived projections (search, links) need a rebuild". The freshness agent
+	// Dirty flag "derived projections (search, links) need a rebuild". The freshness agent
 	// drains 'Y'. Old rows default to 'N' — prior compactions already indexed them.
 	$columns->char('IS_DERIVED_STALE', 1)->notNull()->default('N');
 	$table->addIndex('IX_NOTE_DOC_BRANCH', ['COLLECTION_ID', 'PARENT_ID', 'IS_ARCHIVED', 'POSITION', 'ID']);
@@ -57,6 +57,12 @@ $migration->table('b_note_document')->create(function (\Bitrix\Main\UpdateSystem
 	$table->addIndex('IX_NOTE_DOC_MAIN', ['COLLECTION_ID', 'IS_MAIN']);
 	// Dirty-queue scan for the freshness agent: WHERE IS_DERIVED_STALE='Y' ... ORDER BY ID.
 	$table->addIndex('IX_NOTE_DOC_DERIVED_STALE', ['IS_DERIVED_STALE', 'ID']);
+	// Serves the two by-author reads of the annual summary: documents a user created within the
+	// period, and the reads other employees left on them. CREATED_AT is deliberately left out - one
+	// author owns tens to hundreds of documents, so filtering those by date afterwards is cheaper
+	// than carrying a third column, and the reads query needs no date on this table at all. Both
+	// columns are immutable after insert, so the update-heavy document path never touches this index.
+	$table->addIndex('IX_NOTE_DOC_AUTHOR', ['CREATED_BY', 'IS_MAIN']);
 });
 
 $migration->table('b_note_document_file')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {

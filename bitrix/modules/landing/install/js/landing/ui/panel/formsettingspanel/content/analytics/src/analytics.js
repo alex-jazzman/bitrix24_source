@@ -8,7 +8,7 @@ import yandexIcon from './images/yandex.svg';
 import googleIcon from './images/google.svg';
 import {ContentTable} from './internal/table/content-table';
 
-export default class AnalyticsContent extends ContentWrapper
+export class AnalyticsContent extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -112,3 +112,4 @@ export default class AnalyticsContent extends ContentWrapper
 		return table.render();
 	}
 }
+export { AnalyticsContent as Content };

@@ -1,9 +1,8 @@
 import { BaseMessage } from 'im.v2.component.message.base';
 import { BaseFileItem, DefaultMessageContent, MessageHeader, MessageFooter, Reply } from 'im.v2.component.message.elements';
 import { FileType } from 'im.v2.const';
+import { BaseFileContextMenu } from 'im.v2.lib.menu';
 import { type ImModelMessage, type ImModelFile } from 'im.v2.model';
-
-import { BaseFileContextMenu } from '../classes/base-file-context-menu';
 
 import '../css/base-file-message.css';
 
@@ -77,8 +76,9 @@ export const BaseFileMessage = {
 	},
 	template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
-			<template v-if="isReply && !isForward" #before-message>
-				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			<template #before-message>
+				<slot name="before-message"/>
+				<Reply v-if="isReply && !isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 			</template>
 			<div class="bx-im-message-base-file__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-base-file__author-title" />
@@ -90,7 +90,7 @@ export const BaseFileMessage = {
 					@openContextMenu="onOpenContextMenu"
 					@cancelClick="onCancel"
 				/>
-				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" :withBuilder="true" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>

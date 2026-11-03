@@ -62,61 +62,73 @@ class SaveSingleRuleCommand extends AbstractCommand
 
 	private function processActionExpressions(PortRuleDto $resultPortRule): Result
 	{
-		$actionExpressionList = $this->extractActionExpressionList($resultPortRule);
-
-		foreach ($actionExpressionList as $actionExpression)
+		foreach ($this->extractActionExpressionList($resultPortRule) as $addressedExpression)
 		{
-			if (empty($actionExpression->rawActivityData))
+			$result = $this->normalizeActionExpression($addressedExpression['expression']);
+			if (!$result->isSuccess())
 			{
-				continue;
+				return $this->addressFailure($result, $addressedExpression['constructionId']);
 			}
-
-			// Node-action-backed ACTION: internalise field values through the backing node-action's
-			// getPropertiesMap (FieldType::extractValue) instead of getActivitySettings, mirroring the
-			// BASE_SETTINGS path. This targets legacy dual activities (robot + node-action, e.g.
-			// CBPIMNotifyActivity): as an ACTION they render the unified getPropertiesMap form
-			// (FieldName message_user_from), but getActivitySettings() routes through their legacy
-			// getPropertiesDialogValues, which reads legacy dialog keys (from_user_id) and never sees
-			// those FieldNames — so every value is dropped and the raw printable string reaches the USER
-			// validator. Legacy-dialog node-actions (CBPSetFieldActivity, CBPCrmCreateToDoActivity) do
-			// not implement IBPConfigurableActivity, so internalizeNodeActionProperties() resolves an
-			// empty propertiesMap and returns null → the getActivitySettings() path below is unchanged.
-			$nodeActionResult = $this->extractNodeActionAction($actionExpression);
-			if ($nodeActionResult !== null)
-			{
-				if (!$nodeActionResult->isSuccess())
-				{
-					return $nodeActionResult;
-				}
-
-				continue;
-			}
-
-			$saveActivityResult = $this->getActivitySettings($actionExpression);
-			if (
-				!$saveActivityResult instanceof Activity\Settings\SaveCommandResult
-				|| !$saveActivityResult->isSuccess()
-			)
-			{
-				return $saveActivityResult;
-			}
-
-			$actionExpression->rawActivityData = null;
-			$activityData = $saveActivityResult->getSettings()?->toArray() ?? [];
-			if (!empty($activityData))
-			{
-				$activityData['Document'] = $actionExpression->document;
-			}
-
-			$actionExpression->activityData = $activityData;
 		}
 
 		return new Result();
 	}
 
 	/**
+	 * Normalise one ACTION or FILTER construction: rawActivityData -> activityData, by the route the activity
+	 * of the construction takes. The address of a failure belongs to the traversal above, so neither this
+	 * step nor the routes it takes know which construction they are working on.
+	 */
+	private function normalizeActionExpression(ActionExpressionDto $actionExpression): Result
+	{
+		if (empty($actionExpression->rawActivityData))
+		{
+			return new Result();
+		}
+
+		// Node-action-backed ACTION: internalise field values through the backing node-action's
+		// getPropertiesMap (FieldType::extractValue) instead of getActivitySettings, mirroring the
+		// BASE_SETTINGS path. This targets legacy dual activities (robot + node-action, e.g.
+		// CBPIMNotifyActivity): as an ACTION they render the unified getPropertiesMap form
+		// (FieldName message_user_from), but getActivitySettings() routes through their legacy
+		// getPropertiesDialogValues, which reads legacy dialog keys (from_user_id) and never sees
+		// those FieldNames - so every value is dropped and the raw printable string reaches the USER
+		// validator. Legacy-dialog node-actions (CBPSetFieldActivity, CBPCrmCreateToDoActivity) do
+		// not implement IBPConfigurableActivity, so internalizeNodeActionProperties() resolves an
+		// empty propertiesMap and returns null -> the getActivitySettings() path below is unchanged.
+		$nodeActionResult = $this->extractNodeActionAction($actionExpression);
+		if ($nodeActionResult !== null)
+		{
+			return $nodeActionResult;
+		}
+
+		$saveActivityResult = $this->getActivitySettings($actionExpression);
+		if (
+			!$saveActivityResult instanceof Activity\Settings\SaveCommandResult
+			|| !$saveActivityResult->isSuccess()
+		)
+		{
+			return $saveActivityResult;
+		}
+
+		$actionExpression->rawActivityData = null;
+		$activityData = $saveActivityResult->getSettings()?->toArray() ?? [];
+		if (!empty($activityData))
+		{
+			$activityData['Document'] = $actionExpression->document;
+		}
+
+		$actionExpression->activityData = $activityData;
+
+		return new Result();
+	}
+
+	/**
+	 * The expressions to normalise, each next to the id of the construction carrying it: a failure of the
+	 * traversal is answered with the address of that construction.
+	 *
 	 * @param PortRuleDto $portRuleDto
-	 * @return list<ActionExpressionDto>
+	 * @return list<array{constructionId: string, expression: ActionExpressionDto}>
 	 */
 	private function extractActionExpressionList(PortRuleDto $portRuleDto): array
 	{
@@ -142,7 +154,10 @@ class SaveSingleRuleCommand extends AbstractCommand
 					continue;
 				}
 
-				$actionExpressionList[] = $expression;
+				$actionExpressionList[] = [
+					'constructionId' => $construction->id,
+					'expression' => $expression,
+				];
 			}
 		}
 
@@ -268,70 +283,109 @@ class SaveSingleRuleCommand extends AbstractCommand
 	{
 		Loader::requireModule('bizproc');
 
-		foreach ($this->extractBaseSettingsExpressionList($resultPortRule) as $expression)
+		foreach ($this->extractBaseSettingsExpressionList($resultPortRule) as $addressedExpression)
 		{
-			if (empty($expression->rawActivityData))
+			$result = $this->normalizeBaseSettingsExpression($addressedExpression['expression']);
+			if (!$result->isSuccess())
 			{
-				continue;
+				return $this->addressFailure($result, $addressedExpression['constructionId']);
 			}
-
-			$triggerTypeResult = $this->applyNodeTriggerType($expression);
-			if (!$triggerTypeResult->isSuccess())
-			{
-				return $triggerTypeResult;
-			}
-
-			// Node-action-backed base-settings: extract field values through the node-action's
-			// getPropertiesMap (FieldType::extractValue), internalising printable USER/entity values
-			// ("Admin Adminov [1]" -> "user_1") exactly like ACTION constructions do. This must NOT go
-			// through the shared getActivitySettings() pipeline: a legacy dual activity (robot +
-			// node-action, e.g. IMNotifyActivity) extracts via its own getPropertiesDialogValues, which
-			// reads legacy dialog field names and never sees the getPropertiesMap FieldNames that the
-			// base-settings form submits — so every field value is dropped and the raw printable string
-			// reaches the USER validator ("Свойство '…' указано не корректно").
-			$nodeActionResult = $this->extractNodeActionBaseSettings($expression);
-			if ($nodeActionResult !== null)
-			{
-				if (!$nodeActionResult->isSuccess())
-				{
-					return $nodeActionResult;
-				}
-
-				continue;
-			}
-
-			// Guard: an empty id makes modifyRawActivityDataTemplate inject an empty-string key
-			// into the workflow template, so findActivityByName returns null and all field values
-			// are silently lost. Skip the getActivitySettings pipeline; the existing rawActivityData
-			// (if any) remains as-is, which is the safe fallback for a malformed payload.
-			if ((string)($expression->rawActivityData['id'] ?? '') === '')
-			{
-				continue;
-			}
-
-			$saveActivityResult = $this->getActivitySettings(
-				$this->makeActionExpressionForBaseSettings($expression),
-			);
-
-			if (
-				!$saveActivityResult instanceof Activity\Settings\SaveCommandResult
-				|| !$saveActivityResult->isSuccess()
-			)
-			{
-				return $saveActivityResult;
-			}
-
-			$expression->rawActivityData = null;
-			$activityData = $saveActivityResult->getSettings()?->toArray() ?? [];
-			if (!empty($activityData))
-			{
-				$activityData['Document'] = null;
-			}
-
-			$expression->activityData = $activityData;
 		}
 
 		return new Result();
+	}
+
+	/**
+	 * Normalise one BASE_SETTINGS construction. Mirrors normalizeActionExpression(), the address of a
+	 * failure included: it belongs to the traversal above and not to this step.
+	 */
+	private function normalizeBaseSettingsExpression(BaseSettingsExpressionDto $expression): Result
+	{
+		if (empty($expression->rawActivityData))
+		{
+			return new Result();
+		}
+
+		$triggerTypeResult = $this->applyNodeTriggerType($expression);
+		if (!$triggerTypeResult->isSuccess())
+		{
+			return $triggerTypeResult;
+		}
+
+		// Node-action-backed base-settings: extract field values through the node-action's
+		// getPropertiesMap (FieldType::extractValue), internalising printable USER/entity values
+		// ("Admin Adminov [1]" -> "user_1") exactly like ACTION constructions do. This must NOT go
+		// through the shared getActivitySettings() pipeline: a legacy dual activity (robot +
+		// node-action, e.g. IMNotifyActivity) extracts via its own getPropertiesDialogValues, which
+		// reads legacy dialog field names and never sees the getPropertiesMap FieldNames that the
+		// base-settings form submits - so every field value is dropped and the raw printable string
+		// reaches the USER validator.
+		$nodeActionResult = $this->extractNodeActionBaseSettings($expression);
+		if ($nodeActionResult !== null)
+		{
+			return $nodeActionResult;
+		}
+
+		// Guard: an empty id makes modifyRawActivityDataTemplate inject an empty-string key
+		// into the workflow template, so findActivityByName returns null and all field values
+		// are silently lost. Skip the getActivitySettings pipeline; the existing rawActivityData
+		// (if any) remains as-is, which is the safe fallback for a malformed payload.
+		if ((string)($expression->rawActivityData['id'] ?? '') === '')
+		{
+			return new Result();
+		}
+
+		$saveActivityResult = $this->getActivitySettings(
+			$this->makeActionExpressionForBaseSettings($expression),
+		);
+
+		if (
+			!$saveActivityResult instanceof Activity\Settings\SaveCommandResult
+			|| !$saveActivityResult->isSuccess()
+		)
+		{
+			return $saveActivityResult;
+		}
+
+		$expression->rawActivityData = null;
+		$activityData = $saveActivityResult->getSettings()?->toArray() ?? [];
+		if (!empty($activityData))
+		{
+			// A node-action proxy owns a document of its own, exactly as an ACTION does. A host-merged
+			// construction describes the node itself and has none: whose document the node works over
+			// is written in its own Properties, not here.
+			$activityData['Document'] = $expression->actionId !== null ? $expression->document : null;
+		}
+
+		$expression->activityData = $activityData;
+
+		return new Result();
+	}
+
+	/**
+	 * The failure of a construction leaves the traversal addressed: every error is re-assembled carrying the
+	 * id of the construction in customData, the very address the settings panel reveals a blocked row by.
+	 *
+	 * The message and the code are carried over verbatim - other consumers branch on the code, and the
+	 * message comes from the activity, being the text that names the field left empty. The message is taken
+	 * as it is rather than through getMessage(), which flattens a localizable message into a string.
+	 */
+	private function addressFailure(Result $failure, string $constructionId): Result
+	{
+		$addressedFailure = new Result();
+
+		foreach ($failure->getErrors() as $error)
+		{
+			$addressedFailure->addError(
+				new Error(
+					$error->getLocalizableMessage() ?? $error->getMessage(),
+					$error->getCode(),
+					['constructionId' => $constructionId],
+				),
+			);
+		}
+
+		return $addressedFailure;
 	}
 
 	/**
@@ -434,8 +488,11 @@ class SaveSingleRuleCommand extends AbstractCommand
 	}
 
 	/**
+	 * The expressions to normalise, each next to the id of the construction carrying it, symmetrically to
+	 * extractActionExpressionList().
+	 *
 	 * @param PortRuleDto $portRuleDto
-	 * @return list<BaseSettingsExpressionDto>
+	 * @return list<array{constructionId: string, expression: BaseSettingsExpressionDto}>
 	 */
 	private function extractBaseSettingsExpressionList(PortRuleDto $portRuleDto): array
 	{
@@ -456,7 +513,10 @@ class SaveSingleRuleCommand extends AbstractCommand
 					continue;
 				}
 
-				$list[] = $expression;
+				$list[] = [
+					'constructionId' => $construction->id,
+					'expression' => $expression,
+				];
 			}
 		}
 
@@ -466,8 +526,8 @@ class SaveSingleRuleCommand extends AbstractCommand
 	/**
 	 * Wrap a BaseSettingsExpressionDto into a minimal ActionExpressionDto so that
 	 * the shared getActivitySettings() pipeline (prepareForm / decodeActivitySettings)
-	 * can process it. BASE_SETTINGS has no actionId or document — those fields are
-	 * left null; only rawActivityData and activityData are relevant.
+	 * can process it. The pipeline reads nothing but rawActivityData, so actionId and document are left
+	 * null here; the document of the construction is written onto the settings by the caller.
 	 */
 	private function makeActionExpressionForBaseSettings(BaseSettingsExpressionDto $expression): ActionExpressionDto
 	{
@@ -523,7 +583,7 @@ class SaveSingleRuleCommand extends AbstractCommand
 			'Type' => $activityType,
 			'Activated' => $isActivated ? 'Y' : 'N',
 			'Properties' => $properties,
-			'Document' => null,
+			'Document' => $expression->document,
 		];
 
 		return new Result();
@@ -729,8 +789,10 @@ class SaveSingleRuleCommand extends AbstractCommand
 	{
 		Loader::requireModule('bizproc');
 
-		foreach ($this->extractBaseSettingsExpressionList($portRule) as $expression)
+		foreach ($this->extractBaseSettingsExpressionList($portRule) as $addressedExpression)
 		{
+			$expression = $addressedExpression['expression'];
+
 			// A node-action proxy construction describes a child activity of its own, not the host node.
 			if ($expression->actionId !== null)
 			{

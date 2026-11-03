@@ -1,4 +1,5 @@
 .bx-im-content-ai-assistant-empty-state__container {
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;

@@ -61,12 +61,17 @@ export class SliderDateTimeControl extends DateTimeControl
 		Dom.adjust(this.DOM.toTime, { props: { autocomplete: 'off' } });
 	}
 
+	getReadonlyDateForFormatting(date: Date, utc: boolean): Date
+	{
+		return utc && Type.isDate(date) ? this.createDateFromUtc(date) : date;
+	}
+
 	setReadonly(timezoneHint)
 	{
 		const value = this.getValue();
 		let result = '';
-		const dateFrom = Util.formatDateUsable(value.from, true, true);
-		const dateTo = Util.formatDateUsable(value.to, true, true);
+		const dateFrom = Util.formatDateUsable(this.getReadonlyDateForFormatting(value.from, value.utc), true, true);
+		const dateTo = Util.formatDateUsable(this.getReadonlyDateForFormatting(value.to, value.utc), true, true);
 		const timeFrom = this.DOM.fromTime.value;
 		const timeTo = this.DOM.toTime.value;
 		result += `${dateFrom}, `;

@@ -52,3 +52,15 @@ export const PlaylistScope = {
 	chat: 'chat',
 	sidebar: 'sidebar',
 };
+
+export const PlaybackTrackState = {
+	loading: 'loading',
+	playing: 'playing',
+	paused: 'paused',
+	loadingError: 'loadingError',
+	unsupportedFormat: 'unsupportedFormat',
+	fileProcessing: 'fileProcessing',
+	accessDenied: 'accessDenied',
+	messageDeleted: 'messageDeleted',
+	fileDeleted: 'fileDeleted',
+};

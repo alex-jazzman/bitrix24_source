@@ -14,6 +14,10 @@ export const CommentsDialog = {
 			type: String,
 			required: true,
 		},
+		contextId: {
+			type: Number,
+			default: 0,
+		},
 	},
 	computed:
 	{
@@ -34,8 +38,35 @@ export const CommentsDialog = {
 			return this.$store.getters['messages/getById'](this.postMessageId);
 		},
 	},
+	watch:
+	{
+		dialogInited(inited: boolean)
+		{
+			if (inited)
+			{
+				void this.goToContextMessage();
+			}
+		},
+	},
+	mounted()
+	{
+		if (this.dialogInited)
+		{
+			void this.goToContextMessage();
+		}
+	},
 	methods:
 	{
+		async goToContextMessage()
+		{
+			if (!this.contextId)
+			{
+				return;
+			}
+
+			await this.$nextTick();
+			await this.$refs.dialog.goToMessageContext(this.contextId);
+		},
 		async goToPostMessageContext()
 		{
 			const dialog = this.$refs.dialog;

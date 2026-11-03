@@ -1,13 +1,18 @@
-import { type JsonObject } from 'main.core';
-import { EventEmitter, type BaseEvent } from 'main.core.events';
-import { computed } from 'ui.vue3';
+import { type JsonObject, Type } from 'main.core';
+import { type EventEmitter, type BaseEvent } from 'main.core.events';
+import { computed, inject, onBeforeUnmount } from 'ui.vue3';
 
 import { ChatDialog } from 'im.v2.component.dialog.chat';
 import { ChatSidebar } from 'im.v2.component.sidebar';
 import { ChatTextarea } from 'im.v2.component.textarea';
 import { ActionByRole, Settings, UserRole, EventType, SidebarDetailBlock } from 'im.v2.const';
+import {
+	CHAT_DETAIL_FOCUS_CONTEXT,
+	ChatDetailFocusContext,
+	DetailArea,
+	type DetailAreaType,
+} from 'im.v2.lib.a11y';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { ResizeManager } from 'im.v2.lib.textarea';
 import { ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
 import { type ImModelChat } from 'im.v2.model';
 
@@ -18,12 +23,38 @@ import { DropArea } from './components/drop-area';
 import { JoinPanel } from './components/join-panel';
 import { LoadingBar } from './components/loading-bar';
 import { MutePanel } from './components/mute-panel';
-import { Height } from './const/size';
-import { TextareaObserverDirective } from './utils/observer-directive';
 
 import './css/base-chat-content.css';
 
 type SidebarDetailBlockType = $Values<typeof SidebarDetailBlock>;
+
+type ProvidedContext = {
+	currentSidebarPanel: SidebarDetailBlockType,
+	withSidebar: boolean,
+	sidebarAreaId: string,
+	chatDetailFocusContext: ChatDetailFocusContext,
+};
+
+/**
+ * The bounds of the detail areas this composition owns: the context learns where an area starts and ends
+ * and nothing about the stops inside it, which belong to the owner of the area.
+ */
+const DetailAreaRef: { [DetailAreaType]: string } = Object.freeze({
+	[DetailArea.header]: 'headerArea',
+	[DetailArea.preFeed]: 'preFeedArea',
+	[DetailArea.feed]: 'feedArea',
+	[DetailArea.composerOrReplacement]: 'composerArea',
+	[DetailArea.postComposer]: 'postComposerArea',
+	[DetailArea.sidebar]: 'sidebarArea',
+});
+
+/**
+ * The stable name of the sidebar area a header control points at with `aria-controls`. Several details can
+ * live on one page - an embedded chat beside the messenger, the comments layer over the base one - so the
+ * name carries the number of the composition that owns the element and stays the same while it is mounted.
+ */
+const SIDEBAR_AREA_ID_PREFIX = 'bx-im-chat-detail-sidebar';
+let sidebarAreaSequence = 0;
 
 // @vue/component
 export const BaseChatContent = {
@@ -41,12 +72,15 @@ export const BaseChatContent = {
 		BulkActionsPanel,
 		LoadingBar,
 	},
-	directives: { 'textarea-observer': TextareaObserverDirective },
-	provide(): { currentSidebarPanel: SidebarDetailBlockType, withSidebar: boolean }
+	provide(): ProvidedContext
 	{
 		return {
 			currentSidebarPanel: computed(() => this.currentSidebarPanel),
 			withSidebar: computed(() => this.withSidebar),
+			// A control names the area it opens only while that area is really rendered: an `aria-controls`
+			// pointing at nothing is worse than no attribute at all.
+			sidebarAreaId: computed(() => (this.showSidebar ? this.sidebarAreaElementId : '')),
+			[CHAT_DETAIL_FOCUS_CONTEXT]: this.focusContext,
 		};
 	},
 	props:
@@ -72,13 +106,30 @@ export const BaseChatContent = {
 			default: null,
 		},
 	},
+	setup(): Object
+	{
+		sidebarAreaSequence += 1;
+		const sidebarAreaElementId = `${SIDEBAR_AREA_ID_PREFIX}-${sidebarAreaSequence}`;
+
+		const inheritedFocusContext = inject(CHAT_DETAIL_FOCUS_CONTEXT, null);
+		if (inheritedFocusContext !== null)
+		{
+			return { focusContext: inheritedFocusContext, sidebarAreaElementId };
+		}
+
+		// Embedded content mounted on its own has no messenger root above it, so it owns a fallback
+		// coordinator of its detail areas and takes it down together with itself.
+		const focusContext = new ChatDetailFocusContext();
+		onBeforeUnmount(() => focusContext.destroy());
+
+		return { focusContext, sidebarAreaElementId };
+	},
 	data(): JsonObject
 	{
 		return {
-			textareaHeight: 0,
-			headerHeight: 0,
 			showLoadingBar: false,
 			currentSidebarPanel: '',
+			dropAreaContainer: null,
 		};
 	},
 	computed:
@@ -108,6 +159,14 @@ export const BaseChatContent = {
 		{
 			return this.$store.getters['messages/comments/areOpenedForChannel'](this.dialogId);
 		},
+		showSidebar(): boolean
+		{
+			return Type.isStringFilled(this.dialogId) && this.withSidebar;
+		},
+		canRenderDropArea(): boolean
+		{
+			return this.withDropArea && Boolean(this.dropAreaContainer);
+		},
 		containerClasses(): string[]
 		{
 			const alignment = this.$store.getters['application/settings/get'](Settings.appearance.alignment);
@@ -123,45 +182,25 @@ export const BaseChatContent = {
 
 			return ThemeManager.getCurrentBackgroundStyle(this.dialogId);
 		},
-		dialogContainerStyle(): Object
-		{
-			let textareaHeight = this.textareaHeight;
-			if (!this.canSend || this.isBulkActionsMode)
-			{
-				textareaHeight = Height.blockedTextarea;
-			}
-
-			return {
-				height: `calc(100% - ${this.headerHeight}px - ${textareaHeight}px)`,
-			};
-		},
-	},
-	watch:
-	{
-		textareaHeight(newValue, oldValue)
-		{
-			if (!this.dialog.inited || oldValue === 0)
-			{
-				return;
-			}
-
-			EventEmitter.emit(EventType.dialog.scrollToBottom, {
-				chatId: this.dialog.chatId,
-				animation: false,
-			});
-		},
 	},
 	created()
 	{
-		this.initTextareaResizeManager();
+		this.registeredAreas = new Map();
 		this.bindEvents();
 	},
 	mounted()
 	{
-		this.headerHeight = this.$refs['header-container']?.clientHeight ?? 0;
+		this.syncDetailAreas();
+		// $refs are not reactive: the drop area gets the node through state, not straight from the template
+		this.dropAreaContainer = this.$refs.content;
+	},
+	updated()
+	{
+		this.syncDetailAreas();
 	},
 	beforeUnmount()
 	{
+		this.releaseDetailAreas();
 		this.unbindEvents();
 	},
 	methods:
@@ -170,20 +209,49 @@ export const BaseChatContent = {
 		{
 			return this.$refs.content;
 		},
-		initTextareaResizeManager()
+		/**
+		 * While the comments layer covers this content, the layer on top describes the detail: several
+		 * compositions share one context, and only the one the user is looking at owns the area bounds.
+		 */
+		syncDetailAreas()
 		{
-			this.textareaResizeManager = new ResizeManager();
-			this.textareaResizeManager.subscribe(ResizeManager.events.onHeightChange, this.onTextareaHeightChange);
+			const isCovered = this.hasCommentsOnTop;
+
+			Object.keys(DetailAreaRef).forEach((area: DetailAreaType) => {
+				const element = isCovered ? null : this.resolveAreaElement(DetailAreaRef[area]);
+				const registered = this.registeredAreas.get(area) ?? null;
+				if (registered === element)
+				{
+					return;
+				}
+
+				if (registered !== null)
+				{
+					this.focusContext.unregisterArea(area, registered);
+					this.registeredAreas.delete(area);
+				}
+
+				if (element !== null)
+				{
+					this.focusContext.registerArea(area, element);
+					this.registeredAreas.set(area, element);
+				}
+			});
 		},
-		onTextareaMount()
+		releaseDetailAreas()
 		{
-			const textareaContainer: HTMLDivElement = this.$refs['textarea-container'];
-			this.textareaHeight = textareaContainer.clientHeight;
+			this.registeredAreas.forEach((element: HTMLElement, area: DetailAreaType) => {
+				this.focusContext.unregisterArea(area, element);
+			});
+			this.registeredAreas.clear();
 		},
-		onTextareaHeightChange(event: BaseEvent<{newHeight: number}>)
+		// An area drawn by a component hands over its root element, an area of this template - itself.
+		resolveAreaElement(refName: string): HTMLElement | null
 		{
-			const { newHeight } = event.getData();
-			this.textareaHeight = newHeight;
+			const target = this.$refs[refName];
+			const element = Type.isElementNode(target) ? target : target?.$el;
+
+			return Type.isElementNode(element) ? element : null;
 		},
 		onShowLoadingBar(event: BaseEvent<{ dialogId: string }>)
 		{
@@ -227,15 +295,22 @@ export const BaseChatContent = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat__scope bx-im-content-chat__container" :class="containerClasses" :style="backgroundStyle">
-			<div class="bx-im-content-chat__content" ref="content">
-				<div v-if="withHeader" ref="header-container">
+		<div
+			class="bx-im-content-chat__scope bx-im-content-chat__container"
+			:class="containerClasses"
+			:style="backgroundStyle"
+			data-testid="im-content-chat-container"
+		>
+			<div class="bx-im-content-chat__content" ref="content" data-testid="im-content-chat-content">
+				<div v-if="withHeader" ref="headerArea">
 					<slot name="header">
 						<ChatHeader :dialogId="dialogId" :key="dialogId" />
 					</slot>
 				</div>
-				<slot name="sub-header"></slot>
-				<div :style="dialogContainerStyle" class="bx-im-content-chat__dialog_container">
+				<div class="bx-im-content-chat__pre-feed_container" ref="preFeedArea">
+					<slot name="sub-header"></slot>
+				</div>
+				<div class="bx-im-content-chat__dialog_container" ref="feedArea">
 					<Transition name="loading-bar-transition">
 						<LoadingBar v-if="showLoadingBar" />
 					</Transition>
@@ -246,37 +321,45 @@ export const BaseChatContent = {
 					</div>
 				</div>
 				<!-- Textarea -->
-				<Transition name="bx-im-panel-transition">
-					<BulkActionsPanel v-if="isBulkActionsMode" :dialogId="dialogId"/>
-					<div v-else-if="canSend" v-textarea-observer class="bx-im-content-chat__textarea_container" ref="textarea-container">
-						<slot name="textarea" :onTextareaMount="onTextareaMount">
-							<ChatTextarea
-								:dialogId="dialogId"
-								:key="dialogId"
-								@mounted="onTextareaMount"
-							/>
-						</slot>
-						<div class="bx-im-content-chat__after-textarea_container">
-							<slot name="after-textarea">
-								<ChatContentDisclaimer :dialogId="dialogId"/>
+				<div class="bx-im-content-chat__composer_container" ref="composerArea">
+					<Transition name="bx-im-panel-transition" @afterLeave="syncDetailAreas">
+						<BulkActionsPanel v-if="isBulkActionsMode" :dialogId="dialogId"/>
+						<div v-else-if="canSend" class="bx-im-content-chat__textarea_container">
+							<!-- default field serves the in-scope surfaces only: everyone else either replaces it
+								through the slot or never gets here, having no right to send -->
+							<slot name="textarea">
+								<ChatTextarea
+									:dialogId="dialogId"
+									:withKeyboardNavigation="true"
+									:key="dialogId"
+								/>
 							</slot>
+							<div class="bx-im-content-chat__after-textarea_container" ref="postComposerArea">
+								<slot name="after-textarea">
+									<ChatContentDisclaimer :dialogId="dialogId"/>
+								</slot>
+							</div>
 						</div>
-					</div>
-					<slot v-else-if="isGuest" name="join-panel">
-						<JoinPanel :dialogId="dialogId" />
-					</slot>
-					<MutePanel v-else :dialogId="dialogId" />
-				</Transition>
+						<slot v-else name="blocked-panel">
+							<slot v-if="isGuest" name="join-panel">
+								<JoinPanel :dialogId="dialogId" />
+							</slot>
+							<MutePanel v-else :dialogId="dialogId" />
+						</slot>
+					</Transition>
+				</div>
 				<DropArea
-					v-if="withDropArea"
-					:key="dialogId" 
-					:dialogId="dialogId" 
-					:container="$refs.content || {}" 
+					v-if="canRenderDropArea"
+					:key="dialogId"
+					:dialogId="dialogId"
+					:container="dropAreaContainer"
 				/>
 				<!-- End textarea -->
 			</div>
 			<ChatSidebar
-				v-if="dialogId && withSidebar" 
+				v-if="showSidebar"
+				ref="sidebarArea"
+				:id="sidebarAreaElementId"
 				:originDialogId="dialogId"
 				:isActive="!hasCommentsOnTop"
 				@changePanel="onChangeSidebarPanel"

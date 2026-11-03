@@ -28,10 +28,10 @@ $track = !empty($arResult['RECORD']) ? $arResult['RECORD'] : null;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.tooltip',
-	'call.component.user-list',
-	'call.component.elements.audioplayer',
+	'call.legacy.component.user-list',
+	'call.legacy.component.elements.audioplayer',
 	'call.lib.analytics',
-	'call.component.elements.action-popup',
+	'call.legacy.component.elements.action-popup',
 ]);
 
 CJSCore::Init(array('amcharts', 'amcharts4_core', 'amcharts_pie'));
@@ -60,27 +60,19 @@ if (!empty($arResult['FEEDBACK_URL']))
 	Toolbar::addButton($feedbackButton, ButtonLocation::RIGHT);
 }
 
-$jsMessages = [];
-$jsMessagesCodes = [
-	'CALL_COMPONENT_DELETE_FOLLOWUP_TITLE',
-	'CALL_COMPONENT_DELETE_FOLLOWUP_DESCRIPTION',
-	'CALL_COMPONENT_DELETE_FOLLOWUP_OK_BTN',
+$copilotNameReplace = ['#COPILOT_NAME#' => AI\CallAISettings::getCopilotName()];
+$jsMessages = [
+	'CALL_COMPONENT_DELETE_FOLLOWUP_TITLE' => Loc::getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_TITLE'),
+	'CALL_COMPONENT_DELETE_FOLLOWUP_DESCRIPTION' => Loc::getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_DESCRIPTION_MSGVER_1', $copilotNameReplace),
+	'CALL_COMPONENT_DELETE_FOLLOWUP_OK_BTN' => Loc::getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_OK_BTN'),
 ];
-
-if(count($jsMessagesCodes) >0 )
-{
-	foreach ($jsMessagesCodes as $code)
-	{
-		$jsMessages[$code] = Loc::getMessage($code);
-	}
-}
 ?>
 
 <div class="bx-call-component-call-ai" data-call-id="<?= $arResult['CALL_ID'] ?>" data-call-uuid="<?= htmlspecialcharsbx($arResult['CALL_UUID']) ?>">
 	<div class="bx-call-component-call-ai__resume-container">
 		<div class="bx-call-component-call-ai__resume-wrapper">
 			<h2 class="bx-call-component-call-ai__slider-title">
-				<?= Loc::getMessage('CALL_COMPONENT_COPILOT_DETAIL_TITLE') ?>
+				<?= Loc::getMessage('CALL_COMPONENT_COPILOT_DETAIL_TITLE_MSGVER_1', $copilotNameReplace) ?>
 			</h2>
 			<h3 class="bx-call-component-call-ai__resume-title"><?= $overview['topic'] ?></h3>
 
@@ -126,16 +118,16 @@ if(count($jsMessagesCodes) >0 )
 			</div>
 
 			<div class="bx-call-component-call-ai__disclaimer">
-				<?= Loc::getMessage('CALL_COMPONENT_COPILOT_DISCLAIMER', [
+				<?= Loc::getMessage('CALL_COMPONENT_COPILOT_DISCLAIMER_MSGVER_1', $copilotNameReplace + [
 					'#LINK_START#' => '<span class="bx-call-component-call-ai__disclaimer-link">',
-					'#LINK_END#' => '</span>'
+					'#LINK_END#' => '</span>',
 				]) ?>
 			</div>
 			<?
 			if ($arResult['CAN_DELETE'])
 			{
 				?>
-				<div class="bx-call-component-call-ai__delete"><?= Loc::getMessage('CALL_COMPONENT_DELETE_FOLLOWUP') ?></div>
+				<div class="bx-call-component-call-ai__delete"><?= Loc::getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_MSGVER_1', $copilotNameReplace) ?></div>
 				<div class="bx-call-component-call-ai__delete-popup"></div>
 				<?
 			}
@@ -174,8 +166,8 @@ if(count($jsMessagesCodes) >0 )
 						};
 						if ($overview['isExceptionMeeting'])
 						{
-							$recommendation = Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING', [
-								'#MEETING_TYPE#' => $overview['meetingDetails']['type'] ?? Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING_DAILY')
+							$recommendation = Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING_MSGVER_1', $copilotNameReplace + [
+								'#MEETING_TYPE#' => $overview['meetingDetails']['type'] ?? Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING_DAILY'),
 							]);
 						}
 						else

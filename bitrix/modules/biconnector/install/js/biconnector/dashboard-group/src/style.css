@@ -203,7 +203,7 @@
 	width: 120px;
 	height: 110px;
 	margin-bottom: 20px;
-	background: url('../images/empty-state.png') center/contain no-repeat;
+	background: url('../images/empty-state.webp') center/contain no-repeat;
 }
 
 .group-dashboard-empty-title {

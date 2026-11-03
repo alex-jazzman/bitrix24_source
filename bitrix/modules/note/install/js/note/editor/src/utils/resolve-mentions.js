@@ -1,7 +1,7 @@
 /**
  * Batch-resolve utility for noteMention nodes.
  *
- * Collects unresolved nodes from the document (deduped by type:id),
+ * Collects mention nodes from the document (deduped by type:id),
  * calls API-01, and returns a Map keyed by "type:id".
  *
  * Unlike file-node resolver, unavailable/inaccessible nodes are NOT removed —
@@ -9,20 +9,49 @@
  */
 
 const MENTION_NODE_TYPE = 'noteMention';
+export const MENTION_BATCH_LIMIT = 200;
+
+export function createMentionSnapshot(mention, fallbackLabel = null)
+{
+	if (!mention?.available)
+	{
+		const label = mention?.type === 'document' ? mention.label ?? fallbackLabel : fallbackLabel;
+
+		return Object.freeze({
+			label,
+			avatar: null,
+			url: null,
+			available: false,
+			isCurrentUser: false,
+			unavailable: true,
+		});
+	}
+
+	return Object.freeze({
+		label: mention.label ?? fallbackLabel,
+		avatar: mention.avatar ?? null,
+		url: mention.url ?? null,
+		available: true,
+		isCurrentUser: Boolean(mention.isCurrentUser),
+		unavailable: false,
+	});
+}
 
 /**
- * Collects unresolved mention nodes from the ProseMirror document.
- * "Unresolved" means available === null (resolver has not touched it yet).
+ * Collects mention nodes from the ProseMirror document.
+ * Presentation attributes are deliberately ignored: they can belong to a previous
+ * editor session and therefore are not authoritative for the current user.
  * Results are deduped by "type:id" — one entry per unique pair.
  *
  * @param {Object} doc - ProseMirror document.
- * @param {Set<string>} skip - Already-failed "type:id" keys to skip.
+ * @param {Set<string>} skip - "type:id" keys excluded from this pass.
  * @returns {{ type: string, id: number }[]}
  */
-export function collectUnresolvedMentions(doc, skip)
+export function collectMentions(doc, skip)
 {
 	const seen = new Set();
 	const items = [];
+	const skippedKeys = skip instanceof Set ? skip : new Set();
 
 	doc.descendants((node) => {
 		if (node.type.name !== MENTION_NODE_TYPE)
@@ -30,16 +59,15 @@ export function collectUnresolvedMentions(doc, skip)
 			return;
 		}
 
-		const { entityType, entityId, available } = node.attrs;
+		const { entityType, entityId } = node.attrs;
 
-		// Skip already-resolved or invalid nodes.
-		if (available !== null || !entityType || !(entityId > 0))
+		if (!entityType || !(entityId > 0))
 		{
 			return;
 		}
 
 		const key = `${entityType}:${entityId}`;
-		if (seen.has(key) || skip.has(key))
+		if (seen.has(key) || skippedKeys.has(key))
 		{
 			return;
 		}

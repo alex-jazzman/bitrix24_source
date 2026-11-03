@@ -46,12 +46,9 @@ export function hasField(form: ?HTMLFormElement, fieldCode: string): boolean
  */
 function isValueEmpty(value: mixed): boolean
 {
-	if (Array.isArray(value))
-	{
-		return value.length === 0;
-	}
+	const values = Type.isArray(value) ? value : [value];
 
-	return !value || (Type.isString(value) && value.trim() === '');
+	return values.every((item) => !item || (Type.isString(item) && item.trim() === ''));
 }
 
 /**
@@ -72,8 +69,17 @@ export function isFieldEmpty(form: ?HTMLFormElement, fieldCode: string, snapshot
 		return false;
 	}
 
-	const data = snapshot ?? readFormData(form);
-	if (!(fieldCode in data))
+	return isDataFieldEmpty(snapshot ?? readFormData(form), fieldCode);
+}
+
+/**
+ * The same emptiness on prepared form data alone, without a form to read it from: the data the form
+ * committed to the store (rawActivityData) is prepared by the very same ajax.prepareForm, so a reader
+ * with no form on screen judges its fields by exactly the criterion above.
+ */
+export function isDataFieldEmpty(data: ?Object, fieldCode: string): boolean
+{
+	if (!Type.isPlainObject(data) || !Type.isStringFilled(fieldCode) || !(fieldCode in data))
 	{
 		return false;
 	}
@@ -146,8 +152,15 @@ export function snapshotValues(form: ?HTMLFormElement): Object
  * Writes each [fieldCode, expr] pair into the form, but only where the field exists and is
  * empty, returning the codes actually filled. Shared by apply-on-select and session
  * restore so the "empty-only" invariant lives in a single place.
+ *
+ * A caller that already holds a snapshot of the same form (snapshotValues) passes it in, so a pass
+ * that reads the form for several steps in a row pays for one prepareForm instead of one per step.
  */
-export function fillEmptyFields(form: ?HTMLFormElement, values: ?Object): Array<string>
+export function fillEmptyFields(
+	form: ?HTMLFormElement,
+	values: ?Object,
+	knownSnapshot: ?Object = null,
+): Array<string>
 {
 	const filled = [];
 	if (!form || !Type.isPlainObject(values))
@@ -157,7 +170,7 @@ export function fillEmptyFields(form: ?HTMLFormElement, values: ?Object): Array<
 
 	// One prepareForm snapshot for the whole pass: each field is written at most once and never
 	// re-read, so a single snapshot stays valid while avoiding the per-field O(controls) rescan.
-	const snapshot = readFormData(form);
+	const snapshot = knownSnapshot ?? readFormData(form);
 
 	for (const [fieldCode, expr] of Object.entries(values))
 	{

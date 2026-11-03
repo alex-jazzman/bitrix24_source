@@ -1,4 +1,4 @@
-<?
+<?php
+$MESS["TASKS_DEPARTMENTS_OVERVIEW_COUNTER_ARIA_LABEL"] = "#ROLE#, total: #TOTAL#, overdue: #EXPIRED#";
 $MESS["TASKS_MANAGE_TITLE"] = "Supervising";
 $MESS["TASKS_ROW_SUMMARY"] = "Total";
-?>

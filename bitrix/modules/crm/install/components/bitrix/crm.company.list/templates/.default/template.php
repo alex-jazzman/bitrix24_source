@@ -56,7 +56,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 \Bitrix\Main\UI\Extension::load('crm.dialog');
 
-?><div id="crm-company-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div><?
+?><div id="batchDeletionWrapper"></div><?
 
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 
@@ -117,6 +117,7 @@ if($arResult['NEED_FOR_TRANSFER_REQUISITES']):
 endif;
 
 $isInternal = $arResult['INTERNAL'];
+$enableGroupActions = !empty($arResult['ENABLE_GROUP_ACTIONS']);
 $callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'] ?? false;
 $allowWrite = $arResult['PERMS']['WRITE'] && !$callListUpdateMode;
 $allowDelete = $arResult['PERMS']['DELETE'] && !$callListUpdateMode;
@@ -171,7 +172,8 @@ $fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleI
 
 if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 {
-	$arResult['COMPANY'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Company))->appendNearestActivityBlock($arResult['COMPANY']);
+	$arResult['COMPANY'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Company))
+		->appendNearestActivityBlock($arResult['COMPANY'], false, $arParams['ANALYTICS'] ?? []);
 }
 
 $toolsManager = Container::getInstance()->getIntranetToolsManager();
@@ -604,6 +606,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			'WEBFORM_ID' => $webformId,
 			'INDUSTRY' => $industry,
 			'EMPLOYEES' => $employees,
+			'OPENED' => ($arCompany['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 			'CREATED_BY' => isset($arCompany['~CREATED_BY']) && $arCompany['~CREATED_BY'] > 0
 				? $userRender->render(
 					$arCompany['~CREATED_BY'],
@@ -667,7 +670,9 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 	unset($resultItem);
 }
 
-if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+$isEmbeddedListLayout = $arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest();
+
+if ($isEmbeddedListLayout)
 {
 	$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Company;
 	$targetId = 'relation-button-' . $relationCode;
@@ -712,6 +717,13 @@ if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest
 	<?php
 }
 
+if ($isEmbeddedListLayout)
+{
+	echo '<div class="crm-list-embedded-grid-block">';
+}
+
+echo '<div id="crm-company-list-progress-bar-container"></div>';
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.newentity.counter.panel',
 	'',
@@ -740,6 +752,15 @@ if ($isDefaultCategory)
 	$navigationBar->setItems([
 		NavigationBarPanel::ID_REPEAT_SALE,
 	]);
+}
+
+$actionPanelItems = ($isInternal && !$enableGroupActions)
+	? []
+	: ($arResult['PANEL']?->getControls() ?? []);
+
+if ($isInternal && $enableGroupActions)
+{
+	$actionPanelItems = \Bitrix\Crm\Component\EntityList\Grid\Panel\ActionPanelItems::withoutForAllCheckbox($actionPanelItems);
 }
 
 $APPLICATION->IncludeComponent(
@@ -785,7 +806,7 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => [
 			'GROUPS' => [
 				[
-					'ITEMS' => $isInternal ? [] : $arResult['PANEL']?->getControls(),
+					'ITEMS' => $actionPanelItems,
 				],
 			],
 		],
@@ -821,6 +842,12 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+
+if ($isEmbeddedListLayout)
+{
+	echo '</div>';
+}
+
 
 ?><script>
 	BX.ready(

@@ -37,7 +37,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	legacyMessenger.openVideoconfByUrl = function (link) {
 		console.warn("Developer: method BXIM.openVideoconfByUrl is deprecated. Use method 'Messenger.openConference' from 'im.public' or 'im.public.iframe' extension.");
 		const Utils = main_core.Reflection.getClass('BX.Messenger.v2.Lib.Utils');
-		if (Utils && main_core.Type.isStringFilled(url) && !Utils.conference.isCurrentPortal(url)) {
+		if (Utils && main_core.Type.isStringFilled(link) && !Utils.conference.isCurrentPortal(link)) {
 			return false;
 		}
 		messenger.openConference({
@@ -139,10 +139,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const result = await main_core_events.EventEmitter.emitAsync(EventType.textarea.getText, {
 				dialogId
 			});
-			if (result.length === 0) {
-				return '';
-			}
-			return result[0];
+			return result.find(text => text !== '') ?? '';
 		}
 		insertQuote(chatId, text, options = {}) {
 			const {
@@ -383,7 +380,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		async openChatCreation(chatType, params = {}) {
 			const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
-			const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
+			const isRedirectAllowed = !params.onCreate && (await DesktopManager?.getInstance().checkForRedirect());
 			if (isRedirectAllowed) {
 				return DesktopManager?.getInstance().redirectToChatCreation(chatType);
 			}
@@ -397,7 +394,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return getOpener()?.openChatUpdate(dialogId);
 		}
-		async startVideoCall(dialogId = '', withVideo = true) {
+		async startVideoCall(dialogId = '', withVideo = true, callOptions = null) {
 			if (!this.v2enabled) {
 				window.BXIM.callTo(dialogId, withVideo);
 				return Promise.resolve();
@@ -405,9 +402,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 			const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
 			if (isRedirectAllowed) {
-				return DesktopManager?.getInstance().redirectToVideoCall(dialogId, withVideo);
+				return DesktopManager?.getInstance().redirectToVideoCall(dialogId, withVideo, callOptions);
 			}
-			return getOpener()?.startVideoCall(dialogId, withVideo);
+			return getOpener()?.startVideoCall(dialogId, withVideo, callOptions);
 		}
 		async startPhoneCall(number, params) {
 			if (!this.v2enabled) {
@@ -501,6 +498,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			}
 			return getOpener()?.openNavigationItem(payload);
+		}
+		getNavigationItemId(layoutName) {
+			const NavigationManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.NavigationManager');
+			if (!NavigationManager) {
+				return '';
+			}
+			return NavigationManager.getNavigationItemId(layoutName);
 		}
 		isEmbeddedMode() {
 			const LayoutManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');

@@ -2,6 +2,7 @@
  * @module crm/crm-mode/wizard/layouts/mode/block
  */
 jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) => {
+	const { Text1, Text4 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { TypeId } = require('crm/type');
@@ -163,12 +164,11 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 								uri: makeImagesPath(mode.toLowerCase(), active),
 							},
 						}),
-						Text(
+						Text1(
 							{
 								text: Loc.getMessage(`MCRM_CRM_MODE_LAYOUTS_MODE_${mode}_TITLE`),
 								style: {
 									marginLeft: 14,
-									fontSize: 18,
 									color: active ? AppTheme.colors.base1 : AppTheme.colors.base3,
 									alignSelf: 'center',
 								},
@@ -177,7 +177,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 					),
 					this.renderDelimiter(),
 					this.renderLabels(mode),
-					Text(
+					Text4(
 						{
 							text: Loc.getMessage(`MCRM_CRM_MODE_LAYOUTS_MODE_${mode}_DESCRIPTION`),
 							style: {

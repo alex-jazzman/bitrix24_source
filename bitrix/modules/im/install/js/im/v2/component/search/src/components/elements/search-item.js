@@ -12,7 +12,7 @@ import { type ImModelChat } from 'im.v2.model';
 
 import '../css/search-item.css';
 
-const ItemTextByChatType: Record<string, () => string> = {
+const ItemTextByChatType: { [string]: () => string } = {
 	[ChatType.openChannel]: () => Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
 	[ChatType.generalChannel]: () => Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
 	[ChatType.channel]: () => Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
@@ -53,6 +53,14 @@ export const SearchItem = {
 		titleTwoLine: {
 			type: Boolean,
 			default: false,
+		},
+		active: {
+			type: Boolean,
+			default: false,
+		},
+		navIndex: {
+			type: Number,
+			default: null,
 		},
 	},
 	emits: ['clickItem', 'openContextMenu'],
@@ -182,15 +190,21 @@ export const SearchItem = {
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
+	// data-id and data-testid are the shared row contract on every search surface; data-nav-index is optional.
 	template: `
 		<SearchItemLayout
 			:selected="selected"
 			:centered="selfChatReplace"
+			:keyboardActive="active"
+			:data-id="dialogId"
+			:data-testid="'im-search-item-' + dialogId"
+			:data-nav-index="navIndex"
 			@click="onClick"
 			@contextmenu="onRightClick"
 		>
 			<template #avatar>
 				<ChatAvatar
+					aria-hidden="true"
 					:avatarDialogId="dialogId"
 					:contextDialogId="dialogId"
 					:size="AvatarSize.XL"

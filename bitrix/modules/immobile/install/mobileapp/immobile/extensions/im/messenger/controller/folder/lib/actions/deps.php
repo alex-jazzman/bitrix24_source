@@ -5,6 +5,7 @@ return [
 		'alert',
 		'type',
 		'im:messenger/loc',
+		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/provider/services/folder',

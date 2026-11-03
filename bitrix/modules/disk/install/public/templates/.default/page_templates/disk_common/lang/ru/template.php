@@ -8,4 +8,3 @@ $MESS ['disk_common_wizard_path_to_folder'] = "Путь к папке (отно�
 $MESS ['disk_common_wizard_path_to_folder_error1'] = "Путь должен начинаться со знака /.";
 $MESS ['disk_common_wizard_path_to_folder_error2'] = "Папка /bitrix/ не может быть хранилищем.";
 $MESS ['disk_common_wizard_name_error1'] = "Имя хранилища не должно содержать следующих знаков: /\\:*?|{}%&~";
-?>

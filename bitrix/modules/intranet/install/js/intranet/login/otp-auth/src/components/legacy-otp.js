@@ -17,10 +17,6 @@ export const LegacyOtp = {
 			type: String,
 			default: '',
 		},
-		authLoginUrl: {
-			type: String,
-			default: '',
-		},
 		accountChangeUrl: {
 			type: String,
 			default: '',
@@ -32,14 +28,6 @@ export const LegacyOtp = {
 		captchaCode: {
 			type: String,
 			default: '',
-		},
-		notShowLinks: {
-			type: Boolean,
-			default: false,
-		},
-		isBitrix24: {
-			type: Boolean,
-			default: false,
 		},
 		userData: {
 			type: Object,
@@ -84,6 +72,7 @@ export const LegacyOtp = {
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="OTP" />
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="otp" />
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')" />
 
 			<div v-show="isOtpBlockVisible">
@@ -162,14 +151,6 @@ export const LegacyOtp = {
 					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_HELP') }}
 				</a>
 			</button>
-		</Teleport>
-
-		<Teleport to=".intranet-body__header-right" v-if="!notShowLinks && !isBitrix24">
-			<div class="intranet-text-btn intranet-text-btn--auth">
-				<a class="intranet-text-btn-link" :href="authLoginUrl" rel="nofollow">
-					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_LINK') }}
-				</a>
-			</div>
 		</Teleport>
 	`,
 };

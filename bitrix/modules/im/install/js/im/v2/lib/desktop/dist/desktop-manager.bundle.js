@@ -116,6 +116,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			conferenceList.push(im_v2_lib_utils.Utils.conference.getWindowNameByCode(code));
 			im_v2_lib_desktopApi.DesktopApi.createWindow(im_v2_lib_utils.Utils.conference.getWindowNameByCode(code), controller => {
 				controller.SetProperty('title', main_core.Loc.getMessage('IM_LIB_DESKTOP_CONFERENCE_TITLE'));
+				// The client fills this property only on the windows it opens by itself, so a window taken
+				// from GetWindow starts without it and the client fails to localise the notifications of a
+				// local record made here. The main window already runs in the right language — copy it.
+				const language = window.BXDesktopWindow?.GetProperty('lang') || main_core.Loc.getMessage('LANGUAGE_ID');
+				controller.SetProperty('lang', language);
 				controller.SetProperty('clientSize', {
 					Width: windowSize.width,
 					Height: windowSize.height
@@ -210,6 +215,38 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
+	// Default of the call_sync_invite_period option, used when call.core is not loaded
+	const DEFAULT_MAX_INVITE_PERIOD = 300_000;
+
+	// An external link must not re-invite longer than the portal allows.
+	// call.core is read through the global namespace to keep the desktop lib independent of it.
+	const getMaxInvitePeriod = () => {
+		const getSyncCallInvitePeriod = main_core.Reflection.getClass('BX.Call.Util.getSyncCallInvitePeriod');
+		const invitePeriod = getSyncCallInvitePeriod?.();
+		return Number.isInteger(invitePeriod) && invitePeriod > 0 ? invitePeriod : DEFAULT_MAX_INVITE_PERIOD;
+	};
+
+	// The link comes from outside the messenger, so only the known options pass through.
+	const prepareCallOptions = encodedCallOptions => {
+		const {
+			invitePeriod
+		} = Encoder.decodeParamsJson(encodedCallOptions) ?? {};
+		if (Number.isInteger(invitePeriod) && invitePeriod > 0) {
+			return {
+				invitePeriod: Math.min(invitePeriod, getMaxInvitePeriod())
+			};
+		}
+		return null;
+	};
+	const startVideoCall = params => {
+		const withVideo = params.withVideo !== 'N';
+		const callOptions = prepareCallOptions(params.callOptions);
+		if (callOptions) {
+			void im_public.Messenger.startVideoCall(params.dialogId, withVideo, callOptions);
+			return;
+		}
+		void im_public.Messenger.startVideoCall(params.dialogId, withVideo);
+	};
 	const BxLinkProcessor = {
 		handleCommand(command, rawParams) {
 			const params = rawParams ?? {};
@@ -227,8 +264,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} else if (command === im_v2_const.DesktopBxLink.conference) {
 				void im_v2_lib_desktop.DesktopManager.getInstance().openConference(params.code);
 			} else if (command === im_v2_const.DesktopBxLink.call) {
-				const withVideo = params.withVideo !== 'N';
-				void im_public.Messenger.startVideoCall(params.dialogId, withVideo);
+				startVideoCall(params);
 			} else if (command === im_v2_const.DesktopBxLink.phone) {
 				const decodedParams = Encoder.decodeParamsJson(params.phoneParams);
 				void im_public.Messenger.startPhoneCall(params.number, decodedParams);
@@ -470,13 +506,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#bindHotkeys() {
 			main_core.Event.bind(window, 'keydown', event => {
-				const logFolderCombination = im_v2_lib_utils.Utils.key.isCombination(event, 'Ctrl+Shift+L');
+				const logFolderCombination = im_v2_lib_utils.Utils.key.isCombination(event, im_v2_const.HotkeyCombination.desktop.logFolder);
 				if (logFolderCombination) {
 					im_v2_lib_desktopApi.DesktopApi.openLogsFolder();
 					im_v2_lib_logger.Logger.desktop('NOTICE: User open log folder (hotkey)');
 					return;
 				}
-				const devToolsCombination = im_v2_lib_utils.Utils.key.isCombination(event, 'Ctrl+Shift+D');
+				const devToolsCombination = im_v2_lib_utils.Utils.key.isCombination(event, im_v2_const.HotkeyCombination.desktop.devTools);
 				if (devToolsCombination) {
 					im_v2_lib_desktopApi.DesktopApi.openDeveloperTools();
 					im_v2_lib_logger.Logger.desktop('NOTICE: User open developer tools (hotkey)');
@@ -897,10 +933,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.chatUpdate}/dialogId/${dialogId}`);
 			return Promise.resolve();
 		}
-		redirectToVideoCall(dialogId = '', withVideo = true) {
-			im_v2_lib_logger.Logger.warn('Desktop: redirectToVideoCall', dialogId, withVideo);
+		redirectToVideoCall(dialogId = '', withVideo = true, callOptions = null) {
+			im_v2_lib_logger.Logger.warn('Desktop: redirectToVideoCall', dialogId, withVideo, callOptions);
 			const withVideoParam = withVideo ? 'Y' : 'N';
-			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.call}/dialogId/${dialogId}/withVideo/${withVideoParam}`);
+			let link = `bx://${im_v2_const.DesktopBxLink.call}/dialogId/${dialogId}/withVideo/${withVideoParam}`;
+			// The native bx:// parser breaks on long segments and on literal apostrophes,
+			// so only the known option is passed instead of an arbitrary object
+			const invitePeriod = callOptions?.invitePeriod;
+			if (Number.isInteger(invitePeriod) && invitePeriod > 0) {
+				link += `/callOptions/${Encoder.encodeParamsJson({
+				invitePeriod
+			})}`;
+			}
+			this.openBxLink(link);
 			return Promise.resolve();
 		}
 		redirectToPhoneCall(number, params) {

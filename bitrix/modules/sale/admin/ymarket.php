@@ -140,12 +140,12 @@ while ($row = $saleStatusIterator->GetNext())
 	$statuses[$row["ID"]] = "{$row["NAME"]} [{$row['ID']}]";
 }
 
-$outYandexStatuses = array(
-	"DELIVERY" => GetMessage("SALE_YM_Y_STATUS_DELIVERY")." [DELIVERY]",
-	"CANCELLED" => GetMessage("SALE_YM_Y_STATUS_CANCELLED")." [CANCELLED]",
-	"PICKUP" => GetMessage("SALE_YM_Y_STATUS_PICKUP")." [PICKUP]",
-	"DELIVERED" => GetMessage("SALE_YM_Y_STATUS_DELIVERED")." [DELIVERED]",
-);
+$outYandexStatuses = array();
+
+foreach (CSaleYMHandler::getOutgoingStatuses() as $marketStatus)
+{
+	$outYandexStatuses[$marketStatus] = GetMessage("SALE_YM_Y_STATUS_".$marketStatus)." [".$marketStatus."]";
+}
 
 $APPLICATION->AddHeadString($checkStyle, true, true);
 

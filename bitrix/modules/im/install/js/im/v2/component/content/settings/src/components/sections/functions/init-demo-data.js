@@ -3,7 +3,7 @@ import { UserRole } from 'im.v2.const';
 import { DemoChatBuilder } from 'im.v2.lib.demo';
 import { Loc } from 'main.core';
 
-export const initDemoData = (): string => {
+export const initAppearanceDemoData = (): string => {
 	const chatBuilder = new DemoChatBuilder();
 	chatBuilder.addChat({
 		role: UserRole.guest,
@@ -29,6 +29,24 @@ export const initDemoData = (): string => {
 	chatBuilder.addMessage({
 		authorId: demoUser.id,
 		text: Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_3'),
+		viewedByOthers: true,
+	});
+
+	chatBuilder.save();
+
+	return chatBuilder.getChat().dialogId;
+};
+
+export const initQuickReactionDemoData = (): string => {
+	const chatBuilder = new DemoChatBuilder();
+
+	chatBuilder.addChat({
+		role: UserRole.guest,
+	});
+
+	chatBuilder.addMessage({
+		authorId: Core.getUserId(),
+		text: Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_2'),
 		viewedByOthers: true,
 	});
 

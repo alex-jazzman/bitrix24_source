@@ -5,14 +5,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/folder-container.bundle.css',
-	'js' => 'dist/folder-container.bundle.js',
+	'css' => 'dist/registry.bundle.css',
+	'js' => 'dist/registry.bundle.js',
 	'rel' => [
+		'im.v2.component.list.container.elements.filter-row',
+		'im.v2.component.list.container.elements.header-menu',
+		'im.v2.component.list.container.elements.vibe-code-catalog-button',
 		'im.v2.component.list.container.recent',
 		'im.v2.component.list.items.folder',
 		'im.v2.component.search',
 		'im.v2.const',
 		'im.v2.lib.analytics',
+		'im.v2.lib.feature',
 		'im.v2.lib.logger',
 		'main.core',
 		'main.core.events',

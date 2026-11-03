@@ -62,6 +62,15 @@ export const MenuItem = {
 			required: false,
 			default: false,
 		},
+		// When the after-content slot holds its own interactive control (e.g. the Copilot role
+		// button), the button role moves from the container to the inner content. That keeps the
+		// slotted control a sibling of the button instead of nested inside it (nested interactive
+		// controls fail axe). Off by default, so every other menu item is unchanged.
+		hasInteractiveAfterContent: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	computed: {
 		OutlineIcons: () => OutlineIcons,
@@ -95,9 +104,51 @@ export const MenuItem = {
 			return this.icon === MenuItemIcon.aiAssistant;
 		},
 	},
+	methods: {
+		handleActivationKeydown(event: KeyboardEvent): void
+		{
+			// Only the item itself reacts; keydowns bubbling up from nested focusable controls
+			// (e.g. the Copilot role button) are handled by those controls, not the item.
+			if (event.target !== event.currentTarget)
+			{
+				return;
+			}
+
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				// Synthesize the same native click the mouse path uses: the parent binds @click,
+				// which falls through to this root element, so keyboard and mouse share one handler.
+				event.preventDefault();
+				this.$el.click();
+			}
+		},
+		onContentKeydown(event: KeyboardEvent): void
+		{
+			// The content is the button only when it holds interactive after-content; otherwise the
+			// container is the button and this keydown must stay inert.
+			if (!this.hasInteractiveAfterContent)
+			{
+				return;
+			}
+
+			this.handleActivationKeydown(event);
+		},
+	},
 	template: `
-		<div class="bx-im-menu-item__container" :class="containerClasses">
-			<div class="bx-im-menu-item__content" :class="{'--with-icon': !!preparedIcon}">
+		<div
+			class="bx-im-menu-item__container"
+			:class="[containerClasses, { '--focus-visible': !hasInteractiveAfterContent }]"
+			:role="hasInteractiveAfterContent ? null : 'button'"
+			:tabindex="hasInteractiveAfterContent ? null : 0"
+			@keydown="handleActivationKeydown"
+		>
+			<div
+				class="bx-im-menu-item__content"
+				:class="[{'--with-icon': !!preparedIcon}, { '--focus-visible': hasInteractiveAfterContent }]"
+				:role="hasInteractiveAfterContent ? 'button' : null"
+				:tabindex="hasInteractiveAfterContent ? 0 : null"
+				@keydown="onContentKeydown"
+			>
 				<BIcon
 					v-if="isAiAssistantItem"
 					:name="OutlineIcons.BITRIX_GPT"

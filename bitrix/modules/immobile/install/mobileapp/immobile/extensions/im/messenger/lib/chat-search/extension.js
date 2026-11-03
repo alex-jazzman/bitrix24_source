@@ -11,6 +11,9 @@ jn.define('im/messenger/lib/chat-search', (require, exports, module) => {
 		RecentSectionLocalSearchStrategy,
 	} = require('im/messenger/lib/chat-search/src/strategy/local/recent-section-local-search-strategy');
 	const {
+		FolderLocalSearchStrategy,
+	} = require('im/messenger/lib/chat-search/src/strategy/local/folder-local-search-strategy');
+	const {
 		DialogLocalSearchStrategy,
 	} = require('im/messenger/lib/chat-search/src/strategy/local/dialog-local-search-strategy');
 	const {
@@ -33,6 +36,7 @@ jn.define('im/messenger/lib/chat-search', (require, exports, module) => {
 		getWordsFromText,
 
 		RecentSectionLocalSearchStrategy,
+		FolderLocalSearchStrategy,
 		DialogLocalSearchStrategy,
 		UserLocalSearchStrategy,
 		CompositeLocalSearchStrategy,

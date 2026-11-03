@@ -1,0 +1,3 @@
+<?php
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_CLOUD_CLICKHOUSE_DESCRIPTION'] = 'Connect your ClickHouse database using a server application.';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_CLOUD_CLICKHOUSE_TITLE'] = 'ClickHouse';

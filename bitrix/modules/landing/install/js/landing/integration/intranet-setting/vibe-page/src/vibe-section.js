@@ -1,4 +1,4 @@
-import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Type } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
@@ -8,6 +8,7 @@ import 'ui.hint';
 import { Section, Row } from 'ui.section';
 import { SettingsSection } from 'ui.form-elements.field';
 import 'sidepanel';
+import { A11y } from 'landing.ui.a11y';
 
 export type VibeOptions = {
 	title: string,
@@ -29,6 +30,9 @@ export type VibeOptions = {
 	isPageExists: ?boolean,
 	isPublished: ?boolean,
 	canEdit: ?boolean;
+	canShowPublishButton: ?boolean;
+	canShowWithdrawButton: ?boolean;
+	canRedirectToVibeAfterEdit: ?boolean;
 	limitCode: ?string;
 	feedbackParams: ?{};
 };
@@ -37,6 +41,7 @@ export class VibeSection extends EventEmitter
 {
 	static #iconDefaultSet = 'ui.icon-set.main';
 	static #iconDefaultIcon = '--home';
+	static #helpHintHideDelay = 300;
 
 	#title: string;
 	#pageTitle: ?string;
@@ -53,6 +58,9 @@ export class VibeSection extends EventEmitter
 	#isPageExists: boolean;
 	#isPublished: boolean;
 	#canEdit: boolean;
+	#canShowPublishButton: boolean;
+	#canShowWithdrawButton: boolean;
+	#canRedirectToVibeAfterEdit: boolean;
 	#limitCode: string;
 
 	#urlCreate: ?string;
@@ -75,10 +83,20 @@ export class VibeSection extends EventEmitter
 	#buttonMainSettings: ?HTMLElement = null;
 	#buttonSecondarySettings: ?HTMLElement = null;
 
+	#helpHintId: string;
+	#lockReasonId: string;
+
+	#helpHintPopup: ?Popup = null;
+	#helpHintHideTimeout: ?number = null;
+	#helpHintEscapeHandler: ?Function = null;
+
 	#importPopup: ?Menu = null;
 	#exportPopup: ?Menu = null;
 	#popupShare: ?MessageBox = null;
 	#popupWithdraw: ?MessageBox = null;
+
+	// One status request at a time: two answers would tell the reader of two different statuses.
+	#isStatusRequestPending: boolean = false;
 
 	constructor(options: VibeOptions)
 	{
@@ -94,6 +112,9 @@ export class VibeSection extends EventEmitter
 		this.#icon = Type.isObject(options.icon) ? options.icon : null;
 
 		this.#canEdit = options.canEdit ?? false;
+		this.#canShowPublishButton = options.canShowPublishButton ?? true;
+		this.#canShowWithdrawButton = options.canShowWithdrawButton ?? true;
+		this.#canRedirectToVibeAfterEdit = options.canRedirectToVibeAfterEdit ?? true;
 		this.#limitCode = options.limitCode || 'limit_office_vibe';
 		this.#isPageExists = options.isPageExists ?? false;
 		this.#isPublished = options.isPublished ?? false;
@@ -106,6 +127,10 @@ export class VibeSection extends EventEmitter
 		this.#urlExport = options.urlExport || null;
 
 		this.#feedbackParams = options.feedbackParams || null;
+
+		// Stable DOM ids: the info block is rebuilt on every status change, its descriptions are not.
+		this.#helpHintId = `landing-vibe-help-hint-${Text.getRandom()}`;
+		this.#lockReasonId = `landing-vibe-lock-reason-${Text.getRandom()}`;
 	}
 
 	getType(): string
@@ -123,7 +148,8 @@ export class VibeSection extends EventEmitter
 		const iconClass = (this.#icon && this.#icon.code) ?? VibeSection.#iconDefaultIcon;
 
 		const section = new Section({
-			title: this.#title,
+			// the header of the section shows the value as markup
+			title: Text.encode(this.#title),
 			titleIconClasses: `ui-icon-set ${iconClass}`,
 			canCollapse: !this.#isMainVibe,
 
@@ -164,7 +190,7 @@ export class VibeSection extends EventEmitter
 		if (!this.#mainTemplate)
 		{
 			this.#mainTemplate = Tag.render`
-				<div class="intranet-settings__vibe-template">
+				<div class="intranet-settings__vibe-template" data-testid="vibe-settings-main-card">
 					<div class="intranet-settings__vibe-icon-box">
 						<div class="intranet-settings__vibe-icon"></div>
 					</div>
@@ -195,6 +221,7 @@ export class VibeSection extends EventEmitter
 								${this.#getButtonPartners()}
 								${this.#getButtonMainSettings()}
 							</div>
+							${this.#renderLockReason()}
 						</div>
 					</div>
 				</div>
@@ -213,18 +240,20 @@ export class VibeSection extends EventEmitter
 					<img 
 						src="${this.#previewImg}"
 						class="intranet-settings__vibe-preview" 
+						alt=""
+						data-testid="vibe-settings-preview-img"
 					/>
 				`
 				: ''
 			;
 			this.#secondaryTemplate = Tag.render`
-				<div class="intranet-settings__vibe-template --secondary-template">
+				<div class="intranet-settings__vibe-template --secondary-template" data-testid="vibe-settings-secondary-card">
 					<div class="intranet-settings__vibe-preview-box">
 						${previewImg}
 					</div>
 					<div class="intranet-settings__vibe-content">
 						<div class="intranet-settings__vibe-title">
-							${this.#pageTitle ?? ''}
+							${Text.encode(this.#pageTitle ?? '')}
 						</div>
 						<div class="intranet-settings__vibe-info-template">
 							${this.#isPublished ? this.getInfoSuccessTemplate() : this.getInfoTemplate()}
@@ -232,7 +261,9 @@ export class VibeSection extends EventEmitter
 						<div class="intranet-settings__vibe-button-box">
 							${this.#getButtonEdit()}
 							<div class="intranet-settings__vibe-button-box-right">
-								${this.#isPublished ? this.#getButtonWithdraw() : this.#getButtonPublish()}
+								${this.#isPublished
+									? (this.#canShowWithdrawButton ? this.#getButtonWithdraw() : null)
+									: (this.#canShowPublishButton ? this.#getButtonPublish() : null)}
 								${this.#getButtonSecondarySettings()}
 							</div>
 						</div>
@@ -247,50 +278,16 @@ export class VibeSection extends EventEmitter
 	getInfoTemplate(): HTMLElement
 	{
 		this.infoTemplate = Tag.render`
-			<div class="intranet-settings__vibe-info">
+			<div class="intranet-settings__vibe-info" data-testid="vibe-settings-status-block">
 				<div class="intranet-settings__vibe-info-title">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_INFO_TITLE')}
 				</div>
 				<div class="intranet-settings__vibe-info-subtitle">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_INFO_SUBTITLE')}
-					<div class="ui-icon-set --help intranet-settings__vibe-info-help"></div>
+					${this.#renderHelpHint(Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_WARNING'))}
 				</div>
 			</div>
 		`;
-
-		Event.bind(this.infoTemplate.querySelector('.intranet-settings__vibe-info-help'), 'mouseenter', (event) => {
-			const width = this.infoTemplate.querySelector('.intranet-settings__vibe-info-help').offsetWidth;
-			this.warningHintPopup = new Popup({
-				angle: true,
-				autoHide: true,
-				className: 'ui-hint-popup',
-				content: Tag.render`
-					<div class="ui-hint-content">
-						${Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_WARNING')}
-					</div>
-				`,
-				cacheable: false,
-				animation: 'fading-slide',
-				bindElement: event.target,
-				offsetTop: 0,
-				offsetLeft: parseInt(width / 2, 10),
-				bindOptions: {
-					position: 'top',
-				},
-				darkMode: true,
-			});
-
-			this.warningHintPopup.show();
-		});
-		Event.bind(this.infoTemplate.querySelector('.intranet-settings__vibe-info-help'), 'mouseleave', () => {
-			if (this.warningHintPopup)
-			{
-				setTimeout(() => {
-					this.warningHintPopup.destroy();
-					this.warningHintPopup = null;
-				}, 300);
-			}
-		});
 
 		return this.infoTemplate;
 	}
@@ -298,56 +295,149 @@ export class VibeSection extends EventEmitter
 	getInfoSuccessTemplate(): HTMLElement
 	{
 		this.infoSuccessTemplate = Tag.render`
-			<div class="intranet-settings__vibe-info --success">
+			<div class="intranet-settings__vibe-info --success" data-testid="vibe-settings-status-block">
 				<div class="intranet-settings__vibe-info-title">
-					${Loc.getMessage('INTRANET_SETTINGS_VIBE_INFO_SUCCESS_TITLE')}				
+					${Loc.getMessage('INTRANET_SETTINGS_VIBE_INFO_SUCCESS_TITLE')}
 				</div>
 				<div class="intranet-settings__vibe-info-subtitle">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_INFO_SUCCESS_SUBTITLE')}
-					<div class="ui-icon-set --help intranet-settings__vibe-info-help"></div>
+					${this.#renderHelpHint(Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_SUCCESS'))}
 				</div>
 			</div>
 		`;
 
-		Event.bind(
-			this.infoSuccessTemplate.querySelector('.intranet-settings__vibe-info-help'),
-			'mouseenter',
-			(event) => {
-				const width = this.infoSuccessTemplate.querySelector('.intranet-settings__vibe-info-help').offsetWidth;
-				this.successHintPopup = new Popup({
-					angle: true,
-					autoHide: true,
-					className: 'ui-hint-popup',
-					content: Tag.render`
-						<div class="ui-hint-content">
-							${Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_SUCCESS')}
-						</div>
-					`,
-					cacheable: false,
-					animation: 'fading-slide',
-					bindElement: event.target,
-					offsetTop: 0,
-					offsetLeft: parseInt(width / 2, 10),
-					bindOptions: {
-						position: 'top',
-					},
-					darkMode: true,
-				});
+		return this.infoSuccessTemplate;
+	}
 
-				this.successHintPopup.show();
+	#renderHelpHint(text: string): HTMLElement[]
+	{
+		const button = Tag.render`
+			<button
+				type="button"
+				class="ui-icon-set --help intranet-settings__vibe-info-help"
+				aria-label="${Loc.getMessage('INTRANET_SETTINGS_VIBE_HELP_ARIA')}"
+				aria-describedby="${this.#helpHintId}"
+				data-testid="vibe-settings-help-btn"
+			></button>
+		`;
+
+		Event.bind(button, 'mouseenter', () => {
+			this.#showHelpHint(button, text);
+		});
+		Event.bind(button, 'focus', () => {
+			this.#showHelpHint(button, text);
+		});
+		Event.bind(button, 'mouseleave', this.#hideHelpHintDelayed.bind(this));
+		Event.bind(button, 'blur', this.#hideHelpHintDelayed.bind(this));
+
+		return [
+			button,
+			Tag.render`
+				<span class="intranet-settings__vibe-visually-hidden" id="${this.#helpHintId}">${text}</span>
+			`,
+		];
+	}
+
+	#showHelpHint(button: HTMLElement, text: string): void
+	{
+		clearTimeout(this.#helpHintHideTimeout);
+
+		if (this.#helpHintPopup)
+		{
+			return;
+		}
+
+		this.#helpHintPopup = new Popup({
+			angle: true,
+			autoHide: true,
+			className: 'ui-hint-popup',
+			content: Tag.render`
+				<div class="ui-hint-content" data-testid="vibe-settings-help-hint">
+					${text}
+				</div>
+			`,
+			cacheable: false,
+			animation: 'fading-slide',
+			bindElement: button,
+			// the popup is a dialog unless it is told otherwise, and a hint holding no name is
+			// met by the reader of the screen as a window with nothing in it
+			role: 'tooltip',
+			// A hint is read out of the description of the button and holds nothing to walk: a trap
+			// would take the focus off the button, and the button reopens the hint when it gets it back.
+			focusTrap: false,
+			offsetTop: 0,
+			offsetLeft: parseInt(button.offsetWidth / 2, 10),
+			bindOptions: {
+				position: 'top',
 			},
-		);
-		Event.bind(this.infoSuccessTemplate.querySelector('.intranet-settings__vibe-info-help'), 'mouseleave', () => {
-			if (this.successHintPopup)
-			{
-				setTimeout(() => {
-					this.successHintPopup.destroy();
-					this.successHintPopup = null;
-				}, 300);
-			}
+			darkMode: true,
+			events: {
+				// the popup closes itself on a click outside as well
+				onPopupDestroy: this.#hideHelpHint.bind(this),
+			},
 		});
 
-		return this.infoSuccessTemplate;
+		// the hint has to survive the cursor brought onto it
+		const hintNode = this.#helpHintPopup.getPopupContainer();
+		Event.bind(hintNode, 'mouseenter', () => {
+			clearTimeout(this.#helpHintHideTimeout);
+		});
+		Event.bind(hintNode, 'mouseleave', this.#hideHelpHintDelayed.bind(this));
+
+		// A hint opened by the cursor holds no focus, so the key is taken from the page while it is open.
+		this.#helpHintEscapeHandler = this.#handleHelpHintEscape.bind(this);
+		Event.bind(document, 'keydown', this.#helpHintEscapeHandler, true);
+
+		this.#helpHintPopup.show();
+	}
+
+	#handleHelpHintEscape(event: KeyboardEvent): void
+	{
+		if (event.key !== 'Escape')
+		{
+			return;
+		}
+
+		// the card lives inside a slider: the key is taken only while the hint is open
+		event.stopPropagation();
+		this.#hideHelpHint();
+	}
+
+	#hideHelpHint(): void
+	{
+		clearTimeout(this.#helpHintHideTimeout);
+
+		if (this.#helpHintEscapeHandler)
+		{
+			Event.unbind(document, 'keydown', this.#helpHintEscapeHandler, true);
+			this.#helpHintEscapeHandler = null;
+		}
+
+		// the popup calls this back while it is destroyed: the field is let go before that
+		const popup = this.#helpHintPopup;
+		this.#helpHintPopup = null;
+		popup?.destroy();
+	}
+
+	#hideHelpHintDelayed(): void
+	{
+		clearTimeout(this.#helpHintHideTimeout);
+		this.#helpHintHideTimeout = setTimeout(this.#hideHelpHint.bind(this), VibeSection.#helpHintHideDelay);
+	}
+
+	// A focus left inside the closed menu belongs to the button it was opened from, a focus taken out of
+	// it belongs to the user.
+	#returnFocusFromMenu(menu: Menu, button: HTMLElement): void
+	{
+		const active = document.activeElement;
+		const menuNode = menu.getMenuContainer();
+
+		if (!Type.isDomNode(active) || !Type.isDomNode(menuNode) || !menuNode.contains(active))
+		{
+			return;
+		}
+
+		button.focus();
 	}
 
 	#getButtonMainSettings(): HTMLElement
@@ -355,7 +445,14 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonMainSettings)
 		{
 			this.#buttonMainSettings = Tag.render`
-				<button type="button" class="intranet-settings-btn-settings">
+				<button
+					type="button"
+					class="intranet-settings-btn-settings"
+					aria-label="${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_IMPORT_ARIA')}"
+					aria-haspopup="menu"
+					aria-expanded="false"
+					data-testid="vibe-settings-main-more-btn"
+				>
 					<div class="ui-icon-set --more"></div>
 				</button>
 			`;
@@ -369,7 +466,14 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonSecondarySettings)
 		{
 			this.#buttonSecondarySettings = Tag.render`
-				<button type="button" class="intranet-settings-btn-settings">
+				<button
+					type="button"
+					class="intranet-settings-btn-settings"
+					aria-label="${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_EXPORT_ARIA')}"
+					aria-haspopup="menu"
+					aria-expanded="false"
+					data-testid="vibe-settings-secondary-more-btn"
+				>
 					<div class="ui-icon-set --more"></div>
 				</button>
 			`;
@@ -394,18 +498,23 @@ export class VibeSection extends EventEmitter
 				angle: true,
 				animation: 'fading-slide',
 				bindElement: this.#buttonMainSettings,
-				className: this.#canEdit ? '' : '--disabled',
 				items: [
 					{
 						id: 'importPopup',
 						html: htmlContent,
+						attrs: this.#getMenuItemAttrs('vibe-settings-import-item'),
 						onclick: this.#showImportSlider.bind(this),
 					},
 				],
 				offsetLeft: 20,
 				events: {
-					onPopupClose: () => {},
-					onPopupShow: () => {},
+					onPopupClose: () => {
+						Dom.attr(this.#buttonMainSettings, 'aria-expanded', 'false');
+						this.#returnFocusFromMenu(this.#importPopup, this.#buttonMainSettings);
+					},
+					onPopupShow: () => {
+						Dom.attr(this.#buttonMainSettings, 'aria-expanded', 'true');
+					},
 				},
 			});
 		}
@@ -420,7 +529,7 @@ export class VibeSection extends EventEmitter
 			const htmlContent = this.#canEdit
 				? Tag.render`<span>${Loc.getMessage('INTRANET_SETTINGS_VIBE_EXPORT_POPUP')}</span>`
 				: Tag.render`
-					<span class="intranet-settings-vibe-popup-item --disabled">
+					<span class="intranet-settings-vibe-popup-item">
 						${Loc.getMessage('INTRANET_SETTINGS_VIBE_EXPORT_POPUP')} ${this.renderLockElement()}
 					</span>
 				`
@@ -429,18 +538,23 @@ export class VibeSection extends EventEmitter
 				angle: true,
 				animation: 'fading-slide',
 				bindElement: this.#buttonSecondarySettings,
-				className: this.#canEdit ? '' : '--disabled',
 				items: [
 					{
 						id: 'exportPopup',
 						html: htmlContent,
+						attrs: this.#getMenuItemAttrs('vibe-settings-export-item'),
 						onclick: this.#showExportSlider.bind(this),
 					},
 				],
 				offsetLeft: 20,
 				events: {
-					onPopupClose: () => {},
-					onPopupShow: () => {},
+					onPopupClose: () => {
+						Dom.attr(this.#buttonSecondarySettings, 'aria-expanded', 'false');
+						this.#returnFocusFromMenu(this.#exportPopup, this.#buttonSecondarySettings);
+					},
+					onPopupShow: () => {
+						Dom.attr(this.#buttonSecondarySettings, 'aria-expanded', 'true');
+					},
 				},
 			});
 		}
@@ -541,8 +655,101 @@ export class VibeSection extends EventEmitter
 		);
 	}
 
+	/**
+	 * Tells whether the button that opened the confirmation dialog is the one to hand the focus to.
+	 *
+	 * The dialog holds the focus while the request runs and gives it back to the button it was opened
+	 * from, so a focus inside the dialog belongs to that button as well.
+	 */
+	#holdsFocus(trigger: HTMLElement, dialog: MessageBox): boolean
+	{
+		const active = document.activeElement;
+		if (!Type.isDomNode(active))
+		{
+			return false;
+		}
+
+		if (active === trigger)
+		{
+			return true;
+		}
+
+		const dialogNode = dialog.getPopupWindow().getPopupContainer();
+
+		return Type.isDomNode(dialogNode) && dialogNode.contains(active);
+	}
+
+	/**
+	 * Tells of a refusal of the server through two channels at once.
+	 *
+	 * The dialog is what a sighted user gets: the block has already returned to the status the server
+	 * has kept, and nothing else on the screen tells why. The announcement reaches a reader of the
+	 * screen on its own and holds even when the dialog fails to open.
+	 */
+	#showStatusError(): void
+	{
+		// the wording differs from the one of the dialog: the two are heard one after the other
+		A11y.announce(Loc.getMessage('INTRANET_SETTINGS_VIBE_STATUS_ERROR_ANNOUNCE'), 'assertive');
+
+		const errorBox = new MessageBox({
+			message: Loc.getMessage('INTRANET_SETTINGS_VIBE_STATUS_ERROR'),
+			minWidth: 350,
+			maxWidth: 420,
+			useAirDesign: true,
+			popupOptions: {
+				closeIcon: true,
+				closeByEsc: true,
+				animation: 'fading-slide',
+			},
+			buttons: [
+				new Button({
+					text: Loc.getMessage('INTRANET_SETTINGS_VIBE_STATUS_ERROR_BTN_CLOSE'),
+					color: Button.Color.PRIMARY,
+					useAirDesign: true,
+					dataset: { testid: 'vibe-settings-status-error-close-btn' },
+					onclick: () => {
+						errorBox.close();
+					},
+				}),
+			],
+		});
+
+		errorBox.show();
+	}
+
+	/**
+	 * Asks the server of a status change and tells the card of the outcome.
+	 *
+	 * The card holds the change of one request at a time, and the mark of that is taken off by
+	 * whichever outcome comes first. A request that breaks on its way out is an outcome as well:
+	 * no answer is coming after it, and a mark left on would lock the card until the page is reloaded.
+	 */
+	#requestStatusChange(action: string, carriedOut: () => void, refused: () => void): void
+	{
+		this.#isStatusRequestPending = true;
+
+		try
+		{
+			Ajax.runAction(action, {
+				data: {
+					moduleId: this.#moduleId,
+					embedId: this.#embedId,
+				},
+			}).then(carriedOut, refused);
+		}
+		catch
+		{
+			refused();
+		}
+	}
+
 	#showSharePopup(): void
 	{
+		if (this.#isStatusRequestPending)
+		{
+			return;
+		}
+
 		if (this.#popupShare)
 		{
 			this.#popupShare?.show();
@@ -565,32 +772,71 @@ export class VibeSection extends EventEmitter
 						text: Loc.getMessage('INTRANET_SETTINGS_VIBE_SHARE_POPUP_BTN_CONFIRM'),
 						color: Button.Color.PRIMARY,
 						useAirDesign: true,
+						dataset: { testid: 'vibe-settings-publish-confirm-btn' },
 						onclick: () => {
+							// the dialog is reachable while it fades away, the request is already on its way
+							if (this.#isStatusRequestPending)
+							{
+								return;
+							}
+
 							const newTemplate = this.getInfoSuccessTemplate();
 							const wrapper = this.#secondaryTemplate.querySelector(
 								'.intranet-settings__vibe-info-template',
 							);
 							const innerWrapper = wrapper.querySelector('.intranet-settings__vibe-info:not(.--success)');
 
+							// the hint belongs to the button that leaves the document with the block
+							this.#hideHelpHint();
 							Dom.replace(innerWrapper, newTemplate);
 
-							Ajax.runAction('landing.vibe.publish', {
-								data: {
-									moduleId: this.#moduleId,
-									embedId: this.#embedId,
-								},
-							})
-								.then(() => {
-									this.emit('publish');
-									if (this.#urlPublic)
-									{
-										this.#isPublished = true;
-									}
-								});
+							// asked before the request: the button is gone by the time the answer comes
+							const wasFocusedOnTrigger = this.#holdsFocus(this.#getButtonPublish(), this.#popupShare);
 
+							const publishCarriedOut = () => {
+								this.#isStatusRequestPending = false;
+								this.#sendAnalytic({ event: 'publish_page' });
+								this.emit('publish');
+								if (this.#urlPublic)
+								{
+									this.#isPublished = true;
+								}
+
+								// the answer of the server tells the status, not the block redrawn before it
+								A11y.announce(Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_PUBLISHED'), 'polite');
+
+								if (wasFocusedOnTrigger)
+								{
+									// the settings may leave the trigger alone, then nothing takes its place
+									const nextButton = this.#canShowWithdrawButton
+										? this.#getButtonWithdraw()
+										: this.#getButtonSecondarySettings()
+									;
+									nextButton.focus();
+								}
+							};
+
+							const publishRefused = () => {
+								this.#isStatusRequestPending = false;
+								this.#sendAnalytic({ event: 'publish_page', status: 'error' });
+								this.#hideHelpHint();
+								Dom.replace(newTemplate, this.getInfoTemplate());
+
+								if (wasFocusedOnTrigger)
+								{
+									this.#getButtonPublish().focus();
+								}
+
+								// the button takes the focus back before the dialog of the
+								// refusal borrows it and gives it back on its own close
+								this.#showStatusError();
+							};
+
+							// the confirmation leaves the screen before the request, so that a refusal
+							// given at once is not covered by a dialog still closing over it
 							this.#popupShare.close();
 
-							this.#sendAnalytic({ event: 'publish_page' });
+							this.#requestStatusChange('landing.vibe.publish', publishCarriedOut, publishRefused);
 						},
 					}),
 					new Button({
@@ -598,6 +844,7 @@ export class VibeSection extends EventEmitter
 						color: Button.Color.LIGHT_BORDER,
 						useAirDesign: true,
 						style: Button.AirStyle.OUTLINE,
+						dataset: { testid: 'vibe-settings-publish-cancel-btn' },
 						onclick: () => {
 							this.#popupShare.close();
 						},
@@ -611,6 +858,11 @@ export class VibeSection extends EventEmitter
 
 	#showWithdrawPopup(): void
 	{
+		if (this.#isStatusRequestPending)
+		{
+			return;
+		}
+
 		if (this.#popupWithdraw)
 		{
 			this.#popupWithdraw?.show();
@@ -646,27 +898,68 @@ export class VibeSection extends EventEmitter
 						text: okText,
 						useAirDesign: true,
 						style: Button.AirStyle.FILLED_ALERT,
+						dataset: { testid: 'vibe-settings-withdraw-confirm-btn' },
 						onclick: () => {
+							// the dialog is reachable while it fades away, the request is already on its way
+							if (this.#isStatusRequestPending)
+							{
+								return;
+							}
+
 							const newTemplate = this.getInfoTemplate();
 							const wrapper = this.#secondaryTemplate.querySelector(
 								'.intranet-settings__vibe-info-template',
 							);
 							const innerWrapper = wrapper.querySelector('.intranet-settings__vibe-info');
 
+							// the hint belongs to the button that leaves the document with the block
+							this.#hideHelpHint();
 							Dom.replace(innerWrapper, newTemplate);
-							Ajax.runAction('landing.vibe.withdraw', {
-								data: {
-									moduleId: this.#moduleId,
-									embedId: this.#embedId,
-								},
-							})
-								.then(() => {
-									this.emit('withdraw');
-									this.#isPublished = false;
-								});
 
+							// asked before the request: the button is gone by the time the answer comes
+							const wasFocusedOnTrigger = this.#holdsFocus(this.#getButtonWithdraw(), this.#popupWithdraw);
+
+							const withdrawCarriedOut = () => {
+								this.#isStatusRequestPending = false;
+								this.#sendAnalytic({ event: 'unpublish_page' });
+								this.emit('withdraw');
+								this.#isPublished = false;
+
+								// the answer of the server tells the status, not the block redrawn before it
+								A11y.announce(Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_WITHDRAWN'), 'polite');
+
+								if (wasFocusedOnTrigger)
+								{
+									// the settings may leave the trigger alone, then nothing takes its place
+									const nextButton = this.#canShowPublishButton
+										? this.#getButtonPublish()
+										: this.#getButtonSecondarySettings()
+									;
+									nextButton.focus();
+								}
+							};
+
+							const withdrawRefused = () => {
+								this.#isStatusRequestPending = false;
+								this.#sendAnalytic({ event: 'unpublish_page', status: 'error' });
+								this.#hideHelpHint();
+								Dom.replace(newTemplate, this.getInfoSuccessTemplate());
+
+								if (wasFocusedOnTrigger)
+								{
+									this.#getButtonWithdraw().focus();
+								}
+
+								// the button takes the focus back before the dialog of the
+								// refusal borrows it and gives it back on its own close
+								this.#showStatusError();
+							};
+
+							// the confirmation leaves the screen before the request, so that a refusal
+							// given at once is not covered by a dialog still closing over it
 							this.#popupWithdraw.close();
-							this.#sendAnalytic({ event: 'unpublish_page' });
+
+							this.#requestStatusChange('landing.vibe.withdraw', withdrawCarriedOut, withdrawRefused);
 						},
 					}),
 					new Button({
@@ -674,6 +967,7 @@ export class VibeSection extends EventEmitter
 						color: Button.Color.LIGHT_BORDER,
 						useAirDesign: true,
 						style: Button.AirStyle.OUTLINE,
+						dataset: { testid: 'vibe-settings-withdraw-cancel-btn' },
 						onclick: () => {
 							this.#popupWithdraw.close();
 						},
@@ -696,12 +990,14 @@ export class VibeSection extends EventEmitter
 		{
 			const buttonEdit = Tag.render`
 			
-				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue"
+						data-testid="vibe-settings-edit-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_EDIT')}
 				</button>
 			`;
 			const buttonEditLock = Tag.render`
-				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled"
+						aria-describedby="${this.#lockReasonId}" data-testid="vibe-settings-edit-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_EDIT')}
 					${this.renderLockElement()}
 				</button>
@@ -718,13 +1014,14 @@ export class VibeSection extends EventEmitter
 		{
 			const renderNode = Tag.render`
 				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
-						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
+						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}" data-testid="vibe-settings-publish-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PUBLIC')}
 				</button>
 			`;
 			const renderNodeLock = Tag.render`
 				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
-						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
+						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}"
+						aria-describedby="${this.#lockReasonId}" data-testid="vibe-settings-publish-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PUBLIC')}
 					${this.renderLockElement()}
 				</button>
@@ -741,7 +1038,7 @@ export class VibeSection extends EventEmitter
 		{
 			this.#buttonWithdraw = Tag.render`
 				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
-						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
+						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}" data-testid="vibe-settings-withdraw-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_UNPUBLIC')}
 				</button>
 			`;
@@ -760,7 +1057,8 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonPartners)
 		{
 			this.#buttonPartners = Tag.render`
-				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-gray">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-gray"
+						data-testid="vibe-settings-partners-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PARTNERS')}
 				</button>
 			`;
@@ -780,12 +1078,14 @@ export class VibeSection extends EventEmitter
 		{
 			const buttonColor = this.#isPageExists ? '--light-blue' : 'ui-btn-primary';
 			const renderNode = Tag.render`
-				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor}">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor}"
+						data-testid="vibe-settings-template-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_MARKET')}
 				</button>
 			`;
 			const renderNodeLock = Tag.render`
-				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor} --disabled">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor} --disabled"
+						aria-describedby="${this.#lockReasonId}" data-testid="vibe-settings-template-btn">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_MARKET')}
 					${this.renderLockElement()}
 				</button>
@@ -838,7 +1138,7 @@ export class VibeSection extends EventEmitter
 							customLeftBoundary: 66,
 							events: {
 								onCloseComplete: () => {
-									if (this.#urlPublic)
+									if (this.#canRedirectToVibeAfterEdit && this.#urlPublic)
 									{
 										window.top.location = this.#urlPublic;
 									}
@@ -871,30 +1171,56 @@ export class VibeSection extends EventEmitter
 		}
 
 		this.subscribe('publish', () => {
-			Dom.replace(this.#getButtonPublish(), this.#getButtonWithdraw());
+			if (this.#canShowWithdrawButton)
+			{
+				Dom.replace(this.#getButtonPublish(), this.#getButtonWithdraw());
+			}
+			else
+			{
+				Dom.remove(this.#getButtonPublish());
+			}
 		});
 		this.subscribe('withdraw', () => {
-			Dom.replace(this.#getButtonWithdraw(), this.#getButtonPublish());
-		});
-		Event.bind(this.#getButtonPublish(), 'click', () => {
-			if (!this.#canEdit)
+			if (this.#canShowPublishButton)
 			{
-				BX.UI.InfoHelper.show(this.#limitCode);
-				this.#sendAnalytic({
-					event: 'publish_page',
-					status: 'error_limit',
-				});
-
-				return;
+				Dom.replace(this.#getButtonWithdraw(), this.#getButtonPublish());
 			}
-
-			this.#showSharePopup();
+			else
+			{
+				Dom.remove(this.#getButtonWithdraw());
+			}
 		});
-		Event.bind(this.#getButtonWithdraw(), 'click', this.#showWithdrawPopup.bind(this));
+		if (this.#canShowPublishButton)
+		{
+			Event.bind(this.#getButtonPublish(), 'click', () => {
+				if (!this.#canEdit)
+				{
+					BX.UI.InfoHelper.show(this.#limitCode);
+					this.#sendAnalytic({
+						event: 'publish_page',
+						status: 'error_limit',
+					});
+
+					return;
+				}
+
+				this.#showSharePopup();
+			});
+		}
+
+		if (this.#canShowWithdrawButton)
+		{
+			Event.bind(this.#getButtonWithdraw(), 'click', this.#showWithdrawPopup.bind(this));
+		}
 	}
 
 	#bindSliderCloseEvent()
 	{
+		if (!this.#canRedirectToVibeAfterEdit)
+		{
+			return;
+		}
+
 		const isPublishedBefore = this.#isPublished;
 
 		EventEmitter.subscribe(
@@ -915,7 +1241,38 @@ export class VibeSection extends EventEmitter
 
 	renderLockElement(): HTMLElement
 	{
-		return Tag.render`<span class="intranet-settings-mp-icon ui-icon-set --lock"></span>`;
+		return Tag.render`<span class="intranet-settings-mp-icon ui-icon-set --lock" aria-hidden="true"></span>`;
+	}
+
+	// The menu gives the role of an item to a node of its own and puts these attributes on it.
+	#getMenuItemAttrs(testId: string): { [key: string]: string }
+	{
+		if (this.#canEdit)
+		{
+			return { 'data-testid': testId };
+		}
+
+		return {
+			'data-testid': testId,
+			'aria-describedby': this.#lockReasonId,
+		};
+	}
+
+	// One reason for every locked control of the card: it lives in the main template, the only one
+	// always present in the markup.
+	#renderLockReason(): HTMLElement | string
+	{
+		if (this.#canEdit)
+		{
+			return '';
+		}
+
+		return Tag.render`
+			<span
+				class="intranet-settings__vibe-visually-hidden"
+				id="${this.#lockReasonId}"
+			>${Loc.getMessage('INTRANET_SETTINGS_VIBE_LOCK_REASON')}</span>
+		`;
 	}
 
 	#getAnalyticContextParam(): []

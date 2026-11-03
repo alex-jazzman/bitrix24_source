@@ -20,6 +20,11 @@ BitrixVue.component('sale-checkout-view-property-list_edit', {
 			let error = this.errors.find(error => error.propertyId === item.id);
 			return typeof error !== 'undefined' ? error.message : null
 		},
+		// the field builds the same id from the same index for its aria-describedby
+		getErrorId(index)
+		{
+			return `sale-checkout-property-error-${index}`;
+		},
 		isPhone(item)
 		{
 			return item.type === Const.type.phone
@@ -63,9 +68,9 @@ BitrixVue.component('sale-checkout-view-property-list_edit', {
 	},
 	// language=Vue
 	template: `
-		<div class="checkout-basket-section checkout-basket-section-personal-form">
+		<div class="checkout-basket-section checkout-basket-section-personal-form" data-testid="sale-checkout-property-list">
 			<h2 class="checkout-basket-title">{{localize.CHECKOUT_VIEW_PROPERTY_LIST_VIEW_SHIPPING_CONTACTS}}</h2>
-			<div class="form-group" v-for="(item, index) in items" :key="index">
+			<div class="form-group" v-for="(item, index) in items" :key="index" :data-testid="'sale-checkout-property-' + index">
 				<sale-checkout-view-element-input-property-text v-if="isName(item)"
 					:item="item" 
 					:index="index" 
@@ -107,6 +112,7 @@ BitrixVue.component('sale-checkout-view-property-list_edit', {
 				/>
 
 				<sale-checkout-view-property-note_error v-if="isFailure(item)"
+					:errorId="getErrorId(index)"
 					:message="getErrorMessage(item)"
 				/>
 			</div>

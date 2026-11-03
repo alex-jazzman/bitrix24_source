@@ -4,6 +4,78 @@ $migration = \Bitrix\Main\UpdateSystem\Migration::getInstance();
 $event = $migration->event();
 
 $event
+	->register(
+		'im',
+		'OnRegisterExternalChatTypes',
+		\Bitrix\Vibecodeconnector\Infrastructure\Integration\Im\ChatType::class,
+		'onRegisterType',
+	)
+	->register(
+		'im',
+		'OnBeforeCreateExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Infrastructure\Integration\Im\EventHandler\GuardCreate::class,
+		'execute',
+	)
+	->register(
+		'im',
+		'OnFilterUsersByAccessExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Infrastructure\Integration\Im\EventHandler\FilterUsersByAccess::class,
+		'execute',
+	)
+	->register(
+		'im',
+		'OnGetUsersForRecentExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Infrastructure\Integration\Im\EventHandler\GetUsersForRecent::class,
+		'execute',
+	)
+	->register(
+		'im',
+		'OnBeforeUsersAddExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Im\EventHandler\GuardUsersAdd::class,
+		'execute',
+	)
+	->register(
+		'im',
+		'OnAfterUsersDeleteExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Im\EventHandler\LeaveHandler::class,
+		'execute',
+	)
+	->register(
+		'im',
+		'OnResolveManageCapabilityExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Infrastructure\Integration\Im\EventHandler\ResolveManageCapability::class,
+		'execute',
+	)
+	->register(
+		'im',
+		'OnCreateEntityLinkExternalChatVibecodeApp',
+		\Bitrix\Vibecodeconnector\Infrastructure\Integration\Im\EventHandler\CreateEntityLink::class,
+		'execute',
+	)
+	->registerCompatible(
+		'im',
+		'OnAfterMessagesAdd',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Im\EventHandler\AttachCatalogBlock::class,
+		'execute',
+	)
+	->register(
+		'humanresources',
+		'OnMemberAdded',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Main\EventHandler\UserEventHandler::class,
+		'onMemberAdded',
+	)
+	->register(
+		'humanresources',
+		'OnMemberUpdated',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Main\EventHandler\UserEventHandler::class,
+		'onMemberUpdated',
+	)
+	->register(
+		'humanresources',
+		'OnMemberDeleted',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Main\EventHandler\UserEventHandler::class,
+		'onMemberDeleted',
+	)
 	->registerCompatible(
 		'main',
 		'OnBeforeUserUpdate',
@@ -27,6 +99,18 @@ $event
 		'OnAfterUserDelete',
 		\Bitrix\Vibecodeconnector\Internal\Integration\Main\EventHandler\UserEventHandler::class,
 		'onAfterUserDelete',
+	)
+	->register(
+		'rest',
+		'onRestAccessGrant',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Rest\EventHandler\AccessGrantHandler::class,
+		'onRestAccessGrant',
+	)
+	->register(
+		'intranet',
+		'onCollectSidePanelBindings',
+		\Bitrix\Vibecodeconnector\Internal\Integration\Intranet\EventHandler\CollectSidePanelBindings::class,
+		'handle',
 	)
 ;
 

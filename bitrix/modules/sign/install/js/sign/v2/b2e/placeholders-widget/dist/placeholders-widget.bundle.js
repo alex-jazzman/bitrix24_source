@@ -2,15 +2,12 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports, sign_v2_api, ui_vue3, sign_v2_grid_b2e_placeholders, main_loader, main_core, main_core_events) {
+(function (exports, sign_v2_grid_b2e_placeholders, main_core, main_core_events) {
 	'use strict';
 
 	class PlaceholdersWidget {
-		#api = new sign_v2_api.Api();
-		#app = null;
-		#appInstance = null;
+		#mount = null;
 		#widget = null;
-		#loader = null;
 		#isDragging = false;
 		#dragOffsetX = 0;
 		#dragOffsetY = 0;
@@ -23,46 +20,34 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			this.#initDrag();
 			this.#initControls();
 			this.#initSliderDestroyHandler();
-			const contentContainer = this.#widget.querySelector('.sign-placeholders-widget-body');
-			this.#loader = new main_loader.Loader({
-				target: contentContainer
+			this.#mount = new sign_v2_grid_b2e_placeholders.PlaceholdersMount({
+				container: this.#widget.querySelector('.sign-placeholders-widget-body'),
+				showHeader: false
 			});
-			await this.#loadPlaceholders(contentContainer);
-		}
-		async #loadPlaceholders(container, clearCache = false) {
-			void this.#loader.show();
-			try {
-				const placeholdersData = await this.#api.placeholder.list(clearCache);
-				this.#unmount();
-				this.#createApp(container, placeholdersData);
-			} catch (error) {
-				console.error('Load placeholders data error:', error);
-			} finally {
-				void this.#loader.hide();
-			}
+			await this.#mount.load();
 		}
 		#createWidget() {
 			const title = main_core.Loc.getMessage('SIGN_EDITOR_PLACEHOLDERS_WIDGET_TITLE');
 			const createHint = main_core.Loc.getMessage('SIGN_EDITOR_PLACEHOLDERS_WIDGET_BTN_CREATE_HINT');
 			return main_core.Tag.render`
-			<div class="sign-placeholders-widget" data-test-id="sign-placeholders-widget">
+			<div class="sign-placeholders-widget" data-testid="sign-placeholders-widget">
 				<div class="sign-placeholders-widget-header">
 					<div class="sign-placeholders-widget-drag-handle">
 						<div class="sign-placeholders-widget-drag-icon"
-							 data-test-id="sign-placeholders-widget-drag-icon"
+							 data-testid="sign-placeholders-widget-drag-icon"
 						></div>
 						<span class="sign-placeholders-widget-title">${main_core.Text.encode(title)}</span>
 					</div>
 					<div class="sign-placeholders-widget-controls">
 						<div class="sign-placeholders-widget-btn-collapse"
-							 data-test-id="sign-placeholders-widget-btn-collapse"
+							 data-testid="sign-placeholders-widget-btn-collapse"
 						>
 						</div>
 					</div>
 				</div>
 				<div class="sign-placeholders-widget-body"></div>
 				<div class="sign-placeholders-widget-btn-create"
-					 data-test-id="sign-placeholders-widget-btn-create"
+					 data-testid="sign-placeholders-widget-btn-create"
 					 title="${main_core.Text.encode(createHint)}"
 				>
 				</div>
@@ -141,41 +126,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			}
 		}
 		#handleCreate() {
-			if (this.#appInstance) {
-				this.#appInstance.onCreateClick();
-			}
-		}
-		#createApp(container, placeholdersData) {
-			this.#app = ui_vue3.BitrixVue.createApp(sign_v2_grid_b2e_placeholders.PlaceholdersApp, {
-				sectionsData: placeholdersData,
-				showHeader: false,
-				onListUpdate: () => {
-					void this.#loadPlaceholders(container, true);
-				}
-			});
-			this.#appInstance = this.#app.mount(container);
+			this.#mount?.getAppInstance()?.onCreateClick();
 		}
 		destroy() {
 			main_core.Event.unbind(document, 'mousemove', this.#handleMouseMove);
 			main_core.Event.unbind(document, 'mouseup', this.#handleMouseUp);
 			this.#handleMouseMove = null;
 			this.#handleMouseUp = null;
-			this.#unmount();
+			this.#mount?.unmount();
 			if (this.#widget) {
 				main_core.Dom.remove(this.#widget);
 				this.#widget = null;
-			}
-		}
-		#unmount() {
-			if (this.#app) {
-				this.#app.unmount();
-				this.#app = null;
-				this.#appInstance = null;
 			}
 		}
 	}
 
 	exports.PlaceholdersWidget = PlaceholdersWidget;
 
-})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX.Sign.V2, BX.Vue3, BX.Sign.V2.Grid.B2e, BX, BX, BX.Event);
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX.Sign.V2.Grid.B2e, BX, BX.Event);
 //# sourceMappingURL=placeholders-widget.bundle.js.map

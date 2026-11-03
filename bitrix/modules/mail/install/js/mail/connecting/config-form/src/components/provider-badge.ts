@@ -20,9 +20,11 @@ export const ProviderBadge = defineComponent({
 		avatar: { type: String, default: '' },
 		buttonText: { type: String, default: '' },
 		buttonDisabled: { type: Boolean, default: false },
+		secondaryButtonText: { type: String, default: '' },
+		secondaryButtonDisabled: { type: Boolean, default: false },
 	},
 
-	emits: ['button-click'],
+	emits: ['button-click', 'secondary-button-click', 'avatar-error'],
 
 	setup()
 	{
@@ -32,17 +34,44 @@ export const ProviderBadge = defineComponent({
 		};
 	},
 
+	data()
+	{
+		return { failedAvatar: '' };
+	},
+
 	computed: {
-		avatarStyle(): { backgroundImage: string } | null
+		showAvatar(): boolean
 		{
-			return this.avatar ? { backgroundImage: `url("${encodeURI(this.avatar)}")` } : null;
+			return Boolean(this.avatar) && this.avatar !== this.failedAvatar;
+		},
+	},
+
+	watch: {
+		avatar(): void
+		{
+			this.failedAvatar = '';
 		},
 	},
 
 	methods: {
+		onAvatarError(event: Event): void
+		{
+			const url = (event.target as HTMLImageElement).getAttribute('src') ?? '';
+			if (url === this.avatar)
+			{
+				this.failedAvatar = url;
+				this.$emit('avatar-error', url);
+			}
+		},
+
 		onButtonClick(): void
 		{
 			this.$emit('button-click');
+		},
+
+		onSecondaryButtonClick(): void
+		{
+			this.$emit('secondary-button-click');
 		},
 	},
 
@@ -52,14 +81,17 @@ export const ProviderBadge = defineComponent({
 			<div class="mail-provider-img-container">
 				<div :class="'mail-provider-' + iconKey + '-img'"></div>
 			</div>
-			<template v-if="avatar">
+			<template v-if="showAvatar">
 				<div class="mail-config-form__provider-divider"></div>
 				<div class="mail-config-form__provider-account">
-					<div
+					<img
+						:key="avatar"
 						class="mail-config-form__provider-avatar"
-						:style="avatarStyle"
+						:src="avatar"
+						alt=""
 						data-test-id="mail_config-form__provider-avatar"
-					></div>
+						@error="onAvatarError"
+					/>
 					<TextLg
 						v-if="email"
 						:accent="true"
@@ -82,12 +114,26 @@ export const ProviderBadge = defineComponent({
 				</TextSm>
 			</div>
 			<div
-				v-if="buttonText"
+				v-if="buttonText || secondaryButtonText"
 				class="mail-config-form__provider-action"
 				data-id="mail-config-form-provider-action"
 				data-test-id="mail_config-form__provider-action"
 			>
+				<span
+					v-if="secondaryButtonText"
+					data-id="mail-config-form-provider-reauthorization"
+					data-test-id="mail_config-form__provider-reauthorization"
+				>
+					<UiButton
+						:text="secondaryButtonText"
+						:style="AirButtonStyle.PLAIN_NO_ACCENT"
+						:disabled="secondaryButtonDisabled"
+						:dataset="{ testId: 'mail_config-form__provider-reauthorization_button' }"
+						@click="onSecondaryButtonClick"
+					/>
+				</span>
 				<UiButton
+					v-if="buttonText"
 					:text="buttonText"
 					:style="AirButtonStyle.PLAIN_NO_ACCENT"
 					:disabled="buttonDisabled"

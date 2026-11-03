@@ -1,0 +1,2 @@
+<?php
+$MESS['DISK_JS_DIALOG_MARKUP_SAVE_AS_NAME_LABEL'] = 'File name';

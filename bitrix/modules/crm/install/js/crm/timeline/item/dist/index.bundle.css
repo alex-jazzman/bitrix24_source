@@ -202,6 +202,155 @@
 	opacity: 0.5;
 }
 
+/*region Reflow: the title keeps its room, the header order never changes (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The defect this region was opened for: the header keeps the checkbox, the title, the time and the
+	user in one non-wrapping row, so at a card width of 241px the title was squeezed to 75px and cut
+	("Заплани…"), while the time broke into three lines ("16 / июля, / 19:38").
+
+	The reading order stays the one the wide card has - title, status, time - at every width. What
+	changes below the breakpoint is only how the row breaks: the title may wrap, the date may not, and
+	the meta steps down a line when the title would otherwise be squeezed.
+
+	Two earlier takes and why they were dropped, both measured on the stand:
+	- dissolving _info with display: contents and giving the siblings explicit order values put the
+	  meta first and the title under it - the header read backwards, and the avatar, dragged into the
+	  flow, ended up alone on a line opposite a lone time;
+	- leaving the row alone entirely kept the order right but squeezed the title of a planned call to
+	  116px (three lines) in a 433px column, because the checkbox, the logo column and a long date
+	  ("16 июля, 19:38", 90px) eat the row between them.
+*/
+@media (max-width: 768px) {
+	/*
+		The row may wrap: while the title fits beside the meta they share a line, otherwise the meta -
+		status and time together - steps down under the title. The avatar is not part of this: it keeps
+		the base position: absolute in the card's corner, so it never travels with the meta.
+	*/
+	.crm-timeline__card-top_info {
+		flex-wrap: wrap;
+		row-gap: 2px;
+		align-items: flex-start;
+	}
+
+	/*
+		flex: 0 1 auto keeps the box at the title's own width, so the meta sits right after it with the
+		same 8px it has on the wide card - a min-width floor was tried here and inflated the box into a
+		gap of up to 125px. Line breaking still measures the title's full text, so the meta steps down
+		only when the whole title does not fit beside it; shrinking starts after that, when the title is
+		alone on its line and wraps inside its own box.
+	*/
+	.crm-timeline__card-top_info_left {
+		flex: 0 1 auto;
+		align-items: flex-start;
+		margin-bottom: 0;
+	}
+
+	/*
+		A meta that stepped down starts at the row's left edge, which is the checkbox's edge - 21px left
+		of the title's text, because the controller is 13px wide and carries an 8px gap. So the row is
+		indented to the text and the controller is pulled back out into that indent: the checkbox keeps
+		its place, and everything that wraps - the date, the status - lines up under the title. Cards
+		without an activity checkbox have no controller node at all, hence :has() rather than a blanket
+		indent; the pull-back needs no guard for the same reason.
+	*/
+	.crm-timeline__card-top_info:has(.crm-timeline__card-top_controller) {
+		padding-left: 21px;
+	}
+
+	.crm-timeline__card-top_controller {
+		margin-left: -21px;
+	}
+
+	/*
+		The controller hugs the checkbox, so its box is 13px tall while the title's line is 18.2px.
+		Aligned to the start of a row that may now wrap, its centre sat 2.3px above the centre of the
+		title's first line and the pair read as crooked. Borrowing the title's font gives the controller
+		the same line box, and the checkbox - centred inside it - lands on the title's axis. The static
+		value is the fallback for engines without the lh unit; there the pair stays as it is today.
+	*/
+	.crm-timeline__card-top_controller {
+		font: var(--crm-timeline__card-font-title);
+		min-height: 18px;
+		min-height: 1lh;
+	}
+
+	/*
+		The date is one token: it may share the title's line or drop under it, but it must never break
+		into "16 / июля, / 19:38" again - that was the defect this region was opened for.
+	*/
+	.crm-timeline__card-time {
+		white-space: nowrap;
+	}
+}
+/*
+	Second trigger, same fix, paired with layout/header/title.css: @media reacts to the card's own
+	width and misses the CRM Entity Card Split handle narrowing just the column - see title.css and
+	decisions.md for the 460px measurement and the 480px/crm-entity-stream choice.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	/*
+		The row may wrap: while the title fits beside the meta they share a line, otherwise the meta -
+		status and time together - steps down under the title. The avatar is not part of this: it keeps
+		the base position: absolute in the card's corner, so it never travels with the meta.
+	*/
+	.crm-timeline__card-top_info {
+		flex-wrap: wrap;
+		row-gap: 2px;
+		align-items: flex-start;
+	}
+
+	/*
+		flex: 0 1 auto keeps the box at the title's own width, so the meta sits right after it with the
+		same 8px it has on the wide card - a min-width floor was tried here and inflated the box into a
+		gap of up to 125px. Line breaking still measures the title's full text, so the meta steps down
+		only when the whole title does not fit beside it; shrinking starts after that, when the title is
+		alone on its line and wraps inside its own box.
+	*/
+	.crm-timeline__card-top_info_left {
+		flex: 0 1 auto;
+		align-items: flex-start;
+		margin-bottom: 0;
+	}
+
+	/*
+		A meta that stepped down starts at the row's left edge, which is the checkbox's edge - 21px left
+		of the title's text, because the controller is 13px wide and carries an 8px gap. So the row is
+		indented to the text and the controller is pulled back out into that indent: the checkbox keeps
+		its place, and everything that wraps - the date, the status - lines up under the title. Cards
+		without an activity checkbox have no controller node at all, hence :has() rather than a blanket
+		indent; the pull-back needs no guard for the same reason.
+	*/
+	.crm-timeline__card-top_info:has(.crm-timeline__card-top_controller) {
+		padding-left: 21px;
+	}
+
+	.crm-timeline__card-top_controller {
+		margin-left: -21px;
+	}
+
+	/*
+		The controller hugs the checkbox, so its box is 13px tall while the title's line is 18.2px.
+		Aligned to the start of a row that may now wrap, its centre sat 2.3px above the centre of the
+		title's first line and the pair read as crooked. Borrowing the title's font gives the controller
+		the same line box, and the checkbox - centred inside it - lands on the title's axis. The static
+		value is the fallback for engines without the lh unit; there the pair stays as it is today.
+	*/
+	.crm-timeline__card-top_controller {
+		font: var(--crm-timeline__card-font-title);
+		min-height: 18px;
+		min-height: 1lh;
+	}
+
+	/*
+		The date is one token: it may share the title's line or drop under it, but it must never break
+		into "16 / июля, / 19:38" again - that was the defect this region was opened for.
+	*/
+	.crm-timeline__card-time {
+		white-space: nowrap;
+	}
+}
+/*endregion*/
+
 .crm-timeline__card-title {
 	display: inline-block;
 	vertical-align: middle;
@@ -236,6 +385,37 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card-title:last-child {
 	margin-right: unset;
 }
+/*region Reflow: the card title wraps instead of being cut (WCAG 2.1 AA, 1.4.10)*/
+/*
+	Measured at a card width of 241px: the title had 75px of the 218px it needs, so an activity
+	subject read as "Заплани…". Below the breakpoint it wraps - the header row is rearranged for
+	that in layout/header.css, where the title gets a line of its own.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-title {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*
+	Second trigger, same fix: @media reacts to the card/window width, not to the timeline
+	column's own width, so it never fires when the CRM Entity Card Split handle narrows just
+	the column on a wide desktop. Measured live on the stand at the handle's 460px floor: the
+	title was 1px short ("Запланирован исходящий звон…"), clean again from 465px up - see
+	decisions.md (CRM Entity Card Split) for the full measurement. crm-entity-stream is
+	declared on .crm-entity-stream-container in crm.entity.details/templates/.default/style.css,
+	desktop only.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-title {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*endregion*/
+
 .crm-timeline__card-status {
 	margin-right: 6px;
 	margin-bottom: 8px;
@@ -530,6 +710,81 @@ a.crm-timeline__card-title:hover {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='58' fill='none' viewBox='0 0 58 58'%3E%3Ccircle cx='29' cy='29' r='29' fill='url(%23a)'/%3E%3Ccircle cx='29' cy='29' r='29' fill='%232fc6f6' fill-opacity='.2'/%3E%3Ccircle cx='29' cy='29' r='29' fill='%23000' fill-opacity='.2'/%3E%3Ccircle cx='29' cy='29' r='29' fill='%23faa72c'/%3E%3Cpath fill='%23fff' d='M34.706 25.283h7.175a1.1 1.1 0 1 1 0 2.2h-9.83a1.1 1.1 0 0 1-1.1-1.1v-9.83a1.1 1.1 0 0 1 2.2 0v7.174l9.263-9.263a1.1 1.1 0 0 1 1.556 1.556z'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='m21.827 36.984-.283-.283-.051-.055c-5.244-5.358-7.028-9.946-6.959-13.672.07-3.802 2.065-6.451 3.735-7.857.996-.839 2.338-.746 3.273-.103a2.3 2.3 0 0 1 .373.327c1.18 1.255 2.08 2.27 2.789 3.07.721.814 1.212 1.366 1.607 1.746.092.09.265.258.404.494.448.761.499 1.736-.01 2.559-.485.786-1.363 1.92-2.825 2.967a1.4 1.4 0 0 0-.132.108c-.043.2-.04.512.068.952.115.465.329.996.62 1.555.585 1.12 1.419 2.228 2.148 2.957l.196.196c.728.728 1.836 1.562 2.957 2.147.558.292 1.09.505 1.554.62.44.108.752.111.952.068l.032-.035q.033-.036.076-.097c1.047-1.462 2.18-2.34 2.968-2.826.916-.566 2.012-.436 2.8.153q.05.036.095.078c1.105 1.036 2.62 2.462 5.159 4.867q.055.053.103.113c.753.944.912 2.383.022 3.44a10.35 10.35 0 0 1-7.918 3.629c-3.739.01-8.341-1.822-13.698-7.067zm1.415-1.697c5.19 5.141 9.33 6.623 12.332 6.615 3.03-.009 5.138-1.535 6.24-2.845.1-.118.148-.355-.022-.603a1324 1324 0 0 0-5.025-4.741.35.35 0 0 0-.155-.053.22.22 0 0 0-.137.034c-.584.36-1.486 1.049-2.336 2.235-.2.28-.596.776-1.261.96-.699.193-1.44.125-2.113-.041-.685-.169-1.384-.46-2.046-.805-1.319-.688-2.608-1.655-3.495-2.543l-.196-.196c-.887-.887-1.854-2.176-2.543-3.495-.345-.661-.636-1.36-.805-2.045-.166-.673-.234-1.415-.04-2.114.183-.665.68-1.06.959-1.26 1.186-.85 1.875-1.753 2.235-2.337a.2.2 0 0 0 .035-.122c0-.04-.01-.09-.04-.144l-.007-.009-.036-.035c-.463-.445-1.008-1.06-1.68-1.819l-.048-.054a132 132 0 0 0-2.773-3.05c-.25-.167-.48-.12-.6-.02a8.3 8.3 0 0 0-2.951 6.215c-.056 2.972 1.369 7.084 6.508 12.272' clip-rule='evenodd'/%3E%3Cdefs%3E%3ClinearGradient id='a' x1='49.113' x2='-6.095' y1='60.495' y2='8.005' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.094' stop-color='%231480fb'/%3E%3Cstop offset='.417' stop-color='%232adbfb'/%3E%3Cstop offset='.512' stop-color='%232fdcfb'/%3E%3Cstop offset='1' stop-color='%23008dba'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E");
 }
 
+/*region Reflow: the card logo shrinks at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The logo is a fixed 80px square that never shrinks. main.css already lets it take a row of
+	its own below the breakpoint, but it still holds 80px of that row, which is most of the
+	width at the narrow end. Drop it to 60px there.
+
+	The variable is overridden rather than the width/height pair, so everything keyed to it
+	follows in one place. common-vars.css declares it on the same selector with the same
+	specificity (0,1,0) but is imported first in src/index.js, so this later declaration wins
+	on source order.
+
+	Everything nested inside is fixed px and does not follow the variable, so each layer is
+	scaled by the same 0.75 ratio, or the artwork bursts out of the box it sits in:
+
+	  logo box      80 -> 60   (the variable above)
+	  --in-circle   54 -> 40   (a 54px circle in a 60px box would leave a 3px ring)
+	  glyph         48 -> 36   (.ui-icon-set; at 48 it overflowed the 40px circle by 8px)
+	  add-icon      32 -> 28   (the corner badge - in layout/body/logo-add-icon.css, which is
+	                            imported after this file and would otherwise win on source order.
+	                            28 is where the design-system step lands, not an exact 0.75)
+
+	Two glyph paths exist and both are covered: current markup renders a .ui-icon-set element,
+	older markup a bare <i>. Only one of them is present per card.
+
+	!important is needed for the .ui-icon-set path and only there: the size comes from BIcon's
+	hardcoded :size="48" (components/layout/body/logo.js), which lands as an inline style on the
+	element, and an inline declaration beats any selector. The alternative - making that prop
+	reactive - would need a ResizeObserver on the column, since a container query is not visible
+	to JS. Scoped to the logo so no other .ui-icon-set in the card is touched.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-scope {
+		--crm-timeline__icon-size: 60px;
+	}
+
+	.crm-timeline__card-logo_icon.--in-circle {
+		width: 40px;
+		height: 40px;
+	}
+
+	.crm-timeline__card-logo_icon .ui-icon-set {
+		--ui-icon-set__icon-size: 36px !important;
+	}
+
+	.crm-timeline__card-logo_icon.--in-circle > i {
+		width: 30px;
+		height: 30px;
+	}
+}
+/*
+	Second trigger, same fix - the CRM Entity Card Split handle narrows the column without
+	changing the window, which @media cannot see. See layout/header/title.css and
+	decisions.md (CRM Entity Card Split) for the threshold and the container name.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-scope {
+		--crm-timeline__icon-size: 60px;
+	}
+
+	.crm-timeline__card-logo_icon.--in-circle {
+		width: 40px;
+		height: 40px;
+	}
+
+	.crm-timeline__card-logo_icon .ui-icon-set {
+		--ui-icon-set__icon-size: 36px !important;
+	}
+
+	.crm-timeline__card-logo_icon.--in-circle > i {
+		width: 30px;
+		height: 30px;
+	}
+}
+/*endregion*/
+
 .crm-timeline__card-logo_add-icon {
 	content: '';
 	--add-icon-size: var(--ui-size-3xl, 34px);
@@ -818,6 +1073,34 @@ a.crm-timeline__card-title:hover {
 	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9ccd0' d='M6.017 10.955a.75.75 0 0 1 .731.69l.002.077c-.048 2.215 1.775 5.221 5.24 5.221 3.37 0 5.243-2.863 5.261-4.996l-.004-.203v-.077a.75.75 0 0 1 1.49-.072l.008.076.005.27c-.018 2.658-2.144 6.065-6.005 6.462v1.412h1.63a.75.75 0 0 1 0 1.5H9.616a.75.75 0 0 1 0-1.5h1.628v-1.41c-4.004-.403-6.053-4.024-5.995-6.717l.006-.076a.75.75 0 0 1 .76-.657'/%3E%3Cpath fill='%23c9ccd0' d='M12.163 2.887a3.34 3.34 0 0 1 3.17 3.336v5.359l-.006.17a3.34 3.34 0 0 1-3.335 3.17l-.172-.005a3.34 3.34 0 0 1-3.164-3.164l-.004-.171v-5.36a3.34 3.34 0 0 1 3.34-3.34z'/%3E%3C/svg%3E");
 	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9ccd0' d='M6.017 10.955a.75.75 0 0 1 .731.69l.002.077c-.048 2.215 1.775 5.221 5.24 5.221 3.37 0 5.243-2.863 5.261-4.996l-.004-.203v-.077a.75.75 0 0 1 1.49-.072l.008.076.005.27c-.018 2.658-2.144 6.065-6.005 6.462v1.412h1.63a.75.75 0 0 1 0 1.5H9.616a.75.75 0 0 1 0-1.5h1.628v-1.41c-4.004-.403-6.053-4.024-5.995-6.717l.006-.076a.75.75 0 0 1 .76-.657'/%3E%3Cpath fill='%23c9ccd0' d='M12.163 2.887a3.34 3.34 0 0 1 3.17 3.336v5.359l-.006.17a3.34 3.34 0 0 1-3.335 3.17l-.172-.005a3.34 3.34 0 0 1-3.164-3.164l-.004-.171v-5.36a3.34 3.34 0 0 1 3.34-3.34z'/%3E%3C/svg%3E");
 }
+
+/*region Reflow: the corner badge shrinks with the logo (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The badge is a fixed 32px square pinned to the logo's corner. When the logo drops from 80px
+	to 60px at narrow widths (layout/body/logo.css) the badge keeps its size and takes over the
+	tile, so it steps down with it: 32 -> 28. The design-system token is kept rather than a raw
+	0.75 (which would be 24px) - 28 is the step the scale actually provides.
+
+	It lives here rather than next to the rest of the logo scaling because this file is imported
+	after logo.css (src/index.js) and its --add-icon-size declaration has the same specificity
+	(0,1,0) - from there the override would lose on source order.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-logo_add-icon {
+		--add-icon-size: var(--ui-size-2xl, 24px);
+	}
+}
+/*
+	Second trigger, same fix - the CRM Entity Card Split handle narrows the column without
+	changing the window, which @media cannot see. See layout/header/title.css and decisions.md
+	(CRM Entity Card Split) for the threshold and the container name.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-logo_add-icon {
+		--add-icon-size: var(--ui-size-2xl, 24px);
+	}
+}
+/*endregion*/
 
 .crm-timeline__client-communication-wrapper {
 	display: inline-flex;
@@ -1525,6 +1808,53 @@ a.crm-timeline__card-title:hover {
 	margin-left: 10px;
 }
 
+/*region Reflow: a row value moves under its label instead of being cut (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The label and the value share one non-wrapping flex row, and the value is clipped with an
+	ellipsis: at a card width of 241px "Тема" left 87px for the subject, so it read as
+	"Перезвонить по в…" with no way to see the rest. Below the breakpoint the row wraps, the value
+	takes the full width under the label and is allowed to break onto several lines.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-container_info {
+		flex-wrap: wrap;
+	}
+
+	.crm-timeline__card-container_info-title,
+	.crm-timeline__card-container_info-value {
+		flex: 1 1 100%;
+	}
+
+	.crm-timeline__card-container_info-value {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*
+	Second trigger, same fix, added for consistency with the other reflow rules in this
+	extension - see layout/header/title.css and decisions.md (CRM Entity Card Split) for why
+	@media alone misses the CRM Entity Card Split handle narrowing the column, and how the
+	480px threshold / crm-entity-stream container name were chosen.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-container_info {
+		flex-wrap: wrap;
+	}
+
+	.crm-timeline__card-container_info-title,
+	.crm-timeline__card-container_info-value {
+		flex: 1 1 100%;
+	}
+
+	.crm-timeline__card-container_info-value {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*endregion*/
+
 .crm-timeline__file-list-wrapper {
 	display: flex;
 	white-space: nowrap;
@@ -1871,6 +2201,104 @@ a.crm-timeline__card-title:hover {
 	background: transparent url("data:image/svg+xml,%3Csvg width='14' height='16' viewBox='-2 0 14 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.69156 11.7445V13.4908H5.30837V11.7445C5.05944 11.5416 4.90008 11.2317 4.90008 10.8842C4.90008 10.273 5.39254 9.77758 5.99999 9.77758C6.60739 9.77758 7.09986 10.273 7.09986 10.8842C7.09986 11.2317 6.94054 11.5416 6.69156 11.7445ZM2.98877 4.64992C2.98877 2.9766 4.33698 1.62012 6.00004 1.62012C7.66314 1.62012 9.01134 2.9766 9.01134 4.64992V7.21112H2.98877V4.64992ZM10.6027 7.21073V4.64953C10.6027 2.09188 8.54197 0.0185547 5.99998 0.0185547C3.45803 0.0185547 1.39731 2.09188 1.39731 4.64953V7.21073H0.5C0.223857 7.21073 0 7.43459 0 7.71073V15.4812C0 15.7574 0.223858 15.9812 0.5 15.9812H11.5C11.7761 15.9812 12 15.7574 12 15.4812V7.71073C12 7.43459 11.7761 7.21073 11.5 7.21073H10.6027Z' fill='%23525C69'/%3E%3C/svg%3E%0A") no-repeat;
 }
 /* ---------------------------------------- split button menu ---------------------------------------- */
+
+/*region Reflow: the footer row breaks only when it has to (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The footer keeps the icon menu (note, three dots) and the action buttons in one non-wrapping row.
+	Measured at a card width of 241px: the menu took 78px and the buttons were left with 77px against
+	the 126px each of them needs, so "Запланировать дело" read as "Запланир…".
+
+	Below the breakpoint both keep their natural width and the row breaks only when it has to:
+
+	  no buttons / one button   one line - buttons left, icons right
+	  two buttons               buttons keep their line, icons drop below - the buttons need 290 of the
+	                            365 available and the menu 92, so 382 does not fit
+	  three buttons             the buttons box outgrows the line on its own, wraps internally, and the
+	                            menu goes under it
+
+	That covers the 241px case the region was opened for - there the buttons alone outgrow the row, so
+	the menu ends up on its own line anyway - without spending a row when nothing is crowded.
+
+	An earlier take gave both boxes flex: 1 1 100% instead, which pinned the menu to a row of its own
+	for good: it measured 351px wide even when it needed 78, so a single "Закрепить" sat alone above an
+	empty stretch with the icons underneath. That is what the report was about.
+
+	wrap-reverse, not wrap: the parent is flex-direction: row-reverse and the menu comes first in the
+	DOM, so with plain wrap the menu would take the first line and sit above the buttons. Reversing the
+	cross axis puts the buttons back on top and keeps the icons right-aligned.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-action {
+		flex-wrap: wrap-reverse;
+		row-gap: 6px;
+	}
+
+	/*
+		flex-grow stays on, as in the base rule. The line break is decided by the flex base size, which
+		width: auto keeps tied to what the buttons actually measure, but once the line is settled the box
+		has to take the space that is left: the parent is row-reverse, so a shrink-wrapped box gets packed
+		against the right edge and the buttons drift away from the left margin they line up with
+		everywhere else. Growing puts the box back across the row, and its own flex-start keeps the
+		buttons at the left - whether it shares the line with the icons or has the line to itself.
+	*/
+	.crm-timeline__card-action_buttons {
+		width: auto;
+		flex: 1 1 auto;
+	}
+
+	.crm-timeline__card-action_menu {
+		flex: 0 0 auto;
+	}
+
+	/*
+		The 50% cap has to go with it. It is measured against the buttons box, which no longer spans the
+		whole row, so it tightened from 174px to 137px and clipped "Запланировать дело" (171px) - the
+		truncation this breakpoint exists to avoid. Without the cap the buttons take the width their
+		labels need and wrap inside the box when the row runs out.
+	*/
+	.crm-timeline__card-action-btn {
+		max-width: none;
+	}
+}
+/*
+	Second trigger, same fix - see layout/header/title.css and decisions.md for why @media alone misses
+	the CRM Entity Card Split handle narrowing the column, and how the 480px threshold and the
+	crm-entity-stream container name were chosen.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-action {
+		flex-wrap: wrap-reverse;
+		row-gap: 6px;
+	}
+
+	/*
+		flex-grow stays on, as in the base rule. The line break is decided by the flex base size, which
+		width: auto keeps tied to what the buttons actually measure, but once the line is settled the box
+		has to take the space that is left: the parent is row-reverse, so a shrink-wrapped box gets packed
+		against the right edge and the buttons drift away from the left margin they line up with
+		everywhere else. Growing puts the box back across the row, and its own flex-start keeps the
+		buttons at the left - whether it shares the line with the icons or has the line to itself.
+	*/
+	.crm-timeline__card-action_buttons {
+		width: auto;
+		flex: 1 1 auto;
+	}
+
+	.crm-timeline__card-action_menu {
+		flex: 0 0 auto;
+	}
+
+	/*
+		The 50% cap has to go with it. It is measured against the buttons box, which no longer spans the
+		whole row, so it tightened from 174px to 137px and clipped "Запланировать дело" (171px) - the
+		truncation this breakpoint exists to avoid. Without the cap the buttons take the width their
+		labels need and wrap inside the box when the row runs out.
+	*/
+	.crm-timeline__card-action-btn {
+		max-width: none;
+	}
+}
+/*endregion*/
 
 .crm-timeline__text-block {
 	word-break: break-word;
@@ -2309,6 +2737,71 @@ a.crm-timeline__card-title:hover {
 	margin-right: 20px;
 }
 
+/*region Reflow: shrink the text block's spacing at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The block has 77px of horizontal spacing: padding-left 17 + padding-right 40 + margin-right 20.
+	On desktop this goes unnoticed; at narrow widths it eats up half of the available space.
+	Measured at a card area width of 241px: wrapper 169px, the text is left with 92px —
+	a word and a half per line.
+	Below the breakpoint we shrink the padding and drop the right margin: the text gets ~141px.
+	The rule comes before the --is-edit/--comment declarations, so their vertical
+	spacing is not affected — only the horizontal spacing changes here.
+
+	The 40px of padding-right were the reserve for three absolutely positioned buttons:
+	_edit-btn (right: 17px, an 18px icon — it takes up 17…35px from the right edge),
+	_clear-btn and _copy-btn (right: 9px). Shrinking the padding alone would run the text
+	under the pencil icon — the very 1.4.10 overlap this MR fixes elsewhere, and not an edge
+	case: in editable-description the pencil is shown in any view state, not only for long
+	texts. So below the breakpoint the buttons leave the absolute layer and join the flow,
+	the same way the deal's "actions" button does in todo-editor-v2: they line up in a row
+	at the top right, the content takes a row of its own, and no reserve is needed.
+	The buttons precede the content in the DOM, so in the flow they land above it, not below.
+	_collapse-btn keeps its absolute positioning: it is meant to sit astride the bottom edge,
+	on top of the ::after fade, and the text under it is already clipped by max-height and
+	reachable through the button itself. That is its design, not an overlap this rule created —
+	measured, it covers more of the content box at full width (6184px²) than below the
+	breakpoint (1390px²).
+	The rule that drops the buttons out of the absolute layer lives at the end of the file:
+	their position: absolute is declared below (lines ~102 and ~243) with the same specificity
+	(0,1,0), so placed here it would lose by source order — measured on the stand, the pencil
+	stayed absolute and kept a 705px² overlap with the text.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__editable-text {
+		--crm-timeline__editable-text_padding-left: 12px;
+		--crm-timeline__editable-text_padding-right: 16px;
+		margin-right: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.crm-timeline__editable-text_inner {
+		flex: 0 0 100%;
+	}
+}
+/*
+	Second trigger, same fix, added for consistency with the other reflow rules in this
+	extension - see layout/header/title.css and decisions.md (CRM Entity Card Split) for why
+	@media alone misses the CRM Entity Card Split handle narrowing the column, and how the
+	480px threshold / crm-entity-stream container name were chosen.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__editable-text {
+		--crm-timeline__editable-text_padding-left: 12px;
+		--crm-timeline__editable-text_padding-right: 16px;
+		margin-right: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.crm-timeline__editable-text_inner {
+		flex: 0 0 100%;
+	}
+}
+/*endregion*/
+
 .crm-timeline__editable-text.--is-edit,
 .crm-timeline__editable-text_wrapper.--comment .crm-timeline__editable-text {
 	--crm-timeline__editable-text_padding-top: 11px;
@@ -2468,6 +2961,22 @@ a.crm-timeline__card-title:hover {
 	padding: 0;
 	border: none;
 	outline: none;
+	background: none; /* reset native button background (span -> button) */
+}
+
+/* Visible keyboard focus for the icon buttons and the collapse toggle (WCAG 2.4.7) */
+.crm-timeline__text_copy-btn:focus-visible,
+.crm-timeline__editable-text_clear-btn:focus-visible,
+.crm-timeline__editable-text_edit-btn:focus-visible,
+.crm-timeline__editable-text_text-edit-icon:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.crm-timeline__editable-text_collapse-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154C8);
+	outline-offset: 2px;
 }
 
 .crm-timeline__editable-text_clear-btn,
@@ -2562,6 +3071,42 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__editable-text_action:first-child {
 	margin-right: 3px;
 }
+
+/*region Reflow: the text block's icon buttons join the flow (WCAG 2.1 AA, 1.4.10)*/
+/*
+	Must come after the position: absolute declarations of these buttons above — same
+	specificity (0,1,0), so source order decides. See the reasoning in the region near the
+	top of the file, where the rest of the narrow-width spacing is set.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__text_copy-btn,
+	.crm-timeline__editable-text_clear-btn,
+	.crm-timeline__editable-text_edit-btn {
+		position: static;
+		top: auto;
+		right: auto;
+		margin-left: 8px;
+	}
+}
+/*
+	Second trigger, same fix, added for consistency with the other reflow rules in this
+	extension - see layout/header/title.css and decisions.md (CRM Entity Card Split) for why
+	@media alone misses the CRM Entity Card Split handle narrowing the column, and how the
+	480px threshold / crm-entity-stream container name were chosen. Must stay after the
+	position: absolute declarations above for the same source-order reason as the @media
+	block right above it.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__text_copy-btn,
+	.crm-timeline__editable-text_clear-btn,
+	.crm-timeline__editable-text_edit-btn {
+		position: static;
+		top: auto;
+		right: auto;
+		margin-left: 8px;
+	}
+}
+/*endregion*/
 
 .crm-timeline__editable-text_wrapper .feed-com-img-wrap img {
 	max-width: 100%;
@@ -3563,6 +4108,198 @@ html[data-input-modality="pointer"] .crm-entity-stream-advice-link:focus-visible
 .crm-timeline__card-icon + .crm-timeline__card-container {
 	max-width: calc(100% - 98px);
 }
+
+/*region Reflow: the logo moves up beside the title, the content takes the full width (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The card body is a flex row with no wrap: logo/icon on the left, content on the right. The content
+	has the icon width hard-subtracted from it: max-width: calc(100% - 98px). The subtraction is fixed;
+	it does not allow for the width possibly running short. Measured at a card area width of 241px:
+	body 201px, the logo holds 80px, the content is left with 71px, and 59px after padding. The comment
+	text collapses into a column one letter wide (6 such blocks were observed, one of them 6390px tall).
+	The overflow gate does NOT catch this: the document does not scroll, overflowPx = 0.
+
+	Below the breakpoint the logo moves up beside the activity title and the content takes the full
+	width underneath. The two live in different parents (logo in the body, title in the header), so the
+	card becomes the grid and the body dissolves into it with display: contents - its children become
+	grid items and can be placed next to the header. The card has only ever three direct children
+	(header, body, footer), all in normal flow, so nothing else lands in the grid.
+
+	The body's horizontal padding would vanish with it, so it moves up to the card and is zeroed on the
+	three children - that also keeps the columns starting at the same edge for cards with no logo,
+	where the auto column collapses to zero width and the header sits flush left.
+
+	An earlier take dropped the logo onto a row of its own here instead, which reads as an empty row
+	with the tile alone in it - that is what the report was about, so both triggers now share the
+	pairing.
+
+	Nothing here reintroduces truncation: the title and the row values keep the wrapping they get in
+	layout/header/title.css and content-blocks/with-title.css.
+*/
+@media (max-width: 768px) {
+	/*
+		align-items: center, not start: the logo tile is 60px and the header next to it is one or two
+		text lines, so aligning both to the top left the title hanging at the tile's upper edge. Centred,
+		whichever of the two is taller sets the row and the other sits on its middle - the title against
+		the picture when the header is short, the tile against the title when it wraps. The rows below
+		hold a single full-width item each, so nothing else is affected.
+	*/
+	.crm-timeline__card {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		padding-left: var(--ui-space-inset-md, 16px);
+		padding-right: var(--ui-space-inset-md, 16px);
+	}
+
+	.crm-timeline__card-top,
+	.crm-timeline__card-body,
+	.crm-timeline__card-action {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	/*
+		The header's vertical margin has to go with the padding. The grid centres margin boxes, so the
+		base margin-bottom: 4px (and the -4px the log-message variant carries) tilted the header off the
+		tile's axis by half of itself - measured at 2px. The gap to the content below is set by that
+		block's own margin-top, so nothing collapses here. The modifier is listed explicitly: its
+		specificity is (0,2,0) and it would otherwise win.
+	*/
+	.crm-timeline__card-top,
+	.crm-timeline__card-top.--log-message {
+		margin-bottom: 0;
+	}
+
+	.crm-timeline__card-body {
+		display: contents;
+	}
+
+	.crm-timeline__card-logo_container {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-top {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-container,
+	.crm-timeline__card-icon + .crm-timeline__card-container,
+	.crm-timeline__card-action {
+		grid-column: 1 / -1;
+		max-width: 100%;
+	}
+
+	/*
+		The content row starts exactly at the logo's bottom edge - the grid gives it no gap of its
+		own, and the logo is the tallest thing in the row - so the text reads as glued to the tile.
+	*/
+	.crm-timeline__card-container {
+		margin-top: var(--ui-space-stack-xs, 8px);
+	}
+
+	/*
+		The time carries margin-left: 2px (declared above in this file), which the base layout needs
+		but which here pushes it 2px past the row underneath it - the title, or the checkbox when the
+		activity has one. Both rows sit in the same column, so the offset reads as a misalignment.
+
+		Its margin-bottom: 8px goes for the same reason the header's did: the grid centres margin
+		boxes, so a bottom margin inside the header makes the box taller than its text and the tile
+		lands below the text's optical centre. The time is the last thing on its line, so the margin
+		buys nothing here - the gap to the content below is set by that block's own margin-top.
+	*/
+	.crm-timeline__card-time {
+		margin-left: 0;
+		margin-bottom: 0;
+	}
+}
+/*
+	Second trigger, same layout: @media reacts to the card's own width and misses the CRM Entity Card
+	Split handle narrowing just the column - see decisions.md for the 460px measurement and the
+	480px/crm-entity-stream choice.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	/*
+		align-items: center, not start: the logo tile is 60px and the header next to it is one or two
+		text lines, so aligning both to the top left the title hanging at the tile's upper edge. Centred,
+		whichever of the two is taller sets the row and the other sits on its middle - the title against
+		the picture when the header is short, the tile against the title when it wraps. The rows below
+		hold a single full-width item each, so nothing else is affected.
+	*/
+	.crm-timeline__card {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		padding-left: var(--ui-space-inset-md, 16px);
+		padding-right: var(--ui-space-inset-md, 16px);
+	}
+
+	.crm-timeline__card-top,
+	.crm-timeline__card-body,
+	.crm-timeline__card-action {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	/*
+		The header's vertical margin has to go with the padding. The grid centres margin boxes, so the
+		base margin-bottom: 4px (and the -4px the log-message variant carries) tilted the header off the
+		tile's axis by half of itself - measured at 2px. The gap to the content below is set by that
+		block's own margin-top, so nothing collapses here. The modifier is listed explicitly: its
+		specificity is (0,2,0) and it would otherwise win.
+	*/
+	.crm-timeline__card-top,
+	.crm-timeline__card-top.--log-message {
+		margin-bottom: 0;
+	}
+
+	.crm-timeline__card-body {
+		display: contents;
+	}
+
+	.crm-timeline__card-logo_container {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-top {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-container,
+	.crm-timeline__card-icon + .crm-timeline__card-container,
+	.crm-timeline__card-action {
+		grid-column: 1 / -1;
+		max-width: 100%;
+	}
+
+	/*
+		The content row starts exactly at the logo's bottom edge - the grid gives it no gap of its
+		own, and the logo is the tallest thing in the row - so the text reads as glued to the tile.
+		Measured: logo bottom and content top both at y 497.5.
+	*/
+	.crm-timeline__card-container {
+		margin-top: var(--ui-space-stack-xs, 8px);
+	}
+
+	/*
+		The time carries margin-left: 2px (declared above in this file), which the base layout needs
+		but which here pushes it 2px past the row underneath it - the title, or the checkbox when the
+		activity has one. Both rows sit in the same column, so the offset reads as a misalignment.
+
+		Its margin-bottom: 8px goes for the same reason the header's did: the grid centres margin
+		boxes, so a bottom margin inside the header makes the box taller than its text and the tile
+		lands below the text's optical centre. The time is the last thing on its line, so the margin
+		buys nothing here - the gap to the content below is set by that block's own margin-top.
+	*/
+	.crm-timeline__card-time {
+		margin-left: 0;
+		margin-bottom: 0;
+	}
+}
+/*endregion*/
 
 .crm-timeline__card-container_block {
 	display: block;

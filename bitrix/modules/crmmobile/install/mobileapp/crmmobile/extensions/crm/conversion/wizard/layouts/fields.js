@@ -2,6 +2,7 @@
  * @module crm/conversion/wizard/layouts/fields
  */
 jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { sortBy } = require('utils/array');
@@ -50,10 +51,9 @@ jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => 
 								justifyContent: 'center',
 							},
 						},
-						Text({
+						Text4({
 							style: {
 								color: AppTheme.colors.base2,
-								fontSize: 14,
 							},
 							text: Loc.getMessage(
 								'MCRM_CONVERSION_WIZARD_LAYOUT_FIELDS_TITLE',

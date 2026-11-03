@@ -1,9 +1,12 @@
-import { Event, Loc, Tag, Text, Type, Dom, ajax } from 'main.core';
+import { Event, Extension, Loc, Tag, Text, Type, Dom } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Menu } from 'main.popup';
 
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
+
+import { Analytics } from 'calendar.analytics';
+import 'socialnetwork.v2.lib.event-sender';
 
 import { CreatedEvent, CreatedEventType } from './created.event';
 import { ListEvents } from './list.events';
@@ -123,6 +126,8 @@ export class Meetings
 
 			return;
 		}
+
+		this.sendOpenSectionAnalytics();
 
 		const response = this.requestSender.getMeetings({
 			groupId: this.groupId,
@@ -546,6 +551,8 @@ export class Meetings
 
 	openCalendarSidePanel(eventTemplate?: EventTemplate)
 	{
+		this.sendCreateEventAnalytics();
+
 		const participantsEntityList = eventTemplate ? eventTemplate.roles : [];
 
 		const formData = eventTemplate
@@ -614,23 +621,44 @@ export class Meetings
 									})
 								;
 							}
-
-							ajax.runAction(
-								'bitrix:tasks.scrum.info.saveAnalyticsLabel',
-								{
-									data: {},
-									analyticsLabel: {
-										scrum: 'Y',
-										action: 'create_meet',
-										template: eventTemplate ? eventTemplate.id : 'custom',
-									},
-								},
-							);
 						}
 					},
 				);
 			}
 		});
+	}
+
+	sendOpenSectionAnalytics()
+	{
+		Analytics.sendEvent({
+			event: 'open_section',
+			cSection: 'project',
+			cSubSection: 'meeting',
+			cElement: 'meeting_button',
+			projectId: this.groupId,
+			status: 'success',
+			userType: this.getAnalyticsUserType(),
+		});
+	}
+
+	sendCreateEventAnalytics()
+	{
+		Analytics.sendEvent({
+			event: 'click_create_event',
+			cSection: 'project',
+			cSubSection: 'project_header',
+			cElement: 'slider',
+			projectId: this.groupId,
+			status: 'success',
+			userType: this.getAnalyticsUserType(),
+		});
+	}
+
+	getAnalyticsUserType(): ?string
+	{
+		const settings = Extension.getSettings('socialnetwork.v2.lib.event-sender') ?? {};
+
+		return Type.isStringFilled(settings.userType) ? settings.userType : null;
 	}
 
 	getEventTemplates(calendarSettings: CalendarSettings): Set<EventTemplate>

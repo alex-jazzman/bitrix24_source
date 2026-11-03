@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Crm\Integration\BizProc\Document\Quote;
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription =
@@ -28,11 +29,12 @@ $arActivityDescription =
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'CCrmDocumentDeal'],
+			['crm', Quote::class],
 		],
 	])
 	->setNodeActionSettings([
 		'HANDLES_DOCUMENT' => true,
 	])
-	->setAdditionalResult(['TargetEntityFields'])
+	->setAdditionalResult(['TargetEntityFields', 'SourceDocumentProperties'])
 	->toArray()
 ;

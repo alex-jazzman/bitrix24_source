@@ -23,20 +23,19 @@ export function invalidatePlannerRequests(context: Object): void
 
 function normalizeUserId(userId): number
 {
+	if (!Type.isNumber(userId) && !Type.isStringFilled(userId))
+	{
+		return 0;
+	}
+
 	const normalizedUserId = Number(userId);
 
-	return Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : 0;
+	return Type.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : 0;
 }
 
 export function createSelectedUserIds(userIds, hostId): Set<number>
 {
 	const selectedUserIds = new Set();
-	const normalizedHostId = normalizeUserId(hostId);
-	if (normalizedHostId > 0)
-	{
-		selectedUserIds.add(normalizedHostId);
-	}
-
 	if (userIds?.[Symbol.iterator])
 	{
 		for (const userId of userIds)
@@ -49,7 +48,12 @@ export function createSelectedUserIds(userIds, hostId): Set<number>
 		}
 	}
 
-	return selectedUserIds;
+	const normalizedHostId = normalizeUserId(hostId);
+
+	return selectedUserIds.has(normalizedHostId)
+		? new Set([normalizedHostId, ...selectedUserIds])
+		: selectedUserIds
+	;
 }
 
 export function prepareCalendarBlockForCopy(calendarBlock: Object, hostId: number, from: number): void
@@ -255,7 +259,7 @@ export const TodoEditorBlocksCalendar = {
 	{
 		const ownerId = this.settings.ownerId || this.context.userId;
 		const hostId = normalizeUserId(this.settings.hostId) || normalizeUserId(this.settings.userId);
-		const selectedUserIds = createSelectedUserIds([ownerId], hostId);
+		const selectedUserIds = createSelectedUserIds([hostId, ownerId], hostId);
 
 		const timestamp = (this.settings.from || Timezone.UserTime.getTimestamp()) * 1000;
 		const millisecondsInFiveMinutes = 5 * 60 * 1000;
@@ -322,7 +326,7 @@ export const TodoEditorBlocksCalendar = {
 				sectionSelectorReadOnly: false,
 			};
 
-			if (Type.isObject(filledValues?.config))
+			if (Type.isArray(filledValues?.config?.sections))
 			{
 				const config = this.normalizeCalendarConfig(filledValues.config);
 				preparedData = {
@@ -463,6 +467,7 @@ export const TodoEditorBlocksCalendar = {
 				hostId: this.hostId,
 				type: 'user',
 				entityList: [],
+				attendeesProvided: 'Y',
 				dateFrom: this.getFormattedDate('beforeOneWeek'),
 				dateTo: this.getFormattedDate('afterTwoWeeks'),
 				timezone: this.timezoneName,
@@ -614,8 +619,6 @@ export const TodoEditorBlocksCalendar = {
 				preselectedItems.push(['user', id]);
 			});
 
-			const undeselectedItems = this.hostId > 0 ? [['user', this.hostId]] : [];
-
 			return new Dialog({
 				id: 'todo-editor-calendar-user-selector-dialog',
 				targetNode: this.$refs.userSelector,
@@ -628,7 +631,6 @@ export const TodoEditorBlocksCalendar = {
 				zIndex: 2500,
 				entities: [{ id: 'user' }],
 				preselectedItems,
-				undeselectedItems,
 				events: {
 					'Item:onBeforeSelect': this.onBeforeSelectUser,
 					'Item:onBeforeDeselect': this.onBeforeSelectUser,
@@ -651,7 +653,7 @@ export const TodoEditorBlocksCalendar = {
 		},
 		onSelectUser({ data: { item } }): void
 		{
-			if (this.selectedUserIds.has(item.id))
+			if (this.sectionSelectorReadOnly || this.selectedUserIds.has(item.id))
 			{
 				return;
 			}
@@ -661,7 +663,7 @@ export const TodoEditorBlocksCalendar = {
 		},
 		onDeselectUser({ data: { item } }): void
 		{
-			if (item.id === this.hostId || !this.selectedUserIds.has(item.id))
+			if (this.sectionSelectorReadOnly || !this.selectedUserIds.has(item.id))
 			{
 				return;
 			}
@@ -867,7 +869,7 @@ export const TodoEditorBlocksCalendar = {
 	},
 
 	template: `
-		<div class="crm-activity__todo-editor-v2_block-header">
+		<div class="crm-activity__todo-editor-v2_block-header" data-testid="crm-todo-calendar-header">
 			<span
 				class="crm-activity__todo-editor-v2_block-header-icon"
 				:style="iconStyles"
@@ -876,6 +878,7 @@ export const TodoEditorBlocksCalendar = {
 			<span
 				v-if="canUseCalendarSectionSelector"
 				class="crm-activity__todo-editor-v2_block-header-data"
+				data-testid="crm-todo-calendar-selector"
 			>
 				<SectionSelector 
 					ref="sectionSelector"
@@ -898,6 +901,7 @@ export const TodoEditorBlocksCalendar = {
 			<div
 				@click="$emit('close', id)"
 				class="crm-activity__todo-editor-v2_block-header-close"
+				data-testid="crm-todo-calendar-close"
 			></div>
 		</div>
 		<div class="crm-activity__todo-editor-v2_block-subheader">

@@ -15,7 +15,7 @@ export const Merger = {
 	},
 	computed: {
 		...mapGetters([
-			'conflictFields',
+			'conflictFieldsInEditor',
 			'eeControlPosition',
 			'eeControlPositions',
 			'getMainLayoutScrollPosition',
@@ -23,7 +23,7 @@ export const Merger = {
 	},
 	methods: {
 		getControlTopOffset(field: ConflictField): number {
-			return this.eeControlPositions.get(field.name, 0);
+			return this.eeControlPositions.get(field.name);
 		},
 	},
 	mounted()
@@ -34,7 +34,7 @@ export const Merger = {
 		<div ref="root" class="bx-crm-ai-merge-fields-merger ">
 			<MergeControl
 				v-if="isRootMounted"
-				v-for="field in conflictFields" :key="field.name"
+				v-for="field in conflictFieldsInEditor" :key="field.name"
 				class="bx-crm-ai-merge-fields-merger__field"
 				:style="{top: getControlTopOffset(field) + 'px'}"
 				:field="field"

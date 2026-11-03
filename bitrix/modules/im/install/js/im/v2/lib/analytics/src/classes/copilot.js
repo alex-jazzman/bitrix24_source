@@ -16,8 +16,12 @@ import {
 	CopilotChatType,
 	AnalyticsType,
 } from '../const';
+import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
 import { getCopilotContext } from '../helpers/get-copilot-context';
+import { getFolderSection } from '../helpers/get-folder-section';
+import { getLayoutName } from '../helpers/get-layout-name';
+import { getUserType } from '../helpers/get-user-type';
 
 const CopilotEntryPoint = Object.freeze({
 	create_menu: 'create_menu',
@@ -36,7 +40,7 @@ export class Copilot
 			return;
 		}
 
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 
 		this.#sendCreateChatData({
 			dialogId,
@@ -71,7 +75,7 @@ export class Copilot
 	{
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
 		const copilotChatType = dialog.userCounter <= 2 ? CopilotChatType.private : CopilotChatType.multiuser;
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 
 		sendData({
 			event: AnalyticsEvent.openChat,
@@ -106,7 +110,7 @@ export class Copilot
 			return;
 		}
 
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 		const role = Core.getStore().getters['copilot/chats/getRole'](dialogId);
 		const aiModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 		const aiModelName = aiModel.name ?? aiModel;
@@ -136,7 +140,7 @@ export class Copilot
 		const event = isReasoningEnabled ? AnalyticsEvent.modeOn : AnalyticsEvent.modeOff;
 
 		const chat = Core.getStore().getters['chats/get'](dialogId);
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 		const role = Core.getStore().getters['copilot/chats/getRole'](dialogId);
 		const aiModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 		const aiModelName = aiModel.name ?? aiModel;
@@ -318,6 +322,30 @@ export class Copilot
 		});
 	}
 
+	onClickStopGeneration(dialogId: string): void
+	{
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		if (!chat)
+		{
+			return;
+		}
+
+		const generationState = Core.getStore().getters['copilot/chats/getGenerationState'](dialogId);
+		if (generationState?.initiatorId !== Core.getUserId())
+		{
+			return;
+		}
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chat.type),
+			event: AnalyticsEvent.clickStopGeneration,
+			c_section: AnalyticsSection.chatTextarea,
+			p1: `chatType_${getChatType(chat)}`,
+			p2: getUserType(),
+		});
+	}
+
 	#getModuleSection(): { c_section: string } | {}
 	{
 		const module = PageContext.getModule();
@@ -327,6 +355,13 @@ export class Copilot
 
 	#sendCreateChatData({ dialogId, context }: { dialogId: string, context: string }): void
 	{
+		// Under BitrixGPT v2 the backend emits create_new_chat for every client, so sending it
+		// here too would count the same chat twice in web scenarios.
+		if (this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
 
 		sendData({
@@ -342,13 +377,13 @@ export class Copilot
 
 	#sendDataForCopilotCreation(params: { c_sub_section: string }): void
 	{
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 
 		sendData({
 			event: AnalyticsEvent.clickCreateNew,
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.copilot,
-			c_section: `${currentLayout}_tab`,
+			c_section: getFolderSection(currentLayout),
 			type: AnalyticsType.copilot,
 			...params,
 		});

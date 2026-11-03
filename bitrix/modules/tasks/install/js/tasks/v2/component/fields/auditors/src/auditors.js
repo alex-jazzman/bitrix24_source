@@ -84,6 +84,9 @@ export const Auditors = {
 			:dataset
 			:isLocked
 			:featureId
+			:ariaLabel="loc('TASKS_V2_AUDITORS_TITLE')"
+			ariaHaspopup="dialog"
+			:clearAriaLabel="loc('TASKS_V2_AUDITORS_REMOVE_ARIA_LABEL')"
 			useRemoveAll
 			@update="update"
 		/>

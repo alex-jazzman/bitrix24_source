@@ -93,6 +93,7 @@ export const EmailField: BitrixVueComponentProps = {
 				<ShowMoreMenu
 					v-if="hiddenEmails.length > 0"
 					:items="hiddenEmailItems"
+					data-testid="crm-mini-card-email-show-more-btn"
 				/>
 			</FieldValueList>
 			<div ref="activityEditorContainer" hidden></div>

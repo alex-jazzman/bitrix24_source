@@ -146,9 +146,9 @@
 			return this;
 		},
 
-		setColumnSizes(sizes, expand)
+		setColumnSizes(sizes, expand, resized = [])
 		{
-			this.save(this.getAction('GRID_SET_COLUMN_SIZES'), { sizes, expand });
+			this.save(this.getAction('GRID_SET_COLUMN_SIZES'), { sizes, expand, resized });
 		},
 
 		reset(forAll, callback)

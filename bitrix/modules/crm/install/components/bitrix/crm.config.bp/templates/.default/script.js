@@ -1,0 +1,52 @@
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Crm = this.BX.Crm || {};
+this.BX.Crm.Config = this.BX.Crm.Config || {};
+(function (exports, main_core) {
+	'use strict';
+
+	const boundMarker = Symbol.for('crm.config.bp.settingsHubNavigation');
+	function bindSettingsHubNavigation(targetWindow = window) {
+		const currentDocument = targetWindow.document;
+		if (currentDocument[boundMarker]) {
+			return;
+		}
+		main_core.Event.bind(targetWindow, 'click', event => {
+			const target = event.target;
+			if (event.defaultPrevented || event.button !== 0 || !main_core.Type.isElementNode(target)) {
+				return;
+			}
+			const anchor = target.closest('a[href]');
+			const cancelButton = target.closest('button#ui-button-panel-cancel');
+			const container = (cancelButton ?? anchor)?.closest('[data-crm-bp-hub-navigation]');
+			if (!container) {
+				return;
+			}
+			const destination = cancelButton ? main_core.Dom.create('a', {
+				attrs: {
+					href: container.getAttribute('data-crm-bp-hub-list-url') ?? ''
+				}
+			}, currentDocument) : anchor;
+			if (!destination || destination.hasAttribute('download')) {
+				return;
+			}
+			const href = (destination.getAttribute('href') ?? '').trim();
+			if (href === '' || href.startsWith('#') || !['http:', 'https:'].includes(destination.protocol) || destination.origin !== targetWindow.location.origin || destination.pathname !== targetWindow.location.pathname) {
+				return;
+			}
+			event.stopPropagation();
+			const linkTarget = destination.target.toLowerCase();
+			if (!cancelButton && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || linkTarget !== '' && linkTarget !== '_self')) {
+				return;
+			}
+			event.preventDefault();
+			targetWindow.location.assign(destination.href);
+		}, true);
+		currentDocument[boundMarker] = true;
+	}
+	bindSettingsHubNavigation();
+
+	exports.bindSettingsHubNavigation = bindSettingsHubNavigation;
+
+})(this.BX.Crm.Config.Bp = this.BX.Crm.Config.Bp || {}, BX);
+//# sourceMappingURL=script.js.map

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_DEAL_CATEGORY_EDIT_TITLE"] = "Редактировать воронку продаж";
 $MESS["CRM_DEAL_CATEGORY_EDIT"] = "Редактировать";
 $MESS["CRM_DEAL_CATEGORY_STATUS_EDIT"] = "Редактировать стадии";
@@ -15,3 +15,4 @@ $MESS["CRM_DEAL_CATEGORY_BUTTON_SAVE"] = "Сохранить";
 $MESS["CRM_DEAL_CATEGORY_BUTTON_CANCEL"] = "Отмена";
 $MESS["CRM_DEAL_CATEGORY_ERROR_TITLE"] = "Ошибки сохранения";
 $MESS["CRM_DEAL_CATEGORY_FIELD_NAME_NOT_ASSIGNED_ERROR"] = "Пожалуйста, введите значение в поле \"Название\"";
+$MESS["CRM_DEAL_CATEGORY_DEFAULT_BADGE"] = "По умолчанию";

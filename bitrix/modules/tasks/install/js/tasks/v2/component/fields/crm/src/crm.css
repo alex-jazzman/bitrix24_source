@@ -28,8 +28,29 @@
 	left: 0;
 }
 
+/* button reset */
+.tasks-field-crm-expand {
+	appearance: none;
+	font: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	text-align: inherit;
+}
+/* button reset end */
+
 .tasks-field-crm-expand {
 	z-index: 1;
 	color: var(--ui-color-base-4);
 	cursor: pointer;
+}
+
+.tasks-field-crm-expand:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.ui-chip[data-task-chip-id="crmItemIds"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }

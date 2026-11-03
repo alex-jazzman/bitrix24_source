@@ -35,7 +35,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
 $arActivityDescription = (new ActivityDescription(
 	Loc::getMessage('TIMEMAN_GET_FULL_REPORT_ACTIVITY_NAME') ?? '',
-	Loc::getMessage('TIMEMAN_GET_FULL_REPORT_ACTIVITY_DESCRIPTION') ?? '',
+	Loc::getMessage('TIMEMAN_GET_FULL_REPORT_ACTIVITY_DESCRIPTION_MSGVER_1') ?? '',
 	[ActivityType::NODE->value],
 ))
 	->setClass('GetFullReportActivity')

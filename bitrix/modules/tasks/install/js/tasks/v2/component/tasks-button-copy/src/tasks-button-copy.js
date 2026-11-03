@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { Notifier } from 'ui.notification-manager';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -23,11 +24,21 @@ export const TasksButtonCopy = {
 			type: String,
 			default: '',
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
 	},
 	setup(): {}
 	{
 		return {
 			Outline,
+		};
+	},
+	data(): Object
+	{
+		return {
+			descriptionId: `tasks-button-copy-description-${Text.getRandom()}`,
 		};
 	},
 	computed: {
@@ -89,10 +100,22 @@ export const TasksButtonCopy = {
 		},
 	},
 	template: `
-		<button class="tasks-button-copy" @click="handleClickButton">
+		<button
+			type="button"
+			class="tasks-button-copy"
+			data-testid="tasks-button-copy"
+			:aria-describedby="ariaLabel ? descriptionId : null"
+			@click="handleClickButton"
+		>
 			<span v-if="name" class="tasks-button-copy__text tasks-button-copy__text_name print-font-color-base-1">{{ name }}</span>
 			<span v-if="value" class="tasks-button-copy__text tasks-button-copy__text_value print-font-color-base-1">{{ value }}</span>
-			<BIcon class="tasks-button-copy__icon print-ignore" :name="Outline.COPY" />
+			<BIcon class="tasks-button-copy__icon print-ignore" :name="Outline.COPY" aria-hidden="true" />
+			<span
+				v-if="ariaLabel"
+				:id="descriptionId"
+				class="tasks-button-copy__description"
+				aria-hidden="true"
+			>{{ ariaLabel }}</span>
 		</button>
 	`,
 };

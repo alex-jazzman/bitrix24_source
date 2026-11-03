@@ -4,9 +4,8 @@
 jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) => {
 	const { createTestIdGenerator } = require('utils/test');
 	const { Card, CardDesign, BadgeStatusMode } = require('ui-system/layout/card');
-	const { CardList } = require('ui-system/layout/card-list');
 	const { Text3 } = require('ui-system/typography/text');
-	const { Color, Indent } = require('tokens');
+	const { Color, Indent, Component } = require('tokens');
 	const { Loc } = require('loc');
 	const { ASSET_PATH, ThemeType } = require('settings-v2/const');
 
@@ -43,28 +42,40 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 
 		render()
 		{
-			return CardList(
+			return View(
 				{
-					horizontal: true,
-					withScroll: false,
 					style: {
+						flexDirection: 'row',
 						justifyContent: 'center',
-						padding: Indent.XL3.toNumber(),
 					},
 				},
-				this.renderThemeCard(ThemeType.LIGHT),
-				this.renderThemeCard(ThemeType.DARK),
-				this.renderThemeCard(ThemeType.SYSTEM),
+				View(
+					{
+						style: {
+							flex: 1,
+							flexDirection: 'row',
+							maxWidth: 500,
+							paddingVertical: Indent.M.toNumber(),
+						},
+					},
+					this.renderThemeCard(ThemeType.LIGHT, 0),
+					this.renderThemeCard(ThemeType.DARK, 1),
+					this.renderThemeCard(ThemeType.SYSTEM, 2),
+				),
 			);
 		}
 
-		renderThemeCard(themeType)
+		renderThemeCard(themeType, index)
 		{
 			const selected = this.state.selectedTheme === themeType;
 
 			return View(
 				{
 					onClick: () => this.onChange(themeType),
+					style: {
+						flex: 1,
+						marginLeft: index === 0 ? 0 : Component.cardListGap.toNumber(),
+					},
 				},
 				Card(
 					{
@@ -73,6 +84,9 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 						accent: selected,
 						border: true,
 						badgeMode: selected ? BadgeStatusMode.SUCCESS : null,
+						style: {
+							alignItems: 'center',
+						},
 					},
 					this.renderImage(themeType),
 				),
@@ -80,6 +94,7 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 				Text3({
 					text: ThemeTypeLoc[themeType],
 					color: Color.base1,
+					numberOfLines: 1,
 					style: {
 						alignSelf: 'center',
 						marginTop: Indent.S.toNumber(),
@@ -96,7 +111,6 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 					style: {
 						width: 29,
 						height: 54,
-						marginHorizontal: Indent.XL2.toNumber(),
 					},
 					svg: {
 						uri: `${THEME_ASSET_PATH}${themeType}.svg`,

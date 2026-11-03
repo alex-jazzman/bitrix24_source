@@ -162,9 +162,9 @@ JCCalendarViewWeek.prototype.__drawLayout = function()
 	//obRow.cells[0].innerHTML +=
 	this._parent.CONTROLS.DATEROW.innerHTML =
 	'<table class="bx-calendar-week-control-table" align="center"><tr>'
-		+ '<td><a href="javascript:void(0)" class="bx-calendar-week-icon bx-calendar-week-back"></a></td>'
+		+ '<td><a href="javascript:void(0)" class="bx-calendar-week-icon bx-calendar-week-back" data-testid="intranet-absence-week-previous"></a></td>'
 		+ '<td>' + text + '</td>'
-		+ '<td><a href="javascript:void(0)" class="bx-calendar-week-icon bx-calendar-week-fwd"></a></td>'
+		+ '<td><a href="javascript:void(0)" class="bx-calendar-week-icon bx-calendar-week-fwd" data-testid="intranet-absence-week-next"></a></td>'
 		+ '</tr></table>';
 
 	//var arLinks = obRow.cells[0].getElementsByTagName('A');

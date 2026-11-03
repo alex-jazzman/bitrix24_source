@@ -4,8 +4,8 @@ import { Tag } from 'main.core';
 import { Button, AirButtonStyle, ButtonSize } from 'ui.buttons';
 import type { ButtonOptions } from 'ui.buttons';
 import { Icon, Outline } from 'ui.icon-set.api.core';
-import { EventEmitter } from 'main.core.events';
-import { SidePanel } from 'main.sidepanel';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { SidePanel, type SliderEvent } from 'main.sidepanel';
 import { FileExport } from 'biconnector.file-export';
 import type { Store } from 'ui.vue3.vuex';
 import type { RootState } from '../types/state';
@@ -14,14 +14,17 @@ import { showDeleteFileConfirm } from './delete-file-confirm';
 import { showErrorPopup } from './error-popup';
 
 type CheckFileError = { lineNumber: string, columnName: string, errorMessage: string, value: string };
+type CheckFileRawError = { message?: string, customData?: { field?: number, value?: string, line?: number } };
 
 const SAVE_EVENT = 'biconnector:dataset-import-v2:save';
+const DATASET_SAVED_MESSAGE = 'BIConnector.dataset-import:onDatasetCreated';
 const MAX_DISPLAYED_ERRORS = 200;
 const ERRORS_HELP_ARTICLE = '23779844';
 
 export type SaveControllerOptions = {
 	sourceCode: string,
 	isSupersetReady?: boolean,
+	isTablePermissionsEnabled?: boolean,
 };
 
 const STEP_BY_MUTATION: Record<string, string> = {
@@ -43,11 +46,15 @@ export class SaveController
 
 	private readonly isSupersetReady: boolean;
 
+	private readonly isTablePermissionsEnabled: boolean;
+
 	private readonly analytics: Analytics;
 
 	private isChanged: boolean = false;
 
 	private isSaved: boolean = false;
+
+	private isSaveAnnounced: boolean = false;
 
 	private isConfirmedClose: boolean = false;
 
@@ -61,13 +68,14 @@ export class SaveController
 
 	private mutationUnsubscribe: (() => void) | null = null;
 
-	private sliderCloseHandler: ((event: { denyAction: () => void }) => void) | null = null;
+	private sliderCloseHandler: ((event: BaseEvent<SliderEvent[]>) => void) | null = null;
 
 	constructor(store: Store<RootState>, options: SaveControllerOptions)
 	{
 		this.store = store;
 		this.sourceCode = options.sourceCode;
 		this.isSupersetReady = Boolean(options.isSupersetReady);
+		this.isTablePermissionsEnabled = Boolean(options.isTablePermissionsEnabled);
 		this.analytics = new Analytics(this.sourceCode);
 	}
 
@@ -86,9 +94,8 @@ export class SaveController
 		const slider = (SidePanel as any)?.Instance?.getTopSlider?.();
 		if (slider)
 		{
-			this.sliderCloseHandler = (event: any) => {
-				const sliderEvent = event?.getData?.()?.[0] ?? event;
-				this.onSliderClose(sliderEvent);
+			this.sliderCloseHandler = (event: BaseEvent<SliderEvent[]>) => {
+				this.onSliderClose(event.getData()?.[0] ?? {});
 			};
 			EventEmitter.subscribe(slider as any, 'SidePanel.Slider:onClose', this.sliderCloseHandler);
 		}
@@ -139,6 +146,11 @@ export class SaveController
 			return Loc.getMessage('DATASET_IMPORT_V2_SAVE_BLOCKED_NO_FILE') ?? '';
 		}
 
+		if (this.store.state.ui.connectionLoad.status === 'loading')
+		{
+			return Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_LOADING') ?? '';
+		}
+
 		if (state.fieldsSettings.length === 0)
 		{
 			return Loc.getMessage('DATASET_IMPORT_V2_SAVE_BLOCKED_NO_FIELDS') ?? '';
@@ -151,10 +163,20 @@ export class SaveController
 
 		if (!state.datasetProperties.name || state.datasetProperties.name.length === 0)
 		{
-			return Loc.getMessage('DATASET_IMPORT_V2_SAVE_BLOCKED_NO_NAME') ?? '';
+			return Loc.getMessage('DATASET_IMPORT_V2_SAVE_BLOCKED_NO_NAME_MSGVER_1') ?? '';
+		}
+
+		if (this.isTableGroupRequired() && state.tableGroupIds.length === 0)
+		{
+			return Loc.getMessage('DATASET_IMPORT_V2_SAVE_BLOCKED_NO_TABLE_GROUPS') ?? '';
 		}
 
 		return null;
+	}
+
+	private isTableGroupRequired(): boolean
+	{
+		return this.isTablePermissionsEnabled && !this.store.getters.isEditMode;
 	}
 
 	async checkFile(): Promise<void>
@@ -214,6 +236,12 @@ export class SaveController
 
 	async save(): Promise<void>
 	{
+		// The slider is closing or the page is reloading, while the save button is active again
+		if (this.isSaved)
+		{
+			return;
+		}
+
 		const blockReason = this.getSaveBlockReason();
 		if (blockReason !== null)
 		{
@@ -270,6 +298,10 @@ export class SaveController
 		{
 			data.id = this.store.state.config.datasetProperties.id;
 		}
+		else if (this.store.state.config.tableGroupIds.length > 0)
+		{
+			data.tableGroupIds = [...this.store.state.config.tableGroupIds];
+		}
 
 		try
 		{
@@ -282,11 +314,10 @@ export class SaveController
 				status: 'success',
 				p1: `datasetName_${(this.store.state.config.datasetProperties.name || '').replaceAll('_', '')}`,
 			});
-			(SidePanel as any)?.Instance?.postMessage(window, 'BIConnector.dataset-import:onDatasetCreated', {});
 
 			if (isEditMode)
 			{
-				this.closeSlider();
+				this.closeAfterSave();
 
 				return;
 			}
@@ -343,7 +374,14 @@ export class SaveController
 
 	private onSliderClose(event: { denyAction?: () => void }): void
 	{
-		if (this.isConfirmedClose || this.isSaved || this.store.getters.isEditMode)
+		if (this.isSaved)
+		{
+			this.announceSaved();
+
+			return;
+		}
+
+		if (this.isConfirmedClose || this.store.getters.isEditMode)
 		{
 			return;
 		}
@@ -375,12 +413,38 @@ export class SaveController
 		});
 	}
 
+	/**
+	 * The page under the slider reloads its list by this message. It goes out while the slider is still open:
+	 * a closed slider is no longer a known sender and the message would be dropped.
+	 */
+	private announceSaved(): void
+	{
+		if (!this.isSaved || this.isSaveAnnounced)
+		{
+			return;
+		}
+
+		this.isSaveAnnounced = true;
+		(SidePanel as any)?.Instance?.postMessage(window, DATASET_SAVED_MESSAGE, {});
+	}
+
+	private closeAfterSave(): void
+	{
+		this.announceSaved();
+		this.closeSlider();
+	}
+
+	private reloadPage(): void
+	{
+		window.location.reload();
+	}
+
 	private closeSlider(): void
 	{
 		const slider = (SidePanel as any)?.Instance?.getTopSlider?.();
 		if (slider)
 		{
-			slider.close(true);
+			slider.close();
 		}
 	}
 
@@ -393,12 +457,12 @@ export class SaveController
 
 		const fields = this.store.state.config.fieldsSettings;
 		const result: Array<CheckFileError> = [];
-		Object.entries(raw as Record<string, Array<{ message?: string, customData?: { field?: number, value?: string } }>>)
+		Object.entries(raw as Record<string, Array<CheckFileRawError>>)
 			.forEach(([lineNumber, errs]) => {
 				(errs || []).forEach((e) => {
 					const fieldIdx = e?.customData?.field ?? -1;
 					result.push({
-						lineNumber,
+						lineNumber: String(e?.customData?.line ?? lineNumber),
 						columnName: fields[fieldIdx]?.name ?? '',
 						errorMessage: e?.message ?? '',
 						value: e?.customData?.value ?? '',
@@ -661,10 +725,24 @@ export class SaveController
 		popup.show();
 	}
 
+	private getSuccessDescription(fileName: string): string
+	{
+		const { connectionProperties, fileProperties } = this.store.state.config;
+		const tableName = connectionProperties?.tableName ?? '';
+		if (tableName && !fileProperties.fileToken)
+		{
+			return (Loc.getMessage('DATASET_IMPORT_V2_SUCCESS_DESCRIPTION_SOURCE') ?? '')
+				.replace('#TABLE_NAME#', Text.encode(tableName))
+			;
+		}
+
+		return (Loc.getMessage('DATASET_IMPORT_V2_SUCCESS_DESCRIPTION') ?? '').replace('#FILE_NAME#', Text.encode(fileName));
+	}
+
 	private showSuccessPopup(datasetId: number, title: string, fileName: string): void
 	{
 		const header = (Loc.getMessage('DATASET_IMPORT_V2_SUCCESS_TITLE') ?? '').replace('#NAME#', Text.encode(title));
-		const description = (Loc.getMessage('DATASET_IMPORT_V2_SUCCESS_DESCRIPTION') ?? '').replace('#FILE_NAME#', Text.encode(fileName));
+		const description = this.getSuccessDescription(fileName);
 
 		const content = Tag.render`
 			<div class="biconnector-dataset-import-v2-success">
@@ -691,7 +769,7 @@ export class SaveController
 			overlay: true,
 			closeIcon: true,
 			events: {
-				onPopupClose: () => this.closeSlider(),
+				onPopupClose: () => this.closeAfterSave(),
 			},
 		} as any);
 
@@ -704,7 +782,8 @@ export class SaveController
 			</button>
 		`;
 		createMoreBtn.addEventListener('click', () => {
-			window.location.reload();
+			this.announceSaved();
+			this.reloadPage();
 		});
 		actions?.append(createMoreBtn);
 

@@ -1,0 +1,7 @@
+/* The hint of an autofill conflict is rendered into the legacy form of the settings panel, where the
+   shared list of hidden selectors covers `node-settings-alert-text` with `display: none !important`
+   and the showing rule next to it carries no priority. The modifier lifts that cover for the hints of
+   the relation autofill alone, so every other hint of the panel keeps the behaviour it had. */
+.node-settings-alert-text.editor-chart-node-settings-autofill-conflict {
+	display: block !important;
+}

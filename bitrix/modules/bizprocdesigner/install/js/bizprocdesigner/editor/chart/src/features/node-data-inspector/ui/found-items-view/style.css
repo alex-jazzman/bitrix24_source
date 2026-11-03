@@ -1,0 +1,89 @@
+/* The new node type has no title rule of its own in the collapsible header of the scheme. */
+.inspector-scheme-view__collapsible-item-title.--foundItems {
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+}
+
+.editor-chart-found-items__switcher {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.editor-chart-found-items__switcher-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
+/* Unavailable by state, never hidden: the controls must not move as the position changes. */
+.editor-chart-found-items__switcher-button:disabled {
+	cursor: default;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.editor-chart-found-items__position {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-2);
+}
+
+.editor-chart-found-items__truncated {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	color: var(--ui-color-base-4);
+}
+
+.editor-chart-found-items__caption {
+	display: inline-block;
+	max-width: 100%;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-1);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-found-items__caption.--link {
+	color: var(--ui-color-accent-main-link);
+	text-decoration: underline;
+	text-decoration-color: var(--ui-color-accent-main-link-underline);
+}
+
+.editor-chart-found-items__notice {
+	margin: var(--ui-space-stack-2xs) 0 0;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	color: var(--ui-color-base-4);
+}
+
+.editor-chart-found-items__notice.--alert {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.editor-chart-found-items__retry {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+/* Positions from the second on have no expression, so the leaf is not a drag source and must not
+   offer the grab cursor of the shared row. */
+.editor-chart-found-items__fields.--static .inspector-scheme-view__data-item-title {
+	cursor: default;
+}

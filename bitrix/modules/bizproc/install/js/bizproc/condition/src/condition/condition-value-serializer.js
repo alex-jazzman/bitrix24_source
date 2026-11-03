@@ -5,6 +5,28 @@ export const isMultiValueOperator = (operator: string): boolean => (
 	operator === Operator.IN || operator === Operator.NOT_IN
 );
 
+export const isValuelessOperator = (operator: string): boolean => (
+	operator === Operator.EMPTY || operator === Operator.NOT_EMPTY
+);
+
+// Bring a value entered under the previous operator into the shape the new one reads. An array is a
+// value only for `in`/`!in` (transported as JSON) and for BETWEEN (transported as a pair of slots);
+// anywhere else it is not a value but its first item, and an operator without a value carries none.
+export function adaptValueToOperator(operator: string, value): mixed
+{
+	if (isValuelessOperator(operator))
+	{
+		return '';
+	}
+
+	if (isMultiValueOperator(operator) || operator === Operator.BETWEEN)
+	{
+		return value;
+	}
+
+	return Array.isArray(value) ? (value[0] ?? '') : value;
+}
+
 const isScalarValue = (value): boolean => (
 	Type.isString(value) || Type.isNumber(value) || Type.isBoolean(value)
 );

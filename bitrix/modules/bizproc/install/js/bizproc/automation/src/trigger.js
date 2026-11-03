@@ -78,7 +78,30 @@ export class Trigger extends EventEmitter
 		if (node.parentNode)
 		{
 			node.parentNode.replaceChild(this.#node, node);
+			this.#updateAddControlAriaLabel();
 		}
+	}
+
+	#updateAddControlAriaLabel(): void
+	{
+		const control = this.#node.previousElementSibling;
+		if (control?.dataset.role !== 'trigger-add-insertion')
+		{
+			return;
+		}
+
+		const button = control.querySelector('[data-role="trigger-add-insertion-button"]');
+		if (!button)
+		{
+			return;
+		}
+
+		const addTitle = Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD');
+		const ariaLabel = Loc.getMessage(
+			'BIZPROC_AUTOMATION_CMP_ADD_BEFORE',
+			{ '#TITLE#': this.getName() },
+		);
+		Dom.attr(button, 'aria-label', ariaLabel || addTitle);
 	}
 
 	canEdit()

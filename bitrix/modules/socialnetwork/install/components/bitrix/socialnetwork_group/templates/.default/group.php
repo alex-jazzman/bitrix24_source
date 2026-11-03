@@ -12,6 +12,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 /** @global CMain $APPLICATION */
 
+use Bitrix\Socialnetwork\V2\Feature;
+
 $component = $this->getComponent();
 $pageId = "group";
 $blogPageId = '';
@@ -104,15 +106,25 @@ if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 }
 include("util_group_limit.php");
 
+$allowProjectNavigationInFrame = true;
 if (include('util_project_navigation.php'))
 {
 	return;
 }
 
+$isNewProject = Feature::isSectionPinAvailableForFields($arResult['groupFields']);
 $favoritesTitleTemplate = (
-	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
-		? ''
-		: $arResult['PAGES_TITLE_TEMPLATE']
+	$isNewProject || ($arParams['HIDE_OWNER_IN_TITLE'] ?? null) !== 'Y'
+		? $arResult['FAVORITES_TITLE_TEMPLATE']
+		: ''
+);
+$favoritesUrl = (
+	$isNewProject
+		? CComponentEngine::MakePathFromTemplate(
+			$arResult['PATH_TO_GROUP_GENERAL'],
+			['group_id' => $groupId],
+		)
+		: ''
 );
 
 $APPLICATION->IncludeComponent(
@@ -130,7 +142,9 @@ $APPLICATION->IncludeComponent(
 		'USE_PADDING' => false,
 		'USE_FAST_WAY_CLOSE_LOADER' => true,
 		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
+		'UI_TOOLBAR_FAVORITES_URL' => $favoritesUrl,
 	]
 );
 
 $APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
+$APPLICATION->SetPageProperty('FavoriteUrl', $favoritesUrl);

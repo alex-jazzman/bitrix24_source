@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { AirButtonStyle } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Center as NotificationCenter, Position } from 'ui.notification';
@@ -12,11 +12,13 @@ import {
 import {
 	CatalogShareStateMachine,
 	CatalogShareViewState,
+	type CatalogShareSnapshot,
 	type CatalogShareViewStateValue,
 } from './catalog-share-state';
 import {
 	Audience,
 	type AudienceValue,
+	type CatalogChatWritingResult,
 	type CatalogLinkState,
 	type CatalogShareApplication,
 	type CatalogShareDraft,
@@ -31,7 +33,6 @@ export const CATALOG_SHARE_DIALOG_WIDTH = 588;
 
 export const CatalogShareDialogState = Object.freeze({
 	Loading: CatalogShareViewState.Loading,
-	Error: CatalogShareViewState.LoadError,
 	Ready: CatalogShareViewState.Audience,
 	Audience: CatalogShareViewState.Audience,
 	MemberDraft: CatalogShareViewState.MemberDraft,
@@ -50,6 +51,7 @@ type CatalogShareApi = {
 	setShare: (catalogItemId: number, share: CatalogShareState) => Promise<CatalogShareState>,
 	getLink: (catalogItemId: number) => Promise<CatalogLinkState>,
 	setLink: (catalogItemId: number, payload: SetCatalogLinkPayload) => Promise<CatalogLinkState>,
+	setChatWriting?: (catalogItemId: number, allowed: boolean) => Promise<CatalogChatWritingResult>,
 };
 
 type CatalogShareDialogOptions = {
@@ -59,6 +61,7 @@ type CatalogShareDialogOptions = {
 	selectorFactory?: EntitySelectorFactory,
 	copyText?: (text: string) => Promise<boolean>,
 	now?: () => Date,
+	onChatWritingChanged?: (allowed: boolean) => void,
 };
 
 type ConfirmationOptions = {
@@ -84,7 +87,12 @@ export class CatalogShareDialog
 	#request: Promise<void> | null = null;
 	#saveRequest: Promise<void> | null = null;
 	#linkRequest: Promise<void> | null = null;
+	#shareReloadRequest: Promise<void> | null = null;
+	#linkReloadRequest: Promise<void> | null = null;
 	#applicationLinkCopyRequest: Promise<void> | null = null;
+	#chatWritingRequest: Promise<void> | null = null;
+	#chatWritingAllowed: ?boolean = null;
+	#onChatWritingChanged: ((allowed: boolean) => void) | null;
 	#copyText: (text: string) => Promise<boolean>;
 	#now: () => Date;
 	#shown: boolean = false;
@@ -96,6 +104,10 @@ export class CatalogShareDialog
 		this.#trigger = options.trigger;
 		this.#api = options.api ?? catalogShareApi;
 		this.#copyText = options.copyText ?? this.#copyToClipboard;
+		this.#chatWritingAllowed = Type.isBoolean(options.application.appChatWritingAllowed)
+			? options.application.appChatWritingAllowed
+			: null;
+		this.#onChatWritingChanged = options.onChatWritingChanged ?? null;
 		this.#now = options.now ?? (() => new Date());
 		this.#machine = new CatalogShareStateMachine();
 		this.#view = new CatalogShareDialogView({
@@ -103,7 +115,8 @@ export class CatalogShareDialog
 			selectorFactory: options.selectorFactory,
 			now: this.#now,
 			callbacks: {
-				onRetry: this.#handleRetry,
+				onRetryShare: this.#handleRetryShare,
+				onRetryLink: this.#handleRetryLink,
 				onSelectAudience: this.#handleSelectAudience,
 				onSetMembers: this.#handleSetMembers,
 				onSaveShare: this.#handleSaveShare,
@@ -115,6 +128,7 @@ export class CatalogShareDialog
 				onSetLinkRequireB24Auth: this.#handleSetLinkRequireB24Auth,
 				onSaveAndCopyLink: this.#handleSaveAndCopyLink,
 				onRequestPortalLinkRevoke: this.#handleRequestPortalLinkRevoke,
+				onSetChatWriting: this.#handleSetChatWriting,
 			},
 		});
 
@@ -169,12 +183,7 @@ export class CatalogShareDialog
 		}
 
 		const status = this.#machine.getSnapshot().status;
-		if (status === CatalogShareViewState.LoadError)
-		{
-			this.#machine.retryLoading();
-			this.#render();
-		}
-		else if (status !== CatalogShareViewState.Loading)
+		if (status !== CatalogShareViewState.Loading)
 		{
 			if (!this.#machine.beginLoading())
 			{
@@ -184,26 +193,28 @@ export class CatalogShareDialog
 		}
 
 		const request = Promise.all([
-			this.#api.getShare(this.#application.id),
-			this.#api.getLink(this.#application.id),
+			this.#api.getShare(this.#application.id).then(
+				(share) => ({ value: share, errorCode: null }),
+				(error) => ({ value: null, errorCode: this.#getErrorCode(error) }),
+			),
+			this.#api.getLink(this.#application.id).then(
+				(linkState) => ({ value: linkState, errorCode: null }),
+				(error) => ({ value: null, errorCode: this.#getErrorCode(error) }),
+			),
 		])
-			.then(([share, linkState]) => {
+			.then(([shareResult, linkResult]) => {
 				if (this.#destroyed)
 				{
 					return;
 				}
 
-				this.#machine.completeLoading(share, linkState);
+				this.#machine.settleLoading({
+					share: shareResult.value,
+					shareErrorCode: shareResult.errorCode,
+					linkState: linkResult.value,
+					linkErrorCode: linkResult.errorCode,
+				});
 				this.#syncDraft();
-				this.#render();
-			})
-			.catch((error) => {
-				if (this.#destroyed)
-				{
-					return;
-				}
-
-				this.#machine.failLoading(this.#getErrorCode(error));
 				this.#render();
 			})
 			.finally(() => {
@@ -234,9 +245,91 @@ export class CatalogShareDialog
 		this.#release(true);
 	}
 
-	#handleRetry = (): void => {
-		void this.refresh();
+	#handleRetryShare = (): void => {
+		if (this.#shareReloadRequest !== null || this.#destroyed || !this.#machine.beginShareReload())
+		{
+			return;
+		}
+
+		this.#render();
+		const request = this.#reloadShare();
+		this.#shareReloadRequest = request;
+		void request.finally(() => {
+			if (this.#shareReloadRequest === request)
+			{
+				this.#shareReloadRequest = null;
+			}
+		});
 	};
+
+	async #reloadShare(): Promise<void>
+	{
+		try
+		{
+			const share = await this.#api.getShare(this.#application.id);
+			if (this.#destroyed)
+			{
+				return;
+			}
+
+			this.#machine.completeShareReload(share);
+		}
+		catch (error)
+		{
+			if (this.#destroyed)
+			{
+				return;
+			}
+
+			this.#machine.failShareReload(this.#getErrorCode(error));
+		}
+
+		this.#syncDraft();
+		this.#render();
+	}
+
+	#handleRetryLink = (): void => {
+		if (this.#linkReloadRequest !== null || this.#destroyed || !this.#machine.beginLinkReload())
+		{
+			return;
+		}
+
+		this.#render();
+		const request = this.#reloadLink();
+		this.#linkReloadRequest = request;
+		void request.finally(() => {
+			if (this.#linkReloadRequest === request)
+			{
+				this.#linkReloadRequest = null;
+			}
+		});
+	};
+
+	async #reloadLink(): Promise<void>
+	{
+		try
+		{
+			const linkState = await this.#api.getLink(this.#application.id);
+			if (this.#destroyed)
+			{
+				return;
+			}
+
+			this.#machine.completeLinkReload(linkState);
+		}
+		catch (error)
+		{
+			if (this.#destroyed)
+			{
+				return;
+			}
+
+			this.#machine.failLinkReload(this.#getErrorCode(error));
+		}
+
+		this.#syncDraft();
+		this.#render();
+	}
 
 	#handleSelectAudience = (audience: AudienceValue): void => {
 		if (this.#machine.selectAudience(audience))
@@ -247,24 +340,66 @@ export class CatalogShareDialog
 			return;
 		}
 
-		const pendingAudience = this.#machine.getSnapshot().pendingAudience;
-		if (pendingAudience !== null)
+		const snapshot = this.#machine.getSnapshot();
+		if (snapshot.pendingAudience !== null)
 		{
-			const title = pendingAudience === Audience.Authenticated
-				? Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_TITLE')
-				: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_TITLE');
-			const description = pendingAudience === Audience.Authenticated
-				? Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_DESCRIPTION')
-				: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_DESCRIPTION');
+			const { title, description } = this.#getPendingAudienceConfirmationTexts(snapshot);
 			this.#showConfirmation({
 				title,
 				description,
-				confirmText: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_GLOBAL_BUTTON'),
+				confirmText: snapshot.pendingAudienceAddsCompanyToChat
+					? Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_APP_CHAT_BUTTON')
+					: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_GLOBAL_BUTTON'),
 				onConfirm: this.#handleConfirmLinkRevoke,
 				onCancel: this.#handleCancelLinkRevoke,
 			});
 		}
 	};
+
+	#getPendingAudienceConfirmationTexts(
+		snapshot: CatalogShareSnapshot,
+	): { title: string, description: string }
+	{
+		const addsCompanyToChat = snapshot.pendingAudienceAddsCompanyToChat;
+		const revokesLink = snapshot.pendingAudienceRevokesLink;
+
+		if (snapshot.pendingAudience === Audience.Portal)
+		{
+			return {
+				title: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PORTAL_TITLE'),
+				description: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PORTAL_DESCRIPTION'),
+			};
+		}
+
+		if (snapshot.pendingAudience === Audience.Authenticated)
+		{
+			let description = Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_DESCRIPTION');
+			if (addsCompanyToChat)
+			{
+				description = revokesLink
+					? Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_APP_CHAT_LINK_DESCRIPTION')
+					: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_APP_CHAT_DESCRIPTION');
+			}
+
+			return {
+				title: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_TITLE'),
+				description,
+			};
+		}
+
+		let description = Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_DESCRIPTION');
+		if (addsCompanyToChat)
+		{
+			description = revokesLink
+				? Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_APP_CHAT_LINK_DESCRIPTION')
+				: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_APP_CHAT_DESCRIPTION');
+		}
+
+		return {
+			title: Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_TITLE'),
+			description,
+		};
+	}
 
 	#handleConfirmLinkRevoke = (): void => {
 		if (this.#machine.confirmLinkRevoke())
@@ -503,6 +638,69 @@ export class CatalogShareDialog
 			this.#render();
 		}
 	};
+
+	#handleSetChatWriting = (allowed: boolean): void => {
+		if (this.#chatWritingRequest !== null || this.#destroyed || !Type.isBoolean(this.#chatWritingAllowed))
+		{
+			return;
+		}
+
+		if (allowed === this.#chatWritingAllowed)
+		{
+			return;
+		}
+
+		const request = this.#saveChatWriting(allowed);
+		this.#chatWritingRequest = request;
+		void request.finally(() => {
+			if (this.#chatWritingRequest === request)
+			{
+				this.#chatWritingRequest = null;
+			}
+		});
+	};
+
+	async #saveChatWriting(allowed: boolean): Promise<void>
+	{
+		const previousAllowed = this.#chatWritingAllowed;
+		this.#view.setChatWriting(allowed, true);
+		this.#render();
+
+		let result: CatalogChatWritingResult | null = null;
+		try
+		{
+			result = await this.#api.setChatWriting?.(this.#application.id, allowed) ?? null;
+		}
+		catch
+		{
+			result = null;
+		}
+
+		if (this.#destroyed)
+		{
+			return;
+		}
+
+		if (result === null || result.ok !== true)
+		{
+			this.#view.setChatWriting(previousAllowed, false);
+			this.#render();
+			NotificationCenter.notify({
+				content: Loc.getMessage(result === null
+					? 'VIBECODECONNECTOR_CATALOG_SHARE_CHAT_WRITING_ERROR'
+					: 'VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE'),
+				position: Position.TOP_RIGHT,
+				useAirDesign: true,
+			});
+
+			return;
+		}
+
+		this.#chatWritingAllowed = result.allowed;
+		this.#onChatWritingChanged?.(result.allowed);
+		this.#view.setChatWriting(result.allowed, false);
+		this.#render();
+	}
 
 	#handleRequestPortalLinkRevoke = (): void => {
 		if (this.#machine.requestPortalLinkRevoke())
@@ -936,7 +1134,10 @@ export class CatalogShareDialog
 		this.#request = null;
 		this.#saveRequest = null;
 		this.#linkRequest = null;
+		this.#shareReloadRequest = null;
+		this.#linkReloadRequest = null;
 		this.#applicationLinkCopyRequest = null;
+		this.#chatWritingRequest = null;
 		this.#view.destroy();
 
 		const dialog = this.#dialog;

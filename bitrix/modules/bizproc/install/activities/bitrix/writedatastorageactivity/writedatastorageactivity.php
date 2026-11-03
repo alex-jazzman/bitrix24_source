@@ -465,6 +465,7 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 			],
 			'DynamicFilterFields' => [
 				'Name' => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_FILTER_FIELDS_PROPERTY'),
+				'ShowFieldLabel' => false,
 				'FieldName' => 'filter_fields',
 				'Type' => FieldType::CUSTOM,
 				'Required' => false,
@@ -481,6 +482,7 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 			],
 			'WriteFields' => [
 				'Name' => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_WRITE_FIELDS_PROPERTY'),
+				'ShowFieldLabel' => false,
 				'FieldName' => 'write_fields',
 				'Type' => FieldType::CUSTOM,
 				'Required' => false,
@@ -514,6 +516,13 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 				'Default' => 'Y',
 			],
 		];
+	}
+
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// Persisted but not typable via getPropertiesMap(): per-storage field->value maps (FieldValue, Fields)
+		// and the CUSTOM filter tree.
+		return ['FieldValue', 'Fields', 'DynamicFilterFields'];
 	}
 
 	protected static function extractPropertiesValues(PropertiesDialog $dialog, array $fieldsMap): Result

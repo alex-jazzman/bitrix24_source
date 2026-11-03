@@ -8,3 +8,4 @@ $MESS['BPTA2_DESCR_CLOSEDBY'] = 'Пользователь, закрывший з
 $MESS['BPTA2_DESCR_IS_DELETED'] = 'Задача удалена';
 $MESS['BPTA2_DESCR_DESCR_1'] = 'Ставит задачу сотруднику с автозаполнением всех полей';
 $MESS['BPTA2_DESCR_NAME_1'] = 'Поставить задачу';
+$MESS['TASKS_ACTIVITY_OBJECT_TASK'] = 'Задача';

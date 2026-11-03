@@ -243,7 +243,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())

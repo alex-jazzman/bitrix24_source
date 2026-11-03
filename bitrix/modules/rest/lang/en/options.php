@@ -1,8 +1,8 @@
 <?php
 $MESS["REST_OPT_ACCESS_POLICY"] = "Permissions";
 $MESS["REST_OPT_ACCESS_POLICY_ADD_USERS"] = "Add users";
-$MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE_OWN"] = "Users allowed to add their own incoming webhooks";
 $MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE"] = "Users allowed to add incoming webhooks for everyone";
+$MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE_OWN"] = "Users allowed to add their own incoming webhooks";
 $MESS["REST_OPT_ACCESS_POLICY_LOCAL_APP"] = "Users allowed to add apps for everyone";
 $MESS["REST_OPT_ACCESS_POLICY_PERSONAL_APP"] = "Users allowed to add their own apps";
 $MESS["REST_OPT_ACTIVE"] = "Logging is active";
@@ -26,6 +26,7 @@ $MESS["REST_OPT_MAX_IMPORT_SIZE"] = "Maximum import file size (megabytes)";
 $MESS["REST_OPT_MINUTES"] = "#HOURS#:#MINUTES#:#SECONDS# (h:m:s)";
 $MESS["REST_OPT_SET_ACTIVE"] = "Enable logging";
 $MESS["REST_OPT_SET_IN_ACTIVE"] = "Disable logging";
+$MESS["REST_OPT_TRUST_NATIONAL_CA"] = "Trust certificates from the Russian national CA (MinTsifry) when connecting to application servers. Bitrix24 will add the MinTsifry root certificate to the trusted list for these connections only; the server's system certificate store will not be changed.";
 $MESS["REST_TAB_LOG"] = "Logging";
 $MESS["REST_TAB_SET"] = "Settings";
 $MESS["REST_TAB_TITLE_LOG"] = "Logging parameters";

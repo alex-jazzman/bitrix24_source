@@ -111,7 +111,12 @@
 		var result = prepareResult(data.html);
 		this.inlineScripts = result.SCRIPT.reduce(inlineScriptsReducer, []);
 		this.externalScripts = result.SCRIPT.reduce(externalScriptsReducer, []);
-		this.externalStyles = result.STYLE;
+		// `ext: 'css'` is not decoration: the loader picks the kind of a resource from the
+		// extension in its url unless told, so a stylesheet address ending in `.js` would be
+		// injected as a `<script src>` and executed.
+		this.externalStyles = result.STYLE.map(function(url) {
+			return {url: url, ext: 'css'};
+		});
 	};
 
 	BX.LoadExt.Extension.prototype = {

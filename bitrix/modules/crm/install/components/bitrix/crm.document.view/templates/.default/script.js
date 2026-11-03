@@ -2,6 +2,11 @@
 
 	BX.namespace('BX.Crm.DocumentViewComponent');
 
+	function requisiteText(value)
+	{
+		return typeof value === 'string' ? value : '';
+	}
+
 	BX.Crm.DocumentView = function()
 	{
 		this.pdfUrl = '';
@@ -17,7 +22,7 @@
 		this.changeStampsEnabled = false;
 		this.changeStampsDisabledReason = '';
 		this.changeQrCodeEnabled = false;
-		this.changeQrCodeEnabledDisabledReason = '';
+		this.changeQrCodeDisabledReason = '';
 		this.myCompanyEditUrl = '';
 		this.isTransformationError = false;
 		this.transformationErrorMessage = '';
@@ -27,6 +32,223 @@
 		this.publicUrl = null;
 		this.sendedToSign = false;
 		this.signingInfoHelperSliderCode = null;
+	};
+
+	BX.Crm.DocumentView.creationView = null;
+
+	BX.Crm.DocumentView.createDocument = function(initialData)
+	{
+		this.destroy();
+		this.preview = null;
+		this.isSigningEnabledInCurrentTariff = Boolean(initialData.isSigningEnabledInCurrentTariff);
+		this.signingInfoHelperSliderCode = initialData.signingInfoHelperSliderCode || null;
+
+		var retryButton = document.querySelector('[data-role="document-create-retry"]');
+		var errorContainer = document.getElementById('crm-document-view-error');
+		var errorMessage = document.getElementById('crm-document-view-error-message');
+		var downloadButtonNode = document.getElementById('crm-document-download');
+		var printButtonNode = document.getElementById('crm-document-print');
+		var downloadButton = downloadButtonNode ? BX.UI.ButtonManager.createFromNode(downloadButtonNode) : null;
+		var printButton = printButtonNode ? BX.UI.ButtonManager.createFromNode(printButtonNode) : null;
+		var DocumentView = BX.Crm.Integration.DocumentGenerator.Document.View.DocumentView;
+		var errorNode = {
+			get textContent()
+			{
+				return errorMessage.textContent;
+			},
+			set textContent(message)
+			{
+				errorMessage.textContent = message;
+			},
+			get hidden()
+			{
+				return errorContainer.hidden;
+			},
+			set hidden(isHidden)
+			{
+				errorContainer.hidden = isHidden;
+			},
+		};
+
+		this.creationView = new DocumentView({
+			operation: initialData.operation,
+			signedParameters: initialData.signedParameters,
+			initialTitle: initialData.initialTitle,
+			nodes: {
+				root: document.getElementById('crm-document-view-root'),
+				sidebar: document.querySelector('.crm__document-view--sidebar-wrapper'),
+				error: errorNode,
+				retry: retryButton,
+				preview: document.getElementById('crm__document-view--node'),
+				transformError: document.getElementById('crm__document-view--transform-error'),
+				transformErrorMessage: document.getElementById('crm__document-view--transform-error-message'),
+				previewDownload: document.querySelector('[data-role="document-preview-download-docx"]'),
+				channelSelector: document.querySelector('[data-role="document-channel-selector"]'),
+				pageTitle: document.getElementById('pagetitle'),
+				stampCheckbox: document.getElementById('crm-document-stamp'),
+				status: document.getElementById('crm__document-view--node-message'),
+				loader: document.querySelector('[data-role="document-loader"]'),
+				progress: document.querySelector('[data-role="document-progress"]'),
+				speedupPlaceholder: document.getElementById('crm-document-speedup-in-placeholder'),
+				speedupSidebar: document.getElementById('crm-document-speedup-in-sidebar'),
+				download: downloadButton,
+				print: printButton,
+			},
+			processAssets: this.processCreationAssets,
+			onDocumentUpdate: BX.proxy(this.applyCreatedDocumentUpdate, this),
+			onDocumentReady: BX.proxy(this.initCreatedDocument, this),
+			onPreviewReady: BX.proxy(this.showCreatedDocumentPreview, this),
+			onPreviewChange: BX.proxy(function(preview)
+			{
+				this.preview = preview;
+			}, this),
+		});
+
+		if (retryButton)
+		{
+			retryButton.onclick = BX.proxy(function()
+			{
+				return this.creationView ? this.creationView.retry() : null;
+			}, this);
+		}
+
+		this.startProgressBar();
+
+		return this.creationView.start();
+	};
+
+	BX.Crm.DocumentView.processCreationAssets = function(assets)
+	{
+		var assetsToLoad = (assets.css || []).concat(assets.js || []);
+		var loadStrings = function()
+		{
+			return Promise.all((assets.string || []).map(function(html)
+			{
+				return BX.Runtime.html(null, html);
+			}));
+		};
+
+		if (assetsToLoad.length === 0)
+		{
+			return loadStrings();
+		}
+
+		return new Promise(function(resolve, reject)
+		{
+			BX.load(assetsToLoad, function()
+			{
+				loadStrings().then(resolve, reject);
+			}, document, reject);
+		});
+	};
+
+	BX.Crm.DocumentView.applyCreatedDocumentUpdate = function(documentData)
+	{
+		this.applyOptions(documentData);
+		this.updateCreationRequisites(documentData);
+		this.updateCreationControls(documentData);
+	};
+
+	BX.Crm.DocumentView.initCreatedDocument = function(documentData)
+	{
+		this.previewNode = document.getElementById('crm__document-view--node');
+		this.transformationErrorNode = document.getElementById('crm__document-view--transform-error');
+		this.documentId = documentData.id;
+		this.publicUrl = documentData.publicUrl;
+		this.initButtons();
+		this.initEvents();
+	};
+
+	BX.Crm.DocumentView.showCreatedDocumentPreview = function(documentData)
+	{
+		this.showError(false);
+		this.showPdf();
+	};
+
+	BX.Crm.DocumentView.updateCreationRequisites = function(documentData)
+	{
+		this.updateCreationRequisite('document-my-company-requisite', documentData.myCompanyRequisites || {});
+		this.updateCreationRequisite('document-client-requisite', documentData.clientRequisites || {});
+	};
+
+	BX.Crm.DocumentView.updateCreationRequisite = function(rolePrefix, requisite)
+	{
+		var title = document.querySelector('[data-role="' + rolePrefix + '-title"]');
+		var link = document.querySelector('[data-role="' + rolePrefix + '-link"]');
+		var subtitle = document.querySelector('[data-role="' + rolePrefix + '-subtitle"]');
+
+		var titleText = requisiteText(requisite.title);
+		var linkText = requisiteText(requisite.link);
+		var subtitleText = requisiteText(requisite.subTitle);
+
+		if (title)
+		{
+			title.textContent = titleText;
+		}
+		if (link)
+		{
+			if (linkText)
+			{
+				link.href = linkText;
+			}
+			else
+			{
+				link.removeAttribute('href');
+			}
+		}
+		if (subtitle)
+		{
+			subtitle.textContent = subtitleText;
+			subtitle.hidden = subtitleText === '';
+		}
+	};
+
+	BX.Crm.DocumentView.updateCreationControls = function(documentData)
+	{
+		var stampInput = document.getElementById('crm-document-stamp');
+		var qrCodeInput = document.getElementById('crm-document-qr');
+		var editDocument = document.getElementById('crm-document-edit-document');
+		var editTemplate = document.getElementById('crm-document-edit-template');
+		var signSection = document.querySelector('[data-role="document-sign-section"]');
+		var speedupButton = document.getElementById('crm-document-speedup-in-sidebar');
+
+		if (stampInput)
+		{
+			stampInput.checked = Boolean(documentData.stampsEnabled && this.changeStampsEnabled);
+			stampInput.disabled = !this.editTemplateUrl || !this.changeStampsEnabled;
+			BX[stampInput.disabled ? 'addClass' : 'removeClass'](stampInput.parentNode, '--disabled');
+		}
+		if (qrCodeInput)
+		{
+			qrCodeInput.checked = Boolean(documentData.qrCodeEnabled);
+			qrCodeInput.disabled = !this.editTemplateUrl || !this.changeQrCodeEnabled;
+			BX[qrCodeInput.disabled ? 'addClass' : 'removeClass'](qrCodeInput.parentNode, '--disabled');
+		}
+		if (editDocument)
+		{
+			BX[this.editDocumentUrl ? 'removeClass' : 'addClass'](editDocument, '--disabled');
+		}
+		if (editTemplate)
+		{
+			BX[this.editTemplateUrl ? 'removeClass' : 'addClass'](editTemplate, '--disabled');
+		}
+		if (signSection)
+		{
+			signSection.hidden = !documentData.isSigningEnabled;
+		}
+		if (speedupButton)
+		{
+			speedupButton.hidden = !this.editDocumentUrl;
+		}
+	};
+
+	BX.Crm.DocumentView.destroy = function()
+	{
+		if (this.creationView)
+		{
+			this.creationView.destroy();
+			this.creationView = null;
+		}
 	};
 
 	BX.Crm.DocumentView.init = function(options)
@@ -79,6 +301,10 @@
 
 	BX.Crm.DocumentView.applyOptions = function(options)
 	{
+		if (options.id)
+		{
+			this.documentId = options.id;
+		}
 		if(options.pdfUrl)
 		{
 			this.pdfUrl = options.pdfUrl;
@@ -169,7 +395,10 @@
 			;
 		}
 
-		this.preview.applyOptions(options);
+		if (this.preview)
+		{
+			this.preview.applyOptions(options);
+		}
 	};
 	BX.Crm.DocumentView.closeSlider = function()
 	{
@@ -187,13 +416,14 @@
 	BX.Crm.DocumentView.saveDocumentToSliderData = function()
 	{
 		var slider = BX.SidePanel.Instance.getTopSlider();
+		var stampInput = document.getElementById('crm-document-stamp');
 		if(slider)
 		{
 			slider.getData().set('document', {
 				id: Number(this.documentId),
 				title: document.getElementById('pagetitle') ? document.getElementById('pagetitle').innerText : '',
 				detailUrl: BX.Uri.removeParam(this.editDocumentUrl || '', ['mode']),
-				isWithStamps: document.getElementById('crm-document-stamp').checked,
+				isWithStamps: Boolean(stampInput && stampInput.checked),
 			})
 		}
 	}
@@ -234,19 +464,24 @@
 			}
 			event.preventDefault();
 		}, this));
-		BX.bind(document.getElementById('crm-document-print'), 'click', BX.proxy(function()
+		var printButtonNode = document.getElementById('crm-document-print');
+		if (printButtonNode)
 		{
-			if(this.printUrl)
+			BX.bind(printButtonNode, 'click', BX.proxy(function()
 			{
-				window.open(this.printUrl, '_blank');
-			}
-			else
-			{
-				this.showError(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS_MSGVER_1'));
-			}
-		}, this));
+				if(this.printUrl)
+				{
+					window.open(this.printUrl, '_blank');
+				}
+				else
+				{
+					this.showError(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS_MSGVER_1'));
+				}
+			}, this));
+		}
 
-		var downloadButton = BX.UI.ButtonManager.createFromNode(document.getElementById('crm-document-download'));
+		var downloadButtonNode = document.getElementById('crm-document-download');
+		var downloadButton = downloadButtonNode ? BX.UI.ButtonManager.createFromNode(downloadButtonNode) : null;
 		if (downloadButton)
 		{
 			// fix popup menu position
@@ -266,6 +501,7 @@
 				autoHide: true,
 				minWidth: 150,
 				items: [{
+					attrs: { 'data-testid': 'crm-document-view-download-pdf' },
 					text: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'PDF' }),
 					title: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'PDF' }),
 					onclick: function() {
@@ -273,6 +509,7 @@
 						BX.userOptions.save('crm.document.view', 'download_button', 'format', 'pdf', false);
 					}
 				}, {
+					attrs: { 'data-testid': 'crm-document-view-download-docx' },
 					text: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'DOCX' }),
 					title: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'DOCX' }),
 					onclick: function() {
@@ -378,6 +615,7 @@
 							})
 							, [
 								new BX.PopupWindowButton({
+									id: 'crm-document-view-sign-previous',
 									text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_2'),
 									className: "ui-btn ui-btn-md ui-btn-primary",
 									events: {
@@ -389,6 +627,7 @@
 									}
 								}),
 								new BX.PopupWindowButton({
+									id: 'crm-document-view-sign-new',
 									text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_3'),
 									className: "ui-btn ui-btn-md ui-btn-info",
 									events: {
@@ -463,9 +702,17 @@
 
 		const speedupButtonInSidebar = document.getElementById('crm-document-speedup-in-sidebar');
 		const speedupButtonInPlaceholder = document.getElementById('crm-document-speedup-in-placeholder');
+		if (!speedupButtonInPlaceholder && !speedupButtonInSidebar)
+		{
+			return;
+		}
 
 		for (const button of [speedupButtonInPlaceholder, speedupButtonInSidebar])
 		{
+			if (!button)
+			{
+				continue;
+			}
 			BX.Event.bind(button, 'click', () => {
 				BX.Runtime.loadExtension('baas.store').then(() => {
 					BX.Baas.Store.ServiceWidget.getInstanceByCode(featureCode)
@@ -489,12 +736,18 @@
 			if (params.service.isActive)
 			{
 				BX.Dom.hide(speedupButtonInPlaceholder);
-				captionContainer.textContent = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_FAST');
+				if (captionContainer)
+				{
+					captionContainer.textContent = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_FAST');
+				}
 			}
 			else
 			{
 				BX.Dom.show(speedupButtonInPlaceholder);
-				captionContainer.textContent = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_REGULAR');
+				if (captionContainer)
+				{
+					captionContainer.textContent = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_REGULAR');
+				}
 			}
 		});
 	};
@@ -505,6 +758,7 @@
 		if (typeof(buttons) === "undefined" || typeof(buttons) === "object" && buttons.length <= 0)
 		{
 			buttons = [new BX.PopupWindowButton({
+				id: 'crm-document-view-message-close',
 				text : BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE'),
 				className : "ui-btn ui-btn-md ui-btn-default",
 				events : { click : function(e) { this.popupWindow.close(); BX.PreventDefault(e) } }
@@ -566,7 +820,7 @@
 		var errorNode = document.getElementById('crm-document-view-error');
 		if(text === false && errorNode)
 		{
-			BX.hide(errorNode);
+			errorNode.hidden = true;
 		}
 		if(!text)
 		{
@@ -584,7 +838,7 @@
 		if (errorNode)
 		{
 			document.getElementById('crm-document-view-error-message').innerText = message;
-			BX.show(errorNode);
+			errorNode.hidden = false;
 		}
 	};
 
@@ -651,14 +905,24 @@
 		{
 			this.values['PaymentQrCode'] = 'this.SOURCE.PAYMENT_QR_CODE';
 		}
-		if(BX.type.isDomNode(this.preview.imageNode))
+		if (this.creationView)
 		{
-			BX.hide(this.preview.imageNode);
+			this.creationView.prepareDocumentUpdate();
+		}
+		else
+		{
+			if(this.preview && BX.type.isDomNode(this.preview.imageNode))
+			{
+				BX.hide(this.preview.imageNode);
+			}
+			if (this.preview)
+			{
+				this.preview.imageUrl = null;
+			}
 		}
 		BX.hide(document.getElementById('crm-document-pdf'));
 		BX.hide(this.transformationErrorNode);
 		this.initPreviewMessage(1);
-		this.preview.imageUrl = null;
 		BX.ajax.runAction('crm.documentgenerator.document.update', {
 			data: {
 				stampsEnabled: stampsEnabled,
@@ -670,7 +934,14 @@
 			this.initPreviewMessage(2);
 			this.progress = false;
 			document.getElementById('crm-document-stamp').disabled = false;
-			this.applyOptions(response.data.document);
+			if (this.creationView)
+			{
+				this.creationView.applyDocumentUpdate(response.data.document);
+			}
+			else
+			{
+				this.applyOptions(response.data.document);
+			}
 			var title = document.getElementById('pagetitle');
 			if(title && response.data.document && response.data.document.title)
 			{
@@ -681,7 +952,14 @@
 		{
 			if(response.data && response.data.document)
 			{
-				this.applyOptions(response.data.document);
+				if (this.creationView)
+				{
+					this.creationView.applyDocumentUpdate(response.data.document);
+				}
+				else
+				{
+					this.applyOptions(response.data.document);
+				}
 			}
 			this.progress = false;
 			document.getElementById('crm-document-stamp').disabled = false;
@@ -993,7 +1271,7 @@
 											}),
 											BX.create('select', {
 												props: {className: 'crm-document-edit-select'},
-												attrs: {name: 'values[' + name + ']', id: 'field-' + name}
+												attrs: {name: 'values[' + name + ']', id: 'field-' + name, 'data-testid': 'crm-document-view-field-' + name}
 											})
 										]
 									}), BX.nextSibling(header));
@@ -1078,7 +1356,7 @@
 			downloadButton.setText(BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'PDF' }));
 			BX.Crm.DocumentView.rebindDownloadButtonClick(downloadButton);
 		}
-		else if (this.preview.imageUrl)
+		else if (this.preview && this.preview.imageUrl)
 		{
 			this.showError(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
 		}

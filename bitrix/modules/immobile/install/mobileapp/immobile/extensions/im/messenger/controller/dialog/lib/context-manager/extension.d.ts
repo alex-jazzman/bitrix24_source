@@ -28,3 +28,11 @@ declare type GoToMessageContextByCommentsChatIdEvent = {
 	commentChatId: number,
 	withMessageHighlight?: boolean,
 }
+
+/** What one replacement of the whole message collection of the feed is made of. */
+declare type FeedContextReplacement = {
+	messageId: string | number,
+	withMessageHighlight?: boolean,
+	position?: string,
+	updateModel: () => Promise<void>,
+}

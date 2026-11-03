@@ -165,9 +165,16 @@ class CAdminTabControl
 		foreach($this->tabs as $key => $tab)
 		{
 			$bSelected = ($tab["DIV"] == $this->selectedTab);
+			//the tab is a span: it needs its own place in the tab order, a role to be announced by and
+			//the very same activation on Enter and Space as a click
+			//the active class is a visual difference only, so the selected tab is marked for the
+			//accessibility tree as well; ShowTab() moves the mark on switching
 			$tabs_html .= '<span title="'.($tab["TITLE"] ?? '').$hkInst->GetTitle("tab-container").'" '.
 				'id="tab_cont_'.$tab["DIV"].'" '.
 				'class="adm-detail-tab'.($bSelected ? ' adm-detail-tab-active':'').($key==$len-1? ' adm-detail-tab-last':'').'" '.
+				'role="button" tabindex="0" '.($bSelected ? 'aria-current="true" ' : '').
+				'onkeydown="if (event.key === \'Enter\' || event.key === \' \') '.
+				'{ event.preventDefault(); this.click(); }" '.
 				'onclick="'.$this->name.'.SelectTab(\''.$tab["DIV"].'\');">'.htmlspecialcharsex($tab["TAB"]).'</span>';
 		}
 
@@ -211,7 +218,13 @@ class CAdminTabControl
 		{
 			if(count($this->tabs) > 1 && $this->bCanExpand/* || $this->AUTOSAVE*/)
 			{
-				$s .= '<div class="adm-detail-title-setting" onclick="'.$this->name.'.ToggleTabs();" title="'.GetMessage("admin_lib_expand_tabs").'" id="'.$this->name.'_expand_link"><span class="adm-detail-title-setting-btn adm-detail-title-expand"></span></div>';
+				//the toggle stands in the very same strip as the tabs and switches the mode they are shown
+				//in, so it is given what they were given: a role, a place in the tab order and the same
+				//activation on Enter and Space as a click
+				$s .= '<div class="adm-detail-title-setting" role="button" tabindex="0" '.
+					'onkeydown="if (event.key === \'Enter\' || event.key === \' \') '.
+					'{ event.preventDefault(); this.click(); }" '.
+					'onclick="'.$this->name.'.ToggleTabs();" title="'.GetMessage("admin_lib_expand_tabs").'" id="'.$this->name.'_expand_link"><span class="adm-detail-title-setting-btn adm-detail-title-expand"></span></div>';
 			}
 		}
 		return $s;

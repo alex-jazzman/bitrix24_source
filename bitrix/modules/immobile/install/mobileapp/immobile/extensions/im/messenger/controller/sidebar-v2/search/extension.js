@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { Type } = require('type');
+	const { Icon } = require('assets/icons');
 	const { uniqBy } = require('utils/array');
 	const { debounce } = require('utils/function');
 
@@ -16,6 +17,7 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 	const { SidebarSearchAnalytics } = require('im/messenger/controller/sidebar-v2/search/src/analytics');
 	const { SidebarSearchMemoryStorage } = require('im/messenger/controller/sidebar-v2/search/src/memory-storage');
 	const { RestMethod } = require('im/messenger/const/rest');
+	const { Analytics } = require('im/messenger/const');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog/dialog');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const {
@@ -25,10 +27,17 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 		withColor,
 	} = require('im/messenger/controller/sidebar-v2/search/src/utils');
 	const { Feature } = require('im/messenger/lib/feature');
+	const {
+		DateCalendarWidget,
+		DateCalendarSearchEntry,
+		DateCalendarSearchShow,
+		DateCalendarJump,
+	} = require('im/messenger/controller/dialog/lib/date-calendar');
 
 	const MINIMAL_SERVER_SEARCH_LENGTH = 3;
 	const SEARCH_RESULT_SUBTITLE_MAX_LENGTH = Application.getPlatform() === 'android' ? 50 : 60;
 	const GENERAL_SECTION_CODE = 'general';
+	const DATE_NAVIGATION_PHRASE = 'IMMOBILE_SIDEBAR_V2_DATE_NAVIGATION_TEXT';
 	const LOGGER_KEY = 'sidebarV2–search';
 	const ServiceItemsId = {
 		LOADING: 'loading',
@@ -42,6 +51,15 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 	 */
 	class SidebarSearch
 	{
+		/**
+		 * The showing of the panel going on right now. The calendar is opened from inside a showing
+		 * and must not outlive it: the overlay the user closed leaves the dialog alive, so the
+		 * dialog alone would let a sheet rise over the uncovered feed.
+		 *
+		 * @type {DateCalendarSearchShow}
+		 */
+		#searchShow = new DateCalendarSearchShow();
+
 		/**
 		 * @param {Object} options
 		 * @param {string} options.dialogId
@@ -69,10 +87,15 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 
 			this.dialogLocator = options.dialogLocator;
 			this.contextManager = this.dialogLocator.get('context-manager');
-
 			this.debounceServerSearch = debounce(() => this.#onServerSearch(), 500, this);
 
 			this.analytics = new SidebarSearchAnalytics(this.dialogHelper);
+			// the jump belongs to the dialog and not to this panel: the entry from the date separator
+			// moves the same feed, and a jump of its own would let an abandoned pick land last
+			this.dateJump = DateCalendarJump.forDialog({
+				dialogId: this.dialogId,
+				dialogLocator: this.dialogLocator,
+			});
 			this.logger = getLogger(LOGGER_KEY);
 		}
 
@@ -89,6 +112,8 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 			this.search.on('show', this.#onShow);
 
 			this.search.on('clickEnter', this.#onClickEnter);
+
+			this.search.on('rightButtonClick', this.#onRightButtonClick);
 		}
 
 		#unsubscribeSearchEvents()
@@ -104,6 +129,8 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 			this.search.off('show', this.#onShow);
 
 			this.search.off('clickEnter', this.#onClickEnter);
+
+			this.search.off('rightButtonClick', this.#onRightButtonClick);
 		}
 
 		#setLoading(isLoading)
@@ -118,6 +145,65 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 			this.items = this.items.filter((item) => item.type !== 'loading');
 			this.search.setItems(this.items);
 		}
+
+		/**
+		 * The button is set once the overlay is shown, and not earlier: iOS drops a button given to
+		 * a search that is still hidden (measured on the device - the search bar comes up without
+		 * it), while Android keeps one either way.
+		 *
+		 * The early return asks the BUILD and not the feature, and the difference is a real state:
+		 * the server flag is re-read within a session, so a calendar taken away after the button was
+		 * drawn has to be able to take the button away too - and the removal is `null` through this
+		 * very method. Asking the feature here would return early and leave a button that opens
+		 * nothing, the only entry point there is.
+		 */
+		#setDateNavigationButton()
+		{
+			// a build without the button in the search bar knows no such method at all
+			if (!Feature.isSearchBarRightButtonSupported)
+			{
+				return;
+			}
+
+			this.search.setRightButton(DateCalendarSearchEntry.createButton({
+				isEnabled: Feature.isMessageDateNavigationEnabled,
+				isButtonSupported: Feature.isMessageDateNavigationSearchButtonEnabled,
+				iconName: Icon.CALENDAR.getIconName(),
+				accessibilityText: Loc.getMessage(DATE_NAVIGATION_PHRASE),
+			}));
+		}
+
+		#openDateCalendar()
+		{
+			const isSameShow = this.#searchShow.watch();
+
+			DateCalendarWidget.open({
+				dialogId: this.dialogId,
+				dialogLocator: this.dialogLocator,
+				parentWidget: this.widget,
+				// two ways to leave the sheet nowhere to go, and the opening waits long enough for
+				// both: the jump is torn down together with the dialog, and the showing of the panel
+				// ends with the overlay - closed, the overlay uncovers the very feed a sheet would
+				// then cover again
+				isOpeningRelevant: () => !this.dateJump.isDestroyed && isSameShow(),
+				onDaySelected: this.#onDaySelected,
+			}).catch((error) => this.logger.error(error));
+		}
+
+		/**
+		 * The overlay of the search is closed before the jump, exactly as a jump by a search result
+		 * closes it: the overlay covers the feed, and the highlighted separator would stay unseen.
+		 *
+		 * @param {DateNavigationDay} day
+		 */
+		#onDaySelected = (day) => {
+			this.search.close();
+
+			void this.dateJump.goToDate(day, {
+				entryPoint: Analytics.DateNavigationEntryPoint.search,
+				analytics: this.analytics,
+			});
+		};
 
 		/**
 		 * @public
@@ -163,11 +249,18 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 			this.analytics.sendCancelSearchEvent();
 		};
 
+		/**
+		 * The one event every way out of the overlay comes through - the cancel button, the back
+		 * gesture, the panel closing itself for a picked day - and so the only place an opening of
+		 * the calendar still waiting can be told that the showing it belongs to is over.
+		 */
 		#onHide = () => {
+			this.#searchShow.end();
 			this.#unsubscribeSearchEvents();
 		};
 
 		#onShow = () => {
+			this.#setDateNavigationButton();
 			this.search.setItems([this.#getStartTypingItem()]);
 			this.analytics.sendOpenSearchEvent();
 
@@ -180,6 +273,15 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 
 		#onClickEnter = () => {
 			Keyboard.dismiss();
+		};
+
+		#onRightButtonClick = (payload) => {
+			if (!DateCalendarSearchEntry.isButtonClick(payload))
+			{
+				return;
+			}
+
+			this.#openDateCalendar();
 		};
 
 		#searchLocal = async () => {
@@ -427,6 +529,7 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 
 	module.exports = {
 		SidebarSearch,
+		SidebarSearchAnalytics,
 		SidebarSearchMemoryStorage,
 		// for tests
 		cropTextByCenterWord,

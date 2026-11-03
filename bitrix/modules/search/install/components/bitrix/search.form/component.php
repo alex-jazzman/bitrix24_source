@@ -3,9 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -30,4 +30,4 @@ if (!isset($arParams['PAGE']) || $arParams['PAGE'] == '')
 
 $arResult['FORM_ACTION'] = htmlspecialcharsbx(str_replace('#SITE_DIR#', SITE_DIR, $arParams['PAGE']));
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

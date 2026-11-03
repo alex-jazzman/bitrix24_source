@@ -2,6 +2,7 @@ import { Logger } from 'im.v2.lib.logger';
 import { RestMethod } from 'im.v2.const';
 import { runAction } from 'im.v2.lib.rest';
 import { Notifier } from 'im.v2.lib.notifier';
+import { PlaybackService } from 'im.v2.lib.playback';
 import { Core } from 'im.v2.application.core';
 
 import type { Store } from 'ui.vue3.vuex';
@@ -69,5 +70,7 @@ export class DeleteService
 
 		const chat = this.#store.getters['chats/get'](dialogId, true);
 		void this.#store.dispatch('messages/clearChatCollection', { chatId: chat.chatId });
+
+		PlaybackService.getInstanceIfCreated()?.handleChatAccessLost(dialogId);
 	}
 }

@@ -13,6 +13,7 @@ return [
 		'im.v2.const',
 		'im.v2.lib.analytics',
 		'im.v2.lib.feature',
+		'im.v2.lib.folder',
 		'im.v2.lib.layout',
 		'im.v2.lib.market',
 		'im.v2.lib.phone',

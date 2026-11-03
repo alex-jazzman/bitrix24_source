@@ -37,37 +37,35 @@ if($arResult['userField']['SETTINGS']['DISPLAY'] === SectionType::DISPLAY_UI)
 			{
 				var currentValue = JSON.parse(controlObject.node.getAttribute('data-value'));
 
-				if(BX.type.isPlainObject(currentValue))
+				var list;
+				if(currentValue === null)
 				{
-					BX('{$arResult['valueContainerIdJs']}').firstChild.value = currentValue['VALUE'];
-				} else {				
-					var s = '';
-					if(!BX.type.isArray(currentValue))
-					{
-						if(currentValue === null)
-						{
-							currentValue = [{VALUE:''}];
-						}
-						else
-						{
-							currentValue = [currentValue];
-						}
-					}
-
-					if(currentValue.length > 0)
-					{
-						for(var i = 0; i < currentValue.length; i++)
-						{
-							s += '<input type="hidden" name="{$arResult['htmlFieldNameJs']}" value="'+BX.util.htmlspecialchars(currentValue[i].VALUE)+'" />';
-						}
-					}
-					else
-					{
-						s += '<input type="hidden" name="{$arResult['htmlFieldNameJs']}" value="" />';
-					}
-
-					BX('{$arResult['valueContainerIdJs']}').innerHTML = s;					
+					list = [];
 				}
+				else if(BX.type.isPlainObject(currentValue))
+				{
+					list = [currentValue];
+				}
+				else if(BX.type.isArray(currentValue))
+				{
+					list = currentValue;
+				}
+				else
+				{
+					list = [];
+				}
+
+				var s = '';
+				for(var i = 0; i < list.length; i++)
+				{
+					s += '<input type="hidden" name="{$arResult['htmlFieldNameJs']}" value="'+BX.util.htmlspecialchars(list[i].VALUE)+'" />';
+				}
+				if(list.length === 0)
+				{
+					s = '<input type="hidden" name="{$arResult['htmlFieldNameJs']}" value="" />';
+				}
+
+				BX('{$arResult['valueContainerIdJs']}').innerHTML = s;
 				BX.fireEvent(BX('{$arResult['fieldNameJs']}_default'), 'change');
 			}
 		}

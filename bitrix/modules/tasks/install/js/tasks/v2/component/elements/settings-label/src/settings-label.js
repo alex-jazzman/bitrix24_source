@@ -9,15 +9,27 @@ export const SettingsLabel = {
 	components: {
 		BIcon,
 	},
+	props: {
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+	},
 	setup(): Object
 	{
 		return {
 			Outline,
 		};
 	},
+	computed: {
+		label(): string
+		{
+			return this.ariaLabel || this.loc('TASKS_V2_SETTINGS_ARIA_LABEL');
+		},
+	},
 	template: `
-		<div class="b24-settings-label">
-			<BIcon :name="Outline.FILTER_2_LINES" hoverable/>
-		</div>
+		<button type="button" class="b24-settings-label" :aria-label="label">
+			<BIcon :name="Outline.FILTER_2_LINES" hoverable aria-hidden="true"/>
+		</button>
 	`,
 };

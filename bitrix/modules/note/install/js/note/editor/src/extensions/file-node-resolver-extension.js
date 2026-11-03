@@ -1,12 +1,25 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { resolveFileNodes } from '../utils/resolve-file-nodes';
+import { resolveDiskAttachmentNodes } from '../utils/resolve-disk-attachment-nodes';
+import { DiskAttachmentStore } from '../services/disk-attachment-store';
 import { showErrorToast } from '../utils/show-error-toast';
 
 export const FILE_NODE_RESOLVER_KEY = new PluginKey('noteFileNodeResolver');
 
 const FILE_NODE_TYPES = new Set(['imageAttachment', 'fileAttachment', 'video']);
 const RESOLVE_DEBOUNCE_MS = 200;
+// What the server says about a Disk file can change while the document stays open: access is granted,
+// or the file is taken out of Disk's trash can — by this very reader, from the link the block offers.
+// So neither an unavailable nor a deleted verdict is sealed for the session the way a physically
+// deleted own file is; each is only held long enough to stop a pass from asking about the same object
+// again and again.
+//
+// Held, not scheduled: the retry rides the next resolve pass, and passes come from editor updates
+// (see the plugin view below), not from a timer of their own. A reader who touches nothing sees the
+// block recover on their next edit or reload — the alternative is a request every half minute, for
+// as long as a tab stays open on a file that will most likely never change its answer.
+const DISK_RETRY_HOLD_MS = 30000;
 
 // Signal from the paste path: these fileIds were just inserted by the user, so if the backend
 // can't resolve them they should be removed + toasted (rather than left as a placeholder, which
@@ -103,6 +116,28 @@ export const FileNodeResolverExtension = Extension.create({
 					let timer = null;
 					let running = false;
 					let dirty = false;
+					let diskHeld = new Set();
+					let diskHeldAt = 0;
+
+					const resolveDiskNodes = async (documentId) => {
+						if (diskHeld.size > 0 && Date.now() - diskHeldAt > DISK_RETRY_HOLD_MS)
+						{
+							diskHeld = new Set();
+						}
+
+						const result = await resolveDiskAttachmentNodes(editor, documentId, {
+							skip: diskHeld,
+						});
+
+						// Both verdicts are answers that can change on their own, so both are asked about again
+						// — after the hold, and not before it.
+						const held = [...result.unavailableIds, ...result.deletedIds];
+						if (held.length > 0)
+						{
+							held.forEach((id) => diskHeld.add(id));
+							diskHeldAt = Date.now();
+						}
+					};
 
 					const run = async () => {
 						if (running)
@@ -118,7 +153,15 @@ export const FileNodeResolverExtension = Extension.create({
 						{
 							const documentId = getDocumentId();
 							const { failed, deleteOnFail } = FILE_NODE_RESOLVER_KEY.getState(view.state);
-							const result = await resolveFileNodes(editor, documentId, { skip: failed });
+
+							// Own files and Disk attachments live in different id spaces and answer to
+							// different endpoints, so each is one request — and the two go together: they
+							// depend on nothing of each other's, and a document holding both would
+							// otherwise wait out one round trip before starting the next.
+							const [result] = await Promise.all([
+								resolveFileNodes(editor, documentId, { skip: failed }),
+								resolveDiskNodes(documentId),
+							]);
 
 							if (result.failedIds.length > 0)
 							{
@@ -182,6 +225,12 @@ export const FileNodeResolverExtension = Extension.create({
 							{
 								clearTimeout(timer);
 							}
+
+							// The store is a per-reader cache of what the server said, not document data:
+							// once this editor is gone nobody reads its entries, and the app switches
+							// documents without a page load, so without this they would pile up for the
+							// whole session. A document opened again simply resolves again.
+							DiskAttachmentStore.forgetDocument(getDocumentId());
 						},
 					};
 				},

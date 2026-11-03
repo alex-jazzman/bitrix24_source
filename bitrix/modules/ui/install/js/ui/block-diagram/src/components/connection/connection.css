@@ -16,6 +16,19 @@
 	z-index: 2;
 }
 
+/* The connection is led by a raised gesture, so it goes up by the same addition every raised
+   participant gets - on top of the two steps above. The canvas publishes that addition from
+   BLOCK_INDEXES, so the scale is stated in one place; mounted outside the canvas the connection
+   has no raise to add. */
+.ui-block-diagram-connection.--elevated {
+	z-index: var(--ui-block-diagram-elevation-offset, 0);
+}
+
+.ui-block-diagram-connection.--elevated.--active,
+.ui-block-diagram-connection.--elevated:hover {
+	z-index: calc(2 + var(--ui-block-diagram-elevation-offset, 0));
+}
+
 .ui-block-diagram-connection:hover .ui-block-diagram-connection__target {
 	stroke: var(--pallete-blue-blue-57, #4A9DFF);
 }

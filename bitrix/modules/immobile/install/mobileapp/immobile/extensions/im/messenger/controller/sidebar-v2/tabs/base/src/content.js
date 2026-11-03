@@ -202,6 +202,21 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/content', (require, 
 		{
 			return !this.hasItems();
 		}
+
+		/**
+		 * @param {SidebarTabSelectedParams} params
+		 */
+		onSelectedTab({ tab })
+		{}
+
+		/**
+		 * Called on the tab that has just left the screen. Tab contents are all mounted
+		 * at once inside the slider, so this is the only signal a tab gets about it.
+		 *
+		 * @param {SidebarTabDeselectedParams} params
+		 */
+		onDeselectedTab({ tabId })
+		{}
 	}
 
 	module.exports = { SidebarBaseTabContent };

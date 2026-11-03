@@ -2,6 +2,7 @@
  * @module crm/receive-payment/steps/send-message/instruction
  */
 jn.define('crm/receive-payment/steps/send-message/instruction', (require, exports, module) => {
+	const { Text4 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
@@ -21,12 +22,11 @@ jn.define('crm/receive-payment/steps/send-message/instruction', (require, export
 
 		render()
 		{
-			return Text({
+			return Text4({
 				text: Loc.getMessage(this.state.isEditing ? 'M_RP_SM_INSTRUCTION_EDITING' : 'M_RP_SM_INSTRUCTION_READ_ONLY'),
 				style: {
 					marginTop: 12,
 					color: AppTheme.colors.base2,
-					fontSize: 14,
 					marginLeft: 16,
 					marginRight: 16,
 					opacity: 0.55,

@@ -294,6 +294,45 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		}
 
 		/**
+		 * @desc Send button v2 (native feature 'chat_send_button_v2'): full (re)configuration
+		 * of the state models. No-op on builds without the native contract.
+		 * @param {SendButtonModel} model
+		 */
+		setSendButton(model)
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.setSendButton?.(model);
+			}
+		}
+
+		/**
+		 * @desc Send button v2: switch the button to one of the configured states
+		 * ('disabled' | 'filled' | 'edit' | 'stop').
+		 * @param {SendButtonStateId} stateId
+		 */
+		setSendButtonState(stateId)
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.setSendButtonState?.(stateId);
+			}
+		}
+
+		/**
+		 * @desc Send button v2: when forced, the button ignores native state changes
+		 * and obeys only JS commands.
+		 * @param {boolean} flag
+		 */
+		setSendButtonToForcedState(flag)
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.setSendButtonToForcedState?.(flag);
+			}
+		}
+
+		/**
 		 * @param {AssistantButton[]} buttons
 		 * @param {boolean} animated
 		 * @return {Promise<any>}
@@ -336,6 +375,18 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			}
 
 			return Promise.resolve();
+		}
+
+		/**
+		 * @desc Fully replaces the rendered set of input buttons (native updateButtons)
+		 * @param {{ left: object[], right: object[] }} model
+		 */
+		updateButtons(model)
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.updateButtons(model);
+			}
 		}
 
 		/**

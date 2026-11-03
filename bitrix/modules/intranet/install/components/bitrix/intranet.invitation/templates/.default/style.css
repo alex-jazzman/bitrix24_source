@@ -98,6 +98,17 @@
 	margin-bottom: 15px;
 }
 
+.invite-body .ui-sidepanel-menu-link:focus-visible,
+.invite-body .ui-sidepanel-submenu-link:focus-visible,
+.intranet-invitation-actions .ui-link:focus-visible,
+.intranet-invitation-link__footer-link:focus-visible,
+.invite-invitation-helper:focus-visible,
+.invite-body [data-role="page-title"]:focus-visible {
+	border-radius: var(--ui-border-radius-2xs);
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-accent-main-link);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
 .invite-body .ui-side-panel-wrap-title {
 	display: none;
 }
@@ -346,8 +357,13 @@
 	display: flex;
 	align-items: center;
 	gap: 2px;
+	padding: 0;
+	border: none;
 	cursor: pointer;
 	margin-left: 0;
+	background: transparent;
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 .intranet-invitation-link__footer-link .ui-icon-set {
@@ -460,8 +476,8 @@
 .intranet-invitation-status.--invite-link-disabled:before {
 	content: '';
 	background-image: image-set(
-			url(./images/invitation-link.png) 1x,
-			url(./images/invitation-link@2x.png) 2x
+			url(./images/invitation-link.webp) 1x,
+			url(./images/invitation-link@2x.webp) 2x
 	);
 	background-position: center;
 	background-repeat: no-repeat;
@@ -482,12 +498,20 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--ui-space-inline-xs2);
-	padding-bottom: var(--ui-space-stack-xs);
+	min-inline-size: 0;
+	margin: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-sm);
+	padding: 0 0 var(--ui-space-stack-xs);
 }
 
 .intranet-invite-form-row .ui-system-input {
 	flex: 1 1 0;
 	min-width: 0;
+}
+
+.intranet-invite-form-row .ui-system-input-action-btn:focus-visible {
+	outline-offset: -2px;
 }
 
 @media (max-width: 560px) {
@@ -547,6 +571,15 @@
 	margin-top: var(--ui-space-stack-md);
 }
 
+.intranet-invitation-actions .ui-link {
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
 .intranet-invitation-actions .ui-text {
 	color: var(--ui-color-base-3);
 }
@@ -568,7 +601,11 @@
 	width: 100%;
 	max-width: 640px;
 	gap: var(--ui-space-stack-xs);
-	margin-top: var(--ui-space-stack-lg2);
+	min-inline-size: 0;
+	margin: var(--ui-space-stack-lg2) 0 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-sm);
+	padding: 0;
 }
 
 .intranet-invitation-block__body .ui-system-input {
@@ -605,6 +642,8 @@
 }
 
 .invite-invitation-helper {
+	padding: 0;
+	border: none;
 	background-image: url(images/question-mark.svg);
 	background-repeat: no-repeat;
 	background-position: center;
@@ -612,6 +651,8 @@
 	width: 16px;
 	height: 16px;
 	background-color: var(--ui-color-background-primary);
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 .intranet-invitation-alert {

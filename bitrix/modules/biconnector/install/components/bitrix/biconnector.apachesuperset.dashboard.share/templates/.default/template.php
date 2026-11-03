@@ -60,13 +60,19 @@ $APPLICATION->SetTitle($pageTitle);
 
 <style>
 	.biconnector-share__popup-character {
-		background-image: url('<?= $templateFolder ?>/images/password-popup-character.png');
+		background-image: url('<?= $templateFolder ?>/images/password-popup-character.webp');
+		background-image: -webkit-image-set(url('<?= $templateFolder ?>/images/password-popup-character.webp') 1x, url('<?= $templateFolder ?>/images/password-popup-character@2x.webp') 2x);
+		background-image: image-set(url('<?= $templateFolder ?>/images/password-popup-character.webp') 1x, url('<?= $templateFolder ?>/images/password-popup-character@2x.webp') 2x);
 	}
 	.biconnector-share__not-found-icon {
-		background-image: url('<?= $templateFolder ?>/images/icon_not_found.png');
+		background-image: url('<?= $templateFolder ?>/images/icon_not_found.webp');
+		background-image: -webkit-image-set(url('<?= $templateFolder ?>/images/icon_not_found.webp') 1x, url('<?= $templateFolder ?>/images/icon_not_found@2x.webp') 2x);
+		background-image: image-set(url('<?= $templateFolder ?>/images/icon_not_found.webp') 1x, url('<?= $templateFolder ?>/images/icon_not_found@2x.webp') 2x);
 	}
 	.biconnector-share__error-icon {
-		background-image: url('<?= $templateFolder ?>/images/icon_lock.png');
+		background-image: url('<?= $templateFolder ?>/images/icon_lock.webp');
+		background-image: -webkit-image-set(url('<?= $templateFolder ?>/images/icon_lock.webp') 1x, url('<?= $templateFolder ?>/images/icon_lock@2x.webp') 2x);
+		background-image: image-set(url('<?= $templateFolder ?>/images/icon_lock.webp') 1x, url('<?= $templateFolder ?>/images/icon_lock@2x.webp') 2x);
 	}
 </style>
 

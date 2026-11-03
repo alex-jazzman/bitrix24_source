@@ -52,7 +52,24 @@ jn.define('im/messenger/lib/parser/markdown/rules/html-rules', (require, exports
 	);
 
 	/**
-	 * Decode HTML entities (named, decimal, hex) to their Unicode equivalents.
+	 * A '[' produced by decoding an HTML entity (&#91; / &#x5B;) must NOT be able to open a BB-code
+	 * tag: this pass runs before the BB-code decoders and the server passes entity-encoded text
+	 * through as plain text, so `&#91;URL=b24://x]tap&#91;/URL]` would otherwise be decoded into an
+	 * ACTIVE tag on the recipient. A zero-width space after '[' keeps it visually a '[' but inert.
+	 * This is the root defang; the per-construct guards elsewhere (inline code, table cells) no
+	 * longer have to cover the entity case.
+	 *
+	 * @param {string} char
+	 * @returns {string}
+	 */
+	function defangDecodedBracket(char)
+	{
+		return char === '[' ? '[\u200B' : char;
+	}
+
+	/**
+	 * Decode HTML entities (named, decimal, hex) to their Unicode equivalents. A decoded '[' is
+	 * defanged so an entity can never assemble an active BB-code tag (see above).
 	 *
 	 * @param {string} text
 	 * @returns {string}
@@ -70,7 +87,7 @@ jn.define('im/messenger/lib/parser/markdown/rules/html-rules', (require, exports
 
 				try
 				{
-					return String.fromCodePoint(codePoint);
+					return defangDecodedBracket(String.fromCodePoint(codePoint));
 				}
 				catch
 				{
@@ -88,7 +105,7 @@ jn.define('im/messenger/lib/parser/markdown/rules/html-rules', (require, exports
 
 				try
 				{
-					return String.fromCodePoint(codePoint);
+					return defangDecodedBracket(String.fromCodePoint(codePoint));
 				}
 				catch
 				{
@@ -98,7 +115,7 @@ jn.define('im/messenger/lib/parser/markdown/rules/html-rules', (require, exports
 
 			const decoded = NAMED_ENTITIES[entity];
 
-			return decoded === undefined ? match : decoded;
+			return decoded === undefined ? match : defangDecodedBracket(decoded);
 		});
 	}
 
@@ -106,10 +123,15 @@ jn.define('im/messenger/lib/parser/markdown/rules/html-rules', (require, exports
 	 * Convert HTML formatting tags to BB-codes and decode HTML entities.
 	 * Skips content inside code block placeholders (####MD_CODE_N####).
 	 *
+	 * The output is render-mode independent (tag mapping and entity decoding are identical in
+	 * both modes); `options` is accepted only for signature parity with the block/inline rules,
+	 * so a caller can run all three over an isolated string with one options object.
+	 *
 	 * @param {string} text
+	 * @param {object} [options]
 	 * @returns {string}
 	 */
-	function applyHtmlRules(text)
+	function applyHtmlRules(text, options = {})
 	{
 		if (!Type.isStringFilled(text))
 		{

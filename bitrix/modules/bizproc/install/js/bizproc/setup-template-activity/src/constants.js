@@ -27,6 +27,14 @@ export const DELIMITER_TYPES: Record<string, DelimiterType> = Object.freeze({
 	LINE: 'line',
 });
 
+// Keys of the value rule inside the settings of a constant: bounds of an integer, length limit of a string.
+export const VALUE_RULE_KEYS: { [string]: string } = Object.freeze({
+	ROOT: 'ValueRule',
+	MIN: 'Min',
+	MAX: 'Max',
+	MAX_LENGTH: 'MaxLength',
+});
+
 export const EDITING_MODES = Object.freeze({
 	CREATE: 'create',
 	EDIT: 'edit',

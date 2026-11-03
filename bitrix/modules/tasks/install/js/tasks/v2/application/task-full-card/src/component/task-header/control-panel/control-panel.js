@@ -85,6 +85,7 @@ export const ControlPanel = {
 
 			return {
 				bindElement: this.$refs.controlPanelOpener,
+				targetContainer: document.body,
 				className: 'tasks-full-card-header__control-panel-popup',
 				width: popupWidth,
 				offsetTop: 10,
@@ -354,11 +355,11 @@ export const ControlPanel = {
 				handleClickItem: (): void => {
 					if (isLocked)
 					{
-						this.isMenuShown = false;
+						this.isControlPanelOpened = false;
 
 						void showLimit({
 							featureId: Core.getParams().restrictions.robots.featureId,
-							bindElement: this.$refs.container,
+							bindElement: this.$refs.controlPanelOpener,
 						});
 
 						return;
@@ -512,17 +513,23 @@ export const ControlPanel = {
 		},
 	},
 	template: `
-		<div
+		<button
+			type="button"
 			class="tasks-full-card-header__control-panel-opener print-ignore"
 			ref="controlPanelOpener"
+			data-testid="task-full-card-header-menu-btn"
+			:aria-label="loc('TASKS_V2_TASK_FULL_CARD_CONTROL_PANEL_LABEL')"
+			aria-haspopup="menu"
+			:aria-expanded="isControlPanelOpened ? 'true' : 'false'"
 			@click="handleClickControlPanelOpener"
 		>
 			<BIcon
 				class="tasks-full-card-header__control-panel-opener-icon"
 				:name="Outline.HAMBURGER_MENU"
+				aria-hidden="true"
 				hoverable
 			/>
-		</div>
+		</button>
 		<Popup
 			v-if="isControlPanelOpened"
 			ref="controlPanelPopup"

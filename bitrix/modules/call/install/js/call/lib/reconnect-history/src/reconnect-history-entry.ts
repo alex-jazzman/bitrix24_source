@@ -7,4 +7,5 @@ export type ReconnectHistoryEntry = {
 	last: boolean;
 	reason: string | null;
 	target: ReconnectTargetType;
+	userId: number | null;
 };

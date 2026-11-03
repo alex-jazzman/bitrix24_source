@@ -6,15 +6,19 @@
  *
  */
 import type { LexicalNode, SerializedLexicalNode } from '../LexicalNode';
-import type { SerializedElementNode } from './LexicalElementNode';
-import { ElementNode } from './LexicalElementNode';
+import { ElementNode, type SerializedElementNode } from './LexicalElementNode';
 export type SerializedRootNode<T extends SerializedLexicalNode = SerializedLexicalNode> = SerializedElementNode<T>;
 /** @noInheritDoc */
 export declare class RootNode extends ElementNode {
     /** @internal */
     __cachedText: null | string;
-    static getType(): string;
-    static clone(): RootNode;
+    $config(): import("..").BaseStaticNodeConfig & {
+        readonly root?: {
+            readonly extends: typeof ElementNode;
+        } | undefined;
+    } & import("..").StaticNodeTypeAccessor<"root"> & import("..").StaticNodeConfigAccessor<{
+        readonly extends: typeof ElementNode;
+    }>;
     constructor();
     getTopLevelElementOrThrow(): never;
     getTextContent(): string;
@@ -22,11 +26,11 @@ export declare class RootNode extends ElementNode {
     replace<N = LexicalNode>(node: N): never;
     insertBefore(nodeToInsert: LexicalNode): LexicalNode;
     insertAfter(nodeToInsert: LexicalNode): LexicalNode;
-    updateDOM(prevNode: RootNode, dom: HTMLElement): false;
-    append(...nodesToAppend: LexicalNode[]): this;
+    updateDOM(prevNode: this, dom: HTMLElement): false;
+    splice(start: number, deleteCount: number, nodesToInsert: LexicalNode[]): this;
     static importJSON(serializedNode: SerializedRootNode): RootNode;
-    exportJSON(): SerializedRootNode;
     collapseAtStart(): true;
 }
 export declare function $createRootNode(): RootNode;
+/** Returns true if the given node is a RootNode. */
 export declare function $isRootNode(node: RootNode | LexicalNode | null | undefined): node is RootNode;

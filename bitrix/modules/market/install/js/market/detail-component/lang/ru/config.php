@@ -29,3 +29,6 @@ $MESS["MARKET_DETAIL_ACTION_JS_OPEN_APP"] = "Открыть";
 $MESS["MARKET_DETAIL_ACTION_JS_ADD_FAVORITE"] = "Добавить в избранное";
 $MESS["MARKET_DETAIL_ACTION_JS_RM_FAVORITE"] = "Убрать из избранного";
 $MESS["MARKET_DETAIL_ACTION_JS_ACCESS_DENIED"] = "Чтобы установить приложение, обратитесь к администратору вашего Битрикс24";
+$MESS["MARKET_DETAIL_ACTION_JS_ADMIN_REQUIRED"] = "Требуется разрешение администратора";
+$MESS["MARKET_DETAIL_ACTION_JS_REQUEST_ALREADY_SENT"] = "Вы уже отправили запрос на установку";
+$MESS["MARKET_DETAIL_ACTION_JS_REQUEST_ERROR"] = "Не удалось отправить запрос. Попробуйте позже";

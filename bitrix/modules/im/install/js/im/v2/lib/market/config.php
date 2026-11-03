@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 return [
+	'css' => './dist/market.bundle.css',
 	'js' => [
 		'./dist/market.bundle.js',
 	],
@@ -15,6 +16,9 @@ return [
 		'im.v2.const',
 		'im.v2.lib.logger',
 		'main.core',
+		'main.core.events',
+		'main.loader',
+		'main.popup',
 	],
 	'skip_core' => false,
 ];

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_const, im_v2_lib_channel, im_v2_lib_message, im_v2_lib_utils) {
+(function (exports, main_core, im_v2_application_core, im_v2_const, im_v2_lib_message, im_v2_lib_utils) {
 	'use strict';
 
 	const RecentManager = {
@@ -13,22 +13,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			const {
 				messageId,
-				draft,
 				lastActivityDate
 			} = recentItem;
-			const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
-			const messageDate = message?.date;
-			if (main_core.Type.isDate(draft.date) && draft.date > messageDate) {
-				return draft.date;
-			}
-			if (this.needsBirthdayPlaceholder(dialogId)) {
-				return im_v2_lib_utils.Utils.date.getStartOfTheDay();
+			const messageDate = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId)?.date;
+			const fakeActivityDate = getFakeActivityDate(recentItem, messageDate);
+			if (fakeActivityDate) {
+				return fakeActivityDate;
 			}
 			const shouldUseActivityDate = main_core.Type.isDate(lastActivityDate) && lastActivityDate > messageDate;
 			if (shouldUseActivityDate) {
 				return lastActivityDate;
 			}
 			return messageDate ?? lastActivityDate;
+		},
+		// The row is high in the list, but nothing behind it moved on the server side.
+		hasFakeActivityDate(dialogId) {
+			const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](dialogId);
+			if (!recentItem) {
+				return false;
+			}
+			const messageDate = im_v2_application_core.Core.getStore().getters['messages/getById'](recentItem.messageId)?.date;
+			return getFakeActivityDate(recentItem, messageDate) !== null;
 		},
 		needToShowItem(item) {
 			if (item.isBirthdayPlaceholder && !isBirthdayOptionEnabled()) {
@@ -61,6 +66,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const RECENT_TYPES_WITH_NESTED_CHATS = [im_v2_const.RecentType.taskComments];
 			return RECENT_TYPES_WITH_NESTED_CHATS.includes(type);
 		}
+	};
+
+	// Client-side rules that raise a row: an unsent draft and the birthday placeholder.
+	// Not to be confused with isFakeElement - that one marks the whole row, not its date.
+	const getFakeActivityDate = (recentItem, messageDate) => {
+		const {
+			draft,
+			dialogId
+		} = recentItem;
+		if (main_core.Type.isDate(draft.date) && draft.date > messageDate) {
+			return draft.date;
+		}
+		if (RecentManager.needsBirthdayPlaceholder(dialogId)) {
+			return im_v2_lib_utils.Utils.date.getStartOfTheDay();
+		}
+		return null;
 	};
 	const isBirthdayOptionEnabled = () => {
 		return im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.recent.showBirthday);
@@ -106,5 +127,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.RecentManager = RecentManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=recent.bundle.js.map

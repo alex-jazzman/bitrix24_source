@@ -3,14 +3,17 @@
 return [
 	'extensions' => [
 		'analytics',
-		'require-lazy',
-		'in-app-url',
-		'crm:type',
-		'catalog:store/document-card/manager',
-		'crm:disabling-tools',
+		'in-app-url/presentation',
+		'in-app-url/widget-presenter',
+		'in-app-url/portal-page',
 		'layout/ui/info-helper',
+		'require-lazy',
+		'crm:disabling-tools',
+		'crm:type',
+		'crm:in-app-url/routes/entity-list-target',
+		'crm:in-app-url/routes/query-params',
 	],
 	'bundle' => [
-		'./open-actions',
+		'./src/open-actions',
 	],
 ];

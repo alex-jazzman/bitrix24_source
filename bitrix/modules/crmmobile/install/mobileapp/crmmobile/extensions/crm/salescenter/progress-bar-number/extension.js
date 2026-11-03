@@ -2,6 +2,7 @@
  * @module crm/salescenter/progress-bar-number
  */
 jn.define('crm/salescenter/progress-bar-number', (require, exports, module) => {
+	const { Text1 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -58,7 +59,7 @@ jn.define('crm/salescenter/progress-bar-number', (require, exports, module) => {
 							borderWidth: 2,
 						},
 					},
-					Text(
+					Text1(
 						{
 							text: this.number,
 							style: {
@@ -67,7 +68,6 @@ jn.define('crm/salescenter/progress-bar-number', (require, exports, module) => {
 								backgroundColor: AppTheme.colors.accentMainSuccess,
 								borderRadius: 100,
 								color: AppTheme.colors.baseWhiteFixed,
-								fontSize: 19,
 								fontWeight: '600',
 								textAlign: 'center',
 							},
@@ -112,7 +112,7 @@ jn.define('crm/salescenter/progress-bar-number', (require, exports, module) => {
 							justifyContent: 'center',
 						},
 					},
-					Text(
+					Text1(
 						{
 							text: this.number,
 							style: {
@@ -121,7 +121,6 @@ jn.define('crm/salescenter/progress-bar-number', (require, exports, module) => {
 								backgroundColor: AppTheme.colors.accentExtraAqua,
 								borderRadius: 100,
 								color: AppTheme.colors.baseWhiteFixed,
-								fontSize: 19,
 								fontWeight: '600',
 								textAlign: 'center',
 							},

@@ -8,15 +8,21 @@ jn.define('mail/in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = (inAppUrl) => {
-		inAppUrl.register('/mail/message/:threadId(\\?source=:source)?$', eventOpenMessageHandler)
+		inAppUrl
+			// the pattern is matched, not anchored at the front: an end of its own is what keeps the
+			// route off every link that merely carries a message of the mail inside it. The query is
+			// left uncaptured - params are mapped to capture groups by position, and the screen reads
+			// the query of the url itself
+			.addRoute('/mail/message/:threadId(?:\\?.*)?$')
+			.handler(eventOpenMessageHandler)
 			.name('mail:message:open');
-		inAppUrl.register('/mail/list/:threadId', eventOpenMailboxHandler)
+		inAppUrl.register('/mail/list/:mailboxId', eventOpenMailboxHandler)
 			.name('mail:mailbox:open');
 		inAppUrl.register('/mail/mailbox-list\\?CONNECTION_REQUESTS=Y', eventOpenConnectionRequestsHandler)
 			.name('mail:connectionRequests:open');
 	};
 
-	const eventOpenMessageHandler = ({ threadId, source }) => {
+	const eventOpenMessageHandler = ({ threadId }, { queryParams = {} } = {}) => {
 		ComponentHelper.openLayout({
 			canOpenInDefault: true,
 			name: 'mail:mail.message.view',
@@ -27,7 +33,8 @@ jn.define('mail/in-app-url/routes', (require, exports, module) => {
 			componentParams: {
 				isCrmMessage: 0,
 				threadId,
-				source: source ?? 'mail',
+				source: queryParams.source ?? 'mail',
+				mailUfMessageToken: queryParams.mail_uf_message_token ?? '',
 			},
 		});
 	};

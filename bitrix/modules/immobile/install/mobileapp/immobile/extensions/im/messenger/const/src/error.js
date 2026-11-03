@@ -15,6 +15,9 @@ jn.define('im/messenger/const/error', (require, exports, module) => {
 			MESSAGE_ACCESS_DENIED_BY_TARIFF: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',
 			COLLAB_TARIFF_RESTRICTED: 'COLLAB_TARIFF_RESTRICTED',
 		},
+		project: {
+			accessDenied: 'PROJECT_ACCESS_DENIED',
+		},
 		recent: {
 			maxPin: 'MAX_PINNED_CHATS_ERROR',
 		},
@@ -22,6 +25,13 @@ jn.define('im/messenger/const/error', (require, exports, module) => {
 		reaction: {
 			reactionNotFound: 'REACTION_NOT_FOUND',
 			reactionAlreadySet: 'REACTION_ALREADY_SET',
+		},
+		// Refusals of an AI task creation the user can be told apart: a slot of the chat already taken
+		// by an operation over the same messages, and a source no task can be built out of.
+		aiTask: {
+			creationInProgress: 'AI_TASK_CREATION_IN_PROGRESS',
+			sourceNotSupported: 'AI_TASK_SOURCE_NOT_SUPPORTED',
+			creationNotAvailable: 'AI_TASK_CREATION_NOT_AVAILABLE',
 		},
 	};
 

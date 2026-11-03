@@ -1826,5 +1826,3 @@
 	|| typeof self==="object" && typeof self.protobuf==='object' && self.protobuf
 	|| typeof protobuf==='object' && protobuf
 );
-
-console.log("model/extension.js");

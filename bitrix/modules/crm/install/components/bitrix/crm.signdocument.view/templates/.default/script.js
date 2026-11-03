@@ -59,8 +59,10 @@
 		#button = null;
 		#docSend = undefined;
 		#memberIds = [];
+		#documentSigned = false;
 		constructor(options = {}) {
 			this.#memberIds = options?.memberIds ?? [];
+			this.#documentSigned = options?.documentSigned ?? false;
 			this.#button = this.#createButton();
 			if (!main_core.Type.isUndefined(BX?.Sign?.V2?.DocumentSend)) {
 				this.#docSend = new BX.Sign.V2.DocumentSend();
@@ -126,16 +128,21 @@
 			>
 				<div class="crm__sign-document-view-resend--button-icon --service-sms"></div>
 				<div class="crm__sign-document-view-resend--button-main-title">
-					${main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN')}
+					${this.#createButtonText(0)}
 				</div>
 				<div class="crm__sign-document-view-resend--button-helper"></div>
 			</div>
 		`;
 		}
 		#createButtonText(remainingSeconds) {
-			return remainingSeconds > 0 ? main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN_TIMER', {
-				'#COUNTDOWN#': this.#formatSeconds(remainingSeconds)
-			}) : main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN');
+			if (remainingSeconds > 0) {
+				return this.#documentSigned ? main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_COPY_TIMER', {
+					'#COUNTDOWN#': this.#formatSeconds(remainingSeconds)
+				}) : main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN_TIMER', {
+					'#COUNTDOWN#': this.#formatSeconds(remainingSeconds)
+				});
+			}
+			return this.#documentSigned ? main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_COPY') : main_core.Loc.getMessage('CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN');
 		}
 		#setButtonText(text) {
 			this.#button.querySelector('.crm__sign-document-view-resend--button-main-title').textContent = text;

@@ -10,6 +10,7 @@ return [
 		'./src/record-status',
 		'./src/grid-user-count',
 		'./src/call-error',
+		'./src/widget-layer-error',
 		'./src/call-status',
 		'./src/signals-behavior',
 		'./src/call-presence',

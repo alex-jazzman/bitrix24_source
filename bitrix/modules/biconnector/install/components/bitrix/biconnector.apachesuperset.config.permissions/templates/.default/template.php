@@ -23,6 +23,7 @@ Bitrix\Main\UI\Extension::load([
 	'ui.icons.disk',
 	'biconnector.apache-superset-analytics',
 	'biconnector.dashboard-group',
+	'biconnector.table-group',
 ]);
 
 
@@ -87,6 +88,9 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 			newGroupPermissions: <?= Json::encode($arResult['NEW_GROUP_PERMISSIONS']) ?>,
 			dashboardGroups: <?= Json::encode($arResult['DASHBOARD_GROUPS']) ?>,
 			dashboards: <?= Json::encode($arResult['DASHBOARDS']) ?>,
+			newTableGroupPermissions: <?= Json::encode($arResult['NEW_TABLE_GROUP_PERMISSIONS']) ?>,
+			tableGroups: <?= Json::encode($arResult['TABLE_GROUPS']) ?>,
+			tables: <?= Json::encode($arResult['TABLES']) ?>,
 			user: <?= Json::encode($arResult['USER_DATA']) ?>,
 			appGuid: accessRightsApp.getGuid(),
 		});

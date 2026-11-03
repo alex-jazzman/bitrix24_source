@@ -33,7 +33,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription =
 	(new ActivityDescription(
 		(string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_NAME'),
-		(string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_DESCR'),
+		(string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_DESCR_MSGVER_1'),
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('FullReportSentTrigger')
@@ -70,6 +70,18 @@ $arActivityDescription =
 			'SOURCE_TYPE' => [
 				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_SOURCE_TYPE'),
 				'Type' => FieldType::STRING,
+			],
+			'PERIOD_FROM' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_PERIOD_FROM'),
+				'Type' => FieldType::DATETIME,
+			],
+			'PERIOD_TO' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_PERIOD_TO'),
+				'Type' => FieldType::DATETIME,
+			],
+			'EventDateTime' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_EVENT_DATE_TIME'),
+				'Type' => FieldType::DATETIME,
 			],
 		])
 		->setIcon(Outline::FILE_WITH_CROWN->name)

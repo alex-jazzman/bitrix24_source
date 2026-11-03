@@ -1,18 +1,16 @@
 import {PullClient} from "pull.client";
+import {Type} from "main.core";
 import type {CommandOptions} from "./types";
-import UserManager from "./user-manager";
-import OnlyOffice from "./onlyoffice";
+import type OnlyOffice from "./onlyoffice";
 
 export default class BaseCommandHandler
 {
 	options: CommandOptions = null;
 	onlyOffice: OnlyOffice = null;
-	userManager: UserManager = null;
 
 	constructor(commandOptions: CommandOptions)
 	{
 		this.options = commandOptions;
-		this.userManager = commandOptions.userManager;
 		this.context = commandOptions.context;
 		this.onlyOffice = commandOptions.onlyOffice;
 	}
@@ -42,5 +40,17 @@ export default class BaseCommandHandler
 	isCurrentUser(userId: number): boolean
 	{
 		return this.context.currentUser.id === userId;
+	}
+
+	/**
+	 * The channel belongs to the object, so a message reaches every tab which has it open. The hash of
+	 * the document session names the opening the message came from: editors of one editing session
+	 * share it, while a viewing and a reopening each have one of their own.
+	 */
+	isCurrentDocumentSession(documentSessionHash: ?string): boolean
+	{
+		return Type.isStringFilled(documentSessionHash)
+			&& this.context.documentSession?.hash === documentSessionHash
+		;
 	}
 }

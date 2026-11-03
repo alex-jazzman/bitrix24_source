@@ -19,6 +19,7 @@ return [
 		'im:messenger/lib/parser',
 	],
 	'bundle' => [
+		'./src/media-collection',
 		'./src/media-menu',
 	],
 ];

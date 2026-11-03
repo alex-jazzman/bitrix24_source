@@ -11,10 +11,9 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 	const { Icon } = require('assets/icons');
 	const { PopupMenu, PopupMenuPosition } = require('ui-system/popups/popup-menu');
 	const { Logger, LogType } = require('utils/logger');
-	const { openInApp } = require('vibecode/catalog/src/open-in-app');
+	const { VibeCodeAppOpener } = require('vibecode/app-opener');
 	const {
 		CATALOG_STATE,
-		VIBECODE_KIND,
 		VIBECODE_MENU_SECTION_CODE,
 	} = require('vibecode/catalog/src/const');
 	const {
@@ -27,7 +26,6 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 		normalizePositiveInteger,
 	} = require('vibecode/catalog/src/utils');
 
-	const OPEN_APP_PAGE_PATH = '/mobile/vibecode/open-app/';
 	const logger = new Logger([LogType.ERROR]);
 
 	class VibeCodeCatalogItemActionsController
@@ -36,6 +34,7 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 		{
 			this.renderer = renderer;
 			this.vibeCodeItemPopupMenu = null;
+			this.pendingFavoriteGuards = new Map();
 		}
 
 		dispose()
@@ -46,6 +45,12 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 
 		handleItemClick = (itemId, itemData = null) => {
 			const resolvedItem = this.resolveItem(itemId, itemData);
+			if (this.isItemClickOpensChat())
+			{
+				this.openVibeCodeItemChat(resolvedItem);
+
+				return;
+			}
 
 			this.openVibeCodeItem(resolvedItem);
 		};
@@ -82,18 +87,15 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 				return;
 			}
 
-			if (this.isVibeCodeBotWithChat(item))
+			const title = item?.title ?? this.renderer.getHeaderTitle();
+			const catalogItemId = normalizePositiveInteger(item?.id);
+
+			if (this.canOpenVibeCodeItemAppPage(item))
 			{
-				const chatId = normalizePositiveInteger(item.chatId);
-
-				this.recordVibeCodeItemOpen(item);
-
-				void this.openVibeCodeChat(chatId)
-					.catch((error) => {
-						logger.error('[vibecode/catalog] failed to open chat', error);
-						showErrorToast({}, this.renderer.getParentWidget());
-					})
-				;
+				this.handleSharedRecordOpenOutcome(
+					item,
+					() => VibeCodeAppOpener.open({ catalogItemId, title }),
+				);
 
 				return;
 			}
@@ -104,53 +106,71 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 				return;
 			}
 
-			this.recordVibeCodeItemOpen(item);
-
-			const title = item?.title ?? this.renderer.getHeaderTitle();
-
-			const openAppPageUrl = this.getVibeCodeItemOpenAppPageUrl(item);
-			if (!openAppPageUrl)
+			if (catalogItemId !== null)
 			{
-				// Degradation: without externalId (or a valid id) the entry page would render an
-				// error, so fall back to the previous behaviour of opening the external viewUrl.
-				inAppUrl.open(openUrl, { title });
-
-				return;
+				this.handleSharedRecordOpenOutcome(
+					item,
+					() => VibeCodeAppOpener.recordOpen(catalogItemId),
+				);
 			}
-
-			const catalogItemId = normalizePositiveInteger(item?.id);
-
-			openInApp(openAppPageUrl, { title, componentCode: `vibecode-app-${catalogItemId}` });
+			inAppUrl.open(openUrl, { title });
 		}
 
-		getVibeCodeItemOpenAppPageUrl(item = {})
+		canOpenVibeCodeItemAppPage(item = {})
 		{
 			const externalId = String(item?.externalId ?? '').trim();
-			if (externalId === '')
-			{
-				return null;
-			}
 
-			const catalogItemId = normalizePositiveInteger(item?.id);
-			if (catalogItemId === null)
-			{
-				return null;
-			}
-
-			return `${OPEN_APP_PAGE_PATH}?catalogItemId=${catalogItemId}`;
-		}
-
-		isVibeCodeBotWithChat(item = {})
-		{
-			return (
-				String(item?.kind ?? '') === VIBECODE_KIND.BOT
-				&& normalizePositiveInteger(item?.chatId) !== null
-			);
+			return externalId !== '' && normalizePositiveInteger(item?.id) !== null;
 		}
 
 		getVibeCodeItemOpenUrl(item = {})
 		{
 			return normalizeAbsoluteUrl(item?.viewUrl);
+		}
+
+		isItemClickOpensChat()
+		{
+			return this.renderer.isItemClickOpensChat?.() === true;
+		}
+
+		openVibeCodeItemChat(item = {})
+		{
+			const appChatId = this.getVibeCodeItemAppChatId(item);
+			if (appChatId === null)
+			{
+				this.openVibeCodeItem(item);
+
+				return;
+			}
+
+			if (item?.appChatAccessible !== true)
+			{
+				showErrorToast({
+					message: Loc.getMessage('MOBILE_VIBECODE_CATALOG_CHAT_UNAVAILABLE'),
+				}, this.renderer.getParentWidget());
+
+				return;
+			}
+
+			void this.openVibeCodeDialog(`chat${appChatId}`)
+				.then(() => this.recordVibeCodeItemOpen(item))
+				.catch((error) => {
+					logger.error('[vibecode/catalog] failed to open the app chat', error);
+					showErrorToast({
+						message: Loc.getMessage('MOBILE_VIBECODE_CATALOG_CHAT_ERROR'),
+					}, this.renderer.getParentWidget());
+				})
+			;
+		}
+
+		canOpenVibeCodeItemChat(item = {})
+		{
+			return this.getVibeCodeItemAppChatId(item) !== null && item?.appChatAccessible === true;
+		}
+
+		getVibeCodeItemAppChatId(item = {})
+		{
+			return normalizePositiveInteger(item?.appChatId);
 		}
 
 		recordVibeCodeItemOpen(item = {})
@@ -161,32 +181,43 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 				return;
 			}
 
+			this.handleSharedRecordOpenOutcome(
+				item,
+				() => VibeCodeAppOpener.recordOpen(catalogItemId),
+			);
+		}
+
+		handleSharedRecordOpenOutcome(item = {}, recordOpen)
+		{
 			const wasNew = item?.isNew === true;
 
-			void (new RunActionExecutor('vibecodeconnector.Catalog.recordOpen', { catalogItemId }))
-				.call(false)
-				.then((response) => {
-					const errors = Array.isArray(response?.errors) ? response.errors : [];
-					if (errors.length > 0)
-					{
-						throw response;
-					}
+			try
+			{
+				void Promise.resolve(recordOpen())
+					.then((outcome) => {
+						if (outcome?.isSuccess === true && wasNew)
+						{
+							this.refreshAfterSuccessfulRecordOpen();
+						}
+					})
+					.catch((error) => {
+						console.error('[vibecode/catalog] failed to record item open', error);
+					})
+				;
+			}
+			catch (error)
+			{
+				console.error('[vibecode/catalog] failed to record item open', error);
+			}
+		}
 
-					if (!wasNew)
-					{
-						return;
-					}
-
-					// The item is no longer new server-side; reload rebuilds the list and
-					// rewrites the StatefulList cache so the "new" badge does not resurrect
-					// on the next open of the catalog.
-					this.renderer.refreshNewAppsCount();
-					this.renderer.handleRefresh();
-				})
-				.catch((error) => {
-					console.error('[vibecode/catalog] failed to record item open', error);
-				})
-			;
+		refreshAfterSuccessfulRecordOpen()
+		{
+			// The item is no longer new server-side; reload rebuilds the list and
+			// rewrites the StatefulList cache so the "new" badge does not resurrect
+			// on the next open of the catalog.
+			this.renderer.refreshNewAppsCount();
+			this.renderer.handleRefresh();
 		}
 
 		showVibeCodeItemMenu(item = null, targetRef = null)
@@ -221,9 +252,11 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 		{
 			const isPinned = item?.isPinned === true;
 			const isHidden = item?.isHidden === true;
+			const isFavorite = item?.isFavorite === true;
+			const respondsWithFavoriteAwareBackend = Object.hasOwn(item ?? {}, 'isFavorite');
 			const items = [];
 
-			if (this.getVibeCodeItemOpenUrl(item) || this.isVibeCodeBotWithChat(item))
+			if (this.getVibeCodeItemOpenUrl(item))
 			{
 				items.push({
 					id: 'vibecode-open',
@@ -232,6 +265,32 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 					icon: Icon.OPEN_NEW,
 					sectionCode: VIBECODE_MENU_SECTION_CODE,
 					onItemSelected: () => this.openVibeCodeItem(item),
+				});
+			}
+
+			if (!this.isItemClickOpensChat() && this.canOpenVibeCodeItemChat(item))
+			{
+				items.push({
+					id: 'vibecode-open-chat',
+					testId: this.renderer.getTestId('vibecode-menu-open-chat'),
+					title: Loc.getMessage('MOBILE_VIBECODE_CATALOG_MENU_OPEN_CHAT'),
+					icon: Icon.MESSAGE,
+					sectionCode: VIBECODE_MENU_SECTION_CODE,
+					onItemSelected: () => this.openVibeCodeItemChat(item),
+				});
+			}
+
+			if (item?.canShare === true)
+			{
+				items.push({
+					id: 'vibecode-share',
+					testId: this.renderer.getTestId('vibecode-menu-share'),
+					title: Loc.getMessage('MOBILE_VIBECODE_CATALOG_SHARE_MENU'),
+					icon: Icon.SHARE,
+					sectionCode: VIBECODE_MENU_SECTION_CODE,
+					onItemSelected: () => {
+						void this.openVibeCodeItemShare(item);
+					},
 				});
 			}
 
@@ -251,6 +310,22 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 				});
 			}
 
+			if (respondsWithFavoriteAwareBackend && this.renderer.getProvider().getPreviewUserId() === null)
+			{
+				items.push({
+					id: isFavorite ? 'vibecode-unfavorite' : 'vibecode-favorite',
+					testId: this.renderer.getTestId(isFavorite ? 'vibecode-menu-unfavorite' : 'vibecode-menu-favorite'),
+					title: Loc.getMessage(
+						isFavorite
+							? 'MOBILE_VIBECODE_CATALOG_MENU_UNFAVORITE'
+							: 'MOBILE_VIBECODE_CATALOG_MENU_FAVORITE',
+					),
+					icon: isFavorite ? Icon.NON_FAVORITE : Icon.FAVORITE,
+					sectionCode: VIBECODE_MENU_SECTION_CODE,
+					onItemSelected: () => this.toggleVibeCodeItemFavorite(item),
+				});
+			}
+
 			const hiddenAction = this.getVibeCodeItemHiddenMenuItem(item);
 			if (hiddenAction)
 			{
@@ -260,26 +335,44 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 			return items;
 		}
 
-		async openVibeCodeChat(chatId)
+		async openVibeCodeItemShare(item = {})
 		{
-			const response = await (new RunActionExecutor('im.v2.Chat.get', { chatId }))
-				.call(false)
-			;
-			const errors = Array.isArray(response?.errors) ? response.errors : [];
-			if (errors.length > 0)
+			if (normalizePositiveInteger(item?.id) === null)
 			{
-				throw response;
+				return;
 			}
 
-			const dialogId = String(response?.data?.chat?.dialogId ?? '').trim();
-			if (dialogId === '')
+			const { VibeCodeCatalogShareSheet } = await requireLazy('vibecode/catalog/share') ?? {};
+			if (!VibeCodeCatalogShareSheet)
 			{
-				throw new Error(`Failed to resolve dialogId for chat ${chatId}`);
+				logger.error('[vibecode/catalog] failed to load the sharing extension');
+				showErrorToast({
+					message: Loc.getMessage('MOBILE_VIBECODE_CATALOG_SHARE_LOAD_ERROR'),
+				}, this.renderer.getParentWidget());
+
+				return;
+			}
+
+			void VibeCodeCatalogShareSheet.open(
+				{
+					item,
+					testId: this.renderer.getTestId('vibecode-share'),
+				},
+				this.renderer.getParentWidget() ?? PageManager,
+			);
+		}
+
+		async openVibeCodeDialog(dialogId)
+		{
+			const normalizedDialogId = String(dialogId ?? '').trim();
+			if (normalizedDialogId === '')
+			{
+				throw new Error('Failed to resolve the dialog to open');
 			}
 
 			const { DialogOpener } = await requireLazy('im:messenger/api/dialog-opener');
 
-			return DialogOpener.open({ dialogId });
+			return DialogOpener.open({ dialogId: normalizedDialogId });
 		}
 
 		getVibeCodeItemHiddenMenuItem(item = {})
@@ -353,6 +446,134 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 			}
 
 			return data;
+		}
+
+		toggleVibeCodeItemFavorite(item = {})
+		{
+			const catalogItemId = normalizePositiveInteger(item?.id);
+			if (catalogItemId === null)
+			{
+				return;
+			}
+
+			const nextFavorite = item.isFavorite !== true;
+			const data = this.getVibeCodeItemFavoriteActionData(catalogItemId);
+
+			const action = nextFavorite
+				? 'vibecodeconnector.Catalog.favorite'
+				: 'vibecodeconnector.Catalog.unfavorite'
+			;
+
+			void (new RunActionExecutor(action, data))
+				.call(false)
+				.then((response) => {
+					const errors = Array.isArray(response?.errors) ? response.errors : [];
+					if (errors.length > 0)
+					{
+						throw response;
+					}
+
+					this.renderer.getProvider().bumpFavoriteCacheVersion();
+					this.pendingFavoriteGuards.set(String(catalogItemId), nextFavorite);
+
+					if (!nextFavorite && this.renderer.getCatalogState() === CATALOG_STATE.FAVORITE)
+					{
+						this.reloadFavoriteCatalogState();
+
+						return undefined;
+					}
+
+					return this.updateVibeCodeItemFavoriteDynamically(item, nextFavorite);
+				})
+				.catch((error) => {
+					console.error('[vibecode/catalog] failed to toggle favorite', error);
+					showErrorToast({
+						message: Loc.getMessage('MOBILE_VIBECODE_CATALOG_FAVORITE_ERROR'),
+					}, this.renderer.getParentWidget());
+				})
+			;
+		}
+
+		getVibeCodeItemFavoriteActionData(catalogItemId)
+		{
+			return {
+				catalogItemId,
+			};
+		}
+
+		applyPendingFavoriteGuards(responseData = {}, config = {})
+		{
+			if (this.pendingFavoriteGuards.size === 0)
+			{
+				return;
+			}
+
+			const isPagedResponse = Boolean(config?.navigation);
+			const isFirstPage = isPagedResponse && Number(config.navigation.page ?? 1) === 1;
+			if (isPagedResponse && !isFirstPage)
+			{
+				return;
+			}
+
+			const items = Array.isArray(responseData?.items) ? responseData.items : [];
+			this.pendingFavoriteGuards.forEach((value, itemId) => {
+				const item = items.find((currentItem) => String(currentItem?.id ?? '') === itemId);
+				if (item)
+				{
+					item.isFavorite = value;
+				}
+
+				if (isFirstPage)
+				{
+					this.pendingFavoriteGuards.delete(itemId);
+				}
+			});
+		}
+
+		reloadFavoriteCatalogState()
+		{
+			try
+			{
+				this.renderer.handleRefresh();
+			}
+			catch (error)
+			{
+				console.error('[vibecode/catalog] failed to reload the favorites slice after unfavorite', error);
+				showErrorToast({
+					message: Loc.getMessage('MOBILE_VIBECODE_CATALOG_FAVORITE_ERROR'),
+				}, this.renderer.getParentWidget());
+			}
+		}
+
+		updateVibeCodeItemFavoriteDynamically(item = {}, isFavorite = false)
+		{
+			const updatePromise = this.applyVibeCodeItemFavoriteState(item, isFavorite);
+
+			return updatePromise.catch((error) => {
+				console.error('[vibecode/catalog] failed to update favorite item dynamically', error);
+				this.renderer.handleRefresh();
+			});
+		}
+
+		applyVibeCodeItemFavoriteState(item = {}, isFavorite = false)
+		{
+			const statefulList = this.renderer.statefulListRef;
+			const currentItems = statefulList?.state?.items;
+			if (!Array.isArray(currentItems))
+			{
+				this.renderer.handleRefresh();
+
+				return Promise.resolve();
+			}
+
+			const itemId = String(item?.id ?? '');
+			const nextItems = currentItems.map((currentItem) => (
+				String(currentItem?.id ?? '') === itemId
+					? { ...currentItem, isFavorite }
+					: currentItem
+			));
+
+			return this.applyVibeCodeItemsState(nextItems);
 		}
 
 		toggleVibeCodeItemHidden(item = {})

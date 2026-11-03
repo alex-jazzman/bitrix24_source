@@ -648,6 +648,7 @@
 				new RunActionExecutor('socialnetwork.api.workgroup.turnOnTrial')
 					.setHandler((response) => resolve(response.data))
 					.call(false)
+					.catch(console.error)
 				;
 			});
 		}

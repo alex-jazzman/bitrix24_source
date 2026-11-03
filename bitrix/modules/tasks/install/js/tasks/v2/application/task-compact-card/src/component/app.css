@@ -12,7 +12,7 @@
 	content: '';
 	position: absolute;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.1);
+	background: var(--ui-color-bg-state-hover-default-overlay);
 	pointer-events: none;
 	opacity: 0;
 	transition: opacity 300ms;
@@ -47,12 +47,20 @@
 	display: flex;
 	gap: 6px;
 	margin-bottom: -4px;
+	padding-right: 32px;
 }
 
 .tasks-compact-card-fields-close {
+	position: absolute;
+	top: 24px;
+	right: 24px;
 	display: flex;
 	align-items: center;
 	height: 29px;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: transparent;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	--ui-icon-set__icon-size: 26px;
 	cursor: pointer;
@@ -60,6 +68,12 @@
 
 .tasks-compact-card-fields-close:hover {
 	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.tasks-compact-card-fields-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-compact-card-footer {
@@ -97,4 +111,29 @@
 
 .tasks-compact-card-popup.--disable-drag .tasks-compact-card-popup-drag-handle {
 	pointer-events: none;
+}
+
+/* Reflow for narrow viewports (WCAG 1.4.10): override main.popup inline width and
+   let footer, chips and field rows wrap/stack so nothing overflows the popup. */
+@media (max-width: 600px) {
+	.tasks-compact-card-popup {
+		width: min(580px, calc(100vw - 20px)) !important;
+	}
+
+	.tasks-compact-card-popup .b24-field-list {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.tasks-compact-card-chips {
+		flex-wrap: wrap;
+	}
+
+	.tasks-compact-card-buttons {
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.tasks-compact-card-main-buttons {
+		flex-wrap: wrap;
+	}
 }

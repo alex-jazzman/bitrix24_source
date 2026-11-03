@@ -9,7 +9,7 @@
  * The user can dismiss it; the dismiss state is stored in localStorage
  * and auto-invalidates when the baseline is updated.
  */
-type BaselineStatus = 'supported' | 'unsupported';
+type BaselineStatus = 'supported' | 'unsupported' | 'unknown';
 
 interface BrowserInfo {
 	name: string;

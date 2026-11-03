@@ -6,4 +6,5 @@ export interface LoginItemModel {
 	browser: string,
 	address: string,
 	ip: string,
+	isCurrent?: boolean,
 }

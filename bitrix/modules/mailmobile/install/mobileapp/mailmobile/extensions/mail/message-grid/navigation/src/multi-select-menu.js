@@ -14,6 +14,7 @@ jn.define('mail/message-grid/navigation/src/multi-select-menu', (require, export
 	const { remove, markAsSpam } = require('mail/statemanager/redux/slices/messages/thunk');
 	const { markAsRemoved, unmarkAsRemoved, setMultiSelectMode } = require('mail/statemanager/redux/slices/messages');
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
+	const { isRemoveActionVisible } = require('mail/simple-list/items/message-redux/src/action-menu');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
@@ -30,10 +31,25 @@ jn.define('mail/message-grid/navigation/src/multi-select-menu', (require, export
 		constructor(props)
 		{
 			this.parentWidget = props.parentWidget;
+			this.isDraftMode = props.isDraftMode ?? (() => false);
+			this.onRemoveDrafts = props.onRemoveDrafts ?? (() => {});
+			this.onToggleDraftMultiSelectMode = props.onToggleDraftMultiSelectMode ?? (() => {});
 		}
 
 		get actions()
 		{
+			if (this.isDraftMode())
+			{
+				return [{
+					id: 'remove',
+					title: Loc.getMessage('MAILMOBILE_ACTIONS_REMOVE'),
+					sectionCode: Sections.REMOVE,
+					iconName: Icon.TRASHCAN,
+					isDestructive: true,
+					onItemSelected: () => this.removeObject(),
+				}];
+			}
+
 			const actions = [];
 			const currentFolder = selectCurrentFolder(store.getState());
 
@@ -76,14 +92,17 @@ jn.define('mail/message-grid/navigation/src/multi-select-menu', (require, export
 				});
 			}
 
-			actions.push({
-				id: 'remove',
-				title: Loc.getMessage('MAILMOBILE_ACTIONS_REMOVE'),
-				sectionCode: Sections.REMOVE,
-				iconName: Icon.TRASHCAN,
-				isDestructive: true,
-				onItemSelected: () => this.removeObject(),
-			});
+			if (isRemoveActionVisible())
+			{
+				actions.push({
+					id: 'remove',
+					title: Loc.getMessage('MAILMOBILE_ACTIONS_REMOVE'),
+					sectionCode: Sections.REMOVE,
+					iconName: Icon.TRASHCAN,
+					isDestructive: true,
+					onItemSelected: () => this.removeObject(),
+				});
+			}
 
 			return actions;
 		}
@@ -142,6 +161,13 @@ jn.define('mail/message-grid/navigation/src/multi-select-menu', (require, export
 
 		removeObject()
 		{
+			if (this.isDraftMode())
+			{
+				this.onRemoveDrafts();
+
+				return;
+			}
+
 			const objectIds = selectSelectedIds(store.getState());
 			const objectUidIds = selectSelectedUidIds(store.getState());
 
@@ -208,6 +234,13 @@ jn.define('mail/message-grid/navigation/src/multi-select-menu', (require, export
 		};
 
 		#onToggleMultiSelectMode = () => {
+			if (this.isDraftMode())
+			{
+				this.onToggleDraftMultiSelectMode();
+
+				return;
+			}
+
 			const currentState = store.getState();
 			const isMultiSelectMode = selectIsMultiSelectMode(currentState);
 

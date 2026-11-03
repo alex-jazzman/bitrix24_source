@@ -88,7 +88,7 @@ use Bitrix\Main\Localization\Loc;
 					{{#COUPON_LIST}}
 					<div class="basket-coupon-alert text-{{CLASS}}">
 						<span class="basket-coupon-text">
-							<strong>{{COUPON}}</strong> - <?=Loc::getMessage('SBB_COUPON')?> {{JS_CHECK_CODE}}
+							<strong>{{COUPON}}</strong> - {{JS_CHECK_CODE}}
 							{{#DISCOUNT_NAME}}({{DISCOUNT_NAME}}){{/DISCOUNT_NAME}}
 						</span>
 						<span class="close-link" data-entity="basket-coupon-delete" data-coupon="{{COUPON}}">

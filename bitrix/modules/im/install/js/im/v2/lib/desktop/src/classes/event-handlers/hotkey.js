@@ -1,4 +1,5 @@
 import { Event } from 'main.core';
+import { HotkeyCombination } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
@@ -18,7 +19,7 @@ export class HotkeyHandler
 	#bindHotkeys()
 	{
 		Event.bind(window, 'keydown', (event) => {
-			const logFolderCombination = Utils.key.isCombination(event, 'Ctrl+Shift+L');
+			const logFolderCombination = Utils.key.isCombination(event, HotkeyCombination.desktop.logFolder);
 			if (logFolderCombination)
 			{
 				DesktopApi.openLogsFolder();
@@ -27,7 +28,7 @@ export class HotkeyHandler
 				return;
 			}
 
-			const devToolsCombination = Utils.key.isCombination(event, 'Ctrl+Shift+D');
+			const devToolsCombination = Utils.key.isCombination(event, HotkeyCombination.desktop.devTools);
 			if (devToolsCombination)
 			{
 				DesktopApi.openDeveloperTools();

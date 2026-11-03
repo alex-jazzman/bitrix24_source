@@ -1,5 +1,10 @@
 <?php
 return [
+	'rest' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\Iblock\\Infrastructure\\Rest\\Controller',
+		],
+	],
 	'controllers' => [
 		'value' => [
 			'defaultNamespace' => '\Bitrix\Iblock\Controller',

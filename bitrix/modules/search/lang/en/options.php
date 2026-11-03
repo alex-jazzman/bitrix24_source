@@ -1,7 +1,9 @@
 <?php
 $MESS["SEARCH_OPTIONS_AGENT_DURATION"] = "Maximum agent run time (sec):";
 $MESS["SEARCH_OPTIONS_AGENT_STEMMING"] = "Relay stemming to agent:";
+$MESS["SEARCH_OPTIONS_DELAY_INDEX_NOTE"] = "It is recommended to enable this option only when the index server is not available.";
 $MESS["SEARCH_OPTIONS_FULL_REINDEX"] = "Full text search mode has changed. Use the Search module to <a href=\"#LINK#\">fully recreate the search index</a>.";
+$MESS["SEARCH_OPTIONS_FULL_TEXT_DELAY_INDEX"] = "Use bulk queued indexing:";
 $MESS["SEARCH_OPTIONS_FULL_TEXT_ENGINE"] = "Use full text search engine:";
 $MESS["SEARCH_OPTIONS_FULL_TEXT_ENGINE_BITRIX"] = "Bitrix";
 $MESS["SEARCH_OPTIONS_FULL_TEXT_ENGINE_MYSQL"] = "MySql full-text search";

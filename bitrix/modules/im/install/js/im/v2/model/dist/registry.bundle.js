@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_lib_utils, main_core_events, ui_vue3_vuex, im_v2_const, im_v2_lib_layout, im_v2_application_core, im_v2_lib_logger, im_v2_lib_user, im_v2_model, im_v2_lib_message, im_v2_lib_userStatus, im_v2_lib_recent) {
+(function (exports, main_core, im_v2_lib_utils, main_core_events, ui_vue3_vuex, im_v2_const, im_v2_lib_layout, im_v2_application_core, im_v2_lib_logger, im_v2_lib_user, im_v2_model, im_v2_lib_message, im_v2_lib_copilotSimpleStatus, im_v2_lib_userStatus, im_v2_lib_recent) {
 	'use strict';
 
 	const isNumberOrString = target => {
@@ -268,6 +268,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: im_v2_const.Settings.user.status,
 		targetFieldName: im_v2_const.Settings.user.status,
 		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: im_v2_const.Settings.message.defaultReaction,
+		targetFieldName: im_v2_const.Settings.message.defaultReaction,
+		checkFunction: main_core.Type.isString
 	}];
 
 	/* eslint-disable no-param-reassign */
@@ -284,6 +288,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				[im_v2_const.Settings.notification.enablePush]: true,
 				notifications: {},
 				[im_v2_const.Settings.message.bigSmiles]: true,
+				[im_v2_const.Settings.message.defaultReaction]: 'like',
 				[im_v2_const.Settings.recent.showBirthday]: true,
 				[im_v2_const.Settings.recent.showInvited]: true,
 				[im_v2_const.Settings.recent.showLastMessage]: true,
@@ -485,7 +490,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						...store.state.layout
 					};
 					const newLayout = {
-						name: this.validateLayout(name),
+						name,
 						entityId,
 						contextId,
 						params
@@ -520,12 +525,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					};
 				}
 			};
-		}
-		validateLayout(name) {
-			if (!im_v2_lib_layout.LayoutManager.getInstance().isValidLayout(name)) {
-				return im_v2_const.Layout.chat;
-			}
-			return name;
 		}
 		#isSameLayoutPayload(previousLayout, newLayout) {
 			return this.#isSameLayout(previousLayout, newLayout) && previousLayout.entityId === newLayout.entityId && JSON.stringify(previousLayout.params) === JSON.stringify(newLayout.params);
@@ -608,6 +607,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'error',
 		checkFunction: main_core.Type.isBoolean
 	}, {
+		fieldName: 'sendingTs',
+		targetFieldName: 'sendingTs',
+		checkFunction: isNumberOrString,
+		formatFunction: convertToNumber
+	}, {
 		fieldName: 'componentId',
 		targetFieldName: 'componentId',
 		checkFunction: target => {
@@ -663,6 +667,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'forward',
 		targetFieldName: 'forward',
 		checkFunction: main_core.Type.isPlainObject
+	}, {
+		fieldName: 'langfuseTraceId',
+		targetFieldName: 'langfuseTraceId',
+		checkFunction: isNumberOrString,
+		formatFunction: convertToString
+	}, {
+		fieldName: im_v2_const.CopilotSimpleReasoningPlanField,
+		targetFieldName: im_v2_const.CopilotSimpleReasoningPlanField,
+		// No check: a value that fails one skips the write and leaves the previous plan on the message,
+		// while any value of the param has to reset the field. The format function is the single gate.
+		formatFunction: im_v2_lib_copilotSimpleStatus.prepareReasoningPlan
 	}];
 
 	function isAnchorsEqual(anchor1, anchor2) {
@@ -1126,6 +1141,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		checkFunction: main_core.Type.isPlainObject,
 		formatFunction: target => formatFieldsWithConfig(target, foldFieldsConfig)
 	}, {
+		fieldName: 'progress',
+		targetFieldName: 'progress',
+		checkFunction: main_core.Type.isPlainObject,
+		formatFunction: target => formatFieldsWithConfig(target, progressFieldsConfig)
+	}, {
 		fieldName: 'buttons',
 		targetFieldName: 'buttons',
 		checkFunction: main_core.Type.isArray,
@@ -1147,6 +1167,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'fileIds',
 		targetFieldName: 'fileIds',
 		checkFunction: main_core.Type.isArray
+	}, {
+		fieldName: 'fileId',
+		targetFieldName: 'fileId',
+		checkFunction: main_core.Type.isNumber
+	}, {
+		fieldName: 'label',
+		targetFieldName: 'label',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'placeholder',
+		targetFieldName: 'placeholder',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'disabled',
+		targetFieldName: 'disabled',
+		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'options',
+		targetFieldName: 'options',
+		checkFunction: main_core.Type.isArray,
+		formatFunction: target => {
+			return target.map(option => formatFieldsWithConfig(option, formFieldOptionFieldsConfig));
+		}
 	}];
 	const iconFieldsConfig = [{
 		fieldName: 'type',
@@ -1157,7 +1200,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'color',
 		checkFunction: main_core.Type.isString
 	}];
+	const formFieldOptionFieldsConfig = [{
+		fieldName: 'id',
+		targetFieldName: 'id',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'label',
+		targetFieldName: 'label',
+		checkFunction: main_core.Type.isString
+	}];
 	const buttonFieldsConfig = [{
+		fieldName: 'id',
+		targetFieldName: 'id',
+		checkFunction: isNumberOrString
+	}, {
 		fieldName: 'type',
 		targetFieldName: 'type',
 		checkFunction: main_core.Type.isString
@@ -1181,6 +1237,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'actionParams',
 		targetFieldName: 'actionParams',
 		checkFunction: main_core.Type.isPlainObject
+	}, {
+		fieldName: 'disabled',
+		targetFieldName: 'disabled',
+		checkFunction: main_core.Type.isBoolean
 	}];
 	const sourceItemFieldsConfig = [{
 		fieldName: 'url',
@@ -1208,6 +1268,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}, {
 		fieldName: 'title',
 		targetFieldName: 'title',
+		checkFunction: main_core.Type.isString
+	}];
+	const progressFieldsConfig = [{
+		fieldName: 'value',
+		targetFieldName: 'value',
+		checkFunction: main_core.Type.isNumber
+	}, {
+		fieldName: 'colorToken',
+		targetFieldName: 'colorToken',
 		checkFunction: main_core.Type.isString
 	}];
 
@@ -1558,6 +1627,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					store.commit('removeReaction', payload);
 				},
+				/** @function messages/reactions/delete */
+				delete: (store, payload) => {
+					if (!store.state.collection[payload.messageId]) {
+						return;
+					}
+					store.commit('delete', payload);
+				},
 				/** @function messages/reactions/clearCollection */
 				clearCollection: store => {
 					store.commit('clearCollection');
@@ -1624,6 +1700,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					if (reactions.reactionCounters[reaction] === 0) {
 						delete reactions.reactionCounters[reaction];
 					}
+				},
+				delete: (state, payload) => {
+					delete state.collection[payload.messageId];
 				},
 				clearCollection: state => {
 					state.collection = {};
@@ -1810,6 +1889,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				viewedByOthers: false,
 				sending: false,
 				error: false,
+				notDelivered: false,
+				sendingTs: 0,
 				componentId: im_v2_const.MessageComponent.default,
 				componentParams: {},
 				forward: {
@@ -1817,7 +1898,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					userId: 0
 				},
 				isEdited: false,
-				isDeleted: false
+				isDeleted: false,
+				[im_v2_const.CopilotSimpleReasoningPlanField]: null
 			};
 		}
 
@@ -1920,6 +2002,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					return this.#findLastOwnMessageId(state, chatId);
 				},
+				/** @function messages/getLastOwnMessage */
+				getLastOwnMessage: (state, getters) => chatId => {
+					if (!state.chatCollection[chatId]) {
+						return null;
+					}
+					const lastOwnMessage = this.#findLastOwnMessage(getters.getByChatId(chatId));
+					return state.collection[lastOwnMessage?.id] ?? lastOwnMessage;
+				},
 				/** @function messages/getFirstUnread */
 				getFirstUnread: state => chatId => {
 					if (!state.chatCollection[chatId]) {
@@ -1945,9 +2035,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					if (!state.collection[messageId]) {
 						return [];
 					}
-					return state.collection[messageId].files.map(fileId => {
-						return this.store.getters['files/get'](fileId, true);
-					});
+
+					// The composition can run ahead of the entities: an edit writes the saved file ids into
+					// the model at once, while the files themselves arrive with the pull event. Consumers
+					// read this as a list of files, so an id with nothing behind it is dropped, not passed
+					// on as a hole.
+					return state.collection[messageId].files.map(fileId => this.store.getters['files/get'](fileId, true)).filter(Boolean);
 				},
 				/** @function messages/getMessageType */
 				getMessageType: state => messageId => {
@@ -2450,6 +2543,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (this.#needToSwapAuthorId(formattedFields, messageParams)) {
 				formattedFields.authorId = this.#prepareSwapAuthorId(formattedFields, messageParams);
 			}
+			const notDelivered = this.#computeNotDelivered(fields, messageParams);
+			if (!main_core.Type.isUndefined(notDelivered)) {
+				formattedFields.notDelivered = notDelivered;
+			}
 			return formattedFields;
 		}
 		#needToSwapAuthorId(formattedFields, messageParams) {
@@ -2458,6 +2555,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				USER_ID: userId
 			} = messageParams;
 			return Boolean(name && userId && formattedFields.authorId);
+		}
+
+		// Undefined means "no delivery parameter in this update": the caller keeps the stored value
+		// so the watchdog flag (messages/update with { notDelivered: true } and no params) survives.
+		#computeNotDelivered(fields, messageParams) {
+			if (main_core.Type.isUndefined(messageParams.SENDING)) {
+				return fields.notDelivered;
+			}
+			if (messageParams.SENDING !== 'Y') {
+				return false;
+			}
+			const sendingTs = convertToNumber(messageParams.SENDING_TS);
+			if (!(sendingTs > 0)) {
+				return false;
+			}
+			const threshold = this.#messageHasFiles(messageParams) ? im_v2_const.DeliveryTimeout.WithFiles : im_v2_const.DeliveryTimeout.Default;
+			const nowInSeconds = Math.floor(Date.now() / 1000);
+			return sendingTs + threshold < nowInSeconds;
+		}
+		#messageHasFiles(messageParams) {
+			return main_core.Type.isArrayFilled(messageParams.FILE_ID) || main_core.Type.isArrayFilled(messageParams.FILES);
 		}
 		#prepareSwapAuthorId(formattedFields, messageParams) {
 			const {
@@ -2530,6 +2648,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 			}
 			return lastOwnMessageId;
+		}
+		#findLastOwnMessage(messages) {
+			for (let index = messages.length - 1; index >= 0; index--) {
+				const message = messages[index];
+				if (message.authorId === im_v2_application_core.Core.getUserId()) {
+					return message;
+				}
+			}
+			return null;
 		}
 		#findFirstUnread(state, chatId) {
 			let resultId = 0;
@@ -3628,6 +3755,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'id',
 		checkFunction: im_v2_lib_utils.Utils.user.isNetworkUserId
 	}, {
+		fieldName: 'active',
+		targetFieldName: 'active',
+		checkFunction: main_core.Type.isBoolean
+	}, {
 		fieldName: 'firstName',
 		targetFieldName: 'firstName',
 		checkFunction: main_core.Type.isString,
@@ -3673,6 +3804,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'type',
 		checkFunction: main_core.Type.isString
 	}, {
+		fieldName: 'extranet',
+		targetFieldName: 'extranet',
+		checkFunction: main_core.Type.isBoolean
+	}, {
 		fieldName: 'network',
 		targetFieldName: 'network',
 		checkFunction: main_core.Type.isBoolean
@@ -3684,6 +3819,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'externalAuthId',
 		targetFieldName: 'externalAuthId',
 		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'internalAccount',
+		targetFieldName: 'internalAccount',
+		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'intranetUser',
+		targetFieldName: 'intranetUser',
+		checkFunction: main_core.Type.isBoolean
 	}, {
 		fieldName: 'status',
 		targetFieldName: 'status',
@@ -3891,6 +4034,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} = params;
 			return {
 				id,
+				active: true,
 				name: '',
 				firstName: '',
 				lastName: '',
@@ -3899,9 +4043,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				workPosition: '',
 				gender: 'M',
 				type: im_v2_const.UserType.user,
+				extranet: false,
 				network: false,
 				connector: false,
 				externalAuthId: 'default',
+				// only the full server format brings these verdicts of the server,
+				// so their default means 'the server did not confirm'
+				internalAccount: false,
+				intranetUser: false,
 				status: '',
 				idle: false,
 				lastActivityDate: false,
@@ -3959,6 +4108,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					});
 					return result;
 				},
+				/** @function users/getCollection */
+				getCollection: state => {
+					return Object.values(state.collection);
+				},
 				/** @function users/hasBirthday */
 				hasBirthday: state => rawUserId => {
 					const userId = Number.parseInt(rawUserId, 10);
@@ -4006,6 +4159,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function users/isGuest */
 				isGuest: state => userId => {
 					return state.collection[userId]?.type === im_v2_const.UserType.guest;
+				},
+				/** @function users/isBot */
+				isBot: state => userId => {
+					return state.collection[userId]?.type === im_v2_const.UserType.bot;
+				},
+				/** @function users/isExtranet */
+				isExtranet: state => userId => {
+					return state.collection[userId]?.type === im_v2_const.UserType.extranet;
 				}
 			};
 		}
@@ -4243,6 +4404,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'status',
 		checkFunction: [main_core.Type.isString, file => !main_core.Type.isUndefined(im_v2_const.FileStatus[file.status])]
 	}, {
+		fieldName: 'validationError',
+		targetFieldName: 'validationError',
+		checkFunction: [main_core.Type.isString, main_core.Type.isNull]
+	}, {
 		fieldName: 'progress',
 		targetFieldName: 'progress',
 		checkFunction: isNumberOrString,
@@ -4251,6 +4416,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'isVideoNote',
 		targetFieldName: 'isVideoNote',
 		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'isVoiceNote',
+		targetFieldName: 'isVoiceNote',
+		checkFunction: main_core.Type.isBoolean
+	}, {
+		// Comes only with files sent after the field appeared: for the rest the check drops the null
+		// the server sends, and the consumer falls back to reading the duration from the media itself.
+		fieldName: 'duration',
+		targetFieldName: 'duration',
+		checkFunction: isNumberOrString,
+		formatFunction: convertToNumber
 	}, {
 		fieldName: 'authorId',
 		targetFieldName: 'authorId',
@@ -4266,6 +4442,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'urlPreview',
 		checkFunction: main_core.Type.isString,
 		formatFunction: prepareUrl
+	}, {
+		fieldName: 'mediaUrl',
+		targetFieldName: 'mediaUrl',
+		checkFunction: main_core.Type.isPlainObject
 	}, {
 		fieldName: 'urlDownload',
 		targetFieldName: 'urlDownload',
@@ -4310,14 +4490,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				size: 0,
 				image: null,
 				status: im_v2_const.FileStatus.done,
+				validationError: null,
 				progress: 100,
 				authorId: 0,
 				authorName: '',
 				urlPreview: '',
+				mediaUrl: {},
 				urlShow: '',
 				urlDownload: '',
 				viewerAttrs: null,
-				isVideoNote: false
+				isVideoNote: false,
+				isVoiceNote: false,
+				duration: null
 			};
 		}
 		getGetters() {
@@ -4338,10 +4522,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						const temporaryFile = getters.getMappedTemporaryFile({
 							serverFileId: fileId
 						});
+						const temporaryVoiceFields = temporaryFile.isVoiceNote ? {
+							isVoiceNote: file.isVoiceNote || temporaryFile.isVoiceNote,
+							isTranscribable: file.isTranscribable || temporaryFile.isTranscribable,
+							duration: file.duration ?? temporaryFile.duration
+						} : {};
 						return {
 							...file,
 							urlPreview: temporaryFile.urlPreview,
-							urlShow: temporaryFile.urlShow
+							urlShow: temporaryFile.urlShow,
+							...temporaryVoiceFields
 						};
 					}
 					return file;
@@ -4681,7 +4871,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	const folderCodes = Object.values(im_v2_const.SystemFolderCode);
 	const isValidFolderType = type => Boolean(im_v2_const.FolderType[type]);
+	const isValidFolderCode = code => folderCodes.includes(code);
 	const isValidRecentType = type => Object.values(im_v2_const.RecentType).includes(type);
 	const folderFieldsConfig = [{
 		fieldName: 'id',
@@ -4698,7 +4890,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}, {
 		fieldName: 'code',
 		targetFieldName: 'code',
-		checkFunction: isValidRecentType
+		checkFunction: isValidFolderCode
 	}, {
 		fieldName: 'title',
 		targetFieldName: 'title',
@@ -4707,6 +4899,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'displaysNestedInRoot',
 		targetFieldName: 'displaysNestedInRoot',
 		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'visible',
+		targetFieldName: 'visible',
+		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'description',
+		targetFieldName: 'description',
+		checkFunction: main_core.Type.isString
 	}, {
 		fieldName: 'definition',
 		targetFieldName: 'definition',
@@ -4725,6 +4925,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'chats',
 		checkFunction: main_core.Type.isArray,
 		formatFunction: chats => chats.filter(isValidChat)
+	}, {
+		fieldName: 'sourceFolders',
+		targetFieldName: 'sourceFolders',
+		checkFunction: main_core.Type.isArray,
+		formatFunction: sourceFolders => sourceFolders.filter(main_core.Type.isStringFilled)
+	},
+	// 0 - roots only, null - every nesting level
+	{
+		fieldName: 'parentChatId',
+		targetFieldName: 'parentChatId',
+		checkFunction: [main_core.Type.isNumber, main_core.Type.isNull]
 	}];
 
 	class FoldersModel extends ui_vue3_vuex.BuilderModel {
@@ -4735,17 +4946,65 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		getGetters() {
 			return {
+				// The whole registry in the order of the server. Outside the model the list is asked about
+				// something in particular - the getters below answer those questions.
 				/** @function recent/folders/getList */
 				getList: state => {
 					return Object.values(state.collection).sort((a, b) => a.sort - b.sort || a.id - b.id);
+				},
+				// Service member folders of the composite "all" folder stay in the collection for the
+				// composition resolver, but the server marks them invisible: they must not reach the rail, the
+				// folder list or the initial layout. Folders without the flag (personal and pre-existing system
+				// ones) stay visible.
+				/** @function recent/folders/getVisibleList */
+				getVisibleList: (state, getters) => {
+					return getters.getList.filter(folder => folder.visible !== false);
+				},
+				// Visibility is no part of this question: a hidden personal folder would still hold its place
+				// against the creation limit.
+				/** @function recent/folders/getPersonalList */
+				getPersonalList: (state, getters) => {
+					return getters.getList.filter(folder => folder.type === im_v2_const.FolderType.personal);
 				},
 				/** @function recent/folders/getById */
 				getById: state => folderId => {
 					return state.collection[folderId];
 				},
+				/** @function recent/folders/getByCode */
+				getByCode: state => code => {
+					if (!main_core.Type.isStringFilled(code)) {
+						return null;
+					}
+					return Object.values(state.collection).find(folder => folder.code === code) ?? null;
+				},
+				// A composite folder is recognized by the shape of its definition, not by its code:
+				// its content is a union of the sections of the folders it unites.
+				/** @function recent/folders/isComposite */
+				isComposite: state => folderId => {
+					return main_core.Type.isArrayFilled(state.collection[folderId]?.definition?.sourceFolders);
+				},
+				/** @function recent/folders/getSourceDefinitions */
+				getSourceDefinitions: (state, getters) => folderId => {
+					if (!getters.isComposite(folderId)) {
+						return [];
+					}
+
+					// the source is known by its code alone, and there is no code -> section table: what the
+					// source contributes lives in the definition of the source folder itself
+					return [...new Set(state.collection[folderId].definition.sourceFolders)].map(sourceCode => getters.getByCode(sourceCode))
+					// the composition comes already resolved for the owner, but a source becoming
+					// available is not pushed at all, so its code can outrun the folder itself
+					.filter(sourceFolder => sourceFolder !== null).map(sourceFolder => sourceFolder.definition);
+				},
+				// the list body needs the sections alone: it shows root chats only, the frames say nothing there
+				/** @function recent/folders/getSourceSections */
+				getSourceSections: (state, getters) => folderId => {
+					const definitions = getters.getSourceDefinitions(folderId);
+					return [...new Set(definitions.map(definition => definition.recentSection))];
+				},
 				/** @function recent/folders/getPersonalCount */
-				getPersonalCount: state => {
-					return Object.values(state.collection).filter(folder => folder.type === im_v2_const.FolderType.personal).length;
+				getPersonalCount: (state, getters) => {
+					return getters.getPersonalList.length;
 				}
 			};
 		}
@@ -4879,6 +5138,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				lastActivityDate: null
 			};
 		}
+
+		// eslint-disable-next-line max-lines-per-function
 		getGetters() {
 			return {
 				/** @function recent/getCollection */
@@ -4909,7 +5170,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function recent/getSortedCollection */
 				getSortedCollection: () => payload => {
 					const collection = this.store.getters['recent/getCollection'](payload);
-					return [...collection].sort(this.#compareByDate);
+					return this.#sortByDate(collection);
 				},
 				/** @function recent/getSortedUnreadCollection */
 				getSortedUnreadCollection: () => payload => {
@@ -4918,10 +5179,37 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						unread: true
 					});
 				},
+				/** @function recent/getRootUnionCollection */
+				getRootUnionCollection: () => payload => {
+					const {
+						sections,
+						unread = false
+					} = payload;
+					const seenDialogIds = new Set();
+					const union = [];
+					sections.forEach(section => {
+						const sectionItems = this.store.getters['recent/getCollection']({
+							type: section,
+							unread
+						});
+						sectionItems.forEach(item => {
+							if (seenDialogIds.has(item.dialogId) || !this.#isRootChat(item.dialogId)) {
+								return;
+							}
+							seenDialogIds.add(item.dialogId);
+							union.push(item);
+						});
+					});
+					return this.#sortByDate(union);
+				},
+				/** @function recent/getUnreadIndexEntries */
+				getUnreadIndexEntries: state => () => {
+					return this.#getUnreadIndexEntries(state);
+				},
 				/** @function recent/getCollectionByIds */
 				getCollectionByIds: state => dialogIds => {
 					const collection = dialogIds.map(dialogId => state.collection[dialogId]).filter(item => Boolean(item) && !state.hiddenChats.has(item.dialogId));
-					return [...collection].sort(this.#compareByDate);
+					return this.#sortByDate(collection);
 				},
 				/** @function recent/get */
 				get: state => dialogId => {
@@ -4945,6 +5233,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return null;
 					}
 					return this.#getMessage(element.ownMessageId);
+				},
+				/** @function recent/getShownChatId */
+				getShownChatId: state => dialogId => {
+					const element = state.collection[dialogId];
+					if (!element) {
+						return 0;
+					}
+					const shownChatId = this.#getMessage(element.messageId)?.chatId;
+					if (shownChatId > 0) {
+						return shownChatId;
+					}
+					if (Number(element.messageId) === Number(element.ownMessageId)) {
+						return this.store.getters['chats/get'](dialogId)?.chatId ?? 0;
+					}
+					return 0;
 				},
 				/** @function recent/hasInCollection */
 				hasInCollection: state => payload => {
@@ -5341,6 +5644,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 			return result;
 		}
+
+		// the top-level bucket also holds nested chats propagated by setCollection, so the real level lives in chats
+		#isRootChat(dialogId) {
+			const chat = this.store.getters['chats/get'](dialogId);
+			return chat?.parentChatId === im_v2_const.ParentChatScope.topLevel;
+		}
+		#getUnreadIndexEntries(state) {
+			const entries = [];
+			Object.entries(state.unreadIndex).forEach(([parentChatId, sectionGroup]) => {
+				Object.entries(sectionGroup).forEach(([recentSection, dialogIds]) => {
+					dialogIds.forEach(dialogId => {
+						entries.push({
+							recentSection,
+							dialogId,
+							parentChatId: Number(parentChatId)
+						});
+					});
+				});
+			});
+			return entries;
+		}
 		#getMessage(messageId) {
 			return im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
 		}
@@ -5376,13 +5700,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const existingItem = im_v2_application_core.Core.getStore().getters['recent/get'](payload.dialogId);
 			return existingItem && !main_core.Type.isStringFilled(payload.text) && existingItem.messageId.toString().startsWith(im_v2_const.FakeDraftMessagePrefix);
 		}
-		#compareByDate(a, b) {
-			const dateA = im_v2_lib_recent.RecentManager.getSortDate(a.dialogId);
-			const dateB = im_v2_lib_recent.RecentManager.getSortDate(b.dialogId);
-			if (dateA?.getTime() === dateB?.getTime()) {
-				return a.dialogId > b.dialogId ? 1 : -1;
-			}
-			return dateB - dateA;
+
+		// The sort date is read from the store, so it is taken once per row and not once per comparison.
+		#sortByDate(items) {
+			const sortDates = new Map(items.map(item => [item.dialogId, im_v2_lib_recent.RecentManager.getSortDate(item.dialogId)]));
+			return [...items].sort((a, b) => {
+				const dateA = sortDates.get(a.dialogId);
+				const dateB = sortDates.get(b.dialogId);
+				if (dateA?.getTime() === dateB?.getTime()) {
+					return a.dialogId > b.dialogId ? 1 : -1;
+				}
+				return dateB - dateA;
+			});
 		}
 	}
 
@@ -7424,6 +7753,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		checkFunction: main_core.Type.isNumber
 	}];
 
+	const LATEST_FILES_LIMIT = 3;
+
+	/**
+	 * The date is compared as a time value, not as a string: a comparison of date formats gives a wrong
+	 * order. The number resolves the tie: without it records of one date follow the order of insertion
+	 * into the collection and change places between redraws.
+	 */
+	const compareByDateDesc = (first, second) => {
+		const dateDiff = second.date.getTime() - first.date.getTime();
+		return dateDiff === 0 ? second.id - first.id : dateDiff;
+	};
+	const compareByIdDesc = (first, second) => {
+		return second.id - first.id;
+	};
+
+	/**
+	 * The order of a collection must match the order the server read that group in (API-01): pages of
+	 * the voice tab arrive by the date of the record, the other groups arrive by its number, and sorting
+	 * a page by the other key would shuffle already ordered pages between each other.
+	 */
+	const getComparator = group => {
+		return group === im_v2_const.SidebarFileGroups.audio ? compareByDateDesc : compareByIdDesc;
+	};
+
 	/* eslint-disable no-param-reassign */
 	class FilesModel extends ui_vue3_vuex.BuilderModel {
 		getState() {
@@ -7447,7 +7800,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				items: new Map(),
 				hasNextPage: true,
-				lastId: 0
+				lastId: 0,
+				lastDate: ''
 			};
 		}
 
@@ -7459,14 +7813,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					if (!state.collection[chatId] || !state.collection[chatId][group]) {
 						return [];
 					}
-					return [...state.collection[chatId][group].items.values()].sort((a, b) => b.id - a.id);
+					return [...state.collection[chatId][group].items.values()].sort(getComparator(group));
 				},
 				/** @function sidebar/files/getSearchResultCollection */
 				getSearchResultCollection: state => (chatId, group) => {
 					if (!state.collectionSearch[chatId] || !state.collectionSearch[chatId][group]) {
 						return [];
 					}
-					return [...state.collectionSearch[chatId][group].items.values()].sort((a, b) => b.id - a.id);
+					return [...state.collectionSearch[chatId][group].items.values()].sort(getComparator(group));
 				},
 				/** @function sidebar/files/getLatest */
 				getLatest: (state, getters, rootState, rootGetters) => chatId => {
@@ -7511,6 +7865,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					return state.collection[chatId][group].items.size;
 				},
+				// Whether the chat holds any file at all, whatever its group and whatever the preview block
+				// of the sidebar is willing to show: a chat of nothing but video notes has files, and
+				// `getLatest` leaves them out of its selection by design.
+				/** @function sidebar/files/hasAnyFiles */
+				hasAnyFiles: state => chatId => {
+					const groups = state.collection[chatId];
+					if (!groups) {
+						return false;
+					}
+					return Object.values(groups).some(group => group.items.size > 0);
+				},
 				/** @function sidebar/files/hasNextPage */
 				hasNextPage: state => (chatId, group) => {
 					if (!state.collection[chatId] || !state.collection[chatId][group]) {
@@ -7538,6 +7903,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return false;
 					}
 					return state.collectionSearch[chatId][group].lastId;
+				},
+				/** @function sidebar/files/getLastDate */
+				getLastDate: state => (chatId, group) => {
+					if (!state.collection[chatId] || !state.collection[chatId][group]) {
+						return '';
+					}
+					return state.collection[chatId][group].lastDate;
+				},
+				/** @function sidebar/files/getSearchResultCollectionLastDate */
+				getSearchResultCollectionLastDate: state => (chatId, group) => {
+					if (!state.collectionSearch[chatId] || !state.collectionSearch[chatId][group]) {
+						return '';
+					}
+					return state.collectionSearch[chatId][group].lastDate;
 				},
 				/** @function sidebar/files/isHistoryLimitExceeded */
 				isHistoryLimitExceeded: state => chatId => {
@@ -7655,7 +8034,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const {
 						chatId,
 						group,
-						lastId
+						lastId,
+						lastDate = ''
 					} = payload;
 					if (!main_core.Type.isNumber(chatId)) {
 						return;
@@ -7666,7 +8046,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					store.commit('setLastId', {
 						chatId,
 						group,
-						lastId
+						lastId,
+						lastDate
 					});
 				},
 				/** @function sidebar/files/setLastIdSearch */
@@ -7674,7 +8055,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const {
 						chatId,
 						group,
-						lastId
+						lastId,
+						lastDate = ''
 					} = payload;
 					if (!main_core.Type.isNumber(chatId)) {
 						return;
@@ -7685,7 +8067,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					store.commit('setLastIdSearch', {
 						chatId,
 						group,
-						lastId
+						lastId,
+						lastDate
+					});
+				},
+				/** @function sidebar/files/clearGroup */
+				clearGroup: (store, payload) => {
+					const {
+						chatId,
+						group
+					} = payload;
+					if (!main_core.Type.isNumber(chatId)) {
+						return;
+					}
+					if (!store.state.collection[chatId]) {
+						return;
+					}
+					store.commit('clearGroup', {
+						chatId,
+						group
 					});
 				},
 				/** @function sidebar/files/clearSearch */
@@ -7782,11 +8182,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					state.collectionSearch[chatId][group].hasNextPage = hasNextPage;
 				},
+				// the boundary of the page is written as a whole: a number without a date is the cursor of
+				// another order, and leaving the previous date next to it would pass off a mixed pair as its own
 				setLastId: (state, payload) => {
 					const {
 						chatId,
 						group,
-						lastId
+						lastId,
+						lastDate = ''
 					} = payload;
 					if (!state.collection[chatId]) {
 						state.collection[chatId] = {};
@@ -7796,12 +8199,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						state.collection[chatId][group] = this.getChatState();
 					}
 					state.collection[chatId][group].lastId = lastId;
+					state.collection[chatId][group].lastDate = lastDate;
 				},
 				setLastIdSearch: (state, payload) => {
 					const {
 						chatId,
 						group,
-						lastId
+						lastId,
+						lastDate = ''
 					} = payload;
 					if (!state.collectionSearch[chatId]) {
 						state.collectionSearch[chatId] = {};
@@ -7811,6 +8216,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						state.collectionSearch[chatId][group] = this.getChatState();
 					}
 					state.collectionSearch[chatId][group].lastId = lastId;
+					state.collectionSearch[chatId][group].lastDate = lastDate;
+				},
+				clearGroup: (state, payload) => {
+					const {
+						chatId,
+						group
+					} = payload;
+					if (!state.collection[chatId] || !state.collection[chatId][group]) {
+						return;
+					}
+					state.collection[chatId][group] = this.getChatState();
 				},
 				clearSearch: state => {
 					state.collectionSearch = {};
@@ -7831,10 +8247,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return formatFieldsWithConfig(fields, sidebarFilesFieldsConfig);
 		}
 		getTopThreeCompletedFiles(collection, rootGetters) {
-			return collection.filter(sidebarFile => {
+			const selected = [];
+			for (const sidebarFile of collection) {
+				// The record of the panel outlives the Disk object it points at, so a record whose file is
+				// gone stays in the collection. Everything the selection is made by is read from the file.
+				if (!rootGetters['files/isInCollection']({
+					fileId: sidebarFile.fileId
+				})) {
+					continue;
+				}
 				const file = rootGetters['files/get'](sidebarFile.fileId, true);
-				return file.progress === 100;
-			}).slice(0, 3);
+
+				// A video note is not a media file of this block: the block draws every record with a
+				// rectangular preview and opens it in the viewer, and neither fits a round record. The sign
+				// is taken from the file, the same one the row of the tab is chosen by (DTO-01).
+				if (file.progress === 100 && !file.isVideoNote) {
+					selected.push(sidebarFile);
+				}
+				if (selected.length === LATEST_FILES_LIMIT) {
+					break;
+				}
+			}
+			return selected;
 		}
 	}
 
@@ -8287,7 +8721,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					[im_v2_const.PlacementType.textarea]: new Set(),
 					[im_v2_const.PlacementType.sidebar]: new Set(),
 					[im_v2_const.PlacementType.smilesSelector]: new Set()
-				}
+				},
+				openedPlacements: {},
+				livePlacements: []
 			};
 		}
 		getElementState() {
@@ -8322,6 +8758,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				},
 				getById: state => id => {
 					return state.collection.get(id);
+				},
+				getOpenedAppId: state => dialogId => {
+					return state.openedPlacements[dialogId] ?? null;
+				},
+				getLivePlacements: state => {
+					return state.livePlacements;
 				}
 			};
 		}
@@ -8338,6 +8780,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						});
 						store.commit('setCollection', item);
 					});
+				},
+				setOpenedPlacement: (store, payload) => {
+					store.commit('setOpenedPlacement', payload);
+				},
+				clearOpenedPlacement: (store, payload) => {
+					if (store.state.openedPlacements[payload.dialogId] !== payload.appId) {
+						return;
+					}
+					store.commit('clearOpenedPlacement', payload);
+				},
+				setLivePlacements: (store, payload) => {
+					store.commit('setLivePlacements', payload);
 				}
 			};
 		}
@@ -8351,6 +8805,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						...this.getElementState(),
 						...this.#validate(payload)
 					});
+				},
+				setOpenedPlacement: (state, payload) => {
+					state.openedPlacements[payload.dialogId] = payload.appId;
+				},
+				clearOpenedPlacement: (state, payload) => {
+					delete state.openedPlacements[payload.dialogId];
+				},
+				setLivePlacements: (state, payload) => {
+					state.livePlacements = payload.placements;
 				}
 			};
 		}
@@ -8448,6 +8911,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		checkFunction: main_core.Type.isArray
 	}];
 
+	// A recent section constrained to a nesting frame: parentChatId 0 - root chats only, null or absent -
+	// every nesting level.
+
 	// noinspection UnnecessaryLocalVariableJS
 	class CountersModel extends ui_vue3_vuex.BuilderModel {
 		getName() {
@@ -8523,6 +8989,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					return totalCount;
 				},
+				/** @function counters/getCounterByRecentSections */
+				getCounterByRecentSections: state => recentSections => {
+					let totalCount = 0;
+					const collection = state.collection;
+					for (const counterItem of Object.values(collection)) {
+						if (this.#isMuted(counterItem)) {
+							continue;
+						}
+						if (!this.#isCountedBySections({
+							collection,
+							counterItem,
+							recentSections
+						})) {
+							continue;
+						}
+						totalCount += this.#resolveCounter(counterItem);
+					}
+					return totalCount;
+				},
 				/** @function counters/getTotalCounterByIds */
 				getTotalCounterByIds: state => chatIds => {
 					let totalCount = 0;
@@ -8571,6 +9056,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						childrenIdsWithCounter.push(counterItem.chatId);
 					}
 					return childrenIdsWithCounter;
+				},
+				/** @function counters/getTreeChatIdsWithUnread */
+				getTreeChatIdsWithUnread: state => parentChatId => {
+					if (parentChatId === 0) {
+						return [];
+					}
+					const chatIds = [];
+					for (const counterItem of Object.values(state.collection)) {
+						const isInTree = counterItem.chatId === parentChatId || counterItem.parentChatId === parentChatId;
+						if (!isInTree || this.#isMuted(counterItem) || this.#resolveCounter(counterItem) === 0) {
+							continue;
+						}
+						chatIds.push(counterItem.chatId);
+					}
+					return chatIds;
 				},
 				/** @function counters/getCounterByChatId */
 				getCounterByChatId: state => chatId => {
@@ -8769,6 +9269,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return this.#hasRecentType(counterItem, recentType);
 		}
+
+		// A chat is counted when at least one of the sections counts it: either through the section of its
+		// direct parent, or through its own section inside the nesting frame of that section.
+		// The frame is what makes the mute of a parent stick, so there is no bypass of the parent-mute check here.
+		#isCountedBySections(params) {
+			const {
+				collection,
+				counterItem,
+				recentSections
+			} = params;
+			for (const {
+				recentSection: recentType,
+				parentChatId
+			} of recentSections) {
+				// the direct parent's section: the frame does not apply, the parent mute does
+				if (this.#hasParentRecentType({
+					collection,
+					counterItem,
+					recentType
+				})) {
+					if (!this.#isParentMuted(collection, counterItem)) {
+						return true;
+					}
+					continue;
+				}
+
+				// the chat's own section, but only inside the frame of that section
+				if (!this.#hasRecentType(counterItem, recentType)) {
+					continue;
+				}
+
+				// a section without a frame of its own takes every nesting level
+				const hasFrame = main_core.Type.isNumber(parentChatId);
+				if (!hasFrame || counterItem.parentChatId === parentChatId) {
+					return true;
+				}
+			}
+			return false;
+		}
 		#shouldClearByRecentType(params) {
 			const {
 				collection,
@@ -8889,6 +9428,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'titleIsCustom',
 		targetFieldName: 'titleIsCustom',
 		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'mcpAuth',
+		targetFieldName: 'mcpAuth',
+		// null is the server saying the selection is cleared, so it has to reach the store too
+		checkFunction: [main_core.Type.isPlainObject, main_core.Type.isNull],
+		formatFunction: target => {
+			if (!target) {
+				return null;
+			}
+			return {
+				id: target.id,
+				name: target.name,
+				icon: target.icon ?? null
+			};
+		}
+	}, {
+		fieldName: 'mcpAuth',
+		targetFieldName: 'mcpSelectionStatus',
+		checkFunction: [main_core.Type.isPlainObject, main_core.Type.isNull],
+		formatFunction: target => {
+			return target?.available === false ? im_v2_const.CopilotMcpSelectionStatus.unavailable : im_v2_const.CopilotMcpSelectionStatus.ready;
+		}
 	}];
 
 	const AI_MODEL_DEFAULT_NAME = 'none';
@@ -8910,7 +9471,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				reasoningEnabled: false,
 				forceSearchEnabled: false,
 				agentModeEnabled: false,
-				mcpAuth: null
+				mcpAuth: null,
+				mcpAuthConfirmed: false,
+				mcpSelectionStatus: im_v2_const.CopilotMcpSelectionStatus.ready,
+				mcpSelectionLoaded: false,
+				generationState: null
 			};
 		}
 		getGetters() {
@@ -8973,6 +9538,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					return state.collection[dialogId].agentModeEnabled;
 				},
+				/** @function copilot/chats/getGenerationState */
+				getGenerationState: state => dialogId => {
+					return state.collection[dialogId]?.generationState ?? null;
+				},
 				/** @function copilot/chats/getMcpAuth */
 				getMcpAuth: state => dialogId => {
 					const chat = state.collection[dialogId];
@@ -8980,6 +9549,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return null;
 					}
 					return chat.mcpAuth;
+				},
+				/** @function copilot/chats/isMcpAuthConfirmed */
+				isMcpAuthConfirmed: state => dialogId => {
+					return state.collection[dialogId]?.mcpAuthConfirmed === true;
+				},
+				/** @function copilot/chats/getMcpSelectionStatus */
+				getMcpSelectionStatus: state => dialogId => {
+					const chat = state.collection[dialogId];
+					if (!chat?.mcpSelectionLoaded) {
+						return im_v2_const.CopilotMcpSelectionStatus.restoring;
+					}
+					return chat.mcpSelectionStatus;
+				},
+				/** @function copilot/chats/isMcpSelectionLoaded */
+				isMcpSelectionLoaded: state => dialogId => {
+					return state.collection[dialogId]?.mcpSelectionLoaded === true;
 				},
 				/** @function copilot/chats/isTempChat */
 				isTempChat: () => dialogId => {
@@ -9009,11 +9594,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return this.formatFields(chat);
 					});
 					preparedChats.forEach(chat => {
+						const loadedChat = this.#withServerSelectionState(chat);
 						const existingItem = store.state.collection[chat.dialogId];
 						if (existingItem) {
 							store.commit('update', {
 								dialogId: chat.dialogId,
-								fields: chat
+								fields: loadedChat
 							});
 							return;
 						}
@@ -9021,7 +9607,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							dialogId: chat.dialogId,
 							fields: {
 								...this.getElementState(),
-								...chat
+								...loadedChat
 							}
 						});
 					});
@@ -9061,19 +9647,85 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					store.commit('toggleAgentMode', dialogId);
 				},
-				/** @function copilot/chats/setMcpAuth */
-				setMcpAuth: (store, payload) => {
-					if (!store.state.collection[payload.dialogId]) {
+				/** @function copilot/chats/setGenerationState */
+				setGenerationState: (store, payload) => {
+					const {
+						dialogId,
+						generationState
+					} = payload ?? {};
+					if (!main_core.Type.isStringFilled(dialogId)) {
 						return;
 					}
+
+					// only the active generation is kept; any terminal status clears the state
+					if (generationState?.status !== im_v2_const.CopilotGenerationStatus.generating) {
+						if (store.state.collection[dialogId]) {
+							store.commit('setGenerationState', {
+								dialogId,
+								generationState: null
+							});
+						}
+						return;
+					}
+					const preparedState = {
+						status: im_v2_const.CopilotGenerationStatus.generating,
+						initiatorId: Number(generationState.initiatorId) || 0
+					};
+					if (store.state.collection[dialogId]) {
+						store.commit('setGenerationState', {
+							dialogId,
+							generationState: preparedState
+						});
+						return;
+					}
+					store.commit('add', {
+						dialogId,
+						fields: {
+							...this.getElementState(),
+							dialogId,
+							generationState: preparedState
+						}
+					});
+				},
+				/** @function copilot/chats/clearGenerationState */
+				clearGenerationState: (store, dialogId) => {
+					if (!store.state.collection[dialogId]) {
+						return;
+					}
+					store.commit('setGenerationState', {
+						dialogId,
+						generationState: null
+					});
+				},
+				/** @function copilot/chats/setMcpAuth */
+				setMcpAuth: (store, payload) => {
+					const {
+						dialogId
+					} = payload ?? {};
+					if (!main_core.Type.isStringFilled(dialogId)) {
+						return;
+					}
+					this.#addChatIfMissing(store, dialogId);
 					store.commit('setMcpAuth', payload);
 				},
 				/** @function copilot/chats/clearMcpAuth */
 				clearMcpAuth: (store, dialogId) => {
-					if (!store.state.collection[dialogId]) {
+					if (!main_core.Type.isStringFilled(dialogId)) {
 						return;
 					}
+					this.#addChatIfMissing(store, dialogId);
 					store.commit('clearMcpAuth', dialogId);
+				},
+				/** @function copilot/chats/setMcpSelectionStatus */
+				setMcpSelectionStatus: (store, payload) => {
+					const {
+						dialogId
+					} = payload ?? {};
+					if (!main_core.Type.isStringFilled(dialogId)) {
+						return;
+					}
+					this.#addChatIfMissing(store, dialogId);
+					store.commit('setMcpSelectionStatus', payload);
 				},
 				/** @function copilot/chats/delete */
 				delete: (store, dialogId) => {
@@ -9095,7 +9747,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const userFields = {
 						forceSearchEnabled: source.forceSearchEnabled,
 						agentModeEnabled: source.agentModeEnabled,
-						mcpAuth: source.mcpAuth
+						mcpAuth: source.mcpAuth,
+						mcpAuthConfirmed: source.mcpAuthConfirmed,
+						// the migrated selection is all there is to restore for the created chat
+						mcpSelectionLoaded: true
 					};
 					const target = store.state.collection[toDialogId];
 					if (target) {
@@ -9200,11 +9855,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				toggleAgentMode: (state, dialogId) => {
 					state.collection[dialogId].agentModeEnabled = !state.collection[dialogId].agentModeEnabled;
 				},
+				setGenerationState: (state, payload) => {
+					state.collection[payload.dialogId].generationState = payload.generationState;
+				},
 				setMcpAuth: (state, payload) => {
 					state.collection[payload.dialogId].mcpAuth = payload.mcpAuth;
+					state.collection[payload.dialogId].mcpAuthConfirmed = payload.confirmed === true;
 				},
 				clearMcpAuth: (state, dialogId) => {
 					state.collection[dialogId].mcpAuth = null;
+					state.collection[dialogId].mcpAuthConfirmed = false;
+				},
+				setMcpSelectionStatus: (state, payload) => {
+					state.collection[payload.dialogId].mcpSelectionStatus = payload.status;
+					// a status written by the client is a known one, restoring included
+					state.collection[payload.dialogId].mcpSelectionLoaded = true;
 				},
 				delete: (state, dialogId) => {
 					delete state.collection[dialogId];
@@ -9218,6 +9883,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		formatFields(fields) {
 			return formatFieldsWithConfig(fields, chatFieldsConfig);
+		}
+
+		// a selection dropped for a chat whose data has not arrived would stay restoring forever
+		#addChatIfMissing(store, dialogId) {
+			if (store.state.collection[dialogId]) {
+				return;
+			}
+			store.commit('add', {
+				dialogId,
+				fields: {
+					...this.getElementState(),
+					dialogId
+				}
+			});
+		}
+
+		// a payload without the mcpAuth field says nothing about the selection saved on the server
+		#withServerSelectionState(chat) {
+			if (main_core.Type.isUndefined(chat.mcpAuth)) {
+				return {
+					...chat
+				};
+			}
+			return {
+				...chat,
+				mcpSelectionLoaded: true,
+				mcpAuthConfirmed: Boolean(chat.mcpAuth) && chat.mcpSelectionStatus === im_v2_const.CopilotMcpSelectionStatus.ready
+			};
 		}
 	}
 
@@ -9516,6 +10209,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return;
 					}
 					store.commit('delete', messageId);
+				},
+				/** @function copilot/votes/add */
+				add: (store, payload) => {
+					if (!main_core.Type.isArrayFilled(payload)) {
+						return;
+					}
+					payload.forEach(item => {
+						const preparedVote = this.formatFields(item);
+						if (main_core.Type.isUndefined(preparedVote.messageId) || main_core.Type.isUndefined(preparedVote.value)) {
+							return;
+						}
+						store.commit('set', preparedVote);
+					});
 				}
 			};
 		}
@@ -9554,7 +10260,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				name: '',
 				agentName: '',
 				widgetDialogId: '',
-				suggests: []
+				sentChatDialogId: '',
+				activatedChatDialogId: '',
+				suggests: [],
+				greetings: [],
+				greetingWeekHolidays: []
 			};
 		}
 		getGetters() {
@@ -9595,9 +10305,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				isChatOpenedInWidget: state => dialogId => {
 					return state.widgetDialogId !== '' && state.widgetDialogId === dialogId;
 				},
+				// the chat just opened by sending from the widget start screen; only that swap cross-fades
+				/** @function copilot/isWidgetChatOpenedBySend */
+				isWidgetChatOpenedBySend: state => dialogId => {
+					return state.sentChatDialogId !== '' && state.sentChatDialogId === dialogId;
+				},
+				// the central BitrixGPT chat just opened by activating the draft with a send; only that swap cross-fades
+				/** @function copilot/isChatOpenedBySend */
+				isChatOpenedBySend: state => dialogId => {
+					return state.activatedChatDialogId !== '' && state.activatedChatDialogId === dialogId;
+				},
 				/** @function copilot/getSuggests */
 				getSuggests: state => {
 					return state.suggests;
+				},
+				/** @function copilot/getGreetings */
+				getGreetings: state => {
+					return state.greetings;
+				},
+				/** @function copilot/getGreetingWeekHolidays */
+				getGreetingWeekHolidays: state => {
+					return state.greetingWeekHolidays;
 				}
 			};
 		}
@@ -9637,12 +10365,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				setWidgetDialogId: (store, payload) => {
 					store.commit('setWidgetDialogId', payload ?? '');
 				},
+				/** @function copilot/setSentChatDialogId */
+				setSentChatDialogId: (store, payload) => {
+					store.commit('setSentChatDialogId', payload ?? '');
+				},
+				/** @function copilot/setActivatedChatDialogId */
+				setActivatedChatDialogId: (store, payload) => {
+					store.commit('setActivatedChatDialogId', payload ?? '');
+				},
 				/** @function copilot/setSuggests */
 				setSuggests: (store, payload) => {
 					if (!main_core.Type.isArray(payload)) {
 						return;
 					}
 					store.commit('setSuggests', payload);
+				},
+				/** @function copilot/setGreetings */
+				setGreetings: (store, payload) => {
+					if (!main_core.Type.isArray(payload)) {
+						return;
+					}
+					store.commit('setGreetings', payload);
+				},
+				/** @function copilot/setGreetingWeekHolidays */
+				setGreetingWeekHolidays: (store, payload) => {
+					if (!main_core.Type.isArray(payload)) {
+						return;
+					}
+					store.commit('setGreetingWeekHolidays', payload);
 				}
 			};
 		}
@@ -9663,8 +10413,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				setWidgetDialogId: (state, payload) => {
 					state.widgetDialogId = payload;
 				},
+				setSentChatDialogId: (state, payload) => {
+					state.sentChatDialogId = payload;
+				},
+				setActivatedChatDialogId: (state, payload) => {
+					state.activatedChatDialogId = payload;
+				},
 				setSuggests: (state, payload) => {
 					state.suggests = payload;
+				},
+				setGreetings: (state, payload) => {
+					state.greetings = payload;
+				},
+				setGreetingWeekHolidays: (state, payload) => {
+					state.greetingWeekHolidays = payload;
 				}
 			};
 		}
@@ -9703,6 +10465,223 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				setMcpAuthId: (state, mcpAuthId) => {
 					state.mcpAuthId = mcpAuthId;
+				}
+			};
+		}
+	}
+
+	/**
+	 * A status that reached the client before the operation it belongs to. The first status of an
+	 * operation is sent by the very request that answers its start
+	 * (`MultipleMessagesCreator::sendAiQuery()` sends `Search` and keeps working afterwards), so it can
+	 * arrive through the pull channel while the answer - and with it `aiTask/start` - is still on its
+	 * way. One slot is enough: a start raises exactly one operation, and only the newest such status
+	 * can still be waiting for a start of its own.
+	 */
+
+	/**
+	 * How long a status may wait for its own start. Deliberately shorter than the windows the pull
+	 * handler and the service give an operation: this one covers the race between the answer of the
+	 * start request and the pull channel, which is settled in seconds, and a longer wait would let the
+	 * status of a finished operation reach the next one started on the same message.
+	 */
+	const EARLY_STATUS_LIFETIME = 30_000;
+
+	/**
+	 * The web tracks exactly ONE AI-task operation per chat (keyed by chatId): the indication is
+	 * shown on the source message, and a chat cannot have two of them at once. A second `start`
+	 * in the same chat overwrites the previous operation (its anchorMessageId), and from then on
+	 * pull events of the overwritten operation are dropped by the anchor check in `applyStatus`.
+	 * This is intentional (SDD: indication on the source message). The backend may run several
+	 * operations for one chat independently (e.g. voice/video), but the web does not track those -
+	 * only the last started one.
+	 */
+
+	function createOperation(anchorMessageId, messageIds, indicatedMessageIds) {
+		// Copied, not referenced: the composition must not change while the operation runs (EVENT-02).
+		// The anchor belongs to the set by construction (`Math.max(...messageIds)`), so it is the fallback
+		// for a single source.
+		const composition = main_core.Type.isArrayFilled(messageIds) ? [...messageIds] : [anchorMessageId];
+		const indicated = main_core.Type.isArray(indicatedMessageIds) ? composition.filter(messageId => indicatedMessageIds.includes(messageId)) : [...composition];
+		return {
+			status: null,
+			anchorMessageId,
+			messageIds: composition,
+			indicatedMessageIds: indicated,
+			captionMessageId: indicated.length > 0 ? Math.max(...indicated) : null,
+			isPartial: false,
+			anchorVisible: false
+		};
+	}
+
+	/**
+	 * Hands the operation just started the status that overtook it, if the waiting one is its own. The
+	 * anchor decides, exactly as it does in `applyStatus`; the slot is freed either way, since a status
+	 * addressed to this anchor has no other start left to wait for.
+	 */
+	function applyEarlyStatus(store, chatId, anchorMessageId) {
+		const early = store.state.earlyStatus;
+		if (!early || early.anchorMessageId !== anchorMessageId) {
+			return;
+		}
+		store.commit('deleteEarlyStatus');
+
+		// Past its lifetime the status describes a stage this operation has not reached, so the frame
+		// starts where every start starts - on the entry stage, guarded by the start watchdog.
+		if (Date.now() - early.arrivedAt > EARLY_STATUS_LIFETIME) {
+			return;
+		}
+		store.commit('set', {
+			chatId,
+			operation: {
+				...store.state.collection[chatId],
+				status: early.status
+			}
+		});
+	}
+
+	/* eslint-disable no-param-reassign */
+	class AiTaskModel extends ui_vue3_vuex.BuilderModel {
+		getName() {
+			return 'aiTask';
+		}
+		getState() {
+			return {
+				collection: {},
+				earlyStatus: null
+			};
+		}
+		getGetters() {
+			return {
+				/** @function aiTask/getForChat */
+				getForChat: state => chatId => {
+					return state.collection[chatId] ?? null;
+				}
+			};
+		}
+		getActions() {
+			return {
+				/** @function aiTask/start */
+				start: (store, payload) => {
+					const {
+						chatId,
+						anchorMessageId,
+						messageIds,
+						indicatedMessageIds
+					} = payload;
+					// `Type.isNumber` rejects NaN but passes Infinity (`typeof Infinity === 'number'`),
+					// so require a finite anchor explicitly: an Infinity anchor would never match a pull
+					// messageId and the indication would hang until the watchdog.
+					if (!main_core.Type.isNumber(chatId) || !Number.isFinite(anchorMessageId)) {
+						return;
+					}
+					store.commit('set', {
+						chatId,
+						operation: createOperation(anchorMessageId, messageIds, indicatedMessageIds)
+					});
+
+					// A status of this operation may already be here: dropped instead of applied, it would
+					// leave the operation with no status at all - the start watchdog of the service would
+					// take the frame of a running operation down, and the terminal event of that operation
+					// would then find nothing left in the store to report on.
+					applyEarlyStatus(store, chatId, anchorMessageId);
+				},
+				/** @function aiTask/rememberEarlyStatus */
+				rememberEarlyStatus: (store, payload) => {
+					const {
+						messageId,
+						status
+					} = payload;
+					if (!Number.isFinite(messageId) || !main_core.Type.isStringFilled(status)) {
+						return;
+					}
+					store.commit('setEarlyStatus', {
+						anchorMessageId: messageId,
+						status,
+						arrivedAt: Date.now()
+					});
+				},
+				/** @function aiTask/applyStatus */
+				applyStatus: (store, payload) => {
+					const {
+						chatId,
+						messageId,
+						status,
+						isPartial
+					} = payload;
+					const operation = store.state.collection[chatId];
+
+					// Correlation by anchor: react only to the tracked operation.
+					if (!operation || operation.anchorMessageId !== messageId) {
+						return;
+					}
+					store.commit('set', {
+						chatId,
+						operation: {
+							...operation,
+							status,
+							// The partial-result flag rides only on the terminal success (EVENT-01), so a status
+							// that arrives without it resets the flag: a later operation of the same chat must not
+							// inherit the partial result of the previous one.
+							isPartial: isPartial === true
+						}
+					});
+				},
+				/** @function aiTask/setAnchorVisibility */
+				setAnchorVisibility: (store, payload) => {
+					const {
+						chatId,
+						messageId,
+						visible
+					} = payload;
+					const operation = store.state.collection[chatId];
+
+					// Correlated with the caption message, not with the anchor: the flag tells whether the
+					// caption can be seen, and an operation without one has nothing to report.
+					if (!operation || operation.captionMessageId !== messageId) {
+						return;
+					}
+					const anchorVisible = visible === true;
+					// Visibility is reported by an observer on every scroll pass: skip the no-op write, since
+					// `set` replaces the whole operation and would otherwise re-render its readers for nothing.
+					if (operation.anchorVisible === anchorVisible) {
+						return;
+					}
+					store.commit('set', {
+						chatId,
+						operation: {
+							...operation,
+							anchorVisible
+						}
+					});
+				},
+				/** @function aiTask/clear */
+				clear: (store, payload) => {
+					const {
+						chatId
+					} = payload;
+					if (!store.state.collection[chatId]) {
+						return;
+					}
+					store.commit('delete', {
+						chatId
+					});
+				}
+			};
+		}
+		getMutations() {
+			return {
+				set: (state, payload) => {
+					state.collection[payload.chatId] = payload.operation;
+				},
+				delete: (state, payload) => {
+					delete state.collection[payload.chatId];
+				},
+				setEarlyStatus: (state, payload) => {
+					state.earlyStatus = payload;
+				},
+				deleteEarlyStatus: state => {
+					state.earlyStatus = null;
 				}
 			};
 		}
@@ -9907,6 +10886,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							...preparedStickerMessage
 						});
 					});
+				},
+				/** @function stickers/messages/delete */
+				delete: (store, payload) => {
+					store.commit('delete', payload.messageId);
 				},
 				/** @function stickers/messages/updateWithId */
 				updateWithId: (store, payload) => {
@@ -10268,9 +11251,100 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	const LoadStatus = Object.freeze({
+		idle: 'idle',
+		loading: 'loading',
+		success: 'success',
+		error: 'error'
+	});
+	/* eslint-disable no-param-reassign */
+	class CommandsModel extends ui_vue3_vuex.BuilderModel {
+		getName() {
+			return 'commands';
+		}
+		getState() {
+			return {
+				collection: {}
+			};
+		}
+		getElementState() {
+			return {
+				items: [],
+				status: LoadStatus.idle
+			};
+		}
+		getGetters() {
+			return {
+				/** @function commands/getByDialogId */
+				getByDialogId: state => dialogId => {
+					return state.collection[dialogId]?.items ?? [];
+				},
+				/** @function commands/getStatus */
+				getStatus: state => dialogId => {
+					return state.collection[dialogId]?.status ?? LoadStatus.idle;
+				},
+				/** @function commands/isCached */
+				isCached: state => dialogId => {
+					const chatState = state.collection[dialogId];
+					return Boolean(chatState) && chatState.status !== LoadStatus.idle;
+				}
+			};
+		}
+		getActions() {
+			return {
+				/** @function commands/set */
+				set: (store, payload) => {
+					store.commit('set', payload);
+				},
+				/** @function commands/startLoading */
+				startLoading: (store, payload) => {
+					store.commit('startLoading', payload);
+				},
+				/** @function commands/setError */
+				setError: (store, payload) => {
+					store.commit('setError', payload);
+				}
+			};
+		}
+		getMutations() {
+			return {
+				set: (state, payload) => {
+					const {
+						dialogId,
+						items
+					} = payload;
+					this.#ensureChatState(state, dialogId);
+					state.collection[dialogId].items = items;
+					state.collection[dialogId].status = LoadStatus.success;
+				},
+				startLoading: (state, payload) => {
+					const {
+						dialogId
+					} = payload;
+					this.#ensureChatState(state, dialogId);
+					state.collection[dialogId].status = LoadStatus.loading;
+				},
+				setError: (state, payload) => {
+					const {
+						dialogId
+					} = payload;
+					this.#ensureChatState(state, dialogId);
+					state.collection[dialogId].status = LoadStatus.error;
+				}
+			};
+		}
+		#ensureChatState(state, dialogId) {
+			if (main_core.Type.isNil(state.collection[dialogId])) {
+				state.collection[dialogId] = this.getElementState();
+			}
+		}
+	}
+
 	exports.AiAssistantModel = AiAssistantModel;
+	exports.AiTaskModel = AiTaskModel;
 	exports.ApplicationModel = ApplicationModel;
 	exports.ChatsModel = ChatsModel$1;
+	exports.CommandsModel = CommandsModel;
 	exports.CopilotModel = CopilotModel;
 	exports.CountersModel = CountersModel;
 	exports.FilesModel = FilesModel$1;
@@ -10289,5 +11363,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.prepareDraft = prepareDraft;
 	exports.prepareInvitation = prepareInvitation;
 
-})(this.BX.Messenger.v2.Model = this.BX.Messenger.v2.Model || {}, BX, BX.Messenger.v2.Lib, BX.Event, BX.Vue3.Vuex, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Model, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Model = this.BX.Messenger.v2.Model || {}, BX, BX.Messenger.v2.Lib, BX.Event, BX.Vue3.Vuex, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Model, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

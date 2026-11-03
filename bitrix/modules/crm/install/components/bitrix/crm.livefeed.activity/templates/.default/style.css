@@ -33,7 +33,7 @@
 }
 
 .feed-activity-client-avatar {
-    background:url("images/activity_sprite.png") no-repeat 1px 1px #fff;
+    background:url("images/activity_sprite.webp") no-repeat 1px 1px #fff;
     border:1px solid #f6f7f7;
     box-shadow: 0 0 3px rgba(172,172,172,0.6);
     height:21px;

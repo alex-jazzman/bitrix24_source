@@ -37,15 +37,38 @@ export const Group = {
 		}
 	},
 	methods: {
-		handleClick()
+		isKeyboardActivation(originalEvent): boolean
 		{
+			if (originalEvent instanceof KeyboardEvent)
+			{
+				return true;
+			}
+
+			if (originalEvent instanceof MouseEvent)
+			{
+				return originalEvent.detail === 0;
+			}
+
+			return document.activeElement?.matches(':focus-visible') === true;
+		},
+		handleClick(originalEvent = null)
+		{
+			if (this.groupData.disabled)
+			{
+				return;
+			}
+
 			if (this.groupData.deselectable)
 			{
-				this.$emit(!this.groupData.selected ? 'selected' : 'unselected', this.groupData);
+				this.$emit(
+					!this.groupData.selected ? 'selected' : 'unselected',
+					this.groupData,
+					this.isKeyboardActivation(originalEvent),
+				);
 			}
 			else if (!this.groupData.selected)
 			{
-				this.$emit('selected', this.groupData);
+				this.$emit('selected', this.groupData, this.isKeyboardActivation(originalEvent));
 			}
 		},
 	},
@@ -54,13 +77,22 @@ export const Group = {
 			<li
 				:class="{
 					'ui-entity-catalog__menu_item': true,
+					'--native-action': true,
 					'--active': groupData.selected,
 					'--disabled': groupData.disabled,
 				}"
-				@click="handleClick"
 			>
-				<span class="ui-entity-catalog__menu_item-icon" v-if="hasIcon" v-html="groupData.icon"/>
-				<span class="ui-entity-catalog__menu_item-text">{{ groupData.name }}</span>
+				<button
+					type="button"
+					data-testid="entity-catalog-group-action"
+					class="ui-entity-catalog__menu_item-button"
+					:disabled="groupData.disabled"
+					:aria-current="groupData.selected ? 'true' : null"
+					@click="handleClick"
+				>
+					<span class="ui-entity-catalog__menu_item-icon" v-if="hasIcon" v-html="groupData.icon"/>
+					<span class="ui-entity-catalog__menu_item-text">{{ groupData.name }}</span>
+				</button>
 				<span
 					v-if="getCounterValue !== null"
 					class="ui-entity-catalog__menu_item-entity-count"

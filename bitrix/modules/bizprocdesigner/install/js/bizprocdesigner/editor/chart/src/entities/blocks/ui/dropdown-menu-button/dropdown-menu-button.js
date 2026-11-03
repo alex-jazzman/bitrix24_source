@@ -10,6 +10,7 @@ type DropdownMenuButtonData = {
 
 // The caret of the split button: the menu is opened from it, and the focus comes back to it.
 const MENU_BUTTON_SELECTOR = '[data-testid="bizprocdesigner-split-button-menu"]';
+const MAIN_BUTTON_SELECTOR = '[data-testid="bizprocdesigner-split-button-main"]';
 
 // @vue/components
 export const DropdownMenuButton = {
@@ -113,6 +114,15 @@ export const DropdownMenuButton = {
 			{
 				return;
 			}
+
+			// Starting the operation is the end of choosing it, so the menu goes away - and where the focus
+			// goes afterwards is decided here and not left to the browser. The dialogs of the operation
+			// return the focus to the element they were opened from, and that element has to be this button:
+			// otherwise it is whatever the click happened to leave focused, which differs between browsers
+			// and can be an item of a menu that is about to close. closeDropdown() would send the focus back
+			// to the caret, so the main button takes it after.
+			this.closeDropdown();
+			this.$el?.querySelector(MAIN_BUTTON_SELECTOR)?.focus();
 
 			this.$emit('change');
 		},

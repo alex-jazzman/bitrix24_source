@@ -9,7 +9,8 @@ type AssetType = 'image' | 'file' | 'video';
 
 type TokenAttrs = {
 	assetType: AssetType,
-	fileId: number,
+	fileId: number | null,
+	diskObjectId: number | null,
 	width: number | null,
 	align: string | null,
 };
@@ -23,7 +24,8 @@ type MarkdownToken = {
 type ParsedNode = {
 	type: 'imageAttachment' | 'fileAttachment' | 'video',
 	attrs: {
-		fileId: number,
+		fileId: number | null,
+		diskObjectId: number | null,
 		documentId: null,
 		name: null,
 		size: null,
@@ -60,6 +62,7 @@ export const NoteAssetTokenizer: Object = Node.create({
 				attrs: {
 					assetType: ((result.assetType: any): AssetType),
 					fileId: result.fileId,
+					diskObjectId: result.diskObjectId,
 					width: result.width,
 					align: result.align,
 				},
@@ -77,7 +80,10 @@ export const NoteAssetTokenizer: Object = Node.create({
 		}
 
 		const attrs: Object = {
+			// The source of the attachment travels as "which of the two ids is filled" — the node type
+			// itself stays the same for both, so an image from Disk is still an image block.
 			fileId: token.attrs.fileId,
+			diskObjectId: token.attrs.diskObjectId,
 			documentId: null,
 			name: null,
 			size: null,

@@ -18,6 +18,7 @@ jn.define('im/messenger/const/message-menu-action-type', (require, exports, modu
 		downloadToDevice: 'download-to-device',
 		create: 'create',
 		createTask: 'createTask',
+		createAiTask: 'createAiTask',
 		createEvent: 'createEvent',
 		feedback: 'feedback',
 		subscribe: 'subscribe',

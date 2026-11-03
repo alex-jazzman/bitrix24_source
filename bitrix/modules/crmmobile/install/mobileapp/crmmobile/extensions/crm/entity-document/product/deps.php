@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'ui-system/typography/text',
+		'tokens',
 		'apptheme',
 		'utils/object',
 		'layout/ui/product-grid',

@@ -55,6 +55,12 @@ foreach ($dialog->getMap()['DynamicEntitiesFields']['Map'] as $entityTypeId => $
 			false,
 			1
 		) ?>
+		<?= $dialog->renderFieldControl(
+			$dialog->getMap()['DynamicTypeScope'],
+			$dialog->getCurrentValue('dynamic_type_scope'),
+			false,
+			1
+		) ?>
 	</td>
 </tr>
 

@@ -126,6 +126,7 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 		this._showPermissionErrorCallback = null;
 		this._dialogOpenListener = BX.delegate(this.onDialogOpen, this);
 		this._dialogCloseListener = BX.delegate(this.onDialogClose, this);
+		this._stageFinalTransitionEntityConvertHandler = null;
 	};
 	BX.CrmLeadTerminationControl.prototype =
 	{
@@ -239,6 +240,80 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 
 			return results;
 		},
+		prepareStageFinalTransitionSuccessButton()
+		{
+			if (
+				!BX.Reflection.getClass('BX.UI.SplitButton')
+				|| !BX.Reflection.getClass('BX.Crm.Conversion.SchemeSelector')
+				|| !BX.Reflection.getClass('BX.Crm.Integration.Analytics.Dictionary')
+				|| !this._getConverterViaConversionExtension()
+			)
+			{
+				return null;
+			}
+
+			const hasPermission = !this.isPermissionsCheckAvailable() || this._permissionCheckCallback();
+			const mainButtonOptions = {
+				text: `${this._schemeData.schemeCaption}: ${this._schemeData.schemeDescription}`,
+			};
+			const menuButtonOptions = {
+				props: {
+					'aria-label': `${this._schemeData.schemeCaption}: ${this._schemeData.schemeDescription}`,
+					'aria-haspopup': 'menu',
+					'aria-expanded': 'false',
+					title: `${this._schemeData.schemeCaption}: ${this._schemeData.schemeDescription}`,
+				},
+			};
+			if (!hasPermission)
+			{
+				const showPermissionError = () => {
+					this._showPermissionErrorCallback();
+
+					return {};
+				};
+				mainButtonOptions.onclick = showPermissionError;
+				menuButtonOptions.onclick = showPermissionError;
+			}
+
+			const successButton = new BX.UI.SplitButton({
+				size: BX.UI.ButtonSize.LARGE,
+				useAirDesign: true,
+				style: BX.UI.AirButtonStyle.FILLED_SUCCESS,
+				menuTarget: BX.UI.SplitSubButtonType.MENU,
+				mainButton: mainButtonOptions,
+				menuButton: menuButtonOptions,
+			});
+			const container = successButton.getContainer();
+			const mainButton = successButton.getMainButton().getContainer();
+			const menuButton = successButton.getMenuButton().getContainer();
+			const textContainer = mainButton.querySelector('.ui-btn-text-inner');
+			if (!textContainer)
+			{
+				return null;
+			}
+
+			container.id = this.prepareControlId('success_btn_wrapper');
+			mainButton.id = this.prepareControlId('success_btn_inner_wrapper');
+			menuButton.id = this.prepareControlId('success_btn_menu');
+			BX.Dom.clean(textContainer);
+			BX.Dom.append(document.createTextNode(`${this._schemeData.schemeCaption}: `), textContainer);
+			BX.Dom.append(
+				BX.create('SPAN', {
+					attrs: { id: this.prepareControlId('success_btn') },
+					text: this._schemeData.schemeDescription,
+				}),
+				textContainer,
+			);
+
+			if (!hasPermission)
+			{
+				BX.Dom.addClass(container, BX.UI.SplitButtonState.DISABLED);
+				BX.Dom.attr(mainButton, 'aria-disabled', 'true');
+				BX.Dom.attr(menuButton, 'aria-disabled', 'true');
+			}
+
+			return successButton;
+		},
 		isPermissionsCheckAvailable()
 		{
 			return BX.type.isFunction(this._permissionCheckCallback)
@@ -247,12 +322,7 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 		},
 		onDialogOpen: function(sender)
 		{
-			if(this._selector)
-			{
-				this._selector.release();
-				this._selector = null;
-			}
-
+			this._releaseSelector();
 			this._selector = this._tryCreateSelectorViaConversionExtension();
 
 			if (!this._selector)
@@ -272,6 +342,82 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 				);
 			}
 		},
+		onStageFinalTransitionSuccessButtonShow(onSuccess)
+		{
+			this._releaseSelector();
+			this._unbindStageFinalTransitionEntityConvertHandler();
+			if (this.isPermissionsCheckAvailable() && !this._permissionCheckCallback())
+			{
+				return;
+			}
+
+			if (BX.type.isFunction(onSuccess))
+			{
+				const entityConvertHandler = (sender, eventArgs) => {
+					if (this._stageFinalTransitionEntityConvertHandler !== entityConvertHandler)
+					{
+						return;
+					}
+
+					let conversionData = eventArgs;
+					if (typeof(eventArgs) === 'undefined')
+					{
+						if (BX.prop.getString(sender, 'key', '') !== 'onCrmEntityConvert')
+						{
+							return;
+						}
+
+						conversionData = BX.prop.getObject(sender, 'value', {});
+					}
+
+					if (
+						BX.prop.getString(conversionData, 'entityTypeName') === 'LEAD'
+						&& BX.prop.getInteger(conversionData, 'entityId', 0) === this._entityId
+					)
+					{
+						this._unbindStageFinalTransitionEntityConvertHandler();
+						onSuccess();
+					}
+				};
+				this._stageFinalTransitionEntityConvertHandler = entityConvertHandler;
+				BX.addCustomEvent(
+					window,
+					'Crm.EntityConverter.Converted',
+					this._stageFinalTransitionEntityConvertHandler,
+				);
+				BX.addCustomEvent(
+					window,
+					'onLocalStorageSet',
+					this._stageFinalTransitionEntityConvertHandler,
+				);
+			}
+
+			this._selector = this._tryCreateSelectorViaConversionExtension();
+		},
+		onStageFinalTransitionSuccessButtonHide()
+		{
+			this._releaseSelector();
+			this._unbindStageFinalTransitionEntityConvertHandler();
+		},
+		_unbindStageFinalTransitionEntityConvertHandler()
+		{
+			if (!this._stageFinalTransitionEntityConvertHandler)
+			{
+				return;
+			}
+
+			BX.removeCustomEvent(
+				window,
+				'Crm.EntityConverter.Converted',
+				this._stageFinalTransitionEntityConvertHandler,
+			);
+			BX.removeCustomEvent(
+				window,
+				'onLocalStorageSet',
+				this._stageFinalTransitionEntityConvertHandler,
+			);
+			this._stageFinalTransitionEntityConvertHandler = null;
+		},
 		/**
 		 * @private
 		 */
@@ -286,17 +432,9 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 				return null;
 			}
 
-			const converterId = this.getSetting('converterId', null);
-			if (!converterId)
-			{
-				return null;
-			}
-
-			const converter = BX.Crm.Conversion.Manager.Instance.getConverter(converterId);
+			const converter = this._getConverterViaConversionExtension();
 			if (!converter)
 			{
-				console.error(`converter with id ${converterId} not found`);
-
 				return null;
 			}
 
@@ -310,6 +448,13 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 					analytics: {
 						c_element: BX.Crm.Integration.Analytics.Dictionary.ELEMENT_TERMINATION_CONTROL,
 					},
+					onMenuStateChange: (isOpen) => {
+						const menuButton = document.getElementById(this.prepareControlId('success_btn_menu'));
+						if (menuButton)
+						{
+							BX.Dom.attr(menuButton, 'aria-expanded', isOpen ? 'true' : 'false');
+						}
+					},
 				},
 			);
 
@@ -317,13 +462,38 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 
 			return schemeSelector;
 		},
-		onDialogClose: function(sender)
+		_getConverterViaConversionExtension()
 		{
-			if(this._selector)
+			if (!BX.Reflection.getClass('BX.Crm.Conversion.Manager'))
+			{
+				return null;
+			}
+
+			const converterId = this.getSetting('converterId', null);
+			if (!converterId)
+			{
+				return null;
+			}
+
+			const converter = BX.Crm.Conversion.Manager.Instance.getConverter(converterId);
+			if (!converter)
+			{
+				console.error(`converter with id ${converterId} not found`);
+			}
+
+			return converter;
+		},
+		_releaseSelector()
+		{
+			if (this._selector)
 			{
 				this._selector.release();
 				this._selector = null;
 			}
+		},
+		onDialogClose: function(sender)
+		{
+			this._releaseSelector();
 
 			sender.removeOpenListener(this._dialogOpenListener);
 			sender.removeCloseListener(this._dialogCloseListener);
@@ -1123,6 +1293,13 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		this.throttleShowLoadingNotificationCallback = null;
 
 		this._entityEditorDialog = null;
+		this._stageFinalTransition = null;
+		this._lazyLoadFinalTransition = false;
+		this._isStageFinalTransitionOpening = false;
+		this._stageTransitionAttemptSerial = 0;
+		this._activeStageTransitionAttempt = null;
+		this._entityEditorStageTransitionAttemptId = null;
+		this._stageDescriptionChangeHandler = null;
 
 		this._externalEventHandler = null;
 		this._entityConvertHandler = null;
@@ -1160,6 +1337,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			this._currentStepId = this.getSetting("currentStepId");
 			this._infoTypeId = this.getSetting("infoTypeId", "");
 			this.loadingNotificationMessage = this.getSetting('loadingNotificationMessage', null);
+			this._lazyLoadFinalTransition = this.getSetting('lazyLoadFinalTransition', false) === true;
 
 			this._enableCustomColors = this.getSetting("enableCustomColors");
 
@@ -1207,6 +1385,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			}
 
 			var stepInfos = this._stepInfos = this._manager.getInfos(this._infoTypeId);
+			this._bindStageDescriptionChangeHandler();
 			var currentStepIndex = this._findStepInfoIndex(this._currentStepId);
 			var currentStepInfo = currentStepIndex >= 0 ? stepInfos[currentStepIndex] : null;
 
@@ -1239,9 +1418,42 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						),
 					),
 				);
+
+				if (!this._isReadOnly && info.semantics === 'success')
+				{
+					stepContainer.dataset.testid = [
+						'crm-progress-final-step',
+						this.getEntityType().toLowerCase(),
+						this.getEntityId(),
+					].join('-');
+				}
 			}
 
 			this.adjustDisableOfSteps();
+		},
+		_bindStageDescriptionChangeHandler()
+		{
+			this._unbindStageDescriptionChangeHandler();
+			this._stageDescriptionChangeHandler = this._onStageDescriptionChanged.bind(this);
+			BX.addCustomEvent('Crm.Stage.DescriptionChanged', this._stageDescriptionChangeHandler);
+		},
+		_unbindStageDescriptionChangeHandler()
+		{
+			if (!this._stageDescriptionChangeHandler)
+			{
+				return;
+			}
+
+			BX.removeCustomEvent('Crm.Stage.DescriptionChanged', this._stageDescriptionChangeHandler);
+			this._stageDescriptionChangeHandler = null;
+		},
+		destroy()
+		{
+			this._unbindStageDescriptionChangeHandler();
+			if (BX.CrmProgressControl.items && BX.CrmProgressControl.items[this._id] === this)
+			{
+				delete BX.CrmProgressControl.items[this._id];
+			}
 		},
 		getSetting: function(name, defaultval)
 		{
@@ -1590,6 +1802,18 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		},
 		_openTerminationDialog()
 		{
+			if (!this._skipStageFinalTransition && this._lazyLoadFinalTransition)
+			{
+				this._openLazyStageFinalTransition();
+
+				return;
+			}
+
+			if (!this._skipStageFinalTransition && this._openStageFinalTransition())
+			{
+				return;
+			}
+
 			this._enableStepHints(false);
 
 			if (this._terminationDlg)
@@ -1629,6 +1853,267 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this._entityConvertHandler = this.onEntityConvert.bind(this);
 				BX.addCustomEvent(window, 'Crm.EntityConverter.Converted', this._entityConvertHandler);
 			}
+		},
+		_openLazyStageFinalTransition()
+		{
+			if (this._isStageFinalTransitionOpening)
+			{
+				return;
+			}
+
+			this._isStageFinalTransitionOpening = true;
+			const finalTransition = BX?.Crm?.Stage?.FinalTransition;
+			if (finalTransition)
+			{
+				this._openLoadedStageFinalTransition(finalTransition);
+
+				return;
+			}
+
+			BX.CrmProgressControl.getFinalTransitionExtension().then((FinalTransition) => {
+				this._openLoadedStageFinalTransition(FinalTransition);
+			});
+		},
+		_openLoadedStageFinalTransition(FinalTransition)
+		{
+			try
+			{
+				if (FinalTransition && this._openStageFinalTransition(FinalTransition))
+				{
+					return;
+				}
+			}
+			catch
+			{
+				this._isStageFinalTransitionOpening = false;
+				this._openLegacyTerminationDialog();
+
+				return;
+			}
+
+			this._isStageFinalTransitionOpening = false;
+			this._openLegacyTerminationDialog();
+		},
+		_openStageFinalTransition(finalTransition = BX?.Crm?.Stage?.FinalTransition)
+		{
+			if (!finalTransition)
+			{
+				return false;
+			}
+
+			const currentStage = this._getFinalTransitionStageData(this._findStepInfoById(this._currentStepId));
+			const successStage = this._getFinalTransitionStageData(this._findStepInfoBySemantics('success'));
+			const failureStages = [
+				this._findStepInfoBySemantics('failure'),
+				...this._findAllStepInfoBySemantics('apology'),
+			]
+				.map((stage) => this._getFinalTransitionStageData(stage))
+				.filter((stage) => BX.type.isNotEmptyString(stage.statusId))
+			;
+
+			if (!BX.type.isNotEmptyString(currentStage.statusId) || !BX.type.isNotEmptyString(successStage.statusId))
+			{
+				return false;
+			}
+
+			const customSuccessOptions = {};
+			if (this._terminationControl)
+			{
+				const successButton = this._terminationControl.prepareStageFinalTransitionSuccessButton();
+				if (!successButton)
+				{
+					return false;
+				}
+
+				customSuccessOptions.successButton = successButton;
+				customSuccessOptions.onSuccessButtonShow = (complete) => {
+					this._terminationControl.onStageFinalTransitionSuccessButtonShow(() => {
+						this._previousStepId = this._currentStepId;
+						this._currentStepId = successStage.statusId;
+						this._layout();
+						complete();
+					});
+				};
+				customSuccessOptions.onSuccessButtonHide = () => {
+					this._terminationControl.onStageFinalTransitionSuccessButtonHide();
+				};
+			}
+
+			let stageFinalTransition = null;
+			stageFinalTransition = finalTransition.open({
+				currentStage,
+				successStage,
+				failureStages,
+				entityTitle: this.getSetting('entityTitle', ''),
+				entityTextContext: {
+					entityTypeName: this._entityType,
+				},
+				onMoveToStage: (statusId) => {
+					return this._moveToStageWithPromise(statusId).then((stage) => {
+						if (this._stageFinalTransition === stageFinalTransition)
+						{
+							this._stageFinalTransition = null;
+							this._isStageFinalTransitionOpening = false;
+						}
+
+						return stage;
+					});
+				},
+				canMoveToStage: (statusId) => {
+					if (statusId === successStage.statusId)
+					{
+						return this.isHasPermissionToMoveSuccessStage();
+					}
+
+					return this.getPermissionChecker().isHasPermissionToMove(
+						currentStage.statusId,
+						statusId,
+					);
+				},
+				onMovePermissionDenied: () => {
+					this.showMissPermissionError();
+				},
+				onUndo: (previousStatusId, targetStatusId) => {
+					if (this.isLoading || this.getCurrentStepId() !== targetStatusId)
+					{
+						return Promise.reject({ code: 'CRM_STAGE_TRANSITION_CANCELLED' });
+					}
+
+					return this._moveToStageWithPromise(previousStatusId);
+				},
+				isMoveCancelled: (error) => error?.code === 'CRM_STAGE_TRANSITION_CANCELLED',
+				onClose: () => {
+					this._stageFinalTransition = null;
+					this._isStageFinalTransitionOpening = false;
+					this._layout();
+				},
+				...customSuccessOptions,
+				analytics: this._analyticsData ?? {},
+			});
+			this._stageFinalTransition = stageFinalTransition;
+
+			return true;
+		},
+		_openLegacyTerminationDialog()
+		{
+			this._skipStageFinalTransition = true;
+
+			try
+			{
+				this._openTerminationDialog();
+			}
+			finally
+			{
+				this._skipStageFinalTransition = false;
+			}
+		},
+		_getFinalTransitionStageData(stepInfo)
+		{
+			if (!stepInfo)
+			{
+				return {};
+			}
+
+			return {
+				...stepInfo,
+				statusId: stepInfo.id,
+			};
+		},
+		_getStageDescriptionCategoryId()
+		{
+			const match = /^category_(-?\d+)$/.exec(this._infoTypeId);
+
+			return match ? parseInt(match[1], 10) : 0;
+		},
+		_onStageDescriptionChanged(params)
+		{
+			if (
+				!BX.Type.isPlainObject(params)
+				|| String(params.entityType).toUpperCase() !== String(this._entityType).toUpperCase()
+				|| Number(params.categoryId ?? 0) !== this._getStageDescriptionCategoryId()
+			)
+			{
+				return;
+			}
+
+			const stepInfo = this._findStepInfoById(params.stageId);
+			if (!stepInfo)
+			{
+				return;
+			}
+
+			if (BX.Type.isString(params.description))
+			{
+				stepInfo.description = params.description;
+			}
+		},
+		_findStepInfoById(id)
+		{
+			const index = this._findStepInfoIndex(id);
+
+			return index >= 0 ? this._stepInfos[index] : null;
+		},
+		_moveToStageWithPromise(stageId)
+		{
+			const index = this._findStepInfoIndex(stageId);
+			if (index < 0)
+			{
+				return Promise.reject(new Error('Stage is not found'));
+			}
+
+			if (BX?.Crm?.Integration?.Analytics)
+			{
+				this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(
+						this.getEntityType(),
+						this.getEntityId(),
+					)
+					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_LIST)
+					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_PROGRESS_BAR)
+					.buildData();
+			}
+
+			const attemptId = (this._stageTransitionAttemptSerial ?? 0) + 1;
+			this._stageTransitionAttemptSerial = attemptId;
+			this._activeStageTransitionAttempt = { id: attemptId, stageId };
+
+			return new Promise((resolve, reject) => {
+				const onSuccess = (control, data, completedAttemptId) => {
+					if (control !== this || completedAttemptId !== attemptId)
+					{
+						return;
+					}
+
+					cleanup();
+					resolve(this._getFinalTransitionStageData(this._findStepInfoById(stageId)));
+				};
+
+				const onFailure = (control, error, failedAttemptId) => {
+					if (control !== this || failedAttemptId !== attemptId)
+					{
+						return;
+					}
+
+					cleanup();
+					reject(error);
+				};
+
+				const cleanup = () => {
+					BX.removeCustomEvent(this, 'CrmProgressControlAfterSaveSucces', onSuccess);
+					BX.removeCustomEvent(this, 'CrmProgressControlAfterSaveFailed', onFailure);
+					if (this._activeStageTransitionAttempt?.id === attemptId)
+					{
+						this._activeStageTransitionAttempt = null;
+					}
+				};
+
+				BX.addCustomEvent(this, 'CrmProgressControlAfterSaveSucces', onSuccess);
+				BX.addCustomEvent(this, 'CrmProgressControlAfterSaveFailed', onFailure);
+
+				this._previousStepId = this._currentStepId;
+				this._currentStepId = stageId;
+				this._layout();
+				this._save();
+			});
 		},
 		_closeTerminationDialog: function()
 		{
@@ -1928,6 +2413,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			var value = this.getCurrentStepId();
 			var type = this.getEntityType();
 			var id = this.getEntityId();
+			const stageTransitionAttemptId = this._activeStageTransitionAttempt?.id ?? null;
 
 			if(serviceUrl === "" || value === "" || type === "" || id <= 0)
 			{
@@ -1969,8 +2455,8 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 							},
 						}
 					})
-					.then(function(response) {
-						this._onSaveRequestSuccess(response.data);
+						.then(function(response) {
+							this._onSaveRequestSuccess(response.data, stageTransitionAttemptId);
 					}.bind(this))
 					.catch(function(response) {
 						var isRequiredFieldsError = false;
@@ -2003,12 +2489,12 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 
 						if (isRequiredFieldsError)
 						{
-							this._onSaveRequestSuccess(errors);
+								this._onSaveRequestSuccess(errors, stageTransitionAttemptId);
 						}
 						else
 						{
 							console.log(errorMessage);
-							this._onSaveRequestFailure(errors);
+								this._onSaveRequestFailure(errors, stageTransitionAttemptId);
 						}
 					}.bind(this));
 			}
@@ -2030,13 +2516,13 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						"method": "POST",
 						"dataType": 'json',
 						"data": data,
-						"onsuccess": BX.delegate(this._onSaveRequestSuccess, this),
-						"onfailure": BX.delegate(this._onSaveRequestFailure, this)
+							"onsuccess": (data) => this._onSaveRequestSuccess(data, stageTransitionAttemptId),
+							"onfailure": (data) => this._onSaveRequestFailure(data, stageTransitionAttemptId)
 					}
 				);
 			}
 		},
-		_onSaveRequestSuccess: function(data)
+		_onSaveRequestSuccess: function(data, stageTransitionAttemptId = null)
 		{
 			this.setLoading(false);
 
@@ -2051,15 +2537,24 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						fieldNames: Object.keys(checkErrors),
 						initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 						context: BX.prop.getObject(data, "CONTEXT", null),
-						isController: BX.CrmEntityType.isUseFactoryBasedApproachByName(this.getEntityType()),
-						stageId: BX.prop.getString(data, 'VALUE', null)
+							isController: BX.CrmEntityType.isUseFactoryBasedApproachByName(this.getEntityType()),
+							stageId: BX.prop.getString(data, 'VALUE', null),
+							stageTransitionAttemptId,
 					}
 				);
 
 				return;
 			}
 
-			BX.onCustomEvent(this, 'CrmProgressControlAfterSaveSucces', [ this, data ]);
+			this._completeSaveRequestSuccess(data, stageTransitionAttemptId);
+		},
+		_completeSaveRequestSuccess(data, stageTransitionAttemptId)
+		{
+			BX.onCustomEvent(this, 'CrmProgressControlAfterSaveSucces', [
+				this,
+				data,
+				stageTransitionAttemptId,
+			]);
 			BX.CrmProgressControl._synchronize(this);
 
 			if (this._analyticsData)
@@ -2067,7 +2562,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 			}
 		},
-		_onSaveRequestFailure: function(data)
+		_onSaveRequestFailure: function(data, stageTransitionAttemptId = null)
 		{
 			this.setLoading(false);
 
@@ -2075,10 +2570,21 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 			}
-			BX.onCustomEvent(self, 'CrmProgressControlAfterSaveFailed', [ this, data ]);
+			BX.onCustomEvent(this, 'CrmProgressControlAfterSaveFailed', [
+				this,
+				data,
+				stageTransitionAttemptId,
+			]);
 		},
 		_openEntityEditorDialog: function(params)
 		{
+			this._stageFinalTransition?.close();
+			this._entityEditorStageTransitionAttemptId = BX.prop.getInteger(
+				params,
+				'stageTransitionAttemptId',
+				0,
+			);
+
 			BX.Crm.PartialEditorDialog.close("progressbar-entity-editor");
 
 			this._entityEditorDialog = BX.Crm.PartialEditorDialog.create(
@@ -2115,6 +2621,8 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 
 			this._entityEditorDialog = null;
 			BX.removeCustomEvent(window, "Crm.PartialEditorDialog.Close", this._entityEditorDialogHandler);
+			const stageTransitionAttemptId = this._entityEditorStageTransitionAttemptId;
+			this._entityEditorStageTransitionAttemptId = null;
 
 			if(BX.prop.getBoolean(eventParams, "isCancelled", true) && this._previousStepId !== "")
 			{
@@ -2131,11 +2639,20 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				{
 					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_FILLING_FIELDS);
 				}
-			}
-			else if (this._analyticsData)
-			{
-				this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
-			}
+
+					BX.onCustomEvent(this, 'CrmProgressControlAfterSaveFailed', [
+						this,
+						{ code: 'CRM_STAGE_TRANSITION_CANCELLED' },
+						stageTransitionAttemptId,
+					]);
+				}
+				else
+				{
+					this._completeSaveRequestSuccess(
+						{ VALUE: BX.prop.getString(eventParams, 'stageId', this._currentStepId) },
+						stageTransitionAttemptId,
+					);
+				}
 		},
 		_findStepInfoBySemantics: function(semantics)
 		{
@@ -2230,8 +2747,29 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 	};
 
 	BX.CrmProgressControl.items = {};
+	BX.CrmProgressControl._finalTransitionExtensionPromise = null;
+	BX.CrmProgressControl.getFinalTransitionExtension = function()
+	{
+		this._finalTransitionExtensionPromise ??= (
+			BX.Runtime && BX.type.isFunction(BX.Runtime.loadExtension)
+				? BX.Runtime.loadExtension('crm.stage.final-transition')
+				: Promise.resolve(null)
+		)
+			.then((exports) => {
+				return BX.type.isFunction(exports?.FinalTransition?.open) ? exports.FinalTransition : null;
+			})
+			.catch(() => null)
+		;
+
+		return this._finalTransitionExtensionPromise;
+	};
 	BX.CrmProgressControl.create = function(id, settings)
 	{
+		if (this.items[id])
+		{
+			this.items[id].destroy();
+		}
+
 		var self = new BX.CrmProgressControl();
 		self.initialize(id, settings);
 		this.items[id] = self;
@@ -2298,9 +2836,15 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 
 			if (!this._isReadOnly)
 			{
+				BX.Dom.attr(this._container, {
+					role: 'button',
+					tabindex: '0',
+					'aria-label': this._name,
+				});
 				BX.bind(this._container, "mouseover", BX.delegate(this._onMouseOver, this));
 				BX.bind(this._container, "mouseout", BX.delegate(this._onMouseOut, this));
 				BX.bind(this._container, "click", BX.delegate(this._onClick, this));
+				BX.bind(this._container, 'keydown', BX.delegate(this._onKeyDown, this));
 			}
 		},
 		getId: function()
@@ -2415,10 +2959,21 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 		{
 			if(!this._isReadOnly)
 			{
+				this._container.focus();
 				this._control.setCurrentStep(this);
 			}
 
 			e.stopPropagation();
+		},
+		_onKeyDown(e)
+		{
+			if (e.key !== 'Enter' && e.key !== ' ')
+			{
+				return;
+			}
+
+			e.preventDefault();
+			this._onClick(e);
 		},
 		_onMouseOver(e)
 		{
@@ -2464,6 +3019,7 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 			this.isDisabled = true;
 			const target = this._container.parentElement;
 			BX.Dom.addClass(target, '--disabled');
+			BX.Dom.attr(this._container, 'aria-disabled', 'true');
 		},
 		removeDisable()
 		{
@@ -2475,6 +3031,7 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 			this.isDisabled = false;
 			const target = this._container.parentElement;
 			BX.Dom.removeClass(target, '--disabled');
+			BX.Dom.attr(this._container, 'aria-disabled', 'false');
 		},
 	};
 

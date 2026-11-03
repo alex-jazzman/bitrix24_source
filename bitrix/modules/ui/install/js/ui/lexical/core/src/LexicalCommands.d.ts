@@ -5,54 +5,217 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { BaseSelection, ElementFormatType, LexicalCommand, LexicalNode, TextFormatType } from 'ui.lexical.core';
+import type { LexicalCommand } from './LexicalEditor';
+import type { LexicalNode } from './LexicalNode';
+import type { BaseSelection } from './LexicalSelection';
+import type { ElementFormatType } from './nodes/LexicalElementNode';
+import type { TextFormatType } from './nodes/LexicalTextNode';
 export type PasteCommandType = ClipboardEvent | InputEvent | KeyboardEvent;
+/**
+ * Crete a command that can be used with `editor.dispatchCommand` and
+ * `editor.registerCommand`. Commands are used by unique reference, not by
+ * name.
+ *
+ * @param type A string to identify the command, very helpful for debugging
+ * @returns A new LexicalCommand
+ *
+ * @__NO_SIDE_EFFECTS__
+ */
 export declare function createCommand<T>(type?: string): LexicalCommand<T>;
+/** Dispatched whenever the editor selection changes. */
 export declare const SELECTION_CHANGE_COMMAND: LexicalCommand<void>;
+/** Dispatched to insert clipboard nodes at the current selection. */
 export declare const SELECTION_INSERT_CLIPBOARD_NODES_COMMAND: LexicalCommand<{
-    nodes: Array<LexicalNode>;
+    nodes: LexicalNode[];
     selection: BaseSelection;
 }>;
+/** Dispatched on a mouse click event in the editor. */
 export declare const CLICK_COMMAND: LexicalCommand<MouseEvent>;
+/** Dispatched on a beforeinput event. */
+export declare const BEFORE_INPUT_COMMAND: LexicalCommand<InputEvent>;
+/** Dispatched on an input event. */
+export declare const INPUT_COMMAND: LexicalCommand<InputEvent>;
+/** Dispatched when an IME composition session starts. */
+export declare const COMPOSITION_START_COMMAND: LexicalCommand<CompositionEvent>;
+/** Dispatched when an IME composition session ends. */
+export declare const COMPOSITION_END_COMMAND: LexicalCommand<CompositionEvent>;
+/**
+ * Dispatched to delete a character, the payload will be `true` if the deletion
+ * is backwards (backspace or delete on macOS) and `false` if forwards
+ * (delete or Fn+Delete on macOS).
+ */
 export declare const DELETE_CHARACTER_COMMAND: LexicalCommand<boolean>;
+/**
+ * Dispatched to insert a line break. With a false payload the
+ * cursor moves to the new line (Shift+Enter), with a true payload the cursor
+ * does not move (Ctrl+O on macOS).
+ */
 export declare const INSERT_LINE_BREAK_COMMAND: LexicalCommand<boolean>;
+/** Dispatched to insert a new paragraph (Enter key). */
 export declare const INSERT_PARAGRAPH_COMMAND: LexicalCommand<void>;
+/** Dispatched to insert text from an InputEvent or a string. */
 export declare const CONTROLLED_TEXT_INSERTION_COMMAND: LexicalCommand<InputEvent | string>;
+/** Dispatched on a paste event. */
 export declare const PASTE_COMMAND: LexicalCommand<PasteCommandType>;
+/** Dispatched to remove the currently selected text. */
 export declare const REMOVE_TEXT_COMMAND: LexicalCommand<InputEvent | null>;
+/**
+ * Dispatched to delete a word, the payload will be `true` if the deletion is
+ * backwards (Ctrl+Backspace or Opt+Delete on macOS), and `false` if
+ * forwards (Ctrl+Delete or Fn+Opt+Delete on macOS).
+ */
 export declare const DELETE_WORD_COMMAND: LexicalCommand<boolean>;
+/**
+ * Dispatched to delete a line, the payload will be `true` if the deletion is
+ * backwards (Cmd+Delete on macOS), and `false` if forwards
+ * (Fn+Cmd+Delete on macOS).
+ */
 export declare const DELETE_LINE_COMMAND: LexicalCommand<boolean>;
+/**
+ * Dispatched to format the selected text.
+ */
 export declare const FORMAT_TEXT_COMMAND: LexicalCommand<TextFormatType>;
+/**
+ * Dispatched to explicitly set or unset text formats on the selection.
+ * Unlike FORMAT_TEXT_COMMAND which toggles, this command sets each specified
+ * format to the exact boolean value provided.
+ */
+export declare const SET_TEXT_FORMAT_COMMAND: LexicalCommand<Partial<Record<TextFormatType, boolean>>>;
+/**
+ * Dispatched on undo (Cmd+Z on macOS, Ctrl+Z elsewhere).
+ */
 export declare const UNDO_COMMAND: LexicalCommand<void>;
+/**
+ * Dispatched on redo (Shift+Cmd+Z on macOS, Shift+Ctrl+Z or Ctrl+Y elsewhere).
+ */
 export declare const REDO_COMMAND: LexicalCommand<void>;
+/**
+ * Dispatched when any key is pressed.
+ */
 export declare const KEY_DOWN_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the `'ArrowRight'` key is pressed.
+ * The shift modifier key may also be down.
+ */
 export declare const KEY_ARROW_RIGHT_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the move to end keyboard shortcut is pressed,
+ * (Cmd+Right on macOS; Ctrl+Right elsewhere).
+ */
 export declare const MOVE_TO_END: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the `'ArrowLeft'` key is pressed.
+ * The shift modifier key may also be down.
+ */
 export declare const KEY_ARROW_LEFT_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the move to start keyboard shortcut is pressed,
+ * (Cmd+Left on macOS; Ctrl+Left elsewhere).
+ */
 export declare const MOVE_TO_START: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the `'ArrowUp'` key is pressed.
+ * The shift and/or alt (option) modifier keys may also be down.
+ */
 export declare const KEY_ARROW_UP_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the `'ArrowDown'` key is pressed.
+ * The shift and/or alt (option) modifier keys may also be down.
+ */
 export declare const KEY_ARROW_DOWN_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched when the enter key is pressed, may also be called with a null
+ * payload when the intent is to insert a newline. The shift modifier key
+ * must be down, any other modifier keys may also be down.
+ */
 export declare const KEY_ENTER_COMMAND: LexicalCommand<KeyboardEvent | null>;
+/**
+ * Dispatched whenever the space (`' '`) key is pressed, any modifier
+ * keys may be down.
+ */
 export declare const KEY_SPACE_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched whenever the `'Backspace'` key is pressed, the shift
+ * modifier key may be down.
+ */
 export declare const KEY_BACKSPACE_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched whenever the `'Escape'` key is pressed, any modifier
+ * keys may be down.
+ */
 export declare const KEY_ESCAPE_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched whenever the `'Delete'` key is pressed (Fn+Delete on macOS).
+ */
 export declare const KEY_DELETE_COMMAND: LexicalCommand<KeyboardEvent>;
+/**
+ * Dispatched whenever the `'Tab'` key is pressed. The shift modifier key
+ * may be down.
+ */
 export declare const KEY_TAB_COMMAND: LexicalCommand<KeyboardEvent>;
+/** Dispatched to insert a tab character. */
 export declare const INSERT_TAB_COMMAND: LexicalCommand<void>;
+/** Dispatched to indent the selected content. */
 export declare const INDENT_CONTENT_COMMAND: LexicalCommand<void>;
+/** Dispatched to outdent the selected content. */
 export declare const OUTDENT_CONTENT_COMMAND: LexicalCommand<void>;
+/** Dispatched on a drop event. */
 export declare const DROP_COMMAND: LexicalCommand<DragEvent>;
+/** Dispatched to set the element format (alignment) of the selected block. */
 export declare const FORMAT_ELEMENT_COMMAND: LexicalCommand<ElementFormatType>;
+/** Dispatched when a drag operation starts. */
 export declare const DRAGSTART_COMMAND: LexicalCommand<DragEvent>;
+/** Dispatched when a dragged element is over the editor. */
 export declare const DRAGOVER_COMMAND: LexicalCommand<DragEvent>;
+/** Dispatched when a drag operation ends. */
 export declare const DRAGEND_COMMAND: LexicalCommand<DragEvent>;
+/**
+ * Dispatched on a copy event, either via the clipboard or a KeyboardEvent
+ * (Cmd+C on macOS, Ctrl+C elsewhere).
+ */
 export declare const COPY_COMMAND: LexicalCommand<ClipboardEvent | KeyboardEvent | null>;
+/**
+ * Dispatched on a cut event, either via the clipboard or a KeyboardEvent
+ * (Cmd+X on macOS, Ctrl+X elsewhere).
+ */
 export declare const CUT_COMMAND: LexicalCommand<ClipboardEvent | KeyboardEvent | null>;
+/**
+ * Dispatched on the select all keyboard shortcut
+ * (Cmd+A on macOS, Ctrl+A elsehwere).
+ */
 export declare const SELECT_ALL_COMMAND: LexicalCommand<KeyboardEvent>;
+/** Dispatched to clear all editor content. */
 export declare const CLEAR_EDITOR_COMMAND: LexicalCommand<void>;
+/** Dispatched to clear the undo/redo history stack. */
 export declare const CLEAR_HISTORY_COMMAND: LexicalCommand<void>;
+/**
+ * @deprecated in v0.49.0, use the `canRedo` signal from `HistoryExtension`.
+ *
+ * A command only reports a change, so a listener registered after the editor
+ * is initialized has no way to read the current value. The signal always
+ * holds it.
+ *
+ * Dispatched when the redo availability changes. Payload is true if redo is available.
+ */
 export declare const CAN_REDO_COMMAND: LexicalCommand<boolean>;
+/**
+ * @deprecated in v0.49.0, use the `canUndo` signal from `HistoryExtension`.
+ *
+ * A command only reports a change, so a listener registered after the editor
+ * is initialized has no way to read the current value. The signal always
+ * holds it.
+ *
+ * Dispatched when the undo availability changes. Payload is true if undo is available.
+ */
 export declare const CAN_UNDO_COMMAND: LexicalCommand<boolean>;
+/** Dispatched when the editor receives focus. */
 export declare const FOCUS_COMMAND: LexicalCommand<FocusEvent>;
+/** Dispatched when the editor loses focus. */
 export declare const BLUR_COMMAND: LexicalCommand<FocusEvent>;
+/**
+ * @deprecated in v0.31.0, use KEY_DOWN_COMMAND and check for modifiers
+ * directly.
+ *
+ * Dispatched after any KeyboardEvent when modifiers are pressed
+ */
 export declare const KEY_MODIFIER_COMMAND: LexicalCommand<KeyboardEvent>;

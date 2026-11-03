@@ -51,5 +51,6 @@ $arActivityDescription = (new ActivityDescription(
 	->setGroups([ ActivityGroup::CLIENT_COMMUNICATION->value ])
 	->setColorIndex(ActivityColorIndex::GREEN->value)
 	->setIcon(Outline::MAIL->name)
+	->set('NODE_DESCRIPTION', Loc::getMessage('CRM_SEMA_NODE_DESCRIPTION') ?? '')
 	->toArray()
 ;

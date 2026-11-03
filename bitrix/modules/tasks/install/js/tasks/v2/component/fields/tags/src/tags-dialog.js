@@ -62,7 +62,7 @@ export const tagsDialog = new class
 				allowCreateItem: true,
 			},
 			footer: entityId === EntitySelectorEntity.Tag ? Footer : false,
-			footerOptions: { userId, groupId },
+			footerOptions: { userId, groupId, canCreateTag: true },
 			clearUnavailableItems: true,
 			events: {
 				onLoad: () => this.#fillDialog(taskId),

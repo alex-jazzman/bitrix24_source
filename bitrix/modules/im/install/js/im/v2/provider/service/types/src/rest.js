@@ -47,6 +47,11 @@ type RawCollabEntityInfo = {
 	url: string,
 };
 
+export type RawCopilotGenerationState = {
+	status: 'generating' | 'stopped' | 'completed' | 'error',
+	initiatorId: number,
+};
+
 export type RawChat = {
 	avatar: string,
 	color: string,
@@ -88,6 +93,7 @@ export type RawChat = {
 	userCounter: number,
 	backgroundId: string | null,
 	textFieldEnabled: boolean,
+	copilotGenerationState?: ?RawCopilotGenerationState,
 };
 
 export type RawRecentChat = {
@@ -315,6 +321,11 @@ export type RawRecentItem = {
 	pinned: boolean,
 	unread: boolean,
 	ownMessageId?: number,
+};
+
+export type RawRecentConfig = {
+	chatId: number,
+	sections: string[],
 };
 
 type RawPackType = 'vendor' | 'custom';

@@ -3,6 +3,8 @@ import { Event, Type, Dom, Text, Tag } from 'main.core';
 
 import './css/style.css';
 
+const EDGE_REGULAR_WHITESPACE_PATTERN = /^[\t\n\r ]+|[\t\n\r ]+$/g;
+
 export class Link extends BaseField
 {
 	static TARGET_SELF = '_self';
@@ -23,18 +25,14 @@ export class Link extends BaseField
 		this.content = Type.isPlainObject(this.content) ? this.content : {};
 		this.content = BX.Landing.Utils.clone(this.content);
 		this.content.text = BX.Landing.Utils.trim(this.content.text);
-		this.content.href = BX.Landing.Utils.trim(BX.Landing.Utils.escapeText(this.content.href));
+		// href is put in the attribute and shown in the field as is, never as html
+		this.content.href = BX.Landing.Utils.trim(this.content.href);
 		this.content.target = BX.Landing.Utils.trim(BX.Landing.Utils.escapeText(this.content.target));
 		this.skipContent = data.skipContent;
 		this.detailPageMode = data.detailPageMode === true;
 
 		if (!this.containsImage() && !this.containsHtml())
 		{
-			if (Type.isStringFilled(this.content.text))
-			{
-				this.content.text = this.content.text.replace('&nbsp;', ' ');
-			}
-
 			this.content.text = BX.Landing.Utils.escapeText(this.content.text);
 		}
 
@@ -54,7 +52,7 @@ export class Link extends BaseField
 					if (placeholder)
 					{
 						const textNode = placeholder.querySelector('.landing-ui-field-url-placeholder-text');
-						textNode.innerText = Text.decode(value.replace(/&nbsp;/g, ' '));
+						textNode.innerText = Text.decode(value);
 					}
 				}
 
@@ -101,7 +99,7 @@ export class Link extends BaseField
 				if (placeholder)
 				{
 					const textNode = placeholder.querySelector('.landing-ui-field-url-placeholder-text');
-					textNode.innerHTML = value.replace(/&nbsp;/g, ' ');
+					textNode.innerText = value;
 				}
 			}.bind(this)
 		});
@@ -452,7 +450,9 @@ export class Link extends BaseField
 	getValue()
 	{
 		const value = {
-			text: BX.Landing.Utils.decodeDataValue(BX.Landing.Utils.trim(this.input.getValue().replace(/&nbsp;/g, ' '))),
+			text: BX.Landing.Utils.decodeDataValue(
+				this.input.getValue().replaceAll(EDGE_REGULAR_WHITESPACE_PATTERN, ''),
+			),
 			href: BX.Landing.Utils.trim(this.hrefInput.getValue()),
 			target: this.prepareTarget(BX.Landing.Utils.trim(this.targetInput.getValue()))
 		};
@@ -565,6 +565,14 @@ export class Link extends BaseField
 			{
 				this.readyToSave = true;
 				this.emit('onChangeReadyToSave');
+			});
+			BX.addCustomEvent(this.mediaService, 'onDataLoadError', () => {
+				this.readyToSave = true;
+				this.emit('onChangeReadyToSave');
+				if (this.video)
+				{
+					Dom.remove(this.video);
+				}
 			});
 		}
 		this.emit('onChangeReadyToSave');

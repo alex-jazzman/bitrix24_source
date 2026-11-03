@@ -183,6 +183,18 @@
 	background: var(--theme-color-primary, #63aa28);
 }
 
+/* The bootstrap of the theme hands the browser ring to a bare button on plain :focus
+   (landing24/assets/vendor/bootstrap/bootstrap.css:237-240), not on :focus-visible, so a mouse click
+   on the buttons this template made out of a div or a span lights it. The .btn family is answered
+   there by the theme itself; these four carry no .btn and are ours to answer. The keyboard is left
+   alone: :not(:focus-visible) cannot apply where the rules above do. */
+.catalog-section-item-slider-controls-image:focus:not(:focus-visible),
+.catalog-section-item-detail-close-btn:focus:not(:focus-visible),
+.catalog-section-item-quantity-btn-minus:focus:not(:focus-visible),
+.catalog-section-item-quantity-btn-plus:focus:not(:focus-visible) {
+	outline: none;
+}
+
 /*endregion*/
 
 /*region Slider Controls*/
@@ -199,19 +211,25 @@
 .catalog-section-item-slider-controls-image {
 	position: relative;
 	padding: 4px;
+	border: 0;
+	background: none;
 	overflow: hidden;
-	opacity: .3;
 	text-align: center;
+	font: inherit;
+	-webkit-appearance: none;
+	appearance: none;
 	cursor: pointer;
 	flex-grow: 1;
 }
 
-.catalog-section-item-slider-controls-image:hover,
-.catalog-section-item-slider-controls-image.active { opacity: 1; }
+/* The ring is barely readable over a pale dot, so focus darkens the dot the way hover does. */
+.catalog-section-item-slider-controls-image:hover .catalog-section-item-slider-controls-dot,
+.catalog-section-item-slider-controls-image:focus-visible .catalog-section-item-slider-controls-dot,
+.catalog-section-item-slider-controls-image.active .catalog-section-item-slider-controls-dot { background-color: var(--ui-color-base-2); }
 
 .catalog-section-item-slider-controls-dot {
 	height: 4px;
-	background-color: #c4c4c4;
+	background-color: var(--ui-color-base-3);
 	border-radius: 2px;
 }
 
@@ -271,7 +289,7 @@
 .catalog-section-item-name,
 .catalog-section-item-name a,
 .catalog-section-item-name-link {
-	color: #777;
+	color: var(--ui-color-base-2);
 	text-decoration: none;
 	font: normal 16px/23px "Roboto", "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
@@ -300,8 +318,7 @@
 	font-size: 11px;
 	line-height: 15px;
 	text-decoration-line: line-through;
-	color: #121212;
-	opacity: 0.5;
+	color: var(--ui-color-base-2);
 	margin-right: 1px;
 }
 
@@ -321,12 +338,12 @@
 /*endregion*/
 
 /*region BUTTONS*/
-.catalog-section-item-buy-btn {
+.btn.catalog-section-item-buy-btn {
 	margin: 0 auto;
 	width: 100%;
 	max-width: 260px;
 	min-width: 120px;
-	transition: background-color .3s;
+	transition: background-color .3s, outline 0s, box-shadow 0s;
 }
 
 .btn.catalog-section-item-buy-btn[disabled],
@@ -463,16 +480,23 @@
 	padding-bottom: 5px;
 }
 
+/* The label is pushed against the right edge by justify-content, and the light band of the focus
+   ring is drawn along that edge inwards, so the label is inset by exactly the width of the band. */
 .catalog-section-item-detail-close-btn {
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	opacity: .5;
-	transition: 180ms linear all;
+	width: 100%;
+	padding: 0 var(--ui-focus-outline-width) 0 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	transition: 180ms linear all, outline 0s, box-shadow 0s;
 }
 
 .catalog-section-item-detail-close-btn:hover {
-	opacity: 1;
 	text-decoration: none;
 	border-bottom: none;
 	cursor: pointer;
@@ -484,7 +508,7 @@
 	font-weight: normal;
 	font-size: 16px;
 	line-height: 21px;
-	color: #fff;
+	color: var(--ui-color-base-white-fixed);
 }
 
 /*endregion*/
@@ -513,7 +537,7 @@
 	font-weight: normal;
 	font-size: 16px;
 	line-height: 23px;
-	color: #777;
+	color: var(--ui-color-base-2);
 }
 
 .catalog-section-item-detail {
@@ -591,7 +615,7 @@
 	position: relative;
 	width: 54px;
 	height: 33px;
-	border: 2px solid #c0cfda;
+	border: 2px solid var(--ui-color-base-3);
 	cursor: pointer;
 	border-radius: 2px;
 	box-sizing: border-box;
@@ -616,7 +640,7 @@
 	padding: 3px 15px;
 	min-width: 53px;
 	box-sizing: border-box;
-	border: 1px solid rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--ui-color-base-3);
 	cursor: pointer;
 	border-radius: 2px;
 	transition: 190ms linear color, 190ms linear background-color, 190ms linear border-color;
@@ -638,18 +662,38 @@
 .catalog-section-item-scu-item-color-container.notallowed .catalog-section-item-scu-item-color-block,
 .catalog-section-item-scu-item-text-container.notallowed .catalog-section-item-scu-item-text-block {
 	position: relative;
-	border-color: #a9adb4 !important;
+	border-color: var(--ui-color-base-2) !important;
 }
 
-.catalog-section-item-scu-item-color-container.notallowed .catalog-section-item-scu-item-color-block:after,
-.catalog-section-item-scu-item-text-container.notallowed .catalog-section-item-scu-item-text-block:after {
+.catalog-section-item-scu-item-color-container.notallowed .catalog-section-item-scu-item-color-block:before,
+.catalog-section-item-scu-item-text-container.notallowed .catalog-section-item-scu-item-text-block:before {
 	position: absolute;
 	top: -2px;
 	right: -2px;
 	bottom: -2px;
 	left: -2px;
-	background: rgba(255, 255, 255, 0.75) url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=) no-repeat center;
-	background-size: 80% 80%;
+	background: rgba(255, 255, 255, 0.75);
+	content: "";
+}
+
+/* The cross is a mask, not a background image: a token does not reach inside a data: URI. */
+.catalog-section-item-scu-item-color-container.notallowed .catalog-section-item-scu-item-color-block:after,
+.catalog-section-item-scu-item-text-container.notallowed .catalog-section-item-scu-item-text-block:after {
+	--iblock-store-v3-cross-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=);
+	position: absolute;
+	top: -2px;
+	right: -2px;
+	bottom: -2px;
+	left: -2px;
+	background-color: var(--ui-color-base-2);
+	-webkit-mask-image: var(--iblock-store-v3-cross-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 80% 80%;
+	mask-image: var(--iblock-store-v3-cross-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 80% 80%;
 	content: "";
 }
 
@@ -703,9 +747,14 @@
 	display: block;
 	min-width: 26px;
 	height: 26px;
+	padding: 0;
+	border: 0;
 	border-radius: 50%;
 	background-color: #f2f2f2;
 	color: #fff;
+	font: inherit;
+	-webkit-appearance: none;
+	appearance: none;
 	vertical-align: middle;
 	text-align: center;
 	cursor: pointer;
@@ -811,8 +860,7 @@ div.catalog-section-item-quantity-field {
 }
 
 .catalog-section-item-quantity-field:focus {
-	outline: none !important;
-	border-color: var(--theme-color-primary, #63aa28);
+	border-color: var(--ui-color-base-1);
 }
 
 .bx-no-touch input.catalog-section-item-quantity-field::-webkit-outer-spin-button,
@@ -836,7 +884,7 @@ div.catalog-section-item-quantity-field {
 	font-weight: normal;
 	font-size: 12px;
 	line-height: 15px;
-	color: #999;
+	color: var(--ui-color-base-2);
 	vertical-align: bottom;
 	letter-spacing: -0.4px;
 }
@@ -866,3 +914,152 @@ div.catalog-section-item-quantity-field {
 /*endregion*/
 
 .ovh { overflow: hidden; }
+
+/*region FOCUS RING*/
+/* The preview link is inline, so its box is shorter than the thumbnail it wraps and a ring by
+   inset: 0 would trace neither. The box is brought to the picture instead. */
+.catalog-section-item-detail-preview-link {
+	position: relative;
+	display: inline-block;
+}
+
+/* The variant and dot selectors carry their attributes to outweigh the theme, not to narrow the
+   match: the theme rule for a focused node with tabindex (landing24/template_styles.css:221-225)
+   counts 0,4,0 - a class, an attribute, the attribute inside :not() and a pseudo-class - so at
+   0,3,0 our reset loses and the node shows the ring of the theme and ours at once. The dot holds a
+   tabindex because its group moves focus between the dots, so the same theme rule reaches it; its
+   container class was weight and nothing else, and the attributes of the dot itself carry that now. */
+.catalog-section-item-scu-item-list .catalog-section-item-scu-item-color-container[tabindex][role=radio]:focus-visible,
+.catalog-section-item-scu-item-list .catalog-section-item-scu-item-text-container[tabindex][role=radio]:focus-visible,
+.catalog-section-item-slider-controls-image[data-entity=slider-control][tabindex][type=button]:focus-visible,
+.catalog-section-item-detail-props-container .catalog-section-item-detail-preview-link:focus-visible {
+	outline: none;
+}
+
+/* The steps of the quantity carry the ring of the checkout (sale.order.checkout, region FOCUS RING):
+   one dark band inside the box, so the same control does not look heavier here than in the basket.
+   The theme hands a bare button a ring of its own, so the shadow is cleared as well. */
+.catalog-section-item-quantity-field-container .catalog-section-item-quantity-btn-minus:focus-visible,
+.catalog-section-item-quantity-field-container .catalog-section-item-quantity-btn-plus:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: none;
+}
+
+.catalog-section-item-slider-controls-block .catalog-section-item-slider-controls-image:focus-visible::before,
+.catalog-section-item-detail-props-container .catalog-section-item-detail-preview-link:focus-visible::before {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border: calc(var(--ui-focus-outline-width) * 2) solid var(--ui-color-base-1);
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/* Two boxes are too small for the doubled band and keep the single token. The dot strip is 12px
+   high around a 4px bar, so 4px of dark plus 2px of light would leave no bar to see; and the
+   preview link is nothing but a 50x33 thumbnail, a third of whose height the band would cover. */
+.catalog-section-item-slider-controls-block .catalog-section-item-slider-controls-image:focus-visible::before,
+.catalog-section-item-detail-props-container .catalog-section-item-detail-preview-link:focus-visible::before {
+	border-width: var(--ui-focus-outline-width);
+}
+
+/* The ring of a variant goes on the swatch, not on the focusable container around it. The padding of
+   that container is the spacing of the row - 4px at the sides, none above, 5px below - so a ring at
+   the edges of its box stood at three different distances from the swatch at once, and evening that
+   out meant growing the padding, which is the spacing and pushes the swatches apart. An outline
+   takes no room in the layout, so it is measured from the swatch itself: the same gap on all four
+   sides and not a pixel of the row moved. The offset is the one of the design system, so the gap
+   matches every other ring of the storefront; the swatch is what the visitor sees as the control,
+   and the padding around it is a gutter. The theme paints a halo of its own with box-shadow: 0 0 0
+   4px on the container, which reached over the neighbouring swatch - it goes here. */
+.catalog-section-item-scu-item-list .catalog-section-item-scu-item-color-container[tabindex][role=radio]:focus-visible,
+.catalog-section-item-scu-item-list .catalog-section-item-scu-item-text-container[tabindex][role=radio]:focus-visible {
+	box-shadow: none;
+}
+
+.catalog-section-item-scu-item-color-container:focus-visible .catalog-section-item-scu-item-color-block,
+.catalog-section-item-scu-item-text-container:focus-visible .catalog-section-item-scu-item-text-block {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The left edge of the preview link meets the edge of the scrollable properties container, so the
+   halo of the site theme would stand next to our ring cut on one side. The other nodes of the
+   enumeration above keep their halo, hence a rule of its own here. */
+.catalog-section-item-detail-props-container .catalog-section-item-detail-preview-link:focus-visible {
+	box-shadow: none;
+}
+
+/* The box of a title link hugs its text, so the light band of the theme ring, drawn inside the box
+   by outline-offset: -2px, falls on the glyphs. Both tones go outside the box instead: the light one
+   hugs it, the dark one stands off by its own width. Nothing above the link clips, so neither is cut.
+   The tones are swapped against the rule above for the same reason as the scrollable area below. */
+.catalog-section-item-name-link:focus-visible {
+	outline: calc(var(--ui-focus-outline-width) * 2) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-width);
+	box-shadow: 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+}
+
+/* The back link of the store menu block belongs to the landing module, and the theme draws its ring
+   inside the box (outline-offset: -2px), so the light band falls on the glyphs. An outline cannot
+   fix it here: the block gives the link padding-top: 20px, so its box is 47px tall around a 25.6px
+   line, and a ring on that box stands far above the text. Both tones go on a pseudo-element sized
+   to the line box instead - light hugging the glyphs, dark behind it - so the ring follows the text
+   and not the padding. height is given twice on purpose: 1lh is the line box itself, and the em
+   value before it keeps a ring where 1lh is not supported. The rule is kept to the back link of a
+   landing block and to the moment it holds focus: nothing else carrying the class is touched, and
+   outside focus the box of the link stays as its owners built it. 0,3,1 outweighs the theme selector
+   a:focus-visible without relying on file order, and our stylesheet loads on the storefront pages
+   only, so everywhere else the theme rule stays as it is. */
+.landing-block a.js-link-back:focus-visible {
+	position: relative;
+	outline: none;
+	box-shadow: none;
+}
+
+.landing-block a.js-link-back:focus-visible::after {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 1.6em;
+	height: 1lh;
+	box-shadow:
+		0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8),
+		0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-base-1);
+	content: '';
+	pointer-events: none;
+}
+
+/* The close button needs no ring inside its box: the header of the layer is a sibling of the
+   scrollable area, not its parent, and no ancestor of the button clips. A ring inside the box lay
+   over the label, which justify-content: flex-end pushes against the right edge of a full-width
+   button. The selector keeps 0,3,0 to outweigh the theme rule for a button (0,2,1). */
+.catalog-section-item-detail-close-btn-container .catalog-section-item-detail-close-btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-8);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: 0 0 0 4px var(--ui-color-base-1);
+}
+
+/* The quantity field gets no ring from the theme: it is neither a link, nor .btn, nor .form-control. */
+input.catalog-section-item-quantity-field:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-8);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: 0 0 0 4px var(--ui-color-base-1);
+}
+
+/* The scrollable area carries its ring on its own outline, which its overflow does not clip: a
+   pseudo-element inside overflow: auto is placed from the start of the scroll and rides away with
+   the content. The tones of the rule above are swapped - the outer halo would be covered by the
+   header, the offers block and the dimming around the layer. The selector needs 0,5,0: the theme
+   rule for a node with tabindex is 0,4,0 and our file is included earlier. */
+.catalog-section-item-detail-container .catalog-section-item-detail[tabindex][role="group"]:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: inset 0 0 0 4px var(--ui-color-base-8);
+}
+
+/*endregion*/

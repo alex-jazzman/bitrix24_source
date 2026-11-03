@@ -142,3 +142,20 @@
 .ui-toolbar.--air .ui-toolbar-title-box + .ui-toolbar-after-title-buttons {
 	margin-left: 0;
 }
+
+/*region Reflow: row spacing for wrapped buttons (WCAG 2.1 AA, 1.4.10)*/
+/*
+	In AIR the button blocks are given gap: 0 12px — that is, the row spacing is zero.
+	When the buttons wrap onto several rows below the breakpoint, the rows stick together.
+	We set row-gap here rather than in style.css: air.css is imported second and, at
+	equal specificity, would override the rule from the base file.
+*/
+@media (max-width: 768px) {
+	.ui-toolbar.--air .ui-toolbar-right-buttons,
+	.ui-toolbar.--air .ui-toolbar-after-title-buttons,
+	.ui-toolbar.--air.--multiline-title .ui-toolbar-right-buttons,
+	.ui-toolbar.--air.--multiline-title .ui-toolbar-after-title-buttons {
+		row-gap: 8px;
+	}
+}
+/*endregion*/

@@ -1,9 +1,15 @@
-/* The text of the field is hidden by the fill colour, not by `color`: the settings panel paints its
-   controls with `color: … !important` at the same weight (`.node-settings-panel .field-row textarea`),
-   so a `color` of ours would come down to the order of the bundles, while the fill colour is
-   contested by no one and wins over `color` either way. A focused field shows its own text. */
-.bxr-veneer:not(.bxr-raw) + input,
-.bxr-veneer:not(.bxr-raw) + textarea {
+/* The repeated class outweighs the later `!important` field styles of the settings panel. Excluding
+   color from the transition keeps the raw text and the veneer from being visible at the same time
+   and restores the raw text immediately on focus. */
+.bxr-veneer.bxr-veneer.bxr-veneer + input,
+.bxr-veneer.bxr-veneer.bxr-veneer + textarea {
+	transition-property: border, background-color, padding !important;
+}
+
+/* Spellcheck can paint the raw text with `color` even when its fill is transparent. */
+.bxr-veneer.bxr-veneer.bxr-veneer:not(.bxr-raw) + input,
+.bxr-veneer.bxr-veneer.bxr-veneer:not(.bxr-raw) + textarea {
+	color: transparent !important;
 	-webkit-text-fill-color: transparent;
 }
 
@@ -37,14 +43,15 @@
 	display: none;
 }
 
-/* The token is filled with the colour of its group in the data inspector. Neutral grey is the
-   outbound group — the own data of the node being edited, the document, system variables and
-   parameters. A token is never split by a line break: a half of a chip reads as a chip of its own. */
+/* The token is filled with the colour of its group in the data inspector, taken from the variables of
+   `design-tokens.css`. Neutral grey is the outbound group: the own data of the node being edited, the
+   document, system variables and parameters. A token is never split by a line break: a half of a chip
+   reads as a chip of its own. */
 .bxr-tok {
 	padding: 0 10px;
 	border-radius: 6px;
-	background: var(--ui-color-base-7);
-	color: var(--ui-color-base-1) !important;
+	background: var(--designer-bp-token-bg);
+	color: var(--designer-bp-token-text) !important;
 	white-space: nowrap;
 	cursor: pointer;
 	pointer-events: auto;
@@ -58,14 +65,18 @@
 }
 
 .bxr-tok.bxr-node {
-	background: var(--ui-color-accent-soft-green-2);
+	background: var(--designer-bp-token-inbound-bg);
 }
 
 .bxr-tok.bxr-global {
-	background: var(--ui-color-accent-soft-blue-2);
+	background: var(--designer-bp-token-global-bg);
+}
+
+.bxr-tok.bxr-filter {
+	background: var(--designer-bp-token-filter-bg);
 }
 
 .bxr-tok.bxr-unknown {
-	background: var(--ui-color-accent-soft-red-2);
-	color: var(--ui-color-accent-soft-element-red) !important;
+	background: var(--designer-bp-token-unknown-bg);
+	color: var(--designer-bp-token-unknown-text) !important;
 }

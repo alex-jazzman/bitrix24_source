@@ -31,7 +31,7 @@ export const FieldRowCard = {
 	},
 	computed:
 	{
-		...mapGetters(['isEditMode', 'isReadOnly', 'isSystem', 'fieldNameCounts', 'activeFieldIndex', 'connectionProperties']),
+		...mapGetters(['isEditMode', 'isReadOnly', 'isEditingForbidden', 'fieldNameCounts', 'activeFieldIndex', 'connectionProperties']),
 		isActive()
 		{
 			return this.index === this.activeFieldIndex;
@@ -102,11 +102,11 @@ export const FieldRowCard = {
 		},
 		canEditDescription()
 		{
-			return !this.isSystem && this.isVisible;
+			return !this.isEditingForbidden && this.isVisible;
 		},
 		canToggleVisibility()
 		{
-			return !this.isSystem;
+			return !this.isEditingForbidden;
 		},
 		isVisible: {
 			get()

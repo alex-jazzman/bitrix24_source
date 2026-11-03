@@ -17,7 +17,7 @@
 	font-weight: normal;
 	font-size: 16px;
 	line-height: 23px;
-	color: #777;
+	color: var(--ui-color-base-2);
 	margin-bottom: 25px;
 }
 
@@ -79,8 +79,7 @@
 	font-size: 11px;
 	line-height: 15px;
 	text-decoration-line: line-through;
-	color: #121212;
-	opacity: 0.5;
+	color: var(--ui-color-base-2);
 	margin-right: 1px;
 }
 
@@ -100,13 +99,13 @@
 /*endregion*/
 
 .product-item-detail-info-container-title {
-	color: #a5a5a5;
+	color: var(--ui-color-base-2);
 	font-size: 12px;
 }
 
 /*region SCU */
 .product-detail-scu-container-title {
-	color: #a5a5a5;
+	color: var(--ui-color-base-2);
 	font-size: 12px;
 }
 
@@ -147,7 +146,7 @@
 	position: relative;
 	width: 54px;
 	height: 33px;
-	border: 2px solid #c0cfda;
+	border: 2px solid var(--ui-color-base-3);
 	cursor: pointer;
 	border-radius: 2px;
 	box-sizing: border-box;
@@ -172,7 +171,7 @@
 	padding: 3px 15px;
 	min-width: 53px;
 	box-sizing: border-box;
-	border: 1px solid rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--ui-color-base-3);
 	cursor: pointer;
 	border-radius: 2px;
 	transition: 190ms linear color, 190ms linear background-color, 190ms linear border-color;
@@ -204,18 +203,38 @@
 .product-detail-scu-item-text-container.notallowed .product-detail-scu-item-text-block {
 	position: relative;
 	overflow: hidden;
-	outline-color: #a9adb4 !important;
+	border-color: var(--ui-color-base-2) !important;
 }
 
-.product-detail-scu-item-color-container.notallowed .product-detail-scu-item-color-block:after,
-.product-detail-scu-item-text-container.notallowed .product-detail-scu-item-text-block:after {
+.product-detail-scu-item-color-container.notallowed .product-detail-scu-item-color-block:before,
+.product-detail-scu-item-text-container.notallowed .product-detail-scu-item-text-block:before {
 	position: absolute;
 	top: -2px;
 	right: -2px;
 	bottom: -2px;
 	left: -2px;
-	background: rgba(255, 255, 255, 0.75) url("data:image/svg+xml,%3Csvg width='25' height='25' viewBox='0 0 25 25' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cmask id='path-1-outside-1' maskUnits='userSpaceOnUse' x='0.0683594' y='0.244629' width='25' height='25' fill='black'%3E%3Crect fill='white' x='0.0683594' y='0.244629' width='25' height='25'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.5272 11.4136L4.35823 3.24463L3.06836 4.5345L11.2373 12.7034L3.10905 20.8317L4.39892 22.1216L12.5272 13.9933L20.6954 22.1616L21.9853 20.8717L13.817 12.7034L21.9448 4.57572L20.6549 3.28585L12.5272 11.4136Z'/%3E%3C/mask%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.5272 11.4136L4.35823 3.24463L3.06836 4.5345L11.2373 12.7034L3.10905 20.8317L4.39892 22.1216L12.5272 13.9933L20.6954 22.1616L21.9853 20.8717L13.817 12.7034L21.9448 4.57572L20.6549 3.28585L12.5272 11.4136Z' fill='%23C4C4C4'/%3E%3Cpath d='M4.35823 3.24463L5.77244 1.83042L4.35823 0.416202L2.94401 1.83042L4.35823 3.24463ZM12.5272 11.4136L11.113 12.8278L12.5272 14.242L13.9414 12.8278L12.5272 11.4136ZM3.06836 4.5345L1.65415 3.12028L0.239932 4.5345L1.65415 5.94871L3.06836 4.5345ZM11.2373 12.7034L12.6515 14.1177L14.0657 12.7034L12.6515 11.2892L11.2373 12.7034ZM3.10905 20.8317L1.69484 19.4175L0.280623 20.8317L1.69484 22.2459L3.10905 20.8317ZM4.39892 22.1216L2.9847 23.5358L4.39892 24.95L5.81313 23.5358L4.39892 22.1216ZM12.5272 13.9933L13.9414 12.5791L12.5272 11.1649L11.113 12.5791L12.5272 13.9933ZM20.6954 22.1616L19.2812 23.5758L20.6954 24.99L22.1097 23.5758L20.6954 22.1616ZM21.9853 20.8717L23.3995 22.2859L24.8137 20.8717L23.3995 19.4575L21.9853 20.8717ZM13.817 12.7034L12.4028 11.2892L10.9886 12.7034L12.4028 14.1177L13.817 12.7034ZM21.9448 4.57572L23.359 5.98993L24.7732 4.57572L23.359 3.1615L21.9448 4.57572ZM20.6549 3.28585L22.0691 1.87164L20.6549 0.457422L19.2407 1.87164L20.6549 3.28585ZM2.94401 4.65884L11.113 12.8278L13.9414 9.99937L5.77244 1.83042L2.94401 4.65884ZM4.48257 5.94871L5.77244 4.65884L2.94401 1.83042L1.65415 3.12028L4.48257 5.94871ZM12.6515 11.2892L4.48257 3.12028L1.65415 5.94871L9.8231 14.1177L12.6515 11.2892ZM4.52326 22.2459L12.6515 14.1177L9.8231 11.2892L1.69484 19.4175L4.52326 22.2459ZM5.81313 20.7074L4.52326 19.4175L1.69484 22.2459L2.9847 23.5358L5.81313 20.7074ZM11.113 12.5791L2.9847 20.7074L5.81313 23.5358L13.9414 15.4075L11.113 12.5791ZM22.1097 20.7474L13.9414 12.5791L11.113 15.4075L19.2812 23.5758L22.1097 20.7474ZM20.5711 19.4575L19.2812 20.7474L22.1097 23.5758L23.3995 22.2859L20.5711 19.4575ZM12.4028 14.1177L20.5711 22.2859L23.3995 19.4575L15.2313 11.2892L12.4028 14.1177ZM20.5306 3.1615L12.4028 11.2892L15.2313 14.1177L23.359 5.98993L20.5306 3.1615ZM19.2407 4.70006L20.5306 5.98993L23.359 3.1615L22.0691 1.87164L19.2407 4.70006ZM13.9414 12.8278L22.0691 4.70006L19.2407 1.87164L11.113 9.99937L13.9414 12.8278Z' fill='white' mask='url(%23path-1-outside-1)'/%3E%3C/svg%3E%0A") no-repeat center;
-	background-size: 66% 66%;
+	background: rgba(255, 255, 255, 0.75);
+	content: "";
+}
+
+/* The cross is a mask, not a background image: a token does not reach inside a data: URI. */
+.product-detail-scu-item-color-container.notallowed .product-detail-scu-item-color-block:after,
+.product-detail-scu-item-text-container.notallowed .product-detail-scu-item-text-block:after {
+	--iblock-store-v3-cross-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=);
+	position: absolute;
+	top: -2px;
+	right: -2px;
+	bottom: -2px;
+	left: -2px;
+	background-color: var(--ui-color-base-2);
+	-webkit-mask-image: var(--iblock-store-v3-cross-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 66% 66%;
+	mask-image: var(--iblock-store-v3-cross-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 66% 66%;
 	content: "";
 }
 
@@ -263,7 +282,7 @@
 	font-weight: normal;
 	font-size: 12px;
 	line-height: 25px;
-	color: #999;
+	color: var(--ui-color-base-2);
 	position: absolute;
 	bottom: calc(100% - 20px);
 	left: 0;
@@ -288,9 +307,14 @@
 	display: block;
 	min-width: 26px;
 	height: 26px;
+	padding: 0;
+	border: 0;
 	border-radius: 50%;
 	background-color: #f2f2f2;
 	color: #fff;
+	font: inherit;
+	-webkit-appearance: none;
+	appearance: none;
 	vertical-align: middle;
 	text-align: center;
 	cursor: pointer;
@@ -397,8 +421,7 @@ div.product-item-detail-quantity-field {
 
 
 .product-item-detail-quantity-field:focus {
-	outline: none !important;
-	border-color: var(--theme-color-primary, #63aa28);
+	border-color: var(--ui-color-base-1);
 }
 
 .bx-no-touch input.product-item-detail-quantity-field::-webkit-outer-spin-button,
@@ -422,7 +445,7 @@ div.product-item-detail-quantity-field {
 	font-weight: normal;
 	font-size: 11px;
 	line-height: 15px;
-	color: #999;
+	color: var(--ui-color-base-2);
 	vertical-align: bottom;
 	letter-spacing: -0.4px;
 }
@@ -472,7 +495,8 @@ div.product-item-detail-quantity-field {
 	background-color: #121212;
 	border-color: #121212;
 	color: #fff;
-	opacity: .2;
+	/* Below ~.6 the label on the dimmed plate falls under 4.5:1. */
+	opacity: .65;
 }
 
 .btn.product-item-detail-buy-button span {
@@ -632,7 +656,7 @@ div.product-detail-slider-container {
 	outline: 1px solid transparent;
 	background-position: center;
 	background-repeat: no-repeat;
-	transition: background-size 450ms ease, width 450ms ease, height 450ms ease, outline 450ms ease;
+	transition: background-size 450ms ease, width 450ms ease, height 450ms ease;
 	transform: translateY(-50%) translateX(-50%);
 }
 
@@ -704,19 +728,25 @@ div.product-detail-slider-container {
 .product-detail-slider-controls-image {
 	position: relative;
 	padding: 4px;
+	border: 0;
+	background: none;
 	overflow: hidden;
-	opacity: .3;
 	text-align: center;
+	font: inherit;
+	-webkit-appearance: none;
+	appearance: none;
 	cursor: pointer;
 	flex-grow: 1;
 }
 
-.product-detail-slider-controls-image:hover,
-.product-detail-slider-controls-image.active { opacity: 1; }
+/* The ring is barely readable over a pale dot, so focus darkens the dot the way hover does. */
+.product-detail-slider-controls-image:hover .product-detail-slider-controls-dot,
+.product-detail-slider-controls-image:focus-visible .product-detail-slider-controls-dot,
+.product-detail-slider-controls-image.active .product-detail-slider-controls-dot { background-color: var(--ui-color-base-2); }
 
 .product-detail-slider-controls-dot {
 	height: 4px;
-	background-color: #c4c4c4;
+	background-color: var(--ui-color-base-3);
 	border-radius: 2px;
 }
 
@@ -957,11 +987,17 @@ section.product-detail-props-container {
 	text-overflow: ellipsis;
 	max-width: 100%;
 	transition: all 250ms ease;
-	color: rgba(0, 0, 0, 0.5);
+	color: var(--ui-color-base-2);
 	font-style: normal;
 	font-size: 15px;
 	line-height: 26px;
-	padding-top: 2px;
+	font-family: inherit;
+	padding: 2px 0 0;
+	border: 0;
+	background: none;
+	-webkit-appearance: none;
+	appearance: none;
+	cursor: pointer;
 	text-decoration: none;
 }
 
@@ -987,6 +1023,11 @@ section.product-detail-props-container {
 .product-item-detail-tab.active .product-item-detail-tab-link:after { background: var(--theme-color-primary, #63aa28); }
 
 .product-item-detail-tab-content { padding: 25px 0; }
+
+.product-item-detail-tab-content[data-value="description"] {
+	overflow: auto;
+	contain: paint;
+}
 
 /*endregion*/
 
@@ -1100,7 +1141,7 @@ section.product-detail-props-container {
 }
 
 .product-item-detail-properties-name {
-	color: rgba(0, 0, 0, 0.4);
+	color: var(--ui-color-base-2);
 }
 
 .product-item-detail-properties-value {
@@ -1144,3 +1185,127 @@ input::-webkit-inner-spin-button { -webkit-appearance: none; }
 	animation-iteration-count: infinite;
 	animation-timing-function: linear;
 }
+
+/*region FOCUS RING*/
+/* The variant and dot selectors carry their attributes to outweigh the theme, not to narrow the
+   match: the theme rule for a focused node with tabindex (landing24/template_styles.css:221-225)
+   counts 0,4,0 - a class, an attribute, the attribute inside :not() and a pseudo-class - so at
+   0,3,0 our reset loses and the node shows the ring of the theme and ours at once. The dot holds a
+   tabindex because its group moves focus between the dots, so the same theme rule reaches it; its
+   container class was weight and nothing else, and the attributes of the dot itself carry that now. */
+.product-detail-scu-item-list .product-detail-scu-item-color-container[tabindex][role=radio]:focus-visible,
+.product-detail-scu-item-list .product-detail-scu-item-text-container[tabindex][role=radio]:focus-visible,
+.product-detail-slider-controls-image[data-entity=slider-control][tabindex][type=button]:focus-visible {
+	outline: none;
+}
+
+/* The steps of the quantity carry the ring of the checkout (sale.order.checkout, region FOCUS RING):
+   one dark band inside the box, so the same control does not look heavier here than in the basket.
+   The theme hands a bare button a ring of its own, so the shadow is cleared as well. */
+.product-item-detail-quantity-field-container .product-item-detail-quantity-btn-minus:focus-visible,
+.product-item-detail-quantity-field-container .product-item-detail-quantity-btn-plus:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: none;
+}
+
+.product-detail-slider-controls-block .product-detail-slider-controls-image:focus-visible::before {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border: calc(var(--ui-focus-outline-width) * 2) solid var(--ui-color-base-1);
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/* The dot strip is too small for the doubled band and keeps the single token: 12px high around a
+   4px bar, so 4px of dark plus 2px of light would leave no bar to see. */
+.product-detail-slider-controls-block .product-detail-slider-controls-image:focus-visible::before {
+	border-width: var(--ui-focus-outline-width);
+}
+
+/* The ring of a variant goes on the swatch, not on the focusable container around it. The padding of
+   that container is the spacing of the row, so a ring at the edges of its box lay on the border of
+   the swatch above and below and stood 4px away at the sides, and evening that out meant growing the
+   padding, which pushes the swatches apart. An outline takes no room in the layout, so it is measured
+   from the swatch itself: the same gap on all four sides and not a pixel of the row moved. The offset
+   is the one of the design system, so the gap matches every other ring of the storefront; the swatch
+   is what the visitor sees as the control, and the padding around it is a gutter. The theme paints a
+   halo of its own with box-shadow: 0 0 0 4px on the container, which reached over the neighbouring
+   swatch - it goes here. */
+.product-detail-scu-item-list .product-detail-scu-item-color-container[tabindex][role=radio]:focus-visible,
+.product-detail-scu-item-list .product-detail-scu-item-text-container[tabindex][role=radio]:focus-visible {
+	box-shadow: none;
+}
+
+.product-detail-scu-item-color-container:focus-visible .product-detail-scu-item-color-block,
+.product-detail-scu-item-text-container:focus-visible .product-detail-scu-item-text-block {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The quantity field gets no ring from the theme: it is neither a link, nor .btn, nor .form-control. */
+input.product-item-detail-quantity-field:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-8);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: 0 0 0 4px var(--ui-color-base-1);
+}
+
+/* The box of a tab hugs its caption, so the light band of the theme ring, drawn inside the box by
+   outline-offset: -2px, falls on the first and the last glyph. Both tones go outside the box instead,
+   the way the title link of a card carries them: nothing above the strip clips, and the gap to the
+   next tab is 17px against the 6px this ring takes. The tab holds a tabindex, because the strip moves
+   focus between the tabs itself, so the theme rule that reaches it is the one for a node with
+   tabindex (0,4,0) and not the one for a button; the attributes of the tab carry the weight past it. */
+.product-item-detail-tabs-list .product-item-detail-tab-link[role=tab][tabindex]:focus-visible {
+	outline: calc(var(--ui-focus-outline-width) * 2) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-width);
+	box-shadow: 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+}
+
+/* The back link of the store menu block belongs to the landing module, and the theme draws its ring
+   inside the box (outline-offset: -2px), so the light band falls on the glyphs. An outline cannot
+   fix it here: the block gives the link padding-top: 20px, so its box is 47px tall around a 25.6px
+   line, and a ring on that box stands far above the text. Both tones go on a pseudo-element sized
+   to the line box instead - light hugging the glyphs, dark behind it - so the ring follows the text
+   and not the padding. height is given twice on purpose: 1lh is the line box itself, and the em
+   value before it keeps a ring where 1lh is not supported. The rule is kept to the back link of a
+   landing block and to the moment it holds focus: nothing else carrying the class is touched, and
+   outside focus the box of the link stays as its owners built it. 0,3,1 outweighs the theme selector
+   a:focus-visible without relying on file order, and our stylesheet loads on the storefront pages
+   only, so everywhere else the theme rule stays as it is. */
+.landing-block a.js-link-back:focus-visible {
+	position: relative;
+	outline: none;
+	box-shadow: none;
+}
+
+.landing-block a.js-link-back:focus-visible::after {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 1.6em;
+	height: 1lh;
+	box-shadow:
+		0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8),
+		0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-base-1);
+	content: '';
+	pointer-events: none;
+}
+
+/* The bootstrap of the theme hands the browser ring to a bare button on plain :focus
+   (landing24/assets/vendor/bootstrap/bootstrap.css:237-240), not on :focus-visible, so a mouse click
+   on the buttons this template made out of a div or a link lights it. The .btn family is answered
+   there by the theme itself; these four carry no .btn and are ours to answer. The keyboard is left
+   alone: :not(:focus-visible) cannot apply where the rules above do. */
+.product-item-detail-tab-link:focus:not(:focus-visible),
+.product-detail-slider-controls-image:focus:not(:focus-visible),
+.product-item-detail-quantity-btn-minus:focus:not(:focus-visible),
+.product-item-detail-quantity-btn-plus:focus:not(:focus-visible) {
+	outline: none;
+}
+
+/*endregion*/

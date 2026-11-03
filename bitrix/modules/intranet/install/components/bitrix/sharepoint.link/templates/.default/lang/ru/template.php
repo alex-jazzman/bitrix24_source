@@ -7,7 +7,7 @@ $MESS['SL_FORM_SERVER_STEP_HEAD'] = 'Укажите параметры дост�
 $MESS['SL_FORM_LISTS_STEP_HEAD'] = 'Выберите нужный список из доступных на сервере';
 $MESS['SL_SETTINGS_SECTION_CONN'] = 'Настройки подключения';
 $MESS['SL_SETTINGS_SECTION_AUTH'] = 'Параметры авторизации';
-$MESS['SL_SETTINGS_CONN_SERVER'] = 'Адрес сервера';
+$MESS['SL_SETTINGS_CONN_SERVER'] = 'Адрес SharePoint';
 $MESS['SL_SETTINGS_CONN_USER'] = 'Имя пользователя';
 $MESS['SL_SETTINGS_CONN_PASS'] = 'Пароль';
 $MESS['SL_SETTINGS_CONN_PASS_SHOW_SYMBOLS'] = 'показывать вводимые знаки';
@@ -46,4 +46,4 @@ $MESS['SL_FORM_LIST_PRIORITY'] = 'В случае конфиликта верс�
 $MESS['SL_FORM_LIST_PRIORITY_B'] = 'локальную версию';
 $MESS['SL_FORM_LIST_PRIORITY_S'] = 'версию SharePoint';
 
-?>
+$MESS['SL_FORM_SERVER_EMPTY'] = 'Нет адресов для выбора';

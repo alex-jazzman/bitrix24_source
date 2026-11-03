@@ -1,6 +1,7 @@
 // @flow
 import { type Event, Extension, Type } from 'main.core';
 import { DatePicker } from 'ui.date-picker';
+import { resolveNumericOffset } from '../../../lib/constant-date/constant-date';
 
 const boundTimePickers = new WeakSet();
 
@@ -9,9 +10,10 @@ const REGEX_PATTERNS = {
 	TIMEZONE_OFFSET: /\s\[[\d-]+]$/,
 };
 
+// A single time row: one value of the constant, whether the constant is multiple or not.
 // @vue/component
-export const ConstantTime = {
-	name: 'ConstantTime',
+export const ConstantTimeControl = {
+	name: 'ConstantTimeControl',
 	props: {
 		item: {
 			type: Object,
@@ -51,6 +53,18 @@ export const ConstantTime = {
 			timezones: [],
 		};
 	},
+	watch: {
+		modelValue(): void
+		{
+			// The value may be replaced from outside: an edited default of the constant redraws the
+			// row. The echo of the value the row has just published is skipped, so the entered time
+			// is never rebuilt under the user.
+			if (this.modelValue !== this.currentValue())
+			{
+				this.syncFromModel();
+			}
+		},
+	},
 	mounted(): void
 	{
 		this.timezones = Extension.getSettings('bizproc.setup-template')?.timezones;
@@ -73,6 +87,8 @@ export const ConstantTime = {
 			this.applyValueFromModule();
 			this.applyTimezoneFromModel();
 		},
+		// The zone a row falls back to, as its select shows it: the keyword of the current user
+		// zone. The offset such a row serializes with is resolved by resolveTimezoneOffset().
 		getDefaultTimezone(): string
 		{
 			return 'current';
@@ -108,6 +124,10 @@ export const ConstantTime = {
 			const match = clean.match(REGEX_PATTERNS.TIME_FORMAT);
 
 			return match ? match[1] : '';
+		},
+		currentValue(): string
+		{
+			return this.prepareEventData(this.timeValue, this.timezone);
 		},
 		emitUpdate(value: string): void
 		{
@@ -204,19 +224,25 @@ export const ConstantTime = {
 
 			this.timePicker.show();
 		},
-		prepareEventData(time: number, timezone: string): string
+		/**
+		 * The offset a zone of the list serializes with. A value carries a numeric offset only:
+		 * Bitrix\Bizproc\BaseType\Value\Time reads nothing else, and the rule of reading it off a
+		 * zone belongs to resolveNumericOffset() — the `time` field only picks the zone by its value.
+		 */
+		resolveTimezoneOffset(timezone: string): number
 		{
-			let offset = timezone;
-			if (!Type.isNumber(timezone))
-			{
-				offset = this.timezones.find((zone) => zone.value === timezone)?.offset ?? '0';
-			}
-
-			return `${time} [${offset}]`;
+			return resolveNumericOffset(this.timezones?.find((zone) => zone.value === timezone));
+		},
+		prepareEventData(time: string, timezone: string): string
+		{
+			return `${time} [${this.resolveTimezoneOffset(timezone)}]`;
 		},
 	},
 	template: `
-		<div class="bizproc-setup-template__time-row">
+		<div
+		    class="bizproc-setup-template__time-row"
+		    data-test-id="bizproc-setup-template__form-time-control"
+		>
 		  <div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 		    <input
 		        ref="timeInput"

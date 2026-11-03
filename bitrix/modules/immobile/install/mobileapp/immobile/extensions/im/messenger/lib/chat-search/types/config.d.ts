@@ -30,4 +30,6 @@ export type ChatSearchConfigSetOptionParams = {
 	contextChatId?: number;
 	/** Drop im-guest users from server search results. */
 	excludeGuests?: boolean;
+	/** Search every chat available for forwarding instead of a single recent section. */
+	searchAllChats?: boolean;
 };

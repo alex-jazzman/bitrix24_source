@@ -16,6 +16,7 @@ export const DateGroup = {
 			required: true,
 		},
 	},
+	emits: ['dateNavigationClick'],
 	data(): JsonObject
 	{
 		return {};
@@ -29,8 +30,12 @@ export const DateGroup = {
 		},
 	},
 	template: `
-		<div class="bx-im-message-list-date-group__container">
-			<DateGroupTitle :title="dateGroup.dateTitle" />
+		<div class="bx-im-message-list-date-group__container" data-testid="im-message-list-date-group">
+			<DateGroupTitle
+				:title="dateGroup.dateTitle"
+				:date="dateGroup.date"
+				@dateNavigationClick="$emit('dateNavigationClick', $event)"
+			/>
 			<template v-for="dateGroupItem in dateGroup.items" >
 				<slot
 					name="dateGroupItem"

@@ -1,8 +1,28 @@
+/* Two groups: the set on the left, the actions on the right. The actions are pushed right by
+   their own margin rather than by the space between the groups, so emptying the set — which
+   takes the chip off the footer — leaves confirm and cancel where they stood. */
 .disk-picker-selection-footer {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: flex-end;
 	gap: var(--ui-space-inline-sm);
 	width: 100%;
+}
+
+/* The set itself is a design-system button; this element only holds the hint. The native title
+   sits on the wrapper because the button takes no title of its own, and the tooltip a button
+   raises from its own text was too loud for this one and lost in Firefox from the second hover
+   on. */
+.disk-picker-selection-footer__chip {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.disk-picker-selection-footer__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex: none;
+	margin-left: auto;
 }

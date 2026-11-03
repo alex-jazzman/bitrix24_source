@@ -20,6 +20,7 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 		CreateBannerFactory,
 		CallMessageFactory,
 		VoteMessageFactory,
+		ContactMessageFactory,
 		AiAssistantMessage,
 		VideoNoteMessage,
 		VideoNoteTextMessage,
@@ -159,6 +160,13 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 	};
 
 	/** @type {MessageTypeRule} */
+	const ContactMessageRule = {
+		type: MessageType.contact,
+		isSuitable: (helper) => ContactMessageFactory.checkSuitableForDisplay(helper.getComponentId()),
+		create: (model, options) => ContactMessageFactory.create(model, options),
+	};
+
+	/** @type {MessageTypeRule} */
 	const ImageMessageRule = {
 		type: MessageType.image,
 		isSuitable: (helper) => helper.isImage,
@@ -224,7 +232,10 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 	/** @type {MessageTypeRule} */
 	const TextMessageRule = {
 		type: MessageType.text,
-		isSuitable: (helper) => helper.isText && !helper.isUnsupportedByComponentId,
+		isSuitable: (helper) => helper.isText && (
+			!helper.isUnsupportedByComponentId
+			|| helper.isAiAssistantSourceResponse
+		),
 		create: (model, options) => new TextMessage(model, options),
 	};
 
@@ -245,11 +256,11 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 	const messageTypeRules = [
 		CopilotPromptMessageRule,
 		CreateBannerMessageRule,
-		AiAssistantMessageRule,
 		StickerMessageRule,
 		DeletedStickerMessageRule,
 		CopilotBlockMessageRule,
 		BlockMessageRule,
+		AiAssistantMessageRule,
 		SystemTextMessageRule,
 		DeletedMessageRule,
 		ErrorMessageRule,
@@ -257,6 +268,7 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 		CopilotMessageRule,
 		ConvertCollabSystemTextMessageRule,
 		CheckInMessageRule,
+		ContactMessageRule,
 		MediaGalleryMessageRule,
 		FileGalleryMessageRule,
 		CallMessageRule,

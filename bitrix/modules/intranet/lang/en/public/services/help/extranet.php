@@ -14,7 +14,7 @@ workgroups and work over your collective, shared tasks and problems. This
 solution ensures that your communication is secure while preserving the Intranet
 security. </p>
 
-<div align='center'> <img width='302' height='218' src='#SITE#images/en/docs/cp/extranet_main-s300.png' complete='complete' />
+<div align='center'> <img width='302' height='218' src='#SITE#images/en/docs/cp/extranet_main-s300.webp' complete='complete' />
   <br />
   <i>The Extranet main page</i> &nbsp; </div>
 
@@ -40,7 +40,7 @@ stricter security policy.</p>
 
 <p>When installing Bitrix24, you get the Extranet module installed automatically. However, this might not be the case when upgrading an older version. If the Extranet module is not present on the existing modules list, you have to <a href='/bitrix/admin/module_admin.php' >install it</a> before you proceed.</p>
 
-<div align='center'><img width='361' height='205' src='#SITE#images/en/docs/cp/extranet_setup.png' complete='complete' />
+<div align='center'><img width='361' height='205' src='#SITE#images/en/docs/cp/extranet_setup.webp' complete='complete' />
   <br />
   <i>Installing the Extranet module</i> </div>
 

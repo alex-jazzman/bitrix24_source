@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActionArea;
+use Bitrix\Bizproc\Activity\Enum\ActionGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\FieldType;
@@ -35,6 +37,21 @@ $arActivityDescription = (
 		'IS_SUPPORTING_ROBOT' => true,
 	])
 ;
+
+if (
+	enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionGroup')
+	&& enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionArea')
+)
+{
+	$arActivityDescription->setNodeActionSettings([
+		'HANDLES_DOCUMENT' => false,
+		'ACTION_GROUP' => ActionGroup::GET->value,
+		'ACTION_AREA' => ActionArea::TASKS->value,
+		'ACTION_OBJECTS' => [
+			['id' => 'task', 'title' => Loc::getMessage('TASKS_ACTIVITY_OBJECT_TASK')],
+		],
+	]);
+}
 
 if (defined(FieldType::class . '::DOCUMENT'))
 {

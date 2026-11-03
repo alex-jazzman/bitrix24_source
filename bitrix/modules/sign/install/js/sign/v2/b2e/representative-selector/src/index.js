@@ -155,7 +155,10 @@ export class RepresentativeSelector
 			</span>
 		`;
 		this.#ui.select.button = Tag.render`
-			<button class="ui-btn ui-btn-success ui-btn-xs ui-btn-round">
+			<button
+				class="ui-btn ui-btn-success ui-btn-xs ui-btn-round"
+				data-testid="sign-b2e-representative-selector-select"
+			>
 				${Loc.getMessage('SIGN_PARTIES_REPRESENTATIVE_SELECT_BUTTON')}
 			</button>
 		`;

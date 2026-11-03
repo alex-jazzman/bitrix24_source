@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.AI = this.BX.AI || {};
 this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
-(function (exports, main_core_events, main_core, ui_label, main_popup, main_loader, ui_analytics) {
+(function (exports, main_core, ui_label, main_popup, main_loader, ui_analytics) {
 	'use strict';
 
 	class PopupCategoriesRenderer {
@@ -208,6 +208,66 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 				this.#updateList();
 			});
 			return container.root;
+		}
+	}
+
+	function getMultipleActionNotificationMessage(actionName, promptName) {
+		if (!main_core.Type.isStringFilled(promptName)) {
+			return getMassActionNotificationMessage(actionName);
+		}
+		switch (actionName) {
+			case 'multiple-activate':
+				{
+					return wrapTextToHtmlWithWordBreak(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_ACTIVATE', {
+						'#NAME#': `<b>${main_core.Text.encode(promptName)}</b>`
+					}));
+				}
+			case 'multiple-deactivate':
+				{
+					return wrapTextToHtmlWithWordBreak(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_DEACTIVATE', {
+						'#NAME#': `<b>${main_core.Text.encode(promptName)}</b>`
+					}));
+				}
+			case 'multiple-show-for-me':
+				{
+					return wrapTextToHtmlWithWordBreak(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_SHOW_MSGVER_1', {
+						'#NAME#': `<b>${main_core.Text.encode(promptName)}</b>`
+					}));
+				}
+			case 'multiple-hide-from-me':
+				{
+					return wrapTextToHtmlWithWordBreak(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_HIDE_MSGVER_1', {
+						'#NAME#': `<b>${main_core.Text.encode(promptName)}</b>`
+					}));
+				}
+			default:
+				{
+					return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTION_DEFAULT');
+				}
+		}
+	}
+	function getMassActionNotificationMessage(actionName) {
+		switch (actionName) {
+			case 'multiple-activate':
+				{
+					return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTIVATE');
+				}
+			case 'multiple-deactivate':
+				{
+					return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_DEACTIVATE');
+				}
+			case 'multiple-show-for-me':
+				{
+					return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW_MSGVER_1');
+				}
+			case 'multiple-hide-from-me':
+				{
+					return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE_MSGVER_1');
+				}
+			default:
+				{
+					return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTION_DEFAULT');
+				}
 		}
 	}
 
@@ -467,41 +527,15 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 		static applyMultipleAction() {
 			const action = this.#grid.getActionsPanel().getPanel().querySelector('#action-menu span').dataset.value;
 			const actionWithoutQuotes = action.replaceAll('"', '');
-			const message = this.#getNotificationMessageForMassAction(actionWithoutQuotes);
+			const selectedPromptIds = this.#grid.getRows().getSelectedIds();
+			const promptName = selectedPromptIds.length === 1 ? this.#grid.getRows().getById(selectedPromptIds[0])?.getDataset().promptName : null;
+			const message = getMultipleActionNotificationMessage(actionWithoutQuotes, promptName);
 			this.#sendRowAction(actionWithoutQuotes, {
-				selectedSharePromptsCodes: this.#grid.getRows().getSelectedIds(),
+				selectedSharePromptsCodes: selectedPromptIds,
 				page: this.#getCurrentPage()
 			}, () => {
 				showNotification(message);
 			});
-		}
-		static #getNotificationMessageForMassAction(actionName) {
-			switch (actionName) {
-				case 'multiple-activate':
-					{
-						return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTIVATE');
-					}
-				case 'multiple-deactivate':
-					{
-						return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_DEACTIVATE');
-					}
-				case 'multiple-show-for-me':
-					{
-						return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW_MSGVER_1', {
-							'#COPILOT_NAME#': this.#getCopilotName()
-						});
-					}
-				case 'multiple-hide-from-me':
-					{
-						return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE_MSGVER_1', {
-							'#COPILOT_NAME#': this.#getCopilotName()
-						});
-					}
-				default:
-					{
-						return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_ACTION_DEFAULT');
-					}
-			}
 		}
 		static init(gridId, isShowTour = false) {
 			if (isShowTour) {
@@ -618,5 +652,5 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 
 	exports.Controller = Controller;
 
-})(this.BX.AI.SharePrompt.Library = this.BX.AI.SharePrompt.Library || {}, BX.Event, BX, BX.UI, BX.Main, BX, BX.UI.Analytics);
+})(this.BX.AI.SharePrompt.Library = this.BX.AI.SharePrompt.Library || {}, BX, BX.UI, BX.Main, BX, BX.UI.Analytics);
 //# sourceMappingURL=script.js.map

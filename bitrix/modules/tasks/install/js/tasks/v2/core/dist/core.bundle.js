@@ -17,13 +17,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 			return this.#store;
 		}
 		init() {
-			// eslint-disable-next-line no-async-promise-executor
-			this.#initPromise ??= new Promise(async resolve => {
-				this.#store = await this.#initStore();
-				this.#initPull();
-				resolve();
-			});
+			// a promise executor swallows its own rejection, so callers would await a forever pending init
+			this.#initPromise ??= this.#init();
 			return this.#initPromise;
+		}
+		async #init() {
+			this.#store = await this.#initStore();
+			this.#initPull();
 		}
 		async addDynamicModel(vuexBuilderModel) {
 			if (!(this.#builder instanceof ui_vue3_vuex.Builder)) {

@@ -97,12 +97,21 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 						requiredFields: this._fieldNames,
 						title: BX.prop.getString(this._settings, "title", ""),
 						ANALYTICS_CONFIG: BX.prop.getObject(this._settings, 'analyticsConfig', null),
+						POST_FORM_ANALYTICS_DATA: BX.prop.getObject(this._settings, 'postFormAnalyticsData', null),
+						HOST_COLUMN_FOR_QUICK_EDITOR_ID: BX.prop.getString(
+							this._settings, 'hostColumnForQuickEditorId', '',
+						),
 					},
 				};
 
 				if (this._categoryId !== '')
 				{
 					data.categoryId = this._categoryId;
+				}
+				const viewMode = BX.prop.getString(this._settings, 'viewMode', '');
+				if (viewMode !== '')
+				{
+					data.viewMode = viewMode;
 				}
 
 				BX.ajax.runAction('crm.api.item.getEditor', { data })
@@ -157,6 +166,10 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 						ENABLE_FIELDS_CONTEXT_MENU: "N",
 						IS_EMBEDDED: "Y",
 						ANALYTICS_CONFIG: BX.prop.getObject(this._settings, 'analyticsConfig', null),
+						POST_FORM_ANALYTICS_DATA: BX.prop.getObject(this._settings, 'postFormAnalyticsData', null),
+						HOST_COLUMN_FOR_QUICK_EDITOR_ID: BX.prop.getString(
+							this._settings, 'hostColumnForQuickEditorId', '',
+						),
 					},
 					function(result)
 					{

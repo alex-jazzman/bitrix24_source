@@ -56,6 +56,7 @@ $MESS['M_PROFILE_DEPARTMENT_CONTACTS_BOX_TITLE'] = 'Контакты';
 $MESS['M_PROFILE_USER_ROLE_COLLAB'] = 'Гость';
 $MESS['M_PROFILE_USER_ROLE_EXTRANET'] = 'Внешний пользователь';
 $MESS['M_PROFILE_USER_ROLE_ROOT_ADMIN'] = 'Администратор';
+$MESS['M_PROFILE_USER_ROLE_SYSTEM_USER'] = 'Системный пользователь';
 
 $MESS['M_PROFILE_DELETE'] = 'Удалить профиль';
 
@@ -68,3 +69,11 @@ $MESS['PHONE_CALL_B24_BANNER_FEATURE_2_COMMON'] = 'Можно арендоват
 $MESS['PHONE_CALL_B24_BANNER_FEATURE_3_COMMON'] = 'Записи разговоров сохранятся в CRM';
 
 $MESS['M_PROFILE_PERMISSION_DENIED_TEXT'] = 'Нет прав на просмотр';
+
+$MESS['M_PROFILE_SYSTEM_USER_PLACEHOLDER'] = 'Системные пользователи создаются автоматически при установке приложений в вашем Битрикс24. Они обеспечивают работу приложений и связанных с ними интеграций при кадровых изменениях или после прекращения сотрудничества с интеграторами. Авторизоваться под системным пользователем нельзя — у него нет логина и пароля';
+$MESS['M_PROFILE_OFFICE_PRESENCE_PRESENT'] = 'Сейчас в офисе';
+$MESS['M_PROFILE_OFFICE_PRESENCE_ABSENT'] = 'Присутствие в офисе не отмечено';
+$MESS['M_PROFILE_OFFICE_PRESENCE_UNKNOWN'] = 'Сейчас может быть не на месте';
+$MESS['M_PROFILE_OFFICE_TITLE_EMPLOYEE'] = 'Офис сотрудника';
+$MESS['M_PROFILE_OFFICE_TITLE_OWN'] = 'Мой офис';
+$MESS['M_PROFILE_SYSTEM_USER_LINK'] = 'Подробнее в нашей статье';

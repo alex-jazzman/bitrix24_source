@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ACTION_BUTTON_CONTENT"] = "Редактировать";
 $MESS["ACTION_BUTTON_REMOVE"] = "&nbsp;";
 $MESS["ACTION_BUTTON_INSERT_AFTER"] = "Вставить после";
@@ -127,7 +127,6 @@ $MESS["LANDING_IMAGE_GOOGLE_DESCRIPTION"] = "Google Images - инструмен�
 $MESS["LANDING_TITLE_OF_TEXT_NODE"] = "Нажмите, чтобы отредактировать текст";
 $MESS["LANDING_TITLE_OF_IMAGE_NODE"] = "Нажмите, чтобы отредактировать изображение";
 $MESS["LANDING_TITLE_OF_IMAGE_NODE_UPLOAD"] = "Загрузить изображение";
-$MESS["LANDING_NODE_IMG_UPLOAD_ERROR"] = "Не удалось загрузить файл. Возможно, его формат не поддерживается.";
 $MESS["LANDING_TITLE_OF_LINK_NODE"] = "Нажмите, чтобы отредактировать кнопку";
 $MESS["LANDING_TITLE_OF_BLOCK_ACTION_SORT_UP"] = "Переместить блок наверх";
 $MESS["LANDING_TITLE_OF_BLOCK_ACTION_SORT_DOWN"] = "Переместить блок вниз";
@@ -235,7 +234,7 @@ $MESS["LANDING_TITLE_OF_EDITOR_ACTION_DESIGN"] = "Дизайн";
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_AI_TEXT"] = "Создать";
 $MESS["LANDING_BLOCK_DISABLED_ON_DESKTOP_NAME_2"] = "Настроена видимость блока";
 $MESS["LANDING_BLOCK_HIDDEN_ON_DESKTOP"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана более чем 1120px";
-$MESS["LANDING_BLOCK_HIDDEN_ON_TABLET"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана менее чем 1120px но&nbsp;более чем 575px";
+$MESS["LANDING_BLOCK_HIDDEN_ON_TABLET"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана менее чем 1120px, но&nbsp;более чем 575px";
 $MESS["LANDING_BLOCK_HIDDEN_ON_MOBILE"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана менее чем 575px";
 // Don't translate it. For RU only
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_GLAVRED"] = "Главред";
@@ -290,7 +289,7 @@ $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_SANS_SERIF_2"] = "Без засече�
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_SERIF_2"] = "С засечками";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_DISPLAY"] = "Декоративный";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_HANDWRITING"] = "Рукописный";
-$MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_MONOSPACE"] = "Моноширный";
+$MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_MONOSPACE"] = "Моноширинный";
 $MESS["LANDING_GOOGLE_FONT_SELECT_BUTTON"] = "Выбрать";
 $MESS["LANDING_GOOGLE_IMAGES_KEY_PANEL_TITLE"] = "Укажите ключ для Google Images";
 $MESS["LANDING_GOOGLE_IMAGES_KEY_FIELD_TITLE"] = "Ключ Google Custom Search API";
@@ -409,6 +408,7 @@ $MESS['LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_NO_VK_MSGVER_1'] = 'Использ
 $MESS['LANDING_EMBED_FIELD_PLACEHOLDER'] = 'Ссылка на видео';
 $MESS['LANDING_EMBED_ERROR_TEXT'] = 'Укажите ссылку на страницу с видео. Код и другие способы вставки не поддерживаются.';
 $MESS['LANDING_EMBED_ERROR_WRONG_SOURCE_TEXT_ALL'] = 'Некорректная ссылка';
+$MESS['LANDING_EMBED_ERROR_VK_NO_PLAYER'] = 'Не удалось вставить видео ВКонтакте, проверьте ссылку: клипы и недоступные видео не поддерживаются';
 $MESS['LANDING_SHOW_FORM_EDITOR'] = 'Настроить форму';
 $MESS['LANDING_DESIGN_BLOCK_REPO_BUTTON'] = 'Добавить элемент';
 $MESS['LANDING_DESIGN_BLOCK_REPO_TITLE'] = 'Добавить элемент';

@@ -6,6 +6,7 @@ jn.define('manual-testing-tools/src/factory', (require, exports, module) => {
 	const ToolType = {
 		AppRatingManager: 'AppRatingManager',
 		Onboarding: 'Onboarding',
+		MapStates: 'MapStates',
 	};
 
 	class ToolFactory
@@ -22,6 +23,10 @@ jn.define('manual-testing-tools/src/factory', (require, exports, module) => {
 					const { OnboardingTestingTool } = require('onboarding/testing-tool');
 
 					return OnboardingTestingTool();
+				case ToolType.MapStates:
+					const { MapStatesTestingTool } = require('stafftrack/check-in-v3/map-testing-tool');
+
+					return MapStatesTestingTool();
 				default:
 					return null;
 			}

@@ -1,0 +1,68 @@
+/* The row is a button, so the browser defaults are dropped first and the look of the row is built on
+   the bare element. */
+.bx-im-content-folder-source-item {
+	appearance: none;
+	width: 100%;
+	margin: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	/* the horizontal inset of the list belongs to the card, so the row only holds the vertical one */
+	padding: var(--ui-space-inset-xs) 0;
+	cursor: pointer;
+}
+
+.bx-im-content-folder-source-item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bx-im-content-folder-source-item.--locked {
+	cursor: default;
+}
+
+/* The switcher shows its locked state on its own, so only the rest of the row is dimmed. */
+.bx-im-content-folder-source-item.--locked .bx-im-content-folder-source-item__icon,
+.bx-im-content-folder-source-item.--locked .bx-im-content-folder-source-item__text {
+	opacity: 0.5;
+}
+
+.bx-im-content-folder-source-item__icon {
+	--ui-icon-set__icon-size: 32px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+
+	flex-shrink: 0;
+}
+
+.bx-im-content-folder-source-item__text {
+	/* lets the captions be cut inside the row instead of pushing the switcher out of it */
+	min-width: 0;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.bx-im-content-folder-source-item__title {
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-content-folder-source-item__subtitle {
+	color: var(--ui-color-base-4);
+}
+
+/* The note of a locked source is a whole sentence and is meant to be read, so it wraps instead of
+   being cut like the captions above it. */
+.bx-im-content-folder-source-item__note {
+	color: var(--ui-color-base-4);
+}
+
+.bx-im-content-folder-source-item__switcher {
+	flex-shrink: 0;
+}

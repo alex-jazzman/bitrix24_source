@@ -8,10 +8,10 @@ const BACKLINKS_PUSH_COMMAND = 'documentBacklinksChanged';
 // documents, not this one, so it is never matched against documentId.
 const ACCESS_CASCADE_PUSH_COMMAND = 'documentAccessCascade';
 
-// [EVENT-01] Subscribes to everything that can change what this reader sees as the backlinks of one
+// Subscribes to everything that can change what this reader sees as the backlinks of one
 // document: the "backlinks changed" signal on the document's own channel and the ACL cascade on the
 // reader's. `onChange()` takes no argument on purpose: the counter is personal, so no signal carries
-// a value and a consumer re-reads its own number through [API-02]. Returns a disposer. Safe to call
+// a value and a consumer re-reads its own number through BacklinksApi.getBacklinksCount. Returns a disposer. Safe to call
 // before BX.PULL exists (no-op disposer).
 export function subscribeDocumentBacklinks(documentId: number, onChange: () => void): () => void
 {

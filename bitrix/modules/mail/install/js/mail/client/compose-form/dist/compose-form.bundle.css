@@ -58,7 +58,8 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-header__icon
 {
 	flex: 0 0 auto;
-	color: var(--ui-color-accent-main-primary);
+	/* optical alignment with the headline cap height */
+	transform: translateY(1px);
 }
 
 .mail-compose-form__content
@@ -87,7 +88,7 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	gap: var(--ui-space-inline-sm);
 	min-width: 0;
 	padding: var(--ui-space-inset-xs) 0;
-	min-height: 40px;
+	min-height: var(--ui-size-5xl);
 	box-sizing: border-box;
 	border-bottom: 1px solid var(--ui-color-divider-default);
 }
@@ -138,12 +139,45 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	margin-inline-start: calc(-1 * var(--ui-space-inset-xs));
 }
 
+/*
+ * The negative margin above aligns the label of a plain first button with the send button below.
+ * The BitrixGPT chip has a visible edge, so with it the row aligns by that edge instead.
+ */
+.mail-compose-action-bar.--with-copilot
+{
+	margin-inline-start: 0;
+}
+
+/*
+ * The resting state drops the tinted fill through the published button variable; hover and focus keep
+ * the gradient of the design because their own variables stay untouched.
+ */
+.mail-compose-form .mail-compose-action-bar .mail-compose-copilot-button
+{
+	--ui-btn-background-gradient: none;
+}
+
 .mail-compose-send-row
 {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--ui-space-inline-xs);
+	gap: var(--ui-space-inline-sm);
 	min-width: 0;
+}
+
+.mail-compose-save-template
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	margin-inline-start: auto;
+}
+
+.mail-compose-save-template__label
+{
+	cursor: pointer;
 }
 
 /* The split brings its own sizes, so this node only holds it in the send row. */
@@ -164,6 +198,16 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 }
 
 /*
+ * The right half is a native button, so it does not inherit the colour of the split: the design system sets
+ * `color` on the half for hover and active only, and at rest the browser paints it black. The resting state
+ * takes the published button colour; the calendar icon follows it through `currentColor` in every state.
+ */
+.mail-compose-send-split__schedule
+{
+	color: var(--ui-btn-color);
+}
+
+/*
  * The padding of the card belongs to the popup, so the card itself only holds the two columns apart.
  *
  * The card width comes from the calendar rather than being fixed: the picker sizes itself, and a fixed width
@@ -172,14 +216,25 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-schedule
 {
 	display: flex;
+	/* the two columns stand side by side, the refusal of the chosen moment wraps under both of them */
+	flex-wrap: wrap;
 	gap: var(--ui-space-inline-md);
+	min-width: 0;
+}
+
+/* the calendar and the button that confirms the moment picked in it belong to one column */
+.mail-compose-schedule__date
+{
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
 	min-width: 0;
 }
 
 .mail-compose-schedule__calendar
 {
 	display: flex;
-	flex: 1 1 auto;
 	min-width: 0;
 }
 
@@ -191,6 +246,11 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	flex-direction: column;
 	gap: var(--ui-space-stack-xs);
 	min-width: 0;
+}
+
+.mail-compose-schedule__error
+{
+	flex: 1 0 100%;
 }
 
 /*
@@ -205,6 +265,69 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	align-items: center;
 	gap: var(--ui-space-inline-2xs);
 	min-width: 0;
+}
+
+.mail-compose-template-picker__template-item
+{
+	position: relative;
+}
+
+.mail-compose-template-picker__template-apply
+{
+	padding-right: 100px;
+}
+
+[data-testid^='mail-template-picker-preview-']:not(.mail-compose-template-picker__template-preview)
+{
+	display: none;
+}
+
+.mail-compose-template-picker__template-preview
+{
+	position: absolute;
+	top: var(--ui-space-inset-xs);
+	right: var(--pmenu-cell-padding-LR);
+	width: auto;
+	min-height: auto;
+	padding: 0;
+	color: var(--ui-color-accent-main-primary);
+	text-decoration-line: underline;
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-accent-main-link-underline);
+	text-underline-offset: 3px;
+}
+
+/*
+ * A pointer able to hover names the row it stands over, so the item shows itself there and nowhere else.
+ * A touch names nothing: hidden, the item would hand every touch of its area to the apply button spanning
+ * the row underneath it and apply the template instead of showing it. `hover` speaks of the primary pointer
+ * alone, so it calls a laptop with a touch screen a hovering device and hides the item there all the same:
+ * a coarse pointer anywhere among the ones available - what `any-pointer` answers for - keeps it in sight.
+ */
+@media (hover: hover) and (not (any-pointer: coarse))
+{
+	.mail-compose-template-picker__template-preview
+	{
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.mail-compose-template-picker__template-item:hover .mail-compose-template-picker__template-preview,
+	.mail-compose-template-picker__template-preview:focus-visible
+	{
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+
+.mail-compose-template-picker__template-preview .ui-popup-menu-item-header
+{
+	padding: 0;
+}
+
+.mail-compose-template-picker__template-preview .ui-popup-menu-item-title-text
+{
+	color: inherit;
 }
 
 /*
@@ -393,13 +516,61 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 
 .mail-compose-template-apply__error
 {
-	color: var(--ui-color-text-alert);
+	color: var(--ui-color-accent-main-alert);
+}
+
+.mail-compose-template-preview
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	box-sizing: border-box;
+	width: 640px;
+	max-width: calc(100vw - var(--ui-space-inset-md) * 2);
+	max-height: calc(100vh - var(--ui-space-inset-md) * 2);
+	padding: var(--ui-space-inset-lg);
+}
+
+.mail-compose-template-preview__header,
+.mail-compose-template-preview__state
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+}
+
+.mail-compose-template-preview__subject
+{
+	padding-bottom: var(--ui-space-inset-sm);
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.mail-compose-template-preview__body
+{
+	flex: 1 1 auto;
+	min-height: 240px;
+	overflow: auto;
+}
+
+/*
+ * The body is drawn into a frame of its own by `mail.message-body`. A frame of the browser comes with an
+ * inset border and sits on the baseline of a line of text: the border stands around the body as a rule of
+ * its own and, counted on top of the full width, pushes the card into a scroll of four pixels.
+ */
+.mail-compose-template-preview__body iframe
+{
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	border: none;
 }
 
 .mail-compose-editor-host
 {
 	display: flex;
-	flex: 1 1 320px;
+	flex: 1 0 auto;
 	flex-direction: column;
 	min-width: 0;
 	min-height: 240px;
@@ -416,33 +587,33 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-editor-host__slot
 {
 	display: flex;
-	flex: 1 1 auto;
+	flex: 1 0 auto;
 	flex-direction: column;
 	min-width: 0;
 	min-height: 240px;
 }
 
+/*
+ * One scroll for the whole middle of the form: the letter takes the height of its text and the wrappers
+ * of the post form neither fix that height nor clip it, or the sticky bar of the toolbar would have
+ * nothing to stick to.
+ */
 .mail-compose-editor-host__slot > .feed-add-post,
 .mail-compose-editor-host__slot .feed-add-post-form,
 .mail-compose-editor-host__slot .feed-add-post-text
 {
 	display: flex;
-	flex: 1 1 auto;
-	height: 100%;
+	flex: 1 0 auto;
 	flex-direction: column;
 	min-height: 0;
+	overflow: visible !important;
 }
 
+/* the floor of the letter is set by the editor through minBodyHeight, not from here */
 .mail-compose-editor-host__slot .bx-html-editor
 {
-	flex: 1 1 auto;
-	height: 100% !important;
-	min-height: 240px !important;
-}
-
-.mail-compose-editor-host__slot .bxhtmled-area-cnt
-{
-	height: calc(100% - 43px) !important;
+	flex: 1 0 auto;
+	overflow: visible !important;
 }
 
 .mail-compose-editor-host__slot .bxhtmled-iframe-cnt,
@@ -455,6 +626,33 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-editor-host__slot .main-post-form-toolbar
 {
 	display: none;
+}
+
+/*
+ * The bar keeps to the top of the scroll while the letter under it goes by. No dividing line under it:
+ * the letter starts right below.
+ */
+.mail-compose-editor-host__slot .bxhtmled-toolbar-cnt
+{
+	position: sticky;
+	top: 0;
+	/*
+	 * Above the letter box: it is absolutely positioned at z-index 100 and painted opaque white, so at a
+	 * lower layer the pinned bar is simply hidden behind the letter as the form scrolls.
+	 */
+	z-index: 110;
+	background: var(--ui-color-bg-content-primary);
+	border-bottom: none;
+}
+
+/*
+ * The first glyph of the toolbar starts where the labels of the rows start. The shift sits on the bar
+ * itself and is prefixed by the frame class: the stylesheet of the post form loads after this bundle
+ * and at equal specificity would win the wrap back.
+ */
+.mail-compose-form-frame .mail-compose-editor-host__slot .bxhtmled-toolbar
+{
+	margin-left: calc(-1 * var(--ui-space-inline-md2));
 }
 
 .mail-compose-error-alert
@@ -475,6 +673,35 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-error-alert:focus:not(:focus-visible)
 {
 	outline: none;
+}
+
+/*
+ * Layout only: the look of the control belongs to the button of the design system. The subject row is a
+ * flex line whose input stretches over it, and the button would otherwise give up its width and clip its
+ * own caption on a narrow panel. A wrapper is needed anyway: the button replaces its node after mounting,
+ * so a class put on the component itself never reaches the rendered control.
+ */
+.mail-compose-generate-subject-button
+{
+	display: flex;
+	flex: 0 0 auto;
+}
+
+/*
+ * The focus ring of the waiting control, restored by specificity, not a duplicate of the design system rule.
+ * The waiting look clears the outline (`.ui-btn-wait.ui-btn` in ui.buttons.css, same specificity as the focus
+ * rule above it), and the air focus rule is written through `:where()` and carries no specificity of its own.
+ * The design system never meets the case: its waiting state brings `disabled` along and drops the control out
+ * of the tab order, while this one stays reachable on purpose. Values are those of the idle ring of the very
+ * same control; the pointer modality is left out of it, as the design system leaves it out everywhere.
+ */
+html:not([data-input-modality="pointer"]) .mail-compose-generate-subject-button .ui-btn.ui-btn-wait:focus-visible,
+html[data-input-modality="keyboard"] .mail-compose-generate-subject-button .ui-btn.ui-btn-wait:focus:not(:focus-visible)
+{
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link);
+	outline-style: solid;
 }
 
 /*
@@ -503,7 +730,7 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	gap: var(--ui-space-inline-sm);
 	min-width: 0;
 	padding: var(--ui-space-inset-xs) 0;
-	min-height: 40px;
+	min-height: var(--ui-size-5xl);
 	box-sizing: border-box;
 	border-bottom: 1px solid var(--ui-color-divider-default);
 }
@@ -511,7 +738,7 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-recipient-rows__label
 {
 	flex: 0 0 76px;
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-3);
 }
 
 .mail-compose-recipient-field
@@ -535,11 +762,33 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	background: transparent;
 }
 
-.mail-compose-recipient-field.--editing .ui-tag-selector-outer-container
+/* the sender chip next to these fields is a pill; the recipient tags match it */
+.mail-compose-recipient-field .ui-tag-selector-outer-container .ui-tag-selector-tag
 {
-	border-color: var(--ui-color-base-5);
-	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-pill);
 }
+
+.mail-compose-recipient-field .--hidden-by-collapse
+{
+	display: none;
+}
+
+/*
+ * The look of the chip belongs to the control itself; only the place in the tag row is set here.
+ * The margin is the one of `.--air .ui-tag-selector-item`, the box every tag stands in.
+ */
+.mail-compose-recipient-field__more
+{
+	margin: var(--ui-space-stack-3xs) var(--ui-space-inline-3xs);
+	cursor: pointer;
+}
+
+/* the small caption of the built-in control reads better at the field size */
+.mail-compose-form .mail-compose-recipient-field .ui-tag-selector-add-button-caption
+{
+	font-size: var(--ui-font-size-md);
+}
+
 
 /*
  * The stub of the picker takes ready markup inside a popup of the selector, where a control of the design
@@ -563,7 +812,7 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	gap: var(--ui-space-inline-sm);
 	min-width: 0;
 	padding: var(--ui-space-inset-xs) 0;
-	min-height: 40px;
+	min-height: var(--ui-size-5xl);
 	box-sizing: border-box;
 	border-bottom: 1px solid var(--ui-color-divider-default);
 }
@@ -571,7 +820,7 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 .mail-compose-sender-chip__label
 {
 	flex: 0 0 76px;
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-3);
 }
 
 .mail-compose-sender-chip__control
@@ -581,47 +830,111 @@ body.ui-page-slider-wrapper.mail-compose-form-frame
 	min-width: 0;
 }
 
-/* The signature itself lives in the editor body, so this row of controls is all the form draws. */
-.mail-compose-signature-block
-{
-	position: absolute;
-	z-index: 40;
-	display: flex;
-	align-items: center;
-	gap: var(--ui-space-inline-2xs);
-	box-sizing: border-box;
-	min-width: 0;
-	padding: var(--ui-space-inset-sm) 0 0;
-	border-top: 1px solid var(--ui-color-divider-default);
-}
-
-.mail-compose-signature-block.--unplaced
-{
-	visibility: hidden;
-}
-
-.mail-compose-signature-block__icon
-{
-	flex: 0 0 auto;
-	color: var(--ui-color-base-3);
-}
-
-.mail-compose-signature-block__label
-{
-	flex: 0 0 auto;
-	color: var(--ui-color-base-4);
-}
-
 .mail-compose-subject-field__label
 {
 	flex: 0 0 76px;
-	color: var(--ui-color-base-4);
+	color: var(--ui-color-base-3);
 }
 
-/* the naked design of the input draws no ring at all, so the row shows the focus of the field itself */
-.mail-compose-subject-field:focus-within
+/* the box the phrase of the generation is laid over: the field itself keeps the whole width of it */
+.mail-compose-subject-field__slot
 {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 2px;
-	border-radius: var(--ui-border-radius-sm);
+	position: relative;
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* the typed subject reads a step bolder than the body; the placeholder stays quiet */
+.mail-compose-subject-field input
+{
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.mail-compose-subject-field input::placeholder
+{
+	font-weight: var(--ui-font-weight-normal);
+}
+
+/*
+ * The phrase stands over the subject field, so it takes the whole box of the field and lets the pointer
+ * through to the input that keeps the focus underneath it. The naked design of the input draws its text
+ * with no horizontal padding of its own, so the two lines start at the same place.
+ */
+.mail-compose-subject-generation-text
+{
+	position: absolute;
+	top: 50%;
+	right: 0;
+	left: 0;
+	transform: translateY(-50%);
+	pointer-events: none;
+
+	/* the five stops and the angle of the mobile row, taken from the tokens of the BitrixGPT design */
+	background-image: linear-gradient(
+		90deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5)
+	);
+
+	/*
+	 * The ramp is drawn twice as wide as the field so the sweep below has somewhere to travel: the glyphs
+	 * stand over one half of it at a time and the other half slides under them.
+	 */
+	background-size: 200% 100%;
+	background-repeat: no-repeat;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+
+	/*
+	 * The glow of the mobile row: the third stop of the gradient at a quarter of its strength, no offset.
+	 * `drop-shadow` and not `text-shadow`, because a shadow of a glyph filled with a gradient is drawn
+	 * through the glyph itself, while this one traces its silhouette.
+	 */
+	filter: drop-shadow(
+		0 0 2.5px color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 24%, transparent)
+	);
+
+	animation: mail-compose-subject-generation-sweep 1200ms ease-in-out infinite alternate;
+}
+
+/*
+ * The wait is shown by the gradient running along the phrase, and by nothing else: `opacity` is the one
+ * property that lowers the contrast of the glyphs directly, so it is left out of the motion and the text
+ * is drawn at its full strength the whole time. The colours the sweep carries under the glyphs stay inside
+ * the ramp, which holds 3:1 of WCAG 1.4.3 for large scale text at every point of it.
+ *
+ * One direction takes 1200ms; `alternate` gives the full cycle of 2400ms and spares the eye the jump back
+ * a looping sweep would make.
+ */
+@keyframes mail-compose-subject-generation-sweep
+{
+	from
+	{
+		background-position: 0 0;
+	}
+
+	to
+	{
+		background-position: 100% 0;
+	}
+}
+
+/*
+ * A sweep is an animation the user may have asked the system to do without. The phrase then stands still,
+ * at full strength and over the whole ramp: the widened background belongs to the motion, so it goes away
+ * with it and leaves the plain gradient of the design behind.
+ */
+@media (prefers-reduced-motion: reduce)
+{
+	.mail-compose-subject-generation-text
+	{
+		background-size: 100% 100%;
+		animation: none;
+	}
 }

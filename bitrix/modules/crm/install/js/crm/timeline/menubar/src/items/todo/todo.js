@@ -170,6 +170,11 @@ export default class ToDo extends Item
 		this.#toDoEditor.setDescription(description);
 	}
 
+	activateClientBlock(): void
+	{
+		this.#toDoEditor.activateClientBlock();
+	}
+
 	focus(): void
 	{
 		this.#toDoEditor.setFocused();

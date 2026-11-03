@@ -2,16 +2,16 @@
 
 $MESS['CRM_TIMELINE_ITEM_LINK_IS_COPIED'] = "Ссылка скопирована в буфер обмена";
 $MESS['CRM_TIMELINE_ITEM_TEXT_IS_COPIED'] = "Текст скопирован в буфер обмена";
-$MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR'] = "Произошла неизвестная ошибка при создании публичной ссылки на документ";
-$MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR'] = "Не удалось скопировать ссылку в буфер обмена. Попробуйте еще раз, пожалуйста";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY'] = "Печать документа невозможна, пока не будет сформирован PDF файл. Пожалуйста, повторите попытку позднее";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY'] = "PDF-файл пока не сформирован. Пожалуйста, повторите попытку позднее или скачайте DOCX-файл прямо сейчас.";
-$MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'] = "Произошла неизвестная ошибка при редактировании документа";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_TITLE_DEAL'] = "Добавить эту сделку в стоп-лист?";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_TITLE_LEAD'] = "Добавить этот лид в стоп-лист?";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_HELP'] = "[helpdesklink]Подробнее о стоп-листе[/helpdesklink]";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE"] = "Сохранить";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Отмена";
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPY"] = "Копировать";
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CLEAR"] = "Очистить";
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_EDIT"] = "Изменить";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Что нужно сделать";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT"] = "Напишите, что нужно сделать, или нажмите пробел для запуска #COPILOT_NAME#";
 $MESS['CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'] = "Отправлено";
@@ -40,6 +40,9 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_EMAIL_SUMMARIZE_TRANSCRIPTION_MENU'] = 'Рез
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_SHOW_MORE'] = 'Показать еще #COUNT#';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_COLLAPSE'] = 'Свернуть';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_EXPAND'] = 'Показать все';
+$MESS['CRM_TIMELINE_ITEM_EXPANDABLE_LIST_REVEALED_PLURAL_0'] = 'Раскрыт ещё #COUNT# товар';
+$MESS['CRM_TIMELINE_ITEM_EXPANDABLE_LIST_REVEALED_PLURAL_1'] = 'Раскрыто ещё #COUNT# товара';
+$MESS['CRM_TIMELINE_ITEM_EXPANDABLE_LIST_REVEALED_PLURAL_2'] = 'Раскрыто ещё #COUNT# товаров';
 
 $MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'] = 'Отменить подписание?';
 $MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'] = 'Подписание отменится для сотрудников, которые ещё не подписали документ.';
@@ -92,3 +95,18 @@ $MESS["CRM_TIMELINE_ITEM_TEXT_EXPAND"] = "ещё";
 $MESS["CRM_TIMELINE_ITEM_TEXT_COLLAPSE"] = "свернуть";
 
 $MESS["CRM_TIMELINE_ITEM_DATE_PILL_CALENDAR_EVENT_ACCESS_DENIED"] = "Недостаточно прав, чтобы изменить событие в календаре, привязанное к делу";
+
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_SUGGESTION_TITLE"] = "Предложение #COPILOT_NAME#";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_TITLE"] = "История покупок";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_EXPAND"] = "ещё #COUNT#";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_COLLAPSE"] = "Свернуть";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_BASE_PURCHASE"] = "Покупка, по которой создана сделка";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_PRODUCTS_EXPAND"] = "Показать остальные товары сделки: #COUNT#";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_PRODUCTS_COLLAPSE"] = "Свернуть список товаров сделки";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_HISTORY_PRODUCTS_COLLAPSE_TEXT"] = "Свернуть";
+$MESS["CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_DISCLAIMER"] = "Ответы #COPILOT_NAME# могут быть неточны, проверяйте важную информацию";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_CALL"] = 'Звонок в переписке #DATE#';
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_CALL_NO_DATE"] = 'Звонок в переписке без даты';
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_NO_FOLLOWUP"] = "Фолоуап не готов";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_EMPTY"] = "Завершённых звонков пока нет";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_OLDER_IN_CHAT"] = "Более ранние звонки — в чате";

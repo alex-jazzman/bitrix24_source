@@ -1,9 +1,14 @@
 import { Type } from 'main.core';
-import type { Popup } from 'main.popup';
+import { type Popup } from 'main.popup';
 
 type Bounds = {
 	left: number,
 	width: number,
+};
+
+type AngleAlignment = {
+	popupShift: number,
+	angleOffset: number,
 };
 
 /**
@@ -37,13 +42,39 @@ export function getAngleHalfWidth(popup: ?Popup): ?number
 }
 
 /**
- * Angle offset for a popup shifted by getPopupCenterShift(): its center coincides with the title
- * center, so an angle standing in the middle of the popup points at the title at any title width.
- *
- * The hint directive of ui.vue3.directives.hint centers the angle on the title itself and knows
- * nothing about the shift applied to the popup afterwards, hence the recalculation.
+ * Angle offset for a popup shifted by getPopupCenterShift(): the popup remains centered over the
+ * title, but the angle points at the title left edge.
  */
-export function getCenteredAngleOffset(popupWidth: number, angleHalfWidth: number): number
+export function getLeftEdgeAngleOffset(
+	titleBounds: Bounds,
+	popupBounds: Bounds,
+	popupShift: number,
+	angleHalfWidth: number,
+	scale: number = 1,
+): number
 {
-	return (popupWidth / 2) - angleHalfWidth;
+	const popupCenter = popupBounds.left + popupShift + (popupBounds.width / 2);
+	const localAngleTip = (popupBounds.width / 2) + ((titleBounds.left - popupCenter) / scale);
+
+	return localAngleTip - angleHalfWidth;
+}
+
+export function getLeftEdgeAngleAlignment(
+	titleBounds: Bounds,
+	popupBounds: Bounds,
+	scale: number,
+	angleHalfWidth: number,
+): AngleAlignment
+{
+	const popupShift = getPopupCenterShift(titleBounds, popupBounds);
+	const angleOffset = getLeftEdgeAngleOffset(titleBounds, popupBounds, popupShift, angleHalfWidth, scale);
+
+	return { popupShift, angleOffset: getBoundedAngleOffset(angleOffset, popupBounds.width, angleHalfWidth * 2) };
+}
+
+function getBoundedAngleOffset(offset: number, popupWidth: number, angleWidth: number): number
+{
+	const maxOffset = Math.max(0, popupWidth - angleWidth);
+
+	return Math.min(Math.max(0, offset), maxOffset);
 }

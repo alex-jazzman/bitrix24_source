@@ -44,6 +44,7 @@ export class EditorMount
 		initialFavorite = null,
 		historyEnabled = false,
 		notificationsEnabled = false,
+		diskAttachmentsEnabled = false,
 		showActivityLine = true,
 		onRenameTitle = null,
 		onOpenInternalLink = null,
@@ -62,6 +63,7 @@ export class EditorMount
 		initialFavorite?: boolean | null,
 		historyEnabled?: boolean,
 		notificationsEnabled?: boolean,
+		diskAttachmentsEnabled?: boolean,
 		showActivityLine?: boolean,
 		onRenameTitle?: Function | null,
 		onOpenInternalLink?: Function | null,
@@ -91,28 +93,32 @@ export class EditorMount
 				// [#6] Base snapshot for the views widget — see create-document-feature.js's
 				// applyLoadedDocument(); null falls back to the widget's own getViews call.
 				initialViews,
-				// [DTO-01] Backlinks counter from the same bootstrap — see create-document-feature.js's
+				// Backlinks counter from the same bootstrap - see create-document-feature.js's
 				// applyLoadedDocument(); null makes the chip read its own count.
 				initialBacklinks,
 				// [#2] `{ authors, time } | null` for the activity-line chip's default (non-preview)
 				// state — see create-document-feature.js's applyLoadedDocument()/state.lastChange.
 				lastChange,
-				// [P8.T5] ISO creation timestamp for the chip's "Created …" fallback.
+				// ISO creation timestamp for the chip's "Created ..." fallback.
 				createdAt,
 				// Bell state bundled with the bootstrap — the bell adopts it instead of its own getState.
 				initialSubscription,
-				// [TPL-01] Star state from the same bootstrap - the star prefers it over the sidebar
+				// Star state from the same bootstrap - the star prefers it over the sidebar
 				// store until the store reports a change of its own.
 				initialFavorite,
-				// [P8.T2/T3] UI feature flags — gate the chip's history-open affordance and the bell.
+				// UI feature flags - gate the chip's history-open affordance and the bell.
 				historyEnabled,
 				notificationsEnabled,
+				// Same channel for the Disk source of the file button: note.app's provide() does not
+				// reach this app, so the flag arrives as a prop.
+				diskAttachmentsEnabled,
 				showActivityLine,
-				// [P1.T5 relocation] Activity line renders inside DocumentEditorComponent (right
+				// Activity line renders inside DocumentEditorComponent (right
 				// under the title) and builds its own lang via note.ui.document-history's
 				// createHistoryMessages() — it no longer needs this bundle's own messages. The
 				// open-history bridge still crosses this createApp() boundary.
 				onRenameTitle,
+				openInternalLink: onOpenInternalLink,
 				onOpenInternalLink,
 				onMentionClick,
 				onOpenHistory,

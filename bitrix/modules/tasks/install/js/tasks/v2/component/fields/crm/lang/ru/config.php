@@ -2,6 +2,9 @@
 
 $MESS['TASKS_V2_CRM_TITLE'] = 'Элементы CRM';
 $MESS['TASKS_V2_CRM_TITLE_CHIP'] = 'Элементы CRM';
+$MESS['TASKS_V2_CRM_ARIA_LABEL'] = 'Связь с CRM';
+$MESS['TASKS_V2_CRM_ADD_ARIA_LABEL'] = 'Добавить связь с CRM';
+$MESS['TASKS_V2_CRM_CLEAR_ARIA_LABEL'] = 'Убрать связь';
 $MESS['TASKS_V2_CRM_ENTITY_TITLE'] = '#TYPE_NAME# [a]#TITLE#[/a]';
 $MESS['TASKS_V2_CRM_AND_COUNT'] = 'и ещё #COUNT#';
 $MESS['TASKS_V2_CRM_COLLAPSE'] = 'свернуть';

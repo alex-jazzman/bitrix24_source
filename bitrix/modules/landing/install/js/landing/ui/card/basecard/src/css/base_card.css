@@ -6,7 +6,7 @@
 	margin: 20px 60px;
 }
 
-.landing-ui-card[role="gridcell"]:focus-visible {
+.landing-ui-card[role="listitem"]:focus-visible {
 	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
 	outline-offset: -2px;
 }

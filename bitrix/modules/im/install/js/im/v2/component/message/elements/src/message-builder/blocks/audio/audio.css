@@ -1,0 +1,12 @@
+/*
+	The player is a foreign component without vertical padding of its own, so the block adds the
+	space the design puts around it: 2px of the block layout plus 8px of the player row.
+
+	The design gives the player row a fixed 280px and does not stretch the block with the bubble,
+	same as the file block. Here it is a max-width, not a width: a sibling block may widen the
+	bubble past 280px, and a narrow chat panel may leave less than that.
+*/
+.bx-im-message-block-audio__container {
+	max-width: 280px;
+	padding: 10px 0;
+}

@@ -1,0 +1,35 @@
+<?php
+
+return [
+	'extensions' => [
+		'asset-manager',
+		'layout/polyfill',
+		'layout/pure-component',
+		'utils/enums/base',
+		'timeman:work-reports/loc',
+		'toast',
+		'tokens',
+		'ui-system/blocks/chips/chip-button',
+		'ui-system/form/buttons/button',
+		'ui-system/layout/area',
+		'ui-system/layout/area-list',
+		'ui-system/layout/box',
+		'utils/skeleton',
+		'utils/test',
+		'timeman:layout/status-box',
+		'timeman:work-reports/api',
+		'timeman:work-reports/enum',
+		'timeman:work-reports/ui/form',
+		'timeman:work-reports/ui/gpt-report-card',
+		'timeman:work-reports/ui/map-card',
+		'timeman:work-reports/utils',
+		'timeman:analytics/workday-analytics',
+	],
+	'bundle' => [
+		'./src/content-enum',
+		'./src/status-view',
+		'./src/container',
+		'./src/report-shimmer',
+		'./src/report-view',
+	],
+];

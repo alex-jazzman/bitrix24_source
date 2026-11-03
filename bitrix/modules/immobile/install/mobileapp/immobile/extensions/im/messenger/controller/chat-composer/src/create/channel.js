@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 	const {
 		DialogType,
 		WidgetTitleParamsType,
+		EntitySelectorContext,
 		EntitySelectorElementType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
@@ -63,7 +64,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		{
 			const widgetName = 'layout';
 			/**
-				 * @type PageManagerProps
+				 * @type BaseWidgetSettings
 				 */
 			const widgetParams = {
 				titleParams: this.getTitleParams(),
@@ -186,7 +187,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 				},
 				canUseRecent: false,
 				provider: {
-					context: 'IMMOBILE_UPDATE_GROUP_CHAT_PARTICIPANT',
+					context: EntitySelectorContext.chatMembers,
 					options: {
 						useLettersForEmptyAvatar: true,
 						allowFlatDepartments: true,

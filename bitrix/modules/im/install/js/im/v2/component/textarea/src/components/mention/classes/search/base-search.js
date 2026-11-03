@@ -12,6 +12,23 @@ import type { ImModelUser } from 'im.v2.model';
 
 const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
 
+export const SearchOutcome = {
+	success: 'success',
+	failure: 'failure',
+};
+
+export type SearchOutcomeType = $Values<typeof SearchOutcome>;
+
+type ServerSearchResult = {
+	items: SearchResultItem[],
+	outcome: SearchOutcomeType,
+};
+
+type SearchRequestResult = {
+	items: ImRecentProviderItem[],
+	outcome: SearchOutcomeType,
+};
+
 export class BaseServerSearch
 {
 	#storeUpdater: StoreUpdater;
@@ -23,12 +40,12 @@ export class BaseServerSearch
 		this.#storeUpdater = new StoreUpdater();
 	}
 
-	async search(query: string): Promise<SearchResultItem[]>
+	async search(query: string): Promise<ServerSearchResult>
 	{
-		const items = await this.#searchRequest(query);
+		const { items, outcome } = await this.#searchRequest(query);
 		await this.#storeUpdater.update(items);
 
-		return this.#prepareSearchResults(items);
+		return { items: this.#prepareSearchResults(items), outcome };
 	}
 
 	async loadChatParticipants(dialogId: string): Promise<SearchResultItem[]>
@@ -58,7 +75,7 @@ export class BaseServerSearch
 		}
 	}
 
-	async #searchRequest(query: string): Promise<ImRecentProviderItem[]>
+	async #searchRequest(query: string): Promise<SearchRequestResult>
 	{
 		const config = {
 			json: getSearchConfig(this.#searchConfig),
@@ -69,19 +86,19 @@ export class BaseServerSearch
 			query,
 		};
 
-		let items = [];
 		try
 		{
 			const response = await Ajax.runAction(SEARCH_REQUEST_ENDPOINT, config);
 			Logger.warn('Mention search service: request result', response);
-			items = response.data.dialog.items;
+
+			return { items: response.data.dialog.items, outcome: SearchOutcome.success };
 		}
 		catch (error)
 		{
 			Logger.warn('Mention search service: request error', error);
-		}
 
-		return items;
+			return { items: [], outcome: SearchOutcome.failure };
+		}
 	}
 
 	#prepareSearchResults(items: ImRecentProviderItem[]): SearchResultItem[]

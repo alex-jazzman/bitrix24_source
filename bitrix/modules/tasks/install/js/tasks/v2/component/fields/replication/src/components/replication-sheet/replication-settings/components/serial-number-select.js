@@ -62,6 +62,7 @@ export const SerialNumberSelect = {
 			:item
 			:items
 			:disabled
+			:ariaLabel="loc('TASKS_V2_REPLICATION_SERIAL_NUMBER_SELECT_ARIA_LABEL')"
 			@update:item="$emit('update:modelValue', $event.id)"
 		/>
 	`,

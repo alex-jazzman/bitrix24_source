@@ -20,6 +20,7 @@ export const FormActions = defineComponent({
 
 	props: {
 		isEditMode: { type: Boolean, default: false },
+		saveDisabled: { type: Boolean, default: false },
 	},
 
 	emits: ['save', 'cancel'],
@@ -27,6 +28,11 @@ export const FormActions = defineComponent({
 	methods: {
 		onSave(): void
 		{
+			if (this.saveDisabled || this.state.loading || !this.state.isDataReady)
+			{
+				return;
+			}
+
 			this.$emit('save');
 		},
 
@@ -43,14 +49,13 @@ export const FormActions = defineComponent({
 				:text="isEditMode ? loc('MAIL_CONFIG_FORM_SAVE_BUTTON') : loc('MAIL_CONFIG_FORM_CONNECT_BUTTON')"
 				:style="AirButtonStyle.FILLED"
 				:loading="state.loading"
-				:disabled="state.loading"
+				:disabled="state.loading || !state.isDataReady || saveDisabled"
 				:dataset="{ testId: 'mail_config-form__save_button' }"
 				@click="onSave"
 			/>
 			<UiButton
 				:text="loc('MAIL_CONFIG_FORM_CANCEL_BUTTON')"
 				:style="AirButtonStyle.PLAIN_NO_ACCENT"
-				:disabled="state.loading"
 				:dataset="{ testId: 'mail_config-form__cancel_button' }"
 				@click="onCancel"
 			/>

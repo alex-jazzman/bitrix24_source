@@ -60,6 +60,7 @@ export class FeedbackManager
 				sending_time: params.message.date,
 				chat_id: params.message.chatId,
 				message_id: params.message.id,
+				trace_id: params.message.langfuseTraceId ?? '',
 			};
 		}
 		else

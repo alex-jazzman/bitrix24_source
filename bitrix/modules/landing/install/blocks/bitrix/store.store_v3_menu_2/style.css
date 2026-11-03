@@ -1,0 +1,96 @@
+/* The container clipped nothing but the focus ring; min-width keeps the shrink the clipping gave it. */
+.block-store-store-v3-menu-2 .landing-block-node-title-container {
+	min-width: 0;
+	overflow: visible;
+}
+
+/* Beside the back link the titles would overflow the container. */
+.block-store-store-v3-menu-2 .landing-block-node-titles {
+	min-width: 0;
+}
+
+/* The ring stands outside the control: the light tone fills the gap, the dark one is the ring. */
+.block-store-store-v3-menu-2 .landing-block-node-title:focus-visible,
+.block-store-store-v3-menu-2 .landing-block-node-title-container a.js-link-back:focus-visible,
+.block-store-store-v3-menu-2 .landing-block-node-menu-bottom-link:focus-visible,
+.block-store-store-v3-menu-2 .navbar.u-navbar-slider .show .u-navbar-slider--close:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+}
+
+/* Outweighs the theme utility g-opacity-0_4 (!important) for the time of focus only; at rest it stays. */
+.block-store-store-v3-menu-2 .landing-block-node-title:focus-visible {
+	opacity: 1 !important;
+}
+
+/* The storefront template rings this link with a pseudo-element of its own. */
+.block-store-store-v3-menu-2 .landing-block-node-title-container a.js-link-back:focus-visible::after {
+	content: none;
+}
+
+/* The phone keeps 25px of padding (g-px-25) on either side: the ring goes round the icon and the caption. */
+.block-store-store-v3-menu-2 .landing-block-node-phone:focus-visible {
+	position: relative;
+	outline: none;
+	box-shadow: none;
+}
+
+.block-store-store-v3-menu-2 .landing-block-node-phone:focus-visible::before {
+	position: absolute;
+	inset: 0 25px;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/* The top bar of the hamburger sits 2px above the button (hamburgers.css, margin-top: -2px). */
+.block-store-store-v3-menu-2 .navbar-toggler:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.block-store-store-v3-menu-2 .navbar-toggler:focus-visible::after {
+	position: absolute;
+	inset: -2px 0 2px;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/* The panel scrolls and its rows touch its edges: the ring stays inside the row, left of the text outside it. */
+.block-store-store-v3-menu-2 .landing-block-node-menu-top-link:focus-visible {
+	position: relative;
+	outline: none;
+	box-shadow: none;
+}
+
+.block-store-store-v3-menu-2 .landing-block-node-menu-top-link:focus-visible::before {
+	position: absolute;
+	inset: 0 0 0 calc(var(--ui-focus-outline-width) * -2);
+	border: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/* The block script passes a click on the close button to the toggler; no light fill under the white glyph. */
+.block-store-store-v3-menu-2 .navbar.u-navbar-slider .show .u-navbar-slider--close {
+	background: none;
+	pointer-events: auto;
+}
+
+/* Paired with .sr-only to outweigh it whatever the stylesheet order. */
+@media (min-width: 768px) {
+	.landing-block-node-text.sr-only {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+	}
+}

@@ -7,9 +7,14 @@ export class AdministrationTool extends BaseSecondaryTool
 		return '--o-filter-2-lines';
 	}
 
-	onClick(): void
+	getHref(): string
 	{
-		window.open(this.options.path, '_blank');
+		return this.options.path;
+	}
+
+	getTarget(): string
+	{
+		return '_blank';
 	}
 
 	getId(): string

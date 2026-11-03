@@ -10,9 +10,11 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 
 	/**
 	 * @param {object} fields
+	 * @param {{ allowEmptyText?: boolean }} [options] intent of the caller: an empty text is dropped by
+	 *   default, so a caption removed from a video note reaches the model only when it is asked for
 	 * @return {MessagesModelState}
 	 */
-	function validate(fields)
+	function validate(fields, options = {})
 	{
 		const result = {};
 
@@ -68,7 +70,11 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.date = fields.date;
 		}
 
-		if (Type.isNumber(fields.text) || Type.isStringFilled(fields.text))
+		const isTextAccepted = options.allowEmptyText === true
+			? Type.isString(fields.text)
+			: Type.isStringFilled(fields.text);
+
+		if (Type.isNumber(fields.text) || isTextAccepted)
 		{
 			result.text = fields.text.toString();
 		}

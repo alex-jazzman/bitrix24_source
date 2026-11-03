@@ -15,12 +15,15 @@
 				phoneNumber: params.phoneNumber,
 				email: params.email,
 				isPhoneNumberConfirmed: params.isPhoneNumberConfirmed,
+				canSendSms: params.canSendSms,
+				canSendEmail: params.canSendEmail,
+				canSkipDeviceConnect: params.canSkipDeviceConnect,
 				signedUserId: params.signedUserId,
 				userId: params.userId,
 				enablePostConnectFlow: false,
 				events: {
 					onPopupClose: () => {
-						BX.SidePanel.Instance.reload();
+						this.reload();
 					},
 				},
 			});

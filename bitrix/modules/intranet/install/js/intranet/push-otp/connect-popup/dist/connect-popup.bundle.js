@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, main_core_cache, main_core_events, main_popup, ui_buttons, ui_analytics, main_loader, ui_designTokens, intranet_designTokens, main_qrcode, pull_client, ui_iconSet_outline, ui_type, main_phonenumber, main_sidepanel, intranet_pushOtp_connectPopup, ui_confetti) {
+(function (exports, main_core, main_core_cache, main_core_events, main_popup, ui_buttons, ui_analytics, main_loader, ui_designTokens, intranet_designTokens, main_qrcode, pull_client, ui_iconSet_outline, ui_type, main_phonenumber, main_sidepanel, ui_confetti) {
 	'use strict';
 
 	class StepperController {
@@ -53,6 +53,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	const MOBILE_POPUP_WIDTH = 340;
 	class BaseView extends main_core_events.EventEmitter {
 		#id;
 		#excludeFromSteps = false;
@@ -78,6 +79,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		getStepInfo() {
 			return this.#stepper.getStepInfo();
 		}
+		getPopupWidth() {
+			return null;
+		}
 		renderStepIndicators() {
 			return this.#stepper.render();
 		}
@@ -90,10 +94,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 		beforeShow(option) {}
 	}
 
+	const POPUP_MAX_WIDTH = 700;
+	const POPUP_SIDE_MARGIN = 16;
+	const getPopupWidth = (viewWidth, viewportWidth) => {
+		const popupMaxWidth = viewWidth ?? POPUP_MAX_WIDTH;
+		const availableViewportWidth = Math.max(1, viewportWidth - POPUP_SIDE_MARGIN * 2);
+		return Math.min(popupMaxWidth, availableViewportWidth);
+	};
+	const isMobilePopup = viewWidth => main_core.Type.isNumber(viewWidth);
 	class ConnectPopup extends main_core_events.EventEmitter {
 		#cache = new main_core_cache.MemoryCache();
 		#view;
 		#viewCollection = [];
+		#isClosed = false;
 		constructor(options) {
 			super();
 			(main_core.Type.isArray(options.viewList) ? options.viewList : []).forEach(view => {
@@ -106,6 +119,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.setEventNamespace('BX.Intranet.PushOtp.ConnectPopup');
 			this.#viewCollection.forEach(view => {
 				view.subscribe('onNextView', event => {
+					if (this.#isClosed) {
+						return;
+					}
 					const viewCode = event.getData()?.viewCode;
 					const fallbackViewCode = event.getData()?.fallbackViewCode;
 					const options = event.getData()?.options;
@@ -122,7 +138,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				view.subscribe('onPreviousView', event => {
 					const viewCode = event.getData()?.viewCode;
 					const options = event.getData()?.options;
-					main_core.Type.isStringFilled(viewCode, this.getViewByCode(viewCode)) ? this.changeView(this.getViewByCode(viewCode), options) : this.previousView(options);
+					const targetView = main_core.Type.isStringFilled(viewCode) ? this.getViewByCode(viewCode) : null;
+					targetView ? this.changeView(targetView, options) : this.previousView(options);
 				});
 				view.subscribe('onParentClose', () => {
 					this.close();
@@ -219,9 +236,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#getPopup().setContent(this.#renderContent());
 		}
 		#createPopup() {
+			const viewWidth = this.#view.getPopupWidth();
 			return new main_popup.Popup({
+				ariaLabel: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE_MSGVER_1'),
 				content: this.#renderContent(),
-				width: 700,
+				width: getPopupWidth(viewWidth, window.innerWidth),
 				closeByEsc: true,
 				contentColor: 'white',
 				autoHide: true,
@@ -229,8 +248,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 				fixed: true,
 				overlay: true,
 				disableScroll: true,
+				className: isMobilePopup(viewWidth) ? 'intranet-push-otp-connect-popup--mobile' : '',
 				events: {
 					onPopupShow: () => {
+						this.#isClosed = false;
 						this.emit('onShow', {
 							context: this,
 							parent: this.#getPopup()
@@ -238,6 +259,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 						this.#view.afterShow();
 					},
 					onPopupClose: () => {
+						this.#isClosed = true;
 						this.#view.beforeDismiss();
 						this.emit('onClose', {
 							context: this,
@@ -283,6 +305,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					className: this.#className,
 					name: `${this.#name}[]`,
 					type: 'text',
+					inputmode: 'numeric',
 					autocomplete: 'one-time-code',
 					maxlength: '1'
 				},
@@ -460,6 +483,50 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	const createSwitchChannelButton = (view, channel) => {
+		const isEmail = channel === 'email';
+		return new ui_buttons.Button({
+			text: main_core.Loc.getMessage(isEmail ? 'INTRANET_PUSH_OTP_CONNECT_POPUP_SWITCH_TO_EMAIL_BTN' : 'INTRANET_PUSH_OTP_CONNECT_POPUP_SWITCH_TO_PHONE_BTN'),
+			noCaps: true,
+			size: ui_buttons.Button.Size.MD,
+			style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+			useAirDesign: true,
+			props: {
+				'data-testid': `bx-intranet-push-otp-connect-popup-switch-to-${channel}`
+			},
+			onclick: () => {
+				view.emit('onNextView', {
+					viewCode: isEmail ? 'email' : 'number'
+				});
+			}
+		});
+	};
+	const createFinishButton = (view, onError, onFinish = () => Promise.resolve()) => {
+		return new ui_buttons.Button({
+			text: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_FINISH_SKIP_DEVICE_CONNECT_BTN'),
+			noCaps: true,
+			size: ui_buttons.Button.Size.MD,
+			style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+			useAirDesign: true,
+			props: {
+				'data-testid': 'bx-intranet-push-otp-connect-popup-finish-skip-device-connect'
+			},
+			onclick: button => {
+				if (button.isWaiting()) {
+					return;
+				}
+				button.setWaiting(true);
+				onFinish().then(response => {
+					if (response?.skipDeviceConnectCompleted === true) {
+						view.emit('onNextView', {
+							viewCode: response.nextViewCode ?? 'success'
+						});
+					}
+				}).catch(response => onError(response?.errors ?? [])).finally(() => button.setWaiting(false));
+			}
+		});
+	};
+
 	class EmailEnterCodeView extends BaseView {
 		#signedUserId;
 		#cooldown = 0;
@@ -473,11 +540,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#email = '';
 		#signedData = '';
 		#backButton;
+		#isMobile;
+		#onContactConfirmed;
+		#flowIdProvider;
+		#isContactConfirmed = false;
+		#canSwitchChannelProvider;
+		#switchChannelButton;
 		constructor(options) {
 			super(options);
 			this.#signedUserId = options.signedUserId || null;
 			this.#email = options.email || '';
 			this.#signedData = options.signedData || '';
+			this.#isMobile = main_core.Browser.isMobile();
+			this.#onContactConfirmed = main_core.Type.isFunction(options.onContactConfirmed) ? options.onContactConfirmed : () => Promise.resolve();
+			this.#flowIdProvider = main_core.Type.isFunction(options.flowIdProvider) ? options.flowIdProvider : () => null;
+			this.#canSwitchChannelProvider = main_core.Type.isFunction(options.canSwitchChannelProvider) ? options.canSwitchChannelProvider : () => false;
+			this.#switchChannelButton = createSwitchChannelButton(this, 'phone');
 			this.#backButton = this.#createBackBtn();
 			this.#input = new CodeInput({
 				codeLength: 6,
@@ -502,6 +580,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		render() {
 			return this.#container.remember('view', () => {
+				if (this.#isMobile) {
+					return this.#renderMobileView();
+				}
 				return main_core.Tag.render`
 				<div class="intranet-push-otp-connect-popup__view-container">
 					<div>
@@ -519,12 +600,44 @@ this.BX.Intranet = this.BX.Intranet || {};
 						${this.#timerContainer}
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
+						${this.#renderSwitchChannelButton()}
 						${this.#backButton.render()}
 						${this.#button.render()}
 					</div>
 				</div>
 			`;
 			});
+		}
+		getPopupWidth() {
+			return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+		}
+		#renderMobileView() {
+			return main_core.Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div>
+					<div class="intranet-push-otp-connect-popup__popup-title">
+						${this.#renderTitle()}
+					</div>
+					${this.renderStepIndicators()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${this.#getDescription()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-enter-code-container --content-center --mobile">
+					${this.#input.render()}
+					${this.#errorContainer}
+					${this.#timerContainer}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">
+					${this.#renderSwitchChannelButton()}
+					${this.#backButton.render()}
+					${this.#button.render()}
+				</div>
+			</div>
+		`;
+		}
+		#renderSwitchChannelButton() {
+			return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
 		}
 		beforeShow(option) {
 			this.#codeSent = main_core.Type.isStringFilled(option.signedData);
@@ -552,6 +665,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			main_core.Dom.clean(this.#errorContainer);
 			main_core.Dom.clean(this.#timerContainer);
 			this.#cooldown = 0;
+			this.#isContactConfirmed = false;
 			clearInterval(this.#cooldownInterval);
 			this.#input.clear();
 		}
@@ -565,7 +679,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			BX.ajax.runAction('intranet.v2.Otp.sendEmailConfirmation', {
 				method: 'POST',
 				data: {
-					email: this.#email
+					email: this.#email,
+					flowId: this.#flowIdProvider(),
+					signedUserId: this.#signedUserId
 				}
 			}).then(response => {
 				if (response.status === 'success') {
@@ -596,19 +712,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		#createConfirmCodeBtn() {
-			return new ui_buttons.Button({
+			const button = new ui_buttons.Button({
 				text: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN'),
 				noCaps: true,
 				size: ui_buttons.Button.Size.MD,
 				useAirDesign: true,
-				disabled: true,
 				onclick: () => {
-					if (this.#codeSent) {
+					if (!this.#codeSent) {
 						return;
 					}
 					this.#confirmCode();
 				}
 			});
+			button.setDisabled(true);
+			return button;
 		}
 		#canSendCode() {
 			return this.#cooldown <= 0 && !this.#codeSent;
@@ -659,35 +776,46 @@ this.BX.Intranet = this.BX.Intranet || {};
 			'#SEC#': this.#cooldown
 		})}</span>`;
 		}
-		#confirmCode() {
+		async #confirmCode() {
 			if (this.#button.isWaiting()) {
 				return;
 			}
 			this.#cleanError();
 			this.#button.setWaiting(true);
-			BX.ajax.runAction('intranet.v2.Otp.confirmationEmail', {
-				method: 'POST',
-				data: {
-					code: this.#input.getValue(),
-					signedData: this.#signedData
+			try {
+				const flowId = this.#flowIdProvider();
+				let response = {
+					status: 'success'
+				};
+				if (!this.#isContactConfirmed) {
+					response = await BX.ajax.runAction('intranet.v2.Otp.confirmationEmail', {
+						method: 'POST',
+						data: {
+							code: this.#input.getValue(),
+							signedData: this.#signedData,
+							flowId,
+							signedUserId: this.#signedUserId
+						}
+					});
+					if (response.status !== 'success') {
+						return;
+					}
+					this.#isContactConfirmed = true;
 				}
-			}).then(response => {
-				this.#button.setWaiting(false);
-				if (response.status === 'success') {
+				response = (await this.#onContactConfirmed(flowId)) ?? response;
+				if (response?.status === 'success') {
 					this.emit('onNextView', {
-						viewCode: null,
+						viewCode: response.skipDeviceConnectCompleted === true ? response.nextViewCode ?? 'success' : null,
 						options: {
 							closeIfLast: true
 						}
 					});
 				}
-			}, response => {
-				this.#setError(response.errors);
-				this.#button.setWaiting(false);
-			}).catch(response => {
+			} catch (response) {
 				this.#setError(response?.errors ?? []);
+			} finally {
 				this.#button.setWaiting(false);
-			});
+			}
 		}
 		#setError(errors) {
 			this.#input.setInputClass('confirm-code-input --danger');
@@ -717,6 +845,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class EmailView extends BaseView {
 		#signedUserId;
+		#flowIdProvider;
 		#timeLeft = 0;
 		#email;
 		#signedData;
@@ -728,13 +857,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#confirmButton;
 		#errorContainer;
 		#titleContainer;
+		#isMobile;
+		#isSkippingDeviceConnectProvider;
+		#canSwitchChannelProvider;
+		#switchChannelButton;
+		#canFinishProvider;
+		#finishButton;
 		constructor(options) {
 			super(options);
 			this.#signedUserId = options.signedUserId || null;
+			this.#flowIdProvider = main_core.Type.isFunction(options.flowIdProvider) ? options.flowIdProvider : () => null;
 			this.#email = main_core.Type.isStringFilled(options.email) ? options.email : '';
 			this.#signedData = '';
 			this.#changeClicked = false;
 			this.#showInput = !main_core.Type.isStringFilled(this.#email);
+			this.#isMobile = main_core.Browser.isMobile();
+			this.#isSkippingDeviceConnectProvider = main_core.Type.isFunction(options.isSkippingDeviceConnectProvider) ? options.isSkippingDeviceConnectProvider : () => options.hideSkipButton === true;
+			this.#canSwitchChannelProvider = main_core.Type.isFunction(options.canSwitchChannelProvider) ? options.canSwitchChannelProvider : () => false;
+			this.#switchChannelButton = createSwitchChannelButton(this, 'phone');
+			this.#canFinishProvider = main_core.Type.isFunction(options.canFinishProvider) ? options.canFinishProvider : () => false;
+			this.#finishButton = createFinishButton(this);
 			this.#skipButton = this.#createSkipButton();
 			this.#confirmButton = this.#createConfirmButton();
 			this.#titleContainer = main_core.Tag.render`
@@ -748,8 +890,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		render() {
 			return this.#container.remember('view', () => {
+				if (this.#isMobile) {
+					return this.#renderMobileView();
+				}
 				const shouldShowInput = this.#forceChangeMode || this.#showInput;
-				const skipButton = this.isForceChangeMode() ? '' : this.#skipButton.render();
+				const skipButton = this.#renderSecondaryButton();
 				return main_core.Tag.render`
 				<div class="intranet-push-otp-connect-popup__view-container">
 					<div>
@@ -791,6 +936,46 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 			`;
 			});
+		}
+		getPopupWidth() {
+			return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+		}
+		#renderMobileView() {
+			const shouldShowInput = this.#forceChangeMode || this.#showInput;
+			const skipButton = this.#renderSecondaryButton();
+			return main_core.Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div>
+					<div class="intranet-push-otp-connect-popup__popup-title">
+						${this.#renderTitle()}
+					</div>
+					${this.renderStepIndicators()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_EMAIL_DESC')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-email-container --mobile">
+					${shouldShowInput ? this.#renderInputEmail() : this.#renderCurrentEmail()}
+					${this.#renderGraphic()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">
+					${skipButton}
+					${this.#confirmButton.render()}
+				</div>
+			</div>
+		`;
+		}
+		#renderSecondaryButton() {
+			if (this.isForceChangeMode()) {
+				return '';
+			}
+			if (this.#isSkippingDeviceConnectProvider()) {
+				return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
+			}
+			if (this.#canFinishProvider()) {
+				return this.#finishButton.render();
+			}
+			return this.#skipButton.render();
 		}
 		beforeShow(option) {
 			if (main_core.Type.isStringFilled(option.email)) {
@@ -929,7 +1114,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			BX.ajax.runAction('intranet.v2.Otp.changeAuthEmail', {
 				method: 'POST',
 				data: {
-					email: this.#email
+					email: this.#email,
+					flowId: this.#flowIdProvider(),
+					signedUserId: this.#signedUserId
 				}
 			}).then(response => {
 				this.#confirmButton.setWaiting(false);
@@ -1044,6 +1231,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 		});
 	};
 
+	const getQrViewPopupWidth = isMobile => isMobile ? MOBILE_POPUP_WIDTH : null;
+	const canOpenDeepLink = deeplink => main_core.Type.isStringFilled(deeplink);
 	class QrView extends BaseView {
 		#signedUserId;
 		#pullConfig;
@@ -1052,8 +1241,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#repeatingRequest;
 		#qrContainer;
 		#loader;
+		#openAppButton;
+		#deeplink = '';
+		#isMobile;
 		#isAppSuccessConnected = false;
 		#onAppConnected;
+		#finishOnAppConnected;
+		#onSkipDeviceConnect;
+		#skipDeviceConnectButton = null;
+		#skipDeviceConnectErrorContainer;
+		#pullClientProvider;
 		#unsubscribePull = null;
 		constructor(options) {
 			super(options);
@@ -1064,19 +1261,37 @@ this.BX.Intranet = this.BX.Intranet || {};
 			} : {};
 			this.#callback = main_core.Type.isFunction(options.callback) ? options.callback : () => {};
 			this.#linkProvider = main_core.Type.isFunction(options.linkProvider) ? options.linkProvider : () => new Promise();
+			this.#isMobile = main_core.Browser.isMobile();
 			this.#qrContainer = main_core.Tag.render`<div class="intranet-push-otp-connect-popup__qr-container"></div>`;
 			this.#loader = new main_loader.Loader({
 				target: this.#qrContainer,
 				mode: 'inline',
 				size: 120
 			});
+			this.#openAppButton = this.#createOpenAppButton();
 			this.#onAppConnected = main_core.Type.isFunction(options.onAppConnected) ? options.onAppConnected : () => {};
+			this.#finishOnAppConnected = options.finishOnAppConnected === true;
+			this.#onSkipDeviceConnect = main_core.Type.isFunction(options.onSkipDeviceConnect) ? options.onSkipDeviceConnect : null;
+			this.#pullClientProvider = main_core.Type.isFunction(options.pullClientProvider) ? options.pullClientProvider : () => new pull_client.PullClient();
+			this.#skipDeviceConnectButton = this.#onSkipDeviceConnect ? this.#createSkipDeviceConnectButton() : null;
+			this.#skipDeviceConnectErrorContainer = main_core.Tag.render`
+			<div
+				class="intranet-push-otp-connect-popup__skip-device-connect-error"
+				data-testid="bx-intranet-push-otp-connect-popup-skip-device-connect-error"
+			></div>
+		`;
 		}
 		#renderTitle() {
-			return main_core.Tag.render`<span>${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE')}</span>`;
+			return main_core.Tag.render`<span>${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE_MSGVER_1')}</span>`;
+		}
+		getPopupWidth() {
+			return getQrViewPopupWidth(this.#isMobile);
 		}
 		render() {
 			this.#subscribeToScanQr();
+			if (this.#isMobile) {
+				return this.#renderMobileView();
+			}
 			return main_core.Tag.render`
 			<div class="intranet-push-otp-connect-popup__view-container">
 				<div>
@@ -1086,7 +1301,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					${this.renderStepIndicators()}
 				</div>
 				<div class="intranet-push-otp-connect-popup__view-description-text">
-					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_QR_DESCRIPTION')}
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_QR_DESCRIPTION_MSGVER_1')}
 				</div>
 				<div class="intranet-push-otp-connect-popup__view-connect-container">
 					<div>${this.#qrContainer}</div>
@@ -1099,8 +1314,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 		})}
 							</li>
 							<li class="intranet-push-otp-connect-popup-ol-list-item --marker-2">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_2')}</li>
-							<li class="intranet-push-otp-connect-popup-ol-list-item --marker-3">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_3')}</li>
-							<li class="intranet-push-otp-connect-popup-ol-list-item --marker-4">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4')}</li>
+							<li class="intranet-push-otp-connect-popup-ol-list-item --marker-3">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_3_MSGVER_1')}</li>
+							<li class="intranet-push-otp-connect-popup-ol-list-item --marker-4">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4_MSGVER_1')}</li>
 						</ol>
 						<div class="intranet-push-otp-connect-popup-alert">
 							<div class="ui-icon-set --o-alert"></div>
@@ -1109,9 +1324,106 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 				</div>
 				<div class="intranet-push-otp-connect-popup__view-button-container">
+					${this.#skipDeviceConnectErrorContainer}
+					${this.#renderSkipDeviceConnectButton()}
 				</div>
 			</div>
 		`;
+		}
+		#renderMobileView() {
+			return main_core.Tag.render`
+			<div data-testid="bx-intranet-push-otp-connect-popup-qr-mobile" class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div>
+					<div class="intranet-push-otp-connect-popup__popup-title">
+						${this.#renderTitle()}
+					</div>
+					${this.renderStepIndicators()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_MOBILE_DESCRIPTION')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-connect-container --mobile">
+					<div class="intranet-push-otp-connect-popup__mobile-phone"></div>
+					<ol class="intranet-push-otp-connect-popup__mobile-guide">
+						<li>${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_MOBILE_STEP_1')}</li>
+						<li>${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_MOBILE_STEP_2')}</li>
+					</ol>
+					${this.#renderOpenAppButton()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container">
+					${this.#skipDeviceConnectErrorContainer}
+					${this.#renderSkipDeviceConnectButton()}
+				</div>
+			</div>
+		`;
+		}
+		#renderOpenAppButton() {
+			return main_core.Tag.render`
+			<div class="intranet-push-otp-connect-popup__open-app-button-container">
+				${this.#openAppButton.render()}
+			</div>
+		`;
+		}
+		#createOpenAppButton() {
+			const button = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_OPEN_APP_BTN'),
+				className: 'intranet-push-otp-connect-popup__open-app-button',
+				noCaps: true,
+				size: ui_buttons.Button.Size.MD,
+				useAirDesign: true,
+				props: {
+					'data-testid': 'bx-intranet-push-otp-connect-popup-open-app-button'
+				},
+				onclick: () => {
+					if (!canOpenDeepLink(this.#deeplink)) {
+						return;
+					}
+					window.open(this.#deeplink, '_blank');
+				}
+			});
+			button.setDisabled(true);
+			return button;
+		}
+		#renderSkipDeviceConnectButton() {
+			return this.#skipDeviceConnectButton ? this.#skipDeviceConnectButton.render() : '';
+		}
+		#createSkipDeviceConnectButton() {
+			return new ui_buttons.Button({
+				text: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_SKIP_DEVICE_CONNECT_BTN'),
+				noCaps: true,
+				size: ui_buttons.Button.Size.MD,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				useAirDesign: true,
+				props: {
+					'data-testid': 'bx-intranet-push-otp-connect-popup-skip-device-connect-button'
+				},
+				onclick: button => {
+					if (button.isWaiting() || !this.#onSkipDeviceConnect) {
+						return;
+					}
+					button.setWaiting(true);
+					main_core.Dom.clean(this.#skipDeviceConnectErrorContainer);
+					this.#onSkipDeviceConnect().then(response => {
+						const channel = response.data?.channel;
+						if (channel === 'phone') {
+							this.emit('onNextView', {
+								viewCode: 'number'
+							});
+						} else if (channel === 'email') {
+							this.emit('onNextView', {
+								viewCode: 'email'
+							});
+						}
+					}).catch(() => {
+						main_core.Dom.clean(this.#skipDeviceConnectErrorContainer);
+						this.#skipDeviceConnectErrorContainer.append(main_core.Tag.render`
+							<div class="intranet-push-otp-connect-popup-alert-text">
+								${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_SKIP_DEVICE_CONNECT_ERROR')}
+							</div>
+						`);
+					}).finally(() => button.setWaiting(false));
+				}
+			});
 		}
 		#showQrCode(deeplink) {
 			makeQrCodeTo(this.#qrContainer, deeplink);
@@ -1129,26 +1441,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#fetchQrCode() {
 			this.#showLoader();
+			if (this.#isMobile) {
+				this.#deeplink = '';
+				this.#openAppButton.setDisabled(true);
+			}
 			return this.#linkProvider().then(response => {
 				const link = response.data?.link;
-				if (link) {
-					this.#showQrCode(link);
+				this.#deeplink = main_core.Type.isStringFilled(link) ? link : '';
+				if (this.#isMobile) {
+					this.#openAppButton.setDisabled(!canOpenDeepLink(this.#deeplink));
+				} else if (canOpenDeepLink(this.#deeplink)) {
+					this.#showQrCode(this.#deeplink);
 				}
 				this.#loader.hide();
-			}).catch(() => {});
+			}).catch(() => {
+				this.#deeplink = '';
+				this.#openAppButton.setDisabled(true);
+				this.#loader.hide();
+			});
 		}
 		#subscribeToScanQr() {
-			const pull = new pull_client.PullClient();
+			const pull = this.#pullClientProvider();
 			this.#unsubscribePull = pull.subscribe({
 				moduleId: 'security',
 				command: 'pushOtpCode',
 				callback: params => {
 					params.signedUserId = this.#signedUserId;
 					this.#callback(params).then(response => {
+						if (this.#finishOnAppConnected && response?.status !== 'ok' && response?.status !== 'success') {
+							throw response;
+						}
 						this.#isAppSuccessConnected = true;
 						this.#onAppConnected(this);
 						this.emit('onNextView', {
-							viewCode: '',
+							viewCode: this.#finishOnAppConnected ? 'success' : '',
 							options: {
 								device: params.device
 							}
@@ -1161,6 +1487,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			pull.start(this.#pullConfig);
 		}
 		#showLoader() {
+			if (this.#isMobile) {
+				return;
+			}
 			main_core.Dom.clean(this.#qrContainer);
 			this.#loader.show();
 		}
@@ -1180,12 +1509,28 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#skipButton;
 		#titleContainer;
 		#errorContainer;
+		#isMobile;
+		#onContactConfirmed;
+		#isSkippingDeviceConnectProvider;
+		#flowIdProvider;
+		#canSwitchChannelProvider;
+		#switchChannelButton;
+		#canFinishProvider;
+		#finishButton;
 		constructor(options) {
 			super(options);
 			this.#signedUserId = options.signedUserId || null;
 			this.#phoneNumber = main_core.Type.isString(options.phoneNumber) ? ui_type.PhoneFormatter.formatValue(options.phoneNumber) : '';
 			this.#isPhoneNumberConfirmed = options.isPhoneNumberConfirmed === true;
 			this.#changeClicked = false;
+			this.#isMobile = main_core.Browser.isMobile();
+			this.#onContactConfirmed = main_core.Type.isFunction(options.onContactConfirmed) ? options.onContactConfirmed : () => Promise.resolve();
+			this.#isSkippingDeviceConnectProvider = main_core.Type.isFunction(options.isSkippingDeviceConnectProvider) ? options.isSkippingDeviceConnectProvider : () => options.hideSkipButton === true;
+			this.#flowIdProvider = options.flowIdProvider || (() => null);
+			this.#canSwitchChannelProvider = main_core.Type.isFunction(options.canSwitchChannelProvider) ? options.canSwitchChannelProvider : () => false;
+			this.#switchChannelButton = createSwitchChannelButton(this, 'email');
+			this.#canFinishProvider = main_core.Type.isFunction(options.canFinishProvider) ? options.canFinishProvider : () => false;
+			this.#finishButton = createFinishButton(this, errors => this.#setError(errors), options.onFinish);
 			this.#sendButton = this.#createSendBtn();
 			this.#skipButton = SendNumberView.createSkipAddPhoneNumberButton(this);
 			this.#titleContainer = main_core.Tag.render`
@@ -1269,6 +1614,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		render() {
 			return this.#container.remember('view', () => {
+				if (this.#isMobile) {
+					return this.#renderMobileView();
+				}
 				const shouldShowInput = this.#forceChangeMode || !main_core.Type.isStringFilled(this.#phoneNumber);
 				return main_core.Tag.render`
 				<div class="intranet-push-otp-connect-popup__view-container">
@@ -1284,12 +1632,38 @@ this.BX.Intranet = this.BX.Intranet || {};
 						<div class="intranet-push-otp-connect-popup__view-phone-number-phone"></div>
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
-						${this.#skipButton.render()}
+						${this.#renderSecondaryButton()}
 						${this.#sendButton.render()}
 					</div>
 				</div>
 			`;
 			});
+		}
+		getPopupWidth() {
+			return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+		}
+		#renderMobileView() {
+			const shouldShowInput = this.#forceChangeMode || !main_core.Type.isStringFilled(this.#phoneNumber);
+			return main_core.Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div><div class="intranet-push-otp-connect-popup__popup-title">${this.#renderTitle()}</div>${this.renderStepIndicators()}</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_DESC')}</div>
+				<div class="intranet-push-otp-connect-popup__view-connect-container --mobile --phone">
+					${shouldShowInput ? this.#renderInputPhoneNumber() : this.#renderCurrentPhoneNumber()}
+					<div class="intranet-push-otp-connect-popup__view-phone-number-phone"></div>
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">${this.#renderSecondaryButton()}${this.#sendButton.render()}</div>
+			</div>
+		`;
+		}
+		#renderSecondaryButton() {
+			if (this.#isSkippingDeviceConnectProvider()) {
+				if (this.#canFinishProvider()) {
+					return this.#finishButton.render();
+				}
+				return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
+			}
+			return this.#skipButton.render();
 		}
 		#createSendBtn() {
 			return new ui_buttons.Button({
@@ -1303,13 +1677,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 						return;
 					}
 					this.#cleanError();
-					if (!this.#changeClicked && this.#isPhoneNumberConfirmed && !this.#forceChangeMode) {
-						this.emit('onNextView', {
-							viewCode: 'success',
-							options: {
-								phoneNumber: this.#phoneNumber
-							}
-						});
+					if (!this.#isSkippingDeviceConnectProvider() && !this.#changeClicked && this.#isPhoneNumberConfirmed && !this.#forceChangeMode) {
+						button.setWaiting(true);
+						this.#onContactConfirmed(this.#flowIdProvider()).then(() => {
+							this.emit('onNextView', {
+								viewCode: 'success',
+								options: {
+									phoneNumber: this.#phoneNumber
+								}
+							});
+						}).catch(response => this.#setError(response?.errors ?? [])).finally(() => button.setWaiting(false));
 						return;
 					}
 					this.#sendNumber();
@@ -1325,6 +1702,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				method: 'POST',
 				data: {
 					signedUserId: this.#signedUserId,
+					flowId: this.#flowIdProvider(),
 					phoneNumber: this.#phoneNumber
 				}
 			}).then(response => {
@@ -1362,6 +1740,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			Analytics.sendEvent(Analytics.SHOW_INPUT_PHONE);
 			this.render().querySelector('input')?.focus();
 		}
+		afterDismiss(option) {
+			this.#container.delete('view');
+			main_core.Dom.clean(this.#errorContainer);
+		}
 		setForceChangeMode(force) {
 			this.#forceChangeMode = force;
 		}
@@ -1395,11 +1777,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#phoneLabel;
 		#phoneOs;
 		#isProcessing = false;
+		#isMobile;
 		constructor(options) {
 			super(options);
 			this.#button = this.#createContinueBtn();
 			this.#phoneLabel = main_core.Type.isStringFilled(options.phoneLabel) ? options.phoneLabel : '';
 			this.#phoneOs = main_core.Type.isStringFilled(options.phoneOs) ? options.phoneOs : '';
+			this.#isMobile = main_core.Browser.isMobile();
 		}
 		#renderTitle() {
 			return main_core.Tag.render`<span>${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECTED_TITLE')}</span>`;
@@ -1413,6 +1797,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			Analytics.sendEvent(Analytics.SHOW_INSTALL_APP_SUCCESS);
 		}
 		render() {
+			if (this.#isMobile) {
+				return this.#renderMobileView();
+			}
 			return main_core.Tag.render`
 			<div class="intranet-push-otp-connect-popup__view-container">
 				<div>
@@ -1423,12 +1810,39 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 				<div class="intranet-push-otp-connect-popup__view-description-text">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_DESC')}</div>
 				<div class="intranet-push-otp-connect-popup__view-connect-container">
-					<div>
+					<div class="intranet-push-otp-connect-popup__view-connect-device">
 						<div class="intranet-push-otp-connect-popup__view-connect-logo ${this.#phoneOs === 'ios' ? '' : '--android'}"></div>
 						<div class="intranet-push-otp-connect-popup__view-connect-logo-text">${main_core.Text.encode(this.#phoneLabel)}</div>
 					</div>
 				</div>
 				<div class="intranet-push-otp-connect-popup__view-button-container">
+					${this.#button.render()}
+				</div>
+			</div>
+		`;
+		}
+		getPopupWidth() {
+			return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+		}
+		#renderMobileView() {
+			return main_core.Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div>
+					<div class="intranet-push-otp-connect-popup__popup-title">
+						${this.#renderTitle()}
+					</div>
+					${this.renderStepIndicators()}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_DESC')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-connect-container --mobile --device">
+					<div class="intranet-push-otp-connect-popup__view-connect-device">
+						<div class="intranet-push-otp-connect-popup__view-connect-logo ${this.#phoneOs === 'ios' ? '' : '--android'}"></div>
+						<div class="intranet-push-otp-connect-popup__view-connect-logo-text">${main_core.Text.encode(this.#phoneLabel)}</div>
+					</div>
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">
 					${this.#button.render()}
 				</div>
 			</div>
@@ -1473,12 +1887,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#isFirstView = false;
 		#skipButton;
 		#forceChangeMode = false;
+		#isMobile;
+		#onContactConfirmed;
+		#isSkippingDeviceConnectProvider;
+		#flowIdProvider;
+		#isContactConfirmed = false;
+		#canSwitchChannelProvider;
+		#switchChannelButton;
+		#canFinishProvider;
+		#finishButton;
 		constructor(options) {
 			super(options);
 			this.#signedUserId = options.signedUserId || null;
 			this.#phoneNumber = options.phoneNumber || '';
+			this.#isMobile = main_core.Browser.isMobile();
+			this.#onContactConfirmed = main_core.Type.isFunction(options.onContactConfirmed) ? options.onContactConfirmed : () => Promise.resolve();
+			this.#isSkippingDeviceConnectProvider = main_core.Type.isFunction(options.isSkippingDeviceConnectProvider) ? options.isSkippingDeviceConnectProvider : () => options.hideSkipButton === true;
+			this.#flowIdProvider = main_core.Type.isFunction(options.flowIdProvider) ? options.flowIdProvider : () => null;
+			this.#canSwitchChannelProvider = main_core.Type.isFunction(options.canSwitchChannelProvider) ? options.canSwitchChannelProvider : () => false;
+			this.#switchChannelButton = createSwitchChannelButton(this, 'email');
+			this.#canFinishProvider = main_core.Type.isFunction(options.canFinishProvider) ? options.canFinishProvider : () => false;
+			this.#finishButton = createFinishButton(this, errors => this.#setError(errors), options.onFinish);
 			this.#backButton = this.#createBackBtn();
-			this.#skipButton = intranet_pushOtp_connectPopup.SendNumberView.createSkipAddPhoneNumberButton(this);
+			this.#skipButton = SendNumberView.createSkipAddPhoneNumberButton(this);
 			this.#input = new CodeInput({
 				codeLength: 6,
 				name: 'confirm_code',
@@ -1508,6 +1939,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return this.#container.remember('view', () => {
 				const stepInfo = this.getStepInfo();
 				this.#isFirstView = stepInfo.current === 1;
+				if (this.#isMobile) {
+					return this.#renderMobileView();
+				}
 				return main_core.Tag.render`
 				<div class="intranet-push-otp-connect-popup__view-container">
 					<div>
@@ -1527,7 +1961,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 							${this.#timerContainer}
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
-						${this.#skipButton.render()}
+						${this.#renderSecondaryButton()}
 						${this.#isFirstView ? '' : this.#backButton.render()}
 						${this.#button.render()}
 					</div>
@@ -1535,20 +1969,53 @@ this.BX.Intranet = this.BX.Intranet || {};
 			`;
 			});
 		}
+		getPopupWidth() {
+			return this.#isMobile ? MOBILE_POPUP_WIDTH : null;
+		}
+		#renderMobileView() {
+			return main_core.Tag.render`
+			<div class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div><div class="intranet-push-otp-connect-popup__popup-title">${this.#renderTitle()}</div>${this.renderStepIndicators()}</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESCRIPTION', {
+			'#PHONE_NUMBER#': `<strong>${this.#phoneNumber}</strong>`
+		})}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-enter-code-container --content-center --mobile">
+					${this.#input.render()}${this.#errorContainer}${this.#timerContainer}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --mobile">
+					${this.#renderSecondaryButton()}
+					${this.#isFirstView ? '' : this.#backButton.render()}
+					${this.#button.render()}
+				</div>
+			</div>
+		`;
+		}
+		#renderSecondaryButton() {
+			if (this.#isSkippingDeviceConnectProvider()) {
+				if (this.#canFinishProvider()) {
+					return this.#finishButton.render();
+				}
+				return this.#canSwitchChannelProvider() ? this.#switchChannelButton.render() : '';
+			}
+			return this.#skipButton.render();
+		}
 		#createConfirmCodeBtn() {
-			return new ui_buttons.Button({
+			const button = new ui_buttons.Button({
 				text: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN'),
 				noCaps: true,
 				size: ui_buttons.Button.Size.MD,
 				useAirDesign: true,
-				disabled: true,
 				onclick: () => {
-					if (this.#codeSent) {
+					if (!this.#codeSent) {
 						return;
 					}
 					this.#confirmCode();
 				}
 			});
+			button.setDisabled(true);
+			return button;
 		}
 		sendCode() {
 			if (!this.#canSendCode()) {
@@ -1560,7 +2027,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			BX.ajax.runAction('intranet.v2.Otp.sendConfirmationCode', {
 				method: 'POST',
 				data: {
-					signedUserId: this.#signedUserId
+					signedUserId: this.#signedUserId,
+					flowId: this.#flowIdProvider()
 				}
 			}).then(response => {
 				if (response.status === 'success') {
@@ -1627,36 +2095,46 @@ this.BX.Intranet = this.BX.Intranet || {};
 			'#SEC#': this.#cooldown
 		})}</span>`;
 		}
-		#confirmCode() {
+		async #confirmCode() {
 			if (this.#button.isWaiting()) {
 				return;
 			}
 			this.#cleanError();
 			this.#button.setWaiting(true);
-			BX.ajax.runAction('intranet.v2.Otp.confirmationPhoneNumber', {
-				method: 'POST',
-				data: {
-					signedUserId: this.#signedUserId,
-					code: this.#input.getValue()
+			try {
+				const flowId = this.#flowIdProvider();
+				let response = {
+					status: 'success'
+				};
+				if (!this.#isContactConfirmed) {
+					response = await BX.ajax.runAction('intranet.v2.Otp.confirmationPhoneNumber', {
+						method: 'POST',
+						data: {
+							signedUserId: this.#signedUserId,
+							code: this.#input.getValue(),
+							flowId
+						}
+					});
+					if (response.status !== 'success') {
+						return;
+					}
+					this.#isContactConfirmed = true;
 				}
-			}).then(response => {
-				this.#button.setWaiting(false);
-				if (response.status === 'success') {
+				response = (await this.#onContactConfirmed(flowId)) ?? response;
+				if (response?.status === 'success') {
 					this.#isPhoneNumberConfirmed = true;
 					this.emit('onNextView', {
-						viewCode: null,
+						viewCode: response.skipDeviceConnectCompleted === true ? response.nextViewCode ?? 'success' : null,
 						options: {
 							closeIfLast: true
 						}
 					});
 				}
-			}, response => {
-				this.#setError(response.errors);
+			} catch (response) {
+				this.#setError(response?.errors ?? []);
+			} finally {
 				this.#button.setWaiting(false);
-			}).catch(response => {
-				this.#setError(response.errors);
-				this.#button.setWaiting(false);
-			});
+			}
 		}
 		#setError(errors) {
 			this.#input.setInputClass('confirm-code-input --danger');
@@ -1702,6 +2180,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			main_core.Dom.clean(this.#errorContainer);
 			main_core.Dom.clean(this.#timerContainer);
 			this.#cooldown = 0;
+			this.#isContactConfirmed = false;
 			clearInterval(this.#cooldownInterval);
 			this.#input.clear();
 		}
@@ -1717,12 +2196,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 		render() {
 			// eslint-disable-next-line no-undef
 			return main_core.Tag.render`
-			<div class="intranet-push-otp-connect-popup-success-box">
-				<div class="intranet-push-otp-connect-popup-success-logo"></div>
+			<div class="intranet-push-otp-connect-popup-success-box ${main_core.Browser.isMobile() ? '--mobile' : ''}">
+				<div class="intranet-push-otp-connect-popup-success-graphic">
+					<div class="intranet-push-otp-connect-popup-success-logo"></div>
+				</div>
 				<div class="intranet-push-otp-connect-popup-success-title">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_TITLE')}</div>
 				<div class="intranet-push-otp-connect-popup-success-subtitle">${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_SUBTITLE')}</div>
 			</div>
 		`;
+		}
+		getPopupWidth() {
+			return main_core.Browser.isMobile() ? MOBILE_POPUP_WIDTH : null;
 		}
 		afterShow(option) {
 			Analytics.sendEvent(Analytics.ADD_PHONE_SUCCESS);
@@ -1798,6 +2282,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		});
 	};
 
+	const getReconnectQrViewPopupWidth = isMobile => isMobile ? MOBILE_POPUP_WIDTH : null;
 	class ReconnectQrView extends BaseView {
 		#signedUserId;
 		#pullConfig;
@@ -1807,6 +2292,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#devicePlatform;
 		#qrContainer;
 		#loader;
+		#openAppButton;
+		#deeplink = '';
+		#isMobile;
 		#isQrRevealed = false;
 		#pull = null;
 		#unsubscribePull = null;
@@ -1820,6 +2308,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#intent = options.intent || '';
 			this.#deviceName = options.deviceName || '';
 			this.#devicePlatform = options.devicePlatform || '';
+			this.#isMobile = main_core.Browser.isMobile();
 			this.#qrContainer = main_core.Tag.render`<div class="intranet-push-otp-connect-popup__qr-container"></div>`;
 			this.#repeatingRequest = new RepeatingRequest(this.#defaultTtl * 1000);
 			this.#loader = new main_loader.Loader({
@@ -1827,8 +2316,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				mode: 'inline',
 				size: 120
 			});
+			this.#openAppButton = this.#createOpenAppButton();
 		}
 		render() {
+			if (this.#isMobile) {
+				return this.#renderMobileView();
+			}
 			this.#renderQRPlaceholder();
 			const deviceIconClass = this.#devicePlatform.toLowerCase() === 'ios' ? 'intranet-push-otp-connect-popup__reconnect-device-icon' : 'intranet-push-otp-connect-popup__reconnect-device-icon --android';
 			return main_core.Tag.render`
@@ -1871,6 +2364,51 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 		`;
 		}
+		getPopupWidth() {
+			return getReconnectQrViewPopupWidth(this.#isMobile);
+		}
+		#renderMobileView() {
+			return main_core.Tag.render`
+			<div data-testid="bx-intranet-push-otp-connect-popup-reconnect-mobile" class="intranet-push-otp-connect-popup__view-container --mobile">
+				<div class="intranet-push-otp-connect-popup__popup-title">
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_RECONNECT_TITLE')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-description-text">
+					${main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_RECONNECT_MOBILE_DESC')}
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-connect-container --mobile">
+					<div class="intranet-push-otp-connect-popup__mobile-phone"></div>
+					<div class="intranet-push-otp-connect-popup__open-app-button-container">
+						${this.#openAppButton.render()}
+					</div>
+				</div>
+				<div class="intranet-push-otp-connect-popup__view-button-container --center">
+					${this.#createRemindLaterButton().render()}
+				</div>
+			</div>
+		`;
+		}
+		#createOpenAppButton() {
+			const button = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_OPEN_APP_BTN'),
+				className: 'intranet-push-otp-connect-popup__open-app-button',
+				noCaps: true,
+				size: ui_buttons.Button.Size.MD,
+				useAirDesign: true,
+				props: {
+					'data-testid': 'bx-intranet-push-otp-connect-popup-reconnect-open-app-button'
+				},
+				onclick: () => {
+					if (!main_core.Type.isStringFilled(this.#deeplink)) {
+						return;
+					}
+					Analytics.sendEventWithCSection(Analytics.RECONNECT_CLICK, 'app');
+					window.open(this.#deeplink, '_blank');
+				}
+			});
+			button.setDisabled(true);
+			return button;
+		}
 		#renderQRPlaceholder() {
 			const placeholder = main_core.Tag.render`<i class="intranet-push-otp-connect-popup__reconnect-qr-placeholder-image">`;
 			const showButton = new ui_buttons.Button({
@@ -1898,15 +2436,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#repeatingRequest.start(this.#fetchQrCode.bind(this));
 		}
 		#fetchQrCode() {
-			main_core.Dom.clean(this.#qrContainer);
-			this.#loader.show();
+			if (this.#isMobile) {
+				this.#deeplink = '';
+				this.#openAppButton.setDisabled(true);
+			} else {
+				main_core.Dom.clean(this.#qrContainer);
+				this.#loader.show();
+			}
 			return deeplinkRequest(this.#intent, this.#defaultTtl).then(response => {
 				const link = response.data?.link;
-				if (link) {
+				if (this.#isMobile) {
+					this.#deeplink = main_core.Type.isStringFilled(link) ? link : '';
+					this.#openAppButton.setDisabled(!main_core.Type.isStringFilled(this.#deeplink));
+				} else if (link) {
 					makeQrCodeTo(this.#qrContainer, link);
 				}
 				this.#loader.hide();
 			}).catch(() => {
+				this.#deeplink = '';
+				this.#openAppButton.setDisabled(true);
 				this.#loader.hide();
 			});
 		}
@@ -1943,6 +2491,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 		afterShow(option) {
 			Analytics.sendEvent(Analytics.SHOW_RECONNECT_DEVICE);
 			BX.userOptions.save('intranet', 'push_otp_device_lost', null, 'N');
+			if (this.#isMobile) {
+				this.#subscribeToScanQr();
+				this.#repeatingRequest.start(this.#fetchQrCode.bind(this));
+			}
 		}
 		beforeDismiss(option) {
 			this.#repeatingRequest.stop();
@@ -1950,12 +2502,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.#unsubscribePull();
 				this.#unsubscribePull = null;
 			}
+			this.#pull?.stop();
+			this.#pull = null;
 		}
 	}
 
 	class EnablePushOtpProvider {
 		#options;
 		#defaultTtl = 600;
+		#isSkippingDeviceConnect = false;
+		#skipDeviceConnectFlowId = null;
+		#skipDeviceConnectAvailableChannels = [];
+		#skipDeviceConnectStartPromise = null;
+		#skipDeviceConnectConfirmedChannel = null;
+		#skipDeviceConnectCompletionPromise = null;
+		#isSkipDeviceConnectCompleted = false;
+		#isConnectionCompleted = false;
 		constructor(options) {
 			this.#options = options || {};
 		}
@@ -1987,8 +2549,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 				pullConfig: this.#options.pullConfig,
 				linkProvider: this.#options?.linkProvider ?? (() => deeplinkRequest(this.#options.intent, this.#defaultTtl)),
 				repeatingRequest: this.#options?.repeatingRequest ?? new RepeatingRequest(this.#defaultTtl * 1000),
+				pullClientProvider: this.#options?.pullClientProvider,
 				callback: this.#options?.appConnectingProvider ?? this.appConnectingHandler,
-				onAppConnected: this.#options?.events?.onAppConnected,
+				finishOnAppConnected: this.#options.mandatoryLoginMode === true,
+				onAppConnected: view => {
+					this.#isConnectionCompleted = true;
+					this.#options?.events?.onAppConnected?.(view);
+				},
+				onSkipDeviceConnect: this.#options.canSkipDeviceConnect === true ? this.startSkipDeviceConnect.bind(this) : null,
 				id: 'qr'
 			});
 		}
@@ -2001,14 +2569,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return new EmailView({
 				id: 'email',
 				signedUserId: this.#options.signedUserId,
-				email: this.#options.email
+				email: this.#options.email,
+				flowIdProvider: () => this.#skipDeviceConnectFlowId,
+				isSkippingDeviceConnectProvider: () => this.#isSkippingDeviceConnect,
+				canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('phone'),
+				canFinishProvider: () => this.#options.canSendSms !== true
 			});
 		}
 		#createEmailEnterCodeView() {
 			return new EmailEnterCodeView({
 				id: 'emailCode',
 				signedUserId: this.#options.signedUserId,
-				email: this.#options.email
+				email: this.#options.email,
+				flowIdProvider: () => this.#skipDeviceConnectFlowId,
+				onContactConfirmed: flowId => this.#onSkipContactConfirmed('email', flowId),
+				canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('phone')
 			});
 		}
 		#createSendNumberView() {
@@ -2016,6 +2591,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				signedUserId: this.#options.signedUserId,
 				phoneNumber: this.#options.phoneNumber,
 				isPhoneNumberConfirmed: this.#options.isPhoneNumberConfirmed,
+				flowIdProvider: () => this.#skipDeviceConnectFlowId,
+				onContactConfirmed: flowId => this.#onSkipContactConfirmed('phone', flowId),
+				isSkippingDeviceConnectProvider: () => this.#isSkippingDeviceConnect,
+				canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('email'),
+				canFinishProvider: () => this.#canFinishSkipDeviceConnect(),
+				onFinish: () => this.completeSkipDeviceConnect(this.#skipDeviceConnectConfirmedChannel),
 				id: 'number'
 			});
 		}
@@ -2023,7 +2604,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return new EnterCodeView({
 				id: 'code',
 				signedUserId: this.#options.signedUserId,
-				phoneNumber: this.#options.phoneNumber
+				phoneNumber: this.#options.phoneNumber,
+				flowIdProvider: () => this.#skipDeviceConnectFlowId,
+				onContactConfirmed: flowId => this.#onSkipContactConfirmed('phone', flowId),
+				isSkippingDeviceConnectProvider: () => this.#isSkippingDeviceConnect,
+				canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('email'),
+				canFinishProvider: () => this.#canFinishSkipDeviceConnect(),
+				onFinish: () => this.completeSkipDeviceConnect(this.#skipDeviceConnectConfirmedChannel)
 			});
 		}
 		#createSuccessView() {
@@ -2073,15 +2660,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return popup;
 		}
 		onlyPushOtp() {
-			const viewList = [this.#createQrView(), this.#createConnectedView()];
+			if (this.#options.canSkipDeviceConnect === true) {
+				return this.full();
+			}
+			const viewList = this.#options.mandatoryLoginMode === true ? [this.#createQrView(), this.#createSuccessView()] : [this.#createQrView(), this.#createConnectedView()];
 			return this.#createConnectPopup(viewList);
 		}
 		full() {
+			this.#isConnectionCompleted = false;
 			const viewList = [this.#createQrView(), this.#createConnectedView()];
-			if (main_core.Extension.getSettings('intranet.push-otp.connect-popup')?.get('canSendEmail')) {
+			if (this.#options.canSendEmail === true) {
 				viewList.push(this.#createSendEmailView(), this.#createEmailEnterCodeView());
 			}
-			if (main_core.Extension.getSettings('intranet.push-otp.connect-popup')?.get('canSendSms')) {
+			if (this.#options.canSendSms === true) {
 				viewList.push(this.#createSendNumberView(), this.#createEnterCodeView());
 			}
 			viewList.push(this.#createSuccessView());
@@ -2092,10 +2683,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 				const popup = this.#createConnectPopup(viewList, null, {
 					skipDefaultOnClose: true
 				});
-				popup.subscribe('onClose', event => {
-					const context = event.getData()?.context;
-					const qrView = context?.getViewByCode('qr');
-					if (qrView?.isAppSuccessConnected() === true) {
+				popup.subscribe('onClose', () => {
+					const isConnectionCompleted = this.isConnectionCompleted();
+					this.cancelSkipDeviceConnect();
+					if (isConnectionCompleted) {
 						this.openOtpSettingsWithTooltip();
 					} else {
 						this.#options?.events?.onPopupClose?.();
@@ -2128,6 +2719,143 @@ this.BX.Intranet = this.BX.Intranet || {};
 				}
 			});
 		}
+		startSkipDeviceConnect() {
+			const startPromise = Promise.resolve(main_core.ajax.runAction('intranet.v2.Otp.startSkipDeviceConnect', {
+				method: 'POST',
+				data: this.#options.signedUserId ? {
+					signedUserId: this.#options.signedUserId
+				} : {}
+			})).then(async response => {
+				const flowId = response?.data?.flowId;
+				if (!main_core.Type.isStringFilled(flowId)) {
+					throw new Error('Skip device connect flow was not started');
+				}
+				const availableChannels = Array.isArray(response?.data?.availableChannels) ? response.data.availableChannels : [response?.data?.channel];
+				const supportedChannels = availableChannels.filter(channel => this.#isSkipDeviceConnectChannelSupported(channel));
+				const responseChannel = response?.data?.channel;
+				const channel = supportedChannels.includes(responseChannel) ? responseChannel : supportedChannels[0];
+				if (!channel) {
+					await this.#cancelSkipDeviceConnectFlow(flowId);
+					throw new Error('No supported skip device connect channel is available');
+				}
+				this.#isSkippingDeviceConnect = true;
+				this.#skipDeviceConnectFlowId = flowId;
+				this.#skipDeviceConnectAvailableChannels = supportedChannels;
+				this.#skipDeviceConnectConfirmedChannel = null;
+				this.#skipDeviceConnectCompletionPromise = null;
+				this.#isSkipDeviceConnectCompleted = false;
+				return {
+					...response,
+					data: {
+						...response.data,
+						channel,
+						availableChannels: supportedChannels
+					}
+				};
+			});
+			this.#skipDeviceConnectStartPromise = startPromise;
+			const clearStartPromise = () => {
+				if (this.#skipDeviceConnectStartPromise === startPromise) {
+					this.#skipDeviceConnectStartPromise = null;
+				}
+			};
+			startPromise.then(clearStartPromise, clearStartPromise);
+			return startPromise;
+		}
+		completeSkipDeviceConnect(confirmedChannel = null) {
+			if (!this.#isSkippingDeviceConnect || !this.#skipDeviceConnectFlowId) {
+				return Promise.resolve();
+			}
+			if (this.#skipDeviceConnectCompletionPromise) {
+				return this.#skipDeviceConnectCompletionPromise;
+			}
+			const flowId = this.#skipDeviceConnectFlowId;
+			const completionPromise = Promise.resolve(main_core.ajax.runAction('intranet.v2.Otp.completeSkipDeviceConnect', {
+				method: 'POST',
+				data: {
+					flowId,
+					...(this.#options.signedUserId ? {
+						signedUserId: this.#options.signedUserId
+					} : {})
+				}
+			})).then(response => {
+				if (!this.#isSkippingDeviceConnect || this.#skipDeviceConnectFlowId !== flowId) {
+					return {
+						...response,
+						status: 'canceled'
+					};
+				}
+				this.#isSkipDeviceConnectCompleted = true;
+				this.#isConnectionCompleted = true;
+				return {
+					...response,
+					skipDeviceConnectCompleted: true,
+					nextViewCode: 'success'
+				};
+			}).catch(response => {
+				if (!this.#isSkippingDeviceConnect || this.#skipDeviceConnectFlowId !== flowId) {
+					return {
+						status: 'canceled'
+					};
+				}
+				throw response;
+			}).finally(() => {
+				if (this.#skipDeviceConnectCompletionPromise === completionPromise) {
+					this.#skipDeviceConnectCompletionPromise = null;
+				}
+			});
+			this.#skipDeviceConnectCompletionPromise = completionPromise;
+			return completionPromise;
+		}
+		#onSkipContactConfirmed(confirmedChannel, flowId) {
+			if (!this.#isSkippingDeviceConnect || !flowId || this.#skipDeviceConnectFlowId !== flowId) {
+				return Promise.resolve();
+			}
+			this.#skipDeviceConnectConfirmedChannel = confirmedChannel;
+			if (confirmedChannel === 'email' && this.#skipDeviceConnectAvailableChannels.includes('phone')) {
+				return Promise.resolve({
+					status: 'success'
+				});
+			}
+			return this.completeSkipDeviceConnect(confirmedChannel);
+		}
+		#canFinishSkipDeviceConnect() {
+			return this.#isSkippingDeviceConnect && !this.#isSkipDeviceConnectCompleted && this.#skipDeviceConnectConfirmedChannel !== null;
+		}
+		isConnectionCompleted() {
+			return this.#isConnectionCompleted;
+		}
+		cancelSkipDeviceConnect() {
+			if (this.#skipDeviceConnectStartPromise) {
+				this.#skipDeviceConnectStartPromise.then(() => this.cancelSkipDeviceConnect(), () => {});
+				return;
+			}
+			if (!this.#isSkippingDeviceConnect || !this.#skipDeviceConnectFlowId) {
+				return;
+			}
+			const flowId = this.#skipDeviceConnectFlowId;
+			const isCompleted = this.#isSkipDeviceConnectCompleted;
+			this.#isSkippingDeviceConnect = false;
+			this.#isSkipDeviceConnectCompleted = false;
+			this.#skipDeviceConnectFlowId = null;
+			this.#skipDeviceConnectAvailableChannels = [];
+			this.#skipDeviceConnectConfirmedChannel = null;
+			this.#skipDeviceConnectCompletionPromise = null;
+			if (!isCompleted) {
+				this.#cancelSkipDeviceConnectFlow(flowId);
+			}
+		}
+		#cancelSkipDeviceConnectFlow(flowId) {
+			return main_core.ajax.runAction('intranet.v2.Otp.cancelSkipDeviceConnect', {
+				method: 'POST',
+				data: {
+					flowId,
+					...(this.#options.signedUserId ? {
+						signedUserId: this.#options.signedUserId
+					} : {})
+				}
+			}).catch(() => {});
+		}
 		resumeOtpRequest() {
 			return BX.ajax.runAction('intranet.v2.Otp.resumeOtp', {
 				mode: 'ajax',
@@ -2144,6 +2872,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 			if (options.skipDefaultOnClose !== true) {
 				popup.subscribe('onClose', () => {
+					this.cancelSkipDeviceConnect();
 					this.#options?.events?.onPopupClose?.();
 				});
 			}
@@ -2151,6 +2880,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#getCurrentUserSettingsUrl() {
 			return main_core.Extension.getSettings('intranet.push-otp.connect-popup')?.get('settingsUrl') ?? '';
+		}
+		#canSwitchSkipDeviceConnectChannel(channel) {
+			return this.#isSkippingDeviceConnect && !this.#isSkipDeviceConnectCompleted && this.#skipDeviceConnectAvailableChannels.includes(channel);
+		}
+		#isSkipDeviceConnectChannelSupported(channel) {
+			return channel === 'phone' && this.#options.canSendSms === true || channel === 'email' && this.#options.canSendEmail === true;
 		}
 		#getCurrentUserId() {
 			return Number(main_core.Extension.getSettings('intranet.push-otp.connect-popup')?.get('userId') ?? 0);
@@ -2168,5 +2903,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.pauseOtpRequest = pauseOtpRequest;
 	exports.resumeOtpRequest = resumeOtpRequest;
 
-})(this.BX.Intranet.PushOtp = this.BX.Intranet.PushOtp || {}, BX, BX.Cache, BX.Event, BX.Main, BX.UI, BX.UI.Analytics, BX, BX, BX, BX, BX, window, BX.Ui, BX, BX.SidePanel, BX.Intranet.PushOtp, BX.UI);
+})(this.BX.Intranet.PushOtp = this.BX.Intranet.PushOtp || {}, BX, BX.Cache, BX.Event, BX.Main, BX.UI, BX.UI.Analytics, BX, window, BX, BX, BX, window, BX.Ui, BX, BX.SidePanel, BX.UI);
 //# sourceMappingURL=connect-popup.bundle.js.map

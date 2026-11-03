@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports, main_core, tasks_v2_provider_service_userService, tasks_v2_core, tasks_v2_const, tasks_v2_lib_idUtils, tasks_v2_lib_apiClient, tasks_v2_provider_service_taskService, tasks_v2_provider_service_fileService, tasks_v2_component_entityText) {
+(function (exports, main_core, tasks_v2_provider_service_userService, tasks_v2_core, tasks_v2_const, tasks_v2_lib_idUtils, tasks_v2_lib_apiClient, tasks_v2_provider_service_taskService, tasks_v2_provider_service_fileService, tasks_v2_component_entityText, tasks_v2_provider_service_resultMessageService) {
 	'use strict';
 
 	function mapDtoToModel(resultDto) {
@@ -18,7 +18,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			fileIds: resultDto.fileIds,
 			previewId: resultDto.previewId,
 			rights: resultDto.rights,
-			files: resultDto.files
+			files: resultDto.files,
+			archiveLink: resultDto.archiveLink
 		};
 	}
 	function mapModelToDto(result) {
@@ -63,10 +64,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			}
 			if (withMap) {
 				const ids = Object.keys(map).map(it => parseInt(it, 10)).reverse();
-				void tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
-					results: ids,
-					resultsMessageMap: map
-				});
+				if (this.#hasStore()) {
+					void tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+						results: ids,
+						resultsMessageMap: map
+					});
+				}
 			}
 		}
 		async getAll(taskId) {
@@ -152,36 +155,37 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				console.error('ResultService.update error', error);
 			}
 		}
-		async delete(id) {
+		async delete(id, taskId = null) {
 			const resultBeforeDelete = this.getStoreResult(id);
-			const taskId = resultBeforeDelete?.taskId;
-			this.deleteResultFromTask(taskId, id);
+			const resolvedTaskId = taskId ?? resultBeforeDelete?.taskId;
+			const messageIdBeforeDelete = this.#getResultMessageId(resolvedTaskId, id);
+			this.deleteResultFromTask(resolvedTaskId, id);
 			await this.deleteStoreResult(id);
-			if (!tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
+			if (!tasks_v2_lib_idUtils.idUtils.isReal(resolvedTaskId)) {
 				return;
 			}
 			try {
-				await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskResultDelete, {
-					result: {
-						id
-					}
-				});
+				await tasks_v2_provider_service_resultMessageService.resultMessageService.delete(resolvedTaskId, id);
 			} catch (error) {
 				console.error('ResultService.delete error', error);
-				await this.insertStoreResult(resultBeforeDelete);
-				this.addResultToTask(taskId, id);
+				if (resultBeforeDelete) {
+					await this.insertStoreResult(resultBeforeDelete);
+					this.addResultToTask(resolvedTaskId, id, messageIdBeforeDelete);
+				}
 			}
+		}
+		#getResultMessageId(taskId, resultId) {
+			if (!this.#hasStore()) {
+				return null;
+			}
+			return tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId)?.resultsMessageMap?.[resultId] ?? null;
 		}
 		async addResultFromMessage(taskId, messageId, result) {
 			const tempId = result.id;
 			try {
 				await this.#addResultToStore(result);
 				this.addResultToTask(taskId, tempId, messageId);
-				const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskResultMessageAdd, {
-					message: {
-						id: messageId
-					}
-				});
+				const data = await tasks_v2_provider_service_resultMessageService.resultMessageService.add(taskId, messageId, result);
 				await this.#handleResultAfterAdd(taskId, tempId, data);
 				return true;
 			} catch (error) {
@@ -192,6 +196,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			}
 		}
 		hasOpenedResults(taskId) {
+			if (!this.#hasStore()) {
+				return false;
+			}
 			const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
 			if (!task?.results.length > 0) {
 				return false;
@@ -205,6 +212,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			return false;
 		}
 		async closeResults(taskId) {
+			if (!this.#hasStore()) {
+				return;
+			}
 			const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
 			if (!task?.results.length > 0) {
 				return;
@@ -223,6 +233,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			const {
 				id
 			} = data;
+			if (!this.#hasStore()) {
+				return data;
+			}
 			tasks_v2_provider_service_fileService.fileService.replace(tempId, id, tasks_v2_provider_service_fileService.EntityTypes.Result);
 			tasks_v2_component_entityText.entityTextEditor.replace(tempId, id, tasks_v2_component_entityText.EntityTextTypes.Result);
 			await this.#addResultToStore(data);
@@ -240,26 +253,46 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				this.addResultToTask(taskId, id);
 			}
 			await this.deleteStoreResult(tempId);
+			return data;
 		}
 		getStoreResult(id) {
-			return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](id) || null;
+			const store = this.$store;
+			if (!store) {
+				return null;
+			}
+			return store.getters[`${tasks_v2_const.Model.Results}/getById`](id) || null;
 		}
 		hasStoreResult(id) {
 			return Boolean(this.getStoreResult(id));
 		}
 		async insertStoreResult(result) {
-			await this.$store.dispatch(`${tasks_v2_const.Model.Results}/insert`, result);
+			const store = this.$store;
+			if (!store) {
+				return;
+			}
+			await store.dispatch(`${tasks_v2_const.Model.Results}/insert`, result);
 		}
 		async updateStoreResult(id, fields) {
-			await this.$store.dispatch(`${tasks_v2_const.Model.Results}/update`, {
+			const store = this.$store;
+			if (!store) {
+				return;
+			}
+			await store.dispatch(`${tasks_v2_const.Model.Results}/update`, {
 				id,
 				fields
 			});
 		}
 		async deleteStoreResult(id) {
-			await this.$store.dispatch(`${tasks_v2_const.Model.Results}/delete`, id);
+			const store = this.$store;
+			if (!store) {
+				return;
+			}
+			await store.dispatch(`${tasks_v2_const.Model.Results}/delete`, id);
 		}
 		async #addResultToStore(result) {
+			if (!this.#hasStore()) {
+				return;
+			}
 			const mappedResult = mapDtoToModel(result);
 			await this.insertStoreResult(mappedResult);
 			if (main_core.Type.isArrayFilled(mappedResult.files)) {
@@ -271,6 +304,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			});
 		}
 		addResultToTask(taskId, resultId, messageId = null) {
+			if (!this.#hasStore()) {
+				return;
+			}
 			const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
 			const results = [resultId, ...(task?.results || [])];
 			const resultsMessageMap = {
@@ -280,6 +316,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			this.#updateStoreTask(taskId, results, resultsMessageMap);
 		}
 		deleteResultFromTask(taskId, resultId) {
+			if (!this.#hasStore()) {
+				return;
+			}
 			const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
 			const results = (task?.results || []).filter(it => it !== resultId);
 			const resultsMessageMap = {
@@ -289,12 +328,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			this.#updateStoreTask(taskId, results, resultsMessageMap);
 		}
 		#updateStoreTask(taskId, results, resultsMessageMap) {
+			if (!this.#hasStore()) {
+				return;
+			}
 			const containsResults = results.length > 0;
 			void tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
 				results,
 				resultsMessageMap,
 				containsResults
 			});
+		}
+		#hasStore() {
+			return Boolean(this.$store);
 		}
 		get $store() {
 			return tasks_v2_core.Core.getStore();
@@ -310,5 +355,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.ResultMappers = ResultMappers;
 	exports.resultService = resultService;
 
-})(this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}, BX, BX.Tasks.V2.Provider.Service, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component);
+})(this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}, BX, BX.Tasks.V2.Provider.Service, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component, BX.Tasks.V2.Provider.Service);
 //# sourceMappingURL=result-service.bundle.js.map

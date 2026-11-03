@@ -127,6 +127,11 @@ this.BX.Landing = this.BX.Landing || {};
 	const onForwardButtonClick = Symbol('onForwardButtonClick');
 	const onCopyLinkButtonClick = Symbol('onCopyLinkButtonClick');
 	const onUniqueViewIconClick = Symbol('onUniqueViewIconClick');
+	const onUniqueViewKeydown = Symbol('onUniqueViewKeydown');
+	const onUniqueViewPointerEnter = Symbol('onUniqueViewPointerEnter');
+	const onUniqueViewPointerLeave = Symbol('onUniqueViewPointerLeave');
+	const onUniqueViewFocusOut = Symbol('onUniqueViewFocusOut');
+	const onDocumentClick = Symbol('onDocumentClick');
 	class TopPanel {
 		static cache = new main_core.Cache.MemoryCache();
 		constructor(data) {
@@ -136,6 +141,12 @@ this.BX.Landing = this.BX.Landing || {};
 			main_core.Event.bind(TopPanel.getForwardButton(), 'click', this[onForwardButtonClick]);
 			main_core.Event.bind(TopPanel.getCopyLinkButton(), 'click', this[onCopyLinkButtonClick]);
 			main_core.Event.bind(TopPanel.getUniqueViewIcon(), 'click', this[onUniqueViewIconClick]);
+			main_core.Event.bind(TopPanel.getUniqueViewIcon(), 'pointerenter', this[onUniqueViewPointerEnter]);
+			main_core.Event.bind(TopPanel.getUniqueViewIcon(), 'pointerleave', this[onUniqueViewPointerLeave]);
+			main_core.Event.bind(TopPanel.getUniqueViewIcon(), 'focusout', this[onUniqueViewFocusOut]);
+			main_core.Event.bind(TopPanel.getUniqueViewPopup(), 'pointerenter', this[onUniqueViewPointerEnter]);
+			main_core.Event.bind(TopPanel.getUniqueViewPopup(), 'pointerleave', this[onUniqueViewPointerLeave]);
+			main_core.Event.bind(TopPanel.getUniqueViewPopup(), 'focusout', this[onUniqueViewFocusOut]);
 			TopPanel.pushHistory(window.location.toString());
 			TopPanel.checkNavButtonsActivity();
 			TopPanel.checkHints();
@@ -222,6 +233,48 @@ this.BX.Landing = this.BX.Landing || {};
 				const layout = TopPanel.getLayout();
 				return layout ? layout.querySelector('.landing-pub-top-panel-unique-view') : null;
 			});
+		}
+		static getUniqueViewPopup() {
+			return TopPanel.cache.remember('uniqueViewPopup', () => {
+				const layout = TopPanel.getLayout();
+				return layout ? layout.querySelector('.landing-pub-top-panel-unique-view-popup') : null;
+			});
+		}
+
+		// A popup opened by a click, a tap or the keyboard, as opposed to one the pointer merely hovers
+		// open: only the first kind is closed by the next click on the button and survives the pointer.
+		static uniqueViewPopupPinned = false;
+		static isUniqueViewPopupShown() {
+			const popup = TopPanel.getUniqueViewPopup();
+			return popup !== null && !main_core.Dom.hasClass(popup, 'hide');
+		}
+		static isInsideUniqueView(node) {
+			const icon = TopPanel.getUniqueViewIcon();
+			const popup = TopPanel.getUniqueViewPopup();
+			return icon !== null && icon.contains(node) || popup !== null && popup.contains(node);
+		}
+		static showUniqueViewPopup() {
+			if (TopPanel.getUniqueViewPopup() === null || TopPanel.isUniqueViewPopupShown()) {
+				return;
+			}
+			main_core.Dom.removeClass(TopPanel.getUniqueViewPopup(), 'hide');
+			main_core.Dom.attr(TopPanel.getUniqueViewIcon(), 'aria-expanded', 'true');
+
+			// Both listeners live as long as the popup does. Escape has to reach it from wherever the
+			// focus is, because the pointer opens the popup without moving the focus at all, and the
+			// capture phase keeps a block of the site from swallowing the way out of the popup.
+			main_core.Event.bind(document, 'keydown', TopPanel[onUniqueViewKeydown], true);
+			main_core.Event.bind(document, 'click', TopPanel[onDocumentClick], true);
+		}
+		static hideUniqueViewPopup() {
+			TopPanel.uniqueViewPopupPinned = false;
+			if (!TopPanel.isUniqueViewPopupShown()) {
+				return;
+			}
+			main_core.Dom.addClass(TopPanel.getUniqueViewPopup(), 'hide');
+			main_core.Dom.attr(TopPanel.getUniqueViewIcon(), 'aria-expanded', 'false');
+			main_core.Event.unbind(document, 'keydown', TopPanel[onUniqueViewKeydown], true);
+			main_core.Event.unbind(document, 'click', TopPanel[onDocumentClick], true);
 		}
 		static checkHints() {
 			const linkPage = document.querySelector('.landing-pub-top-panel-chain-link-page');
@@ -313,16 +366,59 @@ this.BX.Landing = this.BX.Landing || {};
 				this.timeoutIds.push(timeoutId);
 			}
 		}
-		[onUniqueViewIconClick](event) {
-			const popup = document.querySelector('.landing-pub-top-panel-unique-view-popup');
-			if (main_core.Dom.hasClass(popup, 'hide')) {
-				main_core.Dom.removeClass(popup, 'hide');
-				setTimeout(function () {
-					main_core.Dom.addClass(popup, 'hide');
-				}, 2000);
-			} else {
-				main_core.Dom.addClass(popup, 'hide');
+		[onUniqueViewIconClick]() {
+			if (TopPanel.uniqueViewPopupPinned) {
+				TopPanel.hideUniqueViewPopup();
+				return;
 			}
+
+			// A popup the pointer holds open is taken over here instead of being closed: a tap reaches
+			// the button as a hover first, and closing it would leave the tap without a visible result.
+			TopPanel.uniqueViewPopupPinned = true;
+			TopPanel.showUniqueViewPopup();
+		}
+		static [onUniqueViewKeydown](event) {
+			if (event.key !== 'Escape' || !TopPanel.isUniqueViewPopupShown()) {
+				return;
+			}
+
+			// The page is opened inside a slider, which closes on the same key.
+			event.preventDefault();
+			event.stopPropagation();
+			const icon = TopPanel.getUniqueViewIcon();
+			// A popup opened by the pointer leaves the focus where the visitor put it.
+			const takesTheFocusBack = TopPanel.isInsideUniqueView(document.activeElement);
+			TopPanel.hideUniqueViewPopup();
+			if (takesTheFocusBack && icon !== null) {
+				icon.focus();
+			}
+		}
+		[onUniqueViewPointerEnter](event) {
+			// A touch reports itself as a hover as well, and there the popup belongs to the tap alone.
+			if (event.pointerType !== 'mouse') {
+				return;
+			}
+			TopPanel.showUniqueViewPopup();
+		}
+		[onUniqueViewPointerLeave](event) {
+			// The pointer takes away only what it brought: a pinned popup stays, and so does one the
+			// focus is inside.
+			if (event.pointerType !== 'mouse' || TopPanel.uniqueViewPopupPinned || TopPanel.isInsideUniqueView(event.relatedTarget) || TopPanel.isInsideUniqueView(document.activeElement)) {
+				return;
+			}
+			TopPanel.hideUniqueViewPopup();
+		}
+		[onUniqueViewFocusOut](event) {
+			if (TopPanel.isInsideUniqueView(event.relatedTarget)) {
+				return;
+			}
+			TopPanel.hideUniqueViewPopup();
+		}
+		static [onDocumentClick](event) {
+			if (TopPanel.isInsideUniqueView(event.target)) {
+				return;
+			}
+			TopPanel.hideUniqueViewPopup();
 		}
 		[onBackButtonClick](event) {
 			event.preventDefault();

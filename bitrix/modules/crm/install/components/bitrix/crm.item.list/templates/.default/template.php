@@ -32,6 +32,7 @@ Extension::load([
 	'crm.entity-list.panel',
 	'crm.activity.grid-activities-manager',
 	'crm.badge',
+	'crm.router',
 	'ui.design-tokens',
 	'ui.tooltip',
 	'crm.entity-list.binder',
@@ -102,6 +103,9 @@ $this->getComponent()->addTopPanel($this);
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
 
+/** @see \Bitrix\Crm\Component\Base::addJsRouter() */
+$this->getComponent()->addJsRouter($this);
+
 if (!$isRecurring)
 {
 	$clientFieldsTour = AbstractClientFieldsEntityList::getInstanceByEntityTypeId($arParams['entityTypeId']);
@@ -114,10 +118,14 @@ if (!$isRecurring)
 	}
 	unset($clientFieldsTour);
 }
+
+// several embedded grids may live on the same detail page, so the containers must be unique per grid
+$progressBarContainerId = $arResult['jsParams']['gridId'] . '-progress-bar-container';
+$errorTextContainerId = $arResult['jsParams']['gridId'] . '-error-text-container';
 ?>
 
 <div class="ui-alert ui-alert-danger" style="display: none;">
-	<span class="ui-alert-message" id="crm-type-item-list-error-text-container"></span>
+	<span class="ui-alert-message" id="<?= htmlspecialcharsbx($errorTextContainerId) ?>"></span>
 	<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
 </div>
 
@@ -129,9 +137,9 @@ if (!$isRecurring)
 		<?php
 		if ($arResult['grid'])
 		{
-			echo '<div id="crm-type-item-list-progress-bar-container"></div>';
+			$isEmbeddedListLayout = ($arParams['isEmbedded'] ?? false) === true;
 
-			if (($arParams['isEmbedded'] ?? false) === true)
+			if ($isEmbeddedListLayout)
 			{
 				$toolbarId = sprintf('crm-item-list-embedded-toolbar-%d', $arParams['entityTypeId']);
 				$toolbar = Manager::getInstance()->createToolbar($toolbarId, []);
@@ -161,6 +169,14 @@ if (!$isRecurring)
 				</div>
 			<?php
 			}
+
+			if ($isEmbeddedListLayout)
+			{
+				echo '<div class="crm-list-embedded-grid-block">';
+			}
+
+			echo '<div id="' . htmlspecialcharsbx($progressBarContainerId) . '"></div>';
+
 			$navigationHtml = '';
 			if (isset($arResult['pagination']) && is_array($arResult['pagination']))
 			{
@@ -183,6 +199,11 @@ if (!$isRecurring)
 				'',
 				$arResult['grid'],
 			);
+
+			if ($isEmbeddedListLayout)
+			{
+				echo '</div>';
+			}
 		}
 		?>
 	</div>
@@ -205,8 +226,8 @@ if (!empty($arResult['restrictedFieldsEngine']))
 		BX.message(<?= Json::encode($messages) ?>);
 
 		const params = <?= CUtil::PhpToJSObject($arResult['jsParams'], false, false, true) ?>;
-		params.errorTextContainer = document.getElementById('crm-type-item-list-error-text-container');
-		params.progressBarContainerId = 'crm-type-item-list-progress-bar-container';
+		params.errorTextContainer = document.getElementById('<?= CUtil::JSEscape($errorTextContainerId) ?>');
+		params.progressBarContainerId = '<?= CUtil::JSEscape($progressBarContainerId) ?>';
 		(new BX.Crm.ItemListComponent(params)).init();
 
 		<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])): ?>
@@ -231,6 +252,27 @@ if (!empty($arResult['restrictedFieldsEngine']))
 				content: BX.Loc.getMessage('CRM_KANBAN_MODE_ACTIVITIES_DISABLED'),
 				autoHideDelay: 5000,
 			});
+		}
+
+		if (urlParams.get('openTypeDetailSlider') === 'Y')
+		{
+			const typeDetailQueryParams = {};
+			const analyticsSubSection = urlParams.get('c_sub_section');
+			if (analyticsSubSection)
+			{
+				typeDetailQueryParams.c_sub_section = analyticsSubSection;
+			}
+
+			BX.Crm.Router.Instance.openTypeDetail(params.entityTypeId, null, typeDetailQueryParams);
+
+			urlParams.delete('openTypeDetailSlider');
+			urlParams.delete('c_sub_section');
+			const queryString = urlParams.toString();
+			window.history.replaceState(
+				{},
+				document.title,
+				`${window.location.pathname}${queryString ? `?${queryString}` : ''}${window.location.hash}`,
+			);
 		}
 	});
 </script>

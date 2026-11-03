@@ -2,7 +2,7 @@
 $MESS['OPEN_BROWSER'] = 'Откройте [SIZE=13][B][COLOR=#4578E7]#DOMAIN#[/COLOR][/B][/SIZE] на компьютере';
 $MESS['SCAN_QR'] = 'Наведите камеру телефона на [B]QR-код[/B]';
 $MESS['AUTH_WAIT'] = 'Авторизуем...';
-$MESS['WRONG_QR'] = 'Неверный qr-код';
+$MESS['WRONG_QR_MSGVER_1'] = 'Сканируйте QR-код камерой телефона';
 $MESS['QR_HOW_TO_AUTH_MSGVER_2'] = 'Быстрый вход по QR ';
 $MESS['STEP_OPEN_SITE_MSGVER_2'] = 'Откройте на компьютере';
 $MESS['STEP_PRESS_CLOUD'] = 'Нажмите [B]Вход[/B] и [IMG WIDTH="18" HEIGHT="18"]#URL#[/IMG][B] QR-код[/B]';

@@ -115,7 +115,7 @@
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 18px;
-	transition: all .3s ease;
+	transition: all .3s ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .bx-soa-section.bx-selected .bx-soa-section-title { font-size: 22px; }
@@ -1049,7 +1049,7 @@
 .bx-soa-pp .bx-soa-pp-company {
 	/*padding: 7px;*/
 	border: 1px solid transparent;
-	transition: all 100ms ease;
+	transition: all 100ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .bx-soa-pp-desc-container { padding-top: 7px; }
@@ -1527,3 +1527,140 @@ hr.bxe-light {
 
 /* USER CONSENT */
 .bx-sls .bx-ui-sls-container { min-height: 33px !important; }
+
+.bx-soa-visually-hidden {
+	position: absolute !important;
+	overflow: hidden;
+	margin: -1px;
+	padding: 0;
+	width: 1px;
+	height: 1px;
+	border: 0;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/*region Focus ring*/
+/* Outweighs the focus rules of the landing store theme: the id beats `.block-wrapper
+ * [tabindex]:not([tabindex="-1"])` (0,4,0), the confirmation and empty basket pages beat
+ * `a:focus-visible` (0,1,1) and `.btn:focus-visible` (0,2,0) by their root class. */
+#bx-soa-order-form a:focus-visible,
+#bx-soa-order-form .btn:focus-visible,
+#bx-soa-order-form button:focus-visible,
+#bx-soa-order-form .form-control:focus-visible,
+#bx-soa-order-form select:focus-visible,
+#bx-soa-order-form input[type=radio]:focus-visible,
+#bx-soa-order-form input[type=checkbox]:focus-visible,
+#bx-soa-order-form [tabindex]:focus-visible,
+#bx-soa-order-form .bx-ui-sls-fake:focus-visible,
+.bx-soa-confirm a:focus-visible,
+.bx-soa-empty-cart-container a:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* `!important` answers `[tabindex="-1"]:focus { outline: 0 !important }` of the landing store theme
+ * (`landing24/assets/vendor/bootstrap/bootstrap.css:73`); the offset is inset because the heading
+ * spans a container that clips. */
+#bx-soa-order-form .bx-soa-section-title[tabindex]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/* The error of the whole form takes the focus when the server refuses the order; the theme wipes its
+ * outline the same way. */
+#bx-soa-main-notifications .alert[tabindex]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+/* Room for the inset ring: descenders reach below the 18px line box. The negative margin keeps the
+ * outer size, so nothing moves at rest. */
+#bx-soa-order-form .bx-soa-section-title {
+	margin: 0 -6px -6px;
+	padding: 3px 6px 6px;
+}
+
+/* Adjacent step buttons have no gap, so a ring overlapped the neighbour. */
+#bx-soa-order-form .bx-soa-more-btn .btn + .btn {
+	margin-left: calc(var(--ui-focus-outline-width, 2px) + var(--ui-focus-outline-offset, 2px));
+}
+
+/* Tiles touch each other, so the ring is inset and borrows 4px above; the focused tile is raised over
+ * its neighbours. No transition: the resting rule animates `all`, including `z-index`. */
+#bx-soa-order-form .bx-soa-pp .bx-soa-pp-company:focus-visible {
+	z-index: 101;
+	margin-top: -4px;
+	padding-top: 4px;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	transition: none;
+}
+
+/* The widget draws the search input inside a clipping container of its own height, so the ring goes
+ * inset on the visible box. */
+#bx-soa-order-form .bx-ui-sls-input-block:focus-within {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/* The positioned fade would cover the ring at the right and bottom edges. */
+#bx-soa-order-form .bx-ui-sls-input-block:focus-within .dropdown-fade2white {
+	top: 3px;
+	right: 2px;
+	bottom: 2px;
+	height: auto;
+}
+
+/* The error hint sits right above the field and paints over an outer ring. */
+#bx-soa-order-form .has-error .form-control:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/* Zeroed on the resting rule: the theme and `ui.bootstrap4` animate the outline and the shadow with
+ * the rest, and a ring that fades in or out cannot be followed. */
+#bx-soa-order-form .btn {
+	transition: color .2s ease, background-color .2s ease, border-color .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+#bx-soa-order-form .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+#bx-soa-order-form .form-check-input {
+	transition: background-color .15s ease-in-out, background-position .15s ease-in-out, border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* Puts the resting colours back over `.btn-primary:focus` (0,2,0) of `ui.bootstrap4`, which the store
+ * theme has no rule for; the id outweighs it. The button under the pointer and the button pressed are
+ * left out: there the theme has rules of its own, and the id would take the highlight of the pointer
+ * away from a button the click has left in the focus. `--primary` is the colour of the theme of the
+ * site, `--bs-primary` the one `ui.bootstrap4` paints the button with where no theme declares it. The
+ * text is white like at rest: a theme painting the text of a focused button in its accent would hide
+ * the label in the fill. */
+#bx-soa-order-form .btn.btn-primary:focus:not(:hover):not(:active) {
+	background-color: var(--primary, var(--bs-primary, #0d6efd));
+	border-color: var(--primary, var(--bs-primary, #0d6efd));
+	color: #fff;
+}
+
+/* Map links live in `overflow: hidden` boxes that clip an outer ring. */
+#bx-soa-order-form #pickUpMap a:focus-visible,
+#bx-soa-order-form #propsMap a:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
+/*endregion*/
+
+/*region Image layer*/
+/* The layer is outside the form, so the checkout ring does not apply. The focused close button gets
+ * the page background so it stays visible over any picture. */
+#bx-soa-image-popup .popup-window-close-icon:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+	background-color: var(--ui-color-base-8, #ffffff);
+	--ui-icon-set__icon-color: var(--ui-color-base-1, #333333);
+}
+/*endregion*/

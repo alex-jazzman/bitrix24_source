@@ -98,9 +98,13 @@ jn.define('tourist', (require, exports, module) => {
 			operations.push(this.storage.set('_inited', true));
 			for (const eventId of Object.keys(response.data))
 			{
-				if (isKeyAllowed(eventId))
+				const preparedEventData = response.data[eventId];
+
+				// A cache written before forget() started removing the key keeps a null in its place, and the
+				// device serves such a cache for a week after its last write. The entry is an event that never
+				// happened: it is skipped rather than failing the loop and losing every event that follows.
+				if (isKeyAllowed(eventId) && Type.isObjectLike(preparedEventData))
 				{
-					const preparedEventData = response.data[eventId];
 					preparedEventData.context = this.#convertContextToObjectIfNeeded(preparedEventData.context);
 					operations.push(this.storage.set(eventId, preparedEventData));
 				}
@@ -113,7 +117,19 @@ jn.define('tourist', (require, exports, module) => {
 		{
 			if (context && typeof context === 'string')
 			{
-				return JSON.parse(context);
+				// The same answer remember() gives to a context it cannot read: the event itself happened and
+				// keeps its count, only what it carried is lost. Thrown from here instead, it would break the
+				// loop above and lose every event that follows the damaged one for the whole session.
+				try
+				{
+					return JSON.parse(context);
+				}
+				catch (error)
+				{
+					console.error('Failed to parse context JSON', error);
+
+					return {};
+				}
 			}
 
 			return context;
@@ -133,6 +149,27 @@ jn.define('tourist', (require, exports, module) => {
 		ready()
 		{
 			return this.onInit;
+		}
+
+		/**
+		 * Whether the events of the user are loaded in this session: from the server, from the cache of the device
+		 * or by another context of the application. ready() resolves after a failed load too, and firstTime() then
+		 * answers true for every event, so an event that never happened and an event that did not load look alike.
+		 * This answers false both for a load still under way and for a failed one - an answer of an error or
+		 * a request that never reached the server. Nothing is loaded or retried here.
+		 *
+		 * Two things a consumer of another module has to hold to. An older mobile module does not carry this
+		 * method at all, so the call goes through a check that it is there. And the answer is not final for the
+		 * session: after a failed load another context of the application loads the events again, and the answer
+		 * turns from false to true with nothing announcing it - so it is asked where the decision is made and
+		 * never kept.
+		 *
+		 * @public
+		 * @return {boolean}
+		 */
+		areEventsLoaded()
+		{
+			return this.storage.getSync('_inited') === true;
 		}
 
 		/**

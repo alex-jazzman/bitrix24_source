@@ -8,14 +8,19 @@ jn.define('im/messenger/controller/folder/create', (require, exports, module) =>
 	const { BottomSheet } = require('bottom-sheet');
 	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('im/messenger/loc');
-	const { MAX_PERSONAL_FOLDERS } = require('im/messenger/const');
+	const { getMaxPersonalFolders } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { FolderChatSelector } = require('im/messenger/controller/folder/chat-selector');
 	const { FolderFormView } = require('im/messenger/controller/folder/lib/ui/folder-form');
 	const { preloadIncompleteChats } = require('im/messenger/controller/folder/lib/preload-chats');
-	const { createFolder, showCreateSuccessToast } = require('im/messenger/controller/folder/lib/actions');
+	const {
+		createFolder,
+		showCreateSuccessToast,
+		showFolderGenericErrorToast,
+	} = require('im/messenger/controller/folder/lib/actions');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const logger = getLoggerWithContext('folder--create', 'FolderCreate');
 
@@ -136,9 +141,17 @@ jn.define('im/messenger/controller/folder/create', (require, exports, module) =>
 			try
 			{
 				await preloadIncompleteChats(chatIds);
+				const nextChatIds = this.#resolveChatIds(chatIds);
+				if (!nextChatIds)
+				{
+					showFolderGenericErrorToast(this.layoutWidget);
+
+					return;
+				}
+
 				await createFolder({
 					title,
-					chatIds: this.#resolveChatIds(chatIds),
+					chatIds: nextChatIds,
 					layoutWidget: this.layoutWidget,
 				});
 
@@ -157,17 +170,32 @@ jn.define('im/messenger/controller/folder/create', (require, exports, module) =>
 			}
 		}
 
+		/**
+		 * @param {Array<string|number>} dialogIds
+		 * @return {Array<number>|null} null when at least one dialogId has no chatId in dialoguesModel.
+		 *   Dropping such a member would create the folder without a chat the user picked, so the
+		 *   caller refuses the creation instead.
+		 */
 		#resolveChatIds(dialogIds)
 		{
 			const store = this.#getStore();
 
-			return dialogIds
-				.map((dialogId) => {
-					const dialog = store?.getters['dialoguesModel/getById'](dialogId);
+			const chatIds = dialogIds.map((dialogId) => {
+				const dialog = store?.getters['dialoguesModel/getById'](dialogId);
+				const chatId = dialog?.chatId ?? null;
 
-					return dialog?.chatId ?? null;
-				})
-				.filter((chatId) => Type.isInteger(chatId) && chatId > 0);
+				return Type.isInteger(chatId) && chatId > 0 ? chatId : null;
+			});
+
+			const unresolvedDialogIds = dialogIds.filter((dialogId, index) => chatIds[index] === null);
+			if (unresolvedDialogIds.length > 0)
+			{
+				logger.error('resolveChatIds: dialogIds with no chatId in the model', unresolvedDialogIds);
+
+				return null;
+			}
+
+			return chatIds;
 		}
 
 		#canOpen(parentWidget = null)
@@ -187,11 +215,16 @@ jn.define('im/messenger/controller/folder/create', (require, exports, module) =>
 				return false;
 			}
 
-			if (this.#getPersonalFolderCount() >= MAX_PERSONAL_FOLDERS)
+			const maxPersonalFolders = getMaxPersonalFolders();
+			if (this.#getPersonalFolderCount() >= maxPersonalFolders)
 			{
+				AnalyticsService.getInstance().sendFolderLimitException();
+
 				Notification.showErrorToast(
 					{
-						message: Loc.getMessage('IMMOBILE_FOLDER_CREATE_ERROR_LIMIT'),
+						message: Loc.getMessage('IMMOBILE_FOLDER_CREATE_ERROR_LIMIT', {
+							'#LIMIT#': maxPersonalFolders,
+						}),
 					},
 					parentWidget,
 				);

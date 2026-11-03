@@ -73,6 +73,8 @@ $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_CONTACT'] = 'Теперь конта�
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_QUOTE_MSGVER_1'] = 'Теперь предложения сортируются по дате их добавления';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_SMART_INVOICE'] = 'Теперь счета сортируются по дате их добавления';
 
+$MESS['M_CRM_ENTITY_TAB_COMPACT_VIEW_TOGGLE_TEXT'] = 'Компактный список';
+
 $MESS['M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_TITLE'] = 'Общайтесь с клиентами прямо в CRM';
 $MESS['M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_TITLE'] = 'Каналы коммуникаций';
 $MESS['M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_1'] = 'Автоматическое создание сделок после звонка, письма или чата с клиентом';
@@ -80,3 +82,6 @@ $MESS['M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_2'] = 'Вся �
 $MESS['M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_3'] = 'Интеграция с телефонией, почтой и мессенджерами для общения с клиентами';
 $MESS['M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_BUTTON_TEXT'] = 'Настроить';
 
+$MESS['M_CRM_ENTITY_TAB_COUNTERS_SECTION'] = 'Счётчики';
+$MESS['M_CRM_ENTITY_TAB_FILTER_SORT_LAST_ACTIVITY'] = 'По последней активности';
+$MESS['M_CRM_ENTITY_TAB_FILTER_SORT_ID'] = 'По дате создания';

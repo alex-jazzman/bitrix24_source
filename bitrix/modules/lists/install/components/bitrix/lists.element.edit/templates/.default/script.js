@@ -33,17 +33,70 @@ BX.Lists.ListsElementEditClass = (function ()
 		if (form)
 		{
 			const saveButton = form.querySelector('[name="save"]');
+			const appendTimeToStart = () => {
+				const timeElement = BX.Dom.create('input', {
+					attrs: {
+						name: 'timeToStart',
+						type: 'hidden',
+						value: Math.round(Date.now() / 1000) - this.startTime,
+					},
+				});
+				BX.Dom.append(timeElement, form);
+			};
+
 			if (saveButton)
 			{
 				saveButton.onclick = (event) => {
-					const timeElement = BX.Dom.create('input', {
-						attrs: {
-							name: 'timeToStart',
-							type: 'hidden',
-							value: Math.round(Date.now() / 1000) - this.startTime,
-						},
-					});
-					BX.Dom.append(timeElement, form);
+					if (this.formId.startsWith('lists_element_add_'))
+					{
+						if (event)
+						{
+							event.preventDefault();
+						}
+
+						if (
+							typeof form.reportValidity === 'function'
+							&& !form.reportValidity()
+						)
+						{
+							return;
+						}
+
+						if (
+							typeof form.checkValidity === 'function'
+							&& !form.checkValidity()
+						)
+						{
+							return;
+						}
+
+						appendTimeToStart();
+
+						const hidden = BX.Dom.create('input', {
+							attrs: {
+								type: 'hidden',
+								name: saveButton.name,
+								value: saveButton.value || '',
+							},
+						});
+						BX.Dom.append(hidden, form);
+
+						saveButton.disabled = true;
+						setTimeout(() => {
+							if (typeof form.requestSubmit === 'function')
+							{
+								form.requestSubmit();
+							}
+							else
+							{
+								form.submit();
+							}
+						}, 0);
+					}
+					else
+					{
+						appendTimeToStart();
+					}
 				};
 			}
 

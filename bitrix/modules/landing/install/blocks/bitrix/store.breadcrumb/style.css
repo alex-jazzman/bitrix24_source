@@ -1,0 +1,11 @@
+/* The ring stands outside the link: the light tone fills the gap, the dark one is the ring. */
+.block-store-breadcrumb .landing-breadcrumb-link:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: 0 0 0 var(--ui-focus-outline-offset) var(--ui-color-base-8);
+}
+
+/* The theme animates everything of .u-link-v5, the ring with it; the fade of the hover stays. */
+.block-store-breadcrumb .landing-breadcrumb-link {
+	transition-property: color, background-color, border-color, opacity;
+}

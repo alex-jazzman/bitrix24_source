@@ -1,0 +1,5 @@
+<?php
+
+$MESS['TASKS_V2_ENTITIES_PICKER_LOADED_MORE_PLURAL_0'] = 'Загружен ещё #COUNT# элемент';
+$MESS['TASKS_V2_ENTITIES_PICKER_LOADED_MORE_PLURAL_1'] = 'Загружено ещё #COUNT# элемента';
+$MESS['TASKS_V2_ENTITIES_PICKER_LOADED_MORE_PLURAL_2'] = 'Загружено ещё #COUNT# элементов';

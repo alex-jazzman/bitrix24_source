@@ -6,6 +6,7 @@ use Bitrix\Main\Grid\Row\RowAssembler;
 use Bitrix\Main\Grid\Settings;
 
 use Bitrix\Bizproc\Internal\Grid\AiAgents\Row\Assembler\Field\JsFields;
+use Bitrix\Bizproc\Internal\Service\AiAgentGrid\Upgrade\UpgradeFeatureToggle;
 use CBPWorkflowTemplateUser;
 
 class AiAgentsRowAssembler extends RowAssembler
@@ -20,13 +21,22 @@ class AiAgentsRowAssembler extends RowAssembler
 
 	protected function prepareFieldAssemblers(): array
 	{
-		return [
+		$assemblers = [
 			new JsFields\AgentInfoFieldAssembler(['NAME'], $this->settings),
 			new JsFields\UsedByFieldAssembler(['USED_BY'], $this->settings),
 			new JsFields\LaunchedByFieldAssembler(['LAUNCHED_BY'], $this->settings),
 			new JsFields\LaunchControlFieldAssembler(['LAUNCH_CONTROL'], $this->settings),
 			new JsFields\LoadIndicatorFieldAssembler(['LOAD'], $this->settings),
 		];
+
+		// Assemblers are filtered by the saved column set, not by the declared columns, so a
+		// disabled feature must not register the assembler at all.
+		if (UpgradeFeatureToggle::isEnabled())
+		{
+			$assemblers[] = new JsFields\VersionFieldAssembler(['VERSION'], $this->settings);
+		}
+
+		return $assemblers;
 	}
 
 	private function getUserIdFromString(?string $value): ?int

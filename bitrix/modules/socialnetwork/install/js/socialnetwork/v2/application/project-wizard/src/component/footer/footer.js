@@ -30,7 +30,9 @@ export const ProjectWizardFooter = {
 		<div class="socialnetwork--project-wizard-footer">
 			<ScnButtonSubmitProject />
 			<UiButton
+				:dataset="{ testid: 'socialnetwork-project-wizard-cancel' }"
 				:text="loc('SONET_EXT_PROJECT_WIZARD_CANCEL_BUTTON')"
+				:dataset="{ testid: 'socialnetwork-project-wizard-cancel' }"
 				:size="ButtonSize.LARGE"
 				:style="AirButtonStyle.PLAIN"
 				@click="close"

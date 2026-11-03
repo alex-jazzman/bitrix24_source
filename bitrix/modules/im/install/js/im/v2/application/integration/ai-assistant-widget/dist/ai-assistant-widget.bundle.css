@@ -10,11 +10,6 @@
 	padding-bottom: 0;
 }
 
-.bx-im-ai-assistant-widget-empty-state {
-	display: flex;
-	height: 100%;
-}
-
 .bx-im-ai-assistant-widget-layout__container{
 	display: flex;
 	position: relative;
@@ -25,6 +20,7 @@
 }
 
 .bx-im-ai-assistant-widget-layout__content {
+	position: relative;
 	flex-grow: 1;
 }
 
@@ -40,6 +36,37 @@
 
 .bx-im-ai-assistant-widget-dialog-context {
 	display: contents;
+}
+
+.bx-im-ai-assistant-widget-start-screen-content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.bx-im-ai-assistant-widget-layout__content .im-widget-start-reveal-leave-active {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	transition: opacity 400ms linear;
+}
+
+.im-widget-start-reveal-leave-to {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-ai-assistant-widget-layout__content .im-widget-start-reveal-leave-active {
+		transition: none;
+	}
+}
+
+.bx-im-ai-assistant-widget-layout__content .bx-im-content-chat-drop-area__container {
+	right: 10px;
+	bottom: 10px;
+	left: 10px;
+	margin-top: -8px;
 }
 
 .bx-im-ai-assistant-chat-header__container {
@@ -112,8 +139,11 @@
 }
 
 .bx-im-ai-assistant-chat-header__create-chat .bx-im-ai-assistant-create-chat-button__scope {
-	--im-ai-assistant-create-chat-button__icon-background: var(--ui-color-design-tinted-content-icon);
-	--im-ai-assistant-create-chat-button__background: var(--ui-color-design-tinted-bg);
+	--im-ai-assistant-create-chat-button__icon-color: var(--ui-color-base-white-fixed);
+	--im-ai-assistant-create-chat-button__icon-background: var(--ui-color-base-white-fixed);
+	--im-ai-assistant-create-chat-button__icon-opacity: var(--ui-opacity-60);
+	--im-ai-assistant-create-chat-button__background:
+		color-mix(in srgb, var(--ui-color-base-white-fixed) 15%, transparent);
 }
 
 .bx-im-ai-assistant-chat-header__icon {
@@ -158,13 +188,29 @@
 
 .bx-im-ai-assistant-widget-empty-state {
 	display: flex;
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
 	flex-direction: column;
 	justify-content: flex-end;
-	padding: 16px 16px 36px;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xs2) 0 var(--ui-space-inset-xs2);
 }
 
 .bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__scope {
-	--bx-im-ai-assistant-empty-state-view-gap: 20px;
+	--bx-im-ai-assistant-empty-state-view-gap: var(--ui-space-stack-md);
+	--bx-im-ai-assistant-empty-state-view-textarea-margin-bottom: 0;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__title {
+	order: 1;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__suggestions {
+	order: 2;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__textarea {
+	order: 3;
 }
 
 .bx-im-ai-assistant-chat-recent-list {

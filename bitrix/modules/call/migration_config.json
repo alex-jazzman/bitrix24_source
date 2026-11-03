@@ -1,0 +1,10 @@
+{
+    "defaultTableName": "b_call_session",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/js": "js",
+        "install/images": "images",
+        "install/templates": "templates",
+        "install/activities": "activities"
+    }
+}

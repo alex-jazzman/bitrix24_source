@@ -6,6 +6,7 @@ import {
 	TagSelector,
 } from 'ui.entity-selector';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
 import { SelectorEntity } from 'im.v2.const';
 
@@ -56,7 +57,7 @@ export const ChatSelector = {
 						id: SelectorEntity.recent,
 						dynamicLoad: true,
 						dynamicSearch: true,
-						options: { fillDialogByRecent: true },
+						options: { fillDialogByRecent: true, searchFolderEligible: true },
 					}],
 					preselectedItems,
 					events: {
@@ -73,6 +74,7 @@ export const ChatSelector = {
 			if (this.chatLimit && selectedItems.length > this.chatLimit)
 			{
 				const { item }: { item: SelectorItem } = event.getData();
+				Analytics.getInstance().folder.onChatLimitException();
 				Notifier.folder.onChatLimitError(this.chatLimit);
 				item.deselect();
 

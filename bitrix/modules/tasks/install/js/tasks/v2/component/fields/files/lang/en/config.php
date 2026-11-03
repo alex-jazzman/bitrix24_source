@@ -1,11 +1,21 @@
 <?php
 $MESS["TASKS_V2_FILES_ADD"] = "Add";
+$MESS["TASKS_V2_FILES_ARIA_LABEL"] = "Upload files";
 $MESS["TASKS_V2_FILES_CLEAR"] = "Delete all";
+$MESS["TASKS_V2_FILES_CLOSE"] = "Close";
+$MESS["TASKS_V2_FILES_COLLAPSE"] = "Show less";
 $MESS["TASKS_V2_FILES_COUNT"] = "Files: #COUNT#";
+$MESS["TASKS_V2_FILES_COUNT_ARIA_LABEL"] = "Upload files: #COUNT#";
 $MESS["TASKS_V2_FILES_DOWNLOAD_ARCHIVE"] = "Download all (#FILES_SIZE#)";
+$MESS["TASKS_V2_FILES_EXPAND"] = "Show more";
 $MESS["TASKS_V2_FILES_LOADING"] = "Loading files";
 $MESS["TASKS_V2_FILES_MORE"] = "more";
 $MESS["TASKS_V2_FILES_MY_DRIVE"] = "My Drive";
 $MESS["TASKS_V2_FILES_TITLE"] = "Files";
 $MESS["TASKS_V2_FILES_UPLOAD"] = "Upload files";
 $MESS["TASKS_V2_FILES_UPLOAD_BUTTON"] = "Upload";
+$MESS["TASKS_V2_FILES_VIEW_LIST"] = "List";
+$MESS["TASKS_V2_FILES_VIEW_ONBOARDING_TEXT"] = "Select the preferred file view mode: list or tile.";
+$MESS["TASKS_V2_FILES_VIEW_ONBOARDING_TITLE"] = "Set the file view mode";
+$MESS["TASKS_V2_FILES_VIEW_SWITCHER_TITLE"] = "View mode";
+$MESS["TASKS_V2_FILES_VIEW_TILE"] = "Tile";

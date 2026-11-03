@@ -1,0 +1,100 @@
+/* the html canvas, not the fixed overlay, paints the native over-scroll zones */
+.vibecodeconnector-open-app-page {
+	background: linear-gradient(to bottom, #1E276B, #02021E);
+}
+
+/* app pages may be transparent: a dark canvas behind the iframe would tint them */
+.vibecodeconnector-open-app-page.--loaded {
+	background: #fff;
+}
+
+.vibecodeconnector-open-app-loader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	/* the extra height paints the native bottom inset zone, the bottom padding keeps
+	   the content centered on the viewport instead of on the taller overlay */
+	height: calc(100% + 80px);
+	padding-bottom: 80px;
+	box-sizing: border-box;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(to bottom, #1E276B, #02021E);
+}
+
+.vibecodeconnector-open-app-loader.--hidden {
+	display: none;
+}
+
+.vibecodeconnector-open-app-loader__logo {
+	width: min(240px, 64vw);
+	height: auto;
+	animation: vibecodeconnector-open-app-loader-appear .6s ease-out both;
+}
+
+/* the taller viewBox carries padding around the glyphs: this width keeps their rendered height
+   equal to the Bitrix24 logo */
+.vibecodeconnector-open-app-loader__logo.--alaio {
+	width: min(262px, 70vw);
+}
+
+/* visually hidden, still announced by screen readers */
+.vibecodeconnector-open-app-loader__label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.vibecodeconnector-open-app-loader__shine {
+	animation: vibecodeconnector-open-app-loader-shine 2.3s ease-in-out 1s infinite;
+}
+
+/* a second set of keyframes instead of a var() shared with the base one: WebKit has a history of
+   dropping custom properties inside @keyframes, and this page opens in the iOS webview */
+.vibecodeconnector-open-app-loader__logo.--alaio .vibecodeconnector-open-app-loader__shine {
+	animation-name: vibecodeconnector-open-app-loader-shine-alaio;
+}
+
+/* the in-flow spacer makes the document taller than the viewport, so the page paints through
+   the native bottom inset zone (iOS forces the inset on webviews); removed with the loading screen */
+.vibecodeconnector-open-app-loader-spacer {
+	height: 60px;
+}
+
+@keyframes vibecodeconnector-open-app-loader-appear {
+	from {
+		opacity: 0;
+		transform: scale(1.25);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes vibecodeconnector-open-app-loader-shine {
+	0% {
+		transform: translateX(0) skewX(-20deg);
+	}
+
+	55%, 100% {
+		transform: translateX(340px) skewX(-20deg);
+	}
+}
+
+@keyframes vibecodeconnector-open-app-loader-shine-alaio {
+	0% {
+		transform: translateX(0) skewX(-20deg);
+	}
+
+	55%, 100% {
+		transform: translateX(1180px) skewX(-20deg);
+	}
+}

@@ -49,6 +49,11 @@
 	var proxy = BX.Landing.Utils.proxy;
 	var escapeText = BX.Landing.Utils.escapeText;
 	var isValidElementId = BX.Landing.Utils.isValidElementId;
+	var nbsp = "\u00A0";
+	var nbspEntityPattern = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
+	var normalizeCardTitleText = function(value) {
+		return String(value || "").replace(nbspEntityPattern, nbsp);
+	};
 
 	// Collections
 	var BaseCollection = BX.Landing.Collection.BaseCollection;
@@ -2049,10 +2054,12 @@
 					if (BX.Type.isArray(parsedFormId) && parsedFormId.length === 3)
 					{
 						var instanceId = '';
-						var formUid = BX.Dom.attr(
-							formScriptNode.previousSibling.firstChild,
-							'id'
-						);
+						var formUid = '';
+						var formContainerNode = formScriptNode.previousSibling;
+						if (formContainerNode && formContainerNode.firstChild)
+						{
+							formUid = BX.Dom.attr(formContainerNode.firstChild, 'id');
+						}
 
 						if (formUid)
 						{
@@ -2338,12 +2345,12 @@
 					{
 						currentLabel = create("span", {
 							props: {className: "landing-card-title-text"},
-							html: escapeText(create("div", {html: labelNode.getValue()}).innerText)
+							html: escapeText(normalizeCardTitleText(create("div", {html: labelNode.getValue()}).innerText))
 						});
 						children.push(currentLabel);
 
 						onCustomEvent(labelNode.getField(), "change", function(value) {
-							currentLabel.innerHTML = escapeText(create("div", {html: value}).innerText);
+							currentLabel.innerHTML = escapeText(normalizeCardTitleText(create("div", {html: value}).innerText));
 						});
 
 						return;
@@ -2353,12 +2360,12 @@
 					{
 						currentLabel = create("span", {
 							props: {className: "landing-card-title-link"},
-							html: escapeText(labelNode.getValue().text)
+							html: escapeText(normalizeCardTitleText(labelNode.getValue().text))
 						});
 						children.push(currentLabel);
 
 						onCustomEvent(labelNode.getField(), "change", function(value) {
-							currentLabel.innerHTML = escapeText(value.text);
+							currentLabel.innerHTML = escapeText(normalizeCardTitleText(value.text));
 						});
 
 						return;
@@ -2386,22 +2393,42 @@
 							attrs: {
 								style: "background-color: #fafafa"
 							},
-							children: [create('img', {props: {src: labelNode.getValue().src}})]
+							children: [create('img', {props: {src: labelNode.getValue().src, alt: ""}})]
 						});
 						children.push(currentLabel);
 
 						onCustomEvent(labelNode.getField(), "change", function(value) {
 							currentLabel.innerHTML = "";
-							currentLabel.appendChild(create('img', {props: {src: value.src}}));
+							currentLabel.appendChild(create('img', {props: {src: value.src, alt: ""}}));
 						});
 					}
 				}
 			}, this);
 
-			return create("div", {
+			var label = create("div", {
 				props: {className: "landing-card-title"},
 				children: !isEmpty(children) ? children : manifest.name
 			});
+
+			// This label is the whole content of the card title button in the cards form, so a label
+			// that says nothing in words - built of pictures or icons alone - leaves that button
+			// without an accessible name. Such a label stands for the card as a single picture and
+			// is named after it; the pictures inside it stay decorative.
+			//
+			// The name has to hold something: `role="img"` carrying an empty label is a violation of
+			// its own and names the button no better than the bare picture did. A manifest without a
+			// usable name leaves the label as it was - there is nothing to call it.
+			if (label.textContent.trim() === ""
+				&& BX.Type.isStringFilled(manifest.name)
+				&& manifest.name.trim() !== "")
+			{
+				BX.Dom.attr(label, {
+					"role": "img",
+					"aria-label": manifest.name
+				});
+			}
+
+			return label;
 		},
 
 
@@ -4197,11 +4224,12 @@
 		/**
 		 * @param {object} requestData
 		 * @param {BX.Landing.UI.Field.BaseField} field
+		 * @param {string} [selectorOverride]
 		 * @return {object}
 		 */
-		appendAttrFieldValue: function(requestData, field)
+		appendAttrFieldValue: function(requestData, field, selectorOverride)
 		{
-			var selector = this.makeAbsoluteSelector(field.selector);
+			var selector = this.makeAbsoluteSelector(selectorOverride || field.selector);
 			var value = field.getValue();
 
 			requestData[selector] = requestData[selector] || {};
@@ -5144,21 +5172,16 @@
 			fetchFields(forms.content.fetchFields(), all)
 				.reduce(proxy(this.appendContentFieldValue, this), requestData);
 
-			var attrFields = new BaseCollection();
-
 			forms.cards.forEach(function(form) {
-				form.childForms.forEach(function(childForm) {
+				form.childForms.forEach(function(childForm, index) {
 					childForm.fields.forEach(function(field) {
 						if (field.type === "attr")
 						{
-							attrFields.add(field);
+							this.appendAttrFieldValue(requestData, field, join(form.code, '@', index));
 						}
-					});
-				});
-			});
-
-			fetchFields(attrFields, true)
-				.reduce(proxy(this.appendAttrFieldValue, this), requestData);
+					}, this);
+				}, this);
+			}, this);
 
 			forms.cards
 				.reduce(proxy(this.appendCardsFormValue, this), requestData);
@@ -5170,7 +5193,9 @@
 				.reduce(proxy(this.appendDynamicBlockFormValue, this), requestData);
 
 			fetchFields(forms.attrs.fetchFields(), all)
-				.reduce(proxy(this.appendAttrFieldValue, this), requestData);
+				.reduce(function(data, field) {
+					return this.appendAttrFieldValue(data, field);
+				}.bind(this), requestData);
 
 			fetchFields(forms.settings.fetchFields(), all)
 				.reduce(proxy(this.appendSettingsFieldValue, this), requestData);

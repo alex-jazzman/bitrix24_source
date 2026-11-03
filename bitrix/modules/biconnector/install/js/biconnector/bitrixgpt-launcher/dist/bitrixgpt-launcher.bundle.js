@@ -19,6 +19,10 @@ this.BX = this.BX || {};
 		#isOpen = false;
 		#mountPromise = null;
 		#bitrixGptName = '';
+		#createPanel = null;
+		#pendingDialogId = null;
+		#stubNode = null;
+		#stubContentNode = null;
 		#resizeHandleNode = null;
 		#dragOverlayNode = null;
 		#widthHostNode;
@@ -35,6 +39,7 @@ this.BX = this.BX || {};
 			}
 			this.#panelNode = options.panelNode;
 			this.#bitrixGptName = main_core.Type.isStringFilled(options.bitrixGptName) ? options.bitrixGptName : '';
+			this.#createPanel = main_core.Type.isFunction(options.createPanel) ? options.createPanel : null;
 			this.#initResizeHandle();
 			this.#initTriggerDelegation();
 			this.#playIntroGlow();
@@ -68,6 +73,60 @@ this.BX = this.BX || {};
 		close() {
 			if (this.#isOpen) {
 				this.#collapse();
+			}
+		}
+
+		/**
+		 * Switches the open panel to the chat. A panel closed by the user stays closed:
+		 * the chat is applied on its next open.
+		 */
+		async openDialog(chatId) {
+			const dialogId = `chat${chatId}`;
+			this.hideStub();
+			if (!this.#isOpen || !this.#mountPromise) {
+				this.#pendingDialogId = dialogId;
+				return;
+			}
+			try {
+				await this.#mountPromise;
+			} catch {
+				this.#pendingDialogId = dialogId;
+				return;
+			}
+			if (!this.#isOpen) {
+				this.#pendingDialogId = dialogId;
+				return;
+			}
+			this.#pendingDialogId = null;
+			await this.#panel?.changeDialog(dialogId);
+		}
+		showStub(content) {
+			if (!this.#stubNode) {
+				this.#stubContentNode = main_core.Tag.render`<div class="dashboard-bitrixgpt-panel__stub-content"></div>`;
+
+				// The stub covers the whole widget including its hide button, so it carries its own way back to the chat.
+				const closeTitle = main_core.Loc.getMessage('JS_CORE_WINDOW_CLOSE') ?? '';
+				const closeButton = main_core.Tag.render`<button type="button" class="dashboard-bitrixgpt-panel__stub-close"></button>`;
+				main_core.Dom.attr(closeButton, {
+					'aria-label': closeTitle,
+					title: closeTitle
+				});
+				main_core.Event.bind(closeButton, 'click', () => this.hideStub());
+				this.#stubNode = main_core.Tag.render`
+				<div class="dashboard-bitrixgpt-panel__stub" role="status" aria-live="polite"></div>
+			`;
+				main_core.Dom.append(closeButton, this.#stubNode);
+				main_core.Dom.append(this.#stubContentNode, this.#stubNode);
+			}
+			main_core.Dom.clean(this.#stubContentNode);
+			main_core.Dom.append(content, this.#stubContentNode);
+			if (this.#stubNode.parentNode !== this.#panelNode) {
+				main_core.Dom.append(this.#stubNode, this.#panelNode);
+			}
+		}
+		hideStub() {
+			if (this.#stubNode) {
+				main_core.Dom.remove(this.#stubNode);
 			}
 		}
 
@@ -114,6 +173,7 @@ this.BX = this.BX || {};
 				if (options.skipSync !== true && this.#isOpen) {
 					this.#syncMainChatState(true);
 				}
+				this.#applyPendingDialog();
 			}).catch(error => {
 				console.error('BitrixGptLauncher: failed to mount widget', error);
 				this.#collapse({
@@ -126,9 +186,20 @@ this.BX = this.BX || {};
 				});
 			});
 		}
+		#applyPendingDialog() {
+			if (!this.#isOpen || this.#pendingDialogId === null) {
+				return;
+			}
+			const dialogId = this.#pendingDialogId;
+			this.#pendingDialogId = null;
+			this.#panel?.changeDialog(dialogId).catch(error => {
+				console.error('BitrixGptLauncher: failed to change dialog', error);
+			});
+		}
 		#collapse(options = {}) {
 			this.#isOpen = false;
 			main_core.Dom.removeClass(this.#panelNode, EXPANDED_CLASS);
+			this.hideStub();
 			if (options.skipSync !== true) {
 				this.#syncMainChatState(false);
 			}
@@ -144,7 +215,7 @@ this.BX = this.BX || {};
 				return this.#mountPromise;
 			}
 			this.#resetDialogStorage();
-			this.#panel = new intranet_aiChatPanel.AiChatPanel({
+			this.#panel = this.#createPanel ? this.#createPanel() : new intranet_aiChatPanel.AiChatPanel({
 				events: {
 					onHideButtonClick: () => this.close(),
 					onError: errors => console.error('BitrixGptLauncher: AI widget error', errors)

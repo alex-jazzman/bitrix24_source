@@ -6,7 +6,6 @@ this.BX.Bizproc.Fields = this.BX.Bizproc.Fields || {};
 	'use strict';
 
 	const NUMERIC_OFFSET = /^-?\d+$/;
-	const EXPRESSION_VALUE = /^\s*[={]/;
 	const TIMEZONE_SETTINGS_ID = 'bizproc.fields.datetime';
 	const ZONE_MATCH = {
 		preferEmptyZoneAtZeroOffset: true
@@ -41,6 +40,7 @@ this.BX.Bizproc.Fields = this.BX.Bizproc.Fields || {};
 				blockClass: 'bizproc-fields-datetime',
 				value: this.#stripSeconds(datetimeValue),
 				nonEditable: true,
+				writeOver: true,
 				rowNodes: [this.#renderTimezone(offset)]
 			});
 			this.#rememberFullValue(valueNode, datetimeValue);
@@ -163,7 +163,7 @@ this.BX.Bizproc.Fields = this.BX.Bizproc.Fields || {};
 		}
 		#serializeValue(valueNode) {
 			const value = this.#restoreSeconds(valueNode, valueNode.value ?? '');
-			if (!main_core.Type.isStringFilled(value) || EXPRESSION_VALUE.test(value)) {
+			if (!main_core.Type.isStringFilled(value) || bizproc_fields.isExpressionValue(value)) {
 				return value;
 			}
 			const offset = this.#selectedOffset(valueNode);

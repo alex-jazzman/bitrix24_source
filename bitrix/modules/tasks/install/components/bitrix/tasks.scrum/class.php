@@ -1165,34 +1165,53 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		return '';
 	}
 
+	protected function createSortItemService(): ItemService
+	{
+		return new ItemService();
+	}
+
 	public function updateItemSortAction()
 	{
 		$this->checkModules();
 
-		$request = Context::getCurrent()->getRequest();
-		$post = $request->getPostList()->toArray();
-
-		$this->debugMode = (isset($post['debugMode']) && $post['debugMode'] === 'Y');
+		$post = Context::getCurrent()->getRequest()->getPostList()->toArray();
+		$this->debugMode = (($post['debugMode'] ?? null) === 'Y');
 		$this->userId = Util\User::getId();
-		$groupId = (int) $this->arParams['GROUP_ID'];
+		$groupId = (int)$this->arParams['GROUP_ID'];
+		if (
+			!$this->canReadGroupTasks($groupId)
+			|| !Group::can($groupId, Group::ACTION_SORT_TASKS, $this->userId)
+		)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
 
-		$targetEntityId = (is_numeric($post['entityId'] ?? null) ? (int) $post['entityId'] : 0);
+			return null;
+		}
+
+		$targetEntityId = (is_numeric($post['entityId'] ?? null) ? (int)$post['entityId'] : 0);
 		$itemIds = (is_array($post['itemIds'] ?? null) ? $post['itemIds'] : []);
 		$sortInfo = (is_array($post['sortInfo'] ?? null) ? $post['sortInfo'] : []);
-
 		$entityService = new EntityService();
-		$itemService = new ItemService();
-		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-		$kanbanService = new KanbanService();
+		$itemService = $this->createSortItemService();
+		$kanbanService = $this->createSortKanbanService();
 		$taskService = new TaskService($this->userId);
+		$pushService = Loader::includeModule('pull') ? new PushService() : null;
+
+		if (!$itemService->canSortItemsInGroup($groupId, $sortInfo, $itemIds))
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
+
+			return null;
+		}
 
 		$targetEntity = null;
 		if ($targetEntityId)
 		{
 			$targetEntity = $entityService->getEntityById($targetEntityId);
 			if (
-				($targetEntity->isEmpty() || $targetEntity->getGroupId() !== $groupId)
-				|| (!$targetEntity->isEmpty() && !$this->canReadGroupTasks($targetEntity->getGroupId()))
+				$targetEntity->isEmpty()
+				|| $targetEntity->getGroupId() !== $groupId
+				|| !$this->canReadGroupTasks($targetEntity->getGroupId())
 			)
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
@@ -1201,76 +1220,312 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			}
 		}
 
+		$moves = [];
+		$sourceEntities = [];
 		if ($targetEntity)
 		{
 			$items = $itemIds ? $itemService->getItemsByIds($itemIds) : [];
 			foreach ($items as $item)
 			{
-				if ($item->getEntityId() !== $targetEntity->getId())
+				if ($item->getEntityId() === $targetEntityId)
 				{
-					$sourceEntity = $entityService->getEntityById($item->getEntityId());
-					if ($sourceEntity->getGroupId() !== $groupId)
+					continue;
+				}
+
+				$sourceEntity = $entityService->getEntityById($item->getEntityId());
+				if ($sourceEntity->isEmpty() || $sourceEntity->getGroupId() !== $groupId)
+				{
+					$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
+
+					return null;
+				}
+
+				$taskId = $item->getSourceId();
+				$subTaskIds = $taskService->getSubTaskIds($groupId, $taskId);
+				if ($taskService->getErrors())
+				{
+					$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $taskService->getErrors());
+
+					return null;
+				}
+
+				$taskIdsToMove = array_values(array_unique(array_merge([$taskId], $subTaskIds)));
+				$itemIdsToMove = $itemService->getItemIdsBySourceIds($taskIdsToMove);
+				foreach ($itemService->getItemsByIds($itemIdsToMove) as $movingItem)
+				{
+					$sourceEntityId = $movingItem->getEntityId();
+					if ($sourceEntityId === $targetEntityId)
 					{
 						continue;
 					}
 
-					$taskId = $item->getSourceId();
-					$subTaskIds = $taskService->getSubTaskIds($groupId, $taskId);
-					$idsToMove = array_merge([$taskId], $subTaskIds);
-					$itemIds = $itemService->getItemIdsBySourceIds($idsToMove);
-
-					$itemService->updateEntityIdToItems($targetEntity->getId(), $itemIds);
-
-					if ($targetEntity->isActiveSprint())
+					$sourceEntities[$sourceEntityId] ??= $entityService->getEntityById($sourceEntityId);
+					$movingSourceEntity = $sourceEntities[$sourceEntityId];
+					if ($movingSourceEntity->isEmpty() || $movingSourceEntity->getGroupId() !== $groupId)
 					{
-						$kanbanService->addTasksToKanban($targetEntity->getId(), [$taskId]);
-						$kanbanService->addTasksToKanban($targetEntity->getId(), $subTaskIds);
+						$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
 
-						// "MOVE_TO_SPRINT" analytics label
-						$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
-
-						Analytics::getInstance($this->userId)->onTaskUpdate(
-							event: Analytics::EVENT['task_update'],
-							subSection: Analytics::SUB_SECTION['task_card'],
-							params: [
-								'p1' => 'isDemo_' . $isDemo,
-							],
-						);
+						return null;
 					}
 
-					if (!$sourceEntity->isEmpty() && $sourceEntity->isActiveSprint())
-					{
-						$kanbanService->removeTasksFromKanban($sourceEntity->getId(), $idsToMove);
-
-						// "MOVE_TO_BACKLOG" analytics label
-						$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
-
-						Analytics::getInstance($this->userId)->onTaskUpdate(
-							event: Analytics::EVENT['task_update'],
-							subSection: Analytics::SUB_SECTION['task_card'],
-							params: [
-								'p1' => 'isDemo_' . $isDemo,
-							],
-						);
-					}
-
-					if($sourceEntity->getEntityType() !== $targetEntity->getEntityType())
-					{
-						foreach ($idsToMove as $taskId)
-						{
-							$taskService->addTaskMovingToLog($taskId, $groupId);
-						}
-					}
+					$moves[$movingItem->getId()] = [
+						'item' => $movingItem,
+						'sourceEntity' => $movingSourceEntity,
+					];
 				}
 			}
 		}
 
-		if ($sortInfo)
+		if ($itemService->getErrors())
 		{
-			$itemService->sortItems($this->prepareSortInfo($groupId, $sortInfo), $pushService);
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'), $itemService->getErrors());
+
+			return null;
+		}
+
+		$affectedEntityIds = [];
+		$affectedGroupIds = [];
+		$taskIdsByActiveSource = [];
+		$targetTaskIds = [];
+		$journalTaskIds = [];
+		foreach ($moves as $move)
+		{
+			$taskId = $move['item']->getSourceId();
+			$sourceEntity = $move['sourceEntity'];
+			$sourceEntityId = $sourceEntity->getId();
+			$targetTaskIds[$taskId] = $taskId;
+			$affectedEntityIds[$sourceEntityId] = true;
+			$affectedEntityIds[$targetEntityId] = true;
+			$affectedGroupIds[$sourceEntity->getGroupId()] = true;
+			$affectedGroupIds[$targetEntity->getGroupId()] = true;
+			if ($sourceEntity->isActiveSprint())
+			{
+				$taskIdsByActiveSource[$sourceEntityId][$taskId] = $taskId;
+			}
+			if ($sourceEntity->getEntityType() !== $targetEntity->getEntityType())
+			{
+				$journalTaskIds[$taskId] = $taskId;
+			}
+		}
+
+		$preparedSortInfo = $sortInfo ? $this->prepareSortInfo($groupId, $sortInfo) : [];
+		$sortEventItems = [];
+		try
+		{
+			$committed = \Bitrix\Tasks\Scrum\Service\PlacementTransaction::run(
+				function () use (
+					$itemService,
+					$kanbanService,
+					$moves,
+					$targetEntity,
+					$targetEntityId,
+					$targetTaskIds,
+					$taskIdsByActiveSource,
+					$preparedSortInfo,
+					&$sortEventItems,
+				): bool {
+					if ($moves)
+					{
+						$itemIdsToMove = array_keys($moves);
+						if (!$itemService->tryUpdateEntityIdToItems($targetEntityId, $itemIdsToMove))
+						{
+							return false;
+						}
+						$writtenItems = $itemService->getItemsByIds($itemIdsToMove);
+						foreach ($itemIdsToMove as $itemId)
+						{
+							if (!isset($writtenItems[$itemId]) || $writtenItems[$itemId]->getEntityId() !== $targetEntityId)
+							{
+								return false;
+							}
+						}
+
+						$oldSourceIdsByTask = [];
+						$oldStageIdsBySource = [];
+						$oldStageIds = [];
+						foreach ($taskIdsByActiveSource as $sourceEntityId => $taskIds)
+						{
+							if (!$kanbanService->removeTasksFromKanban(
+								(int)$sourceEntityId,
+								array_values($taskIds),
+								!$targetEntity->isActiveSprint(),
+							))
+							{
+								return false;
+							}
+							$sourceStageIds = $kanbanService->getSprintStageIds((int)$sourceEntityId);
+							$oldStageIdsBySource[$sourceEntityId] = array_fill_keys($sourceStageIds, true);
+							foreach ($sourceStageIds as $stageId)
+							{
+								$oldStageIds[$stageId] = true;
+							}
+							foreach ($taskIds as $taskId)
+							{
+								$oldSourceIdsByTask[$taskId][$sourceEntityId] = true;
+							}
+						}
+						if ($oldStageIds)
+						{
+							$oldRelations = \Bitrix\Tasks\Kanban\TaskStageTable::getList([
+								'select' => ['TASK_ID', 'STAGE_ID'],
+								'filter' => [
+									'@TASK_ID' => array_keys($oldSourceIdsByTask),
+									'@STAGE_ID' => array_keys($oldStageIds),
+								],
+							]);
+							while ($relation = $oldRelations->fetch())
+							{
+								$taskId = (int)$relation['TASK_ID'];
+								$stageId = (int)$relation['STAGE_ID'];
+								foreach ($oldSourceIdsByTask[$taskId] ?? [] as $sourceEntityId => $_)
+								{
+									if (isset($oldStageIdsBySource[$sourceEntityId][$stageId]))
+									{
+										return false;
+									}
+								}
+							}
+						}
+
+						if ($targetEntity->isActiveSprint())
+						{
+							if (!$kanbanService->addTasksToKanban($targetEntityId, array_values($targetTaskIds)))
+							{
+								return false;
+							}
+							$targetStageId = $kanbanService->getDefaultStageId($targetEntityId);
+							$targetStageTaskCounts = array_fill_keys($targetTaskIds, 0);
+							$targetRelations = \Bitrix\Tasks\Kanban\TaskStageTable::getList([
+								'select' => ['TASK_ID'],
+								'filter' => [
+									'@TASK_ID' => array_values($targetTaskIds),
+									'=STAGE_ID' => $targetStageId,
+								],
+							]);
+							while ($relation = $targetRelations->fetch())
+							{
+								$taskId = (int)$relation['TASK_ID'];
+								if (!array_key_exists($taskId, $targetStageTaskCounts) || $targetStageTaskCounts[$taskId] !== 0)
+								{
+									return false;
+								}
+								$targetStageTaskCounts[$taskId] = 1;
+							}
+							foreach ($targetStageTaskCounts as $count)
+							{
+								if ($count !== 1)
+								{
+									return false;
+								}
+							}
+						}
+					}
+
+					return !$preparedSortInfo
+						|| $itemService->trySortItems($preparedSortInfo, $sortEventItems);
+				},
+			);
+		}
+		catch (\Throwable $exception)
+		{
+			$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
+
+			return null;
+		}
+		if (!$committed)
+		{
+			$this->setError(
+				Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'),
+				array_merge($itemService->getErrors(), $kanbanService->getErrors()),
+			);
+
+			return null;
+		}
+
+		if (!$kanbanService->flushTaskStageUpdates())
+		{
+			$this->publishSortPlacementResult(
+				$pushService,
+				$groupId,
+				array_keys($affectedEntityIds),
+				$sortEventItems,
+				array_keys($affectedGroupIds),
+				true,
+			);
+			$this->errorCollection->setError(new Error(
+				Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'),
+				'PARTIAL_PLACEMENT',
+				['partial' => true, 'refetchRequired' => true, 'refreshRequired' => true],
+			));
+
+			return [
+				'status' => 'PARTIAL_PLACEMENT',
+				'partial' => true,
+				'refetchRequired' => true,
+				'refreshRequired' => true,
+			];
+		}
+
+		$this->publishSortPlacementResult(
+			$pushService,
+			$groupId,
+			array_keys($affectedEntityIds),
+			$sortEventItems,
+			array_keys($affectedGroupIds),
+			false,
+		);
+		foreach ($journalTaskIds as $taskId)
+		{
+			$taskService->addTaskMovingToLog($taskId, $groupId);
+		}
+		if ($moves && ($targetEntity->isActiveSprint() || $taskIdsByActiveSource))
+		{
+			$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+			Analytics::getInstance($this->userId)->onTaskUpdate(
+				event: Analytics::EVENT['task_update'],
+				subSection: Analytics::SUB_SECTION['task_card'],
+				params: ['p1' => 'isDemo_' . $isDemo],
+			);
 		}
 
 		return '';
+	}
+
+	protected function createSortKanbanService(): KanbanService
+	{
+		return new KanbanService(true, true);
+	}
+
+	protected function publishSortPlacementResult(
+		?PushService $pushService,
+		int $groupId,
+		array $affectedEntityIds,
+		array $sortEventItems,
+		array $affectedGroupIds,
+		bool $partial,
+	): void
+	{
+		if (!$pushService)
+		{
+			return;
+		}
+		if ($partial)
+		{
+			foreach ($affectedGroupIds as $affectedGroupId)
+			{
+				$pushService->sendPlacementChangedEvent($affectedGroupId);
+			}
+
+			return;
+		}
+		if ($sortEventItems)
+		{
+			$pushService->sendSortItemEvent($sortEventItems);
+		}
+		if ($affectedEntityIds)
+		{
+			$pushService->sendMoveItemEvent($groupId, $affectedEntityIds);
+		}
 	}
 
 	public function updateItemAction()
@@ -1998,12 +2253,14 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$itemService = new ItemService();
 		$taskService = new TaskService($this->userId);
 		$userService = new UserService();
+		$items = $itemService->getItemsByIds($itemIds);
 
 		foreach ($itemIds as $key => $itemId)
 		{
-			$item = $itemService->getItemById($itemId);
+			$item = $items[$itemId] ?? null;
 			if (
-				$item->isEmpty()
+				$item === null
+				|| $item->isEmpty()
 				|| !TaskAccessController::can(
 					$this->userId,
 					ActionDictionary::ACTION_TASK_READ,

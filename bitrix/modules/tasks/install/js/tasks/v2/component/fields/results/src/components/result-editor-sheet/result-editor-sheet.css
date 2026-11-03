@@ -35,8 +35,21 @@
 }
 
 .tasks-result-editor-field-icon {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	display: flex;
+	align-items: center;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
+}
+
+.tasks-result-editor-field-icon:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 .tasks-result-editor-container {
@@ -53,7 +66,7 @@
 
 @supports not selector(::-webkit-scrollbar) {
 	.tasks-result-editor-container {
-		scrollbar-color: rgba(0, 0, 0, 0.21) transparent;
+		scrollbar-color: var(--ui-color-base-4) transparent;
 		scrollbar-width: thin;
 	}
 }
@@ -68,7 +81,7 @@
 }
 
 .tasks-result-editor-container::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.21);
+	background: var(--ui-color-base-4);
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 	cursor: pointer;

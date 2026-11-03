@@ -6,9 +6,19 @@
  *
  */
 import type { LexicalEditor } from './LexicalEditor';
+import type { KeyboardShortcutMatch } from './LexicalKeyboardShortcuts';
 import type { NodeKey } from './LexicalNode';
+export declare function registerDefaultCommandHandlers(editor: LexicalEditor): void;
+/** @internal */
+export interface KeyDownShortcut extends KeyboardShortcutMatch {
+    onMatch: (event: KeyboardEvent, editor: LexicalEditor) => void;
+}
+/** @internal */
+export declare function stopLexicalPropagation(event: Event): void;
 export type EventHandler = (event: Event, editor: LexicalEditor) => void;
 export declare function addRootElementEvents(rootElement: HTMLElement, editor: LexicalEditor): void;
 export declare function removeRootElementEvents(rootElement: HTMLElement): void;
-export declare function markSelectionChangeFromDOMUpdate(): void;
-export declare function markCollapsedSelectionFormat(format: number, style: string, offset: number, key: NodeKey, timeStamp: number): void;
+/** @internal */
+export declare function markSelectionChangeFromDOMUpdate(editor: LexicalEditor, anchorNode?: Node, anchorOffset?: number, focusNode?: Node, focusOffset?: number): void;
+/** @internal */
+export declare function markCollapsedSelectionFormat(editor: LexicalEditor, format: number, style: string, offset: number, key: NodeKey, timeStamp: number): void;

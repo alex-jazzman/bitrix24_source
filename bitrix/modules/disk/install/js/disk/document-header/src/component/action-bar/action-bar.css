@@ -1,0 +1,26 @@
+.disk-document-header-action-bar {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+}
+
+/* the buttons of the design system are inserted into the bar as its own children */
+.disk-document-header-action-bar > *:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* a waiting button is never disabled - it keeps the focus - so it takes the idle cursor on its own */
+.disk-document-header-action-bar > [aria-disabled="true"] {
+	cursor: default;
+}
+
+/* main.loader is centered over the button while its regular content keeps the button's dimensions. */
+.disk-document-header-action-bar > [aria-busy="true"] {
+	position: relative;
+}
+
+.disk-document-header-action-bar > [aria-busy="true"] > :not(.main-ui-loader) {
+	visibility: hidden;
+}

@@ -110,6 +110,9 @@ export const Replication = {
 			return [{
 				title: replicationMeta.title,
 				component: ReplicationContent,
+				props: {
+					isSheetShown: this.isSheetShown,
+				},
 			}];
 		},
 	},
@@ -183,6 +186,7 @@ export const Replication = {
 	template: `
 		<div
 			class="tasks-field-replication"
+			data-testid="tasks-replication"
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
@@ -197,6 +201,10 @@ export const Replication = {
 					v-if="!readonly && !disabled && isEdit && replicateParams && canOpenSheet"
 					:icon="Outline.EDIT_L"
 					:isVisible="isHovered"
+					:ariaLabel="loc('TASKS_V2_REPLICATION_ARIA_LABEL')"
+					:ariaHaspopup="'dialog'"
+					:ariaExpanded="isSheetShown"
+					data-testid="tasks-replication-edit-btn"
 					@click="handleClick"
 				/>
 				<FieldList :fields/>
@@ -205,14 +213,18 @@ export const Replication = {
 				<div v-if="isLoading" class="tasks-field-replication-history">
 					<BLine :width="120"/>
 				</div>
-				<div
+				<button
 					v-else-if="logCount > 0"
+					type="button"
 					class="tasks-field-replication-history"
+					aria-haspopup="dialog"
+					:aria-expanded="isHistorySheetShown"
+					data-testid="tasks-replication-history-btn"
 					@click="setHistorySheetShown(true)"
 				>
 					<TextXs className="tasks-field-replication-history-title">{{ historyTitle }}</TextXs>
-					<BIcon :name="Outline.CHEVRON_RIGHT_M" color="var(--ui-color-base-4)"/>
-				</div>
+					<BIcon :name="Outline.CHEVRON_RIGHT_M" color="var(--ui-color-base-4)" aria-hidden="true"/>
+				</button>
 			</template>
 		</div>
 		<ReplicationSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>

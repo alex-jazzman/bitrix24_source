@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/reminder-selector.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.buttons',
-		'sign.v2.api',
 		'sign.type',
+		'sign.v2.api',
+		'ui.buttons',
 	],
 	'skip_core' => false,
 ];

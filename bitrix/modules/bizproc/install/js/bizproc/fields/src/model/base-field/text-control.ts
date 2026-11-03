@@ -12,6 +12,13 @@ export type TextControlOptions = {
 	inputMode?: string,
 	/** The input never accepts typing, even in edit mode - a date is picked in the calendar. */
 	nonEditable?: boolean,
+	/**
+	 * The control holds one whole value rather than text typed into it, so an inserted value
+	 * replaces what it shows instead of landing at the caret (`data-select-mode`, read by the
+	 * inline selector). Declared by the type: it is the one that knows whether its control shows
+	 * a value of its own - a date, a file group - or a string that another one can be typed into.
+	 */
+	writeOver?: boolean,
 	/** The wrapper row carries data-testid. False only for `string`, which never had one. */
 	rowTestId?: boolean,
 	/** Type-owned nodes of the row, placed after the control and before the insert button. */
@@ -54,6 +61,11 @@ export function buildTextControl(params: TextControlParams): TextControl
 	if (params.readOnly || params.nonEditable === true)
 	{
 		Dom.attr(valueNode, 'readonly', '');
+	}
+
+	if (params.writeOver === true)
+	{
+		Dom.attr(valueNode, 'data-select-mode', 'replace');
 	}
 
 	// The framework class next to the type's own one is what core styles key off, so a rule

@@ -2,6 +2,7 @@
  * @module crm/receive-payment/steps/payment-systems/paysystem-settings
  */
 jn.define('crm/receive-payment/steps/payment-systems/paysystem-settings', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Random } = require('utils/random');
 	const { handleErrors } = require('crm/error');
@@ -202,7 +203,7 @@ jn.define('crm/receive-payment/steps/payment-systems/paysystem-settings', (requi
 			marginHorizontal: 20,
 			marginVertical: 10,
 			color: AppTheme.colors.base2,
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 		},
 		selector: {
 			margin: 20,

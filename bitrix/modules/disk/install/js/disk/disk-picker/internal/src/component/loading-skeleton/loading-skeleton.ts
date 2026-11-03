@@ -1,9 +1,14 @@
 import { BLine, BCircle } from 'ui.system.skeleton.vue';
 
 import { PickerLayout } from '../picker-layout/picker-layout';
+import { SourceRowSkeleton } from '../source-row-skeleton/source-row-skeleton';
 
 import './loading-skeleton.css';
 
+// The dialog while its first stage is on the way. Every placeholder outside the sources panel
+// carries the edge-dark context: the design system's skeleton takes its fill from
+// --ui-color-base-6, a grey step in the light context and translucent white in the dark one,
+// and it offers no colour of its own. The panel is in that context already.
 // @vue/component
 export const LoadingSkeleton = {
 	name: 'DiskPickerLoadingSkeleton',
@@ -11,6 +16,7 @@ export const LoadingSkeleton = {
 		PickerLayout,
 		BLine,
 		BCircle,
+		SourceRowSkeleton,
 	},
 	setup(): Object
 	{
@@ -23,42 +29,35 @@ export const LoadingSkeleton = {
 	template: `
 		<PickerLayout class="disk-picker-skeleton">
 			<template #sidebar>
-				<div class="disk-picker-skeleton__sidebar-row">
-					<BCircle :size="24"/>
-					<BLine :width="sidebarWidths[0]" :height="10" :radius="4"/>
-				</div>
+				<SourceRowSkeleton :width="sidebarWidths[0]"/>
 				<div class="disk-picker-skeleton__group-title">
 					<BLine :width="80" :height="8" :radius="4"/>
 				</div>
-				<div class="disk-picker-skeleton__sidebar-row">
-					<BCircle :size="24"/>
-					<BLine :width="sidebarWidths[1]" :height="10" :radius="4"/>
-				</div>
+				<SourceRowSkeleton :width="sidebarWidths[1]"/>
 				<div class="disk-picker-skeleton__group-title">
 					<BLine :width="80" :height="8" :radius="4"/>
 				</div>
-				<div
+				<SourceRowSkeleton
 					v-for="width in sidebarWidths.slice(2)"
-					class="disk-picker-skeleton__sidebar-row"
-				>
-					<BCircle :size="24"/>
-					<BLine :width="width" :height="10" :radius="4"/>
-				</div>
+					:width="width"
+				/>
 			</template>
 
 			<template #header>
-				<BLine :width="120" :height="16" :radius="4"/>
-				<div class="disk-picker-skeleton__header-actions">
+				<span class="--ui-context-edge-dark">
+					<BLine :width="120" :height="16" :radius="4"/>
+				</span>
+				<div class="disk-picker-skeleton__header-actions --ui-context-edge-dark">
 					<BLine :width="34" :height="34" :radius="8"/>
 					<BLine :width="68" :height="34" :radius="8"/>
 				</div>
 			</template>
 
 			<template #list>
-				<div class="disk-picker-skeleton__group-title">
+				<div class="disk-picker-skeleton__group-title --ui-context-edge-dark">
 					<BLine :width="72" :height="8" :radius="4"/>
 				</div>
-				<div class="disk-picker-skeleton__list-rows">
+				<div class="disk-picker-skeleton__list-rows --ui-context-edge-dark">
 					<div
 						v-for="width in listWidths"
 						class="disk-picker-skeleton__list-row"
@@ -70,7 +69,7 @@ export const LoadingSkeleton = {
 			</template>
 
 			<template #preview>
-				<div class="disk-picker-skeleton__preview">
+				<div class="disk-picker-skeleton__preview --ui-context-edge-dark">
 					<BLine :width="120" :height="120" :radius="16"/>
 					<div class="disk-picker-skeleton__preview-lines">
 						<BLine
@@ -84,8 +83,10 @@ export const LoadingSkeleton = {
 			</template>
 
 			<template #footer>
-				<BLine :width="84" :height="38" :radius="8"/>
-				<BLine :width="120" :height="38" :radius="8"/>
+				<div class="disk-picker-skeleton__footer-actions --ui-context-edge-dark">
+					<BLine :width="84" :height="38" :radius="8"/>
+					<BLine :width="120" :height="38" :radius="8"/>
+				</div>
 			</template>
 		</PickerLayout>
 	`,

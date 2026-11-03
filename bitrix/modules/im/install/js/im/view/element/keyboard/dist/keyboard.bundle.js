@@ -160,5 +160,5 @@
 	`
 	});
 
-})(BX, BX, BX.Messenger.Lib, BX.Messenger.Lib);
+})(window, BX, BX.Messenger.Lib, BX.Messenger.Lib);
 //# sourceMappingURL=keyboard.bundle.js.map

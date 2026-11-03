@@ -10,6 +10,10 @@ export class EditFieldController
 	{
 		this.params = params;
 		this.plannerPopup = null;
+		this.availabilityState = 'unknown';
+		this.availabilityStateData = {};
+		this.availabilityValidationRequested = false;
+		this.handleUserSelectorChange = this.handleUserSelectorChange.bind(this);
 
 		this.DOM = {
 			outerWrap: BX(params.controlId),
@@ -17,6 +21,7 @@ export class EditFieldController
 		};
 
 		this.isNew = !this.params.value || !this.params.value.DATE_FROM;
+		this.availabilityCheckRequired = this.isNew;
 
 		if (this.params.socnetDestination)
 		{
@@ -39,6 +44,7 @@ export class EditFieldController
 		this.buildDurationControl();
 		this.buildUserSelectorControl();
 		this.buildResourceSelectorControl();
+		this.buildAvailabilityWarning();
 	}
 
 	createEventHandlers()
@@ -53,8 +59,14 @@ export class EditFieldController
 				this.params.controlId,
 				function(result)
 				{
-					if (!this.params.allowOverbooking && this.isOverbooked())
+					if (this.shouldBlockBooking())
 					{
+						if (!this.isAvailabilityConfirmed())
+						{
+							this.availabilityValidationRequested = true;
+							this.renderAvailabilityWarning();
+						}
+
 						if (result && result.addError && BX.Crm && BX.Crm.EntityValidationError)
 						{
 							result.addError(BX.Crm.EntityValidationError.create({field: this}));
@@ -388,8 +400,8 @@ export class EditFieldController
 				itemsSelected: itemsSelected,
 			});
 
-			BX.addCustomEvent('OnResourceBookDestinationAddNewItem', this.triggerUpdatePlanner.bind(this));
-			BX.addCustomEvent('OnResourceBookDestinationUnselect', this.triggerUpdatePlanner.bind(this));
+			BX.addCustomEvent('OnResourceBookDestinationAddNewItem', this.handleUserSelectorChange);
+			BX.addCustomEvent('OnResourceBookDestinationUnselect', this.handleUserSelectorChange);
 		}
 	}
 
@@ -414,6 +426,21 @@ export class EditFieldController
 				checkLimitCallback: this.checkResourceCountLimit.bind(this)
 			});
 		}
+	}
+
+	buildAvailabilityWarning()
+	{
+		this.DOM.availabilityWarning = Dom.create('div', {
+			attrs: {
+				role: 'status',
+				'aria-live': 'polite',
+				'aria-atomic': 'true',
+			},
+			props: {
+				className: 'calendar-resbook-availability-warning',
+			},
+		});
+		Dom.append(this.DOM.availabilityWarning, this.DOM.outerWrap);
 	}
 
 	static showCalendarPicker(e)
@@ -513,7 +540,8 @@ export class EditFieldController
 			selectorOnChangeCallback: this.plannerSelectorOnChange.bind(this),
 			selectEntriesOnChangeCallback: this.plannerSelectedEntriesOnChange.bind(this),
 			checkSelectorStatusCallback: this.checkSelectorStatusCallback.bind(this),
-			currentEventList: currentEventList
+			availabilityStateChangeCallback: this.handleAvailabilityStateChange.bind(this),
+			currentEventList,
 		});
 
 		this.triggerUpdatePlanner();
@@ -521,23 +549,45 @@ export class EditFieldController
 
 	triggerUpdatePlanner()
 	{
-		if (!Type.isNull(this.plannerPopup)
+		this.availabilityCheckRequired = true;
+		const plannerIsShown = !Type.isNull(this.plannerPopup)
 			&& this.plannerPopup.plannerId === this.params.plannerId
-			&& this.plannerPopup.isShown())
+			&& this.plannerPopup.isShown()
+		;
+
+		if (plannerIsShown)
 		{
-			this.plannerPopup.update({
+			this.plannerPopup.update(
+				{
+					plannerId: this.params.plannerId,
+					plannerConfig: this.getPlannerConfig(),
+					selector: this.getSelectorData(),
+					resourceList: this.getResourceList(),
+					selectedResources: this.resourceSelector ? this.resourceSelector.getSelectedValues() : false,
+					userList: this.getUserList(),
+					selectedUsers: this.userSelector ? this.userSelector.getSelectedValues() : false,
+				},
+				true,
+			);
+		}
+		else
+		{
+			this.handleAvailabilityStateChange({
 				plannerId: this.params.plannerId,
-				plannerConfig: this.getPlannerConfig(),
-				selector: this.getSelectorData(),
-				resourceList: this.getResourceList(),
-				selectedResources: this.resourceSelector ? this.resourceSelector.getSelectedValues() : false,
-				userList: this.getUserList(),
-				selectedUsers: this.userSelector ? this.userSelector.getSelectedValues() : false
-			},
-			true);
+				state: 'unknown',
+			});
 		}
 
 		this.onChangeValues();
+	}
+
+	handleUserSelectorChange(...eventArguments)
+	{
+		const selectorId = eventArguments[1];
+		if (selectorId === this.userSelector?.id)
+		{
+			this.triggerUpdatePlanner();
+		}
 	}
 
 	getPlannerConfig()
@@ -621,7 +671,8 @@ export class EditFieldController
 			{
 				this.resourceSelector.setValues(selectedResources, false);
 			}
-			if (this.userSelector)
+
+			if (this.userSelector && this.isAvailabilityConfirmed())
 			{
 				this.userSelector.setValues(selectedUsers, false);
 			}
@@ -632,10 +683,14 @@ export class EditFieldController
 
 	checkSelectorStatusCallback(params)
 	{
-		if (params.plannerId === this.params.plannerId && !this.params.allowOverbooking)
+		if (params.plannerId === this.params.plannerId)
 		{
 			let errorClass = 'calendar-resbook-error';
 			this.overbooked = params.status === 'busy';
+			if (this.params.allowOverbooking)
+			{
+				return;
+			}
 
 			if (this.overbooked)
 			{
@@ -675,6 +730,94 @@ export class EditFieldController
 				}
 			}
 		}
+	}
+
+	handleAvailabilityStateChange(params)
+	{
+		if (params.plannerId !== this.params.plannerId)
+		{
+			return;
+		}
+
+		this.availabilityState = params.state;
+		this.availabilityStateData = {
+			maxPlannerUsers: parseInt(params.maxPlannerUsers, 10) || 0,
+			plannerPeopleCount: parseInt(params.plannerPeopleCount, 10) || 0,
+		};
+
+		if (this.availabilityState === 'available')
+		{
+			this.availabilityValidationRequested = false;
+		}
+
+		this.renderAvailabilityWarning();
+	}
+
+	renderAvailabilityWarning()
+	{
+		if (!this.DOM.availabilityWarning)
+		{
+			return;
+		}
+
+		const message = this.getAvailabilityWarningMessage() || '';
+		if (this.DOM.availabilityWarning.textContent !== message)
+		{
+			this.DOM.availabilityWarning.textContent = message;
+		}
+	}
+
+	getAvailabilityWarningMessage()
+	{
+		if (this.availabilityState === 'limit-exceeded')
+		{
+			return Loc.getMessage('USER_TYPE_RESOURCE_PLANNER_LIMIT_WARNING', {
+				'#COUNT#': this.availabilityStateData.maxPlannerUsers,
+			});
+		}
+
+		if (this.availabilityState === 'error')
+		{
+			return Loc.getMessage('USER_TYPE_RESOURCE_PLANNER_REQUEST_ERROR');
+		}
+
+		if (!this.availabilityValidationRequested)
+		{
+			return '';
+		}
+
+		if (this.availabilityState === 'loading')
+		{
+			return Loc.getMessage('USER_TYPE_RESOURCE_PLANNER_LOADING_ERROR');
+		}
+
+		if (this.availabilityState === 'unknown')
+		{
+			return Loc.getMessage('USER_TYPE_RESOURCE_PLANNER_UNKNOWN_ERROR');
+		}
+
+		return '';
+	}
+
+	isAvailabilityConfirmed()
+	{
+		return this.availabilityState === 'available';
+	}
+
+	shouldBlockBooking()
+	{
+		return this.hasSelectedBookingEntries()
+			&& !this.params.allowOverbooking
+			&& (
+				this.isOverbooked()
+				|| (this.availabilityCheckRequired && !this.isAvailabilityConfirmed())
+			)
+		;
+	}
+
+	hasSelectedBookingEntries()
+	{
+		return this.getSelectedResourceList().length > 0 || this.getSelectedUserList().length > 0;
 	}
 
 	getSelectorData()

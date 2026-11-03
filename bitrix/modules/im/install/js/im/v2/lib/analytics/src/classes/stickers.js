@@ -3,7 +3,7 @@ import { sendData } from 'ui.analytics';
 import { Core } from 'im.v2.application.core';
 
 import { AnalyticsEvent, AnalyticsSection, AnalyticsTool, AnalyticsType, AnalyticsCategory } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -77,7 +77,7 @@ export class Stickers
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
-		return getCategoryByChatType(chat.type);
+		return getCategoryByChat(chat);
 	}
 
 	#getChatType(dialogId: string): ExtendedChatType

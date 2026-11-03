@@ -74,9 +74,9 @@ return [
 		],
 	],
 	'assets' => [
-		'ext' => ['landing_menu', 'landing_header', 'landing_backlinks'],
+		'ext' => ['landing_menu', 'landing_header', 'landing_backlinks', 'ui.a11y', 'ui.design-tokens.air'],
 	],
 	'groups' => [
-		'phone' => Loc::getMessage('LNDBLCK_STOREMENUV3_1_PHONE'),
+		'phone' => Loc::getMessage('LNDBLCK_STOREMENUV3_2_PHONE'),
 	],
 ];

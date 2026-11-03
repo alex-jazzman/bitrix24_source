@@ -15,6 +15,12 @@
 	line-height: 0;
 }
 
+.tasks-closer-embedded:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-xs);
+}
+
 .tasks-closer-embedded__icon {
 	--ui-icon-set__icon-color: var(--color-icon);
 	--ui-icon-set__icon-size: var(--size-icon);

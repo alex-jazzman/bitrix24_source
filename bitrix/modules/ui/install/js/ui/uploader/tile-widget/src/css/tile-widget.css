@@ -548,21 +548,12 @@
 }
 
 /**
- * The preview covers the whole tile, so its focus is shown by the tile itself - the same ring the
- * tile already uses for the selected state. An outline on the preview would be clipped by
- * `overflow: hidden` and read as a frame inside a frame.
+ * The focus ring goes inside the element: the tile clips overflow and would cut an outer ring.
+ * The preview draws its own ring instead of lending it to the tile through `:has()` - the same list
+ * renders inside the dialog of the stack widget, where the `.ui-tile-uploader` root is absent, and
+ * `:has()` is unknown to Firefox 115 ESR.
  */
-.ui-tile-uploader:not(.--compact) .ui-tile-uploader-item:has(.ui-tile-uploader-item-preview-content:focus-visible),
-.ui-tile-uploader.--compact .ui-tile-uploader-item:has(.ui-tile-uploader-item-preview-content:focus-visible) {
-	box-shadow: 0 0 0 2px var(--ui-color-accent-brand-blue);
-}
-
-/* the ring above replaces the browser default one - otherwise the tile shows two rings at once */
-.ui-tile-uploader-item-preview-content:focus-visible {
-	outline: none;
-}
-
-/** the focus ring goes inside the element: the tile clips overflow and would cut an outer ring */
+.ui-tile-uploader-item-preview-content:focus-visible,
 .ui-tile-uploader-item-remove:focus-visible,
 .ui-tile-uploader-item-menu:focus-visible {
 	outline: 2px solid var(--ui-color-accent-brand-blue);
@@ -570,9 +561,14 @@
 	border-radius: 10px;
 }
 
-/** the menu icon is dimmed while hidden, so the focused button keeps a readable contrast */
-.ui-tile-uploader-item-menu:focus-visible {
-	opacity: 0.7;
+/**
+ * The menu button is dimmed while it waits, and a translucent button has a translucent ring, so the
+ * keyboard focus opens both the button and its icon up - the icon on its own account, because the
+ * rule hiding it in the compact mode is a `:has()` one and does not reach Firefox 115 ESR.
+ */
+.ui-tile-uploader-item-menu:focus-visible,
+.ui-tile-uploader-item-menu:focus-visible .ui-icon-set {
+	opacity: 1;
 }
 
 .ui-tile-uploader-item-state-remove:focus-visible {

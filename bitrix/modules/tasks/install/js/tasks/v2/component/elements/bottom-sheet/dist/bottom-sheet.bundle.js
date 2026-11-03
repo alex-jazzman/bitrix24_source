@@ -3,11 +3,10 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, ui_vue3_components_popup) {
+(function (exports, main_core, ui_vue3, ui_vue3_components_popup) {
 	'use strict';
 
-	// @vue/component
-	const BottomSheet = {
+	const BottomSheet = ui_vue3.defineComponent({
 		components: {
 			Popup: ui_vue3_components_popup.Popup
 		},
@@ -36,6 +35,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			customClass: {
 				type: String,
 				default: ''
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
+			ariaLabelledBy: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['close'],
@@ -58,7 +65,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						closeAnimationType: 'animation'
 					},
 					autoHide: false,
-					closeByEsc: false
+					// main.popup gives neither Esc nor focus-trap by default: the built-in trap
+					// is gated behind the ui.a11y `useFocusTrapInDialogs` setting, which is on
+					// for dev environments only. Both options must be passed explicitly.
+					closeByEsc: true,
+					focusTrap: true,
+					ariaLabel: this.ariaLabel || null,
+					ariaLabelledBy: this.ariaLabelledBy || null
 				};
 			}
 		},
@@ -94,9 +107,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			</div>
 		</Popup>
 	`
-	};
+	});
 
 	exports.BottomSheet = BottomSheet;
 
-})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX, BX.UI.Vue3.Components);
+})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX, BX.Vue3, BX.UI.Vue3.Components);
 //# sourceMappingURL=bottom-sheet.bundle.js.map

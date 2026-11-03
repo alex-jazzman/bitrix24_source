@@ -2,6 +2,7 @@ import { CreateChatButton } from 'im.v2.component.list.container.elements.create
 import { ChatSearchInput } from 'im.v2.component.search';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Utils } from 'im.v2.lib.utils';
+import { BaseMenu } from 'im.v2.lib.menu';
 import { ActionByRole, ActionByUserType, RecentType } from 'im.v2.const';
 import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 import { type ImModelCollabInfo } from 'im.v2.model';
@@ -37,6 +38,10 @@ export const CollabHeader = {
 			type: Boolean,
 			required: true,
 		},
+		searchAreaId: {
+			type: String,
+			default: null,
+		},
 	},
 	emits: ['openSearch', 'closeSearch', 'updateSearch', 'toggleUnreadMode'],
 	data()
@@ -44,6 +49,7 @@ export const CollabHeader = {
 		return {
 			showCreateChatPromo: false,
 			showAttachToCollabV2Popup: false,
+			isCreateMenuOpen: false,
 		};
 	},
 	computed: {
@@ -80,10 +86,12 @@ export const CollabHeader = {
 		this.contextMenuManager = new CreateMenu();
 
 		this.contextMenuManager.subscribe(CreateMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+		this.contextMenuManager.subscribe(BaseMenu.events.close, this.onCreateMenuClose);
 	},
 	beforeUnmount()
 	{
 		this.contextMenuManager.unsubscribe(CreateMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+		this.contextMenuManager.unsubscribe(BaseMenu.events.close, this.onCreateMenuClose);
 
 		this.contextMenuManager.destroy();
 	},
@@ -105,7 +113,12 @@ export const CollabHeader = {
 				collabId: this.collabId,
 			};
 
+			this.isCreateMenuOpen = true;
 			this.contextMenuManager.openMenu(context, event.currentTarget);
+		},
+		onCreateMenuClose()
+		{
+			this.isCreateMenuOpen = false;
 		},
 		onCloseCreateChatPromo()
 		{
@@ -123,6 +136,8 @@ export const CollabHeader = {
 					:searchMode="searchMode"
 					:isLoading="searchMode && isSearchLoading"
 					:placeholder="loc('IM_LIST_CONTAINER_COLLAB_NESTED_SEARCH_INPUT_PLACEHOLDER')"
+					:activateOnEnter="true"
+					:searchAreaId="searchAreaId"
 					@openSearch="$emit('openSearch')"
 					@closeSearch="$emit('closeSearch')"
 					@updateSearch="$emit('updateSearch', $event)"
@@ -136,7 +151,12 @@ export const CollabHeader = {
 				@toggleUnreadMode="$emit('toggleUnreadMode')"
 			/>
 			<div :class="createChatClasses" class="bx-im-nested-list-collab__subheader_create-button" ref="create-chat-button">
-				<CreateChatButton v-if="canCreateEntities" @click="onCreateClick" />
+				<CreateChatButton
+					v-if="canCreateEntities"
+					aria-haspopup="menu"
+					:aria-expanded="isCreateMenuOpen"
+					@click="onCreateClick"
+				/>
 			</div>
 			<CreateChatPromo v-if="showCreateChatPromo" :bindElement="$refs['create-chat-button']" @close="onCloseCreateChatPromo" />
 			<AttachToCollabV2

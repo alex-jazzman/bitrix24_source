@@ -126,19 +126,23 @@ $unifiedLink = $arResult['UNIFIED_LINK'];
 	include $_SERVER['DOCUMENT_ROOT']
 		. '/bitrix/components/bitrix/disk.external.link/templates/.default/access-button.php';
 
-	$downloadButton = new Button([
-		'text' => $component->getMessage('DISK_EXT_LINK_FILE_DOWNLOAD'),
-		'tag' => Tag::LINK,
-		'link' => $arResult['FILE']['DOWNLOAD_URL'],
-	]);
-	$applyAirStyle($downloadButton, AirButtonStyle::FILLED);
-	$downloadButton
-		// Buttons\Size has no constant for the XL step of the air design (46px).
-		->addClass('ui-btn-xl')
-		// Media files are served inline by the fast download path, so the link has to ask for saving.
-		->addAttribute('download', $arResult['FILE']['NAME'])
-		->addAttribute('data-testid', 'disk-ext-file-download-btn')
-	;
+	$downloadButton = null;
+	if (!empty($arResult['FILE']['CAN_DOWNLOAD']))
+	{
+		$downloadButton = new Button([
+			'text' => $component->getMessage('DISK_EXT_LINK_FILE_DOWNLOAD'),
+			'tag' => Tag::LINK,
+			'link' => $arResult['FILE']['DOWNLOAD_URL'],
+		]);
+		$applyAirStyle($downloadButton, AirButtonStyle::FILLED);
+		$downloadButton
+			// Buttons\Size has no constant for the XL step of the air design (46px).
+			->addClass('ui-btn-xl')
+			// Media files are served inline by the fast download path, so the link has to ask for saving.
+			->addAttribute('download', $arResult['FILE']['NAME'])
+			->addAttribute('data-testid', 'disk-ext-file-download-btn')
+		;
+	}
 
 	$copyLinkButton = new Button([
 		'text' => $component->getMessage('DISK_EXT_LINK_COPY_LINK'),
@@ -152,7 +156,7 @@ $unifiedLink = $arResult['UNIFIED_LINK'];
 		->addAttribute('data-testid', 'disk-ext-file-copy-link-btn')
 	;
 
-	$downloadButtonHtml = $downloadButton->render(false);
+	$downloadButtonHtml = $downloadButton === null ? '' : $downloadButton->render(false);
 	$copyLinkButtonHtml = $copyLinkButton->render(false);
 	?>
 		<main class="disk-ext-content-layout --centered" data-testid="disk-ext-file-page">

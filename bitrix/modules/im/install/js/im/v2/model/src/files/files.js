@@ -49,14 +49,18 @@ export class FilesModel extends BuilderModel
 			size: 0,
 			image: null,
 			status: FileStatus.done,
+			validationError: null,
 			progress: 100,
 			authorId: 0,
 			authorName: '',
 			urlPreview: '',
+			mediaUrl: {},
 			urlShow: '',
 			urlDownload: '',
 			viewerAttrs: null,
 			isVideoNote: false,
+			isVoiceNote: false,
+			duration: null,
 		};
 	}
 
@@ -80,11 +84,17 @@ export class FilesModel extends BuilderModel
 				if (file && hasMappedTemporaryFile)
 				{
 					const temporaryFile: ImModelFile = getters.getMappedTemporaryFile({ serverFileId: fileId });
+					const temporaryVoiceFields = temporaryFile.isVoiceNote ? {
+						isVoiceNote: file.isVoiceNote || temporaryFile.isVoiceNote,
+						isTranscribable: file.isTranscribable || temporaryFile.isTranscribable,
+						duration: file.duration ?? temporaryFile.duration,
+					} : {};
 
 					return {
 						...file,
 						urlPreview: temporaryFile.urlPreview,
 						urlShow: temporaryFile.urlShow,
+						...temporaryVoiceFields,
 					};
 				}
 

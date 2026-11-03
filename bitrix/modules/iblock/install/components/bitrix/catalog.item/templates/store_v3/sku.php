@@ -72,7 +72,7 @@ if (isset($item))
 		}
 	}
 	?>
-	<div class="catalog-section-item" id="<?=$areaId?>" data-entity="item">
+	<div class="catalog-section-item" id="<?=$areaId?>" data-entity="item" data-testid="catalog-item-card">
 		<?php //region COVER
 		$percent = '';
 		if ($photosExist)
@@ -147,7 +147,8 @@ if (isset($item))
 							<a href="<?=$item["DETAIL_PAGE_URL"]; ?>"
 								class="catalog-section-item-slider-image<?= ($key == $activePhoto ? ' active' : '') ?>"
 								data-entity="image"
-								data-id="<?= $photo['ID'] ?>">
+								data-id="<?= $photo['ID'] ?>"
+								tabindex="-1" aria-hidden="true">
 								<img
 									src="<?= $xResizedImage ?>"
 									srcset="<?= $xResizedImage ?> 1x, <?= $x2ResizedImage ?> 2x"
@@ -162,7 +163,7 @@ if (isset($item))
 					?>
 				</div>
 			<?php //region SLIDER PAGER ?>
-				<a href="<?=$item["DETAIL_PAGE_URL"]; ?>" class="catalog-section-item-slider-images-slider-pager d-none d-sm-flex" id="<?=$itemIds['PICT_SLIDER']?>_pager">
+				<a href="<?=$item["DETAIL_PAGE_URL"]; ?>" class="catalog-section-item-slider-images-slider-pager d-none d-sm-flex" id="<?=$itemIds['PICT_SLIDER']?>_pager" tabindex="-1" aria-hidden="true">
 					<?php
 					if ($photosExist)
 					{
@@ -176,17 +177,23 @@ if (isset($item))
 			<?php //endregion ?>
 			</div>
 		<?php //region SLIDER CONTROLS ?>
-			<div class="catalog-section-item-slider-controls-block" id="<?=$itemIds['PICT_SLIDER']?>_indicator" <?=($photosExist && count($morePhoto) > 1 ? '' : 'style="display: none;"')?>>
+			<div class="catalog-section-item-slider-controls-block" id="<?=$itemIds['PICT_SLIDER']?>_indicator"
+				role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_ARIA'))?>" data-testid="catalog-item-gallery-dots"
+				<?=($photosExist && count($morePhoto) > 1 ? '' : 'style="display: none;"')?>>
 				<?php
 				if ($photosExist)
 				{
+					$photosTotal = count($morePhoto);
 					foreach ($morePhoto as $key => $photo)
 					{
 						?>
-						<div class="catalog-section-item-slider-controls-image<?=($key == $activePhoto ? ' active' : '')?>"
-							data-entity="slider-control" data-value="<?=$photo['ID']?>" data-go-to="<?=$key; ?>">
+						<button type="button" class="catalog-section-item-slider-controls-image<?=($key == $activePhoto ? ' active' : '')?>"
+							data-entity="slider-control" data-value="<?=$photo['ID']?>" data-go-to="<?=$key; ?>"
+							tabindex="-1"
+							<?=($key == $activePhoto ? 'aria-current="true"' : '')?>
+							aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_GALLERY_DOT_ARIA', ['#NUM#' => $key + 1, '#TOTAL#' => $photosTotal]))?>" data-testid="catalog-item-gallery-dot">
 							<div class="catalog-section-item-slider-controls-dot" data-entity="slider-control-dot" data-go-to="<?=$key; ?>"></div>
-						</div>
+						</button>
 						<?php
 					}
 				}
@@ -205,7 +212,7 @@ if (isset($item))
 			//region NAME
 			?>
 			<h3 class="catalog-section-item-name">
-				<a id="<?=$itemIds['NAME']; ?>" class="catalog-section-item-name-link" href="<?=$item["DETAIL_PAGE_URL"]?>"><?=$showedTitle?></a>
+				<a id="<?=$itemIds['NAME']; ?>" class="catalog-section-item-name-link" data-testid="catalog-item-name-link" href="<?=$item["DETAIL_PAGE_URL"]?>"><?=$showedTitle?></a>
 			</h3>
 			<?php
 			//endregion
@@ -260,7 +267,7 @@ if (isset($item))
 					if ($actualItem['CAN_BUY'])
 					{
 						?>
-						<button class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['PREBUY_OPEN_BTN']?>">
+						<button type="button" class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['PREBUY_OPEN_BTN']?>" aria-haspopup="dialog" data-testid="catalog-item-buy-open">
 							<?=($arParams['ADD_TO_BASKET_ACTION'] === 'BUY'
 								? $arParams['MESS_BTN_BUY']
 								: $arParams['MESS_BTN_ADD_TO_BASKET']
@@ -271,7 +278,7 @@ if (isset($item))
 					else
 					{
 						?>
-						<button class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill disabled" id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" disabled>
+						<button type="button" class="catalog-section-item-buy-btn btn btn-primary btn-md rounded-pill disabled" id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" disabled data-testid="catalog-item-not-available">
 							<?=$arParams['MESS_NOT_AVAILABLE']?>
 						</button>
 						<?php
@@ -282,23 +289,23 @@ if (isset($item))
 			</div>
 
 			<?php //region DETAIL POPUP ?>
-				<div class="catalog-section-item-detail-wrapper closed" data-attr-sku id="<?=$itemIds['PREBUY']?>" >
-					<div class="catalog-section-item-detail-cover" id="<?=$itemIds['PREBUY_OVERLAY']?>"></div>
-					<div class="catalog-section-item-detail-container" id="<?=$itemIds['PREBUY_CONTAINER']?>">
+				<div class="catalog-section-item-detail-wrapper closed" data-attr-sku id="<?=$itemIds['PREBUY']?>" inert data-testid="catalog-item-prebuy">
+					<div class="catalog-section-item-detail-cover" id="<?=$itemIds['PREBUY_OVERLAY']?>" data-testid="catalog-item-prebuy-overlay"></div>
+					<div class="catalog-section-item-detail-container" id="<?=$itemIds['PREBUY_CONTAINER']?>" role="dialog" data-testid="catalog-item-prebuy-dialog" aria-labelledby="<?=$itemIds['PREBUY_NAME']?>">
 
 						<div class="catalog-section-item-detail-header d-flex justify-content-between align-items-center">
 							<div class="catalog-section-item-detail-header-separate"></div>
-							<div class="catalog-section-item-detail-swipe-btn-container" id="<?=$itemIds['PREBUY_SWIPE_BTN']?>">
+							<div class="catalog-section-item-detail-swipe-btn-container" id="<?=$itemIds['PREBUY_SWIPE_BTN']?>" data-testid="catalog-item-prebuy-swipe">
 								<div class="catalog-section-item-detail-swipe-btn"></div>
 							</div>
 							<div class="catalog-section-item-detail-close-btn-container">
-								<span class="catalog-section-item-detail-close-btn" id="<?=$itemIds['PREBUY_CLOSE_BTN']?>">
+								<button type="button" class="catalog-section-item-detail-close-btn" id="<?=$itemIds['PREBUY_CLOSE_BTN']?>" data-testid="catalog-item-prebuy-close">
 									<span class="catalog-section-item-detail-close-btn-text"><?=$messages['CLOSE_BTN']; ?></span>
-								</span>
+								</button>
 							</div>
 						</div>
 
-						<div class="catalog-section-item-detail">
+						<div class="catalog-section-item-detail" role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_PREBUY_CONTENT_ARIA'))?>">
 							<section class="catalog-section-item-detail-props-container">
 								<div class="d-flex align-items-center justify-content-start" style="margin-bottom: 19px;">
 									<?php
@@ -306,7 +313,7 @@ if (isset($item))
 									{
 										?>
 										<div style="padding-right: 15px;">
-											<a href="<?=$item["DETAIL_PAGE_URL"]; ?>"><img src="<?=$firstPhoto['SRC']?>"
+											<a href="<?=$item["DETAIL_PAGE_URL"]; ?>" class="catalog-section-item-detail-preview-link" data-testid="catalog-item-prebuy-preview-link"><img src="<?=$firstPhoto['SRC']?>"
 												id="<?=$itemIds['PREBUY_PICT']; ?>"
 												alt="<?=$showedTitle?>"
 												class="catalog-section-item-detail-preview-image"
@@ -397,25 +404,46 @@ if (isset($item))
 													$skuProperty['NAME'] = htmlspecialcharsbx($skuProperty['NAME']);
 													if (!isset($item['SKU_TREE_VALUES'][$propertyId]))
 														continue;
+
+													$skuValues = [];
+													foreach ($skuProperty['VALUES'] as $value)
+													{
+														if (isset($item['SKU_TREE_VALUES'][$propertyId][$value['ID']]))
+														{
+															$skuValues[] = $value;
+														}
+													}
+
+													$skuTitleId = $itemIds['PROP_DIV'].'_title_'.$propertyId;
+													$skuGroupName = $skuProperty['NAME'] !== ''
+														? 'aria-labelledby="'.$skuTitleId.'"'
+														: 'aria-label="'.htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_SKU_GROUP_ARIA')).'"'
+													;
+													$skuValuesTotal = count($skuValues);
+													$skuValuePos = 0;
 													?>
 													<div data-entity="sku-block">
 														<div class="catalog-section-item-scu-container" data-entity="sku-line-block">
-															<div class="catalog-section-item-scu-block-title text-muted"><?=$skuProperty['NAME']?></div>
+															<div class="catalog-section-item-scu-block-title text-muted" id="<?=$skuTitleId?>"><?=$skuProperty['NAME']?></div>
 															<div class="catalog-section-item-scu-block">
 																<div class="catalog-section-item-scu-list">
-																	<ul class="catalog-section-item-scu-item-list">
+																	<ul class="catalog-section-item-scu-item-list" role="radiogroup" data-testid="catalog-item-sku-group" <?=$skuGroupName?>>
 																		<?php
-																		foreach ($skuProperty['VALUES'] as $value)
+																		foreach ($skuValues as $value)
 																		{
-																			if (!isset($item['SKU_TREE_VALUES'][$propertyId][$value['ID']]))
-																				continue;
-
 																			$value['NAME'] = htmlspecialcharsbx($value['NAME']);
+																			$skuValuePos++;
+																			$skuValueName = $value['NAME'] !== ''
+																				? $value['NAME']
+																				: htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_SKU_VALUE_ARIA', ['#ID#' => $value['ID']]))
+																			;
 
 																			if ($skuProperty['SHOW_MODE'] === 'PICT')
 																			{
 																				?>
-																				<li class="catalog-section-item-scu-item-color-container" title="<?=$value['NAME']?>" data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>">
+																				<li class="catalog-section-item-scu-item-color-container" data-testid="catalog-item-sku-option" data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>"
+																					role="radio" tabindex="-1" aria-checked="false" aria-label="<?=$skuValueName?>"
+																					aria-setsize="<?=$skuValuesTotal?>" aria-posinset="<?=$skuValuePos?>">
 																					<div class="catalog-section-item-scu-item-color-block">
 																						<div class="catalog-section-item-scu-item-color" title="<?=$value['NAME']?>" style="background-image: url('<?=$value['PICT']['SRC']?>');"></div>
 																					</div>
@@ -425,8 +453,10 @@ if (isset($item))
 																			else
 																			{
 																				?>
-																				<li class="catalog-section-item-scu-item-text-container" title="<?=$value['NAME']?>"
-																					data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>">
+																				<li class="catalog-section-item-scu-item-text-container" data-testid="catalog-item-sku-option"
+																					data-treevalue="<?=$propertyId?>_<?=$value['ID']?>" data-onevalue="<?=$value['ID']?>"
+																					role="radio" tabindex="-1" aria-checked="false" aria-label="<?=$skuValueName?>"
+																					aria-setsize="<?=$skuValuesTotal?>" aria-posinset="<?=$skuValuePos?>">
 																					<div class="catalog-section-item-scu-item-text-block">
 																						<div class="catalog-section-item-scu-item-text"><?=$value['NAME']?></div>
 																					</div>
@@ -521,15 +551,22 @@ if (isset($item))
 									{
 										if ($arParams['USE_PRODUCT_QUANTITY'])
 										{
+											$measureStep = $actualItem['ITEM_MEASURE_RATIOS'][$actualItem['ITEM_MEASURE_RATIO_SELECTED']]['RATIO'];
 											?>
 											<div class="catalog-section-item-quantity-container" data-entity="quantity-block">
 												<div class="catalog-section-item-quantity-field-container">
-													<span class="catalog-section-item-quantity-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>"></span>
+													<button type="button" class="catalog-section-item-quantity-btn-minus no-select" id="<?=$itemIds['QUANTITY_DOWN']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_DOWN_ARIA'))?>" data-testid="catalog-item-quantity-down"></button>
 													<div class="catalog-section-item-quantity-field-block">
-														<input class="catalog-section-item-quantity-field" id="<?=$itemIds['QUANTITY']?>" type="number" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value="<?=$measureRatio?>">
-														<div class="catalog-section-item-quantity-field" id="<?=$itemIds['QUANTITY_COUNTER']?>" contentEditable="true" inputmode="numeric" name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>" value=""><?=$measureRatio?></div>
+														<input class="catalog-section-item-quantity-field"
+															id="<?=$itemIds['QUANTITY']?>" type="number"
+															name="<?=$arParams['PRODUCT_QUANTITY_VARIABLE']?>"
+															value="<?=$measureRatio?>" min="<?=$measureRatio?>"
+															step="<?=$measureStep?>"
+															aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_ARIA'))?>"
+															data-testid="catalog-item-quantity-field">
+														<div class="catalog-section-item-quantity-field" id="<?=$itemIds['QUANTITY_COUNTER']?>" aria-hidden="true"><?=$measureRatio?></div>
 													</div>
-													<span class="catalog-section-item-quantity-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>"></span>
+													<button type="button" class="catalog-section-item-quantity-btn-plus no-select" id="<?=$itemIds['QUANTITY_UP']?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('CT_BCI_TPL_MESS_QUANTITY_UP_ARIA'))?>" data-testid="catalog-item-quantity-up"></button>
 												</div>
 												<span class="catalog-section-item-quantity-description" id="<?=$itemIds['QUANTITY_MEASURE_CONTAINER']?>">
 													<span class="product-item-detail-quantity-description-text"  id="<?=$itemIds['QUANTITY_MEASURE']?>"><?=$actualItem['ITEM_MEASURE']['TITLE']?></span>
@@ -548,16 +585,15 @@ if (isset($item))
 								//region BUTTONS
 								?>
 								<div id="<?=$itemIds['BASKET_ACTIONS']?>" class="mb-2" <?=($actualItem['CAN_BUY'] ? '' : 'style="display: none;"')?>>
-									<button class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['BUY_LINK']?>"
-											href="javascript:void(0)" rel="nofollow">
+									<button type="button" class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill" id="<?=$itemIds['BUY_LINK']?>" data-testid="catalog-item-prebuy-buy">
 										<?=$arParams['BTN_MESSAGE_CREATE_ORDER']; ?>
 									</button>
-									<button class="catalog-section-item-popup-buy-btn btn border btn-md rounded-pill mt-2" id="<?=$itemIds['ADD_BASKET_LINK']?>">
+									<button type="button" class="catalog-section-item-popup-buy-btn btn border btn-md rounded-pill mt-2" id="<?=$itemIds['ADD_BASKET_LINK']?>" data-testid="catalog-item-prebuy-add-to-basket">
 										<?=$arParams['BTN_MESSAGE_CONTINUE_SHOPPING']; ?>
 									</button>
 								</div>
-								<button class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill"
-									id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" <?=($actualItem['CAN_BUY'] ? 'style="display: none;"' : ''); ?>>
+								<button type="button" class="catalog-section-item-popup-buy-btn btn btn-primary btn-md rounded-pill"
+									id="<?=$itemIds['NOT_AVAILABLE_MESS']?>" disabled data-testid="catalog-item-prebuy-not-available" <?=($actualItem['CAN_BUY'] ? 'style="display: none;"' : ''); ?>>
 									<?=$arParams['MESS_NOT_AVAILABLE']?>
 								</button>
 								<?php

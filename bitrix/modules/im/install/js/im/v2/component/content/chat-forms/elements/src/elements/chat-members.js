@@ -6,8 +6,10 @@ import {
 	TagSelector,
 } from 'ui.entity-selector';
 
+import 'ui.design-tokens.air';
+
 import { Core } from 'im.v2.application.core';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { getEntitiesConfig } from 'im.v2.lib.entity-selector-config';
 import { SelectorEntity, type SelectorEntityItem } from 'im.v2.const';
 
 import './css/chat-members.css';
@@ -34,6 +36,15 @@ export const ChatMembersSelector = {
 			type: Boolean,
 			default: false,
 		},
+		chatType: {
+			type: String,
+			default: undefined,
+		},
+		// An update form knows the chat and its role in it; a creation form has neither yet.
+		dialogId: {
+			type: String,
+			default: undefined,
+		},
 	},
 	emits: ['membersChange'],
 	created()
@@ -51,7 +62,7 @@ export const ChatMembersSelector = {
 				enableSearch: true,
 				alwaysShowLabels: true,
 				context: 'IM_CHAT_CREATE',
-				entities: this.getEntitiesConfig(),
+				entities: this.entitiesConfig(),
 				preselectedItems: this.chatMembers,
 				undeselectedItems: this.undeselectedItems,
 				events: {
@@ -67,57 +78,13 @@ export const ChatMembersSelector = {
 	},
 	methods:
 	{
-		getEntitiesConfig(): EntityOptions[]
+		entitiesConfig(): EntityOptions[]
 		{
-			const entitiesConfig = [{ id: SelectorEntity.user }];
-			const allowDepartments = FeatureManager.isFeatureAvailable(Feature.chatDepartments);
-			entitiesConfig.push(this.getDepartmentEntityConfig(allowDepartments));
-
-			if (this.allowTeamsSelect && FeatureManager.isFeatureAvailable(Feature.teamsInStructureAvailable))
-			{
-				entitiesConfig.push(this.getEntityTeamsConfig(allowDepartments));
-			}
-
-			return entitiesConfig;
-		},
-		getDepartmentEntityConfig(allowDepartments: boolean): EntityOptions
-		{
-			if (allowDepartments)
-			{
-				return {
-					id: SelectorEntity.department,
-					options: {
-						selectMode: 'usersAndDepartments',
-						allowFlatDepartments: true,
-						allowSelectRootDepartment: true,
-					},
-				};
-			}
-
-			return { id: SelectorEntity.department };
-		},
-		getEntityTeamsConfig(allowDepartments: boolean): EntityOptions
-		{
-			const baseOptionsConfig = {
-				includedNodeEntityTypes: ['team'],
-				useMultipleTabs: true,
-				visual: {
-					avatarMode: 'node',
-					tagStyle: 'none',
-				},
-			};
-
-			const departmentOptionsConfig = {
-				...baseOptionsConfig,
-				selectMode: 'usersAndDepartments',
-				allowFlatDepartments: true,
-				allowSelectRootDepartment: true,
-			};
-
-			return {
-				id: 'structure-node',
-				options: allowDepartments ? departmentOptionsConfig : baseOptionsConfig,
-			};
+			return getEntitiesConfig({
+				dialogId: this.dialogId,
+				chatType: this.chatType,
+				withTeams: this.allowTeamsSelect,
+			});
 		},
 		onItemsChange(event: BaseEvent)
 		{
@@ -135,6 +102,10 @@ export const ChatMembersSelector = {
 		},
 	},
 	template: `
-		<div class="bx-im-chat-forms-chat-members__container" ref="members"></div>
+		<div
+			class="bx-im-chat-forms-chat-members__container"
+			data-testid="im-chat-form-members"
+			ref="members"
+		></div>
 	`,
 };

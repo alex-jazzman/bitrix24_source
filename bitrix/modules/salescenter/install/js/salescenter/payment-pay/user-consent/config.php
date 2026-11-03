@@ -12,6 +12,7 @@ return [
 		'main.polyfill.core',
 		'main.core.events',
 		'sale.payment-pay.const',
+		'sale.user-consent-a11y',
 	],
 	'skip_core' => true,
 ];

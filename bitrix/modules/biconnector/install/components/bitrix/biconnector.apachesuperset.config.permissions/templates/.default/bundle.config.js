@@ -5,6 +5,6 @@ module.exports = {
 	},
 	namespace: 'BX.BIConnector',
 	adjustConfigPhp: false,
-	minification: true,
+	minification: false,
 	sourceMaps: true,
 };

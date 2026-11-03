@@ -1,0 +1,299 @@
+.tasks-bp-check-list
+{
+	display: flex;
+	flex-direction: column;
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-1);
+}
+
+.tasks-bp-check-list__blocks
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.tasks-bp-check-list-block
+{
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-bp-check-list-block__head
+{
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+	padding-bottom: var(--ui-space-stack-2xs);
+}
+
+.tasks-bp-check-list-block__name
+{
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+/* a block with no name row keeps the head as tall as the action that creates one */
+.tasks-bp-check-list-block__name:empty
+{
+	display: none;
+}
+
+.tasks-bp-check-list-block__name-add
+{
+	flex: 0 0 auto;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+.tasks-bp-check-list-block__name-add:hover:not(:disabled)
+{
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-bp-check-list-block__name-add[hidden]
+{
+	display: none;
+}
+
+.tasks-bp-check-list-block__remove
+{
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-3xl);
+	height: var(--ui-size-3xl);
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	/* the size the delete button of the node designer gives its own cross; no token holds it */
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.tasks-bp-check-list-block__remove:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
+.tasks-bp-check-list-block__remove[hidden]
+{
+	display: none;
+}
+
+.tasks-bp-check-list__name
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+}
+
+.tasks-bp-check-list__items
+{
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-bp-check-list__item
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-2xs) 0;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-less);
+}
+
+/* no token covers the visually hidden recipe; the same declarations as ui.system.chip uses */
+.tasks-bp-check-list__visually-hidden
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.tasks-bp-check-list__item-control
+{
+	/* the field type prints a table sized by the columns of its textarea: taken as the base size of
+	   the row, it would push the neighbours onto lines of their own */
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.tasks-bp-check-list__item.--error .tasks-bp-check-list__item-control textarea,
+.tasks-bp-check-list__name.--error .tasks-bp-check-list__item-control textarea
+{
+	border-color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-bp-check-list__item-error
+{
+	flex: 0 0 100%;
+	padding-top: var(--ui-space-stack-2xs);
+	font-size: var(--ui-font-size-sm);
+}
+
+.tasks-bp-check-list__item-error[hidden]
+{
+	display: none;
+}
+
+.tasks-bp-check-list__item-remove
+{
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	/* the target of the button is the whole height of the row it belongs to */
+	align-self: stretch;
+	width: var(--ui-size-3xl);
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	/* the size the delete button of the node designer gives its own cross; no token holds it */
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.tasks-bp-check-list__item-remove:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
+.tasks-bp-check-list__item-remove[hidden]
+{
+	display: none;
+}
+
+.tasks-bp-check-list__empty
+{
+	padding: var(--ui-space-inset-xs) 0;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+}
+
+.tasks-bp-check-list__footer
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-xs);
+	padding-top: var(--ui-space-stack-xs);
+}
+
+.tasks-bp-check-list__add
+{
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	font-family: inherit;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+.tasks-bp-check-list__add::before
+{
+	content: '+';
+	/* the empty alternative text keeps the sign out of the accessible name of the button; a browser
+	   that does not know the syntax drops this line and keeps the sign above */
+	content: '+' / '';
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-reset);
+}
+
+.tasks-bp-check-list__add:hover:not([aria-disabled="true"])
+{
+	color: var(--ui-color-accent-main-primary);
+}
+
+/* at the limit the button keeps the focus and the tab order, and only the action is refused */
+.tasks-bp-check-list__add[aria-disabled="true"]
+{
+	color: var(--ui-color-base-5);
+	cursor: default;
+}
+
+.tasks-bp-check-list__add[hidden]
+{
+	display: none;
+}
+
+.tasks-bp-check-list__actions
+{
+	display: flex;
+	align-items: center;
+	padding-top: var(--ui-space-stack-sm);
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-less);
+}
+
+.tasks-bp-check-list__counter
+{
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+}
+
+/* The ring of the settings panel, the one its own buttons draw. The rows are reached through their
+   own row class on purpose: the panel takes the outline off every text field of a legacy dialog, and
+   only a selector of a higher specificity puts a visible focus back on the fields of this field. */
+.tasks-bp-check-list-block__name-add:focus-visible,
+.tasks-bp-check-list-block__remove:focus-visible,
+.tasks-bp-check-list__item-remove:focus-visible,
+.tasks-bp-check-list__add:focus-visible,
+.tasks-bp-check-list__item .tasks-bp-check-list__item-control textarea:focus-visible,
+.tasks-bp-check-list__name .tasks-bp-check-list__item-control textarea:focus-visible
+{
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.tasks-bp-check-list.--readonly .tasks-bp-check-list__add,
+.tasks-bp-check-list.--readonly .tasks-bp-check-list__item-remove,
+.tasks-bp-check-list.--readonly .tasks-bp-check-list-block__remove,
+.tasks-bp-check-list.--readonly .tasks-bp-check-list-block__name-add
+{
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+	.tasks-bp-check-list__item-remove,
+	.tasks-bp-check-list__add,
+	.tasks-bp-check-list-block__remove,
+	.tasks-bp-check-list-block__name-add
+	{
+		transition: none;
+	}
+}

@@ -2,6 +2,17 @@
 CModule::IncludeModule('socialnetwork');
 CUtil::InitJSCore(array('socnetlogdest'));
 \Bitrix\Main\Localization\Loc::loadMessages(__DIR__.DIRECTORY_SEPARATOR.'script.js.php');
+
+// template description is stored as BBCode
+$toPlainDescription = static function ($description): string
+{
+	$description = (string)$description;
+
+	return \Bitrix\Main\Loader::includeModule('ui')
+		? \Bitrix\UI\Format\BBCode\Converter::toPlainText($description)
+		: $description
+	;
+};
 ?>
 <div class="bizproc-page-workflow-start">
 	<?
@@ -24,7 +35,7 @@ CUtil::InitJSCore(array('socnetlogdest'));
 			</legend>
 			<?if($template["DESCRIPTION"]!=''):?>
 				<div class="bizproc-item-description bizproc-workflow-template-description">
-					<?= htmlspecialcharsbx($template["DESCRIPTION"]) ?>
+					<?= htmlspecialcharsbx($toPlainDescription($template["DESCRIPTION"])) ?>
 				</div>
 			<?endif;
 			if (!empty($template["PARAMETERS"]))

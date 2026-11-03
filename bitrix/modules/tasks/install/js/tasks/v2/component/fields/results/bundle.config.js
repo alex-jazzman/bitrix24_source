@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/results.bundle.js',
 	namespace: 'BX.Tasks.V2.Component.Fields',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

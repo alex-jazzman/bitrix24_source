@@ -1,4 +1,12 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Loader;
+use Bitrix\Blog\Item\Post;
+use Bitrix\Blog\Item\Permissions;
+use Bitrix\Socialnetwork\Livefeed\BlogPost;
+use Bitrix\Socialnetwork\ComponentHelper;
+
 define("PUBLIC_AJAX_MODE", true);
 define("NO_KEEP_STATISTIC", "Y");
 define("NO_AGENT_STATISTIC","Y");
@@ -13,7 +21,7 @@ $postId = (isset($_POST["postId"]) ? intval($_POST["postId"]) : false);
 $isPublicPage = (isset($_POST["public"]) && $_POST["public"] == 'Y');
 $isMobile = (isset($_POST["mobile"]) && $_POST["mobile"] == 'Y');
 $isGroupReadOnly = (isset($_POST["group_readonly"]) && $_POST["group_readonly"] == 'Y');
-$pathToPost = (isset($_POST["pathToPost"]) ? $_POST["pathToPost"] : '');
+$pathToPost = ($_POST["pathToPost"] ?? '');
 $voteId = (isset($_POST["voteId"]) ? intval($_POST["voteId"]) : false);
 
 define("SITE_ID", $siteId);
@@ -32,8 +40,8 @@ if (!in_array($action, array("get_data")))
 }
 
 if (
-	!\Bitrix\Main\Loader::includeModule('socialnetwork')
-	|| !\Bitrix\Main\Loader::includeModule('blog')
+	!Loader::includeModule('socialnetwork')
+	|| !Loader::includeModule('blog')
 )
 {
 	echo CUtil::phpToJsObject(Array('ERROR' => 'MODULE_NOT_INSTALLED'));
@@ -54,7 +62,7 @@ if (!check_bitrix_sessid())
 
 $userId = $USER->getID();
 
-$postItem = \Bitrix\Blog\Item\Post::getById($postId);
+$postItem = Post::getById($postId);
 if (!$postItem)
 {
 	echo CUtil::phpToJsObject(Array('ERROR' => 'POST NOT FOUND'));
@@ -65,7 +73,7 @@ $post = $postItem->getFields();
 if ($action == 'get_data')
 {
 	$logFavoritesUserId = $logId = false;
-	$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+	$blogPostLivefeedProvider = new BlogPost;
 
 	$filter = array(
 		"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
@@ -73,7 +81,7 @@ if ($action == 'get_data')
 	);
 
 	if (
-		\Bitrix\Main\Loader::includeModule('extranet')
+		Loader::includeModule('extranet')
 		&& CExtranet::isExtranetSite($siteId)
 	)
 	{
@@ -106,14 +114,14 @@ if ($action == 'get_data')
 	{
 		if (!$logId)
 		{
-			$perms = \Bitrix\Blog\Item\Permissions::DENY;
+			$perms = Permissions::DENY;
 		}
 		elseif (
 			CSocNetUser::isCurrentUserModuleAdmin($siteId, !$isMobile)
 			|| $APPLICATION->getGroupRight("blog") >= "W"
 		)
 		{
-			$perms = \Bitrix\Blog\Item\Permissions::FULL;
+			$perms = Permissions::FULL;
 		}
 		else
 		{
@@ -124,13 +132,13 @@ if ($action == 'get_data')
 			));
 			$perms = $permsResult['PERM'];
 			$isGroupReadOnly = (
-				$permsResult['PERM'] <= \Bitrix\Blog\Item\Permissions::READ
+				$permsResult['PERM'] <= Permissions::READ
 				&& $permsResult['READ_BY_OSG']
 			);
 		}
 	}
 
-	$isShareForbidden = \Bitrix\Socialnetwork\ComponentHelper::getBlogPostLimitedViewStatus(array(
+	$isShareForbidden = ComponentHelper::getBlogPostLimitedViewStatus(array(
 		'logId' => intval($logId),
 		'postId' => intval($postId),
 		'authorId' => $post["AUTHOR_ID"]
@@ -148,13 +156,7 @@ if ($action == 'get_data')
 
 	if ($voteId)
 	{
-		$voteExportUrl = CHTTP::urlAddParams(
-			CHTTP::urlDeleteParams(
-				$postUrl,
-				array("exportVoting")
-			),
-			array("exportVoting" => $voteId)
-		);
+		$voteExportUrl = (string)(new Uri($postUrl))->addParams(["exportVoting" => $voteId]);
 	}
 
 	header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
@@ -172,4 +174,3 @@ if ($action == 'get_data')
 }
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
-?>

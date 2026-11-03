@@ -1,8 +1,8 @@
-import {TextField} from 'landing.ui.field.textfield';
-import {Dom, Tag, Event} from 'main.core';
-import {BaseButton} from 'landing.ui.button.basebutton';
-import {Menu} from 'main.popup';
-import {PageObject} from 'landing.pageobject';
+import { Dom, Event, Tag } from 'main.core';
+import 'main.popup';
+
+import { PageObject } from 'landing.pageobject';
+import { TextField } from 'landing.ui.field.textfield';
 
 import './css/style.css';
 
@@ -17,7 +17,7 @@ export class VariablesField extends TextField
 
 	constructor(options)
 	{
-		super({...options, textOnly: true});
+		super({ ...options, textOnly: true });
 		this.setEventNamespace('BX.Landing.UI.Field.VariablesField');
 		this.onTopDocumentClick = this.onTopDocumentClick.bind(this);
 
@@ -62,7 +62,7 @@ export class VariablesField extends TextField
 		});
 	}
 
-	getButton(): BaseButton
+	getButton(): HTMLDivElement
 	{
 		return this.cache.remember('button', () => {
 			return Tag.render`
@@ -74,7 +74,7 @@ export class VariablesField extends TextField
 		});
 	}
 
-	getMenu(): Menu
+	getMenu()
 	{
 		return this.cache.remember('menu', () => {
 			const rootWindow = PageObject.getRootWindow();
@@ -86,7 +86,7 @@ export class VariablesField extends TextField
 				items: this.options.variables.map((variable) => {
 					if (variable.delimiter)
 					{
-						return {delimiter: true};
+						return { delimiter: true };
 					}
 
 					return {
@@ -148,7 +148,7 @@ export class VariablesField extends TextField
 		event.preventDefault();
 		event.stopPropagation();
 
-		if (!this.lastRange && this.input.innerText.length)
+		if (!this.lastRange && this.input.innerText.length > 0)
 		{
 			const currentDocument = this.input.ownerDocument;
 			currentDocument.getSelection().collapse(this.input.childNodes[0], this.input.innerText.length);

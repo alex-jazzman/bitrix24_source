@@ -1,6 +1,13 @@
 import StoreDocumentFieldConfigurator from './store-document-field-configurator';
 import { Type } from 'main.core';
 
+const disabledAiFillPolicy = {
+	isAiFillPolicyAvailable: () => false,
+	isAiFillPolicyChanged: () => false,
+	isAiFillPolicySupportedForType: () => false,
+	getSavedAiFillPolicyState: () => true,
+};
+
 export default class StoreDocumentFieldConfigurationManager extends BX.UI.EntityConfigurationManager
 {
 	getSimpleFieldConfigurator(params, parent): StoreDocumentFieldConfigurator
@@ -39,6 +46,21 @@ export default class StoreDocumentFieldConfigurationManager extends BX.UI.Entity
 		);
 
 		return this._fieldConfigurator;
+	}
+
+	getUserFieldConfigurator(params, parent)
+	{
+		const configurator = super.getUserFieldConfigurator(params, parent);
+		// Remove after http://jabber.bx/view.php?id=256488 fixes the shared configurator contract.
+		for (const [methodName, implementation] of Object.entries(disabledAiFillPolicy))
+		{
+			if (!Type.isFunction(configurator[methodName]))
+			{
+				configurator[methodName] = implementation;
+			}
+		}
+
+		return configurator;
 	}
 
 	static create(id, settings): StoreDocumentFieldConfigurationManager

@@ -85,7 +85,9 @@ jn.define('more-menu/utils', (require, exports, module) => {
 			return;
 		}
 
-		const { path, title, params = {} } = item;
+		const { path, title, params = {}, id } = item;
+
+		BX.postComponentEvent('onOpenMenuItem', [id]);
 
 		if (params?.analytics && MoreMenuAnalytics.isValidAnalyticsData(params.analytics))
 		{
@@ -159,6 +161,8 @@ jn.define('more-menu/utils', (require, exports, module) => {
 		};
 	};
 
+	const getWhatsNewCounter = () => selectNewCount(store.getState()) ?? 0;
+
 	const updateMenuBadgeCounter = (menuList, counters, whatsNewCounter = null) => {
 		if (!Array.isArray(menuList) || !counters)
 		{
@@ -170,26 +174,28 @@ jn.define('more-menu/utils', (require, exports, module) => {
 			const updatedSections = getUpdateSectionsWithCounters(menuList, counters);
 			let totalCounter = calculateTotalCounter(updatedSections, counters);
 
-			const { total_invitation, menu_invite, menu_tab_presets } = counters;
+			const {
+				total_invitation: totalInvitation,
+				menu_invite: menuInvite,
+				menu_tab_presets: menuTabPresets,
+			} = counters;
 
-			if (Type.isNumber(total_invitation))
+			if (Type.isNumber(totalInvitation))
 			{
-				totalCounter += total_invitation;
+				totalCounter += totalInvitation;
 			}
 
-			if (Type.isNumber(menu_invite))
+			if (Type.isNumber(menuInvite))
 			{
-				totalCounter += menu_invite;
+				totalCounter += menuInvite;
 			}
 
-			if (Type.isNumber(menu_tab_presets))
+			if (Type.isNumber(menuTabPresets))
 			{
-				totalCounter += menu_tab_presets;
+				totalCounter += menuTabPresets;
 			}
 
-			const whatsNewCount = Type.isNumber(whatsNewCounter)
-				? whatsNewCounter
-				: (selectNewCount(store.getState()) ?? 0);
+			const whatsNewCount = Type.isNumber(whatsNewCounter) ? whatsNewCounter : getWhatsNewCounter();
 
 			if (whatsNewCount > 0)
 			{
@@ -209,6 +215,7 @@ jn.define('more-menu/utils', (require, exports, module) => {
 		calculateTotalCounter,
 		handleItemClick,
 		getMenuCounters,
+		getWhatsNewCounter,
 		updateMenuBadgeCounter,
 	};
 });

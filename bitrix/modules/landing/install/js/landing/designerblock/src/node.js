@@ -26,6 +26,8 @@ export class Node
 		this.pseudoElement = Dom.hasClass(this.element, 'landing-designer-block-pseudo-last');
 
 		Event.bind(this.element, 'mouseover', this.onMouseOver.bind(this));
+		// `focus` does not bubble: binding on the node itself keeps a nested node the active one
+		Event.bind(this.element, 'focus', this.onFocus.bind(this));
 
 		if (options.className)
 		{
@@ -59,6 +61,12 @@ export class Node
 	}
 
 	onMouseOver(event: Event)
+	{
+		event.stopPropagation();
+		this.onHover(this);
+	}
+
+	onFocus(event: Event)
 	{
 		event.stopPropagation();
 		this.onHover(this);

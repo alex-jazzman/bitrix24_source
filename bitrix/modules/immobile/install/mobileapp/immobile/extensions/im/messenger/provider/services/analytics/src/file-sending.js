@@ -7,6 +7,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
 	/**
 	 * @class FileSending
@@ -33,6 +34,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 		}
 
 		/**
+		 * @desc p4 of the event carries the channel axis only: it reports no project.
 		 * @param {DialogId} dialogId
 		 * @param {number} filesCount
 		 */
@@ -49,7 +51,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 					.setCategory(category)
 					.setEvent(Analytics.Event.galleryLimitException)
 					.setSection(section)
-					.setP1(`chatType_${dialog?.type}`)
+					.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 					.setP3(`filesCount_${filesCount}`)
 
 				const isChannelOrComment = helper?.isChannelOrComment;
@@ -58,14 +60,9 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 					analytics.setP4(`parentChatId_${dialog.parentChatId}`);
 				}
 
-				const isCollabType = helper?.isCollab;
-				if (isCollabType)
+				if (helper?.isCollab)
 				{
-					const collabId = this.store.getters['dialoguesModel/collabModel/getCollabIdByDialogId'](dialogId);
-					const userModel = this.store.getters['usersModel/getById'](dialogId);
-					const userType = userModel?.type === 'user' ? 'user_intranet' : `user_${userModel?.type}`;
-					analytics.setP2(userType);
-					analytics.setP4(`collabId_${collabId}`);
+					analytics.setP2(AnalyticsHelper.getP2ByUserType());
 				}
 
 				analytics.send();
@@ -77,6 +74,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 		}
 
 		/**
+		 * @desc p4 of the event carries the channel axis only: it reports no project.
 		 * @param {string} temporaryMessageId
 		 * @param {string} fileId
 		 */
@@ -95,8 +93,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 					.setCategory(category)
 					.setEvent(Analytics.Event.cancelFileUpload)
 					.setSection(section)
-					.setP1(`chatType_${dialogModel?.type}`)
-					.setP5(`chatId_${dialogModel.chatId}`);
+					.setP1(AnalyticsHelper.getP1ByDialog(dialogModel));
 
 				const isChannelOrComment = helper?.isChannelOrComment;
 				if (isChannelOrComment)
@@ -104,13 +101,9 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 					analytics.setP4(`parentChatId_${dialogModel.parentChatId}`);
 				}
 
-				const isCollabType = helper?.isCollab;
-				if (isCollabType)
+				if (helper?.isCollab)
 				{
-					const collabId = this.store.getters['dialoguesModel/collabModel/getCollabIdByDialogId'](dialogModel.dialogId);
-					const userModel = this.store.getters['usersModel/getById'](dialogModel.dialogId);
-					analytics.setP2(`user_${userModel?.type}`);
-					analytics.setP4(`collabId_${collabId}`);
+					analytics.setP2(AnalyticsHelper.getP2ByUserType());
 				}
 
 				analytics.send();
@@ -127,17 +120,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 		 */
 		#getChatCategory(dialogHelper)
 		{
-			if (dialogHelper?.isChannelOrComment)
-			{
-				return Analytics.Category.channel;
-			}
-
-			if (dialogHelper?.isCollab)
-			{
-				return Analytics.Category.collab;
-			}
-
-			return Analytics.Category.chat;
+			return AnalyticsHelper.getCategoryByChat(dialogHelper?.dialogModel);
 		}
 
 		/**
@@ -148,7 +131,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 			switch (this.#recentManager?.getActiveRecentId())
 			{
 				case NavigationTabId.channel: return Analytics.Section.channelTab;
-				case NavigationTabId.collab: return Analytics.Section.collabTab;
+				case NavigationTabId.collab: return Analytics.Section.projectTab;
 				default: return Analytics.Section.chatTab;
 			}
 		}

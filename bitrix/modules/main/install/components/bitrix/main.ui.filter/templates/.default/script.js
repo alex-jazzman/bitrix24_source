@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, ui_entitySelector, main_core, main_core_events, ui_notification, ui_icons_service, main_popup) {
+(function (exports, main_core, main_core_events, ui_notification, ui_icons_service, main_popup) {
 	'use strict';
 
 	(function () {
@@ -1065,6 +1065,10 @@ this.BX = this.BX || {};
 		getFilterField() {
 			return this.filter.getField(this.id);
 		}
+		isControlFromThisFilter(control) {
+			const field = this.getFilterField();
+			return !!(field && field.node && field.node.contains(control.getField()));
+		}
 		getFilterFieldInputWrapper() {
 			const field = this.getFilterField();
 			if (!field) {
@@ -1192,7 +1196,7 @@ this.BX = this.BX || {};
 		}
 		onCustomEntityFocus(event) {
 			const [control] = event.getData();
-			if (this.id !== control.getId()) {
+			if (this.id !== control.getId() || !this.isControlFromThisFilter(control)) {
 				return;
 			}
 			this.setControl(control);
@@ -1200,7 +1204,7 @@ this.BX = this.BX || {};
 		}
 		onCustomEntityBlur(event) {
 			const [control] = event.getData();
-			if (this.id !== control.getId()) {
+			if (this.control !== control) {
 				return;
 			}
 			this.close();
@@ -1229,7 +1233,7 @@ this.BX = this.BX || {};
 		}
 		onCustomEntityRemove(event) {
 			const [control] = event.getData();
-			if (this.id !== control.getId()) {
+			if (this.id !== control.getId() || !this.isControlFromThisFilter(control)) {
 				return;
 			}
 			if (this.dialog) {
@@ -1281,14 +1285,15 @@ this.BX = this.BX || {};
 			return EntitySelector.initExtensionPromise;
 		}
 		static create(id, settings) {
-			if (main_core.Type.isObject(this.items[id])) {
+			const key = JSON.stringify([settings.filter.getParam('FILTER_ID'), id]);
+			if (main_core.Type.isObject(this.items[key])) {
 				if (main_core.Type.isObject(settings.filter)) {
-					this.items[id].filter = settings.filter;
+					this.items[key].filter = settings.filter;
 				}
-				return this.items[id];
+				return this.items[key];
 			}
 			const self = new EntitySelector(id, settings);
-			this.items[id] = self;
+			this.items[key] = self;
 			return self;
 		}
 	}
@@ -1625,6 +1630,7 @@ this.BX = this.BX || {};
 				}
 				BX.bind(this.getInput(), 'keydown', BX.delegate(this._onKeyDown, this));
 				BX.bind(this.getFindButton(), 'click', BX.delegate(this._onSearchClick, this));
+				BX.bind(this.getButtonsContainer(), 'mousedown', BX.delegate(this._onButtonsMouseDown, this));
 				BX.bind(this.getContainer(), 'click', BX.delegate(this._onSearchContainerClick, this));
 				this.removeAutofocus();
 				this.firstInit = true;
@@ -1844,6 +1850,9 @@ this.BX = this.BX || {};
 			 */
 			removeSquare: function (square) {
 				!!square && BX.remove(square);
+			},
+			_onButtonsMouseDown: function (event) {
+				event.preventDefault();
 			},
 			_onSearchContainerClick: function (event) {
 				var Filter = this.parent;
@@ -2185,7 +2194,7 @@ this.BX = this.BX || {};
 				if (moreSquares.moreSquares.length) {
 					square = {
 						block: 'main-ui-search-square',
-						name: this.parent.getParam('MAIN_UI_FILTER__AND') + ' ' + this.parent.getParam('MAIN_UI_FILTER__MORE') + ' ' + moreSquares.moreSquares.length,
+						name: this.parent.getParam('MAIN_UI_FILTER__AND_MORE').replace('#N#', moreSquares.moreSquares.length),
 						item: moreSquares.moreSquares,
 						title: moreSquares.moreSquares.map(function (curr) {
 							let title = curr.title;
@@ -5573,8 +5582,12 @@ this.BX = this.BX || {};
 				this.disableEdit();
 				!!this.getSaveForAllCheckbox() && (this.getSaveForAllCheckbox().checked = null);
 			},
+			// A grid can be rebuilt in place: its consumer destroys the instance and inits a new
+			// one over fresh markup under the same container id. The filter always takes the
+			// latest one - a destroyed instance has lost its listeners, so the update it
+			// announces after a reload reaches neither the live grid nor anybody else.
 			_onGridReady: function (grid) {
-				if (!this.grid && grid.getContainerId() === this.getParam('GRID_ID')) {
+				if (grid.getContainerId() === this.getParam('GRID_ID')) {
 					this.grid = grid;
 				}
 			},
@@ -6527,7 +6540,7 @@ this.BX = this.BX || {};
 				}
 				this.saveRestoreFilter();
 				this.disableAddPreset();
-				this.disableEdit();
+				this.disableEditWithoutApply();
 				if (!applyPresetId) {
 					applyPresetId = "default_filter";
 				}
@@ -6945,6 +6958,14 @@ this.BX = this.BX || {};
 			 * Disables edit mode
 			 */
 			disableEdit: function () {
+				this.disableEditWithoutApply();
+				this.applyFilter(null, true);
+			},
+			/**
+			 * Leaves edit mode without reloading the grid. Callers that follow up with their own
+			 * reload use it: a second one races the first and leaves the grid half updated.
+			 */
+			disableEditWithoutApply: function () {
 				var Preset = this.getPreset();
 				var presets = Preset.getPresets();
 				if (BX.type.isArray(presets) && presets.length) {
@@ -6963,7 +6984,6 @@ this.BX = this.BX || {};
 				BX.removeClass(this.getSidebarControlsContainer(), this.settings.classDisabled);
 				this.editablePresets = null;
 				this.isEditEnabledState = false;
-				this.applyFilter(null, true);
 			},
 			/**
 			 * Get preset buttons container
@@ -8737,5 +8757,5 @@ this.BX = this.BX || {};
 	exports.Fields = Fields;
 	exports.Presets = Presets;
 
-})(this.BX.Filter = this.BX.Filter || {}, BX.UI.EntitySelector, BX, BX.Event, BX.UI.Notification, BX, BX.Main);
+})(this.BX.Filter = this.BX.Filter || {}, BX, BX.Event, BX.UI.Notification, BX, BX.Main);
 //# sourceMappingURL=script.js.map

@@ -67,5 +67,6 @@ $arActivityDescription = (new ActivityDescription(
 	->setGroups([ ActivityGroup::CLIENT_COMMUNICATION->value ])
 	->setColorIndex(ActivityColorIndex::GREEN->value)
 	->setIcon(Outline::SMS->name)
+	->set('NODE_DESCRIPTION', Loc::getMessage('CRM_SSMSA_NODE_DESCRIPTION') ?? '')
 	->toArray()
 ;

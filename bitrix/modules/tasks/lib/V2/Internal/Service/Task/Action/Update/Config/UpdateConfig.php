@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config;
 
+use Bitrix\Tasks\Internals\Task\UpdateEventSuppression;
 use Bitrix\Tasks\V2\Internal\Entity\Analytics\AnalyticsData;
 
 class UpdateConfig
@@ -25,6 +26,7 @@ class UpdateConfig
 	private RuntimeData $runtime;
 	private ?AnalyticsData $analyticsData;
 	private bool $fromAi;
+	private bool $skipTaskUpdateEvent = false;
 
 	public function __construct(
 		int $userId,
@@ -54,7 +56,7 @@ class UpdateConfig
 		$this->needAutoclose = $needAutoclose;
 		$this->skipNotifications = $skipNotifications;
 		$this->skipRecount = $skipRecount;
-		$this->byPassParameters = $byPassParameters;
+		$this->setByPassParameters($byPassParameters);
 		$this->skipComments = $skipComments;
 		$this->skipPush = $skipPush;
 		$this->skipBP = $skipBP;
@@ -215,6 +217,11 @@ class UpdateConfig
 		return $this->fromAi;
 	}
 
+	public function isSkipTaskUpdateEvent(): bool
+	{
+		return $this->skipTaskUpdateEvent;
+	}
+
 	public function getEventGuid(): ?string
 	{
 		return $this->eventGuid;
@@ -286,6 +293,8 @@ class UpdateConfig
 
 	public function setByPassParameters(array $byPassParameters): static
 	{
+		$this->skipTaskUpdateEvent = UpdateEventSuppression::extract($byPassParameters);
+
 		$this->byPassParameters = $byPassParameters;
 
 		return $this;

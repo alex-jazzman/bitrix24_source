@@ -1,0 +1,2 @@
+<?php
+$MESS["CALL_BLOCK_CAMERA_BUTTON_LABEL"] = "Камера";

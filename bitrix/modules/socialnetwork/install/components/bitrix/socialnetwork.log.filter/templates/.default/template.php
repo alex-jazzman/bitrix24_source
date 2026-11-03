@@ -28,6 +28,14 @@ UI\Extension::load([
 ]);
 
 $isTasksV2Form = Loader::includeModule('tasks') && FormV2Feature::isOn();
+$hasLentaMenuActions =
+	$arParams['SHOW_FOLLOW'] !== 'N'
+	|| (
+		!$isTasksV2Form
+		&& $arParams['SHOW_EXPERT_MODE'] !== 'N'
+		&& class_exists(LogViewTable::class)
+	)
+;
 
 if (SITE_TEMPLATE_ID === 'bitrix24')
 {
@@ -287,7 +295,7 @@ if ($arResult["MODE"] === "AJAX")
 					description1: '<?=GetMessageJS("SONET_C30_F_EXPERT_MODE_POPUP_TEXT1B")?>',
 					description2: '<?=GetMessageJS("SONET_C30_F_EXPERT_MODE_POPUP_TEXT2B")?>',
 					descriptionImage: {
-						src: '<?=CUtil::JSEscape($this->GetFolder())?>/images/expert_mode/<?=GetMessageJS("SONET_C30_F_EXPERT_MODE_IMAGENAME")?>.png',
+						src: '<?=CUtil::JSEscape($this->GetFolder())?>/images/expert_mode/<?=GetMessageJS("SONET_C30_F_EXPERT_MODE_IMAGENAME")?>.webp',
 						width: 354,
 						height: 201
 					}
@@ -541,7 +549,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 		)
 	]);
 
-	if ($arParams['SHOW_FOLLOW'] !== 'N' || $arParams['SHOW_EXPERT_MODE'] !== 'N')
+	if ($hasLentaMenuActions)
 	{
 		$button = new Buttons\Button([
 			'icon' => Buttons\Icon::DOTS,
@@ -637,13 +645,7 @@ else if (SITE_TEMPLATE_ID === "bitrix24")
 
 	?><div id="<?=htmlspecialcharsbx($toolbarId)?>" class="pagetitle-container pagetitle-align-right-container"><?php
 
-	if (
-		$arParams["SHOW_FOLLOW"] !== "N"
-		|| (
-			$arParams["SHOW_EXPERT_MODE"] !== "N"
-			&& class_exists(LogViewTable::class)
-		)
-	)
+	if ($hasLentaMenuActions)
 	{
 		?>
 		<button id="feed_filter_button" class="ui-btn ui-btn-link ui-btn-filter-button ui-btn-themes"></button>

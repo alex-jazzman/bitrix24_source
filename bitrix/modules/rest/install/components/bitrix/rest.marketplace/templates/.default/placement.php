@@ -15,6 +15,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @global CUser $USER
  */
 use Bitrix\Rest\AppTable;
+use Bitrix\Rest\Internal\Service\Placement\LegacyAppIdPresenter;
 use Bitrix\Rest\PlacementTable;
 
 $appId = 0;
@@ -23,13 +24,15 @@ $placementCode = '';
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 
+$legacyAppIdPresenter = new LegacyAppIdPresenter();
+
 if($arResult["VARIABLES"]["PLACEMENT_ID"] > 0)
 {
 	$res = PlacementTable::getById(intval($arResult["VARIABLES"]["PLACEMENT_ID"]));
 	if($placement = $res->fetch())
 	{
 		$placementCode = $placement['PLACEMENT'];
-		$appId = $placement['APP_ID'];
+		$appId = $legacyAppIdPresenter->encode($placement);
 		$placementId = $placement['ID'];
 	}
 }
@@ -43,18 +46,16 @@ elseif($arResult["VARIABLES"]["APP"])
 	)
 	{
 		$appId =  $appInfo['ID'];
-		$res = PlacementTable::getList(
-			[
-				'filter' => [
-					'PLACEMENT' => \CRestUtil::PLACEMENT_APP_URI,
-					'APP_ID' => $appInfo['ID']
-				],
-			]
-		);
-		if($placement = $res->fetch())
+		$placement = PlacementTable::query()
+			->setSelect(['ID'])
+			->where('APP_ID', $appInfo['ID'])
+			->where('PLACEMENT', \CRestUtil::PLACEMENT_APP_URI)
+			->setLimit(1)
+			->fetch()
+		;
+		if($placement)
 		{
-			$placementCode = $placement['PLACEMENT'];
-			$appId = $placement['APP_ID'];
+			$placementCode = \CRestUtil::PLACEMENT_APP_URI;
 			$placementId = $placement['ID'];
 		}
 	}

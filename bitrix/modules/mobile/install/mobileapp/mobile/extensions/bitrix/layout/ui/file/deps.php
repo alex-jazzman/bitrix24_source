@@ -3,16 +3,24 @@
 return [
 	'extensions' => [
 		'assets/icons',
-		'utils/function',
 		'utils/object',
 		'utils/file',
 		'utils/skeleton',
-		'utils/string',
-		'apptheme',
+		'tokens',
 		'alert',
 		'loc',
+		'layout/ui/file/viewer',
 		'layout/ui/safe-image',
+		'ui-system/blocks/badges/button',
 		'ui-system/blocks/icon',
-		'require-lazy',
+		'ui-system/typography/text',
+	],
+	'bundle' => [
+		'./src/action-button',
+		'./src/tile-parts',
+		'./src/delete-item',
+		'./src/render-file',
+		'./src/render-image',
+		'./src/render-shimmed-file',
 	],
 ];

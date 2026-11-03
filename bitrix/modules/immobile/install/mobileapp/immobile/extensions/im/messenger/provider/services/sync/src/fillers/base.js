@@ -42,6 +42,8 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			this.recentRepository = this.core.getRepository().recent;
 			/** @type {CopilotRepository} */
 			this.copilotRepository = this.core.getRepository().copilot;
+			/** @type {CommentRepository} */
+			this.commentRepository = this.core.getRepository().comment;
 
 			this.messageContextCreator = new MessageContextCreator();
 
@@ -152,6 +154,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			await this.processFiles(syncListResult.files);
 			await this.processReactions(syncListResult);
 			await this.processMessages(syncListResult);
+			await this.processCommentInfo(syncListResult);
 			await this.processPins(syncListResult);
 			await this.processRecent(syncListResult);
 			await this.processCopilot(syncListResult);
@@ -420,6 +423,24 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			});
 
 			return openChatIdList;
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
+		 */
+		async processCommentInfo(syncListResult)
+		{
+			const { commentInfo } = syncListResult;
+			if (!Type.isArrayFilled(commentInfo))
+			{
+				return;
+			}
+
+			// The action creates missing elements and merges over existing ones, so a cell without
+			// isUserSubscribed does not reset the flag. updateComment would skip unknown posts and
+			// swallow zero values. The section goes to the local base by fillCommentInfo, therefore
+			// the action of the synchronization is the one the writer of the model does not follow.
+			await this.store.dispatch('commentModel/setCommentsFromSync', commentInfo);
 		}
 
 		/**

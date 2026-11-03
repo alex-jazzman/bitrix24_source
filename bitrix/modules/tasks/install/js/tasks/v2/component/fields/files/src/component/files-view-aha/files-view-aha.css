@@ -1,0 +1,27 @@
+.tasks-files-view-aha-container {
+	display: flex;
+	flex-direction: row;
+	padding: 0;
+	min-height: 129px;
+}
+
+.tasks-files-view-aha-icon {
+	flex-shrink: 0;
+	width: 98px;
+	align-self: stretch;
+	overflow: hidden;
+	background: url('./files-view-aha.png') no-repeat -38px -8px;
+	background-size: 149px 149px;
+}
+
+.tasks-files-view-aha-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	padding: var(--ui-space-inset-lg);
+	flex: 1;
+}
+
+.tasks-files-view-aha-info-text {
+	color: var(--ui-color-base-white-fixed);
+}

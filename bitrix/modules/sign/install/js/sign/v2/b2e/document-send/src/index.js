@@ -1,14 +1,14 @@
-import { Tag, Loc, Type, Dom } from 'main.core';
+import { Tag, Loc, Type, Dom, Text } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { Timezone } from 'main.date';
 import { type DocumentDetails } from 'sign.v2.document-setup';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { UserParty } from 'sign.v2.b2e.user-party';
 import { ReminderSelector, type Options as ReminderOptions } from 'sign.v2.b2e.reminder-selector';
-import type { MemberRoleType, DocumentModeType } from 'sign.type';
-import { MemberRole, Reminder, ProviderCode } from 'sign.type';
+import type { MemberRoleType, DocumentModeType, DocumentInitiatedType } from 'sign.type';
+import { MemberRole, Reminder, ProviderCode, DocumentInitiated } from 'sign.type';
 import { Item, EntityTypes } from './item';
-import { Api, type Provider } from 'sign.v2.api';
+import { Api, type LoadedMember, type Provider } from 'sign.v2.api';
 import { DocumentSummary } from 'sign.v2.document-summary';
 import { LangSelector } from 'sign.v2.lang-selector';
 import { DatetimeLimitSelector } from 'sign.v2.datetime-limit-selector';
@@ -16,11 +16,14 @@ import type { PartiesData, DocumentData } from './type';
 import type { DocumentSendConfig } from 'sign.v2.b2b.document-send';
 import { Hint } from 'sign.v2.helper';
 import { ProgressBar } from 'ui.progressbar';
+import { Input } from 'ui.system.input';
+import { FeatureStorage } from 'sign.feature-storage';
 import { HcmLinkPartyChecker } from 'sign.v2.b2e.hcm-link-party-checker';
 import type { Analytics } from 'sign.v2.analytics';
 
 import 'sign.v2.ui.notice';
 import './style.css';
+import './css/document-message.css';
 
 export type CommunicationType = 'idle' | 'phone' | 'email';
 
@@ -37,6 +40,18 @@ const ReminderSelectorOptionsByRole: Record<MemberRoleType, ReminderOptions> = {
 };
 
 const idleCommunication: CommunicationType = 'idle';
+
+// UX hint only, the actual limit is enforced by the server
+const documentMessageMaxLength = 2000;
+const documentMessageRowsQuantity = 4;
+
+// The step is completed by a single button, so every source that can block it is kept apart:
+// the step stays blocked while at least one source is invalid.
+const CompletionBlocker = Object.freeze({
+	dateSignUntil: 'dateSignUntil',
+	hcmLink: 'hcmLink',
+	documentMessage: 'documentMessage',
+});
 
 export class DocumentSend extends EventEmitter
 {
@@ -83,9 +98,24 @@ export class DocumentSend extends EventEmitter
 	#itemsToHide: Array<HTMLElement> = [];
 	#reminderSelectorByRole: Record<MemberRoleType, ReminderSelector> = {};
 	#documentMode: DocumentModeType;
+	#initiatedByType: DocumentInitiatedType;
 	#isExistingTemplate: boolean = false;
 	#isOpenedFromRobot: boolean = false;
 	#templateFolderId: number = 0;
+
+	#documentMessageInput: Input | null = null;
+	#documentMessageField: ?HTMLElement = null;
+	#documentMessageCounter: ?HTMLElement = null;
+	#documentMessageCounterId: string = `sign-document-send-message-counter-${Text.getRandom()}`;
+	#documentMessageErrorId: string = `sign-document-send-message-error-${Text.getRandom()}`;
+	#isDocumentMessageValid: boolean = true;
+	// The text the document carries on the server: it is read from the document when the step gets
+	// its data and it is what the field is compared against before a write.
+	#storedDocumentMessage: string = '';
+	#isDocumentMessageHydrated: boolean = false;
+	#isReminderTypesHydrated: boolean = false;
+
+	#completionBlockers: Set<string> = new Set();
 
 	#analytics: ?Analytics;
 
@@ -117,12 +147,21 @@ export class DocumentSend extends EventEmitter
 				},
 			},
 		});
-		const { region, languages, documentMode, isOpenedFromRobot, analytics, templateFolderId } = documentSendConfig;
+		const {
+			region,
+			languages,
+			documentMode,
+			initiatedByType,
+			isOpenedFromRobot,
+			analytics,
+			templateFolderId,
+		} = documentSendConfig;
 		this.#isOpenedFromRobot = isOpenedFromRobot;
 		this.#langSelector = new LangSelector(region, languages);
 		this.#documentData = {};
 		this.#analytics = analytics;
 		this.#documentMode = documentMode;
+		this.#initiatedByType = initiatedByType;
 		this.#templateFolderId = templateFolderId;
 		this.#ui.employeesTitle = Tag.render`
 			<p class="sign-b2e-send__party_signing-employees">
@@ -157,10 +196,10 @@ export class DocumentSend extends EventEmitter
 
 			this.#dateTimeLimitSelector
 				.subscribe('beforeDateModify', () => {
-					this.emit('disableComplete');
+					this.#setCompletionBlocker(CompletionBlocker.dateSignUntil, true);
 				})
 				.subscribe('afterDateModify', () => {
-					this.emit('enableComplete');
+					this.#setCompletionBlocker(CompletionBlocker.dateSignUntil, false);
 				})
 			;
 		}
@@ -205,8 +244,78 @@ export class DocumentSend extends EventEmitter
 		this.#items.employees.setDocumentUid(lastUid);
 		this.#items.reviewers.setDocumentUid(lastUid);
 
+		this.#hydrateDocumentMessage(documentData?.values().next().value?.inviteMessage);
+
 		this.#hcmLinkPartyChecker?.setDocumentGroupUids(documentGroupUids);
 		void this.#hcmLinkPartyChecker?.check();
+	}
+
+	// A document opened by the wizard keeps the language it was saved with, so the selector must
+	// show that language instead of the portal region default. A template being created has nothing
+	// saved yet, hence the restore is driven by the caller that opens a saved document and not by
+	// the data itself.
+	restoreSavedLanguage(): void
+	{
+		if (!this.#isTemplateMode())
+		{
+			return;
+		}
+
+		// documents of a group share one language, so the first one tells what is stored
+		this.#langSelector.setLangId(this.#documentData.values().next().value?.langId);
+	}
+
+	// The reminder frequency is stored on the members, and a template copy carries the frequency of
+	// the source template: left unread, the selectors would show their defaults and completing the
+	// step would write those defaults over the copied values. Only the first arrival that actually
+	// carries members hydrates the selectors: a later one must not overwrite the user choice, and an
+	// empty one must not count as done.
+	hydrateReminderTypesFromMembers(members: Array<LoadedMember>): void
+	{
+		if (this.#isReminderTypesHydrated || !this.#isTemplateMode() || !Type.isArrayFilled(members))
+		{
+			return;
+		}
+
+		Object.keys(this.#reminderSelectorByRole).forEach((role: MemberRoleType) => {
+			const reminderType = members.find((member) => member.role === role)?.reminderType;
+			if (Type.isStringFilled(reminderType))
+			{
+				this.#reminderSelectorByRole[role].setType(reminderType);
+			}
+		});
+
+		this.#isReminderTypesHydrated = true;
+	}
+
+	// The wizard can be opened again on a document whose message is already stored: without reading
+	// the text back the field would look empty while the invitations still carry it, and emptying
+	// the field would not clear anything. Documents of a group share one message, so the first one
+	// tells what is stored. Only the first data arrival fills the field: the later ones come from
+	// the same load and must not overwrite what the user has typed by then.
+	#hydrateDocumentMessage(storedMessage: ?string): void
+	{
+		if (this.#isDocumentMessageHydrated)
+		{
+			return;
+		}
+
+		this.#isDocumentMessageHydrated = true;
+		this.#storedDocumentMessage = storedMessage ?? '';
+
+		if (!Type.isNull(this.#documentMessageInput))
+		{
+			this.#fillFieldWithStoredDocumentMessage();
+			this.#updateDocumentMessageCounter();
+		}
+	}
+
+	// The stored text is written by a user, so it reaches the field through setValue and only after
+	// the input is rendered: the value option of ui.system.input goes into the markup of the
+	// textarea as it is.
+	#fillFieldWithStoredDocumentMessage(): void
+	{
+		this.#documentMessageInput.setValue(this.#storedDocumentMessage);
 	}
 
 	#getProgressAnimateLayout(): HTMLElement
@@ -361,6 +470,12 @@ export class DocumentSend extends EventEmitter
 			Dom.append(usersLayout, layout);
 		}
 
+		const documentMessageLayout = this.#getDocumentMessageLayout();
+		if (!Type.isNull(documentMessageLayout))
+		{
+			Dom.append(documentMessageLayout, layout);
+		}
+
 		this.#progressContainer = Tag.render`<div class="send-b2e-progress-container"></div>`;
 		this.#progress.renderTo(this.#progressContainer);
 
@@ -390,6 +505,117 @@ export class DocumentSend extends EventEmitter
 				</div>
 			</div>
 		`;
+	}
+
+	#getDocumentMessageLayout(): HTMLElement | null
+	{
+		if (!this.#isDocumentMessageAvailable())
+		{
+			return null;
+		}
+
+		const isInputCreatedHere = Type.isNull(this.#documentMessageInput);
+		this.#documentMessageInput ??= new Input({
+			rowsQuantity: documentMessageRowsQuantity,
+			resize: 'vertical',
+			placeholder: Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_PLACEHOLDER'),
+			ariaLabel: Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_TITLE'),
+			onInput: () => this.#onDocumentMessageInput(),
+		});
+		this.#documentMessageCounter ??= Tag.render`
+			<div
+				id="${this.#documentMessageCounterId}"
+				class="sign-b2e-send__message_counter"
+				data-testid="sign-document-send-message-counter"
+			></div>
+		`;
+
+		const messageInputLayout = this.#documentMessageInput.render();
+		if (isInputCreatedHere)
+		{
+			this.#fillFieldWithStoredDocumentMessage();
+		}
+
+		this.#updateDocumentMessageCounter();
+		// the counter and the length error describe the field; ui.system.input has no option for that
+		// and gives its error node no id, so the ids are set here, on the empty node: a live region
+		// announces only the changes that happen after it is already in the DOM
+		Dom.attr(messageInputLayout.querySelector('.ui-system-input-label.--error'), {
+			id: this.#documentMessageErrorId,
+			role: 'alert',
+		});
+		this.#documentMessageField ??= messageInputLayout.querySelector('textarea');
+		Dom.attr(this.#documentMessageField, {
+			'aria-describedby': `${this.#documentMessageCounterId} ${this.#documentMessageErrorId}`,
+		});
+
+		const messageLayout = Tag.render`
+			<div class="sign-b2e-settings__item" data-testid="sign-document-send-message">
+				<p class="sign-b2e-settings__item_title">
+					${Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_TITLE')}
+				</p>
+				<div class="sign-b2e-send__message">
+					${messageInputLayout}
+					${this.#documentMessageCounter}
+				</div>
+			</div>
+		`;
+		this.#itemsToHide.push(messageLayout);
+
+		return messageLayout;
+	}
+
+	#isDocumentMessageAvailable(): boolean
+	{
+		// only the invitation of a company-initiated document carries the sender message
+		return FeatureStorage.isDocumentMessageEnabled()
+			&& !this.#isTemplateMode()
+			&& this.#initiatedByType === DocumentInitiated.company
+		;
+	}
+
+	#onDocumentMessageInput(): void
+	{
+		const isValid = this.#getDocumentMessageLength() <= documentMessageMaxLength;
+		const isValidityChanged = isValid !== this.#isDocumentMessageValid;
+		this.#isDocumentMessageValid = isValid;
+		this.#updateDocumentMessageCounter();
+
+		if (!isValidityChanged)
+		{
+			return;
+		}
+
+		this.#documentMessageInput.setError(
+			isValid
+				? ''
+				: Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_LENGTH_ERROR', {
+					'#MAX_LENGTH#': documentMessageMaxLength,
+				}),
+		);
+		Dom.attr(this.#documentMessageField, 'aria-invalid', isValid ? null : 'true');
+		this.#setCompletionBlocker(CompletionBlocker.documentMessage, !isValid);
+	}
+
+	#updateDocumentMessageCounter(): void
+	{
+		// the counter shows the length the limit is checked against, so it never reports an error
+		// on a message the server accepts
+		const length = this.#getDocumentMessageLength();
+
+		this.#documentMessageCounter.textContent = `${length}/${documentMessageMaxLength}`;
+		Dom.toggleClass(this.#documentMessageCounter, '--error', !this.#isDocumentMessageValid);
+	}
+
+	#getDocumentMessage(): string
+	{
+		return this.#documentMessageInput?.getValue().trim() ?? '';
+	}
+
+	#getDocumentMessageLength(): number
+	{
+		// counted in characters of the trimmed value, exactly what is sent to the server
+		return [...this.#getDocumentMessage()].length;
 	}
 
 	#renderLangAndDateContainer(): HTMLElement
@@ -599,6 +825,10 @@ export class DocumentSend extends EventEmitter
 			{
 				await this.#dateTimeLimitSelector.saveSelectedDateForUids();
 			}
+
+			// the message must be stored before configure, otherwise invitations are sent without it
+			await this.#saveDocumentMessage(api);
+
 			this.#showProgressOverlay();
 			if (this.#isTemplateMode())
 			{
@@ -640,6 +870,40 @@ export class DocumentSend extends EventEmitter
 
 			return false;
 		}
+	}
+
+	async #saveDocumentMessage(api: Api): Promise<void>
+	{
+		if (!this.#isDocumentMessageAvailable())
+		{
+			return;
+		}
+
+		const message = this.#getDocumentMessage();
+		// only a difference from the text the document carries is written: an emptied field clears
+		// the stored text, and a field left as it was loaded costs no request
+		if (message === this.#storedDocumentMessage)
+		{
+			return;
+		}
+
+		const messageToStore = message === '' ? null : message;
+
+		if (this.#isGroupDocuments())
+		{
+			await api.modifyInviteMessageForDocuments(this.#getDocumentIds(), messageToStore);
+		}
+		else
+		{
+			await api.modifyInviteMessage(this.#getFirstDocumentUidFromGroup(), messageToStore);
+		}
+
+		this.#storedDocumentMessage = message;
+	}
+
+	#getDocumentIds(): Array<number>
+	{
+		return [...this.documentData.values()].map((data: DocumentDetails) => data.id);
 	}
 
 	deleteDocument(uid: string): void
@@ -686,6 +950,11 @@ export class DocumentSend extends EventEmitter
 	isDateTimeLimitSelectorValid(): boolean
 	{
 		return this.#dateTimeLimitSelector ? this.#dateTimeLimitSelector.isValid() : true;
+	}
+
+	refreshDateSignUntilBlocker(): void
+	{
+		this.#setCompletionBlocker(CompletionBlocker.dateSignUntil, !this.isDateTimeLimitSelectorValid());
 	}
 
 	#sleep(ms: Number): Promise
@@ -790,12 +1059,22 @@ export class DocumentSend extends EventEmitter
 
 	#onHcmLinkCheckerUpdateValidation(event: BaseEvent): void
 	{
-		const enableComplete = event?.data ?? false;
+		const isValid = event?.data ?? false;
 
-		this.emit(
-			enableComplete
-				? 'enableComplete'
-				: 'disableComplete',
-		);
+		this.#setCompletionBlocker(CompletionBlocker.hcmLink, !isValid);
+	}
+
+	#setCompletionBlocker(reason: string, isBlocked: boolean): void
+	{
+		if (isBlocked)
+		{
+			this.#completionBlockers.add(reason);
+		}
+		else
+		{
+			this.#completionBlockers.delete(reason);
+		}
+
+		this.emit(this.#completionBlockers.size === 0 ? 'enableComplete' : 'disableComplete');
 	}
 }

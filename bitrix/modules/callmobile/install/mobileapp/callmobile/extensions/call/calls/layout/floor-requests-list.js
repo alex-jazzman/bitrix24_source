@@ -147,7 +147,7 @@ jn.define('call/calls/layout/floor-requests-list', (require, exports, module) =>
 			const avatar = Avatar({
 				testId: 'floor-request-list-avatar',
 				uri: encodeURI(avatarPath),
-				name: BX.utils.html.htmlDecode(name),
+				name: Utils.htmlDecode(name),
 				size: 40,
 				backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[id].color),
 			});

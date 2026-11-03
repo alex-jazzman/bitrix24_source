@@ -38,8 +38,20 @@
 }
 
 .catalog-sections-list-menu-item-text i{
+	color: var(--ui-color-base-2);
 	font-style: normal;
-	opacity: .6;
+}
+
+.catalog-sections-list-menu-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	border: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
 }
 
 .catalog-sections-list-menu-item:active,
@@ -55,4 +67,20 @@
 	opacity: 0.6;
 	width: 7px;
 	height: 7px;
+}
+
+/* The rows touch the edges of the panel and of the side column, both of which scroll: the ring stays inside
+   the row, and only its left side, where the text starts, steps out into the padding of the item. */
+.catalog-sections-list-menu .catalog-sections-list-menu-item-link:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.catalog-sections-list-menu .catalog-sections-list-menu-item-link:focus-visible::before {
+	position: absolute;
+	inset: 0 0 0 calc(var(--ui-focus-outline-width) * -2);
+	border: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
 }

@@ -13,6 +13,7 @@ return [
 		'im.v2.lib.counter',
 		'im.v2.lib.feature',
 		'im.v2.lib.utils',
+		'main.popup',
 		'ui.icon-set.api.vue',
 	],
 	'skip_core' => true,

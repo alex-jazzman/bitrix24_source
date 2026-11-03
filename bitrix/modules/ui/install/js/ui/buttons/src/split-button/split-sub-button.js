@@ -1,4 +1,5 @@
 import BaseButton from '../base-button';
+import { updateCollapsedTooltip } from '../button/button';
 import SplitButtonState from './split-button-state';
 import SplitSubButtonType from './split-sub-button-type';
 import type SplitButton from './split-button';
@@ -96,7 +97,35 @@ export default class SplitSubButton extends BaseButton
 			throw new Error('BX.UI.SplitButton: a menu button doesn\'t support a text caption.');
 		}
 
-		return super.setText(text);
+		super.setText(text);
+		if (this.isMainButton())
+		{
+			updateCollapsedTooltip(this.getSplitButton());
+		}
+
+		return this;
+	}
+
+	setProps(props: { [propertyName: string]: string }): this
+	{
+		super.setProps(props);
+		if (this.isMainButton())
+		{
+			updateCollapsedTooltip(this.getSplitButton());
+		}
+
+		return this;
+	}
+
+	setDataSet(props: { [propertyName: string]: string }): this
+	{
+		super.setDataSet(props);
+		if (this.isMainButton())
+		{
+			updateCollapsedTooltip(this.getSplitButton());
+		}
+
+		return this;
 	}
 
 	#renderSwitcher(container: HTMLElement): void

@@ -79,7 +79,7 @@ export function createSidebarActions({
 })
 {
 	return {
-		// [TPL-02] The favorites block and all three stars go through the store, nothing else.
+		// The favorites block and all three stars go through the store, nothing else.
 		...favoriteActions,
 		canEditCollection: (collection) => collectionUseCases.canEditCollection(collection),
 		canManageCollectionPermissions: (collection) => collectionUseCases.canManageCollectionPermissions(collection),
@@ -136,7 +136,7 @@ export function createSidebarActions({
 		setSidebarCollapsed: (collapsed) => setSidebarCollapsed(collapsed),
 		toggleSidebarCollapsed: () => toggleSidebarCollapsed(),
 		saveSidebarState: (payload) => saveSidebarState(payload),
-		// [ALG-01] The only way the shell flips the rail panel state — mutation goes through
+		// The only way the shell flips the rail panel state - mutation goes through
 		// actions everywhere in the module.
 		setAiChatOpen: (open) => setAiChatOpen(open),
 		navigateToSearch: (query) => {

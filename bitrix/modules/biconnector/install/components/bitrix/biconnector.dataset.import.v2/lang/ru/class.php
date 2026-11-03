@@ -10,3 +10,4 @@ $MESS['BICONNECTOR_CSV_IMPORT_SEPARATOR_SEMICOLON'] = 'Точка с запят�
 $MESS['BICONNECTOR_CSV_IMPORT_SEPARATOR_COLON'] = 'Двоеточие';
 $MESS['BICONNECTOR_CSV_IMPORT_SEPARATOR_COMMA'] = 'Запятая';
 $MESS['BICONNECTOR_CSV_IMPORT_ACCESS_ERROR'] = 'Недостаточно прав для доступа к рабочему месту аналитика';
+$MESS['BICONNECTOR_CSV_IMPORT_TABLE_CREATE_ACCESS_ERROR'] = 'Недостаточно прав для создания таблицы';

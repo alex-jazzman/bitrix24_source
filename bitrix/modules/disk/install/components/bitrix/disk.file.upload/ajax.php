@@ -4,9 +4,12 @@ use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkAccessService;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkUrl;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\ProxyType;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 
 define('STOP_STATISTICS', true);
@@ -36,7 +39,18 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 	const ERROR_COULD_NOT_FIND_FILE   = 'DISK_FUAC_22003';
 	const ERROR_COULD_UPLOAD_VERSION  = 'DISK_FUAC_22004';
 
+	private UnifiedLinkAccessService $unifiedLinkAccessService;
+	private UnifiedLinkUrl $unifiedLinkUrl;
 	private static $uploader;
+
+	public function __construct()
+	{
+		parent::__construct();
+
+		$serviceLocator = ServiceLocator::getInstance();
+		$this->unifiedLinkAccessService = $serviceLocator->get(UnifiedLinkAccessService::class);
+		$this->unifiedLinkUrl = $serviceLocator->get(UnifiedLinkUrl::class);
+	}
 
 	protected function listActions()
 	{
@@ -95,7 +109,17 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 		unset($file["isNotUnique"]);
 		if ($createFile)
 		{
-			if(!$folder->canAdd($folder->getStorage()->getCurrentUserSecurityContext()))
+			$uls = $this->unifiedLinkUrl->getUlsFromRequest($this->request);
+
+			$shouldCheckUnifiedLink =
+				is_string($uls)
+				&& $this->unifiedLinkAccessService->validateUlsForObjectId(
+					objectId: $folder->getId(),
+					uls: $uls,
+				)
+			;
+
+			if(!$folder->canAdd($folder->getStorage()->getCurrentUserSecurityContext($shouldCheckUnifiedLink)))
 			{
 				$error = Loc::getMessage('DISK_FILE_UPLOAD_ERROR_BAD_RIGHTS');
 
@@ -123,6 +147,8 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 
 			$this->tryToRunWorkflow($fileModel);
 			$file["fileId"] = $fileModel->getId();
+			$file["uniqueCode"] = $fileModel->getUniqueCode();
+			$file["uls"] = $this->unifiedLinkAccessService->getUlsForObjectId($fileModel->getId());
 
 			return true;
 		}
@@ -151,6 +177,8 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 		}
 
 		$file["fileId"] = $fileModel->getId();
+		$file["uniqueCode"] = $fileModel->getUniqueCode();
+		$file["uls"] = $this->unifiedLinkAccessService->getUlsForObjectId($fileModel->getId());
 
 		return (empty($error));
 	}
@@ -184,7 +212,17 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 			return false;
 		}
 
-		if (!$file->canUpdate($file->getStorage()->getCurrentUserSecurityContext()))
+		$uls = $this->unifiedLinkUrl->getUlsFromRequest($this->request);
+
+		$shouldCheckUnifiedLink =
+			is_string($uls)
+			&& $this->unifiedLinkAccessService->validateUlsForObjectId(
+				objectId: $file->getId(),
+				uls: $uls,
+			)
+		;
+
+		if (!$file->canUpdate($file->getStorage()->getCurrentUserSecurityContext($shouldCheckUnifiedLink)))
 		{
 			$error = Loc::getMessage('DISK_FILE_UPLOAD_ERROR_BAD_RIGHTS2');
 
@@ -198,6 +236,8 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 			return false;
 		}
 		$fileData["fileId"] = $file->getId();
+		$fileData["uniqueCode"] = $file->getUniqueCode();
+		$fileData["uls"] = $this->unifiedLinkAccessService->getUlsForObjectId($file->getId());
 		$this->tryToRunWorkflow($file);
 
 		return true;

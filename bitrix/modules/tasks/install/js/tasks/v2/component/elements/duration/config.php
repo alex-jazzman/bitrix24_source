@@ -8,12 +8,13 @@ return [
 	'css' => 'dist/duration.bundle.css',
 	'js' => 'dist/duration.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'main.date',
 		'tasks.v2.const',
 		'tasks.v2.lib.calendar',
 		'ui.system.input.vue',
 		'ui.system.menu.vue',
+		'ui.vue3',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

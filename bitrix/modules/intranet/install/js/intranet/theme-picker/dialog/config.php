@@ -15,6 +15,7 @@ return [
 		'main.loader',
 		'color_picker',
 		'ui.uploader.core',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

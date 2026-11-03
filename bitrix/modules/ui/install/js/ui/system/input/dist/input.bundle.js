@@ -886,7 +886,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 					${commonAttrs.readonly ? 'readonly' : ''}
 					type="${commonAttrs.type}"
 					value="${commonAttrs.value}"
-					${commonAttrs.dataTestId ? `data-test-id="${commonAttrs.dataTestId}"` : ''}
+					${commonAttrs.dataTestId ? `data-testid="${commonAttrs.dataTestId}"` : ''}
 				/>
 			`;
 			}

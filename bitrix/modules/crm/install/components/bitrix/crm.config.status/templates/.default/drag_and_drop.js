@@ -44,6 +44,7 @@ var DragManager = new function() {
 		if (!elem) return;
 
 		if(!elem.parentNode.className.match(/\bdraghandle\b/)) return;
+		if(elem.parentNode.getAttribute('data-stage-editor-draft') === 'Y') return;
 
 		dragObject.elem = elem;
 

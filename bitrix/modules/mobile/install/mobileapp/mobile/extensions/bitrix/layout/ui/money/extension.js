@@ -6,14 +6,8 @@ jn.define('layout/ui/money', (require, exports, module) => {
 	const { Money } = require('money');
 
 	/**
-	 * @function MoneyView
-	 * @param {Object} props
-	 * @param {Money} props.money
-	 * @param {Function} props.renderAmount
-	 * @param {Function} props.renderCurrency
-	 * @param {Function} props.renderContainer
-	 * @param {Object} props.options
-	 * @returns {View}
+	 * @param {MoneyViewProps} props
+	 * @returns {MoneyViewNode}
 	 */
 	function MoneyView({ money, renderAmount, renderCurrency, renderContainer, ...options })
 	{

@@ -1,3 +1,5 @@
+import { Type } from 'main.core';
+
 import { GroupMappers } from 'tasks.v2.provider.service.group-service';
 import { FlowMappers } from 'tasks.v2.provider.service.flow-service';
 import { UserMappers, type UserDto } from 'tasks.v2.provider.service.user-service';
@@ -41,8 +43,11 @@ export class TaskGetExtractor
 
 	getUsers(): UserModel[]
 	{
+		const creator = this.#data.creator;
+		const hasCreatorName = Type.isString(creator?.name) && creator.name.trim().length > 0;
+
 		return [
-			this.#data.creator ?? [],
+			...(hasCreatorName ? [creator] : []),
 			this.#data.responsible ?? [],
 			...this.#data?.responsibleCollection ?? [],
 			...this.#data.multiResponsibles ?? [],

@@ -5,6 +5,31 @@
 	--base3-color: #909090;
 	--base7-color: #EDEEF0;
 	--success-color: #9DCF00;
+	--ci-blue: #0075FF;
+	--ci-green: #34C759;
+	--ci-white: #fff;
+	/* Staleness grey. Mirror of location/checkin CI_GREY in checkin-tokens.js (a JS const and a CSS var
+	   cannot share one literal — keep in sync). Consumed by the .--stale marker rules below. */
+	--ci-grey: #97a2b2;
+	--ci-amber: #F0A020;
+	--ci-office-fill: #d9f2ea;
+	--ci-office-icon: #17a67f;
+	--ci-office-bubble-size: 40px;
+	--ci-office-tail-height: 9px;
+	--ci-office-tail-overlap: 1px;
+	--ci-office-ring: rgba(47, 168, 232, 0.3);
+	--ci-office-plate-bg: #fff;
+	--ci-office-plate-title-color: #0f1115;
+	--ci-office-plate-count-color: #525c69;
+	--ci-office-plate-drop-gap: 6px;
+	--ci-office-plate-title-line-height: 16px;
+	--ci-office-plate-faces-line-height: 26px;
+	--ci-avatar-stack-face-size: 22px;
+	--ci-avatar-stack-outline: 2px;
+	--ci-avatar-stack-overlap: 9px;
+	--ci-avatar-stack-outline-color: #fff;
+	--ci-avatar-stack-rest-bg: #edeef0;
+	--ci-avatar-stack-rest-color: #525c69;
 }
 
 #check-in-map.theme-dark {
@@ -19,6 +44,15 @@
 	width: 100%;
 	height: 100vh;
 	background-color: #DDDDDD;
+}
+
+/* The map stands on the stand-in centre it was built with (check-in-map.js init): the engine keeps
+   loading and answering commands underneath, but nothing it draws is shown until the camera reaches
+   real coordinates. Only the drawn content is hidden - the container keeps its background, which is
+   the colour the host paints behind the WebView, so the wait reads as a map that has not opened yet
+   rather than as a place the user was never at. */
+#check-in-map.ci-stand-in-center > * {
+	visibility: hidden;
 }
 
 .leaflet-container {
@@ -169,7 +203,8 @@
 
 .employee-marker-container .marker-point-circle,
 .last-check-in-marker-container .marker-point-circle,
-.last-auto-check-in-marker-container .marker-point-circle
+.last-auto-check-in-marker-container .marker-point-circle,
+.current-location-marker-container .marker-point-circle
 {
 	margin-top: 12px;
 }
@@ -188,7 +223,8 @@
 }
 
 .last-check-in-marker-container .employee-drop,
-.last-auto-check-in-marker-container .employee-drop {
+.last-auto-check-in-marker-container .employee-drop,
+.current-location-marker-container .employee-drop {
 	background-color: var(--accent-color);
 }
 
@@ -287,9 +323,16 @@
 }
 
 .map-cluster-avatar .ui-avatar {
-	display: block;
+	display: flex;
 	width: 100%;
 	height: 100%;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Keep the fixed-size svg centered on the aperture; flex:none stops the disk from squishing into an ellipse. */
+.map-cluster-avatar .ui-avatar svg {
+	flex: none;
 }
 
 .map-cluster-avatar--counter {
@@ -347,7 +390,13 @@
 
 /* Loading marker style */
 
+/* Absolute overlay above the marker: floats over the top edge without changing the icon box,
+   so the anchor dot never shifts when the loader appears. */
 .marker-bullet-loader {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 100%;
 	display: flex;
 	justify-content: center;
 	height: 20px;
@@ -429,4 +478,380 @@
 .first-check-in-marker-icon-svg {
 	width: 100%;
 	height: 100%;
+}
+
+.ci-line-dot {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	box-sizing: border-box;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ci-line-dot--manual {
+	background: var(--ci-blue);
+	border: 3px solid var(--ci-white);
+}
+
+.ci-line-dot--auto {
+	background: var(--ci-white);
+	border: 3.5px solid var(--ci-blue);
+}
+
+.ci-line-dot--auto.ci-line-dot--stale {
+	border-color: var(--ci-grey);
+}
+
+.ci-num-marker--stale .ci-num-bubble,
+.ci-num-marker--stale .ci-line-dot--manual {
+	background: var(--ci-grey);
+}
+
+.ci-line-dot--start {
+	background: var(--ci-green);
+	border: 3px solid var(--ci-white);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* block strips the inline-svg baseline gap (down-shift); flex:none keeps the fixed 9px svg from being shrunk by the flex row. */
+.ci-start-play {
+	color: var(--ci-white);
+	display: block;
+	flex: none;
+}
+
+.ci-line-dot--finish,
+.ci-stack-disc--checker {
+	background-color: var(--ci-white);
+	background-image:
+		linear-gradient(45deg, #1b1b1b 25%, transparent 25%, transparent 75%, #1b1b1b 75%),
+		linear-gradient(45deg, #1b1b1b 25%, transparent 25%, transparent 75%, #1b1b1b 75%);
+	background-size: 6px 6px;
+	background-position: 0 0, 3px 3px;
+}
+
+.ci-line-dot--finish {
+	border: 3px solid var(--ci-white);
+}
+
+/* Prevent flex from shrinking marker children, otherwise the dot squishes. */
+.ci-line-dot,
+.ci-num-bubble,
+.ci-num-tail,
+.ci-avatar-body,
+.ci-avatar-tail,
+.ci-office-bubble,
+.ci-office-circle,
+.ci-office-tail {
+	flex-shrink: 0;
+}
+
+/* Outer marker container: content anchored to the bottom, the dot is the anchor point. */
+.ci-num-pin-marker,
+.ci-avatar-marker,
+.ci-office-marker {
+	overflow: visible;
+}
+
+.ci-num-marker,
+.ci-avatar,
+.ci-office {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.ci-num-bubble {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background: var(--ci-blue);
+	color: var(--ci-white);
+	border: 2.5px solid var(--ci-white);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font: 600 14px sans-serif;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+	box-sizing: border-box;
+}
+
+/* Overlap the tail tip into the dot's white border so the drop reads as connected. */
+.ci-num-tail {
+	width: 0;
+	height: 0;
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-top: 6px solid var(--ci-white);
+	margin-bottom: -2px;
+}
+
+.ci-avatar-body {
+	position: relative;
+	width: 48px;
+	height: 48px;
+}
+
+.ci-avatar-circle {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	border: 3px solid var(--ci-white);
+	box-shadow: 0 4px 11px rgba(0, 0, 0, 0.32), 0 0 0 2px var(--ci-blue);
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.ci-avatar-circle .ui-avatar {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Keep the fixed 48px svg centered on the aperture; flex:none stops the disk from squishing into an ellipse. */
+.ci-avatar-circle .ui-avatar svg {
+	flex: none;
+}
+
+.ci-avatar-tail {
+	width: 0;
+	height: 0;
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	/* Blue tail continues the avatar's colored ring instead of leaving a white notch. */
+	border-top: 8px solid var(--ci-blue);
+	margin-bottom: 1px;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+}
+
+/* Selection: the same static halo the other marker types draw it with (.ci-num-marker--active,
+   .ci-line-dot--active). Written as an outline so it composes with the ring the circle already
+   carries in its box-shadow instead of overwriting it. */
+.ci-avatar--active .ci-avatar-circle {
+	outline: 4px solid rgba(0, 117, 255, 0.28);
+	outline-offset: 2px;
+}
+
+/* Later rule on the same property, so it wins over the selection halo when a marker carries both.
+   Animating a separate node inside the marker makes Android WebView stop painting the rest of it;
+   the ring is an outline on the circle itself, which needs no node of its own. */
+.ci-avatar--pulse .ci-avatar-circle {
+	outline: 2px solid rgba(0, 117, 255, 0.7);
+	outline-offset: -2px;
+	animation: ci-pulse 2.4s ease-out infinite;
+}
+
+@keyframes ci-pulse {
+	0% { outline-offset: -2px; outline-color: rgba(0, 117, 255, 0.7); }
+	70% { outline-offset: 16px; outline-color: rgba(0, 117, 255, 0); }
+	100% { outline-offset: 16px; outline-color: rgba(0, 117, 255, 0); }
+}
+
+.ci-office-bubble {
+	width: var(--ci-office-bubble-size);
+	height: var(--ci-office-bubble-size);
+	border-radius: 50%;
+	background: var(--ci-white);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+	box-sizing: border-box;
+}
+
+.ci-office-circle {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--ci-office-fill);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ci-office-building {
+	color: var(--ci-office-icon);
+	display: block;
+	flex: none;
+}
+
+.ci-office-tail {
+	width: 0;
+	height: 0;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+	border-top: var(--ci-office-tail-height) solid var(--ci-white);
+	margin-top: calc(-1 * var(--ci-office-tail-overlap));
+	filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+}
+
+.ci-office {
+	position: relative;
+}
+
+.ci-office--active .ci-office-bubble {
+	outline: 6px solid var(--ci-office-ring);
+	outline-offset: 2px;
+}
+
+.ci-office-plate {
+	--ci-avatar-stack-outline-color: var(--ci-office-plate-bg);
+	position: absolute;
+	top: calc(100% + var(--ci-office-plate-drop-gap));
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 6px 11px;
+	border-radius: 12px;
+	background: var(--ci-office-plate-bg);
+	box-shadow: 0 6px 18px rgba(15, 17, 21, 0.15);
+	white-space: nowrap;
+}
+
+.ci-office-plate-title {
+	font: 500 13.5px sans-serif;
+	line-height: var(--ci-office-plate-title-line-height);
+	color: var(--ci-office-plate-title-color);
+}
+
+.ci-office-plate-faces {
+	display: flex;
+	height: var(--ci-office-plate-faces-line-height);
+	margin-top: 6px;
+	align-items: center;
+	gap: 8px;
+}
+
+.ci-avatar-stack {
+	display: flex;
+	align-items: center;
+}
+
+.ci-avatar-stack-face {
+	display: flex;
+	position: relative;
+	z-index: 0;
+	width: calc(var(--ci-avatar-stack-face-size) + 2 * var(--ci-avatar-stack-outline));
+	height: calc(var(--ci-avatar-stack-face-size) + 2 * var(--ci-avatar-stack-outline));
+	border: var(--ci-avatar-stack-outline) solid var(--ci-avatar-stack-outline-color);
+	border-radius: 50%;
+	margin-left: calc(-1 * var(--ci-avatar-stack-overlap));
+	box-sizing: border-box;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	flex-shrink: 0;
+}
+
+.ci-avatar-stack-face:first-child {
+	margin-left: 0;
+}
+
+.ci-avatar-stack-face .ui-avatar,
+.ci-avatar-stack-face .ui-avatar svg {
+	display: flex;
+	width: 100%;
+	height: 100%;
+}
+
+.ci-avatar-stack-face--rest {
+	background: var(--ci-avatar-stack-rest-bg);
+	color: var(--ci-avatar-stack-rest-color);
+	font: 500 11px sans-serif;
+}
+
+.ci-office-plate-count {
+	font: 400 12.5px sans-serif;
+	color: var(--ci-office-plate-count-color);
+}
+
+.ci-zoom-no-plate .ci-office-plate {
+	display: none;
+}
+
+.ci-num-marker--active .ci-num-bubble {
+	box-shadow: 0 0 0 4px rgba(0, 117, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ci-line-dot--active {
+	box-shadow: 0 0 0 4px rgba(0, 117, 255, 0.28), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ci-stack-marker {
+	overflow: visible;
+}
+
+.ci-stack {
+	position: relative;
+	width: 18px;
+}
+
+.ci-stack-disc {
+	position: absolute;
+	left: 0;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	box-sizing: border-box;
+	border: 2px solid var(--ci-white);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font: 600 10px sans-serif;
+	color: var(--ci-white);
+}
+
+.ci-stack-disc--manual {
+	background: var(--ci-blue);
+}
+
+.ci-stack-disc--auto {
+	background: var(--ci-white);
+	border-color: var(--ci-blue);
+}
+
+.ci-stack-disc--green {
+	background: var(--ci-green);
+}
+
+.ci-stack--stale .ci-stack-disc--manual {
+	background: var(--ci-grey);
+}
+
+.ci-stack--stale .ci-stack-disc--auto {
+	border-color: var(--ci-grey);
+}
+
+.ci-stack--active .ci-stack-disc:first-child {
+	box-shadow: 0 0 0 4px rgba(0, 117, 255, 0.28), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ci-xn-badge {
+	position: absolute;
+	top: -12px;
+	right: -12px;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 4px;
+	border-radius: 512px;
+	background: var(--ci-amber);
+	border: 2px solid var(--ci-white);
+	color: var(--ci-white);
+	font: 600 11px sans-serif;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+	box-sizing: border-box;
+	z-index: 10;
+}
+
+.ci-zoom-far .ci-xn-badge {
+	display: none;
 }

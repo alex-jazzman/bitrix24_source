@@ -18,6 +18,7 @@
 	{
 		BX.Landing.UI.Panel.Content.apply(this, arguments);
 		this.layout.classList.add("landing-ui-panel-content-edit");
+		this.layout.setAttribute("data-testid", "landing-content-edit-panel");
 		this.disableScroll = true;
 
 		this.appendFooterButton(
@@ -25,7 +26,10 @@
 				text: BX.Landing.Loc.getMessage("BLOCK_SAVE"),
 				onClick: BX.Type.isFunction(data.onSaveHandler) ? data.onSaveHandler : () => {},
 				className: "landing-ui-button-content-save",
-				attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_SLIDER_SAVE")}
+				attrs: {
+					title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_SLIDER_SAVE"),
+					"data-testid": "landing-content-edit-save-btn"
+				}
 			})
 		);
 		this.appendFooterButton(
@@ -33,7 +37,10 @@
 				text: BX.Landing.Loc.getMessage("BLOCK_CANCEL"),
 				onClick: BX.Type.isFunction(data.onCancelHandler) ? data.onCancelHandler : () => {},
 				className: "landing-ui-button-content-cancel",
-				attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_SLIDER_CANCEL")}
+				attrs: {
+					title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_SLIDER_CANCEL"),
+					"data-testid": "landing-content-edit-cancel-btn"
+				}
 			})
 		);
 	};
@@ -59,6 +66,11 @@
 			{
 				BX.Landing.UI.Panel.Content.prototype.show.call(this);
 			}
+		},
+
+		getFocusTrapOptions: function()
+		{
+			return { isolateOutside: false, initialFocus: 'container' };
 		},
 
 		/**

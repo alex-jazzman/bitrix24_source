@@ -7,7 +7,7 @@ import { sendData } from 'ui.analytics';
 import { Confetti } from 'ui.confetti';
 import { Lottie } from 'ui.lottie';
 import { UI } from 'ui.notification';
-import type { WidgetParams, WidgetTypeEnum } from '../widget';
+import type { WidgetParams, WidgetTypeEnum } from '../types';
 
 export class Base
 {

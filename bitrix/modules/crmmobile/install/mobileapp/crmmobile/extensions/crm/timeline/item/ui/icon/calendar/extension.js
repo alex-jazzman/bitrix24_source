@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/icon/calendar
  */
 jn.define('crm/timeline/item/ui/icon/calendar', (require, exports, module) => {
+	const { Text2 } = require('ui-system/typography/text');
 	const { Moment } = require('utils/date');
 	const { shortTime } = require('utils/date/formats');
 	const AppTheme = require('apptheme');
@@ -42,12 +43,11 @@ jn.define('crm/timeline/item/ui/icon/calendar', (require, exports, module) => {
 						alignItems: 'center',
 					},
 				},
-				Text({
+				Text2({
 					testId: 'TimelineItemIconCalendarDay',
 					text: day,
 					style: {
 						color: AppTheme.colors.base2,
-						fontSize: 17,
 						fontWeight: '700',
 					},
 				}),

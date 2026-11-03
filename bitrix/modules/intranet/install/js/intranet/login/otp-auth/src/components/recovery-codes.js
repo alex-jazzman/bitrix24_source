@@ -76,6 +76,7 @@ export const RecoveryCodes = {
 		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="OTP"/>
+			<input type="hidden" name="OTP_AUTHENTICATION_METHOD" value="recoveryCodes"/>
 			<input type="hidden" name="USER_OTP" :value="recoveryCode"/>
 			<input type="hidden" name="CURRENT_STEP" value="recoveryCodes"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>

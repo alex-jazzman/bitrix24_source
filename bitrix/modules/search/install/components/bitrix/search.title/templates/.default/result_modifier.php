@@ -3,6 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CBitrixComponentTemplate $this */
 
 //You may customize user card fields to display
 $arResult['USER_PROPERTY'] = [
@@ -86,7 +89,7 @@ foreach ($arResult['SEARCH'] as $i => $arItem)
 	{
 		case 'socialnetwork':
 		case 'iblock':
-			if (mb_substr($arItem['ITEM_ID'], 0, 1) === 'G')
+			if (str_starts_with($arItem['ITEM_ID'], 'G'))
 			{
 				if (file_exists($abs_path . 'socialnetwork_group.png'))
 				{
@@ -101,7 +104,8 @@ foreach ($arResult['SEARCH'] as $i => $arItem)
 				}
 
 				//section /element
-				if (mb_substr($arItem['ITEM_ID'], 0, 1) !== 'S')
+				$SECTION_ID = false;
+				if (!str_starts_with($arItem['ITEM_ID'], 'S'))
 				{
 					//Try to find gif by element proprety value xml id
 					$rsElement = CIBlockElement::GetList(
@@ -207,7 +211,7 @@ foreach ($arResult['SEARCH'] as $i => $arItem)
 
 				if (!$file)
 				{
-					if (mb_substr($arItem['ITEM_ID'], 0, 1) !== 'S')
+					if (!str_starts_with($arItem['ITEM_ID'], 'S'))
 					{
 						if (file_exists($abs_path . 'iblock_element.png'))
 						{
@@ -232,11 +236,11 @@ foreach ($arResult['SEARCH'] as $i => $arItem)
 			}
 			break;
 		case 'blog':
-			if (mb_substr($arItem['ITEM_ID'], 0, 1) === 'P' && file_exists($abs_path . 'blog_post.png'))
+			if (str_starts_with($arItem['ITEM_ID'], 'P') && file_exists($abs_path . 'blog_post.png'))
 			{
 				$file = 'blog_post.png';
 			}
-			elseif (mb_substr($arItem['ITEM_ID'], 0, 1) === 'U' && file_exists($abs_path . 'blog_user.png'))
+			elseif (str_starts_with($arItem['ITEM_ID'], 'U') && file_exists($abs_path . 'blog_user.png'))
 			{
 				$file = 'blog_user.png';
 			}
@@ -248,7 +252,7 @@ foreach ($arResult['SEARCH'] as $i => $arItem)
 			}
 			break;
 		case 'intranet':
-			if (mb_substr($arItem['ITEM_ID'], 0, 1) === 'U' && file_exists($abs_path . 'intranet_user.png'))
+			if (str_starts_with($arItem['ITEM_ID'], 'U') && file_exists($abs_path . 'intranet_user.png'))
 			{
 				$file = 'intranet_user.png';
 			}

@@ -44,6 +44,22 @@ else
 	];
 }
 
+$itemsListLabel = null;
+if ($arResult['IS_COMPILATION_EXISTS'] && !empty($arResult['ITEMS']))
+{
+	$productCount = (int)$arResult['NAV_RESULT']->NavRecordCount;
+	$itemsListLabel = Loc::getMessage(
+		'CT_BCS_CATALOG_COMPILATION_REGION_ARIA',
+		[
+			'#COUNT#' => Loc::getMessagePlural(
+				'CT_BCS_CATALOG_COMPILATION_COUNT',
+				$productCount,
+				['#COUNT#' => $productCount]
+			),
+		]
+	);
+}
+
 $showTopPager = false;
 $showBottomPager = false;
 $showLazyLoad = false;
@@ -155,15 +171,27 @@ $containerName = 'container-'.$navParams['NavNum'];
 
 $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_THEME'] : '';
 ?>
-<div class="catalog-section<?=$themeClass?> container-fluid" data-entity="<?=$containerName?>">
+<div
+	class="catalog-section<?=$themeClass?> container-fluid"
+	<?php if ($itemsListLabel !== null): ?>
+	role="list"
+	aria-label="<?= htmlspecialcharsbx($itemsListLabel) ?>"
+	<?php endif ?>
+	data-entity="<?=$containerName?>"
+>
 	<!-- items-container -->
-	<div data-entity="items-row" class="row flex-wrap">
+	<div data-entity="items-row" class="row flex-wrap" role="presentation">
 		<?php
 		if (!$arResult['IS_COMPILATION_EXISTS'])
 		{
 			?>
-			<h3><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_NOT_FOUND_TITLE') ?></h3>
-			<h4><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_NOT_FOUND_TEXT') ?></h4>
+			<div
+				role="region"
+				aria-label="<?= htmlspecialcharsbx(Loc::getMessage('CT_BCS_CATALOG_COMPILATION_NOT_FOUND_ARIA')) ?>"
+			>
+				<h3><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_NOT_FOUND_TITLE') ?></h3>
+				<h4 role="presentation"><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_NOT_FOUND_TEXT') ?></h4>
+			</div>
 			<?php
 		}
 		else if (!empty($arResult['ITEMS']))
@@ -174,7 +202,7 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 				$this->addEditAction($uniqueId, $item['EDIT_LINK'], $elementEdit);
 				$this->addDeleteAction($uniqueId, $item['DELETE_LINK'], $elementDelete, $elementDeleteParams);
 
-			?><div class="catalog-section-item-wrapper col-12 col-sm-6 d-flex align-items-stretch"><?php
+			?><div class="catalog-section-item-wrapper col-12 col-sm-6 d-flex align-items-stretch" role="listitem"><?php
 				$APPLICATION->IncludeComponent(
 					'bitrix:catalog.item',
 					'store_v3',
@@ -198,8 +226,13 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 		else
 		{
 			?>
-			<h3><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_EMPTY_TITLE') ?></h3>
-			<h4><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_EMPTY_TEXT') ?></h4>
+			<div
+				role="region"
+				aria-label="<?= htmlspecialcharsbx(Loc::getMessage('CT_BCS_CATALOG_COMPILATION_EMPTY_ARIA')) ?>"
+			>
+				<h3><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_EMPTY_TITLE') ?></h3>
+				<h4 role="presentation"><?= Loc::getMessage('CT_BCS_CATALOG_COMPILATION_EMPTY_TEXT') ?></h4>
+			</div>
 			<?php
 		}
 		?>
@@ -235,6 +268,9 @@ $templateData['SIGNED_PARAMETERS'] = $signedParams;
 		BTN_MESSAGE_COMPARE_REDIRECT: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_COMPARE_REDIRECT')?>',
 		BTN_MESSAGE_LAZY_LOAD: '<?=CUtil::JSEscape($arParams['MESS_BTN_LAZY_LOAD'])?>',
 		BTN_MESSAGE_LAZY_LOAD_WAITER: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_LAZY_LOAD_WAITER')?>',
+		CT_BCS_CATALOG_COMPILATION_APPENDED_PLURAL_0: '<?=GetMessageJS('CT_BCS_CATALOG_COMPILATION_APPENDED_PLURAL_0')?>',
+		CT_BCS_CATALOG_COMPILATION_APPENDED_PLURAL_1: '<?=GetMessageJS('CT_BCS_CATALOG_COMPILATION_APPENDED_PLURAL_1')?>',
+		CT_BCS_CATALOG_COMPILATION_APPENDED_PLURAL_2: '<?=GetMessageJS('CT_BCS_CATALOG_COMPILATION_APPENDED_PLURAL_2')?>',
 		SITE_ID: '<?=CUtil::JSEscape($component->getSiteId())?>'
 	});
 	var <?=$obName?> = new JCCatalogCompilationComponent({

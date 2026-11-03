@@ -3,6 +3,7 @@
  */
 jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 	const { Hint } = require('ui-system/popups/aha-moment/src/hint');
+	const { Icon } = require('ui-system/blocks/icon');
 	const { PropTypes } = require('utils/validation');
 	const { AnalyticsEvent } = require('analytics');
 	const { Spotlight } = require('ui-system/popups/aha-moment/src/spotlight');
@@ -16,6 +17,16 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 	const momentsEnabled = extensionData?.momentsEnabled;
 
 	/**
+	 * Handle over a moment that has already been asked for. Returned by AhaMoment.show(),
+	 * so that a consumer can take the popup down on its own — a moment normally closes
+	 * itself, through its own buttons, an outside click or autoCloseDelay.
+	 *
+	 * @typedef {object} AhaMomentController
+	 * @property {function(): void} hide closes the spotlight; with a not yet elapsed delay
+	 *   cancels the pending show instead
+	 */
+
+	/**
 	 * @class AhaMoment
 	 * @param {object} props
 	 * @return AhaMoment
@@ -26,28 +37,55 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 
 		#autoCloseTimer = null;
 
+		#showTimer = null;
+
+		#component = null;
+
+		#isDismissed = false;
+
 		/**
 		 * @public
 		 * @param {object} props
 		 * @param {number} props.testId
 		 * @param {object} props.targetRef
 		 * @param {boolean} [props.disableHideByOutsideClick=true]
-		 * @param {object} [props.analyticsLabel]
+		 * @param {object} [props.analyticsLabel] without it no analytics is sent at all
 		 * @param {string} [props.bottomButtonType]
+		 * @param {object} [props.targetParams] native target options, see Spotlight.setTargetAsync()
 		 * @param {object} [props.spotlightParams]
 		 * @param {string} [props.title]
 		 * @param {string} [props.description]
+		 * @param {string} [props.buttonText] renders the action button; the two props below apply only with it
+		 * @param {Icon} [props.buttonIcon]
+		 * @param {boolean} [props.buttonStretched=true]
 		 * @param {boolean} [props.closeButton=true]
+		 * @param {boolean} [props.closeOnClick=true] whether a tap on the action button closes the popup;
+		 *   with false closing is up to the consumer, through the returned controller
+		 * @param {boolean} [props.skipShownCheck=false] keeps the moment out of the AhaMoment.isShown
+		 *   semaphore: it is neither read before the show nor raised by it. Meant for a functional popup
+		 *   that must not block a real aha-moment from appearing over it. Such a consumer is expected
+		 *   to read AhaMoment.isShown itself if it wants to yield to a moment already on screen.
 		 * @param {function} [props.onClose]
 		 * @param {function} [props.onClick]
+		 * @param {function} [props.onTargetClick] called when the highlighted target is tapped
 		 * @param {function} [props.onHide]
-		 * @param {function} [props.onShowSkipped]
-		 * @param {function} [props.canShow]
+		 * @param {function} [props.onShow]
+		 * @param {function} [props.onShowSkipped] called when the moment did not reach the screen:
+		 *   without an argument when the show was declined up front — no target, moments disabled,
+		 *   canShow said no, or another moment already holds the screen — and with an Error when the
+		 *   native spotlight could not be created, measuring the target failed or the show itself threw.
+		 *   Without this callback a moment blocked by the semaphore still burns: its analytics and
+		 *   onShow fire while the native show() is dropped
+		 * @param {function} [props.canShow] asked again right before the show, so a delayed moment
+		 *   can still be declined
 		 * @param {number} [props.fadeInDuration=10]
 		 * @param {object} [props.image]
 		 * @param {number} [props.image.size=78]
 		 * @param {delay} [props.delay = 0]
 		 * @param {number} [props.autoCloseDelay = 0]
+		 * @return {AhaMomentController|null} null when there is nothing to show at all. The show
+		 *   itself completes later — the target is measured by the native side — so its own
+		 *   failure is reported through onShowSkipped rather than by this value
 		 */
 		static show(props)
 		{
@@ -61,52 +99,127 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			{
 				props.onShowSkipped?.();
 
-				return;
+				return null;
 			}
 
 			const controller = new AhaMoment({});
 
 			if (delay > 0)
 			{
-				setTimeout(() => {
-					controller.#showSpotlight(props);
-				}, delay);
-
-				return;
+				controller.#scheduleShow(props, delay);
+			}
+			else
+			{
+				void controller.#showSpotlight(props);
 			}
 
-			controller.#showSpotlight(props);
+			return controller.#createController();
 		}
 
-		#showSpotlight(props)
+		#scheduleShow(props, delay)
 		{
-			if (props.canShow && !props.canShow())
+			this.#showTimer = setTimeout(() => {
+				this.#showTimer = null;
+				void this.#showSpotlight(props);
+			}, delay);
+		}
+
+		/**
+		 * @return {AhaMomentController}
+		 */
+		#createController()
+		{
+			return {
+				hide: () => {
+					this.#isDismissed = true;
+					this.#clearShowTimer();
+					this.#component?.closeSpotlight();
+				},
+			};
+		}
+
+		#clearShowTimer()
+		{
+			if (this.#showTimer)
 			{
-				props.onShowSkipped?.();
+				clearTimeout(this.#showTimer);
+				this.#showTimer = null;
+			}
+		}
+
+		/**
+		 * Measuring the target is up to the native side, and the hint is laid out against the
+		 * measured rect, so everything past that point happens a tick later — late enough for the
+		 * controller to have hidden the moment before it ever reached the screen.
+		 */
+		async #showSpotlight(props)
+		{
+			const {
+				targetRef,
+				targetParams,
+				skipShownCheck = false,
+				canShow,
+				onShow,
+				onShowSkipped,
+			} = props;
+
+			if (canShow && !canShow())
+			{
+				onShowSkipped?.();
 
 				return;
 			}
 
-			if (AhaMoment.isShown && props.onShowSkipped)
+			if (!skipShownCheck && AhaMoment.isShown && onShowSkipped)
 			{
-				props.onShowSkipped();
+				onShowSkipped();
 
 				return;
 			}
 
-			let component = null;
-			let isShowStarted = false;
+			const spotlight = new Spotlight(targetRef, props);
+
+			// A wrapper without a native instance throws on every call, so nothing of it is kept:
+			// neither the component nor a semaphore raised for a popup that never appeared.
+			if (!spotlight.isCreated)
+			{
+				onShowSkipped?.(new Error('AhaMoment: unable to create spotlight'));
+
+				return;
+			}
+
+			let measuredTargetParams = null;
+
 			try
 			{
-				const spotlight = new Spotlight(props.targetRef, props);
-				const targetParams = spotlight.setTarget(props.targetParams);
+				measuredTargetParams = await spotlight.setTargetAsync(targetParams);
+			}
+			catch (error)
+			{
+				onShowSkipped?.(error);
 
-				component = this.#createAhaMoment(props, spotlight, targetParams);
+				return;
+			}
 
-				if (!AhaMoment.isShown)
+			if (this.#isDismissed)
+			{
+				return;
+			}
+
+			let isShowStarted = false;
+
+			try
+			{
+				this.#component = this.#createAhaMoment(props, spotlight, measuredTargetParams);
+
+				if (skipShownCheck || !AhaMoment.isShown)
 				{
-					AhaMoment.isShown = true;
-					isShowStarted = true;
+					if (!skipShownCheck)
+					{
+						AhaMoment.isShown = true;
+						isShowStarted = true;
+					}
+
 					spotlight.show();
 				}
 			}
@@ -117,9 +230,9 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 					AhaMoment.isShown = false;
 				}
 
-				if (props.onShowSkipped)
+				if (onShowSkipped)
 				{
-					props.onShowSkipped(error);
+					onShowSkipped(error);
 
 					return;
 				}
@@ -127,14 +240,11 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				throw error;
 			}
 
-			component.sendAnalytics({
+			this.#component.sendAnalytics({
 				event: 'show',
 			});
 
-			if (props.onShow)
-			{
-				props.onShow();
-			}
+			onShow?.();
 		}
 
 		#createAhaMoment(props, spotlight, targetParams)
@@ -161,6 +271,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				buttonText,
 				onClose: component.handleOnClose,
 				onClick: component.handleOnClick,
+				progress: restProps.progress ?? null,
 			});
 
 			spotlight.setHandler(component.#eventHandler);
@@ -201,15 +312,16 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * Analytics is opt-in: without analyticsLabel there is nothing to report it under,
+		 * so nothing is sent.
+		 */
 		sendAnalytics(params)
 		{
 			const { analyticsLabel } = this.props;
 
 			if (!analyticsLabel)
 			{
-				console.warn(
-					'\'c_section\', \'c_sub_section\' and \'p1\' for analyticsLabel in AhaMoment is not provided');
-
 				return;
 			}
 
@@ -226,7 +338,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		#sendButtonClickAnalytics(type)
 		{
 			this.sendAnalytics({
-				event: 'сlick_button',
+				event: 'click_button',
 				type,
 			});
 		}
@@ -240,7 +352,11 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 
 		onHide()
 		{
-			AhaMoment.isShown = false;
+			if (!this.props.skipShownCheck)
+			{
+				AhaMoment.isShown = false;
+			}
+
 			this.#clearAutoCloseTimer();
 
 			this.props.onHide?.();
@@ -253,6 +369,17 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			}
 
 			this.#sendButtonClickAnalytics(ButtonType.CLOSE);
+		};
+
+		onTargetClick = () => {
+			const { onTargetClick } = this.props;
+			if (!onTargetClick)
+			{
+				return;
+			}
+
+			this.closeSpotlight();
+			onTargetClick();
 		};
 
 		closeSpotlight()
@@ -282,22 +409,22 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		};
 
 		handleOnClick = () => {
-			const { spotlightRef, onClick, bottomButtonType } = this.props;
+			const { spotlightRef, onClick, bottomButtonType, closeOnClick = true } = this.props;
 
-			if (spotlightRef)
+			if (!spotlightRef)
+			{
+				return;
+			}
+
+			if (closeOnClick)
 			{
 				this.closeSpotlight();
+			}
 
-				if (onClick)
-				{
-					onClick();
-				}
+			onClick?.();
 
-				if (!bottomButtonType)
-				{
-					console.warn('\'bottomButtonType\' for AhaMoment is not provided');
-				}
-
+			if (bottomButtonType)
+			{
 				this.#sendButtonClickAnalytics(bottomButtonType);
 			}
 		};
@@ -307,16 +434,23 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		title: null,
 		description: null,
 		buttonText: null,
+		buttonIcon: null,
+		buttonStretched: true,
 		closeButton: true,
+		closeOnClick: true,
+		skipShownCheck: false,
 		onClick: null,
+		onTargetClick: null,
 		onClose: null,
 		onHide: null,
+		onShow: null,
 		onShowSkipped: null,
 		canShow: null,
 		image: null,
 		delay: 0,
 		autoCloseDelay: 0,
 		spotlightParams: {},
+		progress: null,
 	};
 
 	AhaMoment.propTypes = {
@@ -324,17 +458,24 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		title: PropTypes.string,
 		description: PropTypes.string,
 		buttonText: PropTypes.string,
+		buttonIcon: PropTypes.instanceOf(Icon),
+		buttonStretched: PropTypes.bool,
 		image: PropTypes.object,
 		closeButton: PropTypes.bool,
+		closeOnClick: PropTypes.bool,
+		skipShownCheck: PropTypes.bool,
 		disableHideByOutsideClick: PropTypes.bool,
 		onClick: PropTypes.func,
+		onTargetClick: PropTypes.func,
 		onClose: PropTypes.func,
 		onHide: PropTypes.func,
+		onShow: PropTypes.func,
 		onShowSkipped: PropTypes.func,
 		canShow: PropTypes.func,
 		delay: PropTypes.number,
 		autoCloseDelay: PropTypes.number,
 		spotlightParams: PropTypes.object,
+		progress: PropTypes.object,
 	};
 
 	module.exports = {

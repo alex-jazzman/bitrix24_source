@@ -1,6 +1,8 @@
 import { Cache, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { FocusNavigator } from 'ui.a11y';
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
+
 import { Analytics } from './analytics';
 import { AnnualSummaryContent } from './content/annual-summary-content';
 import { ApplicationContent } from './content/application-content';
@@ -9,12 +11,13 @@ import { FooterContent } from './content/footer-content';
 import { MainContent } from './content/main-content';
 import { MobileAuthContent } from './content/mobile-auth-content';
 import { SecondaryContent } from './content/secondary-content';
-import type { ConfigOptions, PopupOptions } from './types';
+import type { ConfigOptions, PopupOptions, ShowOptions } from './types';
 
 export class Popup extends EventEmitter
 {
 	#cache = new Cache.MemoryCache();
 	#popupsShowAfterBasePopup: Array<Popup> = [];
+	#subsectionFocusTarget: ?HTMLElement = null;
 
 	constructor(options: PopupOptions)
 	{
@@ -34,11 +37,37 @@ export class Popup extends EventEmitter
 		return this.#cache.get('options', {});
 	}
 
-	show(): void
+	show({ focusFirst = false }: ShowOptions = {}): void
 	{
-		this.getBasePopup().show();
+		const popup = this.getBasePopup();
+		const isShown = popup.isShown();
+
+		if (isShown)
+		{
+			if (focusFirst && !this.focusFirst())
+			{
+				popup.getPopup().subscribeOnce('onAfterShow', () => this.focusFirst());
+			}
+
+			return;
+		}
+
+		if (focusFirst && !isShown)
+		{
+			popup.getPopup().subscribeOnce('onAfterShow', () => this.focusFirst());
+		}
+
+		popup.show();
+
 		this.emit('show');
 		Analytics.send(Analytics.EVENT_OPEN_WIDGET);
+	}
+
+	focusFirst(): ?HTMLElement
+	{
+		return FocusNavigator.focusContainer(this.getBasePopup().getPopup().getPopupContainer(), {
+			preventScroll: true,
+		});
 	}
 
 	close(): void
@@ -126,7 +155,6 @@ export class Popup extends EventEmitter
 			});
 		});
 	}
-
 
 	#getMainContent(): MainContent
 	{
@@ -259,14 +287,40 @@ export class Popup extends EventEmitter
 
 	#setSubsectionEventHandlers(): void
 	{
-		const openFastMobileAuthSubsection = () => {
+		const openFastMobileAuthSubsection = (focusTarget: ?HTMLElement = null) => {
+			const popup = this.getBasePopup().getPopup();
 			const subsection = this.#getFastMobileAuthSubsection();
-			this.getBasePopup().getPopup().setContent(subsection);
+			this.#subsectionFocusTarget = focusTarget;
+
+			FocusNavigator.focusContainer(popup.getPopupContainer());
+			popup.setContent(subsection);
+			FocusNavigator.focusBySelector(
+				subsection,
+				'.intranet-avatar-widget-item-subsection__header button',
+			);
 		};
-		EventEmitter.subscribe('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', openFastMobileAuthSubsection);
-		EventEmitter.subscribe('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', openFastMobileAuthSubsection);
+		EventEmitter.subscribe('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', (event) => {
+			openFastMobileAuthSubsection(event.getData()?.focusTarget);
+		});
+		EventEmitter.subscribe('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', (event) => {
+			openFastMobileAuthSubsection(event.getData()?.focusTarget);
+		});
 		EventEmitter.subscribe('BX.Intranet.AvatarWidget.Subsection:back', () => {
-			this.getBasePopup().getPopup().setContent(this.getBasePopup().getContentWrapper());
+			const popup = this.getBasePopup().getPopup();
+			const contentWrapper = this.getBasePopup().getContentWrapper();
+			FocusNavigator.focusContainer(popup.getPopupContainer());
+			popup.setContent(contentWrapper);
+
+			if (this.#subsectionFocusTarget?.isConnected)
+			{
+				FocusNavigator.restoreFocus(this.#subsectionFocusTarget);
+			}
+			else
+			{
+				FocusNavigator.focusFirst(contentWrapper);
+			}
+
+			this.#subsectionFocusTarget = null;
 		});
 	}
 }

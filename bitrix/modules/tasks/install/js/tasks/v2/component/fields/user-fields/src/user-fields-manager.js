@@ -21,31 +21,31 @@ class UserFieldsManager
 	{
 		const result = [];
 
-		for (const userField of userFields)
+		for (const scheme of userFieldScheme)
 		{
+			const userField = userFields.find((item) => item.key === scheme.fieldName);
+
+			if (!userField)
+			{
+				continue;
+			}
+
 			if (userField.value === null)
 			{
 				continue;
 			}
 
-			const scheme: UserFieldScheme = userFieldScheme.find((item) => {
-				return item.fieldName === userField.key;
-			});
-
-			if (scheme)
+			if (!this.validateField(userField.value, scheme.userTypeId))
 			{
-				if (!this.validateField(userField.value, scheme.userTypeId))
-				{
-					continue;
-				}
-
-				result.push({
-					value: userField.value,
-					title: scheme.editFormLabel,
-					type: scheme.userTypeId,
-					mandatory: scheme.mandatory,
-				});
+				continue;
 			}
+
+			result.push({
+				value: userField.value,
+				title: scheme.editFormLabel,
+				type: scheme.userTypeId,
+				mandatory: scheme.mandatory,
+			});
 		}
 
 		return result;

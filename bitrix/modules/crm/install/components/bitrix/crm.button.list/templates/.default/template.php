@@ -77,7 +77,7 @@ $APPLICATION->IncludeComponent(
 		<h2 class="intranet-button-list-info-title"><?=Loc::getMessage('CRM_BUTTON_LIST_INFO_TITLE')?></h2>
 		<div class="intranet-button-list-info-visual">
 			<span class="intranet-button-list-info-visual-item">
-				<img src="<?=$this->GetFolder()?>/images/demo_main_<?=(in_array(LANGUAGE_ID, array('ru', 'ua', 'kz', 'by')) ? 'ru' : 'en')?>.png">
+				<img src="<?=$this->GetFolder()?>/images/demo_main_<?=(in_array(LANGUAGE_ID, array('ru', 'ua', 'kz', 'by')) ? 'ru' : 'en')?>.webp" alt="">
 			</span>
 		</div>
 		<div class="intranet-button-list-info-inner">

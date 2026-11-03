@@ -2,17 +2,24 @@
  * @module crm/in-app-url/routes
  */
 jn.define('crm/in-app-url/routes', (require, exports, module) => {
-	const { openEntityDetail, openEntityList } = require('crm/in-app-url/routes/open-actions');
 	const { Type } = require('crm/type');
-	let DocumentCardManager = null;
-	try
-	{
-		DocumentCardManager = require('catalog/store/document-card/manager').DocumentCardManager;
-	}
-	catch (e)
-	{
-		console.warn('Cannot get DocumentCardManager extension', e);
-	}
+	const { openEntityDetail, openEntityList } = require('crm/in-app-url/routes/src/open-actions');
+	const { resolveEntityListTarget } = require('crm/in-app-url/routes/entity-list-target');
+	const { requireLazy } = require('require-lazy');
+	const { openPortalPage } = require('in-app-url/portal-page');
+
+	/**
+	 * The card and the list open through their own screens, and a link they cannot show
+	 * (unsupported entity, a failure on the way) still has to reach the portal page.
+	 *
+	 * @param {Promise<boolean>} opening
+	 * @return {Promise<boolean>}
+	 */
+	const openedOrReported = (opening) => opening.catch((error) => {
+		console.error('crm/in-app-url: unable to open the crm screen', error);
+
+		return false;
+	});
 
 	/**
 	 * @param {InAppUrl} inAppUrl
@@ -23,100 +30,97 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 			eventOpenCrmSharedMessageHandler,
 		).name('crm:activity-shared-mail-message:open');
 
-		inAppUrl.register(
-			'/crm/:entityTypeName/details/:id/',
-			({ id, entityTypeName }, { context, queryParams }) => {
-				const entityTypeId = Type.resolveIdByName(entityTypeName);
+		inAppUrl
+			.addRoute('/crm/:entityTypeName/details/:id/')
+			.addRoute('/page/:sectionName/:pageName/type/:entityTypeId/details/:id/')
+			.addRoute('/crm/type/:entityTypeId/details/:id/')
+			.handler(async ({ id, entityTypeId, entityTypeName }, { context, queryParams, url }) => {
+				const { canOpenInDefault, deeplink, ...restContext } = context ?? {};
 
-				openEntityDetail(
+				const opened = await openedOrReported(openEntityDetail(
+					entityTypeId ?? Type.resolveIdByName(entityTypeName),
+					id,
+					{
+						...restContext,
+						queryParams,
+						canOpenInDefault: canOpenInDefault ?? Boolean(deeplink),
+					},
+				));
+
+				if (!opened)
+				{
+					return openPortalPage(url, context);
+				}
+
+				return null;
+			})
+			.name('crm:detail');
+
+		inAppUrl
+			.addRoute('/crm/:typeName/:typeId/')
+			.addRoute('/crm/:typeName/')
+			.handler(async ({ typeName, typeId }, { context, url }) => {
+				const { entityTypeId, activeTabName } = resolveEntityListTarget({ typeName, typeId });
+
+				const opened = await openedOrReported(openEntityList({
+					activeTabName,
 					entityTypeId,
-					id,
-					{ ...context, queryParams },
-				);
-			},
-		).name('crm:detailStaticEntityTypes');
+					presentation: context?.presentation,
+				}));
 
-		inAppUrl.register(
-			'/page/:sectionName/:pageName/type/:entityTypeId/details/:id/',
-			({ id, entityTypeId }, { context, queryParams }) => {
-				openEntityDetail(
-					entityTypeId,
-					id,
-					{ ...context, queryParams },
-				);
-			},
-		).name('crm:detailStaticEntityDynamicTypes');
+				if (!opened)
+				{
+					return openPortalPage(url, context);
+				}
 
-		inAppUrl.register(
-			'/crm/type/:entityTypeId/details/:id/',
-			({ id, entityTypeId }, { context, queryParams }) => {
-				openEntityDetail(
-					entityTypeId,
-					id,
-					{ ...context, queryParams },
-				);
-			},
-		).name('crm:detailDynamicEntityTypes');
+				return null;
+			})
+			.name('crm:entityList');
 
-		inAppUrl.register('/crm/:typeName/:typeId/', ({ typeName, typeId }) => {
-			const entityTypeId = typeName === 'type' ? typeId : Type.resolveIdByName(typeName);
+		inAppUrl
+			.addRoute('/shop/documents/details/sales_order/:id/')
+			.handler(({ id }, { context, url }) => {
+				const { canOpenInDefault, deeplink, linkText, presentation } = context ?? {};
 
-			openEntityList({
-				activeTabName: typeName,
-				entityTypeId,
-			});
-		}).name('crm:entityTypesList');
+				return requireLazy('catalog:store/document-card/manager')
+					.then(({ DocumentCardManager } = {}) => {
+						if (!DocumentCardManager)
+						{
+							return openPortalPage(url, context);
+						}
 
-		inAppUrl.register('/crm/:typeName/', ({ typeName, typeId }) => {
-			const entityTypeId = Type.resolveIdByName(typeName);
+						return DocumentCardManager.open({
+							id,
+							title: linkText,
+							presentation,
+							canOpenInDefault: canOpenInDefault ?? Boolean(deeplink),
+						});
+					})
+					.catch((error) => {
+						console.error('crm/in-app-url: unable to open the store document', error);
 
-			openEntityList({
-				activeTabName: typeName,
-				entityTypeId,
-			});
-		}).name('crm:entityList');
-
-		if (DocumentCardManager)
-		{
-			inAppUrl.register('/shop/documents/details/sales_order/:id/', ({ id }, { context }) => {
-				DocumentCardManager.open({
-					id,
-					title: context.linkText,
-				});
-			}).name('crm:storeDocumentDetail');
-		}
+						return openPortalPage(url, context);
+					});
+			})
+			.name('crm:storeDocumentDetail');
 	};
 
 	const eventOpenCrmSharedMessageHandler = ({ activityId }, { queryParams = {}, url, context = {} } = {}) => {
 		const act = String(queryParams.act ?? '');
 		if (!act)
 		{
-			openFallbackPage(url, context);
-
-			return;
+			return openPortalPage(url, context);
 		}
 
-		void jn.import('mail:opener')
-			.then(() => {
-				const { MailOpener } = require('mail/opener');
-
+		return requireLazy('mail:opener', false)
+			.then(({ MailOpener } = {}) => {
 				if (MailOpener?.openCrmSharedMessage)
 				{
-					MailOpener.openCrmSharedMessage({ activityId, act });
-
-					return;
+					return MailOpener.openCrmSharedMessage({ activityId, act });
 				}
 
-				openFallbackPage(url, context);
+				return openPortalPage(url, context);
 			})
-			.catch(() => openFallbackPage(url, context));
-	};
-
-	const openFallbackPage = (url, context = {}) => {
-		PageManager.openPage({
-			bx24ModernStyle: true,
-			...context,
-			url,
-		});
+			.catch(() => openPortalPage(url, context));
 	};
 });

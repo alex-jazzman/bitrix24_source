@@ -2,6 +2,7 @@ import { getMultipleLimitByValue, multipleLimits } from '../../enum/multiple-lim
 import { createDatePickerInstance, getFormattedDate, resolveEntityTypeName, showPopupMenu } from '../../helper';
 import { popupMenuMixin } from '../common/destroy-popup-menu';
 import { FieldTitle } from '../common/field-title';
+import { selectorA11yMixin } from '../common/selector-a11y';
 
 // @vue/component
 export const MultipleLimitSelector = {
@@ -9,7 +10,7 @@ export const MultipleLimitSelector = {
 		FieldTitle,
 	},
 
-	mixins: [popupMenuMixin('crm-recurring-multiple-limit-selector')],
+	mixins: [popupMenuMixin('crm-recurring-multiple-limit-selector'), selectorA11yMixin],
 
 	props: {
 		entityTypeId: {
@@ -108,7 +109,7 @@ export const MultipleLimitSelector = {
 	},
 
 	methods: {
-		showSelector(): void
+		showSelector(event: ?Event = null): void
 		{
 			const menu = [];
 
@@ -120,7 +121,8 @@ export const MultipleLimitSelector = {
 				});
 			});
 
-			showPopupMenu(this.popupMenuId, this.$refs.selector, menu);
+			this.markSelectorOpened('multipleLimit');
+			showPopupMenu(this.popupMenuId, this.$refs.selector, menu, () => this.markSelectorClosed('multipleLimit'), event);
 		},
 
 		onChange(_, item): void
@@ -150,14 +152,24 @@ export const MultipleLimitSelector = {
 	// language=Vue
 	template: `
 		<div class="ui-entity-editor-content-block">
-			<FieldTitle :title="title" />
+			<FieldTitle :title="title" :label-id="a11yId('multipleLimit-title')" />
 			
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('multipleLimit')"
+					:aria-labelledby="selectorLabelledBy('multipleLimit')"
+					@click="showSelector"
+					@keydown.enter.prevent="showSelector"
+					@keydown.space.prevent="showSelector"
+				>
 					<div
 						ref="selector"
+						:id="a11yId('multipleLimit-value')"
 						class="ui-ctl-element"
-						@click="showSelector"
 					>
 						{{currentMultipleLimitTitle}}
 					</div>

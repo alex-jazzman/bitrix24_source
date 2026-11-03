@@ -12,6 +12,7 @@ return [
 		'main.core.events',
 		'main.date',
 		'main.loader',
+		'sign.feature-storage',
 		'sign.type',
 		'sign.v2.api',
 		'sign.v2.b2e.hcm-link-party-checker',
@@ -25,6 +26,7 @@ return [
 		'sign.v2.ui.notice',
 		'ui.entity-selector',
 		'ui.progressbar',
+		'ui.system.input',
 	],
 	'skip_core' => false,
 ];

@@ -3,124 +3,178 @@ this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
 (function (exports, main_core, landing_loc, landing_ui_form_baseform) {
-'use strict';
+	'use strict';
 
-/**
- * @memberOf BX.Landing.UI.Form
- */
-var _templateObject;
-var CardForm = /*#__PURE__*/function (_landing_ui_form_base) {
-  function CardForm(options) {
-    var _this;
-    _this = _landing_ui_form_base.call(this, options) || this;
-    _this.setEventNamespace('BX.Landing.UI.Form.CardForm');
-    main_core.Dom.addClass(_this.layout, 'landing-ui-form-card');
-    _this.onItemClick = main_core.Runtime.throttle(_this.onItemClick, 200, _this);
-    _this.onRemoveItemClick = _this.onRemoveItemClick.bind(_this);
-    _this.onHeaderKeyDown = _this.onHeaderKeyDown.bind(_this);
-    _this.onDragButtonClick = _this.onDragButtonClick.bind(_this);
-    _this.titleId = "landing-card-title-".concat(_this.id);
-    _this.bodyId = "landing-card-body-".concat(_this.id);
-    _this.wrapper = _this.getWrapper();
-    _this.labelBindings = options.labelBindings;
-    _this.preset = options.preset;
-    var _this$selector$split = _this.selector.split('@');
-    var _this$selector$split2 = babelHelpers.slicedToArray(_this$selector$split, 2);
-    _this.oldIndex = _this$selector$split2[1];
-    return _this;
-  }
-  babelHelpers.inherits(CardForm, _landing_ui_form_base);
-  var _proto = CardForm.prototype;
-  _proto.getWrapper = function getWrapper() {
-    var wrapper = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"landing-ui-form-cards-item\">\n\t\t\t\t<div class=\"landing-ui-form-cards-item-inner\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"landing-ui-form-card-item-header\"\n\t\t\t\t\t\trole=\"button\"\n\t\t\t\t\t\ttabindex=\"0\"\n\t\t\t\t\t\taria-expanded=\"false\"\n\t\t\t\t\t\taria-controls=\"", "\"\n\t\t\t\t\t\taria-labelledby=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"landing-ui-form-card-item-header-left\">\n\t\t\t\t\t\t\t<div class=\"landing-ui-form-card-item-header-left-inner\">\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"landing-ui-form-card-item-header-drag landing-ui-drag\"\n\t\t\t\t\t\t\t\t\trole=\"button\"\n\t\t\t\t\t\t\t\t\ttabindex=\"0\"\n\t\t\t\t\t\t\t\t\taria-label=\"", "\"\n\t\t\t\t\t\t\t\t\taria-keyshortcuts=\"Alt+ArrowUp Alt+ArrowDown\"\n\t\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t\t\t<span class=\"landing-ui-form-card-item-header-title\" id=\"", "\">", "</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-ui-form-card-item-header-edit\" aria-hidden=\"true\">\n\t\t\t\t\t\t\t\t<span class=\"fa fa-pencil\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-ui-form-card-item-header-right\">\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\ttype=\"button\"\n\t\t\t\t\t\t\t\tclass=\"landing-ui-form-card-item-header-remove\"\n\t\t\t\t\t\t\t\taria-label=\"", "\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"fa fa-remove\" aria-hidden=\"true\"></span>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.bodyId, this.titleId, landing_loc.Loc.getMessage('LANDING_CARDS_FORM_DRAG_HANDLE_LABEL'), this.titleId, this.label, landing_loc.Loc.getMessage('LANDING_CARDS_FORM_REMOVE_LABEL'), this.getNode());
-    this.header = wrapper.querySelector('.landing-ui-form-card-item-header');
-    this.dragButton = wrapper.querySelector('.landing-ui-form-card-item-header-drag');
-    this.removeButton = wrapper.querySelector('.landing-ui-form-card-item-header-remove');
-    main_core.Event.bind(this.header, 'click', this.onItemClick);
-    main_core.Event.bind(this.header, 'keydown', this.onHeaderKeyDown);
-    main_core.Event.bind(this.dragButton, 'click', this.onDragButtonClick);
-    main_core.Event.bind(this.removeButton, 'click', this.onRemoveItemClick);
-    main_core.Dom.attr(this.getNode(), 'id', this.bodyId);
-    this.setExpanded(false);
-    return wrapper;
-  };
-  _proto.setExpanded = function setExpanded(expanded) {
-    var body = this.getNode();
-    main_core.Dom.attr(this.header, 'aria-expanded', expanded ? 'true' : 'false');
+	const NBSP = '\u00A0';
+	const NBSP_ENTITY_PATTERN = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
 
-    // `inert` keeps the collapsed body measurable (height/transition unchanged)
-    // while removing its fields from Tab order and the accessibility tree —
-    // unlike `display:none`, which would break the expand animation.
-    if (expanded) {
-      body.removeAttribute('inert');
-    } else {
-      main_core.Dom.attr(body, 'inert', '');
-    }
-  };
-  _proto.getTitleText = function getTitleText() {
-    var titleNode = this.wrapper ? this.wrapper.querySelector('.landing-ui-form-card-item-header-title') : null;
-    return titleNode ? titleNode.textContent : '';
-  };
-  _proto.onHeaderKeyDown = function onHeaderKeyDown(event) {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-      event.preventDefault();
-      this.onItemClick(event);
-    }
-  }
+	/**
+	 * @memberOf BX.Landing.UI.Form
+	 */
+	class CardForm extends landing_ui_form_baseform.BaseForm {
+		constructor(options) {
+			super(options);
+			this.setEventNamespace('BX.Landing.UI.Form.CardForm');
+			main_core.Dom.addClass(this.layout, 'landing-ui-form-card');
+			this.onItemClick = main_core.Runtime.throttle(this.onItemClick, 200, this);
+			this.onRemoveItemClick = this.onRemoveItemClick.bind(this);
+			this.onDragButtonClick = this.onDragButtonClick.bind(this);
+			this.bodyId = `landing-card-body-${this.id}`;
+			this.wrapper = this.getWrapper();
+			this.labelBindings = options.labelBindings;
+			this.preset = options.preset;
+			[, this.oldIndex] = this.selector.split('@');
+		}
+		getWrapper() {
+			const wrapper = main_core.Tag.render`
+			<div class="landing-ui-form-cards-item" data-testid="landing-card-form">
+				<div class="landing-ui-form-cards-item-inner">
+					<div class="landing-ui-form-card-item-header">
+						<div class="landing-ui-form-card-item-header-left">
+							<div class="landing-ui-form-card-item-header-left-inner">
+								<button
+									type="button"
+									class="landing-ui-form-card-item-header-drag landing-ui-drag"
+									aria-label="${landing_loc.Loc.getMessage('LANDING_CARDS_FORM_DRAG_HANDLE_LABEL')}"
+									aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+									data-testid="landing-card-form-drag-btn"
+								></button>
+								<button
+									type="button"
+									class="landing-ui-form-card-item-header-title"
+									aria-expanded="false"
+									aria-controls="${this.bodyId}"
+									data-testid="landing-card-form-title-btn"
+								></button>
+							</div>
+							<div class="landing-ui-form-card-item-header-edit" aria-hidden="true">
+								<span class="fa fa-pencil"></span>
+							</div>
+						</div>
+						<div class="landing-ui-form-card-item-header-right">
+							<button
+								type="button"
+								class="landing-ui-form-card-item-header-remove"
+								aria-label="${landing_loc.Loc.getMessage('LANDING_CARDS_FORM_REMOVE_LABEL')}"
+								data-testid="landing-card-form-remove-btn"
+							>
+								<span class="fa fa-remove" aria-hidden="true"></span>
+							</button>
+						</div>
+					</div>
+					${this.getNode()}
+				</div>
+			</div>
+		`;
+			this.header = wrapper.querySelector('.landing-ui-form-card-item-header');
+			this.titleButton = wrapper.querySelector('.landing-ui-form-card-item-header-title');
+			this.dragButton = wrapper.querySelector('.landing-ui-form-card-item-header-drag');
+			this.removeButton = wrapper.querySelector('.landing-ui-form-card-item-header-remove');
 
-  // eslint-disable-next-line class-methods-use-this
-;
-  _proto.onDragButtonClick = function onDragButtonClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-  _proto.onItemClick = function onItemClick(event) {
-    event.preventDefault();
-    if (main_core.Type.isDomNode(event.currentTarget)) {
-      var target = event.currentTarget.closest('.landing-ui-form-cards-item');
-      if (!main_core.Dom.hasClass(target, 'landing-ui-form-cards-item-expand')) {
-        main_core.Dom.addClass(target, 'landing-ui-form-cards-item-expand');
-        BX.Landing.Utils.onTransitionEnd(target).then(function () {
-          main_core.Dom.style(target, {
-            overflow: 'visible'
-          });
-        });
-        main_core.Dom.style(target, {
-          height: 'auto'
-        });
-        this.setExpanded(true);
-      } else {
-        main_core.Dom.removeClass(target, 'landing-ui-form-cards-item-expand');
-        main_core.Dom.style(target, null);
-        this.setExpanded(false);
-      }
-    }
-  };
-  _proto.onRemoveItemClick = function onRemoveItemClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!this.getLayout().closest('.landing-ui-disallow-remove')) {
-      main_core.Dom.remove(this.wrapper);
-      this.emit('onRemove');
-    }
-  };
-  _proto.serialize = function serialize() {
-    return this.fields.reduce(function (res, field) {
-      var _field$selector$split = field.selector.split('@'),
-        _field$selector$split2 = babelHelpers.slicedToArray(_field$selector$split, 1),
-        index = _field$selector$split2[0];
-      res[index] = field.getValue();
-      return res;
-    }, {});
-  };
-  _proto.getPreset = function getPreset() {
-    return this.preset || null;
-  };
-  return CardForm;
-}(landing_ui_form_baseform.BaseForm);
-exports.CardForm = CardForm;
+			// The label is either the ready title node of a block card or a plain string, and a string
+			// one is read off the page with `innerHTML` - a card of the site can hold anything and this
+			// panel runs in the origin of the portal. So it goes in as a node in both cases and markup
+			// of the page stays text here. The string still arrives with its entities intact, and only
+			// the parser used to expand them; decoding gives back the characters it would have shown,
+			// while encoding on top of them would print `Q&amp;A` literally.
+			main_core.Dom.append(main_core.Type.isDomNode(this.label) ? this.label : document.createTextNode(CardForm.decodeLabel(this.label)), this.titleButton);
+
+			// The title button is the disclosure control, but the whole header row stays clickable
+			// with the mouse. A native activation of the button - Enter, Space or a click - bubbles
+			// into this very handler, so the toggle is bound once, on the row, and never twice.
+			main_core.Event.bind(this.header, 'click', this.onItemClick);
+			main_core.Event.bind(this.dragButton, 'click', this.onDragButtonClick);
+			main_core.Event.bind(this.removeButton, 'click', this.onRemoveItemClick);
+
+			// The body is what the title button expands and what `inert` leaves out of the Tab order,
+			// so a test needs it by itself and not only through `aria-controls` of the button.
+			main_core.Dom.attr(this.getNode(), {
+				id: this.bodyId,
+				'data-testid': 'landing-card-form-body'
+			});
+			this.setExpanded(false);
+			return wrapper;
+		}
+		setExpanded(expanded) {
+			const body = this.getNode();
+			main_core.Dom.attr(this.titleButton, 'aria-expanded', expanded ? 'true' : 'false');
+
+			// `inert` keeps the collapsed body measurable (height/transition unchanged)
+			// while removing its fields from Tab order and the accessibility tree —
+			// unlike `display:none`, which would break the expand animation.
+			if (expanded) {
+				body.removeAttribute('inert');
+			} else {
+				main_core.Dom.attr(body, 'inert', '');
+			}
+		}
+		getTitleText() {
+			const titleNode = this.wrapper ? this.wrapper.querySelector('.landing-ui-form-card-item-header-title') : null;
+			if (titleNode === null) {
+				return '';
+			}
+			const words = titleNode.textContent.trim();
+			if (words !== '') {
+				return words;
+			}
+
+			// A title built of pictures alone says nothing in words, and the name of such a card lives
+			// on the label instead (`block.js`: createCardLabel marks it `role="img"`). The consumer
+			// reads this to announce a card move out loud, so without the fallback a screen reader is
+			// told a card moved and never told which one.
+			const picture = titleNode.querySelector('[role="img"][aria-label]');
+			return picture ? picture.getAttribute('aria-label').trim() : '';
+		}
+		onDragButtonClick(event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+		onItemClick(event) {
+			event.preventDefault();
+			if (main_core.Type.isDomNode(event.currentTarget)) {
+				const target = event.currentTarget.closest('.landing-ui-form-cards-item');
+				if (main_core.Dom.hasClass(target, 'landing-ui-form-cards-item-expand')) {
+					main_core.Dom.removeClass(target, 'landing-ui-form-cards-item-expand');
+					main_core.Dom.style(target, null);
+					this.setExpanded(false);
+				} else {
+					main_core.Dom.addClass(target, 'landing-ui-form-cards-item-expand');
+					BX.Landing.Utils.onTransitionEnd(target).then(() => {
+						main_core.Dom.style(target, {
+							overflow: 'visible'
+						});
+					}).catch(() => {});
+					main_core.Dom.style(target, {
+						height: 'auto'
+					});
+					this.setExpanded(true);
+				}
+			}
+		}
+		onRemoveItemClick(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			if (!this.getLayout().closest('.landing-ui-disallow-remove')) {
+				main_core.Dom.remove(this.wrapper);
+				this.emit('onRemove');
+			}
+		}
+		serialize() {
+			return this.fields.reduce((res, field) => {
+				const [index] = field.selector.split('@');
+				res[index] = field.getValue();
+				return res;
+			}, {});
+		}
+		getPreset() {
+			return this.preset || null;
+		}
+		static decodeLabel(label) {
+			return main_core.Text.decode(String(label)).replaceAll(NBSP_ENTITY_PATTERN, NBSP);
+		}
+	}
+
+	exports.CardForm = CardForm;
+
 })(this.BX.Landing.UI.Form = this.BX.Landing.UI.Form || {}, BX, BX.Landing, BX.Landing.UI.Form);
 //# sourceMappingURL=cardform.bundle.js.map

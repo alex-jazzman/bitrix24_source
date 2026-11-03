@@ -2,6 +2,7 @@
 jn.define('tasks/checklist/utils/src/open', (require, exports, module) => {
 	const { ChecklistController } = require('tasks/checklist/controller');
 	const { Loc } = require('loc');
+	const { requireLazy } = require('require-lazy');
 	const { showToast } = require('toast');
 
 	/**
@@ -12,13 +13,12 @@ jn.define('tasks/checklist/utils/src/open', (require, exports, module) => {
 		const {
 			taskId,
 			userId,
-			checklistTree,
-			checklistId,
+			checklistServerId,
 			parentWidget = PageManager,
 			inLayout = false,
-			hideCompleted = false,
 			onChange = () => {},
 			groupId = null,
+			diskConfig = null,
 		} = params || {};
 
 		if (!taskId || !userId)
@@ -31,9 +31,8 @@ jn.define('tasks/checklist/utils/src/open', (require, exports, module) => {
 			userId,
 			groupId,
 			inLayout,
-			hideCompleted,
 			parentWidget,
-			checklistTree,
+			diskConfig,
 			onChange: () => {
 				if (typeof onChange === 'function')
 				{
@@ -52,7 +51,10 @@ jn.define('tasks/checklist/utils/src/open', (require, exports, module) => {
 			}).catch(console.error);
 		}
 
-		const checklist = checklistController.getChecklistById(checklistId);
+		// no tree is passed - init() loads the task's checklists from V2 (tasksmobile.Checklist.get)
+		await checklistController.init();
+
+		const checklist = checklistController.getChecklistByServerId(checklistServerId);
 
 		if (!checklist)
 		{
@@ -66,7 +68,7 @@ jn.define('tasks/checklist/utils/src/open', (require, exports, module) => {
 
 		void checklistController.openChecklist({
 			checklist,
-			parentWidget: checklistController.getParentWidgetByChecklistId(checklistId),
+			parentWidget: checklistController.getParentWidgetByChecklistId(checklist.getId()),
 		});
 	};
 

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, date, ui_designTokens, ui_notification, main_popup, ui_datePicker, ui_buttons, ui_countdown, ui_hint, ui_switcher, ui_system_input) {
+(function (exports, main_core, date, ui_designTokens, ui_notification, main_popup, ui_datePicker, ui_buttons, ui_countdown, ui_hint, biconnector_errorMessage, ui_switcher, ui_system_input) {
 	'use strict';
 
 	const USER_OPTION_CATEGORY = 'biconnector';
@@ -27,14 +27,21 @@ this.BX = this.BX || {};
 			<div class="biconnector-settings-card__content"></div>
 		`;
 			const header = main_core.Tag.render`
-			<div class="biconnector-settings-card__header">
+			<div
+				class="biconnector-settings-card__header"
+				data-testid="biconnector-settings-card-${this.#options.id}-header"
+			>
 				<div class="ui-icon-set ${this.#options.iconClass} biconnector-settings-card__icon"></div>
 				<div class="biconnector-settings-card__title">${this.#options.title}</div>
 				${chevronIcon}
 			</div>
 		`;
 			this.#container = main_core.Tag.render`
-			<div class="biconnector-settings-card" data-card-id="${this.#options.id}">
+			<div
+				class="biconnector-settings-card"
+				data-card-id="${this.#options.id}"
+				data-testid="biconnector-settings-card-${this.#options.id}"
+			>
 				${header}
 				${this.#contentWrapper}
 			</div>
@@ -79,7 +86,10 @@ this.BX = this.BX || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="biconnector-settings-card-hint">
+			<div
+				class="biconnector-settings-card-hint"
+				data-testid="biconnector-settings-card-hint"
+			>
 				<span class="biconnector-settings-card-hint__text">
 					${main_core.Text.encode(this.#options.text)}
 				</span>
@@ -87,7 +97,10 @@ this.BX = this.BX || {};
 		`;
 			if (this.#options.link) {
 				const link = main_core.Tag.render`
-				<a class="biconnector-settings-card-hint__link">
+				<a
+					class="biconnector-settings-card-hint__link"
+					data-testid="biconnector-settings-card-hint-link"
+				>
 					${main_core.Text.encode(this.#options.link.text)}
 				</a>
 			`;
@@ -181,7 +194,7 @@ this.BX = this.BX || {};
 			const layout = this.#card.getLayout();
 			this.#contentContainer = this.#card.getContentContainer();
 			const hint = new CardHint({
-				text: main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_PERIOD_HINT') ?? '',
+				text: main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_PERIOD_HINT_MSGVER_1') ?? '',
 				link: {
 					text: main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_LINK_MORE') ?? '',
 					helpCode: '20337242'
@@ -194,7 +207,10 @@ this.BX = this.BX || {};
 		}
 		#buildSelect() {
 			this.#fieldValueElement = main_core.Tag.render`
-			<span class="biconnector-settings-period__select-text"></span>
+			<span
+				class="biconnector-settings-period__select-text"
+				data-testid="biconnector-settings-period-value"
+			></span>
 		`;
 			this.#updateFieldLabel();
 			const control = main_core.Tag.render`
@@ -203,7 +219,10 @@ this.BX = this.BX || {};
 			</div>
 		`;
 			this.#fieldElement = main_core.Tag.render`
-			<div class="biconnector-settings-period__select-wrapper">
+			<div
+				class="biconnector-settings-period__select-wrapper"
+				data-testid="biconnector-settings-period-field"
+			>
 				${control}
 				<div class="ui-icon-set --chevron-down-s biconnector-settings-period__select-arrow"></div>
 			</div>
@@ -248,7 +267,10 @@ this.BX = this.BX || {};
 			}
 			const items = this.#data.items.map(item => {
 				const itemOptions = {
-					attrs: {},
+					attrs: {
+						'data-testid': 'biconnector-settings-period-menu-item',
+						'data-period-value': item.value
+					},
 					className: item.value === this.#currentPeriod ? 'menu-popup-no-icon biconnector-settings-period__menu-item --selected' : 'menu-popup-no-icon biconnector-settings-period__menu-item',
 					onclick: () => {
 						this.#selectPeriod(item.value);
@@ -292,6 +314,7 @@ this.BX = this.BX || {};
 			<input
 				type="text"
 				class="biconnector-settings-period__date-input"
+				data-testid="biconnector-settings-period-date-from"
 				value="${main_core.Text.encode(this.#data.dateStart)}"
 			>
 		`;
@@ -299,6 +322,7 @@ this.BX = this.BX || {};
 			<input
 				type="text"
 				class="biconnector-settings-period__date-input"
+				data-testid="biconnector-settings-period-date-to"
 				value="${main_core.Text.encode(this.#data.dateEnd)}"
 			>
 		`;
@@ -342,7 +366,10 @@ this.BX = this.BX || {};
 				}
 			});
 			this.#rangeBlock = main_core.Tag.render`
-			<div class="biconnector-settings-period__range">
+			<div
+				class="biconnector-settings-period__range"
+				data-testid="biconnector-settings-period-range"
+			>
 				<div class="biconnector-settings-period__range-field">
 					<div class="biconnector-settings-period__range-label">
 						${main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_PERIOD_FROM') ?? ''}
@@ -559,6 +586,9 @@ this.BX = this.BX || {};
 				style: ui_buttons.AirButtonStyle.OUTLINE_ACCENT_2,
 				size: ui_buttons.ButtonSize.SMALL,
 				icon: 'o-refresh',
+				dataset: {
+					testid: 'biconnector-settings-clear-cache-btn'
+				},
 				onclick: () => {
 					this.#clearCache();
 				}
@@ -617,11 +647,10 @@ this.BX = this.BX || {};
 				});
 				this.#timeout = response.data.timeoutToNextClearCache;
 				this.#initCountdown();
-			} catch {
+			} catch (response) {
 				this.#setButtonSpinning(false);
 				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_CLEAR_CACHE_ERROR'),
-					autoHideDelay: 2000
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_CLEAR_CACHE_ERROR'))
 				});
 				this.#button.setDisabled(false);
 				this.#canClear = true;
@@ -680,7 +709,10 @@ this.BX = this.BX || {};
 			});
 			main_core.Dom.append(hint.getLayout(), content);
 			const switcherNode = main_core.Tag.render`
-			<div class="biconnector-settings-card__switcher-control"></div>
+			<div
+				class="biconnector-settings-card__switcher-control"
+				data-testid="biconnector-settings-dataset-typing-switcher"
+			></div>
 		`;
 			this.#switcher = new ui_switcher.Switcher({
 				node: switcherNode,
@@ -712,10 +744,9 @@ this.BX = this.BX || {};
 		async #save() {
 			try {
 				await SettingsApi.saveDatasetTyping(this.#componentName, this.#signedParameters, this.#enabled);
-			} catch {
+			} catch (response) {
 				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_SAVE_ERROR'),
-					autoHideDelay: 2000
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_SAVE_ERROR'))
 				});
 				this.#enabled = !this.#enabled;
 				this.#switcher?.check(this.#enabled, false);
@@ -831,7 +862,10 @@ this.BX = this.BX || {};
 		}
 		render() {
 			const list = main_core.Tag.render`
-			<div class="biconnector-settings-panel__card-list"></div>
+			<div
+				class="biconnector-settings-panel__card-list"
+				data-testid="biconnector-settings-panel"
+			></div>
 		`;
 			for (const card of this.#cards) {
 				main_core.Dom.append(card.getLayout(), list);
@@ -868,5 +902,5 @@ this.BX = this.BX || {};
 	exports.SettingsApi = SettingsApi;
 	exports.SettingsPanel = SettingsPanel;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX, BX, BX.UI.Notification, BX.Main, BX.UI.DatePicker, BX.UI, BX.UI, BX.UI, BX.UI, BX.UI.System.Input);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX, window, BX.UI.Notification, BX.Main, BX.UI.DatePicker, BX.UI, BX.UI, BX.UI, BX.BIConnector, BX.UI, BX.UI.System.Input);
 //# sourceMappingURL=settings-panel.bundle.js.map

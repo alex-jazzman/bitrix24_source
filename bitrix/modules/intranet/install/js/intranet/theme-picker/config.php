@@ -12,6 +12,7 @@ return [
 		'main.popup',
 		'main.loader',
 		'main.sidepanel',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

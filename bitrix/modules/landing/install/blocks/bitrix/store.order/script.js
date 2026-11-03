@@ -1,14 +1,11 @@
 BX.ready(function()
 {
-	$('form input[type="text"]').on('keydown', function(event)
+	$('#bx-soa-order-form').on('keydown', 'input[type="text"]', function(event)
 	{
 		if (event.keyCode === 13)
 		{
-			let element  = event.currentTarget;
-
-			$(element).blur();
+			event.target.dispatchEvent(new Event('change', { bubbles: true }));
 			event.preventDefault();
-			event.stopPropagation();
 		}
 	});
 });

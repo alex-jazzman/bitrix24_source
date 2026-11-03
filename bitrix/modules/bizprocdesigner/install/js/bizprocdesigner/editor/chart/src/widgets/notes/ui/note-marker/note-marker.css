@@ -1,0 +1,43 @@
+.editor-chart-note-marker {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	margin: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-2xs2);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-2);
+	box-shadow: var(--ui-shadow-bottom-xs);
+	cursor: pointer;
+	/* The layer lets the pointer through to the schema; a marker is what takes it back. */
+	pointer-events: auto;
+	transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.editor-chart-note-marker:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-note-marker:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/*
+ * An open thread grows a ring the closed marker does not have, so the state is told by a shape and
+ * not by a hue alone; aria-expanded says the same thing where nothing is drawn at all.
+ */
+.editor-chart-note-marker.--opened {
+	border-color: var(--ui-color-accent-main-primary);
+	box-shadow: 0 0 0 2px var(--ui-color-accent-main-primary), var(--ui-shadow-bottom-m);
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-note-marker__count {
+	color: inherit;
+}

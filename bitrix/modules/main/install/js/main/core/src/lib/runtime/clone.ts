@@ -125,7 +125,7 @@ export function internalClone(value: any, map: WeakMap<any, any>): any
  * @param value
  * @return {*}
  */
-export default function clone(value: any): any
+export default function clone<T>(value: T): T
 {
 	return internalClone(value, new WeakMap());
 }

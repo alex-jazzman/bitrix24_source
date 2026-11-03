@@ -471,11 +471,15 @@ export default class Item extends Kanban.Item
 		const fields = this.getGrid().getFields();
 		Object.keys(fields).forEach((fieldName) =>
 		{
-			if(fields[fieldName]['isVisibleOnKanban'] && !this.isEmptyValue(this.getData()[fieldName]))
+			if (
+				fields[fieldName].isVisibleOnKanban
+				&& (fields[fieldName].isTitle || !this.isEmptyValue(this.getData()[fieldName]))
+			)
 			{
-				if(fields[fieldName]['isTitle'])
+				if (fields[fieldName].isTitle)
 				{
-					this.renderTitle(this.getData()[fieldName]);
+					const title = this.getData()[fieldName];
+					this.renderTitle(this.isEmptyValue(title) ? this.getName() : title);
 				}
 				else if(fieldName === 'createdBy' || fieldName === 'updatedBy' || fieldName === 'movedBy')
 				{

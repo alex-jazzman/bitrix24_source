@@ -54,7 +54,7 @@ jn.define('call/calls/layout/copilot-drawer', (require, exports, module) => {
 					),
 					Text({
 						style: { fontWeight: 500, fontSize: 21, lineHeight: 25, textAlign: 'center' },
-						text: BX.message('MOBILE_CALL_COPILOT_DRAWER_TITLE'),
+						text: BX.message('MOBILE_CALL_COPILOT_DRAWER_TITLE_MSGVER_1'),
 					}),
 					Text({
 						style: {
@@ -64,7 +64,7 @@ jn.define('call/calls/layout/copilot-drawer', (require, exports, module) => {
 							lineHeight: 19,
 							color: Color.base3.toHex(),
 						},
-						text: BX.message('MOBILE_CALL_COPILOT_DRAWER_MESSAGE'),
+						text: BX.message('MOBILE_CALL_COPILOT_DRAWER_MESSAGE_MSGVER_1'),
 					}),
 					View(
 						{

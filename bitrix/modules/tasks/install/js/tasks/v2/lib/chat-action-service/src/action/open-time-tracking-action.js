@@ -35,35 +35,56 @@ class OpenTimeTrackingAction extends BaseAction
 		this.openTimeTrackingPopup(payload.entityId);
 	}
 
-	async validateTimeTracking(payload: ActionPayload): Promise<boolean>
+	isTooltipOnly(payload: ActionPayload): boolean
 	{
-		let elapsedTime = timeTrackingService.getById(payload.entityId);
-
-		if (!elapsedTime && !timeTrackingService.hasLoaded(payload.taskId))
+		if (!payload.entityId)
 		{
-			await timeTrackingService.list(payload.taskId);
-
-			elapsedTime = timeTrackingService.getById(payload.entityId);
+			return false;
 		}
 
-		if (elapsedTime)
+		if (!timeTrackingService.hasLoaded(payload.taskId))
 		{
-			return true;
+			return false;
+		}
+
+		return this.#isRecordRemoved(payload);
+	}
+
+	async validateTimeTracking(payload: ActionPayload): Promise<boolean>
+	{
+		if (!timeTrackingService.getById(payload.entityId) && !timeTrackingService.hasLoaded(payload.taskId))
+		{
+			await timeTrackingService.list(payload.taskId);
+		}
+
+		if (this.#isRecordRemoved(payload))
+		{
+			this.showRecordRemovedHint(payload);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	#isRecordRemoved(payload: ActionPayload): boolean
+	{
+		if (timeTrackingService.getById(payload.entityId))
+		{
+			return false;
 		}
 
 		if (this.isNewerThanLoaded(payload.taskId, payload.entityId))
 		{
-			return true;
+			return false;
 		}
 
 		if (!timeTrackingService.hasLoadedAll(payload.taskId))
 		{
-			return true;
+			return false;
 		}
 
-		this.showRecordRemovedHint(payload);
-
-		return false;
+		return true;
 	}
 
 	showRecordRemovedHint(payload: ActionPayload): void

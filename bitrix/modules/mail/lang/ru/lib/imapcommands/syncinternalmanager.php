@@ -8,3 +8,4 @@ $MESS["MAIL_CLIENT_MESSAGES_MULTIPLE_FOLDERS"] = "Выберите письма 
 $MESS["MAIL_CLIENT_SYNC_ERROR"] = "Ошибка при синхронизации данных";
 $MESS["MAIL_CLIENT_TRASH_FOLDER_NOT_SELECTED_ERROR"] = "Не указано, в какую папку перемещать удаленные письма";
 $MESS["MAIL_CLIENT_SPAM_FOLDER_NOT_SELECTED_ERROR"] = "Не указано, в какую папку перемещать спам";
+$MESS['MAIL_MESSAGE_DELETE_ACCESS_DENIED'] = 'Недостаточно прав для удаления писем';

@@ -27,7 +27,7 @@ return [
 						'default' => [
 							'textColor' => '#828B95',
 							'bgColor' => '#EDEEF0',
-							'avatar' => '',
+							'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department.svg',
 						]
 					],
 				]

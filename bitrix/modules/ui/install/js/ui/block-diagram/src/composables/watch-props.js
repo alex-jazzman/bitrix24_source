@@ -1,5 +1,9 @@
 import { watch, effectScope, toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
+import { pruneGroupableBlocks } from './groupable';
+import { replaceSelection } from './highlighted-blocks';
+import { isValidMinZoom } from '../utils';
+import { ZOOM_FLOOR } from '../constants';
 
 export type UseWatchProps = {
 	dispose: () => void,
@@ -60,9 +64,37 @@ export function pruneSelection(highlitedBlockIds, blockIdsInModel): void
 
 	if (retained.length !== selected.length)
 	{
-		// The selection ref is handed in as an argument, same as in actions.js.
-		// eslint-disable-next-line no-param-reassign
-		highlitedBlockIds.value = retained;
+		replaceSelection(highlitedBlockIds, retained);
+	}
+}
+
+// Reports a broken pair of bounds, it does not repair one: the state keeps mirroring what the
+// consumer set, and the camera clamps to its own floor. The property validator sees a single
+// value, so the pair can only be judged here, where both are visible at once.
+function warnOnInvalidZoomBounds(minZoom: number, maxZoom: number): void
+{
+	if (!isValidMinZoom(minZoom))
+	{
+		console.error(
+			`ui.block-diagram: minZoom has to be a finite number not below ${ZOOM_FLOOR}`,
+			{ minZoom, maxZoom },
+		);
+
+		return;
+	}
+
+	// Infinity is a legal upper bound: it is what the camera itself falls back to for an unreadable
+	// one, and it means the very thing a consumer asks for by it — not limited from above.
+	if (!Number.isFinite(maxZoom) && maxZoom !== Number.POSITIVE_INFINITY)
+	{
+		console.error('ui.block-diagram: maxZoom has to be a finite number or Infinity', { minZoom, maxZoom });
+
+		return;
+	}
+
+	if (minZoom > maxZoom)
+	{
+		console.error('ui.block-diagram: minZoom has to be not above maxZoom', { minZoom, maxZoom });
 	}
 }
 
@@ -71,7 +103,11 @@ export function useWatchProps(props): UseWatchProps
 	const {
 		blocks,
 		connections,
-		zoom,
+		camera,
+		transformX,
+		transformY,
+		minZoom,
+		maxZoom,
 		snapToGrid,
 		snapSize,
 		canvasGridSize,
@@ -93,6 +129,7 @@ export function useWatchProps(props): UseWatchProps
 		isRenderOptimizationAvailable,
 		highlitedBlockIds,
 		blockIdsInModel,
+		groupableBlockIds,
 		connectionRouteHitTestEnabled,
 	} = useBlockDiagram();
 	const scope = effectScope(true);
@@ -137,6 +174,7 @@ export function useWatchProps(props): UseWatchProps
 				setUnmountedBlocks(newBlocks, oldBlocks);
 				blocks.value = newBlocks;
 				pruneSelection(highlitedBlockIds, blockIdsInModel);
+				pruneGroupableBlocks(groupableBlockIds, blockIdsInModel);
 
 				const optimizationEnabled = toValue(isRenderOptimizationAvailable);
 				const newBlockModel = optimizationEnabled ? buildBlockModel(newBlocks) : null;
@@ -176,16 +214,28 @@ export function useWatchProps(props): UseWatchProps
 			blockIntersections.loadConnections();
 		}, { immediate: true, deep: true });
 
+		// The bounds go before the scale below: the camera reads them from the state on every clamp,
+		// so the scale has to meet the bounds of the consumer rather than the defaults of the state.
+		// The diagnostics close the callback because they decide nothing — they must not stand
+		// between the bounds and the state.
+		watch([() => props.minZoom, () => props.maxZoom], ([newMinZoom, newMaxZoom]) => {
+			minZoom.value = newMinZoom;
+			maxZoom.value = newMaxZoom;
+			warnOnInvalidZoomBounds(newMinZoom, newMaxZoom);
+		}, { immediate: true });
+
+		// The scale belongs to the camera, and the state only ever mirrors what the camera
+		// publishes. Writing the property into the state alone would leave the camera at a scale
+		// of its own until the first gesture, and everything counted off the camera - the frame
+		// of the current view on the map, the shift of a camera move - would be counted at the
+		// wrong one. The landmark carries the transform of the state along so that a consumer
+		// which set it up before mounting does not lose it to the publication.
 		watch(() => props.zoom, (newZoom: number) => {
-			zoom.value = newZoom;
-		}, { immediate: true });
-
-		watch(() => props.minZoom, (newMinZoom: number) => {
-			zoom.value = newMinZoom;
-		}, { immediate: true });
-
-		watch(() => props.maxZoom, (newMaxZoom: number) => {
-			zoom.value = newMaxZoom;
+			camera.applyLandmark(camera.createLandmark({
+				x: toValue(transformX),
+				y: toValue(transformY),
+				zoom: newZoom,
+			}));
 		}, { immediate: true });
 
 		watch(() => props.snapToGrid, (newSnapToGrid: boolean) => {

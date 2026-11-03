@@ -9,7 +9,9 @@ return [
 	'js' => 'dist/send-button.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'im.v2.component.elements.loader',
 		'im.v2.const',
+		'im.v2.css.classes',
 		'im.v2.lib.feature',
 		'im.v2.lib.utils',
 	],

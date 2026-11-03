@@ -14,3 +14,6 @@ $MESS['BICONNECTOR_CONTROLLER_SUPERSET_LINK_ADDRESS_ERROR_ONLY_BOX'] = 'Дейс
 $MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_ERROR_RIGHTS'] = 'Недостаточно прав для перепривязки BI Конструктора';
 $MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_NOT_REQUIRED'] = 'Перепривязка BI Конструктора не требуется';
 $MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_NO_KEY'] = 'Не найден ключ доступа BI Конструктора';
+$MESS['BICONNECTOR_CONTROLLER_SUPERSET_CACHE_CLEAR_ERROR'] = 'Не удалось обновить данные отчётов. Попробуйте позже';
+$MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_ERROR'] = 'Не удалось перепривязать BI Конструктор. Попробуйте позже';
+$MESS['BICONNECTOR_CONTROLLER_SUPERSET_LINK_ADDRESS_ERROR'] = 'Не удалось привязать адрес к BI Конструктору. Попробуйте позже';

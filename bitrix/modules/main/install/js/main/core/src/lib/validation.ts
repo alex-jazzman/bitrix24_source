@@ -12,8 +12,8 @@ export default class Validation
 {
 	static MAX_EMAIL_LENGTH = 254;
 	static MAX_LOCAL_LENGTH = 64;
-	static LOCAL_ALLOWED_CHARS = /^[\w%+.ЁА-яё-]+$/;
-	static DOMAIN_LABEL_CHARS = /^[\w.ЁА-яё-]+$/;
+	static LOCAL_ALLOWED_CHARS: RegExp = /^[\w%+.ЁА-яё-]+$/;
+	static DOMAIN_LABEL_CHARS: RegExp = /^[\w.ЁА-яё-]+$/;
 
 	static isEmail(email: unknown): boolean
 	{

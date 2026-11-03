@@ -9,4 +9,5 @@ $MESS["CRM_CLE2_REMOVE"] = "Delete";
 $MESS["CRM_CLE2_TAB_EXTERNAL_MORE"] = "More...";
 $MESS["CRM_CLE2_HEADING_GEO"] = "Geo data";
 $MESS["CRM_CLE2_HEADING_NAMES"] = "Language dependent titles";
-?>
+$MESS['CRM_CLE2_EXTERNAL_ROW'] = 'External data row #NUMBER#';
+$MESS['CRM_CLE2_EXTERNAL_NEW_ROW'] = 'New external data row #NUMBER#';

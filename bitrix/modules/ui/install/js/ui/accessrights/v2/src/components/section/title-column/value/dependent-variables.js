@@ -19,7 +19,7 @@ export const DependentVariables = {
 	},
 	template: `
 		<ValuePopup @close="$emit('close')">
-			<PopupContent @apply="apply">
+			<PopupContent @apply="apply" :show-master-badge="false">
 				<template #role-title>
 					<AllRolesTitle/>
 				</template>

@@ -355,6 +355,14 @@ this.BX = this.BX || {};
 	const DELIMITER_TYPES = Object.freeze({
 		LINE: 'line'
 	});
+
+	// Keys of the value rule inside the settings of a constant: bounds of an integer, length limit of a string.
+	const VALUE_RULE_KEYS = Object.freeze({
+		ROOT: 'ValueRule',
+		MIN: 'Min',
+		MAX: 'Max',
+		MAX_LENGTH: 'MaxLength'
+	});
 	const EDITING_MODES = Object.freeze({
 		CREATE: 'create',
 		EDIT: 'edit'
@@ -1664,6 +1672,183 @@ this.BX = this.BX || {};
 	`
 	};
 
+	/**
+	 * Value the field of a bound shows. Zero is a bound of its own, so only a missing bound leaves the
+	 * field empty.
+	 */
+	function readBound(settings, name) {
+		const bound = settings?.[VALUE_RULE_KEYS.ROOT]?.[name];
+		return main_core.Type.isNil(bound) ? '' : String(bound);
+	}
+
+	/**
+	 * Settings carrying the entered bound. An emptied field drops the bound, an empty rule is no rule at
+	 * all, and the settings given are left untouched - they are the model of the form.
+	 */
+	function writeBound(settings, name, value) {
+		const rule = {
+			...settings?.[VALUE_RULE_KEYS.ROOT]
+		};
+		const bound = Number.parseInt(value, 10);
+		if (Number.isNaN(bound)) {
+			delete rule[name];
+		} else {
+			rule[name] = bound;
+		}
+		const updatedSettings = {
+			...settings
+		};
+		if (Object.keys(rule).length > 0) {
+			updatedSettings[VALUE_RULE_KEYS.ROOT] = rule;
+		} else {
+			delete updatedSettings[VALUE_RULE_KEYS.ROOT];
+		}
+		return updatedSettings;
+	}
+
+	const ValueRuleIntConstantSettings = {
+		name: 'ValueRuleIntConstantSettings',
+		emits: ['update:modelValue'],
+		props: {
+			modelValue: {
+				type: Object,
+				required: true
+			},
+			/** @type ConstantConfiguration */
+			constantConfiguration: {
+				type: Object,
+				required: true
+			}
+		},
+		data() {
+			// the label of a field names it by id, so two editors open at once must not share one
+			const fieldId = `bizproc-setuptemplateactivity-value-rule-int-${main_core.Text.getRandom()}`;
+			return {
+				minId: `${fieldId}-min`,
+				maxId: `${fieldId}-max`
+			};
+		},
+		computed: {
+			min: {
+				get() {
+					return readBound(this.modelValue, VALUE_RULE_KEYS.MIN);
+				},
+				set(value) {
+					this.$emit('update:modelValue', writeBound(this.modelValue, VALUE_RULE_KEYS.MIN, value));
+				}
+			},
+			max: {
+				get() {
+					return readBound(this.modelValue, VALUE_RULE_KEYS.MAX);
+				},
+				set(value) {
+					this.$emit('update:modelValue', writeBound(this.modelValue, VALUE_RULE_KEYS.MAX, value));
+				}
+			},
+			minLabel() {
+				return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_SETTINGS_VALUE_RULE_MIN');
+			},
+			maxLabel() {
+				return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_SETTINGS_VALUE_RULE_MAX');
+			}
+		},
+		template: `
+		<div
+			class="bizproc-setuptemplateactivity-value-rule"
+			data-testid="bizproc-setup-template-constant-edit-value-rule-int"
+		>
+			<div class="ui-ctl-container bizproc-setuptemplateactivity-value-rule__field">
+				<div class="ui-ctl-top">
+					<label class="ui-ctl-title" :for="minId">{{ minLabel }}</label>
+				</div>
+				<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+					<input
+						:id="minId"
+						v-model="min"
+						class="ui-ctl-element"
+						type="number"
+						step="1"
+						data-testid="bizproc-setup-template-constant-edit-value-rule-min-input"
+					/>
+				</div>
+			</div>
+			<div class="ui-ctl-container bizproc-setuptemplateactivity-value-rule__field">
+				<div class="ui-ctl-top">
+					<label class="ui-ctl-title" :for="maxId">{{ maxLabel }}</label>
+				</div>
+				<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+					<input
+						:id="maxId"
+						v-model="max"
+						class="ui-ctl-element"
+						type="number"
+						step="1"
+						data-testid="bizproc-setup-template-constant-edit-value-rule-max-input"
+					/>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const ValueRuleLengthConstantSettings = {
+		name: 'ValueRuleLengthConstantSettings',
+		emits: ['update:modelValue'],
+		props: {
+			modelValue: {
+				type: Object,
+				required: true
+			},
+			/** @type ConstantConfiguration */
+			constantConfiguration: {
+				type: Object,
+				required: true
+			}
+		},
+		data() {
+			// the label of a field names it by id, so two editors open at once must not share one
+			return {
+				maxLengthId: `bizproc-setuptemplateactivity-value-rule-length-${main_core.Text.getRandom()}-max-length`
+			};
+		},
+		computed: {
+			maxLength: {
+				get() {
+					return readBound(this.modelValue, VALUE_RULE_KEYS.MAX_LENGTH);
+				},
+				set(value) {
+					this.$emit('update:modelValue', writeBound(this.modelValue, VALUE_RULE_KEYS.MAX_LENGTH, value));
+				}
+			},
+			maxLengthLabel() {
+				return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_SETTINGS_VALUE_RULE_MAX_LENGTH');
+			}
+		},
+		template: `
+		<div
+			class="bizproc-setuptemplateactivity-value-rule"
+			data-testid="bizproc-setup-template-constant-edit-value-rule-length"
+		>
+			<div class="ui-ctl-container bizproc-setuptemplateactivity-value-rule__field">
+				<div class="ui-ctl-top">
+					<label class="ui-ctl-title" :for="maxLengthId">{{ maxLengthLabel }}</label>
+				</div>
+				<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+					<input
+						:id="maxLengthId"
+						v-model="maxLength"
+						class="ui-ctl-element"
+						type="number"
+						step="1"
+						min="1"
+						data-testid="bizproc-setup-template-constant-edit-value-rule-max-length-input"
+					/>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
 	// @vue/component
 	const ConstantValueUser = {
 		name: 'ConstantValueUser',
@@ -2123,7 +2308,10 @@ this.BX = this.BX || {};
 	};
 
 	const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
-		[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings
+		[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings,
+		[CONSTANT_TYPES.INT]: ValueRuleIntConstantSettings,
+		[CONSTANT_TYPES.STRING]: ValueRuleLengthConstantSettings,
+		[CONSTANT_TYPES.TEXT]: ValueRuleLengthConstantSettings
 	});
 
 	// Types whose default value is edited by a dedicated control instead of the plain text input.
@@ -2132,6 +2320,14 @@ this.BX = this.BX || {};
 		[CONSTANT_TYPES.DATE]: ConstantValueDate,
 		[CONSTANT_TYPES.DATETIME]: ConstantValueDateTime
 	});
+	/**
+	 * Settings as a map: a supplied constant may carry none, and the server encodes an empty settings
+	 * map as a JSON array.
+	 */
+	function normalizeSettings(settings) {
+		return main_core.Type.isPlainObject(settings) ? settings : {};
+	}
+
 	// @vue/component
 	const EditConstantPopupForm = {
 		name: 'EditConstantPopupForm',
@@ -2168,6 +2364,7 @@ this.BX = this.BX || {};
 		},
 		data() {
 			const options = this.convertMapToOptionsModelArray(this.item.options);
+			const settings = normalizeSettings(this.item.settings);
 			return {
 				id: this.item.id,
 				name: this.item.name,
@@ -2176,9 +2373,10 @@ this.BX = this.BX || {};
 				description: this.item.description,
 				defaultValue: this.item.default,
 				options,
-				settings: this.item.settings,
+				settings,
 				required: this.item.required,
 				initialOptionsSnapshot: JSON.stringify(options),
+				initialSettingsSnapshot: JSON.stringify(settings),
 				isDateMissing: false,
 				errors: {
 					id: '',
@@ -2203,7 +2401,7 @@ this.BX = this.BX || {};
 				return this.$Bitrix.Loc.getMessage(key);
 			},
 			isChanged() {
-				return this.id !== this.item.id || this.name !== this.item.name || this.constantType !== this.item.constantType || this.multiple !== this.item.multiple || this.required !== this.item.required || this.description !== this.item.description || (this.isUserType ? JSON.stringify(normalizeUserValue(this.defaultValue, this.multiple)) !== JSON.stringify(normalizeUserValue(this.item.default, this.item.multiple)) : this.defaultValue !== this.item.default) || JSON.stringify(this.options) !== this.initialOptionsSnapshot;
+				return this.id !== this.item.id || this.name !== this.item.name || this.constantType !== this.item.constantType || this.multiple !== this.item.multiple || this.required !== this.item.required || this.description !== this.item.description || (this.isUserType ? JSON.stringify(normalizeUserValue(this.defaultValue, this.multiple)) !== JSON.stringify(normalizeUserValue(this.item.default, this.item.multiple)) : this.defaultValue !== this.item.default) || JSON.stringify(this.options) !== this.initialOptionsSnapshot || JSON.stringify(this.settings) !== this.initialSettingsSnapshot;
 			},
 			errorMessages() {
 				return {
@@ -2245,6 +2443,10 @@ this.BX = this.BX || {};
 			constantType() {
 				this.options = [];
 				this.defaultValue = '';
+				// the value rule of the previous type is not allowed on the new one and the server refuses to
+				// save a template carrying it, while the new type offers no control to clear it - so the
+				// settings are dropped as a whole
+				this.settings = {};
 				this.isDateMissing = false;
 				this.errors.value = '';
 			},

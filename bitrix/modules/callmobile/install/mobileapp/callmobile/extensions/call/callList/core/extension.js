@@ -30,6 +30,13 @@ jn.define('call/callList/core', (require, exports, module) => {
 		[SCOPES.ALL]: {},
 	});
 
+	const CONTENT_STATE = Object.freeze({
+		LOADING: 'loading',
+		ERROR: 'error',
+		EMPTY: 'empty',
+		LIST: 'list',
+	});
+
 	const ACTION_SHEET_BUTTONS = Object.freeze({
 		OUTSIDE_TAP: 0,
 		PHONE_CALL: 1,
@@ -53,11 +60,17 @@ jn.define('call/callList/core', (require, exports, module) => {
 			this.isMounted = config.isMounted;
 			this.layout = config.layout;
 
+			this.isGuestMode = (env.modulesData?.mobile?.isGuest === true);
+
 			this.isFetching = false;
+			this.hasPendingScopeFetch = false;
+			// Generation of the current data cut: raised by every scope switch, so an answer in flight can be
+			// told apart from the state it comes back to. The scope name alone cannot do it — a switch there
+			// and back returns the same name to a list that was already emptied.
+			this.scopeGeneration = 0;
 			this.hasMore = true;
 			this.lastId = 0;
 			this.unsubscribeFromPull = null;
-			this.wasEmptyBeforeSwitch = false;
 			this.markTimer = null;
 
 			this.loader = new LoaderItem({
@@ -85,26 +98,45 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 		switchScope(scopeId)
 		{
+			if (String(scopeId) === this.getState().selectedScopeId)
+			{
+				return;
+			}
+
 			if (this.getState().selectedScopeId === SCOPES.MISSED)
 			{
 				this.clearMissedTimer();
 			}
 
-			this.wasEmptyBeforeSwitch = (this.getState().tabItems.length === 0);
+			// Pagination of the previous scope must not outlive it: the request below can be skipped by the
+			// in-flight guard, and the next onLoadMore would page from a foreign offset.
+			this.lastId = 0;
+			this.hasMore = true;
+			this.scopeGeneration += 1;
 
-			this.setState({ selectedScopeId: String(scopeId), isLoadingTab: true }, () => {
-				this.fetchList(true);
-
-				if (scopeId === SCOPES.MISSED)
+			// Records of the previous scope are dropped: if kept, they would hide a failed first request of the new one.
+			this.setState(
 				{
-					this.scheduleMissedTimer();
-				}
+					selectedScopeId: String(scopeId),
+					allItems: [],
+					tabItems: [],
+					isLoadingTab: true,
+					hasLoadError: false,
+				},
+				() => {
+					this.fetchList(true);
 
-				if (scopeId !== SCOPES.ALL)
-				{
-					CallListAnalyticsController.sendTabChange(scopeId);
-				}
-			});
+					if (scopeId === SCOPES.MISSED)
+					{
+						this.scheduleMissedTimer();
+					}
+
+					if (scopeId !== SCOPES.ALL)
+					{
+						CallListAnalyticsController.sendTabChange(scopeId);
+					}
+				},
+			);
 		}
 
 		async fetchList(reset)
@@ -116,16 +148,25 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 			this.isFetching = true;
 
+			const selectedScopeId = this.getState().selectedScopeId;
+			const requestGeneration = this.scopeGeneration;
+
+			if (this.getState().hasLoadError)
+			{
+				this.setState({ hasLoadError: false });
+			}
+
 			try
 			{
-				const selectedScopeId = this.getState().selectedScopeId;
-				const isInitial = (this.lastId === 0 && this.getState().allItems.length === 0);
-
 				if (reset)
 				{
 					this.lastId = 0;
 					this.hasMore = true;
 				}
+
+				// Read after the reset: the repeat that serves an unserved scope switch starts from an emptied
+				// list, so it is an initial load all the same.
+				const isInitial = (this.lastId === 0 && this.getState().allItems.length === 0);
 
 				const filter = {
 					...(FILTER_BY_SCOPE[selectedScopeId]),
@@ -141,18 +182,25 @@ jn.define('call/callList/core', (require, exports, module) => {
 					? payload.calls
 					: (payload?.result?.calls || []);
 
+				// The cut changed while the answer was in flight: neither the records nor the paging position
+				// of the abandoned cut belong here. The repeat is left to the finally below.
+				if (requestGeneration !== this.scopeGeneration)
+				{
+					return Promise.resolve();
+				}
+
 				const mapped = calls.map((callData) => this.normalizeCallData(callData));
 
 				this.lastId = (calls.length > 0) ? Number(calls[calls.length - 1].id) : this.lastId;
 				this.hasMore = (calls.length === PER_PAGE);
 
 				this.setState((prev) => {
-					if (prev.selectedScopeId !== selectedScopeId)
+					if (requestGeneration !== this.scopeGeneration)
 					{
 						return prev;
 					}
 
-					const list = reset ? mapped : [...prev.allItems, ...mapped];
+					const list = reset ? mapped : this.appendUnseenRecords(prev.allItems, mapped);
 					const tabItems = this.computeTabItems(list, selectedScopeId);
 					let missedCount = prev.missedCount;
 
@@ -168,9 +216,8 @@ jn.define('call/callList/core', (require, exports, module) => {
 						isReady: (isInitial ? true : prev.isReady),
 						missedCount,
 						isLoadingTab: false,
+						hasLoadError: false,
 					};
-				}, () => {
-					this.wasEmptyBeforeSwitch = false;
 				});
 
 				this.startSeenTimerIfNeeded();
@@ -180,13 +227,51 @@ jn.define('call/callList/core', (require, exports, module) => {
 			catch (e)
 			{
 				console.error('[CallListService][fetchList][error]', e);
-				this.setState((prev) => prev);
 
-				return Promise.reject(e);
+				// A failed reset left the paging position at the top: lastId was zeroed before the request, so a
+				// load-more would ask for the first page again and append it to whatever a pull event has
+				// revived (see errorAfterRebuild) - paging stays off there until another reset succeeds. A failed
+				// next page keeps lastId at the end of the last page that DID arrive, so the same request can be
+				// repeated from that position; turning paging off would bury every older call with no way back.
+				if (reset)
+				{
+					this.hasMore = false;
+				}
+
+				this.setState((prev) => {
+					if (requestGeneration !== this.scopeGeneration)
+					{
+						return prev;
+					}
+
+					return {
+						isReady: true,
+						isLoadingTab: false,
+						hasLoadError: true,
+					};
+				});
 			}
 			finally
 			{
 				this.isFetching = false;
+
+				// A scope switch made during this request was dropped by the guard above: serve the current scope
+				// now. Counted by generation, not by name — switching there and back also leaves the list empty
+				// and unrequested. Fires again only if the scope changes during that request too, so the chain
+				// ends by itself.
+				if (requestGeneration !== this.scopeGeneration)
+				{
+					if (this.isMounted())
+					{
+						this.fetchList(true);
+					}
+					else
+					{
+						// The screen was left before the answer came: a request now would be dropped by the mount
+						// check of setState, so the switch is remembered and served on return instead.
+						this.hasPendingScopeFetch = true;
+					}
+				}
 			}
 		}
 
@@ -280,9 +365,10 @@ jn.define('call/callList/core', (require, exports, module) => {
 				return [...state.searchItems].sort((a, b) => (b.ts || 0) - (a.ts || 0));
 			}
 
-			const items = state.tabItems.length > 0 ? state.tabItems : state.allItems;
-
-			return [...items].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+			// tabItems is the cut the screen shows: an empty one means the current filter holds nothing, not
+			// that the records are to be looked for elsewhere - falling back to allItems put rows of a foreign
+			// filter on the tab.
+			return [...state.tabItems].sort((a, b) => (b.ts || 0) - (a.ts || 0));
 		}
 
 		getTabEmptyStateText()
@@ -292,7 +378,11 @@ jn.define('call/callList/core', (require, exports, module) => {
 			const TAB_EMPTY_STATE_TEXTS = {
 				[SCOPES.ALL]: {
 					title: BX.message('MOBILEAPP_EMPTY_TAB_MAIN_TITLE'),
-					description: BX.message('MOBILEAPP_EMPTY_TAB_MAIN_DESCRIPTION'),
+					// The description invites to start a call, which is not available to a guest.
+					...(this.isGuestMode
+						? {}
+						: { description: BX.message('MOBILEAPP_EMPTY_TAB_MAIN_DESCRIPTION') }
+					),
 				},
 				[SCOPES.MISSED]: {
 					title: BX.message('MOBILEAPP_EMPTY_TAB_MISSED'),
@@ -306,6 +396,52 @@ jn.define('call/callList/core', (require, exports, module) => {
 			};
 
 			return TAB_EMPTY_STATE_TEXTS[selectedScopeId] || TAB_EMPTY_STATE_TEXTS[SCOPES.ALL];
+		}
+
+		getErrorStateText()
+		{
+			return {
+				title: BX.message('MOBILEAPP_CALL_LIST_LOAD_ERROR'),
+			};
+		}
+
+		/**
+		 * Content branch shared by the call list tab and the sync screen.
+		 *
+		 * @param {Array} [renderedItems] the very array passed to ListView, to skip a second sort in the same frame
+		 * @return {'loading' | 'error' | 'empty' | 'list'}
+		 */
+		resolveContentState(renderedItems)
+		{
+			const state = this.getState();
+			const isSearch = state.isSearchMode;
+
+			// isLoadingTab covers the frame between a scope switch and the request it starts: the screen is
+			// redrawn on the state patch, before the setState callback raises isFetching.
+			const isBodyLoading = !isSearch && (
+				!state.isReady
+				|| ((this.isFetching || state.isLoadingTab) && state.allItems.length === 0)
+			);
+
+			if (isBodyLoading)
+			{
+				return CONTENT_STATE.LOADING;
+			}
+
+			const items = renderedItems ?? this.getSortedItems();
+			const hasNothingToShow = !isSearch && !state.isLoadingTab && items.length === 0;
+
+			if (hasNothingToShow && state.hasLoadError)
+			{
+				return CONTENT_STATE.ERROR;
+			}
+
+			if (hasNothingToShow)
+			{
+				return CONTENT_STATE.EMPTY;
+			}
+
+			return CONTENT_STATE.LIST;
 		}
 
 		pullSubscribe()
@@ -376,7 +512,7 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 				const tabItems = this.computeTabItems(allItems, prev.selectedScopeId);
 
-				return { allItems, tabItems };
+				return { allItems, tabItems, hasLoadError: this.errorAfterRebuild(prev, tabItems) };
 			});
 		}
 
@@ -410,8 +546,35 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 				const tabItems = this.computeTabItems(allItems, prev.selectedScopeId);
 
-				return { allItems, tabItems };
+				return { allItems, tabItems, hasLoadError: this.errorAfterRebuild(prev, tabItems) };
 			});
+		}
+
+		/**
+		 * The failure flag after a list rebuilt by a pull event. A rebuild that produced records FOR THE CUT
+		 * ON SCREEN answers for the list the user now sees, so the flag of the request before it goes. A
+		 * rebuild that produced nothing for that cut - the event named a record the screen does not hold, or
+		 * one the selected filter drops - has restored no content, and dropping the flag there would replace
+		 * "failed to load" with an empty state claiming the user has no calls, with no request in flight to
+		 * correct it.
+		 */
+		errorAfterRebuild(prev, tabItems)
+		{
+			return tabItems.length > 0 ? false : prev.hasLoadError;
+		}
+
+		/**
+		 * Appends a freshly loaded page to what the screen already holds, one row per record id.
+		 *
+		 * A page and the list can legitimately overlap: a pull event puts a record on screen while no
+		 * request is in flight, and a later page may carry the same record. Two rows with one id break the
+		 * list twice over - a duplicated row and a duplicated key.
+		 */
+		appendUnseenRecords(existing, incoming)
+		{
+			const known = new Set(existing.map((item) => String(item.id)));
+
+			return [...existing, ...incoming.filter((item) => !known.has(String(item.id)))];
 		}
 
 		onCallLogCounterUpdate(params)
@@ -426,9 +589,14 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 			if (callIds.length > 0)
 			{
+				// Ids are compared as strings, as everywhere else in this file: the record id crosses the
+				// network as a string on one path and as a number on another, and a strict includes() would
+				// silently leave the rows marked unseen.
+				const seenIds = new Set(callIds.map((callId) => String(callId)));
+
 				this.setState((prev) => {
 					const allItems = prev.allItems.map((item) => {
-						if (callIds.includes(item.id))
+						if (seenIds.has(String(item.id)))
 						{
 							return {
 								...item,
@@ -441,13 +609,21 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 					const tabItems = this.computeTabItems(allItems, prev.selectedScopeId);
 
-					return { allItems, tabItems };
+					return { allItems, tabItems, hasLoadError: this.errorAfterRebuild(prev, tabItems) };
 				});
 			}
 		}
 
 		startCall(item)
 		{
+			if (this.isGuestMode)
+			{
+				// No call is started here, so the call click below is not sent: openChat sends its own analytics.
+				this.openChat(item);
+
+				return;
+			}
+
 			const dialogIdRaw = String(item.dialogId || '');
 			const isGroup = dialogIdRaw.startsWith('chat') || item.chatType === 'group';
 			const isTelephonyCall = Boolean(item.phone) || item.sourceType === 'voximplant';
@@ -645,6 +821,12 @@ jn.define('call/callList/core', (require, exports, module) => {
 
 		deleteCallItem(item)
 		{
+			// The screen hides the action for a guest, but the call log stays read-only for any other caller too.
+			if (this.isGuestMode)
+			{
+				return;
+			}
+
 			const callId = Number(item.id) || item.id;
 			const state = this.getState();
 
@@ -662,7 +844,9 @@ jn.define('call/callList/core', (require, exports, module) => {
 						const missedCount = this.recalcMissedCountFrom(allItems);
 						this.applyMissedCount(missedCount);
 
-						return { allItems, tabItems, missedCount };
+						// The list is rebuilt from records that were shown, so an older failure must not
+						// outlive them: an emptied list is an empty state, not a failed load.
+						return { allItems, tabItems, missedCount, hasLoadError: false };
 					});
 				})
 				.catch((e) => console.error('[CallListService][deleteCallItem][error]', e));
@@ -710,6 +894,20 @@ jn.define('call/callList/core', (require, exports, module) => {
 			{
 				this.fetchList(true);
 			}
+		}
+
+		// The scope the screen was left on has never been requested: the switch was dropped by the in-flight
+		// guard and the answer that came after it belonged to the previous filter. The debt is dropped before
+		// the request, so a repeated call does nothing.
+		resumePendingFetch()
+		{
+			if (!this.hasPendingScopeFetch)
+			{
+				return;
+			}
+
+			this.hasPendingScopeFetch = false;
+			this.fetchList(true);
 		}
 
 		markMissedAsSeen()
@@ -816,5 +1014,5 @@ jn.define('call/callList/core', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { CallListService, SCOPES, FILTER_BY_SCOPE, PER_PAGE };
+	module.exports = { CallListService, SCOPES, CONTENT_STATE, FILTER_BY_SCOPE, PER_PAGE };
 });

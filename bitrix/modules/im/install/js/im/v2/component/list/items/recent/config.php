@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/recent-list.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'call.component.active-call-list',
 		'im.v2.application.core',
 		'im.v2.component.list.items.base',
+		'im.v2.component.list.items.elements.active-call-list',
 		'im.v2.component.list.items.elements.create-chat-status',
 		'im.v2.component.list.items.elements.empty-state',
 		'im.v2.const',
@@ -24,6 +24,7 @@ return [
 		'im.v2.provider.service.recent',
 		'main.core.events',
 		'ui.icon-set.api.core',
+		'ui.vue3',
 		'ui.vue3.components.button',
 	],
 	'skip_core' => true,

@@ -18,6 +18,7 @@ return [
 		'im:messenger/lib/utils',
 		'im:messenger/lib/converter/data/message',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/provider/pull/base',
 		'im:messenger/provider/pull/lib/file',
 		'im:messenger/provider/data',

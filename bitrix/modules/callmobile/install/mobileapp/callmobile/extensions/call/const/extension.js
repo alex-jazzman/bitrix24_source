@@ -10,6 +10,7 @@ jn.define('call/const', (require, exports, module) => {
 	const { RecordStatus } = require('call/const/record-status');
 	const { GridUserCount } = require('call/const/grid-user-count');
 	const { CallError } = require('call/const/call-error');
+	const { WidgetLayerError } = require('call/const/widget-layer-error');
 	const { CallStatus } = require('call/const/call-status');
 	const { SignalsBehavior } = require('call/const/signals-behavior');
 	const { CallPresence } = require('call/const/call-presence');
@@ -25,6 +26,7 @@ jn.define('call/const', (require, exports, module) => {
 		RecordStatus,
 		GridUserCount,
 		CallError,
+		WidgetLayerError,
 		CallStatus,
 		SignalsBehavior,
 		CallPresence,

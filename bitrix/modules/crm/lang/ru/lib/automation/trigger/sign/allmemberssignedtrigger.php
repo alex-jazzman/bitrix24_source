@@ -5,5 +5,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_SIGN_ALL_MEMBERS_SIGNED_NAME_1'] = 'Запуска
 $MESS['CRM_AUTOMATION_TRIGGER_SIGN_ALL_MEMBERS_SIGNED_NAME_2'] = 'Отследить факт подписания всеми сторонами';
 $MESS['CRM_AUTOMATION_TRIGGER_SIGN_ALL_MEMBERS_SIGNED_DESCRIPTION'] = 'Меняет стадию после того, как документ подписан всеми сторонами';
 
-$MESS['CRM_AUTOMATION_TRIGGER_SIGN_ALL_MEMBERS_SIGNED_NODE_DESCRIPTION'] = 'Запускает процесс после того, как документ подписан всеми сторонами';
+$MESS['CRM_AUTOMATION_TRIGGER_SIGN_ALL_MEMBERS_SIGNED_NODE_DESCRIPTION'] = 'Запускает процесс, когда документ подписан всеми сторонами';
 $MESS['CRM_AUTOMATION_TRIGGER_SIGN_ALL_MEMBERS_SIGNED_EVENT_DATE_TIME'] = 'Дата и время подписания всеми сторонами';

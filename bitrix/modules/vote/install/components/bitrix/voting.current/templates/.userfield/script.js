@@ -26,8 +26,6 @@
 			repo[params['cid']] = new BVotedUser({
 				'CID' : params['cid'],
 				'controller': BX('vote-' + params['cid']),
-				'urlTemplate' : params['urlTemplate'],
-				'nameTemplate' : params['nameTemplate'],
 				'url' : params['url'],
 				'voteId' : params['id'],
 				'startCheck' : params['startCheck']
@@ -184,8 +182,6 @@
 		var d = function(params) {
 			this.CID = params["CID"];
 			this.url = params["url"];
-			this.urlTemplate = params["urlTemplate"];
-			this.nameTemplate = params["nameTemplate"];
 			this.dateTemplate = params["dateTemplate"];
 			this.data = {};
 			this.popup = null;
@@ -415,6 +411,9 @@
 						content : BX.create("SPAN", { props: {className: "bx-ilike-wait"}})
 					});
 
+					BX.adjust(this.popup.popupContainer,
+						{"attrs" : {"data-testid" : "vote-current-voted-users-popup"}});
+
 					this.popup.nodeID = this.node.id;
 					this.popup.isNew = true;
 					this.popup.show();
@@ -451,7 +450,7 @@
 					return false;
 				if (!this.node.getAttribute("id"))
 					this.node.setAttribute("id", this.getID());
-				if ((!this.node.getAttribute("rel") && !this.node.getAttribute("rev")) || parseInt(this.node.innerHTML) <= 0)
+				if (!this.node.getAttribute("rev") || parseInt(this.node.innerHTML) <= 0)
 					return false;
 
 				if (this.node.getAttribute("status") === "busy")
@@ -474,12 +473,9 @@
 						method: 'POST',
 						dataType: 'json',
 						data: {
-							'ID' : this.node.getAttribute("rel"),
-							'answer_id'  : this.node.getAttribute("rev"),
+							'sign' : this.node.getAttribute("data-sign"),
 							'request_id' : this.node.getAttribute("id"),
 							'iNumPage' : this.node.getAttribute("inumpage"),
-							'URL_TEMPLATE' : this.urlTemplate,
-							'NAME_TEMPLATE' : this.nameTemplate,
 							'sessid': BX.bitrix_sessid()
 						},
 						onsuccess: BX.proxy(function(data) {
@@ -533,7 +529,7 @@
 			changeData : function(data) {
 				data = data["QUESTIONS"];
 				BX.onCustomEvent(this.controller, 'OnBeforeChangeData');
-				var question, answer, i, q, per;
+				var question, answer, counter, i, q, per;
 				for (q in data)
 				{
 					if (data.hasOwnProperty(q))
@@ -550,9 +546,17 @@
 									{
 										per = parseInt(data[q][i]["PERCENT"]);
 										per = (isNaN(per) ? 0 : per);
-										BX.adjust(BX.findChild(answer, {"tagName" : "A", "className" : "bx-vote-voted-users"}, true),
-											{"attrs" : {"id" : "", "rel" : data[q][i]["USERS"], "rev" : i, "inumpage" : false},
-												"html" : data[q][i]["COUNTER"]});
+										counter = BX.findChild(answer, {"className" : "bx-vote-voted-users"}, true);
+										if (!!counter)
+										{
+											BX.adjust(counter, {"html" : data[q][i]["COUNTER"]});
+											// only a link opens the popup, so a text counter gets no link attributes
+											if (counter.tagName === "A")
+											{
+												BX.adjust(counter,
+													{"attrs" : {"id" : "", "rev" : i, "inumpage" : false}});
+											}
+										}
 										BX.adjust(BX.findChild(answer, {"tagName" : "SPAN", "className" : "bx-vote-data-percent"}, true),
 											{"html" : per + '%'});
 										BX.adjust(BX.findChild(answer, {"tagName" : "DIV", "className" : "bx-vote-result-bar"}, true),

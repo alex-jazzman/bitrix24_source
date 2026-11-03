@@ -4,8 +4,9 @@
 jn.define('layout/ui/item-selector', (require, exports, module) => {
 	const { SelectField } = require('layout/ui/fields/select');
 	const { Loc } = require('loc');
-	const { chevronDown } = require('assets/common');
 	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 
 	/**
 	 * @class ItemSelector
@@ -107,18 +108,12 @@ jn.define('layout/ui/item-selector', (require, exports, module) => {
 						isDashed: false,
 					}),
 				),
-				Image(
-					{
-						tintColor: AppTheme.colors.base4,
-						style: {
-							height: this.imageSize,
-							width: this.imageSize,
-						},
-						svg: {
-							content: chevronDown(AppTheme.colors.base4, { box: true }),
-						},
-					},
-				),
+				IconView({
+					testId: 'ItemSelectorChevron_icon',
+					icon: Icon.CHEVRON_DOWN,
+					size: this.imageSize,
+					color: Color.base4,
+				}),
 			);
 		}
 

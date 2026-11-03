@@ -1,6 +1,7 @@
 import { Router } from 'crm.router';
 import { Type } from 'main.core';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
+import { BitrixVue } from 'ui.vue3';
 import { EditableDescriptionAiStatus } from '../components/enums/editable-description-ai-status';
 import ConfigurableItem from '../configurable-item';
 import 'crm_common';
@@ -8,6 +9,11 @@ import 'crm_common';
 import type { CopilotConfig } from './ai/copilot-base';
 import { CopilotBase } from './ai/copilot-base';
 import { type ActionParams } from './base';
+
+// The card body lives in an extension of its own and is fetched when a repeat sale card is actually
+// rendered: it is a rare card, and its component and styles would otherwise be loaded on every page
+// carrying a timeline. Declared once - a new async wrapper per render would remount the card.
+const RepeatSaleBody = BitrixVue.defineAsyncComponent('crm.timeline.item.repeat-sale-body', 'RepeatSaleBody');
 
 export class RepeatSale extends CopilotBase
 {
@@ -34,7 +40,12 @@ export class RepeatSale extends CopilotBase
 
 		if (action === 'Activity:RepeatSale:Schedule')
 		{
-			this.runScheduleAction(actionData.activityId, actionData.scheduleDate, actionData.description);
+			this.runScheduleAction(
+				actionData.activityId,
+				actionData.scheduleDate,
+				actionData.description,
+				{ activateClient: true },
+			);
 		}
 
 		if (action === 'Activity:RepeatSale:LaunchCopilot')
@@ -84,7 +95,7 @@ export class RepeatSale extends CopilotBase
 
 	#showRestrictionSlider(): void
 	{
-		FeaturePromotersRegistry.getPromoter({ featureId: 'limit_v2_crm_repeat_sale' }).show();
+		FeaturePromotersRegistry.getPromoter({ featureId: 'crm_repeat_sale' }).show();
 	}
 
 	#openSegment(item: ConfigurableItem, segmentId: number): void
@@ -99,6 +110,11 @@ export class RepeatSale extends CopilotBase
 		});
 	}
 	// endregion
+
+	getContentBlockComponents(): Object
+	{
+		return { RepeatSaleBody };
+	}
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{

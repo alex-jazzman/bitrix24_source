@@ -53,7 +53,7 @@ Bitrix\Main\UI\Extension::load(
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 
-?><div id="crm-quote-list-progress-bar-container"></div><div id="rebuildMessageWrapper"><?
+?><div id="rebuildMessageWrapper"><?
 
 if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])):
 	?><div id="rebuildQuoteSearchWrapper"></div><?
@@ -78,6 +78,7 @@ endif;
 ?></div><?
 
 $isInternal = $arResult['INTERNAL'];
+$enableGroupActions = !empty($arResult['ENABLE_GROUP_ACTIONS']);
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
@@ -282,6 +283,7 @@ foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 			'WEBFORM_ID' => $webformId,
 			'TITLE' => '<a target="_self" href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'">'.$arQuote['TITLE'].'</a>',
 			'CLOSED' => ($arQuote['CLOSED'] ?? null) == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
+			'OPENED' => ($arQuote['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 			'ASSIGNED_BY' => $arQuote['~ASSIGNED_BY_ID'] > 0
 				? $userRender->render(
 					$arQuote['~ASSIGNED_BY_ID'],
@@ -301,6 +303,8 @@ foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
 					'ENTITY_ID' => $arQuote['~ID'],
+					'ENTITY_TITLE' => ($arQuote['~TITLE'] ?? '')
+						?: \Bitrix\Crm\Item\Quote::getTitlePlaceholderFromData($arQuote),
 					'CURRENT_ID' => $arQuote['~STATUS_ID'],
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.quote.list/list.ajax.php'
 				)
@@ -384,7 +388,9 @@ $filterLazyLoadParams = [
 ];
 $uri = new Uri($filterLazyLoadUrl);
 
-if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+$isEmbeddedListLayout = $arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest();
+
+if ($isEmbeddedListLayout)
 {
 	$buttonParams = [
 		'text' =>  Loc::getMessage('CRM_QUOTE_LIST_ADD_MSGVER_1'),
@@ -480,6 +486,13 @@ if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest
 	<?php
 }
 
+if ($isEmbeddedListLayout)
+{
+	echo '<div class="crm-list-embedded-grid-block">';
+}
+
+echo '<div id="crm-quote-list-progress-bar-container"></div>';
+
 //region Navigation
 $navigationHtml = '';
 if (isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']))
@@ -496,6 +509,15 @@ if (isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']))
 	ob_end_clean();
 }
 //endregion
+
+$actionPanelItems = ($isInternal && !$enableGroupActions)
+	? []
+	: ($arResult['PANEL']?->getControls() ?? []);
+
+if ($isInternal && $enableGroupActions)
+{
+	$actionPanelItems = \Bitrix\Crm\Component\EntityList\Grid\Panel\ActionPanelItems::withoutForAllCheckbox($actionPanelItems);
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -537,7 +559,7 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => [
 			'GROUPS' => [
 				[
-					'ITEMS' => $isInternal ? [] : $arResult['PANEL']?->getControls(),
+					'ITEMS' => $actionPanelItems,
 				],
 			],
 		],
@@ -578,6 +600,12 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
+
+if ($isEmbeddedListLayout)
+{
+	echo '</div>';
+}
+
 ?>
 <script>
 	BX.ready(

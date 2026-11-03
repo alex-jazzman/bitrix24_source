@@ -2,9 +2,13 @@
 $MESS["INTRANET_USER_OTP_LIST_ADD_EMAIL_BTN"] = "Enter email";
 $MESS["INTRANET_USER_OTP_LIST_ADD_PHONE_NUMBER_BTN"] = "Enter phone number";
 $MESS["INTRANET_USER_OTP_LIST_CHANGE_BTN"] = "Change";
+$MESS["INTRANET_USER_OTP_LIST_CONNECT_DEVICE_BTN"] = "Connect";
 $MESS["INTRANET_USER_OTP_LIST_DESCRIPTION"] = "Your account is protected. Attackers won't be able to access your account even if your password got leaked. Disabling the protection is not recommended.";
 $MESS["INTRANET_USER_OTP_LIST_DEVICES"] = "Trusted devices";
 $MESS["INTRANET_USER_OTP_LIST_DEVICES_DESCRIPTION"] = "Phone or tablet with the app you will use to confirm login.";
+$MESS["INTRANET_USER_OTP_LIST_DEVICES_HINT_WITHOUT_CONNECT"] = "Connect a trusted device to confirm your login in the app";
+$MESS["INTRANET_USER_OTP_LIST_DEVICES_HINT_WITHOUT_CONNECT_FOREIGN"] = "User didn't connect a trusted device.";
+$MESS["INTRANET_USER_OTP_LIST_DEVICES_NOT_CONNECTED"] = "Not connected";
 $MESS["INTRANET_USER_OTP_LIST_DISABLE_DEF_BTN"] = "Disable protection";
 $MESS["INTRANET_USER_OTP_LIST_EMAIL"] = "Deliver code via email";
 $MESS["INTRANET_USER_OTP_LIST_EMAIL_DESCRIPTION"] = "Your login confirmation code will be delivered via the email if can't access the app.";

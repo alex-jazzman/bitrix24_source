@@ -1,5 +1,6 @@
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { EditableColumnManager } from 'biconnector.grid.editable-columns';
-import { Reflection, Uri, Text, Loc, ajax as Ajax, Tag } from 'main.core';
+import { Reflection, Uri, Text, Loc, ajax as Ajax, Tag, Runtime } from 'main.core';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
 import { EventEmitter } from 'main.core.events';
@@ -21,6 +22,7 @@ class ExternalSourceManager
 	#sourceTitleList: Object;
 
 	#datasetUrl: String = '/bi/table/';
+	#isDatasetCreationOpening: boolean = false;
 
 	constructor(props: Props)
 	{
@@ -117,7 +119,6 @@ class ExternalSourceManager
 		filterToExtend[`${fieldData.fieldId}_label`] = currentFilteredFieldLabel;
 
 		filterApi.extendFilter(filterToExtend);
-		filterApi.apply();
 	}
 
 	openSourceDetail(id: number, moduleId: string): void
@@ -153,6 +154,32 @@ class ExternalSourceManager
 		);
 	}
 
+	openDatasetCreation(id: number, type: string): void
+	{
+		if (this.#isDatasetCreationOpening)
+		{
+			return;
+		}
+
+		this.#isDatasetCreationOpening = true;
+		Runtime.loadExtension('biconnector.dataset-import-v2')
+			.then((exports) => {
+				exports.Slider.open(type, 0, {
+					connectionId: id,
+					connectionType: type,
+				});
+			})
+			.catch(() => {
+				BX.UI.Notification.Center.notify({
+					content: Text.encode(Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_OPEN_DATASET_CREATION_ERROR')),
+				});
+			})
+			.finally(() => {
+				this.#isDatasetCreationOpening = false;
+			})
+		;
+	}
+
 	openCreateSourceSlider()
 	{
 		const sliderLink = new Uri('/bitrix/components/bitrix/biconnector.apachesuperset.source.connect.list/slider.php');
@@ -179,10 +206,10 @@ class ExternalSourceManager
 				this.getGrid().reload();
 			})
 			.catch((response) => {
-				if (response.errors)
-				{
-					this.#notifyErrors(response.errors);
-				}
+				this.#notifyError(
+					response,
+					Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_CHANGE_ACTIVITY_ERROR'),
+				);
 			})
 		;
 	}
@@ -199,17 +226,17 @@ class ExternalSourceManager
 				this.#showDeleteSourcePopup(id, moduleId);
 			})
 			.catch((response) => {
-				if (response.errors)
+				if (response.errors?.some(({ code }) => code === 409))
 				{
-					if (response.errors.some(({ code }) => code === 409))
-					{
-						this.#getDeleteSourceWithDatasetDialog(id).show();
-					}
-					else
-					{
-						this.#notifyErrors(response.errors);
-					}
+					this.#getDeleteSourceWithDatasetDialog(id).show();
+
+					return;
 				}
+
+				this.#notifyError(
+					response,
+					Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_ERROR'),
+				);
 			})
 		;
 	}
@@ -237,10 +264,10 @@ class ExternalSourceManager
 							})
 							.catch((response) => {
 								messageBox.hide();
-								if (response.errors)
-								{
-									this.#notifyErrors(response.errors);
-								}
+								this.#notifyError(
+									response,
+									Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_ERROR'),
+								);
 							})
 						;
 					},
@@ -355,14 +382,11 @@ class ExternalSourceManager
 		);
 	}
 
-	#notifyErrors(errors: Array): void
+	#notifyError(response: Object, fallbackMessage: string): void
 	{
-		if (errors[0] && errors[0].message)
-		{
-			BX.UI.Notification.Center.notify({
-				content: Text.encode(errors[0].message),
-			});
-		}
+		BX.UI.Notification.Center.notify({
+			content: resolveErrorHtml(response, fallbackMessage),
+		});
 	}
 }
 

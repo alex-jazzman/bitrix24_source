@@ -5,14 +5,17 @@ import {
 	IMPORT_PROGRESS_STATUS,
 } from '../constants';
 import type {
+	ExistingCollection,
 	ImportCollection,
 	ImportDocumentTreeNode,
 	ImportProgress,
 	CheckConnectionResponse,
+	CheckOverlapResponse,
 	GetCollectionsResponse,
 	GetDocumentTreeResponse,
 	StartResponse,
 	GetStatusResponse,
+	GetConvertedCollectionsResponse,
 } from '../type';
 
 const ALLOWED_PROGRESS_STATUS = new Set(Object.values(IMPORT_PROGRESS_STATUS));
@@ -53,6 +56,37 @@ export function normalizeGetDocumentTreeResponse(rawResponse: mixed): GetDocumen
 	};
 }
 
+export function normalizeCheckOverlapResponse(rawResponse: mixed): CheckOverlapResponse
+{
+	if (!Type.isPlainObject(rawResponse))
+	{
+		throw new TypeError('Invalid checkOverlap response');
+	}
+
+	return {
+		existingCollectionIds: Array.isArray(rawResponse.existingCollectionIds)
+			? rawResponse.existingCollectionIds.map((id) => String(id))
+			: [],
+		existingCollections: Array.isArray(rawResponse.existingCollections)
+			? rawResponse.existingCollections
+				.filter((item) => Type.isPlainObject(item))
+				.map((item) => normalizeExistingCollection(item))
+				.filter((item) => item.collectionId > 0)
+			: [],
+	};
+}
+
+function normalizeExistingCollection(rawCollection: Object): ExistingCollection
+{
+	return {
+		externalId: String(rawCollection.externalId ?? ''),
+		collectionId: toPositiveInt(rawCollection.collectionId) ?? 0,
+		name: String(rawCollection.name ?? ''),
+		// Absent means "no right": the screen may only offer an update the server confirmed.
+		canModerate: rawCollection.canModerate === true,
+	};
+}
+
 export function normalizeStartResponse(rawResponse: mixed): StartResponse
 {
 	if (!Type.isPlainObject(rawResponse))
@@ -81,6 +115,24 @@ export function normalizeGetStatusResponse(rawResponse: mixed): GetStatusRespons
 
 	return {
 		progress: normalizeImportProgress(rawResponse.progress),
+	};
+}
+
+export function normalizeGetConvertedCollectionsResponse(rawResponse: mixed): GetConvertedCollectionsResponse
+{
+	if (!Type.isPlainObject(rawResponse) || !Array.isArray(rawResponse.collections))
+	{
+		throw new TypeError('Invalid getConvertedCollections response');
+	}
+
+	return {
+		collections: rawResponse.collections
+			.filter((item) => Type.isPlainObject(item))
+			.map((item) => ({
+				collectionId: toPositiveInt(item.collectionId) ?? 0,
+				name: String(item.name ?? ''),
+			}))
+			.filter((item) => item.collectionId > 0),
 	};
 }
 
@@ -137,6 +189,7 @@ export function normalizeImportProgress(rawProgress: mixed): ImportProgress
 		collectionName: String(rawProgress.collectionName ?? ''),
 		collectionIndex: toNonNegativeInt(rawProgress.collectionIndex) ?? 0,
 		collectionCount: toNonNegativeInt(rawProgress.collectionCount) ?? 0,
+		errorMessage: String(rawProgress.errorMessage ?? ''),
 		errorDetails: normalizeErrorDetails(rawProgress.errorDetails),
 	};
 }
@@ -187,3 +240,4 @@ function toNullableString(value: mixed): string | null
 
 	return String(value);
 }
+

@@ -1,0 +1,8 @@
+<?php
+$MESS["TASKS_CREATE_DESCR"] = "Triggered after a task is created.";
+$MESS["TASKS_CREATE_NAME"] = "Task created";
+$MESS["TASKS_CREATE_RETURN_FIELD_TASK_CREATED_DATE"] = "Created task date";
+$MESS["TASKS_CREATE_RETURN_FIELD_TASK_ID"] = "Created task ID";
+$MESS["TASKS_CREATE_RETURN_FIELD_TASK_RESPONSIBLE"] = "Responsible person";
+$MESS["TASKS_CREATE_RETURN_FIELD_TASK_TITLE"] = "Created task name";
+$MESS["TASKS_CREATE_RETURN_FIELD_TASK_URL"] = "Task URL";

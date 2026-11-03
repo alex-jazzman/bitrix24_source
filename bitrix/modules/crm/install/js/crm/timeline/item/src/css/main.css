@@ -107,6 +107,198 @@
 	max-width: calc(100% - 98px);
 }
 
+/*region Reflow: the logo moves up beside the title, the content takes the full width (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The card body is a flex row with no wrap: logo/icon on the left, content on the right. The content
+	has the icon width hard-subtracted from it: max-width: calc(100% - 98px). The subtraction is fixed;
+	it does not allow for the width possibly running short. Measured at a card area width of 241px:
+	body 201px, the logo holds 80px, the content is left with 71px, and 59px after padding. The comment
+	text collapses into a column one letter wide (6 such blocks were observed, one of them 6390px tall).
+	The overflow gate does NOT catch this: the document does not scroll, overflowPx = 0.
+
+	Below the breakpoint the logo moves up beside the activity title and the content takes the full
+	width underneath. The two live in different parents (logo in the body, title in the header), so the
+	card becomes the grid and the body dissolves into it with display: contents - its children become
+	grid items and can be placed next to the header. The card has only ever three direct children
+	(header, body, footer), all in normal flow, so nothing else lands in the grid.
+
+	The body's horizontal padding would vanish with it, so it moves up to the card and is zeroed on the
+	three children - that also keeps the columns starting at the same edge for cards with no logo,
+	where the auto column collapses to zero width and the header sits flush left.
+
+	An earlier take dropped the logo onto a row of its own here instead, which reads as an empty row
+	with the tile alone in it - that is what the report was about, so both triggers now share the
+	pairing.
+
+	Nothing here reintroduces truncation: the title and the row values keep the wrapping they get in
+	layout/header/title.css and content-blocks/with-title.css.
+*/
+@media (max-width: 768px) {
+	/*
+		align-items: center, not start: the logo tile is 60px and the header next to it is one or two
+		text lines, so aligning both to the top left the title hanging at the tile's upper edge. Centred,
+		whichever of the two is taller sets the row and the other sits on its middle - the title against
+		the picture when the header is short, the tile against the title when it wraps. The rows below
+		hold a single full-width item each, so nothing else is affected.
+	*/
+	.crm-timeline__card {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		padding-left: var(--ui-space-inset-md, 16px);
+		padding-right: var(--ui-space-inset-md, 16px);
+	}
+
+	.crm-timeline__card-top,
+	.crm-timeline__card-body,
+	.crm-timeline__card-action {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	/*
+		The header's vertical margin has to go with the padding. The grid centres margin boxes, so the
+		base margin-bottom: 4px (and the -4px the log-message variant carries) tilted the header off the
+		tile's axis by half of itself - measured at 2px. The gap to the content below is set by that
+		block's own margin-top, so nothing collapses here. The modifier is listed explicitly: its
+		specificity is (0,2,0) and it would otherwise win.
+	*/
+	.crm-timeline__card-top,
+	.crm-timeline__card-top.--log-message {
+		margin-bottom: 0;
+	}
+
+	.crm-timeline__card-body {
+		display: contents;
+	}
+
+	.crm-timeline__card-logo_container {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-top {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-container,
+	.crm-timeline__card-icon + .crm-timeline__card-container,
+	.crm-timeline__card-action {
+		grid-column: 1 / -1;
+		max-width: 100%;
+	}
+
+	/*
+		The content row starts exactly at the logo's bottom edge - the grid gives it no gap of its
+		own, and the logo is the tallest thing in the row - so the text reads as glued to the tile.
+	*/
+	.crm-timeline__card-container {
+		margin-top: var(--ui-space-stack-xs, 8px);
+	}
+
+	/*
+		The time carries margin-left: 2px (declared above in this file), which the base layout needs
+		but which here pushes it 2px past the row underneath it - the title, or the checkbox when the
+		activity has one. Both rows sit in the same column, so the offset reads as a misalignment.
+
+		Its margin-bottom: 8px goes for the same reason the header's did: the grid centres margin
+		boxes, so a bottom margin inside the header makes the box taller than its text and the tile
+		lands below the text's optical centre. The time is the last thing on its line, so the margin
+		buys nothing here - the gap to the content below is set by that block's own margin-top.
+	*/
+	.crm-timeline__card-time {
+		margin-left: 0;
+		margin-bottom: 0;
+	}
+}
+/*
+	Second trigger, same layout: @media reacts to the card's own width and misses the CRM Entity Card
+	Split handle narrowing just the column - see decisions.md for the 460px measurement and the
+	480px/crm-entity-stream choice.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	/*
+		align-items: center, not start: the logo tile is 60px and the header next to it is one or two
+		text lines, so aligning both to the top left the title hanging at the tile's upper edge. Centred,
+		whichever of the two is taller sets the row and the other sits on its middle - the title against
+		the picture when the header is short, the tile against the title when it wraps. The rows below
+		hold a single full-width item each, so nothing else is affected.
+	*/
+	.crm-timeline__card {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		padding-left: var(--ui-space-inset-md, 16px);
+		padding-right: var(--ui-space-inset-md, 16px);
+	}
+
+	.crm-timeline__card-top,
+	.crm-timeline__card-body,
+	.crm-timeline__card-action {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	/*
+		The header's vertical margin has to go with the padding. The grid centres margin boxes, so the
+		base margin-bottom: 4px (and the -4px the log-message variant carries) tilted the header off the
+		tile's axis by half of itself - measured at 2px. The gap to the content below is set by that
+		block's own margin-top, so nothing collapses here. The modifier is listed explicitly: its
+		specificity is (0,2,0) and it would otherwise win.
+	*/
+	.crm-timeline__card-top,
+	.crm-timeline__card-top.--log-message {
+		margin-bottom: 0;
+	}
+
+	.crm-timeline__card-body {
+		display: contents;
+	}
+
+	.crm-timeline__card-logo_container {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-top {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.crm-timeline__card-container,
+	.crm-timeline__card-icon + .crm-timeline__card-container,
+	.crm-timeline__card-action {
+		grid-column: 1 / -1;
+		max-width: 100%;
+	}
+
+	/*
+		The content row starts exactly at the logo's bottom edge - the grid gives it no gap of its
+		own, and the logo is the tallest thing in the row - so the text reads as glued to the tile.
+		Measured: logo bottom and content top both at y 497.5.
+	*/
+	.crm-timeline__card-container {
+		margin-top: var(--ui-space-stack-xs, 8px);
+	}
+
+	/*
+		The time carries margin-left: 2px (declared above in this file), which the base layout needs
+		but which here pushes it 2px past the row underneath it - the title, or the checkbox when the
+		activity has one. Both rows sit in the same column, so the offset reads as a misalignment.
+
+		Its margin-bottom: 8px goes for the same reason the header's did: the grid centres margin
+		boxes, so a bottom margin inside the header makes the box taller than its text and the tile
+		lands below the text's optical centre. The time is the last thing on its line, so the margin
+		buys nothing here - the gap to the content below is set by that block's own margin-top.
+	*/
+	.crm-timeline__card-time {
+		margin-left: 0;
+		margin-bottom: 0;
+	}
+}
+/*endregion*/
+
 .crm-timeline__card-container_block {
 	display: block;
 	margin-bottom: 6px;

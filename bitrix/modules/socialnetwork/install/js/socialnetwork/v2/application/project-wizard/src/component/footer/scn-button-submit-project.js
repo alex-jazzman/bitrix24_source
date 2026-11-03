@@ -3,12 +3,13 @@ import { Notifier } from 'ui.notification-manager';
 import { Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
 import { mapState } from 'ui.vue3.pinia';
 
-import { EventName } from 'socialnetwork.v2.const';
+import { EventName, EntitySelectorEntity } from 'socialnetwork.v2.const';
 import { CreateProjectFeature } from 'socialnetwork.v2.features.project.create-project-feature';
 import { UpdateProjectFeature } from 'socialnetwork.v2.features.project.update-project-feature';
 import { CopyProjectFeature } from 'socialnetwork.v2.features.project.copy-project-feature';
-import { type ProjectModel } from 'socialnetwork.v2.model.project';
+import { type ProjectModel, useProjectStore } from 'socialnetwork.v2.model.project';
 import { useInterfaceStore } from 'socialnetwork.v2.model.interface';
+import { ProjectAnalytics } from 'socialnetwork.v2.lib.event-sender';
 
 // @vue/component
 export const ScnButtonSubmitProject = {
@@ -20,6 +21,7 @@ export const ScnButtonSubmitProject = {
 	{
 		return {
 			ButtonSize,
+			tracker: new ProjectAnalytics(),
 		};
 	},
 	data(): Object
@@ -59,6 +61,8 @@ export const ScnButtonSubmitProject = {
 			const createProjectFeature = new CreateProjectFeature();
 			const createdProject: ProjectModel | null = await createProjectFeature.create();
 
+			this.trackCreateFinish(createdProject);
+
 			if (createdProject)
 			{
 				Event.EventEmitter.emit(EventName.SaveProjectWizard, {
@@ -67,6 +71,59 @@ export const ScnButtonSubmitProject = {
 					chatId: createdProject.chatId,
 				});
 			}
+		},
+		trackCreateFinish(createdProject: ProjectModel | null): void
+		{
+			const projectStore = useProjectStore();
+			const interfaceStore = useInterfaceStore();
+			const members = projectStore.members ?? [];
+
+			const defaultPermissions = projectStore.defaultPermissions;
+			const permissions = projectStore.permissions;
+
+			const normalizeProject = (project) => {
+				if (!project)
+				{
+					return project;
+				}
+
+				const { messagesAutoDeleteDelay: _, ...rest } = project;
+
+				return rest;
+			};
+
+			const permissionsWithoutDelay = { ...permissions, project: normalizeProject(permissions?.project) };
+			const defaultPermissionsWithoutDelay = defaultPermissions
+				? { ...defaultPermissions, project: normalizeProject(defaultPermissions?.project) }
+				: null;
+
+			const accessRightsState = defaultPermissionsWithoutDelay
+				? (JSON.stringify(permissionsWithoutDelay) !== JSON.stringify(defaultPermissionsWithoutDelay) ? 1 : 0)
+				: 0;
+
+			const normalizeDelay = (delay) => (delay === '' || delay === null || delay === undefined ? 0 : Number(delay));
+			const defaultDelay = normalizeDelay(defaultPermissions?.project?.messagesAutoDeleteDelay);
+			const currentDelay = normalizeDelay(permissions?.project?.messagesAutoDeleteDelay);
+			const additionalSettingsAutoDelete = currentDelay !== defaultDelay ? 1 : 0;
+
+			const dates = projectStore.dates;
+			const additionalSettingsCalendar = (dates?.startTs || dates?.finishTs) ? 1 : 0;
+
+			this.tracker.trackCreateFinish(
+				createdProject?.id ?? 0,
+				createdProject ? 'success' : 'error',
+				{
+					ownerChange: projectStore.ownerId !== interfaceStore.currentUserId ? 1 : 0,
+					moderators: (projectStore.moderators ?? []).length,
+					participants: members.filter((m) => m.type === EntitySelectorEntity.User).length,
+					departments: members.filter((m) => m.type === EntitySelectorEntity.Department).length,
+					projectType: projectStore.privacyType === 'closed' ? 'closed' : 'open',
+					mainTool: projectStore.baseFeatureId ?? '',
+					accessRightsState,
+					additionalSettingsCalendar,
+					additionalSettingsAutoDelete,
+				},
+			);
 		},
 		async updateProject()
 		{
@@ -139,6 +196,7 @@ export const ScnButtonSubmitProject = {
 			:size="ButtonSize.LARGE"
 			:text="title"
 			:loading="fetching"
+			:dataset="{ testid: 'socialnetwork-project-wizard-submit' }"
 			@click="handleClickSubmit"
 		/>
 	`,

@@ -72,7 +72,16 @@
 	content: "";
 	position: absolute;
 	inset: 0;
-	background: url('./assets/public-img.png') no-repeat;
+	background-image: url('./assets/public-img.webp');
+	background-image: -webkit-image-set(
+		url('./assets/public-img.webp') 1x,
+		url('./assets/public-img-2x.webp') 2x
+	);
+	background-image: image-set(
+		url('./assets/public-img.webp') 1x,
+		url('./assets/public-img-2x.webp') 2x
+	);
+	background-repeat: no-repeat;
 	background-size: 85px;
 	border-radius: 12px;
 	background-position-y: 20px;
@@ -297,7 +306,16 @@
 	content: "";
 	position: absolute;
 	inset: 0;
-	background: url('./assets/private-img.png') no-repeat;
+	background-image: url('./assets/private-img.webp');
+	background-image: -webkit-image-set(
+		url('./assets/private-img.webp') 1x,
+		url('./assets/private-img-2x.webp') 2x
+	);
+	background-image: image-set(
+		url('./assets/private-img.webp') 1x,
+		url('./assets/private-img-2x.webp') 2x
+	);
+	background-repeat: no-repeat;
 	background-position-x: 370px;
 	background-position-y: 21px;
 	background-size: 82px;
@@ -400,10 +418,6 @@
 	color: var(--ui-color-base-4);
 }
 
-.access-private-head__user-name {
-	color: var(--ui-color-base-1);
-}
-
 .access-private-user__access-button {
 	background: transparent;
 	border: 0;
@@ -420,7 +434,57 @@
 
 .access-private-user__wrapper {
 	display: flex;
-	justify-content: space-between;
+	align-items: center;
+	gap: 6px;
+	min-height: 30px;
 	margin: 10px 0;
 	padding: 0 10px;
+}
+
+.access-private-user__avatar {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	border-radius: var(--ui-border-radius-circle);
+	object-fit: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.access-private-user__avatar--employee {
+	background-image: url('./assets/member-employee.svg');
+}
+
+.access-private-user__avatar--extranet {
+	background-image: url('./assets/member-extranet.svg');
+}
+
+.access-private-user__avatar--collaber {
+	background-image: url('./assets/member-collaber.svg');
+}
+
+.access-private-user__avatar--group {
+	background-image: url('./assets/member-group.svg');
+}
+
+.access-private-user__avatar--department {
+	background-image: url('./assets/member-department.svg');
+}
+
+.access-private-user__avatar--unknown {
+	background-image: url('./assets/member-unknown.svg');
+}
+
+.access-private-user__info-wrapper {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.access-private-user__change-access {
+	flex: none;
+	margin-left: auto;
 }

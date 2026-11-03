@@ -56,10 +56,33 @@ $this->SetViewTarget('left-panel');
 	</div>
 
 	<div class="main-ui-filter-search main-ui-filter-theme-default main-ui-filter-set-inside" id="intranet-settings-search-container">
-		<input <?= $arResult['PERMISSION'] < 2 ? 'disabled' : '' ?> type="text" tabindex="1" value="" name="FIND" placeholder="<?=Loc::getMessage('INTRANET_SETTINGS_SEARCH_PLACEHOLDER')?>" class="main-ui-filter-search-filter" id="intranet-settings-search" autocomplete="off">
+		<input
+			<?= $arResult['PERMISSION'] < 2 ? 'disabled' : '' ?>
+			type="search"
+			role="combobox"
+			value=""
+			name="FIND"
+			placeholder="<?=Loc::getMessage('INTRANET_SETTINGS_SEARCH_PLACEHOLDER')?>"
+			class="main-ui-filter-search-filter"
+			id="intranet-settings-search"
+			autocomplete="off"
+			readonly
+			aria-controls="settings-search-popup"
+			aria-expanded="false"
+			aria-haspopup="listbox"
+			aria-autocomplete="list"
+			data-testid="intranet-settings-search-input"
+		>
 		<div class="main-ui-item-icon-block" id="intranet-settings-search-icon-container">
 			<span class="main-ui-item-icon main-ui-search <?= $arResult['PERMISSION'] < 2 ? '--disabled' : '' ?>"></span>
-			<span class="main-ui-item-icon main-ui-delete" id="intranet-settings-icon-delete"></span>
+			<button
+				class="main-ui-item-icon main-ui-delete"
+				id="intranet-settings-icon-delete"
+				type="button"
+				aria-label="<?= htmlspecialcharsbx(Loc::getMessage('INTRANET_SETTINGS_SEARCH_CLEAR')) ?>"
+				data-testid="intranet-settings-search-clear-button"
+				hidden
+			></button>
 		</div>
 	</div>
 </div>
@@ -68,6 +91,22 @@ $this->EndViewTarget();
 ?>
 
 <div id="intranet-settings-page" class="intranet-settings-page-wrapper">
+	<div
+		id="intranet-settings-live-status"
+		class="intranet-settings__live-region"
+		role="status"
+		aria-live="polite"
+		aria-atomic="true"
+		data-testid="intranet-settings-live-status"
+	></div>
+	<div
+		id="intranet-settings-live-alert"
+		class="intranet-settings__live-region"
+		role="alert"
+		aria-live="assertive"
+		aria-atomic="true"
+		data-testid="intranet-settings-live-alert"
+	></div>
 
 
 
@@ -81,7 +120,14 @@ $this->EndViewTarget();
 	?>
 	<ul class="intranet-settings__sidepanel-menu">
 		<li class="intranet-settings__menu-item">
-			<a onclick="top.BX.Helper.show('redirect=detail&code=18371844'); return false;" class="intranet-settings__menu-link"><?=Loc::getMessage('INTRANET_SETTINGS_GUIDE')?></a>
+			<button
+				class="intranet-settings__menu-link"
+				type="button"
+				onclick="top.BX.Helper.show('redirect=detail&code=18371844');"
+				data-testid="intranet-settings-guide-button"
+			>
+				<?=Loc::getMessage('INTRANET_SETTINGS_GUIDE')?>
+			</button>
 		</li>
 <?php
 
@@ -112,9 +158,14 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 	{
 		?>
 		<li class="intranet-settings__menu-item">
-			<a onclick="<?= $callback->getCode() ?>; return false;" class="intranet-settings__menu-link">
+			<button
+				class="intranet-settings__menu-link"
+				type="button"
+				onclick="<?= $callback->getCode() ?>;"
+				data-testid="intranet-settings-partner-order-button"
+			>
 				<?= Loc::getMessage('BITRIX24_PARTNER_ORDER_MSGVER_1') ?>
-			</a>
+			</button>
 		</li>
 		<?php
 	}
@@ -152,7 +203,10 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 				searcher: searcher,
 				inputNode: BX('intranet-settings-search'),
 				timeout: 500,
-			iconContainer: BX('intranet-settings-search-icon-container'),});
+				iconContainer: BX('intranet-settings-search-icon-container'),
+				liveStatusNode: BX('intranet-settings-live-status'),
+				liveAlertNode: BX('intranet-settings-live-alert'),
+			});
 		}
 
 		const pagesPermission = <?=CUtil::PhpToJSObject($arResult['PAGES_PERMISSION'])?>;
@@ -167,6 +221,8 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 			menuNode: BX('intranet-settings-left-menu'),
 			settingsNode: BX('intranet-settings-page'),
 			contentNode: BX('intranet-settings-page').querySelector('.intranet-settings-content'),
+			liveStatusNode: BX('intranet-settings-live-status'),
+			liveAlertNode: BX('intranet-settings-live-alert'),
 			pages: Array.from(<?=CUtil::PhpToJSObject(
 				array_values(array_map(
 					fn($item) => ucfirst($item['ATTRIBUTES']['DATA']['type']),

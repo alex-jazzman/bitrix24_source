@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -13,8 +12,6 @@ class IntranetMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = \Bitrix\IntranetMobile\Workspace::class;
 
 	public function __construct()
 	{
@@ -33,66 +30,32 @@ class IntranetMobile extends CModule
 
 	public function installDB(): bool
 	{
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+
+			return false;
+		}
+
 		ModuleManager::registerModule($this->MODULE_ID);
-
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->registerEventHandler(
-			'main',
-			'OnAfterUserAuthorize',
-			$this->MODULE_ID,
-			'\Bitrix\IntranetMobile\Integration\Main\Event',
-			'onAfterUserAuthorizeHandler'
-		);
-
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'intranetmobile',
-			'Bitrix\IntranetMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
 
 		return true;
 	}
 
-	public function uninstallDB($arParams = []): void
+	public function uninstallDB($arParams = []): bool
 	{
-		$eventManager = EventManager::getInstance();
+		$migrationResult = $this->uninstallMigrations(false);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'main',
-			'OnAfterUserAuthorize',
-			$this->MODULE_ID,
-			'\Bitrix\IntranetMobile\Integration\Main\Event',
-			'onAfterUserAuthorizeHandler'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'intranetmobile',
-			'Bitrix\IntranetMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function installFiles(): bool
@@ -150,7 +113,14 @@ class IntranetMobile extends CModule
 		}
 		else
 		{
-			$this->installDB();
+			if (!$this->installDB())
+			{
+				$APPLICATION->throwException(implode('<br>', $this->errors));
+				$this->showInstallStep(2);
+
+				return;
+			}
+
 			$this->installFiles();
 			$this->installEvents();
 			$this->installDependencies();
@@ -188,9 +158,15 @@ class IntranetMobile extends CModule
 		}
 		elseif($step === 2)
 		{
-			$this->uninstallDB();
-			$this->uninstallFiles();
-			$this->uninstallEvents();
+			if (!$this->uninstallDB())
+			{
+				$APPLICATION->throwException(implode('<br>', $this->errors));
+			}
+			else
+			{
+				$this->uninstallFiles();
+				$this->uninstallEvents();
+			}
 
 			$APPLICATION->IncludeAdminFile(
 				Loc::getMessage('INTRANETMOBILE_UNINSTALL_TITLE'),

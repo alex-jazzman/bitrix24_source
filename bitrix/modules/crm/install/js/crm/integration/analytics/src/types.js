@@ -45,7 +45,7 @@ export type EntityAddEvent = {
 	p1: CrmMode,
 	p2?: string,
 	p3?: 'category_smartDocumentContact' | 'category_catalogContractorContact' | 'category_catalogContractorCompany',
-	p4?: 'myCompany_1' | 'myCompany_0',
+	p4?: string, // id_<workplace id>
 };
 
 export type EntityCloseEvent = {
@@ -307,9 +307,19 @@ export type RepeatSaleBannerClickEvent = {
 		| Dictionary.SUB_SECTION_DEADLINES
 		| Dictionary.SUB_SECTION_DETAILS
 	,
-	c_element: 'info_button' | 'start_flow' | 'change_period' | 'config' | 'feedback',
+	c_element: 'info_button'
+		| 'start_flow'
+		| 'change_period'
+		| 'config'
+		| 'feedback'
+		| 'won_deals'
+		| 'deals_in_work'
+		| 'won_deals_segment'
+		| 'deals_in_work_segment'
+	,
 	p1: CrmMode,
 	p3: 'period_0' | 'period_1' | 'period_2' | 'period_3', // @see \Bitrix\Crm\RepeatSale\Statistics\PeriodType
+	p4?: 'enable-mode-manual' | 'enable-mode-auto-after-close',
 };
 
 export type RepeatSaleBannerCloseEvent = {
@@ -579,4 +589,108 @@ export type ImportCancelEvent = {
 	c_sub_section: ?Origin,
 	p1: CrmMode,
 	p2: string, // step_<step_name>
+};
+
+export type CallAssessmentAutoUpdateEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_AUTO_UPDATE,
+	type: Dictionary.TYPE_SCRIPT,
+	c_element: Dictionary.ELEMENT_ON | Dictionary.ELEMENT_OFF,
+	p1: CrmMode,
+	p2?: string,
+};
+
+export type CallAssessmentBiReportEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_BI_REPORT_BUTTON,
+	p1: CrmMode,
+};
+
+export type CallAssessmentScriptWizardEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_SCRIPT_WIZARD,
+	p1: CrmMode,
+};
+
+export type CallAssessmentSummaryWizardEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_SUMMARY_WIZARD,
+	p1: CrmMode,
+};
+
+export type CallAssessmentCallListViewEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_CALL_LIST_VIEW,
+	type: Dictionary.TYPE_SCRIPT,
+	p1: CrmMode,
+	p2: string,
+};
+
+export type CallAssessmentOpenScriptEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_OPEN_SCRIPT,
+	type: Dictionary.TYPE_SCRIPT,
+	p1: CrmMode,
+	p2: string,
+};
+
+export type CallAssessmentOpenCallScoreEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_OPEN_CALL_SCORE,
+	type: Dictionary.TYPE_CALL_SCORE,
+	p1: CrmMode,
+	p2?: string,
+	p5: string,
+};
+
+export type CallAssessmentCallReassessmentEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_REEVAL_SCRIPT,
+	type: Dictionary.TYPE_CALL_SCORE,
+	c_element: Dictionary.ELEMENT_UPDATED_SCRIPT | Dictionary.ELEMENT_OTHER_SCRIPT,
+	p1: CrmMode,
+	p2: string,
+	p5: string,
+};
+
+export type CallAssessmentScriptToggleEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_SCRIPT_TOGGLE,
+	type: Dictionary.TYPE_SCRIPT,
+	c_element: Dictionary.ELEMENT_ON | Dictionary.ELEMENT_OFF,
+	p1: CrmMode,
+	p2: string,
+};
+
+export type CallAssessmentScriptDeleteEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_SCRIPT_DELETE,
+	type: Dictionary.TYPE_SCRIPT,
+	p1: CrmMode,
+	p2: string,
+};
+
+export type CallAssessmentGridActionsEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+	event: Dictionary.EVENT_GRID_ACTIONS,
+	type: Dictionary.TYPE_SCRIPT,
+	c_element: Dictionary.ELEMENT_SAVE_BUTTON
+		| Dictionary.ELEMENT_EDIT_BUTTON
+		| Dictionary.ELEMENT_CLOSE_BUTTON
+		| Dictionary.ELEMENT_CANCEL_BUTTON
+		| Dictionary.ELEMENT_CREATE_BUTTON
+	,
+	p1: CrmMode,
+	p2?: string,
 };

@@ -1,0 +1,10 @@
+<?php
+
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_INVALID_PROCESS_TOKEN'] = 'Could not determine the ID of the pipeline deletion operation.';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_INVALID_SCOPE'] = 'Could not determine which pipelines to delete.';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_DEFAULT_CATEGORY'] = 'The default pipeline cannot be deleted.';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_SUMMARY'] = 'Deleted: #SUCCESS_COUNT#. Could not delete: #ERROR_COUNT#.';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_ERRORS'] = 'Could not delete: #ERROR_COUNT#.';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_ERRORS_LIMITED'] = 'Only the first #SHOWN_COUNT# of #ERROR_COUNT# errors are shown.';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_ERROR_DESCRIPTION'] = '#NAME# (ID #ID#): #MESSAGE#';
+$MESS['CRM_V2_DEAL_CATEGORY_BATCH_DELETE_FALLBACK_NAME'] = 'Pipeline ID #ID#';

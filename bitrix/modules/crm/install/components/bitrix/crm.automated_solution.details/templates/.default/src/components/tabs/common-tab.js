@@ -1,9 +1,14 @@
 import { Card } from '../card';
+import { VibeSwitcher } from '../inputs/vibe-switcher';
 import '../../css/tabs/common-tab.css';
 
 export const CommonTab = {
 	components: {
 		Card,
+		VibeSwitcher,
+	},
+	props: {
+		readOnly: Boolean,
 	},
 	computed: {
 		title: {
@@ -15,6 +20,10 @@ export const CommonTab = {
 			{
 				this.$store.dispatch('setTitle', title);
 			},
+		},
+		shouldShowVibe(): boolean
+		{
+			return this.$store.state.isVibeFeatureEnabled && !this.readOnly;
 		},
 	},
 	template: `
@@ -39,6 +48,10 @@ export const CommonTab = {
 					</div>
 				</div>
 			</div>
+			<VibeSwitcher
+				v-if="shouldShowVibe"
+				:read-only="readOnly"
+			/>
 		</div>
 	`,
 };

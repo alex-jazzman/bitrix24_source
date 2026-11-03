@@ -27,6 +27,7 @@ $extensions = [
 
 if ($isAdmin)
 {
+	$extensions[] = 'ui.notification';
 	$extensions[] = 'biconnector.rebind-superset-popup';
 }
 

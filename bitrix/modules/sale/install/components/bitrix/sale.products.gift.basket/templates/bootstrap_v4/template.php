@@ -114,11 +114,21 @@ $generalParams = array(
 
 $obName = 'ob'.preg_replace('/[^a-zA-Z0-9_]/', 'x', $this->GetEditAreaId($this->randString()));
 $containerName = 'sale-products-gift-container';
+
+// The block header is printed by the cart page around this component, its id is the contract between them.
+$giftsHeaderId = 'basket-gifts-header';
+$giftsHeaderExists = trim((string)($arParams['BLOCK_TITLE'] ?? '')) !== ''
+	&& ($arParams['HIDE_BLOCK_TITLE'] ?? '') !== 'Y';
+
+// A block with no gift in it is no list and is waiting for nothing: the deferred load turns both on.
+$hasGifts = !empty($arResult['ITEMS']) && !empty($arResult['ITEM_ROWS']);
 ?>
 
-<div class="sale-products-gift bx-<?=$arParams['TEMPLATE_THEME']?>" data-entity="<?=$containerName?>">
+<div class="sale-products-gift bx-<?=$arParams['TEMPLATE_THEME']?>" data-entity="<?=$containerName?>"
+		<?=$hasGifts ? 'role="list" aria-busy="true"' : ''?><?=$giftsHeaderExists ? ' aria-labelledby="'.$giftsHeaderId.'"' : ''?>>
+	<!-- items-container -->
 	<?
-	if (!empty($arResult['ITEMS']) && !empty($arResult['ITEM_ROWS']))
+	if ($hasGifts)
 	{
 		$areaIds = array();
 
@@ -136,20 +146,17 @@ $containerName = 'sale-products-gift-container';
 			$item['LABEL'] = !empty($item['LABEL_VALUE']);
 		}
 		unset($item);
-		?>
-		<!-- items-container -->
-		<?
 		foreach ($arResult['ITEM_ROWS'] as $rowData)
 		{
 			$rowItems = array_splice($arResult['ITEMS'], 0, $rowData['COUNT']);
 			?>
-			<div class="row <?=$rowData['CLASS']?>" data-entity="items-row">
+			<div class="row <?=$rowData['CLASS']?>" data-entity="items-row" role="none">
 				<?
 				switch ($rowData['VARIANT'])
 				{
 					case 0:
 						?>
-						<div class="col-12 product-item-small-card">
+						<div class="col-12 product-item-small-card" role="listitem">
 							<?
 							$item = reset($rowItems);
 							$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
@@ -177,7 +184,7 @@ $containerName = 'sale-products-gift-container';
 						foreach ($rowItems as $item)
 						{
 							?>
-							<div class="col-6 product-item-big-card">
+							<div class="col-6 product-item-big-card" role="listitem">
 								<?
 								$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 										'RESULT' => array(
@@ -205,7 +212,7 @@ $containerName = 'sale-products-gift-container';
 						foreach ($rowItems as $item)
 						{
 							?>
-							<div class="col-sm-4 product-item-big-card">
+							<div class="col-sm-4 product-item-big-card" role="listitem">
 								<? $APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 										'RESULT' => array(
 											'ITEM' => $item,
@@ -232,7 +239,7 @@ $containerName = 'sale-products-gift-container';
 						foreach ($rowItems as $item)
 						{
 							?>
-							<div class="col-6 col-sm-3">
+							<div class="col-6 col-sm-3" role="listitem">
 								<? $APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 										'RESULT' => array(
 											'ITEM' => $item,
@@ -258,7 +265,7 @@ $containerName = 'sale-products-gift-container';
 					case 4:
 						$rowItemsCount = count($rowItems);
 						?>
-						<div class="col-sm-6 product-item-big-card">
+						<div class="col-sm-6 product-item-big-card" role="listitem">
 							<?
 							$item = array_shift($rowItems);
 							$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
@@ -280,13 +287,13 @@ $containerName = 'sale-products-gift-container';
 							unset($item);
 							?>
 						</div>
-						<div class="col-sm-6 product-item-small-card">
-							<div class="row">
+						<div class="col-sm-6 product-item-small-card" role="none">
+							<div class="row" role="none">
 								<?
 								for ($i = 0; $i < $rowItemsCount - 1; $i++)
 								{
 									?>
-									<div class="col-6">
+									<div class="col-6" role="listitem">
 										<? $APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 												'RESULT' => array(
 													'ITEM' => $rowItems[$i],
@@ -316,13 +323,13 @@ $containerName = 'sale-products-gift-container';
 					case 5:
 						$rowItemsCount = count($rowItems);
 						?>
-						<div class="col-sm-6 product-item-small-card">
-							<div class="row">
+						<div class="col-sm-6 product-item-small-card" role="none">
+							<div class="row" role="none">
 								<?
 								for ($i = 0; $i < $rowItemsCount - 1; $i++)
 								{
 									?>
-									<div class="col-6">
+									<div class="col-6" role="listitem">
 										<? $APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 												'RESULT' => array(
 													'ITEM' => $rowItems[$i],
@@ -346,7 +353,7 @@ $containerName = 'sale-products-gift-container';
 								?>
 							</div>
 						</div>
-						<div class="col-sm-6 product-item-big-card">
+						<div class="col-sm-6 product-item-big-card" role="listitem">
 							<?
 							$item = end($rowItems);
 							$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
@@ -375,7 +382,7 @@ $containerName = 'sale-products-gift-container';
 						foreach ($rowItems as $item)
 						{
 							?>
-							<div class="col-6 col-sm-4 col-md-2">
+							<div class="col-6 col-sm-4 col-md-2" role="listitem">
 								<? $APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 										'RESULT' => array(
 											'ITEM' => $item,
@@ -401,7 +408,7 @@ $containerName = 'sale-products-gift-container';
 					case 7:
 						$rowItemsCount = count($rowItems);
 						?>
-						<div class="col-sm-6 product-item-big-card">
+						<div class="col-sm-6 product-item-big-card" role="listitem">
 							<?
 							$item = array_shift($rowItems);
 							$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
@@ -423,13 +430,13 @@ $containerName = 'sale-products-gift-container';
 							unset($item);
 							?>
 						</div>
-						<div class="col-sm-6 product-item-small-card">
-							<div class="row">
+						<div class="col-sm-6 product-item-small-card" role="none">
+							<div class="row" role="none">
 								<?
 								for ($i = 0; $i < $rowItemsCount - 1; $i++)
 								{
 									?>
-									<div class="col-6 col-md-4">
+									<div class="col-6 col-md-4" role="listitem">
 										<? $APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 												'RESULT' => array(
 													'ITEM' => $rowItems[$i],
@@ -459,13 +466,13 @@ $containerName = 'sale-products-gift-container';
 					case 8:
 						$rowItemsCount = count($rowItems);
 						?>
-						<div class="col-sm-6 product-item-small-card">
-							<div class="row">
+						<div class="col-sm-6 product-item-small-card" role="none">
+							<div class="row" role="none">
 								<?
 								for ($i = 0; $i < $rowItemsCount - 1; $i++)
 								{
 									?>
-									<div class="col-6 col-md-4">
+									<div class="col-6 col-md-4" role="listitem">
 										<?
 										$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
 												'RESULT' => array(
@@ -490,7 +497,7 @@ $containerName = 'sale-products-gift-container';
 								?>
 							</div>
 						</div>
-						<div class="col-sm-6 product-item-big-card">
+						<div class="col-sm-6 product-item-big-card" role="listitem">
 							<?
 							$item = end($rowItems);
 							$APPLICATION->IncludeComponent('bitrix:catalog.item', 'bootstrap_v4', array(
@@ -519,7 +526,7 @@ $containerName = 'sale-products-gift-container';
 						foreach ($rowItems as $item)
 						{
 							?>
-							<div class="col-12 product-line-item-card">
+							<div class="col-12 product-line-item-card" role="listitem">
 								<?
 								$APPLICATION->IncludeComponent(
 									'bitrix:catalog.item',
@@ -550,9 +557,6 @@ $containerName = 'sale-products-gift-container';
 			<?
 		}
 		unset($generalParams, $rowItems);
-		?>
-		<!-- items-container -->
-		<?
 	}
 	else
 	{
@@ -562,7 +566,9 @@ $containerName = 'sale-products-gift-container';
 			array('HIDE_ICONS' => 'Y')
 		);
 	}
-
+	?>
+	<!-- items-container -->
+	<?
 	$signer = new \Bitrix\Main\Security\Sign\Signer;
 	$signedTemplate = $signer->sign($templateName, 'sale.products.gift.basket');
 	$signedParams = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'sale.products.gift.basket');
@@ -588,6 +594,10 @@ $containerName = 'sale-products-gift-container';
 		RELATIVE_QUANTITY_MANY: '<?=CUtil::JSEscape($arParams['MESS_RELATIVE_QUANTITY_MANY'])?>',
 		RELATIVE_QUANTITY_FEW: '<?=CUtil::JSEscape($arParams['MESS_RELATIVE_QUANTITY_FEW'])?>',
 		BTN_MESSAGE_COMPARE_REDIRECT: '<?=GetMessageJS('CT_SPGB_CATALOG_BTN_MESSAGE_COMPARE_REDIRECT')?>',
+		CT_SPGB_TPL_GIFTS_LIST_ARIA: '<?=GetMessageJS('CT_SPGB_TPL_GIFTS_LIST_ARIA')?>',
+		CT_SPGB_TPL_GIFTS_UPDATED_ARIA: '<?=GetMessageJS('CT_SPGB_TPL_GIFTS_UPDATED_ARIA')?>',
+		CT_SPGB_TPL_GIFTS_EMPTY_ARIA: '<?=GetMessageJS('CT_SPGB_TPL_GIFTS_EMPTY_ARIA')?>',
+		CT_SPGB_TPL_BTN_CHOOSE_ARIA_MSGVER_1: '<?=GetMessageJS('CT_SPGB_TPL_BTN_CHOOSE_ARIA_MSGVER_1')?>',
 		SITE_ID: '<?=CUtil::JSEscape($component->getSiteId())?>'
 	});
 

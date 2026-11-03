@@ -53,7 +53,6 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 			const preparedActions = this.actions
 				.filter((action) => this.task.actions[action.id])
 				.filter((action) => !this.possibleActions || this.possibleActions.includes(action.id))
-				// eslint-disable-next-line max-len
 				.filter((action) => action.id !== ActionMenu.action.complete || !this.task.actions[ActionMenu.action.approve])
 				.map((action) => ({
 					...action,

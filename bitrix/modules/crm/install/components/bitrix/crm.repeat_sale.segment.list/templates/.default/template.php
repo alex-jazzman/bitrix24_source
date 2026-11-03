@@ -18,6 +18,7 @@ Extension::load([
 	'crm.repeat-sale.widget',
 	'main.core',
 	'ui.icons',
+	'ui.progressround',
 	'ui.sidepanel',
 	'ui.switcher',
 	'ui.design-tokens',

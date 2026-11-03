@@ -18,6 +18,8 @@ jn.define('im/messenger/controller/attach-chat/chat-selector/src/opener', (requi
 	 * @param {Function} [options.onViewRemoved] - fired after the view is removed (e.g. on swipe-dismiss)
 	 * @param {boolean} [options.closeOnSelect=true]
 	 * @param {PageManager} [parentWidget]
+	 * @param {Function} [WidgetClass] - selector widget constructor; a seam for tests,
+	 *        which would otherwise have to swap the shared selector/widget export
 	 */
 	function openChatSelector({
 		parentChatId,
@@ -27,12 +29,12 @@ jn.define('im/messenger/controller/attach-chat/chat-selector/src/opener', (requi
 		onWidgetClosed,
 		onViewRemoved,
 		closeOnSelect = true,
-	}, parentWidget)
+	}, parentWidget, WidgetClass = EntitySelectorWidget)
 	{
 		const emptyTitle = Loc.getMessage('IMMOBILE_ATTACH_CHAT_SELECTOR_CHATS_SEARCH_EMPTY_TITLE');
 		const emptyDescription = Loc.getMessage('IMMOBILE_ATTACH_CHAT_SELECTOR_CHATS_SEARCH_EMPTY_DESCRIPTION');
 
-		const entitySelectorWidget = new EntitySelectorWidget({
+		const entitySelectorWidget = new WidgetClass({
 			widgetParams: {
 				titleParams: {
 					text: title ?? Loc.getMessage('IMMOBILE_ATTACH_CHAT_SELECTOR_CHATS_TITLE'),

@@ -24,6 +24,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.popup',
+		'ui.a11y',
 		'ui.bbcode.parser',
 		'ui.bbcode.model',
 		'ui.smiley',

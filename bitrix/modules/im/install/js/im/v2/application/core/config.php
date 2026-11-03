@@ -21,6 +21,7 @@ return [
 		'main.core',
 		'pull.client',
 		'rest.client',
+		'ui.design-tokens.air',
 		'ui.vue3',
 		'ui.vue3.vuex',
 	],

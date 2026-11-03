@@ -69,9 +69,13 @@ return [
 		'socialnetwork.collab.im.date.range.formatter' => [
 			'className' => \Bitrix\Socialnetwork\Collab\Integration\IM\Message\ProjectCreate\DateRangeFormatter::class,
 		],
+		'socialnetwork.collab.im.project.members.enumeration' => [
+			'className' => \Bitrix\Socialnetwork\V2\Internal\Integration\Im\Service\Message\ProjectMembersEnumeration::class,
+		],
 		'socialnetwork.collab.im.projectattach.builder' => [
 			'constructor' => static fn() => new \Bitrix\Socialnetwork\Collab\Integration\IM\Message\ProjectCreate\ProjectAttachBuilder(
 				ServiceLocator::getInstance()->get('socialnetwork.collab.im.date.range.formatter'),
+				ServiceLocator::getInstance()->get('socialnetwork.collab.im.project.members.enumeration'),
 			),
 		],
 		'socialnetwork.onboarding.job.repository' => [

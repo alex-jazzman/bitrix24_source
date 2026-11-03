@@ -5,13 +5,19 @@ jn.define('im/messenger/controller/folder/update', (require, exports, module) =>
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('im/messenger/loc');
+	const { Analytics } = require('im/messenger/const');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { FolderChatSelector } = require('im/messenger/controller/folder/chat-selector');
 	const { FolderFormView } = require('im/messenger/controller/folder/lib/ui/folder-form');
 	const { preloadIncompleteChats } = require('im/messenger/controller/folder/lib/preload-chats');
 	const { preloadFolderChats } = require('im/messenger/controller/folder/lib/preload-folder-chats');
-	const { updateFolder, showUpdateSuccessToast } = require('im/messenger/controller/folder/lib/actions');
+	const {
+		updateFolder,
+		showUpdateSuccessToast,
+		showFolderGenericErrorToast,
+	} = require('im/messenger/controller/folder/lib/actions');
 	const { IconType } = require('im/messenger/assets/icon');
 
 	const logger = getLoggerWithContext('folder--update', 'FolderUpdate');
@@ -115,14 +121,21 @@ jn.define('im/messenger/controller/folder/update', (require, exports, module) =>
 			{
 				await preloadIncompleteChats(chatIds);
 				const nextChatIds = this.#resolveChatIds(chatIds);
-				const diff = this.#getChatIdsDiff(nextChatIds);
+				if (!nextChatIds)
+				{
+					showFolderGenericErrorToast(this.layoutWidget);
+
+					return;
+				}
+
 				await updateFolder({
 					folderId: this.id,
 					title,
-					addChatIds: diff.addChatIds,
-					removeChatIds: diff.removeChatIds,
+					chatIds: nextChatIds,
 					layoutWidget: this.layoutWidget,
 				});
+
+				this.sendRemovedChatsAnalytics(chatIds);
 
 				this.formView?.markSaved();
 				showUpdateSuccessToast(this.layoutWidget);
@@ -136,6 +149,25 @@ jn.define('im/messenger/controller/folder/update', (require, exports, module) =>
 				this.isSubmitting = false;
 				this.submitButton?.setLoading(false);
 			}
+		}
+
+		/**
+		 * @protected
+		 * @param {Array<string>} savedDialogIds
+		 */
+		sendRemovedChatsAnalytics(savedDialogIds)
+		{
+			const saved = new Set(savedDialogIds);
+			const analyticsService = AnalyticsService.getInstance();
+
+			this.chatIds
+				.filter((dialogId) => !saved.has(dialogId))
+				.forEach((dialogId) => analyticsService.sendDeleteFromFolder({
+					dialogId,
+					section: Analytics.Section.userFolder,
+				}));
+
+			this.chatIds = [...savedDialogIds];
 		}
 
 		#getFolder()
@@ -184,29 +216,32 @@ jn.define('im/messenger/controller/folder/update', (require, exports, module) =>
 				});
 		}
 
+		/**
+		 * @param {Array<string|number>} dialogIds
+		 * @return {Array<number>|null} null when at least one dialogId has no chatId in dialoguesModel.
+		 *   The save sends the whole composition, so dropping such a member would delete that chat
+		 *   from the folder, so the caller refuses the save instead.
+		 */
 		#resolveChatIds(dialogIds)
 		{
 			const store = serviceLocator.get('core').getStore();
 
-			return dialogIds
-				.map((dialogId) => {
-					const dialog = store.getters['dialoguesModel/getById'](dialogId);
+			const chatIds = dialogIds.map((dialogId) => {
+				const dialog = store.getters['dialoguesModel/getById'](dialogId);
+				const chatId = dialog?.chatId ?? null;
 
-					return dialog?.chatId ?? null;
-				})
-				.filter((chatId) => Type.isInteger(chatId) && chatId > 0);
-		}
+				return Type.isInteger(chatId) && chatId > 0 ? chatId : null;
+			});
 
-		#getChatIdsDiff(nextChatIds)
-		{
-			const currentChatIds = this.#resolveChatIds(this.chatIds);
-			const currentSet = new Set(currentChatIds);
-			const nextSet = new Set(nextChatIds);
+			const unresolvedDialogIds = dialogIds.filter((dialogId, index) => chatIds[index] === null);
+			if (unresolvedDialogIds.length > 0)
+			{
+				logger.error('resolveChatIds: dialogIds with no chatId in the model', unresolvedDialogIds);
 
-			return {
-				addChatIds: nextChatIds.filter((chatId) => !currentSet.has(chatId)),
-				removeChatIds: currentChatIds.filter((chatId) => !nextSet.has(chatId)),
-			};
+				return null;
+			}
+
+			return [...new Set(chatIds)];
 		}
 	}
 

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, tasks_v2_core, tasks_v2_component_fields_relationTasks, tasks_v2_lib_relationTasksDialog, main_core, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_provider_service_relationService, ui_vue3_directives_hint, tasks_v2_component_elements_hint, tasks_v2_lib_fieldHighlighter) {
+(function (exports, main_core, tasks_v2_core, tasks_v2_component_fields_relationTasks, tasks_v2_lib_entitySelectorDialog, tasks_v2_lib_relationTasksDialog, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_provider_service_relationService, ui_vue3_directives_hint, tasks_v2_component_elements_hint, tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const subTasksMeta = Object.freeze({
@@ -66,10 +66,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		methods: {
 			handleAdd(targetNode) {
+				main_core.Dom.attr(targetNode, 'aria-expanded', 'true');
 				tasks_v2_lib_relationTasksDialog.subTasksDialog.show({
 					targetNode,
 					taskId: this.taskId,
-					analytics: this.analytics
+					analytics: this.analytics,
+					onClose: () => {
+						main_core.Dom.attr(targetNode, 'aria-expanded', 'false');
+						tasks_v2_lib_entitySelectorDialog.restoreOpenerFocus(targetNode);
+					}
 				});
 			}
 		},
@@ -128,11 +133,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		methods: {
-			handleAdd(targetNode) {
+			handleAdd(targetNode, onClose) {
 				tasks_v2_lib_relationTasksDialog.subTasksDialog.show({
 					targetNode,
 					taskId: this.taskId,
-					onClose: this.highlightField,
+					onClose: () => {
+						this.highlightField();
+						onClose?.();
+					},
 					analytics: this.analytics
 				});
 			},
@@ -156,5 +164,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.SubTasksChip = SubTasksChip;
 	exports.subTasksMeta = subTasksMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Tasks.V2, BX.Tasks.V2.Component.Fields, BX.Tasks.V2.Lib, BX, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service, BX.Vue3.Directives, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Tasks.V2, BX.Tasks.V2.Component.Fields, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service, BX.Vue3.Directives, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib);
 //# sourceMappingURL=sub-tasks.bundle.js.map

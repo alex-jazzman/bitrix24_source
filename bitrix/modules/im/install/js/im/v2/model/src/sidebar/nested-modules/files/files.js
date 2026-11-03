@@ -23,6 +23,7 @@ type ChatState = {
 	items: Map<number, ImModelSidebarFileItem>,
 	hasNextPage: boolean,
 	lastId: number,
+	lastDate: string,
 };
 
 type FilesPayload = {
@@ -31,6 +32,32 @@ type FilesPayload = {
 	group?: string,
 	hasNextPage?: boolean,
 }
+
+const LATEST_FILES_LIMIT = 3;
+
+/**
+ * The date is compared as a time value, not as a string: a comparison of date formats gives a wrong
+ * order. The number resolves the tie: without it records of one date follow the order of insertion
+ * into the collection and change places between redraws.
+ */
+const compareByDateDesc = (first: ImModelSidebarFileItem, second: ImModelSidebarFileItem): number => {
+	const dateDiff = second.date.getTime() - first.date.getTime();
+
+	return dateDiff === 0 ? second.id - first.id : dateDiff;
+};
+
+const compareByIdDesc = (first: ImModelSidebarFileItem, second: ImModelSidebarFileItem): number => {
+	return second.id - first.id;
+};
+
+/**
+ * The order of a collection must match the order the server read that group in (API-01): pages of
+ * the voice tab arrive by the date of the record, the other groups arrive by its number, and sorting
+ * a page by the other key would shuffle already ordered pages between each other.
+ */
+const getComparator = (group: string): Function => {
+	return group === SidebarFileGroups.audio ? compareByDateDesc : compareByIdDesc;
+};
 
 /* eslint-disable no-param-reassign */
 export class FilesModel extends BuilderModel
@@ -62,6 +89,7 @@ export class FilesModel extends BuilderModel
 			items: new Map(),
 			hasNextPage: true,
 			lastId: 0,
+			lastDate: '',
 		};
 	}
 
@@ -76,7 +104,7 @@ export class FilesModel extends BuilderModel
 					return [];
 				}
 
-				return [...state.collection[chatId][group].items.values()].sort((a, b) => b.id - a.id);
+				return [...state.collection[chatId][group].items.values()].sort(getComparator(group));
 			},
 			/** @function sidebar/files/getSearchResultCollection */
 			getSearchResultCollection: (state) => (chatId: number, group: string): ImModelSidebarFileItem[] => {
@@ -85,7 +113,7 @@ export class FilesModel extends BuilderModel
 					return [];
 				}
 
-				return [...state.collectionSearch[chatId][group].items.values()].sort((a, b) => b.id - a.id);
+				return [...state.collectionSearch[chatId][group].items.values()].sort(getComparator(group));
 			},
 			/** @function sidebar/files/getLatest */
 			getLatest: (state, getters, rootState, rootGetters) => (chatId: number): ImModelSidebarFileItem[] => {
@@ -153,6 +181,19 @@ export class FilesModel extends BuilderModel
 
 				return state.collection[chatId][group].items.size;
 			},
+			// Whether the chat holds any file at all, whatever its group and whatever the preview block
+			// of the sidebar is willing to show: a chat of nothing but video notes has files, and
+			// `getLatest` leaves them out of its selection by design.
+			/** @function sidebar/files/hasAnyFiles */
+			hasAnyFiles: (state) => (chatId: number): boolean => {
+				const groups = state.collection[chatId];
+				if (!groups)
+				{
+					return false;
+				}
+
+				return Object.values(groups).some((group: ChatState) => group.items.size > 0);
+			},
 			/** @function sidebar/files/hasNextPage */
 			hasNextPage: (state) => (chatId: number, group: string): boolean => {
 				if (!state.collection[chatId] || !state.collection[chatId][group])
@@ -188,6 +229,24 @@ export class FilesModel extends BuilderModel
 				}
 
 				return state.collectionSearch[chatId][group].lastId;
+			},
+			/** @function sidebar/files/getLastDate */
+			getLastDate: (state) => (chatId: number, group: string): string => {
+				if (!state.collection[chatId] || !state.collection[chatId][group])
+				{
+					return '';
+				}
+
+				return state.collection[chatId][group].lastDate;
+			},
+			/** @function sidebar/files/getSearchResultCollectionLastDate */
+			getSearchResultCollectionLastDate: (state) => (chatId: number, group: string): string => {
+				if (!state.collectionSearch[chatId] || !state.collectionSearch[chatId][group])
+				{
+					return '';
+				}
+
+				return state.collectionSearch[chatId][group].lastDate;
 			},
 			/** @function sidebar/files/isHistoryLimitExceeded */
 			isHistoryLimitExceeded: (state) => (chatId: number): boolean => {
@@ -278,7 +337,7 @@ export class FilesModel extends BuilderModel
 			},
 			/** @function sidebar/files/setLastId */
 			setLastId: (store, payload) => {
-				const { chatId, group, lastId } = payload;
+				const { chatId, group, lastId, lastDate = '' } = payload;
 				if (!Type.isNumber(chatId))
 				{
 					return;
@@ -289,11 +348,11 @@ export class FilesModel extends BuilderModel
 					return;
 				}
 
-				store.commit('setLastId', { chatId, group, lastId });
+				store.commit('setLastId', { chatId, group, lastId, lastDate });
 			},
 			/** @function sidebar/files/setLastIdSearch */
 			setLastIdSearch: (store, payload) => {
-				const { chatId, group, lastId } = payload;
+				const { chatId, group, lastId, lastDate = '' } = payload;
 				if (!Type.isNumber(chatId))
 				{
 					return;
@@ -304,7 +363,22 @@ export class FilesModel extends BuilderModel
 					return;
 				}
 
-				store.commit('setLastIdSearch', { chatId, group, lastId });
+				store.commit('setLastIdSearch', { chatId, group, lastId, lastDate });
+			},
+			/** @function sidebar/files/clearGroup */
+			clearGroup: (store, payload) => {
+				const { chatId, group } = payload;
+				if (!Type.isNumber(chatId))
+				{
+					return;
+				}
+
+				if (!store.state.collection[chatId])
+				{
+					return;
+				}
+
+				store.commit('clearGroup', { chatId, group });
 			},
 			/** @function sidebar/files/clearSearch */
 			clearSearch: (store) => {
@@ -396,8 +470,10 @@ export class FilesModel extends BuilderModel
 
 				state.collectionSearch[chatId][group].hasNextPage = hasNextPage;
 			},
+			// the boundary of the page is written as a whole: a number without a date is the cursor of
+			// another order, and leaving the previous date next to it would pass off a mixed pair as its own
 			setLastId: (state, payload) => {
-				const { chatId, group, lastId } = payload;
+				const { chatId, group, lastId, lastDate = '' } = payload;
 
 				if (!state.collection[chatId])
 				{
@@ -411,9 +487,10 @@ export class FilesModel extends BuilderModel
 				}
 
 				state.collection[chatId][group].lastId = lastId;
+				state.collection[chatId][group].lastDate = lastDate;
 			},
 			setLastIdSearch: (state, payload) => {
-				const { chatId, group, lastId } = payload;
+				const { chatId, group, lastId, lastDate = '' } = payload;
 
 				if (!state.collectionSearch[chatId])
 				{
@@ -427,6 +504,17 @@ export class FilesModel extends BuilderModel
 				}
 
 				state.collectionSearch[chatId][group].lastId = lastId;
+				state.collectionSearch[chatId][group].lastDate = lastDate;
+			},
+			clearGroup: (state, payload) => {
+				const { chatId, group } = payload;
+
+				if (!state.collection[chatId] || !state.collection[chatId][group])
+				{
+					return;
+				}
+
+				state.collection[chatId][group] = this.getChatState();
 			},
 			clearSearch: (state) => {
 				state.collectionSearch = {};
@@ -450,10 +538,33 @@ export class FilesModel extends BuilderModel
 
 	getTopThreeCompletedFiles(collection: ImModelSidebarFileItem[], rootGetters): ImModelSidebarFileItem[]
 	{
-		return collection.filter((sidebarFile: ImModelSidebarFileItem) => {
+		const selected = [];
+
+		for (const sidebarFile of collection)
+		{
+			// The record of the panel outlives the Disk object it points at, so a record whose file is
+			// gone stays in the collection. Everything the selection is made by is read from the file.
+			if (!rootGetters['files/isInCollection']({ fileId: sidebarFile.fileId }))
+			{
+				continue;
+			}
+
 			const file = rootGetters['files/get'](sidebarFile.fileId, true);
 
-			return file.progress === 100;
-		}).slice(0, 3);
+			// A video note is not a media file of this block: the block draws every record with a
+			// rectangular preview and opens it in the viewer, and neither fits a round record. The sign
+			// is taken from the file, the same one the row of the tab is chosen by (DTO-01).
+			if (file.progress === 100 && !file.isVideoNote)
+			{
+				selected.push(sidebarFile);
+			}
+
+			if (selected.length === LATEST_FILES_LIMIT)
+			{
+				break;
+			}
+		}
+
+		return selected;
 	}
 }

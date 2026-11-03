@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/entity-selector.bundle.css',
 	'js' => 'dist/entity-selector.bundle.js',
 	'rel' => [
-		'ui.info-helper',
-		'main.core.events',
 		'main.core',
-		'ui.entity-selector',
+		'main.core.events',
 		'ui.buttons',
+		'ui.entity-selector',
+		'ui.info-helper',
 	],
 	'skip_core' => false,
 ];

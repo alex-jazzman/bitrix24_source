@@ -26,6 +26,7 @@ use Bitrix\Socialnetwork\Helper\Mention;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Socialnetwork\Integration;
+use Bitrix\Main\Web\Uri;
 
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
@@ -212,7 +213,7 @@ if ($arParams["PATH_TO_BLOG"] == '')
 	$arParams["PATH_TO_BLOG"] = htmlspecialcharsbx($applicationCurPage."?".$arParams["PAGE_VAR"]."=blog&".$arParams["BLOG_VAR"]."=#blog#");
 }
 
-$arParams["PATH_TO_BLOG"] = CHTTP::urlDeleteParams($arParams["PATH_TO_BLOG"], array("WFILES"));
+$arParams["PATH_TO_BLOG"] = (string)(new Uri($arParams["PATH_TO_BLOG"]))->deleteParams(["WFILES"]);
 
 $arParams["PATH_TO_POST"] = trim($arParams["PATH_TO_POST"]);
 if ($arParams["PATH_TO_POST"] == '')
@@ -1789,26 +1790,21 @@ if (
 							$arPostFieldsOLD = $arPostFields;
 
 							$arPostFields = $USER_FIELD_MANAGER->GetUserFields("BLOG_POST", $newID, LANGUAGE_ID);
-							if (
-								($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"] != $arPostFieldsOLD["UF_BLOG_POST_IMPRTNT"]["VALUE"])
-								|| (
-									$arParams["ID"] > 0
-									&& (
-										$arResult["Post"]["~DETAIL_TEXT"] != $arFields["DETAIL_TEXT"]
-										|| $arResult["Post"]["~TITLE"] != $arFields["TITLE"]
-									)
-								)
-							)
+							$importantValueChanged = (
+								$arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"]
+									!= $arPostFieldsOLD["UF_BLOG_POST_IMPRTNT"]["VALUE"]
+							);
+							if ($importantValueChanged)
 							{
-								if ($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"] != $arPostFieldsOLD["UF_BLOG_POST_IMPRTNT"]["VALUE"])
-								{
-									if ($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"])
-										CBlogUserOptions::SetOption($newID, "BLOG_POST_IMPRTNT", "Y", $USER->GetID());
-									else
-										CBlogUserOptions::DeleteOption($newID, "BLOG_POST_IMPRTNT", $USER->GetID());
-								}
+								if ($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"])
+									CBlogUserOptions::SetOption($newID, "BLOG_POST_IMPRTNT", "Y", $USER->GetID());
+								else
+									CBlogUserOptions::DeleteOption($newID, "BLOG_POST_IMPRTNT", $USER->GetID());
 
-								if (defined("BX_COMP_MANAGED_CACHE"))
+								if (
+									(int)$arParams["ID"] <= 0
+									&& defined("BX_COMP_MANAGED_CACHE")
+								)
 								{
 									$CACHE_MANAGER->ClearByTag('blogpost_important_all');
 								}

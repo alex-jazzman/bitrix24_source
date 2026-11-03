@@ -39,6 +39,13 @@ $APPLICATION->ShowProperty('FooterJS');
 	{
 		BX.bindDelegate(document.body, 'click', {tagName: 'A'}, function (event)
 		{
+			if (event.landingBlockLinkHandled)
+			{
+				// Android's body click handler appends a navigation marker to the href.
+				this.href = event.landingBlockLinkUrl;
+				return;
+			}
+
 			if (this.hostname === document.location.hostname)
 			{
 				let func = BX.MobileTools.resolveOpenFunction(this.href);

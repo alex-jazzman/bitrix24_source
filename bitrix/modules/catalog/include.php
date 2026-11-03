@@ -113,6 +113,11 @@ const CATALOG_PAGE_SIZE = 500;
 
 require_once __DIR__ . '/autoload.php';
 
+if (is_dir(__DIR__ . '/dev/e2e'))
+{
+	Loader::registerNamespace('Bitrix\\Catalog\\Controller\\Dev\\E2e', __DIR__ . '/dev/e2e');
+}
+
 if (defined('CATALOG_GLOBAL_VARS') && CATALOG_GLOBAL_VARS == 'Y')
 {
 	global $CATALOG_CATALOG_CACHE;

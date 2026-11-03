@@ -41,6 +41,11 @@
 	margin-top: 19px;
 }
 
+.ui-entity-catalog__main-content-body:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .ui-entity-catalog__content.--help-block {
 	display: flex;
 	flex-direction: column;

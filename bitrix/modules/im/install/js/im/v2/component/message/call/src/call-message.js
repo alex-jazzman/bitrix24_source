@@ -1,10 +1,10 @@
 import { DefaultMessage } from 'im.v2.component.message.default';
-import { CallMessage as CallCustomMessage } from 'call.component.call-message';
+import { CallMessage as CallCustomMessage } from 'call.widget.call-message';
 
-import type { BitrixVueComponentProps } from 'ui.vue3';
+import { defineComponent, type BitrixVueComponentProps } from 'ui.vue3';
 
 // @vue/component
-export const CallMessage = {
+export const CallMessage = defineComponent({
 	name: 'CallMessage',
 	props:
 	{
@@ -25,10 +25,10 @@ export const CallMessage = {
 	{
 		messageComponentToRender(): BitrixVueComponentProps
 		{
-			return CallCustomMessage ? CallCustomMessage : DefaultMessage;
+			return CallCustomMessage || DefaultMessage;
 		},
 	},
 	template: `
 		<component :is="messageComponentToRender" :item="item" :dialogId="dialogId" :withTitle="withTitle" />
 	`,
-};
+});

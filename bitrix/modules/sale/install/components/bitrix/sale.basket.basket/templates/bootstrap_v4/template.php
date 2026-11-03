@@ -110,7 +110,8 @@ if ($arParams['USE_GIFTS'] === 'Y')
 }
 
 \CJSCore::Init(array('fx', 'popup', 'ajax'));
-Main\UI\Extension::load(['ui.mustache']);
+Main\Loader::includeModule('ui');
+Main\UI\Extension::load(['ui.mustache', 'ui.a11y']);
 
 //$this->addExternalCss($templateFolder.'/themes/'.$arParams['TEMPLATE_THEME'].'/style.css');
 
@@ -122,6 +123,25 @@ $mobileColumns = isset($arParams['COLUMNS_LIST_MOBILE'])
 	? $arParams['COLUMNS_LIST_MOBILE']
 	: $arParams['COLUMNS_LIST'];
 $mobileColumns = array_fill_keys($mobileColumns, true);
+
+$tableColumns = ['NAME'];
+
+if (in_array('PRICE', $arParams['COLUMNS_LIST']) && $arParams['PRICE_DISPLAY_MODE'] === 'Y')
+{
+	$tableColumns[] = 'PRICE';
+}
+
+$tableColumns[] = 'QUANTITY';
+
+if (in_array('SUM', $arParams['COLUMNS_LIST']))
+{
+	$tableColumns[] = 'SUM';
+}
+
+if (in_array('DELETE', $arParams['COLUMNS_LIST']))
+{
+	$tableColumns[] = 'DELETE';
+}
 
 $jsTemplates = new Main\IO\Directory(Main\Application::getDocumentRoot().$templateFolder.'/js-templates');
 /** @var Main\IO\File $jsTemplate */
@@ -138,12 +158,13 @@ if (empty($arResult['ERROR_MESSAGE']))
 	{
 		?>
 		<div data-entity="parent-container">
-			<div class="catalog-block-header"
+			<h2 class="catalog-block-header basket-gifts-header-plain"
+					id="basket-gifts-header"
 					data-entity="header"
 					data-showed="false"
 					style="display: none; opacity: 0;">
 				<?=$arParams['GIFTS_BLOCK_TITLE']?>
-			</div>
+			</h2>
 			<?
 			$APPLICATION->IncludeComponent(
 				'bitrix:sale.products.gift.basket',
@@ -174,7 +195,7 @@ if (empty($arResult['ERROR_MESSAGE']))
 		{
 			?>
 			<div class="row">
-				<div class="col" data-entity="basket-total-block"></div>
+				<div class="col" role="region" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_TOTAL_PANEL_TOP_ARIA'))?>" data-entity="basket-total-block"></div>
 			</div>
 			<?
 		}
@@ -183,10 +204,12 @@ if (empty($arResult['ERROR_MESSAGE']))
 		<div class="row">
 			<div class="col">
 				<div class="alert alert-warning alert-dismissable" id="basket-warning" style="display: none;">
-					<span class="close" data-entity="basket-items-warning-notification-close">&times;</span>
-					<div data-entity="basket-general-warnings"></div>
+					<button type="button" class="close" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_WARNING_CLOSE_ARIA'))?>" data-entity="basket-items-warning-notification-close">&times;</button>
+					<div role="status" data-entity="basket-general-warnings"></div>
 					<div data-entity="basket-item-warnings">
-						<?=Loc::getMessage('SBB_BASKET_ITEM_WARNING')?>
+						<?=Loc::getMessage('SBB_BASKET_ITEM_WARNING_MSGVER_1', [
+							'#NUM_PRODUCTS#' => '<button type="button" class="basket-btn-plain" data-entity="basket-items-warning-count"></button>',
+						])?>
 					</div>
 				</div>
 			</div>
@@ -199,17 +222,17 @@ if (empty($arResult['ERROR_MESSAGE']))
 					<div class="basket-items-list-header" data-entity="basket-items-list-header">
 						<div class="basket-items-search-field" data-entity="basket-filter">
 							<div class="form input-group">
-								<input type="text" class="form-control" placeholder="<?=Loc::getMessage('SBB_BASKET_FILTER')?>" data-entity="basket-filter-input">
+								<input type="text" class="form-control" placeholder="<?=htmlspecialcharsbx(Loc::getMessage('SBB_BASKET_FILTER'))?>" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_FILTER_FIELD_ARIA'))?>" data-entity="basket-filter-input">
 							</div>
-							<button class="basket-items-search-clear-btn" type="button" data-entity="basket-filter-clear-btn">&times;</button>
+							<button class="basket-items-search-clear-btn" type="button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_FILTER_CLEAR_ARIA'))?>" data-entity="basket-filter-clear-btn">&times;</button>
 						</div>
 
 						<div class="basket-items-list-header-filter">
-							<a href="javascript:void(0)" class="basket-items-list-header-filter-item active" data-entity="basket-items-count" data-filter="all" style="display: none;"></a>
-							<a href="javascript:void(0)" class="basket-items-list-header-filter-item" data-entity="basket-items-count" data-filter="similar" style="display: none;"></a>
-							<a href="javascript:void(0)" class="basket-items-list-header-filter-item" data-entity="basket-items-count" data-filter="warning" style="display: none;"></a>
-							<a href="javascript:void(0)" class="basket-items-list-header-filter-item" data-entity="basket-items-count" data-filter="delayed" style="display: none;"></a>
-							<a href="javascript:void(0)" class="basket-items-list-header-filter-item" data-entity="basket-items-count" data-filter="not-available" style="display: none;"></a>
+							<button type="button" class="basket-items-list-header-filter-item active basket-btn-plain" data-entity="basket-items-count" data-filter="all" aria-pressed="true" style="display: none;"></button>
+							<button type="button" class="basket-items-list-header-filter-item basket-btn-plain" data-entity="basket-items-count" data-filter="similar" aria-pressed="false" style="display: none;"></button>
+							<button type="button" class="basket-items-list-header-filter-item basket-btn-plain" data-entity="basket-items-count" data-filter="warning" aria-pressed="false" style="display: none;"></button>
+							<button type="button" class="basket-items-list-header-filter-item basket-btn-plain" data-entity="basket-items-count" data-filter="delayed" aria-pressed="false" style="display: none;"></button>
+							<button type="button" class="basket-items-list-header-filter-item basket-btn-plain" data-entity="basket-items-count" data-filter="not-available" aria-pressed="false" style="display: none;"></button>
 						</div>
 					</div>
 					<div class="basket-items-list-container" id="basket-items-list-container">
@@ -219,7 +242,20 @@ if (empty($arResult['ERROR_MESSAGE']))
 								<div class="basket-search-not-found-icon"></div>
 								<div class="basket-search-not-found-text"><?=Loc::getMessage('SBB_FILTER_EMPTY_RESULT')?></div>
 							</div>
-							<table class="basket-items-list-table" id="basket-item-table"></table>
+							<table class="basket-items-list-table" id="basket-item-table">
+								<thead class="basket-visually-hidden">
+									<tr>
+										<?
+										foreach ($tableColumns as $tableColumn)
+										{
+											?>
+											<th scope="col"><?=Loc::getMessage('SBB_TABLE_HEADER_'.$tableColumn.'_ARIA')?></th>
+											<?
+										}
+										?>
+									</tr>
+								</thead>
+							</table>
 						</div>
 					</div>
 				</div>
@@ -233,7 +269,7 @@ if (empty($arResult['ERROR_MESSAGE']))
 		{
 			?>
 			<div class="row">
-				<div class="col" data-entity="basket-total-block"></div>
+				<div class="col" role="region" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SBB_TOTAL_PANEL_BOTTOM_ARIA'))?>" data-entity="basket-total-block"></div>
 			</div>
 			<?
 		}
@@ -273,12 +309,13 @@ if (empty($arResult['ERROR_MESSAGE']))
 	{
 		?>
 		<div data-entity="parent-container">
-			<div class="catalog-block-header"
+			<h2 class="catalog-block-header basket-gifts-header-plain"
+					id="basket-gifts-header"
 					data-entity="header"
 					data-showed="false"
 					style="display: none; opacity: 0;">
 				<?=$arParams['GIFTS_BLOCK_TITLE']?>
-			</div>
+			</h2>
 			<?
 			$APPLICATION->IncludeComponent(
 				'bitrix:sale.products.gift.basket',

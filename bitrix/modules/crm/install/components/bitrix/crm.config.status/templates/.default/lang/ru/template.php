@@ -10,7 +10,6 @@ $MESS["CRM_STATUS_VIEW_SCALE"] = "Предварительный просмот�
 $MESS["CRM_STATUS_VIEW_FUNNEL2_MSGVER_1"] = "Предварительный просмотр воронки";
 $MESS["CRM_STATUS_ADD"] = "Добавить поле";
 $MESS["CRM_STATUS_NEW"] = "Новое поле";
-$MESS["CRM_STATUS_EDIT_COLOR"] = "Изменить цвет";
 $MESS["CRM_STATUS_EDIT_NAME"] = "Изменить название";
 $MESS["CRM_STATUS_DELETE_FIELD"] = "Удалить";
 $MESS["CRM_STATUS_TITLE_INITIAL_DEAL_STAGE"] = "Начальная стадия";

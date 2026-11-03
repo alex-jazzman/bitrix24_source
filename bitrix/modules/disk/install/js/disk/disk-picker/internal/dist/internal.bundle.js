@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports, main_date, ui_designTokens, ui_designTokens_air, ui_iconSet_outline, main_core, ui_vue3, ui_vue3_pinia, ui_iconSet_api_disk, ui_system_skeleton_vue, ui_iconSet_api_vue, ui_vue3_components_avatar, ui_system_typography_vue, main_polyfill_intersectionobserver, ui_vue3_components_button) {
+(function (exports, main_date, ui_designTokens, ui_designTokens_air, ui_iconSet_outline, ui_iconSet_solid, main_core, ui_vue3, ui_vue3_pinia, ui_iconSet_api_disk, main_core_events, ui_system_skeleton_vue, main_polyfill_intersectionobserver, ui_iconSet_api_vue, ui_vue3_components_avatar, ui_system_typography_vue, ui_vue3_components_button, ui_system_skeleton, ui_a11y, ui_cnt) {
 	'use strict';
 
 	const StageType = Object.freeze({
@@ -29,7 +29,8 @@ this.BX.Disk = this.BX.Disk || {};
 		Common: 'common',
 		Group: 'group',
 		Project: 'project',
-		Collab: 'collab'
+		Collab: 'collab',
+		Im: 'im'
 	});
 	const OrderField = Object.freeze({
 		Name: 'name',
@@ -48,7 +49,8 @@ this.BX.Disk = this.BX.Disk || {};
 		GetInitialStage: 'disk.api.FilePicker.getInitialStage',
 		ListChildren: 'disk.api.FilePicker.listChildren',
 		Search: 'disk.api.FilePicker.search',
-		ResolveSelection: 'disk.api.FilePicker.resolveSelection'
+		ResolveSelection: 'disk.api.FilePicker.resolveSelection',
+		GetViewerAttributes: 'disk.api.FilePicker.getViewerAttributes'
 	});
 	const PageSize = Object.freeze({
 		Default: 50,
@@ -116,7 +118,7 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 	}
 
-	const ITEM_KEYS = Object.freeze(['objectId', 'type', 'name', 'extension', 'size', 'updateTime', 'createTime', 'recentTime', 'selectable', 'fileType', 'source', 'preview']);
+	const ITEM_KEYS = Object.freeze(['objectId', 'type', 'name', 'extension', 'size', 'updateTime', 'createTime', 'recentTime', 'selectable', 'fileType', 'source', 'preview', 'previewable']);
 	const SELECTION_ITEM_KEYS = Object.freeze([...ITEM_KEYS, 'parentFolderName', 'editorFileType']);
 	const SOURCE_KEYS = Object.freeze(['storageId', 'storageType', 'title', 'entityId']);
 	const SOURCE_DESCRIPTOR_KEYS = Object.freeze(['storageId', 'folderId', 'title', 'storageType', 'entityId', 'avatarUrl']);
@@ -128,10 +130,13 @@ this.BX.Disk = this.BX.Disk || {};
 	const STAGE_KEYS = Object.freeze(['type', 'storageId', 'folderId']);
 	const REJECTED_KEYS = Object.freeze(['objectId', 'reason']);
 	const REJECT_REASONS = Object.freeze(['not_found', 'not_selectable']);
-	const INITIAL_STAGE_RESPONSE_KEYS = Object.freeze(['stage', 'items', 'sources', 'pagination', 'context', 'emptyReason']);
+	const INITIAL_STAGE_RESPONSE_KEYS = Object.freeze(['stage', 'items', 'sources', 'pagination', 'context', 'emptyReason', 'sourceRevision']);
 	const LIST_CHILDREN_RESPONSE_KEYS = Object.freeze(['items', 'pagination', 'context', 'emptyReason']);
 	const SEARCH_RESPONSE_KEYS = Object.freeze(['items', 'pagination', 'emptyReason']);
 	const RESOLVE_RESPONSE_KEYS = Object.freeze(['items', 'rejectedItems', 'partial']);
+	const VIEWER_ATTRIBUTES_RESPONSE_KEYS = Object.freeze(['items']);
+	const VIEWER_ATTRIBUTES_ENTRY_KEYS = Object.freeze(['objectId', 'attributes']);
+	const VIEWER_ATTRIBUTE_NAME = /^data-[a-z0-9-]+$/;
 	class Schema {
 		method;
 		constructor(method) {
@@ -293,6 +298,14 @@ this.BX.Disk = this.BX.Disk || {};
 		} else {
 			fileType = schema.enumValue(item.fileType, FILE_TYPE_ALIASES, `${path}.fileType`);
 		}
+		let previewable = false;
+		if (isFolder) {
+			if (item.previewable !== null) {
+				schema.fail(`${path}.previewable`);
+			}
+		} else {
+			previewable = schema.boolean(item.previewable, `${path}.previewable`);
+		}
 		const source = mapSource(schema, item.source, `${path}.source`);
 		const previewUrl = mapPreviewUrl(schema, item.preview, isFolder, `${path}.preview`);
 		return {
@@ -312,6 +325,7 @@ this.BX.Disk = this.BX.Disk || {};
 				fileType
 			}),
 			previewUrl,
+			previewable,
 			sourceTitle: source.title,
 			sourceId: source.storageId
 		};
@@ -483,13 +497,19 @@ this.BX.Disk = this.BX.Disk || {};
 	function mapInitialStage(data) {
 		const schema = new Schema('getInitialStage');
 		const response = schema.object(data, 'data', INITIAL_STAGE_RESPONSE_KEYS);
+		const stage = mapStage(schema, response.stage, 'data.stage');
+		const sourceRevision = schema.stringOrNull(response.sourceRevision, 'data.sourceRevision');
+		if (stage.stageType === 'sources' !== (sourceRevision !== null)) {
+			schema.fail('data.sourceRevision');
+		}
 		return {
-			stage: mapStage(schema, response.stage, 'data.stage'),
+			stage,
 			items: mapItems(schema, response.items, 'data.items'),
 			sources: mapSources(schema, response.sources, 'data.sources'),
 			pagination: mapPagination(schema, response.pagination, 'data.pagination'),
 			context: mapContext(schema, response.context, 'data.context'),
-			emptyReason: mapEmptyReason(schema, response.emptyReason, 'data.emptyReason')
+			emptyReason: mapEmptyReason(schema, response.emptyReason, 'data.emptyReason'),
+			sourceRevision
 		};
 	}
 	function mapListChildren(data) {
@@ -524,6 +544,44 @@ this.BX.Disk = this.BX.Disk || {};
 			items,
 			rejectedItems,
 			partial
+		};
+	}
+	function mapViewerAttributeMap(schema, raw, path) {
+		if (!main_core.Type.isPlainObject(raw)) {
+			schema.fail(path);
+		}
+		const source = raw;
+		const attributes = {};
+		Object.keys(source).forEach(key => {
+			if (!VIEWER_ATTRIBUTE_NAME.test(key) || !main_core.Type.isString(source[key])) {
+				schema.fail(`${path}.${key}`);
+			}
+			attributes[key] = source[key];
+		});
+		return attributes;
+	}
+	function mapViewerAttributesEntry(schema, raw, path) {
+		const entry = schema.object(raw, path, VIEWER_ATTRIBUTES_ENTRY_KEYS);
+		return {
+			objectId: schema.positiveInt(entry.objectId, `${path}.objectId`),
+			attributes: mapViewerAttributeMap(schema, entry.attributes, `${path}.attributes`)
+		};
+	}
+	function mapViewerAttributes(data) {
+		const schema = new Schema('getViewerAttributes');
+		const response = schema.object(data, 'data', VIEWER_ATTRIBUTES_RESPONSE_KEYS);
+		const entries = schema.array(response.items, 'data.items');
+		const seenObjectIds = new Set();
+		const items = entries.map((entry, index) => {
+			const attributesEntry = mapViewerAttributesEntry(schema, entry, `data.items[${index}]`);
+			if (seenObjectIds.has(attributesEntry.objectId)) {
+				schema.fail(`data.items[${index}].objectId`);
+			}
+			seenObjectIds.add(attributesEntry.objectId);
+			return attributesEntry;
+		});
+		return {
+			items
 		};
 	}
 
@@ -597,6 +655,7 @@ this.BX.Disk = this.BX.Disk || {};
 			objectTypeFilter: request.filters.objectTypeFilter,
 			fileTypeFilters: request.filters.fileTypeFilters,
 			allowedFileTypes: request.allowedFileTypes,
+			page: request.page,
 			pageSize: cappedPageSize(request.pageSize),
 			...(request.initialStage === null ? {} : {
 				initialStage: request.initialStage
@@ -641,6 +700,12 @@ this.BX.Disk = this.BX.Disk || {};
 		}, request.signedConfig);
 		return callAction(FilePickerAction.ResolveSelection, payload, mapResolveSelection);
 	}
+	function getViewerAttributes(request) {
+		const payload = withSignedConfig({
+			objectIds: request.objectIds.slice(0, PageSize.Max)
+		}, request.signedConfig);
+		return callAction(FilePickerAction.GetViewerAttributes, payload, mapViewerAttributes);
+	}
 
 	function applyLocalFilters(items, filters) {
 		return items.filter(item => {
@@ -655,6 +720,23 @@ this.BX.Disk = this.BX.Disk || {};
 			}
 			return true;
 		});
+	}
+	function findItemsByName(items, filters, query) {
+		const normalizedQuery = query.trim().toLocaleLowerCase();
+		if (normalizedQuery === '') {
+			return [];
+		}
+		return applyLocalFilters(items, filters).filter(item => item.name.toLocaleLowerCase().includes(normalizedQuery));
+	}
+	function withLocalMatches(serverItems, localCandidates, filters, query) {
+		const seenIds = new Set(serverItems.map(item => item.objectId));
+		return [...serverItems, ...findItemsByName(localCandidates, filters, query).filter(item => {
+			if (seenIds.has(item.objectId)) {
+				return false;
+			}
+			seenIds.add(item.objectId);
+			return true;
+		})];
 	}
 
 	const useItemStore = ui_vue3_pinia.defineStore('diskPickerItem', {
@@ -707,7 +789,7 @@ this.BX.Disk = this.BX.Disk || {};
 	const useSelectionStore = ui_vue3_pinia.defineStore('diskPickerSelection', {
 		state: () => ({
 			selectedIds: [],
-			selectedSizes: {},
+			selectedSnapshots: {},
 			activeObjectId: null
 		}),
 		getters: {
@@ -719,43 +801,60 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			selectedIdSet() {
 				return new Set(this.selectedIds);
+			},
+			selectedSnapshotList() {
+				return this.selectedIds.map(objectId => this.selectedSnapshots[objectId]);
 			}
 		},
 		actions: {
 			has(objectId) {
 				return this.selectedIds.includes(objectId);
 			},
-			add(objectId, size) {
+			add(objectId, snapshot) {
 				if (!this.selectedIds.includes(objectId)) {
 					this.selectedIds = [...this.selectedIds, objectId];
-					if (size !== undefined) {
-						this.selectedSizes = {
-							...this.selectedSizes,
-							[objectId]: size
-						};
-					}
+					this.selectedSnapshots = {
+						...this.selectedSnapshots,
+						[objectId]: snapshot
+					};
 				}
 			},
 			remove(objectId) {
 				this.selectedIds = this.selectedIds.filter(id => id !== objectId);
-				const selectedSizes = {
-					...this.selectedSizes
+				const selectedSnapshots = {
+					...this.selectedSnapshots
 				};
-				delete selectedSizes[objectId];
-				this.selectedSizes = selectedSizes;
+				delete selectedSnapshots[objectId];
+				this.selectedSnapshots = selectedSnapshots;
 			},
-			replaceWith(objectId, size) {
+			replaceWith(objectId, snapshot) {
 				this.selectedIds = [objectId];
-				this.selectedSizes = size === undefined ? {} : {
-					[objectId]: size
+				this.selectedSnapshots = {
+					[objectId]: snapshot
 				};
 			},
 			setActive(objectId) {
 				this.activeObjectId = objectId;
 			},
+			captureState() {
+				return {
+					selectedIds: [...this.selectedIds],
+					selectedSnapshots: {
+						...this.selectedSnapshots
+					},
+					activeObjectId: this.activeObjectId
+				};
+			},
+			restoreState(snapshot) {
+				this.selectedIds = [...snapshot.selectedIds];
+				this.selectedSnapshots = {
+					...snapshot.selectedSnapshots
+				};
+				this.activeObjectId = snapshot.activeObjectId;
+			},
 			clear() {
 				this.selectedIds = [];
-				this.selectedSizes = {};
+				this.selectedSnapshots = {};
 				this.activeObjectId = null;
 			},
 			pruneActive(visibleObjectIds) {
@@ -790,7 +889,8 @@ this.BX.Disk = this.BX.Disk || {};
 		onContextInvalid: () => {},
 		notify: () => {},
 		emitSelection: () => {},
-		requestCancel: () => {}
+		requestCancel: () => {},
+		setPreviewShown: () => {}
 	};
 	const DEFAULT_CONSTRAINTS = Object.freeze({
 		signedConfig: null,
@@ -809,6 +909,9 @@ this.BX.Disk = this.BX.Disk || {};
 			name: currentFolder.name
 		}];
 	}
+	function isSameFilters(current, next) {
+		return current.objectTypeFilter === next.objectTypeFilter && current.fileTypeFilters.length === next.fileTypeFilters.length && current.fileTypeFilters.every((value, index) => value === next.fileTypeFilters[index]);
+	}
 	const useSessionStore = ui_vue3_pinia.defineStore('diskPickerSession', {
 		state: () => ({
 			stageType: StageType.Recent,
@@ -823,6 +926,8 @@ this.BX.Disk = this.BX.Disk || {};
 			viewMode: ViewMode.List,
 			initialized: false,
 			contentLoading: false,
+			preserveContentOnLoading: false,
+			navigationPending: false,
 			contentError: null,
 			emptyReason: null,
 			hasMore: false,
@@ -832,6 +937,8 @@ this.BX.Disk = this.BX.Disk || {};
 			paginationStalled: false,
 			confirming: false,
 			confirmationEpoch: 0,
+			focusHandoffToFiles: false,
+			feedRevision: 0,
 			constraints: DEFAULT_CONSTRAINTS,
 			callbacks: ui_vue3.markRaw({
 				...NOOP_CALLBACKS
@@ -882,6 +989,7 @@ this.BX.Disk = this.BX.Disk || {};
 			setFeed(feed) {
 				if (!this.isSameFeed(feed)) {
 					this.invalidateConfirmation();
+					this.feedRevision += 1;
 				}
 				this.stageType = feed.stageType;
 				this.storageId = feed.storageId;
@@ -907,10 +1015,16 @@ this.BX.Disk = this.BX.Disk || {};
 				this.paginationStalled = stalled;
 			},
 			setFilters(filters) {
+				if (!isSameFilters(this.filters, filters)) {
+					this.feedRevision += 1;
+				}
 				this.objectTypeFilter = filters.objectTypeFilter;
 				this.fileTypeFilters = [...filters.fileTypeFilters];
 			},
 			setSearchQuery(query) {
+				if (this.searchQuery !== query) {
+					this.feedRevision += 1;
+				}
 				this.searchQuery = query;
 			},
 			setFilterFind(find) {
@@ -920,7 +1034,7 @@ this.BX.Disk = this.BX.Disk || {};
 				this.searchOpen = open;
 			},
 			resetSearchQuery() {
-				this.searchQuery = '';
+				this.setSearchQuery('');
 			},
 			setViewMode(mode) {
 				this.viewMode = mode;
@@ -936,6 +1050,23 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			setLoading(loading) {
 				this.contentLoading = loading;
+				if (!loading) {
+					this.preserveContentOnLoading = false;
+				}
+			},
+			setPreserveContentOnLoading(preserve) {
+				this.preserveContentOnLoading = preserve;
+			},
+			setNavigationPending(pending) {
+				this.navigationPending = pending;
+			},
+			requestFocusHandoffToFiles() {
+				this.focusHandoffToFiles = true;
+			},
+			consumeFocusHandoffToFiles() {
+				const requested = this.focusHandoffToFiles;
+				this.focusHandoffToFiles = false;
+				return requested;
 			},
 			markInitialized() {
 				this.initialized = true;
@@ -966,11 +1097,37 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 	});
 
+	function mergeSources(current, incoming) {
+		const merged = current.map(source => ({
+			...source
+		}));
+		const indexes = new Map(merged.map((source, index) => [source.storageId, index]));
+		incoming.forEach(source => {
+			const index = indexes.get(source.storageId);
+			if (index === undefined) {
+				indexes.set(source.storageId, merged.length);
+				merged.push({
+					...source
+				});
+				return;
+			}
+			merged[index] = {
+				...source
+			};
+		});
+		return merged;
+	}
 	const useSourceStore = ui_vue3_pinia.defineStore('diskPickerSource', {
 		state: () => ({
 			sources: [],
 			sourcesLoading: false,
-			sourcesError: null
+			sourcesValidating: false,
+			sourcesLoadingMore: false,
+			sourcesError: null,
+			sourcesPageError: null,
+			sourcesHasMore: false,
+			sourcesPage: 1,
+			sourcesRevision: null
 		}),
 		actions: {
 			setSources(sources) {
@@ -982,13 +1139,67 @@ this.BX.Disk = this.BX.Disk || {};
 			setError(code) {
 				this.sourcesError = code;
 			},
+			replacePage(sources, page, hasMore, revision) {
+				this.sources = mergeSources([], sources);
+				this.sourcesPage = page;
+				this.sourcesHasMore = hasMore;
+				this.sourcesRevision = revision;
+				this.sourcesError = null;
+				this.sourcesPageError = null;
+			},
+			appendPage(sources, page, hasMore, revision) {
+				if (revision !== this.sourcesRevision) {
+					return false;
+				}
+				this.sources = mergeSources(this.sources, sources);
+				this.sourcesPage = page;
+				this.sourcesHasMore = hasMore;
+				this.sourcesPageError = null;
+				return true;
+			},
+			hydrate(snapshot) {
+				this.replacePage(snapshot.sources, snapshot.page, snapshot.hasMore, snapshot.revision);
+			},
+			setValidating(validating) {
+				this.sourcesValidating = validating;
+			},
+			setLoadingMore(loading) {
+				this.sourcesLoadingMore = loading;
+			},
+			setPageError(code) {
+				this.sourcesPageError = code;
+			},
 			reset() {
 				this.sources = [];
 				this.sourcesLoading = false;
+				this.sourcesValidating = false;
+				this.sourcesLoadingMore = false;
 				this.sourcesError = null;
+				this.sourcesPageError = null;
+				this.sourcesHasMore = false;
+				this.sourcesPage = 1;
+				this.sourcesRevision = null;
 			}
 		}
 	});
+
+	let snapshot = null;
+	function copy$1(sourceCache) {
+		return {
+			sources: sourceCache.sources.map(source => ({
+				...source
+			})),
+			page: sourceCache.page,
+			hasMore: sourceCache.hasMore,
+			revision: sourceCache.revision
+		};
+	}
+	function getSourceCache() {
+		return snapshot === null ? null : copy$1(snapshot);
+	}
+	function setSourceCache(next) {
+		snapshot = copy$1(next);
+	}
 
 	const FOLDER_NOT_FOUND_MESSAGE = 'DISK_PICKER_NOTIFY_FOLDER_NOT_FOUND';
 	function resolveStartFeed(initialStage) {
@@ -1030,33 +1241,72 @@ this.BX.Disk = this.BX.Disk || {};
 		session.setLoading(false);
 		session.markInitialized();
 	}
-	function applySearchResult(session, item, result) {
+	function applySearchResult(session, item, result, query) {
 		session.setBreadcrumbsFromContext(null);
-		item.replace(result.items);
-		useSelectionStore().pruneActive(result.items.map(entry => entry.objectId));
+		const items = session.stageType === StageType.Recent ? withLocalMatches(result.items, item.recentSnapshot, session.filters, query) : result.items;
+		item.replace(items);
+		useSelectionStore().pruneActive(items.map(entry => entry.objectId));
 		session.setHasMore(result.pagination.hasMore);
-		session.setEmptyReason(result.emptyReason);
+		session.setEmptyReason(items.length === 0 ? result.emptyReason : null);
 		session.setLoading(false);
 		session.markInitialized();
 	}
-	function startSourcesLoading(source) {
-		source.setLoading(true);
+	function sourceSnapshot(source) {
+		if (source.sourcesRevision === null) {
+			return null;
+		}
+		return {
+			sources: source.sources,
+			page: source.sourcesPage,
+			hasMore: source.sourcesHasMore,
+			revision: source.sourcesRevision
+		};
+	}
+	function persistSources$1(source) {
+		const snapshot = sourceSnapshot(source);
+		if (snapshot !== null) {
+			setSourceCache(snapshot);
+		}
+	}
+	function prepareSourcesLoading(source) {
+		const cached = getSourceCache();
 		source.setError(null);
-	}
-	function applySourcesResult(source, result) {
-		source.setSources(result.sources);
+		source.setPageError(null);
+		if (cached === null) {
+			source.setLoading(true);
+			source.setValidating(false);
+			return null;
+		}
+		source.hydrate(cached);
 		source.setLoading(false);
+		source.setValidating(true);
+		return cached;
 	}
-	function applySourcesError(source, code) {
-		source.setError(code);
+	function applySourcesResult(source, result, cached) {
+		const revision = result.sourceRevision;
+		if (revision === null) {
+			throw new Error('DiskPicker: sources response has no catalogue revision');
+		}
+		if (cached === null || cached.revision !== revision) {
+			source.replacePage(result.sources, 1, result.pagination.hasMore, revision);
+			persistSources$1(source);
+		}
 		source.setLoading(false);
+		source.setValidating(false);
+	}
+	function applySourcesError(source, code, cached) {
+		if (cached === null && source.sources.length === 0) {
+			source.setError(code);
+		}
+		source.setLoading(false);
+		source.setValidating(false);
 	}
 	async function loadSources(deps, session) {
 		if (!session.isSessionActive()) {
 			return;
 		}
 		const source = useSourceStore();
-		startSourcesLoading(source);
+		const cached = prepareSourcesLoading(source);
 		try {
 			const result = await loadInitialStage$1({
 				initialStage: {
@@ -1069,13 +1319,14 @@ this.BX.Disk = this.BX.Disk || {};
 					fileTypeFilters: []
 				},
 				allowedFileTypes: session.constraints.allowedFileTypes,
-				pageSize: PageSize.Recent,
+				page: 1,
+				pageSize: PageSize.Default,
 				signedConfig: session.constraints.signedConfig
 			});
 			if (!session.isSessionActive()) {
 				return;
 			}
-			applySourcesResult(source, result);
+			applySourcesResult(source, result, cached);
 		} catch (error) {
 			if (pickerErrorCode(error) === ErrorCode.InvalidContext) {
 				session.invalidateRequests();
@@ -1085,7 +1336,7 @@ this.BX.Disk = this.BX.Disk || {};
 			if (!session.isSessionActive()) {
 				return;
 			}
-			applySourcesError(source, pickerErrorCode(error));
+			applySourcesError(source, pickerErrorCode(error), cached);
 		}
 	}
 	async function runRecovery(deps, session, item) {
@@ -1095,7 +1346,7 @@ this.BX.Disk = this.BX.Disk || {};
 			folderId: null
 		};
 		session.setFeed(recentFeed);
-		useSelectionStore().clear();
+		useSelectionStore().setActive(null);
 		session.resetSearchQuery();
 		await runMainStart(deps, session, item, recentFeed, '', false);
 	}
@@ -1123,6 +1374,7 @@ this.BX.Disk = this.BX.Disk || {};
 				fileTypeFilters: []
 			} : session.filters,
 			allowedFileTypes: session.constraints.allowedFileTypes,
+			page: 1,
 			pageSize: isRecent ? PageSize.Recent : PageSize.Default,
 			signedConfig: session.constraints.signedConfig
 		});
@@ -1154,20 +1406,26 @@ this.BX.Disk = this.BX.Disk || {};
 		const searchActive = [...query].length >= SearchQueryLength.Min;
 		const sharesSourcesRequest = !searchActive && startFeed.stageType === StageType.Sources;
 		const source = sharesSourcesRequest ? useSourceStore() : null;
+		let sourceCache = null;
 		if (source !== null) {
-			startSourcesLoading(source);
+			sourceCache = prepareSourcesLoading(source);
 		}
 		try {
 			if (searchActive) {
+				const recentRequest = startFeed.stageType === StageType.Recent ? requestStagePage(session, startFeed).catch(() => null) : null;
 				const result = await requestSearchPage(session, startFeed, query);
+				const recent = recentRequest === null ? null : await recentRequest;
 				if (session.isCurrentRequest(token)) {
-					applySearchResult(session, item, result);
+					if (recent !== null) {
+						item.setRecentSnapshot(recent.items);
+					}
+					applySearchResult(session, item, result, query);
 				}
 				return;
 			}
 			const result = await requestStagePage(session, startFeed);
 			if (source !== null && session.isSessionActive()) {
-				applySourcesResult(source, result);
+				applySourcesResult(source, result, sourceCache);
 			}
 			if (session.isCurrentRequest(token)) {
 				const localFilters = startFeed.stageType === StageType.Recent ? session.filters : null;
@@ -1176,7 +1434,7 @@ this.BX.Disk = this.BX.Disk || {};
 		} catch (error) {
 			const code = pickerErrorCode(error);
 			if (source !== null && code !== ErrorCode.InvalidContext && session.isSessionActive()) {
-				applySourcesError(source, code);
+				applySourcesError(source, code, sourceCache);
 			}
 			await handleMainError(deps, session, item, error, {
 				token,
@@ -1234,7 +1492,409 @@ this.BX.Disk = this.BX.Disk || {};
 		await runMainStart(deps, session, item, session.feed, '', false);
 	}
 
+	const VIEWER_EXTENSION = 'ui.viewer';
+	const CLOSE_EVENT = 'BX.UI.Viewer.Controller:onClose';
+	const TITLE_ATTRIBUTE = 'data-title';
+	function belongsToThisWindow(value) {
+		return value instanceof Object;
+	}
+	function getController() {
+		const controller = main_core.Reflection.getClass('BX.UI.Viewer.Instance');
+		if (!controller) {
+			throw new Error('DiskPicker: ui.viewer is not available');
+		}
+		if (!belongsToThisWindow(controller)) {
+			throw new Error('DiskPicker: ui.viewer runs in another window');
+		}
+		return controller;
+	}
+	function buildItem(node) {
+		const build = main_core.Reflection.getClass('BX.UI.Viewer.buildItemByNode');
+		if (!build) {
+			throw new Error('DiskPicker: ui.viewer is not available');
+		}
+		return build(node);
+	}
+	class PageViewerAdapter {
+		#loading = null;
+		ensureLoaded() {
+			if (this.#loading === null) {
+				this.#loading = main_core.Runtime.loadExtension(VIEWER_EXTENSION).then(() => {}).catch(error => {
+					this.#loading = null;
+					throw error;
+				});
+			}
+			return this.#loading;
+		}
+		buildNode(entry, title) {
+			const node = document.createElement('span');
+			Object.entries(entry.attributes).forEach(([name, value]) => {
+				node.setAttribute(name, value);
+			});
+			node.setAttribute(TITLE_ATTRIBUTE, title);
+			return node;
+		}
+		isSeparate(node) {
+			return Boolean(getController().isSeparateItem(node));
+		}
+		async prepare(nodes) {
+			const controller = getController();
+			await controller.loadExtensions(controller.collectExtensionsForItems(nodes));
+			await controller.setItems(nodes.map(node => buildItem(node)));
+			return index => {
+				controller.open(index);
+			};
+		}
+		async openSeparate(node, onFailure) {
+			const controller = getController();
+			await controller.loadExtensions(controller.collectExtensionsForItems([node]));
+			const item = buildItem(node);
+			await controller.setItems([item]);
+			controller.openSeparate(0);
+			void item.load().catch(onFailure);
+		}
+		onClose(callback) {
+			const handler = event => {
+				const [controller] = event.getCompatData() ?? [];
+				if (controller !== undefined && controller !== getController()) {
+					return;
+				}
+				callback();
+			};
+			main_core_events.EventEmitter.subscribe(CLOSE_EVENT, handler);
+			return () => {
+				main_core_events.EventEmitter.unsubscribe(CLOSE_EVENT, handler);
+			};
+		}
+	}
+	const viewerAdapter = new PageViewerAdapter();
+
+	const useViewerStore = ui_vue3_pinia.defineStore('diskPickerViewer', {
+		state: () => ({
+			openingObjectId: null,
+			open: false
+		}),
+		getters: {
+			isBusy() {
+				return this.openingObjectId !== null || this.open;
+			}
+		},
+		actions: {
+			startOpening(objectId) {
+				this.openingObjectId = objectId;
+			},
+			markOpen() {
+				this.openingObjectId = null;
+				this.open = true;
+			},
+			reset() {
+				this.openingObjectId = null;
+				this.open = false;
+			}
+		}
+	});
+
+	const PREVIEW_UNAVAILABLE_MESSAGE = 'DISK_PICKER_NOTIFY_PREVIEW_UNAVAILABLE';
+	let activeSession = null;
+	function setWindowInert(container, inert) {
+		if (container === null) {
+			return;
+		}
+		if (inert) {
+			container.setAttribute('inert', '');
+			return;
+		}
+		container.removeAttribute('inert');
+	}
+	function createOpenPreviewDeps(notify, windowContainer) {
+		return {
+			notify,
+			windowContainer,
+			service: {
+				getViewerAttributes
+			},
+			viewer: viewerAdapter
+		};
+	}
+	function detachSession() {
+		const session = activeSession;
+		if (session === null) {
+			return null;
+		}
+		activeSession = null;
+		if (session.shown) {
+			session.shown = false;
+			session.setShown(false);
+		}
+		setWindowInert(session.windowContainer, false);
+		session.unsubscribe();
+		return session;
+	}
+	function releasePreviewLayer() {
+		detachSession();
+	}
+	function returnFocus(session) {
+		const initiator = session.initiator;
+		const target = initiator !== null && initiator.isConnected ? initiator : session.windowContainer;
+		try {
+			target?.focus();
+		} catch {
+		}
+	}
+	function endPreview() {
+		const session = detachSession();
+		if (session === null) {
+			return;
+		}
+		returnFocus(session);
+		useViewerStore().reset();
+	}
+	function failPreview(deps) {
+		endPreview();
+		deps.notify(PREVIEW_UNAVAILABLE_MESSAGE);
+		useViewerStore().reset();
+	}
+	function windowAroundInitiator(candidates, initiatorIndex) {
+		if (candidates.length <= PageSize.Max) {
+			return candidates;
+		}
+		const before = Math.floor((PageSize.Max - 1) / 2);
+		const lastStart = candidates.length - PageSize.Max;
+		const start = Math.min(Math.max(initiatorIndex - before, 0), lastStart);
+		return candidates.slice(start, start + PageSize.Max);
+	}
+	function canOpenPreview(item) {
+		return item.previewable && !item.isFolder && !useViewerStore().isBusy && !useSessionStore().confirming;
+	}
+	async function openPreview(item, initiator, deps) {
+		const viewer = useViewerStore();
+		const session = useSessionStore();
+		if (!canOpenPreview(item)) {
+			return;
+		}
+		viewer.startOpening(item.objectId);
+		const revision = session.feedRevision;
+		const feed = useItemStore().items.filter(entry => !entry.isFolder && entry.previewable);
+		const candidates = windowAroundInitiator(feed, feed.findIndex(entry => entry.objectId === item.objectId));
+		let result;
+		try {
+			[result] = await Promise.all([deps.service.getViewerAttributes({
+				objectIds: candidates.map(entry => entry.objectId),
+				signedConfig: session.constraints.signedConfig
+			}), deps.viewer.ensureLoaded()]);
+		} catch {
+			failPreview(deps);
+			return;
+		}
+		if (!session.isSessionActive() || session.feedRevision !== revision) {
+			viewer.reset();
+			return;
+		}
+		const entryById = new Map(result.items.map(entry => [entry.objectId, entry]));
+		if (!entryById.has(item.objectId)) {
+			failPreview(deps);
+			return;
+		}
+		const shown = candidates.filter(entry => entryById.has(entry.objectId));
+		try {
+			const nodes = shown.map(entry => deps.viewer.buildNode(entryById.get(entry.objectId), entry.name));
+			const initiatorNode = nodes[shown.findIndex(entry => entry.objectId === item.objectId)];
+			const previewSession = {
+				initiator,
+				windowContainer: deps.windowContainer,
+				unsubscribe: deps.viewer.onClose(endPreview),
+				setShown: session.callbacks.setPreviewShown,
+				shown: false
+			};
+			activeSession = previewSession;
+			if (deps.viewer.isSeparate(initiatorNode)) {
+				await deps.viewer.openSeparate(initiatorNode, () => deps.notify(PREVIEW_UNAVAILABLE_MESSAGE));
+				endPreview();
+				return;
+			}
+			const embedded = nodes.filter(node => !deps.viewer.isSeparate(node));
+			const show = await deps.viewer.prepare(embedded);
+			if (activeSession !== previewSession || !session.isSessionActive() || session.feedRevision !== revision) {
+				detachSession();
+				viewer.reset();
+				return;
+			}
+			setWindowInert(deps.windowContainer, true);
+			previewSession.shown = true;
+			previewSession.setShown(true);
+			viewer.markOpen();
+			show(embedded.indexOf(initiatorNode));
+		} catch {
+			failPreview(deps);
+		}
+	}
+
+	const MAX_CONCURRENT_PREVIEWS = 2;
+	const pending = [];
+	const active = new Set();
+	let paused = false;
+	function detach(previewImage) {
+		const image = previewImage;
+		image.onload = null;
+		image.onerror = null;
+	}
+	function removePending(task) {
+		const index = pending.indexOf(task);
+		if (index >= 0) {
+			pending.splice(index, 1);
+		}
+	}
+	function settle(previewTask, loaded) {
+		const task = previewTask;
+		if (task.settled) {
+			return;
+		}
+		task.settled = true;
+		active.delete(task);
+		const image = task.image;
+		if (image !== null) {
+			detach(image);
+		}
+		try {
+			if (loaded && image !== null) {
+				task.onLoad(image);
+			}
+			task.onSettle?.();
+		} finally {
+			startPending();
+		}
+	}
+	function start(previewTask) {
+		const task = previewTask;
+		const image = new Image();
+		task.image = image;
+		active.add(task);
+		image.onload = () => settle(task, true);
+		image.onerror = () => settle(task, false);
+		image.src = task.url;
+	}
+	function startPending() {
+		if (paused) {
+			return;
+		}
+		while (active.size < MAX_CONCURRENT_PREVIEWS && pending.length > 0) {
+			const task = pending.shift();
+			if (task !== undefined && !task.settled) {
+				start(task);
+			}
+		}
+	}
+	function cancel(previewTask) {
+		const task = previewTask;
+		if (task.settled) {
+			return;
+		}
+		task.settled = true;
+		removePending(task);
+		if (task.image !== null) {
+			detach(task.image);
+			task.image.src = '';
+		}
+		active.delete(task);
+		task.onSettle?.();
+		startPending();
+	}
+	function enqueuePreview(url, onLoad, onSettle = null, keepOnFeedChange = false) {
+		const task = {
+			url,
+			onLoad,
+			onSettle,
+			image: null,
+			settled: false,
+			keepOnFeedChange
+		};
+		pending.push(task);
+		startPending();
+		return () => cancel(task);
+	}
+	function pauseAndClearPreviews() {
+		paused = true;
+		[...pending, ...active].filter(task => !task.keepOnFeedChange).forEach(task => cancel(task));
+	}
+	function resumePreviews() {
+		paused = false;
+		startPending();
+	}
+	function resetPreviews() {
+		paused = true;
+		[...pending, ...active].forEach(task => cancel(task));
+		paused = false;
+	}
+
+	const FOLDER_PAGE_CACHE_LIMIT = 20;
+	const pages = new Map();
+	function key(request) {
+		return JSON.stringify({
+			storageId: request.storageId,
+			folderId: request.folderId,
+			objectTypeFilter: request.filters.objectTypeFilter,
+			fileTypeFilters: [...request.filters.fileTypeFilters].sort(),
+			allowedFileTypes: [...request.allowedFileTypes].sort(),
+			orderField: request.order.field,
+			orderDirection: request.order.direction,
+			pageSize: request.pageSize
+		});
+	}
+	function copy(result) {
+		return {
+			items: result.items.map(item => ({
+				...item
+			})),
+			pagination: {
+				...result.pagination
+			},
+			context: {
+				storageId: result.context.storageId,
+				folderId: result.context.folderId,
+				currentFolder: result.context.currentFolder === null ? null : {
+					...result.context.currentFolder
+				},
+				breadcrumbs: result.context.breadcrumbs.map(breadcrumb => ({
+					...breadcrumb
+				}))
+			},
+			emptyReason: result.emptyReason
+		};
+	}
+	function getFolderPage(request) {
+		if (request.page !== 1) {
+			return null;
+		}
+		const cacheKey = key(request);
+		const cached = pages.get(cacheKey);
+		if (cached === undefined) {
+			return null;
+		}
+		pages.delete(cacheKey);
+		pages.set(cacheKey, cached);
+		return copy(cached);
+	}
+	function setFolderPage(request, result) {
+		if (request.page !== 1) {
+			return;
+		}
+		const cacheKey = key(request);
+		pages.delete(cacheKey);
+		pages.set(cacheKey, copy(result));
+		while (pages.size > FOLDER_PAGE_CACHE_LIMIT) {
+			const oldestKey = pages.keys().next().value;
+			if (oldestKey === undefined) {
+				break;
+			}
+			pages.delete(oldestKey);
+		}
+	}
+	function clearFolderPages() {
+		pages.clear();
+	}
+
 	const DEFAULT_ORDER_INPUT$1 = DEFAULT_ORDER;
+	const FOLDER_NOT_REFRESHED_MESSAGE = 'DISK_PICKER_NOTIFY_FOLDER_NOT_REFRESHED';
 	function handleFeedError(session, deps, error, token) {
 		const code = pickerErrorCode(error);
 		if (code === ErrorCode.InvalidContext) {
@@ -1248,7 +1908,61 @@ this.BX.Disk = this.BX.Disk || {};
 		session.setContentError(code);
 		session.setLoading(false);
 	}
-	async function changeFeed(nextFeed, deps) {
+	function firstPageRequest(session, feed) {
+		return {
+			storageId: feed.storageId,
+			folderId: feed.folderId,
+			filters: session.filters,
+			allowedFileTypes: session.constraints.allowedFileTypes,
+			order: DEFAULT_ORDER_INPUT$1,
+			page: 1,
+			pageSize: PageSize.Default,
+			signedConfig: session.constraints.signedConfig
+		};
+	}
+	function applyFirstPage(session, item, result) {
+		item.replace(result.items);
+		useSelectionStore().pruneActive(result.items.map(entry => entry.objectId));
+		session.setBreadcrumbsFromContext(result.context);
+		session.setHasMore(result.pagination.hasMore);
+		session.setEmptyReason(result.emptyReason);
+	}
+	function finishNavigation(session) {
+		session.setNavigationPending(false);
+		session.setLoading(false);
+		resumePreviews();
+	}
+	function releaseNavigationHold() {
+		const session = useSessionStore();
+		if (!session.navigationPending) {
+			return;
+		}
+		session.setNavigationPending(false);
+		resumePreviews();
+	}
+	function handleNavigationError(session, item, deps, error, token, hadCachedPage) {
+		const code = pickerErrorCode(error);
+		if (code === ErrorCode.InvalidContext) {
+			clearFolderPages();
+			pauseAndClearPreviews();
+			resumePreviews();
+			session.invalidateRequests();
+			session.setNavigationPending(false);
+			deps.onContextInvalid();
+			return;
+		}
+		if (!session.isCurrentRequest(token)) {
+			return;
+		}
+		if (hadCachedPage) {
+			session.callbacks.notify(FOLDER_NOT_REFRESHED_MESSAGE);
+		} else {
+			item.clear();
+			session.setContentError(code);
+		}
+		finishNavigation(session);
+	}
+	async function changeFeed(nextFeed, deps, optimisticBreadcrumbs = []) {
 		const session = useSessionStore();
 		const item = useItemStore();
 		if (session.isSameFeed(nextFeed)) {
@@ -1258,37 +1972,35 @@ this.BX.Disk = this.BX.Disk || {};
 			return;
 		}
 		const token = session.nextRequestToken();
-		session.setLoading(true);
+		pauseAndClearPreviews();
+		session.setNavigationPending(true);
 		session.setFeed(nextFeed);
-		useSelectionStore().clear();
+		useSelectionStore().setActive(null);
 		deps.suppressFilterFind();
 		session.setFilterFind('');
 		session.resetSearchQuery();
-		item.clear();
-		session.setBreadcrumbs([]);
+		session.setBreadcrumbs(optimisticBreadcrumbs);
 		session.setHasMore(false);
 		session.clearContentError();
+		const request = firstPageRequest(session, nextFeed);
+		const cached = getFolderPage(request);
+		if (cached === null) {
+			session.setPreserveContentOnLoading(true);
+			session.setLoading(true);
+		} else {
+			applyFirstPage(session, item, cached);
+			session.setLoading(false);
+		}
 		try {
-			const result = await listChildren({
-				storageId: nextFeed.storageId,
-				folderId: nextFeed.folderId,
-				filters: session.filters,
-				allowedFileTypes: session.constraints.allowedFileTypes,
-				order: DEFAULT_ORDER_INPUT$1,
-				page: 1,
-				pageSize: PageSize.Default,
-				signedConfig: session.constraints.signedConfig
-			});
+			const result = await listChildren(request);
 			if (!session.isCurrentRequest(token)) {
 				return;
 			}
-			item.replace(result.items);
-			session.setBreadcrumbsFromContext(result.context);
-			session.setHasMore(result.pagination.hasMore);
-			session.setEmptyReason(result.emptyReason);
-			session.setLoading(false);
+			applyFirstPage(session, item, result);
+			setFolderPage(request, result);
+			finishNavigation(session);
 		} catch (error) {
-			handleFeedError(session, deps, error, token);
+			handleNavigationError(session, item, deps, error, token, cached !== null);
 		}
 	}
 	async function reloadCurrentFeed(deps) {
@@ -1298,8 +2010,10 @@ this.BX.Disk = this.BX.Disk || {};
 		if (feed.storageId === null || feed.folderId === null) {
 			return;
 		}
+		releaseNavigationHold();
 		session.invalidateConfirmation();
 		const token = session.nextRequestToken();
+		session.setPreserveContentOnLoading(item.count > 0);
 		session.setLoading(true);
 		session.clearContentError();
 		session.resetPagination();
@@ -1327,12 +2041,24 @@ this.BX.Disk = this.BX.Disk || {};
 			handleFeedError(session, deps, error, token);
 		}
 	}
+	function childBreadcrumbs(item) {
+		const session = useSessionStore();
+		const canInferPath = session.stageType === StageType.Folder && session.storageId === item.sourceId && session.searchQuery === '' && session.breadcrumbs.length > 0;
+		if (!canInferPath) {
+			return [];
+		}
+		return [...session.breadcrumbs, {
+			objectId: item.objectId,
+			name: item.name
+		}];
+	}
 	function openFolder(item, deps) {
+		const optimisticBreadcrumbs = childBreadcrumbs(item);
 		return changeFeed({
 			stageType: StageType.Folder,
 			storageId: item.sourceId,
 			folderId: item.objectId
-		}, deps);
+		}, deps, optimisticBreadcrumbs);
 	}
 	function openBreadcrumb(breadcrumb, deps) {
 		const session = useSessionStore();
@@ -1340,11 +2066,154 @@ this.BX.Disk = this.BX.Disk || {};
 		if (feed.stageType !== StageType.Folder || feed.storageId === null || feed.storageId <= 0) {
 			return Promise.resolve();
 		}
+		const breadcrumbIndex = session.breadcrumbs.findIndex(entry => entry.objectId === breadcrumb.objectId);
+		const optimisticBreadcrumbs = breadcrumbIndex >= 0 ? session.breadcrumbs.slice(0, breadcrumbIndex + 1) : [];
 		return changeFeed({
 			stageType: StageType.Folder,
 			storageId: feed.storageId,
 			folderId: breadcrumb.objectId
-		}, deps);
+		}, deps, optimisticBreadcrumbs);
+	}
+	function openParentFolder(deps) {
+		const session = useSessionStore();
+		const parent = session.breadcrumbs.length > 1 ? session.breadcrumbs[session.breadcrumbs.length - 2] : null;
+		const blocked = session.contentLoading || session.navigationPending || session.confirming;
+		if (session.stageType !== StageType.Folder || parent === null || blocked || session.folderId === null) {
+			return null;
+		}
+		const leavingFolderId = session.folderId;
+		void openBreadcrumb(parent, deps);
+		return leavingFolderId;
+	}
+
+	const DEFAULT_MAX_ITEMS = 100;
+	const SELECT_LIMIT_MESSAGE$1 = 'DISK_PICKER_NOTIFY_SELECT_LIMIT';
+	const LIMIT_NOTICE_DELAY = 250;
+	function effectiveMaxItems(maxItems) {
+		return Math.min(maxItems ?? DEFAULT_MAX_ITEMS, DEFAULT_MAX_ITEMS);
+	}
+	let pendingLimitNotice = null;
+	function clearLimitNotice() {
+		if (pendingLimitNotice !== null) {
+			clearTimeout(pendingLimitNotice.timer);
+			pendingLimitNotice = null;
+		}
+	}
+	function resetSelectLimitNotice() {
+		clearLimitNotice();
+	}
+	function cancelSelectLimitNotice(objectId) {
+		if (pendingLimitNotice?.objectId === objectId) {
+			clearLimitNotice();
+		}
+	}
+	function notifySelectLimit(item, maxItems, deps) {
+		const replacements = {
+			'#COUNT#': String(maxItems)
+		};
+		if (!item.previewable) {
+			deps.notify(SELECT_LIMIT_MESSAGE$1, replacements);
+			return;
+		}
+		clearLimitNotice();
+		const timer = setTimeout(() => {
+			pendingLimitNotice = null;
+			if (useSessionStore().isSessionActive()) {
+				deps.notify(SELECT_LIMIT_MESSAGE$1, replacements);
+			}
+		}, LIMIT_NOTICE_DELAY);
+		pendingLimitNotice = {
+			objectId: item.objectId,
+			timer
+		};
+	}
+	function lastPickedId(selectedIds) {
+		return selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : null;
+	}
+	function snapshotOf(item) {
+		return {
+			objectId: item.objectId,
+			size: item.size,
+			iconType: item.iconType,
+			previewUrl: item.previewUrl,
+			createTime: item.createTime,
+			updateTime: item.updateTime
+		};
+	}
+	function toggleSelection(item, deps) {
+		const session = useSessionStore();
+		if (session.confirming || session.contentLoading && session.preserveContentOnLoading) {
+			return;
+		}
+		if (item.isFolder) {
+			void openFolder(item, deps);
+			return;
+		}
+		if (!item.selectable) {
+			return;
+		}
+		const selection = useSelectionStore();
+		selection.setActive(item.objectId);
+		if (session.constraints.selectionMode === SelectionMode.Single) {
+			selection.replaceWith(item.objectId, snapshotOf(item));
+			return;
+		}
+		if (selection.has(item.objectId)) {
+			selection.remove(item.objectId);
+			selection.setActive(lastPickedId(selection.selectedIds));
+			return;
+		}
+		const maxItems = effectiveMaxItems(session.constraints.maxItems);
+		if (selection.count >= maxItems) {
+			notifySelectLimit(item, maxItems, deps);
+			return;
+		}
+		selection.add(item.objectId, snapshotOf(item));
+	}
+	function toggleFileSelection(item, deps) {
+		if (item.isFolder || !item.selectable) {
+			return;
+		}
+		toggleSelection(item, deps);
+	}
+
+	let clickState = null;
+	function resetRowActivation() {
+		clickState = null;
+	}
+	function rememberClickState(item) {
+		clickState = item.previewable && !item.isFolder ? {
+			objectId: item.objectId,
+			snapshot: ui_vue3.markRaw(useSelectionStore().captureState())
+		} : null;
+	}
+	function restoreClickState(item) {
+		if (clickState?.objectId !== item.objectId) {
+			return;
+		}
+		useSelectionStore().restoreState(clickState.snapshot);
+		clickState = null;
+	}
+	function startPreview(item, initiator, windowContainer) {
+		cancelSelectLimitNotice(item.objectId);
+		void openPreview(item, initiator, createOpenPreviewDeps(useSessionStore().callbacks.notify, windowContainer));
+	}
+	function beginClick(item, event) {
+		if (event.detail >= 2) {
+			return;
+		}
+		rememberClickState(item);
+		toggleSelection(item, useSessionStore().callbacks);
+	}
+	function openPreviewFromDblclick(item, initiator, windowContainer) {
+		if (!canOpenPreview(item)) {
+			return;
+		}
+		restoreClickState(item);
+		startPreview(item, initiator, windowContainer);
+	}
+	function openPreviewFromButton(item, initiator, windowContainer) {
+		startPreview(item, initiator, windowContainer);
 	}
 
 	function queryLength(query) {
@@ -1365,6 +2234,7 @@ this.BX.Disk = this.BX.Disk || {};
 	}
 	async function restoreBaseFeed(deps) {
 		const session = useSessionStore();
+		releaseNavigationHold();
 		session.invalidateConfirmation();
 		session.resetSearchQuery();
 		if (session.stageType === StageType.Sources) {
@@ -1407,8 +2277,10 @@ this.BX.Disk = this.BX.Disk || {};
 			return;
 		}
 		session.setSearchQuery(query);
+		releaseNavigationHold();
 		session.invalidateConfirmation();
 		const token = session.nextRequestToken();
+		session.setPreserveContentOnLoading(useItemStore().count > 0);
 		session.setLoading(true);
 		session.clearContentError();
 		session.resetPagination();
@@ -1427,10 +2299,11 @@ this.BX.Disk = this.BX.Disk || {};
 				return;
 			}
 			const item = useItemStore();
-			item.replace(result.items);
-			useSelectionStore().pruneActive(result.items.map(entry => entry.objectId));
+			const items = session.stageType === StageType.Recent ? withLocalMatches(result.items, item.recentSnapshot, session.filters, query) : result.items;
+			item.replace(items);
+			useSelectionStore().pruneActive(items.map(entry => entry.objectId));
 			session.setHasMore(result.pagination.hasMore);
-			session.setEmptyReason(result.emptyReason);
+			session.setEmptyReason(items.length === 0 ? result.emptyReason : null);
 			session.setLoading(false);
 		} catch (error) {
 			handleSearchError(session, deps, error, token);
@@ -1523,6 +2396,9 @@ this.BX.Disk = this.BX.Disk || {};
 			const api = main_core.Type.isFunction(filter?.getApi) ? filter.getApi() : null;
 			if (api && main_core.Type.isFunction(api.setFields)) {
 				const current = main_core.Type.isFunction(filter.getFilterFieldsValues) ? filter.getFilterFieldsValues() : {};
+				if ((current[FilterFieldId.Find] ?? '') === value) {
+					return;
+				}
 				api.setFields({
 					...current,
 					[FilterFieldId.Find]: value
@@ -1562,6 +2438,9 @@ this.BX.Disk = this.BX.Disk || {};
 	}
 
 	const APPLY_EVENT = 'BX.Main.Filter:apply';
+	const BEFORE_APPLY_EVENT = 'BX.Main.Filter:beforeApply';
+	const BEFORE_APPLY_DIM_TIMEOUT_MS = 10000;
+	const SEARCH_SHOWED_CLASS = 'main-ui-filter-search--showed';
 	function getCustomEventBus() {
 		const bx = main_core.Reflection.getClass('BX');
 		if (bx && main_core.Type.isFunction(bx.addCustomEvent) && main_core.Type.isFunction(bx.removeCustomEvent)) {
@@ -1576,6 +2455,33 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 		return null;
 	}
+	function getSearchContainer(filter) {
+		if (!main_core.Type.isFunction(filter.getSearch)) {
+			return null;
+		}
+		const search = filter.getSearch();
+		return search && main_core.Type.isFunction(search.getContainer) ? search.getContainer() : null;
+	}
+	function collectAnimatableAncestors(element) {
+		const elements = [];
+		let node = element;
+		while (node) {
+			if (main_core.Type.isFunction(node.getAnimations)) {
+				elements.push(node);
+			}
+			node = node.parentElement;
+		}
+		return elements;
+	}
+	function waitSearchAnimationsEnd(container) {
+		if (!main_core.Type.isFunction(main_core.Animation?.waitAnimationEnd)) {
+			return Promise.resolve([]);
+		}
+		return Promise.all(collectAnimatableAncestors(container).map(element => main_core.Animation.waitAnimationEnd(element)));
+	}
+	function isPopupShown(popup) {
+		return Boolean(popup && main_core.Type.isFunction(popup.isShown) && popup.isShown());
+	}
 	function filtersDiffer(a, b) {
 		return a.objectTypeFilter !== b.objectTypeFilter || a.fileTypeFilters.length !== b.fileTypeFilters.length || a.fileTypeFilters.some((alias, index) => alias !== b.fileTypeFilters[index]);
 	}
@@ -1585,7 +2491,13 @@ this.BX.Disk = this.BX.Disk || {};
 		#deps;
 		#bus = null;
 		#handler = null;
+		#beforeApplyHandler = null;
+		#dimmedBeforeApply = false;
+		#dimTimeoutTimer = null;
+		#unsubscribeSession = null;
 		#debounceTimer = null;
+		#showPopupTimer = null;
+		#showPopupGeneration = 0;
 		#suppressing = false;
 		#previous;
 		constructor(filterId, pinia, deps, initial) {
@@ -1595,29 +2507,96 @@ this.BX.Disk = this.BX.Disk || {};
 			this.#previous = cloneValues(initial);
 		}
 		subscribe() {
+			if (!this.#unsubscribeSession) {
+				const session = useSessionStore(this.#pinia);
+				let previousSearchOpen = session.searchOpen;
+				this.#unsubscribeSession = session.$subscribe((_mutation, state) => {
+					const searchCollapsed = previousSearchOpen && !state.searchOpen;
+					const searchExpanded = !previousSearchOpen && state.searchOpen;
+					previousSearchOpen = state.searchOpen;
+					if (searchCollapsed) {
+						this.#cancelScheduledShowPopup();
+						this.#closePopup();
+					} else if (searchExpanded) {
+						this.#scheduleShowPopup();
+					}
+				}, {
+					flush: 'sync'
+				});
+			}
 			const bus = getCustomEventBus();
 			if (!bus || this.#handler) {
 				return;
 			}
 			this.#bus = bus;
+			this.#beforeApplyHandler = filterId => {
+				if (filterId !== this.#filterId || this.#suppressing) {
+					return;
+				}
+				this.#dimBeforeApply();
+			};
+			bus.addCustomEvent(window, BEFORE_APPLY_EVENT, this.#beforeApplyHandler);
 			this.#handler = filterId => {
 				if (filterId !== this.#filterId || this.#suppressing) {
+					return;
+				}
+				this.#cancelScheduledShowPopup();
+				if (this.#filtersChanged() || this.#dimmedBeforeApply) {
+					this.#cancelScheduledProcess();
+					this.#process();
 					return;
 				}
 				this.#scheduleProcess();
 			};
 			bus.addCustomEvent(window, APPLY_EVENT, this.#handler);
 		}
-		dispose() {
-			if (this.#debounceTimer !== null) {
-				clearTimeout(this.#debounceTimer);
-				this.#debounceTimer = null;
+		#dimBeforeApply() {
+			const session = useSessionStore(this.#pinia);
+			if (!session.isSessionActive() || session.contentLoading || session.contentError !== null) {
+				return;
 			}
+			const count = useItemStore(this.#pinia).count;
+			if (count === 0) {
+				return;
+			}
+			session.setPreserveContentOnLoading(true);
+			session.setLoading(true);
+			this.#dimmedBeforeApply = true;
+			this.#cancelDimTimeout();
+			this.#dimTimeoutTimer = setTimeout(() => {
+				this.#dimTimeoutTimer = null;
+				this.#undimBeforeApply();
+			}, BEFORE_APPLY_DIM_TIMEOUT_MS);
+		}
+		#undimBeforeApply() {
+			this.#cancelDimTimeout();
+			if (!this.#dimmedBeforeApply) {
+				return;
+			}
+			this.#dimmedBeforeApply = false;
+			useSessionStore(this.#pinia).setLoading(false);
+		}
+		#cancelDimTimeout() {
+			if (this.#dimTimeoutTimer !== null) {
+				clearTimeout(this.#dimTimeoutTimer);
+				this.#dimTimeoutTimer = null;
+			}
+		}
+		dispose() {
+			this.#cancelScheduledProcess();
+			this.#cancelScheduledShowPopup();
 			if (this.#bus && this.#handler) {
 				this.#bus.removeCustomEvent(window, APPLY_EVENT, this.#handler);
 			}
+			if (this.#bus && this.#beforeApplyHandler) {
+				this.#bus.removeCustomEvent(window, BEFORE_APPLY_EVENT, this.#beforeApplyHandler);
+			}
 			this.#handler = null;
+			this.#beforeApplyHandler = null;
 			this.#bus = null;
+			this.#undimBeforeApply();
+			this.#unsubscribeSession?.();
+			this.#unsubscribeSession = null;
 		}
 		clearFindSuppressed() {
 			const filter = getFilterById(this.#filterId);
@@ -1652,18 +2631,111 @@ this.BX.Disk = this.BX.Disk || {};
 				}, 0);
 			}
 		}
-		#scheduleProcess() {
+		#filtersChanged() {
+			const filter = getFilterById(this.#filterId);
+			if (!filter) {
+				return false;
+			}
+			return filtersDiffer(readInitialFilterValues(filter), this.#previous);
+		}
+		#cancelScheduledProcess() {
 			if (this.#debounceTimer !== null) {
 				clearTimeout(this.#debounceTimer);
+				this.#debounceTimer = null;
 			}
+		}
+		#scheduleProcess() {
+			this.#cancelScheduledProcess();
 			this.#debounceTimer = setTimeout(() => {
 				this.#debounceTimer = null;
 				this.#process();
 			}, SEARCH_DEBOUNCE_MS);
 		}
+		#scheduleShowPopup() {
+			this.#cancelScheduledShowPopup();
+			this.#showPopupTimer = setTimeout(() => {
+				this.#showPopupTimer = null;
+				void this.#showPopup();
+			}, 0);
+		}
+		#cancelScheduledShowPopup() {
+			this.#showPopupGeneration += 1;
+			if (this.#showPopupTimer !== null) {
+				clearTimeout(this.#showPopupTimer);
+				this.#showPopupTimer = null;
+			}
+		}
+		async #showPopup() {
+			const filter = getFilterById(this.#filterId);
+			if (!filter || !main_core.Type.isFunction(filter.showPopup)) {
+				return;
+			}
+			const generation = this.#showPopupGeneration;
+			try {
+				const container = getSearchContainer(filter);
+				await waitSearchAnimationsEnd(container);
+				if (generation !== this.#showPopupGeneration) {
+					return;
+				}
+				const popup = filter.popup;
+				if (!isPopupShown(popup)) {
+					filter.showPopup();
+					return;
+				}
+				if (main_core.Dom.hasClass(container, SEARCH_SHOWED_CLASS) || !main_core.Type.isFunction(popup.subscribeOnce)) {
+					return;
+				}
+				popup.subscribeOnce('onAfterClose', () => {
+					if (generation === this.#showPopupGeneration) {
+						this.#openPopup(filter);
+					}
+				});
+			} catch (error) {
+				console.error('DiskPicker: failed to open the standard filter popup', error);
+			}
+		}
+		#openPopup(filter) {
+			if (!main_core.Type.isFunction(filter.showPopup)) {
+				return;
+			}
+			try {
+				filter.showPopup();
+			} catch (error) {
+				console.error('DiskPicker: failed to open the standard filter popup', error);
+			}
+		}
+		#closePopup() {
+			const filter = getFilterById(this.#filterId);
+			if (!filter || !main_core.Type.isFunction(filter.closePopup)) {
+				return;
+			}
+			const container = getSearchContainer(filter);
+			if (container && !main_core.Dom.hasClass(container, SEARCH_SHOWED_CLASS)) {
+				return;
+			}
+			const activeBefore = document.activeElement;
+			try {
+				filter.closePopup();
+			} catch (error) {
+				console.error('DiskPicker: failed to close the standard filter popup', error);
+			}
+			this.#restoreFocus(activeBefore);
+		}
+		#restoreFocus(activeBefore) {
+			const active = document.activeElement;
+			if (active === activeBefore || !main_core.Type.isElementNode(active)) {
+				return;
+			}
+			if (main_core.Type.isElementNode(activeBefore) && activeBefore !== document.body && activeBefore.isConnected) {
+				activeBefore.focus();
+				return;
+			}
+			active.blur();
+		}
 		#process() {
 			const filter = getFilterById(this.#filterId);
 			if (!filter) {
+				this.#undimBeforeApply();
 				return;
 			}
 			const normalized = readInitialFilterValues(filter);
@@ -1671,17 +2743,23 @@ this.BX.Disk = this.BX.Disk || {};
 			const queryChanged = normalized.find !== this.#previous.find;
 			this.#previous = cloneValues(normalized);
 			if (!filtersChanged && !queryChanged) {
+				this.#undimBeforeApply();
 				return;
 			}
 			ui_vue3_pinia.setActivePinia(this.#pinia);
 			if (filtersChanged) {
+				this.#dimmedBeforeApply = false;
+				this.#cancelDimTimeout();
 				void applyFilters({
 					objectTypeFilter: normalized.objectTypeFilter,
 					fileTypeFilters: [...normalized.fileTypeFilters]
 				}, this.#deps, normalized.find);
 				return;
 			}
+			const searchNoop = [...normalized.find.trim()].length < SearchQueryLength.Min && useSessionStore(this.#pinia).searchQuery === '';
+			this.#dimmedBeforeApply = this.#dimmedBeforeApply && searchNoop;
 			void searchItems(normalized.find, this.#deps);
+			this.#undimBeforeApply();
 		}
 	}
 	function cloneValues(values) {
@@ -1697,22 +2775,29 @@ this.BX.Disk = this.BX.Disk || {};
 		computed: {
 			isTable() {
 				return useSessionStore().viewMode === ViewMode.Table;
+			},
+			hasContent() {
+				const session = useSessionStore();
+				return session.contentLoading || session.contentError === null && session.emptyReason === null;
 			}
 		},
 		template: `
-		<div class="disk-picker-layout" :class="{ '--table': isTable }">
-			<div class="disk-picker-layout__sidebar">
+		<div
+			class="disk-picker-layout --ui-context-content-light"
+			:class="{ '--table': isTable, '--no-preview': !hasContent }"
+		>
+			<div class="disk-picker-layout__sidebar --ui-context-edge-dark">
 				<slot name="sidebar"/>
 			</div>
+			<div class="disk-picker-layout__header --ui-context-edge-dark --air-context-blurred-bg">
+				<slot name="header"/>
+			</div>
 			<div class="disk-picker-layout__workarea">
-				<div class="disk-picker-layout__header">
-					<slot name="header"/>
-				</div>
 				<div class="disk-picker-layout__body">
 					<div class="disk-picker-layout__list">
 						<slot name="list"/>
 					</div>
-					<div class="disk-picker-layout__preview">
+					<div v-if="hasContent" class="disk-picker-layout__preview">
 						<slot name="preview"/>
 					</div>
 				</div>
@@ -1724,12 +2809,35 @@ this.BX.Disk = this.BX.Disk || {};
 	`
 	});
 
+	const SourceRowSkeleton = ui_vue3.defineComponent({
+		name: 'DiskPickerSourceRowSkeleton',
+		components: {
+			BCircle: ui_system_skeleton_vue.BCircle,
+			BLine: ui_system_skeleton_vue.BLine
+		},
+		props: {
+			width: {
+				type: Number,
+				default: 120
+			}
+		},
+		template: `
+		<div class="disk-picker-source-row-skeleton" aria-hidden="true">
+			<BCircle :size="24"/>
+			<span class="disk-picker-source-row-skeleton__line">
+				<BLine :width="width" :height="10" :radius="4"/>
+			</span>
+		</div>
+	`
+	});
+
 	const LoadingSkeleton = {
 		name: 'DiskPickerLoadingSkeleton',
 		components: {
 			PickerLayout,
 			BLine: ui_system_skeleton_vue.BLine,
-			BCircle: ui_system_skeleton_vue.BCircle
+			BCircle: ui_system_skeleton_vue.BCircle,
+			SourceRowSkeleton
 		},
 		setup() {
 			return {
@@ -1741,42 +2849,35 @@ this.BX.Disk = this.BX.Disk || {};
 		template: `
 		<PickerLayout class="disk-picker-skeleton">
 			<template #sidebar>
-				<div class="disk-picker-skeleton__sidebar-row">
-					<BCircle :size="24"/>
-					<BLine :width="sidebarWidths[0]" :height="10" :radius="4"/>
-				</div>
+				<SourceRowSkeleton :width="sidebarWidths[0]"/>
 				<div class="disk-picker-skeleton__group-title">
 					<BLine :width="80" :height="8" :radius="4"/>
 				</div>
-				<div class="disk-picker-skeleton__sidebar-row">
-					<BCircle :size="24"/>
-					<BLine :width="sidebarWidths[1]" :height="10" :radius="4"/>
-				</div>
+				<SourceRowSkeleton :width="sidebarWidths[1]"/>
 				<div class="disk-picker-skeleton__group-title">
 					<BLine :width="80" :height="8" :radius="4"/>
 				</div>
-				<div
+				<SourceRowSkeleton
 					v-for="width in sidebarWidths.slice(2)"
-					class="disk-picker-skeleton__sidebar-row"
-				>
-					<BCircle :size="24"/>
-					<BLine :width="width" :height="10" :radius="4"/>
-				</div>
+					:width="width"
+				/>
 			</template>
 
 			<template #header>
-				<BLine :width="120" :height="16" :radius="4"/>
-				<div class="disk-picker-skeleton__header-actions">
+				<span class="--ui-context-edge-dark">
+					<BLine :width="120" :height="16" :radius="4"/>
+				</span>
+				<div class="disk-picker-skeleton__header-actions --ui-context-edge-dark">
 					<BLine :width="34" :height="34" :radius="8"/>
 					<BLine :width="68" :height="34" :radius="8"/>
 				</div>
 			</template>
 
 			<template #list>
-				<div class="disk-picker-skeleton__group-title">
+				<div class="disk-picker-skeleton__group-title --ui-context-edge-dark">
 					<BLine :width="72" :height="8" :radius="4"/>
 				</div>
-				<div class="disk-picker-skeleton__list-rows">
+				<div class="disk-picker-skeleton__list-rows --ui-context-edge-dark">
 					<div
 						v-for="width in listWidths"
 						class="disk-picker-skeleton__list-row"
@@ -1788,7 +2889,7 @@ this.BX.Disk = this.BX.Disk || {};
 			</template>
 
 			<template #preview>
-				<div class="disk-picker-skeleton__preview">
+				<div class="disk-picker-skeleton__preview --ui-context-edge-dark">
 					<BLine :width="120" :height="120" :radius="16"/>
 					<div class="disk-picker-skeleton__preview-lines">
 						<BLine
@@ -1802,12 +2903,87 @@ this.BX.Disk = this.BX.Disk || {};
 			</template>
 
 			<template #footer>
-				<BLine :width="84" :height="38" :radius="8"/>
-				<BLine :width="120" :height="38" :radius="8"/>
+				<div class="disk-picker-skeleton__footer-actions --ui-context-edge-dark">
+					<BLine :width="84" :height="38" :radius="8"/>
+					<BLine :width="120" :height="38" :radius="8"/>
+				</div>
 			</template>
 		</PickerLayout>
 	`
 	};
+
+	function requestRunning() {
+		const source = useSourceStore();
+		return source.sourcesLoading || source.sourcesValidating || source.sourcesLoadingMore;
+	}
+	function persistSources() {
+		const source = useSourceStore();
+		if (source.sourcesRevision === null) {
+			return;
+		}
+		setSourceCache({
+			sources: source.sources,
+			page: source.sourcesPage,
+			hasMore: source.sourcesHasMore,
+			revision: source.sourcesRevision
+		});
+	}
+	async function loadNextSourcePage() {
+		const session = useSessionStore();
+		const source = useSourceStore();
+		if (!session.isSessionActive() || requestRunning() || !source.sourcesHasMore || source.sourcesRevision === null) {
+			return;
+		}
+		const requestedPage = source.sourcesPage + 1;
+		source.setPageError(null);
+		source.setLoadingMore(true);
+		try {
+			const result = await loadInitialStage$1({
+				initialStage: {
+					type: StageType.Sources,
+					storageId: null,
+					folderId: null
+				},
+				filters: {
+					objectTypeFilter: ObjectTypeFilter.All,
+					fileTypeFilters: []
+				},
+				allowedFileTypes: session.constraints.allowedFileTypes,
+				page: requestedPage,
+				pageSize: PageSize.Default,
+				signedConfig: session.constraints.signedConfig
+			});
+			if (!session.isSessionActive()) {
+				return;
+			}
+			if (result.sourceRevision !== source.sourcesRevision) {
+				source.setLoadingMore(false);
+				await retrySources();
+				return;
+			}
+			if (source.appendPage(result.sources, requestedPage, result.pagination.hasMore, result.sourceRevision)) {
+				persistSources();
+			}
+		} catch (error) {
+			const code = pickerErrorCode(error);
+			if (code === ErrorCode.InvalidContext) {
+				session.invalidateRequests();
+				session.callbacks.onContextInvalid();
+				return;
+			}
+			if (session.isSessionActive()) {
+				source.setPageError(code);
+			}
+		} finally {
+			if (session.isSessionActive()) {
+				source.setLoadingMore(false);
+			}
+		}
+	}
+	async function retrySourcePage() {
+		useSourceStore().setPageError(null);
+		await loadNextSourcePage();
+	}
 
 	function switchSource(source, deps) {
 		return changeFeed({
@@ -1828,10 +3004,11 @@ this.BX.Disk = this.BX.Disk || {};
 		if (session.isSameFeed(RECENT_FEED)) {
 			return;
 		}
+		releaseNavigationHold();
 		const token = session.nextRequestToken();
 		session.setLoading(true);
 		session.setFeed(RECENT_FEED);
-		useSelectionStore().clear();
+		useSelectionStore().setActive(null);
 		deps.suppressFilterFind();
 		session.setFilterFind('');
 		session.resetSearchQuery();
@@ -1851,6 +3028,7 @@ this.BX.Disk = this.BX.Disk || {};
 					fileTypeFilters: []
 				},
 				allowedFileTypes: session.constraints.allowedFileTypes,
+				page: 1,
 				pageSize: PageSize.Recent,
 				signedConfig: session.constraints.signedConfig
 			});
@@ -1880,6 +3058,7 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 	}
 
+	const FOCUSABLE_SELECTOR = ['a[href]:not([disabled])', 'button:not([disabled])', 'input:not([disabled])', 'select:not([disabled])', 'textarea:not([disabled])', '[tabindex]:not([tabindex="-1"]):not([disabled])'].join(',');
 	function resolveCompositeNavigationIndex(currentIndex, itemCount, key, pageSize) {
 		if (itemCount === 0) {
 			return -1;
@@ -1889,8 +3068,10 @@ this.BX.Disk = this.BX.Disk || {};
 		const page = Math.max(1, pageSize);
 		switch (key) {
 			case 'ArrowDown':
+			case 'ArrowRight':
 				return Math.min(current + 1, lastIndex);
 			case 'ArrowUp':
+			case 'ArrowLeft':
 				return Math.max(current - 1, 0);
 			case 'Home':
 				return 0;
@@ -1903,6 +3084,21 @@ this.BX.Disk = this.BX.Disk || {};
 			default:
 				return current;
 		}
+	}
+	function resolveFallbackId(ids, preferredId, previousIndex) {
+		if (ids.length === 0) {
+			return null;
+		}
+		if (preferredId !== null && ids.includes(preferredId)) {
+			return preferredId;
+		}
+		if (previousIndex < 0) {
+			return ids[0];
+		}
+		return ids[Math.min(previousIndex, ids.length - 1)];
+	}
+	function takeCurrentFocus(pending, version) {
+		return pending !== null && pending.version === version ? pending : null;
 	}
 	function scrollOffsetForEntry(entryTop, entryHeight, scrollTop, viewportHeight) {
 		if (entryTop < scrollTop) {
@@ -1919,11 +3115,78 @@ this.BX.Disk = this.BX.Disk || {};
 		item?.focus();
 		return item !== null;
 	}
+	function listFocusableControls(root) {
+		return [...root.querySelectorAll(FOCUSABLE_SELECTOR)].filter(element => element.offsetParent !== null || element === document.activeElement);
+	}
+	function isTextEntryTarget(target) {
+		return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+	}
+	function moveHorizontalFocus(root, key) {
+		const controls = listFocusableControls(root);
+		const currentIndex = controls.indexOf(document.activeElement);
+		if (currentIndex < 0) {
+			return false;
+		}
+		const nextIndex = resolveCompositeNavigationIndex(currentIndex, controls.length, key, 1);
+		controls[nextIndex]?.focus();
+		return true;
+	}
 
-	const SOURCE_ROW_HEIGHT = 40;
-	const SOURCE_GROUP_HEIGHT = 28;
+	const METRIC_PROPERTIES = {
+		listRow: '--disk-picker-list-row-advance',
+		groupTitle: '--disk-picker-group-title-advance',
+		tableRow: '--disk-picker-table-row-advance',
+		sourceRow: '--disk-picker-source-row-advance',
+		sourceGroup: '--disk-picker-source-group-advance'
+	};
+	const DEFAULT_METRICS = {
+		listRow: 48,
+		groupTitle: 36,
+		tableRow: 48,
+		sourceRow: 48,
+		sourceGroup: 46
+	};
+	function readLength(style, property, fallback) {
+		const value = Number.parseFloat(style.getPropertyValue(property));
+		return Number.isFinite(value) && value > 0 ? value : fallback;
+	}
+	function readMetrics(element) {
+		const layout = element?.closest('.disk-picker-layout');
+		if (!layout) {
+			return {
+				...DEFAULT_METRICS
+			};
+		}
+		const style = getComputedStyle(layout);
+		return {
+			listRow: readLength(style, METRIC_PROPERTIES.listRow, DEFAULT_METRICS.listRow),
+			groupTitle: readLength(style, METRIC_PROPERTIES.groupTitle, DEFAULT_METRICS.groupTitle),
+			tableRow: readLength(style, METRIC_PROPERTIES.tableRow, DEFAULT_METRICS.tableRow),
+			sourceRow: readLength(style, METRIC_PROPERTIES.sourceRow, DEFAULT_METRICS.sourceRow),
+			sourceGroup: readLength(style, METRIC_PROPERTIES.sourceGroup, DEFAULT_METRICS.sourceGroup)
+		};
+	}
+
+	const TINT_COUNT = 4;
+	function resolveAvatarTint(storageId) {
+		return Math.abs(storageId) % TINT_COUNT + 1;
+	}
+	const INITIAL_SYMBOL_PATTERN = /[\p{L}\p{N} ]/u;
+	function resolveAvatarInitials(title) {
+		const words = title.split(/[\s,]/).filter(word => INITIAL_SYMBOL_PATTERN.test(word.charAt(0)));
+		if (words.length === 0) {
+			return '';
+		}
+		const initials = words.length > 1 ? words[0].charAt(0) + words[1].charAt(0) : words[0].charAt(0);
+		return initials.toUpperCase();
+	}
+
 	const SOURCE_VIEWPORT_HEIGHT = 640;
 	const SOURCE_OVERSCAN = 200;
+	const SOURCE_PAGINATION_ROOT_MARGIN = '120px 0px';
+	const SOURCE_SKELETON_WIDTHS = Object.freeze([126, 110, 122]);
+	const RETRY_KEY = 'retry';
+	const VERTICAL_KEYS$1 = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'];
 	function sourceWindow(entries, scrollTop) {
 		const firstOffset = Math.max(0, scrollTop - SOURCE_OVERSCAN);
 		const lastOffset = scrollTop + SOURCE_VIEWPORT_HEIGHT + SOURCE_OVERSCAN;
@@ -1945,25 +3208,40 @@ this.BX.Disk = this.BX.Disk || {};
 		components: {
 			Avatar: ui_vue3_components_avatar.Avatar,
 			BIcon: ui_iconSet_api_vue.BIcon,
+			Text3Xs: ui_system_typography_vue.Text3Xs,
 			TextSm: ui_system_typography_vue.TextSm,
-			TextXs: ui_system_typography_vue.TextXs
+			TextXs: ui_system_typography_vue.TextXs,
+			SourceRowSkeleton
 		},
 		setup() {
 			return {
-				recentIcon: ui_iconSet_api_vue.Outline.RECENT_ITEMS
+				recentIcon: ui_iconSet_api_vue.Solid.CLOCK,
+				personalIcon: ui_iconSet_api_vue.Solid.STORAGE
 			};
 		},
 		data() {
 			return {
-				focusHandled: false,
 				focusedSourceKey: null,
 				scrollTop: 0,
 				pendingScrollTop: 0,
-				scrollFrame: null
+				scrollFrame: null,
+				sourcePaginationObserver: null,
+				metrics: {
+					...DEFAULT_METRICS
+				}
 			};
 		},
 		mounted() {
-			this.maybeFocusFirstStorage();
+			this.metrics = readMetrics(this.$el);
+			this.sourcePaginationObserver = new IntersectionObserver(entries => {
+				if (entries.some(entry => entry.isIntersecting)) {
+					void loadNextSourcePage();
+				}
+			}, {
+				root: this.$refs.sourceScroll,
+				rootMargin: SOURCE_PAGINATION_ROOT_MARGIN
+			});
+			this.observeSourceSentinel();
 		},
 		computed: {
 			isRecentActive() {
@@ -1974,6 +3252,18 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			loading() {
 				return useSourceStore().sourcesLoading;
+			},
+			loadingMore() {
+				return useSourceStore().sourcesLoadingMore;
+			},
+			pageError() {
+				return useSourceStore().sourcesPageError;
+			},
+			hasMore() {
+				return useSourceStore().sourcesHasMore;
+			},
+			skeletonWidths() {
+				return SOURCE_SKELETON_WIDTHS;
 			},
 			sourceCount() {
 				return useSourceStore().sources.length;
@@ -1988,12 +3278,15 @@ this.BX.Disk = this.BX.Disk || {};
 				const sources = useSourceStore().sources;
 				return [{
 					titleKey: 'DISK_PICKER_SOURCE_GROUP_COMPANY',
+					shortTitleKey: 'DISK_PICKER_SOURCE_GROUP_COMPANY_SHORT',
 					sources: sources.filter(source => source.storageType === StorageType.Common)
 				}, {
 					titleKey: 'DISK_PICKER_SOURCE_GROUP_GROUPS',
+					shortTitleKey: 'DISK_PICKER_SOURCE_GROUP_GROUPS_SHORT',
 					sources: sources.filter(source => source.storageType === StorageType.Group || source.storageType === StorageType.Project)
 				}, {
 					titleKey: 'DISK_PICKER_SOURCE_GROUP_COLLABS',
+					shortTitleKey: 'DISK_PICKER_SOURCE_GROUP_COLLABS_SHORT',
 					sources: sources.filter(source => source.storageType === StorageType.Collab)
 				}].filter(group => group.sources.length > 0);
 			},
@@ -2005,11 +3298,12 @@ this.BX.Disk = this.BX.Disk || {};
 						key: `source-${source.storageId}`,
 						type: 'source',
 						titleKey: '',
+						shortTitleKey: '',
 						source,
 						top,
-						height: SOURCE_ROW_HEIGHT
+						height: this.metrics.sourceRow
 					});
-					top += SOURCE_ROW_HEIGHT;
+					top += this.metrics.sourceRow;
 				};
 				this.personal.forEach(source => addSource(source));
 				this.groups.forEach(group => {
@@ -2017,20 +3311,25 @@ this.BX.Disk = this.BX.Disk || {};
 						key: `group-${group.titleKey}`,
 						type: 'group',
 						titleKey: group.titleKey,
+						shortTitleKey: group.shortTitleKey,
 						source: null,
 						top,
-						height: SOURCE_GROUP_HEIGHT
+						height: this.metrics.sourceGroup
 					});
-					top += SOURCE_GROUP_HEIGHT;
+					top += this.metrics.sourceGroup;
 					group.sources.forEach(source => addSource(source));
 				});
 				return entries;
 			},
 			visibleSourceEntries() {
-				return sourceWindow(this.sourceEntries, Math.max(0, this.scrollTop - SOURCE_ROW_HEIGHT));
+				return sourceWindow(this.sourceEntries, Math.max(0, this.scrollTop - this.metrics.sourceRow));
 			},
 			sourceNavigationKeys() {
-				return ['recent', ...this.sourceEntries.filter(entry => entry.type === 'source').map(entry => entry.key)];
+				const keys = ['recent', ...this.sourceEntries.filter(entry => entry.type === 'source').map(entry => entry.key)];
+				if (this.error || this.pageError) {
+					keys.push(RETRY_KEY);
+				}
+				return keys;
 			},
 			sourceFocusKey() {
 				if (this.focusedSourceKey && this.sourceNavigationKeys.includes(this.focusedSourceKey)) {
@@ -2042,36 +3341,38 @@ this.BX.Disk = this.BX.Disk || {};
 		},
 		watch: {
 			sourceCount() {
-				this.maybeFocusFirstStorage();
 				this.$nextTick(() => this.revealActiveSource());
+				this.$nextTick(() => this.observeSourceSentinel());
+			},
+			hasMore() {
+				this.$nextTick(() => this.observeSourceSentinel());
+			},
+			loadingMore() {
+				this.$nextTick(() => this.observeSourceSentinel());
+			},
+			pageError() {
+				this.$nextTick(() => this.observeSourceSentinel());
 			},
 			activeStorageId() {
 				this.$nextTick(() => this.revealActiveSource());
+			},
+			sourceNavigationKeys(keys, previousKeys) {
+				const focusedKey = this.focusedSourceKey;
+				if (focusedKey === null || keys.includes(focusedKey)) {
+					return;
+				}
+				const root = this.$el;
+				const active = document.activeElement;
+				if (!root || !(active === document.body || root.contains(active))) {
+					return;
+				}
+				const fallbackKey = resolveFallbackId(keys, null, previousKeys.indexOf(focusedKey));
+				this.$nextTick(() => this.moveFocusTo(fallbackKey));
 			}
 		},
 		methods: {
 			loc(messageCode) {
 				return main_core.Loc.getMessage(messageCode) ?? '';
-			},
-			maybeFocusFirstStorage() {
-				if (this.focusHandled || this.sourceCount === 0) {
-					return;
-				}
-				this.$nextTick(() => {
-					const container = this.$el.closest('.disk-picker');
-					const active = document.activeElement;
-					const focusOnContainer = active === null || active === document.body || active === container;
-					if (!focusOnContainer) {
-						this.focusHandled = true;
-						return;
-					}
-					const first = this.$el.querySelector('.disk-picker-source-sidebar__item:not(.--recent)');
-					if (first) {
-						this.focusedSourceKey = first.dataset.compositeId ?? null;
-						first.focus();
-						this.focusHandled = true;
-					}
-				});
 			},
 			avatarType(source) {
 				return source.storageType === StorageType.Collab ? 'hexagon-guest' : 'round';
@@ -2083,11 +3384,20 @@ this.BX.Disk = this.BX.Disk || {};
 				return {
 					title: source.title,
 					picPath: source.avatarUrl ?? undefined,
-					size: 24
+					size: 28
 				};
 			},
 			isPersonalSource(source) {
 				return source.storageType === StorageType.User;
+			},
+			hasLetterAvatar(source) {
+				return source.avatarUrl === null && source.storageType !== StorageType.Collab;
+			},
+			letterAvatarClass(source) {
+				return `--tint-${resolveAvatarTint(source.storageId)}`;
+			},
+			sourceInitials(source) {
+				return resolveAvatarInitials(source.title);
 			},
 			isActive(source) {
 				return useSessionStore().storageId === source.storageId;
@@ -2115,8 +3425,7 @@ this.BX.Disk = this.BX.Disk || {};
 				}
 			},
 			handleCompositeKeydown(event) {
-				const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'];
-				if (!keys.includes(event.key)) {
+				if (!VERTICAL_KEYS$1.includes(event.key)) {
 					return;
 				}
 				const target = event.target.closest('[data-composite-id]');
@@ -2127,12 +3436,25 @@ this.BX.Disk = this.BX.Disk || {};
 				}
 				event.preventDefault();
 				const scroll = this.$refs.sourceScroll;
-				const pageSize = Math.max(1, Math.floor((scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT) / SOURCE_ROW_HEIGHT));
+				const metrics = this.metrics ?? DEFAULT_METRICS;
+				const pageSize = Math.max(1, Math.floor((scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT) / metrics.sourceRow));
 				const nextIndex = resolveCompositeNavigationIndex(currentIndex, this.sourceNavigationKeys.length, event.key, pageSize);
-				const key = this.sourceNavigationKeys[nextIndex];
+				this.moveFocusTo(this.sourceNavigationKeys[nextIndex]);
+			},
+			focusEntry() {
+				if (!this.$refs.sourceScroll) {
+					return false;
+				}
+				this.moveFocusTo(this.sourceFocusKey);
+				return true;
+			},
+			moveFocusTo(key) {
+				const scroll = this.$refs.sourceScroll;
+				const viewportHeight = scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT;
+				const metrics = this.metrics ?? DEFAULT_METRICS;
 				const entry = this.sourceEntries.find(sourceEntry => sourceEntry.key === key);
-				const entryTop = key === 'recent' ? 0 : SOURCE_ROW_HEIGHT + (entry?.top ?? 0);
-				const nextScrollTop = scrollOffsetForEntry(entryTop, SOURCE_ROW_HEIGHT, scroll.scrollTop, scroll.clientHeight || SOURCE_VIEWPORT_HEIGHT);
+				const entryTop = key === 'recent' ? 0 : metrics.sourceRow + (entry?.top ?? 0);
+				const nextScrollTop = key === RETRY_KEY ? Math.max(0, scroll.scrollHeight - viewportHeight) : scrollOffsetForEntry(entryTop, metrics.sourceRow, scroll.scrollTop, viewportHeight);
 				this.focusedSourceKey = key;
 				scroll.scrollTop = nextScrollTop;
 				this.scrollTop = nextScrollTop;
@@ -2141,6 +3463,16 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			handleRetrySources() {
 				void retrySources();
+			},
+			handleRetrySourcePage() {
+				void retrySourcePage();
+			},
+			observeSourceSentinel() {
+				const sentinel = this.$refs.sourceSentinel;
+				this.sourcePaginationObserver?.disconnect();
+				if (sentinel) {
+					this.sourcePaginationObserver?.observe(sentinel);
+				}
 			},
 			revealActiveSource() {
 				const storageId = useSessionStore().storageId;
@@ -2152,22 +3484,29 @@ this.BX.Disk = this.BX.Disk || {};
 				if (!active || !scroll) {
 					return;
 				}
-				const activeTop = SOURCE_ROW_HEIGHT + active.top;
+				const metrics = this.metrics ?? DEFAULT_METRICS;
+				const activeTop = metrics.sourceRow + active.top;
 				if (activeTop < scroll.scrollTop || activeTop + active.height > scroll.scrollTop + scroll.clientHeight) {
-					scroll.scrollTop = Math.max(0, activeTop - SOURCE_GROUP_HEIGHT);
+					scroll.scrollTop = Math.max(0, activeTop - metrics.sourceGroup);
 					this.scrollTop = scroll.scrollTop;
 					this.pendingScrollTop = scroll.scrollTop;
 				}
 			}
 		},
 		beforeUnmount() {
+			this.sourcePaginationObserver?.disconnect();
+			this.sourcePaginationObserver = null;
 			if (this.scrollFrame !== null) {
 				cancelAnimationFrame(this.scrollFrame);
 				this.scrollFrame = null;
 			}
 		},
 		template: `
-		<div class="disk-picker-source-sidebar" data-testid="universal-disk-picker-sidebar">
+		<div
+			class="disk-picker-source-sidebar"
+			data-disk-picker-group="storage"
+			data-testid="universal-disk-picker-sidebar"
+		>
 			<div
 				ref="sourceScroll"
 				class="disk-picker-source-sidebar__scroll"
@@ -2179,21 +3518,40 @@ this.BX.Disk = this.BX.Disk || {};
 					type="button"
 					class="disk-picker-source-sidebar__item --recent"
 					:class="{ '--active': isRecentActive }"
+					:title="loc('DISK_PICKER_SOURCE_RECENT')"
 					:aria-current="isRecentActive ? 'page' : null"
 					:tabindex="sourceFocusKey === 'recent' ? 0 : -1"
 					data-composite-id="recent"
 					data-testid="universal-disk-picker-source-recent"
 					@click="handleSelectRecent"
 				>
-					<BIcon :name="recentIcon" :size="24"/>
+					<span
+						class="disk-picker-source-sidebar__icon-avatar --recent --ui-context-content-light"
+						aria-hidden="true"
+					>
+						<BIcon :name="recentIcon" :size="20"/>
+					</span>
 					<TextSm class="disk-picker-source-sidebar__name">{{ loc('DISK_PICKER_SOURCE_RECENT') }}</TextSm>
 				</button>
-				<div v-if="error" class="disk-picker-source-sidebar__error">
+				<div
+					v-if="loading && sourceCount === 0"
+					class="disk-picker-source-sidebar__skeleton"
+					data-testid="universal-disk-picker-source-skeleton"
+				>
+					<SourceRowSkeleton
+						v-for="(width, index) in skeletonWidths"
+						:key="index"
+						:width="width"
+					/>
+				</div>
+				<div v-else-if="error" class="disk-picker-source-sidebar__error">
 					<TextXs>{{ loc('DISK_PICKER_SOURCE_LOAD_FAILED') }}</TextXs>
 					<button
 						type="button"
 						class="disk-picker-source-sidebar__retry"
 						:disabled="loading"
+						:tabindex="sourceFocusKey === 'retry' ? 0 : -1"
+						data-composite-id="retry"
 						data-testid="universal-disk-picker-sources-retry"
 						@click="handleRetrySources"
 					>
@@ -2210,12 +3568,15 @@ this.BX.Disk = this.BX.Disk || {};
 						<TextXs
 							v-if="entry.type === 'group'"
 							class="disk-picker-source-sidebar__group-title"
-						>{{ loc(entry.titleKey) }}</TextXs>
+						><span class="disk-picker-source-sidebar__group-title-full">{{ loc(entry.titleKey) }}</span><span
+							class="disk-picker-source-sidebar__group-title-short"
+						>{{ loc(entry.shortTitleKey) }}</span></TextXs>
 						<button
 							v-else
 							type="button"
 							class="disk-picker-source-sidebar__item"
 							:class="{ '--active': isActive(entry.source) }"
+							:title="entry.source.title"
 							:aria-current="isActive(entry.source) ? 'page' : null"
 							:tabindex="sourceFocusKey === entry.key ? 0 : -1"
 							:data-composite-id="entry.key"
@@ -2223,14 +3584,26 @@ this.BX.Disk = this.BX.Disk || {};
 							@click="handleSelect(entry.source)"
 						>
 							<span
-								class="disk-picker-source-sidebar__avatar"
+								class="disk-picker-source-sidebar__avatar --ui-context-content-light"
 								:data-testid="'universal-disk-picker-source-' + entry.source.storageId + '-avatar'"
 								aria-hidden="true"
 							>
 								<span
 									v-if="isPersonalSource(entry.source)"
-									class="disk-picker-source-sidebar__personal-avatar"
-								></span>
+									class="disk-picker-source-sidebar__icon-avatar --personal"
+								>
+									<BIcon :name="personalIcon" :size="20"/>
+								</span>
+								<span
+									v-else-if="hasLetterAvatar(entry.source)"
+									class="disk-picker-source-sidebar__icon-avatar"
+									:class="letterAvatarClass(entry.source)"
+								>
+									<Text3Xs
+										accent
+										class="disk-picker-source-sidebar__initials"
+									>{{ sourceInitials(entry.source) }}</Text3Xs>
+								</span>
 								<Avatar
 									v-else
 									:key="avatarKey(entry.source)"
@@ -2246,6 +3619,36 @@ this.BX.Disk = this.BX.Disk || {};
 						:style="{ height: visibleSourceEntries.bottom + 'px' }"
 						aria-hidden="true"
 					></div>
+					<div
+						v-if="loadingMore"
+						class="disk-picker-source-sidebar__skeleton"
+						data-testid="universal-disk-picker-source-more-skeleton"
+					>
+						<SourceRowSkeleton
+							v-for="(width, index) in skeletonWidths"
+							:key="index"
+							:width="width"
+						/>
+					</div>
+					<div v-else-if="pageError" class="disk-picker-source-sidebar__error --page">
+						<button
+							type="button"
+							class="disk-picker-source-sidebar__retry"
+							:tabindex="sourceFocusKey === 'retry' ? 0 : -1"
+							data-composite-id="retry"
+							data-testid="universal-disk-picker-source-page-retry"
+							@click="handleRetrySourcePage"
+						>
+							<TextXs>{{ loc('DISK_PICKER_RETRY') }}</TextXs>
+						</button>
+					</div>
+					<div
+						v-if="hasMore && !pageError"
+						ref="sourceSentinel"
+						class="disk-picker-source-sidebar__sentinel"
+						data-testid="universal-disk-picker-source-sentinel"
+						aria-hidden="true"
+					></div>
 				</template>
 			</div>
 		</div>
@@ -2255,23 +3658,36 @@ this.BX.Disk = this.BX.Disk || {};
 	const Breadcrumbs = ui_vue3.defineComponent({
 		name: 'DiskPickerBreadcrumbs',
 		components: {
+			HeadlineSm: ui_system_typography_vue.HeadlineSm,
 			TextSm: ui_system_typography_vue.TextSm
 		},
 		computed: {
 			crumbs() {
 				return useSessionStore().breadcrumbs;
 			},
+			rootCrumb() {
+				return this.crumbs.length > 3 ? this.crumbs[0] : null;
+			},
+			hiddenCrumbs() {
+				return this.crumbs.length > 3 ? this.crumbs.slice(1, -2) : [];
+			},
 			overflowCrumb() {
-				return this.crumbs.length >= 3 ? this.crumbs[this.crumbs.length - 3] : null;
+				return this.hiddenCrumbs.length > 0 ? this.hiddenCrumbs[this.hiddenCrumbs.length - 1] : null;
 			},
 			linkCrumbs() {
-				if (this.crumbs.length >= 3) {
+				if (this.crumbs.length > 3) {
 					return [this.crumbs[this.crumbs.length - 2]];
 				}
 				return this.crumbs.slice(0, -1);
 			},
 			current() {
 				return this.crumbs.length > 0 ? this.crumbs[this.crumbs.length - 1] : null;
+			},
+			hasPath() {
+				return this.crumbs.length > 1;
+			},
+			currentTypography() {
+				return this.hasPath ? 'TextSm' : 'HeadlineSm';
 			}
 		},
 		methods: {
@@ -2283,12 +3699,35 @@ this.BX.Disk = this.BX.Disk || {};
 					'#NAME#': crumb.name
 				});
 			},
-			handleAncestor(crumb) {
+			handleAncestor(crumb, event) {
+				const keyboardActivated = event === undefined || event.detail === 0;
+				if (keyboardActivated && event?.currentTarget instanceof HTMLElement && event.currentTarget === document.activeElement) {
+					useSessionStore().requestFocusHandoffToFiles();
+				}
 				void openBreadcrumb(crumb, useSessionStore().callbacks);
+			},
+			handleOverflow(event) {
+				const closestHiddenCrumb = this.hiddenCrumbs[this.hiddenCrumbs.length - 1];
+				if (closestHiddenCrumb) {
+					this.handleAncestor(closestHiddenCrumb, event);
+				}
 			}
 		},
 		template: `
 		<nav class="disk-picker-breadcrumbs" data-testid="universal-disk-picker-breadcrumbs">
+			<template v-if="rootCrumb">
+				<button
+					type="button"
+					class="disk-picker-breadcrumbs__link"
+					:title="rootCrumb.name"
+					:aria-label="navigateLabel(rootCrumb)"
+					data-testid="universal-disk-picker-breadcrumb-root"
+					@click="handleAncestor(rootCrumb, $event)"
+				>
+					<TextSm class="disk-picker-breadcrumbs__label">{{ rootCrumb.name }}</TextSm>
+				</button>
+				<span class="disk-picker-breadcrumbs__separator" aria-hidden="true">&rsaquo;</span>
+			</template>
 			<template v-if="overflowCrumb">
 				<button
 					type="button"
@@ -2296,7 +3735,7 @@ this.BX.Disk = this.BX.Disk || {};
 					:title="overflowCrumb.name"
 					:aria-label="navigateLabel(overflowCrumb)"
 					data-testid="universal-disk-picker-breadcrumb-overflow"
-					@click="handleAncestor(overflowCrumb)"
+					@click="handleOverflow($event)"
 				>&hellip;</button>
 				<span class="disk-picker-breadcrumbs__separator" aria-hidden="true">&rsaquo;</span>
 			</template>
@@ -2307,17 +3746,18 @@ this.BX.Disk = this.BX.Disk || {};
 					:title="crumb.name"
 					:aria-label="navigateLabel(crumb)"
 					data-testid="universal-disk-picker-breadcrumb-link"
-					@click="handleAncestor(crumb)"
+					@click="handleAncestor(crumb, $event)"
 				>
 					<TextSm class="disk-picker-breadcrumbs__label">{{ crumb.name }}</TextSm>
 				</button>
 				<span class="disk-picker-breadcrumbs__separator" aria-hidden="true">&rsaquo;</span>
 			</template>
-			<TextSm
+			<component
+				:is="currentTypography"
 				v-if="current"
 				class="disk-picker-breadcrumbs__current"
 				:title="current.name"
-			>{{ current.name }}</TextSm>
+			>{{ current.name }}</component>
 		</nav>
 	`
 	});
@@ -2326,13 +3766,20 @@ this.BX.Disk = this.BX.Disk || {};
 		name: 'DiskPickerToolbar',
 		components: {
 			Breadcrumbs,
-			BIcon: ui_iconSet_api_vue.BIcon,
-			TextSm: ui_system_typography_vue.TextSm
+			HeadlineSm: ui_system_typography_vue.HeadlineSm,
+			UiButton: ui_vue3_components_button.Button
 		},
 		setup() {
 			return {
 				ViewMode,
-				Outline: ui_iconSet_api_vue.Outline
+				Outline: ui_iconSet_api_vue.Outline,
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		data() {
+			return {
+				lastFocused: null
 			};
 		},
 		computed: {
@@ -2361,54 +3808,92 @@ this.BX.Disk = this.BX.Disk || {};
 			setViewMode(mode) {
 				useSessionStore().setViewMode(mode);
 			},
+			viewButtonStyle(mode) {
+				return this.viewMode === mode ? ui_vue3_components_button.AirButtonStyle.PLAIN_ACCENT : ui_vue3_components_button.AirButtonStyle.PLAIN_NO_ACCENT;
+			},
 			openSearch() {
 				useSessionStore().setSearchOpen(true);
+			},
+			handleCompositeFocus(event) {
+				this.lastFocused = event.target instanceof HTMLElement ? event.target : null;
+			},
+			handleCompositeKeydown(event) {
+				if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' || isTextEntryTarget(event.target)) {
+					return;
+				}
+				if (moveHorizontalFocus(this.$el, event.key)) {
+					event.preventDefault();
+				}
+			},
+			focusEntry() {
+				const root = this.$el;
+				if (!root || this.searchOpen) {
+					return false;
+				}
+				const controls = listFocusableControls(root);
+				const target = this.lastFocused !== null && controls.includes(this.lastFocused) ? this.lastFocused : controls[0];
+				target?.focus();
+				return target !== undefined;
 			}
 		},
 		template: `
-		<div class="disk-picker-toolbar" data-testid="universal-disk-picker-header">
+		<div
+			class="disk-picker-toolbar"
+			data-disk-picker-group="header"
+			data-testid="universal-disk-picker-header"
+			@focusin="handleCompositeFocus"
+			@keydown="handleCompositeKeydown"
+		>
 			<div class="disk-picker-toolbar__title" :class="{ '--search-open': searchOpen }">
 				<Breadcrumbs v-if="hasBreadcrumbs"/>
-				<TextSm v-else class="disk-picker-toolbar__title-text" :title="fallbackTitle">{{ fallbackTitle }}</TextSm>
+				<HeadlineSm
+					v-else
+					class="disk-picker-toolbar__title-text"
+					:title="fallbackTitle"
+				>{{ fallbackTitle }}</HeadlineSm>
 			</div>
-			<button
-				v-if="!searchOpen"
-				type="button"
-				class="disk-picker-toolbar__search-button"
-				:aria-label="loc('DISK_PICKER_SEARCH_OPEN')"
-				data-testid="universal-disk-picker-search-btn"
-				@click="openSearch"
-			>
-				<BIcon :name="Outline.SEARCH" :size="20"/>
-			</button>
+			<span v-if="!searchOpen" class="disk-picker-toolbar__search">
+				<UiButton
+					class="disk-picker-toolbar__button"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.PLAIN_NO_ACCENT"
+					:leftIcon="Outline.SEARCH"
+					:aria-label="loc('DISK_PICKER_SEARCH_OPEN')"
+					:dataset="{ testid: 'universal-disk-picker-search-btn' }"
+					@click="openSearch"
+				/>
+			</span>
 			<div
 				v-else
 				class="disk-picker-toolbar__search-slot"
 				data-disk-picker-search-slot
 			></div>
 			<div class="disk-picker-toolbar__view-toggle" role="group" :aria-label="loc('DISK_PICKER_VIEW_TOGGLE')">
-				<button
-					type="button"
-					class="disk-picker-toolbar__view-button"
-					:class="{ '--active': viewMode === ViewMode.List }"
+				<UiButton
+					class="disk-picker-toolbar__button"
+					:class="{ '--view-active': viewMode === ViewMode.List }"
+					:size="ButtonSize.MEDIUM"
+					:style="viewButtonStyle(ViewMode.List)"
+					:leftIcon="Outline.LIST_VIEWER"
+					removeRightCorners
 					:aria-pressed="viewMode === ViewMode.List"
 					:aria-label="loc('DISK_PICKER_VIEW_LIST')"
-					data-testid="universal-disk-picker-view-list"
+					:dataset="{ testid: 'universal-disk-picker-view-list' }"
 					@click="setViewMode(ViewMode.List)"
-				>
-					<BIcon :name="Outline.LIST_VIEWER" :size="22"/>
-				</button>
-				<button
-					type="button"
-					class="disk-picker-toolbar__view-button"
-					:class="{ '--active': viewMode === ViewMode.Table }"
+				/>
+				<span class="disk-picker-toolbar__view-divider" aria-hidden="true"></span>
+				<UiButton
+					class="disk-picker-toolbar__button"
+					:class="{ '--view-active': viewMode === ViewMode.Table }"
+					:size="ButtonSize.MEDIUM"
+					:style="viewButtonStyle(ViewMode.Table)"
+					:leftIcon="Outline.BULLETED_LIST"
+					removeLeftCorners
 					:aria-pressed="viewMode === ViewMode.Table"
 					:aria-label="loc('DISK_PICKER_VIEW_TABLE')"
-					data-testid="universal-disk-picker-view-table"
+					:dataset="{ testid: 'universal-disk-picker-view-table' }"
 					@click="setViewMode(ViewMode.Table)"
-				>
-					<BIcon :name="Outline.BULLETED_LIST" :size="22"/>
-				</button>
+				/>
 			</div>
 		</div>
 	`
@@ -2488,7 +3973,7 @@ this.BX.Disk = this.BX.Disk || {};
 	function loadNextPage(deps) {
 		const session = useSessionStore();
 		const item = useItemStore();
-		if (!session.hasMore || session.loadingMore || session.paginationStalled || session.stageType === StageType.Sources && !isSearchActive(session) || session.stageType === StageType.Recent && !isSearchActive(session)) {
+		if (session.navigationPending || !session.hasMore || session.loadingMore || session.paginationStalled || session.stageType === StageType.Sources && !isSearchActive(session) || session.stageType === StageType.Recent && !isSearchActive(session)) {
 			return Promise.resolve();
 		}
 		return runNextPage(deps, session, item);
@@ -2589,16 +4074,46 @@ this.BX.Disk = this.BX.Disk || {};
 		return GENERIC_MESSAGE;
 	}
 
+	const ItemRowSkeleton = ui_vue3.defineComponent({
+		name: 'DiskPickerItemRowSkeleton',
+		components: {
+			BLine: ui_system_skeleton_vue.BLine
+		},
+		props: {
+			width: {
+				type: Number,
+				default: 220
+			}
+		},
+		template: `
+		<div class="disk-picker-item-row-skeleton --ui-context-edge-dark" aria-hidden="true">
+			<BLine :width="24" :height="24" :radius="6"/>
+			<BLine :width="width" :height="10" :radius="4"/>
+		</div>
+	`
+	});
+
 	const EmptyState = ui_vue3.defineComponent({
 		name: 'DiskPickerEmptyState',
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
-			TextSm: ui_system_typography_vue.TextSm
+			TextSm: ui_system_typography_vue.TextSm,
+			UiButton: ui_vue3_components_button.Button
+		},
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
 		},
 		props: {
 			icon: {
 				type: String,
 				required: true
+			},
+			graphic: {
+				type: String,
+				default: ''
 			},
 			title: {
 				type: String,
@@ -2620,983 +4135,23 @@ this.BX.Disk = this.BX.Disk || {};
 		emits: ['action'],
 		template: `
 		<div class="disk-picker-empty-state" :data-testid="testId">
-			<BIcon :name="icon" :size="48" class="disk-picker-empty-state__icon"/>
+			<span
+				v-if="graphic"
+				class="disk-picker-empty-state__graphic"
+				:class="'--' + graphic"
+				aria-hidden="true"
+			></span>
+			<BIcon v-else :name="icon" :size="48" class="disk-picker-empty-state__icon"/>
 			<TextSm class="disk-picker-empty-state__title">{{ title }}</TextSm>
-			<button
+			<UiButton
 				v-if="actionLabel"
-				type="button"
 				class="disk-picker-empty-state__action"
-				:data-testid="actionTestId"
+				:size="ButtonSize.MEDIUM"
+				:style="AirButtonStyle.OUTLINE_ACCENT_2"
+				:text="actionLabel"
+				:dataset="{ testid: actionTestId }"
 				@click="$emit('action')"
-			>
-				{{ actionLabel }}
-			</button>
-		</div>
-	`
-	});
-
-	const DEFAULT_MAX_ITEMS = 100;
-	const SELECT_LIMIT_MESSAGE$1 = 'DISK_PICKER_NOTIFY_SELECT_LIMIT';
-	function effectiveMaxItems(maxItems) {
-		return Math.min(maxItems ?? DEFAULT_MAX_ITEMS, DEFAULT_MAX_ITEMS);
-	}
-	function toggleSelection(item, modifier, deps) {
-		const session = useSessionStore();
-		if (session.confirming) {
-			return;
-		}
-		if (item.isFolder) {
-			void openFolder(item, deps);
-			return;
-		}
-		if (!item.selectable) {
-			return;
-		}
-		const selection = useSelectionStore();
-		selection.setActive(item.objectId);
-		if (session.constraints.selectionMode === SelectionMode.Single) {
-			selection.replaceWith(item.objectId, item.size ?? 0);
-			return;
-		}
-		if (!modifier) {
-			selection.replaceWith(item.objectId, item.size ?? 0);
-			return;
-		}
-		if (selection.has(item.objectId)) {
-			selection.remove(item.objectId);
-			return;
-		}
-		const maxItems = effectiveMaxItems(session.constraints.maxItems);
-		if (selection.count >= maxItems) {
-			deps.notify(SELECT_LIMIT_MESSAGE$1, {
-				'#COUNT#': String(maxItems)
-			});
-			return;
-		}
-		selection.add(item.objectId, item.size ?? 0);
-	}
-
-	const PREVIEW_OBSERVER_OPTIONS = {
-		root: null,
-		rootMargin: '50px',
-		threshold: 0.1
-	};
-	const DiskIconView = ui_vue3.defineComponent({
-		name: 'DiskPickerDiskIcon',
-		props: {
-			type: {
-				type: String,
-				default: 'file'
-			},
-			size: {
-				type: Number,
-				default: 24
-			},
-			previewUrl: {
-				type: String,
-				default: null
-			}
-		},
-		data() {
-			return {
-				icon: null,
-				previewObserver: null
-			};
-		},
-		watch: {
-			type() {
-				this.icon?.setType(this.type);
-			},
-			size() {
-				this.icon?.setSize(this.size);
-			},
-			previewUrl() {
-				this.stopPreviewObserver();
-				this.icon?.setPreviewUrl(null);
-				this.observePreview();
-			}
-		},
-		mounted() {
-			const icon = ui_vue3.markRaw(new ui_iconSet_api_disk.DiskIcon({
-				type: this.type,
-				size: this.size,
-				previewUrl: null
-			}));
-			icon.renderOnNode(this.$el);
-			this.icon = icon;
-			this.observePreview();
-		},
-		beforeUnmount() {
-			this.stopPreviewObserver();
-			this.icon?.destroy();
-			this.icon = null;
-		},
-		methods: {
-			observePreview() {
-				const url = this.previewUrl ?? null;
-				const node = this.$el;
-				if (url === null || !node) {
-					return;
-				}
-				const observer = new IntersectionObserver(entries => {
-					if (!entries.some(entry => entry.isIntersecting)) {
-						return;
-					}
-					this.stopPreviewObserver();
-					this.icon?.setPreviewUrl(url);
-				}, PREVIEW_OBSERVER_OPTIONS);
-				observer.observe(node);
-				this.previewObserver = ui_vue3.markRaw(observer);
-			},
-			stopPreviewObserver() {
-				this.previewObserver?.disconnect();
-				this.previewObserver = null;
-			}
-		},
-		template: `
-		<span class="disk-picker-disk-icon"></span>
-	`
-	});
-
-	const ItemRow = ui_vue3.defineComponent({
-		name: 'DiskPickerItemRow',
-		components: {
-			BDiskIcon: DiskIconView,
-			TextSm: ui_system_typography_vue.TextSm
-		},
-		props: {
-			item: {
-				type: Object,
-				required: true
-			},
-			selected: {
-				type: Boolean,
-				default: false
-			},
-			active: {
-				type: Boolean,
-				default: false
-			},
-			tabIndex: {
-				type: Number,
-				default: -1
-			}
-		},
-		computed: {
-			disabled() {
-				return !this.item.isFolder && !this.item.selectable;
-			},
-			ariaPressed() {
-				return !this.item.isFolder && this.item.selectable ? this.selected : null;
-			},
-			rowClass() {
-				return {
-					'--selected': this.selected,
-					'--active': this.active
-				};
-			},
-			testId() {
-				return `universal-disk-picker-file-row-${this.item.objectId}`;
-			}
-		},
-		methods: {
-			activate(modifier) {
-				if (this.disabled) {
-					return;
-				}
-				toggleSelection(this.item, modifier, useSessionStore().callbacks);
-			},
-			handleClick(event) {
-				this.activate(event.metaKey || event.ctrlKey);
-			},
-			handleKeydown(event) {
-				if (event.key === ' ' || event.key === 'Spacebar') {
-					event.preventDefault();
-					this.activate(true);
-				}
-			}
-		},
-		template: `
-		<button
-			type="button"
-			class="disk-picker-item-row"
-			:class="rowClass"
-			:tabindex="tabIndex"
-			:aria-pressed="ariaPressed"
-			:aria-disabled="disabled ? 'true' : null"
-			:data-composite-id="item.objectId"
-			:data-testid="testId"
-			@click="handleClick"
-			@keydown="handleKeydown"
-		>
-			<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
-			<TextSm class="disk-picker-item-row__name">{{ item.name }}</TextSm>
-		</button>
-	`
-	});
-
-	function formatDate(timestampInSeconds) {
-		if (!main_core.Type.isNumber(timestampInSeconds)) {
-			return '';
-		}
-		return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATE'), timestampInSeconds);
-	}
-	function formatTableDate(timestampInSeconds, todayText, nowInSeconds = Math.floor(Date.now() / 1000)) {
-		if (!main_core.Type.isNumber(timestampInSeconds)) {
-			return '';
-		}
-		const dateKey = main_date.DateTimeFormat.format('Y-m-d', timestampInSeconds);
-		const todayKey = main_date.DateTimeFormat.format('Y-m-d', nowInSeconds);
-		if (dateKey === todayKey) {
-			return todayText;
-		}
-		const year = main_date.DateTimeFormat.format('Y', timestampInSeconds);
-		const currentYear = main_date.DateTimeFormat.format('Y', nowInSeconds);
-		if (year === currentYear) {
-			return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), timestampInSeconds);
-		}
-		return formatDate(timestampInSeconds);
-	}
-
-	const UNIT_MESSAGE_KEYS = Object.freeze(['DISK_PICKER_SIZE_UNIT_BYTES', 'DISK_PICKER_SIZE_UNIT_KB', 'DISK_PICKER_SIZE_UNIT_MB', 'DISK_PICKER_SIZE_UNIT_GB', 'DISK_PICKER_SIZE_UNIT_TB']);
-	const STEP = 1024;
-	const DECIMAL_SEPARATOR = ',';
-	function formatNumber(value, fractionDigits) {
-		return value.toFixed(fractionDigits).replace('.', DECIMAL_SEPARATOR);
-	}
-	function formatSize(bytes) {
-		if (!main_core.Type.isNumber(bytes) || bytes < 0) {
-			return '';
-		}
-		let value = bytes;
-		let unitIndex = 0;
-		while (value >= STEP && unitIndex < UNIT_MESSAGE_KEYS.length - 1) {
-			value /= STEP;
-			unitIndex += 1;
-		}
-		const fractionDigits = unitIndex === 0 || Number.isInteger(value) ? 0 : 1;
-		const number = formatNumber(value, fractionDigits);
-		const unit = main_core.Loc.getMessage(UNIT_MESSAGE_KEYS[unitIndex]) ?? '';
-		return unit === '' ? number : `${number} ${unit}`;
-	}
-
-	const ItemTable = ui_vue3.defineComponent({
-		name: 'DiskPickerItemTable',
-		components: {
-			BDiskIcon: DiskIconView,
-			Text2Xs: ui_system_typography_vue.Text2Xs,
-			TextSm: ui_system_typography_vue.TextSm
-		},
-		props: {
-			items: {
-				type: Array,
-				default: () => useItemStore().items
-			},
-			topSpacerHeight: {
-				type: Number,
-				default: 0
-			},
-			bottomSpacerHeight: {
-				type: Number,
-				default: 0
-			},
-			focusObjectId: {
-				type: Number,
-				default: null
-			}
-		},
-		methods: {
-			loc(messageCode) {
-				return main_core.Loc.getMessage(messageCode) ?? '';
-			},
-			isSelected(item) {
-				return useSelectionStore().selectedIdSet.has(item.objectId);
-			},
-			isActive(item) {
-				return useSelectionStore().activeObjectId === item.objectId;
-			},
-			isDisabled(item) {
-				return !item.isFolder && !item.selectable;
-			},
-			ariaPressed(item) {
-				return !item.isFolder && item.selectable ? this.isSelected(item) : null;
-			},
-			rowClass(item) {
-				return {
-					'--selected': this.isSelected(item),
-					'--active': this.isActive(item)
-				};
-			},
-			testId(item) {
-				return `universal-disk-picker-file-row-${item.objectId}`;
-			},
-			sizeText(item) {
-				return item.isFolder ? '' : formatSize(item.size);
-			},
-			addedText(item) {
-				return formatTableDate(item.createTime, this.loc('DISK_PICKER_TABLE_TODAY'));
-			},
-			activate(item, modifier) {
-				if (this.isDisabled(item)) {
-					return;
-				}
-				toggleSelection(item, modifier, useSessionStore().callbacks);
-			},
-			handleClick(item, event) {
-				this.activate(item, event.metaKey || event.ctrlKey);
-			},
-			handleKeydown(item, event) {
-				if (event.key === ' ' || event.key === 'Spacebar') {
-					event.preventDefault();
-					this.activate(item, true);
-				}
-			}
-		},
-		template: `
-		<table class="disk-picker-item-table" data-testid="universal-disk-picker-table">
-			<colgroup>
-				<col class="--name">
-				<col class="--size">
-				<col class="--added">
-			</colgroup>
-			<thead>
-				<tr class="disk-picker-item-table__head">
-					<th scope="col" class="disk-picker-item-table__cell --name">
-						<Text2Xs :accent="true">{{ loc('DISK_PICKER_TABLE_NAME') }}</Text2Xs>
-					</th>
-					<th scope="col" class="disk-picker-item-table__cell --size">
-						<Text2Xs :accent="true">{{ loc('DISK_PICKER_TABLE_SIZE') }}</Text2Xs>
-					</th>
-					<th scope="col" class="disk-picker-item-table__cell --added">
-						<Text2Xs :accent="true">{{ loc('DISK_PICKER_TABLE_ADDED') }}</Text2Xs>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-if="topSpacerHeight > 0" aria-hidden="true">
-					<td :style="{ height: topSpacerHeight + 'px' }" colspan="3"></td>
-				</tr>
-				<tr
-					v-for="item in items"
-					:key="item.objectId"
-					class="disk-picker-item-table__row"
-					:class="rowClass(item)"
-					:data-testid="testId(item)"
-					@click="handleClick(item, $event)"
-				>
-					<td class="disk-picker-item-table__cell --name">
-						<button
-							type="button"
-							class="disk-picker-item-table__action"
-							:tabindex="item.objectId === focusObjectId ? 0 : -1"
-							:aria-pressed="ariaPressed(item)"
-							:aria-disabled="isDisabled(item) ? 'true' : null"
-							:data-composite-id="item.objectId"
-							@keydown="handleKeydown(item, $event)"
-						>
-							<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
-							<TextSm class="disk-picker-item-table__name">{{ item.name }}</TextSm>
-						</button>
-					</td>
-					<td class="disk-picker-item-table__cell --size"><TextSm>{{ sizeText(item) }}</TextSm></td>
-					<td class="disk-picker-item-table__cell --added"><TextSm>{{ addedText(item) }}</TextSm></td>
-				</tr>
-				<tr v-if="bottomSpacerHeight > 0" aria-hidden="true">
-					<td :style="{ height: bottomSpacerHeight + 'px' }" colspan="3"></td>
-				</tr>
-			</tbody>
-		</table>
-	`
-	});
-
-	const LIST_ROW_HEIGHT = 44;
-	const GROUP_TITLE_HEIGHT = 28;
-	const TABLE_ROW_HEIGHT = 45;
-	const VIRTUAL_VIEWPORT_HEIGHT = 640;
-	const VIRTUAL_OVERSCAN = 440;
-	const PAGINATION_ROOT_MARGIN = '120px 0px';
-	function firstEntryAfter(items, offset) {
-		let low = 0;
-		let high = items.length;
-		while (low < high) {
-			const middle = Math.floor((low + high) / 2);
-			if (items[middle].top + items[middle].height <= offset) {
-				low = middle + 1;
-			} else {
-				high = middle;
-			}
-		}
-		return low;
-	}
-	function firstEntryAtOrAfter(items, offset) {
-		let low = 0;
-		let high = items.length;
-		while (low < high) {
-			const middle = Math.floor((low + high) / 2);
-			if (items[middle].top < offset) {
-				low = middle + 1;
-			} else {
-				high = middle;
-			}
-		}
-		return low;
-	}
-	function windowByOffset(items, scrollTop) {
-		const last = items[items.length - 1];
-		const totalHeight = last ? last.top + last.height : 0;
-		const startOffset = Math.max(0, scrollTop - VIRTUAL_OVERSCAN);
-		const endOffset = scrollTop + VIRTUAL_VIEWPORT_HEIGHT + VIRTUAL_OVERSCAN;
-		const start = firstEntryAfter(items, startOffset);
-		const end = firstEntryAtOrAfter(items, endOffset);
-		return {
-			items: items.slice(start, end),
-			top: items[start]?.top ?? totalHeight,
-			bottom: Math.max(0, totalHeight - (items[end - 1]?.top ?? 0) - (items[end - 1]?.height ?? 0))
-		};
-	}
-	const ItemBrowser = ui_vue3.defineComponent({
-		name: 'DiskPickerItemBrowser',
-		components: {
-			EmptyState,
-			ItemRow,
-			ItemTable,
-			TextXs: ui_system_typography_vue.TextXs
-		},
-		setup() {
-			return {
-				ViewMode
-			};
-		},
-		data() {
-			return {
-				pendingNavFocus: false,
-				focusedObjectId: null,
-				virtualScrollTop: 0,
-				paginationObserver: null,
-				scrollFrame: null,
-				pendingScrollTop: 0
-			};
-		},
-		computed: {
-			items() {
-				return useItemStore().items;
-			},
-			session() {
-				return useSessionStore();
-			},
-			viewMode() {
-				return this.session.viewMode;
-			},
-			focusObjectId() {
-				const focusedExists = this.items.some(item => item.objectId === this.focusedObjectId);
-				if (focusedExists) {
-					return this.focusedObjectId;
-				}
-				const activeObjectId = useSelectionStore().activeObjectId;
-				return this.items.some(item => item.objectId === activeObjectId) ? activeObjectId : this.items[0]?.objectId ?? null;
-			},
-			contentLoading() {
-				return this.session.contentLoading;
-			},
-			feedKey() {
-				const feed = this.session.feed;
-				return `${feed.stageType}:${feed.storageId}:${feed.folderId}`;
-			},
-			searchActive() {
-				return [...this.session.searchQuery.trim()].length >= SearchQueryLength.Min;
-			},
-			filtersActive() {
-				return this.session.objectTypeFilter !== ObjectTypeFilter.All || this.session.fileTypeFilters.length > 0;
-			},
-			hasError() {
-				return this.session.contentError !== null;
-			},
-			isEmpty() {
-				return !this.session.contentLoading && !this.hasError && this.session.emptyReason === 'empty';
-			},
-			errorTitle() {
-				return this.loc(errorMessageCode(this.session.contentError));
-			},
-			errorIcon() {
-				return ui_iconSet_api_vue.Outline.ALERT;
-			},
-			emptyIcon() {
-				if (this.searchActive || this.filtersActive) {
-					return ui_iconSet_api_vue.Outline.SEARCH;
-				}
-				return this.session.stageType === StageType.Folder ? ui_iconSet_api_vue.Outline.FOLDER : ui_iconSet_api_vue.Outline.FILE;
-			},
-			emptyTitle() {
-				if (this.searchActive || this.filtersActive) {
-					return this.loc('DISK_PICKER_NOTHING_FOUND');
-				}
-				if (this.session.stageType === StageType.Folder) {
-					return this.loc('DISK_PICKER_EMPTY_FOLDER');
-				}
-				return this.session.stageType === StageType.Recent ? this.loc('DISK_PICKER_EMPTY_RECENT') : this.loc('DISK_PICKER_EMPTY_DISK');
-			},
-			emptyActionLabel() {
-				return this.searchActive || this.filtersActive ? this.loc('DISK_PICKER_RESET_FILTERS') : '';
-			},
-			groups() {
-				if (!this.searchActive && this.session.stageType === StageType.Folder) {
-					return [{
-						key: 'folder',
-						label: '',
-						items: this.items
-					}];
-				}
-				const useRecentTime = !this.searchActive && this.session.stageType === StageType.Recent;
-				const now = Math.floor(Date.now() / 1000);
-				const buckets = new Map();
-				this.items.forEach(item => {
-					const group = resolveDateGroup(useRecentTime ? item.recentTime : item.updateTime, now);
-					const bucket = buckets.get(group.key) ?? {
-						group,
-						items: []
-					};
-					bucket.items.push(item);
-					buckets.set(group.key, bucket);
-				});
-				return [...buckets.values()].sort((left, right) => compareDateGroups(left.group, right.group)).map(({
-					group,
-					items
-				}) => ({
-					key: group.key,
-					label: group.labelCode ? this.loc(group.labelCode) : group.label ?? '',
-					items
-				}));
-			},
-			virtualEntries() {
-				const entries = [];
-				let top = 0;
-				this.groups.forEach(group => {
-					if (group.label) {
-						entries.push({
-							key: `group-${group.key}`,
-							type: 'group',
-							label: group.label,
-							item: null,
-							top,
-							height: GROUP_TITLE_HEIGHT
-						});
-						top += GROUP_TITLE_HEIGHT;
-					}
-					group.items.forEach(item => {
-						entries.push({
-							key: `item-${item.objectId}`,
-							type: 'item',
-							label: '',
-							item,
-							top,
-							height: LIST_ROW_HEIGHT
-						});
-						top += LIST_ROW_HEIGHT;
-					});
-				});
-				return entries;
-			},
-			virtualListWindow() {
-				return windowByOffset(this.virtualEntries, this.virtualScrollTop);
-			},
-			virtualTableWindow() {
-				const start = Math.max(0, Math.floor((this.virtualScrollTop - VIRTUAL_OVERSCAN) / TABLE_ROW_HEIGHT));
-				const visibleCount = Math.ceil((VIRTUAL_VIEWPORT_HEIGHT + 2 * VIRTUAL_OVERSCAN) / TABLE_ROW_HEIGHT);
-				const end = Math.min(this.items.length, start + visibleCount);
-				return {
-					items: this.items.slice(start, end),
-					top: start * TABLE_ROW_HEIGHT,
-					bottom: (this.items.length - end) * TABLE_ROW_HEIGHT
-				};
-			},
-			announcement() {
-				if (this.session.contentLoading) {
-					return '';
-				}
-				if (this.hasError) {
-					return this.errorTitle;
-				}
-				if (this.isEmpty) {
-					return this.emptyTitle;
-				}
-				return this.loc('DISK_PICKER_ANNOUNCE_COUNT', {
-					'#COUNT#': String(this.items.length)
-				});
-			}
-		},
-		watch: {
-			feedKey() {
-				const root = this.$el;
-				this.virtualScrollTop = 0;
-				if (root && root.contains(document.activeElement)) {
-					this.pendingNavFocus = true;
-				}
-				if (root) {
-					root.scrollTop = 0;
-				}
-			},
-			viewMode() {
-				this.virtualScrollTop = 0;
-				this.$nextTick(() => this.observePaginationSentinel());
-			},
-			'items.length': function () {
-				this.$nextTick(() => this.observePaginationSentinel());
-			},
-			contentLoading(loading) {
-				if (!loading) {
-					this.$nextTick(() => this.observePaginationSentinel());
-				}
-				if (!loading && this.pendingNavFocus) {
-					this.pendingNavFocus = false;
-					this.$nextTick(() => this.focusAfterNavigation());
-				}
-			}
-		},
-		mounted() {
-			this.paginationObserver = new IntersectionObserver(entries => {
-				if (entries.some(entry => entry.isIntersecting)) {
-					void loadNextPage(this.session.callbacks);
-				}
-			}, {
-				root: this.$el,
-				rootMargin: PAGINATION_ROOT_MARGIN
-			});
-			this.observePaginationSentinel();
-		},
-		beforeUnmount() {
-			this.paginationObserver?.disconnect();
-			this.paginationObserver = null;
-			if (this.scrollFrame !== null) {
-				cancelAnimationFrame(this.scrollFrame);
-				this.scrollFrame = null;
-			}
-		},
-		methods: {
-			loc(messageCode, replacements) {
-				return main_core.Loc.getMessage(messageCode, replacements) ?? '';
-			},
-			focusAfterNavigation() {
-				const root = this.$el;
-				if (!root) {
-					return;
-				}
-				const active = document.activeElement;
-				const focusLostOrStillInList = active === document.body || root.contains(active);
-				if (!focusLostOrStillInList) {
-					return;
-				}
-				const first = root.querySelector('[data-composite-id]');
-				(first ?? root).focus();
-			},
-			handleCompositeFocus(event) {
-				const target = event.target.closest('[data-composite-id]');
-				if (target) {
-					this.focusedObjectId = Number(target.dataset.compositeId);
-				}
-			},
-			handleCompositeKeydown(event) {
-				const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'];
-				if (!keys.includes(event.key)) {
-					return;
-				}
-				const target = event.target.closest('[data-composite-id]');
-				const currentIndex = this.items.findIndex(item => item.objectId === Number(target?.dataset.compositeId));
-				if (currentIndex < 0) {
-					return;
-				}
-				event.preventDefault();
-				const root = this.$el;
-				const rowHeight = this.viewMode === ViewMode.Table ? TABLE_ROW_HEIGHT : LIST_ROW_HEIGHT;
-				const pageSize = Math.max(1, Math.floor((root.clientHeight || VIRTUAL_VIEWPORT_HEIGHT) / rowHeight));
-				const nextIndex = resolveCompositeNavigationIndex(currentIndex, this.items.length, event.key, pageSize);
-				const item = this.items[nextIndex];
-				if (!item) {
-					return;
-				}
-				const entryTop = this.viewMode === ViewMode.Table ? nextIndex * TABLE_ROW_HEIGHT : this.virtualEntries.find(entry => entry.item?.objectId === item.objectId)?.top ?? 0;
-				const nextScrollTop = scrollOffsetForEntry(entryTop, rowHeight, root.scrollTop, root.clientHeight || VIRTUAL_VIEWPORT_HEIGHT);
-				this.focusedObjectId = item.objectId;
-				root.scrollTop = nextScrollTop;
-				this.pendingScrollTop = nextScrollTop;
-				this.virtualScrollTop = nextScrollTop;
-				this.$nextTick(() => focusCompositeItem(root, item.objectId));
-			},
-			isActive(item) {
-				return useSelectionStore().activeObjectId === item.objectId;
-			},
-			isSelected(item) {
-				return useSelectionStore().selectedIdSet.has(item.objectId);
-			},
-			handleVirtualScroll(event) {
-				this.pendingScrollTop = event.target.scrollTop;
-				if (this.scrollFrame !== null) {
-					return;
-				}
-				this.scrollFrame = requestAnimationFrame(() => {
-					this.virtualScrollTop = this.pendingScrollTop;
-					this.scrollFrame = null;
-				});
-			},
-			observePaginationSentinel() {
-				const sentinel = this.$refs.paginationSentinel;
-				this.paginationObserver?.disconnect();
-				if (sentinel) {
-					this.paginationObserver?.observe(sentinel);
-				}
-			},
-			handleRetryContent() {
-				if (this.searchActive) {
-					void searchItems(this.session.searchQuery, this.session.callbacks);
-					return;
-				}
-				if (this.session.stageType === StageType.Folder) {
-					void reloadCurrentFeed(this.session.callbacks);
-					return;
-				}
-				void retryInitialStage();
-			},
-			handleRetryNextPage() {
-				void retryNextPage(this.session.callbacks);
-			},
-			handleResetFilters() {
-				this.session.callbacks.resetFilters();
-			}
-		},
-		template: `
-		<div
-			class="disk-picker-item-browser"
-			tabindex="-1"
-			@focusin="handleCompositeFocus"
-			@keydown="handleCompositeKeydown"
-			@scroll.passive="handleVirtualScroll"
-		>
-			<div class="disk-picker-item-browser__status" role="status" aria-live="polite">{{ announcement }}</div>
-
-			<EmptyState
-				v-if="hasError"
-				:icon="errorIcon"
-				:title="errorTitle"
-				:action-label="loc('DISK_PICKER_RETRY')"
-				test-id="universal-disk-picker-error-state"
-				action-test-id="universal-disk-picker-error-retry"
-				@action="handleRetryContent"
 			/>
-
-			<EmptyState
-				v-else-if="isEmpty"
-				:icon="emptyIcon"
-				:title="emptyTitle"
-				:action-label="emptyActionLabel"
-				test-id="universal-disk-picker-empty-state"
-				@action="handleResetFilters"
-			/>
-
-			<template v-else>
-				<ItemTable
-					v-if="viewMode === ViewMode.Table"
-					:items="virtualTableWindow.items"
-					:top-spacer-height="virtualTableWindow.top"
-					:bottom-spacer-height="virtualTableWindow.bottom"
-					:focus-object-id="focusObjectId"
-				/>
-
-				<template v-else>
-					<div
-						class="disk-picker-item-browser__spacer"
-						:style="{ height: virtualListWindow.top + 'px' }"
-						aria-hidden="true"
-					></div>
-					<template v-for="entry in virtualListWindow.items" :key="entry.key">
-						<TextXs
-							v-if="entry.type === 'group'"
-							class="disk-picker-item-browser__group-title"
-						>{{ entry.label }}</TextXs>
-						<ItemRow
-							v-else
-							:item="entry.item"
-							:active="isActive(entry.item)"
-							:selected="isSelected(entry.item)"
-							:tab-index="entry.item.objectId === focusObjectId ? 0 : -1"
-						/>
-					</template>
-					<div
-						class="disk-picker-item-browser__spacer"
-						:style="{ height: virtualListWindow.bottom + 'px' }"
-						aria-hidden="true"
-					></div>
-				</template>
-
-				<div v-if="session.paginationStalled" class="disk-picker-item-browser__more">
-					<button
-						type="button"
-						class="disk-picker-item-browser__retry"
-						data-testid="universal-disk-picker-load-more-retry"
-						@click="handleRetryNextPage"
-					>
-						{{ loc('DISK_PICKER_RETRY') }}
-					</button>
-				</div>
-				<div ref="paginationSentinel" class="disk-picker-item-browser__sentinel" aria-hidden="true"></div>
-			</template>
-		</div>
-	`
-	});
-
-	const FAN_LIMIT = 5;
-	const PreviewPanel = ui_vue3.defineComponent({
-		name: 'DiskPickerPreviewPanel',
-		components: {
-			BDiskIcon: DiskIconView,
-			TextSm: ui_system_typography_vue.TextSm,
-			TextXs: ui_system_typography_vue.TextXs
-		},
-		computed: {
-			activeItem() {
-				const activeObjectId = useSelectionStore().activeObjectId;
-				if (activeObjectId === null) {
-					return null;
-				}
-				return useItemStore().getById(activeObjectId);
-			},
-			count() {
-				return useSelectionStore().count;
-			},
-			isMultipleMode() {
-				return useSessionStore().constraints.selectionMode === SelectionMode.Multiple;
-			},
-			multiSelectShortcut() {
-				return main_core.Browser.isMac() ? 'Cmd' : 'Ctrl';
-			},
-			selectedItems() {
-				const item = useItemStore();
-				return useSelectionStore().selectedIds.map(objectId => item.getById(objectId)).filter(entry => entry !== null);
-			},
-			showEmpty() {
-				return this.activeItem === null;
-			},
-			showMulti() {
-				return this.activeItem !== null && this.count > 1;
-			},
-			showSingle() {
-				return this.activeItem !== null && this.count <= 1;
-			},
-			fanItems() {
-				return this.selectedItems.slice(0, FAN_LIMIT);
-			},
-			multiTitle() {
-				return this.loc('DISK_PICKER_PREVIEW_MULTI_TITLE', {
-					'#COUNT#': String(this.count)
-				});
-			},
-			multiSize() {
-				const selection = useSelectionStore();
-				const item = useItemStore();
-				const total = selection.selectedIds.reduce((sum, objectId) => {
-					return sum + (selection.selectedSizes[objectId] ?? item.getById(objectId)?.size ?? 0);
-				}, 0);
-				return formatSize(total);
-			},
-			singleProps() {
-				const item = this.activeItem;
-				if (item === null) {
-					return [];
-				}
-				return [{
-					key: 'size',
-					label: this.loc('DISK_PICKER_PREVIEW_PROP_SIZE'),
-					value: formatSize(item.size)
-				}, {
-					key: 'created',
-					label: this.loc('DISK_PICKER_PREVIEW_PROP_CREATED'),
-					value: formatDate(item.createTime)
-				}, {
-					key: 'changed',
-					label: this.loc('DISK_PICKER_PREVIEW_PROP_CHANGED'),
-					value: formatDate(item.updateTime)
-				}, {
-					key: 'source',
-					label: this.loc('DISK_PICKER_PREVIEW_PROP_SOURCE'),
-					value: item.sourceTitle
-				}];
-			}
-		},
-		methods: {
-			loc(messageCode, replacements) {
-				return main_core.Loc.getMessage(messageCode, replacements) ?? '';
-			}
-		},
-		template: `
-		<div class="disk-picker-preview-panel" data-testid="universal-disk-picker-preview-pane">
-			<div v-if="showEmpty" class="disk-picker-preview-panel__empty" data-testid="universal-disk-picker-preview-empty">
-				<div
-					class="disk-picker-preview-panel__empty-graphic"
-					data-testid="universal-disk-picker-preview-empty-graphic"
-					aria-hidden="true"
-				></div>
-				<div class="disk-picker-preview-panel__empty-hint">
-					<TextXs>{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT') }}</TextXs>
-					<TextXs
-						v-if="isMultipleMode"
-						class="disk-picker-preview-panel__multi-hint"
-						data-testid="universal-disk-picker-preview-empty-shortcut"
-					>
-						<span>{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT_MULTI') }}</span>
-						<span class="disk-picker-preview-panel__multi-hint-action">
-							<span>{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT_MULTI_ACTION') }}</span>
-							<kbd>{{ multiSelectShortcut }}</kbd>
-							<span aria-hidden="true">+</span>
-							<span
-								class="disk-picker-preview-panel__click"
-								data-testid="universal-disk-picker-preview-empty-click"
-								role="img"
-								:aria-label="loc('DISK_PICKER_PREVIEW_MOUSE_CLICK_ARIA')"
-							></span>
-						</span>
-					</TextXs>
-				</div>
-			</div>
-
-			<div v-else-if="showMulti" class="disk-picker-preview-panel__multi" data-testid="universal-disk-picker-preview-multi">
-				<div class="disk-picker-preview-panel__fan">
-					<div
-						v-for="item in fanItems"
-						:key="item.objectId"
-						class="disk-picker-preview-panel__fan-thumb"
-					>
-						<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
-					</div>
-				</div>
-				<TextSm class="disk-picker-preview-panel__multi-title">{{ multiTitle }}</TextSm>
-				<div class="disk-picker-preview-panel__props">
-					<div class="disk-picker-preview-panel__prop">
-						<TextXs class="disk-picker-preview-panel__prop-label">{{ loc('DISK_PICKER_PREVIEW_PROP_SIZE') }}</TextXs>
-						<TextXs class="disk-picker-preview-panel__prop-value">{{ multiSize }}</TextXs>
-					</div>
-				</div>
-			</div>
-
-			<div v-else-if="showSingle" class="disk-picker-preview-panel__single" data-testid="universal-disk-picker-preview-single">
-				<div class="disk-picker-preview-panel__thumb">
-					<img
-						v-if="activeItem.previewUrl"
-						class="disk-picker-preview-panel__image"
-						:src="activeItem.previewUrl"
-						:alt="activeItem.name"
-					/>
-					<BDiskIcon v-else :type="activeItem.iconType" :size="64"/>
-				</div>
-				<TextSm class="disk-picker-preview-panel__name">{{ activeItem.name }}</TextSm>
-				<div class="disk-picker-preview-panel__props">
-					<div
-						v-for="prop in singleProps"
-						:key="prop.key"
-						class="disk-picker-preview-panel__prop"
-					>
-						<TextXs class="disk-picker-preview-panel__prop-label">{{ prop.label }}</TextXs>
-						<TextXs class="disk-picker-preview-panel__prop-value">{{ prop.value }}</TextXs>
-					</div>
-				</div>
-			</div>
 		</div>
 	`
 	});
@@ -3675,6 +4230,1448 @@ this.BX.Disk = this.BX.Disk || {};
 			handleConfirmError(session, deps, error, token);
 		}
 	}
+	function confirmItem(item, deps) {
+		const session = useSessionStore();
+		if (session.confirming || session.contentLoading && session.preserveContentOnLoading) {
+			return Promise.resolve();
+		}
+		if (item.isFolder) {
+			return openFolder(item, deps);
+		}
+		if (!item.selectable) {
+			return Promise.resolve();
+		}
+		if (useSelectionStore().count === 0) {
+			toggleFileSelection(item, deps);
+		}
+		return submitSelection(deps);
+	}
+
+	const PREVIEW_PLACEHOLDER_RADIUS = 6;
+	const PREVIEW_OBSERVER_OPTIONS = {
+		root: null,
+		rootMargin: '50px',
+		threshold: 0.1
+	};
+	const DiskIconView = ui_vue3.defineComponent({
+		name: 'DiskPickerDiskIcon',
+		props: {
+			type: {
+				type: String,
+				default: 'file'
+			},
+			size: {
+				type: Number,
+				default: 24
+			},
+			previewUrl: {
+				type: String,
+				default: null
+			},
+			keepPreviewOnFeedChange: {
+				type: Boolean,
+				default: false
+			}
+		},
+		data() {
+			return {
+				icon: null,
+				previewObserver: null,
+				cancelPreviewLoad: null,
+				previewImage: null,
+				previewPlaceholder: null
+			};
+		},
+		watch: {
+			type() {
+				this.icon?.setType(this.type);
+			},
+			size() {
+				this.icon?.setSize(this.size);
+			},
+			previewUrl() {
+				this.resetPreview();
+				this.observePreview();
+			}
+		},
+		mounted() {
+			const icon = ui_vue3.markRaw(new ui_iconSet_api_disk.DiskIcon({
+				type: this.type,
+				size: this.size,
+				previewUrl: null
+			}));
+			icon.renderOnNode(this.$el);
+			main_core.Dom.addClass(this.$el, 'disk-picker-disk-icon');
+			this.icon = icon;
+			this.observePreview();
+		},
+		beforeUnmount() {
+			this.resetPreview();
+			this.icon?.destroy();
+			this.icon = null;
+		},
+		methods: {
+			observePreview() {
+				const url = this.previewUrl ?? null;
+				const node = this.$el;
+				if (url === null || !node || this.icon === null) {
+					return;
+				}
+				const observer = new IntersectionObserver(entries => {
+					if (!entries.some(entry => entry.isIntersecting)) {
+						return;
+					}
+					this.stopPreviewObserver();
+					this.showPreviewPlaceholder();
+					this.cancelPreviewLoad = enqueuePreview(url, image => {
+						this.cancelPreviewLoad = null;
+						if (this.icon === null || this.previewUrl !== url) {
+							return;
+						}
+						main_core.Dom.addClass(image, 'disk-picker-disk-icon__preview');
+						main_core.Dom.attr(image, 'alt', '');
+						node.append(image);
+						main_core.Dom.addClass(node, '--with-preview');
+						this.previewImage = image;
+					}, () => {
+						this.hidePreviewPlaceholder();
+					}, this.keepPreviewOnFeedChange);
+				}, PREVIEW_OBSERVER_OPTIONS);
+				observer.observe(node);
+				this.previewObserver = ui_vue3.markRaw(observer);
+			},
+			showPreviewPlaceholder() {
+				const node = this.$el;
+				if (!node || this.previewPlaceholder || this.previewImage) {
+					return;
+				}
+				const placeholder = ui_system_skeleton.Line(this.size, this.size, PREVIEW_PLACEHOLDER_RADIUS);
+				main_core.Dom.addClass(placeholder, 'disk-picker-disk-icon__placeholder');
+				main_core.Dom.addClass(placeholder, '--ui-context-edge-dark');
+				node.append(placeholder);
+				this.previewPlaceholder = placeholder;
+			},
+			hidePreviewPlaceholder() {
+				this.previewPlaceholder?.remove();
+				this.previewPlaceholder = null;
+			},
+			stopPreviewObserver() {
+				this.previewObserver?.disconnect();
+				this.previewObserver = null;
+			},
+			resetPreview() {
+				this.stopPreviewObserver();
+				this.cancelPreviewLoad?.();
+				this.cancelPreviewLoad = null;
+				this.previewImage?.remove();
+				this.previewImage = null;
+				this.hidePreviewPlaceholder();
+				main_core.Dom.removeClass(this.$el, '--with-preview');
+			}
+		},
+		template: `
+		<span class="disk-picker-disk-icon"></span>
+	`
+	});
+
+	const LABEL_MESSAGE = 'DISK_PICKER_PREVIEW_OPEN';
+	const PreviewButton = ui_vue3.defineComponent({
+		name: 'DiskPickerPreviewButton',
+		components: {
+			UiButton: ui_vue3_components_button.Button
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			tabIndex: {
+				type: Number,
+				default: -1
+			},
+			onAccent: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['open'],
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		computed: {
+			label() {
+				return main_core.Loc.getMessage(LABEL_MESSAGE) ?? '';
+			},
+			buttonTestId() {
+				return `universal-disk-picker-preview-btn-${this.item.objectId}`;
+			}
+		},
+		watch: {
+			tabIndex() {
+				this.syncButton();
+			}
+		},
+		mounted() {
+			this.syncButton();
+		},
+		updated() {
+			this.syncButton();
+		},
+		methods: {
+			buttonNode() {
+				const root = this.$el;
+				return root instanceof HTMLElement ? root.querySelector('button') : null;
+			},
+			syncButton() {
+				void this.$nextTick(() => {
+					const button = this.buttonNode();
+					if (button === null) {
+						return;
+					}
+					button.tabIndex = this.tabIndex;
+					button.setAttribute('aria-label', this.label);
+				});
+			},
+			handleOpen() {
+				this.$emit('open', this.buttonNode());
+			}
+		},
+		template: `
+		<div
+			v-if="item.previewable"
+			class="disk-picker-preview-button"
+			:title="label"
+			@click.stop="handleOpen"
+			@dblclick.stop
+		>
+			<UiButton
+				:text="label"
+				:size="ButtonSize.SMALL"
+				:style="onAccent ? AirButtonStyle.PLAIN : AirButtonStyle.PLAIN_NO_ACCENT"
+				:left-icon="Outline.ZOOM_IN"
+				collapsed
+				:dataset="{ testid: buttonTestId }"
+			/>
+		</div>
+	`
+	});
+
+	const ItemRow = ui_vue3.defineComponent({
+		name: 'DiskPickerItemRow',
+		components: {
+			BDiskIcon: DiskIconView,
+			PreviewButton,
+			TextMd: ui_system_typography_vue.TextMd
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			selected: {
+				type: Boolean,
+				default: false
+			},
+			active: {
+				type: Boolean,
+				default: false
+			},
+			tabIndex: {
+				type: Number,
+				default: -1
+			}
+		},
+		computed: {
+			disabled() {
+				return !this.item.isFolder && !this.item.selectable;
+			},
+			ariaPressed() {
+				return !this.item.isFolder && this.item.selectable ? this.selected : null;
+			},
+			rowClass() {
+				return {
+					'--selected': this.selected,
+					'--active': this.active
+				};
+			},
+			testId() {
+				return `universal-disk-picker-file-row-${this.item.objectId}`;
+			}
+		},
+		methods: {
+			handleClick(event) {
+				beginClick(this.item, event);
+			},
+			handleDblclick(event) {
+				openPreviewFromDblclick(this.item, event.currentTarget, this.windowContainer());
+			},
+			handlePreviewOpen(initiator) {
+				openPreviewFromButton(this.item, initiator, this.windowContainer());
+			},
+			windowContainer() {
+				return this.$el.closest('.disk-picker');
+			},
+			handleKeydown(event) {
+				if (event.key === ' ' || event.key === 'Spacebar') {
+					event.preventDefault();
+					toggleFileSelection(this.item, useSessionStore().callbacks);
+				} else if (event.key === 'Enter') {
+					event.preventDefault();
+					void confirmItem(this.item, useSessionStore().callbacks);
+				}
+			}
+		},
+		template: `
+		<div class="disk-picker-item-row-wrap" :class="rowClass">
+			<button
+				type="button"
+				class="disk-picker-item-row"
+				:tabindex="tabIndex"
+				:aria-pressed="ariaPressed"
+				:aria-disabled="disabled ? 'true' : null"
+				:data-composite-id="item.objectId"
+				:data-testid="testId"
+				@click="handleClick"
+				@dblclick="handleDblclick"
+				@keydown="handleKeydown"
+			>
+				<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
+				<TextMd class="disk-picker-item-row__name">{{ item.name }}</TextMd>
+			</button>
+			<PreviewButton
+				:item="item"
+				:tab-index="tabIndex"
+				:class="{ '--ui-context-edge-dark': selected, '--air-context-blurred-bg': selected }"
+				:on-accent="selected"
+				@open="handlePreviewOpen"
+			/>
+		</div>
+	`
+	});
+
+	function formatDate(timestampInSeconds) {
+		if (!main_core.Type.isNumber(timestampInSeconds)) {
+			return '';
+		}
+		return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATE'), timestampInSeconds);
+	}
+	function formatRelativeDate(timestampInSeconds, todayText, nowInSeconds) {
+		const dayKey = timestamp => main_date.DateTimeFormat.format('Y-m-d', timestamp);
+		if (dayKey(timestampInSeconds) === dayKey(nowInSeconds)) {
+			return todayText;
+		}
+		if (main_date.DateTimeFormat.format('Y', timestampInSeconds) === main_date.DateTimeFormat.format('Y', nowInSeconds)) {
+			return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), timestampInSeconds);
+		}
+		return formatDate(timestampInSeconds);
+	}
+	function formatTableDate(timestampInSeconds, todayText, nowInSeconds = Math.floor(Date.now() / 1000)) {
+		if (!main_core.Type.isNumber(timestampInSeconds)) {
+			return '';
+		}
+		return formatRelativeDate(timestampInSeconds, todayText, nowInSeconds);
+	}
+
+	const UNIT_MESSAGE_KEYS = Object.freeze(['DISK_PICKER_SIZE_UNIT_BYTES', 'DISK_PICKER_SIZE_UNIT_KB', 'DISK_PICKER_SIZE_UNIT_MB', 'DISK_PICKER_SIZE_UNIT_GB', 'DISK_PICKER_SIZE_UNIT_TB']);
+	const STEP = 1024;
+	const DECIMAL_SEPARATOR = ',';
+	function formatNumber(value, fractionDigits) {
+		return value.toFixed(fractionDigits).replace('.', DECIMAL_SEPARATOR);
+	}
+	function formatSize(bytes) {
+		if (!main_core.Type.isNumber(bytes) || bytes < 0) {
+			return '';
+		}
+		let value = bytes;
+		let unitIndex = 0;
+		while (value >= STEP && unitIndex < UNIT_MESSAGE_KEYS.length - 1) {
+			value /= STEP;
+			unitIndex += 1;
+		}
+		const fractionDigits = unitIndex === 0 || Number.isInteger(value) ? 0 : 1;
+		const number = formatNumber(value, fractionDigits);
+		const unit = main_core.Loc.getMessage(UNIT_MESSAGE_KEYS[unitIndex]) ?? '';
+		return unit === '' ? number : `${number} ${unit}`;
+	}
+
+	const ItemTable = ui_vue3.defineComponent({
+		name: 'DiskPickerItemTable',
+		components: {
+			BDiskIcon: DiskIconView,
+			PreviewButton,
+			TextMd: ui_system_typography_vue.TextMd,
+			TextXs: ui_system_typography_vue.TextXs
+		},
+		compilerOptions: {
+			isCustomElement: tag => tag === 'visually-hidden'
+		},
+		props: {
+			items: {
+				type: Array,
+				default: () => useItemStore().items
+			},
+			topSpacerHeight: {
+				type: Number,
+				default: 0
+			},
+			bottomSpacerHeight: {
+				type: Number,
+				default: 0
+			},
+			focusObjectId: {
+				type: Number,
+				default: null
+			}
+		},
+		methods: {
+			loc(messageCode) {
+				return main_core.Loc.getMessage(messageCode) ?? '';
+			},
+			isSelected(item) {
+				return useSelectionStore().selectedIdSet.has(item.objectId);
+			},
+			isActive(item) {
+				return useSelectionStore().activeObjectId === item.objectId;
+			},
+			isDisabled(item) {
+				return !item.isFolder && !item.selectable;
+			},
+			ariaPressed(item) {
+				return !item.isFolder && item.selectable ? this.isSelected(item) : null;
+			},
+			rowClass(item) {
+				return {
+					'--selected': this.isSelected(item),
+					'--active': this.isActive(item)
+				};
+			},
+			testId(item) {
+				return `universal-disk-picker-file-row-${item.objectId}`;
+			},
+			sizeText(item) {
+				return item.isFolder ? '' : formatSize(item.size);
+			},
+			dateColumnLabel() {
+				return this.loc(useSessionStore().stageType === StageType.Recent ? 'DISK_PICKER_TABLE_CHANGED' : 'DISK_PICKER_TABLE_ADDED');
+			},
+			dateText(item) {
+				const timestamp = useSessionStore().stageType === StageType.Recent ? item.updateTime : item.createTime;
+				return formatTableDate(timestamp, this.loc('DISK_PICKER_TABLE_TODAY'));
+			},
+			handleClick(item, event) {
+				beginClick(item, event);
+			},
+			handleDblclick(item, event) {
+				const row = event.currentTarget;
+				const initiator = row.querySelector('.disk-picker-item-table__action') ?? row;
+				openPreviewFromDblclick(item, initiator, this.windowContainer());
+			},
+			handlePreviewOpen(item, initiator) {
+				openPreviewFromButton(item, initiator, this.windowContainer());
+			},
+			windowContainer() {
+				return this.$el.closest('.disk-picker');
+			},
+			handleKeydown(item, event) {
+				if (event.key === ' ' || event.key === 'Spacebar') {
+					event.preventDefault();
+					toggleFileSelection(item, useSessionStore().callbacks);
+				} else if (event.key === 'Enter') {
+					event.preventDefault();
+					void confirmItem(item, useSessionStore().callbacks);
+				}
+			}
+		},
+		template: `
+		<table class="disk-picker-item-table" data-testid="universal-disk-picker-table">
+			<colgroup>
+				<col class="--name">
+				<col class="--size">
+				<col class="--added">
+				<col class="--preview">
+			</colgroup>
+			<thead>
+				<tr class="disk-picker-item-table__head">
+					<th scope="col" class="disk-picker-item-table__cell --name">
+						<TextXs class="disk-picker-item-table__head-label">{{ loc('DISK_PICKER_TABLE_NAME') }}</TextXs>
+					</th>
+					<th scope="col" class="disk-picker-item-table__cell --size">
+						<TextXs class="disk-picker-item-table__head-label">{{ loc('DISK_PICKER_TABLE_SIZE') }}</TextXs>
+					</th>
+					<th scope="col" class="disk-picker-item-table__cell --added">
+						<TextXs class="disk-picker-item-table__head-label">{{ dateColumnLabel() }}</TextXs>
+					</th>
+					<th scope="col" class="disk-picker-item-table__cell --preview">
+						<visually-hidden>{{ loc('DISK_PICKER_PREVIEW_OPEN') }}</visually-hidden>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-if="topSpacerHeight > 0" aria-hidden="true">
+					<td :style="{ height: topSpacerHeight + 'px' }" colspan="4"></td>
+				</tr>
+				<tr
+					v-for="item in items"
+					:key="item.objectId"
+					class="disk-picker-item-table__row"
+					:class="rowClass(item)"
+					:data-testid="testId(item)"
+					@click="handleClick(item, $event)"
+					@dblclick="handleDblclick(item, $event)"
+				>
+					<td class="disk-picker-item-table__cell --name">
+						<button
+							type="button"
+							class="disk-picker-item-table__action"
+							:tabindex="item.objectId === focusObjectId ? 0 : -1"
+							:aria-pressed="ariaPressed(item)"
+							:aria-disabled="isDisabled(item) ? 'true' : null"
+							:data-composite-id="item.objectId"
+							@keydown="handleKeydown(item, $event)"
+						>
+							<BDiskIcon :type="item.iconType" :size="24" :preview-url="item.previewUrl"/>
+							<TextMd class="disk-picker-item-table__name">{{ item.name }}</TextMd>
+						</button>
+					</td>
+					<td class="disk-picker-item-table__cell --size">
+						<TextMd class="disk-picker-item-table__value">{{ sizeText(item) }}</TextMd>
+					</td>
+					<td class="disk-picker-item-table__cell --added">
+						<TextMd class="disk-picker-item-table__value">{{ dateText(item) }}</TextMd>
+					</td>
+					<td class="disk-picker-item-table__cell --preview">
+						<PreviewButton
+							:item="item"
+							:tab-index="item.objectId === focusObjectId ? 0 : -1"
+							:class="{ '--ui-context-edge-dark': isSelected(item), '--air-context-blurred-bg': isSelected(item) }"
+							:on-accent="isSelected(item)"
+							@open="handlePreviewOpen(item, $event)"
+						/>
+					</td>
+				</tr>
+				<tr v-if="bottomSpacerHeight > 0" aria-hidden="true">
+					<td :style="{ height: bottomSpacerHeight + 'px' }" colspan="4"></td>
+				</tr>
+			</tbody>
+		</table>
+	`
+	});
+
+	const VIRTUAL_VIEWPORT_HEIGHT = 640;
+	const VIRTUAL_OVERSCAN = 440;
+	const PAGINATION_ROOT_MARGIN = '120px 0px';
+	const SWITCH_ANIMATION_MS = 510;
+	const RETRY_ID = 'retry';
+	const VERTICAL_KEYS = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'];
+	const ROW_SELECTOR = '.disk-picker-item-row-wrap, .disk-picker-item-table__row';
+	function compositeIdOfEvent(event) {
+		const target = event.target;
+		const holder = target.closest('[data-composite-id]') ?? target.closest(ROW_SELECTOR)?.querySelector('[data-composite-id]') ?? null;
+		if (holder === null) {
+			return null;
+		}
+		const rawId = holder.dataset.compositeId ?? '';
+		return rawId === RETRY_ID ? RETRY_ID : Number(rawId);
+	}
+	function firstEntryAfter(items, offset) {
+		let low = 0;
+		let high = items.length;
+		while (low < high) {
+			const middle = Math.floor((low + high) / 2);
+			if (items[middle].top + items[middle].height <= offset) {
+				low = middle + 1;
+			} else {
+				high = middle;
+			}
+		}
+		return low;
+	}
+	function firstEntryAtOrAfter(items, offset) {
+		let low = 0;
+		let high = items.length;
+		while (low < high) {
+			const middle = Math.floor((low + high) / 2);
+			if (items[middle].top < offset) {
+				low = middle + 1;
+			} else {
+				high = middle;
+			}
+		}
+		return low;
+	}
+	function windowByOffset(items, scrollTop) {
+		const last = items[items.length - 1];
+		const totalHeight = last ? last.top + last.height : 0;
+		const startOffset = Math.max(0, scrollTop - VIRTUAL_OVERSCAN);
+		const endOffset = scrollTop + VIRTUAL_VIEWPORT_HEIGHT + VIRTUAL_OVERSCAN;
+		const start = firstEntryAfter(items, startOffset);
+		const end = firstEntryAtOrAfter(items, endOffset);
+		return {
+			items: items.slice(start, end),
+			top: items[start]?.top ?? totalHeight,
+			bottom: Math.max(0, totalHeight - (items[end - 1]?.top ?? 0) - (items[end - 1]?.height ?? 0))
+		};
+	}
+	const ItemBrowser = ui_vue3.defineComponent({
+		name: 'DiskPickerItemBrowser',
+		components: {
+			ItemRowSkeleton,
+			EmptyState,
+			ItemRow,
+			ItemTable,
+			TextXs: ui_system_typography_vue.TextXs
+		},
+		setup() {
+			return {
+				ViewMode,
+				skeletonWidths: [230, 180, 260, 200, 150, 240, 190]
+			};
+		},
+		data() {
+			return {
+				pendingNavFocus: false,
+				preferredNavFocusId: null,
+				pendingFocus: null,
+				focusedObjectId: null,
+				virtualScrollTop: 0,
+				paginationObserver: null,
+				scrollFrame: null,
+				pendingScrollTop: 0,
+				switching: false,
+				switchTimer: null,
+				switchPending: false,
+				switchDirection: 'none',
+				crumbCount: 0,
+				metrics: {
+					...DEFAULT_METRICS
+				}
+			};
+		},
+		computed: {
+			scrolled() {
+				return this.virtualScrollTop > 0;
+			},
+			items() {
+				return useItemStore().items;
+			},
+			session() {
+				return useSessionStore();
+			},
+			viewMode() {
+				return this.session.viewMode;
+			},
+			focusObjectId() {
+				if (this.focusedObjectId !== null && this.navigationIds.includes(this.focusedObjectId)) {
+					return this.focusedObjectId;
+				}
+				const activeObjectId = useSelectionStore().activeObjectId;
+				return this.items.some(item => item.objectId === activeObjectId) ? activeObjectId : this.items[0]?.objectId ?? null;
+			},
+			tableFocusObjectId() {
+				return typeof this.focusObjectId === 'number' ? this.focusObjectId : null;
+			},
+			navigationIds() {
+				const ids = this.items.map(item => item.objectId);
+				if (this.session.paginationStalled) {
+					ids.push(RETRY_ID);
+				}
+				return ids;
+			},
+			focusVersion() {
+				return `${this.feedKey}|${this.viewMode}|${this.session.searchQuery}`;
+			},
+			contentLoading() {
+				return this.session.contentLoading;
+			},
+			fullContentLoading() {
+				return this.contentLoading && !this.session.preserveContentOnLoading;
+			},
+			overlayContentLoading() {
+				return this.contentLoading && this.session.preserveContentOnLoading;
+			},
+			navigationPending() {
+				return this.session.navigationPending;
+			},
+			feedKey() {
+				const feed = this.session.feed;
+				return `${feed.stageType}:${feed.storageId}:${feed.folderId}`;
+			},
+			searchActive() {
+				return [...this.session.searchQuery.trim()].length >= SearchQueryLength.Min;
+			},
+			filtersActive() {
+				return this.session.objectTypeFilter !== ObjectTypeFilter.All || this.session.fileTypeFilters.length > 0;
+			},
+			hasError() {
+				return this.session.contentError !== null;
+			},
+			isEmpty() {
+				return !this.session.contentLoading && !this.hasError && this.session.emptyReason === 'empty';
+			},
+			rowsRendered() {
+				return !this.fullContentLoading && !this.hasError && !this.isEmpty;
+			},
+			errorTitle() {
+				return this.loc(errorMessageCode(this.session.contentError));
+			},
+			errorIcon() {
+				return ui_iconSet_api_vue.Outline.ALERT;
+			},
+			emptyIcon() {
+				if (this.searchActive || this.filtersActive) {
+					return ui_iconSet_api_vue.Outline.SEARCH;
+				}
+				return this.session.stageType === StageType.Folder ? ui_iconSet_api_vue.Outline.FOLDER : ui_iconSet_api_vue.Outline.FILE;
+			},
+			emptyGraphic() {
+				if (this.searchActive || this.filtersActive) {
+					return 'no-results';
+				}
+				return this.session.stageType === StageType.Folder ? 'folder' : 'no-file';
+			},
+			emptyTitle() {
+				if (this.searchActive || this.filtersActive) {
+					return this.loc('DISK_PICKER_NOTHING_FOUND');
+				}
+				if (this.session.stageType === StageType.Folder) {
+					return this.loc('DISK_PICKER_EMPTY_FOLDER');
+				}
+				return this.session.stageType === StageType.Recent ? this.loc('DISK_PICKER_EMPTY_RECENT') : this.loc('DISK_PICKER_EMPTY_DISK');
+			},
+			emptyActionLabel() {
+				return this.searchActive || this.filtersActive ? this.loc('DISK_PICKER_RESET_FILTERS') : '';
+			},
+			groups() {
+				if (!this.searchActive && this.session.stageType === StageType.Folder) {
+					return [{
+						key: 'folder',
+						label: '',
+						items: this.items
+					}];
+				}
+				const useRecentTime = !this.searchActive && this.session.stageType === StageType.Recent;
+				const now = Math.floor(Date.now() / 1000);
+				const buckets = new Map();
+				this.items.forEach(item => {
+					const group = resolveDateGroup(useRecentTime ? item.recentTime : item.updateTime, now);
+					const bucket = buckets.get(group.key) ?? {
+						group,
+						items: []
+					};
+					bucket.items.push(item);
+					buckets.set(group.key, bucket);
+				});
+				return [...buckets.values()].sort((left, right) => compareDateGroups(left.group, right.group)).map(({
+					group,
+					items
+				}) => ({
+					key: group.key,
+					label: group.labelCode ? this.loc(group.labelCode) : group.label ?? '',
+					items
+				}));
+			},
+			virtualEntries() {
+				const entries = [];
+				let top = 0;
+				this.groups.forEach(group => {
+					if (group.label) {
+						entries.push({
+							key: `group-${group.key}`,
+							type: 'group',
+							label: group.label,
+							item: null,
+							top,
+							height: this.metrics.groupTitle
+						});
+						top += this.metrics.groupTitle;
+					}
+					group.items.forEach(item => {
+						entries.push({
+							key: `item-${item.objectId}`,
+							type: 'item',
+							label: '',
+							item,
+							top,
+							height: this.metrics.listRow
+						});
+						top += this.metrics.listRow;
+					});
+				});
+				return entries;
+			},
+			virtualListWindow() {
+				return windowByOffset(this.virtualEntries, this.virtualScrollTop);
+			},
+			virtualTableWindow() {
+				const rowHeight = this.metrics.tableRow;
+				const start = Math.max(0, Math.floor((this.virtualScrollTop - VIRTUAL_OVERSCAN) / rowHeight));
+				const visibleCount = Math.ceil((VIRTUAL_VIEWPORT_HEIGHT + 2 * VIRTUAL_OVERSCAN) / rowHeight);
+				const end = Math.min(this.items.length, start + visibleCount);
+				return {
+					items: this.items.slice(start, end),
+					top: start * rowHeight,
+					bottom: (this.items.length - end) * rowHeight
+				};
+			},
+			announcement() {
+				if (this.session.contentLoading) {
+					return this.loc('DISK_PICKER_LOADING');
+				}
+				if (this.hasError) {
+					return this.errorTitle;
+				}
+				if (this.isEmpty) {
+					return this.emptyTitle;
+				}
+				return this.loc('DISK_PICKER_ANNOUNCE_COUNT', {
+					'#COUNT#': String(this.items.length)
+				});
+			}
+		},
+		watch: {
+			feedKey() {
+				const root = this.$el;
+				this.switchPending = true;
+				this.virtualScrollTop = 0;
+				this.$nextTick(() => this.runPendingSwitch());
+				const handoff = this.session.consumeFocusHandoffToFiles();
+				if (handoff || root && root.contains(document.activeElement)) {
+					this.pendingNavFocus = true;
+				}
+				if (root) {
+					root.scrollTop = 0;
+				}
+			},
+			viewMode() {
+				this.switchDirection = 'none';
+				this.markSwitch();
+				const root = this.$el;
+				if (root) {
+					root.scrollTop = 0;
+				}
+				this.virtualScrollTop = 0;
+				this.pendingScrollTop = 0;
+				this.$nextTick(() => this.observePaginationSentinel());
+				if (root && root.contains(document.activeElement) && this.focusObjectId !== null) {
+					this.$nextTick(() => this.moveFocusTo(this.focusObjectId));
+				}
+			},
+			'items.length': function () {
+				this.$nextTick(() => this.observePaginationSentinel());
+				if (this.pendingNavFocus) {
+					this.pendingNavFocus = false;
+					this.$nextTick(() => this.focusAfterNavigation());
+				}
+			},
+			navigationIds(ids, previousIds) {
+				const active = document.activeElement;
+				const focusedKey = active instanceof HTMLElement ? active.dataset.compositeId ?? null : null;
+				if (focusedKey === null || ids.some(id => String(id) === focusedKey)) {
+					return;
+				}
+				const root = this.$el;
+				if (!root || !(active === document.body || root.contains(active))) {
+					return;
+				}
+				if (this.pendingNavFocus) {
+					this.pendingNavFocus = false;
+					this.$nextTick(() => this.focusAfterNavigation());
+					return;
+				}
+				const previousIndex = previousIds.findIndex(id => String(id) === focusedKey);
+				const fallbackId = resolveFallbackId(ids, null, previousIndex);
+				this.$nextTick(() => this.focusRowOrStablePoint(fallbackId));
+			},
+			contentLoading(loading) {
+				if (!loading) {
+					this.$nextTick(() => this.observePaginationSentinel());
+				}
+				if (!loading) {
+					this.runPendingSwitch();
+				}
+				if (!loading && this.pendingNavFocus) {
+					this.pendingNavFocus = false;
+					this.$nextTick(() => this.focusAfterNavigation());
+				}
+			},
+			navigationPending(pending) {
+				if (!pending) {
+					this.$nextTick(() => this.observePaginationSentinel());
+				}
+			}
+		},
+		mounted() {
+			this.metrics = readMetrics(this.$el);
+			this.crumbCount = this.session.breadcrumbs.length;
+			this.paginationObserver = new IntersectionObserver(entries => {
+				if (entries.some(entry => entry.isIntersecting)) {
+					void loadNextPage(this.session.callbacks);
+				}
+			}, {
+				root: this.$el,
+				rootMargin: PAGINATION_ROOT_MARGIN
+			});
+			this.observePaginationSentinel();
+		},
+		beforeUnmount() {
+			this.paginationObserver?.disconnect();
+			this.paginationObserver = null;
+			if (this.scrollFrame !== null) {
+				cancelAnimationFrame(this.scrollFrame);
+				this.scrollFrame = null;
+			}
+			if (this.switchTimer !== null) {
+				clearTimeout(this.switchTimer);
+				this.switchTimer = null;
+			}
+		},
+		methods: {
+			runPendingSwitch() {
+				if (!this.switchPending || this.contentLoading) {
+					return;
+				}
+				this.switchPending = false;
+				this.resolveSwitchDirection();
+				this.markSwitch();
+			},
+			resolveSwitchDirection() {
+				const crumbCount = this.session.breadcrumbs.length;
+				if (crumbCount > this.crumbCount && this.crumbCount > 0) {
+					this.switchDirection = 'forward';
+				} else if (crumbCount < this.crumbCount && crumbCount > 0) {
+					this.switchDirection = 'back';
+				} else {
+					this.switchDirection = 'none';
+				}
+				this.crumbCount = crumbCount;
+			},
+			markSwitch() {
+				if (this.switchTimer !== null) {
+					clearTimeout(this.switchTimer);
+				}
+				this.switching = true;
+				this.switchTimer = setTimeout(() => {
+					this.switching = false;
+					this.switchTimer = null;
+				}, SWITCH_ANIMATION_MS);
+			},
+			loc(messageCode, replacements) {
+				return main_core.Loc.getMessage(messageCode, replacements) ?? '';
+			},
+			focusAfterNavigation() {
+				const root = this.$el;
+				const preferredId = this.preferredNavFocusId;
+				this.preferredNavFocusId = null;
+				if (!root) {
+					return;
+				}
+				const active = document.activeElement;
+				const focusLostOrStillInList = active === document.body || root.contains(active);
+				if (!focusLostOrStillInList) {
+					return;
+				}
+				this.focusRowOrStablePoint(resolveFallbackId(this.navigationIds, preferredId, 0));
+			},
+			focusEntry() {
+				if (!this.$el) {
+					return false;
+				}
+				this.focusRowOrStablePoint(resolveFallbackId(this.navigationIds, this.focusObjectId, 0));
+				return true;
+			},
+			focusRowOrStablePoint(id) {
+				if (id !== null) {
+					this.moveFocusTo(id);
+					return;
+				}
+				const root = this.$el;
+				(root.querySelector('button:not([disabled])') ?? root).focus();
+			},
+			claimStableFocus() {
+				const root = this.$el;
+				if (root && root.contains(document.activeElement)) {
+					root.focus();
+				}
+			},
+			moveFocusTo(id) {
+				const root = this.$el;
+				const index = this.navigationIds.indexOf(id);
+				if (index < 0) {
+					return;
+				}
+				const metrics = this.metrics ?? DEFAULT_METRICS;
+				const rowHeight = this.viewMode === ViewMode.Table ? metrics.tableRow : metrics.listRow;
+				const viewportHeight = root.clientHeight || VIRTUAL_VIEWPORT_HEIGHT;
+				let nextScrollTop = root.scrollHeight - viewportHeight;
+				if (id !== RETRY_ID) {
+					const entryTop = this.viewMode === ViewMode.Table ? index * metrics.tableRow : this.virtualEntries.find(entry => entry.item?.objectId === id)?.top ?? 0;
+					nextScrollTop = scrollOffsetForEntry(entryTop, rowHeight, root.scrollTop, viewportHeight);
+				}
+				this.focusedObjectId = id;
+				root.scrollTop = Math.max(0, nextScrollTop);
+				this.pendingScrollTop = root.scrollTop;
+				this.virtualScrollTop = root.scrollTop;
+				this.pendingFocus = {
+					id,
+					version: this.focusVersion
+				};
+				this.$nextTick(() => this.applyPendingFocus());
+			},
+			applyPendingFocus() {
+				const pending = takeCurrentFocus(this.pendingFocus, this.focusVersion);
+				this.pendingFocus = null;
+				if (pending === null) {
+					return;
+				}
+				if (focusCompositeItem(this.$el, pending.id)) {
+					return;
+				}
+				if (!this.rowsRendered) {
+					this.pendingNavFocus = true;
+					this.focusRowOrStablePoint(null);
+					return;
+				}
+				this.focusRowOrStablePoint(resolveFallbackId(this.navigationIds, null, 0));
+			},
+			handleBackspace(event) {
+				if (isTextEntryTarget(event.target)) {
+					return;
+				}
+				event.preventDefault();
+				const leavingFolderId = openParentFolder(this.session.callbacks);
+				if (leavingFolderId !== null) {
+					this.preferredNavFocusId = leavingFolderId;
+				}
+			},
+			handleCompositeFocus(event) {
+				const compositeId = compositeIdOfEvent(event);
+				if (compositeId !== null) {
+					this.focusedObjectId = compositeId;
+				}
+			},
+			handleCompositeKeydown(event) {
+				if (event.key === 'Backspace') {
+					this.handleBackspace(event);
+					return;
+				}
+				if (!VERTICAL_KEYS.includes(event.key) || isTextEntryTarget(event.target)) {
+					return;
+				}
+				if (this.overlayContentLoading) {
+					event.preventDefault();
+					event.stopPropagation();
+					return;
+				}
+				const compositeId = compositeIdOfEvent(event);
+				const currentIndex = compositeId === null ? -1 : this.navigationIds.indexOf(compositeId);
+				if (currentIndex < 0) {
+					return;
+				}
+				event.preventDefault();
+				const root = this.$el;
+				const metrics = this.metrics ?? DEFAULT_METRICS;
+				const rowHeight = this.viewMode === ViewMode.Table ? metrics.tableRow : metrics.listRow;
+				const pageSize = Math.max(1, Math.floor((root.clientHeight || VIRTUAL_VIEWPORT_HEIGHT) / rowHeight));
+				const nextIndex = resolveCompositeNavigationIndex(currentIndex, this.navigationIds.length, event.key, pageSize);
+				this.moveFocusTo(this.navigationIds[nextIndex]);
+			},
+			isActive(item) {
+				return useSelectionStore().activeObjectId === item.objectId;
+			},
+			isSelected(item) {
+				return useSelectionStore().selectedIdSet.has(item.objectId);
+			},
+			handleVirtualScroll(event) {
+				this.pendingScrollTop = event.target.scrollTop;
+				if (this.scrollFrame !== null) {
+					return;
+				}
+				this.scrollFrame = requestAnimationFrame(() => {
+					this.virtualScrollTop = this.pendingScrollTop;
+					this.scrollFrame = null;
+				});
+			},
+			observePaginationSentinel() {
+				const sentinel = this.$refs.paginationSentinel;
+				this.paginationObserver?.disconnect();
+				if (sentinel && !this.session.navigationPending) {
+					this.paginationObserver?.observe(sentinel);
+				}
+			},
+			handleRetryContent() {
+				if (this.overlayContentLoading) {
+					return;
+				}
+				this.pendingNavFocus = true;
+				this.claimStableFocus();
+				if (this.searchActive) {
+					void searchItems(this.session.searchQuery, this.session.callbacks);
+					return;
+				}
+				if (this.session.stageType === StageType.Folder) {
+					void reloadCurrentFeed(this.session.callbacks);
+					return;
+				}
+				void retryInitialStage();
+			},
+			handleRetryNextPage() {
+				if (this.overlayContentLoading) {
+					return;
+				}
+				void retryNextPage(this.session.callbacks);
+			},
+			handleResetFilters() {
+				this.pendingNavFocus = true;
+				this.claimStableFocus();
+				this.session.callbacks.resetFilters();
+			}
+		},
+		template: `
+		<div
+			class="disk-picker-item-browser"
+			data-disk-picker-group="files"
+			:class="{
+				'--navigation-blocked': overlayContentLoading,
+				'--scrolled': scrolled,
+				'--switching': switching,
+				'--switch-forward': switching && switchDirection === 'forward',
+				'--switch-back': switching && switchDirection === 'back',
+				'--table': viewMode === ViewMode.Table,
+			}"
+			tabindex="-1"
+			:aria-busy="contentLoading"
+			:aria-label="announcement"
+			@focusin="handleCompositeFocus"
+			@keydown="handleCompositeKeydown"
+			@scroll.passive="handleVirtualScroll"
+		>
+			<div class="disk-picker-item-browser__status" role="status" aria-live="polite">{{ announcement }}</div>
+
+			<div
+				v-if="fullContentLoading"
+				class="disk-picker-item-browser__skeleton"
+				data-testid="universal-disk-picker-content-loader"
+				aria-hidden="true"
+			>
+				<ItemRowSkeleton
+					v-for="(width, index) in skeletonWidths"
+					:key="index"
+					:width="width"
+				/>
+			</div>
+
+			<EmptyState
+				v-else-if="hasError"
+				:icon="errorIcon"
+				:title="errorTitle"
+				:action-label="loc('DISK_PICKER_RETRY')"
+				test-id="universal-disk-picker-error-state"
+				action-test-id="universal-disk-picker-error-retry"
+				@action="handleRetryContent"
+			/>
+
+			<EmptyState
+				v-else-if="isEmpty"
+				:icon="emptyIcon"
+				:graphic="emptyGraphic"
+				:title="emptyTitle"
+				:action-label="emptyActionLabel"
+				test-id="universal-disk-picker-empty-state"
+				@action="handleResetFilters"
+			/>
+
+			<template v-else>
+				<ItemTable
+					v-if="viewMode === ViewMode.Table"
+					:items="virtualTableWindow.items"
+					:top-spacer-height="virtualTableWindow.top"
+					:bottom-spacer-height="virtualTableWindow.bottom"
+					:focus-object-id="tableFocusObjectId"
+				/>
+
+				<template v-else>
+					<div
+						class="disk-picker-item-browser__spacer"
+						:style="{ height: virtualListWindow.top + 'px' }"
+						aria-hidden="true"
+					></div>
+					<template v-for="entry in virtualListWindow.items" :key="entry.key">
+						<TextXs
+							v-if="entry.type === 'group'"
+							class="disk-picker-item-browser__group-title"
+						>{{ entry.label }}</TextXs>
+						<ItemRow
+							v-else
+							:item="entry.item"
+							:active="isActive(entry.item)"
+							:selected="isSelected(entry.item)"
+							:tab-index="entry.item.objectId === focusObjectId ? 0 : -1"
+						/>
+					</template>
+					<div
+						class="disk-picker-item-browser__spacer"
+						:style="{ height: virtualListWindow.bottom + 'px' }"
+						aria-hidden="true"
+					></div>
+				</template>
+
+				<div v-if="session.paginationStalled" class="disk-picker-item-browser__more">
+					<button
+						type="button"
+						class="disk-picker-item-browser__retry"
+						:tabindex="focusObjectId === 'retry' ? 0 : -1"
+						data-composite-id="retry"
+						data-testid="universal-disk-picker-load-more-retry"
+						@click="handleRetryNextPage"
+					>
+						{{ loc('DISK_PICKER_RETRY') }}
+					</button>
+				</div>
+				<div ref="paginationSentinel" class="disk-picker-item-browser__sentinel" aria-hidden="true"></div>
+				<div
+					v-if="overlayContentLoading"
+					class="disk-picker-item-browser__loading-overlay"
+					data-testid="universal-disk-picker-content-loading-overlay"
+					aria-hidden="true"
+					@wheel.prevent
+					@touchmove.prevent
+				></div>
+			</template>
+		</div>
+	`
+	});
+
+	function formatDateRange(timestamps) {
+		const known = timestamps.filter(value => value !== null);
+		if (known.length === 0) {
+			return '';
+		}
+		const from = formatDate(Math.min(...known));
+		const to = formatDate(Math.max(...known));
+		return from === to ? from : `${from} - ${to}`;
+	}
+	const PreviewPanel = ui_vue3.defineComponent({
+		name: 'DiskPickerPreviewPanel',
+		components: {
+			BDiskIcon: DiskIconView,
+			BLine: ui_system_skeleton_vue.BLine,
+			HeadlineSm: ui_system_typography_vue.HeadlineSm,
+			TextXs: ui_system_typography_vue.TextXs
+		},
+		data() {
+			return {
+				loadedPreviewUrl: null
+			};
+		},
+		watch: {
+			'activeItem.previewUrl': function () {
+				this.loadedPreviewUrl = null;
+			}
+		},
+		computed: {
+			previewImageLoaded() {
+				return this.loadedPreviewUrl !== null && this.loadedPreviewUrl === this.activeItem?.previewUrl;
+			},
+			activeItem() {
+				const activeObjectId = useSelectionStore().activeObjectId;
+				if (activeObjectId === null) {
+					return null;
+				}
+				return useItemStore().getById(activeObjectId);
+			},
+			count() {
+				return useSelectionStore().count;
+			},
+			selectedSnapshots() {
+				return useSelectionStore().selectedSnapshotList;
+			},
+			showEmpty() {
+				return !this.showMulti && this.activeItem === null;
+			},
+			showMulti() {
+				return this.count > 1;
+			},
+			showSingle() {
+				return !this.showMulti && this.activeItem !== null;
+			},
+			previewImageAllowed() {
+				return !useSessionStore().navigationPending;
+			},
+			showsPreviewImage() {
+				return main_core.Type.isStringFilled(this.activeItem?.previewUrl) && this.previewImageAllowed;
+			},
+			fanItems() {
+				return this.selectedSnapshots.slice(-3);
+			},
+			formatLabel() {
+				const extension = this.activeItem?.extension ?? null;
+				return extension ? extension.toUpperCase() : '';
+			},
+			multiTitle() {
+				return this.loc('DISK_PICKER_PREVIEW_MULTI_TITLE', {
+					'#COUNT#': String(this.count)
+				});
+			},
+			multiSize() {
+				const total = this.selectedSnapshots.reduce((sum, snapshot) => sum + (snapshot.size ?? 0), 0);
+				return formatSize(total);
+			},
+			multiProps() {
+				return [{
+					key: 'size',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_SIZE'),
+					value: this.multiSize
+				}, {
+					key: 'created',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_CREATED'),
+					value: formatDateRange(this.selectedSnapshots.map(snapshot => snapshot.createTime))
+				}, {
+					key: 'changed',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_CHANGED'),
+					value: formatDateRange(this.selectedSnapshots.map(snapshot => snapshot.updateTime))
+				}].filter(prop => prop.value !== '');
+			},
+			fileProps() {
+				const item = this.activeItem;
+				if (item === null) {
+					return [];
+				}
+				return [{
+					key: 'size',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_SIZE'),
+					value: formatSize(item.size)
+				}, {
+					key: 'created',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_CREATED'),
+					value: formatDate(item.createTime)
+				}, {
+					key: 'changed',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_CHANGED'),
+					value: formatDate(item.updateTime)
+				}];
+			},
+			originProps() {
+				const item = this.activeItem;
+				if (item === null) {
+					return [];
+				}
+				return [{
+					key: 'source',
+					label: this.loc('DISK_PICKER_PREVIEW_PROP_SOURCE'),
+					value: item.sourceTitle
+				}];
+			}
+		},
+		methods: {
+			handlePreviewLoad() {
+				this.loadedPreviewUrl = this.activeItem?.previewUrl ?? null;
+			},
+			loc(messageCode, replacements) {
+				return main_core.Loc.getMessage(messageCode, replacements) ?? '';
+			}
+		},
+		template: `
+		<div class="disk-picker-preview-panel" data-testid="universal-disk-picker-preview-pane">
+			<div v-if="showEmpty" class="disk-picker-preview-panel__empty" data-testid="universal-disk-picker-preview-empty">
+				<div
+					class="disk-picker-preview-panel__empty-graphic"
+					data-testid="universal-disk-picker-preview-empty-graphic"
+					aria-hidden="true"
+				></div>
+				<div class="disk-picker-preview-panel__empty-hint">
+					<TextXs class="disk-picker-preview-panel__empty-hint-text">{{ loc('DISK_PICKER_PREVIEW_EMPTY_HINT') }}</TextXs>
+				</div>
+			</div>
+
+			<div v-else-if="showMulti" :key="'multi'" class="disk-picker-preview-panel__multi" data-testid="universal-disk-picker-preview-multi">
+				<div class="disk-picker-preview-panel__fan">
+					<div
+						v-for="snapshot in fanItems"
+						:key="snapshot.objectId"
+						class="disk-picker-preview-panel__fan-thumb"
+					>
+						<BDiskIcon
+							:type="snapshot.iconType"
+							:size="138"
+							:preview-url="snapshot.previewUrl"
+							keep-preview-on-feed-change
+						/>
+					</div>
+				</div>
+				<HeadlineSm accent class="disk-picker-preview-panel__multi-title">{{ multiTitle }}</HeadlineSm>
+				<div class="disk-picker-preview-panel__props">
+					<div
+						v-for="prop in multiProps"
+						:key="prop.key"
+						class="disk-picker-preview-panel__prop"
+					>
+						<TextXs class="disk-picker-preview-panel__prop-label">{{ prop.label }}</TextXs>
+						<TextXs class="disk-picker-preview-panel__prop-value">{{ prop.value }}</TextXs>
+					</div>
+				</div>
+			</div>
+
+			<div v-else-if="showSingle" :key="'single-' + activeItem.objectId" class="disk-picker-preview-panel__single" data-testid="universal-disk-picker-preview-single">
+				<div class="disk-picker-preview-panel__thumb">
+					<div
+						v-if="showsPreviewImage && !previewImageLoaded"
+						class="disk-picker-preview-panel__thumb-skeleton"
+						aria-hidden="true"
+					>
+						<BLine :height="154" :radius="12"/>
+					</div>
+					<img
+						v-if="showsPreviewImage"
+						v-show="previewImageLoaded"
+						class="disk-picker-preview-panel__image"
+						:src="activeItem.previewUrl"
+						:alt="activeItem.name"
+						@load="handlePreviewLoad"
+						@error="handlePreviewLoad"
+					/>
+					<BDiskIcon
+						v-else
+						:key="activeItem.objectId"
+						:type="activeItem.iconType"
+						:size="128"
+					/>
+				</div>
+				<div class="disk-picker-preview-panel__title">
+					<HeadlineSm accent class="disk-picker-preview-panel__name">{{ activeItem.name }}</HeadlineSm>
+					<TextXs
+						v-if="formatLabel"
+						class="disk-picker-preview-panel__format"
+						data-testid="universal-disk-picker-preview-format"
+					>{{ formatLabel }}</TextXs>
+				</div>
+				<div class="disk-picker-preview-panel__props">
+					<div
+						v-for="prop in fileProps"
+						:key="prop.key"
+						class="disk-picker-preview-panel__prop"
+					>
+						<TextXs class="disk-picker-preview-panel__prop-label">{{ prop.label }}</TextXs>
+						<TextXs class="disk-picker-preview-panel__prop-value">{{ prop.value }}</TextXs>
+					</div>
+				</div>
+				<div class="disk-picker-preview-panel__props --origin">
+					<div
+						v-for="prop in originProps"
+						:key="prop.key"
+						class="disk-picker-preview-panel__prop"
+					>
+						<TextXs class="disk-picker-preview-panel__prop-label">{{ prop.label }}</TextXs>
+						<TextXs class="disk-picker-preview-panel__prop-value">{{ prop.value }}</TextXs>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	});
 
 	const SelectionFooter = ui_vue3.defineComponent({
 		name: 'DiskPickerSelectionFooter',
@@ -3684,10 +5681,44 @@ this.BX.Disk = this.BX.Disk || {};
 		setup() {
 			return {
 				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-				ButtonSize: ui_vue3_components_button.ButtonSize
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				CounterStyle: ui_cnt.CounterStyle,
+				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
+		watch: {
+			chipVisible: {
+				immediate: true,
+				handler(visible) {
+					if (visible) {
+						void this.$nextTick(() => this.nameReset());
+					}
+				}
+			},
+			count() {
+				void this.$nextTick(() => this.nameReset());
+			},
+			confirming(confirming) {
+				const root = this.$el;
+				const active = document.activeElement;
+				if (!root || !(active === document.body || root.contains(active))) {
+					return;
+				}
+				if (confirming) {
+					const controls = listFocusableControls(root);
+					const cancel = controls[controls.length - 1];
+					if (active !== cancel) {
+						cancel?.focus();
+					}
+					return;
+				}
+				this.$nextTick(() => this.focusEntry());
+			}
+		},
 		computed: {
+			chipVisible() {
+				return this.multipleMode && this.canConfirm;
+			},
 			count() {
 				return useSelectionStore().count;
 			},
@@ -3698,39 +5729,96 @@ this.BX.Disk = this.BX.Disk || {};
 				return useSessionStore().confirming;
 			},
 			confirmText() {
-				return this.canConfirm ? this.loc('DISK_PICKER_CONFIRM') : this.loc('DISK_PICKER_CONFIRM_EMPTY');
+				return this.loc('DISK_PICKER_CONFIRM_ATTACH');
+			},
+			countLabel() {
+				return this.loc('DISK_PICKER_CONFIRM');
+			},
+			multipleMode() {
+				return useSessionStore().constraints.selectionMode === SelectionMode.Multiple;
 			}
 		},
 		methods: {
-			loc(messageCode) {
-				return main_core.Loc.getMessage(messageCode) ?? '';
+			nameReset() {
+				const chip = this.$refs.chip;
+				chip?.querySelector('button')?.setAttribute('aria-label', this.loc('DISK_PICKER_RESET_SELECTION_LABEL', {
+					'#COUNT#': String(this.count)
+				}));
+			},
+			loc(messageCode, replacements) {
+				return main_core.Loc.getMessage(messageCode, replacements) ?? '';
 			},
 			handleCancel() {
 				useSessionStore().callbacks.requestCancel();
 			},
 			handleConfirm() {
 				void submitSelection(useSessionStore().callbacks);
+			},
+			handleReset() {
+				if (this.confirming) {
+					return;
+				}
+				this.focusFooter();
+				useSelectionStore().clear();
+				ui_a11y.LiveAnnouncer.announce(this.loc('DISK_PICKER_RESET_SELECTION_DONE'));
+			},
+			focusFooter() {
+				this.$refs.root?.focus();
+			},
+			focusEntry() {
+				const root = this.$el;
+				if (!root) {
+					return false;
+				}
+				const target = listFocusableControls(root)[0];
+				target?.focus();
+				return target !== undefined;
 			}
 		},
 		template: `
-		<div class="disk-picker-selection-footer">
-			<Button
-				:text="loc('DISK_PICKER_CANCEL')"
-				:style="AirButtonStyle.PLAIN"
-				:size="ButtonSize.LARGE"
-				:dataset="{ testid: 'universal-disk-picker-cancel-btn' }"
-				@click="handleCancel"
-			/>
-			<Button
-				:text="confirmText"
-				:style="AirButtonStyle.FILLED"
-				:size="ButtonSize.LARGE"
-				:disabled="!canConfirm"
-				:loading="confirming"
-				:right-counter-value="count"
-				:dataset="{ testid: 'universal-disk-picker-confirm-btn' }"
-				@click="handleConfirm"
-			/>
+		<div
+			ref="root"
+			class="disk-picker-selection-footer"
+			data-disk-picker-group="actions"
+			tabindex="-1"
+		>
+			<div
+				v-if="chipVisible"
+				ref="chip"
+				class="disk-picker-selection-footer__chip"
+				:title="loc('DISK_PICKER_RESET_SELECTION')"
+				data-testid="universal-disk-picker-selection-chip"
+			>
+				<Button
+					:text="countLabel"
+					:rightCounterValue="count"
+					:rightCounterColor="CounterStyle.FILLED"
+					:rightIcon="Outline.CROSS_M"
+					:style="AirButtonStyle.OUTLINE_ACCENT_2"
+					:size="ButtonSize.LARGE"
+					:disabled="confirming"
+					:dataset="{ testid: 'universal-disk-picker-reset-selection-btn' }"
+					@click="handleReset"
+				/>
+			</div>
+			<div class="disk-picker-selection-footer__actions">
+				<Button
+					:text="confirmText"
+					:style="AirButtonStyle.FILLED"
+					:size="ButtonSize.LARGE"
+					:disabled="!canConfirm"
+					:loading="confirming"
+					:dataset="{ testid: 'universal-disk-picker-confirm-btn' }"
+					@click="handleConfirm"
+				/>
+				<Button
+					:text="loc('DISK_PICKER_CANCEL')"
+					:style="AirButtonStyle.PLAIN"
+					:size="ButtonSize.LARGE"
+					:dataset="{ testid: 'universal-disk-picker-cancel-btn' }"
+					@click="handleCancel"
+				/>
+			</div>
 		</div>
 	`
 	});
@@ -3772,11 +5860,31 @@ this.BX.Disk = this.BX.Disk || {};
 		event.preventDefault();
 	}
 
-	const FOCUSABLE_SELECTOR = ['a[href]', 'button:not([disabled])', 'input:not([disabled])', 'select:not([disabled])', 'textarea:not([disabled])', '[tabindex]:not([tabindex="-1"])'].join(',');
-	const RELATED_POPUP_SELECTOR = '.main-ui-filter-popup, .menu-popup.popup-window-show, .main-ui-select-inner.--open';
+	const GROUP_ATTRIBUTE = 'data-disk-picker-group';
+	const GROUP_ORDER = ['storage', 'files', 'header', 'actions'];
+	const RELATED_POPUP_SELECTOR = '.menu-popup.popup-window-show, .main-ui-select-inner.--open';
 	const FILTER_PRESET_SELECTOR = '.main-ui-filter-sidebar-item';
 	const OPEN_POPUP_SELECTOR = '.popup-window.--open';
+	const FILTER_SEARCH_CONTAINER_SUFFIX = '_search_container';
 	const FILTER_FIND_SELECTOR = ['.main-ui-filter-field-search input', 'input.main-ui-filter-search-filter', 'input[name="FIND"]'].join(',');
+	const FILTER_CLEAR_SELECTOR = '.main-ui-item-icon-block .main-ui-delete';
+	const FILTER_CLEAR_CONTAINER_SELECTOR = '.main-ui-item-icon-block';
+	const FILTER_CLEAR_VISIBLE_CLASS = 'main-ui-show';
+	function getFilterSettingsPopup(filterHost) {
+		if (!filterHost) {
+			return null;
+		}
+		const searchContainer = filterHost.querySelector(`[id$="${FILTER_SEARCH_CONTAINER_SUFFIX}"]`);
+		if (!searchContainer?.id) {
+			return null;
+		}
+		return [...document.querySelectorAll(OPEN_POPUP_SELECTOR)].find(popup => popup.id === searchContainer.id && !filterHost.contains(popup)) ?? null;
+	}
+	function isRelatedFilterTarget(target, filterHost) {
+		const settingsPopup = getFilterSettingsPopup(filterHost);
+		const preset = target.closest(FILTER_PRESET_SELECTOR);
+		return settingsPopup?.contains(target) === true || target.closest(RELATED_POPUP_SELECTOR) !== null || preset !== null && preset.closest(OPEN_POPUP_SELECTOR) !== null;
+	}
 	const App = ui_vue3.defineComponent({
 		name: 'DiskPickerApp',
 		components: {
@@ -3792,12 +5900,17 @@ this.BX.Disk = this.BX.Disk || {};
 			return {
 				trapHandler: null,
 				escapeHandler: null,
-				filterPresetPointerdownHandler: null,
-				filterPresetPointerdownActive: false,
+				viewerKeydownHandler: null,
+				viewerEscapeArmed: false,
+				filterPointerdownHandler: null,
+				filterPointerdownActive: false,
 				filterFocusoutHandler: null,
 				filterInputHandler: null,
+				filterKeydownHandler: null,
+				filterClickHandler: null,
 				resizeObserver: null,
-				observedBreadcrumbs: null
+				observedBreadcrumbs: null,
+				initialFocusHandled: false
 			};
 		},
 		computed: {
@@ -3827,7 +5940,10 @@ this.BX.Disk = this.BX.Disk || {};
 				}
 			},
 			initialized() {
-				this.$nextTick(() => this.syncFilterHost());
+				this.$nextTick(() => {
+					this.syncFilterHost();
+					this.focusInitialGroup();
+				});
 			}
 		},
 		mounted() {
@@ -3835,16 +5951,23 @@ this.BX.Disk = this.BX.Disk || {};
 			main_core.Event.bind(this.$el, 'keydown', this.trapHandler);
 			this.escapeHandler = event => this.handleDocumentEscape(event);
 			main_core.Event.bind(document, 'keyup', this.escapeHandler, true);
-			this.filterPresetPointerdownHandler = event => {
+			this.viewerKeydownHandler = event => this.handleDocumentKeydown(event);
+			main_core.Event.bind(document, 'keydown', this.viewerKeydownHandler, true);
+			this.filterPointerdownHandler = event => {
 				this.handleDocumentPointerdown(event);
 			};
-			main_core.Event.bind(document, 'pointerdown', this.filterPresetPointerdownHandler, true);
+			main_core.Event.bind(document, 'pointerdown', this.filterPointerdownHandler, true);
 			const host = this.getFilterHost();
 			if (host) {
 				this.filterFocusoutHandler = event => this.handleFilterFocusout(event);
 				main_core.Event.bind(host, 'focusout', this.filterFocusoutHandler);
 				this.filterInputHandler = event => this.handleFilterInput(event);
 				main_core.Event.bind(host, 'input', this.filterInputHandler);
+				this.filterKeydownHandler = event => this.handleFilterKeydown(event);
+				main_core.Event.bind(host, 'keydown', this.filterKeydownHandler);
+				this.filterClickHandler = () => this.enhanceFilterClearButton(host);
+				main_core.Event.bind(host, 'click', this.filterClickHandler);
+				this.enhanceFilterClearButton(host);
 			}
 			this.resizeObserver = new ResizeObserver(() => this.syncFilterHost());
 			this.resizeObserver.observe(this.$el);
@@ -3860,9 +5983,13 @@ this.BX.Disk = this.BX.Disk || {};
 				main_core.Event.unbind(document, 'keyup', this.escapeHandler, true);
 				this.escapeHandler = null;
 			}
-			if (this.filterPresetPointerdownHandler) {
-				main_core.Event.unbind(document, 'pointerdown', this.filterPresetPointerdownHandler, true);
-				this.filterPresetPointerdownHandler = null;
+			if (this.viewerKeydownHandler) {
+				main_core.Event.unbind(document, 'keydown', this.viewerKeydownHandler, true);
+				this.viewerKeydownHandler = null;
+			}
+			if (this.filterPointerdownHandler) {
+				main_core.Event.unbind(document, 'pointerdown', this.filterPointerdownHandler, true);
+				this.filterPointerdownHandler = null;
 			}
 			const host = this.getFilterHost();
 			if (host && this.filterFocusoutHandler) {
@@ -3873,11 +6000,20 @@ this.BX.Disk = this.BX.Disk || {};
 				main_core.Event.unbind(host, 'input', this.filterInputHandler);
 			}
 			this.filterInputHandler = null;
+			if (host && this.filterKeydownHandler) {
+				main_core.Event.unbind(host, 'keydown', this.filterKeydownHandler);
+			}
+			this.filterKeydownHandler = null;
+			if (host && this.filterClickHandler) {
+				main_core.Event.unbind(host, 'click', this.filterClickHandler);
+			}
+			this.filterClickHandler = null;
 			if (this.resizeObserver) {
 				this.resizeObserver.disconnect();
 				this.resizeObserver = null;
 			}
 			this.observedBreadcrumbs = null;
+			releasePreviewLayer();
 		},
 		methods: {
 			getFilterHost() {
@@ -3888,6 +6024,7 @@ this.BX.Disk = this.BX.Disk || {};
 				if (!host) {
 					return;
 				}
+				this.enhanceFilterClearButton(host);
 				const root = this.$el;
 				const slot = root.querySelector('[data-disk-picker-search-slot]');
 				if (!useSessionStore().searchOpen || !slot) {
@@ -3919,11 +6056,12 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			focusFilterFind() {
 				const host = this.getFilterHost();
-				const input = host?.querySelector(FILTER_FIND_SELECTOR);
+				const input = host?.querySelector(FILTER_FIND_SELECTOR) ?? null;
 				try {
 					input?.focus();
 				} catch {
 				}
+				return input !== null;
 			},
 			isSearchMeaningless() {
 				const session = useSessionStore();
@@ -3934,6 +6072,41 @@ this.BX.Disk = this.BX.Disk || {};
 				if (target instanceof HTMLInputElement && target.matches(FILTER_FIND_SELECTOR)) {
 					useSessionStore().setFilterFind(target.value);
 				}
+				const host = this.getFilterHost();
+				if (host) {
+					this.enhanceFilterClearButton(host);
+				}
+			},
+			enhanceFilterClearButton(host) {
+				const button = host.querySelector(FILTER_CLEAR_SELECTOR);
+				if (!button) {
+					return;
+				}
+				if (button.getAttribute('role') !== 'button') {
+					button.setAttribute('role', 'button');
+					button.setAttribute('aria-label', this.loc('DISK_PICKER_SEARCH_CLEAR'));
+				}
+				const container = button.closest(FILTER_CLEAR_CONTAINER_SELECTOR);
+				const visible = container !== null && main_core.Dom.hasClass(container, FILTER_CLEAR_VISIBLE_CLASS);
+				if (visible) {
+					button.setAttribute('tabindex', '0');
+				} else {
+					button.removeAttribute('tabindex');
+				}
+			},
+			handleFilterKeydown(event) {
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				const target = event.target;
+				if (!(target instanceof HTMLElement) || !target.matches(FILTER_CLEAR_SELECTOR)) {
+					return;
+				}
+				event.preventDefault();
+				target.click();
+			},
+			loc(messageCode) {
+				return main_core.Loc.getMessage(messageCode) ?? '';
 			},
 			collapseSearch() {
 				useSessionStore().setSearchOpen(false);
@@ -3942,41 +6115,60 @@ this.BX.Disk = this.BX.Disk || {};
 					button?.focus();
 				});
 			},
+			handleDocumentKeydown(event) {
+				if (event.key === 'Escape' && !event.repeat) {
+					this.viewerEscapeArmed = useViewerStore().open;
+				}
+			},
 			handleDocumentEscape(event) {
-				if (event.key !== 'Escape' || !useSessionStore().searchOpen) {
+				if (event.key !== 'Escape') {
+					return;
+				}
+				const armed = this.viewerEscapeArmed;
+				this.viewerEscapeArmed = false;
+				if (armed || useViewerStore().open) {
+					event.stopImmediatePropagation();
+					return;
+				}
+				if (!useSessionStore().searchOpen) {
 					return;
 				}
 				const host = this.getFilterHost();
 				const target = event.target;
-				const insideSearch = host !== null && target !== null && host.contains(target);
-				if (!insideSearch) {
+				if (host === null || target === null) {
+					return;
+				}
+				const insideHost = host.contains(target);
+				if (!insideHost && !isRelatedFilterTarget(target, host)) {
 					return;
 				}
 				event.stopImmediatePropagation();
 				if (this.isSearchMeaningless()) {
 					this.collapseSearch();
+				} else if (!insideHost) {
+					this.focusFilterFind();
 				}
 			},
 			handleDocumentPointerdown(event) {
 				const target = event.target;
-				const preset = target instanceof Element ? target.closest(FILTER_PRESET_SELECTOR) : null;
-				this.filterPresetPointerdownActive = preset !== null && preset.closest(OPEN_POPUP_SELECTOR) !== null;
+				this.filterPointerdownActive = target instanceof Element && isRelatedFilterTarget(target, this.getFilterHost());
 				setTimeout(() => {
-					this.filterPresetPointerdownActive = false;
+					this.filterPointerdownActive = false;
 				}, 0);
 			},
 			handleFilterFocusout(event) {
+				const host = this.getFilterHost();
 				const relatedTarget = event.relatedTarget;
-				const movedToRelatedPopup = relatedTarget instanceof Element && relatedTarget.closest(RELATED_POPUP_SELECTOR) !== null;
-				const presetPointerdownActive = this.filterPresetPointerdownActive;
-				this.filterPresetPointerdownActive = false;
+				const movedToRelatedPopup = relatedTarget instanceof Element && isRelatedFilterTarget(relatedTarget, host);
+				const filterPointerdownActive = this.filterPointerdownActive;
+				this.filterPointerdownActive = false;
 				setTimeout(() => {
 					if (!useSessionStore().searchOpen) {
 						return;
 					}
-					const host = this.getFilterHost();
 					const active = document.activeElement;
-					const stillInside = presetPointerdownActive || movedToRelatedPopup || host !== null && active !== null && (host.contains(active) || active.closest(RELATED_POPUP_SELECTOR) !== null);
+					const activeInRelatedPopup = active instanceof Element && isRelatedFilterTarget(active, host);
+					const stillInside = filterPointerdownActive || movedToRelatedPopup || host !== null && active !== null && (host.contains(active) || activeInRelatedPopup);
 					if (!stillInside && this.isSearchMeaningless()) {
 						useSessionStore().setSearchOpen(false);
 					}
@@ -3986,24 +6178,92 @@ this.BX.Disk = this.BX.Disk || {};
 				if (event.key !== 'Tab') {
 					return;
 				}
-				if (document.querySelector(RELATED_POPUP_SELECTOR)) {
+				if (useViewerStore().open) {
 					return;
 				}
-				const root = this.$el;
-				const focusable = [...root.querySelectorAll(FOCUSABLE_SELECTOR)].filter(element => element.offsetParent !== null || element === document.activeElement);
-				if (focusable.length === 0) {
+				if (getFilterSettingsPopup(this.getFilterHost()) || document.querySelector(RELATED_POPUP_SELECTOR)) {
 					return;
 				}
-				const first = focusable[0];
-				const last = focusable[focusable.length - 1];
 				const active = document.activeElement;
-				if (event.shiftKey && active === first) {
-					event.preventDefault();
-					last.focus();
-				} else if (!event.shiftKey && active === last || !root.contains(active)) {
-					event.preventDefault();
-					first.focus();
+				if (this.isInsideSearchAwayFromEdge(active, event.shiftKey) || this.isInsideActionsAwayFromEdge(active, event.shiftKey)) {
+					return;
 				}
+				event.preventDefault();
+				this.focusAdjacentGroup(this.groupOf(active), event.shiftKey ? -1 : 1);
+			},
+			groupOf(element) {
+				const container = element?.closest(`[${GROUP_ATTRIBUTE}]`) ?? null;
+				const id = container?.getAttribute(GROUP_ATTRIBUTE) ?? '';
+				return GROUP_ORDER.includes(id) ? id : null;
+			},
+			isInsideSearchAwayFromEdge(active, backwards) {
+				const host = this.getFilterHost();
+				if (!host || !this.searchOpen || !(active instanceof HTMLElement) || !host.contains(active)) {
+					return false;
+				}
+				const controls = listFocusableControls(host);
+				const edge = backwards ? controls[0] : controls[controls.length - 1];
+				return active !== edge;
+			},
+			isInsideActionsAwayFromEdge(active, backwards) {
+				const root = this.$refs.actions?.$el ?? null;
+				if (!root || !(active instanceof HTMLElement) || !root.contains(active)) {
+					return false;
+				}
+				const controls = listFocusableControls(root);
+				const edge = backwards ? controls[0] : controls[controls.length - 1];
+				return active !== edge;
+			},
+			focusAdjacentGroup(from, direction) {
+				const count = GROUP_ORDER.length;
+				let index = from === null ? direction > 0 ? -1 : count : GROUP_ORDER.indexOf(from);
+				for (let step = 0; step < count; step++) {
+					index = (index + direction + count) % count;
+					if (this.focusGroup(GROUP_ORDER[index], direction)) {
+						return;
+					}
+				}
+			},
+			focusGroup(id, direction) {
+				if (id === 'header' && this.searchOpen) {
+					return direction > 0 ? this.focusFilterFind() : this.focusFilterLastControl();
+				}
+				if (id === 'actions' && direction < 0) {
+					return this.focusActionsLastControl();
+				}
+				const owners = this.$refs;
+				return owners[id]?.focusEntry?.() === true;
+			},
+			focusFilterLastControl() {
+				const host = this.getFilterHost();
+				const controls = host ? listFocusableControls(host) : [];
+				const last = controls[controls.length - 1] ?? null;
+				try {
+					last?.focus();
+				} catch {
+				}
+				return last !== null;
+			},
+			focusActionsLastControl() {
+				const root = this.$refs.actions?.$el ?? null;
+				const controls = root ? listFocusableControls(root) : [];
+				const last = controls[controls.length - 1] ?? null;
+				last?.focus();
+				return last !== null;
+			},
+			focusInitialGroup() {
+				if (this.initialFocusHandled) {
+					return;
+				}
+				this.initialFocusHandled = true;
+				const container = this.$el.closest('.disk-picker');
+				const active = document.activeElement;
+				const focusOnContainer = active === null || active === document.body || active === container;
+				if (!focusOnContainer) {
+					return;
+				}
+				const owners = this.$refs;
+				owners.files?.focusEntry?.();
 			},
 			handleBoundaryWheel(event) {
 				preventWheelScrollChaining(event);
@@ -4013,26 +6273,27 @@ this.BX.Disk = this.BX.Disk || {};
 		<div class="disk-picker__root" @wheel="handleBoundaryWheel">
 			<div
 				data-disk-picker-filter-host
+				data-disk-picker-group="header"
 				data-testid="universal-disk-picker-search-filter"
-				class="disk-picker__filter-host"
+				class="disk-picker__filter-host --ui-context-edge-dark"
 				:class="{ '--open': searchOpen }"
 			></div>
 			<LoadingSkeleton v-if="!initialized"/>
 			<PickerLayout v-else>
 				<template #sidebar>
-					<SourceSidebar/>
+					<SourceSidebar ref="storage"/>
 				</template>
 				<template #header>
-					<PickerToolbar/>
+					<PickerToolbar ref="header"/>
 				</template>
 				<template #list>
-					<ItemBrowser/>
+					<ItemBrowser ref="files"/>
 				</template>
 				<template #preview>
 					<PreviewPanel/>
 				</template>
 				<template #footer>
-					<SelectionFooter/>
+					<SelectionFooter ref="actions"/>
 				</template>
 			</PickerLayout>
 		</div>
@@ -4056,6 +6317,10 @@ this.BX.Disk = this.BX.Disk || {};
 		let filterAdapter = null;
 		return {
 			unmount() {
+				clearFolderPages();
+				resetPreviews();
+				resetRowActivation();
+				resetSelectLimitNotice();
 				filterAdapter?.dispose();
 				filterAdapter = null;
 				app.unmount();
@@ -4066,6 +6331,8 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			start(options) {
 				ui_vue3_pinia.setActivePinia(pinia);
+				clearFolderPages();
+				resetPreviews();
 				const adapter = new MainUiFilterAdapter(options.filterId, pinia, options.callbacks, options.restoredFilter);
 				filterAdapter = adapter;
 				const restored = options.restoredFilter;
@@ -4086,9 +6353,16 @@ this.BX.Disk = this.BX.Disk || {};
 			},
 			notifyClosing() {
 				ui_vue3_pinia.setActivePinia(pinia);
+				clearFolderPages();
+				resetPreviews();
+				resetRowActivation();
+				resetSelectLimitNotice();
 				filterAdapter?.dispose();
 				filterAdapter = null;
-				useSessionStore().invalidateRequests();
+				const session = useSessionStore();
+				session.setNavigationPending(false);
+				session.setLoading(false);
+				session.invalidateRequests();
 			}
 		};
 	}
@@ -4100,5 +6374,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.readInitialFilterValues = readInitialFilterValues;
 	exports.resetInitialFilterValues = resetInitialFilterValues;
 
-})(this.BX.Disk.DiskPickerInternal = this.BX.Disk.DiskPickerInternal || {}, BX.Main, window, window, window, BX, BX.Vue3, BX.Vue3.Pinia, BX.UI.IconSet.Api.Disk, BX.UI.System.Skeleton.Vue, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI.System.Typography.Vue, BX, BX.Vue3.Components);
+})(this.BX.Disk.DiskPickerInternal = this.BX.Disk.DiskPickerInternal || {}, BX.Main, window, window, window, window, BX, BX.Vue3, BX.Vue3.Pinia, BX.UI.IconSet.Api.Disk, BX.Event, BX.UI.System.Skeleton.Vue, BX, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI.System.Typography.Vue, BX.Vue3.Components, BX.UI.System, BX.UI.Accessibility, BX.UI);
 //# sourceMappingURL=internal.bundle.js.map

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, sidepanel, biconnector_dashboardExportMaster, biconnector_dashboardRelatedItemsList, biconnector_dashboardGroup, ui_buttons, ui_system_dialog) {
+(function (exports, main_core, main_core_events, sidepanel, biconnector_dashboardExportMaster, biconnector_errorMessage, ui_notification, biconnector_dashboardRelatedItemsList, biconnector_dashboardGroup, ui_buttons, ui_system_dialog) {
 	'use strict';
 
 	class DashboardManager {
@@ -51,22 +51,30 @@ this.BX = this.BX || {};
 				onclick: () => {
 					continueBtn.setWaiting(true);
 					this.duplicateDashboard(dashboardInfo.id).then(duplicateResponse => {
-						onCompleteProcessing(popupType);
 						const dashboard = duplicateResponse.data.dashboard;
 						if (!dashboard) {
-							BX.UI.Notification.Center.notify({
-								content: BX.util.htmlspecialchars(main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_COPY_ERROR'))
+							onFailProcessing(popupType);
+							ui_notification.Center.notify({
+								content: biconnector_errorMessage.resolveErrorHtml(duplicateResponse, main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_COPY_ERROR'))
 							});
 							return null;
 						}
+						onCompleteProcessing(popupType);
 						return this.getDashboardEmbeddedData(dashboard.id);
 					}).then(embeddedResponse => {
+						if (!embeddedResponse) {
+							return;
+						}
 						main_core_events.EventEmitter.emit('BIConnector.DashboardManager:onCopyDashboard', {
 							dashboard: embeddedResponse.data.dashboard
 						});
+						const copiedEditLink = new main_core.Uri(embeddedResponse.data.dashboard.editUrl);
+						if (dashboardInfo.openInEditMode === true) {
+							copiedEditLink.setQueryParam('edit', 'true');
+						}
 						const copiedDashboardInfo = {
 							id: embeddedResponse.data.dashboard.id,
-							editLink: embeddedResponse.data.dashboard.editUrl,
+							editLink: copiedEditLink.toString(),
 							type: embeddedResponse.data.dashboard.type
 						};
 						this.processLoginDashboard(copiedDashboardInfo, () => {
@@ -76,11 +84,9 @@ this.BX = this.BX || {};
 						}, onCompleteProcessing, onFailProcessing);
 					}).catch(response => {
 						onFailProcessing(popupType);
-						if (response.errors && main_core.Type.isStringFilled(response.errors[0]?.message)) {
-							BX.UI.Notification.Center.notify({
-								content: main_core.Text.encode(response.errors[0].message)
-							});
-						}
+						ui_notification.Center.notify({
+							content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_COPY_ERROR'))
+						});
 					});
 				}
 			});
@@ -120,6 +126,40 @@ this.BX = this.BX || {};
 			}).finally(() => {
 				onCloseProcessing();
 			});
+		}
+		openDashboardInConstructor(dashboardInfo) {
+			return this.#openUrlInNewTab(() => this.getEditUrl(dashboardInfo), main_core.Loc.getMessage('SUPERSET_DASHBOARD_CONSTRUCTOR_OPEN_ERROR'));
+		}
+		async #openUrlInNewTab(getUrl, fallbackErrorMessage) {
+			const tab = window.open('about:blank', '_blank');
+			if (!tab) {
+				const message = main_core.Loc.getMessage('SUPERSET_DASHBOARD_POPUP_BLOCKED');
+				BX.UI.Notification.Center.notify({
+					content: main_core.Text.encode(message)
+				});
+				throw new Error(message);
+			}
+			try {
+				const url = await getUrl();
+				if (!main_core.Type.isStringFilled(url)) {
+					throw new Error();
+				}
+				tab.location.href = url;
+				tab.focus();
+			} catch (response) {
+				tab.close();
+				const message = main_core.Type.isStringFilled(response?.errors?.[0]?.message) ? response.errors[0].message : fallbackErrorMessage;
+				BX.UI.Notification.Center.notify({
+					content: main_core.Text.encode(message)
+				});
+				throw response;
+			}
+		}
+		getConstructorUrl() {
+			return main_core.ajax.runAction('biconnector.dashboard.getConstructorUrl');
+		}
+		async openConstructorWorkspace() {
+			return this.#openUrlInNewTab(() => this.getConstructorUrl().then(response => response?.data), main_core.Loc.getMessage('SUPERSET_DASHBOARD_CONSTRUCTOR_OPEN_ERROR'));
 		}
 		duplicateDashboard(dashboardId) {
 			return main_core.ajax.runAction('biconnector.dashboard.copy', {
@@ -362,9 +402,8 @@ this.BX = this.BX || {};
 			});
 		}
 		notifyDeleteError(response) {
-			const message = main_core.Type.isStringFilled(response?.errors?.[0]?.message) ? response.errors[0].message : main_core.Loc.getMessage('SUPERSET_DASHBOARD_DELETE_ERROR');
-			BX.UI.Notification.Center.notify({
-				content: main_core.Text.encode(message)
+			ui_notification.Center.notify({
+				content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('SUPERSET_DASHBOARD_DELETE_ERROR'))
 			});
 		}
 		openDiscussionChat(dashboardId) {
@@ -398,21 +437,11 @@ this.BX = this.BX || {};
 					});
 					resolve(response);
 				}).catch(response => {
-					if (response.errors) {
-						main_core.UI.Notification.Center.notify({
-							content: main_core.Text.encode(response.errors[0].message)
-						});
-					}
+					ui_notification.Center.notify({
+						content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('SUPERSET_DASHBOARD_GROUP_SETTINGS_LOAD_ERROR'))
+					});
 					reject(response);
 				});
-			});
-		}
-		renameDashboard(dashboardId, title) {
-			return main_core.ajax.runAction('biconnector.dashboard.rename', {
-				data: {
-					id: dashboardId,
-					title
-				}
 			});
 		}
 		restartDashboardImport(dashboardId) {
@@ -581,4 +610,4 @@ this.BX = this.BX || {};
 
 	exports.DashboardManager = DashboardManager;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI, BX.UI.System);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX, BX.BIConnector, BX.BIConnector, BX.UI.Notification, BX.BIConnector, BX.BIConnector, BX.UI, BX.UI.System);

@@ -1,13 +1,23 @@
 <?php
+$MESS["TASKS_V2_CHAT_ACTION_ADD_OBSERVER_ALREADY_OBSERVER"] = "This user is already an observer.";
+$MESS["TASKS_V2_CHAT_ACTION_ADD_OBSERVER_ERROR"] = "Could not add observer. Try again.";
+$MESS["TASKS_V2_CHAT_ACTION_ADD_OBSERVER_NOT_ALLOWED"] = "Cannot make this user an observer.";
+$MESS["TASKS_V2_CHAT_ACTION_ADD_OBSERVER_NO_PERMISSION"] = "Insufficient permissions.";
+$MESS["TASKS_V2_CHAT_ACTION_ADD_OBSERVER_NO_REQUEST"] = "This request has expired.";
+$MESS["TASKS_V2_CHAT_ACTION_ADD_OBSERVER_USER_INACTIVE"] = "This user was dismissed.";
 $MESS["TASKS_V2_CHAT_ACTION_CHANGE_DEADLINE_EXCEEDED"] = "The task owner has limited the number of times the deadline can be changed.<br><br>The deadline cannot be changed anymore.";
 $MESS["TASKS_V2_CHAT_ACTION_CHANGE_DEADLINE_NO_PERMISSION"] = "Changing deadline is prohibited by the task owner.";
 $MESS["TASKS_V2_CHAT_ACTION_CHECK_LIST_ITEMS_REMOVED_HINT"] = "Item(s) were deleted or moved.";
 $MESS["TASKS_V2_CHAT_ACTION_CHECK_LIST_ITEMS_REMOVED_HINT_MSGVER_1"] = "Item(s) were deleted or moved.";
+$MESS["TASKS_V2_CHAT_ACTION_CHECK_LIST_LOAD_FAILED"] = "Could not load the checklist. Please try again.";
 $MESS["TASKS_V2_CHAT_ACTION_CHECK_LIST_REMOVED_HINT"] = "This checklist was deleted.";
 $MESS["TASKS_V2_CHAT_ACTION_CHECK_LIST_REMOVED_HINT_MSGVER_1"] = "This checklist was deleted.";
+$MESS["TASKS_V2_CHAT_ACTION_COMPLETE_TASK_ERROR"] = 'Could not complete the task.';
 $MESS["TASKS_V2_CHAT_ACTION_COMPLETE_TASK_NO_PERMISSION"] = "Insufficient permission to complete the task.";
+$MESS["TASKS_V2_CHAT_ACTION_COMPLETE_TASK_RESULT_REQUIRED"] = 'A task that requires a result can only be completed in the detailed form view.';
 $MESS["TASKS_V2_CHAT_ACTION_OPEN_GROUP_UNLINKED"] = "The task does not belong to this project anymore.";
 $MESS["TASKS_V2_CHAT_ACTION_OPEN_TIME_TRACKING_RECORD_REMOVED"] = "This entry was deleted.";
 $MESS["TASKS_V2_CHAT_ACTION_RESULT_NOT_FOUND"] = "This status summary has been deleted.";
 $MESS["TASKS_V2_CHAT_ACTION_RESULT_NOT_FOUND_MSGVER_1"] = "This status summary has been deleted.";
 $MESS["TASKS_V2_CHAT_ACTION_TASK_COMPLETED"] = "The task is already completed.";
+$MESS["TASKS_V2_CHAT_ACTION_TASK_LOAD_FAILED"] = 'Could not load the task. Try again.';

@@ -102,6 +102,39 @@ this.BX = this.BX || {};
 	function _classPrivateFieldGet$4(s, a) { return s.get(_assertClassBrand$6(s, a)); }
 	function _classPrivateFieldSet$4(s, a, r) { return s.set(_assertClassBrand$6(s, a), r), r; }
 	function _assertClassBrand$6(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	const buttonEventHandlers = new WeakMap();
+	const bindButtonEvent = (node, eventName, handler) => {
+		let events = buttonEventHandlers.get(node);
+		if (!events) {
+			events = new Map();
+			buttonEventHandlers.set(node, events);
+		}
+		let handlers = events.get(eventName);
+		if (!handlers) {
+			handlers = new Set();
+			events.set(eventName, handlers);
+		}
+		handlers.add(handler);
+		main_core.Event.bind(node, eventName, handler);
+	};
+	const unbindButtonEvent = (node, eventName, handler = null) => {
+		const events = buttonEventHandlers.get(node);
+		const handlers = events?.get(eventName);
+		if (!handlers) {
+			return;
+		}
+		for (const listener of handler ? [handler] : handlers) {
+			if (handlers.delete(listener)) {
+				main_core.Event.unbind(node, eventName, listener);
+			}
+		}
+		if (handlers.size === 0) {
+			events.delete(eventName);
+		}
+		if (events.size === 0) {
+			buttonEventHandlers.delete(node);
+		}
+	};
 	var _useAirDesign = /*#__PURE__*/new WeakMap();
 	var _leftCounter = /*#__PURE__*/new WeakMap();
 	var _rightCounter = /*#__PURE__*/new WeakMap();
@@ -506,14 +539,14 @@ this.BX = this.BX || {};
 				if (main_core.Type.isStringFilled(eventName) && main_core.Type.isFunction(fn)) {
 					this.unbindEvent(eventName);
 					this.events[eventName] = fn;
-					main_core.Event.bind(this.getContainer(), eventName, _classPrivateFieldGet$4(_handleEvent, this));
+					bindButtonEvent(this.getContainer(), eventName, _classPrivateFieldGet$4(_handleEvent, this));
 				}
 				return this;
 			}
 		}, {
 			key: "unbindEvent",
 			value: function unbindEvent(eventName) {
-				main_core.Event.unbindAll(this.getContainer(), eventName);
+				unbindButtonEvent(this.getContainer(), eventName);
 				if (this.events[eventName]) {
 					delete this.events[eventName];
 				}
@@ -1020,14 +1053,148 @@ this.BX = this.BX || {};
 	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand$2(s, a), r), r; }
 	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand$2(s, a)); }
 	function _assertClassBrand$2(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	const tooltips = new WeakMap();
+	const EXPLICIT_TOOLTIP = '[title], [data-hint], [data-ui-tooltip]';
+	let tooltipLoading = null;
+	const loadTooltipExtension = async () => {
+		tooltipLoading ??= main_core.Runtime.loadExtension('ui.system.tooltip');
+		const loading = tooltipLoading;
+		try {
+			return await loading;
+		} finally {
+			if (tooltipLoading === loading) {
+				tooltipLoading = null;
+			}
+		}
+	};
+	const getTooltipText = target => {
+		if (target.tagName === 'INPUT') {
+			return target.value;
+		}
+		const inner = target.querySelector('.ui-btn-text-inner');
+		if (inner) {
+			return inner.textContent ?? '';
+		}
+		const text = target.querySelector('.ui-btn-text');
+		return Array.from(text?.childNodes ?? []).filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join('');
+	};
+	const destroyTooltip = state => {
+		const tooltip = state.tooltip;
+		state.tooltip = null;
+		state.hovered = false;
+		state.focused = false;
+		tooltip?.destroy();
+	};
+	const canShowTooltip = state => {
+		const {
+			container,
+			target
+		} = state;
+		return target.isConnected && container.contains(target) && main_core.Dom.hasClass(container, ButtonStyle.COLLAPSED) && getTooltipText(target).trim().length > 0 && !target.closest(EXPLICIT_TOOLTIP) && !target.querySelector(EXPLICIT_TOOLTIP);
+	};
+	const updateCollapsedTooltip = button => {
+		const state = tooltips.get(button?.button);
+		if (!state) {
+			return;
+		}
+		if (canShowTooltip(state)) {
+			state.tooltip?.setOptions({
+				content: getTooltipText(state.target)
+			});
+		} else {
+			destroyTooltip(state);
+		}
+	};
+	const initializeCollapsedTooltip = button => {
+		const container = button.button;
+		if (tooltips.has(container)) {
+			updateCollapsedTooltip(button);
+			return;
+		}
+		const target = container.querySelector('.ui-btn-main') ?? container;
+		const state = {
+			container,
+			target,
+			tooltip: null,
+			loading: false,
+			hovered: false,
+			focused: false
+		};
+		tooltips.set(container, state);
+		const handleGesture = async event => {
+			updateCollapsedTooltip(button);
+			if (event.type === 'pointerover' || event.target !== target) {
+				return;
+			}
+			if (event.type === 'pointerenter') {
+				state.hovered = event.pointerType !== 'touch';
+				if (!state.hovered) {
+					return;
+				}
+			} else {
+				state.focused = target.matches(':focus-visible');
+				if (!state.focused) {
+					return;
+				}
+			}
+			if (state.tooltip || state.loading || !canShowTooltip(state)) {
+				return;
+			}
+			state.loading = true;
+			try {
+				const {
+					Tooltip,
+					TooltipTrigger
+				} = await loadTooltipExtension();
+				const hasGesture = state.hovered && target.matches(':hover') || state.focused && target.matches(':focus-visible');
+				if (!canShowTooltip(state) || !hasGesture) {
+					return;
+				}
+				state.tooltip = new Tooltip({
+					target,
+					content: getTooltipText(target),
+					trigger: [TooltipTrigger.Hover, TooltipTrigger.Focus],
+					events: {
+						onHide: () => destroyTooltip(state)
+					}
+				});
+			} catch (error) {
+				console.warn('BX.UI.Button: cannot load collapsed button tooltip.', error);
+			} finally {
+				state.loading = false;
+			}
+		};
+		main_core.Event.bind(target, 'pointerenter', handleGesture, {
+			capture: true
+		});
+		main_core.Event.bind(target, 'pointerover', handleGesture, {
+			capture: true
+		});
+		main_core.Event.bind(target, 'focusin', handleGesture, {
+			capture: true
+		});
+		main_core.Event.bind(target, 'pointerleave', () => {
+			state.hovered = false;
+		});
+		main_core.Event.bind(target, 'focusout', () => {
+			state.focused = false;
+		});
+		main_core.Event.bind(target, 'keydown', event => {
+			if (event.key === 'Escape') {
+				state.hovered = false;
+				state.focused = false;
+			}
+		});
+	};
+
+	/**
+	 * @namespace {BX.UI}
+	 */
 	var _style = /*#__PURE__*/new WeakMap();
 	var _isWide = /*#__PURE__*/new WeakMap();
 	var _menuController = /*#__PURE__*/new WeakMap();
 	var _layout = /*#__PURE__*/new WeakMap();
 	var _Button_brand = /*#__PURE__*/new WeakSet();
-	/**
-	 * @namespace {BX.UI}
-	 */
 	let Button = /*#__PURE__*/function (_BaseButton) {
 		function Button(options) {
 			var _this;
@@ -1081,6 +1248,7 @@ this.BX = this.BX || {};
 			if (_this.options.dropdown || _classPrivateFieldGet(_menuController, _this) !== null && _this.options.dropdown !== false) {
 				_this.setDropdown();
 			}
+			initializeCollapsedTooltip(_this);
 			return _this;
 		}
 		babelHelpers.inherits(Button, _BaseButton);
@@ -1091,6 +1259,21 @@ this.BX = this.BX || {};
 				if (this.hasAirDesign()) {
 					main_core.Dom.toggleClass(this.getContainer(), ButtonStyle.COLLAPSED, !this.text);
 				}
+				updateCollapsedTooltip(this);
+				return this;
+			}
+		}, {
+			key: "setProps",
+			value: function setProps(props) {
+				_superPropGet$2(Button, "setProps", this)([props]);
+				updateCollapsedTooltip(this);
+				return this;
+			}
+		}, {
+			key: "setDataSet",
+			value: function setDataSet(props) {
+				_superPropGet$2(Button, "setDataSet", this)([props]);
+				updateCollapsedTooltip(this);
 				return this;
 			}
 		}, {
@@ -1202,6 +1385,7 @@ this.BX = this.BX || {};
 			value: function setCollapsed(collapsed = true) {
 				const isAirWithoutText = this.hasAirDesign() && !this.getText();
 				main_core.Dom.toggleClass(this.getContainer(), ButtonStyle.COLLAPSED, collapsed || isAirWithoutText);
+				updateCollapsedTooltip(this);
 				return this;
 			}
 		}, {
@@ -1236,7 +1420,7 @@ this.BX = this.BX || {};
 					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this);
 					_classPrivateFieldSet(_menuController, this, new LegacyMenuController(options, _assertClassBrand$2(_Button_brand, this, _getMenuCallbacks).call(this)));
 					this.menuWindow = _classPrivateFieldGet(_menuController, this).getMenu();
-					main_core.Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+					bindButtonEvent(this.getMenuClickElement(), 'click', this.handleMenuClick);
 				} else if (options === false) {
 					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this, LegacyMenuController);
 				}
@@ -1255,7 +1439,7 @@ this.BX = this.BX || {};
 					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this);
 					_assertClassBrand$2(_Button_brand, this, _warnOnLegacyMenuItems).call(this, options.items);
 					_classPrivateFieldSet(_menuController, this, new SystemMenuController(options, _assertClassBrand$2(_Button_brand, this, _getMenuCallbacks).call(this)));
-					main_core.Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+					bindButtonEvent(this.getMenuClickElement(), 'click', this.handleMenuClick);
 				} else if (options === false) {
 					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this, SystemMenuController);
 				}
@@ -1549,7 +1733,7 @@ this.BX = this.BX || {};
 		if (controllerClass !== null && !(controller instanceof controllerClass)) {
 			return;
 		}
-		main_core.Event.unbind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+		unbindButtonEvent(this.getMenuClickElement(), 'click', this.handleMenuClick);
 		controller.destroy();
 
 		// a consumer handler of the destroyed menu may set a new one, and it must survive
@@ -1694,7 +1878,29 @@ this.BX = this.BX || {};
 				if (main_core.Type.isString(text) && this.isMenuButton()) {
 					throw new Error('BX.UI.SplitButton: a menu button doesn\'t support a text caption.');
 				}
-				return _superPropGet$1(SplitSubButton, "setText", this, 3)([text]);
+				_superPropGet$1(SplitSubButton, "setText", this, 3)([text]);
+				if (this.isMainButton()) {
+					updateCollapsedTooltip(this.getSplitButton());
+				}
+				return this;
+			}
+		}, {
+			key: "setProps",
+			value: function setProps(props) {
+				_superPropGet$1(SplitSubButton, "setProps", this, 3)([props]);
+				if (this.isMainButton()) {
+					updateCollapsedTooltip(this.getSplitButton());
+				}
+				return this;
+			}
+		}, {
+			key: "setDataSet",
+			value: function setDataSet(props) {
+				_superPropGet$1(SplitSubButton, "setDataSet", this, 3)([props]);
+				if (this.isMainButton()) {
+					updateCollapsedTooltip(this.getSplitButton());
+				}
+				return this;
 			}
 		}, {
 			key: "getContainer",

@@ -25,6 +25,8 @@ return [
 		'tasks.v2.provider.service.group-service',
 		'tasks.v2.provider.service.task-service',
 		'tasks.v2.provider.service.user-service',
+		'ui.a11y',
+		'ui.entity-selector',
 		'ui.icon-set.api.core',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.crm',

@@ -11,6 +11,12 @@ if (empty($arResult["VOTE"]) || empty($arResult["QUESTIONS"]) ):
 	return true;
 endif;
 
+$isAnonymousVote = (int)($arResult["VOTE"]["ANONYMITY"] ?? 0) === \Bitrix\Vote\Vote\Anonymity::ANONYMOUSLY;
+$votedSigner = new \Bitrix\Vote\Service\VotedContextSigner();
+$voteId = (int)$arParams["VOTE_ID"];
+$votedNameTemplate = (string)($arParams["~NAME_TEMPLATE"] ?? '');
+$votedUrlTemplate = (string)($arParams["~PATH_TO_USER"] ?? '');
+
 ?>
 	<ol class="bx-vote-question-list" id="vote-<?=$uid?>">
 	<?foreach ($arResult["QUESTIONS"] as $arQuestion):?>
@@ -31,7 +37,13 @@ endif;
 					</td>
 					<td>
 						<span class="bx-vote-voted-users-wrap"><?
-							?><a href="javascript:void(0);" class="bx-vote-voted-users" rel="<?=$arAnswer["USERS"]?>" rev="<?=$arAnswer["ID"]?>"><?=$arAnswer["COUNTER"]?></a><?
+							$counterTestId = "vote-current-answer-counter-".$arAnswer["ID"];
+							if ($isAnonymousVote):
+								?><span class="bx-vote-voted-users" data-testid="<?=$counterTestId?>"><?=$arAnswer["COUNTER"]?></span><?
+							else:
+								$votedSign = $votedSigner->sign($voteId, (int)$arAnswer["ID"], $votedNameTemplate, $votedUrlTemplate);
+								?><a href="javascript:void(0);" class="bx-vote-voted-users" data-sign="<?=htmlspecialcharsbx($votedSign)?>" rev="<?=$arAnswer["ID"]?>" data-testid="<?=$counterTestId?>"><?=$arAnswer["COUNTER"]?></a><?
+							endif;
 						?></span>
 					</td>
 					<td><span class="bx-vote-data-percent"><?=$arAnswer["PERCENT"]?>%</span></td>

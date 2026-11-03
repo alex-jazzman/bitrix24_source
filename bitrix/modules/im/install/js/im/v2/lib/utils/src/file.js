@@ -275,6 +275,19 @@ export const FileUtil = {
 		return fileType === FileType.image;
 	},
 
+	/**
+	 * An unfilled image size (null - a shortened payload of an old message) still goes to the gallery; only
+	 * a dropped one (false) does not. The message and the window editing it must not disagree here.
+	 */
+	isGallery(files: ImModelFile[]): boolean
+	{
+		const galleryTypes: Set<string> = new Set([FileType.image, FileType.video]);
+		const isMediaOnly: boolean = files.every((file: ImModelFile) => galleryTypes.has(file.type));
+		const hasPreviewSize: boolean = files.some((file: ImModelFile) => file.image !== false);
+
+		return isMediaOnly && hasPreviewSize;
+	},
+
 	getBase64(file: File): Promise<string>
 	{
 		const reader = new FileReader();

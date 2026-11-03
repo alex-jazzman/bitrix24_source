@@ -46,7 +46,7 @@ if (Loader::includeModule('crm'))
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_BP_GPR_NAME_2'),
 	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPR_DESC_2'),
-	'TYPE' => ['activity', 'robot_activity'],
+	'TYPE' => ['activity', 'robot_activity', 'node_action'],
 	'CLASS' => 'CrmGetProductRowActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
@@ -68,6 +68,9 @@ $arActivityDescription = [
 		'GROUP' => ['delivery', 'goods'],
 		'SORT' => 600,
 		'IS_SUPPORTING_ROBOT' => true,
+	],
+	'NODE_ACTION_SETTINGS' => [
+		'HANDLES_DOCUMENT' => true,
 	],
 ];
 

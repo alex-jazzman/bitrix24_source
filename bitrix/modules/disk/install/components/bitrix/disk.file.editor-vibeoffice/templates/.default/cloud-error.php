@@ -8,7 +8,6 @@
 /** @var BaseComponent $component */
 
 use Bitrix\Disk\Internals\BaseComponent;
-use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
@@ -27,19 +26,24 @@ Extension::load([
 $containerId = 'cloud-error-' . $this->randString();
 $headerText = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_HEADER_MODE_VIEW');
 
-$headerLogoClass = '';
-if (Context::getCurrent()->getLanguage() !== 'ru')
-{
-	$headerLogoClass = 'disk-fe-office-header-logo--eng';
-}
-
 $title = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_CLOUD_ERROR_COMMON_TITLE');
 $description = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_CLOUD_ERROR_COMMON_DESCR');
+$failureKind = $arResult['OPEN_FAILURE_KIND'] ?? null;
+if ($failureKind === 'save_refused')
+{
+	$title = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_SAVE_REFUSED_TITLE');
+	$description = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_SAVE_REFUSED_DESCR');
+}
+elseif ($failureKind === 'open_operation_expired')
+{
+	$title = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_OPEN_EXPIRED_TITLE');
+	$description = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_OPEN_EXPIRED_DESCR');
+}
+$reason = $arResult['SAVE_REFUSAL_REASON'] ?? null;
 ?>
 <div data-id="<?= $containerId ?>-wrapper">
 	<div class="disk-fe-office-header">
 		<div class="disk-fe-office-header-left">
-			<a href="<?= $arResult['HEADER_LOGO_LINK'] ?? '' ?>" class="disk-fe-office-header-logo <?= $headerLogoClass ?>" target="_blank"></a>
 			<div class="disk-fe-office-header-mode">
 				<span class="disk-fe-office-header-mode-text"><?= $headerText ?></span>
 			</div>
@@ -53,6 +57,16 @@ $description = Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_CLOUD_ERROR_COMMON_D
 		>
 			<div class="disk-fe-vo-cloud-error-title"><?= $title ?></div>
 			<div class="disk-fe-vo-cloud-error-desc"><?= $description ?></div>
+			<?php if ($failureKind === 'save_refused' && is_string($reason) && $reason !== ''): ?>
+				<div class="disk-fe-vo-cloud-error-desc">
+					<?= Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_SAVE_REFUSED_REASON') ?>:
+					<?= htmlspecialcharsbx($reason) ?>
+				</div>
+			<?php elseif ($failureKind === 'open_operation_expired' && isset($arResult['OPEN_RETRY_URL'])): ?>
+				<a href="<?= htmlspecialcharsbx($arResult['OPEN_RETRY_URL']) ?>" data-testid="disk-vibeoffice-open-again">
+					<?= Loc::getMessage('DISK_FILE_EDITOR_VIBEOFFICE_OPEN_EXPIRED_RETRY') ?>
+				</a>
+			<?php endif; ?>
 		</div>
 	</div>
 </div>

@@ -1,8 +1,10 @@
+import { type ComponentOptions } from 'ui.vue3';
 import { Loc } from 'main.core';
 
-import { baseBlocks } from '../configs/base';
+import { type SidebarMainPanelBlockType } from 'im.v2.const';
+import { type BaseMenu } from 'im.v2.lib.menu';
 
-import type { SidebarMainPanelBlockType } from 'im.v2.const';
+import { baseBlocks } from '../configs/base';
 
 type SidebarPresetOptions = {
 	blocks: SidebarMainPanelBlockType[],
@@ -12,6 +14,9 @@ type SidebarPresetOptions = {
 	isHeaderMenuEnabled?: () => boolean,
 	areSharedChatsEnabled?: () => boolean,
 	isAutoDeleteEnabled?: () => boolean,
+	getHeaderMenu?: () => ?typeof BaseMenu,
+	getMembersMenu?: () => ?typeof BaseMenu,
+	getCustomBlocks?: () => ComponentOptions[],
 };
 
 export class SidebarPreset
@@ -38,6 +43,9 @@ export class SidebarPreset
 			areChatMembersEnabled: () => true,
 			isAutoDeleteEnabled: () => true,
 			getCustomDescription: () => '',
+			getHeaderMenu: () => null,
+			getMembersMenu: () => null,
+			getCustomBlocks: () => [],
 		};
 	}
 }

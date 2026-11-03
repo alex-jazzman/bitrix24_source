@@ -7,3 +7,4 @@ $MESS["BPTA2_DESCR_IS_DELETED"] = "Task has been deleted";
 $MESS["BPTA2_DESCR_NAME"] = "Task";
 $MESS["BPTA2_DESCR_NAME_1"] = "Create task";
 $MESS["BPTA2_DESCR_TASKID"] = "Task ID";
+$MESS["TASKS_ACTIVITY_OBJECT_TASK"] = "Task";

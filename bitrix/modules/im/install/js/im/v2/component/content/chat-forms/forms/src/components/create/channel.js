@@ -9,13 +9,14 @@ import {
 	ButtonPanel,
 	TextareaInput,
 	CreateChatHeading,
+	FieldRow,
 	RightsSection,
-	AppearanceSection,
 	PrivacySection,
 } from 'im.v2.component.content.chat-forms.elements';
 import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
 import { PopupType, ChatType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, type SelectorEntityItem } from 'im.v2.const';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatService } from 'im.v2.provider.service.chat';
 
@@ -29,11 +30,11 @@ export const ChannelCreation = {
 		ChatAvatar,
 		ChatMembersSelector,
 		RightsSection,
-		AppearanceSection,
 		PrivacySection,
 		ButtonPanel,
 		TextareaInput,
 		CreateChatHeading,
+		FieldRow,
 	},
 	data(): JsonObject
 	{
@@ -61,6 +62,18 @@ export const ChannelCreation = {
 	{
 		ChatType: () => ChatType,
 		EmptyAvatarType: () => EmptyAvatarType,
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		descriptionLabel(): string
+		{
+			return this.loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE');
+		},
+		descriptionPlaceholder(): string
+		{
+			return this.loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3');
+		},
 	},
 	watch:
 	{
@@ -224,8 +237,15 @@ export const ChannelCreation = {
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
+	// In the air branch the caption of the description belongs to FieldRow, so the heading above the
+	// field is gone; BInput inside TextareaInput keeps its control private, so the field is named by
+	// the same text through ariaLabel. The container of the row owns the vertical rhythm in both branches.
 	template: `
-		<div class="bx-im-content-chat-forms__content --channel" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --channel"
+			data-testid="im-chat-form-create-channel"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar 
 					:avatarFile="avatarFile" 
@@ -235,11 +255,20 @@ export const ChannelCreation = {
 				/>
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2')" />
 			</div>
-			<CreateChatHeading :text="loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE')" />
+			<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 			<div class="bx-im-content-chat-forms__description_container">
+				<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+					<TextareaInput
+						:ariaLabel="descriptionLabel"
+						:value="settings.description"
+						:placeholder="descriptionPlaceholder"
+						@input="onDescriptionChange"
+					/>
+				</FieldRow>
 				<TextareaInput
+					v-else
 					:value="settings.description"
-					:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3')"
+					:placeholder="descriptionPlaceholder"
 					:border="false"
 					@input="onDescriptionChange"
 				/>
@@ -256,6 +285,7 @@ export const ChannelCreation = {
 				<ChatMembersSelector 
 					:chatMembers="chatMembers"
 					:undeselectedItems="undeselectedItems"
+					:chatType="ChatType.channel"
 					:allowTeamsSelect="true"
 					@membersChange="onMembersChange"
 				/>

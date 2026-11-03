@@ -1,4 +1,4 @@
-import { Event, Loc, Tag, Text, Type } from 'main.core';
+import { Loc, Tag, Text, Type } from 'main.core';
 import { TileWidget } from 'ui.uploader.tile-widget';
 import { FileOrigin } from 'ui.uploader.core';
 
@@ -167,18 +167,11 @@ export class GalleryField
 		dropLabelNode.innerHTML = Text.encode(message)
 			.replace(
 				'#LINK_START#',
-				'<a href="#" class="dashboard-gallery-upload-link">'
+				'<span class="dashboard-gallery-upload-link" '
+					+ 'data-testid="biconnector-dashboard-gallery-upload-link">',
 			)
-			.replace('#LINK_END#', '</a>')
+			.replace('#LINK_END#', '</span>')
 		;
-
-		const linkNode = dropLabelNode.querySelector('.dashboard-gallery-upload-link');
-		if (Type.isDomNode(linkNode))
-		{
-			Event.bind(linkNode, 'click', (event) => {
-				event.preventDefault();
-			});
-		}
 	}
 
 	#resolveImageId(file: mixed): ?number

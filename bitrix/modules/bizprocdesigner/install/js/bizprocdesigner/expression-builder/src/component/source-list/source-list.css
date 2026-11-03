@@ -1,0 +1,99 @@
+/* Fills the mode body given by the parent. No floor of its own: it is the scroll below that both
+   sets the height the list asks for and keeps it from being squeezed away. */
+.bizprocdesigner-expression-builder-source-list {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__toolbar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__search {
+	flex: 1 1 auto;
+}
+
+/* The field is type="search" for the semantics; hide the engine's own clear button so the
+   look stays the design-system one. */
+.bizprocdesigner-expression-builder-source-list__search input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.bizprocdesigner-expression-builder-source-list__scroll {
+	flex: 1 1 auto;
+	/* The height of the window follows its content, so the list is what has to know its limits.
+	   A row is 50px tall (two lines of text and the insets around them, see __item below) and a
+	   row without a subtitle 33px: the list opens at four rows at most and keeps two of them
+	   whatever happens to the window, which is what stops the mode body from being squeezed away.
+	   Both limits are on the scrolling box itself: a shrinking box has no minimum height of its
+	   own, and the rows past the ceiling scroll here rather than grow the window. */
+	min-height: 100px;
+	max-height: 200px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	overflow-y: auto;
+}
+
+.bizprocdesigner-expression-builder-source-list__hint {
+	color: var(--ui-color-base-3);
+	padding: var(--ui-space-inset-xs);
+}
+
+/* A load failure, as opposed to an empty list: told apart by colour as well as by wording. */
+.bizprocdesigner-expression-builder-source-list__hint.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-expression-builder-source-list__section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__section-title {
+	color: var(--ui-color-base-4);
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs) 0;
+}
+
+/* Native button reset: the row is a button, its own look comes from the rules below. */
+.bizprocdesigner-expression-builder-source-list__item {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-3xs);
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs);
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder-source-list__item:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder-source-list__item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.bizprocdesigner-expression-builder-source-list__item-title {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-expression-builder-source-list__item-subtitle {
+	color: var(--ui-color-base-3);
+	word-break: break-word;
+}

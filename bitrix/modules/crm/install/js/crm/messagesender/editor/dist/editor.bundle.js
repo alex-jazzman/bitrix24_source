@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
-(function (exports, messageservice_message_editor, crm_integration_analytics, main_core, main_core_events, ui_entitySelector, ui_iconSet_api_vue) {
+(function (exports, messageservice_message_editor, main_core, main_core_events, crm_integration_analytics, ui_entitySelector, ui_iconSet_api_vue) {
 	'use strict';
 
 	/**
@@ -48,13 +48,50 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 							item: selectedItem
 						} = event.getData();
 						const displayText = selectedItem.getCustomData().get('text');
-						ctx.insertPlaceholder(selectedItem.getId(), displayText);
+						ctx.insertPlaceholder(selectedItem.getId(), displayText, {
+							customData: this.#buildOriginAttrs(selectedItem)
+						});
 						ctx.trackAction('crmValue');
 						selectedItem.deselect();
 					}
 				}
 			});
 			this.#dialog.show();
+		}
+
+		/**
+		 * Stamp the placeholder origin onto its BBCode attributes so the zone can
+		 * later decide keep/remove on template insert. The platform carries these
+		 * opaquely; only the zone subscriber interprets them.
+		 *
+		 * `entityTypeId`/`categoryId` are the current picker context. `isUf` marks a
+		 * user field, and `categoryDependent` marks a user field whose visibility is
+		 * scoped to a category (Contact/Company) — only those need a category match
+		 * on top of the entity-type match. Boolean flags are stamped as `'true'` /
+		 * `'false'` (read back with `Text.toBoolean`); BBCode attributes are strings.
+		 */
+		#buildOriginAttrs(selectedItem) {
+			const {
+				entityTypeId,
+				categoryId
+			} = this.getCustomData().placeholdersOptions ?? {};
+			const itemData = selectedItem.getCustomData();
+			const isUf = itemData.get('isUf');
+			const categoryDependent = itemData.get('categoryDependent');
+			const attrs = {};
+			if (!main_core.Type.isNil(entityTypeId)) {
+				attrs.entityTypeId = String(entityTypeId);
+			}
+			if (!main_core.Type.isNil(categoryId)) {
+				attrs.categoryId = String(categoryId);
+			}
+			if (!main_core.Type.isNil(isUf)) {
+				attrs.isUf = isUf ? 'true' : 'false';
+			}
+			if (!main_core.Type.isNil(categoryDependent)) {
+				attrs.categoryDependent = categoryDependent ? 'true' : 'false';
+			}
+			return attrs;
 		}
 		destroy() {
 			this.#dialog?.destroy();
@@ -580,6 +617,8 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 	}
 
 	const SIMPLY_PROXIED_EVENTS = ['onSendSuccess', 'onCancel', 'onChannelChange', 'onFromChange', 'onToChange', 'onTemplateChange', 'onStateChange'];
+	const PAYMENT_SCENE_ID = 'crm.payment.details';
+	const SALESCENTER_PAYMENT_LINK_ATTR = 'salescenterPaymentLink';
 	/**
 	 * @memberOf BX.Crm.MessageSender
 	 *
@@ -627,6 +666,19 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 					body: this.#locator.getEscapeService().encode(state.message.body, this.#locator.getPlaceholderService().getKnownCodes(state))
 				}
 			};
+		}
+
+		/**
+		 * Notify the editor that a real send attempt has started. Host scenes that
+		 * drive sending themselves (e.g. payment) call this in their send-attempt
+		 * point instead of using the editor footer. It does not emit `onSend`.
+		 * No-op until the editor is rendered.
+		 */
+		handleSendAttempt() {
+			// handleSendAttempt() comes from a newer messageservice bundle.
+			if (main_core.Type.isFunction(this.#innerEditor?.handleSendAttempt)) {
+				this.#innerEditor.handleSendAttempt();
+			}
 		}
 
 		/**
@@ -714,10 +766,58 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 		}
 		#getEvents() {
 			const events = {
+				...this.#getTemplateEvents(),
 				onBeforeRender: async () => {
 					await this.#load();
 					this.#innerEditor.setOptions(this.#mapOptions());
 				},
+				onSend: () => {
+					return this.#locator.getSendService().sendMessage(this.getState());
+				},
+				onMessageBodyChange: event => {
+					const {
+						body,
+						oldBody
+					} = event.getData();
+					const escape = this.#locator.getEscapeService();
+					const knownCodes = this.#locator.getPlaceholderService().getKnownCodes(this.#innerEditor.getState());
+					this.emit('onMessageBodyChange', {
+						body: escape.encode(body ?? '', knownCodes),
+						oldBody: escape.encode(oldBody ?? '', knownCodes)
+					});
+				},
+				onBeforeAddChannelOpen: event => {
+					event.preventDefault();
+					void main_core.Runtime.loadExtension('crm.router').then(({
+						Router
+					}) => {
+						return Router.Instance.openMessageSenderConnectionsSlider({
+							c_section: this.#options.analytics?.c_section,
+							c_sub_section: this.#options.analytics?.c_sub_section
+						});
+					}).then(() => {
+						void this.reload();
+					});
+				},
+				'CustomTemplate:onFormRequested': event => {
+					this.#handleOpenForm(event.getData());
+				},
+				'CustomTemplate:onListRequested': event => {
+					this.#handleOpenList(event.getData());
+				},
+				onTemplatePlaceholderInsert: event => {
+					this.#handlePlaceholderInsert(event);
+				}
+			};
+			for (const eventName of SIMPLY_PROXIED_EVENTS) {
+				events[eventName] = event => {
+					this.emit(eventName, event.getData());
+				};
+			}
+			return events;
+		}
+		#getTemplateEvents() {
+			return {
 				onLoadPreview: async event => {
 					const handler = await this.#getTemplateEventHandler();
 					const {
@@ -778,42 +878,8 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 							}).then(resolve).catch(reject);
 						});
 					});
-				},
-				onSend: () => {
-					return this.#locator.getSendService().sendMessage(this.getState());
-				},
-				onMessageBodyChange: event => {
-					const {
-						body,
-						oldBody
-					} = event.getData();
-					const escape = this.#locator.getEscapeService();
-					const knownCodes = this.#locator.getPlaceholderService().getKnownCodes(this.#innerEditor.getState());
-					this.emit('onMessageBodyChange', {
-						body: escape.encode(body ?? '', knownCodes),
-						oldBody: escape.encode(oldBody ?? '', knownCodes)
-					});
-				},
-				onBeforeAddChannelOpen: event => {
-					event.preventDefault();
-					void main_core.Runtime.loadExtension('crm.router').then(({
-						Router
-					}) => {
-						return Router.Instance.openMessageSenderConnectionsSlider({
-							c_section: this.#options.analytics?.c_section,
-							c_sub_section: this.#options.analytics?.c_sub_section
-						});
-					}).then(() => {
-						void this.reload();
-					});
 				}
 			};
-			for (const eventName of SIMPLY_PROXIED_EVENTS) {
-				events[eventName] = event => {
-					this.emit(eventName, event.getData());
-				};
-			}
-			return events;
 		}
 		#getTemplateEventHandler() {
 			if (this.#templateEventHandler) {
@@ -825,6 +891,119 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 				});
 				return this.#templateEventHandler;
 			});
+		}
+
+		/**
+		 * Bridge the inner editor's `CustomTemplate:onFormRequested` intent to the
+		 * single canonical form opener exported by `crm.messagesender.custom-template.editor`.
+		 *
+		 * The opener fetches its own editor options through the CRM AJAX endpoint
+		 * `crm.messagesender.editor.loadCustomTemplate` — so we don't have to forward
+		 * channels/providers/layout from this surface.
+		 */
+		#handleOpenForm(payload) {
+			void main_core.Runtime.loadExtension('crm.messagesender.custom-template.editor').then(({
+				openCustomTemplateForm
+			}) => {
+				return openCustomTemplateForm({
+					mode: payload.mode,
+					templateId: payload.templateId,
+					scene: payload.binding.sceneId,
+					targetId: payload.binding.targetId,
+					titleInitial: payload.titleInitial ?? '',
+					bodyInitial: payload.bodyInitial ?? '',
+					bindElement: payload.bindElement ?? null
+				});
+			});
+		}
+		#handleOpenList(payload) {
+			const {
+				sceneId,
+				targetId
+			} = payload.binding;
+			if (!main_core.Type.isStringFilled(sceneId) || !main_core.Type.isStringFilled(targetId)) {
+				return;
+			}
+			void main_core.Runtime.loadExtension('crm.router').then(({
+				Router
+			}) => {
+				const url = `/crm/messagesender/templates/${encodeURIComponent(sceneId)}/${encodeURIComponent(targetId)}/`;
+				return Router.openSlider(url, {
+					allowChangeHistory: false,
+					cacheable: false
+				});
+			});
+		}
+
+		/**
+		 * Per-placeholder insert hook of the inner editor. Decide keep/remove for the
+		 * current recipient by comparing the placeholder origin (stamped at pick time)
+		 * with the current context. Only this editor's own zone is handled; foreign
+		 * zones are left to their own subscribers.
+		 *
+		 * The string `targetId` is never parsed here — only the structural origin
+		 * attributes are read.
+		 */
+		#handlePlaceholderInsert(event) {
+			const {
+				placeholder,
+				existingPlaceholders,
+				binding
+			} = event.getData();
+			if (binding?.zoneId !== this.#options.scene?.templateBinding?.zoneId) {
+				return;
+			}
+			if (this.#shouldRemovePlaceholder(placeholder?.attrs ?? {}, existingPlaceholders ?? [])) {
+				event.preventDefault();
+			}
+		}
+		#shouldRemovePlaceholder(attrs, existingPlaceholders) {
+			if (main_core.Text.toBoolean(attrs[SALESCENTER_PAYMENT_LINK_ATTR])) {
+				if (this.#options.scene?.templateBinding?.sceneId !== PAYMENT_SCENE_ID) {
+					return true;
+				}
+
+				// The payment scene body holds at most one payment link: the link is
+				// non-removable, so a duplicate would be stuck in the message forever.
+				return existingPlaceholders.some(existing => main_core.Text.toBoolean(existing.attrs?.[SALESCENTER_PAYMENT_LINK_ATTR]));
+			}
+
+			// No origin classification (legacy / context-free placeholder) → keep.
+			if (!main_core.Type.isStringFilled(attrs.entityTypeId)) {
+				return false;
+			}
+			const {
+				entityTypeId
+			} = this.#options.context.customData;
+			const entityTypeMatches = attrs.entityTypeId === String(entityTypeId);
+
+			// Base entity field — keep only when the entity type matches.
+			if (!main_core.Text.toBoolean(attrs.isUf)) {
+				return !entityTypeMatches;
+			}
+
+			// User fields whose visibility does not depend on the category (Deal, Lead,
+			// smart processes) are shared across categories — only the entity type must
+			// match.
+			if (!main_core.Text.toBoolean(attrs.categoryDependent)) {
+				return !entityTypeMatches;
+			}
+
+			// Category-governed user fields (Contact, Company) must match both the
+			// entity type and the category of the current recipient.
+			return !(entityTypeMatches && this.#categoryMatches(attrs.categoryId));
+		}
+		#categoryMatches(originCategoryId) {
+			const {
+				categoryId
+			} = this.#options.context.customData;
+			return this.#normalizeCategoryId(originCategoryId) === this.#normalizeCategoryId(categoryId);
+		}
+		#normalizeCategoryId(value) {
+			// A missing category means the default category. The picker stamps the
+			// default as '0' (binding is normalized to `...:0`), while a category-free
+			// CRM context leaves it nil, so both sides collapse to '0' here.
+			return main_core.Type.isStringFilled(value) || main_core.Type.isNumber(value) ? String(value) : '0';
 		}
 		#load() {
 			if (!this.#options.dynamicLoad) {
@@ -923,6 +1102,7 @@ this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {};
 
 	exports.replaceCustomMessagePlaceholders = messageservice_message_editor.replaceCustomMessagePlaceholders;
 	exports.Editor = Editor;
+	exports.EscapeService = EscapeService;
 
-})(this.BX.Crm.MessageSender.Editor = this.BX.Crm.MessageSender.Editor || {}, BX.MessageService.Message.Editor, BX.Crm.Integration.Analytics, BX, BX.Event, BX.UI.EntitySelector, BX.UI.IconSet);
+})(this.BX.Crm.MessageSender.Editor = this.BX.Crm.MessageSender.Editor || {}, BX.MessageService.Message.Editor, BX, BX.Event, BX.Crm.Integration.Analytics, BX.UI.EntitySelector, BX.UI.IconSet);
 //# sourceMappingURL=editor.bundle.js.map

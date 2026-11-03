@@ -23,6 +23,12 @@ export class Click extends Form
 	load(force: boolean = false): Promise
 	{
 		return super.load(force).then(() => {
+			// controls are bound to the wizard on render, so recreate it only together with a re-render
+			if (this.#wizard && !force)
+			{
+				return;
+			}
+
 			this.#wizard = new Wizard(
 				'click',
 				this.formId,

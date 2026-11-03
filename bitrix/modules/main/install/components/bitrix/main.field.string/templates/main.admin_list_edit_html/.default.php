@@ -26,6 +26,7 @@ else
 	?>
 	<textarea
 		<?= $htmlBuilder->buildTagAttributes($arResult['fieldValues']['attrList']) ?>
-	><?= $arResult['additionalParameters']['VALUE'] ?></textarea>
+	>
+<?= $arResult['additionalParameters']['VALUE'] ?></textarea>
 	<?php
 }

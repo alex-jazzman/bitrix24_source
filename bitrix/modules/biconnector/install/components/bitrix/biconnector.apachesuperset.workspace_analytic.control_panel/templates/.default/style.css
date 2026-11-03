@@ -26,6 +26,6 @@
 	text-overflow: ellipsis;
 }
 
-.bitrix24-light-theme .biconnector-external-dataset-title {
-	color: #fff;
+body.ui-page-slider-wrapper {
+	--air-theme-background: var(--ui-color-drawer-bg-default);
 }

@@ -526,13 +526,12 @@ this.BX.Call = this.BX.Call || {};
 		},
 		emits: ['toggleMic', 'toggleCamera', 'decline', 'micSelected', 'cameraSelected'],
 		setup() {
-			// non-reactive DeviceSelector instance, assigned in showDeviceSelector()
+			// non-reactive state of showDeviceSelector(): the selector instance it owns
+			// and the unmount flag that stops it from building one for a dead component
 			return {
-				deviceSelector: null
+				deviceSelector: null,
+				isUnmounted: false
 			};
-		},
-		beforeUnmount() {
-			this.destroyDeviceSelector();
 		},
 		computed: {
 			micContainerClasses() {
@@ -564,6 +563,10 @@ this.BX.Call = this.BX.Call || {};
 				};
 			}
 		},
+		beforeUnmount() {
+			this.isUnmounted = true;
+			this.destroyDeviceSelector();
+		},
 		methods: {
 			onToggleMic() {
 				if (this.micBlocked) {
@@ -589,7 +592,17 @@ this.BX.Call = this.BX.Call || {};
 				const {
 					DeviceSelector
 				} = await main_core.Runtime.loadExtension('call.view');
-				this.deviceSelector = new DeviceSelector({
+
+				// The lobby could have been left while the extension was loading: a popup built now
+				// would belong to a dead component, and nobody would be left to release it
+				if (this.isUnmounted) {
+					return;
+				}
+
+				// A click on the other arrow could have opened its own selector while the extension
+				// was loading, so the field is re-checked after the wait, not only before it
+				this.destroyDeviceSelector();
+				const selector = new DeviceSelector({
 					parentElement: arrowElement,
 					viewElement,
 					microphoneEnabled: this.micEnabled,
@@ -598,37 +611,45 @@ this.BX.Call = this.BX.Call || {};
 					cameraId: BX.Call.Hardware.defaultCamera,
 					switchMicrophoneBlocked: this.micBlocked,
 					switchCameraBlocked: this.cameraBlocked,
-					events: {
-						[DeviceSelector.Events.onMicrophoneSelect]: event => {
-							this.$emit('micSelected', event.data.deviceId);
+					callbacks: {
+						onMicrophoneSelect: deviceId => {
+							this.$emit('micSelected', deviceId);
 						},
-						[DeviceSelector.Events.onCameraSelect]: event => {
-							this.$emit('cameraSelected', event.data.deviceId);
+						onCameraSelect: deviceId => {
+							this.$emit('cameraSelected', deviceId);
 						},
-						[DeviceSelector.Events.onMicrophoneSwitch]: () => {
+						onMicrophoneSwitch: () => {
 							this.$emit('toggleMic');
 						},
-						[DeviceSelector.Events.onCameraSwitch]: () => {
+						onCameraSwitch: () => {
 							this.$emit('toggleCamera');
 						},
-						[DeviceSelector.Events.onDestroy]: () => {
-							this.deviceSelector = null;
+						onDestroy: () => {
+							// Only the instance that still owns the field may clear it
+							if (this.deviceSelector === selector) {
+								this.deviceSelector = null;
+							}
 						}
 					}
 				});
-				this.deviceSelector.show();
+				this.deviceSelector = selector;
+				selector.show();
 			},
 			onMicArrowClick(event) {
 				if (this.micBlocked) {
 					return;
 				}
-				this.showDeviceSelector(event.currentTarget);
+
+				// Nobody awaits the selector, so a failed extension load is reported here
+				this.showDeviceSelector(event.currentTarget).catch(error => console.error(error));
 			},
 			onCameraArrowClick(event) {
 				if (this.cameraBlocked) {
 					return;
 				}
-				this.showDeviceSelector(event.currentTarget);
+
+				// Nobody awaits the selector, so a failed extension load is reported here
+				this.showDeviceSelector(event.currentTarget).catch(error => console.error(error));
 			},
 			onDecline() {
 				this.$emit('decline');

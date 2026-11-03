@@ -50,6 +50,7 @@ $notificationsEnabled = !empty($arResult['NOTIFICATIONS_ENABLED']);
 $hotkeysEnabled = !empty($arResult['HOTKEYS_ENABLED']);
 $sharedTreeEnabled = !empty($arResult['SHARED_TREE_ENABLED']);
 $markdownIoEnabled = !empty($arResult['MARKDOWN_IO_ENABLED']);
+$diskAttachmentsEnabled = !empty($arResult['DISK_ATTACHMENTS_ENABLED']);
 $aiChatEnabled = !empty($arResult['AI_CHAT_ENABLED']);
 $aiChatName = (string)($arResult['AI_CHAT_NAME'] ?? '');
 $theme = ($arResult['THEME'] ?? 'light') === 'dark' ? 'dark' : 'light';
@@ -95,6 +96,7 @@ $APPLICATION->SetTitle(Loc::getMessage('NOTE_EDITOR_TEMPLATE_PAGE_TITLE'));
 			hotkeysEnabled: <?= $hotkeysEnabled ? 'true' : 'false' ?>,
 			sharedTreeEnabled: <?= $sharedTreeEnabled ? 'true' : 'false' ?>,
 			markdownIoEnabled: <?= $markdownIoEnabled ? 'true' : 'false' ?>,
+			diskAttachmentsEnabled: <?= $diskAttachmentsEnabled ? 'true' : 'false' ?>,
 			aiChatEnabled: <?= $aiChatEnabled ? 'true' : 'false' ?>,
 			aiChatName: '<?= CUtil::JSEscape($aiChatName) ?>',
 			theme: '<?= CUtil::JSEscape($theme) ?>',

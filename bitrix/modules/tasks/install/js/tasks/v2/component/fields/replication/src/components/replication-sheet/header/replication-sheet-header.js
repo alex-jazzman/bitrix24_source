@@ -23,12 +23,15 @@ export const ReplicationSheetHeader = {
 	template: `
 		<div class="tasks-field-replication-sheet-header">
 			<HeadlineMd>{{ loc('TASKS_V2_REPLICATION_HISTORY_SHEET') }}</HeadlineMd>
-			<BIcon
+			<button
+				type="button"
 				class="tasks-field-replication-sheet-close"
-				:name="Outline.CROSS_L"
-				hoverable
+				:aria-label="loc('TASKS_V2_REPLICATION_HISTORY_CLOSE_ARIA_LABEL')"
+				data-testid="tasks-replication-history-close-btn"
 				@click="$emit('close')"
-			/>
+			>
+				<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+			</button>
 		</div>
 	`,
 };

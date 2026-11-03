@@ -69,6 +69,7 @@ export default class StoreAvailablePopup
 					forceBindPosition: true
 				},
 				closeByEsc: true,
+				ariaLabel: Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_ARIA') ?? undefined,
 				// Passing an object opts the popup's focus trap in regardless of the global
 				// AccessibilitySettings flag: initialFocus true moves focus to the first tabbable
 				// (the reserves link) or falls back to the container, and deactivate() on close

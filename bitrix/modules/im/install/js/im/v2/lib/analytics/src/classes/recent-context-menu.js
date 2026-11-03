@@ -1,10 +1,14 @@
+import { type JsonObject } from 'main.core';
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
 
 import { AnalyticsEvent, AnalyticsSubSection, AnalyticsTool, AnalyticsCategory } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
+import { getFolderSection } from '../helpers/get-folder-section';
+import { getProjectId } from '../helpers/get-collab-id';
+import { getLayoutName } from '../helpers/get-layout-name';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { ExtendedChatType } from '../helpers/get-chat-type';
@@ -17,7 +21,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.seeLater,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -31,7 +35,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.pinChat,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -45,7 +49,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.unpinChat,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -59,7 +63,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.openProfile,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -73,7 +77,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.findCommonChats,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -87,7 +91,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.mute,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -101,7 +105,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.unmute,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -115,7 +119,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.hideChat,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -129,7 +133,7 @@ export class RecentContextMenu
 			event: AnalyticsEvent.readAll,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
@@ -143,10 +147,12 @@ export class RecentContextMenu
 			event: AnalyticsEvent.leave,
 			tool: AnalyticsTool.im,
 			category: this.#getChatCategory(dialogId),
-			c_section: `${this.#getLayout()}_tab`,
+			c_section: this.#getSection(),
 			c_sub_section: AnalyticsSubSection.recentContextMenu,
 			p1: `chatType_${this.#getChatType(dialogId)}`,
 		};
+
+		this.#appendProjectId(params, dialogId);
 
 		sendData(params);
 	}
@@ -155,7 +161,22 @@ export class RecentContextMenu
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
-		return getCategoryByChatType(chat.type);
+		return getCategoryByChat(chat);
+	}
+
+	#appendProjectId(params: JsonObject, dialogId: string): void
+	{
+		if (params.category !== AnalyticsCategory.collab)
+		{
+			return;
+		}
+
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		const projectId = getProjectId(chat);
+		if (projectId)
+		{
+			params.p4 = projectId;
+		}
 	}
 
 	#getChatType(dialogId: string): ExtendedChatType
@@ -167,6 +188,11 @@ export class RecentContextMenu
 
 	#getLayout(): string
 	{
-		return Core.getStore().getters['application/getLayout'].name;
+		return getLayoutName(Core.getStore().getters['application/getLayout'].name);
+	}
+
+	#getSection(): string
+	{
+		return getFolderSection(this.#getLayout());
 	}
 }

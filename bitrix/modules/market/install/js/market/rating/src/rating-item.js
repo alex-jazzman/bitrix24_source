@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { Stars } from './stars';
 
 export const RatingItem = {
@@ -17,10 +18,20 @@ export const RatingItem = {
 			return (false) ? 'ui-ears-active' : '';
 		},
 		getReviewText: function () {
-			return (this.review.REVIEW_TEXT_SHORT) ? this.review.REVIEW_TEXT_SHORT + '...' : this.review.REVIEW_TEXT_FULL;
+			const text = (this.review.REVIEW_TEXT_SHORT)
+				? this.review.REVIEW_TEXT_SHORT + '...'
+				: this.review.REVIEW_TEXT_FULL
+			;
+
+			return Text.decode(text.replace(/&#039;/g, '&#39;'));
 		},
 		getAnswerText: function () {
-			return (this.review.REVIEW_ANSWER_TEXT_SHORT) ? this.review.REVIEW_ANSWER_TEXT_SHORT + '...' : this.review.REVIEW_ANSWER_TEXT_FULL;
+			const text = (this.review.REVIEW_ANSWER_TEXT_SHORT)
+				? this.review.REVIEW_ANSWER_TEXT_SHORT + '...'
+				: this.review.REVIEW_ANSWER_TEXT_FULL
+			;
+
+			return Text.decode(text.replace(/&#039;/g, '&#39;'));
 		},
 	},
 	mounted() {

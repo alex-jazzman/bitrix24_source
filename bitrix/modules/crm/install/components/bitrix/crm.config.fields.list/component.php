@@ -1,20 +1,34 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+$arResult['ENTITY_ID'] = $isSettingsHub
+	? ($arParams['FIELS_ENTITY_ID'] ?? '')
+	: ($_REQUEST['entity_id'] ?? $arParams['FIELS_ENTITY_ID']);
+
 $CrmPerms = new CCrmPerms($USER->GetID());
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+$configuration = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->configuration();
+$configurationScope = ConfigurationScope::ofUserFieldEntityId(
+	is_string($arResult['ENTITY_ID']) ? $arResult['ENTITY_ID'] : ''
+);
+$canManageFields = $configuration->canManageFields(ConfigurationCallSite::FieldsListComponent, $configurationScope);
+$canDeleteFields = $configuration->canDeleteFields(ConfigurationCallSite::FieldsListComponent, $configurationScope);
+// The list itself is the read of both operations; every button and every write action below asks for
+// the one operation it performs.
+if (!$canManageFields && !$canDeleteFields)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-
-$arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? $_REQUEST['entity_id']: $arParams['FIELS_ENTITY_ID'];
 
 global $USER_FIELD_MANAGER;
 
@@ -51,18 +65,35 @@ if(
 	&& isset($_POST['action_button_'.$arResult['GRID_ID']])
 )
 {
+	$actionButton = $_POST['action_button_'.$arResult['GRID_ID']];
+	// Every branch below keeps the check of its own operation; skipped for the lack of the right, it would
+	// fall through to the redirect at the end of the block and the refusal would look like a reload.
+	if(($actionButton === 'delete' && !$canDeleteFields) || ($actionButton === 'edit' && !$canManageFields))
+	{
+		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+		return;
+	}
 
-
-	if($_POST['action_button_'.$arResult['GRID_ID']] == 'delete' && isset($_POST['ID']) && is_array($_POST['ID']))
+	if($canDeleteFields && $actionButton == 'delete' && isset($_POST['ID']) && is_array($_POST['ID']))
 	{
 		foreach($_POST['ID'] as $ID)
+		{
+			// The right was asked about the contour of this entity, so only a field of it may be written
+			// here: CCrmFields holds the fields of the entity alone, and the sink checks nothing. A direct
+			// POST naming a field of another entity is refused.
+			if(!$CCrmFields->GetByID($ID))
+			{
+				continue;
+			}
+
 			$CCrmFields->DeleteField($ID);
+		}
 
 		//Clear components cache
 		$CACHE_MANAGER->ClearByTag('crm_fields_list_'.$arResult['ENTITY_ID']);
 	}
 
-	if($_POST['action_button_'.$arResult['GRID_ID']] == 'edit' && isset($_POST['FIELDS']) && is_array($_POST['FIELDS']))
+	if($canManageFields && $actionButton == 'edit' && isset($_POST['FIELDS']) && is_array($_POST['FIELDS']))
 	{
 		$gridID = CCrmGridOptions::GetDefaultGrigID(
 			CCrmOwnerType::ResolveIDByUFEntityID($arResult['ENTITY_ID'])
@@ -71,6 +102,13 @@ if(
 		foreach($_POST['FIELDS'] as $ID => &$arPostField)
 		{
 			$arPresetField = $CCrmFields->GetByID($ID);
+			// A field the entity of this list does not own is outside the contour the right was asked
+			// about, the same refusal as in the deletion above.
+			if(!$arPresetField)
+			{
+				continue;
+			}
+
 			$arField = array();
 			//Sanitaizing
 			foreach($arPostField as $k => $v)
@@ -112,8 +150,7 @@ if(
 	}
 
 	$actionAllRows = ($_POST['action_all_rows_' . $arResult['GRID_ID']] ?? null);
-	$actionButton = ($_POST['action_button_'.$arResult['GRID_ID']] ?? null);
-	if ($actionAllRows === 'Y' && $actionButton === 'delete')
+	if ($canDeleteFields && $actionAllRows === 'Y' && $actionButton === 'delete')
 	{
 		$arFields = $CCrmFields->GetFields();
 		foreach ($arFields as $field)
@@ -126,10 +163,14 @@ if(
 	}
 
 	if(!isset($_POST['AJAX_CALL']))
-		LocalRedirect($arResult['FIELDS_LIST_URL']);
+	{
+		LocalRedirect($isSettingsHub ? $arResult['~FIELDS_LIST_URL'] : $arResult['FIELDS_LIST_URL']);
+	}
 }
 
-if($this->StartResultCache(true))
+// The rendered entity comes from the request and not only from the component parameters, and the row
+// buttons below depend on the rights - both belong to the cache key.
+if($this->StartResultCache(true, array($arResult['ENTITY_ID'], $canManageFields, $canDeleteFields)))
 {
 	$CACHE_MANAGER->StartTagCache($this->GetCachePath());
 	$CACHE_MANAGER->RegisterTag('crm_fields_list_'.$arResult['ENTITY_ID']);
@@ -176,26 +217,40 @@ if($this->StartResultCache(true))
 		$aCols = [
 			'TYPE' => $data['USER_TYPE']['DESCRIPTION'],
 			'MANDATORY' => $data['USER_TYPE']['DESCRIPTION'],
-			'TITLE' => '<a target="_self" href="'.$data["FIELD_EDIT_URL"].'">'
+			'TITLE' => '<a target="_self"'
+				. ' data-testid="crm-config-fields-list-edit-link-' . (int)$data['ID'] . '"'
+				. ($isSettingsHub ? ' data-slider-ignore-autobinding="true"' : '')
+				. ' href="' . $data["FIELD_EDIT_URL"] . '">'
 				. ($data["TITLE"])
 				. '</a>'
 		];
 
-		$aActions = array(
-			array(
+		$aActions = array();
+		if($canManageFields)
+		{
+			$aActions[] = array(
 				'ICONCLASS' => 'edit',
 				'TEXT' => GetMessage('CRM_FIELDS_LIST_ACTION_MENU_EDIT'),
-				'ONCLICK' => "jsUtils.Redirect(arguments, '".CUtil::JSEscape($data["~FIELD_EDIT_URL"])."')",
+				'ONCLICK' => $isSettingsHub
+					? "window.location.href = '" . CUtil::JSEscape($data['~FIELD_EDIT_URL']) . "';"
+					: "jsUtils.Redirect(arguments, '" . CUtil::JSEscape($data["~FIELD_EDIT_URL"]) . "')",
 				'DEFAULT' => true,
-			),
-		);
+			);
+		}
 
-		$aActions[] = array('SEPARATOR' => true);
-		$aActions[] = array(
-			'ICONCLASS' => 'delete',
-			'TEXT' => GetMessage('CRM_FIELDS_LIST_ACTION_MENU_DELETE'),
-			'ONCLICK' => "bxGrid_".$arResult["GRID_ID"].".DeleteItem('".$arField["ID"]."', '".GetMessage("CRM_FIELDS_LIST_ACTION_MENU_DELETE_CONF")."')",
-		);
+		if($canDeleteFields)
+		{
+			if(!empty($aActions))
+			{
+				$aActions[] = array('SEPARATOR' => true);
+			}
+
+			$aActions[] = array(
+				'ICONCLASS' => 'delete',
+				'TEXT' => GetMessage('CRM_FIELDS_LIST_ACTION_MENU_DELETE'),
+				'ONCLICK' => "bxGrid_".$arResult["GRID_ID"].".DeleteItem('".$arField["ID"]."', '".GetMessage("CRM_FIELDS_LIST_ACTION_MENU_DELETE_CONF")."')",
+			);
+		}
 
 		$aEditable = array();
 
@@ -211,6 +266,11 @@ if($this->StartResultCache(true))
 	$CACHE_MANAGER->EndTagCache();
 	$this->EndResultCache();
 }
+
+// The toolbar and the group actions of the template are built on every request, so the rights are put
+// into the result after the cache block - a cached result would answer for the rights it was built with.
+$arResult['CAN_MANAGE_FIELDS'] = $canManageFields;
+$arResult['CAN_DELETE_FIELDS'] = $canDeleteFields;
 
 $this->IncludeComponentTemplate();
 

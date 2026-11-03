@@ -4,6 +4,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+$isLinesOperator = false;
+
+if (\Bitrix\Main\Loader::includeModule('im'))
+{
+	$isLinesOperator = \Bitrix\Im\Integration\Imopenlines\User::isOperator();
+}
+
 return [
 	'css' => 'dist/messenger.bundle.css',
 	'js' => 'dist/messenger.bundle.js',
@@ -20,6 +27,7 @@ return [
 		'im.v2.component.content.openlinesV2',
 		'im.v2.component.content.settings',
 		'im.v2.component.desktop.mode-selection-banner',
+		'im.v2.component.elements.popup',
 		'im.v2.component.list.container.ai-assistant',
 		'im.v2.component.list.container.channel',
 		'im.v2.component.list.container.collab',
@@ -27,11 +35,14 @@ return [
 		'im.v2.component.list.container.openline',
 		'im.v2.component.list.container.recent',
 		'im.v2.component.list.container.task',
+		'im.v2.component.list.container.vibecode-app',
 		'im.v2.component.list.navigator',
+		'im.v2.component.player-bar',
 		'im.v2.const',
 		'im.v2.css.classes',
 		'im.v2.css.icons',
 		'im.v2.css.tokens',
+		'im.v2.lib.a11y',
 		'im.v2.lib.analytics',
 		'im.v2.lib.bulk-actions',
 		'im.v2.lib.counter',
@@ -44,24 +55,34 @@ return [
 		'im.v2.lib.layout',
 		'im.v2.lib.logger',
 		'im.v2.lib.menu',
+		'im.v2.lib.notifier',
 		'im.v2.lib.page-context',
 		'im.v2.lib.promo',
+		'im.v2.lib.slider',
 		'im.v2.lib.theme',
 		'im.v2.provider.service.folder',
 		'main.core',
 		'main.core.events',
+		'main.popup',
 		'main.sidepanel',
 		'planner',
+		'ui.a11y',
+		'ui.cnt',
 		'ui.design-tokens',
 		'ui.fontawesome4',
 		'ui.fonts.opensans',
+		'ui.icon-set.api.core',
 		'ui.icon-set.api.vue',
-		'ui.sidepanel.layout',
+		'ui.icon-set.solid',
+		'ui.system.highlighter',
 		'ui.system.menu',
+		'ui.system.typography.vue',
+		'ui.vue3',
 		'ui.vue3.components.button',
+		'ui.vue3.components.counter',
 	],
 	'skip_core' => false,
 	'settings' => [
-		'isLinesOperator' => \Bitrix\Im\Integration\Imopenlines\User::isOperator(),
+		'isLinesOperator' => $isLinesOperator,
 	]
 ];

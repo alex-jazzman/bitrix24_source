@@ -1,32 +1,101 @@
-.bizprocdesigner-version-history
+.bizprocdesigner-history__tabs
 {
-	min-height: 120px;
-	max-height: 420px;
+	position: relative;
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* Under the tab strip, behind the underline of the selected tab: the tabs read as a strip over the
+   panel instead of floating above it. Scoped to this window - the tab component has other users. */
+.bizprocdesigner-history__tabs::after
+{
+	content: '';
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+	height: 1px;
+	background: var(--ui-color-divider-less);
+}
+
+/* One height for both tabs: the popup is centered once, when it is shown, and never re-centered,
+   so switching tabs must not resize it and a growing feed must not push the footer off screen. */
+.bizprocdesigner-history__panel
+{
+	height: min(420px, 50vh);
+}
+
+.bizprocdesigner-version-history,
+.bizprocdesigner-change-history
+{
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 	overflow-y: auto;
 }
 
-.bizprocdesigner-version-history__skeleton
+.bizprocdesigner-version-history__skeleton,
+.bizprocdesigner-change-history__skeleton
 {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding-top: 8px;
+	gap: var(--ui-space-stack-sm);
+	padding-top: var(--ui-space-inset-xs);
 }
 
-.bizprocdesigner-version-history__error
+.bizprocdesigner-version-history__error,
+.bizprocdesigner-change-history__error
 {
-	display: block;
-	padding: 24px 0;
-	color: var(--ui-color-text-alert);
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex-shrink: 0;
+	padding: var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-alert);
+	background: var(--ui-color-accent-soft-red-3);
+	border-radius: var(--ui-border-radius-md);
 }
 
-.bizprocdesigner-version-history__empty
+/* Pinned to the top of the feed: a refresh may fail while the person is anywhere in the list. */
+.bizprocdesigner-change-history__error
+{
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
+.bizprocdesigner-version-history__error-icon,
+.bizprocdesigner-change-history__error-icon
+{
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-version-history__error-text,
+.bizprocdesigner-change-history__error-text
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-version-history__empty,
+.bizprocdesigner-change-history__empty
 {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	padding: 32px 0;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	margin: auto;
+	padding: var(--ui-space-inset-xl) 0;
 	color: var(--ui-color-text-secondary);
+}
+
+.bizprocdesigner-version-history__empty-icon,
+.bizprocdesigner-change-history__empty-icon
+{
+	margin-bottom: var(--ui-space-stack-2xs);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .bizprocdesigner-version-history__table
@@ -38,7 +107,7 @@
 .bizprocdesigner-version-history__table th,
 .bizprocdesigner-version-history__table td
 {
-	padding: 10px 12px 10px 0;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm) var(--ui-space-inset-xs) 0;
 	text-align: start;
 	vertical-align: middle;
 	border-bottom: 1px solid var(--ui-color-divider-less);
@@ -51,7 +120,12 @@
 
 .bizprocdesigner-version-history__table thead th
 {
-	color: var(--ui-color-text-secondary);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	padding-top: 0;
+	color: var(--ui-color-base-4);
+	background: var(--ui-color-bg-content, var(--ui-color-bg-content-primary));
 	border-bottom-color: var(--ui-color-divider-default);
 }
 
@@ -62,14 +136,25 @@
 	padding-right: 0;
 }
 
-/* Auto layout keeps a column at least as wide as its content, and a truncated cell never
-   wraps: without this cap it widens the table instead of showing an ellipsis. */
+.bizprocdesigner-version-history__table tbody tr
+{
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-version-history__table tbody tr:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Auto layout keeps a column at least as wide as its content: without this cap a long value
+   widens the table instead of wrapping inside its cell. */
 .bizprocdesigner-version-history__table tbody td:not(:last-child)
 {
 	max-width: 0;
 }
 
-.bizprocdesigner-version-history__table tbody tr:last-child td
+.bizprocdesigner-version-history__table tbody tr:last-child td,
+.bizprocdesigner-version-history__table tbody tr:last-child th
 {
 	border-bottom: none;
 }
@@ -78,7 +163,7 @@
 {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--ui-space-inline-2xs);
 	min-width: max-content;
 }
 
@@ -86,7 +171,206 @@
 {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: var(--ui-space-inline-2xs);
 	justify-content: flex-end;
 	min-width: max-content;
+}
+
+.bizprocdesigner-change-history__feed
+{
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* The header of a day and an author: everything under it up to the next header was written by that
+   person on that day. */
+.bizprocdesigner-change-history__group-header
+{
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs) var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-xs);
+	padding-bottom: var(--ui-space-stack-2xs);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-change-history__group-header:first-child
+{
+	margin-top: 0;
+}
+
+/* One change of the template, with the time it was written at. */
+.bizprocdesigner-change-history__change
+{
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-xs);
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-change-history__change:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* What was done to the template, told by a colour before the line is read. */
+.bizprocdesigner-change-history__change-mark
+{
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	margin-bottom: 2px;
+	background: var(--ui-color-base-4);
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.bizprocdesigner-change-history__change-mark.--added
+{
+	background: var(--ui-color-accent-main-success);
+}
+
+.bizprocdesigner-change-history__change-mark.--removed
+{
+	background: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-change-history__change-mark.--updated
+{
+	background: var(--ui-color-accent-main-primary);
+}
+
+.bizprocdesigner-change-history__change-mark.--moved
+{
+	background: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-change-history__change-text
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-change-history__change-time,
+.bizprocdesigner-change-history__event-time
+{
+	flex-shrink: 0;
+	color: var(--ui-color-base-4);
+}
+
+/* The tail of a session: what is left of it to show, or the way back to the preview. */
+.bizprocdesigner-change-history__expander
+{
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+}
+
+/* Two columns: the mark of the event type and everything the event says. */
+.bizprocdesigner-change-history__event
+{
+	display: grid;
+	grid-template-columns: 28px minmax(0, 1fr);
+	gap: 0 var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xs) var(--ui-space-inset-2xs) 0;
+}
+
+.bizprocdesigner-change-history__badge
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	background: var(--ui-color-accent-soft-grey-1);
+	border-radius: var(--ui-border-radius-circle);
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-change-history__badge.--publication
+{
+	background: var(--ui-color-accent-soft-blue-2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bizprocdesigner-change-history__badge.--creation
+{
+	background: var(--ui-color-accent-soft-green-2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-soft-element-green);
+}
+
+.bizprocdesigner-change-history__head
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 28px;
+	min-width: 0;
+}
+
+/* The title takes the free width, so the chips and the times of the feed line up in columns of their own. */
+.bizprocdesigner-change-history__title
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-change-history__toggle
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	padding: var(--ui-space-inset-2xs);
+	color: var(--ui-color-base-3);
+	text-align: start;
+	background: none;
+	border: none;
+	border-radius: var(--ui-border-radius-xs);
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-change-history__toggle:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-change-history__toggle:focus-visible
+{
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.bizprocdesigner-change-history__toggle-icon
+{
+	flex-shrink: 0;
+	transition: transform 200ms ease;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bizprocdesigner-change-history__toggle[aria-expanded="true"] .bizprocdesigner-change-history__toggle-icon
+{
+	transform: rotate(180deg);
+}
+
+.bizprocdesigner-change-history__details-error
+{
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-change-history__more
+{
+	display: flex;
+	flex-shrink: 0;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-2xs);
 }

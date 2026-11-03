@@ -17,6 +17,11 @@
 	justify-content: end;
 }
 
+.ui-entity-catalog-popup-titlebar-controls [data-role="titlebar-filter"] {
+	display: flex;
+	align-items: center;
+}
+
 .ui-entity-catalog__scope .popup-window-titlebar {
 	position: relative;
 	height: auto;
@@ -61,6 +66,12 @@
 
 .ui-entity-catalog-popup-close-icon:hover:before {
 	opacity: 1;
+}
+
+.ui-entity-catalog-popup-close-icon:focus-visible,
+.ui-entity-catalog__titlebar_search .ui-ctl-after:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline) !important;
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .ui-entity-catalog__scope .popup-window-content {

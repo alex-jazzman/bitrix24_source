@@ -27,6 +27,10 @@ export const getChatDialogEntity = function(): Object {
 		itemOptions: {
 			default: {
 				avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-item.svg',
+				avatarOptions: {
+					// im keeps small chat avatars unresized, so 'contain' would letterbox them inside the round frame
+					bgSize: 'cover',
+				},
 			},
 		},
 		options: {

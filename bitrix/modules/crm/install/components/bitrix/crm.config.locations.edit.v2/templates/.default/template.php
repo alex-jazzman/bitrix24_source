@@ -5,6 +5,12 @@ use Bitrix\Sale\Location\Admin\LocationHelper as Helper;
 
 //echo '<pre>'; print_r($arResult); die();
 Loc::loadMessages(__FILE__);
+
+if (($arResult['TITLE'] ?? '') !== '')
+{
+	global $APPLICATION;
+	$APPLICATION->SetTitle($arResult['TITLE']);
+}
 ?>
 
 <?if(!empty($arResult['ERRORS']['FATAL'])):?>
@@ -111,7 +117,15 @@ Loc::loadMessages(__FILE__);
 			ob_start();
 			?>
 
-			<?$randTag = rand(99, 999);?>
+			<?
+			$randTag = rand(99, 999);
+			$externalColumnHeaderIds = [];
+			foreach($arResult['EXTERNAL_TABLE_COLUMNS'] as $code => $column)
+			{
+				$externalColumnHeaderIds[$code] = 'bx-ccle2-external-' . $randTag . '-column-' . strtolower($code);
+			}
+			$externalRemoveHeaderId = 'bx-ccle2-external-' . $randTag . '-column-remove';
+			?>
 			<div id="ib_external_values_<?=$randTag?>" class="bx-ccle2-external-values">
 
 				<table cellpadding="0" cellspacing="0">
@@ -119,25 +133,32 @@ Loc::loadMessages(__FILE__);
 
 						<tr class="heading">
 							<?foreach($arResult['EXTERNAL_TABLE_COLUMNS'] as $code => $column):?>
-								<th><?=$column['title']?></td>
+								<th id="<?=htmlspecialcharsbx($externalColumnHeaderIds[$code])?>" scope="col"><?=$column['title']?></th>
 							<?endforeach?>
-							<th><?=Loc::getMessage('CRM_CLE2_REMOVE')?></th>
+							<th id="<?=htmlspecialcharsbx($externalRemoveHeaderId)?>" scope="col"><?=Loc::getMessage('CRM_CLE2_REMOVE')?></th>
 						</tr>
 
 						<?if(is_array($arResult['FORM_DATA']['EXTERNAL']) && !empty($arResult['FORM_DATA']['EXTERNAL'])):?>
 
+							<?$externalRowNumber = 0;?>
 							<?foreach($arResult['FORM_DATA']['EXTERNAL'] as $id => $ext):
+								$externalRowNumber++;
+								$externalRowContextId = 'bx-ccle2-external-' . $randTag . '-row-' . $externalRowNumber;
 								$isYandexMarketOnUaPortal = (
 									$arResult['PORTAL_ZONE'] === 'ua'
 									&& (int)$ext['SERVICE_ID'] === $arResult['YANDEX_MARKET_ES_ID']
 								);
 							?>
 								<tr style="<?=($isYandexMarketOnUaPortal ? 'visibility:hidden; position:absolute;' : '')?>;">
+									<?$externalColumnNumber = 0;?>
 									<?foreach($arResult['EXTERNAL_TABLE_COLUMNS'] as $code => $void):?>
 										<?$value = Helper::makeSafeDisplay($ext[$code], $code);?>
 										<td>
+											<?if($externalColumnNumber === 0):?>
+												<span class="bx-ccle2-visually-hidden" id="<?=htmlspecialcharsbx($externalRowContextId)?>"><?=Loc::getMessage('CRM_CLE2_EXTERNAL_ROW', ['#NUMBER#' => $externalRowNumber])?></span>
+											<?endif?>
 											<?if($code == 'SERVICE_ID'):?>
-												<select name="EXTERNAL[<?=$ext['ID']?>][<?=$code?>]">
+												<select name="EXTERNAL[<?=$ext['ID']?>][<?=$code?>]" aria-labelledby="<?=htmlspecialcharsbx($externalColumnHeaderIds[$code])?> <?=htmlspecialcharsbx($externalRowContextId)?>">
 													<?foreach($arResult['EXTERNAL_SERVICES'] as $sId => $serv):
 														if (
 															$arResult['PORTAL_ZONE'] === 'ua'
@@ -156,14 +177,15 @@ Loc::loadMessages(__FILE__);
 													<?=$value?>
 												<?endif?>
 											<?else:?>
-												<input type="text" name="EXTERNAL[<?=$ext['ID']?>][<?=$code?>]" value="<?=$value?>" size="20" />
+												<input type="text" name="EXTERNAL[<?=$ext['ID']?>][<?=$code?>]" value="<?=$value?>" size="20" aria-labelledby="<?=htmlspecialcharsbx($externalColumnHeaderIds[$code])?> <?=htmlspecialcharsbx($externalRowContextId)?>" />
 											<?endif?>
 										</td>
+										<?$externalColumnNumber++;?>
 									<?endforeach?>
 
 									<td style="text-align: center">
 										<?if($ext['ID']):?>
-											<input type="checkbox" name="EXTERNAL[<?=$ext['ID']?>][REMOVE]" value="1" />
+											<input type="checkbox" name="EXTERNAL[<?=$ext['ID']?>][REMOVE]" value="1" aria-labelledby="<?=htmlspecialcharsbx($externalRemoveHeaderId)?> <?=htmlspecialcharsbx($externalRowContextId)?>" />
 										<?endif?>
 									</td>
 								</tr>
@@ -173,9 +195,11 @@ Loc::loadMessages(__FILE__);
 
 						<script type="text/html" data-template-id="bx-ui-dynamiclist-row">
 							<tr>
-								<td></td>
 								<td>
-									<select name="EXTERNAL[n{{column_id}}][SERVICE_ID]">
+									<span class="bx-ccle2-visually-hidden" id="bx-ccle2-external-<?=$randTag?>-row-n{{column_id}}"><?=Loc::getMessage('CRM_CLE2_EXTERNAL_NEW_ROW', ['#NUMBER#' => '{{column_id}}'])?></span>
+								</td>
+								<td>
+									<select name="EXTERNAL[n{{column_id}}][SERVICE_ID]" aria-labelledby="<?=htmlspecialcharsbx($externalColumnHeaderIds['SERVICE_ID'])?> bx-ccle2-external-<?=$randTag?>-row-n{{column_id}}">
 										<?foreach($arResult['EXTERNAL_SERVICES'] as $sId => $serv):
 											if (
 												$arResult['PORTAL_ZONE'] === 'ua'
@@ -190,7 +214,7 @@ Loc::loadMessages(__FILE__);
 									</select>
 								</td>
 								<td>
-									<input type="text" name="EXTERNAL[n{{column_id}}][XML_ID]" value="" size="20" />
+									<input type="text" name="EXTERNAL[n{{column_id}}][XML_ID]" value="" size="20" aria-labelledby="<?=htmlspecialcharsbx($externalColumnHeaderIds['XML_ID'])?> bx-ccle2-external-<?=$randTag?>-row-n{{column_id}}" />
 								</td>
 								<td></td>
 							</tr>
@@ -251,5 +275,76 @@ Loc::loadMessages(__FILE__);
 		array('HIDE_ICONS' => 'Y')
 	);
 	?>
+	<script>
+		BX.ready(function() {
+			var form = document.getElementById('form_<?=CUtil::JSEscape($arResult['FORM_ID'])?>');
+			if(!form)
+			{
+				return;
+			}
+
+			form.dataset.testid = 'crm-locations-edit-form';
+			[
+				['save', 'crm-locations-edit-save'],
+				['apply', 'crm-locations-edit-apply'],
+				['cancel', 'crm-locations-edit-cancel'],
+			].forEach(function(button) {
+				var control = form.querySelector('[name="' + button[0] + '"]');
+				if(control)
+				{
+					control.dataset.testid = button[1];
+				}
+			});
+		});
+	</script>
+	<?if($arResult['IS_SIDE_PANEL']):?>
+		<script>
+			BX.ready(function() {
+				var cancelButton = document.querySelector('[name="cancel"]');
+				if(!cancelButton)
+				{
+					return;
+				}
+
+				var defaultCancelHandler = cancelButton.onclick;
+				cancelButton.onclick = function(event) {
+					if(top.BX.SidePanel && top.BX.SidePanel.Instance)
+					{
+						var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+						if(slider)
+						{
+							slider.close();
+
+							return false;
+						}
+					}
+
+					return defaultCancelHandler.call(this, event);
+				};
+			});
+		</script>
+	<?endif?>
+
+	<?if($arResult['ACTION_SUCCESS'] ?? false):?>
+		<script>
+			BX.ready(function() {
+				if(!top.BX.SidePanel || !top.BX.SidePanel.Instance)
+				{
+					return;
+				}
+
+				var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+				if(!slider)
+				{
+					return;
+				}
+
+				slider.getData().set('changed', true);
+				<?if($arResult['ACTION'] === 'save'):?>
+					slider.close();
+				<?endif?>
+			});
+		</script>
+	<?endif?>
 
 <?endif?>

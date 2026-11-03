@@ -7,6 +7,8 @@ if (file_exists(__DIR__ . '/dev/env/include.php'))
 	require_once __DIR__ . '/dev/env/include.php';
 }
 
+\Bitrix\Bizproc\Internal\Config\DesignerV2Feature::scheduleLegacyOptionSync();
+
 CJSCore::RegisterExt('bp_selector', array(
 	'js' => '/bitrix/js/bizproc/bp_selector.js',
 	'css' => '/bitrix/js/bizproc/css/bp_selector.css',
@@ -27,7 +29,14 @@ CJSCore::RegisterExt('bp_selector', array(
 			}
 		);
 
-		return ['settings' => ['functions' => array_values($functions)]];
+		$settings = ['functions' => array_values($functions)];
+
+		if (\Bitrix\Main\Loader::includeModule('ui'))
+		{
+			$settings['systemValues'] = \Bitrix\Bizproc\Integration\UI\EntitySelector\SystemProvider::getSystemValues();
+		}
+
+		return ['settings' => $settings];
 	},
 ));
 

@@ -40,7 +40,7 @@ if (CModule::IncludeModule('search'))
 				];
 			}
 		}
-		?><?=CUtil::PhpToJSObject($arResult)?><?php
+		?><?=\Bitrix\Main\Web\Json::encode($arResult)?><?php
 	}
 }
 require_once $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/epilog_admin_js.php';

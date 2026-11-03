@@ -1,0 +1,12 @@
+<?php
+$MESS['TASKS_V2_CONFLICT_POPUP_TITLE'] = 'Другой участник внёс изменения в чек-лист';
+$MESS['TASKS_V2_CONFLICT_POPUP_SUBTITLE'] = 'Теперь в чек-листе две версии. Выберите, какую сохранить';
+$MESS['TASKS_V2_CONFLICT_POPUP_SAVE_BTN'] = 'Сохранить';
+$MESS['TASKS_V2_CONFLICT_POPUP_CANCEL_BTN'] = 'Отмена';
+$MESS['TASKS_V2_CONFLICT_POPUP_ITEM_DELETED'] = 'Пункт удалён';
+$MESS['TASKS_V2_CONFLICT_POPUP_VERSION_A'] = 'Ваша версия';
+$MESS['TASKS_V2_CONFLICT_POPUP_VERSION_B'] = 'Версия участника';
+$MESS['TASKS_V2_CONFLICT_POPUP_ATTACHMENTS_WERE_DELETED'] = 'Прикреплённые файлы были удалены';
+$MESS['TASKS_V2_CONFLICT_POPUP_VERSION_OPTION_LABEL'] = '#VERSION#, пункт #NUMBER#: #VALUE#';
+$MESS['TASKS_V2_CONFLICT_POPUP_VERSION_OPTION_LABEL_NO_NUMBER'] = '#VERSION#: #VALUE#';
+$MESS['TASKS_V2_CONFLICT_POPUP_FILES_DELETED'] = 'Файлы удалены';

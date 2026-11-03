@@ -2,6 +2,8 @@
  * @module crm/receive-payment/steps/payment-systems/skip-switcher
  */
 jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, exports, module) => {
+	const { Text5 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { transparent } = require('utils/color');
@@ -44,7 +46,7 @@ jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, e
 							},
 							description: {
 								marginLeft: 10,
-								fontSize: 16,
+								fontSize: Typography.text3.getValue().fontSize,
 								color: this.state.value ? AppTheme.colors.base1 : AppTheme.colors.base3,
 							},
 						},
@@ -58,12 +60,11 @@ jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, e
 						}
 					},
 				}),
-				Text({
+				Text5({
 					style: {
 						marginLeft: 80,
 						marginRight: 16,
 						marginBottom: 24,
-						fontSize: 13,
 						color: AppTheme.colors.base3,
 					},
 					text: Loc.getMessage('M_RP_PS_SKIP_STEP_DESC'),

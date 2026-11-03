@@ -15,6 +15,8 @@
 		BX.Kanban.Column.apply(this, arguments);
 
 		this.sortButton = null;
+		this.namedAddItemButton = null;
+		this.namedContainer = null;
 
 		this.type = (options.type ? options.type : '');
 		this.viewStateName = options.viewStateName || 'kanban';
@@ -69,24 +71,41 @@
 			}
 
 			this.hideDragTarget();
-			var draggableItem = this.getGrid().getItemByElement(itemNode);
 
+			this.acceptItem(this.getGrid().getItemByElement(itemNode));
+		},
+
+		/**
+		 * Moves the item to the end of this column.
+		 * @param {BX.Tasks.Kanban.Item} item
+		 * @returns {void}
+		 */
+		acceptItem: function(item)
+		{
 			var event = new BX.Kanban.DragEvent();
-			event.setItem(draggableItem);
+			event.setItem(item);
 			event.setTargetColumn(this);
 
 			BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
 			if (!event.isActionAllowed())
 			{
+				this.getGrid().forgetSourcePosition(item);
+				this.announceRefusedMove(item);
+
 				return;
 			}
+
+			// read before the completion chain opens its dialog and takes the focus away: by the
+			// time the operation ends, the answer is already lost. A drop that held no focus
+			// (every drop of the mouse) is given none back
+			var heldFocus = (item ? item.holdsFocus() : false);
 
 			var taskCompletePromise = new BX.Promise();
 
 			if (
-				draggableItem.isSprintView
+				item.isSprintView
 				&& this.isFinishType()
-				&& (!draggableItem.getColumn().isFinishType())
+				&& (!item.getColumn().isFinishType())
 			)
 			{
 				top.BX.loadExt('tasks.scrum.dod').then(function() {
@@ -95,8 +114,8 @@
 						taskCompletePromise.fulfill();
 					}
 					this.scrumDod = new top.BX.Tasks.Scrum.Dod({
-						groupId: draggableItem.getData()['groupId'],
-						taskId: draggableItem.getId()
+						groupId: item.getData()['groupId'],
+						taskId: item.getId()
 					});
 					this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
 					this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
@@ -119,13 +138,53 @@
 				taskCompletePromise.fulfill();
 			}
 
+			// the rejection handler must be registered in the same then() call: BX.Promise replays
+			// every fulfilment handler on each subscription made after the promise is settled
 			taskCompletePromise.then(function() {
-				var success = this.getGrid().moveItem(draggableItem, this);
+				// the first half of the focus return: moveItem re-attaches the cards of both
+				// columns, and the node under focus inside the moved card drops to the body
+				var success = this.getGrid().moveItem(item, this);
 				if (success)
 				{
-					BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemMoved", [draggableItem, this, null]);
+					if (heldFocus)
+					{
+						item.focusCard();
+					}
+
+					BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemMoved", [item, this, null]);
 				}
+				else
+				{
+					// the card never left its stage: the snapshot would be spent on the next rollback
+					this.getGrid().forgetSourcePosition(item);
+				}
+			}.bind(this), function() {
+				this.getGrid().forgetSourcePosition(item);
+				this.getGrid().announceRejectedCompletion(item, heldFocus);
 			}.bind(this));
+		},
+
+		/**
+		 * A refused move into the final stage is not a refusal: the completion chain has taken the
+		 * operation over - the checklist chain of acceptItem() on this template, or the
+		 * FinishMoveController of the scrum template, which denies the event and performs the move
+		 * itself. Every other refusal is told without a reason: the drag event carries none.
+		 * A drop that resolved to no card has nothing to tell about.
+		 * @param {BX.Tasks.Kanban.Item|null} item
+		 * @returns {void}
+		 */
+		announceRefusedMove: function(item)
+		{
+			const sourceColumn = (item ? item.getColumn() : null);
+			if (!sourceColumn || (this.isFinishType() && !sourceColumn.isFinishType()))
+			{
+				return;
+			}
+
+			this.getGrid().announce(
+				this.getGrid().moveMessage("TASKS_KANBAN_A11Y_MOVE_DENIED", item, this),
+				"assertive"
+			);
 		},
 
 		isFinishType: function()
@@ -154,7 +213,7 @@
 			BX.Kanban.Column.prototype.setGrid.call(this, grid);
 
 			BX.addCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragStop", function() {
-				if(this.getGrid().isRealtimeMode())
+				if(this.getGrid().isRealtimeMode() || this.getGrid().isFieldSortMode())
 				{
 					this.hideDragTarget();
 				}
@@ -324,6 +383,38 @@
 			}
 		},
 
+		/**
+		 * Handler on new item add button pressed from the keyboard.
+		 * @param {KeyboardEvent} event
+		 * @returns {void}
+		 */
+		handleAddItemButtonKeydown: function(event)
+		{
+			if (event.key !== "Enter" && event.key !== " ")
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleAddItemButtonClick(event);
+		},
+
+		getContainer: function()
+		{
+			var container = BX.Kanban.Column.prototype.getContainer.call(this);
+
+			if (container !== this.namedContainer)
+			{
+				this.namedContainer = container;
+
+				container.setAttribute("role", "group");
+				container.setAttribute("aria-labelledby", this.getTitleContainer().id);
+				container.setAttribute("data-testid", "tasks-kanban-column");
+			}
+
+			return container;
+		},
+
 		getTitleContainer: function()
 		{
 			if (this.layout.title)
@@ -331,11 +422,20 @@
 				return this.layout.title;
 			}
 
+			const isTitleNamed = (this.isScrumGridHeader() || !this.isScrumGrid());
+
 			this.layout.title = BX.create("div", {
 				attrs: {
-					className: ((this.isScrumGridHeader() || !this.isScrumGrid()) ? "main-kanban-column-title" : "")
+					id: "tasks-kanban-column-title-" + BX.util.getRandomString(5),
+					className: (isTitleNamed ? "main-kanban-column-title" : ""),
+					"data-testid": "tasks-kanban-column-title"
 				}
 			});
+
+			if (isTitleNamed)
+			{
+				this.layout.title.setAttribute("tabindex", "-1");
+			}
 
 			return this.layout.title;
 		},
@@ -354,6 +454,28 @@
 			}
 		},
 
+		renderSubTitle: function()
+		{
+			const subTitle = BX.Kanban.Column.prototype.renderSubTitle.call(this);
+
+			const button = subTitle.querySelector(".main-kanban-column-add-item-button");
+			const name = this.getGrid().getAddItemTitleText();
+
+			// the visible text is a width-animated wrapper, so the name is given explicitly
+			if (button && name && button !== this.namedAddItemButton)
+			{
+				this.namedAddItemButton = button;
+
+				button.setAttribute("role", "button");
+				button.setAttribute("aria-label", name);
+				button.setAttribute("tabindex", "-1");
+				button.setAttribute("data-testid", "tasks-kanban-column-add-btn");
+				BX.bind(button, "keydown", this.handleAddItemButtonKeydown.bind(this));
+			}
+
+			return subTitle;
+		},
+
 		renderTitle: function()
 		{
 			if (this.isScrumGridHeader())
@@ -361,14 +483,25 @@
 				this.getContainer().classList.add("main-kanban-column-scrum");
 			}
 
+			var titleBody;
+
 			if ((this.isScrumGridHeader() || !this.isScrumGrid()))
 			{
-				return BX.Kanban.Column.prototype.renderTitle.call(this);
+				titleBody = BX.Kanban.Column.prototype.renderTitle.call(this);
 			}
 			else
 			{
-				return document.createElement('div');
+				titleBody = document.createElement('div');
 			}
+
+			this.getTitleContainer().setAttribute(
+				"aria-label",
+				BX.message("TASKS_KANBAN_A11Y_COLUMN_LABEL")
+				.replace("#stage#", this.getName())
+				.replace("#count#", this.getTotal())
+			);
+
+			return titleBody;
 		},
 
 		getBody: function()
@@ -492,7 +625,12 @@
 			}
 			else
 			{
-				return BX.Kanban.Column.prototype.getItemsContainer.call(this);
+				var itemsContainer = BX.Kanban.Column.prototype.getItemsContainer.call(this);
+
+				itemsContainer.setAttribute("role", "list");
+				itemsContainer.setAttribute("data-testid", "tasks-kanban-column-list");
+
+				return itemsContainer;
 			}
 		},
 
@@ -504,6 +642,18 @@
 		isScrumGridHeader: function()
 		{
 			return this.getGrid().isScrumGridHeader();
+		},
+
+		addDraftItem: function(targetItem)
+		{
+			const draftItem = BX.Kanban.Column.prototype.addDraftItem.call(this, targetItem);
+
+			if (draftItem)
+			{
+				draftItem.getContainer().setAttribute("role", "listitem");
+			}
+
+			return draftItem;
 		},
 
 		addItem: function(item, beforeItem)

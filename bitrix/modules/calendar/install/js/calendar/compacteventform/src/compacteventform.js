@@ -6,6 +6,7 @@ import { MenuManager, Popup, PopupManager } from 'main.popup';
 import {
 	DateTimeControl,
 	Location,
+	PlannerLimitHint,
 	Reminder,
 	SectionSelector,
 	UserPlannerSelector,
@@ -39,6 +40,9 @@ export class CompactEventForm extends EventEmitter
 	excludedUsers = [];
 	meetingStatusRequestInProgress = false;
 	meetingStatusRequestSeq = 0;
+	plannerLimitHint = null;
+	checkForChangesTimer = null;
+	openingGeneration = 0;
 
 	constructor(options = {})
 	{
@@ -53,17 +57,22 @@ export class CompactEventForm extends EventEmitter
 		this.ownerId = options.ownerId || this.userId;
 		this.isCollabUser = Util.getCalendarContext().isCollabUser || false;
 
-		this.checkForChangesDebounce = Runtime.debounce(this.checkForChanges, this.CHECK_CHANGES_DELAY, this);
+		this.checkForChangesDebounce = this.scheduleCheckForChanges.bind(this);
 		this.reloadEntryDataDebounce = Runtime.debounce(this.reloadEntryData, this.RELOAD_DATA_DELAY, this);
 		this.checkOutsideClickClose = this.checkOutsideClickClose.bind(this);
 		this.outsideMouseDownClose = this.outsideMouseDownClose.bind(this);
 		this.keyHandler = this.handleKeyPress.bind(this);
+		this.handlePlannerLimitStateChangeBind = this.handlePlannerLimitStateChange.bind(this);
 
 		this.lastUsedSaveOptions = {};
 	}
 
 	show(mode = CompactEventForm.EDIT_MODE, params = {})
 	{
+		this.openingGeneration++;
+		this.clearCheckForChangesTimer();
+
+		this.destroyPlannerLimitControls();
 		this.setParams(params);
 		this.setMode(mode);
 
@@ -234,16 +243,16 @@ export class CompactEventForm extends EventEmitter
 
 		const wasShown = this.isShown();
 
+		this.openingGeneration++;
+		this.clearCheckForChangesTimer();
+
 		this.displayed = false;
 		this.emit('onClose');
 		Event.unbind(document, 'mousedown', this.outsideMouseDownClose);
 		Event.unbind(document, 'mouseup', this.checkOutsideClickClose);
 		Event.unbind(document, 'keydown', this.keyHandler);
 
-		if (this.userPlannerSelector)
-		{
-			this.userPlannerSelector.destroy();
-		}
+		this.destroyPlannerLimitControls();
 
 		if (this.popup)
 		{
@@ -266,6 +275,22 @@ export class CompactEventForm extends EventEmitter
 	abortWithoutConfirm()
 	{
 		this.close(true, true);
+	}
+
+	destroyPlannerLimitControls(): void
+	{
+		if (this.userPlannerSelector)
+		{
+			this.userPlannerSelector.unsubscribe(
+				'onPlannerLimitStateChange',
+				this.handlePlannerLimitStateChangeBind,
+			);
+			this.userPlannerSelector.destroy();
+			this.userPlannerSelector = null;
+		}
+
+		this.plannerLimitHint?.destroy();
+		this.plannerLimitHint = null;
 	}
 
 	getPopupContentCalendar()
@@ -542,30 +567,29 @@ export class CompactEventForm extends EventEmitter
 			dataset: { testid: 'calendar-compact-form-cancel-btn' },
 			className: 'ui-btn ui-btn-link',
 			events: {
-				click: () => {
-					if (this.isNewEntry())
-					{
-						this.checkDataBeforeCloseMode = false;
-						this.close();
-					}
-					else
-					{
-						this.setFormValues();
-
-						if (this.userPlannerSelector)
-						{
-							this.userPlannerSelector.destroy();
-						}
-
-						this.setMode(CompactEventForm.VIEW_MODE);
-						this.popup.setButtons(this.getButtons());
-					}
-				},
+				click: () => this.handleCloseButtonClick(),
 			},
 		});
 		closeButton.button.setAttribute('data-role', 'closeButton');
 
 		return closeButton;
+	}
+
+	handleCloseButtonClick(): void
+	{
+		if (this.isNewEntry())
+		{
+			this.checkDataBeforeCloseMode = false;
+			this.close();
+
+			return;
+		}
+
+		this.setFormValues();
+		this.userPlannerSelector?.reset();
+		this.plannerLimitHint?.close();
+		this.setMode(CompactEventForm.VIEW_MODE);
+		this.popup.setButtons(this.getButtons());
 	}
 
 	getFullFormButton()
@@ -881,6 +905,18 @@ export class CompactEventForm extends EventEmitter
 		{
 			this.setMode(CompactEventForm.EDIT_MODE);
 			this.popup.setButtons(this.getButtons());
+			if (this.userPlannerSelector)
+			{
+				this.userPlannerSelector.resetPlannerLimitState();
+				if (this.userPlannerSelector.isPlannerDisplayed())
+				{
+					this.userPlannerSelector.refreshPlannerStateDebounce();
+				}
+				else
+				{
+					this.userPlannerSelector.checkBusyTime();
+				}
+			}
 		}
 		else if (
 			!this.isNewEntry()
@@ -890,8 +926,37 @@ export class CompactEventForm extends EventEmitter
 		{
 			this.setMode(CompactEventForm.VIEW_MODE);
 			this.popup.setButtons(this.getButtons());
+			this.plannerLimitHint?.close();
+			this.userPlannerSelector?.resetPlannerLimitState();
 		}
 		this.emitOnChange();
+	}
+
+	scheduleCheckForChanges(): void
+	{
+		this.clearCheckForChangesTimer();
+
+		const generation = this.openingGeneration;
+		const timerId = setTimeout(() => {
+			if (this.openingGeneration !== generation || this.checkForChangesTimer !== timerId)
+			{
+				return;
+			}
+
+			this.checkForChangesTimer = null;
+			this.checkForChanges();
+		}, this.CHECK_CHANGES_DELAY);
+
+		this.checkForChangesTimer = timerId;
+	}
+
+	clearCheckForChangesTimer(): void
+	{
+		if (this.checkForChangesTimer !== null)
+		{
+			clearTimeout(this.checkForChangesTimer);
+			this.checkForChangesTimer = null;
+		}
 	}
 
 	updateEventNameInputTitle()
@@ -931,7 +996,12 @@ export class CompactEventForm extends EventEmitter
 		if (!this.isCollabUser && event && event instanceof BaseEvent)
 		{
 			const data = event.getData();
-			const usersCount = data.usersCount;
+			// the truncated planner renders the organizer only, so capacity
+			// must be checked against the full people count from the response
+			const limitState = this.userPlannerSelector?.getPlannerLimitState();
+			const usersCount = limitState?.exceeded
+				? Math.max(data.usersCount, limitState.peopleCount)
+				: data.usersCount;
 
 			let locationCapacity = Location.getCurrentCapacity() || 0;
 
@@ -1404,6 +1474,7 @@ export class CompactEventForm extends EventEmitter
 			outerWrap: this.DOM.dateTimeWrap,
 			inlineEditMode: true,
 		});
+		Event.bind(this.DOM.dateTimeWrap, 'click', this.handleDateTimeControlClick.bind(this));
 
 		this.dateTimeControl.subscribe('onSetValue', () => {
 			this.excludedUsers = [];
@@ -1457,6 +1528,19 @@ export class CompactEventForm extends EventEmitter
 		return this.DOM.dateTimeWrap;
 	}
 
+	handleDateTimeControlClick(): void
+	{
+		if (
+			this.canDo('edit')
+			&& this.userPlannerSelector
+			&& !this.userPlannerSelector.isPlannerDisplayed()
+		)
+		{
+			this.userPlannerSelector.showPlanner();
+			this.userPlannerSelector.refreshPlannerStateDebounce();
+		}
+	}
+
 	getUserPlannerSelector()
 	{
 		this.DOM.userPlannerSelectorOuterWrap = Tag.render`<div>
@@ -1465,9 +1549,16 @@ export class CompactEventForm extends EventEmitter
 				<div class="calendar-field-block">
 					<div class="calendar-members-selected">
 						<span class="calendar-attendees-label"></span>
-						<span class="calendar-attendees-list" data-testid="calendar-compact-form-attendees"></span>
+						${this.DOM.attendeesList = Tag.render`
+							<span class="calendar-attendees-list" data-testid="calendar-compact-form-attendees"></span>
+						`}
 						<span class="calendar-members-more">${Loc.getMessage('EC_ATTENDEES_MORE')}</span>
-						<span class="calendar-members-change-link" data-testid="calendar-compact-form-attendees-change-link">${Loc.getMessage('EC_SEC_SLIDER_CHANGE')}</span>
+						${this.DOM.attendeesChangeLink = Tag.render`
+							<span
+								class="calendar-members-change-link"
+								data-testid="calendar-compact-form-attendees-change-link"
+							>${Loc.getMessage('EC_SEC_SLIDER_CHANGE')}</span>
+						`}
 					</div>
 				</div>`}
 				<span class="calendar-videocall-wrap calendar-videocall-hidden"></span>
@@ -1514,8 +1605,46 @@ export class CompactEventForm extends EventEmitter
 		this.userPlannerSelector.subscribe('onDateChange', this.handlePlannerSelectorChanges.bind(this));
 		this.userPlannerSelector.subscribe('onNotifyChange', this.checkForChangesDebounce);
 		this.userPlannerSelector.subscribe('onUserCodesChange', this.checkForChangesDebounce);
+		this.userPlannerSelector.subscribe(
+			'onPlannerLimitStateChange',
+			this.handlePlannerLimitStateChangeBind,
+		);
 
 		return this.DOM.userPlannerSelectorOuterWrap;
+	}
+
+	handlePlannerLimitStateChange(event: BaseEvent): void
+	{
+		if (!this.isEditMode() || !this.plannerFeatureEnabled)
+		{
+			return;
+		}
+
+		const { exceeded, maxPlannerUsers } = event.getData();
+		if (exceeded)
+		{
+			this.getPlannerLimitHint(maxPlannerUsers)?.show();
+		}
+		else
+		{
+			this.plannerLimitHint?.close();
+		}
+	}
+
+	getPlannerLimitHint(maxPlannerUsers: number): PlannerLimitHint | null
+	{
+		if (!this.plannerLimitHint && this.DOM.attendeesList)
+		{
+			this.plannerLimitHint = new PlannerLimitHint({
+				bindElement: this.DOM.attendeesList,
+				angleTarget: () => this.DOM.attendeesList.firstElementChild ?? this.DOM.attendeesChangeLink,
+				zIndex: this.zIndex + 20,
+				maxPlannerUsers,
+			});
+		}
+		this.plannerLimitHint?.setMaxPlannerUsers(maxPlannerUsers);
+
+		return this.plannerLimitHint;
 	}
 
 	getRelationControl(): HTMLElement

@@ -8072,6 +8072,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return errors;
 			}
 
+			var acceptedExtensions = arProperty.ACCEPT
+				? arProperty.ACCEPT.toLowerCase().split(',').map(function(extension) {
+					return BX.util.trim(extension);
+				})
+				: [];
+
 			if (
 				arProperty.REQUIRED === 'Y' && files.length === 0 && defaultValue === ''
 				&& (!arProperty.DEFAULT_VALUE || !arProperty.DEFAULT_VALUE.length)
@@ -8096,7 +8102,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					var splittedName = file.name.split('.');
 					var fileExtension = splittedName.length > 1 ? splittedName[splittedName.length - 1].toLowerCase() : '';
 
-					if (arProperty.ACCEPT.length > 0 && (fileExtension.length === 0 || arProperty.ACCEPT.indexOf(fileExtension) === '-1'))
+					if (fileExtension === 'jpe')
+					{
+						fileExtension = 'jpg';
+					}
+
+					if (
+						acceptedExtensions.length > 0
+						&& (fileExtension.length === 0 || acceptedExtensions.indexOf(fileExtension) === -1)
+					)
 					{
 						errors.push(BX.Loc.getMessage(
 							'SOA_BAD_EXTENSION_NAME_AND_ACCEPT',

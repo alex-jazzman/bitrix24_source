@@ -26,6 +26,7 @@ use Bitrix\Bizproc\Internal\Service\StorageActivity\StorageActivityService;
  * @property-write int ItemId
  * @property-write string DeleteMode
  * @property-write string StorageCode
+ * @property-write string IsExpanded
  */
 class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurableActivity, IBPEventActivity, IBPActivityExternalEventListener, ActivityContentBlockProviderInterface, ContentBlockScopeConsumerInterface
 {
@@ -46,6 +47,7 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 			'ItemId' => 0,
 			'DeleteMode' => static::DELETE_MODE_MULTIPLE,
 			'StorageCode' => '',
+			'IsExpanded' => 'Y',
 		];
 
 		$this->setPropertiesTypes([
@@ -306,6 +308,7 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 			],
 			'DynamicFilterFields' => [
 				'Name' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_PROPERTY'),
+				'ShowFieldLabel' => false,
 				'FieldName' => 'filter_fields',
 				'Type' => FieldType::CONDITIONGROUP,
 				'Required' => false,
@@ -326,7 +329,23 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 					],
 				],
 			],
+			'IsExpanded' => [
+				'Name' => '',
+				'FieldName' => 'is_expanded',
+				'Type' => FieldType::STRING,
+				'Required' => false,
+				'AllowSelection' => false,
+				'Hidden' => true,
+				'Default' => 'Y',
+			],
 		];
+	}
+
+	public static function getAiPassthroughSettingNames(array $documentType): array
+	{
+		// DynamicFilterFields persists as a CONDITIONGROUP filter tree, which getPropertiesMap() types as a
+		// scalar, so only a passthrough keeps the delete filter through the reverse round-trip.
+		return ['DynamicFilterFields'];
 	}
 
 	private function prepareFilterContext(int $storageId): array

@@ -38,7 +38,8 @@ $component = $this->getComponent();
 					?>
 					<textarea
 						<?= $component->getHtmlBuilder()->buildTagAttributes($value['attrList']) ?>
-					><?= (isset($value['value']) ? HtmlFilter::encode($value['value']) : '') ?></textarea>
+					>
+<?= (isset($value['value']) ? HtmlFilter::encode($value['value']) : '') ?></textarea>
 					<?php
 				}
 				?>

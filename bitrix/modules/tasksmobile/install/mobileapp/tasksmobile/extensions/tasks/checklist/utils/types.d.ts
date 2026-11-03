@@ -1,11 +1,11 @@
 import { LayoutWidget } from '../../../../../../../../mobile/dev/janative/api';
-import { ChecklistItemData } from '../types/common';
+import { ChecklistItemData } from '../types';
 
 export type ChecklistOpenPreparedParams = {
 	taskId: number,
 	userId: number,
 	checklistTree: ChecklistItemData,
-	checklistId: number,
+	checklistServerId: number,
 	parentWidget?: LayoutWidget,
 	inLayout?: boolean,
 	hideCompleted?: boolean,

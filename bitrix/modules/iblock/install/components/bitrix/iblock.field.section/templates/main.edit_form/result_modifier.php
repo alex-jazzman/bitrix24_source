@@ -53,8 +53,12 @@ if($arResult['userField']['SETTINGS']['DISPLAY'] === SectionType::DISPLAY_UI)
 
 	foreach($arResult['additionalParameters']['items'] as $itemId => $item)
 	{
+		$name = array_key_exists('~NAME', $item)
+			? str_repeat(' . ', (int)($item['DEPTH_LEVEL'] ?? 0)) . $item['~NAME']
+			: htmlspecialcharsback($item['VALUE'])
+		;
 		$element = [
-			'NAME' => $item['VALUE'],
+			'NAME' => $name,
 			'VALUE' => $item['ID'],
 		];
 
@@ -72,6 +76,7 @@ if($arResult['userField']['SETTINGS']['DISPLAY'] === SectionType::DISPLAY_UI)
 
 	$params = Json::encode([
 		'isMulti' => ($arResult['userField']['MULTIPLE'] === 'Y'),
+		'enableSearch' => true,
 		'fieldName' => $arResult['userField']['FIELD_NAME']
 	]);
 

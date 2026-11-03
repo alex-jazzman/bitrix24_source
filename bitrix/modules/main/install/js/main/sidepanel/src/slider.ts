@@ -67,6 +67,7 @@ export class Slider
 	private destroyed: boolean = false;
 	private loaded: boolean = false;
 	private loadedCnt: number = 0;
+	#loadedDocument: Document | null = null;
 	private minimizing: boolean = false;
 	private maximizing: boolean = false;
 
@@ -260,6 +261,10 @@ export class Slider
 
 			const clipboard: any = Reflection.getClass('BX.clipboard');
 			clipboard?.bindCopyClick(this.copyLinkLabel.getContainer(), {
+				popup: {
+					offsetTop: -10,
+					offsetLeft: 17,
+				},
 				text: () => {
 					const link = document.createElement('a');
 					link.href = Type.isStringFilled(options.newWindowUrl) ? options.newWindowUrl : this.getUrl();
@@ -1104,7 +1109,7 @@ export class Slider
 		{
 			Event.unbind(frameWindow, 'keydown', this.#handleFrameKeyDown);
 			Event.unbind(frameWindow, 'focus', this.#handleFrameFocus);
-			Event.unbind(frameWindow, 'unload', this.#handleFrameUnload);
+			Event.unbind(frameWindow, 'pagehide', this.#handleFramePageHide);
 		}
 		else if (this.allowCrossOrigin)
 		{
@@ -1123,6 +1128,7 @@ export class Slider
 		}
 
 		this.#focusTrap = null;
+		this.#loadedDocument = null;
 
 		Dom.remove(this.layout.overlay);
 
@@ -2177,7 +2183,7 @@ export class Slider
 
 	private handleFrameLoad(event?: Event)
 	{
-		if (this.loaded)
+		if (this.loaded && this.allowCrossOrigin)
 		{
 			return;
 		}
@@ -2213,9 +2219,18 @@ export class Slider
 			throw e;
 		}
 
+		const frameDocument = frameWindow.document;
+		if (this.#loadedDocument === frameDocument)
+		{
+			// Restoring the same document from bfcache is not an iframe navigation.
+			this.loaded = true;
+
+			return;
+		}
+
 		Event.bind(frameWindow, 'keydown', this.#handleFrameKeyDown);
 		Event.bind(frameWindow, 'focus', this.#handleFrameFocus);
-		Event.bind(frameWindow, 'unload', this.#handleFrameUnload);
+		Event.bind(frameWindow, 'pagehide', this.#handleFramePageHide);
 
 		if (Browser.isMobile())
 		{
@@ -2232,6 +2247,7 @@ export class Slider
 		}
 
 		this.loaded = true;
+		this.#loadedDocument = frameDocument;
 		this.loadedCnt++;
 
 		FocusMonitor.Instance.detachIframe(this.getFrame());
@@ -2298,7 +2314,12 @@ export class Slider
 		}, 200);
 	}
 
-	#handleFrameUnload = () => {
+	#handleFramePageHide = (event: PageTransitionEvent) => {
+		if (event.persisted)
+		{
+			return;
+		}
+
 		this.loaded = false;
 		this.#listenIframeLoading();
 	};

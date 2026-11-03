@@ -43,11 +43,15 @@ import './css/content-blocks/error-block.css';
 import './css/content-blocks/group-blocks.css';
 import './css/content-blocks/action-bar/action-bar.css';
 import Item from './item';
+import { Action } from './action';
 import { StreamType } from './stream-type';
 import './css/main.css';
 
 export {
 	Item,
+	// The legacy crm.timeline extension also exports Action into this namespace.
+	Action,
+	Action as ItemAction,
 	ConfigurableItem,
 	StreamType,
 	ControllerManager,

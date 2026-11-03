@@ -27,6 +27,11 @@ class RefererUriExtractor extends Extractor
 		}
 
 		$placementOptions = $this->params['PLACEMENT_OPTIONS'] ?? [];
+		if ($placementOptions !== '' && !is_array($placementOptions))
+		{
+			return [];
+		}
+
 		$placementOptions = is_array($placementOptions) ? $placementOptions : [];
 
 		$rawPlacementOptions = $this->params['~PLACEMENT_OPTIONS'] ?? [];

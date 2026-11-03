@@ -7,6 +7,7 @@ jn.define('im/messenger/model/messages/block/model', (require, exports, module) 
 	const { Type } = require('type');
 
 	const { normalize, isElementValid } = require('im/messenger/model/messages/block/normalizer');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const logger = getLoggerWithContext('model--messages-block', 'blockModel');
@@ -208,15 +209,33 @@ jn.define('im/messenger/model/messages/block/model', (require, exports, module) 
 				}, { root: true });
 
 				const deletedElement = current.elements.find((existing) => existing.id === elementId);
-				if (deletedElement?.fileIds)
+				const elements = current.elements.filter((existing) => existing.id !== elementId);
+
+				const isFileReferenced = (fileId) => {
+					const isMessageFile = Object.values(store.rootState.messagesModel?.collection ?? {}).some(
+						(message) => message.files?.some((messageFileId) => Number(messageFileId) === fileId),
+					);
+					if (isMessageFile)
+					{
+						return true;
+					}
+
+					return Object.entries(store.state.collection).some(([blockMessageId, block]) => {
+						const blockElements = String(blockMessageId) === String(messageId) ? elements : block.elements;
+
+						return blockElements.some(
+							(element) => MessageHelper.getBlockElementFileIds(element).includes(fileId),
+						);
+					});
+				};
+
+				for (const fileId of MessageHelper.getBlockElementFileIds(deletedElement))
 				{
-					for (const fileId of deletedElement.fileIds)
+					if (!isFileReferenced(fileId))
 					{
 						store.dispatch('filesModel/delete', { id: fileId }, { root: true });
 					}
 				}
-
-				const elements = current.elements.filter((existing) => existing.id !== elementId);
 
 				store.commit('update', {
 					actionName: 'deleteElement',

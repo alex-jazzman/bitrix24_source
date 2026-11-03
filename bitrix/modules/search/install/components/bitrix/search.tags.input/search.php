@@ -19,7 +19,7 @@ if (CModule::IncludeModule('search')):
 // **************************************************************************************
 	if (!empty($_POST['search']))
 	{
-		if (mb_strtolower($arParams['sort']) == 'name')
+		if (mb_strtolower($arParams['sort']) === 'name')
 		{
 			$arOrder = ['NAME' => 'ASC', 'CNT' => 'DESC'];
 		}
@@ -66,7 +66,7 @@ if (CModule::IncludeModule('search')):
 				];
 			}
 		}
-		?><?=CUtil::PhpToJSObject($arResult)?><?php
+		?><?=\Bitrix\Main\Web\Json::encode($arResult)?><?php
 		CMain::FinalActions();
 		die();
 	}

@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CMain $APPLICATION */
 /** @var LandingSiteEditComponent $component */
 
+use Bitrix\Landing\Copilot\Services\NameService;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Restriction;
 use Bitrix\Main\Loader;
@@ -136,6 +137,7 @@ $uriDomain->addParams(
 		}
 		BX.Landing.Env.createInstance({
 			site_id: '<?= CUtil::JSEscape((string)$row['ID']['CURRENT']) ?>',
+			copilot_name: <?= CUtil::PhpToJSObject(NameService::getCopilotName()) ?>,
 			params: {
 				type: '<?= CUtil::JSEscape((string)$arParams['TYPE']) ?>',
 			},

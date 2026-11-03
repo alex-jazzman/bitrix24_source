@@ -12,7 +12,7 @@ this.BX.Note = this.BX.Note || {};
 		return errors.some(item => String(item?.code || '') === RESTORE_DIRTY_WINDOW_ERROR_CODE);
 	}
 	class HistoryApi {
-		// [API-02] Lazy body fetch — only called on click (version-preview), never in a list.
+		// Lazy body fetch - only called on click (version-preview), never in a list.
 		static async getVersion({
 			documentId,
 			versionId
@@ -25,7 +25,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-03] Requires a prior compact() of the patch window — see the 409 retry flow in
+		// Requires a prior compact() of the patch window - see the 409 retry flow in
 		// VersionTimelineComponent.restoreCurrentVersion().
 		//
 		// `operationId` is the caller's name for this restore. The server does not store it - it echoes the
@@ -49,7 +49,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-04, P2.T4] Keyset feed page — role visibility is applied server-side before the
+		// Keyset feed page - role visibility is applied server-side before the
 		// `types` filter, the filter can only narrow it further (see FeedProvider). An empty
 		// `types` list is the server's own "select all"; the caller must NOT send [] when the user
 		// deselected everything (that reads as "all") — it short-circuits locally instead.
@@ -74,7 +74,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-06, P3.T3/T4] Server snapshot of "who viewed the document" — the views widget uses
+		// Server snapshot of "who viewed the document" - the views widget uses
 		// this as its base and overlays live awareness join/heartbeat events on top (see
 		// views-widget.js). No separate track call exists here on purpose: a view is recorded
 		// server-side as a side effect of the awareness `join` message (P3.T2), not by this read.
@@ -99,6 +99,15 @@ this.BX.Note = this.BX.Note || {};
 		}
 	}
 
+	// Which of the three calendar branches a timestamp falls into. The activity chip needs the branch
+	// itself and not only its printed form: the phrase for a near day carries the day inside its own
+	// text (NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CHANGED_TODAY) while the phrase for an older event takes the day as #DATE#,
+	// so the caller has to know which of the two it is holding before it can substitute anything.
+	const ActivityDayKind = Object.freeze({
+		Today: 'today',
+		Yesterday: 'yesterday',
+		Date: 'date'
+	});
 	// [Date format fix] Shared day+time convention across the whole hub (views popover, activity
 	// chip, history tiles) — same helper as tasks.v2's own "who viewed" control:
 	// tasks/install/js/tasks/v2/component/tasks-user-actions-demonstrator/src/tasks-user-actions-demonstrator.js:123-144.
@@ -109,27 +118,78 @@ this.BX.Note = this.BX.Note || {};
 	// buckets by calendar day instead (localized "today, HH:MM" / "yesterday, HH:MM" / "Jul 7, HH:MM"), so a
 	// fresh event never renders as "0 ...".
 	function formatActivityTimestamp(ts) {
+		const {
+			date,
+			time
+		} = describeActivityTimestamp(ts);
+		return `${date} ${time}`;
+	}
+
+	// The same day+time convention, but the day and the time come back separately, together with the
+	// calendar branch they were taken from. That is what lets a caller fill a localized phrase with its
+	// own #DATE# / #TIME# placeholders instead of gluing the two parts with a separator picked by JS:
+	// which separator — and which word order — belongs between a day and a time is a property of the
+	// language, not of this hub ("сегодня в 22:38", "today at 10:38 pm", "heute um 22:38"). Gluing is how
+	// en ended up reading "Modified on today 10:38 pm".
+	function describeActivityTimestamp(ts) {
 		const date = new Date(ts * 1000);
-		const isCurrentYear = date.getFullYear() === new Date().getFullYear();
-		const dayDefault = isCurrentYear ? main_date.DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT') : main_date.DateTimeFormat.getFormat('MEDIUM_DATE_FORMAT');
-		const dayFormats = [['today', 'today'], ['yesterday', 'yesterday'], ['', dayDefault]];
-		const dayFormatted = main_date.DateTimeFormat.format(dayFormats, date);
-		// Time is rendered with the portal's SHORT_TIME_FORMAT so the hub honours the 12h/24h setting
-		// (regional/culture format) exactly like tasks.v2's viewer control — a 24h portal gives "22:38",
-		// a 12h portal gives "10:38 pm". Do NOT hardcode 'H:i' here: that forced 24h and ignored the
-		// portal setting.
-		const timeFormatted = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), date);
-		return `${dayFormatted} ${timeFormatted}`;
+		const kind = detectDayKind(date);
+		return {
+			kind,
+			date: formatDay(date, kind),
+			time: formatTime(ts)
+		};
 	}
 
 	// Time-only, in the portal's SHORT_TIME_FORMAT (12h/24h per the portal setting). Used by the
 	// history tile, whose calendar day is already shown by the sticky group date header — so the tile
-	// itself only needs the time. Same portal-format rule as above: never hardcode 'H:i'.
+	// itself only needs the time. Do NOT hardcode 'H:i' here: that forced 24h and ignored the portal
+	// setting.
 	function formatTime(ts) {
 		return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), new Date(ts * 1000));
 	}
 
-	// [P3.T4] Views widget: "eye N" control in the activity line + a popover listing viewers
+	// Calendar-day boundaries exactly as main.date computes them for its own 'today' / 'yesterday'
+	// format intervals (date-time-format.js, non-UTC path): local midnight of the current day and of
+	// the day before it. Reproduced rather than re-derived, so this hub's notion of "today" can never
+	// drift from the one DateTimeFormat prints.
+	function detectDayKind(date) {
+		const now = new Date();
+		const year = now.getFullYear();
+		const month = now.getMonth();
+		const day = now.getDate();
+		const todayStart = new Date(year, month, day, 0, 0, 0, 0);
+		const tomorrowStart = new Date(year, month, day + 1, 0, 0, 0, 0);
+		if (date >= todayStart && date < tomorrowStart) {
+			return ActivityDayKind.Today;
+		}
+		const yesterdayStart = new Date(year, month, day - 1, 0, 0, 0, 0);
+		if (date >= yesterdayStart && date < todayStart) {
+			return ActivityDayKind.Yesterday;
+		}
+		return ActivityDayKind.Date;
+	}
+	function formatDay(date, kind) {
+		// 'today' / 'yesterday' are main.date's own relative-day tokens (FD_TODAY / FD_YESTERDAY), so the
+		// word itself still comes from the locale. They are not culture date patterns, which is why they
+		// are spelled out here while every real pattern below goes through getFormat().
+		if (kind === ActivityDayKind.Today) {
+			return main_date.DateTimeFormat.format('today', date);
+		}
+		if (kind === ActivityDayKind.Yesterday) {
+			return main_date.DateTimeFormat.format('yesterday', date);
+		}
+
+		// Full month name instead of the abbreviated one: the day is now read as part of a sentence
+		// ("Изменён 7 июля в 22:38"), and a clipped "7 июл" inside a phrase reads like a table cell.
+		// That clipped form is exactly what the previous pair, DAY_SHORT_MONTH_FORMAT /
+		// MEDIUM_DATE_FORMAT, printed.
+		const isCurrentYear = date.getFullYear() === new Date().getFullYear();
+		const dayFormat = isCurrentYear ? main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT') : main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT');
+		return main_date.DateTimeFormat.format(dayFormat, date);
+	}
+
+	// Views widget: "eye N" control in the activity line + a popover listing viewers
 	// (avatar + name + viewed-at time), styled as in Tasks per the mockup (#eyeCtl / #popViews).
 	//
 	// Data has two layers:
@@ -730,7 +790,7 @@ this.BX.Note = this.BX.Note || {};
 	`
 	};
 
-	// [P6.T4 / API-07..09] Thin ajax wrapper around SubscriptionController — mirrors
+	// Thin ajax wrapper around SubscriptionController - mirrors
 	// history-api.js's shape (one static method per action, plain data objects in/out).
 	const SUBSCRIPTION_SCOPE_DOCUMENT$1 = 'document';
 	const SUBSCRIPTION_SCOPE_COLLECTION = 'collection';
@@ -741,13 +801,40 @@ this.BX.Note = this.BX.Note || {};
 	// suppresses this document's notifications without touching the inherited subscription.
 	const SUBSCRIPTION_MODE_MUTED = 'muted';
 
-	// [API-05] Refusal of a positive subscription on an object that is not in the favorites list.
+	// MODES-01: the modes the product actually ships, per scope - a document is subscribed with `self`
+	// alone, a knowledge base has no shipped mode at all. Mirror of the server's list; the refusal lives
+	// on the transport (SubscriptionController::setAction), this map only keeps the interface from
+	// offering what the server would not accept. It is the single place on the client that says what is
+	// shipped: no component decides that for itself, so widening the shipping is an edit of this map.
+	const SHIPPED_SUBSCRIPTION_MODES = Object.freeze({
+		[SUBSCRIPTION_SCOPE_DOCUMENT$1]: Object.freeze([SUBSCRIPTION_MODE_SELF$1]),
+		[SUBSCRIPTION_SCOPE_COLLECTION]: Object.freeze([])
+	});
+	function isShippedSubscriptionMode(scope, mode) {
+		return (SHIPPED_SUBSCRIPTION_MODES[scope] ?? []).includes(String(mode ?? ''));
+	}
+
+	// Whether the scope has a shipped mode at all - the build-time half of the question, asked on its
+	// own only where no portal option applies (a mirror guard, a test).
+	function hasShippedSubscriptionMode(scope) {
+		return (SHIPPED_SUBSCRIPTION_MODES[scope] ?? []).length > 0;
+	}
+
+	// Whether a subscription surface exists here at all - what a component asks before it draws a bell
+	// or a filter. Both halves meet in this one function: the shipping map above, and the
+	// `notifications_enabled` option the server feeds to the mount. No component carries a rule of its
+	// own, so widening the shipping or switching the option reaches every surface through here.
+	function hasSubscriptionSurface(scope, notificationsEnabled) {
+		return notificationsEnabled === true && hasShippedSubscriptionMode(scope);
+	}
+
+	// Refusal of a positive subscription on an object that is not in the favorites list.
 	const SUBSCRIPTION_ERROR_FAVORITE_REQUIRED = 'FAVORITE_REQUIRED';
 	function isFavoriteRequiredError(error) {
 		return String(error?.errors?.[0]?.code || '') === SUBSCRIPTION_ERROR_FAVORITE_REQUIRED;
 	}
 	class SubscriptionApi {
-		// [API-07] Subscribe / change scope — idempotent upsert. `mode` is `self`/`subtree`
+		// Subscribe / change scope - idempotent upsert. `mode` is `self`/`subtree`
 		// for a document target, `all` for a collection target.
 		static async set({
 			scope,
@@ -763,7 +850,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-08] Unsubscribe — removes the caller's own subscription.
+		// Unsubscribe - removes the caller's own subscription.
 		static async remove({
 			scope,
 			entityId
@@ -776,7 +863,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-09] State for the bell control. `collectionId` is optional — the server
+		// State for the bell control. `collectionId` is optional - the server
 		// falls back to the document's own collection when it's omitted.
 		static async getState({
 			documentId,
@@ -794,12 +881,17 @@ this.BX.Note = this.BX.Note || {};
 		}
 	}
 
-	// [P4.T1] Presentation half of the subscription bell: the trigger, the scope popover
+	// Presentation half of the subscription bell: the trigger, the scope popover
 	// (self / subtree / off), the inherited/muted layouts and the keyboard model. It owns no
 	// transport and no loading - the state arrives as a prop (DTO-02 plus `inheritedTitle`) and the
 	// chosen action leaves as an event. Two hosts share it: the editor's own container
 	// (subscription-bell.js, which loads the state itself) and the row of the favorites block, whose
 	// state comes from the sidebar store. There is deliberately no second copy of this choice.
+	//
+	// [TPL-01] `toggleOnly` degenerates the control into a two-way toggle: the trigger announces itself
+	// with `aria-pressed` instead of promising a menu it would not open, and the press leaves as
+	// `select-mode(toggleMode)` or `unsubscribe`. Which form a host asks for depends on how many modes
+	// the product ships - the control itself knows nothing about that.
 	//
 	// [#10 rework] `role="menu"` with `menuitemradio`/`menuitem` rows and roving tabindex -
 	// same pattern as note.ui.avatar-stack's co-authors menu (onParticipantsMenuKeydown):
@@ -818,15 +910,13 @@ this.BX.Note = this.BX.Note || {};
 	// Module-level counter for a unique popover id + radio group name per instance
 	// (mirrors ViewsWidgetComponent / NoteAvatarStack).
 	let instanceCounter$1 = 0;
-	const MODE_SELF = 'self';
-	const MODE_SUBTREE = 'subtree';
 	const SubscriptionBellView = {
 		name: 'NoteDocumentHistorySubscriptionBellView',
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
-			// [DTO-02] `{ mode, subscribed, muted, inherited, inheritedSource }` plus the optional
+			// `{ mode, subscribed, muted, inherited, inheritedSource }` plus the optional
 			// `inheritedTitle` that names the covering source. An absent state reads as "nothing arrives".
 			state: {
 				type: Object,
@@ -836,6 +926,25 @@ this.BX.Note = this.BX.Note || {};
 			isSaving: {
 				type: Boolean,
 				default: false
+			},
+			// TPL-01: nothing to choose, so the press is the whole action - the popover does not open and
+			// the trigger hands the host one of the two events straight away. The host decides this (it is
+			// the half that knows the shipped modes); the popover and its four layouts stay here, unopened.
+			toggleOnly: {
+				type: Boolean,
+				default: false
+			},
+			// What one press turns on in that form. The host names it; the default is the mode the product
+			// ships, taken from the dictionary rather than written here as a string.
+			toggleMode: {
+				type: String,
+				default: SUBSCRIPTION_MODE_SELF$1
+			},
+			// Anchor of the trigger for e2e. The control has two hosts and each names its own surface, so
+			// the value comes from the host; empty - no attribute at all.
+			testId: {
+				type: String,
+				default: ''
 			},
 			// The trigger looks like a control of its host, so its classes come from the host. The active
 			// modifier is separate because the host's design system names it (`--on` in the activity line,
@@ -964,12 +1073,22 @@ this.BX.Note = this.BX.Note || {};
 					case 'muted':
 						return this.messages.activityMuted;
 					case 'direct':
-						return this.mode === MODE_SUBTREE ? this.messages.activitySubscribedSubtree : this.messages.activitySubscribedSelf;
+						return this.mode === SUBSCRIPTION_MODE_SUBTREE ? this.messages.activitySubscribedSubtree : this.messages.activitySubscribedSelf;
 					case 'inherited':
 						return this.inheritedSource === 'collection' ? this.messages.activitySubscribedInheritedCollection : this.messages.activitySubscribedInheritedSubtree;
 					default:
 						return this.messages.activitySubscribe;
 				}
+			},
+			// [a11y] Accessible name of the trigger. In the toggle form the state is already announced by
+			// `aria-pressed`, so the name has to stay put: a name that changes with the state reads as a
+			// different control. The same function is named the same way by the star of this line and by the
+			// bells of the sidebar rows. The `title` keeps following the state - it is a hint, not a name.
+			bellName() {
+				if (!this.toggleOnly) {
+					return this.bellTitle;
+				}
+				return this.messages.activityNotifyState || this.bellTitle;
 			},
 			radioGroupName() {
 				return `note-subscription-bell-scope-${this.instanceId}`;
@@ -979,13 +1098,13 @@ this.BX.Note = this.BX.Note || {};
 			menuOptionKeys() {
 				switch (this.popoverState) {
 					case 'direct':
-						return [MODE_SELF, MODE_SUBTREE, 'off'];
+						return [SUBSCRIPTION_MODE_SELF$1, SUBSCRIPTION_MODE_SUBTREE, 'off'];
 					case 'inherited':
 						return ['mute'];
 					case 'muted':
 						return ['resume'];
 					default:
-						return [MODE_SELF, MODE_SUBTREE];
+						return [SUBSCRIPTION_MODE_SELF$1, SUBSCRIPTION_MODE_SUBTREE];
 				}
 			}
 		},
@@ -1002,6 +1121,23 @@ this.BX.Note = this.BX.Note || {};
 			this.detachPopoverAnchor();
 		},
 		methods: {
+			handleTriggerClick() {
+				if (this.toggleOnly) {
+					this.toggleSubscription();
+					return;
+				}
+				this.toggleOpen();
+			},
+			// [TPL-01] The two-way form: what is on goes off, what is off goes on in the host's mode. The
+			// popover is not opened - neither here nor from the keyboard, since Enter/Space on the trigger
+			// arrive as this same click.
+			toggleSubscription() {
+				if (this.effectiveOn) {
+					this.unsubscribe();
+					return;
+				}
+				this.selectMode(this.toggleMode);
+			},
 			toggleOpen() {
 				if (this.isOpen) {
 					this.closePopover();
@@ -1013,7 +1149,7 @@ this.BX.Note = this.BX.Note || {};
 				// [#10] Roving focus starts on the checked option (or the first row when
 				// unsubscribed) - mirrors the previous "focus the checked radio" behaviour, now
 				// expressed as a menu row index. [#5] Position centered under the trigger.
-				const startIndex = this.popoverState === 'direct' && this.mode === MODE_SUBTREE ? 1 : 0;
+				const startIndex = this.popoverState === 'direct' && this.mode === SUBSCRIPTION_MODE_SUBTREE ? 1 : 0;
 				this.activeIndex = startIndex;
 				this.$nextTick(() => {
 					note_ui_popoverPosition.positionPopoverUnderTrigger(this.$refs.bellTrigger, this.$refs.bellPopover);
@@ -1155,7 +1291,7 @@ this.BX.Note = this.BX.Note || {};
 				}
 				this.closePopover(true);
 				if (this.subscribed && this.mode === mode) {
-					// [AC-043] The mode already in force is not re-sent: the press only closes the popover.
+					// The mode already in force is not re-sent: the press only closes the popover.
 					return;
 				}
 				this.$emit('select-mode', mode);
@@ -1190,11 +1326,13 @@ this.BX.Note = this.BX.Note || {};
 				type="button"
 				:class="triggerClasses"
 				:title="bellTitle"
-				:aria-label="bellTitle"
-				aria-haspopup="menu"
-				:aria-expanded="isOpen ? 'true' : 'false'"
+				:aria-label="bellName"
+				:data-testid="testId || null"
+				:aria-haspopup="toggleOnly ? null : 'menu'"
+				:aria-expanded="toggleOnly ? null : (isOpen ? 'true' : 'false')"
+				:aria-pressed="toggleOnly ? (effectiveOn ? 'true' : 'false') : null"
 				:aria-controls="isOpen ? bellPopoverId : null"
-				@click.stop="toggleOpen"
+				@click.stop="handleTriggerClick"
 			>
 				<BIcon :name="iconName" :class="iconClass" aria-hidden="true" />
 			</button>
@@ -1326,7 +1464,7 @@ this.BX.Note = this.BX.Note || {};
 	const HISTORY_PUSH_COMMAND = 'documentHistoryEvent';
 	const HISTORY_PULL_TAG_PREFIX = 'NOTE_DOC_HISTORY_';
 
-	// [EVENT-02] Subscription lifecycle of the current user, pushed on their personal channel. Only
+	// Subscription lifecycle of the current user, pushed on their personal channel. Only
 	// these two commands are routed; anything else is dropped before a consumer sees it.
 	const SUBSCRIPTION_PUSH_COMMANDS = Object.freeze(['subscriptionSet', 'subscriptionRemove']);
 	const SUBSCRIPTION_SCOPE_DOCUMENT = 'document';
@@ -1366,8 +1504,8 @@ this.BX.Note = this.BX.Note || {};
 		};
 	}
 
-	// [EVENT-02] Subscribes to the subscription commands that can concern one document - its own row and
-	// anything that may cover it from above (AC-052). `onChange({ command, mode })` carries the direct mode
+	// Subscribes to the subscription commands that can concern one document - its own row and
+	// anything that may cover it from above. `onChange({ command, mode })` carries the direct mode
 	// of the change; the effective state of the document also depends on coverage, so a consumer re-reads
 	// rather than adopting it blindly - which is why the filter errs towards passing a change through.
 	// Returns a disposer. Safe to call before BX.PULL exists (no-op disposer). No per-document tag here:
@@ -1450,14 +1588,19 @@ this.BX.Note = this.BX.Note || {};
 		});
 	}
 
-	// [P6.T4] Subscription bell of the activity line: the "#bellLine" control plus the scope popover
+	// Subscription bell of the activity line: the "#bellLine" control plus the scope popover
 	// per mockup-activity-line.html's #popSub. This half owns the state and the transport - it adopts
 	// the bootstrap snapshot (or loads it from SubscriptionController.getState), writes through
 	// SubscriptionApi and reconciles the effective state afterwards. The control itself, the popover
 	// and its keyboard model live in SubscriptionBellView, shared with the row of the favorites block.
 	//
-	// [P4.T4] EVENT-02: a subscription changed in another session (or by the same user in another tab)
+	// EVENT-02: a subscription changed in another session (or by the same user in another tab)
 	// re-reads the state, so the bell of an open document stops relying on the page being reloaded.
+	//
+	// MODES-01: this half is also where the shipped modes are read. Visibility and the state handed to
+	// the control are brought to that map, and the form of the control follows from how many modes it
+	// holds - one leaves nothing to choose. `mute()`/`resume()` stay in place and are out of reach while
+	// `muted` is not shipped.
 	const SubscriptionBellComponent = {
 		name: 'NoteDocumentHistorySubscriptionBell',
 		components: {
@@ -1483,7 +1626,7 @@ this.BX.Note = this.BX.Note || {};
 				type: Object,
 				default: null
 			},
-			// [AC-045] Is the document in the caller's favorites list. Owned by the star next to the bell,
+			// Is the document in the caller's favorites list. Owned by the star next to the bell,
 			// which is the only place that knows the optimistic frame as well as the store.
 			isFavorite: {
 				type: Boolean,
@@ -1512,7 +1655,28 @@ this.BX.Note = this.BX.Note || {};
 			};
 		},
 		computed: {
-			// [AC-045] Notifications live on favorites: the bell is offered for a document in the list, and
+			// MODES-01 / Q-1: only a direct row in a shipped mode counts as a subscription here. A row of a
+			// mode outside the shipping delivers nothing, so reading it as active would promise notifications
+			// that never arrive - it reads as "not subscribed" instead, and one press rewrites it into the
+			// shipped mode (set() upserts), after which the state has fixed itself.
+			isShippedSubscription() {
+				return this.subscribed && isShippedSubscriptionMode(SUBSCRIPTION_SCOPE_DOCUMENT$1, this.mode);
+			},
+			// Coverage from above is a state of the control only while `muted` is shipped: the inherited and
+			// muted layouts exist to suppress that coverage, and coverage nothing can suppress has nothing to
+			// offer. Derived from the mode map, so returning `muted` to it brings both layouts back by itself.
+			isCovered() {
+				return this.inherited && isShippedSubscriptionMode(SUBSCRIPTION_SCOPE_DOCUMENT$1, SUBSCRIPTION_MODE_MUTED);
+			},
+			// One shipped mode leaves nothing to choose, so the control is a plain toggle. A second mode
+			// brings the scope popover back on its own - widening the shipping must not need a component edit.
+			isToggleOnly() {
+				return SHIPPED_SUBSCRIPTION_MODES[SUBSCRIPTION_SCOPE_DOCUMENT$1].length < 2;
+			},
+			toggleMode() {
+				return SHIPPED_SUBSCRIPTION_MODES[SUBSCRIPTION_SCOPE_DOCUMENT$1][0] ?? SUBSCRIPTION_MODE_SELF$1;
+			},
+			// Notifications live on favorites: the bell is offered for a document in the list, and
 			// for one that is still covered after the star came off - otherwise there would be no way to
 			// switch that coverage off or to mute what an ancestor imposes.
 			isVisible() {
@@ -1520,15 +1684,16 @@ this.BX.Note = this.BX.Note || {};
 				// only ever appears together with `inherited`. Once that coverage is gone (the subscription on
 				// the knowledge base switched off) the row it left behind suppresses nothing, and a bell for it
 				// would sit on a document notifications no longer reach. Same rule in the rows of the block.
-				return this.isFavorite || this.subscribed || this.inherited;
+				return this.isFavorite || this.isShippedSubscription || this.isCovered;
 			},
-			// [DTO-02] The state surface the view draws from.
+			// The state surface the view draws from - already brought to the shipped modes, because the
+			// control is presentational and normalizes nothing itself.
 			bellState() {
 				return {
-					mode: this.mode,
-					subscribed: this.subscribed,
-					muted: this.muted,
-					inherited: this.inherited,
+					mode: this.isShippedSubscription ? this.mode : null,
+					subscribed: this.isShippedSubscription,
+					muted: this.muted && this.isCovered,
+					inherited: this.isCovered,
 					inheritedSource: this.inheritedSource,
 					inheritedTitle: this.inheritedTitle
 				};
@@ -1548,7 +1713,7 @@ this.BX.Note = this.BX.Note || {};
 				const data = event?.getData?.() ?? {};
 				const scope = String(data.scope || SUBSCRIPTION_SCOPE_DOCUMENT$1);
 				if (scope !== SUBSCRIPTION_SCOPE_DOCUMENT$1 || Number(data.entityId) !== Number(this.documentId)) {
-					// [AC-052] Not this document's own row - but a subscription on the knowledge base or on the
+					// Not this document's own row - but a subscription on the knowledge base or on the
 					// subtree of an ancestor changes what reaches this document, and the payload does not say
 					// whether it does. Only the server can tell, so the read waits for the announcement that
 					// has the server's answer behind it; an unconfirmed one would be read before the write.
@@ -1627,7 +1792,7 @@ this.BX.Note = this.BX.Note || {};
 				this.inheritedTitle = this.inherited ? String(state?.inheritedTitle || '') : '';
 				this.muted = Boolean(state?.muted);
 			},
-			// [EVENT-02] The payload carries the direct mode only; the effective state also depends on
+			// The payload carries the direct mode only; the effective state also depends on
 			// coverage from above, so the event is a signal to re-read rather than a state to adopt.
 			subscribeSubscriptionEvents() {
 				this.unsubscribeSubscriptionEvents();
@@ -1692,7 +1857,7 @@ this.BX.Note = this.BX.Note || {};
 					this.mode = previous.mode;
 					// The optimistic announcement has already been adopted elsewhere - take it back.
 					this.emitSubscriptionChanged(false);
-					// [API-05] The document left the favorites list between the render and the press. The
+					// The document left the favorites list between the render and the press. The
 					// roll-back above is already the server's answer about the subscription, and EVENT-01 has
 					// the list covered, so this is a stale view rather than a technical failure.
 					if (isFavoriteRequiredError(error)) {
@@ -1795,6 +1960,9 @@ this.BX.Note = this.BX.Note || {};
 			v-if="isVisible"
 			:state="bellState"
 			:is-saving="isSaving"
+			:toggle-only="isToggleOnly"
+			:toggle-mode="toggleMode"
+			test-id="note-activity-subscription"
 			:messages="messages"
 			@select-mode="selectMode"
 			@unsubscribe="unsubscribe"
@@ -1804,12 +1972,12 @@ this.BX.Note = this.BX.Note || {};
 	`
 	};
 
-	// [API-01 / API-02] Thin ajax wrapper around FavoriteController for the star of the activity line -
+	// Thin ajax wrapper around FavoriteController for the star of the activity line -
 	// same shape as subscription-api.js (one static method per action, plain data objects in/out). Only
 	// the document scope is here: the star of a knowledge base lives in the sidebar row, not in a document.
 	const ENTITY_TYPE_DOCUMENT = 'document';
 	class FavoriteApi {
-		// [API-01] Adds the document to the personal list; without a position it goes in first.
+		// Adds the document to the personal list; without a position it goes in first.
 		static add({
 			documentId
 		}) {
@@ -1822,7 +1990,7 @@ this.BX.Note = this.BX.Note || {};
 			});
 		}
 
-		// [API-02] Removes the row. Idempotent: a missing row is not an error.
+		// Removes the row. Idempotent: a missing row is not an error.
 		static remove({
 			documentId
 		}) {
@@ -1840,9 +2008,9 @@ this.BX.Note = this.BX.Note || {};
 	// imported back.
 	const FAVORITE_CHANGED_EVENT = 'Note:favoriteChanged';
 
-	// [P4.T3] Star of the activity line: adds the open document to the personal favorites list and takes
+	// Star of the activity line: adds the open document to the personal favorites list and takes
 	// it back out. Unlike the bell it is NOT gated by the notifications setting - the list exists on its
-	// own - and it needs document VIEW, not edit (AC-001), the same right the bell needs.
+	// own - and it needs document VIEW, not edit, the same right the bell needs.
 	//
 	// State is one and the same as the sidebar's: when the sidebar is on the page its store is the owner
 	// of the flag (optimistic toggles, EVENT-01 pushes, the loaded pages of the block all land there), so
@@ -1959,7 +2127,7 @@ this.BX.Note = this.BX.Note || {};
 					}
 				}));
 			},
-			// [DTO-01] Second announcement of the same press, this one with the server's answer behind it -
+			// Second announcement of the same press, this one with the server's answer behind it -
 			// including the refusal that rolls the press back, which settles the state just as well. Until it
 			// arrives the sidebar holds the press against a page read of its own; `confirmed` is what releases
 			// it, the same convention the bell of the line follows. `item` is the finished row of the block: it
@@ -2041,7 +2209,10 @@ this.BX.Note = this.BX.Note || {};
 	`
 	};
 
-	// [P1.T5] Activity line hub under the document title: three slots — last-change chip
+	// One raw #DATE# / #TIME# template per calendar branch, keyed by ActivityDayKind. A value is null
+	// on a locale whose translation of that phrase has not shipped yet.
+
+	// Activity line hub under the document title: three slots - last-change chip
 	// (opens the history sidebar), views eye and subscription bell. The chip's payload is `lastChange`
 	// (`{ authors, time }`, bundled into the document bootstrap payload by the backend) — `null` falls
 	// back to a generic "open history" label instead of inventing an author/time.
@@ -2053,14 +2224,14 @@ this.BX.Note = this.BX.Note || {};
 	// `#eyeCtl,#bellLine{display:none}`) — those read live-document state that doesn't apply to a
 	// past version.
 	//
-	// [P3.T4] The eye slot is the working ViewsWidgetComponent. It needs `documentId` and the
+	// The eye slot is the working ViewsWidgetComponent. It needs `documentId` and the
 	// live-collaboration `provider` (for the real-time overlay, reusing AwarenessManager per Block
 	// 5 — see views-widget.js) — both are explicit props on this component now, handed down by the
 	// caller (note.editor's DocumentEditorComponent). Previously read via `this.$parent` back when
 	// this component still lived inside note.editor itself; that coupling is gone now that this
 	// component is its own extension.
 	//
-	// [P6.T4] The bell slot is the working SubscriptionBellComponent (self-contained — it loads its
+	// The bell slot is the working SubscriptionBellComponent (self-contained - it loads its
 	// own subscribed/mode state from SubscriptionController.getState, same pattern as the eye).
 	// Subscribing only requires document VIEW rights (see SubscriptionController::assertTargetViewAccess),
 	// not edit — the bell is NOT gated by `canEdit`.
@@ -2093,7 +2264,7 @@ this.BX.Note = this.BX.Note || {};
 			},
 			// Handed down to SubscriptionBellComponent — optional (the server falls back to the
 			// document's own collection when it's 0/omitted), passed through when the caller
-			// already has it (see note-editor.js's own `collectionId` prop). [P3.T1] Also read by
+			// already has it (see note-editor.js's own `collectionId` prop). Also read by
 			// BacklinksWidgetComponent, which labels only the sources living in another knowledge base.
 			collectionId: {
 				type: Number,
@@ -2109,19 +2280,20 @@ this.BX.Note = this.BX.Note || {};
 				type: Object,
 				default: null
 			},
-			// [P8.T5] ISO-8601 creation timestamp of the document. When there is no last-change info to
+			// ISO-8601 creation timestamp of the document. When there is no last-change info to
 			// show, the chip falls back to "Created <date>" instead of the generic "open history" label.
 			createdAt: {
 				type: String,
 				default: null
 			},
-			// [P8.T2] history_enabled UI flag. When false the chip still renders and live-updates, but it
+			// history_enabled UI flag. When false the chip still renders and live-updates, but it
 			// is NOT interactive: no history-open click, no title/hover/cursor affordance.
 			historyEnabled: {
 				type: Boolean,
 				default: false
 			},
-			// [P8.T3] notifications_enabled UI flag — gates the subscription bell only.
+			// notifications_enabled UI flag. When false the bell is not drawn at all - the feature is
+			// hidden whole, and nothing is delivered behind it either (NotificationDrainAgent).
 			notificationsEnabled: {
 				type: Boolean,
 				default: false
@@ -2140,7 +2312,7 @@ this.BX.Note = this.BX.Note || {};
 				type: Object,
 				default: null
 			},
-			// [DTO-01] Backlinks counter bundled with the document bootstrap — passed straight through
+			// Backlinks counter bundled with the document bootstrap - passed straight through
 			// to BacklinksWidgetComponent, which adopts it instead of reading the count itself. See that
 			// component's own prop doc.
 			initialBacklinks: {
@@ -2153,7 +2325,7 @@ this.BX.Note = this.BX.Note || {};
 				type: Object,
 				default: null
 			},
-			// [TPL-01] "In favorites" flag from the document bootstrap - passed straight through to
+			// "In favorites" flag from the document bootstrap - passed straight through to
 			// FavoriteStarComponent. `null` leaves the star to the sidebar's own state (see its prop doc).
 			initialFavorite: {
 				type: Boolean,
@@ -2194,7 +2366,7 @@ this.BX.Note = this.BX.Note || {};
 				// once a `content_changed` event arrives, overrides it so the chip updates in place
 				// without a reload. Same `{ authors, time }` shape as `lastChange`.
 				liveLastChange: null,
-				// [AC-045] Effective "in favorites" flag as the star reports it (bootstrap, sidebar store or
+				// Effective "in favorites" flag as the star reports it (bootstrap, sidebar store or
 				// the user's own press). The bell is gated by it, so it has to be the star's value and not a
 				// second reading of the same fact.
 				starFavorite: null
@@ -2225,6 +2397,12 @@ this.BX.Note = this.BX.Note || {};
 			isFavorite() {
 				return this.starFavorite ?? Boolean(this.initialFavorite);
 			},
+			// An article is followed with `self`, and that is shipped, so the line carries a bell wherever
+			// the option leaves the feature on. Asked of the policy rather than stated here, so neither
+			// narrowing the shipping nor switching the option is an edit of this line.
+			hasSubscriptionBell() {
+				return hasSubscriptionSurface(SUBSCRIPTION_SCOPE_DOCUMENT$1, this.notificationsEnabled);
+			},
 			effectiveChipInfo() {
 				// A version preview wins over everything; otherwise the freshest live content-change
 				// snapshot wins over the bootstrap one, so the chip tracks edits made after page load.
@@ -2238,19 +2416,31 @@ this.BX.Note = this.BX.Note || {};
 			hasChipInfo() {
 				return this.chipAuthors.length > 0 && main_core.Type.isStringFilled(this.effectiveChipInfo?.time);
 			},
-			// [#2, date-format fix] Shared day+time convention — see format-date.js.
-			chipTimeText() {
+			// [#2, date-format fix] The signature is one whole phrase per calendar branch instead of a prefix
+			// glued to a formatted date — the reason, and the shared day+time convention, live in format-date.js.
+			chipChangedText() {
 				const ts = this.toTimestampSeconds(this.effectiveChipInfo?.time);
-				return ts === null ? '' : formatActivityTimestamp(ts);
+				if (ts === null) {
+					return '';
+				}
+				return this.buildChipText(ts, {
+					[ActivityDayKind.Today]: this.messages.activityChangedToday,
+					[ActivityDayKind.Yesterday]: this.messages.activityChangedYesterday,
+					[ActivityDayKind.Date]: this.messages.activityChangedAtDate
+				});
 			},
-			// [P8.T5] No last-change info: show "Created <date>" when we have a valid creation timestamp,
+			// No last-change info: show "Created <date>" when we have a valid creation timestamp,
 			// otherwise keep the generic "open history" label (no crash on a missing/invalid createdAt).
 			chipFallbackText() {
 				const ts = this.toTimestampSeconds(this.createdAt);
 				if (ts === null) {
 					return this.messages.activityOpenHistory;
 				}
-				return `${this.messages.activityCreated} ${formatActivityTimestamp(ts)}`;
+				return this.buildChipText(ts, {
+					[ActivityDayKind.Today]: this.messages.activityCreatedToday,
+					[ActivityDayKind.Yesterday]: this.messages.activityCreatedYesterday,
+					[ActivityDayKind.Date]: this.messages.activityCreatedAtDate
+				});
 			}
 		},
 		methods: {
@@ -2260,6 +2450,21 @@ this.BX.Note = this.BX.Note || {};
 				}
 				const ms = Date.parse(value);
 				return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+			},
+			// A phrase may legitimately be absent: the new keys ship in ru first, and Loc.getMessage() returns
+			// null on a locale whose translation has not arrived yet. An empty signature is the accepted
+			// outcome there — never a TypeError on a missing template, never a literal "undefined" in the chip.
+			buildChipText(ts, phrases) {
+				const {
+					kind,
+					date,
+					time
+				} = describeActivityTimestamp(ts);
+				const phrase = phrases[kind];
+				if (!main_core.Type.isStringFilled(phrase)) {
+					return '';
+				}
+				return phrase.replace('#DATE#', date).replace('#TIME#', time);
 			},
 			// [NEW-C, live chip] Subscribe to the same pushed history stream the sidebar feed reads, but
 			// only to keep the chip's "last change" fresh. `content_changed` is visible to every role
@@ -2297,7 +2502,7 @@ this.BX.Note = this.BX.Note || {};
 				};
 			},
 			handleChipClick() {
-				// [P8.T2] history_enabled off → the chip is a passive label, no history-open.
+				// history_enabled off -> the chip is a passive label, no history-open.
 				if (!this.historyEnabled) {
 					return;
 				}
@@ -2312,20 +2517,41 @@ this.BX.Note = this.BX.Note || {};
 		},
 		// language=Vue
 		template: `
-		<div class="note-activity-line">
+		<div class="note-activity-line" data-testid="note-activity-line">
 			<button
 				v-if="historyEnabled"
 				type="button"
 				class="note-activity-line__chip"
 				:title="messages.activityOpenHistory"
+				data-testid="note-activity-chip"
 				@click="handleChipClick"
 			>
-				<span v-if="hasChipInfo" class="note-activity-line__chip-text">{{ messages.activityChanged }} {{ chipTimeText }}</span>
-				<span v-else class="note-activity-line__chip-text">{{ chipFallbackText }}</span>
+				<span
+					v-if="hasChipInfo"
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipChangedText }}</span>
+				<span
+					v-else
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipFallbackText }}</span>
 			</button>
-			<span v-else class="note-activity-line__chip note-activity-line__chip--static">
-				<span v-if="hasChipInfo" class="note-activity-line__chip-text">{{ messages.activityChanged }} {{ chipTimeText }}</span>
-				<span v-else class="note-activity-line__chip-text">{{ chipFallbackText }}</span>
+			<span
+				v-else
+				class="note-activity-line__chip note-activity-line__chip--static"
+				data-testid="note-activity-chip-static"
+			>
+				<span
+					v-if="hasChipInfo"
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipChangedText }}</span>
+				<span
+					v-else
+					class="note-activity-line__chip-text"
+					data-testid="note-activity-chip-text"
+				>{{ chipFallbackText }}</span>
 			</span>
 			<template v-if="hasChipInfo">
 				<span class="note-activity-line__chip-sep" aria-hidden="true">·</span>
@@ -2337,7 +2563,7 @@ this.BX.Note = this.BX.Note || {};
 					@avatar-click="handleAvatarClick"
 				/>
 			</template>
-			<span v-if="!isPreviewMode" class="note-activity-line__actions">
+			<span v-if="!isPreviewMode" class="note-activity-line__actions" data-testid="note-activity-actions">
 				<ViewsWidgetComponent
 					:document-id="documentId"
 					:provider="provider"
@@ -2346,14 +2572,14 @@ this.BX.Note = this.BX.Note || {};
 					:messages="messages"
 					:open-user-profile="openUserProfile"
 				/>
-				<!-- [P2.T3] Slot order is fixed by the product: last change, views, incoming links,
+				<!-- Slot order is fixed by the product: last change, views, incoming links,
 						 favorites, subscription. -->
 				<BacklinksWidgetComponent
 					:document-id="documentId"
 					:initial-backlinks="initialBacklinks"
 					@open-internal-link="$emit('open-internal-link', $event)"
 				/>
-				<!-- [P4.T3] The star is not gated by notificationsEnabled: the favorites list exists
+				<!-- The star is not gated by the subscription shipping: the favorites list exists
 						 independently of the bell. In "meta" mode (a version preview) it is hidden along
 						 with the eye and the bell - see the wrapper above. -->
 				<FavoriteStarComponent
@@ -2365,7 +2591,7 @@ this.BX.Note = this.BX.Note || {};
 					@favorite-change="starFavorite = $event"
 				/>
 				<SubscriptionBellComponent
-					v-if="notificationsEnabled"
+					v-if="hasSubscriptionBell"
 					:document-id="documentId"
 					:collection-id="collectionId"
 					:initial-state="initialSubscription"
@@ -2377,7 +2603,7 @@ this.BX.Note = this.BX.Note || {};
 	`
 	};
 
-	// [P1.T5 / P2.T4] History sidebar — the right-hand 3rd column, pushes the document content
+	// History sidebar - the right-hand 3rd column, pushes the document content
 	// (see note.editor's document-page.js `--note-history-width` custom property), never overlays it.
 	//
 	// [#11/#12 rework] This sidebar no longer renders a version preview itself — clicking a
@@ -2387,7 +2613,7 @@ this.BX.Note = this.BX.Note || {};
 	// restoring, compacting and the 409 retry (SDD P1.T2) now live with the caller too. `previewVersionId`
 	// is handed back down only so the currently-previewed tile can be highlighted / toggled off.
 	//
-	// [P2.T4] The feed (Block 2, listFeed API-04) is fetched and paginated by this component
+	// The feed (Block 2, listFeed API-04) is fetched and paginated by this component
 	// itself — the parent (note.editor's document-page.js) only owns open/close state, it doesn't
 	// pass data in. `groups` below is an internal computed, not a prop, grouped by calendar day from
 	// the flat `feedEvents` list; the shape matches the P1.T5 placeholder exactly: { key, dateLabel,
@@ -2406,7 +2632,7 @@ this.BX.Note = this.BX.Note || {};
 	// Same slack as handleBodyScroll's bottom trigger — "not scrollable" means within this of fitting.
 	const SCROLL_THRESHOLD_PX = 120;
 
-	// [SDD API-04 / EventVisibilityPolicy] Canonical event types, gender-neutral noun labels per
+	// Canonical event types, mirroring EventVisibilityPolicy on the server, gender-neutral noun labels per
 	// UI-requirements — no "Version" noun anywhere, no gendered "changed" verb forms.
 	const EVENT_LABEL_KEYS = {
 		created: 'historyEventCreated',
@@ -2468,7 +2694,7 @@ this.BX.Note = this.BX.Note || {};
 		emits: ['close', 'preview', 'toggle-diff'],
 		data() {
 			return {
-				// [P2.T4] Feed state — a flat, de-duplicated accumulation of keyset pages.
+				// Feed state - a flat, de-duplicated accumulation of keyset pages.
 				feedEvents: [],
 				feedInitialized: false,
 				feedLoading: false,
@@ -2757,7 +2983,7 @@ this.BX.Note = this.BX.Note || {};
 				}
 				return el.scrollHeight <= el.clientHeight + SCROLL_THRESHOLD_PX;
 			},
-			// [SDD P2.T4] Seamless infinite scroll over the keyset cursor — no "show more" button.
+			// Seamless infinite scroll over the keyset cursor - no "show more" button.
 			handleBodyScroll(event) {
 				const el = event.currentTarget;
 				if (!(el instanceof HTMLElement)) {
@@ -3166,8 +3392,15 @@ this.BX.Note = this.BX.Note || {};
 			loading: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_LOADING'),
 			historyCoAuthorsTitle: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_CO_AUTHORS_TITLE'),
 			activityOpenHistory: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_OPEN_HISTORY'),
-			activityChanged: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CHANGED'),
-			activityCreated: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CREATED'),
+			// One whole chip signature per calendar branch — the reason is in format-date.js. These stay RAW
+			// with their #DATE# / #TIME# placeholders: the dictionary is built once, while the signature is
+			// recomputed on every live change — the values are substituted by the component that has them.
+			activityChangedToday: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CHANGED_TODAY'),
+			activityChangedYesterday: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CHANGED_YESTERDAY'),
+			activityChangedAtDate: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CHANGED_AT_DATE'),
+			activityCreatedToday: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CREATED_TODAY'),
+			activityCreatedYesterday: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CREATED_YESTERDAY'),
+			activityCreatedAtDate: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_CREATED_AT_DATE'),
 			activityViews: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_VIEWS'),
 			activitySubscribe: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_SUBSCRIBE'),
 			activitySubscribedSelf: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_SUBSCRIBED_SELF'),
@@ -3175,6 +3408,9 @@ this.BX.Note = this.BX.Note || {};
 			activitySubscribedInheritedSubtree: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_SUBSCRIBED_INHERITED_SUBTREE'),
 			activitySubscribedInheritedCollection: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_SUBSCRIBED_INHERITED_COLLECTION'),
 			activityMuted: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_MUTED'),
+			// Stable accessible name of the bell in its toggle form - the state is announced by
+			// `aria-pressed`, and the same function is named the same way in the rows of the sidebar.
+			activityNotifyState: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_NOTIFY_STATE'),
 			activityFavoriteOn: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_FAVORITE_ON'),
 			activityFavoriteOff: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_FAVORITE_OFF'),
 			activityFavoriteState: main_core.Loc.getMessage('NOTE_UI_DOCUMENT_HISTORY_ACTIVITY_FAVORITE_STATE'),
@@ -3226,6 +3462,7 @@ this.BX.Note = this.BX.Note || {};
 	exports.FavoriteStarComponent = FavoriteStarComponent;
 	exports.HistoryApi = HistoryApi;
 	exports.RESTORE_DIRTY_WINDOW_ERROR_CODE = RESTORE_DIRTY_WINDOW_ERROR_CODE;
+	exports.SHIPPED_SUBSCRIPTION_MODES = SHIPPED_SUBSCRIPTION_MODES;
 	exports.SUBSCRIPTION_MODE_ALL = SUBSCRIPTION_MODE_ALL;
 	exports.SUBSCRIPTION_MODE_MUTED = SUBSCRIPTION_MODE_MUTED;
 	exports.SUBSCRIPTION_MODE_SELF = SUBSCRIPTION_MODE_SELF$1;
@@ -3238,7 +3475,10 @@ this.BX.Note = this.BX.Note || {};
 	exports.VersionTimelineComponent = VersionTimelineComponent;
 	exports.ViewsWidgetComponent = ViewsWidgetComponent;
 	exports.createHistoryMessages = createHistoryMessages;
+	exports.hasShippedSubscriptionMode = hasShippedSubscriptionMode;
+	exports.hasSubscriptionSurface = hasSubscriptionSurface;
 	exports.isRestoreDirtyWindowError = isRestoreDirtyWindowError;
+	exports.isShippedSubscriptionMode = isShippedSubscriptionMode;
 
 })(this.BX.Note.Ui = this.BX.Note.Ui || {}, BX.UI.System.Checkbox, window, BX, BX.Note.Ui, BX.UI.IconSet, BX.Main, BX.Note.Ui, BX.Note.Ui, BX.Event, window, BX, BX.UI.Notification, BX.Note.Ui);
 //# sourceMappingURL=document-history.bundle.js.map

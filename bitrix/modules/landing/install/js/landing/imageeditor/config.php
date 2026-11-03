@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/imageeditor.bundle.css',
 	'js' => 'dist/imageeditor.bundle.js',
 	'rel' => [
-		'main.imageeditor',
 		'main.core',
+		'main.imageeditor',
 	],
 	'skip_core' => false,
 ];

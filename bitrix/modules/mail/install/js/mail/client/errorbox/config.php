@@ -9,6 +9,8 @@ return [
 	'js' => 'dist/errorbox.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.alerts',
+		'ui.buttons',
 	],
 	'skip_core' => false,
 ];

@@ -396,6 +396,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
+					:aria-label="editButtonLabel"
 					class="crm-timeline__editable-text_edit-btn"
 				>
 					<i class="crm-timeline__editable-text_edit-icon"></i>
@@ -415,13 +416,15 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 							v-html="value"
 						>
 						</span>
-						<span
+						<button
 							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
+							type="button"
 							@click="startEditing"
+							:aria-label="editButtonLabel"
 							class="crm-timeline__editable-text_text-edit-icon"
 						>
 							<span class="crm-timeline__editable-text_edit-icon"></span>
-						</span>
+						</button>
 					</div>
 					<div
 						v-if="isEdit"
@@ -444,6 +447,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 				<button
 					v-if="isLongText && !isEdit"
 					@click="toggleIsCollapsed"
+					:aria-expanded="isCollapsed ? 'true' : 'false'"
 					class="crm-timeline__editable-text_collapse-btn"
 				>
 					{{ expandButtonText }}

@@ -14,6 +14,7 @@ return [
 		'crm.ai.name-service',
 		'crm.integration.analytics',
 		'crm.integration.ui.settings',
+		'crm.router',
 		'main.core',
 		'ui.analytics',
 		'ui.buttons',

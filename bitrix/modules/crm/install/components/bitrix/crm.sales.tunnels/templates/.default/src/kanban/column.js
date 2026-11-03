@@ -1,9 +1,24 @@
 import {Dom, Type, Tag, Event, Loc} from 'main.core';
+import { getStageTextColor } from 'crm.stage.color';
 import {Kanban} from 'main.kanban';
+import { Hint } from 'ui.hint';
 import createStub from './internal/create-stub';
 import Marker from '../marker/marker';
 import isLinkInSameCategory from '../internal/is-link-in-same-category';
 import isCycleLink from '../internal/is-cycle-link';
+import {
+	canOpenStageEditorFromEvent,
+	clearLegacyStageTitleHint,
+	finalizeStageTitleRender,
+	getStageEditorInteractionNode,
+	getStageTooltipBindElement,
+	getStageTooltipInteractionNode,
+	getStageDescription,
+	loadStageDescriptionTooltipForColumn,
+	openStageEditorForColumn,
+	shouldShowStageTooltipForControl,
+	shouldRestoreStageTooltipAfterControl,
+} from '../manager/internal/stage-editor-adapter';
 
 if (BX.Kanban.Pagination)
 {
@@ -17,6 +32,17 @@ export default class Column extends Kanban.Column
 		super(options);
 
 		this.currentName = this.getName();
+		this.stageDescriptionTooltip = null;
+		this.stageDescriptionTooltipRequestId = 0;
+		this.handleStageTitleMouseEnter = this.handleStageTitleMouseEnter.bind(this);
+		this.handleStageTitleMouseLeave = this.handleStageTitleMouseLeave.bind(this);
+		this.handleStageTitleFocusIn = this.handleStageTitleFocusIn.bind(this);
+		this.handleStageTitleFocusOut = this.handleStageTitleFocusOut.bind(this);
+		this.handleStageTitleMouseDown = this.handleStageTitleMouseDown.bind(this);
+		this.handleStageTitleClick = this.handleStageTitleClick.bind(this);
+		this.handleStageTitleKeyDown = this.handleStageTitleKeyDown.bind(this);
+		this.handleAddColumnButtonMouseEnter = this.handleAddColumnButtonMouseEnter.bind(this);
+		this.handleAddColumnButtonMouseLeave = this.handleAddColumnButtonMouseLeave.bind(this);
 
 		this.marker = new Marker({
 			dispatcher: this.getDot(),
@@ -122,6 +148,11 @@ export default class Column extends Kanban.Column
 		if (Type.isFunction(options.data.onAddColumn))
 		{
 			this.onAddColumnHandler = options.data.onAddColumn;
+		}
+
+		if (Type.isFunction(options.data.onEdit))
+		{
+			this.onEditHandler = options.data.onEdit;
 		}
 
 		if (Type.isFunction(options.data.onRemove))
@@ -339,6 +370,201 @@ export default class Column extends Kanban.Column
 		return header;
 	}
 
+	renderTitle()
+	{
+		return finalizeStageTitleRender(this, super.renderTitle(), getStageTextColor(this.getColor()));
+	}
+
+	getAddColumnButton()
+	{
+		const button = super.getAddColumnButton();
+		button.dataset.testid = `crm-sales-tunnels-stage-add-${this.getId()}`;
+
+		Event.unbind(button, 'mouseenter', this.handleAddColumnButtonMouseEnter);
+		Event.unbind(button, 'mouseleave', this.handleAddColumnButtonMouseLeave);
+		Event.bind(button, 'mouseenter', this.handleAddColumnButtonMouseEnter);
+		Event.bind(button, 'mouseleave', this.handleAddColumnButtonMouseLeave);
+
+		return button;
+	}
+
+	bindStageInteractions()
+	{
+		const titleNode = this.layout?.info;
+		const editorInteractionNode = getStageEditorInteractionNode(this);
+		const tooltipInteractionNode = getStageTooltipInteractionNode(this);
+		if (
+			!Type.isElementNode(titleNode)
+			|| !Type.isElementNode(editorInteractionNode)
+			|| !Type.isElementNode(tooltipInteractionNode)
+		)
+		{
+			return;
+		}
+
+		Event.unbind(titleNode, 'mouseenter', this.handleStageTitleMouseEnter);
+		Event.unbind(titleNode, 'mouseleave', this.handleStageTitleMouseLeave);
+		Event.unbind(titleNode, 'mousedown', this.handleStageTitleMouseDown);
+		Event.unbind(titleNode, 'click', this.handleStageTitleClick);
+		Event.unbind(titleNode, 'keydown', this.handleStageTitleKeyDown);
+		Event.unbind(tooltipInteractionNode, 'mouseenter', this.handleStageTitleMouseEnter);
+		Event.unbind(tooltipInteractionNode, 'mouseleave', this.handleStageTitleMouseLeave);
+		Event.unbind(tooltipInteractionNode, 'focusin', this.handleStageTitleFocusIn);
+		Event.unbind(tooltipInteractionNode, 'focusout', this.handleStageTitleFocusOut);
+		Event.unbind(tooltipInteractionNode, 'mousedown', this.handleStageTitleMouseDown);
+		Event.unbind(editorInteractionNode, 'click', this.handleStageTitleClick);
+		Event.unbind(editorInteractionNode, 'keydown', this.handleStageTitleKeyDown);
+		Event.bind(tooltipInteractionNode, 'mouseenter', this.handleStageTitleMouseEnter);
+		Event.bind(tooltipInteractionNode, 'mouseleave', this.handleStageTitleMouseLeave);
+		Event.bind(tooltipInteractionNode, 'focusin', this.handleStageTitleFocusIn);
+		Event.bind(tooltipInteractionNode, 'focusout', this.handleStageTitleFocusOut);
+		Event.bind(tooltipInteractionNode, 'mousedown', this.handleStageTitleMouseDown);
+		Event.bind(editorInteractionNode, 'click', this.handleStageTitleClick);
+		Event.bind(editorInteractionNode, 'keydown', this.handleStageTitleKeyDown);
+
+		titleNode.removeAttribute('title');
+		editorInteractionNode.removeAttribute('role');
+		editorInteractionNode.removeAttribute('tabindex');
+		editorInteractionNode.removeAttribute('aria-haspopup');
+		this.clearDefaultStageTitleHint();
+		editorInteractionNode.dataset.testid = `crm-sales-tunnels-stage-title-${this.getId()}`;
+		if (this.getData().areStagesEditable)
+		{
+			editorInteractionNode.setAttribute('role', 'button');
+			editorInteractionNode.setAttribute('tabindex', '0');
+			editorInteractionNode.setAttribute('aria-haspopup', 'dialog');
+		}
+		else if (Type.isStringFilled(getStageDescription(this)) || this.isStageTitleCropped())
+		{
+			tooltipInteractionNode.setAttribute('tabindex', '0');
+		}
+	}
+
+	handleStageTitleMouseEnter()
+	{
+		this.clearDefaultStageTitleHint();
+		if (this.stageEditorOpened)
+		{
+			this.closeStageDescriptionTooltip();
+
+			return;
+		}
+
+		this.showStageDescriptionTooltip();
+	}
+
+	addTitleHint(element)
+	{
+		this.clearDefaultStageTitleHint(element);
+	}
+
+	clearDefaultStageTitleHint(element = this.layout?.info)
+	{
+		clearLegacyStageTitleHint(element, Hint);
+	}
+
+	handleStageTitleMouseLeave()
+	{
+		this.stageDescriptionTooltipRequestId++;
+		this.stageDescriptionTooltip?.hide();
+	}
+
+	handleStageTitleFocusIn()
+	{
+		this.handleStageTitleMouseEnter();
+	}
+
+	handleStageTitleFocusOut()
+	{
+		this.handleStageTitleMouseLeave();
+	}
+
+	handleStageTitleMouseDown()
+	{
+		this.closeStageDescriptionTooltip();
+	}
+
+	handleAddColumnButtonMouseEnter(event)
+	{
+		if (shouldShowStageTooltipForControl(this, event.target))
+		{
+			this.handleStageTitleMouseEnter();
+		}
+	}
+
+	handleAddColumnButtonMouseLeave(event)
+	{
+		if (shouldRestoreStageTooltipAfterControl(this, event.relatedTarget))
+		{
+			this.handleStageTitleMouseEnter();
+		}
+	}
+
+	handleStageTitleClick(event)
+	{
+		if (
+			!this.getData().areStagesEditable
+			|| !Type.isFunction(this.onEditHandler)
+			|| !canOpenStageEditorFromEvent(this, event)
+		)
+		{
+			return;
+		}
+
+		this.closeStageDescriptionTooltip();
+		event.preventDefault();
+		event.stopPropagation();
+		this.onEditHandler(this);
+	}
+
+	handleStageTitleKeyDown(event)
+	{
+		if (!['Enter', ' '].includes(event.key))
+		{
+			return;
+		}
+
+		this.handleStageTitleClick(event);
+	}
+
+	showStageDescriptionTooltip()
+	{
+		const requestId = ++this.stageDescriptionTooltipRequestId;
+		loadStageDescriptionTooltipForColumn(this).then((Tooltip) => {
+			if (requestId !== this.stageDescriptionTooltipRequestId || !Tooltip)
+			{
+				return;
+			}
+
+			this.stageDescriptionTooltip ??= new Tooltip();
+			this.stageDescriptionTooltip.show({
+				bindElement: this.getStageDescriptionTooltipBindElement(),
+				focusElement: getStageTooltipInteractionNode(this),
+				name: this.getName(),
+				description: getStageDescription(this),
+				showName: this.isStageTitleCropped(),
+			});
+		});
+	}
+
+	getStageDescriptionTooltipBindElement()
+	{
+		return getStageTooltipBindElement(this);
+	}
+
+	isStageTitleCropped()
+	{
+		const titleText = this.layout?.nameInner;
+
+		return Type.isElementNode(titleText) && titleText.offsetWidth < titleText.scrollWidth;
+	}
+
+	closeStageDescriptionTooltip()
+	{
+		this.stageDescriptionTooltipRequestId++;
+		this.stageDescriptionTooltip?.hideImmediately();
+	}
+
 	getSubTitle()
 	{
 		return createStub();
@@ -358,6 +584,22 @@ export default class Column extends Kanban.Column
 	{
 		this.layout.total = createStub();
 		return this.layout.total;
+	}
+
+	getAddColumnButton()
+	{
+		const button = super.getAddColumnButton();
+		button.setAttribute('data-testid', 'crm-sales-tunnels-stage-add-btn');
+
+		return button;
+	}
+
+	getEditButton()
+	{
+		const button = super.getEditButton();
+		button.setAttribute('data-testid', 'crm-sales-tunnels-stage-edit-btn');
+
+		return button;
 	}
 
 	handleTextBoxBlur(event)
@@ -385,7 +627,19 @@ export default class Column extends Kanban.Column
 
 	handleAddColumnButtonClick(event)
 	{
+		event?.preventDefault();
+		this.closeStageDescriptionTooltip();
 		this.onAddColumnHandler(this);
+	}
+
+	switchToEditMode()
+	{
+		if (openStageEditorForColumn(this))
+		{
+			return;
+		}
+
+		super.switchToEditMode();
 	}
 
 	handleRemoveButtonClick(event: any)
@@ -429,11 +683,6 @@ export default class Column extends Kanban.Column
 		this.onRemoveHandler(event);
 	}
 
-	switchToEditMode()
-	{
-		super.switchToEditMode();
-	}
-
 	applyEditMode()
 	{
 		const title = BX.util.trim(this.getTitleTextBox().value);
@@ -458,6 +707,20 @@ export default class Column extends Kanban.Column
 	{
 		super.onColumnDrag(x, y);
 		Marker.adjustLinks();
+	}
+
+	onColumnDragStart()
+	{
+		this.stageDragging = true;
+		super.onColumnDragStart();
+	}
+
+	onColumnDragStop(x, y)
+	{
+		super.onColumnDragStop(x, y);
+		setTimeout(() => {
+			this.stageDragging = false;
+		});
 	}
 
 	resetRectArea()

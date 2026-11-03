@@ -7,10 +7,26 @@
 	cursor: pointer;
 }
 
+.ui-block-diagram-open-search-btn:focus-visible {
+	outline: none;
+}
+
 .ui-block-diagram-open-search-btn__icon {
 	background-color: var(--ui-color-gray-60);
 }
 
-.ui-block-diagram-open-search-btn__icon:hover {
+.ui-block-diagram-open-search-btn__icon:hover,
+.ui-block-diagram-open-search-btn:focus-visible .ui-block-diagram-open-search-btn__icon {
 	background-color: var(--ui-color-accent-main-primary);
+}
+
+/*
+ * Forced-colors mode (Windows High Contrast) replaces background-color with the system palette, so an
+ * icon-only highlight disappears there entirely. A visible ring is restored using system colors so
+ * keyboard focus stays perceivable.
+ */
+@media (forced-colors: active) {
+	.ui-block-diagram-open-search-btn:focus-visible {
+		outline: 2px solid CanvasText;
+	}
 }

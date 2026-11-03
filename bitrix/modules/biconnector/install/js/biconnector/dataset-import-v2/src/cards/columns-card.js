@@ -20,7 +20,7 @@ export const ColumnsCard = {
 	},
 	computed:
 	{
-		...mapGetters(['isEditMode', 'isReadOnly', 'hasPreview', 'connectionProperties']),
+		...mapGetters(['isEditMode', 'isReadOnly', 'isLockedByRights', 'hasPreview', 'connectionProperties']),
 		hint()
 		{
 			return this.isReadOnly ? '' : this.hintMessage;
@@ -31,7 +31,9 @@ export const ColumnsCard = {
 		},
 		showSync()
 		{
-			return this.isEditMode && Boolean(this.connectionProperties?.connectionId);
+			return this.isEditMode
+				&& Boolean(this.connectionProperties?.connectionId)
+				&& !this.isLockedByRights;
 		},
 	},
 	methods:

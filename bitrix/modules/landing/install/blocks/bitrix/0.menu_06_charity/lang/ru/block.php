@@ -1,0 +1,4 @@
+<?php
+$MESS['LANDING_BLOCK_0_MENU_06_NAV_LABEL'] = 'Основное меню';
+$MESS['LANDING_BLOCK_0_MENU_06_LOGO_ALT'] = 'Главная страница';
+$MESS['LANDING_BLOCK_0_MENU_06_TOGGLE_LABEL'] = 'Меню';

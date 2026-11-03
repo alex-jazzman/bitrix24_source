@@ -14,6 +14,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		MEMBER_TYPE_ICONS,
 		MEMBER_TYPE_RESTRICTION_FEATURE_META,
 	} = require('tasks/layout/checklist/list/src/constants');
+	const { ItemPresenter } = require('tasks/layout/checklist/presenter');
 
 	const ICON_SIZE = 24;
 	const ICON_MARGIN = 12;
@@ -54,7 +55,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 			/** @type {Map<string, Object>} */
 			this.targetRefMap = new Map();
 
-			/** @type {CheckListFlatTreeItem} */
+			/** @type {ChecklistItemView} */
 			this.item = null;
 			/** @type {Object} */
 			this.menuRef = null;
@@ -97,11 +98,11 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 			onToggleImportant();
 
 			this.setState({
-				[BUTTON_TYPES.important]: this.item?.getIsImportant(),
+				[BUTTON_TYPES.important]: this.item?.isImportant(),
 			});
 		};
 
-		/** @param {CheckListFlatTreeItem} item */
+		/** @param {ChecklistItemView} item */
 		setItem(item)
 		{
 			this.item = item;
@@ -124,10 +125,13 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 
 			if (this.item)
 			{
-				params[BUTTON_TYPES.important] = this.item.getIsImportant();
-				params[BUTTON_TYPES.attach] = Boolean(this.item.getAttachmentsCount() > 0);
-				params[MEMBER_TYPE.auditor] = this.item.hasAuditor();
-				params[MEMBER_TYPE.accomplice] = this.item.hasAccomplice();
+				params[BUTTON_TYPES.important] = this.item.isImportant();
+				params[BUTTON_TYPES.attach] = this.item.hasAttachments();
+				params[MEMBER_TYPE.auditor] = this.item.hasAuditors();
+				params[MEMBER_TYPE.accomplice] = this.item.hasAccomplices();
+				// kept in state so the indent buttons re-render on indent/outdent without a focus change
+				params.canTabOut = this.item.canOutdent();
+				params.canTabIn = this.item.canIndent();
 			}
 
 			return params;
@@ -583,7 +587,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		handleOnMoveToCheckList = (targetRef) => {
 			const { onMoveToCheckList } = this.props;
 
-			onMoveToCheckList?.(this.item.getMoveIds(this.item.getId()), targetRef);
+			onMoveToCheckList?.(this.item.getSubtreeIds(this.item.getId()), targetRef);
 		};
 
 		/** @param {'bold' | 'italic' | 'underline' | 'strikethrough'} type */
@@ -634,13 +638,15 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		 */
 		getPermissions()
 		{
+			const canAddAccomplice = this.item.canAddAccomplice();
+
 			return {
-				canTabOut: this.item.checkCanTabOut(),
-				canTabIn: this.item.checkCanTabIn(),
-				canAdd: this.item.checkCanAdd(),
-				canUpdate: this.item.checkCanUpdate(),
-				canAddAccomplice: this.item.checkCanAddAccomplice(),
-				hasAnotherCheckLists: this.item.hasAnotherCheckLists(),
+				canTabOut: this.item.canOutdent(),
+				canTabIn: this.item.canIndent(),
+				canAdd: this.item.canAdd(),
+				canUpdate: this.item.canEdit(),
+				canAddAccomplice,
+				hasAnotherCheckLists: ItemPresenter.hasAnotherChecklists(),
 			};
 		}
 

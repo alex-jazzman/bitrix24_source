@@ -34,7 +34,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				isHintShown: false,
 				hintBindElement: null,
 				showAuditorsHint: false,
-				auditorsHintBindElement: null
+				auditorsHintBindElement: null,
+				reasonId: `tasks-compact-card-full-button-reason-${main_core.Text.getRandom()}`
 			};
 		},
 		computed: {
@@ -64,11 +65,21 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						forceBindPosition: true,
 						forceTop: true,
 						position: 'top'
+					},
+					focusTrap: {
+						initialFocus: false
 					}
 				};
 			}
 		},
+		watch: {
+			isDisabled() {
+				this.syncAria();
+			}
+		},
 		mounted() {
+			this.syncAria();
+
 			// Show auditors hint if auditorsIds is not empty
 			if (this.hasAuditors && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup)) {
 				tasks_v2_lib_ahaMoments.ahaMoments.setActive(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup);
@@ -78,6 +89,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					this.showAuditorsHint = true;
 				});
 			}
+		},
+		beforeUnmount() {
+			this.dismissHint();
 		},
 		methods: {
 			handleClick() {
@@ -89,6 +103,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					this.openFullCard();
 				}
 			},
+			syncAria() {
+				const button = this.$refs.fullCardButtonContainer?.querySelector('.tasks-compact-card-full-button');
+				if (!button) {
+					return;
+				}
+				main_core.Dom.attr(button, 'aria-disabled', this.isDisabled ? 'true' : null);
+				main_core.Dom.attr(button, 'aria-describedby', this.isDisabled ? this.reasonId : null);
+
+				// ui.buttons styles the disabled look via [disabled]/.ui-btn-disabled. We keep the
+				// button in tab order (no native disabled), so drive the visual state by the class.
+				main_core.Dom.toggleClass(button, 'ui-btn-disabled', this.isDisabled);
+			},
 			highlightFiles() {
 				this.hintBindElement = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_const.TaskField.Files).getChipContainer(tasks_v2_const.TaskField.Files);
 				this.showHint();
@@ -98,12 +124,26 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				this.showHint();
 			},
 			showHint() {
-				const removeHighlight = () => {
-					this.isHintShown = false;
-					main_core.Event.unbind(window, 'keydown', removeHighlight);
+				this.dismissHint();
+
+				// Esc is intentionally excluded here: on keyup main.popup's checkEscPressed
+				// closes the top popup (the hint) by z-index, leaving the shell open; a second
+				// Esc closes the shell. Other keys dismiss the hint (preserved behavior).
+				this.onHintKeyDown = event => {
+					if (event.key === 'Escape') {
+						return;
+					}
+					this.dismissHint();
 				};
-				main_core.Event.bind(window, 'keydown', removeHighlight);
+				main_core.Event.bind(window, 'keydown', this.onHintKeyDown);
 				this.isHintShown = true;
+			},
+			dismissHint() {
+				if (this.onHintKeyDown) {
+					main_core.Event.unbind(window, 'keydown', this.onHintKeyDown);
+					this.onHintKeyDown = null;
+				}
+				this.isHintShown = false;
 			},
 			openFullCard() {
 				if (this.isOpening) {
@@ -136,7 +176,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			ref="fullCardButtonContainer"
 			class="tasks-compact-card-full-button-container"
 			:class="{ '--disabled': isDisabled }"
-			@click="handleClick"
 		>
 			<UiButton
 				class="tasks-compact-card-full-button"
@@ -145,34 +184,36 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				:style="AirButtonStyle.PLAIN_NO_ACCENT"
 				:loading="isOpening"
 				:dataset="{taskButtonId: 'full'}"
-				:disabled="isDisabled"
+				@click="handleClick"
 			/>
+			<span :id="reasonId" class="tasks-compact-card-vh">{{ loc('TASKS_V2_TCC_FULL_CARD_DISABLED_REASON') }}</span>
 			<Hint
 				v-if="showAuditorsHint"
 				:bindElement="auditorsHintBindElement"
 				@close="closeAuditorsHint"
 				:options="auditorsHintOptions"
 			>
-				<div class="tasks-compact-card-full-button-auditors-hint">
+				<div class="tasks-compact-card-full-button-auditors-hint --ui-context-edge-dark">
 					<div class="tasks-compact-card-full-button-auditors-hint-title">
 						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_TITLE') }}
 					</div>
 					<div class="tasks-compact-card-full-button-auditors-hint-content">
 						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_CONTENT') }}
 					</div>
-					<div
+					<button
+						type="button"
 						class="tasks-compact-card-full-button-auditors-hint-link"
 						@click.stop="handleAuditorsHintLinkClick"
 					>
 						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN') }}
-					</div>
+					</button>
 				</div>
 			</Hint>
 		</div>
 		<Hint
 			v-if="isHintShown"
 			:bindElement="hintBindElement"
-			@close="isHintShown = false"
+			@close="dismissHint"
 		>
 			{{ loc('TASKS_V2_TCC_FILE_IS_UPLOADING') }}
 		</Hint>
@@ -240,6 +281,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				taskId: this.id,
 				openingFullCard: false,
 				isCheckListPopupShown: false,
+				checkListId: 0,
 				creationError: false,
 				popupCount: 0
 			};
@@ -380,7 +422,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				const checklists = this.checklist;
 				const [id, error] = await tasks_v2_provider_service_taskService.taskService.add({
 					task: this.task,
-					view: true
+					view: true,
+					// SC-003 (AC-013): report the marker set by the deadline field when
+					// the user set the deadline themselves during this create session.
+					deadlineManuallySet: this.task.deadlineManuallySet === true
 				});
 				if (!id) {
 					this.creationError = true;
@@ -510,11 +555,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					animate
 				});
 			},
-			showCheckListPopup() {
+			showCheckListPopup(checkListId = 0) {
+				this.checkListId = checkListId;
 				this.isCheckListPopupShown = true;
 			},
 			closeCheckListPopup() {
 				this.isCheckListPopupShown = false;
+				this.checkListId = 0;
 			},
 			subscribeEvents() {
 				main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.handlePopupShow);
@@ -563,12 +610,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					>
 						<FieldTitle :disabled="isCheckListPopupShown"/>
 						<Importance/>
-						<BIcon
-							class="tasks-compact-card-fields-close"
-							:name="Outline.CROSS_L"
-							data-task-button-id="close"
-							@click="close"
-						/>
 					</div>
 					<DescriptionInline ref="description"/>
 					<div class="tasks-compact-card-fields-list">
@@ -577,6 +618,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					<CheckList
 						v-if="isCheckListPopupShown"
 						isAutonomous
+						:checkListId
 						@show="handleShowingPopup"
 						@close="handleHidingPopup(); closeCheckListPopup();"
 						@resize="handleResizingPopup"
@@ -613,6 +655,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						<FullCardButton v-model:isOpening="openingFullCard"/>
 					</div>
 				</div>
+				<button
+					type="button"
+					class="tasks-compact-card-fields-close"
+					:aria-label="loc('TASKS_V2_TCC_CLOSE_BTN')"
+					data-task-button-id="close"
+					@click="close"
+				>
+					<BIcon :name="Outline.CROSS_L" aria-hidden="true"/>
+				</button>
 			</div>
 			<DropZone
 				v-if="isDiskModuleInstalled && !isCheckListPopupShown"
@@ -640,14 +691,30 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			this.#params.groupId = this.#getInitialGroupId();
 		}
 		async mount(popup) {
+			// Esc or the overlay can close the popup before this extension loads: onAfterClose had no card to
+			// unmount, so the lifecycle is finished here; consumers still wait for CardClosed.
 			if (popup.isDestroyed()) {
+				this.unmount();
 				return;
 			}
 			this.#popup = popup;
 			await this.#mountApplication(popup.getContentContainer());
+
+			// Esc or the overlay on the skeleton closes and destroys the popup while the application is still loading:
+			// focus has already been restored to the trigger, so nothing below may touch it. onAfterClose ran before
+			// the application existed and already sent CardClosed, so only unmounting it is left over.
+			if (!popup.isShown()) {
+				this.#application?.unmount();
+				this.#application = null;
+				return;
+			}
+
+			// The trap activates on the skeleton before Vue mounts, so the default initialFocus
+			// cannot find the title yet; move focus to the first field (title) once mounted.
+			popup.getFocusTrap()?.focusFirst();
 			this.#adjustPosition();
 			this.#subscribe();
-			const dragHandle = main_core.Tag.render`<div class="tasks-compact-card-popup-drag-handle"/>`;
+			const dragHandle = main_core.Tag.render`<div class="tasks-compact-card-popup-drag-handle" aria-hidden="true"/>`;
 			main_core.Dom.append(dragHandle, popup.getContentContainer());
 			this.#popup.setDraggable({
 				element: dragHandle,
@@ -678,7 +745,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			this.#application = application;
 		}
 		#unmountApplication() {
-			this.#application.unmount();
+			this.#application?.unmount();
 			if (!this.#openingFullCard) {
 				main_core_events.EventEmitter.emit(tasks_v2_const.EventName.CardClosed, this.#params);
 			}
@@ -696,7 +763,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			Object.entries(this.#handlers).forEach(([event, handler]) => main_core_events.EventEmitter.subscribe(event, handler));
 		}
 		#unsubscribe() {
-			Object.entries(this.#handlers).forEach(([event, handler]) => main_core_events.EventEmitter.unsubscribe(event, handler));
+			Object.entries(this.#handlers ?? {}).forEach(([event, handler]) => main_core_events.EventEmitter.unsubscribe(event, handler));
 		}
 		#openFullCard = () => {
 			this.#openingFullCard = true;
@@ -764,8 +831,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			});
 		}
 		#handlePopupShow = event => {
-			this.#handlePopupShow.openedPopupsCount ??= 0;
 			const popup = event.getCompatData()[0];
+			if (!this.#ownsPopup(popup)) {
+				return;
+			}
+			this.#handlePopupShow.openedPopupsCount ??= 0;
 			const popupContainer = this.#popup.getPopupContainer();
 			const onClose = () => {
 				popup.unsubscribe('onClose', onClose);
@@ -773,13 +843,29 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				this.#handlePopupShow.openedPopupsCount--;
 				if (this.#handlePopupShow.openedPopupsCount === 0) {
 					main_core.Dom.removeClass(popupContainer, '--disable-drag');
+					this.#popup.setAutoHide(true);
 				}
 			};
 			popup.subscribe('onClose', onClose);
 			popup.subscribe('onDestroy', onClose);
 			this.#handlePopupShow.openedPopupsCount++;
 			main_core.Dom.addClass(popupContainer, '--disable-drag');
+			this.#popup.setAutoHide(false);
 		};
+		#ownsPopup(popup) {
+			if (!popup || popup === this.#popup) {
+				return false;
+			}
+			const cardContainer = this.#popup.getPopupContainer();
+			const childContainer = popup.getPopupContainer?.();
+			if (childContainer && cardContainer.contains(childContainer)) {
+				return true;
+			}
+
+			// Nested field popups can render into document.body, so DOM ancestry misses them;
+			// identify card-owned popups by their bind element living inside the card.
+			return main_core.Type.isElementNode(popup.bindElement) && cardContainer.contains(popup.bindElement);
+		}
 		#getInitialGroupId() {
 			if (this.#params.groupId && tasks_v2_core.Core.getParams().currentUser?.type === tasks_v2_model_users.UserTypes.Collaber) {
 				const group = tasks_v2_core.Core.getStore()?.getters[`${tasks_v2_const.Model.Groups}/getById`](this.#params.groupId);

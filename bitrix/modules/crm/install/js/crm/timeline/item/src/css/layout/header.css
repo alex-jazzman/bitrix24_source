@@ -97,3 +97,152 @@
 .crm-timeline__user-icon.--muted {
 	opacity: 0.5;
 }
+
+/*region Reflow: the title keeps its room, the header order never changes (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The defect this region was opened for: the header keeps the checkbox, the title, the time and the
+	user in one non-wrapping row, so at a card width of 241px the title was squeezed to 75px and cut
+	("Заплани…"), while the time broke into three lines ("16 / июля, / 19:38").
+
+	The reading order stays the one the wide card has - title, status, time - at every width. What
+	changes below the breakpoint is only how the row breaks: the title may wrap, the date may not, and
+	the meta steps down a line when the title would otherwise be squeezed.
+
+	Two earlier takes and why they were dropped, both measured on the stand:
+	- dissolving _info with display: contents and giving the siblings explicit order values put the
+	  meta first and the title under it - the header read backwards, and the avatar, dragged into the
+	  flow, ended up alone on a line opposite a lone time;
+	- leaving the row alone entirely kept the order right but squeezed the title of a planned call to
+	  116px (three lines) in a 433px column, because the checkbox, the logo column and a long date
+	  ("16 июля, 19:38", 90px) eat the row between them.
+*/
+@media (max-width: 768px) {
+	/*
+		The row may wrap: while the title fits beside the meta they share a line, otherwise the meta -
+		status and time together - steps down under the title. The avatar is not part of this: it keeps
+		the base position: absolute in the card's corner, so it never travels with the meta.
+	*/
+	.crm-timeline__card-top_info {
+		flex-wrap: wrap;
+		row-gap: 2px;
+		align-items: flex-start;
+	}
+
+	/*
+		flex: 0 1 auto keeps the box at the title's own width, so the meta sits right after it with the
+		same 8px it has on the wide card - a min-width floor was tried here and inflated the box into a
+		gap of up to 125px. Line breaking still measures the title's full text, so the meta steps down
+		only when the whole title does not fit beside it; shrinking starts after that, when the title is
+		alone on its line and wraps inside its own box.
+	*/
+	.crm-timeline__card-top_info_left {
+		flex: 0 1 auto;
+		align-items: flex-start;
+		margin-bottom: 0;
+	}
+
+	/*
+		A meta that stepped down starts at the row's left edge, which is the checkbox's edge - 21px left
+		of the title's text, because the controller is 13px wide and carries an 8px gap. So the row is
+		indented to the text and the controller is pulled back out into that indent: the checkbox keeps
+		its place, and everything that wraps - the date, the status - lines up under the title. Cards
+		without an activity checkbox have no controller node at all, hence :has() rather than a blanket
+		indent; the pull-back needs no guard for the same reason.
+	*/
+	.crm-timeline__card-top_info:has(.crm-timeline__card-top_controller) {
+		padding-left: 21px;
+	}
+
+	.crm-timeline__card-top_controller {
+		margin-left: -21px;
+	}
+
+	/*
+		The controller hugs the checkbox, so its box is 13px tall while the title's line is 18.2px.
+		Aligned to the start of a row that may now wrap, its centre sat 2.3px above the centre of the
+		title's first line and the pair read as crooked. Borrowing the title's font gives the controller
+		the same line box, and the checkbox - centred inside it - lands on the title's axis. The static
+		value is the fallback for engines without the lh unit; there the pair stays as it is today.
+	*/
+	.crm-timeline__card-top_controller {
+		font: var(--crm-timeline__card-font-title);
+		min-height: 18px;
+		min-height: 1lh;
+	}
+
+	/*
+		The date is one token: it may share the title's line or drop under it, but it must never break
+		into "16 / июля, / 19:38" again - that was the defect this region was opened for.
+	*/
+	.crm-timeline__card-time {
+		white-space: nowrap;
+	}
+}
+/*
+	Second trigger, same fix, paired with layout/header/title.css: @media reacts to the card's own
+	width and misses the CRM Entity Card Split handle narrowing just the column - see title.css and
+	decisions.md for the 460px measurement and the 480px/crm-entity-stream choice.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	/*
+		The row may wrap: while the title fits beside the meta they share a line, otherwise the meta -
+		status and time together - steps down under the title. The avatar is not part of this: it keeps
+		the base position: absolute in the card's corner, so it never travels with the meta.
+	*/
+	.crm-timeline__card-top_info {
+		flex-wrap: wrap;
+		row-gap: 2px;
+		align-items: flex-start;
+	}
+
+	/*
+		flex: 0 1 auto keeps the box at the title's own width, so the meta sits right after it with the
+		same 8px it has on the wide card - a min-width floor was tried here and inflated the box into a
+		gap of up to 125px. Line breaking still measures the title's full text, so the meta steps down
+		only when the whole title does not fit beside it; shrinking starts after that, when the title is
+		alone on its line and wraps inside its own box.
+	*/
+	.crm-timeline__card-top_info_left {
+		flex: 0 1 auto;
+		align-items: flex-start;
+		margin-bottom: 0;
+	}
+
+	/*
+		A meta that stepped down starts at the row's left edge, which is the checkbox's edge - 21px left
+		of the title's text, because the controller is 13px wide and carries an 8px gap. So the row is
+		indented to the text and the controller is pulled back out into that indent: the checkbox keeps
+		its place, and everything that wraps - the date, the status - lines up under the title. Cards
+		without an activity checkbox have no controller node at all, hence :has() rather than a blanket
+		indent; the pull-back needs no guard for the same reason.
+	*/
+	.crm-timeline__card-top_info:has(.crm-timeline__card-top_controller) {
+		padding-left: 21px;
+	}
+
+	.crm-timeline__card-top_controller {
+		margin-left: -21px;
+	}
+
+	/*
+		The controller hugs the checkbox, so its box is 13px tall while the title's line is 18.2px.
+		Aligned to the start of a row that may now wrap, its centre sat 2.3px above the centre of the
+		title's first line and the pair read as crooked. Borrowing the title's font gives the controller
+		the same line box, and the checkbox - centred inside it - lands on the title's axis. The static
+		value is the fallback for engines without the lh unit; there the pair stays as it is today.
+	*/
+	.crm-timeline__card-top_controller {
+		font: var(--crm-timeline__card-font-title);
+		min-height: 18px;
+		min-height: 1lh;
+	}
+
+	/*
+		The date is one token: it may share the title's line or drop under it, but it must never break
+		into "16 / июля, / 19:38" again - that was the defect this region was opened for.
+	*/
+	.crm-timeline__card-time {
+		white-space: nowrap;
+	}
+}
+/*endregion*/

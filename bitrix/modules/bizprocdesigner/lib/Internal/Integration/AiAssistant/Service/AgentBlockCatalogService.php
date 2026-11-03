@@ -202,22 +202,21 @@ final class AgentBlockCatalogService
 
 			$activityDescription = $activityDescription->applyPreset($preset);
 
-			$rawProperties = $preset['PROPERTIES'] ?? [];
-			$filteredProperties = [];
-			foreach ($rawProperties as $key => $value)
-			{
-				if (is_string($value) && (str_starts_with($value, '{=') || str_starts_with($value, '{{=')))
-				{
-					continue;
-				}
-
-				$filteredProperties[$key] = $value;
-			}
-
-			$defaultValues = $filteredProperties;
+			// One reading of what a preset pins, shared with the description context: two copies of the
+			// expression filter would drift, and then the catalog would publish a value the description
+			// was never built with.
+			$defaultValues = (new AgentBlockMetadataResolver())->presetProperties($blockType, $presetId);
 		}
 
-		$result = $this->getActivityAiDescription($blockType, $documentBizprocType);
+		// The preset's own values are what several activities resolve their option lists from: a CRM trigger
+		// reads the field list of the entity its `Document` names. Describing the block without them answers
+		// with an empty SELECT on a required setting - the agent is then told to pick a code and shown none,
+		// and whatever it invents passes validation and breaks when the process runs.
+		$result = $this->getActivityAiDescription(
+			$blockType,
+			$documentBizprocType,
+			$defaultValues === null ? [] : ['Properties' => $defaultValues],
+		);
 		if (!$result instanceof ActivityAiDescriptionResult)
 		{
 			$this->logSkippedBlock($blockType, $result);
@@ -228,6 +227,12 @@ final class AgentBlockCatalogService
 			;
 		}
 
+		$complexDetail = (new ComplexBlockDetailFactory())->build(
+			$blockType,
+			$activityDescription->getNodeType(),
+			$documentBizprocType,
+		);
+
 		return new BlockSettingsResult(new BlockTypeDetail(
 			block: new BlockType(
 				type: $blockType,
@@ -236,11 +241,11 @@ final class AgentBlockCatalogService
 			),
 			settings: $result->settings,
 			returnFields: $this->buildReturnFields($activityDescription->getReturn()),
-			describedTypes: $result->settings->getDescribedSettingTypesMap(),
+			describedTypes: (new BlockDescribedTypesResolver())->resolve($result->settings, $complexDetail),
 			skippedSettings: $result->skippedSettings,
 			defaultValues: $defaultValues,
 			nodeSettings: $this->resolveNodeSettings($activityDescription),
-			complexDetail: (new ComplexBlockDetailFactory())->build($blockType, $activityDescription->getNodeType(), $documentBizprocType),
+			complexDetail: $complexDetail,
 		));
 	}
 
@@ -342,12 +347,13 @@ final class AgentBlockCatalogService
 
 	private function getActivityAiDescription(
 		string $blockType,
-		array $documentBizprocType
+		array $documentBizprocType,
+		array $context = []
 	): Result|ActivityAiDescriptionResult
 	{
 		return \CBPRuntime::getRuntime()
 			->getAiDescriptionService()
-			->getActivityDescription($blockType, $documentBizprocType)
+			->getActivityDescription($blockType, $documentBizprocType, $context)
 		;
 	}
 

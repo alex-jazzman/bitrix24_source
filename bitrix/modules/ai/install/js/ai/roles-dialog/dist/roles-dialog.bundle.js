@@ -493,6 +493,15 @@ this.BX = this.BX || {};
 	`
 	};
 
+	function escapeRegExp(value) {
+		return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	}
+	function highlightSearchQuery(text, searchQuery) {
+		const encodedText = main_core.Text.encode(text);
+		const encodedSearchQuery = main_core.Text.encode(searchQuery);
+		return encodedText.replaceAll(new RegExp(escapeRegExp(encodedSearchQuery), 'gi'), match => `<mark>${match}</mark>`);
+	}
+
 	// eslint-disable-next-line max-lines-per-function
 	function getRolesDialogRoleItemWithStates(States) {
 		return {
@@ -518,18 +527,16 @@ this.BX = this.BX || {};
 					return this.itemData.itemData;
 				},
 				subtitle() {
-					const subtitle = main_core.Text.encode(this.item.subtitle);
 					if (this.searching && this.searchQuery !== '') {
-						return subtitle.replaceAll(new RegExp(this.searchQuery, 'gi'), match => `<mark>${match}</mark>`);
+						return highlightSearchQuery(this.item.subtitle, this.searchQuery);
 					}
-					return subtitle;
+					return main_core.Text.encode(this.item.subtitle);
 				},
 				title() {
-					const title = main_core.Text.encode(this.item.title);
 					if (this.searching && this.searchQuery !== '') {
-						return title.replaceAll(new RegExp(this.searchQuery, 'gi'), match => `<mark>${match}</mark>`);
+						return highlightSearchQuery(this.item.title, this.searchQuery);
 					}
-					return title;
+					return main_core.Text.encode(this.item.title);
 				},
 				isSelected() {
 					return Boolean(this.item.customData?.selected);

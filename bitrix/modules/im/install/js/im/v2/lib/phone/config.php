@@ -13,6 +13,7 @@ return [
 		'im.v2.lib.call',
 		'im.v2.lib.desktop-api',
 		'im.v2.lib.logger',
+		'im.v2.lib.playback',
 		'im.v2.lib.sound-notification',
 		'main.core',
 		'voximplant',

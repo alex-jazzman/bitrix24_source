@@ -1,4 +1,5 @@
 import { Switcher } from 'ui.vue3.components.switcher';
+import { createAirSwitcherOptions } from '../../../../utils';
 
 export const Toggler = {
 	name: 'Toggler',
@@ -18,6 +19,9 @@ export const Toggler = {
 		isReadOnly(): boolean {
 			return this.userGroup.isReadOnly === true;
 		},
+		switcherOptions(): Object {
+			return createAirSwitcherOptions();
+		},
 	},
 	methods: {
 		setValue(value): void {
@@ -36,11 +40,7 @@ export const Toggler = {
 			:is-disabled="isReadOnly"
 			@check="setValue('1')"
 			@uncheck="setValue('0')"
-			:options="{
-				size: 'small',
-				color: 'primary',
-				useAirDesign: true,
-			}"
+			:options="switcherOptions"
 		/>
 	`,
 };

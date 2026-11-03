@@ -20,6 +20,29 @@ export const AvatarSizeMap = Object.freeze({
 	[AvatarSize.XXS]: 14,
 });
 
+/**
+ * Pixel sizes used when the Air design is enabled.
+ * Overrides on top of `AvatarSizeMap`; the exported base map is intentionally left untouched
+ * so legacy (flag-off) branches keep their original geometry.
+ */
+export const AvatarSizeMapAir = Object.freeze({
+	[AvatarSize.L]: 44,
+});
+
+/**
+ * Resolves the numeric avatar size for a given `AvatarSize` step.
+ * When the Air design is enabled, Air-specific overrides take precedence.
+ */
+export function getAvatarPixelSize(size: string, isAirDesignEnabled: boolean = false): number
+{
+	if (isAirDesignEnabled && AvatarSizeMapAir[size])
+	{
+		return AvatarSizeMapAir[size];
+	}
+
+	return AvatarSizeMap[size];
+}
+
 export const ChatAvatarType = {
 	selfChat: 'selfChat',
 };

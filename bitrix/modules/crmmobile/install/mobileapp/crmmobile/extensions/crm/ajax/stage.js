@@ -42,26 +42,30 @@ jn.define('crm/ajax/stage', (require, exports, module) => {
 
 		/**
 		 * @param {Number} entityTypeId
+		 * @param {Number|null} categoryId funnel the stage is expected to stand in
 		 * @param {Object} fields
 		 * @return {Promise<Object, void>}
 		 */
-		update(entityTypeId, fields)
+		update(entityTypeId, categoryId, fields)
 		{
 			return this.fetch(StageActions.UPDATE, {
 				entityTypeId,
+				categoryId,
 				fields,
 			});
 		}
 
 		/**
 		 * @param {Number} entityTypeId
+		 * @param {Number|null} categoryId funnel the stage is expected to stand in
 		 * @param {String} statusId
 		 * @return {Promise<Object, void>}
 		 */
-		delete(entityTypeId, statusId)
+		delete(entityTypeId, categoryId, statusId)
 		{
 			return this.fetch(StageActions.DELETE, {
 				entityTypeId,
+				categoryId,
 				statusId,
 			});
 		}

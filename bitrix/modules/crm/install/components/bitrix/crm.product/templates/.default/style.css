@@ -39,7 +39,7 @@ div.bx-interface-toolbar .btn-add {
 }
 
 .bx-crm-goods-drug-btn-border {
-	background: url(images/crm-goods-drug-bg.png) repeat-y 0 0;
+	background: url(images/crm-goods-drug-bg.webp) repeat-y 0 0;
 	cursor: e-resize;
 }
 
@@ -57,7 +57,7 @@ div.bx-interface-toolbar .btn-add {
 	margin-top:-11px;
 	cursor:pointer;
 	border-radius:50%;
-	background:url(images/sprite.png) no-repeat -13px -351px;
+	background:url(images/sprite.webp) no-repeat -13px -351px;
 }
 .bx-crm-sidebar-section{
 	border-bottom:1px solid #edeef0;

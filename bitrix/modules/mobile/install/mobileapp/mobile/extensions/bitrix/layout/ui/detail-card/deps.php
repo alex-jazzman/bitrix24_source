@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'alert',
 		'analytics',
-		'apptheme',
+		'assets/icons',
 		'event-emitter',
 		'haptics',
 		'layout/ui/detail-card/floating-button',
@@ -20,6 +20,7 @@ return [
 		'qrauth/utils',
 		'require-lazy',
 		'rest/run-action-executor',
+		'tokens',
 		'utils',
 		'utils/function',
 		'utils/object',

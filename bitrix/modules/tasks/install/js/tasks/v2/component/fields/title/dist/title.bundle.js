@@ -13,6 +13,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return main_core.Loc.getMessage('TASKS_V2_TEMPLATE_TITLE_PLACEHOLDER');
 			}
 			return main_core.Loc.getMessage('TASKS_V2_TITLE_PLACEHOLDER');
+		},
+		getEditLabel: isTemplate => {
+			if (isTemplate) {
+				return main_core.Loc.getMessage('TASKS_V2_TEMPLATE_TITLE_EDIT_LABEL');
+			}
+			return main_core.Loc.getMessage('TASKS_V2_TITLE_EDIT_LABEL');
 		}
 	});
 
@@ -67,6 +73,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-value="task.title"
 			data-field-container
 			:placeholder="titleMeta.getTitle(isTemplate)"
+			:ariaLabel="titleMeta.getTitle(isTemplate)"
+			:editButtonLabel="titleMeta.getEditLabel(isTemplate)"
 			:readonly="!task.rights.edit || disabled"
 			@input="handleInput"
 		/>

@@ -1,11 +1,12 @@
-import {Loc, Dom, Tag, Type, Text, Event, Runtime} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { Loc, Dom, Tag, Type, Text, Event, Runtime } from 'main.core';
 
-import {PULL as Pull} from 'pull.client';
+import { PULL as Pull } from 'pull.client';
 
-import {PullItem, UpdateParams} from './pull.item';
+import { PullItem, type StructuralParams, type UpdateParams } from './pull.item';
 
-import {KanbanComponent, AjaxComponentParams} from './kanban.component';
+import { KanbanComponent, type AjaxComponentParams } from './kanban.component';
+import { FinishMoveController, createScrumKanbanGrid } from './finish.move.controller';
 
 import './css/base.css';
 
@@ -77,6 +78,8 @@ type Response = {
 	}
 }
 
+const STRUCTURAL_RESYNC_DELAY = 250;
+
 export class KanbanManager
 {
 	constructor(params: Params)
@@ -92,6 +95,11 @@ export class KanbanManager
 		this.kanbanHeader = null;
 		this.kanban = null;
 		this.kanbanGroupedByParentTasks = new Map();
+		this.parentHeaderRequestIds = new Map();
+		this.boardGeneration = 0;
+		this.resyncPromise = null;
+		this.resyncRequested = false;
+		this.structuralResyncTimer = null;
 
 		this.parentTasks = params.parentTasks;
 
@@ -102,15 +110,18 @@ export class KanbanManager
 			ajaxComponentParams: params.ajaxComponentParams
 		});
 
+		this.finishMoveController = new FinishMoveController({
+			groupId: params.ajaxComponentParams?.GROUP_ID,
+		});
+
 		this.pullItem = new PullItem({
 			groupId: this.groupId
 		});
 		this.pullItem.subscribe('itemUpdated', this.onItemUpdated.bind(this));
+		this.pullItem.subscribe('structureChanged', this.onStructuralItemChanged.bind(this));
 
-		EventEmitter.subscribe('BX.Main.Filter:apply', (event: BaseEvent) => {
-			const [filterId, values, filterInstance, promise, params] = event.getCompatData();
-			this.onApplyFilter(filterId, values, filterInstance, promise, params);
-		});
+		EventEmitter.subscribe('BX.Main.Filter:apply', () => this.requestResync());
+		EventEmitter.subscribe('tasks:kanban:resyncRequest', this.onResyncRequest.bind(this));
 
 		EventEmitter.subscribe('onTasksGroupSelectorChange', this.onChangeSprint.bind(this));
 
@@ -135,7 +146,6 @@ export class KanbanManager
 		this.drawKanbanWithoutGrouping(renderTo, params);
 		this.drawKanbanInGroupingMode(renderTo, params);
 		this.fillNeighborKanbans();
-		this.updateHeaderColumns();
 
 		this.adjustGroupHeadersWidth();
 		EventEmitter.subscribe(this.kanbanHeader, 'Kanban.Grid:onColumnAddedAsync', () => {
@@ -209,14 +219,20 @@ export class KanbanManager
 		headerParams.kanbanHeader = true;
 		headerParams.items = [];
 
-		this.kanbanHeader = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
+		this.kanbanHeader = createScrumKanbanGrid(
+			this.finishMoveController,
+			this.getKanbanParams(renderTo, headerParams),
+		);
 
 		this.kanbanHeader.draw();
 	}
 
 	drawKanbanWithoutGrouping(renderTo: HTMLElement, params: KanbanParams)
 	{
-		this.kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, params));
+		this.kanban = createScrumKanbanGrid(
+			this.finishMoveController,
+			this.getKanbanParams(renderTo, params),
+		);
 
 		EventEmitter.subscribe(
 			this.kanban,
@@ -245,7 +261,10 @@ export class KanbanManager
 		headerParams.parentTaskName = parentTask.name;
 		headerParams.parentTaskCompleted = (parentTask.completed === 'Y');
 
-		const kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
+		const kanban = createScrumKanbanGrid(
+			this.finishMoveController,
+			this.getKanbanParams(renderTo, headerParams),
+		);
 
 		kanban.draw();
 
@@ -300,6 +319,8 @@ export class KanbanManager
 		this.kanbanGroupedByParentTasks.forEach((parentTaskKanban) => {
 			this.addNeighborKanban(parentTaskKanban);
 		});
+
+		this.updateHeaderColumns();
 	}
 
 	cleanNeighborKanbans()
@@ -395,13 +416,90 @@ export class KanbanManager
 		this.kanbanComponent.onClickSort(item, order);
 	}
 
+	onResyncRequest(event: BaseEvent)
+	{
+		const { grid, promises, allowStaleChild, groupId, onlyAfterCurrent } = event.getData();
+		const isCurrentGrid = grid === this.kanban
+			|| grid === this.kanbanHeader
+			|| this.kanban?.getNeighborGrids().includes(grid)
+		;
+		const isStaleChildGrid = allowStaleChild === true
+			&& typeof grid?.isChildScrumGrid === 'function'
+			&& grid.isChildScrumGrid()
+			&& Number(groupId) === this.groupId
+		;
+		if (!isCurrentGrid && !isStaleChildGrid)
+		{
+			return Promise.resolve();
+		}
+		if (onlyAfterCurrent === true && !this.resyncPromise)
+		{
+			return Promise.resolve(false);
+		}
+
+		const resyncPromise = this.requestResync();
+		if (Array.isArray(promises))
+		{
+			promises.push(resyncPromise);
+		}
+
+		return resyncPromise;
+	}
+
+	requestResync()
+	{
+		if (!this.resyncPromise)
+		{
+			this.boardGeneration += 1;
+
+			const runResync = () => {
+				this.resyncRequested = false;
+
+				return Promise.resolve(this.onApplyFilter())
+					.catch(() => false)
+					.then((result) => (this.resyncRequested ? runResync() : result))
+				;
+			};
+			const resyncPromise = runResync().finally(() => {
+				if (this.resyncPromise === resyncPromise)
+				{
+					this.resyncPromise = null;
+					this.resyncRequested = false;
+				}
+			});
+			this.resyncPromise = resyncPromise;
+		}
+		else
+		{
+			this.resyncRequested = true;
+		}
+
+		return this.resyncPromise;
+	}
+
 	onApplyFilter(filterId, values, filterInstance, promise, params)
 	{
-		this.fadeOutKanbans();
+		const kanban = this.kanban;
+		const kanbanHeader = this.kanbanHeader;
+		const groupId = this.groupId;
+		const sprintId = kanban.getData().params.SPRINT_ID;
+		const generation = ++this.boardGeneration;
 
-		this.kanban.ajax('applyFilter', {}).then(
+		return kanban.ajax('applyFilter', {}).then(
 			(response) => {
+				if (
+					this.boardGeneration !== generation
+					|| this.groupId !== groupId
+					|| this.kanban !== kanban
+					|| this.kanbanHeader !== kanbanHeader
+					|| kanban.getData().params.SPRINT_ID !== sprintId
+				)
+				{
+					return false;
+				}
+
 				const data = response.data;
+				this.fadeOutKanbans();
 
 				if (this.kanban.differentColumnCount(data))
 				{
@@ -424,23 +522,40 @@ export class KanbanManager
 				this.fillNeighborKanbans();
 				this.adjustGroupHeadersWidth();
 				this.fadeInKanbans();
+				return true;
 			},
-			(response) => {
-				this.fadeInKanbans();
-			});
+			() => false,
+		);
 	}
 
 	onChangeSprint(baseEvent: BaseEvent)
 	{
+		const generation = ++this.boardGeneration;
+
 		const [currentGroup] = baseEvent.getCompatData();
+		const kanban = this.kanban;
+		const kanbanHeader = this.kanbanHeader;
+		const groupId = this.groupId;
+		const sprintId = currentGroup.sprintId;
 
-		const gridData = this.kanban.getData();
-		gridData.params.SPRINT_ID = currentGroup.sprintId;
+		const gridData = kanban.getData();
+		gridData.params.SPRINT_ID = sprintId;
 
-		this.kanban.setData(gridData);
+		kanban.setData(gridData);
 
-		this.kanban.ajax('changeSprint', {}).then(
+		kanban.ajax('changeSprint', {}).then(
 			(response) => {
+				if (
+					this.boardGeneration !== generation
+					|| this.groupId !== groupId
+					|| this.kanban !== kanban
+					|| this.kanbanHeader !== kanbanHeader
+					|| kanban.getData().params.SPRINT_ID !== sprintId
+				)
+				{
+					return;
+				}
+
 				const data = response.data;
 				this.cleanNeighborKanbans();
 				this.kanbanHeader.getColumns().forEach((column) => this.kanbanHeader.removeColumn(column));
@@ -464,6 +579,67 @@ export class KanbanManager
 		);
 	}
 
+	onStructuralItemChanged(baseEvent: BaseEvent): void
+	{
+		const data: StructuralParams = baseEvent.getData();
+		if (Number(data.groupId) !== this.groupId || !this.sprintSelected || !this.kanban)
+		{
+			return;
+		}
+
+		const kanban = this.kanban;
+		const sprintId = kanban.getData().params.SPRINT_ID;
+		if (Array.isArray(data.entityIds) && !data.entityIds.includes(Number(sprintId)))
+		{
+			return;
+		}
+		if (Number.isInteger(data.sprintId) && data.sprintId >= 0 && data.sprintId !== Number(sprintId))
+		{
+			return;
+		}
+
+		this.scheduleStructuralResync();
+	}
+
+	scheduleStructuralResync(): void
+	{
+		const kanban = this.kanban;
+		const groupId = this.groupId;
+		const sprintId = kanban.getData().params.SPRINT_ID;
+
+		const pending = this.structuralResyncTimer;
+		if (pending)
+		{
+			if (pending.kanban === kanban && pending.groupId === groupId && pending.sprintId === sprintId)
+			{
+				return;
+			}
+
+			clearTimeout(pending.id);
+		}
+
+		const timer = { kanban, groupId, sprintId, id: null };
+		timer.id = setTimeout(() => {
+			if (this.structuralResyncTimer !== timer)
+			{
+				return;
+			}
+
+			this.structuralResyncTimer = null;
+			if (
+				this.groupId !== groupId
+				|| this.kanban !== kanban
+				|| kanban.getData().params.SPRINT_ID !== sprintId
+			)
+			{
+				return;
+			}
+
+			void this.requestResync();
+		}, STRUCTURAL_RESYNC_DELAY);
+		this.structuralResyncTimer = timer;
+	}
+
 	onItemUpdated(baseEvent: BaseEvent)
 	{
 		const data: UpdateParams = baseEvent.getData();
@@ -474,22 +650,142 @@ export class KanbanManager
 		}
 
 		const taskId = data.sourceId;
-
-		if (this.kanban.hasItem(taskId))
+		const isParentTask = this.kanbanGroupedByParentTasks.has(Number(taskId));
+		const isTopLevelTask = this.kanban.hasItem(taskId);
+		const childKanbans = [];
+		if (!isParentTask && !isTopLevelTask)
 		{
-			this.kanban.refreshTask(taskId);
+			this.kanbanGroupedByParentTasks.forEach((parentTaskKanban) => {
+				if (parentTaskKanban.hasItem(taskId))
+				{
+					childKanbans.push(parentTaskKanban);
+				}
+			});
+		}
+
+		const isVisible = isParentTask || isTopLevelTask || childKanbans.length > 0;
+		if (Number.isInteger(data.sprintId) && data.sprintId >= 0)
+		{
+			const isInSelectedSprint = data.sprintId === Number(this.kanban.getData().params.SPRINT_ID);
+			if (isVisible !== isInSelectedSprint)
+			{
+				this.scheduleStructuralResync();
+
+				return;
+			}
+			if (!isVisible)
+			{
+				return;
+			}
+		}
+
+		if (isParentTask)
+		{
+			return this.refreshParentTaskHeader(Number(taskId));
+		}
+
+		if (isTopLevelTask)
+		{
+			this.kanban.refreshTask(taskId).then((response) => {
+				if (
+					response
+					&& Type.isArray(response.data)
+					&& response.data.length === 0
+					&& response.errors.length === 0
+				)
+				{
+					this.requestResync();
+				}
+			});
 		}
 		else
 		{
-			this.kanbanGroupedByParentTasks.forEach(
-				(parentTaskKanban) => {
-					if (parentTaskKanban.hasItem(taskId))
-					{
-						parentTaskKanban.refreshTask(taskId);
-					}
-				}
-			);
+			childKanbans.forEach((parentTaskKanban) => parentTaskKanban.refreshTask(taskId));
 		}
+	}
+
+	async refreshParentTaskHeader(parentTaskId: number): Promise<boolean>
+	{
+		if (this.resyncPromise)
+		{
+			return this.requestResync();
+		}
+
+		const kanban = this.kanban;
+		const parentTaskKanban = this.kanbanGroupedByParentTasks.get(parentTaskId);
+		const boardGeneration = this.boardGeneration;
+		const groupId = this.groupId;
+		const sprintId = kanban.getData().params.SPRINT_ID;
+		const requestId = (this.parentHeaderRequestIds.get(parentTaskId) ?? 0) + 1;
+		this.parentHeaderRequestIds.set(parentTaskId, requestId);
+
+		let response;
+		try
+		{
+			response = await kanban.ajax('newTask', { taskId: parentTaskId });
+		}
+		catch (error)
+		{
+			return false;
+		}
+
+		if (
+			this.boardGeneration !== boardGeneration
+			|| this.groupId !== groupId
+			|| this.kanban !== kanban
+			|| this.kanbanGroupedByParentTasks.get(parentTaskId) !== parentTaskKanban
+			|| kanban.getData().params.SPRINT_ID !== sprintId
+			|| this.parentHeaderRequestIds.get(parentTaskId) !== requestId
+			|| this.resyncPromise
+			|| response?.errors?.length > 0
+		)
+		{
+			return false;
+		}
+
+		const parentTask = response?.data;
+		const taskData = parentTask?.data;
+		const cachedParentTask = this.parentTasks[parentTaskId];
+		const container = parentTaskKanban.getInnerContainer()?.closest('.tasks-scrum-parent-task-kanban');
+		const nameNode = container?.querySelector('.tasks-scrum-kanban-group-header-name a');
+		const storyPointsNode = container?.querySelector('.tasks-scrum-kanban-group-header-story-points');
+
+		if (
+			Array.isArray(parentTask)
+			|| Number(parentTask?.id) !== parentTaskId
+			|| Number(taskData?.id) !== parentTaskId
+			|| Number(taskData?.groupId) !== groupId
+			|| Number(taskData?.parentId ?? 0) !== 0
+			|| parentTask?.isVisibilitySubtasks !== 'Y'
+			|| typeof taskData?.name !== 'string'
+			|| !cachedParentTask
+			|| !nameNode
+			|| !storyPointsNode
+		)
+		{
+			return this.requestResync();
+		}
+
+		const completed = taskData.completed === true || taskData.completed === 'Y';
+		const storyPoints = taskData.storyPoints ?? '';
+		nameNode.textContent = taskData.name;
+		storyPointsNode.textContent = storyPoints;
+		if (completed)
+		{
+			this.setTextDecorationToParentTaskName(container);
+		}
+		else
+		{
+			this.unsetTextDecorationToParentTaskName(container);
+		}
+
+		cachedParentTask.name = taskData.name;
+		cachedParentTask.storyPoints = storyPoints;
+		cachedParentTask.completed = completed ? 'Y' : 'N';
+		parentTaskKanban.parentTaskName = taskData.name;
+		parentTaskKanban.parentTaskCompleted = completed;
+
+		return true;
 	}
 
 	refreshKanban(kanban, data)
@@ -592,6 +888,8 @@ export class KanbanManager
 
 	removeParentTaskKanban(kanban)
 	{
+		kanban.deactivateFocusZone();
+
 		Dom.remove(kanban.getInnerContainer().closest('.tasks-scrum-parent-task-kanban'));
 	}
 

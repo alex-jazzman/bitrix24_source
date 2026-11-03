@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import type { DatePickerPreset, DatePickerSelectionMode } from '../date-picker-options';
+import { type DatePickerPreset, type DatePickerSelectionMode } from '../date-picker-options';
 import { createDate } from './create-date';
 
 export function resolvePresetValue(

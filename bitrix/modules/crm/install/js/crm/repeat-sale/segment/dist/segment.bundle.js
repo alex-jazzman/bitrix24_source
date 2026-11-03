@@ -1534,5 +1534,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Segment = Segment;
 
-})(this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}, BX.Crm.AI, BX, BX.UI.TextEditor, BX.Vue3, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX.UI.BBCode, BX.UI, BX, BX.UI, BX.UI, BX.UI, BX.Event, BX.UI.EntitySelector, BX.Crm.Field);
+})(this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}, BX.Crm.AI, BX, BX.UI.TextEditor, BX.Vue3, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX.UI.BBCode, BX.UI, BX.UI.Notification, BX.UI, BX.UI, BX.UI, BX.Event, BX.UI.EntitySelector, BX.Crm.Field);
 //# sourceMappingURL=segment.bundle.js.map

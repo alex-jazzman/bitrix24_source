@@ -82,6 +82,7 @@ export const TasksUserActionsDemonstrator = {
 				const userActionNew = {
 					isEntityClickable: true,
 					id: userAction.id,
+					url: userService.getUrl(userAction.id),
 					name: userAction.name,
 					type: userAction.type,
 					optionsAvatar: {

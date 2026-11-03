@@ -1,5 +1,5 @@
-import {BaseField} from 'ui.form-elements.view';
-import {SettingsRow} from 'ui.form-elements.field';
+import { type SettingsRow } from 'ui.form-elements.field';
+import { type BaseField } from 'ui.form-elements.view';
 
 export type AiSettingsGroup = {
 	code: string,
@@ -17,7 +17,7 @@ export type AiSettingsGroup = {
 export type AiSettingsItem = {
 	code: string,
 	title: string,
- 	type: 'boolean' | 'list',
+	type: 'boolean' | 'list',
 	header: string,
 	value: any,
 	restriction?: AiSettingsItemRestriction,
@@ -43,4 +43,17 @@ export type AiSettingsItemField = {
 export type AiSettingsItemRelations = {
 	parent: string,
 	children: [string],
+};
+
+export type ScenarioDisableFeedbackForm = {
+	zones: Array<string>,
+	id: number,
+	lang: string,
+	sec: string,
+};
+
+export type ScenarioDisableFeedbackSettings = {
+	enabled: boolean,
+	idPrefix: string,
+	forms: Array<ScenarioDisableFeedbackForm>,
 };

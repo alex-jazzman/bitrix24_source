@@ -1,292 +1,328 @@
 /** @module tasks/checklist/controller */
 jn.define('tasks/checklist/controller', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { clone } = require('utils/object');
-	const { ChecklistWidget } = require('tasks/checklist/widget');
-	const { CheckListFlatTree } = require('tasks/checklist/flat-tree');
-	const { PropTypes } = require('utils/validation');
+	const { debounce } = require('utils/function');
+	const { isOnline } = require('device/connection');
+	const { PerfPoint } = require('debug/prism');
 	const { showErrorToast, Position } = require('toast');
+	const store = require('statemanager/redux/store');
+	const { dispatch } = store;
+	const { batchActions } = require('statemanager/redux/batched-actions');
+	const { ChecklistWidget } = require('tasks/checklist/widget');
+	const { ChecklistView } = require('tasks/checklist/view-model');
+	const { ChecklistEntityType } = require('tasks/checklist/enum');
+	const { readChecklistFilter, saveChecklistFilter } = require('tasks/checklist/controller/src/filter-storage');
+	const {
+		checklistsUpserted,
+		checklistsReplacedForEntity,
+		checklistRemoved,
+		makeNewChecklist,
+		makeNewItem,
+		selectChecklistsByEntity,
+		selectChecklistStats,
+		fetchChecklists,
+		saveChecklists,
+	} = require('tasks/statemanager/redux/slices/checklists');
+	// splitFlatList lives in the model submodule (the slice barrel does not re-export it).
+	const { splitFlatList, toDodRequestData } = require('tasks/statemanager/redux/slices/checklists/model');
+	const {
+		itemsUpserted,
+		itemsReplacedForEntity,
+		itemMovedToChecklist,
+		selectHasUploadingAttachments,
+		selectItemsByChecklistId,
+		selectById: selectItemById,
+	} = require('tasks/statemanager/redux/slices/checklist-items');
+	const { selectByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks');
 
+	/** @class ChecklistController */
 	class ChecklistController
 	{
 		/** @param {ChecklistControllerProps} props */
 		constructor(props)
 		{
-			PropTypes.validate(ChecklistController.propTypes, props, 'ChecklistController');
+			this.props = { ...props };
+			this.entityType = props.entityType ?? ChecklistEntityType.TASK.getValue();
+			this.props.taskId = props.taskId ?? props.entityId;
 
-			this.props = {
-				...ChecklistController.defaultProps,
-				...props,
-			};
-
+			/** @type {Map<ChecklistItemId, object>} */
 			this.widgetMap = new Map();
-			this.checklistsMap = new Map();
-			this.currentOpenChecklistId = null;
-			this.handleOnSave = this.save.bind(this);
 
-			this.setChecklistTree(props.checklistTree);
+			/** @type {Map<ChecklistItemId, ChecklistView>} */
+			this.viewModelCache = new Map();
+
+			/** @type {ChecklistFocusController} */
+			this.focusController = this.#createFocusController();
+
+			this.handleOnSave = debounce(this.handleOnSave, 1000, this);
 		}
 
-		/** @param {string|number} taskId */
+		/** @return {Promise} */
+		init()
+		{
+			if (!isOnline() && this.#hasStoreData())
+			{
+				return Promise.resolve();
+			}
+
+			return this.fetch();
+		}
+
+		/** @return {boolean} */
+		#hasStoreData()
+		{
+			return selectChecklistsByEntity(
+				store.getState(),
+				this.entityType,
+				this.props.taskId,
+			).length > 0;
+		}
+
+		/** @return {ChecklistFocusController} */
+		#createFocusController()
+		{
+			return {
+				focusedId: null,
+				getFocusedItemId()
+				{
+					return this.focusedId;
+				},
+				isFocused(id)
+				{
+					return this.focusedId === id;
+				},
+				focus(id)
+				{
+					this.focusedId = id;
+				},
+				blur(id)
+				{
+					if (this.focusedId === id)
+					{
+						this.focusedId = null;
+					}
+				},
+			};
+		}
+
+		/** @return {ChecklistEntityContext} */
+		getContext()
+		{
+			return {
+				entityType: this.entityType,
+				entityId: this.props.taskId,
+				userId: Number(this.props.userId) || null,
+				...this.#getChecklistRights(),
+			};
+		}
+
+		/** @return {{ canEditChecklist: boolean, canAddChecklist: boolean }} */
+		#getChecklistRights()
+		{
+			if (ChecklistEntityType.isDod(this.entityType))
+			{
+				// DoD is edited only via the external scrum save - local rights are closed
+				return { canEditChecklist: false, canAddChecklist: false };
+			}
+
+			if (!ChecklistEntityType.isTask(this.entityType))
+			{
+				return { canEditChecklist: true, canAddChecklist: true };
+			}
+
+			const task = selectByTaskIdOrGuid(store.getState(), this.props.taskId);
+
+			return {
+				canEditChecklist: task?.canUpdateChecklist ?? true,
+				canAddChecklist: task?.canAddChecklist ?? true,
+			};
+		}
+
+		/**
+		 * @param {number|string} taskId
+		 * @return {void}
+		 */
 		setTaskId(taskId)
 		{
 			this.props.taskId = taskId;
 		}
 
-		/** @param {number} groupId */
+		/**
+		 * @param {number} groupId
+		 * @return {void}
+		 */
 		setGroupId(groupId)
 		{
 			this.props.groupId = groupId;
 		}
 
-		/** @param {ChecklistDiskConfig} value */
+		/**
+		 * @param {ChecklistDiskConfig} value
+		 * @return {void}
+		 */
 		setDiskConfig(value)
 		{
 			this.props.diskConfig = value;
 		}
 
-		/** @return {ChecklistReduxData} */
-		getReduxData()
+		/** @return {Promise} */
+		fetch()
 		{
-			const checklists = [...this.getChecklists().values()];
-			const checklistDetails = [];
-			let totalCompleted = 0;
-			let totalUncompleted = 0;
+			const point = new PerfPoint(
+				'Tasks Checklist Open',
+				`${this.entityType} ${this.props.taskId}`,
+			).start();
 
+			return dispatch(fetchChecklists(this.getContext())).finally(() => point.end());
+		}
+
+		/**
+		 * @param {ChecklistV2Raw[]} [rawItems]
+		 * @return {void}
+		 */
+		seedFromV2(rawItems = [])
+		{
+			const context = this.getContext();
+			const { checklists, items } = splitFlatList(rawItems ?? [], context);
+
+			dispatch(batchActions([
+				checklistsReplacedForEntity(context),
+				itemsReplacedForEntity(context),
+				checklistsUpserted({ checklists }),
+				itemsUpserted({ items }),
+			]));
+		}
+
+		/** @return {void} */
+		clearChecklists()
+		{
+			const context = this.getContext();
+
+			dispatch(batchActions([
+				checklistsReplacedForEntity(context),
+				itemsReplacedForEntity(context),
+			]));
+		}
+
+		/** @return {ChecklistItemRequestData[]|null} */
+		getDodRequestData()
+		{
+			const state = store.getState();
+			const checklists = selectChecklistsByEntity(state, this.entityType, this.props.taskId);
+			const itemsByChecklistId = {};
 			checklists.forEach((checklist) => {
-				const completed = checklist.getCompleteCount();
-				const uncompleted = checklist.getUncompleteCount();
-
-				checklistDetails.push({
-					title: checklist.getRootItem()?.getTitle(),
-					completed,
-					uncompleted,
-				});
-
-				totalCompleted += completed;
-				totalUncompleted += uncompleted;
+				itemsByChecklistId[checklist.id] = selectItemsByChecklistId(state, checklist.id);
 			});
 
-			return {
-				checklistDetails,
-				completed: totalCompleted,
-				uncompleted: totalUncompleted,
-			};
+			return toDodRequestData(checklists, itemsByChecklistId);
 		}
 
-		/**
-		 * @param {ChecklistSaveParams} params
-		 * @return {Promise}
-		 */
-		static save({ taskId, items })
-		{
-			if (!Array.isArray(items))
-			{
-				return Promise.reject(new Error('Checklist: No items to save'));
-			}
-
-			return new Promise((resolve, reject) => {
-				BX.ajax.runAction(
-					'tasks.checklist.checklist.save',
-					{
-						data: {
-							nodes: items,
-							taskId,
-						},
-					},
-				).then((response) => {
-					if (response?.status !== 'success')
-					{
-						reject(response);
-
-						return;
-					}
-
-					resolve(response.data);
-				}).catch(reject);
-			});
-		}
-
-		/**
-		 * @param {ChecklistToggleCompletedParams} params
-		 * @return {Promise}
-		 */
-		static toggleCompletedItems = ({ value, userId }) => {
-			return new Promise((resolve) => {
-				BX.ajax.runComponentAction(
-					'bitrix:tasks.widget.checklist.new',
-					'updateTaskOption',
-					{
-						mode: 'class',
-						data: {
-							option: 'show_completed',
-							value,
-							userId,
-							entityType: 'TASK',
-						},
-					},
-				).then((result) => {
-					resolve(result);
-				}).catch(console.error);
-			});
-		};
-
-		/**
-		 * @param {MakeChecklistFlatTreesParams} params
-		 * @return {CheckListFlatTree[]}
-		 */
-		static makeChecklistFlatTrees(params)
-		{
-			const { rawChecklistTree, userId, taskId } = params;
-			const checklists = rawChecklistTree?.descendants || [];
-
-			if (checklists.length === 0)
-			{
-				return [];
-			}
-
-			return checklists.map((checklist) => new CheckListFlatTree({
-				userId,
-				taskId,
-				checklist,
-			}));
-		}
-
-		/** @return {Map<ChecklistItemId, CheckListFlatTree>} */
+		/** @return {Map<ChecklistItemId, ChecklistView>} */
 		getChecklists()
 		{
-			return this.checklistsMap;
-		}
+			const state = store.getState();
+			const checklists = selectChecklistsByEntity(state, this.entityType, this.props.taskId);
+			const result = new Map();
+			const liveIds = new Set();
 
-		/** @return {ChecklistItemId[]} */
-		getChecklistsIds()
-		{
-			return [...this.checklistsMap.keys()];
+			checklists.forEach((checklist) => {
+				liveIds.add(checklist.id);
+				result.set(checklist.id, this.#getOrCreateViewModel(checklist.id));
+			});
+
+			this.viewModelCache.forEach((viewModel, checklistId) => {
+				if (!liveIds.has(checklistId))
+				{
+					this.viewModelCache.delete(checklistId);
+				}
+			});
+
+			return result;
 		}
 
 		/**
 		 * @param {ChecklistItemId} checklistId
-		 * @return {Checklist|null}
+		 * @return {ChecklistView}
 		 */
-		getViewChecklistComponent(checklistId)
+		#getOrCreateViewModel(checklistId)
 		{
-			const checklistWidget = this.widgetMap.get(checklistId);
-
-			if (!checklistWidget)
+			if (!this.viewModelCache.has(checklistId))
 			{
-				return null;
+				const viewModel = new ChecklistView({
+					checklistId,
+					context: this.getContext(),
+					focusController: this.focusController,
+					userId: this.props.userId,
+					taskId: this.props.taskId,
+					autoCompleteItem: false,
+				});
+
+				if (this.#persistsFilter())
+				{
+					viewModel.setFilter(readChecklistFilter(this.props.userId), true);
+				}
+
+				this.viewModelCache.set(checklistId, viewModel);
 			}
 
-			return checklistWidget.getComponent();
+			return this.viewModelCache.get(checklistId);
 		}
 
-		/** @param {ChecklistItemId} checklistId */
-		closeChecklistWidget(checklistId)
+		/**
+		 * Only task checklists show the filter menu, so only they carry the stored preference -
+		 * templates and DoD must not inherit it.
+		 *
+		 * @return {boolean}
+		 */
+		#persistsFilter()
 		{
-			const checklistWidget = this.widgetMap.get(checklistId);
-			if (!checklistWidget)
-			{
-				return;
-			}
-
-			checklistWidget.close();
-		}
-
-		/** @return {ChecklistItemData[][]} */
-		getChecklistFlatTree()
-		{
-			const checklistsFlatTree = [];
-
-			this.getChecklists().forEach((checklist) => {
-				checklistsFlatTree.push(checklist.getFlatTree());
-			});
-
-			return checklistsFlatTree;
-		}
-
-		/** @param {SetChecklistsParams} params */
-		setChecklists({ checklistsFlatTree, checklistsTree, clear = false })
-		{
-			if (clear)
-			{
-				this.clearChecklists();
-			}
-
-			if (checklistsFlatTree)
-			{
-				this.setChecklistFlatTree(checklistsFlatTree);
-			}
-			else if (checklistsTree)
-			{
-				this.setChecklistTree(clone(checklistsTree));
-			}
-		}
-
-		/** @param {ChecklistItemData[][]} checklistsFlatTree */
-		setChecklistFlatTree(checklistsFlatTree)
-		{
-			clone(checklistsFlatTree).forEach((checklistFlatTree) => {
-				this.addChecklist(new CheckListFlatTree({ checklistFlatTree, ...this.getTaskParams() }));
-			});
-		}
-
-		/** @param {ChecklistItemData} tree */
-		setChecklistTree(tree)
-		{
-			const checklists = tree?.descendants || [];
-
-			if (checklists.length === 0)
-			{
-				return;
-			}
-
-			checklists.forEach((checklist) => {
-				this.addChecklist(new CheckListFlatTree({ checklist, ...this.getTaskParams() }));
-			});
-		}
-
-		clearChecklists()
-		{
-			this.checklistsMap.clear();
-		}
-
-		/** @param {CheckListFlatTree} checklist */
-		addChecklist(checklist)
-		{
-			const checklistId = checklist.getId();
-			this.checklistsMap.set(checklistId, checklist);
-		}
-
-		/** @param {string | number} checklistId */
-		#deleteChecklist(checklistId)
-		{
-			this.#removeChecklistById(checklistId);
-			this.#removeFromWidgetMap(checklistId);
-		}
-
-		/** @param {ChecklistItemId} checklistId */
-		#removeChecklistById(checklistId)
-		{
-			this.checklistsMap.delete(checklistId);
+			return ChecklistEntityType.isTask(this.entityType);
 		}
 
 		/**
 		 * @private
-		 * @param {string | number} checklistId
+		 * @param {ChecklistConditions} filter
 		 */
-		#removeFromWidgetMap(checklistId)
+		#handleFilterChanged = (filter) => {
+			if (this.#persistsFilter())
+			{
+				saveChecklistFilter(this.props.userId, filter);
+			}
+		};
+
+		/**
+		 * @param {ChecklistItemId} checklistId
+		 * @return {ChecklistView|null}
+		 */
+		getChecklistById(checklistId)
 		{
-			this.currentOpenChecklistId = null;
-			this.widgetMap.delete(checklistId);
+			return this.getChecklists().get(checklistId) || null;
 		}
 
 		/**
-		 * @private
-		 * @param {AddToWidgetMapParams} params
+		 * Deep links and chat messages carry the server id, while the store is keyed by store id.
+		 *
+		 * @param {number} serverId
+		 * @return {ChecklistView|null}
 		 */
-		addToWidgetMap({ checklistId, checklistWidget })
+		getChecklistByServerId(serverId)
 		{
-			this.widgetMap.set(checklistId, checklistWidget);
+			const checklists = selectChecklistsByEntity(store.getState(), this.entityType, this.props.taskId);
+			const match = checklists.find((checklist) => checklist.serverId === Number(serverId));
+
+			return match ? this.getChecklistById(match.id) : null;
+		}
+
+		/** @return {ChecklistStats} */
+		getReduxData()
+		{
+			return selectChecklistStats(store.getState(), this.entityType, this.props.taskId);
+		}
+
+		/** @return {boolean} */
+		hasUploadingFiles()
+		{
+			return selectHasUploadingAttachments(store.getState(), this.entityType, this.props.taskId);
 		}
 
 		/**
@@ -295,10 +331,9 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 */
 		openChecklist(params)
 		{
-			const { userId, groupId, diskConfig, inLayout, hideCompleted, hideMoreMenu, parentWidget } = this.props;
+			const { userId, groupId, diskConfig, inLayout, parentWidget } = this.props;
 			const { checklist } = params;
 			const checklistId = checklist.getId();
-			this.currentOpenChecklistId = checklistId;
 
 			return new Promise((resolve) => {
 				ChecklistWidget.open({
@@ -306,349 +341,248 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 					groupId,
 					diskConfig,
 					parentWidget,
-					hideCompleted,
-					hideMoreMenu,
 					inLayout: Boolean(inLayout),
-					checklists: this.checklistsMap,
-					onSave: this.handleOnSave,
-					onClose: this.#handleOnClose,
-					onCompletedChanged: this.#handleOnChange,
+					checklists: this.getChecklists(),
+					getChecklists: () => this.getChecklists(),
+					onSave: () => this.handleOnSave(),
+					onClose: () => this.#handleOnClose(checklistId),
+					onCompletedChanged: () => this.props.onChange?.(this),
+					onFilterChanged: this.#handleFilterChanged,
 					menuMore: {
 						accessRestrictions: checklist.getAccessRestrictions(),
-						onToggleCompletedItems: (value) => {
-							void ChecklistController.toggleCompletedItems({ value, userId });
-						},
 						actions: {
-							onRemove: this.handleOnRemove(checklistId),
+							onRemove: () => this.#handleOnRemove(checklistId),
 							onCreateChecklist: this.handleOnCreateChecklist(checklistId),
-							onMoveToCheckList: this.handleOnMoveToChecklist,
+							onMoveToCheckList: (moveParams) => this.handleOnMoveToChecklist(moveParams),
 						},
 					},
 					...params,
 				}).then((checklistWidget) => {
-					this.addToWidgetMap({ checklistId, checklistWidget });
+					this.widgetMap.set(checklistId, checklistWidget);
 					resolve(checklistWidget);
 				}).catch(console.error);
 			});
 		}
 
 		/**
-		 * @param {BuildDefaultListParams} params
-		 * @return {CheckListFlatTree}
+		 * @param {CreateNewChecklistParams} [params]
+		 * @return {ChecklistView}
 		 */
-		createNewChecklist(params)
+		createNewChecklist(params = {})
 		{
-			const newChecklist = CheckListFlatTree.buildDefaultList({ ...params, ...this.getTaskParams() });
-			this.addChecklist(newChecklist);
+			const { title, withBlankItem = true } = params;
+			const state = store.getState();
+			const existing = selectChecklistsByEntity(state, this.entityType, this.props.taskId);
 
-			return newChecklist;
+			const sortIndex = existing.length === 0
+				? 0
+				: Math.max(...existing.map((checklist) => checklist.sortIndex)) + 1;
+
+			const checklist = makeNewChecklist({
+				entityType: this.entityType,
+				entityId: this.props.taskId,
+				title: title ?? '',
+				sortIndex,
+				createdBy: Number(this.props.userId) || null,
+			});
+
+			const actions = [checklistsUpserted({ checklists: [checklist] })];
+
+			if (withBlankItem)
+			{
+				const blankItem = makeNewItem({
+					checklistId: checklist.id,
+					entityType: this.entityType,
+					entityId: this.props.taskId,
+					parentId: checklist.id,
+				});
+				actions.push(itemsUpserted({ items: [blankItem] }));
+			}
+
+			dispatch(batchActions(actions));
+
+			return this.getChecklistById(checklist.id);
 		}
 
 		/**
-		 * @param {MoveToChecklistParams} moveParams
-		 * @return {Promise<(function(): Promise<void>)|null>}
-		 */
-		handleOnMoveToChecklist = async (moveParams) => {
-			const { moveIds, sourceChecklistId } = moveParams;
-
-			if (moveIds.length === 0)
-			{
-				console.error('Checklist: MoveIds is empty');
-
-				return null;
-			}
-
-			let toCheckListId = moveParams.toCheckListId;
-			let checklist = toCheckListId ? this.checklistsMap.get(toCheckListId) : null;
-
-			if (!toCheckListId)
-			{
-				checklist = this.createChecklist({ addBlankItem: false });
-				toCheckListId = checklist.getId();
-			}
-
-			await this.moveToChecklist({ moveIds, toCheckListId, sourceChecklistId });
-
-			return async () => {
-				const { checklistWidget } = await this.openChecklist({
-					checklist,
-					focusedItemId: moveIds[0],
-					parentWidget: this.getParentWidgetByChecklistId(sourceChecklistId),
-				}).catch(console.error);
-
-				checklistWidget.handleOnChange();
-			};
-		};
-
-		/** @param {MoveToChecklistParams} params */
-		async moveToChecklist({ moveIds, toCheckListId, sourceChecklistId })
-		{
-			const sourceChecklist = this.checklistsMap.get(sourceChecklistId);
-			const receivingChecklist = this.checklistsMap.get(toCheckListId);
-			const moveItems = moveIds
-				.map((moveId) => sourceChecklist.getItemById(moveId))
-				.filter(Boolean);
-			const viewSourceChecklist = this.getViewChecklistComponent(sourceChecklistId);
-
-			for (const item of moveItems)
-			{
-				// eslint-disable-next-line no-await-in-loop
-				await viewSourceChecklist?.handleOnRemoveItem({ item });
-				receivingChecklist.addMovedItem(item, moveIds);
-			}
-
-			const viewReceivingChecklist = this.getViewChecklistComponent(toCheckListId);
-			viewReceivingChecklist?.reload({});
-		}
-
-		/**
-		 * @param {ChecklistItemId} checklistId
-		 * @return {LayoutWidget}
-		 */
-		getParentWidgetByChecklistId(checklistId)
-		{
-			const { parentWidget } = this.props;
-			const checklistWidget = this.widgetMap.get(checklistId);
-
-			if (!checklistWidget)
-			{
-				return parentWidget;
-			}
-
-			return checklistWidget.getLayoutWidget();
-		}
-
-		/**
-		 * @private
 		 * @param {ChecklistItemId} checklistId
 		 * @return {function(): Promise}
 		 */
 		handleOnCreateChecklist = (checklistId) => () => {
 			return this.openChecklist({
-				checklist: this.createChecklist(),
+				checklist: this.createNewChecklist(),
 				parentWidget: this.getParentWidgetByChecklistId(checklistId),
 			});
 		};
 
 		/**
-		 * @private
-		 * @param {BuildDefaultListParams} [params]
-		 * @return {CheckListFlatTree}
+		 * @param {MoveToChecklistParams} moveParams
+		 * @return {Promise<function|null>}
 		 */
-		createChecklist(params = {})
-		{
-			return this.createNewChecklist({
-				number: this.checklistsMap.size,
-				addBlankItem: true,
-				...params,
-			});
-		}
-
-		/** @return {ChecklistItemRequestData[]|null} */
-		getChecklistRequestData()
-		{
-			let shouldAbort = false;
-			const requestData = [];
-
-			this.checklistsMap.forEach((checklist) => {
-				const rootItem = checklist.getRootItem();
-				if (!rootItem.hasItemTitle() && rootItem?.hasDescendants())
-				{
-					shouldAbort = true;
-				}
-
-				if (rootItem?.hasDescendants())
-				{
-					requestData.push(checklist.getRequestData());
-				}
-			});
-
-			if (shouldAbort)
+		handleOnMoveToChecklist = async (moveParams) => {
+			const { moveIds, sourceChecklistId } = moveParams;
+			if (!Array.isArray(moveIds) || moveIds.length === 0)
 			{
 				return null;
 			}
 
-			return requestData.flat();
-		}
+			let toCheckListId = moveParams.toCheckListId;
+			if (!toCheckListId)
+			{
+				const created = this.createNewChecklist({ withBlankItem: false });
+				toCheckListId = created.getId();
+			}
 
-		#filterEmptyChecklists()
-		{
-			this.checklistsMap.forEach((checklist, id) => {
-				const rootItem = checklist.getRootItem();
-				if (!rootItem)
+			const moveSet = new Set(moveIds);
+			for (const itemId of moveIds)
+			{
+				const moved = selectItemById(store.getState(), itemId);
+				if (moved && !moveSet.has(moved.parentId))
 				{
-					this.#removeChecklistById(id);
-
-					return;
+					dispatch(itemMovedToChecklist({ itemId, checklistId: toCheckListId }));
 				}
+			}
 
-				const isEmptyChecklist = !rootItem.hasDescendants();
-				if (isEmptyChecklist && !rootItem.isFocused())
-				{
-					this.#removeChecklistById(id);
-				}
-			});
-		}
+			this.handleOnSave();
 
-		#handleOnChange = () => {
-			const { onChange } = this.props;
+			this.widgetMap.get(sourceChecklistId)?.getComponent?.()?.removeMovedRows?.(moveIds);
 
-			onChange?.(this);
+			return async () => {
+				await this.openChecklist({
+					checklist: this.getChecklistById(toCheckListId),
+					focusedItemId: moveIds[0],
+					parentWidget: this.getParentWidgetByChecklistId(sourceChecklistId),
+				});
+			};
 		};
 
-		async save(checklistId = this.currentOpenChecklistId)
+		/** @return {Promise<boolean>} */
+		async handleOnSave()
 		{
-			const { taskId } = this.getTaskParams();
+			this.props.onChange?.(this);
 
-			this.getViewChecklistComponent(checklistId)?.syncFocusedItemText?.(false, true);
-			this.#filterEmptyChecklists();
-			this.#handleOnChange();
+			// a rejected thunk resolves the promise instead of throwing, so check the action itself
+			const action = await dispatch(saveChecklists(this.getContext()));
 
-			// an entity that is not on the server yet (task being created, template) has nowhere to save:
-			// such a checklist is sent within the entity itself, so closing must not be blocked
-			if (!taskId)
+			if (action?.type !== saveChecklists.rejected.type)
 			{
 				return true;
 			}
 
-			const items = this.getChecklistRequestData();
-
-			if (!Array.isArray(items))
+			// the thunk condition skips the save while offline, for DoD and for an entity the server
+			// does not have yet, and none of the three is a failure
+			if (action.meta?.condition)
 			{
 				return false;
 			}
 
-			try
-			{
-				const response = await ChecklistController.save({ taskId, items });
-				this.#updateAfterSave(response, checklistId);
-			}
-			catch (error)
-			{
-				showErrorToast({
+			console.error(action.payload ?? action.error);
+
+			showErrorToast(
+				{
 					message: Loc.getMessage('TASKSMOBILE_CHECKLIST_CONTROLLER_SAVE_ERROR'),
 					position: Position.BOTTOM,
-				});
-
-				console.error(error);
-
-				return false;
-			}
-
-			return true;
-		}
-
-		#handleOnClose = async (checklistId) => {
-			const checklist = this.checklistsMap.get(checklistId);
-
-			if (!checklist || !this.widgetMap.has(checklistId))
-			{
-				return true;
-			}
-
-			this.getViewChecklistComponent(checklistId)?.syncFocusedItemText?.(false, true);
-
-			if (checklist.canUpdate() || checklist.canAdd())
-			{
-				const isSaved = await this.save(checklistId);
-				if (!isSaved)
-				{
-					return false;
-				}
-			}
-
-			this.#removeFromWidgetMap(checklistId);
-			this.props.onClose?.();
-
-			return true;
-		};
-
-		handleOnRemove = (checklistId) => () => {
-			this.closeChecklistWidget(checklistId);
-			this.#deleteChecklist(checklistId);
-			void this.handleOnSave();
-		};
-
-		/** @return {ChecklistTaskParams} */
-		getTaskParams()
-		{
-			const { userId, taskId, groupId, diskConfig, hideCompleted, autoCompleteItem } = this.props;
-
-			return { userId, taskId, groupId, diskConfig, hideCompleted, autoCompleteItem };
-		}
-
-		/**
-		 * @param {Record<string, { id: ChecklistItemId }>} items
-		 * @param {ChecklistItemId} checklistId
-		 */
-		#updateAfterSave(items, checklistId)
-		{
-			if (!items)
-			{
-				return;
-			}
-
-			const checklist = this.checklistsMap.get(checklistId);
-			if (!checklist)
-			{
-				return;
-			}
-
-			checklist.getTreeItems().forEach((item) => {
-				const savedItem = items[item.getNodeId()];
-
-				if (savedItem)
-				{
-					item.setId(savedItem.id);
-				}
-			});
-		}
-
-		/** @return {boolean} */
-		hasUploadingFiles()
-		{
-			for (const checklist of this.checklistsMap.values())
-			{
-				for (const item of checklist.getTreeItems())
-				{
-					if (item.hasUploadingAttachments())
-					{
-						return true;
-					}
-				}
-			}
+				},
+				this.#getToastWidget(),
+			);
 
 			return false;
 		}
 
 		/**
-		 * @param {ChecklistItemId} checklistId
-		 * @return {CheckListFlatTree|null}
+		 * @private
+		 * @return {object|null} LayoutWidget
 		 */
-		getChecklistById(checklistId)
+		#getToastWidget()
 		{
-			return this.checklistsMap.get(checklistId) || null;
+			const [openWidget] = [...this.widgetMap.values()];
+
+			return openWidget?.getLayoutWidget?.() ?? this.props.parentWidget ?? null;
+		}
+
+		/**
+		 * @param {ChecklistItemId} checklistId
+		 * @return {void}
+		 */
+		#handleOnRemove(checklistId)
+		{
+			this.closeChecklistWidget(checklistId);
+
+			dispatch(checklistRemoved({ checklistId }));
+
+			this.handleOnSave();
+		}
+
+		/**
+		 * @param {ChecklistItemId} checklistId
+		 * @return {void}
+		 */
+		#handleOnClose(checklistId)
+		{
+			this.widgetMap.delete(checklistId);
+			this.#removeEmptyChecklists();
+
+			// typing keeps the title in the store without scheduling a save, and closing does not
+			// blur the focused field - so the last edit needs its own save here
+			if (this.#savesOnClose())
+			{
+				this.handleOnSave();
+			}
+
+			this.props.onClose?.();
+		}
+
+		/**
+		 * Only a persisted task is saved on close: a template checklist is read-only on mobile and its
+		 * store items carry no server ids (copy-prepared prefill), a draft has a guid instead of a task
+		 * id, and DoD is saved by the external scrum flow.
+		 *
+		 * @private
+		 * @return {boolean}
+		 */
+		#savesOnClose()
+		{
+			return ChecklistEntityType.isTask(this.entityType) && Number(this.props.taskId) > 0;
+		}
+
+		/**
+		 * @private
+		 * @return {void}
+		 */
+		#removeEmptyChecklists()
+		{
+			this.getChecklists().forEach((checklist, checklistId) => {
+				if (this.widgetMap.has(checklistId))
+				{
+					return;
+				}
+
+				if (!checklist.getRoot()?.hasChildren())
+				{
+					dispatch(checklistRemoved({ checklistId }));
+				}
+			});
+		}
+
+		/**
+		 * @param {ChecklistItemId} checklistId
+		 * @return {void}
+		 */
+		closeChecklistWidget(checklistId)
+		{
+			this.widgetMap.get(checklistId)?.close?.();
+			this.widgetMap.delete(checklistId);
+		}
+
+		/**
+		 * @param {ChecklistItemId} checklistId
+		 * @return {object} LayoutWidget
+		 */
+		getParentWidgetByChecklistId(checklistId)
+		{
+			return this.widgetMap.get(checklistId)?.getLayoutWidget?.() ?? this.props.parentWidget;
 		}
 	}
 
-	ChecklistController.defaultProps = {
-		autoCompleteItem: true,
-		hideMoreMenu: false,
-	};
-
-	ChecklistController.propTypes = {
-		taskId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-		groupId: PropTypes.number,
-		userId: PropTypes.number,
-		checklistTree: PropTypes.object,
-		diskConfig: PropTypes.object,
-		hideCompleted: PropTypes.bool,
-		hideMoreMenu: PropTypes.bool,
-		inLayout: PropTypes.bool,
-		onChange: PropTypes.func,
-		onClose: PropTypes.func,
-		parentWidget: PropTypes.object,
-	};
-
-	module.exports = { ChecklistController };
+	module.exports = { ChecklistController, readChecklistFilter, saveChecklistFilter };
 });

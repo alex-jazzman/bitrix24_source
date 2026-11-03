@@ -2,7 +2,7 @@ import { SyncPageBlock } from './components/sync-page-block/sync-page-block';
 import { SyncPageService } from './service/sync-page-service';
 import { JoinMeetingPopup } from './components/join-meeting-popup/join-meeting-popup';
 import { Analytics } from 'call.lib.analytics';
-import { SyncPromoPopup } from './components/sync-promo-popup/sync-promo-popup';
+import { SyncTabBannerLauncher } from 'call.lib.sync-tab-banner-launcher';
 import { isGuestCallLink } from './lib/guest-link';
 
 import './css/sync-page.css';
@@ -13,7 +13,6 @@ export const SyncPage = {
 	components: {
 		SyncPageBlock,
 		JoinMeetingPopup,
-		SyncPromoPopup,
 	},
 	setup()
 	{
@@ -26,7 +25,6 @@ export const SyncPage = {
 	{
 		return {
 			showJoinMeetingPopup: false,
-			showPromoPopup: false,
 		};
 	},
 	computed: {
@@ -46,10 +44,14 @@ export const SyncPage = {
 	mounted()
 	{
 		Analytics.getInstance().sync.onOpenSection();
-		void this.syncPageService.initPromo(() =>
-		{
-			this.showPromoPopup = true;
-		});
+		// The page has no messenger, so the launcher gets no lifecycle event here and has to be
+		// started by hand. The promo stays one per user: the view mark lives on the server and
+		// knows nothing about surfaces, so a banner already seen in chats will not come up again.
+		SyncTabBannerLauncher.startOnSyncPage();
+	},
+	beforeUnmount()
+	{
+		SyncTabBannerLauncher.cancel();
 	},
 	methods: {
 		onBlockClick(blockType)
@@ -66,11 +68,6 @@ export const SyncPage = {
 		onJoinMeetingPopupClose()
 		{
 			this.showJoinMeetingPopup = false;
-		},
-		onPromoPopupClose()
-		{
-			this.syncPageService.closePromo();
-			this.showPromoPopup = false;
 		},
 		onJoinMeeting(meetingInput)
 		{
@@ -141,10 +138,6 @@ export const SyncPage = {
 				v-if="showJoinMeetingPopup"
 				@close="onJoinMeetingPopupClose"
 				@join="onJoinMeeting"
-			/>
-			<SyncPromoPopup
-				v-if="showPromoPopup"
-				@close="onPromoPopupClose"
 			/>
 		</div>
 	`,

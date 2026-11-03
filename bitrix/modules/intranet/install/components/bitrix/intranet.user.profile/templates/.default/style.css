@@ -1713,8 +1713,8 @@
 	text-decoration:underline;
 }
 .iup-tags-item-users-popup-avatar-new {display: inline-block; vertical-align: middle; margin-right: 2px; background: #fff; position: relative; width: 20px; height: 20px; }
-.iup-tags-item-users-popup-avatar-img {background: url("images/avatar-sprite.png") no-repeat scroll 0 -65px #fff; width: inherit; height: inherit; border: 0; border-radius: 50%;}
-.iup-tags-item-users-popup-avatar-status-icon {display: none; position: absolute; background: url("images/avatar-sprite.png") repeat scroll 0 0; width: 14px; height: 15px; float: right; margin-top: -11px; right: -3px;}
+.iup-tags-item-users-popup-avatar-img {background: url("images/avatar-sprite.webp") no-repeat scroll 0 -65px #fff; width: inherit; height: inherit; border: 0; border-radius: 50%;}
+.iup-tags-item-users-popup-avatar-status-icon {display: none; position: absolute; background: url("images/avatar-sprite.webp") repeat scroll 0 0; width: 14px; height: 15px; float: right; margin-top: -11px; right: -3px;}
 * html .iup-tags-item-users-popup-avatar-new {width:23px;}
 .iup-tags-item-users-popup-img img {border:none; background-color:#FFF; border-radius: 50%;}
 .iup-tags-item-users-popup-name {cursor:pointer; display:block; font-size:11px; padding-left:3px; height:15px; text-decoration:underline; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; padding-top:2px; white-space:nowrap; min-width:100px;}

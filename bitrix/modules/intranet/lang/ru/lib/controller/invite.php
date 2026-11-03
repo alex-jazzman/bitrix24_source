@@ -14,4 +14,5 @@ $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVALID_RESPONSE"] = "Не удалос�
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT"] = "Отправлено максимальное количество приглашений в сутки";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_SMS"] = "Вы отправили максимальное количество приглашений с помощью СМС за день. Пригласите сотрудников другими способами";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_EMAIL"] = "Вы отправили максимальное количество приглашений с помощью e-mail за день. Пригласите сотрудников другими способами";
+$MESS['INTRANET_CONTROLLER_INVITE_ERROR_SMS_REINVITE_TIMEOUT'] = 'Попробуйте отправить приглашение по СМС позже';
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_UNKNOWN"] = "Неизвестная ошибка";

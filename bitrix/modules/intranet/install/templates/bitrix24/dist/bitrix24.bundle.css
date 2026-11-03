@@ -554,11 +554,24 @@ body.--right-panel-expanded .right-sidebar-skeleton {
 	padding: 10px 12px;
 	border-radius: var(--ui-border-radius-sm);
 	transition: background-color 0.1s ease-in-out;
+	box-sizing: border-box;
+	width: 100%;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
 }
 
 .intranet__language-popup_language-item:hover {
 	background-color: var(--ui-color-base-03);
 	transition-duration: 0s;
+}
+
+/* The ring is drawn inside the item so that the popup edges cannot clip it. */
+.intranet__language-popup_language-item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 @view-transition {
@@ -1073,7 +1086,16 @@ textarea {
 	margin-right: 14px;
 }
 
-@container app-header (max-width: 968px) {
+/* Width mirrors .intranet-settings-widget__logo-btn: min-width 24px + margin-left 2px;
+	flex-shrink: 0 because an explicit min-width drops the flex default of min-width: auto. */
+.air-header__settings-slot {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	min-width: 26px;
+}
+
+@container app-header (max-width: 1200px) {
 	.air-header__logo {
 		display: none;
 	}
@@ -1138,7 +1160,7 @@ textarea {
 	display: none;
 }
 
-@container app-header (max-width: 1200px) {
+@container app-header (max-width: 888px) {
 	.air-header-button__icon {
 		display: block;
 		--ui-icon-set__icon-size: 18px;
@@ -1217,6 +1239,11 @@ textarea {
 .air-header-button:focus,
 .air-header-button:active {
 	background: var(--air-header-button-bg-active);
+}
+
+.air-header-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }
 
 .air-header-button.--color-accent,
@@ -1509,6 +1536,25 @@ textarea {
 	--status-icon-color: var(--ui-color-base-5);
 }
 
+.air-user-profile:focus-visible {
+	outline: none;
+}
+
+.air-user-profile:focus-visible::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	right: 0;
+	width: 100%;
+	min-width: 29px;
+	height: 29px;
+	transform: translateY(-50%);
+	outline: auto;
+	outline-offset: 2px;
+	border-radius: 48px;
+	pointer-events: none;
+}
+
 .air-user-profile.--worktime-not-started {
 	--wrapper-color: var(--ui-color-accent-main-primary);
 	--status-icon-color: var(--ui-color-base-4);
@@ -1578,6 +1624,10 @@ body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-sta
 				opacity 0.3s ease-in-out,
 				visibility 0s linear 0.3s,
 				max-width 0s ease-in-out 0.3s;
+	}
+
+	.air-user-profile:focus-visible::before {
+		width: 29px;
 	}
 
 	.air-user-profile .air-user-profile-avatar__work-time-state-short {
@@ -1707,7 +1757,8 @@ body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-sta
 	margin-right: 4px;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-medium);
-	line-height: 19px;
+	line-height: 20px;
+	transform: translateY(0.5px);
 	color: var(--ui-color-base-white-fixed);
 	white-space: nowrap;
 	min-width: 40px;
@@ -1742,6 +1793,8 @@ body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-sta
 }
 
 .intranet-avatar-widget-base-popup {
+	max-width: calc(100vw - 16px);
+	box-sizing: border-box;
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-width: none;
@@ -2400,6 +2453,11 @@ body.--resizing .app__page {
 
 .air-footer-button:active {
 	background-color: color-mix(in srgb, var(--ui-color-design-outline-bg) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+}
+
+.air-footer-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }
 
 .air-footer-button-logo {

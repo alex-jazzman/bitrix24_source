@@ -129,11 +129,27 @@ function prepareParams(params: { [key: string]: any }): { [key: string]: any }
 	}, {});
 }
 
-export default function parseUrl(url: any)
+export type ParsedUrl = {
+	useShort: boolean,
+	href: string,
+	schema: string,
+	host: string,
+	port: string,
+	path: string,
+	query: string,
+	sourceQueryParams: { [key: string]: string | null | undefined },
+	queryParams: { [key: string]: string },
+	hash: string,
+	username: string,
+	password: string,
+	origin: string,
+};
+
+export default function parseUrl(url: any): ParsedUrl | Partial<Record<keyof ParsedUrl, undefined>>
 {
 	const result = url.match(urlExp);
 
-	if (Type.isArray(result))
+	if (Type.isArray<string | undefined>(result))
 	{
 		const sourceParams: { [key: string]: string | null | undefined } = parseQuery(result[14]);
 		const preparedParams: { [key: string]: string } = prepareParams(sourceParams);

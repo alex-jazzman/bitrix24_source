@@ -41,3 +41,40 @@
 .editor-chart-common-node-settings-preview__construction.--empty {
 	color: var(--ui-color-palette-gray-50);
 }
+
+/* Everything below is the layout of the row with the summary, and the modifier is put on only while
+   the feature is on: with the flag off the row keeps the layout it had before the feature. Measured
+   for a single pair - the pilot hands over exactly one, and a multi-line summary was not designed. */
+
+/* visibility, not display: the icon appears on hover, and 20 px arriving into the row at that moment
+   would reflow the title and the summary under the cursor. */
+.editor-chart-common-node-settings-preview.--with-summary .editor-chart-common-node-settings-preview__edit-icon {
+	display: block;
+	visibility: hidden;
+	flex-shrink: 0;
+}
+
+.editor-chart-common-node-settings-preview.--with-summary:hover .editor-chart-common-node-settings-preview__edit-icon {
+	visibility: visible;
+}
+
+/* The row is one line, so the title is cut instead of wrapping: the summary is then read whole, while
+   the tail of the title stays in its `title` attribute and behind a click on the row. */
+.editor-chart-common-node-settings-preview.--with-summary .editor-chart-common-node-settings-preview__construction {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The gap and the half belong to the pair "title, then summary": they are what keeps the summary from
+   pushing out the title the row is about. Both are put on by the adjacency itself, so a row that drops
+   the title of an unfilled construction leaves neither a gap in front of the summary nor half a row of
+   emptiness behind it, and the summary reads across the row up to the icon. The gap is the row's own,
+   not the summary's: with nothing to show the summary renders no element, and no gap is left either. */
+.editor-chart-common-node-settings-preview.--with-summary
+	> .editor-chart-common-node-settings-preview__construction + .editor-chart-settings-summary {
+	flex-shrink: 0;
+	margin-left: 6px;
+	max-width: 50%;
+}

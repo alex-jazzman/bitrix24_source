@@ -21,6 +21,14 @@ $MESS['BIZPROC_USER_PROCESSES_TEMPLATE_GRID_UPDATED'] = 'Список обнов
 $MESS['BIZPROC_USER_PROCESSES_TEMPLATE_TASKS_DELEGATED'] = 'Задания делегированы';
 $MESS['BIZPROC_USER_PROCESSES_TEMPLATE_DELEGATE_TO_LABEL'] = 'Кому делегировать';
 
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_DECISION_LABEL'] = 'Решение по заданиям';
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_DECISION_PLACEHOLDER'] = 'Выберите решение';
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_DECISION_REQUIRED'] = 'Выберите решение для выделенных заданий';
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_PERFORM_GROUP_NO_TASKS'] = 'Среди выделенных процессов нет заданий, ожидающих вашего решения';
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_PERFORM_GROUP_LOAD_FAILED'] = 'Не удалось начать выполнение заданий. Обновите страницу и попробуйте снова';
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_PERFORM_GROUP_FAILED'] = 'Работа с заданиями прервалась из-за ошибки. Попробуйте ещё раз';
+$MESS['BIZPROC_USER_PROCESSES_TEMPLATE_PERFORM_GROUP_FORM_FAILED'] = 'Не удалось открыть форму задания. Работа с заданиями остановлена';
+
 $MESS['BIZPROC_USER_PROCESSES_POPUP_PUSH_TITLE'] = 'Управляйте процессами в мобильном приложении';
 $MESS['BIZPROC_USER_PROCESSES_POPUP_PUSH_DO_PROCESS'] = 'Выполняйте любые процессы на телефоне';
 $MESS['BIZPROC_USER_PROCESSES_POPUP_PUSH_REACT'] = 'Моментально реагируйте на комментарии';

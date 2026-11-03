@@ -30,7 +30,7 @@
 
 
 .view-settings-menu-sort-item-checked .menu-popup-item-icon {
-	background: url(images/check.png) no-repeat center;
+	background: url(images/check.webp) no-repeat center;
 }
 
 .intranet-button-list-wrapper {
@@ -133,7 +133,7 @@
 	display: inline-block;
 	width: 17px;
 	height: 12px;
-	background: url(images/intranet-button-list-confirm.png) no-repeat;
+	background: url(images/intranet-button-list-confirm.webp) no-repeat;
 	vertical-align: middle;
 }
 

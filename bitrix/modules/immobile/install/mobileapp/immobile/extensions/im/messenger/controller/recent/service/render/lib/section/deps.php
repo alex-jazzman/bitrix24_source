@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		'im/messenger/loc',
+		'im:messenger/loc',
 	],
 ];

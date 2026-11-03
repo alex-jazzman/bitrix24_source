@@ -84,7 +84,7 @@
 }
 
 .catalog-section-list-item-inner:after {
-	border: 2px solid rgba(82, 92, 105, 0.31);
+	border: 2px solid var(--ui-color-base-2);
 	width: 12px;
 	height: 12px;
 	border-left: 0;
@@ -113,8 +113,7 @@
 	font-weight: 500;
 	font-size: 13px;
 	line-height: 20px;
-	color: #121212;
-	opacity: 0.4;
+	color: var(--ui-color-base-2);
 }
 
 .catalog-sections-list-ears .ui-ear {
@@ -210,3 +209,26 @@
 
 .bx-touch .catalog-sections-list-ears .ui-ear.ui-ear-left:after,
 .bx-touch .catalog-sections-list-ears .ui-ear.ui-ear-right:after { display: none; }
+
+/*region FOCUS RING*/
+/* Two ancestors clip at the very top edge of the tile - our scroll strip and the wrapper of
+   ui.ears - so the ring of the site theme loses its halo there, and it is drawn inside the box
+   instead. The tile is positioned already (:67), and z-index: 1 is enough: the white plate over
+   the picture is positioned without a z-index of its own. */
+.catalog-sections-list-container .catalog-section-list-item-img:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.catalog-sections-list-container .catalog-section-list-item-img:focus-visible::before {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border: calc(var(--ui-focus-outline-width) * 2) solid var(--ui-color-base-1);
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: '';
+	pointer-events: none;
+}
+
+/*endregion*/

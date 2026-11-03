@@ -8,12 +8,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class CollabInvitationService {
 		addEmployees({
 			dialogId,
-			members
+			members,
+			structureNodes = []
 		}) {
 			const payload = {
 				data: {
 					dialogId,
-					members: im_v2_lib_utils.Utils.user.prepareSelectorIds(members)
+					members: [...im_v2_lib_utils.Utils.user.prepareSelectorIds(members), ...structureNodes]
 				}
 			};
 			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.socialnetworkMemberAdd, payload).catch(([error]) => {

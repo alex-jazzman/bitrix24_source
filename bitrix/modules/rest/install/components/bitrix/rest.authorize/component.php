@@ -15,6 +15,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\Main\Loader;
+use Bitrix\Rest\Public\Provider\ApplicationProvider;
 
 if(!Loader::includeModule('rest'))
 {
@@ -48,11 +49,11 @@ if($USER->IsAuthorized())
 
 	$authResult = \Bitrix\Rest\Application::getAuthProvider()->authorizeClient($clientId, $USER->GetID(), $state);
 
-	if($authResult['error'])
+	if(!empty($authResult['error']))
 	{
-		ShowError($authResult['error'].': '.$authResult['error_description']);
+		ShowError($authResult['error'].': '.($authResult['error_description'] ?? ''));
 	}
-	elseif($authResult['redirect_uri'])
+	elseif(!empty($authResult['redirect_uri']))
 	{
 		$redirectUri = $authResult['redirect_uri'];
 
@@ -88,11 +89,11 @@ else
 {
 	if(isset($clientId))
 	{
-		$appInfo = \Bitrix\Rest\AppTable::getByClientId($clientId);
-		if($appInfo && $appInfo['ACTIVE'] === \Bitrix\Rest\AppTable::ACTIVE)
+		$appInfo = (new ApplicationProvider())->findByClientId((string)$clientId);
+		if($appInfo !== null && $appInfo->isActive() === true)
 		{
 			$APPLICATION->AuthForm(\Bitrix\Main\Localization\Loc::getMessage('REST_NEED_AUTHORIZE_A', array(
-				'#APP_ID#' => $appInfo['CODE']
+				'#APP_ID#' => (string)$appInfo->getCode()
 			)));
 			return;
 		}

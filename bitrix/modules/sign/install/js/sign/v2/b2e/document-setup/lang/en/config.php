@@ -24,6 +24,7 @@ $MESS["SIGN_DOCUMENT_SETUP_TITLE_HINT"] = "Document name is visible to all signi
 $MESS["SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL"] = "Template name";
 $MESS["SIGN_DOCUMENT_SETUP_TYPE"] = "Document ID";
 $MESS["SIGN_DOCUMENT_SETUP_TYPE_HINT"] = "Reference document code.";
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_BATCH_COMMIT_ERROR'] = 'Could not add documents. Please try again.';
 $MESS["SIGN_V2_B2E_DOCUMENT_SETUP_BLOCK_EDITOR_UNAVAILABLE_HINT"] = "Select the signing provider and other signing preferences on the next steps to proceed to the document and field editor.";
 $MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_CANCEL"] = "Cancel";
 $MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_CONFIRM"] = "Replace";

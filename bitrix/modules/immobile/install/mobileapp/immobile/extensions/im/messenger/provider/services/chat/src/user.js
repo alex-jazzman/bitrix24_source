@@ -135,6 +135,28 @@ jn.define('im/messenger/provider/services/chat/user', (require, exports, module)
 		}
 
 		/**
+		 * @desc Links nodes of the org structure to a chat. The id of a node goes as it came from the
+		 * selector: the `:F` suffix tells the node alone from the node with everything under it.
+		 * @param {number} chatId
+		 * @param {Array<[string, number|string]>} entities
+		 *
+		 * @return {Promise<*|T>}
+		 */
+		async linkStructureNodes(chatId, entities)
+		{
+			return runAction(RestMethod.imV2ChatStructureLink, {
+				data: {
+					chatId,
+					entities,
+				},
+			}).catch((errors) => {
+				logger.error('UserService.linkStructureNodes: error', errors);
+
+				throw errors;
+			});
+		}
+
+		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} userId
 		 *

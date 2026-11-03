@@ -1,3 +1,4 @@
+import { Router } from 'crm.router';
 import { Type } from 'main.core';
 
 import ConfigurableItem from '../../configurable-item';
@@ -31,6 +32,15 @@ export class TranscriptSummaryResult extends Base
 			return;
 		}
 
+		void Router.Instance.openAiReportDrawerOrLegacy(
+			'summary-history',
+			actionData,
+			() => this.#openLegacy(actionData),
+		);
+	}
+
+	async #openLegacy(actionData): void
+	{
 		await top.BX.Runtime.loadExtension('crm.ai.call');
 
 		const summary = new top.BX.Crm.AI.Call.Summary({

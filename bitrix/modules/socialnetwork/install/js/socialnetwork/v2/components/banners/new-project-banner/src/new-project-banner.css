@@ -23,7 +23,10 @@
 	right: 0;
 	width: 240px;
 	height: 169px;
-	background: url(./images/new-project-banner.png) top right no-repeat;
+	background: image-set(
+		url(./images/new-project-banner.webp) 1x,
+		url(./images/new-project-banner@2x.webp) 2x
+	) top right no-repeat;
 	background-size: 240px 169px;
 	pointer-events: none;
 }

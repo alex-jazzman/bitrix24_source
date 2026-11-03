@@ -32,6 +32,7 @@ $arParams['PATH_TO_VAT_LIST'] = CrmCheckPath('PATH_TO_VAT_LIST', $arParams['PATH
 $arParams['PATH_TO_VAT_SHOW'] = CrmCheckPath('PATH_TO_VAT_SHOW', $arParams['PATH_TO_VAT_SHOW'], '?vat_id=#vat_id#&show');
 $arParams['PATH_TO_VAT_ADD'] = CrmCheckPath('PATH_TO_VAT_ADD', $arParams['PATH_TO_VAT_ADD'], '?add');
 $arParams['PATH_TO_VAT_EDIT'] = CrmCheckPath('PATH_TO_VAT_EDIT', $arParams['PATH_TO_VAT_EDIT'], '?vat_id=#vat_id#&edit');
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 
 $arResult['GRID_ID'] = 'CRM_VAT_LIST';
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
@@ -151,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 
 	if ($success && !isset($_POST['AJAX_CALL']))
 	{
-		LocalRedirect($APPLICATION->GetCurPage());
+		LocalRedirect($isSettingsHub ? $arParams['PATH_TO_VAT_LIST'] : $APPLICATION->GetCurPage());
 	}
 }
 elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_GET['action_'.$arResult['GRID_ID']]))
@@ -180,7 +181,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 
 	if ($success && !isset($_GET['AJAX_CALL']))
 	{
-		LocalRedirect($bInternal ? '?' . $arParams['FORM_ID'] . '_active_tab=tab_product' : '');
+		LocalRedirect(
+			$isSettingsHub
+				? $arParams['PATH_TO_VAT_LIST']
+				: ($bInternal ? '?' . $arParams['FORM_ID'] . '_active_tab=tab_product' : ''),
+		);
 	}
 }
 

@@ -25,7 +25,7 @@ export const RootApp = {
 		};
 	},
 	template: `
-		<SharingAccessWrapper>
+		<SharingAccessWrapper data-testid="disk-sharing-access-popup">
 			<SharingAccessButtons v-model:isPublic="isPublic" />
 			<SharingAccessMainSettings
 				:objectId="objectId"
@@ -33,7 +33,7 @@ export const RootApp = {
 				:initialAccessRights="initialAccessRights"
 				:mode="mode"
 				:closeDialog="closeDialog"
-				v-model:isPublic="isPublic"
+				:isPublic="isPublic"
 			/>
 		</SharingAccessWrapper>
 	`,

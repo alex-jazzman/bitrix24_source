@@ -27,6 +27,17 @@ Extension::load([
 $this->addExternalCss('/bitrix/components/bitrix/intranet.user.profile.section.security/templates/.default/style.css');
 
 $isOwnProfile = (int)$USER->GetID() === (int)$arParams["USER_ID"];
+$hasConnectedPushDevice = $arResult['OTP']['HAS_CONNECTED_PUSH_DEVICE'] === true;
+$deviceHint = Loc::getMessage(
+	$isOwnProfile
+		? 'INTRANET_USER_OTP_LIST_DEVICES_HINT_WITHOUT_CONNECT'
+		: 'INTRANET_USER_OTP_LIST_DEVICES_HINT_WITHOUT_CONNECT_FOREIGN',
+);
+$deviceActionText = Loc::getMessage(
+	$hasConnectedPushDevice
+		? 'INTRANET_USER_OTP_LIST_CHANGE_BTN'
+		: 'INTRANET_USER_OTP_LIST_CONNECT_DEVICE_BTN',
+);
 
 $arJSParams = [
 	"signedParameters" => $this->getComponent()->getSignedParameters(),
@@ -37,9 +48,12 @@ $arJSParams = [
 
 	...$arResult["OTP"]["PUSH_OTP_CONFIG"],
 	'provideSmsOtp' => $arResult['PROVIDE_SMS_OTP'] === true,
+	'canSendSms' => $arResult['PROVIDE_SMS_OTP'] === true,
+	'canSendEmail' => $arResult['PROVIDE_EMAIL_OTP'] === true,
 	'canShowBannerPushOtp' => $isOwnProfile,
 	'isOtpActive' => $arResult["OTP"]["IS_ACTIVE"] === true,
 	'isNotPushOtp' => $arResult['OTP']['TYPE'] !== \Bitrix\Security\Mfa\OtpType::Push,
+	'canSkipDeviceConnect' => $arResult['OTP']['CAN_SKIP_DEVICE_CONNECT'] === true,
 	"tooltipTitle" => Loc::getMessage("INTRANET_USER_OTP_RECOVERY_TOOLTIP_TITLE"),
 	"tooltipDescription" => Loc::getMessage("INTRANET_USER_OTP_RECOVERY_TOOLTIP_DESCRIPTION"),
 ];
@@ -59,9 +73,9 @@ $arJSParams = [
 						<div class="ui-icon-set --o-mobile"></div>
 						<?= Loc::getMessage('INTRANET_USER_OTP_LIST_DEVICES') ?>
 					</div>
-						<div class="intranet-user-otp-list__row-status">
-							<?php if ($arResult["OTP"]["IS_EXIST"] && !empty($arResult["OTP"]["DEVICE_INFO"])): ?>
-							<div class="intranet-user-otp-list__row-value ui-text --md">
+					<div class="intranet-user-otp-list__row-status<?= !$hasConnectedPushDevice ? ' --single' : '' ?>">
+						<div class="intranet-user-otp-list__row-value ui-text --md">
+							<?php if ($hasConnectedPushDevice && !empty($arResult["OTP"]["DEVICE_INFO"])): ?>
 								<?php if(
 										!empty($arResult['OTP']['DEVICE_INFO']['platform'])
 										&& in_array(strtolower($arResult['OTP']['DEVICE_INFO']['platform']), ['ios', 'android'])
@@ -70,15 +84,25 @@ $arJSParams = [
 								<?php else: ?>
 									<div class="intranet-user-otp-list__device-icon intranet-user-otp-list__device-icon--unknown"></div>
 								<?php endif; ?>
-								<?= $arResult["OTP"]["DEVICE_INFO"]['displayModel']?>
-							</div>
-							<?php endif; ?>
-							<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
-							<a class="intranet-user-otp-list__change-btn ui-link ui-link-secondary ui-link-dashed" onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlyPushOtp().show()">
-								<?= Loc::getMessage('INTRANET_USER_OTP_LIST_CHANGE_BTN')?>
-							</a>
+								<?= htmlspecialcharsbx($arResult["OTP"]["DEVICE_INFO"]['displayModel']) ?>
+							<?php elseif (!$hasConnectedPushDevice): ?>
+								<div
+									data-hint="<?= $deviceHint ?>"
+									data-hint-no-icon="true"
+									class="ui-hint ui-icon-set --o-alert-accent"
+									<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
+									onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlyPushOtp().show()"
+									<?php endif; ?>
+								></div>
+								<?= Loc::getMessage('INTRANET_USER_OTP_LIST_DEVICES_NOT_CONNECTED') ?>
 							<?php endif; ?>
 						</div>
+						<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
+						<a class="intranet-user-otp-list__change-btn ui-link ui-link-secondary ui-link-dashed" onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlyPushOtp().show()">
+							<?= $deviceActionText ?>
+						</a>
+						<?php endif; ?>
+					</div>
 				</div>
 				<div class="intranet-user-otp-list__section-row-description">
 					<?= Loc::getMessage('INTRANET_USER_OTP_LIST_DEVICES_DESCRIPTION')?>
@@ -206,7 +230,7 @@ $arJSParams = [
 			BX.Intranet.PushOtp.pauseOtpRequest(
 				item.numDays,
 				'<?= CUtil::JSEscape($arResult["OTP"]["PUSH_OTP_CONFIG"]['signedUserId'])?>',
-			).then(() => BX.SidePanel.Instance.reload());
+			).then(() => BX.Intranet.UserOtpConnected.reload());
 		}
 
 		const menu = new BX.Intranet.PushOtp.Menu(element, {
@@ -224,7 +248,7 @@ $arJSParams = [
 		BX.Intranet.UserOtpConnected
 			.getPopupOtpProvider()
 			.resumeOtpRequest()
-			.then(() => BX.SidePanel.Instance.reload());
+			.then(() => BX.Intranet.UserOtpConnected.reload());
 	}
 	<?php endif; ?>
 </script>

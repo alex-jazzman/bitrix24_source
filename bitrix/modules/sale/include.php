@@ -19,6 +19,12 @@ $GLOBALS["SALE_FIELD_TYPES"] = array(
 if (!Loader::includeModule('currency'))
 	return false;
 
+// dev/e2e is absent in shipped builds; kept narrow so no other dev/ script is routable as an action
+if (is_dir(__DIR__ . '/dev/e2e'))
+{
+	Loader::registerNamespace('Bitrix\\Sale\\Controller\\Dev\\E2e', __DIR__ . '/dev/e2e');
+}
+
 // Number of processed recurring records at one time
 define("SALE_PROC_REC_NUM", 3);
 // Number of recurring payment attempts

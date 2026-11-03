@@ -1,0 +1,17 @@
+.sign-b2e-run-process-employees {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/* a box that says nothing must not push the selection down */
+.sign-b2e-run-process-employees__errors:empty,
+.sign-b2e-run-process-employees__notice:empty {
+	display: none;
+}
+
+.sign-b2e-run-process-employees__errors {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}

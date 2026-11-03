@@ -1,0 +1,20 @@
+<?php
+$MESS['INTRANET_SELF_DELETE_POPUP_ADD_PARTICIPANT'] = 'Выберите администраторов';
+$MESS['INTRANET_SELF_DELETE_POPUP_BUTTON_CONTINUE'] = 'Продолжить';
+$MESS['INTRANET_SELF_DELETE_POPUP_BUTTON_CREATE_CHAT'] = 'Создать чат';
+$MESS['INTRANET_SELF_DELETE_POPUP_BUTTON_OPEN_SETTINGS'] = 'Открыть настройки';
+$MESS['INTRANET_SELF_DELETE_POPUP_BUTTON_TRANSFER_RIGHTS'] = 'Как передать права';
+$MESS['INTRANET_SELF_DELETE_POPUP_CANCEL'] = 'Отмена';
+$MESS['INTRANET_SELF_DELETE_POPUP_CHAT_CARD_DESCRIPTION'] = 'Можно добавить в чат руководителя, чтобы согласовать удаление';
+$MESS['INTRANET_SELF_DELETE_POPUP_CHAT_CARD_TITLE'] = 'Чат с администратором';
+$MESS['INTRANET_SELF_DELETE_POPUP_CREATE_CHAT_ERROR'] = 'Не удалось создать чат. Попробуйте ещё раз';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_FREE_LICENSE_FIRST'] = 'Сейчас вы единственный администратор этого Битрикс24';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_FREE_LICENSE_SECOND'] = 'Чтобы удалить профиль, нужно передать права администратора другому сотруднику или удалить весь Битрикс24. Это можно сделать в настройках';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_LAST_ADMIN'] = 'Сейчас вы единственный сотрудник в этом Битрикс24';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_LAST_ADMIN_PORTAL_DELETE'] = 'Вместе с профилем будет удалён весь Битрикс24 без возможности восстановления';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_PAID_LICENSE_FIRST'] = 'Сейчас вы единственный администратор этого Битрикс24';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_PAID_LICENSE_SECOND'] = 'Чтобы удалить профиль, сначала передайте права администратора другому сотруднику или обратитесь по адресу [EMAIL][/EMAIL]';
+$MESS['INTRANET_SELF_DELETE_POPUP_MESSAGE_REQUEST_CHAT'] = 'Удалить профиль может только администратор вашего Битрикс24. Создайте чат, и мы автоматически отправим сообщение с вашим запросом';
+$MESS['INTRANET_SELF_DELETE_POPUP_TITLE_CANNOT_DELETE'] = 'Нельзя удалить профиль';
+$MESS['INTRANET_SELF_DELETE_POPUP_TITLE_PROFILE_DELETE'] = 'Удаление профиля';
+$MESS['INTRANET_SELF_DELETE_POPUP_TITLE_TRANSFER_RIGHTS'] = 'Передайте права администратора';

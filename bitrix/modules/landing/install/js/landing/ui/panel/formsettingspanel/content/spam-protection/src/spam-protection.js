@@ -4,13 +4,13 @@ import { FormSettingsForm } from 'landing.ui.form.formsettingsform';
 import { RadioButtonField } from 'landing.ui.field.radiobuttonfield';
 import { ContentWrapper } from 'landing.ui.panel.basepresetpanel';
 import { Dom, Text } from 'main.core';
-import KeysForm from './internal/keys-form';
+import { KeysForm } from './internal/keys-form';
 import { MessageCard } from 'landing.ui.card.messagecard';
 import { YANDEX_AVAILABLE_ZONES, YANDEX_CAPTCHA_SERVICE, GOOGLE_CAPTCHA_SERVICE } from './internal/consts';
 
 import './css/style.css';
 
-export default class SpamProtection extends ContentWrapper
+export class SpamProtection extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -377,3 +377,5 @@ export default class SpamProtection extends ContentWrapper
 		this.emit('onChange', { ...event.getData(), skipPrepare: true });
 	}
 }
+
+export { SpamProtection as Content };

@@ -1,4 +1,4 @@
-import { ajax as Ajax, Dom, Event, Reflection, Tag, Type } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Reflection, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Popup as MainPopup } from 'main.popup';
@@ -63,6 +63,8 @@ class Popup implements PopupInterface
 			null,
 			{
 				titleBar,
+				ariaLabel: titleBar,
+				focusTrap: true,
 				autoHide: false,
 				overlay: 0.6,
 				width: popupWidth,
@@ -101,6 +103,11 @@ class Popup implements PopupInterface
 		}
 	}
 
+	getMainPopup(): MainPopup
+	{
+		return this.getPopup();
+	}
+
 	show(): void
 	{
 		this.popup.show();
@@ -109,6 +116,18 @@ class Popup implements PopupInterface
 	close(): void
 	{
 		this.onPopupClose();
+	}
+
+	/**
+	 * The popup is registered by an id built from the grid id, so a node left in the document
+	 * makes the next `new Popup()` with that id fail as a duplicate, and the window that comes
+	 * up after it answers no clicks. Closing alone does not remove the node - the variant of
+	 * this window built on a checkbox list destroys its popup for the same reason.
+	 */
+	destroy(): void
+	{
+		this.popup?.destroy();
+		this.popup = null;
 	}
 
 	onPopupClose(): void
@@ -144,6 +163,11 @@ class Popup implements PopupInterface
 	{
 		const classSettingsWindow = this.grid.settings.get('classSettingsWindow');
 		const sourceContent = this.grid.getContainer().querySelector(`.${classSettingsWindow}`);
+
+		// Closed, the node sits inline in the form at zero height: visually gone, but its controls
+		// keep their place in the tab order ahead of the table. It is marked inert in the markup
+		// and comes back to the keyboard only here, on its way into the popup.
+		sourceContent?.removeAttribute('inert');
 
 		if (!this.options.isUseLazyLoadColumns)
 		{
@@ -210,11 +234,11 @@ class Popup implements PopupInterface
 
 		if (Type.isPlainObject(lazyLoadParams))
 		{
-			const { controller, GET_LIST: url } = lazyLoadParams;
+			const { CONTROLLER: controller, GET_LIST: url } = lazyLoadParams;
 
 			if (Type.isNil(controller))
 			{
-				ajax({
+				Ajax({
 					url,
 					method: 'GET',
 					dataType: 'json',
@@ -277,7 +301,11 @@ class Popup implements PopupInterface
 				>
 					${options.name}
 				</label>
-				<span class='main-grid-settings-window-list-item-edit-button'></span>
+				<button
+					type='button'
+					class='main-grid-settings-window-list-item-edit-button'
+					aria-label='${Loc.getMessage('interface_grid_column_rename') ?? ''}'
+				></button>
 			</div>
 		`;
 	}
@@ -433,7 +461,7 @@ class Popup implements PopupInterface
 	{
 		if (this.resetButton === null)
 		{
-			this.resetButton = document.getElementById(this.getResetButtonId());
+			this.resetButton = this.getButtonById(this.getResetButtonId());
 		}
 
 		return this.resetButton;
@@ -478,9 +506,14 @@ class Popup implements PopupInterface
 		this.reset();
 	}
 
-	sortItems(): void
+	/**
+	 * @param {string[]} [columns] - showed column ids in the order chosen by the user; the popup
+	 *   list itself is used when omitted, which only holds before the list has been reordered.
+	 */
+	sortItems(columns): void
 	{
-		const showedColumns = this.getShowedColumns();
+		const movedColumns = Type.isArrayFilled(columns);
+		const showedColumns = movedColumns ? columns : this.getShowedColumns();
 		const allColumns = {};
 
 		this.getAllColumns().forEach((name) => {
@@ -489,7 +522,8 @@ class Popup implements PopupInterface
 
 		let counter = 0;
 		Object.keys(allColumns).forEach((name) => {
-			if (this.isShowedColumn(name))
+			const isShowed = movedColumns ? showedColumns.includes(name) : this.isShowedColumn(name);
+			if (isShowed)
 			{
 				allColumns[name] = showedColumns[counter];
 				counter++;
@@ -543,7 +577,7 @@ class Popup implements PopupInterface
 	{
 		if (this.applyButton === null)
 		{
-			this.applyButton = document.getElementById(this.getApplyButtonId());
+			this.applyButton = this.getButtonById(this.getApplyButtonId());
 		}
 
 		return this.applyButton;
@@ -691,11 +725,24 @@ class Popup implements PopupInterface
 		return this.getPopup().getContentContainer();
 	}
 
+	/**
+	 * The ids of these buttons are built from the grid id, but the document can hold nodes of
+	 * another grid, and of a window left over from an earlier one: looking a button up across
+	 * the whole document found a foreign or a stale node, and the handler went there instead of
+	 * to the button of this window. The popup takes the markup out of the grid container and
+	 * holds it by the time these getters run, so the search stays inside the popup at hand -
+	 * as the neighbouring getters of the select-all links already do.
+	 */
+	getButtonById(id: string): HTMLElement | null
+	{
+		return this.getPopupContentContainer()?.querySelector(`#${CSS.escape(id)}`) ?? null;
+	}
+
 	getCancelButton(): HTMLElement
 	{
 		if (this.cancelButton === null)
 		{
-			this.cancelButton = document.getElementById(this.getCancelButtonId());
+			this.cancelButton = this.getButtonById(this.getCancelButtonId());
 		}
 
 		return this.cancelButton;
@@ -792,11 +839,13 @@ class Popup implements PopupInterface
 		{
 			Dom.removeClass(item.firstChild, activeClass);
 			Dom.hide(section);
+			item.setAttribute('aria-pressed', 'false');
 		}
 		else
 		{
 			Dom.addClass(item.firstChild, activeClass);
 			Dom.show(section);
+			item.setAttribute('aria-pressed', 'true');
 		}
 	}
 

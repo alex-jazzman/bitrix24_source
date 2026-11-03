@@ -15,6 +15,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
 
 CPageOption::SetOptionString("main", "nav_page_in_session", "N");
 
@@ -361,7 +362,7 @@ if($this->StartResultCache(false, array($arrFilter, ($arParams["CACHE_GROUPS"]==
 				unset($pagerParameters["BASE_LINK"]);
 			}
 
-			$navComponentParameters["BASE_LINK"] = CHTTP::urlAddParams($pagerBaseLink, $pagerParameters, array("encode"=>true));
+			$navComponentParameters["BASE_LINK"] = (string)(new Uri($pagerBaseLink))->addParams($pagerParameters);
 		}
 
 		$arResult["NAV_STRING"] = $rsElements->GetPageNavStringEx(

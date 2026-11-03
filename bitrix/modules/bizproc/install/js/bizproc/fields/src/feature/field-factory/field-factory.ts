@@ -18,12 +18,10 @@ export type CreateFieldParams = RenderFieldParams & {
  * for the automation extension and infrastructure must not reach for the domain, so the choice
  * lives in the only layer allowed to see both.
  *
- * Insertion is off unless a caller asks for it by name. The automation adapter is wired but
- * unfinished - it carries none of the target attributes the inline selector filters values by,
- * and the value it inserts reaches neither the select nor a backend-rendered control - so a
- * field that picked it up on its own would offer a `...` button that quietly loses what the
- * user chose. Until insertion is implemented the button stays a stub that does nothing, and
- * whoever finishes it turns the default back on here.
+ * Insertion is off unless a caller asks for it by name - the permanent rule, not a wait for
+ * something unfinished. The designer provider lives in bizprocdesigner, which bizproc does not
+ * depend on, so the only adapter the framework could reach for on its own is the automation one -
+ * and NewDesigner, the default render mode, is exactly what that adapter is wrong for.
  */
 export function resolveSelectionProvider(provider?: SelectionProvider | null): SelectionProvider
 {

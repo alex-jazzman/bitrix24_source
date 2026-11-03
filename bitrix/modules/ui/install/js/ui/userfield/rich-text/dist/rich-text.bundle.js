@@ -6,11 +6,11 @@ this.BX.UI = this.BX.UI || {};
 
 	const INPUT_SELECTOR = '.ui-field-rich-text__input';
 	const CONTAINER_SELECTOR = '.ui-field-rich-text__editor';
-	const EDITABLE_SELECTOR = '.ui-text-editor-editable';
 	const ITEM_SELECTOR = '.ui-field-rich-text-item';
 	const USER_TYPE_ID = 'rich_text';
 	const READY_FLAG = 'richTextReady';
 	const EDITOR_MIN_HEIGHT = 100;
+	const SYNC_DELAY = 500;
 	const initialized = new WeakSet();
 	const observedWraps = new WeakSet();
 	class RichTextControl {
@@ -37,9 +37,11 @@ this.BX.UI = this.BX.UI || {};
 			if (config === null || !main_core.Type.isElementNode(this.#container)) {
 				return false;
 			}
+			const label = main_core.Type.isStringFilled(config.placeholder) ? config.placeholder : '';
 			const options = {
 				toolbar: main_core.Type.isArray(config.toolbar) ? config.toolbar : [],
-				placeholder: main_core.Type.isStringFilled(config.placeholder) ? config.placeholder : '',
+				placeholder: label,
+				ariaLabel: label,
 				minHeight: EDITOR_MIN_HEIGHT
 			};
 			if (main_core.Type.isPlainObject(config.copilot)) {
@@ -49,12 +51,6 @@ this.BX.UI = this.BX.UI || {};
 			this.#editor = editor;
 			main_core.Dom.clean(this.#container);
 			editor.renderTo(this.#container);
-			if (main_core.Type.isStringFilled(options.placeholder)) {
-				const editable = this.#container.querySelector(EDITABLE_SELECTOR);
-				if (main_core.Type.isElementNode(editable)) {
-					editable.setAttribute('aria-label', options.placeholder);
-				}
-			}
 			if (main_core.Type.isStringFilled(this.#textarea.value)) {
 				editor.setText(this.#textarea.value);
 			}
@@ -76,7 +72,7 @@ this.BX.UI = this.BX.UI || {};
 			}
 		}
 		#bindSync(editor) {
-			editor.subscribe('onChange', this.#sync);
+			editor.subscribe('onChange', this.#syncDebounced);
 			const form = this.#textarea.closest('form');
 			if (main_core.Type.isElementNode(form)) {
 				main_core.Event.bind(form, 'submit', this.#sync);
@@ -91,6 +87,7 @@ this.BX.UI = this.BX.UI || {};
 				}));
 			}
 		};
+		#syncDebounced = main_core.Runtime.debounce(this.#sync, SYNC_DELAY);
 		static boot() {
 			RichTextControl.#registerCloneHandler();
 			RichTextControl.#initExisting(document);

@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'ui-system/typography/text',
+		'tokens',
 		'apptheme',
 		'analytics-label',
 		'layout/ui/wizard/step',

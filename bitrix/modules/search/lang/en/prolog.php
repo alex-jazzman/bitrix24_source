@@ -1,3 +1,2 @@
-<?
-$MESS["SEARCH_PROLOG_ALT"] = "Search module";
-?>
+<?php
+$MESS['SEARCH_PROLOG_ALT'] = "Search module";

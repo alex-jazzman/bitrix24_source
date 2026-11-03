@@ -8,10 +8,11 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'sale.payment-pay.const',
+		'main.core',
 		'main.core.events',
+		'sale.payment-pay.const',
 		'sale.payment-pay.lib',
+		'ui.a11y',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

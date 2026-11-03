@@ -11,6 +11,7 @@ return [
 		'main.polyfill.core',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

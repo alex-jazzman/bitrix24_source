@@ -13,6 +13,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_ACTIVITY_EVENT_ADD_NAME'),
 	'DESCRIPTION' => Loc::getMessage('CRM_ACTIVITY_EVENT_ADD_DESC_1'),
+	'NODE_DESCRIPTION' => Loc::getMessage('CRM_ACTIVITY_EVENT_ADD_NODE_DESCRIPTION') ?? '',
 	'TYPE' => ['activity', 'robot_activity', 'node'],
 	'CLASS' => 'CrmEventAddActivity',
 	'JSCLASS' => 'BizProcActivity',

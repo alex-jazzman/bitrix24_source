@@ -139,9 +139,40 @@
 					logo.style.backgroundSize = '35% auto';
 				}
 				this.layout.image = logo;
+				this.setBackgroundImage(this.image);
 			}
 
 			return this.layout.image;
+		},
+
+		setBackgroundImage: function(image)
+		{
+			if (!image)
+			{
+				return;
+			}
+
+			var encodedImage = encodeURI(image);
+			var hasLocalTwoXImage = (
+				this.data.type !== 'marketplaceApp'
+				&& this.data.type !== 'actionbox'
+				&& /\.webp$/i.test(encodedImage)
+			);
+			var encodedImage2x = hasLocalTwoXImage
+				? encodedImage.replace(/\.webp$/i, '-2x.webp')
+				: null
+			;
+
+			this.layout.image.style.backgroundImage = 'url("' + encodedImage + '")';
+			if (encodedImage2x)
+			{
+				this.layout.image.style.backgroundImage =
+					'-webkit-image-set(url("' + encodedImage + '") 1x, url("' + encodedImage2x + '") 2x)'
+				;
+				this.layout.image.style.backgroundImage =
+					'image-set(url("' + encodedImage + '") 1x, url("' + encodedImage2x + '") 2x)'
+				;
+			}
 		},
 
 		getStatus: function()
@@ -186,7 +217,7 @@
 
 			if(this.itemSelectedImage)
 			{
-				this.layout.image.style.backgroundImage = 'url(' + this.itemSelectedImage + ')';
+				this.setBackgroundImage(this.itemSelectedImage);
 			}
 
 			if(this.itemSelectedColor)

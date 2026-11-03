@@ -1,0 +1,19 @@
+<?php
+$MESS["IM_PLAYER_BAR_ACTION_CLOSE"] = "Закрыть плеер";
+$MESS["IM_PLAYER_BAR_ACTION_DOWNLOAD"] = "Скачать";
+$MESS["IM_PLAYER_BAR_ACTION_GO_TO_MESSAGE"] = "Перейти к сообщению";
+$MESS["IM_PLAYER_BAR_ACTION_PAUSE"] = "Приостановить";
+$MESS["IM_PLAYER_BAR_ACTION_PLAY"] = "Воспроизвести";
+$MESS["IM_PLAYER_BAR_ACTION_RATE"] = "Скорость воспроизведения #RATE#";
+$MESS["IM_PLAYER_BAR_ACTION_RETRY"] = "Повторить";
+$MESS["IM_PLAYER_BAR_PROGRESS"] = "Позиция воспроизведения";
+$MESS["IM_PLAYER_BAR_PROGRESS_VALUE"] = "#CURRENT# из #TOTAL#";
+$MESS["IM_PLAYER_BAR_STATE_ACCESS_DENIED"] = "Нет доступа к чату с этой записью";
+$MESS["IM_PLAYER_BAR_STATE_FILE_DELETED"] = "Запись удалена";
+$MESS["IM_PLAYER_BAR_STATE_FILE_PROCESSING"] = "Запись ещё обрабатывается";
+$MESS["IM_PLAYER_BAR_STATE_LOADING"] = "Загрузка";
+$MESS["IM_PLAYER_BAR_STATE_LOADING_ERROR"] = "Не удалось загрузить запись";
+$MESS["IM_PLAYER_BAR_STATE_MESSAGE_DELETED"] = "Сообщение с записью удалено";
+$MESS["IM_PLAYER_BAR_STATE_UNSUPPORTED_FORMAT"] = "Формат записи не поддерживается";
+$MESS["IM_PLAYER_BAR_TRACK_TYPE_AUDIO"] = "Голосовое сообщение";
+$MESS["IM_PLAYER_BAR_TRACK_TYPE_VIDEO_NOTE"] = "Видеозаметка";

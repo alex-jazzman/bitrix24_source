@@ -54,6 +54,11 @@ export class B2ETemplatesSignSettings
 	#container: ?HTMLElement = null;
 	#confirmPopup: ?MessageBox = null;
 	#region: string;
+	// The text the created documents carry on the server. Nothing is read back from them: they are
+	// created by this wizard from templates and start without a message (inviteMessage is not
+	// copied to a document made from a template), and the slider builds the wizard anew on every
+	// open, so the documents of a previous send are never the documents of this one.
+	#storedInviteMessage: string = '';
 
 	constructor(
 		templateIds: number[] = [],
@@ -146,6 +151,23 @@ export class B2ETemplatesSignSettings
 		}
 	}
 
+	async #saveInviteMessage(): Promise<void>
+	{
+		const message = useDocumentTemplateFillingStore().inviteMessage.trim();
+		// only a difference from the text the documents carry is written: an emptied field clears
+		// the stored text, and a field left as it was costs no request
+		if (message === this.#storedInviteMessage)
+		{
+			return;
+		}
+
+		await this.#api.modifyInviteMessageForDocuments(
+			this.#getCreatedDocumentIds(),
+			message === '' ? null : message,
+		);
+		this.#storedInviteMessage = message;
+	}
+
 	async #updateDocumentSettings(document: LoadedDocumentData, settings: DocumentSettings): Promise<void>
 	{
 		const uid = document.uid;
@@ -192,6 +214,8 @@ export class B2ETemplatesSignSettings
 					this.#showSendLayout();
 					await this.#createDocumentsAndSaveToStorageIfNotCreated();
 					await this.#updateCreatedDocumentsSettings();
+					// the message must be stored before configure, otherwise invitations are sent without it
+					await this.#saveInviteMessage();
 					await this.#documentUserParty.syncMembers();
 					await this.#waitAllIntegrationMapped();
 					await this.#waitAllIntegrationEmployeesSelected();
@@ -317,8 +341,7 @@ export class B2ETemplatesSignSettings
 
 	async #waitForFillAndStartComplete(): Promise<void>
 	{
-		const createdDocuments = useDocumentTemplateFillingStore().createdDocuments;
-		const ids = createdDocuments.map((value: TemplateCreatedDocument) => value.document.id);
+		const ids = this.#getCreatedDocumentIds();
 		let completed = false;
 		while (!completed)
 		{
@@ -542,6 +565,14 @@ export class B2ETemplatesSignSettings
 		const createdDocuments: TemplateCreatedDocument[] = store.createdDocuments;
 
 		return createdDocuments.map((value: TemplateCreatedDocument): string => value.document.uid);
+	}
+
+	#getCreatedDocumentIds(): number[]
+	{
+		const store = useDocumentTemplateFillingStore();
+		const createdDocuments: TemplateCreatedDocument[] = store.createdDocuments;
+
+		return createdDocuments.map((value: TemplateCreatedDocument): number => value.document.id);
 	}
 
 	#waitEmployeeSelect(integration: HcmLinkMultipleVacancyEmployeesLoadData): Promise<void>

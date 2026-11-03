@@ -2,6 +2,7 @@
  * @module crm/receive-payment/steps/send-message/message-field
  */
 jn.define('crm/receive-payment/steps/send-message/message-field', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
@@ -56,7 +57,7 @@ jn.define('crm/receive-payment/steps/send-message/message-field', (require, expo
 					paddingTop: 10,
 					paddingLeft: 16,
 					paddingRight: 16,
-					fontSize: 14,
+					...Typography.text4.getValue(),
 					color: AppTheme.colors.base1,
 				},
 			});
@@ -85,7 +86,7 @@ jn.define('crm/receive-payment/steps/send-message/message-field', (require, expo
 				BBCodeText({
 					value: this.getReadOnlyValue(),
 					style: {
-						fontSize: 14,
+						...Typography.text4.getValue(),
 						color: AppTheme.colors.base1,
 					},
 					onLinkClick: (url) => {

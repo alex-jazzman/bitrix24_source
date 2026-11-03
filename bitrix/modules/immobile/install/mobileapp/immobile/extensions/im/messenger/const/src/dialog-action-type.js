@@ -39,6 +39,7 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		attachToParent: 'attachToParent',
 		detachFromParent: 'detachFromParent',
 		manageGuestLink: 'manageGuestLink',
+		linkStructureNode: 'linkStructureNode',
 	});
 
 	module.exports = { DialogActionType };

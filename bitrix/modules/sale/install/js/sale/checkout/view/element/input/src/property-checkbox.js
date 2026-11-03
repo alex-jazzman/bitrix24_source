@@ -1,18 +1,14 @@
 import { BitrixVue } from 'ui.vue';
-import { EventEmitter } from 'main.core.events';
-import { Property as Const, EventType } from 'sale.checkout.const';
+import { Property as Const } from 'sale.checkout.const';
+
+import { MixinPropertyField } from './property-field';
 
 BitrixVue.component('sale-checkout-view-element-input-property-checkbox', {
+	mixins: [MixinPropertyField],
 	props: ['item', 'index'],
 	data()
 	{
 		return {'showValue': this.item.value === 'Y'}
-	},
-	methods: {
-		validate()
-		{
-			EventEmitter.emit(EventType.property.validate, { index: this.index });
-		},
 	},
 	computed: {
 		checkedClassObject()
@@ -43,25 +39,24 @@ BitrixVue.component('sale-checkout-view-element-input-property-checkbox', {
 				this.validate();
 			}
 		},
-		isAsteriskShown()
-		{
-			return this.item.required === 'Y';
-		},
 	},
 	// language=Vue
 	template: `
-		<div class="form-wrap form-control form-control-lg border-0 pl-0 form-asterisk" :class="checkedClassObject">
+		<div class="form-wrap form-control form-control-lg border-0 pl-0 form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-checkbox">
 			<input
 				@blur="validate"
 				type="checkbox"
-				:id="item.name"
+				:id="fieldId"
 				:value="showValue"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
 				v-model="switchValue"
 			/>
-			<label :for="item.name" class="ml-2">{{item.name}}</label>
-			<div 
+			<label :for="fieldId" class="ml-2">{{item.name}}</label>
+			<div
 				class="asterisk-item"
-				v-if="isAsteriskShown"
+				v-if="isRequired"
 			>
 			</div>
 		</div>

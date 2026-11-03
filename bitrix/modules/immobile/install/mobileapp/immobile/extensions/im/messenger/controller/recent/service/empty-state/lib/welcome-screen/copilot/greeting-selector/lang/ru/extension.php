@@ -1,0 +1,6 @@
+<?php
+
+$MESS['IMMOBILE_MESSENGER_COPILOT_GREETING_FALLBACK_MORNING'] = 'Доброе утро. С чего начнём?';
+$MESS['IMMOBILE_MESSENGER_COPILOT_GREETING_FALLBACK_DAY'] = 'Добрый день. Чем займёмся?';
+$MESS['IMMOBILE_MESSENGER_COPILOT_GREETING_FALLBACK_EVENING'] = 'Вечер. На чём остановились?';
+$MESS['IMMOBILE_MESSENGER_COPILOT_GREETING_FALLBACK_NIGHT'] = 'Что-то срочное на ночь глядя?';

@@ -1,29 +1,44 @@
-(() => {
-	const require = jn.require;
+/**
+ * @module rest
+ */
+jn.define('rest', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { isValidAnalyticsData } = require('analytics/validator');
+	const { Type } = require('type');
 	const { toMD5 } = require('utils/object');
+
+	// Module factories are lazy, so the BX.ajax.* globals appear only for whoever actually
+	// requires the transport. Consumers of rest rely on them being there after it loads.
+	require('rest/transport');
 
 	/**
 	 * @class RequestExecutor
 	 */
 	class RequestExecutor
 	{
+		/**
+		 * @param {string} method
+		 * @param {RestMethodParams} [options]
+		 */
 		constructor(method, options)
 		{
 			this.method = method;
 			this.options = options || {};
+			/** @type {RestMethodAnswer|null} */
 			this.currentAnswer = null;
+			/** @type {function(unknown, boolean, RestMethodError=): void|null} */
 			this.handler = null;
-			/**
-			 *
-			 * @type {function}
-			 */
+			/** @type {function(unknown): void|null} */
 			this.onCacheFetched = null;
+			/** @type {function(boolean): void|null} */
 			this.onRequestStart = null;
+			/** @type {string|null} */
 			this.cacheId = null;
 		}
 
+		/**
+		 * @param {boolean} [useCache=false]
+		 * @returns {Promise<RestRequestResult>}
+		 */
 		call(useCache = false)
 		{
 			return new Promise((resolve, reject) => {
@@ -69,6 +84,9 @@
 			});
 		}
 
+		/**
+		 * @returns {Promise<RestRequestResult>} stays unsettled when there is no next page
+		 */
 		callNext()
 		{
 			return new Promise((resolve, reject) => {
@@ -86,24 +104,37 @@
 			});
 		}
 
+		/**
+		 * @returns {void}
+		 */
 		abortCurrentRequest()
 		{
-			if (this.currentAjaxObject != null)
+			if (!Type.isNil(this.currentAjaxObject))
 			{
 				this.currentAjaxObject.abort();
 			}
 		}
 
+		/**
+		 * @param {{ abort: function(): void }} ajax
+		 * @returns {void}
+		 */
 		onRequestCreate(ajax)
 		{
 			this.currentAjaxObject = ajax;
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
 		hasNext()
 		{
-			return (this.currentAnswer != null && typeof this.currentAnswer.answer.next !== 'undefined');
+			return !Type.isNil(this.currentAnswer) && !Type.isUndefined(this.currentAnswer.answer.next);
 		}
 
+		/**
+		 * @returns {number|null} how many items the next page brings, at most 50
+		 */
 		getNextCount()
 		{
 			if (this.hasNext())
@@ -116,6 +147,9 @@
 			return null;
 		}
 
+		/**
+		 * @returns {number|null} the offset of the next page
+		 */
 		getNext()
 		{
 			if (this.hasNext())
@@ -127,22 +161,23 @@
 		}
 
 		/**
-		 * @param ajaxAnswer
-		 * @param loadMore
-		 * @param promiseCallback
 		 * @private
+		 * @param {RestMethodAnswer} ajaxAnswer
+		 * @param {boolean} loadMore
+		 * @param {function(RestRequestResult): void} promiseCallback
+		 * @returns {void}
 		 */
 		__internalHandler(ajaxAnswer, loadMore, promiseCallback)
 		{
 			const result = ajaxAnswer.answer.result;
 			let error;
-			if (ajaxAnswer.answer.hasOwnProperty('error'))
+			if (Object.hasOwn(ajaxAnswer.answer, 'error'))
 			{
 				error = { code: ajaxAnswer.answer.error, description: ajaxAnswer.answer.error_description };
 			}
 			this.currentAnswer = ajaxAnswer;
 
-			if (typeof this.handler === 'function')
+			if (Type.isFunction(this.handler))
 			{
 				this.handler(result, loadMore, error);
 			}
@@ -154,7 +189,7 @@
 		}
 
 		/**
-		 * @param {function<object>} func
+		 * @param {function(unknown, boolean, RestMethodError=): void} func
 		 * @returns {RequestExecutor}
 		 */
 		setHandler(func)
@@ -165,7 +200,7 @@
 		}
 
 		/**
-		 * @param {function<object>} func
+		 * @param {function(unknown): void} func
 		 * @returns {RequestExecutor}
 		 */
 		setCacheHandler(func)
@@ -176,7 +211,7 @@
 		}
 
 		/**
-		 * @param {function<object>} func
+		 * @param {function(boolean): void} func called with whether the cache answered first
 		 * @returns {RequestExecutor}
 		 */
 		setStartRequestHandler(func)
@@ -187,7 +222,8 @@
 		}
 
 		/**
-		 * @param {String} id
+		 * @param {string} id
+		 * @returns {RequestExecutor}
 		 */
 		setCacheId(id)
 		{
@@ -196,6 +232,10 @@
 			return this;
 		}
 
+		/**
+		 * @param {RestMethodParams} [options]
+		 * @returns {RequestExecutor}
+		 */
 		setOptions(options = {})
 		{
 			this.options = options;
@@ -211,8 +251,8 @@
 	class DelayedRestRequest extends RequestExecutor
 	{
 		/**
-		 * @param method
-		 * @param options
+		 * @param {string} method
+		 * @param {RestMethodParams} [options]
 		 */
 		constructor(method, options = {})
 		{
@@ -221,9 +261,13 @@
 			this.delay = 500;
 		}
 
+		/**
+		 * @param {number} delay milliseconds to wait before the request leaves
+		 * @returns {DelayedRestRequest}
+		 */
 		setDelay(delay)
 		{
-			if (typeof delay !== 'undefined')
+			if (!Type.isUndefined(delay))
 			{
 				this.delay = Number(delay);
 			}
@@ -231,270 +275,42 @@
 			return this;
 		}
 
+		/**
+		 * @returns {void}
+		 */
 		abortCurrentRequest()
 		{
 			clearTimeout(this.timeoutId);
 			super.abortCurrentRequest();
 		}
 
+		/**
+		 * @returns {Promise<RestRequestResult>}
+		 */
 		call()
 		{
 			this.abortCurrentRequest();
 
 			return new Promise((resolve, reject) => {
-				this.timeoutId = setTimeout(() => super.call().then().catch(reject), this.delay);
+				// Passing resolve on: an empty then() left the promise of every successful delayed
+				// request unsettled, so a caller awaiting it waited for nothing.
+				this.timeoutId = setTimeout(() => super.call().then(resolve).catch(reject), this.delay);
 			});
 		}
 	}
 
-	const ActionPromiseWrapper = (promise) => {
-		return new Promise((resolve, reject) => {
-			promise.then((result) => {
-				if (result.status === 'error')
-				{
-					console.error(result);
-					reject(result);
-				}
-				else
-				{
-					resolve(result);
-				}
-			})
-				.catch((result) => {
-					if (result && result.status && Object.prototype.hasOwnProperty.call(result, 'data'))
-					{
-						console.error(result);
-						reject(result);
-					}
-					else
-					{
-						const networkErrorResult = {
-							status: 'error',
-							data: {
-								ajaxRejectData: result,
-							},
-							errors: [
-								{
-									code: 'NETWORK_ERROR',
-									message: 'Network error',
-								},
-							],
-						};
-						console.error(networkErrorResult);
-						reject(networkErrorResult);
-					}
-				});
-		});
+	module.exports = {
+		RequestExecutor,
+		DelayedRestRequest,
+		RunActionExecutor,
 	};
+});
 
-	/**
-	 *
-	 * @param actionName
-	 * @param params
-	 * @return {Promise}
-	 */
+// todo remove after all global usages of the executors in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { RequestExecutor, RunActionExecutor } = require('rest');
 
-	/**
-	 *
-	 * @param {string} action
-	 * @param {Object} config
-	 * @param {?string|?Object} [config.analyticsLabel]
-	 * @param {string} [config.method='POST']
-	 * @param {Object} [config.data]
-	 * @param {Object} [config.json]
-	 * @param {?Object} [config.getParameters]
-	 * @param {?Object} [config.headers]
-	 * @param {?Object} [config.timeout]
-	 * @param {Object} [config.navigation]
-	 * @param {number} [config.navigation.page]
-	 * @param {function} [config.onCreate]
-	 */
-	BX.ajax.runAction = (action, config = {}) => {
-		const getParameters = prepareAjaxGetParameters(config);
-		getParameters.action = action;
-
-		const onCreate = typeof config.onCreate === 'function' ? config.onCreate : () => {};
-		const url = `/bitrix/services/main/ajax.php?${BX.ajax.prepareData(getParameters, null, false)}`;
-		let prepareData = true;
-
-		if (typeof config.prepareData !== 'undefined')
-		{
-			prepareData = Boolean(config.prepareData);
-		}
-
-		if (config.json)
-		{
-			prepareData = false;
-			config.data = JSON.stringify(config.json);
-			config.headers = config.headers || {};
-			config.headers['Content-Type'] = 'application/json';
-		}
-
-		config = {
-			url,
-			method: 'POST',
-			uploadBinary: Boolean(config.binary),
-			dataType: 'json',
-			data: config.data,
-			headers: config.headers,
-			onUploadProgress: config.onprogressupload || function() {},
-			prepareData,
-		};
-
-		const ajaxPromise = BX.ajax(config);
-		onCreate(config.xhr);
-
-		return ActionPromiseWrapper(ajaxPromise);
-	};
-
-	/**
-	 *
-	 * @param {string} component
-	 * @param {string} action
-	 * @param {Object} config
-	 * @param {?string|?Object} [config.analyticsLabel]
-	 * @param {string} [config.method='POST']
-	 * @param {Object} [config.data]
-	 * @param {?Object} [config.getParameters]
-	 * @param {?Object} [config.headers]
-	 * @param {?Object} [config.timeout]
-	 * @param {Object} [config.navigation]
-	 * @param {number} [config.navigation.page]
-	 * @param {function} [config.onCreate]
-	 */
-
-	BX.ajax.runComponentAction = (component, action, config = {}) => {
-		const getParameters = prepareAjaxGetParameters(config);
-		getParameters.action = action;
-		getParameters.c = component;
-		const onCreate = typeof config.onCreate === 'function' ? config.onCreate : () => {};
-		const url = `/bitrix/services/main/ajax.php?${BX.ajax.prepareData(
-			getParameters,
-			null,
-			/**
-			 * We need to avoid double encoding causing by mobile implementation of underlying XMLHttpRequest.open
-			 * It encodes URL when it is passed without domain
-			 *
-			 * Until we are passing URL here without domain here we are safe to not encode parameters
-			 */
-			false,
-		)}`;
-		config = {
-			url,
-			method: 'POST',
-			dataType: 'json',
-			data: config.data,
-		};
-
-		const ajaxPromise = BX.ajax(config);
-		onCreate(config.xhr);
-
-		return ActionPromiseWrapper(ajaxPromise);
-	};
-
-	BX.ajax.prepareData = (originalData, prefix, encode = true) => {
-		let data = '';
-		if (originalData !== null)
-		{
-			for (const paramName in originalData)
-			{
-				if (originalData.hasOwnProperty(paramName))
-				{
-					if (data.length > 0)
-					{
-						data += '&';
-					}
-					let name = encode ? encodeURIComponent(paramName) : paramName;
-					if (prefix)
-					{
-						name = `${prefix}[${name}]`;
-					}
-
-					if (typeof originalData[paramName] === 'object')
-					{
-						data += BX.ajax.prepareData(originalData[paramName], name, encode);
-					}
-					else
-					{
-						data += `${name}=${encode ? encodeURIComponent(originalData[paramName]) : originalData[paramName]}`;
-					}
-				}
-			}
-		}
-
-		return data;
-	};
-
-	const prepareAjaxGetParameters = function(config) {
-		const getParameters = config.getParameters || {};
-
-		if (typeof config.analyticsLabel === 'string' || typeof config.analyticsLabel === 'object')
-		{
-			getParameters.analyticsLabel = config.analyticsLabel;
-		}
-
-		if (typeof config.analytics === 'object')
-		{
-			if (config.analyticsLabel)
-			{
-				delete getParameters.analyticsLabel;
-
-				console.error(
-					'BX.ajax: Only {analytics} or {analyticsLabel} should be used. If both are present, {analyticsLabel} will be ignored.',
-				);
-			}
-
-			if (isValidAnalyticsData(config.analytics))
-			{
-				getParameters.st = config.analytics;
-			}
-			else
-			{
-				console.error('BX.ajax: {analytics} is invalid and will be ignored.');
-			}
-		}
-
-		if (typeof config.mode !== 'undefined')
-		{
-			getParameters.mode = config.mode || 'ajax';
-		}
-
-		if (config.navigation)
-		{
-			if (config.navigation.page)
-			{
-				getParameters.nav = `page-${config.navigation.page}`;
-			}
-
-			if (config.navigation.size > 0)
-			{
-				if (getParameters.nav)
-				{
-					getParameters.nav += '-';
-				}
-				else
-				{
-					getParameters.nav = '';
-				}
-				getParameters.nav += `size-${config.navigation.size}`;
-			}
-		}
-
-		return getParameters;
-	};
-
-	// todo remove after all global usages in other modules will be cleaned
 	jnexport(RunActionExecutor);
 	jnexport(RequestExecutor);
-
-	/**
-	 * @module rest
-	 */
-	jn.define('rest', (_, exports, module) => {
-		module.exports = {
-			RequestExecutor,
-			DelayedRestRequest,
-			RunActionExecutor,
-		};
-	});
 })();

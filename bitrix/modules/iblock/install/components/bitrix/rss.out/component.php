@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -284,10 +287,10 @@ if($this->StartResultCache(false, array($arParams["CACHE_GROUPS"]==="N"? false: 
 
 		$arElement["arr_PREVIEW_PICTURE"] = $arElement["PREVIEW_PICTURE"] = CFile::GetFileArray($arElement["PREVIEW_PICTURE"]);
 		if(is_array($arElement["arr_PREVIEW_PICTURE"]))
-			$arElement["PREVIEW_PICTURE"] = CHTTP::URN2URI($arElement["arr_PREVIEW_PICTURE"]["SRC"], $arResult["SERVER_NAME"]);
+			$arElement["PREVIEW_PICTURE"] = (string)(new Uri($arElement["arr_PREVIEW_PICTURE"]["SRC"]))->toAbsolute($arResult["SERVER_NAME"]);
 		$arElement["arr_DETAIL_PICTURE"] = $arElement["DETAIL_PICTURE"] = CFile::GetFileArray($arElement["DETAIL_PICTURE"]);
 		if(is_array($arElement["arr_DETAIL_PICTURE"]))
-			$arElement["DETAIL_PICTURE"] = CHTTP::URN2URI($arElement["arr_DETAIL_PICTURE"]["SRC"], $arResult["SERVER_NAME"]);
+			$arElement["DETAIL_PICTURE"] = (string)(new Uri($arElement["arr_DETAIL_PICTURE"]["SRC"]))->toAbsolute($arResult["SERVER_NAME"]);
 
 		if($arResult["NODES"]["title"] <> '')
 			$arItem["title"] = str_replace($arNodesSearch, $arNodesReplace, $arResult["NODES"]["title"]);
@@ -298,9 +301,9 @@ if($this->StartResultCache(false, array($arParams["CACHE_GROUPS"]==="N"? false: 
 		if($arResult["NODES"]["link"] <> '')
 			$arItem["link"] = str_replace($arNodesSearch, $arNodesReplace, $arResult["NODES"]["link"]);
 		elseif($arProperties["DOC_LINK"]["VALUE"])
-			$arItem["link"] = CHTTP::URN2URI($arProperties["DOC_LINK"]["VALUE"], $arResult["SERVER_NAME"]);
+			$arItem["link"] = (string)(new Uri($arProperties["DOC_LINK"]["VALUE"]))->toAbsolute($arResult["SERVER_NAME"]);
 		else
-			$arItem["link"] = CHTTP::URN2URI($arElement["DETAIL_PAGE_URL"], $arResult["SERVER_NAME"]);
+			$arItem["link"] = (string)(new Uri($arElement["DETAIL_PAGE_URL"]))->toAbsolute($arResult["SERVER_NAME"]);
 
 		if($arResult["NODES"]["description"] <> '')
 			$arItem["description"] = str_replace($arNodesSearch, $arNodesReplace, $arResult["NODES"]["description"]);
@@ -318,7 +321,7 @@ if($this->StartResultCache(false, array($arParams["CACHE_GROUPS"]==="N"? false: 
 		elseif(is_array($arElement["arr_PREVIEW_PICTURE"]))
 		{
 			$arItem["enclosure"] = array(
-				"url" => CHTTP::URN2URI($arElement["arr_PREVIEW_PICTURE"]["SRC"], $arResult["SERVER_NAME"]),
+				"url" => (string)(new Uri($arElement["arr_PREVIEW_PICTURE"]["SRC"]))->toAbsolute($arResult["SERVER_NAME"]),
 				"length" => $arElement["arr_PREVIEW_PICTURE"]["FILE_SIZE"],
 				"type" => $arElement["arr_PREVIEW_PICTURE"]["CONTENT_TYPE"],
 			);

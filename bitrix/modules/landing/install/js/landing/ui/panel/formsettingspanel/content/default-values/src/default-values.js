@@ -8,7 +8,7 @@ import {MessageCard} from 'landing.ui.card.messagecard';
 
 import './css/style.css';
 
-export default class DefaultValues extends ContentWrapper
+export class DefaultValues extends ContentWrapper
 {
 	constructor(options)
 	{
@@ -109,3 +109,4 @@ export default class DefaultValues extends ContentWrapper
 		this.emit('onChange', {...event.getData(), skipPrepare: true});
 	}
 }
+export { DefaultValues as Content };

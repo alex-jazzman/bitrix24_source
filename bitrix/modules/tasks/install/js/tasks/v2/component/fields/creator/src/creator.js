@@ -75,6 +75,8 @@ export const Creator = {
 			:canRemove="task.rights.edit"
 			:withHint="!isAdmin && !isEdit && (task.responsibleIds.length > 1 || task.responsibleIds[0] !== currentUserId)"
 			:hintText
+			:ariaLabel="loc('TASKS_V2_CREATOR_TITLE')"
+			:ariaHaspopup="task.rights.edit ? 'dialog' : ''"
 			single
 			inline
 			:dataset

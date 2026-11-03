@@ -67,7 +67,7 @@
 }
 
 .bx-filter-add-tab:after {
-	background: url("images/filter/filter-sprite.png") no-repeat scroll center 0 rgba(0, 0, 0, 0);
+	background: url("images/filter/filter-sprite.webp") no-repeat scroll center 0 rgba(0, 0, 0, 0);
 	content:"";
 	height:12px;
 	left:16px;
@@ -124,7 +124,7 @@
 .bx-input-help-icon-wrap {padding-right:30px!important;}
 
 .bx-input-help-icon {
-	background:url("images/filter/filter-sprite.png") no-repeat center -130px;
+	background:url("images/filter/filter-sprite.webp") no-repeat center -130px;
 	right:0;
 	top:0;
 	height:27px;
@@ -137,7 +137,7 @@
 .bx-filter-content .bx-select-wrap {float:right; max-width:250px; min-width:100px;}
 
 .bx-select-wrap:after{
-	background: url("images/filter/filter-sprite.png") no-repeat -9px -641px;
+	background: url("images/filter/filter-sprite.webp") no-repeat -9px -641px;
 	content: "";
 	height: 10px;
 	margin-top: -5px;
@@ -223,7 +223,7 @@
 
 
 .bx-calendar-icon {
-    background: url("images/filter/filter-sprite.png") no-repeat center -503px;
+    background: url("images/filter/filter-sprite.webp") no-repeat center -503px;
     border: medium none !important;
     cursor: pointer;
     height: 15px;
@@ -408,7 +408,7 @@
 .bx-filter-add-button:after,
 .bx-filter-item-delete:after,
 .bx-filter-setting:after {
-	background: url("images/filter/filter-sprite.png") no-repeat scroll center 0;
+	background: url("images/filter/filter-sprite.webp") no-repeat scroll center 0;
 	content:"";
 	height: 16px;
 	position:absolute;
@@ -487,7 +487,7 @@
 
 
 .bx-filter-folded .bx-filter-switcher-tab-icon {
-	background: url("images/filter/filter-sprite.png") no-repeat center -342px;
+	background: url("images/filter/filter-sprite.webp") no-repeat center -342px;
 	height: 14px;
 	margin-top: 8px;
 	width: 16px;
@@ -647,7 +647,7 @@
 	width: auto;
 }
 
-.crm-filter-popup-item .menu-popup-item-icon {background:url("images/filter/filter-sprite.png") no-repeat 100px 100px; width:12px}
+.crm-filter-popup-item .menu-popup-item-icon {background:url("images/filter/filter-sprite.webp") no-repeat 100px 100px; width:12px}
 .crm-filter-popup-item .menu-popup-item-left,
 .crm-filter-popup-item .menu-popup-item-right{display:none;}
 .crm-filter-popup-item .menu-popup-item-text {margin-left:5px;}

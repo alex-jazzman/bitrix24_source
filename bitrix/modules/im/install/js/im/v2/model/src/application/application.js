@@ -83,7 +83,7 @@ export class ApplicationModel extends BuilderModel
 				const previousLayout = { ...store.state.layout };
 
 				const newLayout = {
-					name: this.validateLayout(name),
+					name,
 					entityId,
 					contextId,
 					params,
@@ -119,16 +119,6 @@ export class ApplicationModel extends BuilderModel
 				state.layout = { ...state.layout, ...payload.layout };
 			},
 		};
-	}
-
-	validateLayout(name: string): string
-	{
-		if (!LayoutManager.getInstance().isValidLayout(name))
-		{
-			return Layout.chat;
-		}
-
-		return name;
 	}
 
 	#isSameLayoutPayload(previousLayout: ImModelLayout, newLayout: ImModelLayout): boolean

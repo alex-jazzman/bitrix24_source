@@ -3,7 +3,11 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die;
 
 use Bitrix\Intranet\Internal\Integration\Bitrix24\Integrator\PartnerInfo;
+use Bitrix\Intranet\Internal\Integration\Im\Notification\Message;
+use Bitrix\Intranet\Internal\Integration\Im\Notification\NotifySender;
+use Bitrix\Intranet\Entity\Collection\DepartmentCollection;
 use Bitrix\Intranet\Public\Service\IntegratorService;
+use Bitrix\Intranet\Public\Command\User\TransferToIntranetCommand;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User;
@@ -165,7 +169,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return true;
 	}
 
-	public function moveToIntranetAction($departmentId, $isEmail = false)
+	public function moveToIntranetAction($departmentIds, $isEmail = false)
 	{
 		if (
 			!(
@@ -177,7 +181,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		if (intval($departmentId) <= 0)
+		if (!is_array($departmentIds) || empty($departmentIds))
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("INTRANET_USER_PROFILE_EMPTY_DEPARTMENT_ERROR")));
 
@@ -187,7 +191,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		if ($isEmail == 'Y')
 		{
 			$ID_TRANSFERRED = CIntranetInviteDialog::TransferEmailUser($this->userId, [
-				'UF_DEPARTMENT' => (int)$departmentId,
+				'UF_DEPARTMENT' => $departmentIds,
 			]);
 
 			if (!$ID_TRANSFERRED)
@@ -206,49 +210,98 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 		else
 		{
-			$isCollaber = Loader::includeModule('extranet')
-				&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->userId);
-			$obUser = new CUser();
-			$arGroups = $obUser->GetUserGroup(intval($this->userId));
-			$ID = 0;
-			if (is_array($arGroups))
+			$nodeIds = $this->normalizePromotionDepartmentIds($departmentIds);
+			$isPromoted = false;
+			if ($nodeIds !== [])
 			{
-				$arGroups = array_diff($arGroups, [11, 13]);
-				$arGroups[] = "11";
-
-				$arNewFields = [
-					"GROUP_ID" => $arGroups,
-					"UF_DEPARTMENT" => [intval($departmentId)],
-				];
-
-				$ID = $obUser->Update($this->userId, $arNewFields);
+				try
+				{
+					$repository = ServiceContainer::getInstance();
+					$user = $repository->userRepository()->getUserById((int)$this->userId);
+					$departments = $repository->hrDepartmentRepository()->findAllByIds($nodeIds);
+					$isPromoted = $user !== null
+						&& $this->hasExactPromotionDepartments($nodeIds, $departments)
+						&& (new TransferToIntranetCommand($user, $departments))->run()->isSuccess();
+				}
+				catch (\Throwable)
+				{
+				}
 			}
-			if(!$ID)
+
+			if (!$isPromoted)
 			{
-				$this->addError(new \Bitrix\Main\Error(preg_split("/<br>/", $obUser->LAST_ERROR)));
+				$this->addError(new \Bitrix\Main\Error(
+					Loc::getMessage('INTRANET_USER_PROFILE_DEPARTMENT_ASSIGN_ERROR'),
+				));
 
 				return false;
 			}
+
+			if (NotifySender::isAvailable())
+			{
+				$message = new Message(
+					toUserId: (int)$this->userId,
+					fromUserId: 0,
+					notifyTag: '',
+					notifyType: IM_NOTIFY_SYSTEM,
+					notifyModule: 'intranet',
+					notifyEvent: 'default',
+					notifyMessage: Loc::getMessage('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY_MESSAGE'),
+				);
+				$message->setTitle(Loc::getMessage('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY_TITLE'));
+				(new NotifySender())->send($message);
+			}
+
+			\CIntranetEventHandlers::ClearAllUsersCache($this->userId);
+
+			return Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_SUCCESS");
+		}
+	}
+
+	protected function normalizePromotionDepartmentIds(array $departmentIds): array
+	{
+		$nodeIds = [];
+		foreach ($departmentIds as $departmentId)
+		{
+			if (is_int($departmentId))
+			{
+				$nodeId = $departmentId;
+			}
+			elseif (is_string($departmentId) && preg_match('/^[0-9]+$/D', $departmentId) === 1)
+			{
+				$normalizedId = ltrim($departmentId, '0');
+				$nodeId = (int)$normalizedId;
+				if ((string)$nodeId !== $normalizedId)
+				{
+					return [];
+				}
+			}
 			else
 			{
-				if (Loader::includeModule("im"))
-				{
-					$arMessageFields = [
-						"TO_USER_ID" => $this->userId,
-						"FROM_USER_ID" => 0,
-						"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-						"NOTIFY_MODULE" => "intranet",
-						"NOTIFY_TITLE" => Loc::getMessage('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY_TITLE'),
-						"NOTIFY_MESSAGE" => Loc::getMessage('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY_MESSAGE'),
-					];
-					\CIMNotify::Add($arMessageFields);
-				}
-
-				\CIntranetEventHandlers::ClearAllUsersCache($this->userId);
-
-				return Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_SUCCESS");
+				return [];
 			}
+
+			if ($nodeId <= 0)
+			{
+				return [];
+			}
+
+			$nodeIds[] = $nodeId;
 		}
+
+		return array_values(array_unique($nodeIds));
+	}
+
+	protected function hasExactPromotionDepartments(array $nodeIds, DepartmentCollection $departments): bool
+	{
+		$foundIds = array_map(
+			static fn ($department) => $department->getId(),
+			$departments->all(),
+		);
+		sort($foundIds);
+		sort($nodeIds);
+
+		return $foundIds === $nodeIds;
 	}
 
 	public function loadPhotoAction()

@@ -7,8 +7,6 @@ import RecordingAnimation from '../animations/recording.json';
 import UploadingAnimation from '../animations/uploading.json';
 import WritingAnimation from '../animations/writing.json';
 
-import type { ImModelInputActions } from 'im.v2.model';
-
 type InputActionUserRecord = {
 	userId: number,
 	userName: string
@@ -32,25 +30,21 @@ export const InputActions = {
 	name: 'InputActions',
 	props:
 	{
-		dialogId: {
-			required: true,
-			type: String,
-		},
 		enterAnimationFinished: {
 			required: true,
 			type: Boolean,
 		},
+		inputActions: {
+			required: true,
+			type: Array,
+		},
 	},
 	computed:
 	{
-		chatInputActions(): ImModelInputActions
-		{
-			return this.$store.getters['chats/inputActions/getByDialogId'](this.dialogId);
-		},
 		uniqueUserRecords(): InputActionUserRecord[]
 		{
 			const uniqueUserRecords = {};
-			this.chatInputActions.forEach((userRecord) => {
+			this.inputActions.forEach((userRecord) => {
 				uniqueUserRecords[userRecord.userId] = userRecord.userName;
 			});
 
@@ -60,7 +54,7 @@ export const InputActions = {
 		},
 		isSingleUserActive(): boolean
 		{
-			const userIds = this.chatInputActions.map((element) => element.userId);
+			const userIds = this.inputActions.map((element) => element.userId);
 			const uniqueUsers = new Set(userIds);
 
 			return uniqueUsers.size === 1;
@@ -97,7 +91,7 @@ export const InputActions = {
 		{
 			if (this.isSingleUserActive)
 			{
-				const [firstUserRecord] = this.chatInputActions;
+				const [firstUserRecord] = this.inputActions;
 				const { type } = firstUserRecord;
 
 				return AnimationByActionType[type];
@@ -140,7 +134,7 @@ export const InputActions = {
 	{
 		getActionTextForSingleUser(): string
 		{
-			const [firstUserRecord] = this.chatInputActions;
+			const [firstUserRecord] = this.inputActions;
 			const { type, userName, statusMessageCode } = firstUserRecord;
 			const hasCustomMessageCode = this.hasCustomMessageCode(statusMessageCode);
 			const code = hasCustomMessageCode ? statusMessageCode : LocCodeByActionType[type];

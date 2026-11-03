@@ -3,6 +3,8 @@
 	die();
 }
 
+/** @var array $arCurrentValues */
+
 if (!CModule::IncludeModule('search'))
 {
 	return;

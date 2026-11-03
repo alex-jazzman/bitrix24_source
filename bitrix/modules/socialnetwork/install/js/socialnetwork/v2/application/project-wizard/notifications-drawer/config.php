@@ -9,12 +9,12 @@ return [
 	'js' => 'dist/notifications-drawer.bundle.js',
 	'rel' => [
 		'main.core',
+		'socialnetwork.v2.components.elements.accessible-switcher',
 		'ui.icon-set.outline',
 		'ui.switcher',
 		'ui.system.typography.vue',
 		'ui.vue3',
 		'ui.vue3.components.button',
-		'ui.vue3.components.switcher',
 	],
 	'skip_core' => false,
 ];

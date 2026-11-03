@@ -2,6 +2,13 @@
 
 "use strict";
 
+/**
+ * The accessible name of the stage (getColumnAriaLabel) and the roles applied
+ * to the column layout are covered by unit tests in
+ * crm/install/js/crm/kanban/tests/unit/. See the note at the top of grid.js for
+ * why the tests live in another module and how to run them.
+ */
+
 BX.namespace("BX.Kanban");
 
 /**
@@ -107,6 +114,15 @@ BX.Kanban.Column.prototype =
 	getId: function()
 	{
 		return this.id;
+	},
+
+	/**
+	 * Release hook, called by the grid once the column has left the board.
+	 * Overridden by consumers to drop timers, popups and anything else that
+	 * would otherwise outlive the removed DOM node.
+	 */
+	destroy: function()
+	{
 	},
 
 	/**
@@ -640,6 +656,27 @@ BX.Kanban.Column.prototype =
 		columnContainer.classList[isEmptyColumn ? "add" : "remove"]("main-kanban-column-empty");
 		columnContainer.classList[this.isDroppable() ? "add" : "remove"]("main-kanban-column-droppable");
 
+		// An empty aria-label strips the group of its name instead of falling back
+		// to the content, so a nameless column keeps the attribute off.
+		var columnAriaLabel = this.getColumnAriaLabel();
+		if (columnAriaLabel)
+		{
+			columnContainer.setAttribute("aria-label", columnAriaLabel);
+		}
+		else
+		{
+			columnContainer.removeAttribute("aria-label");
+		}
+
+		if (isEmptyColumn)
+		{
+			this.getItemsContainer().setAttribute("aria-label", this.getGrid().getMessage("COLUMN_EMPTY"));
+		}
+		else
+		{
+			this.getItemsContainer().removeAttribute("aria-label");
+		}
+
 		if (this.autoPagination)
 		{
 			columnContainer.classList.add("--auto-pagination");
@@ -672,6 +709,18 @@ BX.Kanban.Column.prototype =
 		BX.onCustomEvent(this.getGrid(), "Kanban.Column:render", [this]);
 
 		return columnContainer;
+	},
+
+	/**
+	 * Accessible name of the column/stage group (aria-label). Overridable name
+	 * hook. Base layer returns the stage title text; domain wrappers
+	 * enrich it (e.g. stage name + items count).
+	 *
+	 * @returns {string}
+	 */
+	getColumnAriaLabel: function()
+	{
+		return this.getName() || "";
 	},
 
 	/**
@@ -1277,7 +1326,10 @@ BX.Kanban.Column.prototype =
 
 		this.layout.container = BX.create("div", {
 			attrs: {
-				className: this.animate ? "main-kanban-column" + " --animate-" + this.animate : "main-kanban-column"
+				className: this.animate ? "main-kanban-column" + " --animate-" + this.animate : "main-kanban-column",
+				role: "group",
+				tabindex: "-1",
+				"data-testid": "kanban-column-" + this.getId()
 			},
 			children: [
 				this.getHeader(),
@@ -1456,7 +1508,9 @@ BX.Kanban.Column.prototype =
 		{
 			this.layout.items = BX.create("div", {
 				attrs: {
-					className: "main-kanban-column-items"
+					className: "main-kanban-column-items",
+					role: "list",
+					"data-testid": "kanban-column-items"
 				}
 			})
 		}

@@ -19,6 +19,13 @@
 		.replace(/\/+/g, '/')
 	;
 
+	const invitationPath = `${(BX.message.SITE_DIR || '/').replace(/\/$/, '')}/mail/invitation/`;
+	const escapeInvitationPattern = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const invitationCondition = new RegExp(
+		`^(?:${escapeInvitationPattern(window.location.origin)})?${escapeInvitationPattern(invitationPath)}(?:[?#]|$)`
+	);
+	const invitationUuidPattern = /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
+
 	this.mailLoader = BX.create("div", {
 		props: {
 			className: 'mail-loader-node'
@@ -460,9 +467,9 @@
 				}
 			},
 			{
-				condition: [
-					new RegExp("/mcp/"),
-				],
+				condition: BX.Extension.getSettings('intranet.sidepanel.bindings').get('mcpTokenManagementEnabled', false)
+					? []
+					: [new RegExp("/mcp/")],
 				options: {
 					cacheable: false,
 				}
@@ -959,6 +966,25 @@
 				loader: "intranet:crm-entity-details-loader"
 			},
 			{
+				condition: [invitationCondition],
+				validate: function(link)
+				{
+					const url = new URL(link.url, window.location.href);
+
+					return url.origin === window.location.origin && url.pathname === invitationPath;
+				},
+				handler: function(event, link)
+				{
+					event.preventDefault();
+					const mailboxId = new URL(link.url, window.location.href).searchParams.get('mailboxId') || '';
+					BX.Runtime.loadExtension('mail.invitation').then(({ Invitation }) => {
+						Invitation.open(invitationUuidPattern.test(mailboxId) ? mailboxId : '');
+					});
+
+					return false;
+				},
+			},
+			{
 				condition: [
 					'^' + siteDir + 'mail/config/(new|edit)',
 				],
@@ -1142,6 +1168,31 @@
 				},
 			},
 			{
+				condition: [
+					/\/workgroups\/group\/\d+\/general\/(?:\?|$)/i,
+				],
+				validate: (link) => link.anchor?.dataset.sliderBind === 'Y',
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+				},
+			},
+			{
+				condition: [
+					/\/workgroups\/group\/\d+\/disk\/path\/(?:\?|$)/i,
+				],
+				validate: (link) => !link.anchor || link.anchor.dataset.sliderBind === 'Y',
+				options: (link) => (link?.anchor?.dataset?.sliderBind === 'Y'
+					? {
+						loader: 'intranet:disk',
+						cacheable: false,
+						customLeftBoundary: 0,
+						newWindowLabel: true,
+						copyLinkLabel: true,
+					}
+					: {}),
+			},
+			{
 				condition: ['/configs/userfield_list.php'],
 				options: {
 					cacheable: false,
@@ -1299,7 +1350,7 @@
 				options: {
 					cacheable: false,
 					allowChangeHistory: false,
-					width: 1250,
+					width: 1800,
 					customRightBoundary: 0,
 				},
 			},
@@ -1310,6 +1361,11 @@
 					allowChangeHistory: false,
 					width: 765,
 					customRightBoundary: 0,
+					events: {
+						onOpen: function(event) {
+							event.getSlider().getFocusTrap().setLooped(true);
+						},
+					},
 				},
 				handler: function(event, link) {
 					if (link.url.indexOf('TARIFF_WIDGET=Y') !== -1)

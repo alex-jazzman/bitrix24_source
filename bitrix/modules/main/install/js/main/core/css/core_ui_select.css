@@ -27,7 +27,8 @@
 	margin: 0 !important;
 }
 
-.main-ui-control.main-ui-select.main-ui-select-searchable .main-ui-square-search {
+.main-ui-control.main-ui-select.main-ui-select-searchable .main-ui-square-search,
+.main-ui-control.main-ui-multi-select.main-ui-select-searchable .main-ui-square-search {
 	display: flex;
 	align-items: center;
 	position: static !important;
@@ -43,7 +44,8 @@
 	box-shadow: none;
 }
 
-.main-ui-control.main-ui-select.main-ui-select-searchable .main-ui-square-search-item {
+.main-ui-control.main-ui-select.main-ui-select-searchable .main-ui-square-search-item,
+.main-ui-control.main-ui-multi-select.main-ui-select-searchable .main-ui-square-search-item {
 	position: static !important;
 	opacity: 1 !important;
 	width: auto !important;

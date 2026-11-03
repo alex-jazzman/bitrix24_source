@@ -39,13 +39,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		StatusSummaryAdd: 'status_summary_add',
 		TimeEntryCreate: 'time_entry_create',
 		DescriptionEdit: 'description_edit',
-		DescriptionExpand: 'description_expand'
+		DescriptionExpand: 'description_expand',
+		CloseSuggestBanner: 'close_suggest_banner',
+		ClickSuggestBanner: 'click_suggest_banner'
 	});
 	const Type = Object.freeze({
 		TaskMini: 'task_mini',
 		Task: 'task',
 		Auto: 'auto',
-		Manual: 'manual'
+		Manual: 'manual',
+		Notification: 'notification'
 	});
 	const Section = Object.freeze({
 		Tasks: 'tasks',
@@ -61,7 +64,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		Chat: 'chat',
 		TemplatesCard: 'templates_card',
 		MyFiles: 'my_files',
-		Bitrix24Files: 'bitrix24_files'
+		Bitrix24Files: 'bitrix24_files',
+		List: 'list',
+		Deadline: 'deadline'
 	});
 	const Element = Object.freeze({
 		FullFormButton: 'full_form_button',
@@ -89,7 +94,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		CoexecutorButton: 'coexecutor_button',
 		ViewerButton: 'viewer_button',
 		AddResult: 'add_result',
-		ChatContextMenu: 'chat_context_menu'
+		ChatContextMenu: 'chat_context_menu',
+		Deadline: 'deadline',
+		Executor: 'executor',
+		Refresh: 'refresh'
 	});
 	const Status = Object.freeze({
 		Success: 'success',
@@ -137,6 +145,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	});
 
 	const ChatAction = Object.freeze({
+		AddObserver: 'addObserver',
 		ChangeDeadline: 'changeDeadline',
 		CompleteTask: 'completeTask',
 		OpenResult: 'openResult',
@@ -187,11 +196,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		OpenCompactCard: 'tasks:card:openCompactCard',
 		CardClosed: 'tasks:card:closed',
 		FullCardInit: 'tasks:full-card:init',
+		// The card finished loading without task data: it is deleted or unreachable, and the card shows a placeholder.
+		FullCardInitFailed: 'tasks:full-card:initFailed',
 		FullCardClosed: 'tasks:full-card:closed',
 		TaskAdded: 'tasks:card:taskAdded',
 		TaskBeforeUpdate: 'tasks:card:taskBeforeUpdate',
 		TaskAfterUpdate: 'tasks:card:taskAfterUpdate',
 		TaskPullUpdated: 'tasks:card:taskPullUpdated',
+		TaskStageSyncFailed: 'tasks:card:taskStageSyncFailed',
+		TaskStageSyncRestored: 'tasks:card:taskStageSyncRestored',
 		TaskDeleted: 'tasks:card:taskDeleted',
 		TemplateAdded: 'tasks:templateAdded',
 		TemplateBeforeUpdate: 'tasks:templateBeforeUpdate',
@@ -204,15 +217,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		ShowOverlay: 'tasks:card:showOverlay',
 		HideOverlay: 'tasks:card:hideOverlay',
 		AdjustPosition: 'tasks:card:adjustPosition',
+		// Payload: { text, anchor? }. Without anchor (the AI path) the receiver creates a new checklist.
 		AddCheckListFromText: 'tasks:card:check-list:addFromText',
+		// Fires when the action finished; not emitted when the picker is cancelled without a choice.
+		CheckListAddFromTextResolved: 'tasks:card:check-list:addFromTextResolved',
 		CloseCheckList: 'tasks:card:check-list:close',
 		OpenDeadlinePicker: 'tasks:deadline:openPicker',
 		OpenResultFromChat: 'task:card:open-result-from-chat',
-		AddResultFromChat: 'task:card:add-result-from-chat',
-		DeleteResultFromChat: 'task:card:delete-result-from-chat',
 		RequiredResultsMissing: 'task:card:required-results-missing',
 		ResultAdded: 'task:card:result-added',
 		ResultSuccessfulAdded: 'task:card:result-successful-added',
+		ResultSuccessfulDeleted: 'task:card:result-successful-deleted',
 		ResultUpdated: 'task:card:result-updated',
 		ResultFromMessageAdded: 'task:card:result-from-message-added',
 		OpenPrefilledResultForm: 'task:card:open-prefilled-result-form',
@@ -232,6 +247,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		OpenTimeTrackingPopup: 'task:card:open-time-tracking-popup',
 		CloseAllBottomSheets: 'tasks:card:close-all-bottom-sheets'
 	});
+
+	/**
+	 * Normalizes the AddCheckListFromText payload to { text, anchor } (a string becomes { text, anchor: null }).
+	 * Uses native typeof: const is a leaf module with no BX dependency.
+	 */
+	function normalizeAddCheckListFromTextPayload(data) {
+		if (typeof data === 'string') {
+			return {
+				text: data,
+				anchor: null
+			};
+		}
+		return {
+			text: data?.text ?? '',
+			anchor: data?.anchor ?? null
+		};
+	}
 
 	const GroupType = Object.freeze({
 		Group: 'group',
@@ -278,7 +310,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		AhaStartTimeTracking: 'aha_start_time_tracking',
 		AhaTaskChatPopup: 'aha_task_chat',
 		AhaTaskImportantMessagesPopup: 'aha_task_important_messages',
-		AhaTasksAiPromo: 'aha_tasks_ai_promo'
+		AhaTasksAiPromo: 'aha_tasks_ai_promo',
+		AhaFilesView: 'aha_files_view',
+		// UserOptions
+		FilesViewMode: 'files_view_mode'
 	});
 
 	const PlacementType = Object.freeze({
@@ -432,6 +467,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		OptionSetBool: 'Option.setBool',
 		ScrumUpdateTask: 'Scrum.updateTask',
 		ScrumGetTaskInfo: 'Scrum.getTaskInfo',
+		ScrumGetEpicCreationRight: 'Scrum.getEpicCreationRight',
 		TaskAdd: 'Task.add',
 		TaskGet: 'Task.get',
 		TaskCopy: 'Copy.Task.copy',
@@ -440,6 +476,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		TaskAccessGet: 'Task.Access.get',
 		TaskAccessRequest: 'Task.Access.request',
 		TaskAccessIsRequested: 'Task.Access.isRequested',
+		TaskAccessAddObserver: 'Task.Access.addObserver',
 		TaskAttentionMute: 'Task.Attention.mute',
 		TaskAttentionUnmute: 'Task.Attention.unmute',
 		TaskCheckListFileList: 'Task.CheckList.File.list',
@@ -461,6 +498,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		TaskResultUpdate: 'Task.Result.update',
 		TaskResultDelete: 'Task.Result.delete',
 		TaskResultMessageAdd: 'Task.Result.Message.add',
+		TaskResultMessageGetCurrentUserMap: 'Task.Result.Message.getCurrentUserMap',
 		TaskReminderList: 'Task.Reminder.list',
 		TaskReminderSet: 'Task.Reminder.set',
 		TaskReminderAdd: 'Task.Reminder.add',
@@ -583,6 +621,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	exports.TaskStatus = TaskStatus;
 	exports.TemplateType = TemplateType;
 	exports.UserFieldType = UserFieldType;
+	exports.normalizeAddCheckListFromTextPayload = normalizeAddCheckListFromTextPayload;
 
 })(this.BX.Tasks.V2.Const = this.BX.Tasks.V2.Const || {});
 //# sourceMappingURL=const.bundle.js.map

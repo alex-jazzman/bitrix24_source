@@ -4,7 +4,6 @@
 jn.define('im/messenger/provider/services/analytics/message-create-menu', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics } = require('im/messenger/const');
-	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
@@ -28,22 +27,14 @@ jn.define('im/messenger/provider/services/analytics/message-create-menu', (requi
 
 			try
 			{
-				const analytics = new AnalyticsEvent()
+				new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
-					.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+					.setCategory(AnalyticsHelper.getCategoryByChat(dialog))
 					.setEvent(Analytics.Event.clickAttach)
 					.setSection(Analytics.Section.messageContextMenu)
 					.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 					.setP2(AnalyticsHelper.getP2ByUserType())
-					.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
-
-				const isCollab = DialogHelper.createByDialogId(dialogId)?.isCollab;
-				if (isCollab)
-				{
-					analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialogId));
-				}
-
-				analytics.send();
+					.send();
 			}
 			catch (e)
 			{

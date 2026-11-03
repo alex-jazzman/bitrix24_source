@@ -12,6 +12,10 @@ export type PopupOptions = {
 	content: Object,
 }
 
+export type ShowOptions = {
+	focusFirst?: boolean,
+}
+
 export type ConfigOptions = {
 	[key: string]: any,
 }

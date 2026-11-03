@@ -22,6 +22,13 @@
 	border-bottom: 1px solid var(--im-list-container-recent__background-color_separator);
 }
 
+/* The filter row carries the separator and sets the header height for every container. */
+.bx-im-list-container-recent__header_container.--with-filter-row {
+	height: auto;
+	padding: var(--im-messenger__list-header_padding_with-filter-row);
+	border-bottom: none;
+}
+
 .bx-im-list-container-recent__search-input_container {
 	flex-grow: 1;
 	margin-right: 8px;
@@ -60,6 +67,11 @@
 	height: 34px;
 	background-image: url('./images/spinner.svg');
 	animation: imRotate360 .8s linear infinite;
+}
+
+.bx-im-list-container-recent__create-chat_icon-air {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
 .bx-im-list-container-recent__elements_container {

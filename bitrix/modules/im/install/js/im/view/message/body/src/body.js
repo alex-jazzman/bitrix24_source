@@ -293,7 +293,10 @@ BitrixVue.component('bx-im-view-message-body',
 				}
 
 				let file = this.$store.getters['files/get'](this.chatId, fileId, true);
-				if (!file)
+				// Skip the blank placeholder while chatId is 0 (session not created yet):
+				// files/get always returns null for chatId 0, so the placeholder would
+				// overwrite the real locally-added file and show it as "File is deleted".
+				if (!file && this.chatId)
 				{
 					this.$store.commit('files/set', {data: [
 						this.$store.getters['files/getBlank']({id: fileId, chatId: this.chatId})

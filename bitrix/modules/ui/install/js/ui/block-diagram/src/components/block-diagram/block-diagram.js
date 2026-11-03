@@ -1,6 +1,6 @@
 import './block-diagram.css';
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
-import { onMounted, onUnmounted, useTemplateRef, computed, ref, toValue } from 'ui.vue3';
+import { onMounted, onUnmounted, useTemplateRef, computed, ref, toValue, type ComputedRef } from 'ui.vue3';
 import { CanvasTransform } from '../canvas-transform/canvas-transform';
 import { Connection } from '../connection/connection';
 import { DeleteConnectionBtn } from '../delete-connection-btn/delete-connection-btn';
@@ -19,8 +19,23 @@ import {
 	useInitAppElements,
 	useDragAndDrop,
 	useContextMenu,
+	useDisplacedBlocks,
+	DISPLACED_STATE_DURATION_MS,
+	useKeyboardPan,
+	useLoc,
+	useActionKeyshortcuts,
+	useCanvasFocus,
+	useCanvasEscapeFallback,
 } from '../../composables';
-import { getGroupBlockSlotName, getGroupConnectionSlotName, GRID_DEFAULT_SIZE } from '../../utils';
+import {
+	getGroupBlockSlotName,
+	getGroupConnectionSlotName,
+	isInputEventTarget,
+	isValidMinZoom,
+	CANVAS_ACTION_ID,
+	buildCanvasKeyShortcuts,
+	GRID_DEFAULT_SIZE,
+} from '../../utils';
 
 import {
 	HOOK_NAMES,
@@ -28,6 +43,9 @@ import {
 	CONNECTION_OFFSET,
 	CONNECTION_BEND_OFFSET,
 	CONNECTION_BORDER_RADIUS,
+	BLOCK_INDEXES,
+	ELEVATION_OFFSET_CSS_VARIABLE,
+	DISPLACED_DURATION_CSS_VARIABLE,
 } from '../../constants';
 import type {
 	BlockGroupNames,
@@ -42,10 +60,32 @@ type BlockDiagramSetup = {
 	getGroupBlockSlotName: typeof getGroupBlockSlotName;
 	getGroupConnectionSlotName: typeof getGroupConnectionSlotName;
 	openContextMenu: (event: MouseEvent) => void;
+	canvasLabel: string;
+	onCanvasMouseDown: (event: MouseEvent) => void;
+	keyShortcuts: ComputedRef<string>;
 };
+
+// Everything that can hold the focus of its own inside the canvas. A disabled control is left out:
+// the browser gives it no focus either, so a press on one belongs to the canvas.
+const FOCUSABLE_SELECTOR = [
+	'a[href]',
+	'button:not([disabled])',
+	'input:not([disabled])',
+	'select:not([disabled])',
+	'textarea:not([disabled])',
+	'[contenteditable]:not([contenteditable="false"])',
+	'[tabindex]',
+].join(',');
 
 const UI_CANVAS_GRID_COLOR = '#A1B8D9';
 const UI_CANVAS_BACKGROUND_COLOR = '#ECF0F2';
+
+// Built once: the canvas root carries it through every render of the diagram, and it says the same
+// thing on each of them.
+const CANVAS_ROOT_STYLE = Object.freeze({
+	[ELEVATION_OFFSET_CSS_VARIABLE]: `${BLOCK_INDEXES.ELEVATION_OFFSET}`,
+	[DISPLACED_DURATION_CSS_VARIABLE]: `${DISPLACED_STATE_DURATION_MS}ms`,
+});
 
 const BLOCK_DIAGRAM_CLASS_NAMES = {
 	base: 'ui-block-diagram',
@@ -135,6 +175,10 @@ export const BlockDiagram = {
 		minZoom: {
 			type: Number,
 			default: 0.2,
+			validator(value): boolean
+			{
+				return isValidMinZoom(value);
+			},
 		},
 		maxZoom: {
 			type: Number,
@@ -156,6 +200,7 @@ export const BlockDiagram = {
 			type: Array,
 			default: () => ([
 				HOOK_NAMES.END_DRAG_BLOCK,
+				HOOK_NAMES.END_GESTURE,
 				HOOK_NAMES.ADD_BLOCK,
 				HOOK_NAMES.DELETE_BLOCK,
 				HOOK_NAMES.CREATE_CONNECTION,
@@ -196,6 +241,7 @@ export const BlockDiagram = {
 		HOOK_NAMES.START_DRAG_BLOCK,
 		HOOK_NAMES.MOVE_DRAG_BLOCK,
 		HOOK_NAMES.END_DRAG_BLOCK,
+		HOOK_NAMES.END_GESTURE,
 		HOOK_NAMES.ADD_BLOCK,
 		HOOK_NAMES.ADD_BLOCKS,
 		HOOK_NAMES.UPDATE_BLOCK,
@@ -224,11 +270,18 @@ export const BlockDiagram = {
 			isRenderOptimizationAvailable,
 			connectionPreview,
 			clearConnectionPreview,
+			inputState,
 		} = useBlockDiagram(props);
-
-		const initAppElements = useInitAppElements({
-			blockDiagramRef: useTemplateRef('blockDiagram'),
+		const fitToViewKeyshortcuts = useActionKeyshortcuts(CANVAS_ACTION_ID.FIT_TO_VIEW);
+		const keyShortcuts = computed((): string => {
+			return buildCanvasKeyShortcuts(toValue(fitToViewKeyshortcuts));
 		});
+
+		const blockDiagramRef = useTemplateRef('blockDiagram');
+		const initAppElements = useInitAppElements({ blockDiagramRef });
+		const { focusCanvas } = useCanvasFocus();
+		const loc = useLoc();
+		const canvasLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_LABEL');
 
 		const { makeSnapshot } = useHistory();
 		const { dispose: disposeModelValue } = useModelValue(emit);
@@ -339,6 +392,7 @@ export const BlockDiagram = {
 			},
 		);
 		const { onDrop } = useDragAndDrop();
+		const { clear: clearDisplacedBlocks } = useDisplacedBlocks();
 		const isGrabbing = ref(false);
 
 		const blockDiagramClassNames = computed(() => ({
@@ -353,8 +407,12 @@ export const BlockDiagram = {
 
 		const { showMenu } = useContextMenu();
 
+		useKeyboardPan();
+		useCanvasEscapeFallback();
+
 		onMounted(() => {
 			initAppElements.onMountedAppElements();
+			inputState.attach();
 		});
 
 		onUnmounted(() => {
@@ -363,8 +421,27 @@ export const BlockDiagram = {
 			disposeWatchProps();
 			disposeRegisterHooks();
 			blockIntersections.clear();
+			// The flash of a corrected position expires on a timer of its own, and a canvas taken off
+			// the page leaves it running: it would fire into a state nothing reads any more.
+			clearDisplacedBlocks();
 			initAppElements.onUnmountedAppElements();
+			inputState.detach();
 		});
+
+		// The canvas takes native drag-and-drop from the outside - a catalog item is dropped onto
+		// it - but never starts one of its own. A press on a port or a node opens a canvas gesture
+		// and keeps the event to itself, so nothing is left to cancel the browser's own drag: it
+		// starts alongside the gesture and drags a ghost that lands nowhere. An editable region
+		// inside a node is not canvas - text there stays draggable.
+		function onDragStart(event: DragEvent): void
+		{
+			if (isInputEventTarget(event))
+			{
+				return;
+			}
+
+			event.preventDefault();
+		}
 
 		function onDragEnter(event)
 		{
@@ -382,6 +459,25 @@ export const BlockDiagram = {
 			onDrop(event);
 		}
 
+		// Arrows belong to the canvas only while the focus stands inside it, so a click has to hand the
+		// focus over - otherwise panning would be reachable by Tab alone. A press that lands on
+		// something able to take the focus itself - a field, or a link or a button a consumer put
+		// inside a node - is left to that element: taking the focus here would blink through the
+		// canvas, and in WebKit, which focuses no button on click, the canvas would simply keep it.
+		function onCanvasMouseDown(event: MouseEvent): void
+		{
+			// The root itself matches the selector by its own tabindex, and it is the element the focus
+			// is being handed to.
+			const focusable = event.target?.closest?.(FOCUSABLE_SELECTOR) ?? null;
+
+			if (focusable !== null && focusable !== toValue(blockDiagramRef))
+			{
+				return;
+			}
+
+			focusCanvas();
+		}
+
 		function openContextMenu(event: MouseEvent): void
 		{
 			if (props.contextMenuItems.length > 0)
@@ -395,6 +491,7 @@ export const BlockDiagram = {
 
 		return {
 			blockDiagramClassNames,
+			canvasRootStyle: CANVAS_ROOT_STYLE,
 			visibleBlockGroupNames: blockIntersections.visibleBlockGroupNames,
 			groupedConnections,
 			connectionGroupNames,
@@ -403,14 +500,25 @@ export const BlockDiagram = {
 			onDragDrop,
 			onDragEnter,
 			onDragLeave,
+			onDragStart,
 			openContextMenu,
+			canvasLabel,
+			onCanvasMouseDown,
+			keyShortcuts,
 		};
 	},
 	template: `
 		<div
 			:class="blockDiagramClassNames"
+			:style="canvasRootStyle"
 			:data-test-id="$blockDiagramTestId('blockDiagram')"
 			ref="blockDiagram"
+			role="region"
+			:tabindex="disabled ? -1 : 0"
+			:aria-label="canvasLabel"
+			:aria-keyshortcuts="keyShortcuts"
+			@mousedown="onCanvasMouseDown"
+			@dragstart="onDragStart"
 			@dragover.prevent
 			@dragenter="onDragEnter"
 			@dragleave="onDragLeave"

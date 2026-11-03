@@ -196,12 +196,7 @@ export class Item
 	 */
 	static checkProperties(directory)
 	{
-		if (directory.path === undefined || directory.name === undefined)
-		{
-			return false;
-		}
-
-		return true;
+		return directory.path !== undefined && directory.name !== undefined;
 	}
 
 	constructor(directory, menu, systemDirs, nestingLevel = 0)
@@ -247,11 +242,21 @@ export class Item
 			}
 		}
 
+		if (directory.icon === 'scheduled')
+		{
+			iconClass = 'scheduled';
+		}
+
 		this.#nameOriginal = directory.name;
 
 		this.#name = this.#nameOriginal.charAt(0).toUpperCase() + this.#nameOriginal.slice(1);
 
 		const itemContainer = Tag.render`<div title="${this.#name}" class="mail-menu-directory-item-container"></div>`;
+		if (directory.fixed === true)
+		{
+			Dom.addClass(itemContainer, 'mail-menu-directory-item-container--fixed');
+		}
+
 		if (Type.isNumber(directory.dirId))
 		{
 			Dom.attr(itemContainer, 'data-dir-id', directory.dirId);
@@ -266,8 +271,19 @@ export class Item
 							</a>
 						</li>
 		`;
+		if (Type.isStringFilled(directory.dataTestId))
+		{
+			Dom.attr(itemElement, 'data-testid', directory.dataTestId);
+		}
 
 		const linkElement = itemElement.querySelector('.ui-sidepanel-menu-link');
+		if (Type.isStringFilled(directory.href))
+		{
+			Dom.attr(linkElement, 'href', directory.href);
+			// The item is the single Tab stop of the row, as in every other item of the menu; a link with an
+			// `href` inside it would add a second stop on the same row. Enter on the item still clicks the link.
+			Dom.attr(linkElement, 'tabindex', '-1');
+		}
 		const clampedLevel = Math.min(nestingLevel, this.#maxNestingLevel);
 		Dom.style(linkElement, 'marginLeft', `${this.#zeroLevelShiftWidth + (this.#shiftWidthInPixels * clampedLevel) + 5}px`);
 
@@ -277,6 +293,7 @@ export class Item
 			spam: '--o-alert',
 			trash: '--o-trashcan',
 			drafts: '--o-document-sign',
+			scheduled: '--o-clock',
 			default: '--o-folder',
 		};
 
@@ -290,7 +307,17 @@ export class Item
 
 		Dom.append(itemElement, itemContainer);
 
-		Event.bind(itemElement, 'click', () => {
+		Event.bind(itemElement, 'click', (event) => {
+			if (Type.isStringFilled(directory.href))
+			{
+				if (this.isActive())
+				{
+					event.preventDefault();
+				}
+
+				return;
+			}
+
 			if (!this.isActive() || menu.hasDirectorySelectHandler())
 			{
 				menu.chooseFunction(directory.path);
@@ -303,7 +330,14 @@ export class Item
 			{
 				case 'Enter': {
 					event.preventDefault();
-					itemElement.click();
+					if (Type.isStringFilled(directory.href))
+					{
+						linkElement.click();
+					}
+					else
+					{
+						itemElement.click();
+					}
 					itemElement.focus();
 
 					break;

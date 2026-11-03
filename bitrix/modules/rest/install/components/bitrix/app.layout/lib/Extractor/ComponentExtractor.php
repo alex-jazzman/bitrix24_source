@@ -32,9 +32,15 @@ class ComponentExtractor extends Extractor
 			$placement = Rest\PlacementTable::getById($placementId)->fetch();
 			if ($placement)
 			{
+				$legacyAppIdPresenter = new Rest\Internal\Service\Placement\LegacyAppIdPresenter();
+				$encodedId = $legacyAppIdPresenter->encode([
+					'ID' => $placement['ID'],
+					'APP_ID' => $placement['APP_ID'],
+				]);
+
 				return [
-					'ID' => $placement['APP_ID'],
-					'CODE' => $placement['APP_ID'],
+					'ID' => $encodedId,
+					'CODE' => $encodedId,
 					'PLACEMENT' => $placement['PLACEMENT'],
 					'PLACEMENT_ID' => $placement['ID'],
 				];

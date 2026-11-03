@@ -32,29 +32,45 @@ export const ReplicationInterval = {
 			InputSize,
 		};
 	},
-	data(): { prevInterval: number }
+	data(): { inputValue: string }
 	{
 		return {
-			prevInterval: this.interval,
+			inputValue: this.interval.toString(),
 		};
+	},
+	watch: {
+		interval(interval: number): void
+		{
+			this.inputValue = interval.toString();
+		},
+		period(): void
+		{
+			this.restoreInputValue();
+		},
 	},
 	computed: {
 		intervalValue: {
 			get(): string
 			{
-				return this.interval?.toString() || '';
+				return this.inputValue;
 			},
 			set(value: ?string = ''): void
 			{
-				let interval = parseInt(value.replaceAll(/\D/g, ''), 10) ?? 0;
+				this.inputValue = value.replaceAll(/\D/g, '');
+				const interval = parseInt(this.inputValue, 10);
 				if (!Type.isInteger(interval) || interval < 1)
 				{
-					interval = this.prevInterval;
+					return;
 				}
 
-				this.prevInterval = interval;
 				this.$emit('update:interval', interval);
 			},
+		},
+	},
+	methods: {
+		restoreInputValue(): void
+		{
+			this.inputValue = this.interval.toString();
 		},
 	},
 	template: `
@@ -63,7 +79,10 @@ export const ReplicationInterval = {
 				v-model="intervalValue"
 				:size="InputSize.Lg"
 				:design="InputDesign.Grey"
+				:ariaLabel="loc('TASKS_V2_REPLICATION_INTERVAL_ARIA_LABEL')"
+				data-testid="tasks-replication-interval-input"
 				style="padding-bottom: 0;"
+				@blur="restoreInputValue"
 			/>
 		</div>
 	`,

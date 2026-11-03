@@ -1,4 +1,6 @@
 <?php
+$MESS["INTRANET_SETTINGS_CLOSING_DOCUMENTS_DESCRIPTION_ALL"] = "The section is available to all employees.";
+$MESS["INTRANET_SETTINGS_CLOSING_DOCUMENTS_DESCRIPTION_AUDIENCE"] = "Select employees and departments that can access the section.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON"] = "Any employee can install applications from Market if allowed by the app developer. If this option is disabled, only the administrator can install applications.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON_MSGVER_1"] = "Any employee can install applications from Market if allowed by the app developer. If this option is disabled, only the administrator can install applications.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON"] = "Any employee can pay for your Bitrix24 subscription. If this option is disabled, only the administrator can pay for your Bitrix24 subscription.";
@@ -15,6 +17,8 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF"] = "All users can buy B
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_BICONNECTOR_DASHBOARD_LANGUAGE"] = "Dashboard language:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_BICONNECTOR_DASHBOARD_TIMEZONE"] = "Time zone:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS"] = "Map provider:";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_CLOSING_DOCUMENTS_ALL_EMPLOYEES"] = "Access for all employees";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_CLOSING_DOCUMENTS_AUDIENCE"] = "Who can access the section";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA"] = "Collect geolocation data from employee mobile devices";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT"] = "Use preferences for:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL"] = "Default sender email address:";
@@ -24,6 +28,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS"] = "Track outgoing email s
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS"] = "Track link clicks in outgoing emails";
 $MESS["INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL"] = "example@inbox.mail";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS"] = "Miscellaneous";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_CLOSING_DOCUMENTS"] = "Accounting documents";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_BICONNECTOR"] = "BI Builder and analytics";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME"] = "Date and time format";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS"] = "Mail";

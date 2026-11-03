@@ -9,6 +9,21 @@
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/constants.php");
 
+\Bitrix\Main\Loader::registerClassAliases([
+	'Bitrix\Mail\Public\Service\Mailbox\AddressResolver'
+		=> 'Bitrix\Mail\Public\Service\Mailbox\Alias\AddressResolver',
+	'Bitrix\Mail\Public\Service\Mailbox\ResolvedMailbox'
+		=> 'Bitrix\Mail\Public\Service\Mailbox\Alias\ResolvedMailbox',
+	'Bitrix\Mail\Public\Service\Mailbox\AddressHistory'
+		=> 'Bitrix\Mail\Public\Service\Mailbox\Alias\AddressHistory',
+	'Bitrix\Mail\Public\Service\Mailbox\AddressOccupation'
+		=> 'Bitrix\Mail\Public\Service\Mailbox\Alias\AddressOccupation',
+	'Bitrix\Mail\Public\Service\Mailbox\AddressOccupationStatus'
+		=> 'Bitrix\Mail\Public\Service\Mailbox\Alias\AddressOccupationStatus',
+	'Bitrix\Mail\Public\Service\Mailbox\OrphanAlias'
+		=> 'Bitrix\Mail\Public\Service\Mailbox\Alias\OrphanAlias',
+]);
+
 \Bitrix\Main\Loader::registerAutoloadClasses(
 	'mail',
 	array(
@@ -42,5 +57,19 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/constants.php");
 
 		'Bitrix\Mail\BaseException'     => 'lib/exception.php',
 		'Bitrix\Mail\ReceiverException' => 'lib/exception.php',
+
+		// The ajax router builds the class name from the lowercase action, so a controller in a
+		// case sensitive path is only reachable through an explicit entry.
+		'Bitrix\Mail\Controller\MessageConversation' => 'lib/Controller/MessageConversation.php',
 	)
 );
+
+// Dev/QA controllers (e2e provisioning among them) live under dev/, which is not part of a shipped
+// portal, so they exist only in a developer checkout. Registered the way ui, imbot and statistic
+// register theirs: the whole dev/ under Controller\Dev - Controller, not Dev, because the action
+// resolver only routes to classes under the module's controller namespaces from .settings.php. Each
+// controller under it guards itself in processBeforeAction.
+if (is_dir(__DIR__ . '/dev'))
+{
+	\Bitrix\Main\Loader::registerNamespace('Bitrix\\Mail\\Controller\\Dev', __DIR__ . '/dev');
+}

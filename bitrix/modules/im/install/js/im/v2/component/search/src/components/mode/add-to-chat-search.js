@@ -149,7 +149,14 @@ export const AddToChatSearch = {
 		},
 		onKeyPressed(event: BaseEvent)
 		{
-			const { keyboardEvent } = event.getData();
+			const { keyboardEvent, context } = event.getData();
+
+			// EVENT-01: the list owns no id space, so it acts on unaddressed keystrokes only and leaves
+			// an addressed one to the window it was typed in.
+			if ((context ?? null) !== null)
+			{
+				return;
+			}
 
 			if (Utils.key.isCombination(keyboardEvent, 'Enter'))
 			{

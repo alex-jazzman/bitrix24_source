@@ -6,6 +6,7 @@ import { EventName, Model } from 'tasks.v2.const';
 import { EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { DropZone } from 'tasks.v2.component.drop-zone';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
+import { syncBottomSheetModality } from 'tasks.v2.lib.bottom-sheet-aria';
 import type { ResultModel } from 'tasks.v2.model.results';
 
 import { ResultEditor } from './result-editor';
@@ -47,6 +48,7 @@ export const ResultEditorSheet = {
 		return {
 			isResized: false,
 			uniqueKey: Text.getRandom(),
+			editorTitleId: `tasks-result-editor-title-${Text.getRandom()}`,
 		};
 	},
 	computed: {
@@ -70,6 +72,8 @@ export const ResultEditorSheet = {
 	mounted(): void
 	{
 		EventEmitter.subscribe(EventName.OpenResultFromChat, this.handleOpenResultFromMessage);
+
+		void this.$nextTick(this.syncSheetModality);
 	},
 	beforeUnmount(): void
 	{
@@ -85,14 +89,20 @@ export const ResultEditorSheet = {
 				this.$emit('close');
 			}
 		},
+		syncSheetModality(): void
+		{
+			syncBottomSheetModality(this.$refs.bottomSheet);
+		},
 	},
 	template: `
 		<BottomSheet
+			ref="bottomSheet"
 			:sheetBindProps
 			:isExpanded="isResized"
 			:padding="0"
 			:popupPadding="0"
 			:uniqueKey
+			:ariaLabelledBy="editorTitleId"
 			@close="$emit('close')"
 		>
 			<ResultEditor
@@ -100,6 +110,7 @@ export const ResultEditorSheet = {
 				:isResized
 				:content="result.text || ''"
 				:showResize="shouldShowResize"
+				:titleId="editorTitleId"
 				@close="$emit('close')"
 				@resize="isResized = !isResized"
 			/>

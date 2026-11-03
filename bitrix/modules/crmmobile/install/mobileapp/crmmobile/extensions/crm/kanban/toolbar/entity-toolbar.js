@@ -5,15 +5,18 @@
 jn.define('crm/kanban/toolbar/entity-toolbar', (require, exports, module) => {
 	const { KanbanToolbar } = require('layout/ui/kanban/toolbar');
 	const { Loc } = require('loc');
+	const { mergeImmutable } = require('utils/object');
 
 	const { connect } = require('statemanager/redux/connect');
 	const {
 		getCrmKanbanUniqId,
 		selectById,
+		selectStagesIdsBySemantics,
 	} = require('crm/statemanager/redux/slices/kanban-settings');
 
 	const { StageDropdown } = require('crm/kanban/toolbar/stage-dropdown');
 	const { StageSummary } = require('crm/kanban/toolbar/stage-summary');
+	const { CompactStageControl, compactStyles } = require('crm/kanban/toolbar/compact-stage-control');
 
 	class EntityToolbar extends KanbanToolbar
 	{
@@ -48,12 +51,38 @@ jn.define('crm/kanban/toolbar/entity-toolbar', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'categoriesEnabled', false);
 		}
 
+		get isCompactView()
+		{
+			return BX.prop.getBoolean(this.props, 'isCompactView', false);
+		}
+
+		get allStagesId()
+		{
+			return getCrmKanbanUniqId(this.entityTypeId, this.categoryId);
+		}
+
+		componentWillReceiveProps(props)
+		{
+			if (!BX.prop.getBoolean(props, 'isCompactView', false))
+			{
+				return;
+			}
+
+			const activeStageId = this.getActiveStageId();
+			const stageIds = BX.prop.getArray(props, 'stageIds', []);
+
+			if (activeStageId && activeStageId !== this.allStagesId && !stageIds.includes(activeStageId))
+			{
+				this.setActiveStage(null);
+			}
+		}
+
 		onToolbarClick()
 		{
 			void requireLazy('crm:stage-list-view').then(({ CrmStageListView }) => {
 				const props = {
 					entityTypeId: this.entityTypeId,
-					kanbanSettingsId: getCrmKanbanUniqId(this.entityTypeId, this.categoryId),
+					kanbanSettingsId: this.allStagesId,
 					categoryId: this.categoryId,
 					activeStageId: this.getActiveStageId(),
 					readOnly: true,
@@ -125,7 +154,64 @@ jn.define('crm/kanban/toolbar/entity-toolbar', (require, exports, module) => {
 
 		getTestId()
 		{
-			return 'stageToolbar';
+			return (this.isCompactView ? 'compactStageControl' : 'stageToolbar');
+		}
+
+		getStyles()
+		{
+			const styles = super.getStyles();
+
+			return (this.isCompactView ? mergeImmutable(styles, compactStyles) : styles);
+		}
+
+		/**
+		 * The compact panel is a standalone card with indents, so the shadow of the attached toolbar is dropped
+		 */
+		renderContainer(...children)
+		{
+			if (!this.isCompactView)
+			{
+				return super.renderContainer(...children);
+			}
+
+			const styles = this.getStyles();
+
+			return View(
+				{
+					style: styles.rootWrapper,
+					testId: this.getTestId(),
+					onClick: () => this.onToolbarClick(),
+				},
+				View(
+					{
+						style: styles.mainWrapper,
+						ref: (ref) => {
+							if (ref)
+							{
+								this.provideRef(ref);
+							}
+						},
+					},
+					...children,
+				),
+			);
+		}
+
+		render()
+		{
+			if (!this.isCompactView)
+			{
+				return super.render();
+			}
+
+			return this.renderContainer(
+				CompactStageControl({
+					entityTypeId: this.entityTypeId,
+					categoryId: this.categoryId,
+					activeStageId: this.getActiveStageId(),
+					showSum: Boolean(this.getProps().showSum),
+				}),
+			);
 		}
 
 		setDefaultStage()
@@ -149,9 +235,16 @@ jn.define('crm/kanban/toolbar/entity-toolbar', (require, exports, module) => {
 			name = '',
 		} = selectById(state, id) || {};
 
+		const {
+			processStages,
+			successStages,
+			failedStages,
+		} = selectStagesIdsBySemantics(state, id);
+
 		return {
 			categoriesEnabled,
 			kanbanSettingsName: name,
+			stageIds: [...processStages, ...successStages, ...failedStages],
 		};
 	};
 

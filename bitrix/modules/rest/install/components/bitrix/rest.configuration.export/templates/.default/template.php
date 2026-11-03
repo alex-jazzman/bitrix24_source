@@ -43,7 +43,11 @@ $containerId = 'rest-configuration-export';
 			<div class="rest-configuration-start-icon-circle"></div>
 		</div>
 		<div class="rest-configuration-controls start-btn-block">
-			<button class="ui-btn ui-btn-lg ui-btn-primary start-btn" <?=($arResult['ENABLED_EXPORT'] != 'Y')?'disabled="disabled" ':'';?>><?=Loc::getMessage('REST_CONFIGURATION_EXPORT_START_BTN')?></button>
+			<button
+				class="ui-btn ui-btn-lg ui-btn-primary start-btn"
+				data-testid="rest-configuration-export-start"
+				<?=($arResult['ENABLED_EXPORT'] != 'Y')?'disabled="disabled" ':'';?>
+			><?=Loc::getMessage('REST_CONFIGURATION_EXPORT_START_BTN')?></button>
 		</div>
 
 		<div class="rest-configuration-info" ><p><?=($arResult['MANIFEST']['EXPORT_ACTION_DESCRIPTION'])?:Loc::getMessage('REST_CONFIGURATION_EXPORT_DESCRIPTION')?></p></div>

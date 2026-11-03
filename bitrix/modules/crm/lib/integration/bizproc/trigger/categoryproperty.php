@@ -33,11 +33,35 @@ final class CategoryProperty
 				'Name' => Loc::getMessage('BP_CRM_ENTITY_CREATE_TRIGGER_CATEGORY_ID'),
 				'FieldName' => self::FIELD_NAME,
 				'Type' => FieldType::SELECT,
+				'Multiple' => self::supportsMultipleCategories(),
 				'Required' => false,
 				'AllowSelection' => false,
 				'Options' => self::getOptions($document),
 			],
 		];
+	}
+
+	public static function supportsMultipleCategories(): bool
+	{
+		return method_exists(\Bitrix\Bizproc\Public\Activity\Configurator::class, 'getSections');
+	}
+
+	/** @return int[] */
+	public static function normalizeIds(mixed $categoryIds): array
+	{
+		$categoryIds = is_array($categoryIds) ? $categoryIds : [$categoryIds];
+		$ids = [];
+		foreach ($categoryIds as $categoryId)
+		{
+			if ($categoryId === '' || $categoryId === null)
+			{
+				continue;
+			}
+
+			$ids[] = (int)$categoryId;
+		}
+
+		return array_values(array_unique($ids));
 	}
 
 	public static function getOptions(string $document): array

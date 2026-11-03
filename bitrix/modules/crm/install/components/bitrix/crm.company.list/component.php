@@ -14,6 +14,7 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integration\BizProc\ListDocumentStateReader;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CompanySettings;
@@ -286,6 +287,9 @@ $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
 if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
+
+$arResult['ENABLE_GROUP_ACTIONS'] = (($arParams['ENABLE_GROUP_ACTIONS'] ?? 'N') === 'Y');
+
 if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
@@ -607,7 +611,13 @@ $arResult['HEADERS'] = array_merge(
 				'items' => CCrmStatus::GetStatusList('EMPLOYEES')
 			],
 			'type' => 'list',
-		]
+		],
+		[
+			'id' => 'OPENED',
+			'name' => \CCrmCompany::GetFieldCaption('OPENED'),
+			'sort' => false,
+			'default' => false,
+		],
 	)
 );
 
@@ -815,6 +825,21 @@ unset($arHeader);
 if (!($isInExportMode && $isStExport && $isStExportRequisiteMultiline))
 {
 	$requisite->prepareEntityListHeaderFields($arResult['HEADERS']);
+	if (
+		\Bitrix\Main\Config\Feature::isEnabled(
+			\Bitrix\Crm\Public\Features\RequisiteGridSections::class
+		)
+	)
+	{
+		$requisiteCountryIds = Crm\EntityRequisite::prepareEntityListHeaderSections($arResult['HEADERS']);
+		$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+			->appendRequisiteGridSections(
+				$arResult['HEADERS_SECTIONS'] ?? [],
+				$requisiteCountryIds,
+				$factory,
+			)
+		;
+	}
 }
 //endregion Headers initialization
 
@@ -1784,6 +1809,22 @@ $bizProcTabId = $isMyCompanyMode ? 'CRM_MYCOMPANY_SHOW_V12_active_tab' : 'CRM_CO
 
 $now = time() + CTimeZone::GetOffset();
 
+$allDocumentStates = [];
+if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['COMPANY']))
+{
+	$entityIds = array_map(function ($item)
+		{
+			return "COMPANY_{$item['ID']}";
+		},
+		$arResult['COMPANY']);
+
+	$allDocumentStates = (new ListDocumentStateReader())->read(
+		['crm', 'CCrmDocumentCompany', 'COMPANY'],
+		$entityIds,
+		true,
+	);
+}
+
 $observersDataProvider->appendResult($arResult['COMPANY']);
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
@@ -2019,10 +2060,7 @@ foreach($arResult['COMPANY'] as &$arCompany)
 	{
 		$arCompany['BIZPROC_STATUS'] = '';
 		$arCompany['BIZPROC_STATUS_HINT'] = '';
-		$arDocumentStates = CBPDocument::GetDocumentStates(
-			array('crm', 'CCrmDocumentCompany', 'COMPANY'),
-			array('crm', 'CCrmDocumentCompany', "COMPANY_{$entityID}")
-		);
+		$arDocumentStates = $allDocumentStates["COMPANY_{$entityID}"] ?? [];
 
 		$arCompany['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_COMPANY_SHOW'],

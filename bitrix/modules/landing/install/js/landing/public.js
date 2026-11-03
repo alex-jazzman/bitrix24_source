@@ -22,6 +22,61 @@
 			}
 			// endregion
 
+			// region EMPTY HEADINGS
+			// a heading of a block left without text is still listed by a screen reader
+			// as a nameless heading; it loses the role only, the look stays the same.
+			// A heading named otherwise (aria-label, a named image or svg) keeps it
+			const hasOwnName = (node) => {
+				if ((node.getAttribute('aria-label') || '').trim() !== '')
+				{
+					return true;
+				}
+
+				return (node.getAttribute('aria-labelledby') || '').split(/\s+/).some((id) => {
+					const label = id === '' ? null : document.getElementById(id);
+
+					return label !== null && label.textContent.trim() !== '';
+				});
+			};
+
+			const hasName = (node) => {
+				if (node.nodeType === Node.TEXT_NODE)
+				{
+					return node.textContent.trim() !== '';
+				}
+
+				if (node.nodeType !== Node.ELEMENT_NODE || node.getAttribute('aria-hidden') === 'true')
+				{
+					return false;
+				}
+
+				if (node.tagName.toLowerCase() === 'img')
+				{
+					return (node.getAttribute('alt') || '').trim() !== '';
+				}
+
+				if (node.tagName.toLowerCase() === 'svg' || node.getAttribute('role') === 'img')
+				{
+					const title = node.querySelector('title');
+
+					return hasOwnName(node) || (title !== null && title.textContent.trim() !== '');
+				}
+
+				return [].slice.call(node.childNodes).some((child) => hasName(child));
+			};
+
+			const headings = [].slice.call(document.querySelectorAll(
+				'.block-wrapper h1, .block-wrapper h2, .block-wrapper h3,'
+				+ ' .block-wrapper h4, .block-wrapper h5, .block-wrapper h6',
+			));
+			headings.forEach((heading) => {
+				if (!heading.hasAttribute('role') && !hasOwnName(heading) && !hasName(heading))
+				{
+					heading.setAttribute('role', 'none');
+				}
+			});
+			// endregion
+
 			// region PSEUDO LINKS
 			const pseudoLinks = [].slice.call(document.querySelectorAll('[data-pseudo-url*="{"]'));
 			if (pseudoLinks.length > 0)
@@ -142,22 +197,19 @@
 			// endregion
 
 			// region SCROLL-TO for #block links
-			if (typeof BXMobileApp === "undefined")
+			const blocksLinks = [].slice.call(document.querySelectorAll('a[href*="#"]'))
+			if (!!blocksLinks && blocksLinks.length)
 			{
-				const blocksLinks = [].slice.call(document.querySelectorAll('a[href*="#"]'))
-				if (!!blocksLinks && blocksLinks.length)
-				{
-					blocksLinks.forEach(link => {
-						const href = link.getAttribute("href");
-						if (link.target === '_self' || link.target === '')
+				blocksLinks.forEach(link => {
+					const href = link.getAttribute("href");
+					if (link.target === '_self' || link.target === '')
+					{
+						if (isBlockLink(href))
 						{
-							if (isBlockLink(href))
-							{
-								link.addEventListener("click", onBlockLinkClick);
-							}
+							link.addEventListener("click", onBlockLinkClick);
 						}
-					});
-				}
+					}
+				});
 			}
 			// endregion
 
@@ -207,13 +259,15 @@
 					return false;
 				}
 
-				if (isValidURL(url))
+				if (isValidURL(url) || (url !== null && url.startsWith('/') && isValidURL(url, document.location)))
 				{
 					const urlObj = new URL(url, document.location);
 
 					return urlObj.hash !== ''
+						&& !urlObj.hash.startsWith('#/')
+						&& urlObj.search === document.location.search
 						&& urlObj.pathname === document.location.pathname
-						&& urlObj.hostname === document.location.hostname;
+						&& urlObj.origin === document.location.origin;
 				}
 
 				if (url !== null && url.startsWith('#') && isValidAnchor(url))
@@ -224,11 +278,11 @@
 				return false;
 			}
 
-			function isValidURL(url)
+			function isValidURL(url, base)
 			{
 				try
 				{
-					new URL(url);
+					new URL(url, base);
 
 					return true;
 				}
@@ -299,8 +353,6 @@
 			{
 				try
 				{
-					event.preventDefault();
-
 					let targetSelector = null;
 					let urlForHistory = null;
 					const link = event.currentTarget;
@@ -327,11 +379,19 @@
 						return;
 					}
 
-					const target = document.querySelector(targetSelector);
+					const target = document.getElementById(targetSelector.slice(1));
+					if (!target)
+					{
+						return;
+					}
+
 					window.scrollTo({
 						top: target.offsetTop - headerOffset,
 						behavior: 'smooth'
 					});
+					event.preventDefault();
+					event.landingBlockLinkHandled = true;
+					event.landingBlockLinkUrl = urlForHistory;
 					link.blur(); // disable :focus after click
 					history.pushState({}, '', urlForHistory);
 				}

@@ -5,7 +5,13 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { chevronDown } = require('assets/common');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Color } = require('tokens');
 	const { ContextMenu } = require('layout/ui/context-menu');
+
+	// the chevron of the set is drawn on a 24-point canvas; at this size its glyph matches the
+	// 7x5 arrow the field used to draw by hand
+	const CHEVRON_SIZE = 12;
 
 	/**
 	 * @class MenuSelectField
@@ -127,16 +133,10 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 					ellipsize: 'end',
 					text: this.getSelectedItemTitle(),
 				}),
-				Image({
-					style: {
-						width: 7,
-						height: 5,
-					},
-					tintColor: AppTheme.colors.base3,
-					resizeMode: 'center',
-					svg: {
-						content: chevronDown(),
-					},
+				IconView({
+					icon: Icon.CHEVRON_DOWN,
+					color: Color.base3,
+					size: CHEVRON_SIZE,
 				}),
 			);
 		}
@@ -179,15 +179,10 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 						ellipsize: 'end',
 						text: this.props.emptyValue,
 					}),
-					Image({
-						style: {
-							width: 7,
-							height: 5,
-						},
-						resizeMode: 'center',
-						svg: {
-							content: '<svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.09722 0.235352L4.02232 2.31025L3.49959 2.8249L2.98676 2.31025L0.91186 0.235352L0.179688 0.967524L3.50451 4.29235L6.82933 0.967524L6.09722 0.235352Z" fill="#A8ADB4"/></svg>',
-						},
+					IconView({
+						icon: Icon.CHEVRON_DOWN,
+						color: Color.base4,
+						size: CHEVRON_SIZE,
 					}),
 				);
 			}

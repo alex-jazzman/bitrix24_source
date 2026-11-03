@@ -60,3 +60,24 @@
 .bx-im-messenger__scope .--hidden-scroll::-webkit-scrollbar {
 	display: none;
 }
+
+.bx-im-messenger__scope .--focus-visible:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/*
+ * The shape of the ring above, for a control that paints neither background nor border and therefore has
+ * no form of its own to follow. It lives beside the ring itself because one user result is one look, and
+ * the title of a chat is built in two extensions that cannot import each other - the link of a personal
+ * chat and the renameable button of a group one - so both take the radius from here.
+ *
+ * A control that is nothing but a run of text takes the smallest radius of the scale: the ring of a name
+ * or of a counter reads as a rectangle around the line, and a wider corner starts to look like a button
+ * the control is not. The wider one stays for a control that is a block with a shape of its own, so the
+ * two are named apart instead of one value drifting between the two meanings.
+ */
+.bx-im-messenger__scope {
+	--im-focus-ring__border-radius: var(--ui-border-radius-sm);
+	--im-focus-ring__border-radius_text: var(--ui-border-radius-3xs);
+}

@@ -8,6 +8,7 @@ this.BX = this.BX || {};
 		formBeforeSubmitHandler;
 		postFormAnalytics = {};
 		appendParamsFromCurrentUrl = true;
+		kanbanCreateOrigin = '';
 		constructor() {
 			super();
 			this.formBeforeSubmitHandler = this.onAjaxFormBeforeSubmit.bind(this);
@@ -17,6 +18,7 @@ this.BX = this.BX || {};
 			const config = this.getConfig ? this.getConfig() : null;
 			this.postFormAnalytics = BX.Type.isPlainObject(config?.postFormAnalytics) ? config.postFormAnalytics : {};
 			this.appendParamsFromCurrentUrl = BX.Type.isBoolean(config?.appendParamsFromCurrentUrl) ? config.appendParamsFromCurrentUrl : true;
+			this.kanbanCreateOrigin = BX.Type.isStringFilled(config?.kanbanCreateOrigin) ? config.kanbanCreateOrigin : '';
 		}
 		bindToAjaxForms(ajaxForms) {
 			this.unbindFromAjaxForms();
@@ -65,7 +67,8 @@ this.BX = this.BX || {};
 			if (BX.Type.isPlainObject(this.postFormAnalytics)) {
 				analytics = BX.Runtime.merge(analytics, this.postFormAnalytics);
 			}
-			if (Object.keys(analytics).length === 0) {
+			const saveAnalyticsData = this.#buildSaveAnalyticsData(analytics);
+			if (Object.keys(saveAnalyticsData).length === 0) {
 				return;
 			}
 			if (isComponentAjax) {
@@ -78,7 +81,8 @@ this.BX = this.BX || {};
 				if (!BX.Type.isPlainObject(eventArgs.options.data)) {
 					eventArgs.options.data = {};
 				}
-				eventArgs.options.data.ANALYTICS = analytics;
+				const eventOptions = eventArgs.options;
+				Object.assign(eventOptions.data, saveAnalyticsData);
 			} else if (isAjaxForm) {
 				if (!ajaxForm._config) {
 					ajaxForm._config = {};
@@ -86,8 +90,19 @@ this.BX = this.BX || {};
 				if (!BX.Type.isPlainObject(ajaxForm._config.data)) {
 					ajaxForm._config.data = {};
 				}
-				ajaxForm._config.data.ANALYTICS = analytics;
+				const ajaxFormConfig = Reflect.get(ajaxForm, '_config');
+				Object.assign(ajaxFormConfig.data, saveAnalyticsData);
 			}
+		}
+		#buildSaveAnalyticsData(analytics) {
+			const data = {};
+			if (Object.keys(analytics).length > 0) {
+				data.ANALYTICS = analytics;
+			}
+			if (this.kanbanCreateOrigin !== '') {
+				data.KANBAN_CREATE_ORIGIN = this.kanbanCreateOrigin;
+			}
+			return data;
 		}
 		release() {
 			this.unbindFromAjaxForms();

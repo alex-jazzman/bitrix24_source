@@ -4,8 +4,9 @@ import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 
 import { EventType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
-import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
+import { MessageMenu, MenuItemPlacement, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
 export class CommentsMessageMenu extends MessageMenu
 {
@@ -27,6 +28,7 @@ export class CommentsMessageMenu extends MessageMenu
 			this.getCopyFileItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
+			this.isAiTaskFromMessageAvailable() ? this.getCreateTaskItem(MenuItemPlacement.nested) : null,
 			this.getCreateMeetingItem(),
 		];
 
@@ -78,6 +80,21 @@ export class CommentsMessageMenu extends MessageMenu
 		];
 	}
 
+	/**
+	 * The client rule repeats the server one: the ban on forwarding out of a discussion is lifted by
+	 * the threads feature alone, so an offered action is one the server will accept. Overrides the base
+	 * item instead of wrapping it, so the rule holds for callers in the base class as well.
+	 */
+	getForwardItem(): ?MenuItemOptions
+	{
+		if (!FeatureManager.isFeatureAvailable(Feature.isChatThreadsAvailable))
+		{
+			return null;
+		}
+
+		return super.getForwardItem();
+	}
+
 	#getDefaultMenuItems(): MenuItemOptions[]
 	{
 		const firstGroupItems = [
@@ -85,8 +102,10 @@ export class CommentsMessageMenu extends MessageMenu
 			this.getCopyItem(),
 			this.getEditItem(),
 			this.getDownloadFileItem(),
+			this.getForwardItem(),
 			this.getAskCopilotItem(),
-			this.getCreateTaskItem(),
+			this.getCreateAiTaskItem(),
+			this.isAiTaskFromMessageAvailable() ? null : this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
 		];
 

@@ -1,6 +1,7 @@
-import { ajax } from 'main.core';
+import { ajax, Type } from 'main.core';
 import type { ActivityData } from '../../shared/types';
 import type { ActionDictEntry, AvailableBlocks, CapabilityCatalog, NodeSettings, Rule } from './types';
+import type { AutofillConflict } from './types';
 
 const post = async (action: string, data: Object): Promise<Object | null> => {
 	const response = await ajax.runAction(`bizprocdesigner.v2.${action}`, {
@@ -22,11 +23,19 @@ const post = async (action: string, data: Object): Promise<Object | null> => {
 // keeps no incoming wire.
 export const PORTLESS_RULES_KEY = 'n0';
 
+export type RelationPackageEntry = {
+	id: string,
+	fieldId: string,
+	targetDocumentType: Array<string>,
+	required?: boolean,
+}
+
 export type RelationSource = {
 	blockId: string,
 	documentType: Array<string>,
 	outputs: Array<string>,
 	documentOutput: string,
+	package?: Array<RelationPackageEntry>,
 }
 
 export type ComplexNodeLoadSettingsPayload = {
@@ -37,11 +46,14 @@ export type ComplexNodeLoadSettingsPayload = {
 	rules: Record<Rule["portId"], Rule>,
 	actions: Record<string, ActionDictEntry>,
 	fixedDocumentType: Array<string> | null,
+	fixedDocumentTypeSigned: string | null,
 	filterSupported: boolean,
 	availableBlocks?: AvailableBlocks,
 	// Field code -> bizproc expression "{=blockId:propertyId}". Absent/empty when there is no match.
-	// Backend gates this behind complexNodeConnections + CreateWorkflow; empty map = autofill inactive.
+	// Backend checks complexNodeConnections and template access; empty map = autofill inactive.
 	autofillMap?: Record<string, string>,
+	autofillRequiredFields?: Array<string>,
+	autofillConflicts?: Array<AutofillConflict>,
 }
 
 export const complexNodeApi = Object.freeze({
@@ -49,18 +61,19 @@ export const complexNodeApi = Object.freeze({
 		activity: ActivityData,
 		sources: Array<RelationSource> = [],
 		documentType: Array<string> = [],
+		templateId: number = 0,
 	): ComplexNodeLoadSettingsPayload | null => {
 		const payload: {
 			activity: ActivityData,
 			sources?: Array<RelationSource>,
 			documentType?: Array<string>,
+			templateId?: number,
 		} = { activity };
-		// Keep the request identical to the legacy one when there are no relation sources. Autofill is
-		// authorized against the server-resolved target type, so it needs no document type; documentType is
-		// forwarded only to resolve the node's available blocks when it has no fixed document type.
+		// Template access applies only to relation autofill requests.
 		if (sources.length > 0)
 		{
 			payload.sources = sources;
+			payload.templateId = templateId;
 		}
 		if (documentType.length > 0)
 		{
@@ -73,7 +86,12 @@ export const complexNodeApi = Object.freeze({
 			return null;
 		}
 
-		return data;
+		return {
+			...data,
+			autofillMap: Type.isPlainObject(data.autofillMap) ? data.autofillMap : {},
+			autofillRequiredFields: Type.isArray(data.autofillRequiredFields) ? data.autofillRequiredFields : [],
+			autofillConflicts: Type.isArray(data.autofillConflicts) ? data.autofillConflicts : [],
+		};
 	},
 	saveSettings: async (
 		settings: NodeSettings,

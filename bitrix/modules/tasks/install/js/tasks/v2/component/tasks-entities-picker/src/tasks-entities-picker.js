@@ -1,4 +1,6 @@
 import 'main.polyfill.intersectionobserver';
+import { Loc } from 'main.core';
+import { LiveAnnouncer } from 'ui.a11y';
 import { TasksPopup } from 'tasks.v2.component.tasks-popup';
 import { BIcon, Outline, Animated } from 'ui.icon-set.api.vue';
 import { h } from 'ui.vue3';
@@ -87,6 +89,10 @@ export const TasksEntitiesPicker = {
 		{
 			return Boolean(this.entitiesList.length >= this.optionsFilled.entitiesCount);
 		},
+		listBusy(): string
+		{
+			return this.optionsFilled.isLoadingList ? 'true' : 'false';
+		},
 		isEntityContentHovered(): boolean
 		{
 			const isEntityContentHoveredNew = this.isEntityTooltipOpenerHovered
@@ -104,6 +110,7 @@ export const TasksEntitiesPicker = {
 		{
 			return {
 				className: 'tasks-entities-picker__entity-tooltip',
+				isHoverTooltip: true,
 				isWithPointer: true,
 				positioning: {
 					isOpenedUp: true,
@@ -115,7 +122,9 @@ export const TasksEntitiesPicker = {
 		},
 	},
 	watch: {
-		async entitiesList() {
+		async entitiesList(newList, oldList) {
+			this.announceLoadedPortion(newList, oldList);
+
 			await this.$nextTick();
 			this.initObserver();
 		},
@@ -178,6 +187,58 @@ export const TasksEntitiesPicker = {
 
 			return classSumm;
 		},
+		isEntityLink(entity): boolean
+		{
+			return Boolean(entity.isEntityClickable && entity.url);
+		},
+		getEntityTag(entity): string
+		{
+			if (this.isEntityLink(entity))
+			{
+				return 'a';
+			}
+
+			return entity.isEntityClickable ? 'button' : 'div';
+		},
+		getEntityAttrs(entity): Object
+		{
+			const attrs = {
+				'data-testid': 'task-entities-picker-row',
+				'data-entity-id': entity.id,
+			};
+
+			if (this.isEntityLink(entity))
+			{
+				return { ...attrs, href: entity.url };
+			}
+
+			return entity.isEntityClickable ? { ...attrs, type: 'button' } : attrs;
+		},
+		getEntityListeners(entity): Object
+		{
+			if (!entity.isEntityClickable)
+			{
+				return {};
+			}
+
+			return { click: (event) => this.handleClickEntity(entity, event) };
+		},
+		announceLoadedPortion(newList, oldList): void
+		{
+			const previousCount = oldList?.length || 0;
+			const addedCount = (newList?.length || 0) - previousCount;
+
+			// Only the incremental portions of the infinite scroll are announced; the
+			// initial fill and list resets are not status messages.
+			if (previousCount > 0 && addedCount > 0)
+			{
+				LiveAnnouncer.announce(
+					Loc.getMessagePlural('TASKS_V2_ENTITIES_PICKER_LOADED_MORE', addedCount, {
+						'#COUNT#': addedCount,
+					}),
+				);
+			}
+		},
 		initObserver(): void
 		{
 			this.disconnectObserver();
@@ -233,9 +294,12 @@ export const TasksEntitiesPicker = {
 				}, timeOutHovers);
 			}
 		},
-		handleClickEntity(entity): void
+		handleClickEntity(entity, event): void
 		{
-			event.stopPropagation();
+			// A navigation row is a native <a href>: block the full page load so the
+			// consumer keeps routing it through the side panel.
+			event?.preventDefault();
+			event?.stopPropagation();
 			const entityId = entity && entity.id;
 
 			if (entityId)
@@ -297,7 +361,7 @@ export const TasksEntitiesPicker = {
 			if (entityVisualType === ENTITY_VISUAL_TYPES.IMAGE)
 			{
 				options = {
-					alt: 'Entity',
+					alt: '',
 					class: (classBase + ' tasks-entities-picker__entity-vis-item_img'),
 					src: entity.image,
 				};
@@ -325,17 +389,20 @@ export const TasksEntitiesPicker = {
 					<ul
 						v-if="entitiesList.length > 0"
 						class="tasks-entities-picker__items"
+						:aria-busy="listBusy"
 					>
 						<li
 							v-for="entity in entitiesList"
 							:key="entity.id"
 							class="tasks-entities-picker__item"
 						>
-							<button
+							<component
+								:is="getEntityTag(entity)"
 								:class="getClassesEntity(entity)"
+								v-bind="getEntityAttrs(entity)"
 								@mouseenter="() => handleMouseEnterEntity(entity.tooltip)"
 								@mouseleave="() => handleMouseLeaveEntity(entity.tooltip)"
-								v-on="entity.isEntityClickable ? {click: () => handleClickEntity(entity)} : {}"
+								v-on="getEntityListeners(entity)"
 							>
 								<div class="tasks-entities-picker__entity-vis">
 									<component
@@ -351,7 +418,7 @@ export const TasksEntitiesPicker = {
 										>{{ nameValue }}</span>
 									</span>
 								</p>
-							</button>
+							</component>
 							<p
 								v-if="entity.tag"
 								class="tasks-entities-picker__item-tag"

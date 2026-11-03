@@ -12,6 +12,7 @@ $MESS["IM_CREATE_CHAT_TITLE_PLACEHOLDER"] = "Enter chat name";
 $MESS["IM_CREATE_COLLAB_BANNER_TEXT_1"] = "Create a collab for spectacular results. Everything you need: chat, calls, files, tasks and calendar. All communication history is stored in your company's Bitrix24.";
 $MESS["IM_CREATE_COLLAB_BANNER_TEXT_2"] = "You can invite other users and guests as soon as you have created your collab. [learn-more]Learn more[/learn-more]";
 $MESS["IM_CREATE_COLLAB_BANNER_TITLE"] = "[learn-more]Collab[/learn-more] is a co-working space to collaborate with external guests and customers";
+$MESS["IM_CREATE_COLLAB_CHAT_BANNER_CLOSE_ARIA"] = "Close";
 $MESS["IM_CREATE_COLLAB_CHAT_BANNER_TEXT_MSGVER_1"] = "A project chat is visible to and can be accessed by the users added to the chat only.#BR#Adding a user to this chat will also add them to the project.";
 $MESS["IM_CREATE_COLLAB_CHAT_BANNER_TITLE"] = "Project chats";
 $MESS["IM_CREATE_COLLAB_CONFIRM"] = "Create collab";

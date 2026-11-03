@@ -2,6 +2,7 @@
  * @module crm/terminal/payment-pay/components/payment-button/button
  */
 jn.define('crm/terminal/payment-pay/components/payment-button/button', (require, exports, module) => {
+	const { Text2 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { PureComponent } = require('layout/pure-component');
@@ -63,10 +64,9 @@ jn.define('crm/terminal/payment-pay/components/payment-button/button', (require,
 						uri: this.iconUri,
 					}),
 				),
-				this.text && Text({
+				this.text && Text2({
 					style: {
 						color: AppTheme.colors.base1,
-						fontSize: 17,
 						fontWeight: '500',
 						flexShrink: 1,
 						...this.textStyles,

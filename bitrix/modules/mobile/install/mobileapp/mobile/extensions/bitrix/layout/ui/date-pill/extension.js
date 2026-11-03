@@ -5,6 +5,8 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { Moment } = require('utils/date');
+	const { Color } = require('tokens');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { chevronDown } = require('assets/common');
 	const { shortTime, dayShortMonth, mediumDate } = require('utils/date/formats');
 
@@ -62,7 +64,23 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 
 		get textColor()
 		{
-			return this.props.textColor ?? AppTheme.colors.base2;
+			return this.props.textColor ?? Color.base2;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get hasColorToken()
+		{
+			return Color.has(this.textColor);
+		}
+
+		/**
+		 * @return {string}
+		 */
+		get textColorHex()
+		{
+			return this.hasColorToken ? this.textColor.toHex() : this.textColor;
 		}
 
 		get fontSize()
@@ -133,21 +151,38 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 						style: {
 							fontSize: this.fontSize,
 							fontWeight: this.fontWeight,
-							color: this.textColor,
+							color: this.textColorHex,
 						},
 					}),
-					!this.isReadonly && Image({
-						tintColor: this.textColor,
-						svg: {
-							content: chevronDown(AppTheme.colors.base2, { box: true }),
-						},
-						style: {
-							width: this.imageSize,
-							height: this.imageSize,
-						},
-					}),
+					!this.isReadonly && this.renderChevron(),
 				),
 			);
+		}
+
+		renderChevron()
+		{
+			if (this.hasColorToken)
+			{
+				return IconView({
+					testId: 'DatePillChevron_icon',
+					icon: Icon.CHEVRON_DOWN,
+					size: this.imageSize,
+					color: this.textColor,
+				});
+			}
+
+			// a released crmmobile still passes a plain hex string, which IconView cannot tint:
+			// drop this branch once every consumer ships the token
+			return Image({
+				tintColor: this.textColor,
+				svg: {
+					content: chevronDown(this.textColor, { box: true }),
+				},
+				style: {
+					width: this.imageSize,
+					height: this.imageSize,
+				},
+			});
 		}
 
 		formatDate()

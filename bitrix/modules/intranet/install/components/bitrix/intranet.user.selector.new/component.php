@@ -16,6 +16,7 @@ if (!CModule::IncludeModule("intranet"))
 /** @var array $arResult */
 
 require_once('functions.php');
+require_once(__DIR__ . '/department_access.php');
 
 initBvar($arParams['MULTIPLE']); //allow multiple user selection
 initBvar($arParams['IS_EXTRANET']);
@@ -97,7 +98,7 @@ if ($bSubordinateOnly)
 $arStructure = $arSections = array();
 if ($arParams["DISPLAY_TAB_STRUCTURE"] == 'Y' && (!CModule::IncludeModule('extranet') || CExtranet::IsIntranetUser()) )
 {
-	$arStructure = CIntranetUtils::getSubStructure(0, 1);
+	$arStructure = CIntranetUtils::getSubStructure(0, $bSubordinateOnly ? 1 : false);
 	$arSections  = $arStructure['DATA'] ?? [];
 	$arStructure = $arStructure['TREE'] ?? [];
 
@@ -125,6 +126,43 @@ if ($arParams["DISPLAY_TAB_STRUCTURE"] == 'Y' && (!CModule::IncludeModule('extra
 			$arStructure[$iblockSectionId][] = $item['ID'];
 		}
 		unset($item);
+	}
+
+	$allowedDepartmentIds = IntranetUserSelectorDepartmentAccess::getAllowedDepartmentIdMap(
+		array_column($arSections, 'ID'),
+	);
+	if ($bSubordinateOnly)
+	{
+		$arSections = array_filter(
+			$arSections,
+			static fn(array $department): bool => isset($allowedDepartmentIds[(int)$department['ID']]),
+		);
+		$visibleStructure = [];
+		foreach ($arStructure as $parentId => $departmentIds)
+		{
+			if ((int)$parentId > 0 && !isset($allowedDepartmentIds[(int)$parentId]))
+			{
+				continue;
+			}
+			$departmentIds = array_values(array_filter(
+				$departmentIds,
+				static fn($id): bool => isset($allowedDepartmentIds[(int)$id]),
+			));
+			if ($departmentIds !== [])
+			{
+				$visibleStructure[$parentId] = $departmentIds;
+			}
+		}
+		$arStructure = $visibleStructure;
+	}
+	else
+	{
+		$visibleRootDepartmentIds = IntranetUserSelectorDepartmentAccess::getVisibleRootDepartmentIds(
+			$arSections,
+			$allowedDepartmentIds,
+		);
+		$arSections = array_intersect_key($arSections, array_fill_keys($visibleRootDepartmentIds, true));
+		$arStructure = $visibleRootDepartmentIds === [] ? [] : [0 => $visibleRootDepartmentIds];
 	}
 }
 

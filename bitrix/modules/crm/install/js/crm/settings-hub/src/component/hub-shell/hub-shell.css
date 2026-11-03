@@ -1,0 +1,59 @@
+.crm-settings-hub-shell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+	max-width: 100%;
+
+	/* Height of one AIR button row (ButtonSize.MEDIUM), measured. It is not a free number: both hubs
+	   put MEDIUM buttons in the panel slot, so this is the contract the consumer already keeps. It
+	   lives here only because the reservation below has to know the height of a bar that no longer
+	   takes part in the layout. Change it if the panel ever holds a different button size. */
+	--crm-settings-hub-panel-row-height: 34px;
+}
+
+/* Room for the bar. It is out of flow (see below), so without this the last card slides under it and
+   the whole column jumps up by the bar's height the moment the form goes dirty. */
+.crm-settings-hub-shell.--panel-fixed {
+	padding-bottom: calc(
+		2 * var(--ui-space-inset-sm) + var(--crm-settings-hub-panel-row-height) + 1px
+	);
+}
+
+.crm-settings-hub-shell__sections {
+	display: flex;
+	flex-direction: column;
+}
+
+/* The action bar is the shell's own bottom edge, not a box floating in the column. The surface, the
+   divider and the padding live HERE and not on CrmHubSavePanel because the consumers put a second
+   button (Удалить) next to that component, as its sibling: with the surface on the inner component
+   the white area hugged save+cancel only, and the delete button sat outside it on the page ground.
+   While the form is clean the slot is an ordinary block child of the shell and spans the content
+   column (582px, measured against the column's own 582px); `sticky` keeps whatever the consumer put
+   there — the delete button — at the bottom edge of that column. The dirty state takes it out of the
+   column entirely, see the rule below. */
+.crm-settings-hub-shell__panel {
+	position: sticky;
+	bottom: 0;
+}
+
+/* The consumer enables the fixed state together with CrmHubSavePanel. A clean form keeps whatever
+   else the consumer put in the slot standing on the page ground, exactly as before the bar existed.
+   The bar spans the SLIDER, not the content column (PM). `fixed` rather than a negative-margin bleed
+   because the column is not centred — the slider puts a 240px menu on its left and only the
+   scrollbar gutter on its right, so the usual `margin-inline: calc(50% - 50vw)` misses BOTH edges
+   (measured: it would land on -34 and 989 inside an 876 viewport). `fixed` does not need to know the
+   column's geometry at all. Its containing block stays the frame viewport because nothing in the
+   ancestor chain establishes another one — checked for transform / filter / perspective /
+   will-change / contain before writing this, the way the sticky diagnosis was checked in the commit
+   that introduced the bar. Measured after: x 0, width 862 in an 876 viewport — the missing 14px are
+   exactly the gutter the slider reserves, so the bar stops short of it instead of sliding under a
+   scrollbar when one appears. */
+.crm-settings-hub-shell.--panel-fixed .crm-settings-hub-shell__panel {
+	position: fixed;
+	inset: auto 0 0;
+	z-index: 1;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	background: var(--ui-color-bg-content-primary);
+	border-top: 1px solid var(--ui-color-divider-default);
+}

@@ -3,40 +3,90 @@ import { sendData } from 'ui.analytics';
 import { Core } from 'im.v2.application.core';
 import { ChatType, type ChatTypeItem } from 'im.v2.const';
 
-import { AnalyticsCategory, AnalyticsTool, AnalyticsEvent } from '../const';
+import { AnalyticsCategory, AnalyticsTool, AnalyticsEvent, AnalyticsSection } from '../const';
+import { getFolderSection } from '../helpers/get-folder-section';
+import { getLayoutName } from '../helpers/get-layout-name';
+
+type AnalyticsEventItem = $Values<typeof AnalyticsEvent>;
+type AnalyticsSectionItem = $Values<typeof AnalyticsSection>;
 
 export class RecentHeaderMenu
 {
-	onOpenUnreadMode(): void
+	onOpenUnreadMode(section: ?AnalyticsSectionItem = null): void
 	{
-		this.#sendData(ChatType.chat, AnalyticsEvent.openUnreadMode);
+		this.#sendListData(ChatType.chat, AnalyticsEvent.openUnreadMode, section);
 	}
 
-	onReadAllChats(): void
+	onReadAllChats(section: ?AnalyticsSectionItem = null): void
 	{
-		this.#sendData(ChatType.chat, AnalyticsEvent.readAllChats);
+		this.#sendListData(ChatType.chat, AnalyticsEvent.readAllChats, section);
 	}
 
-	onOpenTasksUnreadMode(): void
+	onOpenTasksUnreadMode(section: ?AnalyticsSectionItem = null): void
 	{
-		this.#sendData(ChatType.tasks, AnalyticsEvent.openUnreadMode);
+		this.#sendListData(ChatType.tasks, AnalyticsEvent.openUnreadMode, section);
 	}
 
-	onReadAllTaskChats(): void
+	onReadAllTaskChats(section: ?AnalyticsSectionItem = null): void
 	{
-		this.#sendData(ChatType.tasks, AnalyticsEvent.readAllChats);
+		this.#sendListData(ChatType.tasks, AnalyticsEvent.readAllChats, section);
 	}
 
-	#sendData(type: ChatTypeItem, event: $Values<typeof AnalyticsEvent>)
+	onOpenVibecodeAppUnreadMode(section: ?AnalyticsSectionItem = null): void
 	{
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		this.#sendListData(ChatType.vibecodeApp, AnalyticsEvent.openUnreadMode, section);
+	}
 
+	onReadAllVibecodeAppChats(section: ?AnalyticsSectionItem = null): void
+	{
+		this.#sendListData(ChatType.vibecodeApp, AnalyticsEvent.readAllChats, section);
+	}
+
+	onOpenProjectUnreadMode(): void
+	{
+		this.#sendSectionData(AnalyticsEvent.openUnreadMode, AnalyticsSection.project);
+	}
+
+	onReadAllProjectChats(): void
+	{
+		this.#sendSectionData(AnalyticsEvent.readAllChats, AnalyticsSection.project);
+	}
+
+	onOpenProjectTabUnreadMode(section: ?AnalyticsSectionItem = null): void
+	{
+		this.#sendSectionData(AnalyticsEvent.openUnreadMode, section ?? AnalyticsSection.projectTab);
+	}
+
+	onReadAllProjectTabChats(section: ?AnalyticsSectionItem = null): void
+	{
+		this.#sendSectionData(AnalyticsEvent.readAllChats, section ?? AnalyticsSection.projectTab);
+	}
+
+	#sendListData(type: ChatTypeItem, event: AnalyticsEventItem, section: ?AnalyticsSectionItem = null): void
+	{
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
+
+		this.#sendData({
+			type,
+			c_section: section ?? getFolderSection(currentLayout),
+			event,
+		});
+	}
+
+	#sendSectionData(event: AnalyticsEventItem, section: string): void
+	{
+		this.#sendData({
+			c_section: section,
+			event,
+		});
+	}
+
+	#sendData(params: { event: AnalyticsEventItem, c_section: string, type?: ChatTypeItem }): void
+	{
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.messenger,
-			type,
-			c_section: `${currentLayout}_tab`,
-			event,
+			...params,
 		});
 	}
 }

@@ -3,8 +3,10 @@ import { Extension, Type } from 'main.core';
 import { Filter } from './filter';
 import { UploaderError } from '../uploader-error';
 import { getImageSize } from '../helpers/image-size/get-image-size';
+import { isAcceptedImageFormat } from '../helpers/is-accepted-image-format';
 import { isResizableImage } from '../helpers/is-resizable-image';
 
+import { type ImageFormat } from '../helpers/image-size/image-format';
 import { type Uploader } from '../uploader';
 import { type UploaderFile } from '../uploader-file';
 import { type UploaderOptions } from '../types/uploader-options';
@@ -49,7 +51,22 @@ export class ImageSizeFilter extends Filter
 			}
 
 			getImageSize(file.getBinary() as File)
-				.then(({ width, height, animated }): void => {
+				.then(({ width, height, animated, contentFormat }): void => {
+					if (!this.#isContentFormatAccepted(contentFormat))
+					{
+						if (this.getIgnoreUnknownImageTypes())
+						{
+							file.setTreatImageAsFile(true);
+							resolve();
+						}
+						else
+						{
+							reject(new UploaderError('FILE_TYPE_NOT_ALLOWED'));
+						}
+
+						return;
+					}
+
 					file.setWidth(width);
 					file.setHeight(height);
 					file.setAnimated(animated === true);
@@ -111,6 +128,17 @@ export class ImageSizeFilter extends Filter
 					}
 				});
 		});
+	}
+
+	#isContentFormatAccepted(contentFormat: ImageFormat | undefined): boolean
+	{
+		// a format taken from the name is already checked against the list by FileTypeFilter
+		if (contentFormat === undefined)
+		{
+			return true;
+		}
+
+		return isAcceptedImageFormat(contentFormat, this.getUploader().getAcceptedFileTypes());
 	}
 
 	getImageMinWidth(): number

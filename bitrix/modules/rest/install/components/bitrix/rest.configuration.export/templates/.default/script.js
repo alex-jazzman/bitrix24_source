@@ -215,6 +215,7 @@
 						attrs: {
 							className: 'ui-btn ui-btn-lg ui-btn-primary start-btn',
 							href: download,
+							'data-testid': 'rest-configuration-export-download',
 							'data-slider-ignore-autobinding': 'true'
 						},
 						text: BX.message("REST_CONFIGURATION_DOWNLOAD_BTN")

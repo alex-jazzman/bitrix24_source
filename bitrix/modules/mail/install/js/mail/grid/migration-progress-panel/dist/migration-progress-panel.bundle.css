@@ -1,0 +1,280 @@
+.mail-migration-progress {
+	width: 100%;
+	box-sizing: border-box;
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-1);
+	white-space: normal;
+}
+
+.mail-migration-progress__layout {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-lg);
+}
+
+.mail-migration-progress__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.mail-migration-progress__title,
+.mail-migration-progress__stage-title,
+.mail-migration-progress__stage-description,
+.mail-migration-progress__hint p {
+	margin: 0;
+}
+
+.mail-migration-progress__title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.mail-migration-progress__summary {
+	margin-top: var(--ui-space-stack-2xs);
+	color: var(--ui-color-base-3);
+}
+
+.mail-migration-progress__live {
+	position: absolute;
+	width: var(--ui-size-3xs);
+	height: var(--ui-size-3xs);
+	padding: 0;
+	margin: var(--ui-space-inline-3xs-neg);
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+.mail-migration-progress__stage-card {
+	padding: var(--ui-space-inset-md);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.mail-migration-progress__stage-title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.mail-migration-progress__stage-description {
+	margin-top: var(--ui-space-stack-2xs);
+	color: var(--ui-color-base-3);
+}
+
+.mail-migration-progress__steps {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.mail-migration-progress__step {
+	position: relative;
+	min-width: 0;
+}
+
+.mail-migration-progress__step::before {
+	position: absolute;
+	top: calc(var(--ui-size-md) / 2);
+	left: 0;
+	right: 0;
+	height: var(--ui-size-3xs);
+	background: var(--ui-color-base-7);
+	content: '';
+}
+
+.mail-migration-progress__step:first-child::before {
+	left: 50%;
+}
+
+.mail-migration-progress__step:last-child::before {
+	right: 50%;
+}
+
+.mail-migration-progress__step[data-state="past"]::before {
+	background: var(--ui-color-accent-main-success);
+}
+
+.mail-migration-progress__step-button {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	width: 100%;
+	min-width: 0;
+	align-items: center;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font: inherit;
+	font-size: var(--ui-font-size-4xs);
+	line-height: var(--ui-font-line-height-2xs);
+	cursor: pointer;
+}
+
+.mail-migration-progress__step-button:disabled {
+	cursor: default;
+}
+
+.mail-migration-progress__step-dot {
+	display: grid;
+	width: var(--ui-size-md);
+	height: var(--ui-size-md);
+	box-sizing: border-box;
+	place-items: center;
+	border: var(--ui-size-3xs) solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-4);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.mail-migration-progress__step[data-state="past"] .mail-migration-progress__step-dot,
+.mail-migration-progress__step[data-state="reached"] .mail-migration-progress__step-dot {
+	border-color: var(--ui-color-accent-main-success);
+	background: var(--ui-color-accent-main-success);
+	color: var(--ui-color-design-filled-success-content);
+}
+
+.mail-migration-progress__step[data-state="current"] .mail-migration-progress__step-dot {
+	border-color: var(--ui-color-accent-main-primary);
+	background: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-design-filled-content);
+	box-shadow: 0 0 0 var(--ui-size-2xs) var(--ui-color-accent-soft-blue-2);
+}
+
+.mail-migration-progress__step[data-selected="true"] .mail-migration-progress__step-dot {
+	outline: var(--ui-size-3xs) solid var(--ui-color-accent-main-primary);
+	outline-offset: var(--ui-size-3xs);
+}
+
+.mail-migration-progress__step[data-state="past"] .mail-migration-progress__step-label,
+.mail-migration-progress__step[data-state="reached"] .mail-migration-progress__step-label {
+	color: var(--ui-color-accent-extra-grass);
+}
+
+.mail-migration-progress__step[data-state="current"] .mail-migration-progress__step-label {
+	color: var(--ui-color-accent-main-link);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.mail-migration-progress__step-button:focus-visible .mail-migration-progress__step-dot {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.mail-migration-progress__metrics {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding-top: var(--ui-space-inset-sm);
+	border-top: var(--ui-size-3xs) solid var(--ui-color-base-7);
+}
+
+.mail-migration-progress__details {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	margin: 0;
+}
+
+.mail-migration-progress__detail {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+}
+
+.mail-migration-progress__detail dt {
+	color: var(--ui-color-base-3);
+}
+
+.mail-migration-progress__detail dd {
+	margin: 0;
+	font-weight: var(--ui-font-weight-semi-bold);
+	text-align: right;
+}
+
+.mail-migration-progress__hint {
+	padding: var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-design-tinted-bg);
+	color: var(--ui-color-design-tinted-content-alt);
+}
+
+.mail-migration-progress__hint p + p {
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+.mail-migration-progress__manual-control {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	border: var(--ui-size-3xs) solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.mail-migration-progress__manual-description,
+.mail-migration-progress__manual-waiting {
+	margin: 0;
+}
+
+.mail-migration-progress__manual-description {
+	color: var(--ui-color-base-2);
+}
+
+.mail-migration-progress__manual-waiting {
+	color: var(--ui-color-base-3);
+}
+
+.mail-migration-progress__manual-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+@media (max-width: 520px) {
+	.mail-migration-progress__steps {
+		grid-template-columns: 1fr;
+		gap: var(--ui-space-stack-xs);
+	}
+
+	.mail-migration-progress__step::before {
+		top: 0;
+		bottom: var(--ui-space-stack-xs-neg);
+		left: calc(var(--ui-size-md) / 2);
+		right: auto;
+		width: var(--ui-size-3xs);
+		height: auto;
+	}
+
+	.mail-migration-progress__step:first-child::before {
+		left: calc(var(--ui-size-md) / 2);
+	}
+
+	.mail-migration-progress__step:last-child::before {
+		display: none;
+	}
+
+	.mail-migration-progress__step-button {
+		align-items: center;
+		flex-direction: row;
+		text-align: left;
+	}
+
+	.mail-migration-progress__manual-actions {
+		align-items: stretch;
+		flex-direction: column;
+	}
+}

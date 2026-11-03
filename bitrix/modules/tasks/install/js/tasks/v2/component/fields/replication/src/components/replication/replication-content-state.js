@@ -108,8 +108,10 @@ export const ReplicationContentState = {
 			class="tasks-replication-content-text-wrapper"
 			:readonly="readonly || (isEdit && !canEditLinkedTemplate)"
 			:withClear="!isEdit"
+			:clearAriaLabel="loc('TASKS_V2_REPLICATION_CLEAR_ARIA_LABEL')"
 			:style="{ background: isEdit ? 'none' : '' }"
 			noOffset
+			data-testid="tasks-replication-state"
 			@clear="clearReplication"
 		>
 			<TextMd 
@@ -120,9 +122,11 @@ export const ReplicationContentState = {
 			</TextMd>
 		</HoverPill>
 		<div v-if="isEdit && task.replicateParams" class="task-replication-content-control">
-			<div
+			<button
 				v-if="canToggle"
+				type="button"
 				class="tasks-replication-content-element"
+				data-testid="tasks-replication-toggle-btn"
 				@click.stop="toggleReplication"
 			>
 				<BIcon
@@ -130,11 +134,12 @@ export const ReplicationContentState = {
 					:size="20"
 					color="var(--ui-color-base-4)"
 					hoverable
+					aria-hidden="true"
 				/>
 				<TextSm className="tasks-replication-content-element-text">
 					{{ toggleText }}
 				</TextSm>
-			</div>
+			</button>
 			<div
 				v-else-if="!isReplicate"
 				class="tasks-replication-content-element"
@@ -149,9 +154,11 @@ export const ReplicationContentState = {
 					{{ loc('TASKS_V2_REPLICATION_ON_PAUSE') }}
 				</TextSm>
 			</div>
-			<div
+			<button
 				v-if="hasLinkedTemplate"
+				type="button"
 				class="tasks-replication-content-element"
+				data-testid="tasks-replication-open-template-btn"
 				@click.stop="openTemplate"
 			>
 				<BIcon
@@ -159,11 +166,12 @@ export const ReplicationContentState = {
 					:size="20"
 					color="var(--ui-color-base-4)"
 					hoverable
+					aria-hidden="true"
 				/>
 				<TextSm className="tasks-replication-content-element-text">
 					{{ loc('TASKS_V2_REPLICATION_OPEN_TEMPLATE') }}
 				</TextSm>
-			</div>
+			</button>
 		</div>
 	`,
 };

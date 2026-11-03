@@ -2,13 +2,19 @@ import { BIcon, Outline, Solid } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.solid';
 import { Type } from 'main.core';
 import { positionPopoverUnderTrigger, keepPopoverAnchored } from 'note.ui.popover-position';
+import { SUBSCRIPTION_MODE_SELF, SUBSCRIPTION_MODE_SUBTREE } from './subscription-api';
 
-// [P4.T1] Presentation half of the subscription bell: the trigger, the scope popover
+// Presentation half of the subscription bell: the trigger, the scope popover
 // (self / subtree / off), the inherited/muted layouts and the keyboard model. It owns no
 // transport and no loading - the state arrives as a prop (DTO-02 plus `inheritedTitle`) and the
 // chosen action leaves as an event. Two hosts share it: the editor's own container
 // (subscription-bell.js, which loads the state itself) and the row of the favorites block, whose
 // state comes from the sidebar store. There is deliberately no second copy of this choice.
+//
+// [TPL-01] `toggleOnly` degenerates the control into a two-way toggle: the trigger announces itself
+// with `aria-pressed` instead of promising a menu it would not open, and the press leaves as
+// `select-mode(toggleMode)` or `unsubscribe`. Which form a host asks for depends on how many modes
+// the product ships - the control itself knows nothing about that.
 //
 // [#10 rework] `role="menu"` with `menuitemradio`/`menuitem` rows and roving tabindex -
 // same pattern as note.ui.avatar-stack's co-authors menu (onParticipantsMenuKeydown):
@@ -28,16 +34,13 @@ import { positionPopoverUnderTrigger, keepPopoverAnchored } from 'note.ui.popove
 // (mirrors ViewsWidgetComponent / NoteAvatarStack).
 let instanceCounter = 0;
 
-const MODE_SELF = 'self';
-const MODE_SUBTREE = 'subtree';
-
 export const SubscriptionBellView = {
 	name: 'NoteDocumentHistorySubscriptionBellView',
 	components: {
 		BIcon,
 	},
 	props: {
-		// [DTO-02] `{ mode, subscribed, muted, inherited, inheritedSource }` plus the optional
+		// `{ mode, subscribed, muted, inherited, inheritedSource }` plus the optional
 		// `inheritedTitle` that names the covering source. An absent state reads as "nothing arrives".
 		state: {
 			type: Object,
@@ -47,6 +50,25 @@ export const SubscriptionBellView = {
 		isSaving: {
 			type: Boolean,
 			default: false,
+		},
+		// TPL-01: nothing to choose, so the press is the whole action - the popover does not open and
+		// the trigger hands the host one of the two events straight away. The host decides this (it is
+		// the half that knows the shipped modes); the popover and its four layouts stay here, unopened.
+		toggleOnly: {
+			type: Boolean,
+			default: false,
+		},
+		// What one press turns on in that form. The host names it; the default is the mode the product
+		// ships, taken from the dictionary rather than written here as a string.
+		toggleMode: {
+			type: String,
+			default: SUBSCRIPTION_MODE_SELF,
+		},
+		// Anchor of the trigger for e2e. The control has two hosts and each names its own surface, so
+		// the value comes from the host; empty - no attribute at all.
+		testId: {
+			type: String,
+			default: '',
 		},
 		// The trigger looks like a control of its host, so its classes come from the host. The active
 		// modifier is separate because the host's design system names it (`--on` in the activity line,
@@ -205,7 +227,7 @@ export const SubscriptionBellView = {
 				case 'muted':
 					return this.messages.activityMuted;
 				case 'direct':
-					return this.mode === MODE_SUBTREE
+					return this.mode === SUBSCRIPTION_MODE_SUBTREE
 						? this.messages.activitySubscribedSubtree
 						: this.messages.activitySubscribedSelf;
 				case 'inherited':
@@ -215,6 +237,19 @@ export const SubscriptionBellView = {
 				default:
 					return this.messages.activitySubscribe;
 			}
+		},
+		// [a11y] Accessible name of the trigger. In the toggle form the state is already announced by
+		// `aria-pressed`, so the name has to stay put: a name that changes with the state reads as a
+		// different control. The same function is named the same way by the star of this line and by the
+		// bells of the sidebar rows. The `title` keeps following the state - it is a hint, not a name.
+		bellName(): string
+		{
+			if (!this.toggleOnly)
+			{
+				return this.bellTitle;
+			}
+
+			return this.messages.activityNotifyState || this.bellTitle;
 		},
 		radioGroupName(): string
 		{
@@ -227,13 +262,13 @@ export const SubscriptionBellView = {
 			switch (this.popoverState)
 			{
 				case 'direct':
-					return [MODE_SELF, MODE_SUBTREE, 'off'];
+					return [SUBSCRIPTION_MODE_SELF, SUBSCRIPTION_MODE_SUBTREE, 'off'];
 				case 'inherited':
 					return ['mute'];
 				case 'muted':
 					return ['resume'];
 				default:
-					return [MODE_SELF, MODE_SUBTREE];
+					return [SUBSCRIPTION_MODE_SELF, SUBSCRIPTION_MODE_SUBTREE];
 			}
 		},
 	},
@@ -253,6 +288,31 @@ export const SubscriptionBellView = {
 		this.detachPopoverAnchor();
 	},
 	methods: {
+		handleTriggerClick(): void
+		{
+			if (this.toggleOnly)
+			{
+				this.toggleSubscription();
+
+				return;
+			}
+
+			this.toggleOpen();
+		},
+		// [TPL-01] The two-way form: what is on goes off, what is off goes on in the host's mode. The
+		// popover is not opened - neither here nor from the keyboard, since Enter/Space on the trigger
+		// arrive as this same click.
+		toggleSubscription(): void
+		{
+			if (this.effectiveOn)
+			{
+				this.unsubscribe();
+
+				return;
+			}
+
+			this.selectMode(this.toggleMode);
+		},
 		toggleOpen(): void
 		{
 			if (this.isOpen)
@@ -268,7 +328,7 @@ export const SubscriptionBellView = {
 			// [#10] Roving focus starts on the checked option (or the first row when
 			// unsubscribed) - mirrors the previous "focus the checked radio" behaviour, now
 			// expressed as a menu row index. [#5] Position centered under the trigger.
-			const startIndex = this.popoverState === 'direct' && this.mode === MODE_SUBTREE ? 1 : 0;
+			const startIndex = this.popoverState === 'direct' && this.mode === SUBSCRIPTION_MODE_SUBTREE ? 1 : 0;
 			this.activeIndex = startIndex;
 			this.$nextTick(() => {
 				positionPopoverUnderTrigger(this.$refs.bellTrigger, this.$refs.bellPopover);
@@ -459,7 +519,7 @@ export const SubscriptionBellView = {
 			this.closePopover(true);
 			if (this.subscribed && this.mode === mode)
 			{
-				// [AC-043] The mode already in force is not re-sent: the press only closes the popover.
+				// The mode already in force is not re-sent: the press only closes the popover.
 				return;
 			}
 
@@ -504,11 +564,13 @@ export const SubscriptionBellView = {
 				type="button"
 				:class="triggerClasses"
 				:title="bellTitle"
-				:aria-label="bellTitle"
-				aria-haspopup="menu"
-				:aria-expanded="isOpen ? 'true' : 'false'"
+				:aria-label="bellName"
+				:data-testid="testId || null"
+				:aria-haspopup="toggleOnly ? null : 'menu'"
+				:aria-expanded="toggleOnly ? null : (isOpen ? 'true' : 'false')"
+				:aria-pressed="toggleOnly ? (effectiveOn ? 'true' : 'false') : null"
 				:aria-controls="isOpen ? bellPopoverId : null"
-				@click.stop="toggleOpen"
+				@click.stop="handleTriggerClick"
 			>
 				<BIcon :name="iconName" :class="iconClass" aria-hidden="true" />
 			</button>

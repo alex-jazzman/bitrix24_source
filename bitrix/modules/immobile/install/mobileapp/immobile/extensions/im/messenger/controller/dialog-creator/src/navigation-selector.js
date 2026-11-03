@@ -101,7 +101,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 
 						if (Feature.isNestedChatAvailable)
 						{
-							this.sendAnalyticsStartCreate(Analytics.Category.project, Analytics.Type.project);
+							this.sendAnalyticsStartCreate(Analytics.Category.project, Analytics.Type.Tab.project);
 							await ProjectCreateManager.open({
 								rootLayoutWidget: this.layout,
 							}, this.layout);
@@ -110,7 +110,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						}
 
 						const { openCollabCreate } = await requireLazy('collab/create');
-						this.sendAnalyticsStartCreate(Analytics.Category.collab, Analytics.Type.collab);
+						this.sendAnalyticsStartCreate(Analytics.Category.project, Analytics.Type.Tab.project);
 						await openCollabCreate({}, this.layout);
 					}
 					catch (error)
@@ -119,15 +119,11 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					}
 				},
 				onCreateFolder: () => {
-					AnalyticsService.getInstance().sendClickCreateFolder(Analytics.SubSection.createBox);
+					AnalyticsService.getInstance().sendClickCreateFolder(Analytics.Section.createBox);
 					new FolderCreate().open(this.layout);
 				},
 				onCreateCopilot: debounce(() => {
-					this.sendAnalyticsStartCreate(
-						Analytics.Category.copilot,
-						Analytics.Type.copilot,
-						Analytics.Section.chatTab,
-					);
+					this.sendAnalyticsStartCreate(Analytics.Category.copilot, Analytics.Type.copilot);
 
 					const fields = {
 						type: DialogType.copilot.toUpperCase(),
@@ -211,10 +207,10 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 			layoutWidget.enableNavigationBarBorder(false);
 		}
 
-		sendAnalyticsStartCreate(category, type, section)
+		sendAnalyticsStartCreate(category, type)
 		{
 			AnalyticsService.getInstance()
-				.sendStartCreation({ category, type, section })
+				.sendStartCreation({ category, type })
 			;
 		}
 

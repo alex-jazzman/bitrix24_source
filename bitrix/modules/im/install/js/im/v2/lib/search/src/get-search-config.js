@@ -1,4 +1,4 @@
-import type { SearchConfig, EntitySelectorRequestConfig } from './types/types';
+import { type SearchConfig, type EntitySelectorRequestConfig } from './types/types';
 
 export const EntityId = 'im-recent-v2';
 const ContextId = 'IM_CHAT_SEARCH';
@@ -9,6 +9,9 @@ export const getSearchConfig = (searchConfig: SearchConfig): EntitySelectorReque
 		entityId = EntityId,
 		contextId = ContextId,
 		searchDialogId = SearchDialogId,
+		// Fields of the ui.EntitySelector entity itself (e.g. fillRecentItems) are lifted onto the
+		// entity; everything else goes to entity.options as provider options.
+		entityConfig = {},
 		...entityOptions
 	} = searchConfig;
 
@@ -16,6 +19,7 @@ export const getSearchConfig = (searchConfig: SearchConfig): EntitySelectorReque
 		id: entityId,
 		dynamicLoad: true,
 		dynamicSearch: true,
+		...entityConfig,
 		options: entityOptions,
 	};
 

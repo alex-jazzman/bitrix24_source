@@ -41,6 +41,7 @@ export class Document
 						const previousNumber = response.data.documents[0].number;
 						showMessage(Loc.getMessage('DOCGEN_PREVIEW_DO_USE_OLD_NUMBER'), [
 							new PopupWindowButton({
+								id: 'documentgenerator-preview-number-new',
 								text: Loc.getMessage('DOCGEN_PREVIEW_NEW_BUTTON'),
 								className: 'ui-btn ui-btn-md ui-btn-primary',
 								events: {
@@ -51,6 +52,7 @@ export class Document
 								},
 							}),
 							new PopupWindowButton({
+								id: 'documentgenerator-preview-number-previous',
 								text: Loc.getMessage('DOCGEN_PREVIEW_OLD_BUTTON'),
 								className: 'ui-btn ui-btn-md ui-btn-primary',
 								events: {
@@ -114,20 +116,27 @@ export class Document
 				else
 				{
 					Document.askAboutUsingPreviousDocumentNumber(provider, templateId, value, (previousNumber) => {
-						if (previousNumber)
-						{
-							viewUrl = BX.util.add_url_param(viewUrl, { number: previousNumber });
-						}
-						openUrl(viewUrl, loaderPath, sliderWidth);
+						const targetViewUrl = previousNumber
+							? BX.util.add_url_param(viewUrl, { number: previousNumber })
+							: viewUrl
+						;
+						openUrl(targetViewUrl, loaderPath, sliderWidth);
 					});
 				}
 			}).catch((reason) => {
 				showMessage(
 					reason.errors.map((error) => error.message).join('<br>'),
 					[new PopupWindowButton({
+						id: 'documentgenerator-preview-continue',
 						text: Loc.getMessage('DOCGEN_PREVIEW_CONTINUE_BUTTON'),
 						className: 'ui-btn ui-btn-md ui-btn-success',
-						events: { click(e) { this.popupWindow.close(); BX.PreventDefault(e); } },
+						events: {
+							click(e) {
+								this.popupWindow.close();
+								e.preventDefault();
+								e.stopPropagation();
+							},
+						},
 					})],
 					Loc.getMessage('DOCGEN_PREVIEW_PRINT_TITLE'),
 				);

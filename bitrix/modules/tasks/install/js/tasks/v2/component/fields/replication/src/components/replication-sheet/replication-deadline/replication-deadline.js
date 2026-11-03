@@ -121,10 +121,17 @@ export const ReplicationDeadline = {
 				<span>
 					{{ loc('TASKS_V2_REPLICATION_DEADLINE') }}
 				</span>
-				<HoverPill textOnly noOffset ref="deadline">
-					<span class="tasks-field-replication-link" @click="isDeadlinePopupShown = true">
-						{{ deadlineLabel }}
-					</span>
+				<HoverPill
+					textOnly
+					noOffset
+					:ariaLabel="loc('TASKS_V2_REPLICATION_DEADLINE')"
+					:ariaHaspopup="'dialog'"
+					:ariaExpanded="isDeadlinePopupShown"
+					data-testid="tasks-replication-deadline-btn"
+					ref="deadline"
+					@click="isDeadlinePopupShown = true"
+				>
+					<span class="tasks-field-replication-link">{{ deadlineLabel }}</span>
 				</HoverPill>
 				<DeadlineAfterPopup
 					v-if="isDeadlinePopupShown"

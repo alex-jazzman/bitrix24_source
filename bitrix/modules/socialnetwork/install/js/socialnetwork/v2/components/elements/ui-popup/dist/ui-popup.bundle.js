@@ -29,7 +29,10 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 		},
 		computed: {
 			popupContainer() {
-				return `#popup-window-content-${this.id}`;
+				// teleport to the element node, not a `#id` selector: the content element is
+				// created by this component and lives in a Vue-managed container, so a
+				// querySelector lookup can miss it at mount time (e.g. inside a slider body)
+				return this.getPopupInstance().getContentContainer();
 			},
 			container() {
 				return this.getPopupInstance().getPopupContainer();

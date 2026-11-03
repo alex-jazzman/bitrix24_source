@@ -1,18 +1,39 @@
 .ui-access-rights-v2-cell-popup-header-role-container {
 	display: flex;
 	align-items: center;
-}
-
-.ui-access-rights-v2-cell-popup-header-role-caption {
-	font-size: var(--ui-font-size-xs);
-	color: var(--ui-color-palette-gray-40);
+	gap: 4px;
+	flex: 1;
+	min-width: 0;
 }
 
 .ui-access-rights-v2-cell-popup-header-role-title {
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-1, #333);
 }
 
 .ui-access-rights-v2-cell-popup-header-role-title.ui-access-rights-v2-text-ellipsis {
 	max-width: 250px;
+}
+
+.ui-access-rights-v2-cell-popup-header-role-members {
+	display: flex;
+	align-items: center;
+	padding-left: 4px;
+}
+
+.ui-access-rights-v2-cell-popup-header-role-members .ui-access-rights-v2-members-item {
+	width: 20px;
+	height: 20px;
+	margin-left: -2px;
+}
+
+.ui-access-rights-v2-cell-popup-header-role-members .ui-access-rights-v2-members-item:first-child {
+	margin-left: 0;
+}
+
+.ui-access-rights-v2-cell-popup-header-role-members .ui-access-rights-v2-members-item-avatar {
+	width: 20px;
+	height: 20px;
 }

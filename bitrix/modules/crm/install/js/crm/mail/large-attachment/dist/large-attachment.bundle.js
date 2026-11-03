@@ -42,6 +42,7 @@ this.BX.Crm = this.BX.Crm || {};
 	const CrmLargeAttachmentErrorCode = Object.freeze({
 		NoSpace: 'MAIL_LA_NO_SPACE',
 		DiskUnavailable: 'MAIL_LA_DISK_UNAVAILABLE',
+		DiskFeatureUnavailable: 'MAIL_LA_DISK_FEATURE_UNAVAILABLE',
 		LinkUnavailable: 'MAIL_LA_LINK_UNAVAILABLE',
 		AccessDenied: 'MAIL_LA_ACCESS_DENIED',
 		InvalidContext: 'MAIL_LA_INVALID_CONTEXT',
@@ -128,7 +129,7 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#showAlert(messageKey, false);
 		}
 		showError(code, onRetry) {
-			if (code === CrmLargeAttachmentErrorCode.TariffUnavailable) {
+			if (code === CrmLargeAttachmentErrorCode.TariffUnavailable || code === CrmLargeAttachmentErrorCode.DiskFeatureUnavailable) {
 				this.showTariffUnavailable();
 				return;
 			}

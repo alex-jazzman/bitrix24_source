@@ -46,6 +46,19 @@ export const UnreadModeManager = {
 			this.removeDialogIdBySections({ recentSections: [recentType], dialogId, parentChatId });
 		});
 	},
+	removeAllClosedChats()
+	{
+		const entries = Core.getStore().getters['recent/getUnreadIndexEntries']();
+
+		entries.forEach(({ recentSection, dialogId, parentChatId }) => {
+			if (Core.getStore().getters['application/isChatOpen'](dialogId))
+			{
+				return;
+			}
+
+			this.removeDialogIdBySections({ recentSections: [recentSection], dialogId, parentChatId });
+		});
+	},
 };
 
 function hasChatCounter(chatId: number): boolean

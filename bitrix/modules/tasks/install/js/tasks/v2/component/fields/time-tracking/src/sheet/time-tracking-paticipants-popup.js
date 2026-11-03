@@ -56,6 +56,9 @@ export const TimeTrackingParticipantsPopup = {
 				offsetTop: 8,
 				offsetLeft: -18,
 				targetContainer: document.body,
+				focusTrap: true,
+				closeByEsc: true,
+				ariaLabel: this.loc('TASKS_V2_TIME_TRACKING_PARTICIPANTS_ARIA_LABEL'),
 			};
 		},
 	},

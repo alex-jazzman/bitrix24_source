@@ -22,6 +22,7 @@ import { extractErrorMessage } from '../../utils/error-message';
 import { showErrorToast } from '../../utils/show-error-toast';
 import { ImportMdErrorCode } from '../../feature/import/import-md-service';
 import { FileUploadService } from '../../services/file-upload-service';
+import { buildInternalDocumentUrl } from '../../utils/internal-link';
 
 export const NoteDocumentPageComponent = {
 	name: 'NoteDocumentPage',
@@ -75,6 +76,10 @@ export const NoteDocumentPageComponent = {
 		markdownIoEnabled: { default: false },
 		// Gates every way to reach the shortcuts help: button, `?`/`Cmd+/` listener, panel.
 		hotkeysEnabled: { default: false },
+		// Gates the Disk source of the editor's file button. Injected here, in note.app's own app, and
+		// handed to the editor as a prop below: the editor lives in a separate app where this provide
+		// does not reach.
+		diskAttachmentsEnabled: { default: false },
 	},
 	data()
 	{
@@ -83,12 +88,12 @@ export const NoteDocumentPageComponent = {
 			feature: null,
 			actionMenuService: null,
 			Outline,
-			// [P1.T5] History sidebar open/closed — purely local UI state, not persisted.
+			// History sidebar open/closed - purely local UI state, not persisted.
 			historyOpen: false,
 			// Hotkeys help panel open/closed. Mutually exclusive with the history sidebar — both are
 			// the single right-hand rail (see openHotkeys / openHistory). Purely local UI state.
 			hotkeysOpen: false,
-			// [EVENT-02] Last seen occupant of the right rail, including our own announcements. Two
+			// Last seen occupant of the right rail, including our own announcements. Two
 			// jobs: deciding whether an `owner: null` of ours would clobber someone else's claim, and
 			// driving the shift of the floating hotkeys button.
 			railOwner: null,
@@ -121,14 +126,15 @@ export const NoteDocumentPageComponent = {
 			onOpenInternalLink: (payload) => this.handleOpenInternalLink(payload),
 			onHardDelete: ({ mode }) => this.handleRemoteHardDelete(mode),
 			onAccessRevoked: () => this.handleAccessRevoked(),
-			// [P1.T5 relocation] The activity line's chip now lives inside the editor's own
+			// The activity line's chip now lives inside the editor's own
 			// Vue app (see note-editor.js) — bridge its click back to this component's local
 			// historyOpen state, same as it did when ActivityLineComponent was mounted here.
 			// [#3] A repeat click toggles the sidebar closed instead of always (re-)opening it.
 			onOpenHistory: () => this.toggleHistory(),
-			// [P8.T2/T3] Bootstrap UI flags threaded to the isolated editor app (chip + bell).
+			// Bootstrap UI flags threaded to the isolated editor app (chip + bell).
 			historyEnabled: Boolean(this.sidebarState?.historyEnabled),
 			notificationsEnabled: Boolean(this.sidebarState?.notificationsEnabled),
+			diskAttachmentsEnabled: Boolean(this.diskAttachmentsEnabled),
 		});
 		this.actionMenuService = markRaw(new DocumentActionMenuService(this.feature?.messages ?? {}));
 	},
@@ -181,16 +187,21 @@ export const NoteDocumentPageComponent = {
 		{
 			return Boolean(this.sidebarState?.isMobile);
 		},
-		// [P8.T2] history_enabled bootstrap flag (from the injected sidebar root state). Gates the
+		// history_enabled bootstrap flag (from the injected sidebar root state). Gates the
 		// version-timeline panel and the chip's history-open path.
 		historyEnabled(): boolean
 		{
 			return Boolean(this.sidebarState?.historyEnabled);
 		},
-		// [P8.T3] notifications_enabled bootstrap flag — gates the subscription bell.
+		// notifications_enabled bootstrap flag - gates the subscription bell.
 		notificationsEnabled(): boolean
 		{
 			return Boolean(this.sidebarState?.notificationsEnabled);
+		},
+		// Which optional features the shortcuts panel may advertise (see its `features` prop).
+		enabledHotkeyFeatures(): Array<string>
+		{
+			return this.diskAttachmentsEnabled ? ['diskAttachments'] : [];
 		},
 		canEditCollection(): boolean
 		{
@@ -340,7 +351,7 @@ export const NoteDocumentPageComponent = {
 			document.addEventListener('keydown', this.handleHelpKeydown, true);
 		}
 
-		// [EVENT-02] The event only carries CHANGES, and the chat can already be open before this page
+		// The event only carries CHANGES, and the chat can already be open before this page
 		// exists: opened on the workspace root, then a document is opened from the tree. Without this
 		// initial read the floating button would come up unshifted, right on top of the open panel.
 		this.railOwner = this.sidebarState?.aiChatOpen === true ? NoteRailOwner.AI_CHAT : null;
@@ -378,7 +389,7 @@ export const NoteDocumentPageComponent = {
 		{
 			this.feature?.scrollToParticipant?.(userId);
 		},
-		// [EVENT-02] Claim the rail for one of our two panels.
+		// Claim the rail for one of our two panels.
 		announceRail(owner: string): void
 		{
 			EventEmitter.emit(NoteEvent.RAIL_OCCUPANCY_CHANGED, new BaseEvent({ data: { owner } }));
@@ -421,7 +432,7 @@ export const NoteDocumentPageComponent = {
 		},
 		openHistory(): void
 		{
-			// [P8.T2] history_enabled off — the timeline entry point is closed; keep it a no-op.
+			// history_enabled off - the timeline entry point is closed; keep it a no-op.
 			if (!this.historyEnabled)
 			{
 				return;
@@ -431,7 +442,7 @@ export const NoteDocumentPageComponent = {
 			// one closes the other.
 			this.hotkeysOpen = false;
 			this.historyOpen = true;
-			// [EVENT-02] Claim the rail: the chat, the third resident, collapses on this.
+			// Claim the rail: the chat, the third resident, collapses on this.
 			this.announceRail(NoteRailOwner.HISTORY);
 		},
 		// Reuses the mention-chip navigation contract (open-link.js): native user card in the
@@ -456,7 +467,7 @@ export const NoteDocumentPageComponent = {
 		// [#3] The chip's own toggle: open when closed, close (same as the X button) when already open.
 		toggleHistory(): void
 		{
-			// [P8.T2] history_enabled off — no timeline at all.
+			// history_enabled off - no timeline at all.
 			if (!this.historyEnabled)
 			{
 				return;
@@ -477,7 +488,7 @@ export const NoteDocumentPageComponent = {
 			this.historyOpen = false;
 			this.exitPreview();
 			this.hotkeysOpen = true;
-			// [EVENT-02] The hotkeys panel is a rail resident too — without this claim it and the chat
+			// The hotkeys panel is a rail resident too - without this claim it and the chat
 			// could be expanded at the same time, squeezing the document with two columns.
 			this.announceRail(NoteRailOwner.HOTKEYS);
 			// Remember where focus came from: the global shortcut can fire from anywhere on the page, and
@@ -684,7 +695,7 @@ export const NoteDocumentPageComponent = {
 				baseMarkdown: this.previewBaseMarkdown,
 			});
 		},
-		// [P1.T2 client flow, SDD 455-468] Relocated from VersionTimelineComponent (see that
+		// Relocated from VersionTimelineComponent (see that
 		// extension's history — this used to live in the sidebar's own restore button). Always
 		// compact the pending patch window before restoring; a 409 NOTE_RESTORE_DIRTY_WINDOW means
 		// a patch landed in the gap, so compact once more and retry exactly once.
@@ -800,7 +811,7 @@ export const NoteDocumentPageComponent = {
 		{
 			this.$router.replace({ name: 'home' });
 		},
-		handleOpenInternalLink(payload: Object): void
+		handleOpenInternalLink(payload: Object): mixed
 		{
 			if (!payload)
 			{
@@ -855,7 +866,8 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
-			const hash = String(payload.hash || '').trim();
+			const rawHash = String(payload.hash || '').trim();
+			const hash = rawHash.startsWith('#') ? rawHash.slice(1) : rawHash;
 
 			if (Number(this.documentId) === id)
 			{
@@ -872,16 +884,16 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
-			const target = { name: 'document', params: { id } };
-			if (hash !== '')
+			if (!Type.isFunction(this.documentActions?.openInternalDocument))
 			{
-				target.hash = `#${hash}`;
+				return 'rejected';
 			}
 
-			// Navigation to another document via internal link / mention.
-			NoteAnalytics.documentViewed('document');
-
-			this.$router.push(target);
+			return this.documentActions.openInternalDocument({
+				id,
+				hash,
+				origin: payload.origin === 'keyboard' ? 'keyboard' : 'pointer',
+			});
 		},
 		buildDocumentLink(): string
 		{
@@ -891,9 +903,7 @@ export const NoteDocumentPageComponent = {
 				return '';
 			}
 
-			const { origin } = window.location;
-
-			return `${origin}/note/document/${id}/`;
+			return buildInternalDocumentUrl(id, { absolute: true });
 		},
 		async copyDocumentLink(): Promise<void>
 		{
@@ -1136,6 +1146,7 @@ export const NoteDocumentPageComponent = {
 				<HotkeysPanelComponent
 					v-if="hotkeysEnabled"
 					:open="hotkeysOpen"
+					:features="enabledHotkeyFeatures"
 					@close="closeHotkeys"
 				/>
 			</teleport>

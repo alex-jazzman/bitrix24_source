@@ -49,4 +49,11 @@ $MESS["IBLOCK_OFFER_FIELD_ACTIVE_PERIOD_TO"] = "Окончание активн�
 $MESS["CP_TPL_CCR_RANGE_TO"] = "до #TO#";
 $MESS["CP_TPL_CCR_RANGE_FROM"] = "от #FROM#";
 $MESS["CP_TPL_CCR_RANGE_FULL"] = "от #FROM# до #TO#";
+$MESS["CATALOG_COMPARE_TABLE_CAPTION"] = "Сравнение товаров по характеристикам";
+$MESS["CATALOG_COMPARE_NO_VALUE"] = "Нет значения";
+$MESS["CATALOG_COMPARE_BUY_FOR"] = "Купить #NAME#";
+$MESS["CATALOG_REMOVE_PRODUCT_FOR"] = "Удалить #NAME# из сравнения";
+$MESS["CATALOG_COMPARE_SCROLL_REGION"] = "Таблица сравнения с горизонтальной прокруткой";
+$MESS["CATALOG_COMPARE_ANNOUNCE_REMOVED"] = "Товар удалён из сравнения, осталось товаров: #COUNT#";
+$MESS["CATALOG_COMPARE_ANNOUNCE_PARAMS"] = "Набор характеристик изменён, строк в таблице: #COUNT#";
 ?>

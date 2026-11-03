@@ -1,6 +1,9 @@
 import { Loc, Text } from 'main.core';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { Core } from 'im.v2.application.core';
+import { IconButton } from 'im.v2.component.elements.icon-button';
+import { Color } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
 
 import '../css/message-panel.css';
@@ -13,6 +16,7 @@ const MESSAGE_DISPLAY_LIMIT = 5;
 // @vue/component
 export const ForwardPanel = {
 	name: 'ForwardPanel',
+	components: { IconButton },
 	props:
 	{
 		context: {
@@ -23,6 +27,8 @@ export const ForwardPanel = {
 	emits: ['close'],
 	computed:
 	{
+		OutlineIcons: () => OutlineIcons,
+		closeIconColor: () => Color.gray90,
 		forwardContext(): PanelContextWithMultipleIds
 		{
 			return this.context;
@@ -155,7 +161,7 @@ export const ForwardPanel = {
 		},
 	},
 	template: `
-		<div class="bx-im-message-panel__container">
+		<div class="bx-im-message-panel__container" data-testid="im-textarea-forward-panel">
 			<div class="bx-im-message-panel__icon --forward"></div>
 			<div class="bx-im-message-panel__content">
 				<div class="bx-im-message-panel__title">{{ titleText }}</div>
@@ -167,7 +173,14 @@ export const ForwardPanel = {
 					<span class="bx-im-message-panel__forward-message-text">{{ messageText }}</span>
 				</div>
 			</div>
-			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
+			<IconButton
+				class="bx-im-message-panel__close"
+				:iconName="OutlineIcons.CROSS_L"
+				:iconColor="closeIconColor"
+				:label="loc('IM_TEXTAREA_FORWARD_PANEL_CLOSE_ARIA')"
+				data-testid="im-textarea-forward-panel-close-btn"
+				@click="$emit('close')"
+			/>
 		</div>
 	`,
 };

@@ -1,4 +1,4 @@
-import { Dom, Event, Text, Type } from 'main.core';
+import { Dom, Event, Loc, Text, Type } from 'main.core';
 import { normalizeImageUrl } from '../image-url';
 
 type GalleryOptions = {
@@ -90,10 +90,13 @@ export class GalleryBlock
 			return '';
 		}
 
+		const navPrevLabel = Text.encode(Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_GALLERY_NAV_PREV'));
+		const navNextLabel = Text.encode(Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_GALLERY_NAV_NEXT'));
+
 		return `
 			<div class="report__row">
 				<div class="report__gallery" data-role="gallery">
-					<button class="report-gallery__nav report-gallery__nav--left" type="button" aria-label="Назад" data-role="prev">
+					<button class="report-gallery__nav report-gallery__nav--left" type="button" aria-label="${navPrevLabel}" data-role="prev">
 						<div class="ui-icon-set --chevron-left-l"></div>
 					</button>
 
@@ -103,7 +106,7 @@ export class GalleryBlock
 						</div>
 					</div>
 
-					<button class="report-gallery__nav report-gallery__nav--right" type="button" aria-label="Вперёд" data-role="next">
+					<button class="report-gallery__nav report-gallery__nav--right" type="button" aria-label="${navNextLabel}" data-role="next">
 						<div class="ui-icon-set --chevron-right-l"></div>
 					</button>
 

@@ -26,7 +26,8 @@ export type BaseBlockElementType =
 	| BulletListBlockElementType
 	| CardBlockElementType
 	| InlineElementBlockType
-	| AiAssistantSearchBlockElementType;
+	| AiAssistantSearchBlockElementType
+	| FormBlockElementType;
 
 export type TitleBlockElementType = {
 	id: string,
@@ -112,13 +113,13 @@ export type GalleryBlockElementType = {
 export type AudioBlockElementType = {
 	id: string,
 	type: 'audio',
-	diskId: number,
+	fileId: number,
 }
 
 export type FileBlockElementType = {
 	id: string,
 	type: 'file',
-	diskId: number,
+	fileIds: Array<number>,
 }
 
 export type ContextBlockElementType = {
@@ -190,6 +191,12 @@ export type RequestButtonType = {
 	design?: CardButtonDesignType,
 	actionId: string,
 	actionParams?: object,
+	/** transient client-side lock state during a form submit; never sent to the server */
+	disabled?: boolean,
+	/** transient client-side loader state during a form submit; never sent to the server */
+	hasLoader?: boolean,
+	/** client-only marker: disabled/hasLoader were set transiently by the submit lock */
+	isTransientDisabled?: boolean,
 }
 
 export type CardButtonDesignType = 'FILLED' | 'OUTLINE_ACCENT_2' | 'PLAIN_NO_ACCENT';
@@ -199,7 +206,32 @@ export type AiAssistantSearchBlockElementType = {
 	type: 'aiAssistantSearch',
 	title: string,
 	text: string,
+	progress?: BlockProgressType,
 }
+
+export type BlockProgressType = {
+	value: number,
+	colorToken?: BlockColorToken,
+}
+
+export type FormBlockElementType = {
+	id: string,
+	type: 'form',
+	elements: Array<FormFieldType>,
+	buttons: Array<Array<RequestButtonType>>,
+}
+
+export type FormFieldType = {
+	id: string,
+	type: FormFieldTypeValue,
+	label?: string | null,
+	placeholder?: string | null,
+	options?: Array<{ id: string, label: string }>,
+	disabled: boolean,
+	/** client-only marker: disabled was set transiently by the submit lock */
+	isTransientDisabled?: boolean,
+}
+export type FormFieldTypeValue = 'singleLineText' | 'multilineText' | 'select' | 'radio' | 'checkbox';
 
 export type InlineElementBlockType =
 	| { type: 'user', userId: string, name?: string, avatarUrl?: string }

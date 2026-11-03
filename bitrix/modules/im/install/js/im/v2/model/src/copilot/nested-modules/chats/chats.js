@@ -3,9 +3,14 @@ import { BuilderModel, type GetterTree, type ActionTree, type MutationTree, type
 
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
-import { ChatType } from 'im.v2.const';
+import { ChatType, CopilotGenerationStatus, CopilotMcpSelectionStatus } from 'im.v2.const';
 
-import { type ImModelCopilotAIModel, type ImModelCopilotRole, type ImModelCopilotMcpAuth } from '../../../registry';
+import {
+	type ImModelCopilotAIModel,
+	type ImModelCopilotRole,
+	type ImModelCopilotMcpAuth,
+	type ImModelCopilotGenerationState,
+} from '../../../registry';
 import { formatFieldsWithConfig } from '../../../utils/validate';
 import { chatFieldsConfig } from './field-config';
 
@@ -23,6 +28,16 @@ type CopilotChat = {
 	forceSearchEnabled: boolean,
 	agentModeEnabled: boolean,
 	mcpAuth: ?ImModelCopilotMcpAuth,
+	mcpAuthConfirmed: boolean,
+	mcpSelectionStatus: string,
+	mcpSelectionLoaded: boolean,
+	generationState: ?ImModelCopilotGenerationState,
+}
+
+type SetMcpAuthPayload = {
+	dialogId: string,
+	mcpAuth: ImModelCopilotMcpAuth,
+	confirmed: boolean,
 }
 
 const AI_MODEL_DEFAULT_NAME = 'none';
@@ -49,6 +64,10 @@ export class ChatsModel extends BuilderModel
 			forceSearchEnabled: false,
 			agentModeEnabled: false,
 			mcpAuth: null,
+			mcpAuthConfirmed: false,
+			mcpSelectionStatus: CopilotMcpSelectionStatus.ready,
+			mcpSelectionLoaded: false,
+			generationState: null,
 		};
 	}
 
@@ -129,6 +148,10 @@ export class ChatsModel extends BuilderModel
 
 				return state.collection[dialogId].agentModeEnabled;
 			},
+			/** @function copilot/chats/getGenerationState */
+			getGenerationState: (state: ChatsState) => (dialogId: string): ?ImModelCopilotGenerationState => {
+				return state.collection[dialogId]?.generationState ?? null;
+			},
 			/** @function copilot/chats/getMcpAuth */
 			getMcpAuth: (state: ChatsState) => (dialogId: string): ?ImModelCopilotMcpAuth => {
 				const chat = state.collection[dialogId];
@@ -138,6 +161,24 @@ export class ChatsModel extends BuilderModel
 				}
 
 				return chat.mcpAuth;
+			},
+			/** @function copilot/chats/isMcpAuthConfirmed */
+			isMcpAuthConfirmed: (state: ChatsState) => (dialogId: string): boolean => {
+				return state.collection[dialogId]?.mcpAuthConfirmed === true;
+			},
+			/** @function copilot/chats/getMcpSelectionStatus */
+			getMcpSelectionStatus: (state: ChatsState) => (dialogId: string): string => {
+				const chat = state.collection[dialogId];
+				if (!chat?.mcpSelectionLoaded)
+				{
+					return CopilotMcpSelectionStatus.restoring;
+				}
+
+				return chat.mcpSelectionStatus;
+			},
+			/** @function copilot/chats/isMcpSelectionLoaded */
+			isMcpSelectionLoaded: (state: ChatsState) => (dialogId: string): boolean => {
+				return state.collection[dialogId]?.mcpSelectionLoaded === true;
 			},
 			/** @function copilot/chats/isTempChat */
 			isTempChat: () => (dialogId: string): boolean => {
@@ -175,12 +216,13 @@ export class ChatsModel extends BuilderModel
 				});
 
 				preparedChats.forEach((chat) => {
+					const loadedChat = this.#withServerSelectionState(chat);
 					const existingItem = store.state.collection[chat.dialogId];
 					if (existingItem)
 					{
 						store.commit('update', {
 							dialogId: chat.dialogId,
-							fields: chat,
+							fields: loadedChat,
 						});
 
 						return;
@@ -188,7 +230,7 @@ export class ChatsModel extends BuilderModel
 
 					store.commit('add', {
 						dialogId: chat.dialogId,
-						fields: { ...this.getElementState(), ...chat },
+						fields: { ...this.getElementState(), ...loadedChat },
 					});
 				});
 			},
@@ -237,23 +279,82 @@ export class ChatsModel extends BuilderModel
 
 				store.commit('toggleAgentMode', dialogId);
 			},
-			/** @function copilot/chats/setMcpAuth */
-			setMcpAuth: (store: Store, payload: { dialogId: string, mcpAuth: ImModelCopilotMcpAuth }) => {
-				if (!store.state.collection[payload.dialogId])
+			/** @function copilot/chats/setGenerationState */
+			setGenerationState: (store: Store, payload: { dialogId: string, generationState: ?ImModelCopilotGenerationState }) => {
+				const { dialogId, generationState } = payload ?? {};
+				if (!Type.isStringFilled(dialogId))
 				{
 					return;
 				}
 
-				store.commit('setMcpAuth', payload);
+				// only the active generation is kept; any terminal status clears the state
+				if (generationState?.status !== CopilotGenerationStatus.generating)
+				{
+					if (store.state.collection[dialogId])
+					{
+						store.commit('setGenerationState', { dialogId, generationState: null });
+					}
+
+					return;
+				}
+
+				const preparedState = {
+					status: CopilotGenerationStatus.generating,
+					initiatorId: Number(generationState.initiatorId) || 0,
+				};
+
+				if (store.state.collection[dialogId])
+				{
+					store.commit('setGenerationState', { dialogId, generationState: preparedState });
+
+					return;
+				}
+
+				store.commit('add', {
+					dialogId,
+					fields: { ...this.getElementState(), dialogId, generationState: preparedState },
+				});
 			},
-			/** @function copilot/chats/clearMcpAuth */
-			clearMcpAuth: (store: Store, dialogId: string) => {
+			/** @function copilot/chats/clearGenerationState */
+			clearGenerationState: (store: Store, dialogId: string) => {
 				if (!store.state.collection[dialogId])
 				{
 					return;
 				}
 
+				store.commit('setGenerationState', { dialogId, generationState: null });
+			},
+			/** @function copilot/chats/setMcpAuth */
+			setMcpAuth: (store: Store, payload: SetMcpAuthPayload) => {
+				const { dialogId } = payload ?? {};
+				if (!Type.isStringFilled(dialogId))
+				{
+					return;
+				}
+
+				this.#addChatIfMissing(store, dialogId);
+				store.commit('setMcpAuth', payload);
+			},
+			/** @function copilot/chats/clearMcpAuth */
+			clearMcpAuth: (store: Store, dialogId: string) => {
+				if (!Type.isStringFilled(dialogId))
+				{
+					return;
+				}
+
+				this.#addChatIfMissing(store, dialogId);
 				store.commit('clearMcpAuth', dialogId);
+			},
+			/** @function copilot/chats/setMcpSelectionStatus */
+			setMcpSelectionStatus: (store: Store, payload: { dialogId: string, status: string }) => {
+				const { dialogId } = payload ?? {};
+				if (!Type.isStringFilled(dialogId))
+				{
+					return;
+				}
+
+				this.#addChatIfMissing(store, dialogId);
+				store.commit('setMcpSelectionStatus', payload);
 			},
 			/** @function copilot/chats/delete */
 			delete: (store: Store, dialogId: string) => {
@@ -277,6 +378,9 @@ export class ChatsModel extends BuilderModel
 					forceSearchEnabled: source.forceSearchEnabled,
 					agentModeEnabled: source.agentModeEnabled,
 					mcpAuth: source.mcpAuth,
+					mcpAuthConfirmed: source.mcpAuthConfirmed,
+					// the migrated selection is all there is to restore for the created chat
+					mcpSelectionLoaded: true,
 				};
 
 				const target = store.state.collection[toDialogId];
@@ -380,11 +484,21 @@ export class ChatsModel extends BuilderModel
 			toggleAgentMode: (state: ChatsState, dialogId: string) => {
 				state.collection[dialogId].agentModeEnabled = !state.collection[dialogId].agentModeEnabled;
 			},
-			setMcpAuth: (state: ChatsState, payload: { dialogId: string, mcpAuth: ImModelCopilotMcpAuth }) => {
+			setGenerationState: (state: ChatsState, payload: { dialogId: string, generationState: ?ImModelCopilotGenerationState }) => {
+				state.collection[payload.dialogId].generationState = payload.generationState;
+			},
+			setMcpAuth: (state: ChatsState, payload: SetMcpAuthPayload) => {
 				state.collection[payload.dialogId].mcpAuth = payload.mcpAuth;
+				state.collection[payload.dialogId].mcpAuthConfirmed = payload.confirmed === true;
 			},
 			clearMcpAuth: (state: ChatsState, dialogId: string) => {
 				state.collection[dialogId].mcpAuth = null;
+				state.collection[dialogId].mcpAuthConfirmed = false;
+			},
+			setMcpSelectionStatus: (state: ChatsState, payload: { dialogId: string, status: string }) => {
+				state.collection[payload.dialogId].mcpSelectionStatus = payload.status;
+				// a status written by the client is a known one, restoring included
+				state.collection[payload.dialogId].mcpSelectionLoaded = true;
 			},
 			delete: (state: ChatsState, dialogId: string) => {
 				delete state.collection[dialogId];
@@ -401,5 +515,35 @@ export class ChatsModel extends BuilderModel
 	formatFields(fields: JsonObject): JsonObject
 	{
 		return formatFieldsWithConfig(fields, chatFieldsConfig);
+	}
+
+	// a selection dropped for a chat whose data has not arrived would stay restoring forever
+	#addChatIfMissing(store: Store, dialogId: string): void
+	{
+		if (store.state.collection[dialogId])
+		{
+			return;
+		}
+
+		store.commit('add', {
+			dialogId,
+			fields: { ...this.getElementState(), dialogId },
+		});
+	}
+
+	// a payload without the mcpAuth field says nothing about the selection saved on the server
+	#withServerSelectionState(chat: JsonObject): JsonObject
+	{
+		if (Type.isUndefined(chat.mcpAuth))
+		{
+			return { ...chat };
+		}
+
+		return {
+			...chat,
+			mcpSelectionLoaded: true,
+			mcpAuthConfirmed: Boolean(chat.mcpAuth)
+				&& chat.mcpSelectionStatus === CopilotMcpSelectionStatus.ready,
+		};
 	}
 }

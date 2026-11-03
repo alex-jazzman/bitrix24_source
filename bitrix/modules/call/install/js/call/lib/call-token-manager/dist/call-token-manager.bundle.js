@@ -4,9 +4,7 @@ this.BX.Call = this.BX.Call || {};
 (function (exports, main_core) {
 	'use strict';
 
-	const {
-		callInstalled
-	} = main_core.Extension.getSettings('call.core');
+	const callInstalled = main_core.Extension.getSettings('call.core').get('callInstalled');
 	class TokenManager {
 		#tokenList;
 		#pendingTokenList;

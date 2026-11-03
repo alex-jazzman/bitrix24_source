@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 
@@ -20,7 +21,7 @@ if ($isCollaber && Loader::includeModule('socialnetwork'))
 	$defaultCollabId = $defaultCollab?->getId();
 }
 
-$isMobileContinueButton = COption::GetOptionString('intranet', 'allow_continue_button_mobile_popup', 'Y') == 'Y';
+$isMobileContinueButton = Option::get('intranet', 'allow_continue_button_mobile_popup', 'Y') === 'Y';
 $isTabletContinueButton = COption::GetOptionString('intranet', 'allow_continue_button_tablet_popup', 'Y') == 'Y';
 
 $continueInMobileBrowserClicked = $isMobileContinueButton && CUserOptions::GetOption('intranet', 'mobilePopupContinueToApp', 'N') === 'Y';
@@ -31,11 +32,12 @@ return [
 	'js' => 'dist/mobile-popup.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.popup',
 		'main.core.events',
-		'ui.buttons',
+		'main.popup',
 		'ui.analytics',
+		'ui.auto-launch',
 		'ui.banner-dispatcher',
+		'ui.buttons',
 		'ui.fonts.montserrat',
 	],
 	'settings' => [

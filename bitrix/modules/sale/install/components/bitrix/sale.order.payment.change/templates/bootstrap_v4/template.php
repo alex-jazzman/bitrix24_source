@@ -55,12 +55,12 @@ else
 				</div>
 			</div>
 		</div>
-		<div class="row mb-3 sale-order-payment-change-pp-list">
+		<div class="row mb-3 sale-order-payment-change-pp-list" role="radiogroup" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('SOPC_TPL_PAY_SYSTEM_GROUP_ARIA'))?>">
 			<?
 			foreach ($arResult['PAYSYSTEMS_LIST'] as $key => $paySystem)
 			{
 				?>
-				<div class="sale-order-payment-change-pp-company col-lg-2 col-md-3 col-sm-4 col-6">
+				<div class="sale-order-payment-change-pp-company col-lg-2 col-md-3 col-sm-4 col-6" role="radio" aria-checked="false" tabindex="<?= ($key == 0) ? '0' : '-1' ?>" data-paysystem-id="<?=(int)$paySystem['ID']?>">
 					<div class="mb-1 sale-order-payment-change-pp-company-graf-container">
 						<input type="hidden" class="sale-order-payment-change-pp-company-hidden" name="PAY_SYSTEM_ID" value="<?=$paySystem['ID']?>" <?= ($key == 0) ? "checked='checked'" :""?>>
 						<?
@@ -96,8 +96,10 @@ else
 		"wrapperId" => $wrapperId
 	);
 	$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
+	$messages = Loc::loadLanguageFile(__FILE__);
 	?>
 	<script>
+		BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 		var sc = new BX.Sale.OrderPaymentChange(<?=$javascriptParams?>);
 	</script>
 	<?

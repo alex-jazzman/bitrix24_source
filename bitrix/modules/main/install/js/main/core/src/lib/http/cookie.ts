@@ -1,5 +1,32 @@
 import Type from '../type';
 
+/**
+ * `decodeURIComponent` throws on a percent sequence that is not valid UTF-8, and a cookie set
+ * by a site in a single-byte encoding carries exactly that. Since the whole list is decoded in
+ * one pass, one such cookie used to take every other cookie of the site down with it, so a
+ * value that cannot be decoded is handed back as it stands instead.
+ */
+function decodeSafely(value: string): string
+{
+	try
+	{
+		return decodeURIComponent(value);
+	}
+	catch
+	{
+		return value;
+	}
+}
+
+export type CookieOptions = {
+	expires?: number | Date | string,
+	path?: string,
+	domain?: string,
+	secure?: boolean,
+	samesite?: string,
+	[attribute: string]: unknown,
+};
+
 export default class Cookie
 {
 	/**
@@ -14,7 +41,7 @@ export default class Cookie
 			.map((item) => item.map((subItem) => subItem.trim()))
 			.reduce((acc: Record<string, string>, item) => {
 				const [key, value] = item;
-				acc[decodeURIComponent(key)] = decodeURIComponent(value);
+				acc[decodeSafely(key)] = decodeSafely(value);
 
 				return acc;
 			}, {});
@@ -43,7 +70,7 @@ export default class Cookie
 	 * @param {*} value
 	 * @param {object} [options]
 	 */
-	static set(name: string, value: any, options: Record<string, any> = {}): void
+	static set(name: string, value: any, options: CookieOptions = {}): void
 	{
 		const attributes: Record<string, any> = {
 			expires: '',
@@ -63,7 +90,7 @@ export default class Cookie
 			attributes.expires = attributes.expires.toUTCString();
 		}
 
-		const safeName = decodeURIComponent(String(name))
+		const safeName = decodeSafely(String(name))
 			.replaceAll(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent)
 			.replaceAll(/[()]/g, escape);
 
@@ -104,7 +131,7 @@ export default class Cookie
 	 * @param {string} name
 	 * @param {object} [options]
 	 */
-	static remove(name: string, options: Record<string, any> = {}): void
+	static remove(name: string, options: CookieOptions = {}): void
 	{
 		Cookie.set(name, '', { ...options, expires: -1 });
 	}

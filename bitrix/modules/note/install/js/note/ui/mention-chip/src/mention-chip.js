@@ -53,7 +53,7 @@ function safeAvatarUrl(url)
  *   pending   — `available` is null (not yet resolved). Type-aware skeleton:
  *               color/icon from presentation map, shimmer label, neutral circle for user.
  *   resolved  — Air chip with label, icon or avatar (user).
- *   unavailable — neutral grey chip "unavailable" (Q-2: no reason differentiation).
+ *   unavailable — neutral grey chip with a known document label or a localized fallback.
  *
  * Self-mention highlight removed (g-tint design); isCurrentUser prop kept for caller compatibility.
  *
@@ -98,7 +98,16 @@ export const MentionChip = {
 			type: Boolean,
 			default: false,
 		},
+		allowUnavailableActivation: {
+			type: Boolean,
+			default: false,
+		},
+		navigationPending: {
+			type: Boolean,
+			default: false,
+		},
 	},
+	emits: ['click', 'auxclick'],
 
 	computed: {
 		presentation()
@@ -115,18 +124,27 @@ export const MentionChip = {
 		chipClass()
 		{
 			const base = 'note-mention-chip';
+			const classes = [base];
 			if (this.unavailable)
 			{
-				return `${base} ${base}--unavailable`;
+				classes.push(`${base}--unavailable`);
 			}
-
-			if (this.isPending)
+			else
 			{
-				return `${base} ${base}--pending ${base}--type-${this.type}`;
+				classes.push(`${base}--type-${this.type}`);
 			}
 
-			// WHY: --self highlight removed per g-tint design; isCurrentUser prop kept for caller compat.
-			return `${base} ${base}--type-${this.type}`;
+			if (this.isPending || this.navigationPending)
+			{
+				classes.push(`${base}--pending`);
+			}
+
+			if (this.unavailable && this.allowUnavailableActivation)
+			{
+				classes.push(`${base}--activatable`);
+			}
+
+			return classes.join(' ');
 		},
 
 		chipStyle()
@@ -182,7 +200,10 @@ export const MentionChip = {
 		{
 			if (this.unavailable)
 			{
-				return Loc.getMessage('NOTE_MENTION_UNAVAILABLE');
+				return this.type === 'document' && this.label
+					? this.label
+					: Loc.getMessage('NOTE_MENTION_UNAVAILABLE')
+				;
 			}
 
 			return this.label ?? '';
@@ -194,7 +215,7 @@ export const MentionChip = {
 		// In edit mode the chip is a ProseMirror atom — no role override.
 		chipRole()
 		{
-			if (this.isEditable || this.unavailable)
+			if (this.isEditable || this.isPending || (this.unavailable && !this.allowUnavailableActivation))
 			{
 				return undefined;
 			}
@@ -206,13 +227,13 @@ export const MentionChip = {
 		// In edit mode ProseMirror manages atom focus via arrow keys — do NOT interfere.
 		chipTabindex()
 		{
-			if (this.isEditable)
+			if (this.isEditable || this.isPending)
 			{
 				return undefined;
 			}
 
 			// Unavailable chips must not be in the tab order as active controls.
-			if (this.unavailable)
+			if (this.unavailable && !this.allowUnavailableActivation)
 			{
 				return undefined;
 			}
@@ -249,7 +270,10 @@ export const MentionChip = {
 		// Not called in edit mode (tabindex is absent there).
 		handleKeydown(event)
 		{
-			if (event.key === 'Enter' || event.key === ' ')
+			if (
+				(!this.unavailable || this.allowUnavailableActivation)
+				&& (event.key === 'Enter' || event.key === ' ')
+			)
 			{
 				if (event.key === ' ')
 				{
@@ -301,9 +325,11 @@ export const MentionChip = {
 			:style="chipStyle"
 			:role="chipRole"
 			:tabindex="chipTabindex"
-			:aria-disabled="unavailable ? 'true' : undefined"
+			:aria-disabled="unavailable && !allowUnavailableActivation ? 'true' : undefined"
 			contenteditable="false"
+			@click="$emit('click', $event)"
 			@keydown="handleKeydown"
+			@auxclick="$emit('auxclick', $event)"
 		>
 			<span v-if="isPending && type === 'user'" aria-hidden="true" class="note-mention-chip__avatar-placeholder"></span>
 			<span v-else-if="isPending && presentation && presentation.iconUrl" aria-hidden="true" class="note-mention-chip__icon-wrap">

@@ -29,6 +29,7 @@ type ServiceState = {
 	upload_outgoing?: boolean | number | null;
 	oauth?: boolean;
 	oauth_smtp_enabled?: boolean;
+	externalCredentials?: boolean;
 	smtp?: ServiceSmtpSettings;
 };
 
@@ -55,6 +56,7 @@ type PermissionsInput = {
 	isSmtpAvailable: boolean;
 	isCrmAvailable: boolean;
 	isCalendarAvailable: boolean;
+	isAvatarAvailable: boolean;
 	syncOldLimit: number;
 	sharedMailboxLimit: number | null;
 	sharedMailboxLimitReached?: boolean;

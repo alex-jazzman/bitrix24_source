@@ -6,6 +6,7 @@ $MESS["SALESCENTER_SP_CASHBOX_EMAIL_HINT"] = "A message will be sent to this ema
 $MESS["SALESCENTER_SP_CASHBOX_ERROR_NO_HANDLER_EXIST"] = "Cash register handler is incorrect";
 $MESS["SALESCENTER_SP_CASHBOX_MARK_ATTENTION"] = "QR code encoding is defined by the online cash register. The most common encoding is base64.";
 $MESS["SALESCENTER_SP_CASHBOX_MARK_HINT"] = "QR code is printed on the receipt.";
+$MESS['SALESCENTER_SP_CASHBOX_MEASURE_ATTENTION'] = 'Keep the setting enabled if your online cash register runs FFD 1.2. If it runs FFD 1.05, turn the setting off; otherwise the receipt will be rejected.';
 $MESS["SALESCENTER_SP_CASHBOX_MEASURE_HINT"] = "Unit of measurement is printed on the receipt for reference.";
 $MESS["SALESCENTER_SP_CASHBOX_OFD_OPTION_OTHER"] = "Other";
 $MESS["SALESCENTER_SP_CASHBOX_OFD_SETTINGS"] = "OFD settings";

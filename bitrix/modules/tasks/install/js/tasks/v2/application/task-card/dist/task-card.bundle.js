@@ -35,6 +35,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				content,
 				cacheable: false,
 				closeByEsc: true,
+				autoHide: true,
+				// Keep and restore focus regardless of the server-side accessibility default (trap is off by default).
+				focusTrap: true,
+				ariaLabel: main_core.Loc.getMessage('TASKS_V2_TC_COMPACT_DIALOG_LABEL'),
 				events: {
 					onAfterClose: () => card?.unmount()
 				},
@@ -48,6 +52,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				card = new exports.TaskCompactCard(params);
 				card.mount(popup);
 			});
+
+			// main.popup does not set aria-modal; set it before show() so the dialog is modal even if the app fails to load.
+			main_core.Dom.attr(popup.getPopupContainer(), 'aria-modal', 'true');
 			popup.show();
 		}
 		static showFullCard(params = {}) {
@@ -78,6 +85,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			return {
 				mount: container => {
 					const skeleton = main_core.Tag.render`<div style="width: 100%; height: 100%" />`;
+					main_core.Dom.attr(container, 'aria-busy', 'true');
 					main_core.Dom.append(skeleton, container);
 					void ui_system_skeleton.renderSkeleton('/bitrix/js/tasks/v2/application/task-card/src/skeleton-full-embedded.html?v=1', skeleton);
 					void loading.then(exports => {
@@ -85,6 +93,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							return;
 						}
 						main_core.Dom.remove(skeleton, container);
+						main_core.Dom.attr(container, 'aria-busy', null);
 						card = new exports.TaskFullCard(params);
 						void card.mountEmbedded(container);
 					});

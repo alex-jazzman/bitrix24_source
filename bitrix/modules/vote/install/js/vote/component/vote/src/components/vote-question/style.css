@@ -169,14 +169,33 @@
 	transition: opacity .7s linear;
 }
 
+.vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:after {
+	content: "";
+	display: block;
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	width: 5px;
+	height: 9px;
+	border: solid var(--ui-color-base-white-fixed, #fff);
+	border-width: 0 2px 2px 0;
+	transform: translateY(-60%) rotate(45deg);
+	opacity: 0;
+	transition: opacity .2s linear;
+}
+
 .vote__answer:hover .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:before {
 	border-color: #1f86ff;
 }
 
 .vote__answer.--selected .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:before,
 .bx-im-message-base__wrap.--self .vote__answer.--selected .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:before {
-	background: #1f86ff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='8' fill='none'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M10.279.433a.55.55 0 0 1-.002.778L3.89 7.573a.55.55 0 0 1-.776 0l-2.9-2.888a.55.55 0 1 1 .775-.78l2.513 2.502 6-5.975a.55.55 0 0 1 .778.001Z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
-	border-color: #1f86ff;
+	background-color: var(--ui-color-accent-main-primary, #1f86ff);
+	border-color: var(--ui-color-accent-main-primary, #1f86ff);
+}
+
+.vote__answer.--selected .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:after {
+	opacity: 1;
 }
 
 .bx-im-message-base__wrap.--self .vote__answer.--selected .vote__answer-select.--checkbox + .vote__progress-bar {
@@ -187,7 +206,8 @@
 	border-color: #c9e99b;
 }
 
-.vote__answers.--voted .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:before {
+.vote__answers.--voted .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:before,
+.vote__answers.--voted .vote__answer-select.--checkbox + .vote__progress-bar .vote__answer-text:after {
 	opacity: 0;
 }
 

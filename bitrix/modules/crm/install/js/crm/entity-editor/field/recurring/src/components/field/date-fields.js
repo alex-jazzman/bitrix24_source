@@ -3,6 +3,7 @@ import { getPeriodByValue, getPeriods } from '../../enum/period';
 import { createDatePickerInstance, getFormattedDate, resolveEntityTypeName, showPopupMenu } from '../../helper';
 import { popupMenuMixin } from '../common/destroy-popup-menu';
 import { FieldTitle } from '../common/field-title';
+import { selectorA11yMixin } from '../common/selector-a11y';
 
 // @vue/component
 export const DateFields = {
@@ -15,6 +16,7 @@ export const DateFields = {
 			'crm-recurring-dates-section-selector-beginDate',
 			'crm-recurring-dates-section-selector-closeDate',
 		]),
+		selectorA11yMixin,
 	],
 
 	props: {
@@ -179,7 +181,7 @@ export const DateFields = {
 			this.datePicker.show();
 		},
 
-		showPeriodSelector(target: HTMLElement, name: string): void
+		showPeriodSelector(event: Event, name: string): void
 		{
 			const menu = [];
 
@@ -192,7 +194,8 @@ export const DateFields = {
 			});
 
 			const id = `crm-recurring-dates-section-selector-${name}`;
-			showPopupMenu(id, target, menu);
+			this.markSelectorOpened(name);
+			showPopupMenu(id, event.target, menu, () => this.markSelectorClosed(name), event);
 		},
 
 		onSelectPeriodItem(name: string, _, item): void
@@ -271,7 +274,7 @@ export const DateFields = {
 					<span class="ui-ctl-label-text">{{offsetDateBeginTitle}}</span>
 				</label>
 
-				<FieldTitle v-if="isShowOffsetBeginDate" :title="beginDateTitle" />
+				<FieldTitle v-if="isShowOffsetBeginDate" :title="beginDateTitle" :label-id="a11yId('beginDate-title')" />
 				
 				<div
 					v-if="isShowOffsetBeginDate"
@@ -285,14 +288,22 @@ export const DateFields = {
 						>
 						<div class="crm-entity-widget-content-block-select">
 							<div
+								:id="a11yId('beginDate-value')"
 								class="crm-entity-widget-content-select"
-								@click="(event) => showPeriodSelector(event.target, 'beginDate')"
+								role="button"
+								tabindex="0"
+								aria-haspopup="menu"
+								:aria-expanded="isSelectorExpanded('beginDate')"
+								:aria-labelledby="selectorLabelledBy('beginDate')"
+								@click="(event) => showPeriodSelector(event, 'beginDate')"
+								@keydown.enter.prevent="(event) => showPeriodSelector(event, 'beginDate')"
+								@keydown.space.prevent="(event) => showPeriodSelector(event, 'beginDate')"
 							>{{offsetBeginDateTypeTitle}}</div>
 						</div>
 					</div>
 				</div>
 				
-				<FieldTitle :title="closeDateTitle" />
+				<FieldTitle :title="closeDateTitle" :label-id="a11yId('closeDate-title')" />
 				
 				<div class="crm-entity-widget-content-block-inner crm-entity-widget-content-block-colums-input">
 					<div class="crm-entity-widget-content-block-input-wrapper">
@@ -303,8 +314,16 @@ export const DateFields = {
 						>
 						<div class="crm-entity-widget-content-block-select">
 							<div
+								:id="a11yId('closeDate-value')"
 								class="crm-entity-widget-content-select"
-								@click="(event) => showPeriodSelector(event.target, 'closeDate')"
+								role="button"
+								tabindex="0"
+								aria-haspopup="menu"
+								:aria-expanded="isSelectorExpanded('closeDate')"
+								:aria-labelledby="selectorLabelledBy('closeDate')"
+								@click="(event) => showPeriodSelector(event, 'closeDate')"
+								@keydown.enter.prevent="(event) => showPeriodSelector(event, 'closeDate')"
+								@keydown.space.prevent="(event) => showPeriodSelector(event, 'closeDate')"
 							>{{offsetCloseDateTypeTitle}}</div>
 						</div>
 					</div>

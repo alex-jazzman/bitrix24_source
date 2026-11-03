@@ -6,6 +6,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		EventType,
 		ConnectionType,
 		CallError,
+		WidgetLayerError,
 		CallStatus,
 	} = require('call/const');
 	const { CallLayout } = require('call/calls/layout');
@@ -24,6 +25,40 @@ jn.define('call/calls/controller', (require, exports, module) => {
 	const { Tourist } = require('tourist');
 	const { getConnectionErrorStatus } = require('call/calls/controller/connection-error-status');
 	const { buildCallIdParam } = require('call/calls/controller/call-id-analytics-param');
+	const deviceConnection = require('device/connection');
+
+	/**
+	 * A start/join failure that is a real transport failure of /v2/join, not a product refusal
+	 * or a local error from elsewhere in the promise chain.
+	 *
+	 * The only source of truth is the `isTransportError` marker the transport boundary
+	 * (getCallConnectionData) stamps on a reject when — and only when — no server response arrived
+	 * (xhr.status === 0: onerror / ontimeout / no-activity). A non-2xx status or an unparseable body
+	 * is a real infrastructural answer and is left unmarked, so it keeps its `error_` code. Nothing is
+	 * inferred from the Error class here either, so a TypeError from openCallView/bindViewEvents/media —
+	 * which the same catch also covers — stays a product/domain outcome.
+	 *
+	 * @param {*} error the rejected value the failure handler caught
+	 * @returns {boolean}
+	 */
+	const isTransportFailure = (error) => typeof error === 'object' && error !== null && error.isTransportError === true;
+
+	/**
+	 * True only for a transport failure of a start/join request on a confirmed-offline device.
+	 * Such an outcome is reclassified off the connection-errors dashboard; an online or unknown
+	 * status (including old app versions without the native connection API) keeps `error_`.
+	 *
+	 * @param {*} error the rejected value the failure handler caught
+	 * @returns {boolean}
+	 */
+	const isOfflineNetworkFailure = (error) => {
+		// The native status method is absent on old app versions (< API 52); guard it so the
+		// wrapper is never asked and the outcome stays the original error_.
+		return isTransportFailure(error)
+			&& typeof device?.getConnectionStatus === 'function'
+			&& typeof deviceConnection?.isOffline === 'function'
+			&& deviceConnection.isOffline();
+	};
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 	const AUDIO_DEVICE = Object.freeze({
@@ -50,6 +85,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			this.callView = null;
 			this.callViewPromise = null;
+
+			this.rootWidget = null;
+			this.widgetLayerTeardownPending = false;
+			this.widgetLayerQueue = Promise.resolve();
 
 			this.startCallPromise = null;
 			this.localVideoPromise = null;
@@ -147,6 +186,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onPrivateChatButtonClickHandler = this.onPrivateChatButtonClick.bind(this);
 			this.onAnswerButtonClickHandler = this.onAnswerButtonClick.bind(this);
 			this.onHangupButtonClickHandler = this.onHangupButtonClick.bind(this);
+			this.onFinishForAllButtonClickHandler = this.onFinishForAllButtonClick.bind(this);
 			this.onDeclineButtonClickHandler = this.onDeclineButtonClick.bind(this);
 			this.onSetCentralUserHandler = this.onSetCentralUser.bind(this);
 			this.onSelectAudioDeviceHandler = this.onSelectAudioDevice.bind(this);
@@ -316,9 +356,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				)
 				.setP2(`chatUserCount_${this.currentCall.associatedEntity?.userCounter}`)
 				.setP3(
-					this.currentCall.isCopilotActive
+					this.currentCall?.isCopilotActive
 						? Analytics.AnalyticsAIStatus.aiOn
-						: Analytics.AnalyticsAIStatus.aiOff
+						: Analytics.AnalyticsAIStatus.aiOff,
 				)
 				.setP4(
 					this.isVpnACtive()
@@ -352,9 +392,17 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		 * @param {boolean} [isRoomClosed]
 		 * @param {String|null} [callType] type of the attempt; the failure paths know it from the
 		 *   provider they chose, while `currentCall` is usually not assigned yet
+		 * @param {boolean} [isOffline] client is confirmed offline on a network failure
 		 */
-		sendStartCallErrorAnalytics(errorCode, isRoomClosed = false, callType = null)
+		sendStartCallErrorAnalytics(errorCode, isRoomClosed = false, callType = null, isOffline = false)
 		{
+			// A network failure while the client is confirmed offline is the user's own connectivity, not a
+			// server/infra error: it is not reported to analytics at all, so it never reaches the dashboard.
+			if (isOffline)
+			{
+				return;
+			}
+
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.AnalyticsTool.im)
 				.setCategory(Analytics.AnalyticsCategory.call)
@@ -362,9 +410,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setType(callType ?? this.getCallType())
 				.setStatus(getConnectionErrorStatus(errorCode, isRoomClosed))
 				.setP3(
-					this.currentCall.isCopilotActive
+					this.currentCall?.isCopilotActive
 						? Analytics.AnalyticsAIStatus.aiOn
-						: Analytics.AnalyticsAIStatus.aiOff
+						: Analytics.AnalyticsAIStatus.aiOff,
 				)
 				.setP4(
 					this.isVpnACtive()
@@ -444,9 +492,17 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		 * @param {boolean} [isRoomClosed]
 		 * @param {String|null} [callType] type of the attempt; the failure paths know it from the
 		 *   provider they chose, while `currentCall` is usually not assigned yet
+		 * @param {boolean} [isOffline] client is confirmed offline on a network failure
 		 */
-		sendJoinCallErrorAnalytics(errorCode, callId, isRoomClosed = false, callType = null)
+		sendJoinCallErrorAnalytics(errorCode, callId, isRoomClosed = false, callType = null, isOffline = false)
 		{
+			// A network failure while the client is confirmed offline is the user's own connectivity, not a
+			// server/infra error: it is not reported to analytics at all, so it never reaches the dashboard.
+			if (isOffline)
+			{
+				return;
+			}
+
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.AnalyticsTool.im)
 				.setCategory(Analytics.AnalyticsCategory.call)
@@ -454,9 +510,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setType(callType ?? this.getCallType())
 				.setStatus(getConnectionErrorStatus(errorCode, isRoomClosed))
 				.setP3(
-					this.currentCall.isCopilotActive
+					this.currentCall?.isCopilotActive
 						? Analytics.AnalyticsAIStatus.aiOn
-						: Analytics.AnalyticsAIStatus.aiOff
+						: Analytics.AnalyticsAIStatus.aiOff,
 				)
 				.setP4(
 					this.isVpnACtive()
@@ -469,7 +525,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			analytics.send();
 		}
 
-		sendStartCopilotRecordAnalytics({ errorCode = null, isAutostart = false })
+		sendStartCopilotRecordAnalytics({ errorCode = null, isAutostart = false } = {})
 		{
 			const errorCodes = {
 				AI_UNAVAILABLE_ERROR: Analytics.AnalyticsStatus.errorB24,
@@ -478,19 +534,29 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				AI_NOT_ENOUGH_BAAS_ERROR: Analytics.AnalyticsStatus.errorLimitBaas,
 			};
 
+			// own properties only: a server code like 'constructor' would otherwise resolve to an inherited member
+			const isKnownCode = errorCode !== null
+				&& Object.prototype.hasOwnProperty.call(errorCodes, errorCode);
+			let status = Analytics.AnalyticsStatus.success;
+
+			if (errorCode)
+			{
+				status = isKnownCode ? errorCodes[errorCode] : Analytics.AnalyticsStatus.errorB24;
+			}
+
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.AnalyticsTool.ai)
 				.setCategory(Analytics.AnalyticsCategory.callsOperations)
 				.setEvent(Analytics.AnalyticsEvent.aiRecordStart)
 				.setType(this.getCallType())
-				.setStatus(errorCode ? errorCodes[errorCode] : Analytics.AnalyticsStatus.success)
+				.setStatus(status)
 				.setSection(Analytics.AnalyticsSection.callFollowup)
 				.setP1(isAutostart ? 'launchType_auto' : 'launchType_manual')
-				.setP2(`chatUserCount_${this.currentCall.associatedEntity?.userCounter}`)
+				.setP2(`chatUserCount_${this.currentCall?.associatedEntity?.userCounter ?? null}`)
 				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 			;
 
-			const userCount = this.getActiveCallUsers().length;
+			const userCount = this.currentCall ? this.getActiveCallUsers().length : 0;
 			if (userCount)
 			{
 				analytics.setP3(userCount + 1);
@@ -726,6 +792,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						console.log('startCall.BitrixDev.createCall.createResult', createResult);
 
 						this.currentCall = createResult.call;
+						this.currentCall.isNew = createResult.isNew === true;
 
 						this.bindCallEvents();
 						if (!this.callView)
@@ -800,7 +867,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						console.error('startCall.BitrixDev.createCall.createResult.catch', error);
 
 						CallUtil.error(error);
-						let errorCode = error.code;
+						let errorCode = error?.code;
 						const isRoomClosed = errorCode === CallError.alreadyFinished;
 
 						if (error instanceof DeviceAccessError)
@@ -817,10 +884,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						{
 							this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 						}
+						else if (errorCode === WidgetLayerError.removed)
+						{
+							// skip toast
+						}
 						else
 						{
 							this.__createErrorControlToast(
-								BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+								BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(errorCode)),
 								true,
 							);
 						}
@@ -829,6 +900,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							errorCode,
 							isRoomClosed,
 							this.getAttemptCallType(provider, associatedDialogData),
+							isOfflineNetworkFailure(error),
 						);
 
 						this.clearEverything();
@@ -879,6 +951,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			})
 				.then((createResult) => {
 					this.currentCall = createResult.call;
+					this.currentCall.isNew = createResult.isNew === true;
 
 					// user has left a call
 					if (!this.callView)
@@ -941,7 +1014,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.catch((error) => {
 					CallUtil.error(error);
 
-					let errorCode = error.code;
+					let errorCode = error?.code;
 					const isRoomClosed = errorCode === CallError.alreadyFinished;
 					if (error instanceof DeviceAccessError)
 					{
@@ -961,10 +1034,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					{
 						// we don't want to show any error messages for this one
 					}
+					else if (errorCode === WidgetLayerError.removed)
+					{
+						// skip toast
+					}
 					else
 					{
 						this.__createErrorControlToast(
-							BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+							BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(errorCode)),
 							true,
 						);
 					}
@@ -975,6 +1052,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							errorCode,
 							isRoomClosed,
 							this.getAttemptCallType(provider, associatedDialogData),
+							isOfflineNetworkFailure(error),
 						);
 					}
 
@@ -1050,6 +1128,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					: callEngine.getJwtCallWithId(callInfo.callUuid, callConfig);
 			}).then((result) => {
 				this.currentCall = result.call;
+				this.currentCall.isNew = result.isNew === true;
 
 				if (this.#isLargeCallBlocked(this.currentCall.connectionData?.roomType))
 				{
@@ -1125,10 +1204,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						CallUtil.showDeviceAccessConfirm(isVideoEnabled, () => Application.openSettings());
 						errorCode = error.name;
 					}
+					else if (errorCode === WidgetLayerError.removed)
+					{
+						// skip toast
+					}
 					else
 					{
 						this.__createErrorControlToast(
-							BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+							BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(errorCode)),
 						);
 					}
 
@@ -1141,6 +1224,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						analyticsCallId,
 						isRoomClosed,
 						this.getAttemptCallType(provider, callInfo.associatedEntity),
+						isOfflineNetworkFailure(error),
 					);
 
 					this.clearEverything();
@@ -1377,6 +1461,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.answerCurrentCall(this.nativeCall.params.video);
 				}
 			}).catch((error) => {
+				if (error?.code === WidgetLayerError.removed)
+				{
+					// Expected cancellation: the layer is gone, so tear the call down without an error log.
+					this.clearEverything();
+
+					return;
+				}
 				CallUtil.error(error);
 				this.clearEverything();
 			});
@@ -1413,9 +1504,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.startAnswerConnectionTimeout();
 
 			callTokenPromise.then(() => {
-				if (!this.currentCall)
+				if (this.currentCall !== call)
 				{
-					throw { code: CallError.alreadyFinished };
+					throw { code: CallError.answerSuperseded };
 				}
 
 				return isLegacyCall ? Promise.resolve() : CallUtil.getCallConnectionDataById(this.currentCall.uuid);
@@ -1429,7 +1520,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							roomType: response.result.roomType,
 						});
 					}
-				});
+				}, call);
 
 				if (this.#isLargeCallBlocked(response?.result?.roomType))
 				{
@@ -1451,7 +1542,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.callView.setState({
 						status: CallStatus.connecting,
 					});
-				});
+				}, call);
 			}).catch((error) => {
 				CallUtil.error(error);
 				if (error instanceof DeviceAccessError)
@@ -1474,15 +1565,24 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					this.__createErrorControlToast(BX.message('MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED'), true);
 				}
+				else if (error?.code === CallError.answerSuperseded)
+				{
+					// Another call took over while we were answering. The room we
+					// captured may still be alive, so no recovery finish and no
+					// "already finished" toast — only the teardown below.
+				}
 				else if (isRoomClosedError(error))
 				{
 					this.handleRoomClosed(call);
 				}
+				else if (error?.code === WidgetLayerError.removed)
+				{
+					// skip toast
+				}
 				else
 				{
-					console.log('errorss');
 					this.__createErrorControlToast(
-						BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+						BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error?.code)),
 						true,
 					);
 				}
@@ -1606,9 +1706,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					CallUtil.showDeviceAccessConfirm(params.video, () => Application.openSettings());
 				}
-				else if (error.code && error.code == CallError.alreadyFinished)
+				else if (error?.code === CallError.alreadyFinished)
 				{
-					return reject(CallError.alreadyFinished);
+					throw { code: CallError.alreadyFinished };
+				}
+				else
+				{
+					throw error;
 				}
 			});
 
@@ -1700,6 +1804,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.callView.on(CallLayout.Event.PrivateChatButtonClick, this.onPrivateChatButtonClickHandler);
 			this.callView.on(CallLayout.Event.AnswerButtonClick, this.onAnswerButtonClickHandler);
 			this.callView.on(CallLayout.Event.HangupButtonClick, this.onHangupButtonClickHandler);
+			this.callView.on(CallLayout.Event.FinishForAllButtonClick, this.onFinishForAllButtonClickHandler);
 			this.callView.on(CallLayout.Event.DeclineButtonClick, this.onDeclineButtonClickHandler);
 			this.callView.on(CallLayout.Event.SetCentralUser, this.onSetCentralUserHandler);
 			this.callView.on(CallLayout.Event.SelectAudioDevice, this.onSelectAudioDeviceHandler);
@@ -1722,6 +1827,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.callView.off(CallLayout.Event.PrivateChatButtonClick, this.onPrivateChatButtonClickHandler);
 			this.callView.off(CallLayout.Event.AnswerButtonClick, this.onAnswerButtonClickHandler);
 			this.callView.off(CallLayout.Event.HangupButtonClick, this.onHangupButtonClickHandler);
+			this.callView.off(CallLayout.Event.FinishForAllButtonClick, this.onFinishForAllButtonClickHandler);
 			this.callView.off(CallLayout.Event.DeclineButtonClick, this.onDeclineButtonClickHandler);
 			this.callView.off(CallLayout.Event.SetCentralUser, this.onSetCentralUserHandler);
 			this.callView.off(CallLayout.Event.SelectAudioDevice, this.onSelectAudioDeviceHandler);
@@ -1780,6 +1886,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.on(BX.Call.Event.onActiveCallNotificationHangupButtonPress, this.onActiveCallNotificationHangupButtonPressHandler)
 				.on(BX.Call.Event.onSwitchConnectionType, this.onSwitchConnectionTypeHandler)
 			;
+
+			// Give transports a pull provider for the grid's per-user subscription snapshot so NQE
+			// auto-quality can cap quality at min(grid, nqe) per currently shown user. The closure
+			// reads this.callView at call time, so it survives call view recreation / teardown. Only
+			// jwt/dev transports implement setVisibleUsersProvider; the optional call is a no-op for
+			// the rest.
+			this.currentCall.setVisibleUsersProvider?.(() => this.callView?.getVisibleUsers?.());
 		}
 
 		removeCallEvents()
@@ -1845,47 +1958,104 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			;
 		}
 
-		prepareWidgetLayer()
+		async prepareWidgetLayer()
 		{
-			return new Promise((resolve, reject) => {
-				if (uicomponent.widgetLayer() && this.rootWidget)
-				{
-					return resolve(this.rootWidget);
-				}
+			if (uicomponent.widgetLayer() && this.rootWidget)
+			{
+				return this.rootWidget;
+			}
 
-				uicomponent.createWidgetLayer('layout', { backdrop: {} })
-					.then((rootWidget) => resolve(rootWidget))
-					.catch((error) => reject(error));
-			});
+			if (uicomponent.widgetLayer())
+			{
+				try
+				{
+					await uicomponent.widgetLayer().close();
+				}
+				catch (error)
+				{
+				}
+			}
+
+			return uicomponent.createWidgetLayer('layout', { backdrop: {} });
+		}
+
+		enqueueWidgetLayerOp(fn)
+		{
+			const prev = this.widgetLayerQueue || Promise.resolve();
+			const result = prev.then(() => fn(), () => fn());
+			this.widgetLayerQueue = result.then(() => {}, () => {});
+
+			return result;
 		}
 
 		openWidgetLayer()
 		{
-			return new Promise((resolve, reject) => {
+			return this.enqueueWidgetLayerOp(() => new Promise((resolve, reject) => {
 				this.prepareWidgetLayer()
 					.then((rootWidget) => {
+						// Publish the reference before setListener() and show(): an onViewRemoved during
+						// show() must see this layer, and a failed show() must leave it closable.
 						this.rootWidget = rootWidget;
-						this.rootWidget.setListener((eventName) => {
-							if (eventName === 'onViewRemoved')
+
+						rootWidget.setListener((eventName) => {
+							if (eventName !== 'onViewRemoved')
 							{
+								return;
+							}
+
+							if (this.rootWidget !== rootWidget)
+							{
+								return;
+							}
+
+							this.widgetLayerTeardownPending = true;
+							this.enqueueWidgetLayerOp(() => {
+								if (this.rootWidget !== rootWidget)
+								{
+									return Promise.resolve();
+								}
+
 								if (uicomponent.widgetLayer())
 								{
-									uicomponent.widgetLayer().close().then(() => {
-										this.rootWidget = null;
+									return uicomponent.widgetLayer().close().then(() => {
+										if (this.rootWidget === rootWidget)
+										{
+											this.rootWidget = null;
+											this.widgetLayerTeardownPending = false;
+										}
+									}, () => {
+										// close() failed: keep the layer, but let it anchor toasts again.
+										if (this.rootWidget === rootWidget)
+										{
+											this.widgetLayerTeardownPending = false;
+										}
 									});
 								}
-								else
-								{
-									this.rootWidget = null;
-								}
-							}
+
+								this.rootWidget = null;
+								this.widgetLayerTeardownPending = false;
+
+								return Promise.resolve();
+							});
 						});
 
-						return uicomponent.widgetLayer().show();
+						return uicomponent.widgetLayer().show().then(() => rootWidget);
 					})
-					.then(() => resolve())
+					.then(() => {
+						// A teardown queued while this open was in flight must win: reject instead of
+						// letting the start chain build a call view over a layer that is closing.
+						if (this.widgetLayerTeardownPending)
+						{
+							reject({ code: WidgetLayerError.removed });
+
+							return;
+						}
+
+						this.widgetLayerTeardownPending = false;
+						resolve();
+					})
 					.catch((error) => reject(error));
-			});
+			}));
 		}
 
 		openCallView(viewProps = {}, showLocalVideo)
@@ -1898,6 +2068,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.callViewPromise = new Promise((resolve, reject) => {
 				this.openWidgetLayer()
 					.then(() => {
+						if (!this.rootWidget)
+						{
+							this.callViewPromise = null;
+							reject({ code: WidgetLayerError.removed });
+
+							return;
+						}
+
 						CallUtil.warn('creating new CallLayout');
 						this.callView = new CallLayout(viewProps);
 						this.rootWidget.showComponent(this.callView);
@@ -1952,6 +2130,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					.catch((error) => {
 						CallUtil.error(error);
 						this.callViewPromise = null;
+						reject(error);
 					});
 			});
 
@@ -1983,15 +2162,35 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			BX.postWebEvent('CallEvents::viewClosed', {});
 		}
 
-		unfold()
+		async unfold()
 		{
 			callInterface.indicator().close();
 			if (!this.currentCall || !this.callView)
 			{
 				return;
 			}
-			uicomponent.widgetLayer().show();
+
+			try
+			{
+				const widgetLayer = uicomponent.widgetLayer();
+				if (!widgetLayer || !this.rootWidget)
+				{
+					throw new Error('widgetLayer: widget layer is not available');
+				}
+
+				await widgetLayer.show();
+			}
+			catch (error)
+			{
+				CallUtil.error('CallController.unfold: failed to restore call view', error);
+				this.clearEverything();
+
+				return;
+			}
+
 			this.changeProximitySensorStatus(true);
+
+			this.callView.onReturnFromFold?.();
 
 			BX.postComponentEvent('CallEvents::viewOpened', []);
 			BX.postWebEvent('CallEvents::viewOpened', {});
@@ -2072,6 +2271,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		onCallUserNameUpdate(params)
 		{
 			const { userId, name } = params;
+
+			// Durability: keep the store fresh so a full rejoin (hard-disconnect -> onUsersJoined)
+			// and a rename before the screen opens both resolve to the new name.
+			CallUtil.setAuthoritativeUserName(userId, name);
+
 			if (this.callView)
 			{
 				this.callView.setUserData({
@@ -2099,6 +2303,40 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		applyGuestIdentity(data)
+		{
+			const user = data?.user;
+			if (user?.id)
+			{
+				// Only whitelisted snake_case fields: the REST guest object carries color:'' and camelCase
+				// keys, and merging it whole would repaint the guest's own tile (AC5). Blank values are
+				// dropped rather than written: setUserData merges, so undefined would erase a known name.
+				const userData = {};
+				if (user.name)
+				{
+					userData.name = user.name;
+				}
+				if (!CallUtil.isAvatarBlank(user.avatar))
+				{
+					userData.avatar = user.avatar;
+				}
+				if (!CallUtil.isAvatarBlank(user.avatarHr))
+				{
+					userData.avatar_hr = user.avatarHr;
+				}
+
+				if (Object.keys(userData).length > 0)
+				{
+					CallUtil.setUserData({ [user.id]: userData });
+				}
+			}
+
+			if (data?.userToken)
+			{
+				tokenManager.setUserToken(data.userToken);
+			}
+		}
+
 		async onGuestIdentified(data)
 		{
 			const dialogId = data?.dialogId;
@@ -2110,6 +2348,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 				return;
 			}
+
+			this.applyGuestIdentity(data);
 
 			if (this.currentCall?.associatedEntity?.id === dialogId)
 			{
@@ -2277,7 +2517,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					offset: 15,
 					backgroundColor: '#e79b2b',
 				},
-				this.rootWidget,
+				this.getToastAnchor(),
 			);
 		}
 
@@ -2410,14 +2650,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				backgroundColor: '#e79b2b',
 			};
 
-			if (this.rootWidget)
-			{
-				Notification.showToastWithParams(toastParams, this.rootWidget);
-
-				return;
-			}
-
-			Notification.showToastWithParams(toastParams);
+			Notification.showToastWithParams(toastParams, this.getToastAnchor());
 		}
 
 		onActiveCallNotificationSwitchMicrophoneStatusPress()
@@ -2450,7 +2683,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			if (!CallUtil.havePermissionToBroadcast('mic'))
+			const muted = !this.currentCall.isMuted();
+
+			if (!muted && !CallUtil.havePermissionToBroadcast('mic'))
 			{
 				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
 						'#NAME#': this.lastCalledChangeSettingsUserName,
@@ -2458,8 +2693,6 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				});
 				return;
 			}
-
-			const muted = !this.currentCall.isMuted();
 
 			const analyticsEvent = muted ? Analytics.AnalyticsEvent.micOff : Analytics.AnalyticsEvent.micOn;
 
@@ -2692,6 +2925,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			console.log('CallController.onAnswerButtonClick');
 			CallUtil.log('onAnswerButtonClick');
 
+			if (!this.currentCall)
+			{
+				CallUtil.error('CallController.onAnswerButtonClick: no current call to answer');
+				this.clearEverything();
+
+				return;
+			}
+
 			this.sendJoinCallAnalytics(
 				Analytics.AnalyticsStatus.success,
 				{
@@ -2746,6 +2987,83 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.clearEverything();
 		}
 
+		onFinishForAllButtonClick()
+		{
+			if (this.finishForAllInFlight === true)
+			{
+				return;
+			}
+			this.finishForAllInFlight = true;
+
+			if (!this.currentCall)
+			{
+				this.finishForAllInFlight = false;
+
+				return;
+			}
+
+			const callId = this.currentCall?.id ?? null;
+			const callUuid = this.currentCall?.uuid ?? null;
+			if (!callId && !callUuid)
+			{
+				CallUtil.error('call.CallManager.finish skipped: current call has no id/uuid');
+				this.finishForAllInFlight = false;
+
+				return;
+			}
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.disconnect)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setSubSection(Analytics.AnalyticsSubSection.finishButton)
+				.setStatus(Analytics.AnalyticsStatus.finishedForAll)
+				.setElement(Analytics.AnalyticsElement.finishForAllButton)
+				.setP1(
+					this.currentCall.isVideoEnabled()
+						? Analytics.AnalyticsEvent.cameraOn
+						: Analytics.AnalyticsEvent.cameraOff,
+				)
+				.setP2(
+					this.currentCall.isMuted()
+						? Analytics.AnalyticsEvent.micOff
+						: Analytics.AnalyticsEvent.micOn,
+				)
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
+			analytics.send();
+
+			const finishData = {};
+			if (callId)
+			{
+				finishData.callId = callId;
+			}
+			if (callUuid)
+			{
+				finishData.callUuid = callUuid;
+			}
+
+			callEngine.getRestClient()
+				.callMethod('call.CallManager.finish', finishData)
+				.then((response) => {
+					const error = response.error();
+					if (error)
+					{
+						throw error.getError();
+					}
+
+					// Teardown arrives via Pull `Call::finish` — the single path for every
+					// participant (initiator included). Do not tear down locally here.
+					this.finishForAllInFlight = false;
+				})
+				.catch((e) => {
+					CallUtil.error('call.CallManager.finish failed', e);
+					this.__createErrorControlToast(BX.message('MOBILE_CALL_FINISH_FOR_ALL_ERROR'));
+					this.finishForAllInFlight = false;
+				});
+		}
+
 		onDeclineButtonClick()
 		{
 			this.stopAnswerConnectionTimeout();
@@ -2757,7 +3075,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onToggleSubscriptionRemoteVideo(toggleList)
 		{
-			if (this.currentCall.toggleSubscriptionRemoteVideo)
+			if (this.currentCall?.toggleSubscriptionRemoteVideo)
 			{
 				this.currentCall.toggleSubscriptionRemoteVideo(toggleList);
 			}
@@ -2765,6 +3083,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onSetCentralUser(userId)
 		{
+			if (!this.currentCall)
+			{
+				return;
+			}
 			if (this.currentCall.allowVideoFrom)
 			{
 				this.currentCall.allowVideoFrom([userId]);
@@ -2791,14 +3113,27 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
+			const requestedCall = this.currentCall;
+
 			this.runCopilotAction(copilotEnabled).then(() => {
+				// the call can end or be swapped for a child one while the request is in flight:
+				// the answer belongs to the call it was asked about, and a missed toggle is not a failure
+				if (this.currentCall !== requestedCall)
+				{
+					return;
+				}
+
 				const newCopilotState = !this.currentCall.isCopilotActive;
 				this.onUpdateCallCopilotState({
 					isTrackRecordOn: newCopilotState,
 					senderId: env.userId,
 				});
 
-				this.currentCall.toggleRecorderState();
+				// legacy call classes have no local recorder: their state arrives with a pull event
+				if (typeof this.currentCall.toggleRecorderState === 'function')
+				{
+					this.currentCall.toggleRecorderState();
+				}
 
 				if (copilotEnabled && CallSettingsManager.plainCallFollowUpEnabled
 					&& this.currentCall instanceof PlainCallJwt
@@ -2813,9 +3148,19 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.sendStartCopilotRecordAnalytics();
 				}
 			}).catch((error) => {
-				const errorCode = error.errors[0].code;
+				const errorCode = error?.errors?.[0]?.code ?? null;
+				if (errorCode)
+				{
+					CallUtil.log('CallController.onChangeStateCopilot errorCode', errorCode);
+				}
+				else
+				{
+					// no code describes nothing: an exception from .then lands here too
+					CallUtil.error('CallController.onChangeStateCopilot', error);
+				}
 
-				this.sendStartCopilotRecordAnalytics(errorCode);
+				// a rejection is a failure even without a structured code, and a missing code would mean success
+				this.sendStartCopilotRecordAnalytics({ errorCode: errorCode || 'UNKNOWN_ERROR' });
 			});
 		}
 
@@ -2844,9 +3189,21 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				}
 				else
 				{
-					CallUtil.setUserData(e.userData);
-					this.callView.setUserData(e.userData);
+					const invitedUserIds = Object.keys(e.userData || {});
+
+					// Resolve names into a fresh map so the incoming event payload is not mutated.
+					const resolvedUserData = {};
+					invitedUserIds.forEach((userId) => {
+						const user = e.userData[userId];
+						resolvedUserData[userId] = { ...user, name: CallUtil.resolveDisplayName(userId, user.name) };
+					});
+
+					CallUtil.setUserData(resolvedUserData);
+					this.callView.setUserData(resolvedUserData);
 					this.callView.setUserStates({ [e.userId]: BX.Call.UserState.Idle });
+
+					// Close the transport-name leak: force-refresh authoritative names and re-apply.
+					this.applyAuthoritativeUserNames(invitedUserIds);
 				}
 			}
 		}
@@ -2856,15 +3213,27 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			console.log('onCallUserJoined', e);
 			if (this.callView)
 			{
-				CallUtil.setUserData(e.userData);
+				const joinedUserIds = Object.keys(e.userData || {});
+
+				// Resolve names into a fresh map so the incoming event payload is not mutated.
+				const resolvedUserData = {};
+				joinedUserIds.forEach((userId) => {
+					const user = e.userData[userId];
+					resolvedUserData[userId] = { ...user, name: CallUtil.resolveDisplayName(userId, user.name) };
+				});
+
+				CallUtil.setUserData(resolvedUserData);
 				// skipUpdate: the user model is created synchronously by setUserStates and the
 				// render is flushed once by the (debounced) updateDisplayedUsers below. Without it,
 				// a live mass-join fired one extra empty force-render per joined user.
-				this.callView.setUserData(e.userData, { skipUpdate: true });
+				this.callView.setUserData(resolvedUserData, { skipUpdate: true });
 				this.callView.setUserStates({ [e.userId]: BX.Call.UserState.Idle });
 				this.onCallUserStateChanged(e.userId, BX.Call.UserState.Connected);
 
 				this.callView.updateTotalUsersCount(this.currentCall?.associatedEntity?.userCounter);
+
+				// Late-join fix: force-refresh authoritative names and re-apply on arrival.
+				this.applyAuthoritativeUserNames(joinedUserIds);
 			}
 		}
 
@@ -2875,7 +3244,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			const mergedUserDataMap = users.reduce((acc, user) => {
+			// Resolve names into fresh objects so the incoming users payload is not mutated.
+			const resolvedUsers = users.map((user) => ({
+				...user,
+				name: CallUtil.resolveDisplayName(user.id, user.name),
+			}));
+
+			const mergedUserDataMap = resolvedUsers.reduce((acc, user) => {
 				acc[user.id] = {
 					name: user.name,
 					avatar_hr: user.avatar_hr,
@@ -2886,7 +3261,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			CallUtil.setUserData(mergedUserDataMap);
 
-			this.callView.applyUsersJoined(users, {
+			// Late-join fix: force-refresh authoritative names for the batch and re-apply on arrival.
+			this.applyAuthoritativeUserNames(users.map((user) => user.id));
+
+			this.callView.applyUsersJoined(resolvedUsers, {
 				totalUsersCount: this.currentCall?.associatedEntity?.userCounter,
 			});
 
@@ -2906,6 +3284,24 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this._nativeAnsweredAction.fullfill();
 				this._nativeAnsweredAction = null;
 			}
+		}
+
+		/**
+		 * Force-refreshes authoritative names for the given users and re-applies the fresh
+		 * backend record to the call card once it arrives (layout merges per-field). No-op on
+		 * empty result - the transport name already on the card stays.
+		 * Applies the full authoritative record (like updateUserData), not just the name.
+		 *
+		 * @param {Array<number|string>} userIds - Bitrix userIds
+		 */
+		applyAuthoritativeUserNames(userIds)
+		{
+			CallUtil.fetchAuthoritativeUserNames(this.currentCall, userIds).then((records) => {
+				if (this.callView && Object.keys(records).length > 0)
+				{
+					this.callView.setUserData(records);
+				}
+			});
 		}
 
 		onCallUserStateChanged(userId, state, prevState, isLegacyMobile, canChangeUI)
@@ -3372,20 +3768,41 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			const muted = this.currentCall.isMuted();
 			if (this.callView)
 			{
-				this.callView.checkScreenshareAfterReconnect();
+				// Reconcile the screenshare map against the server snapshot BEFORE clearing the
+				// reconnect flag: a screenshare stopped during the outage is reported by nothing
+				// else, and the pruning has to be already done when the falling edge of
+				// `isReconnecting` re-runs the period settle in `componentDidUpdate` (ALG-02/ALG-03).
+				// `participantsSnapshot` is scoped to THIS reconnect (the JWT providers arm it empty
+				// in `__onCallReconnecting`); providers that do not publish it leave it undefined,
+				// which the layout reads as "no data" and keeps the map untouched.
+				this.callView.reconcileScreenshareAfterReconnect(e?.participantsSnapshot);
 				this.callView.setState({ isReconnecting: false });
 
+				// Dead loop, kept only to avoid changing behaviour blindly: `reconnectedUsers` is a
+				// single-element wrapper around the participant list (`[Object.values(...)]`), so
+				// `user` here is that inner ARRAY, `user.userId` is always undefined and
+				// `setUserState` bails on its first line. True for every provider. Restoring a real
+				// per-user state propagation on reconnect is a separate behaviour change.
 				e?.reconnectedUsers?.forEach((user) => {
 					this.callView.setUserState(user.userId, user.state, false);
 				});
 
-				const connectedUserIds = e?.reconnectedUsers[0]?.map(user => Number(user.userId)) ?? [];
+				// No participant list at all (the provider has not seen a single joinResponse yet, or
+				// does not publish one) is NOT the statement "everybody left". Sweeping with an empty
+				// list would flip every remote participant to Idle on the strength of no data at all,
+				// so the sweep is skipped instead - the same "no data is not a denial" rule ALG-03
+				// applies to the screenshare map one call above.
+				const reconnectedUserList = e?.reconnectedUsers?.[0];
+				if (Array.isArray(reconnectedUserList))
+				{
+					const connectedUserIds = reconnectedUserList.map(user => Number(user.userId));
 
-				this.callView.userRegistry.users.forEach(user => {
-					if (!connectedUserIds.includes(user.data.id) && user.data.id !== Number(env.userId)) {
-						this.callView.setUserState(user.data.id, BX.Call.UserState.Idle, false);
-					}
-				});
+					this.callView.userRegistry.users.forEach(user => {
+						if (!connectedUserIds.includes(user.data.id) && user.data.id !== Number(env.userId)) {
+							this.callView.setUserState(user.data.id, BX.Call.UserState.Idle, false);
+						}
+					});
+				}
 
 				this.callView.updateDisplayedUsers();
 			}
@@ -3478,6 +3895,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		getToastAnchor()
+		{
+			return (this.rootWidget && !this.widgetLayerTeardownPending) ? this.rootWidget : undefined;
+		}
+
 		__createCallControlToast(params)
 		{
 			//const avatar = params.avatarUrl ? CallUtil.makeAbsolute(params.avatarUrl) : '';
@@ -3491,7 +3913,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					offset: 10,
 					backgroundColor: '#085DC1',
 				},
-				this.rootWidget,
+				this.getToastAnchor(),
 			);
 		}
 
@@ -3504,7 +3926,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					position: 'top',
 					offset: 10,
 				},
-				this.rootWidget,
+				this.getToastAnchor(),
 			);
 		}
 
@@ -3585,14 +4007,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				time: 5,
 			};
 
-			if (global || !this.rootWidget)
+			const anchor = global ? undefined : this.getToastAnchor();
+			if (!anchor)
 			{
 				Notification.showErrorToast(toastParams);
 
 				return;
 			}
 
-			Notification.showErrorToast(toastParams, this.rootWidget);
+			Notification.showErrorToast(toastParams, anchor);
 		}
 
 		#isLargeCallBlocked(roomType)
@@ -3601,7 +4024,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				&& !CallSettingsManager.isLargeMobileCallEnabled;
 		}
 
-		#runWithCurrentCallGuard(callback)
+		#runWithCurrentCallGuard(callback, expectedCall = null)
 		{
 			try
 			{
@@ -3615,7 +4038,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.clearEverything();
 				}
 
-				throw { code: CallError.alreadyFinished };
+				// Mismatch means another call replaced ours mid-flight: the room we
+				// started with is not necessarily gone, so it must not be treated
+				// as a stuck call and finished on the server.
+				const isSuperseded = expectedCall !== null && this.currentCall !== expectedCall;
+
+				throw { code: isSuperseded ? CallError.answerSuperseded : CallError.alreadyFinished };
 			}
 		}
 
@@ -3896,9 +4324,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.callView?.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 		}
 
-		onRecorderStatusChanged({ status, error })
+		onRecorderStatusChanged({ status, error } = {})
 		{
-			if (!this.currentCall.isCopilotInitialized && this.currentCall.initiatorId === this.currentCall.userId)
+			if (this.currentCall && !this.currentCall.isCopilotInitialized
+				&& this.currentCall.initiatorId === this.currentCall.userId
+			)
 			{
 				this.sendStartCopilotRecordAnalytics({ isAutostart: true });
 			}
@@ -4059,16 +4489,43 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 			this.ignoreNativeCallAnswer = false;
 
-			if (uicomponent.widgetLayer())
-			{
-				uicomponent.widgetLayer().close().then(() => {
+			this.widgetLayerTeardownPending = true;
+			this.enqueueWidgetLayerOp(() => {
+				// Read rootWidget at execution time: a queued open may have replaced the layer
+				// since this teardown was enqueued.
+				const closingWidget = this.rootWidget;
+				if (closingWidget === null)
+				{
+					this.widgetLayerTeardownPending = false;
+
+					return Promise.resolve();
+				}
+
+				if (uicomponent.widgetLayer())
+				{
+					return uicomponent.widgetLayer().close().then(() => {
+						if (this.rootWidget === closingWidget)
+						{
+							this.rootWidget = null;
+							this.widgetLayerTeardownPending = false;
+						}
+					}, () => {
+						// close() failed: keep the layer, but let it anchor toasts again.
+						if (this.rootWidget === closingWidget)
+						{
+							this.widgetLayerTeardownPending = false;
+						}
+					});
+				}
+
+				if (this.rootWidget === closingWidget)
+				{
 					this.rootWidget = null;
-				});
-			}
-			else
-			{
-				this.rootWidget = null;
-			}
+					this.widgetLayerTeardownPending = false;
+				}
+
+				return Promise.resolve();
+			});
 
 			if (this.callProvider === BX.Call.Provider.Plain)
 			{
@@ -4093,6 +4550,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.changeProximitySensorStatus(false);
 			this.callWithLegacyMobile = false;
 			this.selectedAudioDeviceOnIncoming = null;
+			CallUtil.resetCallScopedState();
+			this.lastCalledChangeSettingsUserName = Loc.getMessage('CALLMOBILE_DEFAULT_NAME_OF_MODERATOR');
 
 			this.startCallPromise = null;
 			this.localVideoPromise = null;
@@ -4291,7 +4750,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				onClose: () => {
 					CallUtil.log('test menu closed');
 					this.menu && this.menu.destroy();
-					uicomponent.widgetLayer() && uicomponent.widgetLayer().close();
+					this.enqueueWidgetLayerOp(() => uicomponent.widgetLayer() ? uicomponent.widgetLayer().close() : Promise.resolve());
 				},
 				onDestroy: () => {
 					this.menu = null;
@@ -4338,7 +4797,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				onClose: () => this.menu.destroy(),
 				onDestroy: () => {
 					this.menu = null;
-					uicomponent.widgetLayer().close();
+					this.enqueueWidgetLayerOp(() => uicomponent.widgetLayer() ? uicomponent.widgetLayer().close() : Promise.resolve());
 				},
 			});
 

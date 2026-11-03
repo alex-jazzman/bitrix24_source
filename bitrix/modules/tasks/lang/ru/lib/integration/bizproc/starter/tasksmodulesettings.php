@@ -1,0 +1,2 @@
+<?php
+$MESS['TASKS_BP_STARTER_CREATE_DOCUMENT_TRIGGER'] = 'Создана задача';

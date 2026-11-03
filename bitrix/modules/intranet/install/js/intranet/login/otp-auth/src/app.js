@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Dom, Type } from 'main.core';
 import { PullClient } from 'pull.client';
 import { LegacyOtp } from './components/legacy-otp';
 import { PushOtp } from './components/push-otp';
@@ -62,10 +62,6 @@ export const Main = {
 			type: Boolean,
 			default: false,
 		},
-		isBitrix24: {
-			type: Boolean,
-			default: false,
-		},
 		canLoginBySms: {
 			type: Boolean,
 			default: false,
@@ -75,6 +71,10 @@ export const Main = {
 			default: false,
 		},
 		isRecoveryCodesEnabled: {
+			type: Boolean,
+			default: false,
+		},
+		isDeviceConnectSkipped: {
 			type: Boolean,
 			default: false,
 		},
@@ -105,6 +105,10 @@ export const Main = {
 		currentStep: {
 			type: String,
 			default: '',
+		},
+		showPushOtpFailureDetails: {
+			type: Boolean,
+			default: false,
 		},
 		errorMessageText: {
 			type: String,
@@ -142,7 +146,6 @@ export const Main = {
 			currentAuthStep: currentStep,
 			isAlternativeMethodsAvailable: (this.canLoginBySms || this.canLoginByEmail || this.isRecoveryCodesEnabled),
 			pullClient: null,
-			pendingOtpCode: null,
 		};
 	},
 	computed: {
@@ -176,6 +179,10 @@ export const Main = {
 			}
 
 			return null;
+		},
+		isBackToLoginVisible(): boolean
+		{
+			return !this.notShowLinks && Type.isStringFilled(this.authLoginUrl);
 		},
 	},
 	created()
@@ -264,7 +271,9 @@ export const Main = {
 				moduleId: 'security',
 				command: 'pushOtpCode',
 				callback: (params) => {
-					this.handlePushOtpCode(params);
+					this.handlePushOtpCode(params).catch((error) => {
+						console.error('Push OTP handling failed', error);
+					});
 				},
 			});
 
@@ -277,7 +286,7 @@ export const Main = {
 				console.error('Push OTP pull start failed', error);
 			}
 		},
-		handlePushOtpCode(params)
+		async handlePushOtpCode(params)
 		{
 			const code = params?.code;
 			if (!code)
@@ -285,22 +294,12 @@ export const Main = {
 				return;
 			}
 
-			const authComponent = this.$refs?.authComponent;
-			const form = authComponent?.$refs?.authForm ?? (Type.isUndefined(document) ? null : document.forms?.form_auth);
-			if (this.applyOtpCode(code, authComponent, form))
-			{
-				return;
-			}
-
-			this.pendingOtpCode = code;
 			this.currentAuthStep = 'push';
-			this.$nextTick(() => {
-				const pushComponent = this.$refs?.authComponent;
-				const pushForm = pushComponent?.$refs?.authForm
-					?? (Type.isUndefined(document) ? null : document.forms?.form_auth);
-				this.applyOtpCode(this.pendingOtpCode, pushComponent, pushForm);
-				this.pendingOtpCode = null;
-			});
+			await this.$nextTick();
+
+			const pushComponent = this.$refs?.authComponent;
+			const pushForm = pushComponent?.$refs?.authForm;
+			this.applyOtpCode(code, pushComponent, pushForm);
 		},
 		applyOtpCode(code, componentRef, formRef)
 		{
@@ -309,7 +308,20 @@ export const Main = {
 				return false;
 			}
 
-			formRef.USER_OTP.value = code;
+			const { USER_OTP: otpInput } = formRef;
+			otpInput.value = code;
+
+			const otpSourceInput = formRef.OTP_SOURCE ?? Dom.create('input', {
+				attrs: {
+					type: 'hidden',
+					name: 'OTP_SOURCE',
+				},
+			});
+			if (!formRef.OTP_SOURCE)
+			{
+				Dom.append(otpSourceInput, formRef);
+			}
+			otpSourceInput.value = 'push';
 
 			const hasCaptcha = Boolean(this.captchaCode);
 
@@ -331,14 +343,12 @@ export const Main = {
 		 ref="authComponent"
 		 :authUrl="authUrl"
 		 :authOtpHelpLink="authOtpHelpLink"
-		 :authLoginUrl="authLoginUrl"
 		 :rememberOtp="rememberOtp"
 		 :captchaCode="captchaCode"
-		 :notShowLinks="notShowLinks"
-		 :isBitrix24="isBitrix24"
 		 :canLoginBySms="canLoginBySms"
 		 :canLoginByEmail="canLoginByEmail"
 		 :isRecoveryCodesEnabled="isRecoveryCodesEnabled"
+		 :isDeviceConnectSkipped="isDeviceConnectSkipped"
 		 :maskedUserAuthPhoneNumber="maskedUserAuthPhoneNumber"
 		 :maskedUserAuthEmail="maskedUserAuthEmail"
 		 :userDevice="userDevice"
@@ -347,6 +357,7 @@ export const Main = {
 		 :pushOtpConfig="pushOtpConfig"
 		 :recoveryCodesHelpLink="recoveryCodesHelpLink"
 		 :errorMessage="errorMessage"
+		 :showPushOtpFailureDetails="showPushOtpFailureDetails"
 		 :isAlternativeMethodsAvailable="isAlternativeMethodsAvailable"
 		 :canSendRequestRecoverAccess="canSendRequestRecoverAccess"
 		 @form-submit="onSubmitForm"
@@ -360,6 +371,16 @@ export const Main = {
 		 @application-offline-code="onApplicationOfflineCode"
 		 @clear-errors="onClearErrors"
 		/>
+		<Teleport to=".intranet-body__header-right" v-if="isBackToLoginVisible">
+			<a
+				class="intranet-text-btn intranet-text-btn--auth"
+				:href="authLoginUrl"
+				rel="nofollow"
+				data-testid="bx-intranet-2fa-back-to-login"
+			>
+				{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_LINK') }}
+			</a>
+		</Teleport>
 		<Teleport to=".intranet-body__footer-right" v-if="currentHelpButtonConfig">
 			<button type="button" class="intranet-help-widget intranet-page-base__help" @click="onHelpButtonClick">
 				<i class="ui-icon-set intranet-help-widget__icon"></i>

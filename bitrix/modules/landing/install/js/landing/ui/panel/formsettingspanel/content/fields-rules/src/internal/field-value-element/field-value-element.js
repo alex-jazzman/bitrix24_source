@@ -25,7 +25,7 @@ type FieldValueElementOptions = {
 	data: FieldValueState,
 };
 
-export default class FieldValueElement extends EventEmitter
+export class FieldValueElement extends EventEmitter
 {
 	options: FieldValueElementOptions;
 	cache = new Cache.MemoryCache();

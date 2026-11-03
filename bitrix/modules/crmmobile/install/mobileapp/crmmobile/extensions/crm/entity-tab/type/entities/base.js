@@ -3,7 +3,6 @@
  */
 jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { openChat } = require('crm/entity-tab/type/traits/open-chat');
 	const { Icon } = require('ui-system/blocks/icon');
@@ -54,33 +53,26 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		}
 
 		/**
-		 * @return {{
-		 * image: ImageProps,
-		 * title: string|Function,
-		 * description: string|Function,
+		 * @returns {{
+		 * image: object,
+		 * title: string,
+		 * list: array,
+		 * description: string,
+		 * onDescriptionLinkClick: function,
 		 * }}
 		 */
 		getEmptyEntityScreenConfig()
 		{
-			const image = this.getEmptyImage();
-			const text = this.getEmptyEntityScreenDescriptionText();
+			const imageParams = this.getEmptyImage();
+			const description = this.getEmptyEntityScreenDescriptionText();
 			const title = this.getEmptyScreenTitle();
 			const parentWidget = this.getParentWidget();
 
 			return {
-				image,
+				image: Image(imageParams),
 				title,
-				description: () => BBCodeText({
-					value: text,
-					linksUnderline: false,
-					style: {
-						color: AppTheme.colors.base2,
-						fontSize: 15,
-						textAlign: 'center',
-						lineHeightMultiple: 1.2,
-					},
-					onLinkClick: (params) => this.showFeatureBanner(parentWidget, params?.url),
-				}),
+				description: description,
+				onDescriptionLinkClick: (params) => this.showFeatureBanner(parentWidget, params?.url),
 			};
 		}
 
@@ -114,9 +106,10 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		getEmptyColumnScreenConfig(data)
 		{
+			const imageParams = this.getEmptyImage();
 			const screenConfig = {
 				title: this.getEmptyColumnScreenTitle(),
-				image: this.getEmptyImage(),
+				image: Image(imageParams),
 			};
 
 			const { column } = data;
@@ -169,23 +162,21 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		{
 			return {
 				style: {
-					width: 218,
-					height: 178,
+					width: 212,
+					height: 212,
 				},
-				svg: {
-					uri: this.getPathToIcon(),
-				},
+				uri: this.getPathToIcon(),
 			};
 		}
 
 		getPathToIcon()
 		{
-			return EmptyScreen.makeLibraryImagePath(`${this.getIconName()}.svg`, 'crm');
+			return EmptyScreen.makeLibraryImagePath(`${this.getIconName()}.webp`, 'crm');
 		}
 
 		getIconName()
 		{
-			return 'kanban';
+			return 'marshmallow-empty-crm';
 		}
 
 		/**
@@ -263,15 +254,36 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		 */
 		getEmptySearchScreenConfig()
 		{
-			const image = this.getEmptyImage();
+			const imageParams = this.getEmptySearchIcon();
 			const title = this.getEmptySearchScreenTitle();
 			const description = Loc.getMessage('M_CRM_ENTITY_TAB_SEARCH_EMPTY_DESCRIPTION');
 
 			return {
-				image,
+				image: Image(imageParams),
 				title,
 				description,
 			};
+		}
+
+		getEmptySearchIcon()
+		{
+			return {
+				style: {
+					width: 156,
+					height: 140,
+				},
+				uri: this.getEmptySearchIconPath(),
+			};
+		}
+
+		getEmptySearchIconPath()
+		{
+			return EmptyScreen.makeLibraryImagePath(`${this.getEmptySearchIconName()}.webp`, 'crm');
+		}
+
+		getEmptySearchIconName()
+		{
+			return 'empty-search-crm';
 		}
 
 		getEmptySearchScreenTitle()

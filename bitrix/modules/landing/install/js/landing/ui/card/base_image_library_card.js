@@ -24,7 +24,7 @@
 
 		this.searchLabel = !!data.searchLabel ? data.searchLabel : "";
 		this.searchPlaceholder = !!data.searchPlaceholder ? data.searchPlaceholder : "";
-		this.serchTipsList = !!data.searchTips ? data.searchTips : [];
+		this.searchTipsList = !!data.searchTips ? data.searchTips : [];
 		this.onChangeHandler = typeof data.onChange === "function" ? data.onChange : (function() {});
 
 		// Make search
@@ -182,7 +182,7 @@
 		createSearchTips: function()
 		{
 			return new BX.Landing.UI.Field.ButtonGroup({
-				items: this.serchTipsList,
+				items: this.searchTipsList,
 				className: "landing-ui-card-library-search-tips",
 				onChange: this.onTipsChange.bind(this)
 			});

@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -24,6 +25,12 @@ export const TagsChip = {
 			tagsMeta,
 		};
 	},
+	data(): Object
+	{
+		return {
+			isDialogShown: false,
+		};
+	},
 	computed: {
 		design(): string
 		{
@@ -33,8 +40,38 @@ export const TagsChip = {
 		{
 			return this.task.filledFields[tagsMeta.id];
 		},
+		opensDialog(): boolean
+		{
+			return !this.isSelected;
+		},
+	},
+	watch: {
+		isDialogShown(): void
+		{
+			this.syncAria();
+		},
+		opensDialog(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
 	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensDialog ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensDialog ? String(this.isDialogShown) : null);
+		},
 		handleClick(): void
 		{
 			if (this.isSelected)
@@ -44,11 +81,28 @@ export const TagsChip = {
 				return;
 			}
 
+			this.isDialogShown = true;
 			tagsDialog.show({
 				targetNode: this.$el,
 				taskId: this.taskId,
-				onClose: this.highlightField,
+				onClose: this.handleDialogClose,
 			});
+		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
+		handleDialogClose(): void
+		{
+			this.isDialogShown = false;
+
+			this.highlightField();
 		},
 		highlightField(): void
 		{
@@ -63,7 +117,10 @@ export const TagsChip = {
 			:data-task-id="taskId"
 			:data-task-chip-id="tagsMeta.id"
 			:data-task-chip-value="task.tags.join(',')"
+			data-testid="tasks-tags-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`,
 };

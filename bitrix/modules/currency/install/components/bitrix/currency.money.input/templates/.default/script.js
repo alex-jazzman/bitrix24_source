@@ -13,6 +13,7 @@
 		this.input = param.input;
 
 		this.resultInput = param.resultInput;
+		this.currencyInput = param.currencyInput || null;
 
 		this.editor = null;
 
@@ -63,8 +64,15 @@
 
 	BX.Currency.MoneyInput.prototype.setCurrency = function(currency)
 	{
-		this.getEditor().setCurrency(currency);
+		const editor = this.getEditor();
 		this.currency = currency;
+		editor.setCurrency(currency);
+
+		if(this.currencyInput && this.currencyInput.value !== currency)
+		{
+			this.currencyInput.value = currency;
+			BX.fireEvent(this.currencyInput, 'change');
+		}
 	};
 
 	BX.Currency.MoneyInput.prototype.setValue = function(value)

@@ -2,7 +2,7 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\UserTable;
+use Bitrix\Intranet\Internal\Repository\User\PublicTextUserRepository;
 
 $values = array_filter(
 	$arResult['value'],
@@ -20,11 +20,9 @@ else
 {
 	$results = [];
 
-	$users = UserTable::getList([
-		'filter' => ['@ID' => array_values($values)]
-	]);
+	$users = (new PublicTextUserRepository())->getByIds($values);
 
-	while($user = $users->fetch())
+	foreach($users as $user)
 	{
 		$userName = \CUser::FormatName(
 			\CSite::GetNameFormat(),

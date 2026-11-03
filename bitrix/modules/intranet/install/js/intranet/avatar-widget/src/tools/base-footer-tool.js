@@ -12,9 +12,9 @@ export class BaseFooterTool
 	getLayout(): HTMLElement
 	{
 		return Tag.render`
-			<div data-testid="bx-avatar-widget-footer-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-footer__item">
+			<button type="button" data-testid="bx-avatar-widget-footer-tool-${this.getId()}" onclick="${this.onClick.bind(this)}" class="intranet-avatar-widget-footer__item">
 				${this.getTitle()}
-			</div>
+			</button>
 		`;
 	}
 

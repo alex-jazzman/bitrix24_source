@@ -1,6 +1,6 @@
 import Type from '../type';
 
-export default function merge(current: any, target: any)
+export default function merge(current: any, target: any): any
 {
 	return Object.entries(target).reduce((acc, [key, value]) => {
 		if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value))

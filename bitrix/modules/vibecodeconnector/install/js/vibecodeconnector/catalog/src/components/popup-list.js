@@ -112,7 +112,8 @@ export class CatalogPopupList
 			return;
 		}
 		const tab = ctrl.getConfig();
-		const showHiddenBadge = ctrl.getState() === CatalogState.All;
+		const slicesShowingHiddenItems = [CatalogState.All, CatalogState.Favorite];
+		const showHiddenBadge = slicesShowingHiddenItems.includes(ctrl.getState());
 
 		for (const item of items)
 		{
@@ -122,6 +123,46 @@ export class CatalogPopupList
 				{
 					this.renderItems(this.#lastState);
 				}
+			};
+
+			const reRenderAfterFavorite = (committed: boolean) => {
+				if (!committed)
+				{
+					if (this.#lastState)
+					{
+						this.renderItems(this.#lastState);
+					}
+
+					return;
+				}
+
+				if (ctrl.getState() !== CatalogState.Favorite)
+				{
+					return;
+				}
+
+				if (this.#lastState)
+				{
+					this.renderItems(this.#lastState);
+				}
+
+				const isCoveredLocally = ctrl.hasItem(item.id) && !ctrl.hasMorePages();
+				if (isCoveredLocally)
+				{
+					return;
+				}
+
+				void ctrl.refresh().then((refreshed) => {
+					if (!refreshed)
+					{
+						console.error('[vibecodeconnector.catalog] favorite list re-read failed; showing locally updated list');
+					}
+
+					if (this.#lastState)
+					{
+						this.renderItems(this.#lastState);
+					}
+				});
 			};
 
 			const reRenderAfterRename = () => {
@@ -147,8 +188,16 @@ export class CatalogPopupList
 					}
 				});
 			};
+			const favoriteRequests = {
+				get: () => ctrl.getPendingFavorite(item.id),
+				track: (request: Promise<void>, desired: boolean) => ctrl.trackPendingFavorite(item.id, request, desired),
+				settle: (value: boolean) => ctrl.settlePendingFavorite(item.id, value),
+			};
+
 			const popupItem = new CatalogPopupItem(item, tab, {
 				onPinToggled: reRender,
+				onFavoriteToggled: reRenderAfterFavorite,
+				favoriteRequests,
 				onHiddenToggled: reRender,
 				onHiddenCommitted: () => this.#onReloadRequested?.(),
 				onRenamed: reRenderAfterRename,
@@ -262,6 +311,10 @@ export class CatalogPopupList
 		{
 			Dom.append(this.#renderHiddenEmptyState(), this.#bodyNode);
 		}
+		else if (catalogState === CatalogState.Favorite)
+		{
+			Dom.append(this.#renderFavoriteEmptyState(), this.#bodyNode);
+		}
 		else
 		{
 			const emptyState = activeTabId === 'company'
@@ -328,6 +381,17 @@ export class CatalogPopupList
 			<div class="vibecode-catalog__content-empty-state" data-testid="vibecode-catalog-hidden-empty">
 				<p class="vibecode-catalog__hidden-empty-state ui-text --sm">
 					${Loc.getMessage('VIBECODECONNECTOR_CATALOG_HIDDEN_EMPTY')}
+				</p>
+			</div>
+		`;
+	}
+
+	#renderFavoriteEmptyState(): HTMLElement
+	{
+		return Tag.render`
+			<div class="vibecode-catalog__content-empty-state" data-testid="vibecode-catalog-favorite-empty">
+				<p class="vibecode-catalog__hidden-empty-state ui-text --sm">
+					${Loc.getMessage('VIBECODECONNECTOR_CATALOG_FAVORITE_EMPTY')}
 				</p>
 			</div>
 		`;

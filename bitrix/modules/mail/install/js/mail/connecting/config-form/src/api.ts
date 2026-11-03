@@ -1,6 +1,6 @@
 import { ajax } from 'main.core';
 
-import type { InitialOauthUser } from './types';
+import type { AvatarChange, GeneralSettingsPatch, InitialOauthUser, MailboxAvatarData } from './types';
 
 const CONTROLLER = 'mail.api.mailboxconnecting';
 
@@ -86,6 +86,7 @@ export type MailboxServiceData = {
 	smtpServer?: string;
 	smtpLoginAsImap?: boolean;
 	smtpPasswordAsImap?: boolean;
+	externalCredentials?: boolean;
 };
 
 export type MailboxData = {
@@ -116,6 +117,7 @@ export type MailboxData = {
 	};
 	providerRestriction?: string | null;
 	migrationActive?: boolean;
+	sourceGenerationId?: number | null;
 };
 
 export type CrmOptionsPayload = {
@@ -188,16 +190,31 @@ type ConnectionPayloadKey =
 	| 'sslSmtp'
 	| 'loginSmtp';
 
-export type UpdateMailboxPayload = Omit<BaseMailboxPayload, ConnectionPayloadKey>
+export type UpdateMailboxPayload = Omit<BaseMailboxPayload, ConnectionPayloadKey | keyof GeneralSettingsPatch>
 	& Partial<Pick<BaseMailboxPayload, ConnectionPayloadKey>>
+	& GeneralSettingsPatch
 	& {
 	password?: string;
 	passwordSMTP?: string;
 	userIdToConnect?: number;
+	expectedSourceGenerationId?: number | null;
+	avatar?: AvatarChange;
+};
+
+export type UpdateGeneralSettingsParams = {
+	mailboxId: number;
+	patch: GeneralSettingsPatch;
+	avatar?: AvatarChange;
+};
+
+export type UpdateGeneralSettingsResult = {
+	id: number;
+	avatar?: MailboxAvatarData;
 };
 
 export type ConnectMailboxResult = {
 	id: number;
+	avatar?: MailboxAvatarData;
 	senderName?: string | null;
 	email?: string | null;
 	[extra: string]: unknown;
@@ -222,6 +239,14 @@ export const Api = {
 	getMailbox(mailboxId: number): Promise<AjaxResponse<MailboxData>>
 	{
 		return runAction<MailboxData>('getMailbox', { mailboxId });
+	},
+
+	getMailboxAvatar(mailboxId: number): Promise<AjaxResponse<MailboxAvatarData>>
+	{
+		return ajax.runAction('mail.api.mailboxavatar.get', {
+			method: 'POST',
+			data: { mailboxId },
+		}) as Promise<AjaxResponse<MailboxAvatarData>>;
 	},
 
 	// Goes to the OAuth provider, so it is a request of its own: the payload of the settings screen
@@ -254,7 +279,18 @@ export const Api = {
 
 	updateMailbox(mailboxId: number, data: UpdateMailboxPayload): Promise<AjaxResponse<ConnectMailboxResult>>
 	{
-		return runAction<ConnectMailboxResult>('updateMailbox', { mailboxId, ...data });
+		return ajax.runAction(`${CONTROLLER}.updateMailbox`, {
+			method: 'POST',
+			json: { mailboxId, ...data },
+		}) as Promise<AjaxResponse<ConnectMailboxResult>>;
+	},
+
+	updateGeneralSettings(params: UpdateGeneralSettingsParams): Promise<AjaxResponse<UpdateGeneralSettingsResult>>
+	{
+		return ajax.runAction(`${CONTROLLER}.updateGeneralSettings`, {
+			method: 'POST',
+			json: params,
+		}) as Promise<AjaxResponse<UpdateGeneralSettingsResult>>;
 	},
 
 	deleteMailbox(mailboxId: number): Promise<AjaxResponse<Record<string, unknown>>>

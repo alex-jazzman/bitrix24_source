@@ -1,6 +1,8 @@
 <?php
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CATEGORY"] = "Pipeline";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CATEGORY_NAME"] = "Pipeline name";
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CURRENCY_ID'] = 'Currency';
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CURRENCY_ID_FULL'] = 'Currency of the deal used to calculate the item amounts.';
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CUSTOMIZED"] = "Modified";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CUSTOMIZED_FULL"] = "Item was modified manually after being added to CRM deal (Y - yes, N - no)";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_DEAL_CLOSEDATE"] = "Deal closed on";
@@ -28,10 +30,16 @@ $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_PRODUCT_ID"] = "Product ID";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_PRODUCT_NAME"] = "Product name";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_QUANTITY"] = "Quantity";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SORT"] = "Sort order";
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUM_EXCLUSIVE'] = 'Discounted amount without tax';
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUM_EXCLUSIVE_FULL'] = 'Discounted price without tax multiplied by quantity. Rounded to the number of decimal places specified in the deal currency format.';
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUM_NETTO'] = 'Amount without discount or tax';
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUM_NETTO_FULL'] = 'Price without discount or tax multiplied by quantity. Rounded to the number of decimal places specified in the deal currency format.';
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUM_TOTAL'] = 'Discounted amount with tax';
+$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUM_TOTAL_FULL'] = 'Total amount of the item. If tax is included in the price, the amount is the price multiplied by quantity. Otherwise, tax is added to the discounted price without tax multiplied by quantity. Rounded to the number of decimal places specified in the deal currency format. If location-based taxes are enabled in Bitrix24, this amount includes tax, while the product table in the deal form shows the amount without tax.';
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUPERPARENT"] = "Parent product section";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUPERSUPERPARENT"] = "Parent of parent product section";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_TAX_INCLUDED"] = "Include tax in price";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_TAX_INCLUDED_FULL"] = "Y - yes, N - no";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_TAX_RATE"] = "Tax";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_TABLE"] = "Deal: products";
-$MESS["CRM_BIC_DEAL_PRODUCT_ROW_TABLE_DESCRIPTION_FULL"] = "Provides information on products in deals from standard fields.";
+$MESS["CRM_BIC_DEAL_PRODUCT_ROW_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Data on products and services in CRM deals: prices, quantity, discounts, taxes, units of measurement, and catalog sections.";

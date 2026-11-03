@@ -8,3 +8,4 @@ $MESS['CRM_GCDA_EMPTY_RESULT'] = 'Не удалось получить данн�
 $MESS['CRM_GCDA_DEAL'] = 'Сделка';
 $MESS['CRM_GCDA_CONTACT'] = 'Контакт';
 $MESS['CRM_GCDA_COMPANY'] = 'Компания';
+$MESS['CRM_GCDA_SOURCE_DOCUMENT'] = 'Исходный документ';

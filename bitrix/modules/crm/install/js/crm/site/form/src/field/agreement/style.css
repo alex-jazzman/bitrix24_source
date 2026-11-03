@@ -1,5 +1,6 @@
 .b24-form-field-agreement .b24-form-control-container {
-	line-height: 11px;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-2xs, 1.3);
 }
 
 .b24-form-field-agreement input[type="checkbox"]:focus-visible {
@@ -8,22 +9,57 @@
 }
 
 .b24-form-field-agreement .b24-form-control-desc {
-	font-size: 11px;
-	opacity: 0.5;
-	line-height: 1;
+	font-size: var(--ui-font-size-md, 14px);
+	color: var(--ui-color-base-4, #a8adb4);
+	line-height: var(--ui-font-line-height-2xs, 1.3);
 }
 
 .b24-form-field-agreement .b24-form-field-agreement-link {
-	font-size: 11px;
-	line-height: 1;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-2xs, 1.3);
 	cursor: pointer;
 }
+
+.b24-form-field-agreement .b24-form-field-agreement-submit-text {
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-size-md, 14px) var(--b24-font-family);
+	color: #a8adb4;
+	color: var(--ui-color-base-4, #a8adb4);
+	line-height: var(--ui-font-line-height-2xs, 1.3);
+}
+
+.b24-form-field-agreement .b24-form-field-agreement-submit-link {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #007eff;
+	font: inherit;
+	line-height: inherit;
+	text-align: left;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.b24-form-field-agreement .b24-form-field-agreement-submit-link:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid currentColor;
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
 .b24-form-field-agreement a.b24-form-field-agreement-link {
 	color: #007eff;
 	text-decoration: underline;
 }
 
 .b24-form-field-agreement .b24-form-control-required {
-	font-size: 11px;
-	line-height: 1;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-2xs, 1.3);
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.b24-form-field-agreement .b24-form-field-agreement-notice {
+	display: block;
+	margin-top: var(--ui-space-stack-xs, 8px);
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-md, 1.4);
+	color: var(--b24-text-color);
 }

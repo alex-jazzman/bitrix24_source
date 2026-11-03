@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core) {
+(function (exports, main_core, ui_notification) {
 	'use strict';
 
 	const ENTITY_TYPE = 'mail';
@@ -31,7 +31,7 @@ this.BX = this.BX || {};
 				}
 			}).then(response => {
 				if (top.window.BXIM && response.data) {
-					top.BXIM.openMessenger(`chat${parseInt(response.data)}`);
+					top.BXIM.openMessenger(`chat${parseInt(response.data, 10)}`);
 				}
 			}, response => {
 				this.#displayErrors(response.errors);
@@ -67,14 +67,17 @@ this.BX = this.BX || {};
 						}
 					});
 				}
+				return null;
 			}, response => {
 				this.#displayErrors(response.errors);
 			}).then(response => {
-				if (response.data && response.data.eventId) {
+				if (response?.data?.eventId) {
 					const sliderLoader = new (window.top.BX || window.BX).Calendar.SliderLoader(response.data.eventId);
 					sliderLoader.show();
-					const grid = new BX.Mail.MessageGrid();
-					grid.reloadTable();
+
+					// the screen publishes its grid under this name; inside the message slider it is the top window
+					const grid = this.contextBx.Mail?.Home?.Grid ?? BX.Mail?.Home?.Grid;
+					grid?.reloadTable();
 				}
 			});
 		}
@@ -98,19 +101,26 @@ this.BX = this.BX || {};
 			this.contextBx.Event.EventEmitter.unsubscribe('BX.Calendar:onEntrySave', this.onCalendarSave);
 		}
 		#displayErrors(errors) {
+			let errorMessages = [];
 			if (main_core.Type.isArray(errors)) {
-				const errorMessages = [];
 				errors.forEach(error => {
-					errorMessages.push(error.message);
+					if (main_core.Type.isStringFilled(error?.message)) {
+						errorMessages.push(error.message);
+					}
 				});
-				alert(errorMessages.join('\n'));
-			} else {
-				alert("action can't be performed");
 			}
+			if (errorMessages.length === 0) {
+				errorMessages = ["action can't be performed"];
+			}
+			const notificationCenter = this.contextBx.UI?.Notification?.Center ?? ui_notification.Center;
+			notificationCenter.notify({
+				autoHideDelay: 5000,
+				content: errorMessages.map(message => main_core.Text.encode(message)).join('<br>')
+			});
 		}
 	}
 
 	exports.Secretary = Secretary;
 
-})(this.BX.Mail = this.BX.Mail || {}, BX);
+})(this.BX.Mail = this.BX.Mail || {}, BX, BX.UI.Notification);
 //# sourceMappingURL=secretary.bundle.js.map

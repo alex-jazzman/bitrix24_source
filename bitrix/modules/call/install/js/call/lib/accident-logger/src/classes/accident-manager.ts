@@ -1,10 +1,13 @@
 import { Type, Event } from 'main.core';
-import { CallSettingsManager } from 'call.lib.settings-manager';
+import { CallSettingsManager, CallLogContextRegistry } from 'call.lib.settings-manager';
 import { groupLogs } from '../utils/group-logs';
 import { isStorageLimitError } from '../utils/is-storage-limit-error';
 import { AccidentLoggerError } from './accident-logger-error';
 import { type AccidentStorage } from './accident-storage';
 import { LogEntryProvider, type LogEntry, type GroupedLog } from './log-entry-provider';
+
+const startupIdleTimeout = 5000;
+const startupFallbackDelay = 2000;
 
 export class AccidentManager
 {
@@ -14,6 +17,7 @@ export class AccidentManager
 	#bufferedEntries: LogEntry[] = [];
 	#bufferFlushTimeout: ReturnType<typeof setTimeout> | undefined;
 	#isBufferFlushing: boolean = false;
+	#cancelSendingLoopStart: (() => void) | undefined;
 	localStorageSendingSessionIdKey: string;
 	minLogLifetime: number;
 	sendInterval: number;
@@ -49,8 +53,9 @@ export class AccidentManager
 		}
 		this.sendingLoop = this.sendingLoop.bind(this);
 		this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
-		void this.sendingLoop();
+		// Bound before the deferred start: an unload happening earlier must still flush the storage
 		this.#setupGlobalErrorHandlers();
+		this.#startSendingLoopWhenIdle();
 	}
 
 	get sessionId(): string
@@ -68,6 +73,48 @@ export class AccidentManager
 	set isSending(value)
 	{
 		localStorage.setItem(this.localStorageSendingSessionIdKey, value ? this.sessionId : '');
+	}
+
+	/**
+	 * The extension ships with the call core, so the constructor runs while the page is still
+	 * loading. Only the first run of the loop is deferred - it opens the storage and clears it even
+	 * when the journal is empty, and that IO has no reason to compete with the page load. addLog()
+	 * stays immediate, and the periodic run keeps going by sendInterval from this first one.
+	 */
+	#startSendingLoopWhenIdle(): void
+	{
+		const start = () => {
+			this.#cancelSendingLoopStart = undefined;
+			void this.sendingLoop();
+		};
+
+		if (Type.isFunction(window.requestIdleCallback))
+		{
+			const handle = requestIdleCallback(start, { timeout: startupIdleTimeout });
+			// No clearTimeout fallback: an idle handle lives in its own id space, so clearing a
+			// timeout by it could kill an unrelated timer. Skipping is safe - a start that fires
+			// after the teardown returns on the isEnabled check of sendingLoop().
+			this.#cancelSendingLoopStart = () => {
+				if (Type.isFunction(window.cancelIdleCallback))
+				{
+					cancelIdleCallback(handle);
+				}
+			};
+
+			return;
+		}
+
+		const timeout = setTimeout(start, startupFallbackDelay);
+		this.#cancelSendingLoopStart = () => clearTimeout(timeout);
+	}
+
+	#cancelPendingSendingLoopStart(): void
+	{
+		if (Type.isFunction(this.#cancelSendingLoopStart))
+		{
+			this.#cancelSendingLoopStart();
+			this.#cancelSendingLoopStart = undefined;
+		}
 	}
 
 	async sendingLoop()
@@ -98,17 +145,27 @@ export class AccidentManager
 		this.sendingLoopTimeout = setTimeout(this.sendingLoop, this.sendInterval);
 	}
 
-	async addLog(error: Error | null = null, message: string = '')
+	/**
+	 * @param {?Error} error the error itself, when there is one
+	 * @param {string} message text of the entry
+	 * @param {string} source subsystem the entry comes from, so that entries of different subsystems
+	 *   with the same message stay apart. Known values: 'copilot_record'. Empty means unset.
+	 */
+	async addLog(error: Error | null = null, message: string = '', source: string = '')
 	{
 		if (!this.isEnabled)
 		{
 			return;
 		}
 
+		// Capture synchronously before the first await: the active call may change while awaiting
+		const callContext = CallLogContextRegistry.getContext();
+		const context = source ? { ...callContext, source } : callContext;
+
 		let entry: LogEntry | null = null;
 		try
 		{
-			entry = await this.#logEntryProvider.createLogEntry(error, message);
+			entry = await this.#logEntryProvider.createLogEntry(error, message, context);
 		}
 		catch (creationError)
 		{
@@ -258,6 +315,9 @@ export class AccidentManager
 		{
 			return;
 		}
+
+		// Dropped before the flush below: a start still pending would run the same pass twice
+		this.#cancelPendingSendingLoopStart();
 
 		if (Type.isNumber(this.sendingLoopTimeout))
 		{
@@ -428,6 +488,7 @@ export class AccidentManager
 
 	destroy()
 	{
+		this.#cancelPendingSendingLoopStart();
 		clearTimeout(this.sendingLoopTimeout);
 		this.sendingLoopTimeout = undefined;
 		if (Type.isNumber(this.#bufferFlushTimeout))

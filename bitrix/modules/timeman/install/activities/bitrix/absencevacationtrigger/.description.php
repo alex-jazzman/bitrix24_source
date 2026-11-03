@@ -11,6 +11,10 @@ if (
 	!class_exists(\Bitrix\Bizproc\Activity\ActivityDescription::class)
 	|| !enum_exists(\Bitrix\Bizproc\Activity\Enum\ActivityType::class)
 	|| !enum_exists(\Bitrix\Bizproc\Activity\Enum\ActivityGroup::class)
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityType::tryFrom('trigger') === null
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityGroup::tryFrom('starter') === null
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityGroup::tryFrom('team_management') === null
+	|| \Bitrix\Bizproc\Activity\Enum\ActivityGroup::tryFrom('hr') === null
 	|| !enum_exists('\Bitrix\Bizproc\Activity\Enum\ActivityColorIndex')
 	|| \Bitrix\Bizproc\Activity\Enum\ActivityColorIndex::tryFrom(2) == null
 	|| !enum_exists('\Bitrix\Ui\Public\Enum\IconSet\Outline')
@@ -31,11 +35,15 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription =
 	(new ActivityDescription(
 		(string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_NAME'),
-		(string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_DESCR'),
+		(string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_DESCR_MSGVER_1'),
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('AbsenceVacationTrigger')
-		->setGroups([ActivityGroup::STARTER->value])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::TEAM_MANAGEMENT->value,
+			ActivityGroup::HR->value,
+		])
 		->setReturn([
 			'USER' => [
 				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_RETURN_FIELD_USER_ID'),
@@ -47,6 +55,14 @@ $arActivityDescription =
 			],
 			'ACTIVE_TO' => [
 				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_RETURN_FIELD_ACTIVE_TO'),
+				'Type' => FieldType::DATETIME,
+			],
+			'ABSENCE_TYPE' => [
+				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_RETURN_FIELD_ABSENCE_TYPE'),
+				'Type' => FieldType::STRING,
+			],
+			'EventDateTime' => [
+				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_VACATION_RETURN_FIELD_EVENT_DATE_TIME'),
 				'Type' => FieldType::DATETIME,
 			],
 		])

@@ -52,7 +52,27 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 			interval: 100,
 			waitAjaxOnStop: true,
 			whenHit: function(result){
+				if(ctx.isMutatingStage(sv.stage))
+				{
+					ctx.markParentSliderChanged();
+				}
+
 				ctx.setPercent(result.data.PERCENT);
+
+				var lastRequest = this.vars.fields;
+				var isDeleteOnly = typeof lastRequest.ONLY_DELETE_ALL !== 'undefined';
+				if(result.data.PERCENT >= 100 && !sv.awaitInterruption)
+				{
+					var slider = ctx.markParentSliderChanged();
+
+					if(slider)
+					{
+						if(!isDeleteOnly)
+						{
+							slider.close();
+						}
+					}
+				}
 
 				var next = result.data.NEXT_STAGE;
 
@@ -66,8 +86,6 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 				{
 					if(typeof result.data.STAT != 'undefined')
 						ctx.updateStatistics(result.data.STAT);
-
-					var lastRequest = this.vars.fields;
 
 					if((typeof lastRequest.OPTIONS != 'undefined' && typeof lastRequest.OPTIONS.DROP_ALL != 'undefined') || (typeof lastRequest.ONLY_DELETE_ALL != 'undefined'))
 						sv.firstImport = false; // now it is definitely NOT a first import
@@ -146,6 +164,11 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 			bindEvents: {
 				'toggle-bundle-before': function(way, controls){
 					BX[way ? 'addClass' : 'removeClass'](controls.expander, 'expanded');
+					controls.expander.setAttribute('aria-expanded', way ? 'true' : 'false');
+					controls.expander.setAttribute(
+						'aria-label',
+						so.messages[way ? 'collapseLocationSet' : 'expandLocationSet']
+					);
 				}
 			}
 		});
@@ -178,7 +201,11 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 
 		sc.percentIndicator = 	this.getControl('percents', false, false, true);
 		sc.percentGrade = 		this.getControl('adm-progress-bar-inner');
+		sc.progressBar = 		this.getControl('import-progressbar');
 		sc.statusText = 		this.getControl('status-text');
+
+		this.initTreeAccessibility();
+		this.initTabsAccessibility();
 
 		sc.statictics = {
 			list: 		this.getControl('stat-list'),
@@ -192,6 +219,129 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 
 	/*buildUpDOM: function(){},*/
 
+	initTreeAccessibility: function(){
+		var expanders = this.ctrls.nameOfSet.querySelectorAll('.bx-ui-item-tree-expander');
+
+		for(var k = 0; k < expanders.length; k++)
+		{
+			var expander = expanders[k];
+			var children = expander.parentNode.querySelector('.bx-ui-item-tree-children');
+
+			if(children == null)
+				continue;
+
+			if(!children.id)
+				children.id = 'location-import-tree-panel-' + this.opts.importId + '-' + k;
+
+			expander.setAttribute('aria-controls', children.id);
+			expander.setAttribute('aria-expanded', BX.hasClass(expander, 'expanded') ? 'true' : 'false');
+		}
+	},
+
+	initTabsAccessibility: function(){
+		var tabIds = ['tab_import', 'tab_cleanup'];
+		var tabs = [];
+		var panels = {};
+		var activeTabId = null;
+
+		for(var k = 0; k < tabIds.length; k++)
+		{
+			var tabId = tabIds[k];
+			var tab = this.ctrls.scope.querySelector('#tab_cont_' + tabId);
+			var panel = this.ctrls.scope.querySelector('#inner_tab_' + tabId);
+
+			if(tab == null || panel == null)
+				continue;
+
+			tab.setAttribute('role', 'tab');
+			tab.setAttribute('data-tab-id', tabId);
+			tab.setAttribute('aria-controls', panel.id);
+			panel.setAttribute('role', 'tabpanel');
+			panel.setAttribute('aria-labelledby', tab.id);
+
+			if(BX.hasClass(tab, 'bx-tab-selected') || BX.hasClass(tab, 'bx-tab-container-selected'))
+				activeTabId = tabId;
+
+			tabs.push(tab);
+			panels[tabId] = panel;
+		}
+
+		if(tabs.length == 0)
+			return;
+
+		var tabList = tabs[0].parentNode;
+		tabList.setAttribute('role', 'tablist');
+		tabList.setAttribute('aria-label', this.opts.tabListLabel);
+		tabList.setAttribute('aria-orientation', 'horizontal');
+		for(var childIndex = 0; childIndex < tabList.children.length; childIndex++)
+		{
+			if(tabList.children[childIndex].getAttribute('role') != 'tab')
+				tabList.children[childIndex].setAttribute('role', 'presentation');
+		}
+
+		var tabTable = tabList;
+		while(tabTable != null && tabTable.nodeName != 'TABLE')
+			tabTable = tabTable.parentNode;
+
+		if(tabTable != null)
+			tabTable.setAttribute('role', 'presentation');
+
+		this.ctrls.tabs = tabs;
+		this.ctrls.tabPanels = panels;
+
+		for(var tabIndex = 0; tabIndex < tabs.length; tabIndex++)
+		{
+			BX.bind(tabs[tabIndex], 'keydown', (function(index, ctx){
+				return function(event){
+					event = event || window.event;
+					var key = event.key || event.keyCode;
+					var nextIndex = null;
+
+					if(key == 'ArrowRight' || key == 'ArrowDown' || key == 39 || key == 40)
+						nextIndex = (index + 1) % ctx.ctrls.tabs.length;
+					else if(key == 'ArrowLeft' || key == 'ArrowUp' || key == 37 || key == 38)
+						nextIndex = (index - 1 + ctx.ctrls.tabs.length) % ctx.ctrls.tabs.length;
+					else if(key == 'Home' || key == 36)
+						nextIndex = 0;
+					else if(key == 'End' || key == 35)
+						nextIndex = ctx.ctrls.tabs.length - 1;
+					else if(key == 'Enter' || key == ' ' || key == 'Spacebar' || key == 13 || key == 32)
+						nextIndex = index;
+
+					if(nextIndex == null)
+						return;
+
+					ctx.ctrls.tabs[nextIndex].focus();
+					BX.fireEvent(ctx.ctrls.tabs[nextIndex], 'click');
+					BX.PreventDefault(event);
+				};
+			})(tabIndex, this));
+		}
+
+		this.setActiveTab(activeTabId || tabs[0].getAttribute('data-tab-id'));
+	},
+
+	setActiveTab: function(tabId){
+		if(!this.ctrls.tabs)
+			return;
+
+		for(var k = 0; k < this.ctrls.tabs.length; k++)
+		{
+			var tab = this.ctrls.tabs[k];
+			var currentTabId = tab.getAttribute('data-tab-id');
+			var isActive = currentTabId == tabId;
+			var panel = this.ctrls.tabPanels[currentTabId];
+
+			tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+			tab.setAttribute('tabindex', isActive ? '0' : '-1');
+
+			if(isActive)
+				panel.removeAttribute('hidden');
+			else
+				panel.setAttribute('hidden', 'hidden');
+		}
+	},
+
 	bindEvents: function(){
 
 		var sc = this.ctrls,
@@ -204,6 +354,10 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 		BX.bind(sc.buttons.startStop, 'click', function(){
 
 			if(sv.iterator.getIsRunning()){
+				if(ctx.isMutatingStage(sv.stage))
+				{
+					ctx.markParentSliderChanged();
+				}
 
 				sv.iterator.stop();
 
@@ -267,6 +421,11 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 		});
 
 		var onError = function(errors){
+			if(ctx.isMutatingStage(sv.stage))
+			{
+				ctx.markParentSliderChanged();
+			}
+
 			sc.buttons.startStop.value = so.messages.start;
 
 			var errMsg = [];
@@ -304,6 +463,25 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 		setState(so.defaultState, true);
 	},
 
+	isMutatingStage: function(stageCode){
+		return stageCode === 'DELETE_ALL' || stageCode === 'PROCESS_FILES';
+	},
+
+	markParentSliderChanged: function(){
+		var slider = null;
+		if(top.BX.SidePanel && top.BX.SidePanel.Instance)
+		{
+			slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+		}
+
+		if(slider)
+		{
+			slider.getData().set('changed', true);
+		}
+
+		return slider;
+	},
+
 	askRemove: function(){
 
 		var so = this.opts;
@@ -326,6 +504,9 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 			value = 0;
 		if(value > 100)
 			value = 100;
+
+		if(sc.progressBar != null)
+			sc.progressBar.setAttribute('aria-valuenow', value);
 
 		if(sc.percentIndicator != null){
 			for(var k in sc.percentIndicator){
@@ -387,6 +568,7 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 	},
 
 	setTab: function(tab){
+		this.setActiveTab(tab);
 		BX[(tab == 'tab_cleanup' ? 'hide' : 'show')](this.ctrls.buttons.startStop);
 	},
 

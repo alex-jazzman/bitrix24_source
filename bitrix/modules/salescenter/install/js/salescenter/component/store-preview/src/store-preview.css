@@ -7,7 +7,9 @@
 .salescenter-company-contacts-prev,
 .salescenter-company-contacts-prev-en,
 .salescenter-company-contacts-prev-ua {
-    background: url('images/salescenter-company-contacts-prev.webp') no-repeat 0 0;
+    background: url('images/salescenter-company-contacts-prev.a2c86e16fd93db21.webp') no-repeat 0 0;
+    background-image: -webkit-image-set(url('images/salescenter-company-contacts-prev.a2c86e16fd93db21.webp') 1x, url('images/salescenter-company-contacts-prev-2x.afdee438f29bb32f.webp') 2x);
+    background-image: image-set(url('images/salescenter-company-contacts-prev.a2c86e16fd93db21.webp') 1x, url('images/salescenter-company-contacts-prev-2x.afdee438f29bb32f.webp') 2x);
     display: block;
 	overflow: hidden;
     width: 375px;
@@ -16,10 +18,14 @@
 }
 
 .salescenter-company-contacts-prev-en {
-    background-image: url('images/salescenter-company-contacts-prev-en.webp');
+    background-image: url('images/salescenter-company-contacts-prev-en.a3503146225a3641.webp');
+    background-image: -webkit-image-set(url('images/salescenter-company-contacts-prev-en.a3503146225a3641.webp') 1x, url('images/salescenter-company-contacts-prev-en-2x.4c6df800111c725c.webp') 2x);
+    background-image: image-set(url('images/salescenter-company-contacts-prev-en.a3503146225a3641.webp') 1x, url('images/salescenter-company-contacts-prev-en-2x.4c6df800111c725c.webp') 2x);
 }
 
 .salescenter-company-contacts-prev-ua {
     height: 793px;
-    background-image: url('images/salescenter-company-contacts-prev-ua.webp');
+    background-image: url('images/salescenter-company-contacts-prev-ua.b187c6a201b96994.webp');
+    background-image: -webkit-image-set(url('images/salescenter-company-contacts-prev-ua.b187c6a201b96994.webp') 1x, url('images/salescenter-company-contacts-prev-ua-2x.e72c4b11b5b990f7.webp') 2x);
+    background-image: image-set(url('images/salescenter-company-contacts-prev-ua.b187c6a201b96994.webp') 1x, url('images/salescenter-company-contacts-prev-ua-2x.e72c4b11b5b990f7.webp') 2x);
 }

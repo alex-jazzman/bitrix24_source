@@ -62,12 +62,12 @@ export const InspectorGridView = {
 		},
 		rows(): Map<string, Row>
 		{
-			if (!this.selectedGridViewGroup)
+			const values = this.selectedGridViewGroup?.values;
+
+			if (!Array.isArray(values))
 			{
 				return new Map();
 			}
-
-			const { values } = this.selectedGridViewGroup;
 
 			return new Map(values.map((item, i) => {
 				return [
@@ -97,7 +97,10 @@ export const InspectorGridView = {
 		},
 	},
 	template: `
-		<div class="editor-chart-inspector-grid-view">
+		<div
+			class="editor-chart-inspector-grid-view"
+			:data-test-id="$testId('nodeDataInspectorGridView')"
+		>
 			<div class="editor-chart-inspector-grid-view__table" role="table">
 				<div class="editor-chart-inspector-grid-view__heads" role="row">
 					<span
@@ -114,6 +117,7 @@ export const InspectorGridView = {
 				<div class="editor-chart-inspector-grid-view__rows" role="rowgroup">
 					<div
 						v-for="(rowId, rowIndex) in renderedRowsIds"
+						:key="rowId"
 						class="editor-chart-inspector-grid-view__row"
 						role="row"
 					>

@@ -8,4 +8,5 @@ $MESS["CRM_CLL2_DELETE_CONFIRM"] = "Вы уверены, что хотите у�
 $MESS["CRM_CLL2_ALL"] = "Всего";
 $MESS["CRM_CLL2_VIEW_SUBTREE_TITLE"] = "Перейти к списку дочерних местоположений";
 $MESS["CRM_CLL2_VIEW_SUBTREE"] = "Перейти к дочерним местоположениям";
-?>
+$MESS["CRM_CLL2_ADD"] = "Добавить";
+$MESS["CRM_CLL2_IMPORT"] = "Импортировать местоположения";

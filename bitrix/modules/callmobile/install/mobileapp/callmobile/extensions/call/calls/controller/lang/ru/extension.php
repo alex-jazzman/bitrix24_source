@@ -10,6 +10,7 @@ $MESS["MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA"] = "Для включени
 $MESS["MOBILE_CALL_MICROPHONE_SETTINGS"] = "Открыть настройки";
 $MESS["MOBILE_CALL_MICROPHONE_CANCEL"] = "Отмена";
 $MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Звонок уже завершен";
+$MESS["MOBILE_CALL_FINISH_FOR_ALL_ERROR"] = "Не удалось завершить звонок для всех. Попробуйте ещё раз.";
 $MESS["MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED"] = "Не удалось присоединиться, звонок уже завершён";
 $MESS["MOBILE_CALL_ERROR"] = "Ошибка";
 $MESS["MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP"] = "Невозможно включить/выключить камеру: приложения второго участника звонка устарело и не поддерживает включение камеры во время звонка";

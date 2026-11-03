@@ -549,14 +549,6 @@ export default class Item
 		return this.$containerSiteStatusTitle;
 	}
 
-	publush()
-	{
-		this.published = true;
-		this.getContainerSiteStatus().className = 'landing-sites__status --success';
-		this.getContainerSiteStatusTitle().innerText = Loc.getMessage('LANDING_SITE_TILE_STATUS_PUBLISHED');
-		this.getContainerPreviewStatus().classList.add('--hide');
-	}
-
 	unPublish()
 	{
 		this.published = false;
@@ -648,7 +640,7 @@ export default class Item
 				return Outline.CLOCK;
 
 			case 'success':
-			case 'unknow':
+			case 'unknown':
 			default:
 				return Outline.LINK;
 		}
@@ -670,7 +662,7 @@ export default class Item
 			case 'success':
 				return 'var(--ui-color-background-primary)';
 
-			case 'unknow':
+			case 'unknown':
 			default:
 				return 'var(--ui-color-design-outline-a1-content)';
 		}

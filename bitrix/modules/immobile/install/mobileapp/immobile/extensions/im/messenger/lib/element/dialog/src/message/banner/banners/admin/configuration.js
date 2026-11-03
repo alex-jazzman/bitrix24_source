@@ -118,9 +118,41 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/conf
 		},
 	});
 
+	const createAddParticipantsButton = (id) => ({
+		id,
+		testId: id,
+		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_ADD_USERS'),
+		height: ButtonSize.S.getName(),
+		design: ButtonDesignType.outlineAccent2,
+		callback: ({ dialogLocator }) => {
+			try
+			{
+				// Require to dodge the "Cycle in require graph" error (as in the create-chat banner).
+				const { SidebarManager } = require('im/messenger/controller/dialog/lib/sidebar');
+
+				SidebarManager.getInstance(dialogLocator).open();
+			}
+			catch (error)
+			{
+				Logger.error('AdminMetaData.createAddParticipantsButton callback error:', error);
+			}
+		},
+	});
+
 	const maybeNewLine = isBannerButtonNewlineSupported ? [{ type: 'NEWLINE' }] : [];
 
 	const AdminMetaData = {
+		[Await.selfDeleteRequest]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_ADMIN_MESSAGE_SELF_DELETE_REQUEST_TITLE'),
+				imageName: ImageName.docAwaitSign,
+				picBackgroundColor: ImageBackgroundColor.docAwaitSign,
+				description: Loc.getMessage('IMMOBILE_ADMIN_MESSAGE_SELF_DELETE_REQUEST_DESCRIPTION'),
+				buttons: [
+					createAddParticipantsButton(`${Await.selfDeleteRequest}-add-participants-button`),
+				],
+			},
+		},
 		[Await.fireRequest]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ADMIN_MESSAGE_FIRE_REQUEST_TITLE'),

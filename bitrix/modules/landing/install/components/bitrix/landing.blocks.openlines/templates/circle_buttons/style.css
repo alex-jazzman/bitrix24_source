@@ -19,6 +19,38 @@
 	filter: invert(100%);
 }
 
+/* The trigger of a widget without a link of its own is a button now, and a button brings a look of
+   its own with it. Only what the rule above leaves unsaid is reset here: the size, the padding and
+   the background of the circle are already set there, and a repeat would win by the tag. */
+button.openlines-style-circle.landing-b24-widget-button-social-item {
+	appearance: none;
+	border: none;
+}
+
+/* The reset above takes away the ring the browser draws around a focused button together with the
+   border and the background it came with. It is given back written exactly as the template of the
+   site writes it for the rest of the page, so the two never drift apart in the source.
+
+   On screen this one is the negative of the others, and it is left that way on purpose. The rule
+   above paints the circle through `filter: invert(100%)`, and a filter takes the whole rendering of
+   the element with it, the outline and the shadow included: the `#fff` ring arrives black, the
+   `#333` halo arrives near `#ccc`, the `#454545` fill arrives near `#bababa`. Measured on a stand,
+   that black ring holds about 10:1 against the light circle it sits on, where a ring arriving white
+   would hold about 1.9:1 against the same circle. So writing the negatives here to make the ring
+   arrive white would lose the contrast rather than gain it - the tones answer the surface the
+   filter leaves behind, not the one the declarations name.
+
+   The size is the focus tokens of the design system, `--ui-focus-outline-width` and
+   `--ui-focus-outline-offset-inset`; the halo has no token of its own and stays a number. The offset
+   token is the negative one on purpose: a ring hanging outside the control is cut wherever the box
+   around it clips, and the page clips at its own edge - a control standing flush against it would
+   show three sides of four. */
+button.openlines-style-circle.landing-b24-widget-button-social-item:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid #fff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: 0 0 0 4px #333;
+}
+
 .openlines-style-circle.landing-b24-widget-button-social-item:not(:last-child) {
 	margin-right: 15px;
 }

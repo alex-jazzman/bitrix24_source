@@ -83,6 +83,9 @@ export class BitrixCallLegacy extends AbstractCall
 	static Event = BitrixCallEvent
 	peers: { [key: number]: Peer }
 	localVAD: ?SimpleVAD
+	// The reconnect event is sent by the reconnectionEventCount setter, which sees no reason of its own.
+	#reconnectionReason: ?string = null;
+	#reconnectionReasonInfo: ?string = null;
 
 	constructor(config)
 	{
@@ -252,6 +255,9 @@ export class BitrixCallLegacy extends AbstractCall
 		{
 			this.runCallback(CallEvent.onReconnecting, {
 				reconnectionEventCount: newValue,
+				reconnectionReason: this.#reconnectionReason,
+				reconnectionReasonInfo: this.#reconnectionReasonInfo,
+				reconnectionTarget: ReconnectTarget.MediaServer,
 			});
 		}
 		if (newValue === 0)
@@ -1095,6 +1101,7 @@ export class BitrixCallLegacy extends AbstractCall
 		this.CallApi.on('VoiceEnded', this.#onEndpointVoiceEnd);
 		this.CallApi.on('Reconnecting', this.#onCallReconnecting);
 		this.CallApi.on('Reconnected', this.#onCallReconnected);
+		this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 		this.CallApi.on('Disconnected', this.#onCallDisconnected);
 		// if (Util.shouldCollectStats())
 		// {
@@ -1135,6 +1142,7 @@ export class BitrixCallLegacy extends AbstractCall
 			this.CallApi.on('VoiceEnded', BX.DoNothing);
 			this.CallApi.on('Reconnecting', BX.DoNothing);
 			this.CallApi.on('Reconnected', BX.DoNothing);
+			this.CallApi.on('ReconnectingFailed', BX.DoNothing);
 			this.CallApi.on('Disconnected', BX.DoNothing);
 			// if (Util.shouldCollectStats())
 			// {
@@ -1953,7 +1961,12 @@ export class BitrixCallLegacy extends AbstractCall
 		this.isReconnecting = true;
 
 		const data = Type.isObject(params) ? params : {};
-		this.reconnectHistory.startEntry(data.reconnectionReason ?? null, ReconnectTarget.Sdk);
+		this.#reconnectionReason = data.reconnectionReason ?? null;
+		this.#reconnectionReasonInfo = data.reconnectionReasonInfo ?? null;
+		this.reconnectHistory.startEntry({
+			target: ReconnectTarget.MediaServer,
+			reason: this.#reconnectionReason,
+		});
 
 		if (this.reconnectionEventCount++)
 		{
@@ -1982,7 +1995,7 @@ export class BitrixCallLegacy extends AbstractCall
 	#onCallReconnected = (): void => {
 		this.isReconnecting = false;
 		this.reconnectionEventCount = 0;
-		this.reconnectHistory.updateLastEntry(ReconnectTarget.Sdk, true);
+		this.reconnectHistory.updateLastEntry({ target: ReconnectTarget.MediaServer, isSuccessful: true });
 		this.log("Call reconnected");
 		this.sendTelemetryEvent("reconnect");
 		this.localUserState = UserState.Connected;
@@ -2024,6 +2037,10 @@ export class BitrixCallLegacy extends AbstractCall
 		}
 
 		this.CallApi.raiseHand(this.floorRequestActive);
+	};
+
+	#onCallReconnectingFailed = (e, error) => {
+		this.runCallback(CallEvent.onReconnectingFailed, { error });
 	};
 
 	#onCallDisconnected = (e) =>

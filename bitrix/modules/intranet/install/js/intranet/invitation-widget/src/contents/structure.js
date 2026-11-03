@@ -1,6 +1,10 @@
 import { Content } from './content';
 import { Counter } from 'ui.cnt';
 import { Tag, Loc, Type, Dom } from 'main.core';
+import {
+	destroyAccessibleCounter,
+	updateCounterAccessibleName,
+} from 'intranet.invitation-widget-counter';
 import { Analytics } from '../analytics';
 import type { StructureContentOptions } from '../types/options';
 import type { ConfigContent } from '../types/content';
@@ -34,18 +38,35 @@ export class StructureContent extends Content
 			const onclick = () => {
 				Analytics.send(Analytics.EVENT_OPEN_STRUCTURE);
 			};
+			const structureActionLabelledBy = [
+				'intranet-invitation-widget-structure-name',
+				'intranet-invitation-widget-structure-counter',
+				'intranet-invitation-widget-structure-action',
+			].join(' ');
 
 			return Tag.render`
-				<div data-id="bx-invitation-widget-content-structure" class="intranet-invitation-widget-item intranet-invitation-widget-item--company intranet-invitation-widget-item--active">
-					<div class="intranet-invitation-widget-item-logo"></div>
+				<div
+					data-id="bx-invitation-widget-content-structure"
+					class="intranet-invitation-widget-item intranet-invitation-widget-item--company intranet-invitation-widget-item--active"
+					data-testid="intranet-invitation-widget-structure"
+				>
+					<div class="intranet-invitation-widget-item-logo" aria-hidden="true"></div>
 					<div class="intranet-invitation-widget-item-content">
 						<div class="intranet-invitation-widget-item-name">
-							<span>
+							<span id="intranet-invitation-widget-structure-name">
 								${Loc.getMessage('INTRANET_INVITATION_WIDGET_STRUCTURE')}
 							</span>
 						</div>
-						<a onclick="${onclick}" href="${this.getOptions().structureLink}" class="intranet-invitation-widget-item-btn"> 
-							${Loc.getMessage('INTRANET_INVITATION_WIDGET_EDIT')}
+						<a
+							onclick="${onclick}"
+							href="${this.getOptions().structureLink}"
+							class="intranet-invitation-widget-item-btn"
+							aria-labelledby="${structureActionLabelledBy}"
+							data-testid="intranet-invitation-widget-structure-configure"
+						>
+							<span id="intranet-invitation-widget-structure-action">
+								${Loc.getMessage('INTRANET_INVITATION_WIDGET_EDIT')}
+							</span>
 						</a>
 					</div>
 				</div>
@@ -64,18 +85,28 @@ export class StructureContent extends Content
 	{
 		if (this.#getCounterValue() > 0)
 		{
-			Dom.addClass(this.#getCounter().getContainer(), 'invitation-structure-counter');
-			this.#getCounter().renderTo(this.#getCounterWrapper());
+			const counter = this.#getCounter();
+			Dom.addClass(counter.getContainer(), 'invitation-structure-counter');
+			counter.renderTo(this.#getCounterWrapper());
 		}
 	}
 
 	#getCounter(): Counter
 	{
 		return this.cache.remember('counter', () => {
-			return new Counter({
-				value: this.#getCounterValue(),
+			const value = this.#getCounterValue();
+			const counter = new Counter({
+				value,
 				color: Counter.Color.DANGER,
+				id: 'intranet-invitation-widget-structure-counter',
 			});
+			updateCounterAccessibleName(
+				counter,
+				value,
+				'INTRANET_INVITATION_WIDGET_STRUCTURE_COUNTER',
+			);
+
+			return counter;
 		});
 	}
 
@@ -98,7 +129,7 @@ export class StructureContent extends Content
 		}
 
 		this.getOptions().shouldShowStructureCounter = false;
-		this.#getCounter().destroy();
+		destroyAccessibleCounter(this.#getCounter());
 		this.cache.delete('counter');
 	}
 }

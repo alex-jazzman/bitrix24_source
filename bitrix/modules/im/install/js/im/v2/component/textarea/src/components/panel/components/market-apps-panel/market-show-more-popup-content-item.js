@@ -1,29 +1,21 @@
-import {MarketAppPopup} from './market-app-popup';
+import { type ImModelMarketApplication } from 'im.v2.model';
 
 import '../../css/market-apps-panel/market-show-more-popup-content-item.css';
-
-import type {ImModelMarketApplication} from 'im.v2.model';
 
 // @vue/component
 export const MarketShowMorePopupContentItem = {
 	name: 'MarketShowMorePopupContentItem',
-	components: {MarketAppPopup},
 	props: {
 		item: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		dialogId: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
-	data()
-	{
-		return {
-			showApp: false
-		};
-	},
+	emits: ['appClick'],
 	computed:
 	{
 		marketItem(): ImModelMarketApplication
@@ -37,21 +29,25 @@ export const MarketShowMorePopupContentItem = {
 		iconColor(): string
 		{
 			return this.marketItem.options.color;
-		}
+		},
+		isOpened(): boolean
+		{
+			return this.$store.getters['market/getOpenedAppId'](this.dialogId) === this.marketItem.id;
+		},
 	},
 	methods:
 	{
 		onAppClick()
 		{
-			this.showApp = !this.showApp;
-		}
+			this.$emit('appClick');
+		},
 	},
 	template: `
-		<div 
+		<div
 			class="bx-im-market-show-more-popup-content-item__container"
+			:class="{'--opened': isOpened}"
 			:title="marketItem.title"
 			@click="onAppClick"
-			ref="market-app"
 		>
 			<div class="bx-im-market-show-more-popup-content-item__icon-container" :style="{backgroundColor: iconColor}">
 				<i :class="iconClass" aria-hidden="true"></i>
@@ -61,15 +57,6 @@ export const MarketShowMorePopupContentItem = {
 					{{ marketItem.title }}
 				</div>
 			</div>
-			<MarketAppPopup
-				v-if="showApp" 
-				:bindElement="$refs['market-app']" 
-				:entityId="marketItem.id"
-				:width="marketItem.options.width"
-				:height="marketItem.options.height" 
-				:dialogId="dialogId"
-				@close="onAppClick"
-			/>
 		</div>
-	`
+	`,
 };

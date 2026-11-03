@@ -23,6 +23,7 @@ use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\Promotion\NewUserSegment;
 use Bitrix\Tasks\Update\TagConverter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
@@ -44,13 +45,17 @@ $isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform', (int)$arParams['GRO
 
 Extension::load([
 	'ui.design-tokens',
+	'ui.icon-set.main',
+	'ui.icon-set.actions',
 	'ui.fonts.opensans',
 	'ui.counter',
 	'ui.entity-selector',
+	'ui.a11y',
 	'ui.icons.b24',
 	'ui.label',
 	'ui.migrationbar',
 	'ui.tour',
+	'ui.hint',
 	'ui.system.chip',
 	'tasks.task-model',
 	'pull.queuemanager',
@@ -94,6 +99,11 @@ $APPLICATION->IncludeComponent(
 $userId = (int)CurrentUser::get()->getId();
 $targetUserId = (int)$arParams['USER_ID'];
 $isSameUser = $userId === $targetUserId;
+
+// SC-005: new-user segment check for deadlineless hint, obeys the module-wide onboarding gate
+$isNewUser = \Bitrix\Tasks\Onboarding\OnboardingFeature::isAvailable()
+	&& (new NewUserSegment())->isNewUser($userId)
+;
 
 $isCollab = isset($arResult['CONTEXT']) && $arResult['CONTEXT'] === Context::getCollab();
 
@@ -227,8 +237,8 @@ $rowCountHtml = str_replace(
 	],
 	[
 		Loc::getMessage('TASKS_ROW_SHOW_COUNT'),
-		'<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %userid%, %groupid%, %parameters%)">',
-		'</a>',
+		'<button type="button" id="%prefix%_row_count" class="tasks-list-row-count-link" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %userid%, %groupid%, %parameters%)">',
+		'</button>',
 		CUtil::JSEscape(mb_strtolower($arParams['GRID_ID'])),
 		$arParams['USER_ID'],
 		$arParams['GROUP_ID'],
@@ -243,7 +253,15 @@ $rowCountHtml = str_replace(
 );
 ?>
 
-<div class="--ui-context-content-light">
+<script>
+	BX.message({
+		TASKS_TIMER_STOP: '<?=GetMessageJS('TASKS_TIMER_STOP')?>',
+		TASKS_TIMER_START: '<?=GetMessageJS('TASKS_TIMER_START')?>',
+		TASKS_TIMER_TRACKING: '<?=GetMessageJS('TASKS_TIMER_TRACKING')?>',
+	});
+</script>
+
+<div class="--ui-context-content-light ui-icon-set__scope">
 	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.ui.grid',
@@ -374,6 +392,8 @@ if (ProjectLimit::canTurnOnTrial())
 				TASKS_LIST_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_PING_NOTIFICATION') ?>',
 				TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION') ?>',
 				TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION') ?>',
+				TASKS_LIST_CRM_BIND_ERROR: '<?= GetMessageJS('TASKS_LIST_CRM_BIND_ERROR') ?>',
+				TASKS_LIST_CRM_BIND_RETRY: '<?= GetMessageJS('TASKS_LIST_CRM_BIND_RETRY') ?>',
 				TASKS_MARK: '<?=GetMessageJS('TASKS_JS_MARK_MSGVER_1')?>',
 				TASKS_MARK_NONE: '<?=GetMessageJS('TASKS_JS_MARK_NONE')?>',
 				TASKS_MARK_N: '<?=GetMessageJS('TASKS_JS_MARK_N')?>',
@@ -384,6 +404,11 @@ if (ProjectLimit::canTurnOnTrial())
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE')?>',
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT: '<?= Json::encode(GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT')) ?>',
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER')?>',
+				// SC-005: deadlineless hint messages
+				TASKS_KANBAN_DEADLINELESS_HINT_TITLE: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_TITLE')?>',
+				TASKS_KANBAN_DEADLINELESS_HINT_TEXT: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_TEXT')?>',
+				TASKS_KANBAN_DEADLINELESS_HINT_CTA: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_CTA')?>',
+				TASKS_KANBAN_DEADLINELESS_HINT_CLOSE: '<?=GetMessageJS('TASKS_KANBAN_DEADLINELESS_HINT_CLOSE')?>',
 			});
 
 			<?php if ($arResult['needToShowInviteToMobile']) : ?>
@@ -423,6 +448,9 @@ if (ProjectLimit::canTurnOnTrial())
 					],
 				],
 				'isV2Form' => $isV2Form ? 'true' : 'false',
+				// SC-005: current viewer id and new-user segment flag for deadlineless hint predicate
+				'currentUserId' => $userId,
+				'isNewUser' => $isNewUser,
 			])?>);
 
 			new BX.Tasks.Grid.Sorting({

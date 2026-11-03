@@ -40,12 +40,20 @@ export const Switcher = {
 	{
 		this.renderSwitcher();
 	},
+	beforeUnmount()
+	{
+		// UI.Switcher keeps every instance in a static list, so an unmounted wrapper has to
+		// release its own — otherwise the detached node and this component stay reachable.
+		this.switcher?.destroy();
+		this.switcher = null;
+	},
 	watch: {
 		isChecked(): void {
-			this.switcher.check(this.isChecked, false);
+			// The instance is gone between beforeUnmount and a re-render on changed options.
+			this.switcher?.check(this.isChecked, false);
 		},
 		isDisabled(): void {
-			this.switcher.disable(this.isDisabled, false);
+			this.switcher?.disable(this.isDisabled, false);
 		},
 		options(newOptions, oldOptions): void {
 			if (this.isOptionsEqual(newOptions, oldOptions))
@@ -54,6 +62,7 @@ export const Switcher = {
 			}
 
 			// re-render switcher since options has changed
+			this.switcher?.destroy();
 			this.switcher = null;
 			Dom.clean(this.$refs.container);
 			this.renderSwitcher();

@@ -42,6 +42,7 @@ declare namespace BX.Crm.AI {
 		private renderConfirmationPopupContent;
 		private formatScriptUpdatedAt;
 		private doAssessment;
+		private sendReassessmentAnalytics;
 		private onCallScoringPull;
 		private reloadData;
 		private initializePull;
@@ -56,5 +57,6 @@ declare namespace BX.Crm.AI {
 		private destroyConfirmationPopup;
 		private loadData;
 		private parseData;
+		private parseBlocks;
 	}
 }

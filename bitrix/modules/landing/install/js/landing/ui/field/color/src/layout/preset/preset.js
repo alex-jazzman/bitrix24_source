@@ -1,6 +1,8 @@
 import {Tag, Dom, Event, Type, Cache} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
+import 'ui.design-tokens.air';
+
 import {IColorValue} from '../../types/i_color_value';
 import ColorValue from '../../color_value';
 import GradientValue from '../../gradient_value';
@@ -70,9 +72,76 @@ export default class Preset extends EventEmitter
 				></div>
 			`;
 			Event.bind(item, 'click', this.onItemClick.bind(this));
+			if (this.type === gradientType)
+			{
+				Dom.attr(item, {
+					tabindex: '0',
+					role: 'button',
+					'aria-pressed': 'false',
+					'aria-label': `${color.getFrom().getHex()} → ${color.getTo().getHex()}`,
+				});
+				Event.bind(item, 'keydown', this.onItemKeydown.bind(this));
+			}
 
 			return item;
 		});
+	}
+
+	onItemKeydown(event: KeyboardEvent): void
+	{
+		if (event.key === 'Enter' || event.key === ' ')
+		{
+			event.preventDefault();
+			event.stopPropagation();
+			event.currentTarget.click();
+
+			return;
+		}
+
+		if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key))
+		{
+			return;
+		}
+
+		event.preventDefault();
+		event.stopPropagation();
+		const currentItem = event.currentTarget;
+		const currentRect = currentItem.getBoundingClientRect();
+		const horizontal = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+		const backwards = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+		const axis = horizontal ? 'left' : 'top';
+		const crossAxis = horizontal ? 'top' : 'left';
+		const layouts = this.items.map((value) => {
+			const item = this.getItemLayout(value.getName());
+
+			return { item, rect: item.getBoundingClientRect() };
+		}).filter(({ rect }) => rect.width > 0 && rect.height > 0);
+		const adjacentRowDistance = Math.min(
+			...layouts
+				.map(({ rect }) => (rect.top - currentRect.top) * (backwards ? -1 : 1))
+				.filter((distance) => distance > 1),
+		);
+		let nextItem = null;
+		let nearestDistance = Infinity;
+
+		layouts.forEach(({ item, rect }) => {
+			const distance = (rect[axis] - currentRect[axis]) * (backwards ? -1 : 1);
+			if (
+				Math.abs(rect[crossAxis] - currentRect[crossAxis]) < 1
+				&& (horizontal || Math.abs(distance - adjacentRowDistance) < 1)
+				&& distance > 1
+				&& distance < nearestDistance
+			)
+			{
+				nextItem = item;
+				nearestDistance = distance;
+			}
+		});
+
+		if (nextItem)
+		{
+			nextItem.focus({ preventScroll: true });
+		}
 	}
 
 	getItemByName(name: string): string | IColorValue | null
@@ -120,6 +189,11 @@ export default class Preset extends EventEmitter
 
 		this.items.forEach((item) => {
 			const itemName = item.getName();
+			if (this.type === gradientType)
+			{
+				Dom.attr(this.getItemLayout(itemName), 'aria-pressed', name === itemName ? 'true' : 'false');
+			}
+
 			if (name === itemName)
 			{
 				Dom.addClass(this.getItemLayout(itemName), Preset.ACTIVE_CLASS);
@@ -170,6 +244,10 @@ export default class Preset extends EventEmitter
 	{
 		this.items.forEach(item => {
 			Dom.removeClass(this.getItemLayout(item.getName()), Preset.ACTIVE_CLASS);
+			if (this.type === gradientType)
+			{
+				Dom.attr(this.getItemLayout(item.getName()), 'aria-pressed', 'false');
+			}
 		});
 	}
 

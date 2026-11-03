@@ -37,6 +37,7 @@ $event
 	->register('main', 'OnAfterRegisterModule', '\Bitrix\Rest\Marketplace\TagTable', 'onAfterRegisterModule')
 	->register('main', 'OnAfterUnRegisterModule', '\Bitrix\Rest\Marketplace\TagTable', 'onAfterUnRegisterModule')
 	->register('mobile', 'onMobileMenuStructureBuilt', 'Bitrix\Rest\MobileMenuManager', 'onMobileMenuStructureBuilt')
+	->register('rest', 'OnRestAppInstall', \Bitrix\Rest\Internal\Integration\Rest\EventHandlers\RestAppInstall\ResolveAppInstallRequestHandler::class, 'handle')
 	->registerCompatible('im', 'OnGetNotifySchema', \Bitrix\Rest\Integration\Im\NotifySchema::class, 'onGetNotifySchema')
 ;
 

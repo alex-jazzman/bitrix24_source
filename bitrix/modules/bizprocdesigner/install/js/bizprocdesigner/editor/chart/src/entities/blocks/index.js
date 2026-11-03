@@ -28,6 +28,7 @@ export * from './ui/stop-icon/stop-icon';
 export * from './ui/connection-aux/connection-aux';
 export * from './ui/color-menu-top-btn/color-menu-top-btn';
 export * from './ui/block-complex-port-placeholder/block-complex-port-placeholder';
+export * from './ui/output-unreachable-mark/output-unreachable-mark';
 export * from './ui/text-align-menu-top-btn/text-align-menu-top-btn';
 export * from './ui/content-separator/content-separator';
 export * from './ui/activation-top-btn/activation-top-btn';

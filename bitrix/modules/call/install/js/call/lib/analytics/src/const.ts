@@ -7,6 +7,7 @@ export const AnalyticsEvent = Object.freeze({
 	startCallCollab: 'start_call_collab',
 	connectCallCollab: 'connect_call_collab',
 	reconnect: 'reconnect',
+	reconnectResult: 'reconnect_result',
 	addUser: 'add_user',
 	disconnect: 'disconnect',
 	finishCall: 'finish_call',
@@ -65,6 +66,8 @@ export const AnalyticsEvent = Object.freeze({
 	clickOpenSlots: 'click_open_slots',
 	clickBooking: 'click_booking',
 	openSection: 'open_section',
+	syncTabBannerView: 'view_popup',
+	syncTabBannerButtonClick: 'click_sync',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -84,6 +87,7 @@ export const AnalyticsCategory = Object.freeze({
 	callRecord: 'call_record',
 	collabCall: 'collab_call',
 	sync: 'sync',
+	syncPopup: 'sync_popup',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -101,6 +105,7 @@ export const AnalyticsType = Object.freeze({
 	aiOn: 'ai_on',
 	turnOnAi: 'turn_on_ai',
 	sync: 'sync',
+	syncTabPromo: 'synctabpromo',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -115,6 +120,7 @@ export const AnalyticsSection = Object.freeze({
 	callFollowup: 'call_followup',
 	call: 'call',
 	syncPage: 'sync_page',
+	im: 'im',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -139,7 +145,11 @@ export const AnalyticsElement = Object.freeze({
 	initialBanner: 'initial_banner',
 	startMessage: 'start_message',
 	finishMessage: 'finish_message',
+	micButton: 'mic_button',
+	pushToTalk: 'push_to_talk',
 });
+
+export type AnalyticsElementValue = typeof AnalyticsElement[keyof typeof AnalyticsElement];
 
 export const AnalyticsStatus = Object.freeze({
 	success: 'success',
@@ -150,9 +160,13 @@ export const AnalyticsStatus = Object.freeze({
 	lastUserLeft: 'last_user_left',
 	finishedForAll: 'finished_for_all',
 	privateToGroup: 'private_to_group',
-	errorAgreement: 'error_agreement',
-	errorLimitBaas: 'error_limit_baas',
-	errorB24: 'error_b24',
+	// A reconnect series that never got its connection back and is not a media server refusal.
+	notRecovered: 'not_recovered',
+	// A connection to an interlocutor that never came up at all: not a lost connection, but one
+	// that never was.
+	notConnected: 'not_connected',
+	// The call moved to the media server, so the direct connections ended for good.
+	escalated: 'escalated',
 });
 
 export const AnalyticsDeviceStatus = Object.freeze({
@@ -170,4 +184,9 @@ export const AnalyticsAIStatus = Object.freeze({
 export const AnalyticsVpnStatus = Object.freeze({
 	vpnOn: 'vpn_on',
 	vpnOff: 'vpn_off',
+});
+
+export const AnalyticsStorageType = Object.freeze({
+	cloud: 'cloud',
+	local: 'local',
 });

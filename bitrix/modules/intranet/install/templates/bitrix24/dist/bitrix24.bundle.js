@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, main_popup, ui_buttons, main_core_events, main_core_cache, pull_client, ui_cnt, ui_iconSet_api_core, main_loader, main_sidepanel, intranet_skipToContent, intranet_widgetLoader, intranet_avatarWidget, timeman_workTimeStateIcon, ui_infoHelper, bitrix24_licenseWidget, intranet_licenseWidget, intranet_invitationWidget) {
+(function (exports, main_core, main_popup, ui_buttons, main_core_events, main_core_cache, pull_client, ui_cnt, ui_iconSet_api_core, main_loader, main_sidepanel, intranet_skipToContent, ui_a11y, intranet_widgetLoader, intranet_avatarWidget, timeman_workTimeStateIcon, ui_infoHelper, bitrix24_licenseWidget, intranet_licenseWidget, intranet_invitationWidgetCounter, intranet_invitationWidget) {
 	'use strict';
 
 	async function showPartnerConnectForm(params) {
@@ -13,7 +13,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		});
 	}
 	async function showPartnerFormPopup(options) {
-		const partnerLogo = options.partnerLogo === '' || main_core.Type.isNil(options.partnerLogo) ? '/bitrix/modules/intranet/install/templates/bitrix24/dist/dist/images/b24-partner__icon.svg' : options.partnerLogo;
+		const partnerLogo = options.partnerLogo === '' || main_core.Type.isNil(options.partnerLogo) ? '/bitrix/js/intranet/license-widget/img/b24-license-widget_icon-partner.svg' : options.partnerLogo;
 		const clipboardButton = initCopyBtn();
 		const email = initEmail(clipboardButton, options);
 		const phone = initPhone(clipboardButton, options);
@@ -208,10 +208,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	class ChatMenu {
+		#counters = {};
+		#counterMenu = null;
 		constructor() {
 			main_core_events.EventEmitter.subscribe('IM.Layout:onLayoutChange', this.#handleImLayoutChange.bind(this));
 			main_core_events.EventEmitter.subscribe('IM.Counters:onUpdate', this.#handleCounterUpdate.bind(this));
 			main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24.ChatMenu:onSelect', this.#handleChatMenuSelect.bind(this));
+			main_core_events.EventEmitter.subscribe('onFrameDataProcessed', this.#restoreCounters.bind(this));
+			main_core.Event.ready(() => queueMicrotask(() => this.#restoreCounters()));
 		}
 		getChatMenu() {
 			/**
@@ -231,7 +235,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			 */
 			const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
 			if (menuManager) {
-				return menuManager.getById('top_menu_id_collaboration') || null;
+				const menuId = this.#getConfiguredMenuId() || 'top_menu_id_collaboration';
+				return menuManager.getById(menuId) || null;
 			}
 			return null;
 		}
@@ -246,22 +251,72 @@ this.BX.Intranet = this.BX.Intranet || {};
 				target = target.closest('.main-buttons-item-link, .menu-popup-item');
 			}
 			const Public = main_core.Reflection.getClass('BX.Messenger.Public');
-			Public?.openNavigationItem({
+			if (id === 'call' && main_core.Type.isFunction(Public?.openPhoneKeyPad)) {
+				void Public.openPhoneKeyPad({
+					bindElement: this.#resolveTelephonyAnchor(target)
+				});
+				return;
+			}
+			Public?.openNavigationItem?.({
 				id,
 				entityId,
 				target
 			});
 		}
+
+		/**
+		 * A submenu popup closes right after the click, and the keypad opens only after the phone
+		 * lines are loaded, so it is anchored at the visible Sync item of the collaboration menu,
+		 * or at the "More" button when Sync is folded into it.
+		 */
+		#resolveTelephonyAnchor(target) {
+			if (target?.matches('.menu-popup-item')) {
+				const menu = this.getCollaborationMenu();
+				const syncItem = menu?.getItemById?.('menu_sync');
+				if (this.#isMenuItemVisible(menu, syncItem)) {
+					return syncItem;
+				}
+				const moreButton = main_core.Type.isDomNode(syncItem) ? menu.getMoreButton?.() : null;
+				if (main_core.Type.isDomNode(moreButton)) {
+					return moreButton;
+				}
+			}
+			return target;
+		}
+		#isMenuItemVisible(menu, item) {
+			if (!main_core.Type.isDomNode(item)) {
+				return false;
+			}
+			if (main_core.Type.isFunction(menu.isVisibleItem)) {
+				return menu.isVisibleItem(item);
+			}
+			return item.getClientRects().length > 0;
+		}
+
+		/**
+		 * This template is loaded on every portal page, the messenger is not, so its facade
+		 * is resolved through the class registry. The im and intranet modules are updated
+		 * separately, so a portal may run an im without this method; a messenger that is not
+		 * initialized yet answers with an empty string. Both cases fall back to the layout name.
+		 */
+		#resolveNavigationItemId(layoutName) {
+			const Public = main_core.Reflection.getClass('BX.Messenger.Public');
+			if (!Public?.getNavigationItemId) {
+				return layoutName;
+			}
+			return Public.getNavigationItemId(layoutName) || layoutName;
+		}
+		#getNavigationItemId(layout) {
+			const itemId = this.#resolveNavigationItemId(layout.name).toLowerCase();
+			if (itemId === 'market' && layout.entityId) {
+				return `${itemId}_${layout.entityId}`;
+			}
+			return itemId;
+		}
 		#handleImLayoutChange(event) {
 			const data = event.getData();
-			let fromItemId = data.from.name.toLowerCase();
-			if (fromItemId === 'market' && data.from.entityId) {
-				fromItemId = `${fromItemId}_${data.from.entityId}`;
-			}
-			let toItemId = data.to.name.toLowerCase();
-			if (toItemId === 'market' && data.to.entityId) {
-				toItemId = `${toItemId}_${data.to.entityId}`;
-			}
+			const fromItemId = this.#getNavigationItemId(data.from);
+			const toItemId = this.#getNavigationItemId(data.to);
 			const chatMenu = this.getChatMenu();
 			if (chatMenu !== null) {
 				chatMenu.unsetActive(fromItemId);
@@ -273,22 +328,51 @@ this.BX.Intranet = this.BX.Intranet || {};
 			const isMessengerEmbedded = window.location.pathname.toString().startsWith(`${siteDir}online/`);
 			if (collaborationMenu !== null) {
 				if (isMessengerEmbedded) {
-					collaborationMenu.unsetActive(fromItemId);
-					collaborationMenu.setActive(toItemId);
+					collaborationMenu.unsetActive(this.#getCollaborationItemId(collaborationMenu, fromItemId));
+					collaborationMenu.setActive(this.#getCollaborationItemId(collaborationMenu, toItemId));
 				}
 				collaborationMenu.reset();
 			}
 		}
-		#handleCounterUpdate(event) {
-			const counters = event.getData();
-			const menus = [this.getChatMenu(), this.getCollaborationMenu()];
-			for (const menu of menus) {
-				if (menu === null) {
-					continue;
+		#getCollaborationItemId(menu, itemId) {
+			if (!main_core.Type.isStringFilled(this.#getConfiguredMenuId())) {
+				return itemId;
+			}
+			const menuItemId = {
+				messenger: 'menu_im_messenger',
+				notification: 'menu_notifications'
+			}[itemId];
+			return menuItemId && menu.getItemById(menuItemId) ? menuItemId : itemId;
+		}
+		#getConfiguredMenuId() {
+			return main_core.Loc.hasMessage('INTRANET_COLLABORATION_MENU_ID') ? main_core.Loc.getMessage('INTRANET_COLLABORATION_MENU_ID') : null;
+		}
+		#restoreCounters() {
+			if (main_core.Type.isStringFilled(this.#getConfiguredMenuId())) {
+				const menu = this.getCollaborationMenu();
+				if (menu && menu !== this.#counterMenu) {
+					this.#updateCounters(menu, this.#counters);
+					this.#counterMenu = menu;
 				}
+			}
+		}
+		#updateCounters(menu, counters) {
+			if (menu) {
 				for (const [counterId, counterValue] of Object.entries(counters)) {
 					menu.updateCounter(counterId, counterValue);
 				}
+			}
+		}
+		#handleCounterUpdate(event) {
+			const counters = event.getData();
+			this.#counters = {
+				...this.#counters,
+				...counters
+			};
+			this.#counterMenu = this.getCollaborationMenu();
+			const menus = [this.getChatMenu(), this.#counterMenu];
+			for (const menu of menus) {
+				this.#updateCounters(menu, counters);
 			}
 		}
 	}
@@ -1349,9 +1433,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	class CollaborationMenu {
+		#messageCounter = null;
+		#counterMenu = null;
+		#entryRequested = false;
 		constructor() {
 			main_core_events.EventEmitter.subscribe('onImUpdateCounterMessage', this.#handleCounterUpdate.bind(this));
 			main_core_events.EventEmitter.subscribe('onCounterDecrement', this.#handleLiveFeedCounterDecrement.bind(this));
+			main_core_events.EventEmitter.subscribe('onFrameDataProcessed', this.#restoreCounter.bind(this));
+			main_core_events.EventEmitter.subscribe('onFrameDataProcessed', () => queueMicrotask(() => this.#restoreEntry()));
+			main_core.Event.ready(() => queueMicrotask(() => this.#restoreCounter()));
+			main_core.Event.ready(() => queueMicrotask(() => this.#restoreEntry()));
 		}
 		getMenu() {
 			/**
@@ -1360,13 +1451,86 @@ this.BX.Intranet = this.BX.Intranet || {};
 			 */
 			const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
 			if (menuManager) {
-				return menuManager.getById('top_menu_id_collaboration');
+				const menuId = this.#getConfiguredMenuId() || 'top_menu_id_collaboration';
+				return menuManager.getById(menuId) || null;
 			}
 			return null;
+		}
+		openFirstItem(menuId, entryUrl) {
+			if (!main_core.Type.isStringFilled(menuId) || !main_core.Type.isStringFilled(entryUrl)) {
+				return false;
+			}
+			const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
+			const menu = menuManager?.getById(menuId);
+			if (!menu) {
+				if (this.#entryRequested) {
+					return false;
+				}
+				this.#saveEntry(menuId, entryUrl);
+				this.#entryRequested = true;
+				main_core.Page.redirect(entryUrl);
+				return true;
+			}
+			this.#saveEntry(menuId, null);
+			this.#entryRequested = false;
+			const firstItem = menu.getVisibleItems()[0];
+			if (main_core.Type.isDomNode(firstItem)) {
+				const itemData = menu.getItemData(firstItem);
+				const link = itemData?.NODE?.querySelector('.main-buttons-item-link');
+				link?.click();
+			}
+			return true;
+		}
+		#getEntryStorageKey(menuId) {
+			return `intranet.collaboration-menu.entry.${menuId}`;
+		}
+		#saveEntry(menuId, entryUrl) {
+			try {
+				const storageKey = this.#getEntryStorageKey(menuId);
+				if (main_core.Type.isStringFilled(entryUrl)) {
+					sessionStorage.setItem(storageKey, entryUrl);
+				} else {
+					sessionStorage.removeItem(storageKey);
+				}
+				return true;
+			} catch {
+				return false;
+			}
+		}
+		#getEntryUrl(menuId) {
+			try {
+				return sessionStorage.getItem(this.#getEntryStorageKey(menuId));
+			} catch {
+				return null;
+			}
+		}
+		#restoreEntry() {
+			const menuId = this.#getConfiguredMenuId();
+			if (!main_core.Type.isStringFilled(menuId)) {
+				return;
+			}
+			const entryUrl = this.#getEntryUrl(menuId);
+			if (main_core.Type.isStringFilled(entryUrl) && new URL(entryUrl, window.location.origin).pathname === window.location.pathname && this.getMenu() && this.#saveEntry(menuId, null)) {
+				this.openFirstItem(menuId, entryUrl);
+			}
+		}
+		#getConfiguredMenuId() {
+			return main_core.Loc.hasMessage('INTRANET_COLLABORATION_MENU_ID') ? main_core.Loc.getMessage('INTRANET_COLLABORATION_MENU_ID') : null;
+		}
+		#restoreCounter() {
+			if (main_core.Type.isStringFilled(this.#getConfiguredMenuId()) && main_core.Type.isNumber(this.#messageCounter)) {
+				const menu = this.getMenu();
+				if (menu && menu !== this.#counterMenu) {
+					menu.updateCounter('im-message', this.#messageCounter);
+					this.#counterMenu = menu;
+				}
+			}
 		}
 		#handleCounterUpdate(event) {
 			const menu = this.getMenu();
 			const [counter] = event.getCompatData();
+			this.#messageCounter = counter;
+			this.#counterMenu = menu;
 			menu?.updateCounter('im-message', counter);
 		}
 		#handleLiveFeedCounterDecrement(event) {
@@ -2118,50 +2282,63 @@ this.BX.Intranet = this.BX.Intranet || {};
 		static #cache = new main_core_cache.MemoryCache();
 		static #options;
 		static init(options) {
+			main_core.Loc.setMessage(options.messages);
 			this.#options = options;
 			this.#avatarWrapper = document.querySelector('[data-id="bx-avatar-widget"]');
+			main_core.Dom.attr(this.#avatarWrapper, 'aria-haspopup', 'dialog');
+			main_core.Dom.attr(this.#avatarWrapper, 'aria-expanded', 'false');
+			this.#updateAccessibleName();
 			this.#setEventHandlerForChangeAvatar();
-			if (this.#options.signDocumentsCounter > 0 || this.#options.verifyPhoneCounter) {
+			if (this.#calculateCounterValue() > 0) {
 				this.#showCounter();
-				this.#setEventHandlersForUpdateCounter();
 			}
+			this.#setEventHandlersForUpdateCounter();
 			if (this.#options.workTimeAvailable) {
 				this.#showWorkTimeState();
 			}
-			main_core.Event.bind(this.#avatarWrapper, 'click', () => {
+			this.#setInitialClickHandler();
+		}
+		static #setInitialClickHandler() {
+			main_core.Event.bind(this.#avatarWrapper, 'click', event => {
+				const focusFirst = event.detail === 0;
 				main_core.Event.unbindAll(this.#avatarWrapper);
 				this.#getWidgetLoader().getPopup().setFixed(true);
-				this.#getWidgetLoader().createSkeletonFromConfig(options.skeleton).show();
+				this.#getWidgetLoader().createSkeletonFromConfig(this.#options.skeleton).show();
+				this.#setLoadingState(true);
 				this.#setHiddenAvatar();
-				this.#getWidgetLoader().getPopup().subscribe('onClose', () => {
-					this.#setVisibleAvatar();
-				});
-				this.#getWidgetLoader().getPopup().subscribe('onShow', () => {
-					this.#setHiddenAvatar();
-				});
 				main_core.Runtime.loadExtension(['intranet.avatar-widget']).then(() => {
-					this.#showWidget();
-				}).catch(() => {});
+					this.#showWidget(focusFirst);
+				}).catch(() => {
+					this.#showLoadingError();
+				});
 			});
 		}
-		static #showWidget() {
+		static #showWidget(focusFirst) {
 			this.#getContent().then(response => {
 				this.#getWidgetLoader().clearBeforeInsertContent();
+				this.#setLoadingState(false);
 				intranet_avatarWidget.AvatarWidget.getInstance().setOptions({
 					buttonWrapper: this.#avatarWrapper,
 					loader: this.#getWidgetLoader().getPopup(),
 					data: response.data
-				}).show();
-				main_core.Event.bind(this.#avatarWrapper, 'click', () => {
-					intranet_avatarWidget.AvatarWidget.getInstance().show();
+				});
+				this.#showAvatarWidget(focusFirst);
+				main_core.Event.bind(this.#avatarWrapper, 'click', event => {
+					this.#showAvatarWidget(event.detail === 0);
 				});
 			}).catch(error => {
 				console.error(error);
+				this.#showLoadingError();
+			});
+		}
+		static #showAvatarWidget(focusFirst) {
+			intranet_avatarWidget.AvatarWidget.getInstance().show({
+				focusFirst
 			});
 		}
 		static #getWidgetLoader() {
 			return this.#cache.remember('widgetLoader', () => {
-				return new intranet_widgetLoader.WidgetLoader({
+				const loader = new intranet_widgetLoader.WidgetLoader({
 					id: 'bx-avatar-header-popup',
 					bindElement: this.#avatarWrapper,
 					className: 'intranet-avatar-widget-base-popup',
@@ -2169,8 +2346,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 					useAngle: false,
 					fixed: true,
 					offsetTop: -50,
-					offsetLeft: 0
+					offsetLeft: 0,
+					ariaLabel: main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_POPUP'),
+					focusTrap: {
+						initialFocus: false,
+						isolateOutside: true
+					}
 				});
+				const popup = loader.getPopup();
+				popup.subscribe('onClose', () => {
+					this.#setVisibleAvatar();
+					main_core.Dom.attr(this.#avatarWrapper, 'aria-expanded', 'false');
+				});
+				popup.subscribe('onShow', () => {
+					this.#setHiddenAvatar();
+					main_core.Dom.attr(this.#avatarWrapper, 'aria-expanded', 'true');
+				});
+				return loader;
 			});
 		}
 		static #getContent() {
@@ -2183,13 +2375,51 @@ this.BX.Intranet = this.BX.Intranet || {};
 		static #showCounter() {
 			this.#getCounter().renderTo(this.#getCounterWrapper());
 		}
+		static #updateCounter() {
+			if (this.#calculateCounterValue() > 0) {
+				if (this.#cache.has('counter')) {
+					this.#getCounter().update(this.#calculateCounterValue());
+				} else {
+					this.#showCounter();
+				}
+			} else if (this.#cache.has('counter')) {
+				this.#getCounter().destroy();
+				this.#cache.delete('counter');
+			}
+			this.#updateAccessibleName();
+		}
+		static #updateAccessibleName() {
+			const label = [main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_OPEN_PROFILE')];
+			const signDocumentsCounter = this.#options.signDocumentsCounter;
+			if (signDocumentsCounter > 0) {
+				label.push(main_core.Loc.getMessagePlural('INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS', signDocumentsCounter, {
+					'#COUNT#': signDocumentsCounter
+				}));
+			}
+			if (this.#options.verifyPhoneCounter) {
+				label.push(main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_VERIFY_PHONE'));
+			}
+			main_core.Dom.attr(this.#avatarWrapper, 'aria-label', label.filter(Boolean).join('. '));
+		}
+		static #setLoadingState(isLoading) {
+			const widgetLoader = this.#getWidgetLoader();
+			const popupContainer = widgetLoader.getPopup().getPopupContainer();
+			widgetLoader.setLoadingState(isLoading);
+			main_core.Dom.attr(popupContainer, 'aria-label', isLoading ? main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_LOADING') : main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_POPUP'));
+		}
+		static #showLoadingError() {
+			this.#cache.delete('content');
+			this.#getWidgetLoader().clearSkeleton();
+			this.#setLoadingState(false);
+			this.#getWidgetLoader().getPopup().close();
+			this.#setInitialClickHandler();
+			ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessage('INTRANET_AVATAR_WIDGET_LOAD_ERROR'), 'assertive');
+		}
 		static #setHiddenAvatar() {
 			main_core.Dom.style(this.#avatarWrapper, 'opacity', '0');
-			main_core.Dom.attr(this.#avatarWrapper, 'aria-hidden', 'true');
 		}
 		static #setVisibleAvatar() {
 			main_core.Dom.style(this.#avatarWrapper, 'opacity', '1');
-			main_core.Dom.attr(this.#avatarWrapper, 'aria-hidden', 'false');
 		}
 		static #showWorkTimeState() {
 			this.#getWorkTimeState().renderTo(this.#getShortWorkTimeStateWrapper());
@@ -2254,7 +2484,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		static #setEventHandlersForUpdateCounter() {
-			if (this.#options.signDocumentsCounter > 0) {
+			if (main_core.Type.isStringFilled(this.#options.signDocumentsPullEventName)) {
 				pull_client.PULL.subscribe({
 					moduleId: 'sign',
 					command: this.#options.signDocumentsPullEventName,
@@ -2262,27 +2492,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 						if (!main_core.Type.isNumber(params?.needActionCount)) {
 							return;
 						}
-						if (params?.needActionCount > 0) {
-							this.#options.signDocumentsCounter = params.needActionCount;
-							this.#getCounter().update(this.#calculateCounterValue());
-						} else if (!this.#options.verifyPhoneCounter) {
-							this.#options.signDocumentsCounter = 0;
-							this.#getCounter().destroy();
-						}
+						this.#options.signDocumentsCounter = params.needActionCount;
+						this.#updateCounter();
 					}
 				});
 			}
-			if (this.#options.verifyPhoneCounter) {
+			if (main_core.Type.isStringFilled(this.#options.verifyPhonePullEventName)) {
 				pull_client.PULL.subscribe({
 					moduleId: 'intranet',
 					command: this.#options.verifyPhonePullEventName,
 					callback: () => {
 						this.#options.verifyPhoneCounter = false;
-						if (this.#options.signDocumentsCounter <= 0) {
-							this.#getCounter().destroy();
-						} else {
-							this.#getCounter().update(this.#calculateCounterValue());
-						}
+						this.#updateCounter();
 					}
 				});
 			}
@@ -2304,11 +2525,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 		static #options;
 		static #buttonWrapper;
 		static #button;
+		static #ordersCount = null;
 		static #cache = new main_core_cache.MemoryCache();
 		static init(options) {
+			main_core.Loc.setMessage(options.messages);
 			this.#options = options;
 			this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
 			this.#button = this.#buttonWrapper.querySelector('button');
+			this.#ordersCount = null;
 			this.#setEventHandlers(this.#button);
 			if (this.#options.isCloud) {
 				this.#setCounterValue(this.#options.personalTotalCount, this.#options.commonTotalCount, this.#options.counters.highlightIntegrator);
@@ -2385,7 +2609,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				const loader = new intranet_widgetLoader.WidgetLoader({
 					bindElement: this.#buttonWrapper,
 					width: 385,
-					id: 'bx-license-header-popup'
+					id: 'bx-license-header-popup',
+					ariaLabel: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_DIALOG_LABEL'),
+					focusTrap: {
+						initialFocus: 'container',
+						restoreFocus: () => this.#button
+					}
 				});
 				const popup = loader.getPopup();
 				popup.subscribe('onShow', () => {
@@ -2428,7 +2657,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		static #setCounterValue(personalTotalCount, commonTotalCount, highlightIntegrator = 0) {
-			const value = personalTotalCount + commonTotalCount + highlightIntegrator;
+			const ordersCount = personalTotalCount + commonTotalCount;
+			const value = ordersCount + highlightIntegrator;
+			const previousOrdersCount = this.#ordersCount;
+			this.#ordersCount = ordersCount;
+			this.#updateAccessibleName(ordersCount, highlightIntegrator);
+			if (!main_core.Type.isNil(previousOrdersCount) && previousOrdersCount !== ordersCount) {
+				ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_ORDERS_COUNT', {
+					'#COUNT#': ordersCount
+				}), 'polite');
+			}
 			if (value < 1) {
 				this.#getCounter().destroy();
 				this.#cache.delete('counter');
@@ -2437,6 +2675,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.#getCounter().update(value);
 				this.#getCounter().renderTo(this.#getCounterWrapper());
 			}
+		}
+		static #updateAccessibleName(ordersCount = 0, highlightIntegrator = 0) {
+			const tariffName = this.#button.querySelector('.air-header-button__text')?.textContent?.trim() ?? '';
+			const labelParts = [main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_TRIGGER_LABEL', {
+				'#TARIFF#': tariffName
+			})];
+			if (this.#options.isCloud) {
+				labelParts.push(main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_ORDERS_COUNT', {
+					'#COUNT#': ordersCount
+				}));
+				if (highlightIntegrator > 0) {
+					labelParts.push(main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_INTEGRATOR_NOTICE'));
+				}
+			}
+			this.#button.setAttribute('aria-label', labelParts.filter(main_core.Type.isStringFilled).join('. '));
 		}
 		static #setEventHandlers(licenseButton) {
 			if (this.#options.isCloud && this.#options.isSidePanelDemoLicense) {
@@ -2492,14 +2745,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 					this.#options.counters.awaitingPayment = params.orders.awaitingPayment;
 					this.#options.counters.failedPayment = params.orders.failedPayment;
 				}
-				this.#setCounterValue(this.#options.personalTotalCount, params.commonTotalCount);
+				this.#setCounterValue(this.#options.personalTotalCount, params.commonTotalCount, this.#options.counters.highlightIntegrator);
 			} else if (params.scope === 'personal') {
 				this.#options.personalTotalCount = params.personalTotalCount;
 				if (params.personalTotalCount !== 0 && !main_core.Type.isNil(params.personalTotalCount)) {
 					this.#options.ordersInfo.checkoutPath = params.orders.checkoutPath;
 					this.#options.counters.inCheckout = params.orders.inCheckout;
 				}
-				this.#setCounterValue(params.personalTotalCount, this.#options.commonTotalCount);
+				this.#setCounterValue(params.personalTotalCount, this.#options.commonTotalCount, this.#options.counters.highlightIntegrator);
 			}
 			this.#emitOrdersUpdate();
 		}
@@ -2604,42 +2857,95 @@ this.BX.Intranet = this.BX.Intranet || {};
 		static #button;
 		static #cache = new main_core_cache.MemoryCache();
 		static #options;
+		static #loadAttemptCounter = 0;
+		static #currentLoadAttempt = null;
 		static init(options) {
 			this.#options = options;
 			this.#buttonWrapper = document.querySelector('[data-id="invitationButton"]');
 			this.#button = this.#buttonWrapper.querySelector('button');
-			main_core.Event.bind(this.#button, 'click', () => {
-				main_core.Event.unbindAll(this.#button);
-				this.#setAriaExpanded(true);
-				this.#getWidgetLoader().createSkeletonFromConfig(options.skeleton).show();
-				main_core.Runtime.loadExtension(['intranet.invitation-widget']).then(() => {
-					this.#showWidget();
-				}).catch(() => {});
+			this.#bindInitialClickHandler();
+			this.#getInvitationCounter().setOptions({
+				button: this.#buttonWrapper,
+				counterId: this.#options.counterId,
+				invitationCounter: this.#options.invitationCounter,
+				shouldShowStructureCounter: this.#options.shouldShowStructureCounter,
+				useAirDesign: true
 			});
 			if (this.#options.invitationCounter > 0) {
-				this.#getCounter().renderTo(this.#getCounterWrapper());
+				this.#getInvitationCounter().show();
 			}
 			this.#setEventHandlers();
 		}
-		static #showWidget() {
-			this.#getContent().then(response => {
+		static #bindInitialClickHandler() {
+			main_core.Event.bind(this.#button, 'click', this.#getInitialClickHandler());
+		}
+		static #onInitialClick() {
+			this.#unbindInitialClickHandler();
+			const attempt = ++this.#loadAttemptCounter;
+			this.#currentLoadAttempt = attempt;
+			this.#setAriaExpanded(true);
+			this.#getWidgetLoader().createSkeletonFromConfig(this.#options.skeleton).show();
+			main_core.Runtime.loadExtension(['intranet.invitation-widget']).then(() => this.#showWidget(attempt)).catch(() => this.#handleLoadingError(attempt));
+		}
+		static #showWidget(attempt) {
+			if (!this.#isCurrentLoadAttempt(attempt)) {
+				return Promise.resolve();
+			}
+			return this.#getContent().then(response => {
+				if (!this.#isCurrentLoadAttempt(attempt)) {
+					return;
+				}
+				this.#currentLoadAttempt = null;
 				this.#getWidgetLoader().clearBeforeInsertContent();
 				intranet_invitationWidget.InvitationWidget.getInstance().setOptions({
-					buttonWrapper: this.#buttonWrapper,
+					button: this.#button,
+					target: this.#buttonWrapper,
 					loader: this.#getWidgetLoader().getPopup(),
 					...response.data
 				}).show();
-				main_core.Event.bind(this.#button, 'click', () => {
-					intranet_invitationWidget.InvitationWidget.getInstance().show();
-				});
-			}).catch(() => {});
+			});
+		}
+		static #handleLoadingError(attempt) {
+			if (!this.#isCurrentLoadAttempt(attempt)) {
+				return;
+			}
+			this.#currentLoadAttempt = null;
+			const loader = this.#getWidgetLoader();
+			loader.clearLoadingState();
+			loader.getPopup().close();
+			this.#cache.delete('content');
+			this.#bindInitialClickHandler();
+		}
+		static #isCurrentLoadAttempt(attempt) {
+			return this.#currentLoadAttempt === attempt;
+		}
+		static #cancelCurrentLoadAttempt() {
+			if (this.#currentLoadAttempt === null) {
+				return;
+			}
+			this.#currentLoadAttempt = null;
+			this.#getWidgetLoader().clearLoadingState();
+			this.#cache.delete('content');
+			this.#bindInitialClickHandler();
+		}
+		static #unbindInitialClickHandler() {
+			main_core.Event.unbind(this.#button, 'click', this.#getInitialClickHandler());
+		}
+		static #getInitialClickHandler() {
+			return this.#cache.remember('initial-click-handler', () => this.#onInitialClick.bind(this));
 		}
 		static #getWidgetLoader() {
 			return this.#cache.remember('widgetLoader', () => {
 				const loader = new intranet_widgetLoader.WidgetLoader({
 					bindElement: this.#buttonWrapper,
+					bindOnClick: false,
 					width: 350,
-					id: 'bx-invitation-header-popup'
+					id: 'bx-invitation-header-popup',
+					ariaLabel: this.#options.invitationLabel,
+					loadingStatusText: this.#options.loadingStatusText,
+					focusTrap: {
+						initialFocus: false
+					}
 				});
 				const popup = loader.getPopup();
 				popup.subscribe('onShow', () => {
@@ -2647,6 +2953,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				});
 				popup.subscribe('onClose', () => {
 					this.#setAriaExpanded(false);
+					this.#cancelCurrentLoadAttempt();
 				});
 				return loader;
 			});
@@ -2667,129 +2974,311 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		static #setEventHandlers() {
-			main_core_events.EventEmitter.subscribeOnce('HR.company-structure:first-popup-showed', this.#onFirstWatchNewStructure.bind(this));
 			main_core_events.EventEmitter.subscribe('onPullEvent-main', event => {
 				const [command, params] = event.getCompatData();
 				if (command === 'user_counter' && params[main_core.Loc.getMessage('SITE_ID')]) {
 					const value = params[main_core.Loc.getMessage('SITE_ID')][this.#options.counterId];
-					if (value > 0) {
-						this.#onReceiveCounterValue(value);
+					if (main_core.Type.isNumber(value)) {
+						this.#getInvitationCounter().onReceiveCounterValue(value);
 					}
 				}
 			});
 		}
-		static #onReceiveCounterValue(value) {
-			if (this.#options.shouldShowStructureCounter) {
-				value++;
-			}
-			this.#getCounter().update(value);
-			this.#options.invitationCounter = value;
-			if (value > 0) {
-				this.#getCounter().renderTo(this.#getCounterWrapper());
-			} else {
-				this.#getCounter().destroy();
-				this.#cache.delete('counter');
-			}
-		}
-		static #getCounterWrapper() {
-			return this.#cache.remember('counter-wrapper', () => {
-				return this.#buttonWrapper.querySelector('.invitation-widget-counter');
+		static #getInvitationCounter() {
+			return this.#cache.remember('invitation-counter', () => {
+				return intranet_invitationWidgetCounter.InvitationWidgetCounter.getInstance();
 			});
-		}
-		static #getCounter() {
-			return this.#cache.remember('counter', () => {
-				return new ui_cnt.Counter({
-					value: this.#getCounterValue(),
-					color: ui_cnt.Counter.Color.DANGER,
-					useAirDesign: true,
-					style: ui_cnt.CounterStyle.FILLED_ALERT
-				});
-			});
-		}
-		static #getCounterValue() {
-			let counterValue = Number(this.#options.invitationCounter);
-			if (this.#options.shouldShowStructureCounter ?? false) {
-				counterValue++;
-			}
-			return counterValue;
-		}
-		static #onFirstWatchNewStructure() {
-			let value = this.#getCounter().value;
-			if (!main_core.Type.isNumber(value)) {
-				return;
-			}
-			if (!this.#options.shouldShowStructureCounter) {
-				return;
-			}
-			value--;
-			this.#options.shouldShowStructureCounter = false;
-			this.#getCounter().update(value);
-			this.#options.invitationCounter = value;
-			if (value > 0) {
-				this.#getCounter().renderTo(this.#getCounterWrapper());
-			} else {
-				this.#getCounter().destroy();
-				this.#cache.delete('counter');
-			}
 		}
 	}
 
+	const LANGUAGE_ITEM_SELECTOR = '.intranet__language-popup_language-item';
+	const CHECKED_LANGUAGE_ITEM_SELECTOR = `${LANGUAGE_ITEM_SELECTOR}[aria-checked="true"]`;
+
+	/**
+	 * The window the announcer holds a message in its live region. It is given to the announcer and
+	 * used to time the switch, so that both sides count the same window instead of guessing each other.
+	 */
+	const ANNOUNCEMENT_TIMING = {
+		baseDelay: 500,
+		charDelay: 30,
+		maxDelay: 4000
+	};
+
+	// The announcer cuts a message down to this length, and the delay is counted on the same text.
+	const ANNOUNCEMENT_MAX_MESSAGE_LENGTH = 160;
+	/**
+	 * The switch waits the window of the announcer out before it leaves the page, so the document is
+	 * not destroyed while the message is still being read.
+	 */
+	function getAnnouncementDelay(message) {
+		const {
+			baseDelay,
+			charDelay,
+			maxDelay
+		} = ANNOUNCEMENT_TIMING;
+		const length = Math.min(message.trim().length, ANNOUNCEMENT_MAX_MESSAGE_LENGTH);
+		return Math.min(baseDelay + length * charDelay, maxDelay);
+	}
+
+	/**
+	 * The grid is presentational so that it does not break the menu-to-menuitem relation of the popup.
+	 * A language missing from the BCP 47 table comes without a tag, and then no lang attribute is written:
+	 * an invalid one is an accessibility violation of its own.
+	 */
+	function renderLanguageList(languages, currentLanguageCode, onSelect) {
+		const container = main_core.Tag.render`<div class="intranet__language-popup_list" role="presentation"></div>`;
+		Object.entries(languages).forEach(([languageCode, languageItem]) => {
+			const languageNameElement = main_core.Tag.render`
+			<span class="intranet__language-popup_language-item-name">${languageItem.NAME}</span>
+		`;
+			if (main_core.Type.isStringFilled(languageItem.LANG_TAG)) {
+				main_core.Dom.attr(languageNameElement, 'lang', languageItem.LANG_TAG);
+			}
+			const languageItemElement = main_core.Tag.render`
+			<button
+				type="button"
+				class="intranet__language-popup_language-item"
+				role="menuitemradio"
+				aria-checked="${languageCode === currentLanguageCode}"
+			>
+				${languageNameElement}
+				<span class="intranet__language-popup_language-beta">${languageItem.IS_BETA ? ', beta' : ''}</span>
+			</button>
+		`;
+			main_core.Event.bind(languageItemElement, 'click', () => {
+				onSelect(languageCode);
+			});
+			main_core.Dom.append(languageItemElement, container);
+		});
+		return container;
+	}
+
+	/**
+	 * The number of tracks the list is laid out in. The stylesheet owns the layout and the list is
+	 * cut by the hidden-languages setting, so neither the columns nor the items are a constant here.
+	 */
+	function getColumnCount(listContainer) {
+		return main_core.Dom.style(listContainer, 'gridTemplateColumns').split(/\s+/).filter(track => track !== '' && track !== 'none').length;
+	}
+
+	/**
+	 * The horizontal arrows step by one item, the vertical ones by a whole row of the grid, Home and
+	 * End go to its ends. The zone gives a direction, which tells the two axes apart no better than
+	 * "previous" and "next" - hence the original key event. Returning null leaves the key to the
+	 * linear navigation of the zone.
+	 */
+	function getNextLanguageItem(listContainer, from, event) {
+		const items = [...listContainer.querySelectorAll(LANGUAGE_ITEM_SELECTOR)];
+		const columns = getColumnCount(listContainer);
+		const i = items.indexOf(from);
+		if (columns < 1 || i < 0) {
+			return null;
+		}
+		let j = -1;
+		switch (event.key) {
+			case 'ArrowRight':
+				{
+					j = i + 1;
+					break;
+				}
+			case 'ArrowLeft':
+				{
+					j = i - 1;
+					break;
+				}
+			case 'ArrowDown':
+				{
+					j = i + columns;
+					break;
+				}
+			case 'ArrowUp':
+				{
+					j = i - columns;
+					break;
+				}
+			case 'Home':
+				{
+					j = 0;
+					break;
+				}
+			case 'End':
+				{
+					j = items.length - 1;
+					break;
+				}
+			default:
+				{
+					return null;
+				}
+		}
+
+		// A step out of the grid moves nothing: the focus stays on the item it came from.
+		return j < 0 || j >= items.length ? items[i] : items[j];
+	}
 	class LanguageSwitcher {
 		#popup;
-		async showLanguageListPopup(bindElement, languages) {
+		#popupInitPromise;
+		#focusZone;
+		#announcer;
+		#bindElement;
+		#languages;
+		#isSwitching = false;
+		async showLanguageListPopup(bindElement, languages, options = {}) {
+			// The page is already on its way out: a second choice would only override the first one.
+			if (this.#isSwitching) {
+				return;
+			}
+			if (main_core.Type.isPlainObject(options.messages)) {
+				main_core.Loc.setMessage(options.messages);
+			}
+			this.#bindElement = bindElement;
+			this.#languages = languages;
 			if (!this.#popup) {
-				await this.#initPopup(bindElement, languages);
+				// Clicks that land while the extension is still loading share one initialisation,
+				// so the second one does not build a popup of its own.
+				if (!this.#popupInitPromise) {
+					this.#popupInitPromise = this.#initPopup(bindElement, languages, options.currentLanguageCode).finally(() => {
+						this.#popupInitPromise = null;
+					});
+				}
+				await this.#popupInitPromise;
 			}
 			if (this.#popup.isShown()) {
 				return;
 			}
 			this.#popup.show();
 		}
-		async #initPopup(bindElement, languages) {
+		async #initPopup(bindElement, languages, currentLanguageCode) {
+			// The handlers below close and dispose of the popup they were created with, not of whichever
+			// one the class holds at the moment.
+			let popup = null;
+			let focusZone = null;
 			const windowScrollHandler = () => {
-				this.hideLanguageListPopup();
+				popup?.close();
 			};
+
+			// A menu closes on Tab instead of letting the focus walk through its items, the way the
+			// platform menu does (main.popup MenuNavigation): the native move is cancelled, the trap
+			// brings the focus back to the trigger, and the next Tab leaves it for the page.
+			const keyDownHandler = event => {
+				if (event.key === 'Tab') {
+					event.preventDefault();
+					popup?.close();
+				}
+			};
+
+			// The extension of the focus zone is not among the ones the page loads on its own.
 			const {
-				Popup
-			} = await main_core.Runtime.loadExtension('main.popup');
+				Popup,
+				FocusZone,
+				FocusKeys,
+				LiveAnnouncer
+			} = await main_core.Runtime.loadExtension('main.popup', 'ui.a11y');
+
+			// The announcer is raised on opening and not at the choice of a language: a live region has
+			// to sit in the accessibility tree for a while before its first message, or a screen reader
+			// drops it - one frame, the one the constructor of the announcer waits out, is not enough.
+			// The popup is destroyed on close, the announcer is not: one region serves the whole page.
+			if (!this.#announcer) {
+				// Assertive from the start, so that the politeness of the region does not change at the
+				// very moment the message arrives.
+				this.#announcer = new LiveAnnouncer({
+					politeness: 'assertive',
+					...ANNOUNCEMENT_TIMING,
+					maxMessageLength: ANNOUNCEMENT_MAX_MESSAGE_LENGTH
+				});
+			}
+			const listContainer = renderLanguageList(languages, currentLanguageCode, languageCode => {
+				this.switchPortalLanguage(languageCode);
+			});
 			const popupOptions = {
 				bindElement,
 				autoHide: true,
-				closeByEcs: true,
+				closeByEsc: true,
 				cachable: false,
-				content: this.#renderPopupContent(languages),
+				role: 'menu',
+				ariaLabel: main_core.Loc.getMessage('BITRIX24_AIR_LANGUAGE_MENU_ARIA'),
+				focusTrap: {
+					// A click outside moves the focus before the menu hides: the element the user went to
+					// keeps it, and only a focus dying with the menu is handed back to the trigger.
+					restoreFocus: () => {
+						const {
+							activeElement
+						} = document;
+						const popupContainer = popup?.getPopupContainer();
+						const hasFocusLeftTheMenu = main_core.Type.isElementNode(popupContainer) && main_core.Type.isElementNode(activeElement) && activeElement !== document.body && !popupContainer.contains(activeElement);
+						return hasFocusLeftTheMenu ? activeElement : bindElement;
+					},
+					preventScroll: true,
+					// The provider puts the current language first, so the checked item is the first
+					// one as well; the fallback keeps the menu rule when the setting hides it.
+					initialFocus: [CHECKED_LANGUAGE_ITEM_SELECTOR, LANGUAGE_ITEM_SELECTOR]
+				},
+				content: listContainer,
 				events: {
+					onPopupShow: () => {
+						main_core.Dom.attr(bindElement, 'aria-expanded', 'true');
+						focusZone.activate();
+					},
 					onPopupClose: () => {
+						main_core.Dom.attr(bindElement, 'aria-expanded', 'false');
 						main_core.Event.unbind(window, 'scroll', windowScrollHandler);
-						this.#popup.destroy();
-						this.#popup = null;
+						main_core.Event.unbind(popup.getPopupContainer(), 'keydown', keyDownHandler);
+						// Before the popup goes: the zone keeps a mutation observer and tabindex
+						// writes on the very nodes that are about to be thrown away.
+						focusZone.deactivate();
+						popup.destroy();
+						if (this.#focusZone === focusZone) {
+							this.#focusZone = null;
+						}
+						if (this.#popup === popup) {
+							this.#popup = null;
+						}
 					}
 				}
 			};
-			this.#popup = new Popup(popupOptions);
+			popup = new Popup(popupOptions);
+			focusZone = new FocusZone(listContainer, {
+				bindKeys: FocusKeys.ArrowAll | FocusKeys.HomeAndEnd,
+				focusOutBehavior: 'stop',
+				// Without it every arrow scrolls the page, and a window scroll closes the popup.
+				preventScroll: true,
+				focusableElementFilter: element => element.matches(LANGUAGE_ITEM_SELECTOR),
+				getNextFocusable: (direction, from, event) => {
+					return getNextLanguageItem(listContainer, from, event);
+				}
+			});
+			this.#popup = popup;
+			this.#focusZone = focusZone;
 			main_core.Event.bind(window, 'scroll', windowScrollHandler);
+			main_core.Event.bind(popup.getPopupContainer(), 'keydown', keyDownHandler);
 		}
 		hideLanguageListPopup() {
 			this.#popup?.close();
 		}
 		switchPortalLanguage(languageCode) {
-			window.location.href = `/auth/?user_lang=${languageCode}&backurl=${getBackUrl()}`;
-		}
-		#renderPopupContent(languages) {
-			const container = main_core.Tag.render`<div class="intranet__language-popup_list"></div>`;
-			Object.entries(languages).forEach(([languageCode, languageItem]) => {
-				const languageItemElement = main_core.Tag.render`
-				<div class="intranet__language-popup_language-item">
-					<span class="intranet__language-popup_language-item-name">${languageItem.NAME}</span>
-					<span class="intranet__language-popup_language-beta">${languageItem.IS_BETA ? ', beta' : ''}</span>
-				</div>
-			`;
-				main_core.Event.bind(languageItemElement, 'click', () => {
-					this.switchPortalLanguage(languageCode);
-				});
-				main_core.Dom.append(languageItemElement, container);
+			if (this.#isSwitching) {
+				return;
+			}
+			this.#isSwitching = true;
+			this.hideLanguageListPopup();
+
+			// The popup has handed the focus back to the trigger, and the trigger is where the state
+			// of the switch belongs: busy, and not to be used again before the page is replaced.
+			main_core.Dom.attr(this.#bindElement, {
+				'aria-busy': 'true',
+				'aria-disabled': 'true'
 			});
-			return container;
+			const message = main_core.Loc.getMessage('BITRIX24_AIR_LANGUAGE_SWITCHING_ANNOUNCEMENT', {
+				'#LANGUAGE#': this.#languages?.[languageCode]?.NAME ?? ''
+			}) ?? '';
+
+			// Assertive rather than polite: the document is about to be replaced, and a polite message
+			// may never get its turn.
+			this.#announcer?.announce(message, 'assertive');
+			setTimeout(() => {
+				window.location.href = `/auth/?user_lang=${languageCode}&backurl=${getBackUrl()}`;
+			}, getAnnouncementDelay(message));
 		}
 	}
 	const languageSwitcher = new LanguageSwitcher();
@@ -2836,5 +3325,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.Template = Template;
 	exports.languageSwitcher = languageSwitcher;
 
-})(this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}, BX, BX.Main, BX.UI, BX.Event, BX.Cache, BX, BX.UI, BX.UI.IconSet, BX, BX.SidePanel, BX.Intranet, BX.Intranet, BX.Intranet, BX.Timeman, BX.UI, BX.Bitrix24, BX.Intranet, BX.Intranet);
+})(this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}, BX, BX.Main, BX.UI, BX.Event, BX.Cache, BX, BX.UI, BX.UI.IconSet, BX, BX.SidePanel, BX.Intranet, BX.UI.Accessibility, BX.Intranet, BX.Intranet, BX.Timeman, BX.UI, BX.Bitrix24, BX.Intranet, BX.Intranet, BX.Intranet);
 //# sourceMappingURL=bitrix24.bundle.js.map

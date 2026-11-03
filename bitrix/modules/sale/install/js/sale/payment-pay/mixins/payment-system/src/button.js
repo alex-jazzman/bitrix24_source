@@ -12,6 +12,11 @@ export default {
 				'btn-wait': this.loading
 			};
 		},
+		// a string: Vue 2 drops an attribute bound to false
+		ariaBusy()
+		{
+			return this.loading ? 'true' : 'false';
+		},
 	},
 	methods:
 	{

@@ -8,10 +8,13 @@ export class SettingsPullHandler
 	handleSettingsUpdate(params: SettingsUpdateParams)
 	{
 		Logger.warn('SettingsPullHandler: handleSettingsUpdate', params);
-		Object.entries(params).forEach(([optionName, optionValue]) => {
-			Core.getStore().dispatch('application/settings/set', {
-				[optionName]: optionValue,
-			});
-		});
+
+		const settingsToUpdate: SettingsUpdateParams = {
+			...params,
+		};
+
+		void Core.getStore().dispatch('application/settings/set',
+			settingsToUpdate,
+		);
 	}
 }

@@ -17,7 +17,8 @@ jn.define('im/messenger/db/repository/validators/folder', (require, exports, mod
 			result.id = folder.id;
 		}
 
-		if (Type.isNumber(folder.parentChatId))
+		// null has to survive the whitelist: an omitted key falls back to the column default 0
+		if (Type.isNumber(folder.parentChatId) || Type.isNull(folder.parentChatId))
 		{
 			result.parentChatId = folder.parentChatId;
 		}
@@ -37,9 +38,19 @@ jn.define('im/messenger/db/repository/validators/folder', (require, exports, mod
 			result.title = folder.title;
 		}
 
+		if (Type.isString(folder.description) || Type.isNull(folder.description))
+		{
+			result.description = folder.description;
+		}
+
 		if (Type.isNumber(folder.sort))
 		{
 			result.sort = folder.sort;
+		}
+
+		if (Type.isBoolean(folder.visible))
+		{
+			result.visible = folder.visible;
 		}
 
 		// Invariant: validateFolder only ever receives already-normalized flat folders.
@@ -49,6 +60,11 @@ jn.define('im/messenger/db/repository/validators/folder', (require, exports, mod
 		if (Type.isArray(folder.chatIds))
 		{
 			result.chatIds = folder.chatIds;
+		}
+
+		if (Type.isArray(folder.sourceFolders))
+		{
+			result.sourceFolders = folder.sourceFolders;
 		}
 
 		if (Type.isStringFilled(folder.recentSection) || Type.isNull(folder.recentSection))

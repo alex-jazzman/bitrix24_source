@@ -88,13 +88,11 @@ button.landing-ui-form-card-item-header-remove {
 	cursor: pointer;
 }
 
-.landing-ui-form-card-item-header:focus,
 .landing-ui-form-card-item-header-drag:focus,
 .landing-ui-form-card-item-header-remove:focus {
 	outline: none;
 }
 
-.landing-ui-form-card-item-header:focus-visible,
 .landing-ui-form-card-item-header-drag:focus-visible,
 .landing-ui-form-card-item-header-remove:focus-visible {
 	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);

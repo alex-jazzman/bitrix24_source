@@ -14,14 +14,16 @@ import { getMigrationState, type MigrationState } from 'mail.migration-state';
 import { ConnectionSettings } from './connection-settings';
 import { MicrosoftConnection } from './microsoft-connection';
 import { ProviderBadge } from './provider-badge';
+import { MailboxAvatar } from './mailbox-avatar';
 import { SmtpSettings } from './smtp-settings';
-import { AccessSharing } from './access-sharing';
+import { AccessSharing, type AccessUser } from './access-sharing';
 import { MailboxOwnership } from './mailbox-ownership';
 import { ConnectionRequestOwner } from './connection-request-owner';
 import { FormActions } from './form-actions';
 import {
 	Api,
 	type AjaxError,
+	type AjaxResponse,
 	type BaseMailboxPayload,
 	type ConnectByConnectionRequestResult,
 	type ConnectMailboxResult,
@@ -32,31 +34,70 @@ import {
 	type UpdateMailboxPayload,
 } from '../api';
 import type {
+	AvatarChange,
 	FormErrors,
+	FormState,
+	GeneralSettingsPatch,
 	GeneralErrorItem,
 	MailSyncModel,
+	MailboxAvatarData,
+	MailboxAvatarSaveSnapshot,
+	MailboxAvatarSelection,
 	OauthCompletionUser,
 	ResponsibleQueueItem,
 } from '../types';
 import { mapMailboxCrmOptionsToStatePatch } from '../utils/crm-options';
-import { validateForm } from '../utils/validation';
+import { validateForm, validateLink } from '../utils/validation';
 import { loc } from '../utils/loc';
 import { showOauthDeniedGuide, showSyncFailureGuide, type SyncFailureMode } from '../utils/sync-failure-guide';
 import { showProviderRestrictionPopup } from '../utils/provider-restriction-popup';
-import { useFormState } from '../state';
+import {
+	acceptGeneralSettingsPatch,
+	acceptMailboxAvatarRead,
+	acceptMailboxAvatarSave,
+	beginMailboxAvatarRead,
+	buildGeneralSettingsPatch,
+	createMailboxAvatarSaveSnapshot,
+	deleteMailboxAvatar,
+	getMailboxAvatarUrl,
+	getSourceGenerationPrecondition,
+	invalidateMailboxAvatarRead,
+	isMailboxAvatarSaveBlocked,
+	isMailboxAvatarSaveCurrent,
+	rejectMailboxAvatarRead,
+	rejectMailboxAvatarUpload,
+	requireMailboxAvatarRefresh,
+	resetMailboxAvatarIntent,
+	setGeneralSettingsBaseline,
+	setMailboxAvatarSelection,
+	setSourceGeneration,
+	useFormState,
+} from '../state';
 
 type SyncFailureGuideInstance = {
 	start(): void;
 	close?(): void;
 };
 
+const PROVIDER_ACTION_GUIDE_TARGET = '[data-id="mail-config-form-provider-action"]';
+const PROVIDER_REAUTHORIZATION_GUIDE_TARGET = '[data-id="mail-config-form-provider-reauthorization"]';
+
 const SYNC_FAILURE_GUIDE_TARGETS: Record<SyncFailureMode, string> = {
-	oauth: '[data-id="mail-config-form-provider-action"]',
+	oauth: PROVIDER_REAUTHORIZATION_GUIDE_TARGET,
 	password: '[data-id="mail-config-form-password-field"]',
 };
 
 // Scenario id from the server side: see Mail\Helper\OAuth::ERROR_SCENARIO_ADMIN_CONSENT.
 const OAUTH_DENIED_ADMIN_CONSENT_SCENARIO = 'admin_consent';
+
+// Refusals of Mail\Internal\Service\Mailbox\Avatar\AvatarImageProcessor: the prepared upload
+// behind the sent token can never be saved, so the choice is dropped instead of being sent again.
+const AVATAR_UPLOAD_REFUSAL_CODES: ReadonlySet<string> = new Set([
+	'MAIL_AVATAR_UPLOAD_INVALID',
+	'MAIL_AVATAR_FORMAT_INVALID',
+	'MAIL_AVATAR_IMAGE_INVALID',
+	'MAIL_AVATAR_LIMIT_EXCEEDED',
+]);
 
 /**
  * Shows the refusal as a notification when the hint has nothing to attach to.
@@ -421,6 +462,33 @@ function isConnectionRequestResult(result: SaveResult): result is ConnectByConne
 	return 'connectionRequestCompleted' in result;
 }
 
+function createConnectionSettingsSnapshot(state: FormState)
+{
+	return {
+		email: state.connection.email,
+		login: state.connection.login,
+		server: state.connection.server,
+		port: state.connection.port,
+		ssl: state.connection.ssl,
+		serviceId: state.service?.id ?? null,
+		oauthUid: state.connection.oauthUid,
+		userPrincipalName: state.connection.userPrincipalName,
+		password: state.connection.password,
+		smtpEnabled: state.smtp.enabled,
+		smtpServer: state.smtp.server,
+		smtpPort: state.smtp.port,
+		smtpSsl: state.smtp.ssl,
+		smtpLogin: state.smtp.login,
+		smtpPassword: state.smtp.password,
+		smtpUseLimit: state.smtp.useLimit,
+		smtpLimit: state.smtp.limit,
+		uploadOutgoing: state.smtp.uploadOutgoing,
+		ownerId: state.permissions.canChangeOwner ? state.access.ownerId : null,
+	};
+}
+
+type ConnectionSettingsSnapshot = ReturnType<typeof createConnectionSettingsSnapshot>;
+
 // @vue/component
 export const App = defineComponent({
 	name: 'mailbox-config-app',
@@ -429,6 +497,7 @@ export const App = defineComponent({
 		ConnectionSettings,
 		MicrosoftConnection,
 		ProviderBadge,
+		MailboxAvatar,
 		SmtpSettings,
 		CrmIntegration,
 		CalendarIntegration,
@@ -465,6 +534,17 @@ export const App = defineComponent({
 			syncFailureGuide: null as SyncFailureGuideInstance | null,
 			lastMailSyncPeriodValue: '7',
 			verifyEmailRequestSeq: 0,
+			formDisposed: false,
+			migrationStatusReady: false,
+			connectionSettingsReady: false,
+			migrationStatusRevision: -1,
+			mailboxLoadSeq: 0,
+			mailboxLoadRetryTimer: null as ReturnType<typeof setTimeout> | null,
+			mailboxLoadRetryAttempts: 0,
+			mailboxLoadFailed: false,
+			mailboxDataVersion: 0,
+			shareAccessUsers: [] as AccessUser[],
+			connectionSettingsBaseline: null as ConnectionSettingsSnapshot | null,
 			migrationStateHolder: markRaw({ current: null as MigrationState | null }),
 			migrationStateUnsubscribe: null as (() => void) | null,
 			// The provider window lives outside reactivity: while it sits on the provider's
@@ -482,6 +562,12 @@ export const App = defineComponent({
 		isEditMode(): boolean
 		{
 			return this.state.mode === 'edit';
+		},
+		connectionSettingsLocked(): boolean
+		{
+			return this.isEditMode && (
+				!this.migrationStatusReady || !this.connectionSettingsReady || this.state.migrationActive
+			);
 		},
 		isMicrosoftService(): boolean
 		{
@@ -596,6 +682,13 @@ export const App = defineComponent({
 				return Loc.getMessage('MAIL_CONFIG_FORM_PROVIDER_TITLE_IMAP') ?? '';
 			}
 
+			// Our own mail hosting is named in full and without the prefix an outside provider gets:
+			// the mailbox is served here, it is not a client connected to somebody else's mail.
+			if (name === 'mailhost')
+			{
+				return Loc.getMessage('MAIL_CONFIG_FORM_PROVIDER_TITLE_MAILHOST') ?? '';
+			}
+
 			const displayName = providerDisplayNameMap[name]
 				?? `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 
@@ -612,8 +705,18 @@ export const App = defineComponent({
 
 			return '';
 		},
+		avatarSaveBlocked(): boolean
+		{
+			return isMailboxAvatarSaveBlocked(this.state);
+		},
 		providerAvatar(): string
 		{
+			const avatarUrl = this.isEditMode ? getMailboxAvatarUrl(this.state) : '';
+			if (avatarUrl)
+			{
+				return avatarUrl;
+			}
+
 			if (this.isOAuthService && this.isOAuthConnected)
 			{
 				return this.state.connection.oauthUser?.picture || '';
@@ -633,6 +736,11 @@ export const App = defineComponent({
 		},
 		providerButtonText(): string
 		{
+			if (this.connectionSettingsLocked)
+			{
+				return '';
+			}
+
 			if (this.isEditMode || this.isOAuthConnected)
 			{
 				return Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_DISCONNECT') ?? '';
@@ -645,6 +753,48 @@ export const App = defineComponent({
 
 			return Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_CONNECT') ?? '';
 		},
+		providerReauthorizationButtonText(): string
+		{
+			if (!this.isEditMode || !this.isOAuthService)
+			{
+				return '';
+			}
+
+			return Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_CONNECT') ?? '';
+		},
+	},
+
+	watch: {
+		'state.mailboxId': function(): void {
+			if (this.formDisposed || !this.isEditMode)
+			{
+				return;
+			}
+
+			this.mailboxLoadSeq++;
+			this.clearMailboxLoadRetry();
+			this.unbindMigrationState();
+			this.handleOauthAborted();
+			this.closeSyncFailureGuide();
+			this.migrationStatusReady = false;
+			this.migrationStatusRevision = -1;
+			this.connectionSettingsReady = false;
+			this.connectionSettingsBaseline = null;
+			this.mailboxDataVersion = 0;
+			this.mailboxLoadFailed = false;
+			this.mailboxLoadRetryAttempts = 0;
+			this.state.isDataReady = false;
+			this.state.migrationActive = false;
+			this.state.generalSettingsBaseline = null;
+			this.state.hasSourceGenerationId = false;
+			this.state.sourceGenerationId = null;
+			this.state.connection.oauthUser = null;
+			this.state.connection.oauthUid = null;
+			this.state.connection.userPrincipalName = null;
+			this.oauthUserProfileRequest.current = null;
+			this.bindMigrationState();
+			void this.loadMailboxAvatar();
+		},
 	},
 
 	mounted(): void
@@ -654,21 +804,24 @@ export const App = defineComponent({
 		if (this.isEditMode && this.state.mailboxId)
 		{
 			this.bindMigrationState();
-			void this.loadMailboxData();
+			void this.loadMailboxAvatar();
 		}
 
+		window.addEventListener('online', this.recoverMailboxData);
+		window.addEventListener('focus', this.recoverMailboxData);
 		this.bindSidePanelListeners();
 	},
 
 	beforeUnmount(): void
 	{
-		EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
-		EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
+		this.disposeForm();
+		// Legacy event: compatMode delivers positional arguments instead of a BaseEvent.
+		EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted as (...args: unknown[]) => void);
+		EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied as (...args: unknown[]) => void);
 		this.stopOauthPopupWatcher();
 		this.oauthPopupHolder.current = null;
 		this.unbindSidePanelListeners();
 		this.closeSyncFailureGuide();
-		this.unbindMigrationState();
 	},
 
 	methods: {
@@ -689,17 +842,68 @@ export const App = defineComponent({
 			const migrationState = this.getMailboxMigrationState(mailboxId);
 			this.migrationStateHolder.current = migrationState;
 			this.migrationStateUnsubscribe = migrationState.subscribe(({ active }): void => {
-				this.state.migrationActive = active;
+				this.applyMigrationStatus(migrationState, active);
 			});
-			void migrationState.initialize().then((): void => {
-				if (
-					this.migrationStateHolder.current === migrationState
-					&& migrationState.isInitialized()
-				)
+			void this.initializeMigrationState();
+		},
+
+		async initializeMigrationState(): Promise<void>
+		{
+			const migrationState = this.migrationStateHolder.current;
+			if (!migrationState || this.formDisposed)
+			{
+				return;
+			}
+
+			this.state.loading = true;
+			await migrationState.initialize();
+			if (this.formDisposed || this.migrationStateHolder.current !== migrationState)
+			{
+				return;
+			}
+
+			if (!migrationState.isInitialized())
+			{
+				this.state.loading = false;
+				this.mailboxLoadFailed = true;
+
+				return;
+			}
+
+			this.applyMigrationStatus(migrationState, migrationState.isActive());
+		},
+
+		applyMigrationStatus(migrationState: MigrationState, active: boolean): void
+		{
+			if (
+				this.formDisposed
+				|| this.migrationStateHolder.current !== migrationState
+				|| !migrationState.isInitialized()
+				|| this.migrationStatusRevision === migrationState.getRevision()
+			)
+			{
+				return;
+			}
+
+			this.clearMailboxLoadRetry();
+			this.mailboxLoadRetryAttempts = 0;
+			this.mailboxLoadFailed = false;
+			this.migrationStatusRevision = migrationState.getRevision();
+			this.migrationStatusReady = true;
+			this.state.migrationActive = active;
+			this.connectionSettingsReady = false;
+			this.mailboxLoadSeq++;
+			this.closeSyncFailureGuide();
+			if (active)
+			{
+				this.handleOauthAborted();
+				if (this.state.isDataReady)
 				{
-					this.state.migrationActive = migrationState.isActive();
+					return;
 				}
-			});
+			}
+
+			void this.loadMailboxData();
 		},
 
 		unbindMigrationState(): void
@@ -707,6 +911,19 @@ export const App = defineComponent({
 			this.migrationStateUnsubscribe?.();
 			this.migrationStateUnsubscribe = null;
 			this.migrationStateHolder.current = null;
+		},
+
+		disposeForm(): void
+		{
+			this.formDisposed = true;
+			resetMailboxAvatarIntent(this.state);
+			this.state.avatar.saving = false;
+			invalidateMailboxAvatarRead(this.state);
+			this.clearMailboxLoadRetry();
+			window.removeEventListener('online', this.recoverMailboxData);
+			window.removeEventListener('focus', this.recoverMailboxData);
+			this.mailboxLoadSeq++;
+			this.unbindMigrationState();
 		},
 
 		formatLastCheck(timestamp: number): string
@@ -745,34 +962,206 @@ export const App = defineComponent({
 			}) ?? '';
 		},
 
-		async loadMailboxData(): Promise<void>
+		clearMailboxLoadRetry(): void
 		{
-			const mailboxId = this.state.mailboxId;
-			if (!mailboxId)
+			if (this.mailboxLoadRetryTimer !== null)
+			{
+				clearTimeout(this.mailboxLoadRetryTimer);
+				this.mailboxLoadRetryTimer = null;
+			}
+		},
+
+		recoverMailboxAvatar(): void
+		{
+			const avatar = this.state.avatar;
+			if (avatar.saving || avatar.loading || !(avatar.needsRefresh || avatar.error))
 			{
 				return;
 			}
 
+			void this.loadMailboxAvatar();
+		},
+
+		recoverMailboxData(): void
+		{
+			if (this.formDisposed)
+			{
+				return;
+			}
+
+			// The avatar is read apart from the mailbox and recovers apart from it too.
+			this.recoverMailboxAvatar();
+
+			if (!this.mailboxLoadFailed || this.state.loading || this.state.isDataReady)
+			{
+				return;
+			}
+
+			if (!this.migrationStateHolder.current?.isInitialized())
+			{
+				void this.initializeMigrationState();
+
+				return;
+			}
+
+			this.mailboxLoadRetryAttempts = 0;
+			void this.loadMailboxData();
+		},
+
+		async loadMailboxAvatar(): Promise<void>
+		{
+			const savingCurrentMailbox = this.state.avatar.saving
+				&& this.state.avatar.mailboxId === this.state.mailboxId;
+			if (this.formDisposed || !this.isEditMode || !this.state.permissions.isAvatarAvailable
+				|| (savingCurrentMailbox && !this.state.avatar.needsRefresh))
+			{
+				return;
+			}
+
+			const mailboxId = this.state.mailboxId;
+			const requestId = beginMailboxAvatarRead(this.state);
+			if (!mailboxId)
+			{
+				invalidateMailboxAvatarRead(this.state);
+
+				return;
+			}
+
+			try
+			{
+				const response = await Api.getMailboxAvatar(mailboxId);
+				if (this.formDisposed)
+				{
+					return;
+				}
+
+				if (response.status !== 'success' || response.errors?.length)
+				{
+					throw response;
+				}
+
+				acceptMailboxAvatarRead(this.state, requestId, response.data);
+			}
+			catch (error)
+			{
+				if (!this.formDisposed)
+				{
+					const message = extractAjaxErrors(error)[0]?.message
+						|| loc('MAIL_CONFIG_FORM_AVATAR_READ_ERROR');
+					rejectMailboxAvatarRead(this.state, requestId, message);
+				}
+			}
+		},
+
+		onAvatarSelectionChange(selection: MailboxAvatarSelection): void
+		{
+			if (!this.formDisposed)
+			{
+				setMailboxAvatarSelection(this.state, selection);
+			}
+		},
+
+		onAvatarDelete(): void
+		{
+			if (!this.formDisposed)
+			{
+				deleteMailboxAvatar(this.state);
+			}
+		},
+
+		onAvatarReset(): void
+		{
+			if (!this.formDisposed && !this.state.loading)
+			{
+				resetMailboxAvatarIntent(this.state);
+			}
+		},
+
+		onAvatarImageError(url: string): void
+		{
+			if (!this.formDisposed && url === getMailboxAvatarUrl(this.state))
+			{
+				this.state.avatar.imageErrorUrl = url;
+			}
+		},
+
+		async loadMailboxData(): Promise<void>
+		{
+			const mailboxId = this.state.mailboxId;
+			const migrationState = this.migrationStateHolder.current;
+			if (!mailboxId || !migrationState?.isInitialized() || this.formDisposed)
+			{
+				return;
+			}
+
+			this.clearMailboxLoadRetry();
+			this.mailboxLoadFailed = false;
+			const requestSeq = ++this.mailboxLoadSeq;
+			const revision = migrationState.getRevision();
+			const isCurrent = (): boolean => !this.formDisposed
+				&& this.state.mailboxId === mailboxId
+				&& this.mailboxLoadSeq === requestSeq
+				&& this.migrationStateHolder.current === migrationState
+				&& migrationState.getRevision() === revision
+			;
 			this.state.loading = true;
+			this.state.isDataReady = false;
+			this.connectionSettingsReady = false;
 
 			try
 			{
 				const response = await Api.getMailbox(mailboxId);
+				if (!isCurrent())
+				{
+					return;
+				}
+
+				if (response.status !== 'success')
+				{
+					throw response;
+				}
+
+				this.mailboxLoadRetryAttempts = 0;
+				this.state.errors = createEmptyErrors();
+				this.state.migrationActive = this.state.migrationActive || response.data.migrationActive === true;
 				this.mapMailboxData(response.data);
+				this.mailboxDataVersion++;
+				setSourceGeneration(this.state, response.data);
+				setGeneralSettingsBaseline(this.state);
+				this.connectionSettingsBaseline = createConnectionSettingsSnapshot(this.state);
+				this.connectionSettingsReady = !this.state.migrationActive;
+				if (this.connectionSettingsReady)
+				{
+					this.oauthUserProfileRequest.current = this.loadOauthUserProfile();
+				}
 			}
 			catch (error)
 			{
-				console.error('Failed to load mailbox data:', error);
+				if (isCurrent())
+				{
+					this.mailboxLoadFailed = true;
+					this.migrationStatusRevision = -1;
+					this.onSaveError(error);
+					if (this.mailboxLoadRetryAttempts < 3)
+					{
+						this.mailboxLoadRetryAttempts++;
+						this.mailboxLoadRetryTimer = setTimeout((): void => {
+							this.mailboxLoadRetryTimer = null;
+							if (isCurrent() && this.mailboxLoadFailed && !this.state.isDataReady)
+							{
+								void this.loadMailboxData();
+							}
+						}, 5000 * this.mailboxLoadRetryAttempts);
+					}
+				}
 			}
 			finally
 			{
-				this.state.loading = false;
+				if (isCurrent())
+				{
+					this.state.loading = false;
+				}
 			}
-
-			// Deliberately not awaited: the screen is already usable, and this one goes to the
-			// OAuth provider, where a revoked token has no bounded answer time. Saving gives it a
-			// short bounded window - see submitSave().
-			this.oauthUserProfileRequest.current = this.loadOauthUserProfile();
 		},
 
 		async loadOauthUserProfile(): Promise<void>
@@ -785,11 +1174,17 @@ export const App = defineComponent({
 				return;
 			}
 
+			const requestSeq = this.mailboxLoadSeq;
 			const principalNameBeforeRequest = this.state.connection.userPrincipalName;
 
 			try
 			{
 				const response = await Api.getOauthUser(mailboxId);
+				if (this.formDisposed || mailboxId !== this.state.mailboxId
+					|| requestSeq !== this.mailboxLoadSeq || this.connectionSettingsLocked)
+				{
+					return;
+				}
 				this.applyOauthUserProfile(response.data, {
 					oauthUid,
 					principalName: principalNameBeforeRequest,
@@ -830,15 +1225,17 @@ export const App = defineComponent({
 			if (this.state.connection.userPrincipalName === requested.principalName)
 			{
 				this.state.connection.userPrincipalName = profile.userPrincipalName ?? '';
+				if (this.connectionSettingsBaseline?.userPrincipalName === requested.principalName)
+				{
+					this.connectionSettingsBaseline.userPrincipalName = this.state.connection.userPrincipalName;
+				}
 			}
 		},
 
 		mapMailboxData(data: MailboxData): void
 		{
-			const migrationState = this.migrationStateHolder?.current;
-			this.state.migrationActive = migrationState?.isInitialized()
-				? migrationState.isActive()
-				: data.migrationActive === true;
+			this.state.connection.password = '';
+			this.state.smtp.password = '';
 			this.state.connection.email = data.imap.email || '';
 			this.state.connection.login = data.imap.login || '';
 			this.state.connection.server = data.imap.server || '';
@@ -865,9 +1262,12 @@ export const App = defineComponent({
 
 			this.state.service = {
 				...(this.state.service ?? {}),
+				id: data.imap.serviceId,
+				oauth: data.imap.isOAuth,
 				name: data.service.name,
 				type: data.service.type,
 				link: data.service.link,
+				externalCredentials: Boolean(data.service.externalCredentials),
 				smtp: {
 					server: data.service.smtpServer ?? this.state.service?.smtp?.server ?? '',
 					port: this.state.service?.smtp?.port ?? '',
@@ -897,6 +1297,7 @@ export const App = defineComponent({
 			{
 				this.state.access.sharedWith = data.shareAccess;
 			}
+			this.shareAccessUsers = Array.isArray(data.shareAccessUsers) ? data.shareAccessUsers : [];
 
 			this.state.access.ownerId = data.userId || null;
 			this.state.lastMailCheck = data.lastMailCheck || null;
@@ -918,6 +1319,11 @@ export const App = defineComponent({
 
 		triggerSyncFailureGuide(): void
 		{
+			if (this.formDisposed || this.connectionSettingsLocked)
+			{
+				return;
+			}
+
 			const lastCheck = this.state.lastMailCheck;
 			if (!lastCheck || lastCheck.date === null || lastCheck.isSuccess !== false)
 			{
@@ -1026,11 +1432,11 @@ export const App = defineComponent({
 			return { enabled: 'Y', config };
 		},
 
-		buildBasePayload(): BaseMailboxPayload
+		buildConnectionPayload(): Omit<BaseMailboxPayload, keyof GeneralSettingsPatch>
 		{
 			const state = this.state;
 
-			const payload: BaseMailboxPayload = {
+			const payload: Omit<BaseMailboxPayload, keyof GeneralSettingsPatch> = {
 				email: state.connection.email,
 				login: state.connection.login || state.connection.email,
 				server: state.connection.server,
@@ -1045,14 +1451,7 @@ export const App = defineComponent({
 				loginSmtp: state.smtp.login || state.connection.login || state.connection.email,
 				useLimitSmtp: state.smtp.useLimit,
 				limitSmtp: state.smtp.limit,
-				mailboxName: state.mailbox.name || state.connection.email,
-				senderName: state.mailbox.senderName,
-				useSenderName: state.mailbox.useSenderName,
-				iCalAccess: state.calendarSettings.enabled && state.calendarSettings.autoAddEvents,
-				crmOptions: this.buildCrmOptions(),
 				uploadOutgoing: state.smtp.uploadOutgoing,
-				link: state.mailbox.link,
-				shareAccess: state.access.sharedWith,
 			};
 
 			// An unresolved profile is no reason to state that the mailbox has no user principal
@@ -1064,6 +1463,22 @@ export const App = defineComponent({
 			}
 
 			return payload;
+		},
+
+		buildBasePayload(): BaseMailboxPayload
+		{
+			const state = this.state;
+
+			return {
+				...this.buildConnectionPayload(),
+				mailboxName: state.mailbox.name || state.connection.email,
+				senderName: state.mailbox.senderName,
+				useSenderName: state.mailbox.useSenderName,
+				iCalAccess: state.calendarSettings.enabled && state.calendarSettings.autoAddEvents,
+				crmOptions: this.buildCrmOptions(),
+				link: state.mailbox.link,
+				shareAccess: state.access.sharedWith,
+			};
 		},
 
 		buildCreatePayload(): CreateMailboxPayload
@@ -1083,14 +1498,28 @@ export const App = defineComponent({
 			};
 		},
 
-		buildUpdatePayload(): UpdateMailboxPayload
+		buildUpdatePayload(avatar?: AvatarChange): UpdateMailboxPayload
 		{
 			const state = this.state;
-			const payload: UpdateMailboxPayload = this.buildBasePayload();
+			const payload: UpdateMailboxPayload = {
+				...this.buildConnectionPayload(),
+				...buildGeneralSettingsPatch(state),
+				...(avatar ? { avatar } : {}),
+			};
 
-			if (state.migrationActive)
+			if (this.connectionSettingsLocked || this.formDisposed)
 			{
-				const connectionFields = [
+				throw new Error(loc('MAIL_MIGRATION_CREDENTIALS_LOCKED'));
+			}
+
+			if (state.service?.externalCredentials)
+			{
+				// The credentials of such a mailbox are issued outside the portal, the form draws none
+				// of them, and so it sends none: a value it had to invent on its own - the SMTP login
+				// it fills from the address - would read as an attempt to change what the hosting
+				// gave. The switch of the outgoing mail stays, that one the user does own, and the
+				// server puts the issued credentials back behind it.
+				([
 					'email',
 					'userPrincipalName',
 					'login',
@@ -1099,39 +1528,39 @@ export const App = defineComponent({
 					'ssl',
 					'serviceId',
 					'storageOauthUid',
-					'useSmtp',
 					'serverSmtp',
 					'portSmtp',
 					'sslSmtp',
 					'loginSmtp',
-				] as const;
-				connectionFields.forEach((field): void => {
+				] as const).forEach((field): void => {
 					delete payload[field];
 				});
 			}
-			else if (state.connection.password && state.connection.password !== this.passwordPlaceholder)
+			else
 			{
-				payload.password = state.connection.password;
+				if (state.connection.password && state.connection.password !== this.passwordPlaceholder)
+				{
+					payload.password = state.connection.password;
+				}
+
+				if (state.smtp.password && state.smtp.password !== this.passwordPlaceholder)
+				{
+					payload.passwordSMTP = state.smtp.password;
+				}
 			}
 
-			if (
-				!state.migrationActive
-				&& state.smtp.password
-				&& state.smtp.password !== this.passwordPlaceholder
-			)
-			{
-				payload.passwordSMTP = state.smtp.password;
-			}
-
-			if (state.access.ownerId)
+			if (state.permissions.canChangeOwner && state.access.ownerId)
 			{
 				payload.userIdToConnect = state.access.ownerId;
 			}
 
-			return payload;
+			return { ...payload, ...getSourceGenerationPrecondition(state) };
 		},
 
-		async submitSave(): Promise<SaveResult>
+		async submitSave(
+			onSubmit?: () => boolean,
+			avatarSnapshot: MailboxAvatarSaveSnapshot | null = null,
+		): Promise<SaveResult | null>
 		{
 			// Drawing the screen no longer waits for the profile of the OAuth account, but saving
 			// gives it a bounded window: the user principal name lives at the provider only, and a
@@ -1160,6 +1589,11 @@ export const App = defineComponent({
 				}
 			}
 
+			if (this.formDisposed)
+			{
+				return null;
+			}
+
 			if (this.state.mode === 'edit')
 			{
 				const mailboxId = this.state.mailboxId;
@@ -1168,10 +1602,13 @@ export const App = defineComponent({
 					throw new Error('Mailbox id is required in edit mode.');
 				}
 
-				const payload = this.buildUpdatePayload();
-				const response = await Api.updateMailbox(mailboxId, payload);
+				if (onSubmit && !onSubmit())
+				{
+					return null;
+				}
+				const payload = this.buildUpdatePayload(avatarSnapshot?.change);
 
-				return response.data;
+				return this.submitMailboxUpdate(Api.updateMailbox(mailboxId, payload), avatarSnapshot);
 			}
 
 			const payload = this.buildCreatePayload();
@@ -1191,34 +1628,261 @@ export const App = defineComponent({
 			return response.data;
 		},
 
+		hasConnectionSettingsChanges(): boolean
+		{
+			if (this.connectionSettingsLocked || !this.connectionSettingsBaseline)
+			{
+				return false;
+			}
+
+			const baseline = this.connectionSettingsBaseline;
+			const current = createConnectionSettingsSnapshot(this.state);
+
+			return (Object.keys(current) as Array<keyof ConnectionSettingsSnapshot>)
+				.some((key) => current[key] !== baseline[key])
+			;
+		},
+
+		hasPendingEditChanges(): boolean
+		{
+			return Object.keys(buildGeneralSettingsPatch(this.state)).length > 0
+				|| this.hasConnectionSettingsChanges()
+				|| this.state.avatar.intent !== null
+			;
+		},
+
+		async submitMailboxUpdate(
+			request: Promise<AjaxResponse<SaveResult>>,
+			snapshot: MailboxAvatarSaveSnapshot | null,
+		): Promise<SaveResult>
+		{
+			if (snapshot?.change.operation === 'replace' && this.isCurrentSaveMailbox(snapshot.mailboxId)
+				&& isMailboxAvatarSaveCurrent(this.state, snapshot))
+			{
+				this.state.avatar.preservedUploadId = snapshot.selectionId;
+			}
+
+			try
+			{
+				const response = await request;
+				if (response.status !== 'success' || response.errors?.length)
+				{
+					throw response;
+				}
+
+				if (snapshot && this.isCurrentSaveMailbox(snapshot.mailboxId)
+					&& isMailboxAvatarSaveCurrent(this.state, snapshot))
+				{
+					this.state.avatar.preservedUploadId = null;
+				}
+
+				return response.data;
+			}
+			catch (error)
+			{
+				throw await this.resolveAvatarSaveError(error, snapshot);
+			}
+		},
+
+		async resolveAvatarSaveError(error: unknown, snapshot: MailboxAvatarSaveSnapshot | null): Promise<unknown>
+		{
+			if (!snapshot || this.formDisposed || !isMailboxAvatarSaveCurrent(this.state, snapshot))
+			{
+				return error;
+			}
+
+			const errors = extractAjaxErrors(error);
+			const unknownResult = errors.length === 0 || errors.some((item) => item.code === 'NETWORK_ERROR');
+			if (!unknownResult)
+			{
+				this.state.avatar.preservedUploadId = null;
+			}
+
+			const refusal = errors.find((item) => AVATAR_UPLOAD_REFUSAL_CODES.has(String(item.code)));
+			if (refusal)
+			{
+				const reason = refusal.message || loc('MAIL_CONFIG_FORM_AVATAR_UPLOAD_RETRY');
+				rejectMailboxAvatarUpload(this.state, snapshot, reason);
+
+				return error;
+			}
+
+			const conflict = errors.some((item) => item.code === 'MAIL_AVATAR_VERSION_CONFLICT');
+			if (conflict || unknownResult)
+			{
+				requireMailboxAvatarRefresh(this.state);
+				await this.loadMailboxAvatar();
+			}
+
+			if (unknownResult)
+			{
+				return {
+					errors: [{ message: loc('MAIL_CONFIG_FORM_AVATAR_SAVE_RESULT_UNKNOWN') }],
+				};
+			}
+
+			return error;
+		},
+
+		/**
+		 * The mailbox update is already committed when this runs, so a reread that cannot
+		 * confirm the stored image only leaves its own error in the avatar block: the outcome
+		 * of the save is decided by the server answer alone.
+		 */
+		async acceptAvatarSaveResult(
+			snapshot: MailboxAvatarSaveSnapshot | null,
+			avatar: MailboxAvatarData | undefined,
+		): Promise<void>
+		{
+			if (!snapshot || this.formDisposed || !isMailboxAvatarSaveCurrent(this.state, snapshot))
+			{
+				return;
+			}
+
+			if (acceptMailboxAvatarSave(this.state, snapshot, avatar))
+			{
+				return;
+			}
+
+			requireMailboxAvatarRefresh(this.state);
+			await this.loadMailboxAvatar();
+		},
+
+		async submitEditSave(): Promise<SaveResult | null>
+		{
+			const mailboxId = this.state.mailboxId;
+			if (!mailboxId || !this.migrationStatusReady || !this.state.isDataReady || this.formDisposed)
+			{
+				return null;
+			}
+
+			let sentPatch = buildGeneralSettingsPatch(this.state);
+			const hasConnectionChanges = this.hasConnectionSettingsChanges();
+			const sentAvatar = createMailboxAvatarSaveSnapshot(this.state);
+			if (!this.hasPendingEditChanges())
+			{
+				return null;
+			}
+
+			const requestSeq = this.mailboxLoadSeq;
+			const dataVersion = this.mailboxDataVersion;
+			let sentConnectionSettings: ConnectionSettingsSnapshot | null = null;
+			let result: SaveResult | null = null;
+			if (hasConnectionChanges)
+			{
+				result = await this.submitSave((): boolean => {
+					if (this.formDisposed || this.connectionSettingsLocked || requestSeq !== this.mailboxLoadSeq)
+					{
+						return false;
+					}
+					sentPatch = buildGeneralSettingsPatch(this.state);
+					sentConnectionSettings = createConnectionSettingsSnapshot(this.state);
+
+					return true;
+				}, sentAvatar);
+			}
+			else
+			{
+				result = await this.submitMailboxUpdate(Api.updateGeneralSettings({
+					mailboxId,
+					patch: sentPatch,
+					...(sentAvatar ? { avatar: sentAvatar.change } : {}),
+				}), sentAvatar);
+			}
+
+			if (!result || this.formDisposed || mailboxId !== this.state.mailboxId)
+			{
+				return null;
+			}
+
+			await this.acceptAvatarSaveResult(sentAvatar, result.avatar);
+			if (!this.isCurrentSaveMailbox(mailboxId))
+			{
+				return null;
+			}
+
+			if (dataVersion !== this.mailboxDataVersion)
+			{
+				await this.loadMailboxData();
+
+				return null;
+			}
+
+			acceptGeneralSettingsPatch(this.state, sentPatch);
+			if (sentConnectionSettings)
+			{
+				this.connectionSettingsBaseline = sentConnectionSettings;
+			}
+
+			return result;
+		},
+
+		isCurrentSaveMailbox(mailboxId: number | null): boolean
+		{
+			return !this.formDisposed && this.state.mailboxId === mailboxId;
+		},
+
 		async onSave(): Promise<void>
 		{
-			const errors = validateForm(this.state);
+			if (
+				this.formDisposed || this.oauthPending || this.state.loading || !this.state.isDataReady
+				|| isMailboxAvatarSaveBlocked(this.state)
+				|| (this.isEditMode && !this.migrationStatusReady)
+			)
+			{
+				return;
+			}
+			const independentOnly = this.isEditMode && !this.hasConnectionSettingsChanges();
+			const generalPatch: GeneralSettingsPatch = this.isEditMode ? buildGeneralSettingsPatch(this.state) : {};
+			if (independentOnly && !this.hasPendingEditChanges())
+			{
+				return;
+			}
+			const errors = independentOnly
+				? (generalPatch.link && !validateLink(generalPatch.link)
+					? { link: loc('MAIL_CONFIG_FORM_ERROR_INVALID_LINK') }
+					: {})
+				: validateForm(this.state)
+			;
 			if (Object.keys(errors).length > 0)
 			{
-				this.state.errors = {
-					...createEmptyErrors(),
-					...errors,
-				};
+				this.state.errors = { ...createEmptyErrors(), ...errors };
 
 				return;
 			}
 
+			const saveMailboxId = this.state.mailboxId;
 			this.state.loading = true;
+			this.state.avatar.saving = true;
 			this.state.errors = createEmptyErrors();
-
 			try
 			{
-				const result = await this.submitSave();
+				const result = this.isEditMode ? await this.submitEditSave() : await this.submitSave();
+				if (!result || !this.isCurrentSaveMailbox(saveMailboxId))
+				{
+					return;
+				}
+
+				if (this.isEditMode && this.hasPendingEditChanges())
+				{
+					return;
+				}
 				this.onSaveSuccess(result);
 			}
 			catch (error)
 			{
-				this.onSaveError(error);
+				if (this.isCurrentSaveMailbox(saveMailboxId))
+				{
+					this.onSaveError(error);
+				}
 			}
 			finally
 			{
-				this.state.loading = false;
+				if (this.isCurrentSaveMailbox(saveMailboxId))
+				{
+					this.state.loading = false;
+					this.state.avatar.saving = false;
+				}
 			}
 		},
 
@@ -1349,7 +2013,7 @@ export const App = defineComponent({
 			const serverErrors = extractAjaxErrors(error);
 			if (serverErrors.length > 0)
 			{
-				this.state.errors.generalItems = serverErrors.map((item) => createServerErrorItem(item));
+				this.state.errors.generalItems = [createServerErrorItem(serverErrors[0])];
 			}
 			else
 			{
@@ -1391,6 +2055,11 @@ export const App = defineComponent({
 
 		async onDelete(): Promise<void>
 		{
+			if (this.connectionSettingsLocked || this.formDisposed)
+			{
+				return;
+			}
+
 			const mailboxId = this.state.mailboxId;
 			if (!mailboxId)
 			{
@@ -1403,6 +2072,10 @@ export const App = defineComponent({
 			try
 			{
 				await Api.deleteMailbox(mailboxId);
+				if (this.formDisposed)
+				{
+					return;
+				}
 				this.postSliderMessage('mail-mailbox-config-delete', {
 					id: mailboxId,
 				});
@@ -1410,11 +2083,17 @@ export const App = defineComponent({
 			}
 			catch (error)
 			{
-				this.onSaveError(error);
+				if (!this.formDisposed)
+				{
+					this.onSaveError(error);
+				}
 			}
 			finally
 			{
-				this.state.loading = false;
+				if (!this.formDisposed)
+				{
+					this.state.loading = false;
+				}
 			}
 		},
 
@@ -1461,6 +2140,7 @@ export const App = defineComponent({
 
 		closeForm(id: number): void
 		{
+			this.disposeForm();
 			const slider = getTopSidePanel()?.getSliderByWindow?.(window)
 				|| getCurrentSidePanel()?.getTopSlider?.();
 
@@ -1509,6 +2189,7 @@ export const App = defineComponent({
 			{
 				this.boundSlider = slider;
 				const onSliderClose = (): void => {
+					this.disposeForm();
 					this.postSliderMessage('mail-mailbox-config-close', {
 						changed: this.state.changedDirs,
 					});
@@ -1541,7 +2222,7 @@ export const App = defineComponent({
 
 		onProviderButtonClick(): void
 		{
-			if (this.state.migrationActive)
+			if (this.state.loading || this.connectionSettingsLocked || this.formDisposed)
 			{
 				return;
 			}
@@ -1566,6 +2247,16 @@ export const App = defineComponent({
 			}
 		},
 
+		onProviderReauthorizationButtonClick(): void
+		{
+			if (this.state.loading || this.connectionSettingsLocked || this.formDisposed || !this.isEditMode || !this.isOAuthService)
+			{
+				return;
+			}
+
+			void this.startOAuth();
+		},
+
 		confirmDelete(): void
 		{
 			MessageBox.confirm(
@@ -1584,41 +2275,65 @@ export const App = defineComponent({
 
 		async startOAuth(): Promise<void>
 		{
+			if (this.oauthPending || this.state.loading || this.formDisposed || this.connectionSettingsLocked)
+			{
+				return;
+			}
+			const requestSeq = this.mailboxLoadSeq;
 			const serviceName = this.state.service?.name;
 			if (!serviceName)
 			{
 				return;
 			}
 
+			this.oauthPending = true;
+
 			try
 			{
 				const response = await Api.getOauthUrl(serviceName);
+				if (this.formDisposed || this.connectionSettingsLocked || requestSeq !== this.mailboxLoadSeq)
+				{
+					this.handleOauthAborted();
+
+					return;
+				}
 				const url = response.data;
 
-				if (url)
+				if (!url)
 				{
-					const popup = getRootBX().util.popup(url, 800, 600);
-					this.oauthPending = true;
-					this.oauthPopupHolder.current = popup;
-					EventEmitter.subscribe(
-						'OnMailOAuthBCompleted',
-						this.onOAuthCompleted as (...args: unknown[]) => void,
-						{ compatMode: true },
-					);
-					EventEmitter.subscribe(
-						'OnMailOAuthBError',
-						this.onOAuthDenied as (...args: unknown[]) => void,
-						{ compatMode: true },
-					);
+					this.handleOauthAborted();
 
-					// The provider window can be dismissed without firing OnMailOAuthBCompleted
-					// (user closes the popup, cross-origin redirect drops the listener, etc.).
-					// Poll popup.closed so the UI unblocks instead of hanging the OAuth button.
-					this.startOauthPopupWatcher();
+					return;
 				}
+
+				const popup = getRootBX().util.popup(url, 800, 600);
+				if (!popup)
+				{
+					this.handleOauthAborted();
+
+					return;
+				}
+
+				this.oauthPopupHolder.current = popup;
+				EventEmitter.subscribe(
+					'OnMailOAuthBCompleted',
+					this.onOAuthCompleted as (...args: unknown[]) => void,
+					{ compatMode: true },
+				);
+				EventEmitter.subscribe(
+					'OnMailOAuthBError',
+					this.onOAuthDenied as (...args: unknown[]) => void,
+					{ compatMode: true },
+				);
+
+				// The provider window can be dismissed without firing OnMailOAuthBCompleted
+				// (user closes the popup, cross-origin redirect drops the listener, etc.).
+				// Poll popup.closed so the UI unblocks instead of hanging the OAuth button.
+				this.startOauthPopupWatcher();
 			}
 			catch (error)
 			{
+				this.handleOauthAborted();
 				console.error('OAuth URL error:', error);
 			}
 		},
@@ -1652,8 +2367,9 @@ export const App = defineComponent({
 				return;
 			}
 
-			EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
-			EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
+			// Legacy event: compatMode delivers positional arguments instead of a BaseEvent.
+			EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted as (...args: unknown[]) => void);
+			EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied as (...args: unknown[]) => void);
 			this.oauthPending = false;
 			this.oauthPopupHolder.current = null;
 			this.stopOauthPopupWatcher();
@@ -1674,11 +2390,17 @@ export const App = defineComponent({
 			errorCode: string | null | undefined,
 		): void
 		{
-			EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
-			EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
+			// Legacy event: compatMode delivers positional arguments instead of a BaseEvent.
+			EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted as (...args: unknown[]) => void);
+			EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied as (...args: unknown[]) => void);
 			this.stopOauthPopupWatcher();
 			this.oauthPopupHolder.current = null;
 			this.oauthPending = false;
+
+			if (this.formDisposed || this.connectionSettingsLocked)
+			{
+				return;
+			}
 
 			if (scenario === OAUTH_DENIED_ADMIN_CONSENT_SCENARIO)
 			{
@@ -1697,7 +2419,9 @@ export const App = defineComponent({
 			});
 
 			const guide = showOauthDeniedGuide({
-				targetSelector: SYNC_FAILURE_GUIDE_TARGETS.oauth,
+				targetSelector: this.isEditMode
+					? PROVIDER_REAUTHORIZATION_GUIDE_TARGET
+					: PROVIDER_ACTION_GUIDE_TARGET,
 				title: title ?? '',
 				text,
 			});
@@ -1725,23 +2449,35 @@ export const App = defineComponent({
 			user: OauthCompletionUser | null | undefined,
 		): void
 		{
-			EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
-			EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
+			// Legacy event: compatMode delivers positional arguments instead of a BaseEvent.
+			EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted as (...args: unknown[]) => void);
+			EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied as (...args: unknown[]) => void);
 			this.stopOauthPopupWatcher();
 			this.oauthPopupHolder.current = null;
 			this.oauthPending = false;
 
-			if (!uid || !user)
+			if (this.formDisposed || this.connectionSettingsLocked || !uid)
 			{
 				return;
 			}
 
 			this.state.connection.oauthUid = uid;
 			this.state.connection.isOAuth = true;
+
+			if (!user)
+			{
+				return;
+			}
+
 			this.state.connection.oauthUser = mapOauthUser(user);
 			this.state.connection.userPrincipalName = user.userPrincipalName || '';
 			this.state.connection.oauthEmailNeedsConfirmation = false;
 			this.state.connection.oauthEmailCheckStatus = 'idle';
+
+			if (this.isEditMode)
+			{
+				return;
+			}
 
 			if (user.email)
 			{
@@ -1852,12 +2588,14 @@ export const App = defineComponent({
 
 	// language=Vue
 	template: `
-		<template v-if="state.isDataReady">
-			<div class="mail-config-form" data-test-id="mail_config-form__root">
+		<template v-if="state.isDataReady || mailboxDataVersion > 0">
+			<div v-show="state.isDataReady" class="mail-config-form" data-test-id="mail_config-form__root">
 				<div
 					v-if="state.migrationActive"
 					class="mail-config-form__alert-container --warning"
 					data-test-id="mail_config-form__migration-warning"
+					role="status"
+					aria-atomic="true"
 				>
 					<BIcon
 						class="mail-config-form__alert-icon"
@@ -1865,7 +2603,7 @@ export const App = defineComponent({
 						:size="24"
 					/>
 					<span class="mail-config-form__alert-message">
-						{{ loc('MAIL_CONFIG_FORM_MIGRATION_CREDENTIALS_LOCKED') }}
+						{{ loc('MAIL_MIGRATION_CREDENTIALS_LOCKED') }}
 					</span>
 				</div>
 				<div
@@ -1894,13 +2632,29 @@ export const App = defineComponent({
 							:email="providerEmail"
 							:avatar="providerAvatar"
 							:button-text="providerButtonText"
-							:button-disabled="oauthPending || state.migrationActive"
+							:button-disabled="oauthPending || state.loading || connectionSettingsLocked"
+							:secondary-button-text="providerReauthorizationButtonText"
+							:secondary-button-disabled="oauthPending || state.loading || connectionSettingsLocked"
 							@button-click="onProviderButtonClick"
+							@secondary-button-click="onProviderReauthorizationButtonClick"
+							@avatar-error="onAvatarImageError"
+						/>
+						<MailboxAvatar
+							v-if="isEditMode && state.permissions.isAvatarAvailable"
+							:key="state.mailboxId"
+							:avatar="state.avatar"
+							:disabled="state.loading || formDisposed"
+							@selection-change="onAvatarSelectionChange"
+							@delete="onAvatarDelete"
+							@reset="onAvatarReset"
+							@retry="loadMailboxAvatar"
+							@image-error="onAvatarImageError"
 						/>
 						<ConnectionRequestOwner v-if="isConnectionRequestMode" />
 						<ConnectionSettings
 							v-if="isEditMode || !isOAuthService || isOAuthConnected"
 							:password-placeholder="passwordPlaceholder"
+							:connection-settings-locked="connectionSettingsLocked"
 							@oauth-email-blur="onOauthEmailBlur"
 						>
 							<template #after-fields>
@@ -1912,14 +2666,15 @@ export const App = defineComponent({
 								/>
 							</template>
 						</ConnectionSettings>
-						<MicrosoftConnection v-if="isMicrosoftService" />
+						<MicrosoftConnection v-if="isMicrosoftService && !connectionSettingsLocked" />
 					</div>
 				</div>
 
-				<MailboxOwnership v-if="isEditMode && state.permissions.canChangeOwner" />
+				<MailboxOwnership v-if="isEditMode && state.permissions.canChangeOwner && !connectionSettingsLocked" />
 
 				<SmtpSettings
 					v-if="state.permissions.isSmtpAvailable"
+					:connection-settings-locked="connectionSettingsLocked"
 					:password-placeholder="passwordPlaceholder"
 				/>
 
@@ -1940,11 +2695,12 @@ export const App = defineComponent({
 					:show-switcher="false"
 				/>
 
-				<AccessSharing />
+				<AccessSharing :users="shareAccessUsers" />
 
 				<div
 					v-if="generalErrorItems.length > 0"
 					ref="errorAlert"
+					role="alert"
 					class="mail-config-form__alert-container --danger"
 					data-test-id="mail_config-form__error"
 				>
@@ -1987,20 +2743,23 @@ export const App = defineComponent({
 						</div>
 					</div>
 				</div>
-
-				<FormActions
-					:is-edit-mode="isEditMode"
-					@save="onSave"
-					@cancel="onCancel"
-				/>
 			</div>
 		</template>
 			<div
-				v-else
+				v-if="!state.isDataReady"
 				class="mail-config-form --loading"
 				data-test-id="mail_config-form__loader"
 			>
 				<div class="mail-config-form__loader"></div>
+				<div v-if="generalErrorItems.length" class="mail-config-form__alert-message">
+					{{ generalErrorItems[0].message }}
+				</div>
 			</div>
+			<FormActions
+				:is-edit-mode="isEditMode"
+				:save-disabled="oauthPending || avatarSaveBlocked"
+				@save="onSave"
+				@cancel="onCancel"
+			/>
 		`,
 });

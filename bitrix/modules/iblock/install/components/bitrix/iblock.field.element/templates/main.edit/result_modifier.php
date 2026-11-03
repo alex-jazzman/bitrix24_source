@@ -54,6 +54,7 @@ elseif ($arResult['userField']['SETTINGS']['DISPLAY'] === ElementType::DISPLAY_U
 
 	$arResult['params'] = Json::encode([
 		'isMulti' => $isMultiple,
+		'enableSearch' => true,
 		'fieldName' => $arResult['userField']['FIELD_NAME'],
 	]);
 

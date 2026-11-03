@@ -11,6 +11,8 @@ const LIMIT_SLIDER_CODE = 'limit_v2_mail_large_attachment_disk_upload';
 export const CrmLargeAttachmentErrorCode = Object.freeze({
 	NoSpace: 'MAIL_LA_NO_SPACE',
 	DiskUnavailable: 'MAIL_LA_DISK_UNAVAILABLE',
+	// Disk refuses the service link by tariff feature: routed to the same tariff screen as TariffUnavailable.
+	DiskFeatureUnavailable: 'MAIL_LA_DISK_FEATURE_UNAVAILABLE',
 	LinkUnavailable: 'MAIL_LA_LINK_UNAVAILABLE',
 	AccessDenied: 'MAIL_LA_ACCESS_DENIED',
 	InvalidContext: 'MAIL_LA_INVALID_CONTEXT',
@@ -171,7 +173,10 @@ export class CrmLargeAttachmentNotification
 
 	showError(code: string, onRetry?: () => void): void
 	{
-		if (code === CrmLargeAttachmentErrorCode.TariffUnavailable)
+		if (
+			code === CrmLargeAttachmentErrorCode.TariffUnavailable
+			|| code === CrmLargeAttachmentErrorCode.DiskFeatureUnavailable
+		)
 		{
 			this.showTariffUnavailable();
 

@@ -41,6 +41,14 @@ $map = $dialog->getMap();
 $returnFieldsProperty = $map['ReturnFields'];
 unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty['Getter']);
 ?>
+<style>
+	[data-role="bca-cuda-return-fields-container"] select
+	{
+		min-width: 620px !important;
+		max-width: 620px !important;
+	}
+</style>
+
 <?php foreach ($map as $field): ?>
 	<?php if (isset($field['Name'], $field['Type'])): ?>
 		<tr>
@@ -108,5 +116,6 @@ unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty[
 			conditions: <?=Json::encode($dialog->getCurrentValue('dynamic_filter_fields'))?>,
 		});
 		script.init();
+
 	})
 </script>

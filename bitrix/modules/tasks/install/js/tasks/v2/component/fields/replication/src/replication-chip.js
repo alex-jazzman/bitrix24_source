@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
@@ -66,6 +67,10 @@ export const ReplicationChip = {
 		{
 			return this.isTemplate && (this.task.isForNewUser || idUtils.isTemplate(this.task.parentId));
 		},
+		opensSheet(): boolean
+		{
+			return !this.isLocked && !this.disabled && !this.isSelected;
+		},
 		tooltip(): ?Function
 		{
 			if (!this.disabled)
@@ -84,7 +89,38 @@ export const ReplicationChip = {
 			});
 		},
 	},
+	watch: {
+		isSheetShown(): void
+		{
+			this.syncAria();
+		},
+		disabled(): void
+		{
+			this.syncAria();
+		},
+		opensSheet(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
+	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensSheet ? 'dialog' : null);
+			Dom.attr(el, 'aria-expanded', this.opensSheet ? String(this.isSheetShown) : null);
+			Dom.attr(el, 'aria-disabled', this.disabled ? 'true' : null);
+		},
 		handleClick(): void
 		{
 			if (this.isLocked)
@@ -111,6 +147,16 @@ export const ReplicationChip = {
 
 			this.setSheetShown(true);
 		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
+		},
 		highlightField(): void
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(replicationMeta.id);
@@ -129,8 +175,10 @@ export const ReplicationChip = {
 			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="replicationMeta.id"
+			data-testid="tasks-replication-chip"
 			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 		<ReplicationSheet
 			v-if="isSheetShown && !isSelected"

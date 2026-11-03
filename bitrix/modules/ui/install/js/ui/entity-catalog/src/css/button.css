@@ -4,7 +4,6 @@
 }
 
 .ui-entity-catalog__btn {
-	/*display: block;*/
 	display: flex;
 	padding: 5px 16px;
 	border-radius: var(--ui-border-radius-pill, 99rem);
@@ -14,8 +13,14 @@
 	font-size: var(--ui-font-size-md, 14px);
 	line-height: var(--ui-font-line-height-3xs, 1.2);
 	color: var(--ui-color-text-secondary, #525c69);
+	font-family: inherit;
 	cursor: pointer;
 	transition: .2s;
+}
+
+.ui-entity-catalog__btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .ui-entity-catalog__btn.--lock {

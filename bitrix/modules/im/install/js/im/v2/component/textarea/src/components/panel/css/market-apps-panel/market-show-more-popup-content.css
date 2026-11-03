@@ -5,6 +5,9 @@
 }
 
 .bx-im-market-show-more-popup-content__items-container {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	padding: 0 14px 0 8px;
 	height: 100%;
 	overflow: hidden;

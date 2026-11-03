@@ -20,7 +20,8 @@ const CatalogEvent = {
 
 const ICON_NAME = OutlineIcons.VIBECODE_CATALOG;
 const COUNTER_DISPLAY_LIMIT = 99;
-const AVAILABLE_LAYOUTS = new Set([Layout.chat, Layout.notification]);
+// The setup screen of the composite folder keeps that folder's list on the left, header and all.
+const AVAILABLE_LAYOUTS = new Set([Layout.chat, Layout.folderAll, Layout.folderAllSettings, Layout.notification]);
 
 /**
  * Cross-module event contract consumed by the vibecodeconnector.im-button-binder
@@ -119,6 +120,7 @@ export const VibeCodeCatalogButton = defineComponent({
 			type="button"
 			class="bx-im-list-container-vibe-code-catalog-button__container"
 			data-bx-vibe-code-catalog-events="true"
+			data-testid="im-vibe-code-catalog-button"
 			:class="{'--active': isActive }"
 			:aria-label="loc('IM_ELEMENTS_VIBE_CODE_CATALOG_ARIA_TITLE')"
 			:aria-pressed="isActive"

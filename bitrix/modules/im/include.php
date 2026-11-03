@@ -209,7 +209,7 @@ CJSCore::RegisterExt('im_window', array(
 	'js' => '/bitrix/js/im/window.js',
 	'css' => '/bitrix/js/im/css/window.css',
 	'lang' => '/bitrix/modules/im/js_window.php',
-	'rel' => Array('ui.design-tokens', 'popup', 'fx', 'translit', 'call.component.conference.conference-create', 'ui.alerts'),
+	'rel' => array('ui.design-tokens', 'popup', 'fx', 'translit', 'call.legacy.component.conference.conference-create', 'ui.alerts'),
 ));
 
 CJSCore::RegisterExt('im_desktop', array(

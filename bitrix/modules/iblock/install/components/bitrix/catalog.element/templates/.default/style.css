@@ -859,6 +859,11 @@
 
 .product-item-detail-tab-content { padding: 25px 0; }
 
+.product-item-detail-tab-content[data-value="description"] {
+	overflow: auto;
+	contain: paint;
+}
+
 @media (max-width: 991px) {
 	.product-item-detail-tabs-container { display: none !important; }
 

@@ -66,13 +66,15 @@ if (mb_strlen($favoriteUrl) <= 0)
 $favoriteStar = $toolbar->hasFavoriteStar()? '<button type="button" class="ui-toolbar-star ui-icon-set__scope" id="uiToolbarStar" data-bx-title-template="' . htmlspecialcharsbx($favoriteTitleTemplate) . '" data-bx-url="' . htmlspecialcharsbx($favoriteUrl) . '"><i class="ui-toolbar-star-btn-icon"></i></button>' : '';
 
 $title = $toolbar->getTitle(false, true);
+$editTitleInputLabel = htmlspecialcharsbx((string)Loc::getMessage('UI_TOOLBAR_EDIT_TITLE_INPUT_LABEL'));
 $title = $toolbar->hasEditableTitle()
 	? sprintf('
 		<span id="ui-editable-title-wrapper" class="ui-toolbar-title-item">
 			<span id="pagetitle" class="ui-wrap-title-name-item ui-wrap-title-name">%s</span>
-			<input type="text" class="ui-wrap-title-input ui-toolbar-edit-title-input" style="display: none;">
+			<input type="text" class="ui-wrap-title-input ui-toolbar-edit-title-input" style="display: none;" aria-label="%s" data-testid="ui-toolbar-title-editor-input">
 		</span>',
-		$title
+		$title,
+		$editTitleInputLabel
 	)
 	: sprintf('<span id="pagetitle" class="ui-toolbar-title-item">%s</span>', $title)
 ;
@@ -119,16 +121,19 @@ if ($toolbar->hasFullscreenButton())
 	if ($focusModeHint !== '')
 	{
 		$escapedHint = htmlspecialcharsbx($focusModeHint);
-		$hintAttrs = ' data-hint-no-icon data-hint="' . $escapedHint . '" aria-label="' . $escapedHint . '"';
+		$hintAttrs = ' data-hint-no-icon data-hint="' . $escapedHint . '"';
 	}
 
-	$fullscreenButtonHtml = '<button' . $hintAttrs . ' class="ui-toolbar-fullscreen ui-icon-set__scope" id="uiToolbarFullscreen" aria-pressed="false"><i class="ui-toolbar-fullscreen-btn-icon"></i></button>';
+	// Accessible name must be present regardless of the optional hint phrase.
+	$fullscreenLabel = htmlspecialcharsbx((string)Loc::getMessage('UI_TOOLBAR_FULLSCREEN_MODE'));
+	$fullscreenButtonHtml = '<button' . $hintAttrs . ' aria-label="' . $fullscreenLabel . '" class="ui-toolbar-fullscreen ui-icon-set__scope" id="uiToolbarFullscreen" aria-pressed="false"><i class="ui-toolbar-fullscreen-btn-icon"></i></button>';
 }
 
 $editTitleButton = '';
 if ($toolbar->hasEditableTitle())
 {
-	$editTitleButton = '<button class="ui-toolbar-edit-title-button">
+	$editTitleLabel = htmlspecialcharsbx((string)Loc::getMessage('UI_TOOLBAR_EDIT_TITLE_BUTTON'));
+	$editTitleButton = '<button type="button" class="ui-toolbar-edit-title-button" aria-label="' . $editTitleLabel . '" data-testid="ui-toolbar-title-editor-edit-button">
 		<span class="ui-toolbar-edit-title-button-icon ui-icon-set ' . $iconHoverableModifier . '"></span>
 	</button>';
 }
@@ -144,6 +149,8 @@ $saveTitleEditButton = new Button([
 
 
 $saveTitleEditButton->addAttribute('id', 'ui-toolbar-save-title-button');
+$saveTitleEditButton->addAttribute('aria-label', (string)Loc::getMessage('UI_TOOLBAR_SAVE_TITLE_BUTTON'));
+$saveTitleEditButton->addDataAttribute('testid', 'ui-toolbar-title-editor-save-button');
 $saveTitleEditButton->setCollapsed(true);
 
 $cancelTitleEditButton = new Button([
@@ -156,6 +163,8 @@ $cancelTitleEditButton = new Button([
 ]);
 
 $cancelTitleEditButton->addAttribute('id', 'ui-toolbar-cancel-title-edit-button');
+$cancelTitleEditButton->addAttribute('aria-label', (string)Loc::getMessage('UI_TOOLBAR_CANCEL_TITLE_EDIT_BUTTON'));
+$cancelTitleEditButton->addDataAttribute('testid', 'ui-toolbar-title-editor-cancel-button');
 $cancelTitleEditButton->setCollapsed(true);
 
 $saveTitleEditButtonHtml = $saveTitleEditButton->render();
@@ -178,7 +187,7 @@ $noShrinkTitleModifier = $toolbar->isTitleNoShrink() ? '--no-shrink' : '';
 			<div class="ui-toolbar-before-title-box"><?= $beforeTitleBoxHtml ?></div>
 		<?php endif; ?>
 		<div class="ui-toolbar-title-inner">
-			<div class="ui-toolbar-title-item-box">
+			<div class="ui-toolbar-title-item-box" data-testid="ui-toolbar-title-editor-root">
 				<?php
 				if (!empty($beforeTitleHtml)):
 					?><div class="ui-toolbar-before-title"><?=$beforeTitleHtml?></div><?

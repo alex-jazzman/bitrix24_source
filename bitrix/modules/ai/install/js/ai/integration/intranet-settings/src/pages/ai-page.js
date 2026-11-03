@@ -1,12 +1,23 @@
 import { Loc, Runtime, Tag, Type, Extension, type AjaxResponse, ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Alert, AlertColor, AlertSize } from 'ui.alerts';
-import { BaseField, Checker } from 'ui.form-elements.view';
+import { type BaseField, Checker } from 'ui.form-elements.view';
 import { Row } from 'ui.section';
 import { SelectorField } from 'ai.ui.field.selectorfield';
 import { SettingsSection, SettingsRow, SettingsField, BaseSettingsPage } from 'ui.form-elements.field';
 import { type BitrixGptAgreementPopupOptions } from 'ai.bitrixgpt-agreement-popup';
-import { AiSettingsItem, AiSettingsGroup, AiSettingsItemRelations, AiSettingsItemField } from '../types';
+import {
+	createScenarioDisableFeedbackLifecycle,
+	ScenarioDisableFeedback,
+	type ScenarioDisableFeedbackLifecycle,
+} from '../lib/scenario-disable-feedback';
+import { ScenarioDisableTracker } from '../lib/scenario-disable-tracker';
+import {
+	type AiSettingsGroup,
+	type AiSettingsItem,
+	type AiSettingsItemField,
+	type AiSettingsItemRelations,
+} from '../types';
 
 import '../css/ai_page.css';
 
@@ -24,11 +35,17 @@ export class AiPage extends BaseSettingsPage
 	#agreementCheckers: [Checker] = [];
 	#isAgreementAccepted: boolean = false;
 	#isSwitcherProgrammaticChange: boolean = false;
+	#scenarioBooleanValues: {[string]: boolean} = {};
+	#scenarioDisableFeedbackLifecycle: ScenarioDisableFeedbackLifecycle;
 
 	constructor()
 	{
 		super();
-		const copilotName = Extension.getSettings('ai.integration.intranet-settings').copilotName;
+		const extensionSettings = Extension.getSettings('ai.integration.intranet-settings');
+		const copilotName = extensionSettings.copilotName;
+		this.#scenarioDisableFeedbackLifecycle = createScenarioDisableFeedbackLifecycle(
+			new ScenarioDisableFeedback(extensionSettings.scenarioDisableFeedback),
+		);
 		this.titlePage = Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_MSGVER_1', {
 			'#COPILOT_NAME#': copilotName,
 		});
@@ -44,6 +61,7 @@ export class AiPage extends BaseSettingsPage
 
 	appendSections(contentNode: HTMLElement): void
 	{
+		this.#scenarioBooleanValues = {};
 		const groups: ?{[string]: AiSettingsGroup} = this.getValue('fields');
 		if (groups)
 		{
@@ -70,6 +88,10 @@ export class AiPage extends BaseSettingsPage
 			}
 		}
 
+		this.#scenarioDisableFeedbackLifecycle.setTracker(
+			new ScenarioDisableTracker(this.#scenarioBooleanValues),
+		);
+		this.#scenarioDisableFeedbackLifecycle.bind();
 		this.#bindEvents();
 	}
 
@@ -172,6 +194,7 @@ export class AiPage extends BaseSettingsPage
 			}
 
 			field = new Checker(checkerOptions);
+			this.#scenarioBooleanValues[code] = field.isChecked();
 			if (!restriction)
 			{
 				this.#agreementCheckers.push(field);

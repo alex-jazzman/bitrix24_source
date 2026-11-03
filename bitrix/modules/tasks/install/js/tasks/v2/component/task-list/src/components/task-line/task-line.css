@@ -1,6 +1,6 @@
 .tasks-task-line-title-container-wrapper {
 	z-index: 1;
-	overflow: hidden;
+	min-width: 0;
 	display: flex;
 	align-items: center;
 }
@@ -9,7 +9,27 @@
 	margin-bottom: var(--ui-space-stack-sm);
 }
 
+/* SC-005: warning badge next to the "No deadline" deadline chip of a deadlineless row
+   owned by the current new user (ALG-02). No row background highlight — matches Figma. */
+.tasks-task-line-field.--deadlineless-hint {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs, 4px);
+}
+
+.tasks-task-line-deadlineless-badge {
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background-color: #fff4d6;
+	background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7.99988%209.6436L8.00007%203.69234M7.99993%2012.1051L8.00012%2012.3077%22%20stroke%3D%22%23E88C02%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .tasks-task-line-title-container {
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 }
@@ -39,12 +59,49 @@
 	cursor: pointer;
 }
 
+/* The card scrolls the focused link flush with its edge, where the ring drawn on the title
+   below would not fit. The margin belongs to the link because that is what gets scrolled. */
+.tasks-task-line-title-href {
+	scroll-margin-block: 4px;
+}
+
+/* The overflow above clips a descendant outline, so the link ring loses its edges. An element
+   never clips its own outline - draw the ring on the clipper, where it wraps the visible,
+   ellipsized title. */
+.tasks-task-line-title:has(.tasks-task-line-title-href:focus-visible) {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* Where the ring above is drawn it replaces the browser ring on the link, so focus is
+   marked once. Engines without :has() skip this block and keep the native ring. */
+@supports selector(:has(*)) {
+	.tasks-task-line-title-href:focus-visible {
+		outline: none;
+	}
+}
+
 .tasks-task-line-title-href.--completed {
 	color: var(--ui-color-base-5);
 }
 
 .tasks-task-line-deadline.--expired .tasks-task-line-deadline-text {
 	color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-task-line-more {
+	padding: 0;
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	scroll-margin-block: 4px;
+}
+
+.tasks-task-line-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-task-line-more {
@@ -79,7 +136,7 @@
 	-webkit-mask-size: contain;
 	-webkit-mask-repeat: no-repeat;
 	-webkit-mask-position: center;
-	background-color: #C4E6FF;
+	background-color: var(--ui-color-accent-soft-blue-1);
 }
 
 .tasks-task-line-side-icon.--side {

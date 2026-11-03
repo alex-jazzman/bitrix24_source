@@ -134,24 +134,26 @@ jn.define('call/callList/listView', (require, exports, module) => {
 			}
 
 			const isNewIconsEnabled = feature.isFeatureEnabled('listview_icons_v1');
+			const right = [];
 
-			return {
-				left: [],
-				right: [
-					{
-						color: Color.accentMainAlert.toHex(),
-						title: BX.message('MOBILEAPP_CALL_LIST_SWIPE_DELETE'),
-						icon: isNewIconsEnabled ? 'trashcan' : 'action_delete',
-						key: 'delete',
-					},
-					{
-						color: Color.base4.toHex(),
-						title: BX.message('MOBILEAPP_CALL_LIST_SWIPE_CHAT'),
-						icon: isNewIconsEnabled ? 'chats' : 'action_unread',
-						key: 'open_chat',
-					},
-				],
-			};
+			if (typeof this.props.onDelete === 'function')
+			{
+				right.push({
+					color: Color.accentMainAlert.toHex(),
+					title: BX.message('MOBILEAPP_CALL_LIST_SWIPE_DELETE'),
+					icon: isNewIconsEnabled ? 'trashcan' : 'action_delete',
+					key: 'delete',
+				});
+			}
+
+			right.push({
+				color: Color.base4.toHex(),
+				title: BX.message('MOBILEAPP_CALL_LIST_SWIPE_CHAT'),
+				icon: isNewIconsEnabled ? 'chats' : 'action_unread',
+				key: 'open_chat',
+			});
+
+			return { left: [], right };
 		}
 
 		onAction(index, key)

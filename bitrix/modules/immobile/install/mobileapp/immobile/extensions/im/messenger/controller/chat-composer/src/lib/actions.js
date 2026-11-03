@@ -41,7 +41,7 @@ jn.define('im/messenger/controller/chat-composer/lib/actions', (require, exports
 	const managersAction = (props) => {
 		return {
 			testId: 'SETTING_ACTION_MANAGERS',
-			title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_MANAGERS_TITLE'),
+			title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_MANAGERS_TITLE_MSGVER_1'),
 			subtitle: props.subtitle,
 			icon: props.icon,
 			divider: props.divider ?? true,

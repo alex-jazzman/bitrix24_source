@@ -5,6 +5,7 @@ import { Popup } from 'main.popup';
 import { ThemePickerDialog } from 'intranet.theme-picker.dialog';
 import { Loader } from 'main.loader';
 import { SidePanel, type SliderManager, type Slider } from 'main.sidepanel';
+import { InteractivityChecker } from 'ui.a11y';
 
 export type ThemePickerOptions = {
 	themeId?: string,
@@ -68,6 +69,7 @@ export class ThemePicker
 {
 	#cache: BaseCache<any> = new MemoryCache();
 	#dialog: ThemePickerDialog | null = null;
+	#dialogInitiator: HTMLElement | null = null;
 
 	constructor(options: ThemePickerOptions)
 	{
@@ -126,6 +128,9 @@ export class ThemePicker
 			return;
 		}
 
+		this.#dialogInitiator = document.activeElement;
+		this.setDialogBusy(true);
+
 		dialogPopup.show();
 		this.#getLoader().show(dialogPopup.getContentContainer());
 		this.#loadThemeDialog();
@@ -139,26 +144,31 @@ export class ThemePicker
 		this.getDialogPopup().close();
 	}
 
+	/**
+	 * `inert` is what actually turns the theme list off: it takes the whole popup out of the
+	 * Tab order and out of the accessibility tree at once. The class stays for the film on top of it.
+	 */
 	enableThemeListDialog(): void
 	{
-		Dom.removeClass(
-			this.getDialogPopup().popupContainer,
-			'theme-dialog-popup-window-container-disabled',
-		);
+		const container = this.getDialogPopup().popupContainer;
+
+		Dom.removeClass(container, 'theme-dialog-popup-window-container-disabled');
+		Dom.attr(container, 'inert', null);
+		this.#dialog?.refreshGrid();
 	}
 
 	disableThemeListDialog()
 	{
-		Dom.addClass(
-			this.getDialogPopup().popupContainer,
-			'theme-dialog-popup-window-container-disabled',
-		);
+		const container = this.getDialogPopup().popupContainer;
+
+		Dom.addClass(container, 'theme-dialog-popup-window-container-disabled');
+		Dom.attr(container, 'inert', '');
 	}
 
 	getDialogPopup(): Popup
 	{
 		return this.#cache.remember('dialogPopup', () => {
-			return new Popup({
+			const popup = new Popup({
 				width: 800,
 				height: 500,
 				titleBar: Loc.getMessage('BITRIX24_THEME_DIALOG_TITLE'),
@@ -171,18 +181,102 @@ export class ThemePicker
 				events: {
 					onAfterClose: () => {
 						this.closeDialog();
+						this.#returnFocusToInitiator();
 					},
 					onDestroy: () => {
 						this.#cache.delete('dialogPopup');
 					},
 				},
 			});
+
+			Dom.attr(popup.getPopupContainer(), 'data-testid', 'bx-theme-picker-dialog');
+
+			return popup;
 		});
 	}
 
 	hideLoader(): void
 	{
 		this.#getLoader().hide();
+	}
+
+	// The empty popup is busy until the theme grid replaces the loader.
+	setDialogBusy(busy: boolean): void
+	{
+		Dom.attr(this.getDialogPopup().getContentContainer(), 'aria-busy', busy ? 'true' : null);
+	}
+
+	/**
+	 * The focus is never taken away from the user: it moves only when it is lost, still
+	 * inside the dialog it is leaving, or has never left the node the dialog was opened from, so a
+	 * click somewhere else keeps it where the user left it.
+	 * The dialog defaults to the theme list; the nested creation dialog passes its own popup.
+	 */
+	focusInDialog(element: ?HTMLElement, popup: Popup = this.getDialogPopup()): void
+	{
+		if (!Type.isElementNode(element))
+		{
+			return;
+		}
+
+		if (this.#isFocusLost() || this.#isFocusInside(popup) || this.#isFocusOnInitiator())
+		{
+			element.focus();
+		}
+	}
+
+	/**
+	 * The focus still standing on the very node the dialog was opened from.
+	 *
+	 * A modal dialog that opens with the focus outside itself leaves the next Tab press on the page
+	 * behind it, and that is what happens whenever the initiator survives the opening and the focus
+	 * trap of the platform is off - its default outside dev builds. The initiator is known by
+	 * identity, so this case is told apart from "the person moved the focus somewhere else" exactly.
+	 */
+	#isFocusOnInitiator(): boolean
+	{
+		return Type.isElementNode(this.#dialogInitiator) && document.activeElement === this.#dialogInitiator;
+	}
+
+	/**
+	 * The initiator can die together with the popup it lived in (the avatar menu closes on
+	 * `openChild`), so the node is checked before the focus goes back to it.
+	 *
+	 * A click on the close icon focuses the icon itself, so by `onAfterClose` the focus stands on a
+	 * live node of the popup that is about to die: it is not lost yet, and it is about to be. The
+	 * popup is destroyed only after this handler returns, so its container is still there to ask.
+	 */
+	#returnFocusToInitiator(): void
+	{
+		const initiator = this.#dialogInitiator;
+		this.#dialogInitiator = null;
+
+		const focusLeavesDialog = this.#isFocusLost() || this.#isFocusInside(this.getDialogPopup());
+
+		if (!focusLeavesDialog || !Type.isElementNode(initiator) || !initiator.isConnected)
+		{
+			return;
+		}
+
+		if (InteractivityChecker.isFocusable(initiator))
+		{
+			initiator.focus();
+		}
+	}
+
+	#isFocusLost(): boolean
+	{
+		const activeElement = document.activeElement;
+
+		return !Type.isElementNode(activeElement)
+			|| activeElement === document.body
+			|| !activeElement.isConnected
+		;
+	}
+
+	#isFocusInside(popup: Popup): boolean
+	{
+		return popup?.getPopupContainer()?.contains(document.activeElement) === true;
 	}
 
 	getTemplateId(): ?string
@@ -573,9 +667,14 @@ export class ThemePicker
 	#getLoader(): Loader
 	{
 		return this.#cache.remember('loader', () => {
-			return new Loader({
+			const loader = new Loader({
 				size: 120,
 			});
+
+			// Decorative: the busy state of the dialog is announced by `aria-busy`, not by the spinner.
+			Dom.attr(loader.layout, 'aria-hidden', 'true');
+
+			return loader;
 		});
 	}
 

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_const, im_v2_lib_createChat, main_core_events, main_popup, im_v2_component_content_chatForms_elements, im_v2_component_elements_avatar, im_v2_lib_permission, im_v2_provider_service_chat, im_v2_lib_feature, socialnetwork_v2_application_projectWizard, socialnetwork_v2_model_interface, im_v2_lib_utils, im_v2_lib_layout, im_public, im_v2_application_core, main_core, im_v2_lib_helpdesk, socialnetwork_collab_accessRights, ui_iconSet_api_vue, im_v2_lib_promo, im_v2_lib_notifier, im_v2_lib_analytics, im_v2_lib_confirm) {
+(function (exports, ui_designTokens_air, im_v2_const, im_v2_lib_createChat, main_core_events, main_popup, im_v2_component_content_chatForms_elements, im_v2_component_elements_avatar, im_v2_lib_feature, im_v2_lib_permission, im_v2_provider_service_chat, socialnetwork_v2_application_projectWizard, socialnetwork_v2_model_interface, im_v2_lib_utils, im_v2_lib_layout, im_v2_lib_slider, im_public, im_v2_application_core, main_core, ui_system_typography_vue, im_v2_lib_helpdesk, socialnetwork_collab_accessRights, ui_iconSet_api_vue, im_v2_lib_promo, im_v2_lib_notifier, im_v2_lib_analytics, im_v2_lib_confirm) {
 	'use strict';
 
 	// @vue/component
@@ -14,11 +14,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatAvatar: im_v2_component_content_chatForms_elements.ChatAvatar,
 			ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
 			RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
-			AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 			PrivacySection: im_v2_component_content_chatForms_elements.PrivacySection,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			TextareaInput: im_v2_component_content_chatForms_elements.TextareaInput,
-			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading
+			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading,
+			FieldRow: im_v2_component_content_chatForms_elements.FieldRow
 		},
 		data() {
 			return {
@@ -43,7 +43,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			ChatType: () => im_v2_const.ChatType,
-			EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType
+			EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
+			descriptionLabel() {
+				return this.loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE');
+			},
+			descriptionPlaceholder() {
+				return this.loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3');
+			}
 		},
 		watch: {
 			chatTitle(newValue) {
@@ -186,8 +195,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
+		// In the air branch the caption of the description belongs to FieldRow, so the heading above the
+		// field is gone; BInput inside TextareaInput keeps its control private, so the field is named by
+		// the same text through ariaLabel. The container of the row owns the vertical rhythm in both branches.
 		template: `
-		<div class="bx-im-content-chat-forms__content --channel" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --channel"
+			data-testid="im-chat-form-create-channel"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar 
 					:avatarFile="avatarFile" 
@@ -197,11 +213,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2')" />
 			</div>
-			<CreateChatHeading :text="loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE')" />
+			<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 			<div class="bx-im-content-chat-forms__description_container">
+				<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+					<TextareaInput
+						:ariaLabel="descriptionLabel"
+						:value="settings.description"
+						:placeholder="descriptionPlaceholder"
+						@input="onDescriptionChange"
+					/>
+				</FieldRow>
 				<TextareaInput
+					v-else
 					:value="settings.description"
-					:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3')"
+					:placeholder="descriptionPlaceholder"
 					:border="false"
 					@input="onDescriptionChange"
 				/>
@@ -218,6 +243,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<ChatMembersSelector 
 					:chatMembers="chatMembers"
 					:undeselectedItems="undeselectedItems"
+					:chatType="ChatType.channel"
 					:allowTeamsSelect="true"
 					@membersChange="onMembersChange"
 				/>
@@ -253,15 +279,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				container: this.$refs['form-container'],
 				onCancel: () => this.restoreOriginLayout(),
 				onSave: ({
+					id,
+					name,
 					chatId
-				}) => this.openCollab(chatId)
+				}) => this.handleSave({
+					id,
+					name,
+					chatId
+				})
 			});
 			void this.createForm.mount();
 		},
 		beforeUnmount() {
 			this.createForm?.unmount();
+			im_v2_lib_createChat.CreateChatManager.getInstance().clearPresetFields();
 		},
 		methods: {
+			handleSave({
+				id,
+				name,
+				chatId
+			}) {
+				const onCreate = im_v2_lib_createChat.CreateChatManager.getInstance().getOnCreate();
+				if (onCreate) {
+					onCreate({
+						id,
+						name,
+						chatId
+					});
+					im_v2_lib_slider.MessengerSlider.getInstance().getCurrent()?.close();
+					return;
+				}
+				this.openCollab(chatId);
+			},
 			restoreOriginLayout() {
 				void im_v2_lib_layout.LayoutManager.getInstance().restoreOriginLayout();
 			},
@@ -278,25 +328,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const LINK_CSS_CLASS = 'bx-im-create-collab-description-banner__link';
 	const TITLE_LINK_MODIFIER = '--title';
 	const INVITE_LINK_MODIFIER = '--invite';
+	// A link lives inside the phrase and has to wrap with the text around it, so it stays an inline
+	// element and gets the semantics of a button instead of the tag of one.
+	const LINK_SEMANTICS = 'role="button" tabindex="0"';
+	const TITLE_LINK_TAG = `<span class="${LINK_CSS_CLASS} ${TITLE_LINK_MODIFIER} --solid"` + ` data-testid="im-chat-form-collab-banner-title-link" ${LINK_SEMANTICS}>`;
+	const INVITE_LINK_TAG = `<span class="${LINK_CSS_CLASS} ${INVITE_LINK_MODIFIER} --dashed"` + ` data-testid="im-chat-form-collab-banner-invite-link" ${LINK_SEMANTICS}>`;
 
 	// @vue/component
 	const DescriptionBanner$1 = {
 		name: 'DescriptionBanner',
+		components: {
+			HeadlineXs: ui_system_typography_vue.HeadlineXs,
+			TextXs: ui_system_typography_vue.TextXs
+		},
 		computed: {
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
 			preparedTitle() {
 				return main_core.Loc.getMessage('IM_CREATE_COLLAB_BANNER_TITLE', {
-					'[learn-more]': `<span class="${LINK_CSS_CLASS} ${TITLE_LINK_MODIFIER} --solid">`,
+					'[learn-more]': TITLE_LINK_TAG,
 					'[/learn-more]': '</span>'
 				});
 			},
 			preparedInviteText() {
 				return main_core.Loc.getMessage('IM_CREATE_COLLAB_BANNER_TEXT_2', {
-					'[learn-more]': `<span class="${LINK_CSS_CLASS} ${INVITE_LINK_MODIFIER} --dashed">`,
+					'[learn-more]': INVITE_LINK_TAG,
 					'[/learn-more]': '</span>'
 				});
 			}
 		},
 		methods: {
+			// The listener sits on the whole phrase, so the link inside it is recognised by its own
+			// modifier; a keyboard activation of the link reaches the very same check.
 			onTitleClick(event) {
 				if (!main_core.Dom.hasClass(event.target, TITLE_LINK_MODIFIER)) {
 					return;
@@ -315,15 +379,58 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
+		// The card and the illustration are shared: air only retunes their colours and spacing through
+		// the custom properties of the block. The air branch of the markup replaces the typography with
+		// design system components, and the links stay in the text as spans of the phrase itself.
 		template: `
-		<div class="bx-im-create-collab-description-banner__container" ref="container">
+		<div
+			class="bx-im-create-collab-description-banner__container"
+			data-testid="im-chat-form-collab-banner"
+			ref="container"
+		>
 			<div class="bx-im-create-collab-description-banner__icon"></div>
 			<div class="bx-im-create-collab-description-banner__content">
-				<div class="bx-im-create-collab-description-banner__title" v-html="preparedTitle" @click="onTitleClick"></div>
-				<div class="bx-im-create-collab-description-banner__text">
-					{{ loc('IM_CREATE_COLLAB_BANNER_TEXT_1') }}
-				</div>
-				<div class="bx-im-create-collab-description-banner__text" v-html="preparedInviteText" @click="onInviteClick"></div>
+				<template v-if="isAirDesignEnabled">
+					<HeadlineXs className="bx-im-chat-forms-collab-banner__title">
+						<span
+							v-html="preparedTitle"
+							@click="onTitleClick"
+							@keydown.enter.prevent="onTitleClick"
+							@keydown.space.prevent="onTitleClick"
+						></span>
+					</HeadlineXs>
+					<TextXs
+						tag="div"
+						className="bx-im-chat-forms-collab-banner__text"
+					>{{ loc('IM_CREATE_COLLAB_BANNER_TEXT_1') }}</TextXs>
+					<TextXs tag="div" className="bx-im-chat-forms-collab-banner__text">
+						<span
+							v-html="preparedInviteText"
+							@click="onInviteClick"
+							@keydown.enter.prevent="onInviteClick"
+							@keydown.space.prevent="onInviteClick"
+						></span>
+					</TextXs>
+				</template>
+				<template v-else>
+					<div
+						class="bx-im-create-collab-description-banner__title"
+						v-html="preparedTitle"
+						@click="onTitleClick"
+						@keydown.enter.prevent="onTitleClick"
+						@keydown.space.prevent="onTitleClick"
+					></div>
+					<div class="bx-im-create-collab-description-banner__text">
+						{{ loc('IM_CREATE_COLLAB_BANNER_TEXT_1') }}
+					</div>
+					<div
+						class="bx-im-create-collab-description-banner__text"
+						v-html="preparedInviteText"
+						@click="onInviteClick"
+						@keydown.enter.prevent="onInviteClick"
+						@keydown.space.prevent="onInviteClick"
+					></div>
+				</template>
 			</div>
 		</div>
 	`
@@ -399,7 +506,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			TextareaInput: im_v2_component_content_chatForms_elements.TextareaInput,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			RightsSection,
-			AutoDelete: im_v2_component_content_chatForms_elements.AutoDelete
+			AutoDelete: im_v2_component_content_chatForms_elements.AutoDelete,
+			FieldRow: im_v2_component_content_chatForms_elements.FieldRow
 		},
 		data() {
 			return {
@@ -423,6 +531,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
+			descriptionLabel() {
+				return this.loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE');
+			},
+			descriptionPlaceholder() {
+				return this.loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER');
+			},
 			createButtonColorScheme() {
 				return {
 					borderColor: im_v2_const.Color.transparent,
@@ -542,8 +659,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
+		// In the air branch the caption of the description belongs to FieldRow, so the heading above the
+		// field is gone; BInput inside TextareaInput keeps its control private, so the field is named by
+		// the same text through ariaLabel. The container of the row owns the vertical rhythm in both branches.
 		template: `
-		<div class="bx-im-content-chat-forms__content --collab">
+		<div class="bx-im-content-chat-forms__content --collab" data-testid="im-chat-form-create-collab">
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar 
 					:avatarFile="avatarFile" 
@@ -554,11 +674,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_COLLAB_TITLE_PLACEHOLDER')" />
 			</div>
 			<DescriptionBanner />
-			<CreateChatHeading :text="loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE')" />
+			<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 			<div class="bx-im-content-chat-forms__description_container">
+				<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+					<TextareaInput
+						:ariaLabel="descriptionLabel"
+						:value="description"
+						:placeholder="descriptionPlaceholder"
+						@input="onDescriptionChange"
+					/>
+				</FieldRow>
 				<TextareaInput
+					v-else
 					:value="description"
-					:placeholder="loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER')"
+					:placeholder="descriptionPlaceholder"
 					:border="false"
 					@input="onDescriptionChange"
 				/>
@@ -597,13 +726,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const AIR_CLOSE_ICON_SIZE = 18;
+
 	// @vue/component
 	const DescriptionBanner = {
 		name: 'DescriptionBanner',
 		components: {
-			BIcon: ui_iconSet_api_vue.BIcon
+			BIcon: ui_iconSet_api_vue.BIcon,
+			HeadlineXs: ui_system_typography_vue.HeadlineXs,
+			TextXs: ui_system_typography_vue.TextXs
 		},
 		emits: ['close'],
+		setup() {
+			return {
+				AIR_CLOSE_ICON_SIZE
+			};
+		},
 		data() {
 			return {
 				showDescriptionBanner: im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.createCollabNestedChatDescription)
@@ -611,6 +749,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
 			preparedText() {
 				return this.loc('IM_CREATE_COLLAB_CHAT_BANNER_TEXT_MSGVER_1', {
 					'#BR#': '\n'
@@ -626,20 +767,53 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
+		// The gradient, the border and the illustration are shared: they already sit on air tokens.
+		// The air branch replaces the typography with design system components and turns the cross
+		// into a real button: an icon reacting to a click alone has no name and no keyboard.
 		template: `
-		<div v-if="showDescriptionBanner" class="bx-im-create-collab-chat-description-banner__container">
-			<div class="bx-im-create-collab-chat-description-banner__title">
-				{{ loc('IM_CREATE_COLLAB_CHAT_BANNER_TITLE') }}
-			</div>
-			<div class="bx-im-create-collab-chat-description-banner__text">
-				{{ preparedText }}
-			</div>
-			<BIcon
-				:name="OutlineIcons.CROSS_L"
-				:hoverable="true"
-				class="bx-im-create-collab-chat-description-banner__close"
-				@click="onClose"
-			/>
+		<div
+			v-if="showDescriptionBanner"
+			class="bx-im-create-collab-chat-description-banner__container"
+			data-testid="im-chat-form-collab-chat-banner"
+		>
+			<template v-if="isAirDesignEnabled">
+				<HeadlineXs
+					className="bx-im-chat-forms-collab-chat-banner__title"
+				>{{ loc('IM_CREATE_COLLAB_CHAT_BANNER_TITLE') }}</HeadlineXs>
+				<TextXs
+					tag="div"
+					className="bx-im-chat-forms-collab-chat-banner__text"
+				>{{ preparedText }}</TextXs>
+				<button
+					type="button"
+					class="bx-im-chat-forms-collab-chat-banner__close"
+					:aria-label="loc('IM_CREATE_COLLAB_CHAT_BANNER_CLOSE_ARIA')"
+					data-testid="im-chat-form-collab-chat-banner-close"
+					@click="onClose"
+				>
+					<BIcon
+						:name="OutlineIcons.CROSS_L"
+						:size="AIR_CLOSE_ICON_SIZE"
+						color="var(--ui-color-base-4)"
+						hoverable
+					/>
+				</button>
+			</template>
+			<template v-else>
+				<div class="bx-im-create-collab-chat-description-banner__title">
+					{{ loc('IM_CREATE_COLLAB_CHAT_BANNER_TITLE') }}
+				</div>
+				<div class="bx-im-create-collab-chat-description-banner__text">
+					{{ preparedText }}
+				</div>
+				<BIcon
+					:name="OutlineIcons.CROSS_L"
+					:hoverable="true"
+					class="bx-im-create-collab-chat-description-banner__close"
+					data-testid="im-chat-form-collab-chat-banner-close"
+					@click="onClose"
+				/>
+			</template>
 		</div>
 	`
 	};
@@ -653,7 +827,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
 			SettingsSection: im_v2_component_content_chatForms_elements.SettingsSection,
 			RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
-			AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading,
 			DescriptionBanner
@@ -837,7 +1010,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-create-collab-chat"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
@@ -848,6 +1025,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<ChatMembersSelector
 					:undeselectedItems="undeselectedItems"
 					:chatMembers="chatMembers"
+					:chatType="ChatType.collab"
 					:allowTeamsSelect="true"
 					@membersChange="onMembersChange"
 				/>
@@ -890,7 +1068,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
 			SettingsSection: im_v2_component_content_chatForms_elements.SettingsSection,
 			RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
-			AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 			ConferenceSection: im_v2_component_content_chatForms_elements.ConferenceSection,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading
@@ -1081,7 +1258,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-chat-forms__content --conference" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --conference"
+			data-testid="im-chat-form-create-videoconf"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar 
 					:avatarFile="avatarFile" 
@@ -1093,7 +1274,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<CreateChatHeading :text="loc('IM_CREATE_CHAT_MEMBERS_TITLE')" />
 			<div class="bx-im-content-chat-forms__members_container">
-				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+				<ChatMembersSelector
+					:chatMembers="chatMembers"
+					:chatType="ChatType.videoconf"
+					@membersChange="onMembersChange"
+				/>
 			</div>
 			<ConferenceSection
 				:passwordNeeded="conference.passwordNeeded"
@@ -1138,7 +1323,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
 			SettingsSection: im_v2_component_content_chatForms_elements.SettingsSection,
 			RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
-			AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading
 		},
@@ -1164,6 +1348,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					manageGuestInvites: ''
 				}
 			};
+		},
+		computed: {
+			ChatType: () => im_v2_const.ChatType
 		},
 		watch: {
 			chatTitle(newValue) {
@@ -1313,7 +1500,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-create-chat"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
@@ -1323,6 +1514,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<ChatMembersSelector 
 					:undeselectedItems="undeselectedItems" 
 					:chatMembers="chatMembers"
+					:chatType="ChatType.chat"
 					:allowTeamsSelect="true"
 					@membersChange="onMembersChange"
 				/>
@@ -1616,7 +1808,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-update-chat"
+			@scroll="onScroll"
+		>
 			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
 			<template v-else>
 				<div class="bx-im-content-chat-forms__header">
@@ -1633,6 +1829,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<ChatMembersSelector
 						:customElements="collapsedUsers"
 						:chatMembers="chatMembers"
+						:chatType="chatType"
+						:dialogId="dialogId"
 						:allowTeamsSelect="dialog.type !== ChatType.videoconf"
 						@membersChange="onMembersChange"
 					/>
@@ -1677,11 +1875,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatAvatar: im_v2_component_content_chatForms_elements.ChatAvatar,
 			ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
 			RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
-			AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 			PrivacySection: im_v2_component_content_chatForms_elements.PrivacySection,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			TextareaInput: im_v2_component_content_chatForms_elements.TextareaInput,
-			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading
+			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading,
+			FieldRow: im_v2_component_content_chatForms_elements.FieldRow
 		},
 		props: {
 			dialogId: {
@@ -1716,6 +1914,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			ChatType: () => im_v2_const.ChatType,
 			EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
+			descriptionLabel() {
+				return this.loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE');
+			},
+			descriptionPlaceholder() {
+				return this.loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3');
+			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
@@ -1856,8 +2063,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
+		// In the air branch the caption of the description belongs to FieldRow, so the heading above
+		// the field is gone and the same text names the control through ariaLabel.
 		template: `
-		<div class="bx-im-content-chat-forms__content --channel" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --channel"
+			data-testid="im-chat-form-update-channel"
+			@scroll="onScroll"
+		>
 			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
 			<template v-else>
 				<div class="bx-im-content-chat-forms__header">
@@ -1870,11 +2083,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					/>
 					<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2')" />
 				</div>
-				<CreateChatHeading :text="loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE')" />
+				<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 				<div class="bx-im-content-chat-forms__description_container">
+					<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+						<TextareaInput
+							:ariaLabel="descriptionLabel"
+							:value="settings.description"
+							:placeholder="descriptionPlaceholder"
+							@input="onDescriptionChange"
+						/>
+					</FieldRow>
 					<TextareaInput
+						v-else
 						:value="settings.description"
-						:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3')"
+						:placeholder="descriptionPlaceholder"
 						:border="false"
 						@input="onDescriptionChange"
 					/>
@@ -1891,6 +2113,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<ChatMembersSelector
 						:customElements="collapsedUsers"
 						:chatMembers="chatMembers"
+						:chatType="chatType"
+						:dialogId="dialogId"
 						:allowTeamsSelect="true"
 						@membersChange="onMembersChange"
 					/>
@@ -1977,7 +2201,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			TextareaInput: im_v2_component_content_chatForms_elements.TextareaInput,
 			ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
 			CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading,
-			RightsSection
+			RightsSection,
+			FieldRow: im_v2_component_content_chatForms_elements.FieldRow
 		},
 		props: {
 			dialogId: {
@@ -2003,6 +2228,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
+			isAirDesignEnabled() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAirDesignEnabled);
+			},
+			descriptionLabel() {
+				return this.loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE');
+			},
+			descriptionPlaceholder() {
+				return this.loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER');
+			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
@@ -2107,7 +2341,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-chat-forms__content --collab">
+		<div class="bx-im-content-chat-forms__content --collab" data-testid="im-chat-form-update-collab">
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar
 					:avatarFile="avatarFile"
@@ -2118,11 +2352,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_COLLAB_TITLE_PLACEHOLDER')" />
 			</div>
-			<CreateChatHeading :text="loc('IM_CREATE_COLLAB_DESCRIPTION_TITLE')" />
+			<CreateChatHeading v-if="!isAirDesignEnabled" :text="descriptionLabel" />
 			<div class="bx-im-content-chat-forms__description_container">
+				<FieldRow v-if="isAirDesignEnabled" name="description" :label="descriptionLabel">
+					<TextareaInput
+						:ariaLabel="descriptionLabel"
+						:value="description"
+						:placeholder="descriptionPlaceholder"
+						@input="onDescriptionChange"
+					/>
+				</FieldRow>
 				<TextareaInput
+					v-else
 					:value="description"
-					:placeholder="loc('IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER')"
+					:placeholder="descriptionPlaceholder"
 					:border="false"
 					@input="onDescriptionChange"
 				/>
@@ -2355,7 +2598,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-update-collab-chat"
+			@scroll="onScroll"
+		>
 			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
 			<template v-else>
 				<div class="bx-im-content-chat-forms__header">
@@ -2372,6 +2619,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<ChatMembersSelector
 						:customElements="collapsedUsers"
 						:chatMembers="chatMembers"
+						:chatType="dialog.type"
+						:dialogId="dialogId"
 						:allowTeamsSelect="dialog.type !== ChatType.videoconf"
 						@membersChange="onMembersChange"
 					/>
@@ -2471,13 +2720,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				required: true
 			}
 		},
+		// The copy form owns no markup of its own: the settings of the copy belong to the project wizard.
+		// The identifier falls through to the single root node of the child, the container of that wizard.
 		template: `
-		<CollabV2Updating :dialogId="entityId" :copyMode="true" />
+		<CollabV2Updating
+			:dialogId="entityId"
+			:copyMode="true"
+			data-testid="im-chat-form-copy-collab"
+		/>
 	`
 	};
 
 	exports.CollabV2CopyContent = CollabV2CopyContent;
 	exports.CreateChatContent = CreateChatContent;
 	exports.UpdateChatContent = UpdateChatContent;
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Event??{}, BX?.Main??{}, BX?.Messenger?.v2?.Component?.Content??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.V2?.Application??{}, BX?.Socialnetwork?.V2?.Model??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.Collab??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, window??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Event??{}, BX?.Main??{}, BX?.Messenger?.v2?.Component?.Content??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Socialnetwork?.V2?.Application??{}, BX?.Socialnetwork?.V2?.Model??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.UI?.System?.Typography?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.Collab??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
 //# sourceMappingURL=registry.bundle.js.map

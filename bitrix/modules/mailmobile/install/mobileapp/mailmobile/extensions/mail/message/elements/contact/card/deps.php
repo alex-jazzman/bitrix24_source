@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'analytics',
+		'layout/pure-component',
 		'require-lazy',
+		'tokens',
+		'ui-system/typography/text',
 		'user-profile',
 		'utils/object',
-		'layout/pure-component',
 	],
 ];

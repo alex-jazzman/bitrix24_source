@@ -27,42 +27,72 @@
 		this.fieldTableRowClassName = params.fieldTableRowClassName;
 		this.fieldTableRowTagName = params.fieldTableRowTagName || 'tr';
 		this.isRobot = params.isRobot === true;
+		this.isUnifiedEditor = params.isUnifiedEditor === true;
+		this.valuesContainerNodeId = params.valuesContainerNodeId;
 		this.requisitesMap = params.requisitesMap;
+		this.unifiedTemplateFieldsRequestId = 0;
 
 		this.initEvents();
 	};
 
 	BX.Crm.Activity.CrmGenerateEntityDocumentActivity.initEvents = function()
 	{
-		BX.bind(BX(this.selectTemplateNodeId), 'change', BX.proxy(this.getTemplateFields, this));
-		BX.bind(BX(this.selectFieldNodeId), 'change', BX.proxy(function()
+		if(BX(this.selectTemplateNodeId))
 		{
-			if(BX(this.selectFieldNodeId).value.length > 0)
-			{
-				BX(this.textFieldNodeId).value = BX(this.selectFieldNodeId).value;
-			}
-		}, this));
-
-		BX.bindDelegate(document, 'click', {className: this.deleteRowClassName}, function(event)
+			BX.bind(
+				BX(this.selectTemplateNodeId),
+				'change',
+				BX.proxy(this.isUnifiedEditor ? this.getUnifiedTemplateFields : this.getTemplateFields, this),
+			);
+		}
+		if(BX(this.selectFieldNodeId) && BX(this.textFieldNodeId))
 		{
-			event.preventDefault();
-			BX.remove(event.target.parentNode.parentNode);
-		});
+			BX.bind(BX(this.selectFieldNodeId), 'change', BX.proxy(function()
+			{
+				if(BX(this.selectFieldNodeId).value.length > 0)
+				{
+					BX(this.textFieldNodeId).value = BX(this.selectFieldNodeId).value;
+				}
+			}, this));
+		}
 
-		BX.bindDelegate(document, 'click', {className: this.openFieldInfoUrlClassName}, function(event)
+		if(this.deleteRowClassName)
 		{
-			event.preventDefault();
-			if(BX.SidePanel)
+			BX.bindDelegate(document, 'click', {className: this.deleteRowClassName}, function(event)
 			{
-				BX.SidePanel.Instance.open(event.target.getAttribute('href'), {width: 845, cacheable: true});
-			}
-			else
+				event.preventDefault();
+				BX.remove(event.target.parentNode.parentNode);
+			});
+		}
+		if(this.isUnifiedEditor)
+		{
+			BX.bindDelegate(document, 'click', {className: 'bizproc-automation-popup-settings-delete'}, function(event)
 			{
-				location.href = event.target.getAttribute('href');
-			}
-		});
+				event.preventDefault();
+				BX.remove(BX.findParent(event.target, {className: 'bizproc-automation-popup-settings'}));
+			});
+		}
 
-		BX.bind(BX(this.addNewFieldButtonNodeId), 'click', BX.proxy(this.addNewField, this));
+		if(this.openFieldInfoUrlClassName)
+		{
+			BX.bindDelegate(document, 'click', {className: this.openFieldInfoUrlClassName}, function(event)
+			{
+				event.preventDefault();
+				if(BX.SidePanel)
+				{
+					BX.SidePanel.Instance.open(event.target.getAttribute('href'), {width: 845, cacheable: true});
+				}
+				else
+				{
+					location.href = event.target.getAttribute('href');
+				}
+			});
+		}
+
+		if(BX(this.addNewFieldButtonNodeId))
+		{
+			BX.bind(BX(this.addNewFieldButtonNodeId), 'click', BX.proxy(this.addNewField, this));
+		}
 		BX.bind(BX(this.selectMyCompanyNodeId), 'change', function(event) {
 			event.preventDefault();
 			var myCompanyId = parseInt(BX(this.selectMyCompanyNodeId).value);
@@ -128,20 +158,23 @@
 			}
 		}
 
+		var requestData = {
+			'site_id': BX.message('SITE_ID'),
+			'sessid' : BX.bitrix_sessid(),
+			'document_type' : this.documentType,
+			'activity': 'CrmGenerateEntityDocumentActivity',
+			'entity_type': this.entityType,
+			'content_type': 'html',
+			'customer_action' : 'getValuePropertyDialog',
+			'placeholder': BX('add_new_field_text').value,
+			'templateId': BX('id_template_id').value,
+			'isRobot': this.isRobot === true ? 'y' : 'n',
+		};
+		var editorTemplateContext = BX.Reflection.getClass('BX.Bizproc.EditorTemplateContext');
+
 		BX.ajax.post(
 			'/bitrix/tools/bizproc_activity_ajax.php',
-			{
-				'site_id': BX.message('SITE_ID'),
-				'sessid' : BX.bitrix_sessid(),
-				'document_type' : this.documentType,
-				'activity': 'CrmGenerateEntityDocumentActivity',
-				'entity_type': this.entityType,
-				'content_type': 'html',
-				'customer_action' : 'getValuePropertyDialog',
-				'placeholder': BX('add_new_field_text').value,
-				'templateId': BX('id_template_id').value,
-				'isRobot': this.isRobot === true ? 'y' : 'n',
-		},
+			editorTemplateContext ? editorTemplateContext.appendTo(requestData) : requestData,
 			BX.proxy(function(response)
 			{
 				if(response)
@@ -215,6 +248,89 @@
 				alert(response.errors.pop().message);
 			});
 		}
+	};
+
+	BX.Crm.Activity.CrmGenerateEntityDocumentActivity.getUnifiedTemplateFields = function()
+	{
+		var templateId = parseInt(BX(this.selectTemplateNodeId).value, 10);
+		var valuesContainer = BX(this.valuesContainerNodeId);
+		var requestId = ++this.unifiedTemplateFieldsRequestId;
+		if(!valuesContainer)
+		{
+			return;
+		}
+
+		BX.cleanNode(valuesContainer);
+		if(!(templateId > 0) || !(this.entityTypeId > 0))
+		{
+			return;
+		}
+
+		// BX.Promise does not adopt a returned thenable, so the chain runs on native promises.
+		Promise.resolve(BX.ajax.runAction('crm.documentgenerator.template.getFields', {
+			data: {
+				id: templateId,
+				entityTypeId: this.entityTypeId,
+			},
+		})).then(BX.proxy(function(response)
+		{
+			var placeholders = [];
+			for(var placeholder in response.data.templateFields)
+			{
+				if(!response.data.templateFields.hasOwnProperty(placeholder))
+				{
+					continue;
+				}
+				var field = response.data.templateFields[placeholder];
+				if(field.type === 'IMAGE' || field.type === 'STAMP')
+				{
+					continue;
+				}
+
+				placeholders.push(placeholder);
+			}
+
+			if(placeholders.length === 0)
+			{
+				return '';
+			}
+
+			var requestData = {
+				site_id: BX.message('SITE_ID'),
+				sessid: BX.bitrix_sessid(),
+				document_type: this.documentType,
+				activity: 'CrmGenerateEntityDocumentActivity',
+				entity_type: this.entityType,
+				content_type: 'html',
+				customer_action: 'getValuePropertyDialog',
+				placeholders: placeholders,
+				templateId: templateId,
+				isRobot: 'y',
+			};
+			var editorTemplateContext = BX.Reflection.getClass('BX.Bizproc.EditorTemplateContext');
+
+			return new Promise(function(resolve)
+			{
+				BX.ajax.post(
+					'/bitrix/tools/bizproc_activity_ajax.php',
+					editorTemplateContext ? editorTemplateContext.appendTo(requestData) : requestData,
+					resolve,
+				);
+			});
+		}, this)).then(BX.proxy(function(response)
+		{
+			var currentTemplateId = parseInt(BX(this.selectTemplateNodeId).value, 10);
+			if(requestId !== this.unifiedTemplateFieldsRequestId || currentTemplateId !== templateId)
+			{
+				return;
+			}
+
+			var currentValuesContainer = BX(this.valuesContainerNodeId);
+			if(response && currentValuesContainer)
+			{
+				BX.append(BX.create('div', {html: response}), currentValuesContainer);
+			}
+		}, this)).catch(function() {});
 	};
 
 })(window);

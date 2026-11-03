@@ -252,20 +252,27 @@ this.BX = this.BX || {};
 			if (main_core.Type.isPlainObject(analytics) && main_core.Type.isStringFilled(analytics.c_sub_section) && videoCallContext) {
 				analytics.c_sub_section = videoCallContext;
 			}
-			main_core.ajax.runAction('intranet.controlbutton.getVideoCallChat', this.getAjaxConfig(analytics)).then(response => {
-				if (response.data) {
-					im_public_iframe.Messenger.startVideoCall(`chat${response.data}`, true);
+			const config = this.getAjaxConfig(analytics);
+			return main_core.ajax.runAction('intranet.controlbutton.getVideoCallStart', config).then(response => {
+				const chatId = parseInt(response.data?.chatId, 10);
+				if (chatId > 0) {
+					const callOptions = response.data.callOptions;
+					if (main_core.Type.isPlainObject(callOptions) && main_core.Type.isNumber(callOptions.invitePeriod)) {
+						im_public_iframe.Messenger.startVideoCall(`chat${chatId}`, true, callOptions);
+					} else {
+						im_public_iframe.Messenger.startVideoCall(`chat${chatId}`, true);
+					}
 				}
 				this.chatLockCounter = 0;
 				this.hideLoader();
 			}, response => {
 				if (response.errors[0].code === 'lock_error' && this.chatLockCounter < 4) {
 					this.chatLockCounter++;
-					this.startVideoCall();
-				} else {
-					this.showHintPopup(response.errors[0].message);
-					this.hideLoader();
+					return this.startVideoCall();
 				}
+				this.showHintPopup(response.errors[0].message);
+				this.hideLoader();
+				return null;
 			});
 		}
 		addEntityComment(params) {

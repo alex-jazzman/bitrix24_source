@@ -3,6 +3,8 @@
  */
 jn.define('lists/in-app-url/routes', (require, exports, module) => {
 	const openElementDetails = (elementId, context) => {
+		const { widgetTitle, uid, parentWidget, presentation } = context ?? {};
+
 		void requireLazy('lists:element-details')
 			.then(({ ElementDetails }) => {
 				if (ElementDetails)
@@ -10,13 +12,14 @@ jn.define('lists/in-app-url/routes', (require, exports, module) => {
 					ElementDetails.open(
 						{
 							elementId,
-							title: context.widgetTitle || null,
+							title: widgetTitle || null,
 							isEmbedded: false,
 							isNeedShowSkeleton: true,
 							interceptExit: true,
-							uid: context.uid || null,
+							uid: uid || null,
+							presentation,
 						},
-						context.parentWidget || PageManager,
+						parentWidget || PageManager,
 					);
 				}
 			})
@@ -28,40 +31,20 @@ jn.define('lists/in-app-url/routes', (require, exports, module) => {
 	 */
 	module.exports = (inAppUrl) => {
 		inAppUrl
-			.register(
-				'/bizproc/processes/:iBlockId/element/:sectionId/:elementId/',
-				({ elementId }, { context }) => {
-					openElementDetails(elementId, context);
-				},
-			)
+			.addRoute('/bizproc/processes/:iBlockId/element/:sectionId/:elementId/')
+			.addRoute('/bizproc/processes/\\?livefeed=y&list_id=:iBlockId&element_id=:elementId')
+			.handler(({ elementId }, { context }) => {
+				openElementDetails(elementId, context);
+			})
 			.name('lists:processDetail')
 		;
 		inAppUrl
-			.register(
-				'/bizproc/processes/\\?livefeed=y&list_id=:iBlockId&element_id=:elementId',
-				({ elementId }, { context }) => {
-					openElementDetails(elementId, context);
-				},
-			)
-			.name('lists:liveFeedProcessDetail')
-		;
-		inAppUrl
-			.register(
-				'/workgroups/group/:groupID/lists/:iBlockId/element/:sectionId/:elementId/',
-				({ elementId }, { context }) => {
-					openElementDetails(elementId, context);
-				},
-			)
-			.name('lists:groupElementDetail')
-		;
-		inAppUrl
-			.register(
-				'/company/lists/:iBlockId/element/:sectionId/:elementId/',
-				({ elementId }, { context }) => {
-					openElementDetails(elementId, context);
-				},
-			)
-			.name('lists:listElementDetail')
+			.addRoute('/workgroups/group/:groupID/lists/:iBlockId/element/:sectionId/:elementId/')
+			.addRoute('/company/lists/:iBlockId/element/:sectionId/:elementId/')
+			.handler(({ elementId }, { context }) => {
+				openElementDetails(elementId, context);
+			})
+			.name('lists:elementDetail')
 		;
 	};
 });

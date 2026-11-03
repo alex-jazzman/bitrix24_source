@@ -8,8 +8,14 @@ jn.define('disk/uploader/src/progress-bar', (require, exports, module) => {
 	const { formatFileSize } = require('utils/file');
 	const { UploadStatus } = require('disk/uploader/src/config');
 
+	/**
+	 * @extends {LayoutComponent<DiskUploaderProgressBarProps, DiskUploaderProgressBarState>}
+	 */
 	class DiskUploaderProgressBar extends LayoutComponent
 	{
+		/**
+		 * @param {DiskUploaderProgressBarProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -21,6 +27,9 @@ jn.define('disk/uploader/src/progress-bar', (require, exports, module) => {
 			};
 		}
 
+		/**
+		 * @param {DiskUploaderProgressBarProps} props
+		 */
 		componentWillReceiveProps(props)
 		{
 			this.state = {
@@ -32,9 +41,8 @@ jn.define('disk/uploader/src/progress-bar', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @param {number} byteSent
-		 * @param {number} byteTotal
-		 * @param {string} status
+		 * @param {DiskUploadProgressState} progress
+		 * @return {void}
 		 */
 		setProgress({ byteSent, byteTotal, status })
 		{
@@ -55,6 +63,9 @@ jn.define('disk/uploader/src/progress-bar', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {DiskUploaderColor}
+		 */
 		#makeColor()
 		{
 			if (this.state.status === UploadStatus.ERROR || this.state.status === UploadStatus.CANCELED)
@@ -65,6 +76,9 @@ jn.define('disk/uploader/src/progress-bar', (require, exports, module) => {
 			return Color.base3;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		#makeText()
 		{
 			const { status, byteSent, byteTotal } = this.state;

@@ -19,7 +19,7 @@ CJSCore::Init(array('disk'));
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.grid/templates/.default/bitrix/main.interface.grid/.default/style.css');
 ?>
 
-<div class="bx-disk-interface-toolbar-container" style="max-height: 60px; overflow: hidden;">
+<div class="bx-disk-interface-toolbar-container" style="max-height: 60px; overflow: hidden;" data-testid="disk-ext-link-list-toolbar">
 
 	<?
 	$APPLICATION->IncludeComponent(
@@ -35,7 +35,7 @@ CJSCore::Init(array('disk'));
 
 	<div style="clear: both;"></div>
 </div>
-<div class="bx-disk-interface-filelist">
+<div class="bx-disk-interface-filelist" data-testid="disk-ext-link-list">
 	<?
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.ui.grid',
@@ -88,6 +88,7 @@ BX.message({
 	DISK_EXTERNAL_LINK_LIST_SELECTED_OBJECT_2_4: '<?= GetMessageJS('DISK_EXTERNAL_LINK_LIST_SELECTED_OBJECT_2_4') ?>',
 	DISK_EXTERNAL_LINK_LIST_SELECTED_OBJECT_5_20: '<?= GetMessageJS('DISK_EXTERNAL_LINK_LIST_SELECTED_OBJECT_5_20') ?>',
 	DISK_EXTERNAL_LINK_LIST_SHOW_LINK_WINDOW: '<?= GetMessageJS('DISK_EXTERNAL_LINK_LIST_SHOW_LINK_WINDOW') ?>',
+	DISK_EXTERNAL_LINK_LIST_LINK_FIELD_LABEL: '<?= GetMessageJS('DISK_EXTERNAL_LINK_LIST_LINK_FIELD_LABEL') ?>',
 	DISK_EXTERNAL_LINK_LIST_DELETE_BUTTON: '<?=GetMessageJS("DISK_EXTERNAL_LINK_LIST_DELETE_BUTTON")?>'
 });
 

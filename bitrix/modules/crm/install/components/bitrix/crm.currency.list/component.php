@@ -1,348 +1,139 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-use Bitrix\Main\Web\Uri;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\V2\Infrastructure\Component\Currency\Grid\CurrencyGrid;
+use Bitrix\Crm\V2\Internal\Service\Currency\Compatibility\LegacyCurrencyMutationAdapter;
+use Bitrix\Crm\V2\Internal\Service\Currency\CurrencyMutationService;
+use Bitrix\Main\Grid\Settings;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\CreateButton;
+use Bitrix\UI\Buttons\Tag;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
-global $APPLICATION;
-
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+$canEdit = Container::getInstance()->getUserPermissions()->isCrmAdmin();
+if (!$canEdit)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+
 	return;
 }
 
-
-$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
-
-$arParams['PATH_TO_CURRENCY_LIST'] = CrmCheckPath('PATH_TO_CURRENCY_LIST', $arParams['PATH_TO_CURRENCY_LIST'], '');
-$arParams['PATH_TO_CURRENCY_SHOW'] = CrmCheckPath('PATH_TO_CURRENCY_SHOW', $arParams['PATH_TO_CURRENCY_SHOW'], '?currency_id=#currency_id#&show');
-$arParams['PATH_TO_CURRENCY_ADD'] = CrmCheckPath('PATH_TO_CURRENCY_ADD', $arParams['PATH_TO_CURRENCY_ADD'], '?add');
-$arParams['PATH_TO_CURRENCY_EDIT'] = CrmCheckPath('PATH_TO_CURRENCY_EDIT', $arParams['PATH_TO_CURRENCY_EDIT'], '?currency_id=#currency_id#&edit');
-
-$arResult['GRID_ID'] = 'CRM_CURRENCY_LIST';
-$arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
-$arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
-
-$arResult['HEADERS'] = [
-	['id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'ID', 'default' => true, 'editable' => false],
-	['id' => 'NAME', 'name' => GetMessage('CRM_COLUMN_NAME'), 'sort' => 'NAME', 'default' => true, 'editable' => false, 'params' => ['size' => 60]],
-	['id' => 'SORT', 'name' => GetMessage('CRM_COLUMN_SORT'), 'sort' => 'SORT', 'default' => true, 'editable' => true],
-	['id' => 'EXCH_RATE', 'name' => GetMessage('CRM_COLUMN_EXCH_RATE'), 'sort' => false, 'default' => true, 'editable' => true],
-	['id' => 'AMOUNT_CNT', 'name' => GetMessage('CRM_COLUMN_AMOUNT_CNT'), 'sort' => false, 'default' => true, 'editable' => true],
-	['id' => 'BASE', 'name' => GetMessage('CRM_COLUMN_CURRENCY_LIST_BASE'), 'sort' => false, 'default' => true, 'editable' => false, 'type'=>'checkbox'],
-	['id' => 'ACCOUNTING', 'name' => GetMessage('CRM_COLUMN_ACCOUNTING'), 'sort' => false, 'default' => true, 'editable' => true, 'type'=>'checkbox'],
-];
-
-// if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
-// {
-	$arResult['HEADERS'][] = ['id' => 'INVOICE_DEF', 'name' => GetMessage('CRM_COLUMN_INVOICE_DEF'), 'sort' => false, 'default' => true, 'editable' => false, 'type'=>'checkbox'];
-// }
-
-//Show error message if required
-if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
-{
-	$errorID = mb_strtolower($_GET['error']);
-	if(preg_match('/^crm_err_/', $errorID) === 1)
-	{
-		if(!isset($_SESSION[$errorID]))
-		{
-			LocalRedirect(
-				CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_CURRENCY_LIST'],
-					array()
-				)
-			);
-		}
-
-		$errorMessage = strval($_SESSION[$errorID]);
-		unset($_SESSION[$errorID]);
-		if($errorMessage !== '')
-		{
-			ShowError($errorMessage);
-		}
-	}
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['action_button_'.$arResult['GRID_ID']]))
-{
-	$errorMessages = array();
-	$action = $_POST['action_button_'.$arResult['GRID_ID']];
-	if($arResult['CAN_DELETE'] && $action === 'delete')
-	{
-		$deleteAll = $_POST['action_all_rows_'.$arResult['GRID_ID']] == 'Y';
-		$IDs = !$deleteAll ? $_POST['ID'] : array();
-		$allCurrencies = CCrmCurrency::GetAll();
-		foreach($allCurrencies as $arCurrency)
-		{
-			$currencyID = $arCurrency['CURRENCY'];
-			if(!$deleteAll && !in_array($currencyID, $IDs, true))
-			{
-				continue;
-			}
-
-			if(!CCrmCurrency::Delete($currencyID))
-			{
-				$error = CCrmCurrency::GetLastError();
-				$errorMessages[] = $error !== '' ? $error : GetMessage('CRM_CURRENCY_DELETION_GENERAL_ERROR');
-			}
-		}
-		unset($_POST['ID'], $_REQUEST['ID']); // otherwise the filter will work
-	}
-	elseif($arResult['CAN_EDIT'] && $action === 'edit' && isset($_POST['FIELDS']) && is_array($_POST['FIELDS']))
-	{
-		foreach($_POST['FIELDS'] as $ID => $arField)
-		{
-			$arFields = array();
-			if(isset($arField['EXCH_RATE']))
-			{
-				$arFields['AMOUNT'] = $arField['EXCH_RATE'];
-			}
-
-			if(isset($arField['AMOUNT_CNT']))
-			{
-				$arFields['AMOUNT_CNT'] = max(intval($arField['AMOUNT_CNT']), 1);
-			}
-
-			if(isset($arField['SORT']))
-			{
-				$arFields['SORT'] = $arField['SORT'];
-			}
-
-			if (count($arFields) > 0)
-			{
-				if(!CCrmCurrency::Update($ID, $arFields))
-				{
-					$error = CCrmCurrency::GetLastError();
-					$errorMessages[] = $error !== '' ? $error : GetMessage('CRM_CURRENCY_UPDATE_GENERAL_ERROR');
-					continue;
-				}
-			}
-
-			if(isset($arField['ACCOUNTING']))
-			{
-				$baseCurrencyID = CCrmCurrency::GetBaseCurrencyID();
-				$accountCurrencyID = CCrmCurrency::GetAccountCurrencyID();
-				if($ID === $accountCurrencyID)
-				{
-					if($arField['ACCOUNTING'] === 'N' && $ID !== $baseCurrencyID)
-					{
-						CCrmCurrency::SetAccountCurrencyID($baseCurrencyID);
-					}
-				}
-				elseif($arField['ACCOUNTING'] === 'Y')
-				{
-					CCrmCurrency::SetAccountCurrencyID($ID);
-				}
-			}
-		}
-	}
-
-	if(!isset($_POST['AJAX_CALL']))
-	{
-		if(empty($errorMessages))
-		{
-			LocalRedirect($APPLICATION->GetCurPage());
-
-		}
-		else
-		{
-			$errorID = uniqid('crm_err_');
-			$_SESSION[$errorID] = implode("\n", $errorMessages);
-
-			LocalRedirect(
-				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
-						$arParams['PATH_TO_CURRENCY_LIST'],
-						array()
-					)))->addParams(array('error' => $errorID))
-			);
-		}
-	}
-}
-elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_GET['action_'.$arResult['GRID_ID']]))
-{
-	$errorID = '';
-	if ($arResult['CAN_EDIT'] && $_GET['action_'.$arResult['GRID_ID']] === 'mark_as_base')
-	{
-		$currencyID = isset($_GET['ID']) ? $_GET['ID'] : '';
-		if($currencyID !== '' && $currencyID !== CCrmCurrency::GetBaseCurrencyID())
-		{
-			if(!CCrmCurrency::SetBaseCurrencyID($currencyID))
-			{
-				$errorID = uniqid('crm_err_');
-				$_SESSION[$errorID] = GetMessage('CRM_CURRENCY_MARK_AS_BASE_GENERAL_ERROR');
-			}
-		}
-		unset($_GET['ID'], $_REQUEST['ID']); // otherwise the filter will work
-	}
-	elseif ($arResult['CAN_DELETE'] && $_GET['action_'.$arResult['GRID_ID']] === 'delete')
-	{
-		$currencyID = isset($_GET['ID']) ? $_GET['ID'] : '';
-		if($currencyID !== '')
-		{
-			if(!CCrmCurrency::Delete($currencyID))
-			{
-				$errorID = uniqid('crm_err_');
-				$_SESSION[$errorID] = CCrmCurrency::GetLastError();
-			}
-		}
-		unset($_GET['ID'], $_REQUEST['ID']); // otherwise the filter will work
-	}
-
-	if (!isset($_GET['AJAX_CALL']))
-	{
-		if($errorID === '')
-		{
-			LocalRedirect($bInternal ? '?' . $arParams['FORM_ID'] . '_active_tab=tab_currency' : '');
-		}
-		else
-		{
-			LocalRedirect(
-				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
-						$arParams['PATH_TO_CURRENCY_LIST'],
-						array()
-					)))->addParams(array('error' => $errorID))
-			);
-		}
-	}
-}
-
-$gridOptions = new CCrmGridOptions($arResult['GRID_ID']);
-
-$gridSorting = $gridOptions->GetSorting(
-	array(
-		'sort' => array('SORT' => 'asc'),
-		'vars' => array('by' => 'by', 'order' => 'order')
-	)
+$gridId = 'CRM_CURRENCY_LIST';
+$addUrl = CrmCheckPath('PATH_TO_CURRENCY_ADD', $arParams['PATH_TO_CURRENCY_ADD'] ?? '', '?add');
+$editUrlTemplate = CrmCheckPath(
+	'PATH_TO_CURRENCY_EDIT',
+	$arParams['PATH_TO_CURRENCY_EDIT'] ?? '',
+	'?currency_id=#currency_id#&edit',
 );
 
-$sort = $arResult['SORT'] = $gridSorting['sort'];
-$arResult['SORT_VARS'] = $gridSorting['vars'];
-
-//if (!isset($arParams['CURRENCY_COUNT']))
-//{
-//	$arParams['CURRENCY_COUNT'] = 20;
-//}
-
-$accountCurrencyID = CCrmCurrency::GetAccountCurrencyID();
-$baseCurrencyID = CCrmCurrency::GetBaseCurrencyID();
-$defaultForInvoices = CCrmCurrency::getInvoiceDefault();
-$currencies = array();
-
-$allCurrencies = CCrmCurrency::GetAll();
-foreach($allCurrencies as $k => $v)
+$getSafeUrl = static function(string $url, string $fallback): string
 {
-	$currency = array();
-	$currency['ID'] = $k; // Key is Currency ID
-
-	$currency['NAME'] = $v['FULL_NAME'];
-	$currency['SORT'] = $v['SORT'];
-	$currency['EXCH_RATE'] = $v['AMOUNT']; //Default Exchange Rate
-	$currency['AMOUNT_CNT'] = $v['AMOUNT_CNT'];
-	$currency['ACCOUNTING'] = $k === $accountCurrencyID ? 'Y' : 'N';
-
-	$isBase = $k === $baseCurrencyID;
-	$currency['BASE'] = $isBase ? 'Y' : 'N';
-	$currency['INVOICE_DEF'] = $currency['~INVOICE_DEF'] = $defaultForInvoices  == $k ? 'Y' : 'N';
-
-	$currency['PATH_TO_CURRENCY_SHOW'] =
-		CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_CURRENCY_SHOW'],
-			array('currency_id' => $k)
-		);
-
-	$currency['PATH_TO_CURRENCY_EDIT'] =
-		CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_CURRENCY_EDIT'],
-			array('currency_id' => $k)
-		);
-
-	$currency['PATH_TO_CURRENCY_DELETE'] =
-		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_CURRENCY_LIST'],
-				array()
-			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid()));
-
-	$currency['PATH_TO_CURRENCY_MARK_AS_BASE'] =
-		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_CURRENCY_LIST'],
-				array()
-			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'mark_as_base', 'ID' => $k, 'sessid' => bitrix_sessid()));
-
-	$currency['~ID'] = $k;
-	$currency['~NAME'] = htmlspecialcharsBack($currency['NAME']);
-	$currency['~SORT'] = $currency['SORT'];
-	$currency['~EXCH_RATE'] = $currency['EXCH_RATE'];
-	$currency['~AMOUNT_CNT'] = $currency['AMOUNT_CNT'];
-	$currency['~ACCOUNTING'] = $currency['ACCOUNTING'];
-	$currency['~BASE'] = $currency['BASE'];
-
-	$currency['CAN_DELETE'] = $arResult['CAN_DELETE'] && !$isBase;
-	$currencies[] = $currency;
-}
-
-
-if(is_array($sort) && count($sort) > 0)
-{
-	// Process only first expression
-	reset($sort);
-	$by = key($sort);
-	$order = $sort[$by];
-
-	if($by === 'SORT')
+	$url = trim($url);
+	$scheme = parse_url($url, PHP_URL_SCHEME);
+	$host = parse_url($url, PHP_URL_HOST);
+	if (
+		$scheme === false
+		|| $host === false
+		|| ($host !== null && $scheme === null)
+		|| (is_string($scheme) && !in_array(strtolower($scheme), ['http', 'https'], true))
+	)
 	{
-		usort(
-			$currencies,
-			function ($a, $b) use ($order) {
-				if ($order === 'asc')
-				{
-					return $a['SORT'] > $b['SORT'];
-				}
-				return $b['SORT'] > $a['SORT'];
-			}
-		);
+		return $fallback;
 	}
-	elseif($by === 'ID' || $by === 'NAME')
-	{
-		usort(
-			$currencies,
-			function ($a, $b) use ($order, $by) {
-				if ($order === 'asc')
-				{
-					return strcmp($a[$by], $b[$by]);
-				}
-				return strcmp($b[$by], $a[$by]);
-			}
-		);
-	}
-}
 
-$arResult['CURRENCIES'] = array();
-$rowCount = $arResult['ROWS_COUNT'] = count($currencies);
-for($i = 0; $i < $rowCount; $i++)
+	return $url;
+};
+
+$addUrl = $getSafeUrl($addUrl, '?add');
+$editUrlTemplate = $getSafeUrl($editUrlTemplate, '?currency_id=#currency_id#&edit');
+if (!str_contains($editUrlTemplate, '#currency_id#'))
 {
-	$currency = $currencies[$i];
-	$arResult['CURRENCIES'][$currency['ID']] = $currency;
+	$editUrlTemplate = '?currency_id=#currency_id#&edit';
 }
 
-//$arResult['FILTER'] =
-//	array(
-//		array(
-//			'id' => 'ID',
-//			'name' => GetMessage('CRM_COLUMN_ID')
-//		),
-//		array(
-//			'id' => 'NAME',
-//			'name' => GetMessage('CRM_COLUMN_NAME')
-//		)
-//	);
+$mutationAdapter = new LegacyCurrencyMutationAdapter();
+$mutationService = new CurrencyMutationService($mutationAdapter);
+$createGrid = static function(string $baseCurrencyId, string $accountingCurrencyId) use (
+	$gridId,
+	$editUrlTemplate,
+	$mutationService,
+	$mutationAdapter,
+): CurrencyGrid {
+	return new CurrencyGrid(
+		new Settings(['ID' => $gridId]),
+		$editUrlTemplate,
+		$baseCurrencyId,
+		$accountingCurrencyId,
+		$mutationService,
+		$mutationAdapter,
+		null,
+		[
+			'ID' => (string)GetMessage('CRM_COLUMN_ID'),
+			'NAME' => (string)GetMessage('CRM_COLUMN_NAME'),
+			'SORT' => (string)GetMessage('CRM_COLUMN_SORT'),
+			'EXCH_RATE' => (string)GetMessage('CRM_COLUMN_EXCH_RATE'),
+			'AMOUNT_CNT' => (string)GetMessage('CRM_COLUMN_AMOUNT_CNT'),
+			'BASE' => (string)GetMessage('CRM_COLUMN_CURRENCY_LIST_BASE'),
+			'ACCOUNTING' => (string)GetMessage('CRM_COLUMN_ACCOUNTING'),
+		],
+		(string)GetMessage('CRM_CURRENCY_ACTION_SET_BASE'),
+	);
+};
 
+$grid = $createGrid(
+	$mutationAdapter->getBaseCurrencyId(),
+	$mutationAdapter->getAccountingCurrencyId(),
+);
 
+$grid->processRequest();
+$currentPage = $grid->getPagination()->getCurrentPage();
+
+$baseCurrencyId = $mutationAdapter->getBaseCurrencyId();
+$accountingCurrencyId = $mutationAdapter->getAccountingCurrencyId();
+$grid = $createGrid($baseCurrencyId, $accountingCurrencyId);
+$grid->getPagination()->setCurrentPage($currentPage);
+
+$arResult = $grid->getComponentParams([
+	'gridId' => $gridId,
+	'addUrl' => $addUrl,
+	'editUrlTemplate' => $editUrlTemplate,
+	'batchController' => 'crm.v2.Currency.BatchDeletion',
+	'batchStorageKey' => 'crm.currency.list.batchDeletion.v1',
+	'canEdit' => $canEdit,
+	'canDelete' => $canEdit,
+	'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => \Bitrix\Main\ModuleManager::isModuleInstalled('ui'),
+]);
+
+Extension::load('crm.currency-list');
+Toolbar::deleteFavoriteStar();
+
+if ($canEdit)
+{
+	Toolbar::addButton(
+		new CreateButton([
+			'tag' => Tag::LINK,
+			'link' => $addUrl,
+			'text' => Loc::getMessage('CRM_CURRENCY_LIST_ADD'),
+			'dataset' => [
+				'testid' => 'crm-currency-list-add',
+			],
+		]),
+		ButtonLocation::AFTER_TITLE,
+	);
+}
 
 $this->IncludeComponentTemplate();

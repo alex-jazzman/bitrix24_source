@@ -30,7 +30,7 @@ BitrixVue.component('sale-checkout-view-product-summary', {
 	},
 	// language=Vue
 	template: `
-		<div class="checkout-basket-summary-container">
+		<div class="checkout-basket-summary-container" data-testid="sale-checkout-basket-summary">
 			<!--region mobile -->
 			<div class="checkout-basket-mobile-only checkout-basket-summary-discount checkout-summary-item-discount" v-if="hasDiscount()">
 				<div class="checkout-basket-summary-text">{{localize.CHECKOUT_VIEW_SUMMARY_BASKET_PROFIT}}</div>
@@ -60,7 +60,12 @@ BitrixVue.component('sale-checkout-view-product-summary', {
 				</div>
 				<template v-if="mode === getConstMode.view">
 					<div class="d-block w-100 text-right">
-						<span class="checkout-basket-total-backdrop-btn checkout-basket-mobile-only" @click="backdropTotalOpen">{{localize.CHECKOUT_VIEW_SUMMARY_DETAILS}}</span>
+						<button
+							class="checkout-basket-total-backdrop-btn checkout-basket-mobile-only"
+							type="button"
+							data-testid="sale-checkout-total-details-btn"
+							@click="backdropTotalOpen"
+						>{{localize.CHECKOUT_VIEW_SUMMARY_DETAILS}}</button>
 					</div>
 				</template>
 			</div>

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
-(function (exports, main_core, ui_designTokens, main_popup, main_core_events, ui_dialogs_messagebox, ui_iconSet_api_core, ui_iconSet_outline, ui_iconSet_solid, ui_notification, ui_buttons, landing_metrika) {
+(function (exports, main_core, ui_designTokens, main_popup, main_core_events, ui_dialogs_messagebox, ui_iconSet_api_core, ui_iconSet_outline, ui_iconSet_solid, ui_buttons, ui_notification, landing_metrika) {
 	'use strict';
 
 	class EditableTitle {
@@ -331,9 +331,14 @@ this.BX.Landing = this.BX.Landing || {};
 			this.$containerSecondStep = null;
 			this.$containerQr = null;
 			this.$containerQrimage = null;
+			this.$containerQrButton = null;
+			this.$containerNotPublishedPublishButton = null;
+			this.$containerNotPublishedOpenButton = null;
 			this.$containerInputUrl = null;
 			this.$containerCopyLink = null;
 			this.$containerTestOrder = null;
+			this.$containerOpenCRMFirstStep = null;
+			this.$containerOpenCRMSecondStep = null;
 			this.focusTrap = null;
 			this.focusTrapPromise = null;
 			this.isShown = false;
@@ -429,7 +434,7 @@ this.BX.Landing = this.BX.Landing || {};
 			if (ev.type !== 'click') {
 				return;
 			}
-			if (ev.target.closest('.landing-sites__popup') || ev.target.closest('.landing-sites__container-link-' + this.id) || ev.target.closest('.landing-sites__status-' + this.id)) {
+			if (ev.target.closest('.landing-sites__popup') || ev.target.closest(`.landing-sites__container-link-${this.id}`) || ev.target.closest(`.landing-sites__status-${this.id}`)) {
 				return;
 			}
 			this.hide();
@@ -483,7 +488,7 @@ this.BX.Landing = this.BX.Landing || {};
 					let isCopied = false;
 					try {
 						isCopied = document.execCommand('copy');
-					} catch (error) {
+					} catch {
 						isCopied = false;
 					}
 					if (isCopied) {
@@ -500,7 +505,7 @@ this.BX.Landing = this.BX.Landing || {};
 			return this.$containerCopyLink;
 		}
 		getContainerQrImage() {
-			let node = main_core.Tag.render`
+			const node = main_core.Tag.render`
 			<div class="landing-sites__popup-image"></div>
 		`;
 			new QRCode(node, {
@@ -510,9 +515,28 @@ this.BX.Landing = this.BX.Landing || {};
 			});
 			return node;
 		}
+		getContainerQrButton() {
+			const isShop = this.indexEditUrl.startsWith('/shop/');
+			const popupButtonText = isShop ? main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SHOP') : main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SITE');
+			if (!this.$containerQrButton) {
+				const openQrButton = new ui_buttons.Button({
+					text: popupButtonText,
+					useAirDesign: true,
+					tag: ui_buttons.Button.Tag.LINK,
+					link: this.fullUrl,
+					props: {
+						target: '_blank',
+						rel: 'noopener'
+					},
+					style: ui_buttons.Button.AirStyle.OUTLINE
+				});
+				this.$containerQrButton = openQrButton.getContainer();
+			}
+			return this.$containerQrButton;
+		}
 		getContainerQr() {
 			if (!this.$containerQr) {
-				let closeIcon = main_core.Tag.render`
+				const closeIcon = main_core.Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-close"
@@ -522,7 +546,6 @@ this.BX.Landing = this.BX.Landing || {};
 				main_core.Event.bind(closeIcon, 'click', this.hide.bind(this));
 				const isShop = this.indexEditUrl.startsWith('/shop/');
 				const popupText = isShop ? main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_3') : main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_SITE_TEXT');
-				const popupButtonText = isShop ? main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SHOP') : main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SITE');
 				this.$containerQr = main_core.Tag.render`
 				<div class="landing-sites__popup-container --qr">
 					${closeIcon}
@@ -532,10 +555,8 @@ this.BX.Landing = this.BX.Landing || {};
 								${popupText}
 							</div>
 							${this.getContainerQrImage()}
-							<div class="landing-sites__popup-buttons">
-								<a href="${this.fullUrl}" target="_blank" class="ui-btn ui-btn-light-border ui-btn-round">
-									${popupButtonText}
-								</a>
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
+								${this.getContainerQrButton()}
 							</div>
 						</div>
 						<div class="landing-sites__popup-bottom">
@@ -553,18 +574,54 @@ this.BX.Landing = this.BX.Landing || {};
 		}
 		getContainerTestOrder() {
 			if (!this.$containerTestOrder) {
-				this.$containerTestOrder = main_core.Tag.render`
-				<button type="button" class="ui-btn ui-btn-success ui-btn-round">
-					${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')}
-				</button>
-			`;
+				const testOrderButton = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER'),
+					useAirDesign: true,
+					style: ui_buttons.Button.AirStyle.FILLED,
+					props: {
+						type: 'button'
+					}
+				});
+				this.$containerTestOrder = testOrderButton.getContainer();
 				main_core.Event.bind(this.$containerTestOrder, 'click', this.showSecondStep.bind(this));
 			}
 			return this.$containerTestOrder;
 		}
+		createContainerOpenCRM() {
+			if (!this.$containerOpenCRMFirstStep) {
+				const openCRMFirstStepButton = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM'),
+					className: 'landing-sites__popup-crm-button',
+					useAirDesign: true,
+					tag: ui_buttons.Button.Tag.LINK,
+					link: this.ordersUrl,
+					style: ui_buttons.Button.AirStyle.OUTLINE
+				});
+				this.$containerOpenCRMFirstStep = openCRMFirstStepButton.getContainer();
+			}
+			if (!this.$containerOpenCRMSecondStep) {
+				const openCRMSecondStepButton = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM'),
+					className: 'landing-sites__popup-crm-button',
+					useAirDesign: true,
+					tag: ui_buttons.Button.Tag.LINK,
+					link: this.ordersUrl,
+					style: ui_buttons.Button.AirStyle.OUTLINE
+				});
+				this.$containerOpenCRMSecondStep = openCRMSecondStepButton.getContainer();
+			}
+		}
+		getContainerOpenCRMFirstStep() {
+			this.createContainerOpenCRM();
+			return this.$containerOpenCRMFirstStep;
+		}
+		getContainerOpenCRMSecondStep() {
+			this.createContainerOpenCRM();
+			return this.$containerOpenCRMSecondStep;
+		}
 		getContainerFirstStep() {
 			if (!this.$containerFirstStep) {
-				let closeIcon = main_core.Tag.render`
+				const closeIcon = main_core.Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-close"
@@ -574,23 +631,21 @@ this.BX.Landing = this.BX.Landing || {};
 				main_core.Event.bind(closeIcon, 'click', this.hide.bind(this));
 				this.$containerFirstStep = main_core.Tag.render`
 				<div class="landing-sites__popup-container">
-					${closeIcon}
 					<div class="landing-sites__popup-wrapper">
 						<div class="landing-sites__popup-title">
 							<span class="landing-sites__popup-title-text">
 								${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')}
 							</span>
+							${closeIcon}
 						</div>
 						<div class="landing-sites__popup-content">
 							<div class="landing-sites__popup-text">
 								${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_TEXT')}
 							</div>
 							<div class="landing-sites__popup-image --first-order"></div>
-							<div class="landing-sites__popup-buttons">
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
 								${this.getContainerTestOrder()}
-								<a href="${this.ordersUrl}" class="ui-btn ui-btn-light-border ui-btn-round">
-									${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM')}
-								</a>
+								${this.getContainerOpenCRMFirstStep()}
 							</div>
 						</div>
 					</div>
@@ -601,14 +656,14 @@ this.BX.Landing = this.BX.Landing || {};
 		}
 		getContainerSecondStep() {
 			if (!this.$containerSecondStep) {
-				let closeIcon = main_core.Tag.render`
+				const closeIcon = main_core.Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-close"
 					aria-label="${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_CLOSE')}"
 				></button>
 			`;
-				let prevIcon = main_core.Tag.render`
+				const prevIcon = main_core.Tag.render`
 				<button
 					type="button"
 					class="landing-sites__popup-prev"
@@ -619,22 +674,20 @@ this.BX.Landing = this.BX.Landing || {};
 				main_core.Event.bind(prevIcon, 'click', this.showFirstStep.bind(this));
 				this.$containerSecondStep = main_core.Tag.render`
 				<div class="landing-sites__popup-container --hide-left">
-					${closeIcon}
-					${prevIcon}
 					<div class="landing-sites__popup-wrapper">
 						<div class="landing-sites__popup-title">
+							${prevIcon}
 							<span class="landing-sites__popup-title-text">${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER')}</span>
+							${closeIcon}
 						</div>
-						<div class="landing-sites__popup-content">
+						<div class="landing-sites__popup-content --popup-second-step">
 							<div class="landing-sites__popup-text">
 								<div class="landing-sites__popup-text --list"><span>1</span> ${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_1')}</div>
 								<div class="landing-sites__popup-text --list"><span>2</span> ${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_2')}</div>
 							</div>
 							${this.getContainerQrImage()}
-							<div class="landing-sites__popup-buttons">
-								<a href="${this.ordersUrl}" class="ui-btn ui-btn-success ui-btn-round">
-									${main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_CRM')}
-								</a>
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
+								${this.getContainerOpenCRMSecondStep()}
 							</div>
 						</div>
 					</div>
@@ -642,6 +695,48 @@ this.BX.Landing = this.BX.Landing || {};
 			`;
 			}
 			return this.$containerSecondStep;
+		}
+		getContainerNotPublishedPublishButton() {
+			if (!this.$containerNotPublishedPublishButton) {
+				const restriction = this.itemObj.error?.publication;
+				const isShop1c = this.itemObj.access.publication === false && restriction?.code === 'shop1c';
+				const options = {
+					text: main_core.Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH'),
+					useAirDesign: true,
+					style: ui_buttons.Button.AirStyle.FILLED
+				};
+				if (isShop1c) {
+					options.disabled = true;
+					options.state = ui_buttons.Button.State.DISABLED;
+					options.icon = ui_buttons.Button.Icon.LOCK;
+					options.dataset = {
+						hint: `${restriction.hint}<br><a href="${restriction.url}">${restriction.link}</a>`,
+						hintNoIcon: 'Y',
+						hintHtml: 'Y',
+						hintInteractivity: 'Y'
+					};
+				} else {
+					options.onclick = () => {
+						this.itemObj.markUserPublicationAction();
+						main_core_events.EventEmitter.emit('BX.Landing.SiteTile:publish', this.itemObj);
+						this.hide();
+					};
+				}
+				const publishButton = new ui_buttons.Button(options);
+				this.$containerNotPublishedPublishButton = publishButton.getContainer();
+			}
+			return this.$containerNotPublishedPublishButton;
+		}
+		getContainerNotPublishedOpenButton() {
+			if (!this.$containerNotPublishedOpenButton) {
+				const openButton = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_OPEN'),
+					useAirDesign: true,
+					style: ui_buttons.Button.AirStyle.OUTLINE
+				});
+				this.$containerNotPublishedOpenButton = openButton.getContainer();
+			}
+			return this.$containerNotPublishedOpenButton;
 		}
 		getContainerNotPublished() {
 			if (!this.$containerNotPublished) {
@@ -653,44 +748,8 @@ this.BX.Landing = this.BX.Landing || {};
 				></button>
 			`;
 				main_core.Event.bind(closeIcon, 'click', this.hide.bind(this));
-				let buttPublish = main_core.Tag.render`
-				<button type="button" class="ui-btn ui-btn-success ui-btn-round">
-					${main_core.Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH')}
-				</button>
-			`;
-				if (this.itemObj.access.publication === false && this.itemObj.error.publication) {
-					const code = this.itemObj.error.publication.code || '';
-					const hint = this.itemObj.error.publication.hint || '';
-					const url = this.itemObj.error.publication.url || '';
-					const link = this.itemObj.error.publication.link || '';
-					if (code === 'shop1c') {
-						buttPublish = main_core.Tag.render`
-					<button 
-						type="button"
-						class="ui-btn ui-btn-success ui-btn-round ui-btn-disabled ui-btn-icon-lock"
-						aria-disabled="true"
-						data-hint="${hint}<br><a href='${url}'>${link}</a>"
-						data-hint-no-icon
-						data-hint-html
-						data-hint-interactivity
-					>
-						${main_core.Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH')}
-					</button>
-				`;
-					}
-				}
-				if (buttPublish.getAttribute('aria-disabled') !== 'true') {
-					main_core.Event.bind(buttPublish, 'click', () => {
-						this.itemObj.markUserPublicationAction();
-						main_core_events.EventEmitter.emit('BX.Landing.SiteTile:publish', this.itemObj);
-						this.hide();
-					});
-				}
-				const buttOpen = main_core.Tag.render`
-				<button type="button" class="ui-btn ui-btn-light-border ui-btn-round">
-					${main_core.Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_OPEN')}
-				</button>
-			`;
+				const buttPublish = this.getContainerNotPublishedPublishButton();
+				const buttOpen = this.getContainerNotPublishedOpenButton();
 				main_core.Event.bind(buttOpen, 'click', () => {
 					if (this.indexEditUrl) {
 						main_core.Dom.addClass(buttOpen, 'ui-btn-wait');
@@ -710,7 +769,7 @@ this.BX.Landing = this.BX.Landing || {};
 							<div class="landing-sites__popup-text">
 								${this.notPublishedText ? this.notPublishedText.message : 'message'}
 							</div>
-							<div class="landing-sites__popup-buttons">
+							<div class="landing-sites__popup-buttons --ui-context-content-light">
 								${buttPublish}
 								${buttOpen}
 							</div>
@@ -1146,12 +1205,6 @@ this.BX.Landing = this.BX.Landing || {};
 			}
 			return this.$containerSiteStatusTitle;
 		}
-		publush() {
-			this.published = true;
-			this.getContainerSiteStatus().className = 'landing-sites__status --success';
-			this.getContainerSiteStatusTitle().innerText = main_core.Loc.getMessage('LANDING_SITE_TILE_STATUS_PUBLISHED');
-			this.getContainerPreviewStatus().classList.add('--hide');
-		}
 		unPublish() {
 			this.published = false;
 			this.getContainerSiteStatus().className = 'landing-sites__status --alert';
@@ -1218,7 +1271,7 @@ this.BX.Landing = this.BX.Landing || {};
 				case 'clock':
 					return ui_iconSet_api_core.Outline.CLOCK;
 				case 'success':
-				case 'unknow':
+				case 'unknown':
 				default:
 					return ui_iconSet_api_core.Outline.LINK;
 			}
@@ -1233,7 +1286,7 @@ this.BX.Landing = this.BX.Landing || {};
 					return 'var(--ui-color-design-outline-a1-content)';
 				case 'success':
 					return 'var(--ui-color-background-primary)';
-				case 'unknow':
+				case 'unknown':
 				default:
 					return 'var(--ui-color-design-outline-a1-content)';
 			}
@@ -2801,6 +2854,18 @@ this.BX.Landing = this.BX.Landing || {};
 		}
 	}
 
+	function createEmptystateButton(linkTo) {
+		const emptystateButton = new ui_buttons.Button({
+			text: main_core.Loc.getMessage('LANDING_SITE_TILE_SEARCH_EMPTY_BUTTON'),
+			className: 'landing-sites__search-empty-button',
+			useAirDesign: true,
+			tag: ui_buttons.Button.Tag.LINK,
+			link: linkTo,
+			style: ui_buttons.Button.AirStyle.FILLED_BITRIX_GPT
+		});
+		return emptystateButton.getContainer();
+	}
+
 	class SiteTile {
 		constructor(options) {
 			this.renderTo = options.renderTo || null;
@@ -2845,6 +2910,9 @@ this.BX.Landing = this.BX.Landing || {};
 			}
 			this.setData(this.items);
 			this.init();
+			if (options.announcement) {
+				A11y.announce(options.announcement);
+			}
 		}
 		getItems() {
 			return this.siteTileItems;
@@ -2930,6 +2998,7 @@ this.BX.Landing = this.BX.Landing || {};
 	exports.LandingSitesAiInput = LandingSitesAiInput;
 	exports.LandingSitesAiSlider = LandingSitesAiSlider;
 	exports.SiteTile = SiteTile;
+	exports.createEmptystateButton = createEmptystateButton;
 
-})(this.BX.Landing.Component = this.BX.Landing.Component || {}, BX, window, BX.Main, BX.Event, BX.UI.Dialogs, BX.UI.IconSet, window, window, BX.UI.Notification, BX.UI, BX.Landing);
+})(this.BX.Landing.Component = this.BX.Landing.Component || {}, BX, window, BX.Main, BX.Event, BX.UI.Dialogs, BX.UI.IconSet, window, window, BX.UI, BX.UI.Notification, BX.Landing);
 //# sourceMappingURL=script.js.map

@@ -30,7 +30,8 @@ export const TasksControlPanelSection = {
 					<li v-for="controlItem in controlItems" class="tasks-control-panel-section__item">
 						<button
 							class="tasks-control-panel-section__item-action"
-							:disabled="controlItem.isDisabled || controlItem.isLocked"
+							:disabled="controlItem.isDisabled"
+							:aria-disabled="controlItem.isLocked ? 'true' : null"
 							@click="controlItem.handleClickItem"
 						>
 							<div v-if="controlItem.isLocked" class="tasks-control-panel-section__item-action-status">

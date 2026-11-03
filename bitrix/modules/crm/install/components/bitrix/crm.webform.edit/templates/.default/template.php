@@ -162,7 +162,7 @@ if (!empty($arResult['ERRORS']))
 }
 ?>
 
-<form id="crm_webform_edit_form" name="crm_webform_edit_form" method="POST" enctype="multipart/form-data" action="<?=htmlspecialcharsbx($arResult['FORM_ACTION'])?>">
+<form data-testid="crm-webform-edit-form" id="crm_webform_edit_form" name="crm_webform_edit_form" method="POST" enctype="multipart/form-data" action="<?=htmlspecialcharsbx($arResult['FORM_ACTION'])?>">
 <input type="hidden" name="ID" value="<?=$arResult['FORM']['ID']?>">
 <?=bitrix_sessid_post();?>
 
@@ -834,19 +834,21 @@ if (!empty($arResult['ERRORS']))
 	$userBlockController->start('LICENCE', Loc::getMessage('CRM_WEBFORM_EDIT_LICENCE_SECTION'), Loc::getMessage('CRM_WEBFORM_EDIT_LICENCE_SECTION_NAV'));
 	?>
 		<label for="USE_LICENCE" class="task-field-label">
-			<input id="USE_LICENCE" name="USE_LICENCE" value="Y" type="checkbox" <?=($arResult['FORM']['USE_LICENCE'] == 'Y' ? 'checked' : '')?> class="crm-webform-edit-task-options-checkbox">
+			<input data-testid="crm-webform-edit-agreements-enabled" id="USE_LICENCE" name="USE_LICENCE" value="Y" type="checkbox" <?=($arResult['FORM']['USE_LICENCE'] == 'Y' ? 'checked' : '')?> class="crm-webform-edit-task-options-checkbox">
 			<span class="crm-webform-edit-task-options-checkbox-item-container">
 				<span class="crm-webform-edit-task-options-checkbox-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_LICENCE_TITLE')?></span>
 			</span>
 		</label>
-		<div id="LICENCE_CONTAINER" class="crm-webform-edit-userconsent-container <?=($arResult['FORM']['USE_LICENCE'] == 'Y' ? '' : 'crm-webform-display-none')?>">
+		<div data-testid="crm-webform-edit-agreements" id="LICENCE_CONTAINER" class="crm-webform-edit-userconsent-container <?=($arResult['FORM']['USE_LICENCE'] == 'Y' ? '' : 'crm-webform-display-none')?>">
 
 			<?$APPLICATION->IncludeComponent(
 				"bitrix:intranet.userconsent.selector",
 				"",
 				array(
 					'ID' => $arResult['FORM']['AGREEMENT_ID'],
-					'INPUT_NAME' => 'AGREEMENT_ID'
+					'INPUT_NAME' => 'AGREEMENT_ID',
+					'PATH_TO_ADD' => '/settings/configs/userconsent/edit/0/?crm_webform_consent=Y',
+					'PATH_TO_EDIT' => '/settings/configs/userconsent/edit/#id#/?crm_webform_consent=Y',
 				)
 			);?>
 
@@ -854,7 +856,7 @@ if (!empty($arResult['ERRORS']))
 				<div class="crm-webform-edit-license-border"></div>
 
 				<label for="LICENCE_BUTTON_IS_CHECKED" class="task-field-label">
-					<input id="LICENCE_BUTTON_IS_CHECKED" name="LICENCE_BUTTON_IS_CHECKED" value="Y" type="checkbox" <?=($arResult['FORM']['LICENCE_BUTTON_IS_CHECKED'] == 'N' ? '' : 'checked')?> class="crm-webform-edit-task-options-checkbox">
+					<input data-testid="crm-webform-edit-agreements-checked" id="LICENCE_BUTTON_IS_CHECKED" name="LICENCE_BUTTON_IS_CHECKED" value="Y" type="checkbox" <?=($arResult['FORM']['LICENCE_BUTTON_IS_CHECKED'] == 'N' ? '' : 'checked')?> class="crm-webform-edit-task-options-checkbox">
 					<span class="crm-webform-edit-task-options-checkbox-item-container">
 							<span class="crm-webform-edit-task-options-checkbox-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_LICENCE_BUTTON_IS_CHECKED')?></span>
 						</span>

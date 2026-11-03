@@ -7,6 +7,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\Main\Localization\Loc;
 
+\Bitrix\Main\UI\Extension::load("ui.design-tokens");
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 \Bitrix\Main\UI\Extension::load("ui.alerts");
@@ -37,6 +38,19 @@ CJSCore::Init(['sidepanel']);
 					<?}?>
 				</div>
 			</div>
+			<?if(($arResult['timezoneFeatureEnabled'] ?? false) === true):?>
+				<div class="docs-config-block-wrap">
+					<div class="docs-config-check-container">
+						<label class="docs-config-title" for="document-timezone"><?=Loc::getMessage('DOCGEN_CONFIG_TIMEZONE');?></label>
+						<select class="docs-config-input" id="document-timezone" name="document_timezone">
+							<option value="" <?if($arResult['timezone'] === ''){?>selected<?}?>><?=Loc::getMessage('DOCGEN_CONFIG_TIMEZONE_SERVER');?></option>
+							<?foreach($arResult['timezoneItems'] as $timezoneItem):?>
+								<option value="<?=htmlspecialcharsbx($timezoneItem['value'])?>" <?if($timezoneItem['value'] === $arResult['timezone']){?>selected<?}?>><?=htmlspecialcharsbx($timezoneItem['label'])?></option>
+							<?endforeach;?>
+						</select>
+					</div>
+				</div>
+			<?endif;?>
 		</form>
 	</div>
 <script>

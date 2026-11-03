@@ -1,11 +1,22 @@
 import { Type } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
+import { computed } from 'ui.vue3';
 
 import { Core } from 'im.v2.application.core';
-import { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector } from 'im.v2.component.message.elements';
+import {
+	AiTaskIndication,
+	AiTaskIndicationLayout,
+	AiTaskIndicationLayoutKey,
+	ContextMenu,
+	hasAiTaskIndication,
+	MessageKeyboard,
+	ReactionSelector,
+	RetryButton,
+} from 'im.v2.component.message.elements';
 import { ActionByRole, EventType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { MessageMenuManager } from 'im.v2.lib.menu';
+import { messageHasError } from 'im.v2.lib.message';
 import { Parser } from 'im.v2.lib.parser';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Utils } from 'im.v2.lib.utils';
@@ -16,7 +27,22 @@ import './css/base-message.css';
 // @vue/component
 export const BaseMessage = {
 	name: 'BaseMessage',
-	components: { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector },
+	components: { AiTaskIndication, ContextMenu, RetryButton, MessageKeyboard, ReactionSelector },
+	/*
+	 * The layout of a running indication, for the content slotted into this body. The bubble layout
+	 * hands its caption to the time row of the message, and that row belongs to the content, not to
+	 * this component - so the placement is answered here, where the layout is already known, and
+	 * read there. Lazy on purpose: the computed is only evaluated by a content that asks for it, and
+	 * it then reuses the very gate the `v-if` below already paid for.
+	 */
+	provide(): { [key: string]: string | null }
+	{
+		return {
+			[AiTaskIndicationLayoutKey]: computed(() => {
+				return this.hasAiTaskIndication ? this.aiTaskIndicationLayout : null;
+			}),
+		};
+	},
 	props: {
 		item: {
 			type: Object,
@@ -47,6 +73,15 @@ export const BaseMessage = {
 			default: true,
 		},
 		withError: {
+			type: Boolean,
+			default: false,
+		},
+		/**
+		 * The body renders a media frame (a photo, a video, a gallery) rather than plain content.
+		 * Only the host knows it, and the AI-task indication needs it: a frame with a caption keeps
+		 * a bubble around itself, but its light belongs over the graphics, not under them.
+		 */
+		withMediaFrame: {
 			type: Boolean,
 			default: false,
 		},
@@ -111,7 +146,16 @@ export const BaseMessage = {
 			return {
 				'--transparent': this.isTransparentBackground,
 				'--no-angle': !this.showMessageAngle,
+				'--ai-task-underlay': this.hasAiTaskUnderlay,
 			};
+		},
+		/**
+		 * The bubble carries the AI-task layer under its own content; media and the round player
+		 * carry it over the graphics, which is what a positioned layer does by default.
+		 */
+		hasAiTaskUnderlay(): boolean
+		{
+			return this.hasAiTaskIndication && this.aiTaskIndicationLayout === AiTaskIndicationLayout.bubble;
 		},
 		isTransparentBackground(): boolean
 		{
@@ -127,13 +171,36 @@ export const BaseMessage = {
 
 			return this.isSystemMessage;
 		},
+		hasAiTaskIndication(): boolean
+		{
+			return hasAiTaskIndication(this.$store, this.message);
+		},
+		aiTaskIndicationLayout(): string
+		{
+			if (!this.isTransparentBackground)
+			{
+				// A frame with a caption: a bubble on the outside, opaque graphics on the inside.
+				return this.withMediaFrame
+					? AiTaskIndicationLayout.mediaCaption
+					: AiTaskIndicationLayout.bubble;
+			}
+
+			// Only reached behind the gate above (`v-if` compiles to a ternary), so the round-player
+			// check is not paid for by every message of the list.
+			const isVideoNote = this.$store.getters['messages/isVideoNote'](this.message.id);
+
+			return isVideoNote ? AiTaskIndicationLayout.round : AiTaskIndicationLayout.media;
+		},
 		showRetryButton(): boolean
 		{
-			return this.withRetryButton && this.isSelfMessage && this.hasError;
+			return this.withRetryButton && this.isSelfMessage && this.hasError && !this.message.notDelivered;
 		},
+		// Deliberately checks the send error alone, not the combined error signal: a message that
+		// failed to send has no server-side id, so its menu is meaningless, while a message
+		// undelivered by timeout does exist on the server and keeps its actions (as it did in v1).
 		showContextMenu(): boolean
 		{
-			return this.withContextMenu && !this.hasError && this.canOpenContextMenu;
+			return this.withContextMenu && !this.hasSendError && this.canOpenContextMenu;
 		},
 		canOpenContextMenu(): boolean
 		{
@@ -141,7 +208,11 @@ export const BaseMessage = {
 		},
 		hasError(): boolean
 		{
-			return this.withError || this.message.error;
+			return this.withError || messageHasError(this.message);
+		},
+		hasSendError(): boolean
+		{
+			return this.withError || Boolean(this.message.error);
 		},
 	},
 	methods: {
@@ -200,7 +271,7 @@ export const BaseMessage = {
 		},
 	},
 	template: `
-		<div class="bx-im-message-base__wrap bx-im-message-base__scope" :class="containerClasses" :data-id="message.id">
+		<div class="bx-im-message-base__wrap bx-im-message-base__scope" :class="containerClasses" :data-id="message.id" data-testid="im-message-base-root">
 			<div
 				class="bx-im-message-base__container" 
 				@click="onContainerClick"
@@ -214,10 +285,16 @@ export const BaseMessage = {
 						<slot name="before-message"></slot>
 						<div class="bx-im-message-base__body" :class="bodyClasses">
 							<slot></slot>
+							<!-- Both nodes of the indication belong to the body: the decor layer takes its geometry and radius -->
+							<AiTaskIndication
+								v-if="hasAiTaskIndication"
+								:message="message"
+								:layout="aiTaskIndicationLayout"
+							/>
 							<ReactionSelector v-if="withReactions" :messageId="message.id" />
 						</div>
 					</div>
-					<RetryButton v-if="showRetryButton" :message="message" :dialogId="dialogId"/>
+					<RetryButton v-if="showRetryButton" :message="message" :dialogId="dialogId" data-testid="im-message-retry-button"/>
 					<ContextMenu
 						v-else
 						:showContextMenu="showContextMenu"

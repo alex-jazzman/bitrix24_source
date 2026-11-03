@@ -1,4 +1,4 @@
-import { CallPopupContainer } from 'call.component.elements';
+import { CallPopupContainer } from 'call.legacy.component.elements';
 import { isGuestCallLink } from '../../lib/guest-link';
 
 import './join-meeting-popup.css';

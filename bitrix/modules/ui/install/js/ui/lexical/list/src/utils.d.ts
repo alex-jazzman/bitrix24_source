@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { LexicalNode, Spread } from 'ui.lexical.core';
-import { ListItemNode, ListNode } from './';
+import { type LexicalNode, type Spread } from 'ui.lexical.core';
+import { type ListItemNode, type ListNode } from './';
 /**
  * Checks the depth of listNode from the root node.
  * @param listNode - The ListNode to be checked.
@@ -31,14 +31,14 @@ export declare function $isLastItemInList(listItem: ListItemNode): boolean;
  * @param node - The ListNode to start the search.
  * @returns An array containing all nodes of type ListItemNode found.
  */
-export declare function $getAllListItems(node: ListNode): Array<ListItemNode>;
+export declare function $getAllListItems(node: ListNode): ListItemNode[];
 declare const NestedListNodeBrand: unique symbol;
 /**
  * Checks to see if the passed node is a ListItemNode and has a ListNode as a child.
  * @param node - The node to be checked.
  * @returns true if the node is a ListItemNode and has a ListNode child, false otherwise.
  */
-export declare function isNestedListNode(node: LexicalNode | null | undefined): node is Spread<{
+export declare function $isNestedListNode(node: LexicalNode | null | undefined): node is Spread<{
     getFirstChild(): ListNode;
     [NestedListNodeBrand]: never;
 }, ListItemNode>;
@@ -57,9 +57,7 @@ export declare function $findNearestListItemNode(node: LexicalNode): ListItemNod
  */
 export declare function $removeHighestEmptyListParent(sublist: ListItemNode | ListNode): void;
 /**
- * Wraps a node into a ListItemNode.
- * @param node - The node to be wrapped into a ListItemNode
- * @returns The ListItemNode which the passed node is wrapped in.
+ * Calculates the start value for a new list created by splitting an existing list.
  */
-export declare function $wrapInListItem(node: LexicalNode): ListItemNode;
+export declare function $getNewListStart(list: ListNode, listItem: ListItemNode): number;
 export {};

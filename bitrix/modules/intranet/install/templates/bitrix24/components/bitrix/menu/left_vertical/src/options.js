@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
 export default class Options
 {
@@ -16,6 +17,24 @@ export default class Options
 	static settingsPath = null;
 	static isMainPageEnabled = false;
 	static isMessengerEmbedded = false;
+	static isMainToolPickerEnabled = false;
+	static mainToolPickerBootstrapRevision = 0;
+	static mainToolState = null;
+
+	static setMainToolPickerEnabled(enabled: boolean): void
+	{
+		this.isMainToolPickerEnabled = enabled === true;
+		this.mainToolPickerBootstrapRevision++;
+		this.mainToolState = null;
+		EventEmitter.emit(this.eventName('onMainToolPickerBootstrap'), {
+			enabled: this.isMainToolPickerEnabled,
+		});
+	}
+
+	static canChangeMainTool(): boolean
+	{
+		return this.mainToolState?.canChangePersonal === true || this.mainToolState?.canManageAll === true;
+	}
 
 	static availablePresetTools = null;
 	static inviteDialogLink = null;

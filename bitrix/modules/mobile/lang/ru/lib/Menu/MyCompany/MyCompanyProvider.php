@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MOBILE_MY_COMPANY_PORTAL_NAME'] = 'Битрикс24';

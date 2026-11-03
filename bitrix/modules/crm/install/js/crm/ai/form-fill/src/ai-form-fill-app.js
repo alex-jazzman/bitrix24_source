@@ -2,6 +2,7 @@ import { ActivityProvider, Call } from 'crm.ai.call';
 import { NameService } from 'crm.ai.name-service';
 import { type Slider } from 'crm.ai.slider';
 import { Setting, Settings } from 'crm.integration.ui.settings';
+import { Router } from 'crm.router';
 import { addCustomEvent, Loc, removeAllCustomEvents, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 
@@ -76,17 +77,27 @@ class ConflictFieldsliderCreator
 			useAirDesign: Settings.get(Setting.UseAirDesign),
 			style: Button.AirStyle.OUTLINE,
 			onclick: () => {
-				if (top.BX.Helper)
-				{
-					const transcription = new Call.Transcription({
+				Router.Instance.openAiReportDrawerOrLegacy(
+					'transcript',
+					{
 						activityId: this.#options.activityId,
 						ownerTypeId: this.#options.ownerTypeId,
 						ownerId: this.#options.ownerId,
-						languageTitle: this.#options.languageTitle,
-					});
+					},
+					() => {
+						if (top.BX.Helper)
+						{
+							const transcription = new Call.Transcription({
+								activityId: this.#options.activityId,
+								ownerTypeId: this.#options.ownerTypeId,
+								ownerId: this.#options.ownerId,
+								languageTitle: this.#options.languageTitle,
+							});
 
-					transcription.open();
-				}
+							transcription.open();
+						}
+					},
+				);
 			},
 		});
 
@@ -98,19 +109,30 @@ class ConflictFieldsliderCreator
 			useAirDesign: Settings.get(Setting.UseAirDesign),
 			style: Button.AirStyle.OUTLINE,
 			onclick: () => {
-				if (top.BX.Helper)
-				{
-					const resume = new Call.Summary({
+				Router.Instance.openAiReportDrawerOrLegacy(
+					'summary-history',
+					{
 						activityId: this.#options.activityId,
 						ownerTypeId: this.#options.ownerTypeId,
 						ownerId: this.#options.ownerId,
-						languageTitle: this.#options.languageTitle,
-						activityProvider: this.#options.activityProvider,
 						jobId: this.#options.summarizeJobId,
-					});
+					},
+					() => {
+						if (top.BX.Helper)
+						{
+							const resume = new Call.Summary({
+								activityId: this.#options.activityId,
+								ownerTypeId: this.#options.ownerTypeId,
+								ownerId: this.#options.ownerId,
+								languageTitle: this.#options.languageTitle,
+								activityProvider: this.#options.activityProvider,
+								jobId: this.#options.summarizeJobId,
+							});
 
-					resume.open();
-				}
+							resume.open();
+						}
+					},
+				);
 			},
 		});
 

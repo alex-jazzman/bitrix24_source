@@ -416,7 +416,7 @@ class Router
 	{
 		const isAvailableScenario = (
 			Type.isStringFilled(scenario)
-			&& ['call-assessment', 'summary-history'].includes(scenario)
+			&& ['call-assessment', 'summary-history', 'transcript'].includes(scenario)
 		);
 		if (!isAvailableScenario)
 		{
@@ -442,6 +442,43 @@ class Router
 		if (uri)
 		{
 			return this.#openAiReportDrawerSlider(uri, options);
+		}
+
+		return null;
+	}
+
+	openAiReportDrawerOrLegacy(
+		scenario: string,
+		drawerRequest: Object,
+		openLegacy: () => mixed,
+		options: ?Object = {},
+	): ?Promise<?BX.SidePanel.Slider>
+	{
+		try
+		{
+			if (this.#prepareAiReportDrawerQueryParams(drawerRequest) === null)
+			{
+				return null;
+			}
+
+			const isEnabled = Extension.getSettings('crm.router').get('isCallScoringV2Enabled') === true;
+			if (isEnabled)
+			{
+				const uri = this.getAiReportDrawerUrl(scenario, drawerRequest);
+				if (uri)
+				{
+					return this.#openAiReportDrawerSlider(uri, options);
+				}
+			}
+		}
+		catch
+		{
+			// Fall back only while the common drawer is being prepared.
+		}
+
+		if (Type.isFunction(openLegacy))
+		{
+			openLegacy();
 		}
 
 		return null;

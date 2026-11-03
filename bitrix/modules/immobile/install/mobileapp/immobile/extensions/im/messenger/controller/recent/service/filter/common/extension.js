@@ -16,6 +16,8 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 	 */
 	class CommonFilterService extends BaseUiRecentService
 	{
+		#isChangedBySelf = false;
+
 		/**
 		 * @returns {MessengerCoreStore}
 		 */
@@ -64,10 +66,11 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 
 		/**
 		 * @param {FilterId} filterId
+		 * @param {{ bySelf?: boolean }} [options] bySelf marks a filter change made by the user
 		 */
-		async applyFilter(filterId)
+		async applyFilter(filterId, options = {})
 		{
-			this.logger.log('applyFilter', filterId);
+			this.logger.log('applyFilter', filterId, options);
 
 			if (!Type.isStringFilled(filterId))
 			{
@@ -91,6 +94,8 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 				return;
 			}
 
+			this.#isChangedBySelf = options.bySelf === true;
+
 			await this.store.dispatch('recentModel/recentFilteredModel/setCurrentFilter', {
 				tabId: this.tabId,
 				parentChatId: this.parentChatId,
@@ -101,11 +106,26 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 		}
 
 		/**
+		 * @param {{ bySelf?: boolean }} [options]
 		 * @returns {Promise<void>}
 		 */
-		async resetFilter()
+		async resetFilter(options = {})
 		{
-			await this.applyFilter(RecentFilterId.all);
+			await this.applyFilter(RecentFilterId.all, options);
+		}
+
+		/**
+		 * @desc Reads and drops the mark of a filter change made by the user. The mark is set by
+		 * applyFilter and consumed by the handler that puts the filtered item list into the render queue,
+		 * because the recalculation chain is not finished by the time applyFilter returns.
+		 * @returns {boolean}
+		 */
+		consumeChangedBySelf()
+		{
+			const isChangedBySelf = this.#isChangedBySelf;
+			this.#isChangedBySelf = false;
+
+			return isChangedBySelf;
 		}
 
 		/**

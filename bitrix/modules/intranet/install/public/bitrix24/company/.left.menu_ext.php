@@ -10,6 +10,7 @@ use Bitrix\Intranet\Site\Sections\TimemanSection;
 use Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\StaffTrack\Public\Provider\OfficesMenuItemProvider;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/company/.left.menu_ext.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php');
@@ -42,6 +43,18 @@ if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_company'))
 		],
 		'',
 	];
+}
+
+if (
+	Loader::includeModule('stafftrack')
+	&& class_exists(OfficesMenuItemProvider::class)
+)
+{
+	$officesMenuItem = (new OfficesMenuItemProvider())->getMenuItem();
+	if (!empty($officesMenuItem))
+	{
+		$aMenuLinks[] = $officesMenuItem;
+	}
 }
 
 if (Loader::includeModule('intranet') && TimemanSection::isAvailable())

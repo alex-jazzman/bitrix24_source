@@ -1,6 +1,10 @@
 import { CheckInMapEventType } from 'location.core';
 import { Leaflet as L } from '../leaflet/src/leaflet';
 
+// Route marker ids are `{auto-}check-in-{employeeId}-{checkInId}`; the checkInId itself may carry dashes
+// (`track-start` / `track-end`), so the employee id is read off this prefix, not by segment position.
+const CHECK_IN_MARKER_PREFIX = /^(?:auto-)?check-in-/;
+
 /**
  * Manages marker clustering for CheckInMapService.
  *
@@ -11,7 +15,8 @@ import { Leaflet as L } from '../leaflet/src/leaflet';
  * Host properties accessed:
  *   mapInstance, markers, layers, markerOriginalLatLngs, markerConfigs,
  *   fitBoundsMaxZoom, fitBoundsPadding,
- *   createDivIcon(), sendEvent(), normalizePadding()
+ *   createDivIcon(), sendEvent(), normalizePadding(),
+ *   isMarkerAnimating(), cancelMarkerAnimation()
  */
 export class ClusteringManager
 {
@@ -110,6 +115,8 @@ export class ClusteringManager
 
 		// Restore all individual markers on the map at their original positions
 		markers.forEach((marker, id) => {
+			this.#takeOverPosition(id);
+
 			const el = marker.getElement();
 			if (el)
 			{
@@ -188,9 +195,11 @@ export class ClusteringManager
 		});
 		this.#clusterMarkersByKey.clear();
 
-		markers.forEach((marker) => {
+		markers.forEach((marker, id) => {
 			if (mapInstance.hasLayer(marker))
 			{
+				this.#takeOverPosition(id);
+
 				const el = marker.getElement();
 				if (el)
 				{
@@ -244,7 +253,7 @@ export class ClusteringManager
 		const dissolvedCenters = this.#removeDissolvedClusters(clusters);
 
 		clusters.forEach((cluster) => {
-			if (cluster.markers.length === 1)
+			if (cluster.members.length === 1)
 			{
 				this.#applyIndividualMarker(cluster, dissolvedCenters, animated);
 			}
@@ -274,8 +283,15 @@ export class ClusteringManager
 		const icon = this.#host.createDivIcon(html, className, iconSize, iconAnchor);
 
 		entry.leafletMarker.setIcon(icon);
-		const testId = this.#getClusterTestId(markerIds);
-		entry.leafletMarker.getElement()?.setAttribute('testId', testId);
+		this.#applyTestId(entry.leafletMarker.getElement(), this.#getClusterTestId(markerIds));
+	}
+
+	// Both attributes carry the same value: `testId` is what the map markup has always used,
+	// `data-testid` is what Playwright's getByTestId() reads. Mirrors the MapLibre engine.
+	#applyTestId(element, testId)
+	{
+		element?.setAttribute('testId', testId);
+		element?.setAttribute('data-testid', testId);
 	}
 
 	cancelPendingAnimations()
@@ -305,6 +321,14 @@ export class ClusteringManager
 	deletePrevMarkerKey(id)
 	{
 		this.#prevMarkerClusterKey.delete(id);
+	}
+
+	// Takes the position of a marker back from a running move, right before placing it. Every path
+	// that writes a marker position from here goes through this: the position has one owner at a
+	// time, and two of them would tug the marker between the cluster layout and the move.
+	#takeOverPosition(id)
+	{
+		this.#host.cancelMarkerAnimation(id);
 	}
 
 	// ─── Private: transition & zoom ──────────────────────────────────────────
@@ -394,12 +418,17 @@ export class ClusteringManager
 
 	// Snap any markers or cluster markers that are mid-animation back to their
 	// stable positions before recalculating the cluster layout.
+	//
+	// A marker walking to a new coordinate is left where it is: the layout is computed from the stored
+	// coordinates (i.e. from where the walk ends), so nothing here depends on the frame it is on, and
+	// snapping it would cut the walk off on every recalculation. Every path that does place such a
+	// marker takes its position back first (#takeOverPosition).
 	#snapAllMarkersToPosition()
 	{
 		const { mapInstance, markers, markerOriginalLatLngs } = this.#host;
 
 		markers.forEach((marker, id) => {
-			if (!mapInstance.hasLayer(marker))
+			if (!mapInstance.hasLayer(marker) || this.#host.isMarkerAnimating(id))
 			{
 				return;
 			}
@@ -455,7 +484,7 @@ export class ClusteringManager
 		const { mapInstance } = this.#host;
 		const newClustersByKey = new Map();
 		clusters.forEach((cluster) => {
-			if (cluster.markers.length > 1)
+			if (cluster.members.length > 1)
 			{
 				newClustersByKey.set(cluster.key, cluster);
 			}
@@ -477,8 +506,7 @@ export class ClusteringManager
 	// Places a single marker on the map, animating it from its former cluster center if applicable.
 	#applyIndividualMarker(cluster, dissolvedCenters, animated)
 	{
-		const [id] = cluster.ids;
-		const [marker] = cluster.markers;
+		const [{ id, marker }] = cluster.members;
 		const prevKey = this.#prevMarkerClusterKey.get(id);
 		const { mapInstance, markerOriginalLatLngs } = this.#host;
 
@@ -491,6 +519,7 @@ export class ClusteringManager
 		{
 			// Snap to original position before adding — the marker's LatLng may have been
 			// moved to a cluster center during a previous animation and never reset.
+			this.#takeOverPosition(id);
 			const orig = markerOriginalLatLngs.get(id);
 			if (orig)
 			{
@@ -508,6 +537,7 @@ export class ClusteringManager
 	{
 		const { mapInstance, markerOriginalLatLngs } = this.#host;
 
+		this.#takeOverPosition(id);
 		marker.setLatLng(fromLatLng);
 		marker.addTo(mapInstance);
 
@@ -567,14 +597,14 @@ export class ClusteringManager
 		let anyWasIndividual = false;
 		const { mapInstance } = this.#host;
 
-		cluster.markers.forEach((marker, i) => {
-			const id = cluster.ids[i];
+		cluster.members.forEach(({ id, marker }) => {
 			const prevKey = this.#prevMarkerClusterKey.get(id);
 
 			if (animated && !prevKey && mapInstance.hasLayer(marker))
 			{
 				// Was individual and visible → animate towards cluster center
 				anyWasIndividual = true;
+				this.#takeOverPosition(id);
 
 				this.#scheduleAnimation(() => {
 					const el = marker.getElement();
@@ -597,9 +627,10 @@ export class ClusteringManager
 	{
 		const { mapInstance } = this.#host;
 
-		cluster.markers.forEach((marker) => {
+		cluster.members.forEach(({ id, marker }) => {
 			if (mapInstance && mapInstance.hasLayer(marker))
 			{
+				this.#takeOverPosition(id);
 				this.#clearElementTransition(marker.getElement());
 				mapInstance.removeLayer(marker);
 			}
@@ -638,9 +669,10 @@ export class ClusteringManager
 	{
 		const { mapInstance } = this.#host;
 
-		cluster.markers.forEach((marker) => {
+		cluster.members.forEach(({ id, marker }) => {
 			if (mapInstance && mapInstance.hasLayer(marker))
 			{
+				this.#takeOverPosition(id);
 				mapInstance.removeLayer(marker);
 			}
 		});
@@ -748,15 +780,16 @@ export class ClusteringManager
 
 		if (isRouteMode)
 		{
-			const parts = ids[0].split('-');
-			const employeeId = parts[parts.length - 2];
+			const employeeId = parseInt(ids[0].replace(CHECK_IN_MARKER_PREFIX, ''), 10);
+			// A check-in id suffix is numeric except for the track ends (`-track-start` / `-track-end`),
+			// so the suffix is kept as a string: parsing it would turn those ends into NaN.
 			const checkInIds = ids
 				.map((id) => {
 					const p = id.split('-');
 
-					return parseInt(p[p.length - 1], 10);
+					return p[p.length - 1];
 				})
-				.sort((a, b) => a - b)
+				.sort((a, b) => this.#compareIdSuffixes(a, b))
 				.slice(0, MAX_IDS);
 
 			return `cluster-${employeeId}-${checkInIds.join('-')}`;
@@ -772,6 +805,28 @@ export class ClusteringManager
 			.slice(0, MAX_IDS);
 
 		return `cluster-${employeeIds.join('-')}`;
+	}
+
+	// Numeric suffixes go first, ordered by value; named ones (track ends) follow in a stable
+	// alphabetical order, so the same cluster always yields the same testId.
+	#compareIdSuffixes(a, b)
+	{
+		const numA = parseInt(a, 10);
+		const numB = parseInt(b, 10);
+		const isNumberA = !Number.isNaN(numA);
+		const isNumberB = !Number.isNaN(numB);
+
+		if (isNumberA && isNumberB)
+		{
+			return numA - numB;
+		}
+
+		if (isNumberA !== isNumberB)
+		{
+			return isNumberA ? -1 : 1;
+		}
+
+		return a.localeCompare(b);
 	}
 
 	// ─── Private: cluster calculation ────────────────────────────────────────
@@ -802,8 +857,7 @@ export class ClusteringManager
 			// in-progress animations don't skew the cluster grouping.
 			const origLatLng = markerOriginalLatLngs.get(id) || marker.getLatLng();
 			const seedPoint = mapInstance.latLngToLayerPoint(origLatLng);
-			const clusterIds = [id];
-			const clusterMarkers = [marker];
+			const members = [{ id, marker }];
 			const clusterLatLngs = [origLatLng];
 
 			entries.forEach(([otherId, otherMarker]) => {
@@ -819,20 +873,20 @@ export class ClusteringManager
 				if (dist <= maxRadius)
 				{
 					assigned.add(otherId);
-					clusterIds.push(otherId);
-					clusterMarkers.push(otherMarker);
+					members.push({ id: otherId, marker: otherMarker });
 					clusterLatLngs.push(otherOrigLatLng);
 				}
 			});
 
 			const lat = clusterLatLngs.reduce((sum, ll) => sum + ll.lat, 0) / clusterLatLngs.length;
 			const lng = clusterLatLngs.reduce((sum, ll) => sum + ll.lng, 0) / clusterLatLngs.length;
+			const ids = members.map((member) => member.id);
 
 			clusters.push({
 				id: `cluster-${id}`,
-				ids: clusterIds,
-				key: this.#getClusterKey(clusterIds),
-				markers: clusterMarkers,
+				ids,
+				key: this.#getClusterKey(ids),
+				members,
 				center: [lat, lng],
 			});
 		});
@@ -998,12 +1052,18 @@ export class ClusteringManager
 
 	// Builds a cluster object for a group of route marker IDs.
 	// Returns null if center coordinates cannot be determined.
+	//
+	// An id and its marker are kept in one record: a group id the host has no marker for leaves the
+	// cluster whole, instead of shifting the remaining ids onto their neighbours' markers.
 	#buildRouteCluster(groupIds, firstId, lastId)
 	{
 		const { markers, markerOriginalLatLngs } = this.#host;
-		const clusterMarkers = groupIds.map((id) => markers.get(id)).filter(Boolean);
-		const latLngs = groupIds.map((id) => markerOriginalLatLngs.get(id)).filter(Boolean);
-		const center = this.#getRouteClusterCenter(groupIds, firstId, lastId, latLngs);
+		const members = groupIds
+			.map((id) => ({ id, marker: markers.get(id) }))
+			.filter(({ marker }) => Boolean(marker));
+		const ids = members.map((member) => member.id);
+		const latLngs = ids.map((id) => markerOriginalLatLngs.get(id)).filter(Boolean);
+		const center = this.#getRouteClusterCenter(ids, firstId, lastId, latLngs);
 
 		if (center === null)
 		{
@@ -1011,10 +1071,10 @@ export class ClusteringManager
 		}
 
 		return {
-			id: `cluster-${groupIds[0]}`,
-			ids: groupIds,
-			key: this.#getClusterKey(groupIds),
-			markers: clusterMarkers,
+			id: `cluster-${ids[0]}`,
+			ids,
+			key: this.#getClusterKey(ids),
+			members,
 			center,
 		};
 	}
@@ -1075,7 +1135,7 @@ export class ClusteringManager
 
 		const testId = this.#getClusterTestId(cluster.ids);
 		marker.on('add', () => {
-			marker.getElement()?.setAttribute('testId', testId);
+			this.#applyTestId(marker.getElement(), testId);
 		});
 
 		marker.on('click', () => {

@@ -70,8 +70,13 @@ export const Importance = {
 		<button
 			v-if="!readonly || (isResponsible && task.isImportant)"
 			v-hint="tooltip"
+			type="button"
+			role="checkbox"
 			class="tasks-field-importance"
 			:class="{ '--active': task.isImportant, '--readonly': readonly }"
+			:aria-label="loc('TASKS_V2_IMPORTANCE_ARIA_LABEL')"
+			:aria-checked="task.isImportant"
+			:aria-disabled="readonly ? 'true' : null"
 			:data-task-id="taskId"
 			:data-task-field-id="'isImportant'"
 			:data-task-field-value="task.isImportant"
@@ -81,6 +86,7 @@ export const Importance = {
 				:hoverable="!readonly"
 				:name="task.isImportant ? Outline.FIRE_SOLID : Outline.FIRE"
 				class="tasks-field-importance__icon"
+				aria-hidden="true"
 			/>
 		</button>
 	`,

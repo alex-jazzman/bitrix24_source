@@ -126,7 +126,12 @@ $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изм
 $MESS["TASKS_DELETE_SUCCESS"] = "Задача успешно удалена";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Пинг-уведомление отправлено";
 $MESS["TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION"] = "Ссылка на задачу скопирована в буфер обмена";
+$MESS["TASKS_LIST_CRM_BIND_ERROR"] = "Не удалось привязать элемент CRM";
+$MESS["TASKS_LIST_CRM_BIND_RETRY"] = "Повторить";
 $MESS["TASKS_ROW_SHOW_COUNT"] = "Всего: #LINK_START#Показать количество#LINK_END#";
+$MESS["TASKS_TIMER_STOP"] = "Остановить таймер";
+$MESS["TASKS_TIMER_START"] = "Запустить таймер";
+$MESS["TASKS_TIMER_TRACKING"] = "Затраченное время";
 $MESS['TASKS_GRID_STUB_MIGRATION_TITLE'] = "Перенесите свои задачи из других систем";
 $MESS['TASKS_GRID_STUB_MIGRATION_BUTTON_MIGRATE'] = "Перенести";
 $MESS['TASKS_GRID_STUB_MIGRATION_OTHER'] = "и другие";
@@ -135,3 +140,9 @@ $MESS['TASKS_EXCEL_POPUP_TITLE'] = "Экспорт списка задач в Ex
 $MESS['TASKS_EXCEL_POPUP_DESCRIPTION'] = "Будет сформирован файл экспорта для задач. Выполнение этой операции может занять продолжительное время при большом количестве данных.";
 $MESS['TASKS_EXCEL_POPUP_PARAGRAPH_1'] = "Только поля из списка";
 $MESS['TASKS_EXCEL_POPUP_PARAGRAPH_2'] = "Все поля задач";
+
+// SC-005: deadlineless hint
+$MESS['TASKS_KANBAN_DEADLINELESS_HINT_TITLE'] = 'У вас есть задачи без срока';
+$MESS['TASKS_KANBAN_DEADLINELESS_HINT_TEXT'] = 'Когда есть срок — задача делается, а не откладывается';
+$MESS['TASKS_KANBAN_DEADLINELESS_HINT_CTA'] = 'Установить крайний срок';
+$MESS['TASKS_KANBAN_DEADLINELESS_HINT_CLOSE'] = 'Закрыть';

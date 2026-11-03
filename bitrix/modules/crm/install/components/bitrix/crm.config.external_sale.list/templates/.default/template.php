@@ -11,11 +11,16 @@ else
 	if ($arResult["SuccessMessage"] <> '')
 		ShowMessage(array("MESSAGE" => $arResult["SuccessMessage"], "TYPE" => "OK"));
 
+	$navigationLinkAttributes = ($arParams['IS_SETTINGS_HUB'] ?? null) === true
+		? ' data-slider-ignore-autobinding="true" target="_self"'
+		: '';
+
 	$arButtons = array(
 		array(
 			"TEXT"=>GetMessage("BPWC_WLCT_NEW"),
 			"TITLE"=>GetMessage("BPWC_WLCT_NEW"),
 			"LINK"=>$arResult["PATH_TO_EDIT"],
+			'LINK_PARAM' => 'data-testid="crm-config-external-sale-list-create-button"' . $navigationLinkAttributes,
 			"ICON"=>"btn-new",
 		),
 		array(

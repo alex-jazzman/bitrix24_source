@@ -10,7 +10,8 @@ export class AnnualSummaryContent extends Content
 	{
 		return this.cache.remember('layout', () => {
 			return Tag.render`
-				<div
+				<button
+						type="button"
 						data-testid="bx-avatar-widget-tool-${this.getId()}"
 						onclick="${this.onClick.bind(this)}"
 						class="intranet-avatar-widget-item__wrapper intranet-avatar-widget-annual-summary-tool__wrapper"
@@ -19,7 +20,7 @@ export class AnnualSummaryContent extends Content
 						<span class="intranet-avatar-widget-annual-summary-tool__title">
 							${this.getTitle()}
 						</span>
-				</div>
+				</button>
 			`;
 		});
 	}
@@ -39,20 +40,26 @@ export class AnnualSummaryContent extends Content
 			return;
 		}
 
-		Dom.addClass(this.getLayout(), 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
+		const layout = this.getLayout();
+		layout.disabled = true;
+		layout.setAttribute('aria-busy', 'true');
+		Dom.addClass(layout, 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
 
 		Promise.all([
 			ajax.runAction('intranet.v2.AnnualSummary.load', {}),
 			Runtime.loadExtension('intranet.notify-banner.annual-summary'),
 		]).then(([response, { AnnualSummary }]) => {
 			const { topFeatures, options } = response.data;
-			Dom.removeClass(this.getLayout(), 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
 			EventEmitter.emit('BX.Intranet.AvatarWidget.Popup:openChild');
 			this.#annualSummaryPopup = new AnnualSummary(topFeatures, { ...options, section: 'profile' });
 			this.#annualSummaryPopup.subscribe('onShow', () => BX.userOptions.save('intranet', 'annual_summary_25_last_show', null, Math.floor(Date.now() / 1000)));
 			this.#annualSummaryPopup.show();
 		}).catch((error) => {
 			console.error(error);
+		}).finally(() => {
+			layout.disabled = false;
+			layout.removeAttribute('aria-busy');
+			Dom.removeClass(layout, 'intranet-avatar-widget-annual-summary-tool__wrapper--loading');
 		});
 	}
 

@@ -31,6 +31,8 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 		#membershipMap;
 		/** @type {boolean} */
 		#isMembershipMapLoaded;
+		/** @type {Promise<Array<string>>|null} */
+		#membershipLoadPromise = null;
 		/** @type {() => boolean} */
 		#canAddParticipants;
 
@@ -211,6 +213,25 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 				return [];
 			}
 
+			if (this.#membershipLoadPromise)
+			{
+				return this.#membershipLoadPromise;
+			}
+
+			this.#membershipLoadPromise = this.#loadChatUsersMembership(dialogHelper)
+				.finally(() => {
+					this.#membershipLoadPromise = null;
+				});
+
+			return this.#membershipLoadPromise;
+		}
+
+		/**
+		 * @param {DialogHelper} dialogHelper
+		 * @return {Promise<Array<string>>}
+		 */
+		async #loadChatUsersMembership(dialogHelper)
+		{
 			const localUsers = await this.localStrategy.preload({
 				types: [DialogType.private, DialogType.user],
 				limit: LIMIT_LOCAL_SEARCH_USERS,
@@ -222,6 +243,48 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 			}
 
 			return this.#loadMembershipDataFromServer(localUsers, dialogHelper);
+		}
+
+		/**
+		 * Resolves chat membership for a single user: waits for the membership map
+		 * if it is still loading, falls back to a targeted server check for users
+		 * that did not get into the preloaded map (e.g. found via server search).
+		 * @param {string|number} userId
+		 * @return {Promise<boolean|null>} null when membership could not be resolved
+		 */
+		async resolveUserMembership(userId)
+		{
+			const dialogHelper = DialogHelper.createByDialogId(this.dialogId);
+			if (!dialogHelper)
+			{
+				return null;
+			}
+
+			if (!this.#isMembershipMapLoaded)
+			{
+				await this.loadChatUsersMembership();
+			}
+
+			const id = String(userId);
+			if (Type.isBoolean(this.#membershipMap[id]))
+			{
+				return this.#membershipMap[id];
+			}
+
+			try
+			{
+				const verifiedMembers = await this.chatService.verifyUsersChatMembership(dialogHelper.chatId, [id]);
+				const isMember = verifiedMembers.relations.some((member) => String(member.userId) === id);
+				this.#membershipMap[id] = isMember;
+
+				return isMember;
+			}
+			catch (error)
+			{
+				Logger.error(`${this.constructor.name}.resolveUserMembership error`, error);
+
+				return null;
+			}
 		}
 
 		/**

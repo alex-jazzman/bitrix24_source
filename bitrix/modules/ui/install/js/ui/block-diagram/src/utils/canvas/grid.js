@@ -387,10 +387,18 @@ export class Grid
 		);
 	}
 
+	// The context is the canvas's and outlives the grid on a rebinding, so everything built on
+	// it goes back here rather than with the context being put out.
 	destroy(): void
 	{
 		this.#gl.deleteProgram(this.#program);
 		this.#gl.deleteShader(this.#vertexShader);
 		this.#gl.deleteShader(this.#fragmentShader);
+		this.#gl.deleteBuffer(this.#gridPositionBuffer);
+
+		this.#program = null;
+		this.#vertexShader = null;
+		this.#fragmentShader = null;
+		this.#gridPositionBuffer = null;
 	}
 }

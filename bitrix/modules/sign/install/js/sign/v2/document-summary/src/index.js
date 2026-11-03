@@ -151,9 +151,6 @@ export class DocumentSummary extends EventEmitter
 					>
 					</span>
 				</div>
-				<p class="sign-document-summary__title-editor_help">
-					${Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TITLE_EDITOR_HELP')}
-				</p>
 			</div>
 		`;
 	}

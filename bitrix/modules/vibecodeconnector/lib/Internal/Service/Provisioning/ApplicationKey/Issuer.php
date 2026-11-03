@@ -41,7 +41,7 @@ final class Issuer
 		?string $applicationToken = null,
 	): RestApplicationInterface
 	{
-		$this->accessGate->ensureRestProvisioningAvailable();
+		$this->accessGate->ensureRestProvisioningAvailable($this->entryPoint, $userId);
 
 		return $this->permissionSource->isVibecodeSource()
 			? $this->installer->forceInstall(

@@ -1,3 +1,5 @@
+import { Dom } from 'main.core';
+
 import { RelationTasks } from 'tasks.v2.component.fields.relation-tasks';
 import { GanttPopup } from 'tasks.v2.application.gantt-popup';
 
@@ -26,6 +28,12 @@ export const Gantt = {
 		handleAdd(addButton: HTMLElement): void
 		{
 			this.bindElement = addButton;
+			Dom.attr(addButton, 'aria-expanded', 'true');
+		},
+		handleClose(): void
+		{
+			Dom.attr(this.bindElement, 'aria-expanded', 'false');
+			this.bindElement = null;
 		},
 	},
 	template: `
@@ -35,6 +43,6 @@ export const Gantt = {
 			:shouldShowSubTasksOption="false"
 			@add="handleAdd"
 		/>
-		<GanttPopup v-if="bindElement" :bindElement @close="bindElement = null"/>
+		<GanttPopup v-if="bindElement" :bindElement @close="handleClose"/>
 	`,
 };

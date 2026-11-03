@@ -8,9 +8,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MODULE_ID = 'im';
 	const CONTEXT_KEY = 'currentChat';
 	class ChatPageContextManager {
-		static #instance;
+		static #instance = null;
+		#unwatch = null;
 		static init() {
-			ChatPageContextManager.getInstance();
+			ChatPageContextManager.getInstance().subscribe();
 		}
 		static getInstance() {
 			if (!ChatPageContextManager.#instance) {
@@ -18,17 +19,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return ChatPageContextManager.#instance;
 		}
-		constructor() {
-			this.#subscribe();
+		static reset() {
+			if (ChatPageContextManager.#instance) {
+				ChatPageContextManager.#instance.#dispose();
+			}
+			ChatPageContextManager.#instance = null;
 		}
-		#subscribe() {
+		subscribe() {
 			const watcher = (state, getters) => {
 				const layout = getters['application/getLayout'];
 				const chat = layout.entityId ? getters['chats/get'](layout.entityId) : null;
 				return [layout.name, layout.entityId, chat?.inited ? '1' : '0', chat?.type ?? '', chat?.name ?? '', chat?.entityLink?.id ?? ''].join('|');
 			};
-			im_v2_application_core.Core.getStore().watch(watcher, () => this.#syncContext());
+			this.#unwatch?.();
+			this.#unwatch = im_v2_application_core.Core.getStore().watch(watcher, () => this.#syncContext());
 			this.#syncContext();
+		}
+		#dispose() {
+			this.#unwatch?.();
+			this.#unwatch = null;
+			ui_pageContext.PageContext.delete(MODULE_ID, CONTEXT_KEY);
 		}
 		#syncContext() {
 			const layout = im_v2_application_core.Core.getStore().getters['application/getLayout'];

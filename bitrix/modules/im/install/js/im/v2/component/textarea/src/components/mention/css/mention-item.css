@@ -19,8 +19,57 @@
 	padding: 4px;
 }
 
+/* Two modalities, two states. The pointer paints the row it is over and writes nothing into the
+   component, so it can no longer move the keyboard position or what the field announces. `--selected` is
+   that keyboard position, and the row shares the pointer's background - the ring below is what tells the
+   two apart. */
+.bx-im-mention-item__container:hover,
 .bx-im-mention-item__container.--selected {
 	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* The ring marks a keyboard walk, so it waits for the list to be walked: `--keyboard-traversal` appears with
+   the first movement key. Until then the background of the active row carries the state alone - it says what
+   Enter would insert, and aria-activedescendant names that row from the moment the list opens.
+   `--selected` already means "the keyboard is on the name cell of this row" (the row drops the class once the
+   action column takes over), so the ring needs no third condition. It goes around the whole row rather than
+   that cell: the name cell is narrower than the row wherever the "add to chat" button takes a share of it, so
+   a ring on the cell would change size as the arrows walk the list. No radius of its own - an outline follows
+   the rounding of the element it belongs to, and the row is already rounded.
+   Rows touch with no gap between them, and the ring reaches 4px out of the row, so the neighbours would
+   paint their own background over it: positioned siblings paint in tree order. The z-index lifts the row
+   that holds the ring above both, and only while it holds it. */
+.bx-im-mention-popup-content__items.--keyboard-traversal .bx-im-mention-item__container.--selected {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	z-index: 1;
+}
+
+/* gridcell wrappers are layout-neutral: the name cell reproduces the row's own flex box (same gap) so the
+   avatar and the text keep their places, the action cell hugs the button exactly as the bare button did */
+.bx-im-mention-item__name-cell {
+	display: flex;
+	gap: 12px;
+	flex: 1;
+	min-width: 0;
+}
+
+.bx-im-mention-item__action-cell {
+	display: flex;
+	border-radius: 6px;
+}
+
+.bx-im-mention-item__action-cell.--active {
+	background-color: var(--ui-color-bg-state-click-default);
+}
+
+/* The button is never a Tab stop - the whole grid runs under aria-activedescendant - so :focus-visible can
+   never match it. Its ring comes from the active column of the row, the same source as the pill behind it,
+   and the column can only be reached with an arrow - so this ring needs no walk condition of its own. */
+.bx-im-mention-item__action-cell.--active .bx-im-mention-chat-add-dropdown__container {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--im-border-radius-xs);
 }
 
 .bx-im-mention-item__avatar-container {

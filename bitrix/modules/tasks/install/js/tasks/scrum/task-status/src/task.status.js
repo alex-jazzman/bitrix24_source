@@ -1,4 +1,4 @@
-import {Type, Loc, Text} from 'main.core';
+import {Type, Loc, Runtime, Text} from 'main.core';
 
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
 import {UI} from 'ui.notification';
@@ -12,11 +12,13 @@ type State = {
 	action: 'complete' | 'renew',
 	groupId?: number,
 	parentTaskId?: number,
-	performActionOnParentTask?: boolean
+	performActionOnParentTask?: boolean,
+	completeWithChecklist?: boolean,
 }
 
 type Task = {
-	name: string
+	name: string,
+	checkListCompletionSnapshot?: Object | null,
 }
 
 export class TaskStatus
@@ -25,7 +27,8 @@ export class TaskStatus
 		complete: 'complete',
 		renew: 'renew',
 		proceed: 'proceed',
-		skip: 'skip'
+		skip: 'skip',
+		alreadyCompleted: 'alreadyCompleted',
 	};
 
 	constructor(state: State)
@@ -50,6 +53,7 @@ export class TaskStatus
 				? false
 				: state.performActionOnParentTask
 		);
+		this.completeWithChecklist = state.completeWithChecklist === true;
 	}
 
 	updateState(): Promise
@@ -64,9 +68,10 @@ export class TaskStatus
 							action: this.action,
 							groupId: this.groupId,
 							parentTaskId: this.parentTaskId,
-							performActionOnParentTask: this.performActionOnParentTask
+							performActionOnParentTask: this.performActionOnParentTask,
 						},
-						...response.data
+						...response.data,
+						completeWithChecklist: this.completeWithChecklist,
 					}
 				);
 			})
@@ -83,10 +88,16 @@ export class TaskStatus
 			.then((needUpdate: boolean) => {
 				if (needUpdate)
 				{
-					return this.requestSender.getTasks({
+					const request: Object = {
 						groupId: this.groupId,
-						taskIds: [this.parentTaskId, this.taskId]
-					})
+						taskIds: [this.parentTaskId, this.taskId],
+					};
+					if (this.action === TaskStatus.actions.complete)
+					{
+						request.checkListTaskId = this.parentTaskId;
+					}
+
+					return this.requestSender.getTasks(request)
 						.then((response) => {
 							const tasks = response.data;
 
@@ -103,20 +114,43 @@ export class TaskStatus
 				}
 			})
 			.then((response) => {
+				if (response === TaskStatus.actions.alreadyCompleted)
+				{
+					if (this.performActionOnParentTask)
+					{
+						UI.Notification.Center.notify({
+							content: Loc.getMessage('TST_PARENT_COMPLETE_NOTIFY')
+						});
+					}
+
+					return TaskStatus.actions.complete;
+				}
+
+				if (response === TaskStatus.actions.complete)
+				{
+					return this.completeParentTask(this.parentTaskId)
+						.then((isCompleted) => {
+							if (!isCompleted)
+							{
+								return TaskStatus.actions.skip;
+							}
+
+							if (this.performActionOnParentTask)
+							{
+								UI.Notification.Center.notify({
+									content: Loc.getMessage('TST_PARENT_COMPLETE_NOTIFY')
+								});
+							}
+
+							return response;
+						})
+					;
+				}
+
 				if (this.performActionOnParentTask)
 				{
 					switch (response)
 					{
-						case TaskStatus.actions.complete:
-							return this.completeTask(this.parentTaskId)
-								.then(() => {
-									UI.Notification.Center.notify({
-										content: Loc.getMessage('TST_PARENT_COMPLETE_NOTIFY')
-									});
-
-									return response;
-								})
-							;
 						case TaskStatus.actions.renew:
 							return this.renewTask(this.parentTaskId)
 								.then(() => {
@@ -164,6 +198,21 @@ export class TaskStatus
 
 	showMessage(parentTask: Task, task: Task): Promise
 	{
+		const isCompleteAction = (this.action === TaskStatus.actions.complete);
+		const hasCheckListCompletionSnapshot = (
+			!Type.isUndefined(parentTask.checkListCompletionSnapshot)
+			&& parentTask.checkListCompletionSnapshot !== null
+		);
+		if (isCompleteAction && hasCheckListCompletionSnapshot)
+		{
+			return this.showCheckListCompletionPrompt(parentTask);
+		}
+
+		return this.showConfirmMessage(parentTask, task);
+	}
+
+	showConfirmMessage(parentTask: Task, task: Task): Promise
+	{
 		return new Promise((resolve, reject) => {
 			const isCompleteAction = (this.action === TaskStatus.actions.complete);
 
@@ -188,14 +237,23 @@ export class TaskStatus
 				onOk: (messageBox) => {
 					if (isCompleteAction)
 					{
-						this.showDod(this.parentTaskId)
-							.then(() => {
+						this.showDodConfirmation(this.parentTaskId)
+							.then((confirmed) => {
+								if (!confirmed)
+								{
+									messageBox.getOkButton().setDisabled(false);
+
+									return;
+								}
+
 								messageBox.close();
 
 								resolve(TaskStatus.actions.complete);
 							})
-							.catch(() => {
-								messageBox.getOkButton().setDisabled(false);
+							.catch((error) => {
+								messageBox.close();
+
+								reject(error);
 							})
 						;
 					}
@@ -225,12 +283,87 @@ export class TaskStatus
 		});
 	}
 
+	async showCheckListCompletionPrompt(parentTask: Task): Promise<string>
+	{
+		const { checkListCompletionPromptRunner, CompletionStates } = await Runtime.loadExtension(
+			'tasks.v2.lib.check-list-completion-prompt',
+		);
+		const complete = () => this.completeTask(this.parentTaskId, true)
+			.then((response) => response.data === true ? null : response)
+		;
+		const result = await checkListCompletionPromptRunner.run(
+			parentTask.checkListCompletionSnapshot,
+			{
+				complete,
+				completeWithChecklist: complete,
+			},
+			{
+				presentation: {
+					title: Loc.getMessage('TST_PARENT_CHECKLIST_COMPLETE_TITLE'),
+					titleLink: {
+						text: parentTask.name,
+						onClick: () => {
+							void this.openTaskCard(this.parentTaskId);
+						},
+					},
+					subtitle: Loc.getMessage('TST_PARENT_CHECKLIST_COMPLETE_SUBTITLE'),
+					completeButtonText: Loc.getMessage('TST_PARENT_CHECKLIST_COMPLETE_BUTTON'),
+					returnButtonText: Loc.getMessage('TST_PARENT_CHECKLIST_CONTINUE_BUTTON'),
+				},
+				beforeComplete: () => this.showDodConfirmation(this.parentTaskId),
+			},
+		);
+
+		if (result.state === CompletionStates.Failed)
+		{
+			throw result.error;
+		}
+
+		if (
+			result.state === CompletionStates.Cancelled
+			|| result.state === CompletionStates.Returned
+		)
+		{
+			return TaskStatus.actions.skip;
+		}
+
+		return TaskStatus.actions.alreadyCompleted;
+	}
+
+	async openTaskCard(taskId: number): Promise<void>
+	{
+		const { TaskCard } = await Runtime.loadExtension('tasks.v2.application.task-card');
+
+		TaskCard.showFullCard({ taskId });
+	}
+
 	showDod(taskId: number): Promise
+	{
+		return this.showDodDialog(taskId);
+	}
+
+	showDodConfirmation(taskId: number): Promise<boolean>
+	{
+		return this.showDodDialog(taskId, true).then(
+			() => true,
+			(error) => {
+				if (Type.isUndefined(error))
+				{
+					return false;
+				}
+
+				throw error;
+			},
+		);
+	}
+
+	showDodDialog(taskId: number, skipErrorAlert: boolean = false): Promise
 	{
 		return new Promise((resolve, reject) => {
 			const dod = new Dod({
 				taskId,
 				groupId: this.groupId,
+				skipErrorAlert,
 			});
 
 			dod.subscribe('resolve', () => resolve());
@@ -247,15 +380,24 @@ export class TaskStatus
 						resolve();
 					}
 				})
+				.catch(reject)
 			;
 		});
 	}
 
-	completeTask(taskId: number): Promise
+	async completeParentTask(taskId: number): Promise<boolean>
+	{
+		const response = await this.completeTask(taskId, true);
+
+		return response.data === true;
+	}
+
+	completeTask(taskId: number, completeWithChecklist: boolean = false): Promise
 	{
 		return this.requestSender.completeTask({
 			groupId: this.groupId,
-			taskId: taskId
+			taskId,
+			completeWithChecklist,
 		});
 	}
 

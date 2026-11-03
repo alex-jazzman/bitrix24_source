@@ -47,3 +47,59 @@
 	margin: 0;
 	padding: 0;
 }
+/*region Focus ring*/
+/* The forms of the entry, the password recovery and the password change come from `main`; the section
+ * wraps them, and the rules below reach them only there. One dark band outside the box of the control,
+ * as on the other pages of the section: the theme of the landing store draws a white band inside the box
+ * and a halo around it, and the stylesheet of the fields drops the ring of a field altogether. The weight
+ * outruns `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the theme, which is
+ * included after this file. */
+.row > .sale-personal-section-auth .bx-authform a:focus-visible,
+.row > .sale-personal-section-auth .bx-authform .btn:focus-visible,
+.row > .sale-personal-section-auth .bx-authform button:focus-visible,
+.row > .sale-personal-section-auth .bx-authform input:focus-visible,
+.row > .sale-personal-section-auth .bx-authform select:focus-visible,
+.row > .sale-personal-section-auth .bx-authform textarea:focus-visible,
+.row > .sale-personal-section-auth .bx-authform [tabindex]:not([tabindex="-1"]):focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. */
+.row > .sale-personal-section-auth .bx-authform .btn {
+	transition: all .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button (0,2,0). The resting values are put back, and the hovered ones over a hovered or pressed focused
+ * button. */
+.row > .sale-personal-section-auth .bx-authform .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.row > .sale-personal-section-auth .bx-authform .btn.btn-primary:focus:hover,
+.row > .sale-personal-section-auth .bx-authform .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+	color: #fff;
+}
+
+/* One dark band outside the tile instead of the white band the landing store theme draws inside it and
+ * its halo. The weight outruns `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0)
+ * of the theme, whose stylesheet comes later. */
+.row .sale-personal-section-index-block > a.sale-personal-section-index-block-link[href]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The translucent tile would pale the ring: the focused tile is opaque, as the hovered one, at once. */
+.row .sale-personal-section-index-block:has(> a.sale-personal-section-index-block-link[href]:focus-visible) {
+	opacity: 1;
+	transition: none;
+}
+/*endregion*/

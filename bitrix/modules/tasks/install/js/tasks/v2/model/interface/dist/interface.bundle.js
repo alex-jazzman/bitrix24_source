@@ -17,7 +17,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				taskUserFieldScheme: params.taskUserFieldScheme,
 				templateUserFieldScheme: params.templateUserFieldScheme,
 				fullCardWidth: params.userOptions.fullCard?.cardWidth,
-				taskListOptions: params.userOptions.fullCard?.taskListOptions ? JSON.parse(params.userOptions.fullCard.taskListOptions) : undefined
+				taskListOptions: params.userOptions.fullCard?.taskListOptions ? JSON.parse(params.userOptions.fullCard.taskListOptions) : undefined,
+				filesViewMode: params.userOptions.filesViewMode || 'tile'
 			});
 		}
 		getName() {
@@ -57,7 +58,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					showCompletedGantt: true,
 					showSubTasks: true,
 					showSubTemplates: true
-				})
+				}),
+				filesViewMode: this.getVariable('filesViewMode', 'tile')
 			};
 		}
 		getGetters() {
@@ -76,6 +78,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				deadlineUserOption: state => state.deadlineUserOption,
 				/** @function interface/defaultDeadlineTs */
 				defaultDeadlineTs: state => {
+					if (state.deadlineUserOption?.defaultDeadlineInSeconds === 0) {
+						return null;
+					}
 					if (state.deadlineUserOption && state.deadlineUserOption.isExactDeadlineTime) {
 						const worktimeTs = tasks_v2_lib_calendar.calendar.clampWorkDateTime(Date.now());
 						const durationTs = state.deadlineUserOption.defaultDeadlineInSeconds * 1000;
@@ -102,7 +107,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				/** @function interface/taskWithActiveTimer */
 				taskWithActiveTimer: state => state.taskWithActiveTimer,
 				/** @function interface/taskListOptions */
-				taskListOptions: state => state.taskListOptions
+				taskListOptions: state => state.taskListOptions,
+				/** @function interface/filesViewMode */
+				filesViewMode: state => state.filesViewMode
 			};
 		}
 		getActions() {
@@ -173,6 +180,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				/** @function interface/updateTaskListOptions */
 				updateTaskListOptions: (store, taskListOptions) => {
 					store.commit('setTaskListOptions', taskListOptions);
+				},
+				/** @function interface/updateFilesViewMode */
+				updateFilesViewMode: (store, filesViewMode) => {
+					store.commit('setFilesViewMode', filesViewMode);
 				}
 			};
 		}
@@ -197,9 +208,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					};
 				},
 				setDeadlineUserOption: (state, deadlineUserOption) => {
+					const normalizedDeadlineUserOption = deadlineUserOption.defaultDeadlineInSeconds === 0 ? {
+						...deadlineUserOption,
+						defaultDeadlineDate: ''
+					} : deadlineUserOption;
 					state.deadlineUserOption = {
 						...state.deadlineUserOption,
-						...deadlineUserOption
+						...normalizedDeadlineUserOption
 					};
 				},
 				addCheckListItemToDeleting: (state, itemId) => {
@@ -235,12 +250,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				},
 				setTaskListOptions: (state, taskListOptions) => {
 					state.taskListOptions = taskListOptions;
+				},
+				setFilesViewMode: (state, filesViewMode) => {
+					state.filesViewMode = filesViewMode;
 				}
 			};
 		}
 	}
 	const updateSkeleton = width => {
-		const style = width ? `style="width: ${width}px;"` : '';
+		const widthStyle = width ? `width: ${width}px; ` : '';
+		const style = `style="${widthStyle}min-width: 0; max-width: 100%;"`;
 		main_core.localStorage.set('tasks-skeleton-width', style, 315_360_000);
 	};
 

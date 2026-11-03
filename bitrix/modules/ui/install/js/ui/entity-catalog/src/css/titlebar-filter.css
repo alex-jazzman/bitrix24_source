@@ -34,7 +34,15 @@
 	position: relative;
 	width: 40px;
 	height: 40px;
+	padding: 0;
+	border: 0;
+	background: transparent;
 	cursor: pointer;
+}
+
+.ui-entity-catalog__titlebar_btn-filter:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .ui-entity-catalog__titlebar_btn-filter::before {

@@ -10,14 +10,19 @@ export type Criterion = {
 	sort: number,
 };
 
+export type CallAssessment = {
+	id: ?number,
+	title: ?string,
+	prompt: string,
+	isHintEnabled: boolean,
+	hasHint: boolean,
+};
+
 export type ApplicationState = {
 	guid: string,
 	callId: string,
-	assessment: {
-		id: ?number,
-		title: ?string,
-		prompt: ?string,
-	},
+	assessment: CallAssessment,
+	hintViewMode: ?string,
 	hasAvailableSelectorItems: boolean,
 	isCallScoringV2Enabled: boolean,
 	criteria: Criterion[],
@@ -31,8 +36,11 @@ export default () => {
 			assessment: {
 				id: null,
 				title: null,
-				prompt: null,
+				prompt: '',
+				isHintEnabled: false,
+				hasHint: false,
 			},
+			hintViewMode: null,
 			hasAvailableSelectorItems: false,
 			isCallScoringV2Enabled: false,
 			criteria: [],

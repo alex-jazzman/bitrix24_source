@@ -1,6 +1,7 @@
 ﻿import {EventEmitter} from "main.core.events";
 import {Dom, Tag, Type} from "main.core";
 import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.autocomplete";
+import 'crm.entity-editor';
 
 export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 {
@@ -94,7 +95,7 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 
 		if (this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if (this.isDragEnabled())

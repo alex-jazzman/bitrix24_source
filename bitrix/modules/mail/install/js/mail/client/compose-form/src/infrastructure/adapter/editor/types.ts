@@ -14,6 +14,8 @@ export type EditorAdapterParams = {
 	uploaderControlId?: string,
 	/** Escape inside the body is one more way out of the form, and it leaves through the same door. */
 	closeForm?: () => void,
+	/** Markup for the head of the letter document: the stylesheets the form styles the letter with. */
+	headHtml?: string,
 };
 
 /**
@@ -28,12 +30,14 @@ export type EditorAttachment = {
 	sizeFormatted: string,
 };
 
-export type RestoredEditorAttachment = {
+export type EditorServerAttachment = {
 	id: number,
 	name: string,
 	size: number,
 	contentType: string | null,
 };
+
+export type RestoredEditorAttachment = EditorServerAttachment;
 
 export type BodyPosition =
 	| { at: 'caret' }
@@ -61,6 +65,7 @@ export interface ComposeEditorAdapter
 	getBody(): string;
 	setBody(html: string): boolean;
 	setInitialBody(html: string): boolean;
+	setReadOnly(readOnly: boolean): boolean;
 	hasUserContent(): boolean;
 	replaceUserContent(html: string): boolean;
 	insertHtmlAtCaret(html: string): boolean;
@@ -69,11 +74,16 @@ export interface ComposeEditorAdapter
 	insertNode(node: HTMLElement, position: BodyPosition): boolean;
 	getFiles(): EditorAttachment[];
 	replaceFiles(files: RestoredEditorAttachment[]): Promise<boolean>;
+	/** Appends server files and returns their uploader ids; `null` means the partial result was removed. */
+	addFiles(files: EditorServerAttachment[]): Promise<string[] | null>;
 	removeFile(fileId: string): boolean;
-	showUploader(): boolean;
+	toggleUploader(): boolean;
 	showCopilot(): boolean;
-	showCreateDocument(): boolean;
+	toggleCreateDocument(): boolean;
 	parseQuote(html: string): string | null;
+	/** Parses markup for the document of the editor; `null` means there is no editor to parse it. */
+	parseForBody(html: string): string | null;
+	syncBodyFromDocument(): boolean;
 	updateCopilotContext(parameters: Record<string, unknown>): boolean;
 	subscribeReady(handler: () => void): EditorUnsubscribe;
 	subscribeVisibilityChange(handler: (isShown: boolean) => void): EditorUnsubscribe;

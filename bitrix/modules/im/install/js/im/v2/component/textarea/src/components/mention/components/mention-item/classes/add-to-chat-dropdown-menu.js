@@ -3,16 +3,13 @@ import { type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 import { type EventEmitter } from 'main.core.events';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
-import { PopupType, EventType, ChatType, type ApplicationContext, type ChatTypeItem } from 'im.v2.const';
+import { PopupType, ChatType, type ApplicationContext, type ChatTypeItem } from 'im.v2.const';
 import { BaseMenu } from 'im.v2.lib.menu';
-import { ChatService } from 'im.v2.provider.service.chat';
 import { Notifier } from 'im.v2.lib.notifier';
 import { Core } from 'im.v2.application.core';
 import { Analytics } from 'im.v2.lib.analytics';
-import { ChatAccessManager } from 'im.v2.lib.access';
-import { CollabInvitationService } from 'im.v2.provider.service.collab-invitation';
-import { Messenger } from 'im.public';
 
+import { MentionAddUserService } from '../../../classes/add-user-service';
 import { MentionInsertManager } from '../../classes/insert-manager';
 
 const AddToChatTitleByChatType = {
@@ -23,8 +20,14 @@ const AddToChatTitleByChatType = {
 export class AddToChatDropdownMenu extends BaseMenu
 {
 	emitter: EventEmitter;
-	chatService: ChatService;
-	context: { chatId: number, dialogId: string, userId: string, searchQuery: string };
+	context: {
+		chatId: number,
+		dialogId: string,
+		userId: string,
+		searchQuery: string,
+		target: string,
+		targetContainer: HTMLElement,
+	};
 
 	constructor(applicationContext: ApplicationContext)
 	{
@@ -34,8 +37,6 @@ export class AddToChatDropdownMenu extends BaseMenu
 
 		const { emitter } = applicationContext;
 		this.emitter = emitter;
-
-		this.chatService = new ChatService();
 	}
 
 	getMenuOptions(): MenuOptions
@@ -43,6 +44,7 @@ export class AddToChatDropdownMenu extends BaseMenu
 		return {
 			...super.getMenuOptions(),
 			angle: false,
+			targetContainer: this.context.targetContainer,
 		};
 	}
 
@@ -79,6 +81,8 @@ export class AddToChatDropdownMenu extends BaseMenu
 			id: this.context.userId,
 			dialogId: this.context.dialogId,
 			query: this.context.searchQuery,
+			target: this.context.target,
+			suppressAddToChatPopup: true,
 		};
 
 		const insertManager = new MentionInsertManager({ emitter: this.emitter });
@@ -91,61 +95,29 @@ export class AddToChatDropdownMenu extends BaseMenu
 
 		if (this.#isUser())
 		{
-			await this.#createChatFromUser();
+			await this.#getAddUserService().createChatFromUser({
+				dialogId: this.context.dialogId,
+				userId: this.context.userId,
+			});
 
 			return;
 		}
 
-		const canAdd = await ChatAccessManager.canAddUsers(this.context.dialogId, [this.context.userId]);
-		if (!canAdd)
-		{
-			return;
-		}
-
-		await this.#addUserToChat();
-
-		Notifier.chat.handleUserAddComplete(this.#getChatType());
-	}
-
-	async #createChatFromUser()
-	{
-		const { newDialogId } = await this.chatService.extendToGroupChat({
-			users: [this.context.dialogId, this.context.userId, Core.getUserId()],
-			ownerId: Core.getUserId(),
-		});
-
-		void Messenger.openChat(newDialogId);
-	}
-
-	async #addUserToChat()
-	{
-		const addUserHandlers = {
-			[ChatType.collab]: () => this.#addToCollab(),
-			default: () => this.#addToChat(),
-		};
-
-		const handler = addUserHandlers[this.#getChatType()] ?? addUserHandlers.default;
-
-		await handler();
-
-		this.emitter.emit(EventType.mention.onAddUserToChat, { userId: this.context.userId });
-	}
-
-	async #addToChat()
-	{
-		await this.chatService.addToChat({
-			chatId: this.context.chatId,
-			members: [this.context.userId],
-			showHistory: true,
-		});
-	}
-
-	async #addToCollab()
-	{
-		await (new CollabInvitationService()).addEmployees({
+		const isAdded = await this.#getAddUserService().addUser({
 			dialogId: this.context.dialogId,
-			members: [this.context.userId],
+			chatId: this.context.chatId,
+			userId: this.context.userId,
 		});
+
+		if (isAdded)
+		{
+			Notifier.chat.handleUserAddComplete(this.#getChatType());
+		}
+	}
+
+	#getAddUserService(): MentionAddUserService
+	{
+		return new MentionAddUserService({ emitter: this.emitter });
 	}
 
 	#getChatType(): ChatTypeItem

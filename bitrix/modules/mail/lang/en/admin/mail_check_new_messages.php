@@ -10,4 +10,3 @@ $MESS ['MAIL_CHECK_LOG'] = "View log";
 $MESS ['MAIL_CHECK_ERR'] = "Error while receiving mail.";
 $MESS ['MAIL_CHECK_MBOX_PARAMS'] = "Mailbox settings";
 $MESS ['MAIL_CHECK_TEXT'] = "Mailbox check";
-?>

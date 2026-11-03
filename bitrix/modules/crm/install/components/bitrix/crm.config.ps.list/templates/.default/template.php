@@ -4,6 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+$navigationLinkAttributes = $isSettingsHub ? ' data-slider-ignore-autobinding="true" target="_self"' : '';
+
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans'
@@ -12,7 +15,8 @@ use Bitrix\Main\Localization\Loc;
 ?>
 <div class="crm-config-ps-list-wrapper">
 	<?if ($arResult['CAN_ADD']):?>
-		<a href="<?=$arParams['PATH_TO_PS_ADD'];?>" style="display: block">
+		<a href="<?=htmlspecialcharsbx($arParams['PATH_TO_PS_ADD'])?>"<?=$navigationLinkAttributes?>
+			data-testid="crm-config-ps-list-create-link" style="display: block">
 			<div class="crm-config-ps-list-createform-container">
 				<div class="crm-config-ps-list-createform-element"><?=Loc::getMessage('CRM_PS_LIST_PS_CREATE')?></div>
 				<span class="crm-config-ps-list-createform-description"><?=Loc::getMessage('CRM_PS_LIST_PS_CREATE_DESC')?></span>
@@ -26,7 +30,17 @@ use Bitrix\Main\Localization\Loc;
 		<div id="close-row-<?=$paySystem['ID'];?>" class="crm-config-ps-list-widget-row">
 			<div class="crm-config-ps-list-buttons-container">
 				<div class="crm-config-ps-list-buttons">
-					<span class="crm-config-ps-list-hamburger" onclick="BX.PopupMenu.show('menu-<?=$paySystem['ID'];?>', this, [{text : '<?=Loc::getMessage('CRM_PS_EDIT');?>', href : '<?=$paySystem['PATH_TO_PS_EDIT'];?>'}],{angle : {offset : 30}});"></span>
+					<span class="crm-config-ps-list-hamburger" data-testid="crm-config-ps-list-menu-button-<?=(int)$paySystem['ID']?>"
+						onclick="BX.PopupMenu.show('menu-<?=(int)$paySystem['ID']?>', this, [{
+						text: '<?=htmlspecialcharsbx(CUtil::JSEscape(Loc::getMessage('CRM_PS_EDIT')))?>',
+						<?if ($isSettingsHub):?>
+							onclick: function () {
+								window.location.href = '<?=htmlspecialcharsbx(CUtil::JSEscape($paySystem['PATH_TO_PS_EDIT']))?>';
+							}
+						<?else:?>
+							href: '<?=htmlspecialcharsbx(CUtil::JSEscape($paySystem['PATH_TO_PS_EDIT']))?>'
+						<?endif;?>
+					}], {angle: {offset: 30}});"></span>
 					<span class="crm-config-ps-list-close" onclick="BX.Crm.PaySystemList.delete(<?=$paySystem['ID'];?>);"></span>
 				</div>
 			</div>
@@ -35,14 +49,19 @@ use Bitrix\Main\Localization\Loc;
 					<div class="crm-config-ps-list-widget-head">
 						<span class="crm-config-ps-list-widget-title-container">
 							<span class="crm-config-ps-list-widget-title-inner">
-								<a href="<?=$paySystem['PATH_TO_PS_EDIT'];?>" class="crm-config-ps-list-widget-title"><?=$paySystem['NAME'];?></a>
+								<a
+									class="crm-config-ps-list-widget-title"
+									data-testid="crm-config-ps-list-title-link-<?=(int)$paySystem['ID']?>"
+									href="<?=htmlspecialcharsbx($paySystem['PATH_TO_PS_EDIT'])?>"<?=$navigationLinkAttributes?>
+								><?=$paySystem['NAME'];?></a>
 							</span>
 						</span>
 					</div>
 					<div class="crm-config-ps-list-widget-content">
 						<div class="crm-config-ps-list-widget-content-amt">
 							<div class="crm-config-ps-list-widget-content-image">
-								<a href="<?=$paySystem['PATH_TO_PS_EDIT'];?>">
+								<a href="<?=htmlspecialcharsbx($paySystem['PATH_TO_PS_EDIT'])?>"<?=$navigationLinkAttributes?>
+									data-testid="crm-config-ps-list-image-link-<?=(int)$paySystem['ID']?>">
 									<?
 									if ($paySystem["LOGOTIP"] > 0)
 									{

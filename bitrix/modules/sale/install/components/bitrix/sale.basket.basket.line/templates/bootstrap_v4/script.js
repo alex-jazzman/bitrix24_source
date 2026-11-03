@@ -33,6 +33,7 @@ BitrixSmallCart.prototype = {
 			});
 		}
 		this.setCartBodyClosure = this.closure('setCartBody');
+		this.lastAnnouncement = this.getAnnouncement();
 		BX.addCustomEvent(window, 'OnBasketChange', this.closure('refreshCart', {}));
 	},
 
@@ -173,6 +174,34 @@ BitrixSmallCart.prototype = {
 			if (this.verticalPosition == 'vcenter')
 				this.setVerticalCenter(windowHeight);
 		}
+
+		this.reserveBottom(windowHeight);
+	},
+
+	// The cart stands over the page, so the control the focus scrolls to may come to rest under it.
+	// The room it takes at the bottom of the window is handed to the stylesheet of the page.
+	reserveBottom: function(windowHeight)
+	{
+		var root = document.documentElement;
+		var box = this.cartElement.getBoundingClientRect();
+		var reserve = box.height > 0 && box.top > windowHeight / 2 ? Math.ceil(windowHeight - box.top) : 0;
+		// Every write into the root restyles the whole document.
+		if (reserve === this.bottomReserve)
+		{
+			return;
+		}
+
+		this.bottomReserve = reserve;
+		if (reserve > 0)
+		{
+			root.style.setProperty('--bx-basket-fixed-reserve', reserve + 'px');
+			BX.addClass(root, 'bx-basket-fixed-reserved');
+		}
+		else
+		{
+			root.style.removeProperty('--bx-basket-fixed-reserve');
+			BX.removeClass(root, 'bx-basket-fixed-reserved');
+		}
 	},
 
 	refreshCart: function (data)
@@ -198,9 +227,74 @@ BitrixSmallCart.prototype = {
 	setCartBody: function (result)
 	{
 		if (this.cartElement)
+		{
+			var focusWasInside = this.cartElement.contains(document.activeElement);
 			this.cartElement.innerHTML = result.replace(/#CURRENT_URL#/g, this.currentUrl);
+			if (focusWasInside)
+			{
+				this.restoreFocus();
+			}
+			this.announceBasket();
+		}
 		if (this.fixedPosition)
 			setTimeout(this.fixAfterRenderClosure, 100);
+	},
+
+	getAccessibility: function ()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	},
+
+	restoreFocus: function ()
+	{
+		var accessibility = this.getAccessibility();
+		var options = {preventScroll: true};
+		// With SHOW_AUTHOR=Y the links of the profile come first, so the cart link is found by its mark.
+		var selector = this.cartElement.querySelector('[data-basket-link]') ? '[data-basket-link]' : 'a';
+		if (accessibility && accessibility.FocusNavigator.focusBySelector(this.cartElement, selector, options))
+		{
+			return;
+		}
+
+		// The navigator skips a link it deems invisible.
+		var link = this.cartElement.querySelector(selector);
+		if (link)
+		{
+			link.focus(options);
+		}
+	},
+
+	getAnnouncement: function ()
+	{
+		var carrier = this.cartElement ? this.cartElement.querySelector('[data-basket-announce]') : null;
+
+		return carrier ? carrier.dataset.basketAnnounce : '';
+	},
+
+	announceBasket: function ()
+	{
+		var accessibility = this.getAccessibility();
+		var text = this.getAnnouncement();
+		// The storefront fires OnBasketChange after every action, so only a changed text is news.
+		if (!accessibility || !text || text === this.lastAnnouncement)
+		{
+			return;
+		}
+
+		this.lastAnnouncement = text;
+
+		// The cart of the header and the cart of the footer refresh on one change; only one speaks for the page.
+		if (BX.Type.isUndefined(window.bxBasketLineAnnouncer))
+		{
+			window.bxBasketLineAnnouncer = this.cartId;
+		}
+
+		if (window.bxBasketLineAnnouncer !== this.cartId)
+		{
+			return;
+		}
+
+		accessibility.LiveAnnouncer.announce(text, 'polite');
 	},
 
 	removeItemFromCart: function (id)

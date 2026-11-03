@@ -51,7 +51,9 @@ export class Category extends Event.EventEmitter
 		this.drawed = false;
 		this.allowWrite = Boolean(options.allowWrite);
 		this.isCategoryEditable = Boolean(options.isCategoryEditable);
+		this.isCategoryAccessEditable = Boolean(options.isCategoryAccessEditable);
 		this.areStagesEditable = Boolean(options.areStagesEditable);
+		this.areTunnelsEditable = Boolean(options.areTunnelsEditable);
 		this.isAvailableGenerator = options.isAvailableGenerator;
 		this.isAutomationEnabled = options.isAutomationEnabled;
 		this.isStagesEnabled = options.isStagesEnabled;
@@ -315,7 +317,7 @@ export class Category extends Event.EventEmitter
 	{
 		return this.cache.remember('container', () => (
 			Tag.render`
-				<div class="crm-st-category" data-id="${this.id}">
+				<div class="crm-st-category" data-id="${this.id}" data-testid="crm-sales-tunnels-category-${this.id}">
 					<div class="crm-st-category-action">
 						${this.getDragButton()}
 					</div>
@@ -549,6 +551,9 @@ export class Category extends Event.EventEmitter
 			onAddColumn: (column) => {
 				this.emit('Column:addColumn', { column });
 			},
+			onEdit: (column) => {
+				this.emit('Column:edit', { column });
+			},
 			onRemove: (event) => {
 				this.emit('Column:remove', event);
 			},
@@ -573,8 +578,8 @@ export class Category extends Event.EventEmitter
 			},
 			currentStageGroup: this.getFailContainer(),
 			categoryName: this.getTitle().textContent,
-			isCategoryEditable: this.isCategoryEditable,
 			areStagesEditable: this.areStagesEditable,
+			areTunnelsEditable: this.areTunnelsEditable,
 		};
 	}
 
@@ -685,6 +690,7 @@ export class Category extends Event.EventEmitter
 					class="crm-st-edit-button" 
 					onmousedown="${this.onEditButtonClick.bind(this)}"
 					title="${Loc.getMessage('CRM_ST_EDIT_CATEGORY_TITLE')}"
+					data-testid="crm-sales-tunnels-category-edit-btn"
 					> </span>
 			`
 		));
@@ -808,6 +814,7 @@ export class Category extends Event.EventEmitter
 					class="crm-st-option-button" 
 					onclick="${this.onOptionButtonClick.bind(this)}" 
 					title="${Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY')}"
+					data-testid="crm-sales-tunnels-category-access-btn"
 					> </span>
 			`;
 		});
@@ -873,6 +880,7 @@ export class Category extends Event.EventEmitter
 				dataset: {
 					categoryId: category.id,
 					access: category.access,
+					testid: `crm-sales-tunnels-category-access-copy-item-${category.id}`,
 				},
 				onclick: onSubMenuItemClick,
 			};
@@ -890,18 +898,21 @@ export class Category extends Event.EventEmitter
 					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL_MSGVER_1'),
 					dataset: {
 						access: 'X',
+						testid: 'crm-sales-tunnels-category-access-item-all',
 					},
 				},
 				{
 					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL_MSGVER_1'),
 					dataset: {
 						access: '',
+						testid: 'crm-sales-tunnels-category-access-item-none',
 					},
 				},
 				{
 					text: myItemsText,
 					dataset: {
 						access: 'A',
+						testid: 'crm-sales-tunnels-category-access-item-own',
 					},
 				},
 				(items.length > 0 ? {
@@ -911,7 +922,7 @@ export class Category extends Event.EventEmitter
 				{ delimiter: true },
 				{
 					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_CUSTOM'),
-					dataset: { access: false },
+					dataset: { access: false, testid: 'crm-sales-tunnels-category-access-item-custom' },
 					className: this.access !== 'A' && this.access !== 'X' && this.access !== '' ? 'menu-popup-item-accept' : '',
 					href: this.permissionEditLink,
 					target: '_blank',
@@ -963,6 +974,7 @@ export class Category extends Event.EventEmitter
 					class="crm-st-remove-button" 
 					onclick="${this.onRemoveButtonClick.bind(this)}" 
 					title="${Loc.getMessage('CRM_ST_REMOVE_CATEGORY2')}"
+					data-testid="crm-sales-tunnels-category-remove-btn"
 					> </span>
 			`;
 
@@ -1139,7 +1151,7 @@ export class Category extends Event.EventEmitter
 			Tag.render`
 				<div class="crm-st-category-action-buttons">
 					${this.isCategoryEditable ? this.getEditButton() : ''}
-					${this.isCategoryEditable ? this.getOptionButton() : ''}
+					${this.isCategoryAccessEditable ? this.getOptionButton() : ''}
 					${this.isCategoryEditable ? this.getRemoveButton() : ''}
 				</div>
 			`

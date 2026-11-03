@@ -1,0 +1,488 @@
+.crm-repeat-sale-widget-popup.--statistics {
+	/* Live layer: blobs instead of bg2.png; padding and clipping move to .crm-rs__w-statistics-root. */
+	background: #3a2e8f;
+	backdrop-filter: none;
+	padding: 0 !important;
+}
+
+.crm-rs__w-header.--statistics {
+	display: block;
+	padding-right: 40px;
+}
+
+.crm-rs__w-statistics-root {
+	position: relative;
+	overflow: hidden;
+	border-radius: 16px;
+	/* 24px of bottom padding: the distance from the settings link to the bottom of the popup */
+	padding: 22px 16px 24px 22px;
+}
+
+/* Content above the background layers: blobs and digits sit behind it at z-index 0. */
+.crm-rs__w-statistics-content {
+	position: relative;
+	z-index: 1;
+}
+
+/* Close cross: the popup draws its own, so the native close icon is off (see isAutoHidePopup). */
+.crm-rs__w-close {
+	position: absolute;
+	top: 0;
+	right: 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	opacity: 0.85;
+	transition: opacity 200ms;
+	z-index: 1;
+}
+
+.crm-rs__w-close:hover {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-rs__w-header-main {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.crm-rs__w-header-title {
+	color: var(--crm-repeat-sale-widget-popup-base-color);
+	font-size: var(--ui-font-size-2xl, 18px);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: 24px;
+	letter-spacing: -0.2px;
+}
+
+/* Totals sit inline on one line under the title. */
+.crm-rs__w-body-statistics-totals {
+	margin-top: 5px;
+	font-size: var(--ui-font-size-xs);
+	line-height: 15px;
+	letter-spacing: -0.05px;
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.crm-rs__w-body-statistics-totals span {
+	display: inline;
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.crm-rs__w-body-statistics-totals span + span {
+	margin-left: 9px;
+	color: rgba(255, 255, 255, 0.92);
+}
+
+/* The clickable header totals open the deal slider. */
+.crm-rs__w-body-statistics-totals span.--clickable {
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+.crm-rs__w-body-statistics-totals span.--clickable:hover {
+	color: rgba(255, 255, 255, 1);
+}
+
+.crm-rs__w-body-content.--statistics {
+	background: none;
+	/* The base .crm-rs__w-body-content blur is dropped here: it would frost the digits and the blobs
+	   under the conversion bar and the table, adding a backing layer that should not be there. */
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	/* 4px of right padding lines the right edge of the table and of the conversion bar up with the
+	   right edge of the close cross. */
+	padding: 0 4px 0 0;
+	width: 100%;
+	border-radius: 0;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.crm-rs__w-period-selector {
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.20);
+	display: inline-flex;
+	height: 28px;
+	padding: 0 8px 0 10px;
+	justify-content: center;
+	align-items: center;
+	gap: 2px;
+	font-size: var(--ui-font-size-xs);
+	line-height: 15px;
+	color: var(--crm-repeat-sale-widget-popup-base-color);
+	cursor: pointer;
+	margin-top: 4px;
+}
+
+.crm-rs__w-period-selector:hover .crm-rs__w-period-selector-icon {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-rs__w-period-selector-icon {
+	background: url('../images/period-selector-icon.svg') center right no-repeat;
+	width: 16px;
+	height: 16px;
+	display: inline-block;
+	cursor: pointer;
+	opacity: var(--ui-opacity-90);
+	transition: opacity 300ms;
+}
+
+.crm-rs__w-footer.--statistics {
+	margin-top: 24px;
+	/* 4px of right padding lines the feedback link up with the close cross, same as the table. */
+	padding-right: 4px;
+}
+
+/* The gap between the table and the footer is 24px: the shared 32px footer-row margin-top is dropped
+   for statistics only, and the footer margin-top carries the whole distance. */
+.crm-rs__w-footer.--statistics .crm-rs__w-footer-row {
+	margin-top: 0;
+}
+
+.crm-rs__w-footer.--statistics .crm-rs__w-footer-row {
+	margin-top: 0;
+}
+
+.crm-rs__w-body-loading-bubble {
+	margin-right: 27px;
+	margin-top: 16px;
+	margin-bottom: 20px;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.crm-rs__w-body-loading-bubble-wrapper {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+
+.crm-rs__w-body-loading-bubble .crm-rs__w-lottie-container {
+	position: relative;
+}
+
+.crm-rs__w-loading-lottie-container {
+	width: 75px;
+	height: 75px;
+	position: absolute;
+}
+
+.crm-rs__w-body-loading-bubble .crm-rs__w-body-bubble-subtitle{
+	position: relative;
+	top: 0;
+	font-size: var(--ui-font-size-sm);
+	line-height: 18px;
+}
+
+/* Conversion: a gradient bar as the first row, with the period selector docked to its right. */
+.crm-rs__w-conversion {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 16px 0 12px;
+	min-height: 47px;
+	padding: 0 8px 0 12px;
+	border-radius: 8px;
+	overflow: hidden;
+	background: linear-gradient(90deg, #2B3FBF 0%, #5B3FD6 60%, #7B54E8 100%);
+	color: var(--crm-repeat-sale-widget-popup-base-color);
+}
+
+.crm-rs__w-conversion-label {
+	display: inline-flex;
+	align-items: center;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 17px;
+	letter-spacing: -0.05px;
+}
+
+/* Info icon: set off from the percent sign and at 80% opacity. */
+.crm-rs__w-conversion-hint {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 1px;
+	opacity: 0.8;
+	cursor: default;
+	transition: opacity 300ms;
+}
+
+.crm-rs__w-conversion-hint:hover {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-rs__w-conversion .crm-rs__w-period-selector {
+	margin-top: 0;
+}
+
+/* Table = a stack of groups; each group is a parent row + its scenarios block.
+   Groups are separated by a 2px gap; only the table's outer corners round. */
+.crm-rs__w-body-statistics-table {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	/* The gap to the footer is set in one place, the footer margin-top (24px); here and on body-content it is 0. */
+	margin-bottom: 0;
+	/* Glass rows: they frost the blobs and the digits behind them. The rows tile this box with no gaps
+	   and repeat its 8px outer rounding, so one frosted layer here covers exactly the same area as a
+	   filter on every row, and the moving backdrop is resampled once per frame instead of per row. */
+	border-radius: 8px;
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+}
+
+.crm-rs__w-statgroup + .crm-rs__w-statgroup {
+	margin-top: 0;
+}
+
+.crm-rs__w-row,
+.crm-rs__w-scenario {
+	display: grid;
+	grid-template-columns: 1fr 46px 96px;
+	align-items: center;
+	min-height: 36px;
+	padding: 0 20px 0 11px;
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--crm-repeat-sale-widget-popup-base-color);
+}
+
+.crm-rs__w-row-count,
+.crm-rs__w-row-sum,
+.crm-rs__w-scenario-count,
+.crm-rs__w-scenario-sum {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Both parent rows are always highlighted the same way. */
+.crm-rs__w-row.--parent {
+	background: rgba(255, 255, 255, 0.20);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.crm-rs__w-row.--parent.--clickable,
+.crm-rs__w-row.--parent.--expandable {
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.crm-rs__w-row.--parent.--clickable:hover,
+.crm-rs__w-row.--parent.--expandable:hover {
+	background: rgba(255, 255, 255, 0.24);
+}
+
+.crm-rs__w-row-name {
+	display: inline-flex;
+	align-items: center;
+	/* justify-self:start keeps the cell off the toggle area, which a full-column grid item would take
+	   over, so a click beside the text collapses the group instead of opening the slider. max-width
+	   clips a long title. */
+	justify-self: start;
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Chevron toggle: AIR Outline XS glyph, pulled 4px closer to the text; 50% opacity when the group is open. */
+.crm-rs__w-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: -4px;
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.crm-rs__w-toggle.--expanded {
+	opacity: 0.5;
+}
+
+/* Scenario rows: full width (no indent), dim at rest, highlighted with a go-to icon on hover.
+   The height animates through grid-template-rows 0fr to 1fr; the _-inner wrapper carries
+   overflow:hidden and clips the content during the animation, with no magic max-height. */
+.crm-rs__w-scenarios {
+	display: grid;
+	grid-template-rows: 0fr;
+	overflow: hidden;
+	transition: grid-template-rows 240ms ease;
+}
+
+.crm-rs__w-scenarios.--expanded {
+	grid-template-rows: 1fr;
+}
+
+.crm-rs__w-scenarios-inner {
+	min-height: 0;
+	overflow: hidden;
+}
+
+.crm-rs__w-scenario {
+	background: rgba(255, 255, 255, 0.10);
+	color: rgba(255, 255, 255, 0.55);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.crm-rs__w-scenario + .crm-rs__w-scenario {
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.crm-rs__w-scenario.--clickable {
+	cursor: pointer;
+	transition: background-color 200ms ease, color 200ms ease;
+}
+
+.crm-rs__w-scenario.--clickable:hover {
+	background: rgba(255, 255, 255, 0.24);
+	color: var(--crm-repeat-sale-widget-popup-base-color);
+}
+
+.crm-rs__w-scenario-name {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.crm-rs__w-scenario-title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.crm-rs__w-scenario-goto {
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+	margin-left: -2px;
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+
+.crm-rs__w-scenario.--clickable:hover .crm-rs__w-scenario-goto {
+	opacity: 0.9;
+}
+
+/* Outer rounding only: top on the first row, bottom on whatever is actually last. */
+.crm-rs__w-row.--round-top {
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+}
+
+.crm-rs__w-row.--round-bottom,
+.crm-rs__w-scenarios.--round-bottom {
+	border-bottom-left-radius: 8px;
+	border-bottom-right-radius: 8px;
+}
+
+/* Live layer of the statistics popup: the blob background and the glass conversion digits. */
+
+/* (1) Breathing background: four drifting blobs behind the content at z-index 0. */
+.crm-rs__w-bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+}
+
+.crm-rs__w-blob {
+	position: absolute;
+	border-radius: 50%;
+	filter: blur(46px);
+	will-change: transform;
+}
+
+/* b1 sits along the top edge, so it sets the first impression of the popup: the original #71018C read
+   as a hard magenta there and is muted to a softer violet. */
+.crm-rs__w-blob.--b1 { width: 108%; height: 86%; left: -4%; top: -36%; background: radial-gradient(circle, #7A5C9E 0%, rgba(122, 92, 158, 0) 66%); animation: crm-rs-blob-1 13s ease-in-out infinite alternate; }
+.crm-rs__w-blob.--b2 { width: 124%; height: 110%; left: -26%; top: 12%; background: radial-gradient(circle, #7198FF 0%, #3a49cf 38%, #0229B5 72%, rgba(2, 41, 181, 0) 84%); animation: crm-rs-blob-2 13s ease-in-out infinite alternate; }
+.crm-rs__w-blob.--b3 { width: 22%; height: 22%; left: 54%; top: 82%; background: radial-gradient(circle, #43FFD2 0%, #47D0F9 58%, rgba(71, 208, 249, 0) 72%); animation: crm-rs-blob-3 10s ease-in-out infinite alternate; }
+.crm-rs__w-blob.--b4 { width: 30%; height: 30%; left: 64%; top: 82%; background: radial-gradient(circle, #00E86B 0%, #00E86B 16%, rgba(0, 232, 107, .5) 42%, rgba(0, 232, 107, 0) 70%); filter: blur(30px); animation: crm-rs-blob-4 10s ease-in-out infinite alternate; }
+
+/* Drift only, no scale: a blurred layer has to be rasterized again on every scale step, while a
+   translate stays on the compositor and the blur is rasterized once. */
+@keyframes crm-rs-blob-1 { 0% { transform: translate(-4%, -6%); } 100% { transform: translate(10%, 28%); } }
+@keyframes crm-rs-blob-2 { 0% { transform: translate(12%, 10%); } 100% { transform: translate(-20%, -14%); } }
+@keyframes crm-rs-blob-3 { 0% { transform: translate(-8%, -6%); } 100% { transform: translate(10%, 30%); } }
+@keyframes crm-rs-blob-4 { 0% { transform: translate(-3%, -3%); } 100% { transform: translate(6%, 5%); } }
+
+/* The popup outlives the deal slider (see isAutoHidePopup), and behind the slider nobody sees the
+   drift: it is frozen there instead of feeding the compositor frames for nothing. */
+.crm-rs__w-bg.--paused .crm-rs__w-blob {
+	animation-play-state: paused;
+}
+
+/* (2) Glass conversion digits behind the content: no fill, only soft inner highlights, no outline.
+   Geometry and mask stay in the SVG (#renderGhostDigits) and never change per frame; only the sheen
+   rect's transform is animated below. The layer carries its own width and height instead of inset:0,
+   so it does not stretch with the popup height and the digits stay put. */
+.crm-rs__w-ghost {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+	pointer-events: none;
+}
+
+.crm-rs__w-ghost svg {
+	display: block;
+	overflow: visible;
+}
+
+/* The rect is wider than the glyph mask (see #renderGhostDigits), so panning it slides fresh gradient
+   under the stationary glyphs. It carries no SVG filter on purpose: a filtered SVG element is re-filtered
+   on every frame it moves, which is what made the earlier animation expensive — see #renderGhostDigits
+   for the measurements. */
+.crm-rs__w-ghost-sheen {
+	/* Without this the percentages below resolve against the SVG viewBox (transform-box defaults to
+	   view-box), not the rect, and the sweep silently comes out ~29% shorter than the width it is sized
+	   against. */
+	transform-box: fill-box;
+	will-change: transform;
+	animation: crm-rs-ghost-sheen 6s ease-in-out infinite alternate;
+}
+
+/* +-21% of the rect (~195px of the 220px the extra width allows) - far enough for a band to actually
+   slide across a glyph. See #renderGhostDigits before shortening this: at a short throw the sweep
+   measures as a ~7% pixel change and reads as a still image. */
+@keyframes crm-rs-ghost-sheen {
+	0% { transform: translateX(-21%); }
+	100% { transform: translateX(21%); }
+}
+
+/* Frozen behind the deal slider together with the blobs, for the same reason. */
+.crm-rs__w-ghost.--paused .crm-rs__w-ghost-sheen {
+	animation-play-state: paused;
+}
+
+/* Typography of the glass digits. The font is set here because the popup sets none of its own and
+   the digits would otherwise inherit whatever the host page uses. */
+.crm-rs__w-ghost-number,
+.crm-rs__w-ghost-percent {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	font-weight: var(--ui-font-weight-black);
+}
+
+/* The number is tightened; '%' is not, or its trailing gap would keep it off the right edge. */
+.crm-rs__w-ghost-number {
+	letter-spacing: -20px;
+}
+
+.crm-rs__w-ghost-percent {
+	letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.crm-rs__w-blob { animation: none; }
+	.crm-rs__w-ghost-sheen { animation: none; }
+	.crm-rs__w-scenarios { transition: none; }
+}

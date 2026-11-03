@@ -1,0 +1,17 @@
+/* An expanded credit stands hard against the corner (the vendor gives .maplibregl-ctrl-attrib a
+   margin of its own: 0), and the height of its plate is the height of one line box - the vendor adds
+   no vertical padding and no border - so line-height alone sets it. The vendor default, 12px/20px,
+   makes a 20px plate, which runs under the "Check-in" button row above it, starting 18px from the
+   bottom edge; line-height: 16px is what brings the plate down to 16px and clears the button with
+   2px to spare. font-size has no part in that - at this line-height the plate measures 16px at 10px,
+   11px and 12px alike - so the 10px is a separate call about how the credit reads, to be changed on
+   its own merits and not for the sake of the gap. The colour is pinned rather than left to the host
+   page: #333 is what the Leaflet check-in engine shows the same credit in. Scoped to the corner the
+   engine places the credit in, so the rest of the map keeps its typography, and not tied to
+   maplibregl-compact - that class, and the colour the vendor pairs with it, belong to a credit
+   collapsed to the "i" circle, which this one never is. */
+.maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib {
+	font-size: 10px;
+	line-height: 16px;
+	color: #333;
+}

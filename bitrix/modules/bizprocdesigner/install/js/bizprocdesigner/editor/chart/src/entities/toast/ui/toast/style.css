@@ -2,7 +2,8 @@
 	display: flex;
 	align-items: center;
 	max-width: 740px;
-	max-height: 58px;
+	/* No height cap: a message of several lines would otherwise spill out of the coloured box, which
+	   has no clipping of its own. The width still bounds how far a single line runs. */
 	padding: var(--ui-space-inline-sm) var(--ui-space-inset-md);
 	border-radius: 0 0 var(--ui-border-radius-2xl) var(--ui-border-radius-2xl);
 	box-shadow: var(--ui-shadow-bottom-m);

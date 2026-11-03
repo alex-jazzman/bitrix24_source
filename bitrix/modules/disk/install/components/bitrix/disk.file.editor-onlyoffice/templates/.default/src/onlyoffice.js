@@ -1,20 +1,29 @@
-import { ajax as Ajax, Runtime, Type, userOptions, Event } from 'main.core';
+import { ajax as Ajax, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MenuItem } from 'main.popup';
 import { PULL, PullClient } from 'pull.client';
-import type { EditorOptions, DocumentSession, Context, SessionBoostOptions } from './types';
-import { ButtonManager, Button, SplitButton } from 'ui.buttons';
-import ClientCommandHandler from './client-command-handler';
+import type {
+	EditorOptions,
+	DocumentSession,
+	Context,
+	SessionBoostOptions,
+	EditorWarningEvent,
+} from './types';
 import ServerCommandHandler from './server-command-handler';
-import UserManager from './user-manager';
-import { SharingControlType } from 'disk.sharing-legacy-popup';
 import { ExternalLink, ExternalLinkForUnifiedLink } from 'disk.external-link';
 import CustomErrorControl from './custom-error-controls';
-import { Factory as PromoBoostFactory, Checker as PromoBoostChecker } from 'disk.promo-boost';
-import { OnlyOfficePromoActions } from 'disk.onlyoffice-promo-actions';
+import SaveAdapter from './save-adapter';
+import SaveFailureWatch from './save-failure-watch';
+import { BeforeStartEditEvent, DocumentHeader, PresenceChannel } from 'disk.document-header';
+import type { PresenceConfig, SessionBoostContext } from 'disk.document-header';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
+
+/** The component serving the presence requests of this shell. */
+const COMPONENT_NAME = 'bitrix:disk.file.editor-onlyoffice';
+
+/** The container of the boost button is rendered by the header itself, so its id belongs to the page. */
+const BOOST_BUTTON_CONTAINER_ID = 'oo-editor-boost-button-container';
 
 import { LocalStorageCache } from 'main.core.cache';
 const cache = new LocalStorageCache();
@@ -23,7 +32,6 @@ export default class OnlyOffice
 {
 	editor: any = null;
 	editorJson: any = null;
-	userBoxNode: HTMLElement = null;
 	editorNode: HTMLElement = null;
 	editorWrapperNode: HTMLElement = null;
 	targetNode: HTMLElement = null;
@@ -34,23 +42,23 @@ export default class OnlyOffice
 	downloadSizeValue: string = null;
 	pullConfig: any = null;
 	pullUserConfig: any = null;
-	editButton: SplitButton = null;
-	setupSharingButton: Button = null;
 	documentWasChanged: boolean = false;
 	dontEndCurrentDocumentSession: boolean = false;
 	context: Context = null;
-	usersInDocument: UserManager = null;
-	sharingControlType: ?SharingControlType = null;
 	brokenDocumentOpened: boolean = false;
-	sessionBoostOptions: ?SessionBoostOptions = null;
-	unifiedLinkAccessOnly: boolean = false;
-	promoShowImmediately: boolean = false;
-	onlyOfficePromoActions: ?OnlyOfficePromoActions = null;
 	realtimeForceReloadTag: ?string = null;
 	realtimeForceReloadCommand: ?string = null;
 	autoForceReloadAfter: int = null;
 	texts: any = null;
 	userPullClient: any = null;
+	saveAdapter: SaveAdapter = null;
+	documentHeader: ?DocumentHeader = null;
+	presenceConfig: ?PresenceConfig = null;
+	presenceChannel: ?PresenceChannel = null;
+	/** The interval of the signal of activity, kept so that a failure of saving can stop it. */
+	trackWorkTimer: ?number = null;
+	saveFailureWatch: ?SaveFailureWatch = null;
+	#beforeStartEditHandler: ?Function = null;
 
 	constructor(editorOptions: EditorOptions)
 	{
@@ -64,33 +72,24 @@ export default class OnlyOffice
 		this.linkToDownload = options.linkToDownload;
 		this.downloadSizeValue = options.downloadSizeValue;
 		this.targetNode = options.targetNode;
-		this.userBoxNode = options.userBoxNode;
 		this.editorNode = options.editorNode;
 		this.editorWrapperNode = options.editorWrapperNode;
-		this.editButton = ButtonManager.createByUniqId(editorOptions.panelButtonUniqIds.edit);
-		this.setupSharingButton = ButtonManager.createByUniqId(editorOptions.panelButtonUniqIds.setupSharing);
-		this.sharingControlType = editorOptions.sharingControlType;
 		this.context = {
 			currentUser: options.currentUser,
 			documentSession: this.documentSession,
 			object: options.object,
 			attachedObject: options.attachedObject,
 		};
-		this.context.object.publicChannel = options.publicChannel;
-		this.usersInDocument = new UserManager({
-			context: this.context,
-			userBoxNode: this.userBoxNode,
-		});
-		this.sessionBoostButton = PromoBoostFactory.getSessionBoostButton(editorOptions.sessionBoostButtonContainerId);
-		this.sessionBoostOptions = options.sessionBoostOptions;
-		this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
-		this.promoShowImmediately = options.promoShowImmediately;
-		this.onlyOfficePromoActions = new OnlyOfficePromoActions();
 		this.realtimeForceReloadTag = options.realtimeForceReloadTag;
 		this.realtimeForceReloadCommand = options.realtimeForceReloadCommand;
 		this.autoForceReloadAfter = options.autoForceReloadAfter || 300_000; // default is 5 minutes in ms
 		this.texts = options.texts || {};
+		this.presenceConfig = options.presenceConfig || null;
+		this.saveAdapter = new SaveAdapter({
+			showHint: (message: string, isFinal: boolean) => this.showSaveHint(message, isFinal),
+		});
 
+		this.mountDocumentHeader(options);
 		this.initializeEditor(options.editorJson);
 
 		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
@@ -103,32 +102,59 @@ export default class OnlyOffice
 
 		this.initPull();
 		this.bindEvents();
+		this.watchSaveFailures();
 		if (this.isEditMode())
 		{
 			this.registerTimerToTrackWork();
 		}
+	}
 
-		if (this.promoShowImmediately && this.onlyOfficePromoActions.shouldShow())
+	/**
+	 * The header of the opened document. It draws itself from the composition the server describes and
+	 * asks the editor about saving through the adapter; the page has nothing to do after the mount.
+	 * Until the shell of the page renders the container, the page simply works without a header.
+	 */
+	mountDocumentHeader(options: EditorOptions): void
+	{
+		if (!Type.isElementNode(options.headerContainerNode))
 		{
-			this.onlyOfficePromoActions.show(this.editButton.getMainButton().button, true);
+			return;
 		}
 
-		if (PromoBoostChecker.isSessionBoostAvailable())
-		{
-			this.sessionBoostButton.init();
-			this.sessionBoostButton.setOverlayToWidget();
+		this.documentHeader = new DocumentHeader(options.headerContainerNode, {
+			documentSessionHash: this.documentSession.hash,
+			adapter: this.getSaveAdapter(),
+			boostContainerId: BOOST_BUTTON_CONTAINER_ID,
+			logoUrl: Type.isString(options.logoUrl) ? options.logoUrl : '',
+			editUrl: Type.isString(this.linkToEdit) ? this.linkToEdit : '',
+			sessionBoost: mapSessionBoost(options.sessionBoostOptions),
+			shouldShowPromoImmediately: options.promoShowImmediately === true,
+			composition: options.headerComposition ?? null,
+		});
 
-			if (this.isEditMode() && this.sessionBoostOptions?.shouldShowButtonWidgetInstantly)
-			{
-				this.showSessionBoostWidgetOnBoostButton();
-				this.saveWidgetOnBoostButtonView();
-			}
-		}
+		this.#beforeStartEditHandler = this.handleBeforeStartEdit.bind(this);
+		EventEmitter.subscribe(BeforeStartEditEvent, this.#beforeStartEditHandler);
 	}
 
 	registerTimerToTrackWork(): void
 	{
-		setInterval(this.#trackWork.bind(this), SECONDS_TO_MARK_AS_STILL_WORKING * 1000);
+		if (this.trackWorkTimer)
+		{
+			return;
+		}
+
+		this.trackWorkTimer = setInterval(() => this.#trackWork(), SECONDS_TO_MARK_AS_STILL_WORKING * 1000);
+	}
+
+	stopTimerToTrackWork(): void
+	{
+		if (!this.trackWorkTimer)
+		{
+			return;
+		}
+
+		clearInterval(this.trackWorkTimer);
+		this.trackWorkTimer = null;
 	}
 
 	#trackWork(): void
@@ -175,47 +201,9 @@ export default class OnlyOffice
 			});
 		}
 
-		if (this.editorJson.document.permissions.edit === true && this.editButton)
-		{
-			if (Object.prototype.hasOwnProperty.call(this.editButton, 'mainButton'))
-			{
-				this.editButton.getMainButton().bindEvent('click', this.handleClickEditButton.bind(this));
-
-				const menuWindow = this.editButton.getMenuWindow();
-				const menuItems = Runtime.clone(menuWindow.getMenuItems());
-
-				menuItems.forEach((menuItem) => {
-					const menuItemOptions = Runtime.clone(menuItem.options);
-					menuItemOptions.onclick = this.handleClickEditSubItems.bind(this);
-
-					menuWindow.removeMenuItem(menuItem.getId());
-					menuWindow.addMenuItem(menuItemOptions);
-				});
-			}
-			else
-			{
-				this.editButton.bindEvent('click', this.handleClickEditButton.bind(this));
-			}
-		}
-
-		if (this.setupSharingButton)
-		{
-			Event.bind(
-				this.setupSharingButton.getContainer(),
-				'click',
-				this.handleClickSharingAccessPopup.bind(this),
-			);
-		}
-
-		PULL.subscribe(new ClientCommandHandler({
-			onlyOffice: this,
-			context: this.context,
-			userManager: this.usersInDocument,
-		}));
 		PULL.subscribe(new ServerCommandHandler({
 			onlyOffice: this,
 			context: this.context,
-			userManager: this.usersInDocument,
 		}));
 
 		if (this.userPullClient && this.realtimeForceReloadTag)
@@ -326,92 +314,6 @@ export default class OnlyOffice
 		});
 	}
 
-	handleClickEditButton(): void
-	{
-		if (this.onlyOfficePromoActions.shouldShow())
-		{
-			this.onlyOfficePromoActions.show(this.editButton.getMainButton().button, true);
-
-			BX.UI.Analytics.sendData({
-				tool: 'docs',
-				category: 'docs',
-				event: 'oo_limit_edit',
-				c_sub_section: 'old_element',
-				c_element: 'view_mode',
-				p3: this.context.object.docType,
-			 	p4: `fileId_${this.context.object.id}`,
-			});
-
-			return;
-		}
-
-		this.handleRequestEditRights();
-	}
-
-	showSessionBoostWidgetOnBoostButton(): void
-	{
-		this.sessionBoostButton.showWidget();
-	}
-
-	saveWidgetOnBoostButtonView(): void
-	{
-		if (this.sessionBoostOptions !== null)
-		{
-			const { category, name } = this.sessionBoostOptions.optionParamsToControlButtonWidgetDisplay;
-			userOptions.save(category, name, null, Math.floor(Date.now() / 1000));
-			userOptions.send(null);
-		}
-	}
-
-	handleClickSharingAccessPopup(): void
-	{
-		const popupParams = {
-			objectId: this.context.object.id,
-			uniqueCode: this.context.object.uniqueCode ?? null,
-		};
-
-		Runtime.loadExtension('disk.sharing-access-popup').then(({ SharingPopupDialog }) => {
-			const popup = new SharingPopupDialog();
-			popup.open(popupParams);
-		});
-	}
-
-	handleClickEditSubItems(event, menuItem: MenuItem): void
-	{
-		const serviceCode = menuItem.getId();
-
-		if(serviceCode === 'onlyoffice')
-		{
-			this.handleClickEditButton();
-
-			return;
-		}
-
-		BX.Disk.Viewer.Actions.runActionEdit({
-			name: this.context.object.name,
-			objectId: this.context.object.id,
-			attachedObjectId: this.context.attachedObject.id,
-			serviceCode: serviceCode,
-		});
-	}
-
-	handleSaveButtonClick(): void
-	{
-		PULL.subscribe({
-			moduleId: 'disk',
-			command: 'onlyoffice',
-			callback: (data) => {
-				if (data.hash === this.documentSession.hash)
-				{
-					this.emitEventOnSaved();
-
-					window.BX.Disk.showModalWithStatusAction();
-					BX.SidePanel.Instance.close();
-				}
-			},
-		});
-	}
-
 	handleRequestClose(): void
 	{
 		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
@@ -483,9 +385,17 @@ export default class OnlyOffice
 
 	handleClose(): void
 	{
-		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
-			fromUserId: this.context.currentUser.id,
-		});
+		this.presenceChannel?.stop();
+		this.presenceChannel = null;
+
+		this.documentHeader?.unmount();
+		this.documentHeader = null;
+
+		if (this.#beforeStartEditHandler)
+		{
+			EventEmitter.unsubscribe(BeforeStartEditEvent, this.#beforeStartEditHandler);
+			this.#beforeStartEditHandler = null;
+		}
 
 		this.emitEventOnClosed();
 
@@ -514,6 +424,7 @@ export default class OnlyOffice
 		}
 
 		this.documentWasChanged = true;
+		this.saveAdapter.handleDocumentStateChange(event);
 	}
 
 	wasDocumentChanged(): boolean
@@ -544,14 +455,19 @@ export default class OnlyOffice
 		this.caughtInfoEvent = Date.now();
 	}
 
-	handleWarning(d): void
+	/** The editor reports a refused save (-331) and its own breakdown (-25) as warnings, never as errors. */
+	handleWarning(d: EditorWarningEvent): void
 	{
 		console.log('onlyoffice warning:', d.data);
+
+		this.saveAdapter.handleEditorWarning(d.data);
 	}
 
 	handleError(d): void
 	{
 		console.log('onlyoffice error:', d.data);
+
+		this.saveAdapter.handleEditorError(d.data);
 
 		if (d.data.errorCode === -82)
 		{
@@ -570,6 +486,41 @@ export default class OnlyOffice
 				);
 			}, 100);
 		}
+	}
+
+	/**
+	 * What to do about a failure of saving: the indicator of the header keeps the state of the document
+	 * in one short line, and the longer instruction beside it is told by a notification. The one about
+	 * a breakdown of the editor waits for the user - nothing else will change after it.
+	 */
+	showSaveHint(message: string, isFinal: boolean): void
+	{
+		if (!Type.isStringFilled(message))
+		{
+			return;
+		}
+
+		BX.UI.Notification.Center.notify({
+			content: message,
+			autoHide: !isFinal,
+		});
+	}
+
+	/** The signal of activity belongs to a page which still saves, so a failure of saving stops it. */
+	watchSaveFailures(): void
+	{
+		this.saveFailureWatch = new SaveFailureWatch({
+			adapter: this.saveAdapter,
+			sessionId: this.context.documentSession.id,
+			documentSessionHash: this.context.documentSession.hash,
+			onFailure: () => this.stopTimerToTrackWork(),
+			onRecovered: () => {
+				if (this.isEditMode())
+				{
+					this.registerTimerToTrackWork();
+				}
+			},
+		});
 	}
 
 	processBrokenDocument(): void
@@ -622,53 +573,44 @@ export default class OnlyOffice
 	handleDocumentReady(): void
 	{
 		this.caughtDocumentReady = Date.now();
+		this.startPresence();
 	}
 
-	handleRequestEditRights(): void
+	/**
+	 * The live roster of the header. It is opened after the document is ready, so the starting roster of
+	 * the header is already answered by then and a live event never overtakes it. An opening the server
+	 * gave no presence configuration to - a public external link among them - simply keeps no channel.
+	 * The roster comes to the private channel of the user, which this page already listens to, so the
+	 * header is given that client instead of opening a second connection to the same channel.
+	 */
+	startPresence(): void
 	{
-		this.dontEndCurrentDocumentSession = true;
-
-		let linkToEdit = BX.util.add_url_param(
-			'/bitrix/services/main/ajax.php',
-			{
-				action: 'disk.api.documentService.goToEdit',
-				serviceCode: 'onlyoffice',
-				documentSessionId: this.documentSession.id,
-				documentSessionHash: this.documentSession.hash,
-			},
-		);
-
-		if (this.linkToEdit)
+		if (this.presenceChannel !== null || this.presenceConfig?.enabled !== true)
 		{
-			linkToEdit = this.linkToEdit;
-		}
-
-		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-		if (!currentSlider)
-		{
-			window.location = linkToEdit;
-
 			return;
 		}
 
-		let customLeftBoundary = currentSlider.getCustomLeftBoundary();
-		currentSlider.close();
+		this.presenceChannel = new PresenceChannel(COMPONENT_NAME, this.userPullClient);
+		void this.presenceChannel.start(this.presenceConfig);
+	}
 
-		BX.SidePanel.Instance.open(
-			linkToEdit, {
-				width: '100%',
-				customLeftBoundary: customLeftBoundary,
-				cacheable: false,
-				allowChangeHistory: false,
-				data: {
-					documentEditor: true,
-				},
-			});
+	/**
+	 * The header opens the editing of the same object, and the session of the current view continues
+	 * there: leaving the page for the editor must not close it.
+	 */
+	handleBeforeStartEdit(): void
+	{
+		this.dontEndCurrentDocumentSession = true;
 	}
 
 	getEditor()
 	{
 		return this.editor;
+	}
+
+	getSaveAdapter(): SaveAdapter
+	{
+		return this.saveAdapter;
 	}
 
 	getEditorNode(): HTMLElement
@@ -685,4 +627,25 @@ export default class OnlyOffice
 	{
 		return this.targetNode;
 	}
+}
+
+/**
+ * The scenario of the automatic show of the widget of the boosts, as the header expects it. The server
+ * assigns it only to an editing session which may still see the widget; anything else means no scenario.
+ */
+function mapSessionBoost(options: ?SessionBoostOptions): ?SessionBoostContext
+{
+	const viewOption = options?.optionParamsToControlButtonWidgetDisplay;
+	if (!Type.isPlainObject(viewOption))
+	{
+		return null;
+	}
+
+	return {
+		shouldShowWidgetInstantly: options.shouldShowButtonWidgetInstantly === true,
+		widgetViewOption: {
+			category: viewOption.category,
+			name: viewOption.name,
+		},
+	};
 }

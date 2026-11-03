@@ -21,3 +21,5 @@ $MESS["CAL_REST_RES_BOOKING_SERVICE_LABEL"] = "Услуга";
 $MESS["CAL_REST_RESOURCE_BOOKING_ADD_ERROR"] = "При бронировании ресурса произошла ошибка";
 $MESS['CAL_REST_REC_MODE_ERROR'] = 'Указан несуществующий тип редактирования повторяемого события';
 $MESS['CAL_REST_CRM_FIELDS_ERROR'] = 'Список связей события с CRM должен быть массивом';
+$MESS['CAL_REST_LOCATION_OCCUPANCY_CONFLICT'] = 'Переговорная занята в указанное время';
+$MESS['CAL_REST_LOCATION_OCCUPANCY_LOCKED'] = 'Переговорная сейчас выбрана для другого события. Попробуйте позже или выберите новую';

@@ -257,7 +257,11 @@ export const CollabChatUpdating = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-update-collab-chat"
+			@scroll="onScroll"
+		>
 			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
 			<template v-else>
 				<div class="bx-im-content-chat-forms__header">
@@ -274,6 +278,8 @@ export const CollabChatUpdating = {
 					<ChatMembersSelector
 						:customElements="collapsedUsers"
 						:chatMembers="chatMembers"
+						:chatType="dialog.type"
+						:dialogId="dialogId"
 						:allowTeamsSelect="dialog.type !== ChatType.videoconf"
 						@membersChange="onMembersChange"
 					/>

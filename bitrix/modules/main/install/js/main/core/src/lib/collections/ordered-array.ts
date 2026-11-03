@@ -85,7 +85,7 @@ export default class OrderedArray<T>
 		this.items = [];
 	}
 
-	[Symbol.iterator]()
+	[Symbol.iterator](): ArrayIterator<T>
 	{
 		return this.items[Symbol.iterator]();
 	}

@@ -91,9 +91,7 @@ export class RelationTasksDialog
 			entities: [
 				{
 					id: this.#entityId,
-					options: {
-						withFooter: false,
-					},
+					options: this.#entityOptions,
 				},
 			],
 			preselectedItems: this.#items,
@@ -262,6 +260,24 @@ export class RelationTasksDialog
 	get #entityId(): string
 	{
 		return this.#isTemplate ? EntitySelectorEntity.Template : EntitySelectorEntity.Task;
+	}
+
+	get #entityOptions(): Object
+	{
+		const options = { withFooter: false };
+
+		if (this.#meta.isSubTasks && !this.#isTemplate)
+		{
+			options.editableOnly = true;
+
+			if (idUtils.isReal(this.#taskId))
+			{
+				options.parentId = this.#taskId;
+				options.excludeIds = [this.#taskId];
+			}
+		}
+
+		return options;
 	}
 
 	get #isTemplate(): boolean

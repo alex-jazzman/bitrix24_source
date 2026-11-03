@@ -1,11 +1,13 @@
 import { Type, type JsonObject } from 'main.core';
 import { type PopupOptions } from 'main.popup';
-import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+import { Text2Xs } from 'ui.system.typography.vue';
 
 import { GroupSharingController } from 'calendar.sharing.interface';
 import { VoteApplication } from 'vote.application';
 
 import { Core } from 'im.v2.application.core';
+import { IconButton } from 'im.v2.component.elements.icon-button';
 import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements.menu';
 import { ActionByRole, ChatType, Color, type ChatTypeItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -13,7 +15,10 @@ import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Notifier } from 'im.v2.lib.notifier';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { UploadManager } from 'im.v2.lib.uploading';
 import { type ImModelChat, type ImModelCollabInfo } from 'im.v2.model';
+
+import { getFileUploadPolicy, buildPolicyNote } from '../../classes/upload-policy';
 
 import { DiskPopup } from './disk-popup';
 
@@ -22,6 +27,7 @@ import '../../css/upload-menu.css';
 type UploadMenuItem = {
 	icon: $Values<typeof MenuItemIcon>,
 	title: string,
+	testId: string,
 	clickHandler: Function,
 	showCondition?: boolean,
 }
@@ -31,11 +37,15 @@ const DOCUMENT_SIGN_SLIDER_URL = '/sign/doc/0/?chat_id=';
 
 // @vue/component
 export const UploadMenu = {
-	components: { BIcon, MessengerMenu, MenuItem, DiskPopup },
+	components: { IconButton, MessengerMenu, MenuItem, DiskPopup, Text2Xs },
 	props: {
 		dialogId: {
 			type: String,
 			required: true,
+		},
+		disabled: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['fileSelect', 'diskFileSelect'],
@@ -55,41 +65,48 @@ export const UploadMenu = {
 				{
 					icon: MenuItemIcon.file,
 					title: this.loc('IM_TEXTAREA_SELECT_LOCAL_FILE'),
+					testId: 'im-upload-menu-local-file-item',
 					clickHandler: this.onSelectLocalFile,
 				},
 				{
 					icon: MenuItemIcon.b24,
 					title: this.loc('IM_TEXTAREA_SELECT_FILE_FROM_B24'),
+					testId: 'im-upload-menu-b24-file-item',
 					clickHandler: this.onSelectFromB24,
 					showCondition: () => !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.task,
 					title: this.loc('IM_TEXTAREA_SELECT_TASK'),
+					testId: 'im-upload-menu-task-item',
 					clickHandler: this.onCreateTaskClick,
 					showCondition: () => !this.isCopilotChat && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.meeting,
 					title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
+					testId: 'im-upload-menu-meeting-item',
 					clickHandler: this.onCreateMeetingClick,
 					showCondition: () => !this.isCopilotChat && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.calendarSlot,
 					title: this.loc('IM_TEXTAREA_SELECT_CALENDAR_SLOT'),
+					testId: 'im-upload-menu-calendar-slot-item',
 					clickHandler: this.onCreateCalendarSlotClick,
 					showCondition: () => this.isCalendarSlotAvailable && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.documentSign,
 					title: this.loc('IM_TEXTAREA_SELECT_DOCUMENT_SIGN'),
+					testId: 'im-upload-menu-document-sign-item',
 					clickHandler: this.onCreateDocumentSignClick,
 					showCondition: () => this.isDocumentSignAvailable && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.vote,
 					title: this.loc('IM_TEXTAREA_SELECT_VOTE'),
+					testId: 'im-upload-menu-vote-item',
 					clickHandler: this.onCreateVoteClick,
 					showCondition: () => this.isVoteCreationAvailable && !this.isGuest,
 				},
@@ -171,6 +188,28 @@ export const UploadMenu = {
 		{
 			return this.$store.getters['users/isGuest'](Core.getUserId());
 		},
+		acceptAttribute(): string | null
+		{
+			return this.uploadManager.getAcceptAttribute(this.dialogId);
+		},
+		uploadPolicyNote(): string | null
+		{
+			const policy = getFileUploadPolicy(this.chatType);
+			if (policy === null)
+			{
+				return null;
+			}
+
+			return buildPolicyNote(policy);
+		},
+		attachLabel(): string
+		{
+			return this.loc('IM_TEXTAREA_ICON_UPLOAD_TITLE');
+		},
+	},
+	created()
+	{
+		this.uploadManager = new UploadManager();
 	},
 	methods:
 	{
@@ -186,9 +225,7 @@ export const UploadMenu = {
 		},
 		onFileSelect(event)
 		{
-			this.$emit('fileSelect', {
-				event,
-			});
+			this.$emit('fileSelect', { event });
 			this.showMenu = false;
 		},
 		onDiskFileSelect(event)
@@ -277,12 +314,15 @@ export const UploadMenu = {
 	},
 	template: `
 		<div ref="upload" class="bx-im-textarea__icon-container">
-			<BIcon
-				:name="OutlineIcons.ATTACH"
-				:title="loc('IM_TEXTAREA_ICON_UPLOAD_TITLE')"
-				:color="iconColor"
-				:size="ICON_SIZE"
+			<IconButton
+				:iconName="OutlineIcons.ATTACH"
+				:label="attachLabel"
+				:iconColor="iconColor"
+				:iconSize="ICON_SIZE"
+				:expanded="showMenu"
+				:disabled="disabled"
 				class="bx-im-textarea__icon"
+				data-testid="im-upload-menu-attach-btn"
 				@click="onUploadButtonClick"
 			/>
 		</div>
@@ -291,9 +331,30 @@ export const UploadMenu = {
 				v-for="item in availableMenuItems"
 				:icon="item.icon"
 				:title="item.title"
+				:data-testid="item.testId"
 				@click="item.clickHandler"
 			/>
-			<input type="file" @change="onFileSelect" multiple class="bx-im-file-menu__file-input" ref="fileInput">
+			<input
+				type="file"
+				@change="onFileSelect"
+				multiple
+				class="bx-im-file-menu__file-input"
+				ref="fileInput"
+				:accept="acceptAttribute || undefined"
+				data-testid="im-upload-menu-file-input"
+			>
+			<template #footer>
+				<Text2Xs
+					v-if="uploadPolicyNote"
+					tag="div"
+					wrap="break-words"
+					role="note"
+					className="bx-im-file-menu__policy-note"
+					data-testid="im-upload-menu-policy-note"
+				>
+					{{ uploadPolicyNote }}
+				</Text2Xs>
+			</template>
 		</MessengerMenu>
 		<DiskPopup v-if="showDiskPopup" @diskFileSelect="onDiskFileSelect" @close="showDiskPopup = false"/>
 	`,

@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (main_core, main_core_events, ui_buttons, mail_avatar, mail_messagegrid, mail_directorymenu, mail_favoritesFilterState, mail_migrationState) {
+(function (exports, main_core, main_core_events, ui_buttons, mail_avatar, mail_migrationState, mail_messagegrid, mail_directorymenu, ui_a11y, mail_favoritesFilterState) {
 	'use strict';
 
 	class Counters {
@@ -8,6 +8,9 @@
 		hiddenCountersForTotalCounter = [];
 		shortcuts = [];
 		#name;
+		// a cross-folder section keeps its own number, named by the section it belongs to
+		sectionCounters = {};
+		activeSection = null;
 		constructor(name, selectedDirectory) {
 			this.#name = name;
 			this.setDirectory(selectedDirectory);
@@ -37,9 +40,28 @@
 			} else {
 				this.selectedDirectory = name;
 			}
-			let resultCounters = {};
-			resultCounters[this.selectedDirectory] = this.getCounter(this.selectedDirectory);
-			this.sendCounterUpdateEvent(resultCounters);
+			this.#sendCountersUpdate();
+		}
+		setSectionCounter(section, count) {
+			this.sectionCounters[section] = Number(count);
+			this.#sendCountersUpdate();
+		}
+		setActiveSection(section) {
+			this.activeSection = section ?? null;
+			this.#sendCountersUpdate();
+		}
+
+		// the number of a section and the section itself are one state for the panel, so they are
+		// set together and the screen redraws once
+		setSectionState(section, count, active) {
+			this.sectionCounters[section] = Number(count);
+			this.activeSection = active ? section : null;
+			this.#sendCountersUpdate();
+		}
+		#sendCountersUpdate() {
+			this.sendCounterUpdateEvent({
+				...this.counters
+			});
 		}
 		setShortcut(shortcutName, name) {
 			//backlink
@@ -185,7 +207,10 @@
 					hidden: this.hiddenCountersForTotalCounter,
 					selectedDirectory: this.selectedDirectory,
 					name: this.getName(),
-					total: this.getTotalCounter()
+					total: this.getTotalCounter(),
+					// read here rather than at the call, so every update carries the current section state
+					sections: this.sectionCounters,
+					activeSection: this.activeSection
 				}
 			});
 			main_core_events.EventEmitter.emit('BX.Mail.Home:updatingCounters', event);
@@ -236,12 +261,12 @@
 				leftDirectoryMenuWrapper.append(favoritesNode);
 			}
 
-			// the drafts item is rendered on the server above the folders, and its place is under them:
-			// in the block of the favorites one where there is one, right after the folders where there is not
-			const draftsNode = leftDirectoryMenuWrapper.querySelector('.mail-draft-navigation');
-			if (draftsNode) {
-				(favoritesNode ?? leftDirectoryMenuWrapper).append(draftsNode);
-			}
+			// draft and scheduled sections are rendered on the server above the folders, and their place is under
+			// them: in the favorites block where there is one, right after the folders where there is not
+			const messageSections = leftDirectoryMenuWrapper.querySelectorAll('.mail-draft-navigation');
+			messageSections.forEach(section => {
+				(favoritesNode ?? leftDirectoryMenuWrapper).append(section);
+			});
 			if (config['labelsEnabled']) {
 				this.#mountLabels(config, leftDirectoryMenuWrapper);
 			}
@@ -449,23 +474,47 @@
 	}
 
 	const DRAFTS_SECTION = 'drafts';
+	const FAVORITES_COUNTERS_REFRESH_DELAY = 300;
 	const LABEL_SCOPE_ALL_MAILBOXES = 0;
 	const LABELS_SLIDER_URL = '/mail/labels';
 	const LABEL_ITEM_ID_PREFIX = 'mail-label-';
 	const ACTION_PANEL_MENU_ID = 'ui-action-panel-item-popup-menu';
 	const ACTION_PANEL_POPUP_ID = `menu-popup-${ACTION_PANEL_MENU_ID}`;
+	const SCHEDULED_GRID_ID = 'mail-scheduled-message-list';
+	// Past its own moment the row of a pending send has nothing left to wait for: the list cannot know when
+	// the queue will get to the letter. So the waits grow and run out instead of polling on forever - four
+	// tries from ten seconds cover a couple of turns of the dispatcher, which walks the queue every minute.
+	const UNDO_SEND_OVERDUE_DELAY = 10000;
+	const UNDO_SEND_OVERDUE_TRIES = 4;
+	// \Bitrix\Mail\Service\ScheduledMessage\ScheduledMessageService::ERROR_REVISION_CONFLICT
+	const SCHEDULED_REVISION_CONFLICT_ERROR = 'revision_conflict';
+	// the refusals of the same service that name a letter which left the state its row was drawn for:
+	// ERROR_ALREADY_SENDING, ERROR_ALREADY_SENT, ERROR_ALREADY_CANCELLED, ERROR_NOT_FOUND
+	const SCHEDULED_MOVED_ON_ERRORS = new Set(['already_sending', 'already_sent', 'already_cancelled', 'not_found']);
+	// mail.client.scheduled-view, SliderMessage.Cancelled
+	const SCHEDULED_CANCELLED_MESSAGE = 'Mail.Client.ScheduledMessageCancelled';
+	// mail.client.compose-form, SliderMessage.ScheduledMessageSaved
+	const SCHEDULED_SAVED_MESSAGE = 'Mail.Client.ScheduledMessageSaved';
+	// the badge of the section item as the server draws it here; the item of `mail.directorymenu` carries the
+	// same one and hides it by the same class (`mail/install/js/mail/directorymenu/src/item.js`)
+	const SCHEDULED_SECTION_COUNTER_SELECTOR = '[data-testid="mail-scheduled-messages-button"] .ui-sidepanel-menu-link-text-counter';
+	const SCHEDULED_SECTION_COUNTER_HIDDEN_CLASS = 'ui-sidepanel-menu-link-text-counter-hidden';
+	const UNDO_SEND_CANCELLED_EVENT = 'Mail.UndoSend:onCancelled';
 	class List {
 		constructor(options) {
 			this.gridId = options.gridId;
 			this.filterId = options.filterId;
 			this.isDraftMode = options.isDraftMode === true;
+			this.isScheduledMode = options.isScheduledMode === true;
 			this.composePath = options.composePath || '';
 			this.composeSliderOptions = options.composeSliderOptions || {
 				cacheable: false
 			};
 			this.draftsPath = options.draftsPath || '';
+			this.scheduledPath = options.scheduledPath || '';
 			this.messageListPath = options.messageListPath || '';
 			this.favoritesSectionActive = options.favoritesSectionActive === true;
+			this.favoritesUnread = Number(options.favoritesUnread) || 0;
 			// the section is a part of the list improvements, and the server applies its marker only
 			// under them: with the improvements off the same marker in the address means nothing here
 			this.listImprovementsEnabled = main_core.Loc.getMessage('MAIL_LIST_IMPROVEMENTS_ENABLED') === 'Y';
@@ -477,6 +526,28 @@
 			this.draftDeleteButton = options.draftDeleteButton || '';
 			this.draftCancelButton = options.draftCancelButton || '';
 			this.draftDeletePartialError = options.draftDeletePartialError || '';
+			this.scheduledCancelConfirm = options.scheduledCancelConfirm || '';
+			this.scheduledCancelDescription = options.scheduledCancelDescription || '';
+			this.scheduledCancelNothing = options.scheduledCancelNothing || '';
+			this.scheduledCancelButton = options.scheduledCancelButton || '';
+			this.scheduledCancelError = options.scheduledCancelError || '';
+			this.scheduledCancelPartialError = options.scheduledCancelPartialError || '';
+			this.scheduledCancelErrorReasons = options.scheduledCancelErrorReasons || {};
+			this.scheduledRetryError = options.scheduledRetryError || '';
+			this.scheduledRetryErrorReasons = options.scheduledRetryErrorReasons || {};
+			this.scheduledRetryAnnounce = options.scheduledRetryAnnounce || '';
+			this.retryingScheduledMessages = new Set();
+			this.scheduledSendNowButton = options.scheduledSendNowButton || '';
+			this.scheduledSendNowSuccess = options.scheduledSendNowSuccess || '';
+			this.scheduledSendNowNothing = options.scheduledSendNowNothing || '';
+			this.scheduledSendNowError = options.scheduledSendNowError || '';
+			this.scheduledSendNowPartialError = options.scheduledSendNowPartialError || '';
+			this.scheduledSendNowErrorReasons = options.scheduledSendNowErrorReasons || {};
+			this.sendingNowScheduledMessages = new Set();
+			this.scheduledListAnnounce = options.scheduledListAnnounce || '';
+			// the page of the section builds its own left menu, so it hands the item over; the message list page
+			// draws its item as server markup and hands nothing
+			this.directoryMenu = options.directoryMenu || null;
 			this.mailboxId = options.mailboxId;
 			this.canMarkSpam = options.canMarkSpam;
 			this.canDelete = options.canDelete;
@@ -493,7 +564,7 @@
 			this.migrationStatesInitialized = false;
 			this.migrationStatesDestroyed = false;
 			this.migrationPageLeaveHandler = null;
-			this.migrationActionPreviousState = new Map();
+			this.migrationActionPreviousState = new WeakMap();
 			this.modifiedDraftSliders = new Set();
 			this.closedDraftSliders = new Map();
 			this.userInterfaceManager = new BX.Mail.Client.Message.List.UserInterfaceManager(options);
@@ -503,16 +574,25 @@
 			this.userInterfaceManager.updateCountersFromBackend = this.updateCountersFromBackend.bind(this);
 			this.cache = {};
 			this.isAssignMenuOpening = false;
+			this.undoSendRefreshTimer = null;
+			this.undoSendOverdueRows = '';
+			this.undoSendOverdueTries = 0;
+			this.undoSendCancelledHandler = event => this.handleUndoSendCancelled(event);
+			main_core_events.EventEmitter.subscribe(UNDO_SEND_CANCELLED_EVENT, this.undoSendCancelledHandler);
+			this.pageLeaveHandler = () => this.destroy();
+			main_core.Event.bind(window, 'pagehide', this.pageLeaveHandler);
 			const labelCore = BX.Mail && BX.Mail.Label && BX.Mail.Label.Core ? BX.Mail.Label.Core : null;
 			this.labelCollection = labelCore ? new labelCore.LabelCollection(options.labels || []) : null;
 			this.labelsVersion = 0;
 			this.addEventHandlers();
 			this.initDraftsSection();
-			if (!this.isDraftMode) {
+			this.initFavoritesSectionCounter();
+			if (!this.isDraftMode && !this.isScheduledMode) {
 				setTimeout(() => this.initClientDraftList());
 				// the sections live in the address, so history navigation drives them even
 				// on portals where the embedded draft list is off
 				main_core.Event.bind(window, 'popstate', () => this.handleHistoryChange());
+				this.initScheduledList();
 			}
 			if (this.labelCollection) {
 				this.subscribeLabelsSliderClose();
@@ -520,6 +600,12 @@
 			BX.Mail.Client.Message.List[options.id] = this;
 			BX.Mail.Client.Message.List.confirmDeleteSelectedDrafts = this.confirmDeleteSelectedDrafts.bind(this);
 			main_core.Reflection.namespace('BX.Mail.Home').MessageList = this;
+			BX.Mail.Client.Message.List.confirmDeleteScheduledMessage = this.confirmDeleteScheduledMessage.bind(this);
+			BX.Mail.Client.Message.List.confirmDeleteSelectedScheduledMessages = this.confirmDeleteSelectedScheduledMessages.bind(this);
+			BX.Mail.Client.Message.List.retryScheduledMessage = this.retryScheduledMessage.bind(this);
+			BX.Mail.Client.Message.List.sendNowScheduledMessage = this.sendNowScheduledMessage.bind(this);
+			BX.Mail.Client.Message.List.confirmSendNowSelectedScheduledMessages = this.confirmSendNowSelectedScheduledMessages.bind(this);
+			this.scheduleUndoSendRefresh();
 			if (!this.isDraftMode) {
 				this.migrationPageLeaveHandler = () => this.destroyMigrationStates();
 				main_core.Event.bind(window, 'pagehide', this.migrationPageLeaveHandler);
@@ -551,6 +637,122 @@
 					this.applyMigrationStateToGrid();
 				});
 			}
+		}
+		reloadOutcomeGrid() {
+			if (this.userInterfaceManager.isCurrentFolderOutcome) {
+				this.getGridInstance()?.reloadTable('POST');
+			}
+		}
+		prependUndoSendProjection(projection) {
+			const operationId = Number(projection?.operationId);
+			const grid = this.getGridInstance();
+			if (operationId <= 0 || !this.userInterfaceManager.isCurrentFolderOutcome || !grid || document.querySelector(`[data-undo-send-id="${operationId}"]`)) {
+				return;
+			}
+			const recipients = ['to', 'cc', 'bcc'].flatMap(type => main_core.Type.isArray(projection.recipients?.[type]) ? projection.recipients[type] : []).map(recipient => {
+				const name = main_core.Type.isStringFilled(recipient?.name) ? recipient.name.trim() : '';
+				const email = main_core.Type.isStringFilled(recipient?.email) ? recipient.email.trim() : '';
+				return name || email;
+			}).filter(recipient => recipient !== '');
+			const recipientText = recipients.length > 0 ? recipients.join(main_core.Loc.getMessage('MAIL_MESSAGE_SEPARATOR_OF_NAMES_AND_EMAILS_IN_LISTS') ?? ', ') : main_core.Loc.getMessage('MAIL_MESSAGE_EMPTY_RCPT') ?? '';
+			const subjectText = main_core.Type.isStringFilled(projection.subject) ? projection.subject.trim() : main_core.Loc.getMessage('MAIL_MESSAGE_EMPTY_SUBJECT_PLACEHOLDER') ?? '';
+			const sender = main_core.Tag.render`
+			<span class="mail-name-block mail-msg-list-cell-nowrap mail-msg-list-cell-flex">
+				<span class="mail-msg-from-title">${main_core.Text.encode(recipientText)}</span>
+			</span>
+		`;
+			const subject = main_core.Tag.render`
+			<span class="mail-title-block mail-msg-list-cell-flex">
+				<span class="mail-msg-list-subject">${main_core.Text.encode(subjectText)}</span>
+				<span class="mail-undo-send-pending-status">
+					&nbsp;&mdash;&nbsp;${main_core.Text.encode(main_core.Loc.getMessage('MAIL_SCHEDULED_LIST_STATUS_SENDING') ?? '')}
+				</span>
+			</span>
+		`;
+			main_core.Dom.attr(subject, {
+				'data-testid': `mail-undo-send-pending-row-${operationId}`,
+				'data-undo-send-id': operationId,
+				'data-undo-send-refresh-at': Date.parse(projection.cancelUntil)
+			});
+			const rowId = `undo-send-${operationId}`;
+			grid.getRealtime().addRow({
+				id: rowId,
+				columns: {
+					FROM: sender,
+					SUBJECT: subject,
+					DATE: ''
+				},
+				prepend: true,
+				animation: false
+			});
+			const checkbox = grid.getRows().getById(rowId)?.getCheckbox();
+			if (checkbox) {
+				checkbox.disabled = true;
+				main_core.Dom.attr(checkbox, 'data-disabled', '1');
+			}
+			this.scheduleUndoSendRefresh();
+		}
+		dropUndoSendDraftProjection(projection) {
+			const draftId = Number(projection?.draftId);
+			if (draftId <= 0) {
+				return;
+			}
+			const row = this.getDraftGridInstance()?.getRows().getById(`draft-${draftId}`);
+			const node = row?.getNode?.() ?? row?.node;
+			if (node) {
+				main_core.Dom.remove(node);
+			}
+		}
+		handleUndoSendCancelled(event) {
+			const operationId = Number(event.getData()?.operation?.operationId);
+			if (operationId > 0) {
+				const marker = document.querySelector(`[data-undo-send-id="${operationId}"]`);
+				if (marker) {
+					main_core.Dom.remove(marker.closest('.main-grid-row') ?? marker);
+				}
+			}
+			this.scheduleUndoSendRefresh();
+		}
+
+		/**
+		 * A reload of the grid raises `Grid::updated`, which brings the screen back here - and the row of the
+		 * pending send comes back carrying the same moment, already past. A flat wait would therefore rebuild
+		 * the whole grid every ten seconds for as long as the row is on the screen. The waits grow instead and
+		 * run out; a different set of pending rows starts the count anew, so the next letter is not left
+		 * unrefreshed by the tries the previous one spent.
+		 */
+		scheduleUndoSendRefresh() {
+			if (this.undoSendRefreshTimer !== null) {
+				clearTimeout(this.undoSendRefreshTimer);
+				this.undoSendRefreshTimer = null;
+			}
+			const rows = [...document.querySelectorAll('[data-undo-send-refresh-at]')];
+			const refreshTimestamps = rows.map(row => Number(row.dataset.undoSendRefreshAt)).filter(timestamp => Number.isFinite(timestamp) && timestamp > 0);
+			if (refreshTimestamps.length === 0 || !this.userInterfaceManager.isCurrentFolderOutcome) {
+				this.forgetUndoSendOverdueTries();
+				return;
+			}
+			const dueIn = Math.min(...refreshTimestamps) - Date.now() + 2000;
+			if (dueIn > 0) {
+				this.forgetUndoSendOverdueTries();
+				this.undoSendRefreshTimer = setTimeout(() => this.reloadOutcomeGrid(), Math.max(1000, Math.min(dueIn, 60000)));
+				return;
+			}
+			const overdueRows = rows.map(row => row.dataset.undoSendId ?? '').join(',');
+			if (overdueRows !== this.undoSendOverdueRows) {
+				this.undoSendOverdueRows = overdueRows;
+				this.undoSendOverdueTries = 0;
+			}
+			if (this.undoSendOverdueTries >= UNDO_SEND_OVERDUE_TRIES) {
+				return;
+			}
+			const delay = UNDO_SEND_OVERDUE_DELAY * 2 ** this.undoSendOverdueTries;
+			this.undoSendOverdueTries++;
+			this.undoSendRefreshTimer = setTimeout(() => this.reloadOutcomeGrid(), delay);
+		}
+		forgetUndoSendOverdueTries() {
+			this.undoSendOverdueRows = '';
+			this.undoSendOverdueTries = 0;
 		}
 		setMailboxMigrationActive(mailboxId, active, applyToGrid = true) {
 			const wasActive = this.migrationActiveMailboxIds.has(mailboxId);
@@ -591,29 +793,38 @@
 			const selectedIds = this.getGridInstance()?.getRows().getSelectedIds() ?? [];
 			const hasSelection = selectedIds.length > 0;
 			const migrationSelected = BX.Mail.Home.Grid?.areAllRowsSelected?.() === true ? this.shouldRefuseMigrationActionForMessageIds(['all']) : this.shouldRefuseMigrationActionForMessageIds(selectedIds);
-			this.migrationActionIds.forEach(actionId => {
-				const item = panel.getItemById?.(actionId);
-				if (!item) {
-					return;
-				}
+			const migrationItems = (panel.items ?? []).filter(item => this.migrationActionIds.includes(item.id) || item.dataset?.migrationDangerous === true);
+			migrationItems.forEach(item => {
 				if (migrationSelected) {
-					if (!this.migrationActionPreviousState.has(actionId)) {
-						this.migrationActionPreviousState.set(actionId, item.isDisabled());
+					if (!this.migrationActionPreviousState.has(item)) {
+						this.migrationActionPreviousState.set(item, {
+							// an item described without the flag answers `undefined` rather than `false`
+							// (`ui.actionpanel/src/item.js:101`), and the restore below reads a boolean
+							disabled: item.isDisabled() === true,
+							title: item.layout?.container?.getAttribute('title') ?? null
+						});
 					}
 					item.disable();
-					item.layout?.container?.setAttribute('title', main_core.Loc.getMessage('MAIL_MESSAGE_LIST_MIGRATION_ACTION_UNAVAILABLE'));
+					item.layout?.container?.setAttribute('title', main_core.Loc.getMessage('MAIL_MIGRATION_ACTION_UNAVAILABLE'));
 					return;
 				}
-				if (this.migrationActionPreviousState.has(actionId)) {
-					if (this.migrationActionPreviousState.get(actionId) === false && hasSelection) {
-						item.enable();
-					} else {
-						item.disable();
-					}
-					this.migrationActionPreviousState.delete(actionId);
+				const previousState = this.migrationActionPreviousState.get(item);
+				if (!previousState) {
+					return;
 				}
-				if (item.layout?.container) {
-					item.layout.container.setAttribute('title', item.title || item.text || '');
+				if (previousState.disabled === false && hasSelection) {
+					item.enable();
+				} else {
+					item.disable();
+				}
+				this.migrationActionPreviousState.delete(item);
+				const container = item.layout?.container;
+				if (container?.getAttribute('title') === main_core.Loc.getMessage('MAIL_MIGRATION_ACTION_UNAVAILABLE')) {
+					if (previousState.title === null) {
+						container.removeAttribute('title');
+					} else {
+						container.setAttribute('title', previousState.title);
+					}
 				}
 			});
 		}
@@ -635,11 +846,7 @@
 		}
 		refuseMigrationAction(id) {
 			const messageIds = id === undefined ? BX.Mail.Home.Grid?.areAllRowsSelected?.() === true ? ['all'] : this.getGridInstance().getRows().getSelectedIds() : [id];
-			if (!this.shouldRefuseMigrationActionForMessageIds(messageIds)) {
-				return false;
-			}
-			this.notify(main_core.Loc.getMessage('MAIL_MESSAGE_LIST_MIGRATION_ACTION_UNAVAILABLE'));
-			return true;
+			return this.shouldRefuseMigrationActionForMessageIds(messageIds);
 		}
 
 		// The left menu decides which section is lit, and the drafts item is rendered by
@@ -680,6 +887,137 @@
 			} else {
 				main_core.Dom.removeClass(draftsButton, 'mail-menu-directory-item--active');
 				main_core.Dom.attr(draftsButton, 'aria-current', null);
+			}
+		}
+
+		/**
+		 * The section is a part of the page only where the server drew it: it lives inside one mailbox, so the all
+		 * mail mode and a portal with the feature off get neither its rows nor its item, and nothing here to switch
+		 * to them either.
+		 */
+		initScheduledList() {
+			this.scheduledListContainer = document.querySelector('[data-testid="mail-client-scheduled-list"]');
+			if (!this.scheduledListContainer) {
+				return;
+			}
+			this.messageListContainer ??= document.querySelector('[data-role="mail-message-list-view"]');
+			this.messageFilterContainer ??= document.querySelector('[data-role="mail-message-list-filter"]');
+			// The left menu is put into the page after this runs, so the click is caught on the document instead
+			// of the button: one listener that also survives a rebuild of the menu.
+			this.scheduledNavigationClickHandler = this.handleScheduledNavigationClick.bind(this);
+			main_core.Event.bind(document, 'click', this.scheduledNavigationClickHandler);
+			this.scheduledHistoryHandler = () => {
+				if (this.isScheduledUrl(window.location.href)) {
+					this.showScheduledMessages(false);
+				} else {
+					this.hideScheduledMessages(false);
+				}
+			};
+			main_core.Event.bind(window, 'popstate', this.scheduledHistoryHandler);
+			if (this.isScheduledUrl(window.location.href)) {
+				this.showScheduledMessages(false);
+			}
+		}
+
+		// The switch is bound to the click alone: an action carried out on `pointerdown` cannot be called off by
+		// moving the pointer away from the button.
+		handleScheduledNavigationClick(event) {
+			const button = event.target?.closest?.('[data-testid="mail-scheduled-messages-button"]');
+			if (!button) {
+				return;
+			}
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			this.scheduledNavigationButton = button;
+			this.showScheduledMessages();
+		}
+		isScheduledUrl(url) {
+			if (!this.scheduledPath) {
+				return false;
+			}
+			const currentUrl = new URL(url, window.location.origin);
+			const scheduledUrl = new URL(this.scheduledPath, window.location.origin);
+			const currentPath = currentUrl.pathname.replace(/\/+$/, '');
+			const scheduledPath = scheduledUrl.pathname.replace(/\/+$/, '');
+			if (currentPath !== scheduledPath) {
+				return false;
+			}
+			return ['page', 'id'].every(parameter => !scheduledUrl.searchParams.has(parameter) || currentUrl.searchParams.get(parameter) === scheduledUrl.searchParams.get(parameter));
+		}
+		showScheduledMessages(updateHistory = true) {
+			this.scheduledNavigationButton = document.querySelector('[data-testid="mail-scheduled-messages-button"]');
+			this.scheduledListContainer = document.querySelector('[data-testid="mail-client-scheduled-list"]');
+			this.messageListContainer = document.querySelector('[data-role="mail-message-list-view"]');
+			this.messageFilterContainer = document.querySelector('[data-role="mail-message-list-filter"]');
+			if (!this.scheduledNavigationButton || !this.scheduledListContainer || !this.messageListContainer || !this.messageFilterContainer || this.scheduledListContainer.hidden === false) {
+				return;
+			}
+			this.hideDrafts(false);
+			this.resetGridViewSelection(this.gridId);
+			this.resetGridViewSelection('mail-scheduled-message-list');
+			this.messageListContainer.hidden = true;
+			this.scheduledListContainer.hidden = false;
+			this.messageFilterContainer.hidden = true;
+			this.unfixActionPanel(this.gridId);
+			this.refreshActionPanelPosition('mail-scheduled-message-list');
+			main_core.Dom.addClass(document.body, 'mail-client-draft-list-view');
+			BX.Mail.Home.LeftMenuNode?.directoryMenu?.clearActiveMenuButtons();
+			main_core.Dom.addClass(this.scheduledNavigationButton.closest('.mail-menu-directory-item-drafts'), 'mail-menu-directory-item--active');
+			this.scheduledNavigationButton.setAttribute('aria-current', 'page');
+
+			// the rows the section shows were drawn when the page was loaded, and the schedule has moved on since:
+			// entering the section rereads them by its own address, as the drafts do, and the number of the section
+			// follows them the same way it follows a reread of the rows (`reloadScheduledGrid`)
+			const scheduledGrid = this.getScheduledGridInstance();
+			if (scheduledGrid && this.scheduledPath) {
+				scheduledGrid.baseUrl = this.scheduledPath;
+				scheduledGrid.reloadTable('POST', {}, () => this.updateCountersFromBackend(), this.scheduledPath);
+			}
+			if (updateHistory) {
+				window.history.pushState({
+					mailScheduledList: true
+				}, '', this.scheduledPath);
+				this.enterScheduledView();
+			}
+		}
+
+		// The whole main area is replaced without a page load, so the change is told to the reader and the focus
+		// follows the list that took the place of the messages. A restore on load or on Back goes through the
+		// same methods with no history to update and leaves the focus where the user left it.
+		enterScheduledView() {
+			if (this.scheduledListAnnounce) {
+				ui_a11y.LiveAnnouncer.announce(this.scheduledListAnnounce);
+			}
+			this.focusScheduledSection(this.scheduledListContainer);
+		}
+		focusScheduledSection(section) {
+			if (!section) {
+				return;
+			}
+			main_core.Dom.attr(section, 'tabindex', '-1');
+			section.focus();
+		}
+		hideScheduledMessages(updateHistory = true) {
+			this.scheduledNavigationButton = document.querySelector('[data-testid="mail-scheduled-messages-button"]');
+			this.scheduledListContainer = document.querySelector('[data-testid="mail-client-scheduled-list"]');
+			this.messageListContainer = document.querySelector('[data-role="mail-message-list-view"]');
+			this.messageFilterContainer = document.querySelector('[data-role="mail-message-list-filter"]');
+			if (!this.scheduledNavigationButton || !this.scheduledListContainer || !this.messageListContainer || !this.messageFilterContainer || this.scheduledListContainer.hidden) {
+				return;
+			}
+			this.scheduledListContainer.hidden = true;
+			this.resetGridViewSelection('mail-scheduled-message-list');
+			this.messageListContainer.hidden = false;
+			this.messageFilterContainer.hidden = false;
+			this.unfixActionPanel('mail-scheduled-message-list');
+			this.refreshActionPanelPosition(this.gridId);
+			main_core.Dom.removeClass(document.body, 'mail-client-draft-list-view');
+			main_core.Dom.removeClass(this.scheduledNavigationButton.closest('.mail-menu-directory-item-drafts'), 'mail-menu-directory-item--active');
+			this.scheduledNavigationButton.removeAttribute('aria-current');
+			if (updateHistory) {
+				window.history.pushState({
+					mailScheduledList: false
+				}, '', this.messageListPath);
 			}
 		}
 		initClientDraftList(attempt = 0) {
@@ -730,6 +1068,7 @@
 					reload: false
 				});
 			}
+			this.hideScheduledMessages(false);
 			this.resetGridViewSelection(this.gridId);
 			this.resetGridViewSelection('mail-internal-draft-list');
 			this.messageListContainer.hidden = true;
@@ -845,6 +1184,28 @@
 				reload: false
 			});
 		}
+
+		// The list owns the state "which section is active and what its number is": it carries the number
+		// the server sent into the counters structure, and the panel reads it from the update event.
+		initFavoritesSectionCounter() {
+			if (this.isDraftMode || !this.listImprovementsEnabled) {
+				return;
+			}
+			BX.Mail.Home.Counters.setSectionState(mail_favoritesFilterState.FAVORITES_SECTION, this.favoritesUnread, this.favoritesSectionActive);
+		}
+		publishFavoritesUnread(count) {
+			// an answer without the number leaves the panel as it is, while a zero of the server is a number
+			if (!this.listImprovementsEnabled || !main_core.Type.isNumber(count)) {
+				return;
+			}
+			BX.Mail.Home.Counters.setSectionCounter(mail_favoritesFilterState.FAVORITES_SECTION, count);
+		}
+		setActiveFavoritesSection(active) {
+			if (!this.listImprovementsEnabled) {
+				return;
+			}
+			BX.Mail.Home.Counters.setActiveSection(active ? mail_favoritesFilterState.FAVORITES_SECTION : null);
+		}
 		navigateToMessageList(params) {
 			const url = BX.util.add_url_param(this.messageListPath, params);
 			const slider = top.BX.SidePanel.Instance.getTopSlider();
@@ -886,6 +1247,8 @@
 				this.folderBehindFavoritesSection = '';
 			}
 			this.favoritesSectionActive = active;
+			// before the filter below: the update it sends has to carry the section state already
+			this.setActiveFavoritesSection(active);
 			if (grid) {
 				// the grid keeps its own copy of the address it reloads from
 				grid.baseUrl = url;
@@ -933,6 +1296,7 @@
 		addEventHandlers() {
 			BX.addCustomEvent('Grid::updated', () => {
 				this.syncDraftActionPanel(this.getDraftGridInstance());
+				this.scheduleUndoSendRefresh();
 				this.syncMigrationActionPanel();
 			});
 			BX.addCustomEvent('Grid::thereSelectedRows', () => this.syncMigrationActionPanel());
@@ -957,10 +1321,42 @@
 					}
 					return;
 				}
+
+				// the card of the letter names the one whose send it called off, and the row of it goes away here
+				// the same way it goes away when the send is called off from the list itself
+				if (event.getEventId() === SCHEDULED_CANCELLED_MESSAGE) {
+					const scheduledId = Number(event.getData()?.id);
+					// the number of the section comes back with its rows; a section standing hidden behind another
+					// list has no rows to reread, so there the number is asked for on its own
+					if (scheduledId <= 0 || !this.rereadScheduledRows([scheduledId])) {
+						this.updateCountersFromBackend();
+					}
+
+					// the letter is not lost by calling off its send, it goes back to the drafts: the rows of the
+					// drafts behind the slider were drawn while it was still on the schedule
+					this.reloadDraftGrid();
+					return;
+				}
+
+				// the form of the letter names the schedule it wrote, and the section shows it here without an entry
+				// of its own: the rows behind the slider were drawn before the letter was put on the schedule
+				if (event.getEventId() === SCHEDULED_SAVED_MESSAGE) {
+					if (!this.reloadScheduledGrid()) {
+						this.updateCountersFromBackend();
+					}
+					return;
+				}
 				if (event.getEventId() !== 'Mail.Client.MessageCreatedSuccess') {
 					return;
 				}
-				this.reloadDraftGrid();
+				const undoSendProjection = event.getData()?.undoSendProjection;
+				this.prependUndoSendProjection(undoSendProjection);
+				if (undoSendProjection) {
+					this.modifiedDraftSliders.delete(event.getSender?.());
+					this.dropUndoSendDraftProjection(undoSendProjection);
+				} else {
+					this.reloadDraftGrid();
+				}
 			});
 			(window.top?.BX ?? BX).addCustomEvent('SidePanel.Slider:onCloseComplete', event => {
 				const slider = event.getSlider?.();
@@ -1003,6 +1399,11 @@
 			main_core_events.EventEmitter.subscribe('Mail::directoryChanged', () => {
 				this.resetGridSelection();
 			});
+
+			// the star of any grid changes what the favorites section holds, and the number of it
+			// always comes from the server - the screen just asks for it again. A series of stars
+			// asks once: the counters request is the heaviest one of the screen
+			main_core_events.EventEmitter.subscribe('BX.Mail.Favorites:onChange', main_core.Runtime.debounce(() => this.updateCountersFromBackend(), FAVORITES_COUNTERS_REFRESH_DELAY));
 			main_core_events.EventEmitter.subscribe('BX.Mail.Home:updatingCounters', event => {
 				if (event['data']['name'] !== 'mailboxCounters') {
 					const counters = event['data']['counters'];
@@ -1088,6 +1489,442 @@
 				draftId
 			}), this.composeSliderOptions);
 		}
+		deleteScheduledMessage(id, revision) {
+			return BX.ajax.runAction('mail.api.scheduledmessage.cancel', {
+				data: {
+					id,
+					revision
+				}
+			}).then(response => {
+				this.rereadScheduledRows([id]);
+				return response;
+			}, response => {
+				this.showScheduledCancelFailures([response], id);
+				return response;
+			});
+		}
+
+		/**
+		 * The letters of a batch are checked one by one on the server, so the answer carries a verdict per letter:
+		 * the ones that were called off leave the section, and the ones that were not name their reasons. A request
+		 * refused as a whole carries no per-letter answer and is read as one refusal.
+		 *
+		 * The rows are reread once for the whole answer: the letters that left the section and the rows a refusal
+		 * left stale come back in the same request, so the list is not redrawn twice and the focus not thrown twice.
+		 */
+		deleteSelectedScheduledMessages() {
+			const messages = this.getSelectedScheduledMessages();
+			if (messages.length === 0) {
+				return Promise.resolve();
+			}
+			return BX.ajax.runAction('mail.api.scheduledmessage.cancelBatch', {
+				data: {
+					items: messages
+				}
+			}).then(response => {
+				const results = Array.isArray(response.data?.results) ? response.data.results : [];
+				const cancelled = results.filter(result => result.success === true);
+				const failures = results.length > 0 ? results.filter(result => result.success !== true) : [response];
+				this.notifyScheduledBatchOutcome('', this.getScheduledFailureText(failures, this.scheduledCancelPhrases()));
+				if (cancelled.length > 0 || this.hasStaleScheduledRow(failures)) {
+					this.rereadScheduledSection();
+				}
+				return response;
+			}, response => {
+				this.showScheduledCancelFailures([response]);
+				return response;
+			});
+		}
+
+		/**
+		 * One refused letter, told and answered: the reason reaches the reader and the rows are reread when the
+		 * refusal says the row on the screen outlived the letter behind it.
+		 *
+		 * The rows are reread on the same refusals for every action of the section, and for the same causes: the
+		 * server checks the letter alike for all of them. A refusal that names the reader instead of the letter,
+		 * and the two of the draft the cancellation writes, leave the letter in the state its row was drawn for,
+		 * so those keep the rows where they are.
+		 *
+		 * @param {{reasons: Object, error: string, partialError: string}} phrases words of the pressed action
+		 */
+		showScheduledFailures(failures, phrases, messageId = 0) {
+			const text = this.getScheduledFailureText(failures, phrases);
+			if (text === '') {
+				return;
+			}
+			this.notifyScheduledOutcome(text);
+			if (this.hasStaleScheduledRow(failures)) {
+				this.reloadScheduledGrid(messageId);
+			}
+		}
+
+		/**
+		 * The words of a refusal, without saying them. A letter the action did not move keeps its row, so the words
+		 * name the reason; a batch of them is counted instead, as the drafts list counts the drafts it failed to
+		 * delete. Which words the reader gets is decided by the action they pressed: every action of the section
+		 * carries a dictionary of its own, and a code none of them knows is answered by its general phrase. A run
+		 * that refused nothing is answered with nothing.
+		 *
+		 * @param {{reasons: Object, error: string, partialError: string}} phrases words of the pressed action
+		 */
+		getScheduledFailureText(failures, phrases) {
+			if (failures.length === 0) {
+				return '';
+			}
+			return failures.length === 1 ? phrases.reasons[this.getScheduledErrorCode(failures[0])] || phrases.error : phrases.partialError.replace('#COUNT#', String(failures.length));
+		}
+
+		// the revision of a row lives in its markup, so a stale one is only cured by rereading the rows
+		hasStaleScheduledRow(failures) {
+			return failures.some(failure => {
+				const code = this.getScheduledErrorCode(failure);
+				return code === SCHEDULED_REVISION_CONFLICT_ERROR || SCHEDULED_MOVED_ON_ERRORS.has(code);
+			});
+		}
+		scheduledCancelPhrases() {
+			return {
+				reasons: this.scheduledCancelErrorReasons,
+				error: this.scheduledCancelError,
+				partialError: this.scheduledCancelPartialError
+			};
+		}
+		scheduledSendNowPhrases() {
+			return {
+				reasons: this.scheduledSendNowErrorReasons,
+				error: this.scheduledSendNowError,
+				partialError: this.scheduledSendNowPartialError
+			};
+		}
+		showScheduledCancelFailures(failures, messageId = 0) {
+			this.showScheduledFailures(failures, this.scheduledCancelPhrases(), messageId);
+		}
+		showScheduledSendNowFailures(failures, messageId = 0) {
+			this.showScheduledFailures(failures, this.scheduledSendNowPhrases(), messageId);
+		}
+
+		/**
+		 * The outcome of a batch that moved some letters and refused others: a balloon for each half, as before,
+		 * and a single announcement carrying both. `LiveAnnouncer` keeps one live region and one queue, and an
+		 * assertive announcement takes down a polite one still waiting for its frame — announced apart, the letters
+		 * that left would be lost and the reader would hear the refusal as the whole answer.
+		 */
+		notifyScheduledBatchOutcome(successText, failureText) {
+			const texts = [successText, failureText].filter(text => text !== '');
+			if (texts.length === 0) {
+				return;
+			}
+			texts.forEach(text => this.notify(text, 5000));
+			ui_a11y.LiveAnnouncer.announce(texts.join(' '), failureText === '' ? 'polite' : 'assertive');
+		}
+
+		/**
+		 * The balloon of `ui.notification` is drawn without a live region of its own, so the reader who does not see
+		 * it is told the outcome apart from it. `assertive`: the letter did not go anywhere, and the row it is read
+		 * from says nothing about the refusal.
+		 */
+		notifyScheduledOutcome(text) {
+			this.notify(text, 5000);
+			ui_a11y.LiveAnnouncer.announce(text, 'assertive');
+		}
+		getScheduledErrorCode(failure) {
+			return String(failure?.errors?.[0]?.code ?? '');
+		}
+
+		/**
+		 * Queues a letter that stopped at an error for sending again. The action asks nothing back: the letter is
+		 * the one the author wrote and the send is what they already asked for, so a confirmation would only stand
+		 * between them. The second click while the first request is out is dropped — the row keeps its menu open
+		 * and its revision until the section is reread, and a repeat of it would be refused as a conflict.
+		 *
+		 * The answer of the server frees the letter before anything else is done with it: what follows redraws the
+		 * section, and a throw in the middle of that would leave the letter held for the rest of the page. A
+		 * `finally` would say this in one place, but `BX.ajax` answers with `BX.Promise`, which has none.
+		 */
+		retryScheduledMessage(id, revision) {
+			if (this.retryingScheduledMessages.has(id)) {
+				return Promise.resolve();
+			}
+			this.retryingScheduledMessages.add(id);
+			return BX.ajax.runAction('mail.api.scheduledmessage.retry', {
+				data: {
+					id,
+					revision
+				}
+			}).then(response => {
+				this.retryingScheduledMessages.delete(id);
+				// the letter keeps its row and only the text of its status changes, which no reader is told
+				ui_a11y.LiveAnnouncer.announce(this.scheduledRetryAnnounce);
+				this.reloadScheduledGrid(id);
+				return response;
+			}, response => {
+				this.retryingScheduledMessages.delete(id);
+				this.showScheduledRetryFailure(response, id);
+				return response;
+			});
+		}
+
+		/**
+		 * A letter that was not queued again keeps its row and its reason, so the message names the refusal. The
+		 * rows are reread on a stale revision for the same cause as a refused cancellation: the revision lives in
+		 * the markup and nothing but a reread cures it.
+		 *
+		 * A refusal that names the state of the letter is reread for a cause of its own: the letter is sending,
+		 * sent, called off or gone, so the row on the screen outlived the state it was drawn for and would go on
+		 * offering a repeat of a letter that has nothing to repeat. What is left in the section, and under which
+		 * status, is decided by the server — the rows are asked for anew instead of being guessed at here.
+		 */
+		showScheduledRetryFailure(failure, messageId = 0) {
+			const code = this.getScheduledErrorCode(failure);
+			this.notifyScheduledOutcome(this.scheduledRetryErrorReasons[code] || this.scheduledRetryError);
+			if (code === SCHEDULED_REVISION_CONFLICT_ERROR || SCHEDULED_MOVED_ON_ERRORS.has(code)) {
+				this.reloadScheduledGrid(messageId);
+			}
+		}
+
+		/**
+		 * Brings the moment of a letter to now, which is all the send on demand is: the letter leaves with the
+		 * nearest run of the dispatcher, so the message says it is being sent and promises nothing sooner. Nothing
+		 * is asked back: the send is the one the author already asked for, only earlier.
+		 *
+		 * The second click while the first request is out is dropped, the way a repeat drops it: the row keeps the
+		 * revision it was drawn with until the section is reread, and a repeat of it would be refused as a conflict.
+		 * The answer of the server frees the letter before the section is redrawn, since `BX.Promise` has no
+		 * `finally` to say it in one place.
+		 *
+		 * The number of the section is not asked for beside the rows: the nearest run of the dispatcher may take the
+		 * letter while they are on their way, so the number is asked for once they are back (`reloadScheduledGrid`).
+		 */
+		sendNowScheduledMessage(id, revision) {
+			if (this.sendingNowScheduledMessages.has(id)) {
+				return Promise.resolve();
+			}
+			this.sendingNowScheduledMessages.add(id);
+			return BX.ajax.runAction('mail.api.scheduledmessage.sendNow', {
+				data: {
+					id,
+					revision
+				}
+			}).then(response => {
+				this.sendingNowScheduledMessages.delete(id);
+				this.notifyScheduledSuccess(this.scheduledSendNowSuccess);
+				this.reloadScheduledGrid(id);
+				return response;
+			}, response => {
+				this.sendingNowScheduledMessages.delete(id);
+				this.showScheduledSendNowFailures([response], id);
+				return response;
+			});
+		}
+
+		/**
+		 * The letters of a batch are checked one by one on the server, so the answer is read the same way the
+		 * group cancellation reads it: the ones that left are counted together, and the ones that did not name
+		 * their reasons. A request refused as a whole carries no per-letter answer and is read as one refusal.
+		 *
+		 * Both halves of the answer are told at once, and the rows are reread once for the whole of it.
+		 */
+		sendNowSelectedScheduledMessages() {
+			const messages = this.getSelectedScheduledMessagesForSendNow();
+			if (messages.length === 0) {
+				return Promise.resolve();
+			}
+			return BX.ajax.runAction('mail.api.scheduledmessage.sendNowBatch', {
+				data: {
+					items: messages
+				}
+			}).then(response => {
+				const results = Array.isArray(response.data?.results) ? response.data.results : [];
+				const sent = results.filter(result => result.success === true);
+				const failures = results.length > 0 ? results.filter(result => result.success !== true) : [response];
+				this.notifyScheduledBatchOutcome(sent.length > 0 ? this.scheduledPluralPhrase('MAIL_SCHEDULED_LIST_SEND_NOW_MANY_SUCCESS', sent.length) : '', this.getScheduledFailureText(failures, this.scheduledSendNowPhrases()));
+				if (sent.length > 0 || this.hasStaleScheduledRow(failures)) {
+					this.rereadScheduledSection();
+				}
+				return response;
+			}, response => {
+				this.showScheduledSendNowFailures([response]);
+				return response;
+			});
+		}
+
+		/**
+		 * The panel offers the send while the selection holds a letter it can send, so a press with none of them
+		 * left comes from a panel that outlived its rows: the reader is told the refusal instead of meeting a
+		 * button that does nothing.
+		 */
+		confirmSendNowSelectedScheduledMessages() {
+			const messages = this.getSelectedScheduledMessagesForSendNow();
+			if (messages.length === 0) {
+				this.notifyScheduledOutcome(this.scheduledSendNowNothing);
+				return;
+			}
+			this.showDraftDeleteConfirmation(this.scheduledPluralPhrase('MAIL_SCHEDULED_LIST_SEND_NOW_MANY_CONFIRM', messages.length), this.describeScheduledSelection('MAIL_SCHEDULED_LIST_SEND_NOW_MANY_DESCRIPTION', 'MAIL_SCHEDULED_LIST_SEND_NOW_SKIPPED', messages.length), () => this.sendNowSelectedScheduledMessages(), this.scheduledSendNowButton, ui_buttons.AirButtonStyle.FILLED);
+		}
+
+		/**
+		 * The group phrases of the section name a number of letters, and the number is only known once the rows are
+		 * ticked: the form is chosen here, off the forms the page registered. The panel appears on a single ticked
+		 * row as well, so the singular is a case of its own and not an edge of the plural.
+		 */
+		scheduledPluralPhrase(phraseId, count) {
+			return main_core.Loc.getMessagePlural(phraseId, count, {
+				'#COUNT#': String(count)
+			}) || '';
+		}
+
+		/**
+		 * What the confirmation says about the selection: the letters the action takes, and the ticked rows it
+		 * leaves behind. Every other refusal of the section names its reason, so rows dropped without a word would
+		 * be the only thing the reader is left to guess at.
+		 */
+		describeScheduledSelection(descriptionPhraseId, skippedPhraseId, count) {
+			const description = this.scheduledPluralPhrase(descriptionPhraseId, count);
+			const skipped = this.getSelectedScheduledRowCount() - count;
+			return skipped > 0 ? `${description}. ${this.scheduledPluralPhrase(skippedPhraseId, skipped)}` : description;
+		}
+
+		/**
+		 * The balloon of `ui.notification` is drawn without a live region of its own, so the reader who does not see
+		 * it is told the outcome apart from it. `polite`: the letter is on its way, and nothing the reader is doing
+		 * has to give way to that.
+		 */
+		notifyScheduledSuccess(text) {
+			this.notify(text, 5000);
+			ui_a11y.LiveAnnouncer.announce(text);
+		}
+
+		/**
+		 * Rereads the rows of the section the user is looking at right now: the page of the section alone, and the
+		 * embedded section only while it is open — a hidden one is reread by `showScheduledMessages` on the way in.
+		 * A hidden section is said so, since its number is then the only thing left to ask for.
+		 *
+		 * A reread replaces every row, and the focus standing on one of them goes away with it, so the letter the
+		 * action was asked for is carried in as the point of return. Reading it off the focus instead would find
+		 * the item of a row menu, which lives outside the row and names no letter.
+		 *
+		 * The number of the section is asked for once the rows are back and never beside them: the dispatcher takes
+		 * the letters of the section on runs of its own, and a number read while the rows were still on their way
+		 * would belong to a section the rows do not show.
+		 *
+		 * @return {boolean} whether the rows were asked for at all
+		 */
+		reloadScheduledGrid(messageId = 0) {
+			const container = document.querySelector('[data-testid="mail-client-scheduled-list"]');
+			if (!this.isScheduledMode && !(container && !container.hidden)) {
+				return false;
+			}
+			const focusedBeforeReload = document.activeElement;
+			this.getScheduledGridInstance()?.reloadTable('POST', {}, () => {
+				this.updateCountersFromBackend();
+				this.restoreScheduledFocus(messageId, focusedBeforeReload);
+			}, this.scheduledPath);
+			return true;
+		}
+
+		/**
+		 * Gives back the place the reread took away: the row of the letter while it is still in the section, and
+		 * the section itself once the letter has left it — the same point of return the section takes on the way in.
+		 *
+		 * The focus is only ours to move while it is where the request left it: on the body the redrawn rows dropped
+		 * it to, or still on the item of the row menu, which the menu takes down right after and drops it as well.
+		 * A focus the user moved elsewhere in the meantime is theirs and is left alone.
+		 */
+		restoreScheduledFocus(messageId, focusedBeforeReload) {
+			const active = document.activeElement;
+			if (active !== null && active !== document.body && active !== focusedBeforeReload) {
+				return;
+			}
+			const rowMenuButton = messageId > 0 ? document.querySelector(`[data-scheduled-id="${messageId}"] .main-grid-row-action-button`) : null;
+			if (rowMenuButton) {
+				this.focusOnceDrawn(rowMenuButton);
+				return;
+			}
+			this.focusScheduledSection(document.querySelector(this.isScheduledMode ? '[data-testid="mail-scheduled-list-root"]' : '[data-testid="mail-client-scheduled-list"]'));
+		}
+
+		/**
+		 * The rows the grid has just drawn replay a short visibility animation of its own, and nothing hidden by it
+		 * takes the focus, so the node is offered it over the next frames until it accepts. The section itself
+		 * stands outside those rows and needs none of this.
+		 */
+		focusOnceDrawn(node, attemptsLeft = 3) {
+			requestAnimationFrame(() => {
+				node.focus();
+				if (document.activeElement !== node && attemptsLeft > 0) {
+					this.focusOnceDrawn(node, attemptsLeft - 1);
+				}
+			});
+		}
+		getScheduledGridInstance() {
+			return BX.Main.gridManager.getInstanceById(SCHEDULED_GRID_ID);
+		}
+		getSelectedScheduledMessages() {
+			return this.collectSelectedScheduledMessages(dataset => dataset.scheduledCanCancel === 'true');
+		}
+
+		/**
+		 * The group panel holds no menu of its own, so the rule the menu of a row keeps reaches it through the mark
+		 * of the row: a letter that stopped at an error is sent again by its own repeat and not by this action.
+		 */
+		getSelectedScheduledMessagesForSendNow() {
+			return this.collectSelectedScheduledMessages(dataset => dataset.scheduledCanSendNow === 'true');
+		}
+
+		/** How many rows the reader has ticked, whatever each action of the panel may do with them. */
+		getSelectedScheduledRowCount() {
+			const rows = this.getScheduledGridInstance()?.getRows().getSelected() ?? [];
+			return rows.filter(row => row.getNode()?.dataset.scheduledId !== undefined).length;
+		}
+		collectSelectedScheduledMessages(isEligible) {
+			const rows = this.getScheduledGridInstance()?.getRows().getSelected() ?? [];
+			return rows.map(row => {
+				const node = row.getNode();
+				return {
+					id: Number(node?.dataset.scheduledId),
+					revision: Number(node?.dataset.scheduledRevision)
+				};
+			}).filter(({
+				id
+			}, index) => {
+				const dataset = rows[index].getNode()?.dataset;
+				return id > 0 && dataset !== undefined && isEligible(dataset);
+			});
+		}
+
+		/**
+		 * What is left in the section is decided by the server, so the rows are reread once instead of being
+		 * taken off one by one: `BX.Grid.Row.remove()` is a request of its own that redraws the whole section.
+		 * A run that moved no letter leaves the rows as they were and reads nothing back.
+		 *
+		 * @return {boolean} whether the rows were asked for at all
+		 */
+		rereadScheduledRows(changedIds) {
+			return changedIds.length > 0 && this.rereadScheduledSection();
+		}
+
+		/**
+		 * The section as the server has it now, selection and all: a run that moved letters leaves the ticks of the
+		 * rows it consumed behind, so they go with the rows.
+		 *
+		 * @return {boolean} whether the rows were asked for at all
+		 */
+		rereadScheduledSection() {
+			const grid = this.getScheduledGridInstance();
+			grid?.getRows().unselectAll();
+			grid?.adjustCheckAllCheckboxes();
+			return this.reloadScheduledGrid();
+		}
+		confirmDeleteScheduledMessage(id, revision) {
+			this.showDraftDeleteConfirmation(this.scheduledCancelConfirm, this.scheduledCancelDescription, () => this.deleteScheduledMessage(id, revision), this.scheduledCancelButton);
+		}
+		confirmDeleteSelectedScheduledMessages() {
+			const messages = this.getSelectedScheduledMessages();
+			if (messages.length === 0) {
+				this.notifyScheduledOutcome(this.scheduledCancelNothing);
+				return;
+			}
+			this.showDraftDeleteConfirmation(this.scheduledPluralPhrase('MAIL_SCHEDULED_LIST_CANCEL_MANY_CONFIRM', messages.length), this.describeScheduledSelection('MAIL_SCHEDULED_LIST_CANCEL_MANY_DESCRIPTION', 'MAIL_SCHEDULED_LIST_CANCEL_SKIPPED', messages.length), () => this.deleteSelectedScheduledMessages(), this.scheduledCancelButton);
+		}
 		deleteDraft(draftId) {
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction('mail.api.draft.delete', {
@@ -1144,16 +1981,25 @@
 		confirmDeleteDraft(draftId) {
 			this.showDraftDeleteConfirmation(this.draftDeleteConfirm, this.draftDeleteDescription, () => this.deleteDraft(draftId));
 		}
-		async showDraftDeleteConfirmation(title, description, onConfirm) {
+
+		/**
+		 * The dialog serves every confirmation of the two lists, and most of them stand before something that
+		 * destroys a letter, so the alert style is what it keeps by default. A caller confirming an action that
+		 * destroys nothing (the send of the letters already scheduled) hands it the accent style instead.
+		 */
+		async showDraftDeleteConfirmation(title, description, onConfirm, confirmButtonText = this.draftDeleteButton, confirmButtonStyle = ui_buttons.AirButtonStyle.FILLED_ALERT) {
 			const {
 				Dialog,
 				Text
 			} = await main_core.Runtime.loadExtension(['ui.system.dialog', 'ui.system.typography']);
 			let dialog;
 			const confirmButton = new ui_buttons.Button({
-				text: this.draftDeleteButton,
+				text: confirmButtonText,
+				dataset: {
+					testid: 'mail-list-confirm-submit'
+				},
 				size: ui_buttons.ButtonSize.LARGE,
-				style: ui_buttons.AirButtonStyle.FILLED_ALERT,
+				style: confirmButtonStyle,
 				useAirDesign: true,
 				onclick: () => {
 					confirmButton.setWaiting();
@@ -1176,6 +2022,9 @@
 			});
 			const cancelButton = new ui_buttons.Button({
 				text: this.draftCancelButton,
+				dataset: {
+					testid: 'mail-list-confirm-cancel'
+				},
 				size: ui_buttons.ButtonSize.LARGE,
 				style: ui_buttons.AirButtonStyle.OUTLINE,
 				useAirDesign: true,
@@ -1440,22 +2289,35 @@
 				this.labelsEventTargets.add(BX);
 			}
 			this.labelsEventTargets.forEach(target => target.addCustomEvent('SidePanel.Slider:onCloseComplete', this.labelsSliderCloseHandler));
-
-			// window.top.BX outlives this document, so its handler has to go away with the document.
-			this.pageLeaveHandler = () => this.destroy();
-			main_core.Event.bind(window, 'pagehide', this.pageLeaveHandler);
 		}
 		destroy() {
 			this.destroyMigrationStates();
-			if (!this.labelsSliderCloseHandler) {
-				return;
+			if (this.undoSendRefreshTimer !== null) {
+				clearTimeout(this.undoSendRefreshTimer);
+				this.undoSendRefreshTimer = null;
 			}
-			this.labelsEventTargets.forEach(target => target.removeCustomEvent('SidePanel.Slider:onCloseComplete', this.labelsSliderCloseHandler));
-			this.labelsSliderCloseHandler = null;
+			if (this.undoSendCancelledHandler) {
+				main_core_events.EventEmitter.unsubscribe(UNDO_SEND_CANCELLED_EVENT, this.undoSendCancelledHandler);
+				this.undoSendCancelledHandler = null;
+			}
+			if (this.labelsSliderCloseHandler) {
+				this.labelsEventTargets.forEach(target => target.removeCustomEvent('SidePanel.Slider:onCloseComplete', this.labelsSliderCloseHandler));
+				this.labelsSliderCloseHandler = null;
+			}
 			BX.removeCustomEvent(window, 'onPopupShow', this.panelPopupShowHandler);
 			this.panelPopupShowHandler = null;
-			main_core.Event.unbind(window, 'pagehide', this.pageLeaveHandler);
-			this.pageLeaveHandler = null;
+			if (this.pageLeaveHandler) {
+				main_core.Event.unbind(window, 'pagehide', this.pageLeaveHandler);
+				this.pageLeaveHandler = null;
+			}
+			if (this.scheduledHistoryHandler) {
+				main_core.Event.unbind(window, 'popstate', this.scheduledHistoryHandler);
+				this.scheduledHistoryHandler = null;
+			}
+			if (this.scheduledNavigationClickHandler) {
+				main_core.Event.unbind(document, 'click', this.scheduledNavigationClickHandler);
+				this.scheduledNavigationClickHandler = null;
+			}
 		}
 		getSidePanelEventTarget() {
 			if (window.top && window.top.BX && window.top.BX.addCustomEvent) {
@@ -1708,10 +2570,6 @@
 			const folderOptions = event.currentTarget.dataset;
 			const toFolderByPath = folderOptions.path;
 			const toFolderByName = toFolderByPath;
-			if (toFolderByPath === this.getCurrentFolder()) {
-				this.notify(main_core.Loc.getMessage('MESSAGES_ALREADY_EXIST_IN_FOLDER'));
-				return;
-			}
 			let id = undefined;
 			const popupSubmenu = BX.findParent(event.currentTarget, {
 				className: 'popup-window'
@@ -1720,6 +2578,10 @@
 				id = BX.data(popupSubmenu, 'grid-row-id');
 			}
 			if (this.refuseMigrationAction(id)) {
+				return;
+			}
+			if (toFolderByPath === this.getCurrentFolder()) {
+				this.notify(main_core.Loc.getMessage('MESSAGES_ALREADY_EXIST_IN_FOLDER'));
 				return;
 			}
 			const isDisabled = JSON.parse(folderOptions.isDisabled);
@@ -2030,12 +2892,16 @@
 			}).then(function (response) {
 				const result = response.data || {};
 				const total = Number(result.total || 0);
+				this.setScheduledSectionCount(Number(result.scheduled || 0));
 				if (selector) {
 					selector.updateAllMailBadge(total);
 					if (result.mailboxes) {
 						selector.updatePerMailboxBadges(result.mailboxes);
 					}
 				}
+
+				// the section number comes with every update, so entering the section shows it at once
+				this.publishFavoritesUnread(result.favoritesUnread);
 				if (isAllMailMode) {
 					BX.Mail.Home.Counters.setCounters([{
 						path: main_core.Loc.getMessage('MAIL_VIRTUAL_FOLDER_KEY'),
@@ -2045,10 +2911,35 @@
 						path: 'unseenCountInAllMailboxes',
 						count: total
 					}]);
-				} else if (result.folders && this.getCurrentFolder() === '') {
+				}
+				// the folders are counted by the page that carries the filter of the message list; the page of
+				// the section alone has none, and its folder counters are not this call's business
+				else if (!this.isScheduledMode && result.folders && this.getCurrentFolder() === '') {
 					BX.Mail.Home.Counters.setCounters(result.folders);
 				}
 			}.bind(this));
+		}
+
+		/**
+		 * The number of the section, on both faces of its menu item at once: the item of `mail.directorymenu` on the
+		 * page of the section, and the server markup of the button on the page of the message list. A point that
+		 * knew only one of them would lose the number on the way to the other page.
+		 *
+		 * The number is the one the server answered with and never one counted here by adding and subtracting: the
+		 * dispatcher sends the letters of the section without asking the client.
+		 */
+		setScheduledSectionCount(count) {
+			this.directoryMenu?.setScheduledMessagesCount(count);
+			const badge = document.querySelector(SCHEDULED_SECTION_COUNTER_SELECTOR);
+			if (!badge) {
+				return;
+			}
+			badge.textContent = String(count);
+			if (count === 0) {
+				main_core.Dom.addClass(badge, SCHEDULED_SECTION_COUNTER_HIDDEN_CLASS);
+			} else {
+				main_core.Dom.removeClass(badge, SCHEDULED_SECTION_COUNTER_HIDDEN_CLASS);
+			}
 		}
 		runAction(actionName, options, actionOnSuccess) {
 			options = options ? options : {};
@@ -2301,6 +3192,15 @@
 	}
 
 	const namespaceMailHome = main_core.Reflection.namespace('BX.Mail.Home');
+
+	/**
+	 * The list of messages is drawn by `mail.client.message-grid`, and that extension answers for the grid
+	 * of the screen by itself: it publishes the facade under `BX.Mail.Home.Grid` and keeps the rows in a
+	 * state of its own. Everything below that reaches into the grid of the platform belongs to the other
+	 * path - the delegated listeners of the old singleton sit on the very wrapper the application mounts
+	 * inside, and beside it every click on a star would be answered twice.
+	 */
+	const legacyGrid = () => main_core.Loc.getMessage('MAIL_MESSAGE_GRID_VUE_ENABLED') !== 'Y';
 	main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', event => {
 		const [messageEvent] = event.getCompatData();
 		if (messageEvent.getEventId() === 'mail-mailbox-config-success') {
@@ -2315,7 +3215,74 @@
 	let syncButtonWrapper;
 	let sortButtonWrapper;
 	let currentFolderSortMode = 'default';
+	const MIGRATION_BLOCKED_ERROR_CODE = 'MAILBOX_MIGRATION_ACTION_BLOCKED';
+	function hasErrorCode(error, code) {
+		const errors = main_core.Type.isArray(error?.errors) ? error.errors : [error];
+		return errors.some(item => item?.code === code);
+	}
+	function changeFolderSortMode({
+		mailboxId,
+		mode,
+		getCurrentMode,
+		applyMode,
+		closeMenu,
+		request,
+		notify
+	}) {
+		const previousMode = getCurrentMode();
+		closeMenu();
+		if (mailboxId > 0 && mail_migrationState.getMigrationState(mailboxId).isActive()) {
+			notify(main_core.Loc.getMessage('MAIL_MIGRATION_ACTION_UNAVAILABLE'));
+			return Promise.resolve(false);
+		}
+		applyMode(mode);
+		return request('mail.mailboxsettings.saveFolderSortMode', {
+			data: {
+				mailboxId,
+				mode
+			}
+		}).then(() => true).catch(error => {
+			notify(main_core.Loc.getMessage(hasErrorCode(error, MIGRATION_BLOCKED_ERROR_CODE) ? 'MAIL_MIGRATION_ACTION_UNAVAILABLE' : 'MAIL_FOLDER_SORT_MODE_SAVE_ERROR'));
+
+			// A later switch to another mode superseded this request: keep the
+			// newer choice instead of rolling back to the stale mode.
+			if (getCurrentMode() === mode) {
+				applyMode(previousMode);
+			}
+			return false;
+		});
+	}
 	let selectedIdsForRecovery = {};
+
+	/** Puts back the rows the reader had selected before the platform grid reloaded its table. */
+	function subscribeToSelectionRecovery() {
+		main_core_events.EventEmitter.subscribe('BX.Main.Grid:onBeforeReload', event => {
+			const [grid] = event.getCompatData();
+			if (grid !== {} && grid !== undefined && main_core.Loc.getMessage('MAIL_MESSAGE_GRID_ID') === grid.getId()) {
+				selectedIdsForRecovery = grid.getRows().getSelectedIds();
+			}
+		});
+		main_core_events.EventEmitter.subscribe('Grid::updated', event => {
+			const [grid] = event.getCompatData();
+			if (grid !== {} && grid !== undefined && main_core.Loc.getMessage('MAIL_MESSAGE_GRID_ID') === grid.getId()) {
+				let rowsWereSelected = false;
+				namespaceMailHome.Grid.getRows().map(row => {
+					if (main_core.Type.isFunction(selectedIdsForRecovery.indexOf) && selectedIdsForRecovery.includes(row.getId()) && row.isShown()) {
+						row.select();
+						rowsWereSelected = true;
+					}
+				});
+				selectedIdsForRecovery = {};
+				if (rowsWereSelected) {
+					setTimeout(() => {
+						if (grid.getRows().getSelected().length > 0) {
+							main_core_events.EventEmitter.emit(window, 'Grid::thereSelectedRows');
+						}
+					}, 0);
+				}
+			}
+		});
+	}
 	main_core.Event.ready(() => {
 		currentFolderSortMode = main_core.Loc.getMessage('MAIL_FOLDER_SORT_MODE') || 'default';
 		syncButtonWrapper = document.querySelector('[data-role="mail-msg-sync-button-wrapper"]');
@@ -2389,35 +3356,25 @@
 					},
 					className: currentFolderSortMode === mode.id ? 'menu-popup-item-accept' : '',
 					onclick() {
-						const previousMode = currentFolderSortMode;
-						currentFolderSortMode = mode.id;
-						sortButtonWrapper.dataset.sortMode = mode.id;
-						BX.Main.MenuManager.destroy(sortMenuId);
-						main_core_events.EventEmitter.emit('BX.Mail.FolderSort:onChange', {
-							mode: mode.id
-						});
-						BX.ajax.runAction('mail.mailboxsettings.saveFolderSortMode', {
-							data: {
-								mailboxId: parseInt(main_core.Loc.getMessage('MAIL_MAILBOX_ID'), 10),
-								mode: mode.id
-							}
-						}).catch(() => {
-							BX.UI?.Notification?.Center?.notify({
-								content: main_core.Loc.getMessage('MAIL_FOLDER_SORT_MODE_SAVE_ERROR')
-							});
-
-							// A later switch to another mode superseded this request: keep the
-							// newer choice instead of rolling back to the stale mode.
-							if (currentFolderSortMode !== mode.id) {
-								return;
-							}
-							currentFolderSortMode = previousMode;
-							if (sortButtonWrapper) {
-								sortButtonWrapper.dataset.sortMode = previousMode;
-							}
-							main_core_events.EventEmitter.emit('BX.Mail.FolderSort:onChange', {
-								mode: previousMode
-							});
+						const mailboxId = parseInt(main_core.Loc.getMessage('MAIL_MAILBOX_ID'), 10);
+						void changeFolderSortMode({
+							mailboxId,
+							mode: mode.id,
+							getCurrentMode: () => currentFolderSortMode,
+							applyMode: nextMode => {
+								currentFolderSortMode = nextMode;
+								if (sortButtonWrapper) {
+									sortButtonWrapper.dataset.sortMode = nextMode;
+								}
+								main_core_events.EventEmitter.emit('BX.Mail.FolderSort:onChange', {
+									mode: nextMode
+								});
+							},
+							closeMenu: () => BX.Main.MenuManager.destroy(sortMenuId),
+							request: (...args) => BX.ajax.runAction(...args),
+							notify: content => BX.UI?.Notification?.Center?.notify({
+								content
+							})
 						});
 					}
 				}))];
@@ -2459,32 +3416,9 @@
 				}).show();
 			}
 		}
-		main_core_events.EventEmitter.subscribe('BX.Main.Grid:onBeforeReload', event => {
-			const [grid] = event.getCompatData();
-			if (grid !== {} && grid !== undefined && main_core.Loc.getMessage('MAIL_MESSAGE_GRID_ID') === grid.getId()) {
-				selectedIdsForRecovery = grid.getRows().getSelectedIds();
-			}
-		});
-		main_core_events.EventEmitter.subscribe('Grid::updated', event => {
-			const [grid] = event.getCompatData();
-			if (grid !== {} && grid !== undefined && main_core.Loc.getMessage('MAIL_MESSAGE_GRID_ID') === grid.getId()) {
-				let rowsWereSelected = false;
-				namespaceMailHome.Grid.getRows().map(row => {
-					if (main_core.Type.isFunction(selectedIdsForRecovery.indexOf) && selectedIdsForRecovery.includes(row.getId()) && row.isShown()) {
-						row.select();
-						rowsWereSelected = true;
-					}
-				});
-				selectedIdsForRecovery = {};
-				if (rowsWereSelected) {
-					setTimeout(() => {
-						if (grid.getRows().getSelected().length > 0) {
-							main_core_events.EventEmitter.emit(window, 'Grid::thereSelectedRows');
-						}
-					}, 0);
-				}
-			}
-		});
+		if (legacyGrid()) {
+			subscribeToSelectionRecovery();
+		}
 		mail_avatar.Avatar.replaceTagsWithAvatars({
 			className: 'mail-ui-avatar'
 		});
@@ -2504,7 +3438,9 @@
 	BX.ready(() => {
 		namespaceMailHome.Counters = new Counters('dirs', main_core.Loc.getMessage('DEFAULT_DIR'));
 		namespaceMailHome.mailboxCounters = new Counters('mailboxCounters');
-		namespaceMailHome.Grid = new mail_messagegrid.MessageGrid(main_core.Loc.getMessage('MAILBOX_IS_SYNC_AVAILABILITY'));
+		if (legacyGrid()) {
+			namespaceMailHome.Grid = new mail_messagegrid.MessageGrid(main_core.Loc.getMessage('MAILBOX_IS_SYNC_AVAILABILITY'));
+		}
 	});
 	namespaceMailHome.LeftMenu = LeftMenu;
 	const namespaceClientMessage = main_core.Reflection.namespace('BX.Mail.Client.Message');
@@ -2519,5 +3455,7 @@
 	};
 	namespaceClientMessage.LimitHelpers = LimitHelpers;
 
-})(BX, BX.Event, BX.UI, BX.Mail, BX.Mail, BX.Mail, BX.Mail, BX.Mail);
+	exports.changeFolderSortMode = changeFolderSortMode;
+
+})(this.window = this.window || {}, BX, BX.Event, BX.UI, BX.Mail, BX.Mail, BX.Mail, BX.Mail, BX.UI.Accessibility, BX.Mail);
 //# sourceMappingURL=script.js.map

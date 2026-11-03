@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, SidebarDetailBlock } from 'im.v2.const';
+import { PlaybackService } from 'im.v2.lib.playback';
 import { UserManager } from 'im.v2.lib.user';
 import { type ImModelChat, type ImModelSidebarMultidialogItem } from 'im.v2.model';
 
@@ -256,6 +257,8 @@ export class SidebarPullHandler
 
 	handleFileDelete(params)
 	{
+		PlaybackService.getInstanceIfCreated()?.handleFileDeleted(params.fileId);
+
 		const chatId = Type.isNumber(params.chatId) ? params.chatId : Number.parseInt(params.chatId, 10);
 		if (!this.isSidebarInited(chatId))
 		{

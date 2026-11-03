@@ -1,3 +1,4 @@
+import { Reflection } from 'main.core';
 import { Messenger } from 'im.public';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { DesktopBxLink, LegacyDesktopBxLink } from 'im.v2.const';
@@ -7,6 +8,42 @@ import { Utils } from 'im.v2.lib.utils';
 import { Encoder } from '../classes/encoder';
 
 import { type DesktopBxLinkKey, type LegacyDesktopBxLinkKey, type RawParams } from '../classes/event-handlers/bx-link';
+
+// Default of the call_sync_invite_period option, used when call.core is not loaded
+const DEFAULT_MAX_INVITE_PERIOD = 300_000;
+
+// An external link must not re-invite longer than the portal allows.
+// call.core is read through the global namespace to keep the desktop lib independent of it.
+const getMaxInvitePeriod = (): number => {
+	const getSyncCallInvitePeriod = Reflection.getClass('BX.Call.Util.getSyncCallInvitePeriod');
+	const invitePeriod = getSyncCallInvitePeriod?.();
+
+	return Number.isInteger(invitePeriod) && invitePeriod > 0 ? invitePeriod : DEFAULT_MAX_INVITE_PERIOD;
+};
+
+// The link comes from outside the messenger, so only the known options pass through.
+const prepareCallOptions = (encodedCallOptions: ?string): ?{ invitePeriod: number } => {
+	const { invitePeriod } = Encoder.decodeParamsJson(encodedCallOptions) ?? {};
+	if (Number.isInteger(invitePeriod) && invitePeriod > 0)
+	{
+		return { invitePeriod: Math.min(invitePeriod, getMaxInvitePeriod()) };
+	}
+
+	return null;
+};
+
+const startVideoCall = (params: RawParams): void => {
+	const withVideo = params.withVideo !== 'N';
+	const callOptions = prepareCallOptions(params.callOptions);
+	if (callOptions)
+	{
+		void Messenger.startVideoCall(params.dialogId, withVideo, callOptions);
+
+		return;
+	}
+
+	void Messenger.startVideoCall(params.dialogId, withVideo);
+};
 
 export const BxLinkProcessor = {
 	handleCommand(command: DesktopBxLinkKey, rawParams: ?RawParams): void
@@ -37,8 +74,7 @@ export const BxLinkProcessor = {
 		}
 		else if (command === DesktopBxLink.call)
 		{
-			const withVideo = params.withVideo !== 'N';
-			void Messenger.startVideoCall(params.dialogId, withVideo);
+			startVideoCall(params);
 		}
 		else if (command === DesktopBxLink.phone)
 		{

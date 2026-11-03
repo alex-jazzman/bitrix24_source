@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/icon
  */
 jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
+	const { Text6 } = require('ui-system/typography/text');
 	const { stringify } = require('utils/string');
 	const { get } = require('utils/object');
 	const { Haptics } = require('haptics');
@@ -156,12 +157,11 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 					borderRadius: 44,
 				},
 			},
-			Text({
+			Text6({
 				testId: `TimelineItemIconCounter_${color}`,
 				text: String(text),
 				style: {
 					color: AppTheme.colors.baseWhiteFixed,
-					fontSize: 12,
 					fontWeight: '500',
 				},
 			}),

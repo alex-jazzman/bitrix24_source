@@ -19,6 +19,7 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 	const { StickerPackPullHandler } = require('im/messenger/provider/pull/sticker-pack');
 	const { SharingLinkPullHandler } = require('im/messenger/provider/pull/sharing-link');
 	const { FolderPullHandler } = require('im/messenger/provider/pull/folder');
+	const { SettingsPullHandler } = require('im/messenger/provider/pull/settings');
 
 	/**
 	 * @implements {Unsubscribable}
@@ -46,6 +47,7 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 			SharingLinkPullHandler,
 			StickerPackPullHandler,
 			FolderPullHandler,
+			SettingsPullHandler,
 		];
 
 		#unsubscribeCallbackList = [];

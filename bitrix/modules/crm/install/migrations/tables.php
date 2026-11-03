@@ -270,6 +270,7 @@ $migration->table('b_crm_status')->create(function (\Bitrix\Main\UpdateSystem\Mi
 	$columns->char('COLOR', 10);
 	$columns->char('SEMANTICS', 1);
 	$columns->int('CATEGORY_ID')->unsigned();
+	$columns->text('DESCRIPTION');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_CRM_STATUS', ['STATUS_ID', 'ENTITY_ID']);
 	$table->addIndex('IX_B_CRM_STATUS_2', ['ENTITY_ID']);
@@ -756,7 +757,7 @@ $migration->table('b_crm_dp_vol_mcd')->create(function (\Bitrix\Main\UpdateSyste
 
 $migration->table('b_crm_dp_index_type_settings')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
-	$columns->int('ID')->unsigned()->notNull();
+	$columns->bigInt('ID')->notNull();
 	$columns->char('ACTIVE', 1)->notNull()->default('N');
 	$columns->varchar('DESCRIPTION', 256)->notNull();
 	$columns->int('ENTITY_TYPE_ID')->notNull();
@@ -1585,6 +1586,7 @@ $migration->table('b_crm_webform')->create(function (\Bitrix\Main\UpdateSystem\M
 	$columns->varchar('BUTTON_COLOR_BG', 10);
 	$columns->varchar('CSS_PATH', 255);
 	$columns->datetime('DATE_CREATE')->notNull();
+	$columns->datetime('DATE_MODIFY');
 	$columns->int('ENTITY_SCHEME')->notNull();
 	$columns->char('GOOGLE_ANALYTICS_PAGE_VIEW', 1)->notNull()->default('N');
 	$columns->varchar('CAPTION', 255);
@@ -1651,6 +1653,35 @@ $migration->table('b_crm_webform_counter_daily')->create(function (\Bitrix\Main\
 	$columns->int('END_FILL')->notNull()->default('0');
 	$table->addPrimaryKeys(['DATE_STAT', 'FORM_ID']);
 });
+
+$migration->table('b_crm_webform_telemetry_attempt')->create(
+	static function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table): void {
+		$columns = $table->addColumn();
+		$columns->varchar('ATTEMPT_ID', 36)->notNull();
+		$columns->int('FORM_ID')->notNull();
+		$columns->datetime('DATE_START');
+		$columns->datetime('DATE_EXPIRE')->notNull();
+		$columns->varchar('SOURCE', 20)->notNull();
+		$columns->varchar('DEVICE', 20)->notNull();
+		$columns->tinyInt('VALIDATION_ERROR')->notNull()->default('0');
+		$columns->tinyInt('OTHER_ERROR')->notNull()->default('0');
+		$columns->tinyInt('COMPLETED')->notNull()->default('0');
+		$table->addPrimaryKey('ATTEMPT_ID');
+		$table->addIndex('IX_B_CRM_WEBFORM_TELEMETRY_ATTEMPT_EXPIRE', ['DATE_EXPIRE', 'ATTEMPT_ID']);
+	},
+);
+
+$migration->table('b_crm_webform_telemetry_daily')->create(
+	static function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table): void {
+		$columns = $table->addColumn();
+		$columns->date('DATE_STAT')->notNull();
+		$columns->int('FORM_ID')->notNull();
+		$columns->varchar('METRIC_CODE', 50)->notNull();
+		$columns->bigInt('VALUE')->notNull()->default('0');
+		$table->addPrimaryKeys(['DATE_STAT', 'FORM_ID', 'METRIC_CODE']);
+		$table->addIndex('IX_B_CRM_WEBFORM_TELEMETRY_DAILY_METRIC_DATE', ['METRIC_CODE', 'DATE_STAT']);
+	},
+);
 
 $migration->table('b_crm_webform_start_edit')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
@@ -1751,6 +1782,7 @@ $migration->table('b_crm_webform_agreement')->create(function (\Bitrix\Main\Upda
 	$columns->bigInt('AGREEMENT_ID')->unsigned()->notNull();
 	$columns->char('CHECKED', 1)->notNull()->default('N');
 	$columns->char('REQUIRED', 1)->notNull()->default('Y');
+	$columns->char('ACCEPT_BY_SUBMIT', 1)->notNull()->default('N');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_CRM_WEBFORM_AG_FORM', ['FORM_ID']);
 });
@@ -2233,6 +2265,7 @@ $migration->table('b_crm_call_list')->create(function (\Bitrix\Main\UpdateSystem
 	$columns->int('WEBFORM_ID');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_CRM_CALL_LIST_1', ['DATE_CREATE']);
+	$table->addIndex('IX_B_CRM_CALL_LIST_CREATED_BY_ID_ID', ['CREATED_BY_ID', 'ID']);
 });
 
 $migration->table('b_crm_call_list_item')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -3287,6 +3320,7 @@ $migration->table('b_crm_dynamic_type')->create(function (\Bitrix\Main\UpdateSys
 	$columns->int('UPDATED_BY')->unsigned()->notNull();
 	$columns->char('IS_INITIALIZED', 1)->notNull()->default('Y');
 	$columns->int('DAYS_BEFORE_CLOSE');
+	$columns->text('DESCRIPTION');
 
 	/*
 	IMPORTANT!
@@ -3369,8 +3403,10 @@ $migration->table('b_crm_entity_relation')->create(function (\Bitrix\Main\Update
 	$columns->int('DST_ENTITY_TYPE_ID')->unsigned()->notNull();
 	$columns->int('DST_ENTITY_ID')->unsigned()->notNull();
 	$columns->varchar('RELATION_TYPE', 20)->notNull();
+	$columns->datetime('CREATED_TIME')->notNull()->defaultCurrentTimestamp();
 	$table->addPrimaryKeys(['SRC_ENTITY_TYPE_ID', 'SRC_ENTITY_ID', 'DST_ENTITY_TYPE_ID', 'DST_ENTITY_ID']);
 	$table->addIndex('IX_B_CRM_ENT_REL_DST_ENT_ID', ['DST_ENTITY_ID']);
+	$table->addIndex('IX_B_CRM_ENTITY_RELATION_CREATED_TIME', ['CREATED_TIME']);
 });
 
 $migration->table('b_crm_entity_stage_history')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -4083,6 +4119,10 @@ $migration->table('b_crm_automated_solution')->create(function (\Bitrix\Main\Upd
 	$columns->datetime('UPDATED_TIME')->notNull()->defaultCurrentTimestamp();
 	$columns->int('CREATED_BY')->unsigned()->notNull();
 	$columns->int('UPDATED_BY')->unsigned()->notNull();
+	$columns->int('VIBE_ID')->notNull()->default('0');
+	$columns->char('IS_VIBE_ENABLED', 1)->notNull()->default('N');
+	$columns->varchar('VIBE_CREATION_TOKEN', 36);
+	$columns->text('DESCRIPTION');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_CRM_AUTOMATED_SOLUTION_CODE', ['CODE']);
 	$table->addIndex('IX_B_CRM_AUTOMATED_SOLUTION_ICSI', ['INTRANET_CUSTOM_SECTION_ID']);
@@ -4132,6 +4172,7 @@ $migration->table('b_crm_copilot_call_assessment')->create(function (\Bitrix\Mai
 	$columns->varchar('TITLE', 255)->notNull();
 	$columns->varchar('DESCRIPTION', 2000)->notNull()->default('');
 	$columns->text('PROMPT')->notNull();
+	$columns->char('IS_HINT_ENABLED', 1);
 	$columns->text('GIST');
 	$columns->tinyInt('CALL_TYPE')->notNull();
 	$columns->tinyInt('AUTO_CHECK_TYPE')->notNull();
@@ -4559,4 +4600,148 @@ $migration->table('b_crm_act_mail_body_bind')->create(function (\Bitrix\Main\Upd
 	$columns->int('OWNER_ID')->notNull();
 	$table->addIndex('IX_B_CRM_ACT_MAIL_BODY_BIND_1', ['BODY_ID']);
 	$table->addIndex('IX_B_CRM_ACT_MAIL_BODY_BIND_2', ['OWNER_ID', 'OWNER_TYPE_ID']);
+});
+
+$migration->table('b_crm_ai_field_fill_exclusion')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('USER_FIELD_ID')->notNull();
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('UX_CRM_AI_FF_EXCL_UF', ['USER_FIELD_ID']);
+});
+
+$migration->table('b_crm_legal_document')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->varchar('NAME', 255)->notNull();
+	$columns->varchar('ORIGIN_MODULE', 50);
+	$columns->int('ORIGIN_ID');
+	$columns->datetime('CREATED_AT')->notNull();
+	$columns->int('CREATED_BY')->notNull();
+	$columns->char('ARCHIVED', 1)->notNull()->default('N');
+	$table->addIndex('IX_CRM_LEGAL_DOCUMENT_ARCHIVED', ['ARCHIVED', 'ID']);
+});
+
+$migration->table('b_crm_legal_version')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('DOCUMENT_ID')->notNull();
+	$columns->int('NUMBER')->notNull();
+	$columns->int('REVISION')->notNull();
+	$columns->varchar('STATE', 16)->notNull();
+	$columns->varchar('LANGUAGE_ID', 10)->notNull();
+	$columns->mediumText('TEMPLATE')->notNull();
+	$columns->mediumText('LABEL')->notNull();
+	$columns->mediumText('SUBSTITUTION_SCHEMA')->notNull();
+	$columns->varchar('DISPLAY_URL', 2048);
+	$columns->char('CONTENT_HASH', 64)->notNull();
+	$columns->datetime('VALID_FROM');
+	$columns->datetime('VALID_TO');
+	$columns->mediumText('EXPIRY_RULE')->notNull();
+	$columns->datetime('PUBLISHED_AT');
+	$columns->int('PUBLISHED_BY');
+	$table->addUniqueIndex('UX_CRM_LEGAL_VERSION_NUMBER', ['DOCUMENT_ID', 'NUMBER']);
+	$table->addIndex('IX_CRM_LEGAL_VERSION_STATE', ['DOCUMENT_ID', 'STATE', 'ID']);
+});
+
+$migration->table('b_crm_legal_source')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('FORM_ID')->notNull();
+	$columns->varchar('NAME_SNAPSHOT', 255)->notNull();
+	$columns->varchar('STATE', 16)->notNull();
+	$columns->int('REVISION')->notNull();
+	$table->addUniqueIndex('UX_CRM_LEGAL_SOURCE_FORM', ['FORM_ID']);
+});
+
+$migration->table('b_crm_legal_usage')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('SOURCE_ID')->notNull();
+	$columns->int('DOCUMENT_ID')->notNull();
+	$columns->int('VERSION_ID')->notNull();
+	$columns->int('REVISION')->notNull();
+	$columns->char('CHECKED', 1)->notNull();
+	$columns->char('REQUIRED', 1)->notNull();
+	$columns->datetime('DATE_START')->notNull();
+	$columns->datetime('DATE_END');
+	$columns->varchar('FORM_NAME_SNAPSHOT', 255)->notNull();
+	$table->addUniqueIndex('UX_CRM_LEGAL_USAGE_REVISION', ['SOURCE_ID', 'DOCUMENT_ID', 'REVISION']);
+	$table->addIndex('IX_CRM_LEGAL_USAGE_DOCUMENT', ['DOCUMENT_ID', 'SOURCE_ID', 'VERSION_ID']);
+	$table->addIndex('IX_CRM_LEGAL_USAGE_OPEN', ['SOURCE_ID', 'DATE_END']);
+});
+
+$migration->table('b_crm_legal_submission')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('SOURCE_ID')->notNull();
+	$columns->varbinary('SUBMISSION_KEY', 255)->notNull();
+	$columns->char('PAYLOAD_HASH', 64)->notNull();
+	$columns->mediumText('MANIFEST')->notNull();
+	$columns->datetime('SERVER_RECEIVED_AT')->notNull();
+	$columns->varchar('STATE', 16)->notNull();
+	$columns->varchar('ERROR_CODE', 64);
+	$columns->int('RESULT_ID');
+	$columns->int('ACTIVITY_ID');
+	$columns->mediumText('RESOLUTION_SNAPSHOT');
+	$table->addUniqueIndex('UX_CRM_LEGAL_SUBMISSION_KEY', ['SOURCE_ID', 'SUBMISSION_KEY']);
+	$table->addIndex('IX_CRM_LEGAL_SUBMISSION_STATE', ['STATE', 'ID']);
+});
+
+$migration->table('b_crm_legal_subject')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->varbinary('SUBJECT_UID', 64)->notNull();
+	$columns->int('CANONICAL_ID');
+	$columns->int('REVISION')->notNull();
+	$table->addUniqueIndex('UX_CRM_LEGAL_SUBJECT_UID', ['SUBJECT_UID']);
+	$table->addIndex('IX_CRM_LEGAL_SUBJECT_CANONICAL', ['CANONICAL_ID', 'ID']);
+});
+
+$migration->table('b_crm_legal_subject_link')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('SUBJECT_ID')->notNull();
+	$columns->int('ENTITY_TYPE_ID')->notNull();
+	$columns->int('ENTITY_ID')->notNull();
+	$columns->char('IS_CURRENT', 1)->notNull();
+	$table->addUniqueIndex('UX_CRM_LEGAL_SUBJECT_LINK_SUBJECT_ENTITY', ['SUBJECT_ID', 'ENTITY_TYPE_ID', 'ENTITY_ID']);
+	$table->addIndex('IX_CRM_LEGAL_SUBJECT_LINK_ENTITY', ['ENTITY_TYPE_ID', 'ENTITY_ID', 'IS_CURRENT', 'SUBJECT_ID']);
+});
+
+$migration->table('b_crm_legal_fact')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('SUBMISSION_ID')->notNull();
+	$columns->int('DOCUMENT_ID')->notNull();
+	$columns->int('VERSION_ID')->notNull();
+	$columns->int('SUBJECT_ID')->notNull();
+	$columns->mediumText('ORIGINAL_SUBJECT')->notNull();
+	$columns->datetime('ACCEPTED_AT')->notNull();
+	$columns->mediumText('EFFECTIVE_TEXT')->notNull();
+	$columns->mediumText('EFFECTIVE_LABEL')->notNull();
+	$columns->mediumText('SUBSTITUTIONS')->notNull();
+	$columns->char('TEXT_HASH', 64)->notNull();
+	$columns->mediumText('RULE_SNAPSHOT')->notNull();
+	$columns->varchar('TIMEZONE', 64)->notNull();
+	$columns->datetime('EXPIRES_AT');
+	$table->addUniqueIndex('UX_CRM_LEGAL_FACT_DOCUMENT', ['SUBMISSION_ID', 'DOCUMENT_ID']);
+	$table->addIndex('IX_CRM_LEGAL_FACT_SUBJECT', ['SUBJECT_ID', 'DOCUMENT_ID', 'ACCEPTED_AT', 'ID']);
+	$table->addIndex('IX_CRM_LEGAL_FACT_VERSION', ['DOCUMENT_ID', 'VERSION_ID', 'ID']);
+});
+
+$migration->table('b_crm_legal_event')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('SUBJECT_ID');
+	$columns->int('FACT_ID');
+	$columns->varbinary('EVENT_KEY', 255)->notNull();
+	$columns->varchar('KIND', 16)->notNull();
+	$columns->int('ACTOR_ID')->notNull();
+	$columns->datetime('EVENT_DATE')->notNull();
+	$columns->datetime('SERVER_TIME')->notNull();
+	$columns->mediumText('PAYLOAD')->notNull();
+	$table->addUniqueIndex('UX_CRM_LEGAL_EVENT_KEY', ['EVENT_KEY']);
+	$table->addIndex('IX_CRM_LEGAL_EVENT_FACT', ['FACT_ID', 'KIND', 'ID']);
+	$table->addIndex('IX_CRM_LEGAL_EVENT_SUBJECT', ['SUBJECT_ID', 'ID']);
 });

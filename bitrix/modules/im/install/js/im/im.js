@@ -43,7 +43,7 @@ BX.IM = function(domNode, params)
 	this.mobileVersion = false;
 	this.mobileAction = 'none';
 
-	this.revision = 130; // api version - im/lib/revision.php
+	this.revision = 131; // api version - im/lib/revision.php
 	this.revisionError = {
 		active: false,
 		notified: false,

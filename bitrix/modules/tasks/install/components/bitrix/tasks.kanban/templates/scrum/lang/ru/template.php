@@ -29,4 +29,5 @@ $MESS["KANBAN_NO_ACTIVE_SPRINT"] = "У вас нет ни одного акти�
 $MESS["KANBAN_NO_COMPLETED_SPRINT"] = "У вас нет ни одного завершённого спринта";
 $MESS["KANBAN_QUICK_TASK"] = "Быстрая задача";
 $MESS["KANBAN_QUICK_TASK_ITEM_INFO"] = "Нажмите <span>Enter</span> чтобы создать";
+$MESS["KANBAN_CHECKLIST_COMPLETE_RETURN_BUTTON"] = "Перейти к задаче";
 ?>

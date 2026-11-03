@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arCurrentValues */
+
 use Bitrix\Main\ModuleManager;
 
 $arPrice = [];
@@ -86,18 +88,12 @@ if (CModule::IncludeModule('catalog') && CModule::IncludeModule('currency'))
 
 	if (isset($arCurrentValues['CONVERT_CURRENCY']) && 'Y' == $arCurrentValues['CONVERT_CURRENCY'])
 	{
-		$arCurrencyList = [];
-		$rsCurrencies = CCurrency::GetList('SORT', 'ASC');
-		while ($arCurrency = $rsCurrencies->Fetch())
-		{
-			$arCurrencyList[$arCurrency['CURRENCY']] = $arCurrency['CURRENCY'];
-		}
 		$arTemplateParameters['CURRENCY_ID'] = [
 			'PARENT' => 'PRICES',
 			'NAME' => GetMessage('TP_BST_CURRENCY_ID'),
 			'TYPE' => 'LIST',
-			'VALUES' => $arCurrencyList,
-			'DEFAULT' => CCurrency::GetBaseCurrency(),
+			'VALUES' => \Bitrix\Currency\CurrencyManager::getCurrencyList(),
+			'DEFAULT' => \Bitrix\Currency\CurrencyManager::getBaseCurrency(),
 			'ADDITIONAL_VALUES' => 'Y',
 		];
 	}

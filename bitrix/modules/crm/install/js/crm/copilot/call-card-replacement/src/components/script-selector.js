@@ -1,6 +1,6 @@
 import { CallAssessmentSelector } from 'crm.copilot.call-assessment-selector';
 import { mapGetters } from 'ui.vue3.vuex';
-import { PULL } from 'pull.client';
+import 'pull.client';
 import { SelectorLayout } from '../service/selector-layout';
 
 const onBeforeSelectItem = 'Item:onBeforeSelect';
@@ -27,6 +27,9 @@ export const ScriptSelector = {
 				},
 			},
 			additionalSelectorOptions: {
+				popup: {
+					zIndexOptions: { alwaysOnTop: true },
+				},
 				dialog: {
 					events: {
 						onLoad: (): void => {
@@ -51,6 +54,10 @@ export const ScriptSelector = {
 	},
 
 	template: `
-		<div ref="selector" class="crm-copilot__call-card-replacement-selector"></div>
+		<div
+			ref="selector"
+			class="crm-copilot__call-card-replacement-selector"
+			data-testid="crm-copilot-call-card-replacement-script-selector"
+		></div>
 	`,
 };

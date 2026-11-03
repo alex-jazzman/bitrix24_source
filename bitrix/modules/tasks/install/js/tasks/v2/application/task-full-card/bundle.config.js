@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/task-full-card.bundle.js',
 	namespace: 'BX.Tasks.V2.Application',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

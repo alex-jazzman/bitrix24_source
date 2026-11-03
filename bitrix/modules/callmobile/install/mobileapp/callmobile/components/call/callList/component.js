@@ -9,7 +9,7 @@
 	const { EmptyView } = require('call/callList/emptyView');
 	const { CallListAnalyticsController } = require('call/callList/analyticsController');
 	const { Icon } = require('ui-system/blocks/icon');
-	const { CallListService, SCOPES } = require('call/callList/core');
+	const { CallListService, SCOPES, CONTENT_STATE } = require('call/callList/core');
 
 	const COMPONENT_ID = 'CALL_LIST';
 	const TAB_ID = 'call_list';
@@ -32,6 +32,7 @@
 				isSearchMode: false,
 				searchItems: [],
 				isLoadingTab: false,
+				hasLoadError: false,
 			};
 
 			this.hideTabs = BX.componentParameters.get('hideTabs', false);
@@ -63,8 +64,12 @@
 		componentDidMount()
 		{
 			this.isMountedFlag = true;
-			this.callListService.searchController.setupSearch();
-			this.initFloatingButton();
+
+			if (!this.callListService.isGuestMode)
+			{
+				this.callListService.searchController.setupSearch();
+				this.initFloatingButton();
+			}
 		}
 
 		initFloatingButton()
@@ -108,6 +113,7 @@
 			{
 				this.isMountedFlag = true;
 				CallListAnalyticsController.sendOpenCallTab();
+				this.callListService.resumePendingFetch();
 			}
 			else if (this.isMountedFlag)
 			{
@@ -163,19 +169,9 @@
 		{
 			const callItems = this.callListService.getSortedItems();
 			const isSearch = this.state.isSearchMode;
-			const noData = (this.state.allItems.length === 0);
-			const showBodyLoader = (
-				((!this.state.isReady) && !isSearch)
-				|| ((this.callListService.isFetching && noData) && !isSearch)
-				|| (this.state.isLoadingTab && this.callListService.wasEmptyBeforeSwitch && !isSearch)
-			);
+			const contentState = this.callListService.resolveContentState(callItems);
+			const isLoading = (contentState === CONTENT_STATE.LOADING);
 			const unseenMissed = Number(this.state.missedCount || 0);
-			const showEmptyState = (
-				!showBodyLoader
-				&& !isSearch
-				&& !this.state.isLoadingTab
-				&& callItems.length === 0
-			);
 
 			const loaderView = View({
 				style: {
@@ -185,7 +181,8 @@
 				},
 			}, this.callListService.loader);
 
-			const onLoadMore = (!showBodyLoader && this.callListService.hasMore && !isSearch)
+			const hasMore = (!isLoading && this.callListService.hasMore && !isSearch);
+			const onLoadMore = hasMore
 				? () => this.callListService.fetchList(false)
 				: null;
 
@@ -197,16 +194,39 @@
 				},
 				onRefresh: () => this.onRefresh(),
 				isRefreshing: this.state.isRefreshing,
-				hasMore: (!showBodyLoader && this.callListService.hasMore && !isSearch),
+				hasMore,
 				onLoadMore,
 				onItemClick: (item) => this.callListService.startCall(item),
 				onOpenChat: (item) => this.callListService.openChat(item),
-				onDelete: (item) => this.callListService.deleteCallItem(item),
+				onDelete: this.callListService.isGuestMode
+					? null
+					: (item) => this.callListService.deleteCallItem(item),
 			});
 
 			const emptyView = EmptyView({
 				text: this.callListService.getTabEmptyStateText(),
+				testId: 'call-list-empty-state',
 			});
+
+			const errorView = EmptyView({
+				text: this.callListService.getErrorStateText(),
+				showImage: false,
+				testId: 'call-list-error-state',
+			});
+
+			let content = listView;
+			if (isLoading)
+			{
+				content = loaderView;
+			}
+			else if (contentState === CONTENT_STATE.ERROR)
+			{
+				content = errorView;
+			}
+			else if (contentState === CONTENT_STATE.EMPTY)
+			{
+				content = emptyView;
+			}
 
 			return View(
 				{
@@ -222,13 +242,7 @@
 					},
 					onChange: (scopeId) => this.onTabChange(scopeId),
 				})),
-				(showBodyLoader
-					? loaderView
-					: (showEmptyState
-						? emptyView
-						: listView
-					)
-				),
+				content,
 			);
 		}
 	}

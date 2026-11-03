@@ -2,9 +2,9 @@
 {
 	die();
 }
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -44,4 +44,4 @@ $arResult['ID'] = preg_replace('/\\W/', '_', $arParams['NAME']) . $this->randStr
 $arResult['~ADDITIONAL_VALUES'] = 'pe:' . $arParams['DROPDOWN_SIZE'] . ',md5:' . $arParams['FILTER_MD5'] . ',site:' . SITE_ID;
 $arResult['ADDITIONAL_VALUES'] = CUtil::JSEscape($arResult['~ADDITIONAL_VALUES']);
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

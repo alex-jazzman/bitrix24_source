@@ -1,143 +1,144 @@
-import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { Outline } from 'ui.icon-set.api.vue';
+import { Text } from 'main.core';
 
 import { Core } from 'tasks.v2.core';
-import { EventName } from 'tasks.v2.const';
-import { taskService } from 'tasks.v2.provider.service.task-service';
+import {
+	type BaseMenuConstructor,
+	type MenuExecutor,
+	type MenuFactoryDependencies,
+	type MenuStateController,
+	type MessageContext,
+	type ResultMessageMenuAnalytics,
+	type StateStatusValue,
+} from 'tasks.v2.lib.result-message-menu';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 import { resultService } from 'tasks.v2.provider.service.result-service';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 
-import type { MenuItemOptions } from 'ui.system.menu';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+type ResultMessageMenuFactory = (
+	baseMenu: BaseMenuConstructor,
+	dependencies: MenuFactoryDependencies,
+) => BaseMenuConstructor;
 
-// eslint-disable-next-line no-unused-vars
-import type { TaskCommentsMessageMenu } from 'im.v2.lib.menu';
+type TaskFullCardMessageMenuDependencies = {
+	ResultMessageMenu: ResultMessageMenuFactory,
+	executor: MenuExecutor,
+	getTaskId: () => number,
+	getAnalytics?: () => ?ResultMessageMenuAnalytics,
+};
 
-/**
- * @param {typeof TaskCommentsMessageMenu} baseMenu
- * @returns {typeof TaskCommentsMessageMenu}
- */
-// eslint-disable-next-line max-lines-per-function
-export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
-{
-	getAddResultItem(): ?MenuItemOptions
+export const fullCardStateController: MenuStateController = {
+	getStatus(): StateStatusValue
 	{
-		if (
-			this.isDeletedMessage()
-			|| this.#isSystemMessage()
-			|| !this.#shouldShowAddResult()
-		)
-		{
-			return null;
-		}
+		// a StateStatus value import would make the lazily loaded extension a static dependency
+		return 'loaded';
+	},
 
-		return {
-			title: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_MESSAGE_ADD_RESULT'),
-			icon: Outline.FLAG,
-			onClick: (): void => {
-				EventEmitter.emit(EventName.AddResultFromChat, {
-					taskId: this.getTaskId(),
-					messageId: this.context.id,
-					text: this.context.text,
-					authorId: this.#getUserId()
-				});
-
-				this.close();
-			}
-		};
-	}
-
-	getRemoveResultItem(): ?MenuItemOptions
+	getMessageResultId(taskId: number, messageId: number): number
 	{
-		if (
-			this.isDeletedMessage()
-			|| this.#isSystemMessage()
-			|| !this.#shouldShowRemoveResult()
-		)
-		{
-			return null;
-		}
-
-		return {
-			title: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_MESSAGE_DELETE_RESULT'),
-			icon: Outline.FLAG_WITH_CROSS,
-			onClick: (): void => {
-				EventEmitter.emit(EventName.DeleteResultFromChat, {
-					taskId: this.getTaskId(),
-					resultId: this.#getMessageResultIdForCurrentUser(),
-				});
-
-				this.close();
-			}
-		};
-	}
-
-	getTaskId(): number
-	{
-		return 0; // reinitialize in the calling class
-	}
-
-	#shouldShowAddResult(): boolean
-	{
-		const task = this.#getTask();
-		if (!task)
-		{
-			return false;
-		}
-
-		return this.#getMessageResultIdForCurrentUser() === 0;
-	}
-
-	#isSystemMessage(): boolean
-	{
-		return this.context.authorId === 0;
-	}
-
-	#shouldShowRemoveResult(): boolean
-	{
-		const task = this.#getTask();
-		if (!task)
-		{
-			return false;
-		}
-
-		return this.#getMessageResultIdForCurrentUser() > 0;
-	}
-
-	#getMessageResultIdForCurrentUser(): int
-	{
-		const task = this.#getTask();
+		const task = getTask(taskId);
 		if (!task)
 		{
 			return 0;
 		}
 
-		const map = task?.resultsMessageMap || {};
-		const messageId = this.context.id;
+		const normalizedMessageId = Text.toInteger(messageId);
+		const map = task.resultsMessageMap || {};
 
 		for (const [resultId, boundMessageId] of Object.entries(map))
 		{
-			if (boundMessageId !== null && Number(boundMessageId) === Number(messageId))
+			if (Text.toInteger(boundMessageId) !== normalizedMessageId)
 			{
-				const messageResult = resultService.getStoreResult(Number(resultId));
+				continue;
+			}
 
-				if (messageResult !== null && messageResult.author.id === this.#getUserId())
-				{
-					return messageResult.id;
-				}
+			const messageResult = resultService.getStoreResult(Text.toInteger(resultId));
+			if (messageResult && Text.toInteger(messageResult.author?.id) === getCurrentUserId())
+			{
+				return Text.toInteger(messageResult.id);
 			}
 		}
 
 		return 0;
-	}
-
-	#getTask(): ?TaskModel
-	{
-		return taskService.getStoreTask(this.getTaskId());
-	}
-
-	#getUserId(): number
-	{
-		return Core.getParams().currentUser.id;
-	}
+	},
 };
+
+export const TaskFullCardMessageMenu = (
+	baseMenu: BaseMenuConstructor,
+	dependencies: TaskFullCardMessageMenuDependencies,
+): BaseMenuConstructor => {
+	const menuClass = dependencies.ResultMessageMenu(baseMenu, {
+		getTaskId: dependencies.getTaskId,
+		getAnalytics: dependencies.getAnalytics,
+		stateController: fullCardStateController,
+		executor: createFullCardExecutor(dependencies.executor),
+	});
+
+	return class extends menuClass
+	{
+		getSelectItem()
+		{
+			return null;
+		}
+
+		getAddResultItem()
+		{
+			if (!getTask(dependencies.getTaskId()))
+			{
+				return null;
+			}
+
+			return super.getAddResultItem();
+		}
+
+		getRemoveResultItem()
+		{
+			if (!getTask(dependencies.getTaskId()))
+			{
+				return null;
+			}
+
+			return super.getRemoveResultItem();
+		}
+	};
+};
+
+function createFullCardExecutor(executor: MenuExecutor): MenuExecutor
+{
+	return {
+		addFromMessage(
+			taskId: number,
+			messageContext: MessageContext,
+			analytics?: ?ResultMessageMenuAnalytics,
+		): Promise<boolean>
+		{
+			return executor.addFromMessage(
+				taskId,
+				{
+					...messageContext,
+					authorId: getCurrentUserId(),
+				},
+				analytics,
+			);
+		},
+
+		removeFromMessage(
+			taskId: number,
+			messageId: number,
+			resultId: number,
+			analytics?: ?ResultMessageMenuAnalytics,
+		): Promise<boolean>
+		{
+			return executor.removeFromMessage(taskId, messageId, resultId, analytics);
+		},
+	};
+}
+
+function getTask(taskId: number): ?TaskModel
+{
+	return taskService.getStoreTask(Text.toInteger(taskId));
+}
+
+function getCurrentUserId(): number
+{
+	return Text.toInteger(Core.getParams().currentUser.id);
+}

@@ -1,3 +1,8 @@
+/* The pill of a navigation button in the slot of a toast. Two components fill that slot - the errors of
+   a publication and the nodes of an inserted fragment - and both wear this pill: two pills standing in
+   the same place look and behave the same way (decision of phase 3). What they share is therefore kept
+   here in one copy, and this file is read by both of them; a second copy of these rules would drift
+   away silently. What belongs to one pill alone lives in the file of that component. */
 .editor-chart-toast-block-navigation-button {
 	display: flex;
 	height: 24px;
@@ -24,9 +29,25 @@
 .editor-chart-toast-block-navigation-button__controls__button {
 	all: unset;
 	display: flex;
+	/* `all: unset` makes the cursor inherit, and the box around may no longer offer a pointer. */
+	cursor: pointer;
+}
+
+/* "1 / 2" is one reading and never a column of characters: the pill stands beside a message that
+   takes the room it needs, and a narrow spot must not break the counter across lines. Both pills
+   carry that counter. */
+.editor-chart-toast-block-navigation-button__controls__state-title {
+	white-space: nowrap;
 }
 
 .editor-chart-toast-block-navigation-button__controls__button.--disabled {
 	opacity: 0.5;
 	cursor: default;
+}
+
+/* `all: unset` above takes the native ring off the arrows. Every arrow of both pills is a Tab stop,
+   so the focus is drawn back by the tokens of the design system. */
+.editor-chart-toast-block-navigation-button__controls__button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }

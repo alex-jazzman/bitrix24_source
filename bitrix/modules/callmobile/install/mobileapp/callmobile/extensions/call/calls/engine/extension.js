@@ -1830,16 +1830,41 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			this.userData = {};
 			this.usersInProcess = {};
 
+			// Authoritative display names: filled only from getUsers and Pull.
+			// Read by resolveDisplayName; kept separate from transport-fed userData.
+			this.authoritativeNames = {};
+			this.authoritativeNamesInProcess = {};
+			// Call-scope epoch: async getUsers writes older than the current call scope are discarded.
+			this.storeEpoch = 0;
+
 			/* User role & room permission */
-			this.roomPermissions =
+			this.roomPermissions = this.getDefaultRoomPermissions();
+			this.userPermissions = this.getDefaultUserPermissions();
+
+			const UsersRoles =
 			{
+				ADMIN: 'ADMIN', // chat admin
+				MANAGER: 'MANAGER', // aka moderator
+				USER: 'USER', // regular user
+			}
+
+			this.regularUserRoles = [UsersRoles.USER]; // TODO got this from signaling in future
+
+			this.currentUserRole = UsersRoles.USER;
+		}
+
+		getDefaultRoomPermissions()
+		{
+			return {
 				AudioEnabled: false,
 				VideoEnabled: false,
 				ScreenShareEnabled: false,
 			};
+		}
 
-			this.userPermissions =
-			{
+		getDefaultUserPermissions()
+		{
+			return {
 				ask: false,
 				audio: true,
 				can_approve: false,
@@ -1858,17 +1883,19 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				video: true,
 				view_users: false,
 			};
+		}
 
-			const UsersRoles =
-			{
-				ADMIN: 'ADMIN', // chat admin
-				MANAGER: 'MANAGER', // aka moderator
-				USER: 'USER', // regular user
-			}
+		resetCallScopedState()
+		{
+			this.userPermissions = this.getDefaultUserPermissions();
+			this.roomPermissions = this.getDefaultRoomPermissions();
+			this.currentUserRole = 'USER';
 
-			this.regularUserRoles = [UsersRoles.USER]; // TODO got this from signaling in future
-
-			this.currentUserRole = UsersRoles.USER;
+			// Fresh store per call: no cross-call staleness, no unbounded growth.
+			this.authoritativeNames = {};
+			this.authoritativeNamesInProcess = {};
+			// New call scope: in-flight getUsers writes from the previous scope become stale.
+			this.storeEpoch++;
 		}
 
 		setCurrentUserRole(role)
@@ -2101,12 +2128,144 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		{
 			for (const userId in userData)
 			{
-				this.userData[userId] = userData[userId];
+				// Merge instead of replace so partial updates don't drop fields populated by a previous fetch
+				this.userData[userId] = { ...(this.userData[userId] ?? {}), ...userData[userId] };
 				if (!this.userData[userId].color)
 				{
 					this.userData[userId].color = this.getAvatarBackground();
 				}
 			}
+		}
+
+		/**
+		 * Resolves the display name for a user: authoritative (backend/Pull) always wins
+		 * over the frozen transport name (endpoint.userName).
+		 *
+		 * @param {number|string} userId - Bitrix userId (== endpointId)
+		 * @param {string} transportName - endpoint.userName fallback
+		 * @return {string}
+		 */
+		resolveDisplayName(userId, transportName)
+		{
+			const authoritative = this.authoritativeNames[userId];
+			if (BX.type.isNotEmptyString(authoritative))
+			{
+				return authoritative;
+			}
+
+			return transportName;
+		}
+
+		/**
+		 * Stores an authoritative name coming from Pull (onCallUserNameUpdate).
+		 *
+		 * @param {number|string} userId - Bitrix userId
+		 * @param {string} name
+		 */
+		setAuthoritativeUserName(userId, name)
+		{
+			if (BX.type.isNotEmptyString(name))
+			{
+				this.authoritativeNames[userId] = name;
+			}
+		}
+
+		/**
+		 * Force-refreshes authoritative names via backend getUsers and writes them into the
+		 * authoritativeNames store. Bypasses the userData dedup on purpose (transport
+		 * may already occupy the userData slot); dedups only by already-known authoritative ids
+		 * and its own in-flight guard, since force-refresh skips usersInProcess.
+		 *
+		 * @param {object} call - current call (provider, scheme, id, uuid)
+		 * @param {Array<number|string>} userIds - Bitrix userIds (== endpointId)
+		 * @return {Promise<Object>} map { [userId]: record } resolved during this call
+		 */
+		fetchAuthoritativeUserNames(call, userIds)
+		{
+			if (!call || !BX.type.isArray(userIds) || userIds.length === 0)
+			{
+				return Promise.resolve({});
+			}
+
+			// Snapshot the call scope before the async call; a reset bumps storeEpoch.
+			const epoch = this.storeEpoch;
+
+			const idsToFetch = [];
+			for (const userId of userIds)
+			{
+				if (this.authoritativeNames.hasOwnProperty(userId) || this.authoritativeNamesInProcess.hasOwnProperty(userId))
+				{
+					continue;
+				}
+				idsToFetch.push(userId);
+			}
+
+			if (idsToFetch.length === 0)
+			{
+				return Promise.resolve({});
+			}
+
+			// Send exactly one of callId (legacy) / callUuid (jwt).
+			const params = { userIds: idsToFetch };
+			if (this.isLegacyCall(call.provider, call.scheme))
+			{
+				params.callId = call.id;
+			}
+			else
+			{
+				params.callUuid = call.uuid;
+			}
+
+			const request = BX.rest.callMethod('call.CallManager.getUsers', params).then((response) => {
+				// Call scope changed while getUsers was in flight (call closed/reset): the store and
+				// its in-flight map already belong to a new scope. Drop the response so it cannot
+				// bleed in; leave the new scope's in-flight guards untouched.
+				if (epoch !== this.storeEpoch)
+				{
+					return {};
+				}
+
+				const result = BX.type.isPlainObject(response.answer.result) ? response.answer.result : {};
+				const resolvedRecords = {};
+
+				idsToFetch.forEach((userId) => {
+					delete this.authoritativeNamesInProcess[userId];
+
+					const record = result[userId];
+					if (record && BX.type.isNotEmptyString(record.name))
+					{
+						// Pull may have set a fresher name during the fetch window: keep it, do not
+						// overwrite, and leave this id out of the applied records so the card keeps it.
+						if (!this.authoritativeNames.hasOwnProperty(userId))
+						{
+							this.authoritativeNames[userId] = record.name;
+							resolvedRecords[userId] = record;
+						}
+					}
+					else
+					{
+						// Safeguard: requested id absent from getUsers response (guest filtered
+						// by hasUser, or endpointId != Bitrix userId). Never fall back to transport silently.
+						this.warn('fetchAuthoritativeUserNames: missing authoritative name for user', userId, params);
+					}
+				});
+
+				return resolvedRecords;
+			}).catch((error) => {
+				// Graceful degrade (e.g. call_not_found): keep transport name.
+				idsToFetch.forEach((userId) => delete this.authoritativeNamesInProcess[userId]);
+				this.warn('fetchAuthoritativeUserNames: getUsers failed', error?.answer || error);
+
+				return {};
+			});
+
+			// Own in-flight guard: force-refresh bypasses usersInProcess.
+			for (const userId of idsToFetch)
+			{
+				this.authoritativeNamesInProcess[userId] = request;
+			}
+
+			return request;
 		}
 
 		getCurrentUserName()
@@ -2779,6 +2938,11 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					}
 				}).catch((e) => {
 					let error = e;
+					// Origin of the failure, not the shape of the body, marks transport: a response
+					// never arrived only when the reject came from onerror / ontimeout / the no-activity
+					// abort, which all leave xhr.status === 0. A non-2xx status or an unparseable 2xx
+					// body both mean the server answered — an infrastructural error_, not offline.
+					const noResponse = e?.xhr?.status === 0;
 
 					if (e.xhr?.responseText)
 					{
@@ -2794,6 +2958,11 @@ jn.define('call/calls/engine', (require, exports, module) => {
 						{
 							error = { code: BX.Call.CallError.MediaServerUnreachable };
 						}
+					}
+
+					if (noResponse && error && typeof error === 'object')
+					{
+						error.isTransportError = true;
 					}
 
 					reject(error);

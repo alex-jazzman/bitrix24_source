@@ -14,11 +14,21 @@ import { buildHotkeyShortcuts } from './hotkeys-bindings';
 export const NoteHotkeys = Extension.create({
 	name: 'noteHotkeys',
 
+	addOptions(): Object
+	{
+		return {
+			// Features the portal has switched on, as the descriptor names them. Combos of a feature that
+			// is off are left unbound — see buildHotkeyShortcuts.
+			features: [],
+		};
+	},
+
 	addKeyboardShortcuts()
 	{
 		return buildHotkeyShortcuts({
 			editorHotkeys: getEditorHotkeys(),
 			descriptor: getHotkeyDescriptor(),
+			features: Array.isArray(this.options.features) ? this.options.features : [],
 		});
 	},
 });

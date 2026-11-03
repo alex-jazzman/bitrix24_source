@@ -1,5 +1,15 @@
 <?php
 
+use Bitrix\Main\Loader;
+
+// E2e provisioning controllers are available only in a developer checkout. Keep the
+// namespace scoped to dev/e2e because action resolution autoloads matched files before
+// the controller authentication and CSRF filters run.
+if (is_dir(__DIR__ . '/dev/e2e'))
+{
+	Loader::registerNamespace('Bitrix\\Lists\\Controller\\Dev\\E2e', __DIR__ . '/dev/e2e');
+}
+
 if(!CModule::IncludeModule('iblock'))
 {
 	return false;

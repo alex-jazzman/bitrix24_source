@@ -16,6 +16,7 @@ export class EntityCounters
 	{
 		this.requestSender = params.requestSender;
 		this.entityStorage = params.entityStorage;
+		this.latestCounterRequestByEntity = new Map();
 	}
 
 	updateCounters(entities: Map<number, Backlog | Sprint>)
@@ -24,10 +25,20 @@ export class EntityCounters
 			entityIds: [...entities.keys()]
 		};
 
-		this.requestSender.getEntityCounters(requestData)
+		const request = this.requestSender.getEntityCounters(requestData);
+		entities.forEach((entity, entityId) => {
+			this.latestCounterRequestByEntity.set(entityId, request);
+		});
+
+		request
 			.then((response) => {
 				Object.keys(response.data).forEach((entityId: number) => {
 					entityId = parseInt(entityId, 10);
+					if (this.latestCounterRequestByEntity.get(entityId) !== request)
+					{
+						return;
+					}
+
 					const entity = entities.get(entityId);
 					const counters = response.data[entityId];
 					entity.setStoryPoints(counters.storyPoints);

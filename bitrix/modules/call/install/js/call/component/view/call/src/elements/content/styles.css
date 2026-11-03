@@ -1,0 +1,79 @@
+.call-content {
+	position: relative;
+	overflow: hidden; /* ensure content is clipped */
+	--call-content-width: 16px;
+	--call-content-height: 9px;
+	--call-content-top: 0;
+	--call-content-left: 0;
+}
+
+.call-content__card {
+	position: absolute;
+	top: var(--call-card-top);
+	left: var(--call-card-left);
+	width: var(--call-card-width);
+	height: var(--call-card-height);
+}
+
+.video-card {
+	background: white;
+}
+
+.call-content__arrows {
+	--call-content-arrow-width: 50px;
+	--call-content-arrow-height: 100px;
+	--call-content-arrow-transform: translateY(-50%);
+	--call-content-arrow-prev-justify: flex-start;
+	--call-content-arrow-next-justify: flex-end;
+	--call-content-arrow-prev-padding: 0 0 0 5px;
+	--call-content-arrow-next-padding: 0 5px 0 0;
+	--call-content-arrow-prev-inset: 50% auto auto 0;
+	--call-content-arrow-next-inset: 50% 0 auto auto;
+	--call-content-arrow-prev-border-radius: 0 50px 50px 0;
+	--call-content-arrow-next-border-radius: 50px 0 0 50px;
+}
+
+.call-content__arrows.--speaker {
+	--call-content-arrow-width: calc(100px * (16 / 9));
+	--call-content-arrow-height: 50px;
+	--call-content-arrow-transform: unset;
+	--call-content-arrow-prev-justify: center;
+	--call-content-arrow-next-justify: center;
+	--call-content-arrow-prev-padding: 0 0 0 5px;
+	--call-content-arrow-next-padding: 0 5px 0 0;
+	--call-content-arrow-prev-inset: 20px 20px auto auto;
+	--call-content-arrow-next-inset: auto 20px 20px auto;
+	--call-content-arrow-prev-border-radius: 0;
+	--call-content-arrow-next-border-radius: 0;
+}
+
+.call-content__arrow {
+	box-sizing: border-box;
+	display: flex;
+	z-index: 2;
+	position: absolute;
+	align-items: center;
+	width: var(--call-content-arrow-width);
+	height: var(--call-content-arrow-height);
+	transform: var(--call-content-arrow-transform);
+	background: rgba(255, 255, 255, 0.2);
+	cursor: pointer;
+}
+
+.call-content__arrow:hover {
+	background: rgba(255, 255, 255, 0.25);
+}
+
+.call-content__arrow.--prev {
+	inset: var(--call-content-arrow-prev-inset);
+	justify-content: var(--call-content-arrow-prev-justify);
+	padding: var(--call-content-arrow-prev-padding);
+	border-radius: var(--call-content-arrow-prev-border-radius);
+}
+
+.call-content__arrow.--next {
+	inset: var(--call-content-arrow-next-inset);
+	justify-content: var(--call-content-arrow-next-justify);
+	padding: var(--call-content-arrow-next-padding);
+	border-radius: var(--call-content-arrow-next-border-radius);
+}

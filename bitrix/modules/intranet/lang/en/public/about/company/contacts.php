@@ -46,7 +46,7 @@ $MESS["ABOUT_INFO"] = "<p><b>E-mail Addresses:</b></p>
 
 <p><b>See the scheme how to reach the office:</b></p>
 
-<p><img height='449' width='500' src='#SITE#images/en/company/about/address_1.png' /></p>
+<p><img height='449' width='500' src='#SITE#images/en/company/about/address_1.webp' /></p>
 
 <p><b>Minnesota Office:</b></p>
  <dl> <dd>*** Gilbert Building</dd><dt>
@@ -60,5 +60,5 @@ $MESS["ABOUT_INFO"] = "<p><b>E-mail Addresses:</b></p>
   </dt> </dl>
 <p><b>See the scheme how to reach the office:</b></p>
 
-<p><img height='418' width='490' src='#SITE#images/en/company/about/address_2.png' /></p>";
+<p><img height='418' width='490' src='#SITE#images/en/company/about/address_2.webp' /></p>";
 ?>

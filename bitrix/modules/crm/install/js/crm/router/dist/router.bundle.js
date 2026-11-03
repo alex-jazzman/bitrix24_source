@@ -278,7 +278,7 @@ this.BX = this.BX || {};
 			}
 		}
 		getAiReportDrawerUrl(scenario, drawerRequest = {}) {
-			const isAvailableScenario = main_core.Type.isStringFilled(scenario) && ['call-assessment', 'summary-history'].includes(scenario);
+			const isAvailableScenario = main_core.Type.isStringFilled(scenario) && ['call-assessment', 'summary-history', 'transcript'].includes(scenario);
 			if (!isAvailableScenario) {
 				return null;
 			}
@@ -292,6 +292,26 @@ this.BX = this.BX || {};
 			const uri = this.getAiReportDrawerUrl(scenario, drawerRequest);
 			if (uri) {
 				return this.#openAiReportDrawerSlider(uri, options);
+			}
+			return null;
+		}
+		openAiReportDrawerOrLegacy(scenario, drawerRequest, openLegacy, options = {}) {
+			try {
+				if (this.#prepareAiReportDrawerQueryParams(drawerRequest) === null) {
+					return null;
+				}
+				const isEnabled = main_core.Extension.getSettings('crm.router').get('isCallScoringV2Enabled') === true;
+				if (isEnabled) {
+					const uri = this.getAiReportDrawerUrl(scenario, drawerRequest);
+					if (uri) {
+						return this.#openAiReportDrawerSlider(uri, options);
+					}
+				}
+			} catch {
+				// Fall back only while the common drawer is being prepared.
+			}
+			if (main_core.Type.isFunction(openLegacy)) {
+				openLegacy();
 			}
 			return null;
 		}

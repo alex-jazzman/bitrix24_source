@@ -16,6 +16,7 @@ jn.define('call/callList/recentSearchController', (require, exports, module) => 
 			this.component = component;
 			this.searchView = null;
 			this.searchTimer = null;
+			this.searchGeneration = 0;
 		}
 
 		openSearch(layoutWidget)
@@ -42,6 +43,7 @@ jn.define('call/callList/recentSearchController', (require, exports, module) => 
 			const query = String(text || '').trim();
 
 			this.clearSearchTimer();
+			this.searchGeneration += 1;
 
 			if (!query || query.length < SEARCH_MIN_TOKEN_SIZE)
 			{
@@ -50,11 +52,29 @@ jn.define('call/callList/recentSearchController', (require, exports, module) => 
 				return;
 			}
 
-			this.searchTimer = setTimeout(() => this.performSearch(query), SEARCH_DEBOUNCE_MS);
+			let filteredRecent = [];
+			try
+			{
+				filteredRecent = this.filterRecentItems(query);
+			}
+			catch (error)
+			{
+				console.error('[RecentSearchController][onSearchTextChanged][filterRecentItems][error]', error);
+			}
+			this.setLoading(true);
+			this.setItems(filteredRecent);
+
+			const generation = this.searchGeneration;
+			this.searchTimer = setTimeout(() => this.performSearch(query, generation), SEARCH_DEBOUNCE_MS);
 		}
 
-		async performSearch(query)
+		async performSearch(query, generation)
 		{
+			if (generation !== this.searchGeneration)
+			{
+				return;
+			}
+
 			this.setLoading(true);
 
 			let filteredRecent = [];
@@ -79,6 +99,12 @@ jn.define('call/callList/recentSearchController', (require, exports, module) => 
 			catch (error)
 			{
 				console.error('[RecentSearchController][performSearch][searchRemote][error]', error);
+			}
+
+			// ignore results of a stale request superseded by a newer search
+			if (generation !== this.searchGeneration)
+			{
+				return;
 			}
 
 			this.setItems([...filteredRecent, ...remoteItems]);
@@ -169,6 +195,7 @@ jn.define('call/callList/recentSearchController', (require, exports, module) => 
 		resetSearch()
 		{
 			this.clearSearchTimer();
+			this.searchGeneration += 1;
 			this.setItems(null);
 			this.setLoading(false);
 		}

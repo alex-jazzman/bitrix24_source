@@ -26,9 +26,13 @@ import { TaskGetExtractor } from './task-get-extractor';
 import { mapModelToDto } from './mappers';
 import { type TaskDto, type SeparateFieldsMeta, type TaskSelect, type UpdateResult } from './types';
 
+const STAGE_SYNC_FAILED_EVENT = EventName.TaskStageSyncFailed ?? 'tasks:card:taskStageSyncFailed';
+const STAGE_SYNC_RESTORED_EVENT = EventName.TaskStageSyncRestored ?? 'tasks:card:taskStageSyncRestored';
+
 type propsTaskServiceAdd = {
 	task: TaskModel,
 	view?: boolean,
+	deadlineManuallySet?: boolean,
 };
 
 type propsTaskServiceCopy = {
@@ -36,6 +40,39 @@ type propsTaskServiceCopy = {
 	withSubTasks: boolean,
 	view?: boolean,
 };
+
+type SetStageOptions = {
+	completeWithChecklist?: boolean,
+};
+
+type StageMoveState = {
+	latestStageId: number,
+	latestRequestId: number,
+	pendingMoves: Map<number, { stageId: number, echoed: boolean }>,
+	invalidated: boolean,
+	tail: Promise<void>,
+};
+
+type StageReadBarrier = {
+	stageId: ?number,
+	hasConfirmedMove: boolean,
+	uncertain: boolean,
+	reported: boolean,
+	conflictGeneration: number,
+	reconciliationPromise: ?Promise<?Error>,
+};
+
+type StageReadSnapshot = {
+	generation: number,
+	changedTaskIds: Set<number>,
+	deletedTaskIds: Set<number>,
+};
+
+const stageMoveStates: Map<number, StageMoveState> = new Map();
+const stageReadBarriers: Map<number, StageReadBarrier> = new Map();
+const stageChangeGenerations: Map<number, number> = new Map();
+const activeStageReads: Set<StageReadSnapshot> = new Set();
+let stageChangeGeneration = 0;
 
 const separateFields: SeparateFieldsMeta[] = [
 	{
@@ -112,11 +149,14 @@ export const taskService = new class
 
 		try
 		{
-			const data = await apiClient.post(Endpoint.TaskGet, { task: { id }, taskSelect });
+			await this.withStageSnapshot(async (snapshot: StageReadSnapshot): Promise<void> => {
+				const data = await apiClient.post(Endpoint.TaskGet, { task: { id }, taskSelect });
 
-			this.extractTask(data, ignoreContains);
-
-			await this.$store.dispatch(`${Model.Tasks}/removePartiallyLoaded`, id);
+				if (this.extractTask(data, ignoreContains, snapshot))
+				{
+					await this.$store.dispatch(`${Model.Tasks}/removePartiallyLoaded`, id);
+				}
+			});
 		}
 		catch (error)
 		{
@@ -223,6 +263,7 @@ export const taskService = new class
 		const {
 			task,
 			view,
+			deadlineManuallySet,
 		} = props;
 
 		if (idUtils.isTemplate(task.id))
@@ -235,6 +276,11 @@ export const taskService = new class
 			const data = await apiClient.post(Endpoint.TaskAdd, {
 				task: mapModelToDto(task),
 				view: Boolean(view),
+				// SC-003 (AC-013): explicit client marker that the user set the deadline
+				// themselves in the create form. The controller prefers it over the
+				// server-side !empty(DEADLINE) heuristic, which cannot tell an accepted
+				// default auto deadline from a manual one.
+				deadlineManuallySet: Boolean(deadlineManuallySet),
 			});
 
 			await this.onAfterTaskAdded(task, data);
@@ -472,23 +518,327 @@ export const taskService = new class
 		}
 	}
 
-	async setStage(taskId: number, stageId: number): Promise<void>
+	async setStage(taskId: number, stageId: number, options: SetStageOptions = {}): Promise<?Error>
 	{
-		this.updateStoreTask(taskId, { stageId });
+		const barrier: StageReadBarrier = stageReadBarriers.get(taskId) ?? {
+			stageId: this.getStoreTask(taskId)?.stageId,
+			hasConfirmedMove: false,
+			uncertain: false,
+			reported: false,
+			conflictGeneration: 0,
+			reconciliationPromise: null,
+		};
+		if (barrier.uncertain)
+		{
+			return this.#buildStageSyncError();
+		}
 
+		const state: StageMoveState = stageMoveStates.get(taskId) ?? {
+			latestStageId: stageId,
+			latestRequestId: 0,
+			pendingMoves: new Map(),
+			invalidated: false,
+			tail: Promise.resolve(),
+		};
+		const previousLatestStageId = state.latestStageId;
+		state.latestStageId = stageId;
+		const requestId = ++state.latestRequestId;
+		state.pendingMoves.set(requestId, { stageId, echoed: false });
+		stageReadBarriers.set(taskId, barrier);
+		stageMoveStates.set(taskId, state);
+		const isCurrent = () => (
+			!state.invalidated
+			&& stageMoveStates.get(taskId) === state
+			&& stageReadBarriers.get(taskId) === barrier
+		);
 		try
 		{
-			await apiClient.postComponent('bitrix:tasks.task', 'moveStage', { taskId, stageId });
-
-			return true;
+			this.updateStoreTask(taskId, { stageId });
 		}
 		catch (error)
 		{
-			console.error('bitrix:tasks.task.moveStage', error);
+			state.latestStageId = previousLatestStageId;
+			state.pendingMoves.delete(requestId);
+			if (state.latestRequestId === requestId)
+			{
+				state.latestRequestId -= 1;
+			}
+			if (state.pendingMoves.size === 0)
+			{
+				stageMoveStates.delete(taskId);
+				if (!barrier.hasConfirmedMove && !barrier.uncertain)
+				{
+					stageReadBarriers.delete(taskId);
+				}
+			}
 
-			return false;
+			throw error;
+		}
+
+		const execute = async (): Promise<?Error> => {
+			if (!isCurrent())
+			{
+				return this.#buildStageMoveStaleError();
+			}
+
+			try
+			{
+				const response = await apiClient.postComponent(
+					'bitrix:tasks.task',
+					'moveStage',
+					{ taskId, stageId, ...options },
+				);
+				if (!isCurrent())
+				{
+					return this.#buildStageMoveStaleError();
+				}
+				if (response === false)
+				{
+					throw new Error('The task stage was not moved');
+				}
+
+				barrier.stageId = stageId;
+				barrier.hasConfirmedMove = true;
+				this.#noteStageChange(taskId);
+				if (
+					state.pendingMoves.size === 1
+					&& barrier.stageId !== state.latestStageId
+					&& this.getStoreTask(taskId)?.stageId === state.latestStageId
+				)
+				{
+					this.updateStoreTask(taskId, { stageId: barrier.stageId });
+				}
+
+				return null;
+			}
+			catch (error)
+			{
+				if (!isCurrent())
+				{
+					return this.#buildStageMoveStaleError();
+				}
+				if (state.pendingMoves.get(requestId)?.echoed)
+				{
+					barrier.uncertain = true;
+				}
+				if (state.latestRequestId === requestId)
+				{
+					this.updateStoreTask(taskId, { stageId: barrier.stageId });
+				}
+				console.error('bitrix:tasks.task.moveStage', error);
+
+				const moveError = new Error(error.errors?.[0]?.message ?? error.message);
+				moveError.code = error.errors?.[0]?.code ?? error.code;
+
+				return moveError;
+			}
+			finally
+			{
+				state.pendingMoves.delete(requestId);
+				if (isCurrent() && state.pendingMoves.size === 0)
+				{
+					stageMoveStates.delete(taskId);
+					if (!barrier.hasConfirmedMove && !barrier.uncertain)
+					{
+						stageReadBarriers.delete(taskId);
+					}
+				}
+			}
+		};
+
+		const result = state.tail.then(execute);
+		state.tail = result.then(() => undefined, () => undefined);
+
+		return result.then(async (error): Promise<?Error> => {
+			if (state.invalidated)
+			{
+				return this.#buildStageMoveStaleError();
+			}
+			if (state.pendingMoves.size === 0 && barrier.uncertain)
+			{
+				const reconciliationError = await this.reconcileStage(taskId);
+				if (stageReadBarriers.get(taskId) !== barrier)
+				{
+					return this.#buildStageMoveStaleError();
+				}
+
+				if (error?.code && error.code !== 'STAGE_SYNC_UNCERTAIN')
+				{
+					return error;
+				}
+
+				return reconciliationError ?? error;
+			}
+
+			return error;
+		});
+	}
+
+	async reconcileStage(taskId: number): Promise<?Error>
+	{
+		const barrier = stageReadBarriers.get(taskId);
+		if (!barrier?.uncertain || !this.hasStoreTask(taskId))
+		{
+			return null;
+		}
+		if (stageMoveStates.get(taskId)?.pendingMoves.size > 0)
+		{
+			return this.#buildStageSyncError();
+		}
+		if (barrier.reconciliationPromise)
+		{
+			return barrier.reconciliationPromise;
+		}
+
+		let lastReadGeneration = barrier.conflictGeneration;
+		let acceptedReply = false;
+		const promise = (async (): Promise<?Error> => {
+			while (stageReadBarriers.get(taskId) === barrier && this.hasStoreTask(taskId))
+			{
+				lastReadGeneration = barrier.conflictGeneration;
+				try
+				{
+					const data = await apiClient.post(Endpoint.TaskGet, { task: { id: taskId } });
+					if (stageReadBarriers.get(taskId) !== barrier || !this.hasStoreTask(taskId))
+					{
+						return null;
+					}
+					if (lastReadGeneration !== barrier.conflictGeneration)
+					{
+						continue;
+					}
+					if (
+						!data
+						|| Number(data.id) !== taskId
+						|| data.rights?.read === false
+						|| !Object.prototype.hasOwnProperty.call(data, 'stage')
+					)
+					{
+						throw new Error('Task.get did not return the current stage');
+					}
+
+					const stageId = data.stage?.id ?? 0;
+					this.updateStoreTask(taskId, { stageId });
+					barrier.stageId = stageId;
+					barrier.uncertain = false;
+					barrier.reported = false;
+					acceptedReply = true;
+
+					return null;
+				}
+				catch (error)
+				{
+					if (stageReadBarriers.get(taskId) !== barrier || !this.hasStoreTask(taskId))
+					{
+						return null;
+					}
+					if (lastReadGeneration !== barrier.conflictGeneration)
+					{
+						continue;
+					}
+					if (!barrier.reported)
+					{
+						barrier.reported = true;
+						EventEmitter.emit(STAGE_SYNC_FAILED_EVENT, { taskId });
+					}
+
+					return this.#buildStageSyncError();
+				}
+			}
+
+			return null;
+		})();
+		barrier.reconciliationPromise = promise;
+		try
+		{
+			return await promise;
+		}
+		finally
+		{
+			if (barrier.reconciliationPromise === promise)
+			{
+				barrier.reconciliationPromise = null;
+				if (
+					acceptedReply
+					&& stageReadBarriers.get(taskId) === barrier
+					&& this.hasStoreTask(taskId)
+					&& !barrier.uncertain
+				)
+				{
+					EventEmitter.emit(STAGE_SYNC_RESTORED_EVENT, { taskId });
+				}
+				if (
+					barrier.uncertain
+					&& barrier.conflictGeneration !== lastReadGeneration
+					&& stageReadBarriers.get(taskId) === barrier
+					&& !stageMoveStates.get(taskId)?.pendingMoves.size
+				)
+				{
+					void this.reconcileStage(taskId);
+				}
+			}
 		}
 	}
+
+	isStageSyncUncertain(taskId: number): boolean
+	{
+		return stageReadBarriers.get(taskId)?.uncertain === true;
+	}
+
+	#observeServerStage(taskId: number, stageId: number, barrier: StageReadBarrier): void
+	{
+		let isExpected = stageId === barrier.stageId;
+		const state = stageMoveStates.get(taskId);
+		for (const move of state?.pendingMoves.values() ?? [])
+		{
+			if (move.stageId === stageId)
+			{
+				move.echoed = true;
+				isExpected = true;
+			}
+		}
+
+		if (!isExpected || barrier.reconciliationPromise)
+		{
+			barrier.conflictGeneration += 1;
+		}
+		if (!isExpected)
+		{
+			barrier.uncertain = true;
+		}
+		if (barrier.uncertain && (!state || state.pendingMoves.size === 0))
+		{
+			void this.reconcileStage(taskId);
+		}
+	}
+
+	#buildStageSyncError(): Error
+	{
+		const error = new Error('The task stage could not be verified');
+		error.code = 'STAGE_SYNC_UNCERTAIN';
+
+		return error;
+	}
+
+	#buildStageMoveStaleError(): Error
+	{
+		const error = new Error('The task was removed during a stage move');
+		error.code = 'STAGE_MOVE_STALE';
+
+		return error;
+	}
+
+	releaseStageMoveBarrier(taskId: number): void
+	{
+		const state = stageMoveStates.get(taskId);
+		if (state)
+		{
+			state.invalidated = true;
+		}
+		stageMoveStates.delete(taskId);
+		stageReadBarriers.delete(taskId);
+	}
+
 
 	async setMark(taskId: number, mark: string): Promise<void>
 	{
@@ -613,18 +963,94 @@ export const taskService = new class
 		}
 	}
 
-	extractTask(data: TaskDto, ignoreContains: boolean = true): void
+	async withStageSnapshot<T>(read: (snapshot: StageReadSnapshot) => Promise<T>): Promise<T>
+	{
+		const snapshot: StageReadSnapshot = {
+			generation: stageChangeGeneration,
+			changedTaskIds: new Set(),
+			deletedTaskIds: new Set(),
+		};
+		activeStageReads.add(snapshot);
+
+		try
+		{
+			return await read(snapshot);
+		}
+		finally
+		{
+			activeStageReads.delete(snapshot);
+			if (activeStageReads.size === 0)
+			{
+				stageChangeGenerations.clear();
+			}
+		}
+	}
+
+	#noteStageChange(id: number): void
+	{
+		if (activeStageReads.size === 0)
+		{
+			return;
+		}
+
+		stageChangeGeneration += 1;
+		stageChangeGenerations.set(id, stageChangeGeneration);
+		for (const snapshot of activeStageReads)
+		{
+			snapshot.changedTaskIds.add(id);
+		}
+	}
+
+	#rollbackStoreTask(
+		id: number,
+		taskBefore: TaskModel,
+		updatedFields: TaskModel,
+		snapshot: ?StageReadSnapshot,
+	): void
+	{
+		const fields = Object.fromEntries(Object.keys(updatedFields)
+			.filter((field) => field !== 'id')
+			.map((field) => [field, taskBefore[field]]));
+		if (snapshot?.changedTaskIds.has(id))
+		{
+			delete fields.stageId;
+		}
+
+		if (Object.keys(fields).length > 0)
+		{
+			this.updateStoreTask(id, fields);
+		}
+	}
+
+	#preserveStoreStage(task: TaskModel, currentTask: ?TaskModel): void
+	{
+		if (Type.isUndefined(currentTask?.stageId))
+		{
+			delete task.stageId;
+		}
+		else
+		{
+			task.stageId = currentTask.stageId;
+		}
+	}
+
+	extractTask(data: TaskDto, ignoreContains: boolean = true, stageSnapshot: ?StageReadSnapshot = null): boolean
 	{
 		if (!data)
 		{
-			return;
+			return false;
+		}
+
+		if (stageSnapshot?.deletedTaskIds.has(data.id))
+		{
+			return false;
 		}
 
 		if (data?.rights?.read === false)
 		{
 			this.deleteStore(data.id);
 
-			return;
+			return false;
 		}
 
 		const extractor = new TaskGetExtractor(data);
@@ -633,6 +1059,22 @@ export const taskService = new class
 		const currentTask = this.getStoreTask(task.id);
 
 		task = this.#mergeExtractedTaskWithStoreTask(task, currentTask);
+		if (!Type.isUndefined(task.stageId))
+		{
+			if (stageSnapshot !== null && (stageChangeGenerations.get(task.id) ?? 0) > stageSnapshot.generation)
+			{
+				this.#preserveStoreStage(task, currentTask);
+			}
+			else
+			{
+				const barrier = stageReadBarriers.get(task.id);
+				if (barrier)
+				{
+					this.#observeServerStage(task.id, task.stageId, barrier);
+					this.#preserveStoreStage(task, currentTask);
+				}
+			}
+		}
 
 		if (ignoreContains)
 		{
@@ -658,6 +1100,8 @@ export const taskService = new class
 		}
 
 		void fileService.get(data.id).list(data.fileIds);
+
+		return true;
 	}
 
 	#mergeExtractedTaskWithStoreTask(task: TaskModel, currentTask: ?TaskModel): TaskModel
@@ -716,6 +1160,11 @@ export const taskService = new class
 
 	deleteStore(id: number): void
 	{
+		this.releaseStageMoveBarrier(id);
+		for (const snapshot of activeStageReads)
+		{
+			snapshot.deletedTaskIds.add(id);
+		}
 		subTasksService.unlinkStore(id);
 		relatedTasksService.unlinkStore(id);
 		ganttService.unlinkStore(id);
@@ -741,14 +1190,19 @@ export const taskService = new class
 
 	async #updateTask(id: number): Promise<void>
 	{
+		const promise = this.#updatePromises[id];
+		if (!promise)
+		{
+			return;
+		}
+
+		delete this.#updatePromises[id];
+
 		const fields = this.#updateFields[id];
 		delete this.#updateFields[id];
 
 		const taskBefore = this.#updateTaskBefore[id];
 		delete this.#updateTaskBefore[id];
-
-		const promise = this.#updatePromises[id];
-		delete this.#updatePromises[id];
 
 		const task = { id, ...fields };
 
@@ -798,17 +1252,21 @@ export const taskService = new class
 			return {};
 		}
 
+		let stageSnapshot: ?StageReadSnapshot = null;
 		try
 		{
-			const data = await apiClient.post(endpoint, { task });
+			return await this.withStageSnapshot(async (snapshot: StageReadSnapshot): Promise<UpdateResult> => {
+				stageSnapshot = snapshot;
+				const data = await apiClient.post(endpoint, { task });
 
-			this.extractTask(data);
+				this.extractTask(data, true, snapshot);
 
-			return {};
+				return {};
+			});
 		}
 		catch (error)
 		{
-			this.updateStoreTask(id, taskBefore);
+			this.#rollbackStoreTask(id, taskBefore, fields, stageSnapshot);
 
 			if (!this.#silentErrorMode)
 			{
@@ -855,10 +1313,28 @@ export const taskService = new class
 		await this.$store.dispatch(`${Model.Tasks}/insert`, task);
 	}
 
-	updateStoreTask(id: number, fields: TaskModel): void
+	updateStoreTask(id: number, fields: TaskModel, source: 'local' | 'server' = 'local'): void
 	{
 		if (this.hasStoreTask(id))
 		{
+			const barrier = stageReadBarriers.get(id);
+			if (source === 'server' && barrier && !Type.isUndefined(fields.stageId))
+			{
+				const { stageId, ...otherFields } = fields;
+				this.#observeServerStage(id, stageId, barrier);
+				if (Object.keys(otherFields).length > 0)
+				{
+					void this.$store.dispatch(`${Model.Tasks}/update`, { id, fields: otherFields });
+				}
+
+				return;
+			}
+
+			if (!Type.isUndefined(fields.stageId))
+			{
+				this.#noteStageChange(id);
+			}
+
 			void this.$store.dispatch(`${Model.Tasks}/update`, { id, fields });
 		}
 	}

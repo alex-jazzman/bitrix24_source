@@ -8,7 +8,8 @@ import Util from '../util'
 import {MediaStreamsKinds} from '../call_api';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { CallStreamManager, STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
-import { ReconnectTarget } from 'call.lib.reconnect-history';
+import { ReconnectOutcome, ReconnectTarget } from 'call.lib.reconnect-history';
+import { toPeerUserId } from '../utils/to-peer-user-id';
 
 const ajaxActions = {
 	invite: 'call.CallManager.invite',
@@ -233,23 +234,42 @@ export class PlainCall extends AbstractCall
 			{
 				this.isReconnecting = true;
 				this._reconnectionEventCount++;
-				this.reconnectHistory.startEntry(
-					e.reconnectionReason ?? null,
-					ReconnectTarget.Provider,
-					e.userId,
-				);
+				const seriesUserId = toPeerUserId(e.userId);
+				this.reconnectHistory.startEntry({
+					target: ReconnectTarget.Peer,
+					userId: seriesUserId,
+					reason: e.reconnectionReason ?? null,
+				});
 				this.runCallback(CallEvent.onReconnecting, {
 					reconnectionEventCount: this._reconnectionEventCount,
 					reconnectionReason: e.reconnectionReason,
 					reconnectionReasonInfo: e.reconnectionReasonInfo,
+					reconnectionTarget: ReconnectTarget.Peer,
+					userId: seriesUserId,
+					hasEverConnected: Boolean(e.hasEverConnected),
 				});
 			},
-			onReconnected: () =>
+			onReconnected: (e) =>
 			{
 				this.isReconnecting = false;
 				this._reconnectionEventCount = 0;
-				this.reconnectHistory.updateLastEntry(ReconnectTarget.Provider, true);
-				this.runCallback(CallEvent.onReconnected);
+				const seriesUserId = toPeerUserId(e?.userId);
+				this.reconnectHistory.updateLastEntry({
+					target: ReconnectTarget.Peer,
+					userId: seriesUserId,
+					isSuccessful: true,
+				});
+				this.runCallback(CallEvent.onReconnected, {
+					reconnectionTarget: ReconnectTarget.Peer,
+					userId: seriesUserId,
+				});
+			},
+			onReconnectSeriesOutcome: (e) => {
+				this.runCallback(CallEvent.onReconnectSeriesOutcome, {
+					reconnectionTarget: ReconnectTarget.Peer,
+					userId: toPeerUserId(e.userId),
+					reconnectionOutcome: e.outcome,
+				});
 			},
 			onUpdateLastUsedCameraId: () =>
 			{
@@ -1510,6 +1530,14 @@ export class PlainCall extends AbstractCall
 		{
 			if (this.instanceId != params.callInstanceId)
 			{
+				if (this.associatedEntity?.isDeviceScoped === true)
+				{
+					// Device-scoped (private 1-1 TYPE_INSTANT): self-decline from another device must not pull a
+					// still-ringing device out of the call — ending is driven solely
+					// by Call::finish (backend device-aware gate). Defense in depth.
+					return;
+				}
+
 				if (this.ready)
 				{
 					//Received remote self-answer in ready state, ignoring
@@ -2174,6 +2202,9 @@ class Peer
 			onNetworkProblem: Type.isFunction(params.onNetworkProblem) ? params.onNetworkProblem : BX.DoNothing,
 			onReconnecting: Type.isFunction(params.onReconnecting) ? params.onReconnecting : BX.DoNothing,
 			onReconnected: Type.isFunction(params.onReconnected) ? params.onReconnected : BX.DoNothing,
+			onReconnectSeriesOutcome: Type.isFunction(params.onReconnectSeriesOutcome)
+				? params.onReconnectSeriesOutcome
+				: BX.DoNothing,
 			onUpdateLastUsedCameraId: Type.isFunction(params.onUpdateLastUsedCameraId) ? params.onUpdateLastUsedCameraId : BX.DoNothing,
 		};
 
@@ -2191,6 +2222,7 @@ class Peer
 		this.reconnectAfterDisconnectTimeout = null;
 
 		this.connectionAttempt = 0;
+		this.hasEverConnected = false;
 
 		this._outgoingVideoTrack = null;
 		Object.defineProperty(this, 'outgoingVideoTrack', {
@@ -2513,7 +2545,10 @@ class Peer
 			this.localStreams[tag] = this.call.getLocalStream(tag);
 
 			const logMessage = 'Reconnect by replaceMediaStream';
-			this.reconnect({ reconnectionReasonInfo: logMessage });
+			this.reconnect({
+				reconnectionReason: 'PEER_MEDIA_STREAM_REPLACED',
+				reconnectionReasonInfo: logMessage,
+			});
 		}
 	};
 
@@ -3089,7 +3124,8 @@ class Peer
 		{
 			this.isReconnecting = false;
 			this.connectionAttempt = 0;
-			this.callbacks.onReconnected();
+			this.hasEverConnected = true;
+			this.callbacks.onReconnected({ userId: this.userId });
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
 			this._updateTracksDebounced();
 		}
@@ -3301,14 +3337,20 @@ class Peer
 
 		this.call.setPublishingState(MediaStreamsKinds.Camera, false);
 
-		this.reconnect({ reconnectionReasonInfo: logMessage });
+		this.reconnect({
+			reconnectionReason: 'PEER_OFFER_REPLY_TIMEOUT',
+			reconnectionReasonInfo: logMessage,
+		});
 	};
 
 	_onNegotiationNeededReplyTimeout()
 	{
 		const logMessage = 'Did not receive connection offer in time';
 
-		this.reconnect({ reconnectionReasonInfo: logMessage });
+		this.reconnect({
+			reconnectionReason: 'PEER_NEGOTIATION_REPLY_TIMEOUT',
+			reconnectionReasonInfo: logMessage,
+		});
 	};
 
 	setConnectionOffer(connectionId, sdp, trackList)
@@ -3640,6 +3682,10 @@ class Peer
 			this.log("Error: Too many reconnection attempts, giving up");
 			this.failureReason = "Could not connect to user in time";
 			this.updateCalculatedState();
+			this.callbacks.onReconnectSeriesOutcome({
+				userId: this.userId,
+				outcome: this.hasEverConnected ? ReconnectOutcome.NotRecovered : ReconnectOutcome.NotConnected,
+			});
 			return;
 		}
 
@@ -3649,6 +3695,7 @@ class Peer
 			reconnectionReason,
 			reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
 			userId: this.userId,
+			hasEverConnected: this.hasEverConnected,
 		});
 
 		if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo)

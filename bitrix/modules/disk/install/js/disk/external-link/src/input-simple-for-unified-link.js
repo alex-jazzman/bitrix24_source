@@ -4,9 +4,9 @@ import {BackendForUnifiedLink} from './backend';
 
 export default class InputSimpleForUnifiedLink extends InputSimple
 {
-	constructor(objectId, data)
+	constructor(objectId, data, options)
 	{
-		super(objectId, data);
+		super(objectId, data, options);
 	}
 
 	getBackend()

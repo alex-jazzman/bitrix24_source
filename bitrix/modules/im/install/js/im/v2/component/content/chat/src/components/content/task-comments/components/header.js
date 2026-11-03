@@ -69,8 +69,10 @@ export const TaskCommentsHeader = {
 				>
 					<template #after-user-counter>
 						<TaskHeaderButton
+							:dialogId="dialogId"
 							:text="entityText"
 							:compactMode="compactMode"
+							:expanded="isTaskCardOpened"
 							:withEmbeddedTaskCard="withEmbeddedTaskCard"
 							@click="$emit('toggleTaskCard')"
 						/>

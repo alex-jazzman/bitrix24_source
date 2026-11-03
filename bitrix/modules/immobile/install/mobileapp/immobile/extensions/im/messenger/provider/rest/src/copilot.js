@@ -64,6 +64,26 @@ jn.define('im/messenger/provider/rest/copilot', (require, exports, module) => {
 
 			return runAction(RestMethod.imV2ChatCopilotUpdateEngine, { data });
 		}
+
+		/**
+		 * @desc Requests the stop of an active BitrixGPT generation in the chat
+		 * @param {object} options
+		 * @param {string} options.dialogId
+		 * @return {Promise<{status: string, initiatorId: number | null}>}
+		 */
+		stopGeneration(options = {})
+		{
+			if (!options.dialogId)
+			{
+				throw new Error('CopilotRest: options.dialogId is required.');
+			}
+
+			const data = {
+				dialogId: options.dialogId,
+			};
+
+			return runAction(RestMethod.imV2CopilotGenerationStop, { data });
+		}
 	}
 
 	module.exports = {

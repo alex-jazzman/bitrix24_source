@@ -71,7 +71,8 @@ jn.define('crm/ajax/base', (require, exports, module) => {
 			return new Promise((resolve) => {
 				this.getRunActionExecutor(action, ajaxParams)
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+					.catch(console.error);
 			});
 		}
 	}

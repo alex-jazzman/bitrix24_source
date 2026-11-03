@@ -47,7 +47,7 @@ export const PostPreview = {
 					<ChatAvatar :avatarDialogId="postDialog.dialogId" :size="AvatarSize.XXXL" />
 				</div>
 				<div class="bx-im-sidebar-main-preview-post__title">{{ loc('IM_SIDEBAR_COMMENTS_POST_PREVIEW_TITLE') }}</div>
-				<div class="bx-im-sidebar-main-preview-post__subtitle">{{ postDialog.name }}</div>
+				<div class="bx-im-sidebar-main-preview-post__subtitle --ellipsis">{{ postDialog.name }}</div>
 			</div>
 			<div class="bx-im-sidebar-main-preview-post__settings">
 				<!-- TODO: follow toggle -->

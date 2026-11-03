@@ -1,0 +1,22 @@
+.bizproc-task-performer-similar-informer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizproc-task-performer-similar-informer__name {
+	margin-top: var(--ui-space-stack-sm);
+}
+
+.bizproc-task-performer-similar-informer__count {
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-task-performer-similar-informer__hint {
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-task-performer-similar-informer__show-list {
+	margin-top: var(--ui-space-stack-xs);
+}

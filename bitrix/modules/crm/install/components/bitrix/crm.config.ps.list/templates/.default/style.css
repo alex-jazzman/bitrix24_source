@@ -311,15 +311,6 @@ div.crm-config-ps-list-widget-content {
 	overflow: hidden;
 }
 
-.crm-config-ps-list-widget-content-image {
-	/*display: block;*/
-	/*margin: 26px auto;*/
-	/*width: 200px;*/
-	/*height: 70px;*/
-	/*background: url(images/crm-config-ps-list-logo.svg) center;*/
-	/*background-size: cover;*/
-}
-
 .crm-crm-config-ps-list-widget-content-title {
 	font: 21px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);

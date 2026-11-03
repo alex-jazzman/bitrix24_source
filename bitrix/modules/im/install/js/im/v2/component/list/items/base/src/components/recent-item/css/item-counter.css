@@ -3,8 +3,8 @@
 	--im-list-recent-item__background-color_muted: var(--im-color-palette-gray-40);
 	--im-list-recent-item__background-color_comments: var(--im-color-palette-green-55);
 	--im-list-recent-item__color_counter: var(--im-color-palette-white-base);
-	--im-list-recent-item__border-color_unread: var(--im-color-palette-white-base);
-	--im-list-recent-item__border-color_unread-hover: #f1f4f6;
+	--im-list-recent-item__border-color_unread: var(--im-list-recent-item__background-color);
+	--im-list-recent-item__border-color_unread-hover: var(--im-list-recent-item__background-color_hover);
 
 	align-self: center;
 	display: flex;
@@ -14,6 +14,12 @@
 	min-width: 27px;
 	height: 20px;
 	margin-left: 8px;
+}
+
+.bx-im-list-recent-item__counters_wrap.--compact {
+	min-width: 0;
+	height: 28px;
+	gap: 0 8px;
 }
 
 .bx-im-list-recent-item__counters_container {
@@ -163,4 +169,31 @@
 
 .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__counters_wrap.--with-children .bx-im-list-recent-item__counter_number::after {
 	background-color: var(--im-color-palette-white-base);
+}
+
+/* New unread counter color (isAirDesignEnabled flag) */
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__counters_wrap {
+	--im-list-recent-item__background-color_counter: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__counter_number,
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__mention {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__mention-icon {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+/* BCounter (ui.cnt) renders the numeric badge, so .counter_number becomes a
+   transparent positioner for the decorative overlays (--with-unread dot, green
+   --with-children pill). Specificity is deliberately higher than all
+   .counter_number background rules (down to selected.--children-only). */
+.bx-im-messenger__scope.--air-design
+	.bx-im-list-recent-item__wrap
+	.bx-im-list-recent-item__counters_wrap
+	.bx-im-list-recent-item__counter_number.--air-counter {
+	min-width: 0;
+	padding: 0;
+	background-color: transparent;
 }

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports, main_polyfill_intersectionobserver, tasks_v2_component_tasksPopup, ui_iconSet_api_vue, ui_vue3) {
+(function (exports, main_polyfill_intersectionobserver, main_core, ui_a11y, tasks_v2_component_tasksPopup, ui_iconSet_api_vue, ui_vue3) {
 	'use strict';
 
 	const timeOutHovers = 150;
@@ -68,6 +68,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			isEntitiesFull() {
 				return Boolean(this.entitiesList.length >= this.optionsFilled.entitiesCount);
 			},
+			listBusy() {
+				return this.optionsFilled.isLoadingList ? 'true' : 'false';
+			},
 			isEntityContentHovered() {
 				const isEntityContentHoveredNew = this.isEntityTooltipOpenerHovered || this.isEntityTooltipPopupHovered;
 				return isEntityContentHoveredNew;
@@ -79,6 +82,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			optionsPopupEntityTooltip() {
 				return {
 					className: 'tasks-entities-picker__entity-tooltip',
+					isHoverTooltip: true,
 					isWithPointer: true,
 					positioning: {
 						isOpenedUp: true,
@@ -90,7 +94,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			}
 		},
 		watch: {
-			async entitiesList() {
+			async entitiesList(newList, oldList) {
+				this.announceLoadedPortion(newList, oldList);
 				await this.$nextTick();
 				this.initObserver();
 			},
@@ -134,6 +139,51 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				const classSumm = classSummArr.join(' ');
 				return classSumm;
 			},
+			isEntityLink(entity) {
+				return Boolean(entity.isEntityClickable && entity.url);
+			},
+			getEntityTag(entity) {
+				if (this.isEntityLink(entity)) {
+					return 'a';
+				}
+				return entity.isEntityClickable ? 'button' : 'div';
+			},
+			getEntityAttrs(entity) {
+				const attrs = {
+					'data-testid': 'task-entities-picker-row',
+					'data-entity-id': entity.id
+				};
+				if (this.isEntityLink(entity)) {
+					return {
+						...attrs,
+						href: entity.url
+					};
+				}
+				return entity.isEntityClickable ? {
+					...attrs,
+					type: 'button'
+				} : attrs;
+			},
+			getEntityListeners(entity) {
+				if (!entity.isEntityClickable) {
+					return {};
+				}
+				return {
+					click: event => this.handleClickEntity(entity, event)
+				};
+			},
+			announceLoadedPortion(newList, oldList) {
+				const previousCount = oldList?.length || 0;
+				const addedCount = (newList?.length || 0) - previousCount;
+
+				// Only the incremental portions of the infinite scroll are announced; the
+				// initial fill and list resets are not status messages.
+				if (previousCount > 0 && addedCount > 0) {
+					ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessagePlural('TASKS_V2_ENTITIES_PICKER_LOADED_MORE', addedCount, {
+						'#COUNT#': addedCount
+					}));
+				}
+			},
 			initObserver() {
 				this.disconnectObserver();
 				if (!this.$refs.tagScrollBottomEntities || this.isEntitiesFull) {
@@ -175,8 +225,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					}, timeOutHovers);
 				}
 			},
-			handleClickEntity(entity) {
-				event.stopPropagation();
+			handleClickEntity(entity, event) {
+				// A navigation row is a native <a href>: block the full page load so the
+				// consumer keeps routing it through the side panel.
+				event?.preventDefault();
+				event?.stopPropagation();
 				const entityId = entity && entity.id;
 				if (entityId) {
 					this.$emit('clickEntity', entity);
@@ -219,7 +272,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				};
 				if (entityVisualType === ENTITY_VISUAL_TYPES.IMAGE) {
 					options = {
-						alt: 'Entity',
+						alt: '',
 						class: classBase + ' tasks-entities-picker__entity-vis-item_img',
 						src: entity.image
 					};
@@ -247,17 +300,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					<ul
 						v-if="entitiesList.length > 0"
 						class="tasks-entities-picker__items"
+						:aria-busy="listBusy"
 					>
 						<li
 							v-for="entity in entitiesList"
 							:key="entity.id"
 							class="tasks-entities-picker__item"
 						>
-							<button
+							<component
+								:is="getEntityTag(entity)"
 								:class="getClassesEntity(entity)"
+								v-bind="getEntityAttrs(entity)"
 								@mouseenter="() => handleMouseEnterEntity(entity.tooltip)"
 								@mouseleave="() => handleMouseLeaveEntity(entity.tooltip)"
-								v-on="entity.isEntityClickable ? {click: () => handleClickEntity(entity)} : {}"
+								v-on="getEntityListeners(entity)"
 							>
 								<div class="tasks-entities-picker__entity-vis">
 									<component
@@ -273,7 +329,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 										>{{ nameValue }}</span>
 									</span>
 								</p>
-							</button>
+							</component>
 							<p
 								v-if="entity.tag"
 								class="tasks-entities-picker__item-tag"
@@ -309,5 +365,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TasksEntitiesPicker = TasksEntitiesPicker;
 
-})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX, BX.Tasks.V2.Component, BX.UI.IconSet, BX.Vue3);
+})(this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}, BX, BX, BX.UI.Accessibility, BX.Tasks.V2.Component, BX.UI.IconSet, BX.Vue3);
 //# sourceMappingURL=tasks-entities-picker.bundle.js.map

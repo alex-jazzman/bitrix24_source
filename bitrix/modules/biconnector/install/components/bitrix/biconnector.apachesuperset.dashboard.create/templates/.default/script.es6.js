@@ -2,6 +2,7 @@ import { ajax as Ajax, Dom, Loc, Reflection, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { DashboardParametersSelector } from 'biconnector.dashboard-parameters-selector';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { Button, ButtonManager } from 'ui.buttons';
 
 type Props = {
@@ -138,7 +139,7 @@ class SupersetDashboardCreateManager
 			})
 			.catch((response) => {
 				BX.UI.Notification.Center.notify({
-					content: response.errors[0].message,
+					content: resolveErrorHtml(response, Loc.getMessage('DASHBOARD_CREATE_SAVE_ERROR')),
 				});
 				this.#saveButton.setWaiting(false);
 			});

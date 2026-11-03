@@ -10,6 +10,7 @@ import { PinService } from './classes/pin';
 import { ReadService } from './classes/read';
 import { UserService } from './classes/user';
 import { MessagesAutoDeleteService } from './classes/messages-auto-delete';
+import { type AddSelectionConfig } from './types/add-selection';
 import { type ChatUpdateConfig, type GetMemberEntitiesConfig } from './types/update-chat';
 
 export class ChatService
@@ -243,14 +244,19 @@ export class ChatService
 		this.#userService.kickUserFromCollab(dialogId, userId);
 	}
 
-	addToChat(addConfig: {chatId: number, members: string[], showHistory: boolean}): Promise
+	addToChat(addConfig: {chatId: number, members: Array<string | number>, showHistory: boolean}): Promise
 	{
 		return this.#userService.addToChat(addConfig);
 	}
 
-	joinChat(dialogId: string): void
+	addSelection(selectionConfig: AddSelectionConfig): Promise<boolean>
 	{
-		this.#userService.joinChat(dialogId);
+		return this.#userService.addSelection(selectionConfig);
+	}
+
+	joinChat(dialogId: string): Promise<boolean>
+	{
+		return this.#userService.joinChat(dialogId);
 	}
 
 	addManager(dialogId: string, userId: number): void

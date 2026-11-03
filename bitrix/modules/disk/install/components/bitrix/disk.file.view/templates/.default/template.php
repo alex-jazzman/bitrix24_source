@@ -20,9 +20,10 @@ $documentRoot = \Bitrix\Main\Application::getDocumentRoot();
 $messages = Loc::loadLanguageFile(__FILE__);
 
 CJSCore::Init([
+	'clipboard',
 	'ui.design-tokens',
+	'ui.design-tokens.air',
 	'ui.icon-set.outline',
-	'ui.fonts.opensans',
 	'ui.viewer',
 	'ui.avatar',
 	'disk.viewer.actions',
@@ -32,11 +33,14 @@ CJSCore::Init([
 	'disk_information_popups',
 	'sidepanel',
 	'ui.buttons',
+	'ui.system.menu',
 	'disk.model.sharing-item',
-	'disk.model.external-link.input',
-	'disk.model.external-link.description',
-	'disk.model.external-link.settings',
+	'disk.air-message-box',
 ]);
+
+// A panel of the same file is injected into this document over the card, and both templates
+// print the same names: every id of this surface is prefixed with the id of its own root.
+$surfaceId = 'disk-detail-card-' . $arResult['FILE']['ID'];
 
 $sortBpLog = false;
 if(isset($_GET['log_sort']))
@@ -56,14 +60,14 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 }
 ?>
 
-<div class="disk-detail">
+<div class="disk-detail" id="<?= $surfaceId ?>" data-testid="disk-detail-card">
 	<div class="disk-detail-content">
 
 		<div class="disk-detail-file">
 			<div class="disk-detail-preview disk-detail-preview-with-border">
 				<? if($arResult['FILE']['IS_IMAGE']) { ?>
 					<div class="disk-detail-preview-image" data-role="disk-detail-preview-image">
-						<a class="disk-detail-preview-link" href="<?= $arResult['FILE']['SHOW_FILE_URL'] ?>" target="_blank"><img src="<?= $arResult['FILE']['SHOW_PREVIEW_URL'] ?>" alt="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>" title="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>"></a>
+						<a class="disk-detail-preview-link" data-testid="disk-detail-preview-link" href="<?= $arResult['FILE']['SHOW_FILE_URL'] ?>" target="_blank"><img src="<?= $arResult['FILE']['SHOW_PREVIEW_URL'] ?>" alt="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>" title="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>"></a>
 					</div>
 				<?  } elseif($arResult['FILE']['SHOW_PREVIEW_IMAGE_URL']) { ?>
 					<div class="bx-shared-preview-document-image <?= $arResult['FILE']['ICON_CLASS'] ?>" style="position: relative">
@@ -104,9 +108,9 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 					}
 				)
 			</script>
-			<div class="disk-detail-file-info">
-				<span class="disk-detail-file-name"><?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?></span>
-				<table class="disk-detail-table">
+			<div class="disk-detail-file-info" data-testid="disk-detail-file-info">
+				<span class="disk-detail-file-name" data-testid="disk-detail-file-name"><?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?></span>
+				<table class="disk-detail-table" data-testid="disk-detail-file-params">
 					<tr>
 						<td class="disk-detail-table-param"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_SIZE') ?>:</td>
 						<td class="disk-detail-table-value"><?= CFile::formatSize($arResult['FILE']['SIZE']) ?></td>
@@ -141,7 +145,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<div class="disk-detail-sidebar-owner">
 					<?= $arResult['FILE']['CREATE_USER']['AVA_HTML'] ?>
 					<div class="disk-detail-sidebar-owner-name">
-						<a class="disk-detail-sidebar-owner-link" target="_top" href="<?= $arResult['FILE']['CREATE_USER']['LINK'] ?>"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['NAME']) ?></a>
+						<a class="disk-detail-sidebar-owner-link" data-testid="disk-detail-file-owner-link" target="_top" href="<?= $arResult['FILE']['CREATE_USER']['LINK'] ?>"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['NAME']) ?></a>
 						<div class="disk-detail-sidebar-owner-position"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['WORK_POSITION']) ?></div>
 					</div>
 				</div>
@@ -149,7 +153,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 		</div>
 
 		<? if(!empty($arResult['USE_IN_ENTITIES'])){?>
-		<div class="disk-file-info">
+		<div class="disk-file-info" data-testid="disk-detail-usage">
 			<div class="disk-file-info-title"><?= Loc::getMessage('DISK_FILE_VIEW_USAGE') ?></div>
 			<? foreach($arResult['ENTITIES'] as $entity){?>
 				<div class="disk-file-info-item">
@@ -157,11 +161,11 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 					<?
 						if(!empty($entity['DETAIL_URL']))
 						{
-							echo "<a class=\"disk-file-info-item-link\" target='_blank' href=\"{$entity['DETAIL_URL']}\">" . htmlspecialcharsbx($entity['TITLE']) . "</a>";
+							echo "<a class=\"disk-file-info-item-link\" data-testid=\"disk-detail-usage-link\" target='_blank' href=\"{$entity['DETAIL_URL']}\">" . htmlspecialcharsbx($entity['TITLE']) . "</a>";
 						}
 						elseif(!empty($entity['JS_OPEN_DETAIL']))
 						{
-							echo "<a class=\"disk-file-info-item-link\" href=\"javascript:{$entity['JS_OPEN_DETAIL']}\">" . htmlspecialcharsbx($entity['TITLE']) . "</a>";
+							echo "<a class=\"disk-file-info-item-link\" data-testid=\"disk-detail-usage-link\" href=\"javascript:{$entity['JS_OPEN_DETAIL']}\">" . htmlspecialcharsbx($entity['TITLE']) . "</a>";
 						}
 						else
 						{
@@ -187,7 +191,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 			<? }?>
 		</div>
 		<? } else { ?>
-			<div class="disk-file-info">
+			<div class="disk-file-info" data-testid="disk-detail-usage">
 				<div class="disk-file-info-title"><?= Loc::getMessage('DISK_FILE_VIEW_USAGE') ?></div>
 				<div class="disk-file-info-item">
 					<span class="disk-file-info-item-not-used"><?= Loc::getMessage('DISK_FILE_VIEW_NOT_USED_1') ?></span>
@@ -198,7 +202,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 	<div class="disk-detail-sidebar">
 
 		<div class="disk-detail-sidebar-section">
-			<div class="disk-detail-sidebar-editor">
+			<div class="disk-detail-sidebar-editor" data-testid="disk-detail-editor-row">
 				<? if ($arResult['FILE']['IS_DELETED'] && $arResult['CAN_RESTORE'])
 				{
 					?>
@@ -216,7 +220,10 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 							modalWindow: BX.Disk.openBlankDocumentPopup()
 						}); event.preventDefault(); return false;"><span class="ui-icon-set --edit-m" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_FILE_EDIT') ?></a><?
 				}?>
-				<a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-download" data-testid="disk-detail-editor-download" href="<?= $arResult['FILE']['DOWNLOAD_URL'] ?>"><span class="ui-icon-set --o-download" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD') ?></a>
+				<? if ($arResult['CAN_DOWNLOAD'])
+				{
+					?><a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-download" data-testid="disk-detail-editor-download" href="<?= $arResult['FILE']['DOWNLOAD_URL'] ?>"><span class="ui-icon-set --o-download" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD') ?></a><?
+				}?>
 				<? if (!$arResult['FILE']['IS_DELETED'] && !empty($arResult['CAN_UPDATE']) && (!$arResult['FILE']['LOCK']['IS_LOCKED'] || $arResult['FILE']['LOCK']['IS_LOCKED_BY_SELF']))
 				{
 					?>
@@ -227,6 +234,10 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 					<?
 				}
 				?>
+				<div class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-history" data-testid="disk-detail-editor-history" role="button" tabindex="0">
+					<span class="ui-icon-set --o-clock-back" aria-hidden="true"></span>
+					<?= Loc::getMessage('DISK_FILE_VIEW_FILE_GO_TO_HISTORY') ?>
+				</div>
 				<? if(!empty($arResult['CAN_DELETE']))
 				{
 					?>
@@ -237,15 +248,21 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 					<?
 				}
 				?>
-				<div class="disk-detail-sidebar-link-more js-disk-file-more-actions" data-testid="disk-detail-more-actions"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_MORE_ACTIONS') ?></div>
+				<? if ($arResult['SHOW_USER_FIELDS'] || $arParams['STATUS_BIZPROC'])
+				{
+					?>
+					<div class="disk-detail-sidebar-link-more js-disk-file-more-actions" data-testid="disk-detail-more-actions" role="button" tabindex="0" aria-haspopup="menu"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_MORE_ACTIONS') ?></div>
+					<?
+				}
+				?>
 			</div>
 		</div>
 
-		<?php if(!$arResult['FILE']['IS_DELETED'] && $arResult['EXTERNAL_LINK']['ENABLED']){ ?>
+		<?php if(!$arResult['FILE']['IS_DELETED']){ ?>
 		<div class="disk-detail-sidebar-section">
-			<div class="disk-detail-sidebar-public-link">
-				<div class="disk-detail-sidebar-public-link-copy-link" id="disk-detail-sidebar-public-link-copy-link" data-testid="disk-detail-copy-internal-link" for="bx-disk-sidebar-shared-inner-link-input" title="<?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK_COPY_HINT') ?>"><span class="ui-icon-set --o-copy" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK') ?></div>
-				<input class="bx-disk-sidebar-shared-inner-link-input" type="text" value="<?= $arResult['FILE']['SHOW_FILE_ABSOLUTE_URL'] ?>" id="bx-disk-sidebar-shared-inner-link-input" data-testid="disk-detail-internal-link-input">
+			<div class="disk-detail-sidebar-public-link" data-testid="disk-detail-internal-link">
+				<div class="disk-detail-sidebar-public-link-copy-link" id="<?= $surfaceId ?>-internal-link-copy" data-entity="internal-link-copy" data-testid="disk-detail-copy-internal-link" role="button" tabindex="0" title="<?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK_COPY_HINT') ?>"><span class="ui-icon-set --o-copy" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK') ?></div>
+				<input class="bx-disk-sidebar-shared-inner-link-input" type="text" value="<?= $arResult['FILE']['SHOW_FILE_ABSOLUTE_URL'] ?>" id="<?= $surfaceId ?>-internal-link-input" data-entity="internal-link-input" data-testid="disk-detail-internal-link-input">
 			</div>
 			<div data-entity="external-link-place"></div>
 		</div>
@@ -258,10 +275,10 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<div class="disk-detail-sidebar-user-access-title disk-detail-sidebar-owner-title-double">
 					<div class="disk-detail-sidebar-user-access-title-text"><?= Loc::getMessage('DISK_FILE_VIEW_TAB_SHARING') ?>:</div>
 					<?php if($arResult['CAN_SHARE'] && $arResult['CAN_CHANGE_RIGHTS']) { ?>
-					<div class="disk-detail-sidebar-user-access-title-add" id="disk-file-add-sharing"><?= Loc::getMessage('DISK_FILE_ADD_SHARING') ?></div>
+					<div class="disk-detail-sidebar-user-access-title-add js-disk-file-add-sharing" id="<?= $surfaceId ?>-add-sharing" data-testid="disk-detail-sharing-add" role="button" tabindex="0" aria-haspopup="dialog"><?= Loc::getMessage('DISK_FILE_ADD_SHARING') ?></div>
 					<?php } ?>
 				</div>
-				<div class="disk-detail-sidebar-user-access-section"></div>
+				<div class="disk-detail-sidebar-user-access-section" data-testid="disk-detail-sharing-section"></div>
 			</div>
 			<?
 		}
@@ -273,7 +290,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<div class="disk-detail-sidebar-user-access-title">
 					<div class="disk-detail-sidebar-user-access-title-text"><?= Loc::getMessage('DISK_FILE_VIEW_TAB_USER_FIELDS') ?>:</div>
 					<?php if($arResult['CAN_UPDATE']) { ?>
-					<div class="disk-detail-sidebar-user-access-title-add" id="disk-edit-uf"><?= Loc::getMessage('DISK_FILE_VIEW_LINK_EDIT_USER_FIELDS_SIDEBAR') ?></div>
+					<div class="disk-detail-sidebar-user-access-title-add js-disk-edit-uf" data-testid="disk-detail-uf-edit" role="button" tabindex="0"><?= Loc::getMessage('DISK_FILE_VIEW_LINK_EDIT_USER_FIELDS_SIDEBAR') ?></div>
 					<?php } ?>
 				</div>
 				<?php include 'uf_sidebar.php'; ?>
@@ -347,18 +364,34 @@ $APPLICATION->IncludeComponent(
 	array("HIDE_ICONS" => "Y")
 );?>
 <script>
+(function () {
+// The card is opened in a slider over the current page, so a second panel can be in the same
+// document: the mounting points of this card are looked up inside its own root, not across the
+// document. The root is found by an id of its own, because an injected surface has its inline
+// script evaluated from <head> and cannot reach itself through document.currentScript. The id
+// names the surface and the file - getComponentId() is a constant of this component and tells
+// nothing apart - so it also names the layers this shell puts into the body.
+var surfaceId = '<?= $surfaceId ?>';
+var shell = document.getElementById(surfaceId) || document;
+
 BX(function () {
 	BX.Disk['FileViewClass_<?= $component->getComponentId() ?>'] = new BX.Disk.FileViewClass({
 		componentName: '<?= $this->getComponent()->getName() ?>',
-		selectorId: 'disk-file-add-sharing',
+		surfaceId: surfaceId,
+		// the dialog of recipients caches its instances by id, and a panel of the same file is
+		// injected into this document over the card: the id of the surface tells the two apart
+		selectorDialogId: surfaceId + '-sharing-selector',
 		object: {
 			id: <?= $arResult['FILE']['ID'] ?>,
+			uniqueCode: '<?= CUtil::JSEscape($arResult['FILE']['UNIQUE_CODE']) ?>',
+			uls: '<?= CUtil::JSEscape($arResult['FILE']['ULS'] ?? '') ?>',
 			name: '<?= CUtil::JSEscape($arResult['FILE']['NAME']) ?>',
 			isDeleted: <?= $arResult['FILE']['IS_DELETED']? 'true' : 'false' ?>,
 			isHistoryBlocked: <?= $arResult['HISTORY_BLOCKED_BY_FEATURE']? 'true' : 'false' ?>,
 			hasUf: <?= $arResult['SHOW_USER_FIELDS']? 'true' : 'false' ?>,
 			hasBp: <?= $arParams['STATUS_BIZPROC']? 'true' : 'false' ?>
 		},
+		isViewByUnifiedLink: <?= Main\Web\Json::encode($arResult['IS_VIEW_BY_UNIFIED_LINK']) ?>,
 		canDelete: <?= $arResult['CAN_DELETE']? 'true' : 'false' ?>,
 		urls: {
 			trashcanList: '<?= CUtil::JSUrlEscape($arResult['PATH_TO_TRASHCAN_LIST']) ?>',
@@ -368,25 +401,33 @@ BX(function () {
 			fileEditUf: '?action=editUserField'
 		},
 		layout: {
-			sidebarUfValuesSection: BX('disk-uf-sidebar-values'),
-			editUf: BX('disk-edit-uf'),
-			moreActionsButton: BX(document.querySelector('.js-disk-file-more-actions')),
-			restoreButton: BX(document.querySelector('.disk-detail-sidebar-editor-item-restore')),
-			deleteButton: BX(document.querySelector('.disk-detail-sidebar-editor-item-remove')),
-			addSharingButton: BX('disk-file-add-sharing'),
-			externalLink: BX(document.querySelector('[data-entity="external-link-place"]'))
+			sidebarUfValuesSection: BX(shell.querySelector('.disk-detail-sidebar-user-custom-field')),
+			editUf: BX(shell.querySelector('.js-disk-edit-uf')),
+			moreActionsButton: BX(shell.querySelector('.js-disk-file-more-actions')),
+			restoreButton: BX(shell.querySelector('.disk-detail-sidebar-editor-item-restore')),
+			historyButton: BX(shell.querySelector('.disk-detail-sidebar-editor-item-history')),
+			deleteButton: BX(shell.querySelector('.disk-detail-sidebar-editor-item-remove')),
+			addSharingButton: BX(shell.querySelector('.js-disk-file-add-sharing')),
+			externalLink: BX(shell.querySelector('[data-entity="external-link-place"]')),
+			copyInternalLinkButton: BX(shell.querySelector('[data-entity="internal-link-copy"]')),
+			internalLinkInput: BX(shell.querySelector('[data-entity="internal-link-input"]')),
+			sharingSection: BX(shell.querySelector('.disk-detail-sidebar-user-access-section'))
 		},
 		externalLinkInfo: {
+			id: <?= $arResult['EXTERNAL_LINK']['ID'] ?? 'null' ?>,
+			objectId: <?= (int)($arResult['EXTERNAL_LINK']['OBJECT_ID'] ?? $arResult['FILE']['ID']) ?>,
+			supportsSharingAccessPopup: <?= $arResult['EXTERNAL_LINK']['SUPPORTS_SHARING_ACCESS_POPUP']? 'true' : 'false'?>,
 			<? if (isset($arResult['EXTERNAL_LINK']['ID'])) { ?>
-				id: <?= $arResult['EXTERNAL_LINK']['ID']?>,
-				objectId: <?= $arResult['EXTERNAL_LINK']['OBJECT_ID']?>,
-				link: '<?= $arResult['EXTERNAL_LINK']['LINK']?>',
+				link: '<?= CUtil::JSEscape($arResult['EXTERNAL_LINK']['LINK'])?>',
 				hasPassword: <?= $arResult['EXTERNAL_LINK']['HAS_PASSWORD']? 'true' : 'false'?>,
 				canEditSettings: <?= $arResult['EXTERNAL_LINK']['CAN_EDIT_SETTINGS'] ? 'true' : 'false' ?>,
+				availableEdit: <?= $arResult['EXTERNAL_LINK']['AVAILABLE_EDIT']? 'true' : 'false'?>,
+				canEditDocument: <?= $arResult['EXTERNAL_LINK']['CAN_EDIT_DOCUMENT'] === null? 'null' : ($arResult['EXTERNAL_LINK']['CAN_EDIT_DOCUMENT']? 'true' : 'false')?>,
+				isBoard: <?= $arResult['EXTERNAL_LINK']['IS_BOARD']? 'true' : 'false'?>,
 				hasDeathTime: <?= $arResult['EXTERNAL_LINK']['HAS_DEATH_TIME']? 'true' : 'false'?>,
 				deathTimeTimestamp: <?= $arResult['EXTERNAL_LINK']['DEATH_TIME_TIMESTAMP']?: 'null'?>,
 				<? if ($arResult['EXTERNAL_LINK']['DEATH_TIME']) { ?>
-				deathTime: '<?= $arResult['EXTERNAL_LINK']['DEATH_TIME'] ?>'
+				deathTime: '<?= CUtil::JSEscape($arResult['EXTERNAL_LINK']['DEATH_TIME']) ?>'
 				<? } ?>
 			<? } ?>
 		},
@@ -403,6 +444,7 @@ BX(function () {
 });
 
 BX.message(<?=Main\Web\Json::encode($messages)?>);
+})();
 </script>
 <?
 global $USER;
@@ -423,44 +465,3 @@ if(
 
 <?
 }
-
-$APPLICATION->IncludeComponent(
-	"bitrix:main.ui.selector",
-	".default",
-	[
-		'API_VERSION' => 2,
-		'ID' => 'disk-file-add-sharing',
-		'BIND_ID' => 'disk-file-add-sharing',
-		'ITEMS_SELECTED' => [],
-		'CALLBACK' => [
-			'select' => "BX.Disk['FileViewClass_{$component->getComponentId()}'].onSelectSelectorItem.bind(BX.Disk['FileViewClass_{$component->getComponentId()}'])",
-			'unSelect' => "BX.Disk['FileViewClass_{$component->getComponentId()}'].onUnSelectSelectorItem.bind(BX.Disk['FileViewClass_{$component->getComponentId()}'])",
-			'openDialog' => 'function(){}',
-			'closeDialog' => 'function(){}',
-		],
-		'OPTIONS' => [
-			'eventInit' => 'Disk.FileView:onShowSharingEntities',
-			'eventOpen' => 'Disk.FileView:openSelector',
-			'useContainer' => 'Y',
-			'lazyLoad' => 'Y',
-			'context' => 'DISK_SHARING',
-			'contextCode' => 'U',
-			'useSearch' => 'Y',
-			'useClientDatabase' => 'Y',
-			'allowEmailInvitation' => 'N',
-			'enableAll' => 'N',
-			'enableDepartments' => 'Y',
-			'enableSonetgroups' => 'Y',
-			'departmentSelectDisable' => 'N',
-			'allowAddUser' => 'N',
-			'allowAddCrmContact' => 'N',
-			'allowAddSocNetGroup' => 'N',
-			'allowSearchEmailUsers' => 'N',
-			'allowSearchCrmEmailUsers' => 'N',
-			'allowSearchNetworkUsers' => 'N',
-			'useNewCallback' => 'Y',
-		]
-	],
-	false,
-	["HIDE_ICONS" => "Y"]
-);

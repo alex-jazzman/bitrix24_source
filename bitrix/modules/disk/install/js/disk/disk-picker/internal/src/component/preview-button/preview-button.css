@@ -1,0 +1,29 @@
+/* The wrapper is what the hosts lay out and what carries the hint: the design-system
+   button renders outside the Vue tree and takes neither a class nor a title of its own.
+   It holds no size - the button inside brings its own from ButtonSize - and no fill:
+   the row or the panel under it is the surface. */
+.disk-picker-preview-button {
+	display: flex;
+	align-items: center;
+	flex: none;
+	/* The list and the table fade the button in on hover and on focus; the panel keeps it
+	   on. The duration lives with them, the travel is the same everywhere. */
+	transition: opacity var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+/* A square, not a lozenge: a collapsed small button is wider than it is tall, and the film it
+   takes on hover showed that shape. The wrapper is the square — as tall as the button — and
+   clips the film to it; the glyph stays centred because the button overflows both sides alike.
+   The clip hides the button's own focus outline, so the wrapper draws the ring instead. */
+.disk-picker-preview-button {
+	justify-content: center;
+	width: var(--ui-size-2xl);
+	height: var(--ui-size-2xl);
+	border-radius: var(--ui-border-radius-sm);
+	overflow: hidden;
+}
+
+.disk-picker-preview-button:has(:focus-visible) {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}

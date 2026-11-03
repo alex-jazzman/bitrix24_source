@@ -144,8 +144,8 @@ button.intranet-user-otp-con-top-status-link {
 	display: inline-block;
 	min-height: 148px;
 	min-width: 128px;
-	background-image: -webkit-image-set(url(./images/warningShield.png) 1x, url(./images/warningShield@2x.png) 2x);
-	background-image: image-set(url(./images/warningShield.png) 1x, url(./images/warningShield@2x.png) 2x);
+	background-image: -webkit-image-set(url(./images/warningShield.webp) 1x, url(./images/warningShield@2x.webp) 2x);
+	background-image: image-set(url(./images/warningShield.webp) 1x, url(./images/warningShield@2x.webp) 2x);
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;

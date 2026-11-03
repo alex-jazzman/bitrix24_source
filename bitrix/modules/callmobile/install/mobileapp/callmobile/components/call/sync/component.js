@@ -12,7 +12,7 @@
 	const { CallListAnalyticsController } = jn.require('call/callList/analyticsController');
 	const { SyncAnalyticsController } = jn.require('call/sync/analyticsController');
 	const { Analytics } = jn.require('call/const');
-	const { CallListService, SCOPES } = jn.require('call/callList/core');
+	const { CallListService, SCOPES, CONTENT_STATE } = jn.require('call/callList/core');
 	const { Indent } = jn.require('tokens');
 	const { HeroBanner } = jn.require('call/sync/heroBanner');
 	const { ActionRow } = jn.require('call/sync/actionRow');
@@ -49,6 +49,7 @@
 				isSearchMode: false,
 				searchItems: [],
 				isLoadingTab: false,
+				hasLoadError: false,
 			};
 
 			this.syncCallService = new SyncCallService();
@@ -70,7 +71,10 @@
 			this.boundOnTabsSelected = (id) => this.onTabsSelected(id);
 			BX.addCustomEvent('onTabsSelected', this.boundOnTabsSelected);
 
-			BX.onViewLoaded(() => this.initFloatingButton());
+			if (!this.callListService.isGuestMode)
+			{
+				BX.onViewLoaded(() => this.initFloatingButton());
+			}
 
 			const openSource = BX.componentParameters.get('openSource', null);
 			if (openSource === OPEN_SOURCE.MENU)
@@ -137,7 +141,16 @@
 					else
 					{
 						this.callListMountedFlag = true;
-						this.callListService.searchController.setupSearch([moreButton]);
+
+						if (this.callListService.isGuestMode)
+						{
+							this.initRightButtons(moreButton);
+						}
+						else
+						{
+							this.callListService.searchController.setupSearch([moreButton]);
+						}
+
 						this.callListService.init();
 					}
 				}
@@ -155,14 +168,17 @@
 				const mainLayout = this.callListService.layout || layout;
 				if (mainLayout && typeof mainLayout.setRightButtons === 'function')
 				{
-					mainLayout.setRightButtons([
-						{
-							type: 'search',
-							id: 'search',
-							callback: () => this.callListService.searchController.openSearch(mainLayout),
-						},
-						moreButton,
-					]);
+					const searchButton = {
+						type: 'search',
+						id: 'search',
+						callback: () => this.callListService.searchController.openSearch(mainLayout),
+					};
+
+					mainLayout.setRightButtons(
+						this.callListService.isGuestMode
+							? [moreButton]
+							: [searchButton, moreButton],
+					);
 				}
 			});
 		}
@@ -477,18 +493,8 @@
 		{
 			const callItems = this.callListService.getSortedItems();
 			const isSearch = this.state.isSearchMode;
-			const noData = (this.state.allItems.length === 0);
-			const showBodyLoader = (
-				((!this.state.isReady) && !isSearch)
-				|| ((this.callListService.isFetching && noData) && !isSearch)
-				|| (this.state.isLoadingTab && this.callListService.wasEmptyBeforeSwitch && !isSearch)
-			);
-			const showEmptyState = (
-				!showBodyLoader
-				&& !isSearch
-				&& !this.state.isLoadingTab
-				&& callItems.length === 0
-			);
+			const contentState = this.callListService.resolveContentState(callItems);
+			const isLoading = (contentState === CONTENT_STATE.LOADING);
 
 			const loaderView = View(
 				{
@@ -501,6 +507,8 @@
 				this.callListService.loader,
 			);
 
+			const hasMore = (!isLoading && this.callListService.hasMore && !isSearch);
+
 			const listView = ListView({
 				items: callItems,
 				testId: 'sync-callList',
@@ -509,25 +517,38 @@
 				},
 				onRefresh: () => this.onRefresh(),
 				isRefreshing: this.state.isRefreshing,
-				hasMore: (!showBodyLoader && this.callListService.hasMore && !isSearch),
-				onLoadMore: (!showBodyLoader && this.callListService.hasMore && !isSearch)
+				hasMore,
+				onLoadMore: hasMore
 					? () => this.callListService.fetchList(false)
 					: null,
 				onItemClick: (item) => this.callListService.startCall(item),
 				onOpenChat: (item) => this.callListService.openChat(item),
-				onDelete: (item) => this.callListService.deleteCallItem(item),
+				onDelete: this.callListService.isGuestMode
+					? null
+					: (item) => this.callListService.deleteCallItem(item),
 			});
 
 			const emptyView = EmptyView({
 				text: this.callListService.getTabEmptyStateText(),
+				testId: 'sync-call-list-empty-state',
+			});
+
+			const errorView = EmptyView({
+				text: this.callListService.getErrorStateText(),
+				showImage: false,
+				testId: 'sync-call-list-error-state',
 			});
 
 			let content = listView;
-			if (showBodyLoader)
+			if (isLoading)
 			{
 				content = loaderView;
 			}
-			else if (showEmptyState)
+			else if (contentState === CONTENT_STATE.ERROR)
+			{
+				content = errorView;
+			}
+			else if (contentState === CONTENT_STATE.EMPTY)
 			{
 				content = emptyView;
 			}

@@ -28,7 +28,7 @@ if ($arResult['SHOW_DEMO_POPUP'])
 			BX.loadExt(['bitrix24.demo-invite-popup', 'ui.banner-dispatcher'])
 				.then((exports) => {
 					const { DemoInvitePopup, BannerDispatcher } = exports;
-					BannerDispatcher.normal.toQueue(async (onDone) => {
+					BannerDispatcher.critical.toQueue(async (onDone) => {
 						const popup = (new DemoInvitePopup(canInvite)).show();
 						popup.subscribe('onClose', () => {
 							onDone();

@@ -10,7 +10,7 @@ jn.define('mail/statemanager/redux/slices/mailboxes/thunk', (require, exports, m
 	const condition = () => isOnline();
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
-		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
 
 	const syncMailbox = createAsyncThunk(

@@ -69,8 +69,6 @@ if (\Bitrix\Main\Loader::includeModule('disk'))
 $jsLibraries = [
 	'ui.viewer',
 	'player',
-	//used in CRM_DOCUMENT activity item in inline edit to select new create date
-	'date',
 ];
 
 if (\Bitrix\Main\Loader::includeModule('voximplant'))
@@ -540,6 +538,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					ownerInfo: <?=CUtil::PhpToJSObject($arResult['ENTITY_INFO'])?>,
 					userId: <?=$arResult['USER_ID']?>,
 					readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
+					commentTextEditorEnabled: <?=$arResult['COMMENT_TEXT_EDITOR_ENABLED'] ? 'true' : 'false'?>,
 					currentUser: <?=\Bitrix\Main\Web\Json::encode($arResult['LAYOUT_CURRENT_USER'])?>,
 					pingSettings: <?=\Bitrix\Main\Web\Json::encode($arResult['PING_SETTINGS'])?>,
 					calendarSettings: <?=\Bitrix\Main\Web\Json::encode($arResult['CALENDAR_SETTINGS'] ?? [])?>,

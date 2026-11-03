@@ -1,4 +1,4 @@
-import { Runtime, Browser } from 'main.core';
+import { Browser } from 'main.core';
 import { useHistory, useHighlightedBlocks, useBlockDiagram } from 'ui.block-diagram';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { toValue } from 'ui.vue3';
@@ -8,34 +8,52 @@ import { useAgentHighlightStore } from '../../../entities/ai-assistant/stores/ag
 import { useAppStore } from '../../../entities/app';
 import {
 	diagramStore as useDiagramStore,
-	useBufferStore,
 	isBlockActivated,
 	nodeTitleEditServices,
 } from '../../../entities/blocks';
 import { useCommonNodeSettingsStore } from '../../../entities/common-node-settings';
-import { useNodeSettingsStore, generateNextInputPortId, areNodeSettingsDirty } from '../../../entities/node-settings';
+import {
+	useNodeSettingsStore,
+	generateNextInputPortId,
+	generateNextOutputPortId,
+	areNodeSettingsDirty,
+	getUnreachableOutputPortIds,
+	isOutputReachableInAnyState,
+} from '../../../entities/node-settings';
 import { useLoc } from '../../../shared/composables';
-import { textEditorServices } from '../../../shared/ui';
 import {
 	PORT_TYPES,
+	BLOCK_TYPES,
 	COMPLEX_NODE_PORT_LABELS,
 	BLOCK_TYPES_WITHOUT_SETTINGS,
 } from '../../../shared/constants';
+import { parsePortTitle } from '../../../shared/utils';
 import { useNodeDataInspectorStore } from '../../../shared/stores/node-data-inspector-store';
 import { FocusAnchor, rescueFocus } from '../../../shared/utils/focus-rescue';
 import { useDefaultTitle } from '../../../features/catalog';
+import { useEditFrameContent } from '../../../features/blocks/composables/use-edit-frame-content';
+import { useSaveToLibrary } from '../../../features/fragment-library';
 import { useDataViewDefinitionStore } from '../../../features/data-view-editor';
-import { type Block, type BlockId, type Port } from '../../../shared/types';
+import { type Block, type BlockId, type Connection, type Port, type PortId } from '../../../shared/types';
 import { getContextMenuItemHtml } from './get-context-menu-item-html';
 
 const HIDE_SETTINGS_DELAY = 300;
 const DRAG_THRESHOLD = 5;
+const COPY_BLOCK_TEST_ID = 'bizprocdesigner-block-menu-copy';
 const RENAME_NODE_TITLE_TEST_ID = 'bizprocdesigner-block-menu-rename';
+const SAVE_TO_LIBRARY_TEST_ID = 'bizprocdesigner-block-menu-save-to-library';
+const EDIT_FRAME_CONTENT_TEST_ID = 'bizprocdesigner-block-menu-edit-frame-content';
 
 // withTransition: play the content change of the settings panel with a transition. Off by default,
 // so a click on a node and the context menu keep showing the settings instantly.
 type ShowNodeSettingsOptions = {
 	withTransition?: boolean;
+};
+
+const getPortTitleNumber = (title: ?string): number => {
+	const number = parsePortTitle(title)?.id;
+
+	return Number.isFinite(number) ? number : 0;
 };
 
 export class BlockMediator
@@ -49,10 +67,14 @@ export class BlockMediator
 	#blockDiagram = null;
 	#nodeInspectorStore = null;
 	#diagramStore = null;
-	#bufferStore = null;
+	#copyPasteBuffer = null;
 	#highlightedBlocks = null;
 	#agentHighlightStore = null;
 	#isMac = false;
+	#editFrameContent = null;
+	#canEditFrameContent = null;
+	#saveToLibrary = null;
+	#canSaveToLibrary = null;
 	#clickStartX = 0;
 	#clickStartY = 0;
 	// The show in flight, as a promise settled the moment it ends. Doubles as the guard against a
@@ -70,10 +92,16 @@ export class BlockMediator
 		this.#dataViewDefinitionStore = useDataViewDefinitionStore();
 		this.#diagramStore = useDiagramStore();
 		this.#blockDiagram = useBlockDiagram();
-		this.#bufferStore = useBufferStore();
+		this.#copyPasteBuffer = this.#blockDiagram.copyPasteBuffer;
 		this.#isMac = Browser.isMac();
 		this.#highlightedBlocks = useHighlightedBlocks();
 		this.#agentHighlightStore = useAgentHighlightStore();
+		const editFrameContent = useEditFrameContent();
+		this.#editFrameContent = editFrameContent.editFrameContent;
+		this.#canEditFrameContent = editFrameContent.canEditFrameContent;
+		const saveToLibrary = useSaveToLibrary();
+		this.#saveToLibrary = saveToLibrary.saveToLibrary;
+		this.#canSaveToLibrary = saveToLibrary.canSaveToLibrary;
 
 		this.#blockDiagram.hooks.startDragBlock.on((block) => {
 			const settingsBlockId = this.#commonNodeSettingsStore.block?.id
@@ -97,6 +125,17 @@ export class BlockMediator
 	isCurrentComplexBlock(blockId: BlockId): boolean
 	{
 		return this.#complexNodeSettingsStore.isShown && this.#complexNodeSettingsStore.isCurrentBlock(blockId);
+	}
+
+	// Whether the settings store holds the LOADED settings of this block, so its rules may answer for the
+	// node. Deliberately not isCurrentComplexBlock(): fetchNodeSettings() marks the node as the current
+	// one before the request and commits the block only after it, so in between the rules are an empty
+	// map that would report every output of the node as unbound. The committed block tells the two
+	// states apart.
+	areSettingsLoadedForBlock(blockId: BlockId): boolean
+	{
+		return this.#complexNodeSettingsStore.block?.id === blockId
+			&& this.#complexNodeSettingsStore.isCurrentBlock(blockId);
 	}
 
 	hideAllSettings(): Promise<void>
@@ -235,6 +274,7 @@ export class BlockMediator
 			useDefaultTitle().resolveDefaultTitle(block.activity),
 			options,
 		);
+		this.syncSettingsWithDiagram();
 
 		return true;
 	}
@@ -300,11 +340,19 @@ export class BlockMediator
 
 	getCommonBlockMenuOptions(block: Block): Array<MenuItemOptions>
 	{
+		// Saving reads the scheme and writes nothing (see useSaveToLibrary), so it stands beside copying
+		// in both sets.
+		const saveToLibrary = this.#canSaveToLibrary()
+			? [this.getCtxMenuItemSaveToLibrary(block)]
+			: []
+		;
+
 		if (this.#diagramStore.isWriteLocked)
 		{
 			return [
 				this.getCtxMenuItemShowSettings(block),
 				this.getCtxMenuItemCopyBlock(block),
+				...saveToLibrary,
 			];
 		}
 
@@ -312,6 +360,7 @@ export class BlockMediator
 			this.getCtxMenuItemShowSettings(block),
 			this.getCtxMenuItemToggleActivation(block),
 			this.getCtxMenuItemCopyBlock(block),
+			...saveToLibrary,
 			this.getCtxMenuItemDeleteBlock(block),
 		];
 	}
@@ -331,6 +380,38 @@ export class BlockMediator
 		];
 	}
 
+	// The menu of a frame is assembled here beside the other block menus, so the write lock trims it
+	// the same way: the frame keeps its own set of items, but renaming and deleting leave it under
+	// the lock instead of reaching the actions behind them.
+	getFrameBlockMenuOptions(block: Block): Array<MenuItemOptions>
+	{
+		if (this.#diagramStore.isWriteLocked)
+		{
+			return [
+				this.getCtxMenuItemCopyBlock(block),
+			];
+		}
+
+		const items = [];
+
+		// The item is here even on a frame without a content area: turning the area on is part of
+		// the way into editing, so the menu opens the same editor as the button and the double
+		// click do. Where that way is closed the item goes with it, instead of opening a menu that
+		// does nothing.
+		if (this.#canEditFrameContent())
+		{
+			items.push(this.getCtxMenuItemEditFrameContent(block.id));
+		}
+
+		items.push(
+			this.getCtxMenuItemRenameNodeTitle(block.id),
+			this.getCtxMenuItemCopyBlock(block),
+			this.getCtxMenuItemDeleteBlock(block),
+		);
+
+		return items;
+	}
+
 	getCtxMenuItemCopyBlock(block: Block): MenuItemOptions
 	{
 		const itemId = 'copyBlock';
@@ -338,31 +419,46 @@ export class BlockMediator
 		return {
 			id: itemId,
 			html: getContextMenuItemHtml(
-				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+				this.#loc.getMessage('UI_BLOCK_DIAGRAM_CONTEXT_MENU_ITEM_COPY'),
 				this.#isMac ? '⌘ C' : 'Ctrl-C',
 			),
+			dataset: { testid: COPY_BLOCK_TEST_ID },
 			onclick: (): void => {
-				this.#bufferStore.setBufferContent({
+				this.#copyPasteBuffer.setContent({
 					blocks: [block],
 					connections: [],
 				});
 			},
 		};
 	}
+
+	// No hotkey and no caption plate for one: the item of the group selection has none either.
+	getCtxMenuItemSaveToLibrary(block: Block): MenuItemOptions
+	{
+		return {
+			id: 'saveToLibrary',
+			html: getContextMenuItemHtml(
+				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_FRAGMENT_LIBRARY_MENU_ITEM_SAVE'),
+			),
+			dataset: { testid: SAVE_TO_LIBRARY_TEST_ID },
+			onclick: (): void => {
+				this.#saveToLibrary([block], []);
+			},
+		};
+	}
+
 	getCtxMenuItemEditFrameContent(blockId: BlockId): MenuItemOptions
 	{
 		const itemId = 'editFrameContent';
 
 		return {
 			id: itemId,
-			html: getContextMenuItemHtml(
-				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_FRAME_ITEM_EDIT'),
-				this.#isMac ? '⌘ E' : 'Ctrl-E',
-			),
+			// No shortcut caption: the action needs the frame it was called on, and a shortcut
+			// carries no such argument.
+			text: this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_FRAME_ITEM_EDIT'),
+			dataset: { testid: EDIT_FRAME_CONTENT_TEST_ID },
 			onclick: (): void => {
-				textEditorServices
-					.get(blockId)
-					.onEdit();
+				this.#editFrameContent(blockId);
 			},
 		};
 	}
@@ -381,8 +477,17 @@ export class BlockMediator
 		};
 	}
 
+	// Ports are written here for every way in - a drop on a virtual port, the plus of the aux column,
+	// the last connection of an output leaving. The lock is checked at this single point, because a
+	// materialized port reaches the graph before the setter of connections can refuse the connection
+	// that asked for it, and the settings of the open node change along the way.
 	addComplexBlockPort(block: Block, title: string): ?string
 	{
+		if (this.#diagramStore.isWriteLocked)
+		{
+			return null;
+		}
+
 		let portId = '';
 		const isRelationPort = `${title[0]}${title[1]}` === COMPLEX_NODE_PORT_LABELS.relation;
 		const portType = isRelationPort ? PORT_TYPES.inputRelation : PORT_TYPES.input;
@@ -391,6 +496,11 @@ export class BlockMediator
 			if (isRelationPort)
 			{
 				portId = this.#complexNodeSettingsStore.addRelation();
+				if (portId === null)
+				{
+					return null;
+				}
+
 				this.#complexNodeSettingsStore.addRelationPort(portId, portType);
 			}
 			else
@@ -429,12 +539,160 @@ export class BlockMediator
 		return portId;
 	}
 
-	addAuxPort(block: Block, title: string): void
+	// Materializes a plain output E{N} dropped onto a placeholder. The "Output" construction is not
+	// created: the port stays unbound to any rule until the user binds it in the settings panel.
+	addComplexBlockOutputPort(block: Block, title: string): string
 	{
-		const isPortExists = block.ports.some((port) => port.title === title);
-		if (isPortExists)
+		if (this.#diagramStore.isWriteLocked)
+		{
+			return '';
+		}
+
+		const existingBlockPort = block.ports.find((port) => port.title === title);
+		if (existingBlockPort)
+		{
+			return existingBlockPort.id;
+		}
+
+		// The ports the placeholder title was built from, so the id and the title come from one source:
+		// while the settings of this node are loaded the store owns them, and an id counted off the block
+		// alone would repeat one the store has already handed out. The loaded-settings predicate picks the
+		// source, not the weaker one getComplexBlockPorts() draws the port column by: in the load window of
+		// the panel the store still holds the ports of the node opened before this one.
+		const areSettingsLoaded = this.areSettingsLoadedForBlock(block.id);
+		const complexBlockPorts = areSettingsLoaded
+			? (this.#complexNodeSettingsStore.ports ?? block.ports)
+			: block.ports;
+		// The same source answers whether this output is already named: a port the store has handed out
+		// keeps its id, and a fresh one would leave the store and the diagram naming one output twice.
+		const existingSettingsPort = complexBlockPorts.find((port) => port.title === title);
+		const portId = existingSettingsPort?.id ?? generateNextOutputPortId(
+			complexBlockPorts.filter((port) => {
+				return port.type === PORT_TYPES.output || port.type === PORT_TYPES.outputRelation;
+			}),
+		);
+
+		// A port written to the diagram alone is lost on the next saveSettings(): it overwrites the
+		// diagram ports with the settings store content. The same predicate answers here: while the panel
+		// loads, the store holds no ports of this node to write to, and fetchNodeSettings() rebuilds them
+		// off the block with this port included.
+		if (!existingSettingsPort && areSettingsLoaded)
+		{
+			this.#complexNodeSettingsStore.addRulePort(portId, PORT_TYPES.output, title);
+		}
+
+		this.#diagramStore.setPorts(block.id, this.#insertPortByTitleNumber(block.ports, {
+			id: portId,
+			title,
+			type: PORT_TYPES.output,
+			position: 'right',
+		}));
+
+		this.#history.makeSnapshot();
+
+		return portId;
+	}
+
+	// Mirrors addRulePort() of the settings store: a port goes where the number in its title asks for,
+	// so the diagram keeps one order no matter whether the panel took part in the materialization.
+	#insertPortByTitleNumber(ports: Array<Port>, newPort: Port): Array<Port>
+	{
+		const samePortTypePorts = ports.filter((port) => port.type === newPort.type);
+		const newPortNumber = getPortTitleNumber(newPort.title);
+
+		for (let i = samePortTypePorts.length - 1; i >= 0; i--)
+		{
+			if (getPortTitleNumber(samePortTypePorts[i].title) < newPortNumber)
+			{
+				const nextPorts = [...ports];
+				nextPorts.splice(ports.indexOf(samePortTypePorts[i]) + 1, 0, newPort);
+
+				return nextPorts;
+			}
+		}
+
+		return [newPort, ...ports];
+	}
+
+	// Mirrors addComplexBlockOutputPort: an output a connection brought to life goes away with its last
+	// connection while no rule of the node points at it. An output bound to a rule stays, and so does one
+	// that still holds another connection.
+	removeUnboundOutputPort(connection: Connection): void
+	{
+		if (this.#diagramStore.isWriteLocked)
 		{
 			return;
+		}
+
+		// A graph replay (an external agent draft) reaches this rule as a series of addressed deletions:
+		// the outputs it leaves behind belong to the replayed graph, not to a gesture of the user.
+		if (!connection || toValue(this.#blockDiagram.isAnimate))
+		{
+			return;
+		}
+
+		const block = this.#diagramStore.blocks.find((item) => item.id === connection.sourceBlockId);
+		if (block?.type !== BLOCK_TYPES.COMPLEX)
+		{
+			return;
+		}
+
+		const port = block.ports?.find((item) => item.id === connection.sourcePortId);
+		if (port?.type !== PORT_TYPES.output || this.#hasPortConnections(block.id, port.id))
+		{
+			return;
+		}
+
+		// Both states answer here, unlike the mark and the alert of the panel: they redraw with the
+		// draft, a deletion outlives it. An output the saved rules still point at therefore survives the
+		// window in which the panel has its binding removed and not saved.
+		const areSettingsLoaded = this.areSettingsLoadedForBlock(block.id);
+		const isReachable = isOutputReachableInAnyState(port.id, {
+			settingsRules: areSettingsLoaded ? (this.#complexNodeSettingsStore.nodeSettings?.rules ?? null) : null,
+			activityProperties: block.activity?.Properties ?? null,
+		});
+		if (isReachable)
+		{
+			return;
+		}
+
+		if (areSettingsLoaded)
+		{
+			this.#complexNodeSettingsStore.deletePort(port.id);
+		}
+
+		this.#diagramStore.setPorts(block.id, block.ports.filter((item) => item.id !== port.id));
+
+		this.#history.makeSnapshot();
+	}
+
+	#hasPortConnections(blockId: BlockId, portId: PortId): boolean
+	{
+		return this.#diagramStore.connections.some((connection) => {
+			return (connection.sourceBlockId === blockId && connection.sourcePortId === portId)
+				|| (connection.targetBlockId === blockId && connection.targetPortId === portId);
+		});
+	}
+
+	addAuxPort(block: Block, title: string): ?string
+	{
+		if (this.#diagramStore.isWriteLocked)
+		{
+			return null;
+		}
+
+		const existingPort = block.ports.find((port) => port.type === PORT_TYPES.aux && port.title === title);
+		if (existingPort)
+		{
+			if (existingPort.isActive === false)
+			{
+				this.#diagramStore.setPorts(block.id, block.ports.map((port) => {
+					return port.id === existingPort.id ? { ...port, isActive: true } : port;
+				}));
+				this.#history.makeSnapshot();
+			}
+
+			return existingPort.id;
 		}
 
 		const auxPorts = block.ports.filter((port) => port.type === PORT_TYPES.aux);
@@ -458,6 +716,8 @@ export class BlockMediator
 		]);
 
 		this.#history.makeSnapshot();
+
+		return `a${nextPortNumber}`;
 	}
 
 	getComplexBlockPorts(block: Block): Array<Port>
@@ -562,9 +822,9 @@ export class BlockMediator
 			return;
 		}
 
-		const blockExists = this.#diagramStore.blocks.some((block) => block.id === currentId);
+		const block = this.#diagramStore.blocks.find((item) => item.id === currentId);
 
-		if (!blockExists)
+		if (!block)
 		{
 			this.hideAllSettings();
 			if (complexBlockId)
@@ -572,7 +832,64 @@ export class BlockMediator
 				this.#complexNodeSettingsStore.toggleVisibility(false);
 				this.#complexNodeSettingsStore.reset();
 			}
+
+			return;
 		}
+
+		// The loaded-settings predicate, not the weaker "panel is shown": in the load window of another
+		// node the rules already describe THAT node while the ports still belong to this one, and rules
+		// that answer for someone else report every output here as unbound.
+		if (complexBlockId && this.areSettingsLoadedForBlock(complexBlockId))
+		{
+			this.#syncSettingsOutputPortsWithBlock(block);
+		}
+	}
+
+	// History snapshots the diagram alone, so undoing a materialized or a removed output leaves the open
+	// settings panel holding the other version of the port list. For an output no rule points at, the
+	// diagram is the source of truth: a port a connection still leaves through has to exist, and one the
+	// diagram no longer has is gone. An output bound to a rule is left alone - it legitimately lives in
+	// the settings store until saveSettings() writes it to the diagram.
+	#syncSettingsOutputPortsWithBlock(block: Block): void
+	{
+		const settingsPorts = this.#complexNodeSettingsStore.ports;
+		if (!Array.isArray(settingsPorts))
+		{
+			return;
+		}
+
+		const blockOutputPorts = (block.ports ?? []).filter((port) => port.type === PORT_TYPES.output);
+		const blockOutputPortIds = new Set(blockOutputPorts.map((port) => port.id));
+		const settingsOutputPortIds = new Set(
+			settingsPorts
+				.filter((port) => port.type === PORT_TYPES.output)
+				.map((port) => port.id),
+		);
+		// The outputs of the settings store the diagram no longer has. Their reachability is answered by
+		// one pass over the source for the whole list, not by a pass per port.
+		const missingSettingsOutputPorts = settingsPorts.filter((port) => {
+			return port.type === PORT_TYPES.output && !blockOutputPortIds.has(port.id);
+		});
+		// The rules of the panel are the only source here: the caller runs this method only for a block
+		// whose settings are loaded, so the rules map is there and it describes this very block.
+		const unreachablePortIds = new Set(getUnreachableOutputPortIds(
+			missingSettingsOutputPorts.map((port) => port.id),
+			{ settingsRules: this.#complexNodeSettingsStore.nodeSettings?.rules ?? null },
+		));
+
+		missingSettingsOutputPorts
+			.filter((port) => unreachablePortIds.has(port.id))
+			.forEach((port) => {
+				this.#complexNodeSettingsStore.deletePort(port.id);
+			});
+
+		blockOutputPorts
+			.filter((port) => {
+				return !settingsOutputPortIds.has(port.id) && this.#hasPortConnections(block.id, port.id);
+			})
+			.forEach((port) => {
+				this.#complexNodeSettingsStore.addRulePort(port.id, PORT_TYPES.output, port.title);
+			});
 	}
 
 	handleMouseUp(event: MouseEvent, block: Block): void

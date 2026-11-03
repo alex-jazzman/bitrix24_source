@@ -3507,15 +3507,33 @@ BX.adminTabControl.prototype.SelectTab = function(tab_id)
 
 BX.adminTabControl.prototype.ShowTab = function(tab_id, bShow)
 {
+	var tab = BX('tab_cont_' + tab_id);
+	if (!tab)
+	{
+		return;
+	}
+
 	if (bShow)
-		BX.addClass(BX('tab_cont_' + tab_id), 'adm-detail-tab-active');
+	{
+		BX.addClass(tab, 'adm-detail-tab-active');
+		//the class alone is a visual difference: the selected tab is marked for the accessibility tree too
+		tab.setAttribute('aria-current', 'true');
+	}
 	else
-		BX.removeClass(BX('tab_cont_' + tab_id), 'adm-detail-tab-active');
+	{
+		BX.removeClass(tab, 'adm-detail-tab-active');
+		tab.removeAttribute('aria-current');
+	}
 };
 
 BX.adminTabControl.prototype.ShowDisabledTab = function(tab_id, disabled)
 {
 	var tab = BX('tab_cont_'+tab_id);
+	if (!tab)
+	{
+		return;
+	}
+
 	if(disabled)
 	{
 		BX.addClass(tab, 'adm-detail-tab-disable');
@@ -3523,6 +3541,17 @@ BX.adminTabControl.prototype.ShowDisabledTab = function(tab_id, disabled)
 	else
 	{
 		BX.removeClass(tab, 'adm-detail-tab-disable');
+	}
+
+	//the tab keeps its place in the tab order, so it has to say when it does nothing; the state of the
+	//tab tells that and not the argument of the visual part above: EnableTab passes bExpandTabs there
+	if (this.aTabsDisabled[tab_id])
+	{
+		tab.setAttribute('aria-disabled', 'true');
+	}
+	else
+	{
+		tab.removeAttribute('aria-disabled');
 	}
 };
 
@@ -3562,6 +3591,9 @@ BX.adminTabControl.prototype.ToggleTabs = function()
 		BX.removeClass(a, 'adm-detail-title-setting-active');
 	}
 
+	//with the tabs expanded every panel of the form is on the page at once, so there is no current tab
+	//to point at: the mark comes off every tab together with the highlight it doubles, and collapsing
+	//puts both back on the tab the single visible panel belongs to
 	for(var i=0; i < this.aTabs.length; i++)
 	{
 		var tab_id = this.aTabs[i]["DIV"];

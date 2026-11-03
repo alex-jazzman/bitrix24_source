@@ -96,7 +96,10 @@ export class NotificationItem extends Item
 			}
 
 			const currentSkipPeriod = item.value;
-			if (currentSkipPeriod === this.skipPeriod)
+			const isSelected = currentSkipPeriod === this.skipPeriod;
+			this.markOption(item, isSelected);
+
+			if (isSelected)
 			{
 				Dom.addClass(node, this.ACCEPTED_ITEM_CLASS);
 

@@ -122,7 +122,6 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				.sendStartCreation({
 					category: Analytics.Category.copilot,
 					type: Analytics.Type.copilot,
-					section: Analytics.Section.copilotTab,
 				})
 			;
 		}

@@ -122,7 +122,11 @@ export const AddGuestContent = {
 								<div class="bx-im-add-guest-content__description_text">
 									{{ guestDescription }}
 								</div>
-								<a class="bx-im-add-guest-content__helpdesk-link" @click.prevent="openHelpdesk"> 
+								<a
+									class="bx-im-add-guest-content__helpdesk-link"
+									data-testid="im-add-guest-helpdesk-link"
+									@click.prevent="openHelpdesk"
+								>
 									{{ loc('IM_ENTITY_SELECTOR_ADD_GUEST_HELPDESK_LINK') }}
 								</a>
 							</div>
@@ -151,6 +155,7 @@ export const AddGuestContent = {
 					:loading="isInvitingGuests"
 					:disabled="isAddButtonDisabled || isInvitingGuests"
 					:text="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_BUTTON')"
+					:dataset="{ testid: 'im-add-guest-confirm' }"
 					@click="$emit('addGuest')"
 				/>
 				<UiButton
@@ -158,6 +163,7 @@ export const AddGuestContent = {
 					:loading="isInvitingGuests"
 					:style="ButtonStyle.PLAIN"
 					:text="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_CANCEL_BUTTON')"
+					:dataset="{ testid: 'im-add-guest-cancel' }"
 					@click="$emit('close')"
 				/>
 			</div>

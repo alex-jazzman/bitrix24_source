@@ -16,7 +16,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 	const { Text1 } = require('ui-system/typography/text');
 	const { Color, Indent, Component } = require('tokens');
 	const { Loc } = require('loc');
-	const { mergeImmutable } = require('utils/object');
+	const { clone, mergeImmutable } = require('utils/object');
 	const { Notify } = require('notify');
 	const { Haptics } = require('haptics');
 	const { BottomSheet } = require('bottom-sheet');
@@ -26,6 +26,17 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 	const { showErrorToast } = require('toast');
 	const { ListViewQueueWorker } = require('layout/list-view-queue-worker');
 	const { ManualBottomMenu } = require('tab-presets/src/preset-manual/manual-bottom-list');
+	const {
+		getDraggableMenuItems,
+		moveDraggableMenuItem,
+	} = require('tab-presets/src/preset-menu-state');
+	const {
+		PresetBottomMenuAnalytics,
+		PresetBottomMenuAnalyticsEvent,
+		PresetBottomMenuAnalyticsRole,
+		PresetBottomMenuAnalyticsType,
+	} = require('tab-presets/src/analytics');
+	const { ToolUsage } = require('tool-usage');
 
 	const ITEM_TYPE_ADD_BUTTON = 'add_button';
 	const ITEM_TYPE_ACTIVE = 'active';
@@ -34,13 +45,24 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 	const ITEM_TYPE_CHAT = 'chat';
 	const MAX_DRAG_ITEMS = 4;
 
+	/**
+	 * @extends {LayoutComponent<PresetManualMenuProps, PresetManualMenuState>}
+	 */
 	class PresetManualMenu extends LayoutComponent
 	{
+		/** @type {Array<TabPresetMenuItem>} */
 		#inactiveItems = [];
+		/** @type {Array<TabPresetMenuItem>} */
 		#activeItems = [];
+		#isSaving = false;
 
-		static show({ parentWidget, tabs })
+		/**
+		 * @param {PresetManualMenuShowParams} params
+		 * @return {void}
+		 */
+		static show({ parentWidget, tabs, presetConfig })
 		{
+			const configSnapshot = clone(presetConfig);
 			const bottomSheet = new BottomSheet({
 				titleParams: {
 					text: Loc.getMessage('PRESET_MANUAL_SETTINGS_TITLE'),
@@ -48,6 +70,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 				},
 				component: (layoutWidget) => new PresetManualMenu({
 					tabs,
+					presetConfig: configSnapshot,
 					parentWidget: layoutWidget,
 				}),
 			});
@@ -57,6 +80,9 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 				.open();
 		}
 
+		/**
+		 * @param {PresetManualMenuProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -68,31 +94,76 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 				shouldShowBanner: Tourist.firstTime('show_preset_manual_settings_banner'),
 			};
 
-			this.parseTabs(props.tabs);
+			this.parseTabs(props.tabs, props.presetConfig);
 		}
 
-		parseTabs({ current, list })
+		/**
+		 * @param {TabPresetTabs} tabs
+		 * @param {TabPresetConfig} [presetConfig]
+		 * @return {Array<string>}
+		 */
+		static getActiveItemKeys(tabs, presetConfig)
 		{
-			const activeItemKeys = Object.keys(current);
-			const inactiveItemKeys = Object.keys(list).filter((key) => !activeItemKeys.includes(key));
+			const availableKeys = PresetManualMenu.getAvailableItemKeys(tabs.list);
+			if (presetConfig === undefined)
+			{
+				return Object.keys(tabs.current).filter((key) => availableKeys.includes(key));
+			}
 
-			this.initialActiveItems = activeItemKeys;
-			this.#activeItems = activeItemKeys.map((key) => ({
-				...current[key],
-				...list[key],
-				key,
-				type: current[key].canChangeSort ? ITEM_TYPE_ACTIVE : ITEM_TYPE_STATIC,
-				showBorderBottom: current[key].canChangeSort,
-			}));
-			this.#inactiveItems = inactiveItemKeys.map((key) => ({
-				...list[key],
-				key,
-				type: ITEM_TYPE_INACTIVE,
-				canBeRemoved: true,
-				showBorderBottom: true,
-			}));
+			if (!BX.type.isPlainObject(presetConfig))
+			{
+				return [];
+			}
+
+			return Object.entries(presetConfig)
+				.map(([key, sort], index) => ({ key, sort, index }))
+				.filter(({ key, sort }) => Number.isFinite(sort) && availableKeys.includes(key))
+				.sort((a, b) => a.sort - b.sort || a.index - b.index)
+				.map(({ key }) => key)
+			;
 		}
 
+		/**
+		 * @param {Record<string, TabPresetTabItem>} list
+		 * @return {Array<string>}
+		 */
+		static getAvailableItemKeys(list)
+		{
+			return Object.keys(list).filter((key) => BX.type.isPlainObject(list[key]));
+		}
+
+		/**
+		 * @param {TabPresetTabs} tabs
+		 * @param {TabPresetConfig} [presetConfig]
+		 * @return {void}
+		 */
+		parseTabs(tabs, presetConfig)
+		{
+			const { current, list } = tabs;
+			const activeItemKeys = PresetManualMenu.getActiveItemKeys(tabs, presetConfig);
+			const inactiveItemKeys = PresetManualMenu.getAvailableItemKeys(list)
+				.filter((key) => !activeItemKeys.includes(key));
+			const createItem = (key, active) => {
+				const canChangeSort = key !== 'menu'
+					&& (list[key].canChangeSort ?? current[key]?.canChangeSort ?? true);
+				const canBeRemoved = key !== ITEM_TYPE_CHAT && key !== 'menu'
+					&& (list[key].canBeRemoved ?? current[key]?.canBeRemoved ?? true);
+
+				return {
+					...clone(list[key]),
+					key,
+					canChangeSort,
+					canBeRemoved,
+					type: active ? (canChangeSort ? ITEM_TYPE_ACTIVE : ITEM_TYPE_STATIC) : ITEM_TYPE_INACTIVE,
+					showBorderBottom: canChangeSort,
+				};
+			};
+
+			this.#activeItems = activeItemKeys.map((key) => createItem(key, true));
+			this.#inactiveItems = inactiveItemKeys.map((key) => createItem(key, false));
+		}
+
+		/** @return {LayoutComponent} */
 		render()
 		{
 			return Box(
@@ -118,6 +189,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			);
 		}
 
+		/** @return {LayoutComponent} */
 		#renderBoxFooter()
 		{
 			return BoxFooter(
@@ -147,7 +219,8 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 					Button({
 						testId: `${this.testId}-button-close-menu`,
 						size: ButtonSize.L,
-						text: Loc.getMessage('PRESET_MANUAL_SETTINGS_BUTTON_СLOSE'),
+						text: Loc.getMessage('PRESET_MANUAL_SETTINGS_BUTTON_CLOSE')
+							?? Loc.getMessage('PRESET_MANUAL_SETTINGS_BUTTON_\u0421LOSE'),
 						stretched: true,
 						design: ButtonDesign.OUTLINE,
 						onClick: this.#close,
@@ -156,8 +229,17 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			);
 		}
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {void}
+		 */
 		#replaceItem(item)
 		{
+			if (!item.canBeRemoved)
+			{
+				return;
+			}
+
 			ManualBottomMenu.show({
 				items: [item, ...this.#inactiveItems],
 				parentWidget: this.parentWidget,
@@ -166,7 +248,13 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			});
 		}
 
+		/** @return {void} */
 		#addNewItem = () => {
+			if (this.#createAddButtonItem().disabled)
+			{
+				return;
+			}
+
 			ManualBottomMenu.show({
 				items: this.#inactiveItems,
 				parentWidget: this.parentWidget,
@@ -174,69 +262,54 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			});
 		};
 
-		save = () => {
-			const config = Object.fromEntries(this.#activeItems.map((item, index) => [item.key, index]));
-
-			if (!this.isConfigChanged(config))
+		/** @return {Promise<void>} */
+		save = async () => {
+			if (this.#isSaving)
 			{
-				Haptics.impactLight();
-				this.#close();
+				return;
+			}
+
+			this.#isSaving = true;
+			const config = Object.fromEntries(this.#activeItems.map((item, index) => [item.key, index]));
+			void Notify.showIndicatorLoading();
+
+			try
+			{
+				const result = await TabPresetsNewUtils.setUserConfig(config);
+				if (result?.status !== 'success' || (Array.isArray(result.errors) && result.errors.length > 0))
+				{
+					throw new Error('Failed to apply manual preset');
+				}
+			}
+			catch
+			{
+				this.#isSaving = false;
+				void Notify.showIndicatorError({
+					hideAfter: 1000,
+					text: Loc.getMessage('TAB_PRESETS_NEW_APPLY_ERROR'),
+				});
+				Haptics.notifyFailure();
 
 				return;
 			}
 
-			void Notify.showIndicatorLoading();
-
-			const menuItemKeyWithMinimalSort = Object.keys(config)
-				.reduce((minKey, key) => (config[key] < config[minKey] ? key : minKey), Object.keys(config)[0]);
-
-			const analyticsEvent = new AnalyticsEvent({
-				tool: 'intranet',
-				category: 'main_menu',
-				event: 'menu_set',
-				c_section: 'ava_menu',
-				type: menuItemKeyWithMinimalSort,
+			ToolUsage.onChangePreset();
+			TabPresetsNewUtils.changeCurrentPreset('manual', {
+				tabs: config,
+				title: Loc.getMessage('PRESET_MANUAL_SETTINGS_TITLE'),
+			});
+			PresetBottomMenuAnalytics.send({
+				event: PresetBottomMenuAnalyticsEvent.SAVE_PRESET,
+				type: PresetBottomMenuAnalyticsType.CUSTOM_EMPLOYEE,
+				role: PresetBottomMenuAnalyticsRole.EMPLOYEE,
 			});
 
-			TabPresetsNewUtils.setUserConfig(config)
-				.then((result) => {
-					if (result)
-					{
-						TabPresetsNewUtils.changeCurrentPreset('manual', {
-							tabs: config,
-							title: Loc.getMessage('PRESET_MANUAL_SETTINGS_TITLE'),
-						});
-						analyticsEvent.setStatus('success');
-
-						void Notify.showIndicatorSuccess({ hideAfter: 1000 });
-						Haptics.notifySuccess();
-						setTimeout(() => Application.relogin(), 1000);
-					}
-				})
-				.catch(() => {
-					analyticsEvent.setStatus('error');
-					void Notify.showIndicatorError({
-						hideAfter: 1000,
-						text: Loc.getMessage('TAB_PRESETS_NEW_APPLY_ERROR'),
-					});
-					Haptics.notifyFailure();
-				})
-				.finally(() => {
-					analyticsEvent.send();
-				})
-			;
+			void Notify.showIndicatorSuccess({ hideAfter: 1000 });
+			Haptics.notifySuccess();
+			setTimeout(() => Application.relogin(), 1000);
 		};
 
-		isConfigChanged(config)
-		{
-			const currentActiveItems = Object.keys(config);
-
-			return (
-				currentActiveItems.length !== this.initialActiveItems.length
-				|| !currentActiveItems.every((tab, index) => tab === this.initialActiveItems[index])
-			);
-		}
-
+		/** @return {LayoutComponent} */
 		#renderListItems()
 		{
 			return Area(
@@ -275,6 +348,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			);
 		}
 
+		/**
+		 * @param {TabPresetManualListItem} item
+		 * @return {LayoutComponent}
+		 */
 		#renderItem = (item) => {
 			let itemContent = null;
 			switch (item.type)
@@ -293,6 +370,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			return this.#renderItemMenuWrapper(itemContent);
 		};
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {LayoutComponent}
+		 */
 		#renderStaticMenuItem = (item) => this.#renderItemCardWrapper(
 			{
 				testId: `${this.testId}-item-${item.key}-card`,
@@ -328,6 +409,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			}),
 		);
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {LayoutComponent}
+		 */
 		#renderBottomMenuItem = (item) => this.#renderItemCardWrapper(
 			{
 				testId: `${this.testId}-item-${item.key}-card`,
@@ -369,9 +454,13 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			this.#renderRightActions(item),
 		);
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {LayoutComponent|null}
+		 */
 		#renderRightActions(item)
 		{
-			if (item.key === ITEM_TYPE_CHAT)
+			if (!item.canBeRemoved)
 			{
 				return null;
 			}
@@ -408,6 +497,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			);
 		}
 
+		/**
+		 * @param {TabPresetAddButtonItem} item
+		 * @return {LayoutComponent}
+		 */
 		#renderAddButton = (item) => Button({
 			testId: `${this.testId}-add-button`,
 			text: Loc.getMessage('PRESET_MANUAL_SETTINGS_BUTTON_ADD'),
@@ -427,6 +520,11 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			},
 		});
 
+		/**
+		 * @param {Record<string, unknown>} params
+		 * @param {...unknown} children
+		 * @return {LayoutComponent}
+		 */
 		#renderItemCardWrapper = (params, ...children) => Card(
 			mergeImmutable(
 				{
@@ -446,6 +544,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			...children,
 		);
 
+		/**
+		 * @param {...unknown} children
+		 * @return {LayoutComponent}
+		 */
 		#renderItemMenuWrapper = (...children) => View(
 			{
 				style: {
@@ -456,6 +558,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			...children,
 		);
 
+		/**
+		 * @param {unknown} children
+		 * @return {LayoutComponent}
+		 */
 		#renderDragContainer = (children = null) => View(
 			{
 				style: {
@@ -465,6 +571,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			children,
 		);
 
+		/**
+		 * @param {unknown} children
+		 * @return {LayoutComponent}
+		 */
 		#renderItemIconContainer = (children = null) => View(
 			{
 				style: {
@@ -478,6 +588,10 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			children,
 		);
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {LayoutComponent}
+		 */
 		#renderItemIcon = (item) => IconView({
 			testId: `${this.testId}-item-${item.key}-icon`,
 			size: 32,
@@ -486,6 +600,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			icon: TabPresetsNewUtils.getIcon(item.iconId) || TabPresetsNewUtils.getIcon(item.key),
 		});
 
+		/** @return {LayoutComponent} */
 		#renderBanner()
 		{
 			return Area(
@@ -500,28 +615,42 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			);
 		}
 
+		/** @return {Array<TabPresetMenuItem>} */
 		#getDragMenuItems = () => {
-			return this.#activeItems.filter((item) => item.type !== ITEM_TYPE_STATIC).slice(0, MAX_DRAG_ITEMS);
+			return getDraggableMenuItems(this.#activeItems, MAX_DRAG_ITEMS);
 		};
 
+		/** @return {number} */
 		#getDragMenuItemsCount = () => {
 			return this.#getDragMenuItems().length;
 		};
 
+		/** @return {Array<TabPresetManualListItem>} */
 		#getStaticMenuItems = () => {
 			const staticItems = this.#activeItems.filter((item) => item.type === ITEM_TYPE_STATIC);
 
 			return [this.#createAddButtonItem(), ...staticItems];
 		};
 
+		/** @return {TabPresetAddButtonItem} */
 		#createAddButtonItem = () => ({
 			key: ITEM_TYPE_ADD_BUTTON,
 			type: ITEM_TYPE_ADD_BUTTON,
-			disabled: this.#getDragMenuItemsCount() >= MAX_DRAG_ITEMS,
+			disabled: this.#getDragMenuItemsCount() >= MAX_DRAG_ITEMS
+				|| this.#activeItems.length >= MAX_DRAG_ITEMS + 1,
 		});
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {Promise<void>}
+		 */
 		async #hideActiveItem(item)
 		{
+			if (!item.canBeRemoved)
+			{
+				return;
+			}
+
 			new AnalyticsEvent({
 				tool: 'intranet',
 				category: 'main_menu',
@@ -541,9 +670,19 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			void this.#toggleAddButton();
 		}
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @param {TabPresetMenuItem|undefined} replaceItem
+		 * @return {Promise<void>}
+		 */
 		async #showActiveItem(item, replaceItem)
 		{
-			if (replaceItem && item.key === replaceItem.key)
+			const inactiveItem = this.#inactiveItems.find((entry) => entry.key === item.key);
+			if (
+				!inactiveItem
+				|| (replaceItem && !replaceItem.canBeRemoved)
+				|| (!replaceItem && this.#createAddButtonItem().disabled)
+			)
 			{
 				return;
 			}
@@ -557,8 +696,8 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			}).send();
 
 			const newItem = {
-				...item,
-				type: ITEM_TYPE_ACTIVE,
+				...inactiveItem,
+				type: inactiveItem.canChangeSort ? ITEM_TYPE_ACTIVE : ITEM_TYPE_STATIC,
 			};
 
 			const index = this.#findItemIndexByKey(this.#activeItems, replaceItem?.key);
@@ -574,23 +713,36 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			this.#addToActiveItems(newItem, newIndex);
 			this.#removeFromInactiveItems(item);
 
-			if (hasIndex)
+			if (hasIndex && newItem.type === replaceItem.type)
 			{
 				void this.listRef?.updateRowByKey(replaceItem.key, newItem);
 			}
 			else
 			{
-				void this.listRef?.insertRows([newItem], 0, newIndex, 'fade');
+				if (hasIndex)
+				{
+					void this.listRef?.deleteRowsByKeys([replaceItem.key], 'fade');
+				}
+
+				const isStatic = newItem.type === ITEM_TYPE_STATIC;
+				const sectionItems = isStatic ? this.#getStaticMenuItems() : this.#getDragMenuItems();
+				const rowIndex = this.#findItemIndexByKey(sectionItems, newItem.key);
+				void this.listRef?.insertRows([newItem], isStatic ? 1 : 0, rowIndex, 'fade');
 			}
 
 			void this.#toggleAddButton();
 		}
 
+		/** @return {Promise<void>} */
 		async #toggleAddButton()
 		{
 			void this.listRef?.updateRowByKey(ITEM_TYPE_ADD_BUTTON, this.#createAddButtonItem());
 		}
 
+		/**
+		 * @param {TabPresetItemDropParams} params
+		 * @return {void}
+		 */
 		#handleMove = ({ from, to }) => {
 			const indexFrom = from.index;
 			const indexTo = to.index;
@@ -600,52 +752,83 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 				return;
 			}
 
-			const item = this.#activeItems[indexFrom];
-
-			this.#activeItems.splice(indexFrom, 1);
-			this.#activeItems.splice(indexTo, 0, item);
+			this.#activeItems = moveDraggableMenuItem(this.#activeItems, indexFrom, indexTo);
 
 			Haptics.impactMedium();
 		};
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @param {TabPresetMenuItem|undefined} index
+		 * @return {void}
+		 */
 		#onSelectedItem = (item, index) => {
 			void this.#showActiveItem(item, index);
 		};
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {void}
+		 */
 		#removeFromInactiveItems(item)
 		{
 			this.#inactiveItems = this.#removeItemFromList(this.#inactiveItems, item);
 		}
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {void}
+		 */
 		#removeFromActiveItems(item)
 		{
 			this.#activeItems = this.#removeItemFromList(this.#activeItems, item);
 		}
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @param {number} index
+		 * @return {void}
+		 */
 		#addToActiveItems(item, index)
 		{
 			this.#activeItems.splice(index, 0, item);
 		}
 
+		/**
+		 * @param {TabPresetMenuItem} item
+		 * @return {void}
+		 */
 		#addToInactiveItems(item)
 		{
 			this.#inactiveItems = [item, ...this.#inactiveItems];
 		}
 
+		/**
+		 * @param {Array<TabPresetMenuItem>} list
+		 * @param {TabPresetMenuItem} item
+		 * @return {Array<TabPresetMenuItem>}
+		 */
 		#removeItemFromList(list, item)
 		{
 			return list.filter((listItem) => listItem.key !== item.key);
 		}
 
+		/**
+		 * @param {Array<TabPresetMenuItem>} list
+		 * @param {string|undefined} key
+		 * @return {number}
+		 */
 		#findItemIndexByKey(list, key)
 		{
 			return list.findIndex((item) => item.key === key);
 		}
 
+		/** @return {void} */
 		#close = () => {
 			this.parentWidget.close();
 		};
 
+		/** @return {TabPresetLayoutWidget} */
 		get parentWidget()
 		{
 			const { parentWidget } = this.props;
@@ -653,6 +836,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 			return parentWidget;
 		}
 
+		/** @return {string} */
 		get testId()
 		{
 			return 'preset_manual_settings';

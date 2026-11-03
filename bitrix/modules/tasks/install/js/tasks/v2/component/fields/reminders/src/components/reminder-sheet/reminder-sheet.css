@@ -14,3 +14,31 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
 }
+
+/* button reset */
+.tasks-field-reminder-sheet-close {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* button reset end */
+
+.tasks-field-reminder-sheet-close {
+	display: flex;
+}
+
+.tasks-field-reminder-sheet-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.tasks-field-reminder-sheet [role="combobox"]:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}

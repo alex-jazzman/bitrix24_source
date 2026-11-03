@@ -1,0 +1,87 @@
+/*
+ * The thread of a note over the schema: a row with the title and the actions, the conversation under
+ * it, and the field of the reply at the bottom. Typography is set by the components of the design
+ * system, so nothing here touches the font.
+ *
+ * The popup stands in the layer of the markers and is moved by the same translation they are, so it
+ * travels with its marker through every move and every zoom of the canvas.
+ */
+.editor-chart-note-thread {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	width: 320px;
+	/* the conversation scrolls inside the popup instead of growing it past the canvas */
+	max-height: min(420px, 60vh);
+	padding: var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-m);
+	box-sizing: border-box;
+	/* The layer lets the pointer through to the schema; the thread is what takes it back. */
+	pointer-events: auto;
+}
+
+.editor-chart-note-thread:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The popup opened above its marker, so the shadow falls away from it and not onto it. */
+.editor-chart-note-thread.--flipped-y {
+	box-shadow: var(--ui-shadow-top-m);
+}
+
+/*
+ * The row of the title and the actions. The completion of the note draws nothing without the right to
+ * it, so the gap of the row is what sets the buttons apart: no wrapper is left behind by an action
+ * that is not offered.
+ */
+.editor-chart-note-thread__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+/* The title gives way to the actions at the end of the row rather than pushing them out of it. */
+.editor-chart-note-thread__title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-note-thread__loading {
+	display: flex;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm) 0;
+}
+
+/*
+ * The conversation reads from the oldest message down and is the only part of the popup that scrolls:
+ * the title and the field of the reply stay where they are while it does.
+ */
+.editor-chart-note-thread__messages {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	border-top: 1px solid var(--ui-color-divider-less);
+	border-bottom: 1px solid var(--ui-color-divider-less);
+	padding: var(--ui-space-inset-2xs) 0;
+}
+
+/* The earlier messages are asked for from the top of what is drawn, where they would have been. */
+.editor-chart-note-thread__earlier {
+	display: flex;
+	justify-content: center;
+	flex: 0 0 auto;
+}

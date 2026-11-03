@@ -9,6 +9,18 @@ import { CloseEvent as BlockCloseEvent } from './builders/block/close-event';
 import { EnableEvent as BlockEnableEvent } from './builders/block/enable-event';
 import { LinkEvent as BlockLinkEvent } from './builders/block/link-event';
 
+import { AutoUpdateEvent as CallAssessmentAutoUpdateEventBuilder } from './builders/call-assessment/auto-update-event';
+import { BiReportEvent as CallAssessmentBiReportEventBuilder } from './builders/call-assessment/bi-report-event';
+import { CallListViewEvent as CallAssessmentCallListViewEventBuilder } from './builders/call-assessment/call-list-view-event';
+import { CallReassessmentEvent as CallAssessmentCallReassessmentEventBuilder } from './builders/call-assessment/call-reassessment-event';
+import { GridActionsEvent as CallAssessmentGridActionsEventBuilder } from './builders/call-assessment/grid-actions-event';
+import { OpenCallScoreEvent as CallAssessmentOpenCallScoreEventBuilder } from './builders/call-assessment/open-call-score-event';
+import { OpenScriptEvent as CallAssessmentOpenScriptEventBuilder } from './builders/call-assessment/open-script-event';
+import { ScriptDeleteEvent as CallAssessmentScriptDeleteEventBuilder } from './builders/call-assessment/script-delete-event';
+import { ScriptToggleEvent as CallAssessmentScriptToggleEventBuilder } from './builders/call-assessment/script-toggle-event';
+import { ScriptWizardEvent as CallAssessmentScriptWizardEventBuilder } from './builders/call-assessment/script-wizard-event';
+import { SummaryWizardEvent as CallAssessmentSummaryWizardEventBuilder } from './builders/call-assessment/summary-wizard-event';
+
 import { ConnectEvent as CommunicationChannelConnectEventBuilder } from './builders/communication/channel/connect-event';
 import { InviteEvent as CommunicationChannelInviteEventBuilder } from './builders/communication/channel/invite-event';
 
@@ -48,6 +60,17 @@ import { getCrmMode } from './helpers';
 
 import type {
 	AICallParsingEvent,
+	CallAssessmentAutoUpdateEvent,
+	CallAssessmentBiReportEvent,
+	CallAssessmentCallListViewEvent,
+	CallAssessmentCallReassessmentEvent,
+	CallAssessmentGridActionsEvent,
+	CallAssessmentOpenCallScoreEvent,
+	CallAssessmentOpenScriptEvent,
+	CallAssessmentScriptDeleteEvent,
+	CallAssessmentScriptToggleEvent,
+	CallAssessmentScriptWizardEvent,
+	CallAssessmentSummaryWizardEvent,
 	CommunicationChannelConnectEvent,
 	CommunicationChannelInviteEvent,
 	CommunicationEditorResendEvent,
@@ -147,6 +170,19 @@ const Builder = Object.freeze({
 		CreateEvent: ImportCreateEventBuilder,
 		CancelEvent: ImportCancelEventBuilder,
 	},
+	CallAssessment: {
+		AutoUpdateEvent: CallAssessmentAutoUpdateEventBuilder,
+		BiReportEvent: CallAssessmentBiReportEventBuilder,
+		CallListViewEvent: CallAssessmentCallListViewEventBuilder,
+		CallReassessmentEvent: CallAssessmentCallReassessmentEventBuilder,
+		GridActionsEvent: CallAssessmentGridActionsEventBuilder,
+		OpenCallScoreEvent: CallAssessmentOpenCallScoreEventBuilder,
+		OpenScriptEvent: CallAssessmentOpenScriptEventBuilder,
+		ScriptDeleteEvent: CallAssessmentScriptDeleteEventBuilder,
+		ScriptToggleEvent: CallAssessmentScriptToggleEventBuilder,
+		ScriptWizardEvent: CallAssessmentScriptWizardEventBuilder,
+		SummaryWizardEvent: CallAssessmentSummaryWizardEventBuilder,
+	},
 });
 
 export {
@@ -183,4 +219,15 @@ export type {
 	ImportCreateEvent,
 	ImportEditEvent,
 	ImportCancelEvent,
+	CallAssessmentAutoUpdateEvent,
+	CallAssessmentBiReportEvent,
+	CallAssessmentCallListViewEvent,
+	CallAssessmentCallReassessmentEvent,
+	CallAssessmentGridActionsEvent,
+	CallAssessmentOpenCallScoreEvent,
+	CallAssessmentOpenScriptEvent,
+	CallAssessmentScriptDeleteEvent,
+	CallAssessmentScriptToggleEvent,
+	CallAssessmentScriptWizardEvent,
+	CallAssessmentSummaryWizardEvent,
 };

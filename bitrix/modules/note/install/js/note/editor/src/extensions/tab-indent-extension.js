@@ -100,7 +100,7 @@ export const TabIndent = Extension.create({
 					return true; // preventDefault — prevents browser/PM from navigating inside
 				}
 
-				// AC-017: Tab must never move focus out of editable content; always consume in lists.
+				// Tab must never move focus out of editable content; always consume in lists.
 				if (editor.isActive('listItem')) { editor.commands.sinkListItem('listItem'); return true; }
 				if (editor.isActive('taskItem')) { editor.commands.sinkListItem('taskItem'); return true; }
 				if (editor.isActive('codeBlock') || editor.isActive('tableCell') || editor.isActive('tableHeader'))
@@ -139,7 +139,7 @@ export const TabIndent = Extension.create({
 					return true; // preventDefault — prevents browser/PM from navigating inside
 				}
 
-				// AC-017: Shift-Tab must never move focus out of editable content; always consume in lists.
+				// Shift-Tab must never move focus out of editable content; always consume in lists.
 				if (editor.isActive('listItem')) { editor.commands.liftListItem('listItem'); return true; }
 				if (editor.isActive('taskItem')) { editor.commands.liftListItem('taskItem'); return true; }
 				if (editor.isActive('codeBlock') || editor.isActive('tableCell') || editor.isActive('tableHeader'))

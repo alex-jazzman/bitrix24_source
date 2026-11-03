@@ -1,5 +1,6 @@
-<?
+<?php
 
+use Bitrix\Intranet\Integration\Templates\Air\CollaborationWebMenu;
 use Bitrix\Intranet\Integration\Templates\Air\TopMenu;
 use Bitrix\Main\Loader;
 
@@ -33,6 +34,23 @@ if (isset($arParams['MENU_DIR']) && !empty($arParams['MENU_DIR']))
 	$menuId = 'top_menu_id_' . $menuId;
 }
 
+$collaborationWebMenu = ($arParams['MENU_DIR'] ?? '') === SITE_DIR . 'collaboration/'
+	? CollaborationWebMenu::getMenu('collaboration')
+	: null;
+if ($collaborationWebMenu !== null)
+{
+	$items = CollaborationWebMenu::applyActiveState(
+		$collaborationWebMenu['ITEMS'],
+		array_column($items, null, 'ID'),
+	);
+	$menuId = $collaborationWebMenu['ID'];
+	?>
+	<script>
+		BX.message(<?= CUtil::PhpToJSObject($collaborationWebMenu['CLIENT_CONFIG']) ?>);
+	</script>
+	<?php
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:main.interface.buttons',
 	'',
@@ -40,5 +58,5 @@ $APPLICATION->IncludeComponent(
 		'ID' => $menuId,
 		'ITEMS' => $items,
 		'THEME' => 'air',
-	]
+	],
 );

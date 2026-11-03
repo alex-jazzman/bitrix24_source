@@ -6,7 +6,6 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 	const {
 		Analytics,
 		UserRole,
-		ComponentCode,
 		OpenDialogContextType,
 		DialogType,
 	} = require('im/messenger/const');
@@ -50,12 +49,14 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 
 				const chatHelper = DialogHelper.createByModel(chatData);
 
-				const category = chatHelper?.isChannel
-					? Analytics.Category.channel
-					: (Analytics.Category[chatData.type] || Analytics.Category.chat)
-				;
+				const category = AnalyticsHelper.getCategoryByChat(chatData);
 
 				let type = Analytics.Type.Dialog[chatData?.type] || Analytics.Type.custom;
+				if (chatData?.type === DialogType.collab)
+				{
+					type = Analytics.Type.Dialog.project;
+				}
+
 				const isNotes = chatHelper?.isNotes;
 				const isAiAssistant = chatHelper?.isAiAssistant;
 				if (isNotes)
@@ -70,15 +71,15 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 
 				const element = context === OpenDialogContextType.push ? Analytics.Element.push : null;
 
-				const folderSubSection = AnalyticsHelper.getFolderSubSection();
-
+				// The context of the opening is one value and not two: the section names the folder the
+				// chat was opened from, and the sub section used to repeat it a level down - a shape the
+				// web never had and the report has no column for.
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
 					.setCategory(category)
 					.setEvent(Analytics.Event.openExisting)
 					.setType(type)
-					.setSection(AnalyticsHelper.getSectionCode())
-					.setSubSection(folderSubSection)
+					.setSection(AnalyticsHelper.getFolderSectionCode())
 					.setElement(element)
 					.setP2(AnalyticsHelper.getP2ByUserType())
 				;
@@ -88,9 +89,13 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					analytics.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId));
 				}
 
-				if (chatHelper.isCollab)
+				if (category === Analytics.Category.project)
 				{
-					analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(chatData.dialogId));
+					const projectId = AnalyticsHelper.getFormattedProjectId(chatData);
+					if (projectId)
+					{
+						analytics.setP4(projectId);
+					}
 				}
 
 				if (chatHelper.isComment)
@@ -107,7 +112,7 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					analytics.setP4(AnalyticsHelper.getFormattedParentChatId(chatData.parentChatId));
 				}
 
-				if (chatHelper.isCopilot && !Feature.isBitrixGptV2Enabled)
+				if (chatHelper.isCopilot && !Feature.isBitrixGptV2Enabled && category !== Analytics.Category.project)
 				{
 					const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogId);
 					if (copilotMainRole)

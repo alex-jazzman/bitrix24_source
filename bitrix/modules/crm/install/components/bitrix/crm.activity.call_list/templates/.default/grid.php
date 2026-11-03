@@ -5,6 +5,12 @@
  */
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!empty($arResult['ERRORS']))
+{
+	echo htmlspecialcharsbx($arResult['ERRORS']);
+	return;
+}
+
 $actionPanel =array('GROUPS' => array(array('ITEMS' => array(
 	array(
 		"TYPE" => \Bitrix\Main\Grid\Panel\Types::CUSTOM,

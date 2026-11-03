@@ -1,0 +1,2 @@
+<?php
+$MESS["IM_ELEMENTS_AIR_POPUP_CLOSE_ARIA"] = "Закрыть";

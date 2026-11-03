@@ -115,7 +115,7 @@ export default class Creation extends HistoryItem
 			const link = BX.create("A",
 				{
 					attrs: {href: "#"},
-					html: this.cutOffText(BX.prop.getString(entityData, "DESCRIPTION_RAW"), 128)
+					text: this.cutOffText(BX.prop.getString(entityData, "DESCRIPTION_RAW"), 128)
 				}
 			);
 			BX.bind(link, "click", this._headerClickHandler);

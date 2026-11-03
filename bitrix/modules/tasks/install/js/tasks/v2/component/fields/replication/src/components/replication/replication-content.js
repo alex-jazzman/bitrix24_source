@@ -24,6 +24,12 @@ export const ReplicationContent = {
 		task: {},
 		isTemplate: {},
 	},
+	props: {
+		isSheetShown: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	setup(): { task: TaskModel }
 	{
 		return {
@@ -56,7 +62,17 @@ export const ReplicationContent = {
 	template: `
 		<div class="tasks-field-replication-content">
 			<ReplicationContentState v-if="task.replicateParams"/>
-			<FieldAdd v-else v-hint="tooltip" :icon="Outline.REPEAT" :disabled ref="add"/>
+			<FieldAdd
+				v-else
+				v-hint="tooltip"
+				:icon="Outline.REPEAT"
+				:disabled
+				:ariaLabel="loc('TASKS_V2_REPLICATION_ADD_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isSheetShown"
+				data-testid="tasks-replication-add-btn"
+				ref="add"
+			/>
 		</div>
 	`,
 };

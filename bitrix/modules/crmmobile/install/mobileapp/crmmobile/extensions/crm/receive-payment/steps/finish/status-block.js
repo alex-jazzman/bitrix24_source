@@ -2,6 +2,8 @@
  * @module crm/receive-payment/steps/finish/status-block
  */
 jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, module) => {
+	const { Text2 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
@@ -91,10 +93,9 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 					break;
 			}
 
-			return Text({
+			return Text2({
 				text,
 				style: {
-					fontSize: 17,
 					color: AppTheme.colors.base4,
 					marginTop: 15,
 					textAlign: 'center',
@@ -171,14 +172,14 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 		renderTopText()
 		{
 			let text = '';
-			let fontSize = 18;
+			let fontSize = Typography.text1.getValue().fontSize;
 			let marginBottom = 2;
 
 			switch (this.state.sendingStatus)
 			{
 				case Statuses.STARTED:
 					text = Loc.getMessage('M_RP_F_MESSAGE_IS_SENDING');
-					fontSize = 16;
+					fontSize = Typography.text3.getValue().fontSize;
 					marginBottom = 4;
 					break;
 
@@ -276,7 +277,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 					borderRadius: 512,
 					selfAlign: 'center',
 					marginTop: 25,
-					fontSize: 17,
+					...Typography.text2.getValue(),
 					...additionalStyle,
 				},
 				text: getEntityMessage('M_RP_F_BACK_BUTTON_TEXT', TypeId.Deal),

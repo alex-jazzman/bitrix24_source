@@ -2,8 +2,11 @@ import { Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import {
 	isFavoriteRequiredError,
+	isShippedSubscriptionMode,
+	SHIPPED_SUBSCRIPTION_MODES,
 	SubscriptionApi,
 	SUBSCRIPTION_MODE_MUTED,
+	SUBSCRIPTION_MODE_SELF,
 	SUBSCRIPTION_SCOPE_DOCUMENT,
 } from './subscription-api';
 import { SubscriptionBellView } from './subscription-bell-view';
@@ -11,14 +14,19 @@ import { subscribeDocumentSubscription } from './history-pull';
 import { extractErrorMessage } from './error-message';
 import { showErrorToast } from './show-error-toast';
 
-// [P6.T4] Subscription bell of the activity line: the "#bellLine" control plus the scope popover
+// Subscription bell of the activity line: the "#bellLine" control plus the scope popover
 // per mockup-activity-line.html's #popSub. This half owns the state and the transport - it adopts
 // the bootstrap snapshot (or loads it from SubscriptionController.getState), writes through
 // SubscriptionApi and reconciles the effective state afterwards. The control itself, the popover
 // and its keyboard model live in SubscriptionBellView, shared with the row of the favorites block.
 //
-// [P4.T4] EVENT-02: a subscription changed in another session (or by the same user in another tab)
+// EVENT-02: a subscription changed in another session (or by the same user in another tab)
 // re-reads the state, so the bell of an open document stops relying on the page being reloaded.
+//
+// MODES-01: this half is also where the shipped modes are read. Visibility and the state handed to
+// the control are brought to that map, and the form of the control follows from how many modes it
+// holds - one leaves nothing to choose. `mute()`/`resume()` stay in place and are out of reach while
+// `muted` is not shipped.
 export const SubscriptionBellComponent = {
 	name: 'NoteDocumentHistorySubscriptionBell',
 	components: {
@@ -44,7 +52,7 @@ export const SubscriptionBellComponent = {
 			type: Object,
 			default: null,
 		},
-		// [AC-045] Is the document in the caller's favorites list. Owned by the star next to the bell,
+		// Is the document in the caller's favorites list. Owned by the star next to the bell,
 		// which is the only place that knows the optimistic frame as well as the store.
 		isFavorite: {
 			type: Boolean,
@@ -74,7 +82,32 @@ export const SubscriptionBellComponent = {
 		};
 	},
 	computed: {
-		// [AC-045] Notifications live on favorites: the bell is offered for a document in the list, and
+		// MODES-01 / Q-1: only a direct row in a shipped mode counts as a subscription here. A row of a
+		// mode outside the shipping delivers nothing, so reading it as active would promise notifications
+		// that never arrive - it reads as "not subscribed" instead, and one press rewrites it into the
+		// shipped mode (set() upserts), after which the state has fixed itself.
+		isShippedSubscription(): boolean
+		{
+			return this.subscribed && isShippedSubscriptionMode(SUBSCRIPTION_SCOPE_DOCUMENT, this.mode);
+		},
+		// Coverage from above is a state of the control only while `muted` is shipped: the inherited and
+		// muted layouts exist to suppress that coverage, and coverage nothing can suppress has nothing to
+		// offer. Derived from the mode map, so returning `muted` to it brings both layouts back by itself.
+		isCovered(): boolean
+		{
+			return this.inherited && isShippedSubscriptionMode(SUBSCRIPTION_SCOPE_DOCUMENT, SUBSCRIPTION_MODE_MUTED);
+		},
+		// One shipped mode leaves nothing to choose, so the control is a plain toggle. A second mode
+		// brings the scope popover back on its own - widening the shipping must not need a component edit.
+		isToggleOnly(): boolean
+		{
+			return SHIPPED_SUBSCRIPTION_MODES[SUBSCRIPTION_SCOPE_DOCUMENT].length < 2;
+		},
+		toggleMode(): string
+		{
+			return SHIPPED_SUBSCRIPTION_MODES[SUBSCRIPTION_SCOPE_DOCUMENT][0] ?? SUBSCRIPTION_MODE_SELF;
+		},
+		// Notifications live on favorites: the bell is offered for a document in the list, and
 		// for one that is still covered after the star came off - otherwise there would be no way to
 		// switch that coverage off or to mute what an ancestor imposes.
 		isVisible(): boolean
@@ -83,16 +116,17 @@ export const SubscriptionBellComponent = {
 			// only ever appears together with `inherited`. Once that coverage is gone (the subscription on
 			// the knowledge base switched off) the row it left behind suppresses nothing, and a bell for it
 			// would sit on a document notifications no longer reach. Same rule in the rows of the block.
-			return this.isFavorite || this.subscribed || this.inherited;
+			return this.isFavorite || this.isShippedSubscription || this.isCovered;
 		},
-		// [DTO-02] The state surface the view draws from.
+		// The state surface the view draws from - already brought to the shipped modes, because the
+		// control is presentational and normalizes nothing itself.
 		bellState(): Object
 		{
 			return {
-				mode: this.mode,
-				subscribed: this.subscribed,
-				muted: this.muted,
-				inherited: this.inherited,
+				mode: this.isShippedSubscription ? this.mode : null,
+				subscribed: this.isShippedSubscription,
+				muted: this.muted && this.isCovered,
+				inherited: this.isCovered,
 				inheritedSource: this.inheritedSource,
 				inheritedTitle: this.inheritedTitle,
 			};
@@ -118,7 +152,7 @@ export const SubscriptionBellComponent = {
 			const scope = String(data.scope || SUBSCRIPTION_SCOPE_DOCUMENT);
 			if (scope !== SUBSCRIPTION_SCOPE_DOCUMENT || Number(data.entityId) !== Number(this.documentId))
 			{
-				// [AC-052] Not this document's own row - but a subscription on the knowledge base or on the
+				// Not this document's own row - but a subscription on the knowledge base or on the
 				// subtree of an ancestor changes what reaches this document, and the payload does not say
 				// whether it does. Only the server can tell, so the read waits for the announcement that
 				// has the server's answer behind it; an unconfirmed one would be read before the write.
@@ -215,7 +249,7 @@ export const SubscriptionBellComponent = {
 			this.inheritedTitle = this.inherited ? String(state?.inheritedTitle || '') : '';
 			this.muted = Boolean(state?.muted);
 		},
-		// [EVENT-02] The payload carries the direct mode only; the effective state also depends on
+		// The payload carries the direct mode only; the effective state also depends on
 		// coverage from above, so the event is a signal to re-read rather than a state to adopt.
 		subscribeSubscriptionEvents(): void
 		{
@@ -294,7 +328,7 @@ export const SubscriptionBellComponent = {
 				this.mode = previous.mode;
 				// The optimistic announcement has already been adopted elsewhere - take it back.
 				this.emitSubscriptionChanged(false);
-				// [API-05] The document left the favorites list between the render and the press. The
+				// The document left the favorites list between the render and the press. The
 				// roll-back above is already the server's answer about the subscription, and EVENT-01 has
 				// the list covered, so this is a stale view rather than a technical failure.
 				if (isFavoriteRequiredError(error))
@@ -415,6 +449,9 @@ export const SubscriptionBellComponent = {
 			v-if="isVisible"
 			:state="bellState"
 			:is-saving="isSaving"
+			:toggle-only="isToggleOnly"
+			:toggle-mode="toggleMode"
+			test-id="note-activity-subscription"
 			:messages="messages"
 			@select-mode="selectMode"
 			@unsubscribe="unsubscribe"

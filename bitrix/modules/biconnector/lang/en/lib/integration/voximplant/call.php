@@ -38,4 +38,4 @@ $MESS["VI_BIC_CALL_FIELD_TRANSCRIPT_ID"] = "Call transcript ID";
 $MESS["VI_BIC_CALL_FIELD_TRANSCRIPT_PENDING"] = "Transcript pending";
 $MESS["VI_BIC_CALL_FIELD_TRANSCRIPT_PENDING_FULL"] = "Y - call transcript is in progress; N - call transcript is ready";
 $MESS["VI_BIC_CALL_TABLE"] = "Call";
-$MESS["VI_BIC_CALL_TABLE_DESCRIPTION_FULL"] = "Includes information about calls, such as agent IDs, customer phone numbers, and call types.";
+$MESS["VI_BIC_CALL_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Call data: agents and callers, call types and statuses, duration, cost, recordings and transcripts, and related CRM elements.";

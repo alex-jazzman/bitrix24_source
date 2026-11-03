@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, ui_system_typography_vue, main_core, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_elements_hoverPill, tasks_v2_component_tasksButtonCopy, tasks_v2_lib_calendar, tasks_v2_const) {
+(function (exports, ui_system_typography_vue, main_core, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_tasksButtonCopy, tasks_v2_lib_calendar, tasks_v2_const) {
 	'use strict';
 
 	const createdDateMeta = Object.freeze({
@@ -17,7 +17,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
 			TextMd: ui_system_typography_vue.TextMd,
-			HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 			TasksButtonCopy: tasks_v2_component_tasksButtonCopy.TasksButtonCopy
 		},
 		inject: {
@@ -66,12 +65,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-id="createdDateMeta.id"
 			:data-task-field-value="task.createdTs"
 		>
-			<BIcon class="tasks-field-created-date-icon" :name="Outline.CALENDAR_SHARE"/>
+			<BIcon class="tasks-field-created-date-icon" :name="Outline.CALENDAR_SHARE" aria-hidden="true"/>
 			<TextMd class="tasks-field-created-date-text">{{ createdDateFormatted }}</TextMd>
 			<TextMd class="tasks-field-created-date-separator print-font-color-base-1">/</TextMd>
 			<TasksButtonCopy
 				:name="loc('TASKS_V2_CREATED_DATE_TASK_ID')"
 				:value="idTaskFormatted"
+				:ariaLabel="loc('TASKS_V2_CREATED_DATE_COPY_ARIA_LABEL')"
 				:notification="loc('TASKS_V2_CREATED_DATE_COPY_TASK_ID_NOTIF')"
 			/>
 		</div>
@@ -81,5 +81,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.CreatedDate = CreatedDate;
 	exports.createdDateMeta = createdDateMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.UI.System.Typography.Vue, BX, BX.UI.IconSet, window, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Const);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.UI.System.Typography.Vue, BX, BX.UI.IconSet, window, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Const);
 //# sourceMappingURL=created-date.bundle.js.map

@@ -7,11 +7,10 @@
  */
 import type { LexicalEditor } from './LexicalEditor';
 import type { EditorState } from './LexicalEditorState';
-import type { NodeKey } from './LexicalNode';
 import type { ElementNode } from './nodes/LexicalElementNode';
-import type { TextFormatType } from './nodes/LexicalTextNode';
-import { TextNode } from '.';
-import { LexicalNode } from './LexicalNode';
+import { type LineBreakNode, type TextNode } from '.';
+import { type LexicalNode, type NodeKey } from './LexicalNode';
+import { type TextFormatType } from './nodes/LexicalTextNode';
 export type TextPointType = {
     _selection: BaseSelection;
     getNode: () => TextNode;
@@ -19,7 +18,7 @@ export type TextPointType = {
     isBefore: (point: PointType) => boolean;
     key: NodeKey;
     offset: number;
-    set: (key: NodeKey, offset: number, type: 'text' | 'element') => void;
+    set: (key: NodeKey, offset: number, type: 'text' | 'element', onlyIfChanged?: boolean) => void;
     type: 'text';
 };
 export type ElementPointType = {
@@ -29,7 +28,7 @@ export type ElementPointType = {
     isBefore: (point: PointType) => boolean;
     key: NodeKey;
     offset: number;
-    set: (key: NodeKey, offset: number, type: 'text' | 'element') => void;
+    set: (key: NodeKey, offset: number, type: 'text' | 'element', onlyIfChanged?: boolean) => void;
     type: 'element';
 };
 export type PointType = TextPointType | ElementPointType;
@@ -42,21 +41,22 @@ export declare class Point {
     is(point: PointType): boolean;
     isBefore(b: PointType): boolean;
     getNode(): LexicalNode;
-    set(key: NodeKey, offset: number, type: 'text' | 'element'): void;
+    set(key: NodeKey, offset: number, type: 'text' | 'element', onlyIfChanged?: boolean): void;
 }
+/** Creates a selection endpoint (Point) targeting the given node key at the specified offset. */
 export declare function $createPoint(key: NodeKey, offset: number, type: 'text' | 'element'): PointType;
 export declare function $moveSelectionPointToEnd(point: PointType, node: LexicalNode): void;
 export interface BaseSelection {
-    _cachedNodes: Array<LexicalNode> | null;
+    _cachedNodes: LexicalNode[] | null;
     dirty: boolean;
     clone(): BaseSelection;
-    extract(): Array<LexicalNode>;
-    getNodes(): Array<LexicalNode>;
+    extract(): LexicalNode[];
+    getNodes(): LexicalNode[];
     getTextContent(): string;
     insertText(text: string): void;
     insertRawText(text: string): void;
     is(selection: null | BaseSelection): boolean;
-    insertNodes(nodes: Array<LexicalNode>): void;
+    insertNodes(nodes: LexicalNode[]): void;
     getStartEndPoints(): null | [PointType, PointType];
     isCollapsed(): boolean;
     isBackward(): boolean;
@@ -65,7 +65,7 @@ export interface BaseSelection {
 }
 export declare class NodeSelection implements BaseSelection {
     _nodes: Set<NodeKey>;
-    _cachedNodes: Array<LexicalNode> | null;
+    _cachedNodes: LexicalNode[] | null;
     dirty: boolean;
     constructor(objects: Set<NodeKey>);
     getCachedNodes(): LexicalNode[] | null;
@@ -79,27 +79,36 @@ export declare class NodeSelection implements BaseSelection {
     clear(): void;
     has(key: NodeKey): boolean;
     clone(): NodeSelection;
-    extract(): Array<LexicalNode>;
+    extract(): LexicalNode[];
     insertRawText(text: string): void;
     insertText(): void;
-    insertNodes(nodes: Array<LexicalNode>): void;
-    getNodes(): Array<LexicalNode>;
+    insertNodes(nodes: LexicalNode[]): void;
+    getNodes(): LexicalNode[];
     getTextContent(): string;
+    /**
+     * Remove all nodes in the NodeSelection. If there were any nodes,
+     * replace the selection with a new RangeSelection at the previous
+     * location of the first node.
+     */
+    deleteNodes(): void;
 }
+/** Returns true if the given value is a RangeSelection. */
 export declare function $isRangeSelection(x: unknown): x is RangeSelection;
 export declare class RangeSelection implements BaseSelection {
     format: number;
     style: string;
     anchor: PointType;
     focus: PointType;
-    _cachedNodes: Array<LexicalNode> | null;
+    _cachedNodes: LexicalNode[] | null;
+    /** @internal */
+    _cachedIsBackward: boolean | null;
     dirty: boolean;
     constructor(anchor: PointType, focus: PointType, format: number, style: string);
     getCachedNodes(): LexicalNode[] | null;
     setCachedNodes(nodes: LexicalNode[] | null): void;
     /**
      * Used to check if the provided selections is equal to this one by value,
-     * inluding anchor, focus, format, and style properties.
+     * including anchor, focus, format, and style properties.
      * @param selection - the Selection to compare this one to.
      * @returns true if the Selections are equal, false otherwise.
      */
@@ -115,9 +124,14 @@ export declare class RangeSelection implements BaseSelection {
      * Gets all the nodes in the Selection. Uses caching to make it generally suitable
      * for use in hot paths.
      *
+     * See also the {@link CaretRange} APIs (starting with
+     * {@link $caretRangeFromSelection}), which are likely to provide a better
+     * foundation for any operation where partial selection is relevant
+     * (e.g. the anchor or focus are inside an ElementNode and TextNode)
+     *
      * @returns an Array containing all the nodes in the Selection
      */
-    getNodes(): Array<LexicalNode>;
+    getNodes(): LexicalNode[];
     /**
      * Sets this Selection to be of type "text" at the provided anchor and focus values.
      *
@@ -126,7 +140,7 @@ export declare class RangeSelection implements BaseSelection {
      * @param focusNode - the focus node to set on the Selection
      * @param focusOffset - the focus offset to set on the Selection
      */
-    setTextNodeRange(anchorNode: TextNode, anchorOffset: number, focusNode: TextNode, focusOffset: number): void;
+    setTextNodeRange(anchorNode: TextNode, anchorOffset: number, focusNode: TextNode, focusOffset: number): this;
     /**
      * Gets the (plain) text content of all the nodes in the selection.
      *
@@ -153,17 +167,23 @@ export declare class RangeSelection implements BaseSelection {
      */
     toggleFormat(format: TextFormatType): void;
     /**
+     * Sets the value of the format property on the Selection
+     *
+     * @param format - the format to set at the value of the format property.
+     */
+    setFormat(format: number): void;
+    /**
      * Sets the value of the style property on the Selection
      *
      * @param style - the style to set at the value of the style property.
      */
     setStyle(style: string): void;
     /**
-     * Returns whether the provided TextFormatType is present on the Selection. This will be true if any node in the Selection
-     * has the specified format.
+     * Returns whether the provided TextFormatType is present on the Selection. This will be true if all text nodes in the Selection
+     * have the specified format.
      *
      * @param type the TextFormatType to check for.
-     * @returns true if the provided format is currently toggled on on the Selection, false otherwise.
+     * @returns true if the provided format is currently toggled on the Selection, false otherwise.
      */
     hasFormat(type: TextFormatType): boolean;
     /**
@@ -174,8 +194,7 @@ export declare class RangeSelection implements BaseSelection {
      */
     insertRawText(text: string): void;
     /**
-     * Attempts to insert the provided text into the EditorState at the current Selection as a new
-     * Lexical TextNode, according to a series of insertion heuristics based on the selection type and position.
+     * Insert the provided text into the EditorState at the current Selection.
      *
      * @param text the text to insert into the Selection
      */
@@ -189,16 +208,17 @@ export declare class RangeSelection implements BaseSelection {
      * merging nodes as necessary.
      *
      * @param formatType the format type to apply to the nodes in the Selection.
+     * @param alignWithFormat a 32-bit integer representing formatting flags to align with.
      */
-    formatText(formatType: TextFormatType): void;
+    formatText(formatType: TextFormatType, alignWithFormat?: number | null): void;
     /**
      * Attempts to "intelligently" insert an arbitrary list of Lexical nodes into the EditorState at the
      * current Selection according to a set of heuristics that determine how surrounding nodes
-     * should be changed, replaced, or moved to accomodate the incoming ones.
+     * should be changed, replaced, or moved to accommodate the incoming ones.
      *
      * @param nodes - the nodes to insert
      */
-    insertNodes(nodes: Array<LexicalNode>): void;
+    insertNodes(nodes: LexicalNode[]): void;
     /**
      * Inserts a new ParagraphNode into the EditorState at the current Selection
      *
@@ -216,7 +236,7 @@ export declare class RangeSelection implements BaseSelection {
      *
      * @returns The nodes in the Selection
      */
-    extract(): Array<LexicalNode>;
+    extract(): LexicalNode[];
     /**
      * Modifies the Selection according to the parameters and a set of heuristics that account for
      * various node types. Can be used to safely move or extend selection by one logical "unit" without
@@ -263,23 +283,154 @@ export declare class RangeSelection implements BaseSelection {
      * @returns true if the Selection is backwards, false otherwise.
      */
     isBackward(): boolean;
-    getStartEndPoints(): null | [PointType, PointType];
+    getStartEndPoints(): [PointType, PointType];
 }
+/** Returns true if the given value is a NodeSelection. */
 export declare function $isNodeSelection(x: unknown): x is NodeSelection;
+/**
+ * Explicitly sets or unsets text formats on the selection. Unlike $formatText
+ * which toggles based on the current selection state, this function sets each
+ * specified format to the exact boolean value provided. Mutually exclusive
+ * formats (subscript/superscript, lowercase/uppercase/capitalize) are
+ * reconciled by {@link toggleTextFormatType}, with later entries winning when
+ * the requested formats conflict.
+ *
+ * @param selection - the selection whose nodes should be formatted.
+ * @param formats - a partial record mapping TextFormatType to boolean.
+ */
+export declare function $setTextFormat(selection: RangeSelection | NodeSelection, formats: Partial<Record<TextFormatType, boolean>>): void;
+/**
+ * Applies the provided format to TextNodes and inline formattable nodes
+ * (e.g. DecoratorTextNode) in the selection, splitting or merging TextNodes
+ * as necessary and aligning all formattable nodes to the same target format.
+ *
+ * For RangeSelection the toggle direction is determined by the selection's
+ * computed format (intersection of all text nodes) when no explicit alignment
+ * is given. For NodeSelection each node is toggled independently when no
+ * explicit alignment is given, since there is no TextNode to use as an
+ * alignment reference.
+ *
+ * @param selection - the selection whose nodes should be formatted.
+ * @param formatType - the format type to apply.
+ * @param alignWithFormat - optional 32-bit bitmask to align with.
+ */
+export declare function $formatText(selection: RangeSelection | NodeSelection, formatType: TextFormatType, alignWithFormat?: number | null): void;
+/** Returns the character offsets of the selection's anchor and focus points as an [anchor, focus] tuple. */
 export declare function $getCharacterOffsets(selection: BaseSelection): [number, number];
+/**
+ * When `selection` covers the whole document, widen it to the root's own
+ * element points, so the range describes the top-level blocks themselves
+ * rather than only the text inside them.
+ *
+ * A delete over that range then removes the blocks outright and leaves the
+ * editor on a fresh empty paragraph, instead of gutting them and leaving an
+ * empty heading, quote or list behind that keeps its type and styles the next
+ * character typed (#5835). It also keeps a cut honest: what lands on the
+ * clipboard is what leaves the document, so Cmd+X then Cmd+V restores the
+ * blocks rather than their bare text.
+ *
+ * Widening rather than deleting-then-repairing is what makes this safe for
+ * every block type. The range simply contains the blocks, so nothing has to
+ * decide whether a heading, a nested list, a code block or a third-party node
+ * should dissolve, and no node is destroyed that the user did not select.
+ *
+ * A no-op for anything else: a range that stops short of either end is an
+ * ordinary edit inside the blocks it touches, and a select-all scoped to a
+ * named slot never covers the root.
+ */
+export declare function INTERNAL_$expandSelectionToWholeDocument(selection: RangeSelection): void;
+/**
+ * Programmatic counterpart of the DOM-read clamp: applied when a
+ * RangeSelection is committed via $setSelection so an API-built selection
+ * cannot straddle a slot boundary either. Direction comes from the model
+ * comparator (slots-first content order), not the caret system — a
+ * straddling pair has no common ancestor through __parent, so the caret
+ * comparison would throw (that integration is the deferred caret-slot work),
+ * and not from the DOM either, since $setSelection also runs in headless
+ * mode where there is no DOM. Marks the selection dirty when it mutates a
+ * point. No-op for non-slot trees (both frames null), evaluated before any
+ * direction work, so non-slot and headless callers are unaffected.
+ *
+ * @experimental named-slots
+ * @internal
+ */
+export declare function $clampRangeSelectionToSlotFrame(selection: RangeSelection): boolean;
+/** Returns true if the given node is a non-inline ElementNode. */
 export declare function $isBlockElementNode(node: LexicalNode | null | undefined): node is ElementNode;
 export declare function $internalMakeRangeSelection(anchorKey: NodeKey, anchorOffset: number, focusKey: NodeKey, focusOffset: number, anchorType: 'text' | 'element', focusType: 'text' | 'element'): RangeSelection;
+/** Creates a detached RangeSelection anchored at the root element origin (offset 0). */
 export declare function $createRangeSelection(): RangeSelection;
+/** Creates an empty NodeSelection with no selected node keys. */
 export declare function $createNodeSelection(): NodeSelection;
-export declare function $internalCreateSelection(editor: LexicalEditor): null | BaseSelection;
+export declare function $internalCreateSelection(editor: LexicalEditor, event: UIEvent | Event | null): null | BaseSelection;
+/** Creates a RangeSelection from the given DOM selection, or returns null if one cannot be resolved. */
 export declare function $createRangeSelectionFromDom(domSelection: Selection | null, editor: LexicalEditor): null | RangeSelection;
 export declare function $internalCreateRangeSelection(lastSelection: null | BaseSelection, domSelection: Selection | null, editor: LexicalEditor, event: UIEvent | Event | null): null | RangeSelection;
+/** Returns the current selection of the active editor state, or null if none exists. */
 export declare function $getSelection(): null | BaseSelection;
+/** Returns the selection from the previous editor state, or null if none existed. */
 export declare function $getPreviousSelection(): null | BaseSelection;
+/**
+ * Whether `selection` has a point directly on `parentNode`, which is exactly
+ * the condition under which
+ * {@link $updateElementSelectionOnCreateDeleteNode} does anything at all.
+ * @internal
+ *
+ * Every caller of that function has to compute a child offset first, and
+ * `getIndexWithinParent` walks the parent's children from the first one, so
+ * doing it unconditionally makes a bulk insert or removal quadratic (#5194).
+ * Guarding the walk with this predicate skips it whenever the update would
+ * be a no-op. It is the same test the early return uses, so the two cannot
+ * drift apart.
+ *
+ * Note that a point *inside* `parentNode` (a text point on one of its
+ * descendants, say) does not count: the function only shifts offsets that
+ * are element-anchored on `parentNode` itself.
+ *
+ * This function is for internal use of the library.
+ * Please do not use it as it may change in the future.
+ */
+export declare function $selectionTouchesElement(selection: RangeSelection, parentNode: LexicalNode): boolean;
 export declare function $updateElementSelectionOnCreateDeleteNode(selection: RangeSelection, parentNode: LexicalNode, nodeOffset: number, times?: number): void;
 export declare function applySelectionTransforms(nextEditorState: EditorState, editor: LexicalEditor): void;
 export declare function moveSelectionPointToSibling(point: PointType, node: LexicalNode, parent: ElementNode, prevSibling: LexicalNode | null, nextSibling: LexicalNode | null): void;
 export declare function adjustPointOffsetForMergedSibling(point: PointType, isBefore: boolean, key: NodeKey, target: TextNode, textLength: number): void;
-export declare function updateDOMSelection(prevSelection: BaseSelection | null, nextSelection: BaseSelection | null, editor: LexicalEditor, domSelection: Selection, tags: Set<string>, rootElement: HTMLElement, nodeCount: number): void;
-export declare function $insertNodes(nodes: Array<LexicalNode>): void;
+/** @internal */
+export declare function $updateDOMSelection(prevSelection: BaseSelection | null, nextSelection: BaseSelection | null, editor: LexicalEditor, domSelection: Selection, tags: Set<string>, rootElement: HTMLElement): void;
+/** Inserts nodes into the current selection, falling back to the previous selection or the end of the root. */
+export declare function $insertNodes(nodes: LexicalNode[]): void;
+/**
+ * Push-lexer visitor passed to {@link tokenizeRawText}. The tokenizer
+ * invokes one callback per token it emits; empty text runs are
+ * suppressed, so `text` is only invoked with a non-empty string.
+ */
+export interface RawTextVisitor {
+    readonly linebreak: () => void;
+    readonly tab: () => void;
+    readonly text: (text: string) => void;
+}
+/**
+ * Push-lex a raw text string into `linebreak` (`\n` / `\r\n`), `tab`
+ * (`\t`), and `text` (everything else) tokens, dispatching each to the
+ * matching callback on `visitor` in source order.
+ *
+ * Shared by {@link $generateNodesFromRawText} (which builds
+ * `LineBreakNode` / `TabNode` / `TextNode` siblings) and by
+ * `@lexical/clipboard`'s default `text/plain` clipboard importer
+ * (which maps `linebreak` to a real paragraph break via
+ * `insertParagraph` so multi-line plain text becomes multi-paragraph
+ * rich text). Empty text runs are dropped so callers don't need to
+ * special-case them.
+ */
+export declare function tokenizeRawText(text: string, visitor: RawTextVisitor): void;
+/**
+ * Convert a raw text string into a flat array of `TextNode`,
+ * `LineBreakNode`, and `TabNode` siblings, splitting on `\n`, `\r\n`,
+ * and `\t`. Use this when you need the same `\n` / `\t` → real-node
+ * conversion that {@link RangeSelection.insertRawText} performs but
+ * without a selection — e.g. when building a `CodeNode`'s children
+ * inside a DOM-import rule.
+ */
+export declare function $generateNodesFromRawText(text: string): (TextNode | LineBreakNode)[];
+/** Returns the text content of the current selection, or an empty string if no selection exists. */
 export declare function $getTextContent(): string;

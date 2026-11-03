@@ -215,7 +215,8 @@ else:
 			break;
 		case 'textarea':
 ?>
-<textarea name="<?=$field["id"]?>"<?=$params?>><?=$valEncoded?></textarea>
+<textarea name="<?=$field["id"]?>"<?=$params?>>
+<?=$valEncoded?></textarea>
 			<?php
 			break;
 		case 'list':

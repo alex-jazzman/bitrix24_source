@@ -7,6 +7,7 @@ $MESS["IM_CHAT_AVATAR_CHANGE_F"] = "#USER_NAME# changed the chat icon.";
 $MESS["IM_CHAT_AVATAR_CHANGE_M"] = "#USER_NAME# changed the chat icon.";
 $MESS["IM_CHAT_CAN_POST_ALL_MSGVER_1"] = "All members";
 $MESS["IM_CHAT_CAN_POST_MANAGERS_MSGVER_1"] = "Owner and administrators";
+$MESS["IM_CHAT_CAN_POST_MANAGERS_MSGVER_2"] = "Owner and moderators";
 $MESS["IM_CHAT_CAN_POST_NONE"] = "Nobody";
 $MESS["IM_CHAT_CAN_POST_OWNER_MSGVER_1"] = "Owner";
 $MESS["IM_CHAT_JOIN_F"] = "#USER_1_NAME# invited #USER_2_NAME# to chat.";

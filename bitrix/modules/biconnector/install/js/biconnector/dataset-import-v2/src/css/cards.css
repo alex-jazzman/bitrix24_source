@@ -214,6 +214,10 @@
 	border-color: var(--ui-color-accent-main-alert, #ff5752);
 }
 
+.biconnector-dataset-import-v2-card__field .biconnector-dataset-import-v2-card__tag-selector--error .ui-tag-selector-outer-container {
+	border-color: var(--ui-color-accent-main-alert);
+}
+
 .biconnector-dataset-import-v2-card__input:disabled,
 .biconnector-dataset-import-v2-card__select:disabled,
 .biconnector-dataset-import-v2-card__textarea:disabled {

@@ -22,6 +22,7 @@ $event
 	->register('crm', 'ItemCategoryOnBeforeDelete', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete')
 	->register('ai', 'onContextGetMessages', '\Bitrix\Bizproc\Internal\Integration\AI\Event\EventHandler', 'onContextGetMessages')
 	->register('intranet', 'onAddAbsence', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAddAbsence')
+	->register('intranet', 'onAfterUserFire', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAfterUserFire')
 	->register('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', \Bitrix\Bizproc\Public\Integration\AiAssistant\EventHandler\AiAssistantAgentActivity::class, 'onCollectCustomContext')
 	->register('humanresources', 'OnAiReportsEnabled', '\Bitrix\Bizproc\Integration\HumanResources\EventHandler', 'onAiReportsEnabled')
 	->register(

@@ -19,6 +19,18 @@ export const ToastLayout = {
 			required: true,
 		},
 	},
+	computed: {
+		/**
+		 * A summary of several counters arrives as one message with its lines separated by newlines,
+		 * and the block holds plain text, where a newline is not a break of its own. Splitting here
+		 * keeps the message a string for the queue of toasts and keeps the text escaped by Vue - a
+		 * single-line message still renders exactly one line, as it always did.
+		 */
+		messageLines(): Array<string>
+		{
+			return this.message.split('\n');
+		},
+	},
 	template: `
 		<div class="editor-chart-toast-layout">
 			<div class="editor-chart-toast-layout__left">
@@ -38,7 +50,7 @@ export const ToastLayout = {
 				</template>
 				<div class="editor-chart-toast-layout__content">
 					<div class="editor-chart-toast-layout__content__message">
-						{{ message }}
+						<div v-for="(line, index) in messageLines" :key="index">{{ line }}</div>
 					</div>
 					<div v-if="$slots.contentEnd"
 						class="editor-chart-toast-layout__content__end"

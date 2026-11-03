@@ -53,12 +53,12 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 			const actions = [];
 
 			[...checklists.values()].sort((a, b) => {
-				const itemA = a.getRootItem()?.getSortIndex();
-				const itemB = b.getRootItem()?.getSortIndex();
+				const itemA = a.getRoot()?.getSortIndex();
+				const itemB = b.getRoot()?.getSortIndex();
 
 				return itemA - itemB;
 			}).forEach((checklist) => {
-				const rootItem = checklist.getRootItem();
+				const rootItem = checklist.getRoot();
 				const checklistId = rootItem.getId();
 
 				if (sourceChecklistId !== checklistId)

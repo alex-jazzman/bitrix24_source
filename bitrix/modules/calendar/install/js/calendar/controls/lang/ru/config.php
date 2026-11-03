@@ -36,6 +36,10 @@ $MESS["EC_TIMEZONE"] = "Часовой пояс";
 $MESS["EC_CALENDAR_SECTION_TITLE"] = "Календарь:";
 $MESS["EC_CALENDAR_LOCATION_TITLE"] = "Переговорная:";
 
+$MESS['EC_PLANNER_LIMIT_CLOSE'] = 'Закрыть уведомление';
+$MESS['EC_PLANNER_LIMIT_TITLE'] = 'В событии много участников';
+$MESS['EC_PLANNER_LIMIT_TEXT'] = 'Можно посмотреть занятость только первых #COUNT# добавленных участников';
+
 $MESS["EC_NOTIFY_OPTION"] = "Оповещать о решении";
 $MESS["EC_DONT_NOTIFY_OPTION"] = "Не оповещать о решении";
 $MESS["EC_NOTIFY_OPTION_OFF_TITLE"] = "Кликните, чтобы включать оповещения о решении пользователей";

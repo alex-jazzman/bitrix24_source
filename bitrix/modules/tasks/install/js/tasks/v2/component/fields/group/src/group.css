@@ -25,3 +25,7 @@
 	margin-right: 6px;
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
+
+.ui-chip[data-task-chip-id="groupId"]:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
+}

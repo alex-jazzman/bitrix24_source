@@ -1,6 +1,7 @@
 /* eslint-disable */
 type SignatureEditorOptions = EditorPanels & {
 	editorInstanceId: string;
+	initialContent?: string;
 	signatureId: number;
 	alertContainer: HTMLElement;
 	transport: SignatureTransport;
@@ -92,6 +93,91 @@ type SignatureHtmlEditor = {
 	getContent(): string;
 	insertHtml(html: string): void;
 	focus(): void;
+	saveBookmark(): SignatureHtmlEditorBookmark | null;
+	restoreBookmark(bookmark: SignatureHtmlEditorBookmark): boolean;
+	insertNodeAtBookmark(bookmark: SignatureHtmlEditorBookmark, node: HTMLElement): boolean;
+};
+
+type SignatureHtmlEditorBookmark = {
+	readonly [signatureHtmlEditorBookmark]: true;
+};
+
+type ImageCapabilityOptions = {
+	localUploader: LocalImageSource;
+	diskPicker: DiskImageSource;
+	service?: SignatureImageService;
+	markerBuilder?: MarkerBuilder;
+	sizeMenu?: SizeMenu;
+	uploadProgress?: UploadProgress;
+};
+
+type LocalImageSource = {
+	choose(onUploadStart: () => void): Promise<string | null>;
+	cancel(): void;
+};
+
+type DiskImageSource = {
+	choose(): Promise<number | null>;
+	cancel(): void;
+};
+
+type SignatureImageService = {
+	upload(uploadId: string): Promise<SignatureImageDto>;
+	copy(objectId: number): Promise<SignatureImageDto>;
+};
+
+type SignatureImageDto = {
+	id: string;
+	src: string;
+	contentType: SignatureImageContentType;
+	width: number;
+	height: number;
+	size: number;
+	animated: boolean;
+	variants: SignatureImageVariants;
+};
+
+type SignatureImageContentType = 'image/jpeg' | 'image/png' | 'image/gif';
+
+type SignatureImageVariants = Record<SignatureImageVariantName, number>;
+
+type SignatureImageVariantName = (typeof BX.Mail.Signature.Editor.SignatureImageVariant)[keyof typeof BX.Mail.Signature.Editor.SignatureImageVariant];
+
+type MarkerBuilder = (image: SignatureImageDto, variant: SignatureImageVariantName) => HTMLImageElement;
+
+type SizeMenu = {
+	choose(image: SignatureImageDto, anchor: HTMLElement | null): Promise<SignatureImageVariantName | null>;
+	destroy(): void;
+};
+
+type UploadProgress = {
+	show(anchor: HTMLElement | null): void;
+	destroy(): void;
+};
+
+type ImageCapabilityState = 'idle' | 'choosing' | 'uploading' | 'sizing' | 'ready' | 'destroyed';
+
+type LocalImageUploaderOptions = {
+	uploaderFactory?: UploaderFactory;
+};
+
+type UploaderFactory = (options: BX.UI.Uploader.UploaderOptions) => BX.UI.Uploader.Uploader;
+
+type DiskImagePickerOptions = {
+	pickerFactory?: DiskPickerFactory;
+};
+
+type DiskPickerFactory = () => BX.Disk.DiskPicker;
+
+type ImageSourceMenuOptions = {
+	editorInstanceId: string;
+	capability: ImageSourceCapability;
+};
+
+type ImageSourceCapability = {
+	prepareInsertion(anchor?: HTMLElement | null): void;
+	chooseLocal(): Promise<void>;
+	chooseDisk(): Promise<void>;
 };
 
 type SignatureMacroCatalogGroup = {
@@ -244,6 +330,45 @@ declare namespace BX.Mail.Signature.Editor {
 		clearError(): void;
 		closeSlider(signatureId: number): void;
 	}
+
+	const signatureHtmlEditorBookmark: unique symbol;
+
+	class ImageCapability implements SignatureEditorCapability {
+		constructor(options: ImageCapabilityOptions);
+		connect(context: SignatureEditorContext): void;
+		getState(): ImageCapabilityState;
+		prepareInsertion(anchor?: HTMLElement | null): void;
+		chooseLocal(): Promise<void>;
+		chooseDisk(): Promise<void>;
+		beforeSave(): Promise<boolean>;
+		disconnect(): void;
+	}
+
+	const SignatureImageVariant: Readonly<{
+		readonly Small: "small";
+		readonly Medium: "medium";
+		readonly Original: "original";
+	}>;
+
+	class LocalImageUploader {
+		constructor(options: LocalImageUploaderOptions);
+		choose(onUploadStart?: () => void): Promise<string | null>;
+		cancel(): void;
+	}
+
+	class DiskImagePicker {
+		constructor(options?: DiskImagePickerOptions);
+		choose(): Promise<number | null>;
+		cancel(): void;
+	}
+
+	class ImageSourceMenu {
+		constructor(options: ImageSourceMenuOptions);
+		attach(): boolean;
+		destroy(): void;
+	}
+
+	function buildSignatureImageMarker(image: SignatureImageDto, variant?: SignatureImageVariantName): HTMLImageElement;
 
 	class SignatureMacroCatalog {
 		private constructor();

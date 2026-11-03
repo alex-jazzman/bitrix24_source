@@ -11,12 +11,14 @@ use Bitrix\Crm;
 use Bitrix\Crm\Conversion\DealConversionConfig;
 use Bitrix\Crm\Conversion\DealConversionWizard;
 use Bitrix\Crm\Field;
+use Bitrix\Crm\Integration\Analytics\KanbanCreateOrigin;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\Field\DefaultValue\CloseDateConfigurator;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service\ClientRecentCategoryResolver;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
@@ -272,6 +274,7 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $initialData[$fieldName];
 		}
 	}
+	\CCrmUserType::NormalizeMoneyFieldsForSave($fields, $fieldsInfo);
 	/** @global $USER_FIELD_MANAGER CUserTypeManager */
 	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmDeal::USER_FIELD_ENTITY_ID, $fields, [
@@ -317,6 +320,10 @@ elseif($action === 'SAVE')
 		CCrmOwnerType::Deal,
 		$categoryID
 	);
+	$clientRecentCategory = ServiceLocator::getInstance()
+		->get(ClientRecentCategoryResolver::class)
+		->resolve(CCrmOwnerType::Deal, 'crm.deal.details')
+	;
 
 	$companyID = 0;
 	$companyEntity = new \CCrmCompany(false);
@@ -369,7 +376,7 @@ elseif($action === 'SAVE')
 		if($fields['COMPANY_ID'] > 0)
 		{
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
-				'crm.deal.details',
+				$clientRecentCategory,
 				'company',
 				[
 					[
@@ -470,7 +477,7 @@ elseif($action === 'SAVE')
 				];
 			}
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
-				'crm.deal.details',
+				$clientRecentCategory,
 				'contact',
 				$contactBindings
 			);
@@ -961,10 +968,35 @@ elseif($action === 'SAVE')
 					$mcBankDetailId > 0 ? $mcBankDetailId : null
 				);
 
-				$saveOptions['ITEM_OPTIONS'] = [
-					'VIEW_MODE' => $viewMode,
-					'STAGE_ID' => $fields['STAGE_ID'],
-				];
+			$saveOptions['ITEM_OPTIONS'] = [
+				'VIEW_MODE' => $viewMode,
+				'STAGE_ID' => $fields['STAGE_ID'],
+			];
+			$originViewMode = is_string($viewMode)
+				? $viewMode
+				: \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES
+			;
+			if (KanbanCreateOrigin::verifyForSave(
+					$_POST['KANBAN_CREATE_ORIGIN'] ?? null,
+					$currentUserID,
+					\CCrmOwnerType::Deal,
+					$categoryID,
+				KanbanCreateOrigin::resolveColumnForSave(
+					$originViewMode,
+					(string)($fields['STAGE_ID'] ?? ''),
+					$params,
+				),
+					$isNew,
+					$isCopyMode,
+					!empty($params['LEAD_ID'])
+						|| !empty($params['QUOTE_ID'])
+					|| !empty($params['CONVERSION_SOURCE'])
+					|| !empty($_POST['CONVERSION_SOURCE']),
+				$originViewMode,
+				))
+				{
+					$saveOptions['ITEM_OPTIONS']['KANBAN_CREATE_ORIGIN'] = true;
+				}
 
 				$ID = $entity->Add($fields, true, $saveOptions);
 				if ($ID <= 0)
@@ -1536,6 +1568,7 @@ elseif($action === 'GET_BINDING_INFOS')
 			$entityID,
 			array(
 				'ENTITY_EDITOR_FORMAT' => true,
+				'IS_HIDDEN' => !$isReadPermitted,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
 				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
 				'NAME_TEMPLATE' => $nameTemplate,
@@ -1610,6 +1643,7 @@ elseif($action === 'ADD_BINDING')
 			$entityID,
 			array(
 				'ENTITY_EDITOR_FORMAT' => true,
+				'IS_HIDDEN' => !$isReadPermitted,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
 				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
 				'NAME_TEMPLATE' => $nameTemplate,
@@ -1775,6 +1809,44 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
 
 	$component->initializeData();
+	$entityControllers = $component->prepareEntityControllers();
+	$hostColumnId = $_POST['HOST_COLUMN_FOR_QUICK_EDITOR_ID'] ?? null;
+	$editorCategoryId = (int)$component->getCategoryID();
+	$originViewMode = $context['PARAMS']['VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES;
+	if (
+		$ID === 0
+		&& $isEmbedded
+		&& empty($params['DEAL_ID'])
+		&& empty($params['LEAD_ID'])
+		&& empty($params['QUOTE_ID'])
+		&& empty($params['CONVERSION_SOURCE'])
+		&& is_string($hostColumnId)
+		&& $hostColumnId !== ''
+		&& ($context['STAGE_ID'] ?? null) === $hostColumnId
+		&& is_string($originViewMode)
+		&& KanbanCreateOrigin::isValidColumn(\CCrmOwnerType::Deal, $editorCategoryId, $hostColumnId, $originViewMode)
+	)
+	{
+		$origin = KanbanCreateOrigin::issue(
+			$currentUserID,
+			\CCrmOwnerType::Deal,
+			$editorCategoryId,
+			$hostColumnId,
+			$originViewMode,
+		);
+		if ($origin !== null)
+		{
+			$context['PARAMS']['VIEW_MODE'] = $originViewMode;
+			$context['PARAMS']['KANBAN_CREATE_COLUMN_ID'] = $hostColumnId;
+			$entityControllers = KanbanCreateOrigin::appendLegacyEditorController(
+				$entityControllers,
+				is_array($_POST['POST_FORM_ANALYTICS_DATA']['data'] ?? null)
+					? $_POST['POST_FORM_ANALYTICS_DATA']['data']
+					: [],
+				$origin,
+			);
+		}
+	}
 
 	if(empty($fieldNames))
 	{
@@ -1813,10 +1885,12 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		$entityConfig = array($sectionConfig);
 	}
 
-	$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
-	if(isset($_POST['SCOPE']) && \Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($_POST['SCOPE']))
+	$scope = isset($_POST['SCOPE']) && is_string($_POST['SCOPE'])
+		? mb_strtoupper($_POST['SCOPE'])
+		: \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+	if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
 	{
-		$scope = $_POST['SCOPE'];
+		$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
 	}
 
 	$scopePrefix = '';
@@ -1840,6 +1914,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		array(
 			'GUID' => $guid,
 			'CONFIG_ID' => $configID !== '' ? $configID : $component->getDefaultConfigID(),
+			'SCOPE' => $scope,
 			'SCOPE_PREFIX' => $scopePrefix,
 			'OPTION_PREFIX' => $optionPrefix,
 			'FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
@@ -1873,6 +1948,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
+			'ENTITY_CONTROLLERS' => $entityControllers,
 			'MODULE_ID' => $moduleId,
 			'COMPONENT_AJAX_DATA' => [
 				'POST_FORM_ANALYTICS' => $_POST['POST_FORM_ANALYTICS_DATA']['data'] ?? [],

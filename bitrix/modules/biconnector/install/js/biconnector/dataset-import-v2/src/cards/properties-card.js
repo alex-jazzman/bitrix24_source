@@ -1,10 +1,12 @@
 import { Loc } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { CollapsibleCard } from '../card/collapsible-card';
+import { TableGroupField } from './table-group-field';
+import { TableGroupView } from './table-group-view';
 import { DATASET_NAME_MAX_LENGTH, getDatasetNameError } from '../lib/dataset-name-validation';
 
 export const PropertiesCard = {
-	components: { CollapsibleCard },
+	components: { CollapsibleCard, TableGroupField, TableGroupView },
 	inject: ['appParams'],
 	setup()
 	{
@@ -16,8 +18,9 @@ export const PropertiesCard = {
 	{
 		return {
 			titleMessage: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_TITLE'),
-			hintMessage: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_HINT'),
-			nameLabel: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_NAME_LABEL'),
+			hintMessage: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_HINT_MSGVER_1'),
+			nameLabel: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_NAME_LABEL_MSGVER_1'),
+			verboseNameLabel: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_VERBOSE_NAME_LABEL'),
 			descriptionLabel: Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_DESCRIPTION_LABEL'),
 			nameError: '',
 		};
@@ -42,6 +45,16 @@ export const PropertiesCard = {
 			{
 				this.$store.commit('setDatasetProperties', { name: value });
 				this.refreshNameError();
+			},
+		},
+		verboseName: {
+			get()
+			{
+				return this.datasetProperties.verboseName ?? '';
+			},
+			set(value)
+			{
+				this.$store.commit('setDatasetProperties', { verboseName: value });
 			},
 		},
 		description: {
@@ -92,7 +105,7 @@ export const PropertiesCard = {
 			const error = getDatasetNameError(value, this.reservedNames);
 			if (error === 'required')
 			{
-				return Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_NAME_REQUIRED');
+				return Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_NAME_REQUIRED_MSGVER_1');
 			}
 			if (error === 'tooLong')
 			{
@@ -105,7 +118,7 @@ export const PropertiesCard = {
 			}
 			if (error === 'reserved')
 			{
-				return Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_NAME_RESERVED');
+				return Loc.getMessage('DATASET_IMPORT_V2_CARD_PROPERTIES_NAME_RESERVED_MSGVER_1');
 			}
 
 			return '';
@@ -135,6 +148,19 @@ export const PropertiesCard = {
 					{{ nameError }}
 				</span>
 			</label>
+			<label class="biconnector-dataset-import-v2-card__field">
+				<span class="biconnector-dataset-import-v2-card__field-label">{{ verboseNameLabel }}</span>
+				<input
+					type="text"
+					class="biconnector-dataset-import-v2-card__input"
+					v-model.trim="verboseName"
+					:disabled="isReadOnly"
+					maxlength="255"
+					autocomplete="off"
+				/>
+			</label>
+			<TableGroupField/>
+			<TableGroupView/>
 			<label class="biconnector-dataset-import-v2-card__field">
 				<span class="biconnector-dataset-import-v2-card__field-label">{{ descriptionLabel }}</span>
 				<textarea

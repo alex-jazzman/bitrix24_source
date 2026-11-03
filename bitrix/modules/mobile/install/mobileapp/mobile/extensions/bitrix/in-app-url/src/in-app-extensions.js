@@ -24,7 +24,9 @@ jn.define('in-app-url/src/in-app-extensions', (require, exports, module) => {
 		'in-app-url/routes/stafftrack',
 		'in-app-url/routes/settings',
 		'in-app-url/routes/bitrix24',
+		'in-app-url/routes/intent',
 		'in-app-url/routes/note',
+		'in-app-url/routes/vibecode',
 		'intranet/in-app-url/routes',
 		'call/in-app-url/routes',
 	];

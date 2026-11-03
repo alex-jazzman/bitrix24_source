@@ -47,7 +47,3 @@
 	vertical-align: middle;
 	color: var(--ui-color-palette-gray-50);
 }
-
-.ui-block-diagram-percent-menu {
-	transform: translate(15px, calc(-100% - 10px));
-}

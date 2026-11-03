@@ -19,7 +19,7 @@ if (!Loader::includeModule('biconnector'))
 
 class SupersetDashboardDetailAjax extends \Bitrix\Main\Engine\Controller
 {
-	public function sendDashboardToChatAction(CurrentUser $user, $dialogId, string $content, string $dashboardName, string $fileExtension): ?bool
+	public function sendDashboardToChatAction(CurrentUser $user, string $dialogId, string $content, string $dashboardName, string $fileExtension): ?bool
 	{
 		if ($fileExtension !== 'jpeg' && $fileExtension !== 'pdf')
 		{
@@ -46,6 +46,18 @@ class SupersetDashboardDetailAjax extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
+		$chat = \Bitrix\Im\V2\Chat::getInstance((int)$chatId);
+		if (
+			!$chat->isExist()
+			|| !$chat->checkAccess()->isSuccess()
+			|| !$chat->canDo(\Bitrix\Im\V2\Permission\Action::Send)
+		)
+		{
+			$this->addError(new Error(Loc::getMessage('BI_SEND_DASHBOARD_TO_CHAT_ERROR_ACCESS'), 'ACCESS_DENIED'));
+
+			return null;
+		}
+
 		$folder = CIMDisk::getFolderModel($chatId);
 		if (!$folder)
 		{
@@ -64,7 +76,7 @@ class SupersetDashboardDetailAjax extends \Bitrix\Main\Engine\Controller
 		checkDirPath($targetDir);
 		$date = (new DateTime())->format('Y-m-d H-i-s');
 		$fileName = "$dashboardName $date.$fileExtension";
-		$tmpFilePath = IO\Path::normalize($targetDir) . $ds . $fileName;
+		$tmpFilePath = IO\Path::normalize($targetDir . $ds . 'dashboard.' . $fileExtension);
 		IO\File::putFileContents($tmpFilePath, $fileContent);
 
 		$fileArray = CFile::makeFileArray($tmpFilePath);
@@ -94,6 +106,7 @@ class SupersetDashboardDetailAjax extends \Bitrix\Main\Engine\Controller
 
 		if (!is_array($result))
 		{
+			\Bitrix\Disk\File::loadById((int)$file->getId())?->delete($user->getId());
 			$this->addError(new Error(Loc::getMessage('BI_SEND_DASHBOARD_TO_CHAT_ERROR_ACCESS'), 'SEND_MESSAGE_ERROR'));
 
 			return null;

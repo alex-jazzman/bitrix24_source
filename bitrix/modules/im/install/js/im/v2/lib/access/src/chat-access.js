@@ -7,6 +7,28 @@ import { AccessService } from './classes/access-service';
 import { ParentAccessPopup } from './classes/parent-access-popup';
 
 export const ChatAccessManager = {
+	/**
+	 * The whole selection weighed against the parent chat. People are weighed by their access to it;
+	 * a node of the org structure has no such list of its own - the server resolves who stands behind
+	 * the node and mirrors the link onto the parent chat itself, so the node is asked about as a
+	 * whole. The mobile window asks the same way (ProjectAccessGuard.canAddEntitiesToProjectChildChat).
+	 */
+	canAddSelection(dialogId: string, userIds: string[], structureNodes: Array<mixed>): Promise<boolean>
+	{
+		const parentChat: ImModelChat = Core.getStore().getters['chats/getParent'](dialogId);
+		if (!parentChat || !addsMembersToParent(dialogId))
+		{
+			return true;
+		}
+
+		if (structureNodes.length > 0)
+		{
+			return this.askForParentAccess();
+		}
+
+		return this.canAddUsersToParent(parentChat.dialogId, userIds);
+	},
+
 	canAddUsers(dialogId: string, userIds: string[]): Promise<boolean>
 	{
 		const parentChat: ImModelChat = Core.getStore().getters['chats/getParent'](dialogId);

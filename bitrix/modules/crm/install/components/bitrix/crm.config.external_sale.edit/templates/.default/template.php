@@ -9,11 +9,16 @@ else
 	if ($arResult["ErrorMessage"] <> '')
 		ShowError($arResult["ErrorMessage"]);
 
+	$navigationLinkAttributes = ($arParams['IS_SETTINGS_HUB'] ?? null) === true
+		? ' data-slider-ignore-autobinding="true" target="_self"'
+		: '';
+
 	$arButtons = array(
 		array(
 			"TEXT"=>GetMessage("BPWC_WNCT_2LIST"),
 			"TITLE"=>GetMessage("BPWC_WNCT_2LIST"),
 			"LINK"=>$arResult["PATH_TO_INDEX"],
+			'LINK_PARAM' => 'data-testid="crm-config-external-sale-edit-list-button"' . $navigationLinkAttributes,
 			"ICON"=>"btn-list",
 		),
 	);
@@ -23,6 +28,7 @@ else
 			"TEXT"=>GetMessage("BPWC_WNCT_2SYNC"),
 			"TITLE"=>GetMessage("BPWC_WNCT_2SYNC"),
 			"LINK"=>$arResult["PATH_TO_SYNC"],
+			'LINK_PARAM' => 'data-testid="crm-config-external-sale-edit-sync-button"' . $navigationLinkAttributes,
 			"ICON"=>"btn-import",
 		);
 	}
@@ -49,7 +55,12 @@ else
 
 	$lastStatusValue = "";
 	if (intval($arResult["BP"]["MODIFICATION_LABEL"]) == 0)
-		$lastStatusValue .= "<font class='errortext'>".GetMessage("BPWC_WLC_NEED_FIRST_SYNC1")."</font><br /><a href='".$arResult["PATH_TO_SYNC"]."'>".GetMessage("BPWC_WLC_NEED_FIRST_SYNC1_DO")."</a><br />";
+	{
+		$lastStatusValue .= '<font class="errortext">' . GetMessage('BPWC_WLC_NEED_FIRST_SYNC1')
+			. '</font><br /><a href="' . htmlspecialcharsbx($arResult['PATH_TO_SYNC']) . '"'
+			. ' data-testid="crm-config-external-sale-edit-first-sync-link-' . (int)$arResult['BP']['ID'] . '"'
+			. $navigationLinkAttributes . '>' . GetMessage('BPWC_WLC_NEED_FIRST_SYNC1_DO') . '</a><br />';
+	}
 	if ($arResult["BP"]["LAST_STATUS"] != "" && mb_strtolower(mb_substr($arResult["BP"]["LAST_STATUS"], 0, mb_strlen("success"))) != "success")
 		$lastStatusValue .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC3").$arResult["BP"]["LAST_STATUS"];
 	if ($lastStatusValue == "")

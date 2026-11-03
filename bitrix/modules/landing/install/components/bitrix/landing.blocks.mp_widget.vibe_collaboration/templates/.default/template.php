@@ -10,15 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-$extensions = ['ui.icon-set.outline'];
-$hintNeeded = false;
-if (!in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by', 'uz'], true))
-{
-	$extensions[] = 'ui.hint';
-	$hintNeeded = true;
-}
-
-Extension::load($extensions);
+Extension::load(['ui.icon-set.outline', 'ui.hint']);
 
 $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 
@@ -48,32 +40,29 @@ $items = [
 		3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_4_3'),
 	],
 ];
-if ($hintNeeded === true)
-{
-	$hints = [
-		1 => [
-			1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_1'),
-			2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_2_1'),
-			3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_2_2'),
-			4 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_2_3'),
-		],
-		2 => [
-			1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_2_1'),
-			2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_2_2'),
-			3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_2_3'),
-		],
-		3 => [
-			1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_3_1'),
-			2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_3_2'),
-			3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_3_3'),
-		],
-		4 => [
-			1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_4_1'),
-			2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_4_2'),
-			3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_4_3'),
-		],
-	];
-}
+$hints = [
+	1 => [
+		1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_1'),
+		2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_2_1'),
+		3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_2_2'),
+		4 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_1_2_3'),
+	],
+	2 => [
+		1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_2_1'),
+		2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_2_2'),
+		3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_2_3'),
+	],
+	3 => [
+		1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_3_1'),
+		2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_3_2'),
+		3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_3_3'),
+	],
+	4 => [
+		1 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_4_1'),
+		2 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_4_2'),
+		3 => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_COLLABORATION_ITEM_HINT_4_3'),
+	],
+];
 
 $zone = $arResult['ZONE'];
 if (in_array($zone, ['ru', 'kz', 'by', 'uz']))
@@ -180,11 +169,11 @@ $cardConfig = [
 					<?php
 					$wrapStarted = false;
 					foreach ($colItems as $rowIdx => $item):
-						$itermConfig = $cardConfig[$colIdx][$rowIdx - 1];
+						$itemConfig = $cardConfig[$colIdx][$rowIdx - 1];
 						$link = $links[$linksZone][$colIdx][$rowIdx]['href'] ?? '';
 						$target = $linkTarget[$linksZone];
-						$icon = $itermConfig['icon'];
-						$wrap = $itermConfig['wrap'] ?? '';
+						$icon = $itemConfig['icon'];
+						$wrap = $itemConfig['wrap'] ?? '';
 						$itemHeight = 60;
 						if ($wrap === '')
 						{
@@ -203,10 +192,8 @@ $cardConfig = [
 							href="<?= htmlspecialcharsbx($link) ?>"
 							target="<?= htmlspecialcharsbx($target) ?>"
 							style="height: <?= $itemHeight ?>px;"
-							<?php if ($hintNeeded === true): ?>
-								data-hint="<?= htmlspecialcharsbx($hintText) ?>"
-								data-hint-no-icon
-							<?php endif; ?>
+							data-hint="<?= htmlspecialcharsbx($hintText) ?>"
+							data-hint-no-icon
 						>
 							<div
 								class="landing-block-node-card-icon-container g-rounded-50x g-mr-20"
@@ -239,7 +226,7 @@ $cardConfig = [
 
 <script>
 	BX.ready(function() {
-		BX.UI.Hint.init(BX('landing-block-node-card-container'));
+		BX.UI.Hint.init(document.getElementById('<?= $id ?>'));
 	})
 
 	BX.ready(function() {

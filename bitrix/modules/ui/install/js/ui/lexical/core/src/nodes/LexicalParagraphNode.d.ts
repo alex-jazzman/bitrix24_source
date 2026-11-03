@@ -6,38 +6,47 @@
  *
  */
 import type { EditorConfig, KlassConstructor, LexicalEditor, Spread } from '../LexicalEditor';
-import type { DOMConversionMap, DOMExportOutput, LexicalNode, NodeKey } from '../LexicalNode';
-import type { SerializedElementNode } from './LexicalElementNode';
-import type { RangeSelection } from 'ui.lexical.core';
-import { ElementNode } from './LexicalElementNode';
-import { TextFormatType } from './LexicalTextNode';
+import type { DOMConversionOutput, DOMExportOutput, LexicalNode } from '../LexicalNode';
+import type { BaseSelection, RangeSelection } from '../LexicalSelection';
+import { ElementNode, type SerializedElementNode } from './LexicalElementNode';
 export type SerializedParagraphNode = Spread<{
     textFormat: number;
     textStyle: string;
 }, SerializedElementNode>;
 /** @noInheritDoc */
 export declare class ParagraphNode extends ElementNode {
-    ['constructor']: KlassConstructor<typeof ParagraphNode>;
     /** @internal */
-    __textFormat: number;
-    __textStyle: string;
-    constructor(key?: NodeKey);
-    static getType(): string;
-    getTextFormat(): number;
-    setTextFormat(type: number): this;
-    hasTextFormat(type: TextFormatType): boolean;
-    getTextStyle(): string;
-    setTextStyle(style: string): this;
-    static clone(node: ParagraphNode): ParagraphNode;
-    afterCloneFrom(prevNode: this): void;
+    ['constructor']: KlassConstructor<typeof ParagraphNode>;
+    $config(): import("..").BaseStaticNodeConfig & {
+        readonly paragraph?: {
+            readonly extends: typeof ElementNode;
+            readonly importDOM: {
+                readonly p: () => {
+                    conversion: typeof $convertParagraphElement;
+                    priority: 0;
+                };
+            };
+        } | undefined;
+    } & import("..").StaticNodeTypeAccessor<"paragraph"> & import("..").StaticNodeConfigAccessor<{
+        readonly extends: typeof ElementNode;
+        readonly importDOM: {
+            readonly p: () => {
+                conversion: typeof $convertParagraphElement;
+                priority: 0;
+            };
+        };
+    }>;
     createDOM(config: EditorConfig): HTMLElement;
     updateDOM(prevNode: ParagraphNode, dom: HTMLElement, config: EditorConfig): boolean;
-    static importDOM(): DOMConversionMap | null;
     exportDOM(editor: LexicalEditor): DOMExportOutput;
-    static importJSON(serializedNode: SerializedParagraphNode): ParagraphNode;
     exportJSON(): SerializedParagraphNode;
+    extractWithChild(child: LexicalNode, selection: BaseSelection | null, destination: 'clone' | 'html'): boolean;
     insertNewAfter(rangeSelection: RangeSelection, restoreSelection: boolean): ParagraphNode;
     collapseAtStart(): boolean;
 }
+declare function $convertParagraphElement(element: HTMLElement): DOMConversionOutput;
+/** Creates a ParagraphNode, the default block-level container for text. */
 export declare function $createParagraphNode(): ParagraphNode;
+/** Returns true if the given node is a ParagraphNode. */
 export declare function $isParagraphNode(node: LexicalNode | null | undefined): node is ParagraphNode;
+export {};

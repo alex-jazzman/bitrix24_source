@@ -301,31 +301,25 @@ function decryptData(string $data, string $key): ?array
 		return null;
 	}
 
-	$cipherAlgorithm = 'aes-256-ctr';
-	$hashAlgorithm = 'sha256';
+	static $cipher;
+	try
+	{
+		if ($cipher === null)
+		{
+			require_once __DIR__ . '/../lib/SystemException.php';
+			require_once __DIR__ . '/../lib/Security/SecurityException.php';
+			require_once __DIR__ . '/../lib/Security/Cipher.php';
+			require_once __DIR__ . '/../lib/Security/QuickAccess/DeterministicCipher.php';
 
-	$ivLength = openssl_cipher_iv_length($cipherAlgorithm);
-	$iv = substr($data, 0, $ivLength);
-	$raw = substr($data, $ivLength);
+			$cipher = new \Bitrix\Main\Security\QuickAccess\DeterministicCipher();
+		}
 
-	$keyHash = openssl_digest($iv . $key, $hashAlgorithm, true);
-	$decrypted = openssl_decrypt($raw, $cipherAlgorithm, $keyHash, OPENSSL_RAW_DATA, $iv);
-
-	if ($decrypted === false)
+		return decodeJson($cipher->decrypt($data, $key));
+	}
+	catch (\Throwable)
 	{
 		return null;
 	}
-
-	$hashPart = substr($decrypted, 0, strlen($keyHash));
-	$result = substr($decrypted, strlen($keyHash));
-	$checkHash = openssl_digest($result, $hashAlgorithm, true);
-
-	if ($hashPart !== $checkHash)
-	{
-		return null;
-	}
-
-	return decodeJson($result);
 }
 
 $cookiePrefix = $config['cookiePrefix'] ?? 'BITRIX_SM';

@@ -26,6 +26,7 @@ export type ConvertResult = {
 	token: string,
 	fileIds: number[],
 	sourceFileIds?: number[],
+	tokenFileIds?: number[],
 	folderName: string,
 };
 

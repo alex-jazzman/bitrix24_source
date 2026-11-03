@@ -31,3 +31,5 @@ $MESS['TASKS_V2_REMINDERS_SEND_VIA_EMAIL'] = 'Письмо на электрон
 
 $MESS['TASKS_V2_REMINDERS_SAVE'] = 'Сохранить';
 $MESS['TASKS_V2_REMINDERS_CANCEL'] = 'Отмена';
+$MESS['TASKS_V2_REMINDERS_CLOSE_ARIA_LABEL'] = 'Закрыть';
+$MESS['TASKS_V2_REMINDERS_DURATION_UNIT_ARIA_LABEL'] = 'Единица измерения времени';

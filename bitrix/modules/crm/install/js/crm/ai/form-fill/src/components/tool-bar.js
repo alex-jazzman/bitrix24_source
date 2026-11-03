@@ -8,12 +8,12 @@ import '../css/tool-bar.css';
 export const ToolBar = {
 	name: 'ToolBar',
 	computed: {
-		...mapGetters(['conflictFields']),
+		...mapGetters(['conflictFieldsInEditor']),
 		conflictCount(): number {
-			return this.conflictFields.length;
+			return this.conflictFieldsInEditor.length;
 		},
 		resolvedCount(): number {
-			return this.conflictFields.filter((f: ConflictField) => f.isAiValuesUsed).length;
+			return this.conflictFieldsInEditor.filter((f: ConflictField) => f.isAiValuesUsed).length;
 		},
 		isApplyAllDisabled(): boolean {
 			return this.conflictCount === this.resolvedCount;

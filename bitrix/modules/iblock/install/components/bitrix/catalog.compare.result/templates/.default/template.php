@@ -32,8 +32,12 @@ if ($isAjax)
 }
 ?><div class="bx_sort_container">
 	<div class="sorttext"><?=GetMessage("CATALOG_SHOWN_CHARACTERISTICS")?>:</div>
-	<a class="sortbutton<? echo (!$arResult["DIFFERENT"] ? ' current' : ''); ?>" href="<? echo $arResult['COMPARE_URL_TEMPLATE'].'DIFFERENT=N'; ?>" rel="nofollow"><?=GetMessage("CATALOG_ALL_CHARACTERISTICS")?></a>
-	<a class="sortbutton<? echo ($arResult["DIFFERENT"] ? ' current' : ''); ?>" href="<? echo $arResult['COMPARE_URL_TEMPLATE'].'DIFFERENT=Y'; ?>" rel="nofollow"><?=GetMessage("CATALOG_ONLY_DIFFERENT")?></a>
+	<?
+	// The mode the page is showing was told apart by a fill alone. These are two links to two
+	// addresses, so the mark is `aria-current` and not the pressed state of a button.
+	?>
+	<a class="sortbutton<? echo (!$arResult["DIFFERENT"] ? ' current' : ''); ?>" href="<? echo $arResult['COMPARE_URL_TEMPLATE'].'DIFFERENT=N'; ?>" rel="nofollow"<? echo (!$arResult["DIFFERENT"] ? ' aria-current="true"' : ''); ?>><?=GetMessage("CATALOG_ALL_CHARACTERISTICS")?></a>
+	<a class="sortbutton<? echo ($arResult["DIFFERENT"] ? ' current' : ''); ?>" href="<? echo $arResult['COMPARE_URL_TEMPLATE'].'DIFFERENT=Y'; ?>" rel="nofollow"<? echo ($arResult["DIFFERENT"] ? ' aria-current="true"' : ''); ?>><?=GetMessage("CATALOG_ONLY_DIFFERENT")?></a>
 </div>
 <?
 if (!empty($arResult["ALL_FIELDS"]) || !empty($arResult["ALL_PROPERTIES"]) || !empty($arResult["ALL_OFFER_FIELDS"]) || !empty($arResult["ALL_OFFER_PROPERTIES"]))
@@ -49,8 +53,8 @@ if (!empty($arResult["ALL_FIELDS"]) || !empty($arResult["ALL_PROPERTIES"]) || !e
 			if (!isset($arResult['FIELDS_REQUIRED'][$propCode]))
 			{
 		?>
-		<li><span onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')">
-			<span><input type="checkbox" id="PF_<?=$propCode?>"<? echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : ''); ?>></span>
+		<li><span>
+			<span><input type="checkbox" id="PF_<?=$propCode?>"<? echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : ''); ?> onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')"></span>
 			<label for="PF_<?=$propCode?>"><?=GetMessage("IBLOCK_FIELD_".$propCode)?></label>
 		</span></li>
 		<?
@@ -62,8 +66,8 @@ if (!empty($arResult["ALL_FIELDS"]) || !empty($arResult["ALL_PROPERTIES"]) || !e
 		foreach($arResult["ALL_OFFER_FIELDS"] as $propCode => $arProp)
 		{
 			?>
-			<li><span onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')">
-		<span><input type="checkbox" id="OF_<?=$propCode?>"<? echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : ''); ?>></span>
+			<li><span>
+		<span><input type="checkbox" id="OF_<?=$propCode?>"<? echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : ''); ?> onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')"></span>
 		<label for="OF_<?=$propCode?>"><?=GetMessage("IBLOCK_OFFER_FIELD_".$propCode)?></label>
 	</span></li>
 		<?
@@ -74,8 +78,8 @@ if (!empty($arResult["ALL_FIELDS"]) || !empty($arResult["ALL_PROPERTIES"]) || !e
 		foreach($arResult["ALL_PROPERTIES"] as $propCode => $arProp)
 		{
 	?>
-		<li><span onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')">
-			<span><input type="checkbox" id="PP_<?=$propCode?>"<?echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : '');?>></span>
+		<li><span>
+			<span><input type="checkbox" id="PP_<?=$propCode?>"<?echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : '');?> onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')"></span>
 			<label for="PP_<?=$propCode?>"><?=$arProp["NAME"]?></label>
 		</span></li>
 	<?
@@ -86,8 +90,8 @@ if (!empty($arResult["ALL_FIELDS"]) || !empty($arResult["ALL_PROPERTIES"]) || !e
 		foreach($arResult["ALL_OFFER_PROPERTIES"] as $propCode => $arProp)
 		{
 	?>
-		<li><span onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')">
-			<span><input type="checkbox" id="OP_<?=$propCode?>"<? echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : ''); ?>></span>
+		<li><span>
+			<span><input type="checkbox" id="OP_<?=$propCode?>"<? echo ($arProp["IS_DELETED"] == "N" ? ' checked="checked"' : ''); ?> onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arProp["ACTION_LINK"])?>')"></span>
 			<label for="OP_<?=$propCode?>"><?=$arProp["NAME"]?></label>
 		</span></li>
 	<?
@@ -99,13 +103,62 @@ if (!empty($arResult["ALL_FIELDS"]) || !empty($arResult["ALL_PROPERTIES"]) || !e
 <?
 }
 ?>
-<div class="table_compare">
+<div class="table_compare" role="region" aria-label="<?=GetMessage("CATALOG_COMPARE_SCROLL_REGION")?>">
 <table class="data-table">
+<caption class="bx-compare-a11y-text"><?=GetMessage("CATALOG_COMPARE_TABLE_CAPTION")?></caption>
 <?
+// A cell with nothing in it sounds to a reader exactly like the end of the row: the phrase tells
+// the two apart and stays away from the eye.
+$printCellValue = static function ($value): void
+{
+	if ((string)$value !== '')
+	{
+		echo $value;
+
+		return;
+	}
+	?><span class="bx-compare-a11y-text"><?=GetMessage("CATALOG_COMPARE_NO_VALUE")?></span><?
+};
+
+// The names of the products are the header of the table, and the header is printed in both modes:
+// inside the loop below this row was dropped by the same check as any other one, and in the mode
+// "only the different" the columns were left nameless exactly where comparing is hardest.
+if (isset($arResult["SHOW_FIELDS"]["NAME"]))
+{
+	?><thead>
+	<tr>
+		<td></td>
+		<?
+		foreach ($arResult["ITEMS"] as $arElement)
+		{
+			// The column is named explicitly: the buy button lies in this very cell, and a header
+			// named by its own content would repeat "name buy" over every cell of the column.
+			?><th scope="col" aria-label="<?=$arElement["NAME"]?>">
+			<a href="<?=$arElement["DETAIL_PAGE_URL"]?>"><?=$arElement["NAME"]?></a>
+			<?if($arElement["CAN_BUY"]):?>
+			<noindex><br /><a class="bx_bt_button bx_small" href="<?=$arElement["BUY_URL"]?>" rel="nofollow"
+				aria-label="<?=htmlspecialcharsbx(GetMessage("CATALOG_COMPARE_BUY_FOR", array("#NAME#" => $arElement["~NAME"])))?>"
+			><?=GetMessage("CATALOG_COMPARE_BUY"); ?></a></noindex>
+			<?elseif(!empty($arResult["PRICES"]) || is_array($arElement["PRICE_MATRIX"])):?>
+			<br /><?=GetMessage("CATALOG_NOT_AVAILABLE")?>
+			<?endif;?>
+			</th><?
+		}
+		unset($arElement);
+		?>
+	</tr>
+	</thead><?
+}
+
 if (!empty($arResult["SHOW_FIELDS"]))
 {
 	foreach ($arResult["SHOW_FIELDS"] as $code => $arProp)
 	{
+		if ($code === "NAME")
+		{
+			continue;
+		}
+
 		$showRow = true;
 		if ((!isset($arResult['FIELDS_REQUIRED'][$code]) || $arResult['DIFFERENT']) && count($arResult["ITEMS"]) > 1)
 		{
@@ -125,7 +178,7 @@ if (!empty($arResult["SHOW_FIELDS"]))
 		}
 		if ($showRow)
 		{
-			?><tr><td><?=GetMessage("IBLOCK_FIELD_".$code)?></td><?
+			?><tr><th scope="row"><?=GetMessage("IBLOCK_FIELD_".$code)?></th><?
 			foreach($arResult["ITEMS"] as $arElement)
 			{
 		?>
@@ -133,14 +186,6 @@ if (!empty($arResult["SHOW_FIELDS"]))
 		<?
 				switch($code)
 				{
-					case "NAME":
-						?><a href="<?=$arElement["DETAIL_PAGE_URL"]?>"><?=$arElement[$code]?></a>
-						<?if($arElement["CAN_BUY"]):?>
-						<noindex><br /><a class="bx_bt_button bx_small" href="<?=$arElement["BUY_URL"]?>" rel="nofollow"><?=GetMessage("CATALOG_COMPARE_BUY"); ?></a></noindex>
-						<?elseif(!empty($arResult["PRICES"]) || is_array($arElement["PRICE_MATRIX"])):?>
-						<br /><?=GetMessage("CATALOG_NOT_AVAILABLE")?>
-						<?endif;
-						break;
 					case "PREVIEW_PICTURE":
 					case "DETAIL_PICTURE":
 						if (!empty($arElement["FIELDS"][$code]) && is_array($arElement["FIELDS"][$code])):?>
@@ -149,10 +194,12 @@ if (!empty($arResult["SHOW_FIELDS"]))
 							width="auto" height="150"
 							alt="<?=$arElement["FIELDS"][$code]["ALT"]?>" title="<?=$arElement["FIELDS"][$code]["TITLE"]?>"
 							/></a>
-						<?endif;
+						<?else:
+							$printCellValue('');
+						endif;
 						break;
 					default:
-						echo $arElement["FIELDS"][$code];
+						$printCellValue($arElement["FIELDS"][$code]);
 						break;
 				}
 			?>
@@ -192,7 +239,7 @@ if (!empty($arResult["SHOW_OFFER_FIELDS"]))
 		{
 		?>
 		<tr>
-			<td><?=GetMessage("IBLOCK_OFFER_FIELD_".$code)?></td>
+			<th scope="row"><?=GetMessage("IBLOCK_OFFER_FIELD_".$code)?></th>
 			<?foreach($arResult["ITEMS"] as $arElement)
 			{
 				?><td><?
@@ -207,9 +254,13 @@ if (!empty($arResult["SHOW_OFFER_FIELDS"]))
 								alt="<?= $arElement["OFFER_FIELDS"][$code]["ALT"] ?>" title="<?= $arElement["OFFER_FIELDS"][$code]["TITLE"] ?>"
 							/><?
 						}
+						else
+						{
+							$printCellValue('');
+						}
 						break;
 					default:
-						?><?=(is_array($arElement["OFFER_FIELDS"][$code])? implode("/ ", $arElement["OFFER_FIELDS"][$code]): $arElement["OFFER_FIELDS"][$code])?><?
+						$printCellValue(is_array($arElement["OFFER_FIELDS"][$code])? implode("/ ", $arElement["OFFER_FIELDS"][$code]): $arElement["OFFER_FIELDS"][$code]);
 						break;
 				}
 				?></td><?
@@ -223,13 +274,13 @@ if (!empty($arResult["SHOW_OFFER_FIELDS"]))
 }
 ?>
 <tr>
-	<td><?=GetMessage('CATALOG_COMPARE_PRICE');?></td>
+	<th scope="row"><?=GetMessage('CATALOG_COMPARE_PRICE');?></th>
 	<?
 	foreach ($arResult["ITEMS"] as $arElement)
 	{
 		if (isset($arElement['MIN_PRICE']) && is_array($arElement['MIN_PRICE']))
 		{
-			?><td><? echo $arElement['MIN_PRICE']['PRINT_DISCOUNT_VALUE']; ?></td><?
+			?><td><? $printCellValue($arElement['MIN_PRICE']['PRINT_DISCOUNT_VALUE']); ?></td><?
 		}
 		elseif (!empty($arElement['PRICE_MATRIX']) && is_array($arElement['PRICE_MATRIX']))
 		{
@@ -275,7 +326,7 @@ if (!empty($arResult["SHOW_OFFER_FIELDS"]))
 		}
 		else
 		{
-			?><td>&nbsp;</td><?
+			?><td><? $printCellValue(''); ?></td><?
 		}
 	}
 	unset($arElement);
@@ -312,20 +363,21 @@ if (!empty($arResult["SHOW_PROPERTIES"]))
 		{
 			?>
 			<tr>
-				<td><?=$arProperty["NAME"]?></td>
+				<th scope="row"><?=$arProperty["NAME"]?></th>
 				<?foreach($arResult["ITEMS"] as $arElement)
 				{
 					?>
 					<td>
 						<?php
-							if (isset($arElement["DISPLAY_PROPERTIES"][$code]))
-							{
-								echo
-									is_array($arElement["DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
-										? implode("/ ", $arElement["DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
-										: (string)$arElement["DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"]
-								;
-							}
+							$printCellValue(
+								isset($arElement["DISPLAY_PROPERTIES"][$code])
+									? (
+										is_array($arElement["DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
+											? implode("/ ", $arElement["DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
+											: (string)$arElement["DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"]
+									)
+									: ''
+							);
 						?>
 					</td>
 				<?
@@ -367,20 +419,21 @@ if (!empty($arResult["SHOW_OFFER_PROPERTIES"]))
 		{
 		?>
 		<tr>
-			<td><?=$arProperty["NAME"]?></td>
+			<th scope="row"><?=$arProperty["NAME"]?></th>
 			<?foreach($arResult["ITEMS"] as $arElement)
 			{
 			?>
 			<td>
 				<?php
-				if (isset($arElement["OFFER_DISPLAY_PROPERTIES"][$code]))
-				{
-					echo
-						is_array($arElement["OFFER_DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
-							? implode("/ ", $arElement["OFFER_DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
-							: $arElement["OFFER_DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"]
-					;
-				}
+				$printCellValue(
+					isset($arElement["OFFER_DISPLAY_PROPERTIES"][$code])
+						? (
+							is_array($arElement["OFFER_DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
+								? implode("/ ", $arElement["OFFER_DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"])
+								: (string)$arElement["OFFER_DISPLAY_PROPERTIES"][$code]["DISPLAY_VALUE"]
+						)
+						: ''
+				);
 				?>
 			</td>
 			<?
@@ -399,7 +452,9 @@ if (!empty($arResult["SHOW_OFFER_PROPERTIES"]))
 		{
 		?>
 		<td>
-			<a onclick="CatalogCompareObj.delete('<?=CUtil::JSEscape($arElement['~DELETE_URL'])?>');" href="javascript:void(0)"><?=GetMessage("CATALOG_REMOVE_PRODUCT")?></a>
+			<a onclick="CatalogCompareObj.delete('<?=CUtil::JSEscape($arElement['~DELETE_URL'])?>');" href="javascript:void(0)"
+				aria-label="<?=htmlspecialcharsbx(GetMessage("CATALOG_REMOVE_PRODUCT_FOR", array("#NAME#" => $arElement["~NAME"])))?>"
+			><?=GetMessage("CATALOG_REMOVE_PRODUCT")?></a>
 		</td>
 		<?
 		}
@@ -415,6 +470,17 @@ if ($isAjax)
 }
 ?>
 </div>
-<script>
-	var CatalogCompareObj = new BX.Iblock.Catalog.CompareClass("bx_catalog_compare_block", '<?=CUtil::JSEscape($arResult['~COMPARE_URL_TEMPLATE']); ?>');
+<?
+// The language file of a template does not reach its script: the platform prints the script into
+// the page and knows nothing about the phrases of the template. The two the script speaks with are
+// handed over here, where the template is the one talking to it.
+?><script>
+	var CatalogCompareObj = new BX.Iblock.Catalog.CompareClass(
+		"bx_catalog_compare_block",
+		'<?=CUtil::JSEscape($arResult['~COMPARE_URL_TEMPLATE']); ?>',
+		<?=CUtil::PhpToJSObject(array(
+			'ANNOUNCE_REMOVED' => GetMessage('CATALOG_COMPARE_ANNOUNCE_REMOVED'),
+			'ANNOUNCE_PARAMS' => GetMessage('CATALOG_COMPARE_ANNOUNCE_PARAMS'),
+		)); ?>
+	);
 </script>

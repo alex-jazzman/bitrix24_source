@@ -1,3 +1,6 @@
+/* The red of the labels has no semantic token behind it: the alias carries the role, a token its value. */
+.bx-catalog-element { --iblock-bootstrap-v4-color-label: var(--ui-color-red-80); }
+
 /*region Sidebar */
 
 .product-item-detail-pay-block {
@@ -39,7 +42,6 @@
 /*region Price */
 .product-item-detail-price-current {
 	color: #d0021b;
-	white-space: nowrap;
 	font-weight: var(--ui-font-weight-bold);
 	text-align: center;
 	font-size: 30px;
@@ -48,7 +50,7 @@
 }
 
 .product-item-detail-price-old {
-	color: #bdbdbd;
+	color: var(--ui-color-base-2);
 	text-align: center;
 	text-decoration: line-through;
 	white-space: nowrap;
@@ -69,13 +71,13 @@
 /*endregion*/
 
 .product-item-detail-info-container-title {
-	color: #a5a5a5;
+	color: var(--ui-color-base-2);
 	font-size: 12px;
 }
 
 /*region SCU */
 .product-item-scu-container-title {
-	color: #a5a5a5;
+	color: var(--ui-color-base-2);
 	font-size: 12px;
 }
 
@@ -109,7 +111,7 @@
 .product-item-scu-item-color-block {
 	position: relative;
 	padding-top: 100%;
-	outline: 1px solid #c0cfda;
+	outline: 1px solid var(--ui-color-base-3);
 	cursor: pointer;
 }
 
@@ -135,7 +137,7 @@
 .product-item-scu-item-text-block {
 	position: relative;
 	padding: 0 5px;
-	outline: 1px solid #c0cfda;
+	outline: 1px solid var(--ui-color-base-3);
 	cursor: pointer;
 }
 
@@ -146,7 +148,7 @@
 .product-item-scu-item-text-block:hover,
 .product-item-scu-item-color-block:hover,
 .product-item-scu-item-text-container.selected .product-item-scu-item-text-block,
-.product-item-scu-item-color-container.selected .product-item-scu-item-color-block { outline-color: var(--theme-color-primary); }
+.product-item-scu-item-color-container.selected .product-item-scu-item-color-block { outline-color: var(--ui-color-base-1); }
 
 .product-item-scu-item-text-container.selected .product-item-scu-item-text-block { outline-width: 2px; }
 
@@ -164,22 +166,47 @@
 	line-height: 18px;
 }
 
+/* The swatch of a value is a positioned box of its own, so the veil and the cross above it are
+   ordered here and not by the order they are written in. */
 .product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block,
 .product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block {
 	position: relative;
+	z-index: 0;
 	overflow: hidden;
-	outline-color: #a9adb4 !important;
+	outline-color: var(--ui-color-base-2) !important;
 }
 
-.product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block:after,
-.product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block:after {
+.product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block:before,
+.product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block:before {
 	position: absolute;
+	z-index: 1;
 	top: -2px;
 	right: -2px;
 	bottom: -2px;
 	left: -2px;
-	background: rgba(255, 255, 255, 0.75) url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=) no-repeat center;
-	background-size: 80% 80%;
+	background: rgba(255, 255, 255, 0.75);
+	content: "";
+}
+
+/* The cross is a mask, not a background image: a token does not reach inside a data: URI. */
+.product-item-scu-item-color-container.notallowed .product-item-scu-item-color-block:after,
+.product-item-scu-item-text-container.notallowed .product-item-scu-item-text-block:after {
+	--iblock-bootstrap-v4-cross-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=);
+	position: absolute;
+	z-index: 2;
+	top: -2px;
+	right: -2px;
+	bottom: -2px;
+	left: -2px;
+	background-color: var(--ui-color-base-2);
+	-webkit-mask-image: var(--iblock-bootstrap-v4-cross-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 80% 80%;
+	mask-image: var(--iblock-bootstrap-v4-cross-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 80% 80%;
 	content: "";
 }
 
@@ -191,8 +218,7 @@
 	padding: 0 5px;
 	min-width: 22px;
 	height: 22px;
-	outline: 1px solid #c0cfda;
-	outline-color: var(--theme-color-primary);
+	outline: 1px solid var(--ui-color-base-1);
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
@@ -227,7 +253,8 @@
 	align-items: center;
 	position: relative;
 	max-width: 150px;
-	margin: 0 auto 15px;
+	/* The caption stands in the flow and brings its own line, so no gap is held open for it. */
+	margin: 0 auto -4px;
 }
 
 
@@ -237,11 +264,14 @@
 	display: block;
 	min-width: 22px;
 	height: 22px;
+	padding: 0;
+	border: 1px solid var(--ui-color-base-3);
 	border-radius: 2px;
 	background-color: #f2f2f2;
 	color: #fff;
 	vertical-align: middle;
 	text-align: center;
+	font: inherit;
 	cursor: pointer;
 	transition: background 300ms ease, opacity 300ms ease;
 }
@@ -252,6 +282,13 @@
 .product-item-amount-field-btn-plus:hover,
 .product-item-amount-field-btn-minus:hover { background: #d3d3d3; }
 
+/* The bootstrap of the theme lights the browser ring on a bare button at plain :focus
+   (landing24/assets/vendor/bootstrap/bootstrap.css:238-241). The buttons carry no outline of their
+   own, so nothing is taken away with it; the keyboard is left with the ring of the theme. */
+.product-item-amount-field-btn-plus:focus:not(:focus-visible),
+.product-item-amount-field-btn-minus:focus:not(:focus-visible) { outline: none; }
+
+/* The sign is a mask, not a background image: a token does not reach inside a data: URI. */
 .product-item-amount-field-btn-plus:after,
 .product-item-amount-field-btn-minus:after {
 	position: absolute;
@@ -259,43 +296,31 @@
 	right: 0;
 	bottom: 0;
 	left: 0;
+	background-color: var(--ui-color-base-2);
+	-webkit-mask-image: var(--iblock-bootstrap-v4-step-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 10px;
+	mask-image: var(--iblock-bootstrap-v4-step-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 10px;
 	content: "";
-	opacity: .8;
-	transition: opacity 300ms ease, background 300ms ease;
+	transition: background-color 300ms ease;
 }
 
 .product-item-amount-field-btn-disabled.product-item-amount-field-btn-plus:after,
 .product-item-amount-field-btn-disabled.product-item-amount-field-btn-minus:after {
-	opacity: .3 !important;
+	background-color: var(--ui-color-base-3);
 	cursor: default;
 }
 
 .product-item-amount-field-btn-disabled.product-item-amount-field-btn-plus:hover,
 .product-item-amount-field-btn-disabled.product-item-amount-field-btn-minus:hover { background-color: #f2f2f2; }
 
-.product-item-amount-field-btn-minus:after {
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	content: "";
-	opacity: .8;
-	transition: opacity 300ms ease;
-}
+.product-item-amount-field-btn-plus:after { --iblock-bootstrap-v4-step-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxwYXRoIGZpbGw9IiM1MjVDNjgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE4LDEyIEwxOCwwIEwxMiwwIEwxMiwxMiBMMCwxMiBMMCwxOCBMMTIsMTggTDEyLDMwIEwxOCwzMCBMMTgsMTggTDMwLDE4IEwzMCwxMiBMMTgsMTIgWiIvPjwvc3ZnPg==); }
 
-.product-item-amount-field-btn-plus:after {
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxwYXRoIGZpbGw9IiM1MjVDNjgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE4LDEyIEwxOCwwIEwxMiwwIEwxMiwxMiBMMCwxMiBMMCwxOCBMMTIsMTggTDEyLDMwIEwxOCwzMCBMMTgsMTggTDMwLDE4IEwzMCwxMiBMMTgsMTIgWiIvPjwvc3ZnPg==) no-repeat center;
-	background-size: 10px;
-}
-
-.product-item-amount-field-btn-minus:after {
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI2IiB5PSIxMiIgZmlsbD0iIzUyNUM2OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+) no-repeat center;
-	background-size: 10px;
-}
-
-.product-item-amount-field-btn-plus:hover:after,
-.product-item-amount-field-btn-minus:hover:after { opacity: 1; }
+.product-item-amount-field-btn-minus:after { --iblock-bootstrap-v4-step-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4gIDxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI2IiB5PSIxMiIgZmlsbD0iIzUyNUM2OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+); }
 
 .product-item-amount-field-block {
 	-webkit-box-flex: 1;
@@ -307,7 +332,7 @@
 	display: block;
 	padding: 0;
 	width: 100%;
-	height: 22px;
+	min-height: 22px;
 	border: 1px solid transparent;
 	border-radius: 2px;
 	background: transparent !important;
@@ -317,16 +342,9 @@
 	font-weight: var(--ui-font-weight-bold);
 	font-size: 19px;
 	line-height: 22px;
-	transition: border 300ms ease;
 }
 
 .bx-retina .product-item-amount-field { border-width: .5px; }
-
-.product-item-amount-field:focus {
-	outline: none !important;
-	border-color: #006cc0;
-	border-color: var(--theme-color-primary);
-}
 
 .bx-no-touch input.product-item-amount-field::-webkit-outer-spin-button,
 .bx-no-touch input.product-item-amount-field::-webkit-inner-spin-button {
@@ -338,12 +356,11 @@
 	appearance: none;
 }
 
+/* A line of its own under the row of the buttons: the caption grows with the type instead of lying
+   over the buy button, and it takes no more room than the gap that used to be held open for it. */
 .product-item-amount-description-container {
-	position: absolute;
-	top: 100%;
-	left: 0;
-	right: 0;
-	color: #a5a5a5;
+	display: block;
+	color: var(--ui-color-base-2);
 	white-space: nowrap;
 	font-size: 12px;
 }
@@ -351,13 +368,6 @@
 .product-item-amount-description-container strong {
 	color: #333;
 	white-space: nowrap;
-}
-
-.product-item-amount-label-container {
-	margin: 5px 0;
-	color: #a5a5a5;
-	font-weight: var(--ui-font-weight-bold);
-	font-size: 12px;
 }
 
 /**/
@@ -380,6 +390,36 @@
 	padding-bottom: 12px;
 	font-weight: var(--ui-font-weight-bold);
 	text-transform: uppercase;
+	/* The theme animates everything its buttons own over a fifth of a second, the focus ring with it,
+	   and a ring that fades in cannot be followed. Listed here is what the theme really changes. */
+	transition: color 200ms, background-color 200ms, border-color 200ms, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* ui.bootstrap4, loaded by the search of the header, paints a button of its own blue on focus, and
+   the theme overrides every state of the button but that one. The theme colours are put back. */
+.btn.btn-primary.product-item-detail-buy-button:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+
+.btn.btn-primary.product-item-detail-buy-button:focus:hover,
+.btn.btn-primary.product-item-detail-buy-button:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+}
+
+/* The layer the buy block answers with hangs on the body, away from the rule above, and ui.bootstrap4
+   paints its buttons the same blue. */
+[id^="CatalogElementBasket_"] .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+[id^="CatalogElementBasket_"] .btn.btn-primary:focus:hover,
+[id^="CatalogElementBasket_"] .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
 }
 
 .product-item-detail-short-card-btn .btn.product-item-detail-buy-button { margin: 0; }
@@ -397,11 +437,28 @@
 	transform: translateY(-50%);
 }
 
-.btn-link.product-item-detail-buy-button { height: 25px; }
+.btn-link.product-item-detail-buy-button { min-height: 25px; }
 
 /*endregion*/
 
 /*region Slider */
+/* The controls of the gallery are buttons now, and the browser gives a button a border, a fill, a
+   font and padding of its own. The rules below draw the gallery, so the drawing of the browser goes. */
+.product-item-detail-slider-images-container,
+.product-item-detail-slider-left,
+.product-item-detail-slider-right,
+.product-item-detail-slider-close,
+.product-item-detail-slider-controls-image {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
 .product-item-detail-slider-container {
 	position: relative;
 	max-width: 100%;
@@ -476,20 +533,23 @@
 	text-align: center;
 }
 
-.product-item-detail-slider-controls-image {
+/* The frame of a thumbnail is an outline of its own, and the bootstrap of the theme hands the browser
+   ring to a bare button on plain :focus (landing24/assets/vendor/bootstrap/bootstrap.css:238-241) at
+   0,1,1. The attribute carries the frame past it, so a click no longer swaps the frame for that ring. */
+.product-item-detail-slider-controls-image[data-entity=slider-control] {
 	position: relative;
 	display: inline-block;
 	overflow: hidden;
 	width: 65px;
 	height: 65px;
-	outline: 1px solid #c0cfda;
+	outline: 1px solid var(--ui-color-base-3);
 	background-color: #fff;
 	text-align: center;
 	cursor: pointer;
 }
 
 .product-item-detail-slider-controls-image:hover,
-.product-item-detail-slider-controls-image.active { outline-color: var(--theme-color-primary); }
+.product-item-detail-slider-controls-image.active { outline-color: var(--ui-color-base-1); }
 
 .bx-no-retina .product-item-detail-slider-controls-image.active { outline-width: 2px; }
 
@@ -519,7 +579,8 @@
 	background: rgba(255, 255, 255, 0) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2230%22%20viewBox%3D%220%200%2016%2030%22%3E%3Cpolygon%20fill%3D%22%23000000%22%20fill-rule%3D%22evenodd%22%20points%3D%2216%2050%202%2036%2016%2022%2015%2021%201%2035%200%2036%201%2037%2015%2051%22%20transform%3D%22translate(0%20-21)%22%2F%3E%3C%2Fsvg%3E') no-repeat center;
 	opacity: .57;
 	cursor: pointer;
-	transition: all 300ms ease;
+	/* Everything the arrow moves keeps its transition; the ring of a focused arrow is not moved. */
+	transition: all 300ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .product-item-detail-slider-left { left: 0; }
@@ -537,6 +598,7 @@
 
 .product-item-detail-slider-close { display: none; }
 
+/* The sign is a mask, not a background image: a token does not reach inside a data: URI. */
 .product-item-detail-slider-container.popup .product-item-detail-slider-close {
 	position: absolute;
 	top: 4px;
@@ -546,13 +608,32 @@
 	display: block;
 	width: 50px;
 	height: 50px;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpolygon%20fill%3D%22%23000000%22%20fill-rule%3D%22evenodd%22%20points%3D%2216%2015.1%208.944%208%2016%201%2015.006%200%208.05%207%20.994%200%200%201%207.056%208%200%2015.1%20.994%2016%208.05%209%2015.006%2016%22%2F%3E%3C%2Fsvg%3E') no-repeat center;
-	opacity: .27;
 	cursor: pointer;
-	transition: all 300ms ease;
+	/* The sign keeps its transition; the ring of the focused cross is not one of the things moved. */
+	transition: all 300ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
-.product-item-detail-slider-container.popup .product-item-detail-slider-close:hover { opacity: 1; }
+/* A mask clips everything the element paints, the focus ring of the theme with it, and a cross with
+   no visible ring is a stop the keyboard cannot see. So the sign is drawn by a pseudo-element and the
+   button itself is left free to carry the ring. */
+.product-item-detail-slider-container.popup .product-item-detail-slider-close::after {
+	--iblock-bootstrap-v4-close-mask: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpolygon%20fill%3D%22%23000000%22%20fill-rule%3D%22evenodd%22%20points%3D%2216%2015.1%208.944%208%2016%201%2015.006%200%208.05%207%20.994%200%200%201%207.056%208%200%2015.1%20.994%2016%208.05%209%2015.006%2016%22%2F%3E%3C%2Fsvg%3E');
+	position: absolute;
+	inset: 0;
+	background-color: var(--ui-color-base-1);
+	-webkit-mask-image: var(--iblock-bootstrap-v4-close-mask);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: 16px;
+	mask-image: var(--iblock-bootstrap-v4-close-mask);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 16px;
+	content: "";
+	transition: background-color 300ms ease;
+}
+
+.product-item-detail-slider-container.popup .product-item-detail-slider-close:hover::after { background-color: var(--ui-color-base-0); }
 
 .product-item-detail-slider-container.popup .product-item-detail-slider-right { right: 105px; }
 
@@ -712,8 +793,8 @@
 	display: inline-block;
 	clear: both;
 	margin-bottom: 2px;
-	background: #f42c2c;
-	color: #fff;
+	background: var(--iblock-bootstrap-v4-color-label);
+	color: var(--ui-color-base-white-fixed);
 	vertical-align: middle;
 	text-align: center;
 	transition: all 250ms ease;
@@ -777,53 +858,53 @@
 }
 
 /*RING*/
+/* The size below is the smallest the circle takes: bigger type widens it and the ratio keeps it round. */
 .product-item-label-ring {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	box-sizing: border-box;
+	aspect-ratio: 1;
 	border-radius: 50%;
 	font-weight: var(--ui-font-weight-bold);
 }
 
 .product-item-label-ring.product-item-label-small {
-	width: 40px;
-	height: 40px;
+	min-width: 40px;
+	min-height: 40px;
 	font-size: 14px;
-	line-height: 40px;
 }
 
 .product-item-label-ring.product-item-label-big {
-	width: 50px;
-	height: 50px;
+	min-width: 50px;
+	min-height: 50px;
 	font-size: 18px;
-	line-height: 50px;
 }
 
 @media (max-width: 767px) {
 	.product-item-label-ring.product-item-label-small,
 	.product-item-scalable-card.hover .product-item-label-ring.product-item-label-small {
-		width: 20px;
-		height: 20px;
+		min-width: 20px;
+		min-height: 20px;
 		font-size: 13px;
-		line-height: 20px;
 	}
 
 	.product-item-big-card .product-item-label-ring.product-item-label-small,
 	.product-item-label-ring.product-item-label-big,
 	.product-item-scalable-card.hover .product-item-label-ring.product-item-label-big {
-		width: 35px;
-		height: 35px;
+		min-width: 35px;
+		min-height: 35px;
 		font-size: 12px;
-		line-height: 35px;
 	}
 
 	.product-item-big-card .product-item-label-ring.product-item-label-big {
-		width: 70px;
-		height: 70px;
+		min-width: 70px;
+		min-height: 70px;
 		font-size: 24px;
-		line-height: 70px;
 	}
 }
 
-.product-item-label-top { top: -5px; }
+.product-item-label-top { top: 0; }
 
 .product-item-label-center {
 	left: 50%;
@@ -832,18 +913,18 @@
 
 .product-item-label-center > div { text-align: center; }
 
-.product-item-label-left { left: -5px; }
+.product-item-label-left { left: 0; }
 
 .product-item-label-left > div { text-align: left; }
 
-.product-item-label-bottom { bottom: -5px; }
+.product-item-label-bottom { bottom: 0; }
 
 .product-item-label-middle {
 	top: 50%;
 	transform: translateY(-50%);
 }
 
-.product-item-label-right { right: -5px; }
+.product-item-label-right { right: 0; }
 
 .product-item-label-right > div { text-align: right; }
 
@@ -875,27 +956,36 @@
 	min-height: 60px;
 }
 
+/* A tab is a button now, and the browser gives a button a border, a fill, a font and a centred text
+   of its own. The rules of this region draw the strip, so the drawing of the browser goes. */
 .product-item-detail-tab-link {
 	position: relative;
 	display: inline-block;
 	box-sizing: border-box;
+	margin: 0;
 	padding: 10px 25px;
 	height: 60px;
-	color: #000;
+	border: 0;
+	background: none;
+	color: var(--ui-color-base-0);
 	vertical-align: middle;
+	text-align: inherit;
 	text-transform: uppercase;
 	-ms-text-overflow: ellipsis;
 	text-overflow: ellipsis;
+	font-family: inherit;
 	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	line-height: 45px;
-	transition: all 250ms ease;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
+	/* The tab keeps every transition it had; the ring of a focused tab is not one of them. */
+	transition: all 250ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .product-item-detail-tab-link:hover,
 .product-item-detail-tab.active .product-item-detail-tab-link {
-	color: #006cc0;
-	color: var(--theme-color-primary);
 	text-decoration: none;
 }
 
@@ -905,8 +995,7 @@
 	bottom: 0;
 	left: 0;
 	height: 0;
-	background: #006cc0;
-	background: var(--theme-color-primary);
+	background: var(--ui-color-base-1);
 	content: "";
 	transition: all 250ms ease;
 }
@@ -916,33 +1005,54 @@
 
 .product-item-detail-tab-link:active:after { height: 6px; }
 
+/* The bootstrap of the theme lights the browser ring on a bare button at plain :focus
+   (landing24/assets/vendor/bootstrap/bootstrap.css:238-241). The tab carries no outline of its own,
+   so nothing is taken away with it; the keyboard is left with the ring of the theme. */
+.product-item-detail-tab-link:focus:not(:focus-visible) { outline: none; }
+
 .product-item-detail-tab-content { padding: 25px 0; }
+
+.product-item-detail-tab-content[data-value="description"] {
+	overflow: auto;
+	contain: paint;
+}
 
 @media (max-width: 991px) {
 	.product-item-detail-tabs-container { display: none !important; }
+
+	/* The panel keeps the class d-md-block of the theme, and .d-md-block is important and weighs
+	   exactly as much as a bare class here (0,1,0); the sheet of the theme is loaded after ours, so
+	   the tie goes to it. The wrapper of the template adds the weight without touching the theme. */
+	.bx-catalog-element .product-item-detail-tabs-container-fixed { display: none !important; }
 
 	.product-item-detail-tab-content { display: block !important; }
 }
 
 /*Tab fixed*/
+/* Off the top of the window the panel stays on the screen: the class active moves it by top alone,
+   so its controls keep an invisible place in the tab order. Hidden visibility takes the panel out of
+   the accessibility tree and out of the tab order, and it rides the same transition as the offset:
+   the transition of visibility is discrete and keeps the panel visible for the whole slide. */
 .product-item-detail-tabs-container-fixed {
 	position: fixed;
 	top: -100px;
 	right: 0;
 	left: 0;
 	z-index: 300;
-	background-color: #fff;
+	visibility: hidden;
+	background-color: var(--ui-color-bg-content-primary);
 	box-shadow: 0 4px 14px 0 rgba(32, 54, 74, .23);
-	transition: top 350ms linear;
+	transition: top 350ms linear, visibility 350ms linear;
 }
 
 .product-item-detail-tabs-container-fixed {
 	min-height: 45px;
-	background: #fff;
+	background: var(--ui-color-bg-content-primary);
 }
 
 .product-item-detail-tabs-container-fixed.active {
 	top: 0;
+	visibility: visible;
 	opacity: 1;
 }
 
@@ -964,6 +1074,8 @@
 /*endregion*/
 
 /*region Small Card*/
+/* Hidden visibility here does the same as on the fixed tab strip above: it takes the panel parked off
+   the top of the window out of the tab order, and it rides the same transition as the offset. */
 .product-item-detail-short-card-fixed {
 	position: fixed;
 	top: -85px;
@@ -971,14 +1083,16 @@
 	left: 0;
 	z-index: 310;
 	box-sizing: border-box;
-	height: 85px;
-	background-color: #fff;
+	min-height: 85px;
+	visibility: hidden;
+	background-color: var(--ui-color-bg-content-primary);
 	box-shadow: 0 4px 14px 0 rgba(32, 54, 74, .23);
-	transition: top 220ms linear;
+	transition: top 220ms linear, visibility 220ms linear;
 }
 
 .product-item-detail-short-card-fixed.active {
 	top: 0;
+	visibility: visible;
 	opacity: 1;
 }
 
@@ -1020,15 +1134,31 @@
 	flex: 1;
 }
 
+/* The title of the panel is a button now, and the browser gives a button a border, a fill, a font,
+   a padding and a centred text of its own. The rule below draws the title, so the drawing of the
+   browser goes; the width keeps the button as wide as the block it replaced. */
 .product-item-detail-short-title-text {
 	display: block;
-	color: #000;
-	-ms-text-overflow: ellipsis;
-	text-overflow: ellipsis;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	border: 0;
+	background: none;
+	color: var(--ui-color-base-0);
+	text-align: inherit;
 	font-size: 16px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
 }
+
+/* The bootstrap of the theme lights the browser ring on a bare button at plain :focus
+   (landing24/assets/vendor/bootstrap/bootstrap.css:238-241). The title carries no outline of its own,
+   so nothing is taken away with it; the keyboard is left with the ring of the theme. */
+.product-item-detail-short-title-text:focus:not(:focus-visible) { outline: none; }
 
 .product-item-detail-short-card-price {
 	padding: 0 10px;
@@ -1067,13 +1197,18 @@
 	align-items: stretch;
 }
 
-.product-item-detail-properties-dots {
+/* Inside a div of a dl only terms and definitions are allowed, so the dotted spacer is no node of
+   its own any more: the row draws it, and order puts it back between the name and the value. */
+.product-item-detail-properties-item::after {
+	-ms-flex-order: 1;
+	order: 1;
 	border-bottom: 1px dotted #a5a5a5;
 	-ms-flex-preferred-size: 0;
 	flex-basis: 0;
 	-ms-flex-positive: 1;
 	flex-grow: 1;
 	max-width: 100%;
+	content: "";
 }
 
 .product-item-detail-properties-name,
@@ -1085,13 +1220,20 @@
 	font-size: 12px;
 }
 
+/* The name of a property is a dt now, and the bootstrap of the theme makes a dt bold
+   (landing24/assets/vendor/bootstrap/bootstrap.css:125-127). As a span the name took the weight of
+   the text around it, so the weight is set back here. */
 .product-item-detail-properties-name {
 	padding-right: 3px;
-	color: #a5a5a5;
+	color: var(--ui-color-base-2);
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .product-item-detail-properties-value {
+	-ms-flex-order: 2;
+	order: 2;
 	color: #343a40;
+	margin: 0;
 	padding-left: 3px;
 	text-align: right;
 }
@@ -1110,3 +1252,93 @@ input[type='number'] { -moz-appearance: textfield; }
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/*region Focus ring*/
+/* The value carries its attributes to outweigh the theme, not to narrow the match: the theme rule
+   for a focused node with tabindex (landing24/template_styles.css:221-225) counts 0,4,0 - a class,
+   an attribute, the attribute inside :not() and a pseudo-class - so at 0,3,0 our reset loses and the
+   node shows the ring of the theme and ours at once. */
+.product-item-scu-item-list .product-item-scu-item-color-container[tabindex][role=radio]:focus-visible,
+.product-item-scu-item-list .product-item-scu-item-text-container[tabindex][role=radio]:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+/* The list clips its values, so the ring is drawn inside the box by a pseudo-element. */
+.product-item-scu-item-color-container,
+.product-item-scu-item-text-container { position: relative; }
+
+.product-item-scu-item-color-container:focus-visible::before,
+.product-item-scu-item-text-container:focus-visible::before {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: "";
+	pointer-events: none;
+}
+
+/* The quantity field has no theme ring of its own: the outline is inset, the tones are the same. */
+.product-item-amount-field-container .product-item-amount-field:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: inset 0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-base-8);
+}
+
+/* The total spills out of its column up to the edge of the step buttons, and the theme ring for a
+   focused button (landing24/template_styles.css, 0,2,1) spreads outside and runs over its figures.
+   The ring of the field is drawn inside the button instead, where it covers nothing but the button. */
+.product-item-amount-field-container .product-item-amount-field-btn-plus:focus-visible,
+.product-item-amount-field-container .product-item-amount-field-btn-minus:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	box-shadow: inset 0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-base-8);
+}
+
+/* The buttons of the layer the buy block answers with wear the band of the buttons of the showcase,
+   outside the box: the theme ring for a focused button (landing24/template_styles.css, 0,2,1) lies
+   inside it, and 0,3,0 outweighs it. */
+[id^="CatalogElementBasket_"] .btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+	box-shadow: none;
+}
+
+/* A thumbnail carries its attributes to outweigh the theme, not to narrow the match: the theme rule
+   for a focused node with tabindex (landing24/template_styles.css:221-225) counts 0,4,0 and the one
+   for a focused button 0,2,1, so at 0,3,0 our reset loses and the node shows the ring of the theme
+   and ours at once. The thumbnail takes a tabindex from the strip that moves focus between the
+   thumbnails, so both theme rules reach it. Its own frame is an outline as well, and the ring below
+   stands in its place while the thumbnail holds focus. */
+.product-item-detail-slider-controls-block .product-item-detail-slider-controls-image[data-entity=slider-control][aria-pressed]:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+/* The thumbnail clips what lies inside it, so the ring is drawn inside the box by a pseudo-element.
+   The strip is narrow - 65px around a picture - and keeps the single token: a doubled dark band with
+   a light one inside it would leave nothing of the picture to see. */
+.product-item-detail-slider-controls-image[data-entity=slider-control]:focus-visible::before {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8);
+	content: "";
+	pointer-events: none;
+}
+
+/* The same bootstrap rule lights the browser ring on a mouse click. These four carry no outline of
+   their own, so nothing is taken away with it; the keyboard is left alone, because
+   :not(:focus-visible) cannot apply where the rules above do. */
+.product-item-detail-slider-images-container:focus:not(:focus-visible),
+.product-item-detail-slider-left:focus:not(:focus-visible),
+.product-item-detail-slider-right:focus:not(:focus-visible),
+.product-item-detail-slider-close:focus:not(:focus-visible) {
+	outline: none;
+}
+
+/*endregion*/

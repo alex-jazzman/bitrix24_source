@@ -69,6 +69,7 @@ jn.define('intranet/qualification', (require, exports, module) => {
 					settings: {
 						objectName: 'layout',
 						modal: true,
+						closeButtonLockTimeout: 10000,
 					},
 				},
 				params: {

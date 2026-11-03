@@ -1,5 +1,6 @@
-import { DialogType } from '../../../../messenger/model/dialogues/src/types';
+import { SectionRecentValue } from '../base/types/recent';
 
-declare type ReadAllChatsByTypeParams = {
-    type: DialogType,
+declare type ReadAllChatsByRecentSectionParams = {
+    recentSection: SectionRecentValue,
+    parentChatId: ?number,
 };

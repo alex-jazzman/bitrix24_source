@@ -1,7 +1,9 @@
-import { ajax as Ajax, Loc, Tag, Text, Type, Uri, UI } from 'main.core';
+import { ajax as Ajax, Loc, Tag, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import 'sidepanel';
 import { DashboardExportMaster } from 'biconnector.dashboard-export-master';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { Center as NotificationCenter } from 'ui.notification';
 import { DashboardRelatedEntitiesList } from 'biconnector.dashboard-related-items-list';
 import type { Entity as DashboardRelatedEntity } from 'biconnector.dashboard-related-items-list';
 import { DashboardGroup } from 'biconnector.dashboard-group';
@@ -17,6 +19,7 @@ type DashboardInfo = {
 	appId: string, // for analytic
 	editLink: string,
 	title: string,
+	openInEditMode?: boolean,
 };
 
 type DeleteDashboardDialogOptions = {
@@ -108,12 +111,13 @@ export class DashboardManager
 				continueBtn.setWaiting(true);
 				this.duplicateDashboard(dashboardInfo.id)
 					.then((duplicateResponse) => {
-						onCompleteProcessing(popupType);
 						const dashboard = duplicateResponse.data.dashboard;
 						if (!dashboard)
 						{
-							BX.UI.Notification.Center.notify({
-								content: BX.util.htmlspecialchars(
+							onFailProcessing(popupType);
+							NotificationCenter.notify({
+								content: resolveErrorHtml(
+									duplicateResponse,
 									Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_COPY_ERROR'),
 								),
 							});
@@ -121,15 +125,28 @@ export class DashboardManager
 							return null;
 						}
 
+						onCompleteProcessing(popupType);
+
 						return this.getDashboardEmbeddedData(dashboard.id);
 					})
 					.then((embeddedResponse) => {
+						if (!embeddedResponse)
+						{
+							return;
+						}
+
 						EventEmitter.emit('BIConnector.DashboardManager:onCopyDashboard', {
 							dashboard: embeddedResponse.data.dashboard,
 						});
+						const copiedEditLink = new Uri(embeddedResponse.data.dashboard.editUrl);
+						if (dashboardInfo.openInEditMode === true)
+						{
+							copiedEditLink.setQueryParam('edit', 'true');
+						}
+
 						const copiedDashboardInfo = {
 							id: embeddedResponse.data.dashboard.id,
-							editLink: embeddedResponse.data.dashboard.editUrl,
+							editLink: copiedEditLink.toString(),
 							type: embeddedResponse.data.dashboard.type,
 						};
 						this.processLoginDashboard(
@@ -145,12 +162,9 @@ export class DashboardManager
 					})
 					.catch((response) => {
 						onFailProcessing(popupType);
-						if (response.errors && Type.isStringFilled(response.errors[0]?.message))
-						{
-							BX.UI.Notification.Center.notify({
-								content: Text.encode(response.errors[0].message),
-							});
-						}
+						NotificationCenter.notify({
+							content: resolveErrorHtml(response, Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_COPY_ERROR')),
+						});
 					});
 			},
 		});
@@ -207,6 +221,78 @@ export class DashboardManager
 			.finally(() => {
 				onCloseProcessing();
 			});
+	}
+
+	openDashboardInConstructor(dashboardInfo: DashboardInfo): Promise<void>
+	{
+		return this.#openUrlInNewTab(
+			() => this.getEditUrl(dashboardInfo),
+			Loc.getMessage('SUPERSET_DASHBOARD_CONSTRUCTOR_OPEN_ERROR'),
+		);
+	}
+
+	async #openUrlInNewTab(
+		getUrl: () => Promise<string>,
+		fallbackErrorMessage: string,
+	): Promise<void>
+	{
+		const tab = window.open('about:blank', '_blank');
+
+		if (!tab)
+		{
+			const message = Loc.getMessage(
+				'SUPERSET_DASHBOARD_POPUP_BLOCKED',
+			);
+
+			BX.UI.Notification.Center.notify({
+				content: Text.encode(message),
+			});
+
+			throw new Error(message);
+		}
+
+		try
+		{
+			const url = await getUrl();
+
+			if (!Type.isStringFilled(url))
+			{
+				throw new Error();
+			}
+
+			tab.location.href = url;
+			tab.focus();
+		}
+		catch (response)
+		{
+			tab.close();
+
+			const message = Type.isStringFilled(response?.errors?.[0]?.message)
+				? response.errors[0].message
+				: fallbackErrorMessage
+			;
+
+			BX.UI.Notification.Center.notify({
+				content: Text.encode(message),
+			});
+
+			throw response;
+		}
+	}
+
+	getConstructorUrl(): Promise
+	{
+		return Ajax.runAction(
+			'biconnector.dashboard.getConstructorUrl',
+		);
+	}
+
+	async openConstructorWorkspace(): Promise<void>
+	{
+		return this.#openUrlInNewTab(
+			() => this.getConstructorUrl().then((response) => response?.data),
+			Loc.getMessage('SUPERSET_DASHBOARD_CONSTRUCTOR_OPEN_ERROR'),
+		);
 	}
 
 	duplicateDashboard(dashboardId: number | string): Promise
@@ -526,13 +612,8 @@ export class DashboardManager
 
 	notifyDeleteError(response: Object): void
 	{
-		const message = Type.isStringFilled(response?.errors?.[0]?.message)
-			? response.errors[0].message
-			: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_ERROR')
-		;
-
-		BX.UI.Notification.Center.notify({
-			content: Text.encode(message),
+		NotificationCenter.notify({
+			content: resolveErrorHtml(response, Loc.getMessage('SUPERSET_DASHBOARD_DELETE_ERROR')),
 		});
 	}
 
@@ -576,25 +657,15 @@ export class DashboardManager
 					resolve(response);
 				})
 				.catch((response) => {
-					if (response.errors)
-					{
-						UI.Notification.Center.notify({
-							content: Text.encode(response.errors[0].message),
-						});
-					}
+					NotificationCenter.notify({
+						content: resolveErrorHtml(
+							response,
+							Loc.getMessage('SUPERSET_DASHBOARD_GROUP_SETTINGS_LOAD_ERROR'),
+						),
+					});
 					reject(response);
 				})
 			;
-		});
-	}
-
-	renameDashboard(dashboardId: number, title: string): Promise
-	{
-		return Ajax.runAction('biconnector.dashboard.rename', {
-			data: {
-				id: dashboardId,
-				title,
-			},
 		});
 	}
 

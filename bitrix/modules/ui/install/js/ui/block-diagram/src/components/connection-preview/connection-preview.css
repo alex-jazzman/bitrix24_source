@@ -1,8 +1,10 @@
+/* Above every block step: BLOCK_INDEXES tops out at HOVERED (5) and blocks come later in the
+   markup, so an equal step would put the raised node over the preview markers it draws on it. */
 .ui-block-diagram-connection-preview {
 	position: absolute;
 	top: 0;
 	left: 0;
-	z-index: 5;
+	z-index: 6;
 	width: 100%;
 	height: 100%;
 	overflow: visible;

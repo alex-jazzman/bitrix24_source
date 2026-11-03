@@ -116,37 +116,56 @@ this.BX.SocialNetwork = this.BX.SocialNetwork || {};
 		createInviteEmployeeLink(text, icon) {
 			const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 			return main_core.Tag.render`
-			<span class="${className}" onclick="${this.handleInviteEmployeeClick.bind(this)}">${text}</span>
+			<button
+				type="button"
+				tabindex="0"
+				class="${className}" 
+				onclick="${this.handleInviteEmployeeClick.bind(this)}"
+			>${text}</button>
 		`;
 		}
 		createInviteGuestLink(text, icon) {
 			const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 			return main_core.Tag.render`
-			<span class="${className}" onclick="${this.handleInviteGuestClick.bind(this)}">${text}</span>
+			<button
+				type="button"
+				tabindex="0" 
+				class="${className}" 
+				onclick="${this.handleInviteGuestClick.bind(this)}"
+			>${text}</button>
 		`;
 		}
 		createLockedGuestLink(text, icon, featureId) {
 			const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 			return main_core.Tag.render`
-			<span
+			<button
+				type="button"
+				tabindex="0"
 				class="${className}"
 				onclick="${event => this.handleLockedClick(event, featureId)}"
-			>${text}</span>
+			>${text}</button>
 		`;
 		}
 		createProjectLink(text, icon) {
 			const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 			return main_core.Tag.render`
-			<span class="${className}" onclick="${this.handleCreateProjectClick.bind(this)}">${text}</span>
+			<button 
+				type="button"
+				tabindex="0" 
+				class="${className}" 
+				onclick="${this.handleCreateProjectClick.bind(this)}"
+			>${text}</button>
 		`;
 		}
 		createLockedProjectLink(text, icon, featureId) {
 			const className = `ui-selector-footer-link${icon ? ' ui-selector-footer-link-add' : ''}`;
 			return main_core.Tag.render`
-			<span
+			<button
+				type="button"
+				tabindex="0"
 				class="${className}"
 				onclick="${event => this.handleLockedClick(event, featureId)}"
-			>${text}</span>
+			>${text}</button>
 		`;
 		}
 		createHint(link) {
@@ -233,7 +252,18 @@ this.BX.SocialNetwork = this.BX.SocialNetwork || {};
 		}
 		handleCreateProjectClick() {
 			if (this.features.isNewProjectsOn) {
-				im_public.Messenger.openChatCreation('collab');
+				im_public.Messenger.openChatCreation('collab', {
+					onCreate: ({
+						id,
+						name
+					}) => {
+						this.addProjects([{
+							id,
+							entityId: 'project',
+							title: name
+						}]);
+					}
+				});
 				return;
 			}
 			const createProjectLink = this.getOption('createProjectLink');

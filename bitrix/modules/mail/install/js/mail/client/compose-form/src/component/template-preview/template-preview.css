@@ -1,0 +1,47 @@
+.mail-compose-template-preview
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	box-sizing: border-box;
+	width: 640px;
+	max-width: calc(100vw - var(--ui-space-inset-md) * 2);
+	max-height: calc(100vh - var(--ui-space-inset-md) * 2);
+	padding: var(--ui-space-inset-lg);
+}
+
+.mail-compose-template-preview__header,
+.mail-compose-template-preview__state
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+}
+
+.mail-compose-template-preview__subject
+{
+	padding-bottom: var(--ui-space-inset-sm);
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.mail-compose-template-preview__body
+{
+	flex: 1 1 auto;
+	min-height: 240px;
+	overflow: auto;
+}
+
+/*
+ * The body is drawn into a frame of its own by `mail.message-body`. A frame of the browser comes with an
+ * inset border and sits on the baseline of a line of text: the border stands around the body as a rule of
+ * its own and, counted on top of the full width, pushes the card into a scroll of four pixels.
+ */
+.mail-compose-template-preview__body iframe
+{
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	border: none;
+}

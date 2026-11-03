@@ -1,0 +1,54 @@
+/* The background of the form and the picture are the screen's own. The form sits on the drawer
+   background, and the picture is an illustration of the All folder and not the glyph the source rows
+   are drawn with. */
+.bx-im-content-folder-forms__container.--all-folder-settings {
+	background-color: var(--ui-color-drawer-bg-default);
+}
+
+.bx-im-content-folder-all-settings__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-lg);
+	margin-bottom: var(--ui-space-stack-xl);
+}
+
+.bx-im-content-folder-all-settings__icon {
+	flex-shrink: 0;
+	width: 72px;
+	height: 72px;
+	border-radius: var(--ui-border-radius-2xl);
+	background-image: url(./images/all-folder-settings.webp);
+	background-size: cover;
+}
+
+/* The name of the folder is not editable, so the line under it belongs to a heading and not to an input,
+   and the colour says as much. */
+.bx-im-content-folder-all-settings__title {
+	flex: 1;
+	padding-bottom: var(--ui-space-inset-xs);
+	border-bottom: 1px solid var(--ui-color-base-6);
+	color: var(--ui-color-base-3);
+}
+
+/* The typography component drops the margins of its own, so the gap to the card is set past it. */
+.bx-im-content-folder-forms__container .bx-im-content-folder-all-settings__section-title {
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.bx-im-content-folder-all-settings__card {
+	display: flex;
+	flex-direction: column;
+	/* the rows of the list are told apart by the space between them and not by dividers */
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-xs2) var(--ui-space-inset-md2);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.bx-im-content-folder-all-settings__loader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--ui-space-inset-xl);
+}

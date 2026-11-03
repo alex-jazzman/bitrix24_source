@@ -29,6 +29,12 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 		SETUP_CONSULTATION: 'setup_consultation',
 	});
 
+	/**
+	 * Events of the menu and of the cards it owns. The menu is the home of those cards, so its own
+	 * section is the default one; a card drawn by another screen names that screen instead, and the
+	 * `section` argument of a sender is exactly that name. Left out, the default wins: `merge()` of the
+	 * event skips a nil value.
+	 */
 	class MoreMenuAnalytics extends AnalyticsEvent
 	{
 		getDefaults()
@@ -60,13 +66,13 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 			);
 		}
 
-		static sendDrawerOpenEvent()
+		static sendDrawerOpenEvent(section)
 		{
 			new this({
 				tool: 'intranet',
 				category: 'whats_new',
 				event: 'drawer_open',
-				c_section: 'ava_menu',
+				c_section: section,
 			}).send();
 		}
 
@@ -142,6 +148,72 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 				category: 'ava_menu',
 				event: 'click_banner',
 				type,
+			}).send();
+		}
+
+		static sendIntegratorPromoClickEvent(section)
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'click_integrator',
+				type: 'promo',
+				c_section: section,
+			}).send();
+		}
+
+		static sendIntegratorMenuClickEvent(section)
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'click_integrator',
+				type: 'menu',
+				c_section: section,
+			}).send();
+		}
+
+		static sendIntegratorContactClickEvent(section)
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'click_integrator',
+				type: 'contact',
+				c_section: section,
+			}).send();
+		}
+
+		static sendIntegratorFeedbackClickEvent(section)
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'click_integrator',
+				type: 'feedback',
+				c_section: section,
+			}).send();
+		}
+
+		static sendIntegratorRefuseClickEvent(section)
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'click_integrator',
+				type: 'refuse',
+				c_section: section,
+			}).send();
+		}
+
+		static sendIntegratorRefuseSuccessEvent(section)
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'refuse_integrator',
+				type: 'success',
+				c_section: section,
 			}).send();
 		}
 	}

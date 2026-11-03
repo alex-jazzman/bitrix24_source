@@ -58,7 +58,9 @@
 	display: block;
 	width: 200px;
 	height: 162px;
-	background-image: url("svg/link_superset.svg");
+	background-image: url("images/link_superset.webp");
+	background-image: -webkit-image-set(url("images/link_superset.webp") 1x, url("images/link_superset@2x.webp") 2x);
+	background-image: image-set(url("images/link_superset.webp") 1x, url("images/link_superset@2x.webp") 2x);
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;

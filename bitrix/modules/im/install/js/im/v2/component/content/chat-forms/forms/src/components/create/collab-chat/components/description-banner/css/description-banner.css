@@ -44,3 +44,43 @@
 	top: 8px;
 	cursor: pointer;
 }
+
+/* Air banner */
+/* The gradient, the border and the illustration stay as they are: they already sit on air tokens.
+   Air retunes the spacing and the radius of the card and adopts the rhythm of the form body. */
+.bx-im-messenger__scope.--air-design .bx-im-create-collab-chat-description-banner__container {
+	margin-bottom: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+}
+
+/* Both rules below are scoped to the card on purpose: the typography components reset the margin
+   and set the colour with a single class of their own, so a single class here would win by load
+   order alone. The illustration takes the right side of the card, so the text keeps clear of it. */
+.bx-im-create-collab-chat-description-banner__container .bx-im-chat-forms-collab-chat-banner__title {
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
+.bx-im-create-collab-chat-description-banner__container .bx-im-chat-forms-collab-chat-banner__text {
+	max-width: 75%;
+	color: var(--ui-color-base-2);
+	white-space: pre-line;
+}
+
+.bx-im-chat-forms-collab-chat-banner__close {
+	display: flex;
+	position: absolute;
+	top: var(--ui-space-inset-xs);
+	right: var(--ui-space-inset-xs);
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: none;
+	cursor: pointer;
+}
+
+.bx-im-chat-forms-collab-chat-banner__close:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+/* End air banner */

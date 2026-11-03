@@ -856,7 +856,7 @@ return [
 				<div class="landing-block-card-slider-element js-slide g-px-15 mb-1">
 					<blockquote class="landing-block-node-element-text u-blockquote-v8 g-font-weight-300 g-font-size-15 rounded g-pa-25 g-mb-25">
 						The website package made my life easier. I will advice programmers to buy it even it cost 140$ -
-						because it shorten hunderds of hours in front of your pc designing your layout.
+						because it shorten hundreds of hours in front of your pc designing your layout.
 					</blockquote>
 					<div class="media">
 						<img class="landing-block-node-element-img d-flex align-self-center rounded-circle u-shadow-v19 g-brd-around g-brd-3 g-brd-white g-width-50 mr-3"

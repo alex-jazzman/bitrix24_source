@@ -3,9 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -126,15 +126,15 @@ else
 $where = $arParams['SHOW_WHERE'] ? trim($_REQUEST['where'] ?? '') : '';
 
 $how = trim($_REQUEST['how'] ?? '');
-if ($how == 'd')
+if ($how === 'd')
 {
 	$how = 'd';
 }
-elseif ($how == 'r')
+elseif ($how === 'r')
 {
 	$how = '';
 }
-elseif ($arParams['DEFAULT_SORT'] == 'date')
+elseif ($arParams['DEFAULT_SORT'] === 'date')
 {
 	$how = 'd';
 }
@@ -145,7 +145,7 @@ else
 
 if ($arParams['USE_TITLE_RANK'])
 {
-	if ($how == 'd')
+	if ($how === 'd')
 	{
 		$aSort = ['DATE_CHANGE' => 'DESC', 'CUSTOM_RANK' => 'DESC', 'TITLE_RANK' => 'DESC', 'RANK' => 'DESC'];
 	}
@@ -156,7 +156,7 @@ if ($arParams['USE_TITLE_RANK'])
 }
 else
 {
-	if ($how == 'd')
+	if ($how === 'd')
 	{
 		$aSort = ['DATE_CHANGE' => 'DESC', 'CUSTOM_RANK' => 'DESC', 'RANK' => 'DESC'];
 	}
@@ -183,7 +183,7 @@ if (
 	$arParams['CACHE_TIME'] = 0;
 }
 
-if ($obCache->StartDataCache($arParams['CACHE_TIME'], $this->GetCacheID(), '/' . SITE_ID . $this->GetRelativePath()))
+if ($obCache->StartDataCache($arParams['CACHE_TIME'], $this->getCacheID(), '/' . SITE_ID . $this->getRelativePath()))
 {
 	// Getting of the Information block types
 	$arIBlockTypes = [];
@@ -203,12 +203,12 @@ if ($obCache->StartDataCache($arParams['CACHE_TIME'], $this->GetCacheID(), '/' .
 	foreach ($arParams['arrWHERE'] as $code)
 	{
 		$parts = explode('_', $code, 2);
-		$module_id = $parts[0] ?? '';
+		$module_id = $parts[0];
 		$part_id = $parts[1] ?? '';
 
 		if (!empty($module_id))
 		{
-			if ($part_id == '')
+			if ($part_id === '')
 			{
 				switch ($module_id)
 				{
@@ -235,14 +235,12 @@ if ($obCache->StartDataCache($arParams['CACHE_TIME'], $this->GetCacheID(), '/' .
 			else
 			{
 				// if there is additional information specified besides ID then
-				switch ($module_id)
+				if ($module_id === 'iblock')
 				{
-					case 'iblock':
-						if (isset($arIBlockTypes[$part_id]))
-						{
-							$arrDropdown[$code] = $arIBlockTypes[$part_id];
-						}
-						break;
+					if (isset($arIBlockTypes[$part_id]))
+					{
+						$arrDropdown[$code] = $arIBlockTypes[$part_id];
+					}
 				}
 			}
 		}
@@ -254,7 +252,7 @@ else
 	$arrDropdown = $obCache->GetVars();
 }
 
-$arResult['DROPDOWN'] = htmlspecialcharsex($arrDropdown);
+$arResult['DROPDOWN'] = htmlspecialcharsEx($arrDropdown);
 $arResult['REQUEST']['HOW'] = htmlspecialcharsbx($how);
 $arResult['REQUEST']['~FROM'] = $from;
 $arResult['REQUEST']['FROM'] = htmlspecialcharsbx($from);
@@ -266,7 +264,7 @@ if ($q !== false)
 	if ((isset($arParams['USE_LANGUAGE_GUESS']) && $arParams['USE_LANGUAGE_GUESS'] == 'N') || isset($_REQUEST['spell']))
 	{
 		$arResult['REQUEST']['~QUERY'] = $q;
-		$arResult['REQUEST']['QUERY'] = htmlspecialcharsex($q);
+		$arResult['REQUEST']['QUERY'] = htmlspecialcharsEx($q);
 	}
 	else
 	{
@@ -274,15 +272,15 @@ if ($q !== false)
 		if (is_array($arLang) && $arLang['from'] != $arLang['to'])
 		{
 			$arResult['REQUEST']['~ORIGINAL_QUERY'] = $q;
-			$arResult['REQUEST']['ORIGINAL_QUERY'] = htmlspecialcharsex($q);
+			$arResult['REQUEST']['ORIGINAL_QUERY'] = htmlspecialcharsEx($q);
 
 			$arResult['REQUEST']['~QUERY'] = CSearchLanguage::ConvertKeyboardLayout($arResult['REQUEST']['~ORIGINAL_QUERY'], $arLang['from'], $arLang['to']);
-			$arResult['REQUEST']['QUERY'] = htmlspecialcharsex($arResult['REQUEST']['~QUERY']);
+			$arResult['REQUEST']['QUERY'] = htmlspecialcharsEx($arResult['REQUEST']['~QUERY']);
 		}
 		else
 		{
 			$arResult['REQUEST']['~QUERY'] = $q;
-			$arResult['REQUEST']['QUERY'] = htmlspecialcharsex($q);
+			$arResult['REQUEST']['QUERY'] = htmlspecialcharsEx($q);
 		}
 	}
 }
@@ -299,14 +297,14 @@ if ($tags !== false)
 	foreach ($arTags as $tag)
 	{
 		$tag = trim($tag);
-		if ($tag <> '')
+		if ($tag !== '')
 		{
 			$arResult['REQUEST']['~TAGS_ARRAY'][$tag] = $tag;
 		}
 	}
-	$arResult['REQUEST']['TAGS_ARRAY'] = htmlspecialcharsex($arResult['REQUEST']['~TAGS_ARRAY']);
+	$arResult['REQUEST']['TAGS_ARRAY'] = htmlspecialcharsEx($arResult['REQUEST']['~TAGS_ARRAY']);
 	$arResult['REQUEST']['~TAGS'] = implode(',', $arResult['REQUEST']['~TAGS_ARRAY']);
-	$arResult['REQUEST']['TAGS'] = htmlspecialcharsex($arResult['REQUEST']['~TAGS']);
+	$arResult['REQUEST']['TAGS'] = htmlspecialcharsEx($arResult['REQUEST']['~TAGS']);
 }
 else
 {
@@ -339,9 +337,9 @@ if (isset($arResult['REQUEST']['~ORIGINAL_QUERY']))
 
 $templatePage = '';
 $arReturn = false;
-if ($this->InitComponentTemplate($templatePage))
+if ($this->initComponentTemplate($templatePage))
 {
-	$template = &$this->GetTemplate();
+	$template = &$this->getTemplate();
 	$arResult['FOLDER_PATH'] = $folderPath = $template->GetFolder();
 
 	if ($folderPath <> '')
@@ -352,11 +350,11 @@ if ($this->InitComponentTemplate($templatePage))
 			'TAGS' => $arResult['REQUEST']['~TAGS'],
 		];
 		$arFilter = array_merge($arFILTERCustom, $arFilter);
-		if ($where <> '')
+		if ($where !== '')
 		{
-			list($module_id, $part_id) = explode('_',$where,2);
+			list($module_id, $part_id) = explode('_', $where, 2);
 			$arFilter['MODULE_ID'] = $module_id;
-			if ($part_id <> '')
+			if ($part_id !== '')
 			{
 				$arFilter['PARAM1'] = $part_id;
 			}
@@ -432,7 +430,7 @@ if ($this->InitComponentTemplate($templatePage))
 						}
 						$ar['TAGS'][] = [
 							'URL' => $APPLICATION->GetCurPageParam('tags=' . urlencode($tags), ['tags']),
-							'TAG_NAME' => htmlspecialcharsex($name),
+							'TAG_NAME' => htmlspecialcharsEx($name),
 						];
 					}
 				}
@@ -461,11 +459,21 @@ if ($this->InitComponentTemplate($templatePage))
 			$arResult['TAGS_CHAIN'][] = $result;
 		}
 
-		$this->ShowComponentTemplate();
+		$this->showComponentTemplate();
 	}
 }
 else
 {
-	$this->__ShowError(str_replace('#PAGE#', $templatePage, str_replace('#NAME#', $this->__templateName, "Can not find '#NAME#' template with page '#PAGE#'")));
+	$this->__showError(str_replace(
+		[
+			'#PAGE#',
+			'#NAME#',
+		],
+		[
+			$templatePage,
+			$this->getTemplateName(),
+		],
+		"Can not find '#NAME#' template with page '#PAGE#'"
+	));
 }
 return $arReturn;

@@ -388,7 +388,7 @@ foreach ($arProducts as &$item)
 			: '<span class="mobile-grid-field-title-icon"><img src="'.$this->getPath().'/images/icon-product.png" srcset="'.$this->getPath().'/images/icon-product.png 2x" alt=""></span>'
 		),
 		"ONCLICK" => $arResult['LIST_MODE'] == "SELECTOR"
-			? 'BX.Mobile.Crm.ProductList.onSelectItem(\''.htmlspecialcharsbx(CUtil::JSEscape($arParams["ON_PRODUCT_SELECT_EVENT_NAME"])).'\', '.CUtil::PhpToJSObject($itemData).', \''.CUtil::JSEscape($arParams["PAGEID_PRODUCT_SELECTOR_BACK"]).'\')'
+			? 'BX.Mobile.Crm.ProductList.onSelectItem(\''.htmlspecialcharsbx(CUtil::JSEscape($arParams["ON_PRODUCT_SELECT_EVENT_NAME"])).'\', '.CUtil::PhpToJSObject($itemData).', \''.htmlspecialcharsbx(CUtil::JSEscape($arParams["PAGEID_PRODUCT_SELECTOR_BACK"])).'\')'
 			: "BX.Mobile.Crm.loadPageBlank('/mobile/crm/product/?page=view&product_id=".$item["ID"]."');",
 		"DATA_ID" => "mobile-grid-item-".$item["ID"]
 	);

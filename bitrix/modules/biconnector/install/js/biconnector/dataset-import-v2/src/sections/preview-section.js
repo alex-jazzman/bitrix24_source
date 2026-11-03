@@ -5,6 +5,7 @@ import { Hint } from 'ui.hint';
 
 const FOCUS_COLUMN_EVENT = 'biconnector:dataset-import-v2:focus-column';
 const FOCUS_FIELD_EVENT = 'biconnector:dataset-import-v2:focus-field';
+const CONNECTION_LOAD_EVENT = 'biconnector:dataset-import-v2:connection-load';
 
 export const PreviewSection = {
 	inject: ['sourceId'],
@@ -21,6 +22,9 @@ export const PreviewSection = {
 			invalidFormatBadge: Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_INVALID_FORMAT_BADGE'),
 			validatingMessage: Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_VALIDATING'),
 			reloadingMessage: Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_RELOADING'),
+			connectionLoadingMessage: Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_LOADING'),
+			sourceEmptyMessage: Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_SOURCE_EMPTY'),
+			retryMessage: Loc.getMessage('DATASET_IMPORT_V2_PREVIEW_RETRY'),
 			showScrollNext: false,
 			showScrollPrev: false,
 			highlight: { left: 0, top: 0, width: 0, height: 0 },
@@ -43,6 +47,8 @@ export const PreviewSection = {
 			'validationErrorsByField',
 			'validationErrorCellSet',
 			'validationErrors',
+			'previewState',
+			'connectionLoadErrorHtml',
 		]),
 		showLoader()
 		{
@@ -106,6 +112,10 @@ export const PreviewSection = {
 		isExternalConnection()
 		{
 			return this.sourceId !== 'csv' && this.sourceId !== 'system';
+		},
+		externalPreviewState()
+		{
+			return this.isExternalConnection ? this.previewState : null;
 		},
 		previewNoticeMessage()
 		{
@@ -286,6 +296,10 @@ export const PreviewSection = {
 				scroll.scrollTo({ left: target, behavior: 'smooth' });
 			}
 		},
+		onRetryClick()
+		{
+			EventEmitter.emit(CONNECTION_LOAD_EVENT);
+		},
 		onColumnClick(fieldIndex)
 		{
 			this.$store.commit('setActiveFieldIndex', fieldIndex);
@@ -347,7 +361,37 @@ export const PreviewSection = {
 				class="biconnector-dataset-import-v2-preview__subtitle ui-typography-text-sm"
 			>{{ previewNoticeMessage }}</div>
 
-			<div v-if="!hasData || visibleFields.length === 0" class="biconnector-dataset-import-v2-preview__empty">
+			<div v-if="externalPreviewState === 'loading'" class="biconnector-dataset-import-v2-preview__empty">
+				<div
+					class="biconnector-dataset-import-v2-preview__loader-indicator biconnector-dataset-import-v2-preview__loader-indicator--inline"
+					role="status"
+					aria-live="polite"
+				>
+					<span class="biconnector-dataset-import-v2-preview__loader-spinner"></span>
+					<span class="biconnector-dataset-import-v2-preview__loader-text ui-typography-text-sm">{{ connectionLoadingMessage }}</span>
+				</div>
+			</div>
+
+			<div
+				v-else-if="externalPreviewState === 'error'"
+				class="biconnector-dataset-import-v2-preview__empty biconnector-dataset-import-v2-preview__empty--error"
+				data-testid="dataset-import-preview-error"
+			>
+				<span class="biconnector-dataset-import-v2-preview__error-icon ui-icon-set --o-alert-accent"></span>
+				<span class="biconnector-dataset-import-v2-preview__error-text ui-typography-text-sm" v-html="connectionLoadErrorHtml"></span>
+				<button
+					type="button"
+					class="biconnector-dataset-import-v2-preview__retry ui-typography-text-sm"
+					data-testid="dataset-import-preview-retry-btn"
+					@click="onRetryClick"
+				>{{ retryMessage }}</button>
+			</div>
+
+			<div v-else-if="externalPreviewState === 'empty'" class="biconnector-dataset-import-v2-preview__empty">
+				{{ sourceEmptyMessage }}
+			</div>
+
+			<div v-else-if="!hasData || visibleFields.length === 0" class="biconnector-dataset-import-v2-preview__empty">
 				{{ previewEmptyMessage }}
 			</div>
 

@@ -27,6 +27,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 	 * @property {Function} [onRequestContactsSuccess]
 	 * @property {Function} [onSelectionChanged]
 	 * @property {string} [itemImageUri]
+	 * @property {string} [title]
 	 * @property {AvatarEntityType} [avatarType=AvatarEntityType.USER]
 	 *
 	 * @class SmartphoneContactSelector
@@ -70,6 +71,14 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		get closeAfterSendButtonClick()
 		{
 			return this.props.closeAfterSendButtonClick ?? true;
+		}
+
+		get title()
+		{
+			return Type.isStringFilled(this.props.title)
+				? this.props.title
+				: Loc.getMessage('CONTACT_SELECTOR_TITLE_MSGVER_1')
+			;
 		}
 
 		get onSendButtonClickHandler()
@@ -129,7 +138,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 			this.selector = await this.parentLayout.openWidget('selector', {
 				titleParams: {
-					text: Loc.getMessage('CONTACT_SELECTOR_TITLE_MSGVER_1'),
+					text: this.title,
 					type: 'dialog',
 				},
 				backdrop: {
@@ -467,6 +476,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 				if (requestContactsSuccess)
 				{
 					this.onRequestContactsSuccess?.();
+					await this.#waitForContactListAccess();
 
 					return this.#getContacts();
 				}
@@ -487,6 +497,19 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			}
 
 			return null;
+		};
+
+		#waitForContactListAccess = async () => {
+			const attempts = 5;
+			for (let attempt = 0; attempt < attempts; attempt++)
+			{
+				if (Type.isFunction(contacts.hasContactListAccess) && contacts.hasContactListAccess())
+				{
+					return;
+				}
+
+				await this.#timer(100);
+			}
 		};
 
 		#showNeedToAddContactsAccessMessage = () => {
@@ -547,6 +570,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		onSendButtonClickHandler: PropTypes.func,
 		onRequestContactsSuccess: PropTypes.func,
 		itemImageUri: PropTypes.string,
+		title: PropTypes.string,
 	};
 
 	module.exports = {

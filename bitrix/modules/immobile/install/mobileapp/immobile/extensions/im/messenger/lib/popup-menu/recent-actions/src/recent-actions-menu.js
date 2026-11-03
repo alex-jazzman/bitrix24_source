@@ -14,6 +14,12 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 	const { readAllChatsByRecentTab } = require('im/messenger/lib/read-all-chats');
 	const { FolderListView } = require('im/messenger/controller/folder/list');
 	const { FolderUpdate } = require('im/messenger/controller/folder/update');
+	const { FolderSourcesSettings } = require('im/messenger/controller/folder/sources-settings');
+	const {
+		FolderComposition,
+		hasFolderSettingsEntry,
+		isPersonalFolder,
+	} = require('im/messenger/controller/recent/service/lib/folder-composition');
 	const { deleteFolder, showDeleteSuccessToast } = require('im/messenger/controller/folder/lib/actions');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -213,13 +219,11 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 		}
 
 		/**
-		 * @returns {boolean}
+		 * @returns {?FolderModelState}
 		 */
-		#isPersonalFolder()
+		#getFolder()
 		{
-			const store = serviceLocator.get('core').getStore();
-
-			return store.getters['folderModel/getById'](Number(this.#tabId))?.type === 'personal';
+			return FolderComposition.getFolderByTabId(this.#tabId);
 		}
 
 		/**
@@ -244,7 +248,13 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 		 */
 		#createFolderSettingsItem()
 		{
-			if (!this.#showFolderActions || !Feature.isChatFoldersAvailable || !this.#isPersonalFolder())
+			if (!this.#showFolderActions || !Feature.isChatFoldersAvailable)
+			{
+				return null;
+			}
+
+			const folder = this.#getFolder();
+			if (!hasFolderSettingsEntry(folder))
 			{
 				return null;
 			}
@@ -261,7 +271,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 		 */
 		#createFolderDeleteItem()
 		{
-			if (!this.#showFolderActions || !Feature.isChatFoldersAvailable || !this.#isPersonalFolder())
+			if (!this.#showFolderActions || !Feature.isChatFoldersAvailable || !isPersonalFolder(this.#getFolder()))
 			{
 				return null;
 			}
@@ -395,9 +405,23 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 					break;
 
 				case FolderActionId.folderSettings:
-					AnalyticsService.getInstance().sendClickEditFolder(Analytics.SubSection.folderContextMenu);
-					new FolderUpdate({ id: this.#tabId }).open();
+				{
+					// the analytics layer knows folder ids only, so the tab id is resolved here
+					const folder = this.#getFolder();
+					AnalyticsService.getInstance().sendClickEditFolder({
+						folderId: folder?.id,
+						subSection: Analytics.SubSection.folderContextMenu,
+					});
+					if (isPersonalFolder(folder))
+					{
+						new FolderUpdate({ id: this.#tabId }).open();
+					}
+					else
+					{
+						void FolderSourcesSettings.open({ folderId: this.#tabId });
+					}
 					break;
+				}
 
 				case FolderActionId.folderDelete:
 					AnalyticsService.getInstance().sendClickDeleteFolder({

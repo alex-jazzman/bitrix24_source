@@ -22,8 +22,18 @@
 	transition: opacity 0.3s ease;
 }
 
+/* The bound of a detail area, not a box: the area needs one element the focus context can register,
+   while its content keeps the very place it had in the flex column of the content. */
+.bx-im-content-chat__pre-feed_container,
+.bx-im-content-chat__composer_container {
+	display: contents;
+}
+
 .bx-im-content-chat__dialog_container {
 	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .bx-im-content-chat__dialog_content {

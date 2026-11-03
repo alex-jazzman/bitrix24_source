@@ -1,0 +1,5 @@
+<?php
+
+$MESS['MARKET_MAIN_PAGE_TITLE_BY'] = 'Market';
+$MESS['MARKET_MAIN_PAGE_TITLE_MSGVER_1'] = 'Bitrix24 Market';
+$MESS['MARKET_PLUS_TITLE_BY'] = 'Market Plus';

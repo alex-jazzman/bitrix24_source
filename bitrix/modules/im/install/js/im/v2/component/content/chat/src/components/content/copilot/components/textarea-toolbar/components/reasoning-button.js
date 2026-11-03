@@ -51,7 +51,7 @@ export const ReasoningButton = {
 		},
 		hint(): { text: string } | null
 		{
-			if (this.isReasoningAvailableInModel)
+			if (this.isTempChat || this.isReasoningAvailableInModel)
 			{
 				return null;
 			}

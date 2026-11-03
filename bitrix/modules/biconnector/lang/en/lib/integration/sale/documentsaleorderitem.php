@@ -12,4 +12,4 @@ $MESS["SALE_DOCUMENT_SALEORDER_ITEM_FIELD_PRICE_CURRENCY"] = "Selling price curr
 $MESS["SALE_DOCUMENT_SALEORDER_ITEM_FIELD_PRODUCT_ID"] = "Product ID";
 $MESS["SALE_DOCUMENT_SALEORDER_ITEM_FIELD_STORE_ID"] = "Warehouse ID";
 $MESS["SALE_DOCUMENT_SALEORDER_ITEM_TABLE"] = "Sales inventory object items";
-$MESS["SALE_DOCUMENT_SALEORDER_ITEM_TABLE_DESCRIPTION_FULL"] = "Contains information about items in sales inventory objects.";
+$MESS["SALE_DOCUMENT_SALEORDER_ITEM_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Data on line items in sales documents: products, quantity, prices, cost, currencies, and shipping warehouses.";

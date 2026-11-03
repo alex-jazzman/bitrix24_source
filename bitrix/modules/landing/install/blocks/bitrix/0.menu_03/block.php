@@ -53,7 +53,7 @@
 
 				<!-- Responsive Toggle Button -->
 				<button class="navbar-toggler btn g-line-height-1 g-brd-none g-pa-0 ml-auto" type="button"
-						aria-label="Toggle navigation"
+						aria-label="MESS[LANDING_BLOCK_0_MENU_03_TOGGLER_LABEL]"
 						aria-expanded="false"
 						aria-controls="navBar"
 						data-toggle="collapse"

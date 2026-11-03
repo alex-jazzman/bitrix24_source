@@ -25,6 +25,7 @@ export const serverComponentList = new Set([
 	MessageComponent.channelCreationMessage,
 	MessageComponent.callMessage,
 	MessageComponent.voteMessage,
+	MessageComponent.contactMessage,
 	MessageComponent.convertToCollabMessage,
 	MessageComponent.collabCreationMessage,
 	MessageComponent.sticker,

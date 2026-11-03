@@ -35,6 +35,7 @@ export const GoalField = {
 			<UiTextarea
 				v-model.trim="goal"
 				:id="inputId"
+				data-testid="socialnetwork-project-wizard-goal"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_GOAL_PLACEHOLDER')"
 				:disabled
 			/>

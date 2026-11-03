@@ -6,9 +6,16 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
  * @var array $arResult
  */
 
+use Bitrix\Main\UserField\Types\StringType;
+
 $attrList = [];
 
-if($arResult['userField']['SETTINGS']['ROWS'] < 2)
+$isMultiline = (
+	$arResult['userField']['SETTINGS']['ROWS'] >= 2
+	|| StringType::isMultilineValue($arResult['additionalParameters']['VALUE'] ?? null)
+);
+
+if(!$isMultiline)
 {
 	$tag = 'input';
 	$attrList = [
@@ -20,7 +27,7 @@ else
 	$tag = 'textarea';
 	$attrList = [
 		'cols' => (int)$arResult['userField']['SETTINGS']['SIZE'],
-		'rows' => (int)$arResult['userField']['SETTINGS']['ROWS']
+		'rows' => max(2, (int)$arResult['userField']['SETTINGS']['ROWS'])
 	];
 }
 

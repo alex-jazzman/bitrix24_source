@@ -6,3 +6,6 @@ export { EnrichedAssetTokenizer } from './enriched-asset-tokenizer';
 export { parseAttrs, parseAllEnrichedAssets, splitInlineAssets, ASSET_TYPE_TO_NODE } from './enriched-asset-parser';
 export { NoteAssetTokenizer } from './note-asset-tokenizer';
 export { parseNoteAssetSyntax, findNoteAssetStart } from './note-asset-parser';
+export { VideoEmbed, VideoEmbedAssetTokenizer } from './video-embed';
+export { normalizeVideoUrl, findBareUrlLineStart, matchBareUrlLine } from './video-embed-parser';
+export { buildVideoEmbedAsset, matchVideoEmbedAsset, findVideoEmbedAssetStart } from './video-embed-asset-parser';

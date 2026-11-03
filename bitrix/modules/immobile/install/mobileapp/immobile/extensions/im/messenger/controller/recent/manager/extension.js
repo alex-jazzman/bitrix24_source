@@ -3,9 +3,10 @@
  */
 jn.define('im/messenger/controller/recent/manager', (require, exports, module) => {
 	const { Type } = require('type');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
+
+	const { NavigationHelper } = require('im/messenger/controller/navigation/helper');
 
 	const { RecentUiGetter } = require('im/messenger/controller/recent/recent-ui-getter');
 	const { RecentConfigurator } = require('im/messenger/controller/recent/configurator');
@@ -32,8 +33,8 @@ jn.define('im/messenger/controller/recent/manager', (require, exports, module) =
 		constructor()
 		{
 			this.initializedLists = new Set();
-			/** @type {string} */
-			this.currentListId = MessengerParams.get('FIRST_TAB_ID', 'chats');
+			/** @type {string|null} */
+			this.currentListId = NavigationHelper.resolveInitialTabId();
 			/** @type {Map<string, RecentController>} */
 			this.controllerCollection = new Map();
 
@@ -294,6 +295,38 @@ jn.define('im/messenger/controller/recent/manager', (require, exports, module) =
 				for (const controller of sessionControllers.values())
 				{
 					controller.markAsInactive(mode);
+				}
+			}
+		}
+
+		/**
+		 * @desc Drops the cache snapshots of every list this manager knows. The snapshots live in
+		 * their own storage, so a wipe of the local database leaves them behind and the next start
+		 * shows chats of a database that no longer exists.
+		 */
+		invalidateSnapshots()
+		{
+			const invalidate = (controller) => {
+				try
+				{
+					controller.locator?.get('quick-recent')?.invalidateSnapshot();
+				}
+				catch (error)
+				{
+					logger.error('invalidateSnapshots: controller error', error);
+				}
+			};
+
+			for (const controller of this.controllerCollection.values())
+			{
+				invalidate(controller);
+			}
+
+			for (const sessionControllers of this.#nestedControllersMap.values())
+			{
+				for (const controller of sessionControllers.values())
+				{
+					invalidate(controller);
 				}
 			}
 		}

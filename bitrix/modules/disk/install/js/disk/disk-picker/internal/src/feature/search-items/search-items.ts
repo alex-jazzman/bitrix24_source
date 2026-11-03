@@ -3,11 +3,11 @@ import {
 	pickerErrorCode,
 	search as requestSearch,
 } from '../../infrastructure/service/file-picker/file-picker';
-import { applyLocalFilters } from '../../lib/filter-items/filter-items';
+import { applyLocalFilters, withLocalMatches } from '../../lib/filter-items/filter-items';
 import { useItemStore } from '../../model/item/item';
 import { useSelectionStore } from '../../model/selection/selection';
 import { useSessionStore } from '../../model/session/session';
-import { reloadCurrentFeed, type FeedDeps } from '../open-folder/open-folder';
+import { reloadCurrentFeed, releaseNavigationHold, type FeedDeps } from '../open-folder/open-folder';
 
 export type SearchDeps = FeedDeps;
 
@@ -46,6 +46,7 @@ function handleSearchError(session: SessionStore, deps: SearchDeps, error: unkno
 export async function restoreBaseFeed(deps: SearchDeps): Promise<void>
 {
 	const session = useSessionStore();
+	releaseNavigationHold();
 	session.invalidateConfirmation();
 	session.resetSearchQuery();
 
@@ -114,8 +115,10 @@ export async function searchItems(rawQuery: string, deps: SearchDeps): Promise<v
 	}
 
 	session.setSearchQuery(query);
+	releaseNavigationHold();
 	session.invalidateConfirmation();
 	const token = session.nextRequestToken();
+	session.setPreserveContentOnLoading(useItemStore().count > 0);
 	session.setLoading(true);
 	session.clearContentError();
 	session.resetPagination();
@@ -139,10 +142,14 @@ export async function searchItems(rawQuery: string, deps: SearchDeps): Promise<v
 		}
 
 		const item = useItemStore();
-		item.replace(result.items);
-		useSelectionStore().pruneActive(result.items.map((entry) => entry.objectId));
+		const items = session.stageType === StageType.Recent
+			? withLocalMatches(result.items, item.recentSnapshot, session.filters, query)
+			: result.items;
+
+		item.replace(items);
+		useSelectionStore().pruneActive(items.map((entry) => entry.objectId));
 		session.setHasMore(result.pagination.hasMore);
-		session.setEmptyReason(result.emptyReason);
+		session.setEmptyReason(items.length === 0 ? result.emptyReason : null);
 		session.setLoading(false);
 	}
 	catch (error)

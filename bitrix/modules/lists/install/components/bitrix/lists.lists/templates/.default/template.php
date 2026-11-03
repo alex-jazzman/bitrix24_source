@@ -5,6 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Web\Json;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -22,6 +26,38 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	"lists",
 	"ui.buttons",
 ]);
+
+if ($arResult['PROJECT_HEADER'] !== null)
+{
+	\Bitrix\Main\UI\Extension::load('ui.avatar');
+
+	$projectNameValue = (string)$arResult['PROJECT_HEADER']['NAME'];
+	$projectName = HtmlFilter::encode($projectNameValue);
+	$imageUrl = (string)$arResult['PROJECT_HEADER']['IMAGE_URL'];
+	$avatarId = 'lists-project-header-avatar-container';
+
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="lists-project-header-avatar" id="' . $avatarId . '" data-testid="lists-project-header-avatar"></div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="lists-project-header-name" data-testid="lists-project-header-name" title="' . $projectName . '">' .
+			$projectName .
+		'</div>'
+	);
+	?>
+	<script>
+		BX.ready(() => {
+			const avatar = new BX.UI.AvatarHexagonGuest({
+				size: 42,
+				userName: <?= Json::encode($projectNameValue) ?>,
+				baseColor: '#19CC45',
+				userpicPath: <?= Json::encode($imageUrl !== '' ? $imageUrl : null) ?>,
+			});
+			avatar.renderTo(BX(<?= Json::encode($avatarId) ?>));
+		});
+	</script>
+	<?php
+}
 
 $randString = $arResult['RAND_STRING'];
 $jsClass = 'ListsIblockClass_'.$randString;

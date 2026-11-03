@@ -3,9 +3,11 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'assets/common',
 		'loc',
 		'utils/date',
-		'assets/common',
+		'tokens',
+		'ui-system/blocks/icon',
 		'utils/date/formats',
 	],
 ];

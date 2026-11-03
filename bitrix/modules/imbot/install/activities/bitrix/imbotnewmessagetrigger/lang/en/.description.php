@@ -1,5 +1,6 @@
 <?php
 $MESS["BPCDT_DESCR_DESCR"] = "Triggered after an employee sends a message to chat bot.";
+$MESS["BPCDT_DESCR_EVENT_DATE_TIME"] = "Event date and time";
 $MESS["BPCDT_DESCR_MESSAGE_ACTUAL_BOT_ID"] = "Chat bot ID";
 $MESS["BPCDT_DESCR_MESSAGE_CHAT_ID"] = "Chat ID";
 $MESS["BPCDT_DESCR_MESSAGE_IS_GROUP_CHAT"] = "Sent to group chat";

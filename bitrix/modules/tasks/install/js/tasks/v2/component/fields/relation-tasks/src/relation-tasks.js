@@ -111,6 +111,10 @@ export const RelationTasks = {
 		{
 			return this.isEdit && (this.readonly || this.task[this.meta.containsField]);
 		},
+		addLabel(): string
+		{
+			return this.meta.getHint(this.isTemplate);
+		},
 		readonly(): boolean
 		{
 			return !this.task.rights[this.meta.right];
@@ -118,7 +122,7 @@ export const RelationTasks = {
 		tooltip(): Function
 		{
 			return (): HintParams => tooltip({
-				text: this.meta.getHint(this.isTemplate),
+				text: this.addLabel,
 				popupOptions: {
 					offsetLeft: this.$refs.add.offsetWidth / 2,
 				},
@@ -274,6 +278,11 @@ export const RelationTasks = {
 		{
 			void showLimit({ featureId: this.featureId });
 		},
+		handleMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.$refs.settings?.focus();
+		},
 		async handleRemove(id: number): void
 		{
 			await this.meta.service.delete(this.taskId, [id]);
@@ -332,67 +341,72 @@ export const RelationTasks = {
 			:data-task-field-id="meta.id"
 		>
 			<div class="tasks-field-relation-tasks-title">
-				<div
+				<component
+					:is="canOpenMore ? 'button' : 'div'"
+					:type="canOpenMore ? 'button' : null"
 					class="tasks-field-relation-tasks-main"
 					:class="{ '--readonly': !canOpenMore }"
+					:aria-haspopup="canOpenMore ? 'dialog' : null"
 					data-task-relation-open
 					@click="openMore"
 				>
-					<BIcon :name="meta.icon"/>
+					<BIcon :name="meta.icon" aria-hidden="true"/>
 					<TextMd accent>{{ text }}</TextMd>
-				</div>
+				</component>
 				<div class="tasks-field-results-title-actions">
-					<div
+					<button
 						v-if="useOptions && idsLoaded"
+						type="button"
 						class="tasks-field-relation-tasks-icon print-ignore"
 						ref="settings"
+						aria-haspopup="menu"
+						:aria-expanded="isMenuShown"
+						:aria-label="loc('TASKS_V2_RELATION_TASKS_SETTINGS_ARIA_LABEL')"
+						:data-task-relation-settings="meta.id"
+						@click="isMenuShown = true"
 					>
-						<BIcon 
-							:name="Outline.MORE_L"
-							hoverable
-							:data-task-relation-settings="meta.id"
-							@click="isMenuShown = true"
-						/>
-					</div>
-					<div
+						<BIcon :name="Outline.MORE_L" hoverable aria-hidden="true"/>
+					</button>
+					<button
 						v-if="!readonly && idsLoaded && !isLocked"
 						v-hint="tooltip"
+						type="button"
 						class="tasks-field-relation-tasks-icon print-ignore"
 						ref="add"
+						aria-haspopup="dialog"
+						aria-expanded="false"
+						:aria-label="addLabel"
+						:data-task-relation-add="meta.id"
+						@click="$emit('add', $refs.add)"
 					>
-						<BIcon
-							:name="Outline.PLUS_L"
-							hoverable
-							:data-task-relation-add="meta.id"
-							@click="$emit('add', $refs.add)"
-						/>
-					</div>
-					<div
+						<BIcon :name="Outline.PLUS_L" hoverable aria-hidden="true"/>
+					</button>
+					<button
 						v-else-if="isLocked"
+						type="button"
 						class="tasks-field-relation-tasks-icon --lock"
+						:aria-label="loc('TASKS_V2_RELATION_TASKS_LOCK_ARIA_LABEL')"
+						:data-task-relation-locked="meta.id"
+						@click="showLimit"
 					>
-						<BIcon
-							:name="Outline.LOCK_L"
-							hoverable
-							:data-task-relation-locked="meta.id"
-							@click="showLimit"
-						/>
-					</div>
+						<BIcon :name="Outline.LOCK_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</div>
-			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
-			<TaskList
-				v-if="task[meta.containsField]"
-				:ids
-				:loadingIds
-				:fields
-				:canOpenMore
-				:shouldShowSubTasksOption
-				:idsLoaded
-				:isTemplateEntities
-				@openMore="openMore"
-				@removeTask="handleRemove"
-			/>
+			<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
+			<div v-if="task[meta.containsField]" role="group" :aria-label="text">
+				<TaskList
+					:ids
+					:loadingIds
+					:fields
+					:canOpenMore
+					:shouldShowSubTasksOption
+					:idsLoaded
+					:isTemplateEntities
+					@openMore="openMore"
+					@removeTask="handleRemove"
+				/>
+			</div>
 		</div>
 	`,
 };

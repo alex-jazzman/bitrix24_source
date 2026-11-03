@@ -11,6 +11,20 @@
 .location-fields-control-block .ui-entity-editor-content-block:last-child {
 	margin-bottom: 2px;
 }
+/*
+	The collapsed details block hides itself with height: 0 and overflow: hidden
+	(location.widget, ui-address.css) - a purely visual collapse: the fields keep their layout
+	inside the zero-height clip box and stay in the tab order, so Tab leaving the address ran
+	through the invisible inputs before the next visible control (2.4.7, #255182). visibility
+	takes them out of the tab order and out of the accessibility tree, and unlike display: none
+	it keeps the box measurable, which the max-height transition relies on.
+
+	The class belongs to location.widget and three other places render it, so the rule is tied
+	to the container this field builds and does not follow the stylesheet into anyone else's.
+*/
+.crm-address-control-item > .location-fields-control-block:not(.visible) {
+	visibility: hidden;
+}
 .location-fields-control-block.crm-address-type-block.visible {
 	margin-top: 5px;
 }

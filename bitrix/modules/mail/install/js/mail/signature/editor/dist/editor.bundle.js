@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 this.BX.Mail.Signature = this.BX.Mail.Signature || {};
-(function (exports, main_core, ui_alerts, ui_notification, ui_buttons, ui_entitySelector, ui_system_radiobutton, ui_switcher, mail_lib_entitySelector) {
+(function (exports, main_core, ui_alerts, ui_notification, ui_system_alert, ui_system_menu, main_popup, ui_loader, ui_uploader_core, disk_diskPicker, ui_buttons, ui_entitySelector, ui_system_radiobutton, ui_switcher, mail_lib_entitySelector) {
 	'use strict';
 
 	const ASSIGNMENTS_PROVIDED = 'Y';
@@ -86,13 +86,55 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 		return Number(responseData?.item?.id ?? 0);
 	}
 
+	const SIGNATURE_IMAGE_SIZES = new Set(['small', 'medium', 'original']);
+	const SIGNATURE_IMAGE_SRC_PATTERN = new RegExp('^/bitrix/services/main/ajax\\.php\\?action=mail\\.api\\.signatureimage\\.view&id=' + '([\\da-f]{8}-[\\da-f]{4}-[1-8][\\da-f]{3}-[89ab][\\da-f]{3}-[\\da-f]{12})$', 'i');
 	class HtmlEditorAdapter {
 		#editorInstanceId;
-		constructor(editorInstanceId) {
+		#bookmarks = new WeakMap();
+		#signatureImages;
+		#markerObserver = null;
+		#observedDocument = null;
+		#lastVisualSelection = null;
+		#visualFocusLost = false;
+		#restoreFrame = null;
+		#destroyed = false;
+		#rememberSelection = () => {
+			const editor = this.#resolveEditor();
+			const selection = editor?.selection.GetBookmark();
+			if (editor && selection) {
+				this.#lastVisualSelection = {
+					editor,
+					selection
+				};
+			}
+			this.#visualFocusLost = true;
+		};
+		#markVisualFocus = () => {
+			this.#visualFocusLost = false;
+		};
+		constructor(editorInstanceId, initialContent = '') {
 			this.#editorInstanceId = editorInstanceId;
+			this.#signatureImages = this.#readSignatureImages(initialContent);
+			this.#scheduleSignatureImageMarkerRestore();
+		}
+		destroy() {
+			this.#destroyed = true;
+			this.#unbindSelectionEvents();
+			this.#markerObserver?.disconnect();
+			this.#markerObserver = null;
+			this.#observedDocument = null;
+			this.#lastVisualSelection = null;
+			if (this.#restoreFrame !== null) {
+				cancelAnimationFrame(this.#restoreFrame);
+				this.#restoreFrame = null;
+			}
 		}
 		getContent() {
-			return this.#requireEditor().GetContent();
+			const editor = this.#requireEditor();
+			this.#captureSignatureImageMarkers(editor);
+			const content = this.#serializeSignatureImageMarkers(editor.GetContent());
+			this.#restoreSignatureImageMarkers(editor);
+			return content;
 		}
 		insertHtml(html) {
 			this.#requireEditor().InsertHtml(html);
@@ -100,25 +142,208 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 		focus() {
 			this.#requireEditor().Focus();
 		}
+		saveBookmark() {
+			const editor = this.#resolveEditor();
+			if (!editor) {
+				return null;
+			}
+			const selection = this.#visualFocusLost && this.#lastVisualSelection?.editor === editor ? this.#lastVisualSelection.selection : editor.selection.GetBookmark();
+			if (!selection) {
+				return null;
+			}
+			const bookmark = {};
+			this.#bookmarks.set(bookmark, {
+				editor,
+				selection
+			});
+			return bookmark;
+		}
+		restoreBookmark(bookmark) {
+			const savedBookmark = this.#resolveBookmark(bookmark);
+			if (!savedBookmark) {
+				return false;
+			}
+			savedBookmark.editor.selection.SetBookmark(savedBookmark.selection);
+			savedBookmark.editor.Focus();
+			return true;
+		}
+		insertNodeAtBookmark(bookmark, node) {
+			const savedBookmark = this.#resolveBookmark(bookmark);
+			if (!savedBookmark) {
+				return false;
+			}
+			const {
+				editor,
+				selection
+			} = savedBookmark;
+			this.#registerSignatureImage(node);
+			editor.selection.InsertNode(node, selection);
+			editor.selection.SetAfter(node);
+			this.#restoreSignatureImageMarkers(editor);
+			return true;
+		}
+		#resolveBookmark(bookmark) {
+			const savedBookmark = this.#bookmarks.get(bookmark);
+			if (!savedBookmark || this.#resolveEditor() !== savedBookmark.editor) {
+				return null;
+			}
+			return savedBookmark;
+		}
+		#resolveEditor() {
+			const manager = main_core.Reflection.getClass('BXHtmlEditor');
+			return manager?.Get(this.#editorInstanceId) || null;
+		}
+		#readSignatureImages(content) {
+			const registry = new Map();
+			const template = document.createElement('template');
+			template.innerHTML = content;
+			for (const image of template.content.querySelectorAll('img')) {
+				const marker = this.#readSignatureImage(image);
+				if (marker) {
+					registry.set(marker.id, [...(registry.get(marker.id) ?? []), marker.size]);
+				}
+			}
+			return registry;
+		}
+		#registerSignatureImage(image) {
+			const marker = this.#readSignatureImage(image);
+			if (marker) {
+				this.#signatureImages.set(marker.id, [...(this.#signatureImages.get(marker.id) ?? []), marker.size]);
+			}
+		}
+		#captureSignatureImageMarkers(editor) {
+			if (!main_core.Type.isFunction(editor.GetIframeDoc)) {
+				return;
+			}
+			const registry = new Map();
+			for (const image of editor.GetIframeDoc().querySelectorAll('img')) {
+				const marker = this.#readSignatureImage(image);
+				if (marker) {
+					registry.set(marker.id, [...(registry.get(marker.id) ?? []), marker.size]);
+				}
+			}
+			this.#signatureImages = registry;
+		}
+		#readSignatureImage(image) {
+			const id = this.#idFromSrc(image.getAttribute('src'));
+			const markerId = image.getAttribute('data-bx-mail-signature-image');
+			const size = image.getAttribute('data-bx-mail-signature-image-size');
+			if (id === null || markerId?.toLowerCase() !== id || !SIGNATURE_IMAGE_SIZES.has(size)) {
+				return null;
+			}
+			return {
+				id,
+				size: size
+			};
+		}
+		#idFromSrc(src) {
+			const match = SIGNATURE_IMAGE_SRC_PATTERN.exec(src ?? '');
+			return match?.[1]?.toLowerCase() ?? null;
+		}
+		#restoreSignatureImageMarkers(editor = this.#resolveEditor()) {
+			if (!editor || !main_core.Type.isFunction(editor.GetIframeDoc)) {
+				return;
+			}
+			const occurrences = new Map();
+			for (const image of editor.GetIframeDoc().querySelectorAll('img')) {
+				const id = this.#idFromSrc(image.getAttribute('src'));
+				const occurrence = id === null ? 0 : occurrences.get(id) ?? 0;
+				if (id !== null) {
+					occurrences.set(id, occurrence + 1);
+				}
+				const size = this.#readSignatureImage(image)?.size ?? (id === null ? null : this.#signatureImages.get(id)?.[occurrence]);
+				if (id !== null && size && (image.getAttribute('data-bx-mail-signature-image') !== id || image.getAttribute('data-bx-mail-signature-image-size') !== size)) {
+					image.setAttribute('data-bx-mail-signature-image', id);
+					image.setAttribute('data-bx-mail-signature-image-size', size);
+				}
+			}
+		}
+		#scheduleSignatureImageMarkerRestore() {
+			let retryAllowed = true;
+			const restore = () => {
+				this.#restoreFrame = null;
+				if (this.#destroyed) {
+					return;
+				}
+				const editor = this.#resolveEditor();
+				const iframeDocument = editor && main_core.Type.isFunction(editor.GetIframeDoc) ? editor.GetIframeDoc() : null;
+				if (!iframeDocument?.body) {
+					if (retryAllowed) {
+						retryAllowed = false;
+						this.#restoreFrame = requestAnimationFrame(restore);
+					}
+					return;
+				}
+				this.#observeSignatureImageMarkers(iframeDocument);
+				this.#restoreSignatureImageMarkers(editor);
+			};
+			restore();
+		}
+		#observeSignatureImageMarkers(iframeDocument) {
+			if (this.#observedDocument === iframeDocument) {
+				return;
+			}
+			this.#markerObserver?.disconnect();
+			this.#unbindSelectionEvents();
+			this.#observedDocument = iframeDocument;
+			this.#lastVisualSelection = null;
+			this.#visualFocusLost = false;
+			main_core.Event.bind(iframeDocument, 'focusin', this.#markVisualFocus);
+			main_core.Event.bind(iframeDocument, 'focusout', this.#rememberSelection);
+			this.#markerObserver = new MutationObserver(() => {
+				this.#restoreSignatureImageMarkers();
+			});
+			this.#markerObserver.observe(iframeDocument.body, {
+				attributes: true,
+				attributeFilter: ['src', 'data-bx-mail-signature-image', 'data-bx-mail-signature-image-size'],
+				childList: true,
+				subtree: true
+			});
+		}
+		#unbindSelectionEvents() {
+			if (!this.#observedDocument) {
+				return;
+			}
+			main_core.Event.unbind(this.#observedDocument, 'focusin', this.#markVisualFocus);
+			main_core.Event.unbind(this.#observedDocument, 'focusout', this.#rememberSelection);
+		}
+		#serializeSignatureImageMarkers(content) {
+			const template = document.createElement('template');
+			template.innerHTML = content;
+			const occurrences = new Map();
+			for (const image of template.content.querySelectorAll('img')) {
+				const id = this.#idFromSrc(image.getAttribute('src'));
+				const occurrence = id === null ? 0 : occurrences.get(id) ?? 0;
+				if (id !== null) {
+					occurrences.set(id, occurrence + 1);
+				}
+				const size = id === null ? null : this.#signatureImages.get(id)?.[occurrence];
+				if (id === null || !size) {
+					continue;
+				}
+				const marker = document.createElement('img');
+				marker.setAttribute('src', image.getAttribute('src'));
+				marker.setAttribute('data-bx-mail-signature-image', id);
+				marker.setAttribute('data-bx-mail-signature-image-size', size);
+				image.replaceWith(marker);
+			}
+			return template.innerHTML;
+		}
 		syncToolbar() {
-			const editor = this.#getEditor();
+			const editor = this.#resolveEditor();
 			if (!editor) {
 				return;
 			}
 			editor.toolbar.DisableWysiwygButtons(editor.GetViewMode() === 'code');
 		}
 		subscribeToViewModeChanges() {
-			const editor = this.#getEditor();
+			const editor = this.#resolveEditor();
 			if (editor) {
 				main_core.addCustomEvent(editor, 'OnSetViewAfter', () => this.syncToolbar());
 			}
 		}
-		#getEditor() {
-			const manager = main_core.Reflection.getClass('BXHtmlEditor');
-			return manager?.Get(this.#editorInstanceId) ?? null;
-		}
 		#requireEditor() {
-			const editor = this.#getEditor();
+			const editor = this.#resolveEditor();
 			if (!editor) {
 				throw new Error(`HTML editor ${this.#editorInstanceId} is not initialized`);
 			}
@@ -134,7 +359,7 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 		#destroyed = false;
 		constructor(options) {
 			this.#options = options;
-			this.#editor = new HtmlEditorAdapter(options.editorInstanceId);
+			this.#editor = new HtmlEditorAdapter(options.editorInstanceId, options.initialContent);
 			this.#editor.syncToolbar();
 			this.#editor.subscribeToViewModeChanges();
 			main_core.Dom.attr(options.alertContainer, {
@@ -169,6 +394,7 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 				return;
 			}
 			this.#destroyed = true;
+			this.#editor.destroy();
 			for (const capability of this.#connectedCapabilities) {
 				capability.disconnect?.();
 			}
@@ -266,6 +492,689 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 				return false;
 			}
 			return this.#runBeforeSave(index + 1);
+		}
+	}
+
+	const SignatureImageAction = Object.freeze({
+		Upload: 'mail.api.signatureimage.upload',
+		Copy: 'mail.api.signatureimage.copy'
+	});
+	const SignatureImageError = Object.freeze({
+		NotFound: 'SIGNATURE_IMAGE_NOT_FOUND',
+		DiskUnavailable: 'SIGNATURE_IMAGE_DISK_UNAVAILABLE',
+		UploadInvalid: 'SIGNATURE_IMAGE_UPLOAD_INVALID',
+		UnsupportedFormat: 'SIGNATURE_IMAGE_UNSUPPORTED_FORMAT',
+		ExtensionMismatch: 'SIGNATURE_IMAGE_EXTENSION_MISMATCH',
+		InvalidDimensions: 'SIGNATURE_IMAGE_INVALID_DIMENSIONS',
+		TooLarge: 'SIGNATURE_IMAGE_TOO_LARGE',
+		PixelLimitExceeded: 'SIGNATURE_IMAGE_PIXEL_LIMIT_EXCEEDED',
+		CountLimitExceeded: 'SIGNATURE_IMAGE_COUNT_LIMIT_EXCEEDED',
+		TotalSizeLimitExceeded: 'SIGNATURE_IMAGE_TOTAL_SIZE_LIMIT_EXCEEDED',
+		CopyFailed: 'SIGNATURE_IMAGE_COPY_FAILED',
+		StorageFailed: 'SIGNATURE_IMAGE_STORAGE_FAILED',
+		CreationLimitExceeded: 'SIGNATURE_IMAGE_CREATION_LIMIT_EXCEEDED',
+		ResolveFailed: 'SIGNATURE_IMAGE_RESOLVE_FAILED'
+	});
+	const SignatureImageClientLimit = Object.freeze({
+		MaxFileSize: 2 * 1024 * 1024,
+		MaxResourceCount: 10,
+		MaxTotalSize: 5 * 1024 * 1024,
+		MaxPixelCount: 20_000_000
+	});
+	const SignatureImageVariant = Object.freeze({
+		Small: 'small',
+		Medium: 'medium',
+		Original: 'original'
+	});
+
+	class SignatureImageService {
+		#runAction;
+		constructor(runAction = (action, config) => main_core.ajax.runAction(action, config)) {
+			this.#runAction = runAction;
+		}
+		upload(uploadId) {
+			return this.#create(SignatureImageAction.Upload, {
+				uploadId
+			});
+		}
+		copy(objectId) {
+			return this.#create(SignatureImageAction.Copy, {
+				objectId
+			});
+		}
+		async #create(action, data) {
+			try {
+				const response = await this.#runAction(action, {
+					data
+				});
+				return response.data.image;
+			} catch (response) {
+				throw this.#mapError(response);
+			}
+		}
+		#mapError(response) {
+			const error = response?.errors?.[0];
+			const rawCode = error?.code;
+			const rawMessage = error?.message;
+			const code = main_core.Type.isString(rawCode) && Object.values(SignatureImageError).includes(rawCode) ? rawCode : null;
+			return {
+				code,
+				message: main_core.Type.isString(rawMessage) ? rawMessage : ''
+			};
+		}
+	}
+	const signatureImageService = new SignatureImageService();
+
+	const UUID_PATTERN = /^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i;
+	const SIGNATURE_IMAGE_VIEW_PATH = '/bitrix/services/main/ajax.php';
+	const SIGNATURE_IMAGE_VIEW_ACTION = 'mail.api.signatureimage.view';
+	function buildSignatureImageMarker(image, variant = SignatureImageVariant.Original) {
+		if (!UUID_PATTERN.test(image.id) || !Object.values(SignatureImageVariant).includes(variant)) {
+			throw new TypeError('Invalid signature image marker data.');
+		}
+		const expectedSrc = `${SIGNATURE_IMAGE_VIEW_PATH}?action=${SIGNATURE_IMAGE_VIEW_ACTION}&id=${image.id}`;
+		if (image.src !== expectedSrc) {
+			throw new TypeError('Invalid signature image marker source.');
+		}
+		const variantWidth = image.variants[variant];
+		if (!Number.isInteger(image.width) || image.width <= 0 || !Number.isInteger(variantWidth) || variantWidth <= 0) {
+			throw new TypeError('Invalid signature image marker dimensions.');
+		}
+		const marker = document.createElement('img');
+		marker.setAttribute('src', image.src);
+		marker.setAttribute('data-bx-mail-signature-image', image.id);
+		marker.setAttribute('data-bx-mail-signature-image-size', variant);
+		marker.setAttribute('width', String(Math.min(image.width, variantWidth)));
+		return marker;
+	}
+
+	class ImageSizeMenu {
+		#menuFactory;
+		#alertFactory;
+		#menu = null;
+		#alert = null;
+		#resolve = null;
+		#selection = null;
+		constructor(options = {}) {
+			this.#menuFactory = options.menuFactory ?? (menuOptions => {
+				return new ui_system_menu.Menu(menuOptions);
+			});
+			this.#alertFactory = options.alertFactory ?? (content => {
+				return new ui_system_alert.Alert({
+					design: ui_system_alert.AlertDesign.tintedWarning,
+					content
+				});
+			});
+		}
+		choose(image, anchor) {
+			this.destroy();
+			const bindElement = this.#resolveBindElement(anchor);
+			if (!bindElement) {
+				return Promise.resolve(null);
+			}
+			return new Promise(resolve => {
+				this.#resolve = resolve;
+				this.#selection = null;
+				this.#menu = this.#menuFactory({
+					ariaLabel: main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_SIZE_MENU') || '',
+					items: this.#buildItems(image),
+					events: {
+						onShow: () => this.#showGifAlert(image),
+						onClose: () => this.#finish(this.#selection),
+						onDestroy: () => this.#finish(null)
+					}
+				});
+				this.#menu.show(bindElement);
+			});
+		}
+		destroy() {
+			const menu = this.#menu;
+			this.#menu = null;
+			this.#destroyAlert();
+			this.#resolveSelection(null);
+			menu?.destroy();
+		}
+		#buildItems(image) {
+			return [this.#buildItem(image, SignatureImageVariant.Small, 'MAIL_SIGNATURE_EDITOR_IMAGE_SIZE_SMALL'), this.#buildItem(image, SignatureImageVariant.Medium, 'MAIL_SIGNATURE_EDITOR_IMAGE_SIZE_MEDIUM'), this.#buildItem(image, SignatureImageVariant.Original, 'MAIL_SIGNATURE_EDITOR_IMAGE_SIZE_ORIGINAL')];
+		}
+		#buildItem(image, variant, messageCode) {
+			const width = this.#resolveWidth(image, variant);
+			return {
+				id: `mail-signature-editor-image-size-${variant}`,
+				title: main_core.Loc.getMessage(messageCode) || '',
+				subtitle: main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_SIZE_WIDTH', {
+					'#WIDTH#': String(width)
+				}) || '',
+				onClick: () => {
+					this.#selection = variant;
+					this.#menu?.close();
+				}
+			};
+		}
+		#resolveWidth(image, variant) {
+			const width = image.variants[variant];
+			if (!main_core.Type.isInteger(width) || width <= 0) {
+				return image.width;
+			}
+			return Math.min(width, image.width);
+		}
+		#showGifAlert(image) {
+			if (!image.animated || this.#alert || !this.#menu) {
+				return;
+			}
+			this.#alert = this.#alertFactory(main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_GIF_WARNING') || '');
+			const container = this.#alert.render();
+			container.setAttribute('role', 'status');
+			container.setAttribute('aria-live', 'polite');
+			container.setAttribute('aria-atomic', 'true');
+			main_core.Dom.addClass(container, 'mail-signature-image-size-menu__gif-alert');
+			main_core.Dom.prepend(container, this.#menu.getPopupContainer());
+		}
+		#finish(selection) {
+			const menu = this.#menu;
+			this.#menu = null;
+			this.#destroyAlert();
+			this.#resolveSelection(selection);
+			menu?.destroy();
+		}
+		#destroyAlert() {
+			this.#alert?.destroy();
+			this.#alert = null;
+		}
+		#resolveSelection(selection) {
+			const resolve = this.#resolve;
+			this.#resolve = null;
+			this.#selection = null;
+			resolve?.(selection);
+		}
+		#resolveBindElement(anchor) {
+			const sourceMenu = anchor?.closest('[role="menu"]');
+			const labelledBy = sourceMenu?.getAttribute('aria-labelledby')?.split(/\s+/) ?? [];
+			for (const id of labelledBy) {
+				const trigger = document.getElementById(id);
+				if (trigger instanceof HTMLElement && trigger.isConnected) {
+					return trigger;
+				}
+			}
+			if (anchor?.isConnected) {
+				return anchor;
+			}
+			const activeElement = document.activeElement;
+			return activeElement instanceof HTMLElement && activeElement !== document.body && activeElement.isConnected ? activeElement : null;
+		}
+	}
+
+	class ImageUploadProgress {
+		#popupFactory;
+		#loaderFactory;
+		#popup = null;
+		#container = null;
+		constructor(options = {}) {
+			this.#popupFactory = options.popupFactory ?? (popupOptions => new main_popup.Popup(popupOptions));
+			this.#loaderFactory = options.loaderFactory ?? (target => new ui_loader.Loader({
+				target,
+				type: 'BULLET',
+				size: 'S'
+			}));
+		}
+		show(anchor) {
+			this.destroy();
+			if (!anchor?.isConnected) {
+				return;
+			}
+			const loaderTarget = main_core.Tag.render`<span class="mail-signature-image-upload-progress__loader"></span>`;
+			const container = main_core.Tag.render`
+			<div
+				class="mail-signature-image-upload-progress"
+				role="status"
+				aria-live="polite"
+				aria-busy="true"
+				data-testid="mail-signature-editor-image-upload-progress"
+			>
+				${loaderTarget}
+				<span>${main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_UPLOADING') || ''}</span>
+			</div>
+		`;
+			this.#container = container;
+			const loader = this.#loaderFactory(loaderTarget);
+			loader.render();
+			loader.show();
+			this.#popup = this.#popupFactory({
+				bindElement: anchor,
+				content: container,
+				className: 'mail-signature-image-upload-progress-popup',
+				closeIcon: false,
+				closeByEsc: false,
+				autoHide: false,
+				overlay: false,
+				focusTrap: false,
+				cacheable: false,
+				angle: true,
+				padding: 0,
+				contentPadding: 0
+			});
+			this.#popup.show();
+		}
+		destroy() {
+			this.#container?.setAttribute('aria-busy', 'false');
+			this.#container = null;
+			this.#popup?.destroy();
+			this.#popup = null;
+		}
+	}
+
+	class ImageCapability {
+		#localUploader;
+		#diskPicker;
+		#service;
+		#markerBuilder;
+		#sizeMenu;
+		#uploadProgress;
+		#context = null;
+		#state = 'idle';
+		#bookmark = null;
+		#activePromise = null;
+		#requestVersion = 0;
+		#menuAnchor = null;
+		constructor(options) {
+			this.#localUploader = options.localUploader;
+			this.#diskPicker = options.diskPicker;
+			this.#service = options.service ?? signatureImageService;
+			this.#markerBuilder = options.markerBuilder ?? buildSignatureImageMarker;
+			this.#sizeMenu = options.sizeMenu ?? new ImageSizeMenu();
+			this.#uploadProgress = options.uploadProgress ?? new ImageUploadProgress();
+		}
+		connect(context) {
+			if (this.#state !== 'destroyed') {
+				this.#context = context;
+			}
+		}
+		getState() {
+			return this.#state;
+		}
+		prepareInsertion(anchor = null) {
+			if (!this.#context || this.#state === 'destroyed' || this.#activePromise) {
+				return;
+			}
+			let menuAnchor = anchor;
+			if (!menuAnchor?.isConnected) {
+				menuAnchor = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+			}
+			this.#bookmark ??= this.#context.editor.saveBookmark();
+			this.#menuAnchor = menuAnchor;
+			menuAnchor?.focus({
+				preventScroll: true
+			});
+		}
+		chooseLocal() {
+			return this.#start(() => this.#localUploader.choose(() => this.#markUploading()), uploadId => this.#service.upload(uploadId));
+		}
+		chooseDisk() {
+			return this.#start(() => this.#diskPicker.choose(), objectId => this.#service.copy(objectId));
+		}
+		async beforeSave() {
+			const activePromise = this.#activePromise;
+			if (activePromise) {
+				await activePromise;
+			}
+			return this.#state !== 'destroyed';
+		}
+		disconnect() {
+			if (this.#state === 'destroyed') {
+				return;
+			}
+			this.#requestVersion++;
+			this.#state = 'destroyed';
+			this.#context = null;
+			this.#bookmark = null;
+			this.#menuAnchor = null;
+			this.#activePromise = null;
+			this.#localUploader.cancel();
+			this.#diskPicker.cancel();
+			this.#sizeMenu.destroy();
+			this.#uploadProgress.destroy();
+		}
+		#start(choose, create) {
+			if (this.#activePromise) {
+				return this.#activePromise;
+			}
+			const context = this.#context;
+			if (!context || this.#state === 'destroyed') {
+				return Promise.resolve();
+			}
+			this.#menuAnchor ??= document.activeElement instanceof HTMLElement ? document.activeElement : null;
+			this.#bookmark ??= context.editor.saveBookmark();
+			if (!this.#bookmark) {
+				this.#menuAnchor = null;
+				return Promise.resolve();
+			}
+			this.#state = 'choosing';
+			const requestVersion = ++this.#requestVersion;
+			const request = this.#perform(requestVersion, choose, create);
+			this.#activePromise = request;
+			void request.then(() => {
+				if (this.#activePromise === request) {
+					this.#activePromise = null;
+				}
+			});
+			return request;
+		}
+		async #perform(requestVersion, choose, create) {
+			try {
+				const value = await choose();
+				if (!this.#isCurrent(requestVersion)) {
+					return;
+				}
+				if (value === null) {
+					this.#state = 'idle';
+					this.#restoreFocus();
+					return;
+				}
+				this.#markUploading();
+				const image = await create(value);
+				if (!this.#isCurrent(requestVersion)) {
+					return;
+				}
+				this.#uploadProgress.destroy();
+				this.#state = 'sizing';
+				const variant = await this.#sizeMenu.choose(image, this.#menuAnchor);
+				if (!this.#isCurrent(requestVersion)) {
+					return;
+				}
+				if (variant === null) {
+					this.#state = 'idle';
+					this.#restoreFocus();
+					return;
+				}
+				const marker = this.#markerBuilder(image, variant);
+				const inserted = this.#bookmark ? this.#context?.editor.insertNodeAtBookmark(this.#bookmark, marker) === true : false;
+				this.#state = inserted ? 'ready' : 'idle';
+				if (!inserted) {
+					this.#restoreFocus();
+				}
+			} catch (error) {
+				if (this.#isCurrent(requestVersion)) {
+					this.#state = 'idle';
+					const message = error?.message;
+					if (main_core.Type.isStringFilled(message)) {
+						this.#context?.showError(message);
+					}
+					this.#restoreFocus();
+				}
+			} finally {
+				this.#uploadProgress.destroy();
+				if (this.#isCurrent(requestVersion)) {
+					this.#bookmark = null;
+					this.#menuAnchor = null;
+				}
+			}
+		}
+		#markUploading() {
+			if (this.#state === 'choosing') {
+				this.#state = 'uploading';
+				this.#uploadProgress.show(this.#menuAnchor);
+			}
+		}
+		#restoreFocus() {
+			if (!this.#context) {
+				return;
+			}
+			if (!this.#bookmark || !this.#context.editor.restoreBookmark(this.#bookmark)) {
+				this.#context.editor.focus();
+			}
+		}
+		#isCurrent(requestVersion) {
+			return this.#state !== 'destroyed' && this.#context !== null && requestVersion === this.#requestVersion;
+		}
+	}
+
+	const FILE_UPLOAD_START_EVENT = 'File:onUploadStart';
+	const FILE_UPLOAD_COMPLETE_EVENT = 'File:onUploadComplete';
+	const FILE_ERROR_EVENT = 'File:onError';
+	const SIGNATURE_IMAGE_UPLOADER_CONTROLLER = 'mail.fileUploader.signatureImageUploaderController';
+	const FILE_UPLOAD_ERROR_MESSAGE = 'File upload failed.';
+	const SAFE_ERROR_CODE_PATTERN = /^[\dA-Z_]+$/;
+	class LocalImageUploader {
+		#uploaderFactory;
+		#active = null;
+		constructor(options) {
+			this.#uploaderFactory = options.uploaderFactory ?? (uploaderOptions => new ui_uploader_core.Uploader(uploaderOptions));
+		}
+		choose(onUploadStart = () => {}) {
+			if (this.#active) {
+				return Promise.reject(new Error('A local image selection is already active.'));
+			}
+			return new Promise((resolve, reject) => {
+				const input = document.createElement('input');
+				input.type = 'file';
+				const uploader = this.#uploaderFactory({
+					controller: SIGNATURE_IMAGE_UPLOADER_CONTROLLER,
+					browseElement: input,
+					autoUpload: true,
+					multiple: false,
+					acceptOnlyImages: true,
+					acceptedFileTypes: ['image/jpeg', 'image/png', 'image/gif'],
+					maxFileSize: SignatureImageClientLimit.MaxFileSize,
+					events: {
+						[FILE_UPLOAD_START_EVENT]: onUploadStart,
+						[FILE_UPLOAD_COMPLETE_EVENT]: event => {
+							const file = event.getData().file;
+							const serverFileId = file.getServerFileId();
+							if (main_core.Type.isStringFilled(serverFileId) || main_core.Type.isNumber(serverFileId)) {
+								this.#settleAfterEvent(String(serverFileId), null, true);
+								return;
+							}
+							this.#settleAfterEvent(null, new Error('The upload did not return a file id.'));
+						},
+						[FILE_ERROR_EVENT]: event => {
+							this.#settleAfterEvent(null, this.#toError(event.getData().error));
+						}
+					}
+				});
+				this.#active = {
+					uploader,
+					input,
+					resolve,
+					reject,
+					settled: false
+				};
+				main_core.Event.bind(input, 'cancel', this.#handleCancel);
+				input.click();
+			});
+		}
+		cancel() {
+			this.#settle(null);
+		}
+		#handleCancel = () => {
+			this.#settle(null);
+		};
+		#settleAfterEvent(uploadId, error = null, keepServerFile = false) {
+			void Promise.resolve().then(() => this.#settle(uploadId, error, keepServerFile));
+		}
+		#settle(uploadId, error = null, keepServerFile = false) {
+			const active = this.#active;
+			if (!active || active.settled) {
+				return;
+			}
+			active.settled = true;
+			main_core.Event.unbind(active.input, 'cancel', this.#handleCancel);
+			active.uploader.destroy({
+				removeFilesFromServer: !keepServerFile
+			});
+			this.#active = null;
+			if (error) {
+				active.reject(error);
+			} else {
+				active.resolve(uploadId);
+			}
+		}
+		#toError(error) {
+			if (error instanceof Error && main_core.Type.isStringFilled(error.message)) {
+				return error;
+			}
+			const uploaderError = error;
+			const getMessage = uploaderError?.getMessage;
+			const message = main_core.Type.isFunction(getMessage) ? getMessage.call(error) : '';
+			if (main_core.Type.isStringFilled(message)) {
+				return new Error(message);
+			}
+			const getCode = uploaderError?.getCode;
+			const code = main_core.Type.isFunction(getCode) ? getCode.call(error) : '';
+			if (main_core.Type.isStringFilled(code) && SAFE_ERROR_CODE_PATTERN.test(code)) {
+				return new Error(code);
+			}
+			return new Error(FILE_UPLOAD_ERROR_MESSAGE);
+		}
+	}
+
+	class DiskImagePicker {
+		#pickerFactory;
+		#active = null;
+		constructor(options = {}) {
+			this.#pickerFactory = options.pickerFactory ?? (() => new disk_diskPicker.DiskPicker());
+		}
+		choose() {
+			if (this.#active) {
+				return Promise.reject(new Error('A Disk image selection is already active.'));
+			}
+			return new Promise((resolve, reject) => {
+				const picker = this.#pickerFactory();
+				this.#active = {
+					picker,
+					resolve,
+					reject,
+					settled: false
+				};
+				picker.open(this.#buildParams());
+			});
+		}
+		cancel() {
+			this.#active?.picker.close();
+			this.#settle(null);
+		}
+		#buildParams() {
+			return {
+				selectionMode: 'single',
+				maxItems: 1,
+				allowedFileTypes: ['image'],
+				onSelect: result => {
+					this.#settle(result.items[0]?.objectId ?? null);
+				},
+				onCancel: () => this.#settle(null),
+				onClose: () => this.#settle(null),
+				onError: error => {
+					this.#settle(null, new Error(error.code));
+				}
+			};
+		}
+		#settle(objectId, error = null) {
+			const active = this.#active;
+			if (!active || active.settled) {
+				return;
+			}
+			active.settled = true;
+			this.#active = null;
+			if (error) {
+				active.reject(error);
+			} else {
+				active.resolve(objectId);
+			}
+		}
+	}
+
+	class ImageSourceMenu {
+		#options;
+		#button = null;
+		#control = null;
+		#originalContainer = null;
+		#originalDisable = null;
+		#prepareInsertion = null;
+		constructor(options) {
+			this.#options = options;
+		}
+		attach() {
+			if (this.#button) {
+				return true;
+			}
+			const control = this.#resolveControl();
+			const originalContainer = control?.GetCont();
+			if (!control || !(originalContainer instanceof HTMLElement)) {
+				return false;
+			}
+			const label = main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_INSERT') || control.title || '';
+			const button = new ui_buttons.Button({
+				baseClass: control.className || originalContainer.className,
+				className: 'mail-signature-editor-image-button',
+				collapsedIcon: '',
+				dropdown: false,
+				props: {
+					type: 'button',
+					title: label,
+					'aria-label': label,
+					'aria-haspopup': 'menu',
+					'aria-expanded': 'false'
+				},
+				systemMenu: {
+					items: [{
+						id: 'mail-signature-editor-image-local',
+						title: main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_SOURCE_LOCAL') || '',
+						onClick: () => {
+							void this.#options.capability.chooseLocal();
+						}
+					}, {
+						id: 'mail-signature-editor-image-disk',
+						title: main_core.Loc.getMessage('MAIL_SIGNATURE_EDITOR_IMAGE_SOURCE_DISK') || '',
+						onClick: () => {
+							void this.#options.capability.chooseDisk();
+						}
+					}]
+				}
+			});
+			const buttonContainer = button.render();
+			this.#prepareInsertion = () => this.#options.capability.prepareInsertion(buttonContainer);
+			main_core.Event.bind(buttonContainer, 'focusin', this.#prepareInsertion);
+			main_core.Event.bind(buttonContainer, 'click', this.#prepareInsertion);
+			const icon = document.createElement('i');
+			icon.setAttribute('aria-hidden', 'true');
+			main_core.Dom.append(icon, buttonContainer);
+			this.#control = control;
+			this.#button = button;
+			this.#originalContainer = originalContainer;
+			this.#originalDisable = control.Disable;
+			control.pCont = buttonContainer;
+			control.Disable = disabled => {
+				this.#originalDisable?.call(control, disabled);
+				button.setDisabled(disabled);
+			};
+			button.setDisabled(control.disabled === true);
+			main_core.Dom.replace(originalContainer, buttonContainer);
+			return true;
+		}
+		destroy() {
+			if (!this.#button || !this.#control || !this.#originalContainer || !this.#originalDisable) {
+				return;
+			}
+			const buttonContainer = this.#button.getContainer();
+			if (this.#prepareInsertion) {
+				main_core.Event.unbind(buttonContainer, 'focusin', this.#prepareInsertion);
+				main_core.Event.unbind(buttonContainer, 'click', this.#prepareInsertion);
+			}
+			this.#button.setSystemMenu(false);
+			this.#control.pCont = this.#originalContainer;
+			this.#control.Disable = this.#originalDisable;
+			if (buttonContainer.parentNode) {
+				main_core.Dom.replace(buttonContainer, this.#originalContainer);
+			}
+			this.#button = null;
+			this.#control = null;
+			this.#originalContainer = null;
+			this.#originalDisable = null;
+			this.#prepareInsertion = null;
+		}
+		#resolveControl() {
+			const manager = main_core.Reflection.getClass('BXHtmlEditor');
+			const editor = manager?.Get(this.#options.editorInstanceId);
+			return editor ? editor.toolbar?.controls?.InsertImage ?? null : null;
 		}
 	}
 
@@ -1020,6 +1929,10 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 	exports.AssignmentTypeSelector = AssignmentTypeSelector;
 	exports.CompositeTransport = CompositeTransport;
 	exports.DEFAULT_ASSIGNMENT_MODE = DEFAULT_ASSIGNMENT_MODE;
+	exports.DiskImagePicker = DiskImagePicker;
+	exports.ImageCapability = ImageCapability;
+	exports.ImageSourceMenu = ImageSourceMenu;
+	exports.LocalImageUploader = LocalImageUploader;
 	exports.SENDER_OPTION_ENTITY_ID = SENDER_OPTION_ENTITY_ID;
 	exports.SenderBindingPanel = SenderBindingPanel;
 	exports.SharedSignatureTransport = SharedSignatureTransport;
@@ -1030,6 +1943,7 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 	exports.UserSignatureTransport = UserSignatureTransport;
 	exports.buildSenderSelectorItems = buildSenderSelectorItems;
 	exports.buildSharedSignatureSaveRequest = buildSharedSignatureSaveRequest;
+	exports.buildSignatureImageMarker = buildSignatureImageMarker;
 	exports.buildSignatureMacroMenuOptions = buildSignatureMacroMenuOptions;
 	exports.buildUnifiedSignatureUpdateRequest = buildUnifiedSignatureUpdateRequest;
 	exports.buildUserSignatureSaveRequest = buildUserSignatureSaveRequest;
@@ -1043,5 +1957,5 @@ this.BX.Mail.Signature = this.BX.Mail.Signature || {};
 	exports.needsUnifiedTransport = needsUnifiedTransport;
 	exports.pickPanelData = pickPanelData;
 
-})(this.BX.Mail.Signature.Editor = this.BX.Mail.Signature.Editor || {}, BX, BX.UI, BX.UI.Notification, BX.UI, BX.UI.EntitySelector, BX.UI.System.RadioButton, BX.UI, BX.Mail.Lib.EntitySelector);
+})(this.BX.Mail.Signature.Editor = this.BX.Mail.Signature.Editor || {}, BX, BX.UI, BX.UI.Notification, BX.UI.System.Alert, BX.UI.System, BX.Main, BX.UI, BX.UI.Uploader, BX.Disk, BX.UI, BX.UI.EntitySelector, BX.UI.System.RadioButton, BX.UI, BX.Mail.Lib.EntitySelector);
 //# sourceMappingURL=editor.bundle.js.map

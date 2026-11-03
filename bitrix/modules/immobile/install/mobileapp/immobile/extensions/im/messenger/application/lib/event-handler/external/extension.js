@@ -15,6 +15,8 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { waitViewLoaded } = require('im/messenger/lib/wait-view-loaded');
 
+	const { returnToAudioMessage } = require('im/messenger/controller/dialog/lib/audio-panel/audio-helper');
+
 	/**
 	 * @implements {Unsubscribable}
 	 * @class ExternalEventHandler
@@ -84,6 +86,7 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 			this.notificationReloadHandler = this.notificationReloadHandler.bind(this);
 
 			this.openRequestHandler = this.openRequestHandler.bind(this);
+			this.onReturnToAudioMessage = this.onReturnToAudioMessage.bind(this);
 		}
 
 		subscribeEvents()
@@ -95,6 +98,8 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 
 			BX.addCustomEvent(EventType.notification.open, this.notificationOpenHandler);
 			BX.addCustomEvent(EventType.notification.reload, this.notificationReloadHandler);
+
+			BX.addCustomEvent(EventType.audio.audioPanelReturnClick, this.onReturnToAudioMessage);
 
 			jnComponent.on(EventType.jnComponent.openRequest, this.openRequestHandler);
 		}
@@ -108,6 +113,8 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 
 			BX.removeCustomEvent(EventType.notification.open, this.notificationOpenHandler);
 			BX.removeCustomEvent(EventType.notification.reload, this.notificationReloadHandler);
+
+			BX.removeCustomEvent(EventType.audio.audioPanelReturnClick, this.onReturnToAudioMessage);
 
 			jnComponent.off(EventType.jnComponent.openRequest, this.openRequestHandler);
 		}
@@ -186,6 +193,14 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 					this.logger.error(error);
 				});
 			}
+		}
+
+		onReturnToAudioMessage(audioData)
+		{
+			void returnToAudioMessage({
+				audioData,
+				openDialog: (options, parentWidget) => this.#dialogManager.openDialog(options, parentWidget),
+			});
 		}
 
 		notificationOpenHandler()

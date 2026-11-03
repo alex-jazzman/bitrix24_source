@@ -117,7 +117,7 @@ export const UserFields = {
 		},
 		onMouseMove(): void
 		{
-			if (this.selectionMade || this.opened)
+			if (this.selectionMade)
 			{
 				return;
 			}
@@ -151,23 +151,32 @@ export const UserFields = {
 			class="tasks-field-user-fields print-no-box-shadow"
 			:data-task-id="taskId"
 			:data-task-field-id="userFieldsMeta.id"
+			data-testid="tasks-user-fields"
 			@mousedown="onMouseDown"
 			@mousemove="onMouseMove"
 			@mouseup="onMouseUp"
 		>
-			<div
+			<component
+				:is="readonly ? 'div' : 'button'"
+				:type="readonly ? null : 'button'"
 				class="tasks-field-user-fields-title"
 				:class="{
 					'--readonly': readonly,
 					'--border-radius': preparedUserFieldsLength === 0,
 				}"
+				:aria-haspopup="readonly ? null : 'dialog'"
+				data-testid="tasks-user-fields-title"
+				@mousedown.stop
+				@mouseup.stop
+				@click="handleOpenSlider"
 			>
 				<BIcon
 					class="tasks-field-user-fields-title-icon"
 					:name="Outline.TOPIC"
+					aria-hidden="true"
 				/>
 				<TextMd accent>{{ userFieldsMeta.title }}</TextMd>
-			</div>
+			</component>
 			<template
 				v-for="(field, index) in preparedUserFields"
 				:key="index"
@@ -187,15 +196,23 @@ export const UserFields = {
 				<TextXs className="tasks-field-user-fields-footer-text">
 					{{ footerText }}
 				</TextXs>
-				<div class="tasks-field-user-fields-footer-fill">
+				<button
+					type="button"
+					class="tasks-field-user-fields-footer-fill"
+					data-testid="tasks-user-fields-fill-btn"
+					@mousedown.stop
+					@mouseup.stop
+					@click="handleOpenSlider"
+				>
 					<TextXs className="tasks-field-user-fields-footer-fill-text">
 						{{ loc('TASKS_V2_USER_FIELDS_FILL') }}
 					</TextXs>
 					<BIcon
 						class="tasks-field-user-fields-footer-fill-icon"
 						:name="Outline.CHEVRON_RIGHT_L"
+						aria-hidden="true"
 					/>
-				</div>
+				</button>
 			</div>
 		</div>
 	`,

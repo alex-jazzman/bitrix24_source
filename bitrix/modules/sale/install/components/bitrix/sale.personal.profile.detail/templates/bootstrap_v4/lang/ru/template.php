@@ -11,5 +11,8 @@ $MESS ["SPPD_DELETE_FILE"]="Удалить файл";
 $MESS ["SPPD_SELECT"]="Выбрать";
 $MESS ["SPPD_ADD"]="Добавить";
 $MESS ["SPPD_FILE_NOT_SELECTED"]="Файл не выбран";
+$MESS['SPPD_ADD_ARIA'] = 'Добавить значение: #PROPERTY#';
+$MESS['SPPD_CANCEL_FILE_ARIA'] = 'Отменить выбор файла: #PROPERTY#';
 $MESS ["SPPD_FILE_COUNT"]="Выбрано файлов: ";
+$MESS['SPPD_SELECT_FILE_ARIA'] = 'Выбрать файл: #PROPERTY#';
 ?>

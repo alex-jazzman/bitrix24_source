@@ -946,6 +946,9 @@ do{ //one iteration loop
 						{
 							$arErrorsTmp = array();
 
+							$arBizProcParametersValues[$arDocumentState["TEMPLATE_ID"]][CBPDocument::PARAM_MANUAL_START_SURFACE] =
+								\Bitrix\Bizproc\Starter\Enum\ManualStartSurface::IblockElementAdmin->value;
+
 							$arBizProcWorkflowId[$arDocumentState["TEMPLATE_ID"]] = CBPDocument::StartWorkflow(
 								$arDocumentState["TEMPLATE_ID"],
 								array(MODULE_ID, ENTITY, $ID),

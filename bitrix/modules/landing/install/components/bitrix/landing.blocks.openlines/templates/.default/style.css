@@ -20,6 +20,38 @@
 	font-size: 16px;
 	width: 100%;
 }
+
+/* The trigger of a widget without a link of its own is a button now, and a button brings a look of
+   its own with it. Only what the rule above leaves unsaid is reset here - size, padding and colour
+   of the text are already set there, and a repeat would win by the tag and change them. */
+button.landing-b24-widget-button-social-item {
+	appearance: none;
+	background-color: transparent;
+	border: none;
+	font-family: inherit;
+	font-weight: inherit;
+	line-height: inherit;
+	text-align: inherit;
+}
+
+/* The reset above takes away the ring the browser draws around a focused button together with the
+   border and the background it came with. It is given back as the template of the site draws it for
+   the rest of the page, and in two tones for the same reason: the block stands on a section of a
+   colour nobody here knows. One tone is not enough - an accent ring drawn inside a control holds
+   1.15:1 against a fill of `#2186F0`, where WCAG 1.4.11 asks 3:1 of a ring - so the white ring goes
+   inside the control and the dark halo outside it, and whichever tone the surface behind swallows,
+   the other is left with an edge to show: 12.6:1 for the halo on a white page, 3.7:1 for the ring on
+   that blue fill, 17.4:1 for the ring on a dark section. The size is the focus tokens of the design
+   system, `--ui-focus-outline-width` and `--ui-focus-outline-offset-inset`; the halo has no token of
+   its own and stays a number. The offset token is the negative one on purpose: a ring hanging
+   outside the control is cut wherever the box around it clips, and the page clips at its own edge -
+   a control standing flush against it would show three sides of four. */
+button.landing-b24-widget-button-social-item:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid #fff;
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: 0 0 0 4px #333;
+}
+
 .landing-b24-widget-button-social-item * {
 	color: white;
 	margin: 0;

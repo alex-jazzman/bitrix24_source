@@ -1,0 +1,3 @@
+<?php
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_BLOCK_PRESET_NOT_FOUND'] = 'Preset `#PRESET_ID#` was not found for block type `#TYPE#`.';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_BLOCK_TYPE_NOT_FOUND'] = 'Block type `#TYPE#` was not found.';

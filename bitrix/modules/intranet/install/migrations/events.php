@@ -3,11 +3,27 @@
 $migration = \Bitrix\Main\UpdateSystem\Migration::getInstance();
 $event = $migration->event();
 
+if ($migration->context()->isBox())
+{
+	$event->register(
+		'main',
+		'OnAfterSetOption_~PARAM_PARTNER_ID',
+		\Bitrix\Intranet\Internal\Integration\Main\EventHandler\IntegratorUpdate::class,
+		'onAfterIntegratorUpdate',
+	);
+}
+
 $event
 	->registerCompatible('search', 'OnReindex', 'CIntranetSearch', 'OnSearchReindex')
 	->registerCompatible('search', 'OnSearchGetURL', 'CIntranetSearch', 'OnSearchGetURL')
 	->registerCompatible('main', 'OnAfterUserUpdate', 'CIntranetSearch', 'OnUserUpdate')
 	->registerCompatible('main', 'OnAfterUserAdd', 'CIntranetSearch', 'OnUserAdd')
+	->registerCompatible(
+		'main',
+		'OnBeforeEventAdd',
+		\Bitrix\Intranet\Internal\Integration\Main\EventHandler\OtpEmailFrom::class,
+		'addToMailEvent'
+	)
 	->registerCompatible('main', 'OnUserDelete', 'CIntranetSearch', 'OnUserDelete')
 	->registerCompatible('search', 'OnSearchGetFileContent', 'CIntranetSearchConverters', 'OnSearchGetFileContent')
 	->registerCompatible('search', 'BeforeIndex', 'CIntranetSearch', 'ExcludeBlogUser')
@@ -152,9 +168,40 @@ $event
 	->register('crm', 'OnCrmEntityDetailsFrameBelowPage', 'Bitrix\Intranet\UI\Sidepanel\EventHandler', 'onBelowPage')
 	->register('main', 'MainSenderSmtpLimitDecrease', 'Bitrix\Intranet\Integration\Main\EventHandler', 'onSenderSmtpLimitDecrease')
 	->register('main', 'OnBuildFilterFactoryMethods', '\Bitrix\Intranet\User\Filter\FactoryIntranet', 'onBuildFilterFactoryMethods')
+	->register('intranet', 'onBeforeUserFire', \Bitrix\Intranet\Invitation::class, 'onBeforeUserFireHandler')
 	->register('socialnetwork', 'OnSocNetUserToGroupAdd', \Bitrix\Intranet\Invitation::class, 'onSocNetUserToGroupAddHandler')
 	->register('socialnetwork', 'OnSocNetUserToGroupUpdate', \Bitrix\Intranet\Invitation::class, 'onSocNetUserToGroupUpdateHandler')
 	->register('socialnetwork', 'OnAfterSocNetUserToGroupDelete', \Bitrix\Intranet\Invitation::class, 'onSocNetUserToGroupDeleteHandler')
+	->register(
+		'socialnetwork',
+		'OnSocNetUserToGroupAdd',
+		\Bitrix\Intranet\Internal\Integration\Socialnetwork\EventHandler\Workgroup\ClearLeftMenuCache::class,
+		'onUserToGroupAdd'
+	)
+	->register(
+		'socialnetwork',
+		'OnSocNetUserToGroupUpdate',
+		\Bitrix\Intranet\Internal\Integration\Socialnetwork\EventHandler\Workgroup\ClearLeftMenuCache::class,
+		'onUserToGroupUpdate'
+	)
+	->register(
+		'socialnetwork',
+		'OnAfterSocNetUserToGroupDelete',
+		\Bitrix\Intranet\Internal\Integration\Socialnetwork\EventHandler\Workgroup\ClearLeftMenuCache::class,
+		'onAfterUserToGroupDelete'
+	)
+	->unregister(
+		'socialnetwork',
+		'OnSocNetGroupUpdate',
+		\Bitrix\Intranet\Internal\Integration\Socialnetwork\EventHandler\Workgroup\ClearLeftMenuCache::class,
+		'onGroupUpdate'
+	)
+	->unregister(
+		'socialnetwork',
+		'OnSocNetGroupDelete',
+		\Bitrix\Intranet\Internal\Integration\Socialnetwork\EventHandler\Workgroup\ClearLeftMenuCache::class,
+		'onGroupDelete'
+	)
 	->register('socialservices', 'OnUserInitialize', 'CIntranetEventHandlers', 'OnAfterUserInitialize')
 	->register('timeman', 'OnAfterTMDayStart', \Bitrix\Intranet\Integration\Timeman\Worktime::class, 'OnAfterTMDayStart')
 	->register('timeman', 'OnAfterTMDayEnd', \Bitrix\Intranet\Integration\Timeman\Worktime::class, 'OnAfterTMDayEnd')

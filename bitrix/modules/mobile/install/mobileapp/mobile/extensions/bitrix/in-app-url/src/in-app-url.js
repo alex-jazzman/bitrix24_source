@@ -6,6 +6,14 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 	const { Route } = require('in-app-url/route');
 	const { getHttpPath } = require('utils/url');
 	const { stringify } = require('utils/string');
+	const { Loc } = require('loc');
+	const { showSafeToast } = require('toast');
+	const { openPortalPage } = require('in-app-url/portal-page');
+
+	const reportOpenFailure = (reason, error) => {
+		console.error(`in-app-url: ${reason}`, error);
+		showSafeToast({ message: Loc.getMessage('IN_APP_URL_OPEN_FAILURE') });
+	};
 
 	/**
 	 * @class InAppUrl
@@ -19,7 +27,7 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
+		 * @deprecated use addRoute
 		 * @param {string} pattern
 		 * @param {Function} handler
 		 * @return {Route}
@@ -55,17 +63,17 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @param {string} path
+		 * @param {string} rawPath
 		 * @param {object} context
 		 * @param {function(Url)|null} fallbackFn
 		 * @return {false|any}
 		 */
-		open(path, context = {}, fallbackFn = null)
+		open(rawPath, context = {}, fallbackFn = null)
 		{
-			path = stringify(path);
+			const path = stringify(rawPath);
 			if (path === '')
 			{
-				console.error('in-app-url: unable to open empty path');
+				reportOpenFailure('unable to open empty path');
 
 				return false;
 			}
@@ -81,6 +89,13 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 
 			if (url.isExternal)
 			{
+				const routeForExternalUrl = this.findRouteForExternalUrl(url);
+
+				if (routeForExternalUrl)
+				{
+					return this.#dispatchRoute(routeForExternalUrl, url, context);
+				}
+
 				Application.openUrl(InAppUrl.getHttpPath(path));
 
 				return false;
@@ -107,20 +122,47 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 						return fallbackFn(url);
 					}
 
-					PageManager.openPage({
-						bx24ModernStyle: true,
-						...context,
-						url: url.toString(),
-					});
+					openPortalPage(url.toString(), context);
 
 					return false;
 				}
 
-				return route.dispatch(url, context);
+				return this.#dispatchRoute(route, url, context);
 			}
 			catch (e)
 			{
-				console.error(`in-app-url: error while opening path ${path}`, e);
+				reportOpenFailure(`error while opening path ${path}`, e);
+
+				return false;
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {Route} route
+		 * @param {Url} url
+		 * @param {object} context
+		 * @return {false|any}
+		 */
+		#dispatchRoute(route, url, context)
+		{
+			try
+			{
+				const dispatched = route.dispatch(url, context);
+
+				// an async handler rejects after dispatch returns, so try/catch alone leaves it silent
+				if (dispatched instanceof Promise)
+				{
+					return dispatched.catch((e) => reportOpenFailure(`handler failed while opening path ${url}`, e));
+				}
+
+				return dispatched;
+			}
+			catch (e)
+			{
+				reportOpenFailure(`error while opening path ${url}`, e);
+
+				return false;
 			}
 		}
 
@@ -144,6 +186,19 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 		findRoute(url)
 		{
 			return this.routes.find((route) => route.match(url));
+		}
+
+		/**
+		 * Resolves a URL living outside the portal domain: only routes that declared
+		 * allowExternalUrl() take part, so a foreign address cannot reach a route
+		 * whose pattern would match it as a mere substring.
+		 * @public
+		 * @param {Url | string} url
+		 * @returns {Route | undefined}
+		 */
+		findRouteForExternalUrl(url)
+		{
+			return this.routes.find((route) => route.isExternalUrlAllowed() && route.match(url));
 		}
 
 		findRoutesByName(name)

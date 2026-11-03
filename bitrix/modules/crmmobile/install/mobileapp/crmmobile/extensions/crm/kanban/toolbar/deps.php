@@ -6,6 +6,10 @@ return [
 		'money',
 		'layout/ui/kanban/toolbar',
 		'layout/pure-component',
+		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+		'utils/object',
 
 		'statemanager/redux/connect',
 		'crm:statemanager/redux/slices/stage-settings',
@@ -16,5 +20,6 @@ return [
 		'./entity-toolbar',
 		'./stage-dropdown',
 		'./stage-summary',
+		'./compact-stage-control',
 	],
 ];

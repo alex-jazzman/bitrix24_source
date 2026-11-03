@@ -1,0 +1,170 @@
+<div class="form">
+	<div class="header">
+		Circle(24)
+		Line(180, 20, 99)
+	</div>
+	<div class="content">
+		<div class="row">
+			<div class="label">Line(44, 12, 99)</div>
+			Line(210, 20, 99)
+		</div>
+		<div class="row">
+			<div class="label">Line(36, 12, 99)</div>
+			Line(280, 12, 99)
+		</div>
+		<div class="row">
+			<div class="label">Line(52, 12, 99)</div>
+			Line(240, 12, 99)
+		</div>
+		<div class="editor">
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+			Line(null, 12, 99)
+		</div>
+		<div class="signature">
+			Line(160, 12, 99)
+			Line(120, 12, 99)
+		</div>
+	</div>
+	<div class="footer">
+		<div class="actions">
+			Line(104, 32, 99)
+			Line(96, 32, 99)
+			Line(112, 32, 99)
+			Line(92, 32, 99)
+		</div>
+		<div class="send">
+			Line(96, 38, 8)
+			Line(88, 38, 8)
+		</div>
+	</div>
+</div>
+<style>
+	.form {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		box-sizing: border-box;
+		background: var(--ui-color-bg-content-primary);
+		/* the slider clips its own loaders by this radius; the bare skeleton wrapper does not */
+		border-radius: var(--sidepanel-border-radius, 0);
+	}
+
+	.header {
+		display: flex;
+		flex: 0 0 auto;
+		align-items: center;
+		gap: var(--ui-space-inline-xs);
+		padding: var(--ui-space-inset-md) var(--ui-space-inset-xl) var(--ui-space-inset-sm);
+	}
+
+	.content {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-height: 0;
+		padding: 0 var(--ui-space-inset-xl);
+	}
+
+	.row {
+		display: flex;
+		flex: 0 0 auto;
+		align-items: center;
+		gap: var(--ui-space-inline-sm);
+		min-height: var(--ui-size-5xl);
+		box-sizing: border-box;
+		padding: var(--ui-space-inset-xs) 0;
+		border-bottom: 1px solid var(--ui-color-divider-default);
+	}
+
+	.label {
+		flex: 0 0 76px;
+	}
+
+	/* text-like lines fill the top half of the editor zone; the lower half stays clean */
+	.editor {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		gap: var(--ui-space-stack-md);
+		min-height: 0;
+		padding: var(--ui-space-inset-lg) 0;
+		overflow: hidden;
+	}
+
+	/* one rule per line breaks here: renderSkeleton eats single-line {...} groups as placeholders */
+	.editor > .ui-skeleton {
+		flex: 0 0 auto;
+	}
+
+	.editor > .ui-skeleton:nth-child(1) {
+		--width: 62%;
+	}
+
+	.editor > .ui-skeleton:nth-child(2) {
+		--width: 94%;
+	}
+
+	.editor > .ui-skeleton:nth-child(3) {
+		--width: 88%;
+	}
+
+	.editor > .ui-skeleton:nth-child(4) {
+		--width: 96%;
+	}
+
+	.editor > .ui-skeleton:nth-child(5) {
+		--width: 80%;
+	}
+
+	.editor > .ui-skeleton:nth-child(6) {
+		--width: 90%;
+	}
+
+	.editor > .ui-skeleton:nth-child(7) {
+		--width: 84%;
+	}
+
+	.editor > .ui-skeleton:nth-child(8) {
+		--width: 92%;
+	}
+
+	.editor > .ui-skeleton:nth-child(9) {
+		--width: 46%;
+	}
+
+	.signature {
+		display: flex;
+		flex: 0 0 auto;
+		flex-direction: column;
+		gap: var(--ui-space-stack-xs);
+		padding-bottom: var(--ui-space-inset-sm);
+	}
+
+	.footer {
+		display: flex;
+		flex: 0 0 auto;
+		flex-direction: column;
+		gap: var(--ui-space-stack-sm);
+		padding: var(--ui-space-inset-sm) var(--ui-space-inset-xl) var(--ui-space-inset-md);
+		border-top: 1px solid var(--ui-color-divider-default);
+	}
+
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: var(--ui-space-inline-2xs);
+	}
+
+	.send {
+		display: flex;
+		align-items: center;
+		gap: var(--ui-space-inline-sm);
+	}
+</style>

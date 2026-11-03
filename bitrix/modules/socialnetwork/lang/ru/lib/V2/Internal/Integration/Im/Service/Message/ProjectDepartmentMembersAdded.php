@@ -1,2 +1,2 @@
 <?php
-$MESS['SONET_V2_PROJECT_DEPARTMENT_MEMBERS_ADDED'] = 'В проект добавлены сотрудники отдела «#DEPARTMENT_NAME#»';
+$MESS['SONET_V2_PROJECT_MEMBERS_ADDED'] = 'В проект добавлены #MEMBERS#';

@@ -46,10 +46,14 @@ export class TaskCompactCard
 
 		await this.#mountApplication(popup.getContentContainer());
 
+		// The trap activates on the skeleton before Vue mounts, so the default initialFocus
+		// cannot find the title yet; move focus to the first field (title) once mounted.
+		popup.getFocusTrap()?.focusFirst();
+
 		this.#adjustPosition();
 		this.#subscribe();
 
-		const dragHandle = Tag.render`<div class="tasks-compact-card-popup-drag-handle"/>`;
+		const dragHandle = Tag.render`<div class="tasks-compact-card-popup-drag-handle" aria-hidden="true"/>`;
 		Dom.append(dragHandle, popup.getContentContainer());
 		this.#popup.setDraggable({
 			element: dragHandle,
@@ -194,9 +198,14 @@ export class TaskCompactCard
 	}
 
 	#handlePopupShow = (event): void => {
+		const popup: Popup = event.getCompatData()[0];
+		if (!this.#ownsPopup(popup))
+		{
+			return;
+		}
+
 		this.#handlePopupShow.openedPopupsCount ??= 0;
 
-		const popup: Popup = event.getCompatData()[0];
 		const popupContainer = this.#popup.getPopupContainer();
 
 		const onClose = (): void => {
@@ -207,6 +216,7 @@ export class TaskCompactCard
 			if (this.#handlePopupShow.openedPopupsCount === 0)
 			{
 				Dom.removeClass(popupContainer, '--disable-drag');
+				this.#popup.setAutoHide(true);
 			}
 		};
 
@@ -215,7 +225,28 @@ export class TaskCompactCard
 
 		this.#handlePopupShow.openedPopupsCount++;
 		Dom.addClass(popupContainer, '--disable-drag');
+		this.#popup.setAutoHide(false);
 	};
+
+	#ownsPopup(popup: Popup): boolean
+	{
+		if (!popup || popup === this.#popup)
+		{
+			return false;
+		}
+
+		const cardContainer = this.#popup.getPopupContainer();
+
+		const childContainer = popup.getPopupContainer?.();
+		if (childContainer && cardContainer.contains(childContainer))
+		{
+			return true;
+		}
+
+		// Nested field popups can render into document.body, so DOM ancestry misses them;
+		// identify card-owned popups by their bind element living inside the card.
+		return Type.isElementNode(popup.bindElement) && cardContainer.contains(popup.bindElement);
+	}
 
 	#getInitialGroupId(): number | null
 	{

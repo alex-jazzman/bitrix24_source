@@ -34,6 +34,7 @@ return [
 		'disk:uploader',
 		'disk:remove',
 		'disk:file-grid/navigation',
+		'disk:opener/unified-link/rest',
 		'disk:simple-list/items',
 		'disk:statemanager/redux/slices/files',
 		'disk:statemanager/redux/slices/storages',

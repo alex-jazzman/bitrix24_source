@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, voximplant, voximplant_phoneCalls, im_v2_application_core, im_v2_lib_call, im_v2_lib_desktopApi, im_v2_lib_logger, im_v2_lib_soundNotification) {
+(function (exports, main_core, voximplant, voximplant_phoneCalls, im_v2_application_core, im_v2_lib_call, im_v2_lib_desktopApi, im_v2_lib_logger, im_v2_lib_playback, im_v2_lib_soundNotification) {
 	'use strict';
 
 	class PhoneManager {
@@ -56,6 +56,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			// }
 
 			this.closeKeyPad();
+			im_v2_lib_playback.CallPriority.getInstanceIfCreated()?.handleOutgoingPhoneCall();
 			this.#controller.phoneCall(number, params);
 		}
 		startCallList(rawCallListId, params) {
@@ -66,6 +67,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (callListId === 0 || Number.isNaN(callListId)) {
 				return;
 			}
+			im_v2_lib_playback.CallPriority.getInstanceIfCreated()?.handleOutgoingPhoneCall();
 			this.#controller.startCallList(callListId, params);
 		}
 		toggleDebugFlag(debug) {
@@ -124,12 +126,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 		}
 		#onCallCreated() {
+			im_v2_lib_playback.CallPriority.getInstanceIfCreated()?.handlePhoneCallCreated();
 			if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 				return;
 			}
 			im_v2_lib_desktopApi.DesktopApi.stopDiskSync();
 		}
 		#onCallDestroyed() {
+			im_v2_lib_playback.CallPriority.getInstanceIfCreated()?.handlePhoneCallDestroyed();
 			if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 				return;
 			}
@@ -148,6 +152,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				isIncoming,
 				isDeviceCall
 			} = event.getData();
+			im_v2_lib_playback.CallPriority.getInstanceIfCreated()?.handlePhoneCallConnected(isIncoming);
 			if (!im_v2_lib_desktopApi.DesktopApi.isDesktop() || isIncoming || isDeviceCall) {
 				return;
 			}
@@ -179,5 +184,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.PhoneManager = PhoneManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX, BX.Voximplant, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX, BX.Voximplant, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=phone.bundle.js.map

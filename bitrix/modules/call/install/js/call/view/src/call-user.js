@@ -9,8 +9,9 @@ import {
 	LOCAL_STREAM_QUALITY_HEIGHT,
 	Hardware,
 } from 'call.core';
-import {logPlaybackError} from './tools';
-import type {UserModel} from './user-registry'
+import { logPlaybackError, setSrcObject } from './tools';
+import { shouldShowVideo } from './user/video-visibility';
+import type {UserModel} from './user/user-registry'
 import { Utils } from 'im.v2.lib.utils';
 import { VideoFrameKeeper } from './video-frame-keeper.js';
 
@@ -88,6 +89,7 @@ export class CallUser
 	elements: CallUserElements = {}
 	menu: ?Menu
 	remoteParticipantMenu: ?Menu
+	#videoDecision = null;
 
 	constructor(config: CallUserParams = {})
 	{
@@ -532,7 +534,7 @@ export class CallUser
 		}
 		this.elements.root = Dom.create('div', {
 			props: {className: 'bx-messenger-videocall-user'},
-			dataset: {userId: this.userModel.id, order: this.userModel.order},
+			dataset: {userId: this.userModel.id, order: this.userModel.order, testid: `call-participant-${this.userModel.id}`},
 			children: [
 				this.elements.videoBorder = Dom.create('div', {
 					props: {
@@ -544,6 +546,7 @@ export class CallUser
 					children: [
 						this.elements.avatarContainer = Dom.create('div', {
 							props: {className: 'bx-messenger-videocall-user-avatar-border'},
+							dataset: {testid: 'call-participant-avatar'},
 							children: [
 								this.elements.avatar = Dom.create('div', {
 									props: {className: 'bx-messenger-videocall-user-avatar'},
@@ -584,6 +587,7 @@ export class CallUser
 									children: [
 										this.elements.name = Dom.create('span', {
 											props: {className: 'bx-messenger-videocall-user-name', title: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name) : this.userModel.name)},
+											dataset: {testid: 'call-participant-name'},
 											text: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name) : this.userModel.name),
 										}),
 										this.elements.changeNameIcon = Dom.create('div', {
@@ -757,6 +761,7 @@ export class CallUser
 					props: {
 						className: 'bx-messenger-videocall-video', volume: 0, autoplay: true
 					},
+					dataset: {testid: 'call-participant-video'},
 					attrs: {
 						playsinline: true, muted: true
 					}
@@ -952,6 +957,7 @@ export class CallUser
 							className: `bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera${
 							this.isVisibleCameraStateIcon() ? '' : ' hidden'}`,
 						},
+						dataset: {testid: 'call-participant-camera-state'},
 					}),
 				],
 			}),
@@ -1079,7 +1085,15 @@ export class CallUser
 			case 'microphoneState':
 				return this.updateMicrophoneState();
 			case 'cameraState':
-				return this.updateCameraState();
+				if (!this.userModel.cameraState)
+				{
+					this.hideLastVideoFrame();
+				}
+				this.updateCameraState();
+
+				// the avatar comes back at the redraw of the card and nowhere else: the rerender
+				// queue of the grid leaves an already mounted card alone
+				return this.update();
 			case 'videoPaused':
 				return this.updateVideoPaused();
 			case 'floorRequestState':
@@ -1400,7 +1414,13 @@ export class CallUser
 
 		if (this.elements.name)
 		{
-			this.elements.name.innerText = this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name) : this.userModel.name;
+			const name = this.screenSharingUser
+				? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name)
+				: this.userModel.name
+			;
+
+			this.elements.name.innerText = name;
+			this.elements.name.title = name;
 		}
 		if (this.userModel.avatar === '' && this.elements.avatar)
 		{
@@ -1599,7 +1619,9 @@ export class CallUser
 			return;
 		}
 
-		if (this.hasVideo()/* && this.visible*/)
+		const showVideo = this.hasVideo() && this.#showsVideoOfKind(this.videoRenderer?.kind);
+
+		if (showVideo)
 		{
 			if (this.visible)
 			{
@@ -1607,7 +1629,9 @@ export class CallUser
 				{
 					this.videoRenderer.render(this.elements.video);
 					this.playVideoElements(this.elements.video);
-					if (this._previewRenderer)
+					// the preview renderer is always the camera, so an off camera empties it while
+					// the main element goes on showing the screen
+					if (this._previewRenderer && this.#showsVideoOfKind(this._previewRenderer.kind))
 					{
 						this._previewRenderer.render(this.elements.preview);
 					}
@@ -1648,6 +1672,9 @@ export class CallUser
 		{
 			this.elements.video.srcObject = null;
 			this.elements.preview.srcObject = null;
+			// the blur of a paused video is latched: the class is toggled without an explicit value,
+			// so only a call that gets this far takes it off the element the video will come back to
+			this.blurVideo(false);
 			if (this.elements.avatarContainer)
 			{
 				this.elements.avatarContainer.classList.remove('bx-messenger-videocall-hidden-avatar');
@@ -1663,13 +1690,75 @@ export class CallUser
 			this.elements.container.appendChild(this.elements.debugPanel);
 		}
 		this.updatePanelDeferred();
+		this.#logVideoDecision(showVideo);
 	};
+
+	// The camera state gates the camera alone; hasVideo() stays the wider question the grid asks.
+	#showsVideoOfKind(videoRendererKind: ?string): boolean
+	{
+		return shouldShowVideo({
+			isScreenSharingCard: this.screenSharingUser,
+			videoRendererKind,
+			cameraState: this.userModel.cameraState,
+		});
+	}
+
+	// A card redraws in a stream on an active grid, so only a change of the decision goes to the
+	// call log: next to the mute signals of the media layer it tells an unhandled signal from a
+	// wrong condition when a complaint is taken apart. One participant has more than one card --
+	// the tile of the participant and the tile of the screen are given the same model -- so the
+	// record names the role of the card that wrote it.
+	#logVideoDecision(showVideo: boolean)
+	{
+		const decision = showVideo ? 'video' : 'avatar';
+		const previousDecision = this.#videoDecision;
+
+		this.#videoDecision = decision;
+
+		if (previousDecision === null || previousDecision === decision)
+		{
+			return;
+		}
+
+		Util.sendLog({
+			description: 'video decision changed',
+			userModelId: this.userModel?.id,
+			screenSharingUser: this.screenSharingUser,
+			decision,
+			reason: this.#videoDecisionReason(showVideo),
+		});
+	}
+
+	#videoDecisionReason(showVideo: boolean): string
+	{
+		if (showVideo)
+		{
+			return 'videoShown';
+		}
+
+		if (Hardware.maxLocalStreamQualityHeight === LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO)
+		{
+			return 'videoQualityOff';
+		}
+
+		if (this.userModel.state !== UserState.Connected)
+		{
+			return 'notConnected';
+		}
+
+		if (!this.videoTrack && !this.videoRenderer)
+		{
+			return 'noMedia';
+		}
+
+		return 'cameraOff';
+	}
 
 	playAudio()
 	{
 		if (!this.audioStream)
 		{
-			this.elements.audio.srcObject = null;
+			setSrcObject(this.elements.audio, null);
 
 			Util.sendLog({
 				description: 'no audioStream to play',
@@ -1681,7 +1770,7 @@ export class CallUser
 
 		if (this.externalSpeakerManagement)
 		{
-			this.elements.audio.srcObject = this.audioStream;
+			setSrcObject(this.elements.audio, this.audioStream);
 			this.callBacks.onAudioElementCreated(this.elements.audio);
 			this.elements.audio.play().catch(logPlaybackError);
 			this.callBacks.onAudioPlay(this.elements.audio);
@@ -1691,15 +1780,28 @@ export class CallUser
 
 		if (this.speakerId && Type.isFunction(this.elements.audio.setSinkId))
 		{
-			this.elements.audio.setSinkId(this.speakerId).then(function ()
-			{
-				this.elements.audio.srcObject = this.audioStream;
+			// the value the selection was made with: the handlers run later, when the field may have moved on
+			const requestedSpeakerId = this.speakerId;
+			this.elements.audio.setSinkId(requestedSpeakerId).then(() => {
+				setSrcObject(this.elements.audio, this.audioStream);
 				this.elements.audio.play().catch(logPlaybackError);
-			}.bind(this)).catch(console.error);
+			}, (error) => {
+				// the second handler of then() and not a catch: only the refusal of the selection
+				// belongs to this record, not a failure of the attachment below it. The stream is
+				// attached in the first handler alone, so a refused device leaves the element silent.
+				Util.sendLog({
+					description: 'speaker selection failed',
+					scope: 'callUser',
+					userModelId: this.userModel?.id,
+					speakerId: requestedSpeakerId,
+					errorName: error?.name,
+					errorMessage: error?.message,
+				});
+			});
 		}
 		else
 		{
-			this.elements.audio.srcObject = this.audioStream;
+			setSrcObject(this.elements.audio, this.audioStream);
 			this.elements.audio.play().catch(logPlaybackError);
 		}
 	};
@@ -2145,7 +2247,23 @@ export class CallUser
 			return;
 		}
 
+		// the bridge repeats the terms of the redraw except the gap it exists for: missing media and
+		// a participant on the way back are what the saved frame covers, while an off camera and the
+		// local "no video" quality give the card an avatar the frame must not come back over
+		if (
+			Hardware.maxLocalStreamQualityHeight === LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO
+			|| !this.#showsVideoOfKind(this.videoRenderer?.kind)
+		)
+		{
+			return;
+		}
+
 		this.videoFrameKeeper.showLastFrame(this.elements.videoContainer);
+	}
+
+	hideLastVideoFrame()
+	{
+		this.videoFrameKeeper?.hideLastFrame();
 	}
 
 	destroy()

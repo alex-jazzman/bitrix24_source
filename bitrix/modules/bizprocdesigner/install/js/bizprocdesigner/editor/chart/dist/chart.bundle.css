@@ -1,6 +1,17 @@
 :root {
 	--designer-bp-grey-bg: #EBEEF3;
 
+	/* Chips of a readable expression. The colour of a group is defined here once for both stylesheets of
+	   the feature and repeats the groups of the data inspector: the same value must look the same in the
+	   inspector and in the text of an expression. */
+	--designer-bp-token-bg: var(--ui-color-base-7);
+	--designer-bp-token-text: var(--ui-color-base-1);
+	--designer-bp-token-inbound-bg: var(--ui-color-accent-soft-green-2);
+	--designer-bp-token-global-bg: var(--ui-color-accent-soft-blue-2);
+	--designer-bp-token-filter-bg: var(--ui-color-accent-soft-orange-2);
+	--designer-bp-token-unknown-bg: var(--ui-color-accent-soft-red-2);
+	--designer-bp-token-unknown-text: var(--ui-color-accent-soft-element-red);
+
 	--designer-bp-ai-icons: #9C5CEF;
 	--designer-bp-ai-bg: #ECDFFF;
 
@@ -546,7 +557,15 @@
 	top: 0;
 	width: 736px;
 	height: 428px;
-	background: url("images/shared/ui/circuit-backdrop/images/circuit.png") no-repeat center / cover;
+	background: url("images/shared/ui/circuit-backdrop/images/circuit.webp") no-repeat center / cover;
+	background-image: -webkit-image-set(
+		url("images/shared/ui/circuit-backdrop/images/circuit.webp") 1x,
+		url("images/shared/ui/circuit-backdrop/images/circuit@2x.webp") 2x
+	);
+	background-image: image-set(
+		url("images/shared/ui/circuit-backdrop/images/circuit.webp") 1x,
+		url("images/shared/ui/circuit-backdrop/images/circuit@2x.webp") 2x
+	);
 	-webkit-mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
 	mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
 }
@@ -567,17 +586,17 @@
 	align-items: center;
 	gap: 24px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
-	margin: 0;
-	padding: 0;
 }
 
 .editor-chart-tabs_tab {
+	font: inherit;
 	font-size: 15px;
 	line-height: 20px;
 	color: var(--ui-color-base-3);
-	padding-bottom: 12px;
+	background: none;
+	border: 0;
+	padding: 0 0 12px;
 	border-bottom: 2px solid transparent;
-	list-style-type: none;
 	cursor: pointer;
 }
 
@@ -1826,6 +1845,13 @@
 	margin-right: 10px;
 }
 
+.editor-chart-output-unreachable-mark {
+	display: flex;
+	align-items: center;
+	flex: none;
+	margin-right: var(--ui-space-inline-2xs);
+}
+
 .editor-chart-text-align-menu-top-btn__menu {
 	display: flex;
 	justify-content: space-between;
@@ -1913,6 +1939,7 @@
 
 .chart-editor-content-separator__separator {
 	position: relative;
+	flex: 0 0 auto;
 	width: 13px;
 	height: 100%;
 	cursor: ew-resize;
@@ -2061,11 +2088,18 @@
 	display: block;
 }
 
-.chart-editor-content-separator__first-part {
-	flex-grow: 1;
+/* The content part keeps the size it is given: it is what separatorPosition measures.
+   Only the empty part flexes, so any rounding residue of the container never moves the line. */
+.chart-editor-content-separator__first-part,
+.chart-editor-content-separator__second-part {
+	flex: 0 0 auto;
 	overflow: auto;
 	box-sizing: border-box;
-	
+}
+
+.chart-editor-content-separator__first-part.--fill,
+.chart-editor-content-separator__second-part.--fill {
+	flex: 1 1 auto;
 }
 
 .chart-editor-content-separator__first-part.--resizing {
@@ -2082,13 +2116,6 @@
 	bottom: auto;
 	left: 0;
 	right: 0;
-}
-
-.chart-editor-content-separator__second-part {
-	flex-grow: 1;
-	/* padding: 7px; */
-	overflow: auto;
-	box-sizing: border-box;
 }
 
 .chart-editor-content-separator__second-part.--resizing {
@@ -2124,6 +2151,14 @@
 }
 
 
+/*
+ * The sizes of the panels below are mirrored by hand in `entities/app/constants/index.ts`
+ * (PANEL_EDGE_GAP, CATALOG_WIDTH_COLLAPSED, SETTINGS_PANEL_WIDTH, DATA_INSPECTOR_PANEL_WIDTH,
+ * DEBUG_BAR_TOOLBAR_OFFSET), because the editor tells the fit of the overview which edges of the
+ * canvas it covers and there is no way to read a stylesheet for it. CATALOG_WIDTH_EXPANDED belongs
+ * to the catalog itself (`entities/catalog/ui/catalog-layout/catalog-layout.css`). Move a panel
+ * here and the constant has to move with it.
+ */
 .editor-chart-app-layout {
 	display: flex;
 	flex-direction: column;
@@ -2144,6 +2179,19 @@
 .editor-chart-app-layout__content {
 	position: relative;
 	height: calc(100% - 56px);
+}
+
+/*
+ * The whole drawing area of the canvas and no inset of its own: the layer inside places its markers
+ * from the top left corner of that area, so any inset here would shift every marker by as much. The
+ * section spans the canvas, therefore it may not take the pointer either - only the markers do
+ * (note-marker.css), and the schema below stays workable.
+ */
+.editor-chart-app-layout__notes-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
 }
 
 .editor-chart-app-layout__top-right-toolbar {
@@ -2208,14 +2256,11 @@
 	background-color: var(--ui-color-base-5);
 }
 
-.editor-chart-app-layout__bottom-right-toolbar .ui-block-diagram-canvas-map__cursor {
-	stroke: var(--ui-color-blue-57);
-}
-
 .editor-chart-app-layout__bottom-right-toolbar.--shifted {
 	transform: translateX(-589px);
 }
 
+/* The open debug bar takes the strip below; mirrored as DEBUG_BAR_TOOLBAR_OFFSET. */
 .editor-chart-app-layout__bottom-right-toolbar.--margined {
 	bottom: 320px;
 }
@@ -3569,7 +3614,8 @@
 	display: flex;
 	align-items: center;
 	max-width: 740px;
-	max-height: 58px;
+	/* No height cap: a message of several lines would otherwise spill out of the coloured box, which
+	   has no clipping of its own. The width still bounds how far a single line runs. */
 	padding: var(--ui-space-inline-sm) var(--ui-space-inset-md);
 	border-radius: 0 0 var(--ui-border-radius-2xl) var(--ui-border-radius-2xl);
 	box-shadow: var(--ui-shadow-bottom-m);
@@ -3599,7 +3645,8 @@
 .editor-chart-toast-layout {
 	display: flex;
 	align-items: center;
-	height: 28px;
+	/* A summary of several counters is several lines tall, so the height is a floor and not a cap. */
+	min-height: 28px;
 	/* Content color is set by the toast scheme (--warning/--processing/--completed); default is white. */
 	color: var(--bizprocdesigner-editor-toast-content-color, var(--ui-color-base-8));
 	width: 700px;
@@ -3630,7 +3677,7 @@
 }
 
 .editor-chart-toast-layout__content {
-	height: 19px;
+	min-height: 19px;
 	display: flex;
 	align-items: center;
 	width: 100%;
@@ -3644,6 +3691,9 @@
 
 .editor-chart-toast-layout__content__end {
 	margin-left: auto;
+	/* The message takes the room it needs; what stands beside it keeps its own width instead of
+	   being squeezed into a column of characters. */
+	flex-shrink: 0;
 }
 .editor-chart-toast-close-button {
 	all: unset;
@@ -5094,6 +5144,12 @@
 	line-height: 19px;
 	font-weight: var(--ui-font-weight-normal);
 }
+
+/* The wrapper is rendered whenever the slot is passed, and its content may be conditional. */
+.inspector-scheme-view__collapsible-header__controls:empty {
+	display: none;
+}
+
 .inspector-scheme-view__data-item-row {
 	display: flex;
 	flex-direction: row;
@@ -5222,6 +5278,103 @@
 	content: '// ';
 }
 
+/* A leaf without an expression is no drag source. The icon stays in place and goes muted rather than
+   invisible: dropping it would shift every title of the level sideways as the position changes, and an
+   empty gutter reads as a missing icon. Same state colour the switcher chevrons use when unavailable. */
+.inspector-scheme-view__data-item-drag-icon.--inactive {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+/* The new node type has no title rule of its own in the collapsible header of the scheme. */
+.inspector-scheme-view__collapsible-item-title.--foundItems {
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+}
+
+.editor-chart-found-items__switcher {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.editor-chart-found-items__switcher-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
+/* Unavailable by state, never hidden: the controls must not move as the position changes. */
+.editor-chart-found-items__switcher-button:disabled {
+	cursor: default;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.editor-chart-found-items__position {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-2);
+}
+
+.editor-chart-found-items__truncated {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	color: var(--ui-color-base-4);
+}
+
+.editor-chart-found-items__caption {
+	display: inline-block;
+	max-width: 100%;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-1);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-found-items__caption.--link {
+	color: var(--ui-color-accent-main-link);
+	text-decoration: underline;
+	text-decoration-color: var(--ui-color-accent-main-link-underline);
+}
+
+.editor-chart-found-items__notice {
+	margin: var(--ui-space-stack-2xs) 0 0;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	color: var(--ui-color-base-4);
+}
+
+.editor-chart-found-items__notice.--alert {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.editor-chart-found-items__retry {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+/* Positions from the second on have no expression, so the leaf is not a drag source and must not
+   offer the grab cursor of the shared row. */
+.editor-chart-found-items__fields.--static .inspector-scheme-view__data-item-title {
+	cursor: default;
+}
+
 .node-data-inspector-close-button {
 	padding: 0;
 	border: none;
@@ -5266,7 +5419,15 @@
 	width: 320px;
 	height: 163px;
 	opacity: 0.8;
-	background: url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state.png") no-repeat center / contain;
+	background: url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state.webp") no-repeat center / contain;
+	background-image: -webkit-image-set(
+		url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state.webp") 1x,
+		url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state@2x.webp") 2x
+	);
+	background-image: image-set(
+		url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state.webp") 1x,
+		url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state@2x.webp") 2x
+	);
 }
 
 .bizprocdesigner-inspector-empty-state__text {
@@ -5280,466 +5441,273 @@
 	color: var(--ui-color-base-2);
 }
 
-.bizprocdesigner-expression-builder {
+/*
+ * Geometry repeats InspectorSchemeView: the panel replaces the skeleton with the real tree in
+ * place, so the paddings, the tree line offsets and the widths of the row columns must match.
+ */
+.editor-chart-inspector-skeleton {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+
+	display: flex;
+	flex-direction: column;
+	padding: 0 var(--ui-space-inset-md2);
+}
+
+.editor-chart-inspector-skeleton__group {
+	padding: var(--ui-space-inset-md2) 0;
+}
+
+.editor-chart-inspector-skeleton__group + .editor-chart-inspector-skeleton__group {
+	border-top: 1px solid var(--ui-color-divider-accent);
+}
+
+.editor-chart-inspector-skeleton__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.editor-chart-inspector-skeleton__node,
+.editor-chart-inspector-skeleton__row-list {
+	position: relative;
+	padding-top: var(--ui-space-inset-sm);
+	padding-left: var(--ui-space-inset-xl);
+}
+
+.editor-chart-inspector-skeleton__node::before,
+.editor-chart-inspector-skeleton__row-list::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 7px;
+	width: 1px;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.editor-chart-inspector-skeleton__row-list {
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-stack-sm);
-	padding: var(--ui-space-inset-md);
-	/* Floor for the layout, capped by the popup width JS gives it: a window too narrow for the
-	   popup gets a narrower one, and the content must not stick out of it. */
-	min-width: min(340px, 100%);
+}
+
+.editor-chart-inspector-skeleton__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+}
+
+.editor-chart-inspector-skeleton__row-title {
+	display: flex;
+	flex: 0 1 220px;
+	min-width: 0;
+}
+
+.editor-chart-inspector-skeleton__row-title-chip {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	height: var(--ui-size-xl);
 	box-sizing: border-box;
-	/* Single-scroll layout: header (formula/modes/hint/search) and footer stay put, only the mode
-	   body scrolls. No outer scroll here (overflow:hidden), so there is no second scrollbar and
-	   the footer is never clipped.
-	   --eb-height comes from JS: all the room the trigger leaves below itself, minus a margin from
-	   the window edge. `auto` covers the first paint, before the measurement runs. */
-	height: var(--eb-height, auto);
-	max-height: calc(100vh - 32px);
-	overflow: hidden;
+	padding: 0 var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-accent);
+	border-radius: var(--ui-border-radius-xs);
 }
 
-.bizprocdesigner-expression-builder__modes {
-	flex: 0 0 auto;
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--ui-space-inline-xs);
+.editor-chart-inspector-skeleton__row-value {
+	flex: 0 0 160px;
+	min-width: 0;
 }
 
-/* Fills the space left between fixed header and footer; min-height:0 lets it shrink so the
-   inner list (not the whole popup) becomes the scroll area when content is tall. */
-.bizprocdesigner-expression-builder__body {
-	flex: 1 1 auto;
-	min-height: 0;
+.editor-chart-inspector-skeleton__row-type {
+	flex: 0 0 84px;
+	min-width: 0;
+}
+
+/* One height for the window: the popup is centred once, when it is shown, and never re-centred, so a
+   growing list must not push the footer off the screen. */
+.bizprocdesigner-fragment-library
+{
 	display: flex;
 	flex-direction: column;
-}
-
-/* Scrolls when the mode content outgrows the popup. Modes built from a list keep the scroll in
-   the list (it shrinks to the room left, so this never overflows); the calculator and
-   modification forms have no list of their own: without this their fields and chips spill over
-   the footer instead of scrolling. */
-.bizprocdesigner-expression-builder__mode-body {
-	flex: 1 1 auto;
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-xs);
+	height: min(420px, 50vh);
 	overflow-y: auto;
 }
 
-/* Keep their own height inside the scrolling column: a flex child shrinks by default, which
-   squashes the fields and the chip rows instead of letting the column scroll. The source list is
-   the exception: it is the one child that takes the leftover room and scrolls on its own. */
-.bizprocdesigner-expression-builder__mode-body > *:not(.bizprocdesigner-expression-builder-source-list) {
-	flex: 0 0 auto;
-}
-
-.bizprocdesigner-expression-builder__placeholder,
-.bizprocdesigner-expression-builder__hint {
-	flex: 0 0 auto;
-	color: var(--ui-color-base-3);
-}
-
-.bizprocdesigner-expression-builder__operand {
+.bizprocdesigner-fragment-library__skeleton
+{
 	display: flex;
-	align-items: flex-end;
-	gap: var(--ui-space-inline-xs);
-}
-
-.bizprocdesigner-expression-builder__operand .ui-ctl,
-.bizprocdesigner-expression-builder__operand > :first-child {
-	flex: 1 1 auto;
-}
-
-.bizprocdesigner-expression-builder__operations {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--ui-space-inline-xs);
-}
-
-.bizprocdesigner-expression-builder__operation {
-	display: flex;
-}
-
-.bizprocdesigner-expression-builder__operation-select {
-	flex: 1 1 auto;
-}
-
-/* The chosen source doubles as the way back to the list: Modification has no separate
-   "pick a source" button, it opens on the list itself. Native button, so the default
-   button look is reset here. */
-.bizprocdesigner-expression-builder__source-value {
-	display: block;
-	width: 100%;
-	box-sizing: border-box;
-	padding: var(--ui-space-inset-xs);
-	border: none;
-	border-radius: var(--ui-border-radius-sm);
-	background: var(--ui-color-bg-content-secondary);
-	font: inherit;
-	color: var(--ui-color-base-2);
-	text-align: left;
-	word-break: break-word;
-	cursor: pointer;
-	transition: background-color 200ms ease;
-}
-
-.bizprocdesigner-expression-builder__source-value:hover {
-	background: var(--ui-color-bg-state-hover-default);
-}
-
-.bizprocdesigner-expression-builder__source-value:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
-}
-
-.bizprocdesigner-expression-builder__preview {
-	padding: var(--ui-space-inset-xs);
-	border-radius: var(--ui-border-radius-sm);
-	background: var(--ui-color-bg-content-secondary);
-}
-
-.bizprocdesigner-expression-builder__preview.--warning {
-	background: var(--ui-color-bg-content-secondary);
-}
-
-.bizprocdesigner-expression-builder__preview-text {
-	color: var(--ui-color-base-2);
-}
-
-.bizprocdesigner-expression-builder__preview.--warning .bizprocdesigner-expression-builder__preview-text {
-	color: var(--ui-color-accent-main-warning);
-}
-
-.bizprocdesigner-expression-builder__warning {
-	padding: var(--ui-space-inset-xs);
-	border-radius: var(--ui-border-radius-sm);
-	background: var(--ui-color-bg-content-secondary);
-}
-
-.bizprocdesigner-expression-builder__warning-text {
-	color: var(--ui-color-accent-main-warning);
-}
-
-/* Formula highlight: parts are rendered as text nodes ({{ }}), never as HTML. */
-.bizprocdesigner-expression-builder__formula {
-	flex: 0 0 auto;
-	display: block;
-	/* The block shows the whole current value of the field, and that can be a long text (a letter
-	   or a notification body). The window height is fixed, so without a cap such a value takes it
-	   all: the mode body shrinks to nothing and the footer leaves the popup, which is
-	   overflow:hidden. A share of the height, so a taller window shows more of the value — counted
-	   from --eb-height rather than written as `25%`, because a percentage of a root that is still
-	   `auto` high resolves to `none` and leaves the block uncapped (first paint, and any mount with
-	   no trigger to measure). The fallback stands for the shortest window the geometry ever gives
-	   (POPUP_MIN_HEIGHT in popup-fit.js), about three lines of the value. */
-	max-height: calc(var(--eb-height, 265px) * 0.25);
-	overflow-y: auto;
-	padding: var(--ui-space-inset-xs);
-	border-radius: var(--ui-border-radius-sm);
-	background: var(--ui-color-bg-content-secondary);
-	font-family: var(--ui-font-family-mono, monospace);
-	font-size: 12px;
-	line-height: 1.5;
-	word-break: break-word;
-	white-space: pre-wrap;
-}
-
-.bizprocdesigner-expression-builder__part {
-	white-space: pre-wrap;
-}
-
-.bizprocdesigner-expression-builder__part.--brace {
-	color: var(--ui-color-base-4);
-}
-
-.bizprocdesigner-expression-builder__part.--function {
-	color: var(--ui-color-accent-main-primary);
-	font-weight: 700;
-}
-
-.bizprocdesigner-expression-builder__part.--source {
-	color: var(--ui-color-accent-main-link);
-}
-
-.bizprocdesigner-expression-builder__part.--operator {
-	color: var(--ui-color-accent-main-warning);
-}
-
-.bizprocdesigner-expression-builder__part.--value {
-	color: var(--ui-color-base-1);
-}
-
-.bizprocdesigner-expression-builder__part.--modifier {
-	color: var(--ui-color-accent-main-success);
-}
-
-.bizprocdesigner-expression-builder__part.--plain {
-	color: var(--ui-color-base-2);
-}
-
-.bizprocdesigner-expression-builder__footer {
-	flex: 0 0 auto;
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--ui-space-inline-xs);
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
 	padding-top: var(--ui-space-inset-xs);
-	border-top: 1px solid var(--ui-color-divider-less);
 }
 
-/* Placed absolutely in the same relative container as `bp-selector-button`,
-   shifted left of it (selector button sits at right: 8px, width 24px). */
-.bizprocdesigner-expression-builder-trigger {
-	position: absolute;
-	right: 36px;
-	top: 6px;
-	z-index: 10;
+/* Pinned to the top of the list: a page may fail to load while the person is anywhere in it. */
+.bizprocdesigner-fragment-library__error
+{
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex-shrink: 0;
+	margin-bottom: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-alert);
+	background: var(--ui-color-accent-soft-red-3);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.bizprocdesigner-fragment-library__error-icon
+{
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-fragment-library__error-text
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-fragment-library__empty
+{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	margin: auto;
+	padding: var(--ui-space-inset-xl) 0;
+	color: var(--ui-color-base-2);
+}
+
+/* An icon instead of a 3D illustration: the square is held by equal insets around the icon, so its
+   side is set by the icon itself. */
+.bizprocdesigner-fragment-library__empty-icon
+{
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 24px;
-	height: 24px;
-	padding: 0;
-	border: 1px solid var(--ui-color-divider-default);
-	border-radius: var(--ui-border-radius-2xs);
-	background: var(--ui-color-bg-content-primary);
-	color: var(--ui-color-accent-main-primary);
-	cursor: pointer;
-	transition: background-color 200ms ease, border-color 200ms ease;
-}
-
-/* Reserve room in the field for both the trigger and the selector button.
-   Specificity (0,3,1) beats the shared field padding rules in common-settings-form,
-   for the node settings controls (`.field-row`) and for the legacy property dialog,
-   where fields are laid out in the tables of `.adm-detail-content-table`. */
-.node-settings-panel .field-row.bizprocdesigner-expression-builder-host textarea,
-.node-settings-panel .field-row.bizprocdesigner-expression-builder-host input[type="text"],
-.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host textarea,
-.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host input[type="text"] {
-	padding-right: 60px !important;
-}
-
-.bizprocdesigner-expression-builder-trigger:hover {
-	background: var(--ui-color-bg-state-hover-default);
-	border-color: var(--ui-color-divider-accent);
-}
-
-.bizprocdesigner-expression-builder-trigger:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 1px;
-}
-
-/* The text of the field is hidden by the fill colour, not by `color`: the settings panel paints its
-   controls with `color: … !important` at the same weight (`.node-settings-panel .field-row textarea`),
-   so a `color` of ours would come down to the order of the bundles, while the fill colour is
-   contested by no one and wins over `color` either way. A focused field shows its own text. */
-.bxr-veneer:not(.bxr-raw) + input,
-.bxr-veneer:not(.bxr-raw) + textarea {
-	-webkit-text-fill-color: transparent;
-}
-
-/* The layer lies over the border box of the field, out of flow, in the parent of the field: an
-   element of its own around the field would break the design-system rules written for a control
-   that is a direct child. Its box is set from the field at mount time; its own borders are
-   transparent and its typography is carried over, so a token covers its own code. Clicks pass
-   through everywhere but the tokens — that is what keeps the field editable. */
-.bxr-veneer {
-	position: absolute;
-	z-index: 2;
-	display: flex;
-	align-items: center;
-	overflow: hidden;
-	box-sizing: border-box;
-	border-style: solid;
-	border-color: transparent;
-	white-space: pre;
-	pointer-events: none;
-	color: var(--ui-color-base-1);
-}
-
-.bxr-veneer.bxr-multiline {
-	display: block;
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
-
-/* Kept after the multiline rule: both selectors weigh the same, so the last one wins. */
-.bxr-veneer.bxr-raw {
-	display: none;
-}
-
-/* The token is filled with the colour of its group in the data inspector. Neutral grey is the
-   outbound group — the own data of the node being edited, the document, system variables and
-   parameters. A token is never split by a line break: a half of a chip reads as a chip of its own. */
-.bxr-tok {
-	padding: 0 10px;
-	border-radius: 6px;
-	background: var(--ui-color-base-7);
-	color: var(--ui-color-base-1) !important;
-	white-space: nowrap;
-	cursor: pointer;
-	pointer-events: auto;
-}
-
-/* The focus ring is drawn inside the token: the layer clips whatever goes past its own bounds, and
-   a ring drawn outside the token would be cut off at the edges of the field. */
-.bxr-tok:focus-visible {
-	outline: 2px solid var(--ui-color-primary);
-	outline-offset: -2px;
-}
-
-.bxr-tok.bxr-node {
-	background: var(--ui-color-accent-soft-green-2);
-}
-
-.bxr-tok.bxr-global {
-	background: var(--ui-color-accent-soft-blue-2);
-}
-
-.bxr-tok.bxr-unknown {
-	background: var(--ui-color-accent-soft-red-2);
-	color: var(--ui-color-accent-soft-element-red) !important;
-}
-
-.bizprocdesigner-readable-expression-popover__content {
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-xs);
+	margin-bottom: var(--ui-space-stack-xs);
 	padding: var(--ui-space-inset-md);
-	max-width: 367px;
-	box-sizing: border-box;
-	font-size: var(--ui-font-size-sm);
-}
-
-.bizprocdesigner-readable-expression-popover .popup-window-buttons {
-	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md) var(--ui-space-inset-xs2);
-}
-
-.bizprocdesigner-readable-expression-popover__row {
-	display: flex;
-	align-items: baseline;
-	gap: var(--ui-space-inline-xs);
-}
-
-.bizprocdesigner-readable-expression-popover__label {
-	flex: 0 0 auto;
-	color: var(--ui-color-base-3);
-}
-
-.bizprocdesigner-readable-expression-popover__value {
-	flex: 1 1 auto;
-	overflow-wrap: anywhere;
-}
-
-.bizprocdesigner-readable-expression-popover__unknown {
-	color: var(--ui-color-accent-main-warning);
-}
-
-.bizprocdesigner-readable-expression-popover__code {
-	padding: var(--ui-space-inset-xs);
-	border-radius: var(--ui-border-radius-xs);
 	background: var(--ui-color-bg-content-secondary);
-	color: var(--ui-color-base-2);
-	font-family: var(--ui-font-family-system-mono);
-	overflow-wrap: anywhere;
+	border-radius: var(--ui-border-radius-lg);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
-/* Fills the mode body given by the parent; height is driven by the parent flex chain, not a
-   hardcoded cap, so the list is compact for few items and scrolls (the single scroll area) when tall. */
-.bizprocdesigner-expression-builder-source-list {
-	flex: 1 1 auto;
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-xs);
-}
-
-.bizprocdesigner-expression-builder-source-list__toolbar {
-	flex: 0 0 auto;
-	display: flex;
-	align-items: center;
-	gap: var(--ui-space-inline-xs);
-}
-
-.bizprocdesigner-expression-builder-source-list__search {
-	flex: 1 1 auto;
-}
-
-/* The field is type="search" for the semantics; hide the engine's own clear button so the
-   look stays the design-system one. */
-.bizprocdesigner-expression-builder-source-list__search input::-webkit-search-cancel-button {
-	display: none;
-}
-
-.bizprocdesigner-expression-builder-source-list__scroll {
-	flex: 1 1 auto;
-	/* No ceiling of its own: the popup has an explicit height (--eb-height on the root) and the
-	   list takes whatever the header and footer leave. min-height:0 lets it shrink instead of
-	   pushing the footer out when the popup is short. */
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-xs);
-	overflow-y: auto;
-}
-
-.bizprocdesigner-expression-builder-source-list__hint {
-	color: var(--ui-color-base-3);
-	padding: var(--ui-space-inset-xs);
-}
-
-/* A load failure, as opposed to an empty list: told apart by colour as well as by wording. */
-.bizprocdesigner-expression-builder-source-list__hint.--error {
-	color: var(--ui-color-accent-main-alert);
-}
-
-.bizprocdesigner-expression-builder-source-list__section {
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-3xs);
-}
-
-.bizprocdesigner-expression-builder-source-list__section-title {
-	color: var(--ui-color-base-4);
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs) 0;
-}
-
-/* Native button reset: the row is a button, its own look comes from the rules below. */
-.bizprocdesigner-expression-builder-source-list__item {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: var(--ui-space-stack-3xs);
+.bizprocdesigner-fragment-library__table
+{
 	width: 100%;
-	box-sizing: border-box;
-	padding: var(--ui-space-inset-xs);
-	border: none;
-	border-radius: var(--ui-border-radius-sm);
-	background: none;
-	font: inherit;
-	color: inherit;
-	text-align: left;
-	cursor: pointer;
+	border-collapse: collapse;
+}
+
+.bizprocdesigner-fragment-library__table th,
+.bizprocdesigner-fragment-library__table td
+{
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm) var(--ui-space-inset-xs) 0;
+	text-align: start;
+	vertical-align: middle;
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bizprocdesigner-fragment-library__table th
+{
+	font-weight: inherit;
+}
+
+.bizprocdesigner-fragment-library__table thead th
+{
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	padding-top: 0;
+	color: var(--ui-color-base-4);
+	background: var(--ui-color-bg-content-primary);
+	border-bottom-color: var(--ui-color-divider-default);
+}
+
+.bizprocdesigner-fragment-library__table th:last-child,
+.bizprocdesigner-fragment-library__table td:last-child
+{
+	width: 1%;
+	padding-right: 0;
+}
+
+.bizprocdesigner-fragment-library__table tbody tr
+{
 	transition: background-color 200ms ease;
 }
 
-.bizprocdesigner-expression-builder-source-list__item:hover {
+.bizprocdesigner-fragment-library__table tbody tr:hover
+{
 	background: var(--ui-color-bg-state-hover-default);
 }
 
-.bizprocdesigner-expression-builder-source-list__item:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+/* Auto layout keeps a column at least as wide as its content: without this cap a long name widens
+   the table instead of wrapping inside its cell. */
+.bizprocdesigner-fragment-library__table tbody td:not(:last-child),
+.bizprocdesigner-fragment-library__table tbody th
+{
+	max-width: 0;
 }
 
-.bizprocdesigner-expression-builder-source-list__item-title {
-	color: var(--ui-color-base-1);
+.bizprocdesigner-fragment-library__table tbody tr:last-child td,
+.bizprocdesigner-fragment-library__table tbody tr:last-child th
+{
+	border-bottom: none;
 }
 
-.bizprocdesigner-expression-builder-source-list__item-subtitle {
-	color: var(--ui-color-base-3);
-	word-break: break-word;
+.bizprocdesigner-fragment-library__more
+{
+	display: flex;
+	flex-shrink: 0;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-2xs);
+}
+
+.bizprocdesigner-fragment-library-item__name
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.bizprocdesigner-fragment-library-item__actions
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	justify-content: flex-end;
+	min-width: max-content;
+}
+
+/* UiButton renders its own node after mounting, so the layout of the menu button lives on a wrapper. */
+.bizprocdesigner-fragment-library-item__menu
+{
+	display: flex;
+	align-items: center;
+}
+
+.bizprocdesigner-save-fragment
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.bizprocdesigner-save-fragment__shared
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* The caption toggles the checkbox through `for`, so it answers the pointer the way the box does. */
+.bizprocdesigner-save-fragment__shared label
+{
+	cursor: pointer;
 }
 
 .bp-pilot-badge {
@@ -5813,73 +5781,642 @@
 	display: none;
 }
 
+.editor-chart-diagram-layout-button .ui-btn {
+	--ui-btn-background: transparent;
+	--ui-btn-background-hover: transparent;
+	--ui-btn-background-active: transparent;
+}
+
+.editor-chart-diagram-layout-button .ui-btn:not(:disabled) .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.editor-chart-diagram-layout-button .ui-btn:not(:disabled):hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/*
+ * The pin and the window of the form are placed apart over the canvas: the pin stands at the point of
+ * the click, and the window beside it or on the other side of it, wherever it fits whole. The wrapper
+ * spans the layer and takes no pointer of its own - the window is what takes it back, the same way a
+ * marker does.
+ */
+.editor-chart-note-composer {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+/* The draft of the marker: it stands where the note will be pinned and is not a control of its own. */
+.editor-chart-note-composer__pin {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 12px;
+	height: 12px;
+	border: 1px solid var(--ui-color-accent-soft-border-blue);
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-accent-main-primary);
+	box-shadow: var(--ui-shadow-bottom-xs);
+	box-sizing: border-box;
+}
+
+/* The width is the width of the thread of a note (note-thread.css): the form and the thread are the
+   two windows of one discussion, and a form narrower than the thread cut the prompt of its own
+   field in half. */
+.editor-chart-note-composer__form {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	width: 320px;
+	padding: var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-m);
+	box-sizing: border-box;
+	pointer-events: auto;
+}
+
+/* own node so Vue and ui.text-editor never share children */
+.editor-chart-note-composer__editor {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
+}
+
+/* The note is written: the field is taken out of the way and not out of the document, so the editor
+   is destroyed by the form alone and nothing is left rendering into a detached node. */
+.editor-chart-note-composer__editor.--hidden {
+	display: none;
+}
+
+.editor-chart-note-composer__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs);
+}
+
+/* Always rendered: a live region has to stand in the document before its text changes to be read out.
+   With nothing in it the column has no children and no height of its own. */
+.editor-chart-note-composer__status {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+/* A refusal keeps the message in the field, so it is the field it is read next to. */
+.editor-chart-note-composer__error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* The note is created and only the notification of its mention is not: a warning, not a failure. */
+.editor-chart-note-composer__notice {
+	color: var(--ui-color-accent-main-warning);
+}
+
+/*
+ * One message of a note: a line with the author, the time and the actions, the text under it, and the
+ * status line an answer of the server is told on. Typography is set by the components of the design
+ * system, so nothing here touches the font.
+ */
+.editor-chart-note-message {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	width: 100%;
+	/* lets the message shrink to the thread so the text wraps instead of widening the popup */
+	min-width: 0;
+}
+
+.editor-chart-note-message__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+/* The name may be long enough to push the time and the actions out of the row on its own. */
+.editor-chart-note-message__author {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-note-message__time,
+.editor-chart-note-message__edited {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}
+
+/* The actions stand at the end of the row, away from the name they belong to. */
+.editor-chart-note-message__actions {
+	flex: 0 0 auto;
+	margin-inline-start: auto;
+}
+
+/*
+ * ui.text-editor owns everything inside this node. A saved message is drawn without the frame, the
+ * ground and the paddings of a field (the visual options of the editor); the field of an edit is drawn
+ * back around it here, so the text keeps its place while the frame appears around it.
+ */
+.editor-chart-note-message__text {
+	min-width: 0;
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-md);
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.editor-chart-note-message.--editing .editor-chart-note-message__text {
+	padding: var(--ui-space-inset-2xs);
+	border-color: var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+}
+
+/*
+ * The visual options of the editor take away the frame ui.text-editor answers the focus with, so the
+ * field of an edit is left with no sign of being the one in focus. The frame drawn here answers it
+ * instead, in the width and the colour the rest of the notes are focused by.
+ *
+ * The offset goes inward, and by the width of the outline past the inset token. A message stands in
+ * the scrolling .editor-chart-note-thread__messages (note-thread.css), which asks for overflow-y: auto
+ * alone - a visible axis computes to auto once the other one is not visible, so the sides of the list
+ * are cut as well, and a message is as wide as the list. An outline set outside the field loses its
+ * left and right side to that cut; the inset offset on its own keeps the outline in, but lays it over
+ * the border of the field and leaves the field looking frameless. Taking the width off drops the
+ * outline below that border, so the two are seen whole. The thread is focused with the outward offset
+ * of the token instead: the padding of the popup stands around it and cuts nothing.
+ */
+.editor-chart-note-message.--editing .editor-chart-note-message__text:focus-within {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: calc(var(--ui-focus-outline-offset-inset) - var(--ui-focus-outline-width));
+}
+
+.editor-chart-note-message__form {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs);
+}
+
+/* Always rendered: a live region has to stand in the document before its text changes to be read out.
+   With nothing in it the column has no children and no height of its own. */
+.editor-chart-note-message__status {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+/* A refusal leaves the edit open, so it is read next to the field it keeps the message in. */
+.editor-chart-note-message__error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* The edit is saved and only its notifications are not: that is a warning, not a failure. */
+.editor-chart-note-message__notice {
+	color: var(--ui-color-accent-main-warning);
+}
+
+/*
+ * The field of a reply: the editor, a line with the length and the send button under it, and the status
+ * line the answer of the server is told on. Typography is set by the components of the design system,
+ * so nothing here touches the font.
+ */
+.editor-chart-note-message-input {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	width: 100%;
+	/* lets the field shrink to the thread so the editor wraps instead of widening the popup */
+	min-width: 0;
+}
+
+/* own node so Vue and ui.text-editor never share children */
+.editor-chart-note-message-input__editor {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
+}
+
+.editor-chart-note-message-input__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* The counter stands beside the text it counts and steps back from it until the limit is passed. */
+.editor-chart-note-message-input__counter {
+	color: var(--ui-color-base-4);
+}
+
+.editor-chart-note-message-input__counter.--over {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Always rendered: a live region has to stand in the document before its text changes to be read out.
+   With nothing in it the column has no children and no height of its own. */
+.editor-chart-note-message-input__status {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+/* A refusal keeps the message in the field, so it is the field it is read next to. */
+.editor-chart-note-message-input__error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* The message is saved and only its notifications are not: that is a warning, not a failure. */
+.editor-chart-note-message-input__notice {
+	color: var(--ui-color-accent-main-warning);
+}
+
+/*
+ * The thread of a note over the schema: a row with the title and the actions, the conversation under
+ * it, and the field of the reply at the bottom. Typography is set by the components of the design
+ * system, so nothing here touches the font.
+ *
+ * The popup stands in the layer of the markers and is moved by the same translation they are, so it
+ * travels with its marker through every move and every zoom of the canvas.
+ */
+.editor-chart-note-thread {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	width: 320px;
+	/* the conversation scrolls inside the popup instead of growing it past the canvas */
+	max-height: min(420px, 60vh);
+	padding: var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-m);
+	box-sizing: border-box;
+	/* The layer lets the pointer through to the schema; the thread is what takes it back. */
+	pointer-events: auto;
+}
+
+.editor-chart-note-thread:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* The popup opened above its marker, so the shadow falls away from it and not onto it. */
+.editor-chart-note-thread.--flipped-y {
+	box-shadow: var(--ui-shadow-top-m);
+}
+
+/*
+ * The row of the title and the actions. The completion of the note draws nothing without the right to
+ * it, so the gap of the row is what sets the buttons apart: no wrapper is left behind by an action
+ * that is not offered.
+ */
+.editor-chart-note-thread__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+/* The title gives way to the actions at the end of the row rather than pushing them out of it. */
+.editor-chart-note-thread__title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-note-thread__loading {
+	display: flex;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm) 0;
+}
+
+/*
+ * The conversation reads from the oldest message down and is the only part of the popup that scrolls:
+ * the title and the field of the reply stay where they are while it does.
+ */
+.editor-chart-note-thread__messages {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	border-top: 1px solid var(--ui-color-divider-less);
+	border-bottom: 1px solid var(--ui-color-divider-less);
+	padding: var(--ui-space-inset-2xs) 0;
+}
+
+/* The earlier messages are asked for from the top of what is drawn, where they would have been. */
+.editor-chart-note-thread__earlier {
+	display: flex;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+
+/* The hint hangs on the wrapper, so it is shown over a button that is disabled as well. */
+.editor-chart-notes-mode-button {
+	display: inline-flex;
+}
+
+/* The button stands in the row of the canvas tools, so it keeps the height of that row. */
+.editor-chart-notes-mode-button__control {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: transparent;
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+/* The pointer is answered by the colour of the icon and by nothing else, as it is by the map button
+   and by the auto-layout button of the same row: this was the last plate left in it. */
+.editor-chart-notes-mode-button__control:hover:not(:disabled) {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-notes-mode-button__control:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.editor-chart-notes-mode-button__control:disabled {
+	cursor: default;
+	opacity: 0.4;
+}
+
+/*
+ * The mode that is on is told by the colour of the icon and by nothing else, the way the map button
+ * of the same row tells its own state: a plate here left the row looking of two minds about what a
+ * switched-on tool looks like. aria-pressed is what declares the state where nothing is drawn.
+ */
+.editor-chart-notes-mode-button__control.--active {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-notes-mode-button__control .ui-icon-set {
+	--ui-icon-set__icon-color: currentcolor;
+}
+
 .bp-connect-agent-button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 36px;
-	height: 36px;
+	width: var(--ui-size-4xl);
+	height: var(--ui-size-4xl);
 	cursor: pointer;
-	transition: all 0.2s ease;
-	background: var(--ui-color-palette-white-base);
-	border-radius: 8px;
+	transition: background-color 200ms ease;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-sm);
 	border-color: transparent;
 }
 
 .bp-connect-agent-button:hover:not(:disabled) {
-	background-color: var(--ui-color-base-30);
+	background-color: var(--ui-color-base-7);
 }
 
 .bp-connect-agent-button:active:not(:disabled) {
-	background-color: var(--ui-color-base-40);
+	background-color: var(--ui-color-base-6);
 }
 
 .bp-connect-agent-button:focus-visible {
-	outline: 1px solid var(--ui-color-accent-main-link);
-	outline-offset: 2px;
-	border-radius: 8px;
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .bp-connect-agent-button--loading {
-	opacity: 0.6;
 	cursor: not-allowed;
 }
 
-.bp-connect-agent-button--locked {
-	opacity: 0.5;
-	cursor: pointer;
+/* Only the icon turns accent while the popup is open: the toolbar keeps its
+   row of white buttons, the colour of the icon reports the open panel. */
+.bp-connect-agent-button--active:hover:not(:disabled) {
+	background-color: var(--ui-color-bg-content-primary);
 }
 
 .bp-connect-agent-popup {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 16px;
 	width: 100%;
 	box-sizing: border-box;
+	/* A ceiling, not a height: the popup keeps the height of its content up to the room
+	   the trigger leaves under itself, so a low window gets a shorter popup instead of one
+	   hanging past the bottom of the canvas. Only the top edge of the popup is measured
+	   (--bp-connect-agent-popup-top, see getPopupStyle), the rest is counted here, so a
+	   window resized in height re-fits the popup on its own.
+	   What scrolls is __body, so the vertical scroll here stays inert - it only takes over
+	   on a window so low that the promo header alone fills the ceiling and __body has
+	   nothing left to scroll. Neither axis is visible, so the corners stay rounded. */
+	max-height: calc(100vh - var(--bp-connect-agent-popup-top, 0px) - var(--ui-space-stack-md));
+	border-radius: var(--ui-border-radius-lg);
+	overflow: hidden auto;
 }
 
-.bp-connect-agent-popup__title {
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--ui-color-base-90);
+/* Soft BitrixGPT background for a custom AI surface: the gradient stops are
+   tokens, only the geometry is ours (see bitrix-gpt design guidelines). */
+.bp-connect-agent-popup__promo {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	/* Keeps the header whole above the scrolling body instead of being squeezed with it
+	   once the popup is at its ceiling: the chip reports the state of the access. */
+	flex: 0 0 auto;
+	padding: var(--ui-space-inset-lg2) var(--ui-space-inset-lg2) var(--ui-space-inset-lg);
+	background: linear-gradient(
+		269.7deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.38%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
 }
 
-.bp-connect-agent-popup__hint {
-	font-size: 13px;
-	color: var(--ui-color-base-60);
+.bp-connect-agent-popup__promo-content {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-xs);
+	flex-grow: 1;
+	min-width: 0;
+}
+
+/* Decorative watermark: sits behind the header content, hence the explicit
+   stacking order on the text column above. */
+.bp-connect-agent-popup__watermark {
+	position: absolute;
+	top: -30px;
+	right: -36px;
+	display: flex;
+}
+
+.bp-connect-agent-popup__spark {
+	position: absolute;
+	display: flex;
+}
+
+.bp-connect-agent-popup__spark--lower {
+	right: 132px;
+	bottom: 10px;
+}
+
+.bp-connect-agent-popup__spark--upper {
+	top: 16px;
+	right: 156px;
+}
+
+.bp-connect-agent-popup__kicker {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+.bp-connect-agent-popup__kicker-text {
+	color: var(--ui-color-base-2);
+}
+
+.bp-connect-agent-popup__promo-text {
+	color: var(--ui-color-base-2);
 }
 
 .bp-connect-agent-popup__status {
-	font-size: 14px;
-	font-weight: 500;
-	color: var(--ui-color-base-80);
+	display: flex;
+	margin-top: var(--ui-space-stack-xs);
+}
+
+/* The status chip only reports state, so it must not look clickable. The override
+   goes on the chip itself: it declares --cursor: pointer on its own element, and
+   an own declaration beats any value inherited from an ancestor. */
+.bp-connect-agent-popup__status .ui-chip {
+	--cursor: default;
+}
+
+/* Everything under the promo header, and what scrolls once the popup is at its ceiling:
+   the steps, the command and the row of buttons stay reachable instead of being clipped.
+   min-height:0 is what lets a flex item shrink below its content and scroll. */
+.bp-connect-agent-popup__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	gap: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-lg2);
+}
+
+/* Same design as Alert tintedWarning, hand-built: the component hardcodes
+   18px 22px paddings with neither a prop nor a variable to change them. */
+.bp-connect-agent-popup__warning {
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	border: var(--ui-border-width-thin) solid var(--ui-color-design-tinted-warning-stroke-alt);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-design-tinted-warning-bg);
+	color: var(--ui-color-base-1);
+}
+
+.bp-connect-agent-popup__benefits {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.bp-connect-agent-popup__benefit {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bp-connect-agent-popup__step {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+}
+
+.bp-connect-agent-popup__step-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: var(--ui-size-xl);
+	height: var(--ui-size-xl);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-design-tinted-na-bg);
+	color: var(--ui-color-design-tinted-na-content);
+}
+
+.bp-connect-agent-popup__step-content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bp-connect-agent-popup__step-title {
+	color: var(--ui-color-base-1);
+}
+
+/* The step captions and the note about the secret link are read before the
+   command is copied, so they stay one step brighter than the hint. */
+.bp-connect-agent-popup__step-text,
+.bp-connect-agent-popup__secret-note {
+	color: var(--ui-color-base-2);
+}
+
+.bp-connect-agent-popup__hint {
+	color: var(--ui-color-base-3);
+}
+
+.bp-connect-agent-popup__secret-accent {
+	color: var(--ui-color-base-1);
+}
+
+/* The connect command carries an unbreakable secret URL: the textarea wraps
+   on whitespace only, so without this the tail is clipped out of view. */
+.bp-connect-agent-popup__step-content textarea {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+/* BInput centers its copy button, which parks the icon in the middle of a
+   multi-row command; pin it to the first line instead. */
+.bp-connect-agent-popup__step-content button {
+	align-self: flex-start;
+	margin-top: var(--ui-space-stack-2xs);
 }
 
 .bp-connect-agent-popup__actions {
 	display: flex;
-	gap: 8px;
+	flex-direction: row;
+	gap: var(--ui-space-inline-xs);
 	align-items: center;
+	margin-top: var(--ui-space-stack-xs);
 }
 
 .bp-debug-button {
@@ -5950,6 +6487,49 @@
 	font-size: 13px;
 	font-weight: 500;
 	color: var(--ui-color-gray-90);
+}
+
+.bizprocdesigner-readable-expression-popover__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	max-width: 367px;
+	box-sizing: border-box;
+	font-size: var(--ui-font-size-sm);
+}
+
+.bizprocdesigner-readable-expression-popover .popup-window-buttons {
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md) var(--ui-space-inset-xs2);
+}
+
+.bizprocdesigner-readable-expression-popover__row {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-readable-expression-popover__label {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-readable-expression-popover__value {
+	flex: 1 1 auto;
+	overflow-wrap: anywhere;
+}
+
+.bizprocdesigner-readable-expression-popover__unknown {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-readable-expression-popover__code {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-2);
+	font-family: var(--ui-font-family-system-mono);
+	overflow-wrap: anywhere;
 }
 
 .node-settings-panel {
@@ -6132,6 +6712,25 @@
 	margin-bottom: 0;
 }
 
+.node-settings-project-warning {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	margin-left: 4px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: help;
+	vertical-align: middle;
+}
+
+.node-settings-project-warning .ui-icon-set {
+	display: block;
+}
+
 .node-settings-select-dotted {
 	flex: 1;
 	padding: 5px 0;
@@ -6180,13 +6779,13 @@
 	content: '';
 	display: block;
 	flex: 1;
-	background: 0 2px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='580' height='915' fill='none' viewBox='0 0 580 915'%3E%3Cg id='d'%3E%3Crect width='46' height='46' x='18' y='16' fill='%23edeef0' rx='7'/%3E%3Crect width='255' height='16' x='82' y='31' fill='%23c9ccd0' rx='6'/%3E%3Crect width='16' height='16' x='462' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='16' height='16' x='490' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='16' height='16' x='518' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='16' height='16' x='546' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='86' height='12' x='18' y='92' fill='%23c9ccd0' rx='4'/%3E%3Crect width='86' height='2' x='18' y='122' fill='%23c9ccd0' rx='1'/%3E%3Crect width='86' height='12' x='122' y='92' fill='%23edeef0' rx='4'/%3E%3Crect width='77' height='27' x='484.5' y='85.5' stroke='%23c9ccd0' rx='7.5'/%3E%3Crect width='54' height='12' x='496' y='93' fill='%23c9ccd0' rx='4'/%3E%3Cpath fill='%23edeef0' d='M18 154c0-6.627 5.373-12 12-12h520c6.627 0 12 5.373 12 12v249c0 6.627-5.373 12-12 12H30c-6.627 0-12-5.373-12-12z'/%3E%3Crect width='24' height='24' x='38' y='162' fill='%23fff' rx='4'/%3E%3Crect width='255' height='16' x='79' y='166' fill='%23fff' rx='6'/%3E%3Crect width='471' height='8' x='38' y='204' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='220' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='236' fill='%23fff' rx='4'/%3E%3Crect width='157' height='8' x='37.931' y='262' fill='%23fff' rx='4'/%3E%3Crect width='503' height='38' x='37.931' y='279' fill='%23fff' rx='8'/%3E%3Crect width='157' height='8' x='37.931' y='341' fill='%23fff' rx='4'/%3E%3Crect width='503' height='38' x='37.931' y='358' fill='%23fff' rx='8'/%3E%3Cpath fill='%23edeef0' d='M18 449c0-6.627 5.373-12 12-12h520c6.627 0 12 5.373 12 12v211c0 6.627-5.373 12-12 12H30c-6.627 0-12-5.373-12-12z'/%3E%3Crect width='24' height='24' x='38' y='457' fill='%23fff' rx='4'/%3E%3Crect width='255' height='16' x='79' y='461' fill='%23fff' rx='6'/%3E%3Crect width='471' height='8' x='38' y='499' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='515' fill='%23fff' rx='4'/%3E%3Crect width='127' height='8' x='37.931' y='547' fill='%23fff' rx='4'/%3E%3Crect width='240' height='12' x='37.931' y='573' fill='%23fff' rx='4'/%3E%3Crect width='151' height='12' x='37.931' y='597' fill='%23fff' rx='4'/%3E%3Crect width='185' height='12' x='37.931' y='621' fill='%23fff' rx='4'/%3E%3Crect width='55' height='8' x='445.931' y='547' fill='%23fff' rx='4'/%3E%3Crect width='45' height='12' x='455.931' y='573' fill='%23fff' rx='4'/%3E%3Crect width='63' height='12' x='437.931' y='597' fill='%23fff' rx='4'/%3E%3Crect width='21' height='12' x='479.931' y='621' fill='%23fff' rx='4'/%3E%3Cg filter='url(%23a)'%3E%3Cpath fill='%23edeef0' d='M18 706c0-6.627 5.373-12 12-12h520c6.627 0 12 5.373 12 12v182c0 6.627-5.373 12-12 12H30c-6.627 0-12-5.373-12-12z'/%3E%3Crect width='457' height='75' x='38.431' y='801.5' stroke='%23fff' rx='7.5'/%3E%3Crect width='6' height='12' x='49.931' y='813' fill='%23fff' rx='2'/%3E%3Crect width='23' height='12' x='67.931' y='813' fill='%23fff' rx='4'/%3E%3Crect width='281' height='12' x='102.931' y='813' fill='%23fff' rx='4'/%3E%3Crect width='237' height='12' x='102.931' y='833' fill='%23fff' rx='4'/%3E%3Crect width='337' height='12' x='102.931' y='853' fill='%23fff' rx='4'/%3E%3Crect width='24' height='24' x='38' y='714' fill='%23fff' rx='4'/%3E%3Crect width='255' height='16' x='79' y='718' fill='%23fff' rx='6'/%3E%3Crect width='471' height='8' x='38' y='756' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='772' fill='%23fff' rx='4'/%3E%3C/g%3E%3C/g%3E%3Crect id='e' width='100%25' height='915' fill='url(%23b)' mask='url(%23c)'/%3E%3Cmask id='c' fill='%23fff'%3E%3Cuse xlink:href='%23d'/%3E%3C/mask%3E%3ClinearGradient id='b' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-color='%23828b95' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-color='%23828b95' stop-opacity='.05'/%3E%3Cstop offset='100%25' stop-color='%23828b95' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23e' attributeName='x' begin='0s' dur='1.5s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3Cdefs%3E%3Cfilter id='a' width='548' height='210' x='16' y='693' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' result='hardAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.13 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_853_57384'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_853_57384' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E") no-repeat;
+	background: 0 2px url("images/entities/common-node-settings/ui/common-settings-form/images/content-skeleton.svg?v=2") no-repeat;
 	background-size: 100%;
 }
 
 .node-settings-panel.--loading .node-settings-footer {
 	height: 38px;
-	background: 20px 16px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='201' height='38' fill='none' viewBox='0 0 201 38'%3E%3Cg id='c'%3E%3Crect width='120' height='38' fill='%23c9ccd0' rx='8'/%3E%3Crect width='63' height='12' x='138' y='13' fill='%23edeef0' rx='6'/%3E%3C/g%3E%3Crect id='d' width='100%25' height='38' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-color='%23828b95' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-color='%23828b95' stop-opacity='.05'/%3E%3Cstop offset='100%25' stop-color='%23828b95' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1.5s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E") no-repeat;
+	background: 20px 16px url("images/entities/common-node-settings/ui/common-settings-form/images/buttons-skeleton.svg?v=2") no-repeat;
 }
 
 .temp-block {
@@ -6300,6 +6899,16 @@
 
 .node-settings-edit-caption.--required:after {
 	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
+}
+
+.node-settings-edit-caption.--project-deleted {
+	display: inline-flex;
+	align-items: center;
+}
+
+.node-settings-edit-caption-required {
 	margin-left: 2px;
 	color: var(--ui-color-palette-red-60);
 }
@@ -7158,6 +7767,23 @@ select[name="delay_type"] {
 	display: flex;
 	align-items: center;
 	font-weight: 400;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.node-settings-panel select[multiple] option:active,
+.node-settings-panel select[multiple] option:checked,
+.node-settings-panel select[multiple] option:checked:focus,
+.node-settings-panel select[multiple] option:checked:focus-visible,
+.node-settings-panel select[multiple] option:checked:hover,
+.node-settings-panel select[multiple] option:checked:active,
+.node-settings-panel select[multiple]:active option:checked,
+.node-settings-panel select[multiple]:focus option:checked {
+	background-color: transparent !important;
+	background-image: none !important;
+	box-shadow: none !important;
+	color: var(--ui-color-design-outline-content) !important;
+	-webkit-text-fill-color: var(--ui-color-design-outline-content) !important;
 }
 
 .node-settings-panel select[multiple] option:before {
@@ -7672,8 +8298,16 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin-top: 10px;
 }
 
-.bizprocdesigner-activity-broken-link-show-more{
+/* The alert paints its own inner spans (see the rule above), and a native button takes none of that:
+   the reset repeats what the element had while it was a span. */
+.bizprocdesigner-activity-broken-link-show-more {
+	padding: 0;
+	border: 0;
 	border-bottom: 1px dashed rgba(145, 113, 30, .4);
+	background: none;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	font-size: var(--ui-font-size-sm);
 	cursor: pointer;
 	transition: .2s;
 }
@@ -7686,6 +8320,60 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	overflow: hidden;
 	transition: height 0.3s linear;
 	word-break: break-word;
+}
+
+/* In the rules section the warning stands between the section description and the rules preview,
+   so it is spaced from the preview - the top offset comes from the common panel alert rule. */
+.node-settings-form__section.--rules .ui-alert.ui-alert-warning.ui-alert-icon-info {
+	margin-bottom: 10px;
+}
+
+/* A reference of the list is its own element, so a clickable one carries the affordance of a link
+   without stretching it across the width of the block. */
+.bizprocdesigner-activity-broken-link-item {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+.bizprocdesigner-activity-broken-link-item.--clickable {
+	border-bottom: 1px dashed currentColor;
+	cursor: pointer;
+	transition: .2s;
+}
+
+/* The 2.5s here and BROKEN_LINK_HIGHLIGHT_DURATION of common-settings-form.js are one length: the
+   panel takes the class off when the animation ends. Change both or neither. */
+.node-settings-edit-box.--broken-link-target {
+	border-radius: 6px;
+	animation: bizprocdesigner-broken-link-target 2.5s ease-out;
+}
+
+@keyframes bizprocdesigner-broken-link-target {
+	from {
+		background-color: var(--ui-color-background-warning);
+		box-shadow: 0 0 0 6px var(--ui-color-background-warning);
+	}
+
+	to {
+		background-color: transparent;
+		box-shadow: 0 0 0 6px transparent;
+	}
+}
+
+/* Without the animation the accent simply stands until the panel takes the class off. */
+@media (prefers-reduced-motion: reduce) {
+	.node-settings-edit-box.--broken-link-target {
+		background-color: var(--ui-color-background-warning);
+		box-shadow: 0 0 0 6px var(--ui-color-background-warning);
+		animation: none;
+	}
 }
 
 .node-settings-form__section.--rules {
@@ -7793,10 +8481,14 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin-top: 19px;
 }
 
+.editor-chart-data-views-section__body {
+	display: flex;
+	flex-direction: column;
+}
+
 .editor-chart-data-views-section__list {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: 12px;
 }
 
 .editor-chart-data-views-section__columns {
@@ -7930,6 +8622,156 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	--ui-icon-set__icon-color: currentColor;
 }
 
+.editor-chart-data-views-section__empty {
+	position: relative;
+	display: flex;
+	min-height: 120px;
+	align-items: center;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-lg);
+	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-secondary);
+	overflow: hidden;
+}
+
+.editor-chart-data-views-section__empty.--hidden {
+	visibility: hidden;
+}
+
+.editor-chart-data-views-section__empty .editor-chart-circuit-backdrop {
+	transform: translate(-64%, -50%);
+}
+
+.editor-chart-data-views-section__empty-text {
+	position: relative;
+	color: var(--ui-color-base-1);
+}
+
+/* Placed absolutely in the same relative container as `bp-selector-button`,
+   shifted left of it (selector button sits at right: 8px, width 24px). */
+.bizprocdesigner-expression-builder-trigger {
+	position: absolute;
+	right: 36px;
+	top: 6px;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+/* Reserve room in the field for both the trigger and the selector button.
+   Specificity (0,3,1) beats the shared field padding rules in common-settings-form,
+   for the node settings controls (`.field-row`) and for the legacy property dialog,
+   where fields are laid out in the tables of `.adm-detail-content-table`. */
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host input[type="text"],
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host input[type="text"] {
+	padding-right: 60px !important;
+}
+
+.bizprocdesigner-expression-builder-trigger:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	border-color: var(--ui-color-divider-accent);
+}
+
+.bizprocdesigner-expression-builder-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* The repeated class outweighs the later `!important` field styles of the settings panel. Excluding
+   color from the transition keeps the raw text and the veneer from being visible at the same time
+   and restores the raw text immediately on focus. */
+.bxr-veneer.bxr-veneer.bxr-veneer + input,
+.bxr-veneer.bxr-veneer.bxr-veneer + textarea {
+	transition-property: border, background-color, padding !important;
+}
+
+/* Spellcheck can paint the raw text with `color` even when its fill is transparent. */
+.bxr-veneer.bxr-veneer.bxr-veneer:not(.bxr-raw) + input,
+.bxr-veneer.bxr-veneer.bxr-veneer:not(.bxr-raw) + textarea {
+	color: transparent !important;
+	-webkit-text-fill-color: transparent;
+}
+
+/* The layer lies over the border box of the field, out of flow, in the parent of the field: an
+   element of its own around the field would break the design-system rules written for a control
+   that is a direct child. Its box is set from the field at mount time; its own borders are
+   transparent and its typography is carried over, so a token covers its own code. Clicks pass
+   through everywhere but the tokens — that is what keeps the field editable. */
+.bxr-veneer {
+	position: absolute;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	box-sizing: border-box;
+	border-style: solid;
+	border-color: transparent;
+	white-space: pre;
+	pointer-events: none;
+	color: var(--ui-color-base-1);
+}
+
+.bxr-veneer.bxr-multiline {
+	display: block;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+/* Kept after the multiline rule: both selectors weigh the same, so the last one wins. */
+.bxr-veneer.bxr-raw {
+	display: none;
+}
+
+/* The token is filled with the colour of its group in the data inspector, taken from the variables of
+   `design-tokens.css`. Neutral grey is the outbound group: the own data of the node being edited, the
+   document, system variables and parameters. A token is never split by a line break: a half of a chip
+   reads as a chip of its own. */
+.bxr-tok {
+	padding: 0 10px;
+	border-radius: 6px;
+	background: var(--designer-bp-token-bg);
+	color: var(--designer-bp-token-text) !important;
+	white-space: nowrap;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+/* The focus ring is drawn inside the token: the layer clips whatever goes past its own bounds, and
+   a ring drawn outside the token would be cut off at the edges of the field. */
+.bxr-tok:focus-visible {
+	outline: 2px solid var(--ui-color-primary);
+	outline-offset: -2px;
+}
+
+.bxr-tok.bxr-node {
+	background: var(--designer-bp-token-inbound-bg);
+}
+
+.bxr-tok.bxr-global {
+	background: var(--designer-bp-token-global-bg);
+}
+
+.bxr-tok.bxr-filter {
+	background: var(--designer-bp-token-filter-bg);
+}
+
+.bxr-tok.bxr-unknown {
+	background: var(--designer-bp-token-unknown-bg);
+	color: var(--designer-bp-token-unknown-text) !important;
+}
+
 .editor-chart-common-node-settings-preview {
 	display: flex;
 	border: 1px solid rgba(0, 0, 0, 0.05);
@@ -7974,27 +8816,98 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	color: var(--ui-color-palette-gray-50);
 }
 
-/* Token colors are kept here as well: the preview must not depend on the stylesheet of the veneer,
-   which lives in the features layer. */
+/* Everything below is the layout of the row with the summary, and the modifier is put on only while
+   the feature is on: with the flag off the row keeps the layout it had before the feature. Measured
+   for a single pair - the pilot hands over exactly one, and a multi-line summary was not designed. */
+
+/* visibility, not display: the icon appears on hover, and 20 px arriving into the row at that moment
+   would reflow the title and the summary under the cursor. */
+.editor-chart-common-node-settings-preview.--with-summary .editor-chart-common-node-settings-preview__edit-icon {
+	display: block;
+	visibility: hidden;
+	flex-shrink: 0;
+}
+
+.editor-chart-common-node-settings-preview.--with-summary:hover .editor-chart-common-node-settings-preview__edit-icon {
+	visibility: visible;
+}
+
+/* The row is one line, so the title is cut instead of wrapping: the summary is then read whole, while
+   the tail of the title stays in its `title` attribute and behind a click on the row. */
+.editor-chart-common-node-settings-preview.--with-summary .editor-chart-common-node-settings-preview__construction {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The gap and the half belong to the pair "title, then summary": they are what keeps the summary from
+   pushing out the title the row is about. Both are put on by the adjacency itself, so a row that drops
+   the title of an unfilled construction leaves neither a gap in front of the summary nor half a row of
+   emptiness behind it, and the summary reads across the row up to the icon. The gap is the row's own,
+   not the summary's: with nothing to show the summary renders no element, and no gap is left either. */
+.editor-chart-common-node-settings-preview.--with-summary
+	> .editor-chart-common-node-settings-preview__construction + .editor-chart-settings-summary {
+	flex-shrink: 0;
+	margin-left: 6px;
+	max-width: 50%;
+}
+
+/* Colours of the groups come from `design-tokens.css`: the preview and the veneer paint a token alike,
+   and the palette of the chips is defined in one place for both. */
 .editor-chart-readable-expression-text .bxr-tok {
 	padding: 0 6px;
 	border-radius: 6px;
-	background: var(--ui-color-base-7);
-	color: var(--ui-color-base-1);
+	background: var(--designer-bp-token-bg);
+	color: var(--designer-bp-token-text);
 	white-space: nowrap;
 }
 
 .editor-chart-readable-expression-text .bxr-tok.bxr-node {
-	background: var(--ui-color-accent-soft-green-2);
+	background: var(--designer-bp-token-inbound-bg);
 }
 
 .editor-chart-readable-expression-text .bxr-tok.bxr-global {
-	background: var(--ui-color-accent-soft-blue-2);
+	background: var(--designer-bp-token-global-bg);
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-filter {
+	background: var(--designer-bp-token-filter-bg);
 }
 
 .editor-chart-readable-expression-text .bxr-tok.bxr-unknown {
-	background: var(--ui-color-accent-soft-red-2);
-	color: var(--ui-color-accent-soft-element-red);
+	background: var(--designer-bp-token-unknown-bg);
+	color: var(--designer-bp-token-unknown-text);
+}
+
+/* Laid out and measured for a single pair: the pilot hands over exactly one, and the multi-line
+   case of two and more is not designed. */
+.editor-chart-settings-summary {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.editor-chart-settings-summary__item {
+	display: flex;
+	gap: 4px;
+	min-width: 0;
+}
+
+/* The label names the value, so it is shown whole: it neither shrinks nor gets an ellipsis. */
+.editor-chart-settings-summary__label {
+	flex-shrink: 0;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.editor-chart-settings-summary__value {
+	min-width: 0;
+	color: var(--ui-color-palette-black-base);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .editor-chart-node-settings-layout {
@@ -8033,13 +8946,13 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 
 .editor-chart-node-settings-layout.--loading:before {
 	flex: 1;
-	background: 0 2px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='580' height='915' fill='none' viewBox='0 0 580 915'%3E%3Cg id='d'%3E%3Crect width='46' height='46' x='18' y='16' fill='%23edeef0' rx='7'/%3E%3Crect width='255' height='16' x='82' y='31' fill='%23c9ccd0' rx='6'/%3E%3Crect width='16' height='16' x='462' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='16' height='16' x='490' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='16' height='16' x='518' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='16' height='16' x='546' y='31' fill='%23edeef0' rx='4'/%3E%3Crect width='86' height='12' x='18' y='92' fill='%23c9ccd0' rx='4'/%3E%3Crect width='86' height='2' x='18' y='122' fill='%23c9ccd0' rx='1'/%3E%3Crect width='86' height='12' x='122' y='92' fill='%23edeef0' rx='4'/%3E%3Crect width='77' height='27' x='484.5' y='85.5' stroke='%23c9ccd0' rx='7.5'/%3E%3Crect width='54' height='12' x='496' y='93' fill='%23c9ccd0' rx='4'/%3E%3Cpath fill='%23edeef0' d='M18 154c0-6.627 5.373-12 12-12h520c6.627 0 12 5.373 12 12v249c0 6.627-5.373 12-12 12H30c-6.627 0-12-5.373-12-12z'/%3E%3Crect width='24' height='24' x='38' y='162' fill='%23fff' rx='4'/%3E%3Crect width='255' height='16' x='79' y='166' fill='%23fff' rx='6'/%3E%3Crect width='471' height='8' x='38' y='204' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='220' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='236' fill='%23fff' rx='4'/%3E%3Crect width='157' height='8' x='37.931' y='262' fill='%23fff' rx='4'/%3E%3Crect width='503' height='38' x='37.931' y='279' fill='%23fff' rx='8'/%3E%3Crect width='157' height='8' x='37.931' y='341' fill='%23fff' rx='4'/%3E%3Crect width='503' height='38' x='37.931' y='358' fill='%23fff' rx='8'/%3E%3Cpath fill='%23edeef0' d='M18 449c0-6.627 5.373-12 12-12h520c6.627 0 12 5.373 12 12v211c0 6.627-5.373 12-12 12H30c-6.627 0-12-5.373-12-12z'/%3E%3Crect width='24' height='24' x='38' y='457' fill='%23fff' rx='4'/%3E%3Crect width='255' height='16' x='79' y='461' fill='%23fff' rx='6'/%3E%3Crect width='471' height='8' x='38' y='499' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='515' fill='%23fff' rx='4'/%3E%3Crect width='127' height='8' x='37.931' y='547' fill='%23fff' rx='4'/%3E%3Crect width='240' height='12' x='37.931' y='573' fill='%23fff' rx='4'/%3E%3Crect width='151' height='12' x='37.931' y='597' fill='%23fff' rx='4'/%3E%3Crect width='185' height='12' x='37.931' y='621' fill='%23fff' rx='4'/%3E%3Crect width='55' height='8' x='445.931' y='547' fill='%23fff' rx='4'/%3E%3Crect width='45' height='12' x='455.931' y='573' fill='%23fff' rx='4'/%3E%3Crect width='63' height='12' x='437.931' y='597' fill='%23fff' rx='4'/%3E%3Crect width='21' height='12' x='479.931' y='621' fill='%23fff' rx='4'/%3E%3Cg filter='url(%23a)'%3E%3Cpath fill='%23edeef0' d='M18 706c0-6.627 5.373-12 12-12h520c6.627 0 12 5.373 12 12v182c0 6.627-5.373 12-12 12H30c-6.627 0-12-5.373-12-12z'/%3E%3Crect width='457' height='75' x='38.431' y='801.5' stroke='%23fff' rx='7.5'/%3E%3Crect width='6' height='12' x='49.931' y='813' fill='%23fff' rx='2'/%3E%3Crect width='23' height='12' x='67.931' y='813' fill='%23fff' rx='4'/%3E%3Crect width='281' height='12' x='102.931' y='813' fill='%23fff' rx='4'/%3E%3Crect width='237' height='12' x='102.931' y='833' fill='%23fff' rx='4'/%3E%3Crect width='337' height='12' x='102.931' y='853' fill='%23fff' rx='4'/%3E%3Crect width='24' height='24' x='38' y='714' fill='%23fff' rx='4'/%3E%3Crect width='255' height='16' x='79' y='718' fill='%23fff' rx='6'/%3E%3Crect width='471' height='8' x='38' y='756' fill='%23fff' rx='4'/%3E%3Crect width='348' height='8' x='38' y='772' fill='%23fff' rx='4'/%3E%3C/g%3E%3C/g%3E%3Crect id='e' width='100%25' height='915' fill='url(%23b)' mask='url(%23c)'/%3E%3Cmask id='c' fill='%23fff'%3E%3Cuse xlink:href='%23d'/%3E%3C/mask%3E%3ClinearGradient id='b' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-color='%23828b95' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-color='%23828b95' stop-opacity='.05'/%3E%3Cstop offset='100%25' stop-color='%23828b95' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23e' attributeName='x' begin='0s' dur='1.5s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3Cdefs%3E%3Cfilter id='a' width='548' height='210' x='16' y='693' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' result='hardAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.13 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_853_57384'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_853_57384' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E") no-repeat;
+	background: 0 2px url("images/entities/node-settings/ui/node-settings-layout/images/content-skeleton.svg?v=2") no-repeat;
 	background-size: 100%;
 }
 
 .editor-chart-node-settings-layout.--loading:after {
 	height: 40px;
-	background: 18px 10px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='201' height='38' fill='none' viewBox='0 0 201 38'%3E%3Cg id='c'%3E%3Crect width='120' height='38' fill='%23c9ccd0' rx='8'/%3E%3Crect width='63' height='12' x='138' y='13' fill='%23edeef0' rx='6'/%3E%3C/g%3E%3Crect id='d' width='100%25' height='38' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-color='%23828b95' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-color='%23828b95' stop-opacity='.05'/%3E%3Cstop offset='100%25' stop-color='%23828b95' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1.5s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E") no-repeat;
+	background: 18px 10px url("images/entities/node-settings/ui/node-settings-layout/images/buttons-skeleton.svg?v=2") no-repeat;
 }
 
 /* The node-settings-transition classes are global and shared with the panel of an ordinary node;
@@ -8117,9 +9030,12 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	cursor: grabbing;
 }
 
+/* Controls of the row sit at its top edge: the row grows down with every construction it names, and
+   a control centred against a grown row drifts away from the line it acts on */
 .editor-chart-node-settings-preview__actions {
 	margin-left: auto;
 	display: flex;
+	align-items: flex-start;
 }
 
 .editor-chart-node-settings-preview__title {
@@ -8128,11 +9044,21 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin: 0 15px 0 10px;
 }
 
+/* Every row of the card keeps one indent off the edge of the row: the label of a construction is
+   what the eye follows down the card, so the labels have to start in one place. The row itself keeps
+   4px on the left for the drag handle of a movable preview, and these 4px make up the 8px every
+   label stands off the border of the card */
 .editor-chart-node-settings-preview__construction {
 	font-size: 14px;
 	line-height: 20px;
 	display: flex;
 	gap: 6px;
+	padding-left: var(--ui-space-inset-2xs);
+}
+
+/* A construction that names nothing yet says so, in the muted tone of a placeholder */
+.editor-chart-node-settings-preview__expression-part.--not-selected {
+	color: var(--ui-color-base-2);
 }
 
 .editor-chart-node-settings-preview__construction.--empty {
@@ -8151,17 +9077,25 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	color: var(--ui-color-blue-55);
 }
 
+/* Same purple the ACTION chip of the rules toolbar carries: one construction type, one colour,
+   whichever surface names it */
 .editor-chart-node-settings-preview__construction.--action .editor-chart-node-settings-preview__construction_type {
-	color: var(--ui-color-green-50);
+	color: var(--designer-bp-rules-action-text);
 }
 
 .editor-chart-node-settings-preview__construction.--output .editor-chart-node-settings-preview__construction_type {
 	color: var(--ui-color-palette-gray-50);
 }
 
-/* Green uppercase label of a configured base-settings block («БАЗОВЫЕ ДЕЙСТВИЯ» on the mockup) */
+/* Same orange the OBJECT chip of the rules toolbar carries */
+.editor-chart-node-settings-preview__construction.--filter .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+/* Green uppercase label of a base-settings block, written the way the full form writes it */
 .editor-chart-node-settings-preview__construction.--base-settings .editor-chart-node-settings-preview__construction_type {
 	color: var(--ui-color-accent-main-success);
+	text-transform: uppercase;
 }
 
 .editor-chart-node-settings-preview__card:not(:last-child) {
@@ -8197,6 +9131,9 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+	/* The sticky card changes its flow height while animating; scroll anchoring can feed
+	   that change back into scrollTop and make the pinned state flicker. */
+	overflow-anchor: none;
 	/* height of the pinned bottom part of the rules card, measured by the component;
 	   offsets keyboard focus so controls aren't hidden under it */
 	scroll-padding-top: var(--editor-chart-rules-card-pinned-height, 60px);
@@ -8245,6 +9182,9 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-stack-md2);
+	transition:
+		margin-left 160ms ease,
+		margin-right 160ms ease;
 }
 
 .editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-rules-layout__rules-card-metrics {
@@ -8311,9 +9251,259 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	padding: var(--ui-space-inset-md2);
 }
 
+/* Nothing laid out yet: the flow holds the shared placeholder alone, so it takes the height left
+   under the rules card and drops its own insets — the placeholder centres itself in it */
+.editor-chart-node-settings-rules-layout__content.--empty {
+	flex: 1;
+	padding: 0;
+}
+
 .editor-chart-node-settings-rules-layout__content::-webkit-scrollbar,
 .editor-chart-node-settings-rules-layout__content::-webkit-scrollbar {
 	width: 0;
+}
+
+/* In the overview the content spans the full width of the panel: the tint of the selected input has
+   to reach both edges, and the 18px the insets used to take go to the fields instead. The single
+   rule surface (relations, a portless node) keeps its own insets */
+.editor-chart-node-settings-rules-layout__content.--all-rules {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+/* One rule of the node. Showing a single rule it is a bare wrapper: the blocks keep the flow of the
+   content area. In the overview a rule is a two column grid whose left track is the gutter */
+.editor-chart-node-settings-rules-layout__rule-section {
+	display: flex;
+	flex-direction: column;
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+}
+
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section {
+	display: grid;
+	grid-template-columns: var(--editor-chart-rule-gutter-width) minmax(0, 1fr);
+	padding: 0 var(--ui-space-inset-md2);
+	transition: background-color 200ms ease;
+	/* The hover tint of the input is a layer of its naming row (see below): the section is what that
+	   layer is laid out against, and isolating it keeps the layer under everything in the input
+	   instead of under the panel */
+	position: relative;
+	isolation: isolate;
+}
+
+/* The left track carries the vertical rule along the whole height of an expanded input. The rule
+   lines up with the collapse arrow above it, not with the middle of the track - the arrow sits at
+   the start of the track, so its centre is half its own size. Kept in step with the :size the
+   section row passes to BIcon */
+.editor-chart-node-settings-rules-layout {
+	--editor-chart-rule-gutter-width: var(--ui-space-inset-2xl);
+	--editor-chart-rule-toggle-size: 18px;
+	--editor-chart-rule-line-width: 2px;
+}
+
+/* Explicit rows: the naming row and the body, with the vertical rule beside the body. Placing them
+   by hand and not by auto-flow keeps the rule out of the naming row */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-row {
+	grid-row: 1;
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* Reaches past the insets of the section so the hover spans the full width of the panel,
+	   while the text keeps standing where the insets put it */
+	margin: 0 calc(-1 * var(--ui-space-inset-md2));
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-md2);
+}
+
+/* Pointing at the naming row lights the whole input, not just the row: an expanded input is one
+   thing, and its tint has to cover the head blocks and the groups under the row as well. The tint
+   is a layer of the row stretched over the whole section, so it spans the full width past the
+   insets - and the browser recalculates the style of the row the pointer is on and not of the input
+   around it, which is what asking the section whether its row is hovered used to cost.
+   The layer takes no pointer of its own: reaching over the body, it would otherwise answer for a
+   pointer that is nowhere near the row. */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-row::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	transition: background-color 200ms ease;
+}
+
+/* A selected input is tinted already, and a hover on top of that tint reads as nothing. */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section:not(.--active) .editor-chart-node-settings-rules-layout__rule-section-row:hover::before {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* The separator: a vertical rule down the left track, beside the body of an expanded input */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section::before {
+	content: '';
+	grid-row: 3;
+	grid-column: 1;
+	justify-self: start;
+	margin-left: calc(
+		(var(--editor-chart-rule-toggle-size) - var(--editor-chart-rule-line-width)) / 2
+	);
+	width: var(--editor-chart-rule-line-width);
+	border-radius: var(--ui-border-radius-3xs);
+	background: var(--ui-color-accent-soft-border-blue);
+}
+
+/* Every other input carries the second colour of the rule: neighbouring inputs are told apart by it,
+   which is what the alternating tones of the sections used to do before they were dropped */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section.--alternate::before {
+	background: var(--ui-color-accent-soft-border-green);
+}
+
+/* A collapsed input is one row: there is nothing for the vertical rule to run along */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section:not(.--expanded)::before {
+	display: none;
+}
+
+/* The rule the add panel works on: its whole area is tinted, so it is clear what "+ condition" adds
+   to. This is the one tint left in the list - the alternating tones of the neighbouring sections are
+   gone, and the colour of a block stays the only other colour here */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section.--active {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section.--active .editor-chart-node-settings-rules-layout__rule-section-title {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-toggle,
+.editor-chart-node-settings-rules-layout__rule-card-toggle,
+.editor-chart-node-settings-rules-layout__rule-card-name {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-header {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+	flex-grow: 1;
+	min-width: 0;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-toggle:focus-visible,
+.editor-chart-node-settings-rules-layout__rule-card-toggle:focus-visible,
+.editor-chart-node-settings-rules-layout__rule-card-name:focus-visible,
+.editor-chart-node-settings-rules-layout__rule-section-header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* The chevron answers the pointer on its own: it collapses the input, while the name beside it
+   names the input as the target of the add panel - two different actions in one row */
+.editor-chart-node-settings-rules-layout__rule-section-toggle,
+.editor-chart-node-settings-rules-layout__rule-card-toggle {
+	padding: var(--ui-space-inset-3xs);
+	border-radius: var(--ui-border-radius-2xs);
+	transition: background-color 200ms ease;
+}
+
+/* The room the hover backing takes shifts the icon right by its own inset, and the vertical rule of
+   the gutter is laid out from the track, not from the button - so the inset is taken back here and
+   the rule runs through the middle of the chevron */
+.editor-chart-node-settings-rules-layout__rule-section-toggle {
+	margin-left: calc(-1 * var(--ui-space-inset-3xs));
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-toggle:hover,
+.editor-chart-node-settings-rules-layout__rule-card-toggle:hover {
+	background: var(--ui-color-bg-state-click-default);
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-title {
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The count of groups stands at the far end of the row: the name of the input leads, and the counts
+   of the inputs line up in one column instead of trailing names of different length */
+.editor-chart-node-settings-rules-layout__rule-section-summary {
+	margin-left: auto;
+	flex: none;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-body {
+	grid-row: 3;
+	grid-column: 2;
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-md2);
+}
+
+/* An empty rule stays a compact row the user can pick, without a placeholder of its own */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-body.--empty {
+	padding: 0;
+}
+
+.editor-chart-node-settings-rule-card__toggle {
+	display: flex;
+	align-items: center;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-rule-card__toggle:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* Collapsed group: the row names it and where it leads */
+.editor-chart-node-settings-rules-layout__rule-card-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm);
+	border: 1px solid var(--ui-color-divider-less);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.editor-chart-node-settings-rules-layout__rule-card-title {
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.editor-chart-node-settings-rules-layout__rule-card-output {
+	margin-left: auto;
+	color: var(--ui-color-base-3);
 }
 
 .editor-chart-node-settings-rules-layout .editor-chart-node-settings-rule-card > .editor-chart-node-settings-add-construction,
@@ -8513,6 +9703,17 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 .editor-chart-node-settings-rule-construction {
 	border-radius: var(--ui-border-radius-sm);
 	padding: var(--ui-space-inset-md2);
+	transition: box-shadow 200ms ease;
+}
+
+/*
+ * The row an approach of the panel has led to - a press on a reference of the broken-links warning.
+ * A state and not a flash: the panel keeps the class until the next approach, so the mark is still
+ * there when the smooth scrolling arrives, and a second press on the same reference marks the same
+ * row again. The accent is a ring and not a fill, so the scheme colors of the row stay as they are.
+ */
+.editor-chart-node-settings-rule-construction.--highlighted {
+	box-shadow: 0 0 0 2px var(--ui-color-design-tinted-warning-stroke);
 }
 
 .editor-chart-node-settings-rule-construction.--action {
@@ -8533,15 +9734,89 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	border-color: var(--ui-color-designer-bp-rules-grey-stroke);
 }
 
-/* filter is a head card, not a row inside a group - radius 12 per mockup page-node-settings */
+/* Head cards (base-settings, filter) share one metric per mockup and differ only in scheme
+   colors. The card itself carries the vertical insets; the header and the body carry their own
+   side insets, which are not equal, so the divider between them belongs to the body. */
+.editor-chart-node-settings-rule-construction.--base-settings,
+.editor-chart-node-settings-rule-construction.--filter {
+	border-radius: var(--ui-border-radius-lg);
+	padding: var(--ui-space-inset-md2) 0;
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__top,
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__top {
+	flex-wrap: nowrap;
+	gap: var(--ui-space-inline-sm);
+	border-bottom: none;
+	padding: 0 var(--ui-space-inset-md) 0 var(--ui-space-inset-xl);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__expression-form,
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__expression-form {
+	margin-top: var(--ui-space-stack-md2);
+	padding: 0 var(--ui-space-inset-md2);
+}
+
+/* The divider under the header: it runs along the side insets of the body, so it is drawn by the
+   body itself and takes its color from the scheme of the card */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__expression-form::before,
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__expression-form::before {
+	content: '';
+	display: block;
+	height: 1px;
+	margin-bottom: var(--ui-space-stack-md2);
+}
+
+/* Chip of a head card. The case comes from the rule and not from the phrase: «Общие настройки» is
+   the toolbar item of the same block, where the ordinary case is the right one, so a chip that took
+   its case from the phrase would render the two head blocks differently. */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__operator_label,
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label {
+	text-transform: uppercase;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* hint next to the chip: «То, что нужно для корректной работы», base-3 per mockup */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__description,
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__description {
+	color: var(--ui-color-base-3);
+	flex: 1 1 auto;
+}
+
+/* Load-bearing: a tab can hold several head blocks, they are siblings of one data-section and
+   would otherwise be draggable against each other. Head blocks are not reorderable. */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__dnd-icon,
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__dnd-icon {
+	display: none;
+}
+
+/* filter construction: orange-framed head card, same shape as the green base-settings one */
 .editor-chart-node-settings-rule-construction.--filter {
 	border: 1px solid var(--ui-color-designer-bp-rules-orange-stroke);
 	background: var(--ui-color-designer-bp-rules-orange-bg);
-	border-radius: var(--ui-border-radius-lg);
 }
 
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-designer-bp-rules-orange-stroke);
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__expression-form::before {
+	background: var(--ui-color-designer-bp-rules-orange-stroke);
+}
+
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label {
+	background: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+/* base-settings construction: green-framed head card per mockup page-node-settings */
+.editor-chart-node-settings-rule-construction.--base-settings {
+	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__expression-form::before {
+	background: var(--ui-color-designer-bp-rules-green-stroke);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__operator_label {
+	background: var(--ui-color-designer-bp-rules-green-text);
 }
 
 .editor-chart-node-settings-rule-construction.--condition {
@@ -8562,7 +9837,7 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	color: var(--ui-color-palette-white-base);
 }
 
-/* Solid type-colored chips: condition blue, action purple, output grey, filter orange */
+/* Solid type-colored chips: condition blue, action purple, output grey */
 .editor-chart-node-settings-rule-construction.--condition .editor-chart-node-settings-rule-construction__operator_label {
 	background: var(--ui-color-designer-bp-rules-blue-text);
 }
@@ -8575,10 +9850,6 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	background: var(--ui-color-designer-bp-rules-grey-text);
 }
 
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-designer-bp-rules-orange-text);
-}
-
 .editor-chart-node-settings-rule-construction__top {
 	display: flex;
 	align-items: center;
@@ -8589,11 +9860,6 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 
 .editor-chart-node-settings-rule-construction__dnd-icon {
 	cursor: grab;
-}
-
-/* Head blocks (base-settings, filter) live outside the groups and are not reorderable */
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__dnd-icon {
-	display: none;
 }
 
 .editor-chart-node-settings-rule-construction__dnd-icon:active {
@@ -8616,45 +9882,6 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 
 .editor-chart-node-settings-rule-construction__expression-form {
 	margin-top: 18px;
-}
-
-/* base-settings construction: green-framed head card per mockup page-node-settings,
-   radius 12 and a roomier 24px inset (right stays 18px, next to the delete button) */
-.editor-chart-node-settings-rule-construction.--base-settings {
-	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
-	border-radius: var(--ui-border-radius-lg);
-	padding: var(--ui-space-inset-xl) var(--ui-space-inset-md2) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
-}
-
-.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__top {
-	flex-wrap: nowrap;
-	gap: var(--ui-space-inline-sm);
-	border-bottom: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
-	padding-bottom: var(--ui-space-inset-md2);
-}
-
-.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__dnd-icon {
-	display: none;
-}
-
-/* solid green chip with white regular text (mockup node 935:29632) */
-.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-designer-bp-rules-green-text);
-	font-weight: var(--ui-font-weight-normal);
-	text-transform: uppercase;
-	white-space: nowrap;
-	flex-shrink: 0;
-}
-
-/* hint next to the chip: «То, что нужно для корректной работы», base-3 per mockup */
-.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__description {
-	color: var(--ui-color-base-3);
-	flex: 1 1 auto;
-}
-
-.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__expression-form {
-	margin-top: var(--ui-space-inset-md2);
 }
 
 .editor-chart-catalog__search .ui-node-catalog-icon {
@@ -8697,6 +9924,16 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	height: 67px;
 }
 
+.bizprocdesigner-block-frame.--drag-preview {
+	position: absolute;
+	/* Keep shadow space inside the root: its bounds define the new block dimensions and drag hotspot. */
+	inset: var(--drag-preview-inset);
+	width: auto;
+	height: auto;
+	overflow: hidden;
+	box-shadow: 0 7px 16px 2px rgba(0, 0, 0, 0.25);
+}
+
 .editor-chart-block-service__content--large {
 	min-height: 95px;
 }
@@ -8712,35 +9949,104 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	color: var(--ui-color-base-3);
 }
 
-.bizprocdesigner-version-history
+.bizprocdesigner-history__tabs
 {
-	min-height: 120px;
-	max-height: 420px;
+	position: relative;
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* Under the tab strip, behind the underline of the selected tab: the tabs read as a strip over the
+   panel instead of floating above it. Scoped to this window - the tab component has other users. */
+.bizprocdesigner-history__tabs::after
+{
+	content: '';
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+	height: 1px;
+	background: var(--ui-color-divider-less);
+}
+
+/* One height for both tabs: the popup is centered once, when it is shown, and never re-centered,
+   so switching tabs must not resize it and a growing feed must not push the footer off screen. */
+.bizprocdesigner-history__panel
+{
+	height: min(420px, 50vh);
+}
+
+.bizprocdesigner-version-history,
+.bizprocdesigner-change-history
+{
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 	overflow-y: auto;
 }
 
-.bizprocdesigner-version-history__skeleton
+.bizprocdesigner-version-history__skeleton,
+.bizprocdesigner-change-history__skeleton
 {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding-top: 8px;
+	gap: var(--ui-space-stack-sm);
+	padding-top: var(--ui-space-inset-xs);
 }
 
-.bizprocdesigner-version-history__error
+.bizprocdesigner-version-history__error,
+.bizprocdesigner-change-history__error
 {
-	display: block;
-	padding: 24px 0;
-	color: var(--ui-color-text-alert);
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	flex-shrink: 0;
+	padding: var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-alert);
+	background: var(--ui-color-accent-soft-red-3);
+	border-radius: var(--ui-border-radius-md);
 }
 
-.bizprocdesigner-version-history__empty
+/* Pinned to the top of the feed: a refresh may fail while the person is anywhere in the list. */
+.bizprocdesigner-change-history__error
+{
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
+.bizprocdesigner-version-history__error-icon,
+.bizprocdesigner-change-history__error-icon
+{
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-version-history__error-text,
+.bizprocdesigner-change-history__error-text
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-version-history__empty,
+.bizprocdesigner-change-history__empty
 {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	padding: 32px 0;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	margin: auto;
+	padding: var(--ui-space-inset-xl) 0;
 	color: var(--ui-color-text-secondary);
+}
+
+.bizprocdesigner-version-history__empty-icon,
+.bizprocdesigner-change-history__empty-icon
+{
+	margin-bottom: var(--ui-space-stack-2xs);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .bizprocdesigner-version-history__table
@@ -8752,7 +10058,7 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .bizprocdesigner-version-history__table th,
 .bizprocdesigner-version-history__table td
 {
-	padding: 10px 12px 10px 0;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm) var(--ui-space-inset-xs) 0;
 	text-align: start;
 	vertical-align: middle;
 	border-bottom: 1px solid var(--ui-color-divider-less);
@@ -8765,7 +10071,12 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 
 .bizprocdesigner-version-history__table thead th
 {
-	color: var(--ui-color-text-secondary);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	padding-top: 0;
+	color: var(--ui-color-base-4);
+	background: var(--ui-color-bg-content, var(--ui-color-bg-content-primary));
 	border-bottom-color: var(--ui-color-divider-default);
 }
 
@@ -8776,14 +10087,25 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	padding-right: 0;
 }
 
-/* Auto layout keeps a column at least as wide as its content, and a truncated cell never
-   wraps: without this cap it widens the table instead of showing an ellipsis. */
+.bizprocdesigner-version-history__table tbody tr
+{
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-version-history__table tbody tr:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Auto layout keeps a column at least as wide as its content: without this cap a long value
+   widens the table instead of wrapping inside its cell. */
 .bizprocdesigner-version-history__table tbody td:not(:last-child)
 {
 	max-width: 0;
 }
 
-.bizprocdesigner-version-history__table tbody tr:last-child td
+.bizprocdesigner-version-history__table tbody tr:last-child td,
+.bizprocdesigner-version-history__table tbody tr:last-child th
 {
 	border-bottom: none;
 }
@@ -8792,7 +10114,7 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--ui-space-inline-2xs);
 	min-width: max-content;
 }
 
@@ -8800,9 +10122,219 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: var(--ui-space-inline-2xs);
 	justify-content: flex-end;
 	min-width: max-content;
+}
+
+.bizprocdesigner-change-history__feed
+{
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* The header of a day and an author: everything under it up to the next header was written by that
+   person on that day. */
+.bizprocdesigner-change-history__group-header
+{
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs) var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-xs);
+	padding-bottom: var(--ui-space-stack-2xs);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-change-history__group-header:first-child
+{
+	margin-top: 0;
+}
+
+/* One change of the template, with the time it was written at. */
+.bizprocdesigner-change-history__change
+{
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-xs);
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-change-history__change:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* What was done to the template, told by a colour before the line is read. */
+.bizprocdesigner-change-history__change-mark
+{
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	margin-bottom: 2px;
+	background: var(--ui-color-base-4);
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.bizprocdesigner-change-history__change-mark.--added
+{
+	background: var(--ui-color-accent-main-success);
+}
+
+.bizprocdesigner-change-history__change-mark.--removed
+{
+	background: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-change-history__change-mark.--updated
+{
+	background: var(--ui-color-accent-main-primary);
+}
+
+.bizprocdesigner-change-history__change-mark.--moved
+{
+	background: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-change-history__change-text
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-change-history__change-time,
+.bizprocdesigner-change-history__event-time
+{
+	flex-shrink: 0;
+	color: var(--ui-color-base-4);
+}
+
+/* The tail of a session: what is left of it to show, or the way back to the preview. */
+.bizprocdesigner-change-history__expander
+{
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+}
+
+/* Two columns: the mark of the event type and everything the event says. */
+.bizprocdesigner-change-history__event
+{
+	display: grid;
+	grid-template-columns: 28px minmax(0, 1fr);
+	gap: 0 var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xs) var(--ui-space-inset-2xs) 0;
+}
+
+.bizprocdesigner-change-history__badge
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	background: var(--ui-color-accent-soft-grey-1);
+	border-radius: var(--ui-border-radius-circle);
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-change-history__badge.--publication
+{
+	background: var(--ui-color-accent-soft-blue-2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bizprocdesigner-change-history__badge.--creation
+{
+	background: var(--ui-color-accent-soft-green-2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-soft-element-green);
+}
+
+.bizprocdesigner-change-history__head
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 28px;
+	min-width: 0;
+}
+
+/* The title takes the free width, so the chips and the times of the feed line up in columns of their own. */
+.bizprocdesigner-change-history__title
+{
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.bizprocdesigner-change-history__toggle
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	padding: var(--ui-space-inset-2xs);
+	color: var(--ui-color-base-3);
+	text-align: start;
+	background: none;
+	border: none;
+	border-radius: var(--ui-border-radius-xs);
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-change-history__toggle:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-change-history__toggle:focus-visible
+{
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.bizprocdesigner-change-history__toggle-icon
+{
+	flex-shrink: 0;
+	transition: transform 200ms ease;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bizprocdesigner-change-history__toggle[aria-expanded="true"] .bizprocdesigner-change-history__toggle-icon
+{
+	transform: rotate(180deg);
+}
+
+.bizprocdesigner-change-history__details-error
+{
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-change-history__more
+{
+	display: flex;
+	flex-shrink: 0;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-2xs);
+}
+
+/* ui.system.dialog hands DIALOG_WIDTH to the popup as inline min-width and max-width, and neither
+   is bound by the viewport: on a narrow screen the window runs past its right edge. Both have to be
+   clamped here, min-width included: it outranks max-width when the two disagree. The 600px repeats
+   DIALOG_WIDTH of edit-template-settings-dialog.js, and the percentage is counted from the box the
+   popup is placed in, which -- unlike 100vw -- leaves the scrollbar out. */
+.popup-window.ui-system-dialog:has(.bizproc-template-settings)
+{
+	min-width: min(600px, calc(100% - 32px)) !important;
+	max-width: min(600px, calc(100% - 32px)) !important;
 }
 
 .bizproc-template-settings-lable
@@ -8823,7 +10355,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .bizproc-template-settings-description
 {
 	padding-top: 8px;
-
 }
 
 .bizproc-template-settings-title > .ui-ctl-textbox
@@ -8837,18 +10368,46 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	border-radius: var(--ui-border-radius-sm);
 }
 
-.bizproc-template-settings-description > .ui-ctl-textarea
+.editor-chart-template-description-field
 {
+	display: flex;
+	flex-direction: column;
 	width: 100%;
-	height: 96px;
-	padding-bottom: 6px;
+	/* lets the field shrink to the dialog so the editor collapses its toolbar instead of widening the window */
+	min-width: 0;
 }
 
-.bizproc-template-settings-description .ui-ctl-textarea > .ui-ctl-element
+/* own node so Vue and ui.text-editor never share children; the properties repeat the block so it is
+   no narrow link of its own -- in a column min-width only guards a future row direction, and the
+   width is held by the block above and by the dialog clamps */
+.editor-chart-template-description-field__editor
 {
-	border-radius: var(--ui-border-radius-sm);
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
 }
 
+/* the rejection is shown by the notification balloon; this node only carries the same text for
+   aria-describedby, so it stays out of the flow and out of sight */
+.editor-chart-template-description-field__error
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* The pill of a navigation button in the slot of a toast. Two components fill that slot - the errors of
+   a publication and the nodes of an inserted fragment - and both wear this pill: two pills standing in
+   the same place look and behave the same way (decision of phase 3). What they share is therefore kept
+   here in one copy, and this file is read by both of them; a second copy of these rules would drift
+   away silently. What belongs to one pill alone lives in the file of that component. */
 .editor-chart-toast-block-navigation-button {
 	display: flex;
 	height: 24px;
@@ -8876,13 +10435,140 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .editor-chart-toast-block-navigation-button__controls__button {
 	all: unset;
 	display: flex;
+	/* `all: unset` makes the cursor inherit, and the box around may no longer offer a pointer. */
+	cursor: pointer;
+}
+
+/* "1 / 2" is one reading and never a column of characters: the pill stands beside a message that
+   takes the room it needs, and a narrow spot must not break the counter across lines. Both pills
+   carry that counter. */
+.editor-chart-toast-block-navigation-button__controls__state-title {
+	white-space: nowrap;
 }
 
 .editor-chart-toast-block-navigation-button__controls__button.--disabled {
 	opacity: 0.5;
 	cursor: default;
 }
-@import url('../debug-bar-variables.css');
+
+/* `all: unset` above takes the native ring off the arrows. Every arrow of both pills is a Tab stop,
+   so the focus is drawn back by the tokens of the design system. */
+.editor-chart-toast-block-navigation-button__controls__button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+/* What belongs to the review pill alone. The shape shared with the pill of the publish errors lives in
+   ../toast-error-block-navigation-button/style.css. */
+
+/* The review pill wears its action on the title button, so its own box answers no click any more:
+   a pointer over the padding and over the counter would promise one. */
+.editor-chart-toast-block-navigation-button.--no-container-action {
+	cursor: default;
+}
+
+/* The review pill carries its title as a native button, so the main action is a control of its own.
+   The reset keeps the look the title had as a plain node. */
+.editor-chart-toast-block-navigation-button__action {
+	margin: 0 4px;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+/* The action is a Tab stop of its own, and the reset above leaves it without a ring of the browser,
+   so the focus is drawn back by the tokens of the design system - the same way the arrows draw it. */
+.editor-chart-toast-block-navigation-button__action:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bizprocdesigner-editor-template-busy-overlay {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	min-height: 320px;
+	padding: var(--ui-space-inset-2xl);
+	box-sizing: border-box;
+	background: var(--ui-color-bg-content-primary);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 620px;
+	text-align: center;
+}
+
+.bizprocdesigner-editor-template-busy-overlay__title {
+	margin: 0;
+	color: var(--ui-color-text-primary);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__owner {
+	color: var(--ui-color-link-primary-base);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__description {
+	margin: var(--ui-space-stack-lg) 0 var(--ui-space-stack-xl);
+	color: var(--ui-color-text-secondary);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizprocdesigner-editor-template-busy-overlay__legacy-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.bizprocdesigner-editor-template-busy-overlay__owner-avatar,
+.bizprocdesigner-editor-template-busy-overlay__owner-placeholder {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	vertical-align: middle;
+}
+
+.bizprocdesigner-editor-template-busy-overlay__owner-avatar {
+	margin-right: var(--ui-space-inline-xs);
+}
+
+/* The waiting itself is drawn by the design system; the cursor is the one thing it leaves to the
+   caller, and a pointer over an action already working promises a press that leads nowhere. */
+.bizprocdesigner-editor-template-busy-overlay__action[aria-busy="true"] {
+	cursor: default;
+}
+
+/* The waiting state of the design system drops the focus ring together with the pressed look, and
+   this action stays in the tab order while it waits on purpose. The ring is put back for that time,
+   with its own values: a person working from the keyboard must not lose the place they are standing
+   on. The waiting is told by the attribute of the action and not by the class of the design system:
+   both land on the same node, and only the attribute belongs to us. */
+.bizprocdesigner-editor-template-busy-overlay__action[aria-busy="true"]:focus-visible,
+html[data-input-modality="keyboard"] .bizprocdesigner-editor-template-busy-overlay__action[aria-busy="true"]:focus:not(:focus-visible) {
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link);
+	outline-style: solid;
+}
 
 .debug-bar-loading-indicator {
 	height: 0;
@@ -8933,8 +10619,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 		transition: none;
 	}
 }
-
-@import url('../debug-bar-variables.css');
 
 .debug-bar-sessions {
 	min-width: 100%;
@@ -9008,8 +10692,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	font-size: var(--debug-bar-font-size-base);
 	flex: 1;
 }
-
-@import url('../debug-bar-variables.css');
 
 .debug-bar-trace {
 	display: flex;
@@ -9307,8 +10989,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 }
 
 
-@import url('../debug-bar-variables.css');
-
 .debug-bar-panel {
 	height: var(--debug-bar-height-default);
 	display: flex;
@@ -9432,6 +11112,11 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	padding: 0;
+}
+
+.editor-chart-filter-grid-view-dropdown .ui-system-input-value:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }
 
 .editor-chart-filter-grid-view-dropdown .ui-system-input-value::placeholder {
@@ -9594,6 +11279,87 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	margin-right: 7px;
 }
 
+/*
+ * Sits between the rules card header and the first rule preview, which carries no top margin.
+ * The live region stays in the DOM while empty, so only the filled one takes space.
+ */
+.editor-chart-unreachable-outputs-alert.--filled {
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
+/*
+ * Stands right under the header of its section, above the content of the section. The block stays in
+ * the DOM while empty, so only the filled one takes space.
+ */
+.editor-chart-broken-links-alert.--filled {
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
+/* The alert lays out its own padding (18px 22px), and the panel asks for a shorter block. */
+.editor-chart-broken-links-alert .ui-system-alert-inner {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+/*
+ * The alert paints the typography of its own content, and a native button takes none of it: the reset
+ * repeats what the element had while it was plain text, and the dashed underline is what carries the
+ * affordance of a control inline.
+ */
+.editor-chart-broken-links-alert__show-more {
+	margin-left: 5px;
+	padding: 0;
+	border: 0;
+	border-bottom: 1px dashed var(--ui-color-divider-default);
+	background: none;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	cursor: pointer;
+	transition: color 200ms ease, border-color 200ms ease;
+}
+
+.editor-chart-broken-links-alert__show-more:hover {
+	color: var(--ui-color-base-1);
+	border-bottom-color: var(--ui-color-divider-accent);
+}
+
+/*
+ * A list of values is marked up as one, and the reset repeats the layout the block of items had:
+ * the rows of the list are its own children, so the gap stands between the same elements.
+ */
+.editor-chart-broken-links-alert__list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	margin: var(--ui-space-stack-xs) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+/*
+ * A reference is written by the user and is not broken by spaces, so it wraps by characters. An
+ * addressed one is a native button, and the reset repeats what the element had while it was plain
+ * text: only the width of the content is kept, so the affordance does not stretch across the block.
+ */
+.editor-chart-broken-links-alert__item {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	word-break: break-word;
+}
+
+/* The dashed underline is what carries the affordance of a control inline (see __show-more). */
+.editor-chart-broken-links-alert__item.--clickable {
+	border-bottom: 1px dashed currentColor;
+	cursor: pointer;
+}
+
 .editor-chart-node-settings-edit-action-expression-form__dropdown.ui-ctl {
 	--ui-field-size: 34px;
 	width: 100%;
@@ -9610,6 +11376,64 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .editor-chart-node-settings-edit-action-expression-form__dropdown.--disabled {
 	pointer-events: none;
 	opacity: 0.6;
+}
+
+/* The field is a string field of the settings panel: the same box the server-rendered fields of the
+   parameters form right below it get (`.node-settings-panel input[type="text"]`), with the room on the
+   right the selector button stands in. The wrapper is the positioning context of both the button and
+   the readable layer, which is put in next to the field itself. */
+.editor-chart-node-settings-edit-action-expression-form__document {
+	position: relative;
+}
+
+.editor-chart-node-settings-edit-action-expression-form__document-value {
+	display: block;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0 32px 0 11px;
+	width: 100%;
+	height: var(--ui-field-size);
+	outline: none;
+	border: 1px solid rgb(var(--ui-field-color-border-default));
+	border-radius: var(--ui-border-radius-md);
+	background-color: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-1);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	transition: border .3s ease, background-color .3s ease, color .3s ease;
+}
+
+.editor-chart-node-settings-edit-action-expression-form__document-value:hover,
+.editor-chart-node-settings-edit-action-expression-form__document-value:focus {
+	border-color: var(--ui-field-color-link);
+}
+
+/* The three-dot icon button of the panel (`[data-role="bp-selector-button"]`), standing in the room
+   the field keeps for it on the right. It lies over the readable layer, which is on z-index 2. */
+.editor-chart-node-settings-edit-action-expression-form__document-select {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	transform: translateY(-50%);
+	z-index: 10;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+	background-color: transparent;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.58267 7.79166C5.8023 7.79166 6.79166 8.78004 6.79166 9.99967C6.79166 11.2193 5.8023 12.2077 4.58267 12.2077C3.36319 12.2075 2.37466 11.2192 2.37466 9.99967C2.37466 8.78015 3.36319 7.79184 4.58267 7.79166ZM9.99966 7.79166C11.2193 7.79166 12.2077 8.78004 12.2077 9.99967C12.2077 11.2193 11.2193 12.2077 9.99966 12.2077C8.78004 12.2077 7.79166 11.2193 7.79166 9.99967C7.79166 8.78004 8.78004 7.79166 9.99966 7.79166ZM15.4167 7.79166C16.6361 7.79184 17.6247 8.78015 17.6247 9.99967C17.6247 11.2192 16.6361 12.2075 15.4167 12.2077C14.197 12.2077 13.2077 11.2193 13.2077 9.99967C13.2077 8.78004 14.197 7.79166 15.4167 7.79166ZM4.58267 8.95768C4.00753 8.95786 3.54166 9.42448 3.54166 9.99967C3.54166 10.5749 4.00753 11.0415 4.58267 11.0417C5.15797 11.0417 5.62466 10.575 5.62466 9.99967C5.62466 9.42438 5.15797 8.95768 4.58267 8.95768ZM9.99966 8.95768C9.42437 8.95768 8.95767 9.42438 8.95767 9.99967C8.95767 10.575 9.42437 11.0417 9.99966 11.0417C10.575 11.0417 11.0417 10.575 11.0417 9.99967C11.0417 9.42438 10.575 8.95768 9.99966 8.95768ZM15.4167 8.95768C14.8414 8.95768 14.3747 9.42438 14.3747 9.99967C14.3747 10.575 14.8414 11.0417 15.4167 11.0417C15.9918 11.0415 16.4577 10.5749 16.4577 9.99967C16.4577 9.42448 15.9918 8.95786 15.4167 8.95768Z' fill='%23525C69'/%3E%3C/svg%3E");
+	background-size: 20px 20px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.editor-chart-node-settings-edit-action-expression-form__document-select:disabled {
+	opacity: 0.5;
+	cursor: default;
 }
 
 .editor-chart-node-settings-edit-action-expression-form__label {
@@ -9631,6 +11455,11 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	content: '*';
 	margin-left: 2px;
 	color: var(--ui-color-palette-red-60);
+}
+
+.edit-action-expression-form__label.--project-deleted {
+	display: inline-flex;
+	align-items: center;
 }
 
 .editor-chart-node-settings-edit-action-expression-form__item {
@@ -9795,15 +11624,45 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	cursor: pointer;
 }
 
-/* Chips row inside the "Rules" card (mockup page-node-settings): compact left-aligned
-   layout with the node's min-gap 6px, wrapping to the next line when tight */
+/* Chips row inside the "Rules" card (mockup page-node-settings): one line at any width of the card.
+   A chip with no room left is taken off the row by the component and offered in the three-dot menu,
+   so nowrap costs the user nothing: position:relative and the clipping keep such a chip in this box. */
 .editor-chart-node-settings-add-construction-toolbar {
+	/* Room for the focus ring: 2px outline plus its 2px offset, given back to the card by the
+	   negative margins below - the clipping box would cut a whole segment of the ring off. */
+	--editor-chart-add-construction-focus-ring-room: 4px;
+	/* Side inset of the rules card, owned elsewhere: entities/node-settings/ui/
+	   node-settings-rules-layout/style.css, `__rules-card { margin: 18px 18px 0 }`
+	   and its `.--pinned` compensations. Changed there - change it here too. */
+	--editor-chart-add-construction-card-side-inset: 18px;
+
+	position: relative;
 	flex: none;
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
+	overflow: hidden;
 	align-items: center;
 	gap: var(--ui-space-inline-2xs2);
-	padding-top: var(--ui-space-inset-2xs);
+	/* The air above the chips matches the air below them: the card adds its own 18px gap above the
+	   toolbar, and the card's bottom inset is 20px, so 2px here evens the two out. The pinned strip
+	   overrides this with its own inset in node-settings-rules-layout */
+	padding-top: var(--ui-space-inset-3xs);
+	padding-bottom: var(--editor-chart-add-construction-focus-ring-room);
+	margin-bottom: calc(-1 * var(--editor-chart-add-construction-focus-ring-room));
+	/* The side room stays out of the measured width: the fit reads the content box
+	   (measureVisibleChipCount), not the padded one. */
+	padding-inline: var(--editor-chart-add-construction-focus-ring-room);
+	margin-inline: calc(-1 * var(--editor-chart-add-construction-focus-ring-room));
+}
+
+/* The pinned strip drops the side margins of the card, and the row takes them back, as the head of the
+   card does (-metrics): without it the row grows by both insets the moment the card pins, so a plain
+   scroll past the threshold moves a chip between the row and the menu. */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-add-construction-toolbar {
+	margin-inline: calc(
+		var(--editor-chart-add-construction-card-side-inset)
+		- var(--editor-chart-add-construction-focus-ring-room)
+	);
 }
 
 /* Native-button reset: chips and the more-trigger are <button> for a11y,
@@ -9832,10 +11691,16 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .editor-chart-node-settings-add-construction-toolbar__item {
 	cursor: pointer;
 	box-sizing: border-box;
+	/* natural width, never squeezed: a chip that has no room is taken off the row whole */
+	flex: none;
 	min-height: var(--ui-size-xl2);
 	font-size: 13px;
 	font-weight: var(--ui-font-weight-medium);
 	line-height: 17px;
+	/* The case of the row comes from here and not from the phrases: «Общие настройки» of the
+	   base-settings chip is the same phrase the settings preview and the accessible names are built
+	   from, where the ordinary case is the right one. */
+	text-transform: uppercase;
 	padding: 0 var(--ui-space-inset-xs) 0 var(--ui-space-inset-2xs);
 	border: 1px solid;
 	border-radius: var(--ui-border-radius-xs);
@@ -9846,26 +11711,47 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	min-width: 0;
 }
 
-.editor-chart-node-settings-add-construction-toolbar__item:hover {
-	box-shadow: var(--ui-shadow-bottom-s);
-}
-
-.editor-chart-node-settings-add-construction-toolbar__item:active {
-	box-shadow: var(--ui-shadow-bottom-xs);
+.editor-chart-node-settings-add-construction-toolbar__item {
+	transition: background-image 200ms ease;
 }
 
 
 /* Pending state of an add: the base settings an action inherits are being resolved. Kept
    focusable on purpose (aria-disabled, not disabled): focus stays on the pressed chip,
    which is what the addition is announced against. A press that still comes through (the
-   keyboard ignores pointer-events) is answered by an announcement, not by silence.
-   The more-trigger dims along with the chips: its menu items add constructions too. */
-.editor-chart-node-settings-add-construction-toolbar__item.--pending,
-.editor-chart-node-settings-add-construction-toolbar__more-trigger.--pending {
+   keyboard ignores pointer-events) is answered by an announcement, not by silence. */
+.editor-chart-node-settings-add-construction-toolbar__item.--pending {
 	cursor: default;
 	opacity: 0.4;
 	box-shadow: none;
 	pointer-events: none;
+}
+
+/* The same wait, shown on the trigger of a chip that left the row - and shown only. The menu behind
+   the trigger also holds items that wait for nothing (the group, any other chip off the row), and on
+   a narrow panel it is the only way to them, so the button keeps opening it by mouse as by keyboard.
+   A second add of the waiting item is answered by the guard in onAddConstruction. */
+.editor-chart-node-settings-add-construction-toolbar__more-trigger.--pending {
+	opacity: 0.4;
+}
+
+/* Out of sight but not out of the DOM: the width the fit is measured against is read off the chip
+   itself, and an element removed from the document has none. The same state hides the trigger while
+   its menu is empty - the fixed width of its own rule is what the row reserves for it. */
+.editor-chart-node-settings-add-construction-toolbar__item.--offscreen,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger.--offscreen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+/* Absolute positioning makes the width shrink-to-fit against the toolbar, which on a panel narrower
+   than the chip reads short and would keep the chip on the row, clipped. max-content is the width the
+   chip takes on the row (flex: none), so it is the width it is measured at here. */
+.editor-chart-node-settings-add-construction-toolbar__item.--offscreen {
+	width: max-content;
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--condition {
@@ -9897,15 +11783,14 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 }
 
 /* Green chip, truncated to «+ БАЗО…» per mockup node 935:29625 (width 77px).
-   A hard max-width is required: with flex-wrap on the row, items wrap
-   instead of shrinking, so flex-shrink alone never triggered the ellipsis. */
+   The hard max-width is what triggers the ellipsis: chips keep their natural width on the row
+   (flex: none), so nothing else ever shortens the label. */
 .editor-chart-node-settings-add-construction-toolbar__item.--base-settings {
 	color: var(--ui-color-designer-bp-rules-green-text);
 	border-color: var(--ui-color-designer-bp-rules-green-stroke);
 	background: var(--ui-color-designer-bp-rules-green-bg);
 	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-green-text);
 	max-width: 78px;
-	flex-shrink: 1;
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--base-settings span {
@@ -9943,9 +11828,58 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
-.editor-chart-node-settings-add-construction-menu-item.--group {
+/* A chip taken off the row keeps its colour in the menu: it is the same block, offered elsewhere */
+.editor-chart-node-settings-add-construction-menu-item.--group,
+.editor-chart-node-settings-add-construction-menu-item.--output {
 	color: var(--ui-color-designer-bp-rules-grey-text);
 	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--condition {
+	color: var(--ui-color-designer-bp-rules-blue-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-blue-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--action {
+	color: var(--designer-bp-rules-action-text);
+	--ui-icon-set__icon-color: var(--designer-bp-rules-action-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--filter {
+	color: var(--ui-color-designer-bp-rules-orange-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--base-settings {
+	color: var(--ui-color-designer-bp-rules-green-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-green-text);
+}
+
+
+/* State tint of a chip. It has to come after the type colours below and outweigh them: those set
+   the colour through the `background` shorthand, which resets background-image to none, and their
+   specificity matches a bare :hover. Laid over the colour instead of replacing it, so a chip keeps
+   telling its construction type while the pointer is on it. */
+.editor-chart-node-settings-add-construction-toolbar .editor-chart-node-settings-add-construction-toolbar__item:hover {
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-hover-default),
+		var(--ui-color-bg-state-hover-default)
+	);
+}
+
+.editor-chart-node-settings-add-construction-toolbar .editor-chart-node-settings-add-construction-toolbar__item:active {
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-click-default),
+		var(--ui-color-bg-state-click-default)
+	);
+}
+
+/* Hint of a chip with a clipped label: its content box is inset by ui.hint
+   (`.ui-hint-content { margin: 7px }`), which is too much air around a single short phrase. The
+   popup of the directive carries the class of the toolbar, and two classes outweigh that rule -
+   the file of ui.hint belongs to another module and stays untouched. */
+.editor-chart-node-settings-add-construction-hint .ui-hint-content {
+	margin: 3px;
 }
 
 /* Native-button reset: the delete affordance is a <button> for a11y,
@@ -10016,6 +11950,12 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	border-radius: var(--ui-border-radius-sm);
 }
 
+/* Fixed set of rules: the field keeps the look of the control and loses the affordance - nothing
+   opens on click, so there is no pointer, and the element takes no focus for the ring below. */
+.editor-chart-node-settings-select-rule-port__control.--static {
+	cursor: default;
+}
+
 .editor-chart-node-settings-select-rule-port__control:focus-visible {
 	outline: 2px solid var(--ui-color-accent-main-primary);
 	outline-offset: 2px;
@@ -10056,6 +11996,14 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .editor-chart-node-settings-delete-rule-card:focus-visible {
 	outline: 2px solid var(--ui-color-accent-main-primary);
 	outline-offset: 2px;
+}
+
+/* The hint of an autofill conflict is rendered into the legacy form of the settings panel, where the
+   shared list of hidden selectors covers `node-settings-alert-text` with `display: none !important`
+   and the showing rule next to it carries no priority. The modifier lifts that cover for the hints of
+   the relation autofill alone, so every other hint of the panel keeps the behaviour it had. */
+.node-settings-alert-text.editor-chart-node-settings-autofill-conflict {
+	display: block !important;
 }
 
 .editor-chart-node-settings-edit-output-expression-form .ui-ctl {
@@ -10144,43 +12092,153 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 .editor-chart-node-settings-edit-filter-expression {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
 }
 
 .editor-chart-node-settings-edit-filter-expression__item {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: var(--ui-space-stack-2xs);
 }
 
 .editor-chart-node-settings-edit-filter-expression__label {
-	color: var(--ui-color-text-secondary, #525c69);
 	font-size: 13px;
-	line-height: 18px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
 }
 
+/* Box of the neighbouring dropdowns of the panel (edit-condition-expression): 34px control
+   instead of the 40px default of `--ui-field-size`, 8px radius instead of the 10px of `md`. */
+.editor-chart-node-settings-edit-filter-expression__source-selector.ui-ctl {
+	box-sizing: border-box;
+	width: 100%;
+	cursor: pointer;
+	--ui-field-size: 34px;
+}
+
+.editor-chart-node-settings-edit-filter-expression__source-selector.ui-ctl .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.editor-chart-node-settings-edit-filter-expression__source-selector.ui-ctl:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* The row turns horizontal only with a badge: a flex container would take the ellipsis the design system
+   gives a bare text node away from it. The distance to the badge is the `margin-left` of the badge itself,
+   so the row states no `gap` - the two together would double it. */
+.editor-chart-node-settings-edit-filter-expression__source-value.--with-badge {
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-node-settings-edit-filter-expression__source-title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Worn by the badge of the control and by the badge of a menu item alike, and the menu is drawn outside the
+   root of this component, so no ancestor of it may be part of the selector.
+
+   The look is the one the entity selector of `ui` gives its own plate (`.ui-selector-item-badge`): the
+   values are copied literally rather than taken from tokens, so that a plate naming a workplace is the
+   same plate the user already knows from the selectors of the product. The class of `ui` is private to it
+   and is not reused.
+
+   The line height is the one thing the plate of `ui` gets from the room it stands in rather than from
+   itself, and this room is a different one: the badge would inherit the 32px line of `div.ui-ctl-element`
+   in the control and the 36px line of an item in the menu. A line taller than the 14px box overflows it,
+   and an overflowing line is laid out from the start of the box instead of its centre - measured, the
+   text of the plate then sits below the box and `overflow: hidden` takes it off the screen entirely. */
+.editor-chart-node-settings-edit-filter-expression__badge {
+	/* The plate is the point of the row, so it is the title that shrinks first. */
+	flex: 0 0 auto;
+	overflow: hidden;
+	box-sizing: border-box;
+	align-content: center;
+	height: 14px;
+	max-width: 45%;
+	margin-left: 7px;
+	padding: 0 6px 1px;
+	border-radius: 10px;
+	background-color: rgba(47, 198, 246, .17);
+	color: #23a2ca;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 10px;
+	line-height: normal;
+}
+
+/* main.popup gives the text of an item a definite width under the cap of the menu, so the row takes all of
+   it and no more. The distance to the badge is the `margin-left` of the badge, the same as in the control. */
+.editor-chart-node-settings-edit-filter-expression__menu-item {
+	display: flex;
+	align-items: center;
+	max-width: 100%;
+}
+
+.editor-chart-node-settings-edit-filter-expression__menu-item-title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The panel hides every angle icon of the page with `display: none !important`
+   (common-settings-form), so a control that keeps its chevron has to outrank it. */
+.editor-chart-node-settings-edit-filter-expression__source-selector .ui-ctl-icon-angle.ui-ctl-after {
+	display: block !important;
+}
+
+/* The sides and the bottom belong to the inset of rule-construction.--filter; only the gap under
+   the source selector is our own - and it is a gap between the two, so it is set on the pair. With
+   a single source there is no selector to keep away from, and the divider above sets the distance. */
+.editor-chart-node-settings-edit-filter-expression__item + .editor-chart-node-settings-edit-filter-expression__condition-container {
+	margin-top: var(--ui-space-stack-xl);
+}
+
+/* The two rules below reach classes of the condition editor of `bizproc`, which is mounted into
+   this container. They are the look of this block alone - kept here, scoped to the container, so
+   the other consumers of that editor keep the appearance its own stylesheet gives them.
+   `bizproc-condition-group__description` is worn by the description of the root group and by the
+   description of the joiner of a nested one: both are left-aligned here on purpose, the block reads
+   its conditions as one column. */
+.editor-chart-node-settings-edit-filter-expression__condition-container .bizproc-condition-group__description {
+	text-align: left;
+}
+
+.editor-chart-node-settings-edit-filter-expression__condition-container .bizproc-condition-group__add {
+	color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+/* The vertical inset of the band stays its own and has to stay symmetric: `.ui-loader__container`
+   is absolute with `top/left: 50%` against this band, so only equal insets put the dots at the
+   centre of the room reserved for them. The band also has to stay the containing block of that
+   container - otherwise the dots are centred against an outer positioned ancestor. */
 .editor-chart-node-settings-edit-filter-expression__loader {
 	display: flex;
+	position: relative;
 	justify-content: center;
-	padding: 8px 0;
+	padding: var(--ui-space-inset-md2) 0;
+}
+
+/* Read-only source of a section not yet reached: it stands in place of the source selector, so it
+   is the same control box. The side insets are not ours - they belong to rule-construction.--filter,
+   the same way they do for the selector. */
+.editor-chart-node-settings-edit-filter-expression__preview .ui-ctl {
+	box-sizing: border-box;
+	width: 100%;
+	--ui-field-size: 34px;
 }
 
 .editor-chart-node-settings-edit-filter-expression__error {
 	color: var(--ui-color-background-on-alert);
 	font-size: 13px;
 	line-height: 18px;
-}
-
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label
-{
-	background: var(--ui-color-accent-main-warning);
-}
-
-.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__content
-{
-	border-radius: 8px;
-	border: 1px solid var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
 }
 
 /* Visible load-failure message shown instead of the form */
@@ -10199,6 +12257,54 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	font-size: 13px;
 	line-height: 17px;
 	color: var(--ui-color-base-3);
+}
+
+/* Label of a base-settings field: the legacy markup carries a class of the action form that has no
+   rule of its own, so the metrics of the head card are set here: 13/17 grey, 4px to the control.
+   The 2px inset is the column of the panel - the caption under the same control and the captions of
+   the neighbouring blocks all stand on it. */
+.editor-chart-node-settings-edit-base-settings__field-label {
+	margin-bottom: var(--ui-space-stack-2xs);
+	padding-left: 2px;
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
+}
+
+.editor-chart-node-settings-edit-base-settings__field-label.--project-deleted {
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Rhythm between the fields inside the head card: the legacy form spaces its boxes wider. The room
+   below a box is given up first - otherwise it meets the room above the next one, the two collapse
+   into the larger of the two, and the legacy value simply stays. That also hands the room below the
+   last box to the card whatever ends the form, instead of relying on the box being `:last-child`.
+   The rhythm is then set from the top of every box that follows another one, so a hidden field - the
+   form renders it as a bare `input`, not as a box - changes nothing wherever it lands. */
+.editor-chart-node-settings-edit-base-settings .node-settings-edit-box {
+	margin-bottom: 0;
+}
+
+.editor-chart-node-settings-edit-base-settings .node-settings-edit-box ~ .node-settings-edit-box {
+	margin-top: var(--ui-space-stack-xs);
+}
+
+/* Said in place of the fields of a node that has none: the muted tone of a caption, because it is a
+   statement about the node and not a value of it */
+.editor-chart-node-settings-edit-base-settings__no-fields {
+	padding: var(--ui-space-inset-xs) 0;
+	color: var(--ui-color-base-3);
+	font-size: 14px;
+	line-height: 20px;
+}
+
+/* Place the form will take while it is loading. The loader of the library centres itself in the
+   nearest positioned ancestor, so without these the bullets leave the body of the card and land next
+   to its header. The height is the room of a field: the card keeps its size when the form arrives */
+.editor-chart-node-settings-edit-base-settings__status.--loading {
+	position: relative;
+	min-height: 60px;
 }
 
 .editor-chart-node-settings-header {
@@ -10236,6 +12342,61 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 
 .editor-chart-data-inspector-toggle:hover {
 	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/*
+ * The layer covers the whole area of the canvas, so it may not take the pointer: the schema below has
+ * to stay workable. Only the markers take it back (note-marker.css).
+ */
+.editor-chart-notes-layer {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.editor-chart-note-marker {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	margin: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-2xs2);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-2);
+	box-shadow: var(--ui-shadow-bottom-xs);
+	cursor: pointer;
+	/* The layer lets the pointer through to the schema; a marker is what takes it back. */
+	pointer-events: auto;
+	transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.editor-chart-note-marker:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-note-marker:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/*
+ * An open thread grows a ring the closed marker does not have, so the state is told by a shape and
+ * not by a hue alone; aria-expanded says the same thing where nothing is drawn at all.
+ */
+.editor-chart-note-marker.--opened {
+	border-color: var(--ui-color-accent-main-primary);
+	box-shadow: 0 0 0 2px var(--ui-color-accent-main-primary), var(--ui-shadow-bottom-m);
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-note-marker__count {
+	color: inherit;
 }
 
 .bizprocdesigner-template-not-found-state {

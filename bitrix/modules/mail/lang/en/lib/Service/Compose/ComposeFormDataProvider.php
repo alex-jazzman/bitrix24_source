@@ -1,0 +1,4 @@
+<?php
+$MESS['MAIL_COMPOSE_FORM_TITLE_FORWARD'] = 'Forward message';
+$MESS['MAIL_COMPOSE_FORM_TITLE_NEW'] = 'New message';
+$MESS["MAIL_COMPOSE_FORM_TITLE_REPLY"] = "Reply";

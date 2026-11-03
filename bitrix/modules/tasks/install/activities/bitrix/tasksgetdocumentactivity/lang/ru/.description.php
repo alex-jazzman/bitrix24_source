@@ -7,3 +7,4 @@ $MESS['TASKS_GLDA_NAME_1'] = 'Получить информацию о зада�
 $MESS['TASKS_GLDA_DESC_1'] = 'Передаёт значения полей в задачах другим роботам. Вспомогательный робот';
 $MESS['TASKS_GLDA_DESC_1_MSGVER_1'] = 'Передаёт значения полей в задачах другим роботам. Вспомогательный робот';
 $MESS['TASKS_GLDA_DESC_RETURN_TASK'] = 'Задача';
+$MESS['TASKS_ACTIVITY_OBJECT_TASK'] = 'Задача';

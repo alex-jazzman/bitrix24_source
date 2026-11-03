@@ -128,8 +128,10 @@ function writeBack(filter: StandardFilter, normalized: NormalizedFilterValues): 
 	}
 }
 
-// Sets the visible FIND field with the standard component's own apply event
-// suppressed, so a feed change fires exactly one data request. The other fields
+// Clears a changed visible FIND field with the standard component's own apply
+// event suppressed, so a feed change fires exactly one data request. An already
+// equal value is a no-op: applying it would still persist the standard filter and
+// issue a redundant request. The other fields
 // are carried over from the current values: `setFields` replaces the applied
 // preset wholesale, so passing FIND alone would drop the user's object-type and
 // file-type filters on every folder change. Best-effort: the component API
@@ -142,6 +144,11 @@ export function applyFindSuppressed(filter: StandardFilter, value: string): void
 		if (api && Type.isFunction(api.setFields))
 		{
 			const current = Type.isFunction(filter.getFilterFieldsValues) ? filter.getFilterFieldsValues() : {};
+			if ((current[FilterFieldId.Find] ?? '') === value)
+			{
+				return;
+			}
+
 			api.setFields({ ...current, [FilterFieldId.Find]: value });
 			if (Type.isFunction(api.apply))
 			{

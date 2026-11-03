@@ -1040,6 +1040,13 @@ $arResult["ELEMENT_URL"] = str_replace(
 	$arParams["LIST_ELEMENT_URL"]
 );
 
+if ($arResult["ELEMENT_URL"] !== '' && !str_starts_with($arResult["ELEMENT_URL"], '/'))
+{
+	// Resolve the relative URL template against the current page directory so the
+	// notification link stays valid; the ajax guard accepts only absolute internal paths.
+	$arResult["ELEMENT_URL"] = $APPLICATION->GetCurDir() . $arResult["ELEMENT_URL"];
+}
+
 $data = array();
 if($bVarsFromForm)
 {//There was an error so display form values

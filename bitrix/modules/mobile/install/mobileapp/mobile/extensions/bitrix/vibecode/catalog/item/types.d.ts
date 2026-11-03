@@ -11,6 +11,8 @@ declare type VibeCodeCatalogItemData = {
 	iconUrl?: string | null,
 	viewUrl?: string | null,
 	chatId?: number | null,
+	appChatId?: number | null,
+	appChatAccessible?: boolean,
 	externalId?: string | null,
 	/** @deprecated Use owner.id instead. Kept for backward compatibility. */
 	ownerId: number,
@@ -18,8 +20,10 @@ declare type VibeCodeCatalogItemData = {
 	counter?: number | null,
 	isNew?: boolean,
 	isPinned: boolean,
+	isFavorite: boolean,
 	isMine: boolean,
 	isHidden: boolean,
+	canShare?: boolean,
 	isLast?: boolean,
 };
 
@@ -30,6 +34,7 @@ declare type VibeCodeCatalogItemProps = {
 		contentBottomPadding?: number,
 		actionButtonClickHandler?: Function,
 		itemLongClickHandler?: Function,
+		showHiddenBadge?: boolean,
 	},
 	itemDetailOpenHandler?: Function,
 	onClick?: Function,

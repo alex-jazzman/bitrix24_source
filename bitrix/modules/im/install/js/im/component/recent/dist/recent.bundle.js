@@ -659,5 +659,5 @@
 	`
 	});
 
-})(BX, BX, BX.Messenger.Const, BX, BX.Messenger.Lib, BX.Event);
+})(BX, BX, BX.Messenger.Const, window, BX.Messenger.Lib, BX.Event);
 //# sourceMappingURL=recent.bundle.js.map

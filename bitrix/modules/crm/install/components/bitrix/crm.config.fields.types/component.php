@@ -5,17 +5,30 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+$configuration = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->configuration();
+// The section lists the entity types of CRM without naming one, so it asks about CRM itself. It keeps
+// the call site of the fields list: the former check of this file was the same global one, and reading
+// the section serves both operations - either right opens it, and only the add link below is the one
+// operation that creates a field.
+$configurationScope = ConfigurationScope::ofCrm();
+$canManageFields = $configuration->canManageFields(ConfigurationCallSite::FieldsListComponent, $configurationScope);
+$canDeleteFields = $configuration->canDeleteFields(ConfigurationCallSite::FieldsListComponent, $configurationScope);
+if (!$canManageFields && !$canDeleteFields)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
+
+$arResult['CAN_MANAGE_FIELDS'] = $canManageFields;
 
 $arTypes = CCrmFields::GetEntityTypes();
 

@@ -8,9 +8,11 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 use Bitrix\Crm;
 use Bitrix\Crm\FieldMultiTable;
+use Bitrix\Crm\Service\ClientRecentCategoryResolver;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Web\Json;
 
 if (!CModule::IncludeModule('crm'))
@@ -245,6 +247,7 @@ elseif($action === 'SAVE')
 			}
 		}
 	}
+	\CCrmUserType::NormalizeMoneyFieldsForSave($fields, $fieldsInfo);
 	/** @global $USER_FIELD_MANAGER CUserTypeManager */
 	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmContact::USER_FIELD_ENTITY_ID, $fields, [
@@ -297,6 +300,10 @@ elseif($action === 'SAVE')
 		CCrmOwnerType::Contact,
 		$categoryID
 	);
+	$clientRecentCategory = ServiceLocator::getInstance()
+		->get(ClientRecentCategoryResolver::class)
+		->resolve(CCrmOwnerType::Contact, 'crm.contact.details')
+	;
 
 	if(isset($clientData['COMPANY_DATA']) && is_array($clientData['COMPANY_DATA']))
 	{
@@ -370,7 +377,7 @@ elseif($action === 'SAVE')
 				];
 			}
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
-				'crm.contact.details',
+				$clientRecentCategory,
 				'company',
 				$companyBindings
 			);
@@ -801,6 +808,17 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
 
+	// the editor resolves the saved view and its permissions by category, like the details card does
+	$categoryId = 0;
+	if($ID > 0)
+	{
+		$categoryId = (int)Container::getInstance()->getFactory(CCrmOwnerType::Contact)->getItemCategoryId($ID);
+	}
+	elseif(isset($context['PARAMS']['CATEGORY_ID']))
+	{
+		$categoryId = (int)$context['PARAMS']['CATEGORY_ID'];
+	}
+
 	$component->initializeData();
 
 	if(empty($fieldNames))
@@ -839,6 +857,18 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		$entityConfig = array($sectionConfig);
 	}
 
+	$scope = isset($_POST['SCOPE']) && is_string($_POST['SCOPE'])
+		? mb_strtoupper($_POST['SCOPE'])
+		: Crm\Entity\EntityEditorConfigScope::COMMON;
+	// an undefined scope is accepted too: it makes the editor take the configuration saved by the user
+	if(
+		$scope !== Crm\Entity\EntityEditorConfigScope::UNDEFINED
+		&& !Crm\Entity\EntityEditorConfigScope::isDefined($scope)
+	)
+	{
+		$scope = Crm\Entity\EntityEditorConfigScope::COMMON;
+	}
+
 	$scopePrefix = '';
 	if(isset($_POST['FORCE_DEFAULT_SCOPE']) && mb_strtoupper($_POST['FORCE_DEFAULT_SCOPE']) === 'Y')
 	{
@@ -860,7 +890,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		array(
 			'GUID' => $guid,
 			'CONFIG_ID' => $configID !== '' ? $configID : $component->getDefaultConfigID(),
-			'SCOPE' => Crm\Entity\EntityEditorConfigScope::COMMON,
+			'SCOPE' => $scope,
 			'SCOPE_PREFIX' => $scopePrefix,
 			'OPTION_PREFIX' => $optionPrefix,
 			'FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
@@ -892,6 +922,10 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
+			'EXTRAS' => [
+				'CATEGORY_ID' => $categoryId,
+			],
+			'MODULE_ID' => 'crm',
 			'ANALYTICS_CONFIG' => isset($_POST['ANALYTICS_CONFIG']) && is_array($_POST['ANALYTICS_CONFIG']) ? $_POST['ANALYTICS_CONFIG'] : null,
 		)
 	);

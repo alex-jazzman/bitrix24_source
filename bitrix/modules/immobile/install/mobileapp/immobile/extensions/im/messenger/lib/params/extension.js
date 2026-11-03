@@ -33,6 +33,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isCopilotMentionAvailable: false,
 		videoNoteTranscriptionAvailable: false,
 		isBitrixGptV2Available: false,
+		isBitrixGptStopGenerationAvailable: false,
 		aiAssistantMcpSelectorAvailable: false,
 		isAiAssistantAgentModeAvailable: false,
 		isCopilotForceSearchAvailable: false,
@@ -41,11 +42,17 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isNestedChatAvailable: false,
 		isChatWithGuestsAvailable: false,
 		isReplyWithMediaAvailable: false,
+		isAddToChatPopupAvailable: false,
 		chatSharingLinkAvailable: false,
 		isAiAssistantFeedbackAvailable: false,
 		isAiAssistantRegenerateAvailable: false,
 		collabPreviewSourceEnabled: false,
 		isCopilotDraftChatAvailable: false,
+		isAiTaskCreationFromMessagesAvailable: false,
+		isMessageFormBlockAvailable: false,
+		isMessageFileAudioBlockAvailable: false,
+		isVideoNoteCaptionAvailable: false,
+		isChatThreadsAvailable: false,
 	};
 
 	/**
@@ -205,6 +212,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		/**
 		 * @return boolean
 		 */
+		isMarkdownNativeRendererAvailable()
+		{
+			return this.get('IS_MARKDOWN_NATIVE_RENDERER_AVAILABLE', false);
+		}
+
+		/**
+		 * @return boolean
+		 */
 		isOpenlinesInMessengerAvailable()
 		{
 			return this.get('IS_OPENLINES_IN_MESSENGER_V2_AVAILABLE', false);
@@ -323,6 +338,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {MessengerFolders}
+		 */
+		getFolders()
+		{
+			return this.get('FOLDERS', {});
+		}
+
+		/**
 		 * @return {number}
 		 */
 		getMultipleActionMessageLimit()
@@ -338,6 +361,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getCopilotAvailableEngines()
 		{
 			return this.get('COPILOT_AVAILABLE_ENGINES', []);
+		}
+
+		/**
+		 * @return {?CopilotFileUploadPolicy}
+		 */
+		getCopilotFileUploadPolicy()
+		{
+			return this.get('COPILOT_FILE_UPLOAD_POLICY', null);
 		}
 
 		getTasksRecentListAvailable()
@@ -371,9 +402,37 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('IS_VIBECODE_BUTTON_AVAILABLE', false);
 		}
 
+		isVibecodeRecentActionAvailable()
+		{
+			return this.get('IS_VIBECODE_RECENT_ACTION_AVAILABLE', false) === true;
+		}
+
+		/**
+		 * The counter of new apps on the Vibe button; the connector withdraws it while the app
+		 * chats announce the novelties instead. Without the verdict the counter stays, as before.
+		 * @return {boolean}
+		 */
+		isVibecodeNewAppsBadgeAvailable()
+		{
+			return this.get('IS_VIBECODE_NEW_APPS_BADGE_AVAILABLE', true) === true;
+		}
+
+		isVibecodeAppChatSendPermissionAvailable()
+		{
+			return this.get('IS_VIBECODE_APP_CHAT_SEND_PERMISSION_AVAILABLE', false) === true;
+		}
+
 		canUseAudioPanel()
 		{
 			return Boolean(this.get('CAN_USE_AUDIO_PANEL', false));
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isVideoNotePlaybackRateAvailable()
+		{
+			return this.get('IS_VIDEO_NOTE_PLAYBACK_RATE_AVAILABLE', false);
 		}
 
 		/**

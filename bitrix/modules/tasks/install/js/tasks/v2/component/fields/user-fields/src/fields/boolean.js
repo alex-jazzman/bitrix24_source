@@ -51,12 +51,12 @@ export const UserFieldBoolean = {
 			class="tasks-user-field print-no-border --boolean"
 			:class="{ '--last': isLast }"
 		>
-			<div class="tasks-user-field-boolean-row">
-				<Checkbox :checked="preparedValue" disabled/>
+			<label class="tasks-user-field-boolean-row" data-testid="tasks-user-field-boolean">
+				<Checkbox tag="span" :checked="preparedValue" disabled/>
 				<TextMd :className="mandatoryClass">
 					{{ title }}
 				</TextMd>
-			</div>
+			</label>
 		</div>
 	`,
 };

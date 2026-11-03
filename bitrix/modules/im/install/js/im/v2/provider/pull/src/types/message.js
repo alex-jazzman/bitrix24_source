@@ -36,8 +36,12 @@ export type MessageUpdateParams = {
 	chatId: number,
 	dialogId: string,
 	id: number,
+	// Comes only while editing files is available on the server; the composition itself always
+	// arrives as ids in params.FILE_ID, an empty array included.
+	files?: {[fileId: string]: RawFile},
 	params: {
-		IS_EDITED: 'Y' | 'N'
+		IS_EDITED: 'Y' | 'N',
+		FILE_ID?: number[],
 	},
 	senderId: number,
 	text: string,

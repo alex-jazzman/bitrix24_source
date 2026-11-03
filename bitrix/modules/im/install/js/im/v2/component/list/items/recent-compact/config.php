@@ -25,7 +25,7 @@ return [
 	'css' => 'dist/recent-compact.bundle.css',
 	'js' => 'dist/recent-compact.bundle.js',
 	'rel' => [
-		'call.component.compact-active-call-list',
+		'call.widget.compact-active-call-list',
 		'im.public',
 		'im.v2.application.core',
 		'im.v2.component.elements.avatar',
@@ -42,6 +42,7 @@ return [
 		'main.core',
 		'ui.design-tokens.air',
 		'ui.icon-set.api.vue',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 	'settings' => [

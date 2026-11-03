@@ -495,6 +495,7 @@ $frame = $this->createFrame('')->begin('');
 		BX.CrmWebForm = new CrmWebForm(<?=CUtil::PhpToJSObject(
 			array(
 				'id' => $arResult['FORM']['ID'],
+				'sec' => $arParams['SECURITY_CODE'] ?? '',
 				'currency' => $arResult['CURRENCY'],
 				'lang' => Context::getCurrent()->getLanguage(),
 				'date_format' => '',

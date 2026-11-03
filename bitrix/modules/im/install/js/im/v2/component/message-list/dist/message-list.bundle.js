@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_component_animation, im_v2_const, im_v2_lib_feature, im_v2_lib_menu, im_v2_lib_messageComponent, im_v2_lib_permission, im_v2_lib_quote, im_v2_lib_utils, im_v2_application_core, im_v2_lib_dateFormatter, main_polyfill_intersectionobserver, im_v2_component_elements_avatar, im_v2_lib_copilot, main_core, im_v2_lib_notifier, ui_lottie, im_v2_lib_inputAction, im_v2_component_elements_userListPopup, im_v2_provider_service_user, ui_vue3_components_richLoc, im_v2_lib_analytics, im_v2_component_message_file, im_v2_component_message_default, im_v2_component_message_error, im_v2_component_message_callInvite, im_v2_component_message_deleted, im_v2_component_message_unsupported, im_v2_component_message_smile, im_v2_component_message_sticker, im_v2_component_message_creation_chat, im_v2_component_message_copilot_creation, im_v2_component_message_copilot_answer, im_v2_component_message_copilot_addedUsers, im_v2_component_message_support_vote, im_v2_component_message_support_sessionNumber, im_v2_component_message_support_chatCreation, im_v2_component_message_creation_conference, im_v2_component_message_supervisor_updateFeature, im_v2_component_message_supervisor_enableFeature, im_v2_component_message_sign, im_v2_component_message_admin, im_v2_component_message_checkIn, im_v2_component_message_creation_ownChat, im_v2_component_message_zoomInvite, im_v2_component_message_creation_generalChat, im_v2_component_message_creation_generalChannel, im_v2_component_message_creation_channel, imopenlines_v2_component_message_startDialog, imopenlines_v2_component_message_hidden, imopenlines_v2_component_message_feedbackForm, im_v2_component_message_call, im_v2_component_message_vote, im_v2_component_message_creation_taskChat, im_v2_component_message_collab_convert, im_v2_component_message_creation_collab, im_v2_component_message_aiAssistant_answer, im_v2_component_message_aiBizproc) {
+(function (exports, im_v2_component_animation, im_v2_const, im_v2_lib_feature, im_v2_lib_menu, im_v2_lib_messageComponent, im_v2_lib_permission, im_v2_lib_quote, im_v2_lib_utils, im_v2_application_core, im_v2_lib_dateFormatter, main_core, main_polyfill_intersectionobserver, im_v2_component_elements_avatar, im_v2_lib_copilot, im_v2_lib_notifier, ui_lottie, im_v2_lib_inputAction, im_v2_component_elements_userListPopup, im_v2_provider_service_user, ui_vue3_components_richLoc, im_v2_lib_analytics, imopenlines_v2_component_message_feedbackForm, imopenlines_v2_component_message_hidden, imopenlines_v2_component_message_multidialogError, imopenlines_v2_component_message_networkSticker, imopenlines_v2_component_message_startDialog, im_v2_component_message_admin, im_v2_component_message_aiAssistant_answer, im_v2_component_message_aiBizproc, im_v2_component_message_call, im_v2_component_message_callInvite, im_v2_component_message_checkIn, im_v2_component_message_collab_convert, im_v2_component_message_copilot_addedUsers, im_v2_component_message_copilot_answer, im_v2_component_message_copilot_creation, im_v2_component_message_creation_channel, im_v2_component_message_creation_chat, im_v2_component_message_creation_collab, im_v2_component_message_creation_conference, im_v2_component_message_creation_generalChannel, im_v2_component_message_creation_generalChat, im_v2_component_message_creation_ownChat, im_v2_component_message_creation_taskChat, im_v2_component_message_default, im_v2_component_message_deleted, im_v2_component_message_error, im_v2_component_message_file, im_v2_component_message_sign, im_v2_component_message_smile, im_v2_component_message_sticker, im_v2_component_message_supervisor_enableFeature, im_v2_component_message_supervisor_updateFeature, im_v2_component_message_support_chatCreation, im_v2_component_message_support_sessionNumber, im_v2_component_message_support_vote, im_v2_component_message_unsupported, im_v2_component_message_vote, im_v2_component_message_contact, im_v2_component_message_zoomInvite) {
 	'use strict';
 
 	class AvatarMenu extends im_v2_lib_menu.UserMenu {
@@ -93,11 +93,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		hasDateTitle(dateTitle) {
 			return this.#currentDateTitles.has(dateTitle);
 		}
-		addDateGroup(dateTitle) {
+		addDateGroup(dateTitle, date) {
 			this.#currentDateTitles.add(dateTitle);
 			this.#lastDateItems = [];
 			this.#collection.push({
 				dateTitle,
+				date,
 				items: this.#lastDateItems
 			});
 			this.#clearLastAuthor();
@@ -136,14 +137,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class DateManager {
 		cachedDateGroups = {};
 		getDateTitle(date) {
-			const shortDate = this.#getLocalShortDate(date);
+			const shortDate = this.getLocalShortDate(date);
 			if (this.cachedDateGroups[shortDate]) {
 				return this.cachedDateGroups[shortDate];
 			}
 			this.cachedDateGroups[shortDate] = im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(date, im_v2_lib_dateFormatter.DateTemplate.dateGroup);
 			return this.cachedDateGroups[shortDate];
 		}
-		#getLocalShortDate(date) {
+
+		// The day of a message in the user's own day boundaries: the server groups the history by the
+		// offset the client sends, so a UTC day would miss by one around midnight.
+		getLocalShortDate(date) {
 			const timestampWithTimezoneOffset = date.getTime() - date.getTimezoneOffset() * 60000;
 			const localDateInJSON = new Date(timestampWithTimezoneOffset).toJSON();
 
@@ -197,7 +201,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			messageCollection.forEach((message, index) => {
 				const dateTitle = this.dateManager.getDateTitle(message.date);
 				if (!collection.hasDateTitle(dateTitle)) {
-					collection.addDateGroup(dateTitle);
+					collection.addDateGroup(dateTitle, this.dateManager.getLocalShortDate(message.date));
 				}
 				if (message.id === this.markedMessageId) {
 					collection.addMarkedIndicator();
@@ -238,6 +242,42 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#getDialog() {
 			return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId);
+		}
+	}
+
+	const HIGHLIGHT_CLASS = '--date-highlighted';
+	const HIGHLIGHT_DURATION = 2000;
+	const GROUP_SELECTOR = '.bx-im-message-list-date-group__container';
+
+	/**
+	 * Highlights the day divider of a date group the same way a message is highlighted: a class for a
+	 * fixed time, taken off by a timer. The divider carries no message id of its own, so the day is
+	 * addressed through the first message of that day and the group it sits in.
+	 */
+	class DateGroupHighlight {
+		#group = null;
+		#timeoutId = null;
+		showByAnchor(container, messageId) {
+			const group = container.querySelector(`[data-id="${messageId}"]`)?.closest(GROUP_SELECTOR);
+			if (!group) {
+				return false;
+			}
+
+			// a repeated jump moves the highlight instead of stacking a second timer over it
+			this.clear();
+			main_core.Dom.addClass(group, HIGHLIGHT_CLASS);
+			this.#group = group;
+			this.#timeoutId = setTimeout(() => this.clear(), HIGHLIGHT_DURATION);
+			return true;
+		}
+		clear() {
+			clearTimeout(this.#timeoutId);
+			this.#timeoutId = null;
+			if (!this.#group) {
+				return;
+			}
+			main_core.Dom.removeClass(this.#group, HIGHLIGHT_CLASS);
+			this.#group = null;
 		}
 	}
 
@@ -313,7 +353,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	const forwardMessageComponents = new Set([im_v2_const.MessageComponent.default, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.FeedbackFormMessage, im_v2_const.MessageComponent.ImOpenLinesMessage, im_v2_const.MessageComponent.ImOpenLinesForm, im_v2_const.MessageComponent.sticker]);
+	const forwardMessageComponents = new Set([im_v2_const.MessageComponent.default, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.FeedbackFormMessage, im_v2_const.MessageComponent.ImOpenLinesMessage, im_v2_const.MessageComponent.ImOpenLinesForm, im_v2_const.MessageComponent.sticker, im_v2_const.MessageComponent.contactMessage]);
 
 	// @vue/component
 	const MessageSelectButton = {
@@ -456,10 +496,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 				return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.openAvatarMenu, this.contextDialogId);
 			},
+			canMentionByClick() {
+				return new im_v2_lib_copilot.CopilotManager().isMentionByClickAvailable(this.contextDialogId, this.authorDialogId);
+			},
 			containerClasses() {
 				const classes = [`--${this.authorGroup.messageType}`];
 				if (!this.avatarMenuAvailable) {
 					classes.push('--no-menu');
+				}
+				if (this.canMentionByClick) {
+					classes.push('--mention-clickable');
 				}
 				if (this.isBulkActionsMode) {
 					classes.push('--is-bulk-actions-mode');
@@ -476,12 +522,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.authorGroup.avatar.isNeeded && index === lastIndexMessageInGroup;
 			},
 			onAvatarClick(event) {
+				if (this.canMentionByClick) {
+					const botUser = this.$store.getters['users/get'](this.authorDialogId, true);
+					this.insertMention(botUser);
+					return;
+				}
 				if (!this.avatarMenuAvailable) {
 					return;
 				}
 				this.$emit('avatarClick', {
 					dialogId: this.authorGroup.avatar.avatarId,
 					$event: event
+				});
+			},
+			insertMention(user) {
+				this.$Bitrix.eventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
+					mentionText: user.name,
+					mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(user.id, user.name),
+					mentionedUserId: user.id,
+					dialogId: this.contextDialogId,
+					isMentionSymbol: false
 				});
 			},
 			loc(phraseCode) {
@@ -494,7 +554,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<Transition name="bx-im-select-button-transition">
 					<MessageSelectButton v-if="isBulkActionsMode" :contextDialogId="contextDialogId" :message="message" />
 				</Transition>
-				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar">
+				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar" data-testid="im-message-list-author-avatar">
 					<MessageAvatar
 						:contextDialogId="contextDialogId"
 						:messageId="firstMessageIdInAuthorGroup"
@@ -511,18 +571,64 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const DateGroupTitle = {
+		name: 'DateGroupTitle',
 		props: {
 			title: {
 				type: String,
 				required: true
+			},
+			date: {
+				type: String,
+				default: ''
 			}
 		},
+		emits: ['dateNavigationClick'],
 		data() {
 			return {};
 		},
+		computed: {
+			isDateNavigationAvailable() {
+				return this.date.length > 0 && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMessageDateNavigationAvailable);
+			},
+			// The day of the group is published on the sticky element of the divider: it is the element
+			// whose position tells which group the user sees now, and the calendar opens on its month
+			// Nothing to open the calendar from - nothing to publish.
+			navigationDate() {
+				return this.isDateNavigationAvailable ? this.date : null;
+			},
+			// The accessible name keeps the date the divider shows: without it the screen reader would
+			// name every divider the same, and WCAG 2.5.3 asks the name to contain the visible label.
+			dateNavigationTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_MESSAGE_LIST_DATE_GROUP_DATE_NAVIGATION_TITLE', {
+					'#DATE#': this.title
+				});
+			}
+		},
+		methods: {
+			onClick() {
+				this.$emit('dateNavigationClick', {
+					date: this.date
+				});
+			}
+		},
+		// The clickable element is the whole pill, and it is a native button, so Enter and
+		// Space activate it without a key handler of our own.
 		template: `
-		<div class="bx-im-message-list-date-group-title__container">
-			<div class="bx-im-message-list-date-group-title__text">{{ title }}</div>
+		<div class="bx-im-message-list-date-group-title__container" :data-date="navigationDate">
+			<button
+				v-if="isDateNavigationAvailable"
+				type="button"
+				class="bx-im-message-list-date-group-title__text --interactive"
+				:aria-label="dateNavigationTitle"
+				aria-haspopup="dialog"
+				data-testid="im-message-list-date-group-title"
+				@click="onClick"
+			>{{ title }}</button>
+			<div
+				v-else
+				class="bx-im-message-list-date-group-title__text"
+				data-testid="im-message-list-date-group-title"
+			>{{ title }}</div>
 		</div>
 	`
 	};
@@ -539,6 +645,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				required: true
 			}
 		},
+		emits: ['dateNavigationClick'],
 		data() {
 			return {};
 		},
@@ -549,8 +656,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-message-list-date-group__container">
-			<DateGroupTitle :title="dateGroup.dateTitle" />
+		<div class="bx-im-message-list-date-group__container" data-testid="im-message-list-date-group">
+			<DateGroupTitle
+				:title="dateGroup.dateTitle"
+				:date="dateGroup.date"
+				@dateNavigationClick="$emit('dateNavigationClick', $event)"
+			/>
 			<template v-for="dateGroupItem in dateGroup.items" >
 				<slot
 					name="dateGroupItem"
@@ -31825,22 +31936,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const InputActions = {
 		name: 'InputActions',
 		props: {
-			dialogId: {
-				required: true,
-				type: String
-			},
 			enterAnimationFinished: {
 				required: true,
 				type: Boolean
+			},
+			inputActions: {
+				required: true,
+				type: Array
 			}
 		},
 		computed: {
-			chatInputActions() {
-				return this.$store.getters['chats/inputActions/getByDialogId'](this.dialogId);
-			},
 			uniqueUserRecords() {
 				const uniqueUserRecords = {};
-				this.chatInputActions.forEach(userRecord => {
+				this.inputActions.forEach(userRecord => {
 					uniqueUserRecords[userRecord.userId] = userRecord.userName;
 				});
 				return Object.entries(uniqueUserRecords).map(([userId, userName]) => {
@@ -31851,7 +31959,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			},
 			isSingleUserActive() {
-				const userIds = this.chatInputActions.map(element => element.userId);
+				const userIds = this.inputActions.map(element => element.userId);
 				const uniqueUsers = new Set(userIds);
 				return uniqueUsers.size === 1;
 			},
@@ -31880,7 +31988,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			animationName() {
 				if (this.isSingleUserActive) {
-					const [firstUserRecord] = this.chatInputActions;
+					const [firstUserRecord] = this.inputActions;
 					const {
 						type
 					} = firstUserRecord;
@@ -31912,7 +32020,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		methods: {
 			getActionTextForSingleUser() {
-				const [firstUserRecord] = this.chatInputActions;
+				const [firstUserRecord] = this.inputActions;
 				const {
 					type,
 					userName,
@@ -32246,11 +32354,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			chatInputActions() {
 				return this.$store.getters['chats/inputActions/getByDialogId'](this.dialogId);
 			},
+			visibleInputActions() {
+				return (this.chatInputActions ?? []).filter(userRecord => {
+					return !this.getCopilotManager().isCopilotBot(userRecord.userId);
+				});
+			},
 			showInputStatus() {
-				return this.dialog.inited && this.chatInputActions;
+				return this.dialog.inited && this.visibleInputActions.length > 0;
 			},
 			showReadStatus() {
 				return this.dialog.inited && this.dialog.lastMessageViews.countOfViewers > 0;
+			}
+		},
+		methods: {
+			getCopilotManager() {
+				this.copilotManager ??= new im_v2_lib_copilot.CopilotManager();
+				return this.copilotManager;
 			}
 		},
 		template: `
@@ -32261,7 +32380,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				@before-enter="enterAnimationFinished = false"
 				@enter="enterAnimationFinished = true"
 			>
-				<InputActions v-if="showInputStatus" :dialogId="dialogId" :enterAnimationFinished="enterAnimationFinished" />
+				<InputActions v-if="showInputStatus" :inputActions="visibleInputActions" :enterAnimationFinished="enterAnimationFinished" />
 				<ReadStatus v-else-if="showReadStatus" :dialogId="dialogId" />
 			</Transition>
 		</div>
@@ -32411,13 +32530,109 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		CallMessage: im_v2_component_message_call.CallMessage,
 		StartDialogMessage: imopenlines_v2_component_message_startDialog.StartDialogMessage,
 		FeedbackFormMessage: imopenlines_v2_component_message_feedbackForm.FeedbackFormMessage,
+		NetworkStickerMessage: imopenlines_v2_component_message_networkSticker.NetworkStickerMessage,
+		MultiDialogErrorMessage: imopenlines_v2_component_message_multidialogError.MultiDialogErrorMessage,
 		HiddenMessage: imopenlines_v2_component_message_hidden.HiddenMessage,
 		VoteMessage: im_v2_component_message_vote.VoteMessage,
+		ContactMessage: im_v2_component_message_contact.ContactMessage,
 		TaskChatCreationMessage: im_v2_component_message_creation_taskChat.TaskChatCreationMessage,
 		ConvertToCollabMessage: im_v2_component_message_collab_convert.ConvertToCollabMessage,
 		CollabCreationMessage: im_v2_component_message_creation_collab.CollabCreationMessage,
 		AiBizprocMessage: im_v2_component_message_aiBizproc.AiBizprocMessage
 	};
+
+	const DIVIDER_SELECTOR = '.bx-im-message-list-date-group-title__container[data-date]';
+	// the browser can hold a sticky element a fraction of a pixel away from its own place
+	const DISPLACEMENT_THRESHOLD = 1;
+
+	/**
+	 * The divider is sticky at the top of the scrollport, so a group already scrolled past keeps its
+	 * divider pushed up by its own group, while a group still below holds the divider at rest.
+	 */
+	const isDisplacedFromGroup = divider => {
+		const group = divider.parentElement;
+		if (!group) {
+			return false;
+		}
+		const displacement = divider.getBoundingClientRect().top - group.getBoundingClientRect().top;
+		return displacement > DISPLACEMENT_THRESHOLD;
+	};
+
+	/**
+	 * The day of the topmost visible group of the list, empty when the list has no day to report.
+	 *
+	 * The group the user is looking at is the last displaced one: everything above it is displaced too,
+	 * everything below is not. Nothing displaced means the list is not scrolled at all, and then the
+	 * group on screen is the first one.
+	 */
+	const getTopVisibleDate = container => {
+		let firstDate = '';
+		let topVisibleDate = '';
+		container.querySelectorAll(DIVIDER_SELECTOR).forEach(divider => {
+			const {
+				date
+			} = divider.dataset;
+			if (!date) {
+				return;
+			}
+			if (firstDate === '') {
+				firstDate = date;
+			}
+			if (isDisplacedFromGroup(divider)) {
+				topVisibleDate = date;
+			}
+		});
+		return topVisibleDate === '' ? firstDate : topVisibleDate;
+	};
+
+	/* global $Values */
+
+
+	// every jump of the chat, whatever it was started by; a jump that is not date-driven carries an
+	// empty day and no identifier
+
+	// the identifier decides, the rest is the context of the jump it names
+
+	// both requests of the list are addressed by chat and answered with the return value (EventType)
+
+	/**
+	 * The anchor of a jump by date can arrive later than the jump itself, so the highlight waits for the
+	 * collection changes that follow: the page of the anchor normally comes with the first of them, and
+	 * a busy chat can change its collection while that page is still on its way.
+	 *
+	 * What ENDS the wait is the chat reporting the context of this very jump as applied
+	 * (`EventType.dialog.dateNavigationContextApplied`): by then the list has finished moving, so an
+	 * anchor still missing is an anchor that is never coming - a message deleted, a day with no history
+	 * behind it - and the failure is reported at once instead of being waited out. The wait ends when
+	 * the work ends, and the user is not kept in front of a finished screen for nine seconds.
+	 *
+	 * The two bounds below are what is left for a jump no report can be matched to: the wait is started
+	 * by the chat announcing the jump, and every report about it is addressed by the identifier the jump
+	 * carries, so a jump by date started without one is waited for by these two alone. Neither of them
+	 * can be dropped:
+	 * - the budget makes a busy chat stop searching the list on every change;
+	 * - the clock covers a chat that stopped changing and so stopped spending the budget, whose attempts
+	 *   left would otherwise be spent by whatever changes the collection next, lighting a day up long
+	 *   after the user was told the jump had failed.
+	 * Both are taken off the moment a chat says it has taken the jump on
+	 * (`EventType.dialog.dateNavigationContextApplying`): from there the report is certain however long
+	 * the loading runs, and either bound still standing would answer a jump in progress with a failure -
+	 * and be contradicted by the list moving to the day right after. The budget is no safer than the
+	 * clock here: it counts collection changes, and a chat busy enough to make twenty of them while the
+	 * context is loading spends it inside the loading it was never meant to interrupt. While they run,
+	 * they stay inside the window the side that started the jump gives them, so that the outcome still
+	 * reaches somebody waiting for it.
+	 */
+	const MAX_DATE_ANCHOR_ATTEMPTS = 20;
+
+	/**
+	 * A click on the divider asks the sidebar for the message search panel, and the panel may not be on
+	 * screen yet - so the request waits here until a panel takes it. The wait is bounded because an
+	 * unclaimed request must not survive the click that made it: a panel opened much later would jump to
+	 * the day of a click the user does not remember. The panel appears within the flush of the click in
+	 * practice, so the window covers a slow render and nothing more.
+	 */
+	const DATE_NAVIGATION_REQUEST_LIFETIME = 3000;
 
 	// @vue/component
 	const MessageList = {
@@ -32444,6 +32659,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			HistoryLimitBanner,
 			...MessageComponents
 		},
+		inject: {
+			// the chat content reports which sidebar panel is in front; outside it the message list keeps
+			// working and simply asks for the panel every time
+			currentSidebarPanel: {
+				default: ''
+			}
+		},
 		props: {
 			dialogId: {
 				type: String,
@@ -32452,8 +32674,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			containerHeight: {
 				type: [Number, null],
 				default: null
+			},
+			scrollPinEnabled: {
+				type: Boolean,
+				default: false
+			},
+			spacerHeight: {
+				type: Number,
+				default: 0
+			},
+			spacerAnimated: {
+				type: Boolean,
+				default: false
+			},
+			// external inline styles for individual messages, keyed by message id.
+			// Keys are object keys and so always strings: a pending message addressed by its
+			// send-time temporaryId (a uuid) and one addressed by a numeric server id match alike
+			messageStyles: {
+				/** @type {{ [messageId: string]: Object }} */
+				type: Object,
+				default: () => ({})
 			}
 		},
+		emits: ['spacerRiseEnd'],
 		data() {
 			return {
 				windowFocused: false
@@ -32468,6 +32711,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			messageCollection() {
 				return this.$store.getters['messages/getByChatId'](this.dialog.chatId);
+			},
+			isDateNavigationAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMessageDateNavigationAvailable);
 			},
 			isUser() {
 				return this.dialog.type === im_v2_const.ChatType.user;
@@ -32488,6 +32734,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return !im_v2_lib_feature.TariffManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
 			},
 			showDialogStatus() {
+				// DialogStatus renders inside the scroll content below the spacer; its height and
+				// late appearance disturb scroll-pin geometry (jerk the pinned question), so it is
+				// hidden in pin chats (ERR-007).
+				if (this.scrollPinEnabled) {
+					return false;
+				}
 				return this.messageCollection.some(message => {
 					return message.id === this.dialog.lastMessageId;
 				});
@@ -32496,22 +32748,329 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.dialogInited && this.noMessages && this.isUser && !this.isHistoryLimitExceeded;
 			}
 		},
+		watch: {
+			dialogId() {
+				// nothing of the jump into the previous chat belongs to this one, and the side waiting
+				// for that jump is told it will not finish. Cancelled and not failed: the user left of
+				// their own accord, and an error about the chat they left is noise in the one they opened
+				this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.cancelled);
+				this.forgetDateNavigationRequest();
+				this.dateGroupHighlight.clear();
+			}
+		},
 		created() {
 			this.initCollectionManager();
 			this.initObserverManager();
+			this.dateGroupHighlight = new DateGroupHighlight();
+			// the jump by date the list is waiting for: the anchor to look for, the day to report back
+			// and the chat the jump was started in - the list may leave that chat before the wait is over
+			this.pendingDateAnchor = null;
+			this.pendingDateNavigationDate = '';
+			this.dateNavigationRequestTimer = null;
 		},
 		mounted() {
 			this.subscribeToEvents();
 		},
 		beforeUnmount() {
 			this.unsubscribeFromEvents();
+			// the list is going away with the chat it belonged to - the same cancellation as leaving it
+			this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.cancelled);
+			this.forgetDateNavigationRequest();
+			this.dateGroupHighlight.clear();
 		},
 		methods: {
 			subscribeToEvents() {
 				this.getEmitter().subscribe(im_v2_const.EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
+				this.getEmitter().subscribe(im_v2_const.EventType.dialog.messageContextJumpStarted, this.onMessageContextJumpStarted);
+				// alongside the jump itself and not behind the feature gate: the wait is started by a jump
+				// that carries a date, and the report that ends it has to reach the same waits
+				this.getEmitter().subscribe(im_v2_const.EventType.dialog.dateNavigationContextApplying, this.onDateNavigationContextApplying);
+				this.getEmitter().subscribe(im_v2_const.EventType.dialog.dateNavigationContextApplied, this.onDateNavigationContextApplied);
+				if (this.isDateNavigationAvailable) {
+					this.getEmitter().subscribe(im_v2_const.EventType.dialog.getTopVisibleDate, this.onGetTopVisibleDate);
+					this.getEmitter().subscribe(im_v2_const.EventType.dialog.getPendingDateNavigation, this.onGetPendingDateNavigation);
+				}
 			},
 			unsubscribeFromEvents() {
 				this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
+				this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.messageContextJumpStarted, this.onMessageContextJumpStarted);
+				this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.dateNavigationContextApplying, this.onDateNavigationContextApplying);
+				this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.dateNavigationContextApplied, this.onDateNavigationContextApplied);
+
+				// unconditionally, unlike the subscription: the flag is read from the feature manager
+				// anew here, so a flag switched off within the session would leave the handlers of a
+				// destroyed component in the emitter. Unsubscribing what was never subscribed is a no-op
+				this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.getTopVisibleDate, this.onGetTopVisibleDate);
+				this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.getPendingDateNavigation, this.onGetPendingDateNavigation);
+			},
+			/**
+			 * The calendar of the message search panel opens on the month of the messages the user sees
+			 * now, and only the list knows which day that is. The panel asks for the day while
+			 * it builds the calendar, and the day is read from the layout that is already on screen - it
+			 * needs neither a frame nor a copy of itself in the store.
+			 */
+			onGetTopVisibleDate(event) {
+				const {
+					dialogId
+				} = event.getData();
+				if (dialogId !== this.dialogId || !this.$refs.container) {
+					return '';
+				}
+				return getTopVisibleDate(this.$refs.container);
+			},
+			/**
+			 * The chat has started a jump - and the chat is asked and not the side that requested one:
+			 * the request is one way of starting a jump among several, and a wait left standing through
+			 * the jumps started by the others is a wait for an anchor that is not coming any more.
+			 */
+			onMessageContextJumpStarted(event) {
+				const {
+					dialogId,
+					messageId,
+					date,
+					jumpId
+				} = event.getData();
+				if (dialogId !== this.dialogId) {
+					return;
+				}
+
+				// a new jump supersedes the anchor the previous one may still be waiting for, and the
+				// superseded jump is reported as cancelled instead of being dropped in silence: the side
+				// waiting for it cannot see that it was superseded, and told nothing it would sit out its
+				// own bound and answer with a failure the jump the user themselves replaced. Cancelled
+				// and not failed - nothing failed, the user went somewhere else
+				//
+				// Reporting it whatever superseded it is safe because the report names the jump it
+				// belongs to: another jump by date has already made the waiting side forget the
+				// identifier of the old one, so that report meets nothing and is thrown away, while an
+				// ordinary jump leaves the identifier in place and the wait ends the way it should
+				this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.cancelled);
+
+				// only a jump by date asks for the divider of the day; the other jumps highlight the
+				// message alone and carry no date at all
+				if (!date) {
+					return;
+				}
+				const jump = {
+					dialogId,
+					messageId,
+					date,
+					jumpId,
+					attempts: 0,
+					takenByChat: false,
+					stopWatching: null,
+					timeoutId: null
+				};
+				this.pendingDateAnchor = jump;
+				// the collection is watched for the length of the wait alone: outside a jump by date
+				// there is no anchor to look for, and every change would pay a search for nothing
+				jump.stopWatching = this.$watch('formattedCollection', () => {
+					void this.highlightPendingDateGroup();
+				});
+				jump.timeoutId = setTimeout(() => this.onDateAnchorWaitTimeout(jump), im_v2_const.DateNavigationJumpTimeout.anchorWait);
+				void this.highlightPendingDateGroup();
+			},
+			/**
+			 * The chat has taken the jump on and is loading the context. From here the outcome is
+			 * certain: the chat reports the context as applied on a settled promise, so the report comes
+			 * whether the loading succeeded, failed or was superseded. So BOTH bounds of the wait come
+			 * off - they are there for a jump no chat ever took, and the wait itself is unchanged and
+			 * still ends on the outcome. Left on, either of them would answer a load longer than its
+			 * window with a failure, and the chat would then move to the day anyway, next to the error
+			 * saying it had not.
+			 *
+			 * The clock is taken off by hand, the budget by the flag set here: a chat busy enough to
+			 * change its collection twenty times while the context is loading would otherwise spend the
+			 * budget on a jump that is still on its way - the very case the clock was taken off for.
+			 *
+			 * The identifier decides here for the same reason it decides below, and the confirmation
+			 * cannot outrun the wait it belongs to: the chat announces the jump first and says this
+			 * second, from the same method and with nothing between the two, so the wait is standing by
+			 * the time the confirmation of it arrives.
+			 */
+			onDateNavigationContextApplying(event) {
+				const {
+					jumpId
+				} = event.getData();
+				const jump = this.pendingDateAnchor;
+				if (!jumpId || !jump || jump.jumpId !== jumpId) {
+					return;
+				}
+				jump.takenByChat = true;
+				clearTimeout(jump.timeoutId);
+				jump.timeoutId = null;
+			},
+			/**
+			 * The chat has finished applying the context of the jump: the page of the message arrived,
+			 * or it failed to, or the jump was superseded and its answer refused. Whichever of the three,
+			 * the collection will not move for this jump any more, so one last look for the anchor
+			 * decides it - found is the day lit up, missing is a message that is not there at all. Told
+			 * now and not waited out: a jump that cannot land is the very case the clock used to spend
+			 * its nine seconds on.
+			 *
+			 * Only the jump the list is waiting for is answered - a superseded jump reports as well, and
+			 * its report belongs to a jump the list has already left.
+			 *
+			 * The identifier of the jump is what decides that, and nothing else can: the same day picked
+			 * twice in a row resolves to the same message, so the chat, the message and the day of the
+			 * superseded jump are every bit the same as those of the jump that replaced it. A report
+			 * carrying no identifier at all names no jump and is left to the backstop above.
+			 */
+			async onDateNavigationContextApplied(event) {
+				const {
+					jumpId
+				} = event.getData();
+				const jump = this.pendingDateAnchor;
+				if (!jumpId || !jump || jump.jumpId !== jumpId) {
+					return;
+				}
+				await this.highlightPendingDateGroup();
+
+				// still waiting means the attempt found nothing and reported nothing: the jump is over
+				// either way, and this is the only side that knows it
+				if (this.pendingDateAnchor === jump) {
+					this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.failure);
+				}
+			},
+			/**
+			 * The wait ran out with the anchor still missing, and no chat ever said it had taken this
+			 * jump on - a confirmation takes the clock off. So there is nothing left to wait for, and
+			 * the jump is over exactly the way a spent budget ends it - the watcher goes back and the
+			 * failure is reported - so that the day of a jump nobody waits for any more is never lit up
+			 * by a change of the collection much later.
+			 */
+			onDateAnchorWaitTimeout(jump) {
+				if (this.pendingDateAnchor !== jump) {
+					return;
+				}
+				this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.failure);
+			},
+			/**
+			 * The highlight goes on strictly after the jump: the dialog scrolls to the message and, if
+			 * the message was not loaded yet, brings its page in first. Until the anchor is in the DOM
+			 * there is nothing to address, so the request waits for the next collection change.
+			 */
+			async highlightPendingDateGroup() {
+				const jump = this.pendingDateAnchor;
+				if (!jump) {
+					return;
+				}
+				jump.attempts += 1;
+				await this.$nextTick();
+
+				// the wait can be over by the time the turn comes back: the anchor found by an attempt
+				// started before this one, the jump superseded, the chat left
+				if (this.pendingDateAnchor !== jump) {
+					return;
+				}
+				try {
+					const container = this.$refs.container;
+					if (container && this.dateGroupHighlight.showByAnchor(container, jump.messageId)) {
+						this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.success);
+					}
+				} finally {
+					// the budget is what makes the wait finite while no chat has taken the jump on, so it
+					// is reached even when the attempt threw: otherwise the request would stay pending
+					// and the collection watcher would throw again on every change of the list. Once a
+					// chat has taken the jump on, the report of it is what ends the wait, and the budget
+					// steps aside - see onDateNavigationContextApplying()
+					const budgetSpent = !jump.takenByChat && jump.attempts >= MAX_DATE_ANCHOR_ATTEMPTS;
+					if (this.pendingDateAnchor === jump && budgetSpent) {
+						this.reportDateNavigationJump(im_v2_const.DateNavigationJumpOutcome.failure);
+					}
+				}
+			},
+			/**
+			 * The jump is over for the side that started it only when the divider is lit up or the wait
+			 * is given up - until then the list is still where it was, and an answer given earlier would
+			 * be an answer about a screen the user is not looking at.
+			 *
+			 * The report is addressed by the identifier of the jump and not by its day: two jumps to the
+			 * same day carry the same chat, the same message and the same date, so only the identifier
+			 * says which of them this outcome belongs to. It is taken from the jump the list stored, so
+			 * every way out of the wait - the divider found, the budget spent, the clock, the chat left,
+			 * the list going away, a jump superseding this one - names the same jump it started with.
+			 */
+			reportDateNavigationJump(outcome) {
+				const jump = this.pendingDateAnchor;
+				if (!jump) {
+					return;
+				}
+				this.forgetPendingDateGroup();
+				this.getEmitter().emit(im_v2_const.EventType.dialog.dateNavigationJumpFinished, {
+					dialogId: jump.dialogId,
+					date: jump.date,
+					jumpId: jump.jumpId,
+					outcome
+				});
+			},
+			forgetPendingDateGroup() {
+				this.pendingDateAnchor?.stopWatching?.();
+				clearTimeout(this.pendingDateAnchor?.timeoutId);
+				this.pendingDateAnchor = null;
+			},
+			/**
+			 * The divider of the day is the second entry into the calendar, and the calendar
+			 * itself lives in the message search panel of the sidebar. The click therefore asks the
+			 * sidebar for that panel and leaves the day here, where a panel takes it from - the one that
+			 * appears asks for the day itself, the one already on screen is told below. Delivery this way
+			 * depends neither on the flush the panel mounts in nor on which sidebar of the screen answered
+			 * the request to open. An already opened panel is not asked to open again - the request would
+			 * toggle it closed.
+			 */
+			async onDateNavigationClick(payload) {
+				this.rememberDateNavigationRequest(payload.date);
+				if (this.currentSidebarPanel !== im_v2_const.SidebarDetailBlock.messageSearch) {
+					this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
+						panel: im_v2_const.SidebarDetailBlock.messageSearch,
+						dialogId: this.dialogId
+					});
+
+					// the tick lets the panel of this flush take the request and lets a panel that was
+					// already living be re-addressed to this chat before it is told anything
+					await this.$nextTick();
+				}
+				await this.announceDateNavigationRequest();
+			},
+			rememberDateNavigationRequest(date) {
+				this.forgetDateNavigationRequest();
+				this.pendingDateNavigationDate = date;
+				this.dateNavigationRequestTimer = setTimeout(this.forgetDateNavigationRequest, DATE_NAVIGATION_REQUEST_LIFETIME);
+			},
+			forgetDateNavigationRequest() {
+				clearTimeout(this.dateNavigationRequestTimer);
+				this.dateNavigationRequestTimer = null;
+				this.pendingDateNavigationDate = '';
+			},
+			/**
+			 * A panel that is already on screen neither mounts nor activates, so nothing makes it ask -
+			 * it is told instead, and it answers whether it took the request. A panel that took the
+			 * request while the sidebar was opening leaves nothing to tell.
+			 */
+			async announceDateNavigationRequest() {
+				if (!this.pendingDateNavigationDate) {
+					return;
+				}
+				const answers = await this.getEmitter().emitAsync(im_v2_const.EventType.sidebar.openDateNavigation, {
+					dialogId: this.dialogId,
+					date: this.pendingDateNavigationDate
+				});
+				if (answers.includes(true)) {
+					this.forgetDateNavigationRequest();
+				}
+			},
+			// the request is given away once: whoever asks first opens the calendar, and a second asker
+			// - the same panel mounted and activated in one flush - gets nothing to open twice
+			onGetPendingDateNavigation(event) {
+				const {
+					dialogId
+				} = event.getData();
+				if (dialogId !== this.dialogId || !this.pendingDateNavigationDate) {
+					return '';
+				}
+				const date = this.pendingDateNavigationDate;
+				this.forgetDateNavigationRequest();
+				return date;
 			},
 			insertTextQuote(message) {
 				this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
@@ -32525,7 +33084,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				this.getEmitter().emit(im_v2_const.EventType.textarea.insertMention, {
 					mentionText: user.name,
 					mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(user.id, user.name),
-					dialogId: this.dialogId
+					mentionedUserId: user.id,
+					dialogId: this.dialogId,
+					isMentionSymbol: false
 				});
 			},
 			openReplyPanel(messageId) {
@@ -32566,7 +33127,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (!permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.openMessageMenu, this.dialogId)) {
 					return;
 				}
-				if (im_v2_lib_utils.Utils.key.isCombination(event, ['Alt+Ctrl'])) {
+				if (im_v2_lib_utils.Utils.key.isCombination(event, im_v2_const.HotkeyCombination.messageMenu.quote)) {
 					this.insertTextQuote(message);
 					return;
 				}
@@ -32613,6 +33174,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			getEmitter() {
 				return this.$Bitrix.eventEmitter;
+			},
+			getMessageStyle(message) {
+				return this.messageStyles[message.id] ?? null;
+			},
+			onSpacerTransitionEnd(event) {
+				if (event.propertyName === 'height') {
+					this.$emit('spacerRiseEnd');
+				}
 			}
 		},
 		template: `
@@ -32620,11 +33189,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<DialogLoader />
 		</slot>
 		<FadeAnimation :duration="200">
-			<div v-if="dialogInited" class="bx-im-message-list__container">
+			<div
+				v-if="dialogInited"
+				ref="container"
+				class="bx-im-message-list__container"
+				data-testid="im-message-list"
+			>
 				<EmptyState v-if="showEmptyState" :dialogId="dialogId" />
 				<slot name="before-messages" :getMessageComponentName="getMessageComponentName"></slot>
 				<HistoryLimitBanner v-if="isHistoryLimitExceeded" :dialogId="dialogId" :noMessages="noMessages" />
-				<DateGroup v-for="dateGroup in formattedCollection" :key="dateGroup.dateTitle" :item="dateGroup">
+				<DateGroup
+					v-for="dateGroup in formattedCollection"
+					:key="dateGroup.dateTitle"
+					:item="dateGroup"
+					@dateNavigationClick="onDateNavigationClick"
+				>
 					<!-- Slot for every date group item -->
 					<template #dateGroupItem="{ dateGroupItem, isMarkedBlock, isNewMessagesBlock, isAuthorBlock }">
 						<MarkedMessagesBlock v-if="isMarkedBlock" data-id="newMessages" />
@@ -32646,12 +33225,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 									:key="message.id"
 									:data-viewed="message.viewed"
 									:containerHeight="containerHeight"
+									:style="getMessageStyle(message)"
 								>
 								</component>
 							</template>
 						</AuthorGroup>
 					</template>
 				</DateGroup>
+				<div
+					v-if="scrollPinEnabled"
+					class="bx-im-dialog-chat__scroll-pin-spacer"
+					:class="{ '--rising': spacerAnimated }"
+					:style="{ height: spacerHeight + 'px' }"
+					data-testid="im-dialog-scroll-pin-spacer"
+					aria-hidden="true"
+					@transitionend="onSpacerTransitionEnd"
+				></div>
 				<DialogStatus v-if="showDialogStatus" :dialogId="dialogId" />
 			</div>
 		</FadeAnimation>
@@ -32663,5 +33252,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.CollectionManager = CollectionManager;
 	exports.MessageComponents = MessageComponents;
 	exports.MessageList = MessageList;
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX?.Messenger?.v2?.Component?.Animation??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.IM?.V2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.IM?.V2?.Component?.Message?.Collab??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{});;
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX?.Messenger?.v2?.Component?.Animation??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.OpenLines?.v2?.Component?.Message??{}, BX?.IM?.V2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.IM?.V2?.Component?.Message?.Collab??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Component?.Message??{});;
 //# sourceMappingURL=message-list.bundle.js.map

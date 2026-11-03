@@ -1,9 +1,21 @@
-.bx-im-video-note__container {
-	position: relative;
-}
-
 .bx-im-video-note__header_container {
 	margin-bottom: 4px;
+}
+
+/* Matches the round player width so the quote neither widens nor shrinks the circle column */
+.bx-im-video-note__reply {
+	max-width: 260px;
+	margin-top: 0;
+}
+
+/*
+ * Both overlays below hang off the circle, so they are measured from the circle and not from the
+ * body. The body is not the same box: a running AI task adds a caption plate under the graphics as
+ * a sibling of the circle, and a `bottom` counted from the body would drag the time down onto that
+ * plate. The frame is a plain block, so the horizontal offsets keep the box they always had.
+ */
+.bx-im-video-note__frame {
+	position: relative;
 }
 
 .bx-im-video-note__status_container {

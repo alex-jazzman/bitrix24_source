@@ -18,12 +18,13 @@ jn.define('crm/timeline/scheduler/providers/mail', (require, exports, module) =>
 			const { entity: { id, typeId } } = scheduler;
 			const typeName = Type.resolveNameById(typeId);
 
-			MailOpener.openSend({
-				owner: {
-					ownerId: id,
-					ownerType: typeName,
-				},
-			});
+			const owner = {
+				ownerId: id,
+				ownerType: typeName,
+				ownerTypeId: typeId,
+			};
+
+			MailOpener.openSend({ owner });
 		}
 
 		static getId()

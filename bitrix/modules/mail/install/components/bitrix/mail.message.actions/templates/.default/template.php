@@ -103,33 +103,48 @@ if (!in_array($defaultAction, $availableItems, true))
 
 $createMenu['__default'] = &$createMenu[$defaultAction];
 $controlId = (string)($arResult['CONTROL_ID'] ?? (int)$message['ID']);
+$buttonColor = ($arParams['RENDER_TARGET'] ?? '') === 'inline'
+	? Bitrix\UI\Buttons\Color::SUCCESS
+	: Bitrix\UI\Buttons\Color::PRIMARY
+;
 if (count($availableItems) === 1)
 {
 	// A single available action (typical CRM context) has no menu items, so render a plain
 	// button without the split menu arrow to avoid opening an empty/meaningless menu.
 	$createButton = new Bitrix\UI\Buttons\Button([
-		'color' => Bitrix\UI\Buttons\Color::PRIMARY,
+		'color' => $buttonColor,
 		'text' => $createMenu['__default']['title'],
 		'dataset' => [
 			'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::CAMERA
 		]
 	]);
 	$createButton->addAttribute('id', 'mail-msg-'. $controlId .'-actions-create-btn');
-	Toolbar::addButton($createButton);
+	$createButton->addAttribute('data-testid', 'mail-message-actions-create');
 }
 else
 {
 	$splitButton = new Bitrix\UI\Buttons\Split\Button([
-		'color' => Bitrix\UI\Buttons\Color::PRIMARY,
+		'color' => $buttonColor,
 		'text' => $createMenu['__default']['title'],
 		'dataset' => [
 			'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::CAMERA
 		]
 	]);
 	$splitButton->getMainButton()->addAttribute('id', 'mail-msg-'. $controlId .'-actions-create-btn');
+	$splitButton->getMainButton()->addAttribute('data-testid', 'mail-message-actions-create');
 	$splitButton->getMenuButton()->addAttribute('id', 'mail-msg-'. $controlId .'-actions-create-menu-btn');
+	$splitButton->getMenuButton()->addAttribute('data-testid', 'mail-message-actions-create-menu');
 	$splitButton->getMenuButton()->addAttribute('aria-label', Loc::getMessage('MAIL_MESSAGE_ACTIONS_MORE_MENU'));
-	Toolbar::addButton($splitButton);
+	$createButton = $splitButton;
+}
+
+if (($arParams['RENDER_TARGET'] ?? '') === 'inline')
+{
+	echo $createButton->render();
+}
+else
+{
+	Toolbar::addButton($createButton);
 }
 ?>
 

@@ -15,6 +15,8 @@ return [
 		'ui.entity-selector',
 		'tasks.creation-menu',
 		'calendar.entry',
+		'calendar.analytics',
+		'socialnetwork.v2.lib.event-sender',
 		'socialnetwork.post-form',
 		'main.popup',
 		'ui.popupcomponentsmaker',

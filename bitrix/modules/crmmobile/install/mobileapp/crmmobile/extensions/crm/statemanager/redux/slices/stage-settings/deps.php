@@ -11,4 +11,7 @@ return [
 		'crm:ajax',
 		'crm:statemanager/redux/slices/tunnels',
 	],
+	'bundle' => [
+		'./request',
+	],
 ];

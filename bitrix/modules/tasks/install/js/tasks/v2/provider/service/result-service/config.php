@@ -15,6 +15,7 @@ return [
 		'tasks.v2.lib.api-client',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.provider.service.file-service',
+		'tasks.v2.provider.service.result-message-service',
 		'tasks.v2.provider.service.task-service',
 		'tasks.v2.provider.service.user-service',
 	],

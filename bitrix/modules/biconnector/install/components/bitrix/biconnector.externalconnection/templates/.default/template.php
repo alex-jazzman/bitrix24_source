@@ -33,6 +33,7 @@ if (!empty($arResult['ERROR_MESSAGES']))
 
 Extension::load([
 	'biconnector.dataset-import-v2',
+	'biconnector.error-message',
 	'biconnector.popup',
 	'ui.buttons',
 	'ui.entity-selector',

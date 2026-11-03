@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/navigation/tab-switcher', (require, exports, module) => {
 	const { EventType, NonSelectableNavigationTabId } = require('im/messenger/const');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { AsyncQueue, withTimeout } = require('im/messenger/lib/utils');
@@ -30,7 +29,8 @@ jn.define('im/messenger/controller/navigation/tab-switcher', (require, exports, 
 		#onTabChanged = null;
 		/** @type {Partial<TabOptions>} */
 		#activatedTabOptions = {};
-		#currentTabId = MessengerParams.get('FIRST_TAB_ID', 'chats');
+		/** @type {string|null} */
+		#currentTabId = NavigationHelper.resolveInitialTabId();
 		#previousTabId;
 		#queue = new AsyncQueue();
 		// Mutations use a separate queue from setActiveTab — they sync the
@@ -395,6 +395,8 @@ jn.define('im/messenger/controller/navigation/tab-switcher', (require, exports, 
 		#rootTabsSelectedHandler = (id) =>	{
 			logger.log('onRootTabsSelected id:', id);
 
+			// Root tab of the application, not a messenger section: the id comes from the
+			// native app tab bar. Unrelated to NavigationTabId.chats, do not "fix" it.
 			const rootTabChatName = 'chats';
 			if (id === rootTabChatName)
 			{

@@ -6,6 +6,8 @@ import { UiRadio } from 'tasks.v2.component.elements.radio';
 
 import { MonthSelect } from '../../components/month-select';
 
+import '../../../replication-sheet-content.css';
+
 // @vue/component
 export const ReplicationSettingsYearAbsoluteDate = {
 	name: 'ReplicationSettingsYearAbsoluteDate',
@@ -108,22 +110,30 @@ export const ReplicationSettingsYearAbsoluteDate = {
 		>
 			<UiRadio
 				tag="label"
+				class="tasks-replication-sheet-action-row__option"
 				:modelValue="yearlyType"
 				:value="ReplicationYearlyType.Absolute"
 				inputName="tasks-replication-sheet-yearly-type"
+				data-testid="tasks-replication-yearly-absolute-radio"
 				@update:modelValue="$emit('update:yearlyType', $event)"
-			/>
+			>
+				<span class="tasks-field-replication-vh">
+					{{ loc('TASKS_V2_REPLICATION_BY_DATE_ARIA_LABEL') }}
+				</span>
+			</UiRadio>
 			<BInput
 				:modelValue="localDayNumber"
 				:size="InputSize.Sm"
 				:design="disabled ? InputDesign.Disabled : InputDesign.Grey"
 				:disabled
 				stretched
+				:ariaLabel="loc('TASKS_V2_REPLICATION_DAY_OF_MONTH_ARIA_LABEL')"
+				data-testid="tasks-replication-yearly-day-input"
 				style="max-width: 4em;"
 				@update:modelValue="updateDayNumber"
 				@blur="handleDayNumberBlur"
 			/>
-			<MonthSelect v-model="month" :disabled/>
+			<MonthSelect v-model="month" :disabled data-testid="tasks-replication-yearly-month-select"/>
 		</div>
 	`,
 };

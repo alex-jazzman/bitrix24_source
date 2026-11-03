@@ -78,7 +78,15 @@ export type LinkButtonBlockType = BaseButton & {
 	url: string,
 };
 
-export type AnyButtonBlock = EventButtonBlockType | LinkButtonBlockType;
+export type RequestButtonBlockType = BaseButton & {
+	id: string | number,
+	type: 'requestButton',
+	actionId: string,
+	actionParams?: { [string]: any },
+	disabled: boolean,
+};
+
+export type AnyButtonBlock = EventButtonBlockType | LinkButtonBlockType | RequestButtonBlockType;
 
 export type CardBlockType = BaseBlock & {
 	imageUrl?: string,
@@ -87,14 +95,47 @@ export type CardBlockType = BaseBlock & {
 	buttons?: EventButtonBlockType[],
 };
 
+type Progress = {
+	value: number,
+	colorToken?: $Values<typeof MessageBuilderPlainColorToken> | $Values<typeof MessageBuilderGradientColorToken>,
+};
+
 export type AiAssistantSearchBlockType = BaseBlock & {
 	title: string,
 	text: string,
+	progress?: Progress,
 };
 
 export type GalleryBlockType = BaseBlock & {
 	title: string,
 	fileIds: number[],
+};
+
+export type FileBlockType = BaseBlock & {
+	fileIds: number[],
+};
+
+export type AudioBlockType = BaseBlock & {
+	fileId: number,
+};
+
+export type FormFieldOption = {
+	id: string,
+	label: string,
+};
+
+export type FormFieldBlockType = {
+	id: string,
+	type: $Values<typeof FormFieldType>,
+	label?: string,
+	placeholder?: string,
+	options?: FormFieldOption[],
+	disabled: boolean,
+};
+
+export type FormBlockType = BaseBlock & {
+	elements: FormFieldBlockType[],
+	buttons: RequestButtonBlockType[][],
 };
 
 export type AnyBlockType =
@@ -108,6 +149,9 @@ export type AnyBlockType =
 	| TableBlockType
 	| CardBlockType
 	| GalleryBlockType
+	| FileBlockType
+	| AudioBlockType
+	| FormBlockType
 	| AiAssistantSearchBlockType;
 
 export const MessageBuilderPlainColorToken = {
@@ -124,3 +168,15 @@ export const MessageBuilderGradientColorToken = {
 };
 
 export const MessageBuilderBackgroundPlainToken = 'plain';
+
+// Mirrors SendContextualStatus::THINKING_SEARCH_BLOCK_ID. messages/builder/updateBlock silently
+// does nothing on a mismatched id, so the plan player must address the block by the server's id.
+export const AiAssistantThinkingBlockId = 'aiassistant-thinking-search';
+
+export const FormFieldType = Object.freeze({
+	singleLineText: 'singleLineText',
+	multilineText: 'multilineText',
+	select: 'select',
+	radio: 'radio',
+	checkbox: 'checkbox',
+});

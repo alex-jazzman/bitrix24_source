@@ -6,13 +6,26 @@
 		return;
 	}
 
+	var AVAILABILITY_GRACE_TIMEOUT = 3000;
+	var AVAILABILITY_PROBE_TIMEOUT = 8000;
+
+	var DIAGNOSTIC_ACTION = 'rest.v2.Application.AppDiagnostic.diagnose';
+	var DIAGNOSTIC_TEXT_MESSAGE = {
+		certificate_mincifry: 'REST_APP_FRAME_UNAVAILABLE_TEXT_MINCIFRY',
+		certificate_untrusted: 'REST_APP_FRAME_UNAVAILABLE_TEXT_UNTRUSTED',
+		host_unreachable: 'REST_APP_FRAME_UNAVAILABLE_TEXT_UNREACHABLE'
+	};
+	var DIAGNOSTIC_CERTIFICATE_REASON = ['certificate_mincifry', 'certificate_untrusted'];
+
 	BX.rest.AppLayout = function(params)
 	{
 		this.params = {
 			firstRun: !!params.firstRun,
 			appHost: params.appHost,
+			appHandlerSignature: params.appHandlerSignature,
 			appPort: params.appPort,
 			appProto: params.appProto,
+			skipAvailabilityCheck: !!params.skipAvailabilityCheck,
 			authId: params.authId,
 			authExpires: params.authExpires,
 			refreshId: params.refreshId,
@@ -46,6 +59,21 @@
 
 		this._inited = false;
 		this._destroyed = false;
+
+		this._appConnected = false;
+		this._appReachable = false;
+		this._probeRunning = false;
+		this._retryRequested = false;
+		this._stubDismissed = false;
+		this._availabilityTimer = null;
+		this._unavailableStub = null;
+		this._retryNode = null;
+		this._textNode = null;
+		this._firefoxNode = null;
+		this._helpNode = null;
+
+		this._diagnosticReason = '';
+		this._diagnosticRunning = false;
 
 		this.deniedInterface = [];
 
@@ -322,34 +350,505 @@
 			if(!this._inited && !!document.forms[this.params.formName])
 			{
 				var loader = BX(this.params.loaderName);
+				var startAvailabilityCheck = BX.delegate(this.startAvailabilityCheck, this);
 				BX.bind(BX(this.params.frameName), 'load', function()
 				{
 					BX.addClass(loader, 'app-loading-msg-loaded');
 					BX.removeClass(this, 'app-loading');
 					BX.remove(loader);
+					startAvailabilityCheck();
 				});
 
-				if(this.params.staticHtml)
-				{
-					BX(this.params.frameName).src = document.forms[this.params.formName].action;
-				}
-				else
-				{
-					document.forms[this.params.formName].submit();
-				}
+				this.loadFrame();
 
 				this._inited = true;
+			}
+		},
+
+		loadFrame: function()
+		{
+			var form = document.forms[this.params.formName];
+			var frame = BX(this.params.frameName);
+			if(!form || !frame)
+			{
+				return;
+			}
+
+			if(this.params.staticHtml)
+			{
+				frame.src = form.action;
+			}
+			else
+			{
+				form.submit();
 			}
 		},
 
 		destroy: function()
 		{
 			BX.unbind(window, 'message', BX.proxy(this.receiveMessage, this));
+
+			if(this._availabilityTimer)
+			{
+				clearTimeout(this._availabilityTimer);
+				this._availabilityTimer = null;
+			}
+
+			this.hideUnavailableStub();
+
 			if (BX(this.params.frameName))
 			{
 				BX(this.params.frameName).parentNode.removeChild(BX(this.params.frameName));
 			}
 			this._destroyed = true;
+		},
+
+		getAppUrl: function()
+		{
+			var form = document.forms[this.params.formName];
+			var url = form ? form.action : '';
+
+			return /^https?:\/\//i.test(url) ? url : '';
+		},
+
+		startAvailabilityCheck: function()
+		{
+			if(this.params.skipAvailabilityCheck)
+			{
+				return;
+			}
+
+			if(this._availabilityTimer)
+			{
+				clearTimeout(this._availabilityTimer);
+				this._availabilityTimer = null;
+			}
+
+			this.hideUnavailableStub();
+			this._appReachable = false;
+			this._stubDismissed = false;
+
+			if(this._appConnected || this._destroyed || !window.fetch)
+			{
+				return;
+			}
+
+			this._availabilityTimer = setTimeout(BX.delegate(this.probeAppHost, this), AVAILABILITY_GRACE_TIMEOUT);
+		},
+
+		getAppOrigin: function()
+		{
+			var origin = this.params.appProto + '://' + this.params.appHost;
+
+			return /^https?:\/\/[^/]+$/i.test(origin) ? origin : '';
+		},
+
+		probeAppHost: function()
+		{
+			this._availabilityTimer = null;
+
+			var url = this.getAppOrigin();
+			if(this._appConnected || this._appReachable || this._destroyed || this._probeRunning || !url)
+			{
+				return;
+			}
+
+			this._probeRunning = true;
+			this.setRetryBusy(true);
+
+			var options = {mode: 'no-cors', credentials: 'omit', cache: 'no-store'};
+
+			var controller = window.AbortController ? new AbortController() : null;
+			if(controller)
+			{
+				options.signal = controller.signal;
+			}
+
+			var abortTimer = setTimeout(BX.delegate(function()
+			{
+				if(controller)
+				{
+					controller.abort();
+				}
+
+				this._probeRunning = false;
+				this.setRetryBusy(false);
+				this.handleProbeFailure();
+			}, this), AVAILABILITY_PROBE_TIMEOUT);
+
+			window.fetch(url, options).then(
+				BX.delegate(function()
+				{
+					clearTimeout(abortTimer);
+					this._probeRunning = false;
+					this._appReachable = true;
+					this.setRetryBusy(false);
+					this.reloadFrameOnRetry();
+					this.hideUnavailableStub();
+				}, this),
+				BX.delegate(function()
+				{
+					clearTimeout(abortTimer);
+					this._probeRunning = false;
+					this.setRetryBusy(false);
+					this.handleProbeFailure();
+				}, this)
+			).catch(function(error)
+			{
+				BX.debug(error);
+			});
+		},
+
+		handleProbeFailure: function()
+		{
+			this._retryRequested = false;
+
+			if(this._appConnected || this._appReachable || this._destroyed)
+			{
+				return;
+			}
+
+			this.showUnavailableStub();
+		},
+
+		retryAvailabilityCheck: function()
+		{
+			this._retryRequested = true;
+			this.probeAppHost();
+		},
+
+		reloadFrameOnRetry: function()
+		{
+			if(!this._retryRequested)
+			{
+				return;
+			}
+
+			this._retryRequested = false;
+			this.loadFrame();
+		},
+
+		setRetryBusy: function(busy)
+		{
+			if(!this._retryNode)
+			{
+				return;
+			}
+
+			var retryText = getMessage('REST_APP_FRAME_UNAVAILABLE_RETRY');
+
+			this._retryNode.disabled = busy;
+			this._retryNode.textContent = busy
+				? (getMessage('REST_APP_FRAME_UNAVAILABLE_RETRYING') || retryText)
+				: retryText;
+		},
+
+		dismissUnavailableStub: function()
+		{
+			this._stubDismissed = true;
+			this.hideUnavailableStub();
+		},
+
+		showUnavailableStub: function()
+		{
+			var layout = BX(this.params.layoutName);
+			if(this._unavailableStub || this._stubDismissed || !layout)
+			{
+				return;
+			}
+
+			var stub = this.createUnavailableStub();
+			if(!stub)
+			{
+				return;
+			}
+
+			this._unavailableStub = stub;
+			layout.appendChild(stub);
+			this.setFrameInert(true);
+
+			this.requestDiagnostic();
+		},
+
+		hideUnavailableStub: function()
+		{
+			if(!this._unavailableStub)
+			{
+				return;
+			}
+
+			BX.remove(this._unavailableStub);
+			this._unavailableStub = null;
+			this._retryNode = null;
+			this._textNode = null;
+			this._firefoxNode = null;
+			this._helpNode = null;
+			this.setFrameInert(false);
+		},
+
+		requestDiagnostic: function()
+		{
+			if(this._diagnosticReason || this._diagnosticRunning || !BX.ajax || !BX.ajax.runAction)
+			{
+				return;
+			}
+
+			if(!BX.type.isNotEmptyString(this.params.appHandlerSignature))
+			{
+				return;
+			}
+
+			this._diagnosticRunning = true;
+
+			BX.ajax.runAction(DIAGNOSTIC_ACTION, {
+				data: {
+					signedHandlerUrl: this.params.appHandlerSignature
+				}
+			}).then(
+				BX.delegate(function(response)
+				{
+					this._diagnosticRunning = false;
+
+					var data = !!response && !!response.data ? response.data : {};
+					var reason = data.reason;
+					if(!BX.type.isNotEmptyString(reason))
+					{
+						return;
+					}
+
+					if(!DIAGNOSTIC_TEXT_MESSAGE.hasOwnProperty(reason))
+					{
+						return;
+					}
+
+					this._diagnosticReason = reason;
+					this.applyDiagnostic();
+				}, this),
+				BX.delegate(function()
+				{
+					this._diagnosticRunning = false;
+				}, this)
+			);
+		},
+
+		applyDiagnostic: function()
+		{
+			if(!this._unavailableStub || !this._textNode)
+			{
+				return;
+			}
+
+			this._textNode.textContent = this.getStubText();
+			this.updateDiagnosticHelp();
+
+			if(this._firefoxNode || !this.isCertificateReason())
+			{
+				return;
+			}
+
+			var note = this.createFirefoxNote();
+			if(note)
+			{
+				this._firefoxNode = note;
+				BX.insertAfter(note, this._textNode);
+			}
+		},
+
+		isCertificateReason: function()
+		{
+			return BX.util.in_array(this._diagnosticReason, DIAGNOSTIC_CERTIFICATE_REASON);
+		},
+
+		isMincifryReason: function()
+		{
+			return this._diagnosticReason === 'certificate_mincifry';
+		},
+
+		updateDiagnosticHelp: function()
+		{
+			if(!this.isMincifryReason())
+			{
+				if(this._helpNode)
+				{
+					BX.remove(this._helpNode);
+					this._helpNode = null;
+				}
+
+				return;
+			}
+
+			if(!this._helpNode)
+			{
+				this._helpNode = this.createHelpLink();
+				if(this._helpNode)
+				{
+					this._unavailableStub.appendChild(this._helpNode);
+				}
+			}
+		},
+
+		createHelpLink: function()
+		{
+			var helpUrl = getMessage('REST_APP_FRAME_UNAVAILABLE_HELP_URL');
+			if(!/^https?:\/\//i.test(helpUrl))
+			{
+				return null;
+			}
+
+			return BX.create('A', {
+				props: {
+					className: 'app-frame-unavailable-help',
+					href: helpUrl,
+					target: '_blank',
+					rel: 'noopener noreferrer'
+				},
+				text: getMessage('REST_APP_FRAME_UNAVAILABLE_HELP')
+			});
+		},
+
+		getStubText: function()
+		{
+			var reason = this._diagnosticReason;
+			var text = DIAGNOSTIC_TEXT_MESSAGE.hasOwnProperty(reason)
+				? getMessage(DIAGNOSTIC_TEXT_MESSAGE[reason])
+				: '';
+			if(!text)
+			{
+				text = getMessage('REST_APP_FRAME_UNAVAILABLE_TEXT');
+			}
+
+			return text.split('#HOST#').join(this.params.appHost);
+		},
+
+		createFirefoxNote: function()
+		{
+			if(!BX.browser || !BX.browser.IsFirefox())
+			{
+				return null;
+			}
+
+			var text = getMessage('REST_APP_FRAME_UNAVAILABLE_FIREFOX');
+			if(!text)
+			{
+				return null;
+			}
+
+			return BX.create('DIV', {
+				props: {className: 'app-frame-unavailable-hint'},
+				text: text
+			});
+		},
+
+		setFrameInert: function(inert)
+		{
+			var frame = BX(this.params.frameName);
+			if(!frame)
+			{
+				return;
+			}
+
+			frame.inert = inert;
+
+			if(inert)
+			{
+				frame.setAttribute('aria-hidden', 'true');
+			}
+			else
+			{
+				frame.removeAttribute('aria-hidden');
+			}
+		},
+
+		createUnavailableStub: function()
+		{
+			this._retryNode = null;
+			this._textNode = null;
+			this._firefoxNode = null;
+			this._helpNode = null;
+
+			var title = getMessage('REST_APP_FRAME_UNAVAILABLE_TITLE');
+			if(!title)
+			{
+				return null;
+			}
+
+			this._textNode = BX.create('DIV', {
+				props: {className: 'app-frame-unavailable-text'},
+				text: this.getStubText()
+			});
+
+			var children = [
+				BX.create('H3', {
+					props: {className: 'app-frame-unavailable-title'},
+					text: title
+				}),
+				this._textNode
+			];
+
+			if(this.isCertificateReason())
+			{
+				this._firefoxNode = this.createFirefoxNote();
+				if(this._firefoxNode)
+				{
+					children.push(this._firefoxNode);
+				}
+			}
+
+			var url = this.getAppUrl();
+			if(url)
+			{
+				children.push(
+					BX.create('A', {
+						props: {
+							className: 'app-frame-unavailable-button',
+							href: url,
+							target: '_blank',
+							rel: 'noopener noreferrer'
+						},
+						text: getMessage('REST_APP_FRAME_UNAVAILABLE_OPEN')
+					}),
+					BX.create('DIV', {
+						props: {className: 'app-frame-unavailable-hint'},
+						text: getMessage('REST_APP_FRAME_UNAVAILABLE_OPEN_HINT')
+					})
+				);
+			}
+
+			var retryText = getMessage('REST_APP_FRAME_UNAVAILABLE_RETRY');
+			if(retryText)
+			{
+				this._retryNode = BX.create('BUTTON', {
+					props: {className: 'app-frame-unavailable-action', type: 'button'},
+					text: retryText,
+					events: {click: BX.delegate(this.retryAvailabilityCheck, this)}
+				});
+				children.push(this._retryNode);
+			}
+
+			var dismissText = getMessage('REST_APP_FRAME_UNAVAILABLE_DISMISS');
+			if(dismissText)
+			{
+				children.push(BX.create('BUTTON', {
+					props: {className: 'app-frame-unavailable-action', type: 'button'},
+					text: dismissText,
+					events: {click: BX.delegate(this.dismissUnavailableStub, this)}
+				}));
+			}
+
+			if(this.isMincifryReason())
+			{
+				this._helpNode = this.createHelpLink();
+				if(this._helpNode)
+				{
+					children.push(this._helpNode);
+				}
+			}
+
+			return BX.create('DIV', {
+				props: {className: 'app-frame-unavailable'},
+				attrs: {role: 'status', 'aria-atomic': 'false'},
+				children: children
+			});
 		},
 
 		query: function(param, callback)
@@ -424,6 +923,9 @@
 			{
 				return;
 			}
+
+			this._appConnected = true;
+			this.hideUnavailableStub();
 
 			if (!!this.messageInterface[method] && !BX.util.in_array(method, this.deniedInterface))
 			{
@@ -1075,6 +1577,13 @@
 			BX.rest.layoutList[id] = null;
 		}
 	};
+
+	function getMessage(id)
+	{
+		var message = BX.message(id);
+
+		return BX.type.isNotEmptyString(message) ? message : '';
+	}
 
 	function split(s, ss)
 	{

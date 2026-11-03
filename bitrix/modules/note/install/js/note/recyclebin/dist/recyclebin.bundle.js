@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_vue3, ui_buttons, ui_system_dialog, ui_notification, ui_iconSet_api_vue, note_ui_themeContext, note_ui_documentList, note_ui_actionMenu, note_sidebar, note_ui_collectionPicker) {
+(function (exports, main_core, main_core_events, ui_vue3, ui_buttons, ui_system_dialog, ui_notification, ui_iconSet_api_vue, note_ui_themeContext, note_ui_documentList, note_ui_actionMenu, note_sidebar, note_analytics, note_ui_collectionPicker) {
 	'use strict';
 
 	const ACTION_LIST = 'note.infrastructure.RecycleBinController.list';
@@ -11,6 +11,13 @@ this.BX = this.BX || {};
 	const ACTION_EMPTY = 'note.infrastructure.RecycleBinController.empty';
 	const ACTION_RESTORE_MANY = 'note.infrastructure.RecycleBinController.restoreMany';
 	const ACTION_HARD_DELETE_MANY = 'note.infrastructure.RecycleBinController.hardDeleteMany';
+	const ACTION_CREATE_COLLECTION = 'note.infrastructure.CollectionController.create';
+	const RESTORE_PICKER_CREATE_STATS = {
+		admin: 1,
+		reductorsCount: 0,
+		viewersCount: 0,
+		customCount: 0
+	};
 	const ORPHAN_TARGET_REQUIRED_CODE = 'NOTE_RECYCLE_BIN_ORPHAN_TARGET_REQUIRED';
 
 	// DTO-01: outcome of a bulk operation. On limitExceeded the counters are all zero and nothing was applied.
@@ -25,6 +32,30 @@ this.BX = this.BX || {};
 		}
 	}
 	class RecycleBinService {
+		async createCollection(name) {
+			try {
+				const response = await main_core.ajax.runAction(ACTION_CREATE_COLLECTION, {
+					data: {
+						name,
+						position: 0
+					}
+				});
+				const collection = main_core.Type.isPlainObject(response?.data) ? response.data : {};
+				const id = Number(collection.id);
+				if (!Number.isInteger(id) || id <= 0) {
+					note_analytics.NoteAnalytics.collectionCreated(RESTORE_PICKER_CREATE_STATS, false);
+					return null;
+				}
+				note_analytics.NoteAnalytics.collectionCreated(RESTORE_PICKER_CREATE_STATS, true);
+				return {
+					id,
+					title: String(collection.name || name)
+				};
+			} catch (error) {
+				note_analytics.NoteAnalytics.collectionCreated(RESTORE_PICKER_CREATE_STATS, false);
+				throw this.#toServiceError(error);
+			}
+		}
 		async list({
 			limit = 50,
 			afterCursor = null
@@ -237,6 +268,8 @@ this.BX = this.BX || {};
 		const total = Math.max(0, Number(options?.total) || 0);
 		const orphanCount = Math.max(0, Number(options?.orphanCount) || 0);
 		const hasOrphans = orphanCount > 0;
+		const onCreateCollection = main_core.Type.isFunction(options?.onCreateCollection) ? options.onCreateCollection : null;
+		const canCreateCollection = Boolean(options?.canCreateCollection && onCreateCollection);
 		return new Promise(resolve => {
 			let isResolved = false;
 			let restoreButton = null;
@@ -273,7 +306,12 @@ this.BX = this.BX || {};
 			// Selector is only shown when part of the selection has lost its source collection.
 			const picker = hasOrphans ? note_ui_collectionPicker.createCollectionSelector({
 				placeholder: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
+				accessLevel: 'manage',
 				mobileDropdownHeight: 240,
+				allowCreateItem: canCreateCollection,
+				createFooterLabel: main_core.Loc.getMessage('NOTE_SIDEBAR_PICK_COLLECTION_FOOTER_CREATE') || '',
+				onItemCreateAsync: onCreateCollection,
+				confirmAfterCreate: true,
 				onSelectionChange: () => updateRestoreState()
 			}) : null;
 			const content = main_core.Tag.render`
@@ -366,16 +404,23 @@ this.BX = this.BX || {};
 	function openOrphanRestorePopup(options = {}) {
 		const documentTitle = String(options?.documentTitle || '');
 		const bodyOverride = String(options?.bodyText || '');
+		const onCreateCollection = main_core.Type.isFunction(options?.onCreateCollection) ? options.onCreateCollection : null;
+		const canCreateCollection = Boolean(options?.canCreateCollection && onCreateCollection);
 		return note_ui_collectionPicker.openCollectionPicker({
 			title: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TITLE') || '',
 			description: bodyOverride || buildBodyText(documentTitle),
 			placeholder: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
 			primaryLabel: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_RESTORE') || '',
-			cancelLabel: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || ''
+			cancelLabel: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || '',
+			accessLevel: 'manage',
+			canCreateCollection,
+			createFooterLabel: main_core.Loc.getMessage('NOTE_SIDEBAR_PICK_COLLECTION_FOOTER_CREATE') || '',
+			onCreateCollection,
+			confirmAfterCreate: true
 		});
 	}
 	function buildBodyText(documentTitle) {
-		return (main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TEXT') || '').replace('#DOCUMENT#', documentTitle);
+		return (main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TEXT_MSGVER_1') || '').replace('#DOCUMENT#', documentTitle);
 	}
 
 	const PAGE_SIZE = 50;
@@ -415,6 +460,9 @@ this.BX = this.BX || {};
 			Outline: () => ui_iconSet_api_vue.Outline,
 			isMobile() {
 				return Boolean(this.sidebarState?.isMobile);
+			},
+			canCreateCollection() {
+				return Boolean(this.sidebarState?.permissions?.canEditCollections);
 			},
 			selectedCount() {
 				return this.selection.count;
@@ -641,7 +689,9 @@ this.BX = this.BX || {};
 				let target = null;
 				if (orphanIds.length > 0) {
 					target = await openOrphanRestorePopup({
-						bodyText: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_ORPHAN_TARGET_TEXT') || ''
+						bodyText: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_ORPHAN_TARGET_TEXT') || '',
+						canCreateCollection: this.canCreateCollection,
+						onCreateCollection: name => this.createCollectionForRestore(name)
 					});
 					if (!target) {
 						return;
@@ -678,6 +728,14 @@ this.BX = this.BX || {};
 					await this.loadPage(false);
 				}
 			},
+			async createCollectionForRestore(name) {
+				try {
+					return await this.service.createCollection(name);
+				} catch (error) {
+					this.showErrorToast(error?.message || main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC') || '');
+					return null;
+				}
+			},
 			async runHardDelete() {
 				if (this.allSelected) {
 					await this.onEmptyTrash();
@@ -689,7 +747,7 @@ this.BX = this.BX || {};
 					return;
 				}
 
-				// AC-032: reinforced confirm — hard delete is permanent and cannot be undone.
+				// reinforced confirm - hard delete is permanent and cannot be undone.
 				const confirmed = await this.confirm({
 					title: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_TITLE') || '',
 					message: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_MESSAGE') || '',
@@ -787,7 +845,9 @@ this.BX = this.BX || {};
 				if (stats.orphanCount > 0) {
 					const popupResult = await openBulkRestorePopup({
 						total: stats.total,
-						orphanCount: stats.orphanCount
+						orphanCount: stats.orphanCount,
+						canCreateCollection: this.canCreateCollection,
+						onCreateCollection: name => this.createCollectionForRestore(name)
 					});
 					if (!popupResult.confirmed) {
 						return;
@@ -1054,5 +1114,5 @@ this.BX = this.BX || {};
 	exports.openBulkRestorePopup = openBulkRestorePopup;
 	exports.openOrphanRestorePopup = openOrphanRestorePopup;
 
-})(this.BX.Note = this.BX.Note || {}, BX, BX.Event, BX.Vue3, BX.UI, BX.UI.System, BX.UI.Notification, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note.Sidebar, BX.Note.Ui);
+})(this.BX.Note = this.BX.Note || {}, BX, BX.Event, BX.Vue3, BX.UI, BX.UI.System, BX.UI.Notification, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note.Sidebar, BX.Note, BX.Note.Ui);
 //# sourceMappingURL=recyclebin.bundle.js.map

@@ -1,0 +1,2 @@
+<?php
+$MESS['SALE_USER_CONSENT_A11Y_AGREEMENT_TEXT_ARIA'] = 'Текст соглашения';

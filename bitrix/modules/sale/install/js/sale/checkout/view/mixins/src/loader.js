@@ -25,6 +25,11 @@ export default {
             getStatus()
             {
                 return this.config.status;
+            },
+            // a string: Vue 2 drops an attribute bound to false
+            ariaBusy()
+            {
+                return this.config.status === LoaderConst.status.wait ? 'true' : 'false';
             }
         },
     watch:

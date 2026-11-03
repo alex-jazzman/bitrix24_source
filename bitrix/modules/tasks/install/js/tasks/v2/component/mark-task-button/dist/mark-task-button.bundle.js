@@ -18,6 +18,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		inject: {
 			task: {}
 		},
+		props: {
+			getMenuTargetContainer: {
+				type: Function,
+				default: null
+			}
+		},
 		setup() {},
 		data() {
 			return {
@@ -33,6 +39,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				return () => ({
 					id: 'tasks-full-card-mark-task-menu',
 					bindElement: this.$refs.container?.$el || this.$refs.container,
+					targetContainer: this.getMenuTargetContainer?.() ?? null,
 					sections: this.menuSections,
 					items: this.menuItems
 				});
@@ -66,6 +73,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			},
 			isLocked() {
 				return !tasks_v2_core.Core.getParams().restrictions.mark.available;
+			},
+			opensMenu() {
+				return this.isAllowed && !this.isLocked;
+			},
+			isActionable() {
+				return this.opensMenu || this.isLocked;
 			}
 		},
 		watch: {
@@ -137,6 +150,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				}
 				this.isMenuShown = true;
 			},
+			getTriggerElement() {
+				return this.$refs.container?.$el?.querySelector('.b24-hover-pill-content');
+			},
+			handleMenuClose() {
+				this.isMenuShown = false;
+				this.getTriggerElement()?.focus();
+			},
 			updateMark() {
 				this.activeMenuItemId = this.task.mark;
 			}
@@ -146,6 +166,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			:readonly="!isAllowed"
 			ref="container"
 			class="mark-task-button"
+			:ariaLabel="isActionable ? formattedText : ''"
+			:ariaHaspopup="opensMenu ? 'menu' : ''"
+			:ariaExpanded="opensMenu ? isMenuShown : null"
 			@click="handleClick"
 		>
 			<div class="mark-task-button__text">{{ formattedText }}</div>
@@ -158,7 +181,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		<BMenu
 			v-if="isMenuShown"
 			:options="menuOptions()"
-			@close="isMenuShown = false"
+			@close="handleMenuClose"
 		/>
 	`
 	};

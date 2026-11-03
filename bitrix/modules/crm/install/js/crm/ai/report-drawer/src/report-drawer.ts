@@ -4,7 +4,9 @@ import { DateTimeFormat } from 'main.date';
 import { Popup } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
 import { Router } from 'crm.router';
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { DatetimeConverter } from 'crm.timeline.tools';
+import { sendData } from 'ui.analytics';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.entity-selector';
 import { TextSm } from 'ui.system.typography.vue';
@@ -19,9 +21,11 @@ import { Pull } from './pull';
 import {
 	type AppParams,
 	type AssessmentSettingData,
+	type BlockData,
 	type ViewData,
 	type ResponseData, ResponseError,
 	type CallScoringPullData, DrawerRequest,
+	type ReassessmentSource,
 } from './types';
 
 import 'ui.buttons.icons';
@@ -40,6 +44,10 @@ const SCENARIO = {
 	SUMMARY_HISTORY: {
 		ajaxAction: 'crm.timeline.aireportdrawer.loadSummaryHistoryDrawer',
 		code: 'summary-history',
+	},
+	TRANSCRIPT: {
+		ajaxAction: 'crm.timeline.aireportdrawer.loadTranscriptDrawer',
+		code: 'transcript',
 	},
 };
 
@@ -178,6 +186,9 @@ export class ReportDrawer
 			case SCENARIO.SUMMARY_HISTORY.ajaxAction:
 				return SCENARIO.SUMMARY_HISTORY.code;
 
+			case SCENARIO.TRANSCRIPT.ajaxAction:
+				return SCENARIO.TRANSCRIPT.code;
+
 			default:
 				return null;
 		}
@@ -196,6 +207,7 @@ export class ReportDrawer
 			App,
 			{
 				viewData: data,
+				ownerTypeId: Number(this.params.drawerRequest.ownerTypeId),
 				shareLink: this.getSliderLink(),
 				onShowReassessmentPopup: this.onShowReassessmentPopup.bind(this),
 				onChooseNewScript: this.onChooseNewScript.bind(this),
@@ -219,7 +231,7 @@ export class ReportDrawer
 
 		this.destroyConfirmationPopup();
 		this.destroyScriptSelectorDialog();
-		this.showConfirmationPopup(assessmentSetting);
+		this.showConfirmationPopup(assessmentSetting, Dictionary.ELEMENT_UPDATED_SCRIPT);
 	}
 
 	private onChooseNewScript(bindElement: HTMLElement): void
@@ -295,7 +307,7 @@ export class ReportDrawer
 			return;
 		}
 
-		this.showConfirmationPopup(assessmentSetting);
+		this.showConfirmationPopup(assessmentSetting, Dictionary.ELEMENT_OTHER_SCRIPT);
 	}
 
 	private prepareAssessmentSettingFromItem(item: any): AssessmentSettingData | null
@@ -334,7 +346,7 @@ export class ReportDrawer
 		};
 	}
 
-	private showConfirmationPopup(assessmentSetting: AssessmentSettingData): void
+	private showConfirmationPopup(assessmentSetting: AssessmentSettingData, source: ReassessmentSource): void
 	{
 		this.destroyConfirmationPopup();
 
@@ -346,7 +358,7 @@ export class ReportDrawer
 				style: AirButtonStyle.FILLED,
 				onclick: () => {
 					popup.close();
-					void this.doAssessment(assessmentSetting.id);
+					void this.doAssessment(assessmentSetting.id, source);
 
 					return {};
 				},
@@ -438,7 +450,7 @@ export class ReportDrawer
 		return DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), date);
 	}
 
-	private async doAssessment(assessmentSettingsId: number): Promise<void>
+	private async doAssessment(assessmentSettingsId: number, source: ReassessmentSource): Promise<void>
 	{
 		if (this.isDestroyed || this.isAssessmentInProgress)
 		{
@@ -480,6 +492,8 @@ export class ReportDrawer
 				return;
 			}
 
+			this.sendReassessmentAnalytics(activityId, assessmentSettingsId, source);
+
 			this.params.drawerRequest.jobId = Type.isInteger(response?.data?.jobId)
 				? response.data.jobId
 				: null
@@ -488,6 +502,29 @@ export class ReportDrawer
 		catch (error)
 		{
 			this.finishAssessmentWithError(error, 'ReportDrawer doAssessment error');
+		}
+	}
+
+	private sendReassessmentAnalytics(
+		activityId: number,
+		assessmentSettingsId: number,
+		source: ReassessmentSource,
+	): void
+	{
+		try
+		{
+			const data = Builder.CallAssessment.CallReassessmentEvent
+				.createDefault(activityId, assessmentSettingsId, source)
+				.buildData()
+			;
+			if (data !== null)
+			{
+				sendData(data);
+			}
+		}
+		catch (error)
+		{
+			console.error('ReportDrawer call reassessment analytics error', error);
 		}
 	}
 
@@ -737,6 +774,7 @@ export class ReportDrawer
 	private parseData(response: ResponseData): ViewData
 	{
 		const data = response.data;
+		const isEmailReport = data.subtitle?.type === 'email' || data.infoPopup?.type === 'email';
 
 		return {
 			title: data.title ?? '',
@@ -746,9 +784,30 @@ export class ReportDrawer
 			infoPopup: data.infoPopup ?? null,
 			anchors: data.anchors ?? [],
 			assessmentBlocks: data.assessmentBlocks ?? [],
-			blocks: data.blocks ?? [],
+			blocks: this.parseBlocks(data, isEmailReport),
 			aiDisclaimer: data.aiDisclaimer ?? '',
 			assessmentSetting: data.assessmentSetting ?? null,
 		};
+	}
+
+	private parseBlocks(data: any, isEmailReport: boolean): BlockData[]
+	{
+		const blocks: BlockData[] = Type.isArray(data.blocks) ? data.blocks : [];
+		if (!isEmailReport)
+		{
+			return blocks;
+		}
+
+		return blocks.map((block: BlockData): BlockData => {
+			if (!Type.isPlainObject(block) || block.blockType !== 'summary')
+			{
+				return block;
+			}
+
+			return {
+				...block,
+				preserveWhitespace: true,
+			};
+		});
 	}
 }

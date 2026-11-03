@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 	const { Type } = require('type');
 	const { RecentFilterId, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { FolderComposition } = require('im/messenger/controller/recent/service/lib/folder-composition');
 
 	/**
 	 * @class RecentFilteredSync
@@ -14,10 +15,23 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 	class RecentFilteredSync
 	{
 		/**
+		 * @private
+		 * @type {?Promise<void>}
+		 */
+		#pendingSync = null;
+
+		/**
+		 * @private
+		 * @type {number}
+		 */
+		#syncToken = 0;
+
+		/**
 		 * @param {RecentLocator} recentLocator
 		 * @param {Logger} logger
+		 * @param {string|null} [recentSection]
 		 */
-		constructor(recentLocator, logger)
+		constructor(recentLocator, logger, recentSection = null)
 		{
 			/**
 			 * @private
@@ -29,6 +43,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 			 * @type {Logger}
 			 */
 			this.logger = logger;
+			this.explicitRecentSection = recentSection;
 			/**
 			 * @private
 			 * @type {MessengerCoreStore}
@@ -59,7 +74,26 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		get recentSection()
 		{
-			return this.recentLocator.get('recentSection');
+			return this.explicitRecentSection ?? this.recentLocator.get('recentSection');
+		}
+
+		/**
+		 * Recent sections the tab is made of. A tab with a section of its own is that one
+		 * section; a composite tab ("All") has none and takes the composition its list service
+		 * already keeps, falling back to the static resolution while the service is not there.
+		 * The composition is not cached here: the list service owns the cache and drops it on
+		 * the folder mutations able to change it.
+		 *
+		 * @returns {Set<string>}
+		 */
+		get sectionSet()
+		{
+			if (Type.isStringFilled(this.recentSection))
+			{
+				return new Set([this.recentSection]);
+			}
+
+			return this.recentLocator.get('vuex')?.sections ?? FolderComposition.getSectionsByTabId(this.tabId);
 		}
 
 		/**
@@ -122,7 +156,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		setNestedIdCollectionHandler = async ({ payload }) => {
 			const { recentSection, parentChatId = ROOT_PARENT_CHAT_ID } = payload?.data ?? {};
-			if (recentSection !== this.recentSection || parentChatId !== this.parentChatId)
+			if (parentChatId !== this.parentChatId || !this.sectionSet.has(recentSection))
 			{
 				return;
 			}
@@ -139,7 +173,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		storeNestedIdCollectionHandler = async ({ payload }) => {
 			const { recentSection, parentChatId = ROOT_PARENT_CHAT_ID } = payload?.data ?? {};
-			if (!Type.isStringFilled(recentSection) || recentSection !== this.recentSection || parentChatId !== this.parentChatId)
+			if (parentChatId !== this.parentChatId || !this.sectionSet.has(recentSection))
 			{
 				return;
 			}
@@ -200,13 +234,74 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		};
 
 		/**
-		 * @description Dispatches sync for given tab.
+		 * @description Recalculates the filtered collection of this tab on demand. Used when the
+		 * composition of a composite tab changes: the set was built for the previous sections, and
+		 * a source added to the folder brings unread chats the set does not know yet.
+		 * @returns {Promise<void>}
+		 */
+		resync()
+		{
+			this.logger.log('recentFilteredSync: resync');
+
+			return this.#syncForTab(this.tabId, this.parentChatId);
+		}
+
+		/**
+		 * @description Dispatches sync for given tab. The section set always travels with the payload:
+		 * a tab addressed by a folder id has no entry in the map the model resolves sections by, and
+		 * its live sync would otherwise recalculate over an empty set. A tab with a section of its own
+		 * sends that one section, so the payload says the same thing the map would have said.
+		 *
+		 * One recalculation walks the whole union and resolves every chat, while a single seeded
+		 * page commits a section mutation per item and per section of it. Calls made inside one
+		 * synchronous burst therefore share a single recalculation: the dispatch is deferred by a
+		 * microtask and the callers join the promise of the one already pending. Deferring by a
+		 * microtask and not by a timer keeps the handlers awaitable: a caller awaiting a handler
+		 * still observes the dispatch.
+		 *
+		 * The set of sections is read at dispatch time, so a burst that changes the composition
+		 * along the way is answered by the composition it ends with.
+		 *
 		 * @param {string} tabId
 		 * @param {number} [parentChatId]
+		 * @returns {Promise<void>}
 		 */
 		#syncForTab(tabId, parentChatId = ROOT_PARENT_CHAT_ID)
 		{
-			return this.store.dispatch('recentModel/syncFilteredIdCollection', { tabId, parentChatId });
+			if (this.#pendingSync)
+			{
+				return this.#pendingSync;
+			}
+
+			const token = ++this.#syncToken;
+
+			this.#pendingSync = Promise.resolve().then(() => {
+				this.#pendingSync = null;
+
+				if (token !== this.#syncToken)
+				{
+					return undefined;
+				}
+
+				return this.store.dispatch('recentModel/syncFilteredIdCollection', {
+					tabId,
+					parentChatId,
+					sections: this.sectionSet,
+				});
+			});
+
+			return this.#pendingSync;
+		}
+
+		/**
+		 * @description Drops a recalculation that has been scheduled but not dispatched yet. The
+		 * token is what actually cancels it: the microtask is already queued and cannot be unqueued,
+		 * so it checks the token and does nothing when a newer decision has been made.
+		 */
+		#cancelPendingSync()
+		{
+			this.#syncToken++;
+			this.#pendingSync = null;
 		}
 
 		/**
@@ -216,6 +311,9 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		async #clearForTab(tabId, parentChatId = ROOT_PARENT_CHAT_ID)
 		{
+			// a recalculation still pending would land after the set is dropped and refill it
+			this.#cancelPendingSync();
+
 			await this.store.dispatch('recentModel/recentFilteredModel/clearIdCollection', { tabId, parentChatId });
 		}
 	}

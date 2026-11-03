@@ -53,7 +53,7 @@ export const VersionViewBar = {
 		};
 	},
 	computed: {
-		...mapState(useDiagramStore, ['isRestoreInProgress']),
+		...mapState(useDiagramStore, ['isRestoreInProgress', 'canRestoreVersion']),
 		...mapState(useVersionHistoryStore, ['selectedVersion', 'selectedAuthorName']),
 		versionNumber(): ?number
 		{
@@ -103,7 +103,10 @@ export const VersionViewBar = {
 		handleRestore(): void
 		{
 			const versionId = this.selectedVersion?.id;
-			if (!Type.isNumber(versionId))
+			// Reading a version is open to a session that may not write, and restoring it is not: the store
+			// refuses that. The button is unavailable then, and a confirmation before a refusal would
+			// promise a restore that is not going to happen.
+			if (!Type.isNumber(versionId) || !this.canRestoreVersion)
 			{
 				return;
 			}
@@ -131,7 +134,7 @@ export const VersionViewBar = {
 					:text="loc('BIZPROCDESIGNER_EDITOR_VERSION_VIEW_BAR_RESTORE')"
 					:style="AirButtonStyle.FILLED"
 					:size="ButtonSize.EXTRA_SMALL"
-					:disabled="isRestoreInProgress"
+					:disabled="!canRestoreVersion"
 					:dataset="{ testid: 'bizprocdesigner-editor-version-view-bar-restore' }"
 					@click="handleRestore"
 				/>

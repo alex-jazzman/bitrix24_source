@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Lists\Api\Service\ServiceFactory\ServiceFactory;
+use Bitrix\Lists\Integration\Socialnetwork\ProjectHeaderProvider;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -90,6 +91,12 @@ if ($lists_perm <= CListPermissions::ACCESS_DENIED)
 
 $arParams['CAN_EDIT'] = $lists_perm >= CListPermissions::IS_ADMIN;
 $arParams['SOCNET_GROUP_ID'] = $socNetGroupId > 0 ? $socNetGroupId : '';
+$arResult['PROJECT_HEADER'] = null;
+
+if ($socNetGroupId > 0)
+{
+	$arResult['PROJECT_HEADER'] = (new ProjectHeaderProvider())->get($socNetGroupId, $currentUserId);
+}
 
 $arResult['~LISTS_URL'] = str_replace(
 	['#list_id#', '#group_id#'],

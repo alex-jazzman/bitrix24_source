@@ -1,6 +1,7 @@
 import { Event, Loc } from 'main.core';
 
 import { type PopupOptions } from 'main.popup';
+import { FocusNavigator } from 'ui.a11y';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 import { Popup } from 'ui.vue3.components.popup';
 
@@ -61,7 +62,14 @@ export const GroupPopup = {
 				minWidth: 260,
 				maxWidth: 400,
 				offsetTop: 8,
+				closeByEsc: true,
 				targetContainer: document.body,
+				ariaLabel: this.group?.name || this.loc('TASKS_V2_GROUP_HIDDEN'),
+				focusTrap: {
+					initialFocus: false,
+					restoreFocus: false,
+					startBoundary: () => this.keyboardTrigger,
+				},
 			};
 		},
 		groupOwnerUrl(): string
@@ -90,13 +98,28 @@ export const GroupPopup = {
 		groupRestricted(): boolean
 		{
 			return !this.group || Boolean(this.group.isRestrictedView);
-		}
+		},
 	},
 	mounted(): void
 	{
 		Event.bind(this.bindElement, 'click', this.handleClick);
 		Event.bind(this.bindElement, 'mouseenter', this.handleMouseEnter);
 		Event.bind(this.bindElement, 'mouseleave', this.handleMouseLeave);
+		Event.bind(this.bindElement, 'focusin', this.handleMouseEnter);
+		Event.bind(this.bindElement, 'focusout', this.handleFocusOut);
+		Event.bind(this.bindElement, 'keydown', this.handleTriggerKeyDown);
+	},
+	beforeUnmount(): void
+	{
+		this.clearTimeouts();
+
+		Event.unbind(this.bindElement, 'click', this.handleClick);
+		Event.unbind(this.bindElement, 'mouseenter', this.handleMouseEnter);
+		Event.unbind(this.bindElement, 'mouseleave', this.handleMouseLeave);
+		Event.unbind(this.bindElement, 'focusin', this.handleMouseEnter);
+		Event.unbind(this.bindElement, 'focusout', this.handleFocusOut);
+		Event.unbind(this.bindElement, 'keydown', this.handleTriggerKeyDown);
+		Event.unbind(document, 'mouseover', this.updateHoverElement);
 	},
 	methods: {
 		openGroup(): void
@@ -116,7 +139,7 @@ export const GroupPopup = {
 		},
 		handleMouseEnter(): void
 		{
-			if (this.groupRestricted)
+			if (this.groupRestricted || this.isRestoringFocus)
 			{
 				return;
 			}
@@ -133,11 +156,69 @@ export const GroupPopup = {
 
 			this.clearTimeouts();
 			this.closeTimeout = setTimeout(() => {
-				if (!this.$refs.container?.contains(this.hoverElement) && !this.bindElement.contains(this.hoverElement))
+				if (this.containsFocus())
+				{
+					return;
+				}
+
+				if (!this.$refs.container?.contains(this.hoverElement) && !this.bindElement?.contains(this.hoverElement))
 				{
 					this.closePopup();
 				}
 			}, 100);
+		},
+		handleFocusOut(): void
+		{
+			this.clearTimeouts();
+			this.closeTimeout = setTimeout(() => {
+				if (!this.containsFocus())
+				{
+					this.closePopup();
+				}
+			}, 100);
+		},
+		handleTriggerKeyDown(event: KeyboardEvent): void
+		{
+			if (event.key !== 'Tab' || event.shiftKey || !this.isPopupShown)
+			{
+				return;
+			}
+
+			if (FocusNavigator.getNext(this.bindElement))
+			{
+				return;
+			}
+
+			const trigger = FocusNavigator.getActiveElement();
+			if (!this.focusPopupContent())
+			{
+				return;
+			}
+
+			this.keyboardTrigger = trigger;
+			event.preventDefault();
+		},
+		focusPopupContent(): boolean
+		{
+			const focusTrap = this.$refs.popup?.getPopupInstance?.()?.getFocusTrap?.();
+
+			return Boolean(focusTrap?.focusFirst());
+		},
+		containsFocus(): boolean
+		{
+			const activeElement = FocusNavigator.getActiveElement();
+			if (activeElement === null)
+			{
+				return false;
+			}
+
+			return this.bindElement?.contains(activeElement) || Boolean(this.$refs.popup?.contains(activeElement));
+		},
+		popupContainsFocus(): boolean
+		{
+			const activeElement = FocusNavigator.getActiveElement();
+
+			return activeElement !== null && Boolean(this.$refs.popup?.contains(activeElement));
 		},
 		updateHoverElement(event: MouseEvent): void
 		{
@@ -162,10 +243,33 @@ export const GroupPopup = {
 		},
 		closePopup(): void
 		{
+			const trigger = this.popupContainsFocus() ? this.keyboardTrigger : null;
+			this.keyboardTrigger = null;
+
 			this.clearTimeouts();
 			this.isPopupShown = false;
 			Event.unbind(this.$refs.container, 'mouseleave', this.handleMouseLeave);
 			Event.unbind(document, 'mouseover', this.updateHoverElement);
+
+			void this.restoreTriggerFocus(trigger);
+		},
+		async restoreTriggerFocus(trigger: ?HTMLElement): Promise<void>
+		{
+			if (!trigger)
+			{
+				return;
+			}
+
+			await this.$nextTick();
+
+			if (!document.body.contains(trigger))
+			{
+				return;
+			}
+
+			this.isRestoringFocus = true;
+			FocusNavigator.restoreFocus(trigger);
+			this.isRestoringFocus = false;
 		},
 		clearTimeouts(): void
 		{

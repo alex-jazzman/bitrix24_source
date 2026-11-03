@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, tasks_v2_component_fields_relationTasks, tasks_v2_application_ganttPopup, main_core, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_provider_service_relationService) {
+(function (exports, main_core, tasks_v2_component_fields_relationTasks, tasks_v2_application_ganttPopup, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_provider_service_relationService) {
 	'use strict';
 
 	const ganttMeta = Object.freeze({
@@ -40,6 +40,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		methods: {
 			handleAdd(addButton) {
 				this.bindElement = addButton;
+				main_core.Dom.attr(addButton, 'aria-expanded', 'true');
+			},
+			handleClose() {
+				main_core.Dom.attr(this.bindElement, 'aria-expanded', 'false');
+				this.bindElement = null;
 			}
 		},
 		template: `
@@ -49,7 +54,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:shouldShowSubTasksOption="false"
 			@add="handleAdd"
 		/>
-		<GanttPopup v-if="bindElement" :bindElement @close="bindElement = null"/>
+		<GanttPopup v-if="bindElement" :bindElement @close="handleClose"/>
 	`
 	};
 
@@ -66,17 +71,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		data() {
 			return {
-				bindElement: null
+				bindElement: null,
+				onDialogClose: null
 			};
 		},
 		methods: {
-			handleAdd(addButton) {
+			handleAdd(addButton, onClose) {
 				this.bindElement = addButton;
+				this.onDialogClose = onClose;
+			},
+			handleClose() {
+				this.bindElement = null;
+				this.onDialogClose?.();
+				this.onDialogClose = null;
 			}
 		},
 		template: `
 		<RelationTasksChip :meta="ganttMeta" @add="handleAdd"/>
-		<GanttPopup v-if="bindElement" :bindElement @close="bindElement = null"/>
+		<GanttPopup v-if="bindElement" :bindElement @close="handleClose"/>
 	`
 	};
 
@@ -84,5 +96,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.GanttChip = GanttChip;
 	exports.ganttMeta = ganttMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Tasks.V2.Component.Fields, BX.Tasks.V2.Application, BX, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Tasks.V2.Component.Fields, BX.Tasks.V2.Application, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service);
 //# sourceMappingURL=gantt-tasks.bundle.js.map

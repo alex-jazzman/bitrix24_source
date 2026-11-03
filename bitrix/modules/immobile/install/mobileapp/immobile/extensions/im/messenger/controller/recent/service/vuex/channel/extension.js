@@ -125,6 +125,9 @@ jn.define('im/messenger/controller/recent/service/vuex/channel', (require, expor
 			}
 
 			this.#updateItems(recentItems);
+			// the add mutation only fires for records new to the model, and the items are already
+			// filtered by the tab collection: a chat appeared in the tab set
+			this.recentLocator.get('render')?.markCompositionChanged();
 		};
 
 		/**
@@ -164,7 +167,7 @@ jn.define('im/messenger/controller/recent/service/vuex/channel', (require, expor
 				return;
 			}
 
-			if (!this.recentLocator.get('render').hasItemRendered(itemId))
+			if (!this.recentLocator.get('render').hasItemPending(itemId))
 			{
 				this.logger.log('recentDeleteHandler: deleting an item not from the Channel tab, skipping', itemId);
 

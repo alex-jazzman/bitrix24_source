@@ -22,9 +22,9 @@ jn.define('intranet/qualification/src/api', (require, exports, module) => {
 		});
 	}
 
-	function setPreset(presetId)
+	function applyMobilePreset(presetId)
 	{
-		return new RunActionExecutor('mobile.tabs.setpreset', { name: presetId }).call();
+		return new RunActionExecutor('intranetmobile.qualification.applyMobilePreset', { presetId }).call();
 	}
 
 	function saveFieldValue(value, id, type)
@@ -37,7 +37,7 @@ jn.define('intranet/qualification/src/api', (require, exports, module) => {
 
 	module.exports = {
 		getQualificationData,
-		setPreset,
+		applyMobilePreset,
 		saveFieldValue,
 	};
 });

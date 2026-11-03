@@ -54,11 +54,18 @@ Class mail extends CModule
 				\Bitrix\Main\ORM\Data\DataManager::enableCrypto('TOKENS', 'b_mail_oauth', true);
 			}
 
+			if ($isFreshInstall)
+			{
+				// no mailbox records without the mailbox reference here, see LegacyMailboxSenderBindingStepper
+				\Bitrix\Main\Config\Option::set('main', 'sender_identity_address_fallback', 'N');
+			}
+
 			RegisterModule("mail");
 
 			if (CModule::IncludeModule("mail"))
 			{
 				\Bitrix\Mail\Internal\Service\SourceGeneration\MigrationOperationSchema::clearCache();
+				\Bitrix\Mail\Internal\Service\SourceGeneration\ManualMigrationControlSchema::clearCache();
 
 				$result = \Bitrix\Main\SiteTable::getList();
 				while (($site = $result->fetch()) !== false)

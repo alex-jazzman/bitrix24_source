@@ -15,4 +15,4 @@ $MESS['HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE_NAME'] = 'Название д�
 $MESS['HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE_NAME_FULL'] = 'Название дочернего отдела';
 $MESS['HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE'] = 'Дочерний отдел';
 $MESS['HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE_FULL'] = 'Идентификатор и название дочернего отдела';
-$MESS['HR_BIC_STRUCTURE_RELATION_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о связях между отделами компании: идентификаторы вышестоящих и подчиненных подразделений, их названия и уровень вложенности.";
+$MESS['HR_BIC_STRUCTURE_RELATION_TABLE_DESCRIPTION_FULL_MSGVER_1'] = "Данные об иерархии отделов компании: связи вышестоящих и подчинённых отделов и уровни их вложенности.";

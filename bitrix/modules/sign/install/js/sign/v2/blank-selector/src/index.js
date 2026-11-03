@@ -1,4 +1,4 @@
-import { Tag, Loc, Dom, Event, Type, Reflection, Cache } from 'main.core';
+import { Tag, Loc, Dom, Event, Text, Type, Reflection, Cache } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Popup } from 'main.popup';
@@ -7,14 +7,22 @@ import { BlankScenario } from 'sign.type';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
-import { UploaderEvent, FileStatus, type UploaderFile } from 'ui.uploader.core';
+import { UploaderEvent, FileStatus, formatFileSize, type UploaderFile } from 'ui.uploader.core';
 import { Api } from 'sign.v2.api';
 import { getAllowedReplaceExtensions } from 'sign.v2.b2e.document-block';
 import { ListItem } from './list-item';
 import { Blank } from './blank';
 import { BlankField } from './blank-field';
 import { DragDropHandler } from './handlers/drag-drop-handler';
-import type { BlankSelectorConfig, BlankData, ListItemProps, BlankProps, ToggleEvent, ButtonConfig } from './types/type';
+import {
+	type BatchUploadState,
+	type BlankSelectorConfig,
+	type BlankData,
+	type ListItemProps,
+	type BlankProps,
+	type ToggleEvent,
+	type ButtonConfig,
+} from './types/type';
 import { UI } from 'ui.notification';
 import './style.css';
 
@@ -55,6 +63,9 @@ const errorPopupOptions = {
 	darkMode: true,
 	width: 300,
 	autoHide: true,
+	closeByEsc: true,
+	// the popup carries an error message, not a dialog: a screen reader must read it on its own
+	role: 'alert',
 	cacheable: false,
 	bindOptions: {
 		position: 'bottom',
@@ -70,6 +81,7 @@ export class BlankSelector extends EventEmitter
 		beforeAddFileSuccessfully: 'beforeAddFileSuccessfully',
 		toggleSelection: 'toggleSelection',
 		addFile: 'addFile',
+		batchSelected: 'batchSelected',
 	});
 
 	#cache = new Cache.MemoryCache();
@@ -86,6 +98,12 @@ export class BlankSelector extends EventEmitter
 	#config: BlankSelectorConfig;
 	#isPlaceholdersUpload: boolean = false;
 	#browseAcceptMap: WeakMap<HTMLElement, string[]> = new WeakMap();
+	#batchHasPlaceholders: boolean = false;
+	#batchBrowseInput: HTMLInputElement | null = null;
+	#isBatchBrowseSelection: boolean = false;
+	// The batch itself belongs to the owner of the selector: the selection is checked against what
+	// is already in it, but nothing here knows how a batch is uploaded.
+	#resolveBatchState: (() => BatchUploadState) | null = null;
 
 	constructor(config: BlankSelectorConfig)
 	{
@@ -237,6 +255,142 @@ export class BlankSelector extends EventEmitter
 			&& imagesLimit - filesLength >= addedFiles.length;
 	}
 
+	/**
+	 * The owner of the batch tells whether one is running and how much it already weighs.
+	 */
+	setBatchStateResolver(resolveBatchState: () => BatchUploadState): void
+	{
+		this.#resolveBatchState = resolveBatchState;
+	}
+
+	#getBatchState(): BatchUploadState
+	{
+		return this.#resolveBatchState?.() ?? { isActive: false, totalSize: 0 };
+	}
+
+	/**
+	 * Batch mode covers several document files at once: images keep the old merge behaviour
+	 * and a mixed selection keeps the old error. Any selection made while a batch is running joins
+	 * it, a single file included: dropping one file into the zone and adding one through the window
+	 * of the batch must not end up in two different places.
+	 */
+	#isBatchDocumentSelection(addedFiles: UploaderFile[]): boolean
+	{
+		const startsBatch = addedFiles.length > 1 && this.#tileWidget.getUploader().getFiles().length === 0;
+		if (
+			this.#config?.batchUploadEnabled !== true
+			|| !(startsBatch || this.#isBatchBrowseSelection || this.#getBatchState().isActive)
+		)
+		{
+			return false;
+		}
+
+		const acceptedFileTypes = this.#getAcceptedFileTypes();
+
+		return addedFiles.every((file: UploaderFile) => {
+			return !this.#isImageFile(file) && acceptedFileTypes.includes(`.${file.getExtension()}`);
+		});
+	}
+
+	/**
+	 * The whole batch is uploaded and sent to the sign service inside a single request, so a batch
+	 * over the total size limit is rejected entirely instead of partially. A selection joins the
+	 * files already in the running batch, so their weight counts towards the limit as well.
+	 */
+	#handleBatchSelection(addedFiles: UploaderFile[]): void
+	{
+		const totalSizeLimit = this.#getBatchTotalSizeLimit();
+		const totalSize = this.#getTotalSize(addedFiles) + this.#getBatchState().totalSize;
+		if (totalSizeLimit !== null && totalSize > totalSizeLimit)
+		{
+			this.#showUploadErrorPopup(
+				'SIGN_BLANK_SELECTOR_UPLOAD_BATCH_SIZE_HINT',
+				{ '%totalSizeLimit%': formatFileSize(totalSizeLimit) },
+			);
+
+			return;
+		}
+
+		const files = addedFiles
+			.map((file: UploaderFile) => file.getBinary())
+			.filter((file: ?File) => file !== null)
+		;
+		// the mode of the running batch, needed to keep browseBatchFiles() on the same tile rules
+		this.#batchHasPlaceholders = this.#isPlaceholdersUpload;
+		this.emit(this.events.batchSelected, {
+			files,
+			hasPlaceholders: this.#batchHasPlaceholders,
+		});
+	}
+
+	/**
+	 * Opens the system file dialog for the batch that is already running. Unlike the upload
+	 * buttons, a single chosen file joins the batch instead of starting a regular upload.
+	 */
+	browseBatchFiles(): void
+	{
+		this.#isPlaceholdersUpload = this.#batchHasPlaceholders;
+		const input = this.#getBatchBrowseInput();
+		input.setAttribute('accept', this.#getBatchAcceptedFileTypes().join(','));
+		input.click();
+	}
+
+	#getBatchBrowseInput(): HTMLInputElement
+	{
+		if (this.#batchBrowseInput === null)
+		{
+			// the input is never inserted into the document, exactly like the uploader browse input
+			this.#batchBrowseInput = Tag.render`<input type="file" multiple>`;
+			Event.bind(this.#batchBrowseInput, 'change', () => this.#onBatchBrowseChange());
+		}
+
+		return this.#batchBrowseInput;
+	}
+
+	#onBatchBrowseChange(): void
+	{
+		const files = [...(this.#batchBrowseInput.files ?? [])];
+		this.#batchBrowseInput.value = '';
+		if (files.length === 0)
+		{
+			return;
+		}
+
+		// addFiles() runs #onFileBeforeAdd synchronously, so the flag never outlives this call
+		this.#isBatchBrowseSelection = true;
+		try
+		{
+			this.addFiles(files, { isPlaceholdersUpload: this.#batchHasPlaceholders });
+		}
+		finally
+		{
+			this.#isBatchBrowseSelection = false;
+		}
+	}
+
+	#getBatchAcceptedFileTypes(): string[]
+	{
+		return this.#getAcceptedFileTypes()
+			.filter((fileType: string) => !imageExtensions.has(fileType.slice(1)))
+		;
+	}
+
+	/**
+	 * The limit belongs to the server; without it there is nothing to compare against
+	 * and any batch is allowed.
+	 */
+	#getBatchTotalSizeLimit(): number | null
+	{
+		const limit = parseInt(this.#config?.uploaderOptions?.maxBatchTotalFileSize, 10);
+
+		return Type.isInteger(limit) && limit > 0 ? limit : null;
+	}
+
+	#getTotalSize(files: UploaderFile[]): number
+	{
+		return files.reduce((totalSize: number, file: UploaderFile) => totalSize + file.getSize(), 0);
+	}
+
 	#onBeforeBrowse(event: BaseEvent<{ input: HTMLInputElement, node: HTMLElement }>): void
 	{
 		const { input, node } = event.getData();
@@ -264,6 +418,16 @@ export class BlankSelector extends EventEmitter
 			return;
 		}
 
+		if (this.#isBatchDocumentSelection(addedFiles))
+		{
+			this.#handleBatchSelection(addedFiles);
+			// the batch skips the regular upload, so #onUploadComplete never resets the mode
+			this.#isPlaceholdersUpload = false;
+			uploaderEvent.preventDefault();
+
+			return;
+		}
+
 		const valid = this.#checkForFilesValid(addedFiles);
 		if (valid)
 		{
@@ -282,7 +446,12 @@ export class BlankSelector extends EventEmitter
 			return;
 		}
 
-		let messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_HINT';
+		// several documents at once are allowed only where the batch mode is on: everywhere else
+		// the hint must keep promising a single document
+		let messageCode = this.#config?.batchUploadEnabled === true
+			? 'SIGN_BLANK_SELECTOR_UPLOAD_BATCH_HINT'
+			: 'SIGN_BLANK_SELECTOR_UPLOAD_HINT'
+		;
 		const hasExistingFiles = this.#tileWidget.getUploader().getFiles().length > 0;
 		const isLimitHint = hasExistingFiles && isTemplateMode(this.#config.documentMode);
 		if (this.#isPlaceholdersUpload)
@@ -300,7 +469,7 @@ export class BlankSelector extends EventEmitter
 		uploaderEvent.preventDefault();
 	}
 
-	#showUploadErrorPopup(messageCode: string): void
+	#showUploadErrorPopup(messageCode: string, replacements: { [string]: string | number } = {}): void
 	{
 		let bindElement = this.#uploadButtonsContainer.firstElementChild;
 		if (this.#isPlaceholdersUpload)
@@ -320,19 +489,34 @@ export class BlankSelector extends EventEmitter
 			bindElement = container.firstElementChild;
 		}
 
+		const content = this.#getUploadErrorText(messageCode, replacements);
+
 		// Wait for CSS transition to complete before showing popup
 		setTimeout(() => {
 			const errorPopup = new Popup({
 				...errorPopupOptions,
 				bindElement,
-				content: Loc.getMessage(
-					messageCode,
-					{ '%imageCountLimit%': this.#getImagesLimit() },
-				),
+				content,
 			});
 			errorPopup.show();
 			setTimeout(() => errorPopup.close(), 7000);
 		}, 200);
+	}
+
+	/**
+	 * The popup renders a string content as HTML and Loc does not escape substitutions,
+	 * so every replacement is encoded here.
+	 */
+	#getUploadErrorText(messageCode: string, replacements: { [string]: string | number }): string
+	{
+		const encoded: { [string]: string } = {};
+		Object.entries({ '%imageCountLimit%': this.#getImagesLimit(), ...replacements })
+			.forEach(([placeholder, value]: [string, string | number]) => {
+				encoded[placeholder] = Text.encode(String(value));
+			})
+		;
+
+		return Loc.getMessage(messageCode, encoded);
 	}
 
 	#getImagesLimit(): number

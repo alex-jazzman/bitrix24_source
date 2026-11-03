@@ -15,6 +15,7 @@ export const Dictionary = Object.freeze({
 	CATEGORY_BANNERS: 'banners',
 	CATEGORY_EDITOR: 'editor',
 	CATEGORY_IMPORT: 'import_operations',
+	CATEGORY_SPEECH_ANALYTICS: 'speech_analytics',
 
 	// region Event const
 	EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
@@ -81,6 +82,18 @@ export const Dictionary = Object.freeze({
 	EVENT_IMPORT_EDIT: 'edit',
 	EVENT_IMPORT_CREATE: 'create',
 	EVENT_IMPORT_CANCEL: 'cancel',
+
+	EVENT_AUTO_UPDATE: 'auto_update',
+	EVENT_GRID_ACTIONS: 'grid_actions',
+	EVENT_BI_REPORT_BUTTON: 'bi_report_button',
+	EVENT_SCRIPT_WIZARD: 'script_wizard',
+	EVENT_SUMMARY_WIZARD: 'summary_wizard',
+	EVENT_CALL_LIST_VIEW: 'call_list_view',
+	EVENT_SCRIPT_TOGGLE: 'script_toggle',
+	EVENT_SCRIPT_DELETE: 'script_delete',
+	EVENT_OPEN_SCRIPT: 'open_script',
+	EVENT_OPEN_CALL_SCORE: 'open_call_score',
+	EVENT_REEVAL_SCRIPT: 'reeval_script',
 	// endregion
 
 	// region Type const
@@ -105,6 +118,8 @@ export const Dictionary = Object.freeze({
 	TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 	TYPE_OLD_INVOICE_READONLY_ALERT: 'old_invoice',
 	TYPE_EINVOICE_PROMO: 'einvoice_promo',
+	TYPE_SCRIPT: 'script',
+	TYPE_CALL_SCORE: 'call_score',
 	// endregion
 
 	// region Section const
@@ -176,6 +191,8 @@ export const Dictionary = Object.freeze({
 	ELEMENT_CANCEL_BUTTON: 'cancel_button',
 	ELEMENT_ESC_BUTTON: 'esc_button',
 	ELEMENT_DELETE_BUTTON: 'delete_button',
+	ELEMENT_SAVE_BUTTON: 'save_button',
+	ELEMENT_EDIT_BUTTON: 'edit_button',
 	ELEMENT_GRID_PROGRESS_BAR: 'grid_progress_bar',
 	ELEMENT_LOSE_COLUMN: 'lose_column',
 	ELEMENT_GRID_GROUP_ACTIONS_WON_STAGE: 'grid_group_actions_won_stage',
@@ -219,6 +236,10 @@ export const Dictionary = Object.freeze({
 	ELEMENT_AHA_MOMENT: 'aha_moment',
 	ELEMENT_INFO_BUTTON: 'info_button',
 	ELEMENT_GOTOCHAT: 'gotochat',
+	ELEMENT_ON: 'on',
+	ELEMENT_OFF: 'off',
+	ELEMENT_UPDATED_SCRIPT: 'updated_script',
+	ELEMENT_OTHER_SCRIPT: 'other_script',
 	// endregion
 
 	// region Status const

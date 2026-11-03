@@ -1,9 +1,8 @@
-export const CallState = {
-	Idle: 'Idle',
-	Proceeding: 'Proceeding',
-	Connected: 'Connected',
-	Finished: 'Finished'
-};
+// CallState/Provider/CallType are canonically defined in call.mapping;
+// re-exported here so call.core's public contract stays unchanged.
+import { CallState, Provider, CallType } from 'call.mapping';
+
+export { CallState, Provider, CallType };
 
 export const UserState = {
 	Idle: 'Idle',
@@ -23,22 +22,11 @@ export const EndpointDirection = {
 	SendRecv: 'sendrecv',
 };
 
-export const CallType = {
-	Instant: 1,
-	Permanent: 2,
-	Large: 3,
-};
-
 export const RoomType = {
 	Small: 1,
 	Conference: 2,
 	Large: 3,
 	Personal: 4,
-};
-
-export const Provider = {
-	Plain: 'Plain',
-	Bitrix: 'Bitrix',
 };
 
 export const StreamTag = {
@@ -76,6 +64,13 @@ export const DisconnectReason = {
 	SecurityKeyChanged: 'SECURITY_KEY_CHANGED',
 	RoomClosed: 'ROOM_CLOSED',
 	SignalingReconnectCooldown: 'SIGNALING_RECONNECT_COOLDOWN',
+};
+
+// Server-side business outcomes. Not connection failures.
+// Source of truth: call/lib/Controller/Call.php, call/lib/Controller/CallManager.php
+export const BusinessLeaveReason = {
+	AllUsersBusy: 'all_users_busy',
+	UserIsBusy: 'user_is_busy',
 };
 
 export const UserMnemonic = {
@@ -128,6 +123,7 @@ export const CallEvent = {
 	onReconnecting: 'onReconnecting',
 	onReconnected: 'onReconnected',
 	onReconnectingFailed: 'onReconnectingFailed',
+	onReconnectSeriesOutcome: 'onReconnectSeriesOutcome',
 	onParticipantReconnecting: 'onParticipantReconnecting',
 	onParticipantReconnected: 'onParticipantReconnected',
 	onJoin: 'onJoin',

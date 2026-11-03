@@ -39,14 +39,13 @@ class PlacementPreviewExtractor extends Extractor
 
 	public function run(): array
 	{
-		$placement = Rest\PlacementTable::getList(
-			[
-				'filter' => [
-					'PLACEMENT' => \CRestUtil::PLACEMENT_APP_URI,
-					'APP_ID' => $this->appInfo['ID'],
-				],
-			]
-		)->fetch();
+		$placement = Rest\PlacementTable::query()
+			->setSelect(['ID'])
+			->where('APP_ID', $this->appInfo['ID'])
+			->where('PLACEMENT', \CRestUtil::PLACEMENT_APP_URI)
+			->setLimit(1)
+			->fetch()
+		;
 
 		if (empty($placement))
 		{
@@ -54,8 +53,8 @@ class PlacementPreviewExtractor extends Extractor
 		}
 
 		$result = [
-			'ID' => $placement['APP_ID'],
-			'PLACEMENT' => $placement['PLACEMENT'],
+			'ID' => $this->appInfo['ID'],
+			'PLACEMENT' => \CRestUtil::PLACEMENT_APP_URI,
 			'PLACEMENT_ID' => $placement['ID'],
 		];
 

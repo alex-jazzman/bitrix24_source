@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Disk\Internal\Enum\DocumentHeaderElement;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
@@ -14,73 +15,90 @@ use Bitrix\Main\Web\Json;
 /** @var array $arResult */
 /** @var CBitrixComponentTemplate $this */
 
-Extension::load([
-	'ui.buttons',
-	'ui.design-tokens',
-	'ui.fonts.opensans',
-	// Announced from below, and named here rather than taken from main.popup, which ui.buttons and ui.hint
-	// both bring along: the page states what it uses, and the bundle is on the page either way.
-	'ui.a11y',
-	'ui.hint',
-]);
-
 $name = (string)$arResult['NAME'];
 $contentUrl = (string)$arResult['CONTENT_URL'];
-$downloadUrl = (string)$arResult['DOWNLOAD_URL'];
-$copyLinkUrl = (string)$arResult['COPY_LINK_URL'];
-$sharingObjectId = (int)$arResult['SHARING_OBJECT_ID'];
-$sharingUniqueCode = (string)$arResult['SHARING_UNIQUE_CODE'];
+$portalUrl = (string)$arResult['PORTAL_URL'];
+$composition = $arResult['HEADER_COMPOSITION'];
+// The header is drawn from the description and from nothing else, so an opening the server described
+// none for gets no header at all - and none of what only the header and its script would use.
+$hasHeader = $composition !== null;
 
-$sharingPopupParams = null;
-if ($sharingObjectId > 0)
+$extensions = [
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+];
+if ($hasHeader)
 {
-	$sharingPopupParams = [
-		'objectId' => $sharingObjectId,
-		'uniqueCode' => $sharingUniqueCode === '' ? null : $sharingUniqueCode,
+	// The header, and what the script below it uses - named here rather than left to the header's own
+	// dependencies. A page which draws no header downloads none of the three.
+	$extensions = [
+		...$extensions,
+		'disk.document-header',
+		'ui.a11y',
+		'ui.buttons',
 	];
 }
 
-$frameTitle = $name !== '' ? $name : (string)Loc::getMessage('DISK_FILE_VIEWER_HTML_FRAME_TITLE');
-$warning = (string)Loc::getMessage('DISK_FILE_VIEWER_HTML_WARNING');
-$portalUrl = (string)$arResult['PORTAL_URL'];
-$actionsContainerId = 'disk-html-viewer-actions-' . $this->randString();
+Extension::load($extensions);
 
-// Plain text without a portal url: a reader who has no session would only be led to a login form.
-$logo = '<span>' . htmlspecialcharsbx((string)Loc::getMessage('DISK_FILE_VIEWER_HTML_LOGO')) . '</span>';
+$frameTitle = $name !== '' ? $name : (string)Loc::getMessage('DISK_FILE_VIEWER_HTML_FRAME_TITLE');
+// Two phrases on purpose: this one is drawn by the page, the header owns the one of its element.
+// The page draws its own only where the header will draw none, and the description travels in the
+// markup, so the check holds without the bundle.
+$warning = (string)Loc::getMessage('DISK_FILE_VIEWER_HTML_WARNING');
+$hasWarning = $warning !== ''
+	&& $contentUrl !== ''
+	&& (
+		$composition === null
+		|| in_array(
+			DocumentHeaderElement::ContentWarning->value,
+			(array)($composition['elements'] ?? []),
+			true,
+		)
+	)
+;
+
+$headerStripId = 'disk-html-viewer-strip-' . $this->randString();
+$headerContainerId = 'disk-html-viewer-header-' . $this->randString();
+$boostContainerId = 'disk-html-viewer-boost-' . $this->randString();
+$presentationExitContainerId = 'disk-html-viewer-presentation-exit-' . $this->randString();
+
+// A page waiting for no header lays itself out differently: the warning takes its own place in the
+// flow instead of standing over the top of the document nobody will ever move it off.
+$pageClass = 'disk-html-viewer-page';
+if (!$hasHeader)
+{
+	$pageClass .= ' disk-html-viewer-page--headerless';
+}
 ?>
-<div class="disk-html-viewer-page" data-testid="disk-html-viewer-page">
-	<header class="disk-html-viewer-page__header">
-		<?php if ($portalUrl !== ''): ?>
-		<a class="disk-html-viewer-page__logo" href="<?= htmlspecialcharsbx($portalUrl) ?>" data-testid="disk-html-viewer-logo"><?= $logo ?></a>
-		<?php else: ?>
-		<span class="disk-html-viewer-page__logo" data-testid="disk-html-viewer-logo"><?= $logo ?></span>
+<div class="<?= $pageClass ?>" data-testid="disk-html-viewer-page">
+	<!-- The strip is where the way back out of the frame leads: it is on the page whether the header
+	     arrives or not, and it takes the focus of that jump. -->
+	<header
+		class="disk-html-viewer-page__header"
+		id="<?= $headerStripId ?>"
+		tabindex="-1"
+		data-testid="disk-html-viewer-strip"
+	>
+		<?php if ($name !== ''): ?>
+		<!-- Drawn by the page itself, so the first paint already carries readable text; css takes it off
+		     once the header is drawn into the strip. The name keeps its extension, while the header shows it
+		     without: that split is the rule of the header alone (`lib/editable-name`). -->
+		<h1 class="disk-html-viewer-page__name" data-testid="disk-html-viewer-name"><?= htmlspecialcharsbx($name) ?></h1>
 		<?php endif ?>
-		<span class="disk-html-viewer-page__divider"></span>
-		<!-- The name is cut by css when the header runs out of room, so the full one is on the title;
-		     the node keeps the whole text, which is what a screen reader reads. -->
-		<h1
-			class="disk-html-viewer-page__name"
-			title="<?= htmlspecialcharsbx($name) ?>"
-			data-testid="disk-html-viewer-name"
-		><?= htmlspecialcharsbx($name) ?></h1>
-		<?php if ($warning !== ''): ?>
-		<!-- The hint only shows on hover, so the same text is the accessible name of the icon: a
-		     reader with no pointer still gets the warning. Focusable for the same reason: a sighted
-		     user without a pointer reaches the hint by tab (opened by the script below). -->
-		<span
-			class="disk-html-viewer-page__warning"
-			data-hint="<?= htmlspecialcharsbx($warning) ?>"
-			data-hint-icon="o-alert"
-			data-hint-size="xl"
-			role="img"
-			tabindex="0"
-			aria-label="<?= htmlspecialcharsbx($warning) ?>"
-			data-testid="disk-html-viewer-warning"
-		></span>
+		<?php if ($hasHeader): ?>
+		<!-- The place of the header, held at its own height from the first paint. -->
+		<div class="disk-document-header-container" id="<?= $headerContainerId ?>"></div>
 		<?php endif ?>
-		<div class="disk-html-viewer-page__actions" id="<?= $actionsContainerId ?>" data-testid="disk-html-viewer-actions"></div>
 	</header>
-	<main>
+	<?php if ($hasWarning): ?>
+	<!-- Drawn by the page itself, so a header which never appears leaves the reader warned all the
+	     same. Css takes the node off once the header has drawn a warning of its own. -->
+	<p class="disk-html-viewer-page__warning" data-testid="disk-html-viewer-warning">
+		<?= htmlspecialcharsbx($warning) ?>
+	</p>
+	<?php endif ?>
+	<main class="disk-html-viewer-page__content">
 		<?php if ($contentUrl !== ''): ?>
 		<iframe
 			class="disk-html-viewer-page__frame"
@@ -91,218 +109,185 @@ $logo = '<span>' . htmlspecialcharsbx((string)Loc::getMessage('DISK_FILE_VIEWER_
 			onload="this.onload = null; if (document.activeElement === document.body) { this.focus(); }"
 			data-testid="disk-html-viewer-frame"
 		></iframe>
+		<?php if ($hasWarning): ?>
+		<a
+			class="disk-html-viewer-page__warning-return"
+			href="#<?= $headerStripId ?>"
+			data-testid="disk-html-viewer-warning-return"
+		>
+			<span aria-hidden="true">&uarr;</span>
+			<span><?= htmlspecialcharsbx($warning) ?></span>
+		</a>
+		<?php endif ?>
 		<?php else: ?>
 		<!-- No src to give the frame: an empty one lands on about:blank, or on this very page in the
-		     engines that resolve it against the document, and says nothing to the reader either way. -->
+		     engines that resolve it against the document. -->
 		<p class="disk-html-viewer-page__unavailable" data-testid="disk-html-viewer-unavailable">
 			<?= htmlspecialcharsbx((string)Loc::getMessage('DISK_FILE_VIEWER_HTML_UNAVAILABLE')) ?>
 		</p>
 		<?php endif ?>
 	</main>
+	<?php if ($hasHeader && $contentUrl !== ''): ?>
+	<!-- The mode is entered from the header alone, so a page without one offers no way out of it either. -->
+	<div
+		class="disk-html-viewer-page__presentation-exit"
+		id="<?= $presentationExitContainerId ?>"
+	></div>
+	<?php endif ?>
 </div>
-<?php if ($warning !== ''): ?>
 <script>
-	// The manager renders the icon into the node and binds the hover itself, so the markup carries
-	// only the text. Its own page scan looks for a class of the design system, which the markup has
-	// no business naming, so the node is handed over by its data-hint instead.
-	//
-	// An instance of its own, because the popup of the shared one is 400px wide: a single sentence
-	// reads better in a narrower box, and the width is an option of the popup rather than a style of
-	// the design system to override.
-	BX.ready(function() {
-		var hint = BX.UI.Hint.createInstance({
-			id: 'disk-html-viewer-warning-hint',
-			popupParameters: { maxWidth: 350 },
-		});
+	(function() {
+		var url = new URL(window.location.href);
+		if (url.searchParams.get('public_domain') !== 'Y' || !url.searchParams.has('access_token'))
+		{
+			return;
+		}
 
-		hint.init(document.querySelector('.disk-html-viewer-page__header'));
-
-		// The manager binds the pointer alone, so the keyboard is bound here: without it the warning
-		// would be readable by a screen reader and by a mouse, but not by a sighted user tabbing.
-		var warning = document.querySelector('.disk-html-viewer-page__warning');
-		var warningText = BX.util.htmlspecialchars(warning.getAttribute('data-hint'));
-
-		BX.bind(warning, 'focus', function() {
-			hint.show(warning, warningText, false);
-		});
-		BX.bind(warning, 'blur', function() {
-			hint.hide();
-		});
-	});
+		url.searchParams.delete('access_token');
+		url.searchParams.delete('public_domain_retry');
+		history.replaceState(history.state, document.title, url.toString());
+	})();
 </script>
-<?php endif ?>
-<?php if ($downloadUrl !== '' || $sharingPopupParams !== null || $copyLinkUrl !== ''): ?>
+<?php if ($hasHeader): ?>
 <script>
-	// built in js: the air design of the php button is a no-op without AIR_SITE_TEMPLATE, which
-	// only a site template defines, and this page carries none
 	BX.ready(function() {
-		var actions = document.getElementById('<?= $actionsContainerId ?>');
+		var headerContainer = document.getElementById('<?= $headerContainerId ?>');
+		var page = headerContainer.closest('.disk-html-viewer-page');
+		var presentation = null;
+		<?php if ($contentUrl !== ''): ?>
 
-		// The labelled row of actions asks 585px of the header, which a phone does not have: below
-		// that the buttons keep the icon alone, as the copy one always does. The label is not lost —
-		// it stays the accessible name of every button through the title and the aria-label.
-		var narrow = window.matchMedia('(max-width: 639px)');
-		var collapsible = [];
-		var applyNarrow = function() {
-			collapsible.forEach(function(button) {
-				button.setCollapsed(narrow.matches);
-			});
-		};
-		<?php if ($downloadUrl !== ''): ?>
-		(function() {
-			var label = '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_VIEWER_HTML_DOWNLOAD')) ?>';
+		// The presentation mode belongs to the page: the header only asks for it and follows the state.
+		// The node that goes full screen, the button of the exit and the announcements all live here.
+		presentation = (function() {
+			var exitContainer = document.getElementById('<?= $presentationExitContainerId ?>');
+			var exitVisibleClass = 'disk-html-viewer-page__presentation-exit--visible';
+			var exitLabel = BX.message('DISK_DOCUMENT_HEADER_PRESENTATION_EXIT_ACTION');
+			var exitHideDelay = 3000;
+			var exitHideTimer = null;
+			var adapter = new BX.Disk.FullscreenPresentation(page);
 
-			var button = new BX.UI.Button({
-				text: label,
+			// Not in the header: the mode hides it. No text, so the title and the aria-label name the button.
+			var exitButton = new BX.UI.Button({
 				useAirDesign: true,
 				style: BX.UI.AirButtonStyle.OUTLINE,
 				size: BX.UI.Button.Size.MEDIUM,
-				tag: BX.UI.Button.Tag.LINK,
-				link: <?= Json::encode($downloadUrl) ?>,
-				icon: BX.UI.IconSet.Outline.DOWNLOAD,
-				props: { download: '', title: label, 'aria-label': label },
-				dataset: { testid: 'disk-html-viewer-download' },
+				icon: BX.UI.IconSet.Outline.COLLAPSE_M,
+				props: { title: exitLabel, 'aria-label': exitLabel },
+				dataset: { testid: 'disk-html-viewer-presentation-exit' },
 			});
 
-			button.renderTo(actions);
-			collapsible.push(button);
-		})();
-		<?php endif ?>
-		<?php if ($sharingPopupParams !== null): ?>
-		(function() {
-			var params = <?= Json::encode($sharingPopupParams) ?>;
-			var label = '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_VIEWER_HTML_SHARING')) ?>';
-			var errorLabel = '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_VIEWER_HTML_SHARING_ERROR')) ?>';
-			var dialog = null;
+			exitButton.bindEvent('click', function() {
+				adapter.exit();
+			});
+			exitButton.renderTo(exitContainer);
 
-			function showError()
-			{
+			var showExitButton = function() {
+				if (!adapter.isActive())
+				{
+					return;
+				}
+
+				exitContainer.classList.add(exitVisibleClass);
+				clearTimeout(exitHideTimer);
+				exitHideTimer = setTimeout(function() {
+					exitContainer.classList.remove(exitVisibleClass);
+				}, exitHideDelay);
+			};
+
+			var announce = function(message) {
 				var announcer = BX.UI.Accessibility && BX.UI.Accessibility.LiveAnnouncer;
 				if (announcer)
 				{
-					announcer.announce(errorLabel, 'assertive');
+					announcer.announce(message, 'polite');
+				}
+			};
+
+			// Subscribed before the header is mounted, and listeners are told in the order they subscribed, so
+			// the class is off by the time the header takes the focus back: a header still hidden would swallow it.
+			adapter.subscribeToState(function(isActive) {
+				page.classList.toggle('disk-html-viewer-page--presentation', isActive);
+
+				if (isActive)
+				{
+					showExitButton();
+					exitButton.getContainer().focus();
+					announce(BX.message('DISK_DOCUMENT_HEADER_PRESENTATION_ENTERED'));
+
+					return;
 				}
 
-				BX.Runtime.loadExtension('ui.notification').then(function(exports) {
-					exports.UI.Notification.Center.notify({ content: BX.util.htmlspecialchars(errorLabel) });
-				});
+				clearTimeout(exitHideTimer);
+				exitContainer.classList.remove(exitVisibleClass);
+				announce(BX.message('DISK_DOCUMENT_HEADER_PRESENTATION_EXITED'));
+			});
+
+			BX.bind(page, 'mousemove', showExitButton);
+			BX.bind(page, 'touchstart', showExitButton);
+
+			return adapter;
+		})();
+		<?php endif ?>
+
+		var context = {
+			// Nothing writes the document here, and no opening of it carries the save status element, but the
+			// context asks for an adapter all the same.
+			adapter: {
+				subscribeToSaveStatus: function() {
+					return function() {};
+				},
+				retrySave: function() {
+					return Promise.resolve();
+				},
+				canRetrySave: function() {
+					return false;
+				},
+			},
+			boostContainerId: '<?= $boostContainerId ?>',
+			logoUrl: <?= Json::encode($portalUrl) ?>,
+			editUrl: '',
+			sessionBoost: null,
+			shouldShowPromoImmediately: false,
+			// The header stands on a page of its own here, so the name of the document is the heading of
+			// that page - the one the page drew for the first paint steps back together with the strip.
+			shouldRenderNameAsPageHeading: true,
+			composition: <?= Json::encode($composition) ?>,
+		};
+
+		// An opening with nothing to show offers no mode either, and the header then draws no button.
+		if (presentation !== null)
+		{
+			context.presentationAdapter = presentation;
+		}
+
+		// The container filling up is the only honest sign the header is there: constructing it starts work
+		// which may still end without a header, and `:has()` on an element of the header answers for that
+		// element rather than for the header, and is missing from browsers the product supports.
+		var markHeaderMounted = function() {
+			if (headerContainer.firstElementChild === null)
+			{
+				return false;
 			}
 
-			// Only what the page can vouch for is stated: the button opens a dialog. Its open() resolves
-			// whether the dialog appeared or not — a failed access rights request is answered by the popup
-			// itself and resolves all the same — so an aria-expanded here would be a claim about a state
-			// nothing confirms, and a "true" left on a dialog that never opened has nothing to reset it.
-			var button = new BX.UI.Button({
-				text: label,
-				useAirDesign: true,
-				style: BX.UI.AirButtonStyle.OUTLINE,
-				size: BX.UI.Button.Size.MEDIUM,
-				icon: BX.UI.IconSet.Outline.THREE_PERSONS,
-				props: { 'aria-haspopup': 'dialog', title: label, 'aria-label': label },
-				dataset: { testid: 'disk-html-viewer-sharing' },
-				onclick: function() {
-					// the popup chunk arrives in seconds: waiting disables the button, so a second
-					// click cannot start a parallel open
-					button.setWaiting(true);
+			page.classList.add('disk-html-viewer-page--header-mounted');
 
-					// on demand, so the popup extension stays out of the page dependencies
-					BX.Runtime.loadExtension('disk.sharing-access-popup').then(function(exports) {
-						dialog = dialog || new exports.SharingPopupDialog();
+			return true;
+		};
 
-						return dialog.open(params);
-					}).then(function() {
-						button.setWaiting(false);
-					}, function() {
-						button.setWaiting(false);
-						showError();
-					});
-				},
-			});
-
-			button.renderTo(actions);
-			collapsible.push(button);
-		})();
-		<?php endif ?>
-		<?php if ($copyLinkUrl !== ''): ?>
-		(function() {
-			var link = <?= Json::encode($copyLinkUrl) ?>;
-			var label = '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_VIEWER_HTML_COPY_LINK')) ?>';
-			var doneLabel = '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_VIEWER_HTML_COPY_LINK_DONE')) ?>';
-			var errorLabel = '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_VIEWER_HTML_COPY_LINK_ERROR')) ?>';
-			var restoreDelay = 1500;
-			var restoreTimer = null;
-
-			// No text, so air renders the square collapsed button; the title and the aria-label name
-			// it for a pointer hover and a screen reader.
-			var button = new BX.UI.Button({
-				useAirDesign: true,
-				style: BX.UI.AirButtonStyle.OUTLINE,
-				size: BX.UI.Button.Size.MEDIUM,
-				icon: BX.UI.IconSet.Outline.LINK,
-				props: { title: label, 'aria-label': label },
-				dataset: { testid: 'disk-html-viewer-copy-link' },
-			});
-
-			// The colour swap alone conveys nothing to a screen reader, nor to a user who cannot tell
-			// the states apart by hue, so the icon changes with it and the result is announced.
-			var announce = function(message, politeness) {
-				var announcer = BX.UI.Accessibility && BX.UI.Accessibility.LiveAnnouncer;
-				if (announcer)
+		if (!markHeaderMounted())
+		{
+			var headerObserver = new MutationObserver(function() {
+				if (markHeaderMounted())
 				{
-					announcer.announce(message, politeness);
+					headerObserver.disconnect();
 				}
-			};
-
-			var showCopied = function() {
-				button.setStyle(BX.UI.AirButtonStyle.FILLED_SUCCESS);
-				button.setIcon(BX.UI.IconSet.Outline.CHECK_M);
-				announce(doneLabel, 'polite');
-
-				clearTimeout(restoreTimer);
-				restoreTimer = setTimeout(function() {
-					button.setStyle(BX.UI.AirButtonStyle.OUTLINE);
-					button.setIcon(BX.UI.IconSet.Outline.LINK);
-				}, restoreDelay);
-			};
-
-			var showError = function() {
-				announce(errorLabel, 'assertive');
-				// on demand: a failed copy is the rare path, the toast has no place in the page assets
-				BX.Runtime.loadExtension('ui.notification').then(function(exports) {
-					exports.UI.Notification.Center.notify({ content: BX.util.htmlspecialchars(errorLabel) });
-				});
-			};
-
-			// The async clipboard needs a secure context, which a portal on plain http is not, so the
-			// core execCommand helper stays as the fallback.
-			var copy = function() {
-				if (navigator.clipboard && window.isSecureContext)
-				{
-					return navigator.clipboard.writeText(link);
-				}
-
-				return Promise.reject(new Error('async clipboard is unavailable'));
-			};
-
-			button.bindEvent('click', function() {
-				copy().then(showCopied, function() {
-					if (BX.clipboard.copy(link))
-					{
-						showCopied();
-
-						return;
-					}
-
-					showError();
-				});
 			});
 
-			button.renderTo(actions);
-		})();
-		<?php endif ?>
+			headerObserver.observe(headerContainer, { childList: true });
+		}
 
-		applyNarrow();
-		narrow.addEventListener('change', applyNarrow);
+		// Nothing is taken apart on the way out on purpose: an unload handler would keep the page out of the
+		// cache of the back button, and the document goes away with its subscriptions and timers anyway.
+		new BX.Disk.DocumentHeader(headerContainer, context);
 	});
 </script>
 <?php endif ?>

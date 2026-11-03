@@ -1,0 +1,6 @@
+:root {
+	--call-color-background: #011836;
+	--call-color-background-follow-up: #161835;
+
+	--call-color-incoming-border: rgba(255, 255, 255, 0.2);
+}

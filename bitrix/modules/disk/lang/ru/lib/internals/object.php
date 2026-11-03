@@ -9,4 +9,4 @@ $MESS["DISK_OBJECT_ENTITY_ERROR_REQUIRED_FILE_ID"] = "Не указано #FIELD
 $MESS["DISK_OBJECT_ENTITY_ERROR_LINK_FILE_ID"] = "Указано #FIELD# у файла, который является ссылкой.";
 $MESS["DISK_OBJECT_ENTITY_ERROR_FIELD_NAME_HAS_INVALID_CHARS"] = "Название содержит недопустимые символы.";
 $MESS["DISK_OBJECT_ENTITY_NAME_FIELD"] = "Название";
-?>
+$MESS["DISK_OBJECT_ENTITY_ERROR_MOVE_NON_UNIQUE_NAME"] = "Файл с таким именем уже есть в этой папке";

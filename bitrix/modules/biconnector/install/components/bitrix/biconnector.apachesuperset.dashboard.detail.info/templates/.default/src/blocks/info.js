@@ -8,7 +8,6 @@ type InfoBlockOptions = {
 	dashboard: Object,
 	publishedDate: string,
 	updatedDate: string,
-	period: string,
 	reloadDashboardCallback: Function,
 	isMarketModuleInstalled: boolean,
 	appCode: string,
@@ -23,7 +22,6 @@ export class InfoBlock
 		this.dashboard = options.dashboard;
 		this.publishedDate = options.publishedDate;
 		this.updatedDate = options.updatedDate;
-		this.period = options.period;
 		this.reloadDashboardCallback = options.reloadDashboardCallback;
 		this.isMarketModuleInstalled = options.isMarketModuleInstalled;
 		this.appCode = Type.isStringFilled(options.appCode) ? options.appCode : '';
@@ -52,18 +50,11 @@ export class InfoBlock
 		return Type.isStringFilled(dateRaw) ? Text.encode(dateRaw) : '&ndash;';
 	}
 
-	static getPeriodValue(periodRaw: any): string
-	{
-		return Type.isStringFilled(periodRaw) ? Text.encode(periodRaw) : '&ndash;';
-	}
-
 	render(): string
 	{
 		const publishedLabel = this.getPublishedLabel();
 		const publishedRow = this.renderPublishedRow(publishedLabel);
 		const updatedLabel = Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_UPDATED') ?? '';
-		const periodLabel = Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_PERIOD') ?? '';
-		const periodHint = Loc.getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_PERIOD_HINT') ?? '';
 		let ratingHintText = '';
 		let ratingCountText = '';
 		let ratingHintIcon = '';
@@ -125,17 +116,6 @@ export class InfoBlock
 							<span>${this.updatedDate}</span>
 						</div>
 					</div>
-
-						<div class="report-info__row">
-							<div class="report-info__label">
-								${Text.encode(periodLabel)}
-								<span data-hint="${Text.encode(periodHint)}"></span>
-							</div>
-							<div class="report-info__value">
-								<div class="ui-icon-set --o-calendar-with-slots report-info__value-icon"></div>
-								<span>${this.period}</span>
-							</div>
-						</div>
 				</div>
 			</div>
 		`;
@@ -291,7 +271,7 @@ export class InfoBlock
 		const appInfo = {
 			REVIEW_APP_CODE: this.appCode,
 			NAME: this.dashboardTitle,
-			ICON: this.dashboard?.ICON ?? `${this.imagesPath}/icon_empty.png`,
+			ICON: this.dashboard?.ICON ?? `${this.imagesPath}/icon_empty.webp`,
 			REVIEWS: {
 				CAN_REVIEW: this.ratingInfo?.CAN_REVIEW ?? 'N',
 			},

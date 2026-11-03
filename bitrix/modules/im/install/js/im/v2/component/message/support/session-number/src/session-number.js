@@ -1,16 +1,17 @@
 import { DefaultMessage } from 'im.v2.component.message.default';
+import { FileMessage } from 'im.v2.component.message.file';
+
+import { SessionNumberPlaque } from './components/session-number-plaque';
 
 import './css/session-number.css';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelMessage } from 'im.v2.model';
 
-const SESSION_ID_PARAMS_KEY = 'imolSid';
-
 // @vue/component
 export const SupportSessionNumberMessage = {
 	name: 'SupportSessionNumber',
-	components: { DefaultMessage },
+	components: { DefaultMessage, FileMessage, SessionNumberPlaque },
 	props:
 	{
 		item: {
@@ -25,6 +26,10 @@ export const SupportSessionNumberMessage = {
 			type: Boolean,
 			default: true,
 		},
+		containerHeight: {
+			type: [Number, null],
+			default: null,
+		},
 	},
 	data(): JsonObject
 	{
@@ -36,32 +41,26 @@ export const SupportSessionNumberMessage = {
 		{
 			return this.item;
 		},
-		sessionNumberText(): string
+		hasFiles(): boolean
 		{
-			return this.loc('IM_MESSAGE_SUPPORT_SESSION_NUMBER_TEXT', {
-				'#SESSION_NUMBER#': this.sessionNumber,
-			});
-		},
-		sessionNumber(): string
-		{
-			return this.message.componentParams?.[SESSION_ID_PARAMS_KEY];
-		},
-	},
-	methods:
-	{
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			return this.message.files.length > 0;
 		},
 	},
 	template: `
-		<DefaultMessage :item="item" :dialogId="dialogId" :withTitle="withTitle">
+		<FileMessage
+			v-if="hasFiles"
+			:item="item"
+			:dialogId="dialogId"
+			:withTitle="withTitle"
+			:containerHeight="containerHeight"
+		>
 			<template #before-message>
-				<div class="bx-im-message-support-session-number__container">
-					<div class="bx-im-message-support-session-number__content">
-						{{ sessionNumberText }}
-					</div>
-				</div>
+				<SessionNumberPlaque :item="item"/>
+			</template>
+		</FileMessage>
+		<DefaultMessage v-else :item="item" :dialogId="dialogId" :withTitle="withTitle">
+			<template #before-message>
+				<SessionNumberPlaque :item="item"/>
 			</template>
 		</DefaultMessage>
 	`,

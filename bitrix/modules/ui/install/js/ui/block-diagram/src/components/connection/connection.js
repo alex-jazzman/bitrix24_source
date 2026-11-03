@@ -18,6 +18,7 @@ type ConnectionSetup = {
 const CONNECTION_CLASS_NAME = {
 	base: 'ui-block-diagram-connection',
 	active: '--active',
+	elevated: '--elevated',
 };
 
 const TARGET_CONNECTION_CLASS_NAMES = {
@@ -56,6 +57,7 @@ export const Connection = {
 		const {
 			connectionPathInfo,
 			isDisabled,
+			isElevatedConnection,
 		} = useConnectionState(props.connection);
 		const { deleteConnectionById } = useBlockDiagram();
 		const loc = useLoc();
@@ -84,6 +86,7 @@ export const Connection = {
 			return {
 				[CONNECTION_CLASS_NAME.base]: true,
 				[CONNECTION_CLASS_NAME.active]: toValue(isOpen),
+				[CONNECTION_CLASS_NAME.elevated]: toValue(isElevatedConnection),
 			};
 		});
 
@@ -127,7 +130,11 @@ export const Connection = {
 		};
 	},
 	template: `
-		<svg :class="connectionClassNames" :data-id="connection.id">
+		<svg
+			:class="connectionClassNames"
+			:data-id="connection.id"
+			:data-test-id="$blockDiagramTestId('connection', connection.id)"
+		>
 			<g class="ui-block-diagram-connection__group">
 				<path
 					:d="connectionPathInfo.path"

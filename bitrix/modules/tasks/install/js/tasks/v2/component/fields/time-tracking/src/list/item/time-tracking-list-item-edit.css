@@ -37,13 +37,37 @@
 	padding: 0;
 }
 
-.tasks-time-tracking-list-item-edit-save-btn {
-	height: 28px;
+.tasks-time-tracking-list-item-edit [role="combobox"]:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* button reset */
+.tasks-time-tracking-list-item-edit-close {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* button reset end */
+
+.tasks-time-tracking-list-item-edit-close {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-time-tracking-list-item-edit-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-time-tracking-list-item-edit-close-icon {
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
-	cursor: pointer;
 	margin-bottom: 4px;
 }

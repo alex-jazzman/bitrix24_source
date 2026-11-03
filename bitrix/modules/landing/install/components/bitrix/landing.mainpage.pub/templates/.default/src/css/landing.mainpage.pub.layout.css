@@ -116,3 +116,27 @@ todo: fix it, not show title row in backend
 {
 	display: none;
 }
+
+/* the cross is drawn by pseudo elements of the ui module, so the button keeps neither a box nor a
+   native rendering of its own */
+.landing-mainpage-alert .ui-alert-close-btn {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	background: none;
+}
+
+/* the ui module gives this button an opacity of .4 and no rule for the focus at all: the ring
+   of a control at .4 is a weak showing of where the keyboard is */
+.landing-mainpage-alert .ui-alert-close-btn:focus {
+	opacity: 1;
+}
+
+/* the ring is written out instead of left to the browser: bootstrap-mainpage.css is loaded on this
+   page and switches the outline off in some two dozen rules */
+.landing-mainpage-alert .ui-alert-close-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}

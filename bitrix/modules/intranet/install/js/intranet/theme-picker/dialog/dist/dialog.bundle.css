@@ -157,18 +157,44 @@
 	transform: translateY(0);
 }
 
+/**
+ * Keyboard focus reveals the strip, and the class holds it revealed while the focus is on the
+ * remove button inside it. The transition is dropped on purpose: the focus ring of the button is
+ * painted inside the strip, and a fade would leave the ring dimmed for as long as it lasts.
+ */
+.theme-dialog-item:focus-visible .theme-dialog-item-title,
+.theme-dialog-item-focused .theme-dialog-item-title {
+	opacity: 1;
+	transform: translateY(0);
+	transition: none;
+}
+
 .theme-dialog-item-remove {
+	/* A native button now, so the UA background, border, padding, font and cursor are dropped. */
+	padding: 0;
+	background: none;
+	border: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
 	position: absolute;
 	right: 0;
 	top: 0;
 	bottom: 0;
 	width: 30px;
 	opacity: .77;
-	transition: .1s;
+	/* Only the opacity ever changes here, and an unscoped transition would fade the focus ring in. */
+	transition: opacity .1s;
 }
 
 .theme-dialog-item-remove:hover {
 	opacity: .9;
+}
+
+/* The button is translucent at rest, and opacity would dim its focus ring together with the icon. */
+.theme-dialog-item-remove:focus-visible {
+	opacity: 1;
 }
 
 .theme-dialog-item-remove:after {
@@ -179,6 +205,48 @@
 	top: 9px;
 	right: 8px;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%229%22%20height%3D%2211%22%20viewBox%3D%220%200%209%2011%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M1%2C9.85714286%20C1%2C10.4857143%201.525%2C11%202.16666667%2C11%20L6.83333333%2C11%20C7.475%2C11%208%2C10.4857143%208%2C9.85714286%20L8%2C3%20L1%2C3%20L1%2C9.85714286%20Z%20M9%2C0.666666667%20L6.75%2C0.666666667%20L6.10714286%2C0%20L2.89285714%2C0%20L2.25%2C0.666666667%20L0%2C0.666666667%20L0%2C2%20L9%2C2%20L9%2C0.666666667%20Z%22/%3E%0A%3C/svg%3E%0A') center center no-repeat;
+}
+
+/*
+ * One ring for every focusable node of the dialog. It goes inside: the controls sit tight against
+ * their neighbours, so an outer ring would be cut off. Two stops need a ring of their own and say
+ * why right below: the tile of the grid and the checkbox of the footer.
+ */
+.theme-dialog-item-remove:focus-visible,
+.theme-dialog-error:focus-visible,
+.theme-dialog-form-alert-remove:focus-visible,
+.theme-dialog-field-textbox-color:focus-visible,
+.theme-dialog-field-textbox:focus-visible,
+.theme-dialog-field-textbox-remove:focus-visible,
+.theme-dialog-field-button-switcher-item:focus-visible,
+.theme-dialog-checkbox-input:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-accent-brand-blue);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+/*
+ * The tile is the one stop whose ring competes with a mark of its own: the applied theme wears a
+ * solid line of a close hue right beside it, and a single line of the group next to that reads as
+ * the same mark. Two lines with a light gap between them tell the focus apart by shape, not by hue.
+ *
+ * The ring lives in the 5px border of the tile, because that is as deep as the tile can paint: the
+ * preview of a theme is a positioned child, so it covers an inset shadow and an outline of the tile
+ * alike. `double` draws both lines at once, and the gap shows the light border of the tile itself -
+ * the light line costs no layer of its own and nothing can cover it.
+ */
+.theme-dialog-item:focus-visible {
+	/* 5px is the border of the tile above, not a size of its own: the ring fills exactly that band. */
+	outline: 5px double var(--ui-color-focus-outline);
+	outline-offset: -5px;
+}
+
+/*
+ * The one stop the ring goes around instead of inside: the box of the checkbox is 13px wide and has
+ * room of its own on both sides, so the inset offset of the group would paint over the very mark
+ * the checkbox has to keep readable.
+ */
+.theme-dialog-checkbox-input:focus-visible {
+	outline-offset: 1px;
 }
 
 .theme-dialog-button-link {
@@ -204,10 +272,6 @@
 	vertical-align: middle;
 }
 
-.theme-dialog-checkbox-input {
-
-}
-
 .theme-dialog-checkbox-label {
 	margin-left: 2px;
 	color: #535c69;
@@ -223,35 +287,65 @@
 	font-size: 14px;
 }
 
+/*
+ * The live region of the form stays rendered while no error stands, clipped the way `ui.a11y` hides
+ * a node: a region taken out of the tree by `display: none` would have nothing to announce from.
+ */
 .theme-dialog-form-alert {
-	display: none;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	clip: rect(0, 0, 0, 0);
 	overflow: hidden;
-	margin: -20px -20px 25px -20px;
 	font-size: 14px;
 	color: #d0021b;
 	background: rgba(208,2,27,.1);
-	position: relative;
-	padding: 16px 40px 16px 18px;
-	border-bottom: 13px solid #fff;
 }
 
 .theme-dialog-form-alert-show {
-	display: block;
+	position: relative;
+	width: auto;
+	height: auto;
+	margin: -20px -20px 25px -20px;
+	padding: 16px 40px 16px 18px;
+	border-bottom: 13px solid #fff;
+	clip: auto;
+}
+
+/* The clipped region has nothing to close, and a button inside it would still be a stop of Tab. */
+.theme-dialog-form-alert:not(.theme-dialog-form-alert-show) .theme-dialog-form-alert-remove {
+	display: none;
 }
 
 .theme-dialog-form-alert-remove {
+	/* A native button now, so the UA background, border, padding, font and cursor are dropped. */
+	padding: 0;
+	background: none;
+	border: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
 	position: absolute;
 	right: 0;
 	top: 2px;
 	width: 40px;
 	height: 50px;
 	opacity: .3;
-	cursor: pointer;
-	transition: .2s;
+	/* Only the opacity ever changes here, and an unscoped transition would fade the focus ring in. */
+	transition: opacity .2s;
 }
 
 .theme-dialog-form-alert-remove:hover {
 	opacity: .7;
+}
+
+/* The button is translucent at rest, and opacity would dim its focus ring together with the icon. */
+.theme-dialog-form-alert-remove:focus-visible {
+	opacity: 1;
 }
 
 .theme-dialog-form-alert-remove:after {
@@ -291,6 +385,10 @@
 }
 
 .theme-dialog-field-textbox-color {
+	/* A native button now; the border and the background below replace the UA ones. */
+	padding: 0;
+	appearance: none;
+	cursor: pointer;
 	display: inline-block;
 	vertical-align: middle;
 	width: 24px;
@@ -332,17 +430,27 @@
 }
 
 .theme-dialog-field-textbox-remove {
+	/* A native button now, so the UA background, border, padding, font and cursor are dropped. */
+	padding: 0;
+	background: none;
+	border: none;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
 	display: inline-block;
 	vertical-align: middle;
 	width: 34px;
 	height: 24px;
 	opacity: .5;
 	position: relative;
-	cursor: pointer;
-	transition: .2s;
+	/* Only the opacity ever changes here, and an unscoped transition would fade the focus ring in. */
+	transition: opacity .2s;
 }
 
-.theme-dialog-field-textbox-remove:hover {
+/* Translucent at rest: opacity would dim the focus ring together with the icon. */
+.theme-dialog-field-textbox-remove:hover,
+.theme-dialog-field-textbox-remove:focus-visible {
 	opacity: 1;
 }
 
@@ -373,6 +481,9 @@
 }
 
 .theme-dialog-field-button-switcher-item {
+	/* A native button now; the padding, border, font and color below replace the UA ones. */
+	background: none;
+	appearance: none;
 	display: inline-block;
 	padding: 0 25px;
 	line-height: 35px;
@@ -385,10 +496,13 @@
 	border: 1px solid #c6cdd3;
 	cursor: pointer;
 	opacity: .4;
-	transition: .2s;
+	/* The pressed look changes exactly these four, and an unscoped transition would fade the ring in. */
+	transition: opacity .2s, color .2s, background-color .2s, border-color .2s;
 }
 
-.theme-dialog-field-button-switcher-item:hover {
+/* Translucent at rest: opacity would dim the focus ring together with the label. */
+.theme-dialog-field-button-switcher-item:hover,
+.theme-dialog-field-button-switcher-item:focus-visible {
 	opacity: 1;
 }
 
@@ -417,6 +531,40 @@
 	display: none;
 }
 
+/* The file field is stretched over the zone, so the zone is positioned to hold it. */
+.theme-dialog-field-file {
+	position: relative;
+}
+
+.theme-dialog-field-file-browse {
+	position: absolute;
+	inset: 0;
+	/* the preview inside the zone is positioned, and without this the field would end up under it */
+	z-index: 1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	/*
+	 * The field is transparent by a filter and not by `opacity`, because a node whose computed
+	 * opacity is zero is invisible to `InteractivityChecker` of `ui.a11y`, and the focus trap of a
+	 * dialog leaves an invisible node out of its set - the zone would then be reachable by Shift+Tab
+	 * alone. A filter paints the same nothing and keeps the field in the set. It stays hit-testable
+	 * either way, which is what makes the zone open the system dialog by a click.
+	 */
+	filter: opacity(0);
+	cursor: pointer;
+}
+
+/*
+ * The field itself is fully transparent, and a transparent element draws no outline, so the ring of
+ * the zone is drawn on the zone instead. For the same reason the hover of the zone is read from the
+ * wrapper: the field covers the zone, and the pointer never reaches the zone itself.
+ */
+.theme-dialog-field-file-browse:focus-visible + .theme-dialog-field-button {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-accent-brand-blue);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .theme-dialog-field-button {
 	display: flex;
 	overflow: hidden;
@@ -424,10 +572,10 @@
 	border: 2px dashed #c6cdd3;
 	transition: .1s;
 	border-radius: var(--ui-border-radius-2xs, 3px);
-	cursor: pointer;
+	/* the cursor comes from the file field stretched over the zone: the zone itself is not clickable */
 }
 
-.theme-dialog-field-button:hover, .theme-dialog-field-button-hover {
+.theme-dialog-field-file:hover .theme-dialog-field-button, .theme-dialog-field-button-hover {
 	border: 2px dashed #2fc6f6;
 }
 

@@ -1,14 +1,12 @@
 import 'im.v2.css.classes';
 import 'im.v2.css.icons';
 import 'im.v2.css.tokens';
-
 import { Logger } from 'im.v2.lib.logger';
+import { type ImModelChat } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
-import { TaskChatPlaceholder } from './placeholder/placeholder';
 import { TaskChatContent } from './content/task-content';
-
-import type { ImModelChat } from 'im.v2.model';
+import { TaskChatPlaceholder } from './placeholder/placeholder';
 
 import './css/task-chat-opener.css';
 

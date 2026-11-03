@@ -9,22 +9,30 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { openChatCreateByActiveRecentTab } = require('im/messenger/lib/open-chat-create');
+	const {
+		createItemButtonItemOptions,
+		createItemButtonServiceConfig,
+	} = require('im/messenger/controller/recent/config/src/lib/item-button');
 	const { RecentServiceName } = require('im/messenger/controller/recent/const');
 
+	const { AllConfig } = require('im/messenger/controller/recent/config/src/global/all');
 	const { ChannelConfig } = require('im/messenger/controller/recent/config/src/global/channel');
 	const { ChatsConfig } = require('im/messenger/controller/recent/config/src/global/chats');
 	const { CollabConfig } = require('im/messenger/controller/recent/config/src/global/collab');
 	const { CopilotConfig } = require('im/messenger/controller/recent/config/src/global/copilot');
 	const { OpenlinesConfig } = require('im/messenger/controller/recent/config/src/global/openlines');
 	const { TaskConfig } = require('im/messenger/controller/recent/config/src/global/task');
+	const { VibecodeAppConfig } = require('im/messenger/controller/recent/config/src/global/vibecode-app');
 
 	const SystemFolderConfigMap = {
+		all: AllConfig,
 		default: ChatsConfig,
 		copilot: CopilotConfig,
 		openChannel: ChannelConfig,
 		collab: CollabConfig,
 		lines: OpenlinesConfig,
 		tasksTask: TaskConfig,
+		vibecodeApp: VibecodeAppConfig,
 	};
 
 	/**
@@ -34,6 +42,11 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 	function resolveFolderConfig(folderId)
 	{
 		const normalizedFolderId = Number(folderId);
+		if (Number.isNaN(normalizedFolderId))
+		{
+			return SystemFolderConfigMap[folderId] ?? ChatsConfig;
+		}
+
 		const folder = serviceLocator.get('core').getStore().getters['folderModel/getById'](normalizedFolderId);
 		if (!folder)
 		{
@@ -42,7 +55,7 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 
 		if (folder.type === 'system')
 		{
-			return SystemFolderConfigMap[folder.code] ?? null;
+			return SystemFolderConfigMap[folder.code] ?? ChatsConfig;
 		}
 
 		return createPersonalFolderConfig(normalizedFolderId);
@@ -105,6 +118,7 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 						sections: ['pinned', 'general'],
 						defaultSection: 'general',
 						convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/common',
+						itemOptions: createItemButtonItemOptions(),
 					},
 				},
 				[RecentServiceName.pagination]: {
@@ -114,6 +128,11 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 				[RecentServiceName.search]: {
 					extension: 'im/messenger/controller/recent/service/search/common',
 					props: {
+						// The server searches by the folder eligibility rule instead of a recent section:
+						// the rule does not depend on the folder, so no folder id is passed. The local
+						// section stays - it is a subset of the rule, so it can only find less, and the
+						// server answer fills the rest in.
+						folderEligibleOnly: true,
 						recentTab: RecentTab.chat,
 						searchUsers: true,
 					},
@@ -130,6 +149,7 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 					extension: 'im/messenger/controller/recent/service/select/common',
 					props: {},
 				},
+				[RecentServiceName.itemButton]: createItemButtonServiceConfig(),
 			},
 		};
 	}

@@ -16,6 +16,25 @@
 	--status-icon-color: var(--ui-color-base-5);
 }
 
+.air-user-profile:focus-visible {
+	outline: none;
+}
+
+.air-user-profile:focus-visible::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	right: 0;
+	width: 100%;
+	min-width: 29px;
+	height: 29px;
+	transform: translateY(-50%);
+	outline: auto;
+	outline-offset: 2px;
+	border-radius: 48px;
+	pointer-events: none;
+}
+
 .air-user-profile.--worktime-not-started {
 	--wrapper-color: var(--ui-color-accent-main-primary);
 	--status-icon-color: var(--ui-color-base-4);
@@ -85,6 +104,10 @@ body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-sta
 				opacity 0.3s ease-in-out,
 				visibility 0s linear 0.3s,
 				max-width 0s ease-in-out 0.3s;
+	}
+
+	.air-user-profile:focus-visible::before {
+		width: 29px;
 	}
 
 	.air-user-profile .air-user-profile-avatar__work-time-state-short {
@@ -214,7 +237,8 @@ body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-sta
 	margin-right: 4px;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-medium);
-	line-height: 19px;
+	line-height: 20px;
+	transform: translateY(0.5px);
 	color: var(--ui-color-base-white-fixed);
 	white-space: nowrap;
 	min-width: 40px;
@@ -249,6 +273,8 @@ body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-sta
 }
 
 .intranet-avatar-widget-base-popup {
+	max-width: calc(100vw - 16px);
+	box-sizing: border-box;
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-width: none;

@@ -23,7 +23,7 @@ $documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Quote);
 $arActivityDescription =
 	(new ActivityDescription(
 		Loc::getMessage('CRM_QUOTE_MANUAL_START_TRIGGER_NAME_MSG_V1') ?? '',
-		Loc::getMessage('CRM_QUOTE_MANUAL_START_TRIGGER_DESCRIPTION') ?? '',
+		Loc::getMessage('CRM_QUOTE_MANUAL_START_TRIGGER_DESCRIPTION_1') ?? '',
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('CrmQuoteManualStartTrigger')

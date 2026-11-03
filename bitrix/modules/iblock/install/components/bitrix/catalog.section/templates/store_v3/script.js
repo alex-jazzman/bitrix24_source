@@ -8,6 +8,34 @@
 	if (!!window.JCCatalogSectionComponentStoreV3)
 		return;
 
+	// The announcer comes from an extension of its own. Without it the list keeps loading and only
+	// the spoken count is lost.
+	var getAccessibility = function()
+	{
+		return (BX.UI && BX.UI.Accessibility) || null;
+	};
+
+	// The structured data of a card is a script of type application/ld+json, and the core hands it
+	// over with the code: run as code, it fails, and with it the whole block of the loaded cards.
+	var isCode = function(script)
+	{
+		if (!script.isInternal)
+		{
+			return true;
+		}
+
+		try
+		{
+			JSON.parse(script.JS);
+		}
+		catch (error)
+		{
+			return true;
+		}
+
+		return false;
+	};
+
 	window.JCCatalogSectionComponentStoreV3 = function(params) {
 		this.formPosting = false;
 		this.siteId = params.siteId || '';
@@ -240,6 +268,10 @@
 			if (!itemsHtml)
 				return;
 
+			// processNavParams resets the flag after this call, so the first fill of a deferred
+			// container can only be told apart before the rows are inserted
+			var wasDeferred = this.deferredLoad === true;
+
 			var processed = BX.processHTML(itemsHtml, false),
 				temporaryNode = BX.create('DIV');
 
@@ -294,9 +326,44 @@
 						}
 					}
 				}).animate();
+
+				if (!wasDeferred)
+				{
+					this.announceAddedItems(items);
+				}
 			}
 
-			BX.ajax.processScripts(processed.SCRIPT);
+			BX.ajax.processScripts(processed.SCRIPT.filter(isCode));
+		},
+
+		// Focus is not moved here: the rows appear off-screen while the user reads,
+		// so only the count is spoken.
+		//
+		// The message is assertive, not polite. What loads the next page is the scrolling, and with a
+		// keyboard the scrolling is Tab: the reader is speaking the name of every stop it passes, and a
+		// polite message waits for a pause that a moving hand never leaves. The list of the visitor has
+		// just grown under the very keys being pressed, so the message belongs to what is being done
+		// right now and is worth the interruption.
+		announceAddedItems: function(rows)
+		{
+			var added = 0, k;
+
+			for (k in rows)
+			{
+				if (rows.hasOwnProperty(k))
+				{
+					added += rows[k].querySelectorAll('[data-entity="item"]').length;
+				}
+			}
+
+			var accessibility = getAccessibility();
+			if (added === 0 || !accessibility)
+				return;
+
+			accessibility.LiveAnnouncer.announce(
+				BX.Loc.getMessagePlural('CT_BCS_CATALOG_ITEMS_ADDED_ARIA', added, {'#COUNT#': String(added)}),
+				'assertive'
+			);
 		},
 
 		processPagination: function(paginationHtml)

@@ -1,3 +1,4 @@
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import {
 	PlusIcon,
 	LinkIcon,
@@ -11,6 +12,7 @@ import { LinkEditFormComponent } from './link-edit-form';
 export const ToolbarMoreGroupComponent = {
 	name: 'NoteToolbarMoreGroup',
 	components: {
+		BIcon,
 		PlusIcon,
 		LinkIcon,
 		TableIcon,
@@ -94,6 +96,26 @@ export const ToolbarMoreGroupComponent = {
 			type: Function,
 			default: null,
 		},
+		// Own entry point for a file that already lives on Disk. Hidden when the feature is off, so the
+		// row stays exactly as it was.
+		diskAttachmentsEnabled: {
+			type: Boolean,
+			default: false,
+		},
+		onPickDiskFile: {
+			type: Function,
+			default: null,
+		},
+		onInsertDate: {
+			type: Function,
+			default: null,
+		},
+	},
+	data()
+	{
+		return {
+			Outline,
+		};
 	},
 	computed: {
 		showLinkRow(): boolean
@@ -114,8 +136,13 @@ export const ToolbarMoreGroupComponent = {
 		},
 		insertFile(): void
 		{
-			this.onInsertFile?.();
 			this.onCloseMenu?.();
+			this.onInsertFile?.();
+		},
+		pickDiskFile(): void
+		{
+			this.onCloseMenu?.();
+			this.onPickDiskFile?.();
 		},
 		insertImage(): void
 		{
@@ -126,6 +153,11 @@ export const ToolbarMoreGroupComponent = {
 		{
 			this.onInsertVideo?.();
 			this.onCloseMenu?.();
+		},
+		insertDate(): void
+		{
+			this.onCloseMenu?.();
+			this.onInsertDate?.();
 		},
 		switchToLink(): void
 		{
@@ -161,8 +193,10 @@ export const ToolbarMoreGroupComponent = {
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LINK')" :data-note-editor-active="linkIsActive" :disabled="!editor?.isEditable" @click="switchToLink"><LinkIcon /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_INSERT_TABLE')" :disabled="insertTableDisabled" @click="insertTable"><TableIcon /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_FILE')" :disabled="!editor?.isEditable" @click="insertFile"><FilePlusIcon /></button>
+								<button v-if="diskAttachmentsEnabled" type="button" class="note-editor-popover-button" data-testid="note-editor-file-from-disk" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_FILE_FROM_DISK')" :disabled="!editor?.isEditable" @click="pickDiskFile"><BIcon :name="Outline.STORAGE" :size="24" /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_IMAGE')" :disabled="!editor?.isEditable" @click="insertImage"><ImagePlusIcon /></button>
 								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_VIDEO')" :disabled="!editor?.isEditable" @click="insertVideo"><VideoIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-insert-date" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_DATE')" :disabled="!editor?.isEditable" @click="insertDate"><BIcon :name="Outline.CALENDAR" :size="24" /></button>
 							</div>
 							<LinkEditForm
 								v-else

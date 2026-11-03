@@ -24,10 +24,31 @@
 	gap: 14px;
 }
 
+/* button reset */
 .tasks-task-time-tracking-sheet-filter,
 .tasks-task-time-tracking-sheet-close {
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
 	cursor: pointer;
+}
+/* button reset end */
+
+.tasks-task-time-tracking-sheet-filter,
+.tasks-task-time-tracking-sheet-close {
+	display: flex;
+	align-items: center;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-task-time-tracking-sheet-filter:focus-visible,
+.tasks-task-time-tracking-sheet-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-task-time-tracking-sheet-content {
@@ -39,7 +60,7 @@
 	flex-direction: column;
 	background: var(--ui-color-bg-content-primary);
 	border-radius: var(--ui-border-radius-lg);
-	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 9px var(--ui-color-area-box-shadow-default-color);
 }
 
 .tasks-task-time-tracking-sheet-footer {
@@ -51,7 +72,7 @@
 	padding: 18px;
 	background: var(--ui-color-bg-content-primary);
 	border-radius: var(--ui-border-radius-lg);
-	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 9px var(--ui-color-area-box-shadow-default-color);
 }
 
 .tasks-task-time-tracking-sheet-timer {

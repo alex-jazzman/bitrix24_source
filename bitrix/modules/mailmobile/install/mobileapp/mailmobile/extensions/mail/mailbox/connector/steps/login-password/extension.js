@@ -11,11 +11,11 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 	const { clone, isEmpty } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { getServiceInfo } = require('mail/mailbox/connector/steps/services-list');
-	const AppTheme = require('apptheme');
 	const { StringInput, InputDesign, InputMode, InputSize } = require('ui-system/form/inputs/string');
 	const { EmailInput } = require('ui-system/form/inputs/email');
 	const { PureComponent } = require('layout/pure-component');
-	const { Color } = require('tokens');
+	const { Color, Indent, Typography } = require('tokens');
+	const { Text2 } = require('ui-system/typography/text');
 	const { isValidEmail } = require('utils/email');
 	const {
 		ButtonSize,
@@ -242,6 +242,7 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 				isEnabled: true,
 				title: {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_LOGIN_PASSWORD_TITLE_3'),
+					style: Typography.text3Accent.getStyle(),
 				},
 				number: 2,
 				count: 3,
@@ -286,7 +287,7 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 				View(
 					{
 						style: {
-							marginRight: 10,
+							marginRight: Indent.L.toNumber(),
 							width: 32,
 							height: 32,
 						},
@@ -301,12 +302,11 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 						},
 					}),
 				),
-				Text({
+				Text2({
+					testId: 'mailmobile-connector-login-password-title',
+					color: Color.base2,
 					style: {
 						textAlign: 'center',
-						color: AppTheme.colors.base2,
-						fontSize: 18,
-						fontWeight: '400',
 					},
 					text: Loc.getMessage('MAILBOX_CONNECTOR_LOGIN_PASSWORD_TITLE_4'),
 				}),
@@ -329,9 +329,9 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 					{
 						style: {
 							flex: 1,
-							margin: 16,
-							paddingLeft: 15,
-							paddingRight: 15,
+							margin: Indent.XL2.toNumber(),
+							paddingLeft: Indent.XL2.toNumber(),
+							paddingRight: Indent.XL2.toNumber(),
 							paddingBottom: 37,
 							paddingTop: 27,
 						},
@@ -341,7 +341,7 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 						{
 							style: {
 								flex: 1,
-								paddingLeft: 5,
+								paddingLeft: Indent.S.toNumber(),
 							},
 						},
 						this.fieldsLayout,

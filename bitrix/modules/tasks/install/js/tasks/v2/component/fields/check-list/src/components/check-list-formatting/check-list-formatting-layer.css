@@ -8,8 +8,75 @@
 	font-family: inherit;
 	overflow: hidden;
 	display: -webkit-box;
-	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	text-overflow: ellipsis;
 	white-space: pre-wrap;
+}
+
+.tasks-check-list-formatting-layer-display:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.tasks-check-list-formatting-layer-display.--editable {
+	min-height: 1em;
+	cursor: text;
+}
+
+.tasks-check-list-formatting-layer-display.--editable.--empty::before {
+	color: var(--ui-color-base-4);
+	content: attr(data-placeholder);
+	pointer-events: none;
+}
+
+.tasks-check-list-formatting-layer-editor {
+	position: relative;
+	width: 100%;
+	min-height: 1em;
+}
+
+.tasks-check-list-formatting-layer-editor.--empty::before {
+	position: absolute;
+	inset: 0;
+	color: var(--ui-color-base-4);
+	content: attr(data-placeholder);
+	pointer-events: none;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor,
+.tasks-check-list-formatting-layer-editor .ui-text-editor-content,
+.tasks-check-list-formatting-layer-editor .ui-text-editor-editable {
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor {
+	--ui-text-editor-block-space-stack: 0;
+	--ui-text-editor-block-space-inline: 0;
+	--ui-text-editor-color-background: transparent;
+	--ui-text-editor-color-text: inherit;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor-scroller {
+	max-height: var(--check-list-editor-max-height);
+	overflow-y: auto;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor-editable {
+	padding: 0;
+	margin: 0;
+	line-height: inherit;
+	white-space: pre-wrap;
+}
+
+.tasks-check-list-formatting-layer-editor .ui-text-editor__paragraph {
+	margin: 0;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	color: inherit;
 }

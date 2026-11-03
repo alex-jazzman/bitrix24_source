@@ -18,7 +18,7 @@
 	font-size: 13px;
 	line-height: 40px;
 	cursor: pointer;
-	transition: background 300ms ease;
+	transition: background 300ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .sale-accountpay-fixedpay-list .sale-accountpay-fixedpay-item:hover { background: #d1e6f0; }
@@ -38,7 +38,7 @@
 
 .sale-accountpay-pp .sale-accountpay-pp-company {
 	border: 1px solid transparent;
-	transition: all 100ms ease;
+	transition: all 100ms ease, outline 0s, outline-offset 0s, box-shadow 0s;
 }
 
 .sale-accountpay-pp-company-graf-container {
@@ -48,7 +48,7 @@
 	height: 0;
 	border: 2px solid #c3cace;
 	border-radius: 2px;
-	transition: 180ms linear all;
+	transition: 180ms linear all, outline 0s, outline-offset 0s, box-shadow 0s;
 	background: #fff;
 }
 .sale-accountpay-pp-company-graf-container:hover{ border-color: #a8afb2;}
@@ -148,3 +148,80 @@ ul.sale-accountpay-pp-list li {
 	width: 64px;
 	height: 64px;
 }
+
+/*region Focus ring*/
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later: every stop of the form, and of the payment form that
+ * replaces it, lies in the wrapper column. */
+.row.bx-sap > .col[id^="bx-sap"] a:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] .btn:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] button:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] input:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] select:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] textarea:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] [tabindex]:not([tabindex="-1"]):focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] [role="button"]:focus-visible,
+.row.bx-sap > .col[id^="bx-sap"] [role="radio"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The script parks the focus on the wrapper, and `[tabindex="-1"]:focus { outline: 0 !important }`
+ * of the landing store theme (`landing24/assets/vendor/bootstrap/bootstrap.css:73`) is answered by
+ * nothing but `!important`. */
+.bx-sap > [id^="bx-sap"][tabindex="-1"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset, 2px) !important;
+}
+
+/* A sum standing inline and a tile, a flex item, are painted whole, the ring with them, before the next one,
+ * which covers the part of the band lying in the gap. The focused one rises over its neighbours. */
+.row.bx-sap > .col[id^="bx-sap"] .sale-accountpay-fixedpay-item:focus-visible {
+	position: relative;
+	z-index: 1;
+}
+
+.row.bx-sap > .col[id^="bx-sap"] .sale-accountpay-pp-company:focus-visible {
+	z-index: 101;
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. */
+.row.bx-sap > .col[id^="bx-sap"] .btn {
+	transition: all .2s ease, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.row.bx-sap > .col[id^="bx-sap"] .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button (0,2,0), and the theme repaints the text of a focused link (0,1,1). The resting colours are
+ * put back, and the hovered ones over a hovered or pressed focused button. */
+.row.bx-sap > .col[id^="bx-sap"] .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.row.bx-sap > .col[id^="bx-sap"] .btn.btn-primary:focus:hover,
+.row.bx-sap > .col[id^="bx-sap"] .btn.btn-primary:focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+	color: #fff;
+}
+
+.row.bx-sap > .col[id^="bx-sap"] .btn.btn-success:focus {
+	background-color: #28a745;
+	border-color: #28a745;
+	color: #fff;
+}
+
+.row.bx-sap > .col[id^="bx-sap"] .btn.btn-success:focus:hover,
+.row.bx-sap > .col[id^="bx-sap"] .btn.btn-success:focus:active {
+	background-color: #218838;
+	border-color: #1e7e34;
+	color: #fff;
+}
+/*endregion*/

@@ -38,7 +38,10 @@ export class CollapsibleCard
 		`;
 
 		const header: HTMLElement = Tag.render`
-			<div class="biconnector-settings-card__header">
+			<div
+				class="biconnector-settings-card__header"
+				data-testid="biconnector-settings-card-${this.#options.id}-header"
+			>
 				<div class="ui-icon-set ${this.#options.iconClass} biconnector-settings-card__icon"></div>
 				<div class="biconnector-settings-card__title">${this.#options.title}</div>
 				${chevronIcon}
@@ -46,7 +49,11 @@ export class CollapsibleCard
 		`;
 
 		this.#container = Tag.render`
-			<div class="biconnector-settings-card" data-card-id="${this.#options.id}">
+			<div
+				class="biconnector-settings-card"
+				data-card-id="${this.#options.id}"
+				data-testid="biconnector-settings-card-${this.#options.id}"
+			>
 				${header}
 				${this.#contentWrapper}
 			</div>

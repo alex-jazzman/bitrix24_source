@@ -18,6 +18,9 @@ declare type SyncListResult = {
 		deletedChats: Record<string, number> | [],
 	},
 	chats: Array<SyncRawChat>,
+	// optional: a server without the section does not send the key at all.
+	// Cells of several parent chats arrive in one array.
+	commentInfo?: Array<CommentInfoModelState>,
 	copilot: null | CopilotSyncData,
 	dialogIds: Record<number, string> | [],
 	navigationData: {
@@ -104,7 +107,7 @@ export type SyncRawChat = {
 	entityData3: string,
 	entityId: string,
 	entityType: string,
-	entityLink: { type: string, url: string },
+	entityLink: { type: string, url: string, id: string },
 	extranet: boolean,
 	id: number,
 	isNew: boolean,

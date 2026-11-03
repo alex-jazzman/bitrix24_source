@@ -18,9 +18,6 @@ return array(
 			'documentgenerator.integration.intranet.binding.codeBuilder' => [
 				'className' => '\\Bitrix\\DocumentGenerator\\Integration\\Intranet\\Binding\\CodeBuilder',
 			],
-			'documentgenerator.service.actualizeQueue' => [
-				'className' => '\\Bitrix\\DocumentGenerator\\Service\\ActualizeQueue',
-			],
 		],
 		'readonly' => true,
 	],

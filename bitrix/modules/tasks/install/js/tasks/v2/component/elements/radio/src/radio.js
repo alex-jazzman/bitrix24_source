@@ -64,6 +64,7 @@ export const UiRadio = {
 				@blur="$emit('focus', $event)"
 				@change="$emit('focus', $event)"
 			/>
+			<slot/>
 		</Component>
 	`,
 };

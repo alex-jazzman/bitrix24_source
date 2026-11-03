@@ -1,3 +1,6 @@
+/**
+ * @module src/util
+ */
 jn.define('src/util', (require, exports, module) => {
 	const { Color } = require('tokens');
 
@@ -38,14 +41,21 @@ jn.define('src/util', (require, exports, module) => {
 	function versionToNumber(v)
 	{
 		const [major, minor, patch] = v.split(' ')[0].split('.').map(Number);
+
 		return major * 1e6 + minor * 1e3 + patch;
 	}
 
 	function isGridViewSupported()
 	{
 		const appVersion = versionToNumber(Application.getAppVersion());
+
 		return (getIsIos() && appVersion >= versionToNumber(GRIDVIEW_VERSION_IOS))
 			|| (getIsAndroid() && appVersion >= versionToNumber(GRIDVIEW_VERSION_ANDROID));
+	}
+
+	function htmlDecode(value)
+	{
+		return BX.utils.html.htmlDecode(value);
 	}
 
 	module.exports = {
@@ -56,5 +66,6 @@ jn.define('src/util', (require, exports, module) => {
 		getIsIos,
 		isAvatarBlank,
 		isGridViewSupported,
+		htmlDecode,
 	};
 });

@@ -17,9 +17,10 @@ return [
 		'crm:type',
 		'crm:loc',
 		'layout/ui/buttons/add-button',
-		'assets/common',
+		'assets/icons',
 		'selector/widget/factory',
 		'layout/ui/fields/base',
 		'utils/object',
+		'tokens',
 	],
 ];

@@ -6,6 +6,12 @@ import '../css/detail-tabs.css';
 
 const ARROW_CONTROL_SIZE = 50;
 
+// A tab renamed after its title has been translated gets a new version of the phrase, not a new code.
+const TAB_TITLE_PHRASE_VERSION = Object.freeze({
+	AUDIO: '_MSGVER_1',
+	BRIEF: '_MSGVER_2',
+});
+
 // @vue/component
 export const DetailTabs = {
 	name: 'DetailTabs',
@@ -81,14 +87,9 @@ export const DetailTabs = {
 		getTabTitle(tab: ImModelSidebarFileTab): string
 		{
 			const tabNameToUpperCase = tab.toUpperCase();
-			let langPhraseCode = `IM_SIDEBAR_FILES_${tabNameToUpperCase}_TAB`;
+			const phraseVersion = TAB_TITLE_PHRASE_VERSION[tabNameToUpperCase] ?? '';
 
-			if (tabNameToUpperCase === 'BRIEF')
-			{
-				langPhraseCode += '_MSGVER_2';
-			}
-
-			return this.$Bitrix.Loc.getMessage(langPhraseCode);
+			return this.$Bitrix.Loc.getMessage(`IM_SIDEBAR_FILES_${tabNameToUpperCase}_TAB${phraseVersion}`);
 		},
 		isSelectedTab(index: number): boolean
 		{

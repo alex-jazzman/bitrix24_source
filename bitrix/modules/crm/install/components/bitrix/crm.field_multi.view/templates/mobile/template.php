@@ -12,7 +12,7 @@ foreach($arResult['VALUES'] as $arValue)
 			?>
 			<div class="mobile-grid-title"><?= $arValue["COMPLEX_NAME"] ?></div>
 			<div class="mobile-grid-block mobile-grid-data-phone-container" onclick="BX.MobileTools.phoneTo('<?= htmlspecialcharsbx($arValue['VALUE']) ?>')">
-				<img class="mobile-grid-data-phone-icon" src="<?=$this->GetFolder()?>/images/icon-phone2x.png" srcset="<?=$this->GetFolder()?>/images/icon-phone2x.png 2x">
+				<img class="mobile-grid-data-phone-icon" src="<?=$this->GetFolder()?>/images/icon-phone2x.webp" srcset="<?=$this->GetFolder()?>/images/icon-phone2x.webp 2x">
 				<span class="mobile-grid-field-contact"><?= htmlspecialcharsbx($arValue['VALUE']) ?></span>
 			</div>
 			<?
@@ -22,7 +22,7 @@ foreach($arResult['VALUES'] as $arValue)
 			<div class="mobile-grid-title"><?= $arValue["COMPLEX_NAME"] ?></div>
 			<div class="mobile-grid-block mobile-grid-data-mail-container">
 				<a href="mailto:<?=$arValue['VALUE']?>" style="display: block;text-decoration: none">
-					<img class="mobile-grid-data-mail-icon" src="<?=$this->GetFolder()?>/images/icon-email2x.png" srcset="<?=$this->GetFolder()?>/images/icon-email2x.png 2x">
+					<img class="mobile-grid-data-mail-icon" src="<?=$this->GetFolder()?>/images/icon-email2x.webp" srcset="<?=$this->GetFolder()?>/images/icon-email2x.webp 2x">
 					<span class="mobile-grid-field-contact"><?= $arValue['VALUE'] ?></span>
 				</a>
 			</div>

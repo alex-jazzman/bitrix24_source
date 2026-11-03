@@ -3,11 +3,10 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_application_core, im_v2_const, im_v2_lib_dateFormatter, ui_vue3, im_v2_component_elements_attach, im_v2_component_elements_keyboard, main_core_events, ui_reaction_item, im_v2_lib_permission, im_v2_lib_channel, ui_reaction_item_vue, im_v2_component_elements_avatar, im_v2_component_elements_userListPopup, im_v2_lib_utils, im_v2_provider_service_user, im_v2_lib_logger, im_v2_lib_rest, ui_reaction_picker, main_core, im_v2_lib_parser, im_v2_component_elements_chatTitle, im_v2_lib_menu, im_v2_provider_service_sending, im_v2_provider_service_message, im_v2_provider_service_uploading, ui_system_menu, ui_iconSet_api_vue, im_v2_lib_copilot, im_v2_component_animation, im_v2_provider_service_comments, main_sidepanel, ui_system_chip_vue, ui_sidepanel_layout, ui_lottie, ui_vue3_components_button, im_v2_component_elements_mediaGallery, im_v2_component_elements_popup, im_v2_component_elements_player, im_v2_component_elements_progressbar) {
+(function (exports, ui_vue3, im_v2_application_core, im_v2_const, im_v2_lib_dateFormatter, im_v2_lib_message, main_core, ui_a11y, ui_iconSet_api_vue, im_v2_component_elements_attach, im_v2_component_elements_keyboard, pull_client, im_v2_lib_localStorage, im_v2_lib_notifier, im_v2_provider_service_settings, ui_reaction_item, main_core_events, im_v2_lib_channel, im_v2_lib_permission, im_v2_lib_logger, im_v2_lib_rest, ui_reaction_item_vue, im_v2_component_elements_avatar, im_v2_component_elements_userListPopup, im_v2_lib_utils, im_v2_provider_service_user, ui_reaction_picker, ui_iconSet_outline, im_v2_component_elements_popup, im_v2_lib_promo, im_v2_lib_feature, im_v2_lib_parser, im_v2_component_elements_chatTitle, im_v2_lib_copilot, ui_system_menu, im_v2_lib_menu, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_component_animation, im_v2_provider_service_comments, main_sidepanel, ui_system_chip_vue, ui_sidepanel_layout, ui_lottie, im_v2_component_elements_player, im_v2_component_elements_progressbar, ui_vue3_components_button, im_v2_lib_confirm, ui_icons_disk, ui_system_checkbox, ui_system_radiobutton, ui_system_input_vue, ui_system_menu_vue, im_v2_component_elements_mediaGallery) {
 	'use strict';
 
-	// @vue/component
-	const TextContent = {
+	const TextContent = ui_vue3.defineComponent({
 		name: 'TextContent',
 		props: {
 			text: {
@@ -16,16 +15,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-message-text-content__container">
+		<div class="bx-im-message-text-content__container" data-testid="im-message-text-content">
 			<slot>
 				<span v-html="text"></span>
 			</slot>
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const MessageStatus = {
+	const MessageStatus = ui_vue3.defineComponent({
 		name: 'MessageStatus',
 		props: {
 			item: {
@@ -47,8 +45,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isSelfMessage() {
 				return this.message.authorId === im_v2_application_core.Core.getUserId();
 			},
+			isNotDelivered() {
+				return this.message.notDelivered === true && !this.message.error;
+			},
 			messageStatus() {
-				if (this.message.error) {
+				if (im_v2_lib_message.messageHasError(this.message)) {
 					return im_v2_const.OwnMessageStatus.error;
 				}
 				if (this.message.sending) {
@@ -70,16 +71,363 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div v-if="message.isEdited && !message.isDeleted" class="bx-im-message-status__edit-mark">
 				{{ loc('IM_MESSENGER_MESSAGE_EDITED') }}
 			</div>
-			<div class="bx-im-message-status__date" :class="{'--overlay': isOverlay}">
+			<div
+				v-if="isNotDelivered"
+				class="bx-im-message-status__date --not-delivered"
+				:class="{'--overlay': isOverlay}"
+				:title="formattedDate"
+				data-testid="im-message-not-delivered-label"
+			>
+				{{ loc('IM_MESSENGER_MESSAGE_NOT_DELIVERED') }}
+			</div>
+			<div v-else class="bx-im-message-status__date" :class="{'--overlay': isOverlay}">
 				{{ formattedDate }}
 			</div>
-			<div v-if="isSelfMessage" :class="'--' + messageStatus" class="bx-im-message-status__icon"></div>
+			<div v-if="isSelfMessage" :class="'--' + messageStatus" class="bx-im-message-status__icon" data-testid="im-message-status-icon"></div>
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const MessageAttach = {
+	const AiTaskIndicationLayout = Object.freeze({
+		bubble: 'bubble',
+		media: 'media',
+		round: 'round',
+		mediaCaption: 'media-caption'
+	});
+	function isAiTaskStatusInTimeRow(layout) {
+		return layout === AiTaskIndicationLayout.bubble || layout === AiTaskIndicationLayout.mediaCaption;
+	}
+	const AiTaskIndicationLayoutKey = 'imAiTaskIndicationLayout';
+	const Tone = Object.freeze({
+		ai: 'ai',
+		warning: 'warning',
+		alert: 'alert'
+	});
+	const CREATING_STATUSES = new Set([im_v2_const.AiTaskStatus.taskCreationStarted, im_v2_const.AiTaskStatus.resultCreationStarted]);
+	const FRAMES = Object.freeze([{
+		name: 'preparing',
+		matches: operation => operation.status === null,
+		labelKey: 'IM_MESSAGE_AI_TASK_PREPARING',
+		icon: ui_iconSet_api_vue.Outline.AI_STARS,
+		tone: Tone.ai,
+		isTerminal: false,
+		extinguishesDecor: false,
+		politeness: 'polite'
+	}, {
+		name: 'analyzing',
+		matches: operation => operation.status === im_v2_const.AiTaskStatus.search,
+		labelKey: 'IM_MESSAGE_AI_TASK_ANALYZING',
+		icon: ui_iconSet_api_vue.Outline.AI_STARS,
+		tone: Tone.ai,
+		isTerminal: false,
+		extinguishesDecor: false,
+		politeness: 'polite'
+	}, {
+		name: 'creating',
+		matches: operation => CREATING_STATUSES.has(operation.status),
+		labelKey: 'IM_MESSAGE_AI_TASK_CREATING',
+		icon: ui_iconSet_api_vue.Outline.AI_STARS,
+		tone: Tone.ai,
+		isTerminal: false,
+		extinguishesDecor: false,
+		politeness: 'polite'
+	}, {
+		name: 'created',
+		matches: operation => {
+			return operation.status === im_v2_const.AiTaskStatus.taskCreationCompleted && !operation.isPartial;
+		},
+		labelKey: 'IM_MESSAGE_AI_TASK_CREATED',
+		icon: ui_iconSet_api_vue.Outline.AI_STARS,
+		tone: Tone.ai,
+		isTerminal: true,
+		extinguishesDecor: false,
+		politeness: 'polite'
+	}, {
+		name: 'partial',
+		matches: operation => {
+			return operation.status === im_v2_const.AiTaskStatus.taskCreationCompleted;
+		},
+		labelKey: 'IM_MESSAGE_AI_TASK_CREATED_PARTIAL',
+		icon: ui_iconSet_api_vue.Outline.EXCLAMATION_CIRCLE,
+		tone: Tone.warning,
+		isTerminal: true,
+		extinguishesDecor: false,
+		politeness: 'polite'
+	}, {
+		name: 'result-added',
+		matches: operation => {
+			return operation.status === im_v2_const.AiTaskStatus.resultCreationCompleted;
+		},
+		labelKey: 'IM_MESSAGE_AI_TASK_RESULT_ADDED',
+		icon: ui_iconSet_api_vue.Outline.AI_STARS,
+		tone: Tone.ai,
+		isTerminal: true,
+		extinguishesDecor: false,
+		politeness: 'polite'
+	}, {
+		name: 'error',
+		matches: operation => operation.status === im_v2_const.AiTaskStatus.notFound,
+		labelKey: 'IM_MESSAGE_AI_TASK_ERROR',
+		icon: ui_iconSet_api_vue.Outline.ALERT,
+		tone: Tone.alert,
+		isTerminal: true,
+		extinguishesDecor: true,
+		politeness: 'assertive'
+	}]);
+	const PROGRESSIVE_FRAMES = FRAMES.filter(frame => !frame.isTerminal);
+	function findAiTaskFrame(operation) {
+		if (!operation) {
+			return null;
+		}
+		return FRAMES.find(frame => frame.matches(operation)) ?? null;
+	}
+	function getAiTaskOperation(store, message) {
+		const operation = store.getters['aiTask/getForChat'](message.chatId);
+		if (!operation) {
+			return null;
+		}
+		const indicatedIds = operation.indicatedMessageIds;
+		return indicatedIds.includes(message.id) ? operation : null;
+	}
+	function hasAiTaskIndication(store, message) {
+		return getAiTaskOperation(store, message) !== null;
+	}
+	function isAiTaskCaptionPlace(operation, message) {
+		return operation?.captionMessageId === message.id;
+	}
+
+	const AiTaskStatusRow = ui_vue3.defineComponent({
+		name: 'AiTaskStatusRow',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			message: {
+				type: Object,
+				required: true
+			},
+			layout: {
+				type: String,
+				default: AiTaskIndicationLayout.bubble
+			}
+		},
+		computed: {
+			stages: () => PROGRESSIVE_FRAMES,
+			operation() {
+				return getAiTaskOperation(this.$store, this.message);
+			},
+			isCaptionPlace() {
+				return isAiTaskCaptionPlace(this.operation, this.message);
+			},
+			frame() {
+				return this.isCaptionPlace ? findAiTaskFrame(this.operation) : null;
+			},
+			layoutModifier() {
+				return `--${this.layout}`;
+			}
+		},
+		methods: {
+			isCurrentStage(stage) {
+				return this.frame?.name === stage.name;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div
+			v-if="frame"
+			class="bx-im-message-ai-task__status"
+			:class="[layoutModifier, '--' + frame.tone]"
+			data-testid="im-message-ai-task-status"
+		>
+			<BIcon class="bx-im-message-ai-task__icon" :name="frame.icon" aria-hidden="true" />
+			<span class="bx-im-message-ai-task__stack">
+				<span
+					v-for="stage in stages"
+					:key="stage.name"
+					class="bx-im-message-ai-task__label"
+					:class="{ '--current': isCurrentStage(stage) }"
+					:aria-hidden="!isCurrentStage(stage)"
+				>{{ loc(stage.labelKey) }}</span>
+				<span
+					v-if="frame.isTerminal"
+					:key="frame.name"
+					class="bx-im-message-ai-task__label --current --terminal"
+					:data-testid="'im-message-ai-task-outcome-' + frame.name"
+				>{{ loc(frame.labelKey) }}</span>
+			</span>
+			<span
+				v-if="!frame.isTerminal"
+				class="bx-im-message-ai-task__dots"
+				aria-hidden="true"
+				data-testid="im-message-ai-task-progress"
+			>
+				<i class="bx-im-message-ai-task__dot"></i>
+				<i class="bx-im-message-ai-task__dot"></i>
+				<i class="bx-im-message-ai-task__dot"></i>
+			</span>
+		</div>
+	`
+	});
+
+	const ENTRY_ANNOUNCEMENT_KEY = 'IM_MESSAGE_AI_TASK_PREPARING';
+	const ENTRY_ANNOUNCEMENT_MULTIPLE_KEY = 'IM_MESSAGE_AI_TASK_PREPARING_MULTIPLE';
+	const SOURCE_MARK_KEY = 'IM_MESSAGE_AI_TASK_SOURCE';
+	const AiTaskIndication = ui_vue3.defineComponent({
+		name: 'AiTaskIndication',
+		components: {
+			AiTaskStatusRow
+		},
+		compilerOptions: {
+			isCustomElement: tag => tag === 'visually-hidden'
+		},
+		props: {
+			message: {
+				type: Object,
+				required: true
+			},
+			layout: {
+				type: String,
+				default: AiTaskIndicationLayout.bubble
+			}
+		},
+		data() {
+			return {
+				isOffscreen: false
+			};
+		},
+		computed: {
+			operation() {
+				return getAiTaskOperation(this.$store, this.message);
+			},
+			frame() {
+				return findAiTaskFrame(this.operation);
+			},
+			frameName() {
+				return this.frame?.name ?? null;
+			},
+			isCaptionPlace() {
+				return isAiTaskCaptionPlace(this.operation, this.message);
+			},
+			withStatusPlate() {
+				return !isAiTaskStatusInTimeRow(this.layout);
+			},
+			sourceCount() {
+				return this.operation?.messageIds.length ?? 0;
+			},
+			entryAnnouncement() {
+				if (this.sourceCount < 2) {
+					return this.loc(ENTRY_ANNOUNCEMENT_KEY);
+				}
+				return main_core.Loc.getMessagePlural(ENTRY_ANNOUNCEMENT_MULTIPLE_KEY, this.sourceCount, {
+					'#COUNT#': String(this.sourceCount)
+				}) ?? '';
+			},
+			sourceMark() {
+				return this.loc(SOURCE_MARK_KEY);
+			},
+			decorClasses() {
+				const classes = [`--${this.layout}`];
+				if (this.frame?.extinguishesDecor) {
+					classes.push('--extinguished');
+				}
+				if (this.isOffscreen) {
+					classes.push('--offscreen');
+				}
+				if (this.isCaptionPlace && this.withStatusPlate) {
+					classes.push('--with-status');
+				}
+				return classes;
+			}
+		},
+		watch: {
+			frameName: {
+				immediate: true,
+				handler(name, previousName) {
+					this.announceFrame(previousName ?? null);
+				}
+			}
+		},
+		mounted() {
+			this.$Bitrix.eventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			this.$Bitrix.eventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+		},
+		beforeUnmount() {
+			this.$Bitrix.eventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			this.$Bitrix.eventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+			this.reportAnchorVisibility(false);
+		},
+		methods: {
+			onMessageIsVisible(event) {
+				this.handleVisibilityEvent(event, true);
+			},
+			onMessageIsNotVisible(event) {
+				this.handleVisibilityEvent(event, false);
+			},
+			handleVisibilityEvent(event, visible) {
+				const messageId = event.getData()?.messageId;
+				if (messageId !== this.message.id) {
+					return;
+				}
+				this.isOffscreen = !visible;
+				this.reportAnchorVisibility(visible);
+			},
+			reportAnchorVisibility(visible) {
+				if (!this.isCaptionPlace) {
+					return;
+				}
+				if (this.operation?.anchorVisible === visible) {
+					return;
+				}
+				void this.$store.dispatch('aiTask/setAnchorVisibility', {
+					chatId: this.message.chatId,
+					messageId: this.message.id,
+					visible
+				});
+			},
+			announceFrame(previousName) {
+				const frame = this.frame;
+				if (!frame || !this.isCaptionPlace) {
+					return;
+				}
+				if (frame.isTerminal) {
+					ui_a11y.LiveAnnouncer.announce(this.loc(frame.labelKey), frame.politeness);
+					return;
+				}
+				if (previousName) {
+					return;
+				}
+				ui_a11y.LiveAnnouncer.announce(this.entryAnnouncement, frame.politeness);
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<template v-if="frame">
+			<div
+				class="bx-im-message-ai-task__decor"
+				:class="decorClasses"
+				aria-hidden="true"
+				data-testid="im-message-ai-task-indication"
+			>
+				<div class="bx-im-message-ai-task__wash">
+					<div class="bx-im-message-ai-task__wash-core"></div>
+				</div>
+				<div class="bx-im-message-ai-task__ring">
+					<div class="bx-im-message-ai-task__ring-blur">
+						<div class="bx-im-message-ai-task__ring-band"></div>
+					</div>
+				</div>
+			</div>
+			<visually-hidden>{{ sourceMark }}</visually-hidden>
+			<AiTaskStatusRow v-if="withStatusPlate" :message="message" :layout="layout" />
+		</template>
+	`
+	});
+
+	const MessageAttach = ui_vue3.defineComponent({
 		name: 'MessageAttach',
 		components: {
 			Attach: im_v2_component_elements_attach.Attach
@@ -95,9 +443,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
-			message() {
-				return this.item;
-			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
@@ -109,17 +454,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			ui_vue3.provide('message', this.message);
+			ui_vue3.provide('message', this.item);
 		},
 		template: `
-		<div v-for="config in message.attach" :key="config.id" class="bx-im-message-attach__container">
+		<div v-for="config in item.attach" :key="config.id" class="bx-im-message-attach__container">
 			<Attach :baseColor="dialogColor" :config="config" />
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const MessageKeyboard = {
+	const MessageKeyboard = ui_vue3.defineComponent({
 		name: 'MessageKeyboard',
 		components: {
 			Keyboard: im_v2_component_elements_keyboard.Keyboard
@@ -156,10 +500,332 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</div>
 	`
+	});
+
+	const singleFlight = task => {
+		let inFlight = null;
+		let rerunRequested = false;
+		const run = () => {
+			if (inFlight) {
+				rerunRequested = true;
+				return;
+			}
+			inFlight = (async () => {
+				try {
+					await task();
+				} finally {
+					inFlight = null;
+					if (rerunRequested) {
+						rerunRequested = false;
+						run();
+					}
+				}
+			})();
+		};
+		return run;
 	};
 
-	// @vue/component
-	const ReactionUser = {
+	const ChangeStatus = {
+		confirmed: 'confirmed',
+		pending: 'pending',
+		superseded: 'superseded'
+	};
+	const isKnownReaction = value => main_core.Type.isStringFilled(value) && Object.values(ui_reaction_item.ReactionName).includes(value);
+	const isValidPendingChange = value => main_core.Type.isPlainObject(value) && main_core.Type.isStringFilled(value.id) && isKnownReaction(value.value) && isKnownReaction(value.baseValue);
+	class MessageDefaultReactionManager {
+		static #instance;
+		#settingsService = new im_v2_provider_service_settings.SettingsService();
+		#operationWaiters = new Map();
+		#pendingOperation = null;
+		#unsubscribePullStatus = () => {};
+		#unsubscribeSettingsUpdate = () => {};
+		#inFlightRequest = null;
+		#isInitialized = false;
+		#generation = 0;
+		#serverAlignQueued = false;
+		#alignWithServer = singleFlight(() => this.#pullServerValue());
+		static getInstance() {
+			MessageDefaultReactionManager.#instance ??= new MessageDefaultReactionManager();
+			return MessageDefaultReactionManager.#instance;
+		}
+		init() {
+			if (this.#isInitialized) {
+				return;
+			}
+			this.#isInitialized = true;
+			this.#pendingOperation = this.#getPendingOperation();
+			if (this.#pendingOperation) {
+				this.#applyToStore(this.#pendingOperation.value);
+				void this.#sync();
+			}
+			this.#subscribeToPullClient();
+		}
+		destroy() {
+			this.#unsubscribeSettingsUpdate();
+			this.#unsubscribeSettingsUpdate = () => {};
+			this.#unsubscribePullStatus();
+			this.#unsubscribePullStatus = () => {};
+			this.#isInitialized = false;
+		}
+		changeDefaultReaction(reaction) {
+			this.init();
+			this.#generation += 1;
+			const baseValue = this.#supersedePreviousChange();
+			const pendingChange = this.#stagePendingChange(reaction, baseValue);
+			const result = this.#registerWaiter(pendingChange.id);
+			this.#applyToStore(reaction);
+			if (im_v2_application_core.Core.isOnline()) {
+				void this.#sync();
+			} else {
+				this.#resolveWaiter(pendingChange.id, {
+					status: ChangeStatus.pending
+				});
+			}
+			return result;
+		}
+		#applyToStore(reaction) {
+			void im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
+				[im_v2_const.Settings.message.defaultReaction]: reaction
+			});
+		}
+		#supersedePreviousChange() {
+			const previous = this.#pendingOperation;
+			if (previous) {
+				this.#resolveWaiter(previous.id, {
+					status: ChangeStatus.superseded
+				});
+			}
+			return previous?.baseValue ?? im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.message.defaultReaction);
+		}
+		#stagePendingChange(reaction, baseValue) {
+			const pendingChange = {
+				id: main_core.Text.getRandom(16),
+				value: reaction,
+				baseValue
+			};
+			this.#pendingOperation = pendingChange;
+			this.#savePendingOperation();
+			return pendingChange;
+		}
+		#registerWaiter(id) {
+			return new Promise((resolve, reject) => {
+				this.#operationWaiters.set(id, {
+					resolve,
+					reject
+				});
+			});
+		}
+		onDefaultReactionPull(reaction) {
+			this.init();
+			if (this.#pendingOperation || this.#inFlightRequest) {
+				this.#serverAlignQueued = true;
+				if (this.#pendingOperation) {
+					this.#applyToStore(this.#pendingOperation.value);
+				}
+				return;
+			}
+			this.#generation += 1;
+			this.#serverAlignQueued = false;
+			this.#applyToStore(reaction);
+		}
+		onOnline() {
+			void this.#sync();
+		}
+		#getPendingOperation() {
+			let pending = null;
+			try {
+				pending = im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.defaultReactionPending);
+			} catch {
+				return null;
+			}
+			if (!isValidPendingChange(pending)) {
+				im_v2_lib_localStorage.LocalStorageManager.getInstance().remove(im_v2_const.LocalStorageKey.defaultReactionPending);
+				return null;
+			}
+			return pending;
+		}
+		#subscribeToPullClient() {
+			const pullClient = im_v2_application_core.Core.getPullClient();
+			if (!pullClient) {
+				return;
+			}
+			this.#unsubscribePullStatus();
+			this.#unsubscribeSettingsUpdate();
+			this.#unsubscribePullStatus = pullClient.subscribe({
+				type: pull_client.PullClient.SubscriptionType.Status,
+				callback: ({
+					status
+				}) => {
+					if (status === pull_client.PullClient.PullStatus.Online) {
+						this.onOnline();
+					}
+				}
+			});
+			this.#unsubscribeSettingsUpdate = pullClient.subscribe({
+				type: pull_client.PullClient.SubscriptionType.Server,
+				moduleId: 'im',
+				command: 'settingsUpdate',
+				callback: params => {
+					if (!main_core.Type.isPlainObject(params)) {
+						return;
+					}
+					const reaction = params[im_v2_const.Settings.message.defaultReaction];
+					if (!isKnownReaction(reaction)) {
+						return;
+					}
+					this.onDefaultReactionPull(reaction);
+				}
+			});
+		}
+		async #pullServerValue() {
+			if (this.#pendingOperation || this.#inFlightRequest) {
+				return;
+			}
+			const generation = ++this.#generation;
+			let defaultReaction = '';
+			try {
+				defaultReaction = await this.#settingsService.getDefaultReaction();
+			} catch {
+				return;
+			}
+			if (generation !== this.#generation || this.#pendingOperation || this.#inFlightRequest) {
+				return;
+			}
+			void im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
+				[im_v2_const.Settings.message.defaultReaction]: defaultReaction
+			});
+		}
+		#savePendingOperation() {
+			im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.defaultReactionPending, this.#pendingOperation);
+		}
+		#resolveWaiter(operationId, result) {
+			const waiter = this.#operationWaiters.get(operationId);
+			if (!waiter) {
+				return;
+			}
+			this.#operationWaiters.delete(operationId);
+			waiter.resolve(result);
+		}
+		#rejectWaiter(operationId, error) {
+			const waiter = this.#operationWaiters.get(operationId);
+			if (!waiter) {
+				return false;
+			}
+			this.#operationWaiters.delete(operationId);
+			waiter.reject(error);
+			return true;
+		}
+		async #sync() {
+			if (!this.#pendingOperation || this.#inFlightRequest) {
+				return;
+			}
+			if (!im_v2_application_core.Core.isOnline()) {
+				this.#resolveWaiter(this.#pendingOperation.id, {
+					status: ChangeStatus.pending
+				});
+				return;
+			}
+			const operation = this.#pendingOperation;
+			this.#inFlightRequest = this.#settingsService.updateDefaultReaction(operation.value);
+			try {
+				await this.#inFlightRequest;
+				this.#handleSuccess(operation);
+			} catch (error) {
+				if (!im_v2_application_core.Core.isOnline()) {
+					this.#resolveWaiter(operation.id, {
+						status: ChangeStatus.pending
+					});
+					return;
+				}
+				await this.#finalizeFailure(operation, error);
+			} finally {
+				this.#inFlightRequest = null;
+				if (this.#pendingOperation && this.#pendingOperation.id !== operation.id) {
+					void this.#sync();
+				} else if (!this.#pendingOperation && this.#serverAlignQueued) {
+					this.#serverAlignQueued = false;
+					this.#alignWithServer();
+				}
+			}
+		}
+		#handleSuccess(operation) {
+			if (!this.#pendingOperation) {
+				return;
+			}
+			if (this.#pendingOperation?.id !== operation.id) {
+				this.#pendingOperation.baseValue = operation.value;
+				im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.defaultReactionPending, this.#pendingOperation);
+				return;
+			}
+			this.#pendingOperation = null;
+			this.#resolveWaiter(operation.id, {
+				status: ChangeStatus.confirmed
+			});
+			im_v2_lib_localStorage.LocalStorageManager.getInstance().remove(im_v2_const.LocalStorageKey.defaultReactionPending);
+		}
+		async #finalizeFailure(operation, error) {
+			if (operation.id !== this.#pendingOperation?.id) {
+				return;
+			}
+			const generation = ++this.#generation;
+			let confirmedReaction = operation.baseValue;
+			try {
+				confirmedReaction = await this.#settingsService.getDefaultReaction();
+			} catch {
+				confirmedReaction = operation.baseValue;
+			}
+			if (operation.id !== this.#pendingOperation?.id || generation !== this.#generation) {
+				return;
+			}
+			this.#pendingOperation = null;
+			im_v2_lib_localStorage.LocalStorageManager.getInstance().remove(im_v2_const.LocalStorageKey.defaultReactionPending);
+			void im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
+				[im_v2_const.Settings.message.defaultReaction]: confirmedReaction
+			});
+			if (!this.#rejectWaiter(operation.id, error)) {
+				im_v2_lib_notifier.Notifier.onDefaultError();
+			}
+		}
+	}
+
+	class ReactionService {
+		setReaction(messageId, reaction) {
+			im_v2_lib_logger.Logger.warn('ReactionService: setReaction', messageId, reaction);
+			const payload = {
+				data: {
+					messageId,
+					reaction
+				}
+			};
+			void im_v2_application_core.Core.getStore().dispatch('messages/reactions/setReaction', {
+				messageId,
+				reaction,
+				userId: im_v2_application_core.Core.getUserId()
+			});
+			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionAdd, payload).catch(([error]) => {
+				console.error('ReactionService: error setting reaction', error);
+			});
+		}
+		removeReaction(messageId, reaction) {
+			im_v2_lib_logger.Logger.warn('ReactionService: removeReaction', messageId, reaction);
+			const payload = {
+				data: {
+					messageId,
+					reaction
+				}
+			};
+			void im_v2_application_core.Core.getStore().dispatch('messages/reactions/removeReaction', {
+				messageId,
+				reaction,
+				userId: im_v2_application_core.Core.getUserId()
+			});
+			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionDelete, payload).catch(([error]) => {
+				console.error('ReactionService: error removing reaction', error);
+			});
+		}
+	}
+
+	const ReactionUser = ui_vue3.defineComponent({
 		name: 'ReactionUser',
 		components: {
 			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
@@ -194,7 +860,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</div>
 	`
-	};
+	});
 
 	class UserService extends im_v2_provider_service_user.BaseUserService {
 		#reaction;
@@ -223,8 +889,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 	}
 
-	// @vue/component
-	const AdditionalUsers = {
+	const AdditionalUsers = ui_vue3.defineComponent({
 		components: {
 			UserListPopup: im_v2_component_elements_userListPopup.UserListPopup
 		},
@@ -247,6 +912,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		emits: ['close'],
+		setup() {
+			return {
+				userService: null
+			};
+		},
 		data() {
 			return {
 				showPopup: false,
@@ -313,14 +983,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@scroll="onScroll"
 		/>
 	`
-	};
+	});
 
 	const USERS_TO_SHOW = 5;
 	const REACTION_SIZE = 16;
 	const SHOW_USERS_DELAY = 500;
-
-	// @vue/component
-	const ReactionItem = {
+	const ReactionItem = ui_vue3.defineComponent({
 		components: {
 			ReactionUser,
 			AdditionalUsers,
@@ -358,6 +1026,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		emits: ['click', 'animationFinish'],
+		setup() {
+			return {
+				showUsersTimeout: 0
+			};
+		},
 		data() {
 			return {
 				showAdditionalUsers: false
@@ -370,7 +1043,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return false;
 				}
 				const userLimitIsNotReached = this.counter <= USERS_TO_SHOW;
-				// after reaction removal we do not receive all users data to show avatar list properly
 				const weHaveUsersData = this.counter === this.users.length;
 				return userLimitIsNotReached && weHaveUsersData;
 			},
@@ -427,47 +1099,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</div>
 	`
-	};
+	});
 
-	class ReactionService {
-		setReaction(messageId, reaction) {
-			im_v2_lib_logger.Logger.warn('ReactionService: setReaction', messageId, reaction);
-			const payload = {
-				data: {
-					messageId,
-					reaction
-				}
-			};
-			void im_v2_application_core.Core.getStore().dispatch('messages/reactions/setReaction', {
-				messageId,
-				reaction,
-				userId: im_v2_application_core.Core.getUserId()
-			});
-			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionAdd, payload).catch(([error]) => {
-				console.error('ReactionService: error setting reaction', error);
-			});
-		}
-		removeReaction(messageId, reaction) {
-			im_v2_lib_logger.Logger.warn('ReactionService: removeReaction', messageId, reaction);
-			const payload = {
-				data: {
-					messageId,
-					reaction
-				}
-			};
-			void im_v2_application_core.Core.getStore().dispatch('messages/reactions/removeReaction', {
-				messageId,
-				reaction,
-				userId: im_v2_application_core.Core.getUserId()
-			});
-			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionDelete, payload).catch(([error]) => {
-				console.error('ReactionService: error removing reaction', error);
-			});
-		}
-	}
-
-	// @vue/component
-	const ReactionList = {
+	const ReactionList = ui_vue3.defineComponent({
 		name: 'ReactionList',
 		components: {
 			ReactionItem
@@ -477,6 +1111,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: [String, Number],
 				required: true
 			}
+		},
+		setup() {
+			return {
+				reactionService: null
+			};
 		},
 		data() {
 			return {
@@ -599,19 +1238,170 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</div>
 	`
-	};
+	});
+
+	const POPUP_OFFSET_LEFT = 40;
+	const MainReactionOnboarding = ui_vue3.defineComponent({
+		name: 'MainReactionOnboarding',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			geometry: {
+				type: Object,
+				default: null
+			},
+			messageId: {
+				type: [String, Number],
+				required: true
+			}
+		},
+		emits: ['mouseEnter', 'mouseLeave'],
+		data() {
+			return {
+				isClosed: false,
+				isDisplayConfirmed: false
+			};
+		},
+		computed: {
+			closeIcon() {
+				return ui_iconSet_api_vue.Outline.CROSS_M;
+			},
+			isVisible() {
+				return this.geometry !== null && !this.isClosed && (this.isDisplayConfirmed || im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.mainReactionOnboarding));
+			},
+			popupId() {
+				return `im-main-reaction-onboarding-popup-${this.messageId}`;
+			},
+			position() {
+				const {
+					popoverRect,
+					selectorRect
+				} = this.geometry;
+				return popoverRect.bottom <= selectorRect.top ? 'top' : 'bottom';
+			},
+			width() {
+				return this.geometry.popoverRect.width;
+			},
+			config() {
+				return {
+					bindElement: this.geometry.popoverRect,
+					bindOptions: {
+						position: this.position
+					},
+					width: this.width,
+					...(this.position === 'top' ? {
+						offsetTop: 0
+					} : {}),
+					offsetLeft: POPUP_OFFSET_LEFT,
+					angle: true,
+					autoHide: true,
+					className: 'bx-im-main-reaction-onboarding-popup'
+				};
+			}
+		},
+		watch: {
+			isVisible(isVisible) {
+				if (isVisible && !this.isDisplayConfirmed) {
+					void this.confirmDisplay();
+				}
+			},
+			geometry(newGeometry) {
+				if (newGeometry) {
+					this.isClosed = false;
+					this.isDisplayConfirmed = false;
+				}
+			}
+		},
+		methods: {
+			async confirmDisplay() {
+				await ui_vue3.nextTick();
+				await new Promise(resolve => {
+					requestAnimationFrame(resolve);
+				});
+				const content = this.$refs.content;
+				if (!this.isVisible || !content?.isConnected) {
+					return;
+				}
+				this.isDisplayConfirmed = im_v2_lib_promo.PromoManager.getInstance().confirmShown(im_v2_const.PromoId.mainReactionOnboarding);
+				if (!this.isDisplayConfirmed) {
+					this.isClosed = true;
+				}
+			},
+			close() {
+				this.isClosed = true;
+			},
+			complete() {
+				this.isClosed = true;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<MessengerPopup
+			v-if="isVisible"
+			:id="popupId"
+			:config="config"
+			@close="close"
+		>
+			<div
+				ref="content"
+				class="bx-im-main-reaction-onboarding-popup__container --ui-context-content-light"
+				data-testid="im-message-main-reaction-onboarding"
+				@mouseenter="$emit('mouseEnter')"
+				@mouseleave="$emit('mouseLeave')"
+			>
+				<div class="bx-im-main-reaction-onboarding-popup__content">
+					<div class="bx-im-main-reaction-onboarding-popup__content-title">
+						{{ loc('IM_MESSENGER_MESSAGE_REACTION_SELECTOR_MAIN_REACTION_ONBOARDING-PART1') }}
+					</div>
+					<div class="bx-im-main-reaction-onboarding-popup__content-description">
+						{{ loc('IM_MESSENGER_MESSAGE_REACTION_SELECTOR_MAIN_REACTION_ONBOARDING-PART2') }}
+					</div>
+				</div>
+				<button
+					type="button"
+					class="bx-im-main-reaction-onboarding-popup__close"
+					data-testid="im-message-main-reaction-onboarding-close"
+					@click="complete"
+				>
+					<BIcon
+						:name="closeIcon"
+						color="var(--ui-color-accent-main-primary-alt-2)"
+					/>
+				</button>
+			</div>
+		</MessengerPopup>
+	`
+	});
 
 	const SHOW_DELAY = 250;
 	const HIDE_DELAY$1 = 500;
-
-	// @vue/component
-	const ReactionSelector = {
+	const ReactionSelector = ui_vue3.defineComponent({
 		name: 'ReactionSelector',
+		components: {
+			MainReactionOnboarding,
+			Reaction: ui_reaction_item_vue.Reaction
+		},
 		props: {
 			messageId: {
 				type: [String, Number],
 				required: true
 			}
+		},
+		setup() {
+			return {
+				picker: null,
+				showTimeout: 0,
+				hideTimeout: 0
+			};
+		},
+		data() {
+			return {
+				mainReactionOnboardingGeometry: null
+			};
 		},
 		computed: {
 			message() {
@@ -620,14 +1410,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			dialog() {
 				return this.$store.getters['chats/getByChatId'](this.message.chatId);
 			},
-			reactionsData() {
-				return this.$store.getters['messages/reactions/getByMessageId'](this.messageId);
-			},
-			ownReactions() {
-				return this.reactionsData?.ownReactions ?? new Set();
-			},
-			ownPlainLikeSet() {
-				return this.ownReactions.has(ui_reaction_item.ReactionName.like);
+			currentReaction() {
+				const mainReaction = this.$store.getters['application/settings/get'](im_v2_const.Settings.message.defaultReaction);
+				if (main_core.Type.isStringFilled(mainReaction)) {
+					return mainReaction;
+				}
+				return ui_reaction_item.ReactionName.like;
 			},
 			isChatWithBot() {
 				const user = this.$store.getters['users/get'](this.dialog.dialogId);
@@ -660,10 +1448,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.setReaction, this.dialog.dialogId);
 			}
 		},
+		created() {
+			MessageDefaultReactionManager.getInstance().init();
+		},
+		beforeUnmount() {
+			clearTimeout(this.showTimeout);
+			this.clearHideTimer();
+			this.picker?.hide();
+		},
 		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
 			startShowTimer() {
 				this.clearHideTimer();
-				if (this.selector?.isShown()) {
+				if (this.picker?.isShown()) {
 					return;
 				}
 				this.showTimeout = setTimeout(() => {
@@ -672,38 +1471,71 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			clearShowTimer() {
 				clearTimeout(this.showTimeout);
+				if (!this.picker?.isShown()) {
+					this.mainReactionOnboardingGeometry = null;
+				}
 				this.startHideTimer();
 			},
 			showSelector() {
-				this.selector = new ui_reaction_picker.ReactionPicker({
-					target: this.$refs.selector
+				this.picker = new ui_reaction_picker.ReactionPicker({
+					target: this.$refs.selector,
+					priorityReaction: this.currentReaction,
+					contextAction: {
+						title: this.loc('IM_MESSENGER_MESSAGE_REACTION_SELECTOR_MAIN_REACTION'),
+						onClick: reaction => this.setMainReaction(reaction)
+					}
 				});
 				this.subscribeToSelectorEvents();
-				this.selector.show();
+				this.picker.show();
+			},
+			async setMainReaction(reaction) {
+				const isMainReactionChanged = reaction !== this.currentReaction;
+				try {
+					const result = await MessageDefaultReactionManager.getInstance().changeDefaultReaction(reaction);
+					const isSavedOrPending = result.status === ChangeStatus.confirmed || result.status === ChangeStatus.pending;
+					if (isMainReactionChanged && isSavedOrPending) {
+						im_v2_lib_notifier.Notifier.message.onSelectMainReaction();
+					}
+				} catch {
+					im_v2_lib_notifier.Notifier.onDefaultError();
+				}
 			},
 			subscribeToSelectorEvents() {
-				this.selector.subscribe('select', selectEvent => {
-					const {
-						reaction
-					} = selectEvent.getData();
-					this.getEmitter().emit(im_v2_const.EventType.reaction.onReactionSelected, {
-						messageId: this.messageId,
-						reaction
-					});
-					this.selector?.hide();
+				this.picker.subscribe('select', this.onSelectorSelect);
+				this.picker.subscribe('mouseleave', this.startHideTimer);
+				this.picker.subscribe('mouseenter', this.clearHideTimer);
+				this.picker.subscribe('expand', this.onSelectorExpand);
+				this.picker.subscribe('hide', this.onSelectorHide);
+			},
+			onSelectorSelect(selectEvent) {
+				const {
+					reaction
+				} = selectEvent.getData();
+				this.getEmitter().emit(im_v2_const.EventType.reaction.onReactionSelected, {
+					messageId: this.messageId,
+					reaction
 				});
-				this.selector.subscribe('mouseleave', this.startHideTimer);
-				this.selector.subscribe('mouseenter', () => {
-					clearTimeout(this.hideTimeout);
-				});
-				this.selector.subscribe('hide', () => {
-					clearTimeout(this.hideTimeout);
-					this.selector = null;
-				});
+				this.picker?.hide();
+			},
+			onSelectorExpand() {
+				const popoverRect = this.picker?.getPopoverRect();
+				if (!popoverRect) {
+					return;
+				}
+				const selectorRect = main_core.Dom.getPosition(this.$refs.selector);
+				this.mainReactionOnboardingGeometry = {
+					popoverRect,
+					selectorRect
+				};
+			},
+			onSelectorHide() {
+				clearTimeout(this.hideTimeout);
+				this.mainReactionOnboardingGeometry = null;
+				this.picker = null;
 			},
 			startHideTimer() {
 				this.hideTimeout = setTimeout(() => {
-					this.selector?.hide();
+					this.picker?.hide();
 				}, HIDE_DELAY$1);
 			},
 			clearHideTimer() {
@@ -713,7 +1545,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.clearShowTimer();
 				this.getEmitter().emit(im_v2_const.EventType.reaction.onReactionSelected, {
 					messageId: this.messageId,
-					reaction: ui_reaction_item.ReactionName.like
+					reaction: this.currentReaction
 				});
 			},
 			getEmitter() {
@@ -721,27 +1553,44 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div v-if="canSetReactions" class="bx-im-reaction-selector__container">
+		<div
+			v-if="canSetReactions"
+			class="bx-im-reaction-selector__container"
+			data-testid="im-message-reaction-selector"
+		>
 			<div
 				@click="onIconClick"
 				@mouseenter="startShowTimer"
 				@mouseleave="clearShowTimer"
 				class="bx-im-reaction-selector__selector"
 				ref="selector"
+				data-testid="im-message-reaction-selector-trigger"
 			>
-				<div class="bx-im-reaction-selector__icon" :class="{'--active': ownPlainLikeSet}"></div>
+				<Reaction
+					class="bx-im-reaction-selector__icon"
+					:key="currentReaction"
+					:name="currentReaction"
+				>
+				</Reaction>
 			</div>
+			<MainReactionOnboarding
+				:geometry="mainReactionOnboardingGeometry"
+				:message-id="messageId"
+				@mouseEnter="clearHideTimer"
+				@mouseLeave="startHideTimer"
+			/>
 		</div>
 	`
-	};
+	});
 
 	const NO_CONTEXT_TAG = 'none';
 	const NAME_MAX_LENGTH = 40;
 	const GALLERY_STACK_MAX = 3;
-
-	// @vue/component
-	const Reply = {
+	const Reply = ui_vue3.defineComponent({
 		name: 'ReplyComponent',
+		components: {
+			BaseUiAvatar: im_v2_component_elements_avatar.BaseUiAvatar
+		},
 		props: {
 			dialogId: {
 				type: String,
@@ -763,6 +1612,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
+			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
@@ -773,13 +1623,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['chats/getByChatId'](this.replyMessage?.chatId);
 			},
 			replyAuthor() {
-				return this.$store.getters['users/get'](this.replyMessage?.authorId);
+				return this.$store.getters['users/get'](this.replyMessage.authorId);
 			},
 			replyTitle() {
 				return this.replyAuthor ? this.replyAuthor.name : this.loc('IM_DIALOG_CHAT_QUOTE_DEFAULT_TITLE');
 			},
-			// --- Media / file computed for the original-message preview ---
-			/** Files attached to the original message — read once, reused by the file/gallery computed below */
 			messageFiles() {
 				if (!this.replyMessage) {
 					return [];
@@ -787,7 +1635,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['messages/getMessageFiles'](this.replyMessage.id);
 			},
 			messageFile() {
+				if (this.isContactMessage) {
+					return this.messageFiles.find(file => file.type === im_v2_const.FileType.image) ?? null;
+				}
 				return this.messageFiles[0] ?? null;
+			},
+			contactAvatarTitle() {
+				const params = this.replyMessage?.componentParams ?? {};
+				const name = [params.lastName, params.firstName].filter(Boolean).join(' ').trim();
+				const phone = params.phones?.[0] ?? '';
+				return name || phone;
+			},
+			contactAvatarUrl() {
+				return this.messageFile?.mediaUrl?.preview?.[250] || this.messageFile?.urlPreview || this.messageFile?.urlShow || '';
 			},
 			isImage() {
 				return Boolean(this.messageFile && this.messageFile.type === im_v2_const.FileType.image);
@@ -795,13 +1655,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isVideo() {
 				return Boolean(this.messageFile && this.messageFile.type === im_v2_const.FileType.video);
 			},
-			/**
-			 * Video note (round video message). Keeps FileType.video — there is no separate file type;
-			 * the round-message flag lives on the file. Rendered as a compact round thumbnail (its
-			 * urlPreview poster) instead of the rectangular video thumbnail — like a single media
-			 * thumbnail, with no textual type caption (the round shape conveys the type). The
-			 * IM_PARSER_ICON_TYPE_VIDEO_NOTE phrase is still used as the image alt (a11y).
-			 */
 			isVideoNote() {
 				return Boolean(this.messageFile && this.messageFile.isVideoNote);
 			},
@@ -817,7 +1670,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				return this.$store.getters['stickers/messages/isSticker'](this.replyMessage.id);
 			},
-			/** Sticker image URI of the original message (null if not a sticker or sticker data is not in store) */
 			stickerImageUri() {
 				if (!this.replyMessage || !this.isSticker) {
 					return null;
@@ -826,47 +1678,33 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const sticker = this.$store.getters['stickers/get'](stickerId);
 				return sticker?.uri ?? null;
 			},
-			/** Number of files attached to the original message */
 			galleryCount() {
 				return this.messageFiles.length;
 			},
-			/** First files of the original message shown as an overlapped stack (max GALLERY_STACK_MAX) */
 			galleryThumbnails() {
 				return this.messageFiles.slice(0, GALLERY_STACK_MAX);
 			},
-			/** Files beyond the ones shown in the stack — rendered as a "+N" badge */
 			galleryRemainingCount() {
 				return Math.max(this.galleryCount - this.galleryThumbnails.length, 0);
 			},
-			/**
-			 * Count modifier for the gallery stack. The stack items are absolutely positioned, so the
-			 * container cannot size itself to its content (fit-content would collapse it). The fixed base
-			 * width fits the 3-thumbnail layout; for 1/2 shown thumbnails the container must shrink to the
-			 * actual right edge of the last (rotated) thumbnail — otherwise the flex gap to the caption
-			 * grows and the stack↔text spacing looks inconsistent between 2- and 3-media quotes.
-			 */
 			galleryStackModifier() {
 				return `--count-${this.galleryThumbnails.length}`;
 			},
-			/** True when the original bundles several media (image/video) — show the stack instead of a single thumbnail */
 			isGallery() {
-				return (this.isImage || this.isVideo) && this.galleryCount > 1 && !this.isDeleted;
+				return !this.isContactMessage && (this.isImage || this.isVideo) && this.galleryCount > 1 && !this.isDeleted;
 			},
-			/**
-			 * The gallery stack is rendered only when there are several media AND the first file has a
-			 * preview (otherwise the type icon is shown instead). Used both to gate the stack template
-			 * and the preview media-offset so the extra top margin is not added when the icon is shown.
-			 */
 			showGalleryStack() {
 				return this.isGallery && !this.showIcon;
 			},
-			/** Pluralized "N media" caption for the gallery preview */
 			mediaCountText() {
 				return main_core.Loc.getMessagePlural('IM_MESSAGE_REPLY_MEDIA_COUNT', this.galleryCount, {
-					'#COUNT#': this.galleryCount
-				});
+					'#COUNT#': String(this.galleryCount)
+				}) ?? '';
 			},
 			showIcon() {
+				if (this.isContactMessage) {
+					return false;
+				}
 				if (!this.messageFile) {
 					return false;
 				}
@@ -885,21 +1723,24 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const iconType = im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.messageFile.name);
 				return `ui-icon-file-${iconType}`;
 			},
-			/** Human-readable size of the file reply (empty when the file has no known size) */
 			fileSize() {
 				if (!this.messageFile?.size) {
 					return '';
 				}
 				return im_v2_lib_utils.Utils.file.formatFileSize(this.messageFile.size);
 			},
-			// --- End media computed ---
-
 			isMessageDeleted() {
 				return Boolean(this.replyMessage?.isDeleted);
 			},
 			replyText() {
 				if (!this.replyMessage) {
 					return '';
+				}
+				if (this.isContactMessage) {
+					const contactText = im_v2_lib_parser.Parser.getContactPreviewText(this.replyMessage, true);
+					if (contactText !== null) {
+						return im_v2_lib_parser.Parser.decodeText(contactText);
+					}
 				}
 				let text = im_v2_lib_parser.Parser.prepareQuote(this.replyMessage);
 				text = im_v2_lib_parser.Parser.decodeText(text);
@@ -915,7 +1756,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (!this.isForward) {
 					return `${this.dialogId}/${this.replyId}`;
 				}
-				return `${this.replyMessageChat?.dialogId}/${this.replyId}`;
+				return `${this.replyMessageChat.dialogId}/${this.replyId}`;
 			},
 			canShowReply() {
 				return this.replyId !== 0;
@@ -927,38 +1768,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return {
 					'--expanded': this.isExpanded,
 					'--collapsed': !this.isExpanded,
-					'--clickable': this.isActiveQuote || this.isExpandable
+					'--clickable': this.isActiveQuote || this.isExpandable,
+					'--contact-message': this.useCompactContactLayout
 				};
 			},
 			toggleLabel() {
 				return this.isExpanded ? this.loc('IM_PARSER_QUOTE_COLLAPSE') : this.loc('IM_PARSER_QUOTE_EXPAND');
 			},
-			/**
-			 * The original always travels with the reply (server bundles it as additionalMessages/additionalEntities).
-			 * So an absent original means it is inaccessible to the current user — show the "unavailable" fallback.
-			 */
 			isUnavailable() {
 				return main_core.Type.isNil(this.replyMessage);
 			},
-			/** True when the original is present and not deleted */
 			hasOriginal() {
 				return !main_core.Type.isNil(this.replyMessage) && !this.isMessageDeleted;
 			},
-			/** True when the original is present but deleted */
 			isDeleted() {
 				return !main_core.Type.isNil(this.replyMessage) && this.isMessageDeleted;
 			},
-			/** Show media preview only when the original is present and not deleted */
 			showMediaPreview() {
-				return this.hasOriginal && Boolean(this.messageFile || this.isSticker);
+				return this.hasOriginal && Boolean(this.isContactMessage || this.messageFile || this.isSticker);
 			},
-			/**
-			 * Caption shown next to the media preview. For image/video and stickers with a thumbnail the type
-			 * is already conveyed by the thumbnail, so the textual type prefix (image/video/sticker) would
-			 * duplicate it — suppress it. Other types keep the full quote text.
-			 */
+			useCompactContactLayout() {
+				return this.isContactMessage;
+			},
+			isContactMessage() {
+				return this.replyMessage?.componentId === im_v2_const.MessageComponent.contactMessage;
+			},
+			showVideoNoteTypeLabel() {
+				return this.isVideoNote && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isVideoNoteCaptionAvailable);
+			},
 			previewText() {
-				if ((this.isImage || this.isVideo) && !this.showIcon) {
+				if (this.isContactMessage) {
+					return this.replyText;
+				}
+				if (!this.showVideoNoteTypeLabel && (this.isImage || this.isVideo) && !this.showIcon) {
 					const caption = im_v2_lib_parser.Parser.purify({
 						text: this.replyMessage?.text ?? ''
 					});
@@ -967,8 +1809,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.isSticker && this.stickerImageUri) {
 					return '';
 				}
-
-				// For a file reply the file chip (icon + name + size) conveys the file; below it show only the caption text.
 				if (this.isFile) {
 					const caption = im_v2_lib_parser.Parser.purify({
 						text: this.replyMessage?.text ?? ''
@@ -1083,7 +1923,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							data-testid="im-message-reply-preview"
 						>
 						<!-- File: file-type icon + name + size chip -->
-						<template v-if="isFile">
+						<template v-if="isContactMessage">
+							<div class="bx-im-message-quote__contact-avatar" data-testid="im-message-reply-contact-avatar">
+								<BaseUiAvatar
+									type="default"
+									:size="AvatarSize.L"
+									:url="contactAvatarUrl"
+									:title="contactAvatarTitle"
+									:withDefaultUserpic="false"
+								/>
+							</div>
+						</template>
+
+						<!-- File: file-type icon + name + size chip -->
+						<template v-else-if="isFile">
 							<div class="bx-im-message-quote__file-icon" data-testid="im-message-reply-file-icon">
 								<div :class="iconClass" class="ui-icon" aria-hidden="true"><i></i></div>
 							</div>
@@ -1125,7 +1978,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							</div>
 						</template>
 
-						<!-- Video note (round video message): round thumbnail (poster) only, no type caption (round shape conveys the type; alt keeps the IM_PARSER_ICON_TYPE_VIDEO_NOTE a11y label) -->
+						<!-- Video note (round video message): round thumbnail (poster) only; the type label goes to the text row below (alt keeps the IM_PARSER_ICON_TYPE_VIDEO_NOTE a11y label) -->
 						<template v-else-if="isVideoNote && !showIcon">
 							<div class="bx-im-message-quote__preview-video-note" data-testid="im-message-reply-preview-video-note">
 								<img
@@ -1199,10 +2052,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const AuthorTitle = {
+	const AuthorTitle = ui_vue3.defineComponent({
 		name: 'AuthorTitle',
 		components: {
 			MessageAuthorTitle: im_v2_component_elements_chatTitle.MessageAuthorTitle
@@ -1253,18 +2105,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isCopilot() {
 				const authorId = Number.parseInt(this.authorDialogId, 10);
 				return this.$store.getters['users/bots/isCopilot'](authorId);
+			},
+			canMentionByClick() {
+				if (!this.isCopilot) {
+					return false;
+				}
+				return new im_v2_lib_copilot.CopilotManager().isMentionByClickAvailable(this.dialog.dialogId, this.authorDialogId);
 			}
 		},
 		methods: {
 			onAuthorNameClick() {
 				const authorId = Number.parseInt(this.authorDialogId, 10);
-				if (!authorId || authorId === im_v2_application_core.Core.getUserId() || this.isCopilot) {
+				if (!authorId || authorId === im_v2_application_core.Core.getUserId()) {
+					return;
+				}
+				if (this.isCopilot && !this.canMentionByClick) {
 					return;
 				}
 				this.getEmitter().emit(im_v2_const.EventType.textarea.insertMention, {
 					mentionText: this.user.name,
 					mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(this.user.id, this.user.name),
-					dialogId: this.dialog.dialogId
+					mentionedUserId: this.user.id,
+					dialogId: this.dialog.dialogId,
+					isMentionSymbol: false
 				});
 			},
 			getEmitter() {
@@ -1276,7 +2139,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			v-if="showTitle" 
 			@click="onAuthorNameClick" 
 			class="bx-im-message-author-title__container" 
-			:class="{'--clickable': !isCopilot}"
+			:class="{'--clickable': !isCopilot || canMentionByClick}"
+			data-testid="im-message-author-title"
 		>
 			<MessageAuthorTitle
 				:dialogId="authorDialogId"
@@ -1287,10 +2151,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const ContextMenu = {
+	const ContextMenu = ui_vue3.defineComponent({
 		name: 'ContextMenu',
 		props: {
 			dialogId: {
@@ -1315,11 +2178,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			messageItem() {
 				return this.message;
 			},
-			messageHasError() {
-				return this.messageItem.error;
-			},
 			canShowContextMenu() {
-				return this.showContextMenu && !this.messageHasError;
+				return this.showContextMenu && !im_v2_lib_message.messageHasError(this.messageItem);
 			},
 			isBulkActionsMode() {
 				return this.$store.getters['messages/select/isBulkActionsModeActive'](this.dialogId);
@@ -1351,7 +2211,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div v-else class="bx-im-message-base__context-menu-placeholder"></div>
 		</template>
 	`
-	};
+	});
 
 	class RetryContextMenu extends im_v2_lib_menu.BaseMenu {
 		constructor() {
@@ -1366,7 +2226,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return null;
 			}
 			return {
-				title: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_RETRY'),
+				title: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_RETRY') ?? '',
 				onClick: () => {
 					this.#retrySend();
 					this.menuInstance.close();
@@ -1378,7 +2238,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return null;
 			}
 			return {
-				title: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_DELETE'),
+				title: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_DELETE') ?? '',
 				design: ui_system_menu.MenuItemDesign.Alert,
 				onClick: () => {
 					const messageService = new im_v2_provider_service_message.MessageService({
@@ -1415,8 +2275,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 	}
 
-	// @vue/component
-	const RetryButton = {
+	const RetryButton = ui_vue3.defineComponent({
 		name: 'RetryButton',
 		props: {
 			message: {
@@ -1427,6 +2286,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: String,
 				required: true
 			}
+		},
+		setup() {
+			return {
+				contextMenu: null
+			};
 		},
 		computed: {
 			messageItem() {
@@ -1457,12 +2321,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			></button>
 		</div>
 	`
-	};
+	});
 
 	const FORWARD_ICON_SIZE = 20;
-
-	// @vue/component
-	const MessageHeader = {
+	const MessageHeader = ui_vue3.defineComponent({
 		name: 'MessageHeader',
 		components: {
 			AuthorTitle,
@@ -1483,7 +2345,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
 			Color: () => im_v2_const.Color,
 			FORWARD_ICON_SIZE: () => FORWARD_ICON_SIZE,
 			message() {
@@ -1500,6 +2364,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			isChannelForward() {
 				return im_v2_lib_channel.ChannelManager.channelTypes.has(this.message.forward.chatType);
+			},
+			isDiscussionForward() {
+				return main_core.Text.toNumber(this.message.forward.parentChatId) > 0;
+			},
+			isCommentsForwardParent() {
+				return im_v2_lib_channel.ChannelManager.channelTypes.has(this.message.forward.parentChatType);
+			},
+			forwardParentName() {
+				return main_core.Type.isStringFilled(this.message.forward.chatTitle) ? this.message.forward.chatTitle : null;
 			},
 			forwardAuthorName() {
 				const copilotManager = new im_v2_lib_copilot.CopilotManager();
@@ -1526,7 +2399,36 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					'[user_name]': '<span class="bx-im-message-header__author-name">',
 					'#USER_NAME#': main_core.Text.encode(this.forwardAuthorName),
 					'[/user_name]': '</span>'
-				});
+				}) ?? '';
+			},
+			forwardDiscussionNoNamePhraseCode() {
+				if (!main_core.Type.isStringFilled(this.message.forward.parentChatType)) {
+					return 'IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_DISCUSSION';
+				}
+				return this.isCommentsForwardParent ? 'IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_COMMENTS_NO_NAME' : 'IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_THREAD_NO_NAME';
+			},
+			forwardDiscussionTitle() {
+				const authorMarkers = {
+					'[user_name]': '<span class="bx-im-message-header__author-name">',
+					'[/user_name]': '</span>'
+				};
+				const authorName = {
+					'#USER_NAME#': main_core.Text.encode(this.forwardAuthorName)
+				};
+				if (this.forwardParentName === null) {
+					return main_core.Loc.getMessage(this.forwardDiscussionNoNamePhraseCode, {
+						...authorMarkers,
+						...authorName
+					}) ?? '';
+				}
+				const phraseCode = this.isCommentsForwardParent ? 'IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_COMMENTS' : 'IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_THREAD';
+				return main_core.Loc.getMessage(phraseCode, {
+					...authorMarkers,
+					'[chat_name]': '<span class="bx-im-message-header__author-name">',
+					'[/chat_name]': '</span>',
+					...authorName,
+					'#CHAT_NAME#': main_core.Text.encode(this.forwardParentName)
+				}) ?? '';
 			},
 			forwardChannelTitle() {
 				return main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_CHANNEL', {
@@ -1536,7 +2438,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					'[channel_name]': '<span class="bx-im-message-header__author-name">',
 					'#CHANNEL_NAME#': main_core.Text.encode(this.forwardChatName),
 					'[/channel_name]': '</span>'
-				});
+				}) ?? '';
 			},
 			iconColor() {
 				return this.isOverlay ? im_v2_const.Color.white : im_v2_const.Color.blue60;
@@ -1565,7 +2467,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div 
 			v-if="isForwarded" 
 			:class="{'--overlay': isOverlay}"
-			class="bx-im-message-header__container" 
+			class="bx-im-message-header__container"
+			data-testid="im-message-header-forward-root"
 			@click="onForwardClick"
 		>
 			<BIcon
@@ -1576,15 +2479,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<span v-if="isSystemMessage" class="--ellipsis">
 				{{ loc('IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_SYSTEM')}}
 			</span>
+			<span
+				v-else-if="isDiscussionForward"
+				v-html="forwardDiscussionTitle"
+				class="--ellipsis"
+				data-testid="im-message-header-forward-discussion"
+			></span>
 			<span v-else-if="isChannelForward" v-html="forwardChannelTitle" class="--ellipsis"></span>
 			<span v-else v-html="forwardAuthorTitle" class="--ellipsis"></span>
 		</div>
 		<AuthorTitle v-else-if="shouldShowAuthorTitle" :item="item" />
 	`
-	};
+	});
 
-	// @vue/component
-	const CommentsPanel = {
+	const CommentsPanel = ui_vue3.defineComponent({
 		name: 'CommentsPanel',
 		components: {
 			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
@@ -1615,7 +2523,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.commentInfo.chatId;
 			},
 			commentsCount() {
-				// remove first system message from count
 				if (this.commentInfo.messageCount > 0) {
 					return this.commentInfo.messageCount - 1;
 				}
@@ -1623,8 +2530,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			commentsCountText() {
 				return main_core.Loc.getMessagePlural('IM_MESSAGE_COMMENTS_PANEL_COMMENT_COUNT', this.commentsCount, {
-					'#COUNT#': this.commentsCount
-				});
+					'#COUNT#': String(this.commentsCount)
+				}) ?? '';
 			},
 			noComments() {
 				return this.commentsCount === 0;
@@ -1722,10 +2629,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</slot>
 	`
-	};
+	});
 
-	// @vue/component
-	const MessageFooter = {
+	const MessageFooter = ui_vue3.defineComponent({
 		name: 'MessageFooter',
 		components: {
 			CommentsPanel
@@ -1763,18 +2669,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		template: `
 		<CommentsPanel v-if="showCommentsPanel" :dialogId="dialogId" :item="item" />
 	`
-	};
+	});
 
 	const SLIDER_ID_PREFIX = 'im:source-list-slider';
 	const SLIDER_WIDTH = 546;
-
-	// Slider id is derived from the message id. The sources button is rendered only for fully
-	// received messages, so `messageId` is stable for the component lifetime (not a temporary
-	// sending id) and yields a stable, per-message unique slider id.
 	const buildSliderId = messageId => `${SLIDER_ID_PREFIX}:${messageId}`;
-
-	// @vue/component
-	const SourceListSlider = {
+	const SourceListSlider = ui_vue3.defineComponent({
 		name: 'SourceListSlider',
 		props: {
 			messageBlocks: {
@@ -1787,6 +2687,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		emits: ['close'],
+		setup() {
+			return {
+				sliderId: '',
+				contentContainer: null
+			};
+		},
 		computed: {
 			blocks() {
 				return this.messageBlocks;
@@ -1836,6 +2742,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return ui_sidepanel_layout.Layout.createContent({
 					title: this.title,
 					design: {
+						margin: null,
 						section: false,
 						alignButtonsLeft: true
 					},
@@ -1850,7 +2757,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return im_v2_lib_utils.Utils.text.getHostFromUrl(source.url);
 			},
 			loc(phraseCode) {
-				return main_core.Loc.getMessage(phraseCode);
+				return main_core.Loc.getMessage(phraseCode) ?? '';
 			}
 		},
 		template: `
@@ -1877,14 +2784,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</Teleport>
 	`
-	};
+	});
 
-	// Module-level coordinator: id of the message whose source slider is currently open.
-	// When a new button is clicked, the slider of the previously opened message is closed first.
 	let openMessageId = null;
-
-	// @vue/component
-	const SourceListButton = {
+	const SourceListButton = ui_vue3.defineComponent({
 		name: 'SourceListButton',
 		components: {
 			Chip: ui_system_chip_vue.Chip,
@@ -1909,7 +2812,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			ChipSize: () => ui_system_chip_vue.ChipSize,
 			ChipDesign: () => ui_system_chip_vue.ChipDesign,
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
 			hasSources() {
 				return this.messageBlocks.some(block => {
 					return block.sources && Object.keys(block.sources).length > 0;
@@ -1917,8 +2822,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		beforeUnmount() {
-			// Only clear the coordinator if this message owns the open slider. Its own
-			// SourceListSlider.beforeUnmount → closeSlider() handles the actual close idempotently.
 			if (openMessageId === this.messageId) {
 				openMessageId = null;
 			}
@@ -1929,10 +2832,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					main_sidepanel.SidePanel.Instance.getSlider(buildSliderId(this.messageId))?.close();
 					return;
 				}
-
-				// Close the previously opened message's slider by its message-derived id.
-				// This is intentionally idempotent: that slider's own beforeUnmount → closeSlider()
-				// is a safe no-op afterwards (getSlider() returns null once it is already closed).
 				if (openMessageId !== null && openMessageId !== this.messageId) {
 					main_sidepanel.SidePanel.Instance.getSlider(buildSliderId(openMessageId))?.close();
 				}
@@ -1961,7 +2860,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		</span>
 		<SourceListSlider v-if="showSlider" :messageBlocks="messageBlocks" :messageId="messageId" @close="handleSliderClose"/>
 	`
-	};
+	});
 
 	var fr = 60;
 	var v = "5.9.6";
@@ -4607,8 +5506,83 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		meta: meta
 	};
 
-	// @vue/component
-	const BaseBlock = {
+	const MIN_VALUE = 0;
+	const MAX_VALUE = 100;
+	const DEFAULT_COLOR_TOKEN = im_v2_const.MessageBuilderGradientColorToken['ai-assistant'];
+	const FALLBACK_COLOR_TOKEN = im_v2_const.MessageBuilderPlainColorToken.base;
+	const resolveColorToken = colorToken => {
+		if (!colorToken) {
+			return DEFAULT_COLOR_TOKEN;
+		}
+		const plainKey = colorToken;
+		const gradientKey = colorToken;
+		if (!im_v2_const.MessageBuilderPlainColorToken[plainKey] && !im_v2_const.MessageBuilderGradientColorToken[gradientKey]) {
+			return FALLBACK_COLOR_TOKEN;
+		}
+		return colorToken;
+	};
+	const AiAssistantSearchProgressBar = ui_vue3.defineComponent({
+		name: 'AiAssistantSearchProgressBar',
+		props: {
+			progress: {
+				type: Object,
+				required: true
+			},
+			label: {
+				type: String,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				MIN_VALUE,
+				MAX_VALUE
+			};
+		},
+		computed: {
+			value() {
+				if (!main_core.Type.isNumber(this.progress.value)) {
+					return MIN_VALUE;
+				}
+				return Math.min(MAX_VALUE, Math.max(MIN_VALUE, this.progress.value));
+			},
+			colorClass() {
+				return `--color-${resolveColorToken(this.progress.colorToken)}`;
+			},
+			isComplete() {
+				return this.value >= MAX_VALUE;
+			},
+			fillStyle() {
+				return {
+					width: `${this.value}%`
+				};
+			}
+		},
+		template: `
+		<div
+			class="bx-im-message-block-ai-assistant-search-progress__container"
+			role="progressbar"
+			:aria-label="label"
+			:aria-valuenow="value"
+			:aria-valuemin="MIN_VALUE"
+			:aria-valuemax="MAX_VALUE"
+			data-testid="im-message-block-ai-assistant-search-progress"
+		>
+			<div
+				class="bx-im-message-block-ai-assistant-search-progress__fill"
+				:class="colorClass"
+				:style="fillStyle"
+			>
+				<div
+					v-if="!isComplete"
+					class="bx-im-message-block-ai-assistant-search-progress__glance"
+				></div>
+			</div>
+		</div>
+	`
+	});
+
+	const BaseBlock = ui_vue3.defineComponent({
 		name: 'BaseBlock',
 		props: {
 			message: {
@@ -4629,14 +5603,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<slot></slot>
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const AiAssistantSearch = {
+	const AiAssistantSearch = ui_vue3.defineComponent({
 		name: 'AiAssistantSearch',
 		components: {
 			BaseBlock,
-			BIcon: ui_iconSet_api_vue.BIcon
+			BIcon: ui_iconSet_api_vue.BIcon,
+			AiAssistantSearchProgressBar
 		},
 		props: {
 			message: {
@@ -4652,6 +5626,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				required: true
 			}
 		},
+		setup() {
+			return {
+				currentAnimation: null
+			};
+		},
 		data() {
 			return {
 				isExpanded: false,
@@ -4659,12 +5638,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
 			aiAssistantSearchBlock() {
 				return this.block;
 			},
 			chevronIcon() {
 				return this.isExpanded ? ui_iconSet_api_vue.Outline.CHEVRON_TOP_L : ui_iconSet_api_vue.Outline.CHEVRON_DOWN_L;
+			},
+			hasProgress() {
+				return Boolean(this.aiAssistantSearchBlock.progress);
 			},
 			chevronLabel() {
 				return this.isExpanded ? this.loc('IM_MESSAGE_BUILDER_AI_ASSISTANT_SEARCH_COLLAPSE') : this.loc('IM_MESSAGE_BUILDER_AI_ASSISTANT_SEARCH_EXPAND');
@@ -4742,11 +5726,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						{{ aiAssistantSearchBlock.title }}
 					</div>
 				</div>
+				<AiAssistantSearchProgressBar
+					v-if="hasProgress"
+					:progress="aiAssistantSearchBlock.progress"
+					:label="aiAssistantSearchBlock.title"
+				/>
 				<div class="bx-im-message-block-ai-assistant-search__text-container">
 					<div
 						ref="text"
 						:title="aiAssistantSearchBlock.text"
 						:class="textClasses"
+						data-testid="im-message-block-ai-assistant-search-text"
 					>
 						{{ aiAssistantSearchBlock.text }}
 					</div>
@@ -4756,7 +5746,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						class="bx-im-message-block-ai-assistant-search__chevron"
 						:aria-label="chevronLabel"
 						:aria-expanded="isExpanded"
-						data-testid="ai-assistant-search-expand-btn"
+						data-testid="im-message-block-ai-assistant-search-expand-btn"
 						@click.stop="toggleExpanded"
 					>
 						<BIcon
@@ -4768,17 +5758,115 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</BaseBlock>
 	`
-	};
+	});
+
+	const AudioItem = ui_vue3.defineComponent({
+		name: 'AudioItem',
+		components: {
+			AudioPlayer: im_v2_component_elements_player.AudioPlayer,
+			ProgressBar: im_v2_component_elements_progressbar.ProgressBar
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			messageId: {
+				type: [String, Number],
+				required: true
+			},
+			withTranscription: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['cancelClick'],
+		computed: {
+			ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
+			file() {
+				return this.item;
+			}
+		},
+		methods: {
+			onCancelClick(event) {
+				this.$emit('cancelClick', event);
+			}
+		},
+		template: `
+		<div class="bx-im-media-audio__container" data-testid="im-message-audio">
+			<ProgressBar 
+				:item="file"
+				:size="ProgressBarSize.S"
+				@cancelClick="onCancelClick"
+			/>
+			<AudioPlayer
+				:messageId="messageId"
+				:src="file.urlDownload"
+				:file="file"
+				:authorId="file.authorId"
+				:withContextMenu="false"
+				:withAvatar="false"
+				:withTranscription="withTranscription"
+				withPlaybackRateControl
+			/>
+		</div>
+	`
+	});
+
+	const AudioBlock = ui_vue3.defineComponent({
+		name: 'AudioBlock',
+		components: {
+			BaseBlock,
+			AudioItem
+		},
+		props: {
+			message: {
+				type: Object,
+				required: true
+			},
+			block: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			audioBlock() {
+				return this.block;
+			},
+			file() {
+				return this.$store.getters['files/get'](this.audioBlock.fileId);
+			}
+		},
+		template: `
+		<BaseBlock
+			v-if="file"
+			:message="message"
+			:block="audioBlock"
+			:dialogId="dialogId"
+		>
+			<div class="bx-im-message-block-audio__container" data-testid="im-message-block-audio">
+				<AudioItem
+					:item="file"
+					:messageId="message.id"
+					:withTranscription="false"
+					data-testid="im-message-block-audio-item"
+				/>
+			</div>
+		</BaseBlock>
+	`
+	});
 
 	const handlerRegistry = {
-		// 'sign:signDocument': (params: HandlerParams) => {
-		// 	console.log('sign:signDocument', params);
-		// },
 	};
 
 	const ButtonTypeHandler = {
 		eventButton: eventButtonHandler,
-		linkButton: linkButtonHandler
+		linkButton: linkButtonHandler,
+		requestButton: requestButtonHandler
 	};
 	const handleClick = params => {
 		const {
@@ -4811,18 +5899,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			});
 		}
 	}
+	function requestButtonHandler() {
+	}
 	function linkButtonHandler(params) {
 		const {
-			button: {
-				url
-			}
-		} = params;
+			url
+		} = params.button;
 		const isUrl = im_v2_lib_utils.Utils.text.checkUrl(url);
 		if (!isUrl) {
 			return;
 		}
-
-		// we can't use window.open(), because bindings will not work
 		const a = main_core.Dom.create({
 			tag: 'a',
 			style: {
@@ -4837,14 +5923,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		main_core.Dom.remove(a);
 	}
 
-	// @vue/component
-	const ButtonBlock = {
+	const ButtonBlock = ui_vue3.defineComponent({
 		name: 'ButtonBlock',
 		components: {
 			UiButton: ui_vue3_components_button.Button
 		},
 		inheritAttrs: false,
-		// workaround for the :style prop in UiButton
 		props: {
 			message: {
 				type: Object,
@@ -4857,8 +5941,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			dialogId: {
 				type: String,
 				required: true
+			},
+			loading: {
+				type: Boolean,
+				default: false
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			wide: {
+				type: Boolean,
+				default: false
 			}
 		},
+		emits: ['click'],
 		computed: {
 			ButtonSize: () => ui_vue3_components_button.ButtonSize,
 			AirButtonStyle: () => ui_vue3_components_button.AirButtonStyle,
@@ -4877,6 +5974,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					dialogId: this.dialogId,
 					button: this.button
 				});
+				this.$emit('click', event);
 			}
 		},
 		template: `
@@ -4884,13 +5982,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:text="button.title"
 			:style="buttonStyle"
 			:size="ButtonSize.MEDIUM"
+			:loading="loading"
+			:disabled="disabled"
+			:wide="wide"
 			@click="onButtonClick"
 		/>
 	`
-	};
+	});
 
-	// @vue/component
-	const CardBlock = {
+	const CardBlock = ui_vue3.defineComponent({
 		name: 'CardBlock',
 		components: {
 			BaseBlock,
@@ -4943,7 +6043,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		methods: {
 			getButtonUniqueKey(button) {
-				return [button.type, button.title ?? '', button.actionId ?? '', button.url ?? ''].join('|');
+				const b = button;
+				return [b.type, b.title ?? '', b.actionId ?? '', b.url ?? ''].join('|');
 			}
 		},
 		template: `
@@ -4995,10 +6096,670 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const GalleryBlock = {
+	const BaseFileItem = ui_vue3.defineComponent({
+		name: 'BaseFileItem',
+		components: {
+			ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			id: {
+				type: [String, Number],
+				required: true
+			},
+			messageId: {
+				type: [String, Number],
+				required: true
+			}
+		},
+		emits: ['cancelClick', 'openContextMenu'],
+		computed: {
+			ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
+			file() {
+				return this.$store.getters['files/get'](this.id, true);
+			},
+			fileShortName() {
+				const NAME_MAX_LENGTH = 20;
+				return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
+			},
+			fileSize() {
+				return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
+			},
+			iconClass() {
+				const iconType = im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.file.name);
+				return `ui-icon-file-${iconType}`;
+			},
+			canBeOpenedWithViewer() {
+				return Boolean(this.file.viewerAttrs && BX.UI?.Viewer);
+			},
+			viewerAttributes() {
+				return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+					viewerAttributes: this.file.viewerAttrs,
+					previewImageSrc: this.file.urlPreview,
+					context: im_v2_const.FileViewerContext.dialog
+				});
+			},
+			isLoaded() {
+				return this.file.progress === 100;
+			},
+			imageStyles() {
+				return {
+					backgroundImage: `url(${this.file.urlPreview})`
+				};
+			},
+			hasPreview() {
+				return main_core.Type.isStringFilled(this.file.urlPreview);
+			}
+		},
+		methods: {
+			download() {
+				if (this.file.progress !== 100 || this.canBeOpenedWithViewer) {
+					return;
+				}
+				window.open(this.file.urlDownload, '_blank');
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			},
+			openContextMenu(event) {
+				this.$emit('openContextMenu', {
+					event,
+					fileId: this.id
+				});
+			},
+			onCancelClick(event) {
+				this.$emit('cancelClick', event);
+			}
+		},
+		template: `
+		<div class="bx-im-base-file-item__container">
+			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
+				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
+					<ProgressBar 
+						v-if="!isLoaded" 
+						:item="file"
+						:size="ProgressBarSize.S"
+						@cancelClick="onCancelClick"
+					/>
+				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
+					<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
+				</div>
+				<div class="bx-im-base-file-item__content">
+					<span :title="file.name" class="bx-im-base-file-item__title">
+						{{ fileShortName }}
+					</span>
+					<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
+				</div>
+			</div>
+			<BIcon
+				:name="OutlineIcons.DOWNLOAD"
+				:class="{'--not-active': !isLoaded}"
+				:hoverable="isLoaded"
+				class="bx-im-base-file-item__download-icon"
+				@click.stop="openContextMenu"
+			/>
+		</div>
+	`
+	});
+
+	const FileBlock = ui_vue3.defineComponent({
+		name: 'FileBlock',
+		components: {
+			BaseBlock,
+			BaseFileItem
+		},
+		props: {
+			message: {
+				type: Object,
+				required: true
+			},
+			block: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				contextMenu: null
+			};
+		},
+		computed: {
+			fileBlock() {
+				return this.block;
+			},
+			files() {
+				const fileIds = main_core.Type.isArrayFilled(this.fileBlock.fileIds) ? this.fileBlock.fileIds : [];
+				return fileIds.map(fileId => {
+					return this.$store.getters['files/get'](fileId);
+				}).filter(file => {
+					return file !== null;
+				});
+			},
+			hasFiles() {
+				return this.files.length > 0;
+			},
+			hasDownloadAllLink() {
+				return this.files.length > 1 && this.downloadAllText !== '';
+			},
+			downloadAllText() {
+				const totalSize = this.files.reduce((size, file) => size + file.size, 0);
+				return main_core.Loc.getMessagePlural('IM_MESSAGE_BUILDER_FILE_DOWNLOAD_ALL', this.files.length, {
+					'#COUNT#': String(this.files.length),
+					'#SIZE#': im_v2_lib_utils.Utils.file.formatFileSize(totalSize)
+				}) ?? '';
+			}
+		},
+		created() {
+			this.contextMenu = new im_v2_lib_menu.BaseFileContextMenu();
+		},
+		beforeUnmount() {
+			this.contextMenu?.destroy();
+		},
+		methods: {
+			onOpenContextMenu({
+				event,
+				fileId
+			}) {
+				const file = this.files.find(item => item.id === fileId);
+				if (!file) {
+					return;
+				}
+				const context = {
+					dialogId: this.dialogId,
+					fileId,
+					files: [fileId]
+				};
+				this.contextMenu?.openMenu(context, event.target);
+			},
+			async onDownloadAllClick() {
+				im_v2_lib_utils.Utils.file.downloadFiles(this.files);
+				const promoManager = im_v2_lib_promo.PromoManager.getInstance();
+				const needToShowPopup = promoManager.needToShow(im_v2_const.PromoId.downloadSeveralFiles);
+				if (!needToShowPopup || !im_v2_lib_utils.Utils.browser.isChrome() || im_v2_lib_utils.Utils.platform.isBitrixDesktop()) {
+					return;
+				}
+				await im_v2_lib_confirm.showDownloadAllFilesConfirm();
+				void promoManager.markAsWatched(im_v2_const.PromoId.downloadSeveralFiles);
+			}
+		},
+		template: `
+		<BaseBlock
+			v-if="hasFiles"
+			:message="message"
+			:block="fileBlock"
+			:dialogId="dialogId"
+		>
+			<div class="bx-im-message-block-file__container" data-testid="im-message-block-file">
+				<BaseFileItem
+					v-for="file in files"
+					:key="file.id"
+					:id="file.id"
+					:messageId="message.id"
+					data-testid="im-message-block-file-item"
+					@openContextMenu="onOpenContextMenu"
+				/>
+				<template v-if="hasDownloadAllLink">
+					<div class="bx-im-message-block-file__divider"></div>
+					<button
+						type="button"
+						class="bx-im-message-block-file__download-all"
+						data-testid="im-message-block-file-download-all"
+						@click="onDownloadAllClick"
+					>{{ downloadAllText }}</button>
+				</template>
+			</div>
+		</BaseBlock>
+	`
+	});
+
+	const Checkbox = ui_system_checkbox.Vue.Checkbox;
+	const FormFieldCheckbox = ui_vue3.defineComponent({
+		name: 'FormFieldCheckbox',
+		components: {
+			Checkbox
+		},
+		props: {
+			field: {
+				type: Object,
+				required: true
+			},
+			value: {
+				type: Array,
+				default: () => []
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:value'],
+		computed: {
+			options() {
+				return this.field.options ?? [];
+			}
+		},
+		methods: {
+			isChecked(optionId) {
+				return this.value.includes(optionId);
+			},
+			handleToggle(optionId, checked) {
+				const selected = new Set(this.value);
+				if (checked) {
+					selected.add(optionId);
+				} else {
+					selected.delete(optionId);
+				}
+				const nextValue = this.options.filter(option => selected.has(option.id)).map(option => option.id);
+				this.$emit('update:value', nextValue);
+			}
+		},
+		template: `
+		<div class="bx-im-message-block-form__field bx-im-message-block-form__field--group" :data-testid="'im-message-form-field-' + field.id">
+			<div v-if="field.label" :id="'im-form-group-' + field.id" class="bx-im-message-block-form__field-label">{{ field.label }}</div>
+			<div
+				class="bx-im-message-block-form__options"
+				role="group"
+				:aria-labelledby="field.label ? 'im-form-group-' + field.id : null"
+			>
+				<div
+					v-for="option in options"
+					:key="option.id"
+					class="bx-im-message-block-form__option"
+					:data-testid="'im-message-form-option-' + option.id"
+				>
+					<Checkbox
+						:modelValue="isChecked(option.id)"
+						:disabled="disabled"
+						:aria-label="option.label"
+						@update:modelValue="handleToggle(option.id, $event)"
+					/>
+					<span class="bx-im-message-block-form__option-label">{{ option.label }}</span>
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	const RadioButton = ui_system_radiobutton.Vue.RadioButton;
+	const FormFieldRadio = ui_vue3.defineComponent({
+		name: 'FormFieldRadio',
+		components: {
+			RadioButton
+		},
+		props: {
+			field: {
+				type: Object,
+				required: true
+			},
+			value: {
+				type: String,
+				default: ''
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:value'],
+		computed: {
+			options() {
+				return this.field.options ?? [];
+			},
+			groupName() {
+				return `field-${this.field.id}`;
+			}
+		},
+		methods: {
+			handleChange(optionId, checked) {
+				if (checked) {
+					this.$emit('update:value', optionId);
+				}
+			}
+		},
+		template: `
+		<div class="bx-im-message-block-form__field bx-im-message-block-form__field--group" :data-testid="'im-message-form-field-' + field.id">
+			<div v-if="field.label" :id="'im-form-group-' + field.id" class="bx-im-message-block-form__field-label">{{ field.label }}</div>
+			<div
+				class="bx-im-message-block-form__options"
+				role="radiogroup"
+				:aria-labelledby="field.label ? 'im-form-group-' + field.id : null"
+			>
+				<div
+					v-for="option in options"
+					:key="option.id"
+					class="bx-im-message-block-form__option"
+					:data-testid="'im-message-form-option-' + option.id"
+				>
+					<RadioButton
+						:modelValue="option.id === value"
+						:group="groupName"
+						:disabled="disabled"
+						:aria-label="option.label"
+						@update:modelValue="handleChange(option.id, $event)"
+					/>
+					<span class="bx-im-message-block-form__option-label">{{ option.label }}</span>
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	const FormFieldSelect = ui_vue3.defineComponent({
+		name: 'FormFieldSelect',
+		components: {
+			BInput: ui_system_input_vue.BInput,
+			BMenu: ui_system_menu_vue.BMenu
+		},
+		props: {
+			field: {
+				type: Object,
+				required: true
+			},
+			value: {
+				type: String,
+				default: ''
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:value'],
+		data() {
+			return {
+				isShown: false
+			};
+		},
+		computed: {
+			options() {
+				return this.field.options ?? [];
+			},
+			selectedLabel() {
+				const selected = this.options.find(option => option.id === this.value);
+				return selected ? selected.label : '';
+			},
+			design() {
+				return this.disabled ? ui_system_input_vue.InputDesign.Disabled : ui_system_input_vue.InputDesign.Grey;
+			},
+			menuOptions() {
+				return {
+					bindElement: this.$refs.input.$el,
+					closeOnItemClick: false,
+					targetContainer: document.body,
+					items: this.options.map(option => {
+						return {
+							title: option.label,
+							isSelected: option.id === this.value,
+							design: ui_system_menu_vue.MenuItemDesign.Default,
+							onClick: () => {
+								this.$emit('update:value', option.id);
+								this.isShown = false;
+							}
+						};
+					})
+				};
+			}
+		},
+		methods: {
+			handleInputClick() {
+				if (this.disabled) {
+					return;
+				}
+				this.isShown = true;
+			}
+		},
+		template: `
+		<div class="bx-im-message-block-form__field" :data-testid="'im-message-form-field-' + field.id">
+			<BInput
+				:modelValue="selectedLabel"
+				:label="field.label"
+				dropdown
+				clickable
+				readonly
+				stretched
+				:active="isShown"
+				:design="design"
+				ref="input"
+				:data-testid="'im-message-form-select-' + field.id"
+				@click="handleInputClick"
+			/>
+			<BMenu
+				v-if="isShown"
+				:options="menuOptions"
+				@close="isShown = false"
+			/>
+		</div>
+	`
+	});
+
+	const MULTILINE_ROWS = 4;
+	const FormFieldText = ui_vue3.defineComponent({
+		name: 'FormFieldText',
+		components: {
+			BInput: ui_system_input_vue.BInput
+		},
+		props: {
+			field: {
+				type: Object,
+				required: true
+			},
+			value: {
+				type: String,
+				default: ''
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:value'],
+		computed: {
+			fieldValue: {
+				get() {
+					return this.value;
+				},
+				set(nextValue) {
+					this.$emit('update:value', nextValue);
+				}
+			},
+			rowsQuantity() {
+				return this.field.type === im_v2_const.FormFieldType.multilineText ? MULTILINE_ROWS : 1;
+			},
+			design() {
+				return this.disabled ? ui_system_input_vue.InputDesign.Disabled : ui_system_input_vue.InputDesign.Grey;
+			}
+		},
+		template: `
+		<div class="bx-im-message-block-form__field" :data-testid="'im-message-form-field-' + field.id">
+			<BInput
+				v-model="fieldValue"
+				:rowsQuantity="rowsQuantity"
+				:label="field.label"
+				:placeholder="field.placeholder"
+				:design="design"
+				stretched
+			/>
+		</div>
+	`
+	});
+
+	const FIELD_COMPONENT_BY_TYPE = {
+		[im_v2_const.FormFieldType.singleLineText]: FormFieldText,
+		[im_v2_const.FormFieldType.multilineText]: FormFieldText,
+		[im_v2_const.FormFieldType.select]: FormFieldSelect,
+		[im_v2_const.FormFieldType.radio]: FormFieldRadio,
+		[im_v2_const.FormFieldType.checkbox]: FormFieldCheckbox
+	};
+	const FormBlock = ui_vue3.defineComponent({
+		name: 'FormBlock',
+		components: {
+			BaseBlock,
+			ButtonBlock
+		},
+		props: {
+			message: {
+				type: Object,
+				required: true
+			},
+			block: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			const values = {};
+			const elements = this.block.elements ?? [];
+			for (const field of elements) {
+				values[field.id] = field.type === im_v2_const.FormFieldType.checkbox ? [] : '';
+			}
+			return {
+				values,
+				isSubmitting: false,
+				hasSubmitError: false
+			};
+		},
+		computed: {
+			formBlock() {
+				return this.block;
+			},
+			elements() {
+				return this.formBlock.elements ?? [];
+			},
+			buttonRows() {
+				return this.formBlock.buttons ?? [];
+			},
+			resolvedFields() {
+				return this.elements.map(field => {
+					return {
+						field,
+						component: this.getFieldComponent(field.type)
+					};
+				});
+			}
+		},
+		watch: {
+			block() {
+				this.isSubmitting = false;
+				this.hasSubmitError = false;
+			}
+		},
+		methods: {
+			getFieldComponent(type) {
+				return FIELD_COMPONENT_BY_TYPE[type] ?? null;
+			},
+			isFieldDisabled(field) {
+				return field.disabled || this.isSubmitting;
+			},
+			onFieldValueUpdate(fieldId, value) {
+				this.values[fieldId] = value;
+			},
+			async onSubmitClick(button) {
+				if (this.isSubmitting || button.disabled) {
+					return;
+				}
+				this.isSubmitting = true;
+				this.hasSubmitError = false;
+				const values = {};
+				for (const field of this.elements) {
+					const value = this.values[field.id];
+					if (!field.disabled && value !== undefined && value !== '') {
+						values[field.id] = value;
+					}
+				}
+				const payload = {
+					messageId: this.message.id,
+					blockId: this.block.id,
+					buttonId: button.id,
+					values
+				};
+				try {
+					await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageBlockFormSubmit, {
+						data: payload
+					});
+					this.isSubmitting = false;
+				} catch (errors) {
+					this.isSubmitting = false;
+					this.hasSubmitError = true;
+					this.logSubmitErrors(errors);
+				}
+			},
+			logSubmitErrors(errors) {
+				const list = Array.isArray(errors) ? errors : [errors];
+				list.forEach(error => {
+					console.error(`FormBlock: submit error: code: ${error?.code} message: ${error?.message}`);
+				});
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseBlock
+			:message="message"
+			:block="formBlock"
+			:dialogId="dialogId"
+		>
+			<div class="bx-im-message-block-form__container" data-testid="im-message-form">
+				<div v-if="elements.length > 0" class="bx-im-message-block-form__fields" data-testid="im-message-form-fields">
+					<template v-for="{ field, component } in resolvedFields" :key="field.id">
+						<component
+							v-if="component"
+							:is="component"
+							:field="field"
+							:value="values[field.id]"
+							:disabled="isFieldDisabled(field)"
+							@update:value="onFieldValueUpdate(field.id, $event)"
+						/>
+					</template>
+				</div>
+				<div v-if="buttonRows.length > 0" class="bx-im-message-block-form__buttons" data-testid="im-message-form-buttons">
+					<div
+						v-for="(buttonsRow, rowIndex) in buttonRows"
+						:key="rowIndex"
+						class="bx-im-message-block-form__buttons-row"
+					>
+						<!-- ButtonBlock has inheritAttrs: false, so data-testid can't pass through to its root.
+							 The transparent (display: contents) wrapper carries the testid without changing the wide layout. -->
+						<div
+							v-for="button in buttonsRow"
+							:key="button.id"
+							style="display: contents;"
+							data-testid="im-message-form-submit"
+						>
+							<ButtonBlock
+								:block="button"
+								:dialogId="dialogId"
+								:message="message"
+								:loading="isSubmitting"
+								:disabled="button.disabled || isSubmitting"
+								:wide="true"
+								@click="onSubmitClick(button)"
+							/>
+						</div>
+					</div>
+					<div v-if="hasSubmitError" class="bx-im-message-block-form__error" role="alert" data-testid="im-message-form-error">
+						{{ loc('IM_MESSAGE_BUILDER_FORM_SUBMIT_ERROR') }}
+					</div>
+				</div>
+			</div>
+		</BaseBlock>
+	`
+	});
+
+	const GalleryBlock = ui_vue3.defineComponent({
 		name: 'GalleryBlock',
 		components: {
 			BaseBlock,
@@ -5048,10 +6809,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const LineDivider = {
+	const LineDivider = ui_vue3.defineComponent({
 		name: 'LineDivider',
 		components: {
 			BaseBlock
@@ -5086,10 +6846,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const SourcePopup = {
+	const SourcePopup = ui_vue3.defineComponent({
 		name: 'SourcePopup',
 		components: {
 			MessengerPopup: im_v2_component_elements_popup.MessengerPopup
@@ -5166,12 +6925,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</MessengerPopup>
 	`
-	};
+	});
 
 	const HIDE_DELAY = 100;
-
-	// @vue/component
-	const SourceHandler = {
+	const SourceHandler = ui_vue3.defineComponent({
 		name: 'SourceHandler',
 		components: {
 			SourcePopup
@@ -5185,6 +6942,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Number,
 				required: true
 			}
+		},
+		setup() {
+			return {
+				hideTimeout: 0
+			};
 		},
 		data() {
 			return {
@@ -5276,32 +7038,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@mouseLeave="onMouseLeave"
 		/>
 	`
-	};
+	});
 
-	// @vue/component
-	const SourceItem = {
-		name: 'SourceItem',
-		props: {
-			text: {
-				type: String,
-				required: true
-			}
-		},
-		template: `
-		<span class="bx-im-message-source-item__container --ui-hoverable">
-			<span class="--ellipsis">{{ text }}</span>
-		</span>
-	`
-	};
-
-	const TextSegmentType = 'text';
-
-	// @vue/component
-	const BuilderTextContent = {
+	const BuilderTextContent = ui_vue3.defineComponent({
 		name: 'BuilderTextContent',
 		components: {
-			TextContent,
-			SourceItem
+			TextContent
 		},
 		props: {
 			text: {
@@ -5310,24 +7052,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
-			TextSegmentType: () => TextSegmentType,
-			segments() {
-				return im_v2_lib_parser.Parser.getInlineSourceLinkSegments(this.text);
+			formattedText() {
+				return im_v2_lib_parser.Parser.decodeInlineSourceLinks(this.text);
 			}
 		},
 		template: `
-		<TextContent :text="text">
-			<template v-for="(segment, index) in segments" :key="index">
-				<span v-if="segment.type === TextSegmentType" v-html="segment.value"></span>
-				<SourceItem v-else :text="segment.text" :data-source-id="segment.id" />
-			</template>
-		</TextContent>
+		<TextContent :text="formattedText" />
 	`
-	};
+	});
 
 	const getTextColorClass = (listItem, listBlock) => {
 		const color = listItem.color || listBlock.color || null;
-		if (!im_v2_const.MessageBuilderPlainColorToken[color] && !im_v2_const.MessageBuilderGradientColorToken[color]) {
+		const plainKey = color;
+		const gradientKey = color;
+		if (!im_v2_const.MessageBuilderPlainColorToken[plainKey] && !im_v2_const.MessageBuilderGradientColorToken[gradientKey]) {
 			return '';
 		}
 		return color ? `--color-${color}` : '';
@@ -5345,7 +7083,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		return color ? `--color-${color}` : '';
 	};
 
-	// Temporary map: icon IDs currently differ between mobile and web. To be removed once unified IDs are in place.
 	const IconMap = {
 		chevron_to_the_left: ui_iconSet_api_vue.Outline.CHEVRON_LEFT_L,
 		chevron_to_the_right: ui_iconSet_api_vue.Outline.CHEVRON_RIGHT_L,
@@ -5383,9 +7120,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const DEFAULT_ICON = 'bullet';
-
-	// @vue/component
-	const ListItem = {
+	const ListItem = ui_vue3.defineComponent({
 		name: 'ListItem',
 		components: {
 			BuilderTextContent,
@@ -5402,7 +7137,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
 			listBlock() {
 				return this.block;
 			},
@@ -5452,10 +7189,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</span>
 		</li>
 	`
-	};
+	});
 
-	// @vue/component
-	const UnorderedList = {
+	const UnorderedList = ui_vue3.defineComponent({
 		name: 'UnorderedList',
 		components: {
 			ListItem
@@ -5481,10 +7217,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</ul>
 	`
-	};
+	});
 
-	// @vue/component
-	const OrderedList = {
+	const OrderedList = ui_vue3.defineComponent({
 		name: 'OrderedList',
 		components: {
 			BuilderTextContent
@@ -5529,10 +7264,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</li>
 		</ol>
 	`
-	};
+	});
 
-	// @vue/component
-	const ListBlock = {
+	const ListBlock = ui_vue3.defineComponent({
 		name: 'ListBlock',
 		components: {
 			BaseBlock,
@@ -5560,7 +7294,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
 			listBlock() {
 				return this.block;
 			},
@@ -5616,10 +7352,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</ExpandAnimation>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const MapBlock = {
+	const MapBlock = ui_vue3.defineComponent({
 		name: 'MapBlock',
 		components: {
 			BaseBlock,
@@ -5640,7 +7375,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			OutlineIcons() {
+				return ui_iconSet_api_vue.Outline;
+			},
 			mapBlock() {
 				return this.block;
 			},
@@ -5687,10 +7424,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const SpaceDivider = {
+	const SpaceDivider = ui_vue3.defineComponent({
 		name: 'SpaceDivider',
 		components: {
 			BaseBlock
@@ -5726,10 +7462,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-message-block-space-divider__container" :class="containerClasses"></div>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const TableBlock = {
+	const TableBlock = ui_vue3.defineComponent({
 		name: 'TableBlock',
 		components: {
 			BaseBlock,
@@ -5750,10 +7485,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				required: true
 			}
 		},
+		setup() {
+			return {
+				naturalWidth: 0,
+				resizeObserver: null
+			};
+		},
 		data() {
 			return {
-				isNarrow: false,
-				naturalWidth: 0
+				isNarrow: false
 			};
 		},
 		computed: {
@@ -5831,10 +7571,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</SourceHandler>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const TextBlock = {
+	const TextBlock = ui_vue3.defineComponent({
 		name: 'TextBlock',
 		components: {
 			BaseBlock,
@@ -5874,10 +7613,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</SourceHandler>
 		</BaseBlock>
 	`
-	};
+	});
 
-	// @vue/component
-	const TitleBlock = {
+	const TitleBlock = ui_vue3.defineComponent({
 		name: 'TitleBlock',
 		components: {
 			BaseBlock
@@ -5905,8 +7643,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.titleBlock.color) {
 					classes.push(`--color-${this.titleBlock.color}`);
 				}
-
-				// eslint-disable-next-line unicorn/explicit-length-check
 				if (this.titleBlock.size) {
 					classes.push(`--size-${this.titleBlock.size}`);
 				}
@@ -5929,12 +7665,37 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</BaseBlock>
 	`
-	};
+	});
 
 	const UNKNOWN_BLOCK_TYPE = 'unknown';
-
-	// @vue/component
-	const BuilderContent = {
+	const BLOCK_COMPONENT_MAP = {
+		title: TitleBlock,
+		text: TextBlock,
+		unorderedList: ListBlock,
+		orderedList: ListBlock,
+		map: MapBlock,
+		table: TableBlock,
+		lineDivider: LineDivider,
+		spaceDivider: SpaceDivider,
+		aiAssistantSearch: AiAssistantSearch,
+		card: CardBlock,
+		gallery: GalleryBlock
+	};
+	const GATED_BLOCK_COMPONENT_MAP = {
+		form: {
+			feature: im_v2_lib_feature.Feature.isMessageFormBlockAvailable,
+			component: FormBlock
+		},
+		file: {
+			feature: im_v2_lib_feature.Feature.isMessageFileAudioBlockAvailable,
+			component: FileBlock
+		},
+		audio: {
+			feature: im_v2_lib_feature.Feature.isMessageFileAudioBlockAvailable,
+			component: AudioBlock
+		}
+	};
+	const BuilderContent = ui_vue3.defineComponent({
 		name: 'BuilderContent',
 		components: {
 			SourceListButton,
@@ -5971,28 +7732,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		methods: {
 			getComponentNameByType(type) {
-				const componentMap = {
-					title: TitleBlock,
-					text: TextBlock,
-					unorderedList: ListBlock,
-					orderedList: ListBlock,
-					map: MapBlock,
-					table: TableBlock,
-					lineDivider: LineDivider,
-					spaceDivider: SpaceDivider,
-					aiAssistantSearch: AiAssistantSearch,
-					card: CardBlock,
-					gallery: GalleryBlock
-				};
-				return componentMap[type] || UNKNOWN_BLOCK_TYPE;
+				const gatedBlock = GATED_BLOCK_COMPONENT_MAP[type];
+				if (gatedBlock) {
+					const {
+						feature,
+						component
+					} = gatedBlock;
+					return component && im_v2_lib_feature.FeatureManager.isFeatureAvailable(feature) ? component : UNKNOWN_BLOCK_TYPE;
+				}
+				return BLOCK_COMPONENT_MAP[type] || UNKNOWN_BLOCK_TYPE;
 			}
 		},
 		template: `
-		<div v-if="hasBlocks" :style="maxWidthStyles">
+		<div v-if="hasBlocks" :style="maxWidthStyles" data-testid="im-message-builder-content">
 			<component
-				v-for="(block, index) in messageBlocks"
+				v-for="block in messageBlocks"
 				:is="getComponentNameByType(block.type)"
-				:key="index"
+				:key="block.id"
 				:message="message"
 				:block="block"
 				:dialogId="dialogId"
@@ -6000,18 +7756,24 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<SourceListButton :messageBlocks="messageBlocks" :messageId="message.id" />
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const DefaultMessageContent = {
+	const DefaultMessageContent = ui_vue3.defineComponent({
 		name: 'DefaultMessageContent',
 		components: {
+			AiTaskStatusRow,
 			MessageStatus,
 			MessageAttach,
 			ReactionList,
 			Reply,
 			TextContent,
 			BuilderContent
+		},
+		inject: {
+			aiTaskLayout: {
+				from: AiTaskIndicationLayoutKey,
+				default: null
+			}
 		},
 		props: {
 			item: {
@@ -6041,6 +7803,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			withBuilder: {
 				type: Boolean,
 				default: false
+			},
+			withReactions: {
+				type: Boolean,
+				default: true
 			}
 		},
 		computed: {
@@ -6064,6 +7830,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return false;
 				}
 				return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+			},
+			aiTaskStatusLayout() {
+				const layout = this.aiTaskLayout;
+				return isAiTaskStatusInTimeRow(layout) ? layout : null;
 			}
 		},
 		template: `
@@ -6075,21 +7845,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<MessageAttach :item="message" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-message-default-content__bottom-panel">
-				<ReactionList 
-					v-if="canSetReactions" 
-					:messageId="message.id" 
-					class="bx-im-message-default-content__reaction-list" 
+				<ReactionList
+					v-if="withReactions && canSetReactions"
+					:messageId="message.id"
+					class="bx-im-message-default-content__reaction-list"
 				/>
+				<AiTaskStatusRow v-if="aiTaskStatusLayout" :message="message" :layout="aiTaskStatusLayout" />
 				<div v-if="withMessageStatus" class="bx-im-message-default-content__status-container">
 					<MessageStatus :item="message" />
 				</div>
 			</div>
 		</div>
 	`
-	};
+	});
 
-	// @vue/component
-	const CompactCommentsPanel = {
+	const CompactCommentsPanel = ui_vue3.defineComponent({
 		name: 'CompactCommentsPanel',
 		components: {
 			CommentsPanel
@@ -6153,163 +7923,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 		</CommentsPanel>
 	`
-	};
-
-	// @vue/component
-	const AudioItem = {
-		name: 'AudioItem',
-		components: {
-			AudioPlayer: im_v2_component_elements_player.AudioPlayer,
-			ProgressBar: im_v2_component_elements_progressbar.ProgressBar
-		},
-		props: {
-			item: {
-				type: Object,
-				required: true
-			},
-			messageId: {
-				type: [String, Number],
-				required: true
-			}
-		},
-		emits: ['cancelClick'],
-		computed: {
-			ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
-			file() {
-				return this.item;
-			}
-		},
-		methods: {
-			onCancelClick(event) {
-				this.$emit('cancelClick', event);
-			}
-		},
-		template: `
-		<div class="bx-im-media-audio__container">
-			<ProgressBar 
-				:item="file"
-				:size="ProgressBarSize.S"
-				@cancelClick="onCancelClick"
-			/>
-			<AudioPlayer
-				:messageId="messageId"
-				:src="file.urlDownload"
-				:file="file"
-				:authorId="file.authorId"
-				:withContextMenu="false"
-				:withAvatar="false"
-			/>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const BaseFileItem = {
-		name: 'BaseFileItem',
-		components: {
-			ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
-			BIcon: ui_iconSet_api_vue.BIcon
-		},
-		props: {
-			id: {
-				type: [String, Number],
-				required: true
-			},
-			messageId: {
-				type: [String, Number],
-				required: true
-			}
-		},
-		emits: ['cancelClick'],
-		computed: {
-			ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
-			OutlineIcons: () => ui_iconSet_api_vue.Outline,
-			file() {
-				return this.$store.getters['files/get'](this.id, true);
-			},
-			fileShortName() {
-				const NAME_MAX_LENGTH = 20;
-				return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
-			},
-			fileSize() {
-				return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
-			},
-			iconClass() {
-				const iconType = im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.file.name);
-				return `ui-icon-file-${iconType}`;
-			},
-			canBeOpenedWithViewer() {
-				return this.file.viewerAttrs && BX.UI?.Viewer;
-			},
-			viewerAttributes() {
-				return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
-					viewerAttributes: this.file.viewerAttrs,
-					previewImageSrc: this.file.urlPreview,
-					context: im_v2_const.FileViewerContext.dialog
-				});
-			},
-			isLoaded() {
-				return this.file.progress === 100;
-			},
-			imageStyles() {
-				return {
-					backgroundImage: `url(${this.file.urlPreview})`
-				};
-			},
-			hasPreview() {
-				return main_core.Type.isStringFilled(this.file.urlPreview);
-			}
-		},
-		methods: {
-			download() {
-				if (this.file.progress !== 100 || this.canBeOpenedWithViewer) {
-					return;
-				}
-				window.open(this.file.urlDownload, '_blank');
-			},
-			loc(phraseCode, replacements = {}) {
-				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-			},
-			openContextMenu(event) {
-				this.$emit('openContextMenu', {
-					event,
-					fileId: this.id
-				});
-			},
-			onCancelClick(event) {
-				this.$emit('cancelClick', event);
-			}
-		},
-		template: `
-		<div class="bx-im-base-file-item__container">
-			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
-				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
-					<ProgressBar 
-						v-if="!isLoaded" 
-						:item="file"
-						:size="ProgressBarSize.S"
-						@cancelClick="onCancelClick"
-					/>
-				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
-					<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
-				</div>
-				<div class="bx-im-base-file-item__content">
-					<span :title="file.name" class="bx-im-base-file-item__title">
-						{{ fileShortName }}
-					</span>
-					<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
-				</div>
-			</div>
-			<BIcon
-				:name="OutlineIcons.DOWNLOAD"
-				:class="{'--not-active': !isLoaded}"
-				:hoverable="isLoaded"
-				class="bx-im-base-file-item__download-icon"
-				@click.stop="openContextMenu"
-			/>
-		</div>
-	`
-	};
+	});
 
 	const VIDEO_SIZE_TO_AUTOPLAY = 5_000_000;
 	const MAX_WIDTH = 460;
@@ -6318,9 +7932,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const MIN_HEIGHT = 100;
 	const DEFAULT_WIDTH = 320;
 	const DEFAULT_HEIGHT = 180;
-
-	// @vue/component
-	const VideoItem = {
+	const VideoItem = ui_vue3.defineComponent({
 		name: 'VideoItem',
 		components: {
 			DefaultVideoPlayer: im_v2_component_elements_player.DefaultVideoPlayer,
@@ -6348,7 +7960,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.file.size < VIDEO_SIZE_TO_AUTOPLAY;
 			},
 			canBeOpenedWithViewer() {
-				return this.file.viewerAttrs && BX.UI?.Viewer;
+				return Boolean(this.file.viewerAttrs && BX.UI?.Viewer);
 			},
 			viewerAttributes() {
 				return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
@@ -6358,17 +7970,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 			},
 			imageSize() {
-				let newWidth = this.file.image.width;
-				let newHeight = this.file.image.height;
+				const image = this.file.image;
+				let newWidth = image.width;
+				let newHeight = image.height;
 				if (!newHeight || !newWidth) {
 					return {
 						width: `${DEFAULT_WIDTH}px`,
 						height: `${DEFAULT_HEIGHT}px`
 					};
 				}
-				if (this.file.image.width > MAX_WIDTH || this.file.image.height > MAX_HEIGHT) {
-					const aspectRatio = this.file.image.width / this.file.image.height;
-					if (this.file.image.width > MAX_WIDTH) {
+				if (image.width > MAX_WIDTH || image.height > MAX_HEIGHT) {
+					const aspectRatio = image.width / image.height;
+					if (image.width > MAX_WIDTH) {
 						newWidth = MAX_WIDTH;
 						newHeight = Math.round(MAX_WIDTH / aspectRatio);
 					}
@@ -6439,17 +8052,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 		</div>
 	`
-	};
+	});
 
+	exports.AiTaskIndication = AiTaskIndication;
+	exports.AiTaskIndicationLayout = AiTaskIndicationLayout;
+	exports.AiTaskIndicationLayoutKey = AiTaskIndicationLayoutKey;
+	exports.AiTaskStatusRow = AiTaskStatusRow;
 	exports.AudioItem = AudioItem;
 	exports.AuthorTitle = AuthorTitle;
 	exports.BaseFileItem = BaseFileItem;
 	exports.BuilderContent = BuilderContent;
 	exports.BuilderTextContent = BuilderTextContent;
+	exports.ChangeStatus = ChangeStatus;
 	exports.CompactCommentsPanel = CompactCommentsPanel;
 	exports.ContextMenu = ContextMenu;
 	exports.DefaultMessageContent = DefaultMessageContent;
 	exports.MessageAttach = MessageAttach;
+	exports.MessageDefaultReactionManager = MessageDefaultReactionManager;
 	exports.MessageFooter = MessageFooter;
 	exports.MessageHeader = MessageHeader;
 	exports.MessageKeyboard = MessageKeyboard;
@@ -6462,6 +8081,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.SourceListButton = SourceListButton;
 	exports.TextContent = TextContent;
 	exports.VideoItem = VideoItem;
+	exports.hasAiTaskIndication = hasAiTaskIndication;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Vue3, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Event, BX.UI.Reaction.Item, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Item.Vue, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Picker, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.UI.System, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Service, BX.SidePanel, BX.UI.System.Chip.Vue, BX.UI.SidePanel, BX.UI, BX.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Vue3, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.UI.Accessibility, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.Reaction.Item, BX.Event, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Item.Vue, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI.Reaction.Picker, window, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Service, BX.SidePanel, BX.UI.System.Chip.Vue, BX.UI.SidePanel, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Vue3.Components, BX.Messenger.v2.Lib, BX, BX.UI.System.Checkbox, BX.UI.System.RadioButton, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=registry.bundle.js.map

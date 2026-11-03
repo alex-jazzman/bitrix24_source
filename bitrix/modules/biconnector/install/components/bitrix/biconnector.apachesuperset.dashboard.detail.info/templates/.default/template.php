@@ -36,6 +36,7 @@ $extensions = [
 	'im.public',
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-analytics',
+	'biconnector.error-message',
 	'sidepanel',
 ];
 

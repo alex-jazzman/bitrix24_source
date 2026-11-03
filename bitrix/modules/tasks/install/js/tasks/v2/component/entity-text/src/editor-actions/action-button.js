@@ -34,6 +34,14 @@ export const ActionButton = {
 			type: Number,
 			default: null,
 		},
+		ariaHaspopup: {
+			type: String,
+			default: '',
+		},
+		ariaExpanded: {
+			type: Boolean,
+			default: null,
+		},
 	},
 	setup(): Object
 	{
@@ -61,13 +69,20 @@ export const ActionButton = {
 			class="tasks-card-entity-text-action-button-container"
 			v-hint="showTooltip ? tooltip : null"
 		>
-			<button class="tasks-card-entity-text-action-button" type="button">
+			<button
+				class="tasks-card-entity-text-action-button"
+				type="button"
+				:aria-label="title || copilotText || null"
+				:aria-haspopup="ariaHaspopup || null"
+				:aria-expanded="ariaExpanded"
+			>
 				<BIcon
 					:name="iconName"
 					:color="iconColor"
 					:size="iconSize"
 					hoverable
 					class="tasks-card-entity-text-action-button-icon"
+					aria-hidden="true"
 				/>
 			</button>
 			<TextSm

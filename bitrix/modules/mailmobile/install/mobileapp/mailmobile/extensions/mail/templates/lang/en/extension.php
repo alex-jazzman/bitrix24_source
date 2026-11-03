@@ -1,0 +1,23 @@
+<?php
+$MESS['MAILMOBILE_MAIL_TEMPLATES_ALL_TITLE'] = 'All email templates';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_APPLY_DESCRIPTION'] = 'The email already contains text.';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_APPLY_TITLE'] = 'Choose how to apply the template';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_BODY'] = 'Template text';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_CANCEL'] = 'Cancel';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_CREATE'] = 'Create email template';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_CRM_UNAVAILABLE'] = 'This email template is available only in CRM.';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_EMPTY_DESCRIPTION'] = 'Available email templates will appear here.';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_EMPTY_TITLE'] = 'No email templates';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_INSERT'] = 'Insert email template';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_LOAD_ERROR_DESCRIPTION'] = 'Check your internet access and try again.';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_LOAD_ERROR_TITLE'] = 'Could not load email templates.';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_LOAD_MORE'] = 'Show more';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_PREVIEW'] = 'Preview';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_REPLACE'] = 'Replace text';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_RETRY'] = 'Try again';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_SAVE'] = 'Save';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_SAVE_ERROR'] = 'Could not save template';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_SEARCH'] = 'Filter + search';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_SUBJECT'] = 'Template subject';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_TITLE'] = 'Email templates';
+$MESS['MAILMOBILE_MAIL_TEMPLATES_UNAVAILABLE'] = 'This email template cannot be applied.';

@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
@@ -70,8 +71,33 @@ export const UserFieldsChip = {
 		{
 			return !this.task.rights.edit;
 		},
+		opensEditor(): boolean
+		{
+			return !this.isSelected;
+		},
+	},
+	watch: {
+		opensEditor(): void
+		{
+			this.syncAria();
+		},
+	},
+	mounted(): void
+	{
+		this.syncAria();
 	},
 	methods: {
+		syncAria(): void
+		{
+			const el = this.$refs.chip?.$el;
+			if (!el)
+			{
+				return;
+			}
+
+			Dom.attr(el, 'role', 'button');
+			Dom.attr(el, 'aria-haspopup', this.opensEditor ? 'dialog' : null);
+		},
 		handleClick(): void
 		{
 			if (this.isSelected)
@@ -82,6 +108,16 @@ export const UserFieldsChip = {
 			{
 				this.$emit('open');
 			}
+		},
+		handleKeydown(event: KeyboardEvent): void
+		{
+			if (event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.handleClick();
 		},
 		highlightField(): void
 		{
@@ -95,7 +131,10 @@ export const UserFieldsChip = {
 			:icon="Outline.TOPIC"
 			:data-task-id="taskId"
 			:data-task-chip-id="userFieldsMeta.id"
+			data-testid="tasks-user-fields-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
 	`,
 };

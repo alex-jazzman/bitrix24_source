@@ -6,6 +6,10 @@
  * @var array $arParams
  * @var CBitrixComponent $this
  */
+
+use Bitrix\Main\UserPhoneAuthTable;
+use Bitrix\Main\Controller\PhoneAuth;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -155,23 +159,26 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && ($_REQUEST["save"] <> '' || $_REQUEST["
 			}
 		}
 
-		$USER_FIELD_MANAGER->EditFormAddFields("USER", $arFields);
+		if (!empty($arParams["USER_PROPERTY"]))
+		{
+			$USER_FIELD_MANAGER->EditFormAddFields("USER", $arFields, ['FIELDS' => $arParams["USER_PROPERTY"]]);
+		}
 
 		if($obUser->Update($arResult["ID"], $arFields))
 		{
-			if($arResult["PHONE_REGISTRATION"] == true && $arFields["PHONE_NUMBER"] <> '')
+			if($arResult["PHONE_REGISTRATION"] && $arFields["PHONE_NUMBER"] <> '')
 			{
-				if(!($phone = \Bitrix\Main\UserPhoneAuthTable::getRowById($arResult["ID"])))
+				if(!($phone = UserPhoneAuthTable::getRowById($arResult["ID"])))
 				{
 					$phone = ["PHONE_NUMBER" => "", "CONFIRMED" => "N"];
 				}
 
-				$arFields["PHONE_NUMBER"] = \Bitrix\Main\UserPhoneAuthTable::normalizePhoneNumber($arFields["PHONE_NUMBER"]);
+				$arFields["PHONE_NUMBER"] = UserPhoneAuthTable::normalizePhoneNumber($arFields["PHONE_NUMBER"]);
 
 				if($arFields["PHONE_NUMBER"] <> $phone["PHONE_NUMBER"] || $phone["CONFIRMED"] <> 'Y')
 				{
 					//added or updated the phone number for the user, now sending a confirmation SMS
-					list($code, $phoneNumber) = CUser::GeneratePhoneCode($arResult["ID"]);
+					[$code, $phoneNumber] = CUser::GeneratePhoneCode($arResult["ID"]);
 
 					$sms = new \Bitrix\Main\Sms\Event(
 						"SMS_USER_CONFIRM_NUMBER",
@@ -188,7 +195,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && ($_REQUEST["save"] <> '' || $_REQUEST["
 					}
 
 					$arResult["SHOW_SMS_FIELD"] = true;
-					$arResult["SIGNED_DATA"] = \Bitrix\Main\Controller\PhoneAuth::signData(['phoneNumber' => $phoneNumber]);
+					$arResult["SIGNED_DATA"] = PhoneAuth::signData(['phoneNumber' => $phoneNumber]);
 				}
 			}
 		}
@@ -338,7 +345,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["code_submit_button"] <> '
 {
 	if (!empty($_REQUEST["SIGNED_DATA"]))
 	{
-		if(($params = \Bitrix\Main\Controller\PhoneAuth::extractData($_REQUEST["SIGNED_DATA"])) !== false)
+		if(($params = PhoneAuth::extractData($_REQUEST["SIGNED_DATA"])) !== false)
 		{
 			if(($userId = CUser::VerifyPhoneCode($params['phoneNumber'], $_REQUEST["SMS_CODE"])))
 			{
@@ -364,7 +371,7 @@ if(!$arResult["arUser"] = $rsUser->GetNext(false))
 $arResult["arUser"]["PHONE_NUMBER"] = "";
 if($arResult["PHONE_REGISTRATION"])
 {
-	if($phone = \Bitrix\Main\UserPhoneAuthTable::getRowById($arResult["ID"]))
+	if($phone = UserPhoneAuthTable::getRowById($arResult["ID"]))
 	{
 		$arResult["arUser"]["PHONE_NUMBER"] = htmlspecialcharsbx($phone["PHONE_NUMBER"]);
 	}

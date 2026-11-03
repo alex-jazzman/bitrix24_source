@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/message', (require, ex
 	const { MessageType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BannerMessageConfiguration } = require('im/messenger/lib/element/dialog/message/banner/configuration');
+	const { parser } = require('im/messenger/lib/parser');
 
 	/**
 	 * @class BannerMessage
@@ -49,6 +50,30 @@ jn.define('im/messenger/lib/element/dialog/message/banner/message', (require, ex
 		 */
 		prepareTextMessage()
 		{}
+
+		/**
+		 * Applies the decoration to every part of the text except the url tags: a link nested in a
+		 * [color] tag is not rendered on Android, and a link carries its own styling anyway.
+		 *
+		 * @param {string} text
+		 * @param {function(string): string} decorate
+		 * @return {string}
+		 */
+		decorateOutsideUrlTags(text, decorate)
+		{
+			return parser
+				.splitByUrlTag(text)
+				.map((part) => {
+					if (parser.isUrlTag(part))
+					{
+						return part;
+					}
+
+					return part ? decorate(part) : '';
+				})
+				.join('')
+			;
+		}
 
 		get metaData()
 		{

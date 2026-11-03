@@ -1,0 +1,3 @@
+<?php
+
+$MESS['IMMOBILE_SIDEBAR_V2_TAB_AUDIO_VIDEO_NOTE_PROCESSING'] = 'Обрабатывается';

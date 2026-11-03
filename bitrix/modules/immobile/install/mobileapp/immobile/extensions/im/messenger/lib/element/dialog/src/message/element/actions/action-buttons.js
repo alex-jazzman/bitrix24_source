@@ -3,14 +3,13 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/actions/action-buttons', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
+	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
 	const { MessageActionType } = require('im/messenger/const');
 
-	const IconName = Object.freeze({
-		copy: 'copy',
-		refresh: 'refresh',
-		like: 'like',
-		dislike: 'dislike',
-		forward: 'forward',
+	const ActionTint = Object.freeze({
+		active: Color.accentMainPrimaryalt.toHex(),
+		neutral: Color.chatOtherCopilot2.toHex(),
 	});
 
 	/**
@@ -18,20 +17,24 @@ jn.define('im/messenger/lib/element/dialog/message/element/actions/action-button
 	 */
 	class ActionButtons
 	{
-		#tint;
+		#isLiked;
+		#isDisliked;
 
 		/**
 		 * @param {object} options
-		 * @param {string} options.tint
+		 * @param {boolean} options.isLiked
+		 * @param {boolean} options.isDisliked
 		 */
-		constructor({ tint })
+		constructor({ isLiked, isDisliked })
 		{
-			this.#tint = tint;
+			this.#isLiked = isLiked;
+			this.#isDisliked = isDisliked;
 		}
 
 		/**
 		 * @param {object} options
-		 * @param {string} options.tint
+		 * @param {boolean} options.isLiked
+		 * @param {boolean} options.isDisliked
 		 * @return {ActionButtons}
 		 */
 		static create(options)
@@ -64,8 +67,8 @@ jn.define('im/messenger/lib/element/dialog/message/element/actions/action-button
 		{
 			return {
 				id: MessageActionType.copy,
-				iconName: IconName.copy,
-				tint: this.#tint,
+				iconName: Icon.COPY.getIconName(),
+				tint: ActionTint.neutral,
 			};
 		}
 
@@ -76,8 +79,8 @@ jn.define('im/messenger/lib/element/dialog/message/element/actions/action-button
 		{
 			return {
 				id: MessageActionType.regenerate,
-				iconName: IconName.refresh,
-				tint: this.#tint,
+				iconName: Icon.REFRESH.getIconName(),
+				tint: ActionTint.neutral,
 			};
 		}
 
@@ -86,10 +89,13 @@ jn.define('im/messenger/lib/element/dialog/message/element/actions/action-button
 		 */
 		#getLikeButton()
 		{
+			const iconName = this.#isLiked ? Icon.SOLID_LIKE.getIconName() : Icon.LIKE.getIconName();
+			const tint = this.#isLiked ? ActionTint.active : ActionTint.neutral;
+
 			return {
 				id: MessageActionType.like,
-				iconName: IconName.like,
-				tint: this.#tint,
+				iconName,
+				tint,
 			};
 		}
 
@@ -98,10 +104,13 @@ jn.define('im/messenger/lib/element/dialog/message/element/actions/action-button
 		 */
 		#getDislikeButton()
 		{
+			const iconName = this.#isDisliked ? Icon.SOLID_DISIKE.getIconName() : Icon.DISLIKE.getIconName();
+			const tint = this.#isDisliked ? ActionTint.active : ActionTint.neutral;
+
 			return {
 				id: MessageActionType.dislike,
-				iconName: IconName.dislike,
-				tint: this.#tint,
+				iconName,
+				tint,
 			};
 		}
 
@@ -112,8 +121,8 @@ jn.define('im/messenger/lib/element/dialog/message/element/actions/action-button
 		{
 			return {
 				id: MessageActionType.forward,
-				iconName: IconName.forward,
-				tint: this.#tint,
+				iconName: Icon.FORWARD.getIconName(),
+				tint: ActionTint.neutral,
 			};
 		}
 	}

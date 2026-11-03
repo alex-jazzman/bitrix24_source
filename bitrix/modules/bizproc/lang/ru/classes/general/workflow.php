@@ -50,3 +50,4 @@ $MESS['BPCGWF_DEBUG_TRACE_FINALIZE_ACTIVITY'] = "Финализация Activity
 $MESS['BPCGWF_DEBUG_TRACE_EVENT_HANDLERS_COUNT'] = "Найдено обработчиков события: #COUNT#";
 $MESS['BPCGWF_SKIP_NOTE_DEACTIVATED'] = "Действие пропущено: отключено в шаблоне процесса";
 $MESS['BPCGWF_SKIP_NOTE_CONDITION'] = "Действие пропущено: условие не выполнено";
+$MESS['BPCGWF_SKIP_NOTE_UNRESOLVED_DOCUMENT'] = "Действие пропущено: не удалось определить документ";

@@ -11,10 +11,12 @@ return [
 	'css' => 'dist/invitation-widget.bundle.css',
 	'js' => 'dist/invitation-widget.bundle.js',
 	'rel' => [
+		'intranet.invitation-widget-counter',
 		'main.core',
 		'main.core.events',
 		'main.loader',
 		'main.popup',
+		'ui.a11y',
 		'ui.analytics',
 		'ui.cnt',
 		'ui.popupcomponentsmaker',

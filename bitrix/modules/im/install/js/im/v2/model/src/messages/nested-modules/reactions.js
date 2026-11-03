@@ -78,6 +78,15 @@ export class ReactionsModel extends BuilderModel
 
 				store.commit('removeReaction', payload);
 			},
+			/** @function messages/reactions/delete */
+			delete: (store: Store, payload: { messageId: number }) => {
+				if (!store.state.collection[payload.messageId])
+				{
+					return;
+				}
+
+				store.commit('delete', payload);
+			},
 			/** @function messages/reactions/clearCollection */
 			clearCollection: (store: Store) => {
 				store.commit('clearCollection');
@@ -154,6 +163,9 @@ export class ReactionsModel extends BuilderModel
 				{
 					delete reactions.reactionCounters[reaction];
 				}
+			},
+			delete: (state: ReactionsState, payload: { messageId: number }) => {
+				delete state.collection[payload.messageId];
 			},
 			clearCollection: (state: ReactionsState) => {
 				state.collection = {};

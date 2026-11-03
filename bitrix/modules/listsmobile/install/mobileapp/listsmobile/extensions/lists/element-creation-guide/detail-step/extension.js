@@ -261,6 +261,11 @@ jn.define('lists/element-creation-guide/detail-step', (require, exports, module)
 			});
 		}
 
+		resizableByKeyboard()
+		{
+			return true;
+		}
+
 		createLayout(props)
 		{
 			return new DetailStepComponent({

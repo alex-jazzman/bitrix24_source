@@ -24,11 +24,13 @@ Extension::load([
 	'main.core',
 	'ui.design-tokens',
 	'intranet.design-tokens',
+	'ui.notification',
 	'ui.system.typography',
+	'ui.system.menu',
 ]);
 ?>
 
-<div class="intranet-user-otp">
+<div class="intranet-user-otp" data-testid="intranet-user-security-section">
 	<p class="intranet-user-otp__description ui-text --sm">
 		<?= Loc::getMessage('INTRANET_USER_SECURITY_DESCRIPTION')?>
 	</p>
@@ -194,10 +196,35 @@ Extension::load([
 			</li>
 			<?php endif; ?>
 		<?php endif; ?>
+
+		<?php if (($arResult['CAN_SHOW_PROFILE_MANAGEMENT'] ?? false) === true): ?>
+		<li class="intranet-user-otp-security__section-row">
+			<button
+				id="intranet-security-section-profile-management"
+				type="button"
+				class="intranet-user-otp-security__section-button"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				data-testid="intranet-user-security-profile-management-button"
+			>
+				<span class="intranet-user-otp-list__row-label ui-text --md">
+					<span class="ui-icon-set --o-settings"></span>
+					<?= Loc::getMessage('INTRANET_USER_SECURITY_PROFILE_MANAGEMENT_TITLE') ?>
+				</span>
+				<span class="intranet-user-otp-list__row-status">
+					<span class="ui-icon-set --chevron-right-s"></span>
+				</span>
+			</button>
+		</li>
+		<?php endif; ?>
 	</ul>
 	<?php if ($arResult["USER"]["CAN_LOGOUT"] === 'Y'):?>
 		<div class="intranet-user-otp__footer">
-			<a class="intranet-user-otp-list__disable-link ui-link ui-link-dashed" href="#">
+			<a
+				class="intranet-user-otp-list__disable-link ui-link ui-link-dashed"
+				data-testid="intranet-logout-all-confirm-trigger"
+				href="#"
+			>
 				<?= Loc::getMessage('INTRANET_USER_SECURITY_EXIT_BUTTON') ?>
 			</a>
 			<p class="intranet-user-otp__footer-description ui-text --2xs">
@@ -221,6 +248,7 @@ Extension::load([
 			phoneElement: BX('intranet-security-section-phone'),
 			socservElement: BX('intranet-security-section-socserv'),
 			passwordElement: pswBtn,
+			profileManagementElement: BX('intranet-security-section-profile-management'),
 		});
 
 		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_VIEW_OTP"] === 'Y'): ?>

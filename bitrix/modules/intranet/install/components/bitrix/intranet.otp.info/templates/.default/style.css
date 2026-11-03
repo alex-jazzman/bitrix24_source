@@ -28,10 +28,10 @@
 	width:155px;
 	height:221px;
 	margin:3px auto 5px;
-	background:url(images/popup_cnt_1.png) no-repeat center;
+	background:url(images/popup_cnt_1.webp) no-repeat center;
 }
-.ru .bx-otp-info-popup-col-left-img{ background: url(images/popup_cnt_1_ru.png) no-repeat center;}
-.de .bx-otp-info-popup-col-left-img{ background: url(images/popup_cnt_1_de.png) no-repeat center;}
+.ru .bx-otp-info-popup-col-left-img{ background: url(images/popup_cnt_1_ru.webp) no-repeat center;}
+.de .bx-otp-info-popup-col-left-img{ background: url(images/popup_cnt_1_de.webp) no-repeat center;}
 
 .bx-otp-info-popup-col-right{
 	max-width:900px;

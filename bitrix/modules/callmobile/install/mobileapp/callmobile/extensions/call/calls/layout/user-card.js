@@ -108,22 +108,31 @@ jn.define('call/calls/layout/user-card', (require, exports, module) => {
 				};
 			}
 
-			const orientation = this.props.gridOrientation || 'vertical';
-			const rows = this.props.gridRows || 2;
-			const containerWidth = this.props.gridContainerWidth || document.device.screen.width;
-			const containerHeight = this.props.gridContainerHeight || document.device.screen.height;
+			// props.gridContainerWidth/Height are not updated on rotation — read
+			// device.screen for current sizes and Utils for the real orientation.
+			const containerWidth = document.device.screen.width;
+			const containerHeight = document.device.screen.height;
 
-			if (orientation === 'horizontal')
+			if (Utils.getIsLandscapeOrientation())
 			{
-				const height = (containerHeight / rows) - MARGIN;
+				// In landscape native GridView lays out 4 columns × 2 rows.
+				// iOS native treats horizontal and vertical gaps differently: without
+				// compensation cells stick together horizontally (native divides
+				// containerWidth by 4 columns), while vertical gaps come from the
+				// margin/height calc. Width is compensated more (30), height moderately
+				// (10) — matching the observed behaviour.
+				// Android renders margins correctly, no compensation needed.
+				const iosWidthCompensation = Utils.getIsIos() ? 30 : 0;
+				const iosHeightCompensation = Utils.getIsIos() ? 10 : 0;
 
 				return {
-					width: height,
-					height,
+					width: containerWidth / 4 - MARGIN - iosWidthCompensation,
+					height: containerHeight / 2 - MARGIN - iosHeightCompensation,
 				};
 			}
 
-			const width = (containerWidth / rows) - MARGIN;
+			// In portrait — 2 columns, square items (existing behaviour).
+			const width = containerWidth / 2 - MARGIN;
 
 			return {
 				width,
@@ -163,7 +172,7 @@ jn.define('call/calls/layout/user-card', (require, exports, module) => {
 					style: {
 						position: 'absolute',
 						display: 'flex',
-						flexDirection: 'row',
+						flexDirection: 'column',
 						justifyContent: 'center',
 						alignItems: 'center',
 						width: '100%',
@@ -180,13 +189,22 @@ jn.define('call/calls/layout/user-card', (require, exports, module) => {
 					animating: true,
 					size: 'small',
 				}),
+				Text({
+					style: {
+						marginTop: 8,
+						fontSize: 13,
+						color: '#ffffff',
+						textAlign: 'center',
+					},
+					text: BX.message('MOBILE_CALL_LAYOUT_GRID_CONNECTING'),
+				}),
 			);
 			const avatar = View(
 				{},
 				Avatar({
 					testId: 'userCallContainer-avatar',
 					uri: this.props.avatarUri,
-					name: BX.utils.html.htmlDecode(user.data.name),
+					name: Utils.htmlDecode(user.data.name),
 					size: 90,
 					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[user.data.id]?.color),
 				}),
@@ -219,7 +237,6 @@ jn.define('call/calls/layout/user-card', (require, exports, module) => {
 					},
 				},
 				this.props.panelVisible && new NameBadge({ name: user.data.name, microphoneState: user.data.microphoneState }),
-				user.data.state === BX.Call.UserState.Connecting && connectingBadge,
 				user.data.floorRequestState && this.renderFloorRequestBadge(),
 				user.data.screenState && View(
 					{
@@ -233,6 +250,7 @@ jn.define('call/calls/layout/user-card', (require, exports, module) => {
 					}),
 				),
 				(isCameraOff || isReconnecting || !hasVideo) ? avatar : video,
+				user.data.state === BX.Call.UserState.Connecting && connectingBadge,
 				isThisUser && !isCameraOff && switchCamera,
 			);
 		}

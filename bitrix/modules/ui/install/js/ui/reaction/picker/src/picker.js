@@ -23,6 +23,8 @@ type ReactionPickerTarget = HTMLElement | {
 
 export type ReactionPickerOptions = {
 	target: ReactionPickerTarget;
+	alignTargetLeft?: boolean;
+	accessibilityTarget?: HTMLElement | null;
 	priorityReaction?: string;
 	reactions?: string[];
 	contextAction?: {
@@ -43,6 +45,8 @@ export const ReactionPickerEvents = {
 export class ReactionPicker extends EventEmitter
 {
 	#target: ReactionPickerTarget;
+	#alignTargetLeft: boolean;
+	#accessibilityTarget: ?HTMLElement;
 
 	#popover: ?HTMLElement = null;
 	#isShown: boolean;
@@ -62,7 +66,7 @@ export class ReactionPicker extends EventEmitter
 
 	#focusZone: ?FocusZone = null;
 	#focusTrap: ?FocusTrap = null;
-	#restoreFocusTarget: Function;
+	#restoreFocusTarget: Function | false;
 
 	#mouseenterHandler: ?Function = null;
 	#mouseleaveHandler: ?Function = null;
@@ -104,6 +108,10 @@ export class ReactionPicker extends EventEmitter
 
 		this.setEventNamespace('UI.ReactionPicker.V2');
 		this.#target = options.target;
+		this.#alignTargetLeft = options.alignTargetLeft === true;
+		this.#accessibilityTarget = options.accessibilityTarget === undefined
+			? (this.#target instanceof HTMLElement ? this.#target : null)
+			: options.accessibilityTarget;
 		this.#allowedReactions = Type.isArrayFilled(options.reactions) ? options.reactions : null;
 
 		this.#priority = Type.isStringFilled(options.priorityReaction)
@@ -123,7 +131,8 @@ export class ReactionPicker extends EventEmitter
 		this.#isShown = false;
 		this.#reactions = [];
 		this.#ranking = new ReactionPickerRanking();
-		this.#restoreFocusTarget = () => (this.#target instanceof HTMLElement ? this.#target : null);
+		// A callback returning null would let FocusTrap restore its previous focus instead.
+		this.#restoreFocusTarget = options.accessibilityTarget === null ? false : () => this.#accessibilityTarget;
 	}
 
 	show(options: { focus?: boolean } = {}): void
@@ -298,30 +307,70 @@ export class ReactionPicker extends EventEmitter
 
 		let top = 0;
 
-		const isEnoughSpaceBelowTargetElement = this.#isEnoughSpaceBelowTargetElement();
+		if (this.#alignTargetLeft)
+		{
+			const topAboveTarget = (
+				elementRect.top
+				- popoverRect.height
+				- ReactionPicker.#offsetBetweenTargetElement
+			);
+			const topBelowTarget = elementRect.bottom + ReactionPicker.#offsetBetweenTargetElement;
+			const viewportTop = window.scrollY;
+			const viewportBottom = window.scrollY + window.innerHeight;
+			const spaceAboveTarget = elementRect.top
+				- viewportTop
+				- ReactionPicker.#offsetBetweenTargetElement;
+			const spaceBelowTarget = viewportBottom
+				- elementRect.bottom
+				- ReactionPicker.#offsetBetweenTargetElement;
+			const fitsAboveTarget = spaceAboveTarget >= popoverRect.height;
+			const fitsBelowTarget = spaceBelowTarget >= popoverRect.height;
 
-		if (isEnoughSpaceBelowTargetElement === false)
-		{
-			top = elementRect.top - popoverRect.height - ReactionPicker.#offsetBetweenTargetElement;
+			if (fitsAboveTarget)
+			{
+				top = topAboveTarget;
+			}
+			else if (fitsBelowTarget)
+			{
+				top = topBelowTarget;
+			}
+			else
+			{
+				const preferredTop = spaceAboveTarget >= spaceBelowTarget
+					? topAboveTarget
+					: topBelowTarget;
+				const maxTopWithinViewport = Math.max(viewportTop, viewportBottom - popoverRect.height);
+
+				top = Math.min(Math.max(preferredTop, viewportTop), maxTopWithinViewport);
+			}
 		}
-		else if (this.#isEnoughSpaceAboveTargetElement())
+		else
 		{
-			top = elementRect.top - ReactionPicker.#minHeight - ReactionPicker.#offsetBetweenTargetElement;
-		}
-		else if (isEnoughSpaceBelowTargetElement)
-		{
-			top = elementRect.top + elementRect.height + ReactionPicker.#offsetBetweenTargetElement;
+			const isEnoughSpaceBelowTargetElement = this.#isEnoughSpaceBelowTargetElement();
+
+			if (isEnoughSpaceBelowTargetElement === false)
+			{
+				top = elementRect.top - popoverRect.height - ReactionPicker.#offsetBetweenTargetElement;
+			}
+			else if (this.#isEnoughSpaceAboveTargetElement(ReactionPicker.#minHeight))
+			{
+				top = elementRect.top - ReactionPicker.#minHeight - ReactionPicker.#offsetBetweenTargetElement;
+			}
+			else if (isEnoughSpaceBelowTargetElement)
+			{
+				top = elementRect.top + elementRect.height + ReactionPicker.#offsetBetweenTargetElement;
+			}
 		}
 
-		let left = elementRect.left - 53;
+		let left = this.#alignTargetLeft ? elementRect.left : elementRect.left - 53;
 
 		const rightEdge = left + popoverRect.width;
-		const windowWidth = window.innerWidth;
+		const viewportRight = window.scrollX + window.innerWidth;
 		const rightPadding = 40;
 
-		if (rightEdge + rightPadding > windowWidth)
+		if (rightEdge + rightPadding > viewportRight)
 		{
-			left = windowWidth - popoverRect.width - rightPadding;
+			left = viewportRight - popoverRect.width - rightPadding;
 		}
 
 		Dom.style(this.#popover, {
@@ -712,7 +761,7 @@ export class ReactionPicker extends EventEmitter
 			this.#expandedListContainer,
 		);
 
-		if (this.#isEnoughSpaceBelowTargetElement() === false)
+		if (this.#alignTargetLeft || this.#isEnoughSpaceBelowTargetElement() === false)
 		{
 			this.adjustPosition();
 		}
@@ -723,8 +772,8 @@ export class ReactionPicker extends EventEmitter
 	}
 
 	/**
-	 * A target given as coordinates has no element to speak for it, and an element that is not a
-	 * control of any kind has no state to be in: the picker is then a menu nothing announces.
+	 * Without an accessibility target, or with one that is not a control of any kind,
+	 * the picker is a menu nothing announces.
 	 */
 	#syncTargetMenuState(isExpanded: boolean): void
 	{
@@ -739,8 +788,8 @@ export class ReactionPicker extends EventEmitter
 
 	#isMenuStateTarget(): boolean
 	{
-		return this.#target instanceof HTMLElement
-			&& this.#target.matches(ReactionPicker.#menuStateTargetSelector);
+		return this.#accessibilityTarget instanceof HTMLElement
+			&& this.#accessibilityTarget.matches(ReactionPicker.#menuStateTargetSelector);
 	}
 
 	/**
@@ -756,10 +805,10 @@ export class ReactionPicker extends EventEmitter
 
 		if (!this.#stampedTargetAttributes.has(name))
 		{
-			this.#stampedTargetAttributes.set(name, this.#target.getAttribute(name));
+			this.#stampedTargetAttributes.set(name, this.#accessibilityTarget.getAttribute(name));
 		}
 
-		Dom.attr(this.#target, name, value);
+		Dom.attr(this.#accessibilityTarget, name, value);
 	}
 
 	/**
@@ -769,7 +818,7 @@ export class ReactionPicker extends EventEmitter
 	#clearTargetMenuState(): void
 	{
 		this.#stampedTargetAttributes?.forEach((value: ?string, name: string) => {
-			Dom.attr(this.#target, name, value);
+			Dom.attr(this.#accessibilityTarget, name, value);
 		});
 
 		this.#stampedTargetAttributes = null;
@@ -789,8 +838,8 @@ export class ReactionPicker extends EventEmitter
 	#isOpenedFromFocusedTarget(): boolean
 	{
 		return FocusMonitor.Instance.getModalityTracker().getLastModality() === 'keyboard'
-			&& this.#target instanceof HTMLElement
-			&& this.#target.contains(document.activeElement);
+			&& this.#accessibilityTarget instanceof HTMLElement
+			&& this.#accessibilityTarget.contains(document.activeElement);
 	}
 
 	/**
@@ -830,17 +879,18 @@ export class ReactionPicker extends EventEmitter
 	{
 		const popoverRect = Dom.getPosition(this.#popover);
 		const targetRect = Dom.getPosition(this.#target);
+		const viewportBottom = window.scrollY + window.innerHeight;
 
-		return targetRect.bottom + popoverRect.height + ReactionPicker.#offsetBetweenTargetElement < window.innerHeight;
+		return targetRect.bottom + popoverRect.height + ReactionPicker.#offsetBetweenTargetElement < viewportBottom;
 	}
 
-	#isEnoughSpaceAboveTargetElement(): boolean
+	#isEnoughSpaceAboveTargetElement(height: number): boolean
 	{
 		const elementRect = Dom.getPosition(this.#target);
 
 		return (
 			elementRect.top
-			- ReactionPicker.#minHeight
+			- height
 			- window.scrollY
 			- ReactionPicker.#offsetBetweenTargetElement)
 		> 0;

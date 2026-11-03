@@ -12,6 +12,10 @@ use Bitrix\Crm\Integration\UI\EntitySelector\MultiplePlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 use Bitrix\Crm\Security\Notification\Queue\ReadPermissionAddReceiver;
+use Bitrix\Crm\V2\Internal\Service\Settings\SettingFactory;
+use Bitrix\Crm\V2\Internal\Service\Settings\SettingFactoryInterface;
+use Bitrix\Crm\V2\Internal\Service\Settings\SettingRegistry;
+use Bitrix\Crm\V2\Internal\Service\Settings\SettingRegistryInterface;
 
 $uiEntitySelectorConfig = [
 	'value' => [
@@ -170,6 +174,13 @@ $uiEntitySelectorConfig = [
 					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\WebFormProvider',
 				],
 			],
+			[
+				'entityId' => 'crm_catalog_product',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CatalogProductProvider',
+				],
+			],
 		],
 		'extensions' => ['crm.entity-selector'],
 	],
@@ -182,6 +193,7 @@ return [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Crm\\Controller',
 			'namespaces' => [
+				'\\Bitrix\\Crm\\V2\\Infrastructure\\Controller' => 'v2',
 				'\\Bitrix\\Crm\\Controller\\DocumentGenerator' => 'documentgenerator',
 				'\\Bitrix\\Crm\\Controller' => 'api',
 				'\\Bitrix\\Crm\\Integration' => 'integration',
@@ -203,6 +215,10 @@ return [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Crm\\V2\\Infrastructure\\Rest\\Controller',
 			'controllerProvider' => \Bitrix\Crm\V2\Infrastructure\Rest\CustomController\SchemaProvider::class,
+			'documentation' => [
+				'methods' => [
+				],
+			],
 		],
 		'readonly' => true,
 	],
@@ -369,6 +385,9 @@ return [
 			],
 			'crm.service.sign.member' => [
 				'className' => \Bitrix\Crm\Service\Sign\MemberService::class,
+			],
+			'crm.automation.designerAvailability' => [
+				'className' => \Bitrix\Crm\Automation\DesignerAvailability::class,
 			],
 			'crm.service.director' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Director',
@@ -614,6 +633,15 @@ return [
 			'crm.activity.actcounterlighttimerepo' => [
 				'className' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
 			],
+			'crm.service.activity.provider.registry' => [
+				'className' => \Bitrix\Crm\V2\Internal\Service\Activity\Provider\ProviderRegistry::class,
+			],
+			SettingFactoryInterface::class => [
+				'className' => SettingFactory::class,
+			],
+			SettingRegistryInterface::class => [
+				'className' => SettingRegistry::class,
+			],
 			'crm.filter.fieldsTransform.userBasedField' => [
 				'className' => \Bitrix\Crm\Filter\FieldsTransform\UserBasedField::class,
 			],
@@ -625,6 +653,27 @@ return [
 			],
 			'crm.customSection.automatedSolutionManager' => [
 				'className' => \Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager::class,
+			],
+			'crm.customSection.vibeRepository' => [
+				'className' => \Bitrix\Crm\Integration\Landing\Vibe\VibeRepository::class,
+			],
+			'crm.customSection.vibeCreationLock' => [
+				'className' => \Bitrix\Crm\AutomatedSolution\Vibe\CreationLock::class,
+			],
+			'crm.customSection.vibeStateRepository' => [
+				'className' => \Bitrix\Crm\AutomatedSolution\Vibe\StateRepository::class,
+			],
+			'crm.customSection.vibeLifecycleService' => [
+				'className' => \Bitrix\Crm\AutomatedSolution\Vibe\LifecycleService::class,
+				'constructorParams' => static function(): array {
+					$locator = \Bitrix\Main\DI\ServiceLocator::getInstance();
+
+					return [
+						$locator->get('crm.customSection.vibeRepository'),
+						$locator->get('crm.customSection.vibeCreationLock'),
+						$locator->get('crm.customSection.vibeStateRepository'),
+					];
+				},
 			],
 			'crm.summary.summaryFactory' => [
 				'className' => \Bitrix\Crm\Summary\SummaryFactory::class,
@@ -672,6 +721,12 @@ return [
 		'value' => [
 			'manager' => '\\Bitrix\\Crm\\Integration\\DocumentGenerator\\CustomField\\FieldManager',
 		],
+	],
+	'bizprocdesigner.documentfields' => [
+		'value' => [
+			'className' => \Bitrix\Crm\Integration\BizprocDesigner\DocumentFieldsContributor::class,
+		],
+		'readonly' => true,
 	],
 	'loggers' => [
 		'value' => [
@@ -846,6 +901,23 @@ return [
 
 				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
 			},
+			'Activity' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('crm.activity', (int)\Bitrix\Main\Config\Option::get('crm', 'activity_logger_ttl', 24*7)))
+						->setLevel(\Bitrix\Main\Config\Option::get('crm', 'activity_logger_level', \Psr\Log\LogLevel::ERROR))
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.activity', 9))
+							->setLevel(\Bitrix\Main\Config\Option::get('crm', 'activity_logger_message_level', \Psr\Log\LogLevel::ERROR))
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
 			'ScenarioInvestigation' => static function () {
 				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 				{
@@ -882,6 +954,24 @@ return [
 				OpenLineToolSet::class,
 				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\SmartProcessToolSet::class,
 				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\Mail\MailToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\DealRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\LeadRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\ContactRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\CompanyRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\SmartProcessRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\QuoteRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\SmartInvoiceRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\MyCompanyRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\CategoryRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\RequisiteAddressRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\ProductRowRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\ProductRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\DictionaryRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\FieldRequirementRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\FormRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\DetailPageLayoutRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\ActivityRestToolSet::class,
+				Bitrix\Crm\V2\Internal\Integration\AiAssistant\Mcp\ToolSet\TrackingRestToolSet::class,
 			],
 			'profileDataProviders' => [
 				Bitrix\Crm\Integration\AiAssistant\DataProviders\CrmProvider::class,
@@ -895,6 +985,14 @@ return [
 				'crm_role_permission_notification' => [
 					'handler' => ReadPermissionAddReceiver::class,
 				],
+			],
+		],
+		'readonly' => true,
+	],
+	'messageservice.custom-template' => [
+		'value' => [
+			'zones' => [
+				'crm' => ['provider' => \Bitrix\Crm\MessageSender\CustomTemplate\CrmZoneProvider::class],
 			],
 		],
 		'readonly' => true,

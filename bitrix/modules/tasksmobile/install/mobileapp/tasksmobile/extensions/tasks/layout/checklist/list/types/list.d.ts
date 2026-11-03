@@ -1,11 +1,9 @@
 import { LayoutWidget } from '../../../../../../../../../../mobile/dev/janative/api';
 import {
-	CheckListFlatTree,
-	CheckListFlatTreeItem,
 	ChecklistConditions,
-	ChecklistMemberType,
 	ChecklistDiskConfig,
-} from '../../../../checklist/types/common';
+	ChecklistMemberType,
+} from '../../../../checklist/types';
 
 export type ChecklistReloadParams = ChecklistConditions;
 
@@ -16,14 +14,14 @@ export type ChecklistMoveToChecklistRequest = {
 };
 
 export type ChecklistProps = {
-	checklist: CheckListFlatTree,
+	checklist: ChecklistView,
 	parentWidget?: LayoutWidget,
 	focusedItemId?: number | string,
 	onlyMine?: boolean,
 	hideCompleted?: boolean,
 	diskConfig?: ChecklistDiskConfig,
 	groupId?: number | string,
-	checklists?: CheckListFlatTree[],
+	checklists?: ChecklistView[],
 	onChange?: () => void,
 	onSave?: () => void,
 	onMoveToCheckList?: (params: ChecklistMoveToChecklistRequest) => Promise<Object>,
@@ -37,22 +35,22 @@ export type ChecklistUpdateRowsParams = {
 };
 
 export type ChecklistOnBlurParams = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	forceDelete?: boolean,
 };
 
 export type ChecklistRemoveItemParams = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 };
 
 export type ChecklistChangeMembersParams = {
 	members: Object[],
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	memberType: ChecklistMemberType,
 };
 
 export type ChecklistChangeAttachmentsParams = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	shouldRender?: boolean,
 };
 
@@ -62,6 +60,6 @@ export type ChecklistMoveItemParams = {
 };
 
 export type ChecklistChangeUsersParams = {
-	item: CheckListFlatTreeItem,
+	item: ChecklistItemView,
 	memberType: ChecklistMemberType,
 };

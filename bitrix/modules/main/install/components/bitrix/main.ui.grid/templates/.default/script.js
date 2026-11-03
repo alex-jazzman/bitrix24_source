@@ -283,13 +283,19 @@
 				});
 			},
 			prepareButton() {
-				if (this.isSetButtonDisabled()) {
+				const isDisabled = this.isSetButtonDisabled();
+				if (isDisabled) {
 					BX.Dom.attr(this.button, 'data-onchange', []);
 					BX.Dom.addClass(this.button, 'ui-btn-disabled');
 				} else {
 					BX.Dom.attr(this.button, 'data-onchange', this.buttonOnChange);
 					BX.Dom.removeClass(this.button, 'ui-btn-disabled');
 				}
+
+				// The class only paints the button grey. Without the attribute the control keeps its
+				// place in the Tab order and still fires on Enter, so a keyboard user runs an action
+				// the pointer user cannot even click.
+				this.button.disabled = isDisabled;
 			},
 			isSetButtonDisabled() {
 				return Boolean(this.buttonData.SETTINGS && this.buttonData.SETTINGS.minSelectedRows && this.getSelectedIds().length < this.buttonData.SETTINGS.minSelectedRows);
@@ -899,7 +905,7 @@
 					return BX.data(current, 'name');
 				});
 				this.parent.getUserOptions().setColumns(columns);
-				BX.onCustomEvent(this.parent.getContainer(), 'Grid::columnMoved', [this.parent]);
+				BX.onCustomEvent(this.parent.getContainer(), 'Grid::columnMoved', [this.parent, columns]);
 				setTimeout(() => {
 					this.parent.preventSortableClick = false;
 				}, 10);
@@ -1326,10 +1332,45 @@
 				this.menuId = this.getMenuId();
 				this.multiple = this.getMultiple();
 				this.emptyText = this.getEmptyText();
+				this.openedByKeyboard = false;
+				this.initialFocusPosition = null;
 				this.menu = this.createMenu();
 				this.menu.popupWindow.show();
 				this.adjustPosition();
-				BX.bind(this.dropdown, 'click', BX.delegate(this.showMenu, this));
+				BX.bind(this.dropdown, 'click', BX.delegate(this._onClick, this));
+				BX.bind(this.dropdown, 'keydown', BX.delegate(this._onKeyDown, this));
+			},
+			_onClick() {
+				this.openedByKeyboard = false;
+				this.initialFocusPosition = null;
+				this.showMenu();
+			},
+			/**
+			 * The menu itself needs no key handling: main.popup walks the items, activates them and
+			 * closes on Escape on its own. Only opening is ours, and with it the fact that the menu
+			 * was opened from the keyboard — that is what decides whether the focus goes inside.
+			 *
+			 * ArrowUp opens the menu at its last item, the way the interface buttons of main do it.
+			 */
+			_onKeyDown(event) {
+				const isActivation = event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+				const isArrowDown = event.key === 'ArrowDown';
+				const isArrowUp = event.key === 'ArrowUp';
+				if (!isActivation && !isArrowDown && !isArrowUp) {
+					return;
+				}
+				event.preventDefault();
+				this.openWithKeyboard(event.key);
+			},
+			/**
+			 * Opens the menu the way a keyboard user asked for it. Public because the manager builds
+			 * the instance lazily, on the first event that reaches the control: the key that created
+			 * the dropdown has already passed it by, so the opening is carried out from there.
+			 */
+			openWithKeyboard(key) {
+				this.openedByKeyboard = true;
+				this.initialFocusPosition = key === 'ArrowUp' ? 'last' : 'first';
+				this.showMenu();
 			},
 			getMenuId() {
 				return `${this.id}_menu`;
@@ -1339,14 +1380,22 @@
 				try {
 					const str = this.dropdown.dataset[this.dataItems];
 					result = JSON.parse(str);
-					result = result.map(item => {
-						item.VALUE = String(item.VALUE);
-						return item;
-					});
+					result = this.prepareItemsValues(result);
 				} catch {
 					result = [];
 				}
 				return result;
+			},
+			prepareItemsValues(items) {
+				return items.map(item => {
+					if ('VALUE' in item) {
+						item.VALUE = String(item.VALUE);
+					}
+					if ('ITEMS' in item) {
+						item.ITEMS = this.prepareItemsValues(item.ITEMS);
+					}
+					return item;
+				});
 			},
 			// single
 			getValue() {
@@ -1354,7 +1403,7 @@
 			},
 			getValueItem() {
 				const value = this.getValue();
-				return this.items.find(item => item.VALUE === value);
+				return this.getDataItemByValue(value);
 			},
 			// multiple
 			getValueAsArray() {
@@ -1366,7 +1415,7 @@
 			},
 			getValueItems() {
 				const values = this.getValueAsArray();
-				return this.items.filter(item => values.includes(item.VALUE));
+				return this.getDataItemsByValues(values);
 			},
 			toggleValue(value) {
 				if (this.multiple) {
@@ -1391,7 +1440,20 @@
 					return this.getValueItems().map(item => item.NAME).filter(i => Boolean(i)).join(', ') || this.emptyText;
 				}
 				const item = this.getValueItem();
-				return item ? item.NAME : this.emptyText;
+				if (item) {
+					return item.NAME;
+				}
+
+				// A value outside the item list has no caption of its own: keep the rendered one
+				// rather than wiping it with the empty text the dropdown was not given.
+				return this.emptyText ?? this.getRenderedText();
+			},
+			getRenderedText() {
+				const caption = BX.firstChild(this.dropdown);
+				if (!caption) {
+					return '';
+				}
+				return this.dropdown.dataset.htmlEntity === 'true' ? caption.innerHTML : caption.innerText;
 			},
 			getMultiple() {
 				return this.dropdown.dataset.multiple === 'Y';
@@ -1438,12 +1500,30 @@
 				return BX.PopupMenu.create(this.getMenuId(), this.dropdown, this.prepareMenuItems(), {
 					autoHide: true,
 					offsetTop: -8,
-					offsetLeft: Number(this.dropdown.dataset.menuOffsetLeft || 40),
+					// The menu hangs under its dropdown, not to the right of it. The 40px used
+					// to make room for the angle that pointed at the control; the angle was
+					// dropped in bc96b69c0149 and the offset was left behind, shifting every
+					// menu of the grid rightwards. Callers can still ask for one by hand.
+					offsetLeft: Number(this.dropdown.dataset.menuOffsetLeft || 0),
 					maxHeight: Number(this.dropdown.dataset.menuMaxHeight || 170),
+					// Without the trap MenuItem.focus() only paints the item and leaves the real
+					// focus outside, so the built-in arrow navigation has nothing to move. The
+					// default is no help here: it hangs on the ui.a11y setting, which is on only
+					// where Dev\Main\Migrator\ModuleUpdater exists.
+					focusTrap: true,
+					ariaLabel: this.dropdown.getAttribute('aria-label') || this.dropdown.dataset.name || null,
+					navigationOptions: {
+						initialFocusPosition: this.initialFocusPosition
+					},
 					events: {
 						onPopupClose: BX.delegate(this._onCloseMenu, this),
 						onPopupShow() {
 							self._onShowMenu();
+						},
+						// The menu ignores input until the opening animation is over, so the
+						// focus is placed after it, not on show.
+						onAfterPopupShow() {
+							self._onAfterShowMenu();
 						}
 					}
 				});
@@ -1456,14 +1536,87 @@
 				}
 				this.adjustPosition();
 			},
+			/**
+			 * Puts the menu of a panel dropdown over its control. The menu stays where main.popup put
+			 * it — in the body — and is placed by the measured position of the dropdown instead of
+			 * being moved inside it. Moving it used to break the keyboard: the focused item was taken
+			 * out of the document by the rebuild that follows, and with it the focus, so the arrows
+			 * walked the highlight while the focus sat on the body.
+			 *
+			 * The panel of group actions floats: once the grid is scrolled past it, the panel becomes
+			 * `position: fixed` at the bottom of the viewport. The menu therefore follows the same
+			 * kind of positioning as the panel it belongs to, and is kept on the control while the
+			 * page scrolls.
+			 */
 			adjustPosition() {
-				if (this.dropdown.dataset.popupPosition === 'fixed') {
-					const container = this.menu.popupWindow.popupContainer;
-					container.style.setProperty('top', 'auto');
-					container.style.setProperty('bottom', '45px');
-					container.style.setProperty('left', '0px');
-					this.dropdown.appendChild(container);
+				if (this.dropdown.dataset.popupPosition !== 'fixed') {
+					return;
 				}
+				this.placeAbovePanel();
+				this.bindPanelFollow();
+			},
+			placeAbovePanel() {
+				const container = this.menu?.popupWindow?.popupContainer;
+				if (!BX.type.isDomNode(container)) {
+					return;
+				}
+				const dropdownRect = this.dropdown.getBoundingClientRect();
+				const menuHeight = container.offsetHeight;
+				const gap = 5;
+
+				// The panel is fixed to the viewport while it floats, so the menu is too: it then keeps
+				// its place on the control without a scroll handler doing the work on every frame.
+				//
+				// The state is read off the panel itself rather than off its class: unpinning is
+				// animated and the class is dropped 200ms late (pin-panel.js), so a scroll landing in
+				// between would be measured against a state the panel has already left.
+				const panel = this.dropdown.closest('.main-grid-action-panel');
+				const isFloating = BX.type.isDomNode(panel) && getComputedStyle(panel).position === 'fixed';
+				container.style.setProperty('position', isFloating ? 'fixed' : 'absolute');
+				container.style.setProperty('bottom', 'auto');
+				container.style.setProperty('right', 'auto');
+				const top = isFloating ? dropdownRect.top - menuHeight - gap : dropdownRect.top - menuHeight - gap + window.scrollY;
+				const left = isFloating ? dropdownRect.left : dropdownRect.left + window.scrollX;
+				container.style.setProperty('top', `${Math.round(top)}px`);
+				container.style.setProperty('left', `${Math.round(left)}px`);
+			},
+			bindPanelFollow() {
+				if (this.panelFollowHandler) {
+					return;
+				}
+
+				// The panel unpins with an animation, so the frame a scroll event lands on is not the
+				// frame the panel settles in. The menu is therefore re-placed for as long as the
+				// scrolling lasts and a little after it stops, instead of once per event.
+				let until = 0;
+				let running = false;
+				const tick = () => {
+					this.placeAbovePanel();
+					if (Date.now() < until) {
+						requestAnimationFrame(tick);
+						return;
+					}
+					running = false;
+				};
+				this.panelFollowHandler = () => {
+					// main.popup closes the menu on a scroll of its binding element, but the panel
+					// floats and the control stays on screen, so the menu is kept with it.
+					until = Date.now() + 300;
+					if (!running) {
+						running = true;
+						requestAnimationFrame(tick);
+					}
+				};
+				window.addEventListener('scroll', this.panelFollowHandler, true);
+				window.addEventListener('resize', this.panelFollowHandler);
+			},
+			unbindPanelFollow() {
+				if (!this.panelFollowHandler) {
+					return;
+				}
+				window.removeEventListener('scroll', this.panelFollowHandler, true);
+				window.removeEventListener('resize', this.panelFollowHandler);
+				this.panelFollowHandler = null;
 			},
 			getSubItem(node) {
 				return BX.Grid.Utils.getByClass(node, this.dropdownItemClass, true);
@@ -1522,21 +1675,67 @@
 				return false;
 			},
 			getDataItemByValue(value) {
-				const result = this.items.filter(current => {
-					return current.VALUE === value;
+				return this.findDataItemByValue(this.items, value);
+			},
+			findDataItemByValue(items, value) {
+				for (const current of items) {
+					if ('VALUE' in current && current.VALUE === value) {
+						return current;
+					}
+					if ('ITEMS' in current) {
+						const nestedItem = this.findDataItemByValue(current.ITEMS, value);
+						if (nestedItem) {
+							return nestedItem;
+						}
+					}
+				}
+				return null;
+			},
+			getDataItemsByValues(values, items = this.items) {
+				const result = [];
+				items.forEach(item => {
+					if ('VALUE' in item && values.includes(item.VALUE)) {
+						result.push(item);
+					}
+					if ('ITEMS' in item) {
+						result.push(...this.getDataItemsByValues(values, item.ITEMS));
+					}
 				});
-				return result.length > 0 ? result[0] : null;
+				return result;
 			},
 			_onShowMenu() {
 				const self = this;
 				BX.addClass(this.dropdown, this.activeClass);
+				this.dropdown.setAttribute('aria-expanded', 'true');
 				(this.menu.menuItems || []).forEach(current => {
 					BX.bind(current.layout.item, 'click', BX.delegate(self._onItemClick, self));
 				});
 			},
+			_onAfterShowMenu() {
+				if (!this.openedByKeyboard) {
+					return;
+				}
+				const navigation = this.menu?.getNavigation?.();
+				if (this.initialFocusPosition === 'last') {
+					navigation?.focusLast?.();
+					return;
+				}
+				navigation?.focusFirst?.();
+			},
 			_onCloseMenu() {
+				// Only the panel dropdowns ever start following, so the teardown is called the way it
+				// may be absent: a dropdown that never positioned itself has nothing to unbind.
+				this.unbindPanelFollow?.();
 				BX.removeClass(this.dropdown, this.activeClass);
+				this.dropdown.setAttribute('aria-expanded', 'false');
 				BX.PopupMenu.destroy(this.menuId);
+
+				// The menu is destroyed with every close, taking the focus with it: without this the
+				// next Tab would start the walk over from the top of the page.
+				if (this.openedByKeyboard) {
+					this.openedByKeyboard = false;
+					this.dropdown.focus();
+				}
 			},
 			_onItemClick(event) {
 				const item = this.getMenuItem(event.target);
@@ -1579,24 +1778,55 @@
 			data: {},
 			init() {
 				const self = this;
-				let result;
 				let onLoadItems;
 				let items;
+
+				// A dropdown is built on demand, at the first event that reaches it. The pointer is
+				// not the only way in: a keyboard user activates the control with Enter, Space or
+				// an arrow, and without this branch no instance would ever be created for them —
+				// so the menu, its navigation and the whole keyboard path would simply not exist.
+				const ensureInstance = target => {
+					if (!BX.hasClass(target, this.dropdownClass)) {
+						return null;
+					}
+					const existing = this.getById(target.id);
+					if (existing && existing.dropdown === target) {
+						self.push(target.id, existing);
+						return existing;
+					}
+					const created = new BX.Main.dropdown(target);
+					self.push(target.id, created);
+					return created;
+				};
 				BX.bind(document, 'click', BX.delegate(function (event) {
 					if (BX.hasClass(event.target, this.dropdownClass)) {
 						event.preventDefault();
-						result = this.getById(event.target.id);
-						if (result && result.dropdown === event.target) {
-							self.push(event.target.id, this.getById(event.target.id));
-						} else {
-							self.push(event.target.id, new BX.Main.dropdown(event.target));
-						}
+						ensureInstance(event.target);
+					}
+				}, this));
+				BX.bind(document, 'keydown', BX.delegate(function (event) {
+					const isActivation = event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+					const isArrow = event.key === 'ArrowDown' || event.key === 'ArrowUp';
+					if (!isActivation && !isArrow) {
+						return;
+					}
+					if (!BX.hasClass(event.target, this.dropdownClass)) {
+						return;
+					}
+					const instance = ensureInstance(event.target);
+
+					// The instance binds its own keydown handler, but only from now on: the very
+					// key that created it has already passed that element by, so the opening it
+					// asked for is carried out here.
+					if (instance) {
+						event.preventDefault();
+						instance.openWithKeyboard(event.key);
 					}
 				}, this));
 				onLoadItems = BX.Grid.Utils.getByClass(document.body, this.dropdownClass);
 				if (BX.type.isArray(onLoadItems)) {
 					onLoadItems.forEach(current => {
-						result = self.getById(current.id);
+						self.getById(current.id);
 						try {
 							items = eval(BX.data(current, 'items'));
 						} catch {}
@@ -1959,6 +2189,7 @@
 				}
 				this.settings = new BX.Grid.Settings();
 				this.containerId = containerId;
+				this.specialEmptyColumnAdjusted = false;
 				this.userOptions = new BX.Grid.UserOptions(this, userOptions, userOptionsActions, userOptionsHandlerUrl);
 				this.gridSettings = new BX.Grid.SettingsWindow.Manager(this);
 				this.messages = new BX.Grid.Message(this, messageTypes);
@@ -1976,6 +2207,14 @@
 				if (this.getParam('SHOW_ACTION_PANEL')) {
 					this.actionPanel = new BX.Grid.ActionPanel(this, panelActions, panelTypes);
 					this.pinPanel = new BX.Grid.PinPanel(this);
+
+					// The panel is rendered disabled and wakes up only once a row is ticked, so its
+					// controls have to start out of reach as well — otherwise they are reachable by
+					// Tab from the moment the page loads.
+					const panel = this.getActionsPanel().getPanel();
+					if (BX.Type.isDomNode(panel) && BX.hasClass(panel, this.settings.get('classDisable'))) {
+						this.toggleActionsPanelControls(false);
+					}
 				}
 				this.isEditMode = false;
 				if (!BX.type.isDomNode(this.getContainer())) {
@@ -2026,9 +2265,13 @@
 				this.getPageSize() && this.getPageSize().destroy();
 			},
 			_onFrameResize() {
+				this.adjustSpecialEmptyColumnWidth();
 				BX.onCustomEvent(window, 'Grid::resize', [this]);
 			},
-			_onGridUpdated() {
+			_onGridUpdated(grid) {
+				if (grid instanceof BX.Main.grid && grid !== this) {
+					return;
+				}
 				this.initStickedColumns();
 				this.adjustFadePosition(this.getFadeOffset());
 			},
@@ -2039,21 +2282,117 @@
 			getFrameId() {
 				return `main-grid-tmp-frame-${this.getContainerId()}`;
 			},
+			/**
+			 * The phrases come from template.php through BX.message and are absent in an old cached page,
+			 * so an announcement without a text is silently dropped.
+			 * @private
+			 * @param {string} messageId
+			 * @param {object} [replacements]
+			 */
+			announce(messageId, replacements = {}) {
+				const announcer = BX.UI?.Accessibility?.LiveAnnouncer;
+				let message = BX.message(messageId);
+				if (!announcer || !BX.Type.isStringFilled(message)) {
+					return;
+				}
+				Object.keys(replacements).forEach(placeholder => {
+					message = message.replace(placeholder, replacements[placeholder]);
+				});
+				announcer.announce(message);
+			},
 			enableActionsPanel() {
 				if (this.getParam('SHOW_ACTION_PANEL')) {
 					const panel = this.getActionsPanel().getPanel();
 					if (BX.type.isDomNode(panel)) {
+						const wasHidden = BX.hasClass(panel, this.settings.get('classDisable'));
 						BX.removeClass(panel, this.settings.get('classDisable'));
+						this.toggleActionsPanelControls(true);
+						this.toggleSkipToActions(true);
+						if (wasHidden) {
+							this.announce('interface_grid_actions_panel_available');
+						}
 					}
 				}
 			},
+			/**
+			 * The link lives before the table and leads past it, to the actions. It only makes sense
+			 * while something is selected, so it shares the fate of the panel it points at: reaching
+			 * the actions otherwise means tabbing through every row that was just ticked.
+			 * @param {boolean} enabled
+			 */
+			toggleSkipToActions(enabled) {
+				const link = BX.Grid.Utils.getBySelector(this.getContainer(), '.main-grid-skip-to-actions', true);
+				if (BX.Type.isDomNode(link)) {
+					link.hidden = !enabled;
+				}
+			},
 			disableActionsPanel() {
+				this.toggleSkipToActions(false);
 				if (this.getParam('SHOW_ACTION_PANEL')) {
 					const panel = this.getActionsPanel().getPanel();
 					if (BX.type.isDomNode(panel)) {
 						BX.addClass(panel, this.settings.get('classDisable'));
+						this.toggleActionsPanelControls(false);
 					}
 				}
+			},
+			/**
+			 * Takes the controls of a disabled panel out of reach, or gives them back. The class the
+			 * panel carries only dims them and sets `pointer-events: none`, which stops the pointer
+			 * and nothing else: with the keyboard the controls kept their tab stops and still fired
+			 * on Enter, so an action could be run that the mouse could not even click.
+			 *
+			 * The exception mirrors the stylesheet: the «for all rows» control stays operable while
+			 * the panel is off, because that is what it is for.
+			 *
+			 * @param {boolean} enabled
+			 */
+			toggleActionsPanelControls(enabled) {
+				const panel = this.getActionsPanel().getPanel();
+				if (!BX.Type.isDomNode(panel)) {
+					return;
+				}
+				const containers = panel.querySelectorAll('.main-grid-panel-control-container');
+				containers.forEach(container => {
+					if (container.id && container.id.includes('actallrows_')) {
+						return;
+					}
+					container.querySelectorAll('button, input, select, textarea, a[href], [tabindex]').forEach(control => {
+						if (enabled) {
+							// The tab stop is restored to what the markup asked for, not simply
+							// dropped: the dropdowns of the panel carry `tabindex="0"` of their own
+							// (template.php), and removing the attribute would take them out of the
+							// Tab order for good — the control looks active and cannot be reached.
+							if (Object.hasOwn(control.dataset, 'gridPanelTabindex')) {
+								const restored = control.dataset.gridPanelTabindex;
+								delete control.dataset.gridPanelTabindex;
+								if (restored === '') {
+									control.removeAttribute('tabindex');
+								} else {
+									BX.Dom.attr(control, 'tabindex', restored);
+								}
+							}
+							control.removeAttribute('aria-disabled');
+							if (control.dataset.gridPanelDisabled === 'true') {
+								delete control.dataset.gridPanelDisabled;
+								control.disabled = false;
+							}
+							return;
+						}
+						if (!Object.hasOwn(control.dataset, 'gridPanelTabindex')) {
+							control.dataset.gridPanelTabindex = control.getAttribute('tabindex') ?? '';
+						}
+						BX.Dom.attr(control, 'tabindex', '-1');
+						BX.Dom.attr(control, 'aria-disabled', 'true');
+
+						// `disabled` is ours to drop only if it was ours to set: a control the panel
+						// itself disabled must stay disabled once the panel wakes up.
+						if (!control.disabled) {
+							control.dataset.gridPanelDisabled = 'true';
+							control.disabled = true;
+						}
+					});
+				});
 			},
 			getSettingsWindow() {
 				return this.gridSettings;
@@ -2193,10 +2532,41 @@
 			editSelected() {
 				this.disableCheckAllCheckboxes();
 				this.getRows().editSelected();
+				this.announce('interface_grid_edit_mode_announce');
+				this.focusFirstEditor();
 				if (this.getParam('ALLOW_PIN_HEADER')) {
 					this.getPinHeader()._onGridUpdate();
 				}
 				BX.onCustomEvent(window, 'Grid::resize', [this]);
+			},
+			/**
+			 * Puts the caret into the first field of the edit mode. The button that switches the
+			 * mode on stands in the action panel, above the table, so without this the way to the
+			 * fields is a walk through every row that was put into edit — the further down the
+			 * first edited row sits, the longer it is.
+			 *
+			 * The first editable control is preferred; a cell whose editor carries none takes the
+			 * focus itself, the same way the inline editor returns it on Escape.
+			 */
+			focusFirstEditor() {
+				const container = BX.Grid.Utils.getByClass(this.getTable(), this.settings.get('classEditorContainer'), true);
+				if (!BX.Type.isDomNode(container)) {
+					return;
+				}
+				const control = container.querySelector('input, select, textarea, button, [tabindex]');
+				if (BX.Type.isDomNode(control)) {
+					control.focus();
+					return;
+				}
+
+				// The cell is focusable just long enough to take the focus: a tabindex left behind
+				// would turn the cell into a permanent stop for assistive tech.
+				BX.Dom.attr(container, 'tabindex', '-1');
+				container.focus();
+				BX.bind(container, 'blur', function onBlur() {
+					BX.unbind(container, 'blur', onBlur);
+					BX.Dom.attr(container, 'tabindex', null);
+				});
 			},
 			editSelectedSave() {
 				const data = {
@@ -2611,18 +2981,87 @@
 				const columns = this.getParam('DEFAULT_COLUMNS');
 				return Boolean(name) && name in columns ? columns[name] : null;
 			},
+			/**
+			 * @deprecated Unused since the column is addressed by its head cell rather than
+			 * by a position corrected for the placeholders. Kept because the method is part
+			 * of the public `BX.Grid.Grid` prototype and outside code may still call it.
+			 *
+			 * @param {number} index
+			 * @returns {number}
+			 */
 			adjustIndex(index) {
 				const fixedCells = this.getAllRows()[0].querySelectorAll('.main-grid-fixed-column').length;
 				return index + fixedCells;
 			},
-			getColumnByIndex(index) {
-				index = this.adjustIndex(index);
+			/**
+			 * The class a service cell is marked with in every row, or null for a cell that
+			 * carries a column of its own. A service cell is matched by this class rather
+			 * than by its position: a row carries its own set of them, and a row with
+			 * `draggable === false` has no drag cell while the head always does.
+			 *
+			 * @param {HTMLElement} cell
+			 * @returns {string|null}
+			 */
+			getServiceCellClass(cell) {
+				return ['main-grid-cell-drag', 'main-grid-cell-checkbox', 'main-grid-cell-action'].find(className => cell.classList.contains(className)) ?? null;
+			},
+			/**
+			 * Cells of a row that carry a column of their own: the service cells are left
+			 * out, and so are the placeholders standing in for the already pinned columns.
+			 *
+			 * @param {HTMLElement} row
+			 * @returns {Array<HTMLElement>}
+			 */
+			getRowColumnCells(row) {
+				return [].slice.call(row.children).filter(cell => {
+					return this.getServiceCellClass(cell) === null && !cell.classList.contains('main-grid-fixed-column-placeholder');
+				});
+			},
+			/**
+			 * The cell of `row` standing for the same column as `headCell`. A service head
+			 * cell is matched by its own class, a column head cell by its ordinal among the
+			 * cells that carry a column - both counted the same way in every row, whatever
+			 * service cells that row happens to carry.
+			 *
+			 * @param {HTMLElement} row
+			 * @param {HTMLElement} headCell
+			 * @returns {HTMLElement|undefined}
+			 */
+			getRowCellByHeadCell(row, headCell, columnIndex = null) {
+				const serviceClass = this.getServiceCellClass(headCell);
+				if (serviceClass !== null) {
+					return [].slice.call(row.children).find(cell => {
+						return cell.classList.contains(serviceClass) && !cell.classList.contains('main-grid-fixed-column-placeholder');
+					});
+				}
+				const index = columnIndex === null ? this.getRowColumnCells(this.getAllRows()[0]).indexOf(headCell) : columnIndex;
+				return index === -1 ? undefined : this.getRowColumnCells(row)[index];
+			},
+			/**
+			 * Cells of the column the given head cell heads, one per row. The ordinal of the
+			 * head cell is resolved once for the whole pass: `adjustFixedColumnsPosition()`
+			 * runs on every mousemove of a column resize, so re-deriving it per row would
+			 * put a full scan of the head row into the gesture.
+			 *
+			 * @param {HTMLElement} headCell
+			 * @returns {Array<HTMLElement>}
+			 */
+			getColumnByHeadCell(headCell) {
+				// A service head cell is matched by its class, so its ordinal is never read.
+				const columnIndex = this.getServiceCellClass(headCell) === null ? this.getRowColumnCells(this.getAllRows()[0]).indexOf(headCell) : -1;
 				return this.getAllRows().reduce((accumulator, row) => {
 					if (!row.classList.contains('main-grid-row-custom') && !row.classList.contains('main-grid-row-empty')) {
-						accumulator.push(row.children[index]);
+						const cell = this.getRowCellByHeadCell(row, headCell, columnIndex);
+						if (cell) {
+							accumulator.push(cell);
+						}
 					}
 					return accumulator;
 				}, []);
+			},
+			getColumnByIndex(index) {
+				const headCell = this.getAllRows()[0].children[index];
+				return headCell ? this.getColumnByHeadCell(headCell) : [];
 			},
 			getAllRows() {
 				const rows = [].slice.call(this.getTable().rows);
@@ -2639,15 +3078,90 @@
 				if (this.hasEmptyRow()) {
 					return;
 				}
-				[].slice.call(this.getAllRows()[0].children).forEach(function (cell, index) {
-					if (cell.classList.contains('main-grid-sticked-column')) {
-						this.stickyColumnByIndex(index);
+				if (this.areStickedColumnsInitialized()) {
+					return;
+				}
+				this.resetStickedColumns();
+
+				// Pin by the head cell itself: pinning inserts placeholders that shift the
+				// cells, so an index captured before the pass would drift.
+				[].slice.call(this.getAllRows()[0].children).forEach(function (cell) {
+					if (cell.classList.contains('main-grid-sticked-column') && !cell.classList.contains('main-grid-sticked-column-right')) {
+						this.stickyColumnByHeadCell(cell);
 					}
 				}, this);
+
+				// Right-sticked columns accumulate from the right edge, so pin them
+				// right-to-left. Resolve the live offset each iteration: pinning inserts
+				// clones that shift the cells, so a pre-captured snapshot would drift.
+				let rightOffset = this.getRightStickedColumnOffset();
+				while (rightOffset !== -1) {
+					this.stickyRightColumnByRightOffset(rightOffset);
+					rightOffset = this.getRightStickedColumnOffset();
+				}
+				this.adjustSpecialEmptyColumnWidth();
 				if (this.getParam('ALLOW_COLUMNS_RESIZE')) {
 					this.getResize().destroy();
 					this.getResize().init(this);
 				}
+			},
+			areStickedColumnsInitialized() {
+				const rows = this.getAllRows().filter(row => {
+					return !row.classList.contains('main-grid-row-custom') && !row.classList.contains('main-grid-row-empty');
+				});
+				const headRow = rows[0];
+				if (!headRow) {
+					return true;
+				}
+				const headCells = [].slice.call(headRow.children);
+				const hasPendingColumn = headCells.some(cell => {
+					const isLeftPending = cell.classList.contains('main-grid-sticked-column') && !cell.classList.contains('main-grid-sticked-column-right') && !cell.classList.contains('main-grid-fixed-column');
+					const isRightPending = cell.classList.contains('main-grid-sticked-column-right') && !cell.classList.contains('main-grid-fixed-column-right');
+					return isLeftPending || isRightPending;
+				});
+				if (hasPendingColumn) {
+					return false;
+				}
+				const fixedLeftCount = headCells.filter(cell => {
+					return cell.classList.contains('main-grid-fixed-column');
+				}).length;
+				const fixedRightCount = headCells.filter(cell => {
+					return cell.classList.contains('main-grid-fixed-column-right');
+				}).length;
+				if (fixedLeftCount === 0 && fixedRightCount === 0) {
+					return true;
+				}
+
+				// Only the pinned cells are counted, not the cells of the whole row: rows
+				// legitimately differ in their service cells, while a row reloaded from the
+				// server arrives with no pinned cell at all and gives the mismatch away.
+				return rows.every(row => {
+					const cells = [].slice.call(row.children);
+					const rowFixedLeftCount = cells.filter(cell => {
+						return cell.classList.contains('main-grid-fixed-column');
+					}).length;
+					const rowFixedRightCount = cells.filter(cell => {
+						return cell.classList.contains('main-grid-fixed-column-right');
+					}).length;
+					return rowFixedLeftCount === fixedLeftCount && rowFixedRightCount === fixedRightCount;
+				});
+			},
+			resetStickedColumns() {
+				this.getAllRows().forEach(row => {
+					row.querySelectorAll('.main-grid-fixed-column-placeholder').forEach(placeholder => {
+						BX.remove(placeholder);
+					});
+					[].slice.call(row.children).forEach(cell => {
+						if (cell.classList.contains('main-grid-fixed-column')) {
+							cell.classList.remove('main-grid-fixed-column');
+							cell.style.removeProperty('left');
+						}
+						if (cell.classList.contains('main-grid-fixed-column-right')) {
+							cell.classList.remove('main-grid-fixed-column-right');
+							cell.style.removeProperty('right');
+						}
+					});
+				});
 			},
 			setStickedColumns(columns) {
 				if (BX.type.isArray(columns)) {
@@ -2670,24 +3184,83 @@
 					return acc;
 				}, []);
 			},
+			prepareFixedColumnPlaceholder(cell) {
+				const clone = BX.clone(cell);
+				clone.classList.add('main-grid-fixed-column-placeholder');
+				clone.classList.remove('main-grid-sticked-column');
+				clone.classList.remove('main-grid-sticked-column-right');
+				BX.Grid.Utils.hideFromAssistiveTech(clone);
+
+				// The placeholder is a copy of a live cell down to its ids, and unlike the pinned
+				// head it is inert through and through: nothing inside it is reachable, so there is
+				// nothing left for an id to address. They are dropped rather than renamed, which
+				// would only litter the document with ids nothing points at.
+				[clone, ...clone.querySelectorAll('[id]')].forEach(element => {
+					element.removeAttribute('id');
+				});
+
+				// The placeholder has to reserve exactly the width of the cell it stands in
+				// for. Without an upper bound the table stretches its column to fit the
+				// cloned content, and the surplus becomes a gap after the sticked column.
+				clone.style.maxWidth = clone.style.width;
+				return clone;
+			},
+			/**
+			 * Width the column is pinned at. Its own width comes first: a rendered width
+			 * depends on how far the table had been laid out by the time the column got
+			 * pinned, so a column with a width of its own would end up one size on a full
+			 * page load and another one after the table is reloaded.
+			 *
+			 * @param {HTMLElement} headCell
+			 * @returns {number}
+			 */
+			getStickedColumnWidth(headCell) {
+				return parseInt(headCell.style.width, 10) || headCell.clientWidth;
+			},
+			/**
+			 * `left` offset the column is pinned at, measured in the head row: the cell
+			 * pinned before it in the head, plus that cell's width. Returns `null` when
+			 * nothing is pinned before it yet - the column then keeps its own position.
+			 *
+			 * @param {HTMLElement} headCell
+			 * @returns {?number}
+			 */
+			getStickedColumnLeft(headCell) {
+				const lastStickyCell = this.getLastStickyCellFromRow(headCell.parentElement);
+				if (!lastStickyCell) {
+					return null;
+				}
+				let left = parseInt(BX.style(lastStickyCell, 'left'));
+				let width = parseInt(BX.style(lastStickyCell, 'width'));
+				left = isNaN(left) ? 0 : left;
+				width = isNaN(width) ? 0 : width;
+				return left + width;
+			},
 			stickyColumnByIndex(index) {
-				const column = this.getColumnByIndex(index);
-				const cellWidth = column[0].clientWidth;
+				this.stickyColumnByHeadCell(this.getAllRows()[0].children[index]);
+			},
+			stickyColumnByHeadCell(headCell) {
+				const column = headCell ? this.getColumnByHeadCell(headCell) : [];
+				if (column.length === 0) {
+					return;
+				}
+				const cellWidth = this.getStickedColumnWidth(column[0]);
 				const heights = column.map(cell => {
 					return BX.height(cell);
 				});
+
+				// One offset for the whole column, measured in the head. Accumulating it
+				// per row would shift the column in every row whose leading service cells
+				// differ from the head - a row with `draggable === false` carries no drag
+				// cell, so its offset would come up short by that cell's width.
+				const columnLeft = this.getStickedColumnLeft(headCell);
 				column.forEach(function (cell, cellIndex) {
 					cell.style.minWidth = `${cellWidth}px`;
 					cell.style.width = `${cellWidth}px`;
 					cell.style.minHeight = `${heights[cellIndex]}px`;
-					const clone = BX.clone(cell);
-					const lastStickyCell = this.getLastStickyCellFromRowByIndex(cellIndex);
-					if (lastStickyCell) {
-						let lastStickyCellLeft = parseInt(BX.style(lastStickyCell, 'left'));
-						let lastStickyCellWidth = parseInt(BX.style(lastStickyCell, 'width'));
-						lastStickyCellLeft = isNaN(lastStickyCellLeft) ? 0 : lastStickyCellLeft;
-						lastStickyCellWidth = isNaN(lastStickyCellWidth) ? 0 : lastStickyCellWidth;
-						cell.style.left = `${lastStickyCellLeft + lastStickyCellWidth}px`;
+					const clone = this.prepareFixedColumnPlaceholder(cell);
+					if (columnLeft !== null) {
+						cell.style.left = `${columnLeft}px`;
 					}
 					cell.classList.add('main-grid-fixed-column');
 					cell.classList.add('main-grid-cell-static');
@@ -2701,7 +3274,6 @@
 				this.adjustFadePosition(this.getFadeOffset());
 			},
 			adjustFixedColumnsPosition() {
-				const fixedCells = this.getAllRows()[0].querySelectorAll('.main-grid-fixed-column').length;
 				const columnsPosition = [].slice.call(this.getAllRows()[0].children).reduce((accumulator, cell, index, columns) => {
 					let cellLeft;
 					let cellWidth;
@@ -2718,13 +3290,14 @@
 					return accumulator;
 				}, []);
 				columnsPosition.forEach(function (item) {
-					const column = this.getColumnByIndex(item.index - fixedCells);
+					const column = this.getColumnByIndex(item.index);
 					column.forEach(cell => {
 						if (item.index !== columnsPosition[columnsPosition.length - 1].index) {
 							cell.style.left = `${item.left}px`;
 						}
 					});
 				}, this);
+				this.adjustFixedRightColumnsPosition();
 				this.getAllRows().forEach(row => {
 					const height = BX.height(row);
 					const cells = [].slice.call(row.children);
@@ -2732,10 +3305,176 @@
 						cell.style.minHeight = `${height}px`;
 					});
 				});
+				this.adjustSpecialEmptyColumnWidth();
+			},
+			/**
+			 * `right` offsets of the right-fixed columns, laid out anew from their current
+			 * widths: a column pinned to the right edge carries every column pinned to its
+			 * left, so resizing it moves all of them.
+			 */
+			adjustFixedRightColumnsPosition() {
+				const headCells = [].slice.call(this.getAllRows()[0].children);
+				let offset = 0;
+				for (let index = headCells.length - 1; index >= 0; index--) {
+					if (!headCells[index].classList.contains('main-grid-fixed-column-right')) {
+						continue;
+					}
+					this.getColumnCellsByRightOffset(headCells.length - 1 - index).forEach(cell => {
+						cell.style.right = `${offset}px`;
+					});
+					offset += this.getStickedColumnWidth(headCells[index]);
+				}
+			},
+			/**
+			 * Every column a sticked cell leaves behind - the placeholder holding its place
+			 * and the anonymous one the table wraps the absolute cell in - claims a share of
+			 * the width no column asked for, and that share shows up as an empty gap right
+			 * after the sticked column. Give the whole remainder to the trailing empty cell
+			 * so there is nothing left to share.
+			 */
+			adjustSpecialEmptyColumnWidth() {
+				const isSticked = cell => {
+					return cell.classList.contains('main-grid-fixed-column') || cell.classList.contains('main-grid-fixed-column-right');
+				};
+				const headRow = this.getAllRows()[0];
+				const hasStickedColumn = Boolean(headRow) && [].slice.call(headRow.children).some(isSticked);
+
+				// A grid with nothing pinned has nothing to give away, so it must not pay for
+				// a pass over its rows on every resize event. The flag keeps the pass for the
+				// one call that has to take a previously given away width back.
+				if (!hasStickedColumn && !this.specialEmptyColumnAdjusted) {
+					return;
+				}
+				this.specialEmptyColumnAdjusted = hasStickedColumn;
+
+				// Three passes over the rows - reset, measure, apply - so a write never lands
+				// between two reads: interleaved, they would force a reflow per row.
+				const targets = this.getAllRows().reduce((accumulator, row) => {
+					const emptyCell = row.querySelector('.main-grid-special-empty');
+					if (emptyCell) {
+						emptyCell.style.removeProperty('width');
+						emptyCell.style.removeProperty('min-width');
+						accumulator.push({
+							row,
+							emptyCell
+						});
+					}
+					return accumulator;
+				}, []);
+				targets.map(({
+					row,
+					emptyCell
+				}) => {
+					const cells = [].slice.call(row.children);
+					if (!cells.some(isSticked)) {
+						return null;
+					}
+					const declaredWidth = cells.reduce((width, cell) => {
+						return cell === emptyCell || isSticked(cell) ? width : width + cell.offsetWidth;
+					}, 0);
+					return {
+						emptyCell,
+						rest: row.closest('table').clientWidth - declaredWidth
+					};
+				}).forEach(target => {
+					if (!target || target.rest <= 0) {
+						return;
+					}
+
+					// `important` to outweigh the `min-width: 0 !important` that keeps the
+					// cell from claiming any width of its own
+					target.emptyCell.style.setProperty('width', `${target.rest}px`, 'important');
+					target.emptyCell.style.setProperty('min-width', `${target.rest}px`, 'important');
+				});
 			},
 			getLastStickyCellFromRowByIndex(index) {
-				return [].slice.call(this.getAllRows()[index].children).reduceRight((accumulator, cell) => {
+				return this.getLastStickyCellFromRow(this.getAllRows()[index]);
+			},
+			getLastStickyCellFromRow(row) {
+				return [].slice.call(row.children).reduceRight((accumulator, cell) => {
 					if (!accumulator && cell.classList.contains('main-grid-fixed-column')) {
+						accumulator = cell;
+					}
+					return accumulator;
+				}, null);
+			},
+			/**
+			 * Cells (across all rows) of the column standing a given number of cells from
+			 * the end of the row. Counted from the end, because the leading cells differ
+			 * from row to row - a row with `draggable === false` carries no drag cell, an
+			 * aggregate row prefixes a set of its own - while the trailing cell is always
+			 * a single one, so an equal distance from the end means the same column.
+			 *
+			 * @param {number} offset
+			 * @returns {Array<HTMLElement>}
+			 */
+			getColumnCellsByRightOffset(offset) {
+				return this.getAllRows().reduce((accumulator, row) => {
+					if (!row.classList.contains('main-grid-row-custom') && !row.classList.contains('main-grid-row-empty')) {
+						const cell = row.children[row.children.length - 1 - offset];
+						cell && accumulator.push(cell);
+					}
+					return accumulator;
+				}, []);
+			},
+			/**
+			 * Distance from the end of the head row to the rightmost right-sticked head
+			 * cell that has not been pinned yet, or -1 when none is left.
+			 *
+			 * @returns {number}
+			 */
+			getRightStickedColumnOffset() {
+				const cells = [].slice.call(this.getAllRows()[0].children);
+				for (let index = cells.length - 1; index >= 0; index--) {
+					if (cells[index].classList.contains('main-grid-sticked-column-right') && !cells[index].classList.contains('main-grid-fixed-column-right')) {
+						return cells.length - 1 - index;
+					}
+				}
+				return -1;
+			},
+			/**
+			 * Where a right-fixed cell ends, counted from the right edge of the table.
+			 * Read from the inline styles this code writes itself: a computed style read
+			 * right after writing sizes would force a layout on every row.
+			 *
+			 * @param {HTMLElement} cell
+			 * @returns {number}
+			 */
+			getStickedRightEdge(cell) {
+				const right = parseInt(cell.style.right, 10);
+				const width = parseInt(cell.style.width, 10);
+				return (isNaN(right) ? 0 : right) + (isNaN(width) ? 0 : width);
+			},
+			stickyRightColumnByRightOffset(offset) {
+				const column = this.getColumnCellsByRightOffset(offset);
+				if (column.length === 0) {
+					return;
+				}
+				const cellWidth = this.getStickedColumnWidth(column[0]);
+				const heights = column.map(cell => {
+					return BX.height(cell);
+				});
+				column.forEach(function (cell, cellIndex) {
+					cell.style.minWidth = `${cellWidth}px`;
+					cell.style.width = `${cellWidth}px`;
+					cell.style.minHeight = `${heights[cellIndex]}px`;
+					const clone = this.prepareFixedColumnPlaceholder(cell);
+					const lastStickyCell = this.getLastStickyRightCellFromRow(cell.parentElement);
+					cell.style.right = `${lastStickyCell ? this.getStickedRightEdge(lastStickyCell) : 0}px`;
+					cell.classList.add('main-grid-fixed-column-right');
+					cell.classList.add('main-grid-cell-static');
+					clone.classList.add('main-grid-cell-static');
+					if (this.getColsSortable()) {
+						this.getColsSortable().unregister(cell);
+						this.getColsSortable().unregister(clone);
+					}
+					BX.insertAfter(clone, cell);
+				}, this);
+				this.adjustFadePosition(this.getFadeOffset());
+			},
+			getLastStickyRightCellFromRow(row) {
+				return [].slice.call(row.children).reduce((accumulator, cell) => {
+					if (!accumulator && cell.classList.contains('main-grid-fixed-column-right')) {
 						accumulator = cell;
 					}
 					return accumulator;
@@ -2753,11 +3492,47 @@
 				}
 				return fadeOffset;
 			},
+			getFadeOffsetRight() {
+				let fadeOffset = 0;
+				const cells = [].slice.call(this.getAllRows()[0].children).filter(cell => cell.classList.contains('main-grid-fixed-column-right'));
+				cells.forEach(cell => {
+					fadeOffset += cell.offsetWidth;
+				});
+				return fadeOffset;
+			},
 			adjustFadePosition(offset) {
-				const earLeft = this.getFader().getEarLeft();
-				const shadowLeft = this.getFader().getShadowLeft();
+				const fader = this.getFader();
+				const earLeft = fader.getEarLeft();
+				const shadowLeft = fader.getShadowLeft();
 				earLeft.style.left = `${offset}px`;
 				shadowLeft.style.left = `${offset}px`;
+
+				// Only reposition the right fade/ear when a right-sticked column exists;
+				// otherwise leave the native right shadow/ear at their default position.
+				const rightOffset = this.getFadeOffsetRight();
+				const earRight = fader.getEarRight();
+				const shadowRight = fader.getShadowRight();
+				if (rightOffset > 0) {
+					if (earRight) {
+						earRight.style.right = `${rightOffset}px`;
+					}
+					if (shadowRight) {
+						shadowRight.style.right = `${rightOffset}px`;
+						// Switch to the clipped mirror of the left shadow, so the pinned
+						// column shows a clean linear shadow instead of the default ellipse.
+						shadowRight.classList.add('--sticked');
+					}
+				} else {
+					// A reload can replace the columns, so the offset of the previous pinned
+					// column must not stay on the ear and the shadow.
+					if (earRight) {
+						earRight.style.right = '';
+					}
+					if (shadowRight) {
+						shadowRight.style.right = '';
+						shadowRight.classList.remove('--sticked');
+					}
+				}
 			},
 			/**
 			 * @param {string|object} column
@@ -2776,6 +3551,12 @@
 					Boolean(headerCell) && BX.addClass(headerCell, this.settings.get('classLoad'));
 					this.tableFade();
 					const self = this;
+
+					// The head is replaced wholesale below, and with it the button the sort was
+					// started from: the focus would land on the body and the keyboard user would
+					// start the walk over. The column is remembered here and the focus put back on
+					// its new button once the head is rendered again.
+					const sortedColumn = BX.Type.isDomNode(headerCell) ? headerCell.dataset.name : null;
 					this.getUserOptions().setSort(header.sort_by, header.sort_order, () => {
 						self.getData().request(header.sort_url, null, null, 'sort', function () {
 							self.rows = null;
@@ -2803,6 +3584,7 @@
 							BX.onCustomEvent(window, 'BX.Main.grid:sort', [header, self]);
 							BX.onCustomEvent(window, 'Grid::updated', [self]);
 							self.tableUnfade();
+							self.restoreSortFocus(sortedColumn);
 						});
 					});
 				}
@@ -2901,7 +3683,7 @@
 				this.determinateCheckAllCheckboxes();
 			},
 			toggleSelectionAll() {
-				if (!this.getRows().isAllSelected() && (this.lastRowAction === 'select' || !this.lastRowAction)) {
+				if (!this.getRows().isAllSelected() && (this.lastRowAction === 'select' || !this.lastRowAction || !this.getRows().isSelected())) {
 					this.getRows().selectAll();
 					this.selectAllCheckAllCheckboxes();
 					this.enableActionsPanel();
@@ -2931,16 +3713,113 @@
 				const enableCollapsibleRows = this.getParam('ENABLE_COLLAPSIBLE_ROWS');
 				this.getRows().getBodyChild().forEach(function (current) {
 					showCheckboxes && observer.add(current.getNode(), 'click', this._onClickOnRow, this);
+					// Selection rides on a click on the row, and the checkbox itself is excluded from it
+					// by nodeName. The mouse never lands on the input — pointer-events: none sends the
+					// click to the cell — but Space does, and the row would stay unselected under a
+					// ticked box. change arrives from both, so the keyboard gets its own way in.
+					showCheckboxes && current.getCheckbox() && observer.add(current.getCheckbox(), 'change', this._onRowCheckboxChange, this);
+					showCheckboxes && current.getCheckbox() && observer.add(current.getCheckbox(), 'keydown', this._onRowCheckboxKeyDown, this);
 					current.getDefaultAction() && observer.add(current.getNode(), 'dblclick', this._onRowDblclick, this);
 					current.getActionsButton() && observer.add(current.getActionsButton(), 'click', this._clickOnRowActionsButton, this);
 					enableCollapsibleRows && current.getCollapseButton() && observer.add(current.getCollapseButton(), 'click', this._onCollapseButtonClick, this);
+					observer.add(current.getNode(), 'mouseover', this._onCellMouseOver, this);
 				}, this);
+			},
+			/**
+			 * Takes the keyboard from a row checkbox straight to the group actions. The panel sits
+			 * after the table, so a user who ticked a row in the middle of a long list had to walk
+			 * out through every row below it — the link before the table only helps while the focus
+			 * is still above them.
+			 *
+			 * Alt+ArrowDown reads as «down, to the panel» and is free here: Shift already carries the
+			 * range selection of rows. The combo is announced on the checkbox itself through
+			 * `aria-keyshortcuts`, so a screen reader names it when the control takes the focus.
+			 */
+			_onRowCheckboxKeyDown(event) {
+				if (!event.altKey || event.key !== 'ArrowDown') {
+					return;
+				}
+				if (!this.getParam('SHOW_ACTION_PANEL')) {
+					return;
+				}
+				const panel = this.getActionsPanel()?.getPanel();
+
+				// Nothing to jump to while the panel sleeps: it wakes up with the first selected row.
+				if (!BX.Type.isDomNode(panel) || BX.hasClass(panel, this.settings.get('classDisable'))) {
+					return;
+				}
+				event.preventDefault();
+				const control = panel.querySelector('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+				if (BX.Type.isDomNode(control)) {
+					control.focus();
+					return;
+				}
+				panel.focus();
+			},
+			/**
+			 * Brings the row model in line with the checkbox the browser has already toggled. Idempotent
+			 * on purpose: a mouse click selects the row through _onClickOnRow and change follows right
+			 * after, so the handler must recognise the state it already has and do nothing.
+			 *
+			 * The comparison runs against the class of the row, not against isSelected(): that one reads
+			 * the checkbox first, and by the time change arrives the browser has already ticked it —
+			 * every state would look like a match and the handler would never do anything at all.
+			 */
+			_onRowCheckboxChange(event) {
+				const row = this.getRows().get(event.target);
+				if (!row || !row.getCheckbox()) {
+					return;
+				}
+				const checked = event.target.checked;
+				const selectedByRow = BX.hasClass(row.getNode(), this.settings.get('classCheckedRow'));
+				if (checked === selectedByRow) {
+					return;
+				}
+				if (checked) {
+					this.lastRowAction = 'select';
+					row.select();
+					BX.onCustomEvent(window, 'Grid::selectRow', [row, this]);
+				} else {
+					this.lastRowAction = 'unselect';
+					row.unselect();
+					BX.onCustomEvent(window, 'Grid::unselectRow', [row, this]);
+				}
+				this.updateCounterSelected();
+				this.adjustRows();
+				this.adjustCheckAllCheckboxes();
+			},
+			/**
+			 * A body cell clips its content at its own edge, and whether the text reaches past it
+			 * changes with every column resize, so the title is read off the layout under the
+			 * pointer. Decoration drawn in the container margins stays inside the cell and does
+			 * not call for a title. A ROW_LAYOUT cell has no inner wrapper and clips at the edge
+			 * of the content container itself.
+			 */
+			_onCellMouseOver(event) {
+				const container = event.target?.closest?.(`.${this.settings.get('classCellContainer')}`);
+				if (!container || !this.getTable()?.contains(container)) {
+					return;
+				}
+				const clip = container.closest('.main-grid-cell-inner') ?? container;
+				const cell = clip.parentElement;
+				if (!cell || cell.tagName !== 'TD' || BX.Dom.hasClass(cell.parentElement, 'main-grid-row-custom')) {
+					return;
+				}
+				if (clip.scrollWidth <= clip.clientWidth + 1) {
+					cell.removeAttribute('title');
+					return;
+				}
+				const text = (container.innerText || '').trim();
+				if (text !== '' && cell.getAttribute('title') !== text) {
+					cell.setAttribute('title', text);
+				}
 			},
 			_onCollapseButtonClick(event) {
 				event.preventDefault();
 				event.stopPropagation();
 				const row = this.getRows().get(event.currentTarget);
 				row.toggleChildRows();
+				event.currentTarget.setAttribute('aria-expanded', row.isExpand() ? 'true' : 'false');
 				if (row.isCustom()) {
 					this.getUserOptions().setCollapsedGroups(this.getRows().getIdsCollapsedGroups());
 				} else {
@@ -2997,7 +3876,10 @@
 					let max;
 					let contentContainer;
 					let isPrevent = true;
-					if (event.target.nodeName !== 'A' && event.target.nodeName !== 'INPUT') {
+
+					// The row actions button used to be an <a>, excluded by the nodeName check below.
+					const isRowActionsButton = Boolean(event.target.closest && event.target.closest(`.${this.settings.get('classRowActionButton')}`));
+					if (event.target.nodeName !== 'A' && event.target.nodeName !== 'INPUT' && !isRowActionsButton) {
 						row = this.getRows().get(event.target);
 						if (row) {
 							contentContainer = row.getContentContainer(event.target);
@@ -3118,10 +4000,37 @@
 					});
 				}
 			},
+			/**
+			 * Only the result of a load is announced: at the moment of the click the numbers are not
+			 * known yet, and a pair of "loading" and "loaded" sounds intrusive on a fast answer.
+			 * @param {number} countBefore
+			 */
+			announceLoadedRows(countBefore) {
+				const countDisplayed = this.getRows().getCountDisplayed();
+				const loaded = countDisplayed - countBefore;
+				if (loaded <= 0) {
+					return;
+				}
+				this.announce('interface_grid_rows_loaded_announce', {
+					'#COUNT#': loaded,
+					'#TOTAL#': countDisplayed
+				});
+			},
+			/**
+			 * The refreshed list speaks once: a changed selection is the more specific fact and it has
+			 * already been announced by the counter, so the general phrase would only pad the queue.
+			 */
+			announceUpdated(isCountSelectedAnnounced = false) {
+				if (isCountSelectedAnnounced) {
+					return;
+				}
+				this.announce('interface_grid_updated_announce');
+			},
 			_clickOnMoreButton(event) {
 				event.preventDefault();
 				const self = this;
 				const moreButton = this.getMoreButton();
+				const countBefore = this.getRows().getCountDisplayed();
 				moreButton.load();
 				this.getData().request(moreButton.getLink(), null, null, 'more', function () {
 					self.getUpdater().appendBodyRows(this.getBodyRows());
@@ -3134,6 +4043,7 @@
 					self.bindOnCheckAll();
 					self.updateCounterDisplayed();
 					self.updateCounterSelected();
+					self.announceLoadedRows(countBefore);
 					if (self.getParam('ALLOW_PIN_HEADER')) {
 						self.getPinHeader()._onGridUpdate();
 					}
@@ -3223,6 +4133,29 @@
 						}
 					});
 				}
+				return this.announceCountSelected();
+			},
+			/**
+			 * The counter is rewritten on every redraw, so only a changed number is worth a word.
+			 * @private
+			 * @returns {boolean} whether the change was announced
+			 */
+			announceCountSelected() {
+				const rows = this.getRows();
+				const selected = rows.getCountSelected();
+				if (selected === this.announcedCountSelected) {
+					return false;
+				}
+				const isFirstRender = this.announcedCountSelected === undefined;
+				this.announcedCountSelected = selected;
+				if (isFirstRender && selected === 0) {
+					return false;
+				}
+				this.announce('interface_grid_selected_announce', {
+					'#SELECTED#': selected,
+					'#TOTAL#': rows.getCountDisplayed()
+				});
+				return true;
 			},
 			getContainerId() {
 				return this.containerId;
@@ -3318,8 +4251,54 @@
 					if (this.isSortableHeader(header)) {
 						BX.removeClass(header, this.settings.get('classHeaderSortable'));
 						BX.addClass(header, this.settings.get('classHeaderNoSortable'));
+						this.setSortButtonDisabled(header, true);
 					}
 				}, this);
+			},
+			/**
+			 * Puts the focus back on the sort button of a column whose head has just been re-rendered.
+			 * Sorting replaces the whole head, so the button the user pressed is gone by now and the
+			 * focus with it — without this the keyboard walk would start again from the top of the page
+			 * on every sort.
+			 *
+			 * Only a keyboard sort is restored. After a click the focus belongs wherever the pointer
+			 * left it, and pulling it into the table would move the page under the user's hand;
+			 * `ui.a11y` keeps the modality on the root element, the same one the focus ring reads.
+			 *
+			 * @param {string|null} columnName
+			 */
+			restoreSortFocus(columnName) {
+				if (!BX.Type.isStringFilled(columnName)) {
+					return;
+				}
+				if (document.documentElement.dataset.inputModality === 'pointer') {
+					return;
+				}
+				const active = document.activeElement;
+
+				// The old button is detached by now, so a focus that was on it leaves the body as the
+				// active element; anything still focused is a control the user moved to meanwhile.
+				if (active && active !== document.body && this.getContainer()?.contains(active)) {
+					return;
+				}
+				const header = BX.Grid.Utils.getBySelector(this.getHead(), `.main-grid-cell-head[data-name="${columnName}"]`, true);
+				if (!BX.Type.isDomNode(header)) {
+					return;
+				}
+				const button = BX.Grid.Utils.getBySelector(header, '.main-grid-head-sort-button', true);
+				BX.Type.isDomNode(button) && button.focus();
+			},
+			/**
+			 * The classes only grey the header out; the button inside it stays focusable and clickable
+			 * unless it is disabled too, so the keyboard would still reach a sort the mouse cannot.
+			 * @param {Element} header
+			 * @param {boolean} disabled
+			 */
+			setSortButtonDisabled(header, disabled) {
+				const button = BX.Grid.Utils.getBySelector(header, '.main-grid-head-sort-button', true);
+				if (BX.Type.isDomNode(button)) {
+					button.disabled = disabled;
+				}
 			},
 			unblockSorting() {
 				const headerCells = BX.Grid.Utils.getByClass(this.getContainer(), this.settings.get('classHeadCell'));
@@ -3327,6 +4306,7 @@
 					if (this.isNoSortableHeader(header) && header.dataset.sortBy) {
 						BX.addClass(header, this.settings.get('classHeaderSortable'));
 						BX.removeClass(header, this.settings.get('classHeaderNoSortable'));
+						this.setSortButtonDisabled(header, false);
 					}
 				}, this);
 			},
@@ -3809,12 +4789,13 @@
 			const GroupActions = this.parent.getActionsPanel();
 			if (Boolean(GroupActions) && BX.type.isDomNode(panel)) {
 				const panelNode = GroupActions.getPanel();
-				if (BX.type.isDomNode(panelNode)) {
+				const panelChild = BX.firstChild(panel);
+
+				// An outdated response carries an already emptied panel: keeping the live one
+				// is better than leaving the grid without group actions until a page reload.
+				if (BX.type.isDomNode(panelNode) && BX.type.isDomNode(panelChild)) {
 					panelNode.innerHTML = '';
-					const panelChild = BX.firstChild(panel);
-					if (BX.type.isDomNode(panelChild)) {
-						panelNode.appendChild(panelChild);
-					}
+					panelNode.appendChild(panelChild);
 				}
 			}
 		};
@@ -3872,6 +4853,7 @@
 								BX.Dom.remove(this.getFakeField());
 								BX.Dom.append(this.getFileInput(), this.getLayout());
 								BX.Dom.removeClass(this.getRemoveButton(), 'ui-btn-disabled');
+								this.getRemoveButton().disabled = false;
 								BX.Dom.style(this.getPreview(), null);
 							}.bind(this)
 						}
@@ -3906,6 +4888,9 @@
 								BX.Dom.append(this.getFakeField(), this.getLayout());
 								BX.Dom.remove(this.getFileInput());
 								BX.Dom.addClass(this.getRemoveButton(), 'ui-btn-disabled');
+								// The class only greys the button out: without the attribute it keeps
+								// its tab stop and still fires on Enter.
+								this.getRemoveButton().disabled = true;
 								BX.Dom.style(this.getPreview(), {
 									opacity: 0.4
 								});
@@ -4156,33 +5141,81 @@
 				});
 			},
 			getDropdownValueItemByValue(items, value) {
+				return this.findDropdownValueItemByValue(items, value) ?? items[0];
+			},
+			findDropdownValueItemByValue(items, value) {
 				const preparedValue = String(value);
-				const result = items.filter(current => {
-					return String(current.VALUE) === preparedValue;
+				for (const current of items) {
+					if ('VALUE' in current && String(current.VALUE) === preparedValue) {
+						return current;
+					}
+					if ('ITEMS' in current) {
+						const nestedItem = this.findDropdownValueItemByValue(current.ITEMS, value);
+						if (nestedItem) {
+							return nestedItem;
+						}
+					}
+				}
+				return null;
+			},
+			isDropdownEmptyValue(value) {
+				return value === false || BX.Type.isNil(value) || BX.Type.isString(value) && value === '';
+			},
+			getDropdownEmptyValueCaption(editObject) {
+				if (BX.Type.isPlainObject(editObject.DATA) && BX.Type.isString(editObject.DATA.EMPTY_VALUE_CAPTION)) {
+					return editObject.DATA.EMPTY_VALUE_CAPTION;
+				}
+				return null;
+			},
+			getDropdownEmptyValueName(emptyValueCaption, isHtmlEntity) {
+				return isHtmlEntity ? BX.util.htmlspecialchars(emptyValueCaption) : emptyValueCaption;
+			},
+			prepareDropdownItems(items, emptyValueCaption, isHtmlEntity) {
+				return items.map(item => {
+					const preparedItem = {
+						...item
+					};
+					const hasSubItems = 'ITEMS' in preparedItem;
+					if (hasSubItems) {
+						preparedItem.ITEMS = this.prepareDropdownItems(preparedItem.ITEMS, emptyValueCaption, isHtmlEntity);
+					}
+					if (!hasSubItems && BX.Type.isString(emptyValueCaption) && this.isDropdownEmptyValue(preparedItem.VALUE)) {
+						preparedItem.VALUE = '';
+						preparedItem.NAME = this.getDropdownEmptyValueName(emptyValueCaption, isHtmlEntity);
+					}
+					return preparedItem;
 				});
-				return result.length > 0 ? result[0] : items[0];
 			},
 			createDropdown(editObject) {
-				const valueItem = this.getDropdownValueItemByValue(editObject.DATA.ITEMS, editObject.VALUE);
 				const isHtmlEntity = 'HTML_ENTITY' in editObject && editObject.HTML_ENTITY === true;
+				const emptyValueCaption = this.getDropdownEmptyValueCaption(editObject);
+				const isEmptyValueCaptionSelected = BX.Type.isString(emptyValueCaption) && this.isDropdownEmptyValue(editObject.VALUE);
+				const items = this.prepareDropdownItems(editObject.DATA.ITEMS, emptyValueCaption, isHtmlEntity);
+				const value = isEmptyValueCaptionSelected ? '' : editObject.VALUE;
+				const valueItem = this.getDropdownValueItemByValue(items, value);
+				const valueItemName = valueItem.NAME;
+				const attrs = {
+					name: editObject.NAME,
+					tabindex: '0',
+					role: 'button',
+					'aria-haspopup': 'menu',
+					'aria-expanded': 'false',
+					'data-items': JSON.stringify(items),
+					'data-value': valueItem.VALUE,
+					'data-html-entity': editObject.HTML_ENTITY
+				};
 				return BX.create('div', {
 					props: {
 						className: [this.parent.settings.get('classEditor'), 'main-dropdown main-grid-editor-dropdown'].join(' '),
 						id: `${editObject.NAME}_control`
 					},
-					attrs: {
-						name: editObject.NAME,
-						tabindex: '0',
-						'data-items': JSON.stringify(editObject.DATA.ITEMS),
-						'data-value': valueItem.VALUE,
-						'data-html-entity': editObject.HTML_ENTITY
-					},
+					attrs,
 					children: [BX.create('span', {
 						props: {
 							className: 'main-dropdown-inner'
 						},
-						html: isHtmlEntity ? valueItem.NAME : null,
-						text: isHtmlEntity ? null : valueItem.NAME
+						html: isHtmlEntity ? valueItemName : null,
+						text: isHtmlEntity ? null : valueItemName
 					})]
 				});
 			},
@@ -4384,6 +5417,34 @@
 					if (saveButton) {
 						BX.fireEvent(saveButton, 'click');
 					}
+				}
+				if (event.code === 'Escape') {
+					this._cancelEditOnEscape(event);
+				}
+			},
+			/**
+			 * Cancels the edit mode the same way the cancel button of the action panel does and returns
+			 * the focus to the cell the editor was opened in. The event is stopped only when the edit was
+			 * actually cancelled, so Escape still reaches a popup the grid may live in.
+			 */
+			_cancelEditOnEscape(event) {
+				const cell = event.target.closest('.main-grid-cell');
+				const cancelButton = BX.Grid.Utils.getBySelector(this.parent.getContainer(), '#grid_cancel_button > button', true);
+				if (!cancelButton) {
+					return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+				BX.fireEvent(cancelButton, 'click');
+				if (BX.Type.isDomNode(cell)) {
+					// The cell is focusable just long enough to take the focus back: a tabindex left
+					// behind would turn every edited cell into a permanent stop for assistive tech.
+					BX.Dom.attr(cell, 'tabindex', '-1');
+					cell.focus();
+					BX.bind(cell, 'blur', function onBlur() {
+						BX.unbind(cell, 'blur', onBlur);
+						BX.Dom.attr(cell, 'tabindex', null);
+					});
 				}
 			}
 		};
@@ -4814,6 +5875,8 @@
 			this.header = null;
 			this.container = null;
 			this.parentNodeResizeObserver = null;
+			this.scrollContainer = undefined;
+			this.scrollFrame = null;
 			const adminPanel = this.getAdminPanel();
 			if (adminPanel) {
 				this.mo = new MutationObserver(this.onAdminPanelMutation.bind(this));
@@ -4823,6 +5886,7 @@
 			}
 			this.init(parent);
 		};
+		BX.Grid.PinHeader.cloneCounter = 0;
 		BX.Grid.PinHeader.prototype = {
 			init(parent) {
 				this.parent = parent;
@@ -4838,8 +5902,13 @@
 					this.parentNodeResizeObserver.observe(workArea);
 				}
 				this.create(true);
+
+				// `capture`, because a scroll event of an element does not bubble: without it
+				// only the document scroll would be seen, and a grid given a height of its own
+				// scrolls inside itself instead of growing the page.
 				document.addEventListener('scroll', BX.proxy(this._onScroll, this), BX.Grid.Utils.listenerParams({
-					passive: true
+					passive: true,
+					capture: true
 				}));
 				document.addEventListener('resize', BX.proxy(this._onResize, this), BX.Grid.Utils.listenerParams({
 					passive: true
@@ -4848,7 +5917,34 @@
 				BX.addCustomEvent('Grid::resize', BX.proxy(this._onGridUpdate, this));
 				BX.bind(window, 'resize', BX.proxy(this._onGridUpdate, this));
 			},
+			/**
+			 * `BX.Main.grid#destroy` has always called this, so a grid with a pinned header
+			 * used to throw on being destroyed. Left behind, the header keeps its listeners
+			 * and answers scroll events by measuring a table that is no longer on the page.
+			 */
+			destroy() {
+				document.removeEventListener('scroll', BX.proxy(this._onScroll, this), BX.Grid.Utils.listenerParams({
+					passive: true,
+					capture: true
+				}));
+				document.removeEventListener('resize', BX.proxy(this._onResize, this), BX.Grid.Utils.listenerParams({
+					passive: true
+				}));
+				BX.removeCustomEvent('Grid::updated', BX.proxy(this._onGridUpdate, this));
+				BX.removeCustomEvent('Grid::resize', BX.proxy(this._onGridUpdate, this));
+				BX.unbind(window, 'resize', BX.proxy(this._onGridUpdate, this));
+				this.parentNodeResizeObserver && this.parentNodeResizeObserver.disconnect();
+				this.mo && this.mo.disconnect();
+				if (this.scrollFrame) {
+					cancelAnimationFrame(this.scrollFrame);
+					this.scrollFrame = null;
+				}
+				BX.remove(this.getContainer());
+				this.container = null;
+				this.table = null;
+			},
 			refreshRect() {
+				this.scrollContainer = undefined;
 				this.gridRect = BX.pos(this.parent.getTable());
 				this.rect = BX.pos(this.parent.getHead());
 			},
@@ -4857,15 +5953,26 @@
 				BX.remove(this.getContainer());
 				this.create();
 				isPinned && this.pin();
-				this.table = null;
 				this.refreshRect();
-				this._onScroll();
+				this.adjustPosition();
 				BX.onCustomEvent(window, 'Grid::headerUpdated', []);
 			},
 			create(async) {
 				const cells = BX.Grid.Utils.getByTag(this.parent.getHead(), 'th');
 				const cloneThead = BX.clone(this.parent.getHead());
 				const cloneCells = BX.Grid.Utils.getByTag(cloneThead, 'th');
+
+				// The resize handles are registered from this very clone (see Resize.getPinnedTableButtons),
+				// so they stay operable for the pointer while the rest of the copy is taken out of the way.
+				// The class is read defensively: `create` is reachable with a parent that carries the
+				// markup but no settings, and a missing selector only means no exception is made.
+				const resizeButtonClass = this.parent.settings?.get('classResizeButton');
+				BX.Grid.Utils.hideFromAssistiveTech(cloneThead, resizeButtonClass ? `.${resizeButtonClass}` : undefined);
+
+				// The clone is a copy of the head down to its ids, so without this the page would
+				// carry every id of the head twice while the pinned header is on it. The counter
+				// keeps the prefix unique across the clones this header goes through on updates.
+				BX.Grid.Utils.makeCloneIdsUnique(cloneThead, `main-grid-pinned-${++BX.Grid.PinHeader.cloneCounter}-`);
 				const resizeCloneCells = function () {
 					cells.forEach((cell, index) => {
 						let width = BX.width(cell);
@@ -4893,7 +6000,32 @@
 					}
 				});
 				this.container.hidden = true;
+				this.table = null;
+
+				// Appended after the live table on purpose: `getHead` takes the first `thead` of
+				// the grid, so inserting the clone before it would make the clone the head.
 				this.parent.getWrapper().appendChild(this.container);
+				this.adjustHorizontalPosition();
+			},
+			/**
+			 * The clone is a fresh node sitting at the left edge, while the table it heads keeps
+			 * whatever horizontal offset the user scrolled it to. Every rebuild - "show more",
+			 * sorting, a cancelled group edit - therefore has to carry that offset over, or the
+			 * titles end up over the wrong columns.
+			 *
+			 * The fader positions the clone the same way, but only when it hears `Grid::updated`,
+			 * and a rebuild does not always come with one. Placing the clone is part of building
+			 * it, so the header does it itself.
+			 */
+			adjustHorizontalPosition() {
+				const scrollContainer = this.parent.getScrollContainer();
+				const fixedTable = this.getFixedTable();
+				if (!scrollContainer || !fixedTable) {
+					return;
+				}
+				BX.Grid.Utils.styleForEach([fixedTable], {
+					'margin-left': `${-scrollContainer.scrollLeft}px`
+				});
 			},
 			getContainer() {
 				return this.container;
@@ -4948,7 +6080,107 @@
 			isPinned() {
 				return !this.getContainer().hidden;
 			},
-			_onScroll() {
+			/**
+			 * Element the grid scrolls vertically inside, when the page gave the grid a height
+			 * of its own instead of growing along with it. `null` when the grid scrolls with
+			 * the document, which is how it has always worked.
+			 *
+			 * @returns {?HTMLElement}
+			 */
+			getScrollContainer() {
+				// The lookup walks the ancestors reading their computed style, so its result is
+				// kept until the layout can actually change it (`refreshRect`). Nothing but a
+				// style change can change the answer, so a negative one is kept as well.
+				if (this.scrollContainer !== undefined) {
+					return this.scrollContainer;
+				}
+				this.scrollContainer = this.findScrollContainer();
+				return this.scrollContainer;
+			},
+			/**
+			 * The scroller is recognized by its `overflow-y` alone. Whether it overflows
+			 * right now says nothing: content grows after the first lookup - images and
+			 * fonts arrive - without resizing the scroller itself, so a cached answer that
+			 * depended on the content would keep the header unpinned for good.
+			 *
+			 * @returns {?HTMLElement}
+			 */
+			findScrollContainer() {
+				const wrapper = this.parent.getWrapper();
+				let node = this.parent.getTable().parentElement;
+				while (node && wrapper && wrapper.contains(node)) {
+					const overflowY = BX.style(node, 'overflow-y');
+					if (overflowY === 'auto' || overflowY === 'scroll') {
+						return node;
+					}
+					node = node.parentElement;
+				}
+				return null;
+			},
+			/**
+			 * Pinning inside the grid's own scroller: the header sticks to its top edge and
+			 * lets go once the table has been scrolled past it. Viewport coordinates rather
+			 * than document ones - in this mode the document does not move at all.
+			 *
+			 * @param {HTMLElement} scrollContainer
+			 */
+			pinInsideScrollContainer(scrollContainer) {
+				// The pinned administrative panel covers the top of the viewport, so it is the
+				// lowest coordinate the header may take - not an addition to the scroller's own
+				// top, which is a viewport coordinate already.
+				const top = Math.max(scrollContainer.getBoundingClientRect().top, this.getPinOffset());
+				const headRect = this.parent.getHead().getBoundingClientRect();
+				const tableRect = this.parent.getTable().getBoundingClientRect();
+				if (tableRect.bottom <= top + headRect.height) {
+					BX.Grid.Utils.styleForEach([this.getContainer()], {
+						'border-top-left-radius': '',
+						'border-top-right-radius': ''
+					});
+					this.stopPin();
+					return;
+				}
+				BX.Grid.Utils.styleForEach([this.getContainer()], {
+					position: 'fixed',
+					top: `${top}px`,
+					'box-shadow': '',
+					// The bar is `fixed`, so the rounded top corners of the scroller do not clip
+					// it: square corners of the header would stick out over the rounded ones.
+					'border-top-left-radius': BX.style(scrollContainer, 'border-top-left-radius'),
+					'border-top-right-radius': BX.style(scrollContainer, 'border-top-right-radius')
+				});
+				if (headRect.top < top) {
+					!this.isPinned() && this.pin();
+				} else {
+					this.isPinned() && this.unpin();
+				}
+			},
+			_onScroll(event) {
+				// Scrolling something that does not hold this grid - a popup list, another
+				// grid - says nothing about this header, and `capture` brings all of it here.
+				const target = event ? event.target : null;
+				if (target && BX.Type.isFunction(target.contains) && !target.contains(this.parent.getTable())) {
+					return;
+				}
+
+				// Scroll fires more often than the browser paints: measuring and positioning
+				// the header once per frame is enough, and the frame is dropped on `destroy`.
+				if (this.scrollFrame) {
+					return;
+				}
+				this.scrollFrame = requestAnimationFrame(() => {
+					this.scrollFrame = null;
+					this.adjustPosition();
+				});
+			},
+			adjustPosition() {
+				if (!this.getContainer()) {
+					return;
+				}
+				const scrollContainer = this.getScrollContainer();
+				if (scrollContainer) {
+					this.pinInsideScrollContainer(scrollContainer);
+					return;
+				}
 				let scrollY = 0;
 				if (this.scrollRect) {
 					scrollY = this.scrollRect.scrollTop;
@@ -5297,7 +6529,7 @@
 			grid.getRows().reset();
 			grid.bindOnRowEvents();
 			grid.updateCounterDisplayed();
-			grid.updateCounterSelected();
+			grid.announceUpdated(grid.updateCounterSelected());
 			if (grid.getParam('ALLOW_ROWS_SORT')) {
 				grid.rowsSortable.reinit();
 			}
@@ -5423,6 +6655,7 @@
 				});
 				BX.append(this.__overlay, cell);
 				this.__resizeCell = cell.cellIndex;
+				this.resizeColumnName = cell.dataset.name;
 				cellsKeys.forEach(key => {
 					if (!BX.hasClass(cells[key], 'main-grid-special-empty')) {
 						let width = BX.width(cells[key]);
@@ -5453,26 +6686,36 @@
 				x = sX > x ? sX : x;
 				x = Math.max(x, 80);
 				if (x !== cpos.width) {
-					const fixedCells = this.parent.getAllRows()[0].querySelectorAll('.main-grid-fixed-column').length;
-					let column = this.parent.getColumnByIndex(this.__resizeCell - fixedCells);
+					const headCells = this.parent.getAllRows()[0].children;
+
+					// A right-fixed column is matched by its distance from the end of the row:
+					// the leading service cells differ from row to row.
+					const column = cell.classList.contains('main-grid-fixed-column-right') ? this.parent.getColumnCellsByRightOffset(headCells.length - 1 - this.__resizeCell) : this.parent.getColumnByIndex(this.__resizeCell);
 
 					// Resize current column
 					column.forEach(item => {
 						item.style.width = `${x}px`;
 						item.style.minWidth = `${x}px`;
 						item.style.maxWidth = `${x}px`;
-						BX.Dom.style(item.firstElementChild, 'width', `${x}px`);
+
+						// A ROW_LAYOUT body cell holds the content container itself, which keeps
+						// its side margins within the cell only at its automatic width.
+						const isBodyContainer = BX.Dom.hasClass(item.parentElement, 'main-grid-row-body') && BX.Dom.hasClass(item.firstElementChild, this.parent.settings.get('classCellContainer'));
+						if (!isBodyContainer) {
+							BX.Dom.style(item.firstElementChild, 'width', `${x}px`);
+						}
 					});
 
-					// Resize false columns
-					if (column[0].classList.contains('main-grid-fixed-column')) {
-						column = this.parent.getColumnByIndex(this.__resizeCell - fixedCells + 1);
-						column.forEach(item => {
-							item.style.width = `${x}px`;
-							item.style.minWidth = `${x}px`;
-							item.style.maxWidth = `${x}px`;
-						});
-					}
+					// A fixed column is taken out of the table layout, and its placeholder
+					// holds the width in place of it - left and right pinned alike.
+					column.forEach(item => {
+						const placeholder = item.nextElementSibling;
+						if (placeholder && placeholder.classList.contains('main-grid-fixed-column-placeholder')) {
+							placeholder.style.width = `${x}px`;
+							placeholder.style.minWidth = `${x}px`;
+							placeholder.style.maxWidth = `${x}px`;
+						}
+					});
 					this.parent.adjustFixedColumnsPosition();
 					this.parent.adjustFadePosition(this.parent.getFadeOffset());
 					if (BX.type.isDomNode(fixedTable) && BX.type.isDomNode(fixedTable.rows[0])) {
@@ -5509,7 +6752,8 @@
 				return columns;
 			},
 			saveSizes() {
-				this.parent.getUserOptions().setColumnSizes(this.getColumnSizes(), 1);
+				const resized = BX.type.isNotEmptyString(this.resizeColumnName) ? [this.resizeColumnName] : [];
+				this.parent.getUserOptions().setColumnSizes(this.getColumnSizes(), 1, resized);
 			}
 		};
 	})();
@@ -5748,62 +6992,58 @@
 					};
 					switch (element.tagName) {
 						case 'SELECT':
-							if (element.multiple) {
-								const selectValues = [];
-								element.querySelectorAll('option').forEach(option => {
-									if (option.selected) {
-										selectValues.push(option.value);
-									}
-								});
-								resultObject.RAW_VALUE = selectValues;
-								resultObject.VALUE = selectValues;
+							{
+								const selectValues = element.multiple ? [...element.selectedOptions].map(option => option.value) : [element.value];
+								if (this.isMultipleCustomValue(element.name)) {
+									resultObject = this.collectMultipleCustomValue(map, resultObject, selectValues);
+								} else if (element.multiple) {
+									resultObject.RAW_VALUE = selectValues;
+									resultObject.VALUE = [...selectValues];
+								}
 								map.set(element.name, resultObject);
-							} else {
-								map.set(element.name, resultObject);
+								break;
 							}
-							break;
 						case 'INPUT':
 							switch (element.type.toUpperCase()) {
 								case 'RADIO':
-									if (element.checked) {
-										map.set(element.name, resultObject);
-									}
-									break;
 								case 'CHECKBOX':
 									if (element.checked) {
 										if (this.isMultipleCustomValue(element.name)) {
-											if (map.has(element.name)) {
-												resultObject = map.get(element.name);
-												resultObject.RAW_VALUE.push(element.value);
-												resultObject.VALUE.push(element.value);
-											} else {
-												resultObject.RAW_VALUE = [element.value];
-												resultObject.VALUE = [element.value];
-											}
+											resultObject = this.collectMultipleCustomValue(map, resultObject, [element.value]);
 										}
 										map.set(element.name, resultObject);
 									}
 									break;
 								case 'FILE':
-									resultObject.RAW_VALUE = element.files[0];
-									resultObject.VALUE = element.files[0];
+									if (this.isMultipleCustomValue(element.name)) {
+										const files = [...element.files];
+										if (files.length === 0) {
+											// Consumers detect a file field by the name of an emptied uploader input
+											if (!map.has(element.name)) {
+												resultObject.RAW_VALUE = undefined;
+												resultObject.VALUE = undefined;
+												map.set(element.name, resultObject);
+											}
+											break;
+										}
+										resultObject = this.collectMultipleCustomValue(map, resultObject, files);
+									} else {
+										resultObject.RAW_VALUE = element.files[0];
+										resultObject.VALUE = element.files[0];
+									}
 									map.set(element.name, resultObject);
 									break;
 								default:
 									if (this.isMultipleCustomValue(element.name)) {
-										if (map.has(element.name)) {
-											resultObject = map.get(element.name);
-											resultObject.RAW_VALUE.push(element.value);
-											resultObject.VALUE.push(element.value);
-										} else {
-											resultObject.RAW_VALUE = [element.value];
-											resultObject.VALUE = [element.value];
-										}
+										resultObject = this.collectMultipleCustomValue(map, resultObject, [element.value]);
 									}
 									map.set(element.name, resultObject);
 							}
 							break;
 						default:
+							if (this.isMultipleCustomValue(element.name)) {
+								resultObject = this.collectMultipleCustomValue(map, resultObject, [element.value]);
+							}
 							map.set(element.name, resultObject);
 							break;
 					}
@@ -5813,6 +7053,26 @@
 					result.push(value);
 				});
 				return result;
+			},
+			/**
+			 * Appends the values of one input to the entry its array name already holds,
+			 * so that every input of a multiple property is kept instead of the last one.
+			 * Empty strings are dropped: markup of a multiple property carries a reset input
+			 * of its own, and an empty option of a select stands for no value at all.
+			 */
+			collectMultipleCustomValue(map, resultObject, values) {
+				const filtered = values.filter(value => value !== '');
+				const collected = map.get(resultObject.RAW_NAME);
+				if (collected === undefined || !Array.isArray(collected.VALUE)) {
+					return {
+						...resultObject,
+						RAW_VALUE: [...filtered],
+						VALUE: [...filtered]
+					};
+				}
+				collected.RAW_VALUE.push(...filtered);
+				collected.VALUE.push(...filtered);
+				return collected;
 			},
 			isMultipleCustomValue(elementName) {
 				return elementName.length > 2 && elementName.lastIndexOf('[]') === elementName.length - 2;
@@ -5946,18 +7206,19 @@
 				return BX.Grid.Utils.getBySelector(this.getNode(), 'td[data-shift="true"]');
 			},
 			showChildRows() {
-				const rows = this.getChildren();
-				const isCustom = this.isCustom();
-				rows.forEach(row => {
-					row.show();
-					if (!isCustom && row.isExpand()) {
-						row.showChildRows();
-					}
-				});
+				this.showDirectChildRows();
 				this.parent.updateCounterDisplayed();
 				this.parent.updateCounterSelected();
 				this.parent.adjustCheckAllCheckboxes();
 				this.parent.adjustRows();
+			},
+			showDirectChildRows() {
+				this.getDirectChildren().forEach(row => {
+					row.show();
+					if (row.isExpand()) {
+						row.showDirectChildRows();
+					}
+				});
 			},
 			/**
 			 * @return {BX.Grid.Row[]}
@@ -5967,9 +7228,18 @@
 				const id = this.isCustom() ? this.getGroupId() : this.getId();
 				return this.parent.getRows()[functionName](id, true);
 			},
+			/**
+			 * Gets rows directly nested into this one
+			 * @return {BX.Grid.Row[]}
+			 */
+			getDirectChildren() {
+				if (this.isCustom()) {
+					return this.parent.getRows().getTopLevelRowsByGroupId(this.getGroupId());
+				}
+				return this.parent.getRows().getRowsByParentId(this.getId());
+			},
 			hideChildRows() {
-				const rows = this.getChildren();
-				rows.forEach(row => {
+				this.getChildren().forEach(row => {
 					row.hide();
 				});
 				this.parent.updateCounterDisplayed();
@@ -6248,7 +7518,11 @@
 				return String(BX.data(this.getNode(), 'id'));
 			},
 			getGroupId() {
-				return BX.data(this.getNode(), 'group-id').toString();
+				const groupId = BX.data(this.getNode(), 'group-id');
+
+				// The grid does not emit data-group-id itself: a list where only part of the rows
+				// are grouped is an ordinary shape, and such a row simply has no group.
+				return main_core.Type.isNil(groupId) ? null : groupId.toString();
 			},
 			getObserver() {
 				return BX.Grid.observer;
@@ -6299,9 +7573,18 @@
 				}
 				return this.actionsMenu;
 			},
-			_onCloseMenu() {},
+			_onCloseMenu() {
+				const button = this.getActionsButton();
+				if (button) {
+					button.setAttribute('aria-expanded', 'false');
+				}
+			},
 			_onPopupShow(popupMenu) {
-				popupMenu.setBindElement(this.getActionsButton());
+				const button = this.getActionsButton();
+				popupMenu.setBindElement(button);
+				if (button) {
+					button.setAttribute('aria-expanded', 'true');
+				}
 			},
 			actionsMenuIsShown() {
 				return this.getActionsMenu().popupWindow.isShown();
@@ -6410,13 +7693,31 @@
 			setId(id) {
 				BX.Dom.attr(this.getNode(), 'data-id', id);
 			},
+			/**
+			 * Names the actions button after the row, the way the template does. The title of the
+			 * default action lives on the server only, so a row built by the script is named by its
+			 * id; a page cached before the phrase existed falls back to that id alone.
+			 */
+			getActionsLabel() {
+				const phrase = BX.message('interface_grid_row_actions');
+				const id = String(this.getId());
+				return BX.Type.isStringFilled(phrase) ? phrase.replace('#ROW#', id) : id;
+			},
 			setActions(actions) {
 				const actionCell = this.getNode().querySelector('.main-grid-cell-action');
 				if (actionCell) {
 					let actionButton = actionCell.querySelector('.main-grid-row-action-button');
 					if (!actionButton) {
+						// The same markup the template renders: a row that got its actions from the
+						// script must reach the keyboard the way a rendered one does.
 						actionButton = BX.Dom.create({
-							tag: 'div',
+							tag: 'button',
+							attrs: {
+								type: 'button',
+								'aria-label': this.getActionsLabel(),
+								'aria-haspopup': 'menu',
+								'aria-expanded': 'false'
+							},
 							props: {
 								className: 'main-grid-row-action-button'
 							}
@@ -6425,7 +7726,6 @@
 						BX.Dom.append(actionButton, container);
 					}
 					BX.Dom.attr(actionButton, {
-						href: '#',
 						'data-actions': actions
 					});
 					this.actions = actions;
@@ -6481,14 +7781,21 @@
 							`;
 								BX.Dom.append(inner, label);
 								if (BX.Type.isPlainObject(labelOptions.removeButton)) {
+									// The same markup the template renders: a label redrawn by the script
+									// keeps the remove control a named, focusable button.
+									const removeLabel = BX.message('interface_grid_label_remove') || '';
 									const button = (() => {
 										if (labelOptions.removeButton.type === BX.Grid.Label.RemoveButtonType.INSIDE) {
 											return BX.Tag.render`
-											<span class="ui-label-icon"></span>
+											<button type="button" class="ui-label-icon" aria-label="${removeLabel}"></button>
 										`;
 										}
 										return BX.Tag.render`
-										<span class="main-grid-label-remove-button ${labelOptions.removeButton.type}"></span>
+										<button
+											type="button"
+											class="main-grid-label-remove-button ${labelOptions.removeButton.type}"
+											aria-label="${removeLabel}"
+										></button>
 									`;
 									})();
 									if (BX.Type.isPlainObject(labelOptions.removeButton.events)) {
@@ -6541,13 +7848,13 @@
 							const tagsContainer = BX.Tag.render`
 							<span class="main-grid-tags">${tags}</span>
 						`;
-							const addButton = BX.Tag.render`
-							<span class="main-grid-tag-add"></span>
-						`;
 							if (BX.Type.isPlainObject(cellContent.addButton)) {
+								const addButton = BX.Tag.render`
+								<span class="main-grid-tag-add"></span>
+							`;
 								this.bindOnEvents(addButton, cellContent.addButton.events);
+								BX.Dom.append(addButton, tagsContainer);
 							}
-							BX.Dom.append(addButton, tagsContainer);
 							const oldTagsContainer = container.querySelector('.main-grid-tags');
 							if (BX.Type.isDomNode(oldTagsContainer)) {
 								BX.Dom.replace(oldTagsContainer, tagsContainer);
@@ -6784,20 +8091,15 @@
 									}
 								}
 							}
-							if (BX.Text.toNumber(counter.value) > 0) {
-								const align = counter.type === BX.Grid.Counters.Type.RIGHT ? 'right' : 'left';
-								if (align === 'left') {
-									BX.Dom.prepend(counterContainer, cellInner);
-								} else if (align === 'right') {
-									BX.Dom.append(counterContainer, cellInner);
-								}
+							if (counter.type === BX.Grid.Counters.Type.RIGHT) {
+								BX.Dom.append(counterContainer, cellInner);
 							} else {
-								const leftAlignedClass = `main-grid-cell-counter-${BX.Grid.Counters.Type.LEFT_ALIGNED}`;
-								if (BX.Dom.hasClass(counterContainer, leftAlignedClass)) {
-									BX.remove(uiCounter);
-								} else {
-									BX.remove(counterContainer);
-								}
+								BX.Dom.prepend(counterContainer, cellInner);
+							}
+
+							// The container reserves the cell space, so only the counter goes at zero.
+							if (BX.Text.toNumber(counter.value) <= 0) {
+								BX.remove(uiCounter);
 							}
 						}
 					});
@@ -7101,7 +8403,11 @@
 				groupId = groupId.toString();
 				function getByParentId(groupId) {
 					self.getBodyChild().forEach(function (row) {
-						if (row.getGroupId() === groupId && !row.isCustom()) {
+						if (row.isCustom()) {
+							return;
+						}
+						var rowGroupId = row.getGroupId();
+						if (rowGroupId !== null && rowGroupId === groupId) {
 							result.push(row);
 						}
 					}, self);
@@ -7109,9 +8415,23 @@
 				getByParentId(groupId);
 				return result;
 			},
+			/**
+			 * Gets rows of a group which have no parent row inside the same group
+			 * @param {number|string} groupId
+			 * @return {BX.Grid.Row[]}
+			 */
+			getTopLevelRowsByGroupId: function (groupId) {
+				var groupRows = this.getRowsByGroupId(groupId);
+				var ids = groupRows.map(function (row) {
+					return row.getId();
+				});
+				return groupRows.filter(function (row) {
+					return ids.indexOf(row.getParentId()) === -1;
+				});
+			},
 			getExpandedRows: function () {
 				return this.getRows().filter(function (row) {
-					return row.isShown() && row.isExpand();
+					return row.isExpand();
 				});
 			},
 			getIdsExpandedRows: function () {
@@ -7793,6 +9113,43 @@
 		};
 	})();
 
+	/**
+	 * Column titles the user renamed in the settings window are stored in the grid user
+	 * options, keyed by column id. A column the user never renamed keeps the name it
+	 * comes with.
+	 */
+	function getColumnTitle(column, customNames) {
+		const {
+			id,
+			name
+		} = column;
+		if (BX.Type.isPlainObject(customNames) && id in customNames) {
+			return customNames[id];
+		}
+		return name;
+	}
+
+	/**
+	 * The name the user just typed, written straight into the table head. The reload that follows
+	 * the save brings the head from the server, but it is served by another process, which can
+	 * still hold the options this save has replaced - and then the head keeps the old name until
+	 * the page is reloaded by hand.
+	 *
+	 * Only the text is replaced: the title also carries the hint node, which has to stay.
+	 */
+	function setColumnHeaderTitle(headerCell, title) {
+		const titleNode = headerCell?.querySelector('.main-grid-head-title');
+		if (!titleNode) {
+			return;
+		}
+		const textNode = [...titleNode.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+		if (textNode) {
+			textNode.nodeValue = title;
+			return;
+		}
+		titleNode.prepend(document.createTextNode(title));
+	}
+
 	const namespace$1 = main_core.Reflection.namespace('BX.Grid.SettingsWindow');
 	const SAVE_FOR_ALL = 'forAll';
 	const SAVE_FOR_ME = 'forMe';
@@ -7926,14 +9283,8 @@
 							id,
 							default: defaultValue
 						} = column;
-						let {
-							name: title
-						} = column;
-						if (main_core.Type.isPlainObject(customNames) && Object.hasOwn(customNames, 'id')) {
-							title = customNames[id];
-						}
 						result.push({
-							title: main_core.Text.decode(title),
+							title: main_core.Text.decode(getColumnTitle(column, customNames)),
 							value: this.isChecked(id),
 							categoryKey: sectionName,
 							defaultValue,
@@ -7947,11 +9298,10 @@
 			columns.forEach(column => {
 				const {
 					id,
-					name: title,
 					default: defaultValue
 				} = column;
 				result.push({
-					title: main_core.Text.decode(title),
+					title: main_core.Text.decode(getColumnTitle(column, customNames)),
 					value: this.isChecked(id),
 					defaultValue,
 					id
@@ -7997,6 +9347,9 @@
 				}];
 			}
 			return [];
+		}
+		getMainPopup() {
+			return this.getPopup().getPopup();
 		}
 		show() {
 			this.popup.show();
@@ -8069,7 +9422,20 @@
 					delete_user_settings: 'Y'
 				});
 			}
-			options.batch(batch, () => this.grid.reloadTable());
+			options.batch(batch, () => {
+				// After the reload, not before: it replaces the whole head with the server's markup.
+				this.grid.reloadTable(null, null, () => this.applyColumnNamesToHead(columnNames));
+			});
+		}
+		applyColumnNamesToHead(columnNames) {
+			const columns = this.options.columns ?? [];
+			columns.forEach(column => {
+				const {
+					id
+				} = column;
+				const title = id in columnNames ? columnNames[id] : column.name;
+				setColumnHeaderTitle(this.grid.getColumnHeaderCellByName(id), main_core.Text.decode(title));
+			});
 		}
 		getColumnNames(data) {
 			const options = this.options;
@@ -8109,10 +9475,60 @@
 			event.preventDefault();
 			return event;
 		}
-		sortItems() {
-			// may be implemented
+
+		/**
+		 * Options are built once from the server payload, so a column moved in the grid has to be
+		 * moved here too; the popup is dropped to be rebuilt with the new order on the next show.
+		 *
+		 * @param {string[]} [columns] - showed column ids in the order chosen by the user
+		 */
+		sortItems(columns) {
+			if (!main_core.Type.isArrayFilled(columns)) {
+				return;
+			}
+			this.options.columns = this.sortColumns(this.options.columns, columns);
+			const columnsWithSections = this.options.columnsWithSections;
+			if (main_core.Type.isObjectLike(columnsWithSections)) {
+				Object.keys(columnsWithSections).forEach(sectionName => {
+					columnsWithSections[sectionName] = this.sortColumns(columnsWithSections[sectionName], columns);
+				});
+			}
+			if (this.popup) {
+				this.popup.options = this.getOptions();
+			}
+		}
+
+		/**
+		 * Puts showed columns into the full list in the user order, keeping hidden ones at their
+		 * own places — the same way the grid table itself is ordered. A repeated id keeps its last
+		 * place, as the grid table does with such a column.
+		 */
+		sortColumns(columns, showedColumns) {
+			if (!main_core.Type.isArrayFilled(columns)) {
+				return columns;
+			}
+			const byId = new Map(columns.map(column => [String(column.id), column]));
+			const order = new Set();
+			showedColumns.forEach(columnId => {
+				const id = String(columnId);
+				if (byId.has(id)) {
+					order.delete(id);
+					order.add(id);
+				}
+			});
+			const userOrder = [...order];
+			if (userOrder.length === 0) {
+				return columns;
+			}
+			let userOrderIndex = 0;
+			return columns.map(column => {
+				return userOrder.includes(String(column.id)) ? byId.get(userOrder[userOrderIndex++]) : column;
+			});
 		}
 		reset() {
+			if (!this.popup) {
+				return;
+			}
 			this.options.checked = [];
 			this.popup.options.filter(item => item.defaultValue).forEach(item => {
 				this.options.checked.push(item.id);
@@ -8124,6 +9540,10 @@
 		}
 		close() {
 			this.popup?.destroy();
+		}
+		destroy() {
+			this.popup?.destroy();
+			this.popup = null;
 		}
 		isForAll() {
 			return this.isForAllValue;
@@ -8446,18 +9866,30 @@
 		BX.Grid.SettingsWindow.Manager = function (parent) {
 			this.parent = null;
 			this.fieldsSettingsInstance = null;
+			this.popupStateTracked = false;
 			this.init(parent);
 		};
 		BX.Grid.SettingsWindow.Manager.prototype = {
 			init(parent) {
 				this.parent = parent;
-				BX.bind(this.parent.getContainer(), 'click', BX.proxy(this._onContainerClick, this));
-				BX.addCustomEvent(window, 'Grid::columnMoved', BX.proxy(this._onColumnMoved, this));
+
+				// BX.proxy returns a new function every call, so the handlers have to be kept to be
+				// unbound later: passing a fresh proxy to unbind left them in place.
+				this.boundContainerClick = BX.proxy(this._onContainerClick, this);
+				this.boundColumnMoved = BX.proxy(this._onColumnMoved, this);
+				BX.bind(this.parent.getContainer(), 'click', this.boundContainerClick);
+				BX.addCustomEvent(window, 'Grid::columnMoved', this.boundColumnMoved);
 			},
 			destroy() {
-				BX.unbind(this.parent.getContainer(), 'click', BX.proxy(this._onContainerClick, this));
-				BX.removeCustomEvent(window, 'Grid::columnMoved', BX.proxy(this._onColumnMoved, this));
-				this.getPopup().close();
+				BX.unbind(this.parent.getContainer(), 'click', this.boundContainerClick);
+				BX.removeCustomEvent(window, 'Grid::columnMoved', this.boundColumnMoved);
+
+				// getPopup() builds the window when there is none, so asking it here used to raise
+				// one on a grid whose settings were never opened, only to take it down again.
+				if (this.fieldsSettingsInstance) {
+					this.fieldsSettingsInstance.destroy();
+					this.fieldsSettingsInstance = null;
+				}
 			},
 			_onContainerClick(event) {
 				if (BX.hasClass(event.target, this.parent.settings.get('classSettingsButton'))) {
@@ -8467,9 +9899,42 @@
 			_onSettingsButtonClick() {
 				this.getFieldsSettingsInstance().then(fieldsSettingsInstance => {
 					this.fieldsSettingsInstance = fieldsSettingsInstance;
+					this.trackPopupState(fieldsSettingsInstance);
 					this.fieldsSettingsInstance.show();
 					BX.onCustomEvent(window, 'BX.Grid.SettingsWindow:show', [this.fieldsSettingsInstance]);
 				});
+			},
+			/**
+			 * Keeps `aria-expanded` of the settings button in step with the dialog: a screen reader
+			 * has to hear the state change, not only the initial collapsed one. The dialog closes on
+			 * its own too (Esc, the close icon, an applied change), so the state is read from the
+			 * popup rather than from the click.
+			 *
+			 * @param {Object} fieldsSettingsInstance
+			 */
+			trackPopupState(fieldsSettingsInstance) {
+				if (this.popupStateTracked) {
+					return;
+				}
+				const popup = fieldsSettingsInstance.getMainPopup?.();
+				if (!popup?.subscribe) {
+					return;
+				}
+				this.popupStateTracked = true;
+				popup.subscribe('onShow', () => this.setButtonExpanded(true));
+				popup.subscribe('onAfterClose', () => this.setButtonExpanded(false));
+				popup.subscribe('onDestroy', () => this.setButtonExpanded(false));
+			},
+			setButtonExpanded(expanded) {
+				const button = this.getSettingsButton();
+				if (button) {
+					button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+				}
+			},
+			getSettingsButton() {
+				// The head of the grid itself: the pinned copy of it carries a button of its own.
+				const head = this.parent.getHead();
+				return head ? head.querySelector(`.${this.parent.settings.get('classSettingsButton')}`) : null;
 			},
 			getFieldsSettingsInstance() {
 				if (this.fieldsSettingsInstance) {
@@ -8510,12 +9975,12 @@
 			useLazyLoadColumns() {
 				return Boolean(this.parent.getParam('LAZY_LOAD'));
 			},
-			_onColumnMoved() {
-				this.sortItems();
+			_onColumnMoved(grid, columns) {
+				this.sortItems(columns);
 				this.reset();
 			},
-			sortItems() {
-				this.getPopup().sortItems();
+			sortItems(columns) {
+				this.getPopup().sortItems(columns);
 			},
 			reset() {
 				this.getPopup().reset();
@@ -8610,6 +10075,8 @@
 			} = this.options;
 			this.popup = new main_popup.Popup(this.getPopupId(), null, {
 				titleBar,
+				ariaLabel: titleBar,
+				focusTrap: true,
 				autoHide: false,
 				overlay: 0.6,
 				width: popupWidth,
@@ -8637,11 +10104,25 @@
 				this.prepareFilterSectionsSearchInput();
 			}
 		}
+		getMainPopup() {
+			return this.getPopup();
+		}
 		show() {
 			this.popup.show();
 		}
 		close() {
 			this.onPopupClose();
+		}
+
+		/**
+		 * The popup is registered by an id built from the grid id, so a node left in the document
+		 * makes the next `new Popup()` with that id fail as a duplicate, and the window that comes
+		 * up after it answers no clicks. Closing alone does not remove the node - the variant of
+		 * this window built on a checkbox list destroys its popup for the same reason.
+		 */
+		destroy() {
+			this.popup?.destroy();
+			this.popup = null;
 		}
 		onPopupClose() {
 			this.emitSaveEvent();
@@ -8664,6 +10145,11 @@
 		getSourceContent() {
 			const classSettingsWindow = this.grid.settings.get('classSettingsWindow');
 			const sourceContent = this.grid.getContainer().querySelector(`.${classSettingsWindow}`);
+
+			// Closed, the node sits inline in the form at zero height: visually gone, but its controls
+			// keep their place in the tab order ahead of the table. It is marked inert in the markup
+			// and comes back to the keyboard only here, on its way into the popup.
+			sourceContent?.removeAttribute('inert');
 			if (!this.options.isUseLazyLoadColumns) {
 				return sourceContent;
 			}
@@ -8705,11 +10191,11 @@
 			const gridId = this.grid.getId();
 			if (main_core.Type.isPlainObject(lazyLoadParams)) {
 				const {
-					controller,
+					CONTROLLER: controller,
 					GET_LIST: url
 				} = lazyLoadParams;
 				if (main_core.Type.isNil(controller)) {
-					ajax({
+					main_core.ajax({
 						url,
 						method: 'GET',
 						dataType: 'json',
@@ -8756,7 +10242,11 @@
 				>
 					${options.name}
 				</label>
-				<span class='main-grid-settings-window-list-item-edit-button'></span>
+				<button
+					type='button'
+					class='main-grid-settings-window-list-item-edit-button'
+					aria-label='${main_core.Loc.getMessage('interface_grid_column_rename') ?? ''}'
+				></button>
 			</div>
 		`;
 		}
@@ -8852,7 +10342,7 @@
 		}
 		getResetButton() {
 			if (this.resetButton === null) {
-				this.resetButton = document.getElementById(this.getResetButtonId());
+				this.resetButton = this.getButtonById(this.getResetButtonId());
 			}
 			return this.resetButton;
 		}
@@ -8880,15 +10370,22 @@
 			this.sortItems();
 			this.reset();
 		}
-		sortItems() {
-			const showedColumns = this.getShowedColumns();
+
+		/**
+		 * @param {string[]} [columns] - showed column ids in the order chosen by the user; the popup
+		 *   list itself is used when omitted, which only holds before the list has been reordered.
+		 */
+		sortItems(columns) {
+			const movedColumns = main_core.Type.isArrayFilled(columns);
+			const showedColumns = movedColumns ? columns : this.getShowedColumns();
 			const allColumns = {};
 			this.getAllColumns().forEach(name => {
 				allColumns[name] = name;
 			});
 			let counter = 0;
 			Object.keys(allColumns).forEach(name => {
-				if (this.isShowedColumn(name)) {
+				const isShowed = movedColumns ? showedColumns.includes(name) : this.isShowedColumn(name);
+				if (isShowed) {
 					allColumns[name] = showedColumns[counter];
 					counter++;
 				}
@@ -8920,7 +10417,7 @@
 		}
 		getApplyButton() {
 			if (this.applyButton === null) {
-				this.applyButton = document.getElementById(this.getApplyButtonId());
+				this.applyButton = this.getButtonById(this.getApplyButtonId());
 			}
 			return this.applyButton;
 		}
@@ -9015,9 +10512,21 @@
 		getPopupContentContainer() {
 			return this.getPopup().getContentContainer();
 		}
+
+		/**
+		 * The ids of these buttons are built from the grid id, but the document can hold nodes of
+		 * another grid, and of a window left over from an earlier one: looking a button up across
+		 * the whole document found a foreign or a stale node, and the handler went there instead of
+		 * to the button of this window. The popup takes the markup out of the grid container and
+		 * holds it by the time these getters run, so the search stays inside the popup at hand -
+		 * as the neighbouring getters of the select-all links already do.
+		 */
+		getButtonById(id) {
+			return this.getPopupContentContainer()?.querySelector(`#${CSS.escape(id)}`) ?? null;
+		}
 		getCancelButton() {
 			if (this.cancelButton === null) {
-				this.cancelButton = document.getElementById(this.getCancelButtonId());
+				this.cancelButton = this.getButtonById(this.getCancelButtonId());
 			}
 			return this.cancelButton;
 		}
@@ -9079,9 +10588,11 @@
 			if (main_core.Dom.hasClass(item.firstChild, activeClass)) {
 				main_core.Dom.removeClass(item.firstChild, activeClass);
 				main_core.Dom.hide(section);
+				item.setAttribute('aria-pressed', 'false');
 			} else {
 				main_core.Dom.addClass(item.firstChild, activeClass);
 				main_core.Dom.show(section);
+				item.setAttribute('aria-pressed', 'true');
 			}
 		}
 		select(id, value = true) {
@@ -9197,10 +10708,11 @@
 				}
 				return this;
 			},
-			setColumnSizes(sizes, expand) {
+			setColumnSizes(sizes, expand, resized = []) {
 				this.save(this.getAction('GRID_SET_COLUMN_SIZES'), {
 					sizes,
-					expand
+					expand,
+					resized
 				});
 			},
 			reset(forAll, callback) {
@@ -9469,6 +10981,94 @@
 					}
 				}
 				return result;
+			},
+			/**
+			 * Takes a node out of the accessibility tree: assistive technology and the Tab order
+			 * skip it. For decorative clones of live markup — the controls of the copy would
+			 * otherwise be announced and focusable twice. Ids of a clone are not this method's
+			 * business: `makeCloneIdsUnique` renames them and keeps the references inside the
+			 * clone pointing at the renamed ones.
+			 *
+			 * `inert` does the whole job at once, so it is used whenever the copy is purely
+			 * decorative. It is dropped only when `keepPointerSelector` names controls the user
+			 * still drags — `inert` swallows the pointer events of the entire subtree, and the
+			 * resize handles of the pinned header are registered from the clone itself. Without
+			 * `inert` the same state is assembled by hand and the named controls get the pointer
+			 * back.
+			 *
+			 * @param {Element} node
+			 * @param {string} [keepPointerSelector] controls left operable for the pointer
+			 * @returns {Element}
+			 */
+			hideFromAssistiveTech(node, keepPointerSelector) {
+				if (!node) {
+					return node;
+				}
+				const hidden = node;
+				hidden.setAttribute('aria-hidden', 'true');
+				BX.style(hidden, 'pointer-events', 'none');
+				if (!keepPointerSelector) {
+					hidden.inert = true;
+				}
+				hidden.querySelectorAll('button, input, select, textarea, a[href], [tabindex]').forEach(element => {
+					element.setAttribute('tabindex', '-1');
+				});
+				hidden.querySelectorAll('button, input, select, textarea').forEach(element => {
+					element.setAttribute('disabled', 'disabled');
+				});
+				if (keepPointerSelector) {
+					hidden.querySelectorAll(keepPointerSelector).forEach(element => {
+						BX.style(element, 'pointer-events', 'auto');
+						element.removeAttribute('disabled');
+					});
+				}
+				return hidden;
+			},
+			/**
+			 * Rewrites the ids of a cloned subtree so that the clone does not repeat the ids of
+			 * the markup it was cloned from. Attributes pointing at a renamed id - `for` of a
+			 * label, the aria references - are repointed at the new one, so a control keeps
+			 * working inside the clone; references to an id the clone does not carry are left
+			 * alone, because they point outside of it.
+			 *
+			 * @param {Element} clone
+			 * @param {string} prefix
+			 */
+			makeCloneIdsUnique(clone, prefix) {
+				if (!clone) {
+					return;
+				}
+				const referenceAttributes = ['for', 'aria-labelledby', 'aria-describedby', 'aria-controls', 'aria-owns'];
+				const renamed = new Map();
+
+				// The root of the clone carries an id of its own as readily as its descendants,
+				// and `querySelectorAll` does not return it.
+				[clone, ...this.getBySelector(clone, '[id]')].forEach(node => {
+					if (!node.id) {
+						return;
+					}
+					const uniqueId = `${prefix}${node.id}`;
+					renamed.set(node.id, uniqueId);
+					BX.Dom.attr(node, 'id', uniqueId);
+				});
+				if (renamed.size === 0) {
+					return;
+				}
+				const referenceSelector = referenceAttributes.map(name => `[${name}]`).join(',');
+				[clone, ...this.getBySelector(clone, referenceSelector)].forEach(node => {
+					referenceAttributes.forEach(name => {
+						const value = node.getAttribute(name);
+						if (value === null) {
+							return;
+						}
+
+						// An aria reference may list several ids, so each one is looked up on its own.
+						const rewritten = value.split(/\s+/).map(id => renamed.get(id) || id).join(' ');
+						if (rewritten !== value) {
+							BX.Dom.attr(node, name, rewritten);
+						}
+					});
+				});
 			},
 			listenerParams(params) {
 				try {

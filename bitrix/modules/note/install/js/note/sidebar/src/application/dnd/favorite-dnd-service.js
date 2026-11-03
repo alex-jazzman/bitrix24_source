@@ -12,7 +12,7 @@ type CachedFavoriteRect = {
 
 // [P3] Manual order of the favorites block, built on the same HTML5 drag events as the knowledge
 // base list. Geometry only: the order itself belongs to the store, which owns the list and answers
-// to the server (AC-072). Rows are addressed by the id of the favorites row, the same key the
+// to the server. Rows are addressed by the id of the favorites row, the same key the
 // server uses in affectedPositions.
 export class FavoriteDndService
 {
@@ -164,7 +164,7 @@ export class FavoriteDndService
 			return;
 		}
 
-		// Top-level rows only (AC-032): the rows of an expanded branch are drawn by the tree and take
+		// Top-level rows only: the rows of an expanded branch are drawn by the tree and take
 		// no part in the order of the block. A row of the block is the only thing .favorite-item ever
 		// holds, so this says the same as a child selector without depending on how deep inside the
 		// scrolling area the items are wrapped.

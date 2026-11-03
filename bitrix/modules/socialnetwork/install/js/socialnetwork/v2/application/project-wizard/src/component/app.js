@@ -1,4 +1,4 @@
-import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
+import { mapState, mapWritableState } from 'ui.vue3.pinia';
 import { Notifier } from 'ui.notification-manager';
 
 import { useProjectStore } from 'socialnetwork.v2.model.project';
@@ -29,7 +29,6 @@ export const App = {
 	},
 	computed: {
 		...mapState(useInterfaceStore, [
-			'currentUserId',
 			'isActionCreate',
 			'isActionUpdate',
 			'isActionCopy',
@@ -42,7 +41,6 @@ export const App = {
 	},
 	created()
 	{
-		this.patchProject({ ownerId: this.currentUserId });
 		void this.initWizard();
 	},
 	beforeUnmount()
@@ -50,7 +48,6 @@ export const App = {
 		clearTimeout(this._highlightTimer);
 	},
 	methods: {
-		...mapActions(useProjectStore, ['patchProject']),
 		async initWizard(): Promise<void>
 		{
 			this.loading = true;

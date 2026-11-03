@@ -19,8 +19,11 @@ this.BX.UI = this.BX.UI || {};
 			this.sender = options.fieldValue?.length > 0 ? options.fieldValue : null;
 			this.fieldId = options.fieldId;
 			this.fieldName = options.fieldName;
+			this.initialSenderId = Number(options.initialSenderId) || null;
+			this.initialMailboxId = Number(options.initialMailboxId) || null;
 			this.#isSenderAvailable = options.isSenderAvailable ?? false;
 			this.#container = this.fieldId && this.fieldName ? this.#renderContainer() : null;
+			this.#storeCoordinate(this.initialSenderId, this.initialMailboxId);
 			this.#createLoader();
 			this.#createSelector();
 			this.selectCallback = options.selectCallback;
@@ -37,9 +40,9 @@ this.BX.UI = this.BX.UI || {};
 				main_core.Dom.append(this.#container, targetContainer);
 			}
 		}
-		setSender(senderId = null, name = null, email = null, type = senderEntityId) {
+		setSender(itemId = null, name = null, email = null, type = senderEntityId, senderId = null, mailboxId = null) {
 			const prefix = type === mailboxEntityId ? mailboxPrefix : senderPrefix;
-			this.selectedItemId = senderId ? `${prefix}_${senderId}` : null;
+			this.selectedItemId = itemId ? `${prefix}_${itemId}` : null;
 			const senderName = name;
 			const senderEmail = email;
 			let selectorText = '';
@@ -56,11 +59,20 @@ this.BX.UI = this.BX.UI || {};
 				return;
 			}
 			const input = this.#container.querySelector('input');
+			this.#storeCoordinate(senderId, mailboxId);
 			this.sender = selectorText;
 			this.#senderButtonTextNode.innerText = selectorText.length > 0 ? selectorText : main_core.Loc.getMessage('UI_MAIL_SENDER_SLIDER_SELECTOR_SELECT_NEW_SENDER');
 			this.#senderButtonTextNode.title = this.sender;
 			main_core.Dom.append(this.icon, this.#senderButton);
 			input.value = selectorText;
+		}
+		#storeCoordinate(senderId, mailboxId) {
+			if (!this.#container) {
+				return;
+			}
+			const input = this.#container.querySelector('input');
+			input.dataset.senderId = senderId > 0 ? String(senderId) : '';
+			input.dataset.mailboxId = mailboxId > 0 ? String(mailboxId) : '';
 		}
 		#createLoader() {
 			this.#loader = new main_loader.Loader({
@@ -124,7 +136,6 @@ this.BX.UI = this.BX.UI || {};
 						cacheable: false,
 						events: {
 							onClose: () => {
-								this.setSender();
 								void this.#updateSenderList();
 							}
 						}
@@ -135,7 +146,7 @@ this.BX.UI = this.BX.UI || {};
 					senderId: customData.get('id'),
 					email: customData.get('email'),
 					setSenderCallback: (senderId, senderName, senderEmail) => {
-						this.setSender(senderId, senderName, senderEmail);
+						this.setSender(senderId, senderName, senderEmail, senderEntityId, Number(senderId) || null, null);
 					},
 					updateSenderList: () => {
 						void this.#updateSenderList();
@@ -157,9 +168,8 @@ this.BX.UI = this.BX.UI || {};
 						const {
 							item: selectedItem
 						} = event.getData();
-						const selectedItemName = selectedItem.getCustomData().get('name');
-						const selectedItemEmail = selectedItem.getCustomData().get('email');
-						this.setSender(selectedItem.id, selectedItemName, selectedItemEmail);
+						const customData = selectedItem.getCustomData();
+						this.setSender(selectedItem.id, customData.get('name'), customData.get('email'), selectedItem.entityId, customData.get('senderId'), customData.get('mailboxId'));
 					},
 					'ItemNode:onLinkClick': linkClickHandler
 				}
@@ -174,7 +184,8 @@ this.BX.UI = this.BX.UI || {};
 			senders.forEach(sender => {
 				if (sender.id) {
 					this.#addSender(sender);
-					if (!this.selectedItemId && senderName === `${sender.name} <${sender.email}>`) {
+					const matchesInitialCoordinate = this.initialMailboxId ? Number(sender.mailboxId) === this.initialMailboxId : this.initialSenderId ? !sender.mailboxId && Number(sender.id) === this.initialSenderId : false;
+					if (!this.selectedItemId && (matchesInitialCoordinate || !this.initialMailboxId && !this.initialSenderId && senderName === `${sender.name} <${sender.email}>`)) {
 						this.selectedItemId = this.#getSelectorSenderId(sender.id, sender.type);
 					}
 				}
@@ -184,15 +195,36 @@ this.BX.UI = this.BX.UI || {};
 					id: this.selectedItemId,
 					entityId: this.#getSenderTypeByItemId(this.selectedItemId)
 				});
-				selectedItem?.select();
+				if (selectedItem) {
+					this.#setSenderFromItem(selectedItem);
+					selectedItem.select();
+				}
 			} else {
+				if (this.initialMailboxId || this.initialSenderId) {
+					return;
+				}
 				const items = this.senderDialog.getItems();
 				if (items.length > 0) {
-					this.setSender(items[0].id, items[0].getCustomData().get('name'), items[0].getCustomData().get('email'));
+					const customData = items[0].getCustomData();
+					this.setSender(items[0].id, customData.get('name'), customData.get('email'), items[0].entityId, customData.get('senderId'), customData.get('mailboxId'));
 					items[0].select();
 					this.selectedItemId = items[0].id;
 				}
 			}
+		}
+		#setSenderFromItem(item) {
+			const customData = item.getCustomData();
+			this.setSender(item.id, customData.get('name'), customData.get('email'), item.entityId, customData.get('senderId'), customData.get('mailboxId'));
+		}
+		#findItemByCoordinate(id, email) {
+			const normalizedEmail = email.toLowerCase();
+			return this.senderDialog.getItems().find(item => {
+				const customData = item.getCustomData();
+				return Number(customData.get('senderId')) === Number(id) && String(customData.get('email')).toLowerCase() === normalizedEmail;
+			}) ?? this.senderDialog.getItems().find(item => {
+				const customData = item.getCustomData();
+				return Number(customData.get('mailboxId')) === Number(id) && String(customData.get('email')).toLowerCase() === normalizedEmail;
+			});
 		}
 		#loadItems() {
 			return main_core.ajax.runAction('main.api.mail.sender.getAvailableSenders', {}).then(response => {
@@ -218,6 +250,8 @@ this.BX.UI = this.BX.UI || {};
 			const title = `${sender.name} <${sender.email}>`;
 			const id = this.#getSelectorSenderId(sender.id, sender.type);
 			const href = sender.type === mailboxEntityId ? sender.editHref : sender.id;
+			const mailboxId = Number(sender.mailboxId) || null;
+			const senderId = mailboxId ? null : Number(sender.id) || null;
 			this.senderDialog.addItem({
 				id,
 				tabs: 'recents',
@@ -230,6 +264,8 @@ this.BX.UI = this.BX.UI || {};
 					name: sender.name,
 					email: sender.email,
 					id: sender.id,
+					senderId,
+					mailboxId,
 					formated: sender.formated,
 					href
 				}
@@ -253,11 +289,16 @@ this.BX.UI = this.BX.UI || {};
 			ui_mail_providerShowcase.ProviderShowcase.openSlider({
 				isSender: this.#isSenderAvailable,
 				addSenderCallback,
-				setSenderCallback: (senderId, senderName, senderEmail) => {
-					this.setSender(senderId, senderName, senderEmail);
+				setSenderCallback: (senderId, senderName, senderEmail, coordinate = null) => {
+					const coordinateId = coordinate?.mailboxId ?? coordinate?.senderId ?? senderId;
+					const selectedItem = this.#findItemByCoordinate(coordinateId, senderEmail);
+					if (selectedItem) {
+						this.#setSenderFromItem(selectedItem);
+						selectedItem.select();
+					}
 				},
 				updateSenderList: () => {
-					void this.#updateSenderList();
+					return this.#updateSenderList();
 				}
 			});
 		}

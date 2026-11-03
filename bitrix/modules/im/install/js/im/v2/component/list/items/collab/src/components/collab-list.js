@@ -1,7 +1,9 @@
 import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
+import { markRaw } from 'ui.vue3';
 
 import { BaseRecentList } from 'im.v2.component.list.items.base';
+import { ActiveCallList } from 'im.v2.component.list.items.elements.active-call-list';
 import { RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { CollabManager } from 'im.v2.lib.collab';
@@ -16,7 +18,7 @@ export { CollabUnreadList } from './unread/list';
 // @vue/component
 export const CollabList = {
 	name: 'CollabList',
-	components: { BaseRecentList, RecentEmptyState },
+	components: { ActiveCallList, BaseRecentList, RecentEmptyState },
 	emits: ['selectChat'],
 	data(): JsonObject
 	{
@@ -24,6 +26,7 @@ export const CollabList = {
 			isLoading: false,
 			isLoadingNextPage: false,
 			firstPageLoaded: false,
+			listIsScrolled: false,
 		};
 	},
 	computed: {
@@ -43,7 +46,7 @@ export const CollabList = {
 	},
 	async created()
 	{
-		this.contextMenuManager = new CollabRecentMenu({ emitter: this.getEmitter() });
+		this.contextMenuManager = markRaw(new CollabRecentMenu({ emitter: this.getEmitter() }));
 
 		await this.loadInitialItems();
 
@@ -65,6 +68,10 @@ export const CollabList = {
 			await this.getRecentService().loadFirstPage();
 			this.firstPageLoaded = true;
 			this.isLoading = false;
+		},
+		onListScroll(isScrolled: boolean)
+		{
+			this.listIsScrolled = isScrolled;
 		},
 		async onLoadNextPage()
 		{
@@ -100,6 +107,10 @@ export const CollabList = {
 		{
 			this.contextMenuManager.close();
 		},
+		onCallClick({ item })
+		{
+			this.onSelectChat(item.dialogId);
+		},
 		getRecentService(): CollabService
 		{
 			if (!this.service)
@@ -119,11 +130,16 @@ export const CollabList = {
 			:collection="collection"
 			:showMainLoader="isLoading && !firstPageLoaded"
 			:showBottomLoader="isLoadingNextPage"
+			:contextMenuManager="contextMenuManager"
+			@listScroll="onListScroll"
 			@selectChat="onSelectChat"
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
 		>
+			<template #before-scroll>
+				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
 			<template #empty-state>
 				<RecentEmptyState 
 					:title="emptyStateTitle"

@@ -1,0 +1,18 @@
+/* The same box the loaded row has: 8 of inset around a 24 icon makes the 40 of height, and
+   the gap below is the row advance the virtual scroll counts. Keeping them equal is what stops
+   the list from shifting when the rows it stands for take its place. */
+.disk-picker-item-row-skeleton {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	flex-shrink: 0;
+	width: 100%;
+	margin-bottom: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-lg);
+	/* The loaded row carries no fill either: while the list is on the way, the placeholders
+	   inside the box are the only thing that shows. */
+	background: none;
+}

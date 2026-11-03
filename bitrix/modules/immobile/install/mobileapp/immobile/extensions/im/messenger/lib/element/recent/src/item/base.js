@@ -10,13 +10,15 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const { merge } = require('utils/object');
 	const { Icon } = require('assets/icons');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { DraftType } = require('im/messenger/const');
+	const { FolderEligibility } = require('im/messenger/lib/folder-eligibility');
+	const { DraftType, MessageComponent } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const {
 		Path,
 		MessageStatus,
@@ -48,6 +50,22 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		general: 'general',
 	});
 
+	/**
+	 * The whole recent item chips contract: field -> value check. Native receives exactly these
+	 * fields, so anything a provider adds on top (customStyle overriding design tokens, icon names)
+	 * would reach native unreviewed and break theming. The DTO is rejected as a whole rather than
+	 * trimmed: silent truncation would hide the provider error instead of surfacing it.
+	 */
+	const RecentItemButtonFieldValidator = Object.freeze({
+		id: Type.isStringFilled,
+		text: Type.isStringFilled,
+		size: (size) => size === 's' || size === 'm',
+		design: Type.isStringFilled,
+		mode: Type.isStringFilled,
+		rounded: Type.isBoolean,
+		viewId: Type.isStringFilled,
+	});
+
 	const ContextMenuSectionOrder = [
 		ContextMenuSection.main,
 		ContextMenuSection.bottom,
@@ -63,6 +81,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 		/** @type {RecentWidgetItemContextMenu|null|undefined} */
 		#contextMenu;
+
+		/** @type {?RecentWidgetItemButton} */
+		#button = null;
 
 		/**
 		 * @param {RecentModelState} modelItem
@@ -152,7 +173,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const { model, ...paramsWithoutModel } = this.params;
 
-			return {
+			const recentWidgetItem = {
 				id: this.id,
 				title: this.title,
 				subtitle: this.subtitle,
@@ -175,6 +196,13 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				styles: this.styles,
 				isSuperEllipseIcon: this.isSuperEllipseIcon,
 			};
+
+			if (this.#button)
+			{
+				recentWidgetItem.button = this.#button;
+			}
+
+			return recentWidgetItem;
 		}
 
 		/**
@@ -192,11 +220,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		initParams(modelItem, options)
 		{
+			const { button, ...nativeOptions } = options;
 			const dialog = this.getDialogById(modelItem.id);
 			const store = serviceLocator.get('core').getStore();
 			const counterState = store.getters['counterModel/getByChatId'](dialog?.chatId);
 			const counter = counterState?.counter ?? 0;
 			const anchors = store.getters['anchorModel/getByChatId'](dialog?.chatId);
+
+			this.#button = this.#isValidButton(button) ? button : null;
 
 			this.params = {
 				model: {
@@ -206,13 +237,33 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					counterState,
 					anchors,
 				},
-				options,
+				options: nativeOptions,
 				id: modelItem.id,
 				type: modelItem.type,
 				useLetterImage: true,
 			};
 
 			return this;
+		}
+
+		/**
+		 * @param {*} button
+		 * @return {boolean}
+		 */
+		#isValidButton(button)
+		{
+			if (!Type.isPlainObject(button))
+			{
+				return false;
+			}
+
+			const contractFields = Object.keys(RecentItemButtonFieldValidator);
+			if (Object.keys(button).length !== contractFields.length)
+			{
+				return false;
+			}
+
+			return contractFields.every((field) => RecentItemButtonFieldValidator[field](button[field]));
 		}
 
 		/**
@@ -1061,13 +1112,30 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 			const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
 
-			return parser.simplify({
+			const simplifiedText = parser.simplify({
 				text: modelMessage.text,
 				attach: modelMessage?.params?.ATTACH ?? false,
 				files: messageFiles,
 				showFilePrefix: false,
 				sticker: Type.isPlainObject(modelMessage?.stickerParams),
 			});
+			if (modelMessage.params?.componentId === MessageComponent.contact)
+			{
+				const contactPrefix = Loc.getMessage('IMMOBILE_MESSENGER_RECENT_CONTACT');
+				const filePrefixes = [
+					Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_IMAGE'),
+					Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE'),
+				];
+				const escapedPrefixes = filePrefixes.map((prefix) => prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+				const filePrefixPattern = new RegExp(`^\\[(?:${escapedPrefixes.join('|')})\\]\\s*`);
+
+				return filePrefixPattern.test(simplifiedText)
+					? simplifiedText.replace(filePrefixPattern, `${contactPrefix} `)
+					: `${contactPrefix} ${simplifiedText}`
+				;
+			}
+
+			return simplifiedText;
 		}
 
 		/**
@@ -1102,11 +1170,11 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
-		 * @return {RecentWidgetItemAction}
+		 * @return {?RecentWidgetItemAction}
 		 */
 		getHideAction()
 		{
-			return HideAction;
+			return ChatPermission.canHideChat() ? HideAction : null;
 		}
 
 		/**
@@ -1163,6 +1231,11 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			}
 
 			if (this.getDialogHelper()?.isNested === true)
+			{
+				return null;
+			}
+
+			if (!FolderEligibility.isAllowed(this.getDialogItem()?.type))
 			{
 				return null;
 			}

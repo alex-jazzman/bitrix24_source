@@ -7,6 +7,7 @@ type PopupOptions = {
 	offsetLeft?: number;
 	content?: string | Element | Node;
 	closeByEsc?: boolean;
+	blockBackgroundEsc?: boolean;
 	buttons?: PopupButton[];
 	className?: string;
 	width?: number;
@@ -192,6 +193,7 @@ declare namespace BX.Main {
 		private autoHideHandler;
 		private isAutoHideBound;
 		private closeByEsc;
+		private blockBackgroundEsc;
 		private isCloseByEscBound;
 		private toFrontOnShow;
 		private cacheable;
@@ -216,7 +218,6 @@ declare namespace BX.Main {
 		private dragPageY;
 		private animationShowClassName;
 		private animationCloseClassName;
-		private animationCloseEventType;
 		private designSystemContext;
 		private contentContainer;
 		private popupContainer;
@@ -359,6 +360,7 @@ declare namespace BX.Main {
 		private animateClosing;
 		setAnimation(options: PopupAnimationOptions | undefined): void;
 		isShown(): boolean;
+		shouldBlockBackgroundEsc(): boolean;
 		destroy(): void;
 		adjustPosition(bindOptions?: PopupTargetOptions): void;
 		private hasUnchangedBindPosition;
@@ -563,6 +565,7 @@ declare namespace BX.Main {
 		static getCurrentPopup(): Popup | null;
 		static isPopupExists(id: string): boolean;
 		static isAnyPopupShown(): boolean;
+		static isAnyPopupBlockingBackgroundEscShown(): boolean;
 		static getPopupById(id: string): Popup | null;
 		static getMaxZIndex(): number;
 		static getPopups(): Popup[];

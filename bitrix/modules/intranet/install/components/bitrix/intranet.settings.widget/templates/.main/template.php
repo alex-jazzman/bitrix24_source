@@ -13,6 +13,8 @@ use Bitrix\Main\Localization\Loc;
  */
 
 \Bitrix\Main\UI\Extension::load([
+	'main.popup',
+	'ui.a11y',
 	'ui.icon-set.actions',
 	'ui.icon-set.main',
 	'ui.icon-set.crm',

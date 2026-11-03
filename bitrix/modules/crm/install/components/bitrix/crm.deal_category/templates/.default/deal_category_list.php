@@ -1,6 +1,41 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+if (
+	$request->getQuery('IFRAME') === 'Y'
+	&& $request->getQuery('IFRAME_TYPE') === 'SIDE_SLIDER'
+)
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal_category.menu',
+		'',
+		[
+			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+			'TYPE' => 'list',
+		],
+		$component,
+	);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.sidepanel.wrapper',
+		'',
+		[
+			'POPUP_COMPONENT_NAME' => 'bitrix:crm.deal_category.list',
+			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+			'POPUP_COMPONENT_PARAMS' => [
+				'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+				'MESSAGE_VIEW_ID' => 'crm-deal-category-message',
+			],
+			'USE_UI_TOOLBAR' => 'Y',
+		],
+		$component,
+	);
+
+	return;
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',

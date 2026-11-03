@@ -260,7 +260,8 @@ this.BX = this.BX || {};
 				if (this.presentation.transitionEndAt === null) {
 					return '';
 				}
-				return main_date.DateTimeFormat.format(main_core.Loc.getMessage('MARKET_VIBE_PLUS_APPLICATION_LIMIT_POPUP_DATE_FORMAT') ?? 'j F', this.presentation.transitionEndAt);
+				const dateFormat = main_core.Loc.getMessage('MARKET_VIBE_PLUS_APPLICATION_LIMIT_POPUP_DATE_FORMAT') ?? 'j F';
+				return main_date.DateTimeFormat.format(`${dateFormat} Y`, this.presentation.transitionEndAt);
 			},
 			ringLabel() {
 				return main_core.Loc.getMessage('MARKET_VIBE_PLUS_APPLICATION_LIMIT_POPUP_RING_LABEL', {

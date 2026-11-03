@@ -87,9 +87,11 @@ export const MoreButton = {
 		},
 	},
 	template: `
-		<ActionButton 
-			:iconName="Outline.MORE_L" 
-			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_MORE')" 
+		<ActionButton
+			:iconName="Outline.MORE_L"
+			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_MORE')"
+			ariaHaspopup="menu"
+			:ariaExpanded="isMenuShown"
 			@click="isMenuShown = true"
 			ref="actionButton"
 		/>

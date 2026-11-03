@@ -10,6 +10,7 @@ export const useDocumentTemplateFillingStore = defineStore('sign-b2e-document-te
 		sendProgress: number,
 		configured: boolean,
 		ruRegionFieldsVisible: boolean,
+		inviteMessage: string,
 	} => ({
 		documents: [],
 		settings: {},
@@ -17,6 +18,7 @@ export const useDocumentTemplateFillingStore = defineStore('sign-b2e-document-te
 		sendProgress: 0,
 		configured: false,
 		ruRegionFieldsVisible: false,
+		inviteMessage: '',
 	}),
 	actions: {
 		setDocuments(documents: LoadedDocumentData[]): void
@@ -42,6 +44,10 @@ export const useDocumentTemplateFillingStore = defineStore('sign-b2e-document-te
 		setRuRegionFieldsVisible(value: boolean): void
 		{
 			this.ruRegionFieldsVisible = value;
+		},
+		setInviteMessage(value: string): void
+		{
+			this.inviteMessage = value;
 		},
 		removeDocument(uid: string): void
 		{

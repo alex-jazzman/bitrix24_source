@@ -14,5 +14,8 @@ $MESS['TIMEMAN_SAVE_REPORT_ERROR_RECORD_NOT_FOUND'] = 'Запись рабоче
 $MESS['TIMEMAN_SAVE_REPORT_ERROR_REPORT_TEXT_EMPTY'] = 'Не указан текст отчёта';
 
 $MESS['TIMEMAN_SAVE_REPORT_PROP_USERID_EMPTY'] = 'Не указан сотрудник';
+$MESS['TIMEMAN_SAVE_REPORT_ERROR_PROTECTED_CONTEXT'] = 'Не удалось сохранить итоги дня';
+$MESS['TIMEMAN_SAVE_REPORT_PROP_CONVERT_MARKDOWN'] = 'Преобразовывать Markdown в BB-код';
+$MESS['TIMEMAN_SAVE_REPORT_PROP_RECORD_ID'] = 'Идентификатор записи рабочего дня';
 $MESS['TIMEMAN_SAVE_REPORT_PROP_REPORTTEXT_EMPTY'] = 'Не указан текст отчёта';
 $MESS['TIMEMAN_SAVE_REPORT_PROP_REPORTTYPE_EMPTY'] = 'Не указан тип отчёта';

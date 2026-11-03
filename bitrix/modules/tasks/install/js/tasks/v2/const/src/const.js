@@ -5,7 +5,7 @@ export { ChatActionParam } from './dictionary/chat-action/chat-action-param';
 export { ChatAction } from './dictionary/chat-action/chat-action';
 export { DurationUnit } from './dictionary/duration-unit';
 export { EntitySelectorEntity } from './dictionary/entity-selector-entity';
-export { EventName } from './dictionary/event';
+export { EventName, normalizeAddCheckListFromTextPayload } from './dictionary/event';
 export { GroupType } from './dictionary/group-type';
 export { Limit } from './dictionary/limit';
 export { Model } from './dictionary/model';

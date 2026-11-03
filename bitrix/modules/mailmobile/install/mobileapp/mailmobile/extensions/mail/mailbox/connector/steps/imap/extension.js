@@ -11,15 +11,14 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 	const { StringInput, InputDesign, InputMode, InputSize } = require('ui-system/form/inputs/string');
 	const { NumberInput } = require('ui-system/form/inputs/number');
 	const { stringify } = require('utils/string');
-	const { NotifyManager } = require('notify-manager');
 	const { Switcher } = require('ui-system/blocks/switcher');
 	const { throttle } = require('utils/function');
 	const { isValidEmail } = require('utils/email');
 	const { useCallback } = require('utils/function');
 	const { clone, isEmpty } = require('utils/object');
 	const isIOS = Application.getPlatform() === 'ios';
-	const AppTheme = require('apptheme');
-	const { Color } = require('tokens');
+	const { Color, Corner, Indent, Typography } = require('tokens');
+	const { Text4 } = require('ui-system/typography/text');
 	const { PureComponent } = require('layout/pure-component');
 	const {
 		ButtonSize,
@@ -140,14 +139,15 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 					{
 						style: {
 							backgroundColor: Color.bgPrimary.toHex(),
-							paddingBottom: 12,
-							paddingLeft: 18,
-							paddingRight: 18,
+							paddingTop: Indent.XL.toNumber(),
+							paddingBottom: Indent.XL.toNumber(),
+							paddingLeft: Indent.XL3.toNumber(),
+							paddingRight: Indent.XL3.toNumber(),
 						},
 					},
 					EmailInput({
 						style: {
-							marginBottom: 6,
+							marginBottom: Indent.S.toNumber(),
 						},
 						label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_LOGIN_TITLE'),
 						size: InputSize.L,
@@ -166,7 +166,7 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 					}),
 					StringInput({
 						style: {
-							marginBottom: 6,
+							marginBottom: Indent.S.toNumber(),
 						},
 						label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_SMTP_LOGIN_TITLE_1'),
 						size: InputSize.L,
@@ -204,171 +204,145 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 				View(
 					{
 						style: {
-							paddingLeft: 18,
-							paddingRight: 18,
-							paddingTop: 12,
-							paddingBottom: 6,
-							backgroundColor: AppTheme.colors.bgContentSecondary,
+							backgroundColor: Color.bgPrimary.toHex(),
+							paddingTop: Indent.XL.toNumber(),
+							paddingBottom: Indent.XL.toNumber(),
+							paddingLeft: Indent.XL3.toNumber(),
+							paddingRight: Indent.XL3.toNumber(),
 						},
 					},
+					StringInput({
+						style: {
+							marginBottom: Indent.S.toNumber(),
+						},
+						size: InputSize.L,
+						design: InputDesign.GREY,
+						mode: InputMode.STROKE,
+						testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-imap-address',
+						ref: this.constants.fields.imapAddress.ref,
+						showRequired: false,
+						required: true,
+						showTitle: false,
+						validation: true,
+						value: this.state.fields.server.value,
+						onChange: useCallback((data) => this.onChangeField('server', data), ['server']),
+						label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_LOGIN_ADDRESS_TITLE'),
+						placeholder: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_LOGIN_ADDRESS_PLACEHOLDER'),
+						onValid: isEmpty,
+					}),
+					NumberInput({
+						size: InputSize.L,
+						design: InputDesign.GREY,
+						mode: InputMode.STROKE,
+						testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-imap-port',
+						ref: this.constants.fields.imapPort.ref,
+						showRequired: false,
+						required: true,
+						showTitle: false,
+						validation: true,
+						value: this.state.fields.imapPort.value,
+						onChange: useCallback((data) => this.onChangeField('imapPort', data), ['imapPort']),
+						label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_PORT_TITLE'),
+						placeholder: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_PORT_PLACEHOLDER'),
+						onValid: isEmpty,
+					}),
 					View(
 						{
+							onClick: secureConnectionAction,
 							style: {
-								borderRadius: 12,
-								backgroundColor: Color.bgPrimary.toHex(),
-								paddingLeft: 14,
-								paddingRight: 14,
-								paddingBottom: 18,
-								paddingTop: 14,
+								display: 'flex',
+								flexDirection: 'row',
+								alignItems: 'center',
+								height: 30,
 							},
 						},
-						StringInput({
+						Switcher({
+							testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-imap-ssl-switcher',
+							checked: checkedSslImap,
 							style: {
-								marginBottom: 6,
+								marginRight: Indent.M.toNumber(),
 							},
-							size: InputSize.L,
-							design: InputDesign.GREY,
-							mode: InputMode.STROKE,
-							testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-imap-address',
-							ref: this.constants.fields.imapAddress.ref,
-							showRequired: false,
-							required: true,
-							showTitle: false,
-							validation: true,
-							value: this.state.fields.server.value,
-							onChange: useCallback((data) => this.onChangeField('server', data), ['server']),
-							label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_LOGIN_ADDRESS_TITLE'),
-							placeholder: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_LOGIN_ADDRESS_PLACEHOLDER'),
-							onValid: isEmpty,
 						}),
-						NumberInput({
-							size: InputSize.L,
-							design: InputDesign.GREY,
-							mode: InputMode.STROKE,
-							testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-imap-port',
-							ref: this.constants.fields.imapPort.ref,
-							showRequired: false,
-							required: true,
-							showTitle: false,
-							validation: true,
-							value: this.state.fields.imapPort.value,
-							onChange: useCallback((data) => this.onChangeField('imapPort', data), ['imapPort']),
-							label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_PORT_TITLE'),
-							placeholder: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_PORT_PLACEHOLDER'),
-							onValid: isEmpty,
-						}),
-						View(
-							{
-								onClick: secureConnectionAction,
-								style: {
-									display: 'flex',
-									flexDirection: 'row',
-									alignItems: 'center',
-									height: 30,
-								},
+						Text4({
+							testId: 'mailmobile-connector-imap-secure-connection-label',
+							color: Color.base2,
+							style: {
+								paddingBottom: Indent.S.toNumber(),
 							},
-							Switcher({
-								testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-imap-ssl-switcher',
-								checked: checkedSslImap,
-								style: {
-									marginRight: 8,
-								},
-							}),
-							Text({
-								style: {
-									paddingBottom: 6,
-									color: AppTheme.colors.base2,
-									fontSize: 15,
-									fontWeight: '400',
-								},
-								text: Loc.getMessage('MAILBOX_CONNECTOR_USE_SECURE_CONNECTION_1'),
-							}),
-						),
+							text: Loc.getMessage('MAILBOX_CONNECTOR_USE_SECURE_CONNECTION_1'),
+						}),
 					),
 				),
 				View(
 					{
 						style: {
-							paddingLeft: 18,
-							paddingRight: 18,
-							paddingTop: 6,
-							paddingBottom: 12,
-							backgroundColor: AppTheme.colors.bgContentSecondary,
+							backgroundColor: Color.bgPrimary.toHex(),
+							paddingTop: Indent.XL.toNumber(),
+							paddingBottom: Indent.XL.toNumber(),
+							paddingLeft: Indent.XL3.toNumber(),
+							paddingRight: Indent.XL3.toNumber(),
 						},
 					},
+					StringInput({
+						style: {
+							marginBottom: Indent.S.toNumber(),
+						},
+						size: InputSize.L,
+						design: InputDesign.GREY,
+						mode: InputMode.STROKE,
+						testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-smtp-address',
+						ref: this.constants.fields.smtpAddress.ref,
+						showRequired: false,
+						required: true,
+						showTitle: false,
+						validation: true,
+						value: this.state.fields.addressSmtp.value,
+						onChange: useCallback((data) => this.onChangeField('addressSmtp', data), ['addressSmtp']),
+						label: Loc.getMessage('MAILBOX_CONNECTOR_SMTP_ADDRESS_TITLE'),
+						placeholder: Loc.getMessage('MAILBOX_CONNECTOR_SMTP_ADDRESS_PLACEHOLDER'),
+						onValid: isEmpty,
+					}),
+					NumberInput({
+						size: InputSize.L,
+						design: InputDesign.GREY,
+						mode: InputMode.STROKE,
+						testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-smtp-port',
+						ref: this.constants.fields.smtpPort.ref,
+						showRequired: false,
+						required: true,
+						showTitle: false,
+						validation: true,
+						value: this.state.fields.smtpPort.value,
+						onChange: useCallback((data) => this.onChangeField('smtpPort', data), ['smtpPort']),
+						label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_PORT_TITLE'),
+						placeholder: Loc.getMessage('MAILBOX_CONNECTOR_SMTP_PORT_PLACEHOLDER'),
+						onValid: isEmpty,
+					}),
 					View(
 						{
+							onClick: secureConnectionSmtpAction,
 							style: {
-								borderRadius: 12,
-								backgroundColor: Color.bgPrimary.toHex(),
-								paddingLeft: 14,
-								paddingRight: 14,
-								paddingBottom: 18,
-								paddingTop: 14,
+								display: 'flex',
+								flexDirection: 'row',
+								alignItems: 'center',
+								height: 30,
 							},
 						},
-						StringInput({
+						Switcher({
+							testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-smtp-ssl-switcher',
+							checked: checkedSslSmtp,
 							style: {
-								marginBottom: 6,
+								marginRight: Indent.M.toNumber(),
 							},
-							size: InputSize.L,
-							design: InputDesign.GREY,
-							mode: InputMode.STROKE,
-							testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-smtp-address',
-							ref: this.constants.fields.smtpAddress.ref,
-							showRequired: false,
-							required: true,
-							showTitle: false,
-							validation: true,
-							value: this.state.fields.addressSmtp.value,
-							onChange: useCallback((data) => this.onChangeField('addressSmtp', data), ['addressSmtp']),
-							label: Loc.getMessage('MAILBOX_CONNECTOR_SMTP_ADDRESS_TITLE'),
-							placeholder: Loc.getMessage('MAILBOX_CONNECTOR_SMTP_ADDRESS_PLACEHOLDER'),
-							onValid: isEmpty,
 						}),
-						NumberInput({
-							size: InputSize.L,
-							design: InputDesign.GREY,
-							mode: InputMode.STROKE,
-							testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-smtp-port',
-							ref: this.constants.fields.smtpPort.ref,
-							showRequired: false,
-							required: true,
-							showTitle: false,
-							validation: true,
-							value: this.state.fields.smtpPort.value,
-							onChange: useCallback((data) => this.onChangeField('smtpPort', data), ['smtpPort']),
-							label: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_PORT_TITLE'),
-							placeholder: Loc.getMessage('MAILBOX_CONNECTOR_SMTP_PORT_PLACEHOLDER'),
-							onValid: isEmpty,
-						}),
-						View(
-							{
-								onClick: secureConnectionSmtpAction,
-								style: {
-									display: 'flex',
-									flexDirection: 'row',
-									alignItems: 'center',
-									height: 30,
-								},
+						Text4({
+							testId: 'mailmobile-connector-imap-secure-connection-label',
+							color: Color.base2,
+							style: {
+								paddingBottom: Indent.S.toNumber(),
 							},
-							Switcher({
-								testId: 'connecting-mailboxes-connecting-mailbox-imap-smtp-smtp-ssl-switcher',
-								checked: checkedSslSmtp,
-								style: {
-									marginRight: 8,
-								},
-							}),
-							Text({
-								style: {
-									paddingBottom: 6,
-									color: AppTheme.colors.base2,
-									fontSize: 15,
-									fontWeight: '400',
-								},
-								text: Loc.getMessage('MAILBOX_CONNECTOR_USE_SECURE_CONNECTION_1'),
-							}),
-						),
+							text: Loc.getMessage('MAILBOX_CONNECTOR_USE_SECURE_CONNECTION_1'),
+						}),
 					),
 				),
 			);
@@ -544,6 +518,7 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 				isEnabled: true,
 				title: {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_TITLE_1'),
+					style: Typography.text3Accent.getStyle(),
 				},
 				number: 2,
 				count: 3,
@@ -589,14 +564,14 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 				View(
 					{
 						style: {
-							marginTop: 4,
+							marginTop: Indent.XS.toNumber(),
 							flex: 1,
 						},
 					},
 					ScrollView(
 						{
 							style: {
-								backgroundColor: AppTheme.colors.bgContentSecondary,
+								backgroundColor: Color.bgPrimary.toHex(),
 								flex: 1,
 							},
 						},
@@ -609,9 +584,9 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 						{
 							style: {
 								paddingBottom: isIOS ? 23 : 0,
-								backgroundColor: AppTheme.colors.bgContentSecondary,
-								paddingRight: 18,
-								paddingLeft: 18,
+								backgroundColor: Color.bgPrimary.toHex(),
+								paddingRight: Indent.XL3.toNumber(),
+								paddingLeft: Indent.XL3.toNumber(),
 							},
 						},
 						Button({

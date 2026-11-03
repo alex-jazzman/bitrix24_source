@@ -383,7 +383,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/managers', (require, e
 			{
 				actionsItems.push({
 					id: SidebarActionType.commonRemoveManager,
-					title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_COMMON_REMOVE_MANAGER'),
+					title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_COMMON_REMOVE_MANAGER_MSGVER_1'),
 					callback: this.onClickRemoveManager.bind(this, userId),
 					icon: Icon.CIRCLE_CROSS,
 					testId: 'SIDEBAR_USER_CONTEXT_MENU_COMMON_REMOVE_MANAGER',

@@ -97,6 +97,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (!this.#isValidDialogId(dialogId)) {
 				return;
 			}
+			const hasNothingToRemember = !this.drafts[dialogId] && panelType === im_v2_const.TextareaPanelType.none;
+			if (hasNothingToRemember) {
+				return;
+			}
 			if (!this.drafts[dialogId]) {
 				this.drafts[dialogId] = {};
 			}
@@ -122,6 +126,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				await this.initDraftHistory();
 			}
 			return this.drafts[dialogId] ?? {};
+		}
+		async reloadDraftFromStorage(dialogId) {
+			if (!this.#isValidDialogId(dialogId)) {
+				return;
+			}
+			this.#forceSavePendingChanges();
+			if (!this.inited) {
+				await this.initDraftHistory();
+				return;
+			}
+			let draftHistory = null;
+			try {
+				draftHistory = await IndexedDbManager.getInstance().get(STORAGE_KEY, {});
+			} catch (error) {
+				// eslint-disable-next-line no-console
+				console.error('DraftManager: error reloading draft from storage', error);
+				return;
+			}
+			if (!main_core.Type.isPlainObject(draftHistory)) {
+				return;
+			}
+			const storedDraft = draftHistory[dialogId];
+			if (main_core.Type.isPlainObject(storedDraft)) {
+				this.drafts[dialogId] = storedDraft;
+			} else {
+				delete this.drafts[dialogId];
+			}
 		}
 		clearDraft(dialogId) {
 			if (!this.#isValidDialogId(dialogId)) {
@@ -183,8 +214,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#refreshSaveTimeout() {
 			clearTimeout(this.writeToStorageTimeout);
 			this.writeToStorageTimeout = setTimeout(() => {
+				this.writeToStorageTimeout = null;
 				this.#saveToIndexedDb();
 			}, WRITE_TO_STORAGE_TIMEOUT);
+		}
+		#forceSavePendingChanges() {
+			if (!this.writeToStorageTimeout) {
+				return;
+			}
+			clearTimeout(this.writeToStorageTimeout);
+			this.writeToStorageTimeout = null;
+			this.#saveToIndexedDb();
 		}
 		#saveToIndexedDb() {
 			IndexedDbManager.getInstance().set(STORAGE_KEY, this.#prepareDrafts());

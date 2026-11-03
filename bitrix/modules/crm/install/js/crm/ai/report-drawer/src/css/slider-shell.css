@@ -1,5 +1,10 @@
 .crm-ai-report-drawer-slider {
-	background-image: url("icons/bg/bg.png"), linear-gradient(135deg, #3248D7 0%, #154183 100%);
+	background-image:
+		linear-gradient(rgba(10, 18, 58, 0.08), rgba(10, 18, 58, 0.08)),
+		linear-gradient(rgba(128, 128, 128, 0.08), rgba(128, 128, 128, 0.08)),
+		url("icons/bg/bg.webp"),
+		linear-gradient(135deg, #3248D7 0%, #154183 100%);
+	background-blend-mode: normal, saturation, normal, normal;
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-clip: border-box;
@@ -32,13 +37,32 @@ body.ui-page-slider-wrapper.crm-ai-report-drawer-frame {
 	min-height: 100% !important;
 	overflow: hidden !important;
 	background-color: transparent !important;
-	background-image: url("icons/bg/bg.png"), linear-gradient(135deg, #3248D7 0%, #154183 100%) !important;
+	background-image:
+		linear-gradient(rgba(10, 18, 58, 0.08), rgba(10, 18, 58, 0.08)),
+		linear-gradient(rgba(128, 128, 128, 0.08), rgba(128, 128, 128, 0.08)),
+		url("icons/bg/bg.webp"),
+		linear-gradient(135deg, #3248D7 0%, #154183 100%) !important;
+	background-blend-mode: normal, saturation, normal, normal !important;
 	background-repeat: no-repeat !important;
 	background-size: cover !important;
 	background-clip: border-box;
 	background-origin: padding-box;
 	background-position-x: 100%;
 	background-position-y: 0;
+}
+
+body.ui-page-slider-wrapper.crm-ai-report-drawer-frame::before {
+	content: "";
+	position: absolute;
+	left: 281px;
+	top: 243px;
+	width: 745px;
+	height: 418px;
+	border-radius: 50%;
+	background: linear-gradient(180deg, #C9187F 0%, #093690 100%);
+	filter: blur(88px);
+	pointer-events: none;
+	z-index: -1;
 }
 
 body.crm-ai-report-drawer-frame .ui-slider-page,

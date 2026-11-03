@@ -6,6 +6,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 	const { downloadImages, makeLibraryImagePath } = require('asset-manager');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
+	/** @type {Record<string, BaseEnum>} */
 	const icons = {
 		chevron: Icon.CHEVRON_TO_THE_RIGHT,
 		task: Icon.CIRCLE_CHECK,
@@ -31,6 +32,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 		check_in: Icon.LOCATION,
 	};
 
+	/** @type {Record<TabPresetId, string>} */
 	const presetInfoImagePath = {
 		task: makeLibraryImagePath('project-management.svg', 'graphic'),
 		stream: makeLibraryImagePath('company-feed.svg', 'graphic'),
@@ -42,13 +44,18 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 		bizproc: makeLibraryImagePath('connection.svg', 'graphic'),
 	};
 
-	void downloadImages(Object.values(presetInfoImagePath));
-
 	const TabPresetsNewUtils = {
+		/** @return {string} */
 		cacheId: () => `tab.settings.user.${env.userId}`,
+		/** @return {RunActionExecutor} */
 		getPresetGetDataRequestExecutor: () => {
 			return new RunActionExecutor('mobile.tabs.getData').setCacheId(TabPresetsNewUtils.cacheId());
 		},
+		/**
+		 * @param {Record<TabPresetId, LegacyTabPreset>} list
+		 * @param {TabPresetId} current
+		 * @return {Record<TabPresetId, LegacyTabPreset>}
+		 */
 		getSortedPresets: (list, current) => {
 			const result = {};
 			const keys = Object.keys(list).filter((preset) => preset !== current);
@@ -63,6 +70,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 
 			return result;
 		},
+		/** @return {Promise<string|null>} */
 		getCurrentPresetName: () => {
 			return new RunActionExecutor('mobile.tabs.getCurrentPresetName')
 				.setSkipDuplicateRequests()
@@ -76,6 +84,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 					return null;
 				});
 		},
+		/** @return {Promise<unknown|null>} */
 		getCurrentPresetItems: () => {
 			return new RunActionExecutor('mobile.tabs.getCurrentPresetItems')
 				.setSkipDuplicateRequests()
@@ -89,6 +98,10 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 					return null;
 				});
 		},
+		/**
+		 * @param {TabPresetId} name
+		 * @return {Promise<unknown>}
+		 */
 		setCurrentPreset: (name) => {
 			return new Promise((resolve, reject) => {
 				void new RunActionExecutor('mobile.tabs.setPreset', { name })
@@ -106,6 +119,11 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 				;
 			});
 		},
+		/**
+		 * @param {TabPresetId} presetId
+		 * @param {LegacyTabPreset|null|undefined} [preset]
+		 * @return {void}
+		 */
 		changeCurrentPreset: (presetId, preset) => {
 			Application.storage.updateObject(
 				TabPresetsNewUtils.cacheId(),
@@ -131,16 +149,41 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 			);
 			BX.onCustomEvent('onPresetChanged', [presetId]);
 		},
+		/**
+		 * @param {TabPresetConfig} config
+		 * @return {Promise<unknown>}
+		 */
 		setUserConfig: (config) => {
 			return new RunActionExecutor('mobile.tabs.setConfig', { config }).call(false);
 		},
+		/**
+		 * @param {string|null|undefined} code
+		 * @return {BaseEnum|string}
+		 */
 		getIcon: (code) => {
 			const list = ['crm_custom_section'];
 			const modifiedCode = list.find((id) => code?.startsWith(id)) ?? code;
 
 			return icons[modifiedCode] ?? '';
 		},
+		/**
+		 * @param {TabPresetId} presetId
+		 * @return {string}
+		 */
 		getPresetInfoImagePath: (presetId) => (presetInfoImagePath[presetId] ?? ''),
+		/**
+		 * @param {TabPresetId} presetId
+		 * @return {Promise<unknown>}
+		 */
+		preloadPresetInfoImage: (presetId) => {
+			const imagePath = TabPresetsNewUtils.getPresetInfoImagePath(presetId);
+			if (!imagePath)
+			{
+				return Promise.resolve();
+			}
+
+			return downloadImages([imagePath]);
+		},
 	};
 
 	module.exports = TabPresetsNewUtils;

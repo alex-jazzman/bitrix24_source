@@ -21,7 +21,11 @@ if ($arResult['invitationCounter'] > 0)
 	\Bitrix\Main\UI\Extension::load(['intranet.invitation-widget-counter']);
 }
 ?>
-<button data-id='invitationButton' class="ui-btn ui-btn-round license-btn license-btn-primary">
+<button
+	data-id="invitationButton"
+	data-testid="intranet-invitation-widget-invitation-button"
+	class="ui-btn ui-btn-round license-btn license-btn-primary"
+>
 	<span class="invitation-widget-counter"></span>
 	<?=Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE')?>
 </button>
@@ -65,8 +69,13 @@ $frame = $this->createFrame()->begin('');
 			BX.unbindAll(button);
 			const widgetLoader = new BX.Intranet.WidgetLoader({
 				bindElement: button,
+				bindOnClick: false,
 				width: 350,
 				id: 'bx-invitation-header-popup',
+				ariaLabel: <?= Json::encode(Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE')) ?>,
+				focusTrap: {
+					initialFocus: false,
+				},
 			});
 			widgetLoader.createSkeletonFromConfig(<?= Json::encode($arResult['skeleton']) ?>)
 				.show();
@@ -82,6 +91,7 @@ $frame = $this->createFrame()->begin('');
 					BX.Intranet.InvitationWidget.getInstance().setOptions({
 						loader: widgetLoader.getPopup(),
 						button: document.querySelector("[data-id='invitationButton']"),
+						target: button,
 						...response.data,
 					}).show();
 				});

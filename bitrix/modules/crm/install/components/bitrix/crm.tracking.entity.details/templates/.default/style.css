@@ -242,3 +242,32 @@
 .crm-tracking-entity-details-popup-item + .crm-tracking-entity-details-popup-item {
 	margin-top: 10px;
 }
+
+/*
+ * Reflow (<= 768px): the "connect tracking" banner overflows the single-column card.
+ * Base layout: banner width 41.6% (~84px at a 201px column) plus content padding-left 130px,
+ * which reserves room for the decorative :before illustration (120x125px, absolute, left).
+ * In the narrow column that pushes the text and the Setup/Hide buttons past the card edge.
+ * Below the breakpoint: give the banner the full column, drop the padding reserve, hide the
+ * decorative illustration (carries no information), and let the buttons wrap.
+ * Region kept at the end of the file so source order wins at equal specificity (no !important).
+ */
+@media (max-width: 768px) {
+	.crm-tracking-entity-details-banner {
+		width: auto;
+	}
+
+	.crm-tracking-entity-details-content {
+		padding-left: 0;
+	}
+
+	.crm-tracking-entity-details-content:before {
+		display: none;
+	}
+
+	.crm-tracking-entity-details-btn {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+}

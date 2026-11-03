@@ -1,4 +1,5 @@
-import { Type } from 'main.core';
+import { Text, Type } from 'main.core';
+import { Center } from 'ui.notification';
 
 const ENTITY_TYPE = 'mail';
 
@@ -39,7 +40,7 @@ export class Secretary
 			(response) => {
 				if (top.window.BXIM && response.data)
 				{
-					top.BXIM.openMessenger(`chat${parseInt(response.data)}`);
+					top.BXIM.openMessenger(`chat${parseInt(response.data, 10)}`);
 				}
 			},
 			(response) => {
@@ -85,21 +86,24 @@ export class Secretary
 						},
 					});
 				}
+
+				return null;
 			},
 			(response) => {
 				this.#displayErrors(response.errors);
 			},
 		).then(
 			(response) => {
-				if (response.data && response.data.eventId)
+				if (response?.data?.eventId)
 				{
 					const sliderLoader = new (window.top.BX || window.BX).Calendar.SliderLoader(
 						response.data.eventId,
 					);
 					sliderLoader.show();
 
-					const grid = new BX.Mail.MessageGrid();
-					grid.reloadTable();
+					// the screen publishes its grid under this name; inside the message slider it is the top window
+					const grid = this.contextBx.Mail?.Home?.Grid ?? BX.Mail?.Home?.Grid;
+					grid?.reloadTable();
 				}
 			},
 		);
@@ -135,17 +139,26 @@ export class Secretary
 
 	#displayErrors(errors: Array)
 	{
+		let errorMessages = [];
 		if (Type.isArray(errors))
 		{
-			const errorMessages = [];
 			errors.forEach((error) => {
-				errorMessages.push(error.message);
+				if (Type.isStringFilled(error?.message))
+				{
+					errorMessages.push(error.message);
+				}
 			});
-			alert(errorMessages.join('\n'));
 		}
-		else
+
+		if (errorMessages.length === 0)
 		{
-			alert("action can't be performed");
+			errorMessages = ["action can't be performed"];
 		}
+
+		const notificationCenter = this.contextBx.UI?.Notification?.Center ?? Center;
+		notificationCenter.notify({
+			autoHideDelay: 5000,
+			content: errorMessages.map((message) => Text.encode(message)).join('<br>'),
+		});
 	}
 }

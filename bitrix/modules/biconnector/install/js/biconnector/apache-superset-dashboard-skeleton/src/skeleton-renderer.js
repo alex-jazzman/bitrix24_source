@@ -4,13 +4,17 @@ import { Dom, Tag } from 'main.core';
 import { Lottie } from 'ui.lottie';
 import SkeletonAnimation from './skeleton/biconnector-dashboard-skeleton.json';
 
+export type SkeletonAnimationHandle = {
+	destroy: () => void,
+};
+
 export class SkeletonRenderer
 {
-	static render(container: HTMLElement): void
+	static render(container: HTMLElement): SkeletonAnimationHandle | null
 	{
 		if (!container)
 		{
-			return;
+			return null;
 		}
 
 		const animationBox = Tag.render`
@@ -41,5 +45,7 @@ export class SkeletonRenderer
 		`;
 
 		Dom.append(skeletonNode, container);
+
+		return animation;
 	}
 }

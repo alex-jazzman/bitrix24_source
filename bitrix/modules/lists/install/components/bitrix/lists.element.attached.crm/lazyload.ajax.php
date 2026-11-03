@@ -28,11 +28,15 @@ if (isset($_REQUEST["download"]) && $_REQUEST["download"] === "y")
 	$fieldId = !empty($_REQUEST['field_id']) ? $_REQUEST['field_id'] : '';
 	$fileId = !empty($_REQUEST['file_id']) ? intval($_REQUEST['file_id']) : 0;
 	$iblockTypeId = '';
+	$socnetGroupId = 0;
 	$queryObject = CIBlock::getList(array(), array('ID' => $iblockId));
 	if ($iblock = $queryObject->fetch())
+	{
 		$iblockTypeId = $iblock['IBLOCK_TYPE_ID'];
+		$socnetGroupId = (int)($iblock['SOCNET_GROUP_ID'] ?? 0);
+	}
 
-	$listsPerm = CListPermissions::checkAccess($USER, $iblockTypeId, $iblockId);
+	$listsPerm = CListPermissions::checkAccess($USER, $iblockTypeId, $iblockId, $socnetGroupId);
 	if (!CListPermissions::checkFieldId($iblockId, $fieldId))
 	{
 		completeLazyLoad(GetMessage('CC_BLF_UNKNOWN_ERROR'));

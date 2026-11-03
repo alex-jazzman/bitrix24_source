@@ -1,3 +1,6 @@
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+
+import { CaptionedVideoNote } from './items/captioned-video-note';
 import { VideoNote } from './items/video-note';
 import { TranscribedVideoNote } from './items/transcribed-video-note';
 
@@ -9,7 +12,7 @@ import type { JsonObject } from 'main.core';
 // @vue/component
 export const VideoNoteMessage = {
 	name: 'VideoNoteMessage',
-	components: { VideoNote, TranscribedVideoNote },
+	components: { CaptionedVideoNote, VideoNote, TranscribedVideoNote },
 	props: {
 		item: {
 			type: Object,
@@ -41,6 +44,18 @@ export const VideoNoteMessage = {
 		{
 			return this.message.files[0];
 		},
+		hasText(): boolean
+		{
+			return this.message.text.trim().length > 0;
+		},
+		isCaptionFeatureAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isVideoNoteCaptionAvailable);
+		},
+		hasCaption(): boolean
+		{
+			return this.hasText && this.isCaptionFeatureAvailable;
+		},
 	},
 	methods: {
 		onTranscribedVideoPlayClick()
@@ -62,17 +77,29 @@ export const VideoNoteMessage = {
 				:dialogId="dialogId"
 				:item="item"
 				:withTitle="withTitle"
+				:showCaption="hasCaption"
 				@closeTranscription="isTranscriptionOpened = false"
 				@clickPlay="onTranscribedVideoPlayClick"
 				@cancelClick="$emit('cancelClick', $event)"
 			/>
-			<VideoNote 
+			<CaptionedVideoNote
+				v-else-if="hasCaption"
+				:startWithSound="startWithSound"
+				:fileId="firstFileId"
+				:dialogId="dialogId"
+				:item="item"
+				:showTypeLabel="isCaptionFeatureAvailable"
+				@openTranscription="onOpenTranscription"
+				@cancelClick="$emit('cancelClick', $event)"
+			/>
+			<VideoNote
 				v-else
 				:startWithSound="startWithSound"
 				:fileId="firstFileId"
 				:dialogId="dialogId"
 				:item="item"
 				:withTitle="withTitle"
+				:showTypeLabel="isCaptionFeatureAvailable"
 				@openTranscription="onOpenTranscription"
 				@cancelClick="$emit('cancelClick', $event)"
 			/>

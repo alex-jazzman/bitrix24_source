@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_cnt, main_core_events, main_popup, ui_buttons, main_loader, ui_dialogs_messagebox, main_core_event, ui_bannerDispatcher, main_core_cache, main_sidepanel) {
+(function (exports, main_core, ui_cnt, main_core_events, main_popup, ui_buttons, main_loader, ui_dialogs_messagebox, ui_a11y, ui_system_skeleton, main_core_event, ui_bannerDispatcher, main_core_cache, main_sidepanel) {
 	'use strict';
 
 	class Options {
@@ -15,6 +15,20 @@ this.BX = this.BX || {};
 		static settingsPath = null;
 		static isMainPageEnabled = false;
 		static isMessengerEmbedded = false;
+		static isMainToolPickerEnabled = false;
+		static mainToolPickerBootstrapRevision = 0;
+		static mainToolState = null;
+		static setMainToolPickerEnabled(enabled) {
+			this.isMainToolPickerEnabled = enabled === true;
+			this.mainToolPickerBootstrapRevision++;
+			this.mainToolState = null;
+			main_core_events.EventEmitter.emit(this.eventName('onMainToolPickerBootstrap'), {
+				enabled: this.isMainToolPickerEnabled
+			});
+		}
+		static canChangeMainTool() {
+			return this.mainToolState?.canChangePersonal === true || this.mainToolState?.canManageAll === true;
+		}
 		static availablePresetTools = null;
 		static inviteDialogLink = null;
 		static showMarta = null;
@@ -125,227 +139,6 @@ this.BX = this.BX || {};
 					}
 				})]
 			});
-		}
-	}
-
-	class Utils {
-		static #curPage = null;
-		static #curUri = null;
-		static getCurPage() {
-			if (this.#curPage === null) {
-				this.#curPage = document.location.pathname + document.location.search;
-			}
-			return this.#curPage === '' ? null : this.#curPage;
-		}
-		static getCurUri() {
-			if (this.#curUri === null) {
-				this.#curUri = new main_core.Uri(document.location.href);
-			}
-			return this.#curUri;
-		}
-		static catchError(response) {
-			main_core.Runtime.loadExtension('ui.notification').then(() => {
-				const notificationCenter = main_core.Reflection.getClass('BX.UI.Notification.Center');
-				notificationCenter.notify({
-					content: [main_core.Loc.getMessage('MENU_ERROR_OCCURRED'), response.errors ? `: ${response.errors[0].message}` : ''].join(' '),
-					position: 'bottom-left',
-					category: 'menu-self-item-popup',
-					autoHideDelay: 3000
-				});
-			}).catch(() => {
-				console.log('LeftMenu: cannot load ui.notification.');
-			});
-		}
-		static prefersReducedMotion() {
-			return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		}
-		static refineUrl(originUrl) {
-			let url = String(originUrl).trim();
-			if (url !== '') {
-				if (!/^https?:\/\//i.test(url) && !/^\//i.test(url)) {
-					// for external links like "google.com" (without a protocol)
-					url = `https://${url}`;
-				} else {
-					const link = document.createElement('a');
-					link.href = url;
-					if (document.location.host === link.host) {
-						// http://portal.com/path/ => /path/
-						url = link.pathname + link.search + link.hash;
-					}
-				}
-			}
-			return url;
-		}
-	}
-
-	class PresetDefaultController extends DefaultController {
-		isReady = true;
-		#unavailableToolPopup;
-		#mode;
-		constructor(container, {
-			events
-		}, currentPresetId) {
-			super(container, {
-				events
-			});
-			this.currentPresetId = currentPresetId;
-		}
-		createPopup(mode) {
-			this.#mode = mode;
-			let button;
-			const content = main_core.Tag.render`
-			<div class="left-menu-popup-wrapper-skeleton"><div>
-		`;
-			new main_loader.Loader({
-				size: 100
-			}).show(content);
-			const popup = main_popup.PopupManager.create(this.constructor.name.toString(), null, {
-				overlay: true,
-				contentColor: 'white',
-				contentNoPaddings: true,
-				lightShadow: true,
-				draggable: {
-					restrict: true
-				},
-				closeByEsc: true,
-				offsetTop: 1,
-				offsetLeft: 20,
-				cacheable: false,
-				closeIcon: true,
-				content,
-				buttons: [button = new ui_buttons.CreateButton({
-					text: main_core.Loc.getMessage('MENU_CONFIRM_BUTTON'),
-					onclick: () => {
-						if (button.isWaiting()) {
-							return;
-						}
-						button.setWaiting(true);
-						const currentPreset = this.getSelectedPreset();
-						if (!Options.isAdmin && Options.availablePresetTools && Options.availablePresetTools[currentPreset] === false) {
-							button.setWaiting(false);
-							this.showUnavailableToolPopup();
-							return;
-						}
-						main_core_events.EventEmitter.emit(this, Options.eventName('onPresetIsSet'), {
-							presetId: currentPreset,
-							mode
-						}).forEach(promise => {
-							promise.then(response => {
-								button.setWaiting(false);
-								this.hide();
-								if (response.data.hasOwnProperty('url')) {
-									document.location.href = response.data.url;
-								} else {
-									document.location.reload();
-								}
-							}).catch(Utils.catchError);
-						});
-					}
-				}), new ui_buttons.CancelButton({
-					text: main_core.Loc.getMessage('MENU_DELAY_BUTTON'),
-					onclick: () => {
-						main_core_events.EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'), {
-							mode
-						});
-						this.hide();
-					}
-				})]
-			});
-			main_core.Runtime.loadExtension('intranet.menu-preset').then(exports => {
-				const menuPreset = new exports.MenuPreset({
-					containerNode: document.querySelector('#left-menu-preset-popup'),
-					currentPresetId: this.currentPresetId
-				});
-				popup.setContent(menuPreset.getContent());
-				popup.adjustPosition();
-			}).catch(() => {});
-			return popup;
-		}
-		show(mode) {
-			if (this.popup === null) {
-				this.popup = this.createPopup(mode);
-				this.bindPopupEvents();
-			}
-			this.popup.show();
-		}
-		getMode() {
-			return this.#mode;
-		}
-		getSelectedPreset() {
-			let currentPreset = '';
-			if (document.forms['left-menu-preset-form']) {
-				[...document.forms['left-menu-preset-form'].elements['presetType']].forEach(node => {
-					if (node.checked) {
-						currentPreset = node.value;
-					}
-				});
-			}
-			return currentPreset;
-		}
-		showUnavailableToolPopup() {
-			if (!(this.#unavailableToolPopup instanceof ui_dialogs_messagebox.MessageBox)) {
-				this.#unavailableToolPopup = ui_dialogs_messagebox.MessageBox.create({
-					message: main_core.Loc.getMessage('MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION'),
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
-				});
-			}
-			this.#unavailableToolPopup.show();
-		}
-	}
-
-	class SettingsController extends DefaultController {
-		menuId = 'leftMenuSettingsPopup';
-		createPopup() {
-			const menu = new main_popup.Menu({
-				bindElement: this.container,
-				targetContainer: document.querySelector('.js-app__left-menu'),
-				items: this.getItems(),
-				angle: true,
-				offsetTop: 0,
-				offsetLeft: 50
-			});
-			return menu.getPopupWindow();
-		}
-		getItems() {
-			const notHandledMenuItems = main_core_events.EventEmitter.emit(this, Options.eventName('onGettingSettingMenuItems'));
-			return this.#getMenuItems([...notHandledMenuItems][0]);
-		}
-		#getMenuItems(items) {
-			if (main_core.Type.isArray(items) === false) {
-				return [];
-			}
-			return items.map(item => {
-				return this.#getMenuItem(item);
-			});
-		}
-		#getMenuItem(data) {
-			if (!main_core.Type.isPlainObject(data)) {
-				return null;
-			}
-			const {
-				text,
-				html,
-				onclick,
-				className,
-				items = [],
-				delimiter = false
-			} = data;
-			return {
-				html,
-				text: html ? undefined : text,
-				items: this.#getMenuItems(items),
-				delimiter,
-				className: `menu-popup-no-icon ${className}`,
-				onclick: (event, item) => {
-					if (!main_core.Type.isArrayFilled(items)) {
-						item.getMenuWindow().close();
-					}
-					item.getMenuWindow().getParentMenuItem()?.getMenuWindow()?.close();
-					if (onclick) {
-						onclick(event, item);
-					}
-				}
-			};
 		}
 	}
 
@@ -531,6 +324,41 @@ this.BX = this.BX || {};
 				}
 			});
 		}
+		static getMainToolState() {
+			return this.#runMainToolAction('getState', {
+				data: {}
+			});
+		}
+		static confirmInitialShow() {
+			return this.#runMainToolAction('confirmInitialShow', {
+				data: {}
+			});
+		}
+		static applyMainTool({
+			presetId,
+			applyForAll
+		}) {
+			return this.#runMainToolAction('apply', {
+				json: {
+					presetId,
+					applyForAll
+				}
+			});
+		}
+		static #runMainToolAction(action, params) {
+			if (!Options.isMainToolPickerEnabled) {
+				return Promise.reject({
+					errors: [{
+						code: 'MAIN_TOOL_FEATURE_DISABLED'
+					}]
+				});
+			}
+			return main_core.ajax.runAction(`intranet.maintool.${action}`, {
+				method: 'POST',
+				timeout: 30,
+				...params
+			});
+		}
 		static postponeSystemPreset(mode) {
 			return main_core.ajax.runAction('intranet.leftmenu.delaySetPreset', {
 				data: {},
@@ -585,9 +413,763 @@ this.BX = this.BX || {};
 		}
 	}
 
+	class Utils {
+		static #curPage = null;
+		static #curUri = null;
+		static getCurPage() {
+			if (this.#curPage === null) {
+				this.#curPage = document.location.pathname + document.location.search;
+			}
+			return this.#curPage === '' ? null : this.#curPage;
+		}
+		static getCurUri() {
+			if (this.#curUri === null) {
+				this.#curUri = new main_core.Uri(document.location.href);
+			}
+			return this.#curUri;
+		}
+		static catchError(response) {
+			main_core.Runtime.loadExtension('ui.notification').then(() => {
+				const notificationCenter = main_core.Reflection.getClass('BX.UI.Notification.Center');
+				notificationCenter.notify({
+					content: [main_core.Loc.getMessage('MENU_ERROR_OCCURRED'), response.errors ? `: ${response.errors[0].message}` : ''].join(' '),
+					position: 'bottom-left',
+					category: 'menu-self-item-popup',
+					autoHideDelay: 3000
+				});
+			}).catch(() => {
+				console.log('LeftMenu: cannot load ui.notification.');
+			});
+		}
+		static prefersReducedMotion() {
+			return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		}
+		static refineUrl(originUrl) {
+			let url = String(originUrl).trim();
+			if (url !== '') {
+				if (!/^https?:\/\//i.test(url) && !/^\//i.test(url)) {
+					// for external links like "google.com" (without a protocol)
+					url = `https://${url}`;
+				} else {
+					const link = document.createElement('a');
+					link.href = url;
+					if (document.location.host === link.host) {
+						// http://portal.com/path/ => /path/
+						url = link.pathname + link.search + link.hash;
+					}
+				}
+			}
+			return url;
+		}
+	}
+
+	class PresetDefaultController extends DefaultController {
+		isReady = true;
+		#unavailableToolPopup;
+		#mode;
+		#mainToolPicker = null;
+		constructor(container, {
+			events
+		}, currentPresetId) {
+			super(container, {
+				events
+			});
+			this.currentPresetId = currentPresetId;
+		}
+		createPopup(mode) {
+			this.#mode = mode;
+			let button;
+			const content = main_core.Tag.render`
+			<div class="left-menu-popup-wrapper-skeleton"><div>
+		`;
+			new main_loader.Loader({
+				size: 100
+			}).show(content);
+			const popup = main_popup.PopupManager.create(this.constructor.name.toString(), null, {
+				overlay: true,
+				contentColor: 'white',
+				contentNoPaddings: true,
+				lightShadow: true,
+				draggable: {
+					restrict: true
+				},
+				closeByEsc: true,
+				offsetTop: 1,
+				offsetLeft: 20,
+				cacheable: false,
+				closeIcon: true,
+				content,
+				buttons: [button = new ui_buttons.CreateButton({
+					text: main_core.Loc.getMessage('MENU_CONFIRM_BUTTON'),
+					onclick: () => {
+						if (button.isWaiting()) {
+							return;
+						}
+						button.setWaiting(true);
+						const currentPreset = this.getSelectedPreset();
+						if (!Options.isAdmin && Options.availablePresetTools && Options.availablePresetTools[currentPreset] === false) {
+							button.setWaiting(false);
+							this.showUnavailableToolPopup();
+							return;
+						}
+						main_core_events.EventEmitter.emit(this, Options.eventName('onPresetIsSet'), {
+							presetId: currentPreset,
+							mode
+						}).forEach(promise => {
+							promise.then(response => {
+								button.setWaiting(false);
+								this.hide();
+								if (response.data.hasOwnProperty('url')) {
+									document.location.href = response.data.url;
+								} else {
+									document.location.reload();
+								}
+							}).catch(Utils.catchError);
+						});
+					}
+				}), new ui_buttons.CancelButton({
+					text: main_core.Loc.getMessage('MENU_DELAY_BUTTON'),
+					onclick: () => {
+						main_core_events.EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'), {
+							mode
+						});
+						this.hide();
+					}
+				})]
+			});
+			main_core.Runtime.loadExtension('intranet.menu-preset').then(exports => {
+				const menuPreset = new exports.MenuPreset({
+					containerNode: document.querySelector('#left-menu-preset-popup'),
+					currentPresetId: this.currentPresetId
+				});
+				popup.setContent(menuPreset.getContent());
+				popup.adjustPosition();
+			}).catch(() => {});
+			return popup;
+		}
+		show(mode) {
+			if (Options.isMainToolPickerEnabled) {
+				if (mode === 'global') {
+					main_core_events.EventEmitter.emit(this, Options.eventName('onMainToolPickerAutoRequested'));
+					return;
+				}
+				this.openMainToolPicker();
+				return;
+			}
+			if (this.#mainToolPicker) {
+				this.closeMainToolPicker(this.#mainToolPicker.popup, 'bootstrap');
+			}
+			if (this.popup === null) {
+				this.popup = this.createPopup(mode);
+				this.bindPopupEvents();
+			}
+			this.popup.show();
+		}
+		openMainToolPicker() {
+			if (!Options.isMainToolPickerEnabled) {
+				return Promise.resolve(null);
+			}
+			if (this.#mainToolPicker) {
+				if (this.#mainToolPicker.popup.isShown()) {
+					return this.#mainToolPicker.readyPromise;
+				}
+				this.closeMainToolPicker(this.#mainToolPicker.popup, 'replaced');
+			}
+			const instance = this.#createMainToolPicker('manual');
+			instance.popup.show();
+			Backend.getMainToolState().then(({
+				data
+			}) => this.#mountMainToolPicker(instance, data)).catch(response => this.#failMainToolPicker(instance, response));
+			return instance.readyPromise;
+		}
+		prepareMainToolPicker(state) {
+			if (!Options.isMainToolPickerEnabled || this.popup) {
+				return Promise.resolve(null);
+			}
+			const instance = this.#createMainToolPicker('auto');
+			this.#mountMainToolPicker(instance, state).catch(response => this.#failMainToolPicker(instance, response));
+			return instance.readyPromise;
+		}
+		showPreparedMainToolPicker(popup) {
+			if (!this.isMainToolPickerActive(popup) || !this.#mainToolPicker.ready || document.visibilityState !== 'visible') {
+				return false;
+			}
+			popup.show();
+			this.#reportMainToolPickerShown(this.#mainToolPicker);
+			return true;
+		}
+		isMainToolPickerActive(popup) {
+			return Boolean(this.#mainToolPicker && this.#mainToolPicker.popup === popup && !popup.isDestroyed() && Options.isMainToolPickerEnabled && this.#mainToolPicker.bootstrapRevision === Options.mainToolPickerBootstrapRevision);
+		}
+		closeMainToolPicker(popup, reason = 'close') {
+			const instance = this.#mainToolPicker;
+			if (!instance || instance.popup !== popup) {
+				return;
+			}
+			this.#mainToolPicker = null;
+			this.popup = null;
+			this.isReady = true;
+			instance.resolveReady(null);
+			main_core_events.EventEmitter.unsubscribe(Options.eventName('onMainToolPickerBootstrap'), instance.onBootstrap);
+			main_core.Event.unbind(window, 'pagehide', instance.onPageHide);
+			main_core.Event.unbind(window, 'resize', instance.onResize);
+			cancelAnimationFrame(instance.focusFrame);
+			if (reason === 'success' || reason === 'pagehide') {
+				popup.getFocusTrap()?.setRestoreFocus(false);
+			}
+			instance.busy = false;
+			instance.application?.setBusy(false);
+			instance.application?.unsubscribeAll();
+			instance.application?.destroy();
+			popup.destroy();
+			popup.unsubscribeAll();
+			main_core_events.EventEmitter.emit(this, Options.eventName('onMainToolPickerClosed'), {
+				popup,
+				openingReason: instance.openingReason,
+				reason,
+				wasShown: instance.showReported
+			});
+		}
+		destroy() {
+			if (this.#mainToolPicker) {
+				this.closeMainToolPicker(this.#mainToolPicker.popup, 'destroy');
+			} else {
+				this.popup?.destroy();
+			}
+		}
+		#createMainToolPicker(openingReason) {
+			main_popup.PopupManager.getPopupById(this.constructor.name.toString())?.destroy();
+			const opener = ui_a11y.FocusNavigator.getActiveElement();
+			const content = main_core.Tag.render`
+			<div class="intranet-main-tool-picker-loading" aria-busy="true"
+				data-testid="intranet-main-tool-picker-loading">
+				<div class="intranet-main-tool-picker-loading__skeleton" aria-hidden="true">
+					<div class="intranet-main-tool-picker-loading__scene">
+						<div class="intranet-main-tool-picker-loading__illustration">${ui_system_skeleton.Line(0, 0, 24)}</div>
+						<div class="intranet-main-tool-picker-loading__text">
+							${ui_system_skeleton.Line(0, 28, 8)}
+							${ui_system_skeleton.Line(0, 12, 8)}
+							${ui_system_skeleton.Line(0, 12, 8)}
+						</div>
+					</div>
+					<div class="intranet-main-tool-picker-loading__presets">
+						${Array.from({
+			length: 4
+		}, () => ui_system_skeleton.Line(0, 64, 12))}
+					</div>
+				</div>
+			</div>
+		`;
+			const popup = main_popup.PopupManager.create({
+				id: this.constructor.name.toString(),
+				className: 'intranet-main-tool-picker-popup',
+				overlay: true,
+				background: 'transparent',
+				contentBackground: 'transparent',
+				padding: 0,
+				contentPadding: 0,
+				fixed: true,
+				disableScroll: true,
+				closeByEsc: true,
+				cacheable: false,
+				closeIcon: true,
+				focusTrap: {
+					initialFocus: ['input[type="radio"]:checked:not(:disabled)', 'input[type="radio"]:not(:disabled)', '.popup-window-close-icon'],
+					preventScroll: false,
+					restoreFocus: () => this.#getMainToolPickerReturnFocus(opener)
+				},
+				ariaLabel: main_core.Loc.getMessage('MENU_SET_DEFAULT2'),
+				content
+			});
+			main_core.Dom.attr(popup.getPopupContainer(), 'data-testid', 'intranet-main-tool-picker-popup');
+			main_core.Dom.attr(popup.getPopupContainer().querySelector('.popup-window-close-icon'), {
+				'aria-label': main_core.Loc.getMessage('MENU_MAIN_TOOL_PICKER_CLOSE'),
+				'data-testid': 'intranet-main-tool-picker-close'
+			});
+			const instance = {
+				popup,
+				loadingContent: content,
+				openingReason,
+				bootstrapRevision: Options.mainToolPickerBootstrapRevision,
+				application: null,
+				state: null,
+				ready: false,
+				busy: false,
+				showReported: false,
+				focusFrame: 0,
+				onBootstrap: () => this.closeMainToolPicker(popup, 'bootstrap'),
+				onPageHide: () => this.closeMainToolPicker(popup, 'pagehide'),
+				onResize: () => this.#updateMainToolPickerSize(instance)
+			};
+			instance.readyPromise = new Promise(resolve => {
+				instance.resolveReady = resolve;
+			});
+			this.#mainToolPicker = instance;
+			this.popup = popup;
+			this.#mode = openingReason === 'auto' ? 'global' : 'personal';
+			this.isReady = false;
+			popup.subscribe('onClose', () => this.closeMainToolPicker(popup));
+			popup.subscribe('onDestroy', () => this.closeMainToolPicker(popup, 'destroy'));
+			main_core_events.EventEmitter.subscribe(Options.eventName('onMainToolPickerBootstrap'), instance.onBootstrap);
+			main_core.Event.bind(window, 'pagehide', instance.onPageHide);
+			main_core.Event.bind(window, 'resize', instance.onResize);
+			this.#updateMainToolPickerSize(instance);
+			return instance;
+		}
+		#getMainToolPickerReturnFocus(opener) {
+			const settingsButton = this.container.querySelector('[data-role="menu-settings-item"]');
+			if (ui_a11y.InteractivityChecker.isFocusable(settingsButton)) {
+				return settingsButton;
+			}
+			if (ui_a11y.InteractivityChecker.isFocusable(opener)) {
+				return opener;
+			}
+			for (const container of [this.container, document.body]) {
+				const fallback = Array.from(container.querySelectorAll('button')).find(button => ui_a11y.InteractivityChecker.isTabbable(button) && !ui_a11y.InteractivityChecker.isDisabled(button) && !button.closest('[aria-hidden="true"], .intranet-main-tool-picker-popup') && (main_core.Type.isStringFilled(button.getAttribute('aria-label')) || main_core.Type.isStringFilled(button.getAttribute('aria-labelledby')) || main_core.Type.isStringFilled(button.textContent.trim())));
+				if (fallback) {
+					return fallback;
+				}
+			}
+			return null;
+		}
+		#updateMainToolPickerSize(instance) {
+			if (!this.isMainToolPickerActive(instance.popup)) {
+				return;
+			}
+			instance.popup.setWidth(Math.min(820, document.documentElement.clientWidth - 32));
+			if (!instance.ready) {
+				main_core.Dom.style(instance.loadingContent, 'height', `${Math.min(500, window.innerHeight - 32)}px`);
+			}
+			instance.popup.adjustPosition();
+		}
+		#focusMainToolPicker(instance) {
+			cancelAnimationFrame(instance.focusFrame);
+			instance.focusFrame = requestAnimationFrame(() => {
+				if (!this.isMainToolPickerActive(instance.popup) || !instance.popup.isShown() || instance.busy) {
+					return;
+				}
+				const focusTrap = instance.popup.getFocusTrap();
+				if (!focusTrap?.focusBySelector('input[type="radio"]:checked:not(:disabled)', {
+					wrap: true
+				})) {
+					focusTrap?.focusBySelector('input[type="radio"]:not(:disabled)', {
+						wrap: true
+					});
+				}
+			});
+		}
+		async #mountMainToolPicker(instance, state) {
+			if (!this.isMainToolPickerActive(instance.popup)) {
+				return;
+			}
+			if (!main_core.Type.isPlainObject(state) || !main_core.Type.isBoolean(state.canChangePersonal) || !main_core.Type.isBoolean(state.canManageAll) || !main_core.Type.isArray(state.availablePresets) || !state.availablePresets.every(preset => main_core.Type.isPlainObject(preset) && main_core.Type.isStringFilled(preset.id) && main_core.Type.isBoolean(preset.canApplyForAll))) {
+				throw new Error('Invalid main tool state.');
+			}
+			Options.mainToolState = state;
+			if (!Options.canChangeMainTool()) {
+				this.#failMainToolPicker(instance, {
+					errors: [{
+						code: state.forced ? 'MAIN_TOOL_FORCED' : 'MAIN_TOOL_ACCESS_DENIED'
+					}]
+				});
+				return;
+			}
+			if (!main_core.Type.isArrayFilled(state.availablePresets)) {
+				this.#failMainToolPicker(instance, {
+					errors: [{
+						code: 'MAIN_TOOL_UNAVAILABLE'
+					}]
+				});
+				return;
+			}
+			instance.state = state;
+			const {
+				createMainToolPicker
+			} = await main_core.Runtime.loadExtension('intranet.menu-preset');
+			if (!this.isMainToolPickerActive(instance.popup)) {
+				return;
+			}
+			instance.application = createMainToolPicker({
+				state,
+				openingReason: instance.openingReason,
+				busy: false
+			});
+			instance.application.subscribe('confirm', ({
+				data
+			}) => this.#applyMainTool(instance, data));
+			instance.application.subscribe('closeRequested', () => this.closeMainToolPicker(instance.popup));
+			instance.application.subscribe('error', ({
+				data
+			}) => this.#failMainToolPicker(instance, data));
+			let content;
+			instance.application.subscribe('ready', () => {
+				if (!this.isMainToolPickerActive(instance.popup) || instance.ready) {
+					return;
+				}
+				instance.ready = true;
+				instance.popup.setContent(content);
+				main_core.Dom.attr(instance.popup.getPopupContainer(), {
+					'aria-labelledby': content.querySelector('.intranet-main-tool-picker__title').id,
+					'aria-describedby': content.querySelector('.intranet-main-tool-picker__description').id
+				});
+				this.isReady = true;
+				instance.application.setBusy(false);
+				this.#updateMainToolPickerSize(instance);
+				if (instance.popup.isShown()) {
+					this.#focusMainToolPicker(instance);
+				}
+				instance.resolveReady(instance.popup);
+				this.#reportMainToolPickerShown(instance);
+			});
+			content = instance.application.getContent();
+		}
+		#reportMainToolPickerShown(instance) {
+			if (!instance.ready || !instance.popup.isShown() || instance.showReported) {
+				return;
+			}
+			instance.showReported = true;
+			main_core_events.EventEmitter.emit(this, Options.eventName('onMainToolPickerShown'), {
+				popup: instance.popup,
+				openingReason: instance.openingReason
+			});
+		}
+		#applyMainTool(instance, selection) {
+			if (!this.isMainToolPickerActive(instance.popup) || !instance.ready || instance.busy) {
+				return;
+			}
+			const {
+				presetId,
+				applyForAll
+			} = selection ?? {};
+			const preset = instance.state.availablePresets.find(item => item.id === presetId);
+			if (!main_core.Type.isStringFilled(presetId) || !main_core.Type.isBoolean(applyForAll) || !preset || applyForAll && (!instance.state.canManageAll || !preset.canApplyForAll) || !applyForAll && !instance.state.canChangePersonal && !instance.state.canManageAll) {
+				this.#failMainToolPicker(instance, {
+					errors: [{
+						code: 'MAIN_TOOL_INVALID_ARGUMENT'
+					}]
+				});
+				return;
+			}
+			instance.busy = true;
+			instance.popup.getFocusTrap()?.focusBySelector('.popup-window-close-icon', {
+				wrap: true
+			});
+			instance.application.setBusy(true);
+			Backend.applyMainTool({
+				presetId,
+				applyForAll
+			}).then(response => {
+				if (!this.isMainToolPickerActive(instance.popup)) {
+					return;
+				}
+				if (!main_core.Type.isStringFilled(response?.data?.url)) {
+					throw new Error('Missing main tool URL.');
+				}
+				main_core_events.EventEmitter.emit(this, Options.eventName('onMainToolPickerApplied'), {
+					presetId,
+					applyForAll,
+					openingReason: instance.openingReason
+				});
+				this.closeMainToolPicker(instance.popup, 'success');
+				if (response.data.url === document.location.pathname + document.location.search) {
+					document.location.reload();
+				} else {
+					main_core.Page.redirect(response.data.url);
+				}
+			}).catch(response => this.#failMainToolPicker(instance, response));
+		}
+		#failMainToolPicker(instance, response) {
+			if (!this.isMainToolPickerActive(instance.popup)) {
+				return;
+			}
+			this.closeMainToolPicker(instance.popup, 'error');
+			PresetDefaultController.notifyMainToolError(response);
+		}
+		static notifyMainToolError(response) {
+			const code = main_core.Type.isArray(response?.errors) ? response.errors[0]?.code : null;
+			if (code === 'MAIN_TOOL_FEATURE_DISABLED') {
+				Options.setMainToolPickerEnabled(false);
+			}
+			const messages = {
+				MAIN_TOOL_FORCED: 'MENU_MAIN_TOOL_PICKER_FORCED',
+				MAIN_TOOL_ACCESS_DENIED: 'MENU_MAIN_TOOL_PICKER_ACCESS_DENIED',
+				MAIN_TOOL_UNAVAILABLE: 'MENU_MAIN_TOOL_PICKER_UNAVAILABLE'
+			};
+			const message = main_core.Loc.getMessage(messages[code] || 'MENU_MAIN_TOOL_PICKER_ERROR');
+			Utils.catchError({
+				errors: [{
+					message: main_core.Text.encode(message)
+				}]
+			});
+		}
+		getMode() {
+			return this.#mode;
+		}
+		getSelectedPreset() {
+			const form = document.forms['left-menu-preset-form'];
+			const selectedPreset = form?.querySelector('input[name="presetType"]:checked');
+			return selectedPreset?.value ?? '';
+		}
+		showUnavailableToolPopup() {
+			if (!(this.#unavailableToolPopup instanceof ui_dialogs_messagebox.MessageBox)) {
+				this.#unavailableToolPopup = ui_dialogs_messagebox.MessageBox.create({
+					message: main_core.Loc.getMessage('MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION'),
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
+				});
+			}
+			this.#unavailableToolPopup.show();
+		}
+	}
+
+	const attemptedDocuments = new WeakSet();
+	class MainToolInitialShow {
+		#controller;
+		#document;
+		#attempt = null;
+		#destroyed = false;
+		#frame = null;
+		#finishFrame = null;
+		constructor(controller, ownerDocument) {
+			this.#controller = controller;
+			this.#document = ownerDocument;
+			main_core_events.EventEmitter.subscribe(Options.eventName('onMainToolPickerBootstrap'), this.#onBootstrap);
+			main_core_events.EventEmitter.subscribe(controller, Options.eventName('onMainToolPickerShown'), this.#onShown);
+			main_core_events.EventEmitter.subscribe(controller, Options.eventName('onMainToolPickerClosed'), this.#onClosed);
+			main_core.Event.bind(ownerDocument, 'visibilitychange', this.#onVisibilityChange);
+			if (ownerDocument.defaultView) {
+				main_core.Event.bind(ownerDocument.defaultView, 'pagehide', this.#onPageHide);
+			}
+		}
+		async start() {
+			if (this.#destroyed || attemptedDocuments.has(this.#document) || !this.#isMenuAvailable() || this.#controller.getPopup()) {
+				return;
+			}
+			attemptedDocuments.add(this.#document);
+			const attempt = {
+				bootstrapRevision: Options.mainToolPickerBootstrapRevision,
+				popup: null
+			};
+			this.#attempt = attempt;
+			try {
+				const {
+					data: state
+				} = await Backend.getMainToolState();
+				if (!this.#isCurrent(attempt) || !this.#isEligible(state)) {
+					return;
+				}
+				const stateSnapshot = JSON.stringify(state);
+				const preparation = this.#controller.prepareMainToolPicker(state);
+				attempt.popup = this.#controller.getPopup();
+				const popup = await preparation;
+				if (!popup || popup !== attempt.popup || !this.#isCurrent(attempt)) {
+					return;
+				}
+				const [{
+					data: currentState
+				}, {
+					nextTick
+				}] = await Promise.all([Backend.getMainToolState(), main_core.Runtime.loadExtension('ui.vue3')]);
+				if (!this.#isCurrent(attempt)) {
+					return;
+				}
+				if (!this.#isEligible(currentState) || JSON.stringify(currentState) !== stateSnapshot) {
+					this.#cancel('stale');
+					return;
+				}
+				if (!this.#controller.showPreparedMainToolPicker(popup)) {
+					this.#cancel('hidden');
+					return;
+				}
+				await nextTick();
+				for (let frame = 0; frame < 2; frame++) {
+					if (!this.#isCurrent(attempt) || !popup.isShown() || !(await this.#nextFrame())) {
+						return;
+					}
+				}
+				if (!this.#isCurrent(attempt) || !popup.isShown()) {
+					return;
+				}
+				const response = await Backend.confirmInitialShow();
+				if (!this.#isCurrent(attempt)) {
+					return;
+				}
+				if (response?.data?.shown !== true) {
+					throw new Error('Missing initial show confirmation.');
+				}
+				this.#attempt = null;
+			} catch (response) {
+				if (this.#isCurrent(attempt)) {
+					this.#cancel('error');
+					PresetDefaultController.notifyMainToolError(response);
+				}
+			} finally {
+				this.destroy();
+			}
+		}
+		destroy() {
+			if (this.#destroyed) {
+				return;
+			}
+			this.#destroyed = true;
+			this.#cancel('destroy');
+			main_core_events.EventEmitter.unsubscribe(Options.eventName('onMainToolPickerBootstrap'), this.#onBootstrap);
+			main_core_events.EventEmitter.unsubscribe(this.#controller, Options.eventName('onMainToolPickerShown'), this.#onShown);
+			main_core_events.EventEmitter.unsubscribe(this.#controller, Options.eventName('onMainToolPickerClosed'), this.#onClosed);
+			main_core.Event.unbind(this.#document, 'visibilitychange', this.#onVisibilityChange);
+			if (this.#document.defaultView) {
+				main_core.Event.unbind(this.#document.defaultView, 'pagehide', this.#onPageHide);
+			}
+		}
+		#isMenuAvailable() {
+			return Options.isMainToolPickerEnabled && this.#document.visibilityState === 'visible' && this.#document.defaultView !== null && this.#controller.getContainer() === this.#document.getElementById('menu-items-block');
+		}
+		#isCurrent(attempt) {
+			return !this.#destroyed && this.#attempt === attempt && this.#isMenuAvailable() && attempt.bootstrapRevision === Options.mainToolPickerBootstrapRevision && (attempt.popup ? this.#controller.isMainToolPickerActive(attempt.popup) : this.#controller.getPopup() === null);
+		}
+		#isEligible(state) {
+			if (!main_core.Type.isPlainObject(state) || !main_core.Type.isBoolean(state.autoEligible) || !main_core.Type.isBoolean(state.canChangePersonal) || !main_core.Type.isArray(state.availablePresets)) {
+				throw new Error('Invalid initial show state.');
+			}
+			return state.autoEligible && state.canChangePersonal && state.availablePresets.length > 0;
+		}
+		#nextFrame() {
+			const view = this.#document.defaultView;
+			if (!view) {
+				return Promise.resolve(false);
+			}
+			return new Promise(resolve => {
+				this.#finishFrame = resolve;
+				this.#frame = view.requestAnimationFrame(() => {
+					this.#frame = null;
+					this.#finishFrame = null;
+					resolve(true);
+				});
+			});
+		}
+		#cancel(reason) {
+			const attempt = this.#attempt;
+			this.#attempt = null;
+			if (this.#frame !== null) {
+				this.#document.defaultView?.cancelAnimationFrame(this.#frame);
+				this.#frame = null;
+			}
+			this.#finishFrame?.(false);
+			this.#finishFrame = null;
+			if (attempt?.popup) {
+				this.#controller.closeMainToolPicker(attempt.popup, reason);
+			}
+		}
+		#onBootstrap = () => {
+			this.#cancel('bootstrap');
+			this.destroy();
+		};
+		#onVisibilityChange = () => {
+			if (this.#document.visibilityState !== 'visible') {
+				this.#cancel('hidden');
+				this.destroy();
+			}
+		};
+		#onPageHide = () => {
+			this.#cancel('pagehide');
+			this.destroy();
+		};
+		#onShown = event => {
+			if (event.getData().openingReason === 'manual') {
+				this.destroy();
+			}
+		};
+		#onClosed = event => {
+			const {
+				popup,
+				openingReason
+			} = event.getData();
+			if (popup === this.#attempt?.popup) {
+				this.#attempt = null;
+				this.destroy();
+			} else if (openingReason === 'manual') {
+				this.destroy();
+			}
+		};
+	}
+
+	class SettingsController extends DefaultController {
+		menuId = 'leftMenuSettingsPopup';
+		#menu = null;
+		createPopup() {
+			const menu = new main_popup.Menu({
+				bindElement: this.container,
+				targetContainer: document.querySelector('.js-app__left-menu'),
+				items: this.getItems(),
+				angle: true,
+				offsetTop: 0,
+				offsetLeft: 50
+			});
+			this.#menu = menu;
+			const popup = menu.getPopupWindow();
+			popup.subscribe('onDestroy', () => {
+				if (this.#menu === menu) {
+					this.#menu = null;
+				}
+			});
+			return popup;
+		}
+		getMenuItem(id) {
+			if (!this.#menu || this.#menu.getPopupWindow() !== this.popup || this.popup.isDestroyed()) {
+				return null;
+			}
+			return this.#menu.getMenuItem(id);
+		}
+		getItems() {
+			const notHandledMenuItems = main_core_events.EventEmitter.emit(this, Options.eventName('onGettingSettingMenuItems'));
+			return this.#getMenuItems([...notHandledMenuItems][0]);
+		}
+		#getMenuItems(items) {
+			if (main_core.Type.isArray(items) === false) {
+				return [];
+			}
+			return items.map(item => {
+				return this.#getMenuItem(item);
+			});
+		}
+		#getMenuItem(data) {
+			if (!main_core.Type.isPlainObject(data)) {
+				return null;
+			}
+			const {
+				id,
+				text,
+				html,
+				onclick,
+				className,
+				disabled,
+				items = [],
+				delimiter = false
+			} = data;
+			return {
+				id,
+				html,
+				text: html ? undefined : text,
+				items: this.#getMenuItems(items),
+				delimiter,
+				disabled,
+				className: `menu-popup-no-icon ${className}`,
+				onclick: (event, item) => {
+					if (!main_core.Type.isArrayFilled(items)) {
+						item.getMenuWindow().close();
+					}
+					item.getMenuWindow().getParentMenuItem()?.getMenuWindow()?.close();
+					if (onclick) {
+						onclick(event, item);
+					}
+				}
+			};
+		}
+	}
+
 	class Item {
 		static code = 'abstract';
 		links = [];
+		counterValues = null;
 		isDraggable = true;
 		storage = [];
 		constructor(parentContainer, container) {
@@ -620,6 +1202,17 @@ this.BX = this.BX || {};
 		}
 		init() {
 			this.links = [];
+			this.counterValues = null;
+			if (main_core.Type.isStringFilled(this.container.dataset.counterValues)) {
+				try {
+					const counterValues = JSON.parse(this.container.dataset.counterValues);
+					if (main_core.Type.isPlainObject(counterValues)) {
+						this.counterValues = new Map(Object.entries(counterValues).map(([counterId, counterValue]) => [counterId === '**' ? 'live-feed' : counterId, parseInt(counterValue, 10) || 0]));
+					}
+				} catch {
+					this.counterValues = null;
+				}
+			}
 			if (this.container.hasAttribute('data-link') && main_core.Type.isStringFilled(this.container.getAttribute("data-link"))) {
 				this.links.push(this.container.getAttribute("data-link"));
 			}
@@ -686,19 +1279,42 @@ this.BX = this.BX || {};
 				icon.textContent = getShortName(text.textContent);
 			}
 		}
-		getCounterValue() {
-			const counter = ui_cnt.Counter.initFromCounterNode(this.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+		hasCounterId(counterId) {
+			if (this.counterValues !== null) {
+				return this.counterValues.has(counterId);
+			}
+			const counter = this.getCounter();
+			return Boolean(counter && counter.getId().includes(counterId));
+		}
+		getCounter() {
+			return ui_cnt.Counter.initFromCounterNode(this.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+		}
+		getCounterValue(counterId = null) {
+			if (this.counterValues !== null && main_core.Type.isStringFilled(counterId)) {
+				return this.counterValues.get(counterId) ?? null;
+			}
+			const counter = this.getCounter();
 			if (!counter) {
 				return null;
 			}
 			return counter.getRealValue();
 		}
-		updateCounter(counterValue) {
-			const counter = ui_cnt.Counter.initFromCounterNode(this.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+		updateCounter(counterValue, counterId = null) {
+			const counter = this.getCounter();
 			if (!counter) {
 				return;
 			}
 			const oldValue = counter.getRealValue() || 0;
+			if (this.counterValues !== null && main_core.Type.isStringFilled(counterId) && this.counterValues.has(counterId)) {
+				this.counterValues.set(counterId, parseInt(counterValue, 10) || 0);
+				const serializedCounterValues = {};
+				counterValue = 0;
+				this.counterValues.forEach((value, id) => {
+					serializedCounterValues[id] = value;
+					counterValue += value;
+				});
+				this.container.dataset.counterValues = JSON.stringify(serializedCounterValues);
+			}
 			counter.update(parseInt(counterValue, 10));
 			if (counterValue > 0) {
 				main_core.Dom.addClass(this.container, 'menu-item-with-index');
@@ -726,6 +1342,9 @@ this.BX = this.BX || {};
 			title = title ? main_core.Text.encode(title) : '';
 			const node = main_core.Tag.render`<span class="menu-post-warn-icon" role="img" title="${title}" aria-label="${title}"></span>`;
 			if (events) {
+				if (main_core.Type.isFunction(events.click)) {
+					main_core.Dom.attr(node, 'data-slider-ignore-autobinding', '');
+				}
 				Object.keys(events).forEach(key => {
 					main_core.Event.bind(node, key, events[key]);
 				});
@@ -815,7 +1434,9 @@ this.BX = this.BX || {};
 			openInNewPage,
 			counterId,
 			counterValue,
-			topMenuId
+			topMenuId,
+			iconClass,
+			bindSlider
 		}) {
 			id = main_core.Text.encode(id);
 			text = main_core.Text.encode(text);
@@ -823,6 +1444,9 @@ this.BX = this.BX || {};
 			counterId = counterId ? main_core.Text.encode(counterId) : '';
 			counterValue = counterValue ? parseInt(counterValue) : 0;
 			openInNewPage = openInNewPage === 'Y' ? 'Y' : 'N';
+			bindSlider = bindSlider === 'Y' ? 'Y' : 'N';
+			iconClass = main_core.Type.isStringFilled(iconClass) ? main_core.Text.encode(iconClass) : '';
+			const sliderAttribute = bindSlider === 'Y' && openInNewPage !== 'Y' ? 'data-slider-bind="Y"' : 'data-slider-ignore-autobinding="true"';
 			const counter = new ui_cnt.Counter({
 				size: ui_cnt.Counter.Size.SMALL,
 				style: ui_cnt.Counter.Style.FILLED_ALERT,
@@ -831,7 +1455,7 @@ this.BX = this.BX || {};
 				id: `menu-counter-${counterId}`
 			});
 			const ariaLabel = this.getItemAriaLabel(text, counterValue);
-			return main_core.Tag.render`<li 
+			const node = main_core.Tag.render`<li
 			id="bx_left_menu_${id}" 
 			data-status="show" 
 			data-id="${id}" 
@@ -844,13 +1468,13 @@ this.BX = this.BX || {};
 			data-delete-perm="Y" 
 			${topMenuId ? `data-top-menu-id="${main_core.Text.encode(topMenuId)}"` : ""}
 			data-new-page="${openInNewPage}" 
-			class="menu-item-block menu-item-no-icon-state">
+			class="menu-item-block ${iconClass === '' ? 'menu-item-no-icon-state' : iconClass}">
 				<span class="menu-favorites-btn menu-favorites-draggable" aria-hidden="true">
 					<span class="menu-fav-draggable-icon"></span>
 				</span>
-				<a class="menu-item-link" aria-label="${ariaLabel}" data-slider-ignore-autobinding="true" href="${link}" target="${openInNewPage === 'Y' ? '_blank' : '_self'}">
+				<a class="menu-item-link" aria-label="${ariaLabel}" ${sliderAttribute} href="${link}" target="${openInNewPage === 'Y' ? '_blank' : '_self'}">
 					<span class="menu-item-icon-box" aria-hidden="true">
-						<span class="menu-item-icon">W</span>
+						<span class="menu-item-icon">${iconClass === '' ? 'W' : ''}</span>
 					</span>
 					<span class="menu-item-link-text " data-role="item-text">${text}</span>
 					${counterId ? `<span class="menu-item-index-wrap">
@@ -861,6 +1485,10 @@ this.BX = this.BX || {};
 					<span class="menu-favorites-btn-icon"></span>
 				</span>
 			</li>`;
+			if (this.code === 'standard') {
+				main_core.Dom.attr(node, 'data-testid', `intranet-left-menu-favorite-${id}`);
+			}
+			return node;
 		}
 
 		// region Edition for siblings
@@ -1207,6 +1835,15 @@ this.BX = this.BX || {};
 		static backendSaveItem(itemInfoToSave) {
 			return Backend.updateFavoritesItemMenu(itemInfoToSave);
 		}
+		static applyAddResponseData(itemInfo, responseData) {
+			itemInfo.id = responseData.itemId;
+			itemInfo.topMenuId = itemInfo.id;
+			itemInfo.iconClass = responseData.iconClass;
+			itemInfo.bindSlider = responseData.bindSlider;
+			if (main_core.Type.isStringFilled(responseData.canonicalLink)) {
+				itemInfo.link = responseData.canonicalLink;
+			}
+		}
 		static getActiveTopMenuItem() {
 			if (this.#currentPageInTopMenu) {
 				return this.#currentPageInTopMenu;
@@ -1248,11 +1885,13 @@ this.BX = this.BX || {};
 			pageLink
 		}) {
 			const topMenuPoint = this.getActiveTopMenuItem();
-			let itemInfo, startX, startY;
+			let itemInfo, animateFromPoint;
 			if (topMenuPoint && topMenuPoint.NODE && this.isCurrentPageStandard(topMenuPoint) && (pageLink === Utils.getCurPage() || pageLink === topMenuPoint.URL || !pageLink)) {
 				const menuNodeCoord = topMenuPoint.NODE.getBoundingClientRect();
-				startX = menuNodeCoord.left;
-				startY = menuNodeCoord.top;
+				animateFromPoint = {
+					startX: menuNodeCoord.left,
+					startY: menuNodeCoord.top
+				};
 				itemInfo = {
 					id: topMenuPoint.DATA_ID,
 					text: pageTitle || topMenuPoint.TEXT,
@@ -1263,29 +1902,28 @@ this.BX = this.BX || {};
 					subLink: topMenuPoint.SUB_LINK
 				};
 			} else {
+				const titleNode = BX('pagetitle');
 				itemInfo = {
-					text: pageTitle || document.getElementById('pagetitle').innerText,
+					text: pageTitle || titleNode?.innerText || '',
 					link: pageLink || Utils.getCurPage(),
 					isStandardItem: pageLink === Utils.getCurPage()
 				};
-				const titleCoord = BX("pagetitle").getBoundingClientRect();
-				startX = titleCoord.left;
-				startY = titleCoord.top;
+				if (titleNode) {
+					const titleCoord = titleNode.getBoundingClientRect();
+					animateFromPoint = {
+						startX: titleCoord.left,
+						startY: titleCoord.top
+					};
+				}
 			}
 			return Backend.addFavoritesItemMenu(itemInfo).then(({
-				data: {
-					itemId
-				}
+				data
 			}) => {
-				itemInfo.id = itemId;
-				itemInfo.topMenuId = itemInfo.id;
+				this.applyAddResponseData(itemInfo, data);
 				return {
 					node: this.createNode(itemInfo),
-					animateFromPoint: {
-						startX,
-						startY
-					},
-					itemInfo: itemInfo
+					animateFromPoint,
+					itemInfo
 				};
 			});
 		}
@@ -1294,18 +1932,24 @@ this.BX = this.BX || {};
 		}) {
 			const topPoint = this.getActiveTopMenuItem();
 			var itemInfo = {},
-				startX,
-				startY;
+				animateToPoint;
 			if (topPoint && this.isCurrentPageStandard(topPoint)) {
 				itemInfo['id'] = topPoint.DATA_ID;
 				const menuNodeCoord = topPoint.NODE.getBoundingClientRect();
-				startX = menuNodeCoord.left;
-				startY = menuNodeCoord.top;
+				animateToPoint = {
+					startX: menuNodeCoord.left,
+					startY: menuNodeCoord.top
+				};
 			} else {
 				itemInfo['link'] = pageLink || Utils.getCurPage();
-				const titleCoord = BX("pagetitle").getBoundingClientRect();
-				startX = titleCoord.left;
-				startY = titleCoord.top;
+				const titleNode = BX('pagetitle');
+				if (titleNode) {
+					const titleCoord = titleNode.getBoundingClientRect();
+					animateToPoint = {
+						startX: titleCoord.left,
+						startY: titleCoord.top
+					};
+				}
 			}
 			return Backend.deleteFavoritesItemMenu(itemInfo).then(({
 				data
@@ -1317,11 +1961,8 @@ this.BX = this.BX || {};
 					id: itemInfo.id
 				});
 				return {
-					itemInfo: itemInfo,
-					animateToPoint: {
-						startX,
-						startY
-					}
+					itemInfo,
+					animateToPoint
 				};
 			});
 		}
@@ -1346,12 +1987,9 @@ this.BX = this.BX || {};
 			const startX = pos.left;
 			const startY = pos.top;
 			return Backend.addFavoritesItemMenu(itemInfo).then(({
-				data: {
-					itemId
-				}
+				data
 			}) => {
-				itemInfo.id = itemId;
-				itemInfo.topMenuId = itemInfo.id;
+				this.applyAddResponseData(itemInfo, data);
 				const topPoint = this.getActiveTopMenuItem();
 				BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, this]);
 				BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
@@ -1845,6 +2483,52 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const isStringFilled = value => {
+		return typeof value === 'string' && value.trim() !== '';
+	};
+	const isCollaborationMenuItem = node => {
+		return node?.dataset.collaborationMenu === 'Y';
+	};
+	const handleCollaborationMenuItemClick = (itemNode, linkNode, event) => {
+		if (!isCollaborationMenuItem(itemNode) || !linkNode.matches('a.menu-item-link')) {
+			return false;
+		}
+		if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+			return false;
+		}
+		const menuId = itemNode.dataset.topMenuId;
+		const entryUrl = itemNode.dataset.collaborationEntryUrl;
+		if (!isStringFilled(menuId) || !isStringFilled(entryUrl)) {
+			return false;
+		}
+		const bitrix = globalThis;
+		const collaborationMenu = bitrix.BX?.Intranet?.Bitrix24?.Template?.getCollaborationMenu();
+		if (collaborationMenu?.openFirstItem(menuId, entryUrl) !== true) {
+			return false;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		return true;
+	};
+	const resolveFirstPageLink = (firstPageLink, node) => {
+		if (firstPageLink !== null || isCollaborationMenuItem(node)) {
+			return firstPageLink;
+		}
+		return isStringFilled(node.dataset.link) ? node.dataset.link : null;
+	};
+	const canApplyTopMenuFirstItem = node => {
+		return !isCollaborationMenuItem(node);
+	};
+	const resolveLinkedTopMenuId = (menuId, collaborationItem, collaborationMenuId, legacyMenuId) => {
+		if (collaborationItem?.dataset.topMenuId === menuId) {
+			return menuId;
+		}
+		if (isStringFilled(collaborationMenuId) && isStringFilled(legacyMenuId) && menuId === collaborationMenuId) {
+			return legacyMenuId;
+		}
+		return menuId;
+	};
+
 	class ItemsController extends DefaultController {
 		items = new Map();
 		#activeItem = new ItemActive();
@@ -1895,6 +2579,7 @@ this.BX = this.BX || {};
 						event.stopPropagation();
 						return false;
 					}
+					handleCollaborationMenuItemClick(item.container, node, event);
 				}, true);
 			});
 			item.container.querySelector('[data-role="item-edit-control"]')?.addEventListener('click', event => {
@@ -2132,7 +2817,7 @@ this.BX = this.BX || {};
 					const {
 						oldValue,
 						newValue
-					} = item.updateCounter(counterValue);
+					} = item.updateCounter(counterValue, counterId);
 					const state = item.container.getAttribute('data-status');
 					if ((counterId.indexOf('crm_') < 0 || counterId.indexOf('crm_all') >= 0) && (counterId.indexOf('tasks_') < 0 || counterId.indexOf('tasks_total') >= 0)) {
 						countersDynamic[state] = countersDynamic[state] || 0;
@@ -2201,7 +2886,7 @@ this.BX = this.BX || {};
 			[...Object.entries(counters)].forEach(([counterId, counterValue]) => {
 				const item = this.#getItemsByCounterId(counterId).shift();
 				if (item) {
-					const value = item.getCounterValue();
+					const value = item.getCounterValue(counterId);
 					counters[counterId] = value > counterValue ? value - counterValue : 0;
 				} else {
 					delete counters[counterId];
@@ -2212,8 +2897,7 @@ this.BX = this.BX || {};
 		#getItemsByCounterId(counterId) {
 			const result = [];
 			[...this.items.values()].forEach(item => {
-				const counter = ui_cnt.Counter.initFromCounterNode(item.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
-				if (counter && counter.getId().includes(counterId)) {
+				if (item.hasCounterId(counterId)) {
 					result.push(item);
 				}
 			});
@@ -2262,9 +2946,7 @@ this.BX = this.BX || {};
 							}
 							customItems.push(item);
 						}
-						if (firstItemLink === null && main_core.Type.isStringFilled(node.getAttribute("data-link"))) {
-							firstItemLink = node.getAttribute("data-link");
-						}
+						firstItemLink = resolveFirstPageLink(firstItemLink, node);
 						if (node.closest(`[data-group-id="${currentGroupId}"][data-role="group-content"]`)) {
 							items.push(node.dataset.id);
 						} else {
@@ -2829,6 +3511,40 @@ this.BX = this.BX || {};
 				c_section: AnalyticSection.POPUP
 			});
 		}
+		sendMainToolPickerShown(openingReason) {
+			this.#sendData({
+				event: AnalyticEvent.SHOW,
+				tool: AnalyticTool,
+				category: AnalyticCategory.TOOL,
+				c_section: openingReason === 'auto' ? AnalyticSection.POPUP : AnalyticSection.MENU,
+				p1: this.#isAdmin,
+				p3: `openingReason_${openingReason}`
+			});
+		}
+		sendMainToolPickerApplied(presetId, applyForAll, openingReason) {
+			this.#sendData({
+				type: presetId,
+				event: applyForAll ? AnalyticEvent.SELECT : AnalyticEvent.CHANGE,
+				tool: AnalyticTool,
+				category: applyForAll ? AnalyticCategory.TOOL : AnalyticCategory.MENU,
+				c_section: openingReason === 'auto' ? AnalyticSection.POPUP : AnalyticSection.MENU,
+				c_element: AnalyticActions.CONFIRM,
+				p1: this.#isAdmin,
+				p2: applyForAll ? 'scope_global' : 'scope_personal',
+				p3: `openingReason_${openingReason}`
+			});
+		}
+		sendMainToolPickerClosed(openingReason) {
+			this.#sendData({
+				event: openingReason === 'auto' ? AnalyticEvent.SELECT : AnalyticEvent.CHANGE,
+				tool: AnalyticTool,
+				category: openingReason === 'auto' ? AnalyticCategory.TOOL : AnalyticCategory.MENU,
+				c_section: openingReason === 'auto' ? AnalyticSection.POPUP : AnalyticSection.MENU,
+				c_element: AnalyticActions.CLOSE,
+				p1: this.#isAdmin,
+				p3: `openingReason_${openingReason}`
+			});
+		}
 		#sendData(data) {
 			main_core.Runtime.loadExtension('ui.analytics').then(exports => {
 				exports.sendData(data);
@@ -3199,6 +3915,10 @@ this.BX = this.BX || {};
 		isResponsiveCollapsed = false;
 		wasExpandedBeforeResponsive = false;
 		narrowViewportQuery = null;
+		#mainToolSettingsRequest = 0;
+		#mainToolSettingsLoading = false;
+		#mainToolSettingsError = false;
+		#mainToolInitialShow = null;
 		constructor(params) {
 			this.menuContainer = document.getElementById("menu-items-block");
 			if (!this.menuContainer) {
@@ -3218,6 +3938,7 @@ this.BX = this.BX || {};
 			Options.licenseButtonPath = params.licenseButtonPath;
 			Options.isMessengerEmbedded = params.isMessengerEmbedded === 'Y';
 			Options.currentPresetId = params.currentPresetId;
+			Options.setMainToolPickerEnabled(params.isMainToolPickerEnabled === true);
 			this.isCollapsedMode = params.isCollapsedMode;
 			this.analytics = new Analytics(params.isAdmin);
 			this.initAndBindNodes();
@@ -3232,6 +3953,7 @@ this.BX = this.BX || {};
 			// Emulate document scroll because init() can be invoked after page load scroll
 			// (a hard reload with script at the bottom).
 			// this.handleDocumentScroll();
+			this.#scheduleMainToolInitialShow();
 		}
 		initAndBindNodes() {
 			this.menuContainer.addEventListener("dblclick", this.handleMenuDoubleClick.bind(this));
@@ -3336,6 +4058,7 @@ this.BX = this.BX || {};
 						onGettingSettingMenuItems: this.onGettingSettingMenuItems.bind(this),
 						onShow: () => {
 							this.isMenuMouseLeaveBlocked.push('settings');
+							this.refreshMainToolSettings();
 						},
 						onClose: () => {
 							this.isMenuMouseLeaveBlocked.pop();
@@ -3381,6 +4104,34 @@ this.BX = this.BX || {};
 			return this.cache.remember('defaultPresetController', () => {
 				const presetController = new PresetDefaultController(this.menuContainer, {
 					events: {
+						onMainToolPickerAutoRequested: () => this.#scheduleMainToolInitialShow(),
+						onMainToolPickerShown: ({
+							data: {
+								openingReason
+							}
+						}) => {
+							this.analytics.sendMainToolPickerShown(openingReason);
+						},
+						onMainToolPickerApplied: ({
+							data: {
+								presetId,
+								applyForAll,
+								openingReason
+							}
+						}) => {
+							this.analytics.sendMainToolPickerApplied(presetId, applyForAll, openingReason);
+						},
+						onMainToolPickerClosed: ({
+							data: {
+								openingReason,
+								reason,
+								wasShown
+							}
+						}) => {
+							if (reason === 'close' && wasShown) {
+								this.analytics.sendMainToolPickerClosed(openingReason);
+							}
+						},
 						onPresetIsSet: ({
 							data: {
 								mode,
@@ -3414,6 +4165,101 @@ this.BX = this.BX || {};
 				}, Options.currentPresetId);
 				return presetController;
 			});
+		}
+		setMainToolPickerEnabled(enabled) {
+			if (Options.isMainToolPickerEnabled !== (enabled === true)) {
+				this.#mainToolInitialShow?.destroy();
+				this.#mainToolInitialShow = null;
+				Options.setMainToolPickerEnabled(enabled);
+				this.#updateMainToolSettingsItem();
+				this.#scheduleMainToolInitialShow();
+			}
+		}
+		#scheduleMainToolInitialShow() {
+			const bootstrapRevision = Options.mainToolPickerBootstrapRevision;
+			BX.ready(() => {
+				// BX.ready may run before the global menu instance is assigned.
+				Promise.resolve().then(() => {
+					if (BX.Intranet.LeftMenu !== this || !Options.isMainToolPickerEnabled || bootstrapRevision !== Options.mainToolPickerBootstrapRevision) {
+						return;
+					}
+					this.#mainToolInitialShow ??= new MainToolInitialShow(this.getDefaultPresetController(), this.menuContainer.ownerDocument);
+					void this.#mainToolInitialShow.start();
+				});
+			});
+		}
+		refreshMainToolSettings() {
+			if (!Options.isMainToolPickerEnabled) {
+				return;
+			}
+			const request = ++this.#mainToolSettingsRequest;
+			const bootstrapRevision = Options.mainToolPickerBootstrapRevision;
+			const isCurrent = () => request === this.#mainToolSettingsRequest && bootstrapRevision === Options.mainToolPickerBootstrapRevision && this.menuContainer === document.getElementById('menu-items-block');
+			this.#mainToolSettingsLoading = true;
+			this.#mainToolSettingsError = false;
+			this.#updateMainToolSettingsItem();
+			Backend.getMainToolState().then(({
+				data
+			}) => {
+				if (!isCurrent()) {
+					return;
+				}
+				if (!main_core.Type.isPlainObject(data)) {
+					throw new Error('Invalid main tool state.');
+				}
+				Options.mainToolState = data;
+				this.#mainToolSettingsLoading = false;
+				this.#updateMainToolSettingsItem();
+			}).catch(response => {
+				if (!isCurrent()) {
+					return;
+				}
+				Options.mainToolState = null;
+				this.#mainToolSettingsLoading = false;
+				this.#mainToolSettingsError = true;
+				PresetDefaultController.notifyMainToolError(response);
+				this.#updateMainToolSettingsItem();
+			});
+		}
+		#getMainToolSettingsItem() {
+			if (!Options.isMainToolPickerEnabled) {
+				return {
+					text: main_core.Loc.getMessage('MENU_SET_DEFAULT2'),
+					onclick: () => this.getDefaultPresetController().show('personal')
+				};
+			}
+			const isWaitingForState = !this.#mainToolSettingsError && (this.#mainToolSettingsLoading || !Options.mainToolState);
+			const canChange = !this.#mainToolSettingsLoading && Options.canChangeMainTool();
+			let reason = main_core.Loc.getMessage('MENU_MAIN_TOOL_PICKER_ACCESS_DENIED');
+			if (this.#mainToolSettingsError) {
+				reason = main_core.Loc.getMessage('MENU_MAIN_TOOL_PICKER_ERROR');
+			} else if (Options.mainToolState?.forced) {
+				reason = main_core.Loc.getMessage('MENU_MAIN_TOOL_PICKER_FORCED');
+			}
+			const title = main_core.Loc.getMessage('MENU_SET_DEFAULT2');
+			return {
+				id: 'main-tool-picker',
+				text: canChange || isWaitingForState ? title : `${title}: ${reason}`,
+				disabled: !canChange,
+				onclick: () => {
+					if (!Options.isMainToolPickerEnabled || !this.#mainToolSettingsLoading && Options.canChangeMainTool()) {
+						this.getDefaultPresetController().show('personal');
+					}
+				}
+			};
+		}
+		#updateMainToolSettingsItem() {
+			const item = this.getSettingsController()?.getMenuItem('main-tool-picker');
+			if (!item) {
+				return;
+			}
+			const data = this.#getMainToolSettingsItem();
+			item.setText(data.text);
+			if (data.disabled) {
+				item.disable();
+			} else {
+				item.enable();
+			}
 		}
 		// endregion
 
@@ -3458,8 +4304,11 @@ this.BX = this.BX || {};
 				if (!firstPageLink || !main_core.Type.isDomNode(firstNode)) {
 					return;
 				}
-				const topMenuId = firstNode.getAttribute('data-top-menu-id');
+				const topMenuId = this.#getLinkedTopMenuId(firstNode.getAttribute('data-top-menu-id'));
 				const leftMenuNode = this.menuBody.querySelector(`[data-top-menu-id="${topMenuId}"]`);
+				if (!canApplyTopMenuFirstItem(leftMenuNode)) {
+					return;
+				}
 				if (leftMenuNode) {
 					leftMenuNode.setAttribute('data-link', firstPageLink);
 					const leftMenuLink = leftMenuNode.querySelector('a.menu-item-link');
@@ -3670,13 +4519,19 @@ this.BX = this.BX || {};
 				data: {}
 			});
 		}
+		#getLinkedTopMenuId(menuId) {
+			const collaborationItem = this.menuBody.querySelector('[data-collaboration-menu="Y"]');
+			const collaborationMenuId = main_core.Loc.hasMessage('INTRANET_COLLABORATION_MENU_ID') ? main_core.Loc.getMessage('INTRANET_COLLABORATION_MENU_ID') : null;
+			const legacyMenuId = main_core.Loc.hasMessage('INTRANET_COLLABORATION_MENU_LEGACY_ID') ? main_core.Loc.getMessage('INTRANET_COLLABORATION_MENU_LEGACY_ID') : null;
+			return resolveLinkedTopMenuId(menuId, collaborationItem, collaborationMenuId, legacyMenuId);
+		}
 		#getLeftMenuItemByTopMenuItem({
 			DATA_ID,
 			NODE
 		}) {
 			let item = this.getItemsController().items.get(DATA_ID);
 			if (!item) {
-				const topMenuId = NODE.getAttribute('data-top-menu-id');
+				const topMenuId = this.#getLinkedTopMenuId(NODE.getAttribute('data-top-menu-id'));
 				if (NODE === NODE.parentNode.querySelector('[data-top-menu-id]')) {
 					const leftMenuNode = this.menuItemsBlock.querySelector(`[data-top-menu-id="${topMenuId}"]`);
 					if (leftMenuNode) {
@@ -3772,12 +4627,7 @@ this.BX = this.BX || {};
 				onclick: () => {
 					Messenger.openSettings();
 				}
-			} : null, Options.isExtranet ? null : {
-				text: main_core.Loc.getMessage('MENU_SET_DEFAULT2'),
-				onclick: () => {
-					this.getDefaultPresetController().show('personal');
-				}
-			}, !Options.inviteDialogLink ? null : {
+			} : null, Options.isExtranet ? null : this.#getMainToolSettingsItem(), !Options.inviteDialogLink ? null : {
 				text: main_core.Loc.getMessage('MENU_INVITE_USERS'),
 				onclick: () => {
 					BX.SidePanel.Instance.open(Options.inviteDialogLink, {
@@ -4375,7 +5225,6 @@ this.BX = this.BX || {};
 				className: 'menu-license-all-button',
 				onclick: () => {
 					BX.SidePanel.Instance.open(Options.licenseButtonPath, {
-						width: 1250,
 						cacheable: false
 					});
 				}
@@ -4385,5 +5234,5 @@ this.BX = this.BX || {};
 
 	exports.Menu = Menu;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.UI, BX.Event, BX.Main, BX.UI, BX, BX.UI.Dialogs, BX, BX.UI, BX.Cache, BX.SidePanel);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.UI, BX.Event, BX.Main, BX.UI, BX, BX.UI.Dialogs, BX.UI.Accessibility, BX.UI.System, BX, BX.UI, BX.Cache, BX.SidePanel);
 //# sourceMappingURL=script.js.map

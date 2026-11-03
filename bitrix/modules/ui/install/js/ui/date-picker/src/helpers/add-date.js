@@ -1,4 +1,8 @@
+// Cross-module contract: calendar and disk set and read __utc themselves, so renaming it here breaks both.
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
 import { cloneDate } from './clone-date';
+import { createUtcDate } from './create-utc-date';
 import { getDaysInMonth } from './get-days-in-month';
 
 export function addDate(date, unit, increment): Date
@@ -33,7 +37,7 @@ export function addDate(date, unit, increment): Date
 			let day = date.getUTCDate();
 			if (day > 28)
 			{
-				const firstDayOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+				const firstDayOfMonth = createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), 1);
 				day = Math.min(day, getDaysInMonth(addDate(firstDayOfMonth, 'month', increment)));
 			}
 

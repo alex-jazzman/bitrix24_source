@@ -2,6 +2,17 @@
 <?
 \Bitrix\Main\UI\Extension::load('intranet.old-interface.data-table');
 
+// template description is stored as BBCode and comes here not escaped
+$toPlainDescription = static function ($description): string
+{
+	$description = (string)$description;
+
+	return \Bitrix\Main\Loader::includeModule('ui')
+		? \Bitrix\UI\Format\BBCode\Converter::toPlainText($description)
+		: $description
+	;
+};
+
 if ($arResult["FatalErrorMessage"] <> '')
 {
 	?>
@@ -67,7 +78,7 @@ else
 				<tr>
 					<td align="right" width="40%"><?= GetMessage("BPWC_WRCT_DESCR") ?>:</td>
 					<td width="60%">
-						<?= $arResult["TEMPLATE"]["DESCRIPTION"] ?>
+						<?= htmlspecialcharsbx($toPlainDescription($arResult["TEMPLATE"]["DESCRIPTION"])) ?>
 					</td>
 				</tr>
 			<?endif?>
@@ -109,7 +120,7 @@ else
 				<tr>
 					<td colspan="2">
 						<a href="<?= $arWorkflowTemplate["URL"] ?>"><?= $arWorkflowTemplate["NAME"] ?></a><?= $arWorkflowTemplate["DESCRIPTION"] <> '' ? ":" : "" ?>
-						<?= $arWorkflowTemplate["DESCRIPTION"] ?>
+						<?= htmlspecialcharsbx($toPlainDescription($arWorkflowTemplate["DESCRIPTION"])) ?>
 					</td>
 				</tr>
 				<?

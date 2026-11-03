@@ -33,8 +33,25 @@ Bitrix\Main\UI\Extension::load([
 	'ui.alerts',
 ]);
 
+$hasErrors = !empty($arResult['ERRORS']);
+?>
+<?php if ($hasErrors): ?>
+	<div
+		id="biconnector-key-edit-error-summary"
+		role="alert"
+		tabindex="-1"
+	>
+<?php endif; ?>
+<?php
 foreach ($arResult['ERRORS'] as $error)
 {
+	if ($error instanceof \Bitrix\Main\Error)
+	{
+		ShowError($error->getMessage());
+
+		continue;
+	}
+
 	if (is_array($error))
 	{
 		$message = (string)($error['MESSAGE'] ?? '');
@@ -58,6 +75,11 @@ foreach ($arResult['ERRORS'] as $error)
 
 	ShowError($error);
 }
+?>
+<?php if ($hasErrors): ?>
+	</div>
+<?php endif; ?>
+<?php
 
 $users = [];
 foreach ($arResult['FORM_DATA']['USERS'] as $userId)
@@ -65,9 +87,19 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 	$users[] = ['user', $userId];
 }
 ?>
-<form class="biconnector-key-edit__wrapper" method="post">
+<form
+	class="biconnector-key-edit__wrapper"
+	id="biconnector-key-edit-form"
+	method="post"
+	tabindex="-1"
+	aria-busy="false"
+>
 	<?=bitrix_sessid_post()?>
+	<input type="hidden" name="save" value="Y">
 	<input type="hidden" name="ID" value="<?=$arResult['FORM_DATA']['ID']?>">
+	<?php if ($arResult['FORM_STATE'] === 'create'): ?>
+		<input type="hidden" name="ACCESS_KEY" value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['ACCESS_KEY'])?>">
+	<?php endif; ?>
 	<input type="hidden" name="USERS" id="USERS" value="<?=htmlspecialcharsbx(implode(',', $arResult['FORM_DATA']['USERS']))?>">
 	<div class="biconnector-key-edit__wrapper_form-inner">
 		<div class="biconnector-key-edit__wrapper_form-row" style="display: none;margin-bottom:16px">
@@ -186,6 +218,36 @@ function showText()
 
 	return false;
 }
+
+BX.ready(function ()
+{
+	const errorSummary = document.getElementById('biconnector-key-edit-error-summary');
+	if (errorSummary !== null)
+	{
+		errorSummary.focus();
+	}
+
+	const form = document.getElementById('biconnector-key-edit-form');
+	const saveButtonNode = form.querySelector('button[name="save"]');
+	let isSubmitted = false;
+
+	BX.bind(form, 'submit', function (event) {
+		if (isSubmitted)
+		{
+			event.preventDefault();
+
+			return;
+		}
+
+		isSubmitted = true;
+		form.setAttribute('aria-busy', 'true');
+		form.focus();
+		if (saveButtonNode !== null)
+		{
+			BX.UI.ButtonManager.createFromNode(saveButtonNode).setWaiting(true);
+		}
+	});
+});
 
 <?php if (!$arResult['FORM_DATA']['APP_ID']): ?>
 const tagSelector = new BX.UI.EntitySelector.TagSelector({

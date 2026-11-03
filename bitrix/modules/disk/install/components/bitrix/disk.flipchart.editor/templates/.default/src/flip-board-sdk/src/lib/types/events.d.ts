@@ -15,5 +15,9 @@ export declare enum SDKEvents {
     aiTextRequest = "aiTextRequest",
     aiTextResponse = "aiTextResponse",
     aiTextError = "aiTextError",
-    aiTextCancel = "aiTextCancel"
+    aiTextCancel = "aiTextCancel",
+    mentionMembersRequest = "mentionMembersRequest",
+    mentionMembersResponse = "mentionMembersResponse",
+    mentionMembersError = "mentionMembersError",
+    mentionMembersCancel = "mentionMembersCancel"
 }

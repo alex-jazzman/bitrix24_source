@@ -10,10 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'main.loader',
-		'sign.v2.api',
 		'sign.v2.grid.b2e.placeholders',
-		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

@@ -1,5 +1,6 @@
 import {Dom, Loc, Runtime} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
+import { LiveAnnouncer } from 'ui.a11y';
 import {CellActionState} from '../../../../../../../../main/install/components/bitrix/main.ui.grid/templates/.default/src/js/cell-action-state';
 
 export class ActionsController
@@ -16,9 +17,59 @@ export class ActionsController
 		ActionsController.actionsPanel = actionsPanel;
 	}
 
-	static doAction(action, groupId, data = [])
+	static announce(messageCode, politeness = 'polite', useScrumVariant = false)
+	{
+		const prefix = useScrumVariant && ActionsController.options.isScrumList === 'Y'
+			? 'TASKS_PROJECTS_SCRUM_A11Y_'
+			: 'TASKS_PROJECTS_A11Y_'
+		;
+		const message = Loc.getMessage(`${prefix}${messageCode}`);
+		if (message)
+		{
+			LiveAnnouncer.announce(message, politeness);
+		}
+	}
+
+	static announceRequestResult(result, successMessageCode, errorMessageCode, useScrumVariant = false)
+	{
+		const isSuccess = result?.MESSAGE === 'SUCCESS';
+		ActionsController.announce(
+			isSuccess ? successMessageCode : errorMessageCode,
+			isSuccess ? 'polite' : 'assertive',
+			useScrumVariant,
+		);
+	}
+
+	static doAction(action, groupId, data = [], announceResult = true)
 	{
 		return new Promise((resolve, reject) => {
+			let isSettled = false;
+			const settle = (isSuccess) => {
+				if (isSettled)
+				{
+					return;
+				}
+
+				isSettled = true;
+				if (isSuccess)
+				{
+					resolve();
+				}
+				else
+				{
+					reject();
+				}
+
+				if (announceResult && (action === 'pin' || action === 'unpin'))
+				{
+					ActionsController.announce(
+						`${action.toUpperCase()}_${isSuccess ? 'SUCCESS' : 'ERROR'}`,
+						isSuccess ? 'polite' : 'assertive',
+						true,
+					);
+				}
+			};
+
 			BX.ajax.runComponentAction('bitrix:tasks.projects', 'processAction', {
 				mode: 'class',
 				data: {
@@ -27,12 +78,7 @@ export class ActionsController
 					ids: ActionsController.getActionIds(groupId) || [],
 				},
 				signedParameters: ActionsController.options.signedParameters,
-			}).then(
-				() => resolve(),
-				() => reject()
-			).catch(
-				() => reject()
-			);
+			}).then(() => settle(true), () => settle(false)).catch(() => settle(false));
 
 			ActionsController.hideActionsPanel();
 			ActionsController.unselectRows();
@@ -79,8 +125,14 @@ export class ActionsController
 				save: 'Y',
 				sessid: BX.bitrix_sessid(),
 			},
-			onsuccess: () => Dom.removeClass(button, 'ui-btn-clock'),
-			onfailure: () => Dom.removeClass(button, 'ui-btn-clock'),
+			onsuccess: (result) => {
+				Dom.removeClass(button, 'ui-btn-clock');
+				ActionsController.announceRequestResult(result, 'JOIN_SUCCESS', 'JOIN_ERROR', true);
+			},
+			onfailure: () => {
+				Dom.removeClass(button, 'ui-btn-clock');
+				ActionsController.announce('JOIN_ERROR', 'assertive', true);
+			},
 		});
 
 		ActionsController.hideActionsPanel();
@@ -103,8 +155,14 @@ export class ActionsController
 				ajax_request: 'Y',
 				sessid: BX.bitrix_sessid(),
 			},
-			onsuccess: result => {},
-			onfailure: result => console.log(result),
+			onsuccess: (result) => {
+				ActionsController.announceRequestResult(
+					result,
+					'INVITATION_ACCEPT_SUCCESS',
+					'INVITATION_ACCEPT_ERROR',
+				);
+			},
+			onfailure: () => ActionsController.announce('INVITATION_ACCEPT_ERROR', 'assertive'),
 		});
 
 		ActionsController.hideActionsPanel();
@@ -113,11 +171,20 @@ export class ActionsController
 
 	static sendDenyRequest(userGroupRelationId, url)
 	{
-		ActionsController.sendCancelRequest(userGroupRelationId, url);
+		ActionsController.sendCancelRequest(userGroupRelationId, url, true);
 	}
 
-	static sendCancelRequest(userGroupRelationId, url)
+	static sendCancelRequest(userGroupRelationId, url, isInvitationDeny = false)
 	{
+		const successMessageCode = isInvitationDeny
+			? 'INVITATION_DENY_SUCCESS'
+			: 'REQUEST_CANCEL_SUCCESS'
+		;
+		const errorMessageCode = isInvitationDeny
+			? 'INVITATION_DENY_ERROR'
+			: 'REQUEST_CANCEL_ERROR'
+		;
+
 		BX.ajax({
 			url: url,
 			method: 'POST',
@@ -132,8 +199,10 @@ export class ActionsController
 				ajax_request: 'Y',
 				sessid: BX.bitrix_sessid(),
 			},
-			onsuccess: result => {},
-			onfailure: result => console.log(result),
+			onsuccess: (result) => {
+				ActionsController.announceRequestResult(result, successMessageCode, errorMessageCode);
+			},
+			onfailure: () => ActionsController.announce(errorMessageCode, 'assertive'),
 		});
 
 		ActionsController.hideActionsPanel();
@@ -155,24 +224,70 @@ export class ActionsController
 		return BX.Main.gridManager.getById(ActionsController.options.gridId).instance;
 	}
 
-	static changePin(groupId, event: BaseEvent)
+	static onPinKeyDown(groupId, event: BaseEvent, keyboardEvent: KeyboardEvent)
 	{
-		const {button} = event.getData();
+		const { button } = event.getData();
 
-		if (Dom.hasClass(button, CellActionState.ACTIVE))
+		if (
+			keyboardEvent.target !== keyboardEvent.currentTarget
+			|| keyboardEvent.currentTarget !== button
+			|| keyboardEvent.repeat
+			|| (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ')
+		)
 		{
-			ActionsController.doAction('unpin', groupId).then(() => {
-				Dom.removeClass(button, CellActionState.ACTIVE);
-				Dom.addClass(button, CellActionState.SHOW_BY_HOVER);
-			});
+			return;
+		}
+
+		keyboardEvent.preventDefault();
+		keyboardEvent.stopPropagation();
+		void ActionsController.changePin(groupId, event);
+	}
+
+	static async changePin(groupId, event: BaseEvent)
+	{
+		const { button } = event.getData();
+		if (button.dataset.pinPending === 'true')
+		{
+			return;
+		}
+
+		const isPinned = Dom.hasClass(button, CellActionState.ACTIVE);
+		const action = isPinned ? 'unpin' : 'pin';
+		button.dataset.pinPending = 'true';
+
+		try
+		{
+			await ActionsController.doAction(action, groupId, [], false);
+			ActionsController.updatePinState(button, !isPinned);
+			ActionsController.announce(`${action.toUpperCase()}_SUCCESS`, 'polite', true);
+		}
+		catch
+		{
+			ActionsController.announce(`${action.toUpperCase()}_ERROR`, 'assertive', true);
+
+			return;
+		}
+		finally
+		{
+			delete button.dataset.pinPending;
+		}
+	}
+
+	static updatePinState(button, isPinned)
+	{
+		if (isPinned)
+		{
+			Dom.addClass(button, CellActionState.ACTIVE);
+			Dom.removeClass(button, CellActionState.SHOW_BY_HOVER);
 		}
 		else
 		{
-			ActionsController.doAction('pin', groupId).then(() => {
-				Dom.addClass(button, CellActionState.ACTIVE);
-				Dom.removeClass(button, CellActionState.SHOW_BY_HOVER);
-			});
+			Dom.removeClass(button, CellActionState.ACTIVE);
+			Dom.addClass(button, CellActionState.SHOW_BY_HOVER);
 		}
+
+		button.setAttribute('aria-pressed', isPinned ? 'true' : 'false');
+		button.setAttribute('aria-label', isPinned ? button.dataset.unpinLabel : button.dataset.pinLabel);
 	}
 
 	static onTagClick(field)

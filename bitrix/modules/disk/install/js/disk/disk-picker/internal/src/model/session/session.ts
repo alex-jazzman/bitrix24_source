@@ -28,6 +28,7 @@ const NOOP_CALLBACKS: SessionCallbacks = {
 	notify: () => {},
 	emitSelection: () => {},
 	requestCancel: () => {},
+	setPreviewShown: () => {},
 };
 
 const DEFAULT_CONSTRAINTS: PickerConstraints = Object.freeze({
@@ -55,6 +56,13 @@ function buildDisplayBreadcrumbs(context: NavigationContext | null): DisplayBrea
 	];
 }
 
+function isSameFilters(current: SessionFilters, next: SessionFilters): boolean
+{
+	return current.objectTypeFilter === next.objectTypeFilter
+		&& current.fileTypeFilters.length === next.fileTypeFilters.length
+		&& current.fileTypeFilters.every((value, index) => value === next.fileTypeFilters[index]);
+}
+
 type SessionState = {
 	stageType: StageTypeValue,
 	storageId: number | null,
@@ -68,6 +76,8 @@ type SessionState = {
 	viewMode: ViewModeValue,
 	initialized: boolean,
 	contentLoading: boolean,
+	preserveContentOnLoading: boolean,
+	navigationPending: boolean,
 	contentError: string | null,
 	emptyReason: EmptyReasonValue,
 	hasMore: boolean,
@@ -77,6 +87,13 @@ type SessionState = {
 	paginationStalled: boolean,
 	confirming: boolean,
 	confirmationEpoch: number,
+	// ALG-01: armed by a control outside `files` about to vanish from its own
+	// navigation (e.g. a breadcrumb link becoming the current folder).
+	focusHandoffToFiles: boolean,
+	// Counts every replacement of the list shown: the feed, the search query and the filters
+	// each do that. A scenario that outlives its own list - loading the preview of a set is
+	// the long one - reads the number before and after and gives up when it moved.
+	feedRevision: number,
 	constraints: PickerConstraints,
 	callbacks: SessionCallbacks,
 	guard: RequestGuard,
@@ -96,6 +113,8 @@ export const useSessionStore = defineStore('diskPickerSession', {
 		viewMode: ViewMode.List,
 		initialized: false,
 		contentLoading: false,
+		preserveContentOnLoading: false,
+		navigationPending: false,
 		contentError: null,
 		emptyReason: null,
 		hasMore: false,
@@ -105,6 +124,8 @@ export const useSessionStore = defineStore('diskPickerSession', {
 		paginationStalled: false,
 		confirming: false,
 		confirmationEpoch: 0,
+		focusHandoffToFiles: false,
+		feedRevision: 0,
 		constraints: DEFAULT_CONSTRAINTS,
 		callbacks: markRaw({ ...NOOP_CALLBACKS }),
 		// A per-session guard, non-reactive so its private token stays intact.
@@ -163,13 +184,14 @@ export const useSessionStore = defineStore('diskPickerSession', {
 				&& this.storageId === feed.storageId
 				&& this.folderId === feed.folderId;
 		},
-		// Changing the feed resets pagination only; selection lives in its own
-		// store and is cleared by the feed-change feature (ALG-03).
+		// Changing the feed resets pagination only; the picked set lives in its own
+		// store and survives the feed change (ALG-03).
 		setFeed(feed: PickerFeed): void
 		{
 			if (!this.isSameFeed(feed))
 			{
 				this.invalidateConfirmation();
+				this.feedRevision += 1;
 			}
 			this.stageType = feed.stageType;
 			this.storageId = feed.storageId;
@@ -201,11 +223,19 @@ export const useSessionStore = defineStore('diskPickerSession', {
 		},
 		setFilters(filters: SessionFilters): void
 		{
+			if (!isSameFilters(this.filters, filters))
+			{
+				this.feedRevision += 1;
+			}
 			this.objectTypeFilter = filters.objectTypeFilter;
 			this.fileTypeFilters = [...filters.fileTypeFilters];
 		},
 		setSearchQuery(query: string): void
 		{
+			if (this.searchQuery !== query)
+			{
+				this.feedRevision += 1;
+			}
 			this.searchQuery = query;
 		},
 		setFilterFind(find: string): void
@@ -218,7 +248,7 @@ export const useSessionStore = defineStore('diskPickerSession', {
 		},
 		resetSearchQuery(): void
 		{
-			this.searchQuery = '';
+			this.setSearchQuery('');
 		},
 		setViewMode(mode: ViewModeValue): void
 		{
@@ -239,6 +269,29 @@ export const useSessionStore = defineStore('diskPickerSession', {
 		setLoading(loading: boolean): void
 		{
 			this.contentLoading = loading;
+			if (!loading)
+			{
+				this.preserveContentOnLoading = false;
+			}
+		},
+		setPreserveContentOnLoading(preserve: boolean): void
+		{
+			this.preserveContentOnLoading = preserve;
+		},
+		setNavigationPending(pending: boolean): void
+		{
+			this.navigationPending = pending;
+		},
+		requestFocusHandoffToFiles(): void
+		{
+			this.focusHandoffToFiles = true;
+		},
+		consumeFocusHandoffToFiles(): boolean
+		{
+			const requested = this.focusHandoffToFiles;
+			this.focusHandoffToFiles = false;
+
+			return requested;
 		},
 		markInitialized(): void
 		{

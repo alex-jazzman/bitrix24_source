@@ -84,7 +84,7 @@
 	opacity: 1;
 }
 
-.ui-text-editor-toolbar-button[disabled="true"] {
+.ui-text-editor-toolbar-button[disabled] {
 	opacity: 0.3;
 	background-color: initial;
 	pointer-events: none;

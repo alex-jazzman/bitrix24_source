@@ -380,6 +380,7 @@ var jsBXAC = {
 		if (null != this.SETTINGS.CONTROLS.TYPEFILTER)
 		{
 			this.CONTROLS.TYPEFILTER = document.createElement('SPAN');
+			this.CONTROLS.TYPEFILTER.setAttribute('data-testid', 'intranet-absence-type-filter');
 			this.CONTROLS.TYPEFILTER.className = 'bx-indicator bx-indicator-off';
 			this.CONTROLS.TYPEFILTER.innerHTML = '&nbsp;&nbsp;&nbsp;'
 
@@ -566,6 +567,7 @@ var jsBXAC = {
 
 		if (null != arEntry.VISUAL)
 		{
+			arEntry.VISUAL.setAttribute('data-testid', 'intranet-absence-entry-' + arEntry.ENTRY_TYPE + '-' + arEntry.ID);
 			if (null == this._INFO_CACHE)
 				this._INFO_CACHE = {};
 
@@ -931,6 +933,7 @@ function JCCalendarInfoWin(entry_id, entry_type, user_id, loader, typeBgColors)
 		{
 			_this.DIV = document.body.appendChild(document.createElement('DIV'));
 			_this.DIV.className = 'bx-calendar-info';
+			_this.DIV.setAttribute('data-testid', 'intranet-absence-details-' + _this.TYPE + '-' + _this.ID);
 
 			_this.DIV.style.height = _this.height + 'px';
 			_this.DIV.style.width = _this.width + 'px';

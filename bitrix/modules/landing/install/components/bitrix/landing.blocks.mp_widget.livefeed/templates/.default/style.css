@@ -15,18 +15,17 @@
 	padding: 24px 45px 17px 45px;
 }
 
+/* the title stands on an h2, so the margin, the size and the weight of a heading are all set here */
 .landing-widget-livefeed-title {
 	display: flex;
-	margin-bottom: 20px;
+	flex-wrap: wrap;
+	gap: var(--ui-space-stack-xs) var(--ui-space-inline-lg);
+	margin: 0 0 20px;
 	padding-bottom: 16px;
 	font-size: 28px;
 	font-weight: var(--ui-font-weight-medium);
 	color: var(--widget-color-h);
 	line-height: 19px;
-}
-
-.landing-widget-livefeed-title a:hover{
-	opacity: .9;
 }
 
 .landing-widget-livefeed-badge {
@@ -50,8 +49,9 @@
 }
 
 .landing-widget-livefeed-title .landing-widget-livefeed-badge {
+	flex-shrink: 0;
+	white-space: nowrap;
 	align-self: end;
-	margin-left: 20px;
 	margin-top: 3px;
 }
 
@@ -111,18 +111,25 @@
 	z-index: 2;
 }
 
-.landing-widget-livefeed-body .landing-widget-livefeed-title {
+/* the post title stands on an h3 and no longer shares the class of the widget title:
+   the line height it used to inherit from that class is kept here */
+.landing-widget-livefeed-body-title {
 	display: block;
-	margin-bottom: 9px;
+	margin: 0 0 9px;
 	padding: 0;
 	max-width: 100%;
 	border: none;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: 19px;
 	color: var(--ui-color-text-primary);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
+}
+
+.landing-widget-livefeed-body-title a:hover {
+	opacity: .9;
 }
 
 .landing-widget-livefeed-user-box,
@@ -174,6 +181,15 @@
 	overflow: hidden;
 }
 
+/* the box around the name clips its content to keep the name on one line, and in the sidebar it
+   stands right against the text: a ring drawn outward is cut off on the way out. An unresolved var
+   makes the whole outline invalid at computed-value time, and the browser then drops its own ring
+   as well, so every token here carries a fallback of the value it holds */
+.landing-widget-livefeed-user-text:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
 .landing-widget-livefeed-bottom {
 	display: flex;
 	justify-content: space-between;
@@ -203,6 +219,17 @@
 	margin-top: 34px;
 }
 
+/* the shared .landing-widget-button:focus rule drops the border and the box shrinks by 2px,
+   which would move the ring below on keyboard focus: the border is kept here */
+.landing-widget-livefeed .landing-widget-button.view-all-button:focus {
+	border: 1px solid var(--ui-color-background-transparent);
+}
+
+.landing-widget-livefeed .landing-widget-button.view-all-button:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
 
 /* sidebar */
 .landing-layout-flex .landing-sidebar .landing-widget-livefeed .landing-widget-view-sidebar {
@@ -215,6 +242,7 @@
 }
 
 .landing-widget-view-sidebar .landing-widget-livefeed-title {
+	column-gap: var(--ui-space-inline-2xs2);
 	font-size: 17px;
 	font-weight: var(--ui-font-weight-medium);
 	margin-bottom: 0;
@@ -224,7 +252,7 @@
 }
 
 .landing-widget-view-sidebar .landing-widget-livefeed-badge {
-	margin: 0 0 0 6px;
+	margin: 0;
 }
 
 .landing-widget-view-sidebar .landing-widget-livefeed-item .landing-widget-livefeed-badge {
@@ -253,9 +281,12 @@
 	padding: 0;
 }
 
-.landing-widget-view-sidebar .landing-widget-livefeed-body .landing-widget-livefeed-title {
+/* the values the post title used to pick up from the sidebar rule of the widget title above */
+.landing-widget-view-sidebar .landing-widget-livefeed-body-title {
+	margin-bottom: 0;
+	padding: 0 0 4px 2px;
 	font-size: var(--ui-font-size-md);
-	padding-bottom: 4px;
+	font-weight: var(--ui-font-weight-medium);
 }
 
 .landing-widget-view-sidebar .landing-widget-livefeed-user-box {

@@ -1,0 +1,11 @@
+{
+    "defaultTableName": "b_catalog_currency",
+    "installDirectoriesMapping": {
+        "install/admin": "admin",
+        "install/components": "components",
+        "install/images": "images/currency",
+        "install/js": "js",
+        "install/themes": "themes",
+        "install/tools": "tools"
+    }
+}

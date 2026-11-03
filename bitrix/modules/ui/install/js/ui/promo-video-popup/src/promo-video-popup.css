@@ -1,15 +1,19 @@
+/* The popup takes the show class off as soon as the movement is over, so every movement lives
+   in a class of its own and the base rule holds the resting visible state. */
 .ui__promo-video-popup {
-	transition: 0.2s ease-in-out transform, 0.2s opacity ease-in-out;
-	opacity: 0;
+	--ui__promo-video-popup_show-offset-x: 0px;
+	--ui__promo-video-popup_show-offset-y: 0px;
+	--ui__promo-video-popup_close-offset-x: 0px;
+	--ui__promo-video-popup_close-offset-y: 0px;
 	backdrop-filter: blur(2px);
 }
 
 .ui__promo-video-popup.--from-top {
-	transform: translate(0, -10px);
+	--ui__promo-video-popup_show-offset-y: -10px;
 }
 
 .ui__promo-video-popup.--from-right {
-	transform: translate(10px, 0);
+	--ui__promo-video-popup_show-offset-x: 10px;
 }
 
 .ui__promo-video-popup .popup-window-close-icon {
@@ -69,23 +73,54 @@
 	border-radius: 10px;
 }
 
+.ui__promo-video-popup.--show {
+	animation: ui__promo-video-popup-show 0.2s ease-in-out both;
+}
+
+.ui__promo-video-popup.--close,
+.ui__promo-video-popup.--close-left,
+.ui__promo-video-popup.--close-bottom {
+	animation: ui__promo-video-popup-close 0.2s ease-in-out both;
+}
+
 .ui__promo-video-popup.--close-left {
-	transform: translate(-10px, 0);
-	opacity: 0;
+	--ui__promo-video-popup_close-offset-x: -10px;
 }
 
 .ui__promo-video-popup.--close-bottom {
-	transform: translate(0, 10px);
-	opacity: 0;
+	--ui__promo-video-popup_close-offset-y: 10px;
 }
 
-.ui__promo-video-popup.--close {
-	opacity: 0;
+@keyframes ui__promo-video-popup-show {
+	from {
+		opacity: 0;
+		transform: translate(
+			var(--ui__promo-video-popup_show-offset-x),
+			var(--ui__promo-video-popup_show-offset-y)
+		);
+	}
+
+	to {
+		opacity: 1;
+		transform: translate(0px, 0px);
+	}
 }
 
-.ui__promo-video-popup.--show {
-	opacity: 1;
-	transform: translate(0, 0);
+/* The first frame is the state the popup was in when the closing started: the extension writes
+   it down, so a closing that interrupts the show carries on from where the show was cut. */
+@keyframes ui__promo-video-popup-close {
+	from {
+		opacity: var(--ui__promo-video-popup_close-from-opacity, 1);
+		transform: var(--ui__promo-video-popup_close-from-transform, translate(0px, 0px));
+	}
+
+	to {
+		opacity: 0;
+		transform: translate(
+			var(--ui__promo-video-popup_close-offset-x),
+			var(--ui__promo-video-popup_close-offset-y)
+		);
+	}
 }
 
 .ui__promo-video-popup-content_footer {

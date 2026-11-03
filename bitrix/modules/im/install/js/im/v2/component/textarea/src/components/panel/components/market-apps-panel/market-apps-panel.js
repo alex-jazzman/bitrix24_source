@@ -2,13 +2,12 @@ import { RichLoc } from 'ui.vue3.components.rich-loc';
 
 import { PlacementType } from 'im.v2.const';
 import { MarketManager } from 'im.v2.lib.market';
+import { type ImModelMarketApplication } from 'im.v2.model';
 
 import { MarketAppItem } from './market-app-item';
 import { MarketShowMorePopup } from './market-show-more-popup';
 
 import '../../css/market-apps-panel/market-apps-panel.css';
-
-import type { ImModelMarketApplication } from 'im.v2.model';
 
 const MAX_EXPANDED_ITEMS = 5;
 const MAX_COLLAPSED_ITEMS = 15;
@@ -55,6 +54,12 @@ export const MarketAppsPanel = {
 			return this.loc('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_2');
 		},
 	},
+	beforeUnmount()
+	{
+		// the panel is closed or the chat is switched: the placement is only closed, its iframe
+		// stays warm in the cache of the manager and opens instantly with its data on the next click
+		MarketManager.getInstance().closeDialogPlacement(this.dialogId);
+	},
 	methods: {
 		onEmptyStateLinkClick(): void
 		{
@@ -84,13 +89,14 @@ export const MarketAppsPanel = {
 				<div class="bx-im-market-apps-panel__items-container" :class="{'--short': hideTitle}">
 					<MarketAppItem
 						v-for="item in marketItemsToShow.displayedItems"
+						:key="item.id"
 						:item="item"
 						:hideTitle="hideTitle"
 						:dialogId="dialogId"
 					/>
 				</div>
-				<MarketShowMorePopup 
-					v-if="needMoreButton" 
+				<MarketShowMorePopup
+					v-if="needMoreButton"
 					:marketApps="marketItemsToShow.hiddenItems"
 					:dialogId="dialogId"
 				/>

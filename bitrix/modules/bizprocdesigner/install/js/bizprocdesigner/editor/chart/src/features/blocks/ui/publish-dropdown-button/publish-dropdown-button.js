@@ -48,7 +48,7 @@ export const PublishDropdownButton = {
 		...mapState(usePublishMenuStore, { isMenuHeldOpen: 'isHeldOpen' }),
 		isPublishDisabled(): boolean
 		{
-			return !this.canPublish;
+			return !this.canPublish || this.isPublishInert;
 		},
 		icon(): string
 		{

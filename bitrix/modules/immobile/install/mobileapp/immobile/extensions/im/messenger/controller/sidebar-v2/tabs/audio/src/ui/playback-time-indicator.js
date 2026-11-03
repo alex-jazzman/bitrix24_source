@@ -1,52 +1,17 @@
 /**
  * @module im/messenger/controller/sidebar-v2/tabs/audio/src/ui/playback-time-indicator
  */
-jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/playback-time-indicator', (require, exports, module) => {
-	const { Text4 } = require('ui-system/typography/text');
-	const { Color } = require('tokens');
-	const { PureComponent } = require('layout/pure-component');
-
-	class PlaybackTimeIndicator extends PureComponent
-	{
-		/**
-		 * @param props
-		 * @param {string} props.testId
-		 * @param {number} props.length
-		 * @param {number} props.timing
-		 * @param {Function} props.onRef
-		 */
-		constructor(props)
-		{
-			super(props);
-
-			this.testId = props.testId;
-
-			this.state = {
-				timing: 0,
-				length: props.length,
-			};
-		}
-
-		componentDidMount()
-		{
-			this.props.onRef?.(this);
-		}
+jn.define(
+	'im/messenger/controller/sidebar-v2/tabs/audio/src/ui/playback-time-indicator',
+	(require, exports, module) => {
+		const { Text4 } = require('ui-system/typography/text');
+		const { Color } = require('tokens');
 
 		/**
-		 * @public
-		 * @param {number} timing
+		 * @param {{ currentTime?: number, duration?: number, testId: string }} props
 		 */
-		updateTiming(timing)
-		{
-			this.setState({ timing });
-		}
-
-		render()
-		{
-			const { timing, length } = this.state;
-
-			const roundedTiming = Math.floor(timing);
-			const roundedLength = Math.floor(length);
+		const playbackTimeIndicator = (props) => {
+			const { currentTime, duration, testId } = props;
 
 			return View(
 				{
@@ -55,39 +20,50 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/playback-time-in
 					},
 				},
 				Text4({
-					text: this.toTimeText(roundedTiming),
+					text: toTimeText(currentTime),
 					color: Color.base3,
-					testId: `${this.testId}-timing`,
+					testId: `${testId}-timing`,
 				}),
 				Text4({
 					text: ' / ',
 					color: Color.base2,
-					testId: `${this.testId}-duration-divider`,
+					testId: `${testId}-duration-divider`,
 				}),
 				Text4({
-					text: this.toTimeText(roundedLength),
+					text: toTimeText(duration),
 					color: Color.base2,
-					testId: `${this.testId}-duration`,
+					testId: `${testId}-duration`,
 				}),
 			);
-		}
+		};
 
 		/**
 		 * @param {number} seconds
-		 * @returns {string} - MM:SS
+		 * @returns {string} MM:SS, or HH:MM:SS for an hour and longer
 		 */
-		toTimeText(seconds)
-		{
-			const minutes = Math.floor(seconds / 60);
-			seconds = seconds % 60;
-			const minutesText = minutes < 10 ? `0${minutes}` : minutes;
-			const secondsText = seconds < 10 ? `0${seconds}` : seconds;
+		const toTimeText = (seconds) => {
+			const total = Number(seconds);
+			if (!Number.isFinite(total) || total <= 0)
+			{
+				return '00:00';
+			}
 
-			return `${minutesText}:${secondsText}`;
-		}
-	}
+			const pad = (n) => String(n).padStart(2, '0');
+			const hours = Math.floor(total / 3600);
+			const minutes = Math.floor((total % 3600) / 60);
+			const secs = Math.floor(total % 60);
 
-	module.exports = {
-		PlaybackTimeIndicator,
-	};
-});
+			if (hours > 0)
+			{
+				return `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
+			}
+
+			return `${pad(minutes)}:${pad(secs)}`;
+		};
+
+		module.exports = {
+			playbackTimeIndicator,
+			toTimeText,
+		};
+	},
+);

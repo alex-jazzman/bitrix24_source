@@ -108,6 +108,15 @@ if (BX.Type.isUndefined(BX.Crm.EntityEditorRecurringV2))
 		return BX.UI.EditorDragObjectType.field;
 	};
 
+	BX.Crm.EntityEditorRecurringV2.prototype.setActualDraggableContextId = function()
+	{
+		const parent = this.getParent();
+		if (parent)
+		{
+			this.setDraggableContextId(parent.getDraggableContextId());
+		}
+	};
+
 	BX.Crm.EntityEditorRecurringV2.prototype.hasContentToDisplay = function()
 	{
 		return true;
@@ -161,7 +170,12 @@ if (BX.Type.isUndefined(BX.Crm.EntityEditorRecurringV2))
 							${this.getMessage('notRepeat')}
 						</div>
 					</div>
-					<button class="crm-entity-widget-content-block-locked-icon" onclick="${this.showLicencePopup.bind(this)}"></button>
+					<button
+						type="button"
+						class="crm-entity-widget-content-block-locked-icon"
+						aria-label="${this.getMessage('modeTitle')}"
+						onclick="${this.showLicencePopup.bind(this)}"
+					></button>
 				</div>
 			`;
 
@@ -201,21 +215,32 @@ if (BX.Type.isUndefined(BX.Crm.EntityEditorRecurringV2))
 
 			if (this.isContextMenuEnabled())
 			{
-				BX.Dom.append(this.createContextMenuButton(), viewNode);
+				this.insertContextMenuButton(viewNode);
 			}
 
 			if (this.isDragEnabled())
 			{
+				this.setActualDraggableContextId();
 				BX.Dom.append(this.createDragButton(), viewNode);
 				this.initializeDragDropAbilities();
 			}
 		}
 		else
 		{
+			const editNode = BX.Tag.render`<div class="crm-entity-widget-content-block"></div>`;
+
 			this.recurringField.setData(this.getRecurringModel());
 			this.innerWrapper = this.recurringField.getLayout();
 
-			BX.Dom.append(this.innerWrapper, this.contentContainer);
+			if (this.isDragEnabled())
+			{
+				this.setActualDraggableContextId();
+				BX.Dom.append(this.createDragButton(), editNode);
+				this.initializeDragDropAbilities();
+			}
+
+			BX.Dom.append(this.innerWrapper, editNode);
+			BX.Dom.append(editNode, this.contentContainer);
 		}
 
 		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-pseudo-private
@@ -226,6 +251,22 @@ if (BX.Type.isUndefined(BX.Crm.EntityEditorRecurringV2))
 		this._hasLayout = true;
 
 		this.registerLayout(options);
+	};
+
+	BX.Crm.EntityEditorRecurringV2.prototype.refreshLayout = function(options)
+	{
+		if (!this.getContainer())
+		{
+			return;
+		}
+
+		BX.Crm.EntityEditorRecurringV2.superclass.refreshLayout.call(this, options);
+	};
+
+	BX.Crm.EntityEditorRecurringV2.prototype.clearLayout = function()
+	{
+		this.recurringField.clean();
+		BX.Crm.EntityEditorRecurringV2.superclass.clearLayout.call(this);
 	};
 
 	BX.Crm.EntityEditorRecurringV2.prototype.createTitleNode = function(title)

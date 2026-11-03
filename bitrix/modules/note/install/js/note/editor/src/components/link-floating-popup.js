@@ -28,6 +28,8 @@ export const LinkFloatingPopupComponent = {
 			visible: false,
 			posX: 0,
 			posY: 0,
+			linkAutofocus: false,
+			caretDrivenOpen: false,
 		};
 	},
 	created()
@@ -51,6 +53,10 @@ export const LinkFloatingPopupComponent = {
 		// True when the current pointer interaction started inside the popup, so a drag-select that
 		// ends outside the popup (mouseup beyond its bounds) isn't misread as a click-outside close.
 		this.pointerDownInsidePopup = false;
+		this.pointerInteractionActive = false;
+		this.pointerStart = null;
+		this.pointerWasDragged = false;
+		this.explicitPopupOpen = false;
 		// Tracks the isEditable false->true transition: on entering edit mode the caret may land inside
 		// a link (e.g. a link at doc start), and we must not auto-open the popup for that programmatic
 		// caret placement — only an explicit interaction should open it.
@@ -68,8 +74,10 @@ export const LinkFloatingPopupComponent = {
 		this.handleDocumentKeydown = this.handleDocumentKeydown.bind(this);
 		this.handleViewportChange = this.handleViewportChange.bind(this);
 		this.handleDocumentPointerDown = this.handleDocumentPointerDown.bind(this);
+		this.handleDocumentPointerUp = this.handleDocumentPointerUp.bind(this);
 
 		Event.bind(document, 'mousedown', this.handleDocumentPointerDown, true);
+		Event.bind(document, 'mouseup', this.handleDocumentPointerUp, true);
 		Event.bind(document, 'click', this.handleDocumentClick, true);
 		Event.bind(document, 'keydown', this.handleDocumentKeydown, true);
 		// Capture phase on document to also catch scroll of `main.content`, not just window.
@@ -79,6 +87,7 @@ export const LinkFloatingPopupComponent = {
 	beforeUnmount()
 	{
 		Event.unbind(document, 'mousedown', this.handleDocumentPointerDown, true);
+		Event.unbind(document, 'mouseup', this.handleDocumentPointerUp, true);
 		Event.unbind(document, 'click', this.handleDocumentClick, true);
 		Event.unbind(document, 'keydown', this.handleDocumentKeydown, true);
 		Event.unbind(document, 'scroll', this.handleViewportChange, true);
@@ -98,10 +107,32 @@ export const LinkFloatingPopupComponent = {
 		{
 			const target = event.target instanceof Element ? event.target : null;
 			const popup = this.$refs.popup;
+			this.pointerInteractionActive = true;
+			this.pointerStart = { x: event.clientX, y: event.clientY };
+			this.pointerWasDragged = false;
+			const editorDom = this.editor?.view?.dom;
+			if (this.explicitPopupOpen
+				&& editorDom instanceof HTMLElement
+				&& target !== null
+				&& editorDom.contains(target)
+				&& target.closest('a[href]') !== this.currentAnchor)
+			{
+				this.explicitPopupOpen = false;
+			}
 			this.pointerDownInsidePopup = this.visible
 				&& popup instanceof HTMLElement
 				&& target !== null
 				&& popup.contains(target);
+		},
+		handleDocumentPointerUp(event: MouseEvent): void
+		{
+			this.pointerInteractionActive = false;
+			if (this.pointerStart)
+			{
+				this.pointerWasDragged = Math.abs(event.clientX - this.pointerStart.x) > 2
+					|| Math.abs(event.clientY - this.pointerStart.y) > 2;
+				this.pointerStart = null;
+			}
 		},
 		// Popup visibility is primarily caret-driven (see syncVisibilityWithCaret), but a click
 		// outside both the popup and the editor DOM doesn't move ProseMirror selection, so it
@@ -113,6 +144,14 @@ export const LinkFloatingPopupComponent = {
 			if (this.pointerDownInsidePopup)
 			{
 				this.pointerDownInsidePopup = false;
+				this.pointerWasDragged = false;
+
+				return;
+			}
+
+			if (this.pointerWasDragged)
+			{
+				this.pointerWasDragged = false;
 
 				return;
 			}
@@ -153,6 +192,10 @@ export const LinkFloatingPopupComponent = {
 			const anchor = target.closest('a[href]');
 			if (!(anchor instanceof HTMLAnchorElement))
 			{
+				// The click moved the caret outside the dismissed link. This must be synchronous: a
+				// close() transaction may still be flushing and defer the caret-driven reset.
+				this.dismissedRange = null;
+
 				return;
 			}
 
@@ -161,14 +204,48 @@ export const LinkFloatingPopupComponent = {
 				return;
 			}
 
+			event.preventDefault();
+
+			let range = null;
+			try
+			{
+				range = findLinkMarkRangeAtPos(editor, editor.view.posAtDOM(anchor, 0));
+			}
+			catch
+			{
+				return;
+			}
+
+			if (!range)
+			{
+				return;
+			}
+
 			// Explicit click on a link must always be able to reopen the popup, even if this exact
 			// range was just dismissed (Enter/Escape) with the caret still inside it.
 			this.dismissedRange = null;
-			event.preventDefault();
-			// The caret may already sit inside this link (popup was just closed with Enter/Escape),
-			// so no transaction fires to drive the caret sync. Trigger it explicitly so a single
-			// click reopens the popup instead of requiring a second one.
-			this.$nextTick(() => this.syncVisibilityWithCaret());
+			this.explicitPopupOpen = true;
+			if (!this.visible)
+			{
+				this.linkState.open(range);
+				this.openAt(anchor, { autofocus: true });
+
+				return;
+			}
+
+			if (anchor !== this.currentAnchor)
+			{
+				this.commitPendingRange();
+				this.linkState.open(range);
+				this.openAt(anchor, { autofocus: true });
+			}
+			else if (this.caretDrivenOpen)
+			{
+				this.caretDrivenOpen = false;
+				this.linkState.updateRange(range);
+				this.linkState.showSelectionOverlay();
+				this.linkAutofocus = true;
+			}
 		},
 		// Resolve the anchor from a position inside the mark range (not the left edge): domAtPos
 		// at range.from tends to land on the block element (e.g. <p>), whose closest('a[href]')
@@ -243,16 +320,58 @@ export const LinkFloatingPopupComponent = {
 			const justEnabledEdit = !this.wasEditable;
 			this.wasEditable = true;
 
+			const selection = editor.state.selection;
+			if (!selection.empty)
+			{
+				this.anchorRetryPending = false;
+				this.dismissedRange = null;
+				if (this.visible && this.caretDrivenOpen)
+				{
+					this.close({ restoreFocus: false });
+				}
+
+				if (!this.visible || this.caretDrivenOpen)
+				{
+					return;
+				}
+			}
+
 			// Ignore transactions caused by our own close()/commit() to avoid reopening the popup.
 			if (this.isClosing)
 			{
 				return;
 			}
 
-			const range = findLinkMarkRangeAtPos(editor, editor.state.selection.from);
+			if (!this.visible && this.pointerInteractionActive)
+			{
+				return;
+			}
+
+			let range = findLinkMarkRangeAtPos(editor, selection.from);
+
+			// Consume the one-shot marker even when the caret is on an external link boundary. Otherwise
+			// it survives until the next entry into the link and suppresses that real user interaction.
+			const inputRuleRange = editor.storage?.link?.suppressPopupRange ?? null;
+			if (inputRuleRange)
+			{
+				editor.storage.link.suppressPopupRange = null;
+			}
+
+			if ((!this.visible || this.caretDrivenOpen)
+				&& range
+				&& (selection.from === range.from || selection.from === range.to)
+			)
+			{
+				range = null;
+			}
+
 			if (!range)
 			{
 				this.anchorRetryPending = false;
+				if (this.visible && this.explicitPopupOpen)
+				{
+					return;
+				}
 				// Caret left the link: clear dismissal so re-entering it later reopens the popup.
 				this.dismissedRange = null;
 				if (this.visible)
@@ -279,16 +398,15 @@ export const LinkFloatingPopupComponent = {
 			// range handed over by LinkWithInputRule and seed the dismissal (same as entering edit mode),
 			// so the popup stays closed until the user clicks the link or moves into it. Clear it
 			// unconditionally so a later click can still reopen the popup for the same range.
-			const inputRuleRange = editor.storage?.link?.suppressPopupRange ?? null;
-			if (inputRuleRange)
+			if (inputRuleRange
+				&& !this.visible
+				&& inputRuleRange.from === range.from
+				&& inputRuleRange.to === range.to
+			)
 			{
-				editor.storage.link.suppressPopupRange = null;
-				if (!this.visible && inputRuleRange.from === range.from && inputRuleRange.to === range.to)
-				{
-					this.dismissedRange = range;
+				this.dismissedRange = range;
 
-					return;
-				}
+				return;
 			}
 
 			// Caret moved to a different link range: the previous dismissal no longer applies.
@@ -332,17 +450,25 @@ export const LinkFloatingPopupComponent = {
 
 			if (!this.visible)
 			{
-				this.linkState.open(range);
-				this.openAt(anchor);
+				this.linkState.open(range, { showSelectionOverlay: false });
+				this.openAt(anchor, { caretDriven: true });
 			}
 			else if (anchor !== this.currentAnchor)
 			{
 				// Caret moved from link A to link B: commit A's pending edit onto A's own range first
 				// (not via restoreLinkSelection, which would yank the caret back into A), then re-open
 				// on B (re-read its href/selection).
+				const caretDriven = this.caretDrivenOpen;
 				this.commitPendingRange();
-				this.linkState.open(range);
-				this.openAt(anchor);
+				this.linkState.open(range, { showSelectionOverlay: !caretDriven });
+				this.openAt(anchor, {
+					autofocus: !caretDriven,
+					caretDriven,
+				});
+			}
+			else if (this.caretDrivenOpen)
+			{
+				this.linkState.updateRange(range);
 			}
 		},
 		// Lands the currently open link's pending edit on its own (now stale) range, without moving
@@ -353,10 +479,15 @@ export const LinkFloatingPopupComponent = {
 		{
 			this.linkState.commitInPlace();
 		},
-		openAt(anchor: HTMLAnchorElement): void
+		openAt(
+			anchor: HTMLAnchorElement,
+			{ autofocus = false, caretDriven = false }: { autofocus?: boolean, caretDriven?: boolean } = {},
+		): void
 		{
 			this.currentAnchor = anchor;
 			this.committed = false;
+			this.linkAutofocus = autofocus;
+			this.caretDrivenOpen = caretDriven;
 			const rect = anchor.getBoundingClientRect();
 			this.posX = Math.round(rect.left);
 			this.posY = Math.round(rect.top - ANCHOR_GAP);
@@ -428,9 +559,12 @@ export const LinkFloatingPopupComponent = {
 			}
 
 			this.isClosing = true;
+			this.explicitPopupOpen = false;
 			this.commitOnce();
 			this.visible = false;
 			this.currentAnchor = null;
+			this.linkAutofocus = false;
+			this.caretDrivenOpen = false;
 			this.linkState.close();
 			if (restoreFocus)
 			{
@@ -441,6 +575,7 @@ export const LinkFloatingPopupComponent = {
 			// Release the guard after the closing/commit transactions have flushed through the sync.
 			this.$nextTick(() => {
 				this.isClosing = false;
+				this.syncVisibilityWithCaret();
 			});
 		},
 		handleDocumentKeydown(event: KeyboardEvent): void
@@ -448,6 +583,15 @@ export const LinkFloatingPopupComponent = {
 			if (!this.visible)
 			{
 				return;
+			}
+			const editorDom = this.editor?.view?.dom;
+			if (this.explicitPopupOpen
+				&& editorDom instanceof HTMLElement
+				&& event.target instanceof Node
+				&& editorDom.contains(event.target))
+			{
+				this.explicitPopupOpen = false;
+				this.$nextTick(() => this.syncVisibilityWithCaret());
 			}
 
 			if (event.key === 'Escape')
@@ -477,8 +621,12 @@ export const LinkFloatingPopupComponent = {
 		handleApply(): void
 		{
 			// Enter is an explicit user close (like Escape): mark the range dismissed so the caret
-			// staying inside the link after apply doesn't reopen the popup. close() performs the commit.
-			this.dismissCurrentRange();
+			// staying inside the link after apply doesn't reopen the popup. Before creating a new link,
+			// the editor selection has no link mark yet, so use the pending selection captured by linkState.
+			this.dismissedRange = this.linkState.linkSelection ?? findLinkMarkRangeAtPos(
+				this.editor,
+				this.editor?.state.selection.from,
+			);
 			this.close();
 		},
 		handleUnset(): void
@@ -491,6 +639,16 @@ export const LinkFloatingPopupComponent = {
 		{
 			this.linkState.setLinkValue(value);
 		},
+		handleFormFocus(): void
+		{
+			if (!this.visible || !this.caretDrivenOpen)
+			{
+				return;
+			}
+
+			this.caretDrivenOpen = false;
+			this.linkState.showSelectionOverlay();
+		},
 	},
 	// language=Vue
 	template: `
@@ -499,6 +657,7 @@ export const LinkFloatingPopupComponent = {
 				v-if="visible"
 				ref="popup"
 				class="note-editor-popover note-editor-popover--floating"
+				data-testid="note-editor-link-floating-popup"
 				:style="{ position: 'fixed', left: posX + 'px', top: posY + 'px' }"
 			>
 				<div class="note-editor-popover-card">
@@ -507,7 +666,8 @@ export const LinkFloatingPopupComponent = {
 						:editor-tick="editorTick"
 						:link-value="linkState.linkValue"
 						:link-is-active="true"
-						:autofocus="true"
+						:autofocus="linkAutofocus"
+						@field-focus="handleFormFocus"
 						@update:link-value="handleLinkValueChange"
 						@apply="handleApply"
 						@unset="handleUnset"

@@ -1,0 +1,59 @@
+.tasks-hint-popup
+{
+	width: min(520px, calc(100vw - 28px));
+}
+
+.tasks-consultation-aha
+{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 16px 26px 20px 12px;
+}
+
+.tasks-consultation-aha__image
+{
+	flex: none;
+	width: 124px;
+	height: 124px;
+	/* bigger icon on top, larger soft radial glow behind it */
+	background:
+		url('./question-light.png') no-repeat center center / 92px 92px,
+		radial-gradient(circle at 50% 55%, rgba(202, 230, 255, 0.75) 0%, rgba(202, 230, 255, 0.18) 42%, rgba(202, 230, 255, 0) 72%);
+}
+
+.tasks-consultation-aha__info
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm, 8px);
+	color: var(--ui-color-base-white-fixed, #ffffff);
+	padding-left: var(--ui-space-inset-sm, 12px);
+	min-width: 0;
+}
+
+.tasks-consultation-aha__text
+{
+	color: var(--ui-color-base-white-fixed, #ffffff);
+}
+
+@media (max-width: 480px)
+{
+	.tasks-consultation-aha
+	{
+		align-items: flex-start;
+		padding: 16px 20px 20px 12px;
+	}
+
+	.tasks-consultation-aha__image
+	{
+		width: 72px;
+		height: 72px;
+		background-size: 64px 64px, auto;
+	}
+
+	.tasks-consultation-aha__info
+	{
+		padding-left: var(--ui-space-inset-xs, 8px);
+	}
+}

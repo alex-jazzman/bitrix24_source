@@ -2,13 +2,11 @@ import { Dom, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import type { BaseEvent } from 'main.core.events';
 
-import { mapGetters } from 'ui.vue3.vuex';
 import { DatePicker, DatePickerEvent, createDate, createUtcDate } from 'ui.date-picker';
 
-import { Core } from 'tasks.v2.core';
-import { Model, Analytics } from 'tasks.v2.const';
-import { idUtils } from 'tasks.v2.lib.id-utils';
+import { Analytics } from 'tasks.v2.const';
 import { calendar } from 'tasks.v2.lib.calendar';
+import { deadlineRules } from 'tasks.v2.lib.deadline-rules';
 import { timezone } from 'tasks.v2.lib.timezone';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { Hint } from 'tasks.v2.component.elements.hint';
@@ -33,6 +31,9 @@ export const DeadlinePopupContent = {
 	inject: {
 		analytics: {},
 		cardType: {},
+		analyticsSubSection: {
+			default: Analytics.SubSection.TaskCard,
+		},
 	},
 	props: {
 		taskId: {
@@ -59,37 +60,13 @@ export const DeadlinePopupContent = {
 		};
 	},
 	computed: {
-		...mapGetters({
-			currentUserId: `${Model.Interface}/currentUserId`,
-		}),
 		task(): TaskModel
 		{
 			return taskService.getStoreTask(this.taskId);
 		},
-		isEdit(): boolean
-		{
-			return idUtils.isReal(this.taskId);
-		},
-		isCreator(): boolean
-		{
-			return this.currentUserId === this.task.creatorId;
-		},
-		isAdmin(): boolean
-		{
-			return Core.getParams().rights.user.admin;
-		},
-		canChangeDeadlineWithoutLimitation(): boolean
-		{
-			return (
-				!this.isEdit
-				|| this.isCreator
-				|| this.task.rights.edit
-				|| this.isAdmin
-			);
-		},
 		maxDeadlineDate(): Date | null
 		{
-			if (this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChangeDate)
+			if (deadlineRules.canChangeWithoutLimitation(this.taskId) || !this.task.maxDeadlineChangeDate)
 			{
 				return null;
 			}
@@ -171,6 +148,10 @@ export const DeadlinePopupContent = {
 
 			return this.loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_DATE_HINT', { '#DATE#': date });
 		},
+		limitReasonId(): string
+		{
+			return `tasks-deadline-preset-limit-${this.taskId}`;
+		},
 	},
 	created(): void
 	{
@@ -207,7 +188,7 @@ export const DeadlinePopupContent = {
 
 						return compareDate > this.maxDeadlineDate;
 					},
-					textColor: '#DFE0E3',
+					textColor: 'var(--ui-color-base-6)',
 				});
 			}
 
@@ -316,6 +297,7 @@ export const DeadlinePopupContent = {
 			analytics.sendDeadlineSet(this.analytics, {
 				element,
 				cardType: this.cardType,
+				subSection: this.analyticsSubSection,
 				taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
 				viewersCount: this.task.auditorsIds?.length ?? 0,
 				coexecutorsCount: this.task.accomplicesIds?.length ?? 0,
@@ -374,18 +356,22 @@ export const DeadlinePopupContent = {
 			</div>
 			<div class="tasks-field-deadline-presets">
 				<template v-for="(preset, key) of presets" :key>
-					<div
+					<button
+						type="button"
 						:data-task-preset-id="preset.id"
 						:class="['tasks-field-deadline-preset', { '--disabled': preset.disabled }]"
+						:aria-disabled="preset.disabled ? 'true' : null"
+						:aria-describedby="preset.disabled && limitHintText ? limitReasonId : null"
 						@click="selectPresetDate(preset.timestamp, preset.disabled)"
 						@mouseenter="focusDate(preset.timestamp, preset.disabled, $event)"
 						@mouseleave="focusDate(null, preset.disabled, $event)"
 					>
 						<div class="tasks-field-deadline-preset-title">{{ preset.title }}</div>
 						<div class="tasks-field-deadline-preset-date">{{ preset.formatted }}</div>
-					</div>
+					</button>
 				</template>
 			</div>
+			<span v-if="limitHintText" :id="limitReasonId" class="tasks-field-deadline-preset-limit-reason">{{ limitHintText }}</span>
 			<div v-if="false" class="tasks-field-deadline-settings">
 			</div>
 			<Hint

@@ -1,0 +1,44 @@
+/*
+ * The text stretches to the full column width so the clamp wraps against the
+ * container; only the button hugs its label, so it opts out on its own.
+ */
+.sonet-project-info-collapsible {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs, 4px);
+}
+
+/*
+ * `text-wrap` is a progressive enhancement here: it sits above the project's
+ * browser targets (`chef baseline text-wrap-balance`), and browsers that do not
+ * know the value simply drop the declaration and wrap as before. `balance`
+ * evens out the lines of the short goal; `pretty` only pulls the last line of
+ * the longer description up so it is not left as a single word.
+ */
+.sonet-project-info-collapsible-text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: var(--sonet-project-info-line-clamp, 3);
+	overflow: hidden;
+	white-space: pre-line;
+	word-break: break-word;
+	text-wrap: pretty;
+}
+
+.sonet-project-info-collapsible-text.--balanced {
+	text-wrap: balance;
+}
+
+/*
+ * `-webkit-box` keeps clamping whatever the line count is, so the expanded state
+ * has to leave the box model behind entirely rather than raise the clamp.
+ */
+.sonet-project-info-collapsible-text.--expanded {
+	display: block;
+	overflow: visible;
+}
+
+/* Looks are shared with the tags toggle via .sonet-project-info-link-button. */
+.sonet-project-info-collapsible__toggle {
+	align-self: flex-start;
+}

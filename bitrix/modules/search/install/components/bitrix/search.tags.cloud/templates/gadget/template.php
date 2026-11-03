@@ -5,9 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
@@ -33,7 +33,7 @@ if (is_array($arResult['SEARCH']) && !empty($arResult['SEARCH'])):
 ?>
 <noindex>
 	<div class="search-tags-cloud" <?=$arParams['WIDTH']?>><?php
-		foreach ($arResult['SEARCH'] as $key => $res)
+		foreach ($arResult['SEARCH'] as $res)
 		{
 		?><a href="<?=$res['URL']?>" style="font-size: <?=$res['FONT_SIZE']?>px; color: #<?=$res['COLOR']?>;" rel="nofollow"><?=$res['NAME']?></a> <?php
 		}

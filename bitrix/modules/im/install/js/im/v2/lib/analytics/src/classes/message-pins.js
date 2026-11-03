@@ -3,7 +3,7 @@ import { sendData } from 'ui.analytics';
 import { Core } from 'im.v2.application.core';
 
 import { AnalyticsEvent, AnalyticsTool, MessagePinsTypes } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -28,7 +28,7 @@ export class MessagePins
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chat.type),
+			category: getCategoryByChat(chat),
 			p1: `chatType_${getChatType(chat)}`,
 			...this.#getEventSpecificParams(eventParams.event, chat.chatId),
 			...eventParams,

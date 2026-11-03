@@ -1,0 +1,54 @@
+/* Base */
+.call-badge {
+
+	--call-badge-line-height: 14px;
+	--call-badge-background: #0075ff;
+	--call-badge-font-size: 12px;
+	--call-badge-height: 16px;
+	--call-badge-padding: 5px;
+
+	padding: 0 var(--call-badge-padding);
+
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--call-badge-height);
+	border-radius: 999px;
+	background-color: var(--call-badge-background);
+	color: #fff;
+	font-weight: 500;
+	font-size: var(--call-badge-font-size);
+	line-height: var(--call-badge-line-height);
+	white-space: nowrap;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* sizes */
+.call-badge.--sm {
+	--call-badge-height: 14px;
+	--call-badge-font-size: 10px;
+	--call-badge-padding: 4px;
+
+}
+.call-badge.--lg {
+	--call-badge-height: 18px;
+	--call-badge-font-size: 13px;
+	--call-badge-padding: 6px;
+}
+
+/* colors (solid pills; контраст — белый текст, кроме gray) */
+
+.call-badge.--red {
+	--call-badge-background: #ff5752;
+}
+.call-badge.--yellow {
+	--call-badge-background: #faa72c;
+}
+.call-badge.--green {
+	--call-badge-background: #1bce7b;
+}
+.call-badge.--gray {
+	--call-badge-background: #c9ccd0;
+}

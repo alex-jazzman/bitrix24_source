@@ -10,4 +10,7 @@ return [
 		'tokens',
 		'ui-system/form/buttons/floating-action-button',
 	],
+	'bundle' => [
+		'./permissions',
+	],
 ];

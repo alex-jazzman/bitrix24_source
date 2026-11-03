@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, main_core_events, ui_analytics, intranet_departmentControl, ui_buttons, humanresources_departmentCreationPopup, ui_system_input, main_popup, ui_system_typography, ui_avatar, intranet_invitationInput, main_loader, ui_switcher, ui_system_chip) {
+(function (exports, main_core, main_core_events, ui_analytics, intranet_departmentControl, ui_a11y, ui_buttons, humanresources_departmentCreationPopup, ui_iconSet_api_core, ui_system_input, main_popup, ui_system_typography, ui_avatar, intranet_invitationInput, main_loader, ui_switcher, ui_system_chip) {
 	'use strict';
 
 	class ActiveDirectory {
@@ -139,24 +139,94 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	const SHOW_FIELD_ERROR_EVENT = 'BX.Intranet.Invitation:showFieldError';
+	const HIDE_FIELD_ERROR_EVENT = 'BX.Intranet.Invitation:hideFieldError';
+	function getFieldErrorMessageId(inputId) {
+		return `${inputId}-summary-error`;
+	}
+	function syncFieldErrorMessage(inputId, message, announce = true) {
+		const id = getFieldErrorMessageId(inputId);
+		const eventName = main_core.Type.isStringFilled(message) ? SHOW_FIELD_ERROR_EVENT : HIDE_FIELD_ERROR_EVENT;
+		main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, eventName, {
+			id,
+			message,
+			announce
+		});
+	}
+
 	class MessageBar {
 		#errorContainer;
 		#successContainer;
+		#generalErrorElement = null;
+		#fieldErrorElements = new Map();
 		constructor(options) {
 			this.#errorContainer = main_core.Type.isDomNode(options.errorContainer) ? options.errorContainer : null;
 			this.#successContainer = main_core.Type.isDomNode(options.successContainer) ? options.successContainer : null;
+			this.#configureContainers();
 			this.hideAll();
+		}
+		#configureContainers() {
+			if (this.#errorContainer) {
+				this.#errorContainer.removeAttribute('role');
+				this.#errorContainer.removeAttribute('aria-live');
+			}
+			if (this.#successContainer) {
+				main_core.Dom.attr(this.#successContainer, {
+					role: 'status',
+					'aria-live': 'polite'
+				});
+			}
 		}
 		showError(message) {
 			if (!this.#errorContainer || !main_core.Type.isStringFilled(message)) {
 				return;
 			}
-			main_core.Dom.clean(this.#errorContainer);
+			if (this.#generalErrorElement) {
+				this.#generalErrorElement.textContent = message;
+			} else {
+				this.#generalErrorElement = this.#wrapMessage(message);
+				this.#generalErrorElement.setAttribute('role', 'alert');
+				main_core.Dom.append(this.#generalErrorElement, this.#errorContainer);
+			}
 			main_core.Dom.style(this.#errorContainer, 'display', 'block');
-			main_core.Dom.append(this.#wrapMessage(message), this.#errorContainer);
+		}
+		showFieldError(id, message, announce = true) {
+			if (!this.#errorContainer || !main_core.Type.isStringFilled(id) || !main_core.Type.isStringFilled(message)) {
+				return;
+			}
+			let errorElement = this.#fieldErrorElements.get(id);
+			if (errorElement) {
+				errorElement.textContent = message;
+			} else {
+				errorElement = this.#wrapMessage(message);
+				main_core.Dom.attr(errorElement, {
+					id,
+					'data-testid': id
+				});
+				this.#fieldErrorElements.set(id, errorElement);
+				main_core.Dom.append(errorElement, this.#errorContainer);
+			}
+			this.#syncAlertRole(errorElement, announce);
+			main_core.Dom.style(this.#errorContainer, 'display', 'block');
+		}
+		hideFieldError(id) {
+			const errorElement = this.#fieldErrorElements.get(id);
+			if (!errorElement) {
+				return;
+			}
+			main_core.Dom.remove(errorElement);
+			this.#fieldErrorElements.delete(id);
+			this.#hideEmptyErrorContainer();
 		}
 		#wrapMessage(text) {
-			return main_core.Tag.render`<span class="ui-alert-message">${BX.util.htmlspecialchars(text)}</span>`;
+			return main_core.Tag.render`<div class="ui-alert-message">${BX.util.htmlspecialchars(text)}</div>`;
+		}
+		#syncAlertRole(errorElement, announce) {
+			if (announce) {
+				errorElement.setAttribute('role', 'alert');
+				return;
+			}
+			errorElement.removeAttribute('role');
 		}
 		showSuccess(message) {
 			if (!this.#successContainer || !main_core.Type.isStringFilled(message)) {
@@ -170,10 +240,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 			if (this.#errorContainer) {
 				main_core.Dom.style(this.#errorContainer, 'display', 'none');
 				main_core.Dom.clean(this.#errorContainer);
+				this.#generalErrorElement = null;
+				this.#fieldErrorElements.clear();
 			}
 			if (this.#successContainer) {
 				main_core.Dom.style(this.#successContainer, 'display', 'none');
 				main_core.Dom.clean(this.#successContainer);
+			}
+		}
+		#hideEmptyErrorContainer() {
+			if (this.#errorContainer && !this.#errorContainer.hasChildNodes()) {
+				main_core.Dom.style(this.#errorContainer, 'display', 'none');
 			}
 		}
 	}
@@ -188,6 +265,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		onSubmit(event) {}
 		onInviteSuccess(event) {}
+		restoreErrors() {}
 		hasShownButtonPanel() {
 			return true;
 		}
@@ -211,7 +289,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#first = main_core.Type.isStringFilled(options.first) && this.has(options.first) ? options.first : this.#pages.keys().next().value;
 			this.#subscribeEvents();
 		}
-		show(code) {
+		show(code, options = {}) {
 			if (!this.#container || !this.has(code)) {
 				return;
 			}
@@ -231,6 +309,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				current: this.current(),
 				previous: this.prev()
 			});
+			if (options.focusFirstControl === true) {
+				const focusedControl = ui_a11y.FocusNavigator.focusFirst(this.#container);
+				if (!focusedControl && main_core.Type.isDomNode(options.fallbackFocus)) {
+					ui_a11y.FocusNavigator.focusTarget(options.fallbackFocus);
+				}
+			}
 		}
 		showFirst() {
 			this.show(this.#first);
@@ -341,17 +425,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	class ContactsInput {
 		#input;
 		#dataTestId;
+		#inputElement = null;
+		#errorElement = null;
+		#clearButton = null;
+		#errorMessageFrame = null;
 		constructor(dataTestId = 'invite-page-contact-input') {
 			this.#dataTestId = dataTestId;
 		}
 		getInput() {
 			this.#input ??= new ui_system_input.Input({
 				placeholder: this.getPlaceholder(),
+				ariaLabel: this.getPlaceholder(),
+				type: this.getType(),
 				design: ui_system_input.InputDesign.Grey,
-				withClear: true,
-				onBlur: this.#validateContactsInput.bind(this),
+				onBlur: this.#onBlur.bind(this),
 				onInput: this.#onInput.bind(this),
-				onClear: this.#onClear.bind(this),
 				dataTestId: this.#dataTestId
 			});
 			return this.#input;
@@ -360,8 +448,34 @@ this.BX.Intranet = this.BX.Intranet || {};
 			const wrapper = this.getInput().render();
 			const container = wrapper.querySelector('.ui-system-input-container');
 			const containerId = `${this.#dataTestId}-container`;
+			const inputId = this.#getTestId();
 			container?.setAttribute('id', containerId);
 			container?.setAttribute('data-test-id', containerId);
+			container?.setAttribute('data-testid', `${inputId}-container`);
+			this.#inputElement = wrapper.querySelector('input');
+			this.#errorElement = wrapper.querySelector('.ui-system-input-label.--error');
+			if (this.#inputElement) {
+				this.#inputElement.id = inputId;
+				this.#inputElement.dataset.testid = inputId;
+				const autocomplete = this.getAutocomplete();
+				if (autocomplete) {
+					this.#inputElement.autocomplete = autocomplete;
+				} else {
+					this.#inputElement.removeAttribute('autocomplete');
+				}
+				if (this.isRequired()) {
+					this.#inputElement.setAttribute('aria-required', 'true');
+				} else {
+					this.#inputElement.removeAttribute('aria-required');
+				}
+			}
+			if (this.#errorElement) {
+				this.#errorElement.id = `${inputId}-error`;
+				this.#errorElement.dataset.testid = `${inputId}-error`;
+				this.#errorElement.hidden = true;
+			}
+			this.#renderClearButton(container);
+			this.#syncErrorState();
 			return wrapper;
 		}
 		getValue() {
@@ -370,25 +484,122 @@ this.BX.Intranet = this.BX.Intranet || {};
 		getPlaceholder() {
 			throw new Error('Not Implemented');
 		}
+		getType() {
+			return 'text';
+		}
+		getAutocomplete() {
+			return null;
+		}
+		isRequired() {
+			return false;
+		}
 		isValidValue(value) {
 			throw new Error('Not Implemented');
 		}
 		getValidationErrorMessage() {
 			throw new Error('Not Implemented');
 		}
+		focus() {
+			this.getInput().render().querySelector('input')?.focus();
+		}
+		setError(error, deferMessage = false) {
+			this.getInput().setError(error);
+			this.#syncErrorState();
+			this.#syncFieldErrorMessage(error, deferMessage);
+		}
+		hasError() {
+			return main_core.Type.isStringFilled(this.getInput().getError());
+		}
+		restoreError() {
+			this.#syncErrorState();
+			this.#syncFieldErrorMessage(this.getInput().getError(), false, false);
+		}
+		validate() {
+			this.#validateContactsInput();
+			return !this.hasError();
+		}
 		#onInput() {
-			this.getInput().setError('');
+			this.setError('');
 		}
-		#onClear() {
-			this.getInput().setError('');
+		#onBlur() {
+			this.#validateContactsInput(true);
 		}
-		#validateContactsInput() {
+		#onClear(event) {
+			event.stopPropagation();
+			this.getInput().setValue('');
+			this.setError('');
+			this.focus();
+		}
+		#onInputKeydown(event) {
+			const value = this.getInput().getValue();
+			if (event.key !== 'Tab' || event.shiftKey || !value || this.isValidValue(value) || !this.#clearButton) {
+				return;
+			}
+			event.preventDefault();
+			this.#validateContactsInput();
+			this.#clearButton.focus();
+		}
+		#validateContactsInput(deferMessage = false) {
 			const value = this.getInput().getValue();
 			if (value && !this.isValidValue(value)) {
-				this.getInput().setError(this.getValidationErrorMessage());
+				this.setError(this.getValidationErrorMessage(), deferMessage);
 			} else {
-				this.getInput().setError('');
+				this.setError('');
 			}
+		}
+		#syncFieldErrorMessage(error, deferMessage, announce = true) {
+			if (this.#errorMessageFrame !== null) {
+				cancelAnimationFrame(this.#errorMessageFrame);
+				this.#errorMessageFrame = null;
+			}
+			if (!deferMessage || !main_core.Type.isStringFilled(error)) {
+				syncFieldErrorMessage(this.#getTestId(), error, announce);
+				return;
+			}
+			this.#errorMessageFrame = requestAnimationFrame(() => {
+				this.#errorMessageFrame = null;
+				if (!this.#inputElement?.isConnected) {
+					return;
+				}
+				syncFieldErrorMessage(this.#getTestId(), error, announce);
+			});
+		}
+		#renderClearButton(container) {
+			if (!container || !this.#inputElement || this.#clearButton) {
+				return;
+			}
+			const icon = new ui_iconSet_api_core.Icon({
+				icon: ui_iconSet_api_core.Outline.CROSS_L
+			});
+			this.#clearButton = main_core.Tag.render`
+			<button
+				type="button"
+				tabindex="0"
+				class="ui-system-input-action-btn ui-system-input-cross --clear"
+				aria-label="${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CLEAR_INPUT_ARIA_LABEL')}"
+				data-testid="${this.#getTestId()}-clear-button"
+			>
+				${icon.render()}
+			</button>
+		`;
+			main_core.Event.bind(this.#clearButton, 'click', this.#onClear.bind(this));
+			main_core.Event.bind(this.#inputElement, 'keydown', this.#onInputKeydown.bind(this));
+			main_core.Dom.append(this.#clearButton, container);
+		}
+		#syncErrorState() {
+			if (!this.#inputElement) {
+				return;
+			}
+			if (this.hasError()) {
+				this.#inputElement.setAttribute('aria-invalid', 'true');
+				this.#inputElement.setAttribute('aria-describedby', getFieldErrorMessageId(this.#getTestId()));
+			} else {
+				this.#inputElement.removeAttribute('aria-invalid');
+				this.#inputElement.removeAttribute('aria-describedby');
+			}
+		}
+		#getTestId() {
+			return this.#dataTestId.startsWith('invite-') ? this.#dataTestId.replace(/^invite-/, 'invitation-') : `invitation-${this.#dataTestId}`;
 		}
 	}
 
@@ -397,28 +608,60 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#placeholder;
 		#dataTestId;
 		#ariaLabel;
+		#autocomplete;
+		#required;
+		#inputElement = null;
+		#errorElement = null;
 		constructor(options) {
 			this.#placeholder = options.placeholder;
 			this.#dataTestId = options.dataTestId;
 			this.#ariaLabel = options.ariaLabel;
+			this.#autocomplete = options.autocomplete ?? null;
+			this.#required = options.required === true;
 		}
 		getInput() {
 			this.#input ??= new ui_system_input.Input({
 				placeholder: this.#placeholder,
+				ariaLabel: this.#ariaLabel,
+				type: 'text',
 				design: ui_system_input.InputDesign.Grey,
-				dataTestId: this.#dataTestId
+				dataTestId: this.#dataTestId,
+				onInput: () => {
+					this.setError('');
+				}
 			});
 			return this.#input;
 		}
 		render() {
 			const wrapper = this.getInput().render();
 			const container = wrapper.querySelector('.ui-system-input-container');
-			const input = wrapper.querySelector('input');
 			const containerId = `${this.#dataTestId}-container`;
+			const inputId = this.#getTestId();
 			container?.setAttribute('id', containerId);
 			container?.setAttribute('data-test-id', containerId);
-			input?.setAttribute('aria-label', this.#ariaLabel);
-			input?.setAttribute('autocomplete', 'off');
+			container?.setAttribute('data-testid', `${inputId}-container`);
+			this.#inputElement = wrapper.querySelector('input');
+			this.#errorElement = wrapper.querySelector('.ui-system-input-label.--error');
+			if (this.#inputElement) {
+				this.#inputElement.id = inputId;
+				this.#inputElement.dataset.testid = inputId;
+				if (this.#autocomplete) {
+					this.#inputElement.autocomplete = this.#autocomplete;
+				} else {
+					this.#inputElement.removeAttribute('autocomplete');
+				}
+				if (this.#required) {
+					this.#inputElement.setAttribute('aria-required', 'true');
+				} else {
+					this.#inputElement.removeAttribute('aria-required');
+				}
+			}
+			if (this.#errorElement) {
+				this.#errorElement.id = `${inputId}-error`;
+				this.#errorElement.dataset.testid = `${inputId}-error`;
+				this.#errorElement.hidden = true;
+			}
+			this.#syncErrorState();
 			return wrapper;
 		}
 		getValue() {
@@ -426,6 +669,37 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		clear() {
 			this.getInput().setValue('');
+			this.setError('');
+		}
+		focus() {
+			this.getInput().focus();
+		}
+		setError(error) {
+			this.getInput().setError(error);
+			this.#syncErrorState();
+			syncFieldErrorMessage(this.#getTestId(), error);
+		}
+		hasError() {
+			return main_core.Type.isStringFilled(this.getInput().getError());
+		}
+		restoreError() {
+			this.#syncErrorState();
+			syncFieldErrorMessage(this.#getTestId(), this.getInput().getError(), false);
+		}
+		#syncErrorState() {
+			if (!this.#inputElement) {
+				return;
+			}
+			if (this.hasError()) {
+				this.#inputElement.setAttribute('aria-invalid', 'true');
+				this.#inputElement.setAttribute('aria-describedby', getFieldErrorMessageId(this.#getTestId()));
+			} else {
+				this.#inputElement.removeAttribute('aria-invalid');
+				this.#inputElement.removeAttribute('aria-describedby');
+			}
+		}
+		#getTestId() {
+			return this.#dataTestId.startsWith('invite-') ? this.#dataTestId.replace(/^invite-/, 'invitation-') : `invitation-${this.#dataTestId}`;
 		}
 	}
 
@@ -434,7 +708,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			super({
 				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
 				ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_ARIA_LABEL'),
-				dataTestId
+				dataTestId,
+				autocomplete: 'given-name'
 			});
 		}
 	}
@@ -444,7 +719,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			super({
 				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
 				ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_ARIA_LABEL'),
-				dataTestId
+				dataTestId,
+				autocomplete: 'family-name'
 			});
 		}
 	}
@@ -455,6 +731,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#nameInput;
 		#lastNameInput;
 		#id;
+		#invitationErrors = [];
 		constructor(options) {
 			this.#id = options.id;
 			this.#contactsInput = options.contactsInput;
@@ -462,13 +739,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#lastNameInput = options.lastNameInput;
 		}
 		render() {
-			this.#container ??= main_core.Tag.render`
-			<div data-test-id="invite-input-row${this.#id}" class="intranet-invite-form-row">
-				${this.#contactsInput.getInput().render()}
+			if (!this.#container) {
+				this.#container = main_core.Tag.render`
+			<fieldset
+				class="intranet-invite-form-row"
+				data-test-id="invite-input-row${this.#id}"
+				data-testid="invitation-input-row-${this.#id}"
+			>
+				<legend>
+					<visually-hidden>
+						${main_core.Loc.getMessage('BX24_INVITE_DIALOG_EMPLOYEE')} ${this.#id + 1}
+					</visually-hidden>
+				</legend>
+				${this.#contactsInput.render()}
 				${this.#lastNameInput ? this.#lastNameInput.render() : ''}
 				${this.#nameInput ? this.#nameInput.render() : ''}
-			</div>
-		`;
+			</fieldset>
+			`;
+				main_core.Event.bind(this.#container, 'input', () => {
+					if (this.hasInvitationError()) {
+						this.setInvitationError('');
+					}
+				});
+			}
 			return this.#container;
 		}
 		renderTo(target) {
@@ -496,15 +789,75 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return this.#contactsInput.getInput().getValue();
 		}
 		setContactsError(error) {
-			this.#contactsInput.getInput().setError(error);
+			this.#contactsInput.setError(error);
 		}
-		hasContactsError() {
-			return main_core.Type.isStringFilled(this.#contactsInput.getInput().getError());
+		setInvitationError(error) {
+			if (!main_core.Type.isStringFilled(error)) {
+				this.#invitationErrors = [];
+			} else if (!this.#invitationErrors.includes(error)) {
+				this.#invitationErrors.push(error);
+			}
+			syncFieldErrorMessage(this.#getTestId(), this.#invitationErrors.join(' '), false);
+			this.#syncInvitationErrorState();
+		}
+		hasInvitationError() {
+			return this.#invitationErrors.length > 0;
+		}
+		hasError() {
+			return this.#contactsInput.hasError() || this.#lastNameInput?.hasError() === true || this.#nameInput?.hasError() === true || this.hasInvitationError();
+		}
+		restoreErrors() {
+			this.#contactsInput.restoreError();
+			this.#lastNameInput?.restoreError();
+			this.#nameInput?.restoreError();
+			syncFieldErrorMessage(this.#getTestId(), this.#invitationErrors.join(' '), false);
+			this.#syncInvitationErrorState();
+		}
+		validate() {
+			return this.#contactsInput.validate();
+		}
+		focusFirstErrorInput() {
+			if (this.#contactsInput.hasError()) {
+				this.#contactsInput.focus();
+				return true;
+			}
+			if (this.#lastNameInput?.hasError()) {
+				this.#lastNameInput.focus();
+				return true;
+			}
+			if (this.#nameInput?.hasError()) {
+				this.#nameInput.focus();
+				return true;
+			}
+			if (this.hasInvitationError()) {
+				ui_a11y.FocusNavigator.focusContainer(this.render(), {
+					focusVisible: true
+				});
+				return true;
+			}
+			return false;
 		}
 		clear() {
 			this.#contactsInput.getInput().setValue('');
+			this.#contactsInput.setError('');
 			this.#lastNameInput?.clear();
 			this.#nameInput?.clear();
+			this.setInvitationError('');
+		}
+		#getTestId() {
+			return `invitation-input-row-${this.#id}`;
+		}
+		#syncInvitationErrorState() {
+			const container = this.render();
+			if (this.hasInvitationError()) {
+				main_core.Dom.attr(container, {
+					'aria-invalid': 'true',
+					'aria-describedby': getFieldErrorMessageId(this.#getTestId())
+				});
+				return;
+			}
+			container.removeAttribute('aria-invalid');
+			container.removeAttribute('aria-describedby');
 		}
 	}
 
@@ -519,6 +872,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		getPlaceholder() {
 			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
+		}
+		getType() {
+			return 'email';
+		}
+		getAutocomplete() {
+			return 'email';
 		}
 		getValidationErrorMessage() {
 			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL');
@@ -544,6 +903,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 		getPlaceholder() {
 			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_PHONE');
 		}
+		getType() {
+			return 'tel';
+		}
+		getAutocomplete() {
+			return 'tel';
+		}
 		getValidationErrorMessage() {
 			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE');
 		}
@@ -563,6 +928,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		getPlaceholder() {
 			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
+		}
+		getType() {
+			return 'text';
+		}
+		getAutocomplete() {
+			return null;
 		}
 		getValidationErrorMessage() {
 			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL_AND_PHONE');
@@ -614,12 +985,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#popupContainer;
 		#isMultipleMode;
 		#isRestoreUsersAccessAvailable;
+		#restoreFocusElement;
 		constructor(options) {
 			this.#userList = options.userList;
 			this.#isRestoreUsersAccessAvailable = options.isRestoreUsersAccessAvailable;
 			this.#transport = options.transport;
 			this.#departmentIds = options.departmentIds;
 			this.#workgroupIds = options.workgroupIds;
+			this.#restoreFocusElement = options.restoreFocusElement;
 			this.#isMultipleMode = this.#userList.length > 1;
 			this.#selectedUserIds = this.#userList.map(user => user.id);
 		}
@@ -629,34 +1002,58 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 		}
 		#getPopup() {
-			this.#popup ??= new main_popup.Popup({
-				id: 'intranet-restore-fired-users',
-				content: this.#isRestoreUsersAccessAvailable ? this.#getPopupContent() : this.#getPopupContentWithoutRestoreAccess(),
-				closeByEsc: true,
-				closeIcon: true,
-				closeIconSize: main_popup.CloseIconSize.LARGE,
-				autoHide: true,
-				padding: 25,
-				width: this.#isRestoreUsersAccessAvailable ? 515 : 400,
-				events: {
-					onPopupClose: () => {
-						this.#popup.destroy();
+			if (!this.#popup) {
+				this.#popup = new main_popup.Popup({
+					id: 'intranet-restore-fired-users',
+					content: this.#isRestoreUsersAccessAvailable ? this.#getPopupContent() : this.#getPopupContentWithoutRestoreAccess(),
+					ariaLabel: this.#getAriaLabel(),
+					focusTrap: {
+						initialFocus: '[data-autofocus]',
+						restoreFocus: this.#restoreFocusElement ?? true
+					},
+					closeByEsc: true,
+					closeIcon: true,
+					closeIconSize: main_popup.CloseIconSize.LARGE,
+					autoHide: true,
+					padding: 25,
+					width: this.#isRestoreUsersAccessAvailable ? 515 : 400,
+					events: {
+						onPopupClose: () => {
+							this.#popup.destroy();
+						}
 					}
-				}
-			});
+				});
+				this.#popup.getPopupContainer().dataset.testid = 'invitation-restore-fired-users-popup';
+			}
 			return this.#popup;
+		}
+		#getAriaLabel() {
+			if (this.#isRestoreUsersAccessAvailable) {
+				return this.#isMultipleMode ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_TITLE_MULTIPLE') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_TITLE_SINGLE', {
+					'#LOGIN#': this.#userList[0]?.login
+				});
+			}
+			return this.#isMultipleMode ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_MULTIPLE', {
+				'#LOGIN#': this.#userList.map(user => user.login).join(', ')
+			}) : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_SINGLE', {
+				'#LOGIN#': this.#userList[0]?.login
+			});
 		}
 		#getPopupContentWithoutRestoreAccess() {
 			const button = new ui_buttons.Button({
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_OK'),
 				style: ui_buttons.AirButtonStyle.FILLED,
 				useAirDesign: true,
+				dataset: {
+					autofocus: '',
+					testid: 'invitation-restore-fired-users-popup-ok-button'
+				},
 				onclick: () => {
 					this.#getPopup().close();
 				}
 			}).render();
 			return main_core.Tag.render`
-			<div>
+			<div data-testid="invitation-restore-fired-users-popup-no-access-content">
 				<span class="ui-text --lg">
 					${this.#isMultipleMode ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_MULTIPLE', {
 			'#LOGIN#': `<strong>${this.#userList.map(user => user.login).join(', ')}</strong>`
@@ -672,7 +1069,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#getPopupContent() {
 			this.#popupContainer = main_core.Tag.render`
-			<div class="" data-role="intranet-invitation-fired-popup-container"></div>
+			<div
+				data-role="intranet-invitation-fired-popup-container"
+				data-testid="invitation-restore-fired-users-popup-content"
+			></div>
 		`;
 			const headTitle = main_core.Tag.render`
 			<span class="ui-text --md">
@@ -717,26 +1117,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#getUserBlockContent(user) {
 			let checkboxNode = main_core.Tag.render``;
+			const userNameId = `intranet-restore-fired-user-name-${user.id}`;
 			if (this.#isMultipleMode) {
 				checkboxNode = main_core.Tag.render`
 				<div style="margin-left: 10px;">
-					<input 
-						type="checkbox" 
-						checked 
-						class="intranet-invitation-checkbox" 
+					<input
+						type="checkbox"
+						checked
+						class="intranet-invitation-checkbox"
 						value="${user?.id}"
+						aria-labelledby="${userNameId}"
+						data-testid="invitation-restore-fired-users-popup-checkbox-${user.id}"
 					/>
 				</div>
 			`;
+				if (user.id === this.#userList[0]?.id) {
+					checkboxNode.querySelector('input').dataset.autofocus = '';
+				}
 			}
 			const userBlock = main_core.Tag.render`
-			<div class="intranet-invitation-fired-popup-user__wrapper ${this.#isMultipleMode ? '--filled' : ''}">
+			<div
+				class="intranet-invitation-fired-popup-user__wrapper ${this.#isMultipleMode ? '--filled' : ''}"
+				data-testid="invitation-restore-fired-users-popup-user-${user.id}"
+			>
 				${checkboxNode}
 				<div>
 					${this.#renderUserAvatar(user)}
 				</div>
 				<div class="intranet-invitation-fired-popup-user__name-block ${this.#isMultipleMode ? '' : '--wide'}">
-					<a href="${user.profileUrl}" class="ui-link ui-link-dashed" style="font-size:16px;">${user.name}</a>
+					<a
+						id="${userNameId}"
+						href="${user.profileUrl}"
+						class="ui-link ui-link-dashed"
+						style="font-size:16px;"
+					>${user.name}</a>
 					<div>${ui_system_typography.Text.render(user?.position, {
 			size: '2xs',
 			className: 'intranet-invitation-fired-popup-user__text'
@@ -808,6 +1222,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_RESTORE'),
 				style: ui_buttons.AirButtonStyle.FILLED,
 				useAirDesign: true,
+				dataset: {
+					...(this.#isMultipleMode ? {} : {
+						autofocus: ''
+					}),
+					testid: 'invitation-restore-fired-users-popup-restore-button'
+				},
 				onclick: () => {
 					const currentButtonState = this.#sendButton.getState();
 					if (currentButtonState === ui_buttons.ButtonState.WAITING || currentButtonState === ui_buttons.ButtonState.DISABLED) {
@@ -821,12 +1241,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 							departmentIds: this.#departmentIds,
 							workgroupIds: this.#workgroupIds
 						}
+					}, reject => {
+						this.#transport.onError(reject);
+						throw reject;
 					}, {
 						showSuccessPopup: false
 					}).then(response => {
 						this.#getPopup().close();
 						this.#showSuccessNotification(response.data.restoredUserIds);
 					}).catch(reject => {
+						this.#sendButton.setState(null);
 						console.error(reject);
 					});
 				}
@@ -838,6 +1262,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_PASS_LOGIN'),
 				useAirDesign: true,
 				style: ui_buttons.AirButtonStyle.PLAIN,
+				dataset: {
+					testid: 'invitation-restore-fired-users-popup-pass-login-button'
+				},
 				onclick: () => {
 					if (top.BX.Helper) {
 						top.BX.Helper.show('redirect=detail&code=17964466');
@@ -848,22 +1275,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#showSuccessNotification(restoredUserIds) {
 			const restoredUserIdsNumeric = new Set(restoredUserIds.map(id => Number(id)));
 			const restoredUsers = this.#userList.filter(user => restoredUserIdsNumeric.has(user.id));
+			const notificationContent = this.#getNotificationContent(restoredUsers);
 			const notificationOptions = {
 				id: 'restore-notification-success',
 				autoHideDelay: 4000,
 				closeButton: false,
 				autoHide: true,
-				content: this.#getNotificationContent(restoredUsers),
+				content: notificationContent,
 				useAirDesign: true
 			};
 			const notify = BX.UI.Notification.Center.notify(notificationOptions);
 			notify.show();
 			notify.activateAutoHide();
+			ui_a11y.LiveAnnouncer.announce((notificationContent.textContent ?? '').replace(/\s+/g, ' ').trim(), 'polite');
 		}
 		#getNotificationContent(restoredUsers) {
 			return main_core.Tag.render`
-			<div class="invite-email-notification">
-				<div class="invite-email-notification__content">
+			<div
+				class="invite-email-notification"
+				data-testid="invitation-restore-success-notification"
+			>
+				<div
+					class="invite-email-notification__content"
+					data-testid="invitation-restore-success-notification-message"
+				>
 					<div class="invite-email-notification__description ui-text --2xs">
 						${restoredUsers.length > 1 ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_SUCCESS_NOTIFICATION_MULTIPLE', {
 			'#NAME#': `<strong>${restoredUsers[0]?.name}</strong>`,
@@ -958,10 +1393,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 				inputsRow.renderTo(rowsContainer);
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-extranet-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-extranet-page-form"
+				>
+					<h2
+						class="intranet-invitation-status__title ui-headline --sm"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-extranet-page-title"
+					>${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</h2>
 					${rowsContainer}
 					${this.#getAddButton(rowsContainer).render()}
 					<div class="intranet-invitation-block__footer">
@@ -978,7 +1424,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
 				style: ui_buttons.AirButtonStyle.FILLED,
 				props: {
-					'data-test-id': 'invite-extranet-page-submit-button'
+					'data-test-id': 'invite-extranet-page-submit-button',
+					'data-testid': 'invitation-extranet-page-submit-button'
 				},
 				onclick: () => {
 					if (inviteButton.isWaiting()) {
@@ -1025,7 +1472,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
 				icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
 				props: {
-					'data-test-id': 'invite-extranet-page-add-more-button'
+					'data-test-id': 'invite-extranet-page-add-more-button',
+					'data-testid': 'invitation-extranet-page-add-more-button'
 				},
 				onclick: () => {
 					const inputsRow = this.#inputsFactory.createInputsRow();
@@ -1060,23 +1508,33 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#getPopup().show();
 		}
 		#getPopup() {
-			this.#popup ??= new main_popup.Popup({
-				id: 'integrator-confirm-invitation-popup',
-				content: this.#getPopupContent(),
-				closeByEsc: true,
-				closeIcon: true,
-				closeIconSize: main_popup.CloseIconSize.LARGE,
-				autoHide: true,
-				padding: 0,
-				overlay: {
-					backgroundColor: 'rgba(0, 32, 78, 0.46)'
-				}
-			});
+			if (!this.#popup) {
+				this.#popup = new main_popup.Popup({
+					id: 'integrator-confirm-invitation-popup',
+					content: this.#getPopupContent(),
+					ariaLabel: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE'),
+					focusTrap: {
+						initialFocus: '[data-testid="invitation-integrator-confirm-popup-submit-button"]'
+					},
+					closeByEsc: true,
+					closeIcon: true,
+					closeIconSize: main_popup.CloseIconSize.LARGE,
+					autoHide: true,
+					padding: 0,
+					overlay: {
+						backgroundColor: 'rgba(0, 32, 78, 0.46)'
+					}
+				});
+				this.#popup.getPopupContainer().dataset.testid = 'invitation-integrator-confirm-popup';
+			}
 			return this.#popup;
 		}
 		#getPopupContent() {
 			return main_core.Tag.render`
-			<div class="intranet-invitation-popup">
+			<div
+				class="intranet-invitation-popup"
+				data-testid="invitation-integrator-confirm-popup-content"
+			>
 				<div class="intranet-invitation-popup__title">
 					<span class="ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE')}</span>
 				</div>
@@ -1100,6 +1558,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES'),
 				useAirDesign: true,
 				style: ui_buttons.AirButtonStyle.FILLED,
+				dataset: {
+					testid: 'invitation-integrator-confirm-popup-submit-button'
+				},
 				onclick: () => {
 					this.#onConfirm();
 					this.#getPopup().close();
@@ -1112,6 +1573,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO'),
 				useAirDesign: true,
 				style: ui_buttons.AirButtonStyle.OUTLINE,
+				dataset: {
+					testid: 'invitation-integrator-confirm-popup-cancel-button'
+				},
 				onclick: () => {
 					this.#onCancel();
 					this.#getPopup().close();
@@ -1128,6 +1592,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class IntegratorPage extends Page {
 		#container;
+		#inputGroup;
 		#emailInput;
 		#transport;
 		#inviteButton;
@@ -1143,14 +1608,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__content">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-integrator-page-root"
+			>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-integrator-page-form"
+				>
 					<div class="intranet-invitation-block__header">
+						<h2
+							class="intranet-invitation-status__title ui-headline --sm"
+							tabindex="-1"
+							data-role="page-title"
+							data-testid="invitation-integrator-page-title"
+						>${main_core.Loc.getMessage('BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE')}</h2>
 						${this.#renderDescription()}
 					</div>
-					<div class="intranet-invitation-block__body">
-						${this.#getEmailInput().render()}
-					</div>
+					${this.#renderInputGroup()}
 					<div class="intranet-invitation-block__footer">
 						${this.#getInviteButton().render()}
 					</div>
@@ -1158,6 +1633,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 		`;
 			return this.#container;
+		}
+		#renderInputGroup() {
+			this.#inputGroup ??= main_core.Tag.render`
+			<div
+				class="intranet-invitation-block__body"
+				data-testid="invitation-integrator-page-fields"
+			>
+				${this.#renderEmailInput()}
+			</div>
+		`;
+			return this.#inputGroup;
 		}
 		#renderDescription() {
 			const message = main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_DESCRIPTION', {
@@ -1168,10 +1654,45 @@ this.BX.Intranet = this.BX.Intranet || {};
 			<p class="intranet-invitation-description ui-text --md">${message}</p>
 		`;
 		}
+		#renderEmailInput() {
+			const inputControl = this.#getEmailInput();
+			const inputContainer = inputControl.render();
+			const input = inputContainer.querySelector('.ui-system-input-value');
+			const error = inputContainer.querySelector('.ui-system-input-label.--error');
+			const requiredMark = inputContainer.querySelector('.ui-system-input-label-required');
+			const inputId = 'invitation-integrator-page-email-input';
+			main_core.Dom.attr(inputContainer, 'data-testid', 'invitation-integrator-page-email-field');
+			if (input) {
+				main_core.Dom.attr(input, {
+					id: inputId,
+					name: 'integratorEmail',
+					type: 'email',
+					autocomplete: 'email',
+					'aria-required': 'true',
+					'data-testid': inputId
+				});
+			}
+			if (error) {
+				main_core.Dom.attr(error, {
+					id: `${inputId}-error`,
+					'data-testid': `${inputId}-error`,
+					hidden: ''
+				});
+			}
+			if (requiredMark) {
+				main_core.Dom.attr(requiredMark, 'aria-hidden', 'true');
+			}
+			return inputContainer;
+		}
 		#getEmailInput() {
+			const label = main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER');
 			this.#emailInput ??= new ui_system_input.Input({
-				label: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey
+				label,
+				ariaLabel: label,
+				type: 'email',
+				required: true,
+				design: ui_system_input.InputDesign.Grey,
+				onInput: () => this.#setEmailError('')
 			});
 			return this.#emailInput;
 		}
@@ -1181,7 +1702,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
 				style: ui_buttons.AirButtonStyle.FILLED,
 				props: {
-					'data-test-id': 'invite-integrator-page-submit-button'
+					'data-test-id': 'invite-integrator-page-submit-button',
+					'data-testid': 'invitation-integrator-page-submit-button'
 				},
 				onclick: () => {
 					if (this.#inviteButton?.isWaiting()) {
@@ -1204,10 +1726,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 					}, reject => {
 						this.#inviteButton?.setState(null);
 						this.#transport.onError(reject);
+						const errorMessage = reject?.errors?.find(error => {
+							return main_core.Type.isStringFilled(error?.message);
+						})?.message ?? main_core.Loc.getMessage('BX24_INVITE_DIALOG_INTEGRATOR_EMAIL_ERROR');
+						this.#setEmailError(errorMessage);
+						this.#getEmailInput().focus();
 					}, {
 						...this.#analytics.getDataForAction('default'),
 						INVITATION_TYPE: 'integrator'
-					}).then(() => {
+					}).then(response => {
+						if (!response) {
+							return;
+						}
 						main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
 						this.#inviteButton?.setState(null);
 					}).catch(reject => {
@@ -1220,6 +1750,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 			return this.#confirmPopup;
 		}
+		#setEmailError(errorMessage) {
+			this.#getEmailInput().setError(errorMessage);
+			const input = this.#getEmailInput().render().querySelector('.ui-system-input-value');
+			if (input) {
+				if (main_core.Type.isStringFilled(errorMessage)) {
+					main_core.Dom.attr(input, {
+						'aria-invalid': 'true',
+						'aria-describedby': 'invitation-integrator-page-email-input-error'
+					});
+				} else {
+					input.removeAttribute('aria-invalid');
+					input.removeAttribute('aria-describedby');
+				}
+			}
+		}
 		getAnalyticTab() {
 			return Analytics.TAB_INTEGRATOR;
 		}
@@ -1227,14 +1772,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class InputRowsContainer {
 		#inputRows;
+		#submittedInputRows;
 		#container;
 		constructor(inputRows) {
 			this.#inputRows = inputRows;
+			this.#submittedInputRows = [];
 		}
 		render() {
 			if (!this.#container) {
 				this.#container = main_core.Tag.render`
-				<div data-test-id="invite-input-rows" class="intranet-invite-form-rows-container"></div>
+				<div
+					class="intranet-invite-form-rows-container"
+					data-test-id="invite-input-rows"
+					data-testid="invitation-input-rows-container"
+				></div>
 			`;
 				this.#inputRows.forEach(inputRow => {
 					inputRow.renderTo(this.#container);
@@ -1262,29 +1813,66 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return true;
 		}
 		getEnteredInvitations() {
-			const result = [];
-			this.#inputRows.forEach(inputRow => {
-				if (!inputRow.isEmpty()) {
-					result.push(inputRow.getValue());
-				}
-			});
-			return result;
+			this.#submittedInputRows = this.#inputRows.filter(inputRow => !inputRow.isEmpty());
+			return this.#submittedInputRows.map(inputRow => inputRow.getValue());
 		}
 		hasError() {
-			for (const inputRow of this.#inputRows) {
-				if (inputRow.hasContactsError()) {
-					return true;
-				}
+			return this.#getFirstErrorInputRow() !== null;
+		}
+		restoreErrors() {
+			this.#inputRows.forEach(inputRow => {
+				inputRow.restoreErrors();
+			});
+		}
+		validate() {
+			this.#inputRows.forEach(inputRow => {
+				inputRow.validate();
+			});
+			return !this.hasError();
+		}
+		focusFirstErrorInput() {
+			const inputRow = this.#getFirstErrorInputRow();
+			if (!inputRow) {
+				return false;
 			}
-			return false;
+			if (!inputRow.focusFirstErrorInput()) {
+				return false;
+			}
+			const activeElement = this.#container?.ownerDocument.activeElement;
+			activeElement?.scrollIntoView({
+				block: 'center'
+			});
+			return true;
 		}
 		highlightErrorInputs(values, error) {
+			let handled = false;
 			this.#inputRows.forEach(inputRow => {
 				const value = inputRow.getContactsValue();
 				if (value && values.includes(value)) {
 					inputRow.setContactsError(error);
+					handled = true;
 				}
 			});
+			return handled;
+		}
+		setInvitationError(invitationIndex, error) {
+			const inputRow = this.#submittedInputRows[invitationIndex];
+			if (!inputRow) {
+				return false;
+			}
+			inputRow.setInvitationError(error);
+			return true;
+		}
+		setFirstContactsError(error) {
+			const inputRow = this.#inputRows[0];
+			if (!inputRow) {
+				return false;
+			}
+			inputRow.setContactsError(error);
+			return true;
+		}
+		#getFirstErrorInputRow() {
+			return this.#inputRows.find(inputRow => inputRow.hasError()) ?? null;
 		}
 	}
 
@@ -1296,6 +1884,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#inviteType;
 		#analytics;
 		#transport;
+		#initiator = null;
 		constructor(options) {
 			this.#departmentControl = options.departmentControl;
 			this.#inviteType = options.inviteType;
@@ -1303,12 +1892,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#transport = options.transport;
 		}
 		show() {
-			this.#getPopup().show();
+			this.#initiator = ui_a11y.FocusNavigator.getActiveElement();
+			const popup = this.#getPopup();
+			popup.getFocusTrap()?.setRestoreFocus(() => this.#initiator);
+			popup.show();
 		}
 		#getInput() {
 			this.#input ??= new intranet_invitationInput.InvitationInput({
 				id: 'invite-page-popup-invitation-input',
 				inputType: this.#inviteType,
+				showErrorBeforeSubmit: true,
 				onReadySave: this.onReadySaveInputHandler.bind(this),
 				onUnreadySave: this.onUnreadySaveInputHandler.bind(this),
 				placeholder: this.#getPlaceholder()
@@ -1327,25 +1920,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 		}
 		#getPopup() {
-			this.#popup ??= new main_popup.Popup({
-				content: this.#getPopupContent(),
-				id: 'email-invitation-email',
-				className: 'email-invitation-container',
-				closeIcon: true,
-				autoHide: false,
-				closeByEsc: true,
-				width: 515,
-				closeIconSize: main_popup.CloseIconSize.LARGE,
-				padding: 0,
-				overlay: {
-					backgroundColor: 'rgba(0, 32, 78, 0.46)'
+			if (!this.#popup) {
+				this.#popup = new main_popup.Popup({
+					content: this.#getPopupContent(),
+					id: 'email-invitation-email',
+					className: 'email-invitation-container',
+					ariaLabel: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE'),
+					focusTrap: {
+						initialFocus: () => this.#getInput().getTagSelector().getTextBox(),
+						restoreFocus: () => this.#initiator
+					},
+					closeIcon: true,
+					autoHide: false,
+					closeByEsc: true,
+					width: 515,
+					closeIconSize: main_popup.CloseIconSize.LARGE,
+					padding: 0,
+					overlay: {
+						backgroundColor: 'rgba(0, 32, 78, 0.46)'
+					}
+				});
+				this.#popup.getPopupContainer().dataset.testid = 'invitation-email-popup';
+				const closeButton = this.#popup.getPopupContainer().querySelector('.popup-window-close-icon');
+				if (main_core.Type.isDomNode(closeButton)) {
+					main_core.Dom.attr(closeButton, {
+						'aria-label': main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_CLOSE'),
+						'data-testid': 'invitation-email-popup-close-button'
+					});
 				}
-			});
+			}
 			return this.#popup;
 		}
 		#getPopupContent() {
 			return main_core.Tag.render`
-			<div class="intranet-invitation-popup">
+			<div class="intranet-invitation-popup" data-testid="invitation-email-popup-content">
 				<div class="intranet-invitation-popup__title">
 					<span class="ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE')}</span>
 				</div>
@@ -1353,7 +1961,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<p class="intranet-invitation-description ui-text --sm">
 						${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION_MSGVER_1')}
 					</p>
-					<div class="email-popup-container__input">
+					<div class="email-popup-container__input" data-testid="invitation-email-popup-input">
 						${this.#getInput().render()}
 					</div>
 				</div>
@@ -1378,6 +1986,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				state: ui_buttons.ButtonState.DISABLED,
 				style: ui_buttons.AirButtonStyle.FILLED,
 				useAirDesign: true,
+				dataset: {
+					testid: 'invitation-email-popup-send-button'
+				},
 				onclick: () => {
 					if (this.#sendButton.getState() === ui_buttons.ButtonState.WAITING) {
 						return;
@@ -1389,19 +2000,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 						if (response.data.invitedUserIds.length > 0) {
 							main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
 						}
+						const hasFiredUsers = response.data?.firedUserList?.length > 0;
+						if (hasFiredUsers) {
+							this.#getPopup().getFocusTrap()?.setRestoreFocus(false);
+						}
 						this.#getPopup().close();
 						this.#sendButton.setState(null);
-						if (response.data?.firedUserList && response.data?.firedUserList.length > 0) {
+						if (hasFiredUsers) {
 							new RestoreFiredUsersPopup({
 								userList: response.data.firedUserList,
 								isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
 								transport: this.#transport,
 								departmentIds,
-								workgroupIds
+								workgroupIds,
+								restoreFocusElement: this.#initiator
 							}).show();
 						}
 					}).catch(() => {
 						this.#sendButton.setState(null);
+						ui_a11y.FocusNavigator.focusTarget(this.#getInput().getTagSelector().getTextBox(), {
+							focusVisible: true
+						});
 					});
 				}
 			});
@@ -1413,6 +2032,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL'),
 				useAirDesign: true,
 				style: ui_buttons.AirButtonStyle.OUTLINE,
+				dataset: {
+					testid: 'invitation-email-popup-cancel-button'
+				},
 				onclick: () => this.#getPopup().close()
 			});
 		}
@@ -1450,10 +2072,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-invite-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-invite-page-form"
+				>
+					<h2
+						class="intranet-invitation-status__title ui-headline --sm"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-invite-page-title"
+					>${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</h2>
 					${this.#getInputRowsContainer().render()}
 					<span class="intranet-invitation-actions">
 						${this.#getAddButton().render()}
@@ -1472,6 +2105,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`;
 			return this.#container;
 		}
+		restoreErrors() {
+			this.#inputsRowsContainer?.restoreErrors();
+		}
 		#getInputRowsContainer() {
 			if (this.#inputsRowsContainer) {
 				return this.#inputsRowsContainer;
@@ -1486,9 +2122,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#renderMassInviteButton() {
 			const button = main_core.Tag.render`
-			<span data-test-id="invite-invite-page-open-invite-popup-button" class="ui-link ui-link-secondary ui-link-dashed ui-text --sm">
+			<button
+				type="button"
+				class="ui-link ui-link-secondary ui-link-dashed ui-text --sm"
+				data-test-id="invite-invite-page-open-invite-popup-button"
+				data-testid="invitation-invite-page-open-invite-popup-button"
+			>
 				${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MASSIVE')}
-			</span>
+			</button>
 		`;
 			main_core.Event.bind(button, 'click', this.#openMassInvitePopup.bind(this));
 			return button;
@@ -1511,19 +2152,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
 				style: ui_buttons.AirButtonStyle.FILLED,
 				props: {
-					'data-test-id': 'invite-invite-page-submit-button'
+					'data-test-id': 'invite-invite-page-submit-button',
+					'data-testid': 'invitation-invite-page-submit-button'
 				},
 				onclick: () => {
-					if (inviteButton.isWaiting() || this.#inputsRowsContainer.hasError()) {
-						return;
-					}
-					if (this.#inputsRowsContainer.isInvitationInputRowsEmpty()) {
-						main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onError', {
-							error: this.#getEmptyError()
-						});
+					if (inviteButton.isWaiting()) {
 						return;
 					}
 					main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:clearError');
+					this.#inputsRowsContainer.restoreErrors();
+					if (!this.#inputsRowsContainer.validate()) {
+						this.#inputsRowsContainer.focusFirstErrorInput();
+						return;
+					}
+					if (this.#inputsRowsContainer.isInvitationInputRowsEmpty()) {
+						this.#inputsRowsContainer.setFirstContactsError(this.#getEmptyError());
+						this.#inputsRowsContainer.focusFirstErrorInput();
+						return;
+					}
 					inviteButton.setState(ui_buttons.ButtonState.WAITING);
 					const departmentIds = this.#departmentControl.getValues();
 					const workgroupIds = this.#departmentControl.getGroupValues();
@@ -1537,11 +2183,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 						}
 					}, reject => {
 						inviteButton.setState(null);
-						let handled = false;
+						let errorsHandled = false;
 						if (reject.errors) {
-							handled = this.#handleErrors(reject.errors);
+							errorsHandled = this.#handleErrors(reject.errors);
 						}
-						if (!handled) {
+						if (!errorsHandled) {
 							this.#transport.onError(reject);
 						}
 					}, this.#analytics.getDataForAction('default')).then(response => {
@@ -1570,22 +2216,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 			let handled = false;
 			errors.forEach(error => {
 				if (error.code === 'EMAIL_EXIST_ERROR') {
-					this.#inputsRowsContainer.highlightErrorInputs(error.customData.emailList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_EMAIL_EXIST_ERROR'));
-					handled = true;
+					handled = this.#inputsRowsContainer.highlightErrorInputs(error.customData.emailList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_EMAIL_EXIST_ERROR')) || handled;
 				}
 				if (error.code === 'PHONE_EXIST_ERROR') {
-					this.#inputsRowsContainer.highlightErrorInputs(error.customData.phoneList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_PHONE_EXIST_ERROR'));
-					handled = true;
+					handled = this.#inputsRowsContainer.highlightErrorInputs(error.customData.phoneList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_PHONE_EXIST_ERROR')) || handled;
 				}
 				if (error.code === 'EMAIL_INVALID_ERROR') {
-					this.#inputsRowsContainer.highlightErrorInputs(error.customData.emailList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL'));
-					handled = true;
+					handled = this.#inputsRowsContainer.highlightErrorInputs(error.customData.emailList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL')) || handled;
 				}
 				if (error.code === 'PHONE_INVALID_ERROR') {
-					this.#inputsRowsContainer.highlightErrorInputs(error.customData.phoneList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE'));
-					handled = true;
+					handled = this.#inputsRowsContainer.highlightErrorInputs(error.customData.phoneList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE')) || handled;
+				}
+				const invitationIndex = error.customData?.invitationIndex;
+				if (main_core.Type.isStringFilled(error?.message) && Number.isInteger(invitationIndex)) {
+					handled = this.#inputsRowsContainer.setInvitationError(invitationIndex, error.message) || handled;
 				}
 			});
+			if (handled) {
+				this.#inputsRowsContainer.focusFirstErrorInput();
+			}
 			return handled;
 		}
 		#getAddButton() {
@@ -1595,7 +2244,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
 				icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
 				props: {
-					'data-test-id': 'invite-invite-page-add-more-button'
+					'data-test-id': 'invite-invite-page-add-more-button',
+					'data-testid': 'invitation-invite-page-add-more-button'
 				},
 				onclick: () => {
 					const inputsRow = this.#inputsFactory.createInputsRow();
@@ -1633,12 +2283,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block" data-role="self-block"></div>
+			<div
+				class="intranet-invitation-block"
+				data-role="self-block"
+				data-testid="invitation-link-disabled-page-root"
+			></div>
 		`;
 			const statusBlock = main_core.Tag.render`
-			<div class="intranet-invitation-status --invite-link-disabled">
+			<div
+				class="intranet-invitation-status --invite-link-disabled"
+				data-testid="invitation-link-disabled-page-status"
+			>
 				<div class="intranet-invitation-status__content">
-					<span class="intranet-invitation-status__title ui-headline --md">${main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</span>
+					<h2
+						class="intranet-invitation-status__title ui-headline --md"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-link-disabled-page-title"
+					>${main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</h2>
 					<p class="intranet-invitation-status__description ui-text --lg">
 						${main_core.Loc.getMessage(this.#isAdmin ? 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION' : 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION_NOT_ADMIN')}
 					</p>
@@ -1663,7 +2325,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ENABLE_BUTTON'),
 				style: ui_buttons.AirButtonStyle.FILLED,
 				props: {
-					'data-test-id': 'invite-link-page-enable-button'
+					'data-test-id': 'invite-link-page-enable-button',
+					'data-testid': 'invitation-link-disabled-page-enable-button'
 				},
 				onclick: () => {
 					if (enableButton.isWaiting()) {
@@ -1740,25 +2403,56 @@ this.BX.Intranet = this.BX.Intranet || {};
 			if (this.#section) {
 				return this.#section;
 			}
+			const allowInviteWithLinkSwitcher = this.#getAllowInviteWithLinkSwitcher().getNode();
+			this.#makeSwitcherAccessible(this.#getAllowInviteWithLinkSwitcher());
+			main_core.Dom.attr(allowInviteWithLinkSwitcher, {
+				'aria-labelledby': 'invitation-link-options-allow-link-title',
+				'aria-describedby': 'invitation-link-options-allow-link-description',
+				'data-testid': 'invitation-link-options-allow-link-switcher'
+			});
 			const allowInviteWithLinkSwitcherContainer = main_core.Tag.render`
-			<div class="intranet-invitation-link-options__switcher">
+			<div
+				class="intranet-invitation-link-options__switcher"
+				data-testid="invitation-link-options-allow-link-control"
+			>
 				<div class="intranet-invitation-link-options__switcher-header">
-					${this.#getAllowInviteWithLinkSwitcher().getNode()}
-					<span class="intranet-invitation-link-options__switcher-title">${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</span>
+					${allowInviteWithLinkSwitcher}
+					<span
+						id="invitation-link-options-allow-link-title"
+						class="intranet-invitation-link-options__switcher-title"
+					>${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</span>
 				</div>
-				<div class="intranet-invitation-link-options__switcher-description">${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT_MSGVER_1')}</div>
+				<div
+					id="invitation-link-options-allow-link-description"
+					class="intranet-invitation-link-options__switcher-description"
+				>${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT_MSGVER_1')}</div>
 			</div>
 		`;
+			const confirmRegistrationSwitcher = this.#getConfirmRegistrationSwitcher().getNode();
+			this.#makeSwitcherAccessible(this.#getConfirmRegistrationSwitcher());
+			main_core.Dom.attr(confirmRegistrationSwitcher, {
+				'aria-labelledby': 'invitation-link-options-confirm-registration-title',
+				'data-testid': 'invitation-link-options-confirm-registration-switcher'
+			});
 			const confirmRegistrationSwitcherContainer = main_core.Tag.render`
-			<div class="intranet-invitation-link-options__switcher">
+			<div
+				class="intranet-invitation-link-options__switcher"
+				data-testid="invitation-link-options-confirm-registration-control"
+			>
 				<div class="intranet-invitation-link-options__switcher-header">
-					${this.#getConfirmRegistrationSwitcher().getNode()}
-					<span class="intranet-invitation-link-options__switcher-title">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</span>
+					${confirmRegistrationSwitcher}
+					<span
+						id="invitation-link-options-confirm-registration-title"
+						class="intranet-invitation-link-options__switcher-title"
+					>${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</span>
 				</div>
 			</div>
 		`;
 			const body = main_core.Tag.render`
-			<div class="intranet-invitation-link-options__body --divided">
+			<div
+				class="intranet-invitation-link-options__body --divided"
+				data-testid="invitation-link-options-form"
+			>
 				<div class="intranet-invitation-link-options__item">
 					${allowInviteWithLinkSwitcherContainer}
 				</div>
@@ -1768,12 +2462,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 				main_core.Dom.append(main_core.Tag.render`
 				<div class="intranet-invitation-link-options__item">
 					${confirmRegistrationSwitcherContainer}
-					${this.#getAllowRegisterWhiteList().render()}
+					${this.#renderAllowRegisterWhiteList()}
 				</div>
 			`, body);
 			}
 			this.#section = main_core.Tag.render`
-			<div class="intranet-invitation-block__options-section intranet-invitation-link-options">
+			<div
+				class="intranet-invitation-block__options-section intranet-invitation-link-options"
+				data-testid="invitation-link-options-root"
+			>
 				${body}
 				<div class="intranet-invitation-link-options__footer">
 					${this.#renderRegenerateSecretButton()}
@@ -1781,9 +2478,35 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 		`;
 			main_core.Dom.addClass(this.#section, '--collapsed');
+			this.#section.inert = true;
 			this.#refreshSectionHeight();
 			this.#bindAllowRegisterWhiteListEnterHandler();
 			return this.#section;
+		}
+		#makeSwitcherAccessible(switcher) {
+			const node = switcher.getNode();
+			main_core.Dom.attr(node, {
+				role: 'switch',
+				tabindex: '0'
+			});
+			this.#syncSwitcherAccessibilityState(switcher);
+			main_core.Event.bind(node, 'click', () => this.#syncSwitcherAccessibilityState(switcher));
+			main_core.Event.bind(node, 'keydown', event => {
+				if (event.target !== node || event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				switcher.toggle(event);
+				this.#syncSwitcherAccessibilityState(switcher);
+			});
+		}
+		#syncSwitcherAccessibilityState(switcher) {
+			const isUnavailable = switcher.isDisabled() || switcher.isLoading();
+			main_core.Dom.attr(switcher.getNode(), {
+				'aria-checked': switcher.isChecked() ? 'true' : 'false',
+				'aria-disabled': isUnavailable ? 'true' : 'false',
+				'aria-busy': switcher.isLoading() ? 'true' : null
+			});
 		}
 		toggleSection() {
 			if (this.#optionsExpanded) {
@@ -1798,6 +2521,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.#optionsExpanded = true;
 			this.#onExpandedChange?.(true);
+			this.#section.inert = false;
 			this.#refreshSectionHeight();
 			requestAnimationFrame(() => {
 				main_core.Dom.removeClass(this.#section, '--collapsed');
@@ -1809,16 +2533,28 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.#optionsExpanded = false;
 			this.#onExpandedChange?.(false);
+			this.#restoreFocusToDisclosureButton();
+			this.#section.inert = true;
 			this.#refreshSectionHeight();
 			requestAnimationFrame(() => {
-				this.#section?.classList.add('--collapsed');
+				main_core.Dom.addClass(this.#section, '--collapsed');
 			});
+		}
+		#restoreFocusToDisclosureButton() {
+			const activeElement = ui_a11y.FocusNavigator.getActiveElement();
+			if (!main_core.Type.isDomNode(activeElement) || !this.#section.contains(activeElement)) {
+				return;
+			}
+			const disclosureButton = this.#section.parentElement?.querySelector('[data-testid="invitation-link-page-options-action"]');
+			if (main_core.Type.isDomNode(disclosureButton)) {
+				ui_a11y.FocusNavigator.focusTarget(disclosureButton);
+			}
 		}
 		#refreshSectionHeight() {
 			if (!this.#section) {
 				return;
 			}
-			this.#section.style.setProperty('--link-options-section-height', `${this.#section.scrollHeight}px`);
+			main_core.Dom.style(this.#section, '--link-options-section-height', `${this.#section.scrollHeight}px`);
 		}
 		#renderRegenerateSecretButton() {
 			this.#regenerateSecretButton ??= new ui_buttons.Button({
@@ -1828,6 +2564,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				icon: BX.UI.IconSet.Outline.REFRESH,
 				props: {
 					id: 'invite-link-options-inline-regenerate-button'
+				},
+				dataset: {
+					testid: 'invitation-link-options-regenerate-button'
 				},
 				onclick: this.#regenerateSecret.bind(this)
 			});
@@ -1843,21 +2582,39 @@ this.BX.Intranet = this.BX.Intranet || {};
 					unchecked: () => {
 						this.#getAllowRegisterWhiteList().setDesign(this.#getConfirmRegistrationSwitcher().isChecked() ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled);
 						this.#getConfirmRegistrationSwitcher().disable(false);
+						this.#syncSwitcherAccessibilityState(this.#getConfirmRegistrationSwitcher());
 					},
 					checked: () => {
 						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Disabled);
 						this.#getConfirmRegistrationSwitcher().disable(true);
+						this.#syncSwitcherAccessibilityState(this.#getConfirmRegistrationSwitcher());
 					},
 					toggled: this.#saveOptions.bind(this)
 				}
 			});
 			return this.#allowInviteWithLinkSwitcher;
 		}
+		#renderAllowRegisterWhiteList() {
+			const inputContainer = this.#getAllowRegisterWhiteList().render();
+			const input = inputContainer.querySelector('.ui-system-input-value');
+			if (input) {
+				main_core.Dom.attr(input, {
+					id: 'invitation-link-options-whitelist-input',
+					type: 'text',
+					autocomplete: 'off',
+					'aria-label': main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
+					'data-testid': 'invitation-link-options-whitelist-input'
+				});
+			}
+			return inputContainer;
+		}
 		#getAllowRegisterWhiteList() {
 			if (!this.#allowRegisterWhiteList) {
 				this.#allowRegisterWhiteList = new ui_system_input.Input({
 					label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
+					ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
 					placeholder: 'example.com',
+					type: 'text',
 					design: this.#needConfirmRegistration && this.#linkRegisterEnabled ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled,
 					onInput: this.#onAllowRegisterWhiteListInput.bind(this),
 					onBlur: this.#onAllowRegisterWhiteListBlur.bind(this),
@@ -1895,7 +2652,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			if (this.#isWhiteListEnterBound) {
 				return;
 			}
-			const input = this.#getAllowRegisterWhiteList().render().querySelector('.ui-system-input-value');
+			const input = this.#renderAllowRegisterWhiteList().querySelector('.ui-system-input-value');
 			if (!input) {
 				return;
 			}
@@ -1916,21 +2673,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 						allow_register_secret: main_core.Text.getRandom(8)
 					}
 				}, reject => {
-					this.#transport.onError(reject);
 					throw reject;
 				});
-				top.BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
-					autoHideDelay: 2500
-				});
+				this.#showResultNotification(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'), 'polite', 'invitation-link-options-regenerate-success-notification');
 				this.#analytics.sendRegenerateLink();
 				await this.#onRegenerate?.();
 			} catch {
 				this.#onRegenerateError?.();
-				top.BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
-					autoHideDelay: 2500
-				});
+				this.#showResultNotification(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'), 'assertive', 'invitation-link-options-regenerate-error-notification');
 			} finally {
 				this.#isRegenerating = false;
 				this.#setRegenerateButtonLoadingState(false);
@@ -1996,7 +2746,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#collectWhiteListInputValue(shouldSave) {
 			const input = this.#getAllowRegisterWhiteList();
-			const normalizedValue = input.getValue().replace(/[,\s]+$/g, '').trim();
+			const normalizedValue = input.getValue().replaceAll(/[\s,]+$/g, '').trim();
 			if (normalizedValue.length > 0) {
 				this.#addChip(normalizedValue);
 				input.setValue('');
@@ -2010,7 +2760,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			const allowRegister = this.#getAllowInviteWithLinkSwitcher().isChecked();
 			const needConfirmRegistration = this.#getConfirmRegistrationSwitcher().isChecked();
 			const whiteList = this.#getWhiteListValue();
-			const isNeedConfirmRegistrationChanged = needConfirmRegistration === this.#needConfirmRegistration;
+			const isNeedConfirmRegistrationChanged = needConfirmRegistration !== this.#needConfirmRegistration;
 			if (allowRegister === this.#linkRegisterEnabled && needConfirmRegistration === this.#needConfirmRegistration && whiteList === this.#whiteList) {
 				return;
 			}
@@ -2037,7 +2787,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 						allow_register_whitelist: whiteList
 					}
 				}, reject => {
-					this.#transport.onError(reject);
 					throw reject;
 				});
 				this.#linkRegisterEnabled = allowRegister;
@@ -2048,7 +2797,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 					main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
 						selfEnabled: false
 					});
+					this.#announceDisabledStatusAndFocusEnableButton();
 				}
+				this.#showResultNotification(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'), 'polite', 'invitation-link-options-save-success-notification', this.#linkRegisterEnabled);
 			} catch (reject) {
 				this.#linkRegisterEnabled = savedLinkRegisterEnabled;
 				this.#needConfirmRegistration = savedNeedConfirmRegistration;
@@ -2056,8 +2807,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.#getAllowInviteWithLinkSwitcher().check(this.#linkRegisterEnabled, false);
 				this.#getConfirmRegistrationSwitcher().check(this.#needConfirmRegistration, false);
 				this.#getConfirmRegistrationSwitcher().disable(!this.#linkRegisterEnabled, false);
+				this.#syncSwitcherAccessibilityState(this.#getAllowInviteWithLinkSwitcher());
+				this.#syncSwitcherAccessibilityState(this.#getConfirmRegistrationSwitcher());
 				this.#addDefaultChips();
 				console.error(reject);
+				this.#showResultNotification(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'), 'assertive', 'invitation-link-options-save-error-notification');
 			} finally {
 				if (isNeedConfirmRegistrationChanged) {
 					this.#onNeedConfirmRegistrationChangeEnd?.();
@@ -2074,9 +2828,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 				requestAnimationFrame(() => resolve());
 			});
 		}
+		#announceDisabledStatusAndFocusEnableButton() {
+			const statusTitle = document.querySelector('[data-testid="invitation-link-disabled-page-status"] h2');
+			const enableButton = document.querySelector('[data-test-id="invite-link-page-enable-button"]');
+			if (!main_core.Type.isDomNode(statusTitle) || !main_core.Type.isDomNode(enableButton)) {
+				return;
+			}
+			ui_a11y.LiveAnnouncer.announce(statusTitle.textContent ?? '', 'polite');
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					ui_a11y.FocusNavigator.focusTarget(enableButton);
+				});
+			});
+		}
+		#showResultNotification(message, politeness, testId, shouldAnnounce = true) {
+			const content = main_core.Tag.render`
+			<div data-testid="${testId}">${message}</div>
+		`;
+			top.BX.UI.Notification.Center.notify({
+				content,
+				autoHideDelay: 2500
+			});
+			if (shouldAnnounce) {
+				ui_a11y.LiveAnnouncer.announce(content.textContent ?? '', politeness);
+			}
+		}
 		#setSavingState(isSaving) {
 			this.#allowInviteWithLinkSwitcher?.setLoading(isSaving);
 			this.#confirmRegistrationSwitcher?.setLoading(isSaving);
+			if (this.#allowInviteWithLinkSwitcher) {
+				this.#syncSwitcherAccessibilityState(this.#allowInviteWithLinkSwitcher);
+			}
+			if (this.#confirmRegistrationSwitcher) {
+				this.#syncSwitcherAccessibilityState(this.#confirmRegistrationSwitcher);
+			}
 			this.#getAllowRegisterWhiteList().setDesign(isSaving ? ui_system_input.InputDesign.Disabled : this.#getConfirmRegistrationSwitcher().isChecked() && this.#getAllowInviteWithLinkSwitcher().isChecked() ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled);
 		}
 	}
@@ -2095,7 +2880,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#inviteLinkRequestId = 0;
 		#isDepartmentControlSubscribed = false;
 		#whiteList = '';
-		#linkRegisterEnabled = false;
 		#analytics;
 		#transport;
 		#linkInput;
@@ -2116,7 +2900,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#inviteLink = main_core.Type.isString(options.invitationLink) ? options.invitationLink : '';
 			this.#isLinkLoading = !main_core.Type.isStringFilled(this.#inviteLink);
 			this.#whiteList = main_core.Type.isStringFilled(options.whiteList) ? options.whiteList : '';
-			this.#linkRegisterEnabled = options.linkRegisterEnabled === true;
 			this.#analytics = options.analytics;
 			this.#transport = options.transport;
 		}
@@ -2125,15 +2908,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block" data-role="self-block">
+			<div
+				class="intranet-invitation-block"
+				data-role="self-block"
+				data-testid="invitation-link-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-link-page-form"
+				>
 					<div class="intranet-invitation-block__header">
-						<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE')}</span>
+						<h2
+							class="intranet-invitation-status__title ui-headline --sm"
+							tabindex="-1"
+							data-role="page-title"
+							data-testid="invitation-link-page-title"
+						>${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE')}</h2>
 					</div>
 					<div class="intranet-invitation-block__copy-link-wrapper">
-						<div class="intranet-invitation-block__copy-link-input-wrapper">
-							${this.#getLinkInput().render()}
+						<div
+							class="intranet-invitation-block__copy-link-input-wrapper"
+							data-testid="invitation-link-page-link-input-container"
+						>
+							${this.#renderLinkInput()}
 						</div>
 						${this.#getCopyLinkButton().render()}
 					</div>
@@ -2158,6 +2956,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 			return this.#loader;
 		}
+		#renderLinkInput() {
+			const inputContainer = this.#getLinkInput().render();
+			const input = inputContainer.querySelector('.ui-system-input-value');
+			if (input) {
+				main_core.Dom.attr(input, {
+					id: 'invitation-link-page-link-input',
+					type: 'url',
+					autocomplete: 'off',
+					'aria-label': main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE'),
+					'data-testid': 'invitation-link-page-link-input'
+				});
+			}
+			return inputContainer;
+		}
 		#setConfirmRegistrationLoadingState(isLoading) {
 			if (!this.#container) {
 				return;
@@ -2174,7 +2986,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#linkInput ??= new ui_system_input.Input({
 				design: this.#isLinkLoading ? ui_system_input.InputDesign.Disabled : ui_system_input.InputDesign.Grey,
 				value: this.#inviteLink,
-				readonly: true
+				readonly: true,
+				type: 'url',
+				ariaLabel: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE')
 			});
 			return this.#linkInput;
 		}
@@ -2188,6 +3002,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				size: BX.UI.ButtonSize.LARGE,
 				props: {
 					'data-test-id': 'invite-link-page-copy-link-button'
+				},
+				dataset: {
+					testid: 'invitation-link-page-copy-link-button'
 				}
 			});
 			return this.#copyLinkButton;
@@ -2197,14 +3014,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return '';
 			}
 			this.#linkOptionsButton ??= main_core.Tag.render`
-			<div
+			<button
+				type="button"
 				class="intranet-invitation-link__footer-link ${this.#isLinkOptionsExpanded ? '--expanded' : ''}"
 				data-test-id="invite-link-page-option-button"
+				data-testid="invitation-link-page-options-action"
+				aria-expanded="${this.#isLinkOptionsExpanded}"
 				onclick="${() => this.#toggleLinkOptionsSection()}"
 			>
 				<span class="ui-link ui-link-secondary ui-link-dashed">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS')}</span>
-				<i class="ui-icon-set --chevron-down-l"></i>
-			</div>
+				<i class="ui-icon-set --chevron-down-l" aria-hidden="true"></i>
+			</button>
 		`;
 			return this.#linkOptionsButton;
 		}
@@ -2214,7 +3034,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				isCloud: this.#isCloud,
 				needConfirmRegistration: this.#needConfirmRegistration,
 				whiteList: this.#whiteList,
-				linkRegisterEnabled: this.#linkRegisterEnabled,
+				linkRegisterEnabled: true,
 				analytics: this.#analytics,
 				transport: this.#transport,
 				onRegenerateStart: () => {
@@ -2252,7 +3072,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		#setLinkOptionsButtonExpandedState(isExpanded) {
 			this.#isLinkOptionsExpanded = isExpanded === true;
-			main_core.Dom.toggleClass(this.#isLinkOptionsExpanded, '--expanded');
+			if (this.#isLinkOptionsExpanded) {
+				main_core.Dom.addClass(this.#linkOptionsButton, '--expanded');
+			} else {
+				main_core.Dom.removeClass(this.#linkOptionsButton, '--expanded');
+			}
+			main_core.Dom.attr(this.#linkOptionsButton, 'aria-expanded', this.#isLinkOptionsExpanded ? 'true' : 'false');
 		}
 		#copyRegisterUrl(copyLinkButton) {
 			if (copyLinkButton.getState() === ui_buttons.ButtonState.WAITING || this.#isLinkLoading) {
@@ -2420,12 +3245,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-mass-page-root"
+			>
 				<div class="intranet-invitation-block__department-control">
 					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
 				</div>
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE')}</span>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-mass-page-form"
+				>
+					<h2
+						class="intranet-invitation-status__title ui-headline --sm"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-mass-page-title"
+					>${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE')}</h2>
 					${this.#massInvitationField.render()}
 					<div class="intranet-invitation-block__footer">
 						${this.#getInviteButton().render()}
@@ -2440,6 +3276,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 				useAirDesign: true,
 				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'),
 				style: ui_buttons.AirButtonStyle.FILLED,
+				props: {
+					'data-testid': 'invitation-mass-page-submit-button'
+				},
 				onclick: () => {
 					if (inviteButton.getState() === ui_buttons.ButtonState.WAITING) {
 						return;
@@ -2466,6 +3305,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#emailInput;
 		#nameInput;
 		#lastNameInput;
+		#inputGroup;
+		#inputGroupErrors = [];
 		#checkboxInput;
 		#transport;
 		constructor(options) {
@@ -2479,20 +3320,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return this.#container;
 			}
 			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-register-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-register-page-form"
+				>
 					<div class="intranet-invitation-block__header">
-						<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_TITLE_MSGVER_1')}</span>
-<!--						<p class="intranet-invitation-description ui-text &#45;&#45;md">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_DESCRIPTION_MSGVER_1')}</p>-->
+						<h2
+							class="intranet-invitation-status__title ui-headline --sm"
+							tabindex="-1"
+							data-role="page-title"
+							data-testid="invitation-register-page-title"
+						>${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_TITLE_MSGVER_1')}</h2>
 					</div>
-					<div class="intranet-invitation-block__body">
-						${this.#getEmailInput().render()}
-						<div class="intranet-invitation-block__inline-input">
-							${this.#getNameInput().render()}
-							${this.#getLastNameInput().render()}
-						</div>
-					</div>
+					${this.#renderInputGroup()}
 					${this.#renderCheckbox()}
 					<div class="intranet-invitation-block__footer">
 						${this.#getRegisterButton().render()}
@@ -2503,57 +3348,178 @@ this.BX.Intranet = this.BX.Intranet || {};
 			BX.UI.Hint.init(this.#container);
 			return this.#container;
 		}
+		restoreErrors() {
+			const emailInput = this.#getEmailInput();
+			this.#renderInput(emailInput, this.#getEmailInputOptions());
+			syncFieldErrorMessage('invitation-register-page-email-input', emailInput.getError(), false);
+			syncFieldErrorMessage(this.#getInputGroupTestId(), this.#inputGroupErrors.join(' '), false);
+			this.#syncInputGroupErrorState();
+		}
+		#renderInputGroup() {
+			if (!this.#inputGroup) {
+				this.#inputGroup = main_core.Tag.render`
+				<fieldset
+					class="intranet-invitation-block__body"
+					tabindex="-1"
+					data-testid="invitation-register-page-fields"
+				>
+					<legend>
+						<visually-hidden>${main_core.Loc.getMessage('BX24_INVITE_DIALOG_EMPLOYEE')}</visually-hidden>
+					</legend>
+					${this.#renderInput(this.#getEmailInput(), this.#getEmailInputOptions())}
+					<div class="intranet-invitation-block__inline-input">
+						${this.#renderInput(this.#getNameInput(), {
+				id: 'invitation-register-page-name-input',
+				name: 'ADD_NAME',
+				type: 'text',
+				autocomplete: 'given-name'
+			})}
+						${this.#renderInput(this.#getLastNameInput(), {
+				id: 'invitation-register-page-last-name-input',
+				name: 'ADD_LAST_NAME',
+				type: 'text',
+				autocomplete: 'family-name'
+			})}
+					</div>
+				</fieldset>
+			`;
+				main_core.Event.bind(this.#inputGroup, 'input', () => {
+					if (this.#hasInputGroupError()) {
+						this.#setInputGroupError('');
+					}
+				});
+			}
+			return this.#inputGroup;
+		}
+		#getEmailInputOptions() {
+			return {
+				id: 'invitation-register-page-email-input',
+				name: 'ADD_EMAIL',
+				type: 'email',
+				autocomplete: 'email',
+				required: true
+			};
+		}
+		#renderInput(inputControl, options) {
+			const inputContainer = inputControl.render();
+			const input = inputContainer.querySelector('.ui-system-input-value');
+			const error = inputContainer.querySelector('.ui-system-input-label.--error');
+			const requiredMark = inputContainer.querySelector('.ui-system-input-label-required');
+			if (input) {
+				main_core.Dom.attr(input, {
+					id: options.id,
+					name: options.name,
+					type: options.type,
+					autocomplete: options.autocomplete,
+					'data-testid': options.id
+				});
+				if (options.required === true) {
+					main_core.Dom.attr(input, 'required', '');
+				} else {
+					input.removeAttribute('required');
+				}
+				if (main_core.Type.isStringFilled(inputControl.getError())) {
+					main_core.Dom.attr(input, {
+						'aria-invalid': 'true',
+						'aria-describedby': getFieldErrorMessageId(options.id)
+					});
+				} else {
+					input.removeAttribute('aria-invalid');
+					input.removeAttribute('aria-describedby');
+				}
+			}
+			if (error) {
+				main_core.Dom.attr(error, {
+					id: `${options.id}-error`,
+					'data-testid': `${options.id}-error`,
+					hidden: ''
+				});
+			}
+			if (requiredMark) {
+				main_core.Dom.attr(requiredMark, 'aria-hidden', 'true');
+			}
+			return inputContainer;
+		}
 		#getEmailInput() {
 			this.#emailInput ??= new ui_system_input.Input({
 				label: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_LABEL'),
+				ariaLabel: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_LABEL'),
 				placeholder: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_PLACEHOLDER'),
 				design: ui_system_input.InputDesign.Grey,
-				stretched: true
+				stretched: true,
+				type: 'email',
+				required: true,
+				onInput: () => {
+					this.#setEmailError('');
+				}
 			});
 			return this.#emailInput;
 		}
 		#getNameInput() {
 			this.#nameInput ??= new ui_system_input.Input({
 				label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'),
+				ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'),
 				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
 				design: ui_system_input.InputDesign.Grey,
-				stretched: true
+				stretched: true,
+				type: 'text'
 			});
 			return this.#nameInput;
 		}
 		#getLastNameInput() {
 			this.#lastNameInput ??= new ui_system_input.Input({
 				label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'),
+				ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'),
 				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
 				design: ui_system_input.InputDesign.Grey,
-				stretched: true
+				stretched: true,
+				type: 'text'
 			});
 			return this.#lastNameInput;
 		}
 		#renderCheckbox() {
+			const hint = main_core.Tag.render`
+			<span
+				class="invite-invitation-helper"
+				data-hint="${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_CHECKBOX_HINT')}"
+				data-hint-no-icon
+			></span>
+		`;
 			return main_core.Tag.render`
-			<div class="intranet-invitation-checkbox__container">
+			<div
+				class="intranet-invitation-checkbox__container"
+				data-testid="invitation-register-page-send-password-control"
+			>
 				${this.#getCheckboxInput()}
-				<label class="intranet-invitation-checkbox__label ui-text --sm" for="ADD_SEND_PASSWORD">
+				<label
+					class="intranet-invitation-checkbox__label ui-text --sm"
+					for="ADD_SEND_PASSWORD"
+					data-testid="invitation-register-page-send-password-label"
+				>
 					${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_CHECKBOX_LABEL')}
 				</label>
-				<div class="invite-invitation-helper"
-					 data-hint="${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_CHECKBOX_HINT')}"
-					 data-hint-no-icon
-				>
-				</div>
+				${hint}
 			</div>
 		`;
 		}
 		#getCheckboxInput() {
-			this.#checkboxInput ??= main_core.Tag.render`
-			<input
-				type="checkbox"
-				name="ADD_SEND_PASSWORD"
-				data-test-id="invite-register-checkbox"
-				class="intranet-invitation-checkbox"
-			>
-		`;
+			if (!this.#checkboxInput) {
+				this.#checkboxInput = main_core.Tag.render`
+				<input
+					id="ADD_SEND_PASSWORD"
+					type="checkbox"
+					name="ADD_SEND_PASSWORD"
+					data-test-id="invite-register-checkbox"
+					data-testid="invitation-register-page-send-password-checkbox"
+					class="intranet-invitation-checkbox"
+				>
+			`;
+				main_core.Event.bind(this.#checkboxInput, 'keydown', event => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+					}
+				});
+			}
 			return this.#checkboxInput;
 		}
 		#getRegisterButton() {
@@ -2564,8 +3530,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 				props: {
 					'data-test-id': 'invite-register-submit-button'
 				},
+				dataset: {
+					testid: 'invitation-register-page-submit-button'
+				},
 				onclick: () => {
 					if (registerButton.isWaiting()) {
+						return;
+					}
+					main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:clearError');
+					this.#setInputGroupError('');
+					if (!this.#validateInputs()) {
+						this.#focusFirstErrorInput();
 						return;
 					}
 					registerButton.setState(ui_buttons.ButtonState.WAITING);
@@ -2584,13 +3559,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 						}
 					}, reject => {
 						registerButton.setState(null);
-						this.#transport.onError(reject);
+						this.#handleRegisterErrors(reject);
 					}).then(response => {
+						if (!response) {
+							return;
+						}
 						registerButton.setState(null);
 						this.#departmentControl.reset();
 						this.#getEmailInput().setValue('');
+						this.#setEmailError('');
 						this.#getNameInput().setValue('');
 						this.#getLastNameInput().setValue('');
+						this.#setInputGroupError('');
 						if (response.data.firedUserList) {
 							new RestoreFiredUsersPopup({
 								userList: response.data.firedUserList,
@@ -2610,6 +3590,89 @@ this.BX.Intranet = this.BX.Intranet || {};
 				}
 			});
 			return registerButton;
+		}
+		#validateInputs() {
+			const email = String(this.#getEmailInput().getValue() ?? '').trim();
+			const isEmailValid = main_core.Validation.isEmail(email) && /^[^@]+@[^@]+\.[^@]+$/.test(email);
+			this.#setEmailError(isEmailValid ? '' : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL'));
+			return !this.#hasInputErrors();
+		}
+		#handleRegisterErrors(reject) {
+			const errors = main_core.Type.isArray(reject?.errors) ? reject.errors : [];
+			let hasHandledErrors = false;
+			errors.forEach(error => {
+				if (!main_core.Type.isStringFilled(error?.message)) {
+					return;
+				}
+				if (error?.customData?.field === 'email') {
+					this.#setEmailError(error.message);
+				} else {
+					this.#setInputGroupError(error.message);
+				}
+				hasHandledErrors = true;
+			});
+			if (hasHandledErrors) {
+				this.#focusFirstErrorInput();
+				return;
+			}
+			this.#transport.onError(reject);
+		}
+		#hasInputErrors() {
+			return main_core.Type.isStringFilled(this.#getEmailInput().getError()) || this.#hasInputGroupError();
+		}
+		#focusFirstErrorInput() {
+			if (main_core.Type.isStringFilled(this.#getEmailInput().getError())) {
+				this.#getEmailInput().focus();
+			} else if (this.#hasInputGroupError()) {
+				ui_a11y.FocusNavigator.focusContainer(this.#renderInputGroup(), {
+					focusVisible: true
+				});
+			} else {
+				return false;
+			}
+			this.#container?.ownerDocument.activeElement?.scrollIntoView({
+				block: 'center'
+			});
+			return true;
+		}
+		#setEmailError(errorMessage) {
+			const emailInput = this.#getEmailInput();
+			emailInput.setError(errorMessage);
+			this.#renderInput(emailInput, {
+				id: 'invitation-register-page-email-input',
+				name: 'ADD_EMAIL',
+				type: 'email',
+				autocomplete: 'email',
+				required: true
+			});
+			syncFieldErrorMessage('invitation-register-page-email-input', errorMessage);
+		}
+		#setInputGroupError(errorMessage) {
+			if (!main_core.Type.isStringFilled(errorMessage)) {
+				this.#inputGroupErrors = [];
+			} else if (!this.#inputGroupErrors.includes(errorMessage)) {
+				this.#inputGroupErrors.push(errorMessage);
+			}
+			syncFieldErrorMessage(this.#getInputGroupTestId(), this.#inputGroupErrors.join(' '), false);
+			this.#syncInputGroupErrorState();
+		}
+		#hasInputGroupError() {
+			return this.#inputGroupErrors.length > 0;
+		}
+		#getInputGroupTestId() {
+			return 'invitation-register-page-fields';
+		}
+		#syncInputGroupErrorState() {
+			const inputGroup = this.#renderInputGroup();
+			if (this.#hasInputGroupError()) {
+				main_core.Dom.attr(inputGroup, {
+					'aria-invalid': 'true',
+					'aria-describedby': getFieldErrorMessageId(this.#getInputGroupTestId())
+				});
+				return;
+			}
+			inputGroup.removeAttribute('aria-invalid');
+			inputGroup.removeAttribute('aria-describedby');
 		}
 		#getNotificationContentWithoutInvitation() {
 			return main_core.Tag.render`
@@ -2785,22 +3848,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class SuccessInvitePopup {
 		show(content) {
+			const notificationContent = content || this.#getNotificationContent();
+			notificationContent.dataset.testid = 'invitation-success-notification';
 			const notificationOptions = {
 				id: 'invite-notification-result',
 				autoHideDelay: 4000,
 				closeButton: false,
 				autoHide: true,
-				content: content || this.#getNotificationContent(),
+				content: notificationContent,
 				useAirDesign: true
 			};
 			const notify = BX.UI.Notification.Center.notify(notificationOptions);
 			notify.show();
 			notify.activateAutoHide();
+			const resultContent = notificationContent.querySelector('.invite-email-notification__content') ?? notificationContent;
+			ui_a11y.LiveAnnouncer.announce((resultContent.textContent ?? '').replace(/\s+/g, ' ').trim(), 'polite');
 		}
 		#getNotificationContent() {
 			return main_core.Tag.render`
 			<div class="invite-email-notification">
-				<div class="invite-email-notification__content">
+				<div
+					class="invite-email-notification__content"
+					data-testid="invitation-success-notification-message"
+				>
 					<div class="invite-email-notification__title ui-text --sm --accent">
 						${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_TITLE')}
 					</div>
@@ -2884,6 +3954,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.navigation?.subscribe('onBeforeChangePage', this.onBeforeChangePage.bind(this));
 			this.navigation?.subscribe('onAfterChangePage', this.onAfterChangePage.bind(this));
 			this.navigation.showFirst();
+			this.activeMenuItem(this.navigation.getCurrentCode());
 		}
 		subscribeEvents() {
 			main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onError', event => {
@@ -2891,6 +3962,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 			main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:clearError', () => {
 				this.messageBar.hideAll();
+			});
+			main_core_events.EventEmitter.subscribe(SHOW_FIELD_ERROR_EVENT, event => {
+				const {
+					id,
+					message,
+					announce
+				} = event.getData();
+				this.messageBar.showFieldError(id, message, announce);
+			});
+			main_core_events.EventEmitter.subscribe(HIDE_FIELD_ERROR_EVENT, event => {
+				this.messageBar.hideFieldError(event.getData().id);
 			});
 			main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:showSuccessPopup', event => {
 				this.#showSuccessPopup(event.getData().content);
@@ -2906,6 +3988,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		onAfterChangePage(event) {
 			const section = this.getSubSection();
 			const page = event.getData().current;
+			page?.restoreErrors();
 			let subSection = null;
 			if (page) {
 				subSection = page.getAnalyticTab();
@@ -2927,32 +4010,43 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.menuItems = [];
 				return;
 			}
-			this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a'));
+			this.menuContainer.setAttribute('data-testid', 'invitation-menu-primary');
+			this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a[href^="#invitation-menu-"]'));
 			if (main_core.Type.isDomNode(this.subMenuContainer)) {
-				const subMenuItem = Array.prototype.slice.call(this.subMenuContainer.querySelectorAll('a'));
+				const subMenuItem = Array.prototype.slice.call(this.subMenuContainer.querySelectorAll('a[href^="#invitation-menu-"]'));
 				this.menuItems = [...this.menuItems, ...subMenuItem];
 			}
 			(this.menuItems || []).forEach(item => {
-				main_core.Event.bind(item, 'click', () => {
-					this.changeContent(item.getAttribute('data-action'));
+				main_core.Event.bind(item, 'click', event => {
+					event.preventDefault();
+					if (main_core.Dom.hasClass(item.parentElement, 'ui-sidepanel-menu-disabled')) {
+						return;
+					}
+					const action = item.getAttribute('data-action');
+					if (!main_core.Type.isStringFilled(action)) {
+						return;
+					}
+					this.changeContent(action, {
+						focusFirstControl: true,
+						fallbackFocus: item
+					});
 					this.activeMenuItem(this.navigation.getCurrentCode());
 				});
-				if (item.getAttribute('data-action') === this.firstInvitationBlock) {
-					main_core.Dom.addClass(item.parentElement, 'ui-sidepanel-menu-active');
-				} else {
-					main_core.Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
-				}
 			});
 		}
 		activeMenuItem(itemType) {
 			(this.menuItems || []).forEach(item => {
-				main_core.Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
-				if (item.getAttribute('data-action') === itemType) {
+				const isActive = item.getAttribute('data-action') === itemType;
+				if (isActive) {
 					main_core.Dom.addClass(item.parentElement, 'ui-sidepanel-menu-active');
+					item.setAttribute('aria-current', 'page');
+				} else {
+					main_core.Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
+					item.removeAttribute('aria-current');
 				}
 			});
 		}
-		changeContent(action) {
+		changeContent(action, options = {}) {
 			if (!main_core.Type.isStringFilled(action)) {
 				return;
 			}
@@ -2964,7 +4058,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.analytics.sendTabData(this.getSubSection(), Analytics.TAB_AD);
 				return;
 			}
-			this.navigation.show(action);
+			this.navigation.show(action, options);
 		}
 		createNavigation() {
 			return new Navigation({
@@ -3010,5 +4104,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.Form = Form;
 	exports.MassInvitationField = MassInvitationField;
 
-})(this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}, BX, BX.Event, BX.UI.Analytics, BX.Intranet, BX.UI, BX.HumanResources, BX.UI.System.Input, BX.Main, BX.UI.System.Typography, BX.UI, BX.Intranet, BX, BX.UI, BX.UI.System.Chip);
+})(this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}, BX, BX.Event, BX.UI.Analytics, BX.Intranet, BX.UI.Accessibility, BX.UI, BX.HumanResources, BX.UI.IconSet, BX.UI.System.Input, BX.Main, BX.UI.System.Typography, BX.UI, BX.Intranet, BX, BX.UI, BX.UI.System.Chip);
 //# sourceMappingURL=script.js.map

@@ -71,17 +71,32 @@ $compositeStub = (isset($arResult['COMPOSITE_STUB']) && $arResult['COMPOSITE_STU
 	</div>
 <?endif?>
 	<div class="bx-basket-block"><?
+		$showCounter =
+			!$compositeStub
+			&& $arParams['SHOW_NUM_PRODUCTS'] == 'Y'
+			&& ($arResult['NUM_PRODUCTS'] > 0 || $arParams['SHOW_EMPTY_VALUES'] == 'Y')
+		;
+		$cartLabel =
+			$showCounter
+				? GetMessage('TSB1_CART_ARIA', ['#COUNT#' => $arResult['BASKET_COUNT_DESCRIPTION']])
+				: GetMessage('TSB1_CART')
+		;
+
 		if (!$arResult["DISABLE_USE_BASKET"])
 		{
-			?><i class="fa fa-shopping-cart"></i>
-			<a href="<?= $arParams['PATH_TO_BASKET'] ?>"><?= GetMessage('TSB1_CART') ?></a><?
+			?><i class="fa fa-shopping-cart" aria-hidden="true"></i>
+			<a
+				href="<?= $arParams['PATH_TO_BASKET'] ?>"
+				aria-label="<?=htmlspecialcharsbx($cartLabel)?>"
+				data-basket-link
+			><?= GetMessage('TSB1_CART') ?></a><?
 		}
 
 		if (!$compositeStub)
 		{
-			if ($arParams['SHOW_NUM_PRODUCTS'] == 'Y' && ($arResult['NUM_PRODUCTS'] > 0 || $arParams['SHOW_EMPTY_VALUES'] == 'Y'))
+			if ($showCounter)
 			{
-				echo $arResult['BASKET_COUNT_DESCRIPTION'];
+				echo '<span aria-hidden="true">' . $arResult['BASKET_COUNT_DESCRIPTION'] . '</span>';
 
 				if ($arParams['SHOW_TOTAL_PRICE'] == 'Y')
 				{
@@ -92,6 +107,15 @@ $compositeStub = (isset($arResult['COMPOSITE_STUB']) && $arResult['COMPOSITE_STU
 					</span>
 					<?
 				}
+			}
+
+			if (!$arResult["DISABLE_USE_BASKET"])
+			{
+				?><span
+					class="bx-basket-announce"
+					hidden
+					data-basket-announce="<?=htmlspecialcharsbx($arResult['PRODUCTS'])?>"
+				></span><?
 			}
 		}
 

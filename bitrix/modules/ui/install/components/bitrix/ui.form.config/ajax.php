@@ -131,9 +131,12 @@ class UiFormConfigAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function copyScopeAction(string $moduleId, string $entityTypeId, int $scopeId): int|AjaxJson
 	{
+		// The source is read by the passed id, so it needs a right of its own: without it a right over the
+		// destination alone would copy the config and the access codes of any scope, whatever it belongs to.
 		if (
 			($scopeAccess = ScopeAccess::getInstance($moduleId))
 			&& $scopeAccess->canAddByEntityTypeId($entityTypeId)
+			&& $scopeAccess->canRead($scopeId)
 		) {
 			$result = Scope::getInstance()->copyScope($scopeId, $entityTypeId);
 

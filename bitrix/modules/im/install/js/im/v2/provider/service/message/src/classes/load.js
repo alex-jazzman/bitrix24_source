@@ -18,6 +18,18 @@ import {
 } from 'im.v2.provider.service.types';
 import { type PaginationRestResult } from '../types/message';
 
+/**
+ * The number of the last context load asked for in a chat, by chat id. A context load replaces the
+ * whole collection of its chat and cannot be called back, so the collection belongs to the context
+ * asked for LAST and not to the one the network happened to answer first.
+ *
+ * It is kept beside the class and not inside an instance because the sides asking for a context of
+ * one chat do not share a service: the dialog holds one, the send path builds its own to move the
+ * chat to its end, and each of them would otherwise count only its own loads. What the count belongs
+ * to is the chat whose collection is being replaced - one integer per chat opened in the session.
+ */
+const lastContextLoadRequest: Map<number, number> = new Map();
+
 export class LoadService
 {
 	static MESSAGE_REQUEST_LIMIT = 25;
@@ -29,6 +41,7 @@ export class LoadService
 	#preparedHistoryMessages: RawMessage[] = [];
 	#preparedUnreadMessages: RawMessage[] = [];
 	#isLoading: boolean = false;
+	#contextLoadsInFlight: number = 0;
 
 	constructor(chatId: number)
 	{
@@ -197,8 +210,27 @@ export class LoadService
 		this.#isLoading = false;
 	}
 
-	loadContext(messageId: number): Promise
+	/**
+	 * The answer replaces the whole message collection, and the request behind it cannot be called
+	 * back. Two things therefore decide whether an answer is still wanted, and they are asked at the
+	 * same point - between the answer and the collection, where an answer refused changes nothing at
+	 * all and the list stays where the caller left it.
+	 *
+	 * The first belongs to the load itself and is asked of every caller alike: a context overtaken by
+	 * a LATER context of the same chat is not the one the user asked for, whoever asked for either of
+	 * them - a jump by date, a message sent while it was loading, a scroll to the end of the chat.
+	 * Nobody has to pass anything for it, which is the point: an answer that has stopped being the
+	 * last one asked for must not reach the collection even when the caller never thought about it.
+	 *
+	 * The second is `isActual`, and it says something the count cannot: the caller has moved on to
+	 * something newer of ITS own, which is not always a load - a jump to a message already in the
+	 * collection only scrolls, and leaves the count exactly where it was while making the context
+	 * still on its way unwanted. Left out, every answer that is still the last one requested is
+	 * applied, which is the behaviour of a single load.
+	 */
+	loadContext(messageId: number, options: { isActual?: () => boolean } = {}): Promise
 	{
+		const { isActual = () => true } = options;
 		const query = {
 			[RestMethod.imV2ChatMessageGetContext]: {
 				id: messageId,
@@ -210,11 +242,20 @@ export class LoadService
 			},
 		};
 		Logger.warn('MessageService: loadContext for: ', messageId);
+		this.#contextLoadsInFlight++;
 		this.#isLoading = true;
+		const requestNumber = this.#numberContextLoadRequest();
 
 		return callBatch(query)
 			.then((data) => {
 				Logger.warn('MessageService: loadContext result', data);
+				const isLastRequested = requestNumber === lastContextLoadRequest.get(this.#chatId);
+				if (!isLastRequested || !isActual())
+				{
+					Logger.warn('MessageService: loadContext for', messageId, 'is not wanted any more');
+
+					return null;
+				}
 
 				return this.#handleLoadedMessages(data[RestMethod.imV2ChatMessageGetContext]);
 			})
@@ -224,8 +265,20 @@ export class LoadService
 				console.error('MessageService: loadContext error:', error);
 			})
 			.finally(() => {
-				this.#isLoading = false;
+				this.#contextLoadsInFlight--;
+				// the loading is over for the pagination only once the LAST context is in: a context
+				// still on its way replaces the whole collection when it lands, and a page loaded
+				// into the meantime would be built on a list about to be thrown away
+				this.#isLoading = this.#contextLoadsInFlight > 0;
 			});
+	}
+
+	#numberContextLoadRequest(): number
+	{
+		const requestNumber = (lastContextLoadRequest.get(this.#chatId) ?? 0) + 1;
+		lastContextLoadRequest.set(this.#chatId, requestNumber);
+
+		return requestNumber;
 	}
 
 	async loadContextByChatId(chatId: number): Promise<number>
@@ -233,6 +286,7 @@ export class LoadService
 		const queryParams = {
 			data: { commentChatId: chatId },
 		};
+		const requestNumber = this.#numberContextLoadRequest();
 		const result = await runAction(RestMethod.imV2ChatMessageGetContext, queryParams)
 			.catch(([error]) => {
 				console.error('MessageService: loadContextByChatId error:', error);
@@ -246,7 +300,13 @@ export class LoadService
 		const targetMessageId = targetCommentInfo?.messageId;
 
 		Logger.warn('MessageService: loadContextByChatId result', result);
-		void this.#handleLoadedMessages(result);
+		// the same collection and the same rule: the identifier of the post is answered back either
+		// way, so the caller can go to it, but the context of a chat overtaken by a later one does
+		// not get to replace the list on the way there
+		if (requestNumber === lastContextLoadRequest.get(this.#chatId))
+		{
+			void this.#handleLoadedMessages(result);
+		}
 
 		return targetMessageId;
 	}

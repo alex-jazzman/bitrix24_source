@@ -15,7 +15,8 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	const { showToast } = require('toast');
 	const { QRCodeAuthComponent } = require('qrauth');
 
-	const { openNativeViewer } = require('utils/file');
+	const { getMimeType, getNativeViewerMediaType, openNativeViewer } = require('utils/file');
+	const { requireLazy } = require('require-lazy');
 	const { throttle } = require('utils/function');
 	const { Random } = require('utils/random');
 
@@ -40,10 +41,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	 */
 	async function retryReadOnNetworkError(fn, maxRetries = 3, delayMs = 1000)
 	{
-		const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-		let attempt = 1;
-		while (true)
-		{
+		const delay = (ms) => new Promise((resolve) => {
+			setTimeout(resolve, ms);
+		});
+
+		const runAttempt = async (attempt) => {
 			try
 			{
 				return await fn();
@@ -55,9 +57,12 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					throw error;
 				}
 				await delay(delayMs);
-				attempt += 1;
+
+				return runAttempt(attempt + 1);
 			}
-		}
+		};
+
+		return runAttempt(1);
 	}
 
 	class TaskDetails extends PureComponent
@@ -308,12 +313,12 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				value: jnComponent.convertHtmlEntities(this.task.description),
 				style: styles.taskDescription,
 				onLinkClick: ({ url }) => {
-					if (this.files.hasOwnProperty(url))
+					if (Object.hasOwn(this.files, url))
 					{
 						const file = this.files[url];
 						const openViewer = throttle(openNativeViewer, 500);
 						openViewer({
-							fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
+							fileType: getNativeViewerMediaType(getMimeType(file.type, file.name)),
 							url: file.url,
 							name: file.name,
 						});

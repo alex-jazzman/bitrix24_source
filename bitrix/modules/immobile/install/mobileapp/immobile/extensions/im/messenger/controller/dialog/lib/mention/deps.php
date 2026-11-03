@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'utils/array',
 		'device/connection',
 		'assets/icons',
 		'im:messenger/const',

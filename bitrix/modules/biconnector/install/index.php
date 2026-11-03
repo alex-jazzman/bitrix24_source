@@ -2,6 +2,7 @@
 /** @noinspection ClassConstantCanBeUsedInspection */
 
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
+use Bitrix\BIConnector\Superset\Install\SiteTemplateInstaller;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -95,20 +96,12 @@ class BIConnector extends \CModule
 
 	function InstallTemplateRules()
 	{
-		$siteId = CSite::GetDefSite();
-		if ($siteId)
+		if (!\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
 		{
-			$dashboardDetailTemplate = [
-				'SORT' => 500,
-				'SITE_ID' => $siteId,
-				'CONDITION' => "CSite::InDir('/bi/dashboard/detail/')",
-				'TEMPLATE' => 'dashboard_detail'
-			];
-
-			\Bitrix\Main\SiteTemplateTable::add($dashboardDetailTemplate);
+			return false;
 		}
 
-		return true;
+		return SiteTemplateInstaller::install();
 	}
 
 	public function InstallDB()
@@ -129,7 +122,16 @@ class BIConnector extends \CModule
 
 		Option::set('biconnector', 'check_permissions_by_group', 'Y');
 
-		$this->InstallTemplateRules();
+		if (!$this->InstallTemplateRules())
+		{
+			\CEventLog::Add([
+				'SEVERITY' => \CEventLog::SEVERITY_WARNING,
+				'AUDIT_TYPE_ID' => 'BICONNECTOR_INSTALL_WARNING',
+				'MODULE_ID' => $this->MODULE_ID,
+				'ITEM_ID' => 'site_template_rules',
+				'DESCRIPTION' => Loc::getMessage('BICONNECTOR_INSTALL_TEMPLATE_RULES_ERROR'),
+			]);
+		}
 
 		return true;
 	}
@@ -142,7 +144,7 @@ class BIConnector extends \CModule
 	public function UnInstallDB($arParams = [])
 	{
 		global $APPLICATION;
-		$this->errors = false;
+		$this->errors = [];
 
 		$this->clearSupersetData();
 
@@ -156,11 +158,20 @@ class BIConnector extends \CModule
 
 		$this->UnInstallTasks();
 
-		$this->UnInstallTemplateRules();
+		if (!$this->UnInstallTemplateRules())
+		{
+			\CEventLog::Add([
+				'SEVERITY' => \CEventLog::SEVERITY_WARNING,
+				'AUDIT_TYPE_ID' => 'BICONNECTOR_UNINSTALL_WARNING',
+				'MODULE_ID' => $this->MODULE_ID,
+				'ITEM_ID' => 'site_template_rules_uninstall',
+				'DESCRIPTION' => Loc::getMessage('BICONNECTOR_UNINSTALL_TEMPLATE_RULES_ERROR'),
+			]);
+		}
 
 		UnRegisterModule($this->MODULE_ID);
 
-		if ($this->errors !== false)
+		if (!empty($this->errors))
 		{
 			$APPLICATION->ThrowException(implode('<br>', $this->errors));
 			return false;
@@ -171,16 +182,12 @@ class BIConnector extends \CModule
 
 	function UnInstallTemplateRules()
 	{
-		$templateCheck = \Bitrix\Main\SiteTemplateTable::getList([
-			'filter' => [
-				'TEMPLATE' => 'dashboard_detail',
-			]
-		])->fetch();
-
-		if ($templateCheck)
+		if (!\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
 		{
-			\Bitrix\Main\SiteTemplateTable::delete($templateCheck['ID']);
+			return false;
 		}
+
+		return SiteTemplateInstaller::uninstall();
 	}
 
 	public function UnInstallEvents()

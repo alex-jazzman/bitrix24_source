@@ -1,6 +1,7 @@
 import { CloseIconSize } from 'main.popup';
 import { Tooltip } from 'ui.dialogs.tooltip';
 import { CollabEntityType, PromoId } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { PromoManager } from 'im.v2.lib.promo';
 
 import { CollabTooltipContent } from '../../classes/tooltip-content/tooltip-content';
@@ -36,6 +37,10 @@ export const EntitiesPanel = {
 	computed:
 	{
 		CollabEntityType: () => CollabEntityType,
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -139,7 +144,7 @@ export const EntitiesPanel = {
 	template: `
 		<div
 			class="bx-im-collab-header__links-container"
-			:class="{'--compact': compactMode, '--highlight': highlightMode}"
+			:class="{'--compact': compactMode, '--highlight': highlightMode, '--air': isAirDesignEnabled}"
 			ref="collab-entities"
 		>
 			<EntityLink

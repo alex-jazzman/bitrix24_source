@@ -7,6 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Mobile\Tab\Tabable;
+use Bitrix\Mobile\Tab\Preset\Service\ActiveTabProvider;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Socialnetwork\Helper\Path;
 use Bitrix\Mobile\Menu\Analytics;
@@ -299,8 +300,10 @@ class Stream implements Tabable
 
 	private function pushBizprocTab(array &$tabs): void
 	{
-		$manager = new \Bitrix\Mobile\Tab\Manager();
-		$activeTabs = $manager->getActiveTabs();
+		$context = $this->context ?? new \Bitrix\Mobile\Context();
+		$activeTabProvider = ActiveTabProvider::forContext($context);
+		$manager = $activeTabProvider->getManager();
+		$activeTabs = $activeTabProvider->getActiveTabs();
 
 		if (isset($activeTabs['bizproc']))
 		{

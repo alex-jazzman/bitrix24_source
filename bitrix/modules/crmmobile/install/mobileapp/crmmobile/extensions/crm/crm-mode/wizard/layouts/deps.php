@@ -2,23 +2,22 @@
 
 return [
 	'extensions' => [
-		'loc',
+		'ui-system/typography/text',
 		'alert',
 		'apptheme',
-		'utils/color',
 		'assets/common',
 		'layout/ui/banners',
-		'layout/ui/scroll-view',
 		'layout/ui/fields/boolean',
-
-		'crm:type',
-		'crm:loc',
-		'crm:assets/entity',
-		'crm:assets/common',
+		'layout/ui/scroll-view',
+		'loc',
+		'utils/color',
 		'crm:assets/category',
-		'crm:ui/entity-boolean',
+		'crm:assets/common',
+		'crm:assets/entity',
 		'crm:category-list-view/open',
-
+		'crm:loc',
+		'crm:type',
+		'crm:ui/entity-boolean',
 	],
 	'bundle' => [
 		'./src/images',

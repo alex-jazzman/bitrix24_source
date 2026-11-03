@@ -7,6 +7,8 @@ jn.define('user/account', (require, exports, module) => {
 	const imagePath = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/user/account/images/`;
 	const { qrauth } = require('qrauth/utils');
 	const { Loc } = require('loc');
+	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
+	const { requireLazy } = require('require-lazy');
 
 	class Disclaimer extends LayoutComponent
 	{
@@ -79,8 +81,27 @@ jn.define('user/account', (require, exports, module) => {
 		}
 	}
 
-	function openDeleteDialog(opener = PageManager)
+	async function openDeleteDialog(opener = PageManager)
 	{
+		if (isCloudAccount())
+		{
+			try
+			{
+				const isFeatureEnabled = await checkFeatureFlag(FeatureFlagType.SELF_DELETE_V2);
+				if (isFeatureEnabled)
+				{
+					const { openSelfDeleteFlow } = await requireLazy('intranet:self-delete');
+					openSelfDeleteFlow(opener);
+
+					return;
+				}
+			}
+			catch (e)
+			{
+				console.error('self-delete-v2: unexpected failure, fallback to legacy flow', e);
+			}
+		}
+
 		const params = {
 			titleParams: {
 				text: BX.message('DELETE_ACCOUNT_TITLE'),

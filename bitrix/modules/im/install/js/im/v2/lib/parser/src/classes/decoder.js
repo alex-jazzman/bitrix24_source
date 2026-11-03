@@ -188,19 +188,6 @@ export const Decoder = {
 			text = ParserTable.decodeTable(text, { urlTarget });
 			text = ParserList.decodeList(text);
 			text = ParserHeading.decodeHeading(text);
-
-			// A list keeps a single blank line's worth of spacing from adjacent content, like
-			// tables below: collapse 2+ adjacent <br> down to one. (Lists no longer carry the
-			// large typography margins that once justified dropping every <br>, so stripping
-			// them all would glue a following paragraph straight onto the list.)
-			text = text.replace(/(<\/(?:ul|ol)>)(?:<br \/>){2,}/gi, '$1<br />');
-			text = text.replace(/(?:<br \/>){2,}(<(?:ul|ol)\b)/gi, '<br />$1');
-
-			// Tables keep a SINGLE blank line's worth of spacing — like plain text — never a
-			// double one: collapse 2+ adjacent <br> down to one (headings/rules strip their
-			// own in decodeHeading).
-			text = text.replace(/(<\/table><\/div>)(?:<br \/>){2,}/gi, '$1<br />');
-			text = text.replace(/(?:<br \/>){2,}(<div class="bx-im-message-content-table")/gi, '<br />$1');
 		}
 
 		text = NestedTagHandler.recoverCodeTag(text);

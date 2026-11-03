@@ -9,6 +9,12 @@ input.tasks-elements-radio[type="radio"] {
 	cursor: pointer;
 }
 
+input.tasks-elements-radio[type="radio"]:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 input.tasks-elements-radio[type="radio"]:checked::after {
 	content: '';
 	position: absolute;

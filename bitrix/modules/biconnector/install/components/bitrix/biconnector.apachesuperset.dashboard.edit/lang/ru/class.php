@@ -16,7 +16,6 @@ $MESS['DASHBOARD_EDIT_FORM_EMPTY_TITLE_ERROR'] = 'Добавьте назван�
 $MESS['DASHBOARD_EDIT_FORM_TITLE_TOO_LONG_ERROR'] = 'Название отчёта не должно превышать 128 символов';
 $MESS['DASHBOARD_EDIT_FORM_EMPTY_CREATE_DASHBOARD_GROUP_ERROR'] = 'Выберите группу для создания отчёта';
 $MESS['DASHBOARD_EDIT_FORM_EMPTY_DASHBOARD_GROUP_ERROR'] = 'Нельзя удалить отчёт из всех групп';
-$MESS['DASHBOARD_EDIT_FORM_INVALID_RANGE_ERROR'] = 'Неверное значение интервала';
 $MESS['DASHBOARD_EDIT_FORM_SAVE_PARAMS_ERROR'] = 'Не удалось создать параметры отчёта. Откройте настройки отчёта и попробуйте ещё раз';
 $MESS['DASHBOARD_EDIT_FORM_SAVE_DESCRIPTION_ERROR'] = 'Не удалось сохранить описание отчёта. Попробуйте ещё раз';
 $MESS['DASHBOARD_EDIT_FORM_SAVE_GALLERY_ERROR'] = 'Не удалось сохранить галерею отчёта. Попробуйте ещё раз';

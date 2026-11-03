@@ -9,6 +9,12 @@ export default {
 	conflictFields(state): string[] {
 		return state.conflictFields.sort((a, b) => a.order - b.order);
 	},
+	// A conflict field the editor scheme has no control for (the user hid it from the card, or it
+	// lives in a configuration the slider does not show) has nothing to be aligned with and nothing
+	// to write the value into, so it stays out of the merge ui.
+	conflictFieldsInEditor(state, getters): ConflictField[] {
+		return getters.conflictFields.filter((field: ConflictField) => state.eeControlPositions.has(field.name));
+	},
 	mergeUuid(state): string {
 		return state.mergeUuid;
 	},

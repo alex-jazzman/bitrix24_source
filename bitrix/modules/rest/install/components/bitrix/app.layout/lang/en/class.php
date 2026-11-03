@@ -1,4 +1,5 @@
 <?php
+$MESS['REST_AL_ERROR_EMBEDDING_UNAVAILABLE'] = 'Could not open the embedding. It may be unavailable or deleted';
 $MESS["REST_APP_HANDLER_NOT_DEFINED"] = "Handler for this app was not found.";
 $MESS["REST_APP_LAYOUT_ERROR"] = "Error displaying application.";
 $MESS["REST_APP_LAYOUT_UNKNOWN_ERROR"] = "Error displaying application. Try again later.";

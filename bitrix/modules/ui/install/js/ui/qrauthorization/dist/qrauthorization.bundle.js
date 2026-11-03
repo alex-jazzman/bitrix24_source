@@ -15,6 +15,7 @@ this.BX = this.BX || {};
 			this.qr = options.qr || null;
 			this.popupParam = options.popupParam || null;
 			this.intent = options.intent || 'calendar';
+			this.payload = options.payload || null;
 			this.popup = null;
 			this.loader = null;
 			this.ttl = main_core.Extension.getSettings('ui.qrauthorization')?.ttl ?? 60;
@@ -23,8 +24,12 @@ this.BX = this.BX || {};
 			this.successNode = null;
 			this.loadingNode = null;
 			this.isSubscribe = false;
+			this.isScanned = false;
 		}
 		createQrCodeImage() {
+			if (this.isScanned) {
+				return;
+			}
 			main_core.Dom.clean(this.getQrNode());
 			if (main_core.Type.isString(this.qr)) {
 				this.clean();
@@ -37,11 +42,13 @@ this.BX = this.BX || {};
 			}
 			this.loading();
 			main_core.ajax.runAction('mobile.deeplink.get', {
-				data: {
-					intent: this.intent,
-					ttl: this.ttl
-				}
+				data: this.getRequestData()
 			}).then(response => {
+				// The scan may land while this request is on the wire. The code it brings back was issued
+				// after the scan, so it carries the payload away from the code the person entered by.
+				if (this.isScanned) {
+					return;
+				}
 				const link = response.data?.link;
 				if (link) {
 					this.clean();
@@ -56,6 +63,19 @@ this.BX = this.BX || {};
 					}
 				}
 			}).catch(() => {});
+		}
+
+		// The code is reissued on a timer, and every reissue invalidates the previous one, so the payload
+		// has to travel with each request - not only with the first one.
+		getRequestData() {
+			const data = {
+				intent: this.intent,
+				ttl: this.ttl
+			};
+			if (this.payload) {
+				data.payload = this.payload;
+			}
+			return data;
 		}
 		subscribe() {
 			if (pull_client.PULL) {
@@ -108,6 +128,7 @@ this.BX = this.BX || {};
 					},
 					events: {
 						onPopupShow: () => {
+							this.isScanned = false;
 							this.createQrCodeImage();
 							this.ttlInterval = setInterval(() => {
 								this.createQrCodeImage();
@@ -118,7 +139,7 @@ this.BX = this.BX || {};
 							}
 						},
 						onPopupClose: () => {
-							clearInterval(this.ttlInterval);
+							this.stopReissue();
 						}
 					},
 					padding: 0,
@@ -176,9 +197,19 @@ this.BX = this.BX || {};
 			return '';
 		}
 		success() {
+			this.isScanned = true;
+			this.stopReissue();
 			this.clean();
 			main_core.Dom.addClass(this.getQrNode(), '--success');
 			main_core.Dom.append(this.getSuccessNode(), this.getQrNode());
+		}
+
+		// Every reissue invalidates the previous code and carries the payload over to the new one, so past
+		// the scan the timer must stay silent: a code issued after the scan would take the payload away
+		// from the code the person actually entered by.
+		stopReissue() {
+			clearInterval(this.ttlInterval);
+			this.ttlInterval = null;
 		}
 		getSuccessNode() {
 			if (!this.successNode) {

@@ -11,6 +11,7 @@ use Bitrix\Vibecodeconnector\Internal\Integration\Main\AccessCodes;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\CatalogItemRepository;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\HiddenRepository;
 use Bitrix\Vibecodeconnector\Internal\Repository\Catalog\PinRepository;
+use Bitrix\Vibecodeconnector\Internal\Service\Catalog\NewApps\NewAppsCountCache;
 
 final class HideCatalogItemCommandHandler
 {
@@ -19,6 +20,7 @@ final class HideCatalogItemCommandHandler
 		private readonly HiddenRepository $hiddenRepository = new HiddenRepository(),
 		private readonly PinRepository $pinRepository = new PinRepository(),
 		private readonly AccessCodes $accessCodes = new AccessCodes(),
+		private readonly NewAppsCountCache $newAppsCountCache = new NewAppsCountCache(),
 	)
 	{
 	}
@@ -54,5 +56,7 @@ final class HideCatalogItemCommandHandler
 
 			throw $e;
 		}
+
+		$this->newAppsCountCache->forget($command->userId);
 	}
 }

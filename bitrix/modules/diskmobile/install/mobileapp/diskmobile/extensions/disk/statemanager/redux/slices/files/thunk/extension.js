@@ -9,6 +9,13 @@ jn.define('disk/statemanager/redux/slices/files/thunk', (require, exports, modul
 
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { isOnline } = require('device/connection');
+	const { Type } = require('type');
+	const {
+		renameByUnifiedLink,
+		markDeletedByUnifiedLink,
+		moveByUnifiedLink,
+		copyToByUnifiedLink,
+	} = require('disk/opener/unified-link/rest');
 
 	const condition = () => isOnline();
 
@@ -16,43 +23,79 @@ jn.define('disk/statemanager/redux/slices/files/thunk', (require, exports, modul
 		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
 
+	const runUnifiedLinkRequest = (request) => new Promise((resolve) => {
+		request
+			.then(resolve)
+			.catch((rejection) => {
+				if (rejection instanceof Error)
+				{
+					console.error(rejection);
+
+					resolve({ errors: [{ code: 'INTERNAL' }] });
+
+					return;
+				}
+
+				resolve(rejection);
+			})
+		;
+	});
+
+	const isUnifiedLinkOperation = (uniqueCode) => Type.isStringFilled(uniqueCode);
+
 	const rename = createAsyncThunk(
 		`${sliceName}/rename`,
-		({ objectId, newName }) => runActionPromise({
-			action: 'disk.api.commonActions.rename',
-			options: {
-				objectId,
-				newName,
-				autoCorrect: true,
-			},
-		}),
+		({ objectId, newName, uniqueCode }) => (
+			isUnifiedLinkOperation(uniqueCode)
+				? runUnifiedLinkRequest(renameByUnifiedLink(uniqueCode, newName, true))
+				: runActionPromise({
+					action: 'disk.api.commonActions.rename',
+					options: {
+						objectId,
+						newName,
+						autoCorrect: true,
+					},
+				})
+		),
 		{ condition },
 	);
 
 	const remove = createAsyncThunk(
 		`${sliceName}/remove`,
-		({ objectId }) => runActionPromise({
-			action: 'disk.api.commonActions.markDeleted',
-			options: { objectId },
-		}),
+		({ objectId, uniqueCode }) => (
+			isUnifiedLinkOperation(uniqueCode)
+				? runUnifiedLinkRequest(markDeletedByUnifiedLink(uniqueCode))
+				: runActionPromise({
+					action: 'disk.api.commonActions.markDeleted',
+					options: { objectId },
+				})
+		),
 		{ condition },
 	);
 
 	const move = createAsyncThunk(
 		`${sliceName}/move`,
-		({ objectId, targetId }) => runActionPromise({
-			action: 'disk.api.commonActions.move',
-			options: { objectId, toFolderId: targetId },
-		}),
+		({ objectId, targetId, uniqueCode }) => (
+			isUnifiedLinkOperation(uniqueCode)
+				? runUnifiedLinkRequest(moveByUnifiedLink(uniqueCode, targetId))
+				: runActionPromise({
+					action: 'disk.api.commonActions.move',
+					options: { objectId, toFolderId: targetId },
+				})
+		),
 		{ condition },
 	);
 
 	const copy = createAsyncThunk(
 		`${sliceName}/copy`,
-		({ objectId, targetId }) => runActionPromise({
-			action: 'disk.api.commonActions.copyTo',
-			options: { objectId, toFolderId: targetId },
-		}),
+		({ objectId, targetId, uniqueCode }) => (
+			isUnifiedLinkOperation(uniqueCode)
+				? runUnifiedLinkRequest(copyToByUnifiedLink(uniqueCode, targetId))
+				: runActionPromise({
+					action: 'disk.api.commonActions.copyTo',
+					options: { objectId, toFolderId: targetId },
+				})
+		),
 		{ condition },
 	);
 

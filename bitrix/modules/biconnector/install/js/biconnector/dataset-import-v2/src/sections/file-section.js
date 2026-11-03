@@ -24,7 +24,7 @@ export const FileSection = {
 	},
 	computed:
 	{
-		...mapGetters(['isEditMode', 'isUploading', 'uploadStep']),
+		...mapGetters(['isEditMode', 'isEditingForbidden', 'isUploading', 'uploadStep']),
 		loadingMessage()
 		{
 			const step = Math.max(1, Math.min(3, Number(this.uploadStep) || 1));
@@ -51,6 +51,10 @@ export const FileSection = {
 		{
 			return this.sourceId === 'csv';
 		},
+		canReplaceFile()
+		{
+			return !this.isEditingForbidden;
+		},
 		canRemoveFile()
 		{
 			return !this.isEditMode || Boolean(this.fileProperties.fileToken);
@@ -60,7 +64,7 @@ export const FileSection = {
 	{
 		onPick()
 		{
-			if (this.$refs.input)
+			if (this.canReplaceFile && this.$refs.input)
 			{
 				this.$refs.input.click();
 			}
@@ -161,7 +165,7 @@ export const FileSection = {
 			this.dragCounter = 0;
 			this.isDragging = false;
 			const file = event.dataTransfer?.files?.[0];
-			if (!file)
+			if (!file || !this.canReplaceFile)
 			{
 				return;
 			}
@@ -215,8 +219,9 @@ export const FileSection = {
 							@click="onRemove"
 						></button>
 					</span>
-					<span v-if="hasLocalFile" class="biconnector-dataset-import-v2-file-section__divider"></span>
+					<span v-if="hasLocalFile && canReplaceFile" class="biconnector-dataset-import-v2-file-section__divider"></span>
 					<button
+						v-if="canReplaceFile"
 						type="button"
 						class="biconnector-dataset-import-v2-file-section__replace ui-typography-text-sm"
 						@click="onReplace"

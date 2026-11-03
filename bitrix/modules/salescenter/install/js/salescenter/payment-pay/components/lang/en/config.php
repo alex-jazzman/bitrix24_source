@@ -10,3 +10,5 @@ $MESS["PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_8"] = "Unfortunately there was an e
 $MESS["PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_9"] = "Select a different payment option or contact one of our sales representatives.";
 $MESS["PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_10"] = "Information";
 $MESS["PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_11"] = "Amount: #SUM#";
+$MESS['PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_INFO_BUTTON_NAME'] = 'Information about payment method #PAY_SYSTEM#';
+$MESS['PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_PAY_BUTTON_NAME'] = 'Pay via #PAY_SYSTEM#';

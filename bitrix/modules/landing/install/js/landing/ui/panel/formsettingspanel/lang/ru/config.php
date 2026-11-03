@@ -3,7 +3,7 @@ $MESS['LANDING_FORM_SETTINGS_PANEL_TITLE'] = 'CRM-форма';
 $MESS['LANDING_FORM_SETTINGS_MORE_BUTTON_TEXT'] = 'ЕЩЁ ВОЗМОЖНОСТИ';
 
 $MESS['LANDING_SIDEBAR_BUTTON_FIELDS'] = 'Поля';
-$MESS['LANDING_SIDEBAR_BUTTON_AGREEMENT'] = 'Соглашения';
+$MESS['LANDING_SIDEBAR_BUTTON_AGREEMENT'] = 'Правовые документы';
 $MESS['LANDING_SIDEBAR_BUTTON_CRM_ENTITY'] = 'Сущности в CRM';
 $MESS['LANDING_SIDEBAR_BUTTON_CRM_CLIENT_IDENTIFY'] = 'Узнать клиента';
 $MESS['LANDING_SIDEBAR_BUTTON_CRM_HEADER_AND_BUTTON'] = 'Заголовок и кнопка';
@@ -61,9 +61,9 @@ $MESS['LANDING_SPAM_PROTECTION_KEYS_FORM_HELP_TEXT'] = 'Как получить 
 $MESS['LANDING_SPAM_PROTECTION_KEYS_FORM_HELP_HREF'] = 'https://www.google.com/recaptcha/about/';
 $MESS['LANDING_SPAM_PROTECTION_CUSTOM_KEYS_CHECKBOX_LABEL'] = 'Указать свои настройки reCAPTCHA';
 
-$MESS['LANDING_AGREEMENTS_TITLE'] = 'Соглашения';
-$MESS['LANDING_AGREEMENTS_MESSAGE_HEADER'] = 'Мы уже добавили необходимое соглашение';
-$MESS['LANDING_AGREEMENTS_MESSAGE_DESCRIPTION'] = 'Всё в большем количестве регионов для работы с данными пользователей юридически обязательно иметь соглашение на обработку персональных данных.';
+$MESS['LANDING_AGREEMENTS_TITLE'] = 'Правовые документы';
+$MESS['LANDING_AGREEMENTS_MESSAGE_HEADER'] = 'Мы уже добавили необходимое согласие';
+$MESS['LANDING_AGREEMENTS_MESSAGE_DESCRIPTION'] = 'Всё в большем количестве регионов для работы с данными пользователей юридически обязательно иметь согласие на обработку персональных данных.';
 
 $MESS['LANDING_FORM_SETTINGS_ANALYTICS_TITLE'] = 'Аналитика';
 $MESS['LANDING_FORM_SETTINGS_ANALYTICS_ITEMS_FIELD_TITLE'] = 'Идентификаторы и цели';
@@ -114,7 +114,7 @@ $MESS['LANDING_FORM_EMBED_TYPE_FIELD_TITLE'] = 'Выберите, где фор�
 
 $MESS['LANDING_FORM_OTHER_TITLE'] = 'Другие настройки';
 $MESS['LANDING_FORM_OTHER_TITLE_NAME_TITLE'] = 'Название формы';
-$MESS['LANDING_FORM_OTHER_CHECK_WORK_TIME'] = ' Не назначать ответственным, если не начат рабочий день или установлен перерыв';
+$MESS['LANDING_FORM_OTHER_CHECK_WORK_TIME'] = 'Не назначать ответственным, если не начат рабочий день или установлен перерыв';
 
 $MESS['LANDING_FORM_EMBED_TYPE_1'] = 'На внешнем сайте';
 $MESS['LANDING_FORM_EMBED_TYPE_2'] = 'Ссылка на сайте';

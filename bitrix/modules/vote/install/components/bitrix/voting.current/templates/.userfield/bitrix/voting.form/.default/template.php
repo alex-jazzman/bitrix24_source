@@ -11,6 +11,8 @@ if (!empty($arResult["ERROR_MESSAGE"])):?>
 if (empty($arResult["QUESTIONS"])):
 	return true;
 endif;
+
+$isAnonymousVote = (int)($arResult["VOTE"]["ANONYMITY"] ?? 0) === \Bitrix\Vote\Vote\Anonymity::ANONYMOUSLY;
 ?>
 <form action="<?=str_replace(array("view_form=Y", "view_form"), "", POST_FORM_ACTION_URI)?>" method="post" class="vote-form" name="<?=$form?>" id="<?=$form?>">
 	<input type="hidden" name="vote" value="Y" />
@@ -89,7 +91,13 @@ endif;
 					</td>
 					<td>
 						<span class="bx-vote-voted-users-wrap"><?
-							?><a href="#" class="bx-vote-voted-users" onclick="return false;"></a></span>
+							$counterTestId = "vote-current-answer-counter-".$arAnswer["ID"];
+							if ($isAnonymousVote):
+								?><span class="bx-vote-voted-users" data-testid="<?=$counterTestId?>"></span><?
+							else:
+								?><a href="#" class="bx-vote-voted-users" onclick="return false;" data-testid="<?=$counterTestId?>"></a><?
+							endif;
+						?></span>
 					</td>
 					<td><span class="bx-vote-data-percent"></span></td>
 				</tr>

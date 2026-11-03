@@ -85,6 +85,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				containsChecklist: false,
 				storyPoints: '',
 				epicId: 0,
+				canCreateEpic: false,
+				canUpdateScrumFields: false,
 				accomplicesIds: [],
 				auditorsIds: [],
 				tags: [],

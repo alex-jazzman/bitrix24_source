@@ -8,4 +8,5 @@ $MESS["INTRANET_CONTROL_BUTTON_POST_MESSAGE_CALENDAR"] = "Created based on [url=
 $MESS["INTRANET_CONTROL_BUTTON_POST_MESSAGE_TASK"] = "Created based on [url=#LINK#]task[/url]";
 $MESS["INTRANET_CONTROL_BUTTON_VIDEOCALL_LIMIT"] = "Maximum video call users exceeded";
 $MESS["INTRANET_CONTROL_BUTTON_VIDEOCALL_SELF_ERROR"] = "A video call requires two or more participants. Please add more users and call again.";
+$MESS["INTRANET_CONTROL_BUTTON_WORKGROUP_ACCESS_ERROR"] = "Insufficient permissions to access the workgroup chat";
 $MESS["INTRANET_CONTROL_MEETING_CREATED"] = "Event created based on task";

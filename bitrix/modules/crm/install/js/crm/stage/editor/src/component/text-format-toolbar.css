@@ -1,0 +1,59 @@
+.crm-stage-editor-format-toolbar {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-sm);
+	min-height: 48px;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+}
+
+.crm-stage-editor-format-toolbar__button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-xs);
+	background-color: transparent;
+	cursor: pointer;
+	transition: background-color 200ms ease, opacity 200ms ease;
+}
+
+.crm-stage-editor-format-toolbar__button:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.crm-stage-editor-format-toolbar__button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+.crm-stage-editor-format-toolbar__button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.crm-stage-editor-format-toolbar__button:disabled:hover {
+	background-color: transparent;
+}
+
+.crm-stage-editor-format-toolbar__separator {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 18px;
+	background-color: var(--ui-color-divider-accent);
+}
+
+.crm-stage-editor-format-toolbar__link {
+	width: min(320px, calc(100vw - 32px));
+	gap: var(--ui-space-inline-xs);
+}
+
+.crm-stage-editor-format-toolbar__link-input {
+	flex: 1 1 auto;
+	min-width: 0;
+	--label-margin: 0;
+}

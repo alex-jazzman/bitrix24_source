@@ -308,6 +308,7 @@ if (isset($menuItems[$tab]))
 				LANDING_TPL_DOMAIN_AVAILABLE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_AVAILABLE')) ?>',
 				LANDING_TPL_ERROR_DOMAIN_INCORRECT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_INCORRECT')) ?>',
 				LANDING_TPL_ERROR_DOMAIN_CHECK_DASH: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK_DASH')) ?>',
+				LANDING_TPL_ERROR_DOMAIN_NOT_ASCII: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_NOT_ASCII')) ?>',
 				LANDING_TPL_ERROR_DOMAIN_CHECK: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK', ['#TLD#' => strtolower($arResult['TLD'][0])])) ?>',
 				LANDING_TPL_DOMAIN_CHECKING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_CHECKING')) ?>',
 				LANDING_TPL_DOMAIN_CHECKING_SUBMIT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_CHECKING_SUBMIT')) ?>',

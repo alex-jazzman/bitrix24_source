@@ -19,6 +19,8 @@ class ItemListComponent
 	entityTypeName: string;
 	reloadGridTimeoutId: number;
 	exportPopups: Object;
+	exportComponentName: string;
+	exportSignedParameters: ?string;
 	#isIframe: boolean = false;
 	// is the list is embedded in another entity detail tab
 	#isEmbedded: boolean = false;
@@ -31,6 +33,8 @@ class ItemListComponent
 		if(Type.isPlainObject(params))
 		{
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
+			this.exportComponentName = params.exportComponentName;
+			this.exportSignedParameters = params.exportSignedParameters;
 			this.entityTypeName = params.entityTypeName;
 			this.categoryId = Text.toInteger(params.categoryId);
 			this.analytics = Type.isPlainObject(params.analytics) ? params.analytics : {};
@@ -326,17 +330,23 @@ class ItemListComponent
 				};
 			}
 
+			const exportParams = {
+				SITE_ID: Loc.getMessage('SITE_ID'),
+				entityTypeId: this.entityTypeId,
+				categoryId: this.categoryId,
+				EXPORT_TYPE: exportType,
+				COMPONENT_NAME: this.exportComponentName,
+			};
+			if (this.exportSignedParameters)
+			{
+				exportParams.signedParameters = this.exportSignedParameters;
+			}
+
 			this.exportPopups[exportType] = exports.ProcessManager.create({
 				id: 'crm.item.list.export.' + exportType,
 				controller: 'bitrix:crm.api.itemExport',
 				queue: [{action: 'dispatcher'}],
-				params: {
-					SITE_ID: Loc.getMessage('SITE_ID'),
-					entityTypeId: this.entityTypeId,
-					categoryId: this.categoryId,
-					EXPORT_TYPE: exportType,
-					COMPONENT_NAME: 'bitrix:crm.item.list',
-				},
+				params: exportParams,
 				optionsFields: optionsFields,
 				messages: {
 					DialogTitle: Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),

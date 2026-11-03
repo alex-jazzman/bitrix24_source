@@ -4,6 +4,7 @@ import { Menu } from 'main.popup';
 
 import Util from '../util';
 import { STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
+import { AuthoritativeUserNameService } from './authoritative-user-name-service';
 
 /**
  * Manages call window layout: fold/unfold, fullscreen, detached mode, chat visibility, and window focus.
@@ -11,15 +12,15 @@ import { STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
 export class LayoutService extends EventEmitter
 {
 	#pendingTalkingUsers = new Set();
+	#authoritativeUserNameService = new AuthoritativeUserNameService();
 
 	/**
 	 * @param {object} config
 	 * @param {*} config.viewPort
 	 * @param {*} config.container
 	 * @param {*} config.resizeObserver
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, container, resizeObserver, callStore })
+	constructor({ viewPort, container, resizeObserver })
 	{
 		super();
 		this.setEventNamespace('BX.Call.LayoutService');
@@ -27,7 +28,6 @@ export class LayoutService extends EventEmitter
 		this.viewPort = viewPort;
 		this.container = container;
 		this.resizeObserver = resizeObserver;
-		this.callStore = callStore ?? null;
 
 		this.folded = false;
 		this.detached = false;
@@ -39,31 +39,14 @@ export class LayoutService extends EventEmitter
 	}
 
 	/**
-	 * Returns user model from userRegistry or callStore.
+	 * Returns user model from userRegistry.
 	 *
 	 * @param {number|string} userId
 	 * @returns {{ name: string, avatar: string } | null}
 	 */
 	#getUserModel(userId)
 	{
-		const registryModel = this.viewPort.userRegistry?.get(userId) ?? null;
-
-		if (registryModel)
-		{
-			return registryModel;
-		}
-
-		if (this.callStore)
-		{
-			const storeUser = this.callStore.users[userId];
-
-			if (storeUser)
-			{
-				return { name: storeUser.name, avatar: storeUser.avatar };
-			}
-		}
-
-		return null;
+		return this.viewPort.userRegistry?.get(userId) ?? null;
 	}
 
 	/**
@@ -80,14 +63,21 @@ export class LayoutService extends EventEmitter
 
 		this.folded = true;
 		this.resizeObserver.unobserve(this.container);
+
+		// Asked while the window is still rendered: once it is hidden, a focus of its own is
+		// indistinguishable from a focus lost for any other reason.
+		const focusWasOurs = this.viewPort.releaseFocusBeforeHide();
+
 		this.container.classList.add('bx-messenger-call-overlay-folded');
+
+		// Only now does the focus history skip the hidden window and resolve outside it (ALG-02).
+		if (focusWasOurs)
+		{
+			this.viewPort.restoreFocusAfterHide();
+		}
+
 		this.viewPort.setTitle(title);
 		this.viewPort.setSize('folded');
-
-		if (this.callStore)
-		{
-			this.callStore.setCallTitle(title);
-		}
 
 		this.emit('LayoutService::onFold');
 	}
@@ -96,25 +86,30 @@ export class LayoutService extends EventEmitter
 	 * Restores the call window from the folded state.
 	 *
 	 * @param {object} options
+	 * @param {boolean} [options.fromPiP]
+	 * @param {boolean} [options.isReturnGesture] the caller is an explicit "return to call" control,
+	 *        not a side effect of an action taken inside the call window
 	 */
 	unfold(options = {})
 	{
-		const { fromPiP = false } = options;
+		const { fromPiP = false, isReturnGesture = false } = options;
 
 		if (this.detached)
 		{
 			this.container.style.removeProperty('width');
 			this.viewPort.show();
 			this.detached = false;
-			this.emit('LayoutService::onUnfoldDetached');
+			this.emit('LayoutService::onUnfoldDetached', { isReturnGesture });
 		}
 
 		if (this.folded)
 		{
 			this.folded = false;
+
 			this.container.classList.remove('bx-messenger-call-overlay-folded');
+
 			this.viewPort.setSize('full');
-			this.emit('LayoutService::onUnfold', { fromPiP });
+			this.emit('LayoutService::onUnfold', { fromPiP, isReturnGesture });
 		}
 
 		this.emit('LayoutService::onUnfoldComplete');
@@ -232,11 +227,6 @@ export class LayoutService extends EventEmitter
 	{
 		this.isWindowFocus = isActive;
 		this.viewPort.setWindowFocusState(isActive);
-
-		if (this.callStore)
-		{
-			this.callStore.setWindowFocus(isActive);
-		}
 	}
 
 	/**
@@ -247,11 +237,6 @@ export class LayoutService extends EventEmitter
 	setSize(size)
 	{
 		this.viewPort.setSize(size);
-
-		if (this.callStore)
-		{
-			this.callStore.setSize(size);
-		}
 	}
 
 	/**
@@ -262,11 +247,6 @@ export class LayoutService extends EventEmitter
 	setMaxWidth(maxWidth)
 	{
 		this.viewPort.setMaxWidth(maxWidth);
-
-		if (this.callStore)
-		{
-			this.callStore.setMaxWidth(maxWidth);
-		}
 	}
 
 	/**
@@ -777,28 +757,100 @@ export class LayoutService extends EventEmitter
 	{
 		if (!this.viewPort)
 		{
-			return;
+			return event?.userData ?? {};
 		}
 
 		if (eventName === 'onUserInvited')
 		{
+			const userData = this.#resolveUserData(currentCall, event.userData, [event.userId]);
+
 			if (Util.isLegacyCall(currentCall.provider, currentCall.scheme))
 			{
 				this.emit('LayoutService::onUpdateCallViewUsers', { callId: currentCall.id, users: [event.userId] });
 			}
 			else
 			{
-				Util.setUserData(event.userData);
-				this.viewPort.updateUserData(event.userData);
+				Util.setUserData(userData);
+				this.viewPort.updateUserData(userData);
+				this.#fetchAuthoritativeUserData(currentCall, [event.userId]);
 			}
 			this.viewPort.addUser(event.userId);
+
+			return userData;
 		}
 		else if (eventName === 'onUserJoined')
 		{
-			Util.setUserData(event.userData);
-			this.viewPort.updateUserData(event.userData);
+			const userData = this.#resolveUserData(currentCall, event.userData, [event.userId]);
+			Util.setUserData(userData);
+			this.viewPort.updateUserData(userData);
 			this.viewPort.addUser(event.userId, BX.Call.UserState.Connected);
+			this.#fetchAuthoritativeUserData(currentCall, [event.userId]);
+
+			return userData;
 		}
+
+		return event?.userData ?? {};
+	}
+
+	updateUsers(currentCall, userData, userIds, options = {})
+	{
+		const resolvedUserData = this.#resolveUserData(
+			currentCall,
+			userData,
+			userIds,
+			options.getCurrentName,
+		);
+
+		if (Object.keys(resolvedUserData).length > 0)
+		{
+			Util.setUserData(resolvedUserData);
+			this.viewPort?.updateUserData(resolvedUserData);
+		}
+
+		if (options.fetch !== false)
+		{
+			this.refreshUsers(currentCall, userIds, { force: options.forceFetch === true });
+		}
+
+		return resolvedUserData;
+	}
+
+	refreshUsers(currentCall, userIds, options = {})
+	{
+		this.#fetchAuthoritativeUserData(currentCall, userIds, options);
+	}
+
+	setAuthoritativeUserName(userId, name)
+	{
+		this.#authoritativeUserNameService.setAuthoritativeUserName(userId, name);
+	}
+
+	#resolveUserData(currentCall, userData, userIds, getCurrentName = null)
+	{
+		return this.#authoritativeUserNameService.resolveUserData(
+			currentCall,
+			userData,
+			userIds,
+			getCurrentName ?? ((userId) => this.#getUserModel(userId)?.name),
+		);
+	}
+
+	#fetchAuthoritativeUserData(currentCall, userIds, options = {})
+	{
+		if (!currentCall)
+		{
+			return;
+		}
+
+		this.#authoritativeUserNameService.fetchUserData(currentCall, userIds, options).then((userData) => {
+			if (!this.viewPort || Object.keys(userData).length === 0)
+			{
+				return;
+			}
+
+			Util.setUserData(userData);
+			this.viewPort.updateUserData(userData);
+		});
 	}
 
 	/**
@@ -806,8 +858,8 @@ export class LayoutService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
 		this.#pendingTalkingUsers.clear();
+		this.#authoritativeUserNameService.reset();
 
 		if (this.roomMenu)
 		{

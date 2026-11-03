@@ -1,9 +1,3 @@
-/*#tasks_panel_menu_view_role_auditor .main-buttons-item-counter,*/
-/*#tasks_panel_menu_view_role_originator .main-buttons-item-counter,*/
-/*#tasks_panel_menu_view_role_responsible .main-buttons-item-counter,*/
-/*#tasks_panel_menu_view_role_accomplice .main-buttons-item-counter*/
-/*{background: #ccc}*/
-
 .main-buttons-item-super-title.tasks-counter-wrapper {
 	font-size: var(--ui-font-size-4xs);
 }

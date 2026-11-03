@@ -24,18 +24,23 @@ export const PanelSettings = {
 		{
 			this.contextMenuManager.openMenu({}, this.$refs.icon);
 		},
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
+		},
 	},
 	template: `
 		<button
 			type="button"
-			class="bx-im-messenger-folder-panel__settings_container"
+			class="bx-im-messenger-folder-panel__settings_container --focus-visible"
 			aria-haspopup="menu"
+			:aria-label="loc('IM_MESSENGER_FOLDER_PANEL_SETTINGS_ARIA_LABEL')"
 			data-testid="folder-panel-settings-btn"
 			ref="icon"
 			@click="onSettingsClick"
 		>
 			<BIcon
-				:name="OutlineIcons.SETTINGS_L"
+				:name="OutlineIcons.MORE_M"
 				:hoverable="true"
 				class="bx-im-messenger-folder-panel__settings"
 			/>

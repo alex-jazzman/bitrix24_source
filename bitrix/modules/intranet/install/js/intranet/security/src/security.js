@@ -17,11 +17,12 @@ export class Security
 
 		if (Type.isDomNode(this.menuContainer))
 		{
-			this.menuItems = this.menuContainer.querySelectorAll('a');
+			this.menuItems = this.menuContainer.querySelectorAll('a[data-action]');
 
 			(this.menuItems || []).forEach((item) => {
-				Event.bind(item, 'click', () => {
-					this.changeContent(item.getAttribute('data-action'));
+				Event.bind(item, 'click', (event) => {
+					event.preventDefault();
+					this.changeContent(item.getAttribute('data-action'), item);
 				});
 			});
 		}

@@ -14,6 +14,7 @@ $MESS['BI_GROUP_SCOPES_GROUP_EMPTY_MSGVER_1'] = '[title]Зона видимос�
 $MESS['BI_GROUP_SCOPES_DASHBOARD'] = '#FIRST_SCOPES# [hint]и ещё #NUMBER#[/hint]';
 $MESS['BI_GROUP_DASHBOARD_SCOPES_EMPTY'] = 'Выбрать зону видимости';
 $MESS['BI_GROUP_SAVE'] = 'Сохранить';
+$MESS['BI_GROUP_SAVE_ERROR'] = 'Не удалось сохранить группу. Попробуйте ещё раз';
 $MESS['BI_GROUP_SAVE_CANCEL_MSGVER_1'] = 'Отмена';
 $MESS['BI_GROUP_SYSTEM_NAME_HINT'] = 'Название системной группы изменить нельзя';
 $MESS['BI_GROUP_SYSTEM_SCOPES_HINT'] = 'Зону видимости системной группы изменить нельзя';

@@ -35,6 +35,7 @@ export const DescriptionField = {
 			<UiTextarea
 				v-model.trim="description"
 				:id="inputId"
+				data-testid="socialnetwork-project-wizard-description"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_DESCRIPTION_PLACEHOLDER')"
 				:disabled
 			/>

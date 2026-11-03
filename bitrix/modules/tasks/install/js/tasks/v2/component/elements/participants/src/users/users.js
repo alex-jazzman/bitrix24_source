@@ -51,6 +51,26 @@ export const Users = {
 			type: Boolean,
 			default: false,
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+		userAriaLabelTemplate: {
+			type: String,
+			default: '',
+		},
+		ariaHaspopup: {
+			type: String,
+			default: '',
+		},
+		ariaExpanded: {
+			type: Boolean,
+			default: null,
+		},
+		clearAriaLabel: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['edit', 'remove'],
 	computed: {
@@ -74,7 +94,13 @@ export const Users = {
 					:forceEdit
 					:canAdd="canAdd && single"
 					:withClear="!single && !inline && (canRemove || userId === removableUserId)"
+					:clearAriaLabel
 					:withMenu="showMenu && isEdit && (canRemove || removableUserId === userId)"
+					:ariaLabel
+					:userAriaLabelTemplate
+					:ariaHaspopup
+					:ariaExpanded
+					:clearAriaLabel
 					@edit="$emit('edit')"
 					@remove="$emit('remove', userId)"
 				>

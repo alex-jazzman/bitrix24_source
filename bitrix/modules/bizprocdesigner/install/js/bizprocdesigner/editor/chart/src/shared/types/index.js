@@ -38,7 +38,10 @@ export type BlockNode = {
 	colorIndex: number;
 	contentBlockColor?: ?number;
 	shouldShowAuxPorts?: boolean;
-	relationsAvailable?: ?boolean;
+	// Server verdict on the relations of the node - never undecided: the server states it for every
+	// node it describes. A block whose data carries no key at all is answered by the panel descriptor
+	// instead (BlockComplexContent.isRelationFeatureAvailable).
+	relationsAvailable?: boolean;
 	// server-owned marker of the settings panel serving the node; an absent value reads as false
 	servedByUnifiedPanel?: boolean;
 	// per-subaction (construction.id) list of auto-filled field codes. UI-only marker,
@@ -113,9 +116,16 @@ export type DiagramData = {
 // of a request.
 export type DiagramState = DiagramData & {
 	canPublish?: boolean,
+	// CFG-01: settings of the AI assistant as the screen hands them over; the shape belongs
+	// to ai.copilot. null means the assistant is not offered.
+	copilotOptions?: { [string]: mixed } | null,
 	saveStatus: SaveStatus,
 	// last successful save in milliseconds, the same base as Date.now(); null when nothing is saved yet
 	lastSavedAt: ?number,
+	// last write the change journal records, in the same base; null while nothing is written yet
+	lastRecordedChangeAt: ?number,
+	// last publication for everyone, in the same base; null while nothing is published in this session
+	lastPublishedAt: ?number,
 	templatePublishStatus: TEMPLATE_PUBLISH_STATUSES,
 	pilot?: PilotState,
 	isPilotFeatureAvailable?: boolean,
@@ -165,6 +175,13 @@ export type ActivityData = {
 
 export type ContentBlock = {
 	text: string;
+	// Absent when the activity has nothing labelled to show: the canvas keeps reading `text` alone.
+	items?: Array<ContentBlockItem>;
+}
+
+export type ContentBlockItem = {
+	label: string;
+	value: string;
 }
 
 export type BizprocExpression = string;
@@ -181,6 +198,10 @@ export type GetNodeSettingsControlsData = {
 	activity: string;
 	template: Object;
 	activityName: string;
+	options?: {
+		templateId?: number;
+		draftId?: number;
+	};
 };
 
 export type ItemType = 'delimiter' | 'title' | 'description' | 'constant';
@@ -210,18 +231,12 @@ export type ToastMessage = {
 	message: string,
 	type: ToastType;
 	colorScheme?: string;
+	tag?: string;
 };
 
 export type CustomToastType = string;
 
 export type ToastType = $Values<SHARED_TOAST_TYPES> | CustomToastType;
-
-export type BufferContentType = 'block' | 'selection';
-
-export type BufferContent = {
-	type: BufferContentType,
-	content: Block,
-};
 
 export type DocumentField = {
 	fieldKey: string,
@@ -281,4 +296,10 @@ export type TemplateDataNodeGroup = TemplateDataGeneralGroup & {
 
 export type TemplateDataTemplateGroup = TemplateDataGeneralGroup & {
 	type: $Values<typeof TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE>;
+};
+
+/** Which element of the process data a caller names — the key alone repeats between the sources. */
+export type ProcessDataSelector = {
+	sourceType: string;
+	key: string;
 };

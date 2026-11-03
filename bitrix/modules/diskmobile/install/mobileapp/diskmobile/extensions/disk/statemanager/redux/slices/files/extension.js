@@ -49,6 +49,9 @@ jn.define('disk/statemanager/redux/slices/files', (require, exports, module) => 
 			filesUpserted: {
 				reducer: fileListAdapter.upsertMany,
 			},
+			filesRemoved: {
+				reducer: fileListAdapter.removeMany,
+			},
 			filesAdded: {
 				reducer: fileListAdapter.upsertMany,
 			},
@@ -119,6 +122,7 @@ jn.define('disk/statemanager/redux/slices/files', (require, exports, module) => 
 	const {
 		filesUpsertedFromServer,
 		filesUpserted,
+		filesRemoved,
 		filesAddedFromServer,
 		filesAdded,
 		markAsRemoved,
@@ -132,6 +136,7 @@ jn.define('disk/statemanager/redux/slices/files', (require, exports, module) => 
 	module.exports = {
 		filesUpsertedFromServer,
 		filesUpserted,
+		filesRemoved,
 		filesAddedFromServer,
 		filesAdded,
 		markAsRemoved,

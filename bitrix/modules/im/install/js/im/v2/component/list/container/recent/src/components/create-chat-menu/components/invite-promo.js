@@ -27,17 +27,36 @@ export const InvitePromo = {
 		},
 	},
 	template: `
-		<div @click="onContainerClick" class="bx-im-recent-invite-promo__container">
-			<div class="bx-im-recent-invite-promo__icon"></div>
-			<div class="bx-im-recent-invite-promo__content">
-				<div class="bx-im-recent-invite-promo__title">
-					{{ loc('IM_RECENT_CREATE_INVITE_TITLE') }}
-				</div>
-				<div class="bx-im-recent-invite-promo__subtitle">
-					{{ loc('IM_RECENT_CREATE_INVITE_SUBTITLE') }}
+		<div class="bx-im-recent-invite-promo">
+			<div
+				class="bx-im-recent-invite-promo__container --focus-visible"
+				data-testid="im-invite-promo"
+				role="button"
+				tabindex="0"
+				@click="onContainerClick"
+				@keydown.enter.prevent="onContainerClick"
+				@keydown.space.prevent="onContainerClick"
+			>
+				<div class="bx-im-recent-invite-promo__icon"></div>
+				<div class="bx-im-recent-invite-promo__content">
+					<div class="bx-im-recent-invite-promo__title">
+						{{ loc('IM_RECENT_CREATE_INVITE_TITLE') }}
+					</div>
+					<div class="bx-im-recent-invite-promo__subtitle">
+						{{ loc('IM_RECENT_CREATE_INVITE_SUBTITLE') }}
+					</div>
 				</div>
 			</div>
-			<div @click.stop="onCloseClick" class="bx-im-recent-invite-promo__close-icon"></div>
+			<div
+				class="bx-im-recent-invite-promo__close-icon --focus-visible"
+				data-testid="im-invite-promo-close"
+				role="button"
+				tabindex="0"
+				:aria-label="loc('IM_RECENT_CREATE_INVITE_CLOSE_ARIA')"
+				@click.stop="onCloseClick"
+				@keydown.enter.prevent.stop="onCloseClick"
+				@keydown.space.prevent.stop="onCloseClick"
+			></div>
 		</div>
 	`,
 };

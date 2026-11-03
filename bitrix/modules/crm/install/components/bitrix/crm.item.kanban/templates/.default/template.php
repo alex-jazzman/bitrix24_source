@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	[
 		'ui.dialogs.messagebox',
 		'ui.alerts',
+		'crm.router',
 	]
 );
 
@@ -37,6 +38,9 @@ $this->getComponent()->addTopPanel($this);
 
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
+
+/** @see \Bitrix\Crm\Component\Base::addJsRouter() */
+$this->getComponent()->addJsRouter($this);
 ?>
 
 <div class="ui-alert ui-alert-danger" style="display: none;">
@@ -99,3 +103,32 @@ if ($arResult['customSectionId'] > 0)
 		}
 	}
 }
+
+?>
+<script>
+	BX.ready(() => {
+		const urlParams = new URLSearchParams(window.location.search);
+		if (urlParams.get('openTypeDetailSlider') !== 'Y')
+		{
+			return;
+		}
+
+		const typeDetailQueryParams = {};
+		const analyticsSubSection = urlParams.get('c_sub_section');
+		if (analyticsSubSection)
+		{
+			typeDetailQueryParams.c_sub_section = analyticsSubSection;
+		}
+
+		BX.Crm.Router.Instance.openTypeDetail(<?= (int)$entityTypeId ?>, null, typeDetailQueryParams);
+
+		urlParams.delete('openTypeDetailSlider');
+		urlParams.delete('c_sub_section');
+		const queryString = urlParams.toString();
+		window.history.replaceState(
+			{},
+			document.title,
+			`${window.location.pathname}${queryString ? `?${queryString}` : ''}${window.location.hash}`,
+		);
+	});
+</script>

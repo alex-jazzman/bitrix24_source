@@ -134,9 +134,16 @@ if (isset($arResult['MANIFEST']['INSTALL_STEP']) && $arResult['MANIFEST']['INSTA
 		<? endforeach;?>
 	</div>
 <? endif?>
-<div id="<?=htmlspecialcharsbx($containerId)?>" class="rest-configuration-import-install">
+<div
+	id="<?=htmlspecialcharsbx($containerId)?>"
+	class="rest-configuration-import-install"
+	data-testid="rest-configuration-import-install"
+>
 	<div class="rest-configuration-start-icon-main-container">
-		<div class="rest-configuration-start-icon-main rest-configuration-start-icon-main-zip">
+		<div
+			class="rest-configuration-start-icon-main rest-configuration-start-icon-main-zip"
+			data-testid="rest-configuration-import-progress"
+		>
 			<div class="rest-configuration-start-icon-refresh"></div>
 			<div class="rest-configuration-start-icon"></div>
 			<div class="rest-configuration-start-icon-circle"></div>
@@ -144,7 +151,10 @@ if (isset($arResult['MANIFEST']['INSTALL_STEP']) && $arResult['MANIFEST']['INSTA
 	</div>
 	<div class="rest-configuration-controls start-btn-block">
 		<? if($arResult['NEED_START_BTN']): ?>
-			<span class="ui-btn ui-btn-lg ui-btn-primary start_btn"><?=Loc::getMessage('REST_CONFIGURATION_IMPORT_INSTALL_START_BTN')?></span>
+			<span
+				class="ui-btn ui-btn-lg ui-btn-primary start_btn"
+				data-testid="rest-configuration-import-start"
+			><?=Loc::getMessage('REST_CONFIGURATION_IMPORT_INSTALL_START_BTN')?></span>
 		<? endif;?>
 		<? if($arResult['PRE_INSTALL_APP_MODE']):?>
 			<span class="ui-btn ui-btn-lg ui-btn-default start_later_btn"><?=Loc::getMessage("REST_CONFIGURATION_IMPORT_INSTALL_LATER_BTN") ?></span>

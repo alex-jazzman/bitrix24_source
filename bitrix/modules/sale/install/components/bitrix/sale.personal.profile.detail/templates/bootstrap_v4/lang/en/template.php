@@ -12,4 +12,7 @@ $MESS["SPPD_SELECT"] = "Select";
 $MESS["SPPD_FILE_NOT_SELECTED"] = "No file has been selected";
 $MESS["SPPD_FILE_COUNT"] = "Files selected: ";
 $MESS["SPPD_ADD"] = "Add";
+$MESS['SPPD_ADD_ARIA'] = 'Add value: #PROPERTY#';
+$MESS['SPPD_CANCEL_FILE_ARIA'] = 'Cancel file selection: #PROPERTY#';
+$MESS['SPPD_SELECT_FILE_ARIA'] = 'Select file: #PROPERTY#';
 ?>

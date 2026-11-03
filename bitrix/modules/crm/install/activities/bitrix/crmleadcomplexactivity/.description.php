@@ -44,7 +44,7 @@ if (method_exists(BlockAvailability::class, 'legacyDefault'))
 
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_LEAD_NAME') ?? '',
-	description: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_LEAD_DESCRIPTION') ?? '',
+	description: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_LEAD_DESCRIPTION_1') ?? '',
 	type: [ActivityType::NODE->value],
 ))
 	->setClass('CrmLeadComplexActivity')
@@ -100,6 +100,14 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 700,
 				),
 				new NodeAction(
+					activityCode: 'crmchangerequisiteactivity',
+					sort: 725,
+				),
+				new NodeAction(
+					activityCode: 'crmcreaterequisiteactivity',
+					sort: 726,
+				),
+				new NodeAction(
 					activityCode: 'crmgenerateentitydocumentactivity',
 					sort: 750,
 				),
@@ -116,6 +124,7 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		),
 	)
-	->setAdditionalResult(['FilterReturnPropertiesMap'])
+	->setAdditionalResult(['FilterReturnPropertiesMap', 'RelationReturnPropertiesMap'])
+	->set('PROPERTIES', ['BaseSettingsAction' => 'setfieldactivity'])
 	->toArray()
 ;

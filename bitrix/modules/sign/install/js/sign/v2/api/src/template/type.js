@@ -1,5 +1,5 @@
 import type { ProviderCodeType, TemplateEntity } from 'sign.type';
-import type { LoadedDocumentData } from 'sign.v2.api';
+import type { LoadedDocumentData } from '../type';
 
 export type GeneralField = {
 	type: 'date' | 'number' | 'string';

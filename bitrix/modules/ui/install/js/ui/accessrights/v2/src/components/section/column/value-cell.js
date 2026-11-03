@@ -37,6 +37,12 @@ export const ValueCell = {
 		{
 			return this.userGroup.isReadOnly === true;
 		},
+		// the dictionary of a right is shared by every role and is merged into in place, so its own reference
+		// never changes: the count is what invalidates the memoized cells when a picked value brings its title
+		variablesCount(): number
+		{
+			return this.right.variables?.size ?? 0;
+		},
 	},
 	// data attributes are needed for e2e automated tests
 	template: `
@@ -46,7 +52,7 @@ export const ValueCell = {
 				'--modified': value.isModified,
 				'--read-only': isReadOnly
 			}"
-			v-memo="[userGroup.id, value.values, value.isModified, isReadOnly]"
+			v-memo="[userGroup.id, value.values, value.isModified, isReadOnly, variablesCount]"
 		>
 			<Component
 				:is="cellComponent"

@@ -1,4 +1,4 @@
-import { Runtime, ajax } from 'main.core';
+import { Loc, Runtime, Type, ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BasketRestHandler } from 'sale.checkout.provider.rest';
 import {
@@ -10,9 +10,41 @@ import {
 	EventType,
 } from 'sale.checkout.const';
 
-import { History } from 'sale.checkout.lib';
+import { Announcer, History } from 'sale.checkout.lib';
 
 import { Basket } from './basket';
+
+// the page opens on the editing stage and nothing returns to it, so it is not announced;
+// the screens of a placed order are said by their heading, which names the screen the focus enters
+const stageMessageId = {
+	[ApplicationConst.stage.view]: 'CHECKOUT_CONTROLLER_ANNOUNCE_STAGE_VIEW',
+	[ApplicationConst.stage.empty]: 'CHECKOUT_CONTROLLER_ANNOUNCE_STAGE_EMPTY',
+};
+
+const waitMessageId = {
+	'application/setStatus':
+	{
+		[LoaderConst.status.wait]: 'CHECKOUT_CONTROLLER_ANNOUNCE_ORDER_WAIT',
+		[LoaderConst.status.none]: 'CHECKOUT_CONTROLLER_ANNOUNCE_ORDER_WAIT_END',
+	},
+	// the end of the basket wait is said by its own result, the recalculated total below
+	'basket/setStatus':
+	{
+		[LoaderConst.status.wait]: 'CHECKOUT_CONTROLLER_ANNOUNCE_BASKET_WAIT',
+	},
+};
+
+const errorMutations = new Set([
+	'application/setErrors',
+	'basket/setErrors',
+	'property/setErrors',
+]);
+
+const clearErrorMutations = new Map([
+	['application/clearErrors', 'application/setErrors'],
+	['basket/clearErrors', 'basket/setErrors'],
+	['property/clearErrors', 'property/setErrors'],
+]);
 
 export class Application
 {
@@ -34,6 +66,7 @@ export class Application
 		this.store = option.store;
 		this.orderSaveAllowed = false;
 		this.preselectedConsentsIsSubmitted = false;
+		this.orderRefused = false;
 
 		return new Promise((resolve, reject) => resolve());
 	}
@@ -127,16 +160,194 @@ export class Application
 	 */
 	subscribeToStoreChanges()
 	{
-		// this.store.subscribe((mutation, state) => {
-		//	 const { payload, type } = mutation;
-		//	 if (type === 'basket/setNeedRefresh')
-		//	 {
-		//	 	alert('@@');
-		//	 	this.getData();
-		//	 }
-		// });
+		this.announcedStage = this.store.getters['application/getStage'];
+		this.announcedStatus = {};
+		this.announcedErrors = new Map();
+		this.unsaidErrors = [];
+
+		this.store.subscribe((mutation) => this.handlerStoreMutation(mutation));
 
 		return new Promise((resolve, reject) => resolve());
+	}
+
+	/**
+	 * The single source of announcements, so that no block of the checkout keeps a live region of its own.
+	 *
+	 * @private
+	 */
+	handlerStoreMutation(mutation)
+	{
+		if (errorMutations.has(mutation.type))
+		{
+			this.announceErrors(mutation.type, mutation.payload);
+
+			return;
+		}
+
+		if (clearErrorMutations.has(mutation.type))
+		{
+			this.announcedErrors.delete(clearErrorMutations.get(mutation.type));
+
+			return;
+		}
+
+		if (mutation.type === 'application/setStage')
+		{
+			this.announceStage(mutation.payload.stage);
+
+			return;
+		}
+
+		if (mutation.type === 'basket/setTotal')
+		{
+			if (!this.isOrderPlaced())
+			{
+				Announcer.announceRecalculation(Loc.getMessage('CHECKOUT_CONTROLLER_ANNOUNCE_BASKET_TOTAL'));
+			}
+
+			return;
+		}
+
+		this.announceWait(mutation.type, mutation.payload);
+	}
+
+	/**
+	 * Only new errors are said, since every field rewrites the whole list on blur. The errors of one
+	 * server answer go as one message: an assertive message cuts off the one before it.
+	 *
+	 * @private
+	 */
+	announceErrors(type, payload)
+	{
+		const errors = this.collectErrors(payload);
+		const announced = this.announcedErrors.get(type) ?? new Set();
+
+		this.announcedErrors.set(type, new Set(errors.map(({ key }) => key)));
+
+		const messages = errors
+			.filter(({ key }) => !announced.has(key))
+			.map(({ message }) => message)
+		;
+
+		if (messages.length === 0)
+		{
+			return;
+		}
+
+		if (this.unsaidErrors.length === 0)
+		{
+			queueMicrotask(() => {
+				Announcer.announceError(this.unsaidErrors.join(' '));
+				this.unsaidErrors = [];
+			});
+		}
+
+		this.unsaidErrors.push(...messages);
+	}
+
+	/**
+	 * General and property errors carry their text; a basket row error keeps it in a list of its own.
+	 *
+	 * @private
+	 */
+	collectErrors(payload)
+	{
+		if (!Type.isArrayFilled(payload))
+		{
+			return [];
+		}
+
+		const errors = [];
+
+		payload.forEach((error) => {
+			const list = Type.isArrayFilled(error.list) ? error.list : [error];
+
+			list.forEach((item) => {
+				if (Type.isStringFilled(item.message))
+				{
+					errors.push({
+						key: error.propertyId ?? [error.index, item.message].join(':'),
+						message: this.getErrorAnnouncement(item),
+					});
+				}
+			});
+		});
+
+		return errors;
+	}
+
+	/**
+	 * The required-field error does not name the field, and a reader says it once the focus has moved on.
+	 *
+	 * @private
+	 */
+	getErrorAnnouncement(error): string
+	{
+		if (error.message !== Loc.getMessage('CHECKOUT_CONTROLLER_PROPERTY_ERROR_REQUIRED'))
+		{
+			return error.message;
+		}
+
+		const property = this.store.getters['property/getProperty'].find(({ id }) => id === error.propertyId);
+
+		if (!Type.isStringFilled(property?.name))
+		{
+			return error.message;
+		}
+
+		return Loc.getMessage('CHECKOUT_CONTROLLER_ANNOUNCE_PROPERTY_ERROR_REQUIRED', {
+			'#PROPERTY_NAME#': property.name,
+		});
+	}
+
+	/**
+	 * A placed order is said by the heading of its screen: the end of the wait and a new total would only repeat it.
+	 *
+	 * @private
+	 */
+	isOrderPlaced(): boolean
+	{
+		return this.store.getters['application/getStage'] === ApplicationConst.stage.success;
+	}
+
+	/**
+	 * @private
+	 */
+	announceStage(stage)
+	{
+		if (stage === this.announcedStage)
+		{
+			return;
+		}
+
+		this.announcedStage = stage;
+
+		if (stageMessageId[stage])
+		{
+			Announcer.announce(Loc.getMessage(stageMessageId[stage]));
+		}
+	}
+
+	/**
+	 * @private
+	 */
+	announceWait(type, payload)
+	{
+		const messageIds = waitMessageId[type];
+
+		if (!messageIds || this.announcedStatus[type] === payload.status)
+		{
+			return;
+		}
+
+		this.announcedStatus[type] = payload.status;
+
+		if (this.isOrderPlaced() || (type === 'application/setStatus' && this.orderRefused))
+		{
+			return;
+		}
+
+		Announcer.announce(Loc.getMessage(messageIds[payload.status]));
 	}
 
 	/**
@@ -235,6 +446,8 @@ export class Application
 		const firstRequiredUncheckedConsentItem = this.getFirstRequiredUncheckedConsentItem();
 		if (firstRequiredUncheckedConsentItem)
 		{
+			// the dialog of the consent opens without a word of why the order has not gone
+			Announcer.announce(Loc.getMessage('CHECKOUT_CONTROLLER_ANNOUNCE_CONSENT_REQUIRED'));
 			EventEmitter.emit(`${ConsentConst.validate.submit}-${firstRequiredUncheckedConsentItem.id}`, []);
 
 			return;
@@ -243,6 +456,8 @@ export class Application
 		// this.propertiesValidate();
 		// this.propertiesIsValid() ? alert('propsSuccess'):alert('propsError')
 
+		// a new attempt is said from its start, whatever the server answered the last time
+		this.orderRefused = false;
 		this.appSetStatusWait();
 
 		this.saveOrder()
@@ -307,6 +522,9 @@ export class Application
 		const component = ComponentConst.bitrixSaleOrderCheckout;
 		const cmd = RestMethodConst.saleEntitySaveOrder;
 
+		// the answer to a new attempt is said in full, even when it repeats the last one
+		this.announcedErrors.clear();
+
 		return ajax.runComponentAction(
 			component,
 			cmd,
@@ -325,7 +543,12 @@ export class Application
 			},
 		)
 			.then((result) => this.executeRestAnswer(cmd, result))
-			.catch((result) => this.executeRestAnswer(cmd, { error: result.errors }));
+			.catch((result) => {
+				// the errors are the whole answer to a refused order, the end of the wait is not said after them
+				this.orderRefused = true;
+
+				return this.executeRestAnswer(cmd, { error: result.errors });
+			});
 	}
 
 	/**
@@ -397,7 +620,11 @@ export class Application
 		const errorIds = errors.map((item) => item.propertyId);
 		if (!errorIds.includes(fields.id))
 		{
-			errors.push({ propertyId: fields.id });
+			// without the text the form shows an empty message block and a reader hears nothing
+			errors.push({
+				message: Loc.getMessage('CHECKOUT_CONTROLLER_PROPERTY_ERROR_REQUIRED'),
+				propertyId: fields.id,
+			});
 		}
 
 		return errors;

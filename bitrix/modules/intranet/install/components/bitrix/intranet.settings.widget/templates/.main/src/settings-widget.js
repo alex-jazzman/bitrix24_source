@@ -1,5 +1,6 @@
 import { ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { FocusMonitor, FocusNavigator, LiveAnnouncer } from 'ui.a11y';
 import 'ui.buttons';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
@@ -8,7 +9,11 @@ import 'ui.icons.crm';
 import { PopupComponentsMaker, PopupComponentsMakerItem } from 'ui.popupcomponentsmaker';
 import { WidgetLoader } from 'intranet.widget-loader';
 import { RequisiteSection } from './requisite-section';
-import { type SettingsWidgetOptions, type SettingsWidgetHoldingOptions, type MainPageConfiguration } from './types/options';
+import {
+	type MainPageConfiguration,
+	type SettingsWidgetHoldingOptions,
+	type SettingsWidgetOptions,
+} from './types/options';
 
 export class SettingsWidget extends EventEmitter
 {
@@ -42,7 +47,11 @@ export class SettingsWidget extends EventEmitter
 		this.#settingsUrl = options.settingsPath;
 		this.#isRenameable = options.isRenameable;
 		this.#mainPage = options.mainPage;
-		this.#requisiteSection = new RequisiteSection(options.requisite);
+		this.#requisiteSection = new RequisiteSection(
+			options.requisite,
+			() => this.getWidget().close(),
+			() => this.getWidget().getPopup(),
+		);
 
 		this.#setOptions(options);
 	}
@@ -90,10 +99,30 @@ export class SettingsWidget extends EventEmitter
 			this.#updateAriaExpanded(false);
 		});
 
+		const popup = this.#widgetPopup.getPopup();
+		const popupContainer = popup.getPopupContainer();
+		const loadingFocusTarget = FocusNavigator.getActiveElement(popupContainer);
+		const shouldSetInitialFocus = popup.isShown()
+			&& FocusMonitor.Instance.getLastInputModality() === 'keyboard'
+			&& loadingFocusTarget !== null
+			&& popupContainer.contains(loadingFocusTarget)
+		;
+
 		widgetLoader.clearBeforeInsertContent();
 		this.#getItemsList()
 			.then(() => {
 				this.#drawItemsList();
+				const currentFocusTarget = FocusNavigator.getActiveElement(popupContainer);
+				if (
+					shouldSetInitialFocus
+					&& popup.isShown()
+					&& currentFocusTarget !== null
+					&& currentFocusTarget === loadingFocusTarget
+					&& popupContainer.contains(currentFocusTarget)
+				)
+				{
+					FocusNavigator.focusContainer(popupContainer);
+				}
 			})
 		;
 
@@ -112,7 +141,7 @@ export class SettingsWidget extends EventEmitter
 		return instance;
 	}
 
-	static bindAndShow(button): ?SettingsWidget
+	static bind(button): ?SettingsWidget
 	{
 		const instance = this.getInstance();
 
@@ -120,6 +149,17 @@ export class SettingsWidget extends EventEmitter
 		{
 			Event.unbindAll(button);
 			Event.bind(button, 'click', instance.toggle.bind(instance, button));
+		}
+
+		return instance;
+	}
+
+	static bindAndShow(button): ?SettingsWidget
+	{
+		const instance = this.bind(button);
+
+		if (instance)
+		{
 			instance.show(button);
 		}
 
@@ -234,25 +274,47 @@ export class SettingsWidget extends EventEmitter
 		const onclickCopyLink = () => {
 			if (BX.clipboard.copy(window.location.origin))
 			{
+				const message = Loc.getMessage('INTRANET_SETTINGS_WIDGET_LINK_COPIED_POPUP');
 				BX.UI.Notification.Center.notify({
-					content: Loc.getMessage('INTRANET_SETTINGS_WIDGET_LINK_COPIED_POPUP'),
+					content: message,
 					position: 'top-left',
 					autoHideDelay: 3000,
 				});
+				LiveAnnouncer.announce(message, 'polite');
 			}
 		};
 
-		return Tag.render`<span class='ui-icon-set --link-3 intranet-settings-widget__header-btn' onclick="${onclickCopyLink}"></span>`;
+		return Tag.render`
+			<button
+				type="button"
+				class="intranet-settings-widget__header-btn"
+				aria-label="${Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_PORTAL_LINK_ARIA')}"
+				data-autofocus
+				data-testid="settings-widget-copy-link"
+				onclick="${onclickCopyLink}"
+			>
+				<span class="ui-icon-set --link-3" aria-hidden="true"></span>
+			</button>
+		`;
 	}
 
 	#getEditHeaderIcon(): HTMLElement
 	{
-		const onclickEditLink = () => {
-			this.getWidget().close();
-			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings&page=portal&option=subDomainName');
-		};
+		const settingsUrl = `${this.#settingsUrl}?analyticContext=widget_settings_settings&page=portal&option=subDomainName`;
+		const onclickEditLink = this.#openSidePanel.bind(this, settingsUrl);
 
-		return Tag.render`<span class='ui-icon-set --pencil-40 intranet-settings-widget__header-btn' onclick="${onclickEditLink}"></span>`;
+		return Tag.render`
+			<a
+				class="intranet-settings-widget__header-btn"
+				href="${settingsUrl}"
+				aria-label="${Loc.getMessage('INTRANET_SETTINGS_WIDGET_RENAME_PORTAL_ARIA')}"
+				data-autofocus
+				data-testid="settings-widget-rename"
+				onclick="${onclickEditLink}"
+			>
+				<span class="ui-icon-set --pencil-40" aria-hidden="true"></span>
+			</a>
+		`;
 	}
 
 	#getHeader(): HTMLElement
@@ -302,9 +364,14 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const partnerOrder = Tag.render`
-			<span class="intranet-settings-widget__footer-item" onclick="${onclickOpenPartnerOrder}">
+			<button
+				type="button"
+				class="intranet-settings-widget__footer-item"
+				data-testid="settings-widget-order"
+				onclick="${onclickOpenPartnerOrder}"
+			>
 				${Loc.getMessage('INTRANET_SETTINGS_WIDGET_ORDER_PARTNER_LINK_MSGVER_1')}
-			</span>
+			</button>
 		`;
 
 		const onclickWhereToBegin = () => {
@@ -333,12 +400,22 @@ export class SettingsWidget extends EventEmitter
 		return Tag.render`
 				<div class="intranet-settings-widget__footer">
 					${this.#isBitrix24 ? partnerOrder : ''}
-					<span class="intranet-settings-widget__footer-item" onclick="${onclickWhereToBegin}">
+					<button
+						type="button"
+						class="intranet-settings-widget__footer-item"
+						data-testid="settings-widget-getting-started"
+						onclick="${onclickWhereToBegin}"
+					>
 						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_WHERE_TO_BEGIN_LINK')}
-					</span>
-					<span class="intranet-settings-widget__footer-item" onclick="${onclickSupport}">
+					</button>
+					<button
+						type="button"
+						class="intranet-settings-widget__footer-item"
+						data-testid="settings-widget-support"
+						onclick="${onclickSupport}"
+					>
 						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_SUPPORT_BUTTON')}
-					</span>
+					</button>
 				</div>
 			`;
 	}
@@ -352,26 +429,39 @@ export class SettingsWidget extends EventEmitter
 		return node;
 	}
 
-	#getMainPageElement(): HTMLDivElement
+	#openSidePanel(url: string, event): void
 	{
-		const onclick = () => {
-			this.getWidget().close();
-			BX.SidePanel.Instance.open(this.#mainPage.settingsPath);
-			// todo: add vibe analytic context sub_section = from_widget_vibe_point
-		};
+		if (event.ctrlKey || event.metaKey)
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.getWidget().close();
+		BX.SidePanel.Instance.open(url);
+	}
+
+	#getMainPageElement(): HTMLElement
+	{
+		const onclick = this.#openSidePanel.bind(this, this.#mainPage.settingsPath);
 
 		const element = Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --green">
-						<div class="ui-icon-set --home-page"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${this.#mainPage.settingsPath}"
+				data-testid="settings-widget-main-page"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box --green">
+						<span class="ui-icon-set --home-page" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</div>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 
 		return this.#prepareElement(element);
@@ -401,29 +491,34 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<button type="button" class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
-			<span class="intranet-settings-widget__branch-icon_box">
-				<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></span>
-			</span>
-			<span class="intranet-settings-widget__branch_content">
-				<span class="intranet-settings-widget__branch-title">
-					${
-						affiliate.isHolding
-							? Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH')
-							: Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH')
-					}
-				</span>
-				<span class="intranet-settings-widget__title">
-					${affiliate.name}
-				</span>
-			</span>
-			<span class="intranet-settings-widget__branch-btn_box">
-				<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
-					${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES')}
-				</span>
-			</span>
-		</button>
-		`;
+			<button
+				type="button"
+				class="intranet-settings-widget__branch"
+				data-testid="settings-widget-affiliate"
+				onclick="${onclickOpen}"
+			>
+					<span class="intranet-settings-widget__branch-icon_box">
+						<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__branch_content">
+						<span class="intranet-settings-widget__branch-title">
+							${
+								affiliate.isHolding
+									? Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH')
+									: Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH')
+							}
+						</span>
+						<span class="intranet-settings-widget__title">
+							${affiliate.name}
+						</span>
+					</span>
+					<span class="intranet-settings-widget__branch-btn_box">
+						<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
+							${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES')}
+						</span>
+					</span>
+				</button>
+			`;
 
 		return this.#prepareElement(element);
 	}
@@ -440,9 +535,16 @@ export class SettingsWidget extends EventEmitter
 			};
 
 			const holdingWidgetCloseBtn = Tag.render`
-				<button type="button" onclick="${onclickClose}" class="intranet-settings-widget__close-btn">
+				<button
+					type="button"
+					class="intranet-settings-widget__close-btn"
+					data-testid="settings-widget-holding-back"
+					onclick="${onclickClose}"
+				>
 					<span aria-hidden="true" class="ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon"></span>
-					<span class="intranet-settings-widget__close-btn_name">${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST')}</span>
+					<span class="intranet-settings-widget__close-btn_name">
+						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST')}
+					</span>
 				</button>
 			`;
 
@@ -483,21 +585,30 @@ export class SettingsWidget extends EventEmitter
 
 		const lockIcon = Tag.render`
 			<span class="intranet-settings-widget__branch-lock-icon_box">
-				<span class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock"></span>
+				<span class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock" aria-hidden="true"></span>
 			</span>
 		`;
 
 		const element = Tag.render`
-			<button type="button" class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
+			<button
+				type="button"
+				class="intranet-settings-widget__branch"
+				data-testid="settings-widget-holding"
+				onclick="${onclickOpen}"
+			>
 				<span class="intranet-settings-widget__branch-icon_box">
-					<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></span>
+					<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network" aria-hidden="true"></span>
 					${!this.#holding.canBeHolding ? lockIcon : ''}
 				</span>
 				<span class="intranet-settings-widget__branch_content">
 					<span class="intranet-settings-widget__title">${title}</span>
 				</span>
 				<span class="intranet-settings-widget__branch-btn_box">
-					<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">${buttonText}</span>
+					<span
+						class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light"
+					>
+						${buttonText}
+					</span>
 				</span>
 			</button>
 		`;
@@ -517,23 +628,26 @@ export class SettingsWidget extends EventEmitter
 
 	#getSecurityElement(): HTMLElement
 	{
-		const onclick = () => {
-			this.getWidget().close();
-			BX.SidePanel.Instance.open(this.#settingsUrl + '?page=security&analyticContext=widget_settings_settings');
-		};
+		const settingsUrl = `${this.#settingsUrl}?page=security&analyticContext=widget_settings_settings`;
+		const onclick = this.#openSidePanel.bind(this, settingsUrl);
 
 		const element = Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box ${this.#otp.IS_ACTIVE === 'Y' ? '--green' : '--yellow'}">
-						<div class="ui-icon-set --shield"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${settingsUrl}"
+				data-testid="settings-widget-security"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box ${this.#otp.IS_ACTIVE === 'Y' ? '--green' : '--yellow'}">
+						<span class="ui-icon-set --shield" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SECURITY_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</span>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 
 		return this.#prepareElement(element);
@@ -541,47 +655,53 @@ export class SettingsWidget extends EventEmitter
 
 	#getGeneralSettingsElement(): HTMLElement
 	{
-		const onclick = () => {
-			this.getWidget().close();
-			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings');
-		};
+		const settingsUrl = `${this.#settingsUrl}?analyticContext=widget_settings_settings`;
+		const onclick = this.#openSidePanel.bind(this, settingsUrl);
 
 		const element = Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --settings-2"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${settingsUrl}"
+				data-testid="settings-widget-general"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box --gray">
+						<span class="ui-icon-set --settings-2" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SETTINGS_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</span>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 
 		return this.#prepareElement(element);
 	}
 
-	#getMigrateElement(): HTMLDivElement
+	#getMigrateElement(): HTMLElement
 	{
-		const onclick = () => {
-			this.getWidget().close();
-			BX.SidePanel.Instance.open(`${this.#marketUrl}category/migration/`);
-		};
+		const marketUrl = `${this.#marketUrl}category/migration/`;
+		const onclick = this.#openSidePanel.bind(this, marketUrl);
 
 		const element = Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --market-1"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
+			<a
+				class="intranet-settings-widget_box --clickable"
+				href="${marketUrl}"
+				data-testid="settings-widget-migrate"
+				onclick="${onclick}"
+			>
+				<span class="intranet-settings-widget_inner">
+					<span class="intranet-settings-widget_icon-box --gray">
+						<span class="ui-icon-set --market-1" aria-hidden="true"></span>
+					</span>
+					<span class="intranet-settings-widget__title">
 						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_MIGRATION_TITLE')}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</div>
+					</span>
+				</span>
+				<span class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right" aria-hidden="true"></span>
+			</a>
 		`;
 
 		return this.#prepareElement(element);

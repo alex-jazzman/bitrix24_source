@@ -17,5 +17,9 @@ export var SDKEvents;
     SDKEvents["aiTextResponse"] = "aiTextResponse";
     SDKEvents["aiTextError"] = "aiTextError";
     SDKEvents["aiTextCancel"] = "aiTextCancel";
+    SDKEvents["mentionMembersRequest"] = "mentionMembersRequest";
+    SDKEvents["mentionMembersResponse"] = "mentionMembersResponse";
+    SDKEvents["mentionMembersError"] = "mentionMembersError";
+    SDKEvents["mentionMembersCancel"] = "mentionMembersCancel";
 })(SDKEvents || (SDKEvents = {}));
 //# sourceMappingURL=events.js.map

@@ -55,8 +55,6 @@ BX.ready(function(){
 	BX.Vote.init({
 		id : <?=$arResult["VOTE_ID"]?>,
 		cid : '<?=$uid?>',
-		urlTemplate : '<?=CUtil::JSEscape($arParams["~PATH_TO_USER"]);?>',
-		nameTemplate : '<?=CUtil::JSEscape($arParams["~NAME_TEMPLATE"]);?>',
 		url : '<?=CUtil::JSEscape(htmlspecialcharsback(POST_FORM_ACTION_URI))?>',
 		startCheck : <?=$lastVote?>
 	});

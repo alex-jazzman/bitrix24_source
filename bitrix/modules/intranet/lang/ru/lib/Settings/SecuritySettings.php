@@ -1,6 +1,8 @@
 <?php
 $MESS['INTRANET_SETTINGS_SECURITY_MODULE_ERROR'] = 'Отсутствует модуль security';
+$MESS['INTRANET_SETTINGS_SECURITY_OTP_EMAIL_FROM_ERROR'] = 'Введите корректный email отправителя кодов двухфакторной аутентификации';
 $MESS['INTRANET_SETTINGS_SECURITY_WRONG_IP_ERROR'] = 'Неверно введен IP';
+$MESS['INTRANET_SETTINGS_SECURITY_WRONG_OTP_DAYS_ERROR'] = 'Выбран недопустимый период настройки двухфакторной аутентификации';
 $MESS['INTRANET_SETTINGS_SECURITY_UNLIMITED_DAYS'] = 'Неограниченно';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS"] = 'Сколько дней хранить историю входов';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = 'Перечислите разрешенные IP-адреса , разделяя их запятыми, или диапазоны IP-адресов через дефис';
@@ -13,6 +15,8 @@ $MESS["INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST"] = 'Черный список
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG"] = 'Журнал событий';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = 'Обязательно для всех сотрудников';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP_MSGVER_1"] = 'Включить для всех сотрудников';
+$MESS['INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SKIP_DEVICE_CONNECT'] = 'Разрешить подтверждение входа без мобильного приложения';
+$MESS['INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP_EMAIL_FROM'] = 'Email отправителя кодов двухфакторной аутентификации';
 
 $MESS['INTRANET_SETTINGS_SECTION_TITLE_DATA_LEAK_PROTECTION'] = 'Защита информации от утечки';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY_MSGVER_1"] = 'Запрет на копирование текста в мобильном приложении';

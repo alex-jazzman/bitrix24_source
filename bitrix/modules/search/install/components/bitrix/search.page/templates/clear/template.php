@@ -4,9 +4,9 @@
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
@@ -115,7 +115,7 @@
 		<div class="search-advanced">
 			<div class="search-advanced-result">
 				<?php if (is_object($arResult['NAV_RESULT'])):?>
-					<div class="search-result"><?php echo GetMessage('CT_BSP_FOUND')?>: <?php echo $arResult['NAV_RESULT']->SelectedRowsCount()?></div>
+					<div class="search-result"><?php echo GetMessage('CT_BSP_FOUND_COUNT', ['#COUNT#' => $arResult['NAV_RESULT']->SelectedRowsCount()])?></div>
 				<?php endif;?>
 				<?php
 				$arWhere = [];

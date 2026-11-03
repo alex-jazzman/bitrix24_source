@@ -3,5 +3,7 @@ module.exports = {
 	output: 'dist/push-otp.bundle.js',
 	namespace: 'BX.Intranet.NotifyBanner',
 	browserslist: true,
-	minification: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

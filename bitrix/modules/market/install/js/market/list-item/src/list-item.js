@@ -1,4 +1,3 @@
-import { PopupInstall } from "market.popup-install";
 import { PopupUninstall } from "market.popup-uninstall";
 import { mapActions } from "ui.vue3.pinia";
 import { marketInstallState } from "market.install-store";
@@ -7,13 +6,16 @@ import { RatingStars } from "market.rating-stars";
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 import { MenuManager } from "main.popup";
 import { MarketLinks } from "market.market-links";
-import { Extension } from 'main.core';
+import { Extension, Runtime } from 'main.core';
+import { markRaw, nextTick } from 'ui.vue3';
 
 import "./list-item.css";
 
+let popupInstallLoadingPromise = null;
+
 export const ListItem = {
 	components: {
-		PopupInstall, PopupUninstall, BIcon, RatingStars
+		PopupUninstall, BIcon, RatingStars
 	},
 	props: [
 		'item', 'params', 'index',
@@ -29,6 +31,7 @@ export const ListItem = {
 			favoriteProcess: false,
 			favoriteProcessStart: false,
 			MarketLinks: MarketLinks,
+			popupInstallComponent: null,
 		}
 	},
 	computed: {
@@ -278,10 +281,42 @@ export const ListItem = {
 			});
 		},
 		updateApp: function () {
-			this.setAppInfo(this.item);
-			this.showInstallPopup(true);
+			void this.showInstallPopupOnDemand(true);
 		},
-		...mapActions(marketInstallState, ['showInstallPopup', 'setAppInfo',]),
+		showInstallPopupOnDemand(isUpdate = false) {
+			if (popupInstallLoadingPromise)
+			{
+				return popupInstallLoadingPromise;
+			}
+
+			this.prepareInstallContext(this.item, this.item.LICENSE);
+
+			if (this.popupInstallComponent)
+			{
+				this.showInstallPopup(isUpdate);
+
+				return Promise.resolve();
+			}
+
+			popupInstallLoadingPromise = Promise.resolve()
+				.then(() => Runtime.loadExtension('market.popup-install'))
+				.then(({ PopupInstall }) => {
+					this.popupInstallComponent = markRaw(PopupInstall);
+
+					return nextTick();
+				})
+				.then(() => this.showInstallPopup(isUpdate))
+				.catch(() => {
+					this.showError(this.$Bitrix.Loc.getMessage('MARKET_INSTALL_POPUP_LOAD_ERROR'));
+				})
+				.finally(() => {
+					popupInstallLoadingPromise = null;
+				})
+			;
+
+			return popupInstallLoadingPromise;
+		},
+		...mapActions(marketInstallState, ['showInstallPopup', 'prepareInstallContext', 'showError']),
 		...mapActions(marketUninstallState, ['deleteAction', 'setDeleteActionInfo']),
 	},
 	template: `
@@ -462,8 +497,9 @@ export const ListItem = {
 		</template>
 		<div v-if="$parent.isInstalledList">
 			<div style="display: none">
-				<PopupInstall
-					v-if="item.BUTTONS.UPDATE === 'Y'"
+				<component
+					:is="popupInstallComponent"
+					v-if="popupInstallComponent && item.BUTTONS.UPDATE === 'Y'"
 					:appInfo="item"
 					:licenseInfo="item.LICENSE"
 				/>

@@ -163,7 +163,7 @@
 				dataset: {
 					objectId: object.id,
 					hasSubFolders: object.hasSubFolders? 1 : '',
-					canAdd: !!object.canAdd
+					canAdd: object.canAdd ? 1 : ''
 				},
 				children: [
 					BX.create('div', {

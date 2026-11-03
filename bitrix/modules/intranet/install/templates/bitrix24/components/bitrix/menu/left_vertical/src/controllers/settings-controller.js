@@ -7,6 +7,7 @@ import DefaultController from './default-controller';
 export default class SettingsController extends DefaultController
 {
 	menuId = 'leftMenuSettingsPopup';
+	#menu: ?Menu = null;
 
 	createPopup(): Popup
 	{
@@ -19,7 +20,26 @@ export default class SettingsController extends DefaultController
 			offsetLeft: 50,
 		});
 
-		return menu.getPopupWindow();
+		this.#menu = menu;
+		const popup = menu.getPopupWindow();
+		popup.subscribe('onDestroy', () => {
+			if (this.#menu === menu)
+			{
+				this.#menu = null;
+			}
+		});
+
+		return popup;
+	}
+
+	getMenuItem(id: string): ?MenuItem
+	{
+		if (!this.#menu || this.#menu.getPopupWindow() !== this.popup || this.popup.isDestroyed())
+		{
+			return null;
+		}
+
+		return this.#menu.getMenuItem(id);
 	}
 
 	getItems(): Array
@@ -48,13 +68,15 @@ export default class SettingsController extends DefaultController
 			return null;
 		}
 
-		const { text, html, onclick, className, items = [], delimiter = false } = data;
+		const { id, text, html, onclick, className, disabled, items = [], delimiter = false } = data;
 
 		return {
+			id,
 			html,
 			text: html ? undefined : text,
 			items: this.#getMenuItems(items),
 			delimiter,
+			disabled,
 			className: `menu-popup-no-icon ${className}`,
 			onclick: (event, item: MenuItem) => {
 				if (!Type.isArrayFilled(items))

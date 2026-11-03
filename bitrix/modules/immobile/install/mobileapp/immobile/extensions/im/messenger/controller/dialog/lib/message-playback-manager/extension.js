@@ -63,7 +63,12 @@ jn.define('im/messenger/controller/dialog/lib/message-playback-manager', (requir
 			const playbackState = this.store.getters['messagesModel/playbackModel/getPlayback'](this.dialogId, messageId);
 			const message = this.store.getters['messagesModel/getById'](messageId);
 
-			const messageToUpdate = { ...message, ...playbackState };
+			// Playback state goes last: for a voice message the view element reads isPlaying and
+			// playingTime from the model it gets, not from the store.
+			const messageToUpdate = {
+				...this.messageRenderer.prepareStoreMessageForRender(message),
+				...playbackState,
+			};
 			void this.messageRenderer.render([messageToUpdate]);
 		};
 	}

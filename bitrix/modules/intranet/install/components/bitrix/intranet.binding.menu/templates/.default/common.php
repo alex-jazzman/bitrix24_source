@@ -63,8 +63,11 @@ if ($arResult['UNIQUE_BUTTON_ID'])
 	$button->setUniqId($arResult['UNIQUE_BUTTON_ID']);
 }
 
+$testIdSuffix = str_replace('_', '-', $arParams['SECTION_CODE']);
 $button->getMainButton()->addAttribute('id', $id . '_top');
+$button->getMainButton()->addDataAttribute('testid', 'intranet-binding-menu-main-' . $testIdSuffix);
 $button->getMenuButton()->addAttribute('id', $id);
+$button->getMenuButton()->addDataAttribute('testid', 'intranet-binding-menu-expand-' . $testIdSuffix);
 
 if (isset($arParams['USE_UI_TOOLBAR']) && $arParams['USE_UI_TOOLBAR'] === 'Y')
 {

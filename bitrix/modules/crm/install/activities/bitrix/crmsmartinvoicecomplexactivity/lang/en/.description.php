@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION"] = "Creates or modifies invoices, assigns responsible person, changes stage, and performs other invoice related actions.";
+$MESS['CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_1'] = 'Creates and edits invoices: changes the stage, assigns the responsible person, edits products, links the customer and generates documents.';
 $MESS["CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_CHANGE"] = "Modify invoice";
 $MESS["CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_DELETE"] = "Delete invoice";
 $MESS["CRM_COMPLEX_ACTIVITY_SMART_INVOICE_DESCRIPTION_NODE_ACTION_SET_COMPANY"] = "Change associated company";

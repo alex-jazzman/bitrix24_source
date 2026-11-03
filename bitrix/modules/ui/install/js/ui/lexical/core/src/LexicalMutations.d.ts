@@ -7,6 +7,5 @@
  */
 import type { LexicalEditor } from './LexicalEditor';
 export declare function getIsProcessingMutations(): boolean;
-export declare function $flushMutations(editor: LexicalEditor, mutations: Array<MutationRecord>, observer: MutationObserver): void;
-export declare function $flushRootMutations(editor: LexicalEditor): void;
+export declare function flushRootMutations(editor: LexicalEditor): void;
 export declare function initMutationObserver(editor: LexicalEditor): void;

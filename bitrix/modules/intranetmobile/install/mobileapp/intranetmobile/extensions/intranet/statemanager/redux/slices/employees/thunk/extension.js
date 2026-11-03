@@ -12,7 +12,7 @@ jn.define('intranet/statemanager/redux/slices/employees/thunk', (require, export
 	const condition = () => isOnline();
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
-		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
 
 	const runComponentActionPromise = async ({ component, action, options }) => (

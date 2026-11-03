@@ -1,11 +1,12 @@
-import { Type, Dom, Event, Tag } from 'main.core';
+import { Type, Dom, Event, Tag, Runtime } from 'main.core';
 import type { Menu, MenuOptions } from 'main.popup';
 
 import { SplitButton, type ButtonCounterOptions } from 'ui.buttons';
 import { Icon } from 'ui.icon-set.api.core';
+import type { Tooltip } from 'ui.system.tooltip';
 import 'ui.cnt';
 
-import BaseButton from '../base-button';
+import BaseButton, { bindButtonEvent, unbindButtonEvent } from '../base-button';
 import LegacyMenuController from '../menu/legacy-menu-controller';
 import SystemMenuController from '../menu/system-menu-controller';
 import type MenuController from '../menu/menu-controller';
@@ -18,6 +19,195 @@ import ButtonStyle from './button-style';
 import ButtonTag from './button-tag';
 import AirButtonStyle from './air-button-style';
 import type { ButtonOptions, SystemMenuOptions } from './button-options';
+
+type TooltipState = {
+	container: HTMLElement,
+	target: HTMLElement,
+	tooltip: ?Tooltip,
+	loading: boolean,
+	hovered: boolean,
+	focused: boolean,
+};
+
+type TooltipExtension = {
+	Tooltip: Class<Tooltip>,
+	TooltipTrigger: { Hover: string, Focus: string },
+};
+
+const tooltips: WeakMap<HTMLElement, TooltipState> = new WeakMap();
+const EXPLICIT_TOOLTIP = '[title], [data-hint], [data-ui-tooltip]';
+let tooltipLoading: ?Promise<TooltipExtension> = null;
+
+const loadTooltipExtension = async (): Promise<TooltipExtension> => {
+	tooltipLoading ??= Runtime.loadExtension('ui.system.tooltip');
+	const loading = tooltipLoading;
+
+	try
+	{
+		return await loading;
+	}
+	finally
+	{
+		if (tooltipLoading === loading)
+		{
+			tooltipLoading = null;
+		}
+	}
+};
+
+const getTooltipText = (target: HTMLElement): string => {
+	if (target.tagName === 'INPUT')
+	{
+		return target.value;
+	}
+
+	const inner = target.querySelector('.ui-btn-text-inner');
+	if (inner)
+	{
+		return inner.textContent ?? '';
+	}
+
+	const text = target.querySelector('.ui-btn-text');
+
+	return Array.from(text?.childNodes ?? [])
+		.filter((node) => node.nodeType === Node.TEXT_NODE)
+		.map((node) => node.textContent)
+		.join('')
+	;
+};
+
+const destroyTooltip = (state: TooltipState): void => {
+	const tooltip = state.tooltip;
+	state.tooltip = null;
+	state.hovered = false;
+	state.focused = false;
+	tooltip?.destroy();
+};
+
+const canShowTooltip = (state: TooltipState): boolean => {
+	const { container, target } = state;
+
+	return target.isConnected
+		&& container.contains(target)
+		&& Dom.hasClass(container, ButtonStyle.COLLAPSED)
+		&& getTooltipText(target).trim().length > 0
+		&& !target.closest(EXPLICIT_TOOLTIP)
+		&& !target.querySelector(EXPLICIT_TOOLTIP)
+	;
+};
+
+export const updateCollapsedTooltip = (button: ?Button): void => {
+	const state = tooltips.get(button?.button);
+	if (!state)
+	{
+		return;
+	}
+
+	if (canShowTooltip(state))
+	{
+		state.tooltip?.setOptions({ content: getTooltipText(state.target) });
+	}
+	else
+	{
+		destroyTooltip(state);
+	}
+};
+
+const initializeCollapsedTooltip = (button: Button): void => {
+	const container = button.button;
+	if (tooltips.has(container))
+	{
+		updateCollapsedTooltip(button);
+
+		return;
+	}
+
+	const target = container.querySelector('.ui-btn-main') ?? container;
+	const state: TooltipState = {
+		container,
+		target,
+		tooltip: null,
+		loading: false,
+		hovered: false,
+		focused: false,
+	};
+	tooltips.set(container, state);
+
+	const handleGesture = async (event: PointerEvent | FocusEvent): Promise<void> => {
+		updateCollapsedTooltip(button);
+		if (event.type === 'pointerover' || event.target !== target)
+		{
+			return;
+		}
+
+		if (event.type === 'pointerenter')
+		{
+			state.hovered = event.pointerType !== 'touch';
+			if (!state.hovered)
+			{
+				return;
+			}
+		}
+		else
+		{
+			state.focused = target.matches(':focus-visible');
+			if (!state.focused)
+			{
+				return;
+			}
+		}
+
+		if (state.tooltip || state.loading || !canShowTooltip(state))
+		{
+			return;
+		}
+
+		state.loading = true;
+		try
+		{
+			const { Tooltip, TooltipTrigger } = await loadTooltipExtension();
+			const hasGesture = (state.hovered && target.matches(':hover'))
+				|| (state.focused && target.matches(':focus-visible'))
+			;
+			if (!canShowTooltip(state) || !hasGesture)
+			{
+				return;
+			}
+
+			state.tooltip = new Tooltip({
+				target,
+				content: getTooltipText(target),
+				trigger: [TooltipTrigger.Hover, TooltipTrigger.Focus],
+				events: { onHide: () => destroyTooltip(state) },
+			});
+		}
+		catch (error)
+		{
+			console.warn('BX.UI.Button: cannot load collapsed button tooltip.', error);
+		}
+		finally
+		{
+			state.loading = false;
+		}
+	};
+
+	Event.bind(target, 'pointerenter', handleGesture, { capture: true });
+	Event.bind(target, 'pointerover', handleGesture, { capture: true });
+	Event.bind(target, 'focusin', handleGesture, { capture: true });
+	Event.bind(target, 'pointerleave', () => {
+		state.hovered = false;
+	});
+	Event.bind(target, 'focusout', () => {
+		state.focused = false;
+	});
+	Event.bind(target, 'keydown', (event: KeyboardEvent) => {
+		if (event.key === 'Escape')
+		{
+			state.hovered = false;
+			state.focused = false;
+		}
+	});
+};
 
 /**
  * @namespace {BX.UI}
@@ -93,6 +283,8 @@ export default class Button extends BaseButton
 		{
 			this.setDropdown();
 		}
+
+		initializeCollapsedTooltip(this);
 	}
 
 	static Size = ButtonSize;
@@ -111,6 +303,24 @@ export default class Button extends BaseButton
 		{
 			Dom.toggleClass(this.getContainer(), ButtonStyle.COLLAPSED, !this.text);
 		}
+
+		updateCollapsedTooltip(this);
+
+		return this;
+	}
+
+	setProps(props: { [propertyName: string]: string }): this
+	{
+		super.setProps(props);
+		updateCollapsedTooltip(this);
+
+		return this;
+	}
+
+	setDataSet(props: { [propertyName: string]: string }): this
+	{
+		super.setDataSet(props);
+		updateCollapsedTooltip(this);
 
 		return this;
 	}
@@ -234,6 +444,7 @@ export default class Button extends BaseButton
 	{
 		const isAirWithoutText = this.hasAirDesign() && !this.getText();
 		Dom.toggleClass(this.getContainer(), ButtonStyle.COLLAPSED, collapsed || isAirWithoutText);
+		updateCollapsedTooltip(this);
 
 		return this;
 	}
@@ -271,7 +482,7 @@ export default class Button extends BaseButton
 			this.#menuController = new LegacyMenuController(options, this.#getMenuCallbacks());
 			this.menuWindow = this.#menuController.getMenu();
 
-			Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+			bindButtonEvent(this.getMenuClickElement(), 'click', this.handleMenuClick);
 		}
 		else if (options === false)
 		{
@@ -295,7 +506,7 @@ export default class Button extends BaseButton
 
 			this.#menuController = new SystemMenuController(options, this.#getMenuCallbacks());
 
-			Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+			bindButtonEvent(this.getMenuClickElement(), 'click', this.handleMenuClick);
 		}
 		else if (options === false)
 		{
@@ -359,7 +570,7 @@ export default class Button extends BaseButton
 			return;
 		}
 
-		Event.unbind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+		unbindButtonEvent(this.getMenuClickElement(), 'click', this.handleMenuClick);
 
 		controller.destroy();
 

@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/users-selector.bundle.css',
 	'js' => 'dist/users-selector.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'socialnetwork.v2.const',
 		'ui.entity-selector',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

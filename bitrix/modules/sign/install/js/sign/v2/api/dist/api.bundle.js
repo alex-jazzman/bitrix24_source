@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports, sign_type, main_core, ui_notification, ui_sidepanelContent) {
+(function (exports, main_core, sign_type, ui_notification, ui_sidepanelContent) {
 	'use strict';
 
 	function isFilledMessage(message) {
@@ -287,6 +287,11 @@ this.BX.Sign = this.BX.Sign || {};
 		}
 	}
 
+	/**
+	 * Personal state of the placeholder panel as the server keeps it: the codes of the recently copied
+	 * fields, the most recent one first.
+	 */
+
 	class PlaceholderApi {
 		list(clearCache = false) {
 			return post('sign.api_v1.b2e.document.placeholder.list', {
@@ -307,6 +312,40 @@ this.BX.Sign = this.BX.Sign || {};
 		getLastSelectionBySelectorType(selectorType) {
 			return post('sign.api_v1.b2e.document.placeholder.getLastSelectionBySelectorType', {
 				selectorType
+			});
+		}
+
+		/**
+		 * Personal state is a convenience, so a refusal must stay silent: `notifyError = false` keeps the
+		 * common toast away and makes `request()` resolve with the error object instead of rejecting.
+		 */
+		getPersonalSettings() {
+			return post('sign.api_v1.b2e.document.placeholder.getPersonalSettings', {}, false);
+		}
+
+		/**
+		 * A refusal stays silent here as well, for the same reason as in `getPersonalSettings()`.
+		 *
+		 * @param hcmLinkCompanyId the tab of the external human resources system sends the chosen company:
+		 *   the server validates the field code against the collection the user really sees
+		 */
+		saveFieldUsage(code, hcmLinkCompanyId = null) {
+			return post('sign.api_v1.b2e.document.placeholder.saveFieldUsage', {
+				code,
+				hcmLinkCompanyId
+			}, false);
+		}
+
+		/**
+		 * The server checks the permission again, and its refusal must reach the user: unlike the personal
+		 * state, this request keeps the common error toast.
+		 *
+		 * @param category the field category the panel got with the item: `PROFILE` or `DYNAMIC_MEMBER`
+		 */
+		deleteField(fieldId, category) {
+			return post('sign.api_v1.b2e.document.placeholder.deleteField', {
+				fieldId,
+				category
 			});
 		}
 	}
@@ -379,6 +418,91 @@ this.BX.Sign = this.BX.Sign || {};
 		}
 	}
 
+	/**
+	 * Transport of the processes of the KEDO section. The catalog of the section answers what may be started,
+	 * so the list, the fields of the form and the start itself all speak about the same process.
+	 */
+	class ProcessApi {
+		/**
+		 * Processes the employee may start. `limit` narrows the set for the submenu; the grid of the section
+		 * asks for the same set without one.
+		 */
+		getAvailableList(limit = null, searchQuery = null) {
+			return post('sign.api_v1.b2e.process.listAvailable', {
+				limit,
+				searchQuery
+			});
+		}
+
+		/**
+		 * Start fields of the process. An empty `fields` means the step of the parameters is skipped.
+		 */
+		getStartFields(processId) {
+			return post('sign.api_v1.b2e.process.startFields', {
+				processId
+			});
+		}
+
+		/**
+		 * The answer comes back before the processes do: the selection turns into a launch group served by a
+		 * queue. A field the backend refused carries the name of the field in `customData.parameter`.
+		 */
+		start(processId, members, parameters = {}, excludeRefused = true) {
+			return post('sign.api_v1.b2e.process.start', {
+				processId,
+				members,
+				parameters,
+				excludeRefused
+			});
+		}
+
+		/**
+		 * The top level of the list of what is already running - the launch groups. `limit` and `offset` are
+		 * named by the caller: the backend types them as plain integers and its own page size is not a value
+		 * the client may keep a copy of.
+		 */
+		getGroups(filter, limit, offset) {
+			return post('sign.api_v1.b2e.process.list', {
+				filter,
+				limit,
+				offset
+			});
+		}
+
+		/**
+		 * The composition of one launch group; asked for separately so a launch on thirty employees does not
+		 * drag thirty rows into the first answer.
+		 */
+		getGroupProcesses(launchId, limit, offset) {
+			return post('sign.api_v1.b2e.process.list', {
+				launchId,
+				limit,
+				offset
+			});
+		}
+
+		/**
+		 * Rows that did not start in the term of their group go back into the queue. Without `itemId` the whole
+		 * group is retried, with it - the named row alone.
+		 */
+		retry(launchId, itemId = null) {
+			return post('sign.api_v1.b2e.process.retry', {
+				launchId,
+				itemId
+			});
+		}
+
+		/**
+		 * The process a document was created by - the same link as the cell of the documents, read backwards. A
+		 * document created by no process is the ordinary case and answers with an empty `process`.
+		 */
+		getByDocument(documentId) {
+			return post('sign.api_v1.b2e.process.getByDocument', {
+				documentId
+			});
+		}
+	}
+
 	class Api {
 		template = new TemplateApi();
 		templateFolder = new TemplateFolderApi();
@@ -386,6 +510,7 @@ this.BX.Sign = this.BX.Sign || {};
 		placeholder = new PlaceholderApi();
 		myDocuments = new MyDocumentsApi();
 		safeFolder = new SafeFolderApi();
+		process = new ProcessApi();
 		#post(endpoint, data = null, notifyError = true) {
 			return post(endpoint, data, notifyError);
 		}
@@ -583,6 +708,20 @@ this.BX.Sign = this.BX.Sign || {};
 				initiator
 			});
 		}
+		modifyInviteMessage(uid, message) {
+			const data = {
+				uid,
+				message
+			};
+			return this.#post('sign.api_v1.document.modifyInviteMessage', data);
+		}
+		modifyInviteMessageForDocuments(documentIds, message) {
+			const data = {
+				documentIds,
+				message
+			};
+			return this.#post('sign.api_v1.b2e.document.group.modifyInviteMessage', data);
+		}
 		modifyLanguageId(uid, langId) {
 			return this.#post('sign.api_v1.document.modifyLangId', {
 				uid,
@@ -628,6 +767,20 @@ this.BX.Sign = this.BX.Sign || {};
 				representativeId,
 				members,
 				excludeRejected
+			});
+		}
+
+		/**
+		 * Whether the chosen signing method may be used by the chosen representative. Asked on the step of
+		 * the wizard where both are chosen, so that a refusal is shown while the person is on the screen;
+		 * the action that stores the parties makes the same check on its own.
+		 */
+		checkRepresentativeSigningMethod(documentUid, representativeId, signingMethod, representativeEntityType) {
+			return this.#post('sign.api_v1.document.member.checkRepresentativeSigningMethod', {
+				documentUid,
+				representativeId,
+				signingMethod,
+				representativeEntityType
 			});
 		}
 		syncB2eMembersWithDepartments(documentUid, currentParty, excludeRejected = true) {
@@ -754,6 +907,15 @@ this.BX.Sign = this.BX.Sign || {};
 				groupId
 			});
 		}
+		async getDocumentGroupPlaceholderValidationStatus(groupId) {
+			const result = await this.#post('sign.api_v1.b2e.document.group.getPlaceholderValidationStatus', {
+				groupId
+			}, false);
+			if (!main_core.Type.isBoolean(result?.ready)) {
+				throw result;
+			}
+			return result;
+		}
 		getMember(uid) {
 			return this.#post('sign.api_v1.document.member.get', {
 				uid
@@ -761,6 +923,21 @@ this.BX.Sign = this.BX.Sign || {};
 		}
 		createDocumentsGroup() {
 			return this.#post('sign.api_v1.b2e.document.group.create');
+		}
+
+		/**
+		 * Creates one document per uploaded file and attaches all of them to the group.
+		 * Partial success is a regular answer: check `items[].success`, not the whole call.
+		 * `hasPlaceholders` belongs to the whole batch: every blank of the call is created with it.
+		 * `initiatedByType` left as null means a document initiated by the company.
+		 */
+		addDocumentsToGroup(files, groupId = 0, hasPlaceholders = false, initiatedByType = null) {
+			return this.#post('sign.api_v1.b2e.document.group.addDocuments', {
+				files,
+				groupId,
+				hasPlaceholders,
+				initiatedByType
+			});
 		}
 		removeDocument(uid) {
 			return this.#post('sign.api_v1.document.remove', {
@@ -785,10 +962,10 @@ this.BX.Sign = this.BX.Sign || {};
 				groupId
 			});
 		}
-		getDocumentListInGroup(groupId) {
+		getDocumentListInGroup(groupId, notifyError = true) {
 			return this.#post('sign.api_v1.b2e.document.group.documentList', {
 				groupId
-			});
+			}, notifyError);
 		}
 		changeTemplateVisibility(templateId, visibility) {
 			return this.#post('sign.api_v1.b2e.document.template.changeVisibility', {
@@ -861,5 +1038,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.Api = Api;
 	exports.BulkActionType = BulkActionType;
 
-})(this.BX.Sign.V2 = this.BX.Sign.V2 || {}, BX.Sign, BX, BX.UI.Notification, BX.UI.Sidepanel.Content);
+})(this.BX.Sign.V2 = this.BX.Sign.V2 || {}, BX, BX.Sign, BX.UI.Notification, BX.UI.Sidepanel.Content);
 //# sourceMappingURL=api.bundle.js.map

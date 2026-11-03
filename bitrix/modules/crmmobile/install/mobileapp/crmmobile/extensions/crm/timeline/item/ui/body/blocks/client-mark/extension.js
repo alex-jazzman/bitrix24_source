@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/client-mark
  */
 jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, module) => {
+	const { Text5 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 
@@ -51,10 +52,9 @@ jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, mod
 						},
 					),
 				),
-				Text(
+				Text5(
 					{
 						style: {
-							fontSize: 13,
 							color,
 						},
 						text: this.props.text,

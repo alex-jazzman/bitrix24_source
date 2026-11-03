@@ -19,6 +19,10 @@ export const AlternativeMethods = {
 			type: Boolean,
 			default: false,
 		},
+		isDeviceConnectSkipped: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	mounted() {
 		this.sendAnalytics('other_type_show');
@@ -69,10 +73,14 @@ export const AlternativeMethods = {
 		},
 	},
 	template: `
-	
-			<div @click="showPushOtp" class="intranet-back-button">
-				<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
-			</div>
+		<div
+			v-if="!isDeviceConnectSkipped"
+			data-testid="bx-intranet-2fa-alternative-methods-back-to-push"
+			class="intranet-back-button"
+			@click="showPushOtp"
+		>
+			<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
+		</div>
 
 		<div class="intranet-island-otp-push-alternative__wrapper">
 			
@@ -93,7 +101,7 @@ export const AlternativeMethods = {
 					<i class="ui-icon-set --o-key intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_RECOVERY_CODES') }}</span>
 				</div>
-				<div data-testid="bx-intranet-2fa-alternative-methods-offline-code" class="intranet-island-otp-push-alternative__item" @click="showApplicationOfflineCode">
+				<div data-testid="bx-intranet-2fa-alternative-methods-offline-code" v-if="!isDeviceConnectSkipped" class="intranet-island-otp-push-alternative__item" @click="showApplicationOfflineCode">
 					<i class="ui-icon-set --o-shield-checked intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE') }}</span>
 				</div>

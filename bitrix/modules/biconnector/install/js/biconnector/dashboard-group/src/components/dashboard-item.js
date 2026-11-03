@@ -18,15 +18,15 @@ export const DashboardItem: BitrixVueComponentProps = {
 		{
 			if (this.dashboard.type === DashboardType.system)
 			{
-				return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-system.png';
+				return '/bitrix/images/biconnector/database-connections/system.svg';
 			}
 
 			if (this.dashboard.type === DashboardType.market)
 			{
-				return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-market.png';
+				return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-market.webp';
 			}
 
-			return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-custom.png';
+			return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-custom.webp';
 		},
 		set(): Outline
 		{

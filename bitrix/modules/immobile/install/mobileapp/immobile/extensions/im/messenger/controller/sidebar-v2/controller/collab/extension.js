@@ -24,7 +24,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 		createAutoDeleteButton,
 	} = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
 	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { CollabEntity } = require('im/messenger/const');
+	const { Analytics, CollabEntity, RestMethod, ErrorType } = require('im/messenger/const');
+	const { runAction } = require('im/messenger/lib/rest');
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -32,9 +33,126 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 	const { Haptics } = require('haptics');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { Color } = require('tokens');
+	const { PerfPoint } = require('debug/prism');
+
+	let projectInfoRequestSequence = 0;
+	const activeProjectInfoRequests = new Map();
+
+	const isProjectAccessDenied = (rejection) => {
+		if (!Array.isArray(rejection))
+		{
+			return false;
+		}
+
+		return rejection.some((error) => error?.code === ErrorType.project.accessDenied);
+	};
+
+	const createProjectInfoLoader = ({ dialogId, request, save, hasData = () => false, logger }) => {
+		let requestId = null;
+		let projectId = null;
+
+		return {
+			async load(nextProjectId)
+			{
+				if (!Type.isNumber(nextProjectId) || nextProjectId <= 0 || nextProjectId === projectId)
+				{
+					return;
+				}
+
+				projectId = nextProjectId;
+				// A repeated opening shows the stored fields at once, so the wait is only visible
+				// while nothing is stored yet: the two cases cannot share one sample.
+				const point = new PerfPoint(
+					'IM Project Sidebar Info Load',
+					`dialog ${dialogId} ${hasData() ? 'warm' : 'cold'}`,
+				).start();
+				const currentRequestId = ++projectInfoRequestSequence;
+				requestId = currentRequestId;
+				activeProjectInfoRequests.set(dialogId, currentRequestId);
+
+				let fields = null;
+				let failed = false;
+				let accessDenied = false;
+				point.startPoint('Server Fetch');
+				try
+				{
+					fields = await request(projectId);
+					point.endPoint('Server Fetch', { status: 'ok' });
+				}
+				catch (error)
+				{
+					point.endPoint('Server Fetch', { status: 'error' });
+					failed = true;
+					accessDenied = isProjectAccessDenied(error);
+					logger.error('loadProjectInfo', error);
+				}
+
+				if (activeProjectInfoRequests.get(dialogId) !== currentRequestId)
+				{
+					point.end();
+
+					return;
+				}
+
+				if (failed)
+				{
+					if (accessDenied || !hasData())
+					{
+						await save(null);
+					}
+
+					if (!accessDenied && activeProjectInfoRequests.get(dialogId) === currentRequestId)
+					{
+						projectId = null;
+					}
+
+					point.end();
+
+					return;
+				}
+
+				point.startPoint('Store Write');
+				await save(fields);
+				point.endPoint('Store Write', { tags: fields?.tags?.length ?? 0 });
+				point.end();
+			},
+			invalidate()
+			{
+				if (activeProjectInfoRequests.get(dialogId) === requestId)
+				{
+					activeProjectInfoRequests.delete(dialogId);
+				}
+			},
+		};
+	};
 
 	class CollabSidebarController extends SidebarBaseController
 	{
+		onWidgetReady()
+		{
+			this.projectInfoLoader = createProjectInfoLoader({
+				dialogId: this.dialogId,
+				request: (projectId) => runAction(RestMethod.mobileProjectGetViewInfo, {
+					json: { projectId },
+				}),
+				save: (fields) => this.store.dispatch('sidebarModel/sidebarProjectInfoModel/set', {
+					dialogId: this.dialogId,
+					fields,
+				}),
+				hasData: () => this.store.getters['sidebarModel/sidebarProjectInfoModel/hasByDialogId'](this.dialogId),
+				logger: this.logger,
+			});
+
+			super.onWidgetReady();
+		}
+
+		onWidgetClose()
+		{
+			this.projectInfoLoader?.invalidate();
+
+			super.onWidgetClose();
+		}
+
 		bindMethods()
 		{
 			super.bindMethods();
@@ -109,7 +227,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 
 		createView(defaultProps)
 		{
-			return new CollabSidebarView(defaultProps);
+			return new CollabSidebarView({
+				...defaultProps,
+				loadProjectInfo: () => this.projectInfoLoader.load(this.collabId),
+			});
 		}
 
 		createPermissionManager(defaultProps)
@@ -210,6 +331,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 				true,
 			);
 			Haptics.notifySuccess();
+
+			this.analyticsService.sendCopyChatLink(this.dialogId, Analytics.SubSection.contextMenu);
 		}
 
 		handleDeleteDialogAction()
@@ -333,7 +456,9 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 
 			if (Feature.isNestedChatAvailable)
 			{
-				return this.#openProjectDisk();
+				await this.#openProjectDisk();
+
+				return;
 			}
 
 			try
@@ -369,14 +494,15 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 				return;
 			}
 
-
-
 			try
 			{
 				if (Feature.isNestedChatAvailable)
 				{
-					return this.#openProjectCalendar();
+					await this.#openProjectCalendar();
+
+					return;
 				}
+
 				const { Entry } = await requireLazy('calendar:entry');
 
 				this.analyticsService.sendCollabEntityOpened({
@@ -411,7 +537,9 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 
 			if (Feature.isNestedChatAvailable)
 			{
-				return this.#openProjectTasks();
+				await this.#openProjectTasks();
+
+				return;
 			}
 
 			try
@@ -503,5 +631,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 	module.exports = {
 		CollabSidebarController,
 		ControllerClass: CollabSidebarController,
+		createProjectInfoLoader,
 	};
 });

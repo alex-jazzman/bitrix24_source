@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Theme;
 use Bitrix\Mail\Helper\LicenseManager;
+use Bitrix\Mail\Internal\Service\MessageList\ScreenContext;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons\Color;
@@ -24,12 +25,171 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 /** @var array $arParams */
 
+/** @var \CBitrixComponent $component */
+
+require __DIR__ . '/grid.php';
+
+if (!empty($arResult['IS_SCHEDULED_MODE']))
+{
+	// the template bundle boots on this page too, so its own dependencies must be present: every extension
+	// its sources import belongs here, or the bundle starts on this page with a hole where one of them was
+	\Bitrix\Main\UI\Extension::load([
+		'mail.directorymenu',
+		'mail.avatar',
+		'mail.messagegrid',
+		'mail.favorites-filter-state',
+		'mail.migration-state',
+		'ui.a11y',
+		'ui.alerts',
+		'ui.actionpanel',
+		'ui.buttons',
+		'ui.icon-set.outline',
+	]);
+	Main\Page\Asset::getInstance()->addJS(
+		'/bitrix/components/bitrix/mail.client.message.list/templates/.default/user-interface-manager.js',
+	);
+
+	Toolbar::deleteFavoriteStar();
+	$bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
+	$APPLICATION->setPageProperty(
+		'BodyClass',
+		trim(sprintf(
+			'%s %s',
+			$bodyClass,
+			'pagetitle-toolbar-field-view pagetitle-mail-view no-background mail-draft-list-view',
+		)),
+	);
+	$APPLICATION->AddViewContent('left-panel', sprintf(
+		'<div class="mail-left-menu-wrapper">'
+		. '<div class="mail-left-menu-head"><h2 class="mail-left-menu-title"><span class="logo-mail">%s</span></h2></div>'
+		. '</div>',
+		htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_HOME_TITLE_MSGVER_1')),
+	));
+
+	// The address of this very page: the grid rereads its rows by it after a letter changed under the author.
+	$scheduledListHref = \CHTTP::urlAddParams(
+		\CComponentEngine::makePathFromTemplate(
+			(string)($arParams['PATH_TO_MAIL_SCHEDULED'] ?? ''),
+			['id' => (int)$arResult['SCHEDULED_MAILBOX_ID']],
+		),
+		array_filter([
+			'IFRAME' => $_REQUEST['IFRAME'] ?? null,
+			'IFRAME_TYPE' => $_REQUEST['IFRAME_TYPE'] ?? null,
+		]),
+	);
+	?>
+	<div class="mail-draft-list-view" data-testid="mail-scheduled-list-root">
+		<?php if (!empty($arResult['SCHEDULED_GRID']['ERRORS'])): ?>
+			<div class="ui-alert ui-alert-danger" data-testid="mail-scheduled-list-error">
+				<span class="ui-alert-message">
+					<?= htmlspecialcharsbx(Loc::getMessage('MAIL_SCHEDULED_LIST_LOAD_ERROR')) ?>
+				</span>
+			</div>
+		<?php else: ?>
+			<div
+				id="<?= htmlspecialcharsbx($arResult['SCHEDULED_GRID']['GRID_ID']) ?>-actionpanel"
+				class="mail-msg-list-actionpanel-container mail-msg-list-actionpanel-container-<?= htmlspecialcharsbx($arResult['SCHEDULED_GRID']['GRID_ID']) ?>"
+			></div>
+			<div class="mail-msg-list-grid --ui-context-content-light" data-role="mail-scheduled-list-grid">
+				<?php
+				$renderGrid(
+					[
+						'GRID_ID' => $arResult['SCHEDULED_GRID']['GRID_ID'],
+						'ROWS' => $arResult['SCHEDULED_GRID']['ROWS'],
+						'ENABLE_NEXT_PAGE' => $arResult['SCHEDULED_GRID']['ENABLE_NEXT_PAGE'],
+						'NAV_OBJECT' => $arResult['SCHEDULED_GRID']['NAV_OBJECT'],
+						'TOTAL' => $arResult['SCHEDULED_GRID']['TOTAL'],
+						'EMPTY_STUB' => $scheduledEmptyStub,
+					],
+					$scheduledGridHeaders,
+					$scheduledActionPanelActionButtons,
+					true,
+					true,
+				);
+				?>
+			</div>
+		<?php endif; ?>
+	</div>
+	<script>
+		BX.message({
+			INTERFACE_MAIL_CHECK_ALL: '<?= CUtil::JSEscape(Loc::getMessage('INTERFACE_MAIL_CHECK_ALL')) ?>',
+		});
+		// the group phrases of the section are chosen by the number of letters on the client, so all their forms go there
+		BX.message(<?= Json::encode($scheduledPluralPhrases) ?>);
+		BX.ready(function()
+		{
+			// The folders are the way out of the section: a folder chosen here opens the message list filtered by
+			// it. The filter itself belongs to that page, so this menu is built without one, and without the
+			// favorites button, which is a filter of the message list and would have nothing to act on here.
+			var menu = new BX.Mail.DirectoryMenu({
+				mailboxId: <?= (int)$arResult['SCHEDULED_MAILBOX_ID'] ?>,
+				dirsWithUnseenMailCounters: <?= Json::encode($arResult['DIRECTORY_HIERARCHY_WITH_UNSEEN_MAIL_COUNTERS']) ?>,
+				filterId: '',
+				systemDirs: {
+					spam: '<?= CUtil::JSEscape($arResult['spamDir']) ?>',
+					trash: '<?= CUtil::JSEscape($arResult['trashDir']) ?>',
+					drafts: '<?= CUtil::JSEscape($arResult['draftsDir']) ?>',
+					outcome: '<?= CUtil::JSEscape($arResult['outcomeDir']) ?>',
+					inbox: '<?= CUtil::JSEscape($arResult['defaultDir']) ?>',
+				},
+				sortMode: '<?= CUtil::JSEscape($arResult['folderSortMode']) ?>',
+				collapsedFolders: JSON.parse('<?= CUtil::JSEscape($arResult['folderExpandState']) ?>'),
+				folderCustomOrder: JSON.parse('<?= CUtil::JSEscape($arResult['folderCustomOrder']) ?>'),
+				folderDefaultOrder: <?= Json::encode($arResult['folderDefaultOrder']) ?>,
+				manualSortingAvailable: <?= $arResult['FOLDER_MANUAL_SORTING_AVAILABLE'] ? 'true' : 'false' ?>,
+				scheduledMessages: {
+					available: true,
+					active: true,
+					path: <?= Json::encode((string)($arParams['PATH_TO_MAIL_SCHEDULED'] ?? '')) ?>,
+					messageListPath: <?= Json::encode((string)($arParams['PATH_TO_MAIL_MSG_LIST'] ?? '')) ?>,
+					count: <?= (int)($arResult['SCHEDULED_GRID']['COUNT'] ?? 0) ?>,
+				},
+			});
+			var menuWrapper = document.querySelector('.mail-left-menu-wrapper');
+			if (menuWrapper)
+			{
+				menuWrapper.append(menu.getNode());
+			}
+
+			new BX.Mail.Client.Message.List({
+				id: '<?= CUtil::JSEscape($component->getComponentId()) ?>',
+				gridId: '<?= CUtil::JSEscape($arResult['SCHEDULED_GRID']['GRID_ID']) ?>',
+				mailboxId: <?= (int)$arResult['SCHEDULED_MAILBOX_ID'] ?>,
+				isScheduledMode: true,
+				// this page builds its menu itself, so the list is handed the item whose number it refreshes
+				directoryMenu: menu,
+				scheduledPath: '<?= CUtil::JSEscape($scheduledListHref) ?>',
+				draftCancelButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_DRAFT_LIST_DELETE_CANCEL')) ?>',
+				scheduledCancelConfirm: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_CONFIRM')) ?>',
+				scheduledCancelDescription: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_DESCRIPTION')) ?>',
+				scheduledCancelNothing: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_NOTHING')) ?>',
+				scheduledCancelButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_BUTTON')) ?>',
+				scheduledCancelError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_ERROR')) ?>',
+				scheduledCancelPartialError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_PARTIAL_ERROR')) ?>',
+				scheduledCancelErrorReasons: <?= Json::encode($scheduledCancelErrorReasons) ?>,
+				scheduledRetryError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_RETRY_ERROR')) ?>',
+				scheduledRetryErrorReasons: <?= Json::encode($scheduledRetryErrorReasons) ?>,
+				scheduledRetryAnnounce: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_RETRY_ANNOUNCE')) ?>',
+				scheduledSendNowButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_BUTTON')) ?>',
+				scheduledSendNowSuccess: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_SUCCESS')) ?>',
+				scheduledSendNowNothing: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_NOTHING')) ?>',
+				scheduledSendNowError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_ERROR')) ?>',
+				scheduledSendNowPartialError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_PARTIAL_ERROR')) ?>',
+				scheduledSendNowErrorReasons: <?= Json::encode($scheduledSendNowErrorReasons) ?>,
+			});
+		});
+	</script>
+	<?php
+
+	return;
+}
+
 \Bitrix\Main\Loader::includeModule('ui');
 \Bitrix\Main\UI\Extension::load([
+	'ui.a11y',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	"mail.client",
-	"mail.messagegrid",
 	"mail.favorites-filter-state",
 	"mail.avatar",
 	"mail.directorymenu",
@@ -52,6 +212,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'mail.migration-state',
 ]);
 
+$undoSendAvailable = !empty($arParams['UNDO_SEND']['available']);
+if ($undoSendAvailable)
+{
+	\Bitrix\Main\UI\Extension::load('mail.client.undo-send');
+}
+
 if (!empty($arResult['LABELS_ENABLED']))
 {
 	\Bitrix\Main\UI\Extension::load([
@@ -71,12 +237,20 @@ Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/mail.client.mes
 
 Toolbar::deleteFavoriteStar();
 
+// The component leaves a page of the list in the result only for the new grid, so the template follows
+// the data instead of asking the option a second time and disagreeing with it.
+$messageGridPage = $arResult['MESSAGE_PAGE'] ?? null;
+$draftGridPage = $arResult['EMBEDDED_DRAFT_LIST']['PAGE'] ?? null;
+$isMessageGridVueScreen = $messageGridPage !== null || $draftGridPage !== null;
+
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $listBodyClass = 'pagetitle-toolbar-field-view pagetitle-mail-view no-background';
 if (!empty($arResult['IS_DRAFT_MODE']))
 {
 	$listBodyClass .= ' mail-draft-list-view';
 }
+// the workarea gives its padding up to a grid, and the platform component adds this class itself
+$listBodyClass .= $isMessageGridVueScreen ? ' grid-mode' : '';
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $listBodyClass)));
 Toolbar::addFilter([
 	'FILTER_ID' => $arResult['FILTER_ID'],
@@ -92,32 +266,41 @@ Toolbar::addFilter([
 	],
 ]);
 
-if (empty($arResult['IS_DRAFT_MODE']) && !empty($arResult['EMBEDDED_DRAFT_LIST']))
+if (
+	empty($arResult['IS_DRAFT_MODE'])
+	&& (!empty($arResult['EMBEDDED_DRAFT_LIST']) || !empty($arResult['EMBEDDED_SCHEDULED_LIST']))
+)
 {
-	$embeddedDraftList = $arResult['EMBEDDED_DRAFT_LIST'];
 	$messageFilter = Toolbar::getFilter();
-
-	Toolbar::addFilter([
-		'FILTER_ID' => $embeddedDraftList['FILTER_ID'],
-		'GRID_ID' => $embeddedDraftList['GRID_ID'],
-		'ENABLE_LABEL' => true,
-		'FILTER' => $embeddedDraftList['FILTER'],
-		'FILTER_PRESETS' => $embeddedDraftList['FILTER_PRESETS'],
-		'RESET_TO_DEFAULT_MODE' => true,
-		'VALUE_REQUIRED' => true,
-		'THEME' => Theme::MUTED,
-		'CONFIG' => [
-			'AUTOFOCUS' => false,
-		],
-	]);
-	$draftFilter = Toolbar::getFilter();
-
-	Toolbar::setFilter(sprintf(
-		'<div class="mail-client-list-filter" data-role="mail-message-list-filter">%s</div>'
-		. '<div class="mail-client-list-filter" data-testid="mail-draft-list-filter" hidden>%s</div>',
+	$filter = sprintf(
+		'<div class="mail-client-list-filter" data-role="mail-message-list-filter">%s</div>',
 		$messageFilter,
-		$draftFilter,
-	));
+	);
+
+	if (!empty($arResult['EMBEDDED_DRAFT_LIST']))
+	{
+		$embeddedDraftList = $arResult['EMBEDDED_DRAFT_LIST'];
+		Toolbar::addFilter([
+			'FILTER_ID' => $embeddedDraftList['FILTER_ID'],
+			'GRID_ID' => $embeddedDraftList['GRID_ID'],
+			'ENABLE_LABEL' => true,
+			'FILTER' => $embeddedDraftList['FILTER'],
+			'FILTER_PRESETS' => $embeddedDraftList['FILTER_PRESETS'],
+			'RESET_TO_DEFAULT_MODE' => true,
+			'VALUE_REQUIRED' => true,
+			'THEME' => Theme::MUTED,
+			'CONFIG' => [
+				'AUTOFOCUS' => false,
+			],
+		]);
+		$draftFilter = Toolbar::getFilter();
+		$filter .= sprintf(
+			'<div class="mail-client-list-filter" data-testid="mail-draft-list-filter" hidden>%s</div>',
+			$draftFilter,
+		);
+	}
+
+	Toolbar::setFilter($filter);
 }
 
 if ($arResult['HAS_ACCESS_TO_MAILBOX_GRID'])
@@ -170,7 +353,7 @@ Toolbar::addButton(
 $createPath = new Uri($arParams['PATH_TO_MAIL_MSG_NEW']);
 $createPath->addParams(['id' => $arResult['MAILBOX']['ID']]);
 $composeSliderOptions = [
-	'width' => \Bitrix\Mail\Helper\Config\Feature::isComposeRedesignAvailable() ? 820 : 960,
+	'width' => \Bitrix\Mail\Helper\Config\Feature::getMessageSliderWidth(),
 	'cacheable' => false,
 ];
 
@@ -183,6 +366,8 @@ $createButtonParams = [
 ];
 if (\Bitrix\Mail\Helper\Config\Feature::isComposeRedesignAvailable())
 {
+	// intranet binds the loader of the legacy form to this address; a skeleton wins over a loader
+	$composeSliderOptions['skeleton'] = '/bitrix/js/mail/client/compose-form/src/skeleton.html?v=4';
 	$createButtonParams['dataset']['slider-ignore-autobinding'] = true;
 	$createButtonParams['onclick'] = new JsCode(sprintf(
 		"event.preventDefault(); top.BX.SidePanel.Instance.open('%s', %s);",
@@ -204,6 +389,7 @@ $unseenCountInOtherMailboxes = 0;
 $isAllMailMode = !empty($arResult['IS_ALL_MAIL_MODE']);
 $isDraftMode = !empty($arResult['IS_DRAFT_MODE']);
 $internalDraftsAvailable = \Bitrix\Mail\Helper\Config\Feature::isInternalDraftsAvailable();
+$scheduledListEmbedded = !$isDraftMode && !empty($arResult['EMBEDDED_SCHEDULED_LIST']);
 $globalUnseenCounter = (int)($arResult['MESSAGE_COUNTER_IN_ALL_MAILBOXES'] ?? 0);
 
 $currentMailboxId = (int)$arResult['MAILBOX']['ID'];
@@ -223,8 +409,7 @@ $allMailHref = (string)(new Uri(\CComponentEngine::makePathFromTemplate(
 		'virtual' => $arResult['VIRTUAL_FOLDER_KEY'],
 		'IFRAME' => $_REQUEST['IFRAME'] ?? null,
 		'IFRAME_TYPE' => $_REQUEST['IFRAME_TYPE'] ?? null,
-	]))
-;
+	]));
 
 $mailboxesData = [];
 foreach ($arResult['MAILBOXES'] as $mailboxId => $item)
@@ -245,6 +430,7 @@ foreach ($arResult['MAILBOXES'] as $mailboxId => $item)
 	$mailboxesData[] = [
 		'id' => $mailboxId,
 		'name' => $item['NAME'],
+		'avatarUrl' => $arResult['MAILBOX_AVATARS'][$itemMailboxId]['url'] ?? null,
 		'unseen' => (int)$item['__unseen'],
 		'isLocked' => !LicenseManager::checkTheMailboxForSyncAvailability($mailboxId, (int)$item['USER_ID']),
 		'isCurrent' => $isCurrent,
@@ -275,6 +461,7 @@ $mailboxSelectorConfig = [
 	'mailboxes' => $mailboxesData,
 	'addMailbox' => $addMailboxData,
 	'currentMailboxId' => intval($arResult['MAILBOX']['ID']),
+	'currentMailboxAvatarUrl' => $arResult['MAILBOX_AVATARS'][$currentMailboxId]['url'] ?? null,
 	'titleText' => htmlspecialcharsbx($arResult['MAILBOX_NAME'] . $arResult['MAILBOX_DOMAIN']),
 	'titleHoverText' => htmlspecialcharsbx($arResult['MAILBOX']['NAME']),
 	'unseenCountInOtherMailboxes' => $unseenCountInOtherMailboxes,
@@ -283,6 +470,17 @@ $migrationMailboxIds = $isAllMailMode
 	? array_values(array_map(static fn (array $mailbox): int => (int)$mailbox['ID'], $arResult['MAILBOXES']))
 	: [$currentMailboxId]
 ;
+
+// The red alert is drawn from what the component already read, so the page asks nothing of its own (ERR-007).
+$mailboxConnected = (bool)($arResult['LAST_MAIL_CHECK_STATUS'] ?? true);
+$migrationNotice = $arResult['MIGRATION_NOTICE'] ?? null;
+// A decision of `none` carries no mailbox, so the extension would neither draw a message nor listen
+// for one: the section brings it in only when the server has something to say (DTO-01).
+$migrationNoticeDue = ($migrationNotice['code'] ?? 'none') !== 'none';
+if ($migrationNoticeDue)
+{
+	\Bitrix\Main\UI\Extension::load(['mail.migration-notice']);
+}
 
 $listImprovementsEnabled = !empty($arResult['IS_MAIL_LIST_IMPROVEMENTS_AVAILABLE']);
 $favoritesSectionActive = !empty($arResult['IS_FAVORITES_SECTION_ACTIVE']);
@@ -295,11 +493,27 @@ if ($listImprovementsEnabled)
 $archiveDownloadAvailable = $listImprovementsEnabled
 	&& (new \Bitrix\Mail\Internal\Service\Attachment\ArchiveService())->isDownloadAvailable();
 
+if ($isMessageGridVueScreen)
+{
+	\Bitrix\Main\UI\Extension::load(['mail.client.message-grid']);
+}
+
+// The old grid is built only where the screen left the list without a page of its own: the screen of the
+// drafts, and any screen where the option is off.
+if ($messageGridPage === null)
+{
+	\Bitrix\Main\UI\Extension::load(['mail.messagegrid']);
+}
+
+// opened right after a mailbox was connected: the list waits behind a loader instead of declaring itself empty
+$primarySyncStub = !$isDraftMode
+	&& ($arParams['VARIABLES']['start_sync_with_showing_stepper'] ?? '') === 'true'
+;
+
 $configPath = (string)(new Uri(\CComponentEngine::makePathFromTemplate(
 		$arParams['PATH_TO_MAIL_CONFIG'],
 		['act' => 'edit'],
-	)))->addParams(['id' => $arResult['MAILBOX']['ID']])
-;
+	)))->addParams(['id' => $arResult['MAILBOX']['ID']]);
 
 $disabledMailSettings = !MailboxAccess::hasCurrentUserAccessToEditMailbox($arResult['MAILBOX']['ID']);
 
@@ -352,6 +566,24 @@ if (!empty($arResult['LABELS_ENABLED']))
 		'text' => Loc::getMessage('MAIL_MESSAGE_LIST_LABELS_SETTINGS'),
 		'onclick' => "BX.SidePanel.Instance.open('/mail/labels', { width: 900 })",
 		'dataset' => ['testid' => 'mail-settings-menu-labels'],
+	]]);
+}
+
+if (!empty($arResult['VACATION_AUTO_REPLY_ENABLED']))
+{
+	$vacationAutoReplyPath = (string)$arParams['PATH_TO_MAIL_VACATION'];
+	$vacationAutoReplyOnclick = sprintf(
+		"top.BX.SidePanel.Instance.open('%s', %s); return false;",
+		\CUtil::JSEscape($vacationAutoReplyPath),
+		Json::encode($composeSliderOptions),
+	);
+
+	array_splice($settingsMenu, 3, 0, [[
+		'text' => Loc::getMessage('MAIL_MESSAGE_LIST_VACATION_AUTO_REPLY_LINK'),
+		'href' => htmlspecialcharsbx($vacationAutoReplyPath),
+		'onclick' => $vacationAutoReplyOnclick,
+		'attrs' => ['data-slider-ignore-autobinding' => 'true'],
+		'dataset' => ['testid' => 'mail-settings-menu-vacation-auto-reply'],
 	]]);
 }
 
@@ -446,8 +678,39 @@ if ($internalDraftsAvailable)
 		. '</span>'
 		. '</span>'
 		. '</button>'
-		. '</div>'
-	;
+		. '</div>';
+}
+
+$scheduledButtonHtml = '';
+if (!empty($arResult['EMBEDDED_SCHEDULED_LIST']))
+{
+	$scheduledHref = \CComponentEngine::makePathFromTemplate(
+		$arParams['PATH_TO_MAIL_SCHEDULED'],
+		['id' => $currentMailboxId],
+	);
+	$scheduledHref = \CHTTP::urlAddParams($scheduledHref, $frameParams);
+	// the badge repeats the one the item of `mail.directorymenu` carries (`src/item.js`), down to the class that
+	// hides a zero: the two faces of the same menu item must not look different
+	$scheduledCount = (int)($arResult['EMBEDDED_SCHEDULED_LIST']['COUNT'] ?? 0);
+	$scheduledButtonHtml = '<div class="mail-draft-navigation mail-menu-directory-item-container">'
+		. '<button type="button" class="ui-sidepanel-menu-item ui-sidepanel-menu-counter-white'
+		. ' mail-menu-directory-item mail-menu-directory-item-drafts"'
+		. ' data-id="mail-scheduled-messages-button"'
+		. ' data-testid="mail-scheduled-messages-button">'
+		. '<span class="ui-sidepanel-menu-link mail-menu-directory-link">'
+		. '<span class="ui-sidepanel-menu-link-text">'
+		. '<span class="ui-icon-set --o-clock mail-menu-directory-item-icon"></span>'
+		. '<span class="ui-sidepanel-menu-link-text-item">'
+		. htmlspecialcharsbx(Loc::getMessage('MAIL_SCHEDULED_LIST_NAVIGATION'))
+		. '</span>'
+		. '</span>'
+		. '<span class="ui-sidepanel-menu-link-text-counter'
+		. ($scheduledCount > 0 ? '' : ' ui-sidepanel-menu-link-text-counter-hidden') . '">'
+		. $scheduledCount
+		. '</span>'
+		. '</span>'
+		. '</button>'
+		. '</div>';
 }
 
 $APPLICATION->AddViewContent('left-panel', sprintf('
@@ -462,11 +725,12 @@ $APPLICATION->AddViewContent('left-panel', sprintf('
 			<div class="mailbox-sync-btn" data-role="mail-msg-sync-button-wrapper" data-test-id="mail_sync-panel__sync-button"></div>
 			<div class="mailbox-sort-btn" data-role="mail-folder-sort-button-wrapper" data-test-id="mail_sync-panel__sort-button"></div>
 		</nav>
-		%s
+		%s%s
 	</div>',
 	Loc::getMessage('MAIL_CLIENT_HOME_TITLE_MSGVER_1'),
 	Loc::getMessage('MAIL_CLIENT_HOME_TITLE_MSGVER_1'),
 	$draftButtonHtml,
+	$scheduledButtonHtml,
 ));
 
 $APPLICATION->AddViewContent('below_pagetitle', sprintf(
@@ -537,6 +801,7 @@ if (!$isDraftMode && Main\Loader::includeModule('pull'))
 }
 
 $snippet = new Main\Grid\Panel\Snippet();
+$hasAccessToMessageDelete = !empty($arResult['HAS_ACCESS_TO_MESSAGE_DELETE']);
 
 $actionPanelActionButtons = [
 	[
@@ -643,7 +908,7 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 			],
 		],
 	],
-	[
+	...($hasAccessToMessageDelete ? [[
 		'TYPE' => Main\Grid\Panel\Types::BUTTON,
 		'ID' => $arResult['gridActionsData']['delete']['id'],
 		'ICON' => $arResult['gridActionsData']['delete']['icon'],
@@ -661,7 +926,7 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 				],
 			],
 		],
-	],
+	]] : []),
 	[
 		'HIDDEN_IN_PANEL' => true,
 		'TYPE' => Main\Grid\Panel\Types::BUTTON,
@@ -790,7 +1055,7 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 			],
 		],
 	],
-	[
+	...($hasAccessToMessageDelete ? [[
 		'HIDDEN_IN_PANEL' => true,
 		'DISABLED' => ($arResult['currentDir'] !== '[Gmail]/All Mail') ? false : true,
 		'TYPE' => Main\Grid\Panel\Types::BUTTON,
@@ -807,7 +1072,7 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 				],
 			],
 		],
-	],
+	]] : []),
 ]);
 
 // The screen runs under the light:mail theme, so the body carries --ui-context-edge-dark and the
@@ -821,13 +1086,18 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 ><div class="mail-msg-list-grid-stub" data-role="mail-msg-list-grid-stub"></div>
 <?php if ($isDraftMode): ?>
 	<div class="mail-draft-retention" data-testid="mail-draft-list-retention">
-		<?= Loc::getMessage('MAIL_DRAFT_LIST_RETENTION') ?>
+		<?= Loc::getMessagePlural(
+			'MAIL_DRAFT_LIST_RETENTION',
+			$arResult['DRAFT_RETENTION_DAYS'],
+			['#COUNT#' => $arResult['DRAFT_RETENTION_DAYS']],
+		) ?>
 	</div>
 <?php endif ?>
 	<div
 		id="<?= htmlspecialcharsbx($arResult['GRID_ID']) ?>-actionpanel"
 		class="mail-msg-list-actionpanel-container mail-msg-list-actionpanel-container-<?= htmlspecialcharsbx($arResult['GRID_ID']) ?>"
 		data-role="mail-msg-list-actionpanel-container"
+		data-testid="mail-list-action-panel"
 	></div>
 <div class="mail-msg-list-grid --ui-context-content-light" data-role="mail-msg-list-grid" data-testid="mail-list-grid">
 <script>
@@ -845,6 +1115,8 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 			filterId: '<?= $arResult['FILTER_ID'] ?>',
 			syncAvailable: '<?= \Bitrix\Mail\Helper\LicenseManager::isSyncAvailable() ?>',
 			configPath: '<?= CUtil::JSEscape(htmlspecialcharsbx($configPath)) ?>',
+			mailboxConnected: <?= Main\Web\Json::encode($mailboxConnected) ?>,
+			migrationNotice: <?= Main\Web\Json::encode($migrationNotice) ?>,
 			mailboxSelectorConfig: <?= Main\Web\Json::encode($mailboxSelectorConfig) ?>,
 			isDraftMode: <?= CUtil::PhpToJSObject($isDraftMode) ?>,
 			staticCounter: <?= Main\Web\Json::encode($isDraftMode ? [
@@ -854,6 +1126,23 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 		});
 
 		Mail.FilterToolbar = client.getFilterToolbar();
+
+		<?php if ($migrationNoticeDue): ?>
+		// The migration message shares the node with the red alert: the alert is prepended there and this
+		// banner is appended after it, so the two stay apart and in that order (AC-027).
+		var migrationNoticeContainer = document.querySelector('[data-role="mail-error-box-wrapper"]');
+		if (migrationNoticeContainer)
+		{
+			new BX.Mail.MigrationNotice({
+				surface: 'mail',
+				container: migrationNoticeContainer,
+				// Over the letters of every mailbox at once the screen names none to the rules, the same
+				// way the component asked them in the first place (ERR-002)
+				mailboxId: <?= $isAllMailMode ? 'null' : $currentMailboxId ?>,
+				decision: <?= Main\Web\Json::encode($migrationNotice) ?>,
+			}).show();
+		}
+		<?php endif ?>
 
 		<?php if (!$isDraftMode && $isAllMailMode): ?>
 		Mail.Counters.addCounters([
@@ -883,7 +1172,8 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 		]);
 		<?php endif; ?>
 
-		<?php if (!$isDraftMode): ?>
+		<?php // the new grid builds its panel itself and substitutes only the pinning of it ?>
+		<?php if (!$isDraftMode && $messageGridPage === null): ?>
 		BX.addCustomEvent(
 			'BX.UI.ActionPanel:created',
 			function (panel)
@@ -958,122 +1248,6 @@ if (!$isDraftMode)
 		['id' => 'MEETING_BIND', 'name' => Loc::getMessage('MAIL_MESSAGE_LIST_COLUMN_MEETING_BIND'), 'class' => 'mail-msg-list-meeting-cell-head', 'default' => true, 'editable' => false, 'showname' => false],
 	]);
 }
-$renderGrid = static function (
-	array $gridData,
-	array $headers,
-	array $actionButtons,
-	bool $draftMode,
-) use ($APPLICATION): void
-{
-	?>
-	<script>
-		BX(function()
-		{
-			var container = document.querySelector(
-				'.mail-msg-list-actionpanel-container-<?= \CUtil::jsEscape($gridData['GRID_ID']) ?>'
-			);
-			if (container && !container.querySelector('.mail-msg-list-action-panel'))
-			{
-				var actionPanel = new BX.UI.ActionPanel({
-					params: {
-						gridId: '<?= \CUtil::jsEscape($gridData['GRID_ID']) ?>',
-					},
-					pinnedMode: true,
-					renderTo: container,
-					className: 'mail-msg-list-action-panel',
-					groupActions: <?= Main\Web\Json::encode([
-						'GROUPS' => [
-							['ITEMS' => $actionButtons],
-						],
-					]) ?>,
-					maxHeight: 56,
-				});
-				var handleGridSelectItem = actionPanel.handleGridSelectItem.bind(actionPanel);
-				actionPanel.handleGridSelectItem = function(eventGrid)
-				{
-					if (!eventGrid || eventGrid.getId() !== '<?= \CUtil::jsEscape($gridData['GRID_ID']) ?>')
-					{
-						return;
-					}
-
-					this.grid = eventGrid;
-					handleGridSelectItem();
-				};
-				var hidePanel = actionPanel.hidePanel.bind(actionPanel);
-				actionPanel.hidePanel = function(eventGrid)
-				{
-					var grid = BX.Main.gridManager.getInstanceById(
-						'<?= \CUtil::jsEscape($gridData['GRID_ID']) ?>'
-					);
-					if (eventGrid && eventGrid !== grid)
-					{
-						return;
-					}
-					if (!eventGrid && grid?.getRows().getSelectedIds().length > 0)
-					{
-						return;
-					}
-
-					hidePanel();
-				};
-				actionPanel.getPanelContainer().classList.add('mail-msg-list-action-panel');
-				actionPanel.draw();
-				<?php if ($draftMode): ?>
-				container.appendChild(actionPanel.getPanelContainer());
-				<?php endif; ?>
-				BX.Mail.Home.GridActionPanels = BX.Mail.Home.GridActionPanels || {};
-				BX.Mail.Home.GridActionPanels['<?= \CUtil::jsEscape($gridData['GRID_ID']) ?>'] = actionPanel;
-			}
-		});
-	</script>
-	<?php
-	$APPLICATION->includeComponent(
-		'bitrix:main.ui.grid',
-		'',
-		[
-		'GRID_ID' => $gridData['GRID_ID'],
-		'MESSAGES' => $gridData['MESSAGES'] ?? [],
-		'AJAX_MODE' => 'Y',
-		'AJAX_OPTION_ADDITIONAL' => $gridData['GRID_ID'],
-		'AJAX_OPTION_HISTORY' => 'N',
-		'AJAX_OPTION_JUMP' => 'N',
-		'AJAX_OPTION_STYLE' => 'N',
-		'SHOW_ACTION_PANEL' => false,
-		'HEADERS' => $headers,
-
-		'ROWS' => $gridData['ROWS'],
-
-		'SHOW_GRID_SETTINGS_MENU' => false,
-		'ALLOW_COLUMNS_SORT' => false,
-		'ALLOW_ROWS_SORT' => false,
-		'SHOW_NAVIGATION_PANEL' => false,
-
-		'SHOW_MORE_BUTTON' => true,
-		'ENABLE_NEXT_PAGE' => !empty($gridData['ENABLE_NEXT_PAGE']),
-		'NAV_PARAM_NAME' => $gridData['NAV_OBJECT']->getId(),
-		'CURRENT_PAGE' => $gridData['NAV_OBJECT']->getCurrentPage(),
-		'STUB' => $draftMode && ($gridData['DRAFT_TOTAL'] ?? 0) === 0
-			? sprintf(
-				'<div class="mail-draft-list-empty" data-testid="mail-draft-list-empty">%s</div>',
-				htmlspecialcharsbx(
-					Loc::getMessage('MAIL_DRAFT_LIST_EMPTY'),
-				),
-			)
-			: null,
-		'ACTION_PANEL' => [
-			'GROUPS' => [
-				['ITEMS' => $actionButtons],
-			],
-		],
-		'ACTION_PANEL_OPTIONS' => [
-			'MAX_HEIGHT' => 56,
-		],
-
-		'SHOW_ROW_CHECKBOXES' => true,
-		'SHOW_CHECK_ALL_CHECKBOXES' => true,
-		],
-	);
-};
 
 $renderGrid(
 	[
@@ -1082,7 +1256,36 @@ $renderGrid(
 		'ROWS' => $arResult['ROWS'],
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
 		'NAV_OBJECT' => $arResult['NAV_OBJECT'],
-		'DRAFT_TOTAL' => $arResult['DRAFT_TOTAL'] ?? null,
+		'TOTAL' => $arResult['DRAFT_TOTAL'] ?? null,
+		'MESSAGE_GRID' => $messageGridPage === null ? null : [
+			'containerId' => sprintf('%s-grid', $arResult['GRID_ID']),
+			'mode' => 'message',
+			// Where a row opens a message. Kept out of `screen`, which is what the grid asks the server for a page
+			// by: an address named by the client would come back drawn into the rows.
+			'messageHrefTemplate' => (string)($arResult['MESSAGE_HREF_TEMPLATE'] ?? ''),
+			// Where a row leads outside the mail section: the task, the post and the event. Said once for the
+			// same reason - the settings behind these addresses belong to the page this component stands on.
+			'hrefTemplates' => (array)($arResult['ROW_HREF_TEMPLATES'] ?? []),
+			'screen' => [
+				'gridId' => $arResult['GRID_ID'],
+				'filterId' => $arResult['FILTER_ID'],
+				'mailboxId' => $currentMailboxId,
+				'virtual' => $isAllMailMode ? $arResult['VIRTUAL_FOLDER_KEY'] : null,
+				'listSection' => $favoritesSectionActive ? ScreenContext::SECTION_FAVORITES : null,
+			],
+			'page' => $messageGridPage,
+			// shown once and kept nowhere: today this is the error of an action that came back with the request
+			'messages' => $arResult['MESSAGES'],
+			// The submenu of "move to folder" comes empty with every page: one tree serves every row of a mailbox
+			// and the screen already holds it. Empty in the all mail mode, where the action itself has no place.
+			'folders' => $arResult['foldersItems'],
+			'panel' => [
+				'containerId' => sprintf('%s-actionpanel', $arResult['GRID_ID']),
+				'groupActions' => ['GROUPS' => [['ITEMS' => $actionPanelActionButtons]]],
+				// which of the pair of spam buttons stands is decided by the folder, read from the filter of the screen
+				'spamDir' => (string)$arResult['spamDir'],
+			],
+		],
 	],
 	$gridHeaders,
 	$isDraftMode ? $draftActionPanelActionButtons : $actionPanelActionButtons,
@@ -1105,12 +1308,17 @@ $renderGrid(
 	?>
 	<div class="mail-draft-list-view mail-embedded-draft-list" data-testid="mail-client-draft-list" hidden>
 		<div class="mail-draft-retention" data-testid="mail-draft-list-retention">
-			<?= Loc::getMessage('MAIL_DRAFT_LIST_RETENTION') ?>
+			<?= Loc::getMessagePlural(
+			'MAIL_DRAFT_LIST_RETENTION',
+			$arResult['DRAFT_RETENTION_DAYS'],
+			['#COUNT#' => $arResult['DRAFT_RETENTION_DAYS']],
+		) ?>
 		</div>
 		<div
 			id="<?= htmlspecialcharsbx($embeddedDraftList['GRID_ID']) ?>-actionpanel"
 			class="mail-msg-list-actionpanel-container mail-msg-list-actionpanel-container-<?= htmlspecialcharsbx($embeddedDraftList['GRID_ID']) ?>"
 			data-role="mail-draft-list-actionpanel-container"
+			data-testid="mail-draft-list-action-panel"
 		></div>
 		<div
 			class="mail-msg-list-grid --ui-context-content-light"
@@ -1124,10 +1332,57 @@ $renderGrid(
 					'ROWS' => $embeddedDraftList['ROWS'],
 					'ENABLE_NEXT_PAGE' => $embeddedDraftList['ENABLE_NEXT_PAGE'],
 					'NAV_OBJECT' => $embeddedDraftList['NAV_OBJECT'],
-					'DRAFT_TOTAL' => $embeddedDraftList['TOTAL'],
+					'TOTAL' => $embeddedDraftList['TOTAL'],
+					// `mail.api.messagelist.getDraftPage` takes neither the folder nor the section of the screen
+					'MESSAGE_GRID' => $draftGridPage === null ? null : [
+						'containerId' => sprintf('%s-grid', $embeddedDraftList['GRID_ID']),
+						'mode' => 'draft',
+						'screen' => [
+							'gridId' => $embeddedDraftList['GRID_ID'],
+							'filterId' => $embeddedDraftList['FILTER_ID'],
+							'mailboxId' => $currentMailboxId,
+						],
+						'page' => $draftGridPage,
+						'panel' => [
+							'containerId' => sprintf('%s-actionpanel', $embeddedDraftList['GRID_ID']),
+							'groupActions' => [
+								'GROUPS' => [['ITEMS' => $draftActionPanelActionButtons]],
+							],
+							// the drafts of the user know no folder of spam and no pair of spam buttons
+							'spamDir' => '',
+						],
+					],
 				],
 				$draftGridHeaders,
 				$draftActionPanelActionButtons,
+				true,
+			);
+			?>
+		</div>
+	</div>
+<?php endif; ?>
+
+<?php if (!$isDraftMode && !empty($arResult['EMBEDDED_SCHEDULED_LIST'])): ?>
+	<?php $embeddedScheduledList = $arResult['EMBEDDED_SCHEDULED_LIST']; ?>
+	<div class="mail-draft-list-view" data-testid="mail-client-scheduled-list" hidden>
+		<div
+			id="<?= htmlspecialcharsbx($embeddedScheduledList['GRID_ID']) ?>-actionpanel"
+			class="mail-msg-list-actionpanel-container mail-msg-list-actionpanel-container-<?= htmlspecialcharsbx($embeddedScheduledList['GRID_ID']) ?>"
+		></div>
+		<div class="mail-msg-list-grid --ui-context-content-light" data-role="mail-scheduled-list-grid">
+			<?php
+			$renderGrid(
+				[
+					'GRID_ID' => $embeddedScheduledList['GRID_ID'],
+					'ROWS' => $embeddedScheduledList['ROWS'],
+					'ENABLE_NEXT_PAGE' => $embeddedScheduledList['ENABLE_NEXT_PAGE'],
+					'NAV_OBJECT' => $embeddedScheduledList['NAV_OBJECT'],
+					'TOTAL' => $embeddedScheduledList['TOTAL'],
+					'EMPTY_STUB' => $scheduledEmptyStub,
+				],
+				$scheduledGridHeaders,
+				$scheduledActionPanelActionButtons,
+				true,
 				true,
 			);
 			?>
@@ -1143,6 +1398,9 @@ $renderGrid(
 		if(BX.type.isFunction(top.BX.ajax.UpdatePageData)) top.BX.ajax.UpdatePageData = (function() {});
 	}
 
+	// the group phrases of the section are chosen by the number of letters on the client, so all their forms go there
+	BX.message(<?= Json::encode($scheduledPluralPhrases) ?>);
+
 	BX.message({
 		MAIL_MAILBOX_ID: '<?= (int)$arResult['MAILBOX']['ID'] ?>',
 		MAIL_FOLDER_SORT_MODE: '<?= CUtil::jsEscape($arResult['folderSortMode']) ?>',
@@ -1156,6 +1414,8 @@ $renderGrid(
 		MESSAGES_ALREADY_EXIST_IN_FOLDER : '<?= Loc::getMessage('MESSAGES_ALREADY_EXIST_IN_FOLDER') ?>',
 		MAILBOX_LINK: '<?= CUtil::JSEscape($arResult['MAILBOX']['LINK'])?>',
 		MAIL_MESSAGE_GRID_ID: '<?= CUtil::JSEscape($arResult['GRID_ID'])?>',
+		MAIL_MESSAGE_GRID_VUE_ENABLED: '<?= $messageGridPage === null ? 'N' : 'Y' ?>',
+		MAIL_MESSAGE_GRID_SYNC_STUB: '<?= $primarySyncStub ? 'Y' : 'N' ?>',
 		MAIL_MESSAGE_FILTER_ID: '<?= CUtil::JSEscape($arResult['FILTER_ID'])?>',
 		MAIL_IS_ALL_MAIL_MODE: '<?= $isAllMailMode ? 'Y' : 'N' ?>',
 		INTERFACE_MAIL_CHECK_ALL: '<?= Loc::getMessage('INTERFACE_MAIL_CHECK_ALL')?>',
@@ -1177,14 +1437,8 @@ $renderGrid(
 		MAIL_MESSAGE_LIST_NOTIFY_ADD_TO_CRM_ERROR: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_NOTIFY_ADD_TO_CRM_ERROR')) ?>',
 		MAIL_MESSAGE_LIST_NOTIFY_EXCLUDED_FROM_CRM: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_NOTIFY_EXCLUDED_FROM_CRM')) ?>',
 		MAIL_MESSAGE_LIST_NOTIFY_SUCCESS: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_NOTIFY_SUCCESS')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_TITLE: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_TITLE')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_RUNNING: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_RUNNING')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_WAITING: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_WAITING')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_SWITCHING: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_SWITCHING')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_BLOCKED: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_BLOCKED')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_CANCELLING: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_CANCELLING')) ?>',
-		MAIL_MESSAGE_LIST_MIGRATION_ACTION_UNAVAILABLE: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_MIGRATION_ACTION_UNAVAILABLE')) ?>',
 		MAIL_MESSAGE_LIST_CONFIRM_CANCEL_BTN: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_CONFIRM_CANCEL_BTN')) ?>',
+		MAIL_SCHEDULED_LIST_STATUS_SENDING: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_STATUS_SENDING')) ?>',
 		MAIL_MESSAGE_SYNC_BTN_HINT: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_SYNC_BTN_HINT')) ?>',
 		MAIL_FOLDER_SORT_BTN_HINT: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_FOLDER_SORT_BTN_HINT')) ?>',
 		MAIL_FOLDER_SORT_DEFAULT: '<?= \CUtil::jsEscape(Loc::getMessage('MAIL_FOLDER_SORT_DEFAULT')) ?>',
@@ -1248,7 +1502,9 @@ $renderGrid(
 		<?php endif;?>
 
 		var Mail = BX.Mail.Home;
+		<?php if ($messageGridPage === null): ?>
 		Mail.Grid.setGridId('<?= CUtil::JSEscape($arResult['GRID_ID'])?>');
+		<?php endif; ?>
 		var mailboxId = Number(<?= intval($arResult['MAILBOX']['ID']) ?>);
 		var allMailMode = <?= CUtil::PhpToJSObject((bool)$isAllMailMode) ?>;
 		var allMailboxIds = <?= Main\Web\Json::encode(array_keys($arResult['MAILBOXES'])) ?>;
@@ -1304,18 +1560,14 @@ $renderGrid(
 		}, this));
 		<?php endif ?>
 
-		<?php if (!$isDraftMode && $arParams['VARIABLES']['start_sync_with_showing_stepper']==='true')
-		{
-		?>
+		<?php if ($primarySyncStub && $messageGridPage === null): ?>
 			if(!Mail.Grid.getCountDisplayed())
 			{
 				Mail.Grid.setGridWrapper(document.querySelector('[data-role="mail-msg-list-grid"]'));
 				Mail.Grid.setGridStub(document.querySelector('[data-role="mail-msg-list-grid-stub"]'));
 				Mail.Grid.enableLoadingMessagesStub();
 			}
-		<?php
-		}
-		?>
+		<?php endif; ?>
 
 		<?php
 		$leftMenuDirs = $isAllMailMode
@@ -1371,6 +1623,16 @@ $renderGrid(
 
 				mailMessageList.leaveFavoritesSection();
 
+				<?php if ($scheduledListEmbedded): ?>
+				// A folder chosen while the scheduled list stands in place of the messages leaves that list:
+				// the folder filter is applied to the message list, and it is hidden until then.
+				if (mailMessageList?.scheduledListContainer?.hidden === false)
+				{
+					mailMessageList.hideScheduledMessages();
+
+					return true;
+				}
+				<?php endif ?>
 				<?php if ($internalDraftsAvailable): ?>
 				if (!<?= $isDraftMode ? 'true' : 'false' ?> && mailMessageList?.draftListContainer?.hidden === false)
 				{
@@ -1405,6 +1667,29 @@ $renderGrid(
 		})();
 		<?php endif; ?>
 
+		var settingsMenu = <?= Main\Web\Json::encode($settingsMenu) ?>;
+		<?php if ($undoSendAvailable): ?>
+		if (BX.Type.isFunction(BX.Mail?.Client?.UndoSend?.UndoSendMenu))
+		{
+			var undoSendMenu = new BX.Mail.Client.UndoSend.UndoSendMenu({
+				delaySeconds: <?= (int)$arParams['UNDO_SEND']['delaySeconds'] ?>,
+				onSaveError: function() {
+					BX.UI.Notification.Center.notify({
+						content: BX.Loc.getMessage('MAIL_UNDO_SEND_PREFERENCE_SAVE_ERROR'),
+					});
+				},
+			});
+			var firstDelimiterIndex = settingsMenu.findIndex(function(item) {
+				return item.delimiter === true;
+			});
+			settingsMenu.splice(
+				firstDelimiterIndex < 0 ? settingsMenu.length : firstDelimiterIndex,
+				0,
+				undoSendMenu.getItem(),
+			);
+		}
+		<?php endif; ?>
+
 		var mailMessageList = new BX.Mail.Client.Message.List({
 			id: '<?= CUtil::JSEscape($component->getComponentId())?>',
 			gridId: '<?= CUtil::JSEscape($arResult['GRID_ID'])?>',
@@ -1413,7 +1698,7 @@ $renderGrid(
 			migrationMailboxIds: <?= Json::encode($migrationMailboxIds) ?>,
 			labels: <?= Main\Web\Json::encode($arResult['LABELS'] ?? []) ?>,
 			labelScopeMailboxId: <?= $isAllMailMode ? 'null' : (int)$arResult['MAILBOX']['ID'] ?>,
-			settingsMenu: <?= Main\Web\Json::encode($settingsMenu) ?>,
+			settingsMenu: settingsMenu,
 			canDelete: <?= CUtil::PhpToJSObject((bool)$arResult['trashDir']); ?>,
 			canMarkSpam: <?= CUtil::PhpToJSObject((bool)$arResult['spamDir']); ?>,
 			mailboxCanDelete: <?= Main\Web\Json::encode($arResult['MAILBOX_CAN_DELETE'] ?? []) ?>,
@@ -1433,9 +1718,11 @@ $renderGrid(
 			trashDir: '<?= CUtil::JSEscape($arResult['trashDir']) ?>',
 			isDraftMode: <?= CUtil::PhpToJSObject($isDraftMode) ?>,
 			favoritesSectionActive: <?= $favoritesSectionActive ? 'true' : 'false' ?>,
+			favoritesUnread: <?= (int)($arResult['favoritesUnread'] ?? 0) ?>,
 			composePath: '<?= CUtil::JSEscape($createPath->getUri()) ?>',
 			composeSliderOptions: <?= Json::encode($composeSliderOptions) ?>,
 			draftsPath: '<?= CUtil::JSEscape($draftsHref ?? '') ?>',
+			scheduledPath: '<?= CUtil::JSEscape($scheduledHref ?? '') ?>',
 			messageListPath: '<?= CUtil::JSEscape($currentMessageListHref) ?>',
 			draftDeleteConfirm: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_DRAFT_LIST_DELETE_CONFIRM')) ?>',
 			draftDeleteDescription: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_DRAFT_LIST_DELETE_DESCRIPTION')) ?>',
@@ -1444,11 +1731,46 @@ $renderGrid(
 			draftDeleteButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_DRAFT_LIST_DELETE_BUTTON')) ?>',
 			draftCancelButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_DRAFT_LIST_DELETE_CANCEL')) ?>',
 			draftDeletePartialError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_DRAFT_LIST_DELETE_PARTIAL_ERROR')) ?>',
+			scheduledCancelConfirm: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_CONFIRM')) ?>',
+			scheduledCancelDescription: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_DESCRIPTION')) ?>',
+			scheduledCancelNothing: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_NOTHING')) ?>',
+			scheduledCancelButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_BUTTON')) ?>',
+			scheduledCancelError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_ERROR')) ?>',
+			scheduledCancelPartialError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_CANCEL_PARTIAL_ERROR')) ?>',
+			scheduledCancelErrorReasons: <?= Json::encode($scheduledCancelErrorReasons) ?>,
+			scheduledRetryError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_RETRY_ERROR')) ?>',
+			scheduledRetryErrorReasons: <?= Json::encode($scheduledRetryErrorReasons) ?>,
+			scheduledRetryAnnounce: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_RETRY_ANNOUNCE')) ?>',
+			scheduledSendNowButton: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_BUTTON')) ?>',
+			scheduledSendNowSuccess: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_SUCCESS')) ?>',
+			scheduledSendNowNothing: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_NOTHING')) ?>',
+			scheduledSendNowError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_ERROR')) ?>',
+			scheduledSendNowPartialError: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_SEND_NOW_PARTIAL_ERROR')) ?>',
+			scheduledSendNowErrorReasons: <?= Json::encode($scheduledSendNowErrorReasons) ?>,
+			scheduledListAnnounce: '<?= CUtil::JSEscape(Loc::getMessage('MAIL_SCHEDULED_LIST_ANNOUNCE')) ?>',
 			enableNextPage: '<?= !empty($arResult['ENABLE_NEXT_PAGE']) ?>' ?? false,
 			MESSAGE_MAIL_HREF_LIST: <?= Main\Web\Json::encode($arResult['MESSAGE_HREF_LIST']) ?>,
 			ERROR_CODE_CAN_NOT_MARK_SPAM: 'MAIL_CLIENT_SPAM_FOLDER_NOT_SELECTED_ERROR',
 			ERROR_CODE_CAN_NOT_DELETE: 'MAIL_CLIENT_TRASH_FOLDER_NOT_SELECTED_ERROR'
 		});
+
+		<?php if (
+			$undoSendAvailable
+			&& (int)$arParams['UNDO_SEND']['delaySeconds'] > 0
+			&& !empty($arParams['UNDO_SEND']['showGuide'])
+		): ?>
+		if (BX.Type.isFunction(BX.Mail?.Client?.UndoSend?.UndoSendGuide))
+		{
+			var undoSendGuide = new BX.Mail.Client.UndoSend.UndoSendGuide({
+				optionName: <?= Json::encode((string)($arParams['UNDO_SEND']['guideOptionName'] ?? '')) ?>,
+				ready: <?= !empty($arParams['UNDO_SEND']['guideReady']) ? 'true' : 'false' ?>,
+			});
+			undoSendGuide.show();
+			window.addEventListener('pagehide', function() {
+				undoSendGuide.destroy();
+			}, { once: true });
+		}
+		<?php endif; ?>
 
 		<?php if ($arResult['NEED_SHOW_DISCUSS_IN_CHAT_GUIDE']): ?>
 		const discussButton = document.querySelector('.js-mail-discuss-in-chat');
@@ -1616,11 +1938,17 @@ $renderGrid(
 		top.BX.addCustomEvent("SidePanel.Slider:onOpen", (event) => {
 			const slider = event.getSlider();
 			const dictionary = slider.getData();
+			<?php if ($messageGridPage !== null): ?>
+			// the grid accumulates the addresses of the rows itself, and the swapper of the slider walks them
+			dictionary.set('hrefList', BX.Mail.Home.Grid.getMessageHrefList());
+			dictionary.set('enableNextPage', BX.Mail.Home.Grid.hasNextPage());
+			<?php else: ?>
 			dictionary.set(
 				'hrefList',
 				mailMessageList.userInterfaceManager.MESSAGE_MAIL_HREF_LIST
 			);
 			dictionary.set('enableNextPage', mailMessageList.userInterfaceManager.enableNextPage ?? false);
+			<?php endif; ?>
 
 			const views = slider.getWindow()?.BXMailView?.__views
 			let view = null;

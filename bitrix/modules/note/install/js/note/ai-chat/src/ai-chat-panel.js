@@ -48,7 +48,7 @@ export const NoteAiChatPanelComponent = {
 	data()
 	{
 		return {
-			// [ALG-02] Live inputs of the geometry. clientWidth, not innerWidth: the latter counts the
+			// Live inputs of the geometry. clientWidth, not innerWidth: the latter counts the
 			// scrollbar, which would move the overlay threshold by its width.
 			viewportWidth: document.documentElement.clientWidth,
 			resizeRaf: 0,
@@ -135,7 +135,7 @@ export const NoteAiChatPanelComponent = {
 		{
 			return COLUMN_CONTEXT_CLASS[this.theme] ?? COLUMN_CONTEXT_CLASS[NoteTheme.LIGHT];
 		},
-		// [ALG-02] Single source of the applied width and of the placement mode. Recomputed on every
+		// Single source of the applied width and of the placement mode. Recomputed on every
 		// input change — window resize, navigation collapse, a drag frame — so the mode switches on
 		// the fly without ever closing the panel.
 		geometry(): Object
@@ -413,7 +413,7 @@ export const NoteAiChatPanelComponent = {
 		notifyFailure(): void
 		{
 			const content = String(Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '')
-				.replace('#NAME#', String(this.productName ?? ''))
+				.replace('#COPILOT_NAME#', String(this.productName ?? ''))
 				.trim();
 			if (!content)
 			{

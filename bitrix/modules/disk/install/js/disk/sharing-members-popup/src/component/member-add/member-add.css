@@ -1,0 +1,12 @@
+.disk-sharing-members-popup-add {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-md2);
+}
+
+.disk-sharing-members-popup-add__description {
+	flex: 1 1 auto;
+	min-width: 0;
+	color: var(--ui-color-base-2);
+}

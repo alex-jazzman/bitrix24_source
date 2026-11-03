@@ -169,7 +169,7 @@ export class Realtime extends EventEmitter
 		grid.getRows().reset();
 		grid.bindOnRowEvents();
 		grid.updateCounterDisplayed();
-		grid.updateCounterSelected();
+		grid.announceUpdated(grid.updateCounterSelected());
 
 		if (grid.getParam('ALLOW_ROWS_SORT'))
 		{

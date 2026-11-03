@@ -6,6 +6,12 @@
 	width: 100%;
 }
 
+@media (max-width: 960px) {
+	.tasks-full-card-footer-create {
+		flex-wrap: wrap;
+	}
+}
+
 .tasks-full-card-footer-main-buttons {
 	display: flex;
 	align-items: center;

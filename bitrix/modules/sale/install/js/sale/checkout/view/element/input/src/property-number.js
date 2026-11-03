@@ -1,14 +1,12 @@
 import { BitrixVue } from 'ui.vue';
-import { EventEmitter } from 'main.core.events'
-import { Property as Const, EventType} from 'sale.checkout.const';
+import { Property as Const } from 'sale.checkout.const';
+
+import { isCaretKey, MixinPropertyField } from './property-field';
 
 BitrixVue.component('sale-checkout-view-element-input-property-number', {
+	mixins: [MixinPropertyField],
 	props: ['item', 'index'],
 	methods: {
-		validate()
-		{
-			EventEmitter.emit(EventType.property.validate, {index: this.index});
-		},
 		onKeyDown(e)
 		{
 			if (
@@ -20,7 +18,8 @@ BitrixVue.component('sale-checkout-view-element-input-property-number', {
 			}
 			if (e.ctrlKey
 				|| e.metaKey
-				|| ['Esc', 'Tab', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', '.'].indexOf(e.key) >= 0
+				|| isCaretKey(e.key)
+				|| ['Esc', 'Tab', 'Backspace', 'Delete', '.'].indexOf(e.key) >= 0
 			)
 			{
 				return;
@@ -50,10 +49,6 @@ BitrixVue.component('sale-checkout-view-element-input-property-number', {
 		{
 			return this.item.value === '';
 		},
-		isRequired()
-		{
-			return this.item.required === 'Y';
-		},
 		isAsteriskShown()
 		{
 			return this.isEmpty && this.isRequired;
@@ -61,7 +56,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-number', {
 	},
 	// language=Vue
 	template: `
-		<div class="form-wrap form-asterisk" :class="checkedClassObject">
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-number">
 			<input
 				class="form-control form-control-lg"
 				:class="checkedClassObject"
@@ -71,11 +66,16 @@ BitrixVue.component('sale-checkout-view-element-input-property-number', {
 				@paste="onPaste"
 				type="text"
 				inputmode="numeric"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
 				:placeholder="item.name"
 				v-model="item.value"
 			/>
 			<span
 				class="asterisk-item"
+				aria-hidden="true"
 				v-if="isAsteriskShown"
 			>
 				{{item.name}}

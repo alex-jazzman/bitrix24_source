@@ -90,24 +90,36 @@ jn.define('intranet/login-history-list', (require, exports, module) => {
 		};
 
 		onBeforeItemsRender = (items) => {
-			return items.map((item, index) => ({
-				...item,
-				isFirst: index === 1,
-			}));
+			let isFirstRealItemFound = false;
+
+			return items.map((item) => {
+				const isSyntheticItem = item.id === CURRENT_DEVICE_ID;
+				const isFirst = !isSyntheticItem && !isFirstRealItemFound;
+
+				if (isFirst)
+				{
+					isFirstRealItemFound = true;
+				}
+
+				return {
+					...item,
+					isFirst,
+				};
+			});
 		};
 
 		onBeforeItemsSetState = (items, params = {}) => {
+			const cleanedItems = items?.filter((item) => item.id !== CURRENT_DEVICE_ID);
+
 			if (params?.append !== false)
 			{
-				return items;
+				return cleanedItems;
 			}
 
-			if (!items || items.length === 0 || !this.currentDeviceFromServer)
+			if (!cleanedItems || !this.currentDeviceFromServer)
 			{
-				return items;
+				return cleanedItems;
 			}
-
-			const cleanedItems = items.filter((item) => item.id !== CURRENT_DEVICE_ID);
 
 			return [
 				{

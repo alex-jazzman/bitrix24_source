@@ -1,6 +1,7 @@
-import { Event, Extension, Loc, Runtime, Type, ajax } from 'main.core';
+import { Dom, Event, Extension, Loc, Page, Runtime, Type, ajax } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { InfoHelper } from 'ui.info-helper';
+import { Center as NotificationCenter } from 'ui.notification';
 import { CatalogLoadingPopup } from 'vibecodeconnector.catalog-popup';
 
 import './binder.css';
@@ -8,17 +9,23 @@ import './binder.css';
 const SELECTOR = '.bx-im-list-container-vibe-code-catalog-button__container';
 const EVENTS_ATTRIBUTE = 'data-bx-vibe-code-catalog-events';
 const CATALOG_EXTENSION = 'vibecodeconnector.catalog';
+const OPEN_APP_EXTENSION = 'vibecodeconnector.open-app';
 const BANNER_DISPATCHER_EXTENSION = 'ui.banner-dispatcher';
 const SELF_EXTENSION = 'vibecodeconnector.im-button-binder';
 const MARK_SHOWN_ACTION = 'vibecodeconnector.Catalog.markCatalogShown';
 const GET_NEW_APPS_COUNT_ACTION = 'vibecodeconnector.Catalog.getNewAppsCount';
 const NEW_APPS_COUNT_OVERFLOW = 99;
 const RECALC_DEBOUNCE_MS = 300;
+
+const OPEN_APP_PAGE_ACTION_PATTERN = /[&?]action=vibecodeconnector\.Catalog\.openAppPage(?:[#&]|$)/;
+const CATALOG_ITEM_ID_PATTERN = /[&?]catalogItemId=(\d+)(?:[#&]|$)/;
+
 const BADGE_CLASS = 'vibecodeconnector-im-button-binder__badge';
 const BADGE_OVERFLOWED_CLASS = 'vibecodeconnector-im-button-binder__badge--overflowed';
 const BADGE_LABEL_CLASS = 'vibecodeconnector-im-button-binder__badge-label';
 const BADGE_LABEL_ID = 'vibecodeconnector-im-button-binder__badge-label';
 
+const OPEN_APP_ANCHOR_BOUND_PANELS = new WeakSet();
 
 const CatalogEvent = Object.freeze({
 	request: 'im:vibe-code-catalog:request',
@@ -44,6 +51,7 @@ class ImButtonBinder
 	#autoShownInSession: boolean = false;
 	#autoShowOnClose: (() => void) | null = null;
 	#newAppsCount: number = 0;
+	#isNewAppsBadgeAvailable: boolean = false;
 	#badgeNode: HTMLElement | null = null;
 	#badgeLabelNode: HTMLElement | null = null;
 	#recalcTimer: number | null = null;
@@ -72,6 +80,13 @@ class ImButtonBinder
 		this.#newAppsCount = this.#isCatalogAllowed && Type.isNumber(rawNewAppsCount) && rawNewAppsCount > 0
 			? Math.trunc(rawNewAppsCount)
 			: 0;
+		// Closed by default as well: the badge on the button is drawn only when the server says
+		// the app chats do not announce the novelties instead (see config.php). The count itself
+		// is kept either way — the catalog popup decides its starting slice by it.
+		this.#isNewAppsBadgeAvailable = this.#isCatalogAllowed
+			&& settings.get('isNewAppsBadgeAvailable', false) === true;
+
+		this.#bindOpenAppAnchors();
 
 		EventEmitter.subscribe(CatalogEvent.request, this.#handleRequest);
 		EventEmitter.subscribe(CatalogEvent.opened, this.#handleOpened);
@@ -79,6 +94,95 @@ class ImButtonBinder
 		this.#observer = new MutationObserver(() => this.#tryAttachInside(window.document));
 		this.#observeDocument();
 		this.#tryAttachInside(window.document);
+	}
+
+	#bindOpenAppAnchors(): void
+	{
+		if (!this.#isCatalogAllowed || Page.getRootWindow() !== window)
+		{
+			return;
+		}
+
+		const sidePanel = window.BX?.SidePanel?.Instance ?? null;
+		if (sidePanel === null || OPEN_APP_ANCHOR_BOUND_PANELS.has(sidePanel))
+		{
+			return;
+		}
+
+		sidePanel.bindAnchors({
+			rules: [{
+				condition: [OPEN_APP_PAGE_ACTION_PATTERN],
+				handler: (event: MouseEvent, link: { url: string, target?: string }): void => {
+					const catalogItemId = this.#extractCatalogItemId(link?.url);
+					if (catalogItemId === null || !this.#canInterceptOpenAppClick(event, link?.target))
+					{
+						return;
+					}
+
+					event.preventDefault();
+					this.#openCatalogAppById(catalogItemId);
+				},
+			}],
+		});
+		OPEN_APP_ANCHOR_BOUND_PANELS.add(sidePanel);
+	}
+
+	#extractCatalogItemId(url: ?string): number | null
+	{
+		if (!Type.isStringFilled(url))
+		{
+			return null;
+		}
+
+		const matches = url.match(CATALOG_ITEM_ID_PATTERN);
+		if (matches === null)
+		{
+			return null;
+		}
+
+		const catalogItemId = Number.parseInt(matches[1], 10);
+
+		return Number.isInteger(catalogItemId) && catalogItemId > 0 ? catalogItemId : null;
+	}
+
+	#canInterceptOpenAppClick(event: MouseEvent, target: ?string): boolean
+	{
+		if (
+			event.button !== 0
+			|| event.altKey
+			|| event.ctrlKey
+			|| event.metaKey
+			|| event.shiftKey
+		)
+		{
+			return false;
+		}
+
+		return !Type.isStringFilled(target) || ['_self', '_blank'].includes(target.toLowerCase());
+	}
+
+	#openCatalogAppById(catalogItemId: number): void
+	{
+		const suppressNavigationFallback = (): void => {};
+
+		Runtime.loadExtension(OPEN_APP_EXTENSION)
+			.then((exports) => {
+				if (!Type.isFunction(exports?.openCatalogAppById))
+				{
+					throw new TypeError('vibecodeconnector.open-app has no openCatalogAppById');
+				}
+
+				return exports.openCatalogAppById(catalogItemId, suppressNavigationFallback);
+			})
+			.catch(() => false)
+			.then((opened) => {
+				if (opened !== true)
+				{
+					NotificationCenter.notify({
+						content: Loc.getMessage('VIBECODECONNECTOR_IM_BUTTON_BINDER_OPEN_APP_ERROR'),
+					});
+				}
+			});
 	}
 
 	#handleRequest = (event: BaseEvent): void => {
@@ -468,7 +572,7 @@ class ImButtonBinder
 
 	#renderBadge(node: HTMLElement): void
 	{
-		if (!this.#isCatalogAllowed || this.#vibePlusPromoterCode !== null)
+		if (!this.#isNewAppsBadgeAvailable || this.#vibePlusPromoterCode !== null)
 		{
 			return;
 		}
@@ -483,8 +587,8 @@ class ImButtonBinder
 			this.#badgeLabelNode.className = BADGE_LABEL_CLASS;
 			this.#badgeLabelNode.id = BADGE_LABEL_ID;
 
-			node.appendChild(this.#badgeNode);
-			node.appendChild(this.#badgeLabelNode);
+			Dom.append(this.#badgeNode, node);
+			Dom.append(this.#badgeLabelNode, node);
 		}
 
 		this.#syncBadge();
@@ -500,10 +604,10 @@ class ImButtonBinder
 		const count = this.#newAppsCount;
 		const isVisible = count > 0;
 
-		this.#badgeNode.style.display = isVisible ? '' : 'none';
+		Dom.style(this.#badgeNode, 'display', isVisible ? null : 'none');
 		if (this.#badgeLabelNode !== null)
 		{
-			this.#badgeLabelNode.style.display = isVisible ? '' : 'none';
+			Dom.style(this.#badgeLabelNode, 'display', isVisible ? null : 'none');
 		}
 
 		this.#toggleBadgeDescription(isVisible);
@@ -515,7 +619,7 @@ class ImButtonBinder
 
 		const overflowed = count > NEW_APPS_COUNT_OVERFLOW;
 		this.#badgeNode.textContent = overflowed ? `${NEW_APPS_COUNT_OVERFLOW}+` : String(count);
-		this.#badgeNode.classList.toggle(BADGE_OVERFLOWED_CLASS, overflowed);
+		Dom.toggleClass(this.#badgeNode, BADGE_OVERFLOWED_CLASS, overflowed);
 
 		if (this.#badgeLabelNode !== null)
 		{

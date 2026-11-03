@@ -1,0 +1,31 @@
+.crm-settings-hub-application__empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-xs, 8px);
+	padding: 48px 24px;
+	text-align: center;
+}
+
+.crm-settings-hub-application__empty-icon {
+	--ui-icon-set__icon-size: 48px;
+	--ui-icon-set__icon-color: var(--ui-color-base-6);
+}
+
+.crm-settings-hub-application__empty-title {
+	color: var(--ui-color-base-1);
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: 23px;
+}
+
+.crm-settings-hub-application__empty-text {
+	max-width: 480px;
+	color: var(--ui-color-base-4);
+	font-size: 14px;
+	line-height: 18px;
+}
+
+.crm-settings-hub-application__empty-reset {
+	margin-top: var(--ui-space-stack-xs, 8px);
+}

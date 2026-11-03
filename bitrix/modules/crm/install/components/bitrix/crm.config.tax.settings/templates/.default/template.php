@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	$APPLICATION->RestartBuffer();
 	?>
 	<script>
-			top.location.href = '<?=CUtil::JSEscape($arResult['BACK_URL'])?>';
+			parent.location.href = '<?=CUtil::JSEscape($arResult['BACK_URL'])?>';
 	</script><?
 	die();
 endif;

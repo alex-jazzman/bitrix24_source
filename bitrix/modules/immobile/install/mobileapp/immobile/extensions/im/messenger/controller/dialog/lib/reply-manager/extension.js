@@ -14,12 +14,15 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		MessageType,
 		DialogType,
 		FileType,
+		AttachFileStatus,
 	} = require('im/messenger/const');
 	const {
 		InputQuoteType,
 	} = require('im/messenger/view/dialog');
 	const { getFileTypeByExtension, getFileExtension } = require('im/messenger/lib/helper');
 	const { parser } = require('im/messenger/lib/parser');
+	const { buildQuotePreview } = require('im/messenger/lib/parser/functions/quote');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -43,6 +46,8 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		#isEditInProcess;
 		#isForwardInProcess;
 		#isAttachInProcess;
+		/** @type {?string} */
+		#inputTextBuffer;
 
 		constructor({ store, dialogView, dialogLocator })
 		{
@@ -54,7 +59,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			this.dialogLocator = dialogLocator;
 
 			this.quoteMessage = null;
-			this.inputTextBuffer = null;
+			this.#inputTextBuffer = null;
 			this.#isQuoteInProcess = false;
 			this.#isQuoteInBackground = false;
 			this.#isForwardInBackground = false;
@@ -100,6 +105,18 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		}
 
 		/**
+		 * @desc Text that was in the input field before the edit mode took the field over, or null when
+		 *   the user entered the edit mode from an empty field. Part of the interface on purpose: the send
+		 *   flow compares the field against this buffer to tell the text returned by finishEditingMessage()
+		 *   from text the user typed himself.
+		 * @return {?string}
+		 */
+		get inputTextBuffer()
+		{
+			return this.#inputTextBuffer;
+		}
+
+		/**
 		 * @param {DraftManager} draftManager
 		 */
 		setDraftManager(draftManager)
@@ -113,21 +130,11 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 			const quoteMessage = this.dialogLocator.get('message-ui-converter').createMessage(modelMessage);
 			const isSystemMessage = modelMessage.authorId === 0;
-			// const isAudioMessage = message.type === MessageType.audio;
-			// const isEmptyText = !modelMessage.text || modelMessage.text === '';
 
 			if (isSystemMessage)
 			{
 				quoteMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_QUOTE_DEFAULT_TITLE');
 			}
-
-			// if (isAudioMessage && isEmptyText)
-			// {
-			// 	quoteMessage.message = {
-			// 		type: 'text',
-			// 		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_FIELD_VOICE'),
-			// 	};
-			// }
 
 			quoteMessage.message = [
 				{
@@ -136,12 +143,62 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				},
 			];
 
+			// Media preview for the reply plaque, consistent with the in-bubble quote (buildQuotePreview).
+			// Additive: native draws it only in reply-with-media builds; otherwise the text above stays as fallback.
+			this.#attachMediaPreview(quoteMessage, message.id);
+
 			this.quoteMessage = quoteMessage;
+		}
+
+		/**
+		 * @param {Object} quoteMessage
+		 * @param {number} messageId
+		 */
+		#attachMediaPreview(quoteMessage, messageId)
+		{
+			if (!Feature.isReplyWithMediaAvailable)
+			{
+				return;
+			}
+
+			const preview = buildQuotePreview(messageId);
+			// 'deleted_sticker' is an internal marker, not a contract type: don't attach it to the plaque.
+			// The text fallback set in setQuoteMessage stays (native would ignore the out-of-enum type anyway).
+			if (preview && preview.type !== 'deleted_sticker')
+			{
+				quoteMessage.preview = preview;
+			}
 		}
 
 		getQuoteMessage()
 		{
 			return this.quoteMessage;
+		}
+
+		/**
+		 * Rebuilds reply plaque media preview after chat history hydration.
+		 * Draft restore runs in initManagers before messages/files are in the store.
+		 */
+		refreshQuoteMediaPreviewIfNeeded()
+		{
+			if (!this.isQuoteInProcess || !this.quoteMessage?.id || this.quoteMessage.preview)
+			{
+				return Promise.resolve();
+			}
+
+			const quoteMessage = { ...this.quoteMessage };
+			this.#attachMediaPreview(quoteMessage, quoteMessage.id);
+			if (!quoteMessage.preview)
+			{
+				return Promise.resolve();
+			}
+
+			this.quoteMessage = quoteMessage;
+
+			return this.dialogView.setInputQuote(quoteMessage, {
+				type: InputQuoteType.reply,
+				openKeyboard: false,
+			});
 		}
 
 		/**
@@ -441,16 +498,16 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			if (this.isForwardInProcess)
 			{
 				this.#isForwardInProcess = false;
-				this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
+				this.#isForwardInBackground = false;
 				this.dialogView.enableAlwaysSendButtonMode(false);
 			}
 
-			// this.inputTextBuffer will be filled if we replied to the message, but did not send it,
+			// the buffer will be filled if we replied to the message, but did not send it,
 			// but opened the message editing on top.
-			if (this.inputTextBuffer !== null)
+			if (this.#inputTextBuffer !== null)
 			{
-				this.dialogView.setInput(this.inputTextBuffer);
-				this.inputTextBuffer = null;
+				this.dialogView.setInput(this.#inputTextBuffer);
+				this.#inputTextBuffer = null;
 			}
 
 			if (this.isQuoteInProcess)
@@ -493,13 +550,13 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			const inputText = this.dialogView.getInput();
 			if (!this.isEditInProcess && inputText !== '')
 			{
-				this.inputTextBuffer = inputText;
+				this.#inputTextBuffer = inputText;
 			}
 
 			if (this.isForwardInProcess)
 			{
 				this.#isForwardInProcess = false;
-				this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
+				this.#isForwardInBackground = false;
 				this.dialogView.enableAlwaysSendButtonMode(false);
 			}
 
@@ -591,7 +648,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			if (this.isForwardInProcess)
 			{
 				this.#isForwardInProcess = false;
-				this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
+				this.#isForwardInBackground = false;
 			}
 
 			this.#isAttachInProcess = true;
@@ -615,6 +672,60 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		{
 			this.attachFiles = null;
 			this.#isAttachInProcess = false;
+		}
+
+		/**
+		 * @desc Stable key of an attach file: disk id / url, name and size.
+		 * @param {DeviceFile} file
+		 * @return {string}
+		 */
+		#getAttachFileKey(file)
+		{
+			const id = file?.dataAttributes?.ID ?? file?.url ?? '';
+			const name = file?.name ?? '';
+			const size = file?.size ?? file?.dataAttributes?.SIZE ?? '';
+
+			return `${id}:${name}:${size}`;
+		}
+
+		/**
+		 * @desc Updates the client validation status of an attach file. Files without a status are
+		 * treated as valid, so non-copilot chats are unaffected.
+		 * @param {DeviceFile} file
+		 * @param {string} status — one of AttachFileStatus
+		 */
+		setAttachFileStatus(file, status)
+		{
+			if (!Type.isArrayFilled(this.attachFiles))
+			{
+				return;
+			}
+
+			const key = this.#getAttachFileKey(file);
+			const target = this.attachFiles.find((item) => this.#getAttachFileKey(item) === key);
+			if (target)
+			{
+				target.status = status;
+			}
+		}
+
+		/**
+		 * @desc True when any attach file is still being checked or has failed client validation.
+		 * Deliberate safety net: the copilot attach flow currently assigns only the valid status
+		 * (files are filtered before attaching), so this gate is a no-op until a flow sets
+		 * checking/error again.
+		 * @return {boolean}
+		 */
+		hasBlockingAttachFiles()
+		{
+			if (!Type.isArrayFilled(this.attachFiles))
+			{
+				return false;
+			}
+
+			return this.attachFiles.some(
+				(file) => file.status === AttachFileStatus.checking || file.status === AttachFileStatus.error,
+			);
 		}
 
 		/**
@@ -657,7 +768,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		#resetEditingMessageProcess()
 		{
-			this.inputTextBuffer = null;
+			this.#inputTextBuffer = null;
 			this.#isEditInProcess = false;
 		}
 
@@ -666,10 +777,15 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			this.#isEditInProcess = false;
 			this.dialogView.clearInput();
 			this.draftManager.cancelEditingMessage();
-			if (this.inputTextBuffer !== null)
+			// the buffer is deliberately NOT reset here, unlike #resetEditingMessageProcess() and the quote
+			// path above: MessageSender#isInputFieldBusy() tells the text returned into the field from text
+			// the user typed by comparing the field against inputTextBuffer. Resetting it here requires a
+			// paired change of that check, otherwise a failed edit loses the caption silently — the test
+			// double repeats this behaviour, so the suite would stay green
+			if (this.#inputTextBuffer !== null)
 			{
-				this.dialogView.setInput(this.inputTextBuffer);
-				this.draftManager.saveDraft(this.inputTextBuffer);
+				this.dialogView.setInput(this.#inputTextBuffer);
+				this.draftManager.saveDraft(this.#inputTextBuffer);
 			}
 
 			this.dialogView.removeInputQuote().then(() => {
@@ -693,7 +809,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		finishForwardingMessage(shouldClearInputActions = true)
 		{
 			this.#isForwardInProcess = false;
-			this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
+			this.#isForwardInBackground = false;
 			if (this.isQuoteInBackground)
 			{
 				this.#isQuoteInBackground = false;
@@ -725,7 +841,9 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		initializeQuotingMessage(message, initWithForward)
 		{
-			this.quoteMessage = message;
+			const quoteMessage = { ...message };
+			this.#attachMediaPreview(quoteMessage, quoteMessage.id);
+			this.quoteMessage = quoteMessage;
 			if (initWithForward)
 			{
 				this.#isQuoteInBackground = true;
@@ -737,7 +855,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				type: InputQuoteType.reply,
 				openKeyboard: false,
 			};
-			this.dialogView.setInputQuote(message, params);
+			this.dialogView.setInputQuote(quoteMessage, params);
 		}
 
 		/**

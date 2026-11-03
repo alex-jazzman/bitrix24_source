@@ -1,5 +1,7 @@
 import { Type } from 'main.core';
 
+import { CopilotSimpleReasoningPlanField } from 'im.v2.const';
+import { prepareReasoningPlan } from 'im.v2.lib.copilot-simple-status';
 import { Utils } from 'im.v2.lib.utils';
 import { type FieldsConfig } from 'im.v2.model';
 import { MessageManager } from 'im.v2.lib.message';
@@ -61,6 +63,12 @@ export const messageFieldsConfig: FieldsConfig = [
 		fieldName: 'error',
 		targetFieldName: 'error',
 		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'sendingTs',
+		targetFieldName: 'sendingTs',
+		checkFunction: isNumberOrString,
+		formatFunction: convertToNumber,
 	},
 	{
 		fieldName: 'componentId',
@@ -129,5 +137,18 @@ export const messageFieldsConfig: FieldsConfig = [
 		fieldName: 'forward',
 		targetFieldName: 'forward',
 		checkFunction: Type.isPlainObject,
+	},
+	{
+		fieldName: 'langfuseTraceId',
+		targetFieldName: 'langfuseTraceId',
+		checkFunction: isNumberOrString,
+		formatFunction: convertToString,
+	},
+	{
+		fieldName: CopilotSimpleReasoningPlanField,
+		targetFieldName: CopilotSimpleReasoningPlanField,
+		// No check: a value that fails one skips the write and leaves the previous plan on the message,
+		// while any value of the param has to reset the field. The format function is the single gate.
+		formatFunction: prepareReasoningPlan,
 	},
 ];

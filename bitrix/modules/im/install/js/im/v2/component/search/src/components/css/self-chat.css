@@ -19,6 +19,13 @@
 	color: var(--im-search-self-chat__color_hover-name);
 }
 
+/* Keyboard cursor of the search results; same ring as the carousel tile (carousel-user.css). */
+.bx-im-search-self-chat__container.--keyboard-active {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-sm);
+}
+
 .bx-im-search-self-chat__avatar {
 	width: 48px;
 	height: 48px;

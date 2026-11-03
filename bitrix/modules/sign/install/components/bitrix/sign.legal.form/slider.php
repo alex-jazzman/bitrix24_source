@@ -14,6 +14,10 @@ if ($siteId)
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
 \Bitrix\Main\Loader::includeModule('sign');
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
 // \Bitrix\Main\Loader::includeModule('crm');
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $APPLICATION->IncludeComponent(

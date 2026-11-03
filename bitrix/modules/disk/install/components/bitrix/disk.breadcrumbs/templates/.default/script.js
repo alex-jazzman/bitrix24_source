@@ -164,19 +164,35 @@ BX.Disk.BreadcrumbsClass = (function ()
 
 	BreadcrumbsClass.prototype.onOpenGridFolder = function (folder, isJumpFromFilteredList)
 	{
-		var lastCrumb = this.getLastCrumb();
-
-		if(lastCrumb.dataset.objectId == folder.id)
-		{
-			return;
-		}
-
 		if(isJumpFromFilteredList)
 		{
 			return;
 		}
 
+		var crumb = this.getCrumbByObjectId(folder.id);
+		if(crumb)
+		{
+			this.removeRightSidedCrumbs(crumb);
+			this.hideArrow(crumb);
+
+			return;
+		}
+
 		this.appendCrumb(folder);
+	};
+
+	BreadcrumbsClass.prototype.getCrumbByObjectId = function (objectId)
+	{
+		var crumbs = this.container.querySelectorAll('.js-disk-breadcrumbs-folder');
+		for(var i = 0; i < crumbs.length; i++)
+		{
+			if(crumbs[i].dataset.objectId == objectId)
+			{
+				return crumbs[i];
+			}
+		}
+
+		return null;
 	};
 
 	BreadcrumbsClass.prototype.getLastCrumb = function ()
@@ -248,6 +264,8 @@ BX.Disk.BreadcrumbsClass = (function ()
 		var link = newCrumb.querySelector('.js-disk-breadcrumbs-folder-link');
 		link.href = folder.link;
 		link.dataset.objectId = folder.id;
+		link.dataset.uniqueCode = folder.uniqueCode || '';
+		link.dataset.uls = folder.uls || '';
 		newCrumb.setAttribute('title', folder.name);
 		newCrumb.setAttribute('alt', folder.name);
 
@@ -314,6 +332,8 @@ BX.Disk.BreadcrumbsClass = (function ()
 
 		var objectId = crumb.getAttribute('data-object-id');
 		var isRoot = crumb.getAttribute('data-is-root');
+		var link = crumb.querySelector('.js-disk-breadcrumbs-folder-link');
+		var uls = link ? link.dataset.uls : '';
 		if (!objectId) {
 			BX.PreventDefault(event);
 			return;
@@ -326,7 +346,8 @@ BX.Disk.BreadcrumbsClass = (function ()
 			data: {
 				objectId: objectId,
 				showOnlyDeleted: this.showOnlyDeleted? 1 : 0,
-				isRoot: isRoot? 1 : 0
+				isRoot: isRoot? 1 : 0,
+				_uls: uls
 			},
 			onsuccess: function (data) {
 				if (!data)

@@ -63,6 +63,11 @@ $MESS['TASKS_V2_TASK_FULL_CARD_GO_TO_BITRIX_MARKET'] = 'Маркетплейс';
 $MESS['TASKS_V2_TASK_FULL_CARD_OPEN_TASK_NEW_TAB'] = 'Открыть в новой вкладке';
 //burger menu end
 $MESS['TASKS_V2_TASK_FULL_CARD_MORE'] = 'Ещё';
+// accessibility labels
+$MESS['TASKS_V2_TASK_FULL_CARD_CONTROL_PANEL_LABEL'] = 'Действия с задачей';
+$MESS['TASKS_V2_TASK_FULL_CARD_CLOSE'] = 'Закрыть';
+$MESS['TASKS_V2_TASK_FULL_CARD_CHIPS_COLLAPSE'] = 'Свернуть';
+// accessibility labels end
 // chat menu
 $MESS['TASKS_V2_TASK_FULL_CARD_MESSAGE_ADD_RESULT'] = 'Добавить в результаты';
 $MESS['TASKS_V2_TASK_FULL_CARD_MESSAGE_DELETE_RESULT'] = 'Убрать из результатов';

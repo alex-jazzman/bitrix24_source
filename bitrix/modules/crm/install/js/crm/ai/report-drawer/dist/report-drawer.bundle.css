@@ -1,5 +1,10 @@
 .crm-ai-report-drawer-slider {
-	background-image: url("images/css/icons/bg/bg.png"), linear-gradient(135deg, #3248D7 0%, #154183 100%);
+	background-image:
+		linear-gradient(rgba(10, 18, 58, 0.08), rgba(10, 18, 58, 0.08)),
+		linear-gradient(rgba(128, 128, 128, 0.08), rgba(128, 128, 128, 0.08)),
+		url("images/css/icons/bg/bg.webp"),
+		linear-gradient(135deg, #3248D7 0%, #154183 100%);
+	background-blend-mode: normal, saturation, normal, normal;
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-clip: border-box;
@@ -32,13 +37,32 @@ body.ui-page-slider-wrapper.crm-ai-report-drawer-frame {
 	min-height: 100% !important;
 	overflow: hidden !important;
 	background-color: transparent !important;
-	background-image: url("images/css/icons/bg/bg.png"), linear-gradient(135deg, #3248D7 0%, #154183 100%) !important;
+	background-image:
+		linear-gradient(rgba(10, 18, 58, 0.08), rgba(10, 18, 58, 0.08)),
+		linear-gradient(rgba(128, 128, 128, 0.08), rgba(128, 128, 128, 0.08)),
+		url("images/css/icons/bg/bg.webp"),
+		linear-gradient(135deg, #3248D7 0%, #154183 100%) !important;
+	background-blend-mode: normal, saturation, normal, normal !important;
 	background-repeat: no-repeat !important;
 	background-size: cover !important;
 	background-clip: border-box;
 	background-origin: padding-box;
 	background-position-x: 100%;
 	background-position-y: 0;
+}
+
+body.ui-page-slider-wrapper.crm-ai-report-drawer-frame::before {
+	content: "";
+	position: absolute;
+	left: 281px;
+	top: 243px;
+	width: 745px;
+	height: 418px;
+	border-radius: 50%;
+	background: linear-gradient(180deg, #C9187F 0%, #093690 100%);
+	filter: blur(88px);
+	pointer-events: none;
+	z-index: -1;
 }
 
 body.crm-ai-report-drawer-frame .ui-slider-page,
@@ -163,16 +187,23 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	flex-shrink: 0;
 	height: 18px;
 	width: 18px;
-	cursor: pointer;
 }
 
 .crm-ai-report-drawer__spoiler-toggle-trigger {
+	display: flex;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	cursor: pointer;
 }
 
-.crm-ai-report-drawer__spoiler-toggle-trigger .crm-ai-report-drawer__content-block-header-search,
-.crm-ai-report-drawer__spoiler-toggle-trigger .crm-ai-report-drawer__content-block-header-search * {
-	cursor: auto;
+.crm-ai-report-drawer__spoiler-toggle-trigger:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .crm-ai-report-drawer__spoiler-content {
@@ -217,7 +248,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	flex-direction: column;
 	align-items: flex-start;
 	align-self: stretch;
-	padding: var(--ui-space-inset-xl, 24px);
+	padding: var(--ui-space-inset-xl, 24px) var(--ui-space-inset-xl, 24px) var(--ui-space-inset-sm2, 14px);
 	border-radius: var(--ui-border-radius-3xl, 20px);
 	background: var(--ui-color-background-primary, #FFF);
 	box-shadow: var(--ui-shadow-bottom-2xs, 0px 1px 1px rgba(0, 0, 0, 0.06));
@@ -227,9 +258,9 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: center;
 	width: 100%;
-	margin-bottom: var(--ui-space-stack-md, 16px);
+	margin-bottom: var(--ui-space-stack-xl2, 26px);
 }
 
 .crm-ai-report-drawer__content-block-header.--minimized {
@@ -261,6 +292,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 .crm-ai-report-drawer__content-block-header-search-block {
 	justify-content: end;
 	gap: var(--ui-space-inline-sm, 12px);
+	height: 0;
 }
 
 .crm-ai-report-drawer__content-block-header-control {
@@ -308,12 +340,87 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	white-space: pre-line;
 }
 
+.crm-ai-report-drawer__content-block-note {
+	margin-top: var(--ui-space-stack-md, 16px);
+}
+
 .crm-ai-report-drawer__content-block-footer {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	width: 100%;
 	gap: var(--ui-space-inline-sm, 12px);
 	margin-top: var(--ui-space-stack-lg, 20px);
+}
+
+.crm-ai-report-drawer__content-block-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2, 10px);
+	flex-shrink: 0;
+}
+
+/* Reset of what the browser puts on a button, and nothing else.
+
+   The glyph deliberately lives on ::before rather than on the button itself. A mask clips everything
+   the element paints - the focus ring included - so an outline on a masked button computes exactly as
+   written and draws nothing at all. Measured: with the mask taken off, the same ring appears at once.
+   Keep the button unmasked, or the ring goes away again without a word from anywhere. */
+.crm-ai-report-drawer__content-block-action {
+	height: 18px;
+	width: 18px;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	appearance: none;
+	cursor: pointer;
+}
+
+.crm-ai-report-drawer__content-block-action::before {
+	content: '';
+	display: block;
+	height: 100%;
+	width: 100%;
+	background-color: var(--ui-color-base-4);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+}
+
+.crm-ai-report-drawer__content-block-action.--selected::before {
+	background-color: var(--ui-color-design-plain-a-content-icon);
+}
+
+.crm-ai-report-drawer__content-block-action.--selected {
+	cursor: default;
+}
+
+/* The ring of ui.system.*, with one departure: the offset is inward. Measured on the stand - the row
+   sits flush against `spoiler-content-inner`, which is `overflow: hidden`, and the slack around the
+   button there is 8px at the top and 0 at the bottom and on the left. Any outward ring is cut on two
+   sides; an inward one is whole. Do not "restore" the +2px of the convention without re-measuring
+   that slack.
+
+   Colour is left to the token on purpose: AIR redefines it per context, measured rgb(0, 117, 255) in
+   the light blocks against rgb(21, 135, 250) inside `--ui-context-edge-dark` of the assessment one. */
+.crm-ai-report-drawer__content-block-action:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.crm-ai-report-drawer__content-block-action.--copy::before {
+	-webkit-mask-image: var(--o-ui-icon-set__path_copy);
+	mask-image: var(--o-ui-icon-set__path_copy);
+}
+
+.crm-ai-report-drawer__content-block-action.--dislike::before {
+	-webkit-mask-image: var(--o-ui-icon-set__path_dislike);
+	mask-image: var(--o-ui-icon-set__path_dislike);
+}
+
+.crm-ai-report-drawer__content-block-action.--like::before {
+	-webkit-mask-image: var(--o-ui-icon-set__path_like);
+	mask-image: var(--o-ui-icon-set__path_like);
 }
 
 .crm-ai-report-drawer__content-block-message {
@@ -421,7 +528,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-stack-sm, 12px);
-	padding-bottom: var(--ui-space-stack-5xl, 44px);
+	padding-bottom: var(--ui-space-inset-sm2, 14px);
 }
 
 .crm-ai-report-drawer__content-block-assessment-header {
@@ -487,7 +594,11 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 
 .crm-ai-report-drawer__content-block-header-assessment-review {
 	color: var(--ui-color-base-0, #FFFFFF);
-	margin-bottom: var(--ui-space-stack-sm, 12px);
+	margin-bottom: var(--ui-space-stack-2xs, 4px);
+}
+
+.crm-ai-report-drawer__assessment-block .crm-ai-report-drawer__content-block-footer {
+	margin-top: var(--ui-space-stack-xs, 8px);
 }
 
 .crm-ai-report-drawer__content-block-assessment-criteria {
@@ -516,7 +627,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 .crm-ai-report-drawer__content-block-assessment-criteria-failures-list {
 	display: flex;
 	flex-direction: column;
-	gap: var(--ui-space-stack-xl, 24px);
+	gap: var(--ui-space-stack-md, 16px);
 	width: 100%;
 }
 
@@ -528,7 +639,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	box-sizing: border-box;
 	padding: var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px) var(--ui-space-inset-md2, 18px);
 	border-radius: var(--ui-border-radius-xl, 14px);
-	background: rgba(255, 255, 255, 0.80);
+	background: var(--ui-color-background-primary);
 }
 
 .crm-ai-report-drawer__content-block-assessment-criteria-footer-cell {
@@ -668,7 +779,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 		calc(24px + var(--ui-space-inset-2xs2, 6px));
 	display: flex;
 	flex-direction: column;
-	padding: var(--ui-space-inset-lg2, 22px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-xl, 24px);
+	padding: var(--ui-space-inset-md2, 18px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-md, 16px);
 }
 
 .crm-ai-report-drawer__failed-criteria-block-header {
@@ -695,7 +806,7 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 }
 
 .crm-ai-report-drawer__failed-criteria-block-ai-analysis {
-	margin-top: var(--ui-space-stack-xs, 8px);
+	margin-top: var(--ui-space-stack-2xs, 4px);
 	padding-left: var(--crm-ai-report-drawer__failed-criteria-header-offset);
 	box-sizing: border-box;
 }
@@ -708,6 +819,10 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	color: var(--ui-color-base-3);
 	cursor: pointer;
 	width: fit-content;
+}
+
+.crm-ai-report-drawer__failed-criteria-block-description + .crm-ai-report-drawer__spoiler-content:not(.--hidden) {
+	margin-top: var(--ui-space-stack-xs, 8px);
 }
 
 .crm-ai-report-drawer__criteria-name-circle {
@@ -820,6 +935,12 @@ body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slide
 	font: inherit;
 	line-height: inherit;
 	cursor: pointer;
+}
+
+.crm-ai-report-drawer__subtitle .crm-ai-report-drawer__subtitle-more-managers:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .crm-ai-report-drawer__subtitle .crm-ai-report-drawer__subtitle-more-managers::after {

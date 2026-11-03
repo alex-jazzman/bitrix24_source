@@ -5944,32 +5944,65 @@
 			}]);
 		}(Controller$d);
 
+		const BUTTON_CAPTION_PLACEHOLDER = '%buttonCaption%';
+		const DOCUMENT_TITLE_PLACEHOLDER = '%documentTitle%';
 		const FieldAgreement = {
 			mixins: [MixinField],
 			template: `
-		<div class="b24-form-control-container">
-			<label>
+		<div class="b24-form-control-container" :data-testid="'crm-agreement-field-' + field.id">
+			<div
+				v-if="field.isAcceptedBySubmit()"
+				:data-testid="'crm-agreement-submit-text-' + field.id"
+				class="b24-form-field-agreement-submit-text"
+			>{{ linkParts.before }}<a
+				v-if="field.isLink()"
+				:data-testid="'crm-agreement-submit-link-' + field.id"
+				:href="linkUrl"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="b24-form-field-agreement-submit-link"
+			>{{ linkParts.text }}</a><button
+				v-else
+				type="button"
+				:data-testid="'crm-agreement-read-btn-' + field.id"
+				class="b24-form-field-agreement-submit-link"
+				aria-haspopup="dialog"
+				@click="requestConsent"
+			>{{ linkParts.text }}</button>{{ linkParts.after }}</div>
+			<label v-else>
 				<input type="checkbox" 
 					:id="fieldId"
+					:data-testid="'crm-agreement-checkbox-' + field.id"
 					:aria-required="ariaRequired"
 					:aria-invalid="ariaInvalid"
 					:aria-describedby="ariaDescribedby"
 					v-model="field.item().selected"
 					@blur="$emit('input-blur', this)"
 					@focus="$emit('input-focus', this)"
+					@change="field.resetAgreementNotice()"
 					@click.capture="requestConsent"
 					onclick="this.blur()"
 				>
-				<span v-if="field.isLink()" class="b24-form-control-desc">{{ linkParts.before }}<a :href="linkUrl" target="_blank" rel="noopener noreferrer" class="b24-form-field-agreement-link">{{ linkParts.text }}</a>{{ linkParts.after }}</span>
+				<span v-if="field.isLink()" class="b24-form-control-desc">{{ linkParts.before }}<a :data-testid="'crm-agreement-link-' + field.id" :href="linkUrl" target="_blank" rel="noopener noreferrer" class="b24-form-field-agreement-link">{{ linkParts.text }}</a>{{ linkParts.after }}</span>
 				<span v-else class="b24-form-control-desc">
-					<span class="b24-form-field-agreement-link">{{ field.label }}</span>
+					<span class="b24-form-field-agreement-link" :data-testid="'crm-agreement-label-' + field.id">{{ field.label }}</span>
 				</span>
 				<span v-show="field.required" class="b24-form-control-required" aria-hidden="true">*</span>
 			</label>
-			<field-item-alert v-bind:field="field"></field-item-alert>
+			<span
+				v-if="field.agreementNoticeVisible"
+				:data-testid="'crm-agreement-notice-' + field.id"
+				class="b24-form-field-agreement-notice"
+				role="status"
+				aria-live="polite"
+			>{{ field.getAgreementNoticeText() }}</span>
+			<field-item-alert v-if="!field.isAcceptedBySubmit()" v-bind:field="field"></field-item-alert>
 		</div>
 	`,
 			computed: {
+				agreementNoticePolicy() {
+					return this.field.getAgreementNoticePolicy();
+				},
 				linkUrl() {
 					let url = this.field.options.content.url.trim();
 					if (!/^http:|^https:/.test(url)) {
@@ -5978,13 +6011,47 @@
 					return url;
 				},
 				linkParts() {
+					if (this.field.isAcceptedBySubmit()) {
+						return this.submitConsentParts;
+					}
 					const parts = String(this.field.label).split('%');
 					return {
 						before: parts[0] || '',
 						text: parts.length > 1 ? parts[1] : '',
 						after: parts.length > 2 ? parts.slice(2).join('%') : ''
 					};
+				},
+				submitConsentParts() {
+					const form = this.$root.form;
+					const caption = form.buttonCaption || form.messages.get('defButton');
+					const personal = this.field.options.isPersonalDataAgreement === true;
+					const message = personal ? 'consentAcceptBySubmit' : 'consentAcceptBySubmitDocument';
+					const parts = String(this.field.messages.get(message)).split(DOCUMENT_TITLE_PLACEHOLDER);
+
+					// caption comes from form settings: substitute it after the split and via a function,
+					// so it can inject neither the marker nor a `$&` replacement pattern
+					const withCaption = part => (part || '').replace(BUTTON_CAPTION_PLACEHOLDER, () => caption);
+					if (!personal && parts.length === 1) {
+						return {
+							before: '',
+							text: withCaption(parts[0]),
+							after: ''
+						};
+					}
+					return {
+						before: withCaption(parts[0]),
+						text: personal ? this.field.messages.get('consentAcceptBySubmitLink') || this.field.options.content.title : this.field.options.content.title,
+						after: withCaption(parts.length > 1 ? parts.slice(1).join(DOCUMENT_TITLE_PLACEHOLDER) : '')
+					};
 				}
+			},
+			watch: {
+				agreementNoticePolicy() {
+					this.field.refreshAgreementNoticePolicy();
+				}
+			},
+			beforeDestroy() {
+				this.field.resetAgreementNotice();
 			},
 			methods: {
 				requestConsent(e) {
@@ -6007,6 +6074,10 @@
 			function Controller(options) {
 				var _this;
 				babelHelpers.classCallCheck(this, Controller);
+				if (options.acceptBySubmit === true) {
+					options.checked = true;
+					options.required = true;
+				}
 				options.type = 'agreement';
 				options.visible = true;
 				options.multiple = false;
@@ -6014,6 +6085,10 @@
 				options.values = null;
 				_this = _callSuper$d(this, Controller, [options]);
 				babelHelpers.defineProperty(_this, "consentRequested", false);
+				babelHelpers.defineProperty(_this, "agreementNoticeVisible", false);
+				babelHelpers.defineProperty(_this, "agreementNoticeAcknowledged", false);
+				babelHelpers.defineProperty(_this, "agreementNoticeTimer", null);
+				babelHelpers.defineProperty(_this, "agreementNoticePolicy", '');
 				return _this;
 			}
 			babelHelpers.inherits(Controller, _BaseField$Controller);
@@ -6027,16 +6102,69 @@
 				value: function applyConsent() {
 					this.consentRequested = false;
 					this.item().selected = true;
+					this.resetAgreementNotice();
 				}
 			}, {
 				key: "rejectConsent",
 				value: function rejectConsent() {
 					this.consentRequested = false;
 					this.item().selected = false;
+					this.resetAgreementNotice();
+				}
+			}, {
+				key: "isAcceptedBySubmit",
+				value: function isAcceptedBySubmit() {
+					return this.options.acceptBySubmit === true;
+				}
+			}, {
+				key: "resetAgreementNotice",
+				value: function resetAgreementNotice() {
+					clearTimeout(this.agreementNoticeTimer);
+					this.agreementNoticeTimer = null;
+					this.agreementNoticeVisible = false;
+					this.agreementNoticeAcknowledged = false;
+				}
+			}, {
+				key: "getAgreementNoticeText",
+				value: function getAgreementNoticeText() {
+					return String(this.options.agreementNoticeText || '').trim() || this.messages.get('agreementNoticeDefault');
+				}
+			}, {
+				key: "getAgreementNoticePolicy",
+				value: function getAgreementNoticePolicy() {
+					const options = this.options;
+					return JSON.stringify([options.id, options.revision, options.content, options.agreementNoticeAllowed, options.agreementNoticeEnabled, options.agreementNoticeText, options.isPersonalDataAgreement, options.acceptBySubmit, this.required]);
+				}
+			}, {
+				key: "refreshAgreementNoticePolicy",
+				value: function refreshAgreementNoticePolicy() {
+					const policy = this.getAgreementNoticePolicy();
+					if (policy !== this.agreementNoticePolicy) {
+						this.resetAgreementNotice();
+						this.agreementNoticePolicy = policy;
+					}
+				}
+			}, {
+				key: "requestAgreementNotice",
+				value: function requestAgreementNotice() {
+					this.refreshAgreementNoticePolicy();
+					if (this.options.agreementNoticeAllowed !== true || this.options.agreementNoticeEnabled !== true || this.options.isPersonalDataAgreement === true || this.required || this.isAcceptedBySubmit() || this.item().selected || this.agreementNoticeAcknowledged) {
+						return false;
+					}
+					this.agreementNoticeAcknowledged = true;
+					this.agreementNoticeVisible = true;
+					this.agreementNoticeTimer = setTimeout(() => {
+						this.agreementNoticeVisible = false;
+						this.agreementNoticeTimer = null;
+					}, 3000);
+					return true;
 				}
 			}, {
 				key: "requestConsent",
 				value: function requestConsent() {
+					if (this.isAcceptedBySubmit()) {
+						return true;
+					}
 					this.consentRequested = false;
 					if (!this.required || this.valid()) {
 						return true;
@@ -6234,6 +6362,11 @@
 						this.liveFieldController = BX.Calendar.Resourcebooking.getLiveField({
 							wrap: this.$el,
 							field: this.field.booking,
+							sourceType: 'crm-webform',
+							formId: this.$root.form.identification.id,
+							sec: this.$root.form.identification.sec,
+							fieldCode: this.field.name,
+							editorPreview: this.$root.form.editMode === true,
 							actionAgent: (action, options) => {
 								let formData = new FormData();
 								const data = options.data || {};
@@ -7109,6 +7242,18 @@
 							break;
 						case EventTypes.sendSuccess:
 							this.send('end');
+							if (data?.refill?.active) {
+								_classPrivateFieldSet$8(_isStartSent, this, false);
+								_classPrivateFieldSet$8(_filledFields, this, []);
+							}
+							break;
+						case EventTypes.sendError:
+							try {
+								const request = _classPrivateFieldGet$8(_form$1, this).analyticsHandler('error', _classPrivateFieldGet$8(_form$1, this).identification.id, {
+									errorType: 'other'
+								});
+								request?.catch?.(() => null);
+							} catch {}
 							break;
 					}
 				}
@@ -8386,7 +8531,7 @@
 				};
 			},
 			template: `
-		<div>
+		<div data-testid="crm-agreements-root">
 			<component v-bind:is="'field'"
 				v-for="field in fields"
 				v-bind:key="field.id"
@@ -8395,6 +8540,7 @@
 
 			<b24-popup
 				:mountId="formId"
+				:messages="messages"
 				:show="visible" 
 				:title="title" 
 				:maxWidth="maxWidth" 
@@ -8402,23 +8548,23 @@
 				:isOnTop="true"
 				:scrollDown="true"
 				:scrollDownText="messages.get('consentReadAll')"
-				@hide="reject"
+				@hide="onHide"
 			>
-				<div style="padding: 0 12px 12px;">
-					<div v-html="html"></div>
+				<div data-testid="crm-agreement-popup" style="padding: 0 12px 12px;">
+					<div data-testid="crm-agreement-popup-text" v-html="html"></div>
 					
-					<div class="b24-form-btn-container" style="padding: 12px 0 0;">
+					<div v-if="!isReadOnly()" class="b24-form-btn-container" style="padding: 12px 0 0;">
 						<div class="b24-form-btn-block"
 							@click.prevent="apply"						
 						>
-							<button type="button" class="b24-form-btn">
+							<button data-testid="crm-agreement-popup-accept-btn" type="button" class="b24-form-btn">
 								{{ messages.get('consentAccept') }}
 							</button>
 						</div>
 						<div class="b24-form-btn-block"
 							@click.prevent="reject"						
 						>
-							<button type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
+							<button data-testid="crm-agreement-popup-reject-btn" type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
 								{{ messages.get('consentReject') }}
 							</button>
 						</div>
@@ -8436,6 +8582,17 @@
 				}
 			},
 			methods: {
+				isReadOnly() {
+					return this.field && this.field.isAcceptedBySubmit();
+				},
+				onHide() {
+					if (this.isReadOnly()) {
+						this.field = null;
+						this.hidePopup();
+						return;
+					}
+					this.reject();
+				},
 				apply() {
 					this.field.applyConsent();
 					this.field = null;
@@ -9802,6 +9959,7 @@
 			}, {
 				key: "reset",
 				value: function reset() {
+					this.agreements.forEach(field => field.resetAgreementNotice());
 					_classPrivateFieldGet$1(_fields, this).forEach(field => {
 						field.reset();
 						if (_classPrivateFieldGet$1(_dependence, this)) {
@@ -9829,6 +9987,7 @@
 					this.error = false;
 					this.sent = false;
 					if (!this.valid()) {
+						_assertClassBrand$1(_Controller_brand, this, _sendValidationError).call(this);
 						const firstInvalidField = _classPrivateFieldGet$1(_fields, this).find(field => !field.valid());
 						if (firstInvalidField) {
 							_assertClassBrand$1(_Controller_brand, this, _focusFirstInvalidField).call(this, firstInvalidField);
@@ -9842,6 +10001,10 @@
 					}
 					if (this.yandexCaptcha.canUse() && !this.yandexCaptcha.isVerified()) {
 						this.yandexCaptcha.verify(() => this.submit());
+						return false;
+					}
+					const notices = this.agreements.map(field => field.requestAgreementNotice());
+					if (notices.some(shown => shown)) {
 						return false;
 					}
 					this.loading = true;
@@ -9955,6 +10118,11 @@
 					if (typeof options.identification === 'object') {
 						this.identification = options.identification;
 					}
+
+					// must be applied before setFields(): field components read it while building their own preview
+					if (typeof options.editMode === 'boolean') {
+						this.editMode = options.editMode;
+					}
 					if (options.messages) {
 						this.messages.setMessages(options.messages || {});
 					}
@@ -9994,6 +10162,7 @@
 						this.setFields(options.fields);
 					}
 					if (Array.isArray(options.agreements)) {
+						this.agreements.forEach(field => field.resetAgreementNotice());
 						this.agreements = [];
 						options.agreements.forEach(fieldOptions => {
 							fieldOptions.messages = this.messages;
@@ -10213,6 +10382,7 @@
 			}, {
 				key: "destroy",
 				value: function destroy() {
+					this.agreements.forEach(field => field.resetAgreementNotice());
 					this.emit(EventTypes.destroy);
 					this.unsubscribeAll();
 					_classPrivateFieldGet$1(_vue, this).$destroy();
@@ -10221,6 +10391,16 @@
 				}
 			}]);
 		}(Event);
+		function _sendValidationError() {
+			try {
+				const request = this.analyticsHandler('error', this.identification.id, {
+					errorType: 'validation'
+				});
+				request?.catch?.(() => null);
+			} catch {
+				// Telemetry must not block submission.
+			}
+		}
 		function _focusFirstInvalidField(field) {
 			setTimeout(() => {
 				const fieldId = Aria.getFieldId(field);
@@ -10324,13 +10504,52 @@
 		function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
 		function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
 		function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+		function createTelemetryAttempt() {
+			let attemptId = createUuidV4();
+			let startRequest = null;
+			return {
+				appendTo: formData => {
+					formData.set('attemptId', attemptId);
+				},
+				// the server ignores events of an attempt it has not started yet
+				ensureStarted: sendStart => {
+					startRequest = startRequest || Promise.resolve(sendStart());
+					return startRequest;
+				},
+				rotate: () => {
+					attemptId = createUuidV4();
+					startRequest = null;
+				}
+			};
+		}
+		function createUuidV4() {
+			const bytes = new Uint8Array(16);
+			if (window.crypto?.getRandomValues) {
+				window.crypto.getRandomValues(bytes);
+			} else {
+				for (let index = 0; index < bytes.length; index += 1) {
+					bytes[index] = Math.floor(Math.random() * 256);
+				}
+			}
+			bytes[6] = bytes[6] & 0x0F | 0x40;
+			bytes[8] = bytes[8] & 0x3F | 0x80;
+			return [...bytes].map((byte, index) => {
+				const separator = [4, 6, 8, 10].includes(index) ? '-' : '';
+				const hex = byte.toString(16);
+				return separator + (hex.length === 1 ? `0${hex}` : hex);
+			}).join('');
+		}
 		var _forms = /*#__PURE__*/new WeakMap();
 		var _userProviderPromise = /*#__PURE__*/new WeakMap();
+		var _agreementRefreshRequests = /*#__PURE__*/new WeakMap();
+		var _pendingSiteButtonForms = /*#__PURE__*/new WeakMap();
 		let Application = /*#__PURE__*/function () {
 			function Application() {
 				babelHelpers.classCallCheck(this, Application);
 				_classPrivateFieldInitSpec(this, _forms, []);
 				_classPrivateFieldInitSpec(this, _userProviderPromise, void 0);
+				_classPrivateFieldInitSpec(this, _agreementRefreshRequests, {});
+				_classPrivateFieldInitSpec(this, _pendingSiteButtonForms, {});
 			}
 			return babelHelpers.createClass(Application, [{
 				key: "list",
@@ -10340,9 +10559,10 @@
 			}, {
 				key: "get",
 				value: function get(id) {
-					return _classPrivateFieldGet(_forms, this).filter(form => {
+					const form = _classPrivateFieldGet(_forms, this).filter(form => {
 						return form.getId() === id;
 					})[0];
+					return form || _classPrivateFieldGet(_pendingSiteButtonForms, this)[id] || null;
 				}
 			}, {
 				key: "create",
@@ -10372,6 +10592,7 @@
 			}, {
 				key: "createForm24",
 				value: function createForm24(b24options, options) {
+					const telemetry = createTelemetryAttempt();
 					options.provider = options.provider || {};
 					if (!options.provider.user) {
 						options.provider.user = this.getUserProvider24(b24options, options);
@@ -10385,8 +10606,12 @@
 							}
 						}
 					}
-					options.provider.submit = this.getSubmitProvider24(b24options);
-					options.analyticsHandler = this.getAnalyticsSender(b24options);
+					Object.assign(options.provider, {
+						submit: this.getSubmitProvider24(b24options, telemetry)
+					});
+					Object.assign(options, {
+						analyticsHandler: this.getAnalyticsSender(b24options, telemetry)
+					});
 					if (b24options.lang) {
 						options.language = b24options.lang;
 					}
@@ -10503,7 +10728,7 @@
 				}
 			}, {
 				key: "getSubmitProvider24",
-				value: function getSubmitProvider24(b24options) {
+				value: function getSubmitProvider24(b24options, telemetry) {
 					return (form, formData) => {
 						let trace = b24options.usedBySiteButton && BX.SiteButton ? BX.SiteButton.getTrace() : window.b24Tracker && b24Tracker.guest ? b24Tracker.guest.getTrace() : null;
 						const eventData = {
@@ -10519,6 +10744,22 @@
 						formData.set('trace', trace);
 						formData.set('entities', JSON.stringify(b24options.entities || []));
 						formData.set('security_sign', eventData.sign || b24options.sign);
+						const explicitConsents = (form.agreements || []).reduce((selected, agreement) => {
+							if (!agreement.isAcceptedBySubmit() && agreement.value() === 'Y') {
+								selected[agreement.name] = 'Y';
+							}
+							return selected;
+						}, {});
+						formData.set('explicitConsents', JSON.stringify(explicitConsents));
+						const displayedSubmitAgreements = (form.agreements || []).reduce((displayed, agreement) => {
+							if (agreement.isAcceptedBySubmit()) {
+								displayed[agreement.name] = agreement.options.revision;
+							}
+							return displayed;
+						}, {});
+						formData.set('displayedSubmitAgreements', JSON.stringify(displayedSubmitAgreements));
+						formData.set('telemetry_sign', b24options.telemetrySign || '');
+						telemetry.appendTo(formData);
 						return this.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.fill', formData).then(response => {
 							return response.json();
 						}).then(data => {
@@ -10529,6 +10770,9 @@
 							if (data && data.gid && window.b24Tracker && b24Tracker.guest && b24Tracker.guest.setGid) {
 								b24Tracker.guest.setGid(data.gid);
 							}
+							if (data?.resultId && data?.refill?.active) {
+								telemetry.rotate();
+							}
 							return new Promise(resolve => {
 								resolve(data);
 							});
@@ -10538,8 +10782,82 @@
 			}, {
 				key: "initFormScript24",
 				value: function initFormScript24(b24options) {
+					return this.mountFormScript24(b24options);
+				}
+			}, {
+				key: "refreshSubmitAgreements24",
+				value: function refreshSubmitAgreements24(b24options) {
+					if (b24options.data?.acceptBySubmitEnabled !== true) {
+						return Promise.resolve();
+					}
+					const key = JSON.stringify([b24options.address, b24options.id, b24options.sec]);
+					let request = _classPrivateFieldGet(_agreementRefreshRequests, this)[key];
+					if (!request) {
+						const formData = new FormData();
+						formData.set('id', b24options.id);
+						formData.set('sec', b24options.sec);
+						formData.set('agreementsOnly', 'Y');
+						request = this.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.get', formData).then(response => response.json()).then(response => {
+							const agreements = response?.result?.agreements ?? response?.result?.config?.data?.agreements;
+							if (!Array.isArray(agreements)) {
+								throw new Error('Could not refresh form agreements');
+							}
+							return agreements;
+						}).then(agreements => {
+							setTimeout(() => {
+								if (_classPrivateFieldGet(_agreementRefreshRequests, this)[key] === request) {
+									delete _classPrivateFieldGet(_agreementRefreshRequests, this)[key];
+								}
+							}, 15000);
+							return agreements;
+						}).catch(error => {
+							delete _classPrivateFieldGet(_agreementRefreshRequests, this)[key];
+							throw error;
+						});
+						_classPrivateFieldGet(_agreementRefreshRequests, this)[key] = request;
+					}
+					return request.then(agreements => {
+						b24options.data.agreements = Conv.cloneDeep(agreements);
+					}).catch(() => {
+						b24options.data.agreements = (b24options.data.agreements || []).map(agreement => ({
+							...agreement,
+							agreementNoticeAllowed: false,
+							...(agreement.acceptBySubmit === true ? {
+								acceptBySubmit: false,
+								checked: false,
+								required: true
+							} : {})
+						}));
+					});
+				}
+			}, {
+				key: "mountFormScript24",
+				value: function mountFormScript24(b24options) {
+					const mountWithCurrentAgreements = mount => {
+						if (b24options.data?.acceptBySubmitEnabled !== true) {
+							mount();
+							return;
+						}
+						this.refreshSubmitAgreements24(b24options).then(mount);
+					};
 					if (b24options.usedBySiteButton) {
-						this.createWidgetForm24(b24options, Conv.cloneDeep(b24options.data));
+						const id = b24options.data.id;
+						let shouldShow = false;
+						_classPrivateFieldGet(_pendingSiteButtonForms, this)[id] = {
+							show: () => {
+								shouldShow = true;
+							},
+							hide: () => {
+								shouldShow = false;
+							}
+						};
+						mountWithCurrentAgreements(() => {
+							const form = this.createWidgetForm24(b24options, Conv.cloneDeep(b24options.data));
+							delete _classPrivateFieldGet(_pendingSiteButtonForms, this)[id];
+							if (shouldShow) {
+								form.show();
+							}
+						});
 						return;
 					}
 					let nodes = document.querySelectorAll('script[data-b24-form]');
@@ -10552,18 +10870,27 @@
 						if (attributes[1] !== b24options.id || attributes[2] !== b24options.sec) {
 							return;
 						}
+						const form24Options = {
+							...b24options,
+							telemetrySign: node.getAttribute('data-b24-form-telemetry-sign') || b24options.telemetrySign || new URLSearchParams(window.location.search).get('telemetry_sign')
+						};
 						node.setAttribute('data-b24-loaded', true);
-						const options = Conv.cloneDeep(b24options.data);
 						const id = node.getAttribute('data-b24-id');
-						if (id) {
-							options.id = id;
-						}
+						const formOptions = () => {
+							const options = Conv.cloneDeep(b24options.data);
+							if (id) {
+								options.id = id;
+							}
+							return options;
+						};
 						switch (attributes[0]) {
 							case 'auto':
 								setTimeout(() => {
-									this.createForm24(b24options, Object.assign(options, {
-										view: b24options.views.auto
-									})).show();
+									mountWithCurrentAgreements(() => {
+										this.createForm24(form24Options, Object.assign(formOptions(), {
+											view: b24options.views.auto
+										})).show();
+									});
 								}, (b24options.views.auto.delay || 1) * 1000);
 								break;
 							case 'click':
@@ -10576,40 +10903,71 @@
 								}
 								if (clickElement) {
 									let form;
+									let pending = false;
 									clickElement.addEventListener('click', () => {
-										if (!form) {
-											form = this.createForm24(b24options, Object.assign(options, {
-												view: b24options.views.click
-											}));
+										if (form) {
+											form.show();
+											return;
 										}
-										form.show();
+										if (!pending) {
+											pending = true;
+											mountWithCurrentAgreements(() => {
+												pending = false;
+												form = this.createForm24(form24Options, Object.assign(formOptions(), {
+													view: b24options.views.click
+												}));
+												form.show();
+											});
+										}
 									});
 								}
 								break;
 							default:
-								let target = document.createElement('div');
-								node.parentElement.insertBefore(target, node);
-								this.createForm24(b24options, Object.assign(options, {
-									node: target
-								}));
+								mountWithCurrentAgreements(() => {
+									if (!node.parentElement) {
+										return;
+									}
+									const target = document.createElement('div');
+									node.parentElement.insertBefore(target, node);
+									this.createForm24(form24Options, Object.assign(formOptions(), {
+										node: target
+									}));
+								});
 								break;
 						}
 					});
 				}
 			}, {
 				key: "getAnalyticsSender",
-				value: function getAnalyticsSender(b24options) {
-					return (counter, formId) => {
-						if (window.sessionStorage) {
+				value: function getAnalyticsSender(b24options, telemetry) {
+					const send = (counter, formId, analyticsData) => {
+						const formData = new FormData();
+						let telemetryCounter = counter;
+						const legacyStartKey = `b24-analytics-counter-${formId}-start`;
+						if (counter === 'start' && window.sessionStorage) {
+							if (sessionStorage.getItem(legacyStartKey) === 'y') {
+								telemetryCounter = 'telemetry_start';
+							} else {
+								sessionStorage.setItem(legacyStartKey, 'y');
+							}
+						}
+						formData.append('counter', telemetryCounter);
+						formData.append('formId', formId);
+						if (counter === 'start' || counter === 'error') {
+							formData.append('sec', b24options.sec);
+							telemetry.appendTo(formData);
+							formData.append('telemetry_sign', b24options.telemetrySign || '');
+						}
+						if (counter !== 'error' && counter !== 'start' && window.sessionStorage) {
 							const key = `b24-analytics-counter-${formId}-${counter}`;
 							if (sessionStorage.getItem(key) === 'y') {
 								return Promise.resolve([]);
 							}
 							sessionStorage.setItem(key, 'y');
 						}
-						const formData = new FormData();
-						formData.append('counter', counter);
-						formData.append('formId', formId);
+						if (counter === 'error' && ['validation', 'other'].includes(analyticsData.errorType)) {
+							formData.append('errorType', analyticsData.errorType);
+						}
 						return this.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.handleAnalytics', formData).then(response => {
 							return response.json();
 						}).then(data => {
@@ -10619,7 +10977,16 @@
 							return new Promise(resolve => {
 								resolve(data);
 							});
-						});
+						}).catch(() => []);
+					};
+					return (counter, formId, analyticsData = {}) => {
+						if (counter === 'start') {
+							return telemetry.ensureStarted(() => send(counter, formId, analyticsData));
+						}
+						if (counter === 'error') {
+							return telemetry.ensureStarted(() => send('start', formId, {})).then(() => send(counter, formId, analyticsData));
+						}
+						return send(counter, formId, analyticsData);
 					};
 				}
 			}]);

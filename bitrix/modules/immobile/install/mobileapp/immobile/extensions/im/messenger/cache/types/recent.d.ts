@@ -1,7 +1,11 @@
-import {RecentWidgetItem} from "../../view/recent/types/recent-item";
+import {RecentWidgetItem} from "../../lib/element/recent/types/base";
+import {RecentItemButtonContractProfile} from "../types";
 import {JNListWidgetSectionItem} from "../../../../../../../../../mobile/dev/janative/api";
 
-export type RecentViewCacheData = {
-	sections: JNListWidgetSectionItem
-	items: RecentWidgetItem
+export type RecentViewCachePendingSave = {
+	sections: Array<JNListWidgetSectionItem>,
+	itemList: Array<RecentWidgetItem>,
+	theme: string,
+	epoch: number,
+	recentItemButtonContractProfile: RecentItemButtonContractProfile,
 }

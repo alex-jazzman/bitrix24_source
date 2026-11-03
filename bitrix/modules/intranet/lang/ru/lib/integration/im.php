@@ -1,2 +1,5 @@
 <?
+
+$MESS['INTRANET_NOTIFY_SCHEMA_PRODUCT_SOURCE_NAME']  = 'Интранет';
+$MESS['INTRANET_NOTIFY_SCHEMA_PRODUCT_SOURCE_DESCRIPTION'] = 'Новости компании и объявления';
 $MESS['INTRANET_NOTIFY_SCHEMA_SECURITY_OTP'] = "Код подтверждения входа";

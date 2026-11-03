@@ -1,4 +1,5 @@
 <?php
+IncludeModuleLangFile(__FILE__);
 
 global $APPLICATION;
 
@@ -9,7 +10,12 @@ if (!check_bitrix_sessid())
 
 if ($exception = $APPLICATION->GetException())
 {
-	CAdminMessage::ShowMessage(GetMessage('MAILMOBILE_MODULE_UNINSTALL_ERROR') . '<br>' . $exception->GetString());
+	CAdminMessage::ShowMessage([
+		'TYPE' => 'ERROR',
+		'MESSAGE' => GetMessage('MAILMOBILE_MODULE_UNINSTALL_ERROR'),
+		'DETAILS' => $exception->GetString(),
+		'HTML' => true,
+	]);
 	?>
 	<form action="<?= $APPLICATION->GetCurPage() ?>">
 		<p>
@@ -29,7 +35,11 @@ else
 		<input type="hidden" name="uninstall" value="Y">
 		<input type="hidden" name="step" value="2">
 
-		<?php CAdminMessage::ShowMessage(GetMessage('MAILMOBILE_MODULE_UNINSTALL_WARNING', ['#BR#' => '<br />']))?>
+		<?php CAdminMessage::ShowMessage([
+			'TYPE' => 'ERROR',
+			'MESSAGE' => GetMessage('MAILMOBILE_MODULE_UNINSTALL_WARNING', ['#BR#' => '<br />']),
+			'HTML' => true,
+		])?>
 
 		<input type="submit" name="inst" value="<?=GetMessage("MOD_UNINST_DEL")?>">
 	</form>

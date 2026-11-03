@@ -21,7 +21,16 @@ const MAX_LIST_ITEMS = 200;
 // cannot leave a literal BB-code tail once the 100-pass guard trips. The pattern
 // is used only with String.replace (lastIndex is reset by replace), and the loop
 // guard uses a separate non-global .test() regex, so there is no shared-state hazard.
-const INNERMOST_LIST_PATTERN = /\[(list(?:=1)?(?:\s+start=\d+)?)]((?:(?!\[list)[\s\S])*?)\[\/list]/gi;
+//
+// The optional trailing break is part of the block, and the asymmetry is deliberate.
+// AFTER: a list opens a line of its own, so a break typed right behind [/list]
+// would draw an empty line instead of merely ending one — the pattern swallows
+// exactly one, turning K source breaks into K-1 blank lines. BEFORE: nothing is
+// done, a break in front only ends the previous paragraph and belongs to it.
+// Both spellings are matched: a break re-serialized through outerHTML comes back
+// as '<br>', which is what the reply-quote container does (quote.js), and a
+// pattern knowing only '<br />' would not reach inside it.
+const INNERMOST_LIST_PATTERN = /\[(list(?:=1)?(?:\s+start=\d+)?)]((?:(?!\[list)[\s\S])*?)\[\/list](?:<br ?\/?>)?/gi;
 
 export const ParserList = {
 

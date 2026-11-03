@@ -10,6 +10,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/view/dialog',
 		'im:messenger/lib/parser',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/params',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/date-formatter',

@@ -27,12 +27,6 @@ if (!CModule::IncludeModule('bizprocdesigner'))
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
-{
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-	return;
-}
-
 $arTypes = [
 	'CRM_LEAD' => [
 		'ID' => 'CRM_LEAD',
@@ -90,7 +84,7 @@ $dynamicTypesMap->load([
 
 foreach ($dynamicTypesMap->getTypes() as $type)
 {
-	if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerSupported($type->getEntityTypeId()))
+	if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($type->getEntityTypeId()))
 	{
 		$typeId = "CRM_DYNAMIC_{$type->getEntityTypeId()}";
 
@@ -103,17 +97,36 @@ foreach ($dynamicTypesMap->getTypes() as $type)
 	}
 }
 
-$arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? $_REQUEST['entity_id']: $arParams['BP_ENTITY_ID'];
-$arResult['BP_ID'] = isset($_REQUEST['bp_id']) ? $_REQUEST['bp_id']: $arParams['BP_BP_ID'];
-$arResult['ENTITY_NAME'] = $arTypes[$arResult['ENTITY_ID']]['NAME'];
-$arResult['DOCUMENT_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['TYPE'];
-$arResult['ENTITY_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['DOCUMENT'];
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? null) === true;
+$requestedEntityId = $isSettingsHub
+	? ($arParams['BP_ENTITY_ID'] ?? '')
+	: ($_REQUEST['entity_id'] ?? $arParams['BP_ENTITY_ID']);
+$arResult['ENTITY_ID'] = is_string($requestedEntityId) ? $requestedEntityId : '';
+$arResult['BP_ID'] = $isSettingsHub
+	? ($arParams['BP_BP_ID'] ?? 0)
+	: ($_REQUEST['bp_id'] ?? $arParams['BP_BP_ID']);
 
-if (!$arResult['DOCUMENT_TYPE'] || !$arResult['ENTITY_TYPE'])
+$selectedType = $arTypes[$arResult['ENTITY_ID']] ?? null;
+if ($selectedType === null)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
+
+$canManageTemplates = CBPDocument::CanUserOperateDocumentType(
+	CBPCanUserOperateOperation::CreateWorkflow,
+	\Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+	['crm', $selectedType['DOCUMENT'], $selectedType['TYPE']],
+);
+if (!$canManageTemplates)
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
+}
+
+$arResult['ENTITY_NAME'] = $selectedType['NAME'];
+$arResult['DOCUMENT_TYPE'] = $selectedType['TYPE'];
+$arResult['ENTITY_TYPE'] = $selectedType['DOCUMENT'];
 
 define('CRM_ENTITY', $arResult['ENTITY_TYPE']);
 

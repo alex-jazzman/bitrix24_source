@@ -54,13 +54,12 @@ export class LeftMenu
 			leftDirectoryMenuWrapper.append(favoritesNode);
 		}
 
-		// the drafts item is rendered on the server above the folders, and its place is under them:
-		// in the block of the favorites one where there is one, right after the folders where there is not
-		const draftsNode = leftDirectoryMenuWrapper.querySelector('.mail-draft-navigation');
-		if (draftsNode)
-		{
-			(favoritesNode ?? leftDirectoryMenuWrapper).append(draftsNode);
-		}
+		// draft and scheduled sections are rendered on the server above the folders, and their place is under
+		// them: in the favorites block where there is one, right after the folders where there is not
+		const messageSections = leftDirectoryMenuWrapper.querySelectorAll('.mail-draft-navigation');
+		messageSections.forEach((section) => {
+			(favoritesNode ?? leftDirectoryMenuWrapper).append(section);
+		});
 
 		if (config['labelsEnabled'])
 		{

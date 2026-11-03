@@ -9,7 +9,10 @@ return [
 	'js' => 'dist/kanban-sort.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'main.popup',
+		'ui.a11y',
+		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 ];

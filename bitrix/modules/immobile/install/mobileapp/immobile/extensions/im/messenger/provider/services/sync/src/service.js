@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/services/sync/service', (require, exports, module) => {
 	const { Type } = require('type');
+	const { PerfPoint } = require('debug/prism');
 
 	const { AppStatus } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -32,6 +33,11 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			this.syncStartDate = null;
 			this.syncFinishDate = null;
 			this.lastSyncDuration = null;
+
+			this.syncPageCount = 0;
+			this.syncItemCount = 0;
+			/** @type {PerfPoint|null} */
+			this.syncPerfPoint = null;
 
 			this.logList = [];
 
@@ -136,6 +142,10 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			this.appStatus = appStatus;
 			this.syncStartDate = Date.now();
 
+			this.syncPageCount = 0;
+			this.syncItemCount = 0;
+			this.syncPerfPoint = new PerfPoint('sync-changelog', appStatus).start();
+
 			try
 			{
 				this.logger.warn(`performSync: ${this.#isBackgroundSync() ? 'background synchronization' : 'synchronization'} started`);
@@ -157,6 +167,9 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			}
 			finally
 			{
+				this.syncPerfPoint.end();
+				this.syncPerfPoint = null;
+
 				this.syncInProgress = false;
 				this.appStatus = null;
 				this.currentSyncPromise = null;
@@ -260,9 +273,43 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 		 */
 		async #loadChangelog({ fromDate, fromServerDate, lastId })
 		{
-			const result = await this.#loadPage(fromDate, fromServerDate, lastId);
+			this.syncPageCount += 1;
+			const pageNumber = this.syncPageCount;
+			const loadPointKey = `page-load-${pageNumber}`;
+			const applyPointKey = `page-apply-${pageNumber}`;
 
-			await this.#applyData(result);
+			let result = null;
+			this.syncPerfPoint?.startPoint(loadPointKey, `page ${pageNumber}`);
+			try
+			{
+				result = await this.#loadPage(fromDate, fromServerDate, lastId);
+			}
+			catch (error)
+			{
+				this.syncPerfPoint?.endPoint(loadPointKey, { error: error?.message });
+
+				throw error;
+			}
+
+			const pageItemCount = this.#getPageItemCount(result);
+			this.syncItemCount += pageItemCount;
+			this.syncPerfPoint?.endPoint(loadPointKey, {
+				itemCount: pageItemCount,
+				totalItemCount: this.syncItemCount,
+			});
+
+			this.syncPerfPoint?.startPoint(
+				applyPointKey,
+				`page ${pageNumber}: ${pageItemCount} items, ${this.syncItemCount} total`,
+			);
+			try
+			{
+				await this.#applyData(result);
+			}
+			finally
+			{
+				this.syncPerfPoint?.endPoint(applyPointKey);
+			}
 
 			const { navigationData } = result;
 			await this.#updateServerDate(navigationData.lastServerDate);
@@ -309,6 +356,17 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 				CRITICAL_AWAIT_TIMEOUT_COMMON,
 				'syncFiller.applyData',
 			);
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 * @return {number}
+		 */
+		#getPageItemCount(result)
+		{
+			const sizeOf = (section) => (Type.isArray(section) ? section.length : 0);
+
+			return sizeOf(result?.messages) + sizeOf(result?.recentItems) + sizeOf(result?.chats);
 		}
 
 		/**
@@ -441,6 +499,7 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			this.syncFinishDate = Date.now();
 			this.lastSyncDuration = this.syncFinishDate - this.syncStartDate;
 
+			this.logger.warn(`syncComplete: changelog pages: ${this.syncPageCount}, items: ${this.syncItemCount}`);
 			this.logger.warn(`syncComplete: synchronization completed in ${this.lastSyncDuration / 1000} seconds.`);
 
 			this.syncStartDate = null;

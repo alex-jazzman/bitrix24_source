@@ -56,7 +56,26 @@ export class RequestSender
 
 	updateItemSort(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'updateItemSort');
+		return this.sendRequestToComponent(data, 'updateItemSort')
+			.then((response) => {
+				if (this.isPartialPlacementResponse(response))
+				{
+					throw response;
+				}
+
+				return response;
+			})
+		;
+	}
+
+	isPartialPlacementResponse(response): boolean
+	{
+		return response?.data?.refreshRequired === true
+			|| (
+				Type.isArray(response?.errors)
+				&& response.errors.some((error) => error.code === 'PARTIAL_PLACEMENT')
+			)
+		;
 	}
 
 	addTag(data): Promise
@@ -249,7 +268,7 @@ export class RequestSender
 	{
 		if (Type.isUndefined(response.errors))
 		{
-			return;
+			return null;
 		}
 
 		if (response.errors.length)
@@ -262,8 +281,10 @@ export class RequestSender
 				const message = firstError.message + ' ' + errorCode;
 				const title = (alertTitle ? alertTitle : Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
 
-				MessageBox.alert(message, title);
+				return MessageBox.alert(message, title);
 			}
 		}
+
+		return null;
 	}
 }

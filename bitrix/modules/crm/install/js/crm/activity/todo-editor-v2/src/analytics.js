@@ -3,6 +3,41 @@ import type { SettingsCollection } from 'main.core.collections';
 import type { AnalyticsOptions } from 'ui.analytics';
 import { sendData as sendAnalyticsData } from 'ui.analytics';
 
+const REQUIRED_SLICE_KEYS = ['c_section', 'c_sub_section'];
+
+export function isSliceFilled(data: ?AnalyticsOptions): boolean
+{
+	return REQUIRED_SLICE_KEYS.every((key) => Type.isStringFilled(data?.[key]))
+		&& Object.values(data).every((value) => !Type.isNil(value))
+	;
+}
+
+function normalizeOffsets(values: ?Array<number | string>): number[]
+{
+	if (!Type.isArray(values))
+	{
+		return [];
+	}
+
+	const numbers = values
+		.map((value) => Number(value))
+		.filter((number) => Number.isFinite(number))
+	;
+
+	return [...new Set(numbers)].sort((first, second) => first - second);
+}
+
+// the provider yields offsets as numbers before the first save and as strings after it
+export function isPingCustom(selected: ?Array<number | string>, defaults: ?Array<number | string>): boolean
+{
+	const selectedOffsets = normalizeOffsets(selected);
+	const defaultOffsets = normalizeOffsets(defaults);
+
+	return selectedOffsets.length !== defaultOffsets.length
+		|| selectedOffsets.some((offset, index) => offset !== defaultOffsets[index])
+	;
+}
+
 export const EventIds = Object.freeze({
 	activityView: 'activity_view',
 	activityCreate: 'activity_create',
@@ -210,7 +245,7 @@ export class Analytics
 	send(): void
 	{
 		const data = this.getData();
-		if (this.#validate(data))
+		if (isSliceFilled(data))
 		{
 			sendAnalyticsData(data);
 		}
@@ -233,11 +268,11 @@ export class Analytics
 		{
 			if (this.#notificationSkipPeriod === 'forever')
 			{
-				data.p2 = 'skipPeriod_custom';
+				data.p2 = 'skipPeriod_forever';
 			}
 			else
 			{
-				data.p2 = 'skipPeriod_forever';
+				data.p2 = 'skipPeriod_custom';
 			}
 		}
 		else if (Type.isStringFilled(this.#pingSettings))
@@ -281,18 +316,5 @@ export class Analytics
 		}
 
 		return data;
-	}
-
-	#validate(data: AnalyticsOptions): boolean
-	{
-		let isValid = true;
-		Object.keys(data).forEach((key) => {
-			if (Type.isNil(data[key]))
-			{
-				isValid = false;
-			}
-		});
-
-		return isValid;
 	}
 }

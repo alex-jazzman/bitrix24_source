@@ -23,6 +23,12 @@ type FlowParams = {
 	groupId?: number,
 };
 
+// mirrors AnalyticsSection of im.v2.lib.analytics, which keeps the dictionary internal
+const TaskAnalyticsSection = Object.freeze({
+	chat: 'chat',
+	taskChats: 'chat_tasks',
+});
+
 export class EntityCreator
 {
 	#chatId: number = 0;
@@ -38,7 +44,7 @@ export class EntityCreator
 
 	openCollabTaskCreationForm(collabId: number): void
 	{
-		this.openTaskCreationForm({ groupId: collabId });
+		void this.openTaskCreationForm({ groupId: collabId });
 	}
 
 	openCollabMeetingCreationSlider(collabId: number): void
@@ -46,16 +52,22 @@ export class EntityCreator
 		this.#openCalendarSlider({ type: 'group', ownerId: collabId });
 	}
 
-	openTaskCreationForm(additionalParams: JsonObject = {}): void
+	openTaskCreationFormInTaskChats(): Promise
 	{
-		this.#openTaskV2Card({
+		return this.openTaskCreationForm({}, TaskAnalyticsSection.taskChats);
+	}
+
+	openTaskCreationForm(additionalParams: JsonObject = {}, section: string = TaskAnalyticsSection.chat): Promise
+	{
+		return this.#openTaskV2Card({
 			analytics: {
-				context: 'chat',
+				context: section,
 				element: 'create_button',
 			},
 			...additionalParams,
 		});
 	}
+
 	createTaskForChat(): Promise
 	{
 		return this.#createTask();
@@ -152,7 +164,7 @@ export class EntityCreator
 		});
 	}
 
-	async #openTaskV2Card(payload: JsonObject = {}): void
+	async #openTaskV2Card(payload: JsonObject = {}): Promise
 	{
 		const { TaskCard } = await Runtime.loadExtension('tasks.v2.application.task-card');
 

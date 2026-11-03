@@ -1,5 +1,3 @@
-import { Loc } from 'main.core';
-import { Button } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 /**
  * @bxjs_lang_path template.php

@@ -272,6 +272,9 @@ export class GroupActionsStepper extends EventEmitter
 			case 'setflow':
 				title = Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETFLOW');
 				break;
+			case 'bindcrm':
+				title = Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_BINDCRM');
+				break;
 			case 'delete':
 				title = Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_DELETE');
 				break;

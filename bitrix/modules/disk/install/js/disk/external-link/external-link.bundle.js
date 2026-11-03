@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_designTokens, ui_fonts_opensans, clipboard, ui_switcher, ui_layoutForm, main_date, ui_buttons, main_popup) {
+(function (exports, ui_designTokens_air, main_core, main_core_events, ui_designTokens, ui_fonts_opensans, clipboard, ui_switcher, ui_layoutForm, main_date, ui_buttons, main_popup) {
 	'use strict';
 
 	class Backend {
@@ -129,10 +129,39 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const LAYOUT_VERTICAL = 'vertical';
+	const LAYOUT_VERTICAL_CLASS = 'disk-control-external-link-block--vertical';
+
+	// the fields of the link itself: a reset clears exactly these and keeps the fields describing
+	// the object (objectId, isBoard, supportsSharingAccessPopup), which outlive any link created for it.
+	// Keeping them is safe for every caller: the control is bound to one object for its whole life,
+	// and the grid of Documents builds a new control for every row it draws.
+	const EMPTY_LINK_DATA = {
+		id: null,
+		link: null,
+		hash: null,
+		hasPassword: null,
+		hasDeathTime: null,
+		availableEdit: null,
+		canEditDocument: null,
+		canEditSettings: null,
+		deathTime: null,
+		deathTimeTimestamp: null
+	};
+	const renderSeparator = () => {
+		return main_core.Tag.render`<span class="disk-control-external-link-separator">, </span>`;
+	};
+	const setTestId = (node, testId) => {
+		if (main_core.Type.isStringFilled(testId)) {
+			main_core.Dom.attr(node, 'data-testid', testId);
+		}
+	};
 	class Input {
 		cache = new main_core.Cache.MemoryCache();
 		data = {};
-		constructor(objectId, data) {
+		options = {};
+		constructor(objectId, data, options) {
+			this.options = main_core.Type.isPlainObject(options) ? options : {};
 			this.bindEvents();
 			if (main_core.Type.isPlainObject(objectId)) {
 				this.objectId = parseInt(objectId.objectId, 10);
@@ -143,23 +172,8 @@ this.BX = this.BX || {};
 			}
 		}
 		setData(data, fireEvent = true) {
-			if (data && main_core.Type.isPlainObject(data)) {
-				this.data = Object.assign(this.data, data);
-				this.data.id = this.data.id === null ? this.data.id : parseInt(this.data.id, 10);
-			} else {
-				this.data = {
-					id: null,
-					link: null,
-					hash: null,
-					hasPassword: null,
-					hasDeathTime: null,
-					availableEdit: null,
-					canEditDocument: null,
-					canEditSettings: null,
-					deathTime: null,
-					deathTimeTimestamp: null
-				};
-			}
+			this.data = Object.assign(this.data, data && main_core.Type.isPlainObject(data) ? data : EMPTY_LINK_DATA);
+			this.data.id = this.data.id === null ? this.data.id : parseInt(this.data.id, 10);
 			this.adjustData();
 			main_core_events.EventEmitter.emit(this, 'Disk:ExternalLink:DataSet', data);
 			if (fireEvent !== false) {
@@ -182,12 +196,15 @@ this.BX = this.BX || {};
 				this.getPasswordContainer().innerHTML = this.data.hasPassword ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_WITH_PASSWORD') : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_WITHOUT_PASSWORD');
 				this.getDeathTimeContainer().innerHTML = this.data.hasDeathTime ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_BEFORE').replace('#deathTime#', BX.Main.Date.format(BX.Main.Date.convertBitrixFormat(main_core.Loc.getMessage('FORMAT_DATETIME').replace(':SS', '')), new Date(this.data.deathTimeTimestamp * 1000))) : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_FOREVER');
 				if (this.data.availableEdit === true) {
-					this.getRightsContainer().innerHTML = `, ${this.data.canEditDocument ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_EDIT') : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_READ')}`;
+					this.getRightsContainer().innerHTML = this.data.canEditDocument ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_EDIT') : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_READ');
 					main_core.Dom.style(this.getRightsContainer(), 'display', '');
+					main_core.Dom.style(this.getRightsSeparator(), 'display', '');
 				} else {
 					main_core.Dom.style(this.getRightsContainer(), 'display', 'none');
+					main_core.Dom.style(this.getRightsSeparator(), 'display', 'none');
 				}
 			}
+			this.syncSwitcherState();
 		}
 		bindEvents() {
 			main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'Disk:ExternalLink:HasChanged', ({
@@ -217,17 +234,27 @@ this.BX = this.BX || {};
 		}
 		getContainer() {
 			return this.cache.remember('main', () => {
-				const copyButton = main_core.Tag.render`<div class="disk-control-external-link-link-icon"></div>`;
+				const copyButton = main_core.Tag.render`<button type="button" class="disk-control-external-link-link-icon" aria-label="${main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_COPY')}"></button>`;
+				setTestId(copyButton, this.options.testId?.copy);
 				BX.clipboard.bindCopyClick(copyButton, {
 					text: () => {
 						return this.data.link;
+					},
+					// the confirmation balloon hides itself in a moment: it must not pull the focus off the button
+					popup: {
+						focusTrap: false
 					}
 				});
 				const tune = () => {
 					return this.openSettingsPopup();
 				};
-				return main_core.Tag.render`
-				<div class="disk-control-external-link-block${this.data.id === null ? '' : ' disk-control-external-link-block--active'}">
+				const settingsButton = main_core.Tag.render`<button type="button" class="disk-control-external-link-subtitle" aria-haspopup="dialog" onclick="${tune}">${this.getDeathTimeContainer()}${this.getPasswordSeparator()}${this.getPasswordContainer()}${this.getRightsSeparator()}${this.getRightsContainer()}</button>`;
+				setTestId(settingsButton, this.options.testId?.settings);
+
+				// the base class stays first: showChecked()/showUnchecked() build the active class from classList.item(0)
+				const layoutClassName = this.options.layout === LAYOUT_VERTICAL ? ` ${LAYOUT_VERTICAL_CLASS}` : '';
+				const container = main_core.Tag.render`
+				<div class="disk-control-external-link-block${this.data.id === null ? '' : ' disk-control-external-link-block--active'}${layoutClassName}">
 					<div class="disk-control-external-link">
 						<div class="disk-control-external-link-btn">
 							${this.getSwitcher().getNode()}
@@ -237,24 +264,36 @@ this.BX = this.BX || {};
 								${this.getLinkContainer()}
 								${copyButton}
 							</div>
-							<div class="disk-control-external-link-subtitle" onclick="${tune}">${this.getDeathTimeContainer()}<span>, </span>${this.getPasswordContainer()}${this.getRightsContainer()}</div>
+							${settingsButton}
 							<div class="disk-control-external-link-text">${main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED')}</div>
 							<div class="disk-control-external-link-skeleton"></div>
 						</div>
 					</div>
 				</div>
 			`;
+				setTestId(container, this.options.testId?.container);
+				return container;
 			});
 		}
 		getSwitcher() {
 			return this.cache.remember('switcher', () => {
-				const switcherNode = document.createElement('span');
-				switcherNode.className = 'ui-switcher';
+				// ui.switcher renders a plain span, so the role, the checked state and the keyboard
+				// activation stay on the node this control owns
+				const switcherLabel = main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_TITLE');
+				const switcherNode = main_core.Tag.render`<span class="ui-switcher" role="switch" tabindex="0" aria-checked="${this.data.id === null ? 'false' : 'true'}" aria-label="${switcherLabel}" onkeydown="${this.handleSwitcherKeydown.bind(this)}"></span>`;
+				setTestId(switcherNode, this.options.testId?.switcher);
+
+				// where the host already shows the same caption, the switch is named by it: a screen
+				// reader must not read the phrase twice, and the caption must not be a name of nothing
+				if (main_core.Type.isStringFilled(this.options.switcherLabelId)) {
+					main_core.Dom.attr(switcherNode, 'aria-label', null);
+					main_core.Dom.attr(switcherNode, 'aria-labelledby', this.options.switcherLabelId);
+				}
 				const switcher = new BX.UI.Switcher({
 					node: switcherNode,
 					checked: this.data.id !== null,
 					inputName: 'ACTIVE',
-					color: 'green'
+					useAirDesign: true
 				});
 				switcher.handlers = {
 					toggled: this.toggle.bind(this, {
@@ -264,15 +303,33 @@ this.BX = this.BX || {};
 				return switcher;
 			});
 		}
+		handleSwitcherKeydown(event) {
+			if (event.key !== 'Enter' && event.key !== ' ') {
+				return;
+			}
+			event.preventDefault();
+			this.getSwitcher().getNode().click();
+		}
+		syncSwitcherState() {
+			main_core.Dom.attr(this.getSwitcher().getNode(), 'aria-checked', this.getSwitcher().isChecked() ? 'true' : 'false');
+		}
 		getLinkContainer() {
 			return this.cache.remember('link', () => {
-				return main_core.Tag.render`<a href="${main_core.Text.encode(this.data.link)}" class="disk-control-external-link-link" target="_blank">${main_core.Text.encode(this.data.link)}</a>`;
+				const link = main_core.Tag.render`<a href="${main_core.Text.encode(this.data.link)}" class="disk-control-external-link-link" target="_blank">${main_core.Text.encode(this.data.link)}</a>`;
+				setTestId(link, this.options.testId?.link);
+				return link;
 			});
 		}
 		getRightsContainer() {
 			return this.cache.remember('rights', () => {
 				return document.createElement('span');
 			});
+		}
+		getPasswordSeparator() {
+			return this.cache.remember('passwordSeparator', renderSeparator);
+		}
+		getRightsSeparator() {
+			return this.cache.remember('rightsSeparator', renderSeparator);
 		}
 		getDeathTimeContainer() {
 			return this.cache.remember('deathTime', () => {
@@ -292,6 +349,7 @@ this.BX = this.BX || {};
 		toggle({
 			target
 		}) {
+			this.syncSwitcherState();
 			if (target.isChecked()) {
 				this.showLoader();
 				void this.getBackend().generateExternalLink(this.objectId).then(({
@@ -779,11 +837,39 @@ this.BX = this.BX || {};
 	}
 
 	class InputSimple extends Input {
-		constructor(objectId, data) {
-			super(objectId, data);
+		constructor(objectId, data, options) {
+			super(objectId, data, options);
 		}
 		static getExtendedInputClass() {
 			return InputExtended;
+		}
+		openSettingsPopup() {
+			const objectId = this.getSharingAccessPopupObjectId();
+			if (objectId === null) {
+				return super.openSettingsPopup();
+			}
+			if (!this.canEditSettings()) {
+				return null;
+			}
+			return main_core.Runtime.loadExtension('disk.sharing-access-popup').then(({
+				SharingPopupDialog
+			}) => {
+				return new SharingPopupDialog().open({
+					objectId,
+					initialTab: 'public',
+					onAfterHide: () => {
+						void this.reload();
+					}
+				});
+			},
+			// only an unreachable extension falls back: a failure inside the popup itself has to
+			// stay visible instead of turning into a silent switch to the legacy settings
+			() => super.openSettingsPopup());
+		}
+
+		// null - the modern popup does not apply to this object and the extended one opens instead
+		getSharingAccessPopupObjectId() {
+			return null;
 		}
 		static showPopup(objectId, data = null) {
 			const className = this.getExtendedInputClass();
@@ -799,6 +885,13 @@ this.BX = this.BX || {};
 		}
 	}
 
+	class InputSimpleForObject extends InputSimple {
+		getSharingAccessPopupObjectId() {
+			// the server decides whether the modern popup applies; the client does not compute it
+			return this.data?.supportsSharingAccessPopup === true ? this.objectId : null;
+		}
+	}
+
 	class InputExtendedForTrackedObject extends InputExtended {
 		getBackend() {
 			return BackendForTrackedObject;
@@ -806,32 +899,16 @@ this.BX = this.BX || {};
 	}
 
 	class InputSimpleForTrackedObject extends InputSimple {
-		constructor(objectId, data) {
-			super(objectId, data);
+		constructor(objectId, data, options) {
+			super(objectId, data, options);
 		}
 		getBackend() {
 			return BackendForTrackedObject;
 		}
-		openSettingsPopup() {
-			void main_core.Runtime.loadExtension('disk.sharing-access-popup').then(({
-				SharingPopupDialog
-			}) => {
-				const realObjectId = parseInt(this.data?.objectId, 10);
-				if (!realObjectId) {
-					this.constructor.showPopup(this.objectId, this.data);
-					return;
-				}
-				const popup = new SharingPopupDialog();
-				popup.open({
-					objectId: realObjectId,
-					initialTab: 'public',
-					onAfterHide: () => {
-						void this.reload();
-					}
-				});
-			}).catch(() => {
-				this.constructor.showPopup(this.objectId, this.data);
-			});
+		getSharingAccessPopupObjectId() {
+			// the popup works with the real disk object, not with the tracked one
+			const realObjectId = parseInt(this.data?.objectId, 10);
+			return realObjectId > 0 ? realObjectId : null;
 		}
 		static getExtendedInputClass() {
 			return InputExtendedForTrackedObject;
@@ -849,8 +926,8 @@ this.BX = this.BX || {};
 	}
 
 	class InputSimpleForUnifiedLink extends InputSimple {
-		constructor(objectId, data) {
-			super(objectId, data);
+		constructor(objectId, data, options) {
+			super(objectId, data, options);
 		}
 		getBackend() {
 			return BackendForUnifiedLink;
@@ -861,8 +938,9 @@ this.BX = this.BX || {};
 	}
 
 	exports.ExternalLink = InputSimple;
+	exports.ExternalLinkForObject = InputSimpleForObject;
 	exports.ExternalLinkForTrackedObject = InputSimpleForTrackedObject;
 	exports.ExternalLinkForUnifiedLink = InputSimpleForUnifiedLink;
 
-})(this.BX.Disk = this.BX.Disk || {}, BX, BX.Event, BX, BX, BX, BX.UI, BX.UI, BX.Main, BX.UI, BX.Main);
+})(this.BX.Disk = this.BX.Disk || {}, window, BX, BX.Event, window, BX, BX, BX.UI, BX.UI, BX.Main, BX.UI, BX.Main);
 //# sourceMappingURL=external-link.bundle.js.map

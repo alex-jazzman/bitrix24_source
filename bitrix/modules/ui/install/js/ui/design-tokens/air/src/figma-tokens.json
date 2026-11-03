@@ -183,16 +183,16 @@
               "value": "#FFFFFF00"
             },
             {
-              "name": "ui-color-bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F6FAFB"
-            },
-            {
               "name": "ui-divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": false,
               "value": 0
+            },
+            {
+              "name": "ui-color-bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F6FAFB"
             },
             {
               "name": "ui-color-bg-content-tertiary",
@@ -2313,15 +2313,6 @@
               }
             },
             {
-              "name": "ui-color-design-selection-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-accent-main-primary"
-              }
-            },
-            {
               "name": "ui-color-design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": true,
@@ -2331,12 +2322,12 @@
               }
             },
             {
-              "name": "ui-design-plain-na-focused-stroke-weight",
-              "type": "number",
+              "name": "ui-color-design-selection-content",
+              "type": "color",
               "isAlias": true,
               "value": {
-                "collection": "fixed",
-                "name": "ui-border-width-medium"
+                "collection": "design",
+                "name": "ui-color-accent-main-primary"
               }
             },
             {
@@ -2349,6 +2340,15 @@
               }
             },
             {
+              "name": "ui-design-plain-na-focused-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "ui-border-width-medium"
+              }
+            },
+            {
               "name": "ui-color-design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": true,
@@ -2358,21 +2358,21 @@
               }
             },
             {
-              "name": "ui-color-design-selection-content-chevron",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-accent-main-primary"
-              }
-            },
-            {
               "name": "ui-color-design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-base-1"
+              }
+            },
+            {
+              "name": "ui-color-design-selection-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary"
               }
             },
             {
@@ -2982,6 +2982,24 @@
               "value": "#FFFAF0"
             },
             {
+              "name": "ui-color-designer-bp-rules-purple-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#DECAFF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#AA74FF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F8F4FF"
+            },
+            {
               "name": "ui-color-helper-bg-default",
               "type": "color",
               "isAlias": false,
@@ -3435,6 +3453,12 @@
               "value": "#10B96A"
             },
             {
+              "name": "ui-color-marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
+            },
+            {
               "name": "ui-color-leftmenu-bg-expanded",
               "type": "color",
               "isAlias": true,
@@ -3442,12 +3466,6 @@
                 "collection": "design",
                 "name": "ui-color-bg-content-secondary"
               }
-            },
-            {
-              "name": "ui-color-marta-bg-gradient-1",
-              "type": "color",
-              "isAlias": false,
-              "value": "#58D7D5"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -3831,16 +3849,16 @@
               "value": "#F9FCFF"
             },
             {
-              "name": "ui-color-blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F8FBFF"
-            },
-            {
               "name": "ui-color-black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "ui-color-blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F8FBFF"
             },
             {
               "name": "ui-color-blue-06",
@@ -4131,16 +4149,16 @@
               "value": "#FFFFFF2E"
             },
             {
-              "name": "ui-color-white-base",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#F3F8FF"
+            },
+            {
+              "name": "ui-color-white-base",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "ui-color-blue-10",
@@ -4692,6 +4710,12 @@
               }
             },
             {
+              "name": "ui-color-design-disabled-bg-alpha",
+              "type": "color",
+              "isAlias": false,
+              "value": "#525C6914"
+            },
+            {
               "name": "ui-color-design-disabled-bg-alt",
               "type": "color",
               "isAlias": false,
@@ -4974,6 +4998,12 @@
               "value": "#FFFFFF3D"
             },
             {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-0",
+              "type": "color",
+              "isAlias": false,
+              "value": "#6ECCF5"
+            },
+            {
               "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -5014,6 +5044,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#FF7438"
+            },
+            {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-8",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F5C94E"
             },
             {
               "name": "ui-design-filled-bitrix-gpt-stroke-weight",
@@ -5483,12 +5519,6 @@
               "value": "#FFFFFF14"
             },
             {
-              "name": "ui-color-bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1F1F1F"
-            },
-            {
               "name": "ui-divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": true,
@@ -5496,6 +5526,12 @@
                 "collection": "fixed",
                 "name": "ui-border-width-thin"
               }
+            },
+            {
+              "name": "ui-color-bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1F1F1F"
             },
             {
               "name": "ui-color-bg-content-tertiary",
@@ -7610,12 +7646,6 @@
               }
             },
             {
-              "name": "ui-color-design-selection-content",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
-            },
-            {
               "name": "ui-color-design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": true,
@@ -7623,6 +7653,18 @@
                 "collection": "design",
                 "name": "ui-color-divider-default"
               }
+            },
+            {
+              "name": "ui-color-design-selection-content",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
+            },
+            {
+              "name": "ui-color-design-selection-content-icon",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
             },
             {
               "name": "ui-design-plain-na-focused-stroke-weight",
@@ -7634,22 +7676,10 @@
               }
             },
             {
-              "name": "ui-color-design-selection-content-icon",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
-            },
-            {
               "name": "ui-color-design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": false,
               "value": "#5EAEFF"
-            },
-            {
-              "name": "ui-color-design-selection-content-chevron",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
             },
             {
               "name": "ui-color-design-plain-na-focused-content",
@@ -7659,6 +7689,12 @@
                 "collection": "design",
                 "name": "ui-color-base-1"
               }
+            },
+            {
+              "name": "ui-color-design-selection-content-chevron",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
             },
             {
               "name": "ui-color-design-selection-content-divider",
@@ -8264,6 +8300,24 @@
               "value": "#FFFAF0"
             },
             {
+              "name": "ui-color-designer-bp-rules-purple-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#DECAFF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#AA74FF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F8F4FF"
+            },
+            {
               "name": "ui-color-helper-bg-default",
               "type": "color",
               "isAlias": false,
@@ -8687,16 +8741,16 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#262626"
-            },
-            {
               "name": "ui-color-marta-bg-gradient-1",
               "type": "color",
               "isAlias": false,
               "value": "#58D7D5"
+            },
+            {
+              "name": "ui-color-leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#262626"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -9074,16 +9128,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "ui-color-black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "ui-color-blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "ui-color-blue-06",
@@ -9374,13 +9428,13 @@
               "value": "#00000029"
             },
             {
-              "name": "ui-color-white-base",
+              "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-blue-09",
+              "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -9935,6 +9989,12 @@
               }
             },
             {
+              "name": "ui-color-design-disabled-bg-alpha",
+              "type": "color",
+              "isAlias": false,
+              "value": "#A0B7D60A"
+            },
+            {
               "name": "ui-color-design-disabled-bg-alt",
               "type": "color",
               "isAlias": false,
@@ -10217,6 +10277,12 @@
               "value": "#FFFFFF3D"
             },
             {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-0",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5697B4"
+            },
+            {
               "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -10257,6 +10323,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#B6552B"
+            },
+            {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-8",
+              "type": "color",
+              "isAlias": false,
+              "value": "#B4953F"
             },
             {
               "name": "ui-design-filled-bitrix-gpt-stroke-weight",
@@ -10726,12 +10798,6 @@
               "value": "#00000014"
             },
             {
-              "name": "ui-color-bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#0000000A"
-            },
-            {
               "name": "ui-divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": true,
@@ -10739,6 +10805,12 @@
                 "collection": "fixed",
                 "name": "ui-border-width-thin"
               }
+            },
+            {
+              "name": "ui-color-bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0000000A"
             },
             {
               "name": "ui-color-bg-content-tertiary",
@@ -12862,27 +12934,18 @@
               "value": 0
             },
             {
-              "name": "ui-color-design-selection-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-1"
-              }
-            },
-            {
               "name": "ui-color-design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": false,
               "value": "#00000014"
             },
             {
-              "name": "ui-design-plain-na-focused-stroke-weight",
-              "type": "number",
+              "name": "ui-color-design-selection-content",
+              "type": "color",
               "isAlias": true,
               "value": {
-                "collection": "fixed",
-                "name": "ui-border-width-medium"
+                "collection": "design",
+                "name": "ui-color-base-1"
               }
             },
             {
@@ -12895,6 +12958,15 @@
               }
             },
             {
+              "name": "ui-design-plain-na-focused-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "ui-border-width-medium"
+              }
+            },
+            {
               "name": "ui-color-design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": true,
@@ -12904,21 +12976,21 @@
               }
             },
             {
-              "name": "ui-color-design-selection-content-chevron",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-0"
-              }
-            },
-            {
               "name": "ui-color-design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-base-1"
+              }
+            },
+            {
+              "name": "ui-color-design-selection-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-0"
               }
             },
             {
@@ -13525,6 +13597,24 @@
               "value": "#FFFAF0"
             },
             {
+              "name": "ui-color-designer-bp-rules-purple-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#DECAFF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#AA74FF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F8F4FF"
+            },
+            {
               "name": "ui-color-helper-bg-default",
               "type": "color",
               "isAlias": false,
@@ -13963,16 +14053,16 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#00000005"
-            },
-            {
               "name": "ui-color-marta-bg-gradient-1",
               "type": "color",
               "isAlias": false,
               "value": "#58D7D5"
+            },
+            {
+              "name": "ui-color-leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000005"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -14353,16 +14443,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "ui-color-black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "ui-color-blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "ui-color-blue-06",
@@ -14653,13 +14743,13 @@
               "value": "#FFFFFF24"
             },
             {
-              "name": "ui-color-white-base",
+              "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-blue-09",
+              "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -15214,6 +15304,15 @@
               }
             },
             {
+              "name": "ui-color-design-disabled-bg-alpha",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-bg-content-primary"
+              }
+            },
+            {
               "name": "ui-color-design-disabled-bg-alt",
               "type": "color",
               "isAlias": true,
@@ -15493,6 +15592,12 @@
               "value": "#FFFFFF14"
             },
             {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-0",
+              "type": "color",
+              "isAlias": false,
+              "value": "#6ECCF5"
+            },
+            {
               "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -15533,6 +15638,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#FF7438"
+            },
+            {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-8",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F5C94E"
             },
             {
               "name": "ui-design-filled-bitrix-gpt-stroke-weight",
@@ -15999,12 +16110,6 @@
               "value": "#FFFFFF1F"
             },
             {
-              "name": "ui-color-bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF1F"
-            },
-            {
               "name": "ui-divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": true,
@@ -16012,6 +16117,12 @@
                 "collection": "fixed",
                 "name": "ui-border-width-thin"
               }
+            },
+            {
+              "name": "ui-color-bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF1F"
             },
             {
               "name": "ui-color-bg-content-tertiary",
@@ -18135,27 +18246,18 @@
               "value": 0
             },
             {
-              "name": "ui-color-design-selection-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-0"
-              }
-            },
-            {
               "name": "ui-color-design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF1F"
             },
             {
-              "name": "ui-design-plain-na-focused-stroke-weight",
-              "type": "number",
+              "name": "ui-color-design-selection-content",
+              "type": "color",
               "isAlias": true,
               "value": {
-                "collection": "fixed",
-                "name": "ui-border-width-medium"
+                "collection": "design",
+                "name": "ui-color-base-0"
               }
             },
             {
@@ -18168,6 +18270,15 @@
               }
             },
             {
+              "name": "ui-design-plain-na-focused-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "ui-border-width-medium"
+              }
+            },
+            {
               "name": "ui-color-design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": true,
@@ -18177,21 +18288,21 @@
               }
             },
             {
-              "name": "ui-color-design-selection-content-chevron",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-0"
-              }
-            },
-            {
               "name": "ui-color-design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-base-1"
+              }
+            },
+            {
+              "name": "ui-color-design-selection-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-0"
               }
             },
             {
@@ -18798,6 +18909,24 @@
               "value": "#FFFAF0"
             },
             {
+              "name": "ui-color-designer-bp-rules-purple-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#DECAFF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#AA74FF"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-purple-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F8F4FF"
+            },
+            {
               "name": "ui-color-helper-bg-default",
               "type": "color",
               "isAlias": false,
@@ -19221,16 +19350,16 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF0A"
-            },
-            {
               "name": "ui-color-marta-bg-gradient-1",
               "type": "color",
               "isAlias": false,
               "value": "#58D7D5"
+            },
+            {
+              "name": "ui-color-leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF0A"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -19611,16 +19740,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "ui-color-black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "ui-color-blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "ui-color-blue-06",
@@ -19911,13 +20040,13 @@
               "value": "#FFFFFF24"
             },
             {
-              "name": "ui-color-white-base",
+              "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-blue-09",
+              "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -20472,6 +20601,15 @@
               }
             },
             {
+              "name": "ui-color-design-disabled-bg-alpha",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-bg-content-primary"
+              }
+            },
+            {
               "name": "ui-color-design-disabled-bg-alt",
               "type": "color",
               "isAlias": true,
@@ -20751,6 +20889,12 @@
               "value": "#FFFFFF1A"
             },
             {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-0",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5697B4"
+            },
+            {
               "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -20791,6 +20935,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#B6552B"
+            },
+            {
+              "name": "ui-color-design-filled-bitrix-gpt-bg-gradient-8",
+              "type": "color",
+              "isAlias": false,
+              "value": "#B4953F"
             },
             {
               "name": "ui-design-filled-bitrix-gpt-stroke-weight",
@@ -22525,6 +22675,22 @@
         {
           "name": "Style",
           "variables": [
+            {
+              "name": "Heading/3XL",
+              "type": "typography",
+              "isAlias": false,
+              "value": {
+                "fontSize": 32,
+                "fontFamily": "Inter",
+                "fontWeight": "Semi Bold",
+                "lineHeight": "auto",
+                "lineHeightUnit": "AUTO",
+                "letterSpacing": 0,
+                "letterSpacingUnit": "PERCENT",
+                "textCase": "ORIGINAL",
+                "textDecoration": "NONE"
+              }
+            },
             {
               "name": "Heading/H1 (2XL)",
               "type": "typography",

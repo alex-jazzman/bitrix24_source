@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_STAGE_FINAL_TRANSITION_BACK_BUTTON"] = 'Back';
+$MESS["CRM_STAGE_FINAL_TRANSITION_CLOSE_BUTTON"] = 'Close';
+$MESS["CRM_STAGE_FINAL_TRANSITION_ERROR"] = 'Could not finalize processing. Please try again.';
+$MESS["CRM_STAGE_FINAL_TRANSITION_FAILURE_BUTTON"] = 'Failure';
+$MESS["CRM_STAGE_FINAL_TRANSITION_FAILURE_STAGE_NOT_FOUND"] = 'Could not find the failure stage.';
+$MESS["CRM_STAGE_FINAL_TRANSITION_LOSS_SUBTITLE"] = 'Now, select the reason for failure.';
+$MESS["CRM_STAGE_FINAL_TRANSITION_SUBMITTING"] = 'Submitting the reason...';
+$MESS["CRM_STAGE_FINAL_TRANSITION_SUBTITLE"] = 'You are about to finalize the processing of this item. Select the processing result.';
+$MESS["CRM_STAGE_FINAL_TRANSITION_SUCCESS_BUTTON"] = 'Success';
+$MESS["CRM_STAGE_FINAL_TRANSITION_SUCCESS_STAGE_NOT_FOUND"] = 'Could not find the success stage.';
+$MESS["CRM_STAGE_FINAL_TRANSITION_TITLE"] = 'Finalize "#ENTITY#"';
+$MESS["CRM_STAGE_FINAL_TRANSITION_TITLE_DYNAMIC"] = 'Finalize "#ENTITY#"';
+$MESS["CRM_STAGE_FINAL_TRANSITION_TITLE_LEAD"] = 'Finalize lead "#ENTITY#"';
+$MESS["CRM_STAGE_FINAL_TRANSITION_TITLE_QUOTE"] = 'Finalize estimate "#ENTITY#"';
+$MESS["CRM_STAGE_FINAL_TRANSITION_TITLE_SMART_INVOICE"] = 'Finalize invoice "#ENTITY#"';
+$MESS["CRM_STAGE_FINAL_TRANSITION_TOAST"] = 'Item moved to stage "#STAGE#".';
+$MESS["CRM_STAGE_FINAL_TRANSITION_UNDO"] = 'Cancel';
+$MESS["CRM_STAGE_FINAL_TRANSITION_UNDO_ERROR"] = 'Cannot undo action. Please try again.';

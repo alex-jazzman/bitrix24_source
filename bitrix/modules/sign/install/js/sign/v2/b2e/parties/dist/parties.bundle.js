@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports, main_core, main_core_events, sign_v2_b2e_companySelector, sign_v2_b2e_documentValidation, sign_v2_b2e_representativeSelector, sign_type, sign_v2_helper, sign_v2_signSettings) {
+(function (exports, main_core, main_core_events, sign_v2_b2e_companySelector, sign_v2_b2e_documentValidation, sign_v2_b2e_representativeSelector, sign_v2_b2e_signingMethodSelector, sign_v2_api, sign_type, sign_v2_helper, sign_v2_signSettings) {
 	'use strict';
 
 	const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
@@ -12,8 +12,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		ReviewerRoleDetails: '20801214'
 	});
 	class Parties extends main_core_events.EventEmitter {
+		#api = new sign_v2_api.Api();
 		#companySelector = null;
 		#representativeSelector = null;
+		#signingMethodSelector = null;
 		#documentValidation = null;
 		#addReviewerButton = null;
 		#ui = {
@@ -43,10 +45,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				isHcmLinkAvailable: hcmLinkAvailable,
 				needOpenCrmSaveAndEditCompanySliders: isTemplate
 			});
+			this.#signingMethodSelector = new sign_v2_b2e_signingMethodSelector.SigningMethodSelector();
 			this.#companySelector.subscribe('onSelect', event => {
+				this.#refreshSigningMethodAvailability();
 				this.emit('onCompanySelect', event);
 			});
 			this.#companySelector.subscribe('onProviderSelect', event => {
+				this.#refreshSigningMethodAvailability();
 				this.emit('onProviderSelect', event);
 			});
 			this.#documentValidation = new sign_v2_b2e_documentValidation.DocumentValidation(isTemplate, () => this.#checkAddReviewerLimit());
@@ -76,8 +81,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		loadFirstCompany() {
 			this.#companySelector.loadFirstCompany();
 		}
-		loadRepresentative(representativeId, entityType = sign_type.EntityType.USER) {
+		loadRepresentative(representativeId, entityType = sign_type.EntityType.USER, signingMethod = null) {
 			this.#representativeSelector.load(representativeId, entityType);
+			this.#signingMethodSelector.setSelectedMethod(signingMethod);
 		}
 		loadFirstRepresentative() {
 			this.#representativeSelector.loadFistRepresentative();
@@ -109,6 +115,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				${this.#representativeSelector.getLayout()}
 			</div>
 		`;
+			const signingMethodLayout = this.#signingMethodSelector.getLayout();
+			this.#refreshSigningMethodAvailability();
 			const providerLayout = main_core.Tag.render`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
@@ -147,11 +155,21 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				${this.#ui.blocks.companyContent}
 				${providerLayout}
 				${this.#ui.blocks.representativeContent}
+				${signingMethodLayout}
 				${validationReviewerLayout}
 				${this.#ui.blocks.validationEditorLayout}
 			</div>
 		`;
 			return this.#ui.container;
+		}
+
+		/**
+		 * The server decides whether the method may be offered for this company; the wizard adds the only
+		 * thing the server cannot know — which of the company providers the document goes through.
+		 */
+		#refreshSigningMethodAvailability() {
+			const isGoskeyLiteSelected = this.#companySelector.getSelectedCompanyProvider()?.code === sign_type.ProviderCode.goskeyLite;
+			this.#signingMethodSelector.setAvailable(isGoskeyLiteSelected && this.#companySelector.isRepresentativeSigningAvailable());
 		}
 		#createAddReviewerButton() {
 			this.#addReviewerButton = main_core.Tag.render`
@@ -198,6 +216,27 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				throw e;
 			}
 		}
+
+		/**
+		 * The method of the head is offered by the capability of the company, while the right to use it
+		 * belongs to the person - so the person is checked here, on the step where he is chosen, and his
+		 * block carries the refusal. The document must already know its company: the provider is a part of
+		 * the answer, and it is stored by `save()`.
+		 */
+		async validateRepresentativeSigningMethod(documentId) {
+			const {
+				representative
+			} = this.getParties();
+			if (representative.signingMethod !== sign_v2_b2e_signingMethodSelector.SigningMethod.goskey) {
+				return;
+			}
+			try {
+				await this.#api.checkRepresentativeSigningMethod(documentId, representative.entityId, representative.signingMethod, representative.entityType);
+			} catch (e) {
+				this.#setWarning(this.#ui.blocks.representativeContent);
+				throw e;
+			}
+		}
 		getSelectedProvider() {
 			return this.#companySelector.getSelectedCompanyProvider();
 		}
@@ -211,7 +250,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			return {
 				representative: {
 					entityType: this.#representativeSelector.getRepresentativeItemType(),
-					entityId: this.#representativeSelector.getRepresentativeId()
+					entityId: this.#representativeSelector.getRepresentativeId(),
+					signingMethod: this.#signingMethodSelector.getSelectedMethod()
 				},
 				company: {
 					entityType: 'company',
@@ -247,5 +287,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.Parties = Parties;
 
-})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Event, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign, BX.Sign.V2, BX.Sign.V2);
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Event, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2, BX.Sign, BX.Sign.V2, BX.Sign.V2);
 //# sourceMappingURL=parties.bundle.js.map

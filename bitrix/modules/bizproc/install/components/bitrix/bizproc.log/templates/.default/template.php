@@ -59,9 +59,15 @@ else
 		<?
 	endif;
 	if (!empty($arResult["arWorkflowState"]["TEMPLATE_DESCRIPTION"])):
+		// template description is stored as BBCode
+		$templateDescription = (string)$arResult["arWorkflowState"]["TEMPLATE_DESCRIPTION"];
+		if (\Bitrix\Main\Loader::includeModule('ui'))
+		{
+			$templateDescription = \Bitrix\UI\Format\BBCode\Converter::toPlainText($templateDescription);
+		}
 		?>
 		<div class="bizproc-item-description bizproc-workflow-state-template-description">
-			<?=htmlspecialcharsbx($arResult["arWorkflowState"]["TEMPLATE_DESCRIPTION"])?>
+			<?=htmlspecialcharsbx($templateDescription)?>
 		</div>
 		<?
 	endif;

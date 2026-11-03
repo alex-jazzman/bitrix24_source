@@ -28,4 +28,4 @@ $MESS["SP_ERROR_MODULE_NOT_INSTALLED"] = "Модуль не установлен
 $MESS["SP_ERROR_CLASS_NOT_EXISTS"] = "Класс-обработчик не существует";
 $MESS["SP_ERROR_MAX_ERRORS"] = "Превышено максимальное количество ошибок сервиса.";
 $MESS["SP_ERROR_METHOD_NOT_EXISTS"] = "Клиент #CLASS# не поддерживает метод #METHOD#";
-?>
+$MESS['SP_ERROR_SERVER_NOT_ALLOWED'] = 'Сервер SharePoint не указан в списке разрешённых.';

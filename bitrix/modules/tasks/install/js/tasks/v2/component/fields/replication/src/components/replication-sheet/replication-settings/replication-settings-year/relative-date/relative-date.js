@@ -5,6 +5,8 @@ import { SerialNumberSelect } from '../../components/serial-number-select';
 import { MonthSelect } from '../../components/month-select';
 import { WeekDaySelect } from '../../components/week-day-select';
 
+import '../../../replication-sheet-content.css';
+
 // @vue/component
 export const ReplicationSettingsYearRelativeDate = {
 	name: 'ReplicationSettingsYearRelativeDate',
@@ -82,19 +84,36 @@ export const ReplicationSettingsYearRelativeDate = {
 		>
 			<UiRadio
 				tag="label"
+				class="tasks-replication-sheet-action-row__option"
 				:modelValue="yearlyType"
 				:value="ReplicationYearlyType.Relative"
 				inputName="tasks-replication-sheet-yearly-type"
+				data-testid="tasks-replication-yearly-relative-radio"
 				@update:modelValue="$emit('update:yearlyType', $event)"
-			/>
+			>
+				<span class="tasks-field-replication-vh">
+					{{ loc('TASKS_V2_REPLICATION_BY_WEEK_DAY_ARIA_LABEL') }}
+				</span>
+			</UiRadio>
 			<SerialNumberSelect
 				v-model="weekDayNum"
 				:weekDay
 				:disabled
+				data-testid="tasks-replication-yearly-week-day-number-select"
 				style="max-width: 9em"
 			/>
-			<WeekDaySelect v-model="weekDay" :disabled style="max-width: 11em"/>
-			<MonthSelect v-model="month" :disabled style="max-width: 11em"/>
+			<WeekDaySelect
+				v-model="weekDay"
+				:disabled
+				data-testid="tasks-replication-yearly-week-day-select"
+				style="max-width: 11em"
+			/>
+			<MonthSelect
+				v-model="month"
+				:disabled
+				data-testid="tasks-replication-yearly-relative-month-select"
+				style="max-width: 11em"
+			/>
 		</div>
 	`,
 };

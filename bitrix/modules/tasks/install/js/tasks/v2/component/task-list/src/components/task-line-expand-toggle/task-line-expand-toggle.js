@@ -22,14 +22,25 @@ export const TaskLineExpandToggle = {
 			type: Boolean,
 			default: false,
 		},
+		ariaExpanded: {
+			type: Boolean,
+			default: null,
+		},
+		ariaHaspopup: {
+			type: String,
+			default: '',
+		},
 	},
 	template: `
-		<div
+		<button
+			type="button"
 			class="tasks-task-line-expand-toggle"
 			:class="{ '--extra-padding': extraPadding }"
+			:aria-expanded="ariaExpanded"
+			:aria-haspopup="ariaHaspopup || null"
 		>
 			<Text2Xs class="tasks-task-line-expand-toggle-text">{{ text }}</Text2Xs>
-			<BIcon :name="icon"/>
-		</div>
+			<BIcon :name="icon" aria-hidden="true"/>
+		</button>
 	`,
 };

@@ -33,7 +33,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription =
 	(new ActivityDescription(
 		(string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_SICK_NAME'),
-		(string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_SICK_DESCR'),
+		(string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_SICK_DESCR_MSGVER_1'),
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('AbsenceLeaveSickTrigger')
@@ -53,6 +53,14 @@ $arActivityDescription =
 			],
 			'ACTIVE_TO' => [
 				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_RETURN_FIELD_ACTIVE_TO'),
+				'Type' => FieldType::DATETIME,
+			],
+			'ABSENCE_TYPE' => [
+				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_RETURN_FIELD_ABSENCE_TYPE'),
+				'Type' => FieldType::STRING,
+			],
+			'EventDateTime' => [
+				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_RETURN_FIELD_EVENT_DATE_TIME'),
 				'Type' => FieldType::DATETIME,
 			],
 		])

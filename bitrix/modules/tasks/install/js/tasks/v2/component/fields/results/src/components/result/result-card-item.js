@@ -6,9 +6,9 @@ import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { TextMd, TextXs, TextSm } from 'ui.system.typography.vue';
 import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
-import type { VueUploaderAdapter } from 'ui.uploader.vue';
+import { type VueUploaderAdapter } from 'ui.uploader.vue';
 
-import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+import { type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
 import {
 	TasksPopupButtonQuote,
 	TYPES_DEFAULT_QUOTE_ACTIONS,
@@ -21,11 +21,12 @@ import { Hint, tooltip } from 'tasks.v2.component.elements.hint';
 import { UserAvatar, UserAvatarSize } from 'tasks.v2.component.elements.user-avatar';
 import { EntityCollapsibleText } from 'tasks.v2.component.entity-text';
 import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
+import { DownloadArchiveButton, canDownloadArchive } from 'tasks.v2.component.fields.files';
 import { userService } from 'tasks.v2.provider.service.user-service';
 import { EntityTypes, fileService, type FileService } from 'tasks.v2.provider.service.file-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
-import type { ResultModel } from 'tasks.v2.model.results';
-import type { UserModel } from 'tasks.v2.model.users';
+import { type ResultModel } from 'tasks.v2.model.results';
+import { type UserModel } from 'tasks.v2.model.users';
 
 import { resultsMeta } from '../../results-meta';
 
@@ -45,6 +46,7 @@ export const ResultCardItem = {
 		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 		EntityCollapsibleText,
 		TasksPopupButtonQuote,
+		DownloadArchiveButton,
 		TextSm,
 		TextXs,
 		TextMd,
@@ -60,6 +62,10 @@ export const ResultCardItem = {
 			type: [Number, String],
 			required: true,
 		},
+		isAnySheetShown: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['titleClick', 'edit', 'highlightField'],
 	setup(props): { fileService: FileService, uploaderAdapter: VueUploaderAdapter }
@@ -71,6 +77,7 @@ export const ResultCardItem = {
 
 		return {
 			Outline,
+			EntityTypes,
 			resultsMeta,
 			UserAvatarSize,
 			fileService: fileServiceRef,
@@ -133,12 +140,21 @@ export const ResultCardItem = {
 		{
 			return this.files.length;
 		},
+		archiveLink(): ?string
+		{
+			return this.result.archiveLink;
+		},
+		canDownloadArchive(): boolean
+		{
+			return canDownloadArchive(this.filesCount, this.archiveLink);
+		},
 		widgetOptions(): UserFieldWidgetOptions
 		{
 			return {
 				isEmbedded: true,
 				withControlPanel: false,
 				canCreateDocuments: false,
+				viewMode: 'list',
 				tileWidgetOptions: {
 					compact: true,
 					hideDropArea: true,
@@ -153,7 +169,7 @@ export const ResultCardItem = {
 			return {
 				id: `result-action-menu-${Text.getRandom()}`,
 				bindOptions: { forceBindPosition: true },
-				bindElement: this.$refs.moreIcon.$el,
+				bindElement: this.$refs.moreIcon,
 				targetContainer: document.body,
 				offsetLeft: -100,
 				minWidth: 250,
@@ -222,6 +238,11 @@ export const ResultCardItem = {
 		EventEmitter.unsubscribe(EventName.ResultFromMessageAdded, this.handleResultFromMessageAdded);
 	},
 	methods: {
+		handleMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.$refs.moreIcon?.focus();
+		},
 		handleEditClick(): void
 		{
 			this.$emit('edit', this.resultId);
@@ -244,6 +265,11 @@ export const ResultCardItem = {
 			}
 
 			this.$emit('highlightField');
+
+			if (this.isAnySheetShown || !this.hasMenuItems)
+			{
+				return;
+			}
 
 			if (!ahaMoments.shouldShow(Option.AhaResultFromMessagePopup))
 			{
@@ -273,47 +299,66 @@ export const ResultCardItem = {
 	template: `
 		<div
 			class="tasks-field-results-result --card print-no-border print-no-box-shadow"
+			data-testid="tasks-result-card-item"
 			:data-task-field-id="resultsMeta.id"
 			data-field-container
 		>
 			<div
 				class="tasks-field-results-title"
+				data-testid="task-result-card-title"
 				ref="title"
-				@click="$emit('titleClick', resultId)"
 			>
-				<div class="tasks-field-results-title-main">
-					<BIcon :name="Outline.WINDOW_FLAG"/>
+				<button
+					type="button"
+					class="tasks-field-results-title-main"
+					data-testid="tasks-result-card-item-title-btn"
+					@click="$emit('titleClick', resultId)"
+				>
+					<BIcon :name="Outline.WINDOW_FLAG" aria-hidden="true"/>
 					<TextMd accent>{{ resultTitle }}</TextMd>
-				</div>
+				</button>
 				<div class="tasks-field-results-title-actions print-ignore">
-					<BIcon
+					<button
 						v-if="hasMenuItems"
-						class="tasks-field-results-title-icon"
-						:name="Outline.MORE_L"
-						hoverable
+						type="button"
+						class="tasks-field-results-icon-button"
+						aria-haspopup="menu"
+						data-testid="tasks-result-card-item-menu-btn"
+						:aria-expanded="isMenuShown ? 'true' : 'false'"
+						:aria-label="loc('TASKS_V2_RESULT_ITEM_MENU_LABEL')"
 						ref="moreIcon"
 						@click.stop="isMenuShown = true"
-					/>
-					<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+					>
+						<BIcon
+							class="tasks-field-results-title-icon"
+							:name="Outline.MORE_L"
+							hoverable
+							aria-hidden="true"
+						/>
+					</button>
+					<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
 					<Hint
-						v-if="showResultFromMessageHint"
-						:bindElement="$refs.moreIcon.$el"
+						v-if="showResultFromMessageHint && hasMenuItems"
+						:bindElement="$refs.moreIcon"
 						:options="{
 							closeIcon: true,
 							offsetLeft: 10,
 							minWidth: 340,
 							maxWidth: 340,
+							focusTrap: { initialFocus: false },
 							bindOptions: {
 								forceBindPosition: true,
 							},
 						}"
 						@close="handleResultFromMessageHintClose"
 					>
-						<div class="tasks-field-results-hint-info">
+						<div class="tasks-field-results-hint-info --from-message">
 							<TextMd className="tasks-field-results-hint-info-text">
 								{{ loc('TASKS_V2_RESULT_AHA_RESULT_FROM_MESSAGE') }}
 							</TextMd>
 							<TextXs
+								tag="button"
+								type="button"
 								className="tasks-field-results-hint-info-link"
 								@click.stop="handleResultFromMessageHintCloseComplete"
 							>
@@ -325,8 +370,10 @@ export const ResultCardItem = {
 			</div>
 			<div class="tasks-field-results-result-content" ref="content">
 				<div class="tasks-field-results-result-author-border print-no-after">
-					<div
+					<button
+						type="button"
 						class="tasks-field-results-result-author-border-clickable"
+						:aria-label="loc('TASKS_V2_RESULT_AUTHOR_PROFILE_LABEL', { '#NAME#': resultAuthor.name })"
 						@click="handleAuthorClick"
 					>
 						<UserAvatar
@@ -343,7 +390,7 @@ export const ResultCardItem = {
 						>
 							{{ resultAuthor.name }}
 						</TextSm>
-					</div>
+					</button>
 				</div>
 				<EntityCollapsibleText
 					ref="collapsible"
@@ -353,8 +400,15 @@ export const ResultCardItem = {
 					:showFilesIndicator="false"
 					v-model:opened="opened"
 				/>
-				<div v-if="filesCount > 0" class="tasks-field-results-result-files print-ignore" :key="resultId">
+				<div v-if="filesCount > 0" class="tasks-field-results-result-files print-ignore" :key="resultId" data-testid="task-result-card-files">
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+					<DownloadArchiveButton
+						v-if="canDownloadArchive"
+						:files
+						:archiveLink
+						:entityId="resultId"
+						:entityType="EntityTypes.Result"
+					/>
 				</div>
 			</div>
 			<TasksPopupButtonQuote

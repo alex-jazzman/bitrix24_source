@@ -1,24 +1,19 @@
-/* normalize */
-.tasks-opener-full-card {
-	border-radius: 0;
-	border: none;
-	padding: 0;
-	background-color: transparent;
-	text-align: inherit;
-	cursor: pointer;
-}
-/* normalize end */
-
 .tasks-opener-full-card {
 	--color-tasks-opener-full-card: var(--ui-color-base-1);
 	display: flex;
 	align-items: center;
 	height: 27px;
 	opacity: 0.7;
+	text-decoration: none;
 	transition: var(--transition-controls);
 }
 .tasks-opener-full-card:hover {
 	opacity: 1;
+}
+.tasks-opener-full-card:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .tasks-opener-full-card__icon {

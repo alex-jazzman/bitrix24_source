@@ -142,6 +142,7 @@ BX.Tasks.KanbanComponent.onReady = function()
 	{
 		if (BX.data(BX("tasks-popupMenuOptions"), "disabled") === true)
 		{
+			var tooltipText = BX.message("TASKS_KANBAN_DIABLE_SORT_TOOLTIP");
 			var tooltip = new BX.PopupWindow(
 				"popupMenuOptionsDisabled",
 				BX("tasks-popupMenuOptions"),
@@ -152,10 +153,12 @@ BX.Tasks.KanbanComponent.onReady = function()
 					darkMode: true,
 					autoHide: true,
 					zIndex: 1000,
-					content: BX.message("TASKS_KANBAN_DIABLE_SORT_TOOLTIP")
+					content: tooltipText,
+					ariaLabel: tooltipText
 				}
 			);
 			tooltip.show();
+			BX.UI.Accessibility.LiveAnnouncer.announce(tooltipText, "polite");
 		}
 	}));
 

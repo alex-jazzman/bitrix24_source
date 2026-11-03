@@ -8,6 +8,19 @@ export type PushData = {
 	BEFORE: TaskPush,
 };
 
+export type UserOptionPush = {
+	TASK_ID: number,
+	USER_ID: number,
+	OPTION: number,
+	ADDED: boolean,
+};
+
+// The add push has no BEFORE, and its AFTER may carry only a part of the fields.
+export type TaskAddPush = {
+	TASK_ID: number,
+	AFTER: Partial<TaskPush>,
+};
+
 export type TaskPush = {
 	TITLE: string,
 	PRIORITY: number,
@@ -33,6 +46,14 @@ export type TaskPush = {
 	TASK_CONTROL: boolean,
 	taskRequireResult: string,
 	taskRequireDeadlineChangeReason: boolean,
+};
+
+export type StartTimerPush = {
+	taskId: number,
+	timeElapsed: number,
+	timerStartedAtTs: number,
+	timeSpentInLogs: number,
+	timeEstimate: number,
 };
 
 export type StopTimerPush = {

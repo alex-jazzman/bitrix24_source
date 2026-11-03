@@ -4,6 +4,7 @@ import { UsedByField } from './field/used-by-field';
 import { EmployeeField } from './field/employee-field';
 import { LaunchControlField } from './field/launch-control-field';
 import { LoadIndicatorField } from './field/load-indicator-field';
+import { VersionField } from './field/version-field';
 import { GridManager } from './grid-manager';
 import './style.css';
 
@@ -14,5 +15,6 @@ export {
 	EmployeeField,
 	LaunchControlField,
 	LoadIndicatorField,
+	VersionField,
 	GridManager,
 };

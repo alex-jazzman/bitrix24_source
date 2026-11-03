@@ -1502,6 +1502,23 @@
 	color: var(--ui-color-primary, #2fc6f6);
 }
 
+/*
+ * Reflow (<= 768px): the absolute-positioned "ФИЛЬТР" button (right: 0) overlaps the
+ * "Сегодня" period label in the ~241px card. Collapse it to its icon — hide the label
+ * (font-size: 0; the text node stays, so the accessible name "Фильтр" is preserved on the
+ * native <button>), center the funnel background, and give it a fixed narrow width so its
+ * right anchor pulls the left edge clear of the period label.
+ */
+@media (max-width: 768px) {
+	.crm-entity-stream-filter-label {
+		width: 32px;
+		padding-left: 0;
+		padding-right: 0;
+		font-size: 0;
+		background-position: center;
+	}
+}
+
 .crm-entity-stream-history-label {
 	background-color: #dde5e8;
 	color: #6e7273;

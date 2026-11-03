@@ -15,6 +15,7 @@ declare type SidebarFileSubTypeItem = {
 	hasNextPage: boolean,
 	isHistoryLimitExceeded: boolean,
 	lastLoadFileId: number,
+	lastLoadFileDate: string | null,
 }
 
 declare type chatId = number;
@@ -74,4 +75,12 @@ declare type SidebarFilesSetHasNextPageData = {
 	chatId: chatId,
 	subType: subType,
 	hasNextPage: boolean,
+}
+
+declare type SidebarFilesSetLastLoadFileActions = 'setLastLoadFile';
+declare type SidebarFilesSetLastLoadFileData = {
+	chatId: chatId,
+	subType: subType,
+	lastLoadFileId: number,
+	lastLoadFileDate: string | null,
 }

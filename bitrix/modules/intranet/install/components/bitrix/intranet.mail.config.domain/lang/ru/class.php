@@ -23,5 +23,5 @@ $MESS["INTR_MAIL_MANAGE_CHANGE"] = "Изменить";
 $MESS["INTR_MAIL_MANAGE_PASSWORD"] = "Изменить пароль";
 $MESS["INTR_MAIL_MANAGE_DELETE"] = "Удалить почтовый ящик";
 $MESS["INTR_MAIL_MAILBOX_OCCUPIED"] = "Ящик используется другим пользователем";
-$MESS["INTR_MAIL_DOMAIN_ICON"] = "b24mail-ru.png";
+$MESS["INTR_MAIL_DOMAIN_ICON"] = "b24mail-ru.webp";
 ?>

@@ -57,6 +57,10 @@ $MESS["MAIL_MESSAGE_NEW_SEND"] = "Отправить";
 $MESS["MAIL_MESSAGE_NEW_CANCEL"] = "Отменить";
 $MESS["MAIL_MESSAGE_NEW_ADD_RCPT"] = "Добавить получателя";
 
+$MESS["MAIL_MESSAGE_NEW_SCHEDULED_SENDING"] = "Отправка уже началась, изменить письмо не получится";
+$MESS["MAIL_MESSAGE_NEW_SCHEDULED_SENT"] = "Письмо уже отправлено, изменить его не получится";
+$MESS["MAIL_MESSAGE_NEW_SCHEDULED_CANCELLED"] = "Отправка письма отменена, письмо сохранено как черновик";
+
 $MESS["MAIL_MESSAGE_DELETE_CONFIRM"] = "Вы действительно хотите удалить это письмо?";
 $MESS["MAIL_MESSAGE_SPAM_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в черный список?";
 

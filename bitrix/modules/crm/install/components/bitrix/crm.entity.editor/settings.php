@@ -7,6 +7,7 @@
  */
 
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Crm\Entity\EntityEditorOptionParser;
 use Bitrix\Crm\EntityForm\ScopeAccess;
 use Bitrix\Ui\EntityForm\Scope;
 
@@ -34,6 +35,25 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 
 	$optionCategory = \Bitrix\Crm\Entity\EntityEditorConfig::CATEGORY_NAME;
 
+	/*
+	 * The card the right is asked for is parsed out of the guid, which is also the name the write lands
+	 * under, so a guid resolving to one card can never write into the option of another. A guid that
+	 * resolves to no card is answered for CRM as a whole, as every other consumer of
+	 * canEditCommonView() is; the parse is not a canonicity check of the name.
+	 */
+	$cardOption = (new EntityEditorOptionParser())->parse($guid);
+	// Asked once and only where the request is about the common layout: the personal actions of the file
+	// must not pay for a right they do not read.
+	$canEditCommonView = static function () use ($cardOption): bool {
+		static $decision = null;
+
+		return $decision ??= \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->entityEditor()
+			->canEditCommonView($cardOption->entityTypeId(), $cardOption->categoryId())
+		;
+	};
+
 	$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 	if($action === 'saveconfig')
 	{
@@ -41,7 +61,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 
 		if(isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y'
-			&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
+			&& $canEditCommonView()
 		)
 		{
 			if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
@@ -56,7 +76,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	{
 		if(isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y'
-			&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
+			&& $canEditCommonView()
 		)
 		{
 			CUserOptions::DeleteOptionsByName($optionCategory, $guid);
@@ -76,9 +96,9 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		}
 
 		$config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : array();
-		$forAllUsers = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
-			&& isset($_POST['forAllUsers'])
-			&& $_POST['forAllUsers'] === 'Y';
+		$forAllUsers = isset($_POST['forAllUsers'])
+			&& $_POST['forAllUsers'] === 'Y'
+			&& $canEditCommonView();
 
 		if($forAllUsers)
 		{
@@ -87,6 +107,12 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 				CUserOptions::DeleteOptionsByName($optionCategory, $guid);
 			}
 			CUserOptions::SetOption($optionCategory, $guid, $config, true);
+		}
+
+		if($scope === EntityEditorConfigScope::COMMON && !$canEditCommonView())
+		{
+			echo 'ERROR: ACCESS DENIED.';
+			die();
 		}
 
 		if($scope === EntityEditorConfigScope::COMMON)
@@ -149,9 +175,15 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 			$scope = EntityEditorConfigScope::PERSONAL;
 		}
 
-		$forAllUsers = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
-			&& isset($_POST['forAllUsers'])
-			&& $_POST['forAllUsers'] === 'Y';
+		$forAllUsers = isset($_POST['forAllUsers'])
+			&& $_POST['forAllUsers'] === 'Y'
+			&& $canEditCommonView();
+
+		if($scope === EntityEditorConfigScope::COMMON && !$canEditCommonView())
+		{
+			echo 'ERROR: ACCESS DENIED.';
+			die();
+		}
 
 		if($scope === EntityEditorConfigScope::COMMON)
 		{
@@ -182,7 +214,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	}
 	elseif($action === 'forceCommonScopeForAll')
 	{
-		if (Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView())
+		if ($canEditCommonView())
 		{
 			CUserOptions::DeleteOptionsByName($optionCategory, $guid);
 			CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_scope");

@@ -1,11 +1,12 @@
 import { Dom, Text } from 'main.core';
 import { getConst, getUtils } from '../utils/core-proxy';
 
-const { MessageMentionType } = getConst();
 export const ParserCall = {
 
 	decode(text): string
 	{
+		const { MessageMentionType } = getConst();
+
 		let result = text;
 
 		result = result.replaceAll(/\[call(?:=([\d #()+./-]+))?](.+?)\[\/call]/gi, (whole, number, text) => {
@@ -33,7 +34,7 @@ export const ParserCall = {
 				tag: 'span',
 				attrs: {
 					className: 'bx-im-mention',
-					'data-type': MessageMentionType.call,
+					'data-type': getConst().MessageMentionType.call,
 					'data-destination': destination,
 				},
 				text: Text.decode(text),

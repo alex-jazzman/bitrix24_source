@@ -6,3 +6,12 @@
 	display: flex;
 	flex-direction: column;
 }
+
+/* The tab mixes two row components, so a gap hung on a same-class adjacent-sibling selector of
+   either of them collapses where the kinds meet. The list owns the gap for both. */
+.bx-im-sidebar-file-audio-detail-item__container + .bx-im-sidebar-file-audio-detail-item__container,
+.bx-im-sidebar-file-audio-detail-item__container + .bx-im-sidebar-file-video-note-detail-item__container,
+.bx-im-sidebar-file-video-note-detail-item__container + .bx-im-sidebar-file-audio-detail-item__container,
+.bx-im-sidebar-file-video-note-detail-item__container + .bx-im-sidebar-file-video-note-detail-item__container {
+	margin-top: var(--ui-space-stack-sm2);
+}

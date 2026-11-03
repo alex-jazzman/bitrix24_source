@@ -44,6 +44,9 @@ export type MessagesModelState = {
 		userId: number,
 		chatTitle: string | null,
 		chatType: DialogType,
+		parentChatId?: number,
+		parentMessageId?: number,
+		parentChatType?: DialogType | null,
 	},
 	attach: Array<AttachConfig>,
 	keyboard: Array<KeyboardButtonConfig>,
@@ -57,7 +60,14 @@ export type MessagesModelState = {
 		packType: StickerPackType,
 	},
 	visualState?: {
+		/**
+		 * AI-task indication of the message: the frame status, the role of the message inside the
+		 * operation and the partial-result flag of its outcome. visualState is merged deeply, so the
+		 * three are written and cleared together, otherwise a leftover role or flag outlives the operation.
+		 */
 		aiTaskStatus?: string | null,
+		aiTaskRole?: string | null,
+		aiTaskPartial?: boolean | null,
 		type?: string | null,
 	},
 	block: BlockConfig | null,
@@ -80,6 +90,12 @@ declare type MessageParams = {
 	},
 	replyId: number,
 	AI_TASK_TRIGGER_MESSAGE_ID: number,
+	/**
+	 * Reasoning plan of a BitrixGPT simple-mode turn. The server name is kept: unknown params reach
+	 * the model as they come. An explicit null clears a plan already shown.
+	 */
+	COPILOT_SIMPLE_REASONING_PLAN?: CopilotSimpleReasoningPlan | null,
+	IS_DELETED?: 'Y' | 'N',
 }
 
 export type MessagesModelActions =
@@ -98,11 +114,13 @@ export type MessagesModelActions =
 	| 'messagesModel/updateListFromSync'
 	| 'messagesModel/updateReactionState'
 	| 'messagesModel/updateVisualState'
+	| 'messagesModel/updateAiTaskIndication'
 	| 'messagesModel/updateParams'
 	| 'messagesModel/delete'
 	| 'messagesModel/readMessages'
 	| 'messagesModel/setViewedByOthers'
 	| 'messagesModel/updateLoadTextProgress'
+	| 'messagesModel/notifyVideoProcessingProgress'
 	| 'messagesModel/setChatCollection'
 	| 'messagesModel/deleteByIdList'
 	| 'messagesModel/setTemporaryMessages'
@@ -184,6 +202,7 @@ export type MessagesUpdateActions =
 	| 'readMessages'
 	| 'setViewedByOthers'
 	| 'updateLoadTextProgress'
+	| 'notifyVideoProcessingProgress'
 	| 'updateReactionState'
 	| 'updateVisualState'
 	| 'setPlayingState'
@@ -197,9 +216,11 @@ export type MessageUpdateData =
 
 export interface MessagesUpdateData extends PayloadData
 {
-	id?: number;
+	id?: number | string;
 	fields?: Partial<MessagesModelState>;
 	messageList?: Array<MessageUpdateData>;
+	text?: string;
+	uploadFileId?: string;
 }
 
 

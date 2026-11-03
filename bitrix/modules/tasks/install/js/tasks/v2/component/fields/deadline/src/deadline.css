@@ -16,6 +16,16 @@
 	gap: 18px;
 }
 
+.tasks-field-deadline-settings-label {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+
+.tasks-field-deadline-settings-label.--visible,
+.tasks-field-deadline-settings-label:focus-within {
+	opacity: 1;
+}
+
 .tasks-field-deadline-icon {
 	margin-right: var(--ui-space-inline-2xs2);
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
@@ -53,4 +63,8 @@
 
 .tasks-field-deadline-chip.--read-only {
 	pointer-events: none;
+}
+
+.tasks-field-deadline-chip .ui-chip:focus-visible {
+	outline-color: var(--ui-color-accent-main-link);
 }

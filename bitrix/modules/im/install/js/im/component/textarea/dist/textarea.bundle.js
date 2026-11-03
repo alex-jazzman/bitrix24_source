@@ -433,5 +433,5 @@
 	`
 	});
 
-})(BX, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX, BX, BX.Event, BX.Messenger.Const);
+})(window, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX, BX, BX.Event, BX.Messenger.Const);
 //# sourceMappingURL=textarea.bundle.js.map

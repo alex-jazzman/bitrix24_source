@@ -1,0 +1,2 @@
+<?php
+$MESS['BICONNECTOR_TABLE_GROUP_PROVIDER_TAB_LABEL'] = 'Table groups';

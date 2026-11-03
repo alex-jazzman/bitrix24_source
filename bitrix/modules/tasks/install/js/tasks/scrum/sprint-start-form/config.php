@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/sprint.start.form.bundle.css',
 	'js' => 'dist/sprint.start.form.bundle.js',
 	'rel' => [
-		'main.core.events',
-		'ui.sidepanel.layout',
 		'main.core',
+		'main.core.events',
 		'ui.dialogs.messagebox',
-		'ui.hint',
 		'ui.fonts.opensans',
+		'ui.hint',
+		'ui.sidepanel.layout',
 	],
 	'skip_core' => false,
 ];

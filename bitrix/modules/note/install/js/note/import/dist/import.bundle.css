@@ -99,6 +99,14 @@
 	color: var(--ui-color-link-primary-base);
 }
 
+/* These two are the only buttons the module draws itself, so they are the only ones that would
+   otherwise show the browser focus ring instead of the one of the design system. */
+.note-import-disclosure:focus-visible,
+.note-import-link-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
 .note-import-tree,
 .note-import-tree-children {
 	list-style: none;
@@ -289,6 +297,33 @@
 	font-size: 14px;
 }
 
+.note-import-reimport-option-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.note-import-reimport-option {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+}
+
+.note-import-reimport-option__text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.note-import-reimport-option__title {
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-lg);
+	cursor: pointer;
+}
+
 .note-import-loading {
 	display: flex;
 	align-items: center;
@@ -351,3 +386,54 @@
 .note-import-error-details-reason {
 	color: var(--ui-color-base-3);
 }
+
+.note-import-error {
+	color: var(--ui-color-accent-main-alert);
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.note-import-error-block {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: flex-start;
+}
+
+.note-import-limitations-empty {
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	padding: 12px 0;
+	text-align: center;
+}
+
+.note-import-screen-permissions-list {
+	gap: 12px;
+}
+
+.note-import-permissions-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-height: 280px;
+	overflow-y: auto;
+}
+
+.note-import-permissions-list-row {
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: 10px;
+	padding: 10px 12px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+}
+
+.note-import-permissions-list-title {
+	font-size: 14px;
+	color: var(--ui-color-base-1);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+

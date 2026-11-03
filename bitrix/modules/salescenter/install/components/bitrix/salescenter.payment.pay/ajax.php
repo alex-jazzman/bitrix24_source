@@ -19,6 +19,8 @@ Loc::loadLanguageFile(__DIR__ . '/class.php');
 
 class SalescenterPaymentPayAjaxController extends Controller
 {
+	private const PUBLIC_EXCLUDED_ACTION_FILES = ['inner', 'cash'];
+
 	/** @var string */
 	private $actionName;
 
@@ -81,6 +83,12 @@ class SalescenterPaymentPayAjaxController extends Controller
 	 */
 	public function initiatePayAction(array $fields): ?array
 	{
+		if (!$this->isPaySystemAllowedForPublicPay((int)($fields['PAY_SYSTEM_ID'] ?? 0)))
+		{
+			$this->addError(new Error('initiate pay error'));
+			return null;
+		}
+
 		$action = new InitiatePayAction($this->actionName, $this, $this->actionConfig);
 
 		if ($this->isPaySystemOrderDocument((int)$fields['PAY_SYSTEM_ID']))
@@ -127,6 +135,13 @@ class SalescenterPaymentPayAjaxController extends Controller
 		}
 
 		return $result;
+	}
+
+	private function isPaySystemAllowedForPublicPay(int $paySystemId): bool
+	{
+		$service = PaySystem\Manager::getObjectById($paySystemId);
+
+		return $service && !in_array($service->getField('ACTION_FILE'), self::PUBLIC_EXCLUDED_ACTION_FILES, true);
 	}
 
 	/**

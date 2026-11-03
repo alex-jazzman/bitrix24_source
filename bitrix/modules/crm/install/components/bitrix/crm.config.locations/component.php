@@ -1,6 +1,31 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+global $APPLICATION;
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$isSidePanelRequest = $request->getQuery('IFRAME') === 'Y';
+$isSidePanelWrapped = ($arParams['SIDE_PANEL_WRAPPED'] ?? 'N') === 'Y';
+
+if ($isSidePanelRequest && !$isSidePanelWrapped)
+{
+	$popupComponentParams = $arParams;
+	$popupComponentParams['SIDE_PANEL_WRAPPED'] = 'Y';
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.sidepanel.wrapper',
+		'',
+		[
+			'POPUP_COMPONENT_NAME' => 'bitrix:crm.config.locations',
+			'POPUP_COMPONENT_TEMPLATE_NAME' => $this->getTemplateName(),
+			'POPUP_COMPONENT_PARAMS' => $popupComponentParams,
+			'USE_UI_TOOLBAR' => 'Y',
+		],
+	);
+
+	return;
+}
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -25,8 +50,6 @@ if (!CModule::IncludeModule('sale'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
 	return;
 }
-
-global $APPLICATION;
 
 $componentPage = '';
 $arDefaultUrlTemplates404 = array(
@@ -85,12 +108,21 @@ else
 	$arResult['PATH_TO_LOCATIONS_IMPORT'] = $curPage.'?import';
 }
 
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$parentIdFromRequest =
+	$request->getQuery('PARENT_ID') !== null
+	&& !\Bitrix\Main\Grid\Context::isInternalRequest()
+;
+
 $arResult =
 	array_merge(
 		array(
 			'VARIABLES' => $arVariables,
 			'ALIASES' => $arParams['SEF_MODE'] == 'Y' ? array(): $arVariableAliases,
-			'LOC_ID' => isset($arVariables['loc_id']) ? strval($arVariables['loc_id']) : ''
+			'LOC_ID' => isset($arVariables['loc_id']) ? strval($arVariables['loc_id']) : '',
+			'PARENT_ID' => max(0, (int)$request->getQuery('PARENT_ID')),
+			'PARENT_ID_FROM_REQUEST' => $parentIdFromRequest,
+			'SHOW_CONTROL_PANEL' => $request->getQuery('IFRAME') !== 'Y',
 		),
 		$arResult
 	);

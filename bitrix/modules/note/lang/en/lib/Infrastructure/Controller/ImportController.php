@@ -9,3 +9,4 @@ $MESS["NOTE_IMPORT_SESSION_NOT_FOUND"] = "Import session was not found.";
 $MESS['NOTE_IMPORT_SOURCE_NOT_FOUND'] = 'Knowledge base was not found. It may have been deleted.';
 $MESS['NOTE_IMPORT_SOURCE_UNAVAILABLE'] = 'Import from this source is not available in your Bitrix24.';
 $MESS["NOTE_IMPORT_TREE_FAILED"] = "Could not get article tree.";
+$MESS['NOTE_IMPORT_TREE_FAILED_KB'] = 'Could not get article tree in the knowledge base. Please try again later.';

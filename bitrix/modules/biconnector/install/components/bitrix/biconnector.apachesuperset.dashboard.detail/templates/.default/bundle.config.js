@@ -4,6 +4,9 @@ module.exports = {
 		js: './script.js',
 	},
 	namespace: 'BX.BIConnector.ApacheSuperset.Dashboard',
+	dependencies: [
+		'biconnector.ai-digest-setup',
+	],
 	adjustConfigPhp: false,
 	minification: false,
 	sourceMaps: false,

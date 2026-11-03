@@ -6,7 +6,7 @@ import { YANDEX_CAPTCHA_SERVICE } from './consts';
 
 import './keys-form.css';
 
-export default class KeysForm extends FormSettingsForm
+export class KeysForm extends FormSettingsForm
 {
 	constructor(options: {[key: string]: any})
 	{

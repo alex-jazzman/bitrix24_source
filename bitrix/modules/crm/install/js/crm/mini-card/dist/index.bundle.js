@@ -370,6 +370,19 @@ this.BX = this.BX || {};
 			count: {
 				type: Number,
 				required: true
+			},
+			href: {
+				type: String,
+				default: ''
+			},
+			hasPopup: {
+				/** @type {'menu'|'dialog'|'listbox'|'tree'|'grid'|'true'|''} */
+				type: String,
+				default: ''
+			},
+			expanded: {
+				type: Boolean,
+				default: false
 			}
 		},
 		computed: {
@@ -377,12 +390,36 @@ this.BX = this.BX || {};
 				return this.$Bitrix.Loc.getMessage('CRM_MINI_CARD_SHOW_MORE', {
 					'#COUNT#': this.count
 				});
+			},
+			isLink() {
+				return this.href !== '';
+			},
+			popupType() {
+				// A link navigates instead of revealing content, so it is never a disclosure.
+				if (this.isLink || this.hasPopup === '') {
+					return null;
+				}
+				return this.hasPopup;
+			},
+			ariaExpanded() {
+				return this.popupType === null ? null : String(this.expanded);
 			}
 		},
+		// Interactive element: a real link when it navigates, a real button when it
+		// triggers an action (e.g. the "show more" menu). Both are natively
+		// keyboard-operable and take the visible text as their accessible name.
+		// Single root node so attribute fallthrough (e.g. @click) keeps working.
+		// When the button reveals a popup, it also carries the popup type and its
+		// open/closed state, which the owner component keeps in sync.
 		template: `
-		<span class="crm-mini-card__show-more">
-			{{ showMoreTitle }}
-		</span>
+		<component
+			:is="isLink ? 'a' : 'button'"
+			class="crm-mini-card__show-more"
+			:href="isLink ? href : null"
+			:type="isLink ? null : 'button'"
+			:aria-haspopup="popupType"
+			:aria-expanded="ariaExpanded"
+		>{{ showMoreTitle }}</component>
 	`
 	};
 
@@ -398,6 +435,19 @@ this.BX = this.BX || {};
 				required: true
 			}
 		},
+		data() {
+			return {
+				isMenuShown: false
+			};
+		},
+		// The menu is held by the global PopupManager and can outlive the component
+		// (the card is redrawn while the menu is open), so handlers left subscribed
+		// would keep the unmounted component alive through their closure. The menu
+		// itself is not destroyed: that would tear down a menu the user is reading.
+		beforeUnmount() {
+			this.menu?.unsubscribe('onShow', this.onMenuShow);
+			this.menu?.unsubscribe('onClose', this.onMenuClose);
+		},
 		methods: {
 			getMenu() {
 				if (!this.menu) {
@@ -408,16 +458,47 @@ this.BX = this.BX || {};
 							offset: this.$refs.showMoreContainer.$el.offsetWidth / 2
 						}
 					});
+
+					// Named methods, not inline closures: unsubscribing on unmount needs
+					// the very same references, and Vue keeps one bound copy per instance.
+					this.menu.subscribe('onShow', this.onMenuShow);
+					this.menu.subscribe('onClose', this.onMenuClose);
 					ServiceLocator.getInstance().getEventService().registerChildPopup(this.$Bitrix.eventEmitter, this.menu.getPopupWindow());
 				}
 				return this.menu;
+			},
+			onMenuShow() {
+				this.isMenuShown = true;
+			},
+			onMenuClose() {
+				this.isMenuShown = false;
+				this.restoreFocus();
+			},
+			// Focus goes back to the trigger only when the closing menu was holding it,
+			// otherwise the caret is somewhere else and must stay there. The trigger is
+			// read defensively: the menu is shared layout and a redraw can replace it.
+			restoreFocus() {
+				const menuContainer = this.menu?.getMenuContainer();
+				const {
+					activeElement
+				} = document;
+				if (!menuContainer || activeElement === null || !menuContainer.contains(activeElement)) {
+					return;
+				}
+				this.$refs.showMoreContainer?.$el?.focus();
 			},
 			toggleMenu() {
 				this.getMenu().toggle();
 			}
 		},
 		template: `
-		<ShowMore ref="showMoreContainer" :count="items.length" @click="toggleMenu"/>
+		<ShowMore
+			ref="showMoreContainer"
+			:count="items.length"
+			has-popup="menu"
+			:expanded="isMenuShown"
+			@click="toggleMenu"
+		/>
 	`
 	};
 
@@ -472,6 +553,7 @@ this.BX = this.BX || {};
 				<ShowMoreMenu
 					v-if="hiddenPhones.length > 0"
 					:items="hiddenPhoneItems" 
+					data-testid="crm-mini-card-phone-show-more-btn"
 				/>
 			</FieldValueList>
 		</Field>
@@ -542,6 +624,7 @@ this.BX = this.BX || {};
 				<ShowMoreMenu
 					v-if="hiddenEmails.length > 0"
 					:items="hiddenEmailItems"
+					data-testid="crm-mini-card-email-show-more-btn"
 				/>
 			</FieldValueList>
 			<div ref="activityEditorContainer" hidden></div>
@@ -603,6 +686,7 @@ this.BX = this.BX || {};
 				<ShowMoreMenu
 					v-if="hiddenLinks.length > 0"
 					:items="hiddenLinkItems"
+					data-testid="crm-mini-card-link-show-more-btn"
 				/>
 			</FieldValueList>
 		</Field>
@@ -663,7 +747,7 @@ this.BX = this.BX || {};
 		<Field class="--stage">
 			<FieldTitle>{{ title }}</FieldTitle>
 			<FieldValue>
-				<div class="crm-mini-card__stage-color" :style="{ backgroundColor: stage.color }"></div>
+				<div class="crm-mini-card__stage-color" :style="{ backgroundColor: stage.color }" aria-hidden="true"></div>
 				<ValueEllipsis :title="stage.name">{{ stage.name }}</ValueEllipsis>
 			</FieldValue>
 		</Field>
@@ -678,16 +762,25 @@ this.BX = this.BX || {};
 	const BUTTON_CONFIGURATION = Object.freeze({
 		[CommunicationType.Phone]: {
 			icon: ui_iconSet_api_core.Outline.PHONE_UP,
-			removeRightCorners: true
+			removeRightCorners: true,
+			dataset: {
+				testid: 'crm-mini-card-communication-phone-btn'
+			}
 		},
 		[CommunicationType.Email]: {
 			icon: ui_iconSet_api_core.Outline.MAIL,
 			removeLeftCorners: true,
-			removeRightCorners: true
+			removeRightCorners: true,
+			dataset: {
+				testid: 'crm-mini-card-communication-email-btn'
+			}
 		},
 		[CommunicationType.Im]: {
 			icon: ui_iconSet_api_core.Outline.OPEN_CHANNELS,
-			removeLeftCorners: true
+			removeLeftCorners: true,
+			dataset: {
+				testid: 'crm-mini-card-communication-im-btn'
+			}
 		}
 	});
 	const CommunicationControl = {
@@ -724,11 +817,15 @@ this.BX = this.BX || {};
 			createButton(typeId) {
 				const communicationButtonOptions = BUTTON_CONFIGURATION[typeId];
 				const communicationsByType = this.communicationsByType[typeId];
+				const isDisabled = communicationsByType.length === 0;
 				const buttonOptions = {
 					size: ui_buttons.ButtonSize.EXTRA_SMALL,
 					style: ui_buttons.AirButtonStyle.OUTLINE,
 					useAirDesign: true,
 					dropdown: false,
+					props: {
+						'aria-label': this.getButtonAriaLabel(typeId, isDisabled)
+					},
 					...communicationButtonOptions
 				};
 				if (communicationsByType.length === 1) {
@@ -750,17 +847,40 @@ this.BX = this.BX || {};
 					};
 				}
 				const button = new ui_buttons.Button(buttonOptions);
+				this.buttons ??= {};
+				this.buttons[typeId] = button;
 				if (communicationsByType.length === 0) {
-					button.setDisabled(true);
-					button.setState(ui_buttons.Button.State.DISABLED);
+					this.disableButton(typeId);
 				}
 				const menuWindow = button.getMenuWindow();
 				if (menuWindow) {
 					ServiceLocator.getInstance().getEventService().registerChildPopup(this.$Bitrix.eventEmitter, menuWindow.getPopupWindow());
 				}
 				button.renderTo(this.$refs[typeId]);
-				this.buttons ??= {};
-				this.buttons[typeId] = button;
+			},
+			disableButton(typeId) {
+				this.buttons[typeId].setDisabled(true);
+				this.setButtonState(typeId, ui_buttons.Button.State.DISABLED);
+			},
+			setButtonState(typeId, state) {
+				this.buttons[typeId].setState(state);
+				this.refreshButtonAriaLabel(typeId);
+			},
+			// The accessible name follows the current availability of the channel,
+			// so it stays correct after every state change, not only on creation.
+			refreshButtonAriaLabel(typeId) {
+				const button = this.buttons[typeId];
+				button.setProps({
+					'aria-label': this.getButtonAriaLabel(typeId, button.isDisabled())
+				});
+			},
+			getButtonAriaLabel(typeId, isDisabled) {
+				const messageCode = {
+					[CommunicationType.Phone]: isDisabled ? 'CRM_MINI_CARD_COMMUNICATION_PHONE_DISABLED' : 'CRM_SIP_MGR_MAKE_CALL',
+					[CommunicationType.Email]: isDisabled ? 'CRM_MINI_CARD_COMMUNICATION_EMAIL_DISABLED' : 'CRM_MINI_CARD_COMMUNICATION_EMAIL',
+					[CommunicationType.Im]: isDisabled ? 'CRM_MINI_CARD_COMMUNICATION_IM_DISABLED' : 'CRM_MINI_CARD_COMMUNICATION_IM'
+				}[typeId];
+				return this.$Bitrix.Loc.getMessage(messageCode);
 			},
 			communicate(communication) {
 				const communicationService = ServiceLocator.getInstance().getCommunicationService();
@@ -775,7 +895,7 @@ this.BX = this.BX || {};
 					return;
 				}
 				if (communication.typeId === CommunicationType.Email) {
-					this.buttons[CommunicationType.Email].setState(ui_buttons.Button.State.WAITING);
+					this.setButtonState(CommunicationType.Email, ui_buttons.Button.State.WAITING);
 					void communicationService.communicateByEmail({
 						email: communication.value,
 						ownerTypeId: this.entity.ownerTypeId,
@@ -784,7 +904,7 @@ this.BX = this.BX || {};
 						entityId: this.entity.entityId,
 						activityEditorContainer: this.$refs.activityEditorContainer
 					}).finally(() => {
-						this.buttons[CommunicationType.Email].setState(null);
+						this.setButtonState(CommunicationType.Email, null);
 					});
 					return;
 				}
@@ -902,12 +1022,12 @@ this.BX = this.BX || {};
 						<ValueEllipsis :title="product.title">{{ product.title }}</ValueEllipsis>
 					</a>
 				</FieldValue>
-				<a
+				<ShowMore
 					v-if="isDisplayShowMore"
+					:count="productsLeftCount"
 					:href="productsLeftUrl"
-				>
-					<ShowMore :count="productsLeftCount" />
-				</a>
+					data-testid="crm-mini-card-products-show-more-link"
+				/>
 			</FieldValueList>
 		</Field>
 	`
@@ -1349,5 +1469,5 @@ this.BX = this.BX || {};
 	exports.MiniCardComponent = MiniCardComponent;
 	exports.MiniCardItem = MiniCardItem;
 
-})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Event, BX.Main, BX, BX.Vue3, BX.UI.IconSet, window, window, BX.UI, BX.UI.Dialogs, BX.UI.IconSet, BX.Cache);
+})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Event, BX.Main, BX.UI.Notification, BX.Vue3, BX.UI.IconSet, window, window, BX.UI, BX.UI.Dialogs, BX.UI.IconSet, BX.Cache);
 //# sourceMappingURL=index.bundle.js.map

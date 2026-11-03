@@ -67,14 +67,14 @@ export const getAvailableBlockDescriptors = (
  * Legacy default:
  *   condition + action + output = true
  *   filter = filterSupported
- *   relations = complexNodeConnections (gated via fallbackCtx)
+ *   relations = false - relations exist only where the server declares them, so a node arriving
+ *     without a descriptor has none
  *   everything else = false
  */
 export const normalizeAvailableBlocks = (
 	loaded: ?AvailableBlocks,
 	fallbackCtx: {
 		filterSupported?: boolean,
-		complexNodeConnections?: boolean,
 	} = {},
 ): AvailableBlocks => {
 	if (loaded && typeof loaded === 'object' && Object.keys(loaded).length > 0)
@@ -83,7 +83,7 @@ export const normalizeAvailableBlocks = (
 	}
 
 	// Legacy default: preserve the prior node behaviour until the server descriptor arrives
-	const { filterSupported = false, complexNodeConnections = false } = fallbackCtx;
+	const { filterSupported = false } = fallbackCtx;
 
 	return {
 		[NODE_BLOCK_TYPES.BASE_SETTINGS]: { available: false, constraints: null },
@@ -92,7 +92,7 @@ export const normalizeAvailableBlocks = (
 		[NODE_BLOCK_TYPES.FILTER]: { available: filterSupported, constraints: null },
 		[NODE_BLOCK_TYPES.OUTPUT]: { available: true, constraints: null },
 		[NODE_BLOCK_TYPES.GROUP]: { available: false, constraints: null },
-		[NODE_BLOCK_TYPES.RELATIONS]: { available: complexNodeConnections, constraints: null },
+		[NODE_BLOCK_TYPES.RELATIONS]: { available: false, constraints: null },
 		[NODE_BLOCK_TYPES.STORAGES]: { available: false, constraints: null },
 	};
 };

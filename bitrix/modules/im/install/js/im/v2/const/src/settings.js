@@ -18,6 +18,7 @@ export const Settings = Object.freeze({
 	},
 	message: {
 		bigSmiles: 'enableBigSmile',
+		defaultReaction: 'defaultReaction',
 	},
 	recent: {
 		showBirthday: 'viewBirthday',
@@ -87,6 +88,7 @@ export type RawSettings = {
 	viewGroup: boolean,
 	viewLastMessage: boolean,
 	viewOffline: boolean,
+	defaultReaction: string,
 };
 
 export type RawNotificationSettingsBlock = {

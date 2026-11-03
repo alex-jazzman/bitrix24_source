@@ -1,0 +1,4 @@
+<?php
+$MESS["IM_ELEMENTS_SEND_BUTTON_STOP_GENERATION"] = "Остановить генерацию";
+$MESS["IM_ELEMENTS_SEND_BUTTON_SAVE_EDIT"] = "Сохранить изменения (#SEND_MESSAGE_COMBINATION#)";
+$MESS["IM_ELEMENTS_SEND_BUTTON_SAVING_EDIT"] = "Сохраняем изменения";

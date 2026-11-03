@@ -29,10 +29,29 @@ export const ConditionValueControl = {
 			type: String,
 			required: true,
 		},
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the row this control belongs to. Without it the control works on the single rule the
+		 * panel shows: only the all-rules mode has no single one, and there every row names its own.
+		 */
+		rulePort: {
+			type: [Object, null],
+			default: null,
+		},
 	},
 	emits: ['update:modelValue'],
 	computed: {
 		...mapState(useNodeSettingsStore, ['block', 'currentRule']),
+		/** Rule this control works on: the one of its own row, or the single rule the panel shows. */
+		targetRulePort(): Object | null
+		{
+			return this.rulePort ?? this.currentRule;
+		},
+		/** Id of that rule, as the expression builder and the value selector take it. */
+		targetRulePortId(): string | null
+		{
+			return this.targetRulePort?.id ?? null;
+		},
 	},
 	data(): {
 		renderedNode: HTMLElement | null,
@@ -63,12 +82,12 @@ export const ConditionValueControl = {
 			{
 				BX.Bizproc.Selector.initSelectors(this.renderedNode);
 			}
-			mountExpressionBuilders(this.$refs.form, { block: this.block, portId: this.currentRule?.id });
+			mountExpressionBuilders(this.$refs.form, { block: this.block, portId: this.targetRulePortId });
 		};
 		EventEmitter.subscribe('BX.Bizproc.FieldType.onDesignerRenderControlFinished', this.renderFinishedHandler);
 
 		void this.$nextTick(() => {
-			mountExpressionBuilders(this.$refs.form, { block: this.block, portId: this.currentRule?.id });
+			mountExpressionBuilders(this.$refs.form, { block: this.block, portId: this.targetRulePortId });
 		});
 	},
 	unmounted(): void
@@ -103,7 +122,7 @@ export const ConditionValueControl = {
 				form: this.$refs.form,
 				store: diagramStore(),
 				block: this.block,
-				portId: this.currentRule?.id,
+				portId: this.targetRulePortId,
 				onChange: () => this.onChange(),
 			});
 		},

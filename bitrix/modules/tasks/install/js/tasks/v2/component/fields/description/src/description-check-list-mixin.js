@@ -1,10 +1,12 @@
 import { Runtime } from 'main.core';
 import { BaseEvent } from 'main.core.events';
-import { Model } from 'tasks.v2.const';
+import { Model, normalizeAddCheckListFromTextPayload } from 'tasks.v2.const';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 
-const emitAddCheckListDebounced = Runtime.debounce((component, checklistString) => {
-	component.$emit('addCheckList', checklistString);
+type AddCheckListPayload = { text: string, anchor?: ?HTMLElement };
+
+const emitAddCheckListDebounced = Runtime.debounce((component, payload: AddCheckListPayload) => {
+	component.$emit('addCheckList', payload);
 }, 500);
 
 // @vue/component
@@ -68,9 +70,10 @@ export const DescriptionCheckListMixin = {
 				this.handleCloseWithCheckList(checklistString);
 			}
 		},
-		handleCloseWithCheckList(checklistString: string): void
+		handleCloseWithCheckList(payload: string | AddCheckListPayload): void
 		{
-			emitAddCheckListDebounced(this, checklistString);
+			// The AI path passes a string, the button path an object; normalize to one payload shape.
+			emitAddCheckListDebounced(this, normalizeAddCheckListFromTextPayload(payload));
 		},
 		async handleBaasError(errorResult, bindElement): void
 		{

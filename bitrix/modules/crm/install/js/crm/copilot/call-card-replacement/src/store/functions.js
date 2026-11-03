@@ -1,4 +1,8 @@
 import { Type } from 'main.core';
+import { type CallAssessment } from '../store';
+
+const HINT_VIEW_MODE = 'hint';
+const RULES_VIEW_MODE = 'rules';
 
 export function correctCallAssessmentIdOrNull(id: any): ?number
 {
@@ -20,12 +24,27 @@ export function correctStringOrNull(value: any): ?string
 	return null;
 }
 
-export function prepareCallAssessment(callAssessment: Object): Object
+export function correctString(value: any): string
 {
+	return Type.isString(value) ? value : '';
+}
+
+export function correctViewModeOrNull(value: any): ?string
+{
+	return value === HINT_VIEW_MODE || value === RULES_VIEW_MODE ? value : null;
+}
+
+export function prepareCallAssessment(callAssessment: Object): CallAssessment
+{
+	const prompt = correctString(callAssessment?.prompt);
+	const isHintEnabled = callAssessment?.isHintEnabled === true;
+
 	return {
 		id: correctCallAssessmentIdOrNull(callAssessment?.id),
 		title: correctStringOrNull(callAssessment?.title),
-		prompt: correctStringOrNull(callAssessment?.prompt),
+		prompt,
+		isHintEnabled,
+		hasHint: isHintEnabled && callAssessment?.hasHint === true && Type.isStringFilled(prompt),
 	};
 }
 

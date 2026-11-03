@@ -7,6 +7,7 @@ return [
 		'require-lazy',
 		'notify-manager',
 		'device/connection',
+		'in-app-url/portal-page',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/loc',
 		'im:messenger/const',

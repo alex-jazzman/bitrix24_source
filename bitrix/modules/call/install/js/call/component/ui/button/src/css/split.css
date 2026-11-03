@@ -1,0 +1,26 @@
+.call-button-split {
+	display: inline-flex;
+	gap: 0;
+}
+
+.call-button-split > .call-button:not(:first-child) .call-button__body {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.call-button-split > .call-button:not(:last-child) .call-button__body {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.call-button-split > .call-button:not(:last-child)::after {
+	z-index: 2;
+	position: absolute;
+	top: calc(var(--call-button-size) * 0.25);
+	right: 0;
+	width: 1px;
+	height: calc(var(--call-button-size) * 0.5);
+	background: rgba(255, 255, 255, 0.25);
+	content: '';
+	pointer-events: none;
+}

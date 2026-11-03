@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/header/tag
  */
 jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
+	const { Text7 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const TagType = {
 		PRIMARY: 'primary',
@@ -70,12 +71,11 @@ jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
 						marginRight: 4,
 					},
 				},
-				Text(
+				Text7(
 					{
 						style: {
 							color,
 							flexShrink: 2,
-							fontSize: 9,
 							fontWeight: '700',
 						},
 						ellipsize: 'end',

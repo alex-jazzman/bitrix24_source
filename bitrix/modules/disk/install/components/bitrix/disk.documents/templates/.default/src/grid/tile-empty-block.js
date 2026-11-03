@@ -23,7 +23,7 @@ export function generateDocumentsEmptyBlock()
 export function generateBoardsEmptyBlock()
 {
 	return Tag.render`
-		<div class="disk-folder-list-no-data-inner">
+		<div class="disk-folder-list-no-data-inner disk-documents-tile-empty-block">
 			<div class="disk-folder-list-no-data-inner-message">
 				${Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BOARDS_TITLE')}
 			</div>

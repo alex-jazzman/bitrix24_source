@@ -17,11 +17,21 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		openChannel: 'openChannel',
 		collab: 'collab',
 		tasksTask: 'tasksTask',
+		vibecodeApp: 'vibecodeApp',
 		openlines: 'lines',
 		// nested navigation tabs — values match NavigationTabId strings sent by backend
 		collabDefault: 'collabDefault',
 		collabChat: 'collabChat',
 		calendar: 'calendar',
+	});
+
+	// Server-side recent section codes that have no navigation tab of their own.
+	// They are composition sections: a chat may belong to them in addition to its tab
+	// section. Values differ from RecentTab on purpose: RecentSectionCode.chat is 'chat',
+	// while RecentTab.chat is 'default'.
+	const RecentSectionCode = Object.freeze({
+		chat: 'chat',
+		channel: 'channel',
 	});
 
 	const RecentTabByNavigationTab = Object.freeze({
@@ -30,6 +40,7 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		[NavigationTabId.collab]: RecentTab.collab,
 		[NavigationTabId.channel]: RecentTab.openChannel,
 		[NavigationTabId.task]: RecentTab.tasksTask,
+		[NavigationTabId.vibecodeApp]: RecentTab.vibecodeApp,
 		[NavigationTabId.openlines]: RecentTab.openlines,
 		[NavigationTabId.collabDefault]: RecentTab.collabDefault,
 		[NavigationTabId.collabChat]: RecentTab.collabChat,
@@ -45,6 +56,7 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		[RecentTab.collab]: NavigationTabId.collab,
 		[RecentTab.openChannel]: NavigationTabId.channel,
 		[RecentTab.tasksTask]: NavigationTabId.task,
+		[RecentTab.vibecodeApp]: NavigationTabId.vibecodeApp,
 		[RecentTab.openlines]: NavigationTabId.openlines,
 		[RecentTab.collabDefault]: NavigationTabId.collabDefault,
 		[RecentTab.collabChat]: NavigationTabId.collabChat,
@@ -54,12 +66,16 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 	// System folder.code → NavigationTabId. The Open Lines folder rest-code is
 	// 'lines' (backend FolderTable rest-code; domain code is unchanged), which
 	// matches RecentTab.openlines ('lines').
+	// The "All" folder has a tab of its own but no recent section: its content is
+	// resolved into a SET of member sections, so it is absent from RecentTab.
 	const NavigationTabByFolderCode = Object.freeze({
+		all: NavigationTabId.all,
 		default: NavigationTabId.chats,
 		copilot: NavigationTabId.copilot,
 		collab: NavigationTabId.collab,
 		openChannel: NavigationTabId.channel,
 		tasksTask: NavigationTabId.task,
+		vibecodeApp: NavigationTabId.vibecodeApp,
 		lines: NavigationTabId.openlines,
 	});
 
@@ -78,6 +94,7 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 	module.exports = {
 		ChatTypes,
 		RecentTab,
+		RecentSectionCode,
 		RecentTabByNavigationTab,
 		NavigationTabByRecentTab,
 		NavigationTabByFolderCode,

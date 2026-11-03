@@ -3,28 +3,38 @@
  */
 jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports, module) => {
 	const { Type } = require('type');
+	const { PerfPoint } = require('debug/prism');
+	const { Color } = require('tokens');
 	const { Loc } = require('im/messenger/loc');
 	const { Haptics } = require('haptics');
+	const { isOnline } = require('device/connection');
 	const { isEqual } = require('utils/object');
-	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
-	const { EventType, EventFilterType } = require('im/messenger/const');
+	const { EventType, EventFilterType, ErrorType } = require('im/messenger/const');
 	const { showDeleteChannelPostsAlert, showDeleteMessagesAlert } = require('im/messenger/lib/ui/alert');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { AiTaskRest } = require('im/messenger/provider/rest');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { AiTaskIndicationManager } = require('im/messenger/controller/dialog/lib/ai-task-indication-manager');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--select-manager');
 
 	const ButtonId = Object.freeze({
 		forward: 'forward',
 		delete: 'delete',
+		createAiTask: 'createAiTask',
+		more: 'more',
 	});
 
 	const ButtonIconName = Object.freeze({
 		forward: 'forward',
+		more: 'more',
 	});
 
 	const ButtonHeight = Object.freeze({
@@ -35,6 +45,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		outlineAccent1: 'outline-accent-1',
 		outline: 'outline',
 		outlineNoAccent: 'outline-no-accent',
+		outlineBitrixGpt: 'outline-bitrix-gpt',
 	});
 
 	/**
@@ -52,6 +63,15 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		#selectLimit = MessengerParams.getMultipleActionMessageLimit();
 		/** @type {MessagesModelState} */
 		#savedQuoteMessage = null;
+
+		/**
+		 * @desc Whether a creation request of this selection is in flight. The selection mode stays open
+		 * until the request answers, so without the flag a second tap sends a second request - and the
+		 * second task gets no indication at all, because the manager drops a start while an operation of
+		 * the dialog is still running.
+		 * @type {boolean}
+		 */
+		#isAiTaskCreationInProgress = false;
 
 		/**
 		 * @constructor
@@ -98,6 +118,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.onDisabledButtonTap = this.onDisabledButtonTap.bind(this);
 			this.onDeleteMessages = this.onDeleteMessages.bind(this);
 			this.onForwardMessages = this.onForwardMessages.bind(this);
+			this.onMoreButtonTap = this.onMoreButtonTap.bind(this);
 		}
 
 		/**
@@ -211,6 +232,8 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			{
 				case ButtonId.forward: return this.onForwardMessages();
 				case ButtonId.delete: return this.onDeleteMessages();
+				case ButtonId.createAiTask: return this.onCreateAiTask();
+				case ButtonId.more: return this.onMoreButtonTap();
 				default: return false;
 			}
 		}
@@ -261,6 +284,208 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			}
 
 			showDeleteMessagesAlert({ deleteCallback });
+		}
+
+		async onCreateAiTask()
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageIds = this.#selectedMessageIdList
+				.map((id) => Number(id))
+				.filter((id) => Number.isInteger(id));
+
+			if (messageIds.length === 0)
+			{
+				logger.error(`${this.constructor.name}.onCreateAiTask: no numeric message ids in selection`);
+
+				return;
+			}
+
+			// anchor -- max message id of the request, single invariant with web to correlate the autoTaskStatus pull
+			const anchor = Math.max(...messageIds);
+
+			if (this.#isAiTaskCreationInProgress)
+			{
+				logger.log(`${this.constructor.name}.onCreateAiTask: creation in progress, skip`, anchor);
+
+				return;
+			}
+
+			if (AiTaskIndicationManager.isOperationRunning(this.locator, anchor))
+			{
+				logger.log(`${this.constructor.name}.onCreateAiTask: indication active for anchor, skip`, anchor);
+
+				return;
+			}
+
+			logger.log(`${this.constructor.name}.onCreateAiTask, messages:`, messageIds, 'anchor:', anchor);
+
+			// Started at the tap and closed on the frame: three waits stand between the two here, and
+			// leaving the selection mode is one of them - hence a sub-point of its own for each.
+			const point = new PerfPoint('IM AI Task Create', `selection ${messageIds.length}`).start();
+
+			AnalyticsService.getInstance().multiselectPanel.sendCreateAiTaskTap(this.dialogId);
+
+			this.#isAiTaskCreationInProgress = true;
+
+			try
+			{
+				point.startPoint('Server Create');
+				await AiTaskRest.createByMessageList({ messageIds });
+				point.endPoint('Server Create', { status: 'success', itemsCount: messageIds.length });
+
+				// The set of the operation is taken above, before the mode is left: leaving it drops the
+				// selection. The mode is left before the indication is raised, so that nothing on the way
+				// to the first frame can strand the dialog in the selection mode with the task created.
+				point.startPoint('Leave Select Mode');
+				try
+				{
+					await this.disableSelectMessagesMode(true);
+					point.endPoint('Leave Select Mode');
+				}
+				catch (error)
+				{
+					// The task is already on the server, so a native call that failed on the way out of the
+					// mode may neither be told as a refusal of the creation nor hold back the indication.
+					point.endPoint('Leave Select Mode', { status: 'error' });
+					logger.error(`${this.constructor.name}.onCreateAiTask: leaving the select mode:`, error);
+				}
+
+				point.startPoint('Indication Start');
+				this.#showAiTaskIndication(anchor, messageIds);
+				point.endPoint('Indication Start');
+			}
+			catch (errors)
+			{
+				// Whichever of the two was open is closed as failed; endPoint of a closed key is a no-op.
+				point.endPoint('Server Create', { status: 'error' });
+				point.endPoint('Indication Start', { status: 'error' });
+
+				logger.error(`${this.constructor.name}.onCreateAiTask.catch:`, errors);
+				this.#showAiTaskRefusal(errors);
+			}
+			finally
+			{
+				this.#isAiTaskCreationInProgress = false;
+				point.end();
+			}
+		}
+
+		/**
+		 * @desc Tells the refusals the user can act on apart from everything else. A slot already
+		 * taken by an operation over the same messages is a state of the chat rather than a failure of
+		 * the tap, so it gets a plain toast instead of the red one.
+		 * @param {Array<{code: string}>} errors
+		 */
+		#showAiTaskRefusal(errors)
+		{
+			const codes = Array.isArray(errors) ? errors.map((error) => error?.code) : [];
+
+			// The transport stamps NETWORK_ERROR for any rejection with no parsed body -- a lost
+			// network, a timeout, a gateway page, the 401 of a closed guest session. Only the
+			// connection status tells the offline case apart from those, so both are checked here.
+			if (codes.includes(ErrorType.networkError) && !isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			if (codes.includes(ErrorType.aiTask.creationInProgress))
+			{
+				Notification.showToastWithParams({
+					message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_AI_TASK_ALREADY_CREATING'),
+				});
+
+				return;
+			}
+
+			if (codes.includes(ErrorType.aiTask.sourceNotSupported))
+			{
+				Notification.showErrorToast({
+					message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_AI_TASK_SOURCE_NOT_SUPPORTED'),
+				});
+
+				return;
+			}
+
+			Notification.showErrorToast();
+		}
+
+		/**
+		 * @param {number} anchor -- max message id of the request, correlates the operation with the pull
+		 * @param {Array<number>} messageIds -- every message the task is built from
+		 */
+		#showAiTaskIndication(anchor, messageIds)
+		{
+			const isRaised = AiTaskIndicationManager.startOnAvailableTrack(this.locator, {
+				anchor,
+				messageIds,
+			});
+
+			if (!isRaised)
+			{
+				logger.log(`${this.constructor.name}.showAiTaskIndication: the build has no track, skip`, anchor);
+			}
+		}
+
+		onMoreButtonTap()
+		{
+			logger.log(`${this.constructor.name}.onMoreButtonTap`);
+
+			this.checkDeleteButtonAvailable();
+
+			const items = [
+				{
+					id: ButtonId.delete,
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON'),
+					iconName: Icon.TRASHCAN.getIconName(),
+					sectionCode: 'actions',
+					disable: !this.#isButtonDeleteAvailable,
+					styles: {
+						title: {
+							font: {
+								color: Color.accentMainAlert.toHex(),
+							},
+						},
+						icon: {
+							color: Color.accentMainAlert.toHex(),
+						},
+					},
+				},
+			];
+
+			const sections = [{ id: 'actions' }];
+
+			const menu = dialogs.createPopupMenu();
+			menu.setData(items, sections, (event, item) => {
+				if (event === 'onItemSelected')
+				{
+					this.#handleMoreMenuItemSelected(item.id);
+				}
+			});
+			menu.setTarget(ButtonId.more);
+			menu.show();
+		}
+
+		/**
+		 * @param {string} itemId
+		 */
+		#handleMoreMenuItemSelected(itemId)
+		{
+			switch (itemId)
+			{
+				case ButtonId.delete:
+					this.onDeleteMessages();
+					break;
+				default:
+					break;
+			}
 		}
 
 		showUnavailableForwardActionToast()
@@ -410,14 +635,22 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		{
 			this.#actionPanelButtons = this.getButtons();
 
-			return this.view.actionPanelShow(this.getActionPanelTitle(), this.#actionPanelButtons);
+			return this.view.actionPanelShow(
+				this.getActionPanelTitle(),
+				this.#actionPanelButtons,
+				this.#getMoreButton(),
+			);
 		}
 
 		/**
 		 * @param {boolean} animated
 		 */
-		actionPanelHide(animated)
+		async actionPanelHide(animated)
 		{
+			// The "more" button has to go before the panel does: hiding the panel is what makes the
+			// native side lose the reference to that button while its view stays in the container.
+			await this.view.actionPanelHideMoreButton();
+
 			return this.view.actionPanelHide(animated);
 		}
 
@@ -504,32 +737,111 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		getButtons()
 		{
 			this.checkForwardButtonAvailable();
-			this.checkDeleteButtonAvailable();
 
-			const disabledForwardButton = (this.#selectedMessageIdList.length === 0 || !this.#isButtonForwardAvailable);
-			const disabledDeleteButton = (this.#selectedMessageIdList.length === 0 || !this.#isButtonDeleteAvailable);
-			const customStyleDeleteButton = disabledDeleteButton
+			if (!this.#isAiTaskActionPanelAvailable())
+			{
+				this.checkDeleteButtonAvailable();
+
+				return [
+					this.#buildDeleteButton(),
+					this.#buildForwardButton(),
+				];
+			}
+
+			return [
+				this.#buildCreateAiTaskButton(),
+				this.#buildForwardButton(),
+			];
+		}
+
+		/**
+		 * @return {?ActionPanelButton}
+		 */
+		#getMoreButton()
+		{
+			if (!this.#isAiTaskActionPanelAvailable())
+			{
+				return null;
+			}
+
+			return this.#buildMoreButton();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isAiTaskActionPanelAvailable()
+		{
+			return (
+				Feature.isAiTaskCreationFromMessagesEntryPointAvailable
+				&& Feature.isChatActionPanelMoreSupported
+			);
+		}
+
+		/**
+		 * @return {ActionPanelButton}
+		 */
+		#buildForwardButton()
+		{
+			const disabled = (this.#selectedMessageIdList.length === 0 || !this.#isButtonForwardAvailable);
+
+			return {
+				id: ButtonId.forward,
+				rightIconName: ButtonIconName.forward,
+				text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON'),
+				height: ButtonHeight.L,
+				design: ButtonDesignType.outlineAccent1,
+				disabled,
+			};
+		}
+
+		/**
+		 * @return {ActionPanelButton}
+		 */
+		#buildDeleteButton()
+		{
+			const disabled = (this.#selectedMessageIdList.length === 0 || !this.#isButtonDeleteAvailable);
+			const customStyle = disabled
 				? {}
 				: { borderColor: Color.accentMainAlert.toHex() };
 
-			return [
-				{
-					id: ButtonId.delete,
-					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON'),
-					height: ButtonHeight.L,
-					design: ButtonDesignType.outline,
-					disabled: disabledDeleteButton,
-					customStyle: customStyleDeleteButton,
-				},
-				{
-					id: ButtonId.forward,
-					rightIconName: ButtonIconName.forward,
-					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON'),
-					height: ButtonHeight.L,
-					design: ButtonDesignType.outlineAccent1,
-					disabled: disabledForwardButton,
-				},
-			];
+			return {
+				id: ButtonId.delete,
+				text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON'),
+				height: ButtonHeight.L,
+				design: ButtonDesignType.outline,
+				disabled,
+				customStyle,
+			};
+		}
+
+		/**
+		 * @return {ActionPanelButton}
+		 */
+		#buildCreateAiTaskButton()
+		{
+			return {
+				id: ButtonId.createAiTask,
+				text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_CREATE_AI_TASK_BUTTON_MSGVER_1'),
+				height: ButtonHeight.L,
+				design: ButtonDesignType.outlineBitrixGpt,
+				disabled: this.#selectedMessageIdList.length === 0,
+			};
+		}
+
+		/**
+		 * @return {ActionPanelButton}
+		 */
+		#buildMoreButton()
+		{
+			return {
+				id: ButtonId.more,
+				iconName: ButtonIconName.more,
+				height: ButtonHeight.L,
+				design: ButtonDesignType.outline,
+				viewId: ButtonId.more,
+				disabled: false,
+			};
 		}
 
 		/**

@@ -11,6 +11,7 @@ $migration->table('b_mail_mailbox')->create(function (\Bitrix\Main\UpdateSystem\
 	$columns->int('SERVICE_ID')->notNull()->default('0');
 	$columns->varchar('EMAIL', 255);
 	$columns->varchar('EMAIL_NORMALIZED', 255);
+	$columns->char('EMAIL_DOMAIN_HASH', 64);
 	$columns->varchar('USERNAME', 255);
 	$columns->varchar('NAME', 255);
 	$columns->varchar('SERVER', 255);
@@ -35,11 +36,64 @@ $migration->table('b_mail_mailbox')->create(function (\Bitrix\Main\UpdateSystem\
 	$columns->int('SYNC_LOCK');
 	$columns->mediumText('OPTIONS');
 	$columns->int('ACTIVE_GENERATION_ID')->notNull()->default('0');
+	$columns->int('AVATAR_RESOURCE_ID');
+	$columns->int('AVATAR_REVISION')->notNull()->default('0');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_MAIL_MAILBOX_USER_ID', ['USER_ID']);
 	$table->addIndex('IX_B_MAIL_MAILBOX_ACTIVE_GEN', ['ACTIVE_GENERATION_ID']);
 	$table->addIndex('IX_B_MAIL_MAILBOX_EMAIL_NORMALIZED', ['EMAIL_NORMALIZED']);
+	$table->addIndex('IX_B_MAIL_MAILBOX_DOMAIN_HASH_ID', ['EMAIL_DOMAIN_HASH', 'ID']);
+	$table->addIndex('IX_B_MAIL_MAILBOX_AVATAR_RESOURCE', ['AVATAR_RESOURCE_ID']);
 });
+
+$migration->table('b_mail_mailbox_avatar_resource')->create(
+	function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+		$columns = $table->addColumn();
+		$columns->int('ID')->notNull()->autoincrement();
+		$columns->int('MAILBOX_ID')->notNull();
+		$columns->int('FILE_ID')->notNull();
+		$columns->int('CREATED_BY')->notNull();
+		$columns->varchar('STATE', 16)->notNull()->default('pending');
+		$columns->datetime('CREATED_AT')->notNull();
+		$columns->datetime('LAST_ATTEMPT_AT')->notNull();
+		$table->addPrimaryKey('ID');
+		$table->addUniqueIndex('UX_B_MAIL_MAILBOX_AVATAR_RESOURCE_FILE', ['FILE_ID']);
+		$table->addIndex('IX_B_MAIL_MAILBOX_AVATAR_RESOURCE_MAILBOX', ['MAILBOX_ID']);
+		$table->addIndex('IX_B_MAIL_MAILBOX_AVATAR_RESOURCE_CLEANUP', ['STATE', 'LAST_ATTEMPT_AT', 'ID']);
+	},
+);
+
+$migration->table('b_mail_sender_avatar')->create(
+	function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+		$columns = $table->addColumn();
+		$columns->int('ID')->notNull()->autoincrement();
+		$columns->varchar('EMAIL_NORMALIZED', 255)->notNull();
+		$columns->int('RESOURCE_ID');
+		$columns->int('REVISION')->notNull()->default('0');
+		$columns->datetime('DATE_MODIFY')->notNull();
+		$table->addPrimaryKey('ID');
+		$table->addUniqueIndex('UX_B_MAIL_SENDER_AVATAR_EMAIL', ['EMAIL_NORMALIZED']);
+		$table->addIndex('IX_B_MAIL_SENDER_AVATAR_RESOURCE', ['RESOURCE_ID']);
+	},
+);
+
+$migration->table('b_mail_sender_avatar_resource')->create(
+	function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+		$columns = $table->addColumn();
+		$columns->int('ID')->notNull()->autoincrement();
+		$columns->varchar('EMAIL_NORMALIZED', 255)->notNull();
+		$columns->int('FILE_ID')->notNull();
+		$columns->int('CREATED_BY')->notNull();
+		$columns->varchar('STATE', 16)->notNull()->default('pending');
+		$columns->datetime('CREATED_AT')->notNull();
+		$columns->datetime('LAST_ATTEMPT_AT')->notNull();
+		$table->addPrimaryKey('ID');
+		$table->addUniqueIndex('UX_B_MAIL_SENDER_AVATAR_RESOURCE_FILE', ['FILE_ID']);
+		$table->addIndex('IX_B_MAIL_SENDER_AVATAR_RESOURCE_EMAIL', ['EMAIL_NORMALIZED']);
+		$table->addIndex('IX_B_MAIL_SENDER_AVATAR_RESOURCE_CREATOR', ['CREATED_BY']);
+		$table->addIndex('IX_B_MAIL_SENDER_AVATAR_RESOURCE_CLEANUP', ['STATE', 'LAST_ATTEMPT_AT', 'ID']);
+	},
+);
 
 $migration->table('b_mail_mailbox_alias')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
@@ -389,6 +443,40 @@ $migration->table('b_mail_message_closure')->create(function (\Bitrix\Main\Updat
 	$table->addIndex('IX_MAIL_MESSAGE_CL_R', ['PARENT_ID', 'MESSAGE_ID']);
 });
 
+$migration->table('b_mail_message_conversation')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('MAILBOX_ID')->notNull();
+	$columns->datetime('DATE_CREATE')->notNull();
+	$columns->int('REVISION')->notNull()->default('1');
+	$table->addPrimaryKey('ID');
+	$table->addIndex('IX_MAIL_MESSAGE_CONVERSATION_MAILBOX', ['MAILBOX_ID', 'ID']);
+});
+
+$migration->table('b_mail_message_conversation_member')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('MESSAGE_ID')->notNull();
+	$columns->int('CONVERSATION_ID')->notNull();
+	$columns->int('MAILBOX_ID')->notNull();
+	$columns->datetime('DATE_UPDATE')->notNull();
+	$table->addPrimaryKey('MESSAGE_ID');
+	$table->addIndex('IX_MAIL_MESSAGE_CONVERSATION_MEMBER_CONV_MSG', ['CONVERSATION_ID', 'MESSAGE_ID']);
+	$table->addIndex('IX_MAIL_MESSAGE_CONVERSATION_MEMBER_MAILBOX', ['MAILBOX_ID', 'CONVERSATION_ID', 'MESSAGE_ID']);
+});
+
+$migration->table('b_mail_message_conversation_activity')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('MAILBOX_ID')->notNull();
+	$columns->varchar('SCOPE_KEY', 40)->notNull();
+	$columns->int('CONVERSATION_ID')->notNull();
+	$columns->datetime('LAST_ACTIVITY')->notNull();
+	$table->addPrimaryKeys(['MAILBOX_ID', 'CONVERSATION_ID', 'SCOPE_KEY']);
+	$table->addIndex(
+		'IX_MAIL_MESSAGE_CONVERSATION_ACTIVITY_PAGE',
+		['MAILBOX_ID', 'SCOPE_KEY', 'LAST_ACTIVITY', 'CONVERSATION_ID'],
+	);
+});
+
 $migration->table('b_mail_message_delete_queue')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
 	$columns->int('PK')->notNull()->autoincrement();
@@ -569,6 +657,10 @@ $migration->table('b_mail_draft')->create(function (\Bitrix\Main\UpdateSystem\Mi
 		['USER_ID', 'CONTEXT_TYPE', 'CRM_ENTITY_TYPE_ID', 'CRM_ENTITY_ID'],
 	);
 	$table->addIndex('IX_B_MAIL_DRAFT_LIST', ['USER_ID', 'CONTEXT_TYPE', 'DATE_MODIFY', 'ID']);
+	$table->addIndex(
+		'IX_B_MAIL_DRAFT_REPLY_PARENT',
+		['PARENT_MESSAGE_ID', 'USER_ID', 'CONTEXT_TYPE', 'COMPOSE_MODE', 'STATUS', 'DATE_EXPIRE'],
+	);
 	$table->addIndex('IX_B_MAIL_DRAFT_EXPIRE', ['STATUS', 'DATE_EXPIRE', 'ID']);
 	$table->addIndex('IX_B_MAIL_DRAFT_COMPLETED', ['STATUS', 'DATE_COMPLETED', 'ID']);
 });
@@ -583,6 +675,8 @@ $migration->table('b_mail_draft_attachment')->create(function (\Bitrix\Main\Upda
 	$columns->varchar('FILE_NAME', 255)->notNull();
 	$columns->bigInt('FILE_SIZE')->notNull()->unsigned();
 	$columns->varchar('CONTENT_TYPE', 255);
+	$columns->varchar('CONTENT_ID', 255);
+	$columns->char('IS_INLINE', 1)->notNull()->default('N');
 	$columns->int('SORT')->notNull()->default('100');
 	$table->addPrimaryKey('ID');
 	$table->addUniqueIndex('UX_B_MAIL_DRAFT_ATTACHMENT_FILE', ['DRAFT_ID', 'FILE_ID']);
@@ -640,6 +734,39 @@ $migration->table('b_mail_shared_signature_assignment')->create(function (\Bitri
 	$table->addIndex('IX_MAIL_SSA_SIGNATURE', ['SIGNATURE_ID']);
 	$table->addIndex('IX_MAIL_SSA_TARGET', ['TARGET_TYPE', 'TARGET_ID']);
 });
+
+$migration->table('b_mail_signature_image')->create(
+	function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+		$columns = $table->addColumn();
+		$columns->int('ID')->notNull()->autoincrement();
+		$columns->varchar('UUID', 36)->notNull();
+		$columns->int('FILE_ID')->notNull();
+		$columns->int('OWNER_ID')->notNull();
+		$columns->varchar('CONTENT_TYPE', 32)->notNull();
+		$columns->int('WIDTH')->notNull();
+		$columns->int('HEIGHT')->notNull();
+		$columns->int('FILE_SIZE')->notNull();
+		$columns->char('IS_ANIMATED', 1)->notNull()->default('N');
+		$columns->varchar('STATE', 16)->notNull()->default('pending');
+		$columns->datetime('DATE_CREATE')->notNull();
+		$columns->datetime('DATE_MODIFY')->notNull();
+		$table->addPrimaryKey('ID');
+		$table->addUniqueIndex('UX_MAIL_SIGNATURE_IMAGE_UUID', ['UUID']);
+		$table->addIndex('IX_MAIL_SIGNATURE_IMAGE_CLEANUP', ['DATE_MODIFY', 'ID', 'STATE']);
+		$table->addIndex('IX_MAIL_SIGNATURE_IMAGE_OWNER_STATE', ['OWNER_ID', 'STATE']);
+		$table->addIndex('IX_MAIL_SIGNATURE_IMAGE_OWNER_CREATED', ['OWNER_ID', 'DATE_CREATE']);
+	},
+);
+
+$migration->table('b_mail_signature_image_binding')->create(
+	function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+		$columns = $table->addColumn();
+		$columns->int('SIGNATURE_ID')->notNull();
+		$columns->int('IMAGE_ID')->notNull();
+		$table->addPrimaryKeys(['SIGNATURE_ID', 'IMAGE_ID']);
+		$table->addIndex('IX_MAIL_SIGNATURE_IMAGE_BINDING_IMAGE', ['IMAGE_ID', 'SIGNATURE_ID']);
+	},
+);
 
 $migration->table('b_mail_message_mark')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
 	$columns = $table->addColumn();
@@ -714,6 +841,23 @@ $migration->table('b_mail_migration_operation')->create(function (\Bitrix\Main\U
 	$table->addIndex('ix_mail_migration_operation_queue', ['EXEC_STATE', 'NEXT_RUN']);
 	$table->addIndex('ix_mail_migration_operation_latest', ['MAILBOX_ID', 'ID']);
 	$table->addIndex('ix_mail_migration_operation_publication', ['PUBLICATION_PENDING', 'ID']);
+});
+
+$migration->table('b_mail_migration_manual_control')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('MAILBOX_ID')->notNull();
+	$columns->varchar('OPERATION_ID', 64)->notNull();
+	$columns->char('ENABLED', 1)->notNull()->default('N');
+	$columns->varchar('CHECKPOINT', 32)->notNull();
+	$columns->int('VERSION')->notNull()->default('0');
+	$columns->char('GRANTED', 1)->notNull()->default('N');
+	$columns->datetime('WAIT_SINCE');
+	$columns->datetime('RETRY_RESUMED_AT');
+	$columns->datetime('DATE_CREATE')->notNull();
+	$columns->datetime('DATE_MODIFY')->notNull();
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('ux_mail_migration_manual_control_pair', ['MAILBOX_ID', 'OPERATION_ID']);
 });
 
 $migration->table('b_mail_message_fingerprint')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -834,4 +978,112 @@ $migration->table('b_mail_messenger_message')->create(function (\Bitrix\Main\Upd
 	$table->addIndex('IX_MAIL_MSGR_QUEUE_STATUS_AVAIL', ['QUEUE_ID', 'STATUS', 'AVAILABLE_AT']);
 	// Serves requeueStaleMessages(): STATUS plus the age of the row.
 	$table->addIndex('IX_MAIL_MSGR_STATUS_UPDATED', ['STATUS', 'UPDATED_AT']);
+});
+
+$migration->table('b_mail_scheduled_message')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('AUTHOR_ID')->notNull();
+	$columns->int('MAILBOX_ID');
+	$columns->varchar('MODE', 16)->notNull()->default('scheduled');
+	$columns->varchar('SOURCE_TYPE', 16)->notNull()->default('mail');
+	$columns->datetime('CANCEL_UNTIL');
+	$columns->longText('SOURCE_CONTEXT');
+	$columns->varchar('IDEMPOTENCY_KEY', 64);
+	$columns->text('SENDER')->notNull();
+	$columns->text('RECIPIENTS')->notNull();
+	$columns->varchar('SUBJECT', 255)->notNull()->default('');
+	$columns->longText('BODY')->notNull();
+	$columns->longText('LARGE_ATTACHMENTS');
+	$columns->varchar('IN_REPLY_TO', 255);
+	$columns->datetime('SCHEDULED_AT')->notNull();
+	$columns->varchar('AUTHOR_TIMEZONE_ID', 255)->notNull();
+	$columns->varchar('STATUS', 16)->notNull()->default('scheduled');
+	$columns->int('ATTEMPTS')->notNull()->default('0');
+	$columns->datetime('NEXT_ATTEMPT_AT');
+	$columns->datetime('DISPATCH_RECEIPT_AT');
+	$columns->text('LAST_ERROR');
+	$columns->int('REVISION')->notNull()->default('1');
+	$columns->datetime('CREATED_AT')->notNull();
+	$columns->datetime('UPDATED_AT')->notNull();
+	$table->addPrimaryKey('ID');
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_READY', ['STATUS', 'NEXT_ATTEMPT_AT', 'ID']);
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_MAILBOX', ['MAILBOX_ID', 'SCHEDULED_AT', 'ID']);
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_UPDATED', ['STATUS', 'UPDATED_AT', 'ID']);
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_MODE_UPDATED', ['MODE', 'STATUS', 'UPDATED_AT', 'ID']);
+	$table->addIndex(
+		'IX_MAIL_SCHEDULED_MESSAGE_UNDO_LIST',
+		['AUTHOR_ID', 'MAILBOX_ID', 'MODE', 'STATUS', 'CREATED_AT', 'ID'],
+	);
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_EXPIRED', ['STATUS', 'SCHEDULED_AT', 'ID']);
+	$table->addUniqueIndex(
+		'UX_MAIL_SCHEDULED_MESSAGE_IDEMPOTENCY',
+		['AUTHOR_ID', 'IDEMPOTENCY_KEY'],
+	);
+	// Serves the count of the section. Deliberately a separate index and not STATUS inserted into
+	// IX_MAIL_SCHEDULED_MESSAGE_MAILBOX: that would break ORDER BY SCHEDULED_AT, ID of the page.
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_MAILBOX_STATUS', ['MAILBOX_ID', 'STATUS']);
+});
+
+$migration->table('b_mail_scheduled_message_attachment')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->int('SCHEDULED_MESSAGE_ID')->notNull();
+	$columns->int('FILE_ID')->notNull();
+	$columns->int('SOURCE_OBJECT_ID')->notNull()->default('0');
+	$columns->varchar('FILE_NAME', 255)->notNull();
+	$columns->varchar('CONTENT_ID', 255);
+	$columns->char('IS_INLINE', 1)->notNull()->default('N');
+	$table->addPrimaryKey('ID');
+	$table->addIndex('IX_MAIL_SCHEDULED_MESSAGE_ATTACHMENT_MESSAGE', ['SCHEDULED_MESSAGE_ID']);
+});
+
+// Vacation auto-reply setting, one row per mailbox: see Internals\VacationAutoReplyTable. The period
+// is stored in machine time next to the timezone its bounds were given in.
+$migration->table('b_mail_vacation_auto_reply')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('MAILBOX_ID')->notNull();
+	$columns->int('USER_ID')->notNull();
+	$columns->varchar('ACTIVE', 1)->notNull()->default('N');
+	// Bumped when a new period starts; part of the dedup key of b_mail_vacation_auto_reply_log
+	$columns->int('PERIOD_ID')->notNull()->default('1');
+	$columns->datetime('STARTS_AT')->notNull();
+	$columns->datetime('ENDS_AT')->notNull();
+	$columns->varchar('USER_TIMEZONE_ID', 255)->notNull();
+	$columns->longText('BODY')->notNull();
+	// Mailbox PERIOD_CHECK saved before the period shortened it, restored when the period ends
+	$columns->int('ORIGINAL_PERIOD_CHECK');
+	// The value the period wrote into PERIOD_CHECK instead: what tells the writing of this feature from
+	// the writing of another owner of the field, whatever the option says by then
+	$columns->int('SHORTENED_PERIOD_CHECK');
+	$columns->datetime('CREATED_AT')->notNull();
+	$columns->datetime('UPDATED_AT')->notNull();
+	$table->addPrimaryKey('MAILBOX_ID');
+	// Serves shortenStarting(): ACTIVE is the equality, and of the two bounds ENDS_AT opens the range.
+	// A vacation that is over ends below now and the range never reaches it - which is the whole point,
+	// because such a row stays ACTIVE = 'Y' for good: the setting is switched off by the user or by a
+	// handover of the mailbox, and nothing switches it off when the period simply ends. Leading with
+	// STARTS_AT instead would open the scan at the oldest of those rows and read every one of them, so an
+	// hourly pass would grow with the history of the portal. No order is requested: a settled row leaves
+	// the eligible set, and the index scan can stop as soon as it has the pack.
+	$table->addIndex('IX_MAIL_VACATION_AUTO_REPLY_START', ['ACTIVE', 'ENDS_AT', 'STARTS_AT']);
+	// Serves restoreQuery(), behind both restoring passes: a remembered interval is what only the
+	// mailboxes shortened right now carry, so leading with it keeps the passes off the rest of the
+	// table, and the pair is the order they read in, so a pack comes out of the index already sorted.
+	// MAILBOX_ID is spelled out because InnoDB appends the primary key to a secondary index and
+	// PostgreSQL does not.
+	$table->addIndex('IX_MAIL_VACATION_AUTO_REPLY_RESTORE', ['ORIGINAL_PERIOD_CHECK', 'MAILBOX_ID']);
+});
+
+// Senders already answered within a period, see Internals\VacationAutoReplyLogTable. The composite
+// primary key is what keeps one address to one auto-reply per period.
+$migration->table('b_mail_vacation_auto_reply_log')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('MAILBOX_ID')->notNull();
+	$columns->int('PERIOD_ID')->notNull();
+	// Lower-cased sender address; normalization happens before write and before lookup
+	$columns->varchar('ADDRESS', 255)->notNull();
+	$columns->datetime('SENT_AT')->notNull();
+	// Only the primary key: the log is read and written by the whole of it
+	$table->addPrimaryKeys(['MAILBOX_ID', 'PERIOD_ID', 'ADDRESS']);
 });

@@ -47,7 +47,9 @@ export function getMissingConfirmations(error: ApiError, confirmations: Array<st
 export function buildConsequencesText(
 	{ required, error, messages, getMessage, fallbackMessageId }: {
 		required: Array<string>,
-		error: ApiError,
+		// Absent when the consequences are known in advance and the server has not been asked yet: then
+		// every code is one of ours and the fallback below is out of reach.
+		error?: ?ApiError,
 		messages: Map<string, string>,
 		getMessage: (messageId: string) => ?string,
 		fallbackMessageId: string,
@@ -61,7 +63,7 @@ export function buildConsequencesText(
 
 	if (consequences.length === 0)
 	{
-		const [firstError] = error.errors ?? [];
+		const [firstError] = error?.errors ?? [];
 
 		consequences.push(
 			Type.isStringFilled(firstError?.message)

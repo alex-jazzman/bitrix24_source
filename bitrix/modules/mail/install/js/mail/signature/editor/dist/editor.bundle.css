@@ -33,6 +33,12 @@
 	border-color: transparent;
 }
 
+.mail-signature-editor-image-button {
+	padding: 0;
+	border: none;
+	background: none;
+}
+
 /*
  * Third card: the padding belongs to the header and to the content, so that the header keeps its
  * place while the content is hidden — as the settings cards of the mailbox management screen do.
@@ -149,4 +155,28 @@
 	display: none;
 	content: none;
 	margin: 0;
+}
+
+.mail-signature-image-size-menu__gif-alert {
+	margin: var(--ui-space-stack-xs);
+}
+
+.mail-signature-image-upload-progress {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 40px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.mail-signature-image-upload-progress__loader {
+	display: inline-flex;
+	position: relative;
+	flex: 0 0 40px;
+	align-items: center;
+	justify-content: center;
+	height: 24px;
 }

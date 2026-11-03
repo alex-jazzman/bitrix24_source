@@ -3,4 +3,7 @@ module.exports = {
 	output: 'dist/trust-device-confirmation.bundle.js',
 	namespace: 'BX.Intranet.PushOtp',
 	browserslist: true,
+	cssImages: {
+		type: 'copy',
+	},
 };

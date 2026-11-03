@@ -1,6 +1,6 @@
 import { Dom } from 'main.core';
 import { Model } from 'tasks.v2.const';
-import { DragEndEvent, Draggable, DragOverEvent, DragStartEvent } from 'ui.draganddrop.draggable';
+import { DragEndEvent, Draggable, DragOverEvent } from 'ui.draganddrop.draggable';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import { CheckListDragManager } from './check-list-drag-manager';
 import type { CheckListManager } from './check-list-manager';
@@ -26,7 +26,7 @@ export class CheckListListDragManager extends CheckListDragManager
 		this.#checkListManager = params.checkListManager;
 	}
 
-	init(container: HTMLElement, offsetX: number = 0): void
+	init(container: HTMLElement): void
 	{
 		this.#container = container;
 
@@ -36,17 +36,19 @@ export class CheckListListDragManager extends CheckListDragManager
 			dragElement: '.check-list-drag-list',
 			delay: 0,
 			type: Draggable.MOVE,
-			offset: { x: offsetX },
 		});
 
 		this.#draggable.subscribe('beforeStart', this.#handleBeforeDragStart.bind(this));
 		this.#draggable.subscribe('start', this.#handleDragStart.bind(this));
 		this.#draggable.subscribe('over', this.#handleDragOver.bind(this));
 		this.#draggable.subscribe('end', this.#handleDragEnd.bind(this));
+
+		this.initGhostOffsetTracking(this.#draggable, this.#container);
 	}
 
 	destroy(): void
 	{
+		this.stopGhostOffsetTracking();
 		this.#draggable?.destroy();
 	}
 
@@ -73,10 +75,12 @@ export class CheckListListDragManager extends CheckListDragManager
 
 		this.#draggedItem = draggedItem;
 
-		this.#setYOffset(source);
+		this.setGhostOffsetCompensationY(this.#getTopItemCompensation(source));
+
+		this.updateGhostOffset();
 	}
 
-	#handleDragStart(event: DragStartEvent): void
+	#handleDragStart(): void
 	{
 		this.#store.dispatch(`${Model.Interface}/setDisableCheckListAnimations`, true);
 		this.#store.dispatch(`${Model.Interface}/setDraggedCheckListId`, this.#draggedItem.id);
@@ -144,18 +148,11 @@ export class CheckListListDragManager extends CheckListDragManager
 		this.resortLevelDependingOnPosition(draggedItem, overedItem, directionFromBottom, true);
 	}
 
-	#setYOffset(draggedItemElement: HTMLElement): void
+	#getTopItemCompensation(draggedItemElement: HTMLElement): number
 	{
-		const relativePosition = Dom.getRelativePosition(draggedItemElement, this.#container);
+		const { top } = Dom.getRelativePosition(draggedItemElement, this.#container);
+		const isTopItem = top <= 0;
 
-		const relativeTop = relativePosition.top;
-		const isTopItem = relativeTop <= 0;
-
-		const offsetY = isTopItem ? relativeTop : 0;
-
-		const options = this.#draggable.getOptions();
-		options.offset.y = -offsetY;
-
-		this.#draggable.setOptions(options);
+		return isTopItem ? -top : 0;
 	}
 }

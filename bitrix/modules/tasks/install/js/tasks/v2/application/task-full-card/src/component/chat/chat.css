@@ -1,7 +1,7 @@
 .tasks-full-card-chat {
 	width: 60%;
 	flex: 1;
-	border-left: 1px solid rgba(0, 0, 0, 0.1);
+	border-left: 1px solid var(--ui-color-divider-vibrant-accent);
 }
 
 .tasks-full-card.--blur .tasks-full-card-chat {
@@ -11,5 +11,13 @@
 @media (min-width: 1600px) {
 	.tasks-full-card-chat {
 		width: 58%;
+	}
+}
+
+@media (max-width: 960px) {
+	.tasks-full-card-chat {
+		width: auto;
+		min-width: 0;
+		min-height: 60vh;
 	}
 }

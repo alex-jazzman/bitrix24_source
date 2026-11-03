@@ -156,7 +156,7 @@
 					});
 				});
 
-				// highliht expired blocks
+				// highlight expired blocks
 				var blocks = BX.Landing.PageObject.getBlocks();
 				for (var i = 0, c = blocks.length; i < c; i++)
 				{

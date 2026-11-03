@@ -21,6 +21,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		CATEGORY_BANNERS: 'banners',
 		CATEGORY_EDITOR: 'editor',
 		CATEGORY_IMPORT: 'import_operations',
+		CATEGORY_SPEECH_ANALYTICS: 'speech_analytics',
 		// region Event const
 		EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 		EVENT_ENTITY_ADD: 'entity_add',
@@ -76,6 +77,17 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		EVENT_IMPORT_EDIT: 'edit',
 		EVENT_IMPORT_CREATE: 'create',
 		EVENT_IMPORT_CANCEL: 'cancel',
+		EVENT_AUTO_UPDATE: 'auto_update',
+		EVENT_GRID_ACTIONS: 'grid_actions',
+		EVENT_BI_REPORT_BUTTON: 'bi_report_button',
+		EVENT_SCRIPT_WIZARD: 'script_wizard',
+		EVENT_SUMMARY_WIZARD: 'summary_wizard',
+		EVENT_CALL_LIST_VIEW: 'call_list_view',
+		EVENT_SCRIPT_TOGGLE: 'script_toggle',
+		EVENT_SCRIPT_DELETE: 'script_delete',
+		EVENT_OPEN_SCRIPT: 'open_script',
+		EVENT_OPEN_CALL_SCORE: 'open_call_score',
+		EVENT_REEVAL_SCRIPT: 'reeval_script',
 		// endregion
 
 		// region Type const
@@ -100,6 +112,8 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 		TYPE_OLD_INVOICE_READONLY_ALERT: 'old_invoice',
 		TYPE_EINVOICE_PROMO: 'einvoice_promo',
+		TYPE_SCRIPT: 'script',
+		TYPE_CALL_SCORE: 'call_score',
 		// endregion
 
 		// region Section const
@@ -169,6 +183,8 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		ELEMENT_CANCEL_BUTTON: 'cancel_button',
 		ELEMENT_ESC_BUTTON: 'esc_button',
 		ELEMENT_DELETE_BUTTON: 'delete_button',
+		ELEMENT_SAVE_BUTTON: 'save_button',
+		ELEMENT_EDIT_BUTTON: 'edit_button',
 		ELEMENT_GRID_PROGRESS_BAR: 'grid_progress_bar',
 		ELEMENT_LOSE_COLUMN: 'lose_column',
 		ELEMENT_GRID_GROUP_ACTIONS_WON_STAGE: 'grid_group_actions_won_stage',
@@ -211,6 +227,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		ELEMENT_AHA_MOMENT: 'aha_moment',
 		ELEMENT_INFO_BUTTON: 'info_button',
 		ELEMENT_GOTOCHAT: 'gotochat',
+		ELEMENT_ON: 'on',
+		ELEMENT_OFF: 'off',
+		ELEMENT_UPDATED_SCRIPT: 'updated_script',
+		ELEMENT_OTHER_SCRIPT: 'other_script',
 		// endregion
 
 		// region Status const
@@ -734,6 +754,298 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 				c_section: `${type}_section`,
 				c_sub_section: Dictionary.SUB_SECTION_KANBAN,
 				c_element: this.#element,
+				p1: getCrmMode()
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class AutoUpdateEvent {
+		#isEnabled = false;
+		#callAssessmentId = null;
+		static createDefault(isEnabled) {
+			const self = new AutoUpdateEvent();
+			self.#isEnabled = isEnabled;
+			return self;
+		}
+		setCallAssessmentId(callAssessmentId) {
+			this.#callAssessmentId = callAssessmentId;
+			return this;
+		}
+		buildData() {
+			const id = this.#callAssessmentId;
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_AUTO_UPDATE,
+				type: Dictionary.TYPE_SCRIPT,
+				c_element: this.#isEnabled ? Dictionary.ELEMENT_ON : Dictionary.ELEMENT_OFF,
+				p1: getCrmMode(),
+				p2: id && id > 0 ? `scriptId_${id}` : null
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class BiReportEvent {
+		static createDefault() {
+			return new BiReportEvent();
+		}
+		buildData() {
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_BI_REPORT_BUTTON,
+				p1: getCrmMode()
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class CallListViewEvent {
+		#callAssessmentId = 0;
+		static createDefault(callAssessmentId) {
+			const self = new CallListViewEvent();
+			self.#callAssessmentId = main_core.Text.toInteger(callAssessmentId);
+			return self;
+		}
+		buildData() {
+			if (this.#callAssessmentId <= 0) {
+				console.error('crm.integration.analytics: invalid call assessment id');
+				return null;
+			}
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_CALL_LIST_VIEW,
+				type: Dictionary.TYPE_SCRIPT,
+				p1: getCrmMode(),
+				p2: `scriptId_${this.#callAssessmentId}`
+			});
+		}
+	}
+
+	const ALLOWED_ELEMENTS = new Set([Dictionary.ELEMENT_UPDATED_SCRIPT, Dictionary.ELEMENT_OTHER_SCRIPT]);
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class CallReassessmentEvent {
+		#activityId = 0;
+		#scriptId = 0;
+		#element = '';
+		static createDefault(activityId, scriptId, element) {
+			const self = new CallReassessmentEvent();
+			self.#activityId = main_core.Text.toInteger(activityId);
+			self.#scriptId = main_core.Text.toInteger(scriptId);
+			self.#element = element;
+			return self;
+		}
+		buildData() {
+			if (this.#activityId <= 0) {
+				console.error('crm.integration.analytics: invalid activity id');
+				return null;
+			}
+			if (this.#scriptId <= 0) {
+				console.error('crm.integration.analytics: invalid script id');
+				return null;
+			}
+			if (!ALLOWED_ELEMENTS.has(this.#element)) {
+				console.error('crm.integration.analytics: invalid element');
+				return null;
+			}
+			return {
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_REEVAL_SCRIPT,
+				type: Dictionary.TYPE_CALL_SCORE,
+				c_element: this.#element,
+				p1: getCrmMode(),
+				p2: `scriptId_${this.#scriptId}`,
+				p5: `idCall_${this.#activityId}`
+			};
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class GridActionsEvent {
+		#element;
+		#callAssessmentId = null;
+		static createDefault(element) {
+			const self = new GridActionsEvent();
+			self.#element = element;
+			return self;
+		}
+		setCallAssessmentId(callAssessmentId) {
+			this.#callAssessmentId = callAssessmentId;
+			return this;
+		}
+		buildData() {
+			const id = this.#callAssessmentId;
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_GRID_ACTIONS,
+				type: Dictionary.TYPE_SCRIPT,
+				c_element: this.#element,
+				p1: getCrmMode(),
+				p2: id && id > 0 ? `scriptId_${id}` : null
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class OpenCallScoreEvent {
+		#activityId = 0;
+		#callAssessmentId = null;
+		static createDefault(activityId) {
+			const self = new OpenCallScoreEvent();
+			self.#activityId = main_core.Text.toInteger(activityId);
+			return self;
+		}
+		setCallAssessmentId(callAssessmentId) {
+			this.#callAssessmentId = callAssessmentId;
+			return this;
+		}
+		buildData() {
+			if (this.#activityId <= 0) {
+				console.error('crm.integration.analytics: invalid activity id');
+				return null;
+			}
+			const id = this.#callAssessmentId;
+			const hasScriptId = Number.isFinite(id) && (id ?? 0) > 0;
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_OPEN_CALL_SCORE,
+				type: Dictionary.TYPE_CALL_SCORE,
+				p1: getCrmMode(),
+				p2: hasScriptId ? `scriptId_${id ?? 0}` : null,
+				p5: `idCall_${this.#activityId}`
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class OpenScriptEvent {
+		#callAssessmentId = 0;
+		static createDefault(callAssessmentId) {
+			const self = new OpenScriptEvent();
+			self.#callAssessmentId = main_core.Text.toInteger(callAssessmentId);
+			return self;
+		}
+		buildData() {
+			if (this.#callAssessmentId <= 0) {
+				console.error('crm.integration.analytics: invalid call assessment id');
+				return null;
+			}
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_OPEN_SCRIPT,
+				type: Dictionary.TYPE_SCRIPT,
+				p1: getCrmMode(),
+				p2: `scriptId_${this.#callAssessmentId}`
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class ScriptDeleteEvent {
+		#callAssessmentId = 0;
+		static createDefault(callAssessmentId) {
+			const self = new ScriptDeleteEvent();
+			self.#callAssessmentId = main_core.Text.toInteger(callAssessmentId);
+			return self;
+		}
+		buildData() {
+			if (this.#callAssessmentId <= 0) {
+				console.error('crm.integration.analytics: invalid call assessment id');
+				return null;
+			}
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_SCRIPT_DELETE,
+				type: Dictionary.TYPE_SCRIPT,
+				p1: getCrmMode(),
+				p2: `scriptId_${this.#callAssessmentId}`
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class ScriptToggleEvent {
+		#isEnabled = false;
+		#callAssessmentId = 0;
+		static createDefault(isEnabled, callAssessmentId) {
+			const self = new ScriptToggleEvent();
+			self.#isEnabled = isEnabled;
+			self.#callAssessmentId = main_core.Text.toInteger(callAssessmentId);
+			return self;
+		}
+		buildData() {
+			if (this.#callAssessmentId <= 0) {
+				console.error('crm.integration.analytics: invalid call assessment id');
+				return null;
+			}
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_SCRIPT_TOGGLE,
+				type: Dictionary.TYPE_SCRIPT,
+				c_element: this.#isEnabled ? Dictionary.ELEMENT_ON : Dictionary.ELEMENT_OFF,
+				p1: getCrmMode(),
+				p2: `scriptId_${this.#callAssessmentId}`
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class ScriptWizardEvent {
+		static createDefault() {
+			return new ScriptWizardEvent();
+		}
+		buildData() {
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_SCRIPT_WIZARD,
+				p1: getCrmMode()
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.CallAssessment
+	 */
+	class SummaryWizardEvent {
+		static createDefault() {
+			return new SummaryWizardEvent();
+		}
+		buildData() {
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_SPEECH_ANALYTICS,
+				event: Dictionary.EVENT_SUMMARY_WIZARD,
 				p1: getCrmMode()
 			});
 		}
@@ -1330,6 +1642,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		#subSection = Dictionary.SUB_SECTION_KANBAN;
 		#element;
 		#period;
+		#enableMode;
 		static createDefault(type, subSection) {
 			const self = new ClickEvent();
 			self.#type = type;
@@ -1342,6 +1655,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		}
 		setPeriod(period) {
 			this.#period = period;
+			return this;
+		}
+		setEnableMode(mode) {
+			this.#enableMode = `enable-mode-${mode}`;
 			return this;
 		}
 		setSection(section) {
@@ -1358,7 +1675,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 				c_sub_section: this.#subSection,
 				c_element: this.#element,
 				p1: getCrmMode(),
-				p3: this.#period ? `period_${this.#period}` : null
+				// The default view of the widget is the 30-day period, and its id is zero: the period of an
+				// event is told by whether it was set, not by its value being truthy.
+				p3: main_core.Type.isNumber(this.#period) ? `period_${this.#period}` : null,
+				p4: this.#enableMode
 			});
 		}
 	};
@@ -1928,6 +2248,19 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 			EditEvent: EditEvent,
 			CreateEvent: CreateEvent,
 			CancelEvent: CancelEvent
+		},
+		CallAssessment: {
+			AutoUpdateEvent: AutoUpdateEvent,
+			BiReportEvent: BiReportEvent,
+			CallListViewEvent: CallListViewEvent,
+			CallReassessmentEvent: CallReassessmentEvent,
+			GridActionsEvent: GridActionsEvent,
+			OpenCallScoreEvent: OpenCallScoreEvent,
+			OpenScriptEvent: OpenScriptEvent,
+			ScriptDeleteEvent: ScriptDeleteEvent,
+			ScriptToggleEvent: ScriptToggleEvent,
+			ScriptWizardEvent: ScriptWizardEvent,
+			SummaryWizardEvent: SummaryWizardEvent
 		}
 	});
 

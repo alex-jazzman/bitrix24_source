@@ -24,10 +24,26 @@ $largeAttachmentMaxSize = $largeAttachmentEnabled
 	? \Bitrix\Mail\Helper\Message::getMaxAttachedFilesSize()
 	: 0
 ;
+/*
+	The letters of the chain are loaded into the same document by this very template, so the message
+	belongs to the letter the slider was opened for and to it alone. An extension per letter would ask
+	for a decision of its own on every unfolding, draw a banner beside the banner already standing and
+	reach for the popup of its neighbour.
+*/
+$migrationNoticeIsDue = ($arParams['LOADED_FROM_LOG'] ?? '') !== 'Y';
+// The feature is off by default: where it can say nothing, the letter pays nothing
+$migrationNoticeAvailable = $migrationNoticeIsDue
+	&& \Bitrix\Mail\Helper\Config\Feature::isMigrationNoticeAvailable()
+;
 $extensions = [
 	'ui.viewer',
 	'ui.progressbar',
 ];
+if ($migrationNoticeAvailable)
+{
+	// Which migration message is due here, and whether one is due at all, the mail module decides
+	$extensions[] = 'mail.migration-notice';
+}
 if ($largeAttachmentEnabled)
 {
 	$extensions[] = 'crm.mail.large-attachment';
@@ -204,8 +220,13 @@ $bodyDownloadLink = UrlManager::getInstance()
 $warningWaitElementId = "crm-mail-msg-warning-top-wait-$activityId";
 $warningFailElementId = "crm-mail-msg-warning-top-fail-$activityId";
 $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
+$migrationNoticeElementId = "mail-migration-notice-$activityId";
 
 ?>
+
+<?php if ($migrationNoticeAvailable): ?>
+<div id="<?= htmlspecialcharsbx($migrationNoticeElementId) ?>"></div>
+<?php endif ?>
 
 <div class="crm-task-list-mail-border-bottom">
 	<div class="crm-task-list-mail-item-inner-header-container">
@@ -677,6 +698,29 @@ BX.ready(function()
 			);
 		});
 	}, 10);
+
+	<?php if ($migrationNoticeAvailable): ?>
+	// Last, so that a message of the mail module can fail without costing the letter its form
+	var migrationNotice = new BX.Mail.MigrationNotice({
+		surface: 'crm',
+		container: document.getElementById('<?= \CUtil::jsEscape($migrationNoticeElementId) ?>'),
+	});
+	migrationNotice.show();
+
+	// The message goes with the slider of the letter: its subscription outlives neither of them
+	try
+	{
+		var migrationNoticeSlider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+		if (migrationNoticeSlider)
+		{
+			BX.addCustomEvent(migrationNoticeSlider, 'SidePanel.Slider:onDestroy', function ()
+			{
+				migrationNotice.destroy();
+			});
+		}
+	}
+	catch (err) {}
+	<?php endif ?>
 });
 
 </script>

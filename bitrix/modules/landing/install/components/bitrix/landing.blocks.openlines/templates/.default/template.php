@@ -42,6 +42,12 @@ if (!empty($arParams['ERRORS']))
 
 	return;
 }
+
+// The block is not operated in the editor: the click is already stopped there by
+// `g-pointer-events-none--edit-mode`, and a real button would otherwise add stops to the keyboard
+// path of the editor that the `div` before it never had. The public page keeps them all.
+$editModeTabIndex = $arParams['EDIT_MODE'] === 'Y' ? ' tabindex="-1"' : '';
+
 foreach ($arParams['WIDGETS'] as $widget) :?>
 	<?php if (is_array($widget['show']) && isset($widget['show']['url'])): ?>
 		<?php if (is_array($widget['show']['url'])): ?>
@@ -50,13 +56,14 @@ foreach ($arParams['WIDGETS'] as $widget) :?>
 					<?= $widget['title'] ?>
 				</a>
 			<?php else: ?>
-				<div
+				<button
+					type="button"
 					class="g-cursor-pointer g-pointer-events-none--edit-mode <?= $widget['classList'] ?>"
-					target="_blank"
 					onclick='<?= $widget['show']['js']['desktop'] ?>'
+					<?= $editModeTabIndex ?>
 				>
 					<?= $widget['title'] ?>
-				</div>
+				</button>
 			<?php endif; ?>
 		<?php else: ?>
 			<a class="<?= $widget['classList'] ?> g-pointer-events-none--edit-mode" target="_blank" href="<?= $widget['show']['url'] ?>">
@@ -65,13 +72,14 @@ foreach ($arParams['WIDGETS'] as $widget) :?>
 		<?php endif; ?>
 
 	<?php else: ?>
-		<div
+		<button
+			type="button"
 			class="g-cursor-pointer g-pointer-events-none--edit-mode <?= $widget['classList'] ?>"
-			target="_blank"
 			onclick="<?= $widget['show'] ?>"
+			<?= $editModeTabIndex ?>
 		>
 			<?= $widget['title'] ?>
-		</div>
+		</button>
 	<?php endif; ?>
 <?php endforeach;
 

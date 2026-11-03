@@ -37,10 +37,13 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { StickerAnalytics } = require('im/messenger/provider/services/analytics/src/sticker');
 	const { DialogTextFormatAnalytics } = require('im/messenger/provider/services/analytics/src/dialog-text-format');
 	const { SearchAnalytics } = require('im/messenger/provider/services/analytics/src/search');
+	const { ForwardAnalytics } = require('im/messenger/provider/services/analytics/src/forward');
 	const { RecentAnalytics } = require('im/messenger/provider/services/analytics/src/recent');
 	const { MessageMenu } = require('im/messenger/provider/services/analytics/src/message-menu');
 	const { FolderAnalytics } = require('im/messenger/provider/services/analytics/src/folder');
 	const { GuestAnalytics } = require('im/messenger/provider/services/analytics/src/guest');
+	const { SharingLinkAnalytics } = require('im/messenger/provider/services/analytics/src/sharing-link');
+	const { MultiselectPanelAnalytics } = require('im/messenger/provider/services/analytics/src/multiselect-panel');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -110,12 +113,18 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#dialogTextFormat;
 		/** @type {SearchAnalytics} */
 		#search;
+		/** @type {ForwardAnalytics} */
+		#forward;
 		/** @type {MessageMenu} */
 		#messageMenu;
+		/** @type {MultiselectPanelAnalytics} */
+		#multiselectPanel;
 		/** @type {FolderAnalytics} */
 		#folder;
 		/** @type {GuestAnalytics} */
 		#guest;
+
+		#sharingLink;
 
 		static getInstance()
 		{
@@ -367,6 +376,16 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
+		 * @return {ForwardAnalytics}
+		 */
+		get forwardAnalytics()
+		{
+			this.#forward = this.#forward ?? new ForwardAnalytics();
+
+			return this.#forward;
+		}
+
+		/**
 		 * @return {MessageMenu}
 		 */
 		get messageMenuAnalytics()
@@ -374,6 +393,16 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#messageMenu = this.#messageMenu ?? new MessageMenu();
 
 			return this.#messageMenu;
+		}
+
+		/**
+		 * @return {MultiselectPanelAnalytics}
+		 */
+		get multiselectPanel()
+		{
+			this.#multiselectPanel = this.#multiselectPanel ?? new MultiselectPanelAnalytics();
+
+			return this.#multiselectPanel;
 		}
 
 		/** @protected */
@@ -384,12 +413,29 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.#guest;
 		}
 
+		/** @protected */
+		get sharingLink()
+		{
+			this.#sharingLink = this.#sharingLink ?? new SharingLinkAnalytics();
+
+			return this.#sharingLink;
+		}
+
 		/**
 		 * @param {DialogId} dialogId
 		 */
 		sendCopyGuestLink(dialogId)
 		{
 			return this.guest.sendCopyGuestLink(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} [subSection] - one of the Analytics.SubSection.sharingLink* values
+		 */
+		sendCopyChatLink(dialogId, subSection)
+		{
+			return this.sharingLink.sendCopyChatLink(dialogId, subSection);
 		}
 
 		/**
@@ -511,10 +557,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.chatDelete.sendChatDeleteConfirmed({ dialogId });
 		}
 
-		sendToastShownChatDelete({ chatId, chatType, isChatOpened = false })
+		sendToastShownChatDelete({ dialogId, parentChatId, chatType, isChatOpened = false })
 		{
 			return this.chatDelete.sendToastShownChatDelete({
-				chatId,
+				dialogId,
+				parentChatId,
 				chatType,
 				isChatOpened,
 			});
@@ -558,7 +605,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.chatOpen.sendOpenAiAssistantDialog({ dialogId });
 		}
 
-		sendUserAddButtonClicked({ dialogId })
+		/**
+		 * @param {object} params
+		 * @param {DialogId} params.dialogId
+		 * @param {string} [params.section] the place the button was tapped in: the entry points of
+		 *        "add members" are told apart by it, so every one of them names its own; the
+		 *        participants tab of the sidebar is assumed when none is named
+		 */
+		sendUserAddButtonClicked({ dialogId, section = Analytics.Section.chatSidebar })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
 
@@ -568,19 +622,24 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 				return;
 			}
 
+			const category = AnalyticsHelper.getCategoryByChat(chatData);
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
+				.setCategory(category)
 				.setEvent(Analytics.Event.clickAddUser)
-				.setSection(Analytics.Section.chatSidebar)
+				.setSection(section)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
-			if (helper.isCollab)
+			if (category === Analytics.Category.project)
 			{
-				analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(chatData.dialogId));
+				const projectId = AnalyticsHelper.getFormattedProjectId(chatData);
+				if (projectId)
+				{
+					analytics.setP4(projectId);
+				}
 			}
 
 			analytics.send();
@@ -603,7 +662,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
-		 * @param {{category, type, section}} params
+		 * @param {object} params
+		 * @param {string} params.category
+		 * @param {string} params.type
+		 * @param {string} [params.section] the creation menu of a project's nested tab names its own
+		 *        section; every other entry point gets the folder of the screen
 		 */
 		sendStartCreation(params)
 		{
@@ -830,6 +893,24 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.navigation.sendChangeTab(currentTab, analyticsOptions);
 		}
 
+		/**
+		 * @param {object} params
+		 * @param {string} params.tabId
+		 */
+		sendUseChatFilter({ tabId })
+		{
+			this.navigation.sendUseChatFilter({ tabId });
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {string} params.event
+		 */
+		sendProjectTabCreateClick({ event })
+		{
+			this.navigation.sendProjectTabCreateClick({ event });
+		}
+
 		sendOpenNotifications()
 		{
 			this.notificationAnalytics.sendOpenNotifications();
@@ -850,6 +931,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendClickMCPIntegrations(dialogId)
 		{
 			this.assistantButtonAnalytics.sendClickMCPIntegrations(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendClickStopGeneration(dialogId)
+		{
+			this.assistantButtonAnalytics.sendClickStopGeneration(dialogId);
 		}
 
 		/**
@@ -904,6 +993,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendAddParticipantFromMentionPanel(dialogId)
 		{
 			this.mention.sendAddParticipant(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendAddParticipantFromPopup(dialogId)
+		{
+			this.mention.sendAddParticipantFromPopup(dialogId);
 		}
 
 		/**
@@ -984,11 +1081,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
-		 * @param {string} subSection
+		 * @param {string} section
 		 */
-		sendClickCreateFolder(subSection)
+		sendClickCreateFolder(section)
 		{
-			this.folderAnalytics.sendClickCreateFolder(subSection);
+			this.folderAnalytics.sendClickCreateFolder(section);
 		}
 
 		/**
@@ -1012,6 +1109,17 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
+		 * @param {object} params
+		 * @param {DialogId} params.dialogId
+		 * @param {string} [params.subSection]
+		 * @param {string} [params.section]
+		 */
+		sendDeleteFromFolder({ dialogId, subSection, section })
+		{
+			this.folderAnalytics.sendDeleteFromFolder({ dialogId, subSection, section });
+		}
+
+		/**
 		 * @param {string} subSection
 		 */
 		sendOpenFolderList(subSection)
@@ -1020,11 +1128,13 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
-		 * @param {string} subSection
+		 * @param {object} params
+		 * @param {number} params.folderId
+		 * @param {string} params.subSection
 		 */
-		sendClickEditFolder(subSection)
+		sendClickEditFolder({ folderId, subSection })
 		{
-			this.folderAnalytics.sendClickEdit(subSection);
+			this.folderAnalytics.sendClickEdit({ folderId, subSection });
 		}
 
 		/**
@@ -1034,6 +1144,16 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendOpenFolder({ folderId })
 		{
 			this.folderAnalytics.sendOpenFolder({ folderId });
+		}
+
+		sendFolderLimitException()
+		{
+			this.folderAnalytics.sendFolderLimitException();
+		}
+
+		sendChatLimitException()
+		{
+			this.folderAnalytics.sendChatLimitException();
 		}
 
 	}

@@ -31,6 +31,7 @@ jn.define('im/messenger/view/dialog/action-panel', (require, exports, module) =>
 				isShow: false,
 				title: null,
 				buttons: null,
+				moreButton: null,
 			};
 
 			this.stateManager = new StateManager(state);
@@ -70,18 +71,39 @@ jn.define('im/messenger/view/dialog/action-panel', (require, exports, module) =>
 		/**
 		 * @param {object} titleData
 		 * @param {Array<ActionPanelButton>} buttons
+		 * @param {?ActionPanelButton} [moreButton=null]
 		 */
-		async show(titleData, buttons = [])
+		async show(titleData, buttons = [], moreButton = null)
 		{
 			const title = Type.isStringFilled(titleData?.text) ? titleData : { text: '' };
-			const newState = { title, buttons, isShow: true };
+			const newState = { title, buttons, moreButton, isShow: true };
 			const hasChanges = this.stateManager.hasChanges(newState);
 
 			if (this.isUiAvailable() && hasChanges)
 			{
 				this.stateManager.updateState(newState);
 
-				return this.ui.show(title, buttons);
+				return this.ui.show(title, buttons, moreButton);
+			}
+
+			return false;
+		}
+
+		/**
+		 * @desc Drops the "more" button while the native reference to it is still alive. Native hide()
+		 * clears that reference without removing the view from the long-lived container of the panel,
+		 * and the next show() strips the orphan of every constraint -- it then lands at the origin of
+		 * the button row, over the first button of the panel.
+		 */
+		async hideMoreButton()
+		{
+			const hasMoreButton = !Type.isNil(this.stateManager.state.moreButton);
+
+			if (this.isUiAvailable() && hasMoreButton && Type.isFunction(this.ui.hideMoreButton))
+			{
+				this.stateManager.updateState({ moreButton: null });
+
+				return this.ui.hideMoreButton();
 			}
 
 			return false;

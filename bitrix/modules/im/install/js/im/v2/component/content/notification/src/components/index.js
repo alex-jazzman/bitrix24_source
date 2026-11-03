@@ -6,6 +6,7 @@ import { SonetNotificationItem } from './modules/sonet/sonet';
 import { CompatibilityNotificationItem } from './modules/compatibility/compatibility-item';
 import { DefaultNotificationItem } from './modules/default/default-item';
 import { MailNotificationItem } from './modules/mail/mail-item';
+import { MarketAppInstallNotificationItem } from './modules/market-app-install/market-app-install-item';
 
 export const NotificationComponents = {
 	TaskEntity: TaskNotificationItem,
@@ -16,4 +17,5 @@ export const NotificationComponents = {
 	SonetEntity: SonetNotificationItem,
 	DefaultEntity: DefaultNotificationItem,
 	MailEntity: MailNotificationItem,
+	MarketAppInstallRequestEntity: MarketAppInstallNotificationItem,
 };

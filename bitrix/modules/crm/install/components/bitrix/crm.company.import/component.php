@@ -1222,15 +1222,14 @@ else if (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] 
 										$userFilter['LAST_NAME'] = $nameParts['LAST_NAME'];
 									}
 
-									$userFilter['IS_REAL_USER'] = 'Y';
-									$user = \Bitrix\Main\UserTable::getList(
-										array(
-											'order' => array('ID' => 'ASC'),
-											'filter' => $userFilter,
-											'select' => array('ID'),
-											'limit' => 1
-										)
-									)->fetch();
+									$user = \Bitrix\Main\UserTable::query()
+										->setSelect(['ID'])
+										->setFilter($userFilter)
+										->where('REAL_USER', 'expr', true)
+										->setOrder(['ID' => 'ASC'])
+										->setLimit(1)
+										->fetch()
+									;
 									if(is_array($user))
 									{
 										$userID = $user['ID'] = intval($user['ID']);

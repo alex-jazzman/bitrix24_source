@@ -5,6 +5,18 @@ $event = \Bitrix\Main\UpdateSystem\Migration::getInstance()->event();
 $event
 	->registerCompatible('rest', 'OnRestServiceBuildDescription', 'CMailRestService', 'OnRestServiceBuildDescription')
 	->registerCompatible('main', 'OnAfterUserUpdate', 'CMail', 'onUserUpdate')
+	->registerCompatible(
+		'main',
+		'OnAfterUserAdd',
+		'\Bitrix\Mail\Integration\Main\User\AddressCaseHandler',
+		'onUserSaved',
+	)
+	->registerCompatible(
+		'main',
+		'OnAfterUserUpdate',
+		'\Bitrix\Mail\Integration\Main\User\AddressCaseHandler',
+		'onUserSaved',
+	)
 	->registerCompatible('main', 'OnAfterUserDelete', 'CMail', 'onUserDelete')
 	->registerCompatible('main', 'OnBeforeSiteUpdate', 'Bitrix\Mail\User', 'handleSiteUpdate')
 	->register('main', 'OnAfterSetOption_server_name', 'Bitrix\Mail\User', 'handleServerNameUpdate')
@@ -12,6 +24,7 @@ $event
 	->registerCompatible('main', 'OnMailEventMailRead', 'Bitrix\Mail\Helper\MessageEventManager', 'onMailEventMailRead')
 	->register('main', 'OnUISelectorGetProviderByEntityType', '\Bitrix\Mail\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType')
 	->register('main', 'OnUISelectorFillLastDestination', '\Bitrix\Mail\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination')
+	->register('main', 'OnMailSenderListBuild', '\Bitrix\Mail\Integration\Main\Sender\SignatureHandler', 'onMailSenderListBuild')
 	->register('mail', 'onMailMessageNew', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onMailMessageNew')
 	->registerCompatible('im', 'OnGetNotifySchema', '\Bitrix\Mail\Integration\Im\Notification', 'getSchema')
 	->register('mobile', 'onRequestSyncMail', '\Bitrix\Mail\Integration\SyncRequest', 'onRequestSyncMail')
@@ -26,4 +39,10 @@ $event
 	->register('mail', 'onMailMessageNew', '\Bitrix\Mail\Integration\AI\MessageClassifier', 'onMailMessageNew')
 	->register('mail', 'onMailMessageBodySynced', '\Bitrix\Mail\Integration\AI\MessageClassifier', 'onMailMessageBodySynced')
 	->register('ai', 'onQueueJobExecute', '\Bitrix\Mail\Integration\AI\MessageClassifier', 'onQueueJobExecute')
+	->register(
+		'mail',
+		'onMailMessageNew',
+		'\Bitrix\Mail\Service\VacationAutoReply\VacationAutoReplyEventHandler',
+		'onMailMessageNew',
+	)
 ;

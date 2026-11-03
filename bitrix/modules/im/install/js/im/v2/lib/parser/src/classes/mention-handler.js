@@ -6,29 +6,31 @@ import { getConst, getUtils, getCore } from '../utils/core-proxy';
 
 import type { ApplicationContext } from 'im.v2.const';
 
-const { EventType, MessageMentionType, SidebarDetailBlock, SpecialMentionDialogId, ChatType } = getConst();
-
 const MENTION_CSS_CLASS = 'bx-im-mention';
 
 export class MentionHandler
 {
-	#handlersByMentionType = {
-		[MessageMentionType.user]: (dataset) => this.#handleChat(dataset),
-		[MessageMentionType.chat]: (dataset) => this.#handleChat(dataset),
-		[MessageMentionType.lines]: (dataset) => this.#handleLines(dataset),
-		[MessageMentionType.context]: (dataset) => this.#handleContext(dataset),
-		[MessageMentionType.call]: (dataset) => this.#handleCall(dataset),
-	};
-
-	#handlersByDialogId = {
-		[this.#getCopilotBotDialogId()]: () => this.#handleCopilot(),
-		[SpecialMentionDialogId.allParticipants]: () => this.#handleAllParticipants(),
-	};
+	#handlersByMentionType;
+	#handlersByDialogId;
 
 	constructor(context: ApplicationContext)
 	{
 		const { emitter } = context;
 		this.emitter = emitter;
+
+		const { MessageMentionType, SpecialMentionDialogId } = getConst();
+		this.#handlersByMentionType = {
+			[MessageMentionType.user]: (dataset) => this.#handleChat(dataset),
+			[MessageMentionType.chat]: (dataset) => this.#handleChat(dataset),
+			[MessageMentionType.lines]: (dataset) => this.#handleLines(dataset),
+			[MessageMentionType.context]: (dataset) => this.#handleContext(dataset),
+			[MessageMentionType.call]: (dataset) => this.#handleCall(dataset),
+		};
+
+		this.#handlersByDialogId = {
+			[this.#getCopilotBotDialogId()]: () => this.#handleCopilot(),
+			[SpecialMentionDialogId.allParticipants]: () => this.#handleAllParticipants(),
+		};
 	}
 
 	handleClick(event: PointerEvent): void
@@ -88,6 +90,7 @@ export class MentionHandler
 
 	#handleContext(dataset: { messageId: string, dialogId: string }): void
 	{
+		const { EventType } = getConst();
 		const messageId = Number.parseInt(dataset.messageId, 10);
 
 		this.emitter.emit(EventType.dialog.goToMessageContext, {
@@ -107,6 +110,7 @@ export class MentionHandler
 
 	#handleAllParticipants()
 	{
+		const { EventType, ChatType, SidebarDetailBlock } = getConst();
 		const { entityId } = getCore().getStore().getters['application/getLayout'];
 		const { type } = getCore().getStore().getters['chats/get'](entityId, true);
 

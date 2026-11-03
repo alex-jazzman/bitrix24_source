@@ -20,6 +20,8 @@ return [
 		'./floor-requests-list',
 		'./participants-list',
 		'./src/util',
+		'./src/comparators',
+		'./src/view-mode',
 		'./src/batch-snapshot',
 		'./icons/icons',
 		'./scroll-manager',

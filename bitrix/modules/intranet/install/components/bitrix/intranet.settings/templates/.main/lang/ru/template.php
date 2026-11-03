@@ -1,6 +1,9 @@
 <?php
 $MESS["INTRANET_SETTINGS_TITLE_PAGE"] = 'Настройки';
 $MESS["INTRANET_SETTINGS_TITLE_MENU"] = 'Настройки';
+$MESS["INTRANET_SETTINGS_MENU_NAVIGATION_LABEL"] = 'Меню настроек';
+$MESS["INTRANET_SETTINGS_MENU_EXPAND"] = 'Развернуть: #TITLE#';
+$MESS["INTRANET_SETTINGS_MENU_COLLAPSE"] = 'Свернуть: #TITLE#';
 $MESS["INTRANET_SETTINGS_CANCEL_BUTTON"] = 'Отмена';
 $MESS["INTRANET_SETTINGS_CANCEL_MORE"] = 'Подробнее';
 $MESS["INTRANET_SETTINGS_TITLE_PAGE_EMPLOYEE"] = 'Сотрудники';
@@ -288,6 +291,12 @@ $MESS["INTRANET_SETTINGS_TITLE_TOOL_COMPANY"] = "Компания";
 $MESS["INTRANET_SETTINGS_TITLE_SEARCH_IN"] = "Перейти в настройки инструмента";
 $MESS["INTRANET_SETTINGS_TITLE_SEARCHING"] = "Идет поиск...";
 $MESS["INTRANET_SETTINGS_SEARCH_PLACEHOLDER"] = "Поиск";
+$MESS["INTRANET_SETTINGS_SEARCH_CLEAR"] = "Очистить поиск";
+$MESS["INTRANET_SETTINGS_SEARCH_LOADING"] = "Идёт поиск";
+$MESS["INTRANET_SETTINGS_SEARCH_RESULTS_COUNT"] = "Результатов поиска: #COUNT#";
+$MESS["INTRANET_SETTINGS_SEARCH_ERROR"] = "Не удалось выполнить поиск, попробуйте ещё раз";
+$MESS["INTRANET_SETTINGS_SAVE_SUCCESS"] = "Изменения сохранены";
+$MESS["INTRANET_SETTINGS_SAVE_ERROR"] = "Не удалось сохранить изменения, проверьте поля формы";
 $MESS["INTRANET_SETTINGS_PERMISSION_MSG"] = "Эти настройки доступны только администратору вашего Битрикс24";
 $MESS["INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG"] = "Изменять настройки может только администратор вашего Битрикс24";
 $MESS["INTRANET_SETTINGS_SEARCH_NOT_FOUND"] = "Ничего не найдено";
@@ -331,3 +340,10 @@ $MESS["INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TEXT"] = "Надёжная з�
 
 $MESS["INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT_MSGVER_1"] = 'Выберите язык для BI Конструктора и таблиц с данными портала. Отчёты BI Конструктора и описания полей в подключённых аналитических системах обновятся автоматически';
 $MESS["INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_TIMEZONE_HINT"] = 'Выберите часовой пояс, чтобы данные в отчётах у всех сотрудников отображались в едином времени';
+$MESS['INTRANET_SETTINGS_FIELD_HINT_OTP_SWITCHING_PERIOD'] = 'Новый период применится только к тем, кому дата ещё не назначена. У остальных сотрудников сроки останутся прежними';
+$MESS['INTRANET_SETTINGS_POPUP_OTP_DISABLE_BUTTON_CANCEL'] = 'Отмена';
+$MESS['INTRANET_SETTINGS_POPUP_OTP_DISABLE_BUTTON_CONFIRM'] = 'Да, отключить';
+$MESS['INTRANET_SETTINGS_POPUP_OTP_DISABLE_TEXT'] = 'Требование настроить двухфакторную аутентификацию будет снято со всех сотрудников, а те, кто уже её настроил, смогут отключить её сами. Подключённые вторые факторы и резервные коды сохранятся. Специалисты по внедрению отключить настроенную двухфакторную аутентификацию не смогут';
+$MESS['INTRANET_SETTINGS_POPUP_OTP_DISABLE_TITLE'] = 'Отключить обязательную двухфакторную аутентификацию?';
+$MESS['INTRANET_SETTINGS_SECURITY_OTP_DISABLED_BY'] = 'Обязательная двухфакторная аутентификация отключена #DATE#. Автор изменения — #USER_NAME#';
+$MESS['INTRANET_SETTINGS_SECURITY_OTP_DISABLED_BY_UNKNOWN_USER'] = 'Обязательная двухфакторная аутентификация отключена #DATE#';

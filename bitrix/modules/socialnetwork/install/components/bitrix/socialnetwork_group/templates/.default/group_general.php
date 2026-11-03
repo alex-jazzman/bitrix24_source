@@ -12,6 +12,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Socialnetwork\V2\Feature;
+
 $pageId = "group_general";
 $blogPageId = '';
 
@@ -99,10 +101,20 @@ $componentParams = [
 	"LOG_NEW_TEMPLATE" => $arParams["LOG_NEW_TEMPLATE"] ?? null,
 ];
 
+$isNewProject = Feature::isSectionPinAvailableForFields($arResult['groupFields']);
 $favoritesTitleTemplate = (
-	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
-		? ''
-		: $arResult['PAGES_TITLE_TEMPLATE']
+	$isNewProject || ($arParams['HIDE_OWNER_IN_TITLE'] ?? null) !== 'Y'
+		? $arResult['FAVORITES_TITLE_TEMPLATE']
+		: ''
+);
+$groupId = (int)$arResult['VARIABLES']['group_id'];
+$favoritesUrl = (
+	$isNewProject
+		? CComponentEngine::MakePathFromTemplate(
+			$arResult['PATH_TO_GROUP_GENERAL'],
+			['group_id' => $groupId],
+		)
+		: ''
 );
 
 $APPLICATION->IncludeComponent(
@@ -115,12 +127,14 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => $componentParams,
 		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_TYPE' => 'SONET_GROUP',
-		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
+		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $groupId,
 		"POPUP_COMPONENT_PARENT" => $this->getComponent(),
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_FAST_WAY_CLOSE_LOADER' => true,
 		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
+		'UI_TOOLBAR_FAVORITES_URL' => $favoritesUrl,
 	]
 );
 
 $APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
+$APPLICATION->SetPageProperty('FavoriteUrl', $favoritesUrl);

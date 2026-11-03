@@ -95,7 +95,7 @@ table.field_crm td.field_crm_entity .field-item{margin-bottom: 0; margin-left: 3
 div.crm_balloon_company div.bx-user-info-fields span.field-name { font-weight: var(--ui-font-weight-bold)!important; color: #646365; padding-top: 2px; display: inline-block; }
 div.crm_balloon_company div.bx-user-info-seporator { font-weight: var(--ui-font-weight-bold)!important; color: #646365 }
 div.crm_balloon_company .bx-user-photo .no-photo {
-	background-image: url(/bitrix/components/bitrix/crm.company.show/templates/.default/images/company-100x100.png);
+	background-image: url(/bitrix/components/bitrix/crm.company.show/templates/.default/images/company-100x100.webp);
 }
 div.crm_balloon_contact div.bx-user-info-fields span.field-name { font-weight: var(--ui-font-weight-bold)!important; color: #646365; padding-top: 2px; display: inline-block; }
 div.crm_balloon_contact div.bx-user-info-seporator { font-weight: var(--ui-font-weight-bold)!important; color: #646365 }
@@ -117,15 +117,15 @@ div.bx-crm-edit
 .bx-crm-view a:active:not(.ui-btn) { color:#0069c4; }
 
 div.bx-crm-view-menu div.bx-interface-toolbar span.bx-context-button-text { color:#000; }
-div.bx-crm-view-menu span.btn-edit { background:url(../images/lead-mini-sprite.png) no-repeat 3px -50px!important; }
-div.bx-crm-view-menu span.btn-delete { background:url(../images/lead-mini-sprite.png) no-repeat 5px -114px !important; }
-div.bx-crm-view-menu span.btn-new {	background:url(../images/lead-mini-sprite.png) no-repeat 3px -610px !important; }
-div.bx-crm-view-menu span.btn-copy { background:url(../images/lead-mini-sprite.png) no-repeat 3px -18px !important; }
-div.bx-crm-view-menu span.btn-list { background:url(../images/lead-mini-sprite.png) no-repeat 1px -245px !important; }
+div.bx-crm-view-menu span.btn-edit { background:url(../images/lead-mini-sprite.webp) no-repeat 3px -50px!important; }
+div.bx-crm-view-menu span.btn-delete { background:url(../images/lead-mini-sprite.webp) no-repeat 5px -114px !important; }
+div.bx-crm-view-menu span.btn-new {	background:url(../images/lead-mini-sprite.webp) no-repeat 3px -610px !important; }
+div.bx-crm-view-menu span.btn-copy { background:url(../images/lead-mini-sprite.webp) no-repeat 3px -18px !important; }
+div.bx-crm-view-menu span.btn-list { background:url(../images/lead-mini-sprite.webp) no-repeat 1px -245px !important; }
 
 div.bx-crm-view-tab-block { border-bottom:1px solid #c9c9c9; padding:0 10px; margin: 10px 0 0; }
 a.bx-crm-view-tab { border: 0 !important; display:inline-block; margin-right:4px; height:33px; vertical-align:top; }
-span.bx-crm-view-tab-left, span.bx-crm-view-tab-text, span.bx-crm-view-tab-right { background:url(../images/lead-mini-sprite.png) no-repeat 50px 50px; display:inline-block; height:29px; margin-top:4px; vertical-align:top; width:3px; }
+span.bx-crm-view-tab-left, span.bx-crm-view-tab-text, span.bx-crm-view-tab-right { background:url(../images/lead-mini-sprite.webp) no-repeat 50px 50px; display:inline-block; height:29px; margin-top:4px; vertical-align:top; width:3px; }
 span.bx-crm-view-tab-text { background-position:0 -533px; background-repeat:repeat-x; color:#4a4a4a; font-size:13px; font-weight:var(--ui-font-weight-bold); height:22px;  padding:7px 15px 0; width:auto; }
 
 span.bx-crm-view-tab-lock {
@@ -411,9 +411,9 @@ a:hover.bx-crm-entity-info-link
 	display: inline-block;
 }
 
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-delete { background:url(../images/lead-mini-sprite.png) no-repeat 2px -116px !important; }
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-new { background:url(../images/lead-mini-sprite.png) no-repeat 2px -612px !important; }
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background:url(../images/lead-mini-sprite.png) no-repeat 2px -21px !important; }
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-delete { background:url(../images/lead-mini-sprite.webp) no-repeat 2px -116px !important; }
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-new { background:url(../images/lead-mini-sprite.webp) no-repeat 2px -612px !important; }
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background:url(../images/lead-mini-sprite.webp) no-repeat 2px -21px !important; }
 
 .crm-main-wrap {
 	color:#000;
@@ -457,7 +457,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 }
 
 .crm-search-btn {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat center -504px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat center -504px;
 	cursor:pointer;
 	display:block;
 	float:right;
@@ -534,7 +534,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 .crm-menu-fixed .crm-menu-icon-counter {display: none;}
 
 .crm-menu-fixed-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -3752px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -3752px;
 	cursor: pointer;
 	height: 37px;
 	top: 20px;
@@ -576,6 +576,13 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 	margin-bottom: var(--ui-space-stack-2xs, 8px);
 }
 
+/* An embedded list has no page workarea to clip it, so it carries the rounded surface itself */
+.crm-list-embedded-grid-block {
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-primary);
+}
+
 .crm-toolbar-alignment-right {float:right; text-align:right;}
 
 .crm-toolbar-btn,
@@ -609,7 +616,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 }
 
 .crm-toolbar-btn-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	height: 19px;
 	left: 9px;
 	top: 8px;
@@ -653,7 +660,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 
 
 .crm-toolbar-btn-split-r:after {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -24px -1617px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -24px -1617px;
 	content: "";
 	height: 5px;
 	position: absolute;
@@ -755,7 +762,7 @@ div.empty {height:0;}
 
 
 .crm-list-menu-img {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat -42px -583px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat -42px -583px;
 	margin:0 auto;
 	height:11px;
 	width:11px;
@@ -905,7 +912,6 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-nearest-activity-wrapper {
-	padding-right:20px;
 	position:relative;
 }
 
@@ -934,7 +940,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-list-deal-plus {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat -19px -652px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat -19px -652px;
 	cursor:pointer;
 	height:20px;
 	margin-top:-12px;
@@ -944,8 +950,47 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 	width:20px;
 }
 
+.crm-nearest-activity-subject {
+	display:inline;
+}
+
+.crm-nearest-activity-plus {
+	background-color:var(--ui-color-design-filled-success-bg);
+	border-radius:50%;
+	cursor:pointer;
+	display:inline-block;
+	height:18px;
+	margin-left:6px;
+	position:relative;
+	vertical-align:-4px;
+	width:18px;
+	z-index:1;
+}
+
+.crm-nearest-activity-plus::before,
+.crm-nearest-activity-plus::after {
+	background-color:var(--ui-color-design-filled-success-content-icon);
+	content:'';
+	left:50%;
+	position:absolute;
+	top:50%;
+	transform:translate(-50%, -50%);
+}
+
+.crm-nearest-activity-plus::before {
+	height:10px;
+	width:2px;
+}
+
+.crm-nearest-activity-plus::after {
+	height:2px;
+	width:10px;
+}
+
 .crm-list-deal-plus:hover {background-position: 2px -652px}
 .crm-list-deal-plus:active {background-position: -39px -652px}
+.crm-nearest-activity-plus:hover {background-color:var(--ui-color-accent-main-success-alt)}
+.crm-nearest-activity-plus:active {background-color:var(--ui-color-accent-main-success-alt-2)}
 
 .crm-list-deal-responsible {
 	font-size: 12px;
@@ -1040,7 +1085,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .crm-list-responsible-block:hover {text-decoration:none;}
 
 .crm-list-responsible-img-wrap{
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat 3px -609px #fff;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat 3px -609px #fff;
 	border:1px solid #ececec;
 	-webkit-box-shadow:0 0 2px rgba(0,0,0,.1);
 	box-shadow:0 0 2px rgba(0,0,0,.1);
@@ -1159,7 +1204,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-setting-btn {
-	background:url(../images/crm-control-panel-sprite-26.png) repeat-x 0 -747px;
+	background:url(../images/crm-control-panel-sprite-26.webp) repeat-x 0 -747px;
 	border:1px solid rgba(139,153,157,0.72);
 	border-radius:4px;
 	-webkit-box-shadow:0 1px 0 0 rgba(255, 255, 255, 0.5);
@@ -1173,7 +1218,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-setting-btn:after {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat 0 -784px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat 0 -784px;
 	content:"";
 	height:15px;
 	left:11px;
@@ -1225,7 +1270,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 
 
 .bx-crm-view-menu .bx-context-button-icon {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px;
 	height:24px;
 	left:4px;
 	top:4px;
@@ -1270,7 +1315,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 
 
 .crm-btn-convert-arrow {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -1605px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -1605px;
 	cursor: pointer;
 	right: 0;
 	top: 4px;
@@ -1290,7 +1335,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-btn-menu-arrow {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -1611px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -1611px;
 	cursor: pointer;
 	opacity: 0.7;
 	height: 16px;
@@ -1373,7 +1418,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-contact-locked-icon {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat scroll -21px -1107px transparent;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll -21px -1107px transparent;
 	display:inline-block;
 	margin:3px 7px 0 0;
 	vertical-align:middle;
@@ -1449,7 +1494,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .crm-detail-toggle:hover {text-decoration:none;}
 
 .crm-detail-pref-btn {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat -11px -1296px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat -11px -1296px;
 	cursor:pointer;
 	display:inline-block;
 	height:20px;
@@ -1458,7 +1503,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-detail-pref-btn:hover {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat -11px -1315px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat -11px -1315px;
 }
 
 .crm-detail-info-blocks-wrap {
@@ -1585,7 +1630,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .crm-detail-info-item .crm-instant-editor-fld-btn,
 .crm-title-name-wrap .crm-instant-editor-fld-btn,
 .crm-detail-comments-text-wrap .crm-instant-editor-fld-btn {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat center -1042px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat center -1042px;
 	display:none;
 	cursor:pointer;
 	margin-top:1px;
@@ -1650,7 +1695,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-item-type-text-corner {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	display: inline-block;
 	height:10px;
 	vertical-align: top;
@@ -1725,7 +1770,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .crm-detail-lead-resize .crm-item-client-alignment-block { padding-top:3px; }
 
 .crm-item-client-img {
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat 2px -610px #535c6a;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat 2px -610px #535c6a;
 	border-radius: 50%;
 	height:30px;
 	left:0;
@@ -1752,7 +1797,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .crm-item-client-description {color:#000; font-size:11px;}
 
 .crm-item-tel-list {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -4221px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -4221px;
 	display:inline-block;
 	border-radius: 50%;
 	cursor:pointer;
@@ -1803,7 +1848,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 	bottom:0;
 	opacity:.3;
 	cursor:pointer;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	background-position: center -3791px;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
@@ -1885,7 +1930,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 	bottom:0;
 	opacity:.3;
 	cursor:pointer;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	background-position: center -3791px;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
@@ -2013,7 +2058,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-detail-info-resp-img {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat scroll 100px 100px #fff;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll 100px 100px #fff;
 	border-radius: 50%;
 	height: 38px;
 	left:0;
@@ -2090,7 +2135,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 
 .crm-detail-info-head-cont .crm-detail-info-resp-name:before,
 .crm-detail-info-head-firm .crm-detail-info-resp-name:before {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px;
 	content: "";
 	left: 0;
 	height: 10px;
@@ -2427,7 +2472,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-list-end-deal-option:before{
-	background:url(../images/crm-control-panel-sprite-26.png) no-repeat -45px -617px;
+	background:url(../images/crm-control-panel-sprite-26.webp) no-repeat -45px -617px;
 	content:"";
 	height:16px;
 	top:0;
@@ -2511,7 +2556,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-tel-avatar {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 3px -609px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 3px -609px;
 	border: 1px solid #ededed;
 	border-radius: 2px;
 	-webkit-box-shadow: inset 0 0 0 1px #fdfdfd, 0 0 2px 0 #ededed;
@@ -2596,12 +2641,12 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-tel-popup-call-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px, #90b61a;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px, -webkit-linear-gradient(top, #a5c31e, #81ac17) 0 0;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,    -moz-linear-gradient(top, #a5c31e, #81ac17) 0 0;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,     -ms-linear-gradient(top, #a5c31e, #81ac17) 0 0;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,      -o-linear-gradient(top, #a5c31e, #81ac17) 0 0;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,         linear-gradient(to bottom, #a5c31e, #81ac17) 0 0;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px, #90b61a;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px, -webkit-linear-gradient(top, #a5c31e, #81ac17) 0 0;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,    -moz-linear-gradient(top, #a5c31e, #81ac17) 0 0;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,     -ms-linear-gradient(top, #a5c31e, #81ac17) 0 0;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,      -o-linear-gradient(top, #a5c31e, #81ac17) 0 0;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,         linear-gradient(to bottom, #a5c31e, #81ac17) 0 0;
 	border: 1px solid;
 	border-color: #a3c926 #8ab01c #739913;
 	border-radius: 3px;
@@ -2619,16 +2664,16 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-tel-popup-call-btn:hover {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px, #a8ce2f;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px, -webkit-linear-gradient(top, #b5d534, #98c528);
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,    -moz-linear-gradient(top, #b5d534, #98c528);
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,     -ms-linear-gradient(top, #b5d534, #98c528);
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,      -o-linear-gradient(top, #b5d534, #98c528);
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px,         linear-gradient(to bottom, #b5d534, #98c528);
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px, #a8ce2f;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px, -webkit-linear-gradient(top, #b5d534, #98c528);
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,    -moz-linear-gradient(top, #b5d534, #98c528);
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,     -ms-linear-gradient(top, #b5d534, #98c528);
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,      -o-linear-gradient(top, #b5d534, #98c528);
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px,         linear-gradient(to bottom, #b5d534, #98c528);
 }
 
 .crm-tel-popup-call-btn:active {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat left -2743px #87b018;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat left -2743px #87b018;
 	border-color: #5c7619 #719414 #789e12;
 	border-radius: 2px;
 	-webkit-box-shadow: inset 0 1px 1px 0 #587315;
@@ -2636,7 +2681,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-tel-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -19px -2653px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -19px -2653px;
 	cursor: pointer;
 	border-radius: 50%;
 	display: block;
@@ -2816,7 +2861,7 @@ tr.crm-cont-info-table-title:hover td {
 }
 
 .crm-info-popup-block-main:before {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -38px -787px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -38px -787px;
 	content: '';
 	height: 3px;
 	right: 3px;
@@ -2850,7 +2895,7 @@ tr.crm-cont-info-table-title:hover td {
 }
 
 .crm-info-popup-user-img {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -19px -1140px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -19px -1140px;
 	border-radius: 50%;
 	display: inline-block;
 	height: 22px;
@@ -3053,7 +3098,7 @@ div.crm-invoice-term-dialog-params textarea.bx-crm-dialog-invoice-textarea {widt
 }
 
 .crm-item-move-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -2962px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -2962px;
 	cursor: n-resize;
 	display: inline-block;
 	height: 27px;
@@ -3156,7 +3201,7 @@ div.crm-invoice-term-dialog-params textarea.bx-crm-dialog-invoice-textarea {widt
 }
 
 .crm-offer-drg-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -2997px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -2997px;
 	cursor: move;
 	top: 0;
 	left: 0;
@@ -3179,7 +3224,7 @@ div.crm-invoice-term-dialog-params textarea.bx-crm-dialog-invoice-textarea {widt
 .crm-offer-title-edit,
 .crm-offer-title-add,
 .crm-offer-title-del {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px;
 	cursor: pointer;
 	display: inline-block;
 	height: 39px;
@@ -3300,7 +3345,7 @@ td.crm-offer-info-right-btn {
 
 .crm-offer-item-del,
 .crm-offer-item-edit {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -2870px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -2870px;
 	border-right: 1px solid #c2c9cc;
 	cursor: pointer;
 	display: inline-block;
@@ -3460,11 +3505,11 @@ td.crm-offer-last-td {
 }
 
 .crm-offer-info-descrip-tel .crm-offer-info-descrip-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat right -3097px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat right -3097px;
 }
 
 .crm-offer-info-descrip-imail .crm-offer-info-descrip-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat right -3064px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat right -3064px;
 }
 
 .crm-offer-info-link {
@@ -3477,7 +3522,7 @@ td.crm-offer-last-td {
 }
 
 .crm-item-table-date {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat  #fff right -2209px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat  #fff right -2209px;
 	padding-right: 29px;
 	width: 160px;
 }
@@ -3791,7 +3836,7 @@ tr.crm-offer-row[draggable="true"]
 }
 
 .crm-lead-header-title-edit {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -4438px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -4438px;
 	border-radius: 50%;
 	display: none;
 	height: 24px;
@@ -3815,7 +3860,7 @@ tr.crm-offer-row[draggable="true"]
 }
 
 .crm-lead-header-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px #fff;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px #fff;
 	border-radius: 50%;
 	height: 39px;
 	left: 14px;
@@ -3997,7 +4042,7 @@ tr.crm-offer-row[draggable="true"]
 }
 
 .crm-lead-header-contact-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	display: inline-block;
 	cursor: pointer;
 	height: 37px;
@@ -4148,7 +4193,7 @@ tr.crm-offer-row[draggable="true"]
 }
 
 .crm-lead-header-inner-move-btn {
-	background: #BAD7E2 url(../images/crm-control-panel-sprite-26.png) no-repeat center -4088px;
+	background: #BAD7E2 url(../images/crm-control-panel-sprite-26.webp) no-repeat center -4088px;
 	cursor: move;
 	height: 27px;
 	margin-top: 0;
@@ -4170,7 +4215,7 @@ tr.crm-offer-row[draggable="true"]
 
 .crm-lead-header-inner-del-btn,
 .crm-lead-header-inner-edit-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -4133px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -4133px;
 	cursor: pointer;
 	height: 27px;
 	width: 27px;
@@ -4464,10 +4509,10 @@ div.crm-quote-print-popup
 }
 
 .bx-scroller-control.plus {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -20px -3376px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -20px -3376px;
 }
 .bx-scroller-control.minus {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -20px -3440px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -20px -3440px;
 }
 
 body table.bx-interface-grid tr.bx-green.bx-odd td, body table.bx-interface-grid tr.bx-green.bx-over td {
@@ -4479,11 +4524,11 @@ body table.bx-interface-grid tr.bx-green.bx-odd td, body table.bx-interface-grid
 	font-size: 12px;
 	line-height: 16px;
 	padding-left: 20px;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -21px -3500px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -21px -3500px;
 }
 
 .bx-help-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -18px -3549px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -18px -3549px;
 	width:19px;
 	height:21px;
 	vertical-align: middle;
@@ -4582,7 +4627,7 @@ body table.bx-interface-grid tr.bx-green.bx-odd td, body table.bx-interface-grid
 }
 
 .crm-right-block-item-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px;
 	display: inline-block;
 	height: 15px;
 	margin-top: 2px;
@@ -4690,7 +4735,7 @@ div.crm-right-block div.crm-right-block-deadline .crm-right-block-date {
 }
 
 .bx-crm-add-file-link:before {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -2343px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -2343px;
 	height: 13px;
 	content: '';
 	left: 3px;
@@ -5401,7 +5446,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	margin: auto;
 	opacity: 0.5;
 	vertical-align: middle;
-	background: url(../images/crm-transaction-stage.png) no-repeat 0 -72px;
+	background: url(../images/crm-transaction-stage.webp) no-repeat 0 -72px;
 }
 
 .transaction-stage-phase-dark .transaction-stage-phase-panel-button:after {
@@ -5459,7 +5504,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	position: absolute;
 	width: 11px;
 	height: 11px;
-	background: url(../images/crm-transaction-stage.png) no-repeat 0 -87px;
+	background: url(../images/crm-transaction-stage.webp) no-repeat 0 -87px;
 	left: 0;
 	right: 0;
 	top: 0;
@@ -5580,11 +5625,11 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	right: 0;
 	margin: auto;
 	margin-top: 5px;
-	background: #989da5 url(../images/crm-transaction-stage.png) no-repeat 0 0;
+	background: #989da5 url(../images/crm-transaction-stage.webp) no-repeat 0 0;
 }
 
 .transaction-stage-final-column .transaction-stage.transaction-stage-failure:after {
-	background: #989da5 url(../images/crm-transaction-stage.png) no-repeat 0 -36px;
+	background: #989da5 url(../images/crm-transaction-stage.webp) no-repeat 0 -36px;
 	bottom: 11px;
 }
 
@@ -5691,7 +5736,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	content: '';
 	width: 14px;
 	height: 14px;
-	background: url(../images/crm-transaction-stage.png) no-repeat -13px -131px;
+	background: url(../images/crm-transaction-stage.webp) no-repeat -13px -131px;
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -5732,7 +5777,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 
 .crm-filter-view-table:before,
 .crm-filter-view-chart:before {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px;
 	content: '';
 	height: 16px;
 	left: 11px;
@@ -6019,7 +6064,7 @@ td.wd-fa-add-file-light-cell {
 	right: 0;
 	left: 0;
 	margin: auto;
-	background: url(../images/settings-sprite.png) no-repeat;
+	background: url(../images/settings-sprite.webp) no-repeat;
 }
 
 .view-report-wrapper-inner-img.img-1c:before { background-position: -3px -0px; width: 58px; height: 28px; }
@@ -6161,7 +6206,7 @@ td.wd-fa-add-file-light-cell {
 }
 
 .crm-p-s-f-open-btn:before {
-	background: #f5f7f8 url(../images/crm-control-panel-sprite-26.png) no-repeat center -3792px;
+	background: #f5f7f8 url(../images/crm-control-panel-sprite-26.webp) no-repeat center -3792px;
 	border: 1px solid #e6eaec;
 	border-bottom: none;
 	content: '';
@@ -6413,7 +6458,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	top:22px;
 	opacity:.3;
 	cursor:pointer;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	background-position: center -3791px;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
@@ -6489,7 +6534,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 
 .crm-offer-tab-title-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px #eef2f4;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px #eef2f4;
 	border-radius: 50%;
 	height: 24px;
 	left: 0;
@@ -6536,7 +6581,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 
 .crm-offer-tab-flag {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat scroll center -4892px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll center -4892px;
 	cursor: pointer;
 	height: 25px;
 	opacity: 0.6;
@@ -6550,7 +6595,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 
 
 .crm-offer-tab-close-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -3233px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -3233px;
 	cursor: pointer;
 	height: 20px;
 	opacity: 0.7;
@@ -6696,7 +6741,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 
 
 .crm-offer-tab-info-img {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px #fff;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px #fff;
 	border-radius: 50%;
 	height: 56px;
 	left: 21px;
@@ -6713,7 +6758,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 
 .crm-offer-mail-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -18px -5044px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -18px -5044px;
 	cursor: pointer;
 	border-radius: 50%;
 	display: block;
@@ -6764,7 +6809,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 
 .crm-offer-requisite-option-arrow {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -37px -2244px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -37px -2244px;
 	height: 12px;
 	position: absolute;
 	top: 5px;
@@ -7184,7 +7229,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	right: 10px;
 	display: block;
 	height: 20px;
-	background: url(/bitrix/js/crm/css/../images/crm-portriat-blank.png) center center repeat;
+	background: url(/bitrix/js/crm/css/../images/crm-portriat-blank.webp) center center repeat;
 	opacity: .8;
 	z-index: 9;
 }
@@ -7376,7 +7421,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	top:22px;
 	opacity:.3;
 	cursor:pointer;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	background-position: center -3791px;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
@@ -7476,7 +7521,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	position: relative;
 }
 .crm-client-selector-tab-title-icon {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px #eef2f4;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px #eef2f4;
 	border-radius: 50%;
 	height: 24px;
 	left: 0;
@@ -7485,7 +7530,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	width: 24px;
 }
 .crm-client-selector-tab-resp-img {
-	background: #535c6a url(../images/crm-control-panel-sprite-26.png) no-repeat scroll 100px 100px;
+	background: #535c6a url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll 100px 100px;
 	border-radius: 50%;
 	height: 38px;
 	left: 0;
@@ -7527,7 +7572,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 .crm-deal-client-selector-card:hover .crm-client-selector-tab-flag,
 .crm-client-selector-tab-flag {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat scroll center -4895px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll center -4895px;
 	cursor: pointer;
 	height: 15px;
 	opacity: .6;
@@ -7546,7 +7591,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	opacity: 0;
 }
 .crm-client-selector-tab-close-btn {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -3233px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -3233px;
 	cursor: pointer;
 	height: 20px;
 	opacity: 0.7;
@@ -7636,7 +7681,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 		position: relative;
 	}
 	.crm-client-selector-table-list-title-icon {
-		background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px 100px #eef2f4;
+		background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px 100px #eef2f4;
 		border-radius: 50%;
 		height: 24px;
 		left: 0;
@@ -7677,7 +7722,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 		text-overflow: ellipsis;
 	}
 	.crm-client-selector-table-list-resp-img {
-		background: #535c6a url(../images/crm-control-panel-sprite-26.png) no-repeat scroll 100px 100px;
+		background: #535c6a url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll 100px 100px;
 		border-radius: 50%;
 		height: 38px;
 		left: 0;
@@ -7749,7 +7794,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	bottom:18px;
 	opacity:.3;
 	cursor:pointer;
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat 100px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat 100px;
 	background-position: center -3791px;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
@@ -7833,7 +7878,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	color:#697580;
 }
 .crm-deal-client-selector-table-list-resp-img {
-	background: #fff url(../images/crm-control-panel-sprite-26.png) no-repeat scroll 100px 100px;
+	background: #fff url(../images/crm-control-panel-sprite-26.webp) no-repeat scroll 100px 100px;
 	border-radius: 50%;
 	border:1px solid #ddd;
 	left:14px;
@@ -7890,7 +7935,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 
 .crm-client-selector-arrow {
-	background: url(../images/crm-control-panel-sprite-26.png) no-repeat -48px -619px;
+	background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -48px -619px;
 	cursor: pointer;
 	height: 13px;
 	vertical-align: middle;
@@ -7983,9 +8028,9 @@ a.crm-client-contacts-block-text-mail:hover{
 	transition: background-color 0.2s linear;
 }
 
-.crm-client-contacts-block-text-tel-icon {background: url(../images/crm-control-panel-sprite-26.png) no-repeat -19px -2653px}
-.crm-client-contacts-block-text-mail-icon{background: url(../images/crm-control-panel-sprite-26.png) no-repeat -18px -5043px}
-.crm-client-contacts-block-text-list-icon{background: url(../images/crm-control-panel-sprite-26.png) no-repeat center -4221px;}
+.crm-client-contacts-block-text-tel-icon {background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -19px -2653px}
+.crm-client-contacts-block-text-mail-icon{background: url(../images/crm-control-panel-sprite-26.webp) no-repeat -18px -5043px}
+.crm-client-contacts-block-text-list-icon{background: url(../images/crm-control-panel-sprite-26.webp) no-repeat center -4221px;}
 .crm-client-contacts-block-text-tel-icon:hover,
 .crm-client-contacts-block-text-mail-icon:hover{background-color: #c3d7e4;}
 .crm-client-contacts-block-handset .crm-client-contacts-block-text-list-icon{ right:-43px;}

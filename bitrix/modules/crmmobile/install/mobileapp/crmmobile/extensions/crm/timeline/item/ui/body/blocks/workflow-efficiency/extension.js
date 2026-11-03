@@ -2,8 +2,9 @@
  * @module crm/timeline/item/ui/body/blocks/workflow-efficiency
  */
 jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, exports, module) => {
+	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
-	const { Indent, Corner } = require('tokens');
+	const { Typography, Indent, Corner } = require('tokens');
 	const { Duration } = require('utils/date/duration');
 	const { Type } = require('type');
 	const AppTheme = require('apptheme');
@@ -13,7 +14,7 @@ jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, expo
 	const { SafeImage } = require('layout/ui/safe-image');
 	const { inAppUrl } = require('in-app-url');
 	const { throttle } = require('utils/function');
-	const { openNativeViewer } = require('utils/file');
+	const { getMimeType, getNativeViewerMediaType, openNativeViewer } = require('utils/file');
 	const { get } = require('utils/object');
 	const USER_RESULT = 2;
 	const NO_RIGHTS_RESULT = 3;
@@ -85,13 +86,12 @@ jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, expo
 								content: flag(),
 							},
 						}),
-						Text({
+						Text4({
 							text: Loc.getMessage('M_CRM_TIMELINE_ITEM_WORKFLOW_EFFICIENCY_WORKFLOW_RESULT') ?? '',
 							numberOfLines: 1,
 							ellipsize: 'end',
 							style: {
 								color: AppTheme.colors.base1,
-								fontSize: 14,
 								fontWeight: '400',
 							},
 						}),
@@ -101,7 +101,7 @@ jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, expo
 						BBCodeText({
 							testId: 'WorkflowResultText',
 							style: {
-								fontSize: 14,
+								...Typography.text4.getValue(),
 								color: this.props.workflowResult.status === NO_RIGHTS_RESULT
 									? AppTheme.colors.base3
 									: AppTheme.colors.base1,
@@ -114,7 +114,7 @@ jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, expo
 									const file = this.props.workflowResult.files[url];
 									const openViewer = throttle(openNativeViewer, 500);
 									openViewer({
-										fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
+										fileType: getNativeViewerMediaType(getMimeType(file.type, file.name)),
 										url: file.url,
 										name: file.name,
 									});
@@ -170,7 +170,7 @@ jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, expo
 					},
 					BBCodeText({
 						style: {
-							fontSize: 14,
+							...Typography.text4.getValue(),
 							color: AppTheme.colors.base1,
 						},
 						value: userLink,
@@ -195,10 +195,9 @@ jn.define('crm/timeline/item/ui/body/blocks/workflow-efficiency', (require, expo
 						marginTop: Indent.XL.toNumber(),
 					},
 				},
-				Text({
+				Text5({
 					text: Loc.getMessage('M_CRM_TIMELINE_ITEM_WORKFLOW_EFFICIENCY_EXECUTION_TIME') ?? '',
 					style: {
-						fontSize: 13,
 						flexDirection: 'row',
 						alignItems: 'center',
 						color: AppTheme.colors.base3,

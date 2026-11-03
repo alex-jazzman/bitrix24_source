@@ -3,6 +3,8 @@ export type InterfaceModel = {
 	currentUserId: number;
 	isOldPortal: boolean;
 	isAccessRestricted: boolean;
+	accessRightsExpanded: boolean;
+	additionalSettingsExpanded: boolean;
 	loading: boolean;
 	scrollToStartupTool: boolean;
 	validation: {

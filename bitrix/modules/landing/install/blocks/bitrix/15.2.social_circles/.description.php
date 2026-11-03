@@ -23,6 +23,7 @@ return array(
 		'.landing-block-node-list-link' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_15.2.SOCIAL_NODES_LANDINGBLOCKNODELIST_LINK'),
 			'type' => 'link',
+			'ariaLabelFromHref' => true,
 		),
 		'.landing-block-node-list-icon' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_15.2.SOCIAL_NODES_LANDINGBLOCKNODELISTIMG'),

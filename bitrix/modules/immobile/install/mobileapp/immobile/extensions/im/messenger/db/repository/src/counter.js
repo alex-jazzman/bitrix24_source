@@ -161,6 +161,36 @@ jn.define('im/messenger/db/repository/counter', (require, exports, module) => {
 			return promise;
 		}
 
+		/**
+		 * @param {Array<number>} chatIdList
+		 * @return {Promise<unknown>}
+		 */
+		async deletePendingOperationsByChatIdList(chatIdList)
+		{
+			const { promise, resolve } = createPromiseWithResolvers();
+			this.queue.enqueue(
+				() => {
+					if (!Type.isArrayFilled(chatIdList))
+					{
+						resolve();
+
+						return Promise.resolve();
+					}
+
+					return this.counterPendingOperationInternalTable.deleteByChatIdList(chatIdList)
+						.then(resolve)
+					;
+				},
+				(error) => {
+					logger.error('deletePendingOperationsByChatIdList error', error);
+
+					resolve();
+				},
+			);
+
+			return promise;
+		}
+
 		clear()
 		{
 			this.queue.enqueue(

@@ -2,7 +2,6 @@
  * @module im/messenger/lib/integration/callmobile/call-manager
  */
 jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, exports, module) => {
-	const { Type } = require('type');
 	const { AnalyticsEvent } = require('analytics');
 
 	const {
@@ -14,6 +13,15 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
+
+	/**
+	 * A call answers to every identifier it has: an event about the same call may carry only the
+	 * id or only the uuid, whichever its producer had at hand.
+	 *
+	 * @param {RecentCallData} call
+	 * @return {Array<string>}
+	 */
+	const getCallKeys = (call) => [call.id, call.uuid].filter(Boolean).map(String);
 
 	/**
 	 * @class CallManager
@@ -40,8 +48,8 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.chatDataProvider = new ChatDataProvider();
 
-			/** @type {DialogId|null} */
-			this.activeCallDialogId = null;
+			/** @type {Map<string, { keys: Array<string>, dialogId: DialogId }>} a call in progress, by each key */
+			this.activeCalls = new Map();
 
 			this.bindMethods();
 		}
@@ -61,20 +69,59 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 		}
 
 		/**
-		 * @param {object} call
+		 * Every call in progress is tracked, not only the joined one: a tap on a call message
+		 * joins the call the dialog already has. The previous registration is dropped first, so
+		 * a key the call no longer answers to cannot outlive it.
+		 *
+		 * @param {RecentCallData} call
 		 * @return {void}
 		 */
 		onCallActive(call)
 		{
-			this.activeCallDialogId = String(call.associatedEntity.id);
+			const keys = getCallKeys(call);
+			const activeCall = { keys, dialogId: String(call.associatedEntity.id) };
+
+			this.#forgetCall(keys);
+			for (const key of keys)
+			{
+				this.activeCalls.set(key, activeCall);
+			}
 		}
 
 		/**
+		 * Only the finished call is dropped, so a parallel call in the recent list cannot erase
+		 * the dialog of the call still in progress.
+		 *
+		 * @param {RecentCallData} call
 		 * @return {void}
 		 */
-		onCallInactive()
+		onCallInactive(call)
 		{
-			this.activeCallDialogId = null;
+			this.#forgetCall(getCallKeys(call));
+		}
+
+		/**
+		 * An event may name the call by a single identifier, so the call is looked up by any of
+		 * the given keys and forgotten by all of its own.
+		 *
+		 * @param {Array<string>} keys
+		 * @return {void}
+		 */
+		#forgetCall(keys)
+		{
+			for (const key of keys)
+			{
+				const activeCall = this.activeCalls.get(key);
+				if (!activeCall)
+				{
+					continue;
+				}
+
+				for (const activeCallKey of activeCall.keys)
+				{
+					this.activeCalls.delete(activeCallKey);
+				}
+			}
 		}
 
 		/**
@@ -83,12 +130,17 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 		 */
 		hasActiveCallInDialog(dialogId)
 		{
-			if (Type.isNil(this.activeCallDialogId))
+			const targetDialogId = String(dialogId);
+
+			for (const activeCall of this.activeCalls.values())
 			{
-				return false;
+				if (activeCall.dialogId === targetDialogId)
+				{
+					return true;
+				}
 			}
 
-			return this.activeCallDialogId === String(dialogId);
+			return false;
 		}
 
 		/**
@@ -346,5 +398,6 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 
 	module.exports = {
 		CallManager,
+		getCallKeys,
 	};
 });

@@ -28,8 +28,11 @@ return [
 		'im.v2.lib.folder',
 		'im.v2.lib.local-storage',
 		'im.v2.lib.logger',
+		'im.v2.provider.service.chat',
+		'im.v2.provider.service.message',
 		'main.core',
 		'main.core.events',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 	'settings' => [

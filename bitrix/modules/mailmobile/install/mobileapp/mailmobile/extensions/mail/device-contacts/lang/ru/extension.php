@@ -1,0 +1,23 @@
+<?php
+$MESS['MAIL_DEVICE_CONTACTS_ACCESS_ALERT_TITLE'] = 'Нет доступа к контактам';
+$MESS['MAIL_DEVICE_CONTACTS_ACCESS_ALERT_DESCRIPTION'] = 'Чтобы выбирать получателей из телефонной книги, разрешите доступ к контактам в настройках устройства';
+$MESS['MAIL_DEVICE_CONTACTS_ACCESS_ALERT_SETTINGS_BUTTON'] = 'Перейти в настройки';
+$MESS['MAIL_DEVICE_CONTACTS_READ_FAILURE_ALERT_TITLE'] = 'Не удалось прочитать контакты';
+$MESS['MAIL_DEVICE_CONTACTS_READ_FAILURE_ALERT_DESCRIPTION'] = 'Возможно, доступ к контактам отозван. Проверьте разрешение в настройках устройства';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_TITLE'] = 'Телефонная книга';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_SEND_BUTTON'] = 'Добавить';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_SEARCH_PLACEHOLDER'] = 'Имя или e-mail';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_EMPTY_BOOK'] = 'Нет контактов с корректным e-mail. Добавьте адрес контакту на устройстве.';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_EMPTY_SEARCH'] = 'Ничего не найдено, попробуйте изменить запрос';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_REMAINING_PLURAL_0'] = 'Можно добавить ещё #COUNT# адрес';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_REMAINING_PLURAL_1'] = 'Можно добавить ещё #COUNT# адреса';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_REMAINING_PLURAL_2'] = 'Можно добавить ещё #COUNT# адресов';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_LIMIT_REACHED'] = 'Выбрано максимум';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_EXCEEDING_PLURAL_0'] = 'Снимите #COUNT# контакт';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_EXCEEDING_PLURAL_1'] = 'Снимите #COUNT# контакта';
+$MESS['MAIL_DEVICE_CONTACTS_SELECTOR_EXCEEDING_PLURAL_2'] = 'Снимите #COUNT# контактов';
+$MESS['MAIL_DEVICE_CONTACTS_ADDRESS_MENU_CANCEL'] = 'Отмена';
+$MESS['MAIL_DEVICE_CONTACTS_EMAIL_TYPE_WORK'] = 'Рабочий';
+$MESS['MAIL_DEVICE_CONTACTS_EMAIL_TYPE_HOME'] = 'Домашний';
+$MESS['MAIL_DEVICE_CONTACTS_EMAIL_TYPE_MOBILE'] = 'Мобильный';
+$MESS['MAIL_DEVICE_CONTACTS_EMAIL_TYPE_OTHER'] = 'Другой';

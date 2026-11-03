@@ -12,7 +12,7 @@ import 'ui.sidepanel-content';
 
 import resourceAutoSelectionIcon from './images/resource-auto-selection-icon.svg';
 
-export default class BookingResourceAutoSelection extends ContentWrapper
+export class BookingResourceAutoSelection extends ContentWrapper
 {
 	#options;
 
@@ -117,3 +117,5 @@ export default class BookingResourceAutoSelection extends ContentWrapper
 		});
 	}
 }
+
+export { BookingResourceAutoSelection as Content };

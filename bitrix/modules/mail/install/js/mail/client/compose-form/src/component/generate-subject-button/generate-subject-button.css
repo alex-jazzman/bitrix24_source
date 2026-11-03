@@ -1,0 +1,28 @@
+/*
+ * Layout only: the look of the control belongs to the button of the design system. The subject row is a
+ * flex line whose input stretches over it, and the button would otherwise give up its width and clip its
+ * own caption on a narrow panel. A wrapper is needed anyway: the button replaces its node after mounting,
+ * so a class put on the component itself never reaches the rendered control.
+ */
+.mail-compose-generate-subject-button
+{
+	display: flex;
+	flex: 0 0 auto;
+}
+
+/*
+ * The focus ring of the waiting control, restored by specificity, not a duplicate of the design system rule.
+ * The waiting look clears the outline (`.ui-btn-wait.ui-btn` in ui.buttons.css, same specificity as the focus
+ * rule above it), and the air focus rule is written through `:where()` and carries no specificity of its own.
+ * The design system never meets the case: its waiting state brings `disabled` along and drops the control out
+ * of the tab order, while this one stays reachable on purpose. Values are those of the idle ring of the very
+ * same control; the pointer modality is left out of it, as the design system leaves it out everywhere.
+ */
+html:not([data-input-modality="pointer"]) .mail-compose-generate-subject-button .ui-btn.ui-btn-wait:focus-visible,
+html[data-input-modality="keyboard"] .mail-compose-generate-subject-button .ui-btn.ui-btn-wait:focus:not(:focus-visible)
+{
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link);
+	outline-style: solid;
+}

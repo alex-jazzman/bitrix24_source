@@ -1,0 +1,5 @@
+<?php
+$MESS["TASKS_GRID_TASK_ROW_CELL_ACTION_PIN_MSGVER_1"] = "Закрепить задачу";
+$MESS["TASKS_GRID_TASK_ROW_CELL_ACTION_UNPIN_MSGVER_1"] = "Открепить задачу";
+$MESS["TASKS_GRID_TASK_ROW_CELL_ACTION_MUTE_MSGVER_1"] = "Выключить уведомления";
+$MESS["TASKS_GRID_TASK_ROW_CELL_ACTION_UNMUTE_MSGVER_1"] = "Включить уведомления";

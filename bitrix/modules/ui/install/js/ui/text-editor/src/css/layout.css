@@ -174,3 +174,37 @@
 		visibility: hidden;
 	}
 }
+
+/* The vertical margins of the table move onto the scrollable wrapper */
+.ui-text-editor__table-scrollable-wrapper {
+	overflow-x: auto;
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
+}
+
+.ui-text-editor__table-scrollable-wrapper > .ui-typography-table {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/*
+	A selected range of cells. The highlight is an overlay rather than the cell background:
+	header cells already use that background, and repainting it would highlight them
+	differently from ordinary ones. .ui-typography-table-cell is already position: relative.
+*/
+.ui-text-editor__table-cell-selected {
+	caret-color: transparent;
+}
+
+.ui-text-editor__table-cell-selected::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-color: var(--ui-text-editor-color-selection);
+}
+
+/* While a range drives the table selection, the native one on top of it only gets in the way */
+.ui-typography-table-selection *::selection {
+	background-color: transparent;
+}

@@ -14,6 +14,8 @@ export type CollectionSelectorOptions = {
 	allowCreateItem?: boolean,
 	createFooterLabel?: string,
 	onItemCreateAsync?: (name: string) => Promise,
+	// Selects the created collection instead of completing the host flow.
+	confirmAfterCreate?: boolean,
 	showAvatars?: boolean,
 	// Fired whenever the tag selection changes (add/remove/clear). Lets the host
 	// dialog keep its confirm button state in sync with the current selection.
@@ -42,10 +44,16 @@ export function createCollectionSelector(options: CollectionSelectorOptions = {}
 	const allowCreateItem = Boolean(options?.allowCreateItem);
 	const createFooterLabel = String(options?.createFooterLabel || '');
 	const onItemCreateAsync = Type.isFunction(options?.onItemCreateAsync) ? options.onItemCreateAsync : null;
+	const confirmAfterCreate = Boolean(options?.confirmAfterCreate);
 	const showAvatars = Boolean(options?.showAvatars);
 	const onSelectionChange = Type.isFunction(options?.onSelectionChange) ? options.onSelectionChange : () => {};
 
-	const node = Tag.render`<div class="note-collection-picker__selector"></div>`;
+	const node = Tag.render`
+		<div
+			class="note-collection-picker__selector"
+			data-testid="note-collection-picker-selector"
+		></div>
+	`;
 
 	let selector = null;
 
@@ -58,7 +66,26 @@ export function createCollectionSelector(options: CollectionSelectorOptions = {}
 		const isMobile = document.documentElement.classList.contains('note-mobile');
 		const targetWidth = node.offsetWidth || 432;
 
-		const dialogEvents: Object = {};
+		const dialogEvents: { [string]: Function } = {
+			onLoad: () => {
+				const entityDialog = Type.isFunction(selector?.getDialog) ? selector.getDialog() : null;
+				const hasAvailableCollections = entityDialog
+					&& Type.isFunction(entityDialog.getEntityItems)
+					&& entityDialog.getEntityItems(ENTITY_ID).length > 0
+				;
+
+				if (!entityDialog || allowCreateItem || hasAvailableCollections)
+				{
+					return;
+				}
+
+				const emptyState = entityDialog.getRecentTab()?.getStub()?.getOuterContainer?.();
+				if (emptyState)
+				{
+					emptyState.dataset.testid = 'note-collection-picker-empty';
+				}
+			},
+		};
 		if (allowCreateItem && onItemCreateAsync)
 		{
 			// Inline create via SearchTabFooter — backend auto-assigns LEVEL_MODERATE to creator.
@@ -69,7 +96,33 @@ export function createCollectionSelector(options: CollectionSelectorOptions = {}
 					return Promise.resolve();
 				}
 
-				return onItemCreateAsync(name);
+				return Promise.resolve(onItemCreateAsync(name)).then((created) => {
+					if (!confirmAfterCreate)
+					{
+						return created;
+					}
+
+					const id = Number(created?.id);
+					if (!Number.isInteger(id) || id <= 0)
+					{
+						return created;
+					}
+
+					selector.addTag({
+						id,
+						entityId: ENTITY_ID,
+						title: String(created?.title || name),
+						animate: false,
+					});
+
+					const entityDialog = Type.isFunction(selector.getDialog) ? selector.getDialog() : null;
+					if (entityDialog && Type.isFunction(entityDialog.hide))
+					{
+						setTimeout(() => entityDialog.hide(), 0);
+					}
+
+					return created;
+				});
 			};
 		}
 
@@ -95,6 +148,13 @@ export function createCollectionSelector(options: CollectionSelectorOptions = {}
 						options: { accessLevel },
 					},
 				],
+				recentTabOptions: allowCreateItem
+					? undefined
+					: {
+						stubOptions: {
+							title: Loc.getMessage('UI_SELECTOR_SEARCH_STUB_TITLE') || '',
+						},
+					},
 				searchOptions: allowCreateItem
 					? {
 						allowCreateItem: true,
@@ -114,11 +174,19 @@ export function createCollectionSelector(options: CollectionSelectorOptions = {}
 
 		NoteThemeContext.applyToTagSelector(selector);
 		selector.renderTo(node);
+		node.dataset.testid = 'note-collection-picker-selector';
 
 		const entityDialog = Type.isFunction(selector.getDialog) ? selector.getDialog() : null;
 		if (entityDialog)
 		{
 			NoteThemeContext.themeEntitySelector(entityDialog);
+
+			const createFooter = allowCreateItem ? entityDialog.getSearchTab()?.getFooter?.() : null;
+			const createAction = createFooter?.getContainer?.();
+			if (createAction)
+			{
+				createAction.dataset.testid = 'note-collection-picker-create';
+			}
 		}
 	};
 
@@ -194,8 +262,10 @@ export type CollectionPickerOptions = {
 	accessLevel?: 'view' | 'manage',
 	canCreateCollection?: boolean,
 	createFooterLabel?: string,
-	// Resolves the created collection so the picker can close and return it.
+	// Resolves the created collection for immediate completion or explicit confirmation.
 	onCreateCollection?: (name: string) => Promise<{ id: number, title: string } | null>,
+	// Keeps the picker open with the created collection selected.
+	confirmAfterCreate?: boolean,
 	mobileDropdownHeight?: number,
 };
 
@@ -214,6 +284,7 @@ export function openCollectionPicker(options: CollectionPickerOptions = {}): Pro
 	const canCreateCollection = Boolean(options?.canCreateCollection);
 	const createFooterLabel = String(options?.createFooterLabel || '');
 	const onCreateCollection = Type.isFunction(options?.onCreateCollection) ? options.onCreateCollection : null;
+	const confirmAfterCreate = Boolean(options?.confirmAfterCreate);
 	const mobileDropdownHeight = Number(options?.mobileDropdownHeight) || 280;
 
 	return new Promise((resolve) => {
@@ -246,11 +317,17 @@ export function openCollectionPicker(options: CollectionPickerOptions = {}): Pro
 				}
 
 				const collectionTitle = String(created?.title || name);
-				// Defer hide so SearchTabFooter's post-emit chain (clearSearch + selectFirstTab) can run first.
-				setTimeout(() => {
-					finish({ collectionId: id, collectionTitle });
-					dialog.hide();
-				}, 0);
+				const createdCollection = { id, title: collectionTitle };
+				if (!confirmAfterCreate)
+				{
+					// Defer hide so SearchTabFooter's post-emit chain can finish first.
+					setTimeout(() => {
+						finish({ collectionId: id, collectionTitle });
+						dialog.hide();
+					}, 0);
+				}
+
+				return createdCollection;
 			})
 			: null
 		;
@@ -262,6 +339,7 @@ export function openCollectionPicker(options: CollectionPickerOptions = {}): Pro
 			allowCreateItem: canCreateCollection,
 			createFooterLabel,
 			onItemCreateAsync,
+			confirmAfterCreate,
 			onSelectionChange: () => updatePrimaryState(),
 		});
 

@@ -1,0 +1,4 @@
+<?php
+$MESS['MAIL_MIGRATION_NOTICE_BANNER_CLOSE'] = 'Close';
+$MESS['MAIL_MIGRATION_NOTICE_CONTROL_PANEL_REFUSED'] = 'Could not open the mail control panel. Try again.';
+$MESS['MAIL_MIGRATION_NOTICE_DISMISS_HINT_CLOSE'] = 'Close';

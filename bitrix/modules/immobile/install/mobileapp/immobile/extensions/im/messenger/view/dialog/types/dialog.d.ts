@@ -14,6 +14,12 @@ declare type MessagesContextOptions = {
 
 export type UpdateMessageByIdUpdatingBlocksParam = UpdatingBlocksEnum | null;
 
+export type UpdateLoadTextParams = Readonly<{
+	messageId: string,
+	text: string,
+	mediaId?: string,
+}>;
+
 export enum UpdatingBlocksEnum {
 	status = 'status',
 	showAvatar = 'showAvatar',
@@ -52,6 +58,7 @@ export interface ChatWidgetViewInterface extends JNBaseClassInterface {
 		textProgress?: string,
 		mediaId?: string,
 	): void;
+	updateLoadTextByMessageId(messageId: string, text: string, mediaId?: string): void;
 	setCurrentUserAvatar(avatar: DialogReactionSettingCurrentUserAvatar): void;
 	showFloatingText(): void;
 	hideFloatingText(): void;

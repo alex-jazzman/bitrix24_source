@@ -45,5 +45,6 @@ $arActivityDescription = (new ActivityDescription(
 	->setGroups([ ActivityGroup::PAYMENT->value ])
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setIcon(Outline::LINK->name)
+	->set('NODE_DESCRIPTION', Loc::getMessage('CRM_BP_GPU_NODE_DESCRIPTION') ?? '')
 	->toArray()
 ;

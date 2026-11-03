@@ -1,0 +1,10 @@
+<?php
+$MESS['LANDING_GALLERY_BUTTON_CLOSE'] = 'Close';
+$MESS['LANDING_GALLERY_BUTTON_FULLSCREEN'] = 'Enter or exit full screen';
+$MESS['LANDING_GALLERY_BUTTON_NEXT'] = 'Show next image';
+$MESS['LANDING_GALLERY_BUTTON_PLAY'] = 'Start or stop slideshow';
+$MESS['LANDING_GALLERY_BUTTON_PREV'] = 'Show previous image';
+$MESS['LANDING_GALLERY_BUTTON_SHARE'] = 'Share image';
+$MESS['LANDING_GALLERY_BUTTON_THUMBS'] = 'Toggle thumbnails';
+$MESS['LANDING_GALLERY_DIALOG_LABEL'] = 'Image viewer';
+$MESS['LANDING_GALLERY_IMAGE_ALT'] = 'Image #NUM# of #COUNT#';

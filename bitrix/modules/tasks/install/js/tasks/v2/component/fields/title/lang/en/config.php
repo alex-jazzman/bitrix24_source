@@ -1,3 +1,7 @@
 <?php
+$MESS["TASKS_V2_REGULAR_TASK_TITLE_EDIT_LABEL"] = 'Rename recurring task';
+$MESS["TASKS_V2_REGULAR_TASK_TITLE_PLACEHOLDER"] = 'Enter recurring task name';
+$MESS["TASKS_V2_TEMPLATE_TITLE_EDIT_LABEL"] = "Rename template";
 $MESS["TASKS_V2_TEMPLATE_TITLE_PLACEHOLDER"] = "Template name";
+$MESS["TASKS_V2_TITLE_EDIT_LABEL"] = "Rename task";
 $MESS["TASKS_V2_TITLE_PLACEHOLDER"] = "Task name";

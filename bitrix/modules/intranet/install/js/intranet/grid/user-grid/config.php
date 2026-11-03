@@ -14,6 +14,7 @@ return [
 		'bitrix24.first-admin-guard',
 		'im.public',
 		'intranet.fire-employee-wizard',
+		'intranet.fire-system-user-wizard',
 		'intranet.reinvite',
 		'main.core',
 		'ui.avatar',

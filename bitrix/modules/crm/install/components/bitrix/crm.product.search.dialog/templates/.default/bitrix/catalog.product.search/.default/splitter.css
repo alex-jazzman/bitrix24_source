@@ -36,7 +36,7 @@
 
 .crm-catalog-scale-btn-inner:before,
 .bx-crm-goods-drug-btn-inner:before {
-	background: url(images/catalog-popup-sprite.png) no-repeat center -275px;
+	background: url(images/catalog-popup-sprite.webp) no-repeat center -275px;
 	content: '';
 	left: 3px;
 	position: absolute;

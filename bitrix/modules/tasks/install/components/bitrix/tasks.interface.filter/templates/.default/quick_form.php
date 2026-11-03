@@ -11,6 +11,8 @@ $quickBtn = new Buttons\Button([
 ]);
 $quickBtn->addClass('ui-btn-themes webform-cogwheel tasks-quick-form-button ');
 $quickBtn->addAttribute('id', 'task-quick-form-button');
+$quickBtn->addAttribute('data-testid', 'tasks-filter-quick-btn');
 $quickBtn->addAttribute('title', Loc::getMessage('TASKS_ADD_QUICK_TASK'));
+$quickBtn->addAttribute('aria-label', Loc::getMessage('TASKS_ADD_QUICK_TASK'));
 
 Toolbar::addButton($quickBtn, ButtonLocation::RIGHT);

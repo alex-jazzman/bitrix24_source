@@ -16,6 +16,8 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 	const { prepareConversionFields, createConversionConfig } = require('crm/conversion/utils');
 	const { RunActionExecutor } = require('rest');
 	const { wizardSteps, ModeStep, MODE, MODES, CONVERSION, FIELDS } = require('crm/crm-mode/wizard/steps');
+	const { Typography } = require('tokens');
+	const { requireLazy } = require('require-lazy');
 	const AJAX_ACTIONS = {
 		configCrmMode: 'crmmobile.Conversion.getConfigCrmMode',
 		leadMode: '/bitrix/tools/crm_lead_mode.php',
@@ -337,7 +339,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 					onClickEvent: BUTTON_CANCEL_EVENT,
 					style: {
 						marginTop: 30,
-						fontSize: 17,
+						...Typography.text2.getValue(),
 						paddingVertical: Application.getPlatform() === 'android' ? 2 : 8,
 						paddingHorizontal: 34,
 						backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
@@ -369,10 +371,10 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			}
 		}
 
-		closeProgressBar(success)
+		closeProgressBar(success, crmType = null)
 		{
 			this.isProgress = false;
-			this.reloadTabs(success);
+			this.reloadTabs(success, crmType);
 			this.unBindEvents();
 			BX.postComponentEvent('Crm.LoadingProgress::updateProgress', [
 				{
@@ -431,10 +433,12 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				CrmMode.setCrmModeInCache(crmType);
 				if (this.isProgress)
 				{
-					this.closeProgressBar(true);
+					this.closeProgressBar(true, crmType);
 				}
-
-				this.reloadTabs(isSuccess);
+				else
+				{
+					this.reloadTabs(true, crmType);
+				}
 				this.hapticsNotify(isSuccess);
 				void this.loadEntities();
 
@@ -456,9 +460,12 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			return this.result[MODE].mode !== currentCrmMode;
 		}
 
-		reloadTabs(success)
+		reloadTabs(success, crmType = null)
 		{
-			BX.postComponentEvent('CrmTabs::loadTabs', [{ isProgress: false }]);
+			BX.postComponentEvent('CrmTabs::loadTabs', [{
+				isProgress: false,
+				...(success && crmType ? { crmMode: crmType.toUpperCase() } : {}),
+			}]);
 			if (success)
 			{
 				this.showNotify();

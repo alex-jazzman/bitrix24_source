@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/bottom-sheet.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.vue3',
 		'ui.vue3.components.popup',
 	],
 	'skip_core' => false,

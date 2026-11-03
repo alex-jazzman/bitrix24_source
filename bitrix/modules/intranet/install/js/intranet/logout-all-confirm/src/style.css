@@ -10,7 +10,7 @@
 .intranet-logout-all-confirm-popup__logo {
 	width: 100px;
 	height: 97px;
-	background: url('./images/logo.png') no-repeat;
+	background: url('./images/logo.webp') no-repeat;
 	background-size: cover;
 	margin-top: 12px;
 }

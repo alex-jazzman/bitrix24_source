@@ -3,33 +3,21 @@
 }
 
 .landing-ui-form-header {
-	font-family: 'OpenSans-Light', Helvetca, Arial, sans-sarif;
+	font-family: 'OpenSans-Light', Helvetica, Arial, sans-serif;
 	font-size: 22px;
 	color: #333333;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: baseline;
-	    -ms-flex-align: baseline;
-	        align-items: baseline;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	align-items: baseline;
+	justify-content: space-between;
 	line-height: 28px;
 	padding-top: 3px;
 	padding-bottom: 10px;
 }
 
 .landing-form-header {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
-	-webkit-box-align: baseline;
-	    -ms-flex-align: baseline;
-	        align-items: baseline;
+	justify-content: space-between;
+	align-items: baseline;
 }
 
 
@@ -56,8 +44,6 @@
 	border-bottom: 1px rgba(169, 173, 178, .65) solid;
 	padding: 0!important;
 	text-decoration: none;
-	-webkit-transition: opacity 200ms ease;
-	-o-transition: opacity 200ms ease;
 	transition: opacity 200ms ease;
 }
 
@@ -80,12 +66,8 @@
 }
 
 .landing-ui-form-header-checkbox {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 
 .landing-ui-form-header-checkbox-label {
@@ -95,8 +77,6 @@
 	line-height: normal;
 	font-weight: normal;
 	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
 	user-select: none;
 	margin-bottom: -2px;
 }
@@ -119,12 +99,9 @@
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	-webkit-transform: translate3d(-53%, -37%, 0);
-	        transform: translate3d(-53%, -37%, 0);
+	transform: translate3d(-53%, -37%, 0);
 	background: url("/bitrix/images/landing/help.svg");
 	opacity: .8;
-	-webkit-transition: opacity 200ms ease;
-	-o-transition: opacity 200ms ease;
 	transition: opacity 200ms ease;
 }
 

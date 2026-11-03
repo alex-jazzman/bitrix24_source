@@ -47,6 +47,7 @@
 
 .checkout-basket-item.checkout-basket-item-deleted .checkout-basket-item-image {
 	filter: grayscale(1);
+	opacity: .5;
 }
 
 .checkout-basket-item-container {
@@ -162,12 +163,17 @@
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	opacity: .5;
+	/* room for the focus ring off the glyphs; the negative margins keep the caption and the header in place */
+	width: calc(100% + 6px);
+	padding: 2px 3px;
+	margin: -2px -3px;
+	border: none;
+	background: none;
+	font: inherit;
 	transition: 180ms linear all;
 }
 
 .checkout-basket-item-detail-close-btn:hover {
-	opacity: 1;
 	text-decoration: none;
 	border-bottom: none;
 	cursor: pointer;
@@ -179,8 +185,7 @@
 	font-weight: normal;
 	font-size: 16px;
 	line-height: 21px;
-	color: #fff;
-	pointer-events: none;
+	color: var(--ui-color-base-white-fixed);
 }
 
 /*endregion*/
@@ -213,7 +218,8 @@
 }
 
 .checkout-basket-item-backdrop-inner .checkout-basket-item-name-block {
-	padding-top: 0;
+	/* the head clips, so the ring of the link needs room for its top side */
+	padding-top: 2px;
 	margin-bottom: 0;
 }
 
@@ -243,6 +249,12 @@
 
 .checkout-basket-item-head {
 	overflow: hidden;
+}
+
+/* the shutter clips the outer halo of the site template ring, so the ring goes inside the link */
+.checkout-basket-item-backdrop-main a:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
 }
 
 .checkout-basket-item-backdrop-bottom {
@@ -299,6 +311,9 @@
 }
 
 .checkout-basket-item-name-text {
+	/* room for the focus ring off the glyphs; the negative margins keep the caption in place */
+	padding: 2px 3px;
+	margin: 0 -3px;
 	font: 17px/20px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #121212;
 	letter-spacing: -0.29px;
@@ -385,6 +400,8 @@ a.checkout-basket-item-name-text:hover { color: #333; }
 	display: block;
 	min-width: 26px;
 	height: 26px;
+	padding: 0;
+	border: none;
 	border-radius: 50%;
 	background-color: #f2f2f2;
 	color: #fff;
@@ -432,7 +449,6 @@ a.checkout-basket-item-name-text:hover { color: #333; }
 
 .checkout-item-quantity-btn-disabled.checkout-item-quantity-btn-plus:after,
 .checkout-item-quantity-btn-disabled.checkout-item-quantity-btn-minus:after {
-	opacity: .3 !important;
 	cursor: default;
 }
 
@@ -492,9 +508,10 @@ input.checkout-item-quantity-field {
 	appearance: none;
 }
 
-.checkout-item-quantity-field:focus {
-	outline: none !important;
-	border-color: var(--theme-color-primary);
+/* the site template draws no ring on this field; it goes inside the box, where no ancestor can clip it */
+.checkout-item-quantity-field:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
 }
 
 .bx-no-touch input.checkout-item-quantity-field::-webkit-outer-spin-button,
@@ -517,7 +534,7 @@ input.checkout-item-quantity-field {
 	font-weight: normal;
 	font-size: 12px;
 	line-height: 25px;
-	color: #999;
+	color: var(--ui-color-base-2);
 	vertical-align: bottom;
 	pointer-events: none;
 }
@@ -567,26 +584,48 @@ input.checkout-item-quantity-field {
 }
 
 .checkout-basket-item-remove-btn {
+	/* room for the focus ring off the glyphs; the negative margins keep the caption in place */
+	padding: 2px 3px;
+	margin: 0 -3px;
+	border: none;
 	cursor: pointer;
 	font: 11px/13px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #000;
-	opacity: 0.4;
+	color: var(--ui-color-base-2);
+	background: none;
 	-webkit-transition: 170ms linear all;
 	-o-transition: 170ms linear all;
 	transition: 170ms linear all;
 }
 
 .checkout-basket-item-remove-dots-btn {
+	--checkout-item-menu-glyph: url("data:image/svg+xml,%3Csvg width='16' height='5' viewBox='0 0 16 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4.16211C3.10457 4.16211 4 3.26668 4 2.16211C4 1.05754 3.10457 0.162109 2 0.162109C0.89543 0.162109 0 1.05754 0 2.16211C0 3.26668 0.89543 4.16211 2 4.16211Z' fill='%23444444'/%3E%3Cpath d='M8 4.16211C9.10457 4.16211 10 3.26668 10 2.16211C10 1.05754 9.10457 0.162109 8 0.162109C6.89543 0.162109 6 1.05754 6 2.16211C6 3.26668 6.89543 4.16211 8 4.16211Z' fill='%23444444'/%3E%3Cpath d='M16 2.16211C16 3.26668 15.1046 4.16211 14 4.16211C12.8954 4.16211 12 3.26668 12 2.16211C12 1.05754 12.8954 0.162109 14 0.162109C15.1046 0.162109 16 1.05754 16 2.16211Z' fill='%23444444'/%3E%3C/svg%3E%0A");
 	width: 20px;
 	height: 16px;
+	padding: 0;
+	border: none;
 	display: inline-block;
 	cursor: pointer;
-	opacity: .4;
-	background: no-repeat center url("data:image/svg+xml,%3Csvg width='16' height='5' viewBox='0 0 16 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4.16211C3.10457 4.16211 4 3.26668 4 2.16211C4 1.05754 3.10457 0.162109 2 0.162109C0.89543 0.162109 0 1.05754 0 2.16211C0 3.26668 0.89543 4.16211 2 4.16211Z' fill='%23444444'/%3E%3Cpath d='M8 4.16211C9.10457 4.16211 10 3.26668 10 2.16211C10 1.05754 9.10457 0.162109 8 0.162109C6.89543 0.162109 6 1.05754 6 2.16211C6 3.26668 6.89543 4.16211 8 4.16211Z' fill='%23444444'/%3E%3Cpath d='M16 2.16211C16 3.26668 15.1046 4.16211 14 4.16211C12.8954 4.16211 12 3.26668 12 2.16211C12 1.05754 12.8954 0.162109 14 0.162109C15.1046 0.162109 16 1.05754 16 2.16211Z' fill='%23444444'/%3E%3C/svg%3E%0A");
+	background: none;
 }
 
-.checkout-basket-item-remove-btn:hover,
-.checkout-basket-item-remove-dots-btn:hover { opacity: .7; }
+/* a mask would clip the focus ring too, so the glyph is masked on the pseudo element */
+.checkout-basket-item-remove-dots-btn::before {
+	content: "";
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-color: var(--ui-color-base-3);
+	-webkit-mask-image: var(--checkout-item-menu-glyph);
+	mask-image: var(--checkout-item-menu-glyph);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+}
+
+.checkout-basket-item-remove-btn:hover { color: var(--ui-color-base-1); }
+
+.checkout-basket-item-remove-dots-btn:hover::before { background-color: var(--ui-color-base-1); }
 
 .checkout-basket-item-locked {
 	pointer-events: none;
@@ -602,15 +641,21 @@ input.checkout-item-quantity-field {
 	pointer-events: none;
 }
 
+/* the name of a removed row is its only text: it stays readable while the row recalculates */
+.checkout-basket-item-deleted.checkout-basket-item-locked .checkout-basket-item-info-container {
+	opacity: 1;
+}
+
 /* region removed item*/
 .checkout-basket-item-deleted .checkout-basket-item-inner { align-items: center; }
 
+/* a margin keeps the ring on the photo; the photo, not the link, is dimmed so the ring keeps its contrast */
 .checkout-basket-item-deleted .checkout-basket-item-image-block {
 	width: 46px;
 	min-width: 46px;
 	max-width: 46px;
-	opacity: .5;
-	padding: 0 17px 0 0;
+	margin-right: 17px;
+	opacity: 1;
 }
 
 .checkout-basket-item-deleted .checkout-basket-item-info-container {
@@ -619,13 +664,12 @@ input.checkout-item-quantity-field {
 }
 
 .checkout-basket-item-deleted .checkout-basket-item-name-block {
-	opacity: .5;
 	margin-bottom: 0;
 	padding-top: 0;
 	margin-left: 0;
 }
 
-.checkout-basket-item-deleted .checkout-basket-item-name-text { color: #919191; }
+.checkout-basket-item-deleted .checkout-basket-item-name-text { color: var(--ui-color-base-2); }
 
 .checkout-basket-item-deleted .checkout-basket-item-summary-info {
 	min-width: 120px;
@@ -701,8 +745,8 @@ input.checkout-item-quantity-field {
 .checkout-order-status-icon { margin-bottom: 37px; }
 
 .checkout-order-status-icon-circle {
-	stroke: #6cb70e;
-	fill: #6cb70e;
+	stroke: #4A7D0A;
+	fill: #4A7D0A;
 }
 
 @media (max-width: 480px) {
@@ -716,11 +760,18 @@ input.checkout-item-quantity-field {
 
 .checkout-order-status-text {
 	font: 25px/29px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: normal;
 	text-align: center;
-	margin-bottom: 26px;
-	color: #6cb70e;
+	margin: 0 0 26px;
+	color: #4A7D0A;
 	max-width: 550px;
 	padding: 0 50px;
+}
+
+/* the text color is the ring color: green on the white screen, white on the green mobile one */
+.checkout-order-status-text:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid currentColor;
+	outline-offset: var(--ui-focus-outline-offset, 2px);
 }
 
 .checkout-order-section-space { height: 100px; }
@@ -758,7 +809,7 @@ input.checkout-item-quantity-field {
 .checkout-order-info {
 	font: 17px/20px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	text-align: center;
-	color: #919191;
+	color: var(--ui-color-base-2);
 	padding: 0 50px;
 	max-width: 650px;
 	margin: 0 auto 42px;
@@ -767,7 +818,7 @@ input.checkout-item-quantity-field {
 .btn.btn-checkout-order-status:active,
 .btn.btn-checkout-order-status:hover,
 .btn.btn-checkout-order-status.btn-wait {
-	color: #909090;
+	color: var(--ui-color-base-2);
 	background: rgba(255, 255, 255, 0.3);
 }
 
@@ -779,7 +830,7 @@ input.checkout-item-quantity-field {
 .btn.btn-checkout-order-status-link {
 	margin-top: 5px;
 	font-weight: 500;
-	color: #909090;
+	color: var(--ui-color-base-2);
 }
 
 .checkout-order-common-container {
@@ -798,7 +849,7 @@ input.checkout-item-quantity-field {
 	padding: 14px 42px;
 	text-align: center;
 	width: 100%;
-	color: #919191;
+	color: var(--ui-color-base-2);
 }
 
 .checkout-order-common-row-icon { margin-right: 8px; }
@@ -859,11 +910,11 @@ input.checkout-item-quantity-field {
 	font-weight: normal;
 	font-size: 15px;
 	line-height: 17px;
-	color: rgba(18, 18, 18, 0.5);
+	color: var(--ui-color-base-2);
 }
 
 .checkout-basket-total-item-discount,
-.checkout-summary-item-discount { color: #6cb70e; }
+.checkout-summary-item-discount { color: #4A7D0A; }
 
 .checkout-summary-item-price-discount,
 .checkout-basket-total-item-price-discount {
@@ -874,7 +925,7 @@ input.checkout-item-quantity-field {
 	text-transform: capitalize;
 	color: #fff;
 	padding: 3px;
-	background: #6cb70e;
+	background: #4A7D0A;
 	border-radius: 4px;
 }
 
@@ -1019,12 +1070,17 @@ input.checkout-item-quantity-field {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	opacity: .5;
+	/* the same room for the ring as the close button of the product shutter above */
+	width: calc(100% + 6px);
+	padding: 2px 3px;
+	margin: -2px -3px;
+	border: none;
+	background: none;
+	font: inherit;
 	transition: 180ms linear all;
 }
 
 .checkout-basket-total-backdrop-close-btn:hover {
-	opacity: 1;
 	text-decoration: none;
 	border-bottom: none;
 	cursor: pointer;
@@ -1036,8 +1092,7 @@ input.checkout-item-quantity-field {
 	font-weight: normal;
 	font-size: 16px;
 	line-height: 21px;
-	color: #fff;
-	pointer-events: none;
+	color: var(--ui-color-base-white-fixed);
 }
 
 /*endregion*/
@@ -1067,8 +1122,7 @@ input.checkout-item-quantity-field {
 	font-weight: normal;
 	font-size: 11px;
 	line-height: 12px;
-	color: #121212;
-	opacity: 0.4;
+	color: var(--ui-color-base-2);
 	padding-left: 10px;
 	/*padding-top: 5px;*/
 }
@@ -1112,8 +1166,7 @@ input.checkout-item-quantity-field {
 	font-size: 13px;
 	line-height: 15px;
 	text-decoration-line: line-through;
-	color: #121212;
-	opacity: 0.5;
+	color: var(--ui-color-base-2);
 	margin-right: 2px;
 }
 
@@ -1131,7 +1184,7 @@ input.checkout-item-quantity-field {
 	text-transform: capitalize;
 	color: #fff;
 	padding: 0 6px;
-	background: #63aa28;
+	background: #4C831F;
 	border-radius: 4px;
 }
 
@@ -1478,14 +1531,14 @@ input.checkout-item-quantity-field {
 
 .checkout-order-payment-content .ui-ctl-element {
 	height: 51px;
-	border: 1px solid #C4C4C4;
+	border: 1px solid var(--ui-color-base-3);
 	font-size: 18px;
 	color: #121212;
 }
 
 .checkout-order-payment-content .ui-ctl-element::placeholder {
-	color: #121212;
-	opacity: .5;
+	color: var(--ui-color-base-2);
+	opacity: 1;
 }
 
 .checkout-order-payment-btn-container {
@@ -1695,9 +1748,11 @@ input.checkout-item-quantity-field {
 
 	.checkout-basket-total-backdrop-btn {
 		font: 500 11px/13px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-		color: #121212;
-		opacity: 0.5;
-		border-bottom: 1px dashed #ccc;
+		color: var(--ui-color-base-2);
+		padding: 0;
+		background: none;
+		border: none;
+		border-bottom: 1px dashed var(--ui-color-base-3);
 		display: inline-block;
 	}
 
@@ -1766,18 +1821,18 @@ input.checkout-item-quantity-field {
 	.checkout-item-quantity-block-text {
 		font: 12px/14px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 		text-align: right;
-		color: #919191;
+		color: var(--ui-color-base-2);
 	}
 
 	.checkout-basket-list-items-view-mode .checkout-item-quantity-block-text {
 		font-size: 12px;
 		line-height: 14px;
-		color: #919191;
+		color: var(--ui-color-base-2);
 	}
 
 	/*region final window*/
 	.checkout-order-status-successful {
-		background: #65a90f;
+		background: #4E830C;
 		margin: 0 calc(var(--bs-gutter-x) / -2);
 		width: auto;
 	}
@@ -1796,7 +1851,7 @@ input.checkout-item-quantity-field {
 		fill: #fff;
 	}
 
-	.checkout-order-status-icon-angle { fill: #6cb70e;}
+	.checkout-order-status-icon-angle { fill: #4A7D0A;}
 
 	.checkout-order-info {
 		color: #fff;
@@ -1810,11 +1865,12 @@ input.checkout-item-quantity-field {
 		border: 1px solid rgba(255, 255, 255, 0.3);
 	}
 
+	/* the screen behind is green: a white veil on hover would fail the contrast of the white label */
 	.btn.btn-checkout-order-status:active,
 	.btn.btn-checkout-order-status:hover,
 	.btn.btn-checkout-order-status.btn-wait {
 		color: #fff;
-		background: rgba(255, 255, 255, 0.3);
+		background: rgba(0, 0, 0, 0.2);
 	}
 
 	.btn.btn-checkout-order-status.btn-wait::after {
@@ -1918,10 +1974,14 @@ input.checkout-item-quantity-field {
 }
 
 .checkout-basket-item-change-btn {
+	padding: 0;
+	border: none;
+	/* the underline took no room in the line while this was an inline span */
+	margin-bottom: -1px;
 	font: 12px/14px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #121212;
-	opacity: .5;
-	border-bottom: 1px dashed rgba(0, 0, 0, 0.31);
+	color: var(--ui-color-base-2);
+	background: none;
+	border-bottom: 1px dashed var(--ui-color-base-3);
 	text-transform: lowercase;
 	transition: .18s linear;
 	cursor: pointer;
@@ -1929,7 +1989,6 @@ input.checkout-item-quantity-field {
 }
 
 .checkout-basket-item-change-btn:hover {
-	opacity: 1;
 	border-bottom-color: transparent;
 }
 
@@ -2236,7 +2295,7 @@ input.checkout-item-quantity-field {
 .checkout-clear-page-description {
 	font: 23px/25px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	text-align: center;
-	color: #a0a0a0;
+	color: var(--ui-color-base-2);
 	margin-bottom: 57px;
 }
 
@@ -2254,9 +2313,10 @@ input.checkout-item-quantity-field {
 
 /* CHECKOUT SKU */
 
+/* the container above clips, so the line height has to fit the glyphs */
 .checkout-basket-item-info-block .product-item-detail-info-container-title {
 	margin-bottom: 6px;
-	font: 13px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #6d6d6d;
 }
 
@@ -2267,7 +2327,7 @@ input.checkout-item-quantity-field {
 .checkout-basket-item-info-block .ui-ctl-radio-selector .ui-ctl-inner {
 	padding: 7px 15px;
 	height: 33px;
-	border: 1px solid rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--ui-color-base-3);
 	color: #121212;
 }
 
@@ -2310,7 +2370,7 @@ input.checkout-item-quantity-field {
 .product-item-scu-list--pick-color .ui-ctl-radio-selector .ui-ctl-inner {
 	padding: 7px 4px;
 	width: 54px;
-	border: 2px solid #c0cfda;
+	border: 2px solid var(--ui-color-base-3);
 	transition: border-color .3s;
 }
 
@@ -2374,13 +2434,13 @@ input.checkout-item-quantity-field {
 	margin: 0 5px 15px;
 	z-index: 5;
 	padding: 12px 15px;
-	border: 1px solid rgba(151, 151, 151, 0.33);
+	border: 1px solid var(--ui-color-base-3);
 	border-radius: 6px;
 }
 
 .order-payment-title {
 	margin-bottom: 6px;
-	color: rgba(172, 172, 180, 0.78);
+	color: var(--ui-color-base-2);
 	font: 13px/17px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -2405,11 +2465,11 @@ input.checkout-item-quantity-field {
 .order-payment-status-ok {
 	width: 16px;
 	height: 12px;
-	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='%2391AA25' fill-rule='evenodd' d='M5.20427855,12.9172322 L3.77240559,11.4853592 L2.76016564,12.4975991 L5.14919263,14.8866261 L5.20526956,14.940721 L9.64914717,10.4968434 L8.63690722,9.48460348 L5.20427855,12.9172322 Z M6,18.0289047 C2.6862915,18.0289047 0,15.3426132 0,12.0289047 C0,8.71519617 2.6862915,6.02890467 6,6.02890467 C9.3137085,6.02890467 12,8.71519617 12,12.0289047 C12,15.3426132 9.3137085,18.0289047 6,18.0289047 Z' transform='translate(0 -6)'/%3E%3C/svg%3E") no-repeat left center;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 13'%3E%3Cpath fill='%23869D22' fill-rule='evenodd' d='M5.20427855,12.9172322 L3.77240559,11.4853592 L2.76016564,12.4975991 L5.14919263,14.8866261 L5.20526956,14.940721 L9.64914717,10.4968434 L8.63690722,9.48460348 L5.20427855,12.9172322 Z M6,18.0289047 C2.6862915,18.0289047 0,15.3426132 0,12.0289047 C0,8.71519617 2.6862915,6.02890467 6,6.02890467 C9.3137085,6.02890467 12,8.71519617 12,12.0289047 C12,15.3426132 9.3137085,18.0289047 6,18.0289047 Z' transform='translate(0 -6)'/%3E%3C/svg%3E") no-repeat left center;
 }
 
 .order-payment-price {
-	color: rgba(44, 44, 54, 0.6);
+	color: var(--ui-color-base-2);
 	white-space: nowrap;
 	font: 14px/17px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -2451,7 +2511,7 @@ input.checkout-item-quantity-field {
 	position: absolute;
 	top: 0;
 	right: -7px;
-	color: var(--ui-color-palette-red-50, #ff5752);
+	color: var(--ui-color-accent-soft-element-red);
 }
 
 .form-wrap.form-asterisk label + .asterisk-item,
@@ -2471,3 +2531,94 @@ input.checkout-item-quantity-field {
 .form-wrap.form-asterisk.is-invalid + .invalid-feedback {
 	display: block;
 }
+
+/* region FOCUS RING */
+
+/* the site template ring lands on the glyphs of these tight boxes and gets clipped, so one dark ring
+goes inside the box; the site template loads later, so every selector here must outweigh its own */
+.checkout-basket-item a.checkout-basket-item-name-text:focus-visible,
+.checkout-basket-item a.checkout-basket-item-image-block:focus-visible,
+.checkout-item-quantity-field-container .checkout-item-quantity-btn-minus:focus-visible,
+.checkout-item-quantity-field-container .checkout-item-quantity-btn-plus:focus-visible,
+.checkout-basket-item-remove-btn-block .checkout-basket-item-remove-btn:focus-visible,
+.checkout-basket-item-remove-btn-block .checkout-basket-item-remove-dots-btn:focus-visible,
+.checkout-basket-item-deleted .checkout-resotre-btn:focus-visible,
+.checkout-basket-section .form-group .form-control:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+	box-shadow: none;
+}
+
+/* a ring inside would cover the glyphs and the underline; nothing clips these captions, so it goes outside */
+.checkout-basket-item-info-block .checkout-basket-item-change-btn:focus-visible,
+.checkout-basket-summary .checkout-basket-total-backdrop-btn:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* the sku tree clips these boxes and cuts the ring of the leftmost swatch; flow-root keeps the block
+formatting context the clipping gave them, so their size does not change */
+.checkout-basket-item-info-block .product-item-scu-wrapper,
+.checkout-basket-item-info-block .product-item-detail-info-container {
+	display: flow-root;
+	overflow: visible;
+}
+
+/* the ring of a variation is drawn on the swatch itself, as on the storefront; the halo of the theme
+would reach over the neighbouring swatch */
+.checkout-basket-item-info-block .product-item-scu-list .ui-ctl-radio-selector[tabindex]:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+/* the sku tree's own ring fails the contrast threshold and covers the image of the variation */
+.checkout-basket-item-info-block .product-item-scu-list .ui-ctl-radio-selector[tabindex]:focus-visible::before {
+	content: none;
+}
+
+.checkout-basket-item-info-block .product-item-scu-list .ui-ctl-radio-selector[tabindex]:focus-visible .ui-ctl-inner {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-base-1);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+/* the back link of the landing menu block has a tall top padding, so the ring goes on a pseudo element
+around its line box; the em height is the fallback for 1lh */
+.js-link-back {
+	position: relative;
+}
+
+.js-link-back:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.js-link-back:focus-visible::after {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 1.6em;
+	height: 1lh;
+	box-shadow:
+		0 0 0 var(--ui-focus-outline-width) var(--ui-color-base-8),
+		0 0 0 calc(var(--ui-focus-outline-width) * 2) var(--ui-color-base-1);
+	content: "";
+	pointer-events: none;
+}
+
+/* the photo fills the box of the link, so a second, light tone goes inside the dark one */
+.checkout-basket-item a.checkout-basket-item-image-block:focus-visible::after {
+	content: "";
+	position: absolute;
+	inset: 2px;
+	border: 2px solid var(--ui-color-base-white-fixed, #ffffff);
+	pointer-events: none;
+}
+
+/* the dimmed photo paints over the outline of the link, so the dark tone goes on the pseudo element */
+.checkout-basket-item-deleted a.checkout-basket-item-image-block:focus-visible::after {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+}
+
+/*endregion*/

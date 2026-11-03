@@ -10,11 +10,11 @@ jn.define('im/messenger/controller/recent/service/invite-banner/common', (requir
 	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
-	const { UserItem, ExtranetUserItem, InvitedUserItem } = require('im/messenger/lib/element/recent');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { isRecentUserItem } = require('im/messenger/lib/converter/ui/recent');
 
 	const INVITE_BANNER_ID = 'invite-banner';
 	const INVITE_BANNER_ACCENT_THRESHOLD = 5;
-	const INVITE_BANNER_USER_SET_CONSTRUCTORS = new Set([UserItem, ExtranetUserItem, InvitedUserItem]);
 
 	/**
 	 * @class CommonInviteBannerService
@@ -35,6 +35,14 @@ jn.define('im/messenger/controller/recent/service/invite-banner/common', (requir
 			}
 
 			this.isAvailable = true;
+		}
+
+		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get store()
+		{
+			return serviceLocator.get('core').getStore();
 		}
 
 		/**
@@ -100,14 +108,12 @@ jn.define('im/messenger/controller/recent/service/invite-banner/common', (requir
 				return;
 			}
 
-			const items = this.recentLocator.get('render').getItemList();
-			const itemUsers = items
-				.filter((item) => INVITE_BANNER_USER_SET_CONSTRUCTORS.has(item.constructor));
-			const itemUsersLength = itemUsers.length;
+			const firstPageItems = this.store.getters['recentModel/getChatFirstPage']();
+			const userItemCount = firstPageItems.filter((item) => isRecentUserItem(item.id)).length;
 
-			this.logger.log('itemCollectionSizeChangedHandler', itemUsersLength);
+			this.logger.log('itemCollectionSizeChangedHandler', userItemCount);
 
-			const isAccent = itemUsersLength < INVITE_BANNER_ACCENT_THRESHOLD;
+			const isAccent = userItemCount < INVITE_BANNER_ACCENT_THRESHOLD;
 			this.logger.log('itemCollectionSizeChangedHandler: upserting banner', { isAccent });
 			this.#upsertBanner(isAccent);
 		};

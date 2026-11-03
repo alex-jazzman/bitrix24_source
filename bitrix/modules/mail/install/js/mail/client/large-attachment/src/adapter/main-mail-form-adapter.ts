@@ -182,6 +182,14 @@ export class MainMailFormAdapter implements LargeAttachmentFormAdapter
 				fileIdInput.value = String(fileId);
 				form.append(fileIdInput);
 			});
+
+			(contract.sourceFileIds ?? contract.fileIds).forEach((fileId: number): void => {
+				const sourceFileIdInput = document.createElement('input');
+				sourceFileIdInput.type = 'hidden';
+				sourceFileIdInput.name = `data[__largeAttachments][${index}][sourceFileIds][]`;
+				sourceFileIdInput.value = String(fileId);
+				form.append(sourceFileIdInput);
+			});
 		});
 
 		return true;

@@ -41,6 +41,7 @@ interface ConferenceCommonState {
 interface ConferenceUserData {
 	id: number;
 	hash: string;
+	hasCustomName: boolean | null;
 }
 
 interface ConferenceState {
@@ -86,6 +87,7 @@ export class ConferenceModel extends VuexBuilderModel
 			user: {
 				id: -1,
 				hash: '',
+				hasCustomName: null,
 			},
 		};
 	}
@@ -228,6 +230,11 @@ export class ConferenceModel extends VuexBuilderModel
 				if (Type.isString(payload.hash) && payload.hash !== state.user.hash)
 				{
 					state.user.hash = payload.hash;
+				}
+
+				if (Type.isBoolean(payload.hasCustomName))
+				{
+					state.user.hasCustomName = payload.hasCustomName;
 				}
 
 				if (this.isSaveNeeded({ user: payload }))

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, ui_iconSet_api_core, tasks_v2_component_elements_fieldList, tasks_v2_component_elements_fieldHoverButton, main_core, tasks_v2_const, tasks_v2_component_elements_hoverPill, tasks_v2_lib_calendar, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_elements_fieldAdd, tasks_v2_component_elements_questionMark, ui_datePicker, ui_notificationManager, ui_vue3_components_button, ui_system_typography_vue, ui_system_input_vue, ui_system_menu_vue, tasks_v2_core, tasks_v2_component_elements_bottomSheet, tasks_v2_component_elements_duration, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_timezone, tasks_v2_provider_service_taskService, tasks_v2_lib_showLimit, ui_switcher, ui_vue3_components_switcher, ui_system_chip_vue) {
+(function (exports, main_core, ui_iconSet_api_core, tasks_v2_component_elements_fieldList, tasks_v2_component_elements_fieldHoverButton, tasks_v2_const, tasks_v2_component_elements_hoverPill, tasks_v2_lib_calendar, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_elements_fieldAdd, tasks_v2_component_elements_questionMark, ui_datePicker, ui_notificationManager, ui_vue3_components_button, ui_system_typography_vue, ui_system_input_vue, ui_system_menu_vue, tasks_v2_core, tasks_v2_component_elements_bottomSheet, tasks_v2_component_elements_duration, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_timezone, tasks_v2_provider_service_taskService, tasks_v2_lib_showLimit, ui_switcher, ui_vue3_components_switcher, ui_system_chip_vue) {
 	'use strict';
 
 	const datePlanMeta = Object.freeze({
@@ -28,7 +28,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<div>
-			<HoverPill textOnly readonly>
+			<HoverPill textOnly readonly :withTabStop="false">
 				<div>{{ calendar.formatDateTime(dateTs, { forceYear: true }) }}</div>
 			</HoverPill>
 		</div>
@@ -60,7 +60,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<div>
-			<HoverPill textOnly :readonly>
+			<HoverPill textOnly :readonly :withTabStop="false">
 				<div>{{ calendar.formatDuration(dateTs, matchWorkTime) }}</div>
 			</HoverPill>
 		</div>
@@ -76,19 +76,38 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		inject: {
 			task: {}
 		},
+		props: {
+			isSheetShown: {
+				type: Boolean,
+				default: false
+			}
+		},
 		setup() {
 			return {
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
+		computed: {
+			readonly() {
+				return !this.task.rights.datePlan;
+			}
+		},
 		template: `
-		<HoverPill v-if="task.matchesSubTasksTime" textOnly readonly>
+		<HoverPill v-if="task.matchesSubTasksTime" textOnly readonly :withTabStop="false">
 			<div class="tasks-field-date-plan-content">
 				<div>{{ loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE') }}</div>
 				<QuestionMark :hintText="loc('TASKS_V2_DATE_PLAN_NO_SUBTASKS_HINT')"/>
 			</div>
 		</HoverPill>
-		<FieldAdd v-else :icon="Outline.PLANNING"/>
+		<FieldAdd
+			v-else
+			:icon="Outline.PLANNING"
+			data-testid="tasks-date-plan-add-btn"
+			:ariaLabel="readonly ? '' : loc('TASKS_V2_DATE_PLAN_ADD_ARIA_LABEL')"
+			:ariaHaspopup="readonly ? '' : 'dialog'"
+			:ariaExpanded="readonly ? null : isSheetShown"
+			:withTabStop="!readonly"
+		/>
 	`
 	};
 
@@ -118,9 +137,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				default: false
 			}
 		},
+		emits: ['update:modelValue'],
 		setup() {
 			return {
 				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				labelId: `tasks-date-plan-switch-${main_core.Text.getRandom()}`,
+				lockReasonId: `tasks-date-plan-switch-lock-${main_core.Text.getRandom()}`
 			};
 		},
 		computed: {
@@ -131,18 +157,45 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				};
 			}
 		},
+		methods: {
+			handleClick() {
+				this.$emit('update:modelValue', !this.modelValue);
+			},
+			handleKeydown(event) {
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
+			}
+		},
 		template: `
-		<div class="tasks-field-date-plan-switcher" @click="$emit('update:modelValue', !modelValue)">
+		<div
+			class="tasks-field-date-plan-switcher"
+			role="switch"
+			:aria-checked="modelValue"
+			:aria-labelledby="labelId"
+			:aria-describedby="lock ? lockReasonId : null"
+			tabindex="0"
+			@click="handleClick"
+			@keydown="handleKeydown"
+		>
 			<Switcher :isChecked="modelValue" :options/>
-			<TextSm>{{ text }}</TextSm>
+			<TextSm :id="labelId">{{ text }}</TextSm>
 			<QuestionMark v-if="hint" :hintText="hint" @click.stop/>
-			<BIcon v-if="lock" :name="Outline.LOCK_M" class="tasks-field-date-plan-switcher-lock"/>
+			<template v-if="lock">
+				<BIcon :name="Outline.LOCK_M" class="tasks-field-date-plan-switcher-lock" aria-hidden="true"/>
+				<span :id="lockReasonId" class="tasks-field-date-plan-visually-hidden">
+					{{ loc('TASKS_V2_DATE_PLAN_LOCK_ARIA_DESCRIPTION') }}
+				</span>
+			</template>
 		</div>
 	`
 	};
 
 	const MAX_INT = 2 ** 31;
-
+	const OPEN_KEYS = ['Enter', ' ', 'ArrowDown'];
+	const VISIBLE_LABEL_SELECTOR = '.ui-system-input-label:not(.--error)';
 	// @vue/component
 	const DatePlanSheet = {
 		components: {
@@ -174,7 +227,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				InputDesign: ui_system_input_vue.InputDesign,
 				ButtonSize: ui_vue3_components_button.ButtonSize,
 				ButtonColor: ui_vue3_components_button.ButtonColor,
-				wasEmpty: false
+				wasEmpty: false,
+				pickerPopupId: `tasks-date-plan-picker-${main_core.Text.getRandom()}`
 			};
 		},
 		data() {
@@ -287,6 +341,44 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return this.loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT_TEMPLATE');
 				}
 				return this.loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT');
+			},
+			isDisabled() {
+				return this.inputDesign === ui_system_input_vue.InputDesign.Disabled;
+			},
+			triggers() {
+				return [{
+					ref: 'start',
+					label: this.loc('TASKS_V2_DATE_PLAN_START'),
+					inputValue: this.formatDate(this.startTs),
+					isOpen: this.isPickerShown && !this.isEndPicker,
+					disabled: this.isDisabled,
+					open: () => this.handleDateClick({
+						currentTarget: this.triggerEl('start')
+					}, {
+						isEnd: false
+					})
+				}, {
+					ref: 'end',
+					label: this.loc('TASKS_V2_DATE_PLAN_END'),
+					inputValue: this.formatDate(this.endTs),
+					isOpen: this.isPickerShown && this.isEndPicker,
+					disabled: this.isDisabled,
+					open: () => this.handleDateClick({
+						currentTarget: this.triggerEl('end')
+					}, {
+						isEnd: true
+					})
+				}];
+			}
+		},
+		watch: {
+			// The sheet body renders through a slot, so the component's own updated() hook
+			// is not guaranteed to run; a post-flush watcher syncs after the DOM settles.
+			triggers: {
+				handler() {
+					this.syncAria();
+				},
+				flush: 'post'
 			}
 		},
 		created() {
@@ -296,7 +388,74 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			this.templateDuration = this.task.endDatePlanAfter - this.task.startDatePlanAfter;
 			this.showErrorDebounced = main_core.Runtime.debounce(this.showError, 300, this);
 		},
+		mounted() {
+			this.syncAria();
+
+			// main.popup closes the sheet from a capture-phase keyup listener on the document,
+			// so an Escape that only dismisses the picker has to be claimed earlier: capture at
+			// the window always runs before capture at the document, whatever the bind order.
+			main_core.Event.bind(window, 'keyup', this.handleWindowKeyUp, true);
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(window, 'keyup', this.handleWindowKeyUp, true);
+		},
 		methods: {
+			triggerEl(ref) {
+				return this.$refs[ref]?.$el;
+			},
+			/**
+			 * The trigger is the input wrapper, not the inner input: BInput blurs the input
+			 * on focus in the clickable mode, so a tab stop on it swallows the focus.
+			 *
+			 * A combobox reads its value off the text of its own subtree, so whatever is not
+			 * the value has to leave the accessibility tree: the visible label would repeat
+			 * the name in place of the value, and a date input showing nothing adds its name
+			 * on top of that. A disabled input is out of the tab order natively.
+			 */
+			syncAria() {
+				for (const trigger of this.triggers) {
+					const node = this.triggerEl(trigger.ref);
+					const input = node?.querySelector('input');
+					if (!input) {
+						continue;
+					}
+					main_core.Dom.attr(node, 'role', 'combobox');
+					main_core.Dom.attr(node, 'aria-label', trigger.label);
+					main_core.Dom.attr(node, 'aria-haspopup', 'dialog');
+					main_core.Dom.attr(node, 'aria-expanded', trigger.isOpen ? 'true' : 'false');
+					main_core.Dom.attr(node, 'aria-controls', trigger.isOpen ? this.pickerPopupId : null);
+					main_core.Dom.attr(node, 'aria-disabled', trigger.disabled ? 'true' : null);
+					main_core.Dom.attr(node, 'tabindex', trigger.disabled ? null : '0');
+					main_core.Dom.attr(node.querySelector(VISIBLE_LABEL_SELECTOR), 'aria-hidden', 'true');
+					main_core.Dom.attr(input, 'tabindex', trigger.disabled ? null : '-1');
+					main_core.Dom.attr(input, 'aria-hidden', trigger.inputValue ? null : 'true');
+				}
+			},
+			handleKeydown(event, ref) {
+				if (this.isDisabled || !OPEN_KEYS.includes(event.key)) {
+					return;
+				}
+				const trigger = this.triggers.find(item => item.ref === ref);
+
+				// The open picker runs its own arrow navigation, so ArrowDown has nothing to move
+				// here: cancelling the page default would leave the key doing nothing at all.
+				if (trigger.isOpen && event.key === 'ArrowDown') {
+					return;
+				}
+				event.preventDefault();
+				if (trigger.isOpen) {
+					this.getDatePicker().hide();
+					return;
+				}
+				trigger.open();
+			},
+			handleWindowKeyUp(event) {
+				if (event.key !== 'Escape' || !this.isPickerShown) {
+					return;
+				}
+				event.stopImmediatePropagation();
+				this.getDatePicker().hide();
+			},
 			clearStart() {
 				this.duration = 0;
 				this.updatePlan(null, this.endTs);
@@ -336,6 +495,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						}
 					},
 					popupOptions: {
+						id: this.pickerPopupId,
 						animation: 'fading',
 						targetContainer: this.sheetBindProps.getTargetContainer()
 					}
@@ -473,11 +633,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<BottomSheet :sheetBindProps @close="close">
-			<div class="tasks-field-date-plan-sheet">
+		<BottomSheet
+			:sheetBindProps
+			:ariaLabel="loc('TASKS_V2_DATE_PLAN_TITLE_SHEET')"
+			@close="close"
+		>
+			<div class="tasks-field-date-plan-sheet" data-testid="tasks-date-plan-sheet">
 				<div class="tasks-field-date-plan-header">
 					<HeadlineMd>{{ loc('TASKS_V2_DATE_PLAN_TITLE_SHEET') }}</HeadlineMd>
-					<BIcon class="tasks-field-date-plan-close" :name="Outline.CROSS_L" hoverable @click="close"/>
+					<button
+						type="button"
+						class="tasks-field-date-plan-close"
+						:aria-label="loc('TASKS_V2_DATE_PLAN_SHEET_CLOSE_ARIA_LABEL')"
+						data-testid="tasks-date-plan-sheet-close-btn"
+						@click="close"
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 				<TextSm class="tasks-field-date-plan-description">{{ description }}</TextSm>
 				<div class="tasks-field-date-plan-fields">
@@ -486,12 +658,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							v-model="startDatePlanAfter"
 							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_START_AFTER')"
+							:unitAriaLabel="loc('TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL')"
+							data-testid="tasks-date-plan-start-after-duration"
 							:design="inputDesign"
 						/>
 						<Duration
 							v-model="templateDuration"
 							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_DURATION')"
+							:unitAriaLabel="loc('TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL')"
+							data-testid="tasks-date-plan-template-duration"
 							:design="inputDesign"
 						/>
 					</template>
@@ -499,31 +675,41 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						<BInput
 							:modelValue="formatDate(startTs)"
 							:label="loc('TASKS_V2_DATE_PLAN_START')"
+							:ariaLabel="loc('TASKS_V2_DATE_PLAN_START')"
 							:design="inputDesign"
 							:icon="Outline.CALENDAR_WITH_SLOTS"
 							:withClear="Boolean(startTs)"
 							clickable
 							:active="isPickerShown && !isEndPicker"
 							:data-task-plan-start="startTs"
+							ref="start"
+							data-testid="tasks-date-plan-start-input"
 							@clear="clearStart"
 							@click="handleDateClick($event, { isEnd: false })"
+							@keydown="handleKeydown($event, 'start')"
 						/>
 						<BInput
 							:modelValue="formatDate(endTs)"
 							:label="loc('TASKS_V2_DATE_PLAN_END')"
+							:ariaLabel="loc('TASKS_V2_DATE_PLAN_END')"
 							:design="inputDesign"
 							:icon="Outline.CALENDAR_WITH_SLOTS"
 							:withClear="Boolean(endTs)"
 							clickable
 							:active="isPickerShown && isEndPicker"
 							:data-task-plan-end="endTs"
+							ref="end"
+							data-testid="tasks-date-plan-end-input"
 							@clear="clearEnd"
 							@click="handleDateClick($event, { isEnd: true })"
+							@keydown="handleKeydown($event, 'end')"
 						/>
 						<Duration
 							v-model="duration"
 							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_DURATION')"
+							:unitAriaLabel="loc('TASKS_V2_DATE_PLAN_DURATION_UNIT_ARIA_LABEL')"
+							data-testid="tasks-date-plan-duration"
 							:design="inputDesign"
 							:error="maxDurationReached ? ' ' : null"
 							:maxValue="Infinity"
@@ -537,12 +723,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						v-if="task.rights.edit"
 						v-model="allowsChangeDatePlan"
 						:text="allowChangeText"
+						data-testid="tasks-date-plan-allow-change-switcher"
 					/>
 					<DatePlanSwitcher
 						v-model="matchesWorkTime"
 						:text="loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME')"
 						:hint="matchWorkTimeHint"
 						:lock="isMatchesWorkTimeLocked"
+						data-testid="tasks-date-plan-match-work-time-switcher"
 					/>
 					<DatePlanSwitcher
 						v-if="!isTemplate"
@@ -550,9 +738,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						:text="loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME')"
 						:hint="loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT')"
 						:lock="isMatchesSubTasksTimeLocked"
+						data-testid="tasks-date-plan-match-subtasks-switcher"
 					/>
 				</div>
-				<div class="tasks-field-date-plan-footer">
+				<div class="tasks-field-date-plan-footer" data-testid="tasks-date-plan-sheet-footer">
 					<UiButton
 						:text="loc('TASKS_V2_DATE_PLAN_BUTTON_SAVE')"
 						:size="ButtonSize.MEDIUM"
@@ -605,7 +794,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					if (this.isEmpty) {
 						return [{
 							title: datePlanMeta.title,
-							component: DatePlanContent
+							component: DatePlanContent,
+							props: {
+								isSheetShown: this.isSheetShown
+							}
 						}];
 					}
 					return [{
@@ -633,7 +825,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (this.isEmpty && (this.task.filledFields[datePlanMeta.id] || this.task.matchesSubTasksTime)) {
 					return [{
 						title: datePlanMeta.title,
-						component: DatePlanContent
+						component: DatePlanContent,
+						props: {
+							isSheetShown: this.isSheetShown
+						}
 					}];
 				}
 				return [{
@@ -662,13 +857,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			readonly() {
 				return !this.task.rights.datePlan;
+			},
+			dependsOnSubTasks() {
+				return !this.isTemplate && Boolean(this.task.matchesSubTasksTime);
+			},
+			isEditActive() {
+				return !this.readonly && (!this.isEmpty || this.dependsOnSubTasks);
 			}
 		},
 		methods: {
-			handleClick() {
+			handleClick(event) {
 				if (!this.readonly) {
+					this.getOpener(event)?.focus({
+						preventScroll: true
+					});
 					this.setSheetShown(true);
 				}
+			},
+			getOpener(event) {
+				if (main_core.Type.isElementNode(event.target)) {
+					const eventTrigger = event.target.closest('button, [role="button"]');
+					if (eventTrigger && this.$refs.container?.contains(eventTrigger)) {
+						return eventTrigger;
+					}
+				}
+				return this.$refs.editButton?.$el ?? this.$refs.field?.querySelector('button, [role="button"]') ?? null;
 			},
 			setSheetShown(isShown) {
 				this.$emit('update:isSheetShown', isShown);
@@ -676,17 +889,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<div
+			ref="container"
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
 			<FieldHoverButton
-				v-if="!readonly && !isEmpty"
+				v-if="isEditActive"
+				ref="editButton"
 				:icon="Outline.EDIT_L"
-				:isVisible="isHovered"
+				:isVisible="isHovered || isSheetShown"
+				:ariaLabel="loc('TASKS_V2_DATE_PLAN_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isSheetShown"
+				data-testid="tasks-date-plan-edit-btn"
 				@click="handleClick"
 			/>
 			<div
+				ref="field"
 				class="tasks-field-date-plan"
+				data-testid="tasks-date-plan"
 				:class="{ '--readonly': readonly }"
 				:data-task-id="taskId"
 				:data-task-field-id="datePlanMeta.id"
@@ -734,15 +955,48 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			isSelected() {
 				return this.task.filledFields[datePlanMeta.id];
+			},
+			opensSheet() {
+				return !this.isSelected;
 			}
 		},
+		watch: {
+			isSheetShown() {
+				this.syncAria();
+			},
+			opensSheet() {
+				this.syncAria();
+			}
+		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+				main_core.Dom.attr(el, 'aria-haspopup', this.opensSheet ? 'dialog' : null);
+				main_core.Dom.attr(el, 'aria-expanded', this.opensSheet ? String(this.isSheetShown) : null);
+			},
 			handleClick() {
 				if (this.isSelected) {
 					this.highlightField();
 					return;
 				}
+				this.$refs.chip?.$el.focus({
+					preventScroll: true
+				});
 				this.setSheetShown(true);
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.handleClick();
 			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(datePlanMeta.id);
@@ -761,9 +1015,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-chip-id="datePlanMeta.id"
 			:data-task-plan-start="task.startPlanTs"
 			:data-task-plan-end="task.endPlanTs"
+			data-testid="tasks-date-plan-chip"
+			ref="chip"
 			@click="handleClick"
+			@keydown="handleKeydown"
 		/>
-		<DatePlanSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
+		<DatePlanSheet v-if="isSheetShown && opensSheet" :sheetBindProps @close="setSheetShown(false)"/>
 	`
 	};
 
@@ -772,5 +1029,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DatePlanSheet = DatePlanSheet;
 	exports.datePlanMeta = datePlanMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.UI.IconSet, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX, BX.Tasks.V2.Const, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.UI.IconSet, window, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.UI.DatePicker, BX.UI.NotificationManager, BX.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.Tasks.V2, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.UI, BX.UI.Vue3.Components, BX.UI.System.Chip.Vue);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.UI.IconSet, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Const, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.UI.IconSet, window, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.UI.DatePicker, BX.UI.NotificationManager, BX.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.Tasks.V2, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.UI, BX.UI.Vue3.Components, BX.UI.System.Chip.Vue);
 //# sourceMappingURL=date-plan.bundle.js.map

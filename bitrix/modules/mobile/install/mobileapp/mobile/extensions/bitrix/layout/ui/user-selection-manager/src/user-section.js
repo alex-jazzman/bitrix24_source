@@ -8,7 +8,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 	const { OutlineIconTypes } = require('assets/icons/types');
 	const { Loc } = require('loc');
 	const { IconView } = require('ui-system/blocks/icon');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 
 	const ROW_HEIGHT = 40;
 	const SECTION_HEADER_HEIGHT = 38;
@@ -133,9 +133,10 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 					},
 					Avatar({
 						id,
-						image,
+						uri: image,
 						name: title,
 						size: 28,
+						testId: `${testIdPrefix}_avatar`,
 					}),
 					Text({
 						style: {

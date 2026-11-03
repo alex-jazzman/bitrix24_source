@@ -26,11 +26,11 @@ export class ExtranetContent extends Content
 	getLayout(): HTMLDivElement
 	{
 		return this.cache.remember('layout', () => {
-			const showInvitationSlider = (e) => {
-				e.stopPropagation();
+			const showInvitationSlider = (event) => {
+				event.stopPropagation();
 				this.showInvitationPlace(
 					Loc.getMessage('INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1'),
-					e.target,
+					event.currentTarget,
 					'extranet'
 				);
 			}
@@ -39,27 +39,51 @@ export class ExtranetContent extends Content
 				BX.Helper.show(`redirect=detail&code=${this.articleCode}`);
 				this.sendAnalytics(this.articleCode);
 			}
+			const inviteActionLabelledBy = [
+				'intranet-invitation-widget-extranet-name',
+				'intranet-invitation-widget-extranet-invite-action',
+			].join(' ');
 
 			return Tag.render`
-				<div data-id="bx-invitation-widget-content-extranet" class="${this.getWrapperClass()}">
+				<div
+					data-id="bx-invitation-widget-content-extranet"
+					class="${this.getWrapperClass()}"
+					data-testid="intranet-invitation-widget-extranet"
+				>
 					<div class="intranet-invitation-widget-content">
-						<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--ext"></div>
+						<div
+							class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--ext"
+							aria-hidden="true"
+						></div>
 						<div class="intranet-invitation-widget-item-content">
 							<div class="intranet-invitation-widget-item-name">
-								<span>
+								<span id="intranet-invitation-widget-extranet-name">
 									${Loc.getMessage('INTRANET_INVITATION_WIDGET_EXTRANET')}
 								</span>
 							</div>
 							<div class="intranet-invitation-widget-item-link">
-								<span onclick="${showExtranetHelper}" class="intranet-invitation-widget-item-link-text">
+								<button
+									class="intranet-invitation-widget-item-link-text intranet-invitation-widget-item-link-button"
+									type="button"
+									onclick="${showExtranetHelper}"
+									data-testid="intranet-invitation-widget-extranet-details"
+								>
 									${Loc.getMessage('INTRANET_INVITATION_WIDGET_EXTRANET_DESC')}
-								</span>
+								</button>
 							</div>
 							${this.getCountUserMessage()}
 						</div>
 					</div>
-					<button onclick="${showInvitationSlider}" class="intranet-invitation-widget-item-btn">
-						${Loc.getMessage('INTRANET_INVITATION_WIDGET_INVITE')}
+					<button
+						class="intranet-invitation-widget-item-btn"
+						type="button"
+						onclick="${showInvitationSlider}"
+						aria-labelledby="${inviteActionLabelledBy}"
+						data-testid="intranet-invitation-widget-extranet-invite"
+					>
+						<span id="intranet-invitation-widget-extranet-invite-action">
+							${Loc.getMessage('INTRANET_INVITATION_WIDGET_INVITE')}
+						</span>
 					</button>
 				</div>
 			`;

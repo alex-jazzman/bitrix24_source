@@ -4,4 +4,4 @@ $MESS["CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_DESCRIPTION"] = "Changes the stag
 $MESS["CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_EVENT_DATE_TIME"] = "Shipment modified on";
 $MESS["CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NAME"] = "Shipment updated";
 $MESS["CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NAME_1"] = "Shipment status updated";
-$MESS["CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NODE_DESCRIPTION"] = "Triggered after a document was signed by all parties.";
+$MESS["CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NODE_DESCRIPTION"] = 'Triggered after any change to an order shipment. You can select the relevant changes by shipment fields in the condition.';

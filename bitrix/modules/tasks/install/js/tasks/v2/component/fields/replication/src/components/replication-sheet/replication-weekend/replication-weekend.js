@@ -93,7 +93,16 @@ export const ReplicationWeekend = {
 				placeholder="[do/]"
 			>
 				<template #do>
-					<HoverPill textOnly noOffset ref="skipWeekends" @click="isMenuShown = true">
+					<HoverPill
+						textOnly
+						noOffset
+						:ariaLabel="loc('TASKS_V2_REPLICATION_WEEKEND_ARIA_LABEL')"
+						:ariaHaspopup="'menu'"
+						:ariaExpanded="isMenuShown"
+						data-testid="tasks-replication-weekend-btn"
+						ref="skipWeekends"
+						@click="isMenuShown = true"
+					>
 						<span class="tasks-field-replication-link">{{ item?.title || '' }}</span>
 					</HoverPill>
 					<BMenu v-if="isMenuShown" :options @close="isMenuShown = false"/>

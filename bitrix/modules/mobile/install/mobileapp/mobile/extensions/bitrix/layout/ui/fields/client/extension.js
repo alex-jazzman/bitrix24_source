@@ -5,7 +5,8 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
-	const { magnifier } = require('assets/common');
+	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
 	const { EventEmitter } = require('event-emitter');
 	const { AddButton } = require('layout/ui/buttons/add-button');
 	const { BaseField } = require('layout/ui/fields/base');
@@ -686,7 +687,8 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			}
 
 			return AddButton({
-				svg: magnifier(AppTheme.colors.base3),
+				icon: Icon.SEARCH,
+				iconColor: Color.base3,
 				text: BX.message(`FIELDS_CLIENT_PLACEHOLDER_${selectorType.toUpperCase()}`),
 				deepMergeStyles: {
 					view: {

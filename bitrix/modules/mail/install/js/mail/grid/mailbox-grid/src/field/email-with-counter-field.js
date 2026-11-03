@@ -112,6 +112,8 @@ export class EmailWithCounterField extends BaseField
 				return 'exchange';
 			case 'yandex':
 				return 'yandex';
+			case 'mailhost':
+				return 'mailhost';
 			case 'ukr.net':
 				return 'ukrnet';
 			case 'other':

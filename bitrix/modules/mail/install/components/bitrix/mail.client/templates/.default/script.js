@@ -11,6 +11,7 @@
 			return;
 
 		this.options = options;
+		this.__scrollable = this.options.scrollable || null;
 
 		this.__dummyNode = document.createElement('DIV');
 
@@ -169,6 +170,14 @@
 		this.loadLog(log, button);
 	};
 
+	BXMailMessageController.registerLogItem = function (item, log)
+	{
+		this.__log[log]++;
+
+		BX.addClass(item, 'mail-msg-show-animation-rev');
+		BX.bind(item, 'click', this.handleLogItemClick.bind(this, item.getAttribute('data-id')));
+	};
+
 	BXMailMessageController.loadLog = function (log, button)
 	{
 		var ctrl = this;
@@ -206,25 +215,41 @@
 				{
 					ctrl.__dummyNode.innerHTML = json.data.html;
 
-					var marker = log == 'a' ? BX.findNextSibling(separator, {'tag': 'div'}) : separator;
-					while (ctrl.__dummyNode.childNodes.length > 0)
+					var threadAdapter = ctrl.options.threadAdapter;
+					if (threadAdapter && typeof threadAdapter.insertLog === 'function')
 					{
-						var item = separator.parentNode.insertBefore(ctrl.__dummyNode.childNodes[0], marker);
-						if (item.nodeType == 1 && BX.hasClass(item, 'mail-msg-view-log-item'))
+						threadAdapter.insertLog({
+							log: log,
+							separator: separator,
+							responseContainer: ctrl.__dummyNode,
+							registerItem: ctrl.registerLogItem.bind(ctrl)
+						});
+					}
+					else
+					{
+						var marker = log == 'a' ? BX.findNextSibling(separator, {'tag': 'div'}) : separator;
+						while (ctrl.__dummyNode.childNodes.length > 0)
 						{
-							ctrl.__log[log]++;
-
-							BX.addClass(item, 'mail-msg-show-animation-rev');
-							BX.bind(item, 'click', ctrl.handleLogItemClick.bind(ctrl, item.getAttribute('data-id')));
+							var item = separator.parentNode.insertBefore(ctrl.__dummyNode.childNodes[0], marker);
+							if (item.nodeType == 1 && BX.hasClass(item, 'mail-msg-view-log-item'))
+							{
+								ctrl.registerLogItem(item, log);
+							}
 						}
 					}
 
 					if (json.data.count < ctrl.options.pageSize)
 						separator.style.display = 'none';
 
-					if (log == 'b' && ctrl.initScrollable())
+					var shouldScroll = threadAdapter && typeof threadAdapter.shouldScrollAfterInsert === 'function'
+						? threadAdapter.shouldScrollAfterInsert(log)
+						: log == 'b';
+					if (shouldScroll)
 					{
-						ctrl.scrollWrapper(ctrl.__scrollable.scrollHeight);
+						if (ctrl.initScrollable())
+						{
+							ctrl.scrollWrapper(ctrl.__scrollable.scrollHeight);
+						}
 					}
 
 					ctrl.__dummyNode.innerHTML = '';
@@ -292,6 +317,12 @@
 
 			if (details.getAttribute('data-empty'))
 			{
+				var threadAdapter = this.options.threadAdapter;
+				if (threadAdapter && typeof threadAdapter.startItemLoading === 'function')
+				{
+					threadAdapter.startItemLoading(details);
+				}
+
 				var data = {
 					sessid: BX.bitrix_sessid(),
 					action: 'logitem',
@@ -310,6 +341,11 @@
 					dataType: 'json',
 					onsuccess: function (json)
 					{
+						if (threadAdapter && typeof threadAdapter.finishItemLoading === 'function')
+						{
+							threadAdapter.finishItemLoading(details);
+						}
+
 						if (json.status != 'success')
 						{
 							json.errors = json.errors.map(
@@ -357,6 +393,17 @@
 						}, 10);
 
 						details.removeAttribute('data-empty');
+					},
+					onfailure: function ()
+					{
+						if (threadAdapter && typeof threadAdapter.finishItemLoading === 'function')
+						{
+							threadAdapter.finishItemLoading(details);
+						}
+						details.innerHTML = '';
+						details.style.display = 'none';
+						BX.removeClass(logItem, 'mail-msg-view-item-open');
+						logItem.setAttribute('aria-expanded', 'false');
 					}
 				});
 
@@ -482,7 +529,7 @@
 
 			BX.bind(forwardLink, 'click', function ()
 			{
-				if (self.refuseOnMigration('MAIL_MIGRATION_SEND_UNAVAILABLE'))
+				if (self.refuseOnMigration())
 				{
 					return;
 				}
@@ -624,11 +671,8 @@
 
 	BXMailMessage.handleFormSubmit = function (form, event)
 	{
-		// The migration may start while the reply form is already open: the draft survives, the send does not.
-		if (this.migrationActive === true)
+		if (this.refuseOnMigration())
 		{
-			form.showError(BX.message('MAIL_MIGRATION_SEND_UNAVAILABLE'));
-
 			return BX.PreventDefault(event);
 		}
 
@@ -746,7 +790,7 @@
 
 			for (var i = 0; i < data.errors.length; i++)
 			{
-				errorNode.innerHTML += data.errors[i].message + "</br>";
+				errorNode.innerHTML += data.errors[i].message + "<br>";
 			}
 
 			form.showError(errorNode.innerHTML);
@@ -774,8 +818,9 @@
 	{
 		// The width is passed explicitly: intranet binds a rule of its own to this very address and wins as
 		// the earlier one, so a rule of ours would never be reached.
+		// The skeleton is the one the list and the mailto links pass; without it the loader of the legacy form shows.
 		var options = BX.message('MAIL_COMPOSE_REDESIGN_ENABLED') === true
-			? { width: 820, cacheable: false }
+			? { width: 820, cacheable: false, skeleton: '/bitrix/js/mail/client/compose-form/src/skeleton.html?v=4' }
 			: undefined;
 
 		top.BX.SidePanel.Instance.open(url, options);
@@ -783,7 +828,7 @@
 
 	BXMailMessage.prototype.showReplyForm = function(isReplyAll, analyticsElement)
 	{
-		if (this.refuseOnMigration('MAIL_MIGRATION_SEND_UNAVAILABLE'))
+		if (this.refuseOnMigration())
 		{
 			return;
 		}
@@ -866,110 +911,195 @@
 		this.__dummyNode.appendChild(this.htmlForm);
 	};
 
-	// The card mirrors the message list: while the mailbox migrates, actions the server will refuse
-	// anyway are dimmed here instead of failing after the click.
 	BXMailMessage.prototype.__initMigrationGuard = function ()
 	{
+		this.__stopMigrationGuard();
+		this.__applyMigrationState(null);
+
+		if (!this.__disposeMigrationGuard)
+		{
+			var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+			var onClose = function (event)
+			{
+				if (slider && event.getSlider() === slider)
+				{
+					this.__stopMigrationGuard();
+					this.__applyMigrationState(null);
+				}
+			}.bind(this);
+			var onOpen = function (event)
+			{
+				if (slider && event.getSlider() === slider && !this.__unsubscribeMigration)
+				{
+					this.__initMigrationGuard();
+				}
+			}.bind(this);
+			var onDestroy = function (event)
+			{
+				if (slider && event.getSlider() === slider)
+				{
+					this.__disposeMigrationGuard();
+				}
+			}.bind(this);
+			this.__disposeMigrationGuard = function ()
+			{
+				this.__stopMigrationGuard();
+				top.BX.removeCustomEvent('SidePanel.Slider:onCloseComplete', onClose);
+				top.BX.removeCustomEvent('SidePanel.Slider:onOpenComplete', onOpen);
+				top.BX.removeCustomEvent('SidePanel.Slider:onDestroy', onDestroy);
+				BX.unbind(window, 'pagehide', this.__disposeMigrationGuard);
+			}.bind(this);
+			top.BX.addCustomEvent('SidePanel.Slider:onCloseComplete', onClose);
+			top.BX.addCustomEvent('SidePanel.Slider:onOpenComplete', onOpen);
+			top.BX.addCustomEvent('SidePanel.Slider:onDestroy', onDestroy);
+			BX.bind(window, 'pagehide', this.__disposeMigrationGuard);
+		}
+
 		var mailboxId = parseInt(this.options.mailboxId, 10);
-
-		this.migrationActive = false;
-
 		if (!(mailboxId > 0) || !BX.Mail || !BX.Mail.getMigrationState)
 		{
 			return;
 		}
 
 		var state = BX.Mail.getMigrationState(mailboxId);
-		var apply = function ()
+		var revision = this.__migrationRevision;
+		var apply = function (active)
 		{
-			this.__applyMigrationState(state.isActive());
+			if (revision !== this.__migrationRevision)
+			{
+				return;
+			}
+
+			if (!this.__wrapper.isConnected)
+			{
+				this.__disposeMigrationGuard();
+
+				return;
+			}
+
+			this.__applyMigrationState(active);
 		}.bind(this);
 
 		this.__unsubscribeMigration = state.subscribe(function (change)
 		{
-			this.__applyMigrationState(change.active === true);
-		}.bind(this));
+			apply(change.active === true);
+		});
 
 		if (state.isInitialized())
 		{
-			apply();
+			apply(state.isActive());
 		}
 
-		// Controls stay in their usual state until the status is known: the mailbox is not migrating
-		// in the overwhelming majority of cases, and the server refuses the action regardless. A click
-		// that outruns the answer is caught by the checks in the handlers below.
 		state.initialize().then(function ()
 		{
 			if (state.isInitialized())
 			{
-				apply();
+				apply(state.isActive());
 			}
 		});
 	};
 
+	BXMailMessage.prototype.__stopMigrationGuard = function ()
+	{
+		this.__migrationRevision = (this.__migrationRevision || 0) + 1;
+		if (this.__unsubscribeMigration)
+		{
+			this.__unsubscribeMigration();
+			this.__unsubscribeMigration = null;
+		}
+	};
+
 	BXMailMessage.prototype.__applyMigrationState = function (active)
 	{
-		this.migrationActive = active === true;
+		this.migrationActive = active;
 
-		var controls = this.__migrationControls || [];
+		var blocked = this.refuseOnMigration();
+		var controls = (this.__migrationControls || []).slice();
+		var sendButton = this.htmlForm && this.htmlForm.querySelector('.main-mail-form-submit-button');
+		if (sendButton)
+		{
+			controls.push(sendButton);
+		}
+
+		this.__migrationControlStates = this.__migrationControlStates || new Map();
 		for (var i = 0; i < controls.length; i++)
 		{
-			if (!controls[i])
+			var control = controls[i];
+			if (!control)
 			{
 				continue;
 			}
 
-			if (this.migrationActive)
+			var previous = this.__migrationControlStates.get(control);
+			if (blocked)
 			{
-				BX.addClass(controls[i], 'mail-msg-view-control-disabled');
-				controls[i].setAttribute('title', BX.message('MAIL_MIGRATION_ACTION_UNAVAILABLE') || '');
-			}
-			else
-			{
-				BX.removeClass(controls[i], 'mail-msg-view-control-disabled');
-				controls[i].removeAttribute('title');
-			}
-		}
+				if (!previous)
+				{
+					previous = {
+						disabled: control.disabled,
+						disabledClass: BX.hasClass(control, 'mail-msg-view-control-disabled'),
+						title: control.getAttribute('title'),
+						migrationTitle: null
+					};
+					this.__migrationControlStates.set(control, previous);
+				}
 
-		var sendButton = this.htmlForm && this.htmlForm.querySelector('.main-mail-form-submit-button');
-		if (sendButton)
-		{
-			sendButton.disabled = this.migrationActive;
-			if (this.migrationActive)
-			{
-				sendButton.setAttribute('title', BX.message('MAIL_MIGRATION_SEND_UNAVAILABLE') || '');
+				if (control === sendButton)
+				{
+					control.disabled = true;
+				}
+				else
+				{
+					BX.addClass(control, 'mail-msg-view-control-disabled');
+				}
+
+				if (active === true)
+				{
+					previous.migrationTitle = BX.message('MAIL_MIGRATION_ACTION_UNAVAILABLE') || '';
+					control.setAttribute('title', previous.migrationTitle);
+				}
 			}
-			else
+			else if (previous)
 			{
-				sendButton.removeAttribute('title');
+				if (control === sendButton)
+				{
+					control.disabled = previous.disabled;
+				}
+				else if (!previous.disabledClass)
+				{
+					BX.removeClass(control, 'mail-msg-view-control-disabled');
+				}
+
+				if (previous.migrationTitle !== null && control.getAttribute('title') === previous.migrationTitle)
+				{
+					if (previous.title === null)
+					{
+						control.removeAttribute('title');
+					}
+					else
+					{
+						control.setAttribute('title', previous.title);
+					}
+				}
+
+				this.__migrationControlStates.delete(control);
 			}
 		}
 	};
 
-	BXMailMessage.prototype.refuseOnMigration = function (phraseId)
+	BXMailMessage.prototype.refuseOnMigration = function ()
 	{
-		if (this.migrationActive !== true)
-		{
-			return false;
-		}
-
-		if (BX.UI && BX.UI.Notification)
-		{
-			BX.UI.Notification.Center.notify({
-				content: BX.message(phraseId)
-			});
-		}
-
-		return true;
+		return this.migrationActive === null || this.migrationActive === true;
 	};
 
 	BXMailMessage.prototype.markAsSpam = function (btn, uid)
 	{
-		if (this.refuseOnMigration('MAIL_MIGRATION_ACTION_UNAVAILABLE'))
+		if (this.refuseOnMigration())
 		{
 			return;
 		}
 
+		BX.onCustomEvent(btn, 'MailMessage:actionStart');
 		btn.classList.add('mail-msg-view-control-disabled');
 		BX.ajax.runAction('mail.message.markAsSpam', {
 			data: {ids: [uid]}
@@ -984,7 +1114,7 @@
 
 	BXMailMessage.prototype.delete = function (btn, uid)
 	{
-		if (this.refuseOnMigration('MAIL_MIGRATION_ACTION_UNAVAILABLE'))
+		if (this.refuseOnMigration())
 		{
 			return;
 		}
@@ -1050,6 +1180,12 @@
 
 	BXMailMessage.prototype.processDelete = function (btn, uid)
 	{
+		if (this.refuseOnMigration())
+		{
+			return;
+		}
+
+		BX.onCustomEvent(btn, 'MailMessage:actionStart');
 		btn.classList.add('mail-msg-view-control-disabled');
 		BX.ajax.runAction('mail.message.delete', {
 			data: {ids: [uid]}
@@ -1342,6 +1478,7 @@
 	}
 
 	var siteDir = ('/' + (BX.message.SITE_DIR || '/').replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/').replace(/\/+/g, '/');
+	var readSkeleton = '/bitrix/components/bitrix/mail.client/templates/.default/read-skeleton.html';
 
 	this.mailLoader = BX.create("div", {
 		props: {
@@ -1386,10 +1523,48 @@
 				'^' + siteDir + 'mail/(message)'
 			],
 			options: {
-				width: 1080
+				width: 1080,
 			}
 		}
 	];
+
+	if (!top.BX.MailReadSkeletonHandlerBound)
+	{
+		top.BX.MailReadSkeletonHandlerBound = true;
+		top.BX.addCustomEvent('SidePanel.Slider:onOpenStart', function(event)
+		{
+			var slider = event.getSlider();
+			if (
+				BX.message('MAIL_READ_REDESIGN_ENABLED') === true
+				&& slider
+				&& slider.getUrl().match(new RegExp('^' + siteDir + 'mail/message(?:/|$)', 'i'))
+			)
+			{
+				var frame = slider.getFrame();
+				if (
+					frame
+					&& frame.contentDocument
+					&& frame.contentDocument.querySelector('.mail-msg-view-read')
+				)
+				{
+					setTimeout(slider.closeLoader.bind(slider), 0);
+					return;
+				}
+
+				slider.skeleton = readSkeleton;
+				setTimeout(function()
+				{
+					if (slider.layout.loader)
+					{
+						top.BX.addClass(
+							slider.layout.loader,
+							'side-panel-loader mail-msg-view-read-skeleton-loader',
+						);
+					}
+				}, 0);
+			}
+		});
+	}
 
 	top.BX.SidePanel.Instance.bindAnchors({
 		rules: sidePanelRules

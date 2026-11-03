@@ -24,8 +24,10 @@ jn.define('disk/remove', (require, exports, module) => {
 			return;
 		}
 
+		const { uniqueCode } = pendingRemovals.get(objectId);
+
 		pendingRemovals.delete(objectId);
-		dispatch(remove({ objectId }));
+		dispatch(remove({ objectId, uniqueCode }));
 	}
 
 	function cancelRemove(objectId)
@@ -51,7 +53,7 @@ jn.define('disk/remove', (require, exports, module) => {
 			.forEach(([objectId]) => finalizeRemove(objectId));
 	}
 
-	function removeObject(objectId, { relativeFolderId = null, parentWidget = null } = {})
+	function removeObject(objectId, { relativeFolderId = null, parentWidget = null, uniqueCode = null } = {})
 	{
 		const file = selectById(store.getState(), objectId);
 		if (!file)
@@ -61,7 +63,7 @@ jn.define('disk/remove', (require, exports, module) => {
 
 		if (!Feature.isToastSupported())
 		{
-			dispatch(remove({ objectId }));
+			dispatch(remove({ objectId, uniqueCode }));
 
 			return;
 		}
@@ -69,7 +71,7 @@ jn.define('disk/remove', (require, exports, module) => {
 		dispatch(
 			markAsRemoved({ objectId }),
 		);
-		pendingRemovals.set(objectId, { relativeFolderId, parentWidget });
+		pendingRemovals.set(objectId, { relativeFolderId, parentWidget, uniqueCode });
 
 		showRemoveToast(
 			{

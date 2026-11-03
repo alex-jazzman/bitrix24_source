@@ -2,9 +2,14 @@
 {
 	die();
 }
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
+
+/** @var CCacheManager $CACHE_MANAGER */
+global $CACHE_MANAGER;
+
+
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CDatabase $DB */
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -15,9 +20,6 @@
 /** @var string $parentComponentPath */
 /** @var string $parentComponentTemplate */
 
-/** @var CCacheManager $CACHE_MANAGER */
-global $CACHE_MANAGER;
-
 if (!isset($arParams['CACHE_TIME']))
 {
 	$arParams['CACHE_TIME'] = 3600;
@@ -27,10 +29,10 @@ $arParams['SORT'] = (isset($arParams['SORT']) && $arParams['SORT'] == 'CNT' ? 'C
 $arParams['SORT_BY'] = (isset($arParams['SORT_BY']) && $arParams['SORT_BY'] == 'ASC' ? 'ASC' : 'DESC');
 $arParams['PAGE_ELEMENTS'] = ((intval($arParams['PAGE_ELEMENTS']) > 0) ? intval($arParams['PAGE_ELEMENTS']) : 1000);
 $arParams['PERIOD'] = intval($arParams['PERIOD']);
-$arParams['CHECK_DATES'] = ($arParams['CHECK_DATES'] == 'Y' ? true : false);
+$arParams['CHECK_DATES'] = ($arParams['CHECK_DATES'] === 'Y');
 $arParams['~TAGS'] = (empty($arParams['~TAGS']) ? ($_REQUEST['tags'] ?? '') : $arParams['~TAGS']);
 $arParams['~TAGS'] = trim($arParams['~TAGS']);
-$arParams['TAGS'] = htmlspecialcharsex($arParams['~TAGS']);
+$arParams['TAGS'] = htmlspecialcharsEx($arParams['~TAGS']);
 $arParams['SEARCH'] = (empty($arParams['SEARCH']) ? ($_REQUEST['q'] ?? '') : $arParams['~SEARCH']);
 $arParams['~SEARCH'] = trim($arParams['SEARCH']);
 $arParams['SEARCH'] = htmlspecialcharsbx($arParams['~SEARCH']);
@@ -62,18 +64,18 @@ if (!empty($arParams['~TAGS']) || !empty($arParams['~SEARCH']))
 	$arParams['CACHE_TIME'] = 0;
 }
 
-if ($this->StartResultCache(false, [$USER->GetGroups()]))
+if ($this->startResultCache(false, [$USER->GetGroups()]))
 {
 	if (!CModule::IncludeModule('search'))
 	{
-		$this->AbortResultCache();
+		$this->abortResultCache();
 		ShowError(GetMessage('BSF_C_MODULE_NOT_INSTALLED'));
 		return;
 	}
 
 	if (defined('BX_COMP_MANAGED_CACHE'))
 	{
-		$CACHE_MANAGER->registerTag('bitrix:search.tags.cloud');
+		$CACHE_MANAGER->RegisterTag('bitrix:search.tags.cloud');
 	}
 
 	if (empty($arParams['FILTER_NAME']) || !preg_match('/^[A-Za-z_][A-Za-z01-9_]*$/', $arParams['FILTER_NAME']))
@@ -95,11 +97,11 @@ if ($this->StartResultCache(false, [$USER->GetGroups()]))
 	$arFilter = [
 		'SITE_ID' => SITE_ID,
 		'QUERY' => $arParams['~SEARCH'],
-		'TAGS' => $arParams['~TAGS'] ? $arParams['~TAGS'] : '',
+		'TAGS' => $arParams['~TAGS'] ?: '',
 	];
 	if ($arParams['PERIOD'] > 0)
 	{
-		$arFilter['DATE_CHANGE'] = Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat('FULL', LANG)), time() - ($arParams['PERIOD'] * 24 * 3600) + CTimeZone::GetOffset());
+		$arFilter['DATE_CHANGE'] = date(CDatabase::DateFormatToPHP(CLang::GetDateFormat('FULL', LANGUAGE_ID)), time() - ($arParams['PERIOD'] * 24 * 3600) + CTimeZone::GetOffset());
 	}
 	if ($arParams['CHECK_DATES'])
 	{
@@ -150,7 +152,7 @@ if ($this->StartResultCache(false, [$USER->GetGroups()]))
 				foreach ($tmp as $tag)
 				{
 					$tag = trim($tag);
-					if ($tag <> '')
+					if ($tag !== '')
 					{
 						$arTags[$tag] = $tag;
 					}
@@ -200,7 +202,7 @@ if ($this->StartResultCache(false, [$USER->GetGroups()]))
 				$arResult['SEARCH'][] = $res;
 				$arResult['CNT'][$res['NAME']] = $res['CNT'];
 				$arResult['DATE'][$res['NAME']] = $res['TIME'];
-			} while ($res = $obSearch->getNext());
+			} while ($res = $obSearch->GetNext());
 		}
 	}
 
@@ -226,7 +228,7 @@ if ($this->StartResultCache(false, [$USER->GetGroups()]))
 				unset($url_without[$key]);
 				$url[$tags] = $tags;
 				$result = [
-					'TAG_NAME' => htmlspecialcharsex($tags),
+					'TAG_NAME' => htmlspecialcharsEx($tags),
 					'TAG_PATH' => $APPLICATION->GetCurPageParam('tags=' . urlencode(implode(',', $url)), ['tags']),
 					'TAG_WITHOUT' => $APPLICATION->GetCurPageParam((count($url_without) > 0 ? 'tags=' . urlencode(implode(',', $url_without)) : ''), ['tags']),
 				];
@@ -234,7 +236,7 @@ if ($this->StartResultCache(false, [$USER->GetGroups()]))
 			}
 		}
 	}
-	$this->IncludeComponentTemplate();
+	$this->includeComponentTemplate();
 
 	return count($arResult['SEARCH']);
 }

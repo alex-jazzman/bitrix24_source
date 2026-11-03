@@ -1,5 +1,6 @@
-import { Loc, Type } from 'main.core';
+import { Dom, Event, Loc, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { FocusKeys, FocusNavigator, FocusZone, InteractivityChecker, LiveAnnouncer } from 'ui.a11y';
 import 'ui.forms';
 import 'ui.switcher';
 import { CheckboxListCategory } from './category';
@@ -8,6 +9,10 @@ import { CheckboxListParams } from './checkbox-list';
 import { CheckboxComponent } from './controls/checkbox-component';
 import { TextToggleComponent } from './controls/texttoggle-component';
 import { CheckboxListSections } from './sections';
+
+// Counted from the last keystroke: long enough to let a word be typed, short enough to stay a reply
+// to that word.
+const searchAnnounceDelay = 700;
 
 export const Content = {
 	components: {
@@ -30,6 +35,17 @@ export const Content = {
 		'params',
 		'context',
 	],
+
+	setup(): Object
+	{
+		// Generated once per component and kept out of the reactive state: the values never change
+		// while the component lives, and two dialogs on one page must not share them.
+		return {
+			switcherLabelId: `ui-checkbox-list-compact-${Text.getRandom().toLowerCase()}`,
+			optionsContainerId: `ui-checkbox-list-options-${Text.getRandom().toLowerCase()}`,
+			selectAllId: `ui-checkbox-list-select-all-${Text.getRandom().toLowerCase()}`,
+		};
+	},
 
 	data()
 	{
@@ -74,6 +90,10 @@ export const Content = {
 					node: this.$refs.switcher,
 					checked: this.dataCompactField.value,
 					size: 'small',
+					// The switch owns its own role, tab stop, keyboard and aria-checked; the name
+					// comes from the visible caption, so it cannot drift away from it.
+					accessible: true,
+					ariaLabelledBy: this.switcherLabelId,
 					handlers: {
 						toggled: () => this.handleSwitcherToggled(),
 					},
@@ -100,13 +120,257 @@ export const Content = {
 		{
 			this.$refs?.searchInput?.focus();
 		},
+		// The list is a single Tab stop: the arrows and Home/End walk the fields inside it, so the
+		// number of Tab stops in the dialog no longer grows with the number of fields.
+		//
+		// The container lives under a v-if, so an empty search or a section switched off removes it
+		// from the DOM and brings back a new node. A zone is bound to the node it was built on for
+		// good, hence the rebind: the zone left on the removed node would keep its own set and its
+		// keys, and every field of the new node would become a Tab stop of its own again.
+		//
+		// Scrolling is left to the browser: the zone moves the focus with focus() and has no
+		// scrolling of its own, while preventDefault on the arrows and End takes the native one
+		// away. With the scroll suppressed the focus lands on a field outside the visible part of
+		// the list, and the keyboard user cannot see which field Space is about to toggle.
+		createFocusZone(): void
+		{
+			const container = this.$refs.container;
+			if (!container)
+			{
+				this.destroyFocusZone();
+
+				return;
+			}
+
+			if (this.focusZoneContainer === container)
+			{
+				return;
+			}
+
+			this.destroyFocusZone();
+
+			this.focusZone = new FocusZone(container, {
+				bindKeys: FocusKeys.ArrowAll | FocusKeys.HomeAndEnd,
+				focusableElementFilter: (element: HTMLElement): boolean => this.isZoneElement(element),
+				getNextFocusable: (direction, from, event) => this.getNextZoneElement(from, event),
+			});
+			this.focusZone.activate();
+			this.focusZoneContainer = container;
+			this.focusZoneNeedsFirstRefresh = true;
+		},
+		// deactivate() is what releases the node: it disconnects the observer of the zone, detaches
+		// its listeners and restores the tabindex it had taken over.
+		destroyFocusZone(): void
+		{
+			this.focusZone?.deactivate();
+			this.focusZone = null;
+			this.focusZoneContainer = null;
+		},
+		// The single source of truth for the set of the zone: the field of every row plus its rename
+		// button. The button is a member so the pencil can be reached by the keyboard at all - it is
+		// why the button is hidden by its background image rather than by opacity or visibility,
+		// both of which drop it out of the set collected by checkVisibility().
+		isZoneElement(element: HTMLElement): boolean
+		{
+			return this.isZoneField(element) || this.isZonePencil(element);
+		},
+		isZoneField(element: HTMLElement): boolean
+		{
+			return Dom.hasClass(element, 'ui-checkbox-list__field-item_input');
+		},
+		isZonePencil(element: HTMLElement): boolean
+		{
+			return Dom.hasClass(element, 'ui-checkbox-list__field-item_edit');
+		},
+		// The two members of a row sit on two axes instead of one linear walk: up and down step
+		// between the fields, right and left step onto the pencil of the current row and back. A
+		// single linear order would put the pencil between two neighbouring fields, so walking a
+		// list of a hundred fields would take up to two hundred presses, and the count would depend
+		// on how many of the fields happen to be renameable.
+		//
+		// Both axes are answered here rather than left to the default navigation of the zone: to the
+		// zone the pencil is just another member of its set, so a step down from a field would land
+		// on the pencil of that same row and Home and End would reach the pencil of the last one.
+		//
+		// A step that has nowhere to go on its own axis returns the element the focus is already on,
+		// because null is not a way to say "stay": the zone reads it as "no answer" and falls back
+		// to the very linear walk this callback exists to replace. Without it ArrowDown on the last
+		// field would reach the pencil of its row, and ArrowLeft on a field the pencil of the row
+		// above - and Space there renames instead of toggling.
+		getNextZoneElement(from: Element | null, event: KeyboardEvent): HTMLElement | null
+		{
+			const fields = this.zoneFields();
+			if (fields.length === 0 || !this.isZoneElement(from))
+			{
+				return null;
+			}
+
+			// Home and End belong to the list, not to the row, so where the jump started does not
+			// matter beyond being inside the zone at all.
+			if (event.key === 'Home')
+			{
+				return fields[0];
+			}
+
+			if (event.key === 'End')
+			{
+				return fields.at(-1) ?? null;
+			}
+
+			const row = from.closest('.ui-checkbox-list__field-item_label');
+
+			return row ? this.stepInsideRow(row, from, event, fields) : null;
+		},
+		zoneFields(): HTMLElement[]
+		{
+			return [...this.$refs.container?.querySelectorAll('.ui-checkbox-list__field-item_input') ?? []];
+		},
+		stepInsideRow(
+			row: Element,
+			from: Element,
+			event: KeyboardEvent,
+			fields: HTMLElement[],
+		): HTMLElement | null
+		{
+			const field = row.querySelector('.ui-checkbox-list__field-item_input');
+			const pencil = row.querySelector('.ui-checkbox-list__field-item_edit');
+
+			if (event.key === 'ArrowRight')
+			{
+				return (this.isZoneField(from) ? pencil : null) ?? from;
+			}
+
+			if (event.key === 'ArrowLeft')
+			{
+				return this.isZonePencil(from) ? field : from;
+			}
+
+			// A vertical step always continues from the field of the row, whichever member of it the
+			// focus sits on, and always lands on a field.
+			if (event.key === 'ArrowDown' || event.key === 'ArrowUp')
+			{
+				return fields[fields.indexOf(field) + (event.key === 'ArrowDown' ? 1 : -1)] ?? from;
+			}
+
+			return null;
+		},
+		// Both callers - the filtering and the toggling of a section - can leave the list empty and
+		// bring it back, so the node has to be rechecked before its set is refreshed.
+		refreshFocusZone(): void
+		{
+			void this.$nextTick(() => {
+				this.createFocusZone();
+				this.focusZone?.refreshElements();
+			});
+		},
+		// The zone collects only elements it can see, and at mount the popup is not on screen yet,
+		// so the set it takes on activate() is empty. The focus entering the dialog is the first
+		// moment the fields are visible, hence the refresh from here rather than from a popup hook.
+		// Only the first entry does it: the refresh walks the whole list and asks the browser for the
+		// visibility of every field, while focusin also fires on every arrow step between the rows.
+		// Afterwards the set is kept current by the zone's own MutationObserver.
+		handleListFocusIn(): void
+		{
+			if (this.focusZoneNeedsFirstRefresh)
+			{
+				this.focusZoneNeedsFirstRefresh = false;
+				this.focusZone?.refreshElements();
+			}
+		},
+
+		cancelSearchAnnounce(): void
+		{
+			if (this.searchAnnounceTimeout !== null)
+			{
+				clearTimeout(this.searchAnnounceTimeout);
+				this.searchAnnounceTimeout = null;
+			}
+		},
+		// Announced once the typing stops, never per keystroke: a reply per character floods the live
+		// region and is not read out at all.
+		scheduleSearchAnnounce(): void
+		{
+			this.cancelSearchAnnounce();
+
+			this.searchAnnounceTimeout = setTimeout(() => {
+				this.searchAnnounceTimeout = null;
+				this.announceSearchResult();
+			}, searchAnnounceDelay);
+		},
+		// A blank phrase must not reach the live region: an empty reply is noise, and a phrase can be
+		// missing on a stand whose translation repository points elsewhere.
+		announce(message: ?string): void
+		{
+			if (Type.isStringFilled(message))
+			{
+				LiveAnnouncer.announce(message, 'polite');
+			}
+		},
+		announceSearchResult(): void
+		{
+			// An empty search is a return to the whole list, not a result of a search.
+			if (!Type.isStringFilled(this.search))
+			{
+				return;
+			}
+
+			// Counted over the same set that decides the empty state (isEmptyContent), so what is
+			// heard matches what is on screen: a locked field is still a field the search found,
+			// and its own unavailability is announced by the field itself.
+			const count = this.visibleOptions.length;
+
+			if (count === 0)
+			{
+				this.announce(Loc.getMessage('UI_CHECKBOX_LIST_SEARCH_EMPTY_ANNOUNCE'));
+
+				return;
+			}
+
+			this.announce(Loc.getMessage('UI_CHECKBOX_LIST_SEARCH_RESULT_ANNOUNCE', { '#COUNT#': count }));
+		},
 		handleSectionsToggled(key)
 		{
 			const section = this.dataSections.find((item) => item.key === key);
 
-			if (section)
+			if (!section)
 			{
-				section.value = !section.value;
+				return;
+			}
+
+			// The move happens while the field is still in the DOM: waiting for the rerender to
+			// remove it would drop the focus to the body.
+			this.moveFocusOutOfList(this.getSectionToggle(key));
+
+			section.value = !section.value;
+		},
+		getSectionToggle(key: string): ?HTMLElement
+		{
+			const toggles = this.$el?.querySelectorAll('.ui-checkbox-list__sections-item') ?? [];
+			const index = this.dataSections.findIndex((item) => item.key === key);
+
+			return toggles[index] ?? null;
+		},
+		// Nothing to do unless the focus is really inside the list: the search field keeps it while
+		// typing, and a click on a section toggle already holds it itself.
+		moveFocusOutOfList(target: ?HTMLElement = null): void
+		{
+			const container = this.$refs.container;
+			const activeElement = FocusNavigator.getActiveElement();
+			if (!container || !activeElement || !container.contains(activeElement))
+			{
+				return;
+			}
+
+			const focusTarget = target ?? container;
+
+			if (InteractivityChecker.isFocusable(focusTarget))
+			{
+				FocusNavigator.focusTarget(focusTarget, { preventScroll: true });
+			}
+			else
+			{
+				// the list container is the last resort: it has tabindex="-1" to accept the focus
+				FocusNavigator.focusContainer(focusTarget, { preventScroll: true });
 			}
 		},
 		getOptionsByCategory(category = null)
@@ -150,10 +414,6 @@ export const Content = {
 		{
 			this.getBottomIndent();
 			this.getTopIndent();
-		},
-		handleSearchEscKeyUp() {
-			this.$refs.container.focus();
-			this.clearSearch();
 		},
 		defaultSettings()
 		{
@@ -215,10 +475,15 @@ export const Content = {
 			if (this.isAllSelected)
 			{
 				this.deselectAll();
+				this.announce(Loc.getMessage('UI_CHECKBOX_LIST_DESELECT_ALL_ANNOUNCE'));
 			}
 			else
 			{
 				this.selectAll();
+				this.announce(Loc.getMessage(
+					'UI_CHECKBOX_LIST_SELECT_ALL_ANNOUNCE',
+					{ '#COUNT#': this.getSelectableVisibleOptionRefs().length },
+				));
 			}
 
 			// A click/Space on the <input> itself triggers the native checkbox activation; because of
@@ -292,6 +557,9 @@ export const Content = {
 		},
 		apply(): void
 		{
+			// The button carries aria-disabled rather than the native one, so that the count of the
+			// Tab stops does not depend on the selection - which makes this guard the only thing
+			// stopping an apply with nothing selected. It has to stay.
 			if (this.isCheckedCheckboxes)
 			{
 				return;
@@ -313,7 +581,13 @@ export const Content = {
 			if (this.dataParams.closeAfterApply)
 			{
 				this.destroyOrClosePopup();
+
+				return;
 			}
+
+			// Announced only while the dialog stays open: on close the reply competes with the focus
+			// returning to the initiator and gets cut off.
+			this.announce(Loc.getMessage('UI_CHECKBOX_LIST_APPLIED_ANNOUNCE'));
 		},
 		getOptionTitles(): {[key: string]: string}[]
 		{
@@ -371,6 +645,47 @@ export const Content = {
 				&& this.dataSections.every((section) => section.value === false)
 			);
 		},
+		// Escape inside the rename mode has to undo the rename, not close the dialog. The popup
+		// listens for keyup on the document in the capture phase, so it always wins over any
+		// handler on the field: stopping the propagation there is impossible. Taking `closeByEsc`
+		// away for the duration of the edit is the only way to leave Escape to the field.
+		handleOptionEditModeChange(isEditing: boolean, byKey: boolean = false): void
+		{
+			this.cancelEscRestore();
+
+			if (isEditing)
+			{
+				this.popup?.setClosingByEsc?.(false);
+
+				return;
+			}
+
+			// Only a key that ended the edit leaves an Escape still travelling towards the popup,
+			// whose own keyup is what the popup closes on - and the delay between keydown and keyup
+			// is a human one, so any timer loses that race. A mouse leaves nothing in flight, and
+			// waiting for a keyup there would spend the first Escape the user presses afterwards on
+			// the restore instead of on closing the dialog.
+			if (!byKey)
+			{
+				this.popup?.setClosingByEsc?.(true);
+
+				return;
+			}
+
+			this.escRestoreHandler = () => {
+				this.cancelEscRestore();
+				this.popup?.setClosingByEsc?.(true);
+			};
+			Event.bind(document, 'keyup', this.escRestoreHandler, true);
+		},
+		cancelEscRestore(): void
+		{
+			if (this.escRestoreHandler)
+			{
+				Event.unbind(document, 'keyup', this.escRestoreHandler, true);
+				this.escRestoreHandler = null;
+			}
+		},
 		onToggleOption(event)
 		{
 			if (this.dataOptions.has(event.id))
@@ -385,10 +700,17 @@ export const Content = {
 	watch: {
 		search()
 		{
+			// The focus stays in the search field while typing, so only the set of the zone follows
+			// the filtering here.
+			this.refreshFocusZone();
+			this.scheduleSearchAnnounce();
+
 			void this.$nextTick(() => this.checkLongContent());
 		},
 		categoryBySection()
 		{
+			this.refreshFocusZone();
+
 			void this.$nextTick(() => this.checkLongContent());
 		},
 	},
@@ -535,6 +857,17 @@ export const Content = {
 					: Loc.getMessage('UI_CHECKBOX_LIST_DEFAULT_CANCEL_BUTTON')
 			);
 		},
+		// An empty phrase must never reach aria-label: `aria-label=""` strips the name instead of
+		// leaving the fallback in place, and a phrase can be missing on a stand whose translation
+		// repository points elsewhere.
+		searchClearLabel(): ?string
+		{
+			return Loc.getMessage('UI_CHECKBOX_LIST_SEARCH_CLEAR_LABEL') || null;
+		},
+		optionsLabel(): ?string
+		{
+			return Loc.getMessage('UI_CHECKBOX_LIST_OPTIONS_LABEL') || null;
+		},
 		selectAllBtnText(): string
 		{
 			return (
@@ -608,24 +941,45 @@ export const Content = {
 		},
 	},
 
+	created(): void
+	{
+		// non-reactive on purpose: a FocusZone instance behind a Vue proxy breaks its private fields
+		this.focusZone = null;
+		this.focusZoneContainer = null;
+		this.focusZoneNeedsFirstRefresh = true;
+		this.searchAnnounceTimeout = null;
+		this.escRestoreHandler = null;
+	},
+
 	mounted()
 	{
 		this.renderSwitcher();
 		this.syncSelectAllCheckbox();
+		this.createFocusZone();
 
-		void this.$nextTick(() => {
-			this.checkLongContent();
-			this.setFocusToSearchInput();
-		});
+		void this.$nextTick(() => this.checkLongContent());
 	},
 
+	// No refresh of the focus zone from here: the set of the zone is the set of the rendered rows,
+	// and the only two things that change it - the filtering and the toggling of a section - refresh
+	// it from their own watchers. Every other rerender (a field toggled, select-all, a title renamed)
+	// leaves the same rows in place, and refreshing walks the whole list asking the browser for the
+	// visibility of every field. Anything that still slips through is caught by the zone's own
+	// MutationObserver.
 	updated()
 	{
 		this.syncSelectAllCheckbox();
 	},
 
+	beforeUnmount(): void
+	{
+		this.destroyFocusZone();
+		this.cancelSearchAnnounce();
+		this.cancelEscRestore();
+	},
+
 	template: `
-		<div class="ui-checkbox-list">
+		<div class="ui-checkbox-list" data-testid="ui-checkbox-list">
 			<div
 				class="ui-checkbox-list__header"
 				v-if="dataParams.useSearch || (dataSections && dataParams.useSectioning)"
@@ -635,10 +989,14 @@ export const Content = {
 						v-if="dataCompactField"
 						class="ui-checkbox-list__switcher"
 					>
-						<div class="ui-checkbox-list__switcher-text">
+						<div :id="switcherLabelId" class="ui-checkbox-list__switcher-text">
 							{{ switcherText }}
 						</div>
-						<div class="switcher" ref="switcher"></div>
+						<div
+							class="switcher"
+							data-testid="ui-checkbox-list-compact-view"
+							ref="switcher"
+						></div>
 					</div>
 					<div
 						v-if="dataParams.useSearch"
@@ -650,12 +1008,19 @@ export const Content = {
 									:placeholder="placeholderText"
 									type="text"
 									class="ui-ctl-element"
+									data-testid="ui-checkbox-list-search"
 									v-model="search"
-									@keyup.esc.stop="handleSearchEscKeyUp"
+									:aria-disabled="isSearchDisabled ? 'true' : null"
+									:readonly="isSearchDisabled"
+									data-autofocus
 									ref="searchInput"
 								>
 								<button
 									v-if="search.length > 0"
+									type="button"
+									data-testid="ui-checkbox-list-search-clear"
+									:title="searchClearLabel"
+									:aria-label="searchClearLabel"
 									@click="handleClearSearchButtonClick"
 									class="ui-ctl-after ui-ctl-icon-clear ui-checkbox-list__search-clear"
 								></button>
@@ -680,9 +1045,14 @@ export const Content = {
 			>
 				<div
 					ref="container"
+					data-testid="ui-checkbox-list-options"
+					:id="optionsContainerId"
 					class="ui-checkbox-list__container"
+					role="group"
+					:aria-label="optionsLabel"
+					@focusin="handleListFocusIn"
 					@scroll="handleScroll"
-					tabindex="0"
+					tabindex="-1"
 					v-if="isEmptyContent"
 				>
 					<checkbox-list-category
@@ -697,6 +1067,7 @@ export const Content = {
 						:isEditableOptionsTitle="dataParams.isEditableOptionsTitle"
 						:setOptionRef="setOptionRef"
 						@onToggleOption="onToggleOption"
+						@onEditModeChange="handleOptionEditModeChange"
 					/>
 	
 					<checkbox-list-category
@@ -708,6 +1079,7 @@ export const Content = {
 						:isEditableOptionsTitle="dataParams.isEditableOptionsTitle"
 						:setOptionRef="setOptionRef"
 						@onToggleOption="onToggleOption"
+						@onEditModeChange="handleOptionEditModeChange"
 					/>
 				</div>
 				<div
@@ -716,7 +1088,7 @@ export const Content = {
 				>
 					<img
 						src="/bitrix/js/ui/dialogs/checkbox-list/images/ui-checkbox-list-empty.svg"
-						:alt="emptyStateTitleText"
+						alt=""
 					>
 					<div class="ui-checkbox-list__empty-title">
 						{{ emptyStateTitleText }}
@@ -728,6 +1100,7 @@ export const Content = {
 					<div
 						class="ui-checkbox-list__options"
 						:style="{ 'column-count': columnCount, opacity: 0 }"
+						aria-hidden="true"
 					>
 						<div>
 							<label class="ui-ctl"></label>
@@ -736,23 +1109,27 @@ export const Content = {
 				</div>
 			</div>
 
+			<!-- footer blocks follow the visual order left to right: only --center is in the flow,
+			     --left and --right are absolutely positioned, so the DOM order is the Tab order -->
 			<div class="ui-checkbox-list__footer">
 				<div class="ui-checkbox-list__footer-block --left">
 					<div
-						@click="onSelectAllClick()"
+						data-testid="ui-checkbox-list-select-all"
 						:class="selectAllClassName"
+						@click="onSelectAllClick()"
 					>
 						<input
 							type="checkbox"
 							name="selectAllCheckbox"
 							ref="selectAllCheckbox"
-							:aria-label="selectAllBtnText"
+							:aria-labelledby="isNarrowWidth ? null : selectAllId"
+							:aria-label="isNarrowWidth ? selectAllBtnText : null"
 							:checked="isAllSelected"
 							@click.prevent
 						>
 						<label
 							v-if="!isNarrowWidth"
-							for="selectAllCheckbox"
+							:id="selectAllId"
 						>
 							{{ selectAllBtnText }}
 						</label>
@@ -777,27 +1154,34 @@ export const Content = {
 						/>
 					</div>
 				</div>
-				<div class="ui-checkbox-list__footer-block --right">
-					<div
-						v-if="dataParams.showBackToDefaultSettings"
-						class="ui-checkbox-list__footer-link --default"
-						@click="defaultSettings()"
-					>
-						{{ defaultSettingsBtnText }}
-					</div>
-				</div>
 				<div class="ui-checkbox-list__footer-block --center">
 					<button
-						@click="apply()"
+						type="button"
+						data-testid="ui-checkbox-list-apply"
 						:class="applyClassName"
+						:aria-disabled="isCheckedCheckboxes ? 'true' : null"
+						@click="apply()"
 					>
 						{{ applyBtnText }}
 					</button>
 					<button
-						@click="cancel()"
+						type="button"
+						data-testid="ui-checkbox-list-cancel"
 						class="ui-btn ui-btn-link"
+						@click="cancel()"
 					>
 						{{ cancelBtnText }}
+					</button>
+				</div>
+				<div class="ui-checkbox-list__footer-block --right">
+					<button
+						v-if="dataParams.showBackToDefaultSettings"
+						type="button"
+						data-testid="ui-checkbox-list-default"
+						class="ui-checkbox-list__footer-link --default"
+						@click="defaultSettings()"
+					>
+						{{ defaultSettingsBtnText }}
 					</button>
 				</div>
 			</div>

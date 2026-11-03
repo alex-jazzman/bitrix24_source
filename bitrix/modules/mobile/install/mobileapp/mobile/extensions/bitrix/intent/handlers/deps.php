@@ -1,14 +1,14 @@
 <?php
 return [
 	'extensions' => [
-		'intent',
-		'rest',
+		'in-app-url/widget-presenter',
+		'rest/transport',
 		'require-lazy',
 	],
 	'bundle' => [
-		'tasks',
-		'calendar',
-		'terminal',
-		'check-in',
+		'./src/tasks',
+		'./src/terminal',
+		'./src/check-in',
+		'./src/calendar',
 	]
 ];

@@ -291,7 +291,96 @@ export class CollectionUseCases
 		return Boolean(this.#store.queries.findLoadedDocument(normalizedCollectionId, routeDocId));
 	}
 
-	async deleteCollection(collection: Collection): Promise<void>
+	#getFirstCollectionId(excludedCollectionId: number): number | null
+	{
+		const collection = this.#store.state.collections.value.find((item) => {
+			const collectionId = Number(item?.id);
+
+			return Number.isInteger(collectionId) && collectionId > 0 && collectionId !== excludedCollectionId;
+		});
+		const collectionId = Number(collection?.id);
+
+		return Number.isInteger(collectionId) && collectionId > 0 ? collectionId : null;
+	}
+
+	#isSameCollectionCursor(left: mixed, right: mixed): boolean
+	{
+		if (left === null || right === null)
+		{
+			return left === right;
+		}
+
+		return Number(left?.position) === Number(right?.position)
+			&& Number(left?.id) === Number(right?.id)
+		;
+	}
+
+	async #resolveNextCollectionId(excludedCollectionId: number): Promise<{
+		collectionId: number | null,
+		loadFailed: boolean,
+	}>
+	{
+		let nextCollectionId = this.#getFirstCollectionId(excludedCollectionId);
+		let retried = false;
+		while (nextCollectionId === null && this.#store.state.collectionsHasNextPage.value)
+		{
+			const previousCursor = this.#store.state.collectionsCursor.value;
+			let loaded = false;
+			try
+			{
+				loaded = await this.#store.actions.loadCollections(true);
+			}
+			catch
+			{
+				loaded = false;
+			}
+			if (!loaded)
+			{
+				if (retried)
+				{
+					return { collectionId: null, loadFailed: true };
+				}
+
+				retried = true;
+				try
+				{
+					loaded = await this.#store.actions.loadCollections(false);
+				}
+				catch
+				{
+					loaded = false;
+				}
+				if (!loaded)
+				{
+					return { collectionId: null, loadFailed: true };
+				}
+
+				nextCollectionId = this.#getFirstCollectionId(excludedCollectionId);
+				continue;
+			}
+
+			nextCollectionId = this.#getFirstCollectionId(excludedCollectionId);
+			if (
+				nextCollectionId === null
+				&& this.#store.state.collectionsHasNextPage.value
+				&& this.#isSameCollectionCursor(previousCursor, this.#store.state.collectionsCursor.value)
+			)
+			{
+				return { collectionId: null, loadFailed: false };
+			}
+		}
+
+		return { collectionId: nextCollectionId, loadFailed: false };
+	}
+
+	#emitCollectionDeletionStatus(collectionId: number, status: 'started' | 'cancelled'): void
+	{
+		EventEmitter.emit(NoteEvent.COLLECTION_DELETION_STARTED, new BaseEvent({
+			data: { collectionId, status },
+		}));
+	}
+
+	async deleteCollection(collection: Collection): Promise<boolean>
 	{
 		if (!this.canManageCollectionPermissions(collection))
 		{
@@ -308,26 +397,51 @@ export class CollectionUseCases
 			return;
 		}
 
+		const collectionId = Number(collection.id);
+		if (!Number.isInteger(collectionId) || collectionId <= 0)
+		{
+			return;
+		}
+
+		this.#emitCollectionDeletionStatus(collectionId, 'started');
 		try
 		{
-			const collectionId = Number(collection.id);
 			await this.#api.deleteCollection(collectionId);
-			const shouldLeaveDocumentPage = this.#isRouteDocumentInCollection(collectionId);
-			this.#store.actions.removeCollectionLocal(collectionId);
-			delete this.#uiState.expandedCollections[collectionId];
-			if (collectionId === this.#store.state.selectedCollectionId.value)
-			{
-				this.#store.actions.clearSelection();
-			}
-			if (shouldLeaveDocumentPage)
-			{
-				await this.#router?.replace({ name: this.#homeRouteName });
-			}
 		}
 		catch (error)
 		{
+			this.#emitCollectionDeletionStatus(collectionId, 'cancelled');
 			this.#onFail(error);
+
+			return;
 		}
+
+		const { collectionId: nextCollectionId, loadFailed } = await this.#resolveNextCollectionId(collectionId);
+		if (loadFailed)
+		{
+			this.#store.actions.removeCollectionLocal(collectionId);
+			delete this.#uiState.expandedCollections[collectionId];
+			this.#onFail(new Error('Collections loading failed'));
+
+			return true;
+		}
+
+		if (nextCollectionId !== null)
+		{
+			await this.#router?.replace({
+				name: this.#workspaceRouteName,
+				params: { id: String(nextCollectionId) },
+			});
+		}
+		else
+		{
+			await this.#router?.replace({ name: this.#homeRouteName });
+		}
+
+		this.#store.actions.removeCollectionLocal(collectionId);
+		delete this.#uiState.expandedCollections[collectionId];
+
+		return true;
 	}
 
 	async archiveCollection(collection: Collection): Promise<void>

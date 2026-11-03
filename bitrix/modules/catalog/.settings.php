@@ -17,6 +17,11 @@ return [
 		],
 		'readonly' => true,
 	],
+	'rest' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\Catalog\\Infrastructure\\Rest\\Controller',
+		],
+	],
 	'userField' => [
 		'value' => [
 			'access' => '\\Bitrix\\Catalog\\UserField\\UserFieldAccess',

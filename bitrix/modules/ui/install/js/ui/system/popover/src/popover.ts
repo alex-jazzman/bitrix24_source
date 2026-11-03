@@ -3,7 +3,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { autoUpdate, computePosition, platform } from 'ui.floating-ui';
 
-import { POINTER_PROTRUSION, PopoverDesignContext, type PopoverPosition } from './const';
+import { BUBBLE_ATTRIBUTE, POINTER_PROTRUSION, PopoverDesignContext, type PopoverPosition } from './const';
 import {
 	type PopoverClassName,
 	type PopoverContent,
@@ -69,10 +69,6 @@ const GESTURE_EVENTS = new Set(['mousedown', 'pointerdown', 'touchstart', 'mouse
 
 const AREA_INLINE_PROPS = ['left', 'top', 'right', 'bottom', 'transform', 'width', 'minWidth', 'height', 'maxWidth', 'maxHeight'];
 const SIZE_INLINE_PROPS = ['width', 'minWidth', 'height', 'maxWidth', 'maxHeight'];
-
-// Marks the node of the consumer as the bubble of this popover: the address popover.css writes the layout
-// defaults to. An attribute and not a class - the node stays free of classes of the extension.
-const BUBBLE_ATTRIBUTE = 'data-ui-system-popover-bubble';
 
 // What the content has to resolve to, whatever form it is given in. Repeated by every message about a
 // content of the wrong shape, so all of them name the same requirement.
@@ -271,6 +267,7 @@ export class Popover extends EventEmitter
 	#closeByEsc: boolean;
 
 	#element: HTMLElement | null = null;
+	#group: HTMLElement | null = null;
 	#pointer: HTMLElement | null = null;
 	#body: HTMLElement | null = null;
 
@@ -454,6 +451,7 @@ export class Popover extends EventEmitter
 		}
 
 		this.#element = null;
+		this.#group = null;
 		this.#pointer = null;
 		this.#body = null;
 		this.#destroyed = true;
@@ -1368,6 +1366,14 @@ export class Popover extends EventEmitter
 			// the page; off, if a position was applied earlier, and there the popover stays exactly where the
 			// last cycle put it.
 			Dom.removeClass(element, '--measuring');
+			// The moment the popover reaches the screen, and the one an appearance of the consumer starts
+			// from: the group carries the flag because the appearance belongs there - the arrow and the
+			// bubble move as one figure only while they are animated together. Repeated cycles of the same
+			// show leave the class where it is, so a scroll restarts nothing.
+			if (this.#group)
+			{
+				Dom.addClass(this.#group, '--visible');
+			}
 		}
 		else
 		{
@@ -1456,17 +1462,27 @@ export class Popover extends EventEmitter
 		const body = this.#resolveBody();
 
 		const pointer: HTMLElement = Tag.render`<div class="ui-system-popover__pointer"></div>`;
+		// The group holds the two halves of the popover as one figure: the arrow and the bubble. The root
+		// above it carries the position alone, so an appearance written on the group moves both of them
+		// together and never reaches the coordinates - a transform of the group changes no layout, and the
+		// rect the positioning reads off the root stays the rect of the untransformed popover.
+		const group: HTMLElement = Tag.render`
+			<div class="ui-system-popover__group">
+				${pointer}
+			</div>
+		`;
 		const element: HTMLElement = Tag.render`
 			<div class="ui-system-popover">
-				${pointer}
+				${group}
 			</div>
 		`;
 		// The bubble joins the arrow as its sibling, and after it: the arrow stays first in the DOM, while
 		// inside the bubble the overflow of the consumer would cut it off.
-		Dom.append(body, element);
+		Dom.append(body, group);
 		this.#prepareBody(body);
 
 		this.#element = element;
+		this.#group = group;
 		this.#pointer = pointer;
 		this.#body = body;
 
@@ -1570,6 +1586,15 @@ export class Popover extends EventEmitter
 			Dom.addClass(this.#element, '--hidden');
 			Dom.removeClass(this.#element, '--measuring');
 			Dom.removeClass(this.#element, '--anchor-hidden');
+		}
+
+		// Taken off here and nowhere else: the next show() puts it back once a position is applied, and an
+		// appearance of the consumer starts from the beginning there. Left standing, it would start with the
+		// display of the root instead - while the popover is still measuring and out of sight, so the first
+		// half of the appearance would play where nobody sees it.
+		if (this.#group)
+		{
+			Dom.removeClass(this.#group, '--visible');
 		}
 	}
 

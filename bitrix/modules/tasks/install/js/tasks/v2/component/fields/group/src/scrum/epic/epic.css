@@ -1,3 +1,12 @@
+/* epic button reset */
+.tasks-field-epic {
+	appearance: none;
+	border: none;
+	font: inherit;
+	text-align: left;
+}
+/* epic button reset end */
+
 .tasks-field-epic {
 	overflow: hidden;
 	margin-right: 10px;
@@ -12,9 +21,18 @@
 	cursor: pointer;
 }
 
+.tasks-field-epic.--readonly {
+	padding-right: 10px;
+}
+
+.tasks-field-epic:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .tasks-field-epic.--filled {
-	--epic-color: #00C0D5;
-	--epic-background: #00BFD51A;
+	--epic-color: var(--ui-color-stage-bg-3);
+	--epic-background: color-mix(in srgb, var(--ui-color-stage-bg-3) 10%, transparent);
 	background: var(--epic-background);
 }
 
@@ -41,4 +59,26 @@
 	display: flex;
 	align-items: center;
 	height: 26px;
+}
+
+.tasks-v2-group-epic-footer {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+	min-width: 0;
+}
+
+.tasks-v2-group-epic-footer .ui-selector-footer-link {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tasks-v2-group-epic-footer-hint {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xs);
+	white-space: nowrap;
 }

@@ -1,0 +1,778 @@
+/*
+ * Indication of an AI task being created from the message: the BitrixGPT magic around the message
+ * plus a stage caption.
+ *
+ * Built to the specification of the flow (`AI-TASK-ANIMATIONS.md` and `AiMagicGlow.tsx` of the
+ * WGENUI `ai-tasks-web` hypothesis). Two layers of light, in the same order for every layout:
+ *
+ *   wash - the haze: a full conic sheet under a mask that pushes it to the edges, blurred by 14,
+ *          flaring on entry and on exit;
+ *   ring - the rim: the same sheet under a mask that keeps a band on the contour, blurred by an
+ *          amount of its own.
+ *
+ * Each layer is a stack of its own, and the order inside it is not negotiable: a mask is applied
+ * AFTER a filter, so an element carrying both would have its blur cut back into a crisp line.
+ * Hence fade wrapper -> blur wrapper -> mask -> spinning conic square.
+ *
+ * The sheet spins by `transform` instead of animating the angle of the gradient: an angle needs a
+ * registered custom property, which is Firefox 128+, while `.browserslistrc` holds Firefox >= 115 -
+ * and an unregistered property inside `conic-gradient()` drops the declaration, so there the light
+ * would not slow down but vanish. Turning the sheet around the centre of the message is the same
+ * picture as animating the angle.
+ *
+ * The rule of the border (the designer's main one): the light lives INSIDE the message. No halo
+ * around the bubble, no glow on the chat background - the layer is clipped by the radius of the
+ * message, and what flies out is cut off exactly on the contour.
+ *
+ * Where the caption stands is decided by the layout: the bubble sends it to the time row of the
+ * message, media and the round player keep a plate of their own under the graphics. The two live
+ * in different DOM parents, so the styles here name the row by its class and never by its position
+ * in a tree.
+ */
+
+/*
+ * Shared by the layer and the caption row, because the terminal frames tie them together: the
+ * error runs the change in reverse (the light goes out over `duration_extinguish`, and only then
+ * the caption materializes), and the round layout squares its layer by subtracting the caption
+ * plate below the player. Split declarations would let the two sides drift apart, and the bubble
+ * puts the two into different subtrees, so neither can inherit the numbers from the other.
+ *
+ * `size_icon` is here for the same reason and is the ONLY source of that number: the icon sets it
+ * as its own size, and the layer of the round layout adds it up into the height of the plate. Two
+ * independent numbers is exactly how the layer came to subtract a plate 2px shorter than the real
+ * one - the height of the row is set by the icon, not by the line of the caption.
+ */
+.bx-im-message-ai-task__decor,
+.bx-im-message-ai-task__status {
+	/*
+	 * The caption is painted by the same brand stops as the light. The text gradient closes back on
+	 * the first stop and is twice as wide as the box, so the shimmer running the background position
+	 * from end to start has no seam to cross. The icon keeps a still diagonal of the same three.
+	 */
+	--im-message-ai-task__gradient_caption: linear-gradient(
+		90deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 35%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 70%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1)
+	);
+	--im-message-ai-task__gradient_icon: linear-gradient(
+		135deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 50%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5)
+	);
+	--im-message-ai-task__duration_terminal: 220ms;
+	--im-message-ai-task__duration_extinguish: 400ms;
+	--im-message-ai-task__line-height_caption: 16px;
+	--im-message-ai-task__size_icon: 18px;
+	--im-message-ai-task__padding-block_plate: 3px;
+	--im-message-ai-task__padding-inline_plate: 8px;
+	--im-message-ai-task__margin-top_plate: 4px;
+	--im-message-ai-task__gap_row: 3px;
+	--im-message-ai-task__font-size_caption: var(--im-font-size-xs);
+	--im-message-ai-task__radius_plate: var(--im-border-radius-md);
+}
+
+/*
+ * The plate under the graphics has metrics of its own (map §3.3: padding 6/12, gap 6, radius lg,
+ * icon 16, caption 13/18). The time row of a bubble (§3.2) is a different, tighter variant, so the
+ * numbers are overridden by the two layouts that own a plate rather than changed for everyone.
+ * Both nodes carry the layout modifier, so the decor layer reads the very same values for the
+ * height of the plate it subtracts - the two sides cannot drift apart.
+ */
+.bx-im-message-ai-task__decor.--media,
+.bx-im-message-ai-task__status.--media,
+.bx-im-message-ai-task__decor.--round,
+.bx-im-message-ai-task__status.--round {
+	--im-message-ai-task__line-height_caption: 18px;
+	--im-message-ai-task__size_icon: 16px;
+	--im-message-ai-task__padding-block_plate: 6px;
+	--im-message-ai-task__padding-inline_plate: 12px;
+	--im-message-ai-task__gap_row: 6px;
+	--im-message-ai-task__font-size_caption: 13px;
+	--im-message-ai-task__radius_plate: var(--im-border-radius-lg);
+}
+
+.bx-im-message-ai-task__decor {
+	/*
+	 * The two wheels of the palette. Only the BitrixGPT stops 1-5 take part: the yellow and the
+	 * orange of the same scale are not part of the AI brand pattern.
+	 *
+	 * The full wheel closes on itself mirrored (1...5...4...1), so the seam where the last stop meets
+	 * the first has no visible join. It goes to the round player and to edge-to-edge media, where a
+	 * break in the line would read as a defect.
+	 *
+	 * The airy wheel dissolves into nothing twice, so parts of the rim disappear and come back as it
+	 * turns. It goes to the bubble and to media with a caption.
+	 */
+	--im-message-ai-task__conic_full: conic-gradient(
+		from 0deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1)
+	);
+	--im-message-ai-task__conic_airy: conic-gradient(
+		from 0deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2),
+		transparent,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5),
+		transparent,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2),
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1)
+	);
+
+	/*
+	 * The rim of a bubble is a hair: 1.2px set 2px inwards, blurred by 5.2. The blur is a multiple of
+	 * the thickness on purpose - at a comparable one the profile reads as a little stripe instead of
+	 * light. Media and the round player override all three.
+	 */
+	--im-message-ai-task__thickness_ring: 1.2px;
+	--im-message-ai-task__inset_ring: 2px;
+	--im-message-ai-task__blur_ring: 5.2px;
+	--im-message-ai-task__opacity_ring: 1;
+	--im-message-ai-task__conic_ring: var(--im-message-ai-task__conic_airy);
+
+	/*
+	 * Graphics let the sheet fly 12px past the edge, and the clip cuts it back on the contour: right
+	 * at the edge the colour does not fall off. The fade inwards lives between the overshoot and
+	 * `fade_ring`, which is the ~28px of depth the specification asks for.
+	 */
+	--im-message-ai-task__overshoot_ring: 12px;
+	--im-message-ai-task__fade_ring: 40px;
+
+	/* The haze: the same sheet, pushed to the edges by a frame mask of 24% and blurred by 14. */
+	--im-message-ai-task__edge_wash: 24%;
+	--im-message-ai-task__blur_wash: 14px;
+
+	--im-message-ai-task__radius_media: var(--im-border-radius-md);
+	--im-message-ai-task__duration_spin: 3.6s;
+	/*
+	 * The spinning square is 300% of the width of the container with a square aspect: whatever the
+	 * proportion of the message, the square covers it at every angle of the turn.
+	 */
+	--im-message-ai-task__size_spinner: 300%;
+
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+/*
+ * Both layers light up 300ms after the indication appears, not with it: first the layout opens up
+ * for the caption, and only then the light comes on. Lit at once, the gradient rides the growing
+ * geometry and reads as a bug. `both` keeps them invisible until the delay is out.
+ */
+.bx-im-message-ai-task__wash,
+.bx-im-message-ai-task__ring {
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	animation: bx-im-message-ai-task-ignite 400ms ease-out 300ms both;
+}
+
+/* The rim stands above the haze, and above opaque graphics as well - otherwise a photo hides it. */
+.bx-im-message-ai-task__ring {
+	z-index: 2;
+	overflow: hidden;
+}
+
+/*
+ * The blur of the rim is a layer of its own, between the fade and the mask: a mask is applied
+ * after a filter, so blurring the masked band would cut the blur back into the band.
+ */
+.bx-im-message-ai-task__ring-blur {
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	filter: blur(var(--im-message-ai-task__blur_ring));
+	opacity: var(--im-message-ai-task__opacity_ring);
+}
+
+/*
+ * The band itself. On a bubble it is the difference of two masks - the fill of the content box
+ * against the fill of the whole box - so the width of the band IS the padding and the corners are
+ * no denser than the sides, unlike a border. `mask-composite` follows the shorthand, because the
+ * shorthand resets it; the legacy `-webkit-` pair is what Safari and Chrome before 120 read.
+ */
+.bx-im-message-ai-task__ring-band {
+	position: absolute;
+	inset: var(--im-message-ai-task__inset_ring);
+	box-sizing: border-box;
+	border-radius: inherit;
+	padding: var(--im-message-ai-task__thickness_ring);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+}
+
+/*
+ * The haze is masked into a frame rather than filling the area: a bubble is 42-60px tall, and a
+ * flat wash over all of it drowns the colour of the message itself.
+ */
+.bx-im-message-ai-task__wash {
+	-webkit-mask:
+		linear-gradient(to top, #000, transparent var(--im-message-ai-task__edge_wash)),
+		linear-gradient(to bottom, #000, transparent var(--im-message-ai-task__edge_wash)),
+		linear-gradient(to left, #000, transparent var(--im-message-ai-task__edge_wash)),
+		linear-gradient(to right, #000, transparent var(--im-message-ai-task__edge_wash));
+	mask:
+		linear-gradient(to top, #000, transparent var(--im-message-ai-task__edge_wash)),
+		linear-gradient(to bottom, #000, transparent var(--im-message-ai-task__edge_wash)),
+		linear-gradient(to left, #000, transparent var(--im-message-ai-task__edge_wash)),
+		linear-gradient(to right, #000, transparent var(--im-message-ai-task__edge_wash));
+}
+
+/*
+ * The core of the haze carries its blur AND its alpha: the flare is what sets how strong the haze
+ * is, so no opacity is declared anywhere else on this stack - a value there would be overridden by
+ * the `both` of the flare anyway.
+ */
+.bx-im-message-ai-task__wash-core {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	border-radius: inherit;
+	filter: blur(var(--im-message-ai-task__blur_wash));
+	animation: bx-im-message-ai-task-flare-in 820ms ease-out 120ms both;
+}
+
+/* The one spinning sheet, shared by both layers; which wheel it carries is set per layout. */
+.bx-im-message-ai-task__wash-core::before,
+.bx-im-message-ai-task__ring-band::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: var(--im-message-ai-task__size_spinner);
+	aspect-ratio: 1;
+	transform: translate(-50%, -50%) rotate(0);
+	background: var(--im-message-ai-task__conic_ring);
+	animation: bx-im-message-ai-task-spin var(--im-message-ai-task__duration_spin) linear infinite;
+	will-change: transform;
+}
+
+@keyframes bx-im-message-ai-task-spin {
+	to {
+		transform: translate(-50%, -50%) rotate(1turn);
+	}
+}
+
+@keyframes bx-im-message-ai-task-ignite {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+/*
+ * The haze flares on the way in - brighter for a moment, then settling to a hint. The numbers are
+ * the alpha of the layer, and they are the only place it is set.
+ */
+@keyframes bx-im-message-ai-task-flare-in {
+	0% {
+		opacity: 0.02;
+	}
+
+	45% {
+		opacity: 0.24;
+	}
+
+	100% {
+		opacity: 0.11;
+	}
+}
+
+@keyframes bx-im-message-ai-task-flare-out {
+	0% {
+		opacity: 0.11;
+	}
+
+	40% {
+		opacity: 0.22;
+	}
+
+	100% {
+		opacity: 0.15;
+	}
+}
+
+/*
+ * Media and the round player: the rim is thicker and 15% lighter, because a thin soft line is lost
+ * on a photograph. The sheet flies past the edge and the clip cuts it back, so the colour does not
+ * fall off right at the contour; what reads as thickness is the length of the fade inwards.
+ * The line has to be continuous there, so both take the full wheel.
+ *
+ * These two carry the light OVER the graphics, so the whole layer is raised: a picture of a gallery
+ * is a flex item with a `z-index: 1` of its own (`im.v2.component.elements.media-gallery`), and the
+ * `z-index: 2` of the rim below cannot beat it - it is sealed inside the stacking context this
+ * layer opens. Left at `z-index: 0` the pictures cover the light and only the seams between the
+ * tiles let it through, which reads as a rim around every file instead of one around the message,
+ * and a single picture that fills the message hides it completely. The plates of time, duration
+ * and the play button keep their own higher levels and stay above the light, as the map asks.
+ */
+.bx-im-message-ai-task__decor.--media,
+.bx-im-message-ai-task__decor.--round {
+	--im-message-ai-task__blur_ring: 7px;
+	--im-message-ai-task__opacity_ring: 0.85;
+	--im-message-ai-task__inset_ring: calc(-1 * var(--im-message-ai-task__overshoot_ring));
+	--im-message-ai-task__conic_ring: var(--im-message-ai-task__conic_full);
+
+	z-index: 2;
+}
+
+/*
+ * A frame with a caption (map §2.2): a bubble on the outside, a photo on the inside. The rim keeps
+ * the band form of a bubble - the radius is the bubble's - but takes a middle intensity, 3px at a
+ * blur of 4 and 8% off the top: it crosses both the graphics and the white block of the caption,
+ * and a hair is lost on the first while the media rim is too loud on the second. The layer is
+ * raised for the same reason media is: the picture below carries a `z-index` of its own.
+ */
+.bx-im-message-ai-task__decor.--media-caption {
+	--im-message-ai-task__thickness_ring: 3px;
+	--im-message-ai-task__blur_ring: 4px;
+	--im-message-ai-task__opacity_ring: 0.92;
+
+	z-index: 2;
+}
+
+.bx-im-message-ai-task__decor.--media {
+	border-radius: var(--im-message-ai-task__radius_media);
+}
+
+/*
+ * Edge-to-edge media has no padding to hide the rim in, so instead of a band it gets a fade: opaque
+ * out to the overshoot (which the clip cuts at the contour) and gone by `fade_ring`. The four masks
+ * are composited additively, so the corners keep the depth of both adjacent sides.
+ */
+.bx-im-message-ai-task__decor.--media .bx-im-message-ai-task__ring-band {
+	padding: 0;
+	border-radius: calc(var(--im-message-ai-task__radius_media) + var(--im-message-ai-task__overshoot_ring));
+	-webkit-mask:
+		linear-gradient(to bottom, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring)),
+		linear-gradient(to top, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring)),
+		linear-gradient(to right, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring)),
+		linear-gradient(to left, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring));
+	mask:
+		linear-gradient(to bottom, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring)),
+		linear-gradient(to top, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring)),
+		linear-gradient(to right, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring)),
+		linear-gradient(to left, #000 var(--im-message-ai-task__overshoot_ring), transparent var(--im-message-ai-task__fade_ring));
+	-webkit-mask-composite: source-over;
+	mask-composite: add;
+}
+
+/*
+ * The round player has no rectangle to inherit: the rim becomes a radial falloff, dense at the
+ * contour and gone towards the centre, with no inner boundary at all - a band there would read as
+ * a ring drawn on the video.
+ *
+ * The layer cannot simply cover the body either. The player is a fixed square at the bottom of the
+ * body, but above it there may be a quote and below it stands the caption plate of this very
+ * component - stretched over both, the ring would come out an ellipse around the whole column. So
+ * the layer takes the width of the body and squares itself off the bottom edge, skipping the plate.
+ */
+.bx-im-message-ai-task__decor.--round,
+.bx-im-message-ai-task__decor.--round .bx-im-message-ai-task__wash,
+.bx-im-message-ai-task__decor.--round .bx-im-message-ai-task__ring,
+.bx-im-message-ai-task__decor.--round .bx-im-message-ai-task__ring-band {
+	border-radius: 50%;
+}
+
+.bx-im-message-ai-task__decor.--round {
+	top: auto;
+	aspect-ratio: 1;
+}
+
+.bx-im-message-ai-task__decor.--round .bx-im-message-ai-task__ring-band {
+	padding: 0;
+	-webkit-mask-image: radial-gradient(closest-side, transparent 66%, #000 90%, #000 100%);
+	mask-image: radial-gradient(closest-side, transparent 66%, #000 90%, #000 100%);
+	-webkit-mask-composite: source-over;
+	mask-composite: add;
+}
+
+/* The haze of the round player is a ring along the arc: the centre stays clear of the face. */
+.bx-im-message-ai-task__decor.--round .bx-im-message-ai-task__wash {
+	-webkit-mask: radial-gradient(closest-side, transparent 72%, #000 100%);
+	mask: radial-gradient(closest-side, transparent 72%, #000 100%);
+}
+
+/*
+ * The plate stands outside the glow, not inside it: the layer belongs to the graphics alone, while
+ * the body of the message holds the graphics AND the plate as siblings. Left to span the body, the
+ * layer would wrap the caption too.
+ *
+ * The height of the plate is spelled with the very variables that set it. The row is centred, so it
+ * is as tall as its tallest item - the icon or the line of the caption, whichever wins; the dots
+ * are shorter than both by construction. `max()` keeps that true if either of the two changes.
+ */
+.bx-im-message-ai-task__decor.--media,
+.bx-im-message-ai-task__decor.--round {
+	--im-message-ai-task__offset_plate: calc(
+		max(var(--im-message-ai-task__size_icon), var(--im-message-ai-task__line-height_caption))
+		+ 2 * var(--im-message-ai-task__padding-block_plate)
+		+ var(--im-message-ai-task__margin-top_plate)
+	);
+}
+
+.bx-im-message-ai-task__decor.--media.--with-status,
+.bx-im-message-ai-task__decor.--round.--with-status {
+	bottom: var(--im-message-ai-task__offset_plate);
+}
+
+/*
+ * Both sheets stop wherever there is nothing to see. A set of up to twenty sources carries a rim
+ * each, and the message list is not virtualized, so a source scrolled out of the viewport would
+ * otherwise keep spinning squares under masks for the whole operation; the extinguished layer is on
+ * its way to full transparency and has just as little to show.
+ *
+ * Paused rather than dropped: `animation: none` snaps a square back to its starting angle, and both
+ * cases still have paint on the screen at that moment - a source counts as invisible while its
+ * bottom is cut off by the edge of the viewport, and the failing layer keeps fading over
+ * `duration_extinguish`. Pausing freezes the current frame and resumes from it.
+ */
+.bx-im-message-ai-task__decor.--offscreen .bx-im-message-ai-task__wash-core::before,
+.bx-im-message-ai-task__decor.--offscreen .bx-im-message-ai-task__ring-band::before,
+.bx-im-message-ai-task__decor.--extinguished .bx-im-message-ai-task__wash-core::before,
+.bx-im-message-ai-task__decor.--extinguished .bx-im-message-ai-task__ring-band::before {
+	animation-play-state: paused;
+}
+
+/*
+ * The failure is the one frame that changes in reverse order (TPL-02): the light goes out first,
+ * and the caption materializes into the freed slot only afterwards. The layer is kept in place
+ * instead of being dropped, so the outgoing paint has something to fade, and the haze flares once
+ * more on the way out.
+ */
+.bx-im-message-ai-task__decor.--extinguished {
+	opacity: 0;
+	transition: opacity var(--im-message-ai-task__duration_extinguish) ease;
+}
+
+.bx-im-message-ai-task__decor.--extinguished .bx-im-message-ai-task__wash-core {
+	animation: bx-im-message-ai-task-flare-out var(--im-message-ai-task__duration_extinguish) ease-out forwards;
+}
+
+/* status row */
+/*
+ * `line-height` stays OUT of the shorthand, and folding it back in breaks the round layout. The
+ * layer there subtracts this very number as the height of the caption line, and `font` is all or
+ * nothing: the tokens it carries live on `.bx-im-messenger__scope` (im.v2.css.tokens), not on this
+ * block, so without that scope the whole shorthand is dropped, `line-height` falls back to `normal`
+ * and the row grows to whatever the default font of the engine measures - by a different amount in
+ * each of the three.
+ */
+.bx-im-message-ai-task__status {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--im-message-ai-task__gap_row);
+	font: var(--im-font-weight-medium) var(--im-message-ai-task__font-size_caption) var(--im-font-family-system);
+	line-height: var(--im-message-ai-task__line-height_caption);
+	user-select: none;
+}
+
+/*
+ * The bubble hands its caption to the time row of the message (map §3.2), so the row stands inside
+ * content that already carries the bubble padding and adds none of its own. All it keeps is a gap
+ * before the delivery status, which the row next to it holds against the right edge with
+ * `margin-left: auto`.
+ */
+.bx-im-message-ai-task__status.--bubble {
+	margin-right: var(--ui-space-inline-sm);
+}
+
+/*
+ * Media and the round player get a plate of their own under the graphics, and the plate hugs its
+ * caption instead of running the full width of the message. The width has to be asked for: the
+ * body of the message is a plain block container, so the plate is a block-level box that would
+ * otherwise fill the line - and `align-self` has no flex line here to work on.
+ */
+.bx-im-message-ai-task__status.--media,
+.bx-im-message-ai-task__status.--round {
+	width: fit-content;
+	/* the plate is centred under the graphics in both layouts, as the reference render shows */
+	margin-inline: auto;
+	margin-top: var(--im-message-ai-task__margin-top_plate);
+	padding: var(--im-message-ai-task__padding-block_plate) var(--im-message-ai-task__padding-inline_plate);
+	border-radius: var(--im-message-ai-task__radius_plate);
+	background: var(--im-gradient-ai-assistant-bg);
+}
+
+.bx-im-message-ai-task__icon {
+	--ui-icon-set__icon-size: var(--im-message-ai-task__size_icon);
+
+	flex-shrink: 0;
+}
+
+/*
+ * The icon breathes while the operation runs: it is the one part of the caption that moves on its
+ * own, and it stops together with the rest for a user who asked for less motion.
+ */
+.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__icon {
+	--ui-icon-set__icon-color: var(--im-message-ai-task__gradient_icon);
+
+	animation: bx-im-message-ai-task-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes bx-im-message-ai-task-breathe {
+	0%,
+	100% {
+		transform: scale(1) rotate(0);
+	}
+
+	50% {
+		transform: scale(1.2) rotate(8deg);
+	}
+}
+
+/*
+ * The two frames that leave the brand palette (a partial result and a failure) carry one accent
+ * token each, and it paints both the icon and the caption - flat colour, no gradient clipping.
+ */
+.bx-im-message-ai-task__status.--warning {
+	--im-message-ai-task__color_tone: var(--ui-color-accent-main-warning);
+}
+
+.bx-im-message-ai-task__status.--alert {
+	--im-message-ai-task__color_tone: var(--ui-color-accent-main-alert);
+}
+
+.bx-im-message-ai-task__status.--warning .bx-im-message-ai-task__icon,
+.bx-im-message-ai-task__status.--alert .bx-im-message-ai-task__icon {
+	--ui-icon-set__icon-color: var(--im-message-ai-task__color_tone);
+}
+
+.bx-im-message-ai-task__status.--warning .bx-im-message-ai-task__label,
+.bx-im-message-ai-task__status.--alert .bx-im-message-ai-task__label {
+	color: var(--im-message-ai-task__color_tone);
+}
+
+/*
+ * Every stage lives in the same grid cell, so the row is as wide as the longest caption and
+ * a stage change does not resize the message.
+ */
+.bx-im-message-ai-task__stack {
+	display: grid;
+	grid-template-areas: 'stage';
+	align-items: center;
+	min-width: 0;
+}
+
+/*
+ * A stage materializes: it fades in out of a blur while drifting up into place. The shift outlives
+ * the fade by design - the caption settles after it has already become readable, which is what
+ * makes the change read as one movement instead of two.
+ */
+.bx-im-message-ai-task__label {
+	grid-area: stage;
+	white-space: nowrap;
+	opacity: 0;
+	filter: blur(3px);
+	transform: translateY(5px);
+	transition:
+		opacity 320ms cubic-bezier(0.4, 0, 0.2, 1),
+		filter 320ms cubic-bezier(0.4, 0, 0.2, 1),
+		transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bx-im-message-ai-task__label.--current {
+	opacity: 1;
+	filter: blur(0);
+	transform: translateY(0);
+}
+
+/*
+ * A terminal caption is not part of the running sequence and enters the cell only when its frame
+ * arrives, so it materializes by an animation rather than by a transition: a node inserted with
+ * its final classes has nothing to transition from. The width invariant is not extended to it -
+ * the row follows the terminal caption, and `duration_terminal` is what carries the change.
+ */
+.bx-im-message-ai-task__label.--terminal {
+	animation: bx-im-message-ai-task-materialize var(--im-message-ai-task__duration_terminal) ease both;
+}
+
+/*
+ * A caption in the brand tone carries the shimmer as well, and the entrance has to be declared
+ * together with it: the shimmer is set by a more specific selector, so declared apart it would
+ * replace the entrance instead of joining it and a terminal caption would appear without one.
+ * The entrance goes first - the tests of the take-down read the duration it waits for from there.
+ */
+.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__label.--terminal {
+	animation:
+		bx-im-message-ai-task-materialize var(--im-message-ai-task__duration_terminal) ease both,
+		bx-im-message-ai-task-shimmer 2.4s linear infinite;
+}
+
+/* the failure waits out the rim: `both` holds the caption invisible while the delay runs */
+.bx-im-message-ai-task__status.--alert .bx-im-message-ai-task__label.--terminal {
+	animation-delay: var(--im-message-ai-task__duration_extinguish);
+}
+
+@keyframes bx-im-message-ai-task-materialize {
+	from {
+		opacity: 0;
+		filter: blur(3px);
+		transform: translateY(5px);
+	}
+}
+
+@keyframes bx-im-message-ai-task-appear {
+	from {
+		opacity: 0;
+	}
+}
+
+/*
+ * The caption is the gradient showing through the letters, and the gradient drifts: the sheet is
+ * twice the width of the text, so moving the background from one end to the other reads as a
+ * shimmer running along the words rather than as colours swapping places.
+ */
+.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__label {
+	background-image: var(--im-message-ai-task__gradient_caption);
+	background-size: 200% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	color: transparent;
+	animation: bx-im-message-ai-task-shimmer 2.4s linear infinite;
+}
+
+@keyframes bx-im-message-ai-task-shimmer {
+	from {
+		background-position: 200% 50%;
+	}
+
+	to {
+		background-position: 0% 50%;
+	}
+}
+
+/*
+ * The caption is painted by a gradient showing through the letters, so the letters themselves are
+ * transparent. Forced colors take the gradient away and do NOT touch `-webkit-text-fill-color`,
+ * which is outside forced-color-adjust - all three stages and the success would be left invisible.
+ * The fill goes back to the system text colour rather than to an alias of ours: in that mode the
+ * palette belongs to the user, and a token would paint over the pair of colours they chose.
+ */
+@media (forced-colors: active) {
+	.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__label {
+		background-image: none;
+		-webkit-text-fill-color: CanvasText;
+		color: CanvasText;
+	}
+}
+
+.bx-im-message-ai-task__dots {
+	display: flex;
+	align-items: flex-end;
+	gap: 2px;
+	padding-bottom: 3px;
+}
+
+.bx-im-message-ai-task__dot {
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+	opacity: 0.25;
+	animation: bx-im-message-ai-task-dot 1.3s ease-in-out infinite;
+}
+
+/*
+ * One stop of the brand scale rather than the whole gradient: a dot is 3px across, and a gradient
+ * over it comes out as a single colour anyway - picked by where the dot happens to stand.
+ */
+.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__dot {
+	background-color: var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3);
+}
+
+.bx-im-message-ai-task__dot:nth-child(2) {
+	animation-delay: 0.18s;
+}
+
+.bx-im-message-ai-task__dot:nth-child(3) {
+	animation-delay: 0.36s;
+}
+
+/* the wave runs and rests: the lit part is short, so the row does not read as three blinking lamps */
+@keyframes bx-im-message-ai-task-dot {
+	0%,
+	70%,
+	100% {
+		opacity: 0.25;
+	}
+
+	30% {
+		opacity: 1;
+	}
+}
+
+/*
+ * The rim spins and the dots run next to readable text for longer than five seconds, so both stop
+ * for users who asked for less motion (WCAG 2.1, 2.2.2). Only the movement goes away: the rim and
+ * the caption stay painted, keeping the state visible - a stopped sheet still lights the contour,
+ * it just holds one angle of the gradient. A terminal caption keeps its animation, stripped down
+ * to a plain fade - it also carries the order of the failure, where the caption may not appear
+ * before the rim is gone.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-message-ai-task__wash,
+	.bx-im-message-ai-task__ring,
+	.bx-im-message-ai-task__wash-core,
+	.bx-im-message-ai-task__wash-core::before,
+	.bx-im-message-ai-task__ring-band::before,
+	.bx-im-message-ai-task__icon,
+	.bx-im-message-ai-task__label,
+	.bx-im-message-ai-task__dot {
+		animation: none;
+	}
+
+	/*
+	 * The shimmer is what moves the gradient across the letters; stopped, the sheet has to be back
+	 * where the text can read it - at twice the width, the resting position matters.
+	 */
+	.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__label {
+		background-position: 0% 50%;
+	}
+
+	/*
+	 * The flare is what gives the haze its alpha, so switching it off would leave the layer at full
+	 * strength. The resting value of the flare is restored by hand - the state stays visible, only
+	 * the movement goes away.
+	 */
+	.bx-im-message-ai-task__wash-core {
+		opacity: 0.11;
+	}
+
+	.bx-im-message-ai-task__dot {
+		opacity: 1;
+	}
+
+	.bx-im-message-ai-task__label {
+		filter: none;
+		transform: none;
+		transition: opacity 360ms ease;
+	}
+
+	.bx-im-message-ai-task__label.--terminal,
+	.bx-im-message-ai-task__status.--ai .bx-im-message-ai-task__label.--terminal {
+		animation: bx-im-message-ai-task-appear var(--im-message-ai-task__duration_terminal) ease both;
+	}
+}

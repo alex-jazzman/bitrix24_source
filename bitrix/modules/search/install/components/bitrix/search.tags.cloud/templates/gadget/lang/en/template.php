@@ -1,3 +1,2 @@
-<?
-$MESS ['SEARCH_NOTHING_TO_FOUND'] = "Tags not found";
-?>
+<?php
+$MESS['SEARCH_NOTHING_TO_FOUND'] = "Tags not found";

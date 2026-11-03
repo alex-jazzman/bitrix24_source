@@ -10,6 +10,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Mobile\Context;
+use Bitrix\Mobile\Tab\Preset\Service\PortalDefaultPresetCacheVersion;
 use Bitrix\Mobile\Tourist;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Crm\Terminal\AvailabilityManager;
@@ -68,11 +69,13 @@ $menuModificationTime = $menuFile->getModificationTime();
 $cacheIsActual = ($menuModificationTime == $menuSavedModificationTime);
 $clearOptionName = "clear_more_$userId";
 $force = Option::get("mobile", $clearOptionName, false);
+$portalDefaultPresetVersion = (new PortalDefaultPresetCacheVersion())
+	->get(defined('SITE_ID') ? (string)SITE_ID : '')
+;
 
 if (!$cacheIsActual || $force)
 {
 	$CACHE_MANAGER->ClearByTag('mobile_custom_menu' . $userId);
-	$CACHE_MANAGER->ClearByTag('mobile_custom_menu');
 	Option::set("mobile", "jscomponent.menu.date.modified.user_" . $userId, $menuModificationTime);
 	Option::set("mobile", $clearOptionName, false);
 }
@@ -85,6 +88,7 @@ $cache_id = 'more_menu_'
 			LANGUAGE_ID,
 			CSite::GetNameFormat(false) . 'ver' . $version,
 			$apiVersion,
+			$portalDefaultPresetVersion,
 			/**
 			 * Should be removed after the release option release-spring-2023 is set to true!
 			 */
@@ -134,7 +138,6 @@ else
 	$CACHE_MANAGER->RegisterTag('USER_CARD_' . intval($userId / TAGGED_user_card_size));
 	$CACHE_MANAGER->RegisterTag('sonet_user2group_U' . $userId);
 	$CACHE_MANAGER->RegisterTag('mobile_custom_menu' . $userId);
-	$CACHE_MANAGER->RegisterTag('mobile_custom_menu');
 	$CACHE_MANAGER->RegisterTag('crm_change_role');
 	$CACHE_MANAGER->RegisterTag('bitrix24_left_menu');
 	$CACHE_MANAGER->EndTagCache();

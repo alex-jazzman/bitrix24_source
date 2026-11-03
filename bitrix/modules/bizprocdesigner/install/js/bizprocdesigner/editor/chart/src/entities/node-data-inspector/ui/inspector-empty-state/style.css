@@ -13,7 +13,15 @@
 	width: 320px;
 	height: 163px;
 	opacity: 0.8;
-	background: url('./images/empty-state.png') no-repeat center / contain;
+	background: url('./images/empty-state.webp') no-repeat center / contain;
+	background-image: -webkit-image-set(
+		url('./images/empty-state.webp') 1x,
+		url('./images/empty-state@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('./images/empty-state.webp') 1x,
+		url('./images/empty-state@2x.webp') 2x
+	);
 }
 
 .bizprocdesigner-inspector-empty-state__text {

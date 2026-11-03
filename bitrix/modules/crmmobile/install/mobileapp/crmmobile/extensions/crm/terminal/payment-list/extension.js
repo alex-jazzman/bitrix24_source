@@ -2,6 +2,7 @@
  * @module crm/terminal/payment-list
  */
 jn.define('crm/terminal/payment-list', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Alert } = require('alert');
 	const { EventEmitter } = require('event-emitter');
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
@@ -101,6 +102,11 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 		{
 			return new StatefulList({
 				testId: 'TerminalPaymentList',
+				getVoiceContext: () => ({
+					module: 'crm',
+					screen: 'crm.terminal.payment.list',
+					filter: { search: this.filter.getSearchString(), presetId: this.filter.getPresetId() },
+				}),
 				actions: {
 					loadItems: 'crmmobile.Terminal.App.loadPayments',
 				},
@@ -646,7 +652,7 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 				},
 				text: {
 					color: AppTheme.colors.base2,
-					fontSize: 15,
+					fontSize: Typography.text4.getValue().fontSize,
 					textAlign: 'center',
 					lineHeightMultiple: 1.2,
 				},

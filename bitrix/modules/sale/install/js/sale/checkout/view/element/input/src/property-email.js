@@ -1,14 +1,12 @@
 import { BitrixVue } from 'ui.vue';
-import { EventEmitter } from 'main.core.events';
-import { Property as Const, EventType } from 'sale.checkout.const';
+import { Property as Const } from 'sale.checkout.const';
+
+import { MixinPropertyField } from './property-field';
 
 BitrixVue.component('sale-checkout-view-element-input-property-email', {
+	mixins: [MixinPropertyField],
 	props: ['item', 'index', 'autocomplete'],
 	methods: {
-		validate()
-		{
-			EventEmitter.emit(EventType.property.validate, { index: this.index });
-		},
 		onKeyUp(e)
 		{
 			if (['Esc', 'Tab'].indexOf(e.key) >= 0)
@@ -48,10 +46,6 @@ BitrixVue.component('sale-checkout-view-element-input-property-email', {
 		{
 			return this.item.value === '';
 		},
-		isRequired()
-		{
-			return this.item.required === 'Y';
-		},
 		isAsteriskShown()
 		{
 			return this.isEmpty && this.isRequired;
@@ -59,13 +53,17 @@ BitrixVue.component('sale-checkout-view-element-input-property-email', {
 	},
 	// language=Vue
 	template: `
-		<div class="form-wrap form-asterisk" :class="checkedClassObject">
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-email">
 			<input
 				class="form-control form-control-lg"
 				:class="checkedClassObject"
 				@blur="validate"
 				type="text"
 				inputmode="email"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
 				:placeholder="item.name"
 				:autocomplete="autocomplete"
 				v-model="item.value"
@@ -73,6 +71,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-email', {
 			/>
 			<span
 				class="asterisk-item"
+				aria-hidden="true"
 				v-if="isAsteriskShown"
 			>
 				{{item.name}}

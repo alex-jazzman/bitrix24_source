@@ -22,6 +22,7 @@ export class ModeMenu extends BaseMenu
 	context: ModeMenuContext;
 	#rolesDialog: ?RolesDialog = null;
 	#hintPopup: ?Popup = null;
+	#reasoningContext: ?ModeMenuContext = null;
 
 	constructor()
 	{
@@ -52,28 +53,55 @@ export class ModeMenu extends BaseMenu
 
 	getReasoningItem(): MenuItemOptions | null
 	{
-		const modelCode = this.store.getters['copilot/chats/getAIModel'](this.context.dialogId)?.code;
-		const isAvailableInModel = this.store.getters['copilot/isReasoningAvailableInModel'](modelCode);
-		const isReasoningEnabled = this.store.getters['copilot/chats/isReasoningEnabled'](this.context.dialogId);
+		const context = this.context;
+		const { dialogId } = context;
+		this.#reasoningContext = context;
+		const isTempChat = this.store.getters['copilot/chats/isTempChat'](dialogId);
+		const isAvailableInModel = this.#isReasoningAvailable(dialogId);
+		const isReasoningEnabled = this.store.getters['copilot/chats/isReasoningEnabled'](dialogId);
 
 		return {
 			title: Loc.getMessage('IM_CONTENT_COPILOT_MODE_MENU_REASONING'),
 			icon: isReasoningEnabled ? OutlineIcons.CIRCLE_CHECK : OutlineIcons.AI_STARS,
-			design: this.#getReasoningDesign(isAvailableInModel, isReasoningEnabled),
+			design: this.#getReasoningDesign(!isTempChat && isAvailableInModel, isReasoningEnabled),
 			onClick: () => {
-				if (!isAvailableInModel)
+				if (this.#reasoningContext !== context || this.context !== context || this.context.dialogId !== dialogId)
+				{
+					return;
+				}
+
+				if (this.store.getters['copilot/chats/isTempChat'](dialogId))
+				{
+					return;
+				}
+
+				if (!this.#isReasoningAvailable(dialogId))
 				{
 					this.#showHint(Loc.getMessage('IM_CONTENT_COPILOT_TEXTAREA_REASONING_BUTTON_HINT_NOT_AVAILABLE'));
 
 					return;
 				}
 
-				this.store.dispatch('copilot/chats/toggleReasoning', this.context.dialogId);
-				Analytics.getInstance().copilot.onToggleReasoning(this.context.dialogId);
-				Analytics.getInstance().copilot.onChangeReasoning(this.context.dialogId);
+				this.store.dispatch('copilot/chats/toggleReasoning', dialogId);
+				Analytics.getInstance().copilot.onToggleReasoning(dialogId);
+				Analytics.getInstance().copilot.onChangeReasoning(dialogId);
 				this.close();
 			},
 		};
+	}
+
+	close(): void
+	{
+		this.#reasoningContext = null;
+		this.#hideHint();
+		super.close();
+	}
+
+	#isReasoningAvailable(dialogId: string): boolean
+	{
+		const modelCode = this.store.getters['copilot/chats/getAIModel'](dialogId)?.code;
+
+		return this.store.getters['copilot/isReasoningAvailableInModel'](modelCode);
 	}
 
 	getRoleItem(): MenuItemOptions

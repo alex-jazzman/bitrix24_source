@@ -3,6 +3,8 @@
 use Bitrix\Bizproc;
 use Bitrix\Bizproc\Internal\Entity\Workflow\ExecutionPayload;
 use Bitrix\Bizproc\Public\Activity\BaseComplexActivity;
+use Bitrix\Bizproc\Public\ProcessData\Service\ProcessDataCatalogService;
+use Bitrix\Bizproc\Public\ProcessData\Service\ProcessDataMechanicsResolver;
 use Bitrix\Bizproc\Workflow\Entity\WorkflowFilterTable;
 use Bitrix\Bizproc\Workflow\Entity\WorkflowUserTable;
 use Bitrix\Main;
@@ -26,10 +28,11 @@ class CBPWorkflow
 	private const MAX_FAULT_HANDLING_ATTEMPTS = 3;
 
 	/**
-	 * Why an activity was not executed. Both reasons share the path a deactivated activity has always
+	 * Why an activity was not executed. Every reason shares the path a deactivated activity has always
 	 * taken - closed right away, control handed on - so an unmet condition is a completion, not a fault.
 	 */
 	private const SKIP_REASON_DEACTIVATED = 'deactivated';
+	private const SKIP_REASON_UNRESOLVED_DOCUMENT = 'unresolved_document';
 	private const SKIP_REASON_CONDITION = 'condition';
 
 	private bool $isNew = false;
@@ -198,19 +201,91 @@ class CBPWorkflow
 		{
 			foreach ($workflowVariablesTypes as $k => $v)
 			{
-				$variableValue = $v["Default"] ?? null;
-				if ($documentType && $fieldTypeObject = $documentService->getFieldTypeObject($documentType, $v))
-				{
-					$fieldTypeObject->setDocumentId($arDocumentId);
-					$variableValue = $fieldTypeObject->internalizeValue('Variable', $variableValue);
-				}
-
 				//set defaults on start
-				$rootActivity->setVariable($k, $variableValue);
+				$rootActivity->setVariable(
+					$k,
+					$this->internalizeVariableValue($documentType, $arDocumentId, $v, $v["Default"] ?? null),
+				);
 			}
 		}
 
 		$rootActivity->setPropertiesTypes($workflowParametersTypes);
+
+		$this->initializePairs(
+			$rootActivity,
+			$documentType,
+			$arDocumentId,
+			$workflowParameters,
+			$workflowParametersTypes,
+			$workflowVariablesTypes,
+			(int)$workflowTemplateId,
+		);
+	}
+
+	private function internalizeVariableValue($documentType, array $documentId, $variableType, $value)
+	{
+		$fieldTypeObject = $documentType
+			? $this->getService('DocumentService')->getFieldTypeObject($documentType, $variableType)
+			: null
+		;
+
+		if (!$fieldTypeObject)
+		{
+			return $value;
+		}
+
+		$fieldTypeObject->setDocumentId($documentId);
+
+		return $fieldTypeObject->internalizeValue('Variable', $value);
+	}
+
+	/**
+	 * A key standing both in the parameters and in the variables is a pair only on a template of the new
+	 * mechanics; the template is read once and only when such a key was actually met. The feature flag does
+	 * not stand here on purpose: a template already marked keeps starting the same way after the flag goes
+	 * off, otherwise its working values would silently arrive empty.
+	 */
+	private function initializePairs(
+		CBPActivity $rootActivity,
+		$documentType,
+		array $documentId,
+		$workflowParameters,
+		$workflowParametersTypes,
+		$workflowVariablesTypes,
+		int $workflowTemplateId,
+	): void
+	{
+		if (
+			!is_array($workflowVariablesTypes)
+			|| !is_array($workflowParametersTypes)
+			|| !is_array($workflowParameters)
+		)
+		{
+			return;
+		}
+
+		$pairs = array_filter(
+			(new ProcessDataCatalogService())->findStartValuePairs($workflowParametersTypes, $workflowVariablesTypes),
+			static fn($parameterKey) => array_key_exists($parameterKey, $workflowParameters),
+		);
+
+		if (!$pairs || !(new ProcessDataMechanicsResolver())->isNewMechanics($workflowTemplateId))
+		{
+			return;
+		}
+
+		foreach ($pairs as $variableKey => $parameterKey)
+		{
+			$rootActivity->setVariable(
+				$variableKey,
+				$this->internalizeVariableValue(
+					$documentType,
+					$documentId,
+					$workflowVariablesTypes[$variableKey],
+					$workflowParameters[$parameterKey],
+				),
+			);
+		}
 	}
 
 	public function reload(CBPActivity $rootActivity)
@@ -512,6 +587,10 @@ class CBPWorkflow
 		if (empty($activityName))
 		{
 			throw new CBPArgumentNullException('activityName');
+		}
+		if (!is_string($activityName))
+		{
+			return null;
 		}
 
 		$activity = null;
@@ -990,10 +1069,19 @@ class CBPWorkflow
 		{
 			$skipReason = self::SKIP_REASON_DEACTIVATED;
 		}
+		elseif ($activity->hasUnresolvedDocumentContext())
+		{
+			// The node names a document of its own and that name leads nowhere. Falling back to the document
+			// of the process is what let an action - a deletion among them - work over the wrong document, so
+			// the node does not run at all. A node naming no document keeps the document of the process, and
+			// templates written before this all do.
+			$skipReason = self::SKIP_REASON_UNRESOLVED_DOCUMENT;
+		}
 		else
 		{
 			$this->publishNodeFilterResults($activity);
 
+			// After the document: the condition of a node may read a field of the very document it names.
 			if (!$this->isNodeConditionMet($activity))
 			{
 				$skipReason = self::SKIP_REASON_CONDITION;
@@ -1089,6 +1177,7 @@ class CBPWorkflow
 		$phraseId = match ($skipReason)
 		{
 			self::SKIP_REASON_DEACTIVATED => 'BPCGWF_SKIP_NOTE_DEACTIVATED',
+			self::SKIP_REASON_UNRESOLVED_DOCUMENT => 'BPCGWF_SKIP_NOTE_UNRESOLVED_DOCUMENT',
 			self::SKIP_REASON_CONDITION => 'BPCGWF_SKIP_NOTE_CONDITION',
 			// A reason added later must not break the log of a running process over a missing phrase.
 			default => null,

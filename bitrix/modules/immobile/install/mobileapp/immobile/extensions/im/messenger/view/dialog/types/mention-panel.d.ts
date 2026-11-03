@@ -17,15 +17,27 @@ declare interface JNChatMentionPanel extends JNChatBaseClassInterface<MentionPan
 	open(items : Array<MentionItem>): void;
 	close(): void;
 	setItems(items: Array<MentionItem>): void;
+	setEmptyState(emptyState?: MentionEmptyState | null): void;
 	update(id: string, item: Partial<MentionItem>): void;
 	animateAction(id: string, item: MentionItem): void;
 	showLoader(): void;
 	hideLoader(): void;
 }
 
+declare type MentionEmptyState = {
+	/** Icon resource name or image URL; an empty value hides the image. */
+	image?: string,
+	/** Placeholder title; an empty value hides the title. */
+	title?: string,
+	/** Placeholder description; an empty value hides the text. */
+	text?: string,
+}
+
 declare type MentionItem = {
 	id: string,
 	title: string,
+	/** Second-line row description; native panel collapses the row to a single line when empty. */
+	description?: string,
 	imageUrl: string,
 	imageColor: string,
 	displayedDate: string,

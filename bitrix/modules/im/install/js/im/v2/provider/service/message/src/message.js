@@ -1,10 +1,13 @@
 import { LoadService } from './classes/load';
 import { PinService } from './classes/pin';
-import { EditService } from './classes/edit';
+import { EditService, type EditMessageFilesParams, type EditMessageFilesResult } from './classes/edit';
 import { DeleteService } from './classes/delete';
 import { MarkService } from './classes/mark';
 import { FavoriteService } from './classes/favorite';
 import { TranscribeService } from './classes/transcribe';
+import { type EditMessageResult } from './types/message';
+
+export type { EditMessageResult } from './types/message';
 
 export class MessageService
 {
@@ -76,9 +79,9 @@ export class MessageService
 	// endregion 'pagination'
 
 	// region 'context'
-	loadContext(messageId: number): Promise
+	loadContext(messageId: number, options: { isActual?: () => boolean } = {}): Promise
 	{
-		return this.#loadService.loadContext(messageId);
+		return this.#loadService.loadContext(messageId, options);
 	}
 
 	loadContextByChatId(chatId: number): Promise<number>
@@ -136,9 +139,19 @@ export class MessageService
 	// endregion 'favorite'
 
 	// region 'edit'
-	editMessageText(messageId: number, text: string): void
+	editMessageText(messageId: number, text: string): Promise<EditMessageResult>
 	{
-		this.#editService.editMessageText(messageId, text);
+		return this.#editService.editMessageText(messageId, text);
+	}
+
+	rollbackMessage(messageId: number, text: string, isEdited: boolean): void
+	{
+		this.#editService.rollbackMessage(messageId, text, isEdited);
+	}
+
+	editMessageFiles(messageId: number, params: EditMessageFilesParams): Promise<EditMessageFilesResult>
+	{
+		return this.#editService.editMessageFiles(messageId, params);
 	}
 	// endregion 'edit'
 

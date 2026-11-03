@@ -6,6 +6,8 @@ type ComposeFormOptions = {
 	editorFormId: string;
 	editorId: string;
 	initialData: ComposeInitialData;
+	/** Markup for the head of the letter document; the template renders it with `Extension::getHtml()`. */
+	editorHeadHtml?: string;
 };
 
 /**
@@ -33,6 +35,7 @@ type ComposeInitialData = {
 	};
 	subject?: string;
 	body?: {
+		content?: string;
 		quote?: string;
 		quoteFolded?: boolean;
 	};
@@ -51,14 +54,31 @@ type ComposeInitialData = {
 	analytics?: AnalyticsDto;
 	features?: {
 		unfinishedElements?: boolean;
+		scheduledMessages?: boolean;
+		undoSend?: boolean;
 		templates?: boolean;
+		saveTemplate?: boolean;
+		subjectGeneration?: boolean;
 	};
+	/** IANA identifier of the zone the author schedules a letter in. */
+	authorTimezoneId?: string;
 	draft?: {
 		id?: number;
 		revision?: number;
 		clientId?: string;
 	};
 	paths?: PathsDto;
+	scheduledMessage?: {
+		id?: number;
+		revision?: number;
+		scheduledAt?: string;
+		timezoneId?: string;
+		attachments?: Array<{
+			id: number;
+			objectId: number | null;
+			fileId?: string | null;
+		}>;
+	};
 };
 
 type ComposeScenario = (typeof BX.Mail.Client.ComposeForm.Scenario)[keyof typeof BX.Mail.Client.ComposeForm.Scenario];
@@ -186,6 +206,7 @@ type PathsDto = {
 	 * the user cannot be led there, and the form then offers no entry.
 	 */
 	templatesManage?: string;
+	templatesCreate?: string;
 };
 
 declare namespace BX.Mail.Client.ComposeForm {

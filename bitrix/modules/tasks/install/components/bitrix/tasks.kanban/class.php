@@ -32,6 +32,7 @@ use \Bitrix\Tasks\Kanban\TaskStageTable;
 use \Bitrix\Tasks\Kanban\TimeLineTable;
 use Bitrix\Tasks\Kanban\ProjectsTable;
 use \Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Provider\Query\TaskQuery;
 use Bitrix\Tasks\Internals\Counter;
 use \Bitrix\Tasks\Internals\Task;
 use \Bitrix\Tasks\Internals\UserOption;
@@ -39,11 +40,10 @@ use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
+use Bitrix\Tasks\Promotion\KanbanFieldSort;
 use Bitrix\Tasks\Promotion\TasksNewCard;
 use Bitrix\Tasks\Promotion\TasksNewChatButton;
-use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Form\ItemForm;
-use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\PushService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
@@ -62,6 +62,12 @@ use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\LogService;
 use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\TimeService;
 use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\CounterService;
 use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\ViewModeType;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Completion\TaskCompletionService;
+use Bitrix\Tasks\V2\Internal\Service\Task\Completion\CheckListCompletionSnapshotService;
+use Bitrix\Tasks\V2\Internal\Service\Task\Completion\CompletionConfig;
+use Bitrix\Tasks\V2\Internal\Access\Service\TaskAccessService;
+use Bitrix\Tasks\V2\Internal\Access\Task\Status\CompletionAccessRule;
 
 use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\V2\Internal\DI\Container;
@@ -72,6 +78,39 @@ use Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand;
 class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
 	private const ORDER_OPTION = 'order_new_task_v2';
+	private const FIELD_SORT_OPTION = 'kanban_field_sort';
+	private const ORDER_FIELD = 'field';
+
+	/**
+	 * The axis the board falls back to: the menu offers it by an item of its own, above the rest.
+	 */
+	private const SORT_FIELD_ACTIVITY = 'ACTIVITY_DATE';
+
+	/**
+	 * Sorting axes of the personal views in menu order: selection key, value type and empty values policy.
+	 */
+	private const SORT_FIELDS = [
+		'ACTIVITY_DATE' => ['select' => 'ACTIVITY_DATE', 'type' => 'datetime', 'emptyLast' => false],
+		'ID' => ['select' => 'ID', 'type' => 'int', 'emptyLast' => false],
+		'TITLE' => ['select' => 'TITLE', 'type' => 'string', 'emptyLast' => false],
+		'DEADLINE' => ['select' => 'DEADLINE', 'type' => 'datetime', 'emptyLast' => true],
+		'ORIGINATOR_NAME' => ['select' => 'CREATED_BY_LAST_NAME', 'type' => 'string', 'emptyLast' => true],
+		'RESPONSIBLE_NAME' => ['select' => 'RESPONSIBLE_LAST_NAME', 'type' => 'string', 'emptyLast' => true],
+		'PRIORITY' => ['select' => 'PRIORITY', 'type' => 'int', 'emptyLast' => false],
+		'MARK' => ['select' => 'MARK', 'type' => 'mark', 'emptyLast' => true],
+		'CREATED_DATE' => ['select' => 'CREATED_DATE', 'type' => 'datetime', 'emptyLast' => false],
+		'START_DATE_PLAN' => ['select' => 'START_DATE_PLAN', 'type' => 'datetime', 'emptyLast' => true],
+		'END_DATE_PLAN' => ['select' => 'END_DATE_PLAN', 'type' => 'datetime', 'emptyLast' => true],
+	];
+
+	/**
+	 * Date axes whose value fillData() has already parsed into a card field.
+	 */
+	private const SORT_DATE_CARD_FIELDS = [
+		'DEADLINE' => 'date_deadline',
+		'CREATED_DATE' => 'date_view',
+	];
+
 	const TASK_TYPE_USER = 'user';
 	const TASK_TYPE_GROUP = 'group';
 
@@ -92,6 +131,8 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 	protected $errors = array();
 	protected $avatarSize = array('width' => 38, 'height' => 38);
 	protected $previewSize = array('width' => 1000, 'height' => 1000);
+	private ?array $activeFieldSort = null;
+	private bool $activeFieldSortLoaded = false;
 	protected AbstractDisplayService $displayService;
 	protected TimeService $timeService;
 	protected TagService $tagsService;
@@ -833,6 +874,11 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			]
 		);
 
+		if (($fieldSort = $this->getActiveFieldSort()))
+		{
+			$this->select[] = self::SORT_FIELDS[$fieldSort['field']]['select'];
+		}
+
 		$this->select = array_unique($this->select);
 
 		return $this->select;
@@ -929,7 +975,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 	 */
 	protected function getOrder()
 	{
-		if ($this->getNewTaskOrder() == 'actual')
+		$fieldSort = $this->getActiveFieldSort();
+
+		if ($fieldSort)
+		{
+			$this->order = static::getFieldOrder($fieldSort['field'], $fieldSort['direction']);
+		}
+		elseif (in_array($this->getNewTaskOrder(), ['actual', self::ORDER_FIELD], true))
 		{
 			$this->order = [
 				'ACTIVITY_DATE' => 'desc',
@@ -947,6 +999,27 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		}
 
 		return $this->order;
+	}
+
+	/**
+	 * Returns selection order for the field sort mode.
+	 * @param string $field Sort axis.
+	 * @param string $direction asc or desc.
+	 * @return array
+	 */
+	protected static function getFieldOrder(string $field, string $direction): array
+	{
+		$sort = self::SORT_FIELDS[$field]['emptyLast']
+			? $direction . ',' . TaskQuery::SORT_MODIFIER_EMPTY_LAST
+			: $direction;
+
+		$order = [$field => $sort];
+		if ($field !== 'ID')
+		{
+			$order['ID'] = 'asc';
+		}
+
+		return $order;
 	}
 
 	/**
@@ -1416,7 +1489,95 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			$data['date_start'] = $data['date_start']->getTimestamp();
 		}
 
+		if (($fieldSort = $this->getActiveFieldSort()))
+		{
+			$data['sort_field'] = $fieldSort['field'];
+			$data['sort_value'] = static::getSortValue($item, $fieldSort['field'], $data);
+		}
+
 		return array_merge_recursive($data, $this->displayService->fill($item, $this->userId));
+	}
+
+	/**
+	 * Comparable value of the sort axis for one task, null when the task has no value.
+	 * A key to compare by, never markup: strings are taken unescaped and case folded,
+	 * because the database orders them by a case insensitive collation.
+	 * @param array $item Task data.
+	 * @param string $field Sort axis.
+	 * @param array $card Card data already built for the task.
+	 * @return int|string|null
+	 */
+	protected static function getSortValue(array $item, string $field, array $card = [])
+	{
+		$config = self::SORT_FIELDS[$field] ?? null;
+		if ($config === null)
+		{
+			return null;
+		}
+
+		$value = $item[$config['select']] ?? null;
+		if ($config['type'] === 'mark')
+		{
+			return self::getMarkSortValues()[(string)$value] ?? null;
+		}
+
+		if ($value === null || $value === '')
+		{
+			return null;
+		}
+
+		switch ($config['type'])
+		{
+			case 'int':
+				return (int)$value;
+
+			case 'datetime':
+				return static::getDateSortValue($field, $value, $card);
+
+			default:
+				return mb_strtolower((string)($item['~' . $config['select']] ?? $value));
+		}
+	}
+
+	/**
+	 * Marks as numbers, in the order the database sorts the stored codes.
+	 * A method and not a class constant: the ajax router instantiates the component before the tasks
+	 * module is included, and PHP evaluates constant expressions of a class right at instantiation,
+	 * so a constant referencing Mark would break every ajax action of the component.
+	 * @return array<string, int>
+	 */
+	private static function getMarkSortValues(): array
+	{
+		return [
+			Mark::NEGATIVE => 1,
+			Mark::POSITIVE => 2,
+		];
+	}
+
+	/**
+	 * @param string $field Sort axis.
+	 * @param mixed $value Task data value of the axis.
+	 * @param array $card Card data already built for the task.
+	 * @return int|null
+	 */
+	protected static function getDateSortValue(string $field, mixed $value, array $card): ?int
+	{
+		$cardField = self::SORT_DATE_CARD_FIELDS[$field] ?? null;
+		$parsed = $cardField === null ? null : ($card[$cardField] ?? null);
+
+		if ($parsed instanceof DateTime)
+		{
+			return $parsed->getTimestamp();
+		}
+
+		if (is_int($parsed))
+		{
+			return $parsed;
+		}
+
+		$timestamp = MakeTimeStamp($value);
+
+		return $timestamp === false ? null : $timestamp;
 	}
 
 	/**
@@ -1460,14 +1621,8 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				// get other data
 				$task = $this->getUsers($task);
 				$task = $this->getNewLog($task);
-				$task = $this->getFiles($task);
-				$task = $this->getCheckList($task);
-				$task = $this->getTags($task);
 				$task = $this->getCounters($task);
-				if ($this->arParams['SPRINT_ID'] > 0)
-				{
-					$task = $this->getScrumData($task);
-				}
+				$task = $this->displayService->fillBatch($task);
 
 				$task = $this->sendEvent('TimelineComponentGetItems', $task);
 
@@ -1757,56 +1912,6 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		return $this->countersService->getCounters($items);
 	}
 
-	private function getScrumData(array $items): array
-	{
-		$itemService = new ItemService();
-		$epicService = new EpicService(\Bitrix\Tasks\Util\User::getId());
-
-		$scrumItems = $itemService->getItemsBySourceIds(array_keys($items));
-
-		$epicIds = [];
-		foreach ($scrumItems as $item)
-		{
-			$items[$item->getSourceId()]['data']['storyPoints'] = $item->getStoryPoints();
-			$items[$item->getSourceId()]['isVisibilitySubtasks'] = $item->getInfo()->isVisibilitySubtasks() ? 'Y' : 'N';
-
-			$epicIds[] = $item->getEpicId();
-		}
-
-		$epicIds = array_filter(array_unique($epicIds));
-
-		$epicsList = [];
-		if ($epicIds)
-		{
-			$queryResult = $epicService->getList(
-				[],
-				['ID' => $epicIds],
-				['ID' => 'ASC'],
-			);
-			if ($queryResult)
-			{
-				while ($data = $queryResult->fetch())
-				{
-					$epic = new EpicForm();
-
-					$epic->fillFromDatabase($data);
-
-					$epicsList[$epic->getId()] = $epic->toArray();
-				}
-			}
-		}
-
-		foreach ($scrumItems as $item)
-		{
-			$items[$item->getSourceId()]['data']['epic'] = array_key_exists($item->getEpicId(), $epicsList)
-				? $epicsList[$item->getEpicId()]
-				: []
-			;
-		}
-
-		return $items;
-	}
-
 	/**
 	 * Exist or not mandatory fields in the task.
 	 * @return boolean
@@ -2078,8 +2183,85 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		}
 		else
 		{
-			return \CUserOptions::getOption('tasks', static::ORDER_OPTION, 'actual');
+			return \CUserOptions::getOption('tasks', self::ORDER_OPTION, 'actual');
 		}
+	}
+
+	/**
+	 * Get personal sort axis and direction.
+	 * @return array|null ['field' => string, 'direction' => string] or null if not set.
+	 */
+	protected function getFieldSort(): ?array
+	{
+		$option = \CUserOptions::getOption('tasks', self::FIELD_SORT_OPTION, null);
+		if (!is_array($option))
+		{
+			return null;
+		}
+
+		return static::prepareFieldSort($option['field'] ?? null, $option['direction'] ?? null);
+	}
+
+	/**
+	 * Get sort axis and direction applied to the selection, null when the field sort mode is off.
+	 * @return array|null
+	 */
+	protected function getActiveFieldSort(): ?array
+	{
+		if (!$this->activeFieldSortLoaded)
+		{
+			$this->activeFieldSort = $this->getNewTaskOrder() === self::ORDER_FIELD
+				? $this->getFieldSort()
+				: null;
+			$this->activeFieldSortLoaded = true;
+		}
+
+		return $this->activeFieldSort;
+	}
+
+	/**
+	 * Validate sort axis and direction, null if any of them is not allowed.
+	 * @param mixed $field Sort axis.
+	 * @param mixed $direction Sort direction.
+	 * @return array|null
+	 */
+	protected static function prepareFieldSort($field, $direction): ?array
+	{
+		if (!is_string($field) || !isset(self::SORT_FIELDS[$field]))
+		{
+			return null;
+		}
+
+		$direction = is_string($direction) ? mb_strtolower($direction) : '';
+		if (!in_array($direction, ['asc', 'desc'], true))
+		{
+			return null;
+		}
+
+		return [
+			'field' => $field,
+			'direction' => $direction
+		];
+	}
+
+	/**
+	 * Sort axes in menu order, without the activity one: the menu offers it by an item of its own.
+	 * @return string[]
+	 */
+	public static function getSortFields(): array
+	{
+		return array_values(array_diff(array_keys(self::SORT_FIELDS), [self::SORT_FIELD_ACTIVITY]));
+	}
+
+	/**
+	 * Check that the field sort is offered here: the same conditions setNewTaskOrderAction() saves it under.
+	 * @return bool
+	 */
+	private function canSortByField(): bool
+	{
+		$isGroupOrder = (int)$this->arParams['GROUP_ID'] > 0 && $this->arParams['PERSONAL'] !== 'Y';
+
+		return !$isGroupOrder && $this->canSortTasks();
 	}
 
 	/**
@@ -2097,6 +2279,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		$this->arResult['ACCESS_CREATE_PERMS'] = $this->canCreateTasks();
 		$this->arResult['ACCESS_SORT_PERMS'] = $this->canSortTasks();
 		$this->arResult['NEW_TASKS_ORDER'] = $this->getNewTaskOrder();
+		$fieldSort = $this->getActiveFieldSort();
+		$this->arResult['SORT_FIELD'] = $fieldSort['field'] ?? null;
+		$this->arResult['SORT_DIRECTION'] = $fieldSort['direction'] ?? null;
+		$this->arResult['SORT_FIELDS'] = static::getSortFields();
+		$this->arResult['CAN_SORT_BY_FIELD'] = $this->canSortByField();
+		// the direction outlives the mode, so the menu can offer it again when an axis is picked
+		$this->arResult['SAVED_SORT_DIRECTION'] = $this->getFieldSort()['direction'] ?? null;
+		$this->arResult['SHOW_SORT_ONBOARDING'] = $this->shouldShowSortOnboarding();
 		$this->arResult['ITS_MY_TASKS'] = $this->itsMyTasks();
 		$this->arResult['TOURS'] = $this->processTours();
 		$this->arResult['ADMINS'] = [];
@@ -2130,6 +2320,17 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			$this->arResult["COLLAB_NAME"] = $group["NAME"] ?? '';
 			$this->arResult["COLLAB_IMAGE"] = $group["IMAGE"] ?? '';
 		}
+	}
+
+	private function shouldShowSortOnboarding(): bool
+	{
+		if ($this->arParams['PERSONAL'] !== 'Y' && $this->arParams['TIMELINE_MODE'] !== 'Y')
+		{
+			return false;
+		}
+
+		// the promo is shown once for good, so it must not burn where the sort menu is closed
+		return $this->canSortTasks() && (new KanbanFieldSort())->shouldShow($this->userId);
 	}
 
 	private function processTours(): array
@@ -2673,7 +2874,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 	 * Move item from one stage to another.
 	 * @return array
 	 */
-	public function moveTaskAction(): array
+	public function moveTaskAction(bool $completeWithChecklist = false): array
 	{
 		if (!$this->checkBeforeAction())
 		{
@@ -2686,6 +2887,16 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		{
 			$taskId = $this->request('taskId');
 		}
+		if (
+			$completeWithChecklist
+			&& (!$taskId || !$columnId || !$this->canSortTasks())
+		)
+		{
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+			return [];
+		}
+
 		if ($taskId && $columnId && $this->canSortTasks())
 		{
 			$groupAction = $this->request('groupAction') === 'Y';
@@ -2703,6 +2914,21 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					);
 					foreach ($rows as $data)
 					{
+						if (
+							(int)$data['columnId'] !== (int)$columnId
+							&& (int)$this->arParams['SPRINT_ID'] > 0
+							&& $this->arParams['PERSONAL'] !== 'Y'
+							&& $this->arParams['TIMELINE_MODE'] !== 'Y'
+							&& $stages[$columnId]['SYSTEM_TYPE'] !== StagesTable::SYS_TYPE_FINISH
+							&& !empty($data['data']['completed'])
+							&& !$this->canRenewTaskForStageMove((int)$data['id'])
+						)
+						{
+							$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+							return [];
+						}
+
 						$beforeItemId = $this->request('beforeItemId');
 						$afterItemId = $this->request('afterItemId');
 						if ($beforeItemId || $afterItemId)
@@ -2723,6 +2949,11 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 						{
 							continue;
 						}
+
+						$isFinishingScrumTask = (
+							$this->arParams['SPRINT_ID'] > 0
+							&& $stages[$columnId]['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH
+						);
 
 						// update some fields, if fields is exists
 						if (isset($stages[$columnId]['TO_UPDATE']))
@@ -2783,30 +3014,55 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 									'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
 								)
 							));
+							$taskStageRelations = [];
 							while ($rowStg = $resStg->fetch())
 							{
-								(new MoveTaskCommand(
-									relationId: (int)$rowStg['ID'],
-									stageId: (int)$columnId
-								))->run();
+								$taskStageRelations[] = $rowStg;
+							}
 
+							if ($completeWithChecklist && $isFinishingScrumTask)
+							{
 								if (
-									$this->arParams['PERSONAL'] === 'Y'
-									&& $columnId !== $rowStg['STAGE_ID']
+									!$this->moveScrumTaskStageRelationsAndComplete(
+										(int)$taskId,
+										$taskStageRelations,
+										(int)$columnId,
+									)
 								)
 								{
-									Listener::onPlanTaskStageUpdate(
-										$this->arParams['STAGES_ENTITY_ID'],
-										$rowStg['TASK_ID'],
-										$columnId
+									return [];
+								}
+							}
+							else
+							{
+								foreach ($taskStageRelations as $rowStg)
+								{
+									$this->moveTaskStageRelation(
+										(int)$rowStg['ID'],
+										(int)$columnId,
 									);
+
+									if (
+										$this->arParams['PERSONAL'] === 'Y'
+										&& $columnId !== $rowStg['STAGE_ID']
+									)
+									{
+										Listener::onPlanTaskStageUpdate(
+											$this->arParams['STAGES_ENTITY_ID'],
+											$rowStg['TASK_ID'],
+											$columnId
+										);
+									}
 								}
 							}
 							if (StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT)
 							{
 								if ($stages[$columnId]['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
 								{
-									$this->completeTask($taskId);
+									if (!$completeWithChecklist)
+									{
+										$this->completeTask($taskId);
+									}
 								}
 								else
 								{
@@ -2894,29 +3150,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			return [];
 		}
 
-		$rows = $this->getData(['ID' => $taskId], true);
-		$taskData = array_shift($rows);
-
-		$taskStageTable = TaskStageTable::getList([
-			'filter' => [
-				'TASK_ID' => $taskData['id'],
-				'=STAGE.ENTITY_TYPE' => StagesTable::getWorkMode(),
-				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
-			]
-		]);
-
-		while ($taskStage = $taskStageTable->fetch())
+		if ($stages[$finishColumnId]['SYSTEM_TYPE'] !== StagesTable::SYS_TYPE_FINISH)
 		{
-			(new MoveTaskCommand(
-				relationId: (int)$taskStage['ID'],
-				stageId: (int)$finishColumnId
-			))->run();
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+			return [];
 		}
 
-		$this->completeTask($taskId);
-
-		// bizproc set with mode to another value...
-		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+		$this->moveParentTaskStageRelationsAndChangeStatus($taskId, (int)$finishColumnId, true);
 
 		return [];
 	}
@@ -2938,29 +3179,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			return [];
 		}
 
-		$rows = $this->getData(['ID' => $taskId], true);
-		$taskData = array_shift($rows);
-
-		$taskStageTable = TaskStageTable::getList([
-			'filter' => [
-				'TASK_ID' => $taskData['id'],
-				'=STAGE.ENTITY_TYPE' => StagesTable::getWorkMode(),
-				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID'],
-			]
-		]);
-
-		while ($taskStage = $taskStageTable->fetch())
+		if ($stages[$newColumnId]['SYSTEM_TYPE'] !== StagesTable::SYS_TYPE_NEW)
 		{
-			(new MoveTaskCommand(
-				relationId: (int)$taskStage['ID'],
-				stageId: (int)$newColumnId
-			))->run();
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+			return [];
 		}
 
-		$this->renewTask($taskId);
-
-		// bizproc set with mode to another value...
-		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+		$this->moveParentTaskStageRelationsAndChangeStatus($taskId, (int)$newColumnId, false);
 
 		return [];
 	}
@@ -3511,7 +3737,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 	}
 
 	/**
-	 * Set order for new task (desc, asc).
+	 * Set order for new task (desc, asc, actual) or sort by field (field).
 	 * @return array
 	 */
 	public function setNewTaskOrderAction(): array
@@ -3523,27 +3749,44 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 
 		$order = $this->request('order');
 		$groupId = $this->arParams['GROUP_ID'];
+		$isGroupOrder = $groupId > 0 && $this->arParams['PERSONAL'] !== 'Y';
 
-		if (
-			$order &&
-			in_array($order, ['asc', 'desc', 'actual']) &&
-			$this->canSortTasks()
-		)
+		if ($order && $this->canSortTasks())
 		{
-			if ($groupId > 0 && $this->arParams['PERSONAL'] !== 'Y')
+			if ($order === self::ORDER_FIELD)
 			{
-				ProjectsTable::set($groupId, array(
-					'ORDER_NEW_TASK' => $order
-				));
+				$fieldSort = $isGroupOrder
+					? null
+					: static::prepareFieldSort($this->request('field'), $this->request('direction'));
+
+				if ($fieldSort)
+				{
+					\CUserOptions::setOption('tasks', self::FIELD_SORT_OPTION, $fieldSort);
+					\CUserOptions::setOption('tasks', self::ORDER_OPTION, $order);
+				}
 			}
-			else
+			elseif (in_array($order, ['asc', 'desc', 'actual']))
 			{
-				\CUserOptions::setOption('tasks', static::ORDER_OPTION, $order);
+				if ($isGroupOrder)
+				{
+					ProjectsTable::set($groupId, array(
+						'ORDER_NEW_TASK' => $order
+					));
+				}
+				else
+				{
+					\CUserOptions::setOption('tasks', self::ORDER_OPTION, $order);
+				}
 			}
 		}
 
+		$newTaskOrder = $this->getNewTaskOrder();
+		$fieldSort = $newTaskOrder === self::ORDER_FIELD ? $this->getFieldSort() : null;
+
 		return array(
-			'newTaskOrder' => $this->getNewTaskOrder()
+			'newTaskOrder' => $newTaskOrder,
+			'sortField' => $fieldSort['field'] ?? null,
+			'sortDirection' => $fieldSort['direction'] ?? null,
 		);
 	}
 
@@ -3683,7 +3926,10 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				}
 				else if ($subAction === 'addAuditor')
 				{
-					\CTasks::addAuditors($taskId, [$userId]);
+					if ($task->isActionAllowed(CTaskItem::ACTION_EDIT))
+					{
+						\CTasks::addAuditors($taskId, [$userId]);
+					}
 				}
 			}
 		}
@@ -4080,6 +4326,487 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		}
 	}
 
+	private function moveParentTaskStageRelationsAndChangeStatus(int $taskId, int $stageId, bool $complete): void
+	{
+		$movedRelations = [];
+		$needsRollback = false;
+		$failure = null;
+
+		try
+		{
+			if (!$this->canPerformParentStageAction($taskId, $complete))
+			{
+				return;
+			}
+
+			$rows = $this->getData(['ID' => $taskId], true);
+			$taskData = array_shift($rows);
+			if (!is_array($taskData) || !isset($taskData['id']))
+			{
+				$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+				return;
+			}
+
+			$taskStageTable = TaskStageTable::getList([
+				'select' => ['ID', 'TASK_ID', 'STAGE_ID'],
+				'filter' => [
+					'=TASK_ID' => (int)$taskData['id'],
+					'=STAGE.ENTITY_TYPE' => StagesTable::getWorkMode(),
+					'=STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID'],
+				],
+			]);
+			$relations = [];
+			while ($relation = $taskStageTable->fetch())
+			{
+				$relations[] = $relation;
+			}
+
+			foreach ($relations as $relation)
+			{
+				if ((int)$relation['STAGE_ID'] === $stageId)
+				{
+					continue;
+				}
+
+				$movedRelations[] = [
+					'relation' => $relation,
+					'targetStageId' => $stageId,
+					'targetRelationId' => 0,
+				];
+				$index = array_key_last($movedRelations);
+				try
+				{
+					$moveResult = $this->moveParentTaskStageRelation((int)$relation['ID'], $stageId);
+				}
+				finally
+				{
+					$targetRelation = TaskStageTable::getList([
+						'select' => ['ID'],
+						'filter' => [
+							'=TASK_ID' => (int)$relation['TASK_ID'],
+							'=STAGE_ID' => $stageId,
+						],
+						'limit' => 1,
+					])->fetch();
+					$movedRelations[$index]['targetRelationId'] = is_array($targetRelation)
+						? (int)$targetRelation['ID']
+						: 0;
+				}
+
+				if (!$moveResult->isSuccess())
+				{
+					$this->copyError($moveResult->getErrors());
+					if (!$moveResult->getErrors())
+					{
+						$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+					}
+					$needsRollback = true;
+
+					return;
+				}
+			}
+
+			$statusUpdated = $complete
+				? $this->completeParentTaskAndCheckStatus($taskId)
+				: $this->renewParentTaskAndCheckStatus($taskId);
+			if (!$statusUpdated)
+			{
+				if (!$this->getErrors())
+				{
+					$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+				}
+				$needsRollback = true;
+			}
+		}
+		catch (\Throwable $exception)
+		{
+			$failure = $exception;
+			$needsRollback = true;
+		}
+		finally
+		{
+			try
+			{
+				if ($needsRollback)
+				{
+					try
+					{
+						$this->rollbackParentTaskStageRelations($movedRelations);
+					}
+					catch (\Throwable $rollbackException)
+					{
+						if ($failure === null)
+						{
+							throw $rollbackException;
+						}
+					}
+				}
+			}
+			finally
+			{
+				StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+			}
+		}
+
+		if ($failure !== null)
+		{
+			throw $failure;
+		}
+	}
+
+	private function canPerformParentStageAction(int $taskId, bool $complete): bool
+	{
+		$status = $this->getParentTaskStatus($taskId);
+		if ($status === null)
+		{
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+			return false;
+		}
+
+		$statusWillChange = $complete
+			? !in_array($status, Status::getCompletedStatuses(), true)
+			: $status === Status::COMPLETED;
+		if (!$statusWillChange)
+		{
+			if ($this->canSortTasks())
+			{
+				return true;
+			}
+
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+			return false;
+		}
+
+		if (!$complete)
+		{
+			return $this->canRenewParentTask($taskId);
+		}
+
+		return $this->canCompleteParentTask($taskId);
+	}
+
+	protected function moveParentTaskStageRelation(int $relationId, int $stageId): \Bitrix\Main\Result
+	{
+		return (new MoveTaskCommand(relationId: $relationId, stageId: $stageId))->run();
+	}
+
+	private function rollbackParentTaskStageRelations(array $movedRelations): void
+	{
+		foreach (array_reverse($movedRelations) as $movedRelation)
+		{
+			$relation = $movedRelation['relation'];
+			$relationId = (int)$relation['ID'];
+			$taskId = (int)$relation['TASK_ID'];
+			$sourceStageId = (int)$relation['STAGE_ID'];
+			$targetStageId = (int)$movedRelation['targetStageId'];
+			$stored = TaskStageTable::getByPrimary($relationId, ['select' => ['STAGE_ID']])->fetch();
+
+			if (is_array($stored))
+			{
+				$this->restoreMovedParentTaskStageRelationIfCurrent(
+					$relationId,
+					$taskId,
+					$sourceStageId,
+					$targetStageId,
+				);
+			}
+			else
+			{
+				$targetRelationId = (int)$movedRelation['targetRelationId'];
+				if ($targetRelationId <= 0)
+				{
+					throw new \RuntimeException('Parent stage relation could not be restored');
+				}
+				$this->restoreDeletedParentTaskStageRelationIfTargetCurrent(
+					$targetRelationId,
+					$taskId,
+					$sourceStageId,
+					$targetStageId,
+				);
+			}
+		}
+	}
+
+	protected function restoreMovedParentTaskStageRelationIfCurrent(
+		int $relationId,
+		int $taskId,
+		int $sourceStageId,
+		int $targetStageId,
+	): void
+	{
+		Application::getConnection()->queryExecute((new \Bitrix\Main\DB\SqlExpression(
+			'UPDATE ?# SET STAGE_ID = ?i WHERE ID = ?i AND TASK_ID = ?i AND STAGE_ID = ?i',
+			TaskStageTable::getTableName(),
+			$sourceStageId,
+			$relationId,
+			$taskId,
+			$targetStageId,
+		))->compile());
+	}
+
+	protected function restoreDeletedParentTaskStageRelationIfTargetCurrent(
+		int $targetRelationId,
+		int $taskId,
+		int $sourceStageId,
+		int $targetStageId,
+	): void
+	{
+		try
+		{
+			Application::getConnection()->queryExecute((new \Bitrix\Main\DB\SqlExpression(
+				'INSERT INTO ?# (TASK_ID, STAGE_ID) SELECT TASK_ID, ?i FROM ?# '
+				. 'WHERE ID = ?i AND TASK_ID = ?i AND STAGE_ID = ?i FOR UPDATE',
+				TaskStageTable::getTableName(),
+				$sourceStageId,
+				TaskStageTable::getTableName(),
+				$targetRelationId,
+				$taskId,
+				$targetStageId,
+			))->compile());
+		}
+		catch (\Bitrix\Main\DB\DuplicateEntryException $exception)
+		{
+			$sourceRelation = TaskStageTable::getList([
+				'select' => ['ID'],
+				'filter' => ['=TASK_ID' => $taskId, '=STAGE_ID' => $sourceStageId],
+				'limit' => 1,
+			])->fetch();
+			if (!is_array($sourceRelation))
+			{
+				throw $exception;
+			}
+		}
+	}
+
+	private function getParentTaskStatus(int $taskId): ?int
+	{
+		$row = TaskTable::getByPrimary($taskId, ['select' => ['STATUS']])->fetch();
+
+		return is_array($row) ? (int)$row['STATUS'] : null;
+	}
+
+	private function completeParentTaskAndCheckStatus(int $taskId): bool
+	{
+		$this->completeParentTask($taskId);
+
+		return in_array($this->getParentTaskStatus($taskId), Status::getCompletedStatuses(), true);
+	}
+
+	private function renewParentTaskAndCheckStatus(int $taskId): bool
+	{
+		$previousStatus = $this->getParentTaskStatus($taskId);
+		if ($previousStatus === null)
+		{
+			return false;
+		}
+
+		$this->renewTask($taskId);
+		if ($previousStatus !== Status::COMPLETED)
+		{
+			return true;
+		}
+
+		$status = $this->getParentTaskStatus($taskId);
+
+		return $status !== null && !in_array($status, Status::getCompletedStatuses(), true);
+	}
+
+	private function canCompleteParentTask(int $taskId): bool
+	{
+		try
+		{
+			if ($this->getTaskCompletionService()->hasFinalStatus($taskId))
+			{
+				return true;
+			}
+
+			$task = CTaskItem::getInstance($taskId, $this->userId);
+			if (!$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE_RESULT))
+			{
+				$this->addError('TASKS_KANBAN_RESULT_REQUIRED');
+
+				return false;
+			}
+
+			if (!$this->getTaskCompletionService()->canCompleteWithChecklist($taskId, $this->userId))
+			{
+				$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+				return false;
+			}
+		}
+		catch (Exception $exception)
+		{
+			$this->addError($exception->getMessage());
+
+			return false;
+		}
+
+		return true;
+	}
+
+	private function completeParentTask(int $taskId): void
+	{
+		try
+		{
+			if ($this->getTaskCompletionService()->hasFinalStatus($taskId))
+			{
+				return;
+			}
+		}
+		catch (Exception $exception)
+		{
+			$this->addError($exception->getMessage());
+
+			return;
+		}
+
+		$this->completeTask($taskId);
+	}
+
+	protected function completeTaskWithChecklist(int $taskId): bool
+	{
+		$result = $this->getTaskCompletionService()->complete(
+			$taskId,
+			new UpdateConfig(
+				userId: $this->userId,
+				useConsistency: true,
+			),
+		);
+		if (!$result->isSuccess())
+		{
+			$this->copyError($result->getErrors());
+
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function moveScrumTaskStageRelationsAndComplete(
+		int $taskId,
+		array $taskStageRelations,
+		int $stageId,
+	): bool
+	{
+		if ($taskStageRelations === [])
+		{
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+
+			return false;
+		}
+
+		$movedStageRelations = [];
+		try
+		{
+			foreach ($taskStageRelations as $taskStageRelation)
+			{
+				$moveResult = $this->moveTaskStageRelation(
+					(int)$taskStageRelation['ID'],
+					$stageId,
+				);
+				if (!$moveResult->isSuccess())
+				{
+					$this->copyError($moveResult->getErrors());
+					$this->rollbackTaskStageRelations($movedStageRelations);
+
+					return false;
+				}
+
+				$movedStageRelations[] = $taskStageRelation;
+			}
+
+			if ($this->completeTaskWithChecklist($taskId))
+			{
+				return true;
+			}
+		}
+		catch (\Throwable $operationException)
+		{
+			$this->rollbackTaskStageRelations($movedStageRelations);
+
+			throw $operationException;
+		}
+
+		$this->rollbackTaskStageRelations($movedStageRelations);
+
+		return false;
+	}
+
+	protected function rollbackTaskStageRelations(array $taskStageRelations): void
+	{
+		foreach (array_reverse($taskStageRelations) as $taskStageRelation)
+		{
+			try
+			{
+				$rollbackResult = $this->moveTaskStageRelation(
+					(int)$taskStageRelation['ID'],
+					(int)$taskStageRelation['STAGE_ID'],
+				);
+				if (!$rollbackResult->isSuccess())
+				{
+					$this->copyError($rollbackResult->getErrors());
+				}
+			}
+			catch (\Throwable)
+			{
+				$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+			}
+		}
+	}
+
+	protected function moveTaskStageRelation(int $relationId, int $stageId): \Bitrix\Main\Result
+	{
+		return (new MoveTaskCommand(
+			relationId: $relationId,
+			stageId: $stageId,
+		))->run();
+	}
+
+	protected function getTaskCompletionService(): TaskCompletionService
+	{
+		return Container::getInstance()->get(TaskCompletionService::class);
+	}
+
+	private function canRenewParentTask(int $taskId): bool
+	{
+		try
+		{
+			$task = CTaskItem::getInstance($taskId, $this->userId);
+			if (
+				$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
+				|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+			)
+			{
+				return true;
+			}
+
+			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+		}
+		catch (Exception $exception)
+		{
+			$this->addError($exception->getMessage());
+		}
+
+		return false;
+	}
+
+	private function canRenewTaskForStageMove(int $taskId): bool
+	{
+		try
+		{
+			return CTaskItem::getInstance($taskId, $this->userId)
+				->checkAccess(ActionDictionary::ACTION_TASK_RENEW);
+		}
+		catch (Exception)
+		{
+			return false;
+		}
+	}
+
 	private function renewTask(int $taskId): void
 	{
 		try
@@ -4165,17 +4892,221 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 	}
 
 	/**
-	 * Complete the task.
-	 * @return array
+	 * Prepare completion without changing the task or its checklist.
 	 */
-	public function completeTaskAction(): array
+	public function prepareMyPlanTaskCompletionAction(): array
 	{
 		if (!$this->checkBeforeAction())
 		{
 			return [];
 		}
 
-		return $this->actionsSimilar('complete');
+		$request = $this->getMyPlanCompletionRequest();
+		$taskId = $this->getMyPlanCompletionTaskId($request);
+		if ($taskId === null)
+		{
+			return [];
+		}
+
+		try
+		{
+			$access = $this->getTaskAccessService();
+			if (!$access->can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+			{
+				$this->copyError([$access->getUserError() ?? new Error('Access denied', 'ACCESS_DENIED')]);
+
+				return [];
+			}
+
+			if ($this->getTaskCompletionService()->hasFinalStatus($taskId))
+			{
+				return ['isFinal' => true, 'snapshot' => null];
+			}
+
+			$resultRequired = false;
+			$canComplete = CompletionAccessRule::isSatisfiedBy(
+				function (string $action) use ($access, $taskId, &$resultRequired): bool {
+					$allowed = $access->can($this->userId, $action, $taskId);
+					$resultRequired = !$allowed && $action === ActionDictionary::ACTION_TASK_COMPLETE_RESULT;
+
+					return $allowed;
+				},
+			);
+			if (!$canComplete)
+			{
+				if ($resultRequired)
+				{
+					$this->addError('TASKS_KANBAN_RESULT_REQUIRED');
+				}
+				else
+				{
+					$this->copyError([$access->getUserError() ?? new Error('Access denied', 'ACCESS_DENIED')]);
+				}
+
+				return [];
+			}
+
+			return [
+				'isFinal' => false,
+				'snapshot' => $this->getCheckListCompletionSnapshotService()->getByTaskId($taskId),
+			];
+		}
+		catch (\Throwable $exception)
+		{
+			$this->copyError([new Error($exception->getMessage(), $exception->getCode())]);
+
+			return [];
+		}
+	}
+
+	public function completeTaskAction(bool $completeChecklist = false): array
+	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
+		if (!$completeChecklist)
+		{
+			return $this->actionsSimilar('complete');
+		}
+
+		$request = $this->getMyPlanCompletionRequest();
+
+		$taskId = $this->getMyPlanCompletionTaskId($request);
+		if ($taskId === null)
+		{
+			return [];
+		}
+
+		try
+		{
+			$result = $this->getTaskCompletionService()->complete(
+				taskId: $taskId,
+				config: new UpdateConfig(userId: $this->userId, useConsistency: true),
+				withCheckList: true,
+				completionConfig: new CompletionConfig(
+					completeCheckListForFinalTask: false,
+					useBatchCheckListCompletion: false,
+				),
+			);
+			if (!$result->isSuccess())
+			{
+				$this->copyError($result->getErrors());
+
+				return [];
+			}
+		}
+		catch (\Throwable $exception)
+		{
+			$this->copyError([new Error($exception->getMessage(), $exception->getCode())]);
+
+			return [];
+		}
+
+		return $this->getAcceptedMyPlanCompletionResponse($taskId, $request);
+	}
+
+	public function approveMyPlanTaskAction(): array
+	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
+		$request = $this->getMyPlanCompletionRequest();
+		$taskId = $this->getMyPlanCompletionTaskId($request);
+		if ($taskId === null)
+		{
+			return [];
+		}
+
+		try
+		{
+			$result = $this->getTaskCompletionService()->approve(
+				$taskId,
+				new UpdateConfig(userId: $this->userId, useConsistency: true),
+			);
+			if (!$result->isSuccess())
+			{
+				$this->copyError($result->getErrors());
+
+				return [];
+			}
+		}
+		catch (\Throwable $exception)
+		{
+			$this->copyError([new Error($exception->getMessage(), $exception->getCode())]);
+
+			return [];
+		}
+
+		return $this->getAcceptedMyPlanCompletionResponse($taskId, $request);
+	}
+
+	private function getAcceptedMyPlanCompletionResponse(int $taskId, array $request): array
+	{
+		$errorsBeforeRead = $this->errors;
+		try
+		{
+			$item = $this->getRawData($taskId, $request['columnId'] ?? false) ?: null;
+		}
+		catch (\Throwable)
+		{
+			$item = null;
+		}
+		$this->errors = $errorsBeforeRead;
+
+		return ['operationAccepted' => true, 'item' => $item];
+	}
+
+	protected function getMyPlanCompletionRequest(): array
+	{
+		$request = Application::getInstance()->getContext()->getRequest();
+
+		return $request->getJsonList()->toArray() + $request->toArray();
+	}
+
+	private function getMyPlanCompletionTaskId(array $request): ?int
+	{
+		$taskId = $request['taskId'] ?? null;
+		$validId = (is_int($taskId) || (is_string($taskId) && preg_match('/^[0-9]+$/D', $taskId) === 1))
+			&& (int)$taskId > 0;
+		$groupAction = $request['groupAction'] ?? null;
+		$groupMode = $request['groupMode'] ?? null;
+		$inactiveFlags = [null, false, 0, '', '0', 'N'];
+		if (
+			!$validId
+			|| ($this->arParams['PERSONAL'] ?? null) !== 'Y'
+			|| ($this->arParams['TIMELINE_MODE'] ?? null) === 'Y'
+			|| !in_array($groupAction, $inactiveFlags, true)
+			|| !in_array($groupMode, $inactiveFlags, true)
+		)
+		{
+			$this->addInvalidMyPlanCompletionContextError();
+
+			return null;
+		}
+
+		return (int)$taskId;
+	}
+
+	private function addInvalidMyPlanCompletionContextError(): void
+	{
+		$this->errors[] = new Error(
+			Loc::getMessage('TASK_LIST_TASK_ACTION_DENIED'),
+			'TASKS_KANBAN_INVALID_COMPLETION_CONTEXT',
+		);
+	}
+
+	protected function getTaskAccessService(): TaskAccessService
+	{
+		return Container::getInstance()->getTaskAccessService();
+	}
+
+	protected function getCheckListCompletionSnapshotService(): CheckListCompletionSnapshotService
+	{
+		return Container::getInstance()->get(CheckListCompletionSnapshotService::class);
 	}
 
 	/**

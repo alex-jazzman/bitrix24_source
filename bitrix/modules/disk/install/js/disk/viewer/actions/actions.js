@@ -35,6 +35,8 @@
 	{
 		additionalParams = additionalParams || {};
 
+		const uls = params.uls || item.uls || item.sourceNode?.dataset?.uls;
+
 		if (BX.Disk.Viewer.Actions.checkFirstRun())
 		{
 			if (additionalParams.modalWindow)
@@ -63,6 +65,7 @@
 			serviceCode: BX.Disk.getDocumentService(),
 			modalWindow: additionalParams.modalWindow,
 			checkPromoBoost: additionalParams.checkPromoBoost || false,
+			uls,
 		};
 
 		BX.Disk.Viewer.Actions.runActionEdit(paramsToEdit);
@@ -156,6 +159,7 @@
 				serviceCode: params.serviceCode,
 				modalWindow: params.modalWindow,
 				checkPromoBoost: params.checkPromoBoost,
+				uls: params.uls,
 				onAfterSave: function(response) {
 					if (response.status === 'success' && BX.getClass('BX.UI.Viewer.Instance'))
 					{
@@ -180,6 +184,19 @@
 	{
 		var fileId = params.objectId;
 
+		const request = {
+			data: {
+				fileId,
+			},
+		};
+
+		if (BX.type.isStringFilled(params.uls))
+		{
+			request.getParameters = {
+				_uls: params.uls,
+			};
+		}
+
 		if (BX.SidePanel.Instance.isOpen() && BX.SidePanel.Instance.getTopSlider().getUrl() === "widget:file-props-" + fileId)
 		{
 			BX.SidePanel.Instance.getTopSlider().close();
@@ -191,9 +208,7 @@
 			cacheable: false,
 			contentCallback: function (slider) {
 				var promise = new BX.Promise();
-				BX.ajax.runAction('disk.file.showProperties', {data: {
-						fileId: fileId
-					}}).then(function(response){
+				BX.ajax.runAction('disk.file.showProperties', request).then(function(response){
 					slider.getData().set("configurationFormContent", response.data.html);
 					promise.fulfill(response.data);
 				});
@@ -213,6 +228,10 @@
 
 	BX.Disk.Viewer.Actions.runActionCopyToMe = function(item, params)
 	{
+		params = params || {};
+
+		const uls = params.uls || item.uls || item.sourceNode?.dataset?.uls;
+
 		BX.Disk.showActionModal({
 			html: BX.message('DISK_VIEWER_DESCR_PROCESS_SAVE_FILE_TO_OWN_FILES').replace('#NAME#', '<a href="#" class="bx-viewer-file-link">' + item.title +'</a>'),
 			showLoaderIcon: true,
@@ -231,12 +250,21 @@
 		}
 		else if(params.objectId)
 		{
-			promise = BX.ajax.runAction('disk.api.file.copyTome', {
+			const request = {
 				analyticsLabel: 'folder.list.copyTome',
 				data: {
 					fileId: params.objectId
 				}
-			});
+			};
+
+			if (BX.type.isStringFilled(uls))
+			{
+				request.getParameters = {
+					_uls: uls,
+				};
+			}
+
+			promise = BX.ajax.runAction('disk.api.file.copyTome', request);
 		}
 
 		if(promise)

@@ -6,7 +6,7 @@ import StringControl from './properties/string';
 import AddressControl from './properties/address';
 import CheckboxService from './services/checkbox';
 import DropdownService from './services/dropdown';
-import Hint from 'salescenter.component.stage-block.hint';
+import { Popup } from 'salescenter.component.stage-block.hint';
 import {Tag, Text} from 'main.core';
 import {Loc} from 'main.core';
 import 'currency';
@@ -15,7 +15,7 @@ import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import './css/deliveryselector.css';
 
-export default {
+const DeliverySelector = {
 	components: {
 		/**
 		 * Properties Control Types
@@ -461,7 +461,7 @@ export default {
 		},
 		onRestrictionsHintShow(e, profile)
 		{
-			this.restrictionsHintPopup = new Hint.Popup();
+			this.restrictionsHintPopup = new Popup();
 			this.restrictionsHintPopup.show(e.target, this.buildRestrictionsNode(profile));
 
 		},
@@ -882,7 +882,11 @@ export default {
 		},
 	},
 	template: `
-		<div class="salescenter-delivery" :class="{'salescenter-delivery--disabled': isSelectorDisabled()}">
+		<div
+			class="salescenter-delivery"
+			:class="{'salescenter-delivery--disabled': isSelectorDisabled()}"
+			data-testid="salescenter-delivery-selector"
+		>
 			<div class="salescenter-delivery-header">
 				<div class="salescenter-delivery-car-title--sm">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD}}</div>
 				<div class="salescenter-delivery-method" ref="delivery-methods">
@@ -894,6 +898,7 @@ export default {
 							'salescenter-delivery-method-item--selected': isParentDeliveryServiceSelected(deliveryService)
 						}"
 						:data-role="isParentDeliveryServiceSelected(deliveryService) ? 'ui-ears-active' : ''"
+						:data-testid="'salescenter-delivery-selector-method-' + deliveryService.id"
 					>
 						<div class="salescenter-delivery-method-image">
 							<img v-if="deliveryService.logo" :src="deliveryService.logo.src">
@@ -905,7 +910,11 @@ export default {
 							<div class="salescenter-delivery-method-name">{{deliveryService.name}}</div>
 						</div>
 					</div>
-					<div @click="onAddMoreClicked" class="salescenter-delivery-method-item salescenter-delivery-method-item--add">
+					<div
+						@click="onAddMoreClicked"
+						class="salescenter-delivery-method-item salescenter-delivery-method-item--add"
+						data-testid="salescenter-delivery-selector-add-more"
+					>
 						<div class="salescenter-delivery-method-image-more"></div>
 						<div class="salescenter-delivery-method-info">
 							<div class="salescenter-delivery-method-name">
@@ -1086,3 +1095,5 @@ export default {
 		</div>
 	`
 };
+
+export { DeliverySelector };

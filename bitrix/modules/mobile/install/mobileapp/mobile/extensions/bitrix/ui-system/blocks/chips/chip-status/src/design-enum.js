@@ -29,6 +29,7 @@ jn.define('ui-system/blocks/chips/chip-status/src/design-enum', (require, export
 			},
 			[ChipStatusMode.WHITE_BG]: {
 				color: Color.accentMainPrimary,
+				backgroundColor: Color.bgContentPrimary.toHex(),
 			},
 		});
 

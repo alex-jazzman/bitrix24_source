@@ -1,0 +1,22 @@
+<?php
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_AUTOMATION_MARK"] = "Sent by automation engine";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_AUTHOR_NOT_ALLOWED"] = "Only active user can be selected as a send-as user.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_AUTHOR_NOT_FOUND"] = "Post send-as user was not found.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_CHANNEL_NOT_FOUND"] = "Channel was not found, or the selected chat is not a channel.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_EMPTY_CONTENT"] = "Post text or image attachments are required.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_EMPTY_PROPERTY"] = "Field \"#PROPERTY#\" is required.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_FILES_PARTIALLY_ATTACHED"] = "Not all files could be atteched.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_FILE_UPLOAD_FAILED"] = "Could not upload files to the channel.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_HR_UNAVAILABLE"] = "Could not verify the selected send-as user because the \"Company structure\" module is not installed.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_NO_SEND_RIGHT"] = "The send-as user cannot post in this channel.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_RESULT_ENCODE_FAILED"] = "Post was published, but the result could not be passed over to the next nodes.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_SEND_FAILED"] = "Could not publist post.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_TEXT_TOO_LONG"] = "Post text must not exceed #LIMIT# characters.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_TOO_MANY_FILES"] = "Up to #LIMIT# file attachments are supported.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_ERROR_TOO_MANY_PARTS"] = "Post text cannot be split into more than #LIMIT# parts.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_FIELD_AUTHOR"] = "Send as user";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_FIELD_CHANNEL"] = "Channel";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_FIELD_FILES"] = "Files";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_FIELD_TEXT"] = "Post text";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_STATUS_PARTIAL"] = "Post was only partially published. Parts published: #COUNT#.";
+$MESS["IM_ACTIVITIES_SEND_CHANNEL_POST_STATUS_SUCCESS"] = "Post was published successfully. Part count: #COUNT#.";

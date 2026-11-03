@@ -1224,6 +1224,15 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		getSelectedCompanyProvider() {
 			return this.#getCurrentProvider() ?? null;
 		}
+
+		/**
+		 * Server flag: may the wizard offer goskey as the representative's signing method for the
+		 * selected company. Which of the company providers the document goes through is up to the
+		 * consumer.
+		 */
+		isRepresentativeSigningAvailable() {
+			return this.#getCompanyById(this.#company.id ?? 0)?.goskeyRepresentativeSigningAvailable === true;
+		}
 		#onCompanySelectedHandler(event) {
 			if (!event.data || event.data.length === 0) {
 				return;

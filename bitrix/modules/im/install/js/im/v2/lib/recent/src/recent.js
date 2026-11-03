@@ -2,11 +2,10 @@ import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, RecentType, type RecentTypeItem } from 'im.v2.const';
-import { ChannelManager } from 'im.v2.lib.channel';
 import { MessageManager } from 'im.v2.lib.message';
 import { Utils } from 'im.v2.lib.utils';
 
-import { type ImModelChat, type ImModelMessage, type ImModelRecentItem } from 'im.v2.model';
+import { type ImModelChat, type ImModelRecentItem } from 'im.v2.model';
 
 export const RecentManager = {
 	getSortDate(dialogId: string): ?Date
@@ -17,18 +16,13 @@ export const RecentManager = {
 			return null;
 		}
 
-		const { messageId, draft, lastActivityDate } = recentItem;
+		const { messageId, lastActivityDate } = recentItem;
+		const messageDate = Core.getStore().getters['messages/getById'](messageId)?.date;
 
-		const message: ImModelMessage = Core.getStore().getters['messages/getById'](messageId);
-		const messageDate = message?.date;
-		if (Type.isDate(draft.date) && draft.date > messageDate)
+		const fakeActivityDate = getFakeActivityDate(recentItem, messageDate);
+		if (fakeActivityDate)
 		{
-			return draft.date;
-		}
-
-		if (this.needsBirthdayPlaceholder(dialogId))
-		{
-			return Utils.date.getStartOfTheDay();
+			return fakeActivityDate;
 		}
 
 		const shouldUseActivityDate = Type.isDate(lastActivityDate) && lastActivityDate > messageDate;
@@ -38,6 +32,19 @@ export const RecentManager = {
 		}
 
 		return messageDate ?? lastActivityDate;
+	},
+	// The row is high in the list, but nothing behind it moved on the server side.
+	hasFakeActivityDate(dialogId: string): boolean
+	{
+		const recentItem: ImModelRecentItem = Core.getStore().getters['recent/get'](dialogId);
+		if (!recentItem)
+		{
+			return false;
+		}
+
+		const messageDate = Core.getStore().getters['messages/getById'](recentItem.messageId)?.date;
+
+		return getFakeActivityDate(recentItem, messageDate) !== null;
 	},
 	needToShowItem(item: ImModelRecentItem): boolean
 	{
@@ -85,6 +92,24 @@ export const RecentManager = {
 
 		return RECENT_TYPES_WITH_NESTED_CHATS.includes(type);
 	},
+};
+
+// Client-side rules that raise a row: an unsent draft and the birthday placeholder.
+// Not to be confused with isFakeElement - that one marks the whole row, not its date.
+const getFakeActivityDate = (recentItem: ImModelRecentItem, messageDate: ?Date): ?Date => {
+	const { draft, dialogId } = recentItem;
+
+	if (Type.isDate(draft.date) && draft.date > messageDate)
+	{
+		return draft.date;
+	}
+
+	if (RecentManager.needsBirthdayPlaceholder(dialogId))
+	{
+		return Utils.date.getStartOfTheDay();
+	}
+
+	return null;
 };
 
 const isBirthdayOptionEnabled = (): boolean => {
@@ -144,12 +169,4 @@ const needToShowFakeItem = (item: ImModelRecentItem): boolean => {
 	}
 
 	return Core.getStore().getters['users/hasBirthday'](item.dialogId);
-};
-
-const shouldUseActivityDate = (dialogId: string, messageDate: ?Date): boolean => {
-	const shouldUseActivityDate = Type.isDate(lastActivityDate) && lastActivityDate > messageDate;
-	if (ChannelManager.isChannel(dialogId) && shouldUseActivityDate)
-	{
-		return lastActivityDate;
-	}
 };

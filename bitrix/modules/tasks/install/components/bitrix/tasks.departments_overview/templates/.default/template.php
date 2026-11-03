@@ -48,7 +48,7 @@ if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 	foreach ($arResult["ERROR"] as $error)
 	{
 		?>
-		<div class="ui-alert ui-alert-icon-warning ui-alert-danger">
+		<div class="ui-alert ui-alert-icon-warning ui-alert-danger" role="alert">
 			<span class="ui-alert-message"><?= htmlspecialcharsbx($error['MESSAGE'])?></span>
 		</div>
 		<?
@@ -172,11 +172,27 @@ if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS
 <? $helper->displayFatals(); ?>
 <? if (!$helper->checkHasFatals()): ?>
 
-	<div id="<?=$helper->getScopeId()?>" class="tasks<?=($taskLimitExceeded ? ' tasks-locked' : '')?>">
+	<div
+		id="<?=$helper->getScopeId()?>"
+		class="tasks<?=($taskLimitExceeded ? ' tasks-locked' : '')?>"
+		<?=($taskLimitExceeded ? ' inert' : '')?>
+	>
 
 		<? $helper->displayWarnings(); ?>
 
-		<div class='js-id-departments-overview-grid'>
+		<div
+			class="tasks-departments-overview-status"
+			role="status"
+			aria-live="polite"
+			aria-atomic="true"
+		></div>
+
+		<div
+			class="js-id-departments-overview-grid"
+			role="region"
+			aria-label="<?=htmlspecialcharsbx(Loc::getMessage('TASKS_MANAGE_TITLE'))?>"
+			tabindex="-1"
+		>
 			<?php
 			$APPLICATION->IncludeComponent(
 				'bitrix:main.ui.grid',

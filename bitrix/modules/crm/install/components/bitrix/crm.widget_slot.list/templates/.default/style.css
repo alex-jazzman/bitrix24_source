@@ -29,8 +29,8 @@ body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sor
 	display: table-cell;
 	padding: 0;
 }
-body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-up  {background-image: url("./images/bx-sort-up.png") !important;}
-body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-down{background-image: url("./images/bx-sort-down.png") !important;}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-up  {background-image: url("./images/bx-sort-up.webp") !important;}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-down{background-image: url("./images/bx-sort-down.webp") !important;}
 body table.bx-interface-grid-double tr.bx-grid-gutter td,
 body table.bx-interface-grid-double tr.bx-grid-gutter td.bx-left,
 body table.bx-interface-grid-double tr.bx-grid-gutter td.bx-right,
@@ -49,8 +49,8 @@ body table.bx-interface-grid-double tr.bx-grid-head td {
 	color: #555555 !important;
 	text-shadow: 0 1px 1px #FFFFFF;
 }
-body table.bx-interface-grid-double tr.bx-grid-head > td          {background: url("./images/bx-grid-head.png") repeat-x scroll left top #E4E4E4 !important;}
-body table.bx-interface-grid-double tr.bx-grid-head > td.bx-sorted{background: url("./images/bx-grid-head-sorted.png") repeat-x scroll left top transparent !important;}
+body table.bx-interface-grid-double tr.bx-grid-head > td          {background: url("./images/bx-grid-head.webp") repeat-x scroll left top #E4E4E4 !important;}
+body table.bx-interface-grid-double tr.bx-grid-head > td.bx-sorted{background: url("./images/bx-grid-head-sorted.webp") repeat-x scroll left top transparent !important;}
 body table.bx-interface-grid-double tr.bx-grid-head   td.bx-left  {border-radius: 4px 0 0 4px;}
 body table.bx-interface-grid-double tr.bx-grid-head   td.bx-right {border-radius: 0 4px 4px 0;}
 body table.bx-interface-grid-double tr.bx-grid-head td td {
@@ -69,7 +69,7 @@ body table.bx-interface-grid-double tr.bx-selected td{background-color: #DAEC71}
 body table.bx-interface-grid-double tr.bx-active   td{background-color: #FFF46A}
 
 body table.bx-interface-grid-double tr.bx-grid-footer > td {
-	background: url("./images/bx-grid-footer.png") repeat-x scroll left top transparent !important;
+	background: url("./images/bx-grid-footer.webp") repeat-x scroll left top transparent !important;
 	border: 0 none;
 	border-radius: 0 0 4px 4px !important;
 	height: 38px;
@@ -214,7 +214,7 @@ div.crm-client-summary-wrapper {
 	font-size: 12px;
 	line-height: 16px;
 	padding-left: 20px;
-	background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -21px -3500px;
+	background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.webp") no-repeat -21px -3500px;
 }
 
 .crm-double-result-search{
@@ -225,7 +225,7 @@ div.crm-client-summary-wrapper {
 }
 
 .bx-help-icon{
-	background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -18px -3549px;
+	background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.webp") no-repeat -18px -3549px;
 	width:19px;
 	height:21px;
 	vertical-align: middle;
@@ -256,9 +256,9 @@ div.crm-client-summary-wrapper {
 }
 
 .bx-scroller-control.plus {
-  background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -20px -3376px;
+  background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.webp") no-repeat -20px -3376px;
 }
 
 .bx-scroller-control.minus {
-  background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -20px -3440px;
+  background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.webp") no-repeat -20px -3440px;
 }

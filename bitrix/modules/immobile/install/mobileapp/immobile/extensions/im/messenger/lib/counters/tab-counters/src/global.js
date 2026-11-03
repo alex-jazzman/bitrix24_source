@@ -7,6 +7,7 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 	const {
 		RecentTab,
 		NavigationTabId,
+		NavigationTabByRecentTab,
 		EventType,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -17,6 +18,12 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 	const { BaseTabCounters } = require('im/messenger/lib/counters/tab-counters/src/base');
 
 	const logger = getLoggerWithContext('counters--tab', 'TabCounters');
+
+	// The only folder code published under a navigation tab id instead of the folder id: the
+	// allowlist of #getFolderCounterKey. Resolving the id from a server-sent code instead would
+	// let any folder that comes with a composition take the key of another tab and overwrite the
+	// badge counted for it by update().
+	const COMPOSITE_FOLDER_CODE = 'all';
 
 	/**
 	 * @implements Unsubscribable
@@ -51,12 +58,7 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 		/** @override */
 		prepareTabId(rawTabId)
 		{
-			if (rawTabId === RecentTab.tasksTask)
-			{
-				return NavigationTabId.task;
-			}
-
-			return rawTabId;
+			return NavigationTabByRecentTab[rawTabId] ?? rawTabId;
 		}
 
 		/**
@@ -73,6 +75,7 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 				copilot: 0,
 				collab: 0,
 				tasksTask: 0,
+				vibecodeApp: 0,
 			};
 
 			const counterList = this.store.getters['counterModel/getList']();
@@ -96,6 +99,7 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 					counterState.counter,
 				),
 				tasksTask: (counterState, helper) => this.#calculateDirectTabCounter(helper, RecentTab.tasksTask),
+				vibecodeApp: (counterState, helper) => this.#calculateDirectTabCounter(helper, RecentTab.vibecodeApp),
 			};
 
 			for (const counterState of counterList)
@@ -117,6 +121,7 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 				counters.collab += calculateUnmutedTabCounters.collab(counterState, helper);
 				counters.openlines += calculateUnmutedTabCounters.openlines(counterState, helper);
 				counters.tasksTask += calculateUnmutedTabCounters.tasksTask(counterState, helper);
+				counters.vibecodeApp += calculateUnmutedTabCounters.vibecodeApp(counterState, helper);
 			}
 
 			const externalCounters = { ...counters };
@@ -383,13 +388,36 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 					continue;
 				}
 
-				folderCounters[String(folder.id)] = folder.type === 'system'
+				folderCounters[this.#getFolderCounterKey(folder)] = folder.type === 'system'
 					? this.#calculateSystemFolderCounter(folder)
 					: this.#calculatePersonalFolderCounter(folder, countersByChatId)
 				;
 			}
 
 			return folderCounters;
+		}
+
+		/**
+		 * Key the badge of a folder is published under: it has to be the id the tab is registered
+		 * in the widget with. A personal tab is registered by the id of its folder, but a native tab
+		 * of a composite folder comes with its navigation code ('all'), so the numeric id would
+		 * never be found in the widget.
+		 *
+		 * A plain system folder keeps the numeric key on purpose: its badge is counted by the
+		 * singular path of `update()` under keys of its own ('chats', 'copilot', ...), and publishing
+		 * the folder value under the same key would overwrite that count.
+		 *
+		 * @param {FolderModelState} folder
+		 * @return {string}
+		 */
+		#getFolderCounterKey(folder)
+		{
+			if (this.#isCompositeFolder(folder) && folder.code === COMPOSITE_FOLDER_CODE)
+			{
+				return NavigationTabId.all;
+			}
+
+			return String(folder.id);
 		}
 
 		/**
@@ -410,6 +438,11 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 		 */
 		#calculateSystemFolderCounter(folder)
 		{
+			if (this.#isCompositeFolder(folder))
+			{
+				return this.#calculateCompositeFolderCounter(folder);
+			}
+
 			if (!Type.isStringFilled(folder.recentSection))
 			{
 				return 0;
@@ -420,6 +453,87 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 			return counters.reduce((sum, counterState) => {
 				return sum + this.#getCounterValue(counterState);
 			}, 0);
+		}
+
+		/**
+		 * A folder built from other folders (the "All" folder) has no section of its own: the badge
+		 * is the sum over every counter in its member sections, including nested chats. A chat that
+		 * belongs to two of those sections is counted once, and section membership follows the
+		 * counter model's ancestor inheritance rules.
+		 *
+		 * @param {FolderModelState} folder
+		 * @return {number}
+		 */
+		#calculateCompositeFolderCounter(folder)
+		{
+			const sections = this.#getSystemFolderSections(folder);
+			if (sections.size === 0)
+			{
+				return 0;
+			}
+
+			const countedChatIds = new Set();
+
+			return this.store.getters['counterModel/getList']().reduce((sum, counterState) => {
+				if (countedChatIds.has(counterState.chatId))
+				{
+					return sum;
+				}
+
+				if (!this.#belongsToSections(counterState, sections))
+				{
+					return sum;
+				}
+
+				countedChatIds.add(counterState.chatId);
+
+				return sum + this.#getCounterValue(counterState);
+			}, 0);
+		}
+
+		/**
+		 * @param {FolderModelState} folder
+		 * @return {boolean}
+		 */
+		#isCompositeFolder(folder)
+		{
+			return Type.isArrayFilled(folder.sourceFolders);
+		}
+
+		/**
+		 * Sections a system folder collects its badge from: the composition of a composite folder
+		 * or the single section of a plain one.
+		 *
+		 * @param {FolderModelState} folder
+		 * @return {Set<string>}
+		 */
+		#getSystemFolderSections(folder)
+		{
+			if (this.#isCompositeFolder(folder))
+			{
+				return this.store.getters['folderModel/getSourceSections'](folder.id);
+			}
+
+			return Type.isStringFilled(folder.recentSection) ? new Set([folder.recentSection]) : new Set();
+		}
+
+		/**
+		 * @param {CounterModelState} counterState
+		 * @param {Set<string>} sections
+		 * @return {boolean}
+		 */
+		#belongsToSections(counterState, sections)
+		{
+			const belongsToRecentSection = this.store.getters['counterModel/belongsToRecentSection'];
+			for (const section of sections)
+			{
+				if (belongsToRecentSection(counterState, section))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		/**
@@ -474,10 +588,11 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 				return folder.chatIds.some((chatId) => affectedChatIds.has(chatId));
 			}
 
+			const sections = this.#getSystemFolderSections(folder);
+
 			return counterList.some((counterState) => {
 				return affectedChatIds.has(counterState.chatId)
-					&& Array.isArray(counterState.recentSections)
-					&& counterState.recentSections.includes(folder.recentSection)
+					&& this.#belongsToSections(counterState, sections)
 				;
 			});
 		}

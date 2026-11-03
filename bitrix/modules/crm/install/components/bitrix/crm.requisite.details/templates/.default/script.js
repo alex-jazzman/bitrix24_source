@@ -12,6 +12,8 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 		this.titleInput = null;
 		this.nameControl = null;
 		this.toolbar = null;
+		this.nameErrorMessageBox = null;
+		this.failedValidationHandler = this.onFailedValidation.bind(this);
 	};
 
 	BX.Crm.RequisiteDetailsManager.presetControlName = 'PRESET_ID';
@@ -106,6 +108,8 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 		},
 		addEvents: function()
 		{
+			BX.addCustomEvent(window, 'BX.UI.EntityEditor:onFailedValidation', this.failedValidationHandler);
+			BX.bind(window, 'unload', this.onUnload.bind(this));
 			BX.Event.EventEmitter.subscribe("BX.UI.EntityEditor:onCancel", this.onCancelEdit.bind(this));
 			BX.Event.EventEmitter.subscribe("BX.UI.EntityEditor:onNothingChanged", this.onCancelEdit.bind(this));
 			BX.Event.EventEmitter.subscribe("onEntityUpdate", this.onSave.bind(this));
@@ -156,6 +160,54 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 					);
 				}
 			}
+		},
+		onFailedValidation: function(editor, result)
+		{
+			if (editor !== this.entityEditor || !this.nameControl)
+			{
+				return;
+			}
+
+			const hasNameError = result.getErrors().some((error) => error.getField() === this.nameControl);
+			if (!hasNameError)
+			{
+				return;
+			}
+
+			if (!this.nameErrorMessageBox)
+			{
+				this.nameErrorMessageBox = BX.UI.Dialogs.MessageBox.create({
+					message: BX.Text.encode(BX.message('CRM_REQUISITE_DETAILS_NAME_REQUIRED')),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK,
+					minHeight: 100,
+					popupOptions: {
+						closeByEsc: true,
+					},
+				});
+			}
+
+			this.nameErrorMessageBox.show();
+			const popup = this.nameErrorMessageBox.getPopupWindow();
+			BX.Dom.addClass(popup.getPopupContainer(), 'crm-requisite-name-error-popup');
+			BX.Dom.attr(popup.getPopupContainer(), 'data-testid', 'crm-requisite-name-error');
+			BX.Dom.attr(popup.getContentContainer(), 'data-testid', 'crm-requisite-name-error-message');
+			BX.Dom.attr(
+				this.nameErrorMessageBox.getOkButton().getContainer(),
+				'data-testid',
+				'crm-requisite-name-error-ok',
+			);
+		},
+		closeNameErrorMessageBox: function()
+		{
+			if (this.nameErrorMessageBox)
+			{
+				this.nameErrorMessageBox.close();
+			}
+		},
+		onUnload: function()
+		{
+			BX.removeCustomEvent(window, 'BX.UI.EntityEditor:onFailedValidation', this.failedValidationHandler);
+			this.closeNameErrorMessageBox();
 		},
 		isMatchedAutocompleteControlName: function(controlName, matchName)
 		{
@@ -356,6 +408,7 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 		},
 		onCloseSlider: function()
 		{
+			this.closeNameErrorMessageBox();
 			if (!this.needEmitCancelEvent)
 			{
 				this.needEmitCancelEvent = true;

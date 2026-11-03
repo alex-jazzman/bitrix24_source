@@ -56,7 +56,7 @@ export class PeriodFilterCard
 		this.#contentContainer = this.#card.getContentContainer();
 
 		const hint = new CardHint({
-			text: Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_PERIOD_HINT') ?? '',
+			text: Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_PERIOD_HINT_MSGVER_1') ?? '',
 			link: {
 				text: Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_LINK_MORE') ?? '',
 				helpCode: '20337242',
@@ -73,7 +73,10 @@ export class PeriodFilterCard
 	#buildSelect(): void
 	{
 		this.#fieldValueElement = Tag.render`
-			<span class="biconnector-settings-period__select-text"></span>
+			<span
+				class="biconnector-settings-period__select-text"
+				data-testid="biconnector-settings-period-value"
+			></span>
 		`;
 		this.#updateFieldLabel();
 
@@ -84,7 +87,10 @@ export class PeriodFilterCard
 		`;
 
 		this.#fieldElement = Tag.render`
-			<div class="biconnector-settings-period__select-wrapper">
+			<div
+				class="biconnector-settings-period__select-wrapper"
+				data-testid="biconnector-settings-period-field"
+			>
 				${control}
 				<div class="ui-icon-set --chevron-down-s biconnector-settings-period__select-arrow"></div>
 			</div>
@@ -152,7 +158,10 @@ export class PeriodFilterCard
 
 		const items: MenuItemOptions[] = this.#data.items.map((item) => {
 			const itemOptions: MenuItemOptions = {
-				attrs: {},
+				attrs: {
+					'data-testid': 'biconnector-settings-period-menu-item',
+					'data-period-value': item.value,
+				},
 				className: item.value === this.#currentPeriod
 					? 'menu-popup-no-icon biconnector-settings-period__menu-item --selected'
 					: 'menu-popup-no-icon biconnector-settings-period__menu-item',
@@ -210,6 +219,7 @@ export class PeriodFilterCard
 			<input
 				type="text"
 				class="biconnector-settings-period__date-input"
+				data-testid="biconnector-settings-period-date-from"
 				value="${Text.encode(this.#data.dateStart)}"
 			>
 		`;
@@ -217,6 +227,7 @@ export class PeriodFilterCard
 			<input
 				type="text"
 				class="biconnector-settings-period__date-input"
+				data-testid="biconnector-settings-period-date-to"
 				value="${Text.encode(this.#data.dateEnd)}"
 			>
 		`;
@@ -272,7 +283,10 @@ export class PeriodFilterCard
 		});
 
 		this.#rangeBlock = Tag.render`
-			<div class="biconnector-settings-period__range">
+			<div
+				class="biconnector-settings-period__range"
+				data-testid="biconnector-settings-period-range"
+			>
 				<div class="biconnector-settings-period__range-field">
 					<div class="biconnector-settings-period__range-label">
 						${Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_PERIOD_FROM') ?? ''}

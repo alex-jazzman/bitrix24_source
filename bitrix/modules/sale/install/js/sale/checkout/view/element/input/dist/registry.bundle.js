@@ -4,515 +4,723 @@ this.BX.Sale = this.BX.Sale || {};
 this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 this.BX.Sale.Checkout.View.Element = this.BX.Sale.Checkout.View.Element || {};
-(function (exports,ui_type,ui_vue,main_core,main_core_events,sale_checkout_const,ui_entitySelector) {
+(function (exports, ui_vue, main_core, main_core_events, sale_checkout_const, ui_type, ui_entitySelector) {
 	'use strict';
 
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-product_item_quantity', {
-	  props: ['item', 'index'],
-	  data: function data() {
-	    return {
-	      quantity: this.item.quantity
-	    };
-	  },
-	  methods: {
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.basket.inputChangeQuantityProduct, {
-	        index: this.index
-	      });
-	    },
-	    onKeyDown: function onKeyDown(e) {
-	      if (['Enter'].indexOf(e.key) >= 0) {
-	        this.$refs.container.blur();
-	      }
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'checkout-item-quantity-field': true
-	      };
-	    }
-	  },
-	  // language=Vue
-	  template: "\n      <input :class=\"checkedClassObject\" \n\t\t\t type=\"text\" \n\t\t\t inputmode=\"numeric\" \n             @blur=\"validate\"\n\t\t\t @keydown=\"onKeyDown\"\n             v-model=\"item.quantity\"\n             ref=\"container\"\n\t  />\n\t"
+		props: ['item', 'index'],
+		data() {
+			return {
+				quantity: this.item.quantity
+			};
+		},
+		methods: {
+			validate() {
+				main_core_events.EventEmitter.emit(sale_checkout_const.EventType.basket.inputChangeQuantityProduct, {
+					index: this.index
+				});
+			},
+			onKeyDown(e) {
+				if (e.key === 'Enter') {
+					// recalculation runs in place: leaving the field would also lose the focus
+					e.preventDefault();
+					this.validate();
+				}
+			}
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'checkout-item-quantity-field': true
+				};
+			},
+			accessibleName() {
+				return main_core.Loc.getMessage('CHECKOUT_VIEW_ELEMENT_INPUT_PRODUCT_ITEM_QUANTITY_NAME', {
+					'#NAME#': this.item.name
+				});
+			}
+		},
+		// language=Vue
+		template: `
+			<input :class="checkedClassObject" 
+			 type="text" 
+			 inputmode="numeric" 
+			 :aria-label="accessibleName"
+						 @blur="validate"
+			 @keydown="onKeyDown"
+						 v-model="item.quantity"
+						 ref="container"
+		/>
+	`
 	});
 
+	const caretKeys = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End']);
+
+	/**
+	 * A field that filters what the buyer types still has to let the caret move.
+	 */
+	function isCaretKey(key) {
+		return caretKeys.has(key);
+	}
+
+	/**
+	 * Shared by the contact form fields. The ids come from the property index, so the error block
+	 * the property list renders can point at the same field.
+	 */
+	const MixinPropertyField = {
+		props: ['item', 'index'],
+		computed: {
+			fieldId() {
+				return `sale-checkout-property-field-${this.index}`;
+			},
+			fieldErrorId() {
+				return `sale-checkout-property-error-${this.index}`;
+			},
+			isRequired() {
+				return this.item.required === 'Y';
+			},
+			isInvalid() {
+				return this.item.validated === sale_checkout_const.Property.validate.failure;
+			},
+			// strings: Vue 2 drops an attribute bound to false
+			ariaRequired() {
+				return this.isRequired ? 'true' : 'false';
+			},
+			ariaInvalid() {
+				return this.isInvalid ? 'true' : 'false';
+			},
+			errorDescribedBy() {
+				return this.isInvalid ? this.fieldErrorId : null;
+			}
+		},
+		methods: {
+			validate() {
+				main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
+					index: this.index
+				});
+			}
+		}
+	};
+
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-phone', {
-	  props: ['item', 'index'],
-	  methods: {
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    },
-	    onKeyDown: function onKeyDown(e) {
-	      var value = e.key;
-	      if (ui_type.PhoneFilter.replace(value) !== '') {
-	        return;
-	      }
-	      if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0) {
-	        return;
-	      }
-	      if (e.ctrlKey || e.metaKey) {
-	        return;
-	      }
-	      e.preventDefault();
-	    },
-	    onInput: function onInput() {
-	      var value = ui_type.PhoneFormatter.formatValue(this.value);
-	      if (this.value !== value) {
-	        this.validate();
-	        this.value = value;
-	      }
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    value: {
-	      get: function get() {
-	        return this.item.value;
-	      },
-	      set: function set(newValue) {
-	        this.item.value = newValue;
-	      }
-	    },
-	    isEmpty: function isEmpty() {
-	      return this.item.value === '';
-	    },
-	    isRequired: function isRequired() {
-	      return this.item.required === 'Y';
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.isEmpty && this.isRequired;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"form-wrap form-asterisk\" :class=\"checkedClassObject\">\n\t\t\t<input \n\t\t\t\tclass=\"form-control form-control-lg\" \n\t\t\t\t:class=\"checkedClassObject\"\n\t\t\t\t@blur=\"validate\"\n\t\t\t\t@input=\"onInput\"\n\t\t\t\t@keydown=\"onKeyDown\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\tautocomplete=\"tel\"\n\t\t\t\tinputmode=\"tel\"\n\t\t\t\t:placeholder=\"item.name\"\n\t\t\t/>\n\t\t\t<span\n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t\t{{item.name}}\n\t\t\t</span>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index'],
+		methods: {
+			onKeyDown(e) {
+				let value = e.key;
+				if (ui_type.PhoneFilter.replace(value) !== '') {
+					return;
+				}
+				if (isCaretKey(e.key) || ['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0) {
+					return;
+				}
+				if (e.ctrlKey || e.metaKey) {
+					return;
+				}
+				e.preventDefault();
+			},
+			onInput() {
+				let value = ui_type.PhoneFormatter.formatValue(this.value);
+				if (this.value !== value) {
+					this.validate();
+					this.value = value;
+				}
+			}
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			value: {
+				get() {
+					return this.item.value;
+				},
+				set(newValue) {
+					this.item.value = newValue;
+				}
+			},
+			isEmpty() {
+				return this.item.value === '';
+			},
+			isAsteriskShown() {
+				return this.isEmpty && this.isRequired;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-phone">
+			<input
+				class="form-control form-control-lg"
+				:class="checkedClassObject"
+				@blur="validate"
+				@input="onInput"
+				@keydown="onKeyDown"
+				v-model="value"
+				autocomplete="tel"
+				inputmode="tel"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				:placeholder="item.name"
+			/>
+			<span
+				class="asterisk-item"
+				aria-hidden="true"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
+	`
 	});
 
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-text', {
-	  props: ['item', 'index', 'autocomplete'],
-	  data: function data() {
-	    return {
-	      showAsterisk: this.showAsterisk
-	    };
-	  },
-	  methods: {
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    },
-	    onKeyUp: function onKeyUp(e) {
-	      if (['Esc', 'Tab'].indexOf(e.key) >= 0) {
-	        return;
-	      }
-	      if (e.ctrlKey || e.metaKey) {
-	        return;
-	      }
-	      if (this.isKeyAndroidChrome(e.key)) {
-	        this.hideAsteriskAndroid();
-	        return;
-	      }
-	      this.validate();
-	    },
-	    isKeyAndroidChrome: function isKeyAndroidChrome(key) {
-	      return key === 'Unidentified';
-	    },
-	    hideAsteriskAndroid: function hideAsteriskAndroid() {
-	      var asterisk = this.$el.getElementsByTagName('span')[0];
-	      asterisk.style.display = 'none';
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    isEmpty: function isEmpty() {
-	      return this.item.value === '';
-	    },
-	    isRequired: function isRequired() {
-	      return this.item.required === 'Y';
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.isEmpty && this.isRequired;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"form-wrap form-asterisk\" :class=\"checkedClassObject\">\n\t\t\t<input\n\t\t\t\tclass=\"form-control form-control-lg\"\n\t\t\t\t:class=\"checkedClassObject\"\n\t\t\t\t@blur=\"validate\"\n\t\t\t\ttype=\"text\"\n\t\t\t\t:placeholder=\"item.name\"\n\t\t\t\t:autocomplete=\"autocomplete\"\n\t\t\t\tv-model=\"item.value\"\n\t\t\t\t@keyup=\"onKeyUp\"\n\t\t\t/>\n\t\t\t<span \n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t\t{{item.name}}\n\t\t\t</span>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index', 'autocomplete'],
+		data() {
+			return {
+				showAsterisk: this.showAsterisk
+			};
+		},
+		methods: {
+			onKeyUp(e) {
+				if (['Esc', 'Tab'].indexOf(e.key) >= 0) {
+					return;
+				}
+				if (e.ctrlKey || e.metaKey) {
+					return;
+				}
+				if (this.isKeyAndroidChrome(e.key)) {
+					this.hideAsteriskAndroid();
+					return;
+				}
+				this.validate();
+			},
+			isKeyAndroidChrome(key) {
+				return key === 'Unidentified';
+			},
+			hideAsteriskAndroid() {
+				const asterisk = this.$el.getElementsByTagName('span')[0];
+				asterisk.style.display = 'none';
+			}
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			isEmpty() {
+				return this.item.value === '';
+			},
+			isAsteriskShown() {
+				return this.isEmpty && this.isRequired;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-text">
+			<input
+				class="form-control form-control-lg"
+				:class="checkedClassObject"
+				@blur="validate"
+				type="text"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				:placeholder="item.name"
+				:autocomplete="autocomplete"
+				v-model="item.value"
+				@keyup="onKeyUp"
+			/>
+			<span
+				class="asterisk-item"
+				aria-hidden="true"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
+	`
 	});
 
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-email', {
-	  props: ['item', 'index', 'autocomplete'],
-	  methods: {
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    },
-	    onKeyUp: function onKeyUp(e) {
-	      if (['Esc', 'Tab'].indexOf(e.key) >= 0) {
-	        return;
-	      }
-	      if (e.ctrlKey || e.metaKey) {
-	        return;
-	      }
-	      if (this.isKeyAndroidChrome(e.key)) {
-	        this.hideAsteriskAndroid();
-	        return;
-	      }
-	      this.validate();
-	    },
-	    isKeyAndroidChrome: function isKeyAndroidChrome(key) {
-	      return key === 'Unidentified';
-	    },
-	    hideAsteriskAndroid: function hideAsteriskAndroid() {
-	      var asterisk = this.$el.getElementsByTagName('span')[0];
-	      asterisk.style.display = 'none';
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    isEmpty: function isEmpty() {
-	      return this.item.value === '';
-	    },
-	    isRequired: function isRequired() {
-	      return this.item.required === 'Y';
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.isEmpty && this.isRequired;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"form-wrap form-asterisk\" :class=\"checkedClassObject\">\n\t\t\t<input\n\t\t\t\tclass=\"form-control form-control-lg\"\n\t\t\t\t:class=\"checkedClassObject\"\n\t\t\t\t@blur=\"validate\"\n\t\t\t\ttype=\"text\"\n\t\t\t\tinputmode=\"email\"\n\t\t\t\t:placeholder=\"item.name\"\n\t\t\t\t:autocomplete=\"autocomplete\"\n\t\t\t\tv-model=\"item.value\"\n\t\t\t\t@keyup=\"onKeyUp\"\n\t\t\t/>\n\t\t\t<span\n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t\t{{item.name}}\n\t\t\t</span>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index', 'autocomplete'],
+		methods: {
+			onKeyUp(e) {
+				if (['Esc', 'Tab'].indexOf(e.key) >= 0) {
+					return;
+				}
+				if (e.ctrlKey || e.metaKey) {
+					return;
+				}
+				if (this.isKeyAndroidChrome(e.key)) {
+					this.hideAsteriskAndroid();
+					return;
+				}
+				this.validate();
+			},
+			isKeyAndroidChrome(key) {
+				return key === 'Unidentified';
+			},
+			hideAsteriskAndroid() {
+				const asterisk = this.$el.getElementsByTagName('span')[0];
+				asterisk.style.display = 'none';
+			}
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			isEmpty() {
+				return this.item.value === '';
+			},
+			isAsteriskShown() {
+				return this.isEmpty && this.isRequired;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-email">
+			<input
+				class="form-control form-control-lg"
+				:class="checkedClassObject"
+				@blur="validate"
+				type="text"
+				inputmode="email"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				:placeholder="item.name"
+				:autocomplete="autocomplete"
+				v-model="item.value"
+				@keyup="onKeyUp"
+			/>
+			<span
+				class="asterisk-item"
+				aria-hidden="true"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
+	`
 	});
 
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-number', {
-	  props: ['item', 'index'],
-	  methods: {
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    },
-	    onKeyDown: function onKeyDown(e) {
-	      if (!isNaN(Number(e.key)) && e.key !== ' ') {
-	        return;
-	      }
-	      if (e.ctrlKey || e.metaKey || ['Esc', 'Tab', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', '.'].indexOf(e.key) >= 0) {
-	        return;
-	      }
-	      e.preventDefault();
-	    },
-	    onPaste: function onPaste(e) {
-	      e.preventDefault();
-	      var pastedText = e.clipboardData.getData('Text');
-	      if (!isNaN(Number(pastedText))) {
-	        this.item.value = pastedText.trim();
-	      }
-	      this.validate();
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    isEmpty: function isEmpty() {
-	      return this.item.value === '';
-	    },
-	    isRequired: function isRequired() {
-	      return this.item.required === 'Y';
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.isEmpty && this.isRequired;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"form-wrap form-asterisk\" :class=\"checkedClassObject\">\n\t\t\t<input\n\t\t\t\tclass=\"form-control form-control-lg\"\n\t\t\t\t:class=\"checkedClassObject\"\n\t\t\t\t@blur=\"validate\"\n\t\t\t\t@keydown=\"onKeyDown\"\n\t\t\t\t@keyup=\"validate\"\n\t\t\t\t@paste=\"onPaste\"\n\t\t\t\ttype=\"text\"\n\t\t\t\tinputmode=\"numeric\"\n\t\t\t\t:placeholder=\"item.name\"\n\t\t\t\tv-model=\"item.value\"\n\t\t\t/>\n\t\t\t<span\n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t\t{{item.name}}\n\t\t\t</span>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index'],
+		methods: {
+			onKeyDown(e) {
+				if (!isNaN(Number(e.key)) && e.key !== ' ') {
+					return;
+				}
+				if (e.ctrlKey || e.metaKey || isCaretKey(e.key) || ['Esc', 'Tab', 'Backspace', 'Delete', '.'].indexOf(e.key) >= 0) {
+					return;
+				}
+				e.preventDefault();
+			},
+			onPaste(e) {
+				e.preventDefault();
+				const pastedText = e.clipboardData.getData('Text');
+				if (!isNaN(Number(pastedText))) {
+					this.item.value = pastedText.trim();
+				}
+				this.validate();
+			}
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			isEmpty() {
+				return this.item.value === '';
+			},
+			isAsteriskShown() {
+				return this.isEmpty && this.isRequired;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-number">
+			<input
+				class="form-control form-control-lg"
+				:class="checkedClassObject"
+				@blur="validate"
+				@keydown="onKeyDown"
+				@keyup="validate"
+				@paste="onPaste"
+				type="text"
+				inputmode="numeric"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				:placeholder="item.name"
+				v-model="item.value"
+			/>
+			<span
+				class="asterisk-item"
+				aria-hidden="true"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
+	`
 	});
 
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-checkbox', {
-	  props: ['item', 'index'],
-	  data: function data() {
-	    return {
-	      'showValue': this.item.value === 'Y'
-	    };
-	  },
-	  methods: {
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    switchValue: {
-	      get: function get() {
-	        this.showValue = this.item.value === 'Y';
-	        return this.item.value === 'Y';
-	      },
-	      set: function set(value) {
-	        if (value) {
-	          this.item.value = 'Y';
-	          this.showValue = true;
-	        } else {
-	          this.item.value = 'N';
-	          this.showValue = false;
-	        }
-	        this.validate();
-	      }
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.item.required === 'Y';
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"form-wrap form-control form-control-lg border-0 pl-0 form-asterisk\" :class=\"checkedClassObject\">\n\t\t\t<input\n\t\t\t\t@blur=\"validate\"\n\t\t\t\ttype=\"checkbox\"\n\t\t\t\t:id=\"item.name\"\n\t\t\t\t:value=\"showValue\"\n\t\t\t\tv-model=\"switchValue\"\n\t\t\t/>\n\t\t\t<label :for=\"item.name\" class=\"ml-2\">{{item.name}}</label>\n\t\t\t<div \n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t</div>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index'],
+		data() {
+			return {
+				'showValue': this.item.value === 'Y'
+			};
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			switchValue: {
+				get() {
+					this.showValue = this.item.value === 'Y';
+					return this.item.value === 'Y';
+				},
+				set(value) {
+					if (value) {
+						this.item.value = 'Y';
+						this.showValue = true;
+					} else {
+						this.item.value = 'N';
+						this.showValue = false;
+					}
+					this.validate();
+				}
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="form-wrap form-control form-control-lg border-0 pl-0 form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-checkbox">
+			<input
+				@blur="validate"
+				type="checkbox"
+				:id="fieldId"
+				:value="showValue"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				v-model="switchValue"
+			/>
+			<label :for="fieldId" class="ml-2">{{item.name}}</label>
+			<div
+				class="asterisk-item"
+				v-if="isRequired"
+			>
+			</div>
+		</div>
+	`
 	});
 
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-date', {
-	  props: ['item', 'index', 'autocomplete', 'isDateTime'],
-	  methods: {
-	    onClick: function onClick() {
-	      this.showCalendar();
-	      this.focusOnInput();
-	    },
-	    focusOnInput: function focusOnInput() {
-	      var element = this.$el.children[0];
-	      element.focus();
-	    },
-	    showCalendar: function showCalendar() {
-	      var _this = this;
-	      BX.calendar({
-	        node: this.item.name,
-	        field: this.item.name,
-	        bTime: this.isDateTime,
-	        bUseSecond: false,
-	        callback_after: function callback_after(data) {
-	          return _this.handleDate(data);
-	        }
-	      });
-	    },
-	    handleDate: function handleDate(date) {
-	      var dateString = this.prepareDate(date);
-	      this.changeValue(dateString);
-	    },
-	    prepareDate: function prepareDate(date) {
-	      if (this.isDateTime === true) {
-	        return date.toLocaleString([], {
-	          day: '2-digit',
-	          month: '2-digit',
-	          year: 'numeric',
-	          hour: 'numeric',
-	          minute: 'numeric'
-	        }).replace(',', '');
-	      } else {
-	        return date.toLocaleDateString().replace(',', '');
-	      }
-	    },
-	    blur: function blur() {
-	      if (main_core.Type.isStringFilled(this.item.value)) {
-	        this.changeValue(this.item.value);
-	      }
-	    },
-	    changeValue: function changeValue(value) {
-	      var changeValue = '';
-	      if (main_core.Type.isStringFilled(value)) {
-	        changeValue = this.validateDate(value) ? this.prepareDate(BX.parseDate(value)) : this.previousValue;
-	      }
-	      this.setDate(changeValue);
-	      this.validate();
-	    },
-	    validateDate: function validateDate(value) {
-	      var date = BX.parseDate(value);
-	      return date && date.toLocaleDateString() !== 'Invalid Date';
-	    },
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    },
-	    setDate: function setDate(date) {
-	      this.item.value = date;
-	      this.previousValue = date;
-	    }
-	  },
-	  computed: {
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    isEmpty: function isEmpty() {
-	      return this.item.value === '';
-	    },
-	    isRequired: function isRequired() {
-	      return this.item.required === 'Y';
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.isEmpty && this.isRequired;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"form-wrap form-asterisk\">\n\t\t\t<input\n\t\t\t\tclass=\"form-control form-control-lg\"\n\t\t\t\t:class=\"checkedClassObject\"\n\t\t\t\t@blur=\"blur\"\n\t\t\t\ttype=\"text\"\n\t\t\t\tinputmode=\"numeric\"\n\t\t\t\t:name=\"item.name\"\n\t\t\t\t@click=\"onClick\"\n\t\t\t\t@drop=\"(e) => e.preventDefault()\"\n\t\t\t\t@dragstart=\"(e) => e.preventDefault()\"\n\t\t\t\t@paste=\"(e) => e.preventDefault()\"\n\t\t\t\t:autocomplete=\"autocomplete\"\n\t\t\t\t:placeholder=\"item.name\"\n\t\t\t\tv-model=\"item.value\"\n\t\t\t/>\n\t\t\t<span\n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t\t{{item.name}}\n\t\t\t</span>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index', 'autocomplete', 'isDateTime'],
+		methods: {
+			onClick() {
+				this.showCalendar();
+				this.focusOnInput();
+			},
+			focusOnInput() {
+				const element = this.$el.children[0];
+				element.focus();
+			},
+			showCalendar() {
+				BX.calendar({
+					node: this.item.name,
+					field: this.item.name,
+					bTime: this.isDateTime,
+					bUseSecond: false,
+					callback_after: data => this.handleDate(data)
+				});
+			},
+			handleDate(date) {
+				const dateString = this.prepareDate(date);
+				this.changeValue(dateString);
+			},
+			prepareDate(date) {
+				if (this.isDateTime === true) {
+					return date.toLocaleString([], {
+						day: '2-digit',
+						month: '2-digit',
+						year: 'numeric',
+						hour: 'numeric',
+						minute: 'numeric'
+					}).replace(',', '');
+				} else {
+					return date.toLocaleDateString().replace(',', '');
+				}
+			},
+			blur() {
+				if (main_core.Type.isStringFilled(this.item.value)) {
+					this.changeValue(this.item.value);
+				}
+			},
+			changeValue(value) {
+				let changeValue = '';
+				if (main_core.Type.isStringFilled(value)) {
+					changeValue = this.validateDate(value) ? this.prepareDate(BX.parseDate(value)) : this.previousValue;
+				}
+				this.setDate(changeValue);
+				this.validate();
+			},
+			validateDate(value) {
+				const date = BX.parseDate(value);
+				return date && date.toLocaleDateString() !== 'Invalid Date';
+			},
+			setDate(date) {
+				this.item.value = date;
+				this.previousValue = date;
+			}
+		},
+		computed: {
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			isEmpty() {
+				return this.item.value === '';
+			},
+			isAsteriskShown() {
+				return this.isEmpty && this.isRequired;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="form-wrap form-asterisk" :class="checkedClassObject" data-testid="sale-checkout-property-date">
+			<input
+				class="form-control form-control-lg"
+				:class="checkedClassObject"
+				@blur="blur"
+				type="text"
+				inputmode="numeric"
+				:name="item.name"
+				@click="onClick"
+				@drop="(e) => e.preventDefault()"
+				@dragstart="(e) => e.preventDefault()"
+				@paste="(e) => e.preventDefault()"
+				:autocomplete="autocomplete"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				:placeholder="item.name"
+				v-model="item.value"
+			/>
+			<span
+				class="asterisk-item"
+				aria-hidden="true"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
+	`
 	});
 
-	var _templateObject;
+	const openingKeys = ['Enter', ' ', 'ArrowDown'];
 	ui_vue.BitrixVue.component('sale-checkout-view-element-input-property-enum', {
-	  props: ['item', 'index', 'variants'],
-	  mounted: function mounted() {
-	    this.createDialog();
-	  },
-	  methods: {
-	    createDialog: function createDialog() {
-	      this.popupMenu = new ui_entitySelector.Dialog({
-	        targetNode: this.$el,
-	        dropdownMode: true,
-	        showAvatars: false,
-	        compactView: true,
-	        focusOnFirst: false,
-	        multiple: false,
-	        items: this.getMenuItems(),
-	        events: {
-	          'Item:onSelect': this.onSelect,
-	          'Item:onDeselect': this.onDeselect
-	        },
-	        footer: this.item.required === 'Y' ? '' : this.getFooter()
-	      });
-	      main_core.Dom.style(this.popupMenu.getContainer(), 'width', "".concat(this.$el.clientWidth, "px"));
-	      main_core.Dom.style(this.popupMenu.getContainer(), 'height', '100%');
-	      window.addEventListener('resize', this.onResize.bind(this));
-	    },
-	    getMenuItems: function getMenuItems() {
-	      var items = [];
-	      for (var index in this.variants) {
-	        var variant = this.variants[index];
-	        items.push({
-	          id: variant.id,
-	          entityId: 'item',
-	          tabs: 'recents',
-	          title: variant.name,
-	          selected: this.item.value === variant.value,
-	          customData: {
-	            value: variant.value
-	          }
-	        });
-	      }
-	      return items;
-	    },
-	    deselectAll: function deselectAll() {
-	      this.item.value = '';
-	      this.popupMenu.deselectAll();
-	      this.popupMenu.hide();
-	    },
-	    onSelect: function onSelect(e) {
-	      var selectedItem = e.getData().item.getDialog().getSelectedItems()[0];
-	      this.$el.value = selectedItem.getTitle();
-	      var customData = Object.fromEntries(selectedItem.getCustomData());
-	      this.item.value = customData.value;
-	      this.validate();
-	    },
-	    onDeselect: function onDeselect() {
-	      this.item.value = '';
-	      this.popupMenu.hide();
-	      this.validate();
-	    },
-	    getFooter: function getFooter() {
-	      return BX.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span onclick=\"", "\" class=\"ui-selector-footer-link\">\n\t\t\t\t\t", "\n\t\t\t\t\t</span>"])), this.deselectAll, this.localize.CHECKOUT_VIEW_PROPERTY_LIST_ENUM_RESET_CHOICE);
-	    },
-	    validate: function validate() {
-	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.property.validate, {
-	        index: this.index
-	      });
-	    },
-	    onKeyDown: function onKeyDown(e) {
-	      if (['Esc', 'Tab'].indexOf(e.key) >= 0) {
-	        return;
-	      }
-	      e.preventDefault();
-	    },
-	    render: function render() {
-	      this.popupMenu.show();
-	    },
-	    onResize: function onResize() {
-	      main_core.Dom.style(this.popupMenu.getContainer(), 'width', "".concat(this.$el.clientWidth, "px"));
-	    }
-	  },
-	  computed: {
-	    localize: function localize() {
-	      return Object.freeze(ui_vue.BitrixVue.getFilteredPhrases('CHECKOUT_VIEW_PROPERTY_LIST_'));
-	    },
-	    checkedClassObject: function checkedClassObject() {
-	      return {
-	        'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
-	        'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
-	      };
-	    },
-	    getObjectClass: function getObjectClass() {
-	      var classes = {
-	        'form-control': true,
-	        'form-control-lg': true,
-	        'ui-ctl': true,
-	        'p-0': true,
-	        'border-0': this.item.validated === sale_checkout_const.Property.validate.unvalidated
-	      };
-	      return Object.assign(classes, this.checkedClassObject);
-	    },
-	    getSelectClass: function getSelectClass() {
-	      return {
-	        'property-enum-desktop': true,
-	        'form-control': true,
-	        'form-control-lg': true,
-	        'ui-ctl-element': true,
-	        'bg-transparent': true,
-	        'border-0': this.item.validated !== sale_checkout_const.Property.validate.unvalidated
-	      };
-	    },
-	    defaultValue: function defaultValue() {
-	      var _this = this;
-	      if (this.item.value !== '') {
-	        return this.variants.find(function (e) {
-	          return e.value === _this.item.value;
-	        }).name;
-	      }
-	      return '';
-	    },
-	    isEmpty: function isEmpty() {
-	      return this.item.value === '';
-	    },
-	    isRequired: function isRequired() {
-	      return this.item.required === 'Y';
-	    },
-	    isAsteriskShown: function isAsteriskShown() {
-	      return this.isEmpty && this.isRequired;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div\n            class=\"form-wrap form-asterisk\"\n\t\t\t:class=\"getObjectClass\"\n\t\t\t@blur=\"validate\"\n\t\t>\n\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t<input\n\t\t\t\treadonly\n\t\t\t\t@click=\"render\"\n\t\t\t\t@keydown=\"onKeyDown\"\n\t\t\t\t:class=\"getSelectClass\"\n\t\t\t\t:placeholder=\"item.name\"\n\t\t\t\t:value=\"defaultValue\"\n\t\t\t>\n            <span\n\t\t\t\tclass=\"asterisk-item\"\n\t\t\t\tv-if=\"isAsteriskShown\"\n\t\t\t>\n\t\t\t\t{{item.name}}\n\t\t\t</span>\n\t\t</div>\n\t"
+		mixins: [MixinPropertyField],
+		props: ['item', 'index', 'variants'],
+		data() {
+			return {
+				expanded: false
+			};
+		},
+		mounted() {
+			this.createDialog();
+		},
+		methods: {
+			createDialog() {
+				this.popupMenu = new ui_entitySelector.Dialog({
+					targetNode: this.$el,
+					dropdownMode: true,
+					showAvatars: false,
+					compactView: true,
+					focusOnFirst: false,
+					multiple: false,
+					items: this.getMenuItems(),
+					events: {
+						'Item:onSelect': this.onSelect,
+						'Item:onDeselect': this.onDeselect,
+						onShow: this.onShow,
+						onHide: this.onHide
+					},
+					footer: this.isRequired ? '' : this.getFooter()
+				});
+				main_core.Dom.style(this.popupMenu.getContainer(), 'width', `${this.$el.clientWidth}px`);
+				main_core.Dom.style(this.popupMenu.getContainer(), 'height', '100%');
+				window.addEventListener('resize', this.onResize.bind(this));
+			},
+			getMenuItems() {
+				const items = [];
+				for (const index in this.variants) {
+					const variant = this.variants[index];
+					items.push({
+						id: variant.id,
+						entityId: 'item',
+						tabs: 'recents',
+						title: variant.name,
+						selected: this.item.value === variant.value,
+						customData: {
+							value: variant.value
+						}
+					});
+				}
+				return items;
+			},
+			deselectAll() {
+				this.item.value = '';
+				this.popupMenu.deselectAll();
+				this.popupMenu.hide();
+			},
+			onSelect(e) {
+				const selectedItem = e.getData().item.getDialog().getSelectedItems()[0];
+				this.$el.value = selectedItem.getTitle();
+				const customData = Object.fromEntries(selectedItem.getCustomData());
+				this.item.value = customData.value;
+				this.validate();
+			},
+			onDeselect() {
+				this.item.value = '';
+				this.popupMenu.hide();
+				this.validate();
+			},
+			onShow() {
+				this.expanded = true;
+			},
+			onHide() {
+				this.expanded = false;
+			},
+			getFooter() {
+				return BX.Tag.render`
+					<span onclick="${this.deselectAll}" class="ui-selector-footer-link">
+					${this.localize.CHECKOUT_VIEW_PROPERTY_LIST_ENUM_RESET_CHOICE}
+					</span>`;
+			},
+			onKeyDown(e) {
+				if (openingKeys.indexOf(e.key) >= 0) {
+					// the field holds no text of its own, and Space alone would scroll the page
+					e.preventDefault();
+					this.render();
+				}
+			},
+			render() {
+				this.popupMenu.show();
+			},
+			onResize() {
+				main_core.Dom.style(this.popupMenu.getContainer(), 'width', `${this.$el.clientWidth}px`);
+			}
+		},
+		computed: {
+			localize() {
+				return Object.freeze(ui_vue.BitrixVue.getFilteredPhrases('CHECKOUT_VIEW_PROPERTY_LIST_'));
+			},
+			checkedClassObject() {
+				return {
+					'is-invalid': this.item.validated === sale_checkout_const.Property.validate.failure,
+					'is-valid': this.item.validated === sale_checkout_const.Property.validate.successful
+				};
+			},
+			getObjectClass() {
+				const classes = {
+					'form-control': true,
+					'form-control-lg': true,
+					'ui-ctl': true,
+					'p-0': true,
+					'border-0': this.item.validated === sale_checkout_const.Property.validate.unvalidated
+				};
+				return Object.assign(classes, this.checkedClassObject);
+			},
+			getSelectClass() {
+				return {
+					'property-enum-desktop': true,
+					'form-control': true,
+					'form-control-lg': true,
+					'ui-ctl-element': true,
+					'bg-transparent': true,
+					'border-0': this.item.validated !== sale_checkout_const.Property.validate.unvalidated
+				};
+			},
+			defaultValue() {
+				if (this.item.value !== '') {
+					return this.variants.find(e => e.value === this.item.value).name;
+				}
+				return '';
+			},
+			isEmpty() {
+				return this.item.value === '';
+			},
+			isAsteriskShown() {
+				return this.isEmpty && this.isRequired;
+			},
+			ariaExpanded() {
+				return this.expanded ? 'true' : 'false';
+			}
+		},
+		// language=Vue
+		template: `
+		<div
+						class="form-wrap form-asterisk"
+			:class="getObjectClass"
+			data-testid="sale-checkout-property-enum"
+			@blur="validate"
+		>
+			<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+			<input
+				readonly
+				@click="render"
+				@keydown="onKeyDown"
+				:class="getSelectClass"
+				role="combobox"
+				:aria-expanded="ariaExpanded"
+				:aria-label="item.name"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="errorDescribedBy"
+				:placeholder="item.name"
+				:value="defaultValue"
+			>
+						<span
+				class="asterisk-item"
+				aria-hidden="true"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
+	`
 	});
 
-}((this.BX.Sale.Checkout.View.Element.Input = this.BX.Sale.Checkout.View.Element.Input || {}),BX.Ui,BX,BX,BX.Event,BX.Sale.Checkout.Const,BX.UI.EntitySelector));
+	exports.MixinPropertyField = MixinPropertyField;
+
+})(this.BX.Sale.Checkout.View.Element.Input = this.BX.Sale.Checkout.View.Element.Input || {}, BX, BX, BX.Event, BX.Sale.Checkout.Const, BX.Ui, BX.UI.EntitySelector);
 //# sourceMappingURL=registry.bundle.js.map

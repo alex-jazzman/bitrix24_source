@@ -7,20 +7,23 @@ BX.Disk.FileViewClass = (function ()
 	var FileViewClass = function (parameters)
 	{
 		this.componentName = parameters.componentName;
+		this.surfaceId = parameters.surfaceId;
 		this.signedParameters = parameters.signedParameters;
 
-		this.selectorId = parameters.selectorId;
+		this.selectorDialogId = parameters.selectorDialogId;
 		//this.grid = parameters.grid;
 		this.object = parameters.object || {};
 		this.uf = parameters.uf || {};
+		this.isViewByUnifiedLink = parameters.isViewByUnifiedLink || false;
 		this.canDelete = !!parameters.canDelete;
+
+		this.layout = parameters.layout;
+		this.urls = parameters.urls;
+
 		if (parameters.externalLinkInfo)
 		{
 			this.buildExternalLinkByState(parameters.externalLinkInfo);
 		}
-
-		this.layout = parameters.layout;
-		this.urls = parameters.urls;
 
 		this.gridId = parameters.gridId;
 		this.grid = this.gridId? BX.Main.gridManager.getById(this.gridId) : null;
@@ -28,11 +31,26 @@ BX.Disk.FileViewClass = (function ()
 		this.ajaxUrl = '/bitrix/components/bitrix/disk.file.view/ajax.php';
 		this.ajaxCurrentPageUrl = document.location.href;
 
-		this.popupOuterLink = null;
-		this.selectorInitialized = false;
+		this.selectorDialog = null;
+		this.selectorOpenGeneration = 0;
+		// the recipients of this surface by their access code: the marks of the dialog are built
+		// from them, and the deselect of a recipient is addressed to its own model
+		this.sharingItems = {};
+		this.sharingAccessPopup = null;
+		this.sharingAccessPopupOpenGeneration = 0;
+		// both layers of this surface live in the body, outside the slider it was opened in, and
+		// have to go away with it: the slider is subscribed to once, for the two of them
+		this.slider = null;
+		this.sliderCloseHandler = null;
+		this.sharingMembersChangedHandler = null;
 
 		if(!parameters.withoutEventBinding)
 			this.setEvents();
+
+		if (BX.DiskUpload && BX.DiskUpload.getObj)
+		{
+			this.updateFileUploadUls(BX.DiskUpload.getObj('FolderList'));
+		}
 
 		this.render();
 
@@ -49,6 +67,9 @@ BX.Disk.FileViewClass = (function ()
 			{
 				response.data.forEach(function (item) {
 					var sharingItem = new BX.Disk.Model.SharingItem({
+						surfaceId: this.surfaceId,
+						getDialog: this.getSelectorDialog.bind(this),
+						onForgetSharingItem: this.forgetSharingItem.bind(this),
 						state: {
 							entity: item.entity,
 							sharing: item.sharing,
@@ -59,19 +80,8 @@ BX.Disk.FileViewClass = (function ()
 					});
 
 					sharingItem.render();
-					document.querySelector('.disk-detail-sidebar-user-access-section').appendChild(sharingItem.getContainer());
-
-					var selectorInstance = BX.UI.SelectorManager.instances[this.selectorId];
-					if (selectorInstance)
-					{
-						selectorInstance.itemsSelected[item.entity.id] = BX.UI.SelectorManager.convertEntityType(item.entity.type);
-					}
-
-					BX.onCustomEvent('Disk.FileView:onShowSharingEntities', [{
-						id: this.selectorId,
-						openDialogWhenInit: false
-					}]);
-					this.selectorInitialized = true;
+					this.registerSharingItem(sharingItem);
+					this.appendSharingItem(sharingItem);
 				}.bind(this));
 			}
 		}.bind(this));
@@ -80,20 +90,136 @@ BX.Disk.FileViewClass = (function ()
 
 	FileViewClass.prototype.buildExternalLinkByState = function (state)
 	{
-		this.externalLink = new BX.Disk.Model.ExternalLink.Input({
-			state: state,
-			data: {
-				objectId: this.object.id
+		this.externalLink = {
+			container: this.createExternalLinkPopupControl('disk-detail-sidebar-link-settings'),
+			render: function () {},
+			getContainer: function ()
+			{
+				return this.container;
 			},
-			models: {
-				externalLinkSettings: new BX.Disk.Model.ExternalLink.Settings({
-					state: state
-				}),
-				externalLinkDescription: new BX.Disk.Model.ExternalLink.Description({
-					state: state
-				})
-			}
+			adjustHeight: function () {},
+		};
+	};
+
+	FileViewClass.prototype.createExternalLinkPopupControl = function(className)
+	{
+		const link = BX.create('div', {
+			props: {
+				className: className,
+			},
+			attrs: {
+				'data-testid': 'disk-detail-external-link',
+			},
+			text: BX.message('DISK_FILE_VIEW_ACCESS_BY_LINK'),
 		});
+
+		BX.bind(link, 'click', this.openExternalLinkPopup.bind(this));
+
+		return link;
+	};
+
+	FileViewClass.prototype.openExternalLinkPopup = function()
+	{
+		var openGeneration = ++this.sharingAccessPopupOpenGeneration;
+		this.bindToCurrentSlider();
+
+		BX.Runtime.loadExtension('disk.sharing-access-popup').then(function(exports) {
+			if (openGeneration !== this.sharingAccessPopupOpenGeneration)
+			{
+				return;
+			}
+
+			const popup = this.sharingAccessPopup || new exports.SharingPopupDialog();
+			this.sharingAccessPopup = popup;
+
+			popup.open({
+				objectId: this.object.id,
+				uniqueCode:
+					BX.type.isStringFilled(this.object.uniqueCode)
+						? this.object.uniqueCode
+						: null
+				,
+				onAfterHide: this.onSharingAccessPopupHide.bind(this, popup),
+			});
+		}.bind(this));
+	};
+
+	// One subscription serves both layers of this surface - the window of access settings and the
+	// dialog of recipients. It is put up when the surface starts and again when a layer opens: a
+	// surface built before SidePanel knew its slider would otherwise stay unbound.
+	FileViewClass.prototype.bindToCurrentSlider = function()
+	{
+		var eventEmitter = BX.Event && BX.Event.EventEmitter ? BX.Event.EventEmitter : null;
+		var slider = BX.SidePanel && BX.SidePanel.Instance
+			? BX.SidePanel.Instance.getSliderByWindow(window)
+			: null
+		;
+
+		if (!eventEmitter || !slider || this.slider === slider)
+		{
+			return;
+		}
+
+		this.unbindFromCurrentSlider();
+
+		this.slider = slider;
+		this.sliderCloseHandler = this.onCurrentSliderClose.bind(this);
+		eventEmitter.subscribe(
+			slider,
+			'SidePanel.Slider:onClose',
+			this.sliderCloseHandler,
+		);
+	};
+
+	FileViewClass.prototype.unbindFromCurrentSlider = function()
+	{
+		if (!this.slider || !this.sliderCloseHandler)
+		{
+			return;
+		}
+
+		var eventEmitter = BX.Event && BX.Event.EventEmitter ? BX.Event.EventEmitter : null;
+		if (eventEmitter)
+		{
+			eventEmitter.unsubscribe(
+				this.slider,
+				'SidePanel.Slider:onClose',
+				this.sliderCloseHandler,
+			);
+		}
+
+		this.slider = null;
+		this.sliderCloseHandler = null;
+	};
+
+	// the slider removes its own markup, so only the state kept outside it is released here
+	FileViewClass.prototype.onCurrentSliderClose = function()
+	{
+		this.closeSharingAccessPopup();
+		this.destroySelectorDialog();
+		this.unsubscribeFromSharingMembersChanged();
+		this.unbindFromCurrentSlider();
+	};
+
+	FileViewClass.prototype.closeSharingAccessPopup = function()
+	{
+		this.sharingAccessPopupOpenGeneration++;
+
+		const popup = this.sharingAccessPopup;
+		this.sharingAccessPopup = null;
+
+		if (popup)
+		{
+			popup.close();
+		}
+	};
+
+	FileViewClass.prototype.onSharingAccessPopupHide = function(popup)
+	{
+		if (this.sharingAccessPopup === popup)
+		{
+			this.sharingAccessPopup = null;
+		}
 	};
 
 	FileViewClass.prototype.setUrlToAjaxCurrentPage = function (url)
@@ -108,17 +234,56 @@ BX.Disk.FileViewClass = (function ()
 
 	FileViewClass.prototype.render = function ()
 	{
-		if (this.externalLink && this.layout.externalLink)
+		if (this.externalLink && this.layout.externalLink && this.layout.externalLink.parentNode)
 		{
-			this.externalLink.render();
+			// the mounting point leaves the document with the control taking its place: a panel
+			// opened later looks its own point up globally and must not find the one of this panel
 			this.layout.externalLink.parentNode.replaceChild(this.externalLink.getContainer(), this.layout.externalLink);
-			this.adjustExternalLinkBlockHeight();
 		}
+	};
+
+	// role="button" carries no native activation, so the keys are served here: the click handler
+	// of the node is the one thing that has to run, whichever of the two events brought us in
+	FileViewClass.prototype.bindKeyboardActivation = function (node)
+	{
+		if (!node)
+		{
+			return;
+		}
+
+		BX.bind(node, 'keydown', function (event) {
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
+				node.click();
+			}
+		});
 	};
 
 	FileViewClass.prototype.setEvents = function ()
 	{
-		BX.bind(BX('disk-detail-sidebar-public-link-copy-link'), 'click', this.copyInternalLink.bind(this));
+		this.bindKeyboardActivation(this.layout.copyInternalLinkButton);
+		this.bindKeyboardActivation(this.layout.addSharingButton);
+		this.bindKeyboardActivation(this.layout.editUf);
+		this.bindKeyboardActivation(this.layout.historyButton);
+		this.bindKeyboardActivation(this.layout.moreActionsButton);
+		if (this.layout.copyInternalLinkButton && this.layout.internalLinkInput)
+		{
+			var layout = this.layout;
+			BX.clipboard.bindCopyClick(layout.copyInternalLinkButton, {
+				// the field is rewritten when the link changes, so the value is read on copy
+				text: function () {
+					return layout.internalLinkInput.value;
+				},
+				showButtonIfNotSupported: true,
+				// the confirmation balloon hides itself in a moment: it must not hold the focus
+				popup: {
+					hideTimeout: 2200,
+					offsetLeft: -10,
+					focusTrap: false
+				}
+			});
+		}
 		if (this.layout.deleteButton)
 		{
 			BX.bind(this.layout.deleteButton, 'click', this.openDeleteConfirm.bind(this));
@@ -126,6 +291,10 @@ BX.Disk.FileViewClass = (function ()
 		if (this.layout.restoreButton)
 		{
 			BX.bind(this.layout.restoreButton, 'click', this.openConfirmRestoreFromTrash.bind(this));
+		}
+		if (this.layout.historyButton)
+		{
+			BX.bind(this.layout.historyButton, 'click', this.openFileHistory.bind(this));
 		}
 		if (this.layout.addSharingButton)
 		{
@@ -135,20 +304,41 @@ BX.Disk.FileViewClass = (function ()
 		{
 			BX.bind(this.layout.editUf, 'click', this.editUf.bind(this));
 		}
-		BX.bind(this.layout.moreActionsButton, 'click', this.openFileActions.bind(this));
+		if (this.layout.moreActionsButton)
+		{
+			BX.bind(this.layout.moreActionsButton, 'click', this.openFileActions.bind(this));
+		}
 		BX.bind(window, 'popstate', this.onPopState.bind(this));
 
 		BX.addCustomEvent("onIframeElementLoadDataToView", BX.proxy(this.onIframeElementLoadDataToView, this));
 		BX.addCustomEvent("onIframeElementConverted", BX.proxy(this.onIframeElementConverted, this));
 		BX.addCustomEvent("onBeforeElementShow", BX.proxy(this.onBeforeElementShow, this));
-		BX.addCustomEvent(this.externalLink.externalLinkDescription, "Disk.Model.Item:afterRender", this.handleAfterRenderExternalLinkSettings.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onMessage', this.onSliderMessage.bind(this));
 		BX.addCustomEvent("onPopupFileUploadClose", this.onPopupFileUploadClose.bind(this));
+		BX.addCustomEvent(window, 'onDiskUploadAgentInitialized', this.onDiskUploadAgentInitialized.bind(this));
+
+		this.bindToCurrentSlider();
+		this.subscribeToSharingMembersChanged();
 
 		if(!!this.uf)
 		{
 			BX.bind(this.uf.editButton, 'click', BX.delegate(this.onClickEditUfButton, this));
 		}
+	};
+
+	FileViewClass.prototype.onDiskUploadAgentInitialized = function (fileUpload)
+	{
+		this.updateFileUploadUls(fileUpload);
+	};
+
+	FileViewClass.prototype.updateFileUploadUls = function (fileUpload)
+	{
+		if (!this.isViewByUnifiedLink || !BX.type.isStringFilled(this.object.uls) || !fileUpload)
+		{
+			return;
+		}
+
+		fileUpload.updateUls(this.object.uls);
 	};
 
 	FileViewClass.prototype.onSliderMessage = function(event)
@@ -201,11 +391,6 @@ BX.Disk.FileViewClass = (function ()
 			autoHide: true,
 			zIndex: 11000
 		}).show();
-	};
-
-	FileViewClass.prototype.handleAfterRenderExternalLinkSettings = function()
-	{
-		this.adjustExternalLinkBlockHeight();
 	};
 
 	FileViewClass.prototype.onIframeElementConverted = function(element, newName, oldName)
@@ -272,6 +457,7 @@ BX.Disk.FileViewClass = (function ()
 		var name = this.object.name;
 		var objectId = this.object.id;
 		var messageDescription = BX.message('DISK_FILE_TRASH_RESTORE_FILE_CONFIRM_1');
+		var self = this;
 
 		var buttons = [
 			new BX.PopupWindowButton({
@@ -281,11 +467,24 @@ BX.Disk.FileViewClass = (function ()
 					click: function (e) {
 						this.addClassName('popup-window-button-wait');
 
-						BX.ajax.runAction('disk.api.file.restore', {
+						let restoreAction = 'disk.api.file.restore';
+
+						let restoreData = {
+							fileId: objectId,
+						};
+
+						if (self.isViewByUnifiedLink && BX.type.isStringFilled(self.object.uniqueCode))
+						{
+							restoreAction = 'disk.api.unifiedlinkactions.restore';
+
+							restoreData = {
+								uniqueCode: self.object.uniqueCode,
+							};
+						}
+
+						BX.ajax.runAction(restoreAction, {
 							analyticsLabel: 'file.view',
-							data: {
-								fileId: objectId
-							}
+							data: restoreData,
 						}).then(function (response) {
 							BX.PopupWindowManager.getCurrentPopup().close();
 
@@ -297,9 +496,27 @@ BX.Disk.FileViewClass = (function ()
 									objectId: objectId
 								});
 							}
-							else if(response.data.file.id)
+
+							const restoredObjectId =
+								response.data.file && response.data.file.id
+									? response.data.file.id
+									: response.data.object && response.data.object.id
+							;
+
+							if (restoredObjectId)
 							{
-								document.location.href = BX.Disk.getUrlToShowObjectInGrid(response.data.ID);
+								const reloadUrlParams = {};
+								const uls = response.data.object?.uls;
+
+								if (BX.type.isStringFilled(uls))
+								{
+									reloadUrlParams._uls = uls;
+								}
+
+								document.location.href = BX.Disk.getUrlToShowObjectInGrid(
+									restoredObjectId,
+									reloadUrlParams,
+								);
 							}
 						});
 					}
@@ -393,35 +610,49 @@ BX.Disk.FileViewClass = (function ()
 	{
 		var name = this.object.name;
 		var objectId = this.object.id;
+		var canMarkDeleted = !this.object.isDeleted;
+		var canDelete = this.canDelete;
 
-		var messageDescription = this.canDelete ?
+		var messageDescription = canDelete ?
 			BX.message('DISK_FILE_VIEW_TRASH_DELETE_DESTROY_FILE_CONFIRM') :
 			BX.message('DISK_FILE_VIEW_TRASH_DELETE_FILE_CONFIRM')
 		;
 
-		if(this.object.isDeleted)
+		if (this.object.isDeleted)
 		{
 			messageDescription = BX.message('DISK_FILE_VIEW_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM');
 		}
 
-		var buttons = [];
+		var self = this;
+		var airMessageBox = BX.Disk.AirMessageBox;
 
-		if (!this.object.isDeleted)
-		{
-			buttons.push(new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FILE_VIEW_TRASH_DELETE_BUTTON'),
-					className: "ui-btn ui-btn-success",
-					events: {
-						click: function (e) {
-							this.addClassName('ui-btn-clock');
+		airMessageBox.showAirMessageBox({
+			title: BX.message('DISK_FILE_VIEW_VERSION_DELETE_TITLE'),
+			message: airMessageBox.formatFileName(messageDescription, name),
+			className: 'disk-air-message-box-equal-buttons',
+			buttonsFactory: function(messageBox) {
+				var buttons = [];
+				var cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT
+				});
+				cancelButton.setText(BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'));
+
+				if (canMarkDeleted)
+				{
+					buttons.push(new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_TRASH_DELETE_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						onclick: function(button) {
+							button.setWaiting(true);
 
 							BX.ajax.runAction('disk.api.file.markDeleted', {
 								analyticsLabel: 'file.view',
 								data: {
 									fileId: objectId
 								}
-							}).then(function (response) {
-								BX.PopupWindowManager.getCurrentPopup().close();
+							}).then(function() {
+								messageBox.close();
 
 								var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
 								if (sliderByWindow)
@@ -431,30 +662,29 @@ BX.Disk.FileViewClass = (function ()
 										objectId: objectId
 									});
 								}
+							}, function() {
+								button.setWaiting(false);
 							});
 						}
-					}
-				})
-			);
-		}
+					}));
+				}
 
-		if (this.canDelete)
-		{
-			var self = this;
-			buttons.push(new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FILE_VIEW_TRASH_DESTROY_BUTTON'),
-					className: 'ui-btn ui-btn-light-border',
-					events: {
-						click: function (e) {
-							this.addClassName('ui-btn-clock');
+				if (canDelete)
+				{
+					buttons.push(new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_TRASH_DESTROY_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.OUTLINE,
+						onclick: function(button) {
+							button.setWaiting(true);
 
 							BX.ajax.runAction('disk.api.file.delete', {
 								analyticsLabel: 'file.view',
 								data: {
 									fileId: objectId
 								}
-							}).then(function (response) {
-								BX.PopupWindowManager.getCurrentPopup().close();
+							}).then(function() {
+								messageBox.close();
 
 								var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
 								if (sliderByWindow)
@@ -468,29 +698,17 @@ BX.Disk.FileViewClass = (function ()
 								{
 									document.location.href = self.urls.trashcanList;
 								}
+							}, function() {
+								button.setWaiting(false);
 							});
 						}
-					}
-				})
-			)
-		}
-
-		buttons.push(new BX.PopupWindowCustomButton({
-			text: BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'),
-			className: 'ui-btn ui-btn-link',
-			events: {
-				click: function (e) {
-					BX.PopupWindowManager.getCurrentPopup().close();
+					}));
 				}
-			}})
-		);
 
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
-			title: BX.message('DISK_FILE_VIEW_VERSION_DELETE_TITLE'),
-			contentClassName: 'disk-popup-text-content',
-			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+				buttons.push(cancelButton);
+
+				return buttons;
+			}
 		});
 	};
 
@@ -632,44 +850,6 @@ BX.Disk.FileViewClass = (function ()
 		document.location.href = url;
 	}
 
-	FileViewClass.prototype.copyInternalLink = function() {
-		var element = BX('disk-detail-sidebar-public-link-copy-link');
-		var elementAttr = element.getAttribute('for');
-		var copyInput = document.getElementById(elementAttr);
-		copyInput.select();
-		document.execCommand('copy');
-		this.popupOuterLink ? null : this.showCopyLinkPopup(element, BX.message('DISK_FILE_VIEW_INTERNAL_LINK_COPIED'));
-	};
-
-	FileViewClass.prototype.showCopyLinkPopup = function(node, message) {
-		this.popupOuterLink = new BX.PopupWindow('disk-popup-copy-link', node, {
-			className: 'disk-popup-copy-link',
-			bindPosition: {
-				position: 'top'
-			},
-			offsetLeft: -10,
-			darkMode: true,
-			angle: true,
-			content: message
-		});
-
-		this.popupOuterLink.show();
-
-		setTimeout(function() {
-			BX.addClass(BX(this.popupOuterLink.uniquePopupId), 'disk-popup-copy-link-hide');
-		}.bind(this), 2000);
-
-		setTimeout(function() {
-			this.popupOuterLink.destroy();
-			this.popupOuterLink = null;
-		}.bind(this), 2200)
-	};
-
-	FileViewClass.prototype.adjustExternalLinkBlockHeight = function()
-	{
-		this.externalLink.adjustHeight();
-	};
-
 	FileViewClass.prototype.onPopState = function (e)
 	{
 		var state = e.state;
@@ -679,70 +859,76 @@ BX.Disk.FileViewClass = (function ()
 		}
 	};
 
+	FileViewClass.prototype.openFileHistory = function ()
+	{
+		if (this.object.isHistoryBlocked)
+		{
+			top.BX.UI.InfoHelper.show('limit_office_version_storage');
+		}
+		else
+		{
+			BX.SidePanel.Instance.open(this.urls.fileHistory);
+		}
+	};
+
 	FileViewClass.prototype.openFileActions = function (event)
 	{
-		var target = BX.getEventTarget(event);
-		var self = this;
-
-		var menuItems = [
-			{
-				text: BX.message('DISK_FILE_VIEW_FILE_GO_TO_HISTORY'),
-				onclick: function() {
-					if (self.object.isHistoryBlocked)
-					{
-						top.BX.UI.InfoHelper.show('limit_office_version_storage');
-					}
-					else
-					{
-						BX.SidePanel.Instance.open(self.urls.fileHistory);
-					}
-
-					this.close();
-				}
-			}
-		];
-		if (this.object.hasUf)
+		if (!this.actionsMenu)
 		{
-			menuItems.push({
-					text: BX.message('DISK_FILE_VIEW_FILE_GO_TO_SHOW_USERFIELDS'),
-					onclick: function () {
-						BX.SidePanel.Instance.open(self.urls.fileShowUf, {
-							allowChangeHistory: false
-						});
-						this.close();
-					}
-				}
-			)
-		}
-		if (this.object.hasBp)
-		{
-			menuItems.push({
-					text: BX.message('DISK_FILE_VIEW_FILE_GO_TO_SHOW_BP'),
-					onclick: function () {
-						BX.SidePanel.Instance.open(self.urls.fileShowBp, {
-							allowChangeHistory: false
-						});
-						this.close();
-					}
-				}
-			)
-		}
-		BX.PopupMenu.show('disk-file-view-actions', BX(target), menuItems,
-			{
-				className: 'disk-file-view-actions-popup',
+			this.actionsMenu = new BX.UI.System.Menu({
+				// the id of the surface root keeps the layer of a second surface of the same
+				// component open in the same document apart
+				id: 'disk-file-view-actions-' + this.surfaceId,
+				items: this.buildFileActionsItems(),
 				angle: true,
-				autoHide: true,
 				offsetLeft: 20,
+				// the layer lives in the body, outside the surface it belongs to: it is not kept
+				// past its closing
+				cacheable: false,
 				overlay: {
 					opacity: 0.01
 				},
 				events: {
-					onPopupClose: function () {
-						BX.PopupMenu.destroy('disk-file-view-actions');
-					}
+					onDestroy: function() {
+						this.actionsMenu = null;
+					}.bind(this)
 				}
-			}
-		);
+			});
+		}
+
+		this.actionsMenu.show(BX.getEventTarget(event));
+	};
+
+	FileViewClass.prototype.buildFileActionsItems = function ()
+	{
+		var self = this;
+		var items = [];
+
+		if (this.object.hasUf)
+		{
+			items.push({
+				title: BX.message('DISK_FILE_VIEW_FILE_GO_TO_SHOW_USERFIELDS'),
+				onClick: function () {
+					BX.SidePanel.Instance.open(self.urls.fileShowUf, {
+						allowChangeHistory: false
+					});
+				}
+			});
+		}
+
+		if (this.object.hasBp)
+		{
+			items.push({
+				title: BX.message('DISK_FILE_VIEW_FILE_GO_TO_SHOW_BP'),
+				onClick: function () {
+					BX.SidePanel.Instance.open(self.urls.fileShowBp, {
+						allowChangeHistory: false
+					});
+				}
+			});
+		}
+
+		return items;
 	};
 
 	FileViewClass.prototype.editUf = function ()
@@ -765,43 +951,231 @@ BX.Disk.FileViewClass = (function ()
 		}.bind(this));
 	};
 
+	// the dialog is loaded with the first opening, not with the page: a surface without the button
+	// of adding never asks for it
 	FileViewClass.prototype.openSelector = function ()
 	{
-		if (!this.selectorInitialized)
+		// the button is a toggle: the click that closes the dialog does not ask for a new one
+		if (this.selectorDialog && this.selectorDialog.isOpen())
 		{
-			BX.onCustomEvent('Disk.FileView:onShowSharingEntities', [{
-				id: this.selectorId,
-				openDialogWhenInit: true
-			}]);
-			this.selectorInitialized = true;
-		}
-		else
-		{
-			BX.onCustomEvent('Disk.FileView:openSelector', [{
-				id: this.selectorId
-			}]);
-		}
-	};
+			this.destroySelectorDialog();
 
-	FileViewClass.prototype.onUnSelectSelectorItem = function (data)
-	{
-		BX.onCustomEvent("Disk.FileView:onUnSelectSelectorItem", [data]);
-	};
-
-	FileViewClass.prototype.onSelectSelectorItem = function (data)
-	{
-		if (data.state !== 'select')
 			return;
+		}
 
-		BX.Main.selectorManagerV2.getById(this.selectorId).closeDialog();
+		var openGeneration = ++this.selectorOpenGeneration;
+
+		BX.Runtime.loadExtension(['ui.entity-selector', 'ui.a11y'])
+			.then(this.loadProjectSelectorEntity.bind(this))
+			.then(function (isProjectAvailable) {
+				if (openGeneration === this.selectorOpenGeneration)
+				{
+					this.showSelectorDialog(isProjectAvailable);
+				}
+			}.bind(this))
+			// the dialog that failed to load or to open leaves the button silent otherwise
+			.catch(this.showSelectorLoadError.bind(this))
+		;
+	};
+
+	// projects are picked through the entity of socialnetwork: a portal without it simply has none
+	FileViewClass.prototype.loadProjectSelectorEntity = function ()
+	{
+		return BX.Runtime.loadExtension('socialnetwork.entity-selector').then(
+			function () {
+				return true;
+			},
+			function () {
+				return false;
+			}
+		);
+	};
+
+	FileViewClass.prototype.showSelectorLoadError = function ()
+	{
+		var message = BX.message('DISK_FILE_VIEW_SHARING_SELECTOR_LOAD_ERROR');
+
+		// the balloon of ui.notification carries no live region of its own, so the text is announced
+		// apart; ui.a11y itself can be the extension that failed to load
+		var announcer = BX.UI && BX.UI.Accessibility ? BX.UI.Accessibility.LiveAnnouncer : null;
+		if (announcer)
+		{
+			announcer.announce(message, 'assertive');
+		}
+
+		BX.Disk.showModalWithStatusAction({
+			status: 'error',
+			message: message
+		});
+	};
+
+	FileViewClass.prototype.showSelectorDialog = function (isProjectAvailable)
+	{
+		if (!this.layout.addSharingButton)
+		{
+			return;
+		}
+
+		// the recipients change while the block is open, so the dialog is built anew every time
+		// and takes the list as it is now
+		this.destroySelectorDialog();
+		this.forgetRemovedSharingItems();
+
+		var entities = this.getSelectorEntities(isProjectAvailable);
+
+		this.selectorDialog = new BX.UI.EntitySelector.Dialog({
+			id: this.selectorDialogId,
+			targetNode: this.layout.addSharingButton,
+			context: 'DISK_SHARING_PRIVATE_ACCESS',
+			multiple: true,
+			enableSearch: true,
+			entities: entities,
+			preselectedItems: this.getPreselectedItems(entities),
+			// access is revoked from anyone: no recipient is kept from being deselected
+			undeselectedItems: [],
+			events: {
+				'Item:onSelect': function (event) {
+					this.onSelectSelectorItem(event.getData().item);
+				}.bind(this),
+				'Item:onDeselect': function (event) {
+					this.onDeselectSelectorItem(event.getData().item);
+				}.bind(this)
+			}
+		});
+
+		this.bindToCurrentSlider();
+
+		this.selectorDialog.show();
+		// the card can itself be opened in a slider, and the dialog is a layer of the document
+		// above it
+		this.selectorDialog.adjustPosition();
+
+		// the dialog lies outside the root of this surface, so a test cannot reach it through that
+		// root: the mark tells the dialog of the card from the one a panel of the same file opens
+		this.selectorDialog.getContainer().setAttribute('data-testid', 'disk-detail-card-sharing-selector');
+	};
+
+	FileViewClass.prototype.destroySelectorDialog = function ()
+	{
+		if (this.selectorDialog)
+		{
+			this.selectorDialog.destroy();
+			this.selectorDialog = null;
+		}
+	};
+
+	FileViewClass.prototype.getSelectorDialog = function ()
+	{
+		return this.selectorDialog;
+	};
+
+	FileViewClass.prototype.getSelectorEntities = function (isProjectAvailable)
+	{
+		var entities = [
+			{
+				id: 'user',
+				options: {
+					// this block never invited anybody and never looked outside the portal
+					inviteEmployeeLink: false,
+					inviteGuestLink: false
+				}
+			},
+			{
+				id: 'department',
+				options: {
+					selectMode: 'usersAndDepartments'
+				}
+			}
+		];
+
+		if (isProjectAvailable)
+		{
+			entities.push({id: 'project'});
+		}
+
+		return entities;
+	};
+
+	// a recipient without a matching entity in the dialog (a chat, a project on a portal without the
+	// project entity) stays in the list of the block but is not preselected
+	FileViewClass.prototype.getPreselectedItems = function (entities)
+	{
+		var entityIds = entities.map(function (entity) {
+			return entity.id;
+		});
+
+		var preselectedItems = [];
+
+		Object.keys(this.sharingItems).forEach(function (accessCode) {
+			var itemId = BX.Disk.SharingAccessCodes.getSelectorItemIdByAccessCode(accessCode);
+			if (itemId && entityIds.includes(itemId[0]))
+			{
+				preselectedItems.push(itemId);
+			}
+		});
+
+		return preselectedItems;
+	};
+
+	// a recipient deleted by its own cross takes its node out of the list and leaves the model of
+	// the surface behind: the list of the block tells who holds the access now
+	FileViewClass.prototype.forgetRemovedSharingItems = function ()
+	{
+		Object.keys(this.sharingItems).forEach(function (accessCode) {
+			if (!document.contains(this.sharingItems[accessCode].getContainer()))
+			{
+				delete this.sharingItems[accessCode];
+			}
+		}.bind(this));
+	};
+
+	// the sharing section of this card, not the one of a panel opened over it
+	FileViewClass.prototype.appendSharingItem = function (sharingItem)
+	{
+		if (this.layout.sharingSection)
+		{
+			this.layout.sharingSection.appendChild(sharingItem.getContainer());
+		}
+	};
+
+	FileViewClass.prototype.registerSharingItem = function (sharingItem)
+	{
+		this.sharingItems[sharingItem.state.entity.id] = sharingItem;
+	};
+
+	// the model of a recipient the server has taken out of the list says so itself
+	FileViewClass.prototype.forgetSharingItem = function (accessCode)
+	{
+		delete this.sharingItems[accessCode];
+	};
+
+	FileViewClass.prototype.onSelectSelectorItem = function (item)
+	{
+		var accessCode = BX.Disk.SharingAccessCodes.getAccessCodeBySelectorItem(item.getEntityId(), item.getId());
+		if (!accessCode)
+		{
+			return;
+		}
+
+		// the recipient already holds the access or is already waiting for it: a second request
+		// would grant the same access twice
+		if (this.sharingItems[accessCode])
+		{
+			return;
+		}
 
 		var sharingItem = new BX.Disk.Model.DraftSharingItem({
+			surfaceId: this.surfaceId,
+			getDialog: this.getSelectorDialog.bind(this),
+			onForgetSharingItem: this.forgetSharingItem.bind(this),
+			onReplaceByRealItem: this.registerSharingItem.bind(this),
 			state: {
 				entity: {
-					id: data.item.id,
-					name: data.item.name,
-					link: data.item.link,
-					avatar: data.item.avatar
+					id: accessCode,
+					type: BX.Disk.SharingAccessCodes.getMemberTypeBySelectorEntity(item.getEntityId()),
+					name: item.getTitle(),
+					link: item.getLink(),
+					avatar: item.getAvatar()
 				},
 				object: {
 					id: this.object.id
@@ -812,7 +1186,146 @@ BX.Disk.FileViewClass = (function ()
 		sharingItem.render();
 		sharingItem.save();
 
-		document.querySelector('.disk-detail-sidebar-user-access-section').appendChild(sharingItem.getContainer());
+		this.registerSharingItem(sharingItem);
+		this.appendSharingItem(sharingItem);
+	};
+
+	FileViewClass.prototype.onDeselectSelectorItem = function (item)
+	{
+		var accessCode = BX.Disk.SharingAccessCodes.getAccessCodeBySelectorItem(item.getEntityId(), item.getId());
+		var sharingItem = accessCode ? this.sharingItems[accessCode] : null;
+
+		if (!sharingItem)
+		{
+			return;
+		}
+
+		// a draft holds no access to revoke yet: the gesture is kept and the access is revoked as
+		// soon as the server answers the request of the draft
+		if (sharingItem instanceof BX.Disk.Model.DraftSharingItem)
+		{
+			sharingItem.requestRevokeAfterSave();
+
+			return;
+		}
+
+		// the row, the record of the surface and the mark go away with the answer of the server:
+		// a refused revoke has to find all three of them in place
+		sharingItem.deleteSharing();
+	};
+
+	// The card and a panel of the same file show one and the same list of recipients:
+	// what one of them got the server to agree to, the other shows without asking the server again.
+	FileViewClass.prototype.subscribeToSharingMembersChanged = function ()
+	{
+		var eventEmitter = BX.Event && BX.Event.EventEmitter ? BX.Event.EventEmitter : null;
+		if (!eventEmitter || this.sharingMembersChangedHandler)
+		{
+			return;
+		}
+
+		this.sharingMembersChangedHandler = this.onSharingMembersChanged.bind(this);
+		eventEmitter.subscribe('Disk.FileView:onSharingMembersChanged', this.sharingMembersChangedHandler);
+	};
+
+	FileViewClass.prototype.unsubscribeFromSharingMembersChanged = function ()
+	{
+		var eventEmitter = BX.Event && BX.Event.EventEmitter ? BX.Event.EventEmitter : null;
+		if (!eventEmitter || !this.sharingMembersChangedHandler)
+		{
+			return;
+		}
+
+		eventEmitter.unsubscribe('Disk.FileView:onSharingMembersChanged', this.sharingMembersChangedHandler);
+		this.sharingMembersChangedHandler = null;
+	};
+
+	FileViewClass.prototype.onSharingMembersChanged = function (event)
+	{
+		var data = event.getData() || {};
+
+		// the own message is an echo; a message about another file belongs to another surface
+		if (data.sourceSurfaceId === this.surfaceId || data.objectId !== this.object.id)
+		{
+			return;
+		}
+
+		this.forgetRemovedSharingItems();
+
+		if (data.action === 'added')
+		{
+			this.addSharingItemByMember(data.member);
+		}
+		else if (data.action === 'removed')
+		{
+			this.removeSharingItemByAccessCode(data.accessCode);
+		}
+	};
+
+	// the change has already happened on the server: this surface only catches its list up with it
+	FileViewClass.prototype.addSharingItemByMember = function (member)
+	{
+		if (!member || !member.entity || this.sharingItems[member.entity.id])
+		{
+			return;
+		}
+
+		var sharingItem = new BX.Disk.Model.SharingItem({
+			surfaceId: this.surfaceId,
+			getDialog: this.getSelectorDialog.bind(this),
+			onForgetSharingItem: this.forgetSharingItem.bind(this),
+			state: {
+				entity: member.entity,
+				sharing: member.sharing,
+				object: {
+					id: this.object.id
+				}
+			}
+		});
+
+		sharingItem.render();
+		this.registerSharingItem(sharingItem);
+		this.appendSharingItem(sharingItem);
+
+		this.markSelectorItem(member.entity.id, true);
+	};
+
+	FileViewClass.prototype.removeSharingItemByAccessCode = function (accessCode)
+	{
+		var sharingItem = this.sharingItems[accessCode];
+		if (!sharingItem)
+		{
+			return;
+		}
+
+		delete this.sharingItems[accessCode];
+		sharingItem.remove();
+
+		this.markSelectorItem(accessCode, false);
+	};
+
+	// the mark of the own dialog follows the list; the dialog of another surface is never touched
+	FileViewClass.prototype.markSelectorItem = function (accessCode, isSelected)
+	{
+		var itemId = this.selectorDialog
+			? BX.Disk.SharingAccessCodes.getSelectorItemIdByAccessCode(accessCode)
+			: null
+		;
+		var item = itemId ? this.selectorDialog.getItem(itemId) : null;
+		if (!item)
+		{
+			return;
+		}
+
+		// the change is already done: answering it with an event would give a second request
+		if (isSelected)
+		{
+			item.select({emitEvents: false});
+		}
+		else
+		{
+			item.deselect({emitEvents: false});
+		}
 	};
 
 	FileViewClass.prototype.workWithLocationHash = function()

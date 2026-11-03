@@ -21,6 +21,7 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'popup',
+	'ui.a11y',
 	'ui',
 	'resize_observer',
 	'loader',
@@ -73,6 +74,18 @@ foreach ($arResult["COLUMNS"] as $header)
 	}
 }
 
+// Columns a full-width cell spans on top of the printed ones. Pinning splits a cell in two:
+// the cell goes `position: absolute` and a placeholder clone takes its place in the flow, so
+// a pinned cell stands for two columns of the laid out table. Every head cell carrying
+// `main-grid-sticked-column` is pinned, the service ones - drag, checkbox, actions - included;
+// they are exactly the ones `$additionalColumnsCount` counts besides the trailing empty cell.
+$pinnedColumnsCount = 0;
+
+if ($arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"])
+{
+	$pinnedColumnsCount = $stickedColumnsCount + $additionalColumnsCount - 1;
+}
+
 $displayedCount = count(
 	array_filter(
 		$arParams["ROWS"],
@@ -114,11 +127,13 @@ $adjustColumnItem = static function(array $column, array $arParams, array $arRes
 		.'</label>';
 
 	$spanStickedClass = (!$arParams['ALLOW_STICKED_COLUMNS'] ? ' main-grid-reset-right' : '');
-	$result .= '<span class="main-grid-settings-window-list-item-edit-button' . $spanStickedClass . '"></span>';
+	$result .= '<button type="button" class="main-grid-settings-window-list-item-edit-button' . $spanStickedClass . '"'
+		. ' aria-label="' . Text\HtmlFilter::encode(Loc::getMessage('interface_grid_column_rename')) . '"></button>';
 
 	if ($arParams['ALLOW_STICKED_COLUMNS'])
 	{
-		$result .= '<span class="main-grid-settings-window-list-item-sticky-button"></span>';
+		$result .= '<button type="button" class="main-grid-settings-window-list-item-sticky-button"'
+			. ' aria-label="' . Text\HtmlFilter::encode(Loc::getMessage('interface_grid_column_stick')) . '"></button>';
 	}
 
 	$result .= '</div>';
@@ -157,15 +172,47 @@ if ($emptyFooter)
 	$gridClasses[] = 'main-grid-empty-footer';
 }
 
+$hasHeaderHints = false;
+foreach ($arResult['COLUMNS'] as $header)
+{
+	if (isset($header['hint']))
+	{
+		$hasHeaderHints = true;
+		break;
+	}
+}
+
+$settingsWindowPrinted = empty($arResult['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP']);
+$sectionsPrinted =
+	$settingsWindowPrinted
+	&& !empty($arResult['HEADERS_SECTIONS'])
+	&& is_array($arParams['HEADERS_SECTIONS'])
+;
+
+$hasSectionHints = false;
+if ($sectionsPrinted)
+{
+	foreach ($arResult['HEADERS_SECTIONS'] as $headerSection)
+	{
+		if (isset($headerSection['hint']))
+		{
+			$hasSectionHints = true;
+			break;
+		}
+	}
+}
+
+$printHintInit = $hasHeaderHints || $hasSectionHints;
+
 ?>
 
 <div class="<?=join(' ', $gridClasses)?>" id="<?=$arParams["GRID_ID"]?>" data-ajaxid="<?=$arParams["AJAX_ID"]?>"<?=$arResult['IS_AJAX'] ? " style=\"display: none;\"" : ""?>><?php
 	?><form name="form_<?=$arParams["GRID_ID"]?>" action="<?=POST_FORM_ACTION_URI; ?>" method="POST"><?php
 		?><?=bitrix_sessid_post() ?><?php
-		if (!$arResult['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'])
+		if ($settingsWindowPrinted)
 		{
-			?><div class="main-grid-settings-window"><?php
-				$headersSectionsEnabled = !empty($arResult['HEADERS_SECTIONS']) && is_array($arParams['HEADERS_SECTIONS']);
+			?><div class="main-grid-settings-window" inert><?php
+				$headersSectionsEnabled = $sectionsPrinted;
 				if ($headersSectionsEnabled || !empty($arResult['ENABLE_FIELDS_SEARCH']))
 				{
 				?><div class="main-grid-settings-window-search-wrapper"><?php
@@ -182,13 +229,13 @@ if ($emptyFooter)
 												? ' main-grid-settings-window-search-section-item-icon-active'
 												: ''
 										);
-										?><div class="main-grid-settings-window-search-section-item" data-ui-grid-filter-section-button="<?= $headerSection['id'] ?>"><?php
-										?><div class="main-grid-settings-window-search-section-item-icon <?= $activeClass ?>"><?php
-											?><div><?php
+										?><button type="button" class="main-grid-settings-window-search-section-item" data-ui-grid-filter-section-button="<?= Text\HtmlFilter::encode($headerSection['id']) ?>" aria-pressed="<?= $headerSection['selected'] ? 'true' : 'false' ?>"><?php
+										?><span class="main-grid-settings-window-search-section-item-icon <?= $activeClass ?>"><?php
+											?><span><?php
 												print Text\HtmlFilter::encode($headerSection['name']);
-											?></div><?php
-										?></div><?php
-										?></div><?php
+											?></span><?php
+										?></span><?php
+										?></button><?php
 									}
 								?></div><?php
 							?></div><?php
@@ -198,8 +245,8 @@ if ($emptyFooter)
 								?><div class="ui-form-content main-grid-settings-window-search-input-wrapper"><?php
 									?><div class="ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon"><?php
 										?><div class="ui-ctl-before ui-ctl-icon-search"></div><?php
-										?><button class="ui-ctl-after ui-ctl-icon-clear"></button><?php
-										?><input type="text" class="ui-ctl-element main-grid-settings-window-search-section-input"><?php
+										?><button type="button" class="ui-ctl-after ui-ctl-icon-clear" aria-label="<?=getMessage('interface_grid_columns_search_clear')?>"></button><?php
+										?><input type="text" class="ui-ctl-element main-grid-settings-window-search-section-input" data-autofocus aria-label="<?=getMessage('interface_grid_field_search_placeholder')?>"><?php
 									?></div><?php
 								?></div><?php
 							?></div><?php
@@ -218,11 +265,6 @@ if ($emptyFooter)
 							<h3 class="main-grid-settings-window-section-title">
 								<?= Text\HtmlFilter::encode($headerSection['name']) ?>
 								<?php if (isset($headerSection["hint"])): ?>
-									<script>
-										BX.ready(function() {
-											BX.UI.Hint.init(BX('hint_section_<?= CUtil::JSEscape($headerSection['id']) ?>'));
-										});
-									</script>
 									<span id="hint_section_<?= Text\HtmlFilter::encode($headerSection['id']) ?>" class="main-grid-head-title-tooltip" title="">
 										<span <?= empty($headerSection['hintInteractivity']) ? '' : 'data-hint-interactivity'?> <?= empty($headerSection['hintHtml']) ? '' : 'data-hint-html' ?> data-hint="<?= Text\HtmlFilter::encode($headerSection["hint"]) ?>"></span>
 									</span>
@@ -253,7 +295,7 @@ if ($emptyFooter)
 				}
 				?><div class="popup-window-buttons"><?php
 					?><span class="main-grid-settings-window-buttons-wrapper"><?php
-						?><span class="main-grid-settings-window-actions-item-button main-grid-settings-window-actions-item-reset" id="<?=$arParams["GRID_ID"]?>-grid-settings-reset-button"><?=Loc::getMessage("interface_grid_restore_to_default")?></span><?php
+						?><button type="button" class="main-grid-settings-window-actions-item-button main-grid-settings-window-actions-item-reset" id="<?=$arParams["GRID_ID"]?>-grid-settings-reset-button"><?=Loc::getMessage("interface_grid_restore_to_default")?></button><?php
 						if ($USER->CanDoOperation("edit_other_settings")) :
 						?><span class="main-grid-settings-window-actions-item-button main-grid-settings-window-for-all">
 							<input name="grid-settings-window-for-all" type="checkbox" id="<?=$arParams["GRID_ID"]?>-main-grid-settings-window-for-all-checkbox" class="main-grid-settings-window-for-all-checkbox">
@@ -261,11 +303,11 @@ if ($emptyFooter)
 						?></span><?php
 						endif;
 					?></span><?php
-					?><span class="ui-btn ui-btn-success main-grid-settings-window-actions-item-button" id="<?=$arParams["GRID_ID"]?>-grid-settings-apply-button"><?=Loc::getMessage("interface_grid_apply_settings")?></span><?php
-					?><span class="ui-btn ui-btn-link main-grid-settings-window-actions-item-button" id="<?=$arParams["GRID_ID"]?>-grid-settings-cancel-button"><?=Loc::getMessage("interface_grid_cancel_settings")?></span><?php
+					?><button type="button" class="ui-btn ui-btn-success main-grid-settings-window-actions-item-button" id="<?=$arParams["GRID_ID"]?>-grid-settings-apply-button"><?=Loc::getMessage("interface_grid_apply_settings")?></button><?php
+					?><button type="button" class="ui-btn ui-btn-link main-grid-settings-window-actions-item-button" id="<?=$arParams["GRID_ID"]?>-grid-settings-cancel-button"><?=Loc::getMessage("interface_grid_cancel_settings")?></button><?php
 					?><div class="main-grid-settings-window-select-links"><?php
-						?><span class="main-grid-settings-window-select-link main-grid-settings-window-select-all"><?=Loc::getMessage("interface_grid_settings_select_all_columns")?></span><?php
-						?><span class="main-grid-settings-window-select-link main-grid-settings-window-unselect-all"><?=Loc::getMessage("interface_grid_settings_unselect_all_columns")?></span><?php
+						?><button type="button" class="main-grid-settings-window-select-link main-grid-settings-window-select-all"><?=Loc::getMessage("interface_grid_settings_select_all_columns")?></button><?php
+						?><button type="button" class="main-grid-settings-window-select-link main-grid-settings-window-unselect-all"><?=Loc::getMessage("interface_grid_settings_unselect_all_columns")?></button><?php
 					?></div><?php
 				?></div><?php
 			?></div><?php
@@ -279,21 +321,26 @@ if ($emptyFooter)
 					?><div class="main-grid-ear main-grid-ear-right"></div><?php
 				endif; ?><?php
 				?><div class="main-grid-loader-container"></div><?php
+				if ($arParams["SHOW_ACTION_PANEL"] && $arParams["SHOW_ROW_CHECKBOXES"]) : ?><?php
+					?><a class="main-grid-skip-to-actions" href="#<?=$arParams["GRID_ID"]?>_action_panel" hidden><?=
+						Text\HtmlFilter::encode(getMessage("interface_grid_skip_to_actions"))
+					?></a><?php
+				endif; ?><?php
 				?><div class="main-grid-container<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-with-sticked" : ""?>"><?php
-					?><table class="main-grid-table" id="<?=$arParams["GRID_ID"]?>_table">
+					?><table class="main-grid-table" id="<?=$arParams["GRID_ID"]?>_table" aria-label="<?=getMessage('interface_grid_table_label')?>">
 						<thead class="main-grid-header" data-relative="<?=$arParams["GRID_ID"]?>"><?php
 								?><tr class="main-grid-row-head"><?php
 									if ($arParams["ALLOW_ROWS_SORT"]) :
-									?><th class="main-grid-cell-head main-grid-cell-static main-grid-cell-drag<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-sticked-column" : ""?>"><?php
+									?><th scope="col" class="main-grid-cell-head main-grid-cell-static main-grid-cell-drag<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-sticked-column" : ""?>"><?php
 										?><span class="main-grid-cell-head-container">&nbsp;</span><?php
 									?></th><?php
 									endif;
 									if ($arParams["SHOW_ROW_CHECKBOXES"]): ?><?php
-										?><th class="main-grid-cell-head main-grid-cell-static main-grid-cell-checkbox<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-sticked-column" : ""?>"><?php
+										?><th scope="col" class="main-grid-cell-head main-grid-cell-static main-grid-cell-checkbox<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-sticked-column" : ""?>"><?php
 											if ($arParams["SHOW_CHECK_ALL_CHECKBOXES"]): ?><?php
 												?><span class="main-grid-cell-head-container"><?php
 													?><span class="main-grid-checkbox-container main-grid-head-checkbox-container"><?php
-														?><input class="main-grid-checkbox main-grid-row-checkbox main-grid-check-all" id="<?=$arParams["GRID_ID"]?>_check_all" type="checkbox" title="<?=getMessage('interface_grid_check_all') ?>"<?php if (!$arResult['ALLOW_EDIT']): ?> disabled<?php endif ?>><?php
+														?><input class="main-grid-checkbox main-grid-row-checkbox main-grid-check-all" id="<?=$arParams["GRID_ID"]?>_check_all" type="checkbox" title="<?=getMessage('interface_grid_check_all') ?>" aria-label="<?=getMessage('interface_grid_check_all_rows') ?>"<?php if (!$arResult['ALLOW_EDIT']): ?> disabled<?php endif ?>><?php
 														?><label class="main-grid-checkbox" for="<?=$arParams["GRID_ID"]?>_check_all"></label><?php
 												?></span><?php
 											?></span><?php
@@ -301,9 +348,9 @@ if ($emptyFooter)
 										?></th><?php
 									endif ?><?php
 									if ($arParams["SHOW_GRID_SETTINGS_MENU"] || $arParams["SHOW_ROW_ACTIONS_MENU"]) : ?><?php
-										?><th class="main-grid-cell-head main-grid-cell-static main-grid-cell-action<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-sticked-column" : ""?>"><?php
+										?><th scope="col" class="main-grid-cell-head main-grid-cell-static main-grid-cell-action<?=$arParams["ALLOW_STICKED_COLUMNS"] && $arResult["HAS_STICKED_COLUMNS"] ? " main-grid-sticked-column" : ""?>"><?php
 											if ($arParams["SHOW_GRID_SETTINGS_MENU"]) : ?><?php
-												?><span class="main-grid-interface-settings-icon"></span><?php
+												?><button type="button" class="main-grid-interface-settings-icon" aria-label="<?=Text\HtmlFilter::encode(getMessage("interface_grid_settings"))?>" aria-haspopup="dialog" aria-expanded="false"></button><?php
 											endif; ?><?php
 										?></th><?php
 									endif; ?><?php
@@ -314,37 +361,47 @@ if ($emptyFooter)
 													?><span class="main-grid-cell-counter main-grid-cell-counter-left-aligned"></span><?php
 												endif;
 												?><span class="main-grid-cell-head-container"><?php
+												$isSortableColumn = $header["sort"] && $arParams["ALLOW_SORT"];
+												if ($isSortableColumn) :
+													// A visible title names the button by itself; otherwise the hidden one is spelled out.
+													$sortButtonLabel = $header["showname"] && $header["name"] !== ''
+														? ''
+														: (string)$header["name"];
+													if ($sortButtonLabel === '' && !($header["showname"] && $header["name"] !== ''))
+													{
+														$sortButtonLabel = getMessage("interface_grid_sort_column");
+													}
+													?><button type="button" class="main-grid-head-sort-button"<?=$sortButtonLabel === '' ? '' : ' aria-label="' . Text\HtmlFilter::encode($sortButtonLabel) . '"'?>><?php
+												endif;
 												if (!empty($header['iconUrl'])) :
 													$iconTitle = Text\HtmlFilter::encode($header['iconTitle'] ?? '');
-													?><span class="main-grid-head-icon"><img src="<?= Text\HtmlFilter::encode($header['iconUrl']) ?>" title="<?= $iconTitle ?>" alt=""></span><?php
+													?><span class="main-grid-head-icon"><img src="<?= Text\HtmlFilter::encode($header['iconUrl']) ?>" title="<?= $iconTitle ?>" alt="<?= $iconTitle ?>"></span><?php
 												endif;
 												?><span class="main-grid-head-title<?=$arParams['DISABLE_HEADERS_TRANSFORM'] ? " main-grid-head-title-without-transform" : ""?>"><?php
 												echo Text\HtmlFilter::encode($header["showname"] ? $header["name"] : "");
 												if (isset($header["hint"])) :
-													?><script><?php
-														?>BX.ready(function() {
-															BX.UI.Hint.init(BX('hint_<?=$header["id"]?>'));
-														});<?php
-													?></script><?php
 													?><span id="hint_<?=$header["id"]?>" class="main-grid-head-title-tooltip" title=""><?php
 														?><span <?=empty($header['hintInteractivity']) ? '' : 'data-hint-interactivity'?> <?=empty($header['hintHtml']) ? '' : 'data-hint-html'?> data-hint="<?= Text\HtmlFilter::encode($header["hint"]) ?>"></span><?php
 													?></span><?php
 												endif;
 												?></span><?php
+												if ($isSortableColumn) : ?><?php
+													?></button><?php
+												endif;
 												if ($arParams["ALLOW_COLUMNS_RESIZE"] && $header["resizeable"] !== false) : ?><?php
-													?><span class="main-grid-resize-button" onclick="event.stopPropagation(); " title=""></span><?php
+													?><button type="button" class="main-grid-resize-button" onclick="event.stopPropagation(); " tabindex="-1" aria-hidden="true"></button><?php
 												endif; ?><?php
-												if ($header["sort"] && $arParams["ALLOW_SORT"]) : ?><?php
+												if ($isSortableColumn) : ?><?php
 													?><span class="main-grid-control-sort main-grid-control-sort-<?=$header["sort_state"] ? $header["sort_state"] : "hover-".$header["order"]?>"></span><?php
 												endif;
 												?></span><?php
 											?></div><?php
 										?></th><?php
 									endforeach ?><?php
-									?><th class="main-grid-cell-head main-grid-cell-static main-grid-special-empty"></th><?php
+									?><th aria-hidden="true" class="main-grid-cell-head main-grid-cell-static main-grid-special-empty"></th><?php
 								?></tr><?php
-							?></thead>
-							<tbody><?php
+							?></thead><?php
+							?><tbody><?php
 							if (
 								empty($arParams['ROWS'])
 								|| (count($arParams['ROWS']) === 1 && $arParams['ROWS'][0]['id'] === 'template_0')
@@ -382,12 +439,17 @@ if ($emptyFooter)
 								foreach($arParams['ROWS'] as $key => $arRow):
 									$rowClasses = isset($arRow['columnClasses']) && is_array($arRow['columnClasses'])
 										? $arRow['columnClasses'] : array();
+									$expandLabel = Text\HtmlFilter::encode(getMessage('interface_grid_expand_row'));
+									$isRowExpanded = !empty($arRow["expand"]) ? 'true' : 'false';
+									$labelRemoveLabel = Text\HtmlFilter::encode(getMessage('interface_grid_label_remove'));
+									$tagRemoveLabel = Text\HtmlFilter::encode(getMessage('interface_grid_tag_remove'));
+									$tagAddLabel = Text\HtmlFilter::encode(getMessage('interface_grid_tag_add'));
 								if (!empty($arRow["custom"])) :
 									$lastCollapseGroup = isset($arRow["expand"]) && $arRow["expand"] === false ? $arRow["group_id"] : null;
 									?><tr class="main-grid-row main-grid-row-body main-grid-row-custom<?=$arRow["layout"]["row"]["class"]?>"<?=$arRow["layout"]["row"]["attributes"]?>><?php
-										?><td colspan="<?=count($arResult["COLUMNS"]) + $additionalColumnsCount?>" class="main-grid-cell main-grid-cell-center"><?php
+										?><td colspan="<?=count($arResult["COLUMNS"]) + $additionalColumnsCount + $pinnedColumnsCount?>" class="main-grid-cell main-grid-cell-center"><?php
 											if ($arParams["ENABLE_COLLAPSIBLE_ROWS"] && $arRow["has_child"] == true) :
-												?><span class="main-grid-plus-button"></span><?php
+												?><button type="button" class="main-grid-plus-button" aria-label="<?=$expandLabel?>" aria-expanded="<?=$isRowExpanded?>"></button><?php
 											endif;
 											?><div class="main-grid-cell-content"><?=$arRow["custom"]?></div><?php
 										?></td><?php
@@ -395,8 +457,23 @@ if ($emptyFooter)
 								elseif (!empty($arParams["ROW_LAYOUT"])) :
 									$actions = Text\HtmlFilter::encode(Json::encode($arRow["actions"] ?? null));
 									$depth = $arRow["depth"] > 0 ? 20*$arRow["depth"] : 0;
+									$checkboxLabel = Text\HtmlFilter::encode(
+										getMessage(
+											'interface_grid_check_row',
+											['#ROW#' => $arRow['default_action']['title'] ?? $arRow['id']],
+										)
+									);
+									$rowActionsLabel = Text\HtmlFilter::encode(
+										getMessage(
+											'interface_grid_row_actions',
+											['#ROW#' => $arRow['default_action']['title'] ?? $arRow['id']],
+										)
+									);
 									?><tr class="main-grid-row main-grid-row-body<?=$arRow["layout"]["row"]["class"]?>"<?=$arRow["layout"]["row"]["attributes"]?>>
-										<?php if ($arParams["ALLOW_ROWS_SORT"] && $arRow["draggable"] !== false) : ?>
+										<?php /* the cell goes in wherever the head has one: a row one cell short
+											would shift its contents a column to the left. A row that cannot be
+											dragged carries the `main-grid-row-drag-disabled` class instead. */ ?>
+										<?php if ($arParams["ALLOW_ROWS_SORT"]) : ?>
 											<td class="main-grid-cell main-grid-cell-drag" rowspan="<?=count($arParams["ROW_LAYOUT"])?>">
 												<span class="main-grid-cell-content">&nbsp;</span>
 											</td>
@@ -404,7 +481,7 @@ if ($emptyFooter)
 										<?php if ($arParams["SHOW_ROW_CHECKBOXES"]): ?>
 											<td class="main-grid-cell main-grid-cell-checkbox" rowspan="<?=count($arParams["ROW_LAYOUT"])?>">
 												<span class="main-grid-cell-content">
-													<input type="checkbox" class="main-grid-row-checkbox main-grid-checkbox" name="ID[]" value="<?=$arRow["id"] ?>" <?php if (!isset($arRow['editable']) || $arRow['editable'] !== false): ?> title="<?=getMessage('interface_grid_check') ?>" id="checkbox_<?=$arParams["GRID_ID"]?>_<?=$arRow["id"] ?>"<?php endif ?> <?php if (!$arResult['ALLOW_EDIT'] || $arRow['editable'] === false): ?> data-disabled="1" disabled<?php endif ?>>
+													<input type="checkbox" class="main-grid-row-checkbox main-grid-checkbox" name="ID[]" value="<?=$arRow["id"] ?>" aria-label="<?=$checkboxLabel?>"<?php if ($arParams["SHOW_ACTION_PANEL"]): ?> aria-keyshortcuts="Alt+ArrowDown"<?php endif ?> <?php if (!isset($arRow['editable']) || $arRow['editable'] !== false): ?> title="<?=getMessage('interface_grid_check') ?>" id="checkbox_<?=$arParams["GRID_ID"]?>_<?=$arRow["id"] ?>"<?php endif ?> <?php if (!$arResult['ALLOW_EDIT'] || $arRow['editable'] === false): ?> data-disabled="1" disabled<?php endif ?>>
 													<label class="main-grid-checkbox" for="checkbox_<?=$arParams["GRID_ID"]?>_<?=$arRow["id"] ?>"></label>
 												</span>
 											</td>
@@ -413,7 +490,7 @@ if ($emptyFooter)
 											<td class="main-grid-cell main-grid-cell-action" rowspan="<?=count($arParams["ROW_LAYOUT"])?>">
 												<span class="main-grid-cell-content">
 													<?php if (!empty($arRow["actions"]) && $arParams["SHOW_ROW_ACTIONS_MENU"]) : ?>
-														<a href="#" class="main-grid-row-action-button" data-actions="<?=$actions?>"></a>
+														<button type="button" class="main-grid-row-action-button" data-actions="<?=$actions?>" aria-label="<?=$rowActionsLabel?>" aria-haspopup="menu" aria-expanded="false"></button>
 													<?php endif; ?>
 												</span>
 											</td>
@@ -480,7 +557,7 @@ if ($emptyFooter)
 												<td class="<?=$colLayout["cell"]["class"]?><?=$className?>"<?=$colLayout["cell"]["attributes"]?><?=(!empty($rowLayoutCell["rowspan"]) ? " rowspan=\"".$rowLayoutCell["rowspan"]."\"" : "")?><?=(!empty($rowLayoutCell["colspan"]) ? " colspan=\"".$colspan."\"" : "")?>>
 													<span class="main-grid-cell-content"<?=$colLayout["container"]["attributes"]?>>
 														<?php if ($colLayout["plusButton"]["enabled"]) : ?>
-															<span class="main-grid-plus-button"></span>
+															<button type="button" class="main-grid-plus-button" aria-label="<?=$expandLabel?>" aria-expanded="<?=$isRowExpanded?>"></button>
 														<?php endif; ?>
 														<?php
 															if (isset($rowLayoutCell["column"]) && isset($arRow["columns"][$rowLayoutCell["column"]]))
@@ -516,7 +593,7 @@ if ($emptyFooter)
 													<td class="<?=$colLayout["cell"]["class"]?><?=$className?>"<?=$colLayout["cell"]["attributes"]?> rowspan="<?=count($arParams["ROW_LAYOUT"])?>">
 														<span class="main-grid-cell-content"<?=$colLayout["container"]["attributes"]?>>
 															<?php if ($colLayout["plusButton"]["enabled"]) : ?>
-																<span class="main-grid-plus-button"></span>
+																<button type="button" class="main-grid-plus-button" aria-label="<?=$expandLabel?>" aria-expanded="<?=$isRowExpanded?>"></button>
 															<?php endif; ?>
 															<?php
 																if (isset($arRow["columns"][$header["id"]]))
@@ -549,7 +626,7 @@ if ($emptyFooter)
 									if ($arRow["layout"]["columns"]["checkbox"]["cell"]["enabled"]): ?><?php
 										?><td class="main-grid-cell main-grid-cell-checkbox"><?php
 											?><span class="main-grid-cell-content"><?php
-												?><input type="checkbox" class="main-grid-row-checkbox main-grid-checkbox"<?=$arRow["layout"]["columns"]["checkbox"]["input"]["attributes"]?>><?php
+												?><input type="checkbox" class="main-grid-row-checkbox main-grid-checkbox"<?php if ($arParams["SHOW_ACTION_PANEL"]): ?> aria-keyshortcuts="Alt+ArrowDown"<?php endif ?><?=$arRow["layout"]["columns"]["checkbox"]["input"]["attributes"]?>><?php
 												?><label class="main-grid-checkbox" for="checkbox_<?=$arParams["GRID_ID"]?>_<?=$arRow["id"] ?>"></label><?php
 											?></span><?php
 										?></td><?php
@@ -558,7 +635,7 @@ if ($emptyFooter)
 											?><td class="main-grid-cell main-grid-cell-action"><?php
 												?><span class="main-grid-cell-content"><?php
 													if ($arRow["layout"]["columns"]["actions"]["button"]["enabled"]) : ?><?php
-														?><a href="#" class="main-grid-row-action-button"<?=$arRow["layout"]["columns"]["actions"]["button"]["attributes"]?>></a><?php
+														?><button type="button" class="main-grid-row-action-button"<?=$arRow["layout"]["columns"]["actions"]["button"]["attributes"]?> aria-haspopup="menu" aria-expanded="false"></button><?php
 													endif;
 												?></span><?php
 											?></td><?php
@@ -582,7 +659,7 @@ if ($emptyFooter)
 													endif;
 													?><span class="main-grid-cell-content"<?=$colLayout["container"]["attributes"]?>><?php
 														if ($colLayout["plusButton"]["enabled"]) :
-															?><span class="main-grid-plus-button"></span><?php
+															?><button type="button" class="main-grid-plus-button" aria-label="<?=$expandLabel?>" aria-expanded="<?=$isRowExpanded?>"></button><?php
 														endif;
 
 														if (
@@ -621,9 +698,9 @@ if ($emptyFooter)
 																			endif;
 																			if ($labelLayout["removeButton"]["enabled"]) :
 																				if ($labelLayout["removeButton"]["type"] === Grid\Cell\Label\RemoveButtonType::INSIDE) :
-																					?><span class="ui-label-icon"<?=$labelLayout["removeButton"]["attributes"]?>></span><?php
+																					?><button type="button" class="ui-label-icon"<?=$labelLayout["removeButton"]["attributes"]?> aria-label="<?=$labelRemoveLabel?>"></button><?php
 																				else :
-																					?><span class="main-grid-labels-remove-button<?=$labelLayout["removeButton"]["class"]?>"<?=$labelLayout["removeButton"]["attributes"]?>></span><?php
+																					?><button type="button" class="main-grid-labels-remove-button<?=$labelLayout["removeButton"]["class"]?>"<?=$labelLayout["removeButton"]["attributes"]?> aria-label="<?=$labelRemoveLabel?>"></button><?php
 																				endif;
 																			endif;
 																		?></span><?php
@@ -645,12 +722,12 @@ if ($emptyFooter)
 																				?><span class="main-grid-tag-inner"><?=htmlspecialcharsbx($tag["text"])?></span><?php
 																			endif;
 																			if ($tagLayout["active"]) :
-																				?><span class="main-grid-tag-remove"<?=$tagLayout["removeButton"]["attributes"]?>></span><?php
+																				?><button type="button" class="main-grid-tag-remove"<?=$tagLayout["removeButton"]["attributes"]?> aria-label="<?=$tagRemoveLabel?>"></button><?php
 																			endif;
 																		?></span><?php
 																	endforeach;
 																	if ($colLayout["content"]["addButton"]["enabled"]) :
-																		?><span class="main-grid-tag-add"<?=$colLayout["content"]["addButton"]["attributes"]?>></span><?php
+																		?><button type="button" class="main-grid-tag-add"<?=$colLayout["content"]["addButton"]["attributes"]?> aria-label="<?=$tagAddLabel?>"></button><?php
 																	endif;
 																?></div><?php
 															}
@@ -667,7 +744,7 @@ if ($emptyFooter)
 													if ($colLayout["cellActions"]["enabled"]) :
 														?><span class="main-grid-cell-content-actions"><?php
 															foreach ($colLayout["cellActions"]["items"] as $item) :
-																?><span class="main-grid-cell-content-action<?=$item["class"]?>"<?=$item["attributes"]?>></span><?php
+																?><button type="button" class="main-grid-cell-content-action<?=$item["class"]?>"<?=$item["attributes"]?>></button><?php
 															endforeach;
 														?></span><?php
 													endif;
@@ -712,6 +789,30 @@ if ($emptyFooter)
 					endif ?><?php
 				?></tbody><?php
 			?></table><?php
+			if ($printHintInit) :
+				// Printed outside the table: a node between </thead> and <tbody> breaks the section adjacency
+				// the grid row lookup relies on. On reload the core runs the script from the response text.
+				?><script>
+					BX.ready(function() {
+						<?php if ($hasHeaderHints) : ?>
+						var table = BX('<?=\CUtil::JSEscape($arParams["GRID_ID"])?>_table');
+						var head = table ? table.tHead : null;
+						if (head)
+						{
+							BX.UI.Hint.init(head);
+						}
+						<?php endif; ?>
+						<?php if ($hasSectionHints) : ?>
+						var grid = BX('<?=\CUtil::JSEscape($arParams["GRID_ID"])?>');
+						var settings = grid ? grid.querySelector('.main-grid-settings-window') : null;
+						if (settings)
+						{
+							BX.UI.Hint.init(settings);
+						}
+						<?php endif; ?>
+					});
+				</script><?php
+			endif;
 		?></div><?php
 	?></div><?php
 ?></div><?php
@@ -765,7 +866,7 @@ if ($emptyFooter)
 									$pageSize = $arResult['OPTIONS']['views'][$arResult['OPTIONS']['current_view']]['page_size'] ?? $arParams["DEFAULT_PAGE_SIZE"]; ?><?php
 								?><span class="main-grid-panel-content"><?php
 									?><span class="main-grid-panel-content-title"><?=getMessage('interface_grid_page_size') ?></span> <?php
-										?><span class="main-dropdown main-grid-popup-control main-grid-panel-select-pagesize" id="<?=$arParams["GRID_ID"]?>_grid_page_size" data-value="<?=$pageSize;?>" data-items="<?=$arResult["PAGE_SIZES_JSON"]?>">
+										?><span class="main-dropdown main-grid-popup-control main-grid-panel-select-pagesize" id="<?=$arParams["GRID_ID"]?>_grid_page_size" data-value="<?=$pageSize;?>" data-items="<?=$arResult["PAGE_SIZES_JSON"]?>" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
 											<span class="main-dropdown-inner"> <?=$pageSize; ?></span><?php
 										?></span><?php
 									?></span><?php
@@ -777,7 +878,7 @@ if ($emptyFooter)
 			endif; ?><?php
 		?></div>
 		<?php if ($arParams["SHOW_ACTION_PANEL"] && isset($arParams["ACTION_PANEL"]) && !empty($arParams["ACTION_PANEL"]) && is_array($arParams["ACTION_PANEL"]["GROUPS"])) : ?><?php
-			?><div class="main-grid-action-panel main-grid-disable"><?php
+			?><div class="main-grid-action-panel main-grid-disable" id="<?=$arParams["GRID_ID"]?>_action_panel" tabindex="-1" role="region" aria-label="<?=Text\HtmlFilter::encode(getMessage("interface_grid_action_panel_region"))?>"><?php
 				?><div class="main-grid-control-panel-wrap"><?php
 					?><table class="main-grid-control-panel-table"><?php
 						?><tr class="main-grid-control-panel-row"><?php
@@ -816,7 +917,7 @@ if ($emptyFooter)
 										endif; ?><?php
 										if ($item["TYPE"] === "DROPDOWN") :
 											?><span class="main-grid-panel-control-container<?= isset($item["DISABLED"]) && $item["DISABLED"] ? " main-grid-disable" : "";?>" id="<?=Text\HtmlFilter::encode($item["ID"])?>"><?php
-												?><span class="main-dropdown main-grid-panel-control" data-popup-position="fixed" id="<?=Text\HtmlFilter::encode($item["ID"])?>_control" data-name="<?=Text\HtmlFilter::encode($item["NAME"])?>" data-value="<?=Text\HtmlFilter::encode(Json::encode($item["ITEMS"][0]["VALUE"]))?>" data-items="<?=Text\HtmlFilter::encode(Json::encode($item["ITEMS"]))?>"><?php
+												?><span class="main-dropdown main-grid-panel-control" data-popup-position="fixed" id="<?=Text\HtmlFilter::encode($item["ID"])?>_control" data-name="<?=Text\HtmlFilter::encode($item["NAME"])?>" data-value="<?=Text\HtmlFilter::encode(Json::encode($item["ITEMS"][0]["VALUE"]))?>" data-items="<?=Text\HtmlFilter::encode(Json::encode($item["ITEMS"]))?>" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false"><?php
 													?><span class="main-dropdown-inner"><?=$item["ITEMS"][0]["NAME"]?></span><?php
 												?></span><?php
 											?></span><?php
@@ -843,9 +944,9 @@ if ($emptyFooter)
                                                 $buttonModifier = $item["CLASS"];
                                             }
 										?><span class="main-grid-panel-control-container<?= isset($item["DISABLED"]) && $item["DISABLED"] ? " main-grid-disable" : "";?>" id="<?=Text\HtmlFilter::encode($item["ID"])?>"><?php
-											?><span class="ui-btn <?=Text\HtmlFilter::encode($buttonModifier)?>" data-name="<?=Text\HtmlFilter::encode($item["NAME"] ?? '')?>" data-value="<?=Text\HtmlFilter::encode($item["VALUE"] ?? '')?>" id="<?=Text\HtmlFilter::encode($item["ID"])?>_control" data-onchange="<?=Text\HtmlFilter::encode(Json::encode($item["ONCHANGE"]))?>" title="<?=Text\HtmlFilter::encode($item["TITLE"] ?? '')?>"><?php
+											?><button type="button" class="ui-btn <?=Text\HtmlFilter::encode($buttonModifier)?>" data-name="<?=Text\HtmlFilter::encode($item["NAME"] ?? '')?>" data-value="<?=Text\HtmlFilter::encode($item["VALUE"] ?? '')?>" id="<?=Text\HtmlFilter::encode($item["ID"])?>_control" data-onchange="<?=Text\HtmlFilter::encode(Json::encode($item["ONCHANGE"]))?>" title="<?=Text\HtmlFilter::encode($item["TITLE"] ?? '')?>"><?php
 												?><?=$item["TEXT"]
-											?></span><?php
+											?></button><?php
 										?></span><?php
 										endif; ?><?php
 										if ($item["TYPE"] === "LINK") :
@@ -857,7 +958,7 @@ if ($emptyFooter)
 										?><span class="main-grid-panel-control-container<?=$item["DISABLED"] ? " main-grid-disable" : "";?>" id="<?=Text\HtmlFilter::encode($item["ID"])?>" data-onchange="<?=Text\HtmlFilter::encode(Json::encode($item["ONCHANGE"]))?>" title="<?=Text\HtmlFilter::encode($item["TITLE"])?>"><?php
 											?><span class="main-ui-control main-ui-date main-grid-panel-date"><?php
 												?><span class="main-ui-date-button"></span><?php
-												?><input type="text" name="<?=$item["TYPE"]?>" tabindex="1" autocomplete="off" data-time="<?=$item["TIME"] ? "true" : "false"?>" class="main-ui-control-input main-ui-date-input" value="<?=$item["VALUE"]?>" placeholder="<?=$item["PLACEHOLDER"]?>"><?php
+												?><input type="text" name="<?=$item["TYPE"]?>" autocomplete="off" data-time="<?=$item["TIME"] ? "true" : "false"?>" class="main-ui-control-input main-ui-date-input" value="<?=$item["VALUE"]?>" placeholder="<?=$item["PLACEHOLDER"]?>"><?php
 												?><div class="main-ui-control-value-delete<?=empty($item["VALUE"]) ? " main-ui-hide" : ""?>"><?php
 													?><span class="main-ui-control-value-delete-item"></span><?php
 												?></div><?php
@@ -889,7 +990,7 @@ if ($emptyFooter)
 		endif; ?><?php
 	?></div><?php
 ?></form><?php
-?><iframe height="0" width="100%" id="main-grid-tmp-frame-<?=$arParams["GRID_ID"]?>" name="main-grid-tmp-frame-<?=$arParams["GRID_ID"]?>" style="position: absolute; z-index: -1; opacity: 0; border: 0;"></iframe><?php
+?><iframe height="0" width="100%" id="main-grid-tmp-frame-<?=$arParams["GRID_ID"]?>" name="main-grid-tmp-frame-<?=$arParams["GRID_ID"]?>" title="<?=getMessage('interface_grid_service_frame')?>" style="position: absolute; z-index: -1; opacity: 0; border: 0;"></iframe><?php
 ?></div>
 
 <?php
@@ -924,6 +1025,16 @@ endif; ?>
 
 <?php if (!$arResult['IS_AJAX'] || !$arResult['IS_INTERNAL']) : ?><?php
 ?><script>
+		BX.message(<?= Json::encode([
+			'interface_grid_actions_panel_available' => Loc::getMessage('interface_grid_actions_panel_available'),
+			'interface_grid_selected_announce' => Loc::getMessage('interface_grid_selected_announce'),
+			'interface_grid_rows_loaded_announce' => Loc::getMessage('interface_grid_rows_loaded_announce'),
+			'interface_grid_updated_announce' => Loc::getMessage('interface_grid_updated_announce'),
+			'interface_grid_edit_mode_announce' => Loc::getMessage('interface_grid_edit_mode_announce'),
+			'interface_grid_row_actions' => Loc::getMessage('interface_grid_row_actions'),
+			'interface_grid_column_rename' => Loc::getMessage('interface_grid_column_rename'),
+			'interface_grid_label_remove' => Loc::getMessage('interface_grid_label_remove'),
+		]) ?>);
 		BX(function() { BX.Main.dropdownManager.init(); });
 		BX(function() {
 

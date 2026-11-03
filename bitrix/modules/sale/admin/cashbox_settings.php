@@ -28,7 +28,7 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings
 		/** @var Cashbox\Cashbox $handler */
 		$handler = $cashbox['HANDLER'] ?? '';
 		$cashboxSettings = $cashbox['SETTINGS'] ?? [];
-		if (class_exists($handler))
+		if (is_subclass_of($handler, Cashbox\Cashbox::class))
 		{
 			$settings = [];
 			$isRestHandler = $handler === '\Bitrix\Sale\Cashbox\CashboxRest';

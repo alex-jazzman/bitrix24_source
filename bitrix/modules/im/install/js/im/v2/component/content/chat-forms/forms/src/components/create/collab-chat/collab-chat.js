@@ -10,7 +10,6 @@ import {
 	CreateChatHeading,
 	SettingsSection,
 	RightsSection,
-	AppearanceSection,
 	checkParentAccess,
 } from 'im.v2.component.content.chat-forms.elements';
 import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, ChatType, type SelectorEntityItem } from 'im.v2.const';
@@ -31,7 +30,6 @@ export const CollabChatCreation = {
 		ChatMembersSelector,
 		SettingsSection,
 		RightsSection,
-		AppearanceSection,
 		ButtonPanel,
 		CreateChatHeading,
 		DescriptionBanner,
@@ -238,7 +236,11 @@ export const CollabChatCreation = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-create-collab-chat"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
@@ -249,6 +251,7 @@ export const CollabChatCreation = {
 				<ChatMembersSelector
 					:undeselectedItems="undeselectedItems"
 					:chatMembers="chatMembers"
+					:chatType="ChatType.collab"
 					:allowTeamsSelect="true"
 					@membersChange="onMembersChange"
 				/>

@@ -1,7 +1,13 @@
 .disk-picker-item-table {
 	width: 100%;
 	table-layout: fixed;
-	border-collapse: collapse;
+	/* A table row takes neither margin nor flex gap, so the air between rows is border-spacing;
+	   row height plus it is the advance declared in picker-layout.css, which the virtual scroll
+	   counts. */
+	border-collapse: separate;
+	border-spacing: 0 var(--disk-picker-list-row-gap);
+	/* border-spacing also lays a gap above the first row; the table is pulled up by it. */
+	margin-top: calc(-1 * var(--disk-picker-list-row-gap));
 }
 
 .disk-picker-item-table col.--size {
@@ -12,44 +18,118 @@
 	width: 160px;
 }
 
+/* Held by the colgroup, not by what stands in it: a row without a previewable file leaves
+   the same gap and the columns beside it never move. */
+.disk-picker-item-table col.--preview {
+	width: 48px;
+}
+
 .disk-picker-item-table__head {
-	border-bottom: 1px solid var(--ui-color-divider-default);
-	color: var(--ui-color-base-70);
 	position: sticky;
-	top: calc(0px - var(--ui-space-inset-sm));
-	background: var(--ui-color-bg-content-primary);
+	top: 0;
+	background: transparent;
 	z-index: 1;
+	transition: background-color var(--disk-picker-duration-state) var(--disk-picker-ease);
 }
 
+/* The head separates itself only once rows pass underneath. The fill goes on the cells and not
+   on the row: the row is what is stuck, and a sticky `tr` paints no background of its own —
+   the names travelled under a head that stayed clear. The blur stays on the row, where it
+   works. */
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head {
+	backdrop-filter: blur(3px);
+}
+
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head .disk-picker-item-table__cell {
+	background: var(--ui-color-bg-content-primary);
+}
+
+/* The fill runs to the edges of the plate, not to the edges of the table: the list inset lives
+   on the scrolling box, so the table stands an inset short of them and the names travelling under
+   the head showed in those two strips. A shadow with no blur and no offset beyond the side it
+   extends is the fill itself, carried past the table — the cells cannot be widened without
+   moving the columns. */
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head .disk-picker-item-table__cell:first-child {
+	box-shadow: calc(-1 * var(--ui-space-inset-sm)) 0 0 var(--ui-color-bg-content-primary);
+}
+
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head .disk-picker-item-table__cell:last-child {
+	box-shadow: var(--ui-space-inset-sm) 0 0 var(--ui-color-bg-content-primary);
+}
+
+.disk-picker-item-browser.--scrolled .disk-picker-item-table__head-label {
+	color: var(--ui-color-base-1);
+}
+
+.disk-picker-item-table__head-label {
+	color: var(--ui-color-base-3);
+	transition: color var(--disk-picker-duration-state) var(--disk-picker-ease);
+}
+
+/* The row paints nothing itself, but the radius stays on it: an outline follows the radius
+   of the element it is set on, and the focus ring sits on the row. */
 .disk-picker-item-table__row {
-	height: 45px;
+	height: calc(var(--disk-picker-table-row-advance) - var(--disk-picker-list-row-gap));
 	border: none;
+	border-radius: var(--ui-border-radius-md);
 	cursor: pointer;
-	transition: background-color 150ms ease;
 }
 
-.disk-picker-item-table__row:hover {
-	background: var(--ui-color-bg-state-hover-default);
+/* A table row takes no border-radius, so the outer corners live on the cells. Like the list
+   row, a cell paints nothing until the row is pointed at. */
+.disk-picker-item-table__row .disk-picker-item-table__cell {
+	background: none;
+	transition: background-color var(--disk-picker-duration-state) var(--disk-picker-ease);
 }
 
-.disk-picker-item-table__row.--selected {
-	background: var(--ui-color-accent-soft-blue-1);
+.disk-picker-item-table__row .disk-picker-item-table__cell:first-child {
+	border-top-left-radius: var(--ui-border-radius-md);
+	border-bottom-left-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-item-table__row:focus-within {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+.disk-picker-item-table__row .disk-picker-item-table__cell:last-child {
+	border-top-right-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: var(--ui-border-radius-md);
 }
 
-.disk-picker-item-table__row.--active {
-	box-shadow: inset 2px 0 0 var(--ui-color-accent-main-primary);
+.disk-picker-item-table__row:hover .disk-picker-item-table__cell {
+	background: var(--ui-color-bg-content-primary);
+}
+
+/* The fill goes on the cells, not on the row: WebKit does not always paint the background of
+   a `tr`, and a picked row then showed its white text on the bare plate. The cells stand edge
+   to edge, so the flat fill still reads as one bar, with the outer corners on the end cells. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__cell {
+	background: var(--ui-color-accent-main-primary);
+}
+
+/* The name column takes whatever the fixed columns leave, so its edge usually falls between
+   pixels and both cells antialias it, letting the plate show through as a hairline. Each cell
+   but the last carries its fill a pixel under its neighbour to close that seam. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__cell:not(:last-child) {
+	box-shadow: 1px 0 0 var(--ui-color-accent-main-primary);
+}
+
+/* The typography components carry their own colour, so a rule on the cell would never
+   reach the text. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__name {
+	color: var(--ui-color-design-filled-content);
+}
+
+.disk-picker-item-table__row.--selected .disk-picker-item-table__value {
+	color: var(--ui-color-design-filled-content-secondary);
+}
+
+.disk-picker-item-table__row.--active:not(.--selected) .disk-picker-item-table__cell {
+	background: var(--ui-color-bg-content-primary);
 }
 
 .disk-picker-item-table__cell {
 	min-width: 0;
 	box-sizing: border-box;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-sm);
-	color: var(--ui-color-base-90);
+	/* The inset the list row uses, so a name does not shift when the views are switched. */
+	padding: var(--ui-space-inset-xs);
+	color: var(--ui-color-base-1);
 	text-align: left;
 }
 
@@ -67,15 +147,69 @@
 	background: none;
 	text-align: left;
 	cursor: inherit;
+	transition: transform var(--disk-picker-duration-press) var(--disk-picker-ease);
 }
 
+/* On the button rather than the row: a table row takes no transform of its own. */
+.disk-picker-item-table__row:active .disk-picker-item-table__action {
+	transform: scale(0.99);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-item-table__row:active .disk-picker-item-table__action {
+		transform: none;
+	}
+}
+
+/* Focus is marked on the control, not on the row: an element carries a single outline, and a
+   ring on the row would override the fill of the selection. */
 .disk-picker-item-table__action:focus {
 	outline: none;
 }
 
+.disk-picker-item-table__action:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* On a picked row the ring lies on the accent it is a shade of, and the two ran together. There
+   the ring takes the content colour of a filled surface — the colour the row's own text has. */
+.disk-picker-item-table__row.--selected .disk-picker-item-table__action:focus-visible {
+	outline-color: var(--ui-color-design-filled-content);
+}
+
 .disk-picker-item-table__cell.--size,
 .disk-picker-item-table__cell.--added {
-	color: var(--ui-color-base-60);
+	color: var(--ui-color-base-3);
+}
+
+/* The button stands at the right edge of the row, so only the outer inset stays. Its own height
+   is what the row would otherwise be measured by — 28 of button against 24 of icon in the name
+   cell — so the vertical inset here is a step smaller and the row keeps the 40 the list row has;
+   the row advance in picker-layout.css counts on it. */
+.disk-picker-item-table__cell.--preview {
+	padding-top: var(--ui-space-inset-2xs2);
+	padding-bottom: var(--ui-space-inset-2xs2);
+	padding-left: 0;
+}
+
+/* The square itself goes to the end of the cell; inside it the button stays centred. */
+.disk-picker-item-table__cell.--preview .disk-picker-preview-button {
+	margin-left: auto;
+}
+
+/* Same rule as the list row: hidden only where a pointer can bring it back, on hover and
+   on a focus the browser itself shows. */
+@media (hover: hover) {
+	.disk-picker-item-table__row .disk-picker-preview-button {
+		opacity: 0;
+	}
+
+	.disk-picker-item-table__row:hover .disk-picker-preview-button,
+	.disk-picker-item-table__row:has(:focus-visible) .disk-picker-preview-button {
+		opacity: 1;
+	}
 }
 
 .disk-picker-item-table__name {
@@ -84,10 +218,10 @@
 	white-space: nowrap;
 }
 
+/* Until the list is scrolled the head carries nothing: the plate shows through it. The inset
+   above holds the names off the header rule — it lives here rather than on the scrolling box,
+   so that the fill of a stuck head reaches the top of the plate with nothing above it. */
 .disk-picker-item-table__head .disk-picker-item-table__cell {
-	color: var(--ui-color-base-0);
-}
-
-.disk-picker-item-table__head .ui-text {
-	color: var(--ui-color-base-0);
+	padding-top: var(--ui-space-inset-md);
+	background: none;
 }

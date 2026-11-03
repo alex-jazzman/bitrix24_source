@@ -13,6 +13,14 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 	const CUSTOM_CHAT_TYPE = 'custom';
 	const COPILOT_CHAT_TYPE = 'general';
 
+	// Tab id -> folder code, the reverse of NavigationTabByFolderCode. The context of a chat event is
+	// the folder the user stands in, and a tab is how the runtime names that folder; the report value
+	// of the folder is then the same one every folder label uses. Built from the registry rather than
+	// written out, so a tab added to the navigation cannot silently keep the historical value.
+	const FolderCodeByTabId = Object.freeze(
+		Object.fromEntries(Object.entries(NavigationTabByFolderCode).map(([code, tabId]) => [tabId, code])),
+	);
+
 	/**
 	 * @class AnalyticsHelper
 	 */
@@ -37,15 +45,88 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 		}
 
 		/**
+		 * @desc Dialog id of the collab governing a chat's project subtree: the chat itself
+		 *       when it is a collab, or its direct parent when that parent is a collab
+		 *       (Variant B, one-level detect). Null when the chat is outside any project subtree.
+		 * @param {DialoguesModelState} dialog
+		 * @returns {?DialogId}
+		 */
+		getProjectCollabDialogId(dialog)
+		{
+			if (!dialog)
+			{
+				return null;
+			}
+
+			if (dialog.type === DialogType.collab)
+			{
+				return dialog.dialogId;
+			}
+
+			if (!(dialog.parentChatId > 0))
+			{
+				return null;
+			}
+
+			const parentDialog = serviceLocator.get('core').getStore()
+				.getters['dialoguesModel/getByChatId'](dialog.parentChatId)
+			;
+
+			return parentDialog?.type === DialogType.collab ? parentDialog.dialogId : null;
+		}
+
+		/**
+		 * @desc Numeric collab entity id behind a collab dialog, or null when missing/zero.
+		 *       On cold open the collabModel may lack the parent record, so fall back to the
+		 *       entityId of the saved short-format dialog model.
 		 * @param {DialogId} dialogId
+		 * @returns {?number}
+		 */
+		getCollabEntityId(dialogId)
+		{
+			const store = serviceLocator.get('core').getStore();
+			const collabId = store.getters['dialoguesModel/collabModel/getCollabIdByDialogId'](dialogId);
+			if (collabId > 0)
+			{
+				return collabId;
+			}
+
+			const collabDialog = store.getters['dialoguesModel/getById'](dialogId);
+			const entityId = Number(collabDialog?.entityId ?? 0);
+
+			return entityId > 0 ? entityId : null;
+		}
+
+		/**
+		 * @desc projectId_ label for a chat anywhere inside a collab subtree, or null when the
+		 *       governing collab / its entity id is unknown (never projectId_0 / projectId_null).
+		 * @param {DialoguesModelState} dialog
+		 * @returns {?string}
+		 */
+		getFormattedProjectId(dialog)
+		{
+			const collabDialogId = this.getProjectCollabDialogId(dialog);
+			if (collabDialogId === null)
+			{
+				return null;
+			}
+
+			const collabEntityId = this.getCollabEntityId(collabDialogId);
+
+			return collabEntityId === null ? null : `projectId_${collabEntityId}`;
+		}
+
+		/**
+		 * @desc collabId_ label for a collab dialog, or null when the entity id is unknown
+		 *       (0/absent). Prevents the legacy collabId_null / collabId_0 p4.
+		 * @param {DialogId} dialogId
+		 * @returns {?string}
 		 */
 		getFormattedCollabIdByDialogId(dialogId)
 		{
-			const collabId = serviceLocator.get('core').getStore()
-				.getters['dialoguesModel/collabModel/getCollabIdByDialogId'](dialogId)
-			;
+			const collabEntityId = this.getCollabEntityId(dialogId);
 
-			return `collabId_${collabId}`;
+			return collabEntityId === null ? null : `collabId_${collabEntityId}`;
 		}
 
 		/**
@@ -103,10 +184,37 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 				case DialogType.videoconf:
 					return Analytics.Category.videoconf;
 				case DialogType.collab:
-					return Analytics.Category.collab;
+					return Analytics.Category.project;
 				default:
 					return Analytics.Category.chat;
 			}
+		}
+
+		/**
+		 * @desc Category honoring chat-type priority (channel/comment stay channel) and the
+		 *       project subtree: a collab root or any chat nested directly under a collab -> project.
+		 * @param {DialoguesModelState} dialog
+		 * @returns {string}
+		 */
+		getCategoryByChat(dialog)
+		{
+			if (!dialog)
+			{
+				return Analytics.Category.chat;
+			}
+
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			if (dialogHelper?.isChannelOrComment)
+			{
+				return Analytics.Category.channel;
+			}
+
+			if (this.getProjectCollabDialogId(dialog) !== null)
+			{
+				return Analytics.Category.project;
+			}
+
+			return this.getCategoryByChatType(dialog.type);
 		}
 
 		getSectionCode()
@@ -119,7 +227,7 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 				case NavigationTabId.copilot:
 					return Analytics.Section.copilotTab;
 				case NavigationTabId.collab:
-					return Analytics.Section.collabTab;
+					return Analytics.Section.projectTab;
 				case NavigationTabId.task:
 					return Analytics.Section.taskTab;
 				case NavigationTabId.chats:
@@ -144,36 +252,87 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 		}
 
 		/**
-		 * @returns {string|null}
+		 * @desc The context of a chat event is the folder of the screen: every tab that stands for a
+		 *       folder of the label table reports that folder, and the web sends the same values for
+		 *       the same screens. What has no folder value left keeps the historical `<tab>_tab` -
+		 *       the "Chats" tab is the one such screen, and its value is already in the reports.
+		 * @returns {string}
 		 */
-		getFolderSubSection()
+		getFolderSectionCode()
 		{
-			const activeId = this.#recentManager?.getActiveRecentId();
-			if (!activeId)
+			return this.getFolderSectionByTabId(this.#recentManager?.getActiveRecentId())
+				?? this.getSectionCode();
+		}
+
+		/**
+		 * @desc The same question asked about a named tab and not about the active one: the labels of
+		 *       the chat list are sent for the tab they were raised on, which the caller holds and the
+		 *       navigation may already have left.
+		 * @param {?string} tabId
+		 * @returns {string|undefined} undefined when the tab stands for no folder of the label table
+		 */
+		getFolderSectionByTabId(tabId)
+		{
+			const folderCode = FolderCodeByTabId[tabId];
+
+			return folderCode ? Analytics.Type.Folder[folderCode] : undefined;
+		}
+
+		/**
+		 * @desc True while a project's nested navigation is open. Nested navigation is opened for
+		 *       a collab chat only, so its presence is the sign of "inside a project"; the nested
+		 *       tab id is not, because the nested tasks tab shares the id of the global one.
+		 * @returns {boolean}
+		 */
+		isInsideProjectNavigation()
+		{
+			return Boolean(this.#recentManager?.getActiveNestedRecent());
+		}
+
+		/**
+		 * @desc c_section of an event fired from a recent list. A project opens its own nested
+		 *       navigation, whose tabs are lists of one project - such a list reports `project`,
+		 *       while the global tabs (the projects tab / folder included) keep their own section.
+		 * @returns {string}
+		 */
+		getRecentSectionCode()
+		{
+			if (this.isInsideProjectNavigation())
 			{
-				return null;
+				return Analytics.Section.project;
 			}
 
-			const store = serviceLocator.get('core').getStore();
-			const standardTabIds = Object.values(NavigationTabId);
-			if (standardTabIds.includes(activeId))
-			{
-				const folder = store.getters['folderModel/getList']()
-					.find((f) => f.type === 'system' && NavigationTabByFolderCode[f.code] === activeId)
-				;
+			return this.getSectionCode();
+		}
 
-				return folder?.code ?? null;
+		/**
+		 * @desc Bare analytics chat type honoring the FIX-01 contract: `project` for a ROOT
+		 *       collab chat, else the intrinsic prepared type (aiAssistant / notes / prepareChatType).
+		 *       Parallel to getP1ByDialog (which prefixes this with `chatType_`).
+		 * @param {DialoguesModelState} dialog
+		 * @returns {string}
+		 */
+		getTypeByDialog(dialog)
+		{
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			let type = this.prepareChatType(dialog.type);
+
+			if (dialog.type === DialogType.collab)
+			{
+				type = Analytics.Type.Dialog.project;
 			}
 
-			const folderId = Number(activeId);
-			if (!Number.isInteger(folderId) || folderId <= 0)
+			if (dialogHelper?.isAiAssistant)
 			{
-				return null;
+				type = Analytics.Type.Dialog.aiAssistant;
 			}
 
-			const folder = store.getters['folderModel/getById'](folderId);
+			if (dialogHelper?.isNotes)
+			{
+				type = Analytics.Type.Dialog.notes;
+			}
 
-			return folder ? Analytics.Type.userFolder : null;
+			return type;
 		}
 
 		/**
@@ -184,6 +343,11 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 		{
 			const dialogHelper = DialogHelper.createByModel(dialog);
 			let type = this.prepareChatType(dialog.type);
+
+			if (dialog.type === DialogType.collab)
+			{
+				type = Analytics.Type.Dialog.project;
+			}
 
 			if (dialogHelper?.isAiAssistant)
 			{

@@ -1,4 +1,5 @@
 import { type JsonObject } from 'main.core';
+import { computed } from 'ui.vue3';
 
 import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
 import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
@@ -15,6 +16,18 @@ import './css/channel-container.css';
 export const ChannelListContainer = {
 	name: 'ChannelListContainer',
 	components: { ChannelList, CreateChatPromo, CreateChatButton },
+	provide(): { avatarsOnly: boolean }
+	{
+		return {
+			avatarsOnly: computed(() => this.avatarsOnly),
+		};
+	},
+	props: {
+		avatarsOnly: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	emits: ['selectChat'],
 	data(): JsonObject
 	{

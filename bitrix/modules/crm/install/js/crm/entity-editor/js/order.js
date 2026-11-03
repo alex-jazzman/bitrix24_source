@@ -1651,6 +1651,13 @@ if(typeof BX.Crm.EntityEditorOrderExtraServicesWrapper === "undefined")
 		return BX.create('div',{html: html});
 	};
 
+	// An extra service value comes escaped twice, so entity references of a legitimate label stay
+	// in the text node. A textarea decodes them as RCDATA: its content never becomes markup.
+	var decodeEntities = function(text)
+	{
+		return BX.create('textarea', {html: text}).value;
+	};
+
 	var wrap = function(domNode, price, cost, mode)
 	{
 		if(mode === 'edit')
@@ -1678,8 +1685,8 @@ if(typeof BX.Crm.EntityEditorOrderExtraServicesWrapper === "undefined")
 
 			while(textNode = walk.nextNode())
 			{
-				var text = textNode.data,
-					newNode = BX.create('span',{html: text});
+				var text = decodeEntities(textNode.data),
+					newNode = BX.create('span',{text: text});
 
 				textNode.parentNode.replaceChild(
 					getWrappedText(newNode, price, cost),
@@ -2555,7 +2562,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 		if(enableContextMenu)
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(enableDrag)
@@ -4059,7 +4066,7 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 
 		if(enableContextMenu)
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(enableDrag)
@@ -4385,7 +4392,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 
 		if(enableContextMenu)
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(enableDrag)
@@ -6806,7 +6813,7 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -7557,7 +7564,7 @@ if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -8206,7 +8213,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())
@@ -9009,7 +9016,7 @@ if(typeof BX.Crm.EntityEditorPaySystemSelector === "undefined")
 
 		if(this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if(this.isDragEnabled())

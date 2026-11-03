@@ -12,7 +12,6 @@ return [
 		'ajax',
 		'promise',
 		'loadext',
-		'main.polyfill.promise',
 		'main.polyfill.includes',
 		'main.polyfill.closest',
 		'main.polyfill.fill',

@@ -9,10 +9,12 @@ return [
 	'js' => 'dist/total.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'sale.checkout.const',
-		'main.core.events',
-		'ui.vue',
 		'currency.currency-core',
+		'main.core.events',
+		'sale.checkout.const',
+		'sale.checkout.lib',
+		'ui.a11y',
+		'ui.vue',
 	],
 	'skip_core' => true,
 ];

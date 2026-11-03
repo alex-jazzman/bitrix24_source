@@ -27,6 +27,7 @@ export class Manager
 		entityId: number,
 		currentUser: Object,
 		settings: ?any,
+		analytics: ?Object,
 	)
 	{
 		Dom.addClass(bindElement, '--active');
@@ -58,6 +59,9 @@ export class Manager
 								grid.instance.reload();
 							}
 						},
+					},
+					context: {
+						analytics,
 					},
 				},
 			);

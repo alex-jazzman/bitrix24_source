@@ -1,5 +1,5 @@
 import { BitrixVue } from 'ui.vue3';
-import type { Dashboard, Group, PermissionAppState } from './type';
+import type { Dashboard, Group, PermissionAppState, Table, TableGroup } from './type';
 import { PermissionsApp } from './permissions-app';
 import { Store } from './store';
 
@@ -7,6 +7,9 @@ type initPermissionParams = {
 	newGroupPermissions: Object,
 	dashboardGroups: Group[],
 	dashboards: Map<number, Dashboard>,
+	newTableGroupPermissions: Object,
+	tableGroups: TableGroup[],
+	tables: Table[],
 	appGuid: string,
 }
 
@@ -18,6 +21,9 @@ export class Permissions
 			newGroupPermissions,
 			dashboardGroups,
 			dashboards,
+			newTableGroupPermissions,
+			tableGroups,
+			tables,
 			user,
 			appGuid,
 		} = params;
@@ -25,6 +31,9 @@ export class Permissions
 			groups: dashboardGroups,
 			dashboards: new Map(Object.entries(dashboards).map(([key, value]) => [Number(key), value])),
 			newGroupPermissions,
+			tableGroups: tableGroups ?? [],
+			tables: tables ?? [],
+			newTableGroupPermissions,
 			appGuid,
 			user,
 		};

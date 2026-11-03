@@ -1,6 +1,6 @@
 import { ajax } from 'main.core';
 
-// [API-02] Copilot chat creation, pinned in one place so the parameter names are testable.
+// Copilot chat creation, pinned in one place so the parameter names are testable.
 //
 // The type goes out as the upper-case string: im's client constant ChatType.copilot is 'copilot',
 // but CreateService runs it through #prepareType() (camel→snake, upper-case) before the request.

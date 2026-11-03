@@ -619,13 +619,13 @@ ul.crm-view-actions li i {
 	vertical-align: middle;
 }
 
-ul.crm-view-actions li.crm-activity-command-add-task i { background: url("./images/crm/activity-sprite2.png") no-repeat -28px -272px; }
+ul.crm-view-actions li.crm-activity-command-add-task i { background: url("./images/crm/activity-sprite2.webp") no-repeat -28px -272px; }
 
-ul.crm-view-actions li.crm-activity-command-add-call i { background: url("./images/crm/activity-sprite2.png") no-repeat -28px -60px; }
+ul.crm-view-actions li.crm-activity-command-add-call i { background: url("./images/crm/activity-sprite2.webp") no-repeat -28px -60px; }
 
-ul.crm-view-actions li.crm-activity-command-add-meeting i { background: url("./images/crm/activity-sprite2.png") no-repeat -30px -23px; }
+ul.crm-view-actions li.crm-activity-command-add-meeting i { background: url("./images/crm/activity-sprite2.webp") no-repeat -30px -23px; }
 
-ul.crm-view-actions li.crm-activity-command-add-email i { background: url("./images/crm/activity-sprite2.png") no-repeat -28px -153px; }
+ul.crm-view-actions li.crm-activity-command-add-email i { background: url("./images/crm/activity-sprite2.webp") no-repeat -28px -153px; }
 
 ul.crm-view-actions li span {
 	display: inline-block;
@@ -1606,7 +1606,7 @@ div.bx-crm-dialog-activity-webdav-container .wduf-extended .wduf-selector .wduf-
 	left: 6px;
 	width: 59px;
 	height: 53px;
-	background: url("images/crm/webdav-arrow.png") no-repeat scroll 0 0 transparent;
+	background: url("images/crm/webdav-arrow.webp") no-repeat scroll 0 0 transparent;
 }
 
 div.bx-crm-dialog-activity-webdav-container .wduf-extended .wduf-selector:hover .wduf-load-img {
@@ -1615,7 +1615,7 @@ div.bx-crm-dialog-activity-webdav-container .wduf-extended .wduf-selector:hover 
 	left: 3px;
 	width: 59px;
 	height: 53px;
-	background: url("images/crm/webdav-arrow-h.png") no-repeat scroll 0 0 transparent;
+	background: url("images/crm/webdav-arrow-h.webp") no-repeat scroll 0 0 transparent;
 }
 
 div.bx-crm-dialog-activity-webdav-container .wduf-selectdialog .wduf-label2 {
@@ -1697,6 +1697,13 @@ table.bx-interface-grid div.crm-nearest-activity-time-expiried a:hover {
 	white-space: nowrap;
 }
 
+table.main-grid-table div.crm-nearest-activity-wrapper,
+table.bx-interface-grid div.crm-nearest-activity-wrapper {
+	position: relative;
+	display: inline-block;
+	padding-right: 20px;
+}
+
 table.main-grid-table div.crm-nearest-activity-subject,
 table.bx-interface-grid div.crm-nearest-activity-subject {
 	display: block;
@@ -1717,21 +1724,49 @@ table.bx-interface-grid div.crm-nearest-activity-plus {
 	margin-top: -12px;
 	width: 20px;
 	height: 20px;
-	background: url("images/crm/activity-sprite2.png") no-repeat -32px -376px;
+	border-radius: 50%;
+	background-color: var(--ui-color-design-filled-success-bg);
+	background-clip: content-box;
+	box-sizing: border-box;
+	padding: 3px;
 	cursor: pointer;
 }
 
+table.main-grid-table div.crm-nearest-activity-plus::before,
+table.main-grid-table div.crm-nearest-activity-plus::after,
+table.bx-interface-grid div.crm-nearest-activity-plus::before,
+table.bx-interface-grid div.crm-nearest-activity-plus::after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	background-color: var(--ui-color-design-filled-success-content-icon);
+	content: '';
+	transform: translate(-50%, -50%);
+}
+
+table.main-grid-table div.crm-nearest-activity-plus::before,
+table.bx-interface-grid div.crm-nearest-activity-plus::before {
+	width: 2px;
+	height: 8px;
+}
+
+table.main-grid-table div.crm-nearest-activity-plus::after,
+table.bx-interface-grid div.crm-nearest-activity-plus::after {
+	width: 8px;
+	height: 2px;
+}
+
 table.main-grid-table div.crm-nearest-activity-plus:hover,
-table.bx-interface-grid div.crm-nearest-activity-plus:hover { background-position: -11px -376px; }
+table.bx-interface-grid div.crm-nearest-activity-plus:hover { background-color: var(--ui-color-accent-main-success-alt); }
 
 table.main-grid-table div.crm-nearest-activity-plus:active,
-table.bx-interface-grid div.crm-nearest-activity-plus:active { background-position: -52px -376px; }
+table.bx-interface-grid div.crm-nearest-activity-plus:active { background-color: var(--ui-color-accent-main-success-alt-2); }
 
 .bx-no-touch table.main-grid-table tr div.crm-nearest-activity-plus,
 .bx-no-touch table.bx-interface-grid tr div.crm-nearest-activity-plus { display: none; }
 
-.bx-no-touch table.main-grid-table tr:hover div.crm-nearest-activity-plus,
-.bx-no-touch table.bx-interface-grid tr:hover div.crm-nearest-activity-plus { display: block; }
+.bx-no-touch table.main-grid-table tr td.main-grid-cell:hover div.crm-nearest-activity-plus,
+.bx-no-touch table.bx-interface-grid tr td:hover div.crm-nearest-activity-wrapper div.crm-nearest-activity-plus,
 .bx-no-touch table.main-grid-table tr div.crm-nearest-activity-plus.--active { display: block; }
 
 table.bx-interface-grid tr td.crm-current-activity { background-color: #fbf6e5 !important; }
@@ -1941,7 +1976,7 @@ div.crm-activity-crm_phone_tracker-incoming a.crm-activity-subject:before { back
 
 a.crm-activity-completed,
 a.crm-activity-not-completed {
-	background: url("./images/crm/activity-sprite2.png") no-repeat -28px -307px;
+	background: url("./images/crm/activity-sprite2.webp") no-repeat -28px -307px;
 	transition: opacity 200ms ease
 }
 
@@ -1995,7 +2030,7 @@ span.crm-activity-time { white-space: nowrap; }
 	display: inline-block;
 	width: 37px;
 	height: 12px;
-	background: url(images/crm/popuptitileui.png) no-repeat 12px center;
+	background: url(images/crm/popuptitileui.webp) no-repeat 12px center;
 	cursor: pointer
 }
 
@@ -2003,7 +2038,7 @@ span.crm-activity-time { white-space: nowrap; }
 	display: inline-block;
 	width: 42px;
 	height: 12px;
-	background: url(images/crm/popuptitileui.png) no-repeat -29px center;
+	background: url(images/crm/popuptitileui.webp) no-repeat -29px center;
 	cursor: pointer;
 }
 

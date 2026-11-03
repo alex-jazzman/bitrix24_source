@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_system_dialog, main_sidepanel, ui_buttons, ui_analytics, ui_iconSet_outline, ui_tooltip, intranet_user_miniProfile, main_core_events, main_popup, ui_iconSet_api_core, ui_system_skeleton, ui_system_menu, ui_system_typography, im_public, ui_cnt, ui_iconSet_smallOutline, ui_iconSet_solid, ui_notification, ui_system_input, ui_dialogs_messagebox, ui_datePicker, ui_entitySelector, ui_switcher, ui_system_chip) {
+(function (exports, main_core, ui_system_dialog, main_sidepanel, ui_buttons, ui_analytics, im_public, vibecodeconnector_openApp, main_core_events, main_popup, vibecodeconnector_appCreation, ui_iconSet_api_core, ui_system_skeleton, ui_notification, ui_system_menu, ui_system_typography, ui_cnt, ui_iconSet_outline, ui_iconSet_solid, ui_system_input, ui_dialogs_messagebox, ui_datePicker, ui_entitySelector, ui_switcher, ui_system_chip) {
 	'use strict';
 
 	const TOOL = 'intranet';
@@ -13,298 +13,44 @@ this.BX = this.BX || {};
 		});
 	}
 
-	const SAFETY_TIMEOUT_MS = 30000;
-	const LOADER_VIDEO_SRC = '/bitrix/js/vibecodeconnector/catalog/images/bg-blackhole-B-video-min.mp4';
-	// the same runtime url as the loader background in style.css: chef copies
-	// the poster referenced from css into dist/images, so the browser loads it once
-	const LOADER_VIDEO_POSTER = '/bitrix/js/vibecodeconnector/catalog/dist/images/bg-blackhole-B-poster.webp';
-	const FULLSCREEN_LEFT_BOUNDARY = 65; // the core slider zone reserved for the labels
-	const ICON_EXPAND = 'ui-icon-set --expand-l';
-	const ICON_COLLAPSE = 'ui-icon-set --collapse-l';
-	const LOC_EXPAND = 'VIBECODECONNECTOR_CATALOG_OPEN_APP_EXPAND';
-	const LOC_COLLAPSE = 'VIBECODECONNECTOR_CATALOG_OPEN_APP_COLLAPSE';
-	class OpenAppView {
-		#options;
-		#container = null;
-		#contentArea = null;
-		#loader = null;
-		#safetyTimer = null;
-		#fullscreenSlider = null;
-		#fullscreenLabel = null;
-		#savedLeftBoundary = null;
-		#isFullscreen = false;
-		constructor(options) {
-			this.#options = options;
+	/**
+	 * The catalog contract of "open the app of this card": synchronous, so that a
+	 * caller which has to decide between the slider and a plain navigation (the
+	 * side panel binder of the app page) can branch on the answer.
+	 */
+	function openCatalogAppById(itemId, presentation = {}) {
+		return vibecodeconnector_openApp.openAppSlider(itemId, presentation);
+	}
+	const VIBECODE_URL = main_core.Extension.getSettings('vibecodeconnector.catalog').get('vibecodeUrl', 'https://vibecode.bitrix24.tech');
+	const dashboardUrl = main_core.Extension.getSettings('vibecodeconnector.catalog').get('dashboardUrl', null);
+	const VIBECODE_DASHBOARD_URL = main_core.Type.isStringFilled(dashboardUrl) ? dashboardUrl : `${VIBECODE_URL}/dashboard`;
+	function openVibecodeDashboard() {
+		vibecodeconnector_openApp.openUrl(VIBECODE_DASHBOARD_URL);
+	}
+	function openCatalogChat(appChatId) {
+		if (!main_core.Type.isNumber(appChatId) || appChatId <= 0) {
+			return Promise.resolve(false);
 		}
-		getContainer() {
-			this.#container ??= this.#render();
-			return this.#container;
-		}
-		setFullscreenControls(slider, fullscreenLabel) {
-			this.#fullscreenSlider = slider;
-			this.#fullscreenLabel = fullscreenLabel;
-			fullscreenLabel.setIconClass(ICON_EXPAND);
-			fullscreenLabel.setIconTitle(main_core.Loc.getMessage(LOC_EXPAND));
-		}
-		toggleFullscreen() {
-			const slider = this.#fullscreenSlider;
-			const fullscreenLabel = this.#fullscreenLabel;
-			if (slider === null || fullscreenLabel === null) {
-				return;
-			}
-			const wrapper = this.getContainer();
-			if (this.#isFullscreen) {
-				slider.setCustomLeftBoundary(this.#savedLeftBoundary);
-				main_core.Dom.removeClass(wrapper, '--fullscreen');
-				fullscreenLabel.setIconClass(ICON_EXPAND);
-				fullscreenLabel.setIconTitle(main_core.Loc.getMessage(LOC_EXPAND));
-				this.#isFullscreen = false;
-			} else {
-				this.#savedLeftBoundary = slider.getCustomLeftBoundary();
-				slider.setCustomLeftBoundary(FULLSCREEN_LEFT_BOUNDARY);
-				main_core.Dom.addClass(wrapper, '--fullscreen');
-				fullscreenLabel.setIconClass(ICON_COLLAPSE);
-				fullscreenLabel.setIconTitle(main_core.Loc.getMessage(LOC_COLLAPSE));
-				this.#isFullscreen = true;
-			}
-			slider.adjustLayout();
-		}
-		async mountLayout(html) {
-			this.getContainer();
-			await main_core.Runtime.html(this.#contentArea, html);
-			const iframe = this.#contentArea.querySelector('iframe');
-			if (iframe === null) {
-				this.#hideLoader();
-				return;
-			}
-			this.#showLoader();
-			main_core.Event.bind(iframe, 'load', () => this.#onIframeLoad(iframe));
-			this.#restartSafetyTimer();
-		}
-		showLoadError() {
-			this.getContainer();
-			main_core.Dom.clean(this.#contentArea);
-			main_core.Dom.append(main_core.Tag.render`
-				<div class="vibecode-catalog-open-app__error" role="alert" data-testid="vibecode-open-app-error">
-					${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_OPEN_APP_LOAD_ERROR')}
-				</div>
-			`, this.#contentArea);
-			this.#hideLoader();
-		}
-		#onIframeLoad(iframe) {
-			if (this.#isBlankFrame(iframe)) {
-				return;
-			}
-			this.#hideLoader();
-		}
-		#isBlankFrame(iframe) {
-			try {
-				return iframe.contentDocument !== null && iframe.contentWindow.location.href === 'about:blank';
-			} catch {
-				return false;
-			}
-		}
-		#showLoader() {
-			// the loader overlay covers the content visually; inert also removes
-			// the covered iframe from the tab order and the accessibility tree
-			this.#contentArea.inert = true;
-			main_core.Dom.removeClass(this.#loader, '--hidden');
-		}
-		#hideLoader() {
-			if (this.#safetyTimer !== null) {
-				window.clearTimeout(this.#safetyTimer);
-				this.#safetyTimer = null;
-			}
-			this.#contentArea.inert = false;
-			main_core.Dom.addClass(this.#loader, '--hidden');
-		}
-		#restartSafetyTimer() {
-			if (this.#safetyTimer !== null) {
-				window.clearTimeout(this.#safetyTimer);
-			}
-			this.#safetyTimer = window.setTimeout(() => this.#hideLoader(), SAFETY_TIMEOUT_MS);
-		}
-		#render() {
-			this.#contentArea = main_core.Tag.render`<div class="vibecode-catalog-open-app__content" data-testid="vibecode-open-app-content"></div>`;
-			// the loader is visible from the first paint: it covers both the layout request
-			// and the app loading inside the iframe; the visually hidden text makes
-			// the live region actually announce the loading state
-			this.#loader = main_core.Tag.render`
-			<div class="vibecode-catalog-open-app__loader" role="status" data-testid="vibecode-open-app-loader">
-				<video
-					class="vibecode-catalog-open-app__loader-video"
-					src="${LOADER_VIDEO_SRC}"
-					poster="${LOADER_VIDEO_POSTER}"
-					autoplay
-					muted
-					loop
-					playsinline
-					aria-hidden="true"
-				></video>
-				<span class="vibecode-catalog-open-app__visually-hidden">${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_OPEN_APP_LOADER')}</span>
-			</div>
-		`;
-			this.#showLoader();
-			this.#restartSafetyTimer();
-			return main_core.Tag.render`
-			<div class="vibecode-catalog-open-app" data-testid="vibecode-open-app-wrapper">
-				${this.#renderHeader()}
-				<div class="vibecode-catalog-open-app__body">
-					${this.#contentArea}
-					${this.#loader}
-				</div>
-			</div>
-		`;
-		}
-		#renderHeader() {
-			const encodedTitle = main_core.Text.encode(this.#options.title);
-			return main_core.Tag.render`
-			<div class="vibecode-catalog-open-app__header">
-				<h3 class="vibecode-catalog-open-app__title ui-headline --lg" title="${encodedTitle}" data-testid="vibecode-open-app-title">${encodedTitle}</h3>
-				${this.#renderAuthor()}
-			</div>
-		`;
-		}
-		#getProfilePathTemplate() {
-			const template = main_core.Extension.getSettings('vibecodeconnector.catalog').get('userProfilePathTemplate');
-			return main_core.Type.isStringFilled(template) ? template : '/company/personal/user/#user_id#/';
-		}
-		#renderAuthor() {
-			if (this.#options.isMine === true || !main_core.Type.isStringFilled(this.#options.ownerName)) {
-				return '';
-			}
-			const ownerId = main_core.Text.toInteger(this.#options.ownerId);
-			const profileUrl = this.#getProfilePathTemplate().replace('#user_id#', String(ownerId));
-			const authorLabel = main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_OPEN_APP_AUTHOR', {
-				'#NAME#': this.#options.ownerName
-			});
-			return main_core.Tag.render`
-			<a
-				class="vibecode-catalog-open-app__author ui-text --lg"
-				href="${profileUrl}"
-				aria-label="${main_core.Text.encode(authorLabel)}"
-				bx-tooltip-user-id="${ownerId}"
-				bx-tooltip-context="b24"
-				bx-tooltip-mini-profile-direction="viewport"
-				data-testid="vibecode-open-app-author"
-			>${main_core.Text.encode(this.#options.ownerName)}</a>
-		`;
-		}
+		return im_public.Messenger.openChat(`chat${appChatId}`).then(() => true, () => false);
+	}
+	function isEmbedCreateEnabled() {
+		return main_core.Extension.getSettings('vibecodeconnector.catalog').get('createInIframe', false) === true;
 	}
 
-	const VIBECODE_URL = main_core.Extension.getSettings('vibecodeconnector.catalog').get('vibecodeUrl', 'https://vibecode.bitrix24.tech');
-	const VIBECODE_DASHBOARD_URL = `${VIBECODE_URL}/dashboard`;
-	const SLIDER_ID_PREFIX = 'vibecodeconnector-open-app-';
-	const OPEN_APP_PAGE_URL = '/bitrix/services/main/ajax.php?action=vibecodeconnector.Catalog.openAppPage';
-	function openUrl(url) {
-		if (!main_core.Type.isStringFilled(url)) {
-			return;
-		}
-		window.open(url, '_blank', 'noopener,noreferrer');
+	const EXTENSION_NAME = 'vibecodeconnector.catalog';
+	function getCatalogBrand() {
+		return main_core.Extension.getSettings(EXTENSION_NAME).get('catalogBrand') === 'alaio' ? 'alaio' : 'bitrix24';
 	}
-	function openVibecodeDashboard() {
-		openUrl(VIBECODE_DASHBOARD_URL);
+	function getCatalogBrandName() {
+		return main_core.Extension.getSettings(EXTENSION_NAME).get('brandName') ?? '';
 	}
-	function hasCatalogAppOpenTarget(itemId, viewUrl, canOpenInIframe = true, externalId = null) {
-		if (!isCatalogItemIdValid(itemId)) {
-			return false;
-		}
-		if (canOpenAppInIframe(itemId, canOpenInIframe, externalId)) {
-			return true;
-		}
-		return main_core.Type.isStringFilled(viewUrl);
-	}
-	function openCatalogApp(target) {
-		const openAppPageUrl = buildOpenAppPageUrl(target.id);
-		if (openAppPageUrl === null) {
-			return false;
-		}
-		if (!canOpenAppInIframe(target.id, target.canOpenInIframe, target.externalId)) {
-			if (main_core.Type.isStringFilled(target.viewUrl)) {
-				openUrl(openAppPageUrl);
-			}
-			return false;
-		}
-		const sliderId = `${SLIDER_ID_PREFIX}${target.id}`;
-		if (BX.SidePanel.Instance.getSlider(sliderId) !== null) {
-			// the slider is already open (for example, a double click on the item):
-			// a second layout request would be orphaned, the core keeps the open instance
-			return true;
-		}
-		const view = new OpenAppView({
-			title: target.title,
-			ownerId: target.ownerId,
-			ownerName: target.ownerName,
-			isMine: target.isMine
-		});
-		const layoutPromise = loadOpenAppLayout(target.id);
-		// the real handlers are attached in onLoad; the no-op catch keeps a fast
-		// ajax failure before onLoad from surfacing as an unhandled rejection
-		layoutPromise.catch(() => {});
-		let fullscreenLabel = null;
-		BX.SidePanel.Instance.open(sliderId, {
-			// the slider container is a role="dialog": the title becomes its accessible name
-			title: target.title,
-			cacheable: false,
-			allowChangeHistory: false,
-			copyLinkLabel: true,
-			newWindowUrl: openAppPageUrl,
-			contentCallback: () => view.getContainer(),
-			events: {
-				// the layout is mounted after the slider appends the container to the document:
-				// the inline script submits the POST form into the iframe, and a detached iframe
-				// has no browsing context to receive it
-				onLoad: () => {
-					layoutPromise.then(({
-						html
-					}) => view.mountLayout(html)).catch(() => view.showLoadError());
-				},
-				onOpenComplete: event => {
-					fullscreenLabel ??= addFullscreenLabel(event.getSlider(), view);
-				}
-			}
-		});
-		return true;
-	}
-	function addFullscreenLabel(slider, view) {
-		const fullscreenLabel = new main_sidepanel.Label(slider, {
-			className: '--ui-hoverable',
-			onclick: () => view.toggleFullscreen()
-		});
-		view.setFullscreenControls(slider, fullscreenLabel);
-		main_core.Dom.append(fullscreenLabel.getContainer(), slider.getExtraLabelsContainer());
-		return fullscreenLabel;
-	}
-	function canOpenAppInIframe(itemId, canOpenInIframe, externalId) {
-		return isOpenAppInIframeEnabled() && canOpenInIframe && isCatalogItemIdValid(itemId) && main_core.Type.isStringFilled(externalId);
-	}
-	function isCatalogItemIdValid(itemId) {
-		return main_core.Type.isNumber(itemId) && itemId > 0;
-	}
-	function buildOpenAppPageUrl(itemId) {
-		if (!isCatalogItemIdValid(itemId)) {
-			return null;
-		}
-		return `${OPEN_APP_PAGE_URL}&catalogItemId=${encodeURIComponent(itemId)}`;
-	}
-	function isOpenAppInIframeEnabled() {
-		return main_core.Extension.getSettings('vibecodeconnector.catalog').get('openAppInIframe', false) === true;
-	}
-	function loadOpenAppLayout(catalogItemId) {
-		return main_core.ajax.runAction('vibecodeconnector.Catalog.openAppLayout', {
-			data: {
-				catalogItemId
-			}
-		}).then(response => {
-			const html = response?.data?.html;
-			return {
-				html: main_core.Type.isString(html) ? html : ''
-			};
-		});
+	function isItemClickOpensChatEnabled() {
+		return main_core.Extension.getSettings(EXTENSION_NAME).get('itemClickOpensChat', false) === true;
 	}
 
 	class CatalogEmptyState {
 		render() {
+			const emptyTitleMessageId = getCatalogBrand() === 'alaio' ? 'VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_TITLE_ALAIO' : 'VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_TITLE_BITRIX24';
 			const actionButton = new ui_buttons.Button({
 				className: 'vibecode-catalog__popup-empty-state-button',
 				size: ui_buttons.ButtonSize.MEDIUM,
@@ -328,7 +74,7 @@ this.BX = this.BX || {};
 				<div class="vibecode-catalog__popup-empty-state">
 					<div class="vibecode-catalog__popup-empty-state-text">
 						<h4 class="vibecode-catalog__popup-empty-state-title ui-headline --sm">
-							${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_TITLE')}
+							${main_core.Loc.getMessage(emptyTitleMessageId)}
 						</h4>
 						<p class="vibecode-catalog__popup-empty-state-description ui-text --sm">
 							${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_DESCRIPTION')}
@@ -565,27 +311,44 @@ this.BX = this.BX || {};
 		return new ui_iconSet_api_core.Icon(params).render();
 	}
 
-	function renderPopupFab() {
-		const fab = new ui_buttons.Button({
-			className: 'vibecode-catalog__fab',
-			size: ui_buttons.ButtonSize.EXTRA_LARGE,
-			useAirDesign: true,
-			style: ui_buttons.AirButtonStyle.TINTED,
-			icon: getIconName('plus'),
-			props: {
-				type: 'button',
-				'aria-label': main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_ADD_APP_LABEL')
-			}
-		}).render();
-		main_core.Event.bind(fab, 'click', event => {
-			event.preventDefault();
-			sendCatalogAnalytics({
-				event: 'click_vibecode',
-				c_section: 'fab'
+	class CatalogPopupFab {
+		#options;
+		#node = null;
+		#unbind = null;
+		constructor(options = {}) {
+			this.#options = options;
+		}
+		render() {
+			this.#node ??= this.#renderButton();
+			return this.#node;
+		}
+		destroy() {
+			this.#unbind?.();
+			this.#unbind = null;
+			this.#node = null;
+		}
+		#renderButton() {
+			const fab = new ui_buttons.Button({
+				className: 'vibecode-catalog__fab',
+				size: ui_buttons.ButtonSize.EXTRA_LARGE,
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.TINTED,
+				icon: getIconName('plus'),
+				props: {
+					type: 'button',
+					'aria-label': main_core.Loc.getMessage(isEmbedCreateEnabled() ? 'VIBECODECONNECTOR_CATALOG_CREATE_LABEL' : 'VIBECODECONNECTOR_CATALOG_ADD_APP_LABEL')
+				}
+			}).render();
+			this.#unbind = vibecodeconnector_appCreation.bindAppCreation(fab, {
+				analytics: {
+					tool: 'intranet',
+					category: 'vibecode_catalog',
+					c_section: 'fab'
+				},
+				onClose: () => this.#options.onCreateClosed?.()
 			});
-			openVibecodeDashboard();
-		});
-		return fab;
+			return fab;
+		}
 	}
 
 	const SKELETON_TAB_WIDTHS = [70, 49, 63, 128];
@@ -662,12 +425,13 @@ this.BX = this.BX || {};
 
 	class CatalogPopupMyListEmptyState {
 		render() {
+			const emptyTitleMessageId = getCatalogBrand() === 'alaio' ? 'VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_TITLE_ALAIO' : 'VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_TITLE_BITRIX24';
 			return main_core.Tag.render`
 			<div class="vibecode-catalog__content-empty-state">
 				<div class="vibecode-catalog__popup-empty-state vibecode-catalog__popup-empty-state--content">
 					<div class="vibecode-catalog__popup-empty-state-text">
 						<h4 class="vibecode-catalog__popup-empty-state-title ui-headline --sm">
-							${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_TITLE')}
+							${main_core.Loc.getMessage(emptyTitleMessageId)}
 						</h4>
 						<p class="vibecode-catalog__popup-empty-state-description ui-text --sm">
 							${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_POPUP_EMPTY_DESCRIPTION')}
@@ -731,11 +495,103 @@ this.BX = this.BX || {};
 
 	const MY_TAB_ID = 'my';
 
-	class CatalogPopupItemPinButton {
+	class CatalogPopupItemFavoriteButton {
+		#item;
+		#tab;
+		#onFavoriteToggled;
+		#node = null;
+		#request = null;
+		#favoriteRequests;
+		constructor(item, tab = null, options = {}) {
+			this.#item = item;
+			this.#tab = tab;
+			this.#onFavoriteToggled = options.onFavoriteToggled ?? null;
+			this.#favoriteRequests = options.favoriteRequests ?? null;
+		}
+		canBeFavorited() {
+			return this.#tab?.id === MY_TAB_ID && !this.#tab?.extraData?.previewUserId;
+		}
+		render() {
+			if (!this.canBeFavorited()) {
+				return null;
+			}
+			if (this.#node === null) {
+				this.#node = main_core.Tag.render`<button type="button" data-testid="vibecode-catalog-item-favorite-button"></button>`;
+				main_core.Event.bind(this.#node, 'click', event => {
+					event.preventDefault();
+					event.stopPropagation();
+					this.toggle();
+				});
+				main_core.Event.bind(this.#node, 'keydown', event => {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.stopPropagation();
+					}
+				});
+			}
+			this.#syncNode();
+			return this.#node;
+		}
+		toggle() {
+			const pending = this.#pendingRequest();
+			if (pending !== null) {
+				return pending;
+			}
+			const wasFavorite = this.#item.isFavorite;
+			const action = wasFavorite ? 'vibecodeconnector.Catalog.unfavorite' : 'vibecodeconnector.Catalog.favorite';
+			this.#item.isFavorite = !wasFavorite;
+			this.#syncNode();
+			const request = main_core.ajax.runAction(action, {
+				data: {
+					catalogItemId: this.#item.id
+				}
+			}).then(() => {
+				this.#settleRequest(this.#item.isFavorite);
+				this.#onFavoriteToggled?.(true);
+			}).catch(error => {
+				this.#item.isFavorite = wasFavorite;
+				this.#settleRequest(wasFavorite);
+				this.#syncNode();
+				console.error('[vibecodeconnector.catalog] failed to toggle favorite', this.#item.id, error);
+				this.#onFavoriteToggled?.(false);
+			});
+			this.#rememberRequest(request);
+			return request;
+		}
+		#pendingRequest() {
+			return this.#favoriteRequests ? this.#favoriteRequests.get() : this.#request;
+		}
+		#rememberRequest(request) {
+			if (this.#favoriteRequests) {
+				this.#favoriteRequests.track(request, this.#item.isFavorite);
+				return;
+			}
+			this.#request = request;
+		}
+		#settleRequest(value) {
+			if (this.#favoriteRequests) {
+				this.#favoriteRequests.settle(value);
+				return;
+			}
+			this.#request = null;
+		}
+		#syncNode() {
+			if (!(this.#node instanceof HTMLButtonElement)) {
+				return;
+			}
+			this.#node.className = `vibecode-catalog__item-favorite-button${this.#item.isFavorite ? ' vibecode-catalog__item-favorite-button--favorite' : ''}`;
+			const label = main_core.Loc.getMessage(this.#item.isFavorite ? 'VIBECODECONNECTOR_CATALOG_FAVORITE_OFF' : 'VIBECODECONNECTOR_CATALOG_FAVORITE_ON');
+			this.#node.setAttribute('aria-label', label);
+			this.#node.setAttribute('title', label);
+			this.#node.setAttribute('aria-pressed', this.#item.isFavorite ? 'true' : 'false');
+			main_core.Dom.clean(this.#node);
+			main_core.Dom.append(renderIcon(this.#item.isFavorite ? 's-favorite' : 'o-favorite', 16), this.#node);
+		}
+	}
+
+	class CatalogPopupItemPinAction {
 		#item;
 		#tab;
 		#onPinToggled;
-		#node = null;
 		constructor(item, tab = null, options = {}) {
 			this.#item = item;
 			this.#tab = tab;
@@ -753,28 +609,9 @@ this.BX = this.BX || {};
 				onClick: () => this.toggle()
 			};
 		}
-		render() {
-			if (!this.canBePinned()) {
-				return null;
-			}
-			if (this.#node === null) {
-				this.#node = main_core.Tag.render`<button type="button"></button>`;
-				main_core.Event.bind(this.#node, 'click', event => {
-					event.preventDefault();
-					event.stopPropagation();
-					this.toggle();
-				});
-				main_core.Event.bind(this.#node, 'keydown', event => {
-					event.stopPropagation();
-				});
-			}
-			this.#syncNode();
-			return this.#node;
-		}
 		toggle() {
 			const action = this.#item.isPinned ? 'vibecodeconnector.Catalog.unpin' : 'vibecodeconnector.Catalog.pin';
 			this.#item.isPinned = !this.#item.isPinned;
-			this.#syncNode();
 			this.#onPinToggled?.();
 			main_core.ajax.runAction(action, {
 				data: {
@@ -783,19 +620,9 @@ this.BX = this.BX || {};
 				}
 			}).catch(error => {
 				this.#item.isPinned = !this.#item.isPinned;
-				this.#syncNode();
 				this.#onPinToggled?.();
 				console.error('[vibecodeconnector.catalog] failed to toggle pin', this.#item.id, error);
 			});
-		}
-		#syncNode() {
-			if (!(this.#node instanceof HTMLButtonElement)) {
-				return;
-			}
-			this.#node.className = `vibecode-catalog__item-pin-button${this.#item.isPinned ? ' vibecode-catalog__item-pin-button--pinned' : ''}`;
-			this.#node.setAttribute('aria-label', main_core.Loc.getMessage(this.#item.isPinned ? 'VIBECODECONNECTOR_CATALOG_MENU_UNPIN' : 'VIBECODECONNECTOR_CATALOG_MENU_PIN'));
-			main_core.Dom.clean(this.#node);
-			main_core.Dom.append(renderIcon(this.#item.isPinned ? 's-pin' : 'so-pin', 16), this.#node);
 		}
 	}
 
@@ -911,6 +738,107 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const CREATE_CHAT_ACTION = 'vibecodeconnector.Catalog.createChat';
+	class CatalogPopupItemCreateChatAction {
+		#item;
+		#onChatOpen;
+		#creating = false;
+		constructor(item, options = {}) {
+			this.#item = item;
+			this.#onChatOpen = options.onChatOpen ?? null;
+		}
+		canCreateChat() {
+			return this.#item.appChatCreatable === true;
+		}
+		getMenuItem() {
+			if (!this.canCreateChat()) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_MENU_CREATE_APP_CHAT'),
+				onClick: () => this.#confirmCreate(),
+				dataset: {
+					testid: 'vibecode-catalog-item-create-chat'
+				}
+			};
+		}
+		#confirmCreate() {
+			const content = main_core.Tag.render`
+			<div class="vibecode-catalog__delete-dialog ui-text --sm" data-testid="vibecode-catalog-create-chat-dialog">
+				${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_CREATE_CHAT_DIALOG_TEXT')}
+			</div>
+		`;
+			const cancelButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_CREATE_CHAT_DIALOG_CANCEL'),
+				size: ui_buttons.ButtonSize.MEDIUM,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				useAirDesign: true,
+				dataset: {
+					testid: 'vibecode-catalog-create-chat-dialog-cancel'
+				},
+				onclick: () => dialog.hide()
+			});
+			const confirmButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_CREATE_CHAT_DIALOG_CONFIRM'),
+				size: ui_buttons.ButtonSize.MEDIUM,
+				style: ui_buttons.AirButtonStyle.FILLED,
+				useAirDesign: true,
+				dataset: {
+					testid: 'vibecode-catalog-create-chat-dialog-confirm'
+				},
+				onclick: () => {
+					dialog.hide();
+					void this.#createChat();
+				}
+			});
+			const dialog = new ui_system_dialog.Dialog({
+				title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_CREATE_CHAT_DIALOG_TITLE'),
+				content,
+				width: 400,
+				hasOverlay: true,
+				rightButtons: [cancelButton, confirmButton]
+			});
+			dialog.show();
+		}
+		async #createChat() {
+			if (this.#creating) {
+				return;
+			}
+			this.#creating = true;
+			try {
+				const response = await main_core.ajax.runAction(CREATE_CHAT_ACTION, {
+					data: {
+						catalogItemId: this.#item.id
+					}
+				});
+				const chatId = main_core.Text.toInteger(response?.data?.chatId);
+				if (response?.data?.ok !== true || chatId <= 0) {
+					this.#notifyUnavailable();
+					return;
+				}
+				this.#item.appChatId = chatId;
+				this.#item.appChatAccessible = true;
+				this.#item.appChatCreatable = false;
+				const opened = await openCatalogChat(chatId);
+				if (!opened) {
+					this.#notifyUnavailable();
+					return;
+				}
+				this.#onChatOpen?.();
+			} catch (error) {
+				this.#notifyUnavailable();
+				console.error('[vibecodeconnector.catalog] failed to create the app chat', this.#item.id, error);
+			} finally {
+				this.#creating = false;
+			}
+		}
+		#notifyUnavailable() {
+			ui_notification.Center.notify({
+				content: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE')
+			});
+		}
+	}
+
 	class CatalogPopupItemDeleteAction {
 		#item;
 		#tab;
@@ -931,9 +859,10 @@ this.BX = this.BX || {};
 			};
 		}
 		#confirmDelete() {
+			const deleteDialogTextMessageId = getCatalogBrand() === 'alaio' ? 'VIBECODECONNECTOR_CATALOG_DELETE_DIALOG_TEXT_ALAIO' : 'VIBECODECONNECTOR_CATALOG_DELETE_DIALOG_TEXT_BITRIX24';
 			const content = main_core.Tag.render`
 			<div class="vibecode-catalog__delete-dialog ui-text --sm" data-testid="vibecode-catalog-delete-dialog">
-				${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_DELETE_DIALOG_TEXT')}
+				${main_core.Loc.getMessage(deleteDialogTextMessageId)}
 			</div>
 		`;
 			const cancelButton = new ui_buttons.Button({
@@ -955,7 +884,7 @@ this.BX = this.BX || {};
 					testid: 'vibecode-catalog-delete-dialog-confirm'
 				},
 				onclick: () => {
-					openUrl(this.#item.editUrl);
+					vibecodeconnector_openApp.openUrl(this.#item.editUrl);
 					dialog.hide();
 				}
 			});
@@ -1618,6 +1547,9 @@ this.BX = this.BX || {};
 		}
 	}
 
+	function toWireFlag(value) {
+		return value ? 'Y' : 'N';
+	}
 	class CatalogShareApi {
 		getShare(catalogItemId) {
 			return main_core.ajax.runAction('vibecodeconnector.Catalog.getShare', {
@@ -1662,6 +1594,17 @@ this.BX = this.BX || {};
 			return main_core.ajax.runAction('vibecodeconnector.Catalog.setLink', {
 				data
 			}).then(response => response.data.linkState);
+		}
+		setChatWriting(catalogItemId, allowed) {
+			return main_core.ajax.runAction('vibecodeconnector.Catalog.setChatWriting', {
+				data: {
+					catalogItemId,
+					allowed: toWireFlag(allowed)
+				}
+			}).then(response => ({
+				ok: response.data.ok === true,
+				allowed: response.data.allowed === true
+			}));
 		}
 	}
 	const catalogShareApi = new CatalogShareApi();
@@ -1712,7 +1655,6 @@ this.BX = this.BX || {};
 	}
 	const CatalogShareViewState = Object.freeze({
 		Loading: 'loading',
-		LoadError: 'loadError',
 		Audience: 'audience',
 		MemberDraft: 'memberDraft',
 		SavingShare: 'savingShare',
@@ -1725,6 +1667,9 @@ this.BX = this.BX || {};
 		Closed: 'closed'
 	});
 	const GLOBAL_AUDIENCES = new Set([Audience.Authenticated, Audience.Public]);
+
+	// Audiences for which the backend adds every company employee to the app chat
+	const COMPANY_AUDIENCES = new Set([Audience.Portal, Audience.Authenticated, Audience.Public]);
 	function cloneParticipants(participants) {
 		return participants.map(participant => ({
 			...participant
@@ -1768,7 +1713,13 @@ this.BX = this.BX || {};
 			departments: []
 		};
 		#errorCode = null;
+		#shareErrorCode = null;
+		#linkErrorCode = null;
+		#shareLoading = true;
+		#linkLoading = true;
 		#pendingAudience = null;
+		#pendingAudienceAddsCompanyToChat = false;
+		#pendingAudienceRevokesLink = false;
 		#ownerOnlyConfirmationRequired = false;
 		#previousEditableState = null;
 		#linkSettingsReturnState = null;
@@ -1780,7 +1731,13 @@ this.BX = this.BX || {};
 				linkState: this.#linkState,
 				draftShare: this.#draftShare === null ? null : cloneShare(this.#draftShare),
 				errorCode: this.#errorCode,
+				shareErrorCode: this.#shareErrorCode,
+				linkErrorCode: this.#linkErrorCode,
+				isShareLoading: this.#shareLoading,
+				isLinkLoading: this.#linkLoading,
 				pendingAudience: this.#pendingAudience,
+				pendingAudienceAddsCompanyToChat: this.#pendingAudienceAddsCompanyToChat,
+				pendingAudienceRevokesLink: this.#pendingAudienceRevokesLink,
 				ownerOnlyConfirmationRequired: this.#ownerOnlyConfirmationRequired,
 				linkDraft: this.#linkDraft === null ? null : {
 					expiryEnabled: this.#linkDraft.expiryEnabled,
@@ -1797,40 +1754,87 @@ this.BX = this.BX || {};
 			}
 			this.#status = CatalogShareViewState.Loading;
 			this.#errorCode = null;
+			this.#shareLoading = true;
+			this.#linkLoading = true;
+			this.#shareErrorCode = null;
+			this.#linkErrorCode = null;
 			return true;
 		}
-		completeLoading(share, linkState) {
+		settleLoading(result) {
 			if (this.#status !== CatalogShareViewState.Loading) {
 				return false;
 			}
-			this.#replaceCanonicalShare(share);
-			this.#linkState = linkState;
-			this.#status = share.audience === Audience.SpecificMembers ? CatalogShareViewState.MemberDraft : CatalogShareViewState.Audience;
+			this.#shareLoading = false;
+			this.#linkLoading = false;
 			this.#errorCode = null;
+			this.#applyShareLoadResult(result.share, result.shareErrorCode);
+			this.#applyLinkLoadResult(result.linkState, result.linkErrorCode);
 			return true;
 		}
-		failLoading(errorCode) {
-			if (this.#status !== CatalogShareViewState.Loading) {
+		beginShareReload() {
+			if (this.#shareLoading || !this.#isEditorVisible()) {
 				return false;
 			}
-			this.#status = CatalogShareViewState.LoadError;
-			this.#errorCode = errorCode;
+			this.#shareLoading = true;
+			this.#shareErrorCode = null;
 			return true;
 		}
-		retryLoading() {
-			if (this.#status !== CatalogShareViewState.LoadError) {
+		completeShareReload(share) {
+			if (!this.#shareLoading) {
 				return false;
 			}
-			this.#status = CatalogShareViewState.Loading;
-			this.#errorCode = null;
+			this.#shareLoading = false;
+			if (!this.#isEditorVisible()) {
+				return false;
+			}
+			this.#applyShareLoadResult(share, null);
+			return true;
+		}
+		failShareReload(errorCode) {
+			if (!this.#shareLoading) {
+				return false;
+			}
+			this.#shareLoading = false;
+			if (!this.#isEditorVisible()) {
+				return false;
+			}
+			this.#applyShareLoadResult(null, errorCode);
+			return true;
+		}
+		beginLinkReload() {
+			if (this.#linkLoading || !this.#isEditorVisible()) {
+				return false;
+			}
+			this.#linkLoading = true;
+			this.#linkErrorCode = null;
+			return true;
+		}
+		completeLinkReload(linkState) {
+			if (!this.#linkLoading) {
+				return false;
+			}
+			this.#linkLoading = false;
+			this.#applyLinkLoadResult(linkState, null);
+			return true;
+		}
+		failLinkReload(errorCode) {
+			if (!this.#linkLoading) {
+				return false;
+			}
+			this.#linkLoading = false;
+			this.#applyLinkLoadResult(null, errorCode);
 			return true;
 		}
 		selectAudience(audience) {
 			if (!this.#isAudienceEditable()) {
 				return false;
 			}
-			if (GLOBAL_AUDIENCES.has(audience) && this.#hasActiveLink()) {
+			const revokesLink = GLOBAL_AUDIENCES.has(audience) && this.#hasActiveLink();
+			const addsCompanyToChat = COMPANY_AUDIENCES.has(audience) && this.#share !== null && !COMPANY_AUDIENCES.has(this.#share.audience);
+			if (revokesLink || addsCompanyToChat) {
 				this.#pendingAudience = audience;
+				this.#pendingAudienceAddsCompanyToChat = addsCompanyToChat;
+				this.#pendingAudienceRevokesLink = revokesLink;
 				return false;
 			}
 			this.#applyAudience(audience);
@@ -1841,7 +1845,7 @@ this.BX = this.BX || {};
 				return false;
 			}
 			const audience = this.#pendingAudience;
-			this.#pendingAudience = null;
+			this.#clearPendingAudience();
 			this.#applyAudience(audience);
 			return true;
 		}
@@ -1849,7 +1853,7 @@ this.BX = this.BX || {};
 			if (this.#pendingAudience === null) {
 				return false;
 			}
-			this.#pendingAudience = null;
+			this.#clearPendingAudience();
 			return true;
 		}
 		setMembers(users, departments) {
@@ -1914,6 +1918,7 @@ this.BX = this.BX || {};
 				return false;
 			}
 			this.#linkState = linkState;
+			this.#linkErrorCode = null;
 			this.#status = this.#draftShare?.audience === Audience.SpecificMembers ? CatalogShareViewState.MemberDraft : CatalogShareViewState.Audience;
 			this.#previousEditableState = null;
 			return true;
@@ -2049,6 +2054,7 @@ this.BX = this.BX || {};
 				return false;
 			}
 			this.#linkState = linkState;
+			this.#linkErrorCode = null;
 			this.#status = CatalogShareViewState.LinkSettings;
 			if (linkState.link !== null) {
 				const lastFiniteExpiresAt = linkState.link.expiresAt === null ? this.#linkDraft?.lastFiniteExpiresAt ?? createDefaultLinkExpiry() : new Date(linkState.link.expiresAt);
@@ -2072,7 +2078,7 @@ this.BX = this.BX || {};
 		}
 		close() {
 			this.#status = CatalogShareViewState.Closed;
-			this.#pendingAudience = null;
+			this.#clearPendingAudience();
 			this.#ownerOnlyConfirmationRequired = false;
 			this.#linkSettingsReturnState = null;
 			this.#linkDraft = null;
@@ -2085,8 +2091,13 @@ this.BX = this.BX || {};
 				users: share.audience === Audience.SpecificMembers ? cloneParticipants(share.users) : [],
 				departments: share.audience === Audience.SpecificMembers ? cloneParticipants(share.departments) : []
 			};
-			this.#pendingAudience = null;
+			this.#clearPendingAudience();
 			this.#ownerOnlyConfirmationRequired = false;
+		}
+		#clearPendingAudience() {
+			this.#pendingAudience = null;
+			this.#pendingAudienceAddsCompanyToChat = false;
+			this.#pendingAudienceRevokesLink = false;
 		}
 		#applyAudience(audience) {
 			const keepMembers = audience === Audience.SpecificMembers;
@@ -2102,8 +2113,39 @@ this.BX = this.BX || {};
 			this.#errorCode = null;
 			this.#ownerOnlyConfirmationRequired = false;
 		}
-		#isAudienceEditable() {
+		#isEditorVisible() {
 			return this.#status === CatalogShareViewState.Audience || this.#status === CatalogShareViewState.MemberDraft;
+		}
+		#isAudienceEditable() {
+			return this.#isEditorVisible() && this.#share !== null && this.#draftShare !== null;
+		}
+		#applyShareLoadResult(share, errorCode) {
+			if (share === null) {
+				this.#share = null;
+				this.#draftShare = null;
+				this.#specificMembersDraft = {
+					audience: Audience.SpecificMembers,
+					users: [],
+					departments: []
+				};
+				this.#clearPendingAudience();
+				this.#ownerOnlyConfirmationRequired = false;
+				this.#status = CatalogShareViewState.Audience;
+				this.#shareErrorCode = errorCode ?? 'UNKNOWN_ERROR';
+				return;
+			}
+			this.#replaceCanonicalShare(share);
+			this.#status = share.audience === Audience.SpecificMembers ? CatalogShareViewState.MemberDraft : CatalogShareViewState.Audience;
+			this.#shareErrorCode = null;
+		}
+		#applyLinkLoadResult(linkState, errorCode) {
+			if (linkState === null) {
+				this.#linkState = null;
+				this.#linkErrorCode = errorCode ?? 'UNKNOWN_ERROR';
+				return;
+			}
+			this.#linkState = linkState;
+			this.#linkErrorCode = null;
 		}
 		#isShareDraftDirty() {
 			if (this.#share === null || this.#draftShare === null) {
@@ -2187,9 +2229,12 @@ this.BX = this.BX || {};
 		#switchers = new Map();
 		#datePicker = null;
 		#boundNodes = [];
+		#chatWritingAllowed = null;
+		#chatWritingPending = false;
 		constructor(options) {
 			this.#application = options.application;
 			this.#callbacks = options.callbacks;
+			this.#chatWritingAllowed = main_core.Type.isBoolean(options.application.appChatWritingAllowed) ? options.application.appChatWritingAllowed : null;
 			this.#now = options.now ?? (() => new Date());
 			this.#selectorFactory = options.selectorFactory ?? (selectorOptions => {
 				return new ui_entitySelector.TagSelector(selectorOptions);
@@ -2202,13 +2247,6 @@ this.BX = this.BX || {};
 			if (snapshot.status === CatalogShareViewState.Loading) {
 				return {
 					content: this.#renderLoading(),
-					leftButtons: [],
-					rightButtons: []
-				};
-			}
-			if (snapshot.status === CatalogShareViewState.LoadError) {
-				return {
-					content: this.#renderLoadError(),
 					leftButtons: [],
 					rightButtons: []
 				};
@@ -2230,6 +2268,10 @@ this.BX = this.BX || {};
 			this.#destroyTagSelector();
 			this.#snapshot = null;
 		}
+		setChatWriting(allowed, pending) {
+			this.#chatWritingAllowed = main_core.Type.isBoolean(allowed) ? allowed : null;
+			this.#chatWritingPending = pending;
+		}
 		updateShareButton(snapshot) {
 			const isDisabled = this.#isShareButtonDisabled(snapshot);
 			this.#shareButton?.setDisabled(isDisabled);
@@ -2248,22 +2290,6 @@ this.BX = this.BX || {};
 				aria-busy="true"
 			>
 				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOADING')}
-			</div>
-		`;
-		}
-		#renderLoadError() {
-			const retryButton = this.#createButton({
-				text: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_RETRY'),
-				style: ui_buttons.AirButtonStyle.FILLED,
-				dataset: {
-					testid: 'vibecode-catalog-share-retry'
-				},
-				onclick: this.#callbacks.onRetry
-			});
-			return main_core.Tag.render`
-			<div class="vibecode-catalog__share-dialog-error" data-state="loadError">
-				<p class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOAD_ERROR')}</p>
-				${retryButton.render()}
 			</div>
 		`;
 		}
@@ -2347,7 +2373,7 @@ this.BX = this.BX || {};
 			switchLabel.className = 'vibecode-catalog__share-link-switch-row';
 			main_core.Dom.append(expirySwitcher.getNode(), switchLabel);
 			main_core.Dom.append(main_core.Tag.render`
-			<span>${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_EXPIRY')}</span>
+			<span class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_EXPIRY')}</span>
 		`, switchLabel);
 			main_core.Dom.append(switchLabel, section);
 			const expiryInput = this.#createInput({
@@ -2420,7 +2446,7 @@ this.BX = this.BX || {};
 				onToggle: this.#callbacks.onSetLinkRequireB24Auth
 			});
 			main_core.Dom.append(switcher.getNode(), label);
-			main_core.Dom.append(main_core.Tag.render`<span>${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_REQUIRE_AUTH')}</span>`, label);
+			main_core.Dom.append(main_core.Tag.render`<span class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_REQUIRE_AUTH')}</span>`, label);
 			return label;
 		}
 		#createSwitcher(options) {
@@ -2522,18 +2548,17 @@ this.BX = this.BX || {};
 			</p>
 		`, root);
 			main_core.Dom.append(this.#renderApplication(), root);
-			main_core.Dom.append(main_core.Tag.render`
-			<h3 class="vibecode-catalog__share-audience-title ui-text --sm">
-				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_AUDIENCE_TITLE')}
-			</h3>
-		`, root);
-			main_core.Dom.append(this.#renderAudience(snapshot), root);
-			if (snapshot.status === CatalogShareViewState.MemberDraft) {
-				main_core.Dom.append(this.#renderMembers(snapshot), root);
+			const chatWriting = this.#renderChatWriting(snapshot);
+			if (chatWriting !== null) {
+				main_core.Dom.append(chatWriting, root);
 			}
-			const linkSettingsHint = this.#renderLinkSettingsHint(snapshot);
-			if (linkSettingsHint !== null) {
-				main_core.Dom.append(linkSettingsHint, root);
+			const hasMergedError = this.#hasMergedLoadError(snapshot);
+			main_core.Dom.append(this.#renderAudienceSection(snapshot, hasMergedError), root);
+			if (!hasMergedError) {
+				const linkSection = this.#renderLinkSection(snapshot);
+				if (linkSection !== null) {
+					main_core.Dom.append(linkSection, root);
+				}
 			}
 			if (snapshot.errorCode !== null) {
 				const error = main_core.Tag.render`
@@ -2545,6 +2570,129 @@ this.BX = this.BX || {};
 			}
 			return root;
 		}
+		#hasMergedLoadError(snapshot) {
+			return !snapshot.isShareLoading && !snapshot.isLinkLoading && snapshot.shareErrorCode !== null && snapshot.linkErrorCode !== null && snapshot.shareErrorCode === snapshot.linkErrorCode;
+		}
+		#renderAudienceSection(snapshot, hasMergedError = false) {
+			const section = document.createElement('div');
+			section.className = 'vibecode-catalog__share-audience-section';
+			section.dataset.testid = 'vibecode-catalog-share-audience-section';
+			main_core.Dom.append(main_core.Tag.render`
+			<h3 class="vibecode-catalog__share-audience-title ui-text --sm">
+				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_AUDIENCE_TITLE')}
+			</h3>
+		`, section);
+			if (snapshot.isShareLoading) {
+				main_core.Dom.append(this.#renderSectionLoading('vibecode-catalog-share-audience-loading'), section);
+				return section;
+			}
+			if (hasMergedError) {
+				main_core.Dom.append(this.#renderSectionError({
+					message: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_ALL_LOAD_ERROR'),
+					errorTestId: 'vibecode-catalog-share-all-error',
+					retryTestId: 'vibecode-catalog-share-all-retry',
+					onRetry: () => {
+						this.#callbacks.onRetryShare();
+						this.#callbacks.onRetryLink();
+					}
+				}), section);
+				return section;
+			}
+			if (snapshot.shareErrorCode !== null) {
+				main_core.Dom.append(this.#renderSectionError({
+					message: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOAD_ERROR'),
+					errorTestId: 'vibecode-catalog-share-audience-error',
+					retryTestId: 'vibecode-catalog-share-audience-retry',
+					onRetry: this.#callbacks.onRetryShare
+				}), section);
+				return section;
+			}
+			main_core.Dom.append(this.#renderAudience(snapshot), section);
+			if (snapshot.status === CatalogShareViewState.MemberDraft) {
+				main_core.Dom.append(this.#renderMembers(snapshot), section);
+			}
+			return section;
+		}
+		#renderLinkSection(snapshot) {
+			const content = this.#renderLinkSectionContent(snapshot);
+			if (content === null) {
+				return null;
+			}
+			const section = document.createElement('div');
+			section.className = 'vibecode-catalog__share-link-section';
+			section.dataset.testid = 'vibecode-catalog-share-link-section';
+			main_core.Dom.append(main_core.Tag.render`
+			<h3 class="vibecode-catalog__share-link-title ui-text --sm">
+				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_TITLE')}
+			</h3>
+		`, section);
+			main_core.Dom.append(content, section);
+			return section;
+		}
+		#renderLinkSectionContent(snapshot) {
+			if (snapshot.isLinkLoading) {
+				return this.#renderSectionLoading('vibecode-catalog-share-link-loading');
+			}
+			if (snapshot.linkErrorCode !== null) {
+				return this.#renderSectionError({
+					message: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_LOAD_ERROR'),
+					errorTestId: 'vibecode-catalog-share-link-error',
+					retryTestId: 'vibecode-catalog-share-link-retry',
+					onRetry: this.#callbacks.onRetryLink
+				});
+			}
+			return this.#renderLinkSettingsHint(snapshot);
+		}
+		#renderSectionLoading(testId) {
+			const node = document.createElement('p');
+			node.className = 'vibecode-catalog__share-section-loading ui-text --sm';
+			node.dataset.testid = testId;
+			node.setAttribute('aria-busy', 'true');
+			node.textContent = getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOADING');
+			return node;
+		}
+		#renderSectionError(options) {
+			const section = document.createElement('div');
+			section.className = 'vibecode-catalog__share-section-error';
+			section.dataset.testid = options.errorTestId;
+			section.setAttribute('role', 'alert');
+			const message = document.createElement('span');
+			message.className = 'ui-text --sm';
+			message.textContent = options.message;
+			main_core.Dom.append(message, section);
+			const retryButton = this.#createButton({
+				text: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_RETRY'),
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				dataset: {
+					testid: options.retryTestId
+				},
+				onclick: options.onRetry
+			});
+			main_core.Dom.append(retryButton.render(), section);
+			return section;
+		}
+		#renderChatWriting(snapshot) {
+			if (!main_core.Type.isBoolean(this.#chatWritingAllowed)) {
+				return null;
+			}
+			const isEditable = snapshot.status === CatalogShareViewState.Audience || snapshot.status === CatalogShareViewState.MemberDraft;
+			const switcher = this.#createSwitcher({
+				id: `vibecode-catalog-share-chat-writing-${this.#application.id}`,
+				checked: this.#chatWritingAllowed === true,
+				disabled: this.#chatWritingPending || !isEditable,
+				testId: 'vibecode-catalog-share-chat-writing',
+				ariaLabel: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CHAT_WRITING'),
+				onToggle: this.#callbacks.onSetChatWriting
+			});
+			const row = document.createElement('div');
+			row.className = 'vibecode-catalog__share-link-switch-row vibecode-catalog__share-chat-writing';
+			row.dataset.testid = 'vibecode-catalog-share-chat-writing-row';
+			main_core.Dom.append(switcher.getNode(), row);
+			main_core.Dom.append(main_core.Tag.render`
+			<span class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CHAT_WRITING')}</span>
+		`, row);
+			return row;
+		}
 		#renderLinkSettingsHint(snapshot) {
 			if (snapshot.linkState?.availability !== LinkAvailability.Available || hasDirectGlobalAccess(snapshot.draftShare?.audience)) {
 				return null;
@@ -2555,7 +2703,7 @@ this.BX = this.BX || {};
 			linkSettings.type = 'button';
 			linkSettings.className = 'vibecode-catalog__share-link-action';
 			linkSettings.dataset.testid = 'vibecode-catalog-share-link-settings';
-			linkSettings.disabled = snapshot.status !== CatalogShareViewState.Audience && snapshot.status !== CatalogShareViewState.MemberDraft;
+			linkSettings.disabled = snapshot.draftShare === null || snapshot.status !== CatalogShareViewState.Audience && snapshot.status !== CatalogShareViewState.MemberDraft;
 			main_core.Event.bind(linkSettings, 'click', this.#callbacks.onOpenLinkSettings);
 			this.#boundNodes.push(linkSettings);
 			const message = getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_HINT');
@@ -2865,7 +3013,6 @@ this.BX = this.BX || {};
 	const CATALOG_SHARE_DIALOG_WIDTH = 588;
 	Object.freeze({
 		Loading: CatalogShareViewState.Loading,
-		Error: CatalogShareViewState.LoadError,
 		Ready: CatalogShareViewState.Audience,
 		Audience: CatalogShareViewState.Audience,
 		MemberDraft: CatalogShareViewState.MemberDraft,
@@ -2891,7 +3038,12 @@ this.BX = this.BX || {};
 		#request = null;
 		#saveRequest = null;
 		#linkRequest = null;
+		#shareReloadRequest = null;
+		#linkReloadRequest = null;
 		#applicationLinkCopyRequest = null;
+		#chatWritingRequest = null;
+		#chatWritingAllowed = null;
+		#onChatWritingChanged;
 		#copyText;
 		#now;
 		#shown = false;
@@ -2901,6 +3053,8 @@ this.BX = this.BX || {};
 			this.#trigger = options.trigger;
 			this.#api = options.api ?? catalogShareApi;
 			this.#copyText = options.copyText ?? this.#copyToClipboard;
+			this.#chatWritingAllowed = main_core.Type.isBoolean(options.application.appChatWritingAllowed) ? options.application.appChatWritingAllowed : null;
+			this.#onChatWritingChanged = options.onChatWritingChanged ?? null;
 			this.#now = options.now ?? (() => new Date());
 			this.#machine = new CatalogShareStateMachine();
 			this.#view = new CatalogShareDialogView({
@@ -2908,7 +3062,8 @@ this.BX = this.BX || {};
 				selectorFactory: options.selectorFactory,
 				now: this.#now,
 				callbacks: {
-					onRetry: this.#handleRetry,
+					onRetryShare: this.#handleRetryShare,
+					onRetryLink: this.#handleRetryLink,
 					onSelectAudience: this.#handleSelectAudience,
 					onSetMembers: this.#handleSetMembers,
 					onSaveShare: this.#handleSaveShare,
@@ -2919,7 +3074,8 @@ this.BX = this.BX || {};
 					onSetLinkExpiry: this.#handleSetLinkExpiry,
 					onSetLinkRequireB24Auth: this.#handleSetLinkRequireB24Auth,
 					onSaveAndCopyLink: this.#handleSaveAndCopyLink,
-					onRequestPortalLinkRevoke: this.#handleRequestPortalLinkRevoke
+					onRequestPortalLinkRevoke: this.#handleRequestPortalLinkRevoke,
+					onSetChatWriting: this.#handleSetChatWriting
 				}
 			});
 			const rendering = this.#view.render(this.#machine.getSnapshot());
@@ -2958,27 +3114,35 @@ this.BX = this.BX || {};
 				return this.#request;
 			}
 			const status = this.#machine.getSnapshot().status;
-			if (status === CatalogShareViewState.LoadError) {
-				this.#machine.retryLoading();
-				this.#render();
-			} else if (status !== CatalogShareViewState.Loading) {
+			if (status !== CatalogShareViewState.Loading) {
 				if (!this.#machine.beginLoading()) {
 					return Promise.resolve();
 				}
 				this.#render();
 			}
-			const request = Promise.all([this.#api.getShare(this.#application.id), this.#api.getLink(this.#application.id)]).then(([share, linkState]) => {
+			const request = Promise.all([this.#api.getShare(this.#application.id).then(share => ({
+				value: share,
+				errorCode: null
+			}), error => ({
+				value: null,
+				errorCode: this.#getErrorCode(error)
+			})), this.#api.getLink(this.#application.id).then(linkState => ({
+				value: linkState,
+				errorCode: null
+			}), error => ({
+				value: null,
+				errorCode: this.#getErrorCode(error)
+			}))]).then(([shareResult, linkResult]) => {
 				if (this.#destroyed) {
 					return;
 				}
-				this.#machine.completeLoading(share, linkState);
+				this.#machine.settleLoading({
+					share: shareResult.value,
+					shareErrorCode: shareResult.errorCode,
+					linkState: linkResult.value,
+					linkErrorCode: linkResult.errorCode
+				});
 				this.#syncDraft();
-				this.#render();
-			}).catch(error => {
-				if (this.#destroyed) {
-					return;
-				}
-				this.#machine.failLoading(this.#getErrorCode(error));
 				this.#render();
 			}).finally(() => {
 				if (this.#request === request) {
@@ -2997,28 +3161,113 @@ this.BX = this.BX || {};
 		destroy() {
 			this.#release(true);
 		}
-		#handleRetry = () => {
-			void this.refresh();
+		#handleRetryShare = () => {
+			if (this.#shareReloadRequest !== null || this.#destroyed || !this.#machine.beginShareReload()) {
+				return;
+			}
+			this.#render();
+			const request = this.#reloadShare();
+			this.#shareReloadRequest = request;
+			void request.finally(() => {
+				if (this.#shareReloadRequest === request) {
+					this.#shareReloadRequest = null;
+				}
+			});
 		};
+		async #reloadShare() {
+			try {
+				const share = await this.#api.getShare(this.#application.id);
+				if (this.#destroyed) {
+					return;
+				}
+				this.#machine.completeShareReload(share);
+			} catch (error) {
+				if (this.#destroyed) {
+					return;
+				}
+				this.#machine.failShareReload(this.#getErrorCode(error));
+			}
+			this.#syncDraft();
+			this.#render();
+		}
+		#handleRetryLink = () => {
+			if (this.#linkReloadRequest !== null || this.#destroyed || !this.#machine.beginLinkReload()) {
+				return;
+			}
+			this.#render();
+			const request = this.#reloadLink();
+			this.#linkReloadRequest = request;
+			void request.finally(() => {
+				if (this.#linkReloadRequest === request) {
+					this.#linkReloadRequest = null;
+				}
+			});
+		};
+		async #reloadLink() {
+			try {
+				const linkState = await this.#api.getLink(this.#application.id);
+				if (this.#destroyed) {
+					return;
+				}
+				this.#machine.completeLinkReload(linkState);
+			} catch (error) {
+				if (this.#destroyed) {
+					return;
+				}
+				this.#machine.failLinkReload(this.#getErrorCode(error));
+			}
+			this.#syncDraft();
+			this.#render();
+		}
 		#handleSelectAudience = audience => {
 			if (this.#machine.selectAudience(audience)) {
 				this.#syncDraft();
 				this.#render();
 				return;
 			}
-			const pendingAudience = this.#machine.getSnapshot().pendingAudience;
-			if (pendingAudience !== null) {
-				const title = pendingAudience === Audience.Authenticated ? main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_TITLE') : main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_TITLE');
-				const description = pendingAudience === Audience.Authenticated ? main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_DESCRIPTION') : main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_DESCRIPTION');
+			const snapshot = this.#machine.getSnapshot();
+			if (snapshot.pendingAudience !== null) {
+				const {
+					title,
+					description
+				} = this.#getPendingAudienceConfirmationTexts(snapshot);
 				this.#showConfirmation({
 					title,
 					description,
-					confirmText: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_GLOBAL_BUTTON'),
+					confirmText: snapshot.pendingAudienceAddsCompanyToChat ? main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_APP_CHAT_BUTTON') : main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_GLOBAL_BUTTON'),
 					onConfirm: this.#handleConfirmLinkRevoke,
 					onCancel: this.#handleCancelLinkRevoke
 				});
 			}
 		};
+		#getPendingAudienceConfirmationTexts(snapshot) {
+			const addsCompanyToChat = snapshot.pendingAudienceAddsCompanyToChat;
+			const revokesLink = snapshot.pendingAudienceRevokesLink;
+			if (snapshot.pendingAudience === Audience.Portal) {
+				return {
+					title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PORTAL_TITLE'),
+					description: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PORTAL_DESCRIPTION')
+				};
+			}
+			if (snapshot.pendingAudience === Audience.Authenticated) {
+				let description = main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_DESCRIPTION');
+				if (addsCompanyToChat) {
+					description = revokesLink ? main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_APP_CHAT_LINK_DESCRIPTION') : main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_APP_CHAT_DESCRIPTION');
+				}
+				return {
+					title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_AUTHENTICATED_TITLE'),
+					description
+				};
+			}
+			let description = main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_DESCRIPTION');
+			if (addsCompanyToChat) {
+				description = revokesLink ? main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_APP_CHAT_LINK_DESCRIPTION') : main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_APP_CHAT_DESCRIPTION');
+			}
+			return {
+				title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CONFIRM_PUBLIC_TITLE'),
+				description
+			};
+		}
 		#handleConfirmLinkRevoke = () => {
 			if (this.#machine.confirmLinkRevoke()) {
 				this.#syncDraft();
@@ -3183,6 +3432,49 @@ this.BX = this.BX || {};
 				this.#render();
 			}
 		};
+		#handleSetChatWriting = allowed => {
+			if (this.#chatWritingRequest !== null || this.#destroyed || !main_core.Type.isBoolean(this.#chatWritingAllowed)) {
+				return;
+			}
+			if (allowed === this.#chatWritingAllowed) {
+				return;
+			}
+			const request = this.#saveChatWriting(allowed);
+			this.#chatWritingRequest = request;
+			void request.finally(() => {
+				if (this.#chatWritingRequest === request) {
+					this.#chatWritingRequest = null;
+				}
+			});
+		};
+		async #saveChatWriting(allowed) {
+			const previousAllowed = this.#chatWritingAllowed;
+			this.#view.setChatWriting(allowed, true);
+			this.#render();
+			let result = null;
+			try {
+				result = (await this.#api.setChatWriting?.(this.#application.id, allowed)) ?? null;
+			} catch {
+				result = null;
+			}
+			if (this.#destroyed) {
+				return;
+			}
+			if (result === null || result.ok !== true) {
+				this.#view.setChatWriting(previousAllowed, false);
+				this.#render();
+				ui_notification.Center.notify({
+					content: main_core.Loc.getMessage(result === null ? 'VIBECODECONNECTOR_CATALOG_SHARE_CHAT_WRITING_ERROR' : 'VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE'),
+					position: ui_notification.Position.TOP_RIGHT,
+					useAirDesign: true
+				});
+				return;
+			}
+			this.#chatWritingAllowed = result.allowed;
+			this.#onChatWritingChanged?.(result.allowed);
+			this.#view.setChatWriting(result.allowed, false);
+			this.#render();
+		}
 		#handleRequestPortalLinkRevoke = () => {
 			if (this.#machine.requestPortalLinkRevoke()) {
 				this.#showConfirmation({
@@ -3477,7 +3769,10 @@ this.BX = this.BX || {};
 			this.#request = null;
 			this.#saveRequest = null;
 			this.#linkRequest = null;
+			this.#shareReloadRequest = null;
+			this.#linkReloadRequest = null;
 			this.#applicationLinkCopyRequest = null;
+			this.#chatWritingRequest = null;
 			this.#view.destroy();
 			const dialog = this.#dialog;
 			this.#dialog = null;
@@ -3515,9 +3810,13 @@ this.BX = this.BX || {};
 							title: this.#item.title,
 							iconUrl: this.#item.iconUrl,
 							color: this.#item.color,
-							viewUrl: this.#item.viewUrl
+							viewUrl: this.#item.viewUrl,
+							appChatWritingAllowed: this.#item.appChatWritingAllowed
 						},
-						trigger
+						trigger,
+						onChatWritingChanged: allowed => {
+							this.#item.appChatWritingAllowed = allowed;
+						}
 					});
 				}
 			};
@@ -3525,12 +3824,15 @@ this.BX = this.BX || {};
 	}
 
 	const KIND_APPLICATION = 'application';
-	const KIND_BOT = 'bot';
 	const CATALOG_OPENED_EVENT = 'im:vibe-code-catalog:opened';
+	const RECORD_OPEN_ACTION = 'vibecodeconnector.Catalog.recordOpen';
+	const OPEN_CHAT_ACTION = 'vibecodeconnector.Catalog.openChat';
 	class CatalogPopupItem {
 		#item;
-		#pinButton;
+		#favoriteButton;
+		#pinAction;
 		#hideAction;
+		#createChatAction;
 		#deleteAction;
 		#renameAction;
 		#shareAction;
@@ -3539,16 +3841,26 @@ this.BX = this.BX || {};
 		#node = null;
 		#newBadgeNode = null;
 		#actionMenu = null;
+		#clickOpensChat;
+		#chatOpening = false;
 		constructor(item, tab = null, callbacks = {}) {
 			this.#item = item;
 			this.#callbacks = callbacks;
+			this.#clickOpensChat = isItemClickOpensChatEnabled();
 			this.#showHiddenBadge = callbacks.showHiddenBadge === true;
-			this.#pinButton = new CatalogPopupItemPinButton(item, tab, {
+			this.#favoriteButton = new CatalogPopupItemFavoriteButton(item, tab, {
+				onFavoriteToggled: callbacks.onFavoriteToggled,
+				favoriteRequests: callbacks.favoriteRequests
+			});
+			this.#pinAction = new CatalogPopupItemPinAction(item, tab, {
 				onPinToggled: callbacks.onPinToggled
 			});
 			this.#hideAction = new CatalogPopupItemHideAction(item, tab, {
 				onHiddenToggled: callbacks.onHiddenToggled,
 				onHiddenCommitted: callbacks.onHiddenCommitted
+			});
+			this.#createChatAction = new CatalogPopupItemCreateChatAction(item, {
+				onChatOpen: callbacks.onChatOpen
 			});
 			this.#deleteAction = new CatalogPopupItemDeleteAction(item, tab);
 			this.#renameAction = new CatalogPopupItemRenameAction(item, tab, {
@@ -3583,6 +3895,15 @@ this.BX = this.BX || {};
 					${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_BADGE_HIDDEN')}
 				</span>
 			` : '';
+			const pinnedMarkNode = this.#item.isPinned === true ? main_core.Tag.render`
+				<span
+					class="vibecode-catalog__item-pinned-mark"
+					data-testid="vibecode-catalog-item-pinned-mark"
+					role="img"
+					title="${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_BADGE_PINNED')}"
+					aria-label="${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_BADGE_PINNED')}"
+				>${renderIcon('s-pin', 14)}</span>
+			` : '';
 			const showNewBadge = this.#item.isNew === true && this.#item.isOpened !== true;
 			const newBadgeNode = showNewBadge ? main_core.Tag.render`
 				<span class="vibecode-catalog__item-badge vibecode-catalog__item-badge--new ui-text --2xs" data-testid="vibecode-catalog-item-new-badge">
@@ -3591,10 +3912,10 @@ this.BX = this.BX || {};
 			` : '';
 			this.#newBadgeNode = showNewBadge ? newBadgeNode : null;
 			const actionButtonNode = this.#renderActionButton();
-			const pinButtonNode = this.#pinButton.render();
-			const actionControlsNode = (pinButtonNode || actionButtonNode) && main_core.Tag.render`
+			const favoriteButtonNode = this.#favoriteButton.render();
+			const actionControlsNode = (favoriteButtonNode || actionButtonNode) && main_core.Tag.render`
 			<div class="vibecode-catalog__item-action-button-wrap">
-				${pinButtonNode}
+				${favoriteButtonNode}
 				${actionButtonNode}
 			</div>
 		`;
@@ -3608,6 +3929,7 @@ this.BX = this.BX || {};
 				<div class="vibecode-catalog__item-content">
 					<div class="vibecode-catalog__item-title-row">
 						${titleNode}
+						${pinnedMarkNode}
 						${hiddenBadgeNode}
 						${newBadgeNode}
 					</div>
@@ -3626,31 +3948,35 @@ this.BX = this.BX || {};
 			return this.#node;
 		}
 		#hasOpenTarget() {
-			if (this.#isBotWithChat()) {
+			if (this.#clickOpensChat && this.#hasAppChat()) {
 				return true;
 			}
-			return hasCatalogAppOpenTarget(this.#item.id, this.#item.viewUrl, this.#isApplication(), this.#item.externalId);
+			return vibecodeconnector_openApp.hasCatalogAppOpenTarget(this.#item.id, this.#item.viewUrl, this.#isApplication(), this.#item.externalId);
 		}
 		#isApplication() {
 			return this.#item.kind === KIND_APPLICATION;
 		}
-		#isBotWithChat() {
-			return this.#item.kind === KIND_BOT && this.#item.chatId !== null;
+		#hasAppChat() {
+			return main_core.Type.isNumber(this.#item.appChatId) && this.#item.appChatId > 0;
 		}
 		#recordOpen() {
-			const wasNew = this.#item.isNew === true && this.#item.isOpened !== true;
+			const wasNew = this.#isNewUnopened();
 			this.#markOpened();
-			main_core.ajax.runAction('vibecodeconnector.Catalog.recordOpen', {
+			main_core.ajax.runAction(RECORD_OPEN_ACTION, {
 				data: {
 					catalogItemId: this.#item.id
 				}
-			}).then(() => {
-				if (wasNew) {
-					main_core_events.EventEmitter.emit(CATALOG_OPENED_EVENT, {
-						catalogItemId: this.#item.id
-					});
-				}
-			}).catch(console.error);
+			}).then(() => this.#emitOpened(wasNew)).catch(console.error);
+		}
+		#isNewUnopened() {
+			return this.#item.isNew === true && this.#item.isOpened !== true;
+		}
+		#emitOpened(wasNew) {
+			if (wasNew) {
+				main_core_events.EventEmitter.emit(CATALOG_OPENED_EVENT, {
+					catalogItemId: this.#item.id
+				});
+			}
 		}
 
 		// the badge goes, the isNew flag stays: the New slice is filtered by it, and the item must
@@ -3667,14 +3993,37 @@ this.BX = this.BX || {};
 			}
 		}
 		#openTarget() {
-			this.#recordOpen();
-			if (this.#isBotWithChat()) {
-				void im_public.Messenger.openChat(String(this.#item.chatId));
-				// the chat opens on the page behind the modal catalog, which would block it
-				this.#callbacks.onChatOpen?.();
+			if (this.#clickOpensChat && this.#hasAppChat()) {
+				this.#openAppChat();
 				return;
 			}
-			openCatalogApp(this.#buildOpenAppTarget());
+			this.#recordOpen();
+			vibecodeconnector_openApp.openCatalogApp(this.#buildOpenAppTarget());
+		}
+		#openAppChat() {
+			if (this.#chatOpening) {
+				return;
+			}
+			if (this.#item.appChatAccessible !== true) {
+				this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+				return;
+			}
+			this.#chatOpening = true;
+			void openCatalogChat(this.#item.appChatId).then(opened => {
+				if (!opened) {
+					this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+					return;
+				}
+				this.#recordOpen();
+				this.#callbacks.onChatOpen?.();
+			}).finally(() => {
+				this.#chatOpening = false;
+			});
+		}
+		#notify(messageId) {
+			ui_notification.Center.notify({
+				content: main_core.Loc.getMessage(messageId)
+			});
 		}
 		#buildOpenAppTarget() {
 			return {
@@ -3685,15 +4034,71 @@ this.BX = this.BX || {};
 				canOpenInIframe: this.#isApplication(),
 				ownerId: this.#item.ownerId,
 				ownerName: this.#item.ownerName,
-				isMine: this.#item.isMine === true
+				isMine: this.#item.isMine === true,
+				iconUrl: this.#item.iconUrl,
+				color: this.#item.color
 			};
+		}
+		#getAppChatMenuItem() {
+			if (this.#clickOpensChat || !this.#hasAppChat() || this.#item.appChatAccessible !== true) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_MENU_OPEN_APP_CHAT'),
+				onClick: () => {
+					sendCatalogAnalytics({
+						event: 'open_app',
+						c_section: 'item'
+					});
+					void this.#openAppChatThroughEndpoint();
+				}
+			};
+		}
+		async #openAppChatThroughEndpoint() {
+			if (this.#chatOpening) {
+				return;
+			}
+			this.#chatOpening = true;
+			try {
+				const response = await main_core.ajax.runAction(OPEN_CHAT_ACTION, {
+					data: {
+						catalogItemId: this.#item.id
+					}
+				});
+				const chatId = main_core.Text.toInteger(response?.data?.chatId);
+				if (response?.data?.ok !== true || chatId <= 0) {
+					this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+					return;
+				}
+				this.#item.appChatId = chatId;
+				const opened = await openCatalogChat(chatId);
+				if (!opened) {
+					this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+					return;
+				}
+				this.#recordOpen();
+				this.#callbacks.onChatOpen?.();
+			} catch (error) {
+				this.#notify('VIBECODECONNECTOR_CATALOG_APP_CHAT_UNAVAILABLE');
+				console.error('[vibecodeconnector.catalog] failed to open the app chat', this.#item.id, error);
+			} finally {
+				this.#chatOpening = false;
+			}
 		}
 		#getActionMenuItems(trigger) {
 			const items = [];
+			const appChatMenuItem = this.#getAppChatMenuItem();
+			if (appChatMenuItem) {
+				items.push(appChatMenuItem);
+			}
+			const createChatMenuItem = this.#createChatAction.getMenuItem();
+			if (createChatMenuItem) {
+				items.push(createChatMenuItem);
+			}
 			if (this.#item.editUrl !== null && this.#item.isMine === true) {
 				items.push({
 					title: main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_MENU_EDIT_IN_VIBE'),
-					onClick: () => openUrl(this.#item.editUrl)
+					onClick: () => vibecodeconnector_openApp.openUrl(this.#item.editUrl)
 				});
 			}
 			const shareMenuItem = this.#shareAction.getMenuItem(trigger);
@@ -3704,7 +4109,7 @@ this.BX = this.BX || {};
 			if (renameMenuItem) {
 				items.push(renameMenuItem);
 			}
-			const pinMenuItem = this.#pinButton.getMenuItem();
+			const pinMenuItem = this.#pinAction.getMenuItem();
 			if (pinMenuItem) {
 				items.push(pinMenuItem);
 			}
@@ -3847,9 +4252,10 @@ this.BX = this.BX || {};
 		Active: 'active',
 		Hidden: 'hidden',
 		All: 'all',
-		New: 'new'
+		New: 'new',
+		Favorite: 'favorite'
 	});
-	const STATE_ORDER = [CatalogState.Active, CatalogState.Hidden, CatalogState.New, CatalogState.All];
+	const STATE_ORDER = [CatalogState.Active, CatalogState.Hidden, CatalogState.New, CatalogState.Favorite, CatalogState.All];
 	class CatalogPopupStateDropdown {
 		#tab;
 		#state;
@@ -3965,6 +4371,9 @@ this.BX = this.BX || {};
 			if (state === CatalogState.New) {
 				return main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_STATE_NEW');
 			}
+			if (state === CatalogState.Favorite) {
+				return main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_STATE_FAVORITE');
+			}
 			return main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_STATE_ACTIVE');
 		}
 		#getChipLabel() {
@@ -3976,6 +4385,9 @@ this.BX = this.BX || {};
 			}
 			if (this.#state === CatalogState.New) {
 				return main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_TAB_VIBECODE_NEW');
+			}
+			if (this.#state === CatalogState.Favorite) {
+				return main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_TAB_VIBECODE_FAVORITE');
 			}
 			return main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_TAB_VIBECODE');
 		}
@@ -4040,13 +4452,40 @@ this.BX = this.BX || {};
 				return;
 			}
 			const tab = ctrl.getConfig();
-			const showHiddenBadge = ctrl.getState() === CatalogState.All;
+			const slicesShowingHiddenItems = [CatalogState.All, CatalogState.Favorite];
+			const showHiddenBadge = slicesShowingHiddenItems.includes(ctrl.getState());
 			for (const item of items) {
 				const reRender = () => {
 					ctrl.resortForPin(item.id);
 					if (this.#lastState) {
 						this.renderItems(this.#lastState);
 					}
+				};
+				const reRenderAfterFavorite = committed => {
+					if (!committed) {
+						if (this.#lastState) {
+							this.renderItems(this.#lastState);
+						}
+						return;
+					}
+					if (ctrl.getState() !== CatalogState.Favorite) {
+						return;
+					}
+					if (this.#lastState) {
+						this.renderItems(this.#lastState);
+					}
+					const isCoveredLocally = ctrl.hasItem(item.id) && !ctrl.hasMorePages();
+					if (isCoveredLocally) {
+						return;
+					}
+					void ctrl.refresh().then(refreshed => {
+						if (!refreshed) {
+							console.error('[vibecodeconnector.catalog] favorite list re-read failed; showing locally updated list');
+						}
+						if (this.#lastState) {
+							this.renderItems(this.#lastState);
+						}
+					});
 				};
 				const reRenderAfterRename = () => {
 					if (!ctrl.hasQuery()) {
@@ -4064,8 +4503,15 @@ this.BX = this.BX || {};
 						}
 					});
 				};
+				const favoriteRequests = {
+					get: () => ctrl.getPendingFavorite(item.id),
+					track: (request, desired) => ctrl.trackPendingFavorite(item.id, request, desired),
+					settle: value => ctrl.settlePendingFavorite(item.id, value)
+				};
 				const popupItem = new CatalogPopupItem(item, tab, {
 					onPinToggled: reRender,
+					onFavoriteToggled: reRenderAfterFavorite,
+					favoriteRequests,
 					onHiddenToggled: reRender,
 					onHiddenCommitted: () => this.#onReloadRequested?.(),
 					onRenamed: reRenderAfterRename,
@@ -4138,6 +4584,8 @@ this.BX = this.BX || {};
 			main_core.Dom.addClass(this.#bodyNode, 'vibecode-catalog__body--static');
 			if (catalogState === CatalogState.Hidden) {
 				main_core.Dom.append(this.#renderHiddenEmptyState(), this.#bodyNode);
+			} else if (catalogState === CatalogState.Favorite) {
+				main_core.Dom.append(this.#renderFavoriteEmptyState(), this.#bodyNode);
 			} else {
 				const emptyState = activeTabId === 'company' ? this.#companyEmptyState : this.#myEmptyState;
 				main_core.Dom.append(emptyState.render(), this.#bodyNode);
@@ -4192,6 +4640,15 @@ this.BX = this.BX || {};
 			<div class="vibecode-catalog__content-empty-state" data-testid="vibecode-catalog-hidden-empty">
 				<p class="vibecode-catalog__hidden-empty-state ui-text --sm">
 					${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_HIDDEN_EMPTY')}
+				</p>
+			</div>
+		`;
+		}
+		#renderFavoriteEmptyState() {
+			return main_core.Tag.render`
+			<div class="vibecode-catalog__content-empty-state" data-testid="vibecode-catalog-favorite-empty">
+				<p class="vibecode-catalog__hidden-empty-state ui-text --sm">
+					${main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_FAVORITE_EMPTY')}
 				</p>
 			</div>
 		`;
@@ -4370,9 +4827,12 @@ this.BX = this.BX || {};
 	}
 
 	function renderPopupTitleLink() {
-		const titleLabel = main_core.Loc.getMessage('VIBECODECONNECTOR_CATALOG_TITLE') ?? '';
+		const catalogBrand = getCatalogBrand();
+		const titleLabel = main_core.Text.encode(getCatalogBrandName());
+		const logoClass = catalogBrand === 'alaio' ? ' --alaio' : '';
 		const titleLinkNode = main_core.Tag.render`
 		<a
+			data-testid="vibecode-catalog-title-link"
 			class="vibecode-catalog__title vibecode-catalog__title--link ui-headline --md --accent"
 			href="${VIBECODE_DASHBOARD_URL}"
 			target="_blank"
@@ -4380,7 +4840,7 @@ this.BX = this.BX || {};
 			aria-label="${titleLabel}"
 			title="${titleLabel}"
 		>
-			<span class="vibecode-catalog__title-logo" aria-hidden="true">
+			<span class="vibecode-catalog__title-logo${logoClass}" aria-hidden="true">
 				<span class="vibecode-catalog__title-logo-text">${titleLabel}</span>
 			</span>
 			<span class="vibecode-catalog__title-breadcrumb" aria-hidden="true">
@@ -4405,6 +4865,7 @@ this.BX = this.BX || {};
 		#tabsNav;
 		#search;
 		#list;
+		#fab;
 		constructor(options) {
 			this.#tabsNav = new CatalogPopupTabsNav({
 				tabs: options.tabs,
@@ -4417,6 +4878,9 @@ this.BX = this.BX || {};
 				onInput: options.onSearchInput,
 				onClear: options.onSearchClear,
 				useSearch: options.useSearch
+			});
+			this.#fab = new CatalogPopupFab({
+				onCreateClosed: options.onCreateClosed
 			});
 			this.#list = new CatalogPopupList({
 				onScroll: options.onScroll,
@@ -4441,7 +4905,7 @@ this.BX = this.BX || {};
 				</header>
 				<div class="vibecode-catalog__content">
 					${this.#list.render()}
-					${renderPopupFab()}
+					${this.#fab.render()}
 				</div>
 			</div>
 		`;
@@ -4451,6 +4915,7 @@ this.BX = this.BX || {};
 			this.#tabsNav.destroy();
 			this.#search.destroy();
 			this.#list.destroy();
+			this.#fab.destroy();
 			this.#rootNode = null;
 		}
 		focusSearch() {
@@ -4495,6 +4960,8 @@ this.BX = this.BX || {};
 		#config;
 		#pageSize;
 		#items = [];
+		#pendingFavorites = new Map();
+		#loadSequence = 0;
 		#offset = 0;
 		#hasMore = true;
 		#loaded = false;
@@ -4613,7 +5080,41 @@ this.BX = this.BX || {};
 			if (this.#state === CatalogState.New) {
 				return item.isNew;
 			}
+			if (this.#state === CatalogState.Favorite) {
+				return item.isFavorite || this.#pendingFavorites.get(item.id)?.request != null;
+			}
 			return !item.isHidden;
+		}
+		getPendingFavorite(itemId) {
+			return this.#pendingFavorites.get(itemId)?.request ?? null;
+		}
+		trackPendingFavorite(itemId, request, desired) {
+			this.#pendingFavorites.set(itemId, {
+				request,
+				desired,
+				settledAtLoad: null
+			});
+		}
+		settlePendingFavorite(itemId, value) {
+			this.#pendingFavorites.set(itemId, {
+				request: null,
+				desired: value,
+				settledAtLoad: this.#loadSequence
+			});
+			const item = this.#items.find(row => row.id === itemId);
+			if (item) {
+				item.isFavorite = value;
+			}
+		}
+		#dropSettledFavorites(sequence) {
+			for (const [itemId, pending] of this.#pendingFavorites) {
+				if (pending.settledAtLoad !== null && pending.settledAtLoad < sequence) {
+					this.#pendingFavorites.delete(itemId);
+				}
+			}
+		}
+		hasItem(itemId) {
+			return this.#items.some(row => row.id === itemId);
 		}
 		hasQuery() {
 			return this.#query !== '';
@@ -4643,6 +5144,7 @@ this.BX = this.BX || {};
 			this.#loading = true;
 			this.#failed = false;
 			const generation = this.#generation;
+			const sequence = ++this.#loadSequence;
 			try {
 				const actionOptions = this.#config.paginated === false ? {
 					data: this.#buildData()
@@ -4654,6 +5156,7 @@ this.BX = this.BX || {};
 				}
 				this.#rememberViewSession(response?.data?.viewSession, sentSession);
 				this.#rememberNewAppsCount(response?.data?.newAppsCount);
+				this.#dropSettledFavorites(sequence);
 				const rawItems = response?.data?.items ?? [];
 				const newItems = rawItems.map(raw => this.#mapItem(raw));
 				this.#appendPage(newItems);
@@ -4680,6 +5183,7 @@ this.BX = this.BX || {};
 				return false;
 			}
 			const generation = ++this.#generation;
+			const sequence = ++this.#loadSequence;
 			this.#loading = true;
 			this.#failed = false;
 			try {
@@ -4701,6 +5205,7 @@ this.BX = this.BX || {};
 				this.#rememberViewSession(response?.data?.viewSession, sentSession);
 				this.#rememberNewAppsCount(response?.data?.newAppsCount);
 				const rawItems = response?.data?.items ?? [];
+				this.#dropSettledFavorites(sequence);
 				this.#items = this.#dedupePage(rawItems.map(raw => this.#mapItem(raw)));
 				if (this.#config.paginated === false) {
 					this.#offset = 0;
@@ -4714,7 +5219,8 @@ this.BX = this.BX || {};
 				this.#loaded = true;
 				return true;
 			} catch (error) {
-				if (generation === this.#generation) {
+				const hasNothingToShow = !this.#loaded;
+				if (generation === this.#generation && hasNothingToShow) {
 					this.#failed = true;
 				}
 				console.error('[vibecodeconnector.catalog] failed to refresh tab', this.#config.id, error);
@@ -4865,6 +5371,7 @@ this.BX = this.BX || {};
 				counter: main_core.Type.isNumber(raw?.counter) ? raw.counter : null,
 				isPinned: Boolean(raw?.isPinned),
 				isHidden: Boolean(raw?.isHidden),
+				isFavorite: this.#pendingFavorites.get(id)?.desired ?? Boolean(raw?.isFavorite),
 				isMine: Boolean(raw?.isMine),
 				isPublished: Boolean(raw?.isPublished),
 				isNew: Boolean(raw?.isNew),
@@ -4872,7 +5379,11 @@ this.BX = this.BX || {};
 				ownerId: main_core.Type.isNumber(raw?.ownerId) ? raw.ownerId : Number.parseInt(raw?.ownerId, 10) || 0,
 				ownerName: main_core.Type.isStringFilled(raw?.ownerName) ? raw.ownerName : null,
 				kind: main_core.Type.isString(raw?.kind) ? raw.kind : '',
-				chatId: this.#normalizeChatId(raw?.chatId)
+				chatId: this.#normalizeChatId(raw?.chatId),
+				appChatId: this.#normalizeChatId(raw?.appChatId),
+				appChatAccessible: Boolean(raw?.appChatAccessible),
+				appChatCreatable: Boolean(raw?.appChatCreatable),
+				appChatWritingAllowed: main_core.Type.isBoolean(raw?.appChatWritingAllowed) ? raw.appChatWritingAllowed : null
 			};
 		}
 		#normalizeChatId(value) {
@@ -4988,7 +5499,6 @@ this.BX = this.BX || {};
 			return this.#isShown;
 		}
 		setNewAppsCount(value) {
-			// opening an app spends the counter at once, and the owner of the badge recounts it
 			// right after; the New slice the user is in the middle of must not go with it
 			if (this.#isShown && this.#newAppsCount > 0 && !(main_core.Type.isNumber(value) && value > 0)) {
 				return;
@@ -5100,6 +5610,7 @@ this.BX = this.BX || {};
 					this.#selectState(state);
 				},
 				onReloadRequested: () => this.#reloadActiveState(),
+				onCreateClosed: () => this.#reloadActiveState(),
 				onSearchInput: () => this.#scheduleSearch(),
 				onSearchClear: () => {
 					this.#clearSearchTimer();
@@ -5217,7 +5728,6 @@ this.BX = this.BX || {};
 			// the server is the one source allowed to lower the count: it answers for the very
 			// session being opened
 			this.#applyNewAppsCount(newAppsCount);
-			// the value came from the server, so the owner of the badge learns it too instead of
 			// waiting for its own recount to land
 			this.#onNewAppsCount?.(this.#newAppsCount);
 			const state = ctrl.getState();
@@ -5474,6 +5984,7 @@ this.BX = this.BX || {};
 	}
 
 	exports.Catalog = Catalog;
+	exports.openCatalogAppById = openCatalogAppById;
 
-})(this.BX.Vibecodeconnector = this.BX.Vibecodeconnector || {}, BX, BX.UI.System, BX.SidePanel, BX.UI, BX.UI.Analytics, window, BX.UI, BX.Intranet.User, BX.Event, BX.Main, BX.UI.IconSet, BX.UI.System, BX.UI.System, BX.UI.System.Typography, BX.Messenger.v2.Lib, BX.UI, window, window, BX.UI.Notification, BX.UI.System.Input, BX.UI.Dialogs, BX.UI.DatePicker, BX.UI.EntitySelector, BX.UI, BX.UI.System.Chip);
+})(this.BX.Vibecodeconnector = this.BX.Vibecodeconnector || {}, BX, BX.UI.System, BX.SidePanel, BX.UI, BX.UI.Analytics, BX.Messenger.v2.Lib, BX.Vibecodeconnector.OpenApp, BX.Event, BX.Main, BX.Vibecodeconnector, BX.UI.IconSet, BX.UI.System, BX.UI.Notification, BX.UI.System, BX.UI.System.Typography, BX.UI, window, window, BX.UI.System.Input, BX.UI.Dialogs, BX.UI.DatePicker, BX.UI.EntitySelector, BX.UI, BX.UI.System.Chip);
 //# sourceMappingURL=catalog.bundle.js.map

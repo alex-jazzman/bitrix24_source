@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports, main_core, main_core_events, main_date, sign_v2_signSettings, sign_v2_b2e_userParty, sign_v2_b2e_reminderSelector, sign_type, main_loader, ui_entitySelector, sign_v2_api, sign_v2_documentSummary, sign_v2_langSelector, sign_v2_datetimeLimitSelector, sign_v2_helper, ui_progressbar, sign_v2_b2e_hcmLinkPartyChecker) {
+(function (exports, main_core, main_core_events, main_date, sign_v2_signSettings, sign_v2_b2e_userParty, sign_v2_b2e_reminderSelector, sign_type, main_loader, ui_entitySelector, sign_v2_api, sign_v2_documentSummary, sign_v2_langSelector, sign_v2_datetimeLimitSelector, sign_v2_helper, ui_progressbar, ui_system_input, sign_featureStorage, sign_v2_b2e_hcmLinkPartyChecker) {
 	'use strict';
 
 	const EntityTypes = Object.freeze({
@@ -203,6 +203,18 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		}
 	};
 	const idleCommunication = 'idle';
+
+	// UX hint only, the actual limit is enforced by the server
+	const documentMessageMaxLength = 2000;
+	const documentMessageRowsQuantity = 4;
+
+	// The step is completed by a single button, so every source that can block it is kept apart:
+	// the step stays blocked while at least one source is invalid.
+	const CompletionBlocker = Object.freeze({
+		dateSignUntil: 'dateSignUntil',
+		hcmLink: 'hcmLink',
+		documentMessage: 'documentMessage'
+	});
 	class DocumentSend extends main_core_events.EventEmitter {
 		events = Object.freeze({
 			onTemplateComplete: 'onTemplateComplete'
@@ -243,9 +255,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		#itemsToHide = [];
 		#reminderSelectorByRole = {};
 		#documentMode;
+		#initiatedByType;
 		#isExistingTemplate = false;
 		#isOpenedFromRobot = false;
 		#templateFolderId = 0;
+		#documentMessageInput = null;
+		#documentMessageField = null;
+		#documentMessageCounter = null;
+		#documentMessageCounterId = `sign-document-send-message-counter-${main_core.Text.getRandom()}`;
+		#documentMessageErrorId = `sign-document-send-message-error-${main_core.Text.getRandom()}`;
+		#isDocumentMessageValid = true;
+		// The text the document carries on the server: it is read from the document when the step gets
+		// its data and it is what the field is compared against before a write.
+		#storedDocumentMessage = '';
+		#isDocumentMessageHydrated = false;
+		#isReminderTypesHydrated = false;
+		#completionBlockers = new Set();
 		#analytics;
 		#hcmLinkPartyChecker = null;
 		#provider = null;
@@ -288,6 +313,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				region,
 				languages,
 				documentMode,
+				initiatedByType,
 				isOpenedFromRobot,
 				analytics,
 				templateFolderId
@@ -297,6 +323,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			this.#documentData = {};
 			this.#analytics = analytics;
 			this.#documentMode = documentMode;
+			this.#initiatedByType = initiatedByType;
 			this.#templateFolderId = templateFolderId;
 			this.#ui.employeesTitle = main_core.Tag.render`
 			<p class="sign-b2e-send__party_signing-employees">
@@ -322,9 +349,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			if (!this.#isTemplateMode()) {
 				this.#dateTimeLimitSelector = new sign_v2_datetimeLimitSelector.DatetimeLimitSelector();
 				this.#dateTimeLimitSelector.subscribe('beforeDateModify', () => {
-					this.emit('disableComplete');
+					this.#setCompletionBlocker(CompletionBlocker.dateSignUntil, true);
 				}).subscribe('afterDateModify', () => {
-					this.emit('enableComplete');
+					this.#setCompletionBlocker(CompletionBlocker.dateSignUntil, false);
 				});
 			}
 		}
@@ -373,8 +400,64 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			}
 			this.#items.employees.setDocumentUid(lastUid);
 			this.#items.reviewers.setDocumentUid(lastUid);
+			this.#hydrateDocumentMessage(documentData?.values().next().value?.inviteMessage);
 			this.#hcmLinkPartyChecker?.setDocumentGroupUids(documentGroupUids);
 			void this.#hcmLinkPartyChecker?.check();
+		}
+
+		// A document opened by the wizard keeps the language it was saved with, so the selector must
+		// show that language instead of the portal region default. A template being created has nothing
+		// saved yet, hence the restore is driven by the caller that opens a saved document and not by
+		// the data itself.
+		restoreSavedLanguage() {
+			if (!this.#isTemplateMode()) {
+				return;
+			}
+
+			// documents of a group share one language, so the first one tells what is stored
+			this.#langSelector.setLangId(this.#documentData.values().next().value?.langId);
+		}
+
+		// The reminder frequency is stored on the members, and a template copy carries the frequency of
+		// the source template: left unread, the selectors would show their defaults and completing the
+		// step would write those defaults over the copied values. Only the first arrival that actually
+		// carries members hydrates the selectors: a later one must not overwrite the user choice, and an
+		// empty one must not count as done.
+		hydrateReminderTypesFromMembers(members) {
+			if (this.#isReminderTypesHydrated || !this.#isTemplateMode() || !main_core.Type.isArrayFilled(members)) {
+				return;
+			}
+			Object.keys(this.#reminderSelectorByRole).forEach(role => {
+				const reminderType = members.find(member => member.role === role)?.reminderType;
+				if (main_core.Type.isStringFilled(reminderType)) {
+					this.#reminderSelectorByRole[role].setType(reminderType);
+				}
+			});
+			this.#isReminderTypesHydrated = true;
+		}
+
+		// The wizard can be opened again on a document whose message is already stored: without reading
+		// the text back the field would look empty while the invitations still carry it, and emptying
+		// the field would not clear anything. Documents of a group share one message, so the first one
+		// tells what is stored. Only the first data arrival fills the field: the later ones come from
+		// the same load and must not overwrite what the user has typed by then.
+		#hydrateDocumentMessage(storedMessage) {
+			if (this.#isDocumentMessageHydrated) {
+				return;
+			}
+			this.#isDocumentMessageHydrated = true;
+			this.#storedDocumentMessage = storedMessage ?? '';
+			if (!main_core.Type.isNull(this.#documentMessageInput)) {
+				this.#fillFieldWithStoredDocumentMessage();
+				this.#updateDocumentMessageCounter();
+			}
+		}
+
+		// The stored text is written by a user, so it reaches the field through setValue and only after
+		// the input is rendered: the value option of ui.system.input goes into the markup of the
+		// textarea as it is.
+		#fillFieldWithStoredDocumentMessage() {
+			this.#documentMessageInput.setValue(this.#storedDocumentMessage);
 		}
 		#getProgressAnimateLayout() {
 			const createDocumentOverlapLayout = docsCount => {
@@ -504,6 +587,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			if (!main_core.Type.isNull(usersLayout)) {
 				main_core.Dom.append(usersLayout, layout);
 			}
+			const documentMessageLayout = this.#getDocumentMessageLayout();
+			if (!main_core.Type.isNull(documentMessageLayout)) {
+				main_core.Dom.append(documentMessageLayout, layout);
+			}
 			this.#progressContainer = main_core.Tag.render`<div class="send-b2e-progress-container"></div>`;
 			this.#progress.renderTo(this.#progressContainer);
 			this.#progressOverlay = this.#isTemplateMode() ? this.#getTemplateProgressOverlay() : this.#getProgressOverlay();
@@ -529,6 +616,87 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				</div>
 			</div>
 		`;
+		}
+		#getDocumentMessageLayout() {
+			if (!this.#isDocumentMessageAvailable()) {
+				return null;
+			}
+			const isInputCreatedHere = main_core.Type.isNull(this.#documentMessageInput);
+			this.#documentMessageInput ??= new ui_system_input.Input({
+				rowsQuantity: documentMessageRowsQuantity,
+				resize: 'vertical',
+				placeholder: main_core.Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_PLACEHOLDER'),
+				ariaLabel: main_core.Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_TITLE'),
+				onInput: () => this.#onDocumentMessageInput()
+			});
+			this.#documentMessageCounter ??= main_core.Tag.render`
+			<div
+				id="${this.#documentMessageCounterId}"
+				class="sign-b2e-send__message_counter"
+				data-testid="sign-document-send-message-counter"
+			></div>
+		`;
+			const messageInputLayout = this.#documentMessageInput.render();
+			if (isInputCreatedHere) {
+				this.#fillFieldWithStoredDocumentMessage();
+			}
+			this.#updateDocumentMessageCounter();
+			// the counter and the length error describe the field; ui.system.input has no option for that
+			// and gives its error node no id, so the ids are set here, on the empty node: a live region
+			// announces only the changes that happen after it is already in the DOM
+			main_core.Dom.attr(messageInputLayout.querySelector('.ui-system-input-label.--error'), {
+				id: this.#documentMessageErrorId,
+				role: 'alert'
+			});
+			this.#documentMessageField ??= messageInputLayout.querySelector('textarea');
+			main_core.Dom.attr(this.#documentMessageField, {
+				'aria-describedby': `${this.#documentMessageCounterId} ${this.#documentMessageErrorId}`
+			});
+			const messageLayout = main_core.Tag.render`
+			<div class="sign-b2e-settings__item" data-testid="sign-document-send-message">
+				<p class="sign-b2e-settings__item_title">
+					${main_core.Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_TITLE')}
+				</p>
+				<div class="sign-b2e-send__message">
+					${messageInputLayout}
+					${this.#documentMessageCounter}
+				</div>
+			</div>
+		`;
+			this.#itemsToHide.push(messageLayout);
+			return messageLayout;
+		}
+		#isDocumentMessageAvailable() {
+			// only the invitation of a company-initiated document carries the sender message
+			return sign_featureStorage.FeatureStorage.isDocumentMessageEnabled() && !this.#isTemplateMode() && this.#initiatedByType === sign_type.DocumentInitiated.company;
+		}
+		#onDocumentMessageInput() {
+			const isValid = this.#getDocumentMessageLength() <= documentMessageMaxLength;
+			const isValidityChanged = isValid !== this.#isDocumentMessageValid;
+			this.#isDocumentMessageValid = isValid;
+			this.#updateDocumentMessageCounter();
+			if (!isValidityChanged) {
+				return;
+			}
+			this.#documentMessageInput.setError(isValid ? '' : main_core.Loc.getMessage('SIGN_DOCUMENT_SEND_MESSAGE_LENGTH_ERROR', {
+				'#MAX_LENGTH#': documentMessageMaxLength
+			}));
+			main_core.Dom.attr(this.#documentMessageField, 'aria-invalid', isValid ? null : 'true');
+			this.#setCompletionBlocker(CompletionBlocker.documentMessage, !isValid);
+		}
+		#updateDocumentMessageCounter() {
+			// the counter shows the length the limit is checked against, so it never reports an error
+			// on a message the server accepts
+			const length = this.#getDocumentMessageLength();
+			this.#documentMessageCounter.textContent = `${length}/${documentMessageMaxLength}`;
+			main_core.Dom.toggleClass(this.#documentMessageCounter, '--error', !this.#isDocumentMessageValid);
+		}
+		#getDocumentMessage() {
+			return this.#documentMessageInput?.getValue().trim() ?? '';
+		}
+		#getDocumentMessageLength() {
+			// counted in characters of the trimmed value, exactly what is sent to the server
+			return [...this.#getDocumentMessage()].length;
 		}
 		#renderLangAndDateContainer() {
 			const showSignUntil = !main_core.Type.isNull(this.#dateTimeLimitSelector);
@@ -690,6 +858,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				if (this.#dateTimeLimitSelector) {
 					await this.#dateTimeLimitSelector.saveSelectedDateForUids();
 				}
+
+				// the message must be stored before configure, otherwise invitations are sent without it
+				await this.#saveDocumentMessage(api);
 				this.#showProgressOverlay();
 				if (this.#isTemplateMode()) {
 					const documentTemplateId = this.documentData.values().next().value.templateUid;
@@ -721,6 +892,27 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				this.emit('enableBack');
 				return false;
 			}
+		}
+		async #saveDocumentMessage(api) {
+			if (!this.#isDocumentMessageAvailable()) {
+				return;
+			}
+			const message = this.#getDocumentMessage();
+			// only a difference from the text the document carries is written: an emptied field clears
+			// the stored text, and a field left as it was loaded costs no request
+			if (message === this.#storedDocumentMessage) {
+				return;
+			}
+			const messageToStore = message === '' ? null : message;
+			if (this.#isGroupDocuments()) {
+				await api.modifyInviteMessageForDocuments(this.#getDocumentIds(), messageToStore);
+			} else {
+				await api.modifyInviteMessage(this.#getFirstDocumentUidFromGroup(), messageToStore);
+			}
+			this.#storedDocumentMessage = message;
+		}
+		#getDocumentIds() {
+			return [...this.documentData.values()].map(data => data.id);
 		}
 		deleteDocument(uid) {
 			this.#documentSummary.deleteItem(uid);
@@ -755,6 +947,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		}
 		isDateTimeLimitSelectorValid() {
 			return this.#dateTimeLimitSelector ? this.#dateTimeLimitSelector.isValid() : true;
+		}
+		refreshDateSignUntilBlocker() {
+			this.#setCompletionBlocker(CompletionBlocker.dateSignUntil, !this.isDateTimeLimitSelectorValid());
 		}
 		#sleep(ms) {
 			return new Promise(resolve => {
@@ -828,12 +1023,20 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			return this.documentData.values().next().value.groupId;
 		}
 		#onHcmLinkCheckerUpdateValidation(event) {
-			const enableComplete = event?.data ?? false;
-			this.emit(enableComplete ? 'enableComplete' : 'disableComplete');
+			const isValid = event?.data ?? false;
+			this.#setCompletionBlocker(CompletionBlocker.hcmLink, !isValid);
+		}
+		#setCompletionBlocker(reason, isBlocked) {
+			if (isBlocked) {
+				this.#completionBlockers.add(reason);
+			} else {
+				this.#completionBlockers.delete(reason);
+			}
+			this.emit(this.#completionBlockers.size === 0 ? 'enableComplete' : 'disableComplete');
 		}
 	}
 
 	exports.DocumentSend = DocumentSend;
 
-})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Event, BX.Main, BX.Sign.V2, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign, BX, BX.UI.EntitySelector, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.UI, BX.Sign.V2.B2e);
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Event, BX.Main, BX.Sign.V2, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign, BX, BX.UI.EntitySelector, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.Sign.V2, BX.UI, BX.UI.System.Input, BX.Sign, BX.Sign.V2.B2e);
 //# sourceMappingURL=document-send.bundle.js.map

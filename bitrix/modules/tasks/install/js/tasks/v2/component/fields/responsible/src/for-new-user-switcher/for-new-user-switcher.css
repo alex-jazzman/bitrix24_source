@@ -20,6 +20,12 @@
 	align-items: center;
 }
 
+.tasks-field-responsible-new-user-switcher:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-field-responsible-new-user-text {
 	color: var(--text-color);
 }

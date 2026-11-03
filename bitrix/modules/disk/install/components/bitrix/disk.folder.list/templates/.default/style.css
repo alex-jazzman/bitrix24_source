@@ -1127,6 +1127,13 @@ div.disk-folder-list-search-progress {
 	max-width: 500px;
 }
 
+/* Every button of the popup gets the same width, whatever their number is. */
+.ui-message-box.--air.disk-air-message-box-equal-buttons .popup-window-buttons {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+}
+
 .disk-air-message-box-file-name-wrapper {
 	display: inline-flex;
 	max-width: 100%;

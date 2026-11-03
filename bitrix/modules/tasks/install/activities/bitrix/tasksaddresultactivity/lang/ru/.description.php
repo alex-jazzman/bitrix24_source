@@ -1,0 +1,7 @@
+<?php
+
+$MESS['TASKS_ADD_RESULT_ACTIVITY_NAME'] = 'Добавить результат';
+$MESS['TASKS_ADD_RESULT_ACTIVITY_DESCRIPTION'] = 'Добавляет результат в задачу';
+$MESS['TASKS_ADD_RESULT_ACTIVITY_CATEGORY'] = 'Задачи';
+$MESS['TASKS_ADD_RESULT_ACTIVITY_ERROR_MESSAGE'] = 'Текст ошибки';
+$MESS['TASKS_ACTIVITY_OBJECT_TASK'] = 'Задача';

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports, ui_vue3, main_core, main_date, sign_type, sign_v2_b2e_signSettingsTemplates, sign_v2_b2e_vueUtil, ui_vue3_pinia, crm_router, ui_vue3_components_switcher, ui_switcher, ui_vue3_components_hint) {
+(function (exports, ui_vue3, main_core, main_date, sign_featureStorage, sign_type, sign_v2_b2e_signSettingsTemplates, sign_v2_b2e_vueUtil, ui_system_input_vue, ui_vue3_pinia, crm_router, ui_vue3_components_switcher, ui_switcher, ui_vue3_components_hint) {
 	'use strict';
 
 	// @vue/component
@@ -206,16 +206,49 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		HCMLINK: 'hcmlink'};
 	const defaultSigningDateMonth = 3;
 
+	// UX hint only, the actual limit is enforced by the server
+	const inviteMessageMaxLength = 2000;
+	const inviteMessageRowsQuantity = 4;
+
+	// The counter and the length error describe the field, but BInput has no props for that, so the
+	// attributes are wired here, on the textarea it renders. The error itself is announced by the
+	// block's own live region: the error node of BInput is created together with its text, and a live
+	// region announces only the changes that happen after it is already in the DOM.
+	function describeInviteMessageField(element, binding) {
+		main_core.Dom.attr(element.querySelector('textarea'), {
+			'aria-describedby': binding.value.describedBy,
+			'aria-invalid': binding.value.isInvalid ? 'true' : null
+		});
+	}
+
 	// @vue/component
 	const DocumentFillingApp = {
 		name: 'DocumentFillingApp',
 		components: {
+			BInput: ui_system_input_vue.BInput,
 			DateSelector: sign_v2_b2e_vueUtil.DateSelector,
 			DocumentPreview,
 			Switcher,
 			DocumentPreviewList
 		},
+		directives: {
+			describedby: {
+				mounted: describeInviteMessageField,
+				updated: describeInviteMessageField
+			}
+		},
 		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		setup() {
+			const counterId = `sign-b2e-document-filling-message-counter-${main_core.Text.getRandom()}`;
+			const errorId = `sign-b2e-document-filling-message-error-${main_core.Text.getRandom()}`;
+			return {
+				inviteMessageMaxLength,
+				inviteMessageRowsQuantity,
+				inviteMessageCounterId: counterId,
+				inviteMessageErrorId: errorId,
+				inviteMessageDescribedBy: `${counterId} ${errorId}`
+			};
+		},
 		data() {
 			return {
 				isApplySettingsForAll: false,
@@ -252,6 +285,33 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			},
 			switcherAllHint() {
 				return this.ruRegionFieldsVisible ? this.loc('SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_HINT') : '';
+			},
+			// The type of initiator is not checked here as it is in the single-document wizard: a batch
+			// registers documents with onlyInitiatedByType: COMPANY, so it never carries an employee-
+			// initiated document (Controllers\V1\B2e\Document\Template::registerDocumentsAction).
+			isInviteMessageVisible() {
+				return sign_featureStorage.FeatureStorage.isDocumentMessageEnabled();
+			},
+			inviteMessage: {
+				get() {
+					return ui_vue3_pinia.mapState(sign_v2_b2e_signSettingsTemplates.useDocumentTemplateFillingStore, ['inviteMessage']).inviteMessage();
+				},
+				set(value) {
+					sign_v2_b2e_signSettingsTemplates.useDocumentTemplateFillingStore().setInviteMessage(value);
+				}
+			},
+			inviteMessageLength() {
+				// the counter shows the length the limit is checked against, so it never reports an error
+				// on a message the server accepts
+				return [...this.inviteMessage.trim()].length;
+			},
+			isInviteMessageTooLong() {
+				return this.inviteMessageLength > inviteMessageMaxLength;
+			},
+			inviteMessageError() {
+				return this.isInviteMessageTooLong ? this.loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_LENGTH_ERROR', {
+					'#MAX_LENGTH#': inviteMessageMaxLength
+				}) : '';
 			}
 		},
 		watch: {
@@ -413,10 +473,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				sign_v2_b2e_signSettingsTemplates.useDocumentTemplateFillingStore().setSettings(newSettings);
 			},
 			validate() {
+				const isInviteMessageValid = !this.isInviteMessageTooLong;
 				if (this.isApplySettingsForAll) {
 					const value = this.commonSettings.registrationNumber;
 					this.isValid = Boolean(value) && value.trim() !== '';
-					return this.isValid;
+					return this.isValid && isInviteMessageValid;
 				}
 				this.isValid = true;
 				this.isValidMap = {};
@@ -428,7 +489,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 						this.isValid = false;
 					}
 				}
-				return this.isValid;
+				return this.isValid && isInviteMessageValid;
 			},
 			convertFromUTCtoUserDate(dateInUTC) {
 				const year = dateInUTC.getUTCFullYear();
@@ -629,6 +690,41 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				</div>
 			</div>
 		</template>
+
+		<div
+			v-if="isInviteMessageVisible"
+			class="sign-b2e-document-filling__item sign-b2e-document-filling__message"
+			data-testid="sign-document-filling-message"
+		>
+			<span class="sign-b2e-document-filling__item-text">
+				{{ loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_TITLE') }}
+			</span>
+			<BInput
+				v-model="inviteMessage"
+				v-describedby="{ describedBy: inviteMessageDescribedBy, isInvalid: isInviteMessageTooLong }"
+				:aria-label="loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_TITLE')"
+				:placeholder="loc('SIGN_B2E_DOCUMENT_FILLING_MESSAGE_PLACEHOLDER')"
+				:error="inviteMessageError"
+				:rows-quantity="inviteMessageRowsQuantity"
+				data-testid="sign-document-filling-message-field"
+				resize="vertical"
+				stretched
+			/>
+			<div
+				:id="inviteMessageCounterId"
+				class="sign-b2e-document-filling__message-counter"
+				:class="{ '--error': isInviteMessageTooLong }"
+				data-testid="sign-document-filling-message-counter"
+			>
+				{{ inviteMessageLength }}/{{ inviteMessageMaxLength }}
+			</div>
+			<div
+				:id="inviteMessageErrorId"
+				class="sign-b2e-document-filling__message-error"
+				role="alert"
+				data-testid="sign-document-filling-message-error"
+			>{{ inviteMessageError }}</div>
+		</div>
 	`
 	};
 
@@ -666,4 +762,4 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.DocumentTemplateFilling = DocumentTemplateFilling;
 
-})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX.Vue3, BX, BX.Main, BX.Sign, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Vue3.Pinia, BX.Crm, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Components);
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX.Vue3, BX, BX.Main, BX.Sign, BX.Sign, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.UI.System.Input.Vue, BX.Vue3.Pinia, BX.Crm, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Components);

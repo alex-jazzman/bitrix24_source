@@ -4,11 +4,24 @@
 	--ui-text-editor-table-dialog-box-margin: 2px;
 }
 
+/*
+	Rows are explicit nodes (role="row") rather than a flex-wrap side effect: the grid markup needs
+	a real row structure. The width stays as it was so that nothing moves visually.
+*/
 .ui-text-editor-table-dialog-grid {
 	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
+	flex-direction: column;
 	width: calc(var(--ui-text-editor-table-dialog-box-width) * 10 + var(--ui-text-editor-table-dialog-box-margin) * 20);
+}
+
+.ui-text-editor-table-dialog-row {
+	display: flex;
+	flex-direction: row;
+}
+
+/* the cell only carries the grid role, the box inside keeps its own size and margins */
+.ui-text-editor-table-dialog-cell {
+	display: flex;
 }
 
 .ui-text-editor-table-dialog-box {
@@ -18,6 +31,7 @@
 	min-height: var(--ui-text-editor-table-dialog-box-width);
 }
 
+/* the cell under the caret reads as focused, not as merely inside the picked range: see focus-ring.css */
 .ui-text-editor-table-dialog-box.--selected {
 	background-color: #AFDCEF;
 }

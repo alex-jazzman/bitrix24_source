@@ -1,4 +1,4 @@
-import { ajax as Ajax, Extension } from 'main.core';
+import { ajax as Ajax, Extension, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { SidePanel } from 'main.sidepanel';
 import { ConnectPopup } from './connect-popup';
@@ -17,6 +17,14 @@ export class EnablePushOtpProvider
 {
 	#options: Object;
 	#defaultTtl = 600;
+	#isSkippingDeviceConnect: boolean = false;
+	#skipDeviceConnectFlowId: ?string = null;
+	#skipDeviceConnectAvailableChannels: Array<string> = [];
+	#skipDeviceConnectStartPromise: ?Promise = null;
+	#skipDeviceConnectConfirmedChannel: ?string = null;
+	#skipDeviceConnectCompletionPromise: ?Promise = null;
+	#isSkipDeviceConnectCompleted: boolean = false;
+	#isConnectionCompleted: boolean = false;
 
 	constructor(options)
 	{
@@ -62,8 +70,16 @@ export class EnablePushOtpProvider
 			pullConfig: this.#options.pullConfig,
 			linkProvider: this.#options?.linkProvider ?? (() => deeplinkRequest(this.#options.intent, this.#defaultTtl)),
 			repeatingRequest: this.#options?.repeatingRequest ?? new RepeatingRequest(this.#defaultTtl * 1000),
+			pullClientProvider: this.#options?.pullClientProvider,
 			callback: this.#options?.appConnectingProvider ?? this.appConnectingHandler,
-			onAppConnected: this.#options?.events?.onAppConnected,
+			finishOnAppConnected: this.#options.mandatoryLoginMode === true,
+			onAppConnected: (view) => {
+				this.#isConnectionCompleted = true;
+				this.#options?.events?.onAppConnected?.(view);
+			},
+			onSkipDeviceConnect: this.#options.canSkipDeviceConnect === true
+				? this.startSkipDeviceConnect.bind(this)
+				: null,
 			id: 'qr',
 		});
 	}
@@ -81,6 +97,10 @@ export class EnablePushOtpProvider
 			id: 'email',
 			signedUserId: this.#options.signedUserId,
 			email: this.#options.email,
+			flowIdProvider: () => this.#skipDeviceConnectFlowId,
+			isSkippingDeviceConnectProvider: () => this.#isSkippingDeviceConnect,
+			canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('phone'),
+			canFinishProvider: () => this.#options.canSendSms !== true,
 		});
 	}
 
@@ -90,6 +110,9 @@ export class EnablePushOtpProvider
 			id: 'emailCode',
 			signedUserId: this.#options.signedUserId,
 			email: this.#options.email,
+			flowIdProvider: () => this.#skipDeviceConnectFlowId,
+			onContactConfirmed: (flowId) => this.#onSkipContactConfirmed('email', flowId),
+			canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('phone'),
 		});
 	}
 
@@ -99,6 +122,12 @@ export class EnablePushOtpProvider
 			signedUserId: this.#options.signedUserId,
 			phoneNumber: this.#options.phoneNumber,
 			isPhoneNumberConfirmed: this.#options.isPhoneNumberConfirmed,
+			flowIdProvider: () => this.#skipDeviceConnectFlowId,
+			onContactConfirmed: (flowId) => this.#onSkipContactConfirmed('phone', flowId),
+			isSkippingDeviceConnectProvider: () => this.#isSkippingDeviceConnect,
+			canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('email'),
+			canFinishProvider: () => this.#canFinishSkipDeviceConnect(),
+			onFinish: () => this.completeSkipDeviceConnect(this.#skipDeviceConnectConfirmedChannel),
 			id: 'number',
 		});
 	}
@@ -109,6 +138,12 @@ export class EnablePushOtpProvider
 			id: 'code',
 			signedUserId: this.#options.signedUserId,
 			phoneNumber: this.#options.phoneNumber,
+			flowIdProvider: () => this.#skipDeviceConnectFlowId,
+			onContactConfirmed: (flowId) => this.#onSkipContactConfirmed('phone', flowId),
+			isSkippingDeviceConnectProvider: () => this.#isSkippingDeviceConnect,
+			canSwitchChannelProvider: () => this.#canSwitchSkipDeviceConnectChannel('email'),
+			canFinishProvider: () => this.#canFinishSkipDeviceConnect(),
+			onFinish: () => this.completeSkipDeviceConnect(this.#skipDeviceConnectConfirmedChannel),
 		});
 	}
 
@@ -199,27 +234,32 @@ export class EnablePushOtpProvider
 
 	onlyPushOtp(): ConnectPopup
 	{
-		const viewList = [
-			this.#createQrView(),
-			this.#createConnectedView(),
-		];
+		if (this.#options.canSkipDeviceConnect === true)
+		{
+			return this.full();
+		}
+
+		const viewList = this.#options.mandatoryLoginMode === true
+			? [this.#createQrView(), this.#createSuccessView()]
+			: [this.#createQrView(), this.#createConnectedView()];
 
 		return this.#createConnectPopup(viewList);
 	}
 
 	full(): ConnectPopup
 	{
+		this.#isConnectionCompleted = false;
 		const viewList = [
 			this.#createQrView(),
 			this.#createConnectedView(),
 		];
 
-		if (Extension.getSettings('intranet.push-otp.connect-popup')?.get('canSendEmail'))
+		if (this.#options.canSendEmail === true)
 		{
 			viewList.push(this.#createSendEmailView(), this.#createEmailEnterCodeView());
 		}
 
-		if (Extension.getSettings('intranet.push-otp.connect-popup')?.get('canSendSms'))
+		if (this.#options.canSendSms === true)
 		{
 			viewList.push(this.#createSendNumberView(), this.#createEnterCodeView());
 		}
@@ -235,10 +275,10 @@ export class EnablePushOtpProvider
 
 			const popup = this.#createConnectPopup(viewList, null, { skipDefaultOnClose: true });
 
-			popup.subscribe('onClose', (event) => {
-				const context = event.getData()?.context;
-				const qrView = context?.getViewByCode('qr');
-				if (qrView?.isAppSuccessConnected() === true)
+			popup.subscribe('onClose', () => {
+				const isConnectionCompleted = this.isConnectionCompleted();
+				this.cancelSkipDeviceConnect();
+				if (isConnectionCompleted)
 				{
 					this.openOtpSettingsWithTooltip();
 				}
@@ -286,6 +326,193 @@ export class EnablePushOtpProvider
 		});
 	}
 
+	startSkipDeviceConnect(): Promise
+	{
+		const startPromise = Promise.resolve(Ajax.runAction('intranet.v2.Otp.startSkipDeviceConnect', {
+			method: 'POST',
+			data: this.#options.signedUserId ? { signedUserId: this.#options.signedUserId } : {},
+		})).then(async (response) => {
+			const flowId = response?.data?.flowId;
+			if (!Type.isStringFilled(flowId))
+			{
+				throw new Error('Skip device connect flow was not started');
+			}
+
+			const availableChannels = Array.isArray(response?.data?.availableChannels)
+				? response.data.availableChannels
+				: [response?.data?.channel]
+			;
+			const supportedChannels = availableChannels.filter(
+				(channel) => this.#isSkipDeviceConnectChannelSupported(channel),
+			);
+			const responseChannel = response?.data?.channel;
+			const channel = supportedChannels.includes(responseChannel)
+				? responseChannel
+				: supportedChannels[0]
+			;
+			if (!channel)
+			{
+				await this.#cancelSkipDeviceConnectFlow(flowId);
+
+				throw new Error('No supported skip device connect channel is available');
+			}
+
+			this.#isSkippingDeviceConnect = true;
+			this.#skipDeviceConnectFlowId = flowId;
+			this.#skipDeviceConnectAvailableChannels = supportedChannels;
+			this.#skipDeviceConnectConfirmedChannel = null;
+			this.#skipDeviceConnectCompletionPromise = null;
+			this.#isSkipDeviceConnectCompleted = false;
+
+			return {
+				...response,
+				data: {
+					...response.data,
+					channel,
+					availableChannels: supportedChannels,
+				},
+			};
+		});
+		this.#skipDeviceConnectStartPromise = startPromise;
+		const clearStartPromise = () => {
+			if (this.#skipDeviceConnectStartPromise === startPromise)
+			{
+				this.#skipDeviceConnectStartPromise = null;
+			}
+		};
+		startPromise.then(clearStartPromise, clearStartPromise);
+
+		return startPromise;
+	}
+
+	completeSkipDeviceConnect(confirmedChannel: ?string = null): Promise
+	{
+		if (!this.#isSkippingDeviceConnect || !this.#skipDeviceConnectFlowId)
+		{
+			return Promise.resolve();
+		}
+
+		if (this.#skipDeviceConnectCompletionPromise)
+		{
+			return this.#skipDeviceConnectCompletionPromise;
+		}
+
+		const flowId = this.#skipDeviceConnectFlowId;
+		const completionPromise = Promise.resolve(Ajax.runAction('intranet.v2.Otp.completeSkipDeviceConnect', {
+			method: 'POST',
+			data: {
+				flowId,
+				...(this.#options.signedUserId ? { signedUserId: this.#options.signedUserId } : {}),
+			},
+		})).then((response) => {
+			if (!this.#isSkippingDeviceConnect || this.#skipDeviceConnectFlowId !== flowId)
+			{
+				return { ...response, status: 'canceled' };
+			}
+
+			this.#isSkipDeviceConnectCompleted = true;
+			this.#isConnectionCompleted = true;
+
+			return {
+				...response,
+				skipDeviceConnectCompleted: true,
+				nextViewCode: 'success',
+			};
+		}).catch((response) => {
+			if (!this.#isSkippingDeviceConnect || this.#skipDeviceConnectFlowId !== flowId)
+			{
+				return { status: 'canceled' };
+			}
+
+			throw response;
+		}).finally(() => {
+			if (this.#skipDeviceConnectCompletionPromise === completionPromise)
+			{
+				this.#skipDeviceConnectCompletionPromise = null;
+			}
+		});
+		this.#skipDeviceConnectCompletionPromise = completionPromise;
+
+		return completionPromise;
+	}
+
+	#onSkipContactConfirmed(confirmedChannel: string, flowId: ?string): Promise
+	{
+		if (
+			!this.#isSkippingDeviceConnect
+			|| !flowId
+			|| this.#skipDeviceConnectFlowId !== flowId
+		)
+		{
+			return Promise.resolve();
+		}
+
+		this.#skipDeviceConnectConfirmedChannel = confirmedChannel;
+		if (
+			confirmedChannel === 'email'
+			&& this.#skipDeviceConnectAvailableChannels.includes('phone')
+		)
+		{
+			return Promise.resolve({ status: 'success' });
+		}
+
+		return this.completeSkipDeviceConnect(confirmedChannel);
+	}
+
+	#canFinishSkipDeviceConnect(): boolean
+	{
+		return this.#isSkippingDeviceConnect
+			&& !this.#isSkipDeviceConnectCompleted
+			&& this.#skipDeviceConnectConfirmedChannel !== null;
+	}
+
+	isConnectionCompleted(): boolean
+	{
+		return this.#isConnectionCompleted;
+	}
+
+	cancelSkipDeviceConnect(): void
+	{
+		if (this.#skipDeviceConnectStartPromise)
+		{
+			this.#skipDeviceConnectStartPromise.then(
+				() => this.cancelSkipDeviceConnect(),
+				() => {},
+			);
+
+			return;
+		}
+
+		if (!this.#isSkippingDeviceConnect || !this.#skipDeviceConnectFlowId)
+		{
+			return;
+		}
+
+		const flowId = this.#skipDeviceConnectFlowId;
+		const isCompleted = this.#isSkipDeviceConnectCompleted;
+		this.#isSkippingDeviceConnect = false;
+		this.#isSkipDeviceConnectCompleted = false;
+		this.#skipDeviceConnectFlowId = null;
+		this.#skipDeviceConnectAvailableChannels = [];
+		this.#skipDeviceConnectConfirmedChannel = null;
+		this.#skipDeviceConnectCompletionPromise = null;
+		if (!isCompleted)
+		{
+			this.#cancelSkipDeviceConnectFlow(flowId);
+		}
+	}
+
+	#cancelSkipDeviceConnectFlow(flowId: string): Promise
+	{
+		return Ajax.runAction('intranet.v2.Otp.cancelSkipDeviceConnect', {
+			method: 'POST',
+			data: {
+				flowId,
+				...(this.#options.signedUserId ? { signedUserId: this.#options.signedUserId } : {}),
+			},
+		}).catch(() => {});
+	}
+
 	resumeOtpRequest(): Promise
 	{
 		return BX.ajax.runAction(
@@ -310,6 +537,7 @@ export class EnablePushOtpProvider
 		if (options.skipDefaultOnClose !== true)
 		{
 			popup.subscribe('onClose', () => {
+				this.cancelSkipDeviceConnect();
 				this.#options?.events?.onPopupClose?.();
 			});
 		}
@@ -320,6 +548,21 @@ export class EnablePushOtpProvider
 	#getCurrentUserSettingsUrl(): string
 	{
 		return Extension.getSettings('intranet.push-otp.connect-popup')?.get('settingsUrl') ?? '';
+	}
+
+	#canSwitchSkipDeviceConnectChannel(channel: string): boolean
+	{
+		return this.#isSkippingDeviceConnect
+			&& !this.#isSkipDeviceConnectCompleted
+			&& this.#skipDeviceConnectAvailableChannels.includes(channel)
+		;
+	}
+
+	#isSkipDeviceConnectChannelSupported(channel: string): boolean
+	{
+		return (channel === 'phone' && this.#options.canSendSms === true)
+			|| (channel === 'email' && this.#options.canSendEmail === true)
+		;
 	}
 
 	#getCurrentUserId(): number

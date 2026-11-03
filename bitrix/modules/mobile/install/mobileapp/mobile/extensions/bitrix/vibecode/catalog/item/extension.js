@@ -10,7 +10,7 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 	const { Avatar, AvatarShape } = require('ui-system/blocks/avatar');
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Capital, Text4, Text5, Text6 } = require('ui-system/typography/text');
+	const { Capital, Text4, Text5, Text6, Text7 } = require('ui-system/typography/text');
 	const { getPressedColor, prepareHexColor } = require('utils/color');
 
 	const LIST_ITEM_VERTICAL_PADDING = Indent.XL.toNumber();
@@ -124,6 +124,16 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 		isPinned(item)
 		{
 			return item?.isPinned === true;
+		}
+
+		isFavorite(item)
+		{
+			return item?.isFavorite === true;
+		}
+
+		isHidden(item)
+		{
+			return item?.isHidden === true;
 		}
 
 		getBackgroundColor(item)
@@ -297,6 +307,7 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 		renderTitleRow(item)
 		{
 			const counter = normalizeCounter(item?.counter);
+			const showHiddenBadge = this.props.params?.showHiddenBadge === true && this.isHidden(item);
 
 			return View(
 				{
@@ -315,6 +326,26 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 						flex: 1,
 					},
 				}),
+				showHiddenBadge
+					? View(
+						{
+							testId: this.getTestId('badge-hidden'),
+							style: {
+								marginLeft: Indent.S.toNumber(),
+								paddingVertical: Indent.XS2.toNumber(),
+								paddingHorizontal: Indent.S.toNumber(),
+								borderRadius: Corner.XS.toNumber(),
+								backgroundColor: Color.base7.toHex(),
+								alignItems: 'center',
+								justifyContent: 'center',
+							},
+						},
+						Text7({
+							text: Loc.getMessage('MOBILE_VIBECODE_CATALOG_ITEM_HIDDEN_BADGE'),
+							color: Color.base3,
+						}),
+					)
+					: null,
 				item?.isNew === true
 					? View(
 						{
@@ -394,6 +425,7 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 		renderActions(item)
 		{
 			const isPinned = this.isPinned(item);
+			const isFavorite = this.isFavorite(item);
 
 			return View(
 				{
@@ -409,6 +441,15 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 					size: LIST_ITEM_PIN_ICON_SIZE,
 					color: Color.accentMainPrimary,
 				}),
+				isFavorite && IconView({
+					testId: this.getTestId('favorite-icon'),
+					icon: Icon.SOLID_FAVORITE,
+					size: LIST_ITEM_PIN_ICON_SIZE,
+					color: Color.accentMainPrimary,
+					style: {
+						marginTop: isPinned ? LIST_ITEM_ACTIONS_GAP : 0,
+					},
+				}),
 				View(
 					{
 						testId: this.getTestId('menu'),
@@ -417,7 +458,7 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 						},
 						onClick: this.getMoreOnClick(item),
 						style: {
-							marginTop: isPinned ? LIST_ITEM_ACTIONS_GAP : 0,
+							marginTop: (isPinned || isFavorite) ? LIST_ITEM_ACTIONS_GAP : 0,
 							width: LIST_ITEM_ACTION_SIZE,
 							height: LIST_ITEM_ACTION_SIZE,
 							alignItems: 'center',

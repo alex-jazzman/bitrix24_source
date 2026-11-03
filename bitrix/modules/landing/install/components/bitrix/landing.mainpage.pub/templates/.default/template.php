@@ -50,11 +50,11 @@ $isFeatureAvailable = $arResult['IS_VIBE_FEATURE_AVAILABLE'] || $arResult['IS_VI
 if (!$isFeatureAvailable || !$arResult['IS_VIBE_CREATED'])
 {
 ?>
-	<div class="landing-mainpage-disabled-container">
+	<div class="landing-mainpage-disabled-container" data-testid="mainpage-pub-disabled">
 		<div class="landing-mainpage-disabled-icon"></div>
-		<div class="landing-mainpage-disabled-title">
+		<h1 class="landing-mainpage-disabled-title" data-testid="mainpage-pub-disabled-title">
 			<?= Loc::getMessage('LANDING_TPL_MAINPAGE_DISABLED_TITLE'); ?>
-		</div>
+		</h1>
 		<div class="landing-mainpage-disabled-text">
 			<?= Loc::getMessage('LANDING_TPL_MAINPAGE_DISABLED_TEXT'); ?>
 		</div>
@@ -122,7 +122,10 @@ if ($component->request('IFRAME'))
 ?>
 
 <?php if (!$isPublished):?>
-	<div class="ui-alert ui-alert-warning ui-alert-icon-info ui-alert-close-animate">
+	<div
+		class="ui-alert ui-alert-warning ui-alert-icon-info ui-alert-close-animate landing-mainpage-alert"
+		data-testid="mainpage-pub-alert"
+	>
 		<span class="ui-alert-message"><?= Loc::getMessage('LANDING_TPL_MAINPAGE_ALERT_TEXT'); ?>
 			<?php if (isset($arResult['VIBE_SETTINGS_LINK'])): ?>
 				<?= Loc::getMessage(
@@ -131,7 +134,12 @@ if ($component->request('IFRAME'))
 				) ?>
 			<?php endif; ?>
 		</span>
-		<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
+		<button
+			type="button"
+			class="ui-alert-close-btn"
+			aria-label="<?= \htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_MAINPAGE_ALERT_CLOSE'));?>"
+			data-testid="mainpage-pub-alert-close"
+		></button>
 	</div>
 <?php endif;?>
 
@@ -174,6 +182,10 @@ if (isset($arResult['VIBE_TITLE']))
 		<?php endif; ?>
 
 		void new BX.Landing.Pub.Pseudolinks();
+
+		<?php if (!$isPublished): ?>
+			void new BX.Landing.Pub.Alert();
+		<?php endif; ?>
 	});
 </script>
 

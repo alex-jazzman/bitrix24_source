@@ -1,3 +1,4 @@
+import { BIcon } from 'ui.icon-set.api.vue';
 import { HeadlineSm, TextXs } from 'ui.system.typography.vue';
 import { defineComponent, type PropType } from 'ui.vue3';
 import { FilterTagSelector } from '../filter-tag-selector/filter-tag-selector';
@@ -11,6 +12,7 @@ type ClientTypesCardData = {
 export const ClientTypesCard = defineComponent({
 	name: 'CrmCopilotCallAssessmentV2ClientTypesCard',
 	components: {
+		BIcon,
 		FilterTagSelector,
 		HeadlineSm,
 		TextXs,
@@ -71,9 +73,12 @@ export const ClientTypesCard = defineComponent({
 	},
 	template: `
 		<section class="crm-call-assessment-v2-client-types-card">
-			<HeadlineSm class="crm-call-assessment-v2-client-types-card__heading" tag="h2" accent>
-				{{ loc('CRM_CALL_ASSESSMENT_V2_AUDIENCE_HEADING') }}
-			</HeadlineSm>
+			<div class="crm-call-assessment-v2-client-types-card__title-row">
+				<BIcon class="crm-call-assessment-v2-client-types-card__title-icon" name="o-phone-up" :size="24"/>
+				<HeadlineSm class="crm-call-assessment-v2-client-types-card__heading" tag="h2" accent>
+					{{ loc('CRM_CALL_ASSESSMENT_V2_AUDIENCE_HEADING') }}
+				</HeadlineSm>
+			</div>
 			<div class="crm-call-assessment-v2-client-types-card__row">
 				<div class="crm-call-assessment-v2-client-types-card__field" v-if="clientFilter">
 					<TextXs class="crm-call-assessment-v2-client-types-card__label">

@@ -5,6 +5,65 @@ jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { ComponentOpener } = require('whats-new/ui-manager/component-opener');
 	const { requireLazy } = require('require-lazy');
+	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { showErrorToast } = require('toast');
+	const { Tourist } = require('tourist');
+
+	const GET_BOT_ID_ACTION = 'mobile.Support.getBotId';
+
+	/**
+	 * A link opened from outside the app brings no menu context, so the support bot is
+	 * resolved on the spot when the context has none.
+	 * @return {Promise<?number>}
+	 */
+	const resolveSupportBotId = async (context) => {
+		const contextBotId = Number(context?.botId);
+		if (contextBotId > 0)
+		{
+			return contextBotId;
+		}
+
+		// the answer is not cached: an absent bot is a portal setting that may change at any
+		// moment, and a cached "no bot" would keep refusing the link long after support is on
+		const response = await (new RunActionExecutor(GET_BOT_ID_ACTION))
+			.setSkipDuplicateRequests()
+			.call(false);
+
+		// call() resolves even on an error response (does not reject), so check the answer explicitly.
+		const { botId, isSupportActive } = response?.data ?? {};
+		if (isSupportActive === false)
+		{
+			// the same switch the profile menu applies: support turned off for mobile opens no chat
+			return null;
+		}
+
+		return Number(botId) > 0 ? Number(botId) : null;
+	};
+
+	const openSupportDialog = async (botId, context) => {
+		const { DialogOpener } = await requireLazy('im:messenger/api/dialog-opener');
+
+		await DialogOpener.open({
+			dialogId: botId,
+			parentWidget: context?.parentWidget,
+		});
+	};
+
+	// bookkeeping only: its failure must not be reported as a failure to open the chat
+	const rememberSupportShown = () => {
+		try
+		{
+			Tourist.remember('show_support', {});
+		}
+		catch (error)
+		{
+			console.error('in-app-url: unable to remember the support event', error);
+		}
+	};
+
+	const notifySupportFailure = (context, messageCode) => {
+		showErrorToast({ message: Loc.getMessage(messageCode) }, context?.parentWidget);
+	};
 
 	module.exports = function(inAppUrl) {
 		inAppUrl.register('/whats-new/', (params, { context }) => {
@@ -22,35 +81,26 @@ jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 				.catch(console.error);
 		}).name('/bitrix24/profile');
 
-		inAppUrl.register('/support/', (params, { context }) => {
-			const { botId } = context;
-
-			if (botId && Number(botId) > 0)
+		inAppUrl.register('/support/', async (params, { context }) => {
+			try
 			{
-				Promise.all([
-					requireLazy('im:messenger/api/dialog-opener'),
-					requireLazy('tourist', false),
-				]).then(([{ DialogOpener }, { Tourist }]) => {
-					return DialogOpener
-						.open({ dialogId: Number(botId) })
-						.then(() => Tourist.remember('show_support', {}));
-				}).catch(async (error) => {
-					console.error('Error in support opener:', error);
+				const botId = await resolveSupportBotId(context);
+				if (!botId)
+				{
+					notifySupportFailure(context, 'IN_APP_URL_SUPPORT_UNAVAILABLE');
 
-					const { showErrorToast } = await requireLazy('toast', false);
-					showErrorToast(
-						{
-							message: Loc.getMessage('MENU_BITRIX24_SUPPORT24_ERROR_TEXT'),
-						},
-						this.layout,
-					);
-				});
+					return;
+				}
+
+				await openSupportDialog(botId, context);
+				rememberSupportShown();
 			}
-			else
+			catch (error)
 			{
-				console.error('Empty or invalid botId', botId);
+				console.error('in-app-url: unable to open support chat', error);
+				notifySupportFailure(context, 'MENU_BITRIX24_SUPPORT24_ERROR_TEXT');
 			}
-		});
+		}).name('bitrix24:support');
 
 		inAppUrl.register('/change-portal/', () => {
 			Application.exit();

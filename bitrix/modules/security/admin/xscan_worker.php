@@ -559,6 +559,7 @@ if (!isset($_REQUEST['grid_action']))
 						"m" => "/bitrix/modules",
 						"c" => "/bitrix/components",
 						"!m" => "not /bitrix/modules",
+						"!mod" => "not modified",
 						"pop" => GetMessage("BITRIX_XSCAN_POPULAR"),
 					],
 				],
@@ -587,6 +588,12 @@ if (!isset($_REQUEST['grid_action']))
 					"name" => 'not /bitrix/modules',
 					"fields" => [
 						"preset" => ["!m"],
+					],
+				],
+				"not_mod" => [
+					"name" => 'not modified',
+					"fields" => [
+						"preset" => ["!mod"],
 					],
 				],
 				"popular" => [

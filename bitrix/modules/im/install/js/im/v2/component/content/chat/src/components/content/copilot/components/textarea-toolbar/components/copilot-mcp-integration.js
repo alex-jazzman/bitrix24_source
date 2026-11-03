@@ -1,16 +1,29 @@
 import { type JsonObject } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { ChipDesign, ChipSize, Chip } from 'ui.system.chip.vue';
+import { LiveAnnouncer } from 'ui.a11y';
 
 import { McpSelector } from 'aiassistant.mcp-selector';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { CopilotMcpSelectionStatus } from 'im.v2.const';
+import { McpSelection } from 'im.v2.provider.service.copilot';
 import { type ImModelCopilotMcpAuth } from 'im.v2.model';
 
 import { ToolbarHint } from './toolbar-hint';
 
 const COPILOT_ANALYTICS_CONTEXT = 'copilot_chat';
+
+type AnnouncedSelection = {
+	dialogId: string,
+	status: string,
+};
+
+const AriaLive = {
+	polite: 'polite',
+	assertive: 'assertive',
+};
 
 // @vue/component
 export const CopilotMcpIntegration = {
@@ -40,17 +53,65 @@ export const CopilotMcpIntegration = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.aiAssistantMcpSelectorAvailable);
 		},
+		isRestoreAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAiAssistantMcpSelectionRestoreAvailable);
+		},
 		mcpAuth(): ?ImModelCopilotMcpAuth
 		{
 			return this.$store.getters['copilot/chats/getMcpAuth'](this.dialogId);
+		},
+		selectionStatus(): string
+		{
+			return this.$store.getters['copilot/chats/getMcpSelectionStatus'](this.dialogId);
 		},
 		hasSelectedMcpAuth(): boolean
 		{
 			return Boolean(this.mcpAuth?.id);
 		},
+		isMcpAuthConfirmedByServer(): boolean
+		{
+			return this.$store.getters['copilot/chats/isMcpAuthConfirmed'](this.dialogId);
+		},
+		awaitsMcpAuthConfirmation(): boolean
+		{
+			return this.isRestoreAvailable && !this.isMcpAuthConfirmedByServer;
+		},
+		outgoingMcpAuthId(): ?number
+		{
+			if (this.awaitsMcpAuthConfirmation)
+			{
+				return null;
+			}
+
+			return this.mcpAuth?.id ?? null;
+		},
+		hasOutgoingMcpAuth(): boolean
+		{
+			return this.outgoingMcpAuthId !== null;
+		},
 		chipDesign(): string
 		{
-			return this.hasSelectedMcpAuth ? ChipDesign.OutlineAccent2 : ChipDesign.Outline;
+			if (this.isRestoreAvailable && this.hasFailedSelection)
+			{
+				return ChipDesign.OutlineAlert;
+			}
+
+			return this.hasOutgoingMcpAuth ? ChipDesign.OutlineAccent2 : ChipDesign.Outline;
+		},
+		hasFailedSelection(): boolean
+		{
+			return [CopilotMcpSelectionStatus.error, CopilotMcpSelectionStatus.unavailable]
+				.includes(this.selectionStatus);
+		},
+		withClear(): boolean
+		{
+			if (!this.isRestoreAvailable)
+			{
+				return this.hasSelectedMcpAuth;
+			}
+
+			return this.hasOutgoingMcpAuth || this.hasFailedSelection;
 		},
 		defaultIcon(): ?string
 		{
@@ -73,13 +134,44 @@ export const CopilotMcpIntegration = {
 				alt: '',
 			};
 		},
+		statusLabel(): ?string
+		{
+			switch (this.selectionStatus)
+			{
+				case CopilotMcpSelectionStatus.restoring:
+					return this.loc('IM_CONTENT_COPILOT_MCP_STATUS_RESTORING');
+				case CopilotMcpSelectionStatus.error:
+					return this.loc('IM_CONTENT_COPILOT_MCP_STATUS_ERROR');
+				case CopilotMcpSelectionStatus.unavailable:
+					return this.loc('IM_CONTENT_COPILOT_MCP_STATUS_UNAVAILABLE');
+				default:
+					return null;
+			}
+		},
+		selectionLabel(): string
+		{
+			if (this.isRestoreAvailable && this.statusLabel && !this.hasOutgoingMcpAuth)
+			{
+				return this.statusLabel;
+			}
+
+			return this.mcpAuth?.name ?? this.loc('IM_CONTENT_COPILOT_MCP_INTEGRATIONS');
+		},
+		isStatusLabelMovedToHint(): boolean
+		{
+			return this.isRestoreAvailable && Boolean(this.statusLabel) && this.hasOutgoingMcpAuth;
+		},
 		chipText(): string
 		{
-			return this.mcpAuth?.name ?? this.loc('IM_CONTENT_COPILOT_MCP_INTEGRATIONS');
+			return this.selectionLabel;
 		},
 		hintText(): string
 		{
-			return this.mcpAuth?.name ?? this.loc('IM_CONTENT_COPILOT_MCP_INTEGRATIONS');
+			return this.isStatusLabelMovedToHint ? this.statusLabel : this.selectionLabel;
+		},
+		announcedSelection(): AnnouncedSelection
+		{
+			return { dialogId: this.dialogId, status: this.selectionStatus };
 		},
 		isHintEnabled(): boolean
 		{
@@ -88,22 +180,66 @@ export const CopilotMcpIntegration = {
 				return false;
 			}
 
-			return !this.isExpanded;
+			return this.isStatusLabelMovedToHint || !this.isExpanded;
 		},
+	},
+	watch: {
+		// the chat and its status are watched together, so the guard does not depend on watcher order:
+		// neither a chat switch nor the first status the opened chat settles on follows a user action
+		announcedSelection(current: AnnouncedSelection, previous: AnnouncedSelection)
+		{
+			if (current.dialogId !== previous.dialogId)
+			{
+				this.awaitsSettledStatus = current.status === CopilotMcpSelectionStatus.restoring;
+
+				return;
+			}
+
+			if (this.awaitsSettledStatus)
+			{
+				this.awaitsSettledStatus = false;
+
+				return;
+			}
+
+			this.announceStatus();
+		},
+	},
+	created()
+	{
+		this.awaitsSettledStatus = this.selectionStatus === CopilotMcpSelectionStatus.restoring;
 	},
 	beforeUnmount()
 	{
 		this.selector?.destroy();
 	},
 	methods: {
+		announceStatus()
+		{
+			if (!this.isRestoreAvailable || !this.statusLabel)
+			{
+				return;
+			}
+
+			const politeness = this.selectionStatus === CopilotMcpSelectionStatus.error
+				? AriaLive.assertive
+				: AriaLive.polite;
+
+			LiveAnnouncer.announce(this.statusLabel, politeness);
+		},
 		toggle()
 		{
 			Analytics.getInstance().copilot.onMcpIntegrationClick(this.dialogId);
 			if (this.isSelectorOpened)
 			{
-				this.getSelector().hide();
+				this.selector?.hide();
 
 				return;
+			}
+
+			if (this.isRestoreAvailable && this.hasFailedSelection)
+			{
+				this.dismissFailedSelectionLocally();
 			}
 
 			this.getSelector().show();
@@ -118,14 +254,28 @@ export const CopilotMcpIntegration = {
 
 			this.setMcpAuth(mcpAuth);
 		},
+		// the selector takes its selected auth id only at construction, so it is rebuilt, not reused,
+		// once the store moved on
+		isSelectorOutdated(): boolean
+		{
+			if (!this.isRestoreAvailable || this.selectionStatus === CopilotMcpSelectionStatus.restoring)
+			{
+				return false;
+			}
+
+			return this.selectorAuthId !== this.outgoingMcpAuthId;
+		},
 		getSelector(): McpSelector
 		{
-			if (this.selector)
+			if (this.selector && !this.isSelectorOutdated())
 			{
 				return this.selector;
 			}
 
-			this.selector = new McpSelector({
+			this.selector?.destroy();
+			this.selector = null;
+
+			const selectorOptions = {
 				context: COPILOT_ANALYTICS_CONTEXT,
 				dialogId: this.dialogId,
 				targetNode: this.$refs.chip.$el,
@@ -148,6 +298,7 @@ export const CopilotMcpIntegration = {
 							}
 							: null;
 
+						this.selectorAuthId = selectedMcpAuth?.id ?? null;
 						this.onMcpAuthChange(selectedMcpAuth);
 					},
 					onHide: () => {
@@ -157,32 +308,87 @@ export const CopilotMcpIntegration = {
 						this.isSelectorOpened = true;
 					},
 				},
-			});
+			};
+
+			if (this.isRestoreAvailable)
+			{
+				selectorOptions.selectedAuthId = this.outgoingMcpAuthId;
+			}
+
+			this.selectorAuthId = this.isRestoreAvailable ? this.outgoingMcpAuthId : null;
+			this.selector = new McpSelector(selectorOptions);
 
 			return this.selector;
 		},
+		getMcpSelectionService(): McpSelection
+		{
+			if (!this.mcpSelectionService)
+			{
+				this.mcpSelectionService = new McpSelection();
+			}
+
+			return this.mcpSelectionService;
+		},
 		setMcpAuth(mcpAuth: ImModelCopilotMcpAuth)
 		{
-			this.$store.dispatch('copilot/chats/setMcpAuth', {
-				dialogId: this.dialogId,
-				mcpAuth,
-			});
+			if (this.isRestoreAvailable)
+			{
+				void this.getMcpSelectionService().save({ dialogId: this.dialogId, mcpAuth });
+			}
+			else
+			{
+				this.$store.dispatch('copilot/chats/setMcpAuth', {
+					dialogId: this.dialogId,
+					mcpAuth,
+					confirmed: true,
+				});
+			}
+
 			Analytics.getInstance().copilot.onChangeMCP(this.dialogId);
+		},
+		// the way back from the error state must not depend on a call that can fail the same way
+		dismissFailedSelectionLocally()
+		{
+			void this.$store.dispatch('copilot/chats/setMcpSelectionStatus', {
+				dialogId: this.dialogId,
+				status: CopilotMcpSelectionStatus.ready,
+			});
 		},
 		clear()
 		{
+			if (this.isRestoreAvailable && this.hasFailedSelection && !this.hasSelectedMcpAuth)
+			{
+				this.dismissFailedSelectionLocally();
+
+				return;
+			}
+
 			const hadSelectedMcpAuth = this.hasSelectedMcpAuth;
 
-			this.$store.dispatch('copilot/chats/clearMcpAuth', this.dialogId);
+			if (this.isRestoreAvailable)
+			{
+				void this.getMcpSelectionService().clear(this.dialogId);
+			}
+			else
+			{
+				this.$store.dispatch('copilot/chats/clearMcpAuth', this.dialogId);
+			}
 
 			if (hadSelectedMcpAuth)
 			{
 				Analytics.getInstance().copilot.onChangeMCP(this.dialogId);
 			}
 		},
+		// the selector re-emits the cleared selection through onSelect, which runs clear() itself
 		onChipClearClick()
 		{
-			this.selector?.clear();
+			if (this.selector)
+			{
+				this.selector.clear();
+
+				return;
+			}
+
 			this.clear();
 		},
 		loc(phraseCode: string): string
@@ -198,6 +404,7 @@ export const CopilotMcpIntegration = {
 		>
 			<Chip
 				ref="chip"
+				data-testid="copilot-mcp-chip"
 				:text="chipText"
 				:trimmable="true"
 				:rounded="true"
@@ -205,7 +412,7 @@ export const CopilotMcpIntegration = {
 				:icon="defaultIcon"
 				:image="mcpIcon"
 				:design="chipDesign"
-				:withClear="hasSelectedMcpAuth"
+				:withClear="withClear"
 				:collapsed="!isExpanded"
 				@click="toggle"
 				@clear="onChipClearClick"

@@ -1020,37 +1020,19 @@ class TasksTaskListComponent extends TasksBaseComponent
 			],
 		];
 
-		if ($this->canProceedTours())
+		if ($this->canProceedExpiredTour() && $this->canProceedTours())
 		{
-			/** @var TourGuide\FirstGridTaskCreation $firstGridTaskTour */
-			$firstGridTaskTour = TourGuide\FirstGridTaskCreation::getInstance($this->userId);
-			$currentStepPopupData = $firstGridTaskTour->getCurrentStepPopupData();
-			$showFirstGridTaskTour = $firstGridTaskTour->proceed();
+			/** @var TourGuide\ExpiredTasksDeadlineChange $expiredTour */
+			$expiredTour = TourGuide\ExpiredTasksDeadlineChange::getInstance($this->userId);
+			$currentStepPopupData = $expiredTour->getCurrentStepPopupData();
+			$showExpiredTour = $expiredTour->proceed();
 
-			if ($showFirstGridTaskTour)
-			{
-				Analytics::getInstance()->onFirstTaskGridCreation();
-			}
-
-			$this->arResult['tours']['firstGridTaskCreation'] = [
-				'show' => $showFirstGridTaskTour,
+			$this->arResult['tours']['expiredTasksDeadlineChange'] = [
+				'show' => $showExpiredTour,
 				'popupData' => $currentStepPopupData,
+				'backgroundCheck' => !$showExpiredTour && $expiredTour->canPotentiallyProceed(),
+				'counterToCheck' => $expiredTour->getNeededExpiredTasksCount(),
 			];
-
-			if (!$showFirstGridTaskTour && $this->canProceedExpiredTour())
-			{
-				/** @var TourGuide\ExpiredTasksDeadlineChange $expiredTour */
-				$expiredTour = TourGuide\ExpiredTasksDeadlineChange::getInstance($this->userId);
-				$currentStepPopupData = $expiredTour->getCurrentStepPopupData();
-				$showExpiredTour = $expiredTour->proceed();
-
-				$this->arResult['tours']['expiredTasksDeadlineChange'] = [
-					'show' => $showExpiredTour,
-					'popupData' => $currentStepPopupData,
-					'backgroundCheck' => !$showExpiredTour && $expiredTour->canPotentiallyProceed(),
-					'counterToCheck' => $expiredTour->getNeededExpiredTasksCount(),
-				];
-			}
 		}
 	}
 
@@ -1531,7 +1513,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 			return '
 				<div class="tasks-list-create">
-					<div class="tasks-list-collab-empty-state-title">' . $stubTitle . '</div>
+					<h2 class="tasks-list-collab-empty-state-title">' . $stubTitle . '</h2>
 					<div class="tasks-list-collab-empty-state-subtitle">'
 						. Loc::getMessage(
 							'TASKS_GRID_STUB_PROJECT_CREATE_COLLAB_SUBTITLE',
@@ -1549,9 +1531,9 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return '
 				<div class="tasks-list-create">
 					<div class="tasks-list-create-icon"></div>
-					<div class="tasks-list-create-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_PROJECT_CREATED') . '</div>
+					<h2 class="tasks-list-create-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_PROJECT_CREATED') . '</h2>
 					<div class="tasks-list-create-br"></div>
-					<div class="tasks-list-create-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_TASK') . '</div>
+					<h2 class="tasks-list-create-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_TASK') . '</h2>
 					<div class="tasks-list-create-subtitle">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE') . '</div>
 				</div>
 			';

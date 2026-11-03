@@ -29,19 +29,27 @@ use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
 $arActivityDescription = (new ActivityDescription(
 	Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_NAME') ?? '',
-	Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_DESCRIPTION') ?? '',
+	Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_DESCRIPTION_MSGVER_1') ?? '',
 	[ActivityType::NODE->value],
 ))
 	->setClass('SaveDayPlanActivity')
 	->setJsClass('BizProcActivity')
+	->set('PROPERTIES', ['RecordId' => 0, 'ConvertMarkdown' => true])
 	->setNodeType(ActivityNodeType::SIMPLE->value)
 	->setGroups([ActivityGroup::HR->value, ActivityGroup::TEAM_MANAGEMENT->value])
 	->setColorIndex(ActivityColorIndex::ORANGE->value)
 	->setIcon(Outline::MY_PLAN->name)
+	->setReturn([
+		'Saved' => [
+			'NAME' => 'Saved',
+			'TYPE' => FieldType::BOOL,
+		],
+	])
 	->toArray()
 ;

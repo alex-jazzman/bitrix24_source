@@ -15,6 +15,7 @@ return [
 		'tasks.v2.core',
 		'tasks.v2.lib.calendar',
 		'tasks.v2.provider.service.absence-service',
+		'ui.a11y',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
 		'ui.system.typography.vue',

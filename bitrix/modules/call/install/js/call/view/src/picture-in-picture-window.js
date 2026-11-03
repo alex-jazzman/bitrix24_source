@@ -2,6 +2,8 @@ import { Dom, Loc, Type, Runtime } from 'main.core';
 import { Popup } from 'main.popup';
 import { Utils } from 'im.v2.lib.utils';
 
+import { AriaHasPopup } from './buttons/helpers/aria';
+
 import './css/picture-in-picture-window.css';
 
 const PIP_WINDOW_WIDTH = 370;
@@ -13,12 +15,80 @@ const AVATAR_TEXT_SIZE_RATIO = 0.45;
 const FLOOR_REQUEST_HIDE_DELAY = 5000;
 const FLOOR_REQUEST_POPUP_WIDTH = 244;
 const POPUP_HORIZONTAL_OFFSET = 16;
+// the window runs its own panel, so its items live in their own hook namespace
+const PIP_TEST_ID_PREFIX = 'call-pip';
+const FLOOR_REQUESTS_TEST_ID = `${PIP_TEST_ID_PREFIX}-floor-requests`;
+const LIVE_REGION_TEST_ID = `${PIP_TEST_ID_PREFIX}-live-region`;
+// the pause the emptied region is held for before the text lands, and the one the text is held for
+// before the next message takes its place
+const ANNOUNCEMENT_WRITE_DELAY = 100;
+const ANNOUNCEMENT_HOLD_DELAY = 1500;
+// a burst of raised hands outruns the region: one message takes 1.6 s, so a longer queue would still
+// be naming people whose hand is already down. Past this length the names give way to a count.
+const ANNOUNCEMENT_QUEUE_LIMIT = 4;
+// the popup lives outside the root of the window, so the root is told about it by a class of
+// its own: without it the panel collapses as soon as the focus enters the list
+const POPUP_OPEN_CLASS = 'bx-call-picture-in-picture-window_popup-open';
+
+// The order of an announced enumeration belongs to this table, not to the list that arrives: the
+// list is assembled in the order the main window happens to check its buttons in. The names are
+// phrases of their own: the captions of the buttons are capitalised, and the screen button of this
+// window is captioned with a single word that says nothing inside a list of what is unavailable.
+const BLOCKABLE_CONTROLS = [
+	{ name: 'microphone', messageId: 'CALL_VIEW_PIP_CONTROL_MICROPHONE' },
+	{ name: 'camera', messageId: 'CALL_VIEW_PIP_CONTROL_CAMERA' },
+	{ name: 'screen', messageId: 'CALL_VIEW_PIP_CONTROL_SCREEN' },
+];
+const CONTROLS_SEPARATOR = ', ';
+
+// a custom element of ui.a11y stays unupgraded in the document of the window: the registry of
+// custom elements belongs to the window that declared them, so the hiding is done by styles
+const VISUALLY_HIDDEN_STYLE = {
+	position: 'absolute',
+	width: '1px',
+	height: '1px',
+	margin: '-1px',
+	padding: '0',
+	overflow: 'hidden',
+	clip: 'rect(0 0 0 0)',
+	whiteSpace: 'nowrap',
+	border: '0',
+};
+
+/**
+ * The document of a freshly requested window carries neither a language nor a name of its own.
+ * Both are values of the opener, so they are put in from the outside and nothing else about the
+ * window is known here.
+ */
+export function applyPipDocumentAttributes(targetDocument, { lang, title } = {})
+{
+	if (!targetDocument)
+	{
+		return;
+	}
+
+	if (Type.isStringFilled(lang))
+	{
+		targetDocument.documentElement?.setAttribute('lang', lang);
+	}
+
+	if (Type.isStringFilled(title))
+	{
+		// the document of the window has no <title> node at all: the browser creates one by the
+		// assignment itself, and building the node by hand would leave the window unnamed
+		// eslint-disable-next-line no-param-reassign -- naming the document given is the whole job
+		targetDocument.title = title;
+	}
+}
 
 export class PictureInPictureWindow
 {
-	#isClosing: boolean = false;
-	#isProgrammaticClose: boolean = false;
+	#isClosing = false;
+	#isProgrammaticClose = false;
 	#blockedButtonsKey = '';
+	#liveRegion = null;
+	#announcementQueue = [];
+	#announcementTimeoutId = null;
 
 	constructor(config)
 	{
@@ -27,24 +97,24 @@ export class PictureInPictureWindow
 		this.userPanel = null;
 		this.actionsPanel = null;
 		this.notificationPanel = null;
+		this.focusedButtonTestId = null;
 
 		this.hardwareState = config.hardwareState;
 
 		this.buttonNames = config.buttons || [];
-		this.buttonInstances = {
-			microphone: null,
-			camera: null,
-			returnToCall: null,
-			stopScreen: null,
-			copilot: null,
-		};
 
 		this.preferInitialWindowPlacement = config.preferInitialWindowPlacement;
 
 		this.user = null;
 		this.userData = config.currentUser;
 
+		// the name of the call is read once, at the moment the window opens, and never followed
+		this.accessibleName = config.accessibleName || '';
+
 		this.blockedButtons = config.blockedButtons || [];
+		// the state the window opened with is not an event of the window: seeding the key here is
+		// what keeps the first sync from announcing a blocking that was already in place
+		this.#blockedButtonsKey = this.blockedButtons.join(',');
 
 		this.previousFloorRequestNotifications = config.floorRequestNotifications || [];
 
@@ -58,6 +128,8 @@ export class PictureInPictureWindow
 
 		this.floorRequestElements = {
 			counter: null,
+			counterValue: null,
+			counterDescription: null,
 			mainNotification: null,
 			popup: null,
 			popupTemplate: null,
@@ -65,6 +137,10 @@ export class PictureInPictureWindow
 
 		this.floorRequestsList = [];
 		this.floorRequestTimeout = null;
+		// tells whether the focus has to be led into the list on opening, and keeps a stray mouse
+		// move from collapsing a list the user works with from the keyboard
+		this.floorRequestsOpenedFromKeyboard = false;
+		this.floorRequestsFocusWasInside = false;
 
 		this.onCloseHandler = this.onClose.bind(this);
 		this.onResizeHandler = Runtime.throttle(this.onResize.bind(this), 100);
@@ -77,7 +153,7 @@ export class PictureInPictureWindow
 		};
 	}
 
-	#isCurrentUserId(userId): boolean
+	#isCurrentUserId(userId)
 	{
 		return Boolean(this.user) && Number(userId) === Number(this.user.userModel.id);
 	}
@@ -135,17 +211,20 @@ export class PictureInPictureWindow
 		this.user = null;
 	}
 
-	getCurrentUserId(): number | null
+	getCurrentUserId()
 	{
 		return this.user?.userModel.id ?? null;
 	}
 
-	isButtonBlocked(buttonName: string): boolean
+	isButtonBlocked(buttonName)
 	{
 		return this.blockedButtons.includes(buttonName);
 	}
 
-	syncBlockButtons(buttonsList: string[]): void
+	// The only way the blocking of the panel enters this window, and the only record of what has
+	// already been announced - the key is the list the window last synced with. A change the caller
+	// asks to keep quiet moves the key too, so the state and the record never drift apart.
+	syncBlockButtons(buttonsList, { announce = true } = {})
 	{
 		const cacheKey = buttonsList.join(',');
 		if (this.#blockedButtonsKey === cacheKey)
@@ -153,44 +232,148 @@ export class PictureInPictureWindow
 			return;
 		}
 
+		const previousList = this.#blockedButtonsKey === '' ? [] : this.#blockedButtonsKey.split(',');
+
 		this.#blockedButtonsKey = cacheKey;
 		this.blockedButtons = buttonsList;
+
+		if (announce)
+		{
+			this.#announceBlockedButtonsChange(previousList, buttonsList);
+		}
+
 		this.updateButtons();
 	}
 
-	updateBlockButtons(buttonsList: string[]): this
+	// what has just changed is spoken, not what the state is: the whole list arrives on every update,
+	// and naming everything blocked each time would repeat what the user has already heard. A change
+	// in both directions is two announcements, and the queue of the region holds them apart.
+	#announceBlockedButtonsChange(previousList, currentList)
 	{
-		this.blockedButtons = buttonsList;
-
-		return this;
+		this.#announceControls(
+			'CALL_VIEW_PIP_CONTROLS_BLOCKED',
+			currentList.filter((name) => !previousList.includes(name)),
+		);
+		this.#announceControls(
+			'CALL_VIEW_PIP_CONTROLS_UNBLOCKED',
+			previousList.filter((name) => !currentList.includes(name)),
+		);
 	}
 
-	setButtons(buttonsList: string[]): this
+	#announceControls(messageId, names)
+	{
+		const controls = BLOCKABLE_CONTROLS
+			.filter((control) => names.includes(control.name))
+			.map((control) => Loc.getMessage(control.messageId))
+			.filter((name) => Type.isStringFilled(name))
+			.join(CONTROLS_SEPARATOR);
+
+		// nothing to name: an unchanged half of the list, or a button this window cannot speak of
+		if (controls === '')
+		{
+			return;
+		}
+
+		this.#announce(Loc.getMessage(messageId, { '#CONTROLS#': controls }));
+	}
+
+	setButtons(buttonsList)
 	{
 		this.buttonNames = buttonsList;
 
 		return this;
 	}
 
-	updateButtons()
+	// the panel is rebuilt from scratch, so the focus is carried across the rebuild by the only
+	// anchor that survives it: the test hook of the button
+	captureFocusedButton()
 	{
-		Dom.clean(this.actionsPanel);
-		this.renderButtons();
+		this.focusedButtonTestId = null;
+
+		const doc = this.pictureWindow?.document;
+		// activeElement answers even for a document that holds no focus: without hasFocus() an
+		// update would tear the focus out of whatever the user is typing in the main window
+		if (!doc?.hasFocus())
+		{
+			return;
+		}
+
+		const active = doc.activeElement;
+		if (!active || !this.actionsPanel?.contains(active))
+		{
+			return;
+		}
+
+		this.focusedButtonTestId = active.getAttribute('data-testid');
 	}
 
-	getButtonTextBySizePictureWindow(text: string): string
+	restoreFocusedButton()
+	{
+		const testId = this.focusedButtonTestId;
+		this.focusedButtonTestId = null;
+
+		if (!testId)
+		{
+			return false;
+		}
+
+		const node = this.actionsPanel?.querySelector(`[data-testid="${testId}"]`);
+		if (!node)
+		{
+			return false;
+		}
+
+		node.focus();
+
+		// focus() stays silent on a node that cannot take it, a button the mode change brought
+		// back hidden for one, so the verdict is read back from the document
+		return this.pictureWindow?.document?.activeElement === node;
+	}
+
+	updateButtons()
+	{
+		this.captureFocusedButton();
+		Dom.clean(this.actionsPanel);
+		this.renderButtons();
+		this.restoreFocusedButton();
+	}
+
+	getButtonTextBySizePictureWindow(text)
 	{
 		return (this.isMinHeight || this.isMinWidth) ? '' : text;
+	}
+
+	// a small window drops the visible caption and leaves the button with no accessible name;
+	// naming a button that still shows its caption would break SC 2.5.3 instead
+	getButtonLabels(message)
+	{
+		const text = this.getButtonTextBySizePictureWindow(message);
+
+		return text === '' ? { text, ariaLabel: message } : { text };
+	}
+
+	// Single entry point for the panel of this window: the namespace belongs to the window,
+	// so it is bound here once instead of at every button
+	#mountButton(ButtonClass, config)
+	{
+		const button = new ButtonClass({ ...config, testIdPrefix: PIP_TEST_ID_PREFIX });
+
+		Dom.append(button.render(), this.actionsPanel);
+
+		return button;
 	}
 
 	renderButtons()
 	{
 		if (!this.actionsPanel && this.buttonNames.length > 0)
 		{
+			// The buttons repeat the panel of the call screen down to their classes, so the
+			// namespace is what tells the two panels apart, both here and in the buttons
 			this.actionsPanel = Dom.create('div', {
 				props: {
 					className: 'bx-call-picture-in-picture-window__actions',
 				},
+				attrs: { 'data-testid': `${PIP_TEST_ID_PREFIX}-panel` },
 			});
 		}
 
@@ -199,14 +382,12 @@ export class PictureInPictureWindow
 			switch (buttonName)
 			{
 				case 'microphone':
-					this.buttonInstances.microphone = new this.uiDeps.Buttons.DeviceButton({
+					this.#mountButton(this.uiDeps.Buttons.DeviceButton, {
 						class: 'microphone',
 						backgroundClass: 'bx-call-picture-in-picture-window__button-background',
-						text: this.getButtonTextBySizePictureWindow(Loc.getMessage('IM_M_CALL_BTN_MIC')),
+						...this.getButtonLabels(Loc.getMessage('IM_M_CALL_BTN_MIC')),
 						enabled: !this.hardwareState.isMicrophoneMuted,
 						arrowHidden: true,
-						arrowEnabled: false,
-						showPointer: true,
 						blocked: this.isButtonBlocked('microphone'),
 						showLevel: true,
 						sideIcon: null,
@@ -216,14 +397,12 @@ export class PictureInPictureWindow
 						},
 					});
 
-					Dom.append(this.buttonInstances.microphone.render(), this.actionsPanel);
-
 					break;
 				case 'camera':
-					this.buttonInstances.camera = new this.uiDeps.Buttons.DeviceButton({
+					this.#mountButton(this.uiDeps.Buttons.DeviceButton, {
 						class: 'camera',
 						backgroundClass: 'bx-call-picture-in-picture-window__button-background',
-						text: this.getButtonTextBySizePictureWindow(Loc.getMessage('IM_M_CALL_BTN_CAMERA')),
+						...this.getButtonLabels(Loc.getMessage('IM_M_CALL_BTN_CAMERA')),
 						enabled: this.hardwareState.isCameraOn,
 						arrowHidden: true,
 						blocked: this.isButtonBlocked('camera'),
@@ -233,14 +412,12 @@ export class PictureInPictureWindow
 						},
 					});
 
-					Dom.append(this.buttonInstances.camera.render(), this.actionsPanel);
-
 					break;
 				case 'returnToCall':
-					this.buttonInstances.returnToCall = new this.uiDeps.Buttons.SimpleButton({
+					this.#mountButton(this.uiDeps.Buttons.SimpleButton, {
 						class: 'go-to-call',
 						backgroundClass: 'bx-call-picture-in-picture-window__button-background bx-messenger-videocall-panel-icon-background-go-to-call',
-						text: this.getButtonTextBySizePictureWindow(Loc.getMessage('CALL_BUTTON_GO_TO_CALL')),
+						...this.getButtonLabels(Loc.getMessage('CALL_BUTTON_GO_TO_CALL')),
 						onClick: (event) => {
 							event.stopPropagation();
 							this.callbacks.onButtonClick({ buttonName: 'returnToCall', event });
@@ -248,14 +425,12 @@ export class PictureInPictureWindow
 						},
 					});
 
-					Dom.append(this.buttonInstances.returnToCall.render(), this.actionsPanel);
-
 					break;
 				case 'stop-screen':
-					this.buttonInstances.stopScreen = new this.uiDeps.Buttons.SimpleButton({
+					this.#mountButton(this.uiDeps.Buttons.SimpleButton, {
 						class: 'stop-screen',
 						backgroundClass: 'bx-call-picture-in-picture-window__button-background',
-						text: this.getButtonTextBySizePictureWindow(Loc.getMessage('CALL_BUTTON_STOP_SCREEN')),
+						...this.getButtonLabels(Loc.getMessage('CALL_BUTTON_STOP_SCREEN')),
 						blocked: this.isButtonBlocked('screen'),
 						onClick: (event) => {
 							event.stopPropagation();
@@ -263,8 +438,6 @@ export class PictureInPictureWindow
 							window.focus();
 						},
 					});
-
-					Dom.append(this.buttonInstances.stopScreen.render(), this.actionsPanel);
 
 					break;
 				default:
@@ -364,6 +537,7 @@ export class PictureInPictureWindow
 				avatarBackgroundColor: user.avatarBackgroundColor,
 				initials: Utils.text.getFirstLetters(user.userModel.name).toUpperCase(),
 			});
+			this.#announceFloorRequest(user.userModel);
 		}
 		else
 		{
@@ -373,11 +547,32 @@ export class PictureInPictureWindow
 		this.updateFloorRequestCounter();
 	}
 
+	// the phrase is shared with the visible notification, so what is heard matches what is shown
+	#announceFloorRequest(userModel)
+	{
+		const messageKey = userModel.gender === 'F' ? 'IM_CALL_WANTS_TO_SAY_F' : 'IM_CALL_WANTS_TO_SAY_M';
+
+		// the name goes in as plain text: the notification wraps it into a span, and a reader would
+		// pronounce both the markup and the escaped entities of an encoded name
+		this.#announce(
+			Loc.getMessage(messageKey, { '#NAME#': userModel.name }),
+			{ floorRequest: true },
+		);
+	}
+
 	updateFloorRequestCounter(withoutRenderTemplate = false)
 	{
 		if (this.floorRequestElements.counter)
 		{
-			this.floorRequestElements.counter.innerText = this.floorRequestsList.length;
+			const count = this.floorRequestsList.length;
+
+			this.floorRequestElements.counterValue.innerText = count;
+			// the digit is hidden from the reader, so the name of the button is the only place
+			// carrying both the number and what it counts
+			this.floorRequestElements.counterDescription.innerText = Loc.getMessage(
+				'CALL_VIEW_PIP_FLOOR_REQUESTS_COUNT',
+				{ '#COUNT#': count },
+			);
 			this.updateVisibilityFloorRequestCounter();
 		}
 
@@ -387,13 +582,15 @@ export class PictureInPictureWindow
 		}
 	}
 
-	getTemplateForFloorRequestsPopup(): HTMLElement | HTMLBodyElement
+	getTemplateForFloorRequestsPopup()
 	{
 		const children = this.floorRequestsList.map((item, index) => {
+			// initials and the ordinal repeat what the name node already says
 			const avatarElement = Dom.create('div', {
 				props: {
 					className: 'bx-call-picture-in-picture-window__floor-request-avatar',
 				},
+				attrs: { 'aria-hidden': 'true' },
 			});
 
 			if (item.userModel.avatar)
@@ -416,14 +613,16 @@ export class PictureInPictureWindow
 					}),
 					Dom.create('div', {
 						props: { className: 'bx-call-picture-in-picture-window__floor-request-index' },
+						attrs: { 'aria-hidden': 'true' },
 						text: index + 1,
 					}),
 				],
 			});
 		});
 
-		return Dom.create('div', {
+		return Dom.create('ul', {
 			props: { className: 'bx-call-picture-in-picture-window__popup-template' },
+			attrs: { 'data-testid': `${FLOOR_REQUESTS_TEST_ID}-list` },
 			children,
 		});
 	}
@@ -444,7 +643,32 @@ export class PictureInPictureWindow
 			return;
 		}
 
-		this.floorRequestElements.popup.setContent(this.floorRequestElements.popupTemplate);
+		this.onFloorRequestsContentReplaced();
+	}
+
+	// setContent() raises no popup event, so the focus that sat on the replaced content has to be
+	// carried over to the new one by hand
+	onFloorRequestsContentReplaced()
+	{
+		const popup = this.floorRequestElements.popup;
+
+		if (!popup?.isShown())
+		{
+			return;
+		}
+
+		const wasInside = this.focusIsInsideContent();
+
+		popup.setContent(this.floorRequestElements.popupTemplate);
+
+		const content = popup.getContentContainer();
+		content.setAttribute('tabindex', '-1');
+		content.setAttribute('data-testid', `${FLOOR_REQUESTS_TEST_ID}-popup`);
+
+		if (wasInside)
+		{
+			content.focus();
+		}
 	}
 
 	closeFloorRequestMainNotification({ withoutAdditionInList, user, withoutDismount })
@@ -563,7 +787,9 @@ export class PictureInPictureWindow
 
 	onMouseMove(event)
 	{
-		if (!this.floorRequestElements.popup)
+		// a list opened from the keyboard belongs to the keyboard: a mouse crossing the window
+		// must not take it away
+		if (!this.floorRequestElements.popup || this.floorRequestsOpenedFromKeyboard)
 		{
 			return;
 		}
@@ -603,6 +829,174 @@ export class PictureInPictureWindow
 		this.floorRequestElements.popup.setMaxHeight(maxHeightPopup);
 	}
 
+	// both ways into the list build the popup, so the mouse no longer owns its creation
+	ensureFloorRequestsPopup()
+	{
+		if (this.floorRequestElements.popup)
+		{
+			return this.floorRequestElements.popup;
+		}
+
+		if (this.isMinHeight)
+		{
+			return null;
+		}
+
+		this.updateTemplateForFloorRequestsPopup();
+
+		this.floorRequestElements.popup = new Popup({
+			className: 'bx-call-picture-in-picture-window__popup',
+			bindElement: this.floorRequestElements.counter,
+			targetContainer: this.pictureWindow.document.body,
+			content: this.floorRequestElements.popupTemplate,
+			// the counter promises aria-haspopup="dialog"; main.popup already gives its container
+			// that role, and the name is the only half of the promise still missing
+			ariaLabel: Loc.getMessage('CALL_VIEW_PIP_FLOOR_REQUESTS_POPUP_ARIA'),
+			bindOptions: {
+				position: 'top',
+			},
+			autoHide: true,
+			closeByEsc: true,
+			// the focus cycle of the list belongs to this class alone: the trap of the popup
+			// activates after onPopupShow and would overrule the focus set there
+			focusTrap: false,
+			background: '#00428F',
+			contentBackground: '#00428F',
+			darkMode: true,
+			contentNoPaddings: true,
+			animation: 'fading',
+			padding: 0,
+			contentBorderRadius: '18px',
+			zIndex: 11,
+			events: {
+				onPopupShow: () => this.onFloorRequestsPopupShow(),
+				onPopupClose: () => this.onFloorRequestsPopupClose(),
+				onPopupDestroy: () => this.onFloorRequestsPopupDestroy(),
+			},
+		});
+
+		return this.floorRequestElements.popup;
+	}
+
+	openFloorRequestsPopup({ fromKeyboard } = {})
+	{
+		const popup = this.ensureFloorRequestsPopup();
+
+		if (!popup)
+		{
+			return;
+		}
+
+		const wasShown = popup.isShown();
+
+		// what the keyboard has claimed stays with it until the list closes: a mouse crossing the
+		// counter of a list the user works with must not hand it back to the pointer
+		this.floorRequestsOpenedFromKeyboard = this.floorRequestsOpenedFromKeyboard || fromKeyboard === true;
+		this.setNewSettingForPopup();
+		popup.show();
+		this.setFloorRequestsExpanded(true);
+
+		// show() returns at once on a popup that already stands open, and onPopupShow with it: the
+		// keyboard would be left on the counter, with the list it just opened out of the tab order
+		if (wasShown && fromKeyboard === true)
+		{
+			this.onFloorRequestsPopupShow();
+		}
+	}
+
+	setFloorRequestsExpanded(isExpanded)
+	{
+		this.floorRequestElements.counter?.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+
+		if (!this.template)
+		{
+			return;
+		}
+
+		if (isExpanded)
+		{
+			Dom.addClass(this.template, POPUP_OPEN_CLASS);
+		}
+		else
+		{
+			Dom.removeClass(this.template, POPUP_OPEN_CLASS);
+		}
+	}
+
+	onFloorRequestsPopupShow()
+	{
+		const content = this.floorRequestElements.popup?.getContentContainer();
+
+		if (!content)
+		{
+			return;
+		}
+
+		// the list takes the focus only when it is asked to: it never joins the tab order
+		content.setAttribute('tabindex', '-1');
+		// the container is built by main.popup, so the hook of the list is put on it from here
+		content.setAttribute('data-testid', `${FLOOR_REQUESTS_TEST_ID}-popup`);
+
+		if (this.floorRequestsOpenedFromKeyboard)
+		{
+			content.focus();
+		}
+	}
+
+	onFloorRequestsPopupClose()
+	{
+		// the fading animation defers the removal of the nodes, so where the focus was has to be
+		// settled before the content is torn down
+		this.floorRequestsFocusWasInside = this.focusIsInsideContent();
+		this.floorRequestElements.popup.destroy();
+	}
+
+	onFloorRequestsPopupDestroy()
+	{
+		this.setFloorRequestsExpanded(false);
+
+		const wasInside = this.floorRequestsFocusWasInside;
+
+		this.floorRequestsFocusWasInside = false;
+		this.floorRequestsOpenedFromKeyboard = false;
+		this.floorRequestElements.popup = null;
+
+		if (!wasInside)
+		{
+			return;
+		}
+
+		if (this.focusIfPossible(this.floorRequestElements.counter))
+		{
+			return;
+		}
+
+		// the last raised hand may have been lowered while the list was open, and then the counter
+		// is gone together with it
+		this.focusIfPossible(this.actionsPanel?.querySelector('button'));
+	}
+
+	focusIsInsideContent()
+	{
+		const content = this.floorRequestElements.popup?.getContentContainer();
+
+		return content?.contains(this.pictureWindow?.document?.activeElement) === true;
+	}
+
+	// the counter is hidden by display: none and stays in the document, so being connected says
+	// nothing about being able to take the focus: only the document knows
+	focusIfPossible(node)
+	{
+		if (!node?.isConnected)
+		{
+			return false;
+		}
+
+		node.focus();
+
+		return this.pictureWindow?.document?.activeElement === node;
+	}
+
 	renderFloorRequestCounter()
 	{
 		if (this.floorRequestElements.counter)
@@ -610,52 +1004,42 @@ export class PictureInPictureWindow
 			return;
 		}
 
-		this.floorRequestElements.counter = Dom.create('div', {
+		// the digit alone names nothing, so it is left to the eye only
+		this.floorRequestElements.counterValue = Dom.create('span', {
+			attrs: { 'aria-hidden': 'true' },
+		});
+
+		// the accessible name of the counter, hidden from the eye the same way the live region is
+		this.floorRequestElements.counterDescription = Dom.create('span', {
+			attrs: { 'data-testid': `${FLOOR_REQUESTS_TEST_ID}-description` },
+			style: VISUALLY_HIDDEN_STYLE,
+		});
+
+		this.floorRequestElements.counter = Dom.create('button', {
 			props: {
+				type: 'button',
 				className: 'bx-call-picture-in-picture-window__floor-requests',
 			},
-			text: this.floorRequestsList.length,
+			attrs: {
+				'data-testid': FLOOR_REQUESTS_TEST_ID,
+				'aria-haspopup': AriaHasPopup.Dialog,
+				'aria-expanded': 'false',
+			},
+			children: [
+				this.floorRequestElements.counterValue,
+				this.floorRequestElements.counterDescription,
+			],
 			events: {
 				mouseover: (event) => {
 					event.stopPropagation();
-
-					if (!this.floorRequestElements.popup && !this.isMinHeight)
-					{
-						this.updateTemplateForFloorRequestsPopup();
-						this.floorRequestElements.popup = new Popup({
-							className: 'bx-call-picture-in-picture-window__popup',
-							bindElement: this.floorRequestElements.counter,
-							targetContainer: this.pictureWindow.document.body,
-							content: this.floorRequestElements.popupTemplate,
-							bindOptions: {
-								position: 'top',
-							},
-							autoHide: true,
-							closeByEsc: true,
-							background: '#00428F',
-							contentBackground: '#00428F',
-							darkMode: true,
-							contentNoPaddings: true,
-							animation: 'fading',
-							padding: 0,
-							contentBorderRadius: '18px',
-							zIndex: 11,
-							events: {
-								onPopupClose: () => {
-									this.floorRequestElements.popup.destroy();
-								},
-								onPopupDestroy: () => {
-									this.floorRequestElements.popup = null;
-								},
-							},
-						});
-					}
-
-					if (this.floorRequestElements.popup)
-					{
-						this.setNewSettingForPopup();
-						this.floorRequestElements.popup.show();
-					}
+					this.openFloorRequestsPopup({ fromKeyboard: false });
+				},
+				// the root of the window returns to the call on a click, and the counter sits
+				// inside it: without this the keyboard would close the window instead of opening
+				// the list
+				click: (event) => {
+					event.stopPropagation();
+					this.openFloorRequestsPopup({ fromKeyboard: event.detail === 0 });
 				},
 			},
 		});
@@ -689,7 +1073,7 @@ export class PictureInPictureWindow
 			.forEach((el) => Dom.append(el, this.template));
 	}
 
-	setHeightPictureWindow(): boolean
+	setHeightPictureWindow()
 	{
 		if (!this.template)
 		{
@@ -723,7 +1107,7 @@ export class PictureInPictureWindow
 		return true;
 	}
 
-	setWidthPictureWindow(): boolean
+	setWidthPictureWindow()
 	{
 		if (!this.template)
 		{
@@ -795,7 +1179,142 @@ export class PictureInPictureWindow
 		}
 	}
 
-	async checkAvailableAndCreate(): Promise<?Window>
+	// A live region of its own instead of the announcer of ui.a11y: that one moves its queue by
+	// animation frames of the opener, and the tab this window stands in for gets none while hidden.
+	#createLiveRegion()
+	{
+		const container = this.pictureWindow?.document?.body;
+
+		if (this.#isClosing || !container)
+		{
+			return;
+		}
+
+		this.#liveRegion = Dom.create('div', {
+			attrs: {
+				'aria-live': 'polite',
+				'aria-atomic': 'true',
+				'data-testid': LIVE_REGION_TEST_ID,
+			},
+			style: VISUALLY_HIDDEN_STYLE,
+		});
+
+		Dom.append(this.#liveRegion, container);
+	}
+
+	/**
+	 * The way in for what the view has to say while this window is open: a reader following a window
+	 * of its own never gets the live region of the opener. Blocking of the panel does not come this
+	 * way - it goes through syncBlockButtons(), which keeps the record of what has been spoken.
+	 *
+	 * @param {string} message
+	 * @returns {boolean} Whether the window took the message. A window whose region is not up yet
+	 * leaves the announcement to the caller instead of swallowing it.
+	 */
+	announceMessage(message)
+	{
+		return this.#announce(message);
+	}
+
+	#announce(message, { floorRequest = false } = {})
+	{
+		if (!this.#liveRegion || !Type.isStringFilled(message))
+		{
+			return false;
+		}
+
+		this.#announcementQueue.push({ text: message, floorRequest });
+
+		if (this.#announcementQueue.length > ANNOUNCEMENT_QUEUE_LIMIT)
+		{
+			this.#collapseFloorRequestAnnouncements();
+		}
+
+		this.#processAnnouncements();
+
+		return true;
+	}
+
+	// only the enumeration of names gives way, never a control that has just been taken away: by the
+	// time a queued name sounds, the count of raised hands says more about the call than the name does
+	#collapseFloorRequestAnnouncements()
+	{
+		const kept = this.#announcementQueue.filter((item) => !item.floorRequest);
+
+		if (kept.length === this.#announcementQueue.length)
+		{
+			return;
+		}
+
+		const summary = Loc.getMessage('CALL_VIEW_PIP_FLOOR_REQUESTS_COUNT', {
+			'#COUNT#': this.floorRequestsList.length,
+		});
+
+		this.#announcementQueue = Type.isStringFilled(summary)
+			? [...kept, { text: summary, floorRequest: true }]
+			: kept;
+	}
+
+	#processAnnouncements()
+	{
+		if (this.#announcementTimeoutId !== null || !this.#liveRegion)
+		{
+			return;
+		}
+
+		// a reader speaks the change of the text, not the text itself: the node is emptied first and
+		// filled a tick later, and an emptied node is also what the last message leaves behind
+		this.#liveRegion.textContent = '';
+
+		if (this.#announcementQueue.length === 0)
+		{
+			return;
+		}
+
+		const { text } = this.#announcementQueue.shift();
+
+		this.#scheduleAnnouncement(() => this.#writeAnnouncement(text), ANNOUNCEMENT_WRITE_DELAY);
+	}
+
+	#writeAnnouncement(message)
+	{
+		if (!this.#liveRegion)
+		{
+			return;
+		}
+
+		this.#liveRegion.textContent = message;
+		this.#scheduleAnnouncement(() => this.#processAnnouncements(), ANNOUNCEMENT_HOLD_DELAY);
+	}
+
+	// the queue is moved by the timers of the window: they are the only source of ticks that keeps
+	// running while the tab of the opener is hidden
+	#scheduleAnnouncement(action, delay)
+	{
+		this.#announcementTimeoutId = this.pictureWindow?.setTimeout(() => {
+			this.#announcementTimeoutId = null;
+			action();
+		}, delay) ?? null;
+	}
+
+	#destroyLiveRegion()
+	{
+		if (this.#announcementTimeoutId !== null)
+		{
+			this.pictureWindow?.clearTimeout(this.#announcementTimeoutId);
+			this.#announcementTimeoutId = null;
+		}
+
+		this.#announcementQueue = [];
+
+		if (this.#liveRegion)
+		{
+			Dom.remove(this.#liveRegion);
+			this.#liveRegion = null;
+		}
+	}
+
+	async checkAvailableAndCreate()
 	{
 		if (this.pictureWindow)
 		{
@@ -842,7 +1361,16 @@ export class PictureInPictureWindow
 					}
 				});
 
+				// the order of the three is fixed: the markup goes first because the live region
+				// needs a body to live in, and the language is set before anything is announced
 				this.pictureWindow.document.body.append(this.template);
+
+				applyPipDocumentAttributes(this.pictureWindow.document, {
+					lang: document.documentElement?.lang,
+					title: this.accessibleName,
+				});
+
+				this.#createLiveRegion();
 			}
 			catch
 			{
@@ -874,6 +1402,9 @@ export class PictureInPictureWindow
 		}
 
 		this.#destroyFloorRequests();
+		// the region is torn down while the window is still alive: its timers are the ones holding
+		// the queue, and after close() there is nothing left to clear them with
+		this.#destroyLiveRegion();
 		this.destroyCurrentUser();
 		this.toggleEvents(false);
 		this.close();
@@ -917,7 +1448,11 @@ export class PictureInPictureWindow
 		}
 
 		this.floorRequestElements.counter = null;
+		this.floorRequestElements.counterValue = null;
+		this.floorRequestElements.counterDescription = null;
 		this.floorRequestElements.popupTemplate = null;
 		this.floorRequestsList = [];
+		this.floorRequestsOpenedFromKeyboard = false;
+		this.floorRequestsFocusWasInside = false;
 	}
 }

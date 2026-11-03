@@ -1,0 +1,3 @@
+<?php
+
+$MESS["MAIL_VACATION_AUTO_REPLY_NO_SUBJECT"] = "Без темы";

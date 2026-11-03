@@ -1,4 +1,4 @@
-import {Loc, Tag, Dom, Type, Event} from "main.core";
+import {Loc, Tag, Text, Dom, Type, Event} from "main.core";
 import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.autocomplete";
 import {EventEmitter} from "main.core.events";
 import {EntityEditorRequisiteTooltip} from './requisite-tooltip';
@@ -262,7 +262,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 		if (this.isContextMenuEnabled())
 		{
-			this._wrapper.appendChild(this.createContextMenuButton());
+			this.insertContextMenuButton(this._wrapper);
 		}
 
 		if (this.isDragEnabled())
@@ -394,9 +394,19 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 			<div class="ui-entity-editor-content-block">
 				${autocompleteContainer}
 				<div class="crm-entity-widget-content-block-add-field">
-					<span class="crm-entity-widget-content-add-field" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
+					<span class="crm-entity-widget-content-add-field" role="button" tabindex="0"
+						onclick="${this.toggleNewRequisitePresetMenu.bind(this)}"
+						onkeydown="${this.onActivationKeyDown.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
 				</div>
 			</div>`;
+	}
+
+	onActivationKeyDown(event)
+	{
+		// The helper lives in ui.entity-editor, which this extension already declares among its
+		// dependencies. No handler is passed: it raises a click, which keeps one path for both
+		// devices where the handler reads event.target.
+		BX.UI.EntityEditorControl.activateOnKey(event);
 	}
 
 	renderRequisiteSelectForm()
@@ -419,10 +429,21 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 		const selectInput = Tag.render`<div class="ui-ctl-element" onclick="${toggleDropdown}"></div>`;
 
+		// The arrow is the only keyboard way into the dropdown: the .ui-ctl-element next
+		// to it is a plain div with a click handler, no tab stop of its own. It was a
+		// nameless button, so it reached a screen reader as just "button" - 4.1.2.
+		// type="button" is explicit because it lives inside the editor's real <form> and
+		// a button with no type defaults to submit.
+		// No aria-expanded: the popup has autoHide and closes on an outside click without
+		// telling the closure below, so the flag would go stale after the first one.
+		// Keep comments out of the Tag.render template: its parser breaks on multiline
+		// HTML comments and renders their tail as visible text.
 		const selectContainer = Tag.render`
 			<div class="crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites">
 				<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon">
-					<button class="ui-ctl-after ui-ctl-icon-angle" onclick="${toggleDropdown}"></button>
+					<button type="button" class="ui-ctl-after ui-ctl-icon-angle" aria-haspopup="menu"
+						aria-label="${Text.encode(Loc.getMessage('REQUISITE_SELECT_ARIA_LABEL'))}"
+						onclick="${toggleDropdown}"></button>
 					${selectInput}
 				</div>			
 			</div>`;
@@ -442,7 +463,9 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 			<div class="ui-entity-editor-content-block">
 				${selectContainer}
 				<div class="crm-entity-widget-content-block-add-field">
-					<span class="crm-entity-widget-content-add-field" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD_REQUISITE')}</span>
+					<span class="crm-entity-widget-content-add-field" role="button" tabindex="0"
+						onclick="${this.toggleNewRequisitePresetMenu.bind(this)}"
+						onkeydown="${this.onActivationKeyDown.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD_REQUISITE')}</span>
 				</div>
 			</div>`;
 	}
@@ -467,10 +490,13 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 		const selectInput = Tag.render`<div class="ui-ctl-element" onclick="${toggleDropdown}"></div>`;
 
+		// Same nameless arrow as in renderRequisiteSelectForm above.
 		this._domNodes.bankDetailsSelectContainer = Tag.render`
 			<div class="crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites">
 				<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon">
-					<button class="ui-ctl-after ui-ctl-icon-angle" onclick="${toggleDropdown}"></button>
+					<button type="button" class="ui-ctl-after ui-ctl-icon-angle" aria-haspopup="menu"
+						aria-label="${Text.encode(Loc.getMessage('REQUISITE_BANK_DETAIL_SELECT_ARIA_LABEL'))}"
+						onclick="${toggleDropdown}"></button>
 					${selectInput}
 				</div>			
 			</div>`;
@@ -490,7 +516,9 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 			<div class="ui-entity-editor-content-block">
 				${this._domNodes.bankDetailsSelectContainer}
 				<div class="crm-entity-widget-content-block-add-field">
-					<span class="crm-entity-widget-content-add-field" onclick="${this.onAddBankDetailsClick.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD_BANK_DETAILS')}</span>
+					<span class="crm-entity-widget-content-add-field" role="button" tabindex="0"
+						onclick="${this.onAddBankDetailsClick.bind(this)}"
+						onkeydown="${this.onActivationKeyDown.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD_BANK_DETAILS')}</span>
 				</div>
 			</div>`;
 	}

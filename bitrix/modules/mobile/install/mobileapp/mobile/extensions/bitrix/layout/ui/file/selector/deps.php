@@ -3,9 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'alert',
-		'haptics',
-		'apptheme',
+		'tokens',
 		'layout/ui/fields/file',
 		'layout/ui/file-attachment',
 		'layout/ui/widget-header-button',

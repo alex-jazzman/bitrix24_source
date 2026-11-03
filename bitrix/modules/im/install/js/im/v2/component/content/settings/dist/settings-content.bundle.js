@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_lib_logger, im_v2_const, im_public, im_v2_lib_desktopApi, im_v2_lib_helpdesk, im_v2_lib_feedback, main_core, im_v2_component_dialog_chat, im_v2_lib_theme, im_v2_provider_service_settings, im_v2_application_core, im_v2_lib_demo, im_v2_lib_confirm, ui_forms, im_v2_component_elements_hint, im_v2_lib_utils, im_v2_lib_analytics, im_v2_lib_feature) {
+(function (exports, im_v2_lib_logger, im_v2_const, im_public, im_v2_lib_desktopApi, im_v2_lib_helpdesk, im_v2_lib_feedback, main_core, im_v2_component_dialog_chat, im_v2_lib_theme, im_v2_provider_service_settings, im_v2_component_message_elements, ui_iconSet_api_vue, ui_reaction_item, ui_reaction_item_vue, ui_reaction_picker, im_v2_application_core, im_v2_lib_demo, im_v2_lib_confirm, ui_forms, im_v2_component_elements_hint, im_v2_lib_analytics, im_v2_lib_utils, im_v2_lib_feature) {
 	'use strict';
 
 	const SectionMetaData = {
@@ -220,7 +220,173 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const initDemoData = () => {
+	const SHOW_DELAY = 200;
+	const HIDE_DELAY = 200;
+
+	// @vue/component
+	const ChatQuickReaction = {
+		name: 'ChatQuickReaction',
+		components: {
+			Reaction: ui_reaction_item_vue.Reaction,
+			ChatDialog: im_v2_component_dialog_chat.ChatDialog,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			chevronDown() {
+				return ui_iconSet_api_vue.Outline.CHEVRON_DOWN_M;
+			},
+			alignment() {
+				return this.$store.getters['application/settings/get'](im_v2_const.Settings.appearance.alignment);
+			},
+			alignmentClasses() {
+				return {
+					'--left-align': this.alignment === im_v2_const.DialogAlignment.left,
+					'--center-align': this.alignment === im_v2_const.DialogAlignment.center
+				};
+			},
+			backgroundStyle() {
+				return im_v2_lib_theme.ThemeManager.getCurrentBackgroundStyle();
+			},
+			currentReactionTitle() {
+				return ui_reaction_item.ReactionTitle[this.currentReaction] ?? '';
+			},
+			currentReaction() {
+				const mainReaction = this.$store.getters['application/settings/get'](im_v2_const.Settings.message.defaultReaction);
+				if (main_core.Type.isStringFilled(mainReaction)) {
+					return mainReaction;
+				}
+				return ui_reaction_item.ReactionName.like;
+			}
+		},
+		beforeUnmount() {
+			clearTimeout(this.showTimeout);
+			this.clearHideTimer();
+			this.reactionPicker?.hide();
+		},
+		created() {
+			im_v2_component_message_elements.MessageDefaultReactionManager.getInstance().init();
+			this.reactionPicker = null;
+			this.showTimeout = null;
+			this.hideTimeout = null;
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			startShowTimer() {
+				this.clearHideTimer();
+				if (this.reactionPicker?.isShown()) {
+					return;
+				}
+				this.showTimeout = setTimeout(() => {
+					this.openReactionPicker();
+				}, SHOW_DELAY);
+			},
+			clearShowTimer() {
+				clearTimeout(this.showTimeout);
+				this.startHideTimer();
+			},
+			openReactionPicker() {
+				clearTimeout(this.showTimeout);
+				this.clearHideTimer();
+				if (this.reactionPicker?.isShown()) {
+					return;
+				}
+				this.reactionPicker = new ui_reaction_picker.ReactionPicker({
+					target: this.$refs.reactionPickerButton
+				});
+				this.subscribeToReactionPickerEvents();
+				this.reactionPicker.show();
+			},
+			subscribeToReactionPickerEvents() {
+				this.reactionPicker.subscribe('select', async selectEvent => {
+					const {
+						reaction
+					} = selectEvent.getData();
+					try {
+						await im_v2_component_message_elements.MessageDefaultReactionManager.getInstance().changeDefaultReaction(reaction);
+					} catch {
+						return;
+					}
+					this.reactionPicker?.hide();
+				});
+				this.reactionPicker.subscribe('mouseleave', this.startHideTimer);
+				this.reactionPicker.subscribe('mouseenter', () => {
+					this.clearHideTimer();
+				});
+				this.reactionPicker.subscribe('hide', () => {
+					this.clearHideTimer();
+					this.reactionPicker = null;
+				});
+			},
+			startHideTimer() {
+				this.hideTimeout = setTimeout(() => {
+					this.reactionPicker?.hide();
+				}, HIDE_DELAY);
+			},
+			clearHideTimer() {
+				clearTimeout(this.hideTimeout);
+			}
+		},
+		template: `
+		<div class="bx-im-settings-section-content__block-reaction">
+			<div class="bx-im-settings-alignment-quick-reaction__preview">
+				<div
+					class="bx-im-content-chat__container bx-im-settings-quick-reaction__demo-chat_container"
+					:class="alignmentClasses"
+					:style="backgroundStyle"
+				>
+					<ChatDialog :dialogId="dialogId"/>
+				</div>
+				<div 
+					class="bx-im-settings-quick-reaction__alignment"
+					:class="alignmentClasses"
+				>
+					<div class="bx-im-settings-quick-reaction__selector-container">
+						<div class="bx-im-settings-quick-reaction__selector">
+							<Reaction
+								:key="currentReaction"
+								:name="currentReaction"
+								class="bx-im-settings-quick-reaction__selector-icon"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="bx-im-settings-section-content__block_subtitle">
+				{{ loc('IM_CONTENT_SETTINGS_OPTION_DESCRIPTION_QUICKREACTREACTION')}}
+			</div>
+			<div class="bx-im-settings-section-content__choice">
+				<button 
+					class="bx-im-settings-section-content__choice_button"
+					type="button"
+					ref="reactionPickerButton"
+					@click="openReactionPicker"
+					@mouseenter="startShowTimer"
+					@mouseleave="clearShowTimer"
+				>
+					<Reaction
+						:key="currentReaction"
+						:name="currentReaction"
+						class="bx-im-settings-section-content__choice_button-icon"
+					/>
+					<span class="bx-im-settings-section-content__choice_button-title">
+						{{ currentReactionTitle }}
+					</span>
+					<BIcon :name="chevronDown" />
+				</button>
+			</div>
+		</div>
+	`
+	};
+
+	const initAppearanceDemoData = () => {
 		const chatBuilder = new im_v2_lib_demo.DemoChatBuilder();
 		chatBuilder.addChat({
 			role: im_v2_const.UserRole.guest
@@ -247,6 +413,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		chatBuilder.save();
 		return chatBuilder.getChat().dialogId;
 	};
+	const initQuickReactionDemoData = () => {
+		const chatBuilder = new im_v2_lib_demo.DemoChatBuilder();
+		chatBuilder.addChat({
+			role: im_v2_const.UserRole.guest
+		});
+		chatBuilder.addMessage({
+			authorId: im_v2_application_core.Core.getUserId(),
+			text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_2'),
+			viewedByOthers: true
+		});
+		chatBuilder.save();
+		return chatBuilder.getChat().dialogId;
+	};
 
 	// @vue/component
 	const AppearanceSection = {
@@ -254,11 +433,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		components: {
 			ChatDialog: im_v2_component_dialog_chat.ChatDialog,
 			ChatBackground,
-			ChatAlignment
+			ChatAlignment,
+			ChatQuickReaction
 		},
 		data() {
 			return {
-				fakeDialogId: ''
+				fakeDialogId: '',
+				quickReactionDialogId: ''
 			};
 		},
 		computed: {
@@ -271,7 +452,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			this.fakeDialogId = initDemoData();
+			this.fakeDialogId = initAppearanceDemoData();
+			this.quickReactionDialogId = initQuickReactionDemoData();
 		},
 		methods: {
 			loc(phraseCode) {
@@ -290,6 +472,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_APPEARANCE_BACKGROUND') }}
 				</div>
 				<ChatBackground />
+			</div>
+			<div class="bx-im-settings-section-content__separator"></div>
+			<div class="bx-im-settings-section-content__block">
+				<div class="bx-im-settings-section-content__block_title">
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_APPEARANCE_QUICKREACTREACTION') }}
+				</div>
+				<ChatQuickReaction
+					:dialogId="quickReactionDialogId"
+				/>
 			</div>
 			<div class="bx-im-settings-section-content__separator"></div>
 			<div class="bx-im-settings-section-content__block">
@@ -728,44 +919,236 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const ReferenceHeader = {
+		name: 'ReferenceHeader',
+		props: {
+			columns: {
+				type: Array,
+				required: true
+			}
+		},
+		template: `
+		<div class="bx-im-settings-hotkey-reference__row" role="row">
+			<span
+				v-for="column in columns"
+				:key="column"
+				class="bx-im-settings-hotkey-reference__header"
+				role="columnheader"
+			>{{ column }}</span>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const ReferenceRow = {
+		name: 'ReferenceRow',
+		props: {
+			action: {
+				type: String,
+				required: true
+			},
+			cells: {
+				type: Array,
+				required: true
+			}
+		},
+		template: `
+		<div class="bx-im-settings-hotkey-reference__row" role="row">
+			<span class="bx-im-settings-hotkey-reference__action" role="rowheader">{{ action }}</span>
+			<span
+				v-for="(cell, index) in cells"
+				:key="index"
+				class="bx-im-settings-hotkey-reference__cell"
+				role="cell"
+			>{{ cell }}</span>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const ReferenceBlock = {
+		name: 'ReferenceBlock',
+		components: {
+			ReferenceHeader,
+			ReferenceRow
+		},
+		props: {
+			block: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			titleId() {
+				return `bx-im-settings-hotkey-reference-title-${this.block.id}`;
+			}
+		},
+		template: `
+		<div class="bx-im-settings-section-content__body">
+			<div class="bx-im-settings-section-content__block">
+				<div :id="titleId" class="bx-im-settings-section-content__block_title">{{ block.title }}</div>
+				<div class="bx-im-settings-hotkey-reference__scroll">
+					<div
+						class="bx-im-settings-hotkey-reference"
+						:class="{ '--two-columns': block.columns.length === 2 }"
+						role="table"
+						:aria-labelledby="titleId"
+					>
+						<ReferenceHeader :columns="block.columns" />
+						<ReferenceRow
+							v-for="row in block.rows"
+							:key="row.action"
+							:action="row.action"
+							:cells="row.cells"
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const BlockId = {
+		send: 'send',
+		chats: 'chats',
+		text: 'text',
+		formatting: 'formatting'
+	};
+	const Phrase = {
+		columnAction: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_COLUMN_ACTION'),
+		columnWindows: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_COLUMN_WINDOWS'),
+		columnMacos: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_COLUMN_MACOS'),
+		columnSyntax: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_COLUMN_SYNTAX'),
+		blockSend: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_BLOCK_SEND'),
+		blockChats: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_BLOCK_CHATS'),
+		blockText: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_BLOCK_TEXT'),
+		blockFormatting: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_BLOCK_FORMATTING'),
+		sendMessage: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_SEND_MESSAGE'),
+		newLine: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_NEW_LINE'),
+		editLast: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_EDIT_LAST'),
+		insertName: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_INSERT_NAME'),
+		selectAll: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_SELECT_ALL'),
+		bold: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_BOLD'),
+		italic: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_ITALIC'),
+		underline: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_UNDERLINE'),
+		strikethrough: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_STRIKETHROUGH'),
+		quote: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_QUOTE'),
+		link: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_LINK'),
+		color: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_COLOR'),
+		size: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_ACTION_SIZE'),
+		syntaxQuote: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_QUOTE'),
+		syntaxBold: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_BOLD'),
+		syntaxItalic: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_ITALIC'),
+		syntaxUnderline: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_UNDERLINE'),
+		syntaxStrikethrough: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_STRIKETHROUGH'),
+		syntaxLink: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_LINK'),
+		syntaxColor: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_COLOR'),
+		syntaxSize: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_SYNTAX_SIZE'),
+		avatarClick: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_AVATAR_CLICK'),
+		or: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_HOTKEY_OR')
+	};
+	const OutsideRegistry = {
+		selectAll: 'Ctrl+A',
+		insertNameModifier: 'Alt'
+	};
+	const OsColumns = [Phrase.columnAction, Phrase.columnWindows, Phrase.columnMacos];
+	const OsList = [im_v2_lib_utils.HotkeyOs.windows, im_v2_lib_utils.HotkeyOs.macos];
+	const SyntaxColumns = [Phrase.columnAction, Phrase.columnSyntax];
+	const getHotkeyReference = sendByEnter => {
+		const {
+			sendMessage,
+			newLine,
+			editMessage,
+			textDecoration
+		} = im_v2_const.HotkeyCombination;
+		return [{
+			id: BlockId.send,
+			title: Phrase.blockSend,
+			columns: OsColumns,
+			rows: sendByEnter ? [osRow(Phrase.sendMessage, sendMessage.byEnter), osRow(Phrase.newLine, newLine.byShiftEnter, newLine.byCtrlEnter)] : [osRow(Phrase.sendMessage, sendMessage.byCtrlEnter), osRow(Phrase.newLine, newLine.byShiftEnter, newLine.byEnter)]
+		}, {
+			id: BlockId.chats,
+			title: Phrase.blockChats,
+			columns: OsColumns,
+			rows: [osRow(Phrase.editLast, editMessage.lastOwn), pointerRow(Phrase.insertName, OutsideRegistry.insertNameModifier, Phrase.avatarClick)]
+		}, {
+			id: BlockId.text,
+			title: Phrase.blockText,
+			columns: OsColumns,
+			rows: [osRow(Phrase.selectAll, OutsideRegistry.selectAll), osRow(Phrase.bold, textDecoration.bold), osRow(Phrase.italic, textDecoration.italic), osRow(Phrase.underline, textDecoration.underline), osRow(Phrase.strikethrough, textDecoration.strikethrough)]
+		}, {
+			id: BlockId.formatting,
+			title: Phrase.blockFormatting,
+			columns: SyntaxColumns,
+			rows: [syntaxRow(Phrase.quote, Phrase.syntaxQuote), syntaxRow(Phrase.bold, Phrase.syntaxBold), syntaxRow(Phrase.italic, Phrase.syntaxItalic), syntaxRow(Phrase.underline, Phrase.syntaxUnderline), syntaxRow(Phrase.strikethrough, Phrase.syntaxStrikethrough), syntaxRow(Phrase.link, Phrase.syntaxLink), syntaxRow(Phrase.color, Phrase.syntaxColor), syntaxRow(Phrase.size, Phrase.syntaxSize)]
+		}];
+	};
+	const osRow = (action, ...combinations) => {
+		return {
+			action,
+			combinations,
+			cells: OsList.map(os => combinationsText(os, combinations))
+		};
+	};
+	const syntaxRow = (action, syntax) => {
+		return {
+			action,
+			combinations: [],
+			cells: [syntax]
+		};
+	};
+	const pointerRow = (action, modifier, pointerAction) => {
+		return {
+			action,
+			combinations: [],
+			cells: OsList.map(os => `${im_v2_lib_utils.Utils.key.getCombinationText(modifier, os)} + ${pointerAction}`)
+		};
+	};
+	const combinationsText = (os, combinations) => {
+		return combinations.map(combination => im_v2_lib_utils.Utils.key.getCombinationText(combination, os)).join(` ${Phrase.or} `);
+	};
+
+	// @vue/component
 	const HotkeySection = {
 		name: 'HotkeySection',
 		components: {
-			RadioOption
-		},
-		data() {
-			return {};
+			RadioOption,
+			ReferenceBlock
 		},
 		computed: {
 			sendByEnter() {
 				return this.$store.getters['application/settings/get'](im_v2_const.Settings.hotkey.sendByEnter);
 			},
 			sendCombinationItems() {
-				const ctrlKey = im_v2_lib_utils.Utils.platform.isMac() ? '&#8984;' : 'Ctrl';
-				const enterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
-					'#HOTKEY#': 'Shift + Enter'
-				});
-				const ctrlEnterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
-					'#HOTKEY#': 'Enter'
-				});
+				const {
+					sendMessage,
+					newLine
+				} = im_v2_const.HotkeyCombination;
 				return [{
 					value: true,
-					text: 'Enter',
-					subtext: enterSubtext,
+					text: im_v2_lib_utils.Utils.key.getCombinationText(sendMessage.byEnter),
+					subtext: this.newLineSubtext(newLine.byShiftEnter),
 					selected: this.sendByEnter === true
 				}, {
 					value: false,
-					text: `${ctrlKey} + Enter`,
-					subtext: ctrlEnterSubtext,
-					html: true,
+					text: im_v2_lib_utils.Utils.key.getCombinationText(sendMessage.byCtrlEnter),
+					subtext: this.newLineSubtext(newLine.byEnter),
 					selected: this.sendByEnter === false
 				}];
 			},
-			isMac() {
-				return im_v2_lib_utils.Utils.platform.isMac();
+			referenceBlocks() {
+				return getHotkeyReference(this.sendByEnter);
 			}
 		},
+		mounted() {
+			im_v2_lib_analytics.Analytics.getInstance().settings.onOpenHotkeySection();
+		},
 		methods: {
+			newLineSubtext(combination) {
+				return this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
+					'#HOTKEY#': im_v2_lib_utils.Utils.key.getCombinationText(combination)
+				});
+			},
 			onSendByEnterChange(newValue) {
 				this.getSettingsService().changeSetting(im_v2_const.Settings.hotkey.sendByEnter, newValue);
 			},
@@ -791,6 +1174,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 		</div>
+		<ReferenceBlock
+			v-for="block in referenceBlocks"
+			:key="block.id"
+			:block="block"
+		/>
 	`
 	};
 
@@ -1030,21 +1418,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				required: true
 			}
 		},
-		computed: {
-			sections() {
-				return Object.keys(im_v2_const.Settings);
+		watch: {
+			// layout can be reopened without a section - restore it on every empty entityId
+			entityId: {
+				immediate: true,
+				handler() {
+					this.setInitialSection();
+				}
 			}
 		},
 		created() {
 			im_v2_lib_logger.Logger.warn('Content: Settings created');
-			this.setInitialSection();
 		},
 		methods: {
 			setInitialSection() {
 				if (!this.entityId) {
-					const [firstSection] = this.sections;
 					void im_public.Messenger.openSettings({
-						onlyPanel: firstSection
+						onlyPanel: im_v2_const.SettingsSection.appearance
 					});
 				}
 			},
@@ -1064,5 +1454,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SettingsContent = SettingsContent;
 
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Message, BX.UI.IconSet, BX.UI.Reaction.Item, BX.UI.Reaction.Item.Vue, BX.UI.Reaction.Picker, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=settings-content.bundle.js.map

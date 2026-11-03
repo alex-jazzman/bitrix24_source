@@ -28,6 +28,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Type } = require('type');
+	const { unique } = require('utils/array');
 
 	const MENTION_SYMBOL = new Set(['@', '+']);
 	const CLOSE_MENTION_SYMBOLS = new Set([' ', '\n']);
@@ -66,10 +67,31 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		#addUserPopup = null;
 
 		/**
+		 * @type {string|number|null}
+		 */
+		#addToChatCandidateId = null;
+
+		/**
+		 * @type {string|null}
+		 */
+		#addToTaskBaselineText = null;
+
+		/**
+		 * @type {boolean}
+		 */
+		#isAddToTaskBaselineConfirmed = false;
+
+		/**
+		 * @type {number}
+		 */
+		#addToChatRequestId = 0;
+
+		/**
 		 * @param {DialogView} view
 		 * @param dialogId
+		 * @param {AddToChatPopupManager} [addToChatPopupManager]
 		 */
-		constructor({ view, dialogId })
+		constructor({ view, dialogId, addToChatPopupManager = null })
 		{
 			/**
 			 * @private
@@ -78,6 +100,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.view = view;
 
 			this.dialogId = dialogId;
+
+			/**
+			 * @private
+			 * @type {AddToChatPopupManager|null}
+			 */
+			this.addToChatPopupManager = addToChatPopupManager;
 			/**
 			 * @private
 			 * @type {MentionProvider || null}
@@ -143,7 +171,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			 * @private
 			 * @type {function}
 			 */
-			this.mentionItemSelectedHandler = this.onMentionItemSelected.bind(this);
+			this.textSetHandler = this.onTextSet.bind(this);
+			/**
+			 * @private
+			 * @type {function}
+			 */
+			this.mentionItemSelectedHandler = this.onMentionPanelItemTap.bind(this);
 			/**
 			 * @private
 			 * @type {function}
@@ -163,6 +196,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 			this.view.textField.on(EventType.dialog.textField.changeState, this.changeTextStateHandler);
+			this.view.textField.on(EventType.dialog.textField.textSet, this.textSetHandler);
 			this.view.mentionPanel.on(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
 			this.view.mentionPanel.on(EventType.dialog.mentionPanel.actionTap, this.mentionItemActionTapHandler);
 		}
@@ -193,6 +227,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 			this.view.textField.off(EventType.dialog.textField.changeState, this.changeTextStateHandler);
+			this.view.textField.off(EventType.dialog.textField.textSet, this.textSetHandler);
 			this.view.mentionPanel.off(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
 			this.view.mentionPanel.off(EventType.dialog.mentionPanel.actionTap, this.mentionItemActionTapHandler);
 		}
@@ -234,6 +269,23 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		{
 			return ChatPermission.canAddParticipants(this.dialogId)
 				&& Feature.isAddingUserByMentionAvailable;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get canOfferAddToChatPopup()
+		{
+			return Feature.isAddToChatPopupAvailable
+				&& ChatPermission.canAddParticipants(this.dialogId);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get shouldLoadUsersMembership()
+		{
+			return this.canAddParticipants || this.canOfferAddToChatPopup;
 		}
 
 		/**
@@ -422,8 +474,18 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		onChangeText(text, inputCharacters, cursorPosition)
 		{
 			logger.log('Mention.onChangeText', text, inputCharacters, cursorPosition);
-			this.#closeAddUserPopup();
+			this.processTextChangeSideEffects(text);
+			this.processMentionTextChange(text, inputCharacters, cursorPosition);
+		}
 
+		/**
+		 * @protected
+		 * @param {string} text
+		 * @param {string} inputCharacters
+		 * @param {number} cursorPosition
+		 */
+		processMentionTextChange(text, inputCharacters, cursorPosition)
+		{
 			if (this.isMentionProcessed)
 			{
 				this.onProcessedMentionChangeText(text, inputCharacters, cursorPosition);
@@ -432,6 +494,25 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 
 			this.onInactiveMentionChangeText(text, inputCharacters, cursorPosition);
+		}
+
+		/**
+		 * @protected
+		 * @param {string} text
+		 */
+		processTextChangeSideEffects(text)
+		{
+			this.#closeAddUserPopup();
+			this.#checkAddToChatPopupActuality(text);
+		}
+
+		/**
+		 * @private
+		 * @param {string} text
+		 */
+		onTextSet(text)
+		{
+			this.#checkAddToChatPopupActuality(text);
 		}
 
 		/**
@@ -456,7 +537,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.lastQuerySymbolPosition = cursorPosition - 1;
 			if (this.mentionSymbolPosition === this.lastQuerySymbolPosition)
 			{
-				void this.#initialUsersMembership();
+				void this.initialUsersMembership();
 
 				const userIdList = DialogHelper.isChatId(this.dialogId)
 					? this.getRecentUsers()
@@ -468,6 +549,17 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 
+			this.continueMentionSearch(text, cursorPosition);
+		}
+
+		/**
+		 * @protected
+		 * @param {string} text
+		 * @param {number} cursorPosition
+		 */
+		continueMentionSearch(text, cursorPosition)
+		{
+			this.lastQuerySymbolPosition = cursorPosition - 1;
 			this.curruntQuery = text.slice(this.mentionSymbolPosition + 1, cursorPosition);
 			void this.provider.doSearch(this.curruntQuery);
 		}
@@ -494,21 +586,32 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			this.mentionSymbolPosition = cursorPosition - 1;
 			this.provider.setOptionConfig(this.chatId);
-			void this.#initialUsersMembership();
+			void this.initialUsersMembership();
 
 			const userIdList = await this.loadUsersForInitial();
 			this.drawUserFoInitial(userIdList);
 		}
 
-		async #initialUsersMembership()
+		/**
+		 * @protected
+		 * @return {Promise<void>}
+		 */
+		async initialUsersMembership()
 		{
-			if (!this.canAddParticipants)
+			if (!this.shouldLoadUsersMembership)
 			{
 				return;
 			}
 
 			const notParticipantsIds = await this.provider.loadChatUsersMembership();
 			if (!Type.isArrayFilled(notParticipantsIds))
+			{
+				return;
+			}
+
+			logger.log(`${this.constructor.name}.initialUsersMembership : ${notParticipantsIds}`);
+
+			if (!this.canAddParticipants)
 			{
 				return;
 			}
@@ -523,8 +626,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 					this.view.mentionPanel.update(itemId, { actions: [this.#buildInviteActionButton(itemId)] });
 				}
 			});
-
-			logger.log(`${this.constructor.name}.#initialUsersMembership : ${notParticipantsIds}`);
 		}
 
 		/**
@@ -580,10 +681,28 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		}
 
 		/**
+		 * The panel is shared with the slash-command manager, so a tap on it does not necessarily
+		 * belong to a mention: only an open mention session may turn a tapped row into a mention.
+		 *
 		 * @private
 		 * @param {MentionItem} item
 		 */
-		onMentionItemSelected(item)
+		onMentionPanelItemTap(item)
+		{
+			if (!this.isProcessed)
+			{
+				return;
+			}
+
+			this.onMentionItemSelected(item);
+		}
+
+		/**
+		 * @private
+		 * @param {MentionItem} item
+		 * @param {{ skipAddToChatPopup?: boolean }} [options]
+		 */
+		onMentionItemSelected(item, options = {})
 		{
 			const bbCodeText = this.#getBBCodeTextByItem(item);
 
@@ -600,6 +719,238 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.view.textField.replaceText(fromIndex, toIndex, bbCodeText);
 
 			this.finishMentioning();
+
+			void this.#maybeShowAddToChatPopup(item, options);
+		}
+
+		/**
+		 * Membership is resolved asynchronously, and meanwhile the user may delete the mention,
+		 * keep typing or pick another user. So the candidate is claimed synchronously, before the
+		 * request: this way #checkAddToChatPopupActuality watches the text even before the popup is
+		 * shown and drops the candidate as soon as the mention disappears or the text changes.
+		 * The operation id discards responses that arrive out of order or for an outdated candidate.
+		 *
+		 * @param {MentionItem} item
+		 * @param {{ skipAddToChatPopup?: boolean }} options
+		 * @return {Promise<void>}
+		 */
+		async #maybeShowAddToChatPopup(item, options)
+		{
+			if (!this.shouldOfferAddToChatPopup(item, options))
+			{
+				return;
+			}
+
+			const requestId = this.#claimAddToChatCandidate(item.id);
+
+			const isMember = await this.provider.resolveUserMembership(item.id);
+
+			if (requestId !== this.#addToChatRequestId)
+			{
+				return;
+			}
+
+			if (isMember !== false || Type.isNil(this.#addToChatCandidateId))
+			{
+				this.clearAddToChatCandidate();
+
+				return;
+			}
+
+			this.addToChatPopupManager.show(item.id);
+		}
+
+		/**
+		 * @public
+		 * @param {MentionItem} item
+		 * @param {{ skipAddToChatPopup?: boolean }} options
+		 * @return {boolean}
+		 */
+		shouldOfferAddToChatPopup(item, options)
+		{
+			if (options.skipAddToChatPopup)
+			{
+				return false;
+			}
+
+			if (!Feature.isAddToChatPopupAvailable || !this.addToChatPopupManager)
+			{
+				return false;
+			}
+
+			if (!this.isAddToChatPopupSupportedChat())
+			{
+				return false;
+			}
+
+			return this.canOfferAddToTask(item.id);
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		isAddToChatPopupSupportedChat()
+		{
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+
+			return helper?.dialogModel?.type === DialogType.tasksTask;
+		}
+
+		/**
+		 * The popup of the previous candidate is already on screen and stays tappable while the
+		 * membership of the new one is being resolved, and a tap would add the outdated user.
+		 * So it is dismissed synchronously, before the new candidate is claimed.
+		 *
+		 * @param {string|number} candidateId
+		 * @return {number} id of the started operation
+		 */
+		#claimAddToChatCandidate(candidateId)
+		{
+			if (!Type.isNil(this.#addToChatCandidateId))
+			{
+				this.addToChatPopupManager?.hide();
+			}
+
+			this.#addToChatRequestId += 1;
+			this.#addToChatCandidateId = candidateId;
+			this.#addToTaskBaselineText = this.view.getInput();
+			this.#isAddToTaskBaselineConfirmed = false;
+
+			return this.#addToChatRequestId;
+		}
+
+		/**
+		 * @public
+		 */
+		clearAddToChatCandidate()
+		{
+			this.#addToChatCandidateId = null;
+			this.#addToTaskBaselineText = null;
+			this.#isAddToTaskBaselineConfirmed = false;
+		}
+
+		/**
+		 * @public
+		 * @param {string|number} userId
+		 * @return {boolean}
+		 */
+		canOfferAddToTask(userId)
+		{
+			if (!ChatPermission.canAddParticipants(this.dialogId))
+			{
+				return false;
+			}
+
+			const store = this.getStore();
+			const user = store.getters['usersModel/getById'](userId);
+			if (!user)
+			{
+				return false;
+			}
+
+			const copilotData = store.getters['usersModel/getCopilotData']();
+			if (String(copilotData?.id) === String(userId))
+			{
+				return false;
+			}
+
+			if (user.type === UserType.guest)
+			{
+				return false;
+			}
+
+			return !(user.type === UserType.bot || user.type === UserType.extranet);
+		}
+
+		/**
+		 * @public
+		 * @return {MessengerCoreStore}
+		 */
+		getStore()
+		{
+			return serviceLocator.get('core').getStore();
+		}
+
+		/**
+		 * Keeps the "add to chat" candidate in sync with the text field (AC-009, AC-012).
+		 * Runs from the moment the candidate is claimed, i.e. while the membership request
+		 * is still in flight and the popup is not shown yet.
+		 *
+		 * replaceText is applied natively and asynchronously, so a single mention insertion
+		 * emits several intermediate onChangeText states (partial text, trailing space,
+		 * keyboard settle) before the field settles on the text that actually contains the
+		 * mention. We must not treat those as edits. So we first wait for the state that
+		 * contains the candidate's mention and capture it as the baseline (confirmation).
+		 *
+		 * After confirmation:
+		 * - the candidate's mention removed from the text -> close (AC-012);
+		 * - the text changed from the baseline, i.e. the user kept typing -> close (AC-009).
+		 *
+		 * @param {string} text
+		 */
+		#checkAddToChatPopupActuality(text)
+		{
+			if (Type.isNil(this.#addToChatCandidateId))
+			{
+				return;
+			}
+
+			const isMentionStillInText = this.hasMentionOfUser(text, this.#addToChatCandidateId);
+
+			if (!this.#isAddToTaskBaselineConfirmed)
+			{
+				if (isMentionStillInText)
+				{
+					this.#addToTaskBaselineText = text;
+					this.#isAddToTaskBaselineConfirmed = true;
+				}
+
+				return;
+			}
+
+			if (isMentionStillInText && text === this.#addToTaskBaselineText)
+			{
+				return;
+			}
+
+			this.addToChatPopupManager?.hide();
+			this.clearAddToChatCandidate();
+		}
+
+		/**
+		 * @public
+		 * @param {string} text
+		 * @param {string|number} userId
+		 * @return {boolean}
+		 */
+		hasMentionOfUser(text, userId)
+		{
+			return this.getMentionedUserIds(text).includes(String(userId));
+		}
+
+		/**
+		 * @public
+		 * @param {string} text
+		 * @return {Array<string>}
+		 */
+		getMentionedUserIds(text)
+		{
+			if (!Type.isStringFilled(text))
+			{
+				return [];
+			}
+
+			const result = [];
+			const mentionRegExp = /\[user=(\d+)(?: replace)?]/gi;
+			let match = mentionRegExp.exec(text);
+			while (match)
+			{
+				result.push(match[1]);
+				match = mentionRegExp.exec(text);
+			}
+
+			return unique(result);
 		}
 
 		/**
@@ -703,7 +1054,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.provider.updateMembershipMap(mentionId, true);
 			void this.#addParticipant(mentionId);
 			this.#onShowAddUserSuccess(mentionId);
-			this.onMentionItemSelected(this.prepareItemForDrawing(mentionId));
+			this.onMentionItemSelected(this.prepareItemForDrawing(mentionId), { skipAddToChatPopup: true });
 		}
 
 		/**
@@ -793,7 +1144,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 			catch (error)
 			{
-				logger.error(`${this.constructor.name}#addСhat error:`, error);
+				logger.error(`${this.constructor.name}#addChat error:`, error);
 			}
 
 			return true;
@@ -803,8 +1154,10 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 * @private
 		 * @param {string|number} id
 		 * @param {string} type
+		 * @param {DialogId|null} [fromDialogId=null]
+		 * @param {{ atCursor?: boolean, dedupe?: boolean }} [options={}]
 		 */
-		onExternalMention(id, type, fromDialogId = null)
+		onExternalMention(id, type, fromDialogId = null, options = {})
 		{
 			if (this.dialogId !== fromDialogId)
 			{
@@ -815,7 +1168,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			if (!this.isDialogShow)
 			{
-				this.externalMentionQueue.push({ id, type, fromDialogId });
+				this.externalMentionQueue.push({ id, type, fromDialogId, options });
 
 				return;
 			}
@@ -828,13 +1181,25 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			let bbCodeText = this.#getBBCodeTextByType(type, id);
 
 			const text = this.view.getInput();
-			if (Type.isStringFilled(text) && !text.endsWith(' '))
+
+			if (options.dedupe && text.includes(`[USER=${id}]`))
+			{
+				this.view.textField.showKeyboard();
+
+				return;
+			}
+
+			const insertAt = (options.atCursor && Type.isStringFilled(text))
+				? this.view.textField.getCursorIndex()
+				: text.length;
+
+			if (insertAt > 0 && text[insertAt - 1] !== ' ')
 			{
 				bbCodeText = ` ${bbCodeText}`;
 			}
 
 			this.view.textField.showKeyboard();
-			this.view.textField.replaceText(text.length, text.length, bbCodeText);
+			this.view.textField.replaceText(insertAt, insertAt, bbCodeText);
 		}
 
 		onDialogHidden()
@@ -849,7 +1214,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			if (this.externalMentionQueue.length > 0)
 			{
 				this.externalMentionQueue.forEach((externalMention) => {
-					this.onExternalMention(externalMention.id, externalMention.type, externalMention.fromDialogId);
+					this.onExternalMention(
+						externalMention.id,
+						externalMention.type,
+						externalMention.fromDialogId,
+						externalMention.options,
+					);
 				});
 
 				this.externalMentionQueue = [];
@@ -874,6 +1244,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 
 			if (this.#isGuestUser(dialogId))
+			{
+				return false;
+			}
+
+			const isTaskComment = DialogHelper.createByDialogId(this.dialogId)?.isTaskComment;
+			if (isTaskComment && (this.#isBotUser(dialogId) || this.#isExtranetUser(dialogId)))
 			{
 				return false;
 			}
@@ -903,6 +1279,28 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			const user = this.#store.getters['usersModel/getById'](dialogId);
 
 			return user?.type === UserType.guest;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {boolean}
+		 */
+		#isBotUser(dialogId)
+		{
+			const user = this.#store.getters['usersModel/getById'](dialogId);
+
+			return user?.type === UserType.bot;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {boolean}
+		 */
+		#isExtranetUser(dialogId)
+		{
+			const user = this.#store.getters['usersModel/getById'](dialogId);
+
+			return user?.type === UserType.extranet;
 		}
 
 		/**
@@ -1086,11 +1484,19 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return this.getRecentUsers();
 			}
 
+			this.openMentionLoadingPanel();
+
+			return this.provider.loadChatParticipants();
+		}
+
+		/**
+		 * @protected
+		 */
+		openMentionLoadingPanel()
+		{
 			this.view.mentionPanel.open([]);
 			this.showLoader();
 			this.isProcessed = true;
-
-			return this.provider.loadChatParticipants();
 		}
 
 		/**

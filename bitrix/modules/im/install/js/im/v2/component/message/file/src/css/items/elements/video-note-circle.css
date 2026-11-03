@@ -1,0 +1,19 @@
+.bx-im-video-note__container {
+	position: relative;
+}
+
+/*
+ * The round shape is the only visual carrier of the message type, and the player exposes no name of
+ * its own: this label keeps the type in the accessibility tree while staying out of the layout.
+ */
+.bx-im-video-note__type-label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}

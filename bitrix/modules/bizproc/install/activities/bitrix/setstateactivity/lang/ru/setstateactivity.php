@@ -1,4 +1,4 @@
 <?
 $MESS['BPSSA_ERROR_EMPTY_STATE'] = "Не указан целевой статус";
-$MESS['BPSSA_CANCEL_CURRENT_STATE'] = "Прервать выполнение текущего статуса";
-$MESS['BPSSA_EXECUTE_CANCEL'] = "Выполнение текущего статуса прервано";
+$MESS['BPSSA_CANCEL_CURRENT_STATE'] = "Прервать выполнение в текущем статусе";
+$MESS['BPSSA_EXECUTE_CANCEL'] = "Выполнение в текущем статусе прервано";

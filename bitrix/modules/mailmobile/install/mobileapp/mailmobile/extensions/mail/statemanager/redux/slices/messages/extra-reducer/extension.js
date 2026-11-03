@@ -2,7 +2,7 @@
  * @module mail/statemanager/redux/slices/messages/extra-reducer
  */
 jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exports, module) => {
-	const { showErrorToast } = require('toast');
+	const Toast = require('toast');
 	const { messagesListAdapter } = require('mail/statemanager/redux/slices/messages/meta');
 
 	const removePending = (state, action) => {
@@ -42,7 +42,7 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 			{
 				messagesListAdapter.upsertMany(state, objectsToUpdate);
 			}
-			showErrorToast(errors[0]);
+			Toast.showErrorToast(errors[0]);
 		}
 		else
 		{
@@ -105,7 +105,7 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 			{
 				messagesListAdapter.upsertMany(state, objectsToUpdate);
 			}
-			showErrorToast(errors[0]);
+			Toast.showErrorToast(errors[0]);
 
 			if (state.originalReadStatuses)
 			{
@@ -162,7 +162,7 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 
 		if (errors && errors.length > 0)
 		{
-			showErrorToast(errors[0]);
+			Toast.showErrorToast(errors[0]);
 		}
 		else
 		{
@@ -173,6 +173,75 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 		}
 	};
 
+	const setFavoriteStatePending = (state, action) => {
+		const { objectId, isFavorite } = action.meta.arg;
+		const object = state.entities[objectId];
+		if (!object)
+		{
+			return;
+		}
+
+		state.favoriteRequests ??= {};
+		state.favoriteRequests[objectId] = {
+			requestId: action.meta.requestId,
+			previous: Boolean(object.isFavorite),
+		};
+		object.isFavorite = Boolean(isFavorite);
+	};
+
+	const isLatestFavoriteRequest = (state, action) => {
+		const objectId = action.meta.arg.objectId;
+
+		return state.favoriteRequests?.[objectId]?.requestId === action.meta.requestId;
+	};
+
+	const clearFavoriteRequest = (state, objectId) => {
+		delete state.favoriteRequests[objectId];
+	};
+
+	const rollbackFavoriteState = (state, action, error) => {
+		if (!isLatestFavoriteRequest(state, action))
+		{
+			return;
+		}
+
+		const objectId = action.meta.arg.objectId;
+		const object = state.entities[objectId];
+		if (object)
+		{
+			object.isFavorite = state.favoriteRequests[objectId].previous;
+		}
+		clearFavoriteRequest(state, objectId);
+		Toast.showErrorToast(error);
+	};
+
+	const setFavoriteStateFulfilled = (state, action) => {
+		if (!isLatestFavoriteRequest(state, action))
+		{
+			return;
+		}
+
+		const { errors, data } = action.payload ?? {};
+		if (errors?.length > 0)
+		{
+			rollbackFavoriteState(state, action, errors[0]);
+
+			return;
+		}
+
+		const objectId = action.meta.arg.objectId;
+		const object = state.entities[objectId];
+		if (object)
+		{
+			object.isFavorite = Boolean(data?.isFavorite);
+		}
+		clearFavoriteRequest(state, objectId);
+	};
+
+	const setFavoriteStateRejected = (state, action) => {
+		rollbackFavoriteState(state, action, action.error);
+	};
+
 	module.exports = {
 		removePending,
 		removeFulfilled,
@@ -180,5 +249,8 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 		changeReadStatusFulfilled,
 		addToChatFulfilled,
 		addToEventFulfilled,
+		setFavoriteStatePending,
+		setFavoriteStateFulfilled,
+		setFavoriteStateRejected,
 	};
 });

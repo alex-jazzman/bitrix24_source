@@ -493,9 +493,11 @@ class StreamManager
 
 		const localTrack = this.#tracks[kind];
 		const isSameConstraints = this.#isSameConstraints(constraints, localTrack?.constraints);
+		// With a raw-fallback mic (NS init failed → no input stream) the local track is itself
+		// the live device track, so don't gate reuse on noiseSuppressionInputStream.
 		const isInputTrackLived = kind !== MediaStreamsKinds.Microphone
-			|| (Hardware.noiseSuppressionInputStream
-				&& Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0
+			|| !Hardware.noiseSuppressionInputStream
+			|| (Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0
 				&& Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState === 'live');
 		if (
 			localTrack?.track?.readyState === 'live'

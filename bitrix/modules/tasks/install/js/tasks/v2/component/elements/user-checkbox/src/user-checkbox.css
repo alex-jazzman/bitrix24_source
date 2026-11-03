@@ -9,6 +9,11 @@
 	cursor: pointer;
 }
 
+.b24-user-checkbox-container:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .b24-user-checkbox-container .b24-user-checkbox-number {
 	color: var(--ui-color-base-3);
 }

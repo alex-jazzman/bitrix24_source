@@ -1,0 +1,70 @@
+.sign-b2e-run-process {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	padding: var(--ui-space-inset-xl);
+}
+
+.sign-b2e-run-process__title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-md);
+}
+
+/* a wizard of a single step has nothing to show a path through (AC-003) */
+.sign-b2e-run-process.--single-step .sign-wizard__stages {
+	display: none;
+}
+
+.sign-b2e-run-process-employees {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/* a box that says nothing must not push the selection down */
+.sign-b2e-run-process-employees__errors:empty,
+.sign-b2e-run-process-employees__notice:empty {
+	display: none;
+}
+
+.sign-b2e-run-process-employees__errors {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.sign-b2e-run-process-parameters {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/* an error block that says nothing must not push the fields down */
+.sign-b2e-run-process-parameters__errors:empty {
+	display: none;
+}
+
+.sign-b2e-run-process-parameters__messages {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.sign-b2e-run-process-parameters__fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+/*
+ * The mark of a field the server refused (ERR-003). It stands on the holder of the control and not on the
+ * control itself: the markup inside belongs to bizproc, and a rule reaching into it would break with the
+ * next redesign of its field types.
+ */
+.sign-b2e-run-process-parameters__field.--error {
+	outline: 1px solid var(--ui-color-accent-main-alert);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-md);
+}

@@ -38,6 +38,7 @@ export const UiField = defineComponent({
 				<slot name="label">
 					<label
 						v-if="label"
+						:id="labelFor ? labelFor + '-label' : null"
 						:for="labelFor"
 						class="socialnetwork--project-wizard--ui-field_label"
 					>

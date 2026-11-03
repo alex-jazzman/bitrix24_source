@@ -1,5 +1,8 @@
 <?php
 
+$MESS['SONET_NS_PRODUCT_SOURCE_NAME'] = 'Соцсети';
+$MESS['SONET_NS_PRODUCT_SOURCE_DESCRIPTION'] = 'Открытые линии и внешние каналы';
+
 $MESS["SONET_NS_INVITE_USER"] = "Приглашение в друзья";
 $MESS["SONET_NS_INVITE_GROUP_INFO"] = "Информация об изменении в составе группы";
 $MESS['SONET_NS_INVITE_GROUP_INFO_MSGVER_1'] = 'Информация об изменении в составе группы';

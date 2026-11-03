@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
 
 /** @global CMain $APPLICATION */
 
@@ -107,6 +109,20 @@ foreach ($smsSenders as $sender)
 
 $arResult['PERM_CONFIG'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 $arResult['IS_ACCESS_ENABLED'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
+
+// The cards of a single configuration function ask for that function only, the rest of the section
+// stays behind PERM_CONFIG - the full configuration right of CRM.
+$configuration = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->configuration();
+$configurationCallSite = ConfigurationCallSite::CrmConfigsComponent;
+$configurationScope = ConfigurationScope::ofCrm();
+$arResult['CAN_MANAGE_FUNNELS'] = $configuration->canManageFunnels($configurationCallSite, $configurationScope);
+$arResult['CAN_MANAGE_STAGES'] = $configuration->canManageStages($configurationCallSite, $configurationScope);
+$arResult['CAN_MANAGE_FIELDS'] = $configuration->canManageFields($configurationCallSite, $configurationScope);
+$arResult['CAN_DELETE_FIELDS'] = $configuration->canDeleteFields($configurationCallSite, $configurationScope);
+$arResult['CAN_MANAGE_BIZPROC_TEMPLATES'] = $configuration->canManageBizprocTemplates(
+	$configurationCallSite,
+	$configurationScope
+);
 
 $arResult['RAND_STRING'] = $this->randString();
 

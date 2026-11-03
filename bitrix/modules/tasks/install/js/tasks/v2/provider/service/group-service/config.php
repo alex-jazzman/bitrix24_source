@@ -9,9 +9,8 @@ return [
 	'rel' => [
 		'main.core',
 		'tasks.v2.const',
-		'tasks.v2.core',
 		'tasks.v2.lib.api-client',
-		'tasks.v2.provider.service.task-service',
+		'tasks.v2.model.groups',
 	],
 	'skip_core' => false,
 ];

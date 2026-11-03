@@ -54,7 +54,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 			{
 				return {
 					id: SidebarActionType.commonRemoveManager,
-					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_MENU_ITEM_LIST_REMOVE_MANAGER'),
+					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_MENU_ITEM_LIST_REMOVE_MANAGER_MSGVER_1'),
 					onItemSelected: this.onRemoveManager,
 					icon: Icon.CIRCLE_CROSS,
 					testId: 'SIDEBAR_USER_MENU_REMOVE_MANAGER',
@@ -63,7 +63,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 
 			return {
 				id: SidebarActionType.commonAddManager,
-				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_MENU_ITEM_LIST_ADD_MANAGER'),
+				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_MENU_ITEM_LIST_ADD_MANAGER_MSGVER_1'),
 				onItemSelected: this.onAddManager,
 				icon: Icon.CROWN,
 				testId: 'SIDEBAR_USER_MENU_ADD_MANAGER',

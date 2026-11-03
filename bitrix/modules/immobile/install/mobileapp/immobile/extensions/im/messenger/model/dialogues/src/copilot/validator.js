@@ -113,9 +113,26 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 			result.roles = { ...existingElem.roles, ...newElem.roles };
 		}
 
-		if (!Type.isUndefined(newElem.messages) && !Type.isNull(newElem.messages) && newElem.messages.length > 0)
+		if (Type.isArrayFilled(newElem.messages))
 		{
-			result.messages = [...new Set([...existingElem.messages, ...newElem.messages])];
+			const messagesMap = new Map();
+
+			if (Type.isArray(existingElem.messages))
+			{
+				existingElem.messages.forEach(message => {
+					if (message?.id) {
+						messagesMap.set(message.id, message);
+					}
+				});
+			}
+
+			newElem.messages.forEach(message => {
+				if (message?.id) {
+					messagesMap.set(message.id, message);
+				}
+			});
+
+			result.messages = Array.from(messagesMap.values());
 		}
 
 		return result;

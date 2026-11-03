@@ -20,6 +20,13 @@
 	border-bottom: 1px solid var(--im-list-container-task__background-color_separator);
 }
 
+/* The filter row carries the separator and sets the header height for every container. */
+.bx-im-list-container-task__header_container.--with-filter-row {
+	height: auto;
+	padding: var(--im-messenger__list-header_padding_with-filter-row);
+	border-bottom: none;
+}
+
 .bx-im-list-container-task__search-input_container {
 	flex-grow: 1;
 	margin-right: 16px;

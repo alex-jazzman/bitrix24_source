@@ -1,24 +1,27 @@
 .tasks-field-files-popup {
 	display: flex;
 	flex-direction: column;
+	box-sizing: border-box;
 	height: 100%;
+	padding: 4px;
 	overflow: hidden;
 }
 
 .tasks-field-files-popup-files {
 	overflow-y: scroll;
-	padding: 0 5px 15px 0;
+	margin: -4px 0 0 -4px;
+	padding: 4px 5px 15px 4px;
 }
 
 @supports not selector(::-webkit-scrollbar) {
 	.tasks-field-files-popup-files {
-		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-color: color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 11%, transparent) transparent;
 		scrollbar-width: thin;
 	}
 }
 
 .tasks-field-files-popup-files::-webkit-scrollbar {
-	background-color: rgba(0, 0, 0, 0);
+	background-color: transparent;
 	width: 5px;
 }
 
@@ -27,7 +30,7 @@
 }
 
 .tasks-field-files-popup-files::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.11);
+	background: color-mix(in srgb, var(--ui-color-bg-state-hover-default-overlay-hex) 11%, transparent);
 	border-radius: 5px;
 	cursor: pointer;
 	transition: .2s;

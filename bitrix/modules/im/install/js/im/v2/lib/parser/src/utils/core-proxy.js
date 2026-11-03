@@ -11,6 +11,16 @@ const resolveNamespace = () => {
 	return (v2 ? messenger.v2 : messenger.Embedding) ?? messenger.v2 ?? messenger.Embedding ?? {};
 };
 
+// Read feature flags straight from the Core application data the parser already reaches for
+// everything else, instead of pulling the heavier im.v2.lib.feature extension into every parser
+// consumer just for a boolean (FeatureManager.isFeatureAvailable resolves the same featureOptions value).
+const isFeatureOptionEnabled = (featureName: string): boolean => {
+	const applicationData = CoreProxy.getCore().getApplicationData?.() ?? {};
+	const { featureOptions = {} } = applicationData;
+
+	return featureOptions[featureName] ?? false;
+};
+
 const CoreProxy = {
 	getCore()
 	{
@@ -44,16 +54,13 @@ const CoreProxy = {
 		return CoreProxy.getCore().getStore().getters['application/getOption']('bigSmileEnable');
 	},
 
-	// Read the Markdown feature flag straight from the Core application data the
-	// parser already reaches for everything else, instead of pulling the heavier
-	// im.v2.lib.feature extension into every parser consumer just for this boolean
-	// (FeatureManager.isFeatureAvailable resolves the same featureOptions value).
 	isMarkdownFeatureEnabled()
 	{
-		const applicationData = CoreProxy.getCore().getApplicationData?.() ?? {};
-		const { featureOptions = {} } = applicationData;
-
-		return featureOptions.isMarkdownAvailable ?? false;
+		return isFeatureOptionEnabled('isMarkdownAvailable');
+	},
+	isVideoNoteCaptionFeatureEnabled()
+	{
+		return isFeatureOptionEnabled('isVideoNoteCaptionAvailable');
 	},
 };
 
@@ -64,6 +71,7 @@ const getConst = () => CoreProxy.getConst();
 const getSmileManager = () => CoreProxy.getSmileManager();
 const getBigSmileOption = () => CoreProxy.getBigSmileOption();
 const isMarkdownFeatureEnabled = () => CoreProxy.isMarkdownFeatureEnabled();
+const isVideoNoteCaptionFeatureEnabled = () => CoreProxy.isVideoNoteCaptionFeatureEnabled();
 
 export {
 	CoreProxy,
@@ -74,6 +82,7 @@ export {
 	getSmileManager,
 	getBigSmileOption,
 	isMarkdownFeatureEnabled,
+	isVideoNoteCaptionFeatureEnabled,
 };
 
 export type Smile = {

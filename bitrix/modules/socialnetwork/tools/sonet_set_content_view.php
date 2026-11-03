@@ -32,6 +32,8 @@ $pathToUserProfile = (isset($_REQUEST["pathToUserProfile"]) && is_string($_REQUE
 
 use Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main\Loader;
+use Bitrix\Socialnetwork\Item\ContentView\ContentViewAccessService;
+use Bitrix\Socialnetwork\Item\ContentView\UserListService;
 
 $result = array();
 if(
@@ -74,18 +76,15 @@ if(
 	}
 	elseif (
 		$action == 'get_view_list'
-		&& !empty($contentId)
 	)
 	{
-		$userList = \Bitrix\Socialnetwork\Item\UserContentView::getUserList(array(
-			'contentId' => $contentId,
-			'page' => $page,
-			'pathToUserProfile' => $pathToUserProfile
-		));
-
-		$result['items'] = $userList['items'];
-		$result['itemsCount'] = count($result['items']);
-		$result['hiddenCount'] = $userList['hiddenCount'];
+		$userListService = new UserListService(new ContentViewAccessService());
+		$result = $userListService->getUserList(
+			$contentId,
+			(int)$USER->getId(),
+			$page,
+			$pathToUserProfile
+		);
 	}
 
 	$result["SUCCESS"] = "Y";

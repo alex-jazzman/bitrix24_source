@@ -7,7 +7,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const GetParameterByChatType = {
 		[im_v2_const.ChatType.taskComments]: im_v2_const.GetParameter.openTaskComments,
-		[im_v2_const.ChatType.collab]: im_v2_const.GetParameter.openCollab
+		[im_v2_const.ChatType.collab]: im_v2_const.GetParameter.openCollab,
+		[im_v2_const.ChatType.lines]: im_v2_const.GetParameter.openLines
+	};
+	const GetParameterByMessageChatType = {
+		[im_v2_const.ChatType.taskComments]: im_v2_const.GetParameter.openTaskComments,
+		[im_v2_const.ChatType.collab]: im_v2_const.GetParameter.openChat
 	};
 	const ChatManager = {
 		prepareParentChatId(parentChatId) {
@@ -26,10 +31,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return `${im_v2_application_core.Core.getHost()}${im_v2_const.Path.online}?${getParams.toString()}`;
 		},
 		buildMessageLink(dialogId, messageId) {
-			const chatLink = this.buildChatLink(dialogId);
-			const chatUrl = new URL(chatLink);
-			chatUrl.searchParams.set(im_v2_const.GetParameter.openMessage, messageId.toString());
-			return chatUrl.toString();
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const chatGetParameter = GetParameterByMessageChatType[chat.type] ?? im_v2_const.GetParameter.openChat;
+			const getParams = new URLSearchParams({
+				[chatGetParameter]: dialogId,
+				[im_v2_const.GetParameter.openMessage]: messageId.toString()
+			});
+			return `${im_v2_application_core.Core.getHost()}${im_v2_const.Path.online}?${getParams.toString()}`;
 		}
 	};
 

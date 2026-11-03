@@ -165,6 +165,9 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 			}
 
 			this.#updateItems(recentItems);
+			// the add mutation only fires for records new to the model, and the items are already
+			// filtered by the tab collection: a chat appeared in the tab set
+			this.recentLocator.get('render')?.markCompositionChanged();
 		};
 
 		/**
@@ -230,12 +233,34 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				return;
 			}
 
+			this.#setFirstPageToRender();
+		};
+
+		/**
+		 * @desc Puts the set in the render queue without an immediate pass: the delivery is kept, the
+		 * immediacy is not. The immediate pass is added by the caller only when the user changed the
+		 * filter, so under an active filter a live event reaches the screen on the next queue tick.
+		 */
+		#setFirstPageToRender()
+		{
 			const callList = this.recentLocator.get('external').getCallList();
 			const firstPageItems = this.storeManager.store.getters['recentModel/getChatFirstPage']();
 
 			this.recentLocator.get('render').setItems([...callList, ...firstPageItems]);
-			void this.recentLocator.get('render').renderInstant();
-		};
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isFilterChangedBySelf()
+		{
+			if (!this.recentLocator.has('filter'))
+			{
+				return false;
+			}
+
+			return this.recentLocator.get('filter').consumeChangedBySelf();
+		}
 
 		/**
 		 * @param {MutationPayload<RecentDeleteData>} payload
@@ -258,7 +283,7 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				return;
 			}
 
-			if (!this.recentLocator.get('render').hasItemRendered(itemId))
+			if (!this.recentLocator.get('render').hasItemPending(itemId))
 			{
 				this.logger.log('recentDeleteHandler: deleting an item not from the Chat tab, skipping', itemId);
 
@@ -274,7 +299,7 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 		recentDeleteFromIdCollectionHandler = ({ payload }) => {
 			this.logger.log('recentDeleteFromIdCollectionHandler', payload);
 
-			const hideActions = ['hideByNavigationTabs', 'hideByRecentConfigTabs'];
+			const hideActions = ['hideByRecentConfigTabs'];
 			if (!hideActions.includes(payload.actionName))
 			{
 				return;
@@ -303,7 +328,7 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				return;
 			}
 
-			if (!this.recentLocator.get('render').hasItemRendered(itemId))
+			if (!this.recentLocator.get('render').hasItemPending(itemId))
 			{
 				this.logger.log('recentDeleteFromIdCollectionHandler: deleting an item not from the Chat tab, skipping', itemId);
 
@@ -397,7 +422,7 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				{
 					toUpsert.push(item);
 				}
-				else if (render.hasItemRendered(id))
+				else if (render.hasItemPending(id))
 				{
 					toDelete.push({ id });
 				}
@@ -420,6 +445,14 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 			}
 
 			serviceLocator.get('messenger-header-manager').redrawRightButtonsIfNeeded(NavigationTabId.chats);
+
+			// the filtered item list is recalculated by the sync subscribed to this mutation before this handler
+			if (this.#isFilterChangedBySelf())
+			{
+				this.#setFirstPageToRender();
+				// an explicit filter change is a direct user action: the call goes through a scope
+				void this.recentLocator.get('render').renderInstant({ force: true });
+			}
 		};
 
 		/**

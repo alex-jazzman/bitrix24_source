@@ -16,7 +16,7 @@ export class NotificationHeaderMenu
 		this.store = Core.getStore();
 	}
 
-	openMenu(isReadAllAvailable, bindElement): void
+	openMenu(isReadAllAvailable: boolean, bindElement: HTMLElement): void
 	{
 		if (this.menu)
 		{
@@ -27,7 +27,8 @@ export class NotificationHeaderMenu
 		this.menu = new Menu({
 			id: 'im-notifications-header-menu',
 			items: this.getHeaderMenuItems(isReadAllAvailable),
-			closeOnItemClick: true,
+			// Closing is added per item by withMenuClose() instead.
+			closeOnItemClick: false,
 			autoHide: true,
 		});
 
@@ -39,18 +40,41 @@ export class NotificationHeaderMenu
 		return [
 			this.getOptionsItem(),
 			this.getReadAllItem(isReadAllAvailable),
-		];
+		].map((item: MenuItemOptions) => this.withMenuClose(item));
 	}
 
-	getReadAllItem(isReadAllAvailable): ?MenuItemOptions
+	withMenuClose(item: MenuItemOptions): MenuItemOptions
 	{
+		// An item without an action leaves the menu open: that is what unavailable looks like.
+		if (!item.onClick)
+		{
+			return item;
+		}
+
 		return {
-			title: Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_BUTTON'),
-			design: isReadAllAvailable ? MenuItemDesign.Default : MenuItemDesign.Disabled,
+			...item,
 			onClick: () => {
-				this.notificationReadService.readAll();
+				item.onClick();
 				this.menu.close();
 			},
+		};
+	}
+
+	getReadAllItem(isReadAllAvailable: boolean): MenuItemOptions
+	{
+		const item = {
+			title: Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_BUTTON'),
+			design: isReadAllAvailable ? MenuItemDesign.Default : MenuItemDesign.Disabled,
+		};
+
+		if (!isReadAllAvailable)
+		{
+			return item;
+		}
+
+		return {
+			...item,
+			onClick: () => this.notificationReadService.readAll(),
 		};
 	}
 
@@ -60,7 +84,6 @@ export class NotificationHeaderMenu
 			title: Loc.getMessage('IM_NOTIFICATIONS_OPTIONS_BUTTON'),
 			onClick: () => {
 				void Messenger.openSettings({ onlyPanel: SettingsSection.notification });
-				this.menu.close();
 			},
 		};
 	}

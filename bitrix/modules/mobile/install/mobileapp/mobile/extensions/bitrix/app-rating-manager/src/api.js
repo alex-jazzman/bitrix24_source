@@ -34,7 +34,8 @@ jn.define('app-rating-manager/src/api', (require, exports, module) => {
 						.setCacheTtl(cacheTtl)
 						.setCacheHandler(handler)
 						.setHandler(handler)
-						.call(true);
+						.call(true)
+						.catch(console.error);
 				});
 			}
 		}

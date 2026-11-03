@@ -41,7 +41,7 @@
 	display: block;
 	padding-left: 22px;
 	clear: both;
-	background-image: url(/bitrix/components/bitrix/intranet.system.person/templates/.default/images/icons_all.png);
+	background-image: url(/bitrix/components/bitrix/intranet.system.person/templates/.default/images/icons_all.webp);
 	background-repeat: no-repeat;
 	white-space:nowrap;
 }

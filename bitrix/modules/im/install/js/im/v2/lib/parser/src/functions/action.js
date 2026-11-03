@@ -4,8 +4,6 @@ import { getConst, getCore } from '../utils/core-proxy';
 
 import type { ApplicationContext } from 'im.v2.const';
 
-const { EventType } = getConst();
-
 const ActionType = {
 	put: 'put',
 	send: 'send',
@@ -124,6 +122,7 @@ export const ParserAction = {
 		}
 
 		const { emitter } = context;
+		const { EventType } = getConst();
 
 		const element: HTMLSpanElement = event.target;
 		const messageId = getMessageIdForClickElement(element);

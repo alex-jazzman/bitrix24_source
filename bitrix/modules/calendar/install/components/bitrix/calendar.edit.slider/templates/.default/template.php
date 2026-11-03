@@ -575,7 +575,7 @@ $defaultSectionId = $isOpenEvent && isset($arParams['sections'][0]['ID']) ? $arP
 						{
 							ob_start();
 						}?>
-						<div class="calendar-options-item calendar-options-item-border calendar-event-location">
+						<div class="calendar-options-item calendar-options-item-border calendar-event-location calendar-event-location-layout">
 							<div class="calendar-options-item-column-left calendar-options-item-column-left-location">
 								<div class="calendar-options-item-name js-calendar-field-name"><?= Loc::getMessage('EC_EDIT_SLIDER_LOCATION_COLUMN')?></div>
 							</div>
@@ -585,6 +585,7 @@ $defaultSectionId = $isOpenEvent && isset($arParams['sections'][0]['ID']) ? $arP
 								</div>
 							</div>
 							<span data-bx-fixfield="<?= $field?>" class="calendar-option-fixedbtn" title="<?= Loc::getMessage('EC_EDIT_SLIDER_FIX_FIELD')?>"></span>
+							<div id="<?=$id?>_location_error_wrap" class="calendar-event-location-error"></div>
 						</div>
 						<?if (!$fieldsList[$field]["pinned"])
 						{

@@ -1,0 +1,74 @@
+.bx-im-entity-button {
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.bx-im-entity-button.--link {
+	margin-left: 12px;
+	overflow: hidden;
+}
+
+.bx-im-entity-button.--link.--compact {
+	width: 100%;
+}
+
+.bx-im-entity-button__text {
+	font-size: var(--im-font-size-sm);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--ui-color-accent-main-link);
+	border-bottom: 1px solid transparent;
+}
+
+.bx-im-entity-button__icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+	--ui-icon-set__icon-size: 18px;
+}
+
+.bx-im-entity-button.--link:hover .bx-im-entity-button__text {
+	border-bottom: 1px solid var(--ui-color-accent-main-link);
+}
+
+.bx-im-entity-button.--button {
+	--im-entity-button__background-color: var(--ui-color-accent-main-primary);
+	--im-entity-button__background-color_hover: var(--ui-color-accent-main-primary-alt);
+	--im-entity-button__color: var(--im-color-palette-white-base);
+	--im-entity-button__badge-background-color: var(--ui-color-accent-main-primary);
+	--im-entity-button__badge-background-color_muted: var(--im-color-palette-gray-40);
+	--im-entity-button__badge-border-color: var(--im-color-palette-white-base);
+
+	position: relative;
+	flex-shrink: 0;
+	height: 28px;
+	padding: 0 12px;
+	border-radius: 14px;
+	background-color: var(--im-entity-button__background-color);
+	color: var(--im-entity-button__color);
+	font: 14px/18px var(--im-font-family-system);
+}
+
+.bx-im-entity-button.--button:hover {
+	background-color: var(--im-entity-button__background-color_hover);
+	color: var(--im-entity-button__color);
+	text-decoration: none;
+}
+
+.bx-im-entity-button__unread-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	display: block;
+	box-sizing: border-box;
+	width: 10px;
+	height: 10px;
+	border: 2px solid var(--im-entity-button__badge-border-color);
+	border-radius: 50%;
+	background-color: var(--im-entity-button__badge-background-color);
+}
+
+.bx-im-entity-button__unread-badge.--muted {
+	background-color: var(--im-entity-button__badge-background-color_muted);
+}

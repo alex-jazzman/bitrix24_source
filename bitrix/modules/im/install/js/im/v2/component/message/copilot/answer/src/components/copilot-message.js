@@ -1,7 +1,14 @@
 import { Dom, Type } from 'main.core';
 
 import { BaseMessage } from 'im.v2.component.message.base';
-import { ReactionList, MessageStatus, AuthorTitle, TextContent } from 'im.v2.component.message.elements';
+import {
+	ReactionList,
+	MessageStatus,
+	AuthorTitle,
+	BuilderContent,
+	MessageKeyboard,
+	TextContent,
+} from 'im.v2.component.message.elements';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 import { Notifier } from 'im.v2.lib.notifier';
@@ -14,7 +21,15 @@ import '../css/copilot-legacy.css';
 // @vue/component
 export const CopilotMessageLegacy = {
 	name: 'CopilotMessageLegacy',
-	components: { AuthorTitle, BaseMessage, ReactionList, MessageStatus, TextContent },
+	components: {
+		AuthorTitle,
+		BaseMessage,
+		BuilderContent,
+		MessageKeyboard,
+		ReactionList,
+		MessageStatus,
+		TextContent,
+	},
 	props:
 	{
 		item: {
@@ -39,6 +54,14 @@ export const CopilotMessageLegacy = {
 		formattedText(): string
 		{
 			return Parser.decodeMessage(this.item);
+		},
+		hasBuilderBlocks(): boolean
+		{
+			return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+		},
+		hasKeyboard(): boolean
+		{
+			return this.message.keyboard.length > 0;
 		},
 		canSetReactions(): boolean
 		{
@@ -91,7 +114,8 @@ export const CopilotMessageLegacy = {
 			<div class="bx-im-message-default__container bx-im-message-copilot-answer__container" :class="{'--error': isError}">
 				<AuthorTitle v-if="withTitle" :item="item" />
 				<div class="bx-im-message-default-content__container bx-im-message-default-content__scope">
-					<TextContent :text="formattedText" />
+					<BuilderContent v-if="hasBuilderBlocks" :item="item" :dialogId="dialogId" />
+					<TextContent v-else :text="formattedText" />
 					<ReactionList
 						v-if="canSetReactions"
 						:messageId="message.id"
@@ -121,6 +145,9 @@ export const CopilotMessageLegacy = {
 					<MessageStatus :item="message" />
 				</div>
 			</div>
+			<template #after-message v-if="hasKeyboard">
+				<MessageKeyboard :item="message" :dialogId="dialogId" />
+			</template>
 		</BaseMessage>
 	`,
 };

@@ -338,6 +338,10 @@
 				this.layout.titleEdit = BX.create(
 					'div',
 					{
+						attrs:
+							{
+								'data-testid': 'rest-integration-webhook-param-edit'
+							},
 						props:
 							{
 								className: 'integration-table-title-edit'
@@ -356,6 +360,10 @@
 				this.layout.titleInput = BX.create(
 					'input',
 					{
+						attrs:
+							{
+								'data-testid': 'rest-integration-webhook-param-name'
+							},
 						props:
 							{
 								type: 'text',
@@ -422,6 +430,10 @@
 				this.layout.input = BX.create(
 					'input',
 					{
+						attrs:
+							{
+								'data-testid': 'rest-integration-webhook-param-value'
+							},
 						props:
 							{
 								type: 'text',
@@ -542,6 +554,10 @@
 				this.layout.container = BX.create(
 					'div',
 					{
+						attrs:
+							{
+								'data-testid': 'rest-integration-webhook-param-row'
+							},
 						props:
 							{
 								className: newItem ? 'integration-table-row integration-table-row-show' : 'integration-table-row'
@@ -898,44 +914,6 @@
 			}
 		);
 	};
-	BX.rest.integration.edit.inputApiOnlyChange = function()
-	{
-		var value = BX('rest-integration-form').querySelector('#rest-integration-form input[name="APPLICATION_ONLY_API"]');
-		if (value !== null)
-		{
-			var inputLangList = BX('rest-integration-form').querySelectorAll('#applicationLang .integration-required-lang');
-			if (!value.checked)
-			{
-				BX.show(BX('applicationLang'));
-				inputLangList.forEach(
-					function (input)
-					{
-						input.required = true;
-					}
-				);
-			}
-			else
-			{
-				BX.hide(BX('applicationLang'));
-				inputLangList.forEach(
-					function (input)
-					{
-						input.required = false;
-					}
-				);
-
-				var appMode = BX('rest-integration-form').querySelector('#rest-integration-form #applicationType input[value="SERVER"]');
-				if (appMode !== null)
-				{
-					if (!appMode.checked)
-					{
-						appMode.checked = true;
-						BX.fireEvent(appMode, 'change');
-					}
-				}
-			}
-		}
-	};
 	BX.rest.integration.edit.initParams = function ()
 	{
 		this.savedDo = false;
@@ -943,7 +921,6 @@
 		var hints = new BX.rest.integration.edit.InitHint({
 			items: BX('rest-integration-form').querySelectorAll('[data-role="integration-hint"]')
 		});
-		BX.rest.integration.edit.inputApiOnlyChange();
 		BX.bind(
 			BX('rest-integration-form'),
 			'submit',
@@ -976,11 +953,6 @@
 			}
 		}
 
-		BX.bind(
-			BX('rest-integration-form').querySelector('#rest-integration-form input[name="APPLICATION_ONLY_API"]'),
-			'change',
-			BX.delegate(BX.rest.integration.edit.inputApiOnlyChange, this)
-		);
 		BX('rest-integration-form').querySelectorAll('#rest-integration-form .integration-curl-uri-button').forEach(
 		function (value)
 			{
@@ -1084,6 +1056,11 @@
 		}
 		hints.init();
 		tabs.init();
+
+		if (restIntegrationEditComponent.applicationMode === 'ZIP')
+		{
+			BX.rest.integration.edit.applyAppType(restIntegrationEditComponent.applicationMode, false);
+		}
 	};
 
 	BX.rest.integration.edit.onCloseSlider = function(event)
@@ -1175,15 +1152,38 @@
 		}
 	};
 
-	BX.rest.integration.edit.changeAppType = function(event)
+	BX.rest.integration.edit.applyAppType = function(type, isUserChoice)
 	{
-		var reqInputList, noReqInputList, clearInputList;
-		var type = event.target.value;
+		var reqInputList, noReqInputList;
 		var modeServer = BX('rest-integration-form').querySelector('#applicationServer');
 		var modeZip = BX('rest-integration-form').querySelector('#applicationZip');
-		var appOnlyApi = BX('rest-integration-form').querySelector('#rest-integration-form input[name="APPLICATION_ONLY_API"]');
+		if (modeServer === null || modeZip === null)
+		{
+			return;
+		}
 
-		appOnlyApi.disabled = type === 'ZIP';
+		var installCompletionModeInputList = BX('rest-integration-form').querySelectorAll(
+			'#applicationInstallCompletionMode input[name="APPLICATION_INSTALL_COMPLETION_MODE"]'
+		);
+
+		// hiding the block does not stop the inputs from being submitted
+		installCompletionModeInputList.forEach(
+			function (item)
+			{
+				item.disabled = isUserChoice && type === 'ZIP';
+			}
+		);
+
+		if (isUserChoice)
+		{
+			// index.html of the archive is always a page, so a zip application needs menu titles
+			BX('rest-integration-form').querySelectorAll('#applicationLang .integration-required-lang').forEach(
+				function (item)
+				{
+					item.required = type === 'ZIP';
+				}
+			);
+		}
 
 		if (type === 'ZIP')
 		{
@@ -1192,9 +1192,6 @@
 
 			reqInputList = modeZip.querySelectorAll('.integration-required');
 			noReqInputList = modeServer.querySelectorAll('.integration-required');
-			clearInputList = modeServer.querySelectorAll('input');
-			appOnlyApi.checked = false;
-			BX.fireEvent(appOnlyApi, 'change');
 		}
 		else
 		{
@@ -1202,13 +1199,6 @@
 			BX.show(modeServer);
 			reqInputList = modeServer.querySelectorAll('.integration-required');
 			noReqInputList = modeZip.querySelectorAll('.integration-required');
-			clearInputList = modeZip.querySelectorAll('input');
-			var inputFileLabel = BX('rest-integration-form').querySelector('#applicationZip .ui-ctl-label-text');
-			if (inputFileLabel)
-			{
-				BX.cleanNode(inputFileLabel);
-				inputFileLabel.textContent = BX.message('REST_INTEGRATION_EDIT_TAB_APPLICATION_ZIP_INPUT_LABEL');
-			}
 		}
 
 		if (reqInputList.length > 0)
@@ -1230,12 +1220,50 @@
 				}
 			);
 		}
+	};
+
+	BX.rest.integration.edit.clearHiddenAppTypeFields = function(type)
+	{
+		var clearInputList;
+		var modeServer = BX('rest-integration-form').querySelector('#applicationServer');
+		var modeZip = BX('rest-integration-form').querySelector('#applicationZip');
+		if (modeServer === null || modeZip === null)
+		{
+			return;
+		}
+
+		if (type === 'ZIP')
+		{
+			clearInputList = modeServer.querySelectorAll('input');
+		}
+		else
+		{
+			clearInputList = modeZip.querySelectorAll('input');
+			var inputFileLabel = BX('rest-integration-form').querySelector('#applicationZip .ui-ctl-label-text');
+			if (inputFileLabel)
+			{
+				BX.cleanNode(inputFileLabel);
+				inputFileLabel.textContent = BX.message('REST_INTEGRATION_EDIT_TAB_APPLICATION_ZIP_INPUT_LABEL');
+			}
+		}
 
 		if (clearInputList.length > 0)
 		{
 			clearInputList.forEach(
 				function (item)
 				{
+					if (item.type === 'hidden')
+					{
+						return;
+					}
+
+					if (item.type === 'checkbox')
+					{
+						item.checked = false;
+
+						return;
+					}
+
 					item.value = '';
 					//hack clear input file
 					if (item.type === 'file')
@@ -1246,6 +1274,14 @@
 				}
 			);
 		}
+	};
+
+	BX.rest.integration.edit.changeAppType = function(event)
+	{
+		var type = event.target.value;
+
+		BX.rest.integration.edit.applyAppType(type, true);
+		BX.rest.integration.edit.clearHiddenAppTypeFields(type);
 	};
 
 	BX.rest.integration.edit.actionDropdown = function ()
@@ -1360,6 +1396,7 @@
 			title: BX.message('REST_INTEGRATION_EDIT_CONFIRM_POPUP_TITLE'),
 			popupOptions:
 			{
+				id: 'rest-integration-webhook-regenerate-confirm',
 				closeIcon: true,
 			},
 			modal: true,
@@ -1441,6 +1478,18 @@
 		}
 	};
 
+	BX.rest.integration.edit.keepsApplicationUrl = function ()
+	{
+		if (restIntegrationEditComponent.applicationHasUrl !== true)
+		{
+			return false;
+		}
+
+		var urlHandler = BX('rest-integration-form').querySelector('input[name="APPLICATION_URL_HANDLER"]');
+
+		return urlHandler !== null && urlHandler.value !== '';
+	};
+
 	BX.rest.integration.edit.actionSaveForm = function (event)
 	{
 		event.preventDefault();
@@ -1448,7 +1497,13 @@
 		if (appZipMode !== null && !!appZipMode.checked)
 		{
 			var inputZip = BX('rest-integration-form').querySelector('#applicationZip input[type="file"]');
-			if (inputZip !== null && (!(inputZip.files.length > 0) || !(inputZip.files[0]['size'] > 0)))
+			if (
+				inputZip !== null
+				&& (
+					(!(inputZip.files.length > 0) && !BX.rest.integration.edit.keepsApplicationUrl())
+					|| (inputZip.files.length > 0 && !(inputZip.files[0]['size'] > 0))
+				)
+			)
 			{
 				BX.UI.Notification.Center.notify(
 					{

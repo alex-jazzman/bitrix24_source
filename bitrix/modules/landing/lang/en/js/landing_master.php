@@ -196,6 +196,7 @@ $MESS["LANDING_EMBED_BG_FIELD_DESCRIPTION_MSGVER_1"] = "Only full or short Youtu
 $MESS["LANDING_EMBED_BG_FIELD_DESCRIPTION_NO_VK_MSGVER_1"] = "Only full or short Youtube URLs are allowed.";
 $MESS["LANDING_EMBED_ERROR_TEXT"] = "Enter a fully qualified video URL. HTML code or other embedding methods are not supported.";
 $MESS["LANDING_EMBED_ERROR_WRONG_SOURCE_TEXT_ALL"] = "Invalid link";
+$MESS["LANDING_EMBED_ERROR_VK_NO_PLAYER"] = "Couldn't embed the VK video. Check the link: Clips and unavailable videos are not supported.";
 $MESS["LANDING_EMBED_FIELD_PLACEHOLDER"] = "Video URL";
 $MESS["LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_MSGVER_1"] = "Only full or short Youtube or Vimeo URLs are allowed.";
 $MESS["LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_NO_VK_MSGVER_1"] = "Only full or short Youtube or Vimeo URLs are allowed.";

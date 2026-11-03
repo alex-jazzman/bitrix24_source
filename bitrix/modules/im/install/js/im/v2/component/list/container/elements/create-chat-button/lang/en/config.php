@@ -1,0 +1,2 @@
+<?php
+$MESS["IM_LIST_CONTAINER_CREATE_CHAT_BUTTON_ARIA"] = "Create a chat";

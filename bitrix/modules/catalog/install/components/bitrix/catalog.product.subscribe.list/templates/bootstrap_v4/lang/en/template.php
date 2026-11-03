@@ -30,4 +30,7 @@ $MESS["CPSL_SUBSCRIBE_PAGE_TITLE_AUTHORIZE"] = "To view subscriptions, please
 <a href=\"javascript:void(0);\" class=\"alert-link\" id=\"cpsl-auth\">log in</a> or 
 <a href=\"javascript:void(0);\" class=\"alert-link\" id=\"cpsl-identification\">get access code</a>";
 $MESS["CPSL_TPL_MESS_BTN_UNSUBSCRIBE"] = "Unsubscribe";
+$MESS['CPSL_TPL_SCU_GROUP_ARIA'] = '#PROPERTY#';
+$MESS['CPSL_TPL_SCU_NEXT_ARIA'] = 'Show next “#PROPERTY#” options';
+$MESS['CPSL_TPL_SCU_PREV_ARIA'] = 'Show previous “#PROPERTY#” options';
 ?>

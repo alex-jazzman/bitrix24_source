@@ -15,19 +15,39 @@ export const DatePlanContent = {
 	inject: {
 		task: {},
 	},
+	props: {
+		isSheetShown: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
 		};
 	},
+	computed: {
+		readonly(): boolean
+		{
+			return !this.task.rights.datePlan;
+		},
+	},
 	template: `
-		<HoverPill v-if="task.matchesSubTasksTime" textOnly readonly>
+		<HoverPill v-if="task.matchesSubTasksTime" textOnly readonly :withTabStop="false">
 			<div class="tasks-field-date-plan-content">
 				<div>{{ loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE') }}</div>
 				<QuestionMark :hintText="loc('TASKS_V2_DATE_PLAN_NO_SUBTASKS_HINT')"/>
 			</div>
 		</HoverPill>
-		<FieldAdd v-else :icon="Outline.PLANNING"/>
+		<FieldAdd
+			v-else
+			:icon="Outline.PLANNING"
+			data-testid="tasks-date-plan-add-btn"
+			:ariaLabel="readonly ? '' : loc('TASKS_V2_DATE_PLAN_ADD_ARIA_LABEL')"
+			:ariaHaspopup="readonly ? '' : 'dialog'"
+			:ariaExpanded="readonly ? null : isSheetShown"
+			:withTabStop="!readonly"
+		/>
 	`,
 };

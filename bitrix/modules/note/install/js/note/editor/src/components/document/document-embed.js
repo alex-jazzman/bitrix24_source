@@ -40,6 +40,13 @@ export const NoteDocumentEmbedComponent = {
 			default: null,
 		},
 	},
+	inject: {
+		// Gates the Disk file button, exactly as on the document page: this is the same editor, so the
+		// description of a knowledge base takes files from Disk the same way a document does. Injected
+		// from note.app's own app (where the provide lives) and handed to the editor as a prop by
+		// createDocumentFeature — the editor is a separate app root the provide does not reach.
+		diskAttachmentsEnabled: { default: false },
+	},
 	emits: ['ready', 'state-change', 'load-error', 'open-internal-link'],
 	data()
 	{
@@ -119,6 +126,7 @@ export const NoteDocumentEmbedComponent = {
 			onContentChange: (isEmpty) => this.handleContentEmptyChange(isEmpty),
 			// The description is not a document page: no activity chip, views counter or bell.
 			showActivityLine: false,
+			diskAttachmentsEnabled: Boolean(this.diskAttachmentsEnabled),
 		});
 		void this.reload();
 	},

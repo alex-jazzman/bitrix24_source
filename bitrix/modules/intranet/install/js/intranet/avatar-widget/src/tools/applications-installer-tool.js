@@ -1,4 +1,4 @@
-import { Tag } from 'main.core';
+import { Loc, Tag } from 'main.core';
 import { Button, AirButtonStyle } from 'ui.buttons';
 import { BaseSecondaryTool } from './base-secondary-tool';
 import { Menu } from 'main.popup';
@@ -16,7 +16,7 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 				return Tag.render`
 					<span class="intranet-avatar-widget-secondary-tool-icons__wrapper">
 						${this.#getMobileIcon()}
-						<div class="intranet-avatar-widget-secondary-tool-icons__seporator"></div>
+						<div aria-hidden="true" class="intranet-avatar-widget-secondary-tool-icons__seporator"></div>
 						${this.#getDesktopIcon()}
 					</span>
 				`;
@@ -31,12 +31,19 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 		return this.cache.remember('actionElement', () => {
 			if (this.options.desktop.installed && this.options.menu)
 			{
-				const onclick = (element) => {
-					this.#getInstallMenu(element.target).toggle();
+				const onclick = (event) => {
+					this.#getInstallMenu(event.currentTarget).toggle();
 				};
 
 				return Tag.render`
-					<i onclick="${onclick}" class="ui-icon-set --more-m intranet-avatar-widget-item__more"/>
+					<button
+						type="button"
+						onclick="${onclick}"
+						aria-label="${Loc.getMessage('INTRANET_AVATAR_WIDGET_ADDITIONAL_INSTALL_OPTIONS')}"
+						aria-haspopup="menu"
+						aria-expanded="false"
+						class="ui-icon-set --more-m intranet-avatar-widget-item__more"
+					></button>
 				`;
 			}
 
@@ -53,6 +60,7 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 				},
 				wide: true,
 			})).render();
+			button.setAttribute('aria-label', `${this.options.desktop.buttonName} ${this.getTitle()}`);
 
 			return Tag.render`
 				<span class="intranet-avatar-widget-secondary-tool-application__button-wrapper">
@@ -60,6 +68,11 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 				</span>
 			`;
 		});
+	}
+
+	hasInteractiveAction(): boolean
+	{
+		return true;
 	}
 
 	#getMobileIcon(): HTMLElement
@@ -73,7 +86,7 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 			}
 
 			return Tag.render`
-				<i class="${className}"/>
+				<i aria-hidden="true" class="${className}"/>
 			`;
 		});
 	}
@@ -93,7 +106,7 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 			}
 
 			return Tag.render`
-				<i class="${className}"/>
+				<i aria-hidden="true" class="${className}"/>
 			`;
 		});
 	}
@@ -110,10 +123,15 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 
 			return new Menu({
 				bindElement,
+				ariaLabel: Loc.getMessage('INTRANET_AVATAR_WIDGET_ADDITIONAL_INSTALL_OPTIONS'),
 				items,
 				offsetLeft: 5,
 				angle: true,
 				fixed: true,
+				events: {
+					onShow: () => bindElement.setAttribute('aria-expanded', 'true'),
+					onClose: () => bindElement.setAttribute('aria-expanded', 'false'),
+				},
 			});
 		});
 	}
@@ -141,7 +159,9 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 					onclick: () => {
 						Analytics.send(Analytics.EVENT_CLICK_INSTALL_MOBILE_APP);
 						this.#getInstallMenu().close();
-						EventEmitter.emit('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick');
+						EventEmitter.emit('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', {
+							focusTarget: this.getActionElement(),
+						});
 					},
 				});
 			}

@@ -1,4 +1,12 @@
-const matchers = {
+type Matchers = {
+	tag: RegExp,
+	comment: RegExp,
+	tagName: RegExp,
+	attributes: RegExp,
+	placeholder: RegExp,
+};
+
+const matchers: Matchers = {
 	tag: /<[\d!/A-Za-z-](?:"[^"]*"|'[^']*'|[^"'>])*>|{{uid\d+}}/g,
 	comment: /<!--(?!<!)[^>[].*?-->/g,
 	tagName: /<\/?(\S+?)[\s/>]/,

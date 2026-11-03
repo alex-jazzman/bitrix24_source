@@ -27,42 +27,6 @@ export type CurrentUser = {
 	infoToken: ?string,
 };
 
-export type PanelButtonUniqIds = {
-	edit: ?string,
-	setupSharing: ?string,
-};
-
-export type PresenceParticipant = {
-	id: number,
-	name: string,
-	avatar: ?string,
-};
-
-export type PresenceRoster = {
-	scope: string,
-	revision: number,
-	participants: PresenceParticipant[],
-};
-
-export type PresenceActions = {
-	enter: string,
-	heartbeat: string,
-	leave: string,
-};
-
-// Presence is opt-in. A disabled response contains only `enabled: false`; the remaining
-// fields are emitted only for an authenticated internal editor session.
-export type PresenceConfig = {
-	enabled: boolean,
-	presenceContext?: string,
-	heartbeatInterval?: number,
-	actions?: PresenceActions,
-	pullConfig?: Object,
-	moduleId?: string,
-	command?: string,
-	scope?: string,
-};
-
 // The open-config (DTO-EDITORCONFIG) is proxied verbatim from the platform and fed to
 // `createEditor({ openConfig })` as-is. The wrapper never reshapes or re-signs it.
 export type OpenConfig = {
@@ -84,27 +48,31 @@ export type OpenConfig = {
 
 export type EditorOptions = {
 	openConfig: OpenConfig,
+	restartTarget: ?string,
+	openingBudget: ?{ version: number, totalMs: number, remainingMs: number },
 	// `element` is the id of the placeholder div (api.js contract). The template passes a
 	// node here; the wrapper resolves it to an id string for the helper.
 	element: HTMLElement | string,
 	targetNode: HTMLElement,
 	editorNode: HTMLElement,
-	userBoxNode: HTMLElement,
+	// the description of the opening, made by the server together with this page: the wrapper answers
+	// the requests of the editor for the access settings and for the rename by it
+	headerComposition: ?Object,
 	documentSession: DocumentSession,
 	object: BaseObject,
 	attachedObject: AttachedObject,
 	currentUser: CurrentUser,
-	panelButtonUniqIds: ?PanelButtonUniqIds,
-	linkToEdit: ?string,
 	linkToView: ?string,
 	linkToDownload: ?string,
+	// absent when the opening carries no transition to editing
+	linkToEdit: ?string,
 	historyEnabled: ?boolean,
+	externalLinkMode: ?boolean,
+	initialNotice: ?boolean,
 	texts: ?Object,
-	// Existing Disk object pull channel (object_{id}); used only to receive the live
-	// `contentUpdated` host notification for an already-open VIEW (mirrors OnlyOffice).
+	// Existing Disk object pull channel for viewer updates and exact editor conflict facts.
 	pullConfig: ?Object,
 	publicChannel: ?string,
-	presenceConfig: ?PresenceConfig,
 };
 
 // `contentUpdated` server command on the object pull channel. Emitted host-side by
@@ -120,12 +88,32 @@ export type ContentUpdatedMessage = {
 	},
 };
 
+export type ConflictMessage = {
+	object: { id: number },
+	event: string,
+	documentSessionIds: Array<number>,
+};
+
+export type EditorUser = {
+	id: string,
+	name: string,
+};
+
+export type CurrentUserAvatar = {
+	id: string,
+	image: ?string,
+};
+
+export type NativeEditorInstance = {
+	setUsers?: (options: { c: 'info', users: Array<EditorUser & { image: string }> }) => void,
+};
+
 // Public facade returned by `@vibeoffice/helper createEditor`. Kept structural so the
 // vendored UMD and any future ESM build both satisfy it.
 export type VibeOfficeEditor = {
 	state: string,
 	editorKey: string,
-	instance: ?Object,
+	instance: ?NativeEditorInstance,
 	on: (event: string, fn: Function) => () => void,
 	destroy: () => void,
 };
@@ -134,5 +122,8 @@ export type CreateEditor = (opts: {
 	element: string,
 	openConfig: OpenConfig,
 	documentServerEvents?: Object,
+	onFirstLoadProgress?: (progress: { waitCode?: string, stage?: string, attempt?: number }) => void,
+	signal?: AbortSignal,
+	firstLoadContext?: { version: number, remainingMs: number, helperRemainingMs: number },
 	timeouts?: Object,
 }) => Promise<VibeOfficeEditor>;

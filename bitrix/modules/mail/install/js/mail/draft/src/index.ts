@@ -56,6 +56,7 @@ export async function bootstrapMailDraft(options: BootstrapOptions): Promise<Dra
 
 	const connector = options.connector ?? new DraftConnector(options.context ?? { contextType: 'mail' });
 	const lifecycleToken = options.form.getDraftLifecycleToken?.() ?? 0;
+	let isDraftRestoreComplete = false;
 	options.form.setDraftLoading?.(true);
 	try
 	{
@@ -88,8 +89,10 @@ export async function bootstrapMailDraft(options: BootstrapOptions): Promise<Dra
 		}
 		if (window.top && window.top !== window)
 		{
-			await prepareMailDraftNotificationCenter();
+			await tryPrepareMailDraftNotificationCenter();
 		}
+		isDraftRestoreComplete = true;
+
 		return new DraftCoordinator({
 			form: options.form,
 			connector,
@@ -108,7 +111,10 @@ export async function bootstrapMailDraft(options: BootstrapOptions): Promise<Dra
 	}
 	catch (error)
 	{
-		handleMailDraftBootstrapError(options);
+		if (!isDraftRestoreComplete)
+		{
+			handleMailDraftBootstrapError(options);
+		}
 
 		throw error;
 	}
@@ -139,7 +145,9 @@ function notifyMailDraftClosed(): void
 		return;
 	}
 
-	void prepareMailDraftNotificationCenter().then(() => notifyMailDraftClosed());
+	void tryPrepareMailDraftNotificationCenter().then(() => {
+		mailDraftNotificationCenter?.notify({ content });
+	});
 }
 
 async function prepareMailDraftNotificationCenter(): Promise<void>
@@ -160,6 +168,18 @@ async function prepareMailDraftNotificationCenter(): Promise<void>
 		mailDraftNotificationCenter = topWindow?.BX?.UI?.Notification?.Center
 			?? notificationExtension.Center
 		;
+	}
+}
+
+async function tryPrepareMailDraftNotificationCenter(): Promise<void>
+{
+	try
+	{
+		await prepareMailDraftNotificationCenter();
+	}
+	catch
+	{
+		// Optional notifications must not affect draft restoration.
 	}
 }
 
@@ -222,7 +242,7 @@ export async function bootstrapCrmDraft(options: BootstrapOptions): Promise<Draf
 
 		if (window.top && window.top !== window)
 		{
-			await prepareMailDraftNotificationCenter();
+			await tryPrepareMailDraftNotificationCenter();
 		}
 
 		return new DraftCoordinator({

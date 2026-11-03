@@ -1,0 +1,23 @@
+<?php
+$MESS["M_BIC_DASHBOARD_DETAIL_CREATING_DESC"] = "Creating a dashboard for the first time may take a few minutes. You can continue using your Bitrix24. You will be notified when the dashboard is ready.";
+$MESS["M_BIC_DASHBOARD_DETAIL_CREATING_TITLE"] = "Creating dashboard…";
+$MESS["M_BIC_DASHBOARD_DETAIL_DESCRIPTION_TITLE"] = "Description";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_COMMON_DESC"] = "Could not open dashboard. Please try again.";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_COMMON_TITLE"] = "Something's gone wrong";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_NO_ACCESS_DESC"] = "You don't have permission to view this dashboard.";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_NO_ACCESS_TITLE"] = "Access denied";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_TIMEOUT_DESC"] = "Dashboard is taking too long to load. Check your connection and try again.";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_TIMEOUT_TITLE"] = "Timeout";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_UNAVAILABLE_DESC"] = "BI Builder is not available. Try again later.";
+$MESS["M_BIC_DASHBOARD_DETAIL_ERROR_UNAVAILABLE_TITLE"] = "Dashboard is not available";
+$MESS["M_BIC_DASHBOARD_DETAIL_LONG_WAIT_DESC"] = "Still preparing your dashboard. You can continue using your Bitrix24.";
+$MESS["M_BIC_DASHBOARD_DETAIL_LONG_WAIT_NOTIFY_DESC"] = "Still preparing your dashboard. You will be notified when the dashboard is ready.";
+$MESS["M_BIC_DASHBOARD_DETAIL_LONG_WAIT_TITLE"] = "Preparing your dashboard now. Come back later";
+$MESS["M_BIC_DASHBOARD_DETAIL_OPENING_DESC"] = "Opening the dashboard for the first time may take a few minutes. You can continue using your Bitrix24. You will be notified when the dashboard is ready.";
+$MESS["M_BIC_DASHBOARD_DETAIL_OPENING_TITLE"] = "Loading dashboard…";
+$MESS["M_BIC_DASHBOARD_DETAIL_RETRY"] = "Try again";
+$MESS['M_BIC_DASHBOARD_DETAIL_UNPIN'] = 'Unpin';
+$MESS['M_BIC_DASHBOARD_DETAIL_UNPIN_CANCEL'] = 'Cancel';
+$MESS['M_BIC_DASHBOARD_DETAIL_UNPIN_CONFIRM'] = 'Unpin';
+$MESS['M_BIC_DASHBOARD_DETAIL_UNPIN_CONFIRM_DESC'] = 'The report will disappear from the top level, but access to it will not change.';
+$MESS['M_BIC_DASHBOARD_DETAIL_UNPIN_CONFIRM_TITLE'] = 'Unpin report?';

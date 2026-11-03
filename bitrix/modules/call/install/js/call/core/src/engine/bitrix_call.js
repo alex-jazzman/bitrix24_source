@@ -1541,12 +1541,24 @@ export class BitrixCall extends AbstractCall
 
 		if (this.userId === senderId && callInstanceId && this.instanceId !== callInstanceId)
 		{
+			if (this.associatedEntity?.isDeviceScoped === true)
+			{
+				// Self-decline from another device in a device-scoped (private 1-1
+				// TYPE_INSTANT) call. While this device is still ringing (!this.ready)
+				// it must keep ringing:
+				// declining elsewhere no longer pulls a still-ringing device out of
+				// the call. Ending is driven solely by Call::finish (backend emits it
+				// once no ringing devices remain). Mirrors the mobile client.
+				return;
+			}
+
 			if (this.ready)
 			{
 				return;
 			}
 
-			// Call declined by the same user elsewhere
+			// Group call: the server device-aware gate does not apply, so honor the
+			// self-decline from the other device and leave, as before.
 			this.runCallback(CallEvent.onLeave, { local: false });
 
 			return;
@@ -1990,6 +2002,15 @@ export class BitrixCall extends AbstractCall
 				peer.addMediaRenderer(e.mediaRenderer);
 			}
 
+			const cameraState = !p.isMutedVideo;
+			if (t.source === MediaStreamsKinds.Camera)
+			{
+				this.runCallback(CallEvent.onUserCameraState, {
+					userId: p.userId,
+					cameraState,
+				});
+			}
+
 			if (t.source === MediaStreamsKinds.Microphone)
 			{
 				this.runCallback(CallEvent.onUserMicrophoneState, {
@@ -2007,7 +2028,7 @@ export class BitrixCall extends AbstractCall
 			}
 
 			console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}`);
-			const cameraStateInfo = t.source === MediaStreamsKinds.Camera ? `, cameraState: ${!p?.isMutedVideo}` : '';
+			const cameraStateInfo = t.source === MediaStreamsKinds.Camera ? `, cameraState: ${cameraState}` : '';
 			Util.sendLog({ description: `[RemoteMediaAdded]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}${cameraStateInfo}` });
 		}
 	};
@@ -2273,13 +2294,18 @@ export class BitrixCall extends AbstractCall
 		this.isReconnecting = true;
 
 		const data = Type.isObject(params) ? params : {};
-		this.reconnectHistory.startEntry(data.reconnectionReason ?? null, ReconnectTarget.Sdk);
+		this.reconnectHistory.startEntry({
+			target: ReconnectTarget.MediaServer,
+			reason: data.reconnectionReason ?? null,
+		});
 
 		if (this._reconnectionEventCount === 0)
 		{
-			params.reconnectionEventCount = this.reconnectionEventCount + 1;
-
-			this.runCallback(CallEvent.onReconnecting, params);
+			this.runCallback(CallEvent.onReconnecting, {
+				...data,
+				reconnectionEventCount: this.reconnectionEventCount + 1,
+				reconnectionTarget: ReconnectTarget.MediaServer,
+			});
 		}
 
 		// One event per incident, not per attempt: the counter is what closes the condition above and
@@ -2290,7 +2316,7 @@ export class BitrixCall extends AbstractCall
 	#onCallReconnected = (): void => {
 		this.isReconnecting = false;
 		this.reconnectionEventCount = 0;
-		this.reconnectHistory.updateLastEntry(ReconnectTarget.Sdk, true);
+		this.reconnectHistory.updateLastEntry({ target: ReconnectTarget.MediaServer, isSuccessful: true });
 		this.log("Call reconnected");
 		this.sendTelemetryEvent("reconnect");
 		this.localUserState = UserState.Connected;

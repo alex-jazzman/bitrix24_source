@@ -41,6 +41,7 @@ return [
 		'./src/sidebar/file',
 		'./src/draft',
 		'./src/folder',
+		'./src/chat-command',
 		'./src/comment',
 		'./src/vote',
 		'./src/read-message-queue',

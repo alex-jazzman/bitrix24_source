@@ -45,14 +45,17 @@ if (Manager::isAdmin())
 }
 
 Extension::load([
+	'biconnector.grid',
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-market-manager',
 	'biconnector.apache-superset-analytics',
 	'biconnector.aha-moment',
 	'biconnector.dashboard-export-master',
 	'biconnector.dashboard-related-items-list',
+	'biconnector.error-message',
 	'ui.dialogs.messagebox',
 	'ui.hint',
+	'ui.notification',
 	'ui.buttons',
 	'pull.client',
 	'ui.icons',
@@ -66,7 +69,19 @@ Extension::load([
 	'ui.system.dialog',
 	'ui.system.typography',
 	'biconnector.share-popup',
+	'biconnector.ai-digest-setup',
 ]);
+
+$digestSetupOnboarding = $arResult['DIGEST_SETUP_ONBOARDING'] ?? [];
+$canShowDigestSetupOnboarding = ($digestSetupOnboarding['canShow'] ?? false) === true;
+
+$bitrixGptAnnouncement = $arResult['BITRIXGPT_BI_ANNOUNCEMENT'] ?? [];
+$canShowBitrixGptAnnouncement = ($bitrixGptAnnouncement['canShow'] ?? false) === true;
+
+if ($canShowBitrixGptAnnouncement)
+{
+	Extension::load('biconnector.bitrixgpt-bi-announce');
+}
 
 if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
 ?>
@@ -109,16 +124,19 @@ if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
 	</div>
 <?php endif; ?>
 
-<?php if ($arResult['SHOW_DATASET_TYPING_WARNING']): ?>
-	<div id="biconnector-dataset-typing-warning" class="ui-alert ui-alert-warning">
+<?php if (!empty($arResult['STALE_CONDITIONS'])): ?>
+	<div id="biconnector-stale-conditions-warning" class="ui-alert ui-alert-warning">
 		<span class="ui-alert-message">
-			<?= Loc::getMessage(
-				'BICONNECTOR_APACHE_SUPERSET_GRID_DATASET_TYPING_WARNING',
-				[
-					'[link]' => "<a id=\"biconnector-dataset-typing-warning-details\" href=\"#\">",
-					'[/link]' => '</a>',
-				],
-			)?>
+			<?php if (!empty($arResult['STALE_CONDITION_NAMES'])): ?>
+				<?= Loc::getMessage(
+					'BICONNECTOR_SUPERSET_DASHBOARD_GRID_STALE_CONDITIONS_WARNING',
+					[
+						'#FIELDS#' => htmlspecialcharsbx(implode(', ', $arResult['STALE_CONDITION_NAMES'])),
+					],
+				)?>
+			<?php else: ?>
+				<?= Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STALE_CONDITIONS_WARNING_SHORT')?>
+			<?php endif; ?>
 		</span>
 	</div>
 <?php endif; ?>
@@ -151,6 +169,22 @@ if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
 					<?= htmlspecialcharsbx($licenseNotice['actionNote']) ?>
 				<?php endif ?>
 			<?php endif ?>
+		</span>
+	</div>
+<?php endif; ?>
+
+<?php if (isset($arResult['AI_AGENTS_PROMO'])): ?>
+	<div class="ui-alert ui-alert-primary" data-testid="ai-agents-promo">
+		<span class="ui-alert-message">
+			<?= htmlspecialcharsbx(
+				Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_AI_AGENTS_PROMO_TEXT')
+			) ?>
+			<a
+				href="<?= htmlspecialcharsbx($arResult['AI_AGENTS_PROMO']['url']) ?>"
+				data-testid="ai-agents-promo-link"
+			><?= htmlspecialcharsbx(
+				Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_AI_AGENTS_PROMO_LINK')
+			) ?></a>
 		</span>
 	</div>
 <?php endif; ?>
@@ -190,11 +224,23 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 			'isNeedShowDraftGuide' => $arResult['NEED_SHOW_DRAFT_GUIDE'] ?? false,
 			'selfHostedLicensePopup' => $arResult['SELFHOST_LICENSE_POPUP'] ?? null,
 			'publishAhaMoment' => $arResult['PUBLISH_AHA_MOMENT'] ?? [],
+			'constructorButtonHint' => $arResult['CONSTRUCTOR_BUTTON_HINT'] ?? [],
 			'isAvailableDashboardCreation' => $arResult['IS_AVAILABLE_DASHBOARD_CREATION'] ?? false,
 			'isAvailableGroupCreation' => $arResult['IS_AVAILABLE_GROUP_CREATION'] ?? false,
 			'isMarketExists' => $arParams['IS_MARKET_EXISTS'] ?? false,
 			'marketUrl' => $arParams['MARKET_URL'] ?? '',
 			'supersetStatus' => $arResult['SUPERSET_STATUS'],
 		])?>);
+
+		<?php if ($canShowBitrixGptAnnouncement): ?>
+		BX.BIConnector.BitrixGptBiAnnounce.init(<?= Json::encode($bitrixGptAnnouncement) ?>);
+		<?php endif; ?>
+
+		<?php if ($canShowDigestSetupOnboarding): ?>
+		BX.BIConnector.AiDigestOnboarding.enqueue({
+			version: 'v1',
+			availability: <?= Json::encode($digestSetupOnboarding['availability'] ?? []) ?>,
+		});
+		<?php endif; ?>
 	});
 </script>

@@ -1,8 +1,11 @@
+/* global Partial */
+
 import { Dom, Type } from 'main.core';
 import { mapActions, mapGetters } from 'ui.vue3.vuex';
 
 import { Model } from 'tasks.v2.const';
-import { checkListService } from 'tasks.v2.provider.service.check-list-service';
+import { CheckListBbCode } from 'tasks.v2.lib.check-list-bb-code';
+import { checkListService, activeFieldRegistry } from 'tasks.v2.provider.service.check-list-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserModel } from 'tasks.v2.model.users';
@@ -16,6 +19,15 @@ export const CheckListItemMixin = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		checkListEditor: { default: null },
+	},
+	provide(): Object
+	{
+		return {
+			checkListEditorItem: {
+				getId: () => this.id,
+			},
+		};
 	},
 	props: {
 		id: {
@@ -37,6 +49,9 @@ export const CheckListItemMixin = {
 		'show',
 		'hide',
 		'formattingSelectionChange',
+		'itemPointerEnter',
+		'itemPointerLeave',
+		'panelTab',
 	],
 	setup(): { task: TaskModel } {},
 	data(): Object
@@ -59,6 +74,10 @@ export const CheckListItemMixin = {
 		item(): CheckListModel
 		{
 			return this.$store.getters[`${Model.CheckList}/getById`](this.id);
+		},
+		plainTitle(): string
+		{
+			return CheckListBbCode.toPlainText(this.item.title);
 		},
 		isItemEdit(): boolean
 		{
@@ -89,11 +108,11 @@ export const CheckListItemMixin = {
 		},
 		canModify(): boolean
 		{
-			return this.item?.actions.modify === true;
+			return this.item?.actions?.modify === true;
 		},
 		canRemove(): boolean
 		{
-			return this.item?.actions.remove === true;
+			return this.item?.actions?.remove === true;
 		},
 		canToggle(): boolean
 		{
@@ -102,7 +121,7 @@ export const CheckListItemMixin = {
 				return false;
 			}
 
-			return this.item?.actions.toggle === true;
+			return this.item?.actions?.toggle === true;
 		},
 		hasAttachments(): boolean
 		{
@@ -130,6 +149,18 @@ export const CheckListItemMixin = {
 		auditors(): ?UserModel[]
 		{
 			return this.item.auditors;
+		},
+		accomplicesLabel(): string
+		{
+			return this.loc('TASKS_V2_CHECK_LIST_ITEM_PRINT_ACCOMPLICES', {
+				'#USERS#': this.getUserNames(this.accomplices),
+			});
+		},
+		auditorsLabel(): string
+		{
+			return this.loc('TASKS_V2_CHECK_LIST_ITEM_PRINT_AUDITORS', {
+				'#USERS#': this.getUserNames(this.auditors),
+			});
 		},
 		files(): ?[]
 		{
@@ -189,24 +220,61 @@ export const CheckListItemMixin = {
 		this.mentionManager = new MentionManager({
 			taskId: this.taskId,
 			itemId: this.item.id,
+			onDialogStateChange: (open) => this.checkListEditor?.setParticipantSelectorOpen(open),
 		});
+
+		this.registeredActiveFields = new Set();
 	},
 	mounted(): void
 	{
 		setTimeout(() => {
 			this.isDragEnabled = true;
 		}, 1000);
+
+		void this.$nextTick(() => {
+			this.mentionManager.attachHost(this.$refs.growingTextArea?.$el);
+		});
+	},
+	beforeUnmount(): void
+	{
+		this.mentionManager.destroy();
+		this.registeredActiveFields.forEach((field: string) => {
+			activeFieldRegistry.release(this.id, field);
+		});
+		this.registeredActiveFields.clear();
 	},
 	methods: {
 		...mapActions(Model.Interface, [
 			'addCheckListCompletionCallback',
 		]),
+		registerActiveField(field: string): void
+		{
+			if (this.registeredActiveFields.has(field))
+			{
+				return;
+			}
+
+			activeFieldRegistry.register(this.id, field);
+			this.registeredActiveFields.add(field);
+		},
+		releaseActiveField(field: string): void
+		{
+			if (!this.registeredActiveFields.has(field))
+			{
+				return;
+			}
+
+			activeFieldRegistry.release(this.id, field);
+			this.registeredActiveFields.delete(field);
+		},
 		handleFocus(): void
 		{
+			this.registerActiveField('title');
 			this.$emit('focus', this.id);
 		},
 		handleBlur(): void
 		{
+			this.releaseActiveField('title');
 			this.$emit('blur', this.id);
 		},
 		handleEmptyBlur(): void
@@ -220,6 +288,10 @@ export const CheckListItemMixin = {
 		handleFormattingSelectionChange(actions: string[]): void
 		{
 			this.$emit('formattingSelectionChange', this.id, actions);
+		},
+		getUserNames(users: ?UserModel[]): string
+		{
+			return (users ?? []).map((user: UserModel) => user.name).join(', ');
 		},
 		updateCheckList(id: number | string, fields: Partial<CheckListModel>): Promise<void>
 		{
@@ -277,6 +349,8 @@ export const CheckListItemMixin = {
 				return;
 			}
 
+			this.registerActiveField('isComplete');
+
 			await this.updateCheckList(this.id, { localCompleteState: isComplete });
 
 			const listParents = new Map();
@@ -299,6 +373,7 @@ export const CheckListItemMixin = {
 						this.saveCompleteState(id, fields.isComplete);
 					}
 				});
+				this.releaseActiveField('isComplete');
 			};
 
 			this.addCheckListCompletionCallback({
@@ -345,17 +420,26 @@ export const CheckListItemMixin = {
 		{
 			const currentTitle = this.item.title;
 			this.updateTitle(value);
+			const currentPlainTitle = CheckListBbCode.toPlainText(currentTitle);
+			const nextPlainTitle = CheckListBbCode.toPlainText(value);
 
-			const textareaContainer = this.$refs.growingTextArea.$el;
-			const textarea = textareaContainer?.querySelector('textarea');
-			const cursorPosition = textarea?.selectionStart || 0;
+			const formattingLayer = this.$refs.growingTextArea;
+			const visibleState = formattingLayer.getVisibleState();
 
 			void this.mentionManager.handleInput({
-				item: this.item,
-				isEntered: currentTitle.length < value.length,
-				cursorPosition,
-				targetNode: textareaContainer,
+				item: { ...this.item, title: value },
+				isEntered: currentPlainTitle.length < nextPlainTitle.length,
+				visibleText: visibleState?.text ?? '',
+				cursorPosition: visibleState?.end ?? 0,
+				targetNode: formattingLayer.$el,
+				captureVisibleRange: (start, end) => formattingLayer.captureVisibleRange(start, end),
+				removeVisibleRange: (range) => formattingLayer.removeVisibleRange(range),
+				setAria: (aria) => formattingLayer.setEditorAria(aria),
 			});
+		},
+		handleEditorInput(value: string): void
+		{
+			this.handleInput(value);
 		},
 	},
 };

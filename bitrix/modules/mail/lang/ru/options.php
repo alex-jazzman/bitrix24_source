@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['MAIL_OPTIONS_EMBED_LOCAL_ID_IN_OUTGOING_MESSAGE_HEADER'] = "Встраивать локальный идентификатор в заголовок исходящего письма:<br>(оптимизирует синхронизацию писем)";
 $MESS ['MAIL_OPTIONS_SAVE_SRC'] = "Сохранять исходный текст письма:";
 $MESS ['MAIL_OPTIONS_SAVE_ATTACHMENTS'] = "Сохранять вложенные файлы:";
@@ -31,4 +31,4 @@ $MESS ['EMAL_OPT_STATUS'] = "Состояние:";
 $MESS ['EMAL_OPT_STATUS_UNK'] = "неизвестно";
 $MESS ['EMAL_OPT_START_SMTP'] = "Запустить SMTP-сервер";
 $MESS ['EMAL_OPT_STOP_SMTP'] = "Остановить SMTP-сервер";
-?>
+$MESS['MAIL_OPTIONS_UNLIMITED_MAIL_SYNC_PERIOD'] = 'Разрешить синхронизацию писем за всё время';

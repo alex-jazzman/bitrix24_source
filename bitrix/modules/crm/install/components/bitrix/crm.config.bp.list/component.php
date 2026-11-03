@@ -21,12 +21,6 @@ if (!CModule::IncludeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
-{
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-	return;
-}
-
 $arTypes = [
 	'CRM_LEAD' => [
 		'ID' => 'CRM_LEAD',
@@ -91,10 +85,29 @@ foreach ($dynamicTypesMap->getTypes() as $type)
 	}
 }
 
-$arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? $_REQUEST['entity_id']: $arParams['BP_ENTITY_ID'];
-$arResult['ENTITY_NAME'] = $arTypes[$arResult['ENTITY_ID']]['NAME'];
-$arResult['DOCUMENT_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['TYPE'];
-$arResult['ENTITY_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['DOCUMENT'];
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? null) === true;
+$requestedEntityId = $isSettingsHub
+	? ($arParams['BP_ENTITY_ID'] ?? '')
+	: ($_REQUEST['entity_id'] ?? $arParams['BP_ENTITY_ID']);
+$arResult['ENTITY_ID'] = is_string($requestedEntityId) ? $requestedEntityId : '';
+
+$selectedType = $arTypes[$arResult['ENTITY_ID']] ?? null;
+$canManageTemplates = $selectedType !== null
+	&& CBPDocument::CanUserOperateDocumentType(
+		CBPCanUserOperateOperation::CreateWorkflow,
+		\Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+		['crm', $selectedType['DOCUMENT'], $selectedType['TYPE']],
+	)
+;
+if (!$canManageTemplates)
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
+}
+
+$arResult['ENTITY_NAME'] = $selectedType['NAME'];
+$arResult['DOCUMENT_TYPE'] = $selectedType['TYPE'];
+$arResult['ENTITY_TYPE'] = $selectedType['DOCUMENT'];
 
 $arResult['~ENTITY_LIST_URL'] = $arParams['~ENTITY_LIST_URL'];
 $arResult['ENTITY_LIST_URL'] = htmlspecialcharsbx($arResult['~ENTITY_LIST_URL']);

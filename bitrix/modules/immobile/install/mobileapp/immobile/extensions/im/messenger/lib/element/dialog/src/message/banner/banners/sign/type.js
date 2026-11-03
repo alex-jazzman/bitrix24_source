@@ -21,6 +21,11 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		byEmployeeInviteReviewer: 'byEmployeeInviteReviewer',
 		byEmployeeInviteEmployee: 'byEmployeeInviteEmployee',
 		byEmployeeSignedByEmployee: 'byEmployeeSignedByEmployee',
+		byEmployeeReceivedByCompany: 'byEmployeeReceivedByCompany',
+
+		// KEDO annulment (STAGE-01): the annulment mark is cleared, signing is valid again
+		annulmentCanceledToEmployee: 'annulmentCanceledToEmployee',
+		annulmentCanceledToInitiator: 'annulmentCanceledToInitiator',
 	});
 
 	const Success = Object.freeze({
@@ -30,6 +35,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		doneFromAssignee: 'doneFromAssignee',
 		doneFromEditor: 'doneFromEditor',
 		doneFromReviewer: 'doneFromReviewer',
+		doneEmployeeReceivedByCompany: 'doneEmployeeReceivedByCompany',
 		doneB2bDocumentSigning: 'doneB2bDocumentSigning',
 
 		// initiated by employee
@@ -63,6 +69,8 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		employeeStoppedToCompany: 'employeeStoppedToCompany',
 		documentStopped: 'documentStopped',
 		documentCancelled: 'documentCancelled',
+		documentAnnulledToEmployee: 'documentAnnulledToEmployee',
+		documentAnnulledToInitiator: 'documentAnnulledToInitiator',
 		stoppedToEmployee: 'stoppedToEmployee',
 		stoppedToEmployeeM: 'stoppedToEmployeeM',
 		stoppedToEmployeeF: 'stoppedToEmployeeF',

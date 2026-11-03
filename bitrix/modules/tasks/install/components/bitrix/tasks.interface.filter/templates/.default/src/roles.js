@@ -73,11 +73,21 @@ export class Roles
 		this.#menu = new Menu({
 			items: this.#menuItems,
 			offsetTop: 6,
+			focusTrap: true,
+			ariaLabel: Loc.getMessage('TASKS_FILTER_ROLES_MENU_ARIA_LABEL'),
+			events: {
+				onBeforeShow: (): void => {
+					this.#menu.getPopup().getPopupContainer().setAttribute('aria-modal', 'true');
+				},
+				onShow: (): void => this.#button.getContainer().setAttribute('aria-expanded', 'true'),
+				onClose: (): void => this.#button.getContainer().setAttribute('aria-expanded', 'false'),
+			},
 		});
 
 		this.#button = ButtonManager.createFromNode(button);
 		this.#button.bindEvent('click', (): void => {
 			this.#menu.show(this.#button.getContainer());
+			this.#menu.getPopup()?.getFocusTrap()?.focusFirst();
 
 			void this.#sendAnalyticsClick();
 		});
@@ -121,7 +131,39 @@ export class Roles
 	{
 		this.#button.setText(this.#roleName);
 		this.#button.setRightCounter(this.#roleCounter ? { value: this.#roleCounter } : null);
+		this.#updateButtonAriaLabel();
+		this.#updateMenuItems();
+	}
+
+	#updateButtonAriaLabel(): void
+	{
+		const container = this.#button.getContainer();
+
+		if (this.#roleCounter)
+		{
+			container.setAttribute('aria-label', Loc.getMessage('TASKS_FILTER_ROLES_BTN_ARIA_LABEL', {
+				'#ROLE#': this.#roleName,
+				'#COUNT#': this.#roleCounter,
+			}));
+		}
+		else
+		{
+			container.removeAttribute('aria-label');
+		}
+	}
+
+	#updateMenuItems(): void
+	{
+		const popup = this.#menu.getPopup();
+		const container = popup?.getPopupContainer();
+		const shouldRestoreFocus = Boolean(popup?.isShown()) && Boolean(container?.contains(document.activeElement));
+
 		this.#menu.updateItems(this.#menuItems);
+
+		if (shouldRestoreFocus)
+		{
+			this.#menu.getPopup()?.getFocusTrap()?.focusContainer();
+		}
 	}
 
 	get #menuItems(): MenuItemOptions[]

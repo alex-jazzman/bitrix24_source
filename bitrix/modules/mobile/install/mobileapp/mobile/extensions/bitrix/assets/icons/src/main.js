@@ -88,12 +88,6 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
-		static ADD_TASK = new Icon('ADD_TASK', {
-			name: 'add_task',
-			path: '/bitrix/images/mobile/icons/add_task.svg',
-			content: '',
-		});
-
 		static ADD_TIMELINE = new Icon('ADD_TIMELINE', {
 			name: 'add_timeline',
 			path: '/bitrix/images/mobile/icons/add_timeline.svg',
@@ -115,6 +109,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static AI_PROCESS = new Icon('AI_PROCESS', {
 			name: 'ai_process',
 			path: '/bitrix/images/mobile/icons/ai_process.svg',
+			content: '',
+		});
+
+		static AI_PROJECTS = new Icon('AI_PROJECTS', {
+			name: 'ai_projects',
+			path: '/bitrix/images/mobile/icons/ai_projects.svg',
+			content: '',
+		});
+
+		static AI_PROJECTS_2 = new Icon('AI_PROJECTS_2', {
+			name: 'ai_projects_2',
+			path: '/bitrix/images/mobile/icons/ai_projects_2.svg',
 			content: '',
 		});
 
@@ -364,12 +370,6 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
-		static BACK = new Icon('BACK', {
-			name: 'back',
-			path: '/bitrix/images/mobile/icons/back.svg',
-			content: '',
-		});
-
 		static BACK_10 = new Icon('BACK_10', {
 			name: 'back_10',
 			path: '/bitrix/images/mobile/icons/back_10.svg',
@@ -556,6 +556,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static BRANCH_NETWORK = new Icon('BRANCH_NETWORK', {
+			name: 'branch_network',
+			path: '/bitrix/images/mobile/icons/branch_network.svg',
+			content: '',
+		});
+
 		static BROOM = new Icon('BROOM', {
 			name: 'broom',
 			path: '/bitrix/images/mobile/icons/broom.svg',
@@ -673,6 +679,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static CASH_TERMINAL = new Icon('CASH_TERMINAL', {
 			name: 'cash_terminal',
 			path: '/bitrix/images/mobile/icons/cash_terminal.svg',
+			content: '',
+		});
+
+		static CAT = new Icon('CAT', {
+			name: 'cat',
+			path: '/bitrix/images/mobile/icons/cat.svg',
 			content: '',
 		});
 
@@ -988,6 +1000,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static CODE_DOTS = new Icon('CODE_DOTS', {
+			name: 'code_dots',
+			path: '/bitrix/images/mobile/icons/code_dots.svg',
+			content: '',
+		});
+
 		static COLLAB = new Icon('COLLAB', {
 			name: 'collab',
 			path: '/bitrix/images/mobile/icons/collab.svg',
@@ -1165,6 +1183,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static CORE = new Icon('CORE', {
 			name: 'core',
 			path: '/bitrix/images/mobile/icons/core.svg',
+			content: '',
+		});
+
+		static COWORK_CODE = new Icon('COWORK_CODE', {
+			name: 'cowork_code',
+			path: '/bitrix/images/mobile/icons/cowork_code.svg',
 			content: '',
 		});
 
@@ -1948,6 +1972,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static FUNCTION = new Icon('FUNCTION', {
+			name: 'function',
+			path: '/bitrix/images/mobile/icons/function.svg',
+			content: '',
+		});
+
 		static GALAXY = new Icon('GALAXY', {
 			name: 'galaxy',
 			path: '/bitrix/images/mobile/icons/galaxy.svg',
@@ -2158,6 +2188,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static IMAGE_AI = new Icon('IMAGE_AI', {
+			name: 'image_ai',
+			path: '/bitrix/images/mobile/icons/image_ai.svg',
+			content: '',
+		});
+
 		static IMAGE_PLUS = new Icon('IMAGE_PLUS', {
 			name: 'image_plus',
 			path: '/bitrix/images/mobile/icons/image_plus.svg',
@@ -2338,6 +2374,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static LIST_TASKS_ADD = new Icon('LIST_TASKS_ADD', {
+			name: 'list_tasks_add',
+			path: '/bitrix/images/mobile/icons/list_tasks_add.svg',
+			content: '',
+		});
+
 		static LIST_VIEWER = new Icon('LIST_VIEWER', {
 			name: 'list_viewer',
 			path: '/bitrix/images/mobile/icons/list_viewer.svg',
@@ -2494,6 +2536,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static MANEKI_NEKO = new Icon('MANEKI_NEKO', {
+			name: 'maneki_neko',
+			path: '/bitrix/images/mobile/icons/maneki_neko.svg',
+			content: '',
+		});
+
 		static MAP = new Icon('MAP', {
 			name: 'map',
 			path: '/bitrix/images/mobile/icons/map.svg',
@@ -2605,6 +2653,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static MESSENGER_SEND = new Icon('MESSENGER_SEND', {
 			name: 'messenger_send',
 			path: '/bitrix/images/mobile/icons/messenger_send.svg',
+			content: '',
+		});
+
+		static MIC_SCRIPT = new Icon('MIC_SCRIPT', {
+			name: 'mic_script',
+			path: '/bitrix/images/mobile/icons/mic_script.svg',
 			content: '',
 		});
 
@@ -3136,6 +3190,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static PERSONAL_DATA_CONSENT = new Icon('PERSONAL_DATA_CONSENT', {
+			name: 'personal_data_consent',
+			path: '/bitrix/images/mobile/icons/personal_data_consent.svg',
+			content: '',
+		});
+
 		static PERSONAL_FORM = new Icon('PERSONAL_FORM', {
 			name: 'personal_form',
 			path: '/bitrix/images/mobile/icons/personal_form.svg',
@@ -3187,6 +3247,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static PIN_LIST = new Icon('PIN_LIST', {
 			name: 'pin_list',
 			path: '/bitrix/images/mobile/icons/pin_list.svg',
+			content: '',
+		});
+
+		static PIN_YOURSELF = new Icon('PIN_YOURSELF', {
+			name: 'pin_yourself',
+			path: '/bitrix/images/mobile/icons/pin_yourself.svg',
 			content: '',
 		});
 
@@ -3442,6 +3508,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static RADIANT = new Icon('RADIANT', {
+			name: 'radiant',
+			path: '/bitrix/images/mobile/icons/radiant.svg',
+			content: '',
+		});
+
 		static RECEIPT = new Icon('RECEIPT', {
 			name: 'receipt',
 			path: '/bitrix/images/mobile/icons/receipt.svg',
@@ -3565,6 +3637,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static REPLY = new Icon('REPLY', {
 			name: 'reply',
 			path: '/bitrix/images/mobile/icons/reply.svg',
+			content: '',
+		});
+
+		static REPLY_2 = new Icon('REPLY_2', {
+			name: 'reply_2',
+			path: '/bitrix/images/mobile/icons/reply_2.svg',
 			content: '',
 		});
 
@@ -3697,6 +3775,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SEEN_ITEMS = new Icon('SEEN_ITEMS', {
 			name: 'seen_items',
 			path: '/bitrix/images/mobile/icons/seen_items.svg',
+			content: '',
+		});
+
+		static SEGMENT_SALES = new Icon('SEGMENT_SALES', {
+			name: 'segment_sales',
+			path: '/bitrix/images/mobile/icons/segment_sales.svg',
+			content: '',
+		});
+
+		static SEGMENT_SALES_AI = new Icon('SEGMENT_SALES_AI', {
+			name: 'segment_sales_ai',
+			path: '/bitrix/images/mobile/icons/segment_sales_ai.svg',
 			content: '',
 		});
 
@@ -4204,6 +4294,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_ACHIEVEMENT = new Icon('SOLID_ACHIEVEMENT', {
+			name: 'solid_achievement',
+			path: '/bitrix/images/mobile/icons/solid_achievement.svg',
+			content: '',
+		});
+
+		static SOLID_ACTION_REQUIRED = new Icon('SOLID_ACTION_REQUIRED', {
+			name: 'solid_action_required',
+			path: '/bitrix/images/mobile/icons/solid_action_required.svg',
+			content: '',
+		});
+
 		static SOLID_ACTIVITY = new Icon('SOLID_ACTIVITY', {
 			name: 'solid_activity',
 			path: '/bitrix/images/mobile/icons/solid_activity.svg',
@@ -4216,15 +4318,51 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_ADD_DATABASE = new Icon('SOLID_ADD_DATABASE', {
+			name: 'solid_add_database',
+			path: '/bitrix/images/mobile/icons/solid_add_database.svg',
+			content: '',
+		});
+
+		static SOLID_ADD_EVENT = new Icon('SOLID_ADD_EVENT', {
+			name: 'solid_add_event',
+			path: '/bitrix/images/mobile/icons/solid_add_event.svg',
+			content: '',
+		});
+
 		static SOLID_ADD_FUNNEL = new Icon('SOLID_ADD_FUNNEL', {
 			name: 'solid_add_funnel',
 			path: '/bitrix/images/mobile/icons/solid_add_funnel.svg',
 			content: '',
 		});
 
+		static SOLID_ADD_PERSON = new Icon('SOLID_ADD_PERSON', {
+			name: 'solid_add_person',
+			path: '/bitrix/images/mobile/icons/solid_add_person.svg',
+			content: '',
+		});
+
+		static SOLID_AI_INTERNET_SEARCH = new Icon('SOLID_AI_INTERNET_SEARCH', {
+			name: 'solid_ai_internet_search',
+			path: '/bitrix/images/mobile/icons/solid_ai_internet_search.svg',
+			content: '',
+		});
+
 		static SOLID_AI_PROCESS = new Icon('SOLID_AI_PROCESS', {
 			name: 'solid_ai_process',
 			path: '/bitrix/images/mobile/icons/solid_ai_process.svg',
+			content: '',
+		});
+
+		static SOLID_AI_PROJECTS = new Icon('SOLID_AI_PROJECTS', {
+			name: 'solid_ai_projects',
+			path: '/bitrix/images/mobile/icons/solid_ai_projects.svg',
+			content: '',
+		});
+
+		static SOLID_AI_PROJECTS_2 = new Icon('SOLID_AI_PROJECTS_2', {
+			name: 'solid_ai_projects_2',
+			path: '/bitrix/images/mobile/icons/solid_ai_projects_2.svg',
 			content: '',
 		});
 
@@ -4252,9 +4390,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_AI_STARS_QUESTION_4 = new Icon('SOLID_AI_STARS_QUESTION_4', {
+			name: 'solid_ai_stars_question_4',
+			path: '/bitrix/images/mobile/icons/solid_ai_stars_question_4.svg',
+			content: '',
+		});
+
 		static SOLID_AI_TWO_STARS = new Icon('SOLID_AI_TWO_STARS', {
 			name: 'solid_ai_two_stars',
 			path: '/bitrix/images/mobile/icons/solid_ai_two_stars.svg',
+			content: '',
+		});
+
+		static SOLID_ALARM = new Icon('SOLID_ALARM', {
+			name: 'solid_alarm',
+			path: '/bitrix/images/mobile/icons/solid_alarm.svg',
 			content: '',
 		});
 
@@ -4450,9 +4600,15 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
-		static SOLID_BACK = new Icon('SOLID_BACK', {
-			name: 'solid_back',
-			path: '/bitrix/images/mobile/icons/solid_back.svg',
+		static SOLID_AUTO_SELECTION = new Icon('SOLID_AUTO_SELECTION', {
+			name: 'solid_auto_selection',
+			path: '/bitrix/images/mobile/icons/solid_auto_selection.svg',
+			content: '',
+		});
+
+		static SOLID_AUTOFILL = new Icon('SOLID_AUTOFILL', {
+			name: 'solid_autofill',
+			path: '/bitrix/images/mobile/icons/solid_autofill.svg',
 			content: '',
 		});
 
@@ -4465,6 +4621,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_BACK_15 = new Icon('SOLID_BACK_15', {
 			name: 'solid_back_15',
 			path: '/bitrix/images/mobile/icons/solid_back_15.svg',
+			content: '',
+		});
+
+		static SOLID_BALL_ONE = new Icon('SOLID_BALL_ONE', {
+			name: 'solid_ball_one',
+			path: '/bitrix/images/mobile/icons/solid_ball_one.svg',
 			content: '',
 		});
 
@@ -4498,6 +4660,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_BARCODE = new Icon('SOLID_BARCODE', {
+			name: 'solid_barcode',
+			path: '/bitrix/images/mobile/icons/solid_barcode.svg',
+			content: '',
+		});
+
 		static SOLID_BATTERY_1_STICK = new Icon('SOLID_BATTERY_1_STICK', {
 			name: 'solid_battery_1_stick',
 			path: '/bitrix/images/mobile/icons/solid_battery_1_stick.svg',
@@ -4513,6 +4681,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_BATTERY_NO_CHARGE = new Icon('SOLID_BATTERY_NO_CHARGE', {
 			name: 'solid_battery_no_charge',
 			path: '/bitrix/images/mobile/icons/solid_battery_no_charge.svg',
+			content: '',
+		});
+
+		static SOLID_BEER = new Icon('SOLID_BEER', {
+			name: 'solid_beer',
+			path: '/bitrix/images/mobile/icons/solid_beer.svg',
+			content: '',
+		});
+
+		static SOLID_BLACK_LIST = new Icon('SOLID_BLACK_LIST', {
+			name: 'solid_black_list',
+			path: '/bitrix/images/mobile/icons/solid_black_list.svg',
 			content: '',
 		});
 
@@ -4606,6 +4786,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_BRANCH_NETWORK = new Icon('SOLID_BRANCH_NETWORK', {
+			name: 'solid_branch_network',
+			path: '/bitrix/images/mobile/icons/solid_branch_network.svg',
+			content: '',
+		});
+
+		static SOLID_BROOM = new Icon('SOLID_BROOM', {
+			name: 'solid_broom',
+			path: '/bitrix/images/mobile/icons/solid_broom.svg',
+			content: '',
+		});
+
 		static SOLID_BROWSER = new Icon('SOLID_BROWSER', {
 			name: 'solid_browser',
 			path: '/bitrix/images/mobile/icons/solid_browser.svg',
@@ -4636,9 +4828,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_CAKE_CELEBRATING = new Icon('SOLID_CAKE_CELEBRATING', {
+			name: 'solid_cake_celebrating',
+			path: '/bitrix/images/mobile/icons/solid_cake_celebrating.svg',
+			content: '',
+		});
+
 		static SOLID_CALENDAR = new Icon('SOLID_CALENDAR', {
 			name: 'solid_calendar',
 			path: '/bitrix/images/mobile/icons/solid_calendar.svg',
+			content: '',
+		});
+
+		static SOLID_CALENDAR_SHARE = new Icon('SOLID_CALENDAR_SHARE', {
+			name: 'solid_calendar_share',
+			path: '/bitrix/images/mobile/icons/solid_calendar_share.svg',
 			content: '',
 		});
 
@@ -4663,6 +4867,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_CARD = new Icon('SOLID_CARD', {
 			name: 'solid_card',
 			path: '/bitrix/images/mobile/icons/solid_card.svg',
+			content: '',
+		});
+
+		static SOLID_CAT = new Icon('SOLID_CAT', {
+			name: 'solid_cat',
+			path: '/bitrix/images/mobile/icons/solid_cat.svg',
 			content: '',
 		});
 
@@ -4912,6 +5122,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_CLOSE_CHAT = new Icon('SOLID_CLOSE_CHAT', {
+			name: 'solid_close_chat',
+			path: '/bitrix/images/mobile/icons/solid_close_chat.svg',
+			content: '',
+		});
+
 		static SOLID_CLOUD = new Icon('SOLID_CLOUD', {
 			name: 'solid_cloud',
 			path: '/bitrix/images/mobile/icons/solid_cloud.svg',
@@ -4945,6 +5161,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_CLOUD_WITH_CHECK = new Icon('SOLID_CLOUD_WITH_CHECK', {
 			name: 'solid_cloud_with_check',
 			path: '/bitrix/images/mobile/icons/solid_cloud_with_check.svg',
+			content: '',
+		});
+
+		static SOLID_CODE_DOTS = new Icon('SOLID_CODE_DOTS', {
+			name: 'solid_code_dots',
+			path: '/bitrix/images/mobile/icons/solid_code_dots.svg',
 			content: '',
 		});
 
@@ -4996,6 +5218,24 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_COLUMNS_SIDEBAR_PENDING = new Icon('SOLID_COLUMNS_SIDEBAR_PENDING', {
+			name: 'solid_columns_sidebar_pending',
+			path: '/bitrix/images/mobile/icons/solid_columns_sidebar_pending.svg',
+			content: '',
+		});
+
+		static SOLID_COLUMNS_SIDEBAR_PENDING_LEFT = new Icon('SOLID_COLUMNS_SIDEBAR_PENDING_LEFT', {
+			name: 'solid_columns_sidebar_pending_left',
+			path: '/bitrix/images/mobile/icons/solid_columns_sidebar_pending_left.svg',
+			content: '',
+		});
+
+		static SOLID_COMMANDS = new Icon('SOLID_COMMANDS', {
+			name: 'solid_commands',
+			path: '/bitrix/images/mobile/icons/solid_commands.svg',
+			content: '',
+		});
+
 		static SOLID_COMPANY = new Icon('SOLID_COMPANY', {
 			name: 'solid_company',
 			path: '/bitrix/images/mobile/icons/solid_company.svg',
@@ -5032,6 +5272,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_CONTACT_DETAILS = new Icon('SOLID_CONTACT_DETAILS', {
+			name: 'solid_contact_details',
+			path: '/bitrix/images/mobile/icons/solid_contact_details.svg',
+			content: '',
+		});
+
 		static SOLID_CONTRAST = new Icon('SOLID_CONTRAST', {
 			name: 'solid_contrast',
 			path: '/bitrix/images/mobile/icons/solid_contrast.svg',
@@ -5053,6 +5299,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_COPY_LINK = new Icon('SOLID_COPY_LINK', {
 			name: 'solid_copy_link',
 			path: '/bitrix/images/mobile/icons/solid_copy_link.svg',
+			content: '',
+		});
+
+		static SOLID_CORE = new Icon('SOLID_CORE', {
+			name: 'solid_core',
+			path: '/bitrix/images/mobile/icons/solid_core.svg',
 			content: '',
 		});
 
@@ -5176,6 +5428,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_CUP_WINNER = new Icon('SOLID_CUP_WINNER', {
+			name: 'solid_cup_winner',
+			path: '/bitrix/images/mobile/icons/solid_cup_winner.svg',
+			content: '',
+		});
+
 		static SOLID_CURSOR_CLICK = new Icon('SOLID_CURSOR_CLICK', {
 			name: 'solid_cursor_click',
 			path: '/bitrix/images/mobile/icons/solid_cursor_click.svg',
@@ -5188,9 +5446,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_DATA_READING = new Icon('SOLID_DATA_READING', {
+			name: 'solid_data_reading',
+			path: '/bitrix/images/mobile/icons/solid_data_reading.svg',
+			content: '',
+		});
+
 		static SOLID_DATABASE = new Icon('SOLID_DATABASE', {
 			name: 'solid_database',
 			path: '/bitrix/images/mobile/icons/solid_database.svg',
+			content: '',
+		});
+
+		static SOLID_DAY_OFF = new Icon('SOLID_DAY_OFF', {
+			name: 'solid_day_off',
+			path: '/bitrix/images/mobile/icons/solid_day_off.svg',
 			content: '',
 		});
 
@@ -5218,9 +5488,27 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_DIAL_10 = new Icon('SOLID_DIAL_10', {
+			name: 'solid_dial_10',
+			path: '/bitrix/images/mobile/icons/solid_dial_10.svg',
+			content: '',
+		});
+
+		static SOLID_DIAL_20 = new Icon('SOLID_DIAL_20', {
+			name: 'solid_dial_20',
+			path: '/bitrix/images/mobile/icons/solid_dial_20.svg',
+			content: '',
+		});
+
 		static SOLID_DIGITS_123 = new Icon('SOLID_DIGITS_123', {
 			name: 'solid_digits_123',
 			path: '/bitrix/images/mobile/icons/solid_digits_123.svg',
+			content: '',
+		});
+
+		static SOLID_DIGITS_24 = new Icon('SOLID_DIGITS_24', {
+			name: 'solid_digits_24',
+			path: '/bitrix/images/mobile/icons/solid_digits_24.svg',
 			content: '',
 		});
 
@@ -5251,6 +5539,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_DOCUMENT_SIGN = new Icon('SOLID_DOCUMENT_SIGN', {
 			name: 'solid_document_sign',
 			path: '/bitrix/images/mobile/icons/solid_document_sign.svg',
+			content: '',
+		});
+
+		static SOLID_DOTS = new Icon('SOLID_DOTS', {
+			name: 'solid_dots',
+			path: '/bitrix/images/mobile/icons/solid_dots.svg',
 			content: '',
 		});
 
@@ -5434,6 +5728,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_EXPERT_MODE = new Icon('SOLID_EXPERT_MODE', {
+			name: 'solid_expert_mode',
+			path: '/bitrix/images/mobile/icons/solid_expert_mode.svg',
+			content: '',
+		});
+
 		static SOLID_EXPORT = new Icon('SOLID_EXPORT', {
 			name: 'solid_export',
 			path: '/bitrix/images/mobile/icons/solid_export.svg',
@@ -5455,6 +5755,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_FEEDBACK = new Icon('SOLID_FEEDBACK', {
 			name: 'solid_feedback',
 			path: '/bitrix/images/mobile/icons/solid_feedback.svg',
+			content: '',
+		});
+
+		static SOLID_FEEDBACK_FORM = new Icon('SOLID_FEEDBACK_FORM', {
+			name: 'solid_feedback_form',
+			path: '/bitrix/images/mobile/icons/solid_feedback_form.svg',
 			content: '',
 		});
 
@@ -5548,6 +5854,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_FINGERPRINT = new Icon('SOLID_FINGERPRINT', {
+			name: 'solid_fingerprint',
+			path: '/bitrix/images/mobile/icons/solid_fingerprint.svg',
+			content: '',
+		});
+
 		static SOLID_FIRE = new Icon('SOLID_FIRE', {
 			name: 'solid_fire',
 			path: '/bitrix/images/mobile/icons/solid_fire.svg',
@@ -5563,6 +5875,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_FLAG_WITH_CROSS = new Icon('SOLID_FLAG_WITH_CROSS', {
 			name: 'solid_flag_with_cross',
 			path: '/bitrix/images/mobile/icons/solid_flag_with_cross.svg',
+			content: '',
+		});
+
+		static SOLID_FLOWER = new Icon('SOLID_FLOWER', {
+			name: 'solid_flower',
+			path: '/bitrix/images/mobile/icons/solid_flower.svg',
 			content: '',
 		});
 
@@ -5632,6 +5950,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_FUNCTION = new Icon('SOLID_FUNCTION', {
+			name: 'solid_function',
+			path: '/bitrix/images/mobile/icons/solid_function.svg',
+			content: '',
+		});
+
 		static SOLID_GALAXY = new Icon('SOLID_GALAXY', {
 			name: 'solid_galaxy',
 			path: '/bitrix/images/mobile/icons/solid_galaxy.svg',
@@ -5695,6 +6019,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_GRAPHS_DIAGRAM = new Icon('SOLID_GRAPHS_DIAGRAM', {
 			name: 'solid_graphs_diagram',
 			path: '/bitrix/images/mobile/icons/solid_graphs_diagram.svg',
+			content: '',
+		});
+
+		static SOLID_GRAPHS_SETTINGS = new Icon('SOLID_GRAPHS_SETTINGS', {
+			name: 'solid_graphs_settings',
+			path: '/bitrix/images/mobile/icons/solid_graphs_settings.svg',
 			content: '',
 		});
 
@@ -5776,6 +6106,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_HIGH_TEMPERATURE = new Icon('SOLID_HIGH_TEMPERATURE', {
+			name: 'solid_high_temperature',
+			path: '/bitrix/images/mobile/icons/solid_high_temperature.svg',
+			content: '',
+		});
+
 		static SOLID_HOME = new Icon('SOLID_HOME', {
 			name: 'solid_home',
 			path: '/bitrix/images/mobile/icons/solid_home.svg',
@@ -5803,6 +6139,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_IMAGE = new Icon('SOLID_IMAGE', {
 			name: 'solid_image',
 			path: '/bitrix/images/mobile/icons/solid_image.svg',
+			content: '',
+		});
+
+		static SOLID_IMAGE_AI = new Icon('SOLID_IMAGE_AI', {
+			name: 'solid_image_ai',
+			path: '/bitrix/images/mobile/icons/solid_image_ai.svg',
+			content: '',
+		});
+
+		static SOLID_IMAGE_PLUS = new Icon('SOLID_IMAGE_PLUS', {
+			name: 'solid_image_plus',
+			path: '/bitrix/images/mobile/icons/solid_image_plus.svg',
 			content: '',
 		});
 
@@ -5890,6 +6238,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_LEGAL_PROCESS = new Icon('SOLID_LEGAL_PROCESS', {
+			name: 'solid_legal_process',
+			path: '/bitrix/images/mobile/icons/solid_legal_process.svg',
+			content: '',
+		});
+
 		static SOLID_LIBRARY_BASE = new Icon('SOLID_LIBRARY_BASE', {
 			name: 'solid_library_base',
 			path: '/bitrix/images/mobile/icons/solid_library_base.svg',
@@ -5920,6 +6274,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_LINK_UPDATE = new Icon('SOLID_LINK_UPDATE', {
+			name: 'solid_link_update',
+			path: '/bitrix/images/mobile/icons/solid_link_update.svg',
+			content: '',
+		});
+
+		static SOLID_LIST_TASKS_ADD = new Icon('SOLID_LIST_TASKS_ADD', {
+			name: 'solid_list_tasks_add',
+			path: '/bitrix/images/mobile/icons/solid_list_tasks_add.svg',
+			content: '',
+		});
+
 		static SOLID_LIST_VIEWER = new Icon('SOLID_LIST_VIEWER', {
 			name: 'solid_list_viewer',
 			path: '/bitrix/images/mobile/icons/solid_list_viewer.svg',
@@ -5932,6 +6298,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_LOCATION_PLUS = new Icon('SOLID_LOCATION_PLUS', {
+			name: 'solid_location_plus',
+			path: '/bitrix/images/mobile/icons/solid_location_plus.svg',
+			content: '',
+		});
+
 		static SOLID_LOCATION_TIME = new Icon('SOLID_LOCATION_TIME', {
 			name: 'solid_location_time',
 			path: '/bitrix/images/mobile/icons/solid_location_time.svg',
@@ -5941,6 +6313,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_LOCK = new Icon('SOLID_LOCK', {
 			name: 'solid_lock',
 			path: '/bitrix/images/mobile/icons/solid_lock.svg',
+			content: '',
+		});
+
+		static SOLID_LOCK_2 = new Icon('SOLID_LOCK_2', {
+			name: 'solid_lock_2',
+			path: '/bitrix/images/mobile/icons/solid_lock_2.svg',
 			content: '',
 		});
 
@@ -5971,6 +6349,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_LOG_OUT = new Icon('SOLID_LOG_OUT', {
 			name: 'solid_log_out',
 			path: '/bitrix/images/mobile/icons/solid_log_out.svg',
+			content: '',
+		});
+
+		static SOLID_LOGIN_HISTORY = new Icon('SOLID_LOGIN_HISTORY', {
+			name: 'solid_login_history',
+			path: '/bitrix/images/mobile/icons/solid_login_history.svg',
 			content: '',
 		});
 
@@ -6016,6 +6400,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_MANEKI_NEKO = new Icon('SOLID_MANEKI_NEKO', {
+			name: 'solid_maneki_neko',
+			path: '/bitrix/images/mobile/icons/solid_maneki_neko.svg',
+			content: '',
+		});
+
+		static SOLID_MAP = new Icon('SOLID_MAP', {
+			name: 'solid_map',
+			path: '/bitrix/images/mobile/icons/solid_map.svg',
+			content: '',
+		});
+
 		static SOLID_MARKET = new Icon('SOLID_MARKET', {
 			name: 'solid_market',
 			path: '/bitrix/images/mobile/icons/solid_market.svg',
@@ -6025,6 +6421,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_MARKETING = new Icon('SOLID_MARKETING', {
 			name: 'solid_marketing',
 			path: '/bitrix/images/mobile/icons/solid_marketing.svg',
+			content: '',
+		});
+
+		static SOLID_MARTINI_GLASS = new Icon('SOLID_MARTINI_GLASS', {
+			name: 'solid_martini_glass',
+			path: '/bitrix/images/mobile/icons/solid_martini_glass.svg',
 			content: '',
 		});
 
@@ -6082,9 +6484,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_MIC_SCRIPT = new Icon('SOLID_MIC_SCRIPT', {
+			name: 'solid_mic_script',
+			path: '/bitrix/images/mobile/icons/solid_mic_script.svg',
+			content: '',
+		});
+
 		static SOLID_MICROPHONE_AI = new Icon('SOLID_MICROPHONE_AI', {
 			name: 'solid_microphone_ai',
 			path: '/bitrix/images/mobile/icons/solid_microphone_ai.svg',
+			content: '',
+		});
+
+		static SOLID_MICROPHONE_OFF = new Icon('SOLID_MICROPHONE_OFF', {
+			name: 'solid_microphone_off',
+			path: '/bitrix/images/mobile/icons/solid_microphone_off.svg',
 			content: '',
 		});
 
@@ -6166,6 +6580,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_MONEY = new Icon('SOLID_MONEY', {
+			name: 'solid_money',
+			path: '/bitrix/images/mobile/icons/solid_money.svg',
+			content: '',
+		});
+
 		static SOLID_MONEY_PRIZE = new Icon('SOLID_MONEY_PRIZE', {
 			name: 'solid_money_prize',
 			path: '/bitrix/images/mobile/icons/solid_money_prize.svg',
@@ -6232,6 +6652,24 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_MULTI_PAGE_FORM = new Icon('SOLID_MULTI_PAGE_FORM', {
+			name: 'solid_multi_page_form',
+			path: '/bitrix/images/mobile/icons/solid_multi_page_form.svg',
+			content: '',
+		});
+
+		static SOLID_MULTICHOICE_OFF = new Icon('SOLID_MULTICHOICE_OFF', {
+			name: 'solid_multichoice_off',
+			path: '/bitrix/images/mobile/icons/solid_multichoice_off.svg',
+			content: '',
+		});
+
+		static SOLID_MULTICHOICE_ON = new Icon('SOLID_MULTICHOICE_ON', {
+			name: 'solid_multichoice_on',
+			path: '/bitrix/images/mobile/icons/solid_multichoice_on.svg',
+			content: '',
+		});
+
 		static SOLID_MUSIC = new Icon('SOLID_MUSIC', {
 			name: 'solid_music',
 			path: '/bitrix/images/mobile/icons/solid_music.svg',
@@ -6256,9 +6694,27 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_NO_CLOUD_SYNC = new Icon('SOLID_NO_CLOUD_SYNC', {
+			name: 'solid_no_cloud_sync',
+			path: '/bitrix/images/mobile/icons/solid_no_cloud_sync.svg',
+			content: '',
+		});
+
 		static SOLID_NO_COMPASS = new Icon('SOLID_NO_COMPASS', {
 			name: 'solid_no_compass',
 			path: '/bitrix/images/mobile/icons/solid_no_compass.svg',
+			content: '',
+		});
+
+		static SOLID_NO_WIFI = new Icon('SOLID_NO_WIFI', {
+			name: 'solid_no_wifi',
+			path: '/bitrix/images/mobile/icons/solid_no_wifi.svg',
+			content: '',
+		});
+
+		static SOLID_NON_FAVORITE = new Icon('SOLID_NON_FAVORITE', {
+			name: 'solid_non_favorite',
+			path: '/bitrix/images/mobile/icons/solid_non_favorite.svg',
 			content: '',
 		});
 
@@ -6277,6 +6733,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_NOTIFICATION_OFF = new Icon('SOLID_NOTIFICATION_OFF', {
 			name: 'solid_notification_off',
 			path: '/bitrix/images/mobile/icons/solid_notification_off.svg',
+			content: '',
+		});
+
+		static SOLID_NOTIFICATION_SETTINGS = new Icon('SOLID_NOTIFICATION_SETTINGS', {
+			name: 'solid_notification_settings',
+			path: '/bitrix/images/mobile/icons/solid_notification_settings.svg',
+			content: '',
+		});
+
+		static SOLID_NOTIFICATION_WITH_CROSS = new Icon('SOLID_NOTIFICATION_WITH_CROSS', {
+			name: 'solid_notification_with_cross',
+			path: '/bitrix/images/mobile/icons/solid_notification_with_cross.svg',
 			content: '',
 		});
 
@@ -6304,9 +6772,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_ONLINE_EVENTS = new Icon('SOLID_ONLINE_EVENTS', {
+			name: 'solid_online_events',
+			path: '/bitrix/images/mobile/icons/solid_online_events.svg',
+			content: '',
+		});
+
 		static SOLID_OPEN_CHANNELS = new Icon('SOLID_OPEN_CHANNELS', {
 			name: 'solid_open_channels',
 			path: '/bitrix/images/mobile/icons/solid_open_channels.svg',
+			content: '',
+		});
+
+		static SOLID_OPEN_CHAT = new Icon('SOLID_OPEN_CHAT', {
+			name: 'solid_open_chat',
+			path: '/bitrix/images/mobile/icons/solid_open_chat.svg',
 			content: '',
 		});
 
@@ -6394,9 +6874,45 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_PERSON_CHECKS = new Icon('SOLID_PERSON_CHECKS', {
+			name: 'solid_person_checks',
+			path: '/bitrix/images/mobile/icons/solid_person_checks.svg',
+			content: '',
+		});
+
+		static SOLID_PERSON_DESCENDING = new Icon('SOLID_PERSON_DESCENDING', {
+			name: 'solid_person_descending',
+			path: '/bitrix/images/mobile/icons/solid_person_descending.svg',
+			content: '',
+		});
+
 		static SOLID_PERSON_DETECT = new Icon('SOLID_PERSON_DETECT', {
 			name: 'solid_person_detect',
 			path: '/bitrix/images/mobile/icons/solid_person_detect.svg',
+			content: '',
+		});
+
+		static SOLID_PERSON_MENTION = new Icon('SOLID_PERSON_MENTION', {
+			name: 'solid_person_mention',
+			path: '/bitrix/images/mobile/icons/solid_person_mention.svg',
+			content: '',
+		});
+
+		static SOLID_PERSON_SEARCH = new Icon('SOLID_PERSON_SEARCH', {
+			name: 'solid_person_search',
+			path: '/bitrix/images/mobile/icons/solid_person_search.svg',
+			content: '',
+		});
+
+		static SOLID_PERSON_SPEAK = new Icon('SOLID_PERSON_SPEAK', {
+			name: 'solid_person_speak',
+			path: '/bitrix/images/mobile/icons/solid_person_speak.svg',
+			content: '',
+		});
+
+		static SOLID_PERSONAL_DATA_CONSENT = new Icon('SOLID_PERSONAL_DATA_CONSENT', {
+			name: 'solid_personal_data_consent',
+			path: '/bitrix/images/mobile/icons/solid_personal_data_consent.svg',
 			content: '',
 		});
 
@@ -6439,6 +6955,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_PIN = new Icon('SOLID_PIN', {
 			name: 'solid_pin',
 			path: '/bitrix/images/mobile/icons/solid_pin.svg',
+			content: '',
+		});
+
+		static SOLID_PIN_YOURSELF = new Icon('SOLID_PIN_YOURSELF', {
+			name: 'solid_pin_yourself',
+			path: '/bitrix/images/mobile/icons/solid_pin_yourself.svg',
+			content: '',
+		});
+
+		static SOLID_PING = new Icon('SOLID_PING', {
+			name: 'solid_ping',
+			path: '/bitrix/images/mobile/icons/solid_ping.svg',
 			content: '',
 		});
 
@@ -6514,6 +7042,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_POLL = new Icon('SOLID_POLL', {
+			name: 'solid_poll',
+			path: '/bitrix/images/mobile/icons/solid_poll.svg',
+			content: '',
+		});
+
 		static SOLID_POWER = new Icon('SOLID_POWER', {
 			name: 'solid_power',
 			path: '/bitrix/images/mobile/icons/solid_power.svg',
@@ -6574,6 +7108,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_PRODUCTS_SHIRT = new Icon('SOLID_PRODUCTS_SHIRT', {
+			name: 'solid_products_shirt',
+			path: '/bitrix/images/mobile/icons/solid_products_shirt.svg',
+			content: '',
+		});
+
 		static SOLID_PROMPT_VAR = new Icon('SOLID_PROMPT_VAR', {
 			name: 'solid_prompt_var',
 			path: '/bitrix/images/mobile/icons/solid_prompt_var.svg',
@@ -6583,6 +7123,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_PULSE = new Icon('SOLID_PULSE', {
 			name: 'solid_pulse',
 			path: '/bitrix/images/mobile/icons/solid_pulse.svg',
+			content: '',
+		});
+
+		static SOLID_QR_CODE = new Icon('SOLID_QR_CODE', {
+			name: 'solid_qr_code',
+			path: '/bitrix/images/mobile/icons/solid_qr_code.svg',
 			content: '',
 		});
 
@@ -6613,6 +7159,30 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_QUOTE = new Icon('SOLID_QUOTE', {
 			name: 'solid_quote',
 			path: '/bitrix/images/mobile/icons/solid_quote.svg',
+			content: '',
+		});
+
+		static SOLID_RADIANT = new Icon('SOLID_RADIANT', {
+			name: 'solid_radiant',
+			path: '/bitrix/images/mobile/icons/solid_radiant.svg',
+			content: '',
+		});
+
+		static SOLID_RECEIPT = new Icon('SOLID_RECEIPT', {
+			name: 'solid_receipt',
+			path: '/bitrix/images/mobile/icons/solid_receipt.svg',
+			content: '',
+		});
+
+		static SOLID_RECEIPT_NOTE = new Icon('SOLID_RECEIPT_NOTE', {
+			name: 'solid_receipt_note',
+			path: '/bitrix/images/mobile/icons/solid_receipt_note.svg',
+			content: '',
+		});
+
+		static SOLID_RECENT_CARDS = new Icon('SOLID_RECENT_CARDS', {
+			name: 'solid_recent_cards',
+			path: '/bitrix/images/mobile/icons/solid_recent_cards.svg',
 			content: '',
 		});
 
@@ -6670,9 +7240,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_REGISTRATION_ON_SITE = new Icon('SOLID_REGISTRATION_ON_SITE', {
+			name: 'solid_registration_on_site',
+			path: '/bitrix/images/mobile/icons/solid_registration_on_site.svg',
+			content: '',
+		});
+
 		static SOLID_RELATED_TASKS = new Icon('SOLID_RELATED_TASKS', {
 			name: 'solid_related_tasks',
 			path: '/bitrix/images/mobile/icons/solid_related_tasks.svg',
+			content: '',
+		});
+
+		static SOLID_REMOVE_PERSON = new Icon('SOLID_REMOVE_PERSON', {
+			name: 'solid_remove_person',
+			path: '/bitrix/images/mobile/icons/solid_remove_person.svg',
 			content: '',
 		});
 
@@ -6691,6 +7273,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_REPLY = new Icon('SOLID_REPLY', {
 			name: 'solid_reply',
 			path: '/bitrix/images/mobile/icons/solid_reply.svg',
+			content: '',
+		});
+
+		static SOLID_REPLY_2 = new Icon('SOLID_REPLY_2', {
+			name: 'solid_reply_2',
+			path: '/bitrix/images/mobile/icons/solid_reply_2.svg',
 			content: '',
 		});
 
@@ -6778,6 +7366,24 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_SEGMENT_SALES = new Icon('SOLID_SEGMENT_SALES', {
+			name: 'solid_segment_sales',
+			path: '/bitrix/images/mobile/icons/solid_segment_sales.svg',
+			content: '',
+		});
+
+		static SOLID_SEGMENT_SALES_AI = new Icon('SOLID_SEGMENT_SALES_AI', {
+			name: 'solid_segment_sales_ai',
+			path: '/bitrix/images/mobile/icons/solid_segment_sales_ai.svg',
+			content: '',
+		});
+
+		static SOLID_SEND = new Icon('SOLID_SEND', {
+			name: 'solid_send',
+			path: '/bitrix/images/mobile/icons/solid_send.svg',
+			content: '',
+		});
+
 		static SOLID_SENDED = new Icon('SOLID_SENDED', {
 			name: 'solid_sended',
 			path: '/bitrix/images/mobile/icons/solid_sended.svg',
@@ -6850,6 +7456,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_SHOP_ORDER = new Icon('SOLID_SHOP_ORDER', {
+			name: 'solid_shop_order',
+			path: '/bitrix/images/mobile/icons/solid_shop_order.svg',
+			content: '',
+		});
+
 		static SOLID_SHOPPING_CART = new Icon('SOLID_SHOPPING_CART', {
 			name: 'solid_shopping_cart',
 			path: '/bitrix/images/mobile/icons/solid_shopping_cart.svg',
@@ -6877,6 +7489,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_SIGN = new Icon('SOLID_SIGN', {
 			name: 'solid_sign',
 			path: '/bitrix/images/mobile/icons/solid_sign.svg',
+			content: '',
+		});
+
+		static SOLID_SIGN_DEFAULT = new Icon('SOLID_SIGN_DEFAULT', {
+			name: 'solid_sign_default',
+			path: '/bitrix/images/mobile/icons/solid_sign_default.svg',
 			content: '',
 		});
 
@@ -6928,6 +7546,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_SORT_ACTIVITY = new Icon('SOLID_SORT_ACTIVITY', {
+			name: 'solid_sort_activity',
+			path: '/bitrix/images/mobile/icons/solid_sort_activity.svg',
+			content: '',
+		});
+
+		static SOLID_SORT_CALENDAR = new Icon('SOLID_SORT_CALENDAR', {
+			name: 'solid_sort_calendar',
+			path: '/bitrix/images/mobile/icons/solid_sort_calendar.svg',
+			content: '',
+		});
+
 		static SOLID_SOUND_OFF = new Icon('SOLID_SOUND_OFF', {
 			name: 'solid_sound_off',
 			path: '/bitrix/images/mobile/icons/solid_sound_off.svg',
@@ -6937,6 +7567,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_SOUND_ON = new Icon('SOLID_SOUND_ON', {
 			name: 'solid_sound_on',
 			path: '/bitrix/images/mobile/icons/solid_sound_on.svg',
+			content: '',
+		});
+
+		static SOLID_SPEAKER = new Icon('SOLID_SPEAKER', {
+			name: 'solid_speaker',
+			path: '/bitrix/images/mobile/icons/solid_speaker.svg',
 			content: '',
 		});
 
@@ -7042,6 +7678,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_STICKER = new Icon('SOLID_STICKER', {
+			name: 'solid_sticker',
+			path: '/bitrix/images/mobile/icons/solid_sticker.svg',
+			content: '',
+		});
+
+		static SOLID_STICKER_SMILE = new Icon('SOLID_STICKER_SMILE', {
+			name: 'solid_sticker_smile',
+			path: '/bitrix/images/mobile/icons/solid_sticker_smile.svg',
+			content: '',
+		});
+
 		static SOLID_STOCK = new Icon('SOLID_STOCK', {
 			name: 'solid_stock',
 			path: '/bitrix/images/mobile/icons/solid_stock.svg',
@@ -7087,6 +7735,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_STRESS = new Icon('SOLID_STRESS', {
 			name: 'solid_stress',
 			path: '/bitrix/images/mobile/icons/solid_stress.svg',
+			content: '',
+		});
+
+		static SOLID_STRESS_NO = new Icon('SOLID_STRESS_NO', {
+			name: 'solid_stress_no',
+			path: '/bitrix/images/mobile/icons/solid_stress_no.svg',
 			content: '',
 		});
 
@@ -7168,6 +7822,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_TASK_FIRE = new Icon('SOLID_TASK_FIRE', {
+			name: 'solid_task_fire',
+			path: '/bitrix/images/mobile/icons/solid_task_fire.svg',
+			content: '',
+		});
+
 		static SOLID_TASK_LIST = new Icon('SOLID_TASK_LIST', {
 			name: 'solid_task_list',
 			path: '/bitrix/images/mobile/icons/solid_task_list.svg',
@@ -7222,6 +7882,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_TEXT_FORMATTING = new Icon('SOLID_TEXT_FORMATTING', {
+			name: 'solid_text_formatting',
+			path: '/bitrix/images/mobile/icons/solid_text_formatting.svg',
+			content: '',
+		});
+
+		static SOLID_THEME = new Icon('SOLID_THEME', {
+			name: 'solid_theme',
+			path: '/bitrix/images/mobile/icons/solid_theme.svg',
+			content: '',
+		});
+
 		static SOLID_THREAD = new Icon('SOLID_THREAD', {
 			name: 'solid_thread',
 			path: '/bitrix/images/mobile/icons/solid_thread.svg',
@@ -7246,9 +7918,27 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_THREE_SQUARES = new Icon('SOLID_THREE_SQUARES', {
+			name: 'solid_three_squares',
+			path: '/bitrix/images/mobile/icons/solid_three_squares.svg',
+			content: '',
+		});
+
 		static SOLID_TIMELINE = new Icon('SOLID_TIMELINE', {
 			name: 'solid_timeline',
 			path: '/bitrix/images/mobile/icons/solid_timeline.svg',
+			content: '',
+		});
+
+		static SOLID_TIMER = new Icon('SOLID_TIMER', {
+			name: 'solid_timer',
+			path: '/bitrix/images/mobile/icons/solid_timer.svg',
+			content: '',
+		});
+
+		static SOLID_TIMER_DOT = new Icon('SOLID_TIMER_DOT', {
+			name: 'solid_timer_dot',
+			path: '/bitrix/images/mobile/icons/solid_timer_dot.svg',
 			content: '',
 		});
 
@@ -7336,6 +8026,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_UNC_1 = new Icon('SOLID_UNC_1', {
+			name: 'solid_unc_1',
+			path: '/bitrix/images/mobile/icons/solid_unc_1.svg',
+			content: '',
+		});
+
 		static SOLID_UNDERLINE = new Icon('SOLID_UNDERLINE', {
 			name: 'solid_underline',
 			path: '/bitrix/images/mobile/icons/solid_underline.svg',
@@ -7384,6 +8080,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_UNPIN_YOURSELF = new Icon('SOLID_UNPIN_YOURSELF', {
+			name: 'solid_unpin_yourself',
+			path: '/bitrix/images/mobile/icons/solid_unpin_yourself.svg',
+			content: '',
+		});
+
 		static SOLID_UPLOAD = new Icon('SOLID_UPLOAD', {
 			name: 'solid_upload',
 			path: '/bitrix/images/mobile/icons/solid_upload.svg',
@@ -7426,6 +8128,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_VIBECODE = new Icon('SOLID_VIBECODE', {
+			name: 'solid_vibecode',
+			path: '/bitrix/images/mobile/icons/solid_vibecode.svg',
+			content: '',
+		});
+
+		static SOLID_VIBECODE_CATALOG = new Icon('SOLID_VIBECODE_CATALOG', {
+			name: 'solid_vibecode_catalog',
+			path: '/bitrix/images/mobile/icons/solid_vibecode_catalog.svg',
+			content: '',
+		});
+
 		static SOLID_VIDEO_RECORD = new Icon('SOLID_VIDEO_RECORD', {
 			name: 'solid_video_record',
 			path: '/bitrix/images/mobile/icons/solid_video_record.svg',
@@ -7456,9 +8170,21 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static SOLID_VIRTUAL_SERVER = new Icon('SOLID_VIRTUAL_SERVER', {
+			name: 'solid_virtual_server',
+			path: '/bitrix/images/mobile/icons/solid_virtual_server.svg',
+			content: '',
+		});
+
 		static SOLID_VIRTUAL_STORAGE = new Icon('SOLID_VIRTUAL_STORAGE', {
 			name: 'solid_virtual_storage',
 			path: '/bitrix/images/mobile/icons/solid_virtual_storage.svg',
+			content: '',
+		});
+
+		static SOLID_VK_LEAD_FORM = new Icon('SOLID_VK_LEAD_FORM', {
+			name: 'solid_vk_lead_form',
+			path: '/bitrix/images/mobile/icons/solid_vk_lead_form.svg',
 			content: '',
 		});
 
@@ -7477,6 +8203,18 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_WHATSAPP = new Icon('SOLID_WHATSAPP', {
 			name: 'solid_whatsapp',
 			path: '/bitrix/images/mobile/icons/solid_whatsapp.svg',
+			content: '',
+		});
+
+		static SOLID_WIFI = new Icon('SOLID_WIFI', {
+			name: 'solid_wifi',
+			path: '/bitrix/images/mobile/icons/solid_wifi.svg',
+			content: '',
+		});
+
+		static SOLID_WIKI = new Icon('SOLID_WIKI', {
+			name: 'solid_wiki',
+			path: '/bitrix/images/mobile/icons/solid_wiki.svg',
 			content: '',
 		});
 
@@ -7708,6 +8446,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static STRESS_NO = new Icon('STRESS_NO', {
+			name: 'stress_no',
+			path: '/bitrix/images/mobile/icons/stress_no.svg',
+			content: '',
+		});
+
 		static STRIKETHROUGH = new Icon('STRIKETHROUGH', {
 			name: 'strikethrough',
 			path: '/bitrix/images/mobile/icons/strikethrough.svg',
@@ -7891,6 +8635,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static TEXT_FORMAT_TOP_RIGHT = new Icon('TEXT_FORMAT_TOP_RIGHT', {
 			name: 'text_format_top_right',
 			path: '/bitrix/images/mobile/icons/text_format_top_right.svg',
+			content: '',
+		});
+
+		static TEXT_FORMATTING = new Icon('TEXT_FORMATTING', {
+			name: 'text_formatting',
+			path: '/bitrix/images/mobile/icons/text_formatting.svg',
 			content: '',
 		});
 
@@ -8110,6 +8860,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static UNPIN_YOURSELF = new Icon('UNPIN_YOURSELF', {
+			name: 'unpin_yourself',
+			path: '/bitrix/images/mobile/icons/unpin_yourself.svg',
+			content: '',
+		});
+
 		static UPLOAD = new Icon('UPLOAD', {
 			name: 'upload',
 			path: '/bitrix/images/mobile/icons/upload.svg',
@@ -8161,6 +8917,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static VIBE_PLUS_2 = new Icon('VIBE_PLUS_2', {
 			name: 'vibe_plus_2',
 			path: '/bitrix/images/mobile/icons/vibe_plus_2.svg',
+			content: '',
+		});
+
+		static VIBECODE = new Icon('VIBECODE', {
+			name: 'vibecode',
+			path: '/bitrix/images/mobile/icons/vibecode.svg',
 			content: '',
 		});
 

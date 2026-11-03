@@ -10,7 +10,7 @@ import { showErrorToast } from './show-error-toast';
 import { formatTime } from './format-date';
 import { positionPopoverUnderTrigger } from 'note.ui.popover-position';
 
-// [P1.T5 / P2.T4] History sidebar — the right-hand 3rd column, pushes the document content
+// History sidebar - the right-hand 3rd column, pushes the document content
 // (see note.editor's document-page.js `--note-history-width` custom property), never overlays it.
 //
 // [#11/#12 rework] This sidebar no longer renders a version preview itself — clicking a
@@ -20,7 +20,7 @@ import { positionPopoverUnderTrigger } from 'note.ui.popover-position';
 // restoring, compacting and the 409 retry (SDD P1.T2) now live with the caller too. `previewVersionId`
 // is handed back down only so the currently-previewed tile can be highlighted / toggled off.
 //
-// [P2.T4] The feed (Block 2, listFeed API-04) is fetched and paginated by this component
+// The feed (Block 2, listFeed API-04) is fetched and paginated by this component
 // itself — the parent (note.editor's document-page.js) only owns open/close state, it doesn't
 // pass data in. `groups` below is an internal computed, not a prop, grouped by calendar day from
 // the flat `feedEvents` list; the shape matches the P1.T5 placeholder exactly: { key, dateLabel,
@@ -39,7 +39,7 @@ const AUTOFILL_MAX_PAGES = 20;
 // Same slack as handleBodyScroll's bottom trigger — "not scrollable" means within this of fitting.
 const SCROLL_THRESHOLD_PX = 120;
 
-// [SDD API-04 / EventVisibilityPolicy] Canonical event types, gender-neutral noun labels per
+// Canonical event types, mirroring EventVisibilityPolicy on the server, gender-neutral noun labels per
 // UI-requirements — no "Version" noun anywhere, no gendered "changed" verb forms.
 const EVENT_LABEL_KEYS = {
 	created: 'historyEventCreated',
@@ -103,7 +103,7 @@ export const VersionTimelineComponent = {
 	data()
 	{
 		return {
-			// [P2.T4] Feed state — a flat, de-duplicated accumulation of keyset pages.
+			// Feed state - a flat, de-duplicated accumulation of keyset pages.
 			feedEvents: [],
 			feedInitialized: false,
 			feedLoading: false,
@@ -462,7 +462,7 @@ export const VersionTimelineComponent = {
 
 			return el.scrollHeight <= el.clientHeight + SCROLL_THRESHOLD_PX;
 		},
-		// [SDD P2.T4] Seamless infinite scroll over the keyset cursor — no "show more" button.
+		// Seamless infinite scroll over the keyset cursor - no "show more" button.
 		handleBodyScroll(event: Event): void
 		{
 			const el = event.currentTarget;

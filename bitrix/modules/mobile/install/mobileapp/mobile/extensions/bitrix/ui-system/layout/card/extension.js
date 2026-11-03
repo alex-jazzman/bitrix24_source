@@ -12,6 +12,8 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	/**
 	 * @function Card
 	 * @param {CardProps} props
+	 * @param {string} [props.borderColor] ready color of the border, e.g. `Color.base6.toHex(0.07)`;
+	 *        works along with `border` and defaults to the separator color
 	 * @param {Array} children
 	 */
 	function Card(props = {}, ...children)
@@ -23,11 +25,13 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			excludePaddingSide = {},
 			style = {},
 			border = false,
+			borderColor = null,
 			design = CardDesign.PRIMARY,
 			corner = CardCorner.L,
 			badgeMode = null,
 			badge = null,
 			hideCross = true,
+			crossColor = null,
 			selected = false,
 			accent = false,
 			withPressed = false,
@@ -57,7 +61,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		if (border)
 		{
 			cardStyle.borderWidth = 1;
-			cardStyle.borderColor = Color.bgSeparatorPrimary.toHex();
+			cardStyle.borderColor = borderColor ?? Color.bgSeparatorPrimary.toHex();
 		}
 
 		if (selected)
@@ -81,7 +85,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			: IconView({
 				testId: testId ? `${testId}_close` : null,
 				icon: Icon.CROSS,
-				color: Color.base1,
+				color: Color.resolve(crossColor, Color.base1),
 				opacity: 0.3,
 				size: 20,
 			});
@@ -132,8 +136,10 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		badgeMode: null,
 		badge: null,
 		hideCross: true,
+		crossColor: null,
 		selected: true,
 		border: false,
+		borderColor: null,
 		accent: false,
 		withPressed: false,
 		excludePaddingSide: {},
@@ -144,9 +150,11 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	Card.propTypes = {
 		testId: PropTypes.string.isRequired,
 		hideCross: PropTypes.bool,
+		crossColor: PropTypes.instanceOf(Color),
 		selected: PropTypes.bool,
 		withPressed: PropTypes.bool,
 		border: PropTypes.bool,
+		borderColor: PropTypes.string,
 		design: PropTypes.instanceOf(CardDesign),
 		corner: PropTypes.instanceOf(CardCorner),
 		badgeMode: PropTypes.instanceOf(BadgeStatusMode),

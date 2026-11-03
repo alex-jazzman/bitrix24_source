@@ -34,6 +34,11 @@ export const TranscriptionText = {
 			type: Boolean,
 			required: true,
 		},
+		// The consumer renders the message text below the transcription: the divider separates them
+		withMessageText: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	computed: {
 		transcription(): ?ImModelTranscription
@@ -67,7 +72,7 @@ export const TranscriptionText = {
 		},
 		needToShowDivider(): boolean
 		{
-			return this.isOpened && Boolean(this.message.text);
+			return this.isOpened && this.withMessageText && Boolean(this.message.text);
 		},
 		needToShowDisclaimer(): boolean
 		{
@@ -94,7 +99,7 @@ export const TranscriptionText = {
 		},
 	},
 	template: `
-		<div class="bx-im-transcription-text__container">
+		<div class="bx-im-transcription-text__container" data-testid="im-transcription-text-root">
 			<ExpandAnimation>
 				<div
 					v-if="isOpened"
@@ -121,7 +126,11 @@ export const TranscriptionText = {
 					</template>
 				</div>
 			</ExpandAnimation>
-			<div v-if="needToShowDivider" class="bx-im-transcription-text__divider"></div>
+			<div
+				v-if="needToShowDivider"
+				class="bx-im-transcription-text__divider"
+				data-testid="im-transcription-text-divider"
+			></div>
 		</div>
 	`,
 };

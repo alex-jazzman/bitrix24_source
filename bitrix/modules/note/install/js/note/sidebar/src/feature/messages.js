@@ -17,9 +17,9 @@ export function buildSidebarMessages()
 		createChildDocument: msg('NOTE_SIDEBAR_CREATE_CHILD_DOCUMENT'),
 		delete: msg('NOTE_SIDEBAR_DELETE'),
 		deleteWithNested: msg('NOTE_SIDEBAR_DELETE_WITH_NESTED'),
-		confirmDeleteCollection: msg('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION'),
+		confirmDeleteCollection: msg('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_MSGVER_1'),
 		confirmDeleteCollectionTitle: msg('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_TITLE'),
-		confirmDeleteDocument: msg('NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT'),
+		confirmDeleteDocument: msg('NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_MSGVER_1'),
 		confirmDeleteDocumentTitle: msg('NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_TITLE'),
 		archiveConfirm: msg('NOTE_APP_ARCHIVE'),
 		archiveWithNested: msg('NOTE_SIDEBAR_ARCHIVE_WITH_NESTED'),
@@ -62,7 +62,7 @@ export function buildSidebarMessages()
 		favoriteRemoveFailed: msg('NOTE_SIDEBAR_FAVORITE_REMOVE_FAILED'),
 		favoriteMoveFailed: msg('NOTE_SIDEBAR_FAVORITE_MOVE_FAILED'),
 		favoriteNotifyFailed: msg('NOTE_SIDEBAR_FAVORITE_NOTIFY_FAILED'),
-		// [P4.T1] Wording of the depth chooser, taken from the extension that owns the popover - the
+		// Wording of the depth chooser, taken from the extension that owns the popover - the
 		// same phrases the bell of the editor shows, not a second copy of them.
 		notifyPopover: createHistoryMessages(),
 		expandCollections: msg('NOTE_SIDEBAR_COLLECTIONS_EXPAND'),

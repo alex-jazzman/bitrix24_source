@@ -90,6 +90,10 @@
 		{
 			config.infinite = false;
 		}
+		else if (BX.Landing.SliderA11y && BX.Landing.SliderA11y.attach)
+		{
+			BX.Landing.SliderA11y.attach(sliderNode);
+		}
 		$.HSCore.components.HSCarousel.init(sliderNode, config);
 	};
 

@@ -12,7 +12,7 @@ export default {
 	],
 	treeshake: {
 		moduleSideEffects: (id: string) => {
-			return id.includes('/internal/bx');
+			return id.includes('/internal/bx') || id.includes('/legacy/');
 		},
 	},
 	concat: {
@@ -20,7 +20,6 @@ export default {
 			'./src/internal/wrap-start.js',
 			'../polyfill/core/dist/polyfill.bundle.js',
 			'./core.js',
-			'./src/old/core.js',
 			'./core_promise.js',
 			'./core_ajax.js',
 

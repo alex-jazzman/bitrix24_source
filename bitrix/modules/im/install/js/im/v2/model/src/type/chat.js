@@ -1,4 +1,12 @@
-import { UserRole, ChatActionGroup, type FolderTypeItem, type ChatTypeItem, type RecentTypeItem } from 'im.v2.const';
+import {
+	UserRole,
+	ChatActionGroup,
+	type FolderTypeItem,
+	type ChatTypeItem,
+	type ParentChatIdType,
+	type RecentTypeItem,
+	type SystemFolderCodeItem,
+} from 'im.v2.const';
 
 type ActionGroupItem = $Keys<typeof ChatActionGroup>;
 type RoleItem = $Keys<typeof UserRole>;
@@ -80,15 +88,24 @@ export type FolderChat = {
 	dialogId: string,
 };
 
+// What the folder is made of. A folder carries the part that fits its kind: a section, a chat list or
+// the codes of the folders it unites. parentChatId is the nesting frame of the section:
+// 0 - root chats only, null - every nesting level.
+export type FolderDefinition = {
+	recentSection?: RecentTypeItem,
+	chats?: FolderChat[],
+	sourceFolders?: SystemFolderCodeItem[],
+	parentChatId?: ParentChatIdType,
+};
+
 export type Folder = {
 	id: number,
 	sort: number,
 	type: FolderTypeItem,
 	title: string,
 	displaysNestedInRoot: boolean,
-	definition: {
-		recentSection?: RecentTypeItem,
-		chats?: FolderChat[],
-	},
-	code?: RecentTypeItem,
+	visible?: boolean,
+	description?: string,
+	definition: FolderDefinition,
+	code?: SystemFolderCodeItem,
 };

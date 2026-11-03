@@ -37,6 +37,20 @@
 	position: relative;
 }
 
+.bx-im-entity-selector-forward__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+}
+
+.bx-im-entity-selector-forward__selected-count {
+	color: var(--ui-color-base-4);
+	font: var(--ui-font-weight-regular, 400) var(--im-font-size-md)/19px var(--im-font-family-system);
+	letter-spacing: -0.05px;
+}
+
 .bx-im-entity-selector-forward__scope .popup-window-titlebar-text {
 	font-size: var(--im-font-size-2xl);
 	font-weight: var(--im-font-weight-semi-bold);

@@ -8,6 +8,9 @@ import { type SenderDto, type SignatureItem, type SignaturesState } from '../../
  * The option is shared with the old form; `CUserOptions` merges it key by key, so writing one sender leaves
  * the choices of the other senders alone.
  */
+/** Prefix of the key a shared signature of a mailbox is laid out under, as the server writes it. */
+const MailboxKeyPrefix = 'mailbox:';
+
 const ChoiceOption = Object.freeze({
 	category: 'mail',
 	name: 'signature_choice',
@@ -56,9 +59,28 @@ export function collectSignatures(
 		byKey[key] = [...(byKey[key] ?? []), ...(bySender[rawKey] ?? [])];
 	});
 
-	return [normalizeSenderKey(sender.formated), normalizeSenderKey(sender.email), '']
+	const mailboxKey = mailboxSenderKey(sender);
+	const own = [normalizeSenderKey(sender.formated), normalizeSenderKey(sender.email), '']
 		.filter((key, index, keys) => keys.indexOf(key) === index)
 		.flatMap((key) => byKey[key] ?? []);
+
+	const laidOutByMailbox = Object.keys(byKey).some((key) => key.startsWith(MailboxKeyPrefix));
+	if (mailboxKey === null || !laidOutByMailbox)
+	{
+		return own;
+	}
+
+	// Two connections of one address share the formatted key, so a mailbox takes the signatures assigned
+	// to it from its own key alone: the shared ones under the shared key may belong to the neighbour.
+	return [...own.filter((item) => !item.isShared), ...(byKey[mailboxKey] ?? [])];
+}
+
+/** `null` when the sender is not a mailbox: only a mailbox carries signatures assigned to it. */
+function mailboxSenderKey(sender: SenderDto): string | null
+{
+	const mailboxId = Number(sender.mailboxId ?? 0);
+
+	return mailboxId > 0 ? normalizeSenderKey(`${MailboxKeyPrefix}${mailboxId}`) : null;
 }
 
 /**

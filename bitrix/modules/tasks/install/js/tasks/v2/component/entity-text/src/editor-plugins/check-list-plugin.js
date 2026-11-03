@@ -1,6 +1,6 @@
 import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Button, BasePlugin, Commands } from 'ui.text-editor';
+import { Button, BasePlugin } from 'ui.text-editor';
 import { $getSelection, $getPreviousSelection, $isRangeSelection } from 'ui.lexical.core';
 
 export const CHECK_LIST_BUTTON = 'tasks-check-list-button';
@@ -25,10 +25,13 @@ export class CheckListPlugin extends BasePlugin
 					const selection = $getSelection() || $getPreviousSelection();
 					if ($isRangeSelection(selection))
 					{
-						this.#eventEmitter.emit('checkListButtonClick', selection.getTextContent());
-
-						this.getEditor().blur();
-						this.getEditor().dispatchCommand(Commands.HIDE_DIALOG_COMMAND);
+						// Keep the toolbar open so the picker can anchor to the live button.
+						// It closes on CheckListAddFromTextResolved, not on this click.
+						this.#eventEmitter.emit('checkListButtonClick', {
+							text: selection.getTextContent(),
+							// Live node stays valid while the toolbar is open; the popup recomputes position.
+							anchor: button.getContainer(),
+						});
 					}
 				});
 			});

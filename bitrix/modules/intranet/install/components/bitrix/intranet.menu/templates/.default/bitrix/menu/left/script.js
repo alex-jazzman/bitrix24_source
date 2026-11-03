@@ -3,9 +3,22 @@ this.BX = this.BX || {};
 (function (exports, main_core, im_v2_lib_desktopApi, im_v2_lib_confirm, main_popup, im_v2_const, main_loader, main_core_events) {
 	'use strict';
 
+	const DEFAULT_AVATAR = '/bitrix/js/im/images/blank.gif';
+	const DEFAULT_DESKTOP_AVATAR = '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
+	function resolveAvatarUrl(account) {
+		const avatarPath = account.avatar.split(/[?#]/, 1)[0];
+		if (avatarPath.endsWith(DEFAULT_AVATAR)) {
+			return DEFAULT_DESKTOP_AVATAR;
+		}
+		if (account.avatar.includes('http://') || account.avatar.includes('https://')) {
+			return account.avatar;
+		}
+		return `${account.protocol}://${account.portal}${account.avatar}`;
+	}
+
 	class Account {
-		static defaultAvatar = '/bitrix/js/im/images/blank.gif';
-		static defaultAvatarDesktop = '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
+		static defaultAvatar = DEFAULT_AVATAR;
+		static defaultAvatarDesktop = DEFAULT_DESKTOP_AVATAR;
 		accounts = [];
 		currentUser = null;
 		contextPopup = [];
@@ -172,13 +185,7 @@ this.BX = this.BX || {};
 			main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
 		}
 		getAvatarUrl(account) {
-			let avatarUrl = '';
-			if (account.avatar.includes('http://') || account.avatar.includes('https://')) {
-				avatarUrl = account.avatar;
-			} else {
-				avatarUrl = `${account.protocol}://${account.portal}${account.avatar}`;
-			}
-			return `url('${BX.util.htmlspecialchars(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesktop : BX.util.htmlspecialchars(avatarUrl))}')`;
+			return `url('${BX.util.htmlspecialchars(resolveAvatarUrl(account))}')`;
 		}
 		viewPopupAccounts() {
 			if (main_core.Type.isNil(this.currentUser)) {

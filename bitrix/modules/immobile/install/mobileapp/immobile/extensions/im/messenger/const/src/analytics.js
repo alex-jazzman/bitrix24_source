@@ -17,8 +17,11 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		submitCreateNew: 'submit_create_new',
 		clickCreateFolder: 'click_create_folder',
 		addToFolder: 'add_to_folder',
+		deleteFromFolder: 'delete_from_folder',
 		openList: 'open_list',
 		openFolder: 'open_folder',
+		folderLimitException: 'folder_limit_exception',
+		chatLimitException: 'chat_limit_exception',
 		audioUse: 'audio_use',
 		record: 'record',
 		play: 'play',
@@ -45,6 +48,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openFiles: 'open_files',
 		clickCreate: 'click_create',
 		clickCreateTask: 'click_create_task',
+		clickCreateAiTask: 'click_create_ai_task',
 		clickCreateEvent: 'click_create_event',
 		clickAttach: 'click_attach',
 		galleryLimitException: 'gallery_limit_exception',
@@ -55,10 +59,13 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		pinnedMessageLimitException: 'pinned_message_limit_exception',
 		openSearch: 'open_search',
 		startSearch: 'start_search',
+		selectRecipient: 'select_recipient',
+		forwardResult: 'forward_result',
 		searchResult: 'search_result',
 		cancelSearch: 'cancel_search',
 		selectSearchResult: 'select_search_result',
 		backToSearch: 'back_to_search',
+		goToDate: 'go_to_date',
 		clickRecentSuggest: 'click_recent_suggest',
 		clickCreatePoll: 'click_create_poll',
 		publishPoll: 'publish_poll',
@@ -77,6 +84,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickMCPIntegrations: 'click_mcp_integrations',
 		suggestsShow: 'suggests_show',
 		suggestsClick: 'suggests_click',
+		clickStopGeneration: 'click_stop_generation',
 		modeChange: 'mode_change',
 		openNotifications: 'open_notifications',
 		openStickerTab: 'open_sticker_tab',
@@ -84,6 +92,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		addStickerPack: 'add_stickerpack',
 		addMentionedUser: 'add_mentioned_user',
 		useTextFormatting: 'use_text_formatting',
+		useChatFilter: 'use_chat_filter',
 		showUnread: 'show_unread',
 		readAll: 'read_all',
 
@@ -96,6 +105,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		addFeedback: 'add_feedback',
 
 		copyGuestLink: 'copy_guest_link',
+		copyChatLink: 'copy_chat_link',
 		viewJoinPopup: 'view_join_popup',
 	});
 
@@ -117,6 +127,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const Tool = Object.freeze({
 		ai: 'ai',
 		im: 'im',
+		immobile: 'immobile',
 		task: 'task',
 	});
 
@@ -148,6 +159,24 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 			project: 'project',
 			openlines: 'openlines',
 		},
+
+		/**
+		 * @desc folder.code -> report dictionary value. Source of the values is the analytics label
+		 *       table, and only the codes it gives a value to are listed here: 'default' has none, and
+		 *       the member folders of the composite "All" get no tab, so nothing ever reports them.
+		 *       The 'all' value is kept out of open_folder by a type set of its own, and 'vibecode' out
+		 *       of the folder events altogether; both exclusions live in the sender, so what these two
+		 *       values feed is c_section, and their absence there is deliberate, not a forgotten case.
+		 */
+		Folder: {
+			all: 'all',
+			tasksTask: 'tasks',
+			copilot: 'copilot',
+			openChannel: 'channels',
+			collab: 'projects',
+			lines: 'lines',
+			vibecodeApp: 'vibecode',
+		},
 		Dialog: {
 			user: 'user',
 			chat: 'chat',
@@ -172,10 +201,27 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 			openChannel: 'openChannel',
 			generalChannel: 'generalChannel',
 			collab: 'collab',
+			project: 'project',
 			tasksTask: 'tasksTask', // task comment chat
 			custom: 'custom', // case for custom dialog type
 			notes: 'notes',
 			aiAssistant: 'aiAssistant',
+		},
+
+		/**
+		 * @desc select_recipient sources that are not forward picker tabs:
+		 * recent — picker without tabs (old app builds and guests),
+		 * searchResult — recipient picked from search results,
+		 * notes — recipient is the self chat
+		 */
+		ForwardRecipient: {
+			recent: 'recent',
+			searchResult: 'search_result',
+			notes: 'notes',
+		},
+		ForwardResult: {
+			initial: 'initial',
+			retry: 'retry',
 		},
 
 		/** @deprecated the region approach bellow is deprecated, use nested objects instead */
@@ -266,13 +312,16 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		copilotTab: 'copilot_tab',
 		chatTab: 'chat_tab',
 		channelTab: 'channel_tab',
-		collabTab: 'collab_tab',
 		taskTab: 'tasksTask_tab',
+		projectTab: 'project_tab',
+		// inside an open project: its nested tabs are chats of one project, not a global tab
+		project: 'project',
 		notificationTab: 'notification_tab',
 		sidebar: 'sidebar',
 		activeChat: 'active_chat',
 		popup: 'popup',
 		mention: 'mention',
+		textareaMentionPopup: 'textarea_mention_popup',
 		link: 'link',
 		chatHistory: 'chat_history',
 		chatStart: 'chat_start',
@@ -281,6 +330,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		taskChat: 'task_chat',
 		chatTasks: 'chat_tasks',
 		chatSidebar: 'chat_sidebar',
+		chatHeader: 'chat_header',
 		comments: 'comments',
 		editor: 'editor',
 		chatTextarea: 'chat_textarea',
@@ -290,27 +340,51 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		stickerPackPopup: 'stickerpack_popup',
 		chatList: 'chat_list',
 		search: 'search',
+		dateDivider: 'dateDivider',
+		forward: 'forward',
 		updateChatTab: 'updateChat_tab',
 		createChatTab: 'createChat_tab',
 		userFolder: 'user_folder',
+		createBox: 'create_box',
+		folderList: 'folder_list',
+	});
+
+	/**
+	 * @desc Entry the jump to a date was started from. The go-to-date event reports it as its own
+	 * section, so the values are read from `Section`: a second copy of the same wire value is what
+	 * drifts apart. They mirror `DateNavigationEntryPoint` of `im.v2.lib.analytics` literally -
+	 * differing would make the two platforms incomparable.
+	 */
+	const DateNavigationEntryPoint = Object.freeze({
+		search: Section.search,
+		dateDivider: Section.dateDivider,
 	});
 
 	const SubSection = Object.freeze({
 		window: 'window',
 		contextMenu: 'context_menu',
 		fromContextMenu: 'from_context_menu',
+		multiselectPanel: 'multiselect_panel',
 		chatList: 'chat_list',
 		chat: 'chat',
 		taskCard: 'task_card',
-		createBox: 'create_box',
 		folderList: 'folder_list',
 		folderContextMenu: 'folder_context_menu',
 		settings: 'settings',
 		recentContextMenu: 'recent_context_menu',
 		recentSwipeMenu: 'recent_swipe_menu',
+		// sidebar sharing link; values mirror web ChatInviteLink: the row copies directly,
+		// the select menu is the employee/guest chooser, the more menu is the full link menu
+		sharingLinkRow: 'link',
+		sharingLinkSelectMenu: 'link_menu',
+		sharingLinkMoreMenu: 'link_context_menu',
 	});
 
 	const Element = Object.freeze({
+		ForwardResult: {
+			limitReached: 'limit_reached',
+			limitNotReached: 'limit_not_reached',
+		},
 		push: 'push',
 		main: 'main',
 		more: 'more',
@@ -342,6 +416,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		mail: 'chatType_mail',
 		sonetGroup: 'chatType_sonetGroup',
 		copilot: 'chatType_copilot',
+		collab: 'chatType_project',
 		notes: 'chatType_notes',
 	});
 
@@ -359,6 +434,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const Status = Object.freeze({
 		notFound: 'not_found',
 		success: 'success',
+		partial: 'partial',
 		error: 'error',
 	});
 
@@ -372,6 +448,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const Analytics = Object.freeze({
 		CopilotChatType,
 		ChatMode,
+		DateNavigationEntryPoint,
 		Event,
 		Tool,
 		Category,

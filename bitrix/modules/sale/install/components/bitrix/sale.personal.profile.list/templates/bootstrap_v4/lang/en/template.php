@@ -8,6 +8,8 @@ $MESS["SALE_DELETE"] = "Delete";
 $MESS["SALE_DELETE_DESCR"] = "Delete profile";
 $MESS["SALE_DETAIL"] = "Modify";
 $MESS["SALE_DETAIL_DESCR"] = "Edit profile";
+$MESS['STPPL_DELETE_ARIA'] = 'Delete profile #NAME#';
 $MESS["STPPL_DELETE_CONFIRM"] = "Are you sure you want to delete this profile?";
+$MESS['STPPL_DETAIL_ARIA'] = 'Edit profile #NAME#';
 $MESS["STPPL_EMPTY_PROFILE_LIST"] = "There are no profiles";
 ?>

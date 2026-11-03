@@ -15,5 +15,6 @@ return [
 		'im:messenger/controller/folder/lib/preload-chats',
 		'im:messenger/controller/folder/lib/actions',
 		'im:messenger/controller/folder/chat-selector',
+		'im:messenger/provider/services/analytics',
 	],
 ];

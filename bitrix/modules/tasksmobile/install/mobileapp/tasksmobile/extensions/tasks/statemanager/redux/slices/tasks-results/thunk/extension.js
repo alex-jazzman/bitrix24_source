@@ -8,7 +8,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-results/thunk', (require, expor
 	const { sliceName } = require('tasks/statemanager/redux/slices/tasks-results/meta');
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
-		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
 	const condition = () => isOnline();
 

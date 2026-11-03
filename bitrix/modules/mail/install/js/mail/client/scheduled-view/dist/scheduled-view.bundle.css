@@ -1,0 +1,108 @@
+.mail-scheduled-view {
+	display: flex;
+	min-height: 100vh;
+	flex-direction: column;
+	color: var(--ui-color-base-1);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.mail-scheduled-view__header {
+	display: flex;
+	flex-shrink: 0;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-3xl) var(--ui-space-inset-sm);
+}
+
+.mail-scheduled-view__title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.mail-scheduled-view__title-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.mail-scheduled-view__schedule {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.mail-scheduled-view__schedule-text {
+	color: var(--ui-color-accent-extra-darkblue);
+}
+
+.mail-scheduled-view__content {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	flex-direction: column;
+	padding: 0 var(--ui-space-inset-3xl);
+	overflow-y: auto;
+}
+
+.mail-scheduled-view__fields {
+	/* the rows carry their own spacing, the description list adds none */
+	margin: 0;
+}
+
+.mail-scheduled-view__body {
+	flex: 1;
+	width: auto;
+	min-height: 320px;
+	margin: var(--ui-space-stack-md) 0 var(--ui-space-stack-lg);
+	border: 0;
+}
+
+.mail-scheduled-view__action-error {
+	flex-shrink: 0;
+	padding: 0 var(--ui-space-inset-3xl) var(--ui-space-inset-sm);
+}
+
+.mail-scheduled-view__footer {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-3xl) var(--ui-space-inset-md);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.mail-scheduled-view-chips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.mail-scheduled-view-field {
+	display: flex;
+	/* height of a row holding one Md chip: the rows of the send form measure the same */
+	min-height: 45px;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-xs) 0;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.mail-scheduled-view-field__label {
+	width: 76px;
+	flex-shrink: 0;
+	color: var(--ui-color-base-4);
+}
+
+.mail-scheduled-view-field__value {
+	flex: 1;
+	min-width: 0;
+	/* the browser indents a definition on its own, and the row is aligned by the label width */
+	margin: 0;
+	overflow-wrap: anywhere;
+}

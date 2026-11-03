@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'debug/prism',
 		'apptheme',
 		'type',
 		'alert',
@@ -31,6 +32,7 @@ return [
 		'im:messenger/lib/ui/alert',
 		'im:messenger/controller/dialog/lib/message-create-menu',
 		'im:messenger/controller/dialog/lib/helper/text',
+		'im:messenger/controller/dialog/lib/ai-task-indication-manager',
 		'im:messenger/provider/services/analytics',
 		'im:messenger/controller/selector/forward',
 		'im:messenger/api/dialog-integration/message/context-menu',

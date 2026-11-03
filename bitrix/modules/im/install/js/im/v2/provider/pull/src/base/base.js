@@ -310,5 +310,15 @@ export class BasePullHandler
 	{
 		this.#aiPullHandler.handleSetCopilotTitle(params);
 	}
+
+	handleCopilotGenerationState(params)
+	{
+		this.#aiPullHandler.handleCopilotGenerationState(params);
+	}
+
+	handleAutoTaskStatus(params, extra)
+	{
+		this.#aiPullHandler.handleAutoTaskStatus(params, extra);
+	}
 	// endregion 'ai'
 }

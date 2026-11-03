@@ -1,4 +1,5 @@
-import { ajax as Ajax, Loc, Reflection, Text } from 'main.core';
+import { resolveErrorHtml } from 'biconnector.error-message';
+import { ajax as Ajax, Loc, Reflection } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
@@ -48,10 +49,12 @@ class UnusedElementsGridManager
 	{
 		let popupTitle = Loc.getMessage('BI_UNUSED_ELEMENTS_POPUP_DELETE_TITLE_SINGLE');
 		let popupText = Loc.getMessage('BI_UNUSED_ELEMENTS_POPUP_DELETE_TEXT_SINGLE');
+		let deleteErrorMessage = Loc.getMessage('BI_UNUSED_ELEMENTS_DELETE_ERROR_SINGLE');
 		if (elements.length > 1)
 		{
 			popupTitle = Loc.getMessage('BI_UNUSED_ELEMENTS_POPUP_DELETE_TITLE');
 			popupText = Loc.getMessage('BI_UNUSED_ELEMENTS_POPUP_DELETE_TEXT');
+			deleteErrorMessage = Loc.getMessage('BI_UNUSED_ELEMENTS_DELETE_ERROR');
 		}
 		const messageBox = new MessageBox({
 			title: popupTitle,
@@ -76,10 +79,7 @@ class UnusedElementsGridManager
 							})
 							.catch((response) => {
 								messageBox.close();
-								if (response.errors)
-								{
-									this.#notifyErrors(response.errors);
-								}
+								this.#notifyError(response, deleteErrorMessage);
 							});
 					},
 				}),
@@ -112,10 +112,7 @@ class UnusedElementsGridManager
 				this.#grid.tableUnfade();
 			})
 			.catch((response) => {
-				if (response.errors)
-				{
-					this.#notifyErrors(response.errors);
-				}
+				this.#notifyError(response, Loc.getMessage('BI_UNUSED_ELEMENTS_OPEN_ERROR'));
 				this.#grid.tableUnfade();
 			});
 	}
@@ -137,14 +134,11 @@ class UnusedElementsGridManager
 		this.deleteElement(elementsToDelete);
 	}
 
-	#notifyErrors(errors: Array): void
+	#notifyError(response: Object, fallbackMessage: string): void
 	{
-		if (errors[0] && errors[0].message)
-		{
-			BX.UI.Notification.Center.notify({
-				content: Text.encode(errors[0].message),
-			});
-		}
+		BX.UI.Notification.Center.notify({
+			content: resolveErrorHtml(response, fallbackMessage),
+		});
 	}
 }
 

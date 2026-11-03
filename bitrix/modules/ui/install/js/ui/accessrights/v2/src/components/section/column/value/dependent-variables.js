@@ -105,9 +105,10 @@ export const DependentVariables = {
 				<PopupContent
 					@apply="apply"
 					:initial-values="value.values"
+					:user-group="userGroup"
 				>
 					<template #role-title>
-						<SingleRoleTitle :user-group-title="userGroup.title"/>
+						<SingleRoleTitle :user-group="userGroup"/>
 					</template>
 				</PopupContent>
 			</ValuePopup>

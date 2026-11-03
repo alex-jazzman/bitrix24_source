@@ -54,6 +54,13 @@ export const Flow = {
 		{
 			return !this.readonly && this.flow;
 		},
+		ariaLabel(): string
+		{
+			return this.flow?.name
+				? this.loc('TASKS_V2_FLOW_VALUE_ARIA_LABEL', { '#FLOW_NAME#': this.flow.name })
+				: this.loc('TASKS_V2_FLOW_ARIA_LABEL')
+			;
+		},
 	},
 	methods: {
 		handleClick(): void
@@ -83,9 +90,13 @@ export const Flow = {
 		},
 		showDialog(): void
 		{
+			this.isMenuShown = true;
 			flowDialog.show({
 				targetNode: this.$refs.container,
 				taskId: this.taskId,
+				onClose: () => {
+					this.isMenuShown = false;
+				},
 			});
 		},
 	},
@@ -100,14 +111,26 @@ export const Flow = {
 			<HoverPill
 				v-if="flow"
 				:withClear
+				:ariaLabel
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isMenuShown"
+				:clearAriaLabel="loc('TASKS_V2_FLOW_CLEAR_ARIA_LABEL')"
+				data-testid="tasks-flow-pill"
 				@clear="clearField"
 			>
 				<div class="tasks-field-flow">
-					<BIcon :name="Outline.BOTTLENECK"/>
+					<BIcon :name="Outline.BOTTLENECK" aria-hidden="true"/>
 					<div class="tasks-field-flow-title">{{ flow.name }}</div>
 				</div>
 			</HoverPill>
-			<FieldAdd v-else :icon="Outline.BOTTLENECK"/>
+			<FieldAdd
+				v-else
+				:icon="Outline.BOTTLENECK"
+				:ariaLabel="loc('TASKS_V2_FLOW_ADD_ARIA_LABEL')"
+				:ariaHaspopup="'dialog'"
+				:ariaExpanded="isMenuShown"
+				data-testid="tasks-flow-add-btn"
+			/>
 		</div>
 	`,
 };

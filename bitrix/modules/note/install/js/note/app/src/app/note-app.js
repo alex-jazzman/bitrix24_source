@@ -22,6 +22,8 @@ import {
 	ROUTE_NAME_WORKSPACE,
 } from '../router/routes';
 import { RouteDocumentResolver } from './route-document-resolver';
+import { DocumentLinkNavigation } from './document-link-navigation.ts';
+import { showDocumentUnavailableNotification } from './document-unavailable-notification.ts';
 
 export class NoteApp
 {
@@ -30,6 +32,7 @@ export class NoteApp
 	#options: Object = {};
 	#sidebarFeature: Object | null = null;
 	#routeDocumentResolver: RouteDocumentResolver | null = null;
+	#documentLinkNavigation: DocumentLinkNavigation | null = null;
 	#routeDocumentContext: Object | null = null;
 	#removeRouteAfterEach: (() => void) | null = null;
 	#routeSyncId: number = 0;
@@ -82,6 +85,13 @@ export class NoteApp
 		};
 		this.#router = createNoteRouter();
 		this.#routeDocumentResolver = new RouteDocumentResolver();
+		this.#documentLinkNavigation = new DocumentLinkNavigation({
+			resolver: this.#routeDocumentResolver,
+			chooseFullContext: (documentId) => !this.#isDocumentLoadedInSidebar(documentId),
+			push: (route) => this.#router.push(route),
+			notifyUnavailable: () => showDocumentUnavailableNotification(),
+			reportViewed: () => NoteAnalytics.documentViewed('document'),
+		});
 		this.#routeDocumentContext = reactive(this.#createRouteDocumentContext());
 		this.#sidebarFeature = createSidebarFeature({
 			router: this.#router,
@@ -100,7 +110,7 @@ export class NoteApp
 				workspace: ROUTE_NAME_WORKSPACE,
 			},
 			sidebarOptions,
-			// [TPL-02] First page of the favorites block, server-rendered with the collections. Handed to
+			// First page of the favorites block, server-rendered with the collections. Handed to
 			// the feature rather than hydrated afterwards: the feature reads the first page itself the
 			// moment it is created, and a payload arriving later would come after that request.
 			initialFavorites: this.#extractInitialFavorites(this.#options.initialFavorites),
@@ -160,6 +170,9 @@ export class NoteApp
 		// Same reason: the document page gates the shortcuts-help surfaces (button, `?`/`Cmd+/`
 		// listener, panel) on this flag. The editor keymap itself stays on regardless.
 		this.#app.provide('hotkeysEnabled', Boolean(this.#options.hotkeysEnabled));
+		// Same path again: the toolbar reads it to decide whether the file button opens a menu of
+		// sources at all. With the flag off the button behaves exactly as it does today.
+		this.#app.provide('diskAttachmentsEnabled', Boolean(this.#options.diskAttachmentsEnabled));
 		// DTO-01. Static server values, so they go the short way like the flags above instead of
 		// into reactive state: the verdict and the region-aware product name for the phrases.
 		this.#app.provide('aiChatEnabled', Boolean(this.#options.aiChatEnabled));
@@ -280,6 +293,7 @@ export class NoteApp
 	destroy(): void
 	{
 		this.#applyMobileClass(false);
+		this.#documentLinkNavigation?.cancelActiveAttempt();
 
 		if (Type.isFunction(this.#childrenWatchStop))
 		{
@@ -324,6 +338,7 @@ export class NoteApp
 		}
 
 		this.#documentActions = null;
+		this.#documentLinkNavigation = null;
 		this.#routeDocumentResolver = null;
 		this.#routeDocumentContext = null;
 		this.#routeSyncId = 0;
@@ -432,8 +447,9 @@ export class NoteApp
 			await this.#syncRouteState(true);
 			if (!Type.isFunction(this.#removeRouteAfterEach))
 			{
-				this.#removeRouteAfterEach = this.#router.afterEach((to, from) => {
+				this.#removeRouteAfterEach = this.#router.afterEach((to, from, failure) => {
 					this.#previousRouteName = String(from?.name || '');
+					const navigation = this.#documentLinkNavigation?.onRouteAfterEach(to, failure) ?? null;
 
 					// Hash-only navigation within the same document: skip resync so an anchor click
 					// doesn't refetch/remount the document. The editor scrolls via its own $route.hash watcher.
@@ -441,10 +457,14 @@ export class NoteApp
 						&& String(to?.params?.id ?? '') === String(from?.params?.id ?? '');
 					if (sameRoute && to?.hash !== from?.hash)
 					{
+						this.#documentLinkNavigation?.finalizeRouteSync(navigation?.attemptId ?? null);
+
 						return;
 					}
 
-					void this.#syncRouteState(false);
+					void this.#syncRouteState(false).finally(() => {
+						this.#documentLinkNavigation?.finalizeRouteSync(navigation?.attemptId ?? null);
+					});
 				});
 			}
 		}
@@ -597,8 +617,10 @@ export class NoteApp
 			viewMode: this.#resolveViewMode(),
 		});
 
+		const routeHash = this.#router.currentRoute?.value?.hash ?? '';
+		const prepared = this.#documentLinkNavigation?.consumePrepared(routeDocId, routeHash) ?? null;
 		const fullContext = !this.#isDocumentLoadedInSidebar(routeDocId);
-		const resolved = await this.#routeDocumentResolver.resolve(routeDocId, { fullContext });
+		const resolved = prepared ?? await this.#routeDocumentResolver.resolve(routeDocId, { fullContext });
 		if (syncId !== this.#routeSyncId)
 		{
 			return;
@@ -1249,6 +1271,9 @@ export class NoteApp
 	#createDocumentActions(): Object
 	{
 		return {
+			openInternalDocument: (target = {}) => {
+				return this.#documentLinkNavigation?.openInternalDocument(target) ?? Promise.resolve('rejected');
+			},
 			archive: (documentId) => {
 				// Confirm (with the optional "with nested" checkbox) lives in the sidebar
 				// archiveDocument use-case, mirroring the delete action below.
@@ -1287,16 +1312,21 @@ export class NoteApp
 		// Editor passes the freshest recycleBinId/isOrphan via hints — routeDocumentContext.document
 		// stays at its initial-load snapshot and is stale after a push-driven trash flip.
 		const recycleBinId = Number(hints?.recycleBinId) || Number(doc?.recycleBinId) || 0;
-		const isOrphan = typeof hints?.isOrphan === 'boolean' ? hints.isOrphan : Boolean(doc?.isOrphan);
+		const isOrphan = Type.isBoolean(hints?.isOrphan) ? hints.isOrphan : Boolean(doc?.isOrphan);
 		if (!doc || recycleBinId <= 0)
 		{
 			return;
 		}
 
+		const recycleBinService = new RecycleBinService();
 		let targetCollectionId = null;
 		if (isOrphan)
 		{
-			const result = await openOrphanRestorePopup({ documentTitle: String(doc.title || '') });
+			const result = await openOrphanRestorePopup({
+				documentTitle: String(doc.title || ''),
+				canCreateCollection: Boolean(this.#sidebarFeature?.state?.permissions?.canEditCollections),
+				onCreateCollection: (name: string) => this.#createCollectionForRestore(recycleBinService, name),
+			});
 			if (!result)
 			{
 				return;
@@ -1308,7 +1338,7 @@ export class NoteApp
 		let restoredDocumentId = 0;
 		try
 		{
-			const result = await new RecycleBinService().restoreDocument(recycleBinId, targetCollectionId);
+			const result = await recycleBinService.restoreDocument(recycleBinId, targetCollectionId);
 			restoredDocumentId = Number(result?.documentId) || 0;
 		}
 		catch
@@ -1341,6 +1371,23 @@ export class NoteApp
 		}
 
 		void this.#router?.push?.({ name: ROUTE_NAME_RECYCLE_BIN });
+	}
+
+	async #createCollectionForRestore(
+		recycleBinService: RecycleBinService,
+		name: string,
+	): Promise<{ id: number, title: string } | null>
+	{
+		try
+		{
+			return await recycleBinService.createCollection(name);
+		}
+		catch (error)
+		{
+			this.#notify(error?.message || (Loc.getMessage('NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC') || ''), 'error');
+
+			return null;
+		}
 	}
 
 	async #hardDeleteDocument(documentId: number, hints: Object = {}): Promise<void>

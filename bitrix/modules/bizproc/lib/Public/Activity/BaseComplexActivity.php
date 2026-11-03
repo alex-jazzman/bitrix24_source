@@ -7,6 +7,7 @@ namespace Bitrix\Bizproc\Public\Activity;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Internal\Entity\Workflow\ExecutionPayload;
 use Bitrix\Bizproc\Public\Activity\Mixins\NodeFilterResultProperties;
+use Bitrix\Bizproc\Public\Activity\Mixins\RelationPackageProperties;
 use Bitrix\Bizproc\Public\Activity\Structure\FlowDirectedActivity;
 use Bitrix\Bizproc\Internal\Entity\Activity\Interface\FlowCompositeActivity;
 use Bitrix\Bizproc\Internal\Service\Activity\ChildValidationContext;
@@ -26,6 +27,7 @@ abstract class BaseComplexActivity extends FlowDirectedActivity implements
 	FlowCompositeActivity
 {
 	use NodeFilterResultProperties;
+	use RelationPackageProperties;
 
 	protected const RULES_PARAM = 'Rules';
 	protected const RELATIONS_PARAM = 'Relations';
@@ -48,6 +50,7 @@ abstract class BaseComplexActivity extends FlowDirectedActivity implements
 				static::OUTPUT_ACTIVITY_NAMES => [],
 			],
 			static::getFilterPropertyDefaults(),
+			static::getRelationPropertyDefaults(),
 		);
 
 		$this->setPropertiesTypes([
@@ -55,6 +58,7 @@ abstract class BaseComplexActivity extends FlowDirectedActivity implements
 				'Type' => FieldType::RULES,
 			],
 			...static::getFilterPropertyTypes(),
+			...static::getRelationPropertyTypes(),
 		]);
 	}
 
@@ -68,8 +72,16 @@ abstract class BaseComplexActivity extends FlowDirectedActivity implements
 	public function execute(): int
 	{
 		$this->initializeFilterResultProperties();
+		$this->initializeRelationPackageProperties();
 
 		return parent::execute();
+	}
+
+	public function onEvent(CBPActivity $sender, $arEventParameters = []): void
+	{
+		$this->transferRelationPackageProperties($sender);
+
+		parent::onEvent($sender, $arEventParameters);
 	}
 
 	public static function validateChild($childActivity, $bFirstChild = false)

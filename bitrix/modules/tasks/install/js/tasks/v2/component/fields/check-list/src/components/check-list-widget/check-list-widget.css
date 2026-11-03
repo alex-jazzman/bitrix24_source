@@ -107,6 +107,10 @@
 	gap: 3px
 }
 
+.check-list-widget-item-attach-users-print {
+	display: none;
+}
+
 .check-list-widget-item-attach-files {
 	display: flex;
 	flex-direction: column;
@@ -128,7 +132,7 @@
 
 @supports not selector(::-webkit-scrollbar) {
 	.check-list-widget-item-attach-files-list {
-		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-color: var(--ui-color-base-4) transparent;
 		scrollbar-width: thin;
 	}
 }
@@ -143,7 +147,7 @@
 }
 
 .check-list-widget-item-attach-files-list::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.11);
+	background: var(--ui-color-base-4);
 	border-radius: 5px;
 	cursor: pointer;
 	transition: .2s;
@@ -197,7 +201,7 @@
 	left: 24px;
 	right: 24px;
 	height: 1px;
-	background: rgba(0, 0, 0, 0.04);
+	background: var(--ui-color-divider-default);
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.04);
 	pointer-events: none;
 }
@@ -284,6 +288,18 @@
 .check-list-widget-parent-item-main-action-actions .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
+}
+
+.check-list-widget-parent-item-action-btn {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
 }
 
 .check-list-widget-parent-item-empty {
@@ -393,12 +409,25 @@
 
 .check-list-widget-child-item-important .ui-icon-set {
 	--ui-icon-set__icon-size: 24px;
-	--ui-icon-set__icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
+	--ui-icon-set__icon-color: var(--tasks-check-list-important-icon-color);
 }
 
 .check-list-widget-child-item-action {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
 	cursor: pointer;
 	margin-top: 3px;
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+
+.check-list-widget-child-item:hover .check-list-widget-child-item-action,
+.check-list-widget-child-item:focus-within .check-list-widget-child-item-action {
+	opacity: 1;
 }
 
 .check-list-widget-child-item-action .ui-icon-set {
@@ -411,6 +440,14 @@
 }
 
 .check-list-widget-add-item {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+	color: inherit;
 	position: relative;
 	display: flex;
 	justify-content: flex-start;
@@ -448,12 +485,20 @@
 }
 
 .check-list-widget-group-completed-list {
+	appearance: none;
+	-webkit-appearance: none;
+	border: none;
+	width: 100%;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
 	gap: 6px;
 	background: var(--ui-color-base-8);
-	padding-top: 9px;
+	padding: 9px 0 0;
 	border-radius: 18px;
 }
 
@@ -487,7 +532,7 @@
 .check-list-widget-drop-list {
 	width: 100%;
 	height: 84px;
-	background: white;
+	background: var(--ui-color-base-8);
 	border: 2px dashed var(--ui-color-accent-soft-blue-1);
 	border-radius: var(--ui-border-radius-2xl);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
@@ -495,7 +540,7 @@
 
 .check-list-widget-drop-item {
 	height: 60px;
-	background: white;
+	background: var(--ui-color-base-8);
 	border: 2px dashed var(--ui-color-accent-soft-blue-1);
 	border-radius: var(--ui-border-radius-2xl);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
@@ -527,6 +572,7 @@
 .ui-draggable--draggable .check-list-widget-child-item-action,
 .ui-draggable--draggable .check-list-widget-parent-item-empty,
 .ui-draggable--draggable .check-list-widget-parent-item-main-action-actions > :nth-child(2),
+.ui-draggable--draggable .check-list-widget-parent-item-action-btn.--close,
 .ui-draggable--draggable .check-list-widget-item-attach {
 	display: none;
 }
@@ -562,4 +608,33 @@
 
 .ui-draggable--draggable .check-list-draggable-item .check-list-widget-checkbox {
 	margin-top: 1px;
+}
+
+.check-list-widget-child-item-action:focus-visible,
+.check-list-widget-add-item:focus-visible,
+.check-list-widget-parent-item-action-btn:focus-visible,
+.check-list-widget-group-completed-list:focus-visible,
+.check-list-widget-group-completed-list-action:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+@media print {
+	.tasks-full-card .check-list-widget-item-attach-users {
+		display: none;
+	}
+
+	.tasks-full-card .check-list-widget-item-attach-users-print {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		width: 100%;
+		color: var(--ui-color-base-1);
+	}
+
+	.tasks-full-card .check-list-widget-item-attach-users-print-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
 }

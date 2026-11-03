@@ -95,7 +95,7 @@ if (!$USER->IsAuthorized() || $arResult['SHOW_LOGIN_FORM'] === 'Y')
 			<?
 		}
 		?>
-		<div class="col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+		<div class="col-md-8 offset-md-2 col-lg-6 offset-lg-3 sale-personal-section-auth">
 			<?=$authForm?>
 		</div>
 	</div>

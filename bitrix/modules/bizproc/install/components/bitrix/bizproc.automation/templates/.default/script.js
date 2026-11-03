@@ -25,6 +25,11 @@
 		Manage: 3,
 	};
 
+	Component.EntityType = {
+		Robot: 'robot',
+		Trigger: 'trigger',
+	};
+
 	const getAjaxUrl = function(url) {
 		url = url || '/bitrix/components/bitrix/bizproc.automation/ajax.php';
 
@@ -111,8 +116,8 @@
 		{
 			return this.templateManager.needSave() || this.triggerManager.needSave();
 		},
-		initData: function()
-		{
+			initData: function()
+			{
 			this.document = new BX.Bizproc.Automation.Document({
 				rawDocumentType: this.data.DOCUMENT_TYPE,
 				documentId: this.data.DOCUMENT_ID,
@@ -614,8 +619,8 @@
 			this.triggerManager.subscribe('TriggerManager:dataModified', () => {
 				this.markModified();
 			});
-			this.triggerManager.subscribe('TriggerManager:trigger:delete', (event) => {
-				const deletedTrigger = event.getData().trigger;
+				this.triggerManager.subscribe('TriggerManager:trigger:delete', (event) => {
+					const deletedTrigger = event.getData().trigger;
 
 				// analytics
 				BX.ajax.runAction(
@@ -625,10 +630,16 @@
 							automation_trigger_delete: 'Y',
 							delete_trigger: deletedTrigger.getCode().toLowerCase(),
 						},
-					},
-				);
-			});
-		},
+						},
+					);
+				});
+				this.triggerManager.subscribe('TriggerManager:trigger:addButtonClick', (event) => {
+					this.openRobotSelectorForTriggerInsert(
+						event.getData().documentStatus,
+						event.getData().beforeTrigger,
+					);
+				});
+			},
 		reInitTriggerManager: function(triggers)
 		{
 			if (BX.type.isArray(triggers))
@@ -667,10 +678,10 @@
 			this.bindCreationButton();
 			this.bindNewEntitiesButton();
 		},
-		initAddButtons: function() {
-			const addButtonNodes = this.node.querySelectorAll('[data-role="add-button-container"]');
+			initAddButtons: function() {
+				const addButtonNodes = this.node.querySelectorAll('[data-role="add-button-container"]');
 
-			addButtonNodes.forEach((node) => {
+				addButtonNodes.forEach((node) => {
 				const template = this.templateManager.getTemplateByStatusId(node.dataset.statusId);
 				if (!template)
 				{
@@ -678,11 +689,12 @@
 				}
 
 				const btnAddNode = BX.Dom.create('span', {
-					events: {
-						click: () => {
-							this.robotSelector.setStageId(node.dataset.statusId);
-							this.robotSelector.show();
-						},
+						events: {
+							click: () => {
+								this.robotSelectorInsertionContext = null;
+								this.robotSelector.setStageId(node.dataset.statusId);
+								this.robotSelector.show();
+							},
 					},
 					attrs: {
 						className: 'bizproc-automation-robot-btn-add',
@@ -837,15 +849,16 @@
 			this.reInitSearch();
 			this.markModified(false);
 		},
-		bindCreationButton: function()
-		{
-			const button = this.node.querySelector('[data-role="automation-btn-create"]');
-			if (button)
+			bindCreationButton: function()
 			{
-				BX.bind(button, 'click', () => {
-					this.robotSelector.setStageId(this.templateManager.templates[0]?.getStatusId());
-					this.robotSelector.calledFromNewEntitiesButton(false);
-					this.robotSelector.show();
+				const button = this.node.querySelector('[data-role="automation-btn-create"]');
+				if (button)
+				{
+					BX.bind(button, 'click', () => {
+						this.robotSelectorInsertionContext = null;
+						this.robotSelector.setStageId(this.templateManager.templates[0]?.getStatusId());
+						this.robotSelector.calledFromNewEntitiesButton(false);
+						this.robotSelector.show();
 				});
 
 				const settings = new BX.Bizproc.LocalSettings.Settings('aut-cmp');
@@ -878,15 +891,41 @@
 		bindNewEntitiesButton: function()
 		{
 			const newEntitiesButton = this.node.querySelector('[data-role="automation-btn-new-entities"]');
-			if (newEntitiesButton)
+				if (newEntitiesButton)
+				{
+					BX.bind(newEntitiesButton, 'click', () => {
+						this.robotSelectorInsertionContext = null;
+						this.robotSelector.setEntityType(null);
+						this.robotSelector.show();
+						this.robotSelector.calledFromNewEntitiesButton(true);
+					});
+				}
+			},
+			openRobotSelectorForRobotInsert: function(template, beforeRobot)
 			{
-				BX.bind(newEntitiesButton, 'click', () => {
-					this.robotSelector.show();
-					this.robotSelector.calledFromNewEntitiesButton(true);
-				});
-			}
-		},
-		getAjaxUrl: function()
+				this.robotSelectorInsertionContext = {
+					type: Component.EntityType.Robot,
+					stageId: template.getStatusId(),
+					beforeRobot,
+				};
+				this.robotSelector.setStageId(template.getStatusId());
+				this.robotSelector.setEntityType(Component.EntityType.Robot);
+				this.robotSelector.calledFromNewEntitiesButton(false);
+				this.robotSelector.show();
+			},
+			openRobotSelectorForTriggerInsert: function(documentStatus, beforeTrigger)
+			{
+				this.robotSelectorInsertionContext = {
+					type: Component.EntityType.Trigger,
+					stageId: documentStatus,
+					beforeTrigger,
+				};
+				this.robotSelector.setStageId(documentStatus);
+				this.robotSelector.setEntityType(Component.EntityType.Trigger);
+				this.robotSelector.calledFromNewEntitiesButton(false);
+				this.robotSelector.show();
+			},
+			getAjaxUrl: function()
 		{
 			return getAjaxUrl(this.data.AJAX_URL);
 		},
@@ -1233,7 +1272,6 @@
 		{
 			if (!this.robotSelector)
 			{
-				const self = this;
 				const settings = new BX.Bizproc.LocalSettings.Settings('aut-cmp');
 
 				const automationGuide = new BX.Bizproc.Automation.AutomationGuide({
@@ -1247,99 +1285,8 @@
 					context: BX.Bizproc.Automation.getGlobalContext(),
 					stageId: this.templateManager.templates[0]?.getStatusId(),
 					events: {
-						robotSelected: (event) => {
-							const originalEvent = event.getData().originalEvent;
-							if (!this.canEdit())
-							{
-								BX.Bizproc.Automation.HelpHint.showNoPermissionsHint(originalEvent.target);
-
-								return;
-							}
-
-							const item = event.getData().item;
-							const stageId = event.getData().stageId;
-							const robotData = BX.Runtime.clone(item.customData.robotData);
-
-							robotData.NAME = item.title;
-							robotData.DIALOG_CONTEXT = { addMenuGroup: item.groupIds[0] };
-
-							const template = this.templateManager.getTemplateByStatusId(stageId);
-							if (!template)
-							{
-								return;
-							}
-
-							if (template.isExternalModified())
-							{
-								this.showNotification({
-									content: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT_STAGE_TEXT'),
-								});
-							}
-							else
-							{
-								template.addRobot(robotData, (robot) => {
-									const setShowRobotGuide = (
-										BX.Type.isBoolean(robotData.ROBOT_SETTINGS.IS_SUPPORTING_ROBOT)
-											? 'setShowSupportingRobotGuide'
-											: 'setShowRobotGuide'
-									);
-
-									this.notifyAboutNewRobot(template, robot);
-
-									if (!(originalEvent.ctrlKey || originalEvent.metaKey))
-									{
-										self.robotSelector.close();
-										template.openRobotSettingsDialog(robot);
-
-										template.subscribeOnce('Template:robot:closeSettings', () => {
-											automationGuide[setShowRobotGuide](true, robot.node);
-											automationGuide.start();
-											settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
-											settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
-										});
-									}
-								});
-							}
-						},
-						triggerSelected: (event) => {
-							const originalEvent = event.getData().originalEvent;
-							if (!this.canEdit())
-							{
-								BX.Bizproc.Automation.HelpHint.showNoPermissionsHint(originalEvent.target);
-
-								return;
-							}
-
-							const item = event.getData().item;
-							const stageId = event.getData().stageId;
-							const triggerData = BX.Runtime.clone(item.customData.triggerData);
-
-							triggerData.DOCUMENT_STATUS = stageId;
-
-							this.triggerManager.addTrigger(triggerData, (trigger) => {
-								trigger.setName(item.title);
-								this.triggerManager.insertTriggerNode(stageId, trigger.node);
-								this.triggerManager.insertTrigger(trigger);
-
-								this.notifyAboutNewTrigger(trigger);
-
-								if (!(originalEvent.ctrlKey || originalEvent.metaKey))
-								{
-									self.robotSelector.close();
-									this.triggerManager.openTriggerSettingsDialog(trigger);
-
-									this.triggerManager.subscribeOnce(
-										'TriggerManager:onCloseTriggerSettingsDialog',
-										() => {
-											automationGuide.setShowTriggerGuide(true, trigger.node);
-											automationGuide.start();
-											settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
-											settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
-										},
-									);
-								}
-							});
-						},
+						robotSelected: (event) => this.onRobotSelected(event, settings, automationGuide),
+						triggerSelected: (event) => this.onTriggerSelected(event, settings, automationGuide),
 						onAfterShow: () => {
 							BX.Dom.addClass(this.node, 'automation-base-blocked');
 
@@ -1361,6 +1308,8 @@
 							}
 						},
 						onAfterClose: () => {
+							this.robotSelectorInsertionContext = null;
+							this.robotSelector.setEntityType(null);
 							BX.Dom.removeClass(this.node, 'automation-base-blocked');
 							if (this.isNeedSave())
 							{
@@ -1378,6 +1327,134 @@
 					},
 				});
 			}
+		},
+		onRobotSelected(event, settings, automationGuide)
+		{
+			const originalEvent = event.getData().originalEvent;
+			if (!this.canEdit())
+			{
+				BX.Bizproc.Automation.HelpHint.showNoPermissionsHint(originalEvent.target);
+
+				return;
+			}
+
+			const item = event.getData().item;
+			const stageId = event.getData().stageId;
+			const robotData = BX.Runtime.clone(item.customData.robotData);
+
+			robotData.NAME = item.title;
+			robotData.DIALOG_CONTEXT = { addMenuGroup: item.groupIds[0] };
+
+			const template = this.templateManager.getTemplateByStatusId(stageId);
+			if (!template)
+			{
+				return;
+			}
+
+			if (template.isExternalModified())
+			{
+				this.showNotification({
+					content: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT_STAGE_TEXT'),
+				});
+
+				return;
+			}
+
+			const insertionContext = this.robotSelectorInsertionContext;
+			const beforeRobot = (
+				insertionContext?.type === Component.EntityType.Robot
+				&& String(insertionContext.stageId) === String(stageId)
+					? insertionContext.beforeRobot
+					: null
+			);
+			const addRobot = (callback) => {
+				if (beforeRobot)
+				{
+					template.addRobotBefore(robotData, beforeRobot, callback);
+				}
+				else
+				{
+					template.addRobot(robotData, callback);
+				}
+			};
+
+			addRobot((robot) => {
+				const setShowRobotGuide = (
+					BX.Type.isBoolean(robotData.ROBOT_SETTINGS.IS_SUPPORTING_ROBOT)
+						? 'setShowSupportingRobotGuide'
+						: 'setShowRobotGuide'
+				);
+
+				this.notifyAboutNewRobot(template, robot);
+
+				if (!(originalEvent.ctrlKey || originalEvent.metaKey))
+				{
+					this.robotSelector.close();
+					this.robotSelectorInsertionContext = null;
+					template.openRobotSettingsDialog(robot);
+
+					template.subscribeOnce('Template:robot:closeSettings', () => {
+						automationGuide[setShowRobotGuide](true, robot.node);
+						automationGuide.start();
+						settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
+						settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
+					});
+				}
+			});
+		},
+		onTriggerSelected(event, settings, automationGuide)
+		{
+			const originalEvent = event.getData().originalEvent;
+			if (!this.canEdit())
+			{
+				BX.Bizproc.Automation.HelpHint.showNoPermissionsHint(originalEvent.target);
+
+				return;
+			}
+
+			const item = event.getData().item;
+			const stageId = event.getData().stageId;
+			const triggerData = BX.Runtime.clone(item.customData.triggerData);
+
+			triggerData.DOCUMENT_STATUS = stageId;
+
+			const insertionContext = this.robotSelectorInsertionContext;
+			const beforeTrigger = (
+				insertionContext?.type === Component.EntityType.Trigger
+				&& String(insertionContext.stageId) === String(stageId)
+					? insertionContext.beforeTrigger
+					: null
+			);
+			const prepareTrigger = (trigger) => {
+				trigger.setName(item.title);
+			};
+
+			const finalizeTriggerAdding = (trigger) => {
+				this.notifyAboutNewTrigger(trigger);
+
+				if (!(originalEvent.ctrlKey || originalEvent.metaKey))
+				{
+					this.robotSelector.close();
+					this.robotSelectorInsertionContext = null;
+					this.triggerManager.openTriggerSettingsDialog(trigger);
+
+					this.triggerManager.subscribeOnce(
+						'TriggerManager:onCloseTriggerSettingsDialog',
+						() => {
+							automationGuide.setShowTriggerGuide(true, trigger.node);
+							automationGuide.start();
+							settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
+							settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
+						},
+					);
+				}
+			};
+
+			this.triggerManager.addTrigger(triggerData, (trigger) => {
+				prepareTrigger(trigger);
+				this.triggerManager.insertTriggerWithNode(trigger, beforeTrigger);
+				finalizeTriggerAdding(trigger);
+			});
 		},
 		notifyAboutNewRobot(template, robot)
 		{
@@ -1581,6 +1658,11 @@
 			{
 				this.enableManageMode(this.targetManageModeStatus);
 			}
+			else if (this.viewMode === Component.ViewMode.View)
+			{
+				this.component.actionPanel.hidePanel();
+				this.component.disableDragAndDrop();
+			}
 			else
 			{
 				this.disableManageMode();
@@ -1707,17 +1789,26 @@
 						BX.Dom.removeClass(this.component.node, 'automation-base-blocked');
 					}.bind(this),
 				},
-				{
-					eventName: 'Template:robot:add',
-					listener: function(event) {
+					{
+						eventName: 'Template:robot:add',
+						listener: function(event) {
 						const draftRobot = event.getData().robot;
 						this.getRobotEventListeners(template).forEach((eventListener) => {
 							draftRobot.subscribe(eventListener.eventName, eventListener.listener);
-						});
-					}.bind(this),
-				},
-				{
-					eventName: 'Template:robot:delete',
+							});
+						}.bind(this),
+					},
+					{
+						eventName: 'Template:robot:addButtonClick',
+						listener: function(event) {
+							this.component.openRobotSelectorForRobotInsert(
+								event.getData().template,
+								event.getData().beforeRobot,
+							);
+						}.bind(this),
+					},
+					{
+						eventName: 'Template:robot:delete',
 					listener: function(event) {
 						const deletedRobot = event.getData().robot;
 

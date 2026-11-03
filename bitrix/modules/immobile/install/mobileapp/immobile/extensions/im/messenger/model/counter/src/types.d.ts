@@ -21,7 +21,6 @@ export type CounterModelActions = 'counterModel/setList'
 	| 'counterModel/setMarkedAsUnread'
 	| 'counterModel/readChildChatsCounters'
 	| 'counterModel/readAllChats'
-	| 'counterModel/readByRecentSection'
 	| 'counterModel/setMuted'
 	| 'counterModel/delete'
 ;
@@ -40,7 +39,6 @@ declare type CounterSetActions = 'setList'
 	| 'setMarkedAsUnread'
 	| 'readChildChatsCounters'
 	| 'readAllChats'
-	| 'readByRecentSection'
 	| 'setMuted'
 ;
 export interface CounterSetData extends PayloadData

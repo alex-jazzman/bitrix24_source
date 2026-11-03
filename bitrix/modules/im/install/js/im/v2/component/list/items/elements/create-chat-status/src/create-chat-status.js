@@ -5,6 +5,7 @@ import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { EmptyAvatar, EmptyAvatarType, AvatarSize } from 'im.v2.component.elements.avatar';
 import { Layout } from 'im.v2.const';
+import 'im.v2.css.classes';
 
 import './css/create-chat.css';
 
@@ -33,6 +34,14 @@ const DEFAULT_ALLOWED_TYPES = [
 export const CreateChatStatus = {
 	name: 'CreateChatStatus',
 	components: { EmptyAvatar, BIcon },
+	inject: {
+		// Provided by the list container. True only in the compact collab peek, where the recent
+		// list is an aria-hidden mouse-only avatar strip: the draft must drop its tab stops there,
+		// mirroring the recent rows, so no tabbable node sits inside the aria-hidden container.
+		avatarsOnly: {
+			default: false,
+		},
+	},
 	props: {
 		allowedTypes: {
 			type: Array,
@@ -157,6 +166,32 @@ export const CreateChatStatus = {
 
 			void CreateChatManager.getInstance().cancelChatCreation();
 		},
+		onKeydown(event: KeyboardEvent)
+		{
+			// Only the row itself reacts; keydowns bubbling up from nested content stay with them.
+			if (event.target !== event.currentTarget)
+			{
+				return;
+			}
+
+			// Space would scroll the list; Enter would leak a newline into the chat input that
+			// autofocuses once creation opens. Both open the create form via the mouse-path handler.
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
+				this.onClick();
+			}
+		},
+		onCancelKeydown(event: KeyboardEvent)
+		{
+			// Mirror the @click.stop mouse path: cancel without letting the row open the form.
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
+				event.stopPropagation();
+				this.onCancel();
+			}
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -164,7 +199,18 @@ export const CreateChatStatus = {
 	},
 	template: `
 		<div v-if="isAllowedType" class="bx-im-list-recent-create-chat__container">
-			<div class="bx-im-list-recent-item__wrap" :class="{'--selected': chatCreationIsOpened}" @click="onClick">
+			<div
+				class="bx-im-list-recent-item__wrap --focus-visible"
+				:class="{'--selected': chatCreationIsOpened}"
+				data-id="create-chat-draft"
+				data-testid="im-create-chat-status"
+				role="button"
+				:tabindex="avatarsOnly ? -1 : 0"
+				:aria-label="preparedSubtitle"
+				:aria-current="chatCreationIsOpened"
+				@click="onClick"
+				@keydown="onKeydown"
+			>
 				<div class="bx-im-list-recent-item__container">
 					<div class="bx-im-list-recent-create-chat__avatar-container">
 						<EmptyAvatar 
@@ -186,13 +232,23 @@ export const CreateChatStatus = {
 							</div>
 						</div>
 					</div>
-					<BIcon
-						:name="OutlineIcons.CROSS_M"
-						:hoverable="true"
-						class="bx-im-list-recent-create-chat__icon-close"
-						@click.stop="onCancel"
-					/>
 				</div>
+			</div>
+			<!-- Focus ring must live on this non-masked wrapper: -webkit-mask on the BIcon clips the icon's own outline. Mirrors the list slider. -->
+			<div
+				class="bx-im-list-recent-create-chat__icon-close-button --focus-visible"
+				data-testid="im-create-chat-status-cancel"
+				role="button"
+				:tabindex="avatarsOnly ? -1 : 0"
+				:aria-label="loc('IM_LIST_RECENT_CREATE_CHAT_CANCEL_ARIA')"
+				@click.stop="onCancel"
+				@keydown="onCancelKeydown"
+			>
+				<BIcon
+					:name="OutlineIcons.CROSS_M"
+					:hoverable="true"
+					class="bx-im-list-recent-create-chat__icon-close"
+				/>
 			</div>
 		</div>
 	`,

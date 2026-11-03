@@ -98,6 +98,7 @@ jn.define('tasks/layout/project/list-v2', (require, exports, module) => {
 		componentWillUnmount()
 		{
 			this.pull.unsubscribe();
+			this.listRef = null;
 		}
 
 		loadCounters()
@@ -169,6 +170,8 @@ jn.define('tasks/layout/project/list-v2', (require, exports, module) => {
 					},
 					pull: this.pull.getPullConfig(),
 					isShowFloatingButton: true,
+					isFloatingButtonAccent: this.isFloatingButtonAccent,
+					onBeforeReloadAction: this.onBeforeReloadAction,
 					onFloatingButtonClick: this.onFloatingButtonClick,
 					itemDetailOpenHandler: this.onProjectClick,
 					getEmptyListComponent: this.getEmptyListComponent,
@@ -184,6 +187,7 @@ jn.define('tasks/layout/project/list-v2', (require, exports, module) => {
 			if (ref)
 			{
 				this.listRef = ref;
+				this.listRef.updateFloatingButton();
 				this.updateMoreMenuButton();
 			}
 		};
@@ -244,6 +248,13 @@ jn.define('tasks/layout/project/list-v2', (require, exports, module) => {
 
 		onProjectClick = (projectId) => {
 			void this.projectOpener.open(projectId);
+		};
+
+		isFloatingButtonAccent = () => this.isPortalProjectsEmpty;
+
+		onBeforeReloadAction = () => {
+			this.isPortalProjectsEmpty = false;
+			this.listRef?.updateFloatingButton();
 		};
 
 		getPreloadedProjectChatId = (projectId) => {
@@ -386,6 +397,7 @@ jn.define('tasks/layout/project/list-v2', (require, exports, module) => {
 			if (!isCache)
 			{
 				this.isPortalProjectsEmpty = meta.isPortalProjectsEmpty === true;
+				this.listRef?.updateFloatingButton();
 			}
 
 			if (isFirstAjaxPage)

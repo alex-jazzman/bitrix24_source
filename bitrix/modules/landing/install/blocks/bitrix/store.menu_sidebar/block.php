@@ -10,8 +10,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 ?>
-<header class="landing-block container g-bg-white">
-	<ul class="landing-block-node-menu-top catalog-sections-list-menu-items">
+<header
+	class="landing-block container g-bg-white"
+	role="navigation"
+	aria-label="MESS[LANDING_BLOCK_STORE_MENU_SIDEBAR_NAV_LABEL]"
+>
+	<ul
+		class="landing-block-node-menu-top catalog-sections-list-menu-items"
+		aria-label="MESS[LANDING_BLOCK_STORE_MENU_SIDEBAR_LIST_TOP_LABEL]"
+	>
 		<li class="landing-block-node-section-menu-item catalog-sections-list-menu-item">
 			<a
 				href="#system_mainpage"
@@ -40,11 +47,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			'ADD_SECTIONS_CHAIN' => 'N',
 		]
 	); ?>
-	<ul class="g-font-size-16 g-font-roboto u-list-inline g-py-10">
+	<ul
+		class="g-font-size-16 g-font-roboto u-list-inline g-py-10"
+		aria-label="MESS[LANDING_BLOCK_STORE_MENU_SIDEBAR_LIST_CUSTOM_LABEL]"
+	>
 		<li class="landing-block-node-section-menu-item-custom g-pl-17 g-pr-17 g-py-9 active">
 			<a
 				href="#"
-				class="landing-block-node-menu-link-custom g-text-decoration-none--hover g-color-black-opacity-0_5 g-color-black-opacity-0_7--hover"
+				class="landing-block-node-menu-link-custom g-text-decoration-none--hover g-color-gray-dark-v3 g-color-gray-dark-v2--hover"
 			>
 				Business Card
 			</a>
@@ -52,7 +62,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		<li class="landing-block-node-section-menu-item-custom g-pl-17 g-pr-17 g-py-9 active">
 			<a
 				href="#"
-				class="landing-block-node-menu-link-custom g-text-decoration-none--hover g-color-black-opacity-0_5 g-color-black-opacity-0_7--hover"
+				class="landing-block-node-menu-link-custom g-text-decoration-none--hover g-color-gray-dark-v3 g-color-gray-dark-v2--hover"
 			>
 				Payment Options
 			</a>

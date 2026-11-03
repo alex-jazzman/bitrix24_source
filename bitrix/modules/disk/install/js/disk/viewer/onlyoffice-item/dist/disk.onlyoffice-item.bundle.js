@@ -97,7 +97,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "setController",
 	    value: function setController(controller) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(OnlyofficeExternalLinkItem.prototype), "setController", this).call(this, controller);
-	      this.controller.preload = 0;
+	      this.controller.maxParallelLoads = 1;
 	    }
 	  }, {
 	    key: "loadData",

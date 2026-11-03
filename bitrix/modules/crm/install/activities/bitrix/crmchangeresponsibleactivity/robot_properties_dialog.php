@@ -53,7 +53,7 @@ endforeach;
 				{
 					if (top.BX.UI && top.BX.UI.InfoHelper)
 					{
-						top.BX.UI.InfoHelper.show('limit_office_worktime_responsible');
+						top.BX.UI.InfoHelper.show('limit_office_worktime_off');
 					}
 				}
 			);

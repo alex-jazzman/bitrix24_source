@@ -1,5 +1,6 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\PaySystem;
 
 if (!CModule::IncludeModule('crm'))
@@ -14,7 +15,8 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-$isSidePanel = (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y");
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+$isSidePanel = $isSettingsHub || (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y");
 
 global $USER, $APPLICATION;
 
@@ -37,7 +39,7 @@ $arParams['PATH_TO_PS_EDIT'] = CrmCheckPath('PATH_TO_PS_EDIT', $arParams['PATH_T
 $psID = isset($arParams['PS_ID']) ? intval($arParams['PS_ID']) : 0;
 $documentRoot = \Bitrix\Main\Application::getDocumentRoot();
 
-if($psID <= 0)
+if ($psID <= 0 && !$isSettingsHub)
 {
 	$psIDParName = isset($arParams['PS_ID_PAR_NAME']) ? strval($arParams['PS_ID_PAR_NAME']) : '';
 
@@ -47,13 +49,12 @@ if($psID <= 0)
 	$psID = isset($_REQUEST[$psIDParName]) ? (int)$_REQUEST[$psIDParName] : 0;
 }
 
+$metadataProvider = new \Bitrix\Crm\V2\Internal\Service\PaySystem\HandlerMetadataProvider();
 $arPaySys = array();
 
 if ($psID > 0)
 {
 	$arPaySys = \Bitrix\Sale\PaySystem\Manager::getById($psID);
-	$personTypeIds = CSalePaySystem::getPaySystemPersonTypeIds($psID);
-	$arPaySys['PARAMS'] = CSalePaySystemAction::getParamsByConsumer('PAYSYSTEM_'.$psID, $personTypeIds[0]);
 
 	if (!$arPaySys)
 	{
@@ -65,6 +66,10 @@ if ($psID > 0)
 		}
 		return;
 	}
+	$personTypeIds = CSalePaySystem::getPaySystemPersonTypeIds($psID);
+	$paramsResult = $metadataProvider->getParameters($arPaySys ?: [], (int)($personTypeIds[0] ?? 0));
+	$arPaySys['PARAMS'] = $paramsResult->isSuccess() ? $paramsResult->getData()['params'] : [];
+
 }
 
 $arResult['PS_ID'] = $psID;
@@ -83,16 +88,18 @@ if (check_bitrix_sessid())
 	{
 		$psID = isset($_POST['ps_id']) ? (int)$_POST['ps_id'] : 0;
 		$personTypeId = isset($_POST['PERSON_TYPE_ID']) ? intval($_POST['PERSON_TYPE_ID']) : 0;
-		$handler = $_POST["ACTION_FILE"];
-		$errorMessage = '';
+		$handler = $_POST['ACTION_FILE'] ?? null;
+		$selectedMetadata = $metadataProvider->get(['ACTION_FILE' => $handler, 'PS_MODE' => $_POST['PS_MODE'] ?? null]);
+		$errorMessage = $selectedMetadata->isSuccess() ? '' : GetMessage('CRM_PS_NO_SCRIPT');
 
 		$arActFields = array(
 			"PERSON_TYPE_ID" => $personTypeId,
-			"ACTION_FILE" => CCrmPaySystem::getActionHandler($handler),
+			"ACTION_FILE" => $selectedMetadata->isSuccess()
+				? $selectedMetadata->getData()['handler']->getServiceFields()['ACTION_FILE'] : '',
 			"NEW_WINDOW" => (($_POST['NEW_WINDOW'] == "Y") ? "Y" : "N" ),
 			"HAVE_PREPAY" => "N",
 			"HAVE_RESULT" => "N",
-			"ENTITY_REGISTRY_TYPE" => (mb_strpos($handler, 'quote_') !== false) ? REGISTRY_TYPE_CRM_QUOTE : REGISTRY_TYPE_CRM_INVOICE,
+			"ENTITY_REGISTRY_TYPE" => (is_string($handler) && mb_strpos($handler, 'quote_') !== false) ? REGISTRY_TYPE_CRM_QUOTE : REGISTRY_TYPE_CRM_INVOICE,
 			"HAVE_ACTION" => "N",
 			"HAVE_PAYMENT" => "N",
 			"HAVE_RESULT_RECEIVE" => "N",
@@ -122,21 +129,6 @@ if (check_bitrix_sessid())
 
 		if ($errorMessage == '')
 		{
-			if (isset($_POST["ACTION_FILE"]) && trim($_POST["ACTION_FILE"]) <> '')
-				$actionFile = CCrmPaySystem::getActionPath($_POST["ACTION_FILE"]);
-			else
-				$errorMessage .= GetMessage("CRM_PS_EMPTY_SCRIP").".<br>";
-
-			if (isset($actionFile))
-			{
-				$actionFile = str_replace("\\", "/", $actionFile);
-				while (mb_substr($actionFile, mb_strlen($actionFile) - 1, 1) == "/")
-					$actionFile = mb_substr($actionFile, 0, mb_strlen($actionFile) - 1);
-
-				$pathToAction = $_SERVER["DOCUMENT_ROOT"].$actionFile;
-				if (!file_exists($pathToAction))
-					$errorMessage .= GetMessage("CRM_PS_NO_SCRIPT").".<br>";
-			}
 
 			if ($errorMessage === '')
 			{
@@ -250,32 +242,16 @@ if (check_bitrix_sessid())
 					$arActFields['PARAMS'] = serialize($arActParams);
 				}
 
-				$path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($handler);
-				if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$path.'/handler.php'))
+				$className = $selectedMetadata->getData()['handler']->getClassName();
+				$arActFields['HAVE_PAYMENT'] = 'Y';
+				if ($className !== null)
 				{
-					require_once $documentRoot.$path.'/handler.php';
-
-					$className = \Bitrix\Sale\PaySystem\Manager::getClassNameFromPath($path);
-					$arActFields['HAVE_PAYMENT'] = 'Y';
 					if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPrePayable'))
 						$arActFields['HAVE_PREPAY'] = 'Y';
 					if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\ServiceHandler'))
 						$arActFields['HAVE_RESULT_RECEIVE'] = 'Y';
 					if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPayable'))
 						$arActFields['HAVE_PRICE'] = 'Y';
-				}
-				else
-				{
-					if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$actionFile."/pre_payment.php"))
-						$arActFields["HAVE_PREPAY"] = "Y";
-					if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$actionFile."/result.php"))
-						$arActFields["HAVE_RESULT"] = "Y";
-					if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$actionFile."/action.php"))
-						$arActFields["HAVE_ACTION"] = "Y";
-					if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$actionFile."/payment.php"))
-						$arActFields["HAVE_PAYMENT"] = "Y";
-					if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$actionFile."/result_rec.php"))
-						$arActFields["HAVE_RESULT_RECEIVE"] = "Y";
 				}
 
 				if ($psID === 0)
@@ -364,7 +340,7 @@ if (check_bitrix_sessid())
 						$publicKey = file_get_contents($_FILES['YANDEX_PUBLIC_KEY']['tmp_name']);
 						if (openssl_pkey_get_public($publicKey))
 						{
-							$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
+							$shopId = $metadataProvider->getValueById((int)$psID, 'YANDEX_INVOICE_SHOP_ID', (int)$personTypeId);
 							if ($shopId <> '')
 							{
 								$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
@@ -382,7 +358,7 @@ if (check_bitrix_sessid())
 
 					if (array_key_exists('YANDEX_PUBLIC_KEY_DEL', $_REQUEST))
 					{
-						$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
+						$shopId = $metadataProvider->getValueById((int)$psID, 'YANDEX_INVOICE_SHOP_ID', (int)$personTypeId);
 						if ($shopId <> '')
 							\Bitrix\Sale\Internals\YandexSettingsTable::update($shopId, array('PUB_KEY' => ''));
 					}
@@ -393,17 +369,26 @@ if (check_bitrix_sessid())
 		if ($errorMessage == '')
 		{
 			$urlPattern = (isset($_POST['apply']) ? $arParams['PATH_TO_PS_EDIT'] : $arParams['PATH_TO_PS_LIST']);
-			if ($isSidePanel)
+			if ($isSidePanel && !$isSettingsHub)
 			{
 				$urlPattern = $arParams['PATH_TO_PS_EDIT'];
-				$urlPattern .= "?IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER&SIDE_PANEL_REQUEST=Y";
-				$urlPattern .= (isset($_POST['apply']) ? '&SIDE_PANEL_APPLY=Y' : '&SIDE_PANEL_SAVE=Y');
 			}
-			LocalRedirect(CComponentEngine::MakePathFromTemplate($urlPattern, array('ps_id' => $psID)));
+			$url = new Uri(CComponentEngine::MakePathFromTemplate($urlPattern, ['ps_id' => $psID]));
+			if ($isSidePanel && !$isSettingsHub)
+			{
+				$url->addParams([
+					'IFRAME' => 'Y',
+					'IFRAME_TYPE' => 'SIDE_SLIDER',
+					'SIDE_PANEL_REQUEST' => 'Y',
+					isset($_POST['apply']) ? 'SIDE_PANEL_APPLY' : 'SIDE_PANEL_SAVE' => 'Y',
+				]);
+			}
+			LocalRedirect($url->getUri());
 		}
 		else
 		{
-			$arActFields['PARAMS'] = unserialize($arActFields['PARAMS'], ['allowed_classes' => false]);
+			$arActFields['PARAMS'] = isset($arActFields['PARAMS'])
+				? unserialize($arActFields['PARAMS'], ['allowed_classes' => false]) : [];
 			$arResult['PAY_SYSTEM'] = $arActFields;
 			if ($isSidePanel)
 			{
@@ -434,12 +419,21 @@ if (check_bitrix_sessid())
 		}
 
 		$urlPattern = $arParams['PATH_TO_PS_LIST'];
-		if ($isSidePanel)
+		if ($isSidePanel && !$isSettingsHub)
 		{
 			$urlPattern = $arParams['PATH_TO_PS_EDIT'];
-			$urlPattern .= "?IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER&SIDE_PANEL_REQUEST=Y&SIDE_PANEL_SAVE=Y";
 		}
-		LocalRedirect(CComponentEngine::MakePathFromTemplate($urlPattern, array()));
+		$url = new Uri(CComponentEngine::MakePathFromTemplate($urlPattern, ['ps_id' => 0]));
+		if ($isSidePanel && !$isSettingsHub)
+		{
+			$url->addParams([
+				'IFRAME' => 'Y',
+				'IFRAME_TYPE' => 'SIDE_SLIDER',
+				'SIDE_PANEL_REQUEST' => 'Y',
+				'SIDE_PANEL_SAVE' => 'Y',
+			]);
+		}
+		LocalRedirect($url->getUri());
 	}
 }
 
@@ -451,7 +445,7 @@ if (array_key_exists('AJAX', $_REQUEST) && $_REQUEST['AJAX'] == 'Y')
 		$personTypeList = \Bitrix\Sale\PaySystem\Manager::getPersonTypeIdList($psID);
 		$personTypeId = array_shift($personTypeList);
 
-		$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
+		$shopId = $metadataProvider->getValueById((int)$psID, 'YANDEX_INVOICE_SHOP_ID', (int)$personTypeId);
 		if ($shopId <> '')
 		{
 			$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
@@ -477,32 +471,31 @@ if (array_key_exists('AJAX', $_REQUEST) && $_REQUEST['AJAX'] == 'Y')
 	}
 }
 
-$io = CBXVirtualIo::GetInstance();
-if (\Bitrix\Sale\PaySystem\Manager::isRestHandler($arPaySys['ACTION_FILE'] ?? ''))
+if ($psID <= 0 && !$arPaySys)
 {
-	unset($arPaySys['ACTION_FILE']);
+	$arPaySys = ['ACTION_FILE' => 'bill'];
+	$arResult['PAY_SYSTEM'] = $arPaySys;
 }
-$arPaySys['ACTION_FILE'] = $io->ExtractNameFromPath($arPaySys['ACTION_FILE'] ? $arPaySys['ACTION_FILE'] : 'bill');
+$metadataResult = $metadataProvider->get($arPaySys);
+$metadata = $metadataResult->isSuccess() ? $metadataResult->getData() : [];
+if ($metadataResult->isSuccess())
+{
+	$arPaySys['ACTION_FILE'] = $metadata['handler']->getCode();
+}
+else
+{
+	ShowError(GetMessage('CRM_PS_NO_SCRIPT'));
+}
 $arResult['PAY_SYSTEM_LIST'] = CCrmPaySystem::getActionsList();
-
 $arResult['PERSON_TYPE_LIST'] = CCrmPaySystem::getPersonTypesList();
-$ptID = $arPaySys['PERSON_TYPE_ID'] ? $arPaySys['PERSON_TYPE_ID'] : key($arResult['PERSON_TYPE_LIST']);
-$className = PaySystem\Manager::getClassNameFromPath($arPaySys['ACTION_FILE']);
-if (!class_exists($className))
+$ptID = $arPaySys['PERSON_TYPE_ID'] ?? key($arResult['PERSON_TYPE_LIST']);
+if ($psID <= 0 && !isset($arResult['PAY_SYSTEM']['PERSON_TYPE_ID']))
 {
-	$path = PaySystem\Manager::getPathToHandlerFolder($arPaySys['ACTION_FILE']);
-	$fullPath = $documentRoot.$path.'/handler.php';
-	if ($path && \Bitrix\Main\IO\File::isFileExists($fullPath))
-		require_once $fullPath;
+	$arResult['PAY_SYSTEM']['PERSON_TYPE_ID'] = (int)$ptID;
 }
-
-$handlerModeList = array();
-if (class_exists($className))
-	$handlerModeList = $className::getHandlerModeList();
-
+$handlerModeList = $metadata['modes'] ?? [];
 if ($handlerModeList)
 	$arResult['PS_MODE'] = $handlerModeList;
-
 
 if ($arPaySys['ACTION_FILE'] == 'yandexinvoice')
 {
@@ -511,7 +504,7 @@ if ($arPaySys['ACTION_FILE'] == 'yandexinvoice')
 	$personTypeList = \Bitrix\Sale\PaySystem\Manager::getPersonTypeIdList($psID);
 	$personTypeId = array_shift($personTypeList);
 
-	$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
+	$shopId = $metadataProvider->getValueById((int)$psID, 'YANDEX_INVOICE_SHOP_ID', (int)$personTypeId);
 
 	$yandexSettings = array();
 	if ($shopId <> '')
@@ -522,8 +515,15 @@ if ($arPaySys['ACTION_FILE'] == 'yandexinvoice')
 
 	if ($yandexSettings)
 	{
-		$url = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PS_EDIT'], array('ps_id' => $psID));
-		$value = '<a href="'.$url.'?AJAX=Y&HANDLER=YANDEX_INVOICE&ncc=1">'.GetMessage('CRM_PS_ACT_SEC_DOWNLOAD').'</a>';
+		$url = new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PS_EDIT'], ['ps_id' => $psID]));
+		$url->addParams([
+			'AJAX' => 'Y',
+			'HANDLER' => 'YANDEX_INVOICE',
+			'ncc' => 1,
+		]);
+		$value = '<a data-testid="crm-config-ps-edit-download-key-link" href="' . htmlspecialcharsbx($url->getUri()) . '">'
+			. GetMessage('CRM_PS_ACT_SEC_DOWNLOAD') . '</a>'
+		;
 		$name = GetMessage('CRM_PS_ACT_SEC_GENERATE_PUB_KEY');
 	}
 	else
@@ -560,7 +560,7 @@ if ($arResult['ACTION_FILE'] === 'invoicedocument')
 	];
 	$arResult['INVOICE_DOC_ADD_LINK'] = $uri->addParams($params)->getLocator();
 }
-$arResult['PS_ACT_FIELDS'] = CCrmPaySystem::getPSCorrespondence($arPaySys['ACTION_FILE'], $arPaySys['PS_MODE']);
+$arResult['PS_ACT_FIELDS'] = CCrmPaySystem::getPSCorrespondence($arPaySys['ACTION_FILE'], $arPaySys['PS_MODE'] ?? null);
 CCrmPaySystem::rewritePSCorrByRqSource($ptID, $arResult['PS_ACT_FIELDS'], array('PSA_CODE' => $arPaySys['ACTION_FILE']));
 $arResult['ACTION_FIELDS_LIST'] =  implode(',', array_keys($arResult['PS_ACT_FIELDS']));
 $arResult['SIMPLE_MODE'] = CCrmPaySystem::isFormSimple();
@@ -764,25 +764,10 @@ unset($arResult['PS_ACT_FIELDS_BY_GROUP']['USER_COLUMNS']);
 unset($arTabs['COLUMN_SETTINGS']['fields']['USER_COLUMNS']);
 $arResult['BUSINESS_VALUE'] = $arTabs;
 
-if (!$arResult['PAY_SYSTEM'])
+$preview = $metadataProvider->preview($arResult['PAY_SYSTEM'], $arParamsTemplate, 'ps_edit');
+if ($preview->isSuccess())
 {
-	$arResult['PAY_SYSTEM']['ACTION_FILE'] = 'bill';
-	$arResult['PAY_SYSTEM']['PERSON_TYPE_ID'] = $ptID;
-}
-
-$service = new \Bitrix\Sale\PaySystem\Service($arResult['PAY_SYSTEM']);
-if ($service)
-{
-	$arParamsTemplate = array_merge($service->getDemoParams(), $arParamsTemplate);
-
-	$service->setTemplateMode(\Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
-	$service->setTemplateParams($arParamsTemplate);
-	if (mb_strpos($service->getField('ACTION_FILE'), 'bill') !== false || mb_strpos($service->getField('ACTION_FILE'), 'quote') !== false)
-	{
-		$payment = PaySystem\Manager::getPaymentObjectByData($arResult['PAY_SYSTEM']);
-		$result = $service->showTemplate($payment, 'template');
-		$arResult['TEMPLATE'] = $result->getTemplate();
-	}
+	$arResult['TEMPLATE'] = $preview->getData()['content'];
 }
 
 $this->IncludeComponentTemplate();

@@ -4,7 +4,7 @@
 }
 
 .error-404-block {
-	background: url("images/404-bg.png") no-repeat center 58px rgba(255, 255, 255, 0.6);
+	background: url("images/404-bg.webp") no-repeat center 58px rgba(255, 255, 255, 0.6);
 	border: 1px solid #ced5d7;
 	border-radius: 4px;
 	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03);
@@ -17,7 +17,7 @@
 }
 
 .error-404-footer {
-	background: url("images/404-footer.png") no-repeat 0 0;
+	background: url("images/404-footer.webp") no-repeat 0 0;
 	bottom: -12px;
 	height: 11px;
 	left: 0;

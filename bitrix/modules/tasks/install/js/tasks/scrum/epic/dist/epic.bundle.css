@@ -1,11 +1,7 @@
 .tasks-scrum-epic-header {
 	padding: 19px 5px 22px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	justify-content: space-between;
 }
 
 .tasks-scrum-epic-form-container {
@@ -15,18 +11,12 @@
 }
 
 .tasks-scrum-epic-form-header {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: stretch;
-	-ms-flex-align: stretch;
 	align-items: stretch;
 }
 
 .tasks-scrum-epic-form-header-title {
 	border-bottom: 1px solid rgba(82, 92, 105, 0.2);
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
 	flex: 1;
 	padding-bottom: 12px;
 	font: 18px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
@@ -58,15 +48,10 @@
 	width: 64px;
 	max-width: 64px;
 	min-width: 64px;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	align-items: center;
+	box-sizing: border-box;
 	border-bottom: 1px solid rgba(82, 92, 105, 0.2);
 	padding: 0 13px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -82,13 +67,10 @@
 	border-left: 2px solid;
 	border-bottom: 2px solid;
 	border-color: rgba(87, 96, 110, 0.51);
-	-webkit-transform: rotate(-45deg);
-	    -ms-transform: rotate(-45deg);
-	        transform: rotate(-45deg);
+	transform: rotate(-45deg);
 	margin-left: 11px;
 	margin-top: -4px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .tasks-scrum-epic-form-additional {
@@ -97,8 +79,6 @@
 }
 
 .tasks-scrum-epic-grid-name {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -125,16 +105,9 @@
 }
 
 .tasks-scrum-epic-grid-tags {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	-webkit-box-align: start;
-	    -ms-flex-align: start;
-	        align-items: flex-start;
+	flex-direction: column;
+	align-items: flex-start;
 }
 
 .tasks-scrum-epic-grid-tags div {
@@ -167,19 +140,10 @@
 
 .tasks-scrum-epics-empty {
 	background-color: #fff;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	padding: 75px 50px 60px;
 }
 
@@ -208,12 +172,8 @@
 }
 
 .tasks-scrum-epic-toolbar {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	gap: 12px;
 }
 

@@ -1,0 +1,11 @@
+:root {
+
+}
+
+.call-overlay {
+
+}
+
+.call-overlay.--folded {
+	display: none;
+}

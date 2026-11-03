@@ -9,13 +9,19 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 	const { normalizePositiveInteger } = require('vibecode/catalog/src/utils');
 
 	const DEFAULT_ITEMS_LOAD_LIMIT = 20;
+	const CHAT_AWARE_BACKEND_MARKER = 'itemClickOpensChat';
 	const STATEFUL_LIST_CACHE_TTL = 3 * 86400;
+	const FAVORITE_CACHE_VERSION_KEY = 'vibecode-catalog/favorite-cache-version';
 	const CATALOG_STATE_VALUES = [
 		CATALOG_STATE.ACTIVE,
 		CATALOG_STATE.HIDDEN,
 		CATALOG_STATE.NEW,
+		CATALOG_STATE.FAVORITE,
 		CATALOG_STATE.ALL,
 	];
+	const respondsWithChatAwareBackend = (responseData) => (
+		Object.hasOwn(responseData, CHAT_AWARE_BACKEND_MARKER)
+	);
 
 	class VibeCodeCatalogProvider
 	{
@@ -35,6 +41,7 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 				isAvailable: true,
 				title: Loc.getMessage('MOBILE_VIBECODE_CATALOG_TITLE_TEXT'),
 				showSortMenu: false,
+				itemClickOpensChat: false,
 				items: [],
 				pagination: {
 					offset: 0,
@@ -108,9 +115,20 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 				this.getPortalCacheKey(),
 				this.getUserCacheKey(),
 				this.getPreviewUserId() ?? 'current',
+				this.getFavoriteCacheVersion(),
 				this.getState(),
 				encodeURIComponent(this.getSearchQuery() || '__all__'),
 			].join('/');
+		}
+
+		getFavoriteCacheVersion()
+		{
+			return Application.storage.getNumber(FAVORITE_CACHE_VERSION_KEY, 0);
+		}
+
+		bumpFavoriteCacheVersion()
+		{
+			Application.storage.setNumber(FAVORITE_CACHE_VERSION_KEY, this.getFavoriteCacheVersion() + 1);
 		}
 
 		mergeLoadedListData(currentListData = {}, responseData = {})
@@ -120,6 +138,10 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 				...responseData,
 				items: [],
 				showSortMenu: false,
+				itemClickOpensChat: (
+					respondsWithChatAwareBackend(responseData)
+					&& responseData.itemClickOpensChat === true
+				),
 				pagination: responseData.pagination ?? currentListData.pagination,
 			};
 		}
@@ -135,6 +157,7 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 				isAvailable: listData.isAvailable,
 				title: listData.title,
 				showSortMenu: listData.showSortMenu,
+				itemClickOpensChat: listData.itemClickOpensChat,
 				pagination: listData.pagination,
 			});
 		}

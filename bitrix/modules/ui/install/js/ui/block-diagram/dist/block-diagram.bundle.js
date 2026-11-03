@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, ui_vue3, main_core, main_popup, main_polyfill_intersectionobserver, ui_iconSet_api_vue) {
+(function (exports, ui_vue3, main_core, main_popup, ui_a11y, main_polyfill_intersectionobserver, ui_iconSet_api_vue, ui_system_tooltip_vue, ui_system_tooltip) {
 	'use strict';
 
 	const CONNECTION_OFFSET = 30;
@@ -12,15 +12,34 @@ this.BX = this.BX || {};
 	// drag would move a block of an old scheme to the nearest node and dirty the draft.
 	const DRAG_START_THRESHOLD = 4;
 
+	// Screen pixels per second the camera travels while an arrow key is held. Screen, not world: the
+	// picture travels the same way at any zoom.
+	const KEYBOARD_PAN_SPEED = 700;
+
+	// How long the camera takes to reach that speed, and to come back to a stop once the key is
+	// released. Short on purpose: it takes the jolt out of both ends of a hold without letting the
+	// speed grow the longer the key is down.
+	const KEYBOARD_PAN_RAMP_DURATION = 120;
+
+	// The combo the command that fits the whole scheme into the free part of the screen ships with.
+	const FIT_TO_VIEW_SHORTCUT = ['Shift', '1'];
+
 	// Max never-measured connection ends mounted for measurement per render cycle, so a
 	// large off-screen set drains over several frames instead of one long main-thread task.
 	const FIRST_MEASURE_BATCH_SIZE = 12;
+
+	// Hard lower bound of the camera zoom, two orders below any plausible overview scale. It keeps the
+	// inverse scale where the Float32Array matrices still represent whole canvas units exactly.
+	const ZOOM_FLOOR = 1e-4;
 	const HOOK_NAMES = {
 		CHANGED_BLOCKS: 'changedBlocks',
 		CHANGED_CONNECTIONS: 'changedConnections',
 		START_DRAG_BLOCK: 'startDragBlock',
 		MOVE_DRAG_BLOCK: 'moveDragBlock',
 		END_DRAG_BLOCK: 'endDragBlock',
+		// Raised once for a canvas gesture of any kind that reached the model. The three hooks above
+		// stay what they are: only the node drag raises them.
+		END_GESTURE: 'endGesture',
 		ADD_BLOCK: 'addBlock',
 		ADD_BLOCKS: 'addBlocks',
 		UPDATE_BLOCK: 'updateBlock',
@@ -35,6 +54,7 @@ this.BX = this.BX || {};
 		CONNECTION_TRANSITION_START: 'connectionTransitionStart',
 		CONNECTION_TRANSITION_END: 'connectionTransitionEnd',
 		DROP_NEW_BLOCK: 'dropNewBlock',
+		PASTE_BLOCKS: 'pasteBlocks',
 		HISTORY_NEXT: 'historyNext',
 		HISTORY_PREV: 'historyPrev'
 	};
@@ -58,14 +78,40 @@ this.BX = this.BX || {};
 		NWSE_RESIZE: 'nwse-resize',
 		NESW_RESIZE: 'nesw-resize'
 	};
+
+	// Stacking scale inside the canvas context, blocks and connections alike: the connection rests at
+	// 0 and rises to 2 under the cursor, its preview stands at 6 and the one being created at 7, the
+	// selection frame at 90 and the selection box at 9999.
 	const BLOCK_INDEXES = {
+		// Added on top of the step a participant already has, so a raised set keeps its inner order and
+		// lands in the free band 9-15: whole above the connection being created, whole below the frame.
+		ELEVATION_OFFSET: 10,
+		HOVERED: 5,
 		HIGHLITED: 4,
 		MOVABLE: 3,
-		STANDING: 2};
+		STANDING: 2,
+		// Resting step of the backdrop, the same value its stylesheet states.
+		BACKDROP: -1
+	};
+
+	// The canvas publishes the addition on its root so the stylesheets of the extension raise by the
+	// very number the resolver adds, instead of repeating it. Outside the canvas the variable is
+	// undefined and nothing is raised.
+	const ELEVATION_OFFSET_CSS_VARIABLE = '--ui-block-diagram-elevation-offset';
+
+	// Published the same way, and for the same reason: the flash of the placement feedback and the
+	// state behind it expire together, so the stylesheets take the duration from the timer that owns it
+	// instead of stating a number of their own.
+	const DISPLACED_DURATION_CSS_VARIABLE = '--ui-block-diagram-displaced-duration';
 	const INPUT_TAGS = Object.freeze({
 		INPUT: true,
 		TEXTAREA: true,
 		SELECT: true
+	});
+	const MOUSE_BUTTON = Object.freeze({
+		LEFT: 0,
+		MIDDLE: 1,
+		RIGHT: 2
 	});
 	const SOURCE_PORT_STUB_TELEPORT_NAME = 'sourcePortNewConnection';
 	const TARGET_PORT_STUB_TELEPORT_NAME = 'targetPortNewConnection';
@@ -1565,38 +1611,6 @@ this.BX = this.BX || {};
 		return out;
 	}
 	/**
-	 * Rotates a mat3 by the given angle
-	 *
-	 * @param {mat3} out the receiving matrix
-	 * @param {ReadonlyMat3} a the matrix to rotate
-	 * @param {Number} rad the angle to rotate the matrix by
-	 * @returns {mat3} out
-	 */
-
-	function rotate(out, a, rad) {
-		var a00 = a[0],
-			a01 = a[1],
-			a02 = a[2],
-			a10 = a[3],
-			a11 = a[4],
-			a12 = a[5],
-			a20 = a[6],
-			a21 = a[7],
-			a22 = a[8],
-			s = Math.sin(rad),
-			c = Math.cos(rad);
-		out[0] = c * a00 + s * a10;
-		out[1] = c * a01 + s * a11;
-		out[2] = c * a02 + s * a12;
-		out[3] = c * a10 - s * a00;
-		out[4] = c * a11 - s * a01;
-		out[5] = c * a12 - s * a02;
-		out[6] = a20;
-		out[7] = a21;
-		out[8] = a22;
-		return out;
-	}
-	/**
 	 * Scales the mat3 by the dimensions in the given vec2
 	 *
 	 * @param {mat3} out the receiving matrix
@@ -2187,10 +2201,43 @@ this.BX = this.BX || {};
 		};
 	})();
 
+	// The lower bound is the one carrying the safety invariant, so the property validator and the
+	// diagnostics of the pair have to judge it by one and the same rule.
+	function isValidMinZoom(value) {
+		return Number.isFinite(value) && value >= ZOOM_FLOOR;
+	}
+
+	// The floor of the scale, applied wherever a scale is written. An unreadable bound falls back to
+	// its freest safe value and in an inverted pair the lower one wins: bounds come from the consumer,
+	// and refusing to serve a gesture over a typo in a setting breaks more than it fixes. A request
+	// that is not a number leaves the scale where it was.
+	function clampZoom(zoom, minZoom, maxZoom, fallback) {
+		if (!Number.isFinite(zoom)) {
+			return fallback;
+		}
+		const lowerBound = Number.isFinite(minZoom) ? Math.max(minZoom, ZOOM_FLOOR) : ZOOM_FLOOR;
+		const upperBound = Number.isFinite(maxZoom) ? Math.max(maxZoom, lowerBound) : Number.POSITIVE_INFINITY;
+		return Math.min(upperBound, Math.max(lowerBound, zoom));
+	}
+
+	function viewportToCanvas({
+		x,
+		y
+	}, {
+		width,
+		height
+	}, viewProjectionMatrixInv) {
+		const canvas = transformMat3(create(), [x / width * 2 - 1, (1 - y / height) * 2 - 1], viewProjectionMatrixInv);
+		return {
+			x: canvas[0],
+			y: canvas[1]
+		};
+	}
+
 	class Camera {
+		#state = null;
 		#x = 0;
 		#y = 0;
-		#rotation = 0;
 		#zoom = 1;
 		#width = 0;
 		#height = 0;
@@ -2199,20 +2246,9 @@ this.BX = this.BX || {};
 		#viewMatrix = create$4();
 		#viewProjectionMatrix = create$4();
 		#viewProjectionMatrixInv = create$4();
-		#changeCallback = null;
-		constructor(options) {
-			const {
-				width,
-				height,
-				onChangeCallback
-			} = options;
-			this.#changeCallback = onChangeCallback;
-			this.projection(width, height);
-			this.updateMatrix();
-			this.#onChangedTransformParams({
-				width,
-				height
-			});
+		constructor(ctx) {
+			this.#state = ctx.state;
+			this.#updateMatrix();
 		}
 		get projectionMatrix() {
 			return this.#projectionMatrix;
@@ -2226,19 +2262,15 @@ this.BX = this.BX || {};
 		get viewProjectionMatrixInv() {
 			return this.#viewProjectionMatrixInv;
 		}
-		get matrix() {
-			return this.#matrix;
-		}
 		get zoom() {
 			return this.#zoom;
 		}
 		set zoom(zoom) {
-			if (this.#zoom !== zoom) {
-				this.#zoom = zoom;
-				this.#onChangedTransformParams({
-					zoom
-				});
-				this.updateMatrix();
+			const clampedZoom = this.#clampZoom(zoom);
+			if (this.#zoom !== clampedZoom) {
+				this.#zoom = clampedZoom;
+				this.#updateMatrix();
+				this.#publishTransform();
 			}
 		}
 		get x() {
@@ -2247,10 +2279,8 @@ this.BX = this.BX || {};
 		set x(x) {
 			if (this.#x !== x) {
 				this.#x = x;
-				this.#onChangedTransformParams({
-					x
-				});
-				this.updateMatrix();
+				this.#updateMatrix();
+				this.#publishTransform();
 			}
 		}
 		get y() {
@@ -2259,19 +2289,8 @@ this.BX = this.BX || {};
 		set y(y) {
 			if (this.#y !== y) {
 				this.#y = y;
-				this.#onChangedTransformParams({
-					y
-				});
-				this.updateMatrix();
-			}
-		}
-		get rotation() {
-			return this.#rotation;
-		}
-		set rotation(rotation) {
-			if (this.#rotation !== rotation) {
-				this.#rotation = rotation;
-				this.updateMatrix();
+				this.#updateMatrix();
+				this.#publishTransform();
 			}
 		}
 		get width() {
@@ -2280,78 +2299,22 @@ this.BX = this.BX || {};
 		get height() {
 			return this.#height;
 		}
-		setChangeTransformCallback(callback) {
-			this.#changeCallback = callback;
-		}
-		#onChangedTransformParams(params) {
-			this.#changeCallback({
-				x: this.#x,
-				y: this.#y,
-				zoom: this.#zoom,
-				width: this.#width,
-				height: this.#height,
-				...params
-			});
-		}
-		clone(width = null, height = null) {
-			const camera = new Camera({
-				width: width || this.#width,
-				height: height || this.#height,
-				onChangeCallback: this.#changeCallback
-			});
-			camera.#x = this.#x;
-			camera.#y = this.#y;
-			camera.#zoom = this.#zoom;
-			camera.#rotation = this.#rotation;
-			camera.updateMatrix();
-			camera.#onChangedTransformParams({
-				x: camera.#x,
-				y: camera.#y,
-				zoom: camera.#zoom
-			});
-			return camera;
-		}
-		projection(width, height) {
+		resize(width, height) {
 			this.#width = width;
 			this.#height = height;
 			projection(this.#projectionMatrix, width, height);
-			this.updateViewProjectionMatrix();
-		}
-		updateMatrix() {
-			const zoomScale = 1 / this.#zoom;
-			identity(this.#matrix);
-			translate(this.#matrix, this.#matrix, [this.#x, this.#y]);
-			rotate(this.#matrix, this.#matrix, this.#rotation);
-			scale(this.#matrix, this.#matrix, [zoomScale, zoomScale]);
-			invert(this.#viewMatrix, this.#matrix);
-			this.updateViewProjectionMatrix();
-		}
-		updateViewProjectionMatrix() {
-			multiply(this.#viewProjectionMatrix, this.#projectionMatrix, this.#viewMatrix);
-			invert(this.#viewProjectionMatrixInv, this.#viewProjectionMatrix);
+			this.#updateViewProjectionMatrix();
+			this.#publishViewportSize();
 		}
 		createLandmark(params = {}) {
 			return {
 				zoom: this.#zoom,
 				x: this.#x,
 				y: this.#y,
-				rotation: this.#rotation,
+				anchorToViewport: false,
+				viewportX: 0,
+				viewportY: 0,
 				...params
-			};
-		}
-		viewportToCanvas({
-			x,
-			y
-		}, camera) {
-			const {
-				width,
-				height,
-				viewProjectionMatrixInv
-			} = camera || this;
-			const canvas = transformMat3(create(), [x / width * 2 - 1, (1 - y / height) * 2 - 1], viewProjectionMatrixInv);
-			return {
-				x: canvas[0],
-				y: canvas[1]
 			};
 		}
 		applyLandmark(landmark) {
@@ -2359,252 +2322,265 @@ this.BX = this.BX || {};
 				x,
 				y,
 				zoom,
-				rotation,
+				anchorToViewport,
 				viewportX,
 				viewportY
 			} = landmark;
-			const useFixedViewport = viewportX || viewportY;
-			let preZoomX = 0;
-			let preZoomY = 0;
-			if (useFixedViewport) {
-				const canvas = this.viewportToCanvas({
-					x: viewportX,
-					y: viewportY
-				});
-				preZoomX = canvas.x;
-				preZoomY = canvas.y;
-			}
-			this.#zoom = zoom;
-			this.#rotation = rotation;
+			// Anchoring needs a sized viewport: the reverse projection divides by it.
+			const canAnchor = anchorToViewport && this.#width > 0 && this.#height > 0;
+			const anchor = canAnchor ? this.#viewportToCanvas({
+				x: viewportX,
+				y: viewportY
+			}) : null;
+			this.#zoom = this.#clampZoom(zoom);
 			this.#x = x;
 			this.#y = y;
-			this.updateMatrix();
-			this.#onChangedTransformParams({
-				x: this.#x,
-				y: this.#y,
-				zoom: this.#zoom
-			});
-			if (useFixedViewport) {
-				const {
-					x: postZoomX,
-					y: postZoomY
-				} = this.viewportToCanvas({
+			this.#updateMatrix();
+			if (anchor) {
+				const shifted = this.#viewportToCanvas({
 					x: viewportX,
 					y: viewportY
 				});
-				this.#x += preZoomX - postZoomX;
-				this.#y += preZoomY - postZoomY;
-				this.updateMatrix();
-				this.#onChangedTransformParams({
-					x: this.#x,
-					y: this.#y,
-					zoom: this.#zoom
-				});
+				this.#x += anchor.x - shifted.x;
+				this.#y += anchor.y - shifted.y;
+				this.#updateMatrix();
 			}
+			this.#publishTransform();
 		}
-	}
 
-	class Canvas {
-		#canvas = null;
-		#dpr = window.devicePixelRatio || 1;
-		#width = 0;
-		#height = 0;
-		#minZoom = 0.02;
-		#maxZoom = 4;
-		#camera = null;
-		#canvasStyleInstance = null;
-		#startInvertViewProjectionMatrix = create$4();
-		#startCameraX = 0;
-		#startCameraY = 0;
-		#startPos = create();
-		#resizeObserver = null;
-		transform = ui_vue3.ref({
-			x: 0,
-			y: 0,
-			zoom: 0
-		});
-		constructor(options) {
-			const {
-				canvas,
-				canvasStyle,
-				minZoom,
-				maxZoom
-			} = options;
-			this.#minZoom = minZoom;
-			this.#maxZoom = maxZoom;
-			this.#initCanvas(canvas);
-			this.#initCamera();
-			this.#initCanvasStyle(canvasStyle);
-			this.#initResizeObserver();
-		}
-		get viewMatrix() {
-			return this.#camera?.viewMatrix ?? [];
-		}
-		get camera() {
-			return this.#camera;
-		}
-		#initCanvas(canvas) {
-			const {
-				width,
-				height
-			} = canvas.getBoundingClientRect();
-			this.#canvas = canvas;
-			this.#canvas.width = width * this.#dpr;
-			this.#canvas.height = height * this.#dpr;
-			this.#width = this.#canvas.width;
-			this.#height = this.#canvas.height;
-		}
-		#initCamera() {
-			this.#camera = new Camera({
-				width: this.#width / this.#dpr,
-				height: this.#height / this.#dpr,
-				onChangeCallback: ({
-					x,
-					y,
-					zoom
-				}) => {
-					this.transform.x = x;
-					this.transform.y = y;
-					this.transform.zoom = zoom;
-				}
-			});
-		}
-		#initCanvasStyle(canvasStyle) {
-			if (canvasStyle) {
-				const StyleInstance = canvasStyle.instance;
-				this.#canvasStyleInstance = new StyleInstance(this.#canvas, canvasStyle.options);
-			}
-		}
-		#initResizeObserver() {
-			this.#resizeObserver = new ResizeObserver(entries => {
-				for (const entry of entries) {
-					this.#camera = this.#camera.clone(entry.contentRect.width, entry.contentRect.height);
-				}
-			});
-			this.#resizeObserver.observe(this.#canvas);
-		}
-		clientToViewport({
-			x,
-			y
-		}) {
-			const {
-				left,
-				top
-			} = this.#canvas.getBoundingClientRect();
-			return {
-				x: x - left,
-				y: y - top
-			};
-		}
-		viewportToClient({
-			x,
-			y
-		}) {
-			const {
-				left,
-				top
-			} = this.#canvas.getBoundingClientRect();
-			return {
-				x: x + left,
-				y: y + top
-			};
-		}
-		render() {
-			this.#canvasStyleInstance?.render({
-				projectionMatrix: this.#camera.projectionMatrix,
-				viewMatrix: this.#camera.viewMatrix,
-				viewProjectionMatrixInv: this.#camera.viewProjectionMatrixInv,
-				zoomScale: this.#camera.zoom
-			});
-		}
-		setCamera(params) {
-			this.#camera.applyLandmark(this.#camera.createLandmark({
-				...params
-			}));
-		}
-		#setCameraZoom(zoomStep) {
-			const zoom = Number((this.#camera.zoom + zoomStep).toFixed(1));
-			if (zoom < this.#minZoom || zoom > this.#maxZoom) {
+		// Both axes at once: the pair of setters rebuilds the matrices and publishes the
+		// state twice, and a drag asks for a new position on every pointer move.
+		setPosition(x, y) {
+			if (this.#x === x && this.#y === y) {
 				return;
 			}
-			this.#camera.applyLandmark(this.#camera.createLandmark({
-				x: this.#camera.x,
-				y: this.#camera.y,
-				viewportX: this.#camera.width / 2,
-				viewportY: this.#camera.height / 2,
-				zoom
-			}));
+			this.#x = x;
+			this.#y = y;
+			this.#updateMatrix();
+			this.#publishTransform();
 		}
-		zoomIn(zoomStep) {
-			this.#setCameraZoom(zoomStep);
-		}
-		zoomOut(zoomStep) {
-			this.#setCameraZoom(zoomStep * -1);
-		}
-		setZoom(zoom) {
-			this.#camera.applyLandmark(this.#camera.createLandmark({
-				x: this.#camera.x,
-				y: this.#camera.y,
-				viewportX: this.#camera.width / 2,
-				viewportY: this.#camera.height / 2,
-				zoom
-			}));
-		}
-		setCameraZoomByWheel(event, zoomChange = 0) {
-			const newZoom = Math.max(this.#minZoom, Math.min(this.#maxZoom, this.#camera.zoom + zoomChange));
-			const viewport = this.clientToViewport({
-				x: event.clientX,
-				y: event.clientY
-			});
-			this.#camera.applyLandmark(this.#camera.createLandmark({
-				viewportX: viewport.x,
-				viewportY: viewport.y,
-				zoom: newZoom
-			}));
-		}
-		setCameraPositionByWheel(event) {
-			const lineStep = 40;
-			const pixelStep = event.deltaMode === 1 ? lineStep : 1;
-			let dx = event.deltaX * pixelStep;
-			let dy = event.deltaY * pixelStep;
-			if (event.shiftKey && Math.abs(dy) > Math.abs(dx)) {
-				dx = dy;
-				dy = 0;
+
+		// Screen pixels in: the delta becomes world units inside the camera. Callers tick
+		// every frame, so an idle delta must leave the matrices and the state untouched.
+		panBy(dxScreen, dyScreen) {
+			if (dxScreen === 0 && dyScreen === 0) {
+				return;
 			}
-			this.#camera.x += dx / this.#camera.zoom;
-			this.#camera.y += dy / this.#camera.zoom;
+			this.#x += dxScreen / this.#zoom;
+			this.#y += dyScreen / this.#zoom;
+			this.#updateMatrix();
+			this.#publishTransform();
 		}
-		#getClipSpaceMousePosition(event) {
-			const {
-				left,
-				top
-			} = this.#canvas.getBoundingClientRect();
-			const cssX = event.clientX - left;
-			const cssY = event.clientY - top;
-			const normalizedX = cssX / this.#canvas.clientWidth || this.#canvas.width / this.#dpr;
-			const normalizedY = cssY / this.#canvas.clientHeight || this.#canvas.height / this.#dpr;
-			const clipX = normalizedX * 2 - 1;
-			const clipY = normalizedY * -2 + 1;
-			return [clipX, clipY];
+		#viewportToCanvas(point) {
+			return viewportToCanvas(point, {
+				width: this.#width,
+				height: this.#height
+			}, this.#viewProjectionMatrixInv);
 		}
-		setCameraPositionByMouseDown(event) {
-			copy(this.#startInvertViewProjectionMatrix, this.#camera.viewProjectionMatrixInv);
-			this.#startCameraX = this.#camera.x;
-			this.#startCameraY = this.#camera.y;
-			transformMat3(this.#startPos, this.#getClipSpaceMousePosition(event), this.#startInvertViewProjectionMatrix);
+
+		// Bounds are re-read from the state on every call rather than cached: the consumer changes them
+		// on the fly, and the clamp runs on every frame of a gesture.
+		#clampZoom(zoom) {
+			return clampZoom(zoom, this.#state.minZoom, this.#state.maxZoom, this.#zoom);
 		}
-		setCameraPositionByMouseMove(event) {
-			const pos = transformMat3(create(), this.#getClipSpaceMousePosition(event), this.#startInvertViewProjectionMatrix);
-			this.#camera.x = this.#startCameraX + this.#startPos[0] - pos[0];
-			this.#camera.y = this.#startCameraY + this.#startPos[1] - pos[1];
+		#publishTransform() {
+			this.#state.transformX = this.#x;
+			this.#state.transformY = this.#y;
+			this.#state.zoom = this.#zoom;
 		}
-		destroy() {
-			this.#canvasStyleInstance?.destroy();
-			this.#resizeObserver.unobserve(this.#canvas);
+		#publishViewportSize() {
+			this.#state.canvasWidth = this.#width;
+			this.#state.canvasHeight = this.#height;
+		}
+		#updateMatrix() {
+			const zoomScale = 1 / this.#zoom;
+			identity(this.#matrix);
+			translate(this.#matrix, this.#matrix, [this.#x, this.#y]);
+			scale(this.#matrix, this.#matrix, [zoomScale, zoomScale]);
+			invert(this.#viewMatrix, this.#matrix);
+			this.#updateViewProjectionMatrix();
+		}
+		#updateViewProjectionMatrix() {
+			multiply(this.#viewProjectionMatrix, this.#projectionMatrix, this.#viewMatrix);
+			invert(this.#viewProjectionMatrixInv, this.#viewProjectionMatrix);
 		}
 	}
 
-	const vertexShader = `
+	// How long the overview takes to reach a new destination. A quarter of a second is long enough to be
+	// read as a move rather than a jump - the point of the move is that a person sees where they were
+	// taken - and short enough not to stand between them and the next thing they do. The value belongs
+	// here and not to the caller: the length of the move is a property of the canvas, not of a command.
+	const CAMERA_TRANSITION_DURATION_MS = 250;
+
+	// Where the overview stands: the position of the camera and its scale. The anchored form of a
+	// landmark has no meaning here - a move interpolates absolute states.
+
+	function clampProgress(progress) {
+		return Math.min(Math.max(progress, 0), 1);
+	}
+
+	// Ease-out cubic: the move leaves at full speed and settles into the destination, so the eye follows
+	// where it lands instead of where it left.
+	function easeOut(progress) {
+		return 1 - (1 - progress) ** 3;
+	}
+	function interpolate(from, to, progress) {
+		return from + (to - from) * progress;
+	}
+	function isPositiveScale(value) {
+		return Number.isFinite(value) && value > 0;
+	}
+
+	/**
+	 * The scale steps by a constant ratio rather than by a constant amount: to the eye a move from 0.25
+	 * to 1 is the same size of change as one from 1 to 4, and a linear step would crawl through the
+	 * first half of such a move and rush the second. A scale that is not positive has no ratio to step
+	 * by - the camera repairs such a value itself - so the move falls back to the even step.
+	 */
+	function interpolateZoom(from, to, progress) {
+		if (!isPositiveScale(from) || !isPositiveScale(to)) {
+			return interpolate(from, to, progress);
+		}
+		return from * (to / from) ** progress;
+	}
+
+	/**
+	 * A move of the overview to a destination over time. It keeps where the camera started, where it has
+	 * to arrive and how far along it is; every frame it computes the state in between and hands it to
+	 * the camera the same way every other operation of the canvas does - through a landmark.
+	 *
+	 * The move keeps no clock and no frame loop of its own: the timestamp comes from the caller, which
+	 * is the loop the canvas already draws in. That is what makes the whole object testable without
+	 * fake timers, and what keeps one loop in the extension instead of two.
+	 *
+	 * The bounds of the scale are not checked here at all: the camera owns them and applies them to
+	 * every frame, exactly as it does to a jump.
+	 */
+	class CameraTransition {
+		#camera;
+		#from = null;
+		#to = null;
+		#startedAt = null;
+		constructor(camera) {
+			this.#camera = camera;
+		}
+		get isRunning() {
+			return this.#to !== null;
+		}
+
+		/**
+		 * Aims the camera at a new destination from wherever it stands now. At most one move is alive:
+		 * a second destination replaces the first instead of racing it for the camera.
+		 */
+		start(target) {
+			this.cancel();
+			this.#from = {
+				x: this.#camera.x,
+				y: this.#camera.y,
+				zoom: this.#camera.zoom
+			};
+			this.#to = {
+				x: target.x,
+				y: target.y,
+				zoom: target.zoom
+			};
+			// The first frame sets the origin of the clock, so a move started long before it gets its full
+			// length rather than arriving already finished.
+			this.#startedAt = null;
+		}
+
+		// Stops where the camera stands and writes nothing more: the input of a person wins over a move
+		// that is still running, and a stopped move must not drag the camera on afterwards.
+		cancel() {
+			this.#from = null;
+			this.#to = null;
+			this.#startedAt = null;
+		}
+
+		// One frame of the move. Answers whether the camera was written to, so a caller can tell an idle
+		// frame from a moving one.
+		step(now) {
+			if (this.#to === null) {
+				return false;
+			}
+			if (this.#startedAt === null) {
+				this.#startedAt = now;
+			}
+			const progress = clampProgress((now - this.#startedAt) / CAMERA_TRANSITION_DURATION_MS);
+			if (progress >= 1) {
+				const target = this.#to;
+				// Closed before the last write: the move ends exactly on the destination, never on the
+				// frame before it, and leaves nothing running behind it.
+				this.cancel();
+				this.#apply(target);
+				return true;
+			}
+			const eased = easeOut(progress);
+			this.#apply({
+				x: interpolate(this.#from.x, this.#to.x, eased),
+				y: interpolate(this.#from.y, this.#to.y, eased),
+				zoom: interpolateZoom(this.#from.zoom, this.#to.zoom, eased)
+			});
+			return true;
+		}
+		#apply(state) {
+			this.#camera.applyLandmark(this.#camera.createLandmark(state));
+		}
+	}
+
+	/**
+	 * A record of a map read strictly as an own property: keys come from an untrusted graph owned
+	 * by the consumer of the extension, so a plain lookup would answer an inherited prototype member
+	 * (constructor, toString) where the map holds no record at all. A missing or non-object map
+	 * reads as an empty one, so a reactive source and a plain object are both accepted. An own
+	 * record holding null or undefined reads as a missing one, so a consumer filling the gaps
+	 * overwrites such a key with a fresh record.
+	 */
+	function getOwnRecord(map, key) {
+		const records = ui_vue3.toValue(map);
+		if (!main_core.Type.isObjectLike(records) || !Object.hasOwn(records, key)) {
+			return null;
+		}
+		return records[key] ?? null;
+	}
+
+	// A node whose model position is unusable is left out: one non-finite coordinate spreads NaN over
+	// the whole box.
+	function getUsablePosition(block) {
+		const position = ui_vue3.toValue(block)?.position;
+		if (!main_core.Type.isObjectLike(position)) {
+			return null;
+		}
+		const x = Number(position.x);
+		const y = Number(position.y);
+		if (!Number.isFinite(x) || !Number.isFinite(y)) {
+			return null;
+		}
+		return {
+			x,
+			y
+		};
+	}
+
+	// Size of a node for the geometry of the selection: the geometry measured on its mount, then the
+	// dimensions of the model, then the default size of the diagram. Reading it off the cache instead
+	// of the markup keeps a frame of a gesture free of synchronous layout.
+	function getSelectionBlockSize(block, blocksRectMap, defaultBlockSize) {
+		const measured = getOwnRecord(blocksRectMap, ui_vue3.toValue(block).id);
+		if (main_core.Type.isObjectLike(measured) && Number.isFinite(measured.width) && Number.isFinite(measured.height)) {
+			return {
+				width: measured.width,
+				height: measured.height
+			};
+		}
+		const dimensions = ui_vue3.toValue(block).dimensions;
+		return {
+			width: dimensions?.width || defaultBlockSize.width,
+			height: dimensions?.height || defaultBlockSize.height
+		};
+	}
+
+	const vertexShader$1 = `
 	#extension GL_OES_standard_derivatives : enable
 	precision mediump float;
 
@@ -2621,7 +2597,7 @@ this.BX = this.BX || {};
 		gl_Position = vec4(a_Position, 0, 1);
 	}
 `;
-	const fragmentShader = `
+	const fragmentShader$1 = `
 	#extension GL_OES_standard_derivatives : enable
 
 	// Cross-fade needs the coarse grid lines to land exactly on fine ones, and that
@@ -2668,6 +2644,67 @@ this.BX = this.BX || {};
 
 	void main() {
 		gl_FragColor = render_grid(v_Position);
+	}
+`;
+
+	const vertexShader = `
+	precision mediump float;
+
+	attribute vec2 a_Position;
+	attribute vec2 a_Center;
+	attribute vec2 a_HalfSize;
+	attribute vec4 a_Color;
+	// x - corner radius, y - half of the outline width (zero means a filled shape)
+	attribute vec2 a_Shape;
+
+	uniform vec2 u_Resolution;
+
+	varying vec2 v_Local;
+	varying vec2 v_HalfSize;
+	varying vec4 v_Color;
+	varying vec2 v_Shape;
+
+	void main() {
+		v_Local = a_Position - a_Center;
+		v_HalfSize = a_HalfSize;
+		v_Color = a_Color;
+		v_Shape = a_Shape;
+
+		// Map pixels grow right and down, clip space grows right and up.
+		vec2 clip = (a_Position / u_Resolution) * 2.0 - 1.0;
+		gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+	}
+`;
+	const fragmentShader = `
+	precision mediump float;
+
+	// Half-width of the coverage ramp, in map pixels. It is driven by pixel density, so the
+	// edge fades over the same distance on the screen whatever the density is.
+	uniform float u_EdgeSoftness;
+
+	varying vec2 v_Local;
+	varying vec2 v_HalfSize;
+	varying vec4 v_Color;
+	varying vec2 v_Shape;
+
+	// Signed distance to a rounded rectangle centered at the origin: negative inside,
+	// positive outside, zero on the edge. This is what gives the corners their radius
+	// without a single extra vertex.
+	float rounded_box(vec2 point, vec2 halfSize, float radius) {
+		vec2 corner = abs(point) - halfSize + radius;
+
+		return min(max(corner.x, corner.y), 0.0) + length(max(corner, 0.0)) - radius;
+	}
+
+	void main() {
+		float radius = min(v_Shape.x, min(v_HalfSize.x, v_HalfSize.y));
+		float edge = rounded_box(v_Local, v_HalfSize, radius);
+		// A non-zero outline width turns the shape into a band of that width centered on the
+		// edge - the same way a stroked rectangle is drawn.
+		float shape = v_Shape.y > 0.0 ? abs(edge) - v_Shape.y : edge;
+		float coverage = 1.0 - smoothstep(-u_EdgeSoftness, u_EdgeSoftness, shape);
+
+		gl_FragColor = vec4(v_Color.rgb, v_Color.a * coverage);
 	}
 `;
 
@@ -2885,8 +2922,8 @@ this.BX = this.BX || {};
 			this.#gl = canvas.getContext('webgl');
 			this.#gl.getExtension('OES_standard_derivatives');
 			this.#gl.viewport(0, 0, this.#gl.canvas.width, this.#gl.canvas.height);
-			this.#vertexShader = compileShader(this.#gl, vertexShader, this.#gl.VERTEX_SHADER);
-			this.#fragmentShader = compileShader(this.#gl, fragmentShader, this.#gl.FRAGMENT_SHADER);
+			this.#vertexShader = compileShader(this.#gl, vertexShader$1, this.#gl.VERTEX_SHADER);
+			this.#fragmentShader = compileShader(this.#gl, fragmentShader$1, this.#gl.FRAGMENT_SHADER);
 			this.#program = createProgram(this.#gl, this.#vertexShader, this.#fragmentShader);
 			this.#positionAttributeLocation = this.#gl.getAttribLocation(this.#program, 'a_Position');
 			this.#projectionMatrixLink = this.#gl.getUniformLocation(this.#program, 'u_ProjectionMatrix');
@@ -2944,10 +2981,1237 @@ this.BX = this.BX || {};
 			this.#gl.vertexAttribPointer(this.#positionAttributeLocation, 2, this.#gl.FLOAT, false, 0, 0);
 			this.#gl.drawArrays(this.#gl.TRIANGLE_STRIP, 0, 4);
 		}
+
+		// The context is the canvas's and outlives the grid on a rebinding, so everything built on
+		// it goes back here rather than with the context being put out.
 		destroy() {
 			this.#gl.deleteProgram(this.#program);
 			this.#gl.deleteShader(this.#vertexShader);
 			this.#gl.deleteShader(this.#fragmentShader);
+			this.#gl.deleteBuffer(this.#gridPositionBuffer);
+			this.#program = null;
+			this.#vertexShader = null;
+			this.#fragmentShader = null;
+			this.#gridPositionBuffer = null;
+		}
+	}
+
+	// What the caller of the fit brings: the box of the scheme plus the optional settings of the
+	// command. The size of the viewport is not among them - it belongs to the canvas.
+
+	/**
+	 * Where the overview has to end up: the canvas point `center` stands at the viewport pixel
+	 * `viewportPoint` at scale `zoom`. The camera position is derived from it rather than carried in
+	 * it, so a caller whose camera clamped the scale places the content by the scale it actually took.
+	 */
+
+	// The overview is not enlarged past the natural size of the scheme: a single small node blown up
+	// to the whole screen reads as a breakage rather than as a fit.
+	const NATURAL_ZOOM = 1;
+
+	// The size the geometry of the group frame gives a node the model says nothing about.
+	const DEFAULT_BLOCK_SIZE$1 = {
+		width: 150,
+		height: 100
+	};
+	const NO_INSETS = {
+		top: 0,
+		right: 0,
+		bottom: 0,
+		left: 0
+	};
+	function isUsableSize(value) {
+		return Number.isFinite(value) && value > 0;
+	}
+	function toFiniteNumber(value) {
+		const number = Number(value);
+		return Number.isFinite(number) ? number : 0;
+	}
+
+	// Insets come from a consumer that redraws its panels while the diagram stays mounted, so an
+	// absent or half-filled set of edges is an ordinary input, not a programming error.
+	function resolveInsets(insets) {
+		const source = ui_vue3.toValue(insets);
+		if (!main_core.Type.isObjectLike(source)) {
+			return NO_INSETS;
+		}
+		return {
+			top: toFiniteNumber(source.top),
+			right: toFiniteNumber(source.right),
+			bottom: toFiniteNumber(source.bottom),
+			left: toFiniteNumber(source.left)
+		};
+	}
+
+	/**
+	 * Bounding box of the whole scheme in canvas coordinates. The source is the model of the scheme:
+	 * under the render optimization the nodes outside the screen are not mounted and have no measured
+	 * geometry at all, so a box built from the measured rectangles alone would cover the visible part
+	 * only. Connections stay out of it - their route is derived from the nodes. A node whose position
+	 * or size is unusable is left out, by the same rules the group frame follows.
+	 */
+	function getDiagramBounds(blocks, blocksRectMap = {}, defaultBlockSize = DEFAULT_BLOCK_SIZE$1) {
+		const list = ui_vue3.toValue(blocks);
+		if (!main_core.Type.isArray(list)) {
+			return null;
+		}
+		let minX = Infinity;
+		let minY = Infinity;
+		let maxX = -Infinity;
+		let maxY = -Infinity;
+		let hasBlocks = false;
+		list.forEach(block => {
+			const position = getUsablePosition(block);
+			if (position === null) {
+				return;
+			}
+			const size = getSelectionBlockSize(block, blocksRectMap, defaultBlockSize);
+			const width = Number(size.width);
+			const height = Number(size.height);
+
+			// A node sized by a broken model value would spread that value over the whole box.
+			if (!isUsableSize(width) || !isUsableSize(height)) {
+				return;
+			}
+			hasBlocks = true;
+			minX = Math.min(minX, position.x);
+			minY = Math.min(minY, position.y);
+			maxX = Math.max(maxX, position.x + width);
+			maxY = Math.max(maxY, position.y + height);
+		});
+		if (!hasBlocks) {
+			return null;
+		}
+		return {
+			minX,
+			minY,
+			maxX,
+			maxY,
+			width: maxX - minX,
+			height: maxY - minY
+		};
+	}
+
+	/**
+	 * Target overview for the whole scheme: the largest scale at which the box still fits the free
+	 * part of the viewport, and the point of that part the box is centred on. The free part is what
+	 * the viewport keeps after the edges the panels of the consumer cover and a margin along every
+	 * side. An empty scheme returns the starting overview of the editor - the natural scale with the
+	 * origin of the scheme in the middle of the free part - and a free part that has no room left
+	 * returns nothing at all, so the overview stays where the person put it.
+	 *
+	 * The scale is not bounded from below here: the camera owns the bounds of the scale and applies
+	 * them on every path.
+	 */
+	function getFitToViewTarget(options) {
+		const {
+			bounds = null,
+			viewportWidth = 0,
+			viewportHeight = 0,
+			insets,
+			padding = GRID_DEFAULT_SIZE,
+			maxFitZoom = NATURAL_ZOOM
+		} = options ?? {};
+		const edges = resolveInsets(insets);
+		const margin = Math.max(toFiniteNumber(padding), 0);
+		const viewWidth = toFiniteNumber(viewportWidth);
+		const viewHeight = toFiniteNumber(viewportHeight);
+		const freeWidth = viewWidth - edges.left - edges.right - 2 * margin;
+		const freeHeight = viewHeight - edges.top - edges.bottom - 2 * margin;
+
+		// An unmounted canvas and panels wider than the canvas itself come out the same way: there is
+		// no area to fit anything into, so the overview is left alone.
+		if (freeWidth <= 0 || freeHeight <= 0) {
+			return null;
+		}
+
+		// The margin drops out of the centre of the free area: it is the same on both sides.
+		const freeCenter = {
+			x: (viewWidth + edges.left - edges.right) / 2,
+			y: (viewHeight + edges.top - edges.bottom) / 2
+		};
+		if (bounds === null) {
+			return {
+				zoom: NATURAL_ZOOM,
+				center: {
+					x: 0,
+					y: 0
+				},
+				viewportPoint: freeCenter
+			};
+		}
+		const scaleX = freeWidth / bounds.width;
+		const scaleY = freeHeight / bounds.height;
+		const zoom = Math.min(scaleX, scaleY, maxFitZoom);
+		return {
+			zoom,
+			center: {
+				x: bounds.minX + bounds.width / 2,
+				y: bounds.minY + bounds.height / 2
+			},
+			viewportPoint: freeCenter
+		};
+	}
+
+	// Camera position the target asks for at the given scale: a viewport pixel is that many canvas
+	// units away from the origin of the camera.
+	function getFitCameraPosition(target, zoom) {
+		return {
+			x: target.center.x - target.viewportPoint.x / zoom,
+			y: target.center.y - target.viewportPoint.y / zoom
+		};
+	}
+
+	const ZOOM_FRACTION_DIGITS = 1;
+	class Canvas {
+		#camera = null;
+		// The bounds of the scale live in the state of the diagram and the consumer changes them on the
+		// fly; the canvas only reads them, and only where a destination has to be known in advance.
+		#state = null;
+		#cameraTransition = null;
+		#dpr = window.devicePixelRatio || 1;
+		#element = null;
+		// The very same context object the canvas style works on: getContext answers one context
+		// per pair of element and type. The canvas holds it for the drawing area alone - the style
+		// sets that area once when it is built, and only the canvas hears about a resize - and puts
+		// it out at detach, after the style has released what it built on it.
+		#context = null;
+		#width = 0;
+		#height = 0;
+		#canvasStyleInstance = null;
+		#startInvertViewProjectionMatrix = create$4();
+		#startCameraX = 0;
+		#startCameraY = 0;
+		#startPos = create();
+		#resizeObserver = null;
+		constructor(ctx) {
+			this.#camera = ctx.camera;
+			this.#state = ctx.state;
+			this.#cameraTransition = new CameraTransition(ctx.camera);
+		}
+		get viewMatrix() {
+			return this.#camera.viewMatrix;
+		}
+		get camera() {
+			return this.#camera;
+		}
+		get isAttached() {
+			return this.#element !== null;
+		}
+
+		// A repeated attach is a race of the lifecycle, not a programming error: the same element
+		// changes nothing, another one rebinds the canvas. Only an argument that cannot carry a
+		// drawing context throws.
+		attach(element, canvasStyle = null) {
+			if (!main_core.Type.isFunction(element?.getContext)) {
+				throw new TypeError('ui.block-diagram: canvas needs a canvas element to attach to');
+			}
+			if (this.#element === element) {
+				return;
+			}
+			this.detach();
+			this.#element = element;
+			this.#context = element.getContext('webgl');
+			const {
+				width,
+				height
+			} = element.getBoundingClientRect();
+			this.#resize(width, height);
+			this.#initCanvasStyle(canvasStyle);
+			this.#initResizeObserver();
+		}
+
+		// The other half of that contract: a caller that names the element it attached to leaves a
+		// binding made by someone else alone. Without an element the current binding is dropped.
+		detach(element = null) {
+			if (!this.isAttached || element !== null && this.#element !== element) {
+				return;
+			}
+
+			// An unfinished move must not outlive the binding: its frames would go on writing into the
+			// state of a diagram that is no longer on the page.
+			this.#cameraTransition.cancel();
+			this.#resizeObserver?.disconnect();
+			this.#resizeObserver = null;
+			this.#canvasStyleInstance?.destroy();
+			this.#canvasStyleInstance = null;
+
+			// The drawing context must not outlive the element it was created on.
+			this.#context?.getExtension('WEBGL_lose_context')?.loseContext();
+			this.#context = null;
+			this.#element = null;
+			this.#width = 0;
+			this.#height = 0;
+		}
+
+		// The element is measured in logical pixels, the drawing buffer is sized in physical ones,
+		// and the camera keeps working in logical pixels: the ratio between them is pixel density.
+		//
+		// Sizing recreates the buffer cleared, and the frame comes from the caller: render() draws
+		// right after #syncSize(), and after attach() the frame arrives from the resize observer.
+		#resize(width, height) {
+			this.#width = Math.round(width * this.#dpr);
+			this.#height = Math.round(height * this.#dpr);
+			this.#element.width = this.#width;
+			this.#element.height = this.#height;
+			this.#context?.viewport(0, 0, this.#width, this.#height);
+			this.#camera.resize(width, height);
+		}
+
+		// The resize observer speaks after the frame callbacks of the frame it belongs to, while the
+		// element is laid out at its new size before them. A window being dragged by its edge changes
+		// the size on every frame, so a frame that waits for the observer draws into a buffer already
+		// smaller than the element, and the strip the buffer does not reach shows the element itself.
+		// Measuring at the start of the frame closes that gap: by the time the observer speaks the
+		// size is set and there is nothing left to change.
+		//
+		// The buffer is recreated only when it would come out a different size - a buffer recreated at
+		// its own size is still a buffer cleared, and that would cost a cleared frame on every frame.
+		#syncSize() {
+			const {
+				width,
+				height
+			} = this.#element.getBoundingClientRect();
+			if (Math.round(width * this.#dpr) === this.#width && Math.round(height * this.#dpr) === this.#height) {
+				return;
+			}
+			this.#resize(width, height);
+		}
+
+		// The style compiles shaders of its own and throws if they do not build. The canvas is more
+		// than its background - the camera, the coordinates of a gesture and the drawing area all
+		// hang on the binding - so a background that did not build costs the background alone: the
+		// canvas stays bound, and render() already tolerates having no style.
+		#initCanvasStyle(canvasStyle) {
+			if (!canvasStyle) {
+				return;
+			}
+			const StyleInstance = canvasStyle.instance;
+			try {
+				this.#canvasStyleInstance = new StyleInstance(this.#element, canvasStyle.options);
+			} catch (error) {
+				this.#canvasStyleInstance = null;
+				console.error('ui.block-diagram: the canvas style did not build, the background is not drawn', error);
+			}
+		}
+
+		// The observer calls render() from its own callback rather than sizing the buffer itself: the
+		// draw is synchronous and lands inside the frame that changed the size, sizing stays in one
+		// place, and going through render() keeps a canvas drawn on demand in step with its element.
+		#initResizeObserver() {
+			this.#resizeObserver = new ResizeObserver(() => {
+				this.render();
+			});
+			this.#resizeObserver.observe(this.#element);
+		}
+		clientToViewport({
+			x,
+			y
+		}) {
+			const {
+				left,
+				top
+			} = this.#element.getBoundingClientRect();
+			return {
+				x: x - left,
+				y: y - top
+			};
+		}
+		viewportToClient({
+			x,
+			y
+		}) {
+			const {
+				left,
+				top
+			} = this.#element.getBoundingClientRect();
+			return {
+				x: x + left,
+				y: y + top
+			};
+		}
+
+		/**
+		 * One frame of the canvas. A running move of the overview is advanced first, so the background is
+		 * drawn by the same camera state the layer above it is given. The timestamp comes from the frame
+		 * loop that calls this - the canvas keeps no clock of its own.
+		 */
+		render(now = performance.now()) {
+			// Stepped first and unconditionally: a transition is pure camera math, not a draw, so it
+			// advances the same way whether or not there is a DOM element to paint into right now.
+			this.#cameraTransition.step(now);
+			if (!this.isAttached) {
+				return;
+			}
+			this.#syncSize();
+			this.#canvasStyleInstance?.render({
+				projectionMatrix: this.#camera.projectionMatrix,
+				viewMatrix: this.#camera.viewMatrix,
+				viewProjectionMatrixInv: this.#camera.viewProjectionMatrixInv,
+				zoomScale: this.#camera.zoom
+			});
+		}
+
+		/**
+		 * Drops a move of the overview that is still running. Every operation below that changes the
+		 * overview starts with it: the input of a person always wins over a move, and the rule lives here
+		 * rather than in every handler of the consumer. The frames of the move write to the camera
+		 * directly and never come this way, so a move cannot cancel itself.
+		 */
+		cancelCameraTransition() {
+			this.#cameraTransition.cancel();
+		}
+		setCamera(params) {
+			this.cancelCameraTransition();
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				...params
+			}));
+		}
+		panBy(dxScreen, dyScreen) {
+			this.cancelCameraTransition();
+			this.#camera.panBy(dxScreen, dyScreen);
+		}
+
+		// A step by the button is a discrete path and snaps to tenths, so that a chain of steps
+		// stays on round values instead of drifting into 1.2000000000000002.
+		#setCameraZoom(zoomStep) {
+			this.setZoom(Number((this.#camera.zoom + zoomStep).toFixed(ZOOM_FRACTION_DIGITS)));
+		}
+		zoomIn(zoomStep) {
+			this.#setCameraZoom(zoomStep);
+		}
+		zoomOut(zoomStep) {
+			this.#setCameraZoom(zoomStep * -1);
+		}
+
+		// The value arrives as it was asked for: rounding lives on the discrete path alone. The
+		// bounds of the zoom are the camera's business and hold on every path.
+		setZoom(zoom) {
+			this.cancelCameraTransition();
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				anchorToViewport: true,
+				viewportX: this.#camera.width / 2,
+				viewportY: this.#camera.height / 2,
+				zoom
+			}));
+		}
+
+		/**
+		 * Brings the whole scheme into the free part of the viewport. The overview does not jump there:
+		 * the canvas moves it over the frames that follow, so a person sees where they were taken. The
+		 * size of the viewport is read off the camera rather than off the markup.
+		 *
+		 * The scale of the destination is trimmed by the same rule the camera applies to every write:
+		 * the position of the destination is derived from the scale, so a scheme too wide for the lower
+		 * bound has to be placed by the scale it will really get - otherwise it arrives off centre while
+		 * the camera holds it at the bound. The bounds still belong to the camera and hold on every frame
+		 * of the move; this is where the destination is read, not where the rule lives.
+		 */
+		fitToView(request) {
+			const target = getFitToViewTarget({
+				...request,
+				viewportWidth: this.#camera.width,
+				viewportHeight: this.#camera.height
+			});
+			if (target === null) {
+				return;
+			}
+			const zoom = clampZoom(target.zoom, this.#state.minZoom, this.#state.maxZoom, this.#camera.zoom);
+			this.#cameraTransition.start({
+				zoom,
+				...getFitCameraPosition(target, zoom)
+			});
+		}
+		setCameraZoomByWheel(event, zoomChange = 0) {
+			this.cancelCameraTransition();
+			const viewport = this.clientToViewport({
+				x: event.clientX,
+				y: event.clientY
+			});
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				anchorToViewport: true,
+				viewportX: viewport.x,
+				viewportY: viewport.y,
+				zoom: this.#camera.zoom + zoomChange
+			}));
+		}
+		setCameraPositionByWheel(event) {
+			const lineStep = 40;
+			const pixelStep = event.deltaMode === 1 ? lineStep : 1;
+			let dx = event.deltaX * pixelStep;
+			let dy = event.deltaY * pixelStep;
+			if (event.shiftKey && Math.abs(dy) > Math.abs(dx)) {
+				dx = dy;
+				dy = 0;
+			}
+			this.panBy(dx, dy);
+		}
+
+		// Zero is a valid pointer position, so the fallback belongs to a zero-sized element only:
+		// substituting it for a pointer on the left or top edge jumps the camera.
+		#getClipSpaceMousePosition(event) {
+			const {
+				left,
+				top
+			} = this.#element.getBoundingClientRect();
+			const {
+				clientWidth,
+				clientHeight
+			} = this.#element;
+			const cssX = event.clientX - left;
+			const cssY = event.clientY - top;
+			const normalizedX = clientWidth > 0 ? cssX / clientWidth : this.#width / this.#dpr;
+			const normalizedY = clientHeight > 0 ? cssY / clientHeight : this.#height / this.#dpr;
+			const clipX = normalizedX * 2 - 1;
+			const clipY = normalizedY * -2 + 1;
+			return [clipX, clipY];
+		}
+
+		// The press itself moves nothing, but it is where a drag of the canvas begins: a move that went on
+		// running under a held pointer would fight the hand that holds it.
+		setCameraPositionByMouseDown(event) {
+			this.cancelCameraTransition();
+			copy(this.#startInvertViewProjectionMatrix, this.#camera.viewProjectionMatrixInv);
+			this.#startCameraX = this.#camera.x;
+			this.#startCameraY = this.#camera.y;
+			transformMat3(this.#startPos, this.#getClipSpaceMousePosition(event), this.#startInvertViewProjectionMatrix);
+		}
+		setCameraPositionByMouseMove(event) {
+			this.cancelCameraTransition();
+			const pos = transformMat3(create(), this.#getClipSpaceMousePosition(event), this.#startInvertViewProjectionMatrix);
+			this.#camera.setPosition(this.#startCameraX + this.#startPos[0] - pos[0], this.#startCameraY + this.#startPos[1] - pos[1]);
+		}
+	}
+
+	// Color with alpha, components in the 0..1 range - the form the map renderer draws with.
+
+	// A block as the map draws it: a snapshot of the few values the drawing path reads, and
+	// nothing else. Keeping the block itself here would subscribe the layout to every property
+	// of every node, and selecting a node or changing its status would rebuild the whole map.
+
+	const MAP_PADDING = 50;
+	const MAP_FRAME_BLOCK_TYPE = 'frame';
+
+	// Extent of an empty map: twice the canvas, so the viewport frame takes a quarter of it and
+	// the camera still has room to move around the origin.
+	const MAP_EMPTY_EXTENT = 1000;
+	const MAP_BLOCK_FALLBACK_WIDTH = 200;
+	const MAP_BLOCK_FALLBACK_HEIGHT = 50;
+
+	// Size of a block on the map: its own dimensions while they are known, the measured rect
+	// otherwise. A half-known pair counts as unknown - a block with a width but no height has
+	// never been measured as a whole.
+	function getMapBlockSize(block, blocksRectMap = {}) {
+		const dimensions = {
+			width: block?.dimensions?.width,
+			height: block?.dimensions?.height
+		};
+		if (!dimensions.width || !dimensions.height) {
+			const measured = blocksRectMap?.[block?.id] ?? {};
+			dimensions.width = measured.width ?? MAP_BLOCK_FALLBACK_WIDTH;
+			dimensions.height = measured.height ?? MAP_BLOCK_FALLBACK_HEIGHT;
+		}
+		return dimensions;
+	}
+
+	// Bounding box of every block plus a padding, and the drawing order: frames first, because
+	// their fill colors are opaque and a frame is the background under the nodes it groups, the
+	// same way it lies on the canvas.
+	function getMapLayout(blocks, source) {
+		const {
+			canvasWidth,
+			canvasHeight,
+			blocksRectMap
+		} = source;
+		if (!Array.isArray(blocks) || blocks.length === 0) {
+			return {
+				sortedBlocks: [],
+				minX: 0,
+				minY: 0,
+				width: canvasWidth ? 2 * canvasWidth : MAP_EMPTY_EXTENT,
+				height: canvasHeight ? 2 * canvasHeight : MAP_EMPTY_EXTENT
+			};
+		}
+		let minX = Infinity;
+		let minY = Infinity;
+		let maxX = -Infinity;
+		let maxY = -Infinity;
+		const frames = [];
+		const content = [];
+		blocks.forEach(block => {
+			const {
+				x,
+				y
+			} = block.position;
+			const {
+				width,
+				height
+			} = getMapBlockSize(block, blocksRectMap);
+			minX = Math.min(minX, x);
+			minY = Math.min(minY, y);
+			maxX = Math.max(maxX, x + width);
+			maxY = Math.max(maxY, y + height);
+			const renderBlock = {
+				position: {
+					x,
+					y
+				},
+				node: {
+					type: block?.node?.type,
+					colorIndex: block?.node?.colorIndex,
+					frameColorName: block?.node?.frameColorName
+				},
+				dimensions: {
+					width,
+					height
+				}
+			};
+			if (block?.type === MAP_FRAME_BLOCK_TYPE) {
+				frames.push(renderBlock);
+			} else {
+				content.push(renderBlock);
+			}
+		});
+		return {
+			sortedBlocks: [...frames, ...content],
+			minX: minX - MAP_PADDING,
+			minY: minY - MAP_PADDING,
+			width: maxX + MAP_PADDING - (minX - MAP_PADDING),
+			height: maxY + MAP_PADDING - (minY - MAP_PADDING)
+		};
+	}
+
+	// Scale that fits the whole layout into the map: the smaller of the two axis ratios, so
+	// nothing is cropped. A degenerate layout keeps the map at 1:1 instead of dividing by zero.
+	function getMapScale(layout, size) {
+		const {
+			width,
+			height
+		} = layout;
+		if (width <= 0 || height <= 0) {
+			return 1;
+		}
+		return Math.min(size.width / width, size.height / height);
+	}
+
+	// Palettes are indexed by a name or an index taken from a saved template, so only own keys
+	// count as a color: a member inherited from Object.prototype is truthy, slips past the
+	// fallback and reaches the drawing path as something that is not a color.
+	function getOwnColor(palette, key) {
+		return Object.hasOwn(palette, key) ? palette[key] : null;
+	}
+
+	// Color of a block on the map. Note the two different type checks: the drawing order groups
+	// by the block type, while the color is picked by the type of the node behind the block. The
+	// consumer fills both from one value, and the map leans on that: the frame fill is opaque, so a
+	// block whose node is a frame while its block type is not takes the color of a background and is
+	// still drawn among the content, covering the blocks under it instead of lying beneath them.
+	function getMapBlockColor(block, colors) {
+		const blockType = block?.node?.type;
+		const colorIndex = block?.node?.colorIndex;
+		if (blockType === MAP_FRAME_BLOCK_TYPE) {
+			const framePalette = colors.framePalette ?? {};
+			return getOwnColor(framePalette, block?.node?.frameColorName) || colors.frame;
+		}
+		if (colorIndex === null || colorIndex === false) {
+			return colors.block;
+		}
+		const palette = colors.palette ?? {};
+		return getOwnColor(palette, colorIndex) || colors.block;
+	}
+
+	// Blocks of the layout as map rectangles, in drawing order.
+	function getMapBlockRects(layout, scale, colors) {
+		return layout.sortedBlocks.map(block => ({
+			x: (block.position.x - layout.minX) * scale,
+			y: (block.position.y - layout.minY) * scale,
+			width: block.dimensions.width * scale,
+			height: block.dimensions.height * scale,
+			color: getMapBlockColor(block, colors)
+		}));
+	}
+
+	// Frame of the current view on the map: the canvas seen through the camera, in map pixels.
+	function getMapViewportRect(layout, scale, camera) {
+		return {
+			x: (camera.x - layout.minX) * scale,
+			y: (camera.y - layout.minY) * scale,
+			width: camera.canvasWidth * scale / camera.zoom,
+			height: camera.canvasHeight * scale / camera.zoom
+		};
+	}
+
+	// Edges belong to the rectangle: a press exactly on the frame border grabs the frame.
+	function isPointInMapRect(point, rect) {
+		return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
+	}
+
+	// Theme colors as they are written in the product: a design token reference or a plain
+	// CSS color. The renderer resolves them to numbers, and it is the only place that does.
+
+	// Everything the renderer needs for a frame. It knows nothing about the camera: block
+	// rectangles and the frame of the current view arrive already in map pixels.
+
+	const MAP_BLOCK_CORNER_RADIUS = 2;
+	const MAP_VIEWPORT_CORNER_RADIUS = 4;
+	const MAP_VIEWPORT_OUTLINE_WIDTH = 2;
+
+	// Last resort for a color the theme resolves to nothing parseable - a missing token means
+	// the design tokens are not loaded at all, and a neutral shape beats an empty map.
+	const UNRESOLVED_COLOR = [0.9, 0.9, 0.9, 1];
+
+	// a_Position, a_Center, a_HalfSize, a_Color, a_Shape
+	const FLOATS_PER_VERTEX = 12;
+	const VERTICES_PER_RECT = 6;
+	const BYTES_PER_FLOAT = 4;
+	const VERTEX_STRIDE = FLOATS_PER_VERTEX * BYTES_PER_FLOAT;
+
+	// One vertex, attribute by attribute: name in the program, component count, offset in floats.
+	const VERTEX_ATTRIBUTES = [['position', 2, 0], ['center', 2, 2], ['halfSize', 2, 4], ['color', 4, 6], ['shape', 2, 10]];
+
+	// Coverage ramp of an edge, in device pixels. One pixel keeps the corners smooth without
+	// visibly thinning the shape.
+	const EDGE_SOFTNESS_PX = 0.5;
+	const CSS_VAR_PATTERN = /^var\(\s*(--[\w-]+)\s*(?:,([\s\S]+))?\)$/;
+	const RGB_PATTERN = /^rgba?\(([^)]+)\)$/i;
+	const MAX_VAR_DEPTH = 8;
+
+	// A color that leans on its surroundings rather than standing on its own. The numbers behind
+	// it belong to the place it was resolved in, so they must not be remembered for the next one.
+	const CONTEXTUAL_COLOR_PATTERN = /currentcolor|inherit|initial|unset|revert/i;
+
+	// Colors already resolved by the browser. A plain CSS color always gives the same numbers, so
+	// resolving it a second time only costs another style recalculation. Theme references are
+	// resolved before the cache is reached, so a theme change never hands out a stale color.
+	const resolvedColors = new Map();
+
+	// Sentinel of the pixel readback: a color the palette is never going to be written in, so it
+	// surviving the assignment means the drawing context refused the value.
+	const READBACK_SENTINEL = '#010203';
+	let readbackContext = null;
+
+	// Follows a chain of design token references down to a plain CSS color. An undefined token
+	// falls back to the value written inside var(), and then to the caller's constant.
+	function resolveCssValue(style, value, depth = 0) {
+		const trimmed = String(value ?? '').trim();
+		const reference = CSS_VAR_PATTERN.exec(trimmed);
+		if (!reference || depth >= MAX_VAR_DEPTH) {
+			return trimmed;
+		}
+		const token = style.getPropertyValue(reference[1]).trim();
+		return resolveCssValue(style, token === '' ? reference[2] : token, depth + 1);
+	}
+	function parseRgbComponent(part, scale) {
+		const value = Number.parseFloat(part);
+		if (!Number.isFinite(value)) {
+			return Number.NaN;
+		}
+		return part.endsWith('%') ? value / 100 : value / scale;
+	}
+
+	// Reads back what the browser computed. Whatever notation the color was written in, a computed
+	// color comes back as rgb() or rgba(), and that is the only notation parsed by hand here.
+	function parseRgbNotation(value) {
+		const notation = RGB_PATTERN.exec(value);
+		if (!notation) {
+			return null;
+		}
+		const parts = notation[1].split(/[\s,/]+/).filter(part => part !== '');
+		if (parts.length < 3) {
+			return null;
+		}
+		const color = [parseRgbComponent(parts[0], 255), parseRgbComponent(parts[1], 255), parseRgbComponent(parts[2], 255), parts.length > 3 ? parseRgbComponent(parts[3], 1) : 1];
+		return color.some(component => !Number.isFinite(component)) ? null : color;
+	}
+
+	// Hands the color to the browser and reads the result back. The map is drawn by the video card,
+	// but its palette stays a public contract written in CSS, so the renderer has no business
+	// deciding which notations CSS has - hsl(), a color name, transparent and color-mix() are as
+	// valid as a hexadecimal token.
+	//
+	// The probe stands where the markup of the map used to stand: next to the map element, inside a
+	// carrier that wears the color of that element. That is what makes currentColor mean the same
+	// thing it meant when the map was drawn by the browser - the color the map inherits.
+	function resolveByBrowser(value, context) {
+		const host = context?.parentNode ?? document.body;
+		if (!host) {
+			return '';
+		}
+
+		// Asking CSS itself whether this is a color is the whole validation there is: what the
+		// browser rejects, the map has no numbers for.
+		if (!window.CSS?.supports('color', value)) {
+			return '';
+		}
+		const carrier = main_core.Dom.create('span', {
+			style: {
+				position: 'absolute',
+				width: '0',
+				height: '0',
+				visibility: 'hidden',
+				color: context ? main_core.Dom.style(context, 'color') : null
+			}
+		});
+		const probe = main_core.Dom.create('span', {
+			style: {
+				color: value
+			}
+		});
+		main_core.Dom.append(probe, carrier);
+		main_core.Dom.append(carrier, host);
+		const computed = main_core.Dom.style(probe, 'color');
+		main_core.Dom.remove(carrier);
+		return computed;
+	}
+
+	// A modern color - color-mix(), oklch(), color() - is computed by the browser but never lowered
+	// to rgb() on the way out, so the notation reaches here as it was written. Painting one pixel
+	// with it is the browser converting the color to screen values itself. The price is eight bits
+	// per channel, which is the precision the map is drawn with anyway.
+	function readColorBack(value) {
+		if (!readbackContext) {
+			const canvas = document.createElement('canvas');
+			canvas.width = 1;
+			canvas.height = 1;
+			readbackContext = canvas.getContext('2d', {
+				willReadFrequently: true
+			});
+		}
+		if (!readbackContext) {
+			return null;
+		}
+		readbackContext.fillStyle = READBACK_SENTINEL;
+		readbackContext.fillStyle = value;
+		if (readbackContext.fillStyle === READBACK_SENTINEL) {
+			return null;
+		}
+		readbackContext.clearRect(0, 0, 1, 1);
+		readbackContext.fillRect(0, 0, 1, 1);
+		const pixel = readbackContext.getImageData(0, 0, 1, 1).data;
+		return [pixel[0] / 255, pixel[1] / 255, pixel[2] / 255, pixel[3] / 255];
+	}
+
+	// Resolves a plain CSS color into four components in the 0..1 range. A value the browser does
+	// not accept as a color gives null, and the caller falls back to a color it can draw.
+	function parseCssColor(value, context = null) {
+		const trimmed = String(value ?? '').trim();
+		if (trimmed === '') {
+			return null;
+		}
+		const isCacheable = !CONTEXTUAL_COLOR_PATTERN.test(trimmed);
+		if (isCacheable && resolvedColors.has(trimmed)) {
+			return resolvedColors.get(trimmed);
+		}
+		const computed = resolveByBrowser(trimmed, context);
+		const color = computed === '' ? null : parseRgbNotation(computed) ?? readColorBack(computed);
+		if (isCacheable) {
+			resolvedColors.set(trimmed, color);
+		}
+		return color;
+	}
+
+	// Two triangles covering one rectangle. Every vertex carries the whole shape - center, half
+	// size, color, corner radius and outline width - so the fragment shader can build it with a
+	// signed distance field, and a rectangle costs no markup at all.
+	function writeRect(target, offset, rect, color, radius, halfOutline, softness) {
+		const halfWidth = Math.abs(rect.width) / 2;
+		const halfHeight = Math.abs(rect.height) / 2;
+		const centerX = rect.x + rect.width / 2;
+		const centerY = rect.y + rect.height / 2;
+		// The quad has to leave room for the outline and for the coverage ramp, otherwise the
+		// shape is cut off by its own geometry.
+		const padding = halfOutline + softness;
+		const left = centerX - halfWidth - padding;
+		const right = centerX + halfWidth + padding;
+		const top = centerY - halfHeight - padding;
+		const bottom = centerY + halfHeight + padding;
+		const corners = [left, top, right, top, left, bottom, left, bottom, right, top, right, bottom];
+		let cursor = offset;
+		for (let corner = 0; corner < VERTICES_PER_RECT; corner++) {
+			target[cursor] = corners[corner * 2];
+			target[cursor + 1] = corners[corner * 2 + 1];
+			target[cursor + 2] = centerX;
+			target[cursor + 3] = centerY;
+			target[cursor + 4] = halfWidth;
+			target[cursor + 5] = halfHeight;
+			target[cursor + 6] = color[0];
+			target[cursor + 7] = color[1];
+			target[cursor + 8] = color[2];
+			target[cursor + 9] = color[3];
+			target[cursor + 10] = radius;
+			target[cursor + 11] = halfOutline;
+			cursor += FLOATS_PER_VERTEX;
+		}
+		return cursor;
+	}
+	class MapRenderer {
+		#element = null;
+		#gl = null;
+		#dpr = window.devicePixelRatio || 1;
+		#edgeSoftness = EDGE_SOFTNESS_PX;
+		#width = 0;
+		#height = 0;
+		#program = null;
+		#vertexShader = null;
+		#fragmentShader = null;
+		#attributes = null;
+		#uniforms = null;
+		#vertexLayout = null;
+		#blocksBuffer = null;
+		#blocksVertexCount = 0;
+		#uploadedBlocks = null;
+		#viewportBuffer = null;
+		// The frame of the current view is one rectangle and it goes up on every frame, so its
+		// vertices live here instead of being allocated again for each of them.
+		#viewportVertices = new Float32Array(VERTICES_PER_RECT * FLOATS_PER_VERTEX);
+		#palette = null;
+		#colors = null;
+		#frame = null;
+		#resizeObserver = null;
+		#pixelRatioQuery = null;
+		#onPixelRatioChange = null;
+		#onContextLost = null;
+		#onContextRestored = null;
+		#isContextLost = false;
+
+		// The context of the long-lived objects is part of the contract; the map renderer takes
+		// nothing from it - both the geometry and the colors arrive from its owner.
+		// eslint-disable-next-line no-unused-vars
+		constructor(ctx) {
+			this.#edgeSoftness = EDGE_SOFTNESS_PX / this.#dpr;
+		}
+		get isAttached() {
+			return this.#element !== null;
+		}
+
+		// Resolved theme colors. They belong to the renderer alone, so the geometry layer picks a
+		// block color from these numbers instead of resolving the theme a second time.
+		get colors() {
+			return this.#colors;
+		}
+
+		// A repeated attach is a race of the lifecycle, not a programming error: the same element
+		// changes nothing, another one rebinds the renderer. Only an argument that cannot carry a
+		// drawing context throws.
+		attach(element, palette = null) {
+			if (!main_core.Type.isFunction(element?.getContext)) {
+				throw new TypeError('ui.block-diagram: map renderer needs a canvas element to attach to');
+			}
+			if (this.#element === element) {
+				return;
+			}
+			this.detach();
+			const gl = element.getContext('webgl', {
+				alpha: true,
+				premultipliedAlpha: false,
+				antialias: false
+			});
+
+			// The map is drawn by the video card alone, so without a context it would be an empty
+			// rectangle with nothing to diagnose it by. The attach does not happen at all: isAttached
+			// keeps telling the truth and the owner can tell a blank map from a working one.
+			if (!gl) {
+				console.error('ui.block-diagram: no WebGL context for the map, the map is not drawn');
+				return;
+			}
+			this.#element = element;
+			this.#gl = gl;
+			this.#palette = palette;
+			this.#onContextLost = event => {
+				// Without this the browser never restores the context.
+				event.preventDefault();
+				this.#handleContextLost();
+			};
+			this.#onContextRestored = () => this.#handleContextRestored();
+			element.addEventListener('webglcontextlost', this.#onContextLost);
+			element.addEventListener('webglcontextrestored', this.#onContextRestored);
+			if (!this.#buildResources()) {
+				return;
+			}
+			this.#resolveColors();
+			const {
+				width,
+				height
+			} = element.getBoundingClientRect();
+			this.#resize(width, height);
+			this.#initResizeObserver();
+			this.#watchPixelRatio();
+		}
+
+		// The other half of that contract: a caller that names the element it attached to leaves a
+		// binding made by someone else alone. Without an element the current binding is dropped.
+		detach(element = null) {
+			if (!this.isAttached || element !== null && this.#element !== element) {
+				return;
+			}
+			this.#resizeObserver?.disconnect();
+			this.#resizeObserver = null;
+			this.#unwatchPixelRatio();
+			this.#element.removeEventListener('webglcontextlost', this.#onContextLost);
+			this.#element.removeEventListener('webglcontextrestored', this.#onContextRestored);
+			this.#onContextLost = null;
+			this.#onContextRestored = null;
+			this.#releaseResources();
+
+			// The drawing context must not outlive the element it was created on.
+			this.#gl?.getExtension('WEBGL_lose_context')?.loseContext();
+			this.#gl = null;
+			this.#element = null;
+			this.#palette = null;
+			this.#colors = null;
+			this.#frame = null;
+			this.#isContextLost = false;
+			this.#width = 0;
+			this.#height = 0;
+		}
+
+		// The palette of the owner is not frozen at the attach: a consumer that changes the colors
+		// of the blocks, or a theme that changes under the diagram, hands the new one over here and
+		// the theme is read again.
+		setPalette(palette) {
+			this.#palette = palette;
+			this.#resolveColors();
+		}
+
+		// Reads the theme once and keeps the numbers until the next call. Palette entries that
+		// resolve to nothing fall back to the default block color, and entries of the frame palette
+		// to the default frame color: a frame whose color did not resolve has to stay a frame.
+		#resolveColors() {
+			if (!this.isAttached) {
+				return;
+			}
+			const source = this.#palette ?? {};
+			const style = window.getComputedStyle(this.#element);
+			const resolve = (value, fallback) => {
+				return parseCssColor(resolveCssValue(style, value), this.#element) ?? fallback;
+			};
+			const block = resolve(source.block, UNRESOLVED_COLOR);
+			const frame = resolve(source.frame, block);
+			const palette = Object.create(null);
+			const framePalette = Object.create(null);
+			Object.keys(source.palette ?? {}).forEach(key => {
+				palette[key] = resolve(source.palette[key], block);
+			});
+			Object.keys(source.framePalette ?? {}).forEach(key => {
+				framePalette[key] = resolve(source.framePalette[key], frame);
+			});
+			this.#colors = {
+				palette,
+				framePalette,
+				block,
+				frame,
+				viewport: resolve(source.viewport, block)
+			};
+		}
+
+		// Draws one frame. The block buffer is rebuilt only when the blocks array is a different
+		// array than the one drawn last: a gesture that moves the camera hands over the very same
+		// array, so panning the map never pays for the geometry of the nodes.
+		render(frame) {
+			if (!this.isAttached) {
+				return;
+			}
+			this.#frame = frame;
+			this.#draw();
+		}
+
+		// compileShader and createProgram throw, and a program that did not build leaves the
+		// renderer bound to a context it cannot draw with: isAttached would keep saying yes while
+		// every frame of a camera gesture reads colors that were never resolved. The binding is
+		// rolled back the same way a missing drawing context rolls it back - an empty map with a
+		// complaint in the console, and the drawing path of the editor stays alive.
+		#buildResources() {
+			try {
+				this.#createResources();
+			} catch (error) {
+				console.error('ui.block-diagram: the shader program of the map did not build, the map is not drawn', error);
+				this.detach();
+				return false;
+			}
+			return true;
+		}
+		#createResources() {
+			const gl = this.#gl;
+			if (!gl) {
+				return;
+			}
+			this.#vertexShader = compileShader(gl, vertexShader, gl.VERTEX_SHADER);
+			this.#fragmentShader = compileShader(gl, fragmentShader, gl.FRAGMENT_SHADER);
+			this.#program = createProgram(gl, this.#vertexShader, this.#fragmentShader);
+			this.#attributes = {
+				position: gl.getAttribLocation(this.#program, 'a_Position'),
+				center: gl.getAttribLocation(this.#program, 'a_Center'),
+				halfSize: gl.getAttribLocation(this.#program, 'a_HalfSize'),
+				color: gl.getAttribLocation(this.#program, 'a_Color'),
+				shape: gl.getAttribLocation(this.#program, 'a_Shape')
+			};
+			this.#uniforms = {
+				resolution: gl.getUniformLocation(this.#program, 'u_Resolution'),
+				edgeSoftness: gl.getUniformLocation(this.#program, 'u_EdgeSoftness')
+			};
+			this.#vertexLayout = VERTEX_ATTRIBUTES.map(([name, size, offset]) => [this.#attributes[name], size, offset * BYTES_PER_FLOAT]);
+			this.#blocksBuffer = gl.createBuffer();
+			this.#viewportBuffer = gl.createBuffer();
+			this.#blocksVertexCount = 0;
+			this.#uploadedBlocks = null;
+
+			// Frames come first because they are the background the blocks sit on, the same way the
+			// canvas stacks them. Blending is on for another reason: blocks carry transparency. The
+			// alpha channel is kept separate, so the element itself stays transparent where nothing
+			// is drawn.
+			gl.enable(gl.BLEND);
+			gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+			gl.clearColor(0, 0, 0, 0);
+		}
+		#releaseResources() {
+			const gl = this.#gl;
+			if (gl && !this.#isContextLost) {
+				gl.deleteBuffer(this.#blocksBuffer);
+				gl.deleteBuffer(this.#viewportBuffer);
+				gl.deleteProgram(this.#program);
+				gl.deleteShader(this.#vertexShader);
+				gl.deleteShader(this.#fragmentShader);
+			}
+			this.#blocksBuffer = null;
+			this.#viewportBuffer = null;
+			this.#blocksVertexCount = 0;
+			this.#uploadedBlocks = null;
+			this.#program = null;
+			this.#vertexShader = null;
+			this.#fragmentShader = null;
+			this.#attributes = null;
+			this.#uniforms = null;
+			this.#vertexLayout = null;
+		}
+		#handleContextLost() {
+			this.#isContextLost = true;
+			this.#releaseResources();
+		}
+		#handleContextRestored() {
+			this.#isContextLost = false;
+
+			// A throw from a DOM event handler reaches no one at all, so the restore degrades the
+			// same way the attach does.
+			if (!this.#buildResources()) {
+				return;
+			}
+			this.#applyDrawingBufferSize();
+			this.#draw();
+		}
+		#initResizeObserver() {
+			this.#resizeObserver = new ResizeObserver(entries => {
+				for (const entry of entries) {
+					this.#resize(entry.contentRect.width, entry.contentRect.height);
+				}
+			});
+			this.#resizeObserver.observe(this.#element);
+		}
+
+		// The pixel density is not a constant of the page: browser zoom and a move to a screen of
+		// another density change it while the logical size of the map stays the same, so the resize
+		// observer never hears about it. A media query on the current density is the only event the
+		// browser gives for that, and it only ever matches one value - hence the re-arming.
+		#watchPixelRatio() {
+			this.#unwatchPixelRatio();
+			if (!window.matchMedia) {
+				return;
+			}
+			this.#onPixelRatioChange = () => {
+				if (!this.isAttached) {
+					return;
+				}
+				this.#resize(this.#width, this.#height);
+				this.#watchPixelRatio();
+			};
+			this.#pixelRatioQuery = window.matchMedia(`(resolution: ${this.#dpr}dppx)`);
+			this.#pixelRatioQuery.addEventListener('change', this.#onPixelRatioChange);
+		}
+		#unwatchPixelRatio() {
+			this.#pixelRatioQuery?.removeEventListener('change', this.#onPixelRatioChange);
+			this.#pixelRatioQuery = null;
+			this.#onPixelRatioChange = null;
+		}
+		#syncPixelRatio() {
+			const ratio = window.devicePixelRatio || 1;
+			if (ratio === this.#dpr) {
+				return;
+			}
+			this.#dpr = ratio;
+			this.#edgeSoftness = EDGE_SOFTNESS_PX / ratio;
+			// The coverage ramp is built into the quads of the blocks, so they have to go up again.
+			this.#uploadedBlocks = null;
+		}
+
+		// The element is measured in logical pixels and the drawing buffer is sized in physical
+		// ones; the geometry of the map stays logical, so the ratio lives in the buffer alone.
+		#resize(width, height) {
+			this.#syncPixelRatio();
+			this.#width = width;
+			this.#height = height;
+			this.#element.width = Math.round(width * this.#dpr);
+			this.#element.height = Math.round(height * this.#dpr);
+			this.#applyDrawingBufferSize();
+			this.#draw();
+		}
+		#applyDrawingBufferSize() {
+			this.#gl?.viewport(0, 0, this.#element.width, this.#element.height);
+		}
+		#draw() {
+			const gl = this.#gl;
+			if (!gl || this.#isContextLost || !this.#program || this.#width <= 0 || this.#height <= 0) {
+				return;
+			}
+			gl.clear(gl.COLOR_BUFFER_BIT);
+			const frame = this.#frame;
+			if (!frame) {
+				return;
+			}
+			gl.useProgram(this.#program);
+			gl.uniform2f(this.#uniforms.resolution, this.#width, this.#height);
+			gl.uniform1f(this.#uniforms.edgeSoftness, this.#edgeSoftness);
+			if (frame.blocks !== this.#uploadedBlocks) {
+				this.#uploadBlocks(frame.blocks);
+			}
+			this.#drawBuffer(this.#blocksBuffer, this.#blocksVertexCount);
+			if (frame.viewport) {
+				this.#uploadViewport(frame.viewport, frame.viewportColor);
+				this.#drawBuffer(this.#viewportBuffer, VERTICES_PER_RECT);
+			}
+		}
+		#uploadBlocks(blocks) {
+			const gl = this.#gl;
+			const rects = Array.isArray(blocks) ? blocks : [];
+			const data = new Float32Array(rects.length * VERTICES_PER_RECT * FLOATS_PER_VERTEX);
+			let cursor = 0;
+			rects.forEach(rect => {
+				cursor = writeRect(data, cursor, rect, rect.color ?? this.#colors?.block ?? UNRESOLVED_COLOR, MAP_BLOCK_CORNER_RADIUS, 0, this.#edgeSoftness);
+			});
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.#blocksBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+			this.#blocksVertexCount = rects.length * VERTICES_PER_RECT;
+			this.#uploadedBlocks = blocks;
+		}
+		#uploadViewport(viewport, color) {
+			const gl = this.#gl;
+			const data = this.#viewportVertices;
+			writeRect(data, 0, viewport, color ?? this.#colors?.viewport ?? UNRESOLVED_COLOR, MAP_VIEWPORT_CORNER_RADIUS, MAP_VIEWPORT_OUTLINE_WIDTH / 2, this.#edgeSoftness);
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.#viewportBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+		}
+
+		// Blocks and the frame of the view share one program and one vertex layout: whatever the
+		// number of nodes, the map is a couple of draw calls rather than a node's worth of markup.
+		#drawBuffer(buffer, vertexCount) {
+			if (vertexCount <= 0) {
+				return;
+			}
+			const gl = this.#gl;
+			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+			this.#vertexLayout.forEach(([location, size, offset]) => {
+				gl.enableVertexAttribArray(location);
+				gl.vertexAttribPointer(location, size, gl.FLOAT, false, VERTEX_STRIDE, offset);
+			});
+			gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
 		}
 	}
 
@@ -4079,20 +5343,12 @@ this.BX = this.BX || {};
 			this.#gestureConnectionsHeldIds = null;
 		}
 
-		// Nodes of the running gesture: the one being resized, the one leading a drag, the whole set
-		// the gesture registered and the source of a new connection. Empty once the gesture ends, so
-		// nothing is retained past it.
+		// Nodes of the running gesture and the source of a new connection. Every canvas gesture
+		// registers its own nodes in one place, so there is a single set to read here. Empty once the
+		// gesture ends, so nothing is retained past it.
 		#interactingBlockIds() {
 			const interactingIds = new Set();
-			const resizingId = this.#state?.resizingBlock?.id ?? null;
-			const movingId = ui_vue3.toValue(this.#state?.movingBlockId) ?? null;
 			const gestureIds = ui_vue3.toValue(this.#state?.gestureBlockIds) ?? null;
-			if (resizingId !== null) {
-				interactingIds.add(resizingId);
-			}
-			if (movingId !== null) {
-				interactingIds.add(movingId);
-			}
 			gestureIds?.forEach(blockId => interactingIds.add(blockId));
 
 			// The camera pans away from the source node while a new connection is drawn, and culling it
@@ -4328,7 +5584,316 @@ this.BX = this.BX || {};
 		}
 	}
 
-	class Node {
+	// Kept in JS on purpose: chef takes the package language from the entry point (src/index.js), so a
+	// lone .ts source inside this extension would not resolve.
+
+	// A rectangle of the working form tied to the block that owns it: the search needs the id to tell a
+	// participant from an obstacle and to ask whether either side of a pair is a container.
+
+	// The form the capture of a container works in.
+
+	const EDGE_LEFT = 'left';
+	const EDGE_TOP = 'top';
+	const EDGE_RIGHT = 'right';
+	const EDGE_BOTTOM = 'bottom';
+	const PLACEMENT_EDGES = [EDGE_LEFT, EDGE_TOP, EDGE_RIGHT, EDGE_BOTTOM];
+
+	// The clearance a correction leaves between the moved rect and the block it was pushed off: a
+	// design constant of the rule itself, not a diagram setting - two nodes freed from an overlap read
+	// as neighbours rather than as a seam, at any zoom.
+	const PLACEMENT_GAP_PX = 20;
+
+	// Frozen because it leaves the module as the answer of the search: a consumer writing into the
+	// result would otherwise change the answer of every later call.
+	const ZERO_DELTA = Object.freeze({
+		x: 0,
+		y: 0
+	});
+
+	// A size the model does not state is an unknown size, not a zero one: a block may reach the diagram
+	// with empty `dimensions` fields, and a number taken out of an empty field would shrink the rect to
+	// its own top-left corner. Such a rect answers "inside" for a block that is not, so a block without
+	// a stated size takes no part in the rules built on this geometry - neither as the moved node nor as
+	// an obstacle to it.
+	function isUsableRect(rect) {
+		return Number.isFinite(rect?.x) && Number.isFinite(rect?.y) && Number.isFinite(rect?.width) && Number.isFinite(rect?.height) && rect.width > 0 && rect.height > 0;
+	}
+
+	// The area a block takes in the model - the very space the intersections index is built in. The
+	// measured geometry is deliberately not read: it depends on what has managed to mount and be
+	// measured, so the same schema would answer differently at another zoom or camera position.
+	function modelBlockRect(position, dimensions) {
+		const rect = {
+			x: Number(position?.x),
+			y: Number(position?.y),
+			width: Number(dimensions?.width),
+			height: Number(dimensions?.height)
+		};
+		return isUsableRect(rect) ? rect : null;
+	}
+	function toSearchRect(rect) {
+		return {
+			minX: rect.x,
+			minY: rect.y,
+			maxX: rect.x + rect.width,
+			maxY: rect.y + rect.height
+		};
+	}
+	function toRectBounds(rect) {
+		return {
+			left: rect.x,
+			top: rect.y,
+			right: rect.x + rect.width,
+			bottom: rect.y + rect.height
+		};
+	}
+
+	// Strict on every side: two blocks that only touch by an edge do not overlap.
+	function rectsOverlap(first, second) {
+		return first.x < second.x + second.width && first.x + first.width > second.x && first.y < second.y + second.height && first.y + first.height > second.y;
+	}
+	function addDelta(delta, other) {
+		return {
+			x: delta.x + other.x,
+			y: delta.y + other.y
+		};
+	}
+	function applyDelta(participants, delta) {
+		return participants.map(participant => {
+			return {
+				...participant,
+				x: participant.x + delta.x,
+				y: participant.y + delta.y
+			};
+		});
+	}
+
+	// The shift that clears `rect` off the named edge of `other` by the placement gap, along that edge
+	// axis alone.
+	function flushToEdge(rect, other, edge) {
+		switch (edge) {
+			case EDGE_LEFT:
+				return {
+					x: other.x - PLACEMENT_GAP_PX - (rect.x + rect.width),
+					y: 0
+				};
+			case EDGE_RIGHT:
+				return {
+					x: other.x + other.width + PLACEMENT_GAP_PX - rect.x,
+					y: 0
+				};
+			case EDGE_TOP:
+				return {
+					x: 0,
+					y: other.y - PLACEMENT_GAP_PX - (rect.y + rect.height)
+				};
+			case EDGE_BOTTOM:
+				return {
+					x: 0,
+					y: other.y + other.height + PLACEMENT_GAP_PX - rect.y
+				};
+			default:
+				return ZERO_DELTA;
+		}
+	}
+	function floorToStep(value, step) {
+		return Math.floor(value / step) * step;
+	}
+	function ceilToStep(value, step) {
+		return Math.ceil(value / step) * step;
+	}
+
+	// Snapping never walks a candidate back into the block it was just pushed out of: the position the
+	// candidate puts the moved rect at is rounded away from that block, so both rules hold at once. It
+	// is the position and not the shift that lands on a grid line - a shift rounded on its own would
+	// bring the block to the grid only from a place that already stood on it. A step the diagram does
+	// not state leaves the candidate where the edge put it.
+	function snapOutward(origin, delta, edge, snapStep) {
+		if (!Number.isFinite(snapStep) || snapStep <= 0) {
+			return delta;
+		}
+		switch (edge) {
+			case EDGE_LEFT:
+				return {
+					x: floorToStep(origin.x + delta.x, snapStep) - origin.x,
+					y: delta.y
+				};
+			case EDGE_RIGHT:
+				return {
+					x: ceilToStep(origin.x + delta.x, snapStep) - origin.x,
+					y: delta.y
+				};
+			case EDGE_TOP:
+				return {
+					x: delta.x,
+					y: floorToStep(origin.y + delta.y, snapStep) - origin.y
+				};
+			case EDGE_BOTTOM:
+				return {
+					x: delta.x,
+					y: ceilToStep(origin.y + delta.y, snapStep) - origin.y
+				};
+			default:
+				return delta;
+		}
+	}
+	function deltaKey(delta) {
+		return `${delta.x}:${delta.y}`;
+	}
+	function deltaLength(delta) {
+		return Math.hypot(delta.x, delta.y);
+	}
+	function shortestFirstQueue(initial) {
+		const items = [...initial];
+		return {
+			isEmpty: () => items.length === 0,
+			push: delta => {
+				items.push(delta);
+			},
+			takeShortest: () => {
+				let shortest = 0;
+				for (let index = 1; index < items.length; index++) {
+					if (deltaLength(items[index]) < deltaLength(items[shortest])) {
+						shortest = index;
+					}
+				}
+				return items.splice(shortest, 1)[0];
+			}
+		};
+	}
+	function unionRect(rects) {
+		if (rects.length === 0) {
+			return null;
+		}
+		let minX = Number.POSITIVE_INFINITY;
+		let minY = Number.POSITIVE_INFINITY;
+		let maxX = Number.NEGATIVE_INFINITY;
+		let maxY = Number.NEGATIVE_INFINITY;
+		for (const rect of rects) {
+			minX = Math.min(minX, rect.x);
+			minY = Math.min(minY, rect.y);
+			maxX = Math.max(maxX, rect.x + rect.width);
+			maxY = Math.max(maxY, rect.y + rect.height);
+		}
+		return {
+			x: minX,
+			y: minY,
+			width: maxX - minX,
+			height: maxY - minY
+		};
+	}
+	function containsRect(outer, inner) {
+		return inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
+	}
+
+	/**
+	 * The obstacles stand still while the search runs - only the participants move over them. So the
+	 * index is asked once for an area around the participants instead of once per participant per
+	 * candidate, and every candidate that keeps them inside that area is answered from what came back.
+	 * A candidate that steps outside asks the index again for an area grown around itself, so the count
+	 * of index queries follows the reach of the wave and not the count of candidates.
+	 */
+	function areaObstacles(searchObstacles) {
+		let covered = null;
+		let obstacles = [];
+		return moved => {
+			const wanted = unionRect(moved);
+			if (wanted === null) {
+				return [];
+			}
+			if (covered === null || !containsRect(covered, wanted)) {
+				covered = {
+					x: wanted.x - wanted.width,
+					y: wanted.y - wanted.height,
+					width: wanted.width * 3,
+					height: wanted.height * 3
+				};
+				obstacles = searchObstacles(covered);
+			}
+			return obstacles;
+		};
+	}
+
+	// Pairs the rule forbids: the participants of one operation never block each other, and a pair of a
+	// node and a container is allowed by the rule itself.
+	function collectBlockers(moved, obstacles, isBackdrop, participantIds) {
+		const blockers = [];
+		for (const rect of moved) {
+			for (const other of obstacles) {
+				if (participantIds.has(other.id)) {
+					continue;
+				}
+
+				// Exactly one container in the pair, never two: a node lies on a container freely, but two
+				// containers overlapping would leave the node in the shared area belonging to both, and
+				// every gesture over either of them would carry it away.
+				if (isBackdrop(rect.id) !== isBackdrop(other.id)) {
+					continue;
+				}
+				if (rectsOverlap(rect, other)) {
+					blockers.push([rect, other]);
+				}
+			}
+		}
+		return blockers;
+	}
+
+	/**
+	 * The shortest shift that makes every participant an allowed neighbour, or null when the budget of
+	 * examined candidates runs out before such a shift is found. Candidates come from the edges of the
+	 * blocks that really stand in the way, so the shift lands a node against its neighbour rather than
+	 * somewhere along an axis or a grid ray; the wave then spreads from the candidates themselves,
+	 * because a shift out of one block may walk into another.
+	 *
+	 * The shift is one for the whole set, so a group, a container with its content and a pasted fragment
+	 * keep their inner layout without a branch of their own.
+	 */
+	function findPlacementDelta(participants, searchObstacles, isBackdrop, snapStep, budget) {
+		const placed = participants.filter(participant => isUsableRect(participant));
+		const participantIds = new Set(participants.map(participant => participant.id));
+		const obstaclesAround = areaObstacles(searchObstacles);
+		const queue = shortestFirstQueue([ZERO_DELTA]);
+		const seen = new Set([deltaKey(ZERO_DELTA)]);
+		while (!queue.isEmpty()) {
+			const delta = queue.takeShortest();
+			const moved = applyDelta(placed, delta);
+			const blockers = collectBlockers(moved, obstaclesAround(moved), isBackdrop, participantIds);
+			if (blockers.length === 0) {
+				return delta;
+			}
+
+			// The budget stops the generating of candidates, not the walking of them: a candidate already
+			// queued is examined whatever the count says, so `null` means "every candidate found was
+			// tried" and not "the count ran out while the queue still held untried ones".
+			if (seen.size >= budget) {
+				continue;
+			}
+			for (const [rect, other] of blockers) {
+				// The shift is counted from the rect as it stands under the current delta, so the place
+				// it started from - the one the grid rounds the candidate against - is that rect less
+				// the delta.
+				const origin = {
+					x: rect.x - delta.x,
+					y: rect.y - delta.y
+				};
+				for (const edge of PLACEMENT_EDGES) {
+					const candidate = snapOutward(origin, addDelta(delta, flushToEdge(rect, other, edge)), edge, snapStep);
+					const key = deltaKey(candidate);
+
+					// The budget is counted here and not only before the wave: one pass over the blockers of a
+					// large group generates four candidates per conflicting pair, so a check made only at the
+					// top of the wave would let a single pass overshoot the budget many times over.
+					if (!seen.has(key) && seen.size < budget) {
+						seen.add(key);
+						queue.push(candidate);
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	let Node$1 = class Node {
 		constructor(obj, dimension, parent) {
 			this.obj = obj;
 			this.left = null;
@@ -4336,7 +5901,7 @@ this.BX = this.BX || {};
 			this.parent = parent;
 			this.dimension = dimension;
 		}
-	}
+	};
 
 	class BinaryHeap {
 		content = [];
@@ -4450,13 +6015,13 @@ this.BX = this.BX || {};
 				return null;
 			}
 			if (points.length === 1) {
-				return new Node(points[0], dim, parent);
+				return new Node$1(points[0], dim, parent);
 			}
 			points.sort((a, b) => {
 				return a[this.#dimensions[dim]] - b[this.#dimensions[dim]];
 			});
 			median = Math.floor(points.length / 2);
-			node = new Node(points[median], dim, parent);
+			node = new Node$1(points[median], dim, parent);
 			node.left = this.buildTree(points.slice(0, median), depth + 1, node);
 			node.right = this.buildTree(points.slice(median + 1), depth + 1, node);
 			return node;
@@ -4506,10 +6071,10 @@ this.BX = this.BX || {};
 		insert(point) {
 			const insertPosition = this.#innerSearch(this.#root, null, point);
 			if (insertPosition === null) {
-				this.#root = new Node(point, 0, null);
+				this.#root = new Node$1(point, 0, null);
 				return;
 			}
-			const newNode = new Node(point, (insertPosition.dimension + 1) % this.#dimensions.length, insertPosition);
+			const newNode = new Node$1(point, (insertPosition.dimension + 1) % this.#dimensions.length, insertPosition);
 			const dimension = this.#dimensions[insertPosition.dimension];
 			if (point[dimension] < insertPosition.obj[dimension]) {
 				insertPosition.left = newNode;
@@ -4865,6 +6430,1252 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// Key tokens a consumer subscribes by, so the spelling lives in one place on both sides.
+	const KEY_TOKEN = Object.freeze({
+		SPACE: 'space',
+		ESCAPE: 'escape'
+	});
+
+	// A key pressed while an IME composes carries this legacy code in browsers that predate
+	// `KeyboardEvent.isComposing`.
+	const IME_PROCESSING_KEY_CODE = 229;
+	const MOUSE_BUTTON_TOKEN = Object.freeze({
+		LEFT: 'lmb',
+		MIDDLE: 'mmb',
+		RIGHT: 'rmb'
+	});
+
+	// The reset passes null: no event stands behind a forced release.
+
+	// Order is fixed: it makes one combo string out of every way the same combo can be written.
+	const MODIFIERS = ['ctrl', 'alt', 'shift', 'meta'];
+	const MODIFIER_EVENT_FLAGS = Object.freeze({
+		ctrl: 'ctrlKey',
+		alt: 'altKey',
+		shift: 'shiftKey',
+		meta: 'metaKey'
+	});
+	const ALIASES = new Map([['control', 'ctrl'], ['option', 'alt'], ['cmd', 'meta'], ['command', 'meta'], ['win', 'meta'], ['esc', 'escape'], ['del', 'delete'], ['ins', 'insert'], ['left', 'arrowleft'], ['right', 'arrowright'], ['up', 'arrowup'], ['down', 'arrowdown'], [MOUSE_BUTTON_TOKEN.LEFT, `mouse${MOUSE_BUTTON.LEFT}`], [MOUSE_BUTTON_TOKEN.MIDDLE, `mouse${MOUSE_BUTTON.MIDDLE}`], [MOUSE_BUTTON_TOKEN.RIGHT, `mouse${MOUSE_BUTTON.RIGHT}`],
+	// A punctuation key written as its character has to meet the physical code of the same key in
+	// one token, or a record spelled with the character would never match the event. Both the plain
+	// character and the one the same key types under Shift lead to that single code: a record reads
+	// as '?' or as '/', the event says Slash, and all three have to mean the same key.
+	['-', 'minus'], ['_', 'minus'], ['=', 'equal'], ['+', 'equal'], ['[', 'bracketleft'], ['{', 'bracketleft'], [']', 'bracketright'], ['}', 'bracketright'], [',', 'comma'], ['<', 'comma'], ['.', 'period'], ['>', 'period'], ['/', 'slash'], ['?', 'slash'], [';', 'semicolon'], [':', 'semicolon'], ["'", 'quote'], ['"', 'quote'], ['`', 'backquote'], ['~', 'backquote'], ['\\', 'backslash'], ['|', 'backslash'],
+	// The digit row under Shift, same rule.
+	['!', 'digit1'], ['@', 'digit2'], ['#', 'digit3'], ['$', 'digit4'], ['%', 'digit5'], ['^', 'digit6'], ['&', 'digit7'], ['*', 'digit8'], ['(', 'digit9'], [')', 'digit0'],
+	// The numeric keypad carries physical codes of its own, and a combo is matched by code: without
+	// these the keypad would answer no record written for the key of the main row.
+	['numpadadd', 'equal'], ['numpadsubtract', 'minus']]);
+	const CAPTURE_LISTENER_OPTIONS$1 = Object.freeze({
+		capture: true
+	});
+	const COMBO_SEPARATOR$2 = '+';
+	const PLATFORM_MODIFIER_TOKEN = 'mod';
+	const MOUSE_TOKEN_PREFIX = 'mouse';
+	const LETTER_TOKEN_PREFIX$2 = 'key';
+	const DIGIT_TOKEN_PREFIX$2 = 'digit';
+	const SIDE_SUFFIXES = ['left', 'right'];
+	const SPACE_KEY = ' ';
+	const HIDDEN_VISIBILITY_STATE = 'hidden';
+	const LETTER_PATTERN = /^[a-z]$/;
+	const DIGIT_PATTERN = /^\d$/;
+	// Every `KeyboardEvent.code`/`.key` name the DOM ever produces - physical or logical, side-suffixed
+	// or not - is plain ASCII letters and digits: no punctuation, no whitespace, no markup. A multi-
+	// character token that fails this is not a key a keyboard can send, canonical or otherwise: a
+	// personal setting travels through this same function on every load (hotkeys.js `sanitizeOverrides`),
+	// and one hand-crafted through the save API is the only way such a token could ever reach here.
+	const TOKEN_PATTERN = /^[a-z0-9]+$/;
+
+	// ShiftLeft answers a question about shift, ControlRight - about ctrl. A side suffix over anything
+	// but a modifier - ArrowLeft, BracketRight - is part of the key name and strips to nothing.
+	function stripSide(token) {
+		const suffix = SIDE_SUFFIXES.find(side => token.endsWith(side) && token.length > side.length);
+		if (main_core.Type.isNil(suffix)) {
+			return null;
+		}
+		const base = token.slice(0, -suffix.length);
+		const alias = ALIASES.get(base) ?? base;
+		return MODIFIERS.includes(alias) ? alias : null;
+	}
+
+	/**
+	 * Whether a token names a modifier, written once for the class and for the shortcut adapter that
+	 * has to tell a modifier from the main key of a record. Accepts every spelling a record may use,
+	 * the platform-dependent `mod` included.
+	 */
+	function isModifierToken(token) {
+		if (!main_core.Type.isStringFilled(token)) {
+			return false;
+		}
+		const lowered = token.trim().toLowerCase();
+		const alias = ALIASES.get(lowered) ?? lowered;
+		return alias === PLATFORM_MODIFIER_TOKEN || MODIFIERS.includes(stripSide(alias) ?? alias);
+	}
+
+	/**
+	 * The canonical form of a single key: every spelling of the same key - the character, the synonym,
+	 * the physical code - answers with one token. The platform-dependent `mod` needs to know the
+	 * platform, which the class passes from its own; a caller outside it reads the platform of the page.
+	 */
+	function normalizeToken(raw, isMac = main_core.Browser.isMac()) {
+		if (!main_core.Type.isStringFilled(raw)) {
+			return '';
+		}
+		const lowered = raw.trim().toLowerCase();
+		const token = ALIASES.get(lowered) ?? lowered;
+		if (token === PLATFORM_MODIFIER_TOKEN) {
+			return isMac ? 'meta' : 'ctrl';
+		}
+
+		// Both patterns describe a single character: a longer token never has to be matched.
+		if (token.length === 1) {
+			if (LETTER_PATTERN.test(token)) {
+				return `${LETTER_TOKEN_PREFIX$2}${token}`;
+			}
+			if (DIGIT_PATTERN.test(token)) {
+				return `${DIGIT_TOKEN_PREFIX$2}${token}`;
+			}
+
+			// A single character neither pattern above claims - '+', '=', a non-Latin letter - is one of
+			// the rare keys the DOM names by their own printed character, and passes through as-is.
+			return token;
+		}
+		return TOKEN_PATTERN.test(token) ? token : '';
+	}
+
+	/**
+	 * The canonical form of a whole combo: the one string a written record, a stored binding and a
+	 * press all have to arrive at. It lives here rather than in the registry of actions, because this
+	 * is where a press meets a record - the registry is handed canonical strings and normalizes nothing.
+	 *
+	 * A combo written as one string is split by the separator, which leaves no way to name the
+	 * separator itself as a key: '+' is passed as a list instead, and a list is never split.
+	 */
+	function normalizeCombo(combo, isMac = main_core.Browser.isMac()) {
+		let parts = [];
+		if (main_core.Type.isArray(combo)) {
+			parts = combo;
+		} else if (main_core.Type.isStringFilled(combo)) {
+			parts = combo.split(COMBO_SEPARATOR$2);
+		}
+		const tokens = parts.map(part => normalizeToken(part, isMac)).filter(part => main_core.Type.isStringFilled(part));
+		const modifiers = MODIFIERS.filter(modifier => tokens.includes(modifier));
+		const keys = tokens.filter(token => !MODIFIERS.includes(token)).sort();
+		return [...modifiers, ...keys].join(COMBO_SEPARATOR$2);
+	}
+
+	/**
+	 * The rule about an input field holding the focus, written once: the class asks it about the event
+	 * it handles, a consumer of the state - about the event it was handed.
+	 */
+	function isInputEventTarget(event) {
+		const target = event?.target;
+		if (main_core.Type.isNil(target)) {
+			return false;
+		}
+		return INPUT_TAGS[target.tagName] === true || target.isContentEditable === true;
+	}
+
+	/**
+	 * Single owner of the canvas input subscriptions and single source of truth about what is held
+	 * right now. Knows nothing about the diagram model: whether a shortcut may run is decided by the
+	 * subscriber.
+	 *
+	 * Plain subscriptions are heard on the bubbling phase only, so a popup mounted above the canvas
+	 * keeps its own Escape and Space. An exclusive subscription (`onExclusive`) raises a second,
+	 * capture-phase channel for as long as an operation holds the combo, and takes the event away from
+	 * those layers; with no such subscription that channel is not bound at all. The platform is
+	 * injected to keep the class testable without a browser.
+	 *
+	 * The state attaches itself to `window` on first use, so a consumer of the canvas works whether or
+	 * not the root diagram component has mounted. `detach` is the end of it: the owner of the canvas
+	 * calls it on unmount, only an explicit `attach` binds the listeners again, and the claims go down
+	 * with the channel that served them.
+	 */
+	class InputState {
+		#isMac;
+		#actionRegistry;
+		#target = null;
+		#pressedTokens = new Set();
+		#pointer = {
+			x: 0,
+			y: 0
+		};
+		#comboSubscriptions = new Map();
+		#actionSubscriptions = new Map();
+		#holdSubscriptions = new Map();
+		#exclusiveStack = new Map();
+		#listeners;
+		#isCaptureListenerBound = false;
+		#isReleased = false;
+		constructor(options = {}) {
+			this.#isMac = main_core.Type.isBoolean(options?.isMac) ? options.isMac : main_core.Browser.isMac();
+			this.#actionRegistry = options?.actionRegistry ?? null;
+			this.#listeners = {
+				keydown: this.#handleKeyDown,
+				keyup: this.#handleKeyUp,
+				pointerdown: this.#handlePointerDown,
+				pointerup: this.#handlePointerUp,
+				pointermove: this.#handlePointerMove,
+				blur: this.#handleBlur,
+				visibilitychange: this.#handleVisibilityChange
+			};
+		}
+		attach(target = window) {
+			this.#isReleased = false;
+			if (!main_core.Type.isNil(this.#target)) {
+				return;
+			}
+			this.#target = target;
+			Object.entries(this.#listeners).forEach(([eventName, handler]) => {
+				main_core.Event.bind(target, eventName, handler);
+			});
+			this.#ensureCaptureListener();
+		}
+		detach() {
+			this.#isReleased = true;
+			if (main_core.Type.isNil(this.#target)) {
+				return;
+			}
+			Object.entries(this.#listeners).forEach(([eventName, handler]) => {
+				main_core.Event.unbind(this.#target, eventName, handler);
+			});
+			this.#unbindCaptureListener();
+			this.#target = null;
+			this.reset();
+			// A claim lives as long as the operation that took it, and detach ends every operation on
+			// this state: kept here, the registry would raise the channel again on the next attach and
+			// hand the key to owners that are gone.
+			this.#exclusiveStack.clear();
+		}
+		isPressed(token) {
+			this.#autoAttach();
+			const normalized = normalizeToken(token, this.#isMac);
+			if (!main_core.Type.isStringFilled(normalized)) {
+				return false;
+			}
+			return this.#hasToken(normalized);
+		}
+		get pointer() {
+			this.#autoAttach();
+			return {
+				...this.#pointer
+			};
+		}
+		reset() {
+			const holdStates = this.#captureHoldStates();
+			this.#pressedTokens.clear();
+			this.#notifyHoldChanges(holdStates, null);
+		}
+		on(combo, handler, options = {}) {
+			this.#autoAttach();
+			const key = normalizeCombo(combo, this.#isMac);
+			if (!main_core.Type.isStringFilled(key) || !main_core.Type.isFunction(handler)) {
+				return () => {};
+			}
+			const subscription = {
+				handler,
+				preventDefault: main_core.Type.isBoolean(options?.preventDefault) ? options.preventDefault : true
+			};
+			this.#addSubscription(this.#comboSubscriptions, key, subscription);
+			return () => {
+				this.#removeSubscription(this.#comboSubscriptions, key, subscription);
+			};
+		}
+
+		/**
+		 * Subscribes by what the press does rather than by which keys do it: which combo runs the action
+		 * is the answer of the registry handed to the state, and it may change while the subscription
+		 * lives. A state with no registry behind it never resolves an action and this channel stays
+		 * silent. The channels are independent - the same press reaches a record of each - and the rules
+		 * of `on()` hold here too: an input field with the focus takes the key, and the browser action is
+		 * suppressed unless the record opts out.
+		 */
+		onAction(actionId, handler, options = {}) {
+			this.#autoAttach();
+			if (!main_core.Type.isStringFilled(actionId) || !main_core.Type.isFunction(handler)) {
+				return () => {};
+			}
+			const subscription = {
+				handler,
+				preventDefault: main_core.Type.isBoolean(options?.preventDefault) ? options.preventDefault : true
+			};
+			this.#addSubscription(this.#actionSubscriptions, actionId, subscription);
+			return () => {
+				this.#removeSubscription(this.#actionSubscriptions, actionId, subscription);
+			};
+		}
+
+		/**
+		 * Claims the combo for one operation: the record goes on a stack, only its top handler runs, and
+		 * the event stops before the layers above the canvas see it. The record lives exactly as long as
+		 * the operation - the returned function is the only way to drop it - so with nothing running the
+		 * combo behaves as it always did. Suppressing the browser action is never part of the deal.
+		 */
+		onExclusive(combo, handler) {
+			this.#autoAttach();
+			const key = normalizeCombo(combo, this.#isMac);
+			if (!main_core.Type.isStringFilled(key) || !main_core.Type.isFunction(handler)) {
+				return () => {};
+			}
+			this.#addSubscription(this.#exclusiveStack, key, handler);
+			this.#ensureCaptureListener();
+			return () => {
+				this.#removeSubscription(this.#exclusiveStack, key, handler);
+				this.#releaseCaptureListenerIfEmpty();
+			};
+		}
+
+		/**
+		 * Whether the combo is claimed right now. A tool that has just given its own claim back asks
+		 * about what is left under it: with the stack empty the combo belongs to the canvas again, and
+		 * with anything still on it the layer holding the key decides what happens next.
+		 */
+		hasExclusiveClaims(combo) {
+			const key = normalizeCombo(combo, this.#isMac);
+			return main_core.Type.isStringFilled(key) && this.#exclusiveStack.has(key);
+		}
+		onChange(token, handler) {
+			this.#autoAttach();
+			const key = normalizeToken(token, this.#isMac);
+			if (!main_core.Type.isStringFilled(key) || !main_core.Type.isFunction(handler)) {
+				return () => {};
+			}
+			this.#addSubscription(this.#holdSubscriptions, key, handler);
+			return () => {
+				this.#removeSubscription(this.#holdSubscriptions, key, handler);
+			};
+		}
+
+		// Auto repeat runs the action again, the way holding an undo shortcut has always worked. Hold
+		// subscribers stay silent through it: #notifyHoldChanges reports edges, and a repeat is none.
+		#handleKeyDown = event => {
+			const token = this.#keyToken(event);
+			this.#applyInputEvent(event, () => {
+				this.#press(token);
+			});
+			if (isInputEventTarget(event)) {
+				return;
+			}
+			const combo = this.#comboFromEvent(event, token);
+			// The action channel answers first: a record that named what it does must not depend on
+			// whether a neighbour still names the keys.
+			this.#trigger(this.#actionSubscriptions, this.#resolveAction(combo), event);
+			this.#trigger(this.#comboSubscriptions, combo, event);
+		};
+
+		// The exclusive channel. It runs before everything above the canvas, so the bookkeeping comes
+		// first and unconditionally: the bubbling handler never sees an event this one takes away, and
+		// the held set must not depend on which channel delivered it.
+		#handleCaptureKeyDown = event => {
+			const token = this.#keyToken(event);
+			this.#applyInputEvent(event, () => {
+				this.#press(token);
+			});
+
+			// While an IME composes, the press belongs to the composition: Escape ends it, and taking
+			// the key away here would spend one press on two different things.
+			if (event.isComposing === true || event.keyCode === IME_PROCESSING_KEY_CODE) {
+				return;
+			}
+
+			// A suspended registry means a panel above the canvas has taken the keyboard - the settings
+			// panel recording a combo does exactly that. This channel listens on the window, above every
+			// listener of that panel, so staying silent with the registry is what lets the press reach it.
+			if (this.#actionRegistry?.isSuspended === true) {
+				return;
+			}
+			const key = this.#comboFromEvent(event, token);
+			const stack = main_core.Type.isStringFilled(key) ? this.#exclusiveStack.get(key) : null;
+			if (main_core.Type.isNil(stack)) {
+				return;
+			}
+
+			// Escape types nothing, so a focused field has no claim on it; every other combo keeps the
+			// rule of the bubbling channel.
+			if (isInputEventTarget(event) && key !== KEY_TOKEN.ESCAPE) {
+				return;
+			}
+
+			// The key is taken from the layers above, not from the browser: preventDefault stays out.
+			event.stopPropagation();
+			stack[stack.length - 1](event, this);
+		};
+		#handleKeyUp = event => {
+			const token = this.#keyToken(event);
+			this.#applyInputEvent(event, () => {
+				// While the command key is down macOS delivers no keyup for regular keys, so releasing
+				// it leaves the rest of the set stale.
+				if (this.#isMac && this.#matchToken(token, 'meta')) {
+					this.#pressedTokens.clear();
+					return;
+				}
+				this.#pressedTokens.delete(token);
+			});
+		};
+		#handlePointerDown = event => {
+			const token = this.#mouseToken(event.button);
+			this.#applyInputEvent(event, () => {
+				this.#press(token);
+				this.#updatePointer(event);
+			});
+			if (isInputEventTarget(event)) {
+				return;
+			}
+			this.#trigger(this.#comboSubscriptions, this.#comboFromEvent(event, token), event);
+		};
+		#handlePointerUp = event => {
+			this.#applyInputEvent(event, () => {
+				this.#pressedTokens.delete(this.#mouseToken(event.button));
+				this.#updatePointer(event);
+			});
+		};
+
+		// Movement holds nothing down: the only holds it can change are the modifiers of the event.
+		#handlePointerMove = event => {
+			this.#applyInputEvent(event, () => {
+				this.#updatePointer(event);
+			}, true);
+		};
+
+		// A window that loses focus never delivers the keyup of a held key.
+		#handleBlur = () => {
+			this.reset();
+		};
+
+		// Bound on the same target as the rest, `window` by default, and that is enough: the HTML
+		// standard fires visibilitychange at the document with bubbles set to true, so it reaches a
+		// listener on the window. Binding a document of its own would be the class holding a second
+		// target to unbind from.
+		#handleVisibilityChange = event => {
+			// The event bubbles from the document, so the state is read off the event itself: the class
+			// keeps no reference to a document of its own.
+			if (event?.target?.visibilityState === HIDDEN_VISIBILITY_STATE) {
+				this.reset();
+			}
+		};
+
+		// Anyone who touches the state gets it live, whether the owner of the canvas has mounted yet or
+		// not: a consumer that only reads the holds never subscribes, so subscriptions alone would not
+		// cover it. A released state stays released - only an explicit attach revives it, or a read
+		// after unmount would bring the listeners back with nothing to own them.
+		#autoAttach() {
+			if (!main_core.Type.isNil(this.#target) || this.#isReleased) {
+				return;
+			}
+			this.attach();
+		}
+
+		// An empty registry leaves the target exactly as it was before the class learned about exclusive
+		// subscriptions at all.
+		#ensureCaptureListener() {
+			if (this.#isCaptureListenerBound || this.#exclusiveStack.size === 0 || main_core.Type.isNil(this.#target)) {
+				return;
+			}
+			main_core.Event.bind(this.#target, 'keydown', this.#handleCaptureKeyDown, CAPTURE_LISTENER_OPTIONS$1);
+			this.#isCaptureListenerBound = true;
+		}
+		#releaseCaptureListenerIfEmpty() {
+			if (this.#exclusiveStack.size > 0) {
+				return;
+			}
+			this.#unbindCaptureListener();
+		}
+		#unbindCaptureListener() {
+			if (!this.#isCaptureListenerBound) {
+				return;
+			}
+			main_core.Event.unbind(this.#target, 'keydown', this.#handleCaptureKeyDown, CAPTURE_LISTENER_OPTIONS$1);
+			this.#isCaptureListenerBound = false;
+		}
+		#applyInputEvent(event, mutate, modifiersOnly = false) {
+			const holdStates = this.#captureHoldStates(modifiersOnly);
+			mutate();
+			this.#syncModifiers(event);
+			this.#notifyHoldChanges(holdStates, event);
+		}
+
+		// Every input event carries the modifier flags, so each of them corrects the tracked set -
+		// including a modifier toggled while the window was out of focus.
+		#syncModifiers(event) {
+			MODIFIERS.forEach(modifier => {
+				const isDown = event[MODIFIER_EVENT_FLAGS[modifier]] === true;
+				if (isDown === this.#hasToken(modifier)) {
+					return;
+				}
+				if (isDown) {
+					this.#pressedTokens.add(modifier);
+					return;
+				}
+				[...this.#pressedTokens].filter(pressed => this.#matchToken(pressed, modifier)).forEach(pressed => this.#pressedTokens.delete(pressed));
+			});
+		}
+
+		// Runs several times per input event, so the set is read in place: no copy, no re-normalization
+		// of a token the caller has already normalized.
+		#hasToken(normalizedToken) {
+			if (this.#pressedTokens.has(normalizedToken)) {
+				return true;
+			}
+			for (const pressed of this.#pressedTokens) {
+				if (stripSide(pressed) === normalizedToken) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// A key an input method sends without a code would land in the set as an empty token.
+		#press(token) {
+			if (main_core.Type.isStringFilled(token)) {
+				this.#pressedTokens.add(token);
+			}
+		}
+		#updatePointer(event) {
+			this.#pointer.x = event.clientX;
+			this.#pointer.y = event.clientY;
+		}
+		#trigger(registry, key, event) {
+			const subscriptions = main_core.Type.isStringFilled(key) ? registry.get(key) : null;
+			if (main_core.Type.isNil(subscriptions)) {
+				return;
+			}
+			[...subscriptions].forEach(subscription => {
+				if (subscription.preventDefault) {
+					event.preventDefault();
+				}
+				subscription.handler(event, this);
+			});
+		}
+
+		// The combo of an event is built from its own key: a shortcut fires on the key that arrived,
+		// not on everything held at that moment.
+		#comboFromEvent(event, token) {
+			if (isModifierToken(token)) {
+				return null;
+			}
+			const modifiers = MODIFIERS.filter(modifier => event[MODIFIER_EVENT_FLAGS[modifier]] === true);
+			return [...modifiers, token].join(COMBO_SEPARATOR$2);
+		}
+
+		// A suspended registry resolves nothing: the settings panel takes the keyboard for itself while
+		// it captures a combo, and the state keeps tracking the held keys throughout. A combo of null is
+		// a press of a bare modifier, which names no action either.
+		#resolveAction(combo) {
+			if (main_core.Type.isNil(this.#actionRegistry) || this.#actionRegistry.isSuspended) {
+				return null;
+			}
+			return main_core.Type.isStringFilled(combo) ? this.#actionRegistry.getAction(combo) : null;
+		}
+
+		// An empty registry is answered with null: nothing to compare against, nothing to allocate.
+		#captureHoldStates(modifiersOnly = false) {
+			if (this.#holdSubscriptions.size === 0) {
+				return null;
+			}
+			const states = new Map();
+			this.#holdSubscriptions.forEach((handlers, token) => {
+				if (modifiersOnly && !isModifierToken(token)) {
+					return;
+				}
+				states.set(token, this.#hasToken(token));
+			});
+			return states;
+		}
+		#notifyHoldChanges(previousStates, event) {
+			if (main_core.Type.isNil(previousStates)) {
+				return;
+			}
+			previousStates.forEach((wasPressed, token) => {
+				const isPressed = this.#hasToken(token);
+				const handlers = this.#holdSubscriptions.get(token);
+				if (isPressed === wasPressed || main_core.Type.isNil(handlers)) {
+					return;
+				}
+				[...handlers].forEach(handler => handler(isPressed, event));
+			});
+		}
+		#addSubscription(registry, key, subscription) {
+			const subscriptions = registry.get(key) ?? [];
+			subscriptions.push(subscription);
+			registry.set(key, subscriptions);
+		}
+		#removeSubscription(registry, key, subscription) {
+			const subscriptions = registry.get(key);
+			if (main_core.Type.isNil(subscriptions)) {
+				return;
+			}
+			const index = subscriptions.indexOf(subscription);
+			if (index === -1) {
+				return;
+			}
+			subscriptions.splice(index, 1);
+			if (subscriptions.length === 0) {
+				registry.delete(key);
+			}
+		}
+		#mouseToken(button) {
+			return `${MOUSE_TOKEN_PREFIX}${button}`;
+		}
+
+		// The physical code keeps a shortcut independent of the layout, but a synthesized event may
+		// carry none: assistive technologies and input bridges send the key alone.
+		#keyToken(event) {
+			if (main_core.Type.isStringFilled(event.code)) {
+				return normalizeToken(event.code, this.#isMac);
+			}
+
+			// The space arrives as its character, which the trim of the normalization would eat.
+			return event.key === SPACE_KEY ? KEY_TOKEN.SPACE : normalizeToken(event.key, this.#isMac);
+		}
+		#matchToken(pressedToken, token) {
+			return pressedToken === token || stripSide(pressedToken) === token;
+		}
+	}
+
+	// Combos the browser or the operating system takes for itself: a canvas action bound to one of them
+	// would never see the press. There is no way to detect the interception at runtime, so the lists are
+	// curated and grow as cases are found. Spelling is the canonical combo form of the input layer:
+	// modifiers in the ctrl - alt - shift - meta order, then the key token.
+
+	const COMMON_RESERVED_COMBOS = Object.freeze([
+		'f5',
+		'f11',
+		'f12',
+		// The second spelling of delete-block (block-diagram.js registers it as a plain combo record,
+		// not through an action id, precisely because it is a fixed alias rather than an action of its
+		// own). The registry has no entry to protect it with otherwise, and handing it to another action
+		// would fire both on every press: the assigned action and the delete, at once.
+		'backspace',
+	]);
+
+	const MAC_RESERVED_COMBOS = Object.freeze([
+		'meta+keyd',
+		'meta+keyh',
+		'meta+keyl',
+		'meta+keym',
+		'meta+keyn',
+		'meta+keyp',
+		'meta+keyq',
+		'meta+keyr',
+		'meta+keyt',
+		'meta+keyw',
+		'meta+space',
+		'meta+tab',
+		'shift+meta+keyn',
+		'shift+meta+keyt',
+		'alt+meta+keyi',
+	]);
+
+	const OTHER_RESERVED_COMBOS = Object.freeze([
+		'ctrl+keyd',
+		'ctrl+keyl',
+		'ctrl+keyn',
+		'ctrl+keyp',
+		'ctrl+keyq',
+		'ctrl+keyr',
+		'ctrl+keyt',
+		'ctrl+keyw',
+		'ctrl+shift+keyi',
+		'ctrl+shift+keyj',
+		'ctrl+shift+keyn',
+		'ctrl+shift+keyt',
+		'alt+tab',
+		'alt+f4',
+	]);
+
+	/**
+	 * Reserved combos of one platform. A fresh set per call: the caller owns what it gets and the
+	 * registry asks once, when it is built.
+	 *
+	 * @param {boolean} isMac
+	 * @returns {Set<string>}
+	 */
+	function getReservedCombos(isMac)
+	{
+		return new Set([
+			...COMMON_RESERVED_COMBOS,
+			...(isMac ? MAC_RESERVED_COMBOS : OTHER_RESERVED_COMBOS),
+		]);
+	}
+
+	const ComboVerdict = Object.freeze({
+		FREE: 'free',
+		OCCUPIED: 'occupied',
+		RESERVED: 'reserved',
+	});
+
+	/**
+	 * Only the entries that actually hold a combo. A default of null declares an action that ships
+	 * without one: it is a known action - an override may reach it - but nothing to index by combo.
+	 *
+	 * @param {Map<string, string | null>} bindings combo per action id
+	 * @returns {Map<string, string>}
+	 */
+	function keepAssigned(bindings)
+	{
+		const assigned = new Map();
+
+		bindings.forEach((combo, actionId) => {
+			if (!main_core.Type.isNil(combo))
+			{
+				assigned.set(actionId, combo);
+			}
+		});
+
+		return assigned;
+	}
+
+	/**
+	 * Applies the overrides on top of the defaults. An override of an action the defaults do not declare
+	 * is dropped, and a null combo takes the shortcut away from its action.
+	 *
+	 * @param {Map<string, string | null>} defaults canonical combo per action id, null for an action
+	 *   that ships without one
+	 * @param {Map<string, string | null>} overrides difference from the defaults
+	 * @returns {Map<string, string>}
+	 */
+	function mergeOverrides(defaults, overrides)
+	{
+		const bindings = keepAssigned(defaults);
+
+		overrides.forEach((combo, actionId) => {
+			if (!defaults.has(actionId))
+			{
+				return;
+			}
+
+			if (main_core.Type.isNil(combo))
+			{
+				bindings.delete(actionId);
+
+				return;
+			}
+
+			bindings.set(actionId, combo);
+		});
+
+		return bindings;
+	}
+
+	/**
+	 * @param {Map<string, string>} bindings combo per action id
+	 * @returns {Map<string, string>} action id per combo
+	 */
+	function invertBindings(bindings)
+	{
+		const actionByCombo = new Map();
+
+		bindings.forEach((combo, actionId) => {
+			actionByCombo.set(combo, actionId);
+		});
+
+		return actionByCombo;
+	}
+
+	/**
+	 * Combos claimed by more than one action, each with the ids claiming it. Empty while the invariant
+	 * holds.
+	 *
+	 * @param {Map<string, string>} bindings combo per action id
+	 * @returns {string[]} one entry per conflicting combo
+	 */
+	function describeComboConflicts(bindings)
+	{
+		const actionsByCombo = new Map();
+
+		bindings.forEach((combo, actionId) => {
+			const actions = actionsByCombo.get(combo) ?? [];
+			actions.push(actionId);
+			actionsByCombo.set(combo, actions);
+		});
+
+		const conflicts = [];
+
+		actionsByCombo.forEach((actions, combo) => {
+			if (actions.length > 1)
+			{
+				conflicts.push(`${combo} -> ${actions.join(', ')}`);
+			}
+		});
+
+		return conflicts;
+	}
+
+	/**
+	 * Owns the link between an action id and its combo in both directions. The reverse index is the
+	 * single answer to "is this combo taken": it is rebuilt with every set, never searched through.
+	 * Combos arrive canonical - normalization stays with the input layer - and the registry knows nothing
+	 * beyond the ids: no names, no groups, no localization.
+	 *
+	 * Suspension is a flag of the registry, not a detached listener: the input layer keeps tracking
+	 * pressed keys throughout, or the modifiers it holds would drift apart from the keyboard by the time
+	 * the registry resumes. The validator stands outside the flag on purpose - the settings panel
+	 * suspends the registry exactly to capture a combo, and asks about that combo while the capture runs.
+	 *
+	 * The maps themselves are plain - a store keeps the registry markRaw - so the version is the only
+	 * reactive thing it publishes, and reading a combo touches it: a computed built on a combo follows
+	 * a reassignment of the set without knowing the version exists.
+	 */
+	class ActionRegistry
+	{
+		#comboByAction = new Map();
+		#actionByCombo = new Map();
+		#reservedCombos = getReservedCombos(main_core.Browser.isMac());
+		#isSuspended = false;
+		#version = ui_vue3.shallowRef(0);
+
+		/**
+		 * @param {Map<string, string | null>} defaults canonical combo per action id. An action declared
+		 *   with null ships without a combo and is still known: this is how a user gives it the first one.
+		 * @param {Map<string, string | null>} [overrides] difference from the defaults
+		 */
+		applyBindings(defaults, overrides = new Map())
+		{
+			const plainDefaults = keepAssigned(defaults);
+			const bindings = mergeOverrides(defaults, overrides);
+			const actionByCombo = invertBindings(bindings);
+			// One combo belongs to at most one action. A set that breaks the invariant is a data error:
+			// it is rejected whole, and the plain defaults take its place.
+			const isAccepted = actionByCombo.size === bindings.size;
+
+			if (!isAccepted)
+			{
+				console.error(
+					'ui.block-diagram: personal shortcuts dropped, the defaults take their place. '
+					+ `A combo is claimed by several actions: ${describeComboConflicts(bindings).join('; ')}`,
+				);
+			}
+
+			this.#comboByAction = isAccepted ? bindings : plainDefaults;
+			this.#actionByCombo = isAccepted ? actionByCombo : invertBindings(plainDefaults);
+			// The rejected set counts too: the registry stands on the defaults now, and that is a change
+			// of what every combo of it is.
+			this.#version.value += 1;
+		}
+
+		/**
+		 * The count of sets applied so far. `getCombo()` reads it on its own, so a caption or an
+		 * announcement built on a combo already follows a reassignment; this is for a reader that has to
+		 * follow the set without asking for a combo of any action.
+		 *
+		 * @returns {number}
+		 */
+		getVersion()
+		{
+			return this.#version.value;
+		}
+
+		/**
+		 * @returns {string | null} canonical combo of the action, null when it holds none
+		 */
+		getCombo(actionId)
+		{
+			// Deliberate call with the result dropped, not a leftover line: reading the version is what
+			// subscribes a computed built on this call to a reassignment of the set. The maps behind the
+			// combos are plain, so the version is the only reactive thing such a computed can follow.
+			this.getVersion();
+
+			return this.#comboByAction.get(actionId) ?? null;
+		}
+
+		/**
+		 * @returns {string | null} action the combo runs, null while the registry is suspended
+		 */
+		getAction(combo)
+		{
+			if (this.#isSuspended)
+			{
+				return null;
+			}
+
+			return this.#actionByCombo.get(combo) ?? null;
+		}
+
+		/**
+		 * @param {string} combo canonical combo to assign
+		 * @param {string | null} [forActionId] action the combo is meant for: its own combo reads as free
+		 * @returns {string} one of ComboVerdict
+		 */
+		validate(combo, forActionId = null)
+		{
+			if (this.#reservedCombos.has(combo))
+			{
+				return ComboVerdict.RESERVED;
+			}
+
+			const occupant = this.#actionByCombo.get(combo) ?? null;
+
+			if (occupant === null || occupant === forActionId)
+			{
+				return ComboVerdict.FREE;
+			}
+
+			return ComboVerdict.OCCUPIED;
+		}
+
+		suspend()
+		{
+			this.#isSuspended = true;
+		}
+
+		resume()
+		{
+			this.#isSuspended = false;
+		}
+
+		get isSuspended()
+		{
+			return this.#isSuspended;
+		}
+	}
+
+	/**
+	 * The actions the canvas owns itself. A consumer names them by these ids - in a catalog of its own
+	 * and in the set of bindings it hands the registry - so the ids are part of the public surface.
+	 */
+	const CANVAS_ACTION_ID = Object.freeze({
+		UNDO: 'canvas.undo',
+		REDO: 'canvas.redo',
+		COPY: 'canvas.copy',
+		PASTE: 'canvas.paste',
+		TOGGLE_SEARCH: 'canvas.toggleSearch',
+		TOGGLE_MAP: 'canvas.toggleMap',
+		ZOOM_IN: 'canvas.zoomIn',
+		ZOOM_OUT: 'canvas.zoomOut',
+		FIT_TO_VIEW: 'canvas.fitToView',
+		NEXT_SEARCH_RESULT: 'canvas.nextSearchResult',
+		PREV_SEARCH_RESULT: 'canvas.prevSearchResult',
+	});
+
+	/**
+	 * The combos those actions ship with. Redo is the one that differs by platform, and the difference
+	 * lives here rather than at the place of registration: a registration names the action it runs and
+	 * never the keys that run it.
+	 *
+	 * A fresh map on every call, because a consumer merging its own actions into the set works on what
+	 * it is given - the defaults of the layer are not its to write into.
+	 *
+	 * @param {boolean} [isMac]
+	 * @returns {Map<string, string | null>} canonical combo per action id, null for an action that ships
+	 *   without one on this platform
+	 */
+	function getCanvasActionDefaults(isMac = main_core.Browser.isMac())
+	{
+		return new Map([
+			[CANVAS_ACTION_ID.UNDO, normalizeCombo(['Mod', 'z'], isMac)],
+			[CANVAS_ACTION_ID.REDO, normalizeCombo(isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'], isMac)],
+			[CANVAS_ACTION_ID.COPY, normalizeCombo(['Mod', 'c'], isMac)],
+			[CANVAS_ACTION_ID.PASTE, normalizeCombo(['Mod', 'v'], isMac)],
+			[CANVAS_ACTION_ID.TOGGLE_SEARCH, normalizeCombo(['Mod', 'f'], isMac)],
+			// Shift keeps the combo away from Cmd+M, which minimizes the window on macOS before the page
+			// ever sees the press (reserved-combos.ts lists 'meta+keym'): one and the same combo on both
+			// platforms instead of an action that ships without a default on one of them.
+			[CANVAS_ACTION_ID.TOGGLE_MAP, normalizeCombo(['Mod', 'Shift', 'm'], isMac)],
+			[CANVAS_ACTION_ID.ZOOM_IN, normalizeCombo(['Mod', 'Equal'], isMac)],
+			[CANVAS_ACTION_ID.ZOOM_OUT, normalizeCombo(['Mod', 'Minus'], isMac)],
+			// The only action of the layer whose default types a character, and the one combo among them
+			// that reads the same on every platform: no modifier of the platform takes part in it. The keys
+			// come from the constant that declares this default, while what the panel and the canvas announce
+			// through `aria-keyshortcuts` is read from the registry, so it follows a reassignment. A press
+			// into a field being edited is left alone by the input state, as for every action here, and the
+			// narrower rule - the command answers only while the focus stands on a surface of the diagram -
+			// belongs to the place of registration (`components/zoom-bar/zoom-bar.js`).
+			[CANVAS_ACTION_ID.FIT_TO_VIEW, normalizeCombo(FIT_TO_VIEW_SHORTCUT, isMac)],
+			[CANVAS_ACTION_ID.NEXT_SEARCH_RESULT, normalizeCombo(['Mod', 'Shift', 'ArrowRight'], isMac)],
+			[CANVAS_ACTION_ID.PREV_SEARCH_RESULT, normalizeCombo(['Mod', 'Shift', 'ArrowLeft'], isMac)],
+		]);
+	}
+
+	const COMBO_SEPARATOR$1 = '+';
+	const LETTER_TOKEN_PREFIX$1 = 'key';
+	const DIGIT_TOKEN_PREFIX$1 = 'digit';
+	const MAC_SEPARATOR = '';
+
+	const MODIFIER_CAPTIONS = Object.freeze({
+		ctrl: { mac: '⌃', other: 'Ctrl' },
+		alt: { mac: '⌥', other: 'Alt' },
+		shift: { mac: '⇧', other: 'Shift' },
+		meta: { mac: '⌘', other: 'Meta' },
+	});
+
+	// Tokens whose canonical spelling is not a caption. Everything else is derived: a letter and a digit
+	// lose their prefix, the rest is the token with a capital first letter.
+	const KEY_CAPTIONS = Object.freeze({
+		space: 'Space',
+		escape: 'Esc',
+		arrowleft: 'Left',
+		arrowright: 'Right',
+		arrowup: 'Up',
+		arrowdown: 'Down',
+		minus: '-',
+		equal: '=',
+		bracketleft: '[',
+		bracketright: ']',
+		comma: ',',
+		period: '.',
+		slash: '/',
+		semicolon: ';',
+		quote: '\'',
+		backquote: '`',
+		backslash: '\\',
+	});
+
+	function formatToken(token, isMac)
+	{
+		const modifier = MODIFIER_CAPTIONS[token];
+
+		if (!main_core.Type.isNil(modifier))
+		{
+			return isMac ? modifier.mac : modifier.other;
+		}
+
+		const caption = KEY_CAPTIONS[token];
+
+		if (!main_core.Type.isNil(caption))
+		{
+			return caption;
+		}
+
+		if (token.startsWith(LETTER_TOKEN_PREFIX$1))
+		{
+			return token.slice(LETTER_TOKEN_PREFIX$1.length).toUpperCase();
+		}
+
+		if (token.startsWith(DIGIT_TOKEN_PREFIX$1))
+		{
+			return token.slice(DIGIT_TOKEN_PREFIX$1.length);
+		}
+
+		return token.charAt(0).toUpperCase() + token.slice(1);
+	}
+
+	/**
+	 * Single owner of how a combo reads on screen: a canonical combo in, the caption of the current
+	 * platform out. macOS packs symbolic modifiers with no separator, every other platform spells them
+	 * out and joins with a plus.
+	 *
+	 * The canonical form never spells a key as '+', so splitting the combo by the separator is safe.
+	 *
+	 * @param {string} combo canonical combo
+	 * @returns {string}
+	 */
+	function formatComboCaption(combo)
+	{
+		if (!main_core.Type.isStringFilled(combo))
+		{
+			return '';
+		}
+
+		const isMac = main_core.Browser.isMac();
+
+		return combo
+			.split(COMBO_SEPARATOR$1)
+			.map((token) => formatToken(token, isMac))
+			.join(isMac ? MAC_SEPARATOR : COMBO_SEPARATOR$1);
+	}
+
+	const COMBO_SEPARATOR = '+';
+	const LETTER_TOKEN_PREFIX = 'key';
+	const DIGIT_TOKEN_PREFIX = 'digit';
+
+	// `aria-keyshortcuts` is spelled in the key names of UI Events, and the canonical token of the input
+	// layer is the physical code: the two part ways on every key that types a character, so the caption
+	// of `formatComboCaption` (which reads for a person) cannot stand in for this one.
+	const MODIFIER_KEY_NAMES = Object.freeze({
+		ctrl: 'Control',
+		alt: 'Alt',
+		shift: 'Shift',
+		meta: 'Meta',
+	});
+
+	const KEY_NAMES = Object.freeze({
+		space: 'Space',
+		escape: 'Escape',
+		enter: 'Enter',
+		tab: 'Tab',
+		backspace: 'Backspace',
+		delete: 'Delete',
+		insert: 'Insert',
+		arrowleft: 'ArrowLeft',
+		arrowright: 'ArrowRight',
+		arrowup: 'ArrowUp',
+		arrowdown: 'ArrowDown',
+		minus: '-',
+		equal: '=',
+		bracketleft: '[',
+		bracketright: ']',
+		comma: ',',
+		period: '.',
+		slash: '/',
+		semicolon: ';',
+		quote: '\'',
+		backquote: '`',
+		backslash: '\\',
+	});
+
+	function formatKeyName(token)
+	{
+		const modifier = MODIFIER_KEY_NAMES[token];
+
+		if (!main_core.Type.isNil(modifier))
+		{
+			return modifier;
+		}
+
+		const name = KEY_NAMES[token];
+
+		if (!main_core.Type.isNil(name))
+		{
+			return name;
+		}
+
+		if (token.startsWith(LETTER_TOKEN_PREFIX))
+		{
+			return token.slice(LETTER_TOKEN_PREFIX.length).toUpperCase();
+		}
+
+		if (token.startsWith(DIGIT_TOKEN_PREFIX))
+		{
+			return token.slice(DIGIT_TOKEN_PREFIX.length);
+		}
+
+		return token.charAt(0).toUpperCase() + token.slice(1);
+	}
+
+	/**
+	 * The combo of an action as `aria-keyshortcuts` declares it. An action holding no combo announces
+	 * nothing at all, and null is what leaves the attribute off the element.
+	 *
+	 * @param {string | null} combo canonical combo
+	 * @returns {string | null}
+	 */
+	function formatComboKeyshortcuts(combo)
+	{
+		if (!main_core.Type.isStringFilled(combo))
+		{
+			return null;
+		}
+
+		return combo
+			.split(COMBO_SEPARATOR)
+			.map((token) => formatKeyName(token))
+			.join(COMBO_SEPARATOR)
+		;
+	}
+
+	const POPUP_MANAGER_CLASS_NAME = 'BX.Main.PopupManager';
+
+	/**
+	 * Whether a layer above the canvas holds the keyboard right now. Asked at the moment of the press
+	 * and never remembered: a popup opens and closes without telling the canvas about it, so a
+	 * subscription would have to be kept in step with a layer the canvas does not own.
+	 *
+	 * Public on purpose - the editor built over this extension answers the same question about the same
+	 * popups, and one rule implemented twice is two rules.
+	 *
+	 * A page carrying no popup manager carries no such layer either, so the keyboard is free.
+	 */
+	function isKeyboardBusyByOverlay() {
+		const popupManager = main_core.Reflection.getClass(POPUP_MANAGER_CLASS_NAME);
+		if (!main_core.Type.isFunction(popupManager?.isAnyPopupBlockingBackgroundEscShown)) {
+			return false;
+		}
+		return popupManager.isAnyPopupBlockingBackgroundEscShown() === true;
+	}
+
+	/**
+	 * The document's own text selection, but only when it holds text. Both questions this file answers
+	 * start here, so "there is a text selection" means the same thing to the guard that reads it and to
+	 * the press that drops it.
+	 *
+	 * A caret carries no text, and neither does a run of whitespace: both read as no selection. A
+	 * browser without the Selection API reads the same way, so the caller never has to guard the call.
+	 */
+	function getNonEmptyTextSelection()
+	{
+		const selection = main_core.Type.isFunction(window.getSelection) ? window.getSelection() : null;
+
+		if (main_core.Type.isNil(selection) || selection.rangeCount === 0 || selection.isCollapsed)
+		{
+			return null;
+		}
+
+		return main_core.Type.isStringFilled(selection.toString().trim()) ? selection : null;
+	}
+
+	/**
+	 * Answers one question: does the document hold a non-empty text selection lying outside the given
+	 * boundary element? The function is pure - nothing is cached, nothing is subscribed to - so it is
+	 * asked at the moment a key is handled.
+	 *
+	 * A boundary that is not an element - missing, or a reference to a node that has not mounted yet -
+	 * means "not outside": with nothing to measure against, the answer stays with the caller.
+	 */
+	function hasTextSelectionOutside(boundaryElement)
+	{
+		if (!main_core.Type.isElementNode(boundaryElement))
+		{
+			return false;
+		}
+
+		const selection = getNonEmptyTextSelection();
+
+		if (main_core.Type.isNil(selection))
+		{
+			return false;
+		}
+
+		const commonAncestor = selection.getRangeAt(0).commonAncestorContainer;
+
+		return !main_core.Type.isNil(commonAncestor) && !boundaryElement.contains(commonAncestor);
+	}
+
+	/**
+	 * Drops the text selection of the document, if there is one to drop. A caret is left where it
+	 * stands: it is a cursor, not a selection.
+	 */
+	function clearTextSelection()
+	{
+		getNonEmptyTextSelection()?.removeAllRanges();
+	}
+
+	// Both directions copy deeply, so the buffer neither follows later edits of the copied blocks nor
+	// hands out a fragment that a caller can edit in place.
+	function cloneContent(content) {
+		return JSON.parse(JSON.stringify(content));
+	}
+
+	/**
+	 * One buffer per diagram application: a fragment stays available to any canvas of that application
+	 * and outlives the canvas it was copied from. It never enters a history snapshot and is never reset
+	 * by time or by any event.
+	 */
+	class CopyPasteBuffer {
+		// Only the reference swap has to stay reactive, that is all #isEmpty reads. A deep proxy over
+		// every block of the fragment would just make reading and cloning the buffer more expensive.
+		#copiedContent = ui_vue3.shallowRef(null);
+
+		// "nothing has been copied", not "the fragment is empty": a fragment with empty arrays still
+		// leaves the buffer filled.
+		#isEmpty = ui_vue3.computed(() => this.#copiedContent.value === null);
+		get isEmpty() {
+			return this.#isEmpty;
+		}
+		setContent(content) {
+			this.#copiedContent.value = cloneContent(content);
+		}
+		getContent() {
+			if (this.#copiedContent.value === null) {
+				return null;
+			}
+			return cloneContent(this.#copiedContent.value);
+		}
+		clear() {
+			this.#copiedContent.value = null;
+		}
+	}
+
 	// Чистая проверка: соответствует ли DOM-элемент завершившегося перехода текущему
 	// элементу очереди. Точное сопоставление по data-id (MoveableBlock и Connection
 	// кладут его на корень своего элемента). Вынесено из *-queue-transition, чтобы
@@ -4986,6 +7797,128 @@ this.BX = this.BX || {};
 		};
 	}
 
+	function createDiagramBlockId() {
+		return main_core.Text.getRandom();
+	}
+
+	/**
+	 * Gives every block and every connection of the fragment a fresh id and rebinds the connection
+	 * ends through the block id map. The rebinding is explicit: an end that leads outside the fragment
+	 * keeps its id, and port ids are never touched - they are unique only inside their own block.
+	 * Only the block id format is an extension point: a connection id is always issued by the core,
+	 * because connections belong to the core while a block may carry a format of its own.
+	 */
+	function issueNewFragmentIds(content, createBlockId = createDiagramBlockId) {
+		const blockIdMap = new Map();
+		const blocks = content.blocks.map(block => {
+			const id = createBlockId();
+			blockIdMap.set(block.id, id);
+			return {
+				...block,
+				id
+			};
+		});
+		const connections = content.connections.map(connection => ({
+			...connection,
+			id: main_core.Text.getRandom(),
+			sourceBlockId: blockIdMap.get(connection.sourceBlockId) ?? connection.sourceBlockId,
+			targetBlockId: blockIdMap.get(connection.targetBlockId) ?? connection.targetBlockId
+		}));
+		return {
+			content: {
+				blocks,
+				connections
+			},
+			blockIdMap
+		};
+	}
+
+	/**
+	 * Places the fragment against the paste point. The point is only rounded, never aligned to the
+	 * grid, so the fragment lands exactly where it was aimed at even while snapToGrid is on. Origin is
+	 * the position of the first block, the rest keep their offsets from it, so the fragment moves as a
+	 * whole. Every field other than position carries over untouched.
+	 */
+	function layoutFragmentBlocks(blocks, point) {
+		if (blocks.length === 0) {
+			return [];
+		}
+		const pastePoint = {
+			x: Math.round(point.x),
+			y: Math.round(point.y)
+		};
+		const origin = {
+			...blocks[0].position
+		};
+		return blocks.map(block => ({
+			...block,
+			position: {
+				x: pastePoint.x + (block.position.x - origin.x),
+				y: pastePoint.y + (block.position.y - origin.y)
+			}
+		}));
+	}
+
+	// A palette is a plain dictionary of CSS colors keyed by a name or an index from a saved template,
+	// so anything else - a list, an instance, an entry that is not a color - is a mistake of the
+	// consumer. Shared by the property validators of every component taking a palette, so the map and
+	// the bar judge a palette by one and the same rule. It only reports: the drawing path keeps its own
+	// fallbacks, and an empty palette is a valid one.
+	function isValidColorPalette(palette) {
+		if (!main_core.Type.isPlainObject(palette)) {
+			return false;
+		}
+		return Object.values(palette).every(color => main_core.Type.isStringFilled(color));
+	}
+
+	// The single place the shape of "action (shortcut)" is written. A label with nothing in it - an empty
+	// string, or the null of a phrase missing from the portal - is how a caller says there is no caption at
+	// all, and an empty shortcut leaves the action named without an empty pair of brackets.
+	function withShortcut(label, shortcut) {
+		if (!label) {
+			return '';
+		}
+		if (shortcut === '') {
+			return label;
+		}
+		return `${label} (${shortcut})`;
+	}
+
+	// The half of the announcement that never moves: the arrows pan the camera and belong to the surface
+	// itself rather than to the registry, so no one reassigns them.
+	const PAN_KEY_SHORTCUTS = 'ArrowUp ArrowDown ArrowLeft ArrowRight';
+
+	/**
+	 * The `aria-keyshortcuts` of a surface of the canvas: the panning of the camera, which is its own, and
+	 * the fit of the whole scheme, which runs here as well but is registered by the zoom bar the consumer
+	 * mounts next to the diagram (`components/zoom-bar/zoom-bar.js`). The fit is an action of the registry:
+	 * what announces it follows a reassignment, and an action left without a combo adds nothing to the list.
+	 *
+	 * @param {string | null} fitToViewCombo combo of the fit as `aria-keyshortcuts` spells it
+	 * @returns {string}
+	 */
+	function buildCanvasKeyShortcuts(fitToViewCombo)
+	{
+		return fitToViewCombo === null
+			? PAN_KEY_SHORTCUTS
+			: `${PAN_KEY_SHORTCUTS} ${fitToViewCombo}`;
+	}
+
+	/**
+	 * Whether the focus stands on one of the surfaces the diagram answers the keyboard on. The surfaces
+	 * are named by the caller and not taken from the root alone: a consumer places the minimap and the
+	 * zoom bar by hand and normally lands them outside the root, while both promise the keys of the
+	 * diagram work there.
+	 */
+	function isFocusOnAnyOf(surfaces) {
+		const activeElement = document.activeElement;
+		return surfaces.some(surface => Boolean(surface) && surface.contains(activeElement));
+	}
+
+	// The canvas controls sit under the pointer during ordinary work, so their tooltips wait out the passing
+	// cursor instead of flashing on every move across the panel.
+	const TOOLTIP_SHOW_DELAY = 2000;
+
 	const isRenderOptimizationAvailable = main_core.Extension.getSettings('ui.block-diagram').get('isRenderOptimizationAvailable');
 	const RENDER_OPTIMIZATION = {
 		enabled: 'Y'
@@ -4993,12 +7926,18 @@ this.BX = this.BX || {};
 	function useState() {
 		return {
 			blockDiagramRef: null,
+			// The panel of the minimap, registered as a focus surface of the diagram; why - see
+			// `isFocusOnAnyOf` in composables/keyboard-pan.js.
+			canvasMapRef: null,
+			// The work area a consumer declares around the canvas: the catalog and the toolbars it places
+			// next to the diagram belong to it, the page around the editor does not. Read by the
+			// background Escape (composables/canvas-escape-fallback.js); null means the root itself.
+			focusScopeRef: null,
 			blockDiagramTop: 0,
 			blockDiagramLeft: 0,
 			blockDiagramWidth: 0,
 			blockDiagramHeight: 0,
 			cursorType: 'default',
-			isResizing: false,
 			isDisabled: false,
 			waitAllBlocksMounted: promiseWithResolvers(),
 			waitedBlockIds: new Set(),
@@ -5027,12 +7966,22 @@ this.BX = this.BX || {};
 			connectionPreview: null,
 			movingBlockId: null,
 			gestureBlockIds: new Set(),
+			isGestureElevated: false,
+			groupableBlockIds: new Set(),
+			hoveredBlockId: null,
 			resizingBlock: null,
 			canvasRef: null,
 			transformLayoutRef: null,
-			canvasInstance: null,
 			canvasWidth: 0,
 			canvasHeight: 0,
+			// Edges of the viewport the panels of a consumer cover: the canvas is drawn under them and
+			// knows nothing about them. The zoom bar publishes them, the fit reads them when it runs.
+			viewportInsets: {
+				top: 0,
+				right: 0,
+				bottom: 0,
+				left: 0
+			},
 			transformX: 0,
 			transformY: 0,
 			viewportX: 0,
@@ -5066,6 +8015,8 @@ this.BX = this.BX || {};
 			revertHandler: null,
 			highlitedBlockIds: [],
 			transientHighlightedBlockIds: [],
+			displacedBlockIds: [],
+			isPlacementRefused: false,
 			isSelectionActive: false,
 			selectionWorldRect: null,
 			groupDragOffset: {
@@ -5076,22 +8027,34 @@ this.BX = this.BX || {};
 			currentAnimationItem: null,
 			isPauseAnimation: false,
 			isStopAnimation: false,
-			shortcuts: [],
-			mousePosition: {
-				x: 0,
-				y: 0
-			},
-			isKeyboardInitialized: false,
 			isRenderOptimizationAvailable: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled,
 			connectionRouteHitTestEnabled: false
 		};
 	}
 
 	function useInstances(ctx) {
+		const camera = new Camera(ctx);
+		// The registry answers which press runs which action, so the input state is given it at birth:
+		// the consumer of the canvas replaces the set of bindings on the same instance later.
+		const actionRegistry = new ActionRegistry();
+		// The canvas is self-sufficient: its own actions answer to their default combos with no consumer
+		// involved. A consumer replacing the set is expected to merge these defaults into its own.
+		actionRegistry.applyBindings(getCanvasActionDefaults());
 		return {
 			portsNearest: new PortsNearest(ctx),
 			blockIntersections: new BlockIntersections(ctx),
-			animationStep: new AnimationStepController()
+			camera,
+			canvas: new Canvas({
+				...ctx,
+				camera
+			}),
+			mapRenderer: new MapRenderer(ctx),
+			animationStep: new AnimationStepController(),
+			inputState: new InputState({
+				actionRegistry
+			}),
+			actionRegistry,
+			copyPasteBuffer: new CopyPasteBuffer()
 		};
 	}
 
@@ -5102,8 +8065,12 @@ this.BX = this.BX || {};
 		let rafId = null;
 		let mouseX = 0;
 		let mouseY = 0;
-		let rect = null;
 		let activeCallback = null;
+
+		// Re-measured every frame: layout may shift or the page may scroll mid-gesture.
+		const getCanvasRect = () => {
+			return ui_vue3.toValue(state.canvasRef)?.getBoundingClientRect() ?? null;
+		};
 		const getAxisSpeed = penetration => {
 			if (penetration <= 0) {
 				return 0;
@@ -5113,7 +8080,10 @@ this.BX = this.BX || {};
 			return Math.min(speed, HARD_CAP);
 		};
 		const scrollLoop = () => {
+			const rect = getCanvasRect();
 			if (!rect || !activeCallback) {
+				// Leaving the loop must clear the frame id, otherwise the next start sees it as running.
+				rafId = null;
 				return;
 			}
 			let dx = 0;
@@ -5133,12 +8103,7 @@ this.BX = this.BX || {};
 				dy = getAxisSpeed(bottomPenetration);
 			}
 			if (dx !== 0 || dy !== 0) {
-				const currentZoom = ui_vue3.toValue(state.zoom);
-				actions.setCamera({
-					x: ui_vue3.toValue(state.transformX) + dx / currentZoom,
-					y: ui_vue3.toValue(state.transformY) + dy / currentZoom,
-					zoom: currentZoom
-				});
+				actions.panCamera(dx, dy);
 				activeCallback(dx, dy);
 			}
 			rafId = requestAnimationFrame(scrollLoop);
@@ -5159,7 +8124,6 @@ this.BX = this.BX || {};
 				cancelAnimationFrame(rafId);
 				rafId = null;
 			}
-			rect = null;
 			activeCallback = null;
 		};
 		const updateMousePosition = event => {
@@ -5169,16 +8133,10 @@ this.BX = this.BX || {};
 				return;
 			}
 
-			// The canvas is measured here rather than on the press: between the two the panel of the
-			// selected block opens and the canvas loses the width the press would have measured, so
-			// the edge threshold would be counted from a border that has moved.
-			const el = ui_vue3.toValue(state.canvasRef);
-			if (!el) {
-				// A frame without geometry would exit at once, leaving rafId set: every later move would
-				// then read the loop as running and the autoscroll would stay dead for the whole gesture.
+			// Nothing to measure against yet: a later move arms the loop.
+			if (!ui_vue3.toValue(state.canvasRef)) {
 				return;
 			}
-			rect = el.getBoundingClientRect();
 			rafId = requestAnimationFrame(scrollLoop);
 		};
 		return {
@@ -5284,8 +8242,10 @@ this.BX = this.BX || {};
 			state.blocks = ui_vue3.toValue(options.blocks);
 			state.connections = ui_vue3.toValue(options.connections);
 			state.transformX = options.transform.x;
-			state.transformY = options.transfrom.y;
-			state.zoom = ui_vue3.toValue(options.zoom);
+			state.transformY = options.transform.y;
+			// The scale is written straight into the state here, bypassing the camera, so the floor has
+			// to be applied on the spot: everything that divides by the published scale reads this field.
+			state.zoom = clampZoom(ui_vue3.toValue(options.zoom), state.minZoom, state.maxZoom, state.zoom);
 		}
 		function setUnmountedBlocks(newBlocks, oldBlocks = []) {
 			const oldBlockIdsMap = new Set(oldBlocks.map(block => block.id));
@@ -5368,7 +8328,7 @@ this.BX = this.BX || {};
 			state.transformY = y;
 			state.viewportX = viewportX;
 			state.viewportY = viewportY;
-			state.zoom = zoom;
+			state.zoom = clampZoom(zoom, state.minZoom, state.maxZoom, state.zoom);
 		}
 		const isExistConnection = connection => {
 			const {
@@ -5511,6 +8471,9 @@ this.BX = this.BX || {};
 				y: transformedY
 			};
 		};
+
+		// The node a single drag leads: it stands for the visual effects of that drag alone. What a
+		// gesture holds is `setGestureBlocks` below.
 		const setMovingBlock = blockId => {
 			state.movingBlockId = ui_vue3.toValue(blockId);
 		};
@@ -5518,15 +8481,31 @@ this.BX = this.BX || {};
 			state.movingBlockId = null;
 		};
 
-		// Every node of the running gesture, whatever leads it: the frame drag moves a whole selection
-		// and the node drag takes its group members along, while the model keeps their pre-gesture
-		// positions until the commit. The set is replaced rather than mutated - a reactive Set read
+		// A new value evicts the previous one: only the node the cursor is on stays raised.
+		const setHoveredBlock = blockId => {
+			state.hoveredBlockId = ui_vue3.toValue(blockId);
+		};
+		const resetHoveredBlock = () => {
+			state.hoveredBlockId = null;
+		};
+
+		// Every node of the running gesture, whatever leads it: the model keeps their pre-gesture
+		// geometry until the commit. The set is replaced rather than mutated - a reactive Set read
 		// inside an animation frame only needs its current value.
 		const setGestureBlocks = blockIds => {
 			state.gestureBlockIds = new Set(ui_vue3.toValue(blockIds).map(blockId => ui_vue3.toValue(blockId)));
 		};
 		const resetGestureBlocks = () => {
 			state.gestureBlockIds = new Set();
+		};
+
+		// Whether the running gesture raises the set above the rest of the canvas. No second set of ids:
+		// the raised nodes are the ones above, and this answers only whether they are raised.
+		const setGestureElevated = isElevated => {
+			state.isGestureElevated = ui_vue3.toValue(isElevated) === true;
+		};
+		const resetGestureElevated = () => {
+			state.isGestureElevated = false;
 		};
 
 		// The shift the frame drag has drawn and not yet committed. It belongs to the diagram instance:
@@ -5543,11 +8522,19 @@ this.BX = this.BX || {};
 				y: 0
 			};
 		};
+
+		// An existing record is merged in place: replacing it would republish every field of the rect
+		// on a write that touched one of them, and a gesture writes the coordinates of its nodes on
+		// every frame while their size stands still.
 		const updateBlockRectById = (blockId, rect) => {
-			state.blocksRectMap[blockId] = {
-				...state.blocksRectMap[blockId],
-				...rect
-			};
+			const storedRect = getOwnRecord(state.blocksRectMap, blockId);
+			if (storedRect === null) {
+				state.blocksRectMap[blockId] = {
+					...rect
+				};
+				return;
+			}
+			Object.assign(storedRect, rect);
 		};
 
 		// Reports that a port registered or dropped its own rect. Neither the coordinates of an
@@ -5580,14 +8567,8 @@ this.BX = this.BX || {};
 			state.snapshotHandler = newSnapshotHandler || state.snapshotHandler;
 			state.revertHandler = newRevertHandler || state.revertHandler;
 		};
-
-		// Block ids come from an untrusted graph, so a rect is only ever taken as an own property.
-		const getOwnRect = (rectMap, key) => {
-			const map = ui_vue3.toValue(rectMap) ?? {};
-			return Object.hasOwn(map, key) ? map[key] : null;
-		};
 		const translatePortRects = (blockId, offset) => {
-			const ports = getOwnRect(state.portsRectMap, blockId) ?? {};
+			const ports = getOwnRecord(state.portsRectMap, blockId) ?? {};
 			Object.values(ports).forEach(portRect => {
 				portRect.x += offset.x;
 				portRect.y += offset.y;
@@ -5610,7 +8591,7 @@ this.BX = this.BX || {};
 		// changed, and the first-measure path measures such a block again on its next mount. So for
 		// blocks outside the viewport correctness rests on that path, not on this translation.
 		const translateBlockGeometry = (blockId, offset) => {
-			const blockRect = getOwnRect(state.blocksRectMap, blockId);
+			const blockRect = getOwnRecord(state.blocksRectMap, blockId);
 			if (blockRect) {
 				blockRect.x += offset.x;
 				blockRect.y += offset.y;
@@ -5710,10 +8691,13 @@ this.BX = this.BX || {};
 			state.selectionWorldRect = rect;
 		};
 		const setCamera = params => {
-			ui_vue3.toValue(state.canvasInstance)?.setCamera(params);
+			instances?.canvas.setCamera(params);
+		};
+		const panCamera = (dx, dy) => {
+			instances?.canvas.panBy(dx, dy);
 		};
 		const autoScroll = useAutoScroll(state, {
-			setCamera
+			panCamera
 		});
 		const transformMouseEventToPoint = event => {
 			const {
@@ -5780,8 +8764,12 @@ this.BX = this.BX || {};
 			transformEventToPoint,
 			setMovingBlock,
 			resetMovingBlock,
+			setHoveredBlock,
+			resetHoveredBlock,
 			setGestureBlocks,
 			resetGestureBlocks,
+			setGestureElevated,
+			resetGestureElevated,
 			setGroupDragOffset,
 			resetGroupDragOffset,
 			setHistoryHandlers,
@@ -5801,6 +8789,7 @@ this.BX = this.BX || {};
 			stopAutoScroll: autoScroll.stop,
 			updateMousePosition: autoScroll.updateMousePosition,
 			setCamera,
+			panCamera,
 			transformMouseEventToPoint,
 			snapValue,
 			snapPoint
@@ -5882,6 +8871,7 @@ this.BX = this.BX || {};
 			[HOOK_NAMES.START_DRAG_BLOCK]: createHook(),
 			[HOOK_NAMES.MOVE_DRAG_BLOCK]: createHook(),
 			[HOOK_NAMES.END_DRAG_BLOCK]: createHook(),
+			[HOOK_NAMES.END_GESTURE]: createHook(),
 			[HOOK_NAMES.ADD_BLOCK]: createHook(),
 			[HOOK_NAMES.ADD_BLOCKS]: createHook(),
 			[HOOK_NAMES.UPDATE_BLOCK]: createHook(),
@@ -5898,6 +8888,7 @@ this.BX = this.BX || {};
 			[HOOK_NAMES.CONNECTION_TRANSITION_START]: createHook(),
 			[HOOK_NAMES.CONNECTION_TRANSITION_END]: createHook(),
 			[HOOK_NAMES.DROP_NEW_BLOCK]: createHook(),
+			[HOOK_NAMES.PASTE_BLOCKS]: createHook(),
 			[HOOK_NAMES.HISTORY_NEXT]: createHook(),
 			[HOOK_NAMES.HISTORY_PREV]: createHook()
 		};
@@ -5960,6 +8951,11 @@ this.BX = this.BX || {};
 		function setContextMenuName(newName) {
 			openedContextMenuName.value = ui_vue3.toValue(newName);
 		}
+		function markClosed() {
+			isOpen.value = false;
+			isOpenContextMenu.value = false;
+			setContextMenuName(null);
+		}
 		function getItems(items = []) {
 			return items.map(item => {
 				return {
@@ -5979,6 +8975,8 @@ this.BX = this.BX || {};
 		}
 		function getDefaultOptions(additionalOptions = {}) {
 			const defaultOptions = {
+				// Menu/Popup get a single options object below, so this id lands on the popup element
+				// unprefixed - the legacy positional arguments would prefix it and break the e2e selector.
 				id: 'block-diagram-context-menu',
 				bindElement: {
 					left: 0,
@@ -6012,33 +9010,39 @@ this.BX = this.BX || {};
 			positionContextMenu.value.left = (clientX - left) / ui_vue3.toValue(zoom);
 		}
 		function showMenu(point, options = null) {
-			setContextMenuName(contextMenuName);
 			updateContextMenuPosition(point);
 			ui_vue3.toValue(contextMenuInstance)?.destroy();
 			contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Menu(getDefaultOptions(options)));
-			ui_vue3.toValue(contextMenuInstance)?.popupWindow?.subscribeOnce('onDestroy', () => {
-				isOpen.value = false;
-			});
+			ui_vue3.toValue(contextMenuInstance)?.popupWindow?.subscribeOnce('onDestroy', markClosed);
+
+			// A caller may override the cacheable default, and a cacheable popup closes without being
+			// destroyed - the state has to come down on the close every menu goes through as well.
+			ui_vue3.toValue(contextMenuInstance)?.popupWindow?.subscribeOnce('onClose', markClosed);
 			ui_vue3.toValue(contextMenuInstance)?.show();
+
+			// After the previous instance is gone: its closing lowers the very state raised here.
+			setContextMenuName(contextMenuName);
 			isOpen.value = true;
 			isOpenContextMenu.value = true;
 		}
 		function showPopup(point, options = null) {
-			setContextMenuName(contextMenuName);
 			updateContextMenuPosition(point);
 			ui_vue3.toValue(contextMenuInstance)?.destroy();
 			contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Popup(getDefaultOptions(options)));
-			ui_vue3.toValue(contextMenuInstance)?.subscribeOnce('onDestroy', () => {
-				isOpen.value = false;
-			});
+			ui_vue3.toValue(contextMenuInstance)?.subscribeOnce('onDestroy', markClosed);
+
+			// A caller may override the cacheable default, and a cacheable popup closes without being
+			// destroyed - the state has to come down on the close every popup goes through as well.
+			ui_vue3.toValue(contextMenuInstance)?.subscribeOnce('onClose', markClosed);
 			ui_vue3.toValue(contextMenuInstance)?.show();
+
+			// After the previous instance is gone: its closing lowers the very state raised here.
+			setContextMenuName(contextMenuName);
 			isOpen.value = true;
 			isOpenContextMenu.value = true;
 		}
 		function closeContextMenu() {
-			isOpen.value = false;
-			isOpenContextMenu.value = false;
-			setContextMenuName(null);
+			markClosed();
 			ui_vue3.toValue(contextMenuInstance)?.close();
 		}
 		return {
@@ -6047,6 +9051,203 @@ this.BX = this.BX || {};
 			showMenu,
 			showPopup,
 			closeContextMenu
+		};
+	}
+
+	// Kept in JS on purpose: chef takes the package language from the entry point (src/index.js), so a
+	// lone .ts source inside this extension would not resolve.
+	// Alt asks the gesture to leave the content of a container behind, so the container travels alone.
+	// It is answered from the press event and only from it: the set of a gesture is fixed at the press,
+	// so a key pressed or released later changes nothing, and the keyboard state of the diagram is not
+	// consulted - a frame of the autoscroll loop has no event of its own, and there is nothing for it to
+	// decide anyway.
+	function isCaptureCancelModifier(event) {
+		return event?.altKey === true;
+	}
+	function modelRect(block) {
+		const source = ui_vue3.toValue(block);
+		const rect = modelBlockRect(ui_vue3.toValue(source?.position), ui_vue3.toValue(source?.dimensions));
+		return rect === null ? null : toRectBounds(rect);
+	}
+
+	// The record of a container lives as long as the block lives in the model, not as long as its
+	// component stays mounted: culling unmounts a block that keeps its record, so a block that left the
+	// model while unmounted has no other way out of the registry. Called from the props watcher, right
+	// where the selection is trimmed against the model by the very same rule.
+	function pruneGroupableBlocks(groupableBlockIds, blockIdsInModel) {
+		const registered = ui_vue3.toValue(groupableBlockIds) ?? null;
+		const modelIds = ui_vue3.toValue(blockIdsInModel) ?? null;
+		if (registered === null || modelIds === null) {
+			return;
+		}
+		for (const blockId of registered) {
+			if (!modelIds.has(blockId)) {
+				registered.delete(blockId);
+			}
+		}
+	}
+
+	// `enabled` is what the wrapper of a block answers to a consumer flag: while it is false the block
+	// is not written into the registry, so an empty registry keeps the diagram exactly as it was before
+	// this feature.
+	function useGroupable(block = null, enabled = true) {
+		const {
+			groupableBlockIds,
+			blockIntersections,
+			blockIdsInModel,
+			isRenderOptimizationAvailable
+		} = useBlockDiagram();
+		function getOwnBlockId() {
+			return ui_vue3.toValue(block)?.id ?? null;
+		}
+
+		// The node gesture asks this on every press, and it also runs over state a consumer raised
+		// itself - state that may predate the registry. No registry means no containers, which is the
+		// diagram exactly as it was before this feature.
+		function isGroupableBlock(blockId) {
+			return ui_vue3.toValue(groupableBlockIds)?.has(blockId) === true;
+		}
+
+		// A container among the participants is what the raise of a drag is for: a gesture leading
+		// ordinary nodes alone leaves the canvas as flat as it is today. An empty registry never answers
+		// yes, so the rule lives here, beside the registry itself.
+		function hasGroupableBlock(blockIds) {
+			return blockIds.some(blockId => isGroupableBlock(blockId));
+		}
+
+		// A block the model does not have is no part of the diagram: the same markup also mounts outside
+		// the canvas - a consumer drags a preview of a block from its catalog - and the registry belongs
+		// to the whole application. By the time a block of the diagram mounts the model already has it,
+		// so the answer here is the state of the model, not a race with it.
+		function registerGroupableBlock() {
+			const blockId = getOwnBlockId();
+			if (blockId === null) {
+				return;
+			}
+
+			// A mount is the whole declaration of the block, so one that says "no container" takes back
+			// the record of an earlier one. Under render optimization the record outlives the component
+			// on purpose, and the watcher of the flag goes with that component: a flag switched off
+			// while the block was culled has nothing else to answer it.
+			if (ui_vue3.toValue(enabled) !== true) {
+				ui_vue3.toValue(groupableBlockIds)?.delete(blockId);
+				return;
+			}
+			if (ui_vue3.toValue(blockIdsInModel)?.has(blockId) !== true) {
+				return;
+			}
+			ui_vue3.toValue(groupableBlockIds)?.add(blockId);
+		}
+		function unregisterGroupableBlock() {
+			const blockId = getOwnBlockId();
+			if (blockId === null) {
+				return;
+			}
+
+			// Culling unmounts an offscreen block while it stays in the model, and a frame carried off
+			// the screen has to keep carrying its content: the record goes only with the block itself.
+			// A block that is no longer a container is another matter - there the record has nothing to
+			// wait for and goes at once, whether the block is on screen or not.
+			const retain = ui_vue3.toValue(enabled) === true && shouldRetainGeometry(ui_vue3.toValue(isRenderOptimizationAvailable), ui_vue3.toValue(blockIdsInModel), blockId);
+			if (retain) {
+				return;
+			}
+			ui_vue3.toValue(groupableBlockIds)?.delete(blockId);
+		}
+		function searchArea(area) {
+			return blockIntersections.search({
+				minX: area.left,
+				minY: area.top,
+				maxX: area.right,
+				maxY: area.bottom
+			});
+		}
+
+		// Nodes lying entirely inside the container area, compared in model coordinates with
+		// non-strict bounds: a node pressed against the edge counts as inside.
+		function captureContainedBlockIds(container) {
+			const containerId = ui_vue3.toValue(container)?.id ?? null;
+			if (containerId === null || !isGroupableBlock(containerId)) {
+				return [];
+			}
+			const area = modelRect(container);
+			if (area === null) {
+				return [];
+			}
+			const captured = [];
+			for (const candidate of searchArea(area)) {
+				if (candidate.id === containerId) {
+					continue;
+				}
+				if (isGroupableBlock(candidate.id)) {
+					continue;
+				}
+				const rect = modelRect(candidate);
+				if (rect === null) {
+					continue;
+				}
+				if (rect.left >= area.left && rect.top >= area.top && rect.right <= area.right && rect.bottom <= area.bottom) {
+					captured.push(candidate.id);
+				}
+			}
+			return captured;
+		}
+		return {
+			isGroupableBlock,
+			hasGroupableBlock,
+			captureContainedBlockIds,
+			registerGroupableBlock,
+			unregisterGroupableBlock
+		};
+	}
+
+	// The selection is a set: a duplicate in it draws the group frame over a single block. These
+	// operations are the only writers of the list and take the ref itself, so that a caller already
+	// holding it writes by the same rules without a component context of its own.
+
+	function replaceSelection(highlitedBlockIds, blockIds) {
+		// eslint-disable-next-line no-param-reassign
+		highlitedBlockIds.value = [...new Set(blockIds)];
+	}
+	function addToSelection(highlitedBlockIds, blockId) {
+		const selected = ui_vue3.toValue(highlitedBlockIds);
+		if (!selected.includes(blockId)) {
+			selected.push(blockId);
+		}
+	}
+	function removeFromSelection(highlitedBlockIds, blockId) {
+		const selected = ui_vue3.toValue(highlitedBlockIds);
+		const highlitedIndx = selected.indexOf(blockId);
+		if (highlitedIndx > -1) {
+			selected.splice(highlitedIndx, 1);
+		}
+	}
+	function clearSelection(highlitedBlockIds) {
+		// eslint-disable-next-line no-param-reassign
+		highlitedBlockIds.value = [];
+	}
+	function useHighlightedBlocks() {
+		const {
+			highlitedBlockIds
+		} = useBlockDiagram();
+		function replace(blockIds) {
+			replaceSelection(highlitedBlockIds, blockIds);
+		}
+		function add(blockId) {
+			addToSelection(highlitedBlockIds, blockId);
+		}
+		function remove(blockId) {
+			removeFromSelection(highlitedBlockIds, blockId);
+		}
+		function clear() {
+			clearSelection(highlitedBlockIds);
+		}
+		return {
+			highlitedBlockIds,
+			replace,
+			add,
+			remove,
+			clear
 		};
 	}
 
@@ -6102,16 +9303,47 @@ this.BX = this.BX || {};
 		const modelIds = ui_vue3.toValue(blockIdsInModel);
 		const retained = selected.filter(blockId => modelIds.has(blockId));
 		if (retained.length !== selected.length) {
-			// The selection ref is handed in as an argument, same as in actions.js.
-			// eslint-disable-next-line no-param-reassign
-			highlitedBlockIds.value = retained;
+			replaceSelection(highlitedBlockIds, retained);
+		}
+	}
+
+	// Reports a broken pair of bounds, it does not repair one: the state keeps mirroring what the
+	// consumer set, and the camera clamps to its own floor. The property validator sees a single
+	// value, so the pair can only be judged here, where both are visible at once.
+	function warnOnInvalidZoomBounds(minZoom, maxZoom) {
+		if (!isValidMinZoom(minZoom)) {
+			console.error(`ui.block-diagram: minZoom has to be a finite number not below ${ZOOM_FLOOR}`, {
+				minZoom,
+				maxZoom
+			});
+			return;
+		}
+
+		// Infinity is a legal upper bound: it is what the camera itself falls back to for an unreadable
+		// one, and it means the very thing a consumer asks for by it — not limited from above.
+		if (!Number.isFinite(maxZoom) && maxZoom !== Number.POSITIVE_INFINITY) {
+			console.error('ui.block-diagram: maxZoom has to be a finite number or Infinity', {
+				minZoom,
+				maxZoom
+			});
+			return;
+		}
+		if (minZoom > maxZoom) {
+			console.error('ui.block-diagram: minZoom has to be not above maxZoom', {
+				minZoom,
+				maxZoom
+			});
 		}
 	}
 	function useWatchProps(props) {
 		const {
 			blocks,
 			connections,
-			zoom,
+			camera,
+			transformX,
+			transformY,
+			minZoom,
+			maxZoom,
 			snapToGrid,
 			snapSize,
 			canvasGridSize,
@@ -6133,6 +9365,7 @@ this.BX = this.BX || {};
 			isRenderOptimizationAvailable,
 			highlitedBlockIds,
 			blockIdsInModel,
+			groupableBlockIds,
 			connectionRouteHitTestEnabled
 		} = useBlockDiagram();
 		const scope = ui_vue3.effectScope(true);
@@ -6168,6 +9401,7 @@ this.BX = this.BX || {};
 					setUnmountedBlocks(newBlocks, oldBlocks);
 					blocks.value = newBlocks;
 					pruneSelection(highlitedBlockIds, blockIdsInModel);
+					pruneGroupableBlocks(groupableBlockIds, blockIdsInModel);
 					const optimizationEnabled = ui_vue3.toValue(isRenderOptimizationAvailable);
 					const newBlockModel = optimizationEnabled ? buildBlockModel(newBlocks) : null;
 					if (!ui_vue3.toValue(isRunUpdateBlocksCommand)) {
@@ -6203,18 +9437,31 @@ this.BX = this.BX || {};
 				immediate: true,
 				deep: true
 			});
+
+			// The bounds go before the scale below: the camera reads them from the state on every clamp,
+			// so the scale has to meet the bounds of the consumer rather than the defaults of the state.
+			// The diagnostics close the callback because they decide nothing — they must not stand
+			// between the bounds and the state.
+			ui_vue3.watch([() => props.minZoom, () => props.maxZoom], ([newMinZoom, newMaxZoom]) => {
+				minZoom.value = newMinZoom;
+				maxZoom.value = newMaxZoom;
+				warnOnInvalidZoomBounds(newMinZoom, newMaxZoom);
+			}, {
+				immediate: true
+			});
+
+			// The scale belongs to the camera, and the state only ever mirrors what the camera
+			// publishes. Writing the property into the state alone would leave the camera at a scale
+			// of its own until the first gesture, and everything counted off the camera - the frame
+			// of the current view on the map, the shift of a camera move - would be counted at the
+			// wrong one. The landmark carries the transform of the state along so that a consumer
+			// which set it up before mounting does not lose it to the publication.
 			ui_vue3.watch(() => props.zoom, newZoom => {
-				zoom.value = newZoom;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.minZoom, newMinZoom => {
-				zoom.value = newMinZoom;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.maxZoom, newMaxZoom => {
-				zoom.value = newMaxZoom;
+				camera.applyLandmark(camera.createLandmark({
+					x: ui_vue3.toValue(transformX),
+					y: ui_vue3.toValue(transformY),
+					zoom: newZoom
+				}));
 			}, {
 				immediate: true
 			});
@@ -6558,7 +9805,7 @@ this.BX = this.BX || {};
 			// The restored model reaches the state on the next flush, together with the trimming
 			// useWatchProps does, so the kept selection is put back only after that.
 			await ui_vue3.nextTick();
-			highlitedBlockIds.value = selectionBeforeRevert;
+			replaceSelection(highlitedBlockIds, selectionBeforeRevert);
 			pruneSelection(highlitedBlockIds, blockIdsInModel);
 		}
 		async function next() {
@@ -6595,6 +9842,370 @@ this.BX = this.BX || {};
 		};
 	}
 
+	/**
+	 * The cancellations a gesture hears from outside its own pointer stream: Escape, a pointer the
+	 * browser took away and a window that lost focus. Escape belongs to the gesture for as long as it
+	 * lives: the key is taken before the layers above the canvas see it, and they get it back the
+	 * moment the gesture is over.
+	 */
+	function bindCancelPaths(inputState, cancel) {
+		const onPointerCancel = () => cancel();
+		const onBlur = () => cancel();
+		const unsubscribeEscape = inputState.onExclusive(KEY_TOKEN.ESCAPE, () => cancel());
+		main_core.Event.bind(document, 'pointercancel', onPointerCancel);
+		main_core.Event.bind(window, 'blur', onBlur);
+		return () => {
+			main_core.Event.unbind(document, 'pointercancel', onPointerCancel);
+			main_core.Event.unbind(window, 'blur', onBlur);
+			unsubscribeEscape();
+		};
+	}
+
+	// Kept in JS on purpose: chef takes the package language from the entry point (src/index.js), so a
+	// lone .ts source inside this extension would not resolve.
+	const SNAP_MODIFIER_TOKEN = 'shift';
+
+	// Shift asks for snapping. Both mouse and keyboard events carry the flag, so a single predicate
+	// answers for a caller holding an event.
+	function isSnapModifier(event) {
+		return event?.shiftKey === true;
+	}
+	function useSnapModifier() {
+		const {
+			inputState
+		} = useBlockDiagram();
+
+		// The hold is read from the input state, not off the frame event: a frame of the autoscroll
+		// loop has no event of its own, so a key pressed over a motionless pointer would go unnoticed
+		// until the pointer moves again. The state listens to the window, so it stays current anyway.
+		//
+		// The gestures that ask are driven by mouse events while the state corrects its modifiers on
+		// pointer ones. That is in order, not by luck: the browser fires pointerdown/pointermove/
+		// pointerup ahead of their mouse counterparts, so the state is already current when the gesture
+		// reads it. A synthesized mouse event with no pointer event before it would read a stale
+		// modifier - dispatch the pointer event too rather than reading shiftKey off the frame again.
+		return {
+			isPressed: () => inputState.isPressed(SNAP_MODIFIER_TOKEN)
+		};
+	}
+
+	// Where the frame came from: a real pointer move, the autoscroll loop with the pointer standing
+	// still, or the release.
+	const GESTURE_FRAME = Object.freeze({
+		POINTER: 'pointer',
+		CAMERA: 'camera',
+		RELEASE: 'release'
+	});
+	/**
+	 * The lifecycle every canvas gesture shares: entry guards, threshold, subscriptions, cancellation,
+	 * release and commit. What each gesture does differently it says through its spec.
+	 */
+	// eslint-disable-next-line max-lines-per-function
+	function useGestureRunner(spec) {
+		const {
+			isDisabledBlockDiagram,
+			zoom,
+			canvas,
+			setGestureBlocks,
+			resetGestureBlocks,
+			setGestureElevated,
+			resetGestureElevated,
+			startAutoScroll,
+			stopAutoScroll,
+			updateMousePosition,
+			inputState,
+			hooks
+		} = useBlockDiagram();
+		const snapModifier = useSnapModifier();
+		let activeGesture = null;
+		// One counter for the gesture and for the reconciliation: a handler or a reconciliation left
+		// over from a gesture that is gone finds the counter moved on and does nothing.
+		let gestureToken = 0;
+		function getActiveGesture(token) {
+			if (activeGesture?.token !== token || activeGesture.isClosing) {
+				return null;
+			}
+			return activeGesture;
+		}
+		function isBeyondThreshold(gesture, clientX, clientY) {
+			if (spec.threshold <= 0) {
+				return true;
+			}
+			return Math.abs(clientX - gesture.downClient.x) >= spec.threshold || Math.abs(clientY - gesture.downClient.y) >= spec.threshold;
+		}
+		function applyFrame(clientX, clientY, isSnapRequested, source) {
+			activeGesture.lastClient = {
+				x: clientX,
+				y: clientY
+			};
+			activeGesture.isLastFrameSnapped = isSnapRequested;
+			const point = {
+				x: clientX + activeGesture.cameraOffset.x,
+				y: clientY + activeGesture.cameraOffset.y
+			};
+			if (spec.applyFrame(point, isSnapRequested, source, {
+				x: clientX,
+				y: clientY
+			}) === true) {
+				activeGesture.hasAppliedFrame = true;
+			}
+		}
+		function bindGestureHandlers() {
+			const token = activeGesture.token;
+			const handlers = {
+				mouseMove: event => handleMouseMove(token, event),
+				mouseUp: event => finishGesture(token, event),
+				unbindCancelPaths: bindCancelPaths(inputState, () => cancelGesture(token))
+			};
+			activeGesture.handlers = handlers;
+
+			// The window rather than the document: a mouseup dispatched on it by a consumer or by
+			// `BX.fireEvent` never travels down, and a gesture that misses its release stays live.
+			main_core.Event.bind(window, 'mousemove', handlers.mouseMove);
+			main_core.Event.bind(window, 'mouseup', handlers.mouseUp);
+		}
+		function unbindGestureHandlers() {
+			const handlers = activeGesture.handlers;
+			if (handlers === null) {
+				return;
+			}
+			main_core.Event.unbind(window, 'mousemove', handlers.mouseMove);
+			main_core.Event.unbind(window, 'mouseup', handlers.mouseUp);
+			handlers.unbindCancelPaths();
+			activeGesture.handlers = null;
+		}
+
+		// The adapter winds its own side down first, while the shared machinery still stands - but the
+		// teardown is not the adapter's to skip: the gesture holds Escape over the whole page, and a
+		// spec hook that throws would leave that claim standing until the tab is reloaded.
+		function closeGesture() {
+			try {
+				try {
+					spec.onClose();
+				} finally {
+					// The loop of the autoscroll re-arms itself every frame and stops on nothing else:
+					// left running, it carries the camera away until the tab is reloaded.
+					stopAutoScroll();
+				}
+			} finally {
+				unbindGestureHandlers();
+				// The nodes are held in the visible set until the last command has gone out: released
+				// earlier, they would be judged by the pre-gesture boxes the spatial index still holds.
+				resetGestureBlocks();
+				// Beside the composition on purpose: Escape, a lost pointer, a lost focus, a disabled
+				// and an unmounted diagram all close here, and the raise must not outlive any of them.
+				resetGestureElevated();
+				activeGesture = null;
+			}
+		}
+		function cancelActiveGesture() {
+			if (activeGesture === null || activeGesture.isClosing) {
+				return;
+			}
+			activeGesture.isClosing = true;
+
+			// The cancellation is not the revert's to skip: a consumer hook that throws would leave the
+			// gesture live, with the listeners bound and the key held.
+			try {
+				spec.revert();
+			} finally {
+				closeGesture();
+			}
+		}
+		function cancelGesture(token) {
+			if (getActiveGesture(token) === null) {
+				return;
+			}
+			cancelActiveGesture();
+		}
+
+		// Precondition of the extension: the consumer applies `changedBlocks` within this same flush
+		// cycle - the model is read once here, and a command applied later misses the alignment.
+		function scheduleAlignToModel(gesture) {
+			const token = gesture.token;
+			void ui_vue3.nextTick(() => {
+				if (token !== gestureToken || activeGesture !== null) {
+					return;
+				}
+				spec.alignToModel();
+			});
+		}
+
+		// The press turns into a drag here, and only here does the raise reach the state: below the
+		// threshold the press is still a click, and a click that raised its composition for as long as
+		// the button is down would throw the backdrop over the schema and take it back at once.
+		function startDrag(gesture) {
+			gesture.isDragStarted = true;
+			if (!gesture.isElevated) {
+				return;
+			}
+			setGestureElevated(true);
+
+			// The raise reaches the markup on the render that follows this task, and that render
+			// re-applies the style object of every participant - its position among it. The frame drawn
+			// in this same task lives in the markup alone for every participant the spec does not lead
+			// through the model, so it is drawn again once the render is over.
+			void ui_vue3.nextTick(() => {
+				if (getActiveGesture(gesture.token) === null) {
+					return;
+				}
+				spec.redrawMarkup?.();
+			});
+		}
+		function handleMouseMove(token, event) {
+			const gesture = getActiveGesture(token);
+			if (gesture === null) {
+				return;
+			}
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				cancelGesture(token);
+				return;
+			}
+
+			// Below the threshold the press is still a click on the selection.
+			if (!gesture.isDragStarted) {
+				if (!isBeyondThreshold(gesture, event.clientX, event.clientY)) {
+					return;
+				}
+				startDrag(gesture);
+			}
+			updateMousePosition(event);
+			applyFrame(event.clientX, event.clientY, snapModifier.isPressed(), GESTURE_FRAME.POINTER);
+		}
+		function finishGesture(token, event) {
+			const gesture = getActiveGesture(token);
+			if (gesture === null) {
+				return;
+			}
+
+			// The watcher on the disabled state is flushed before the render, so a diagram disabled in
+			// this very tick has not reached it yet.
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				cancelGesture(token);
+				return;
+			}
+
+			// A mouseup can arrive with no coordinates at all - a plain `Event('mouseup')` from a
+			// consumer. Applied as a frame it would put NaN into the geometry, the ports and the model.
+			if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) {
+				cancelGesture(token);
+				return;
+			}
+
+			// A mouseup can carry a position no mousemove has seen, so the threshold is judged against
+			// the release point as well. A gesture with no threshold has nothing to promote.
+			const hasDrawnFrame = gesture.isDragStarted;
+			if (!hasDrawnFrame && spec.threshold > 0 && isBeyondThreshold(gesture, event.clientX, event.clientY)) {
+				startDrag(gesture);
+			}
+			if (gesture.isDragStarted) {
+				// The modifier is taken from the last drawn frame: Shift released an instant before the
+				// button would part the committed position from the drawn one.
+				applyFrame(event.clientX, event.clientY, hasDrawnFrame ? gesture.isLastFrameSnapped : isSnapModifier(event), GESTURE_FRAME.RELEASE);
+			}
+			gesture.isClosing = true;
+			let hasWrittenModel = false;
+
+			// The release is not the commit's to skip: a consumer hook that throws would leave the
+			// gesture live, with the listeners bound and the nodes held.
+			try {
+				if (gesture.hasAppliedFrame) {
+					hasWrittenModel = spec.commit() === true;
+				}
+			} finally {
+				closeGesture();
+			}
+			if (hasWrittenModel) {
+				// Every gesture reports its own end here; one that wrote nothing reports nothing.
+				hooks.endGesture.trigger();
+				scheduleAlignToModel(gesture);
+			}
+		}
+
+		// A readonly template or an animation, any button but the left one, and a gesture still open:
+		// restarting would lose the nodes the open one carries.
+		function acceptsPress(event) {
+			return event.button === MOUSE_BUTTON.LEFT && !ui_vue3.toValue(isDisabledBlockDiagram) && activeGesture === null;
+		}
+		function start(event) {
+			if (!acceptsPress(event)) {
+				return;
+			}
+			event.stopPropagation();
+
+			// Must run before the gesture reads zoom and its anchor point below: a camera transition
+			// still in flight would keep changing both and drag nodes out from under the pointer.
+			canvas.cancelCameraTransition();
+			const targets = spec.resolveTargets(event);
+			if (targets === null || targets.length === 0) {
+				return;
+			}
+
+			// The zoom divides the pointer delta: a zero or non-finite one turns it into NaN.
+			const currentZoom = ui_vue3.toValue(zoom);
+			if (!Number.isFinite(currentZoom) || currentZoom <= 0) {
+				return;
+			}
+			const gesture = {
+				token: ++gestureToken,
+				downClient: {
+					x: event.clientX,
+					y: event.clientY
+				},
+				lastClient: {
+					x: event.clientX,
+					y: event.clientY
+				},
+				cameraOffset: {
+					x: 0,
+					y: 0
+				},
+				isDragStarted: false,
+				isElevated: false,
+				isLastFrameSnapped: false,
+				hasAppliedFrame: false,
+				isClosing: false,
+				handlers: null
+			};
+			activeGesture = gesture;
+			// The nodes of the gesture reach the model only on mouseup, so culling must judge none of
+			// them by the pre-gesture box the spatial index still holds.
+			setGestureBlocks(targets);
+			// Asked once, here, over the composition just resolved - the answer waits for the threshold
+			// and reaches the state in startDrag().
+			gesture.isElevated = spec.elevatesTargets?.(targets) === true;
+			spec.onOpen();
+
+			// The press only arms the autoscroll; the loop starts when the gesture first reports the
+			// pointer - so the camera cannot pan under a press that is still a click on the selection.
+			startAutoScroll(event, (deltaX, deltaY) => {
+				const currentGesture = getActiveGesture(gesture.token);
+				if (currentGesture === null) {
+					return;
+				}
+				currentGesture.cameraOffset.x += deltaX;
+				currentGesture.cameraOffset.y += deltaY;
+				applyFrame(currentGesture.lastClient.x, currentGesture.lastClient.y, snapModifier.isPressed(), GESTURE_FRAME.CAMERA);
+			});
+			bindGestureHandlers();
+		}
+		ui_vue3.watch(isDisabledBlockDiagram, isDisabled => {
+			if (isDisabled) {
+				cancelActiveGesture();
+			}
+		});
+
+		// A gesture torn down without a mouseup would leave the markup where the pointer left it. The
+		// token is bumped on top: the alignment of a release is a microtask and must not outlive it.
+		ui_vue3.onBeforeUnmount(() => {
+			++gestureToken;
+			cancelActiveGesture();
+		});
+		return {
+			start
+		};
+	}
+
 	// Point insertion does not rebalance the tree: targets arriving along a column come in almost
 	// monotonic order and degrade it into a one-sided branch that nearest() walks on every frame of
 	// the ride. The cap has to bound that walk by a constant rather than by the size of the diagram,
@@ -6617,7 +10228,8 @@ this.BX = this.BX || {};
 			transformMouseEventToPoint,
 			startAutoScroll,
 			stopAutoScroll,
-			updateMousePosition
+			updateMousePosition,
+			inputState
 		} = useBlockDiagram();
 		const {
 			block,
@@ -6635,6 +10247,7 @@ this.BX = this.BX || {};
 		let isAutoScrollStarted = false;
 		let stopSnapTargetsWatch = null;
 		let insertsSinceBuild = 0;
+		let unbindCancelPaths = null;
 		const isTargetPort = ui_vue3.computed(() => {
 			const {
 				targetBlockId = null,
@@ -6839,7 +10452,7 @@ this.BX = this.BX || {};
 			// A non-primary press opens a gesture whose mouseup the context menu eats, and a press
 			// over a live gesture leaves its owner with bound handlers, a live watch and an unmount
 			// that would stop the autoscroll of the gesture that replaced it.
-			if (event.button !== 0 || ui_vue3.toValue(newConnection) !== null) {
+			if (event.button !== MOUSE_BUTTON.LEFT || ui_vue3.toValue(newConnection) !== null) {
 				return;
 			}
 			const portRect = getPortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
@@ -6876,17 +10489,19 @@ this.BX = this.BX || {};
 			bindGestureHandlers();
 			startSnapTargetsWatch();
 		}
+
+		// The pointer stream stays private - this gesture drives its own mouse - while everything that
+		// cancels it from outside comes from the shared paths, Escape included.
 		function bindGestureHandlers() {
 			main_core.Event.bind(document, 'mousemove', onMouseMove);
 			main_core.Event.bind(document, 'mouseup', onMouseUp);
-			main_core.Event.bind(document, 'pointercancel', closeGesture);
-			main_core.Event.bind(window, 'blur', closeGesture);
+			unbindCancelPaths = bindCancelPaths(inputState, closeGesture);
 		}
 		function unbindGestureHandlers() {
 			main_core.Event.unbind(document, 'mousemove', onMouseMove);
 			main_core.Event.unbind(document, 'mouseup', onMouseUp);
-			main_core.Event.unbind(document, 'pointercancel', closeGesture);
-			main_core.Event.unbind(window, 'blur', closeGesture);
+			unbindCancelPaths?.();
+			unbindCancelPaths = null;
 		}
 
 		// Winds the gesture down without committing anything. Only the instance that owns the
@@ -6897,25 +10512,31 @@ this.BX = this.BX || {};
 				return;
 			}
 
-			// The autoscroll instance is shared by the whole diagram, so only a gesture that started
-			// it may stop it.
-			if (isAutoScrollStarted) {
-				stopAutoScroll();
+			// The gesture holds Escape over the whole page and draws a connection nothing else clears, so
+			// the teardown is nobody's to skip: whatever the shutdown above it throws, the key goes back
+			// and the drawn connection goes with it - a connection left standing blocks every new one.
+			try {
+				// The autoscroll instance is shared by the whole diagram, so only a gesture that started
+				// it may stop it.
+				if (isAutoScrollStarted) {
+					stopAutoScroll();
+				}
+			} finally {
+				unbindGestureHandlers();
+				unwatchSnapTargets();
+				newConnection.value = null;
+				isSourcePort.value = false;
+				lastMouseEvent = null;
+				isAutoScrollStarted = false;
+				insertsSinceBuild = 0;
+				rejectedTargets.clear();
+				validPortsMap.value = new Map();
+				portsNearest.clear();
+				// Move and resize change the model as they end, and the write path itself asks culling to
+				// catch up. This gesture changes nothing, so the retained source node would stay in the
+				// visible set until the camera moves next.
+				blockIntersections.selectVisibleBlocks();
 			}
-			unbindGestureHandlers();
-			unwatchSnapTargets();
-			newConnection.value = null;
-			isSourcePort.value = false;
-			lastMouseEvent = null;
-			isAutoScrollStarted = false;
-			insertsSinceBuild = 0;
-			rejectedTargets.clear();
-			validPortsMap.value = new Map();
-			portsNearest.clear();
-			// Move and resize change the model as they end, and the write path itself asks culling to
-			// catch up. This gesture changes nothing, so the retained source node would stay in the
-			// visible set until the camera moves next.
-			blockIntersections.selectVisibleBlocks();
 		}
 		function onMouseMove(event) {
 			if (!ui_vue3.toValue(newConnection) || ui_vue3.toValue(isDisabledBlockDiagram)) {
@@ -7042,88 +10663,265 @@ this.BX = this.BX || {};
 		};
 	}
 
+	function useLoc() {
+		const app = ui_vue3.getCurrentInstance()?.appContext.app;
+		const bitrix = app?.config?.globalProperties?.$bitrix ?? null;
+		return {
+			getMessage: (messageId, replacements) => {
+				return bitrix?.Loc?.getMessage(messageId, replacements);
+			}
+		};
+	}
+
+	// Keep in step with the animation in moveable-block.css: the modifier has to outlive the flash,
+	// otherwise the outline is cut off mid-fade.
+	const DISPLACED_STATE_DURATION_MS = 900;
+
+	// The outline says nothing to a screen reader, so the same two facts go out through the shared live
+	// region: a position was corrected, or there was no room and the operation was given up. Both are
+	// announced when the state is set, so the channel does not depend on the flash timer.
+	const DISPLACED_MESSAGE_ID = 'UI_BLOCK_DIAGRAM_A11Y_BLOCK_DISPLACED';
+	const PLACEMENT_REFUSED_MESSAGE_ID = 'UI_BLOCK_DIAGRAM_A11Y_PLACEMENT_REFUSED';
+
+	// The handle of the expiry timer: an implementation detail of this composable alone, so it is kept
+	// here and not in the state the consumer reads through `useBlockDiagram`. Keyed by the reference of
+	// the diagram it belongs to - every caller of `useDisplacedBlocks` builds a closure of its own, and
+	// the timer one of them started has to be cancellable by the next; two diagrams on one page keep
+	// their timers apart, exactly as they did while the handle was part of their state.
+	const resetTimerIdByChannel = new WeakMap();
+	function useDisplacedBlocks(options = {}) {
+		const {
+			durationMs = DISPLACED_STATE_DURATION_MS,
+			// Bound to the global object: the native timers throw on a bare reference. Injection for
+			// tests with fake clocks takes precedence, as in AnimationStepController.
+			setTimeoutFn = globalThis.setTimeout.bind(globalThis),
+			clearTimeoutFn = globalThis.clearTimeout.bind(globalThis)
+		} = options;
+		const {
+			displacedBlockIds,
+			isPlacementRefused
+		} = useBlockDiagram();
+		const loc = useLoc();
+
+		// Two identical announcements in a row do reach the reader: LiveAnnouncer empties the live region
+		// and fills it again a frame later, and it drops a repeat only while the previous one is still
+		// queued unspoken. So no counter or separator is added here on purpose - one would defeat that
+		// very guard against a burst of gestures.
+		function announce(messageId) {
+			const message = loc.getMessage(messageId);
+
+			// A consumer that gave the application no localization plugin gets no announcement, not an
+			// empty live region put into its page.
+			if (!main_core.Type.isStringFilled(message)) {
+				return;
+			}
+			ui_a11y.LiveAnnouncer.announce(message, 'polite');
+		}
+		function cancelReset() {
+			const timerId = resetTimerIdByChannel.get(displacedBlockIds) ?? null;
+			if (timerId !== null) {
+				clearTimeoutFn(timerId);
+				resetTimerIdByChannel.delete(displacedBlockIds);
+			}
+		}
+		function clear() {
+			cancelReset();
+			displacedBlockIds.value = [];
+			isPlacementRefused.value = false;
+		}
+
+		// A displacement has no lifecycle of its own to hang the reset on, so the state expires on a
+		// timer. A newer answer replaces the whole set and restarts the countdown.
+		function lightChannel(blockIds, refused) {
+			if (blockIds.length === 0) {
+				return;
+			}
+			cancelReset();
+			displacedBlockIds.value = [...new Set(blockIds)];
+			isPlacementRefused.value = refused;
+			resetTimerIdByChannel.set(displacedBlockIds, setTimeoutFn(() => {
+				clear();
+			}, durationMs));
+		}
+		function mark(blockIds) {
+			if (blockIds.length === 0) {
+				return;
+			}
+			lightChannel(blockIds, false);
+			announce(DISPLACED_MESSAGE_ID);
+		}
+
+		// The refusal of an operation that never reached the model: a dropped or pasted node exists
+		// nowhere, so there is nothing to outline and the announcement is the whole feedback.
+		function announceRefusal() {
+			announce(PLACEMENT_REFUSED_MESSAGE_ID);
+		}
+
+		// The refusal of an operation that has nodes to point at: they are marked where they came back
+		// to, and the announcement tells why they stayed there.
+		function markRefused(blockIds) {
+			lightChannel(blockIds, true);
+			announceRefusal();
+		}
+		function isInChannel(blockId) {
+			return ui_vue3.toValue(displacedBlockIds).includes(blockId);
+		}
+
+		// "Moved out of the way" and "there was no room" are two different answers, so they light two
+		// different modifiers: a block that stayed where it was must not flash the same way as one the
+		// rule has just carried aside.
+		function isBlockDisplaced(blockId) {
+			return isInChannel(blockId) && !ui_vue3.toValue(isPlacementRefused);
+		}
+		function isBlockPlacementRefused(blockId) {
+			return isInChannel(blockId) && ui_vue3.toValue(isPlacementRefused) === true;
+		}
+		return {
+			displacedBlockIds,
+			mark,
+			markRefused,
+			announceRefusal,
+			clear,
+			isBlockDisplaced,
+			isBlockPlacementRefused
+		};
+	}
+
+	// Under culling an off-screen block never mounts, so waitAllBlocksMounted never
+	// resolves and the deferred updatePortSegmentSizes in onMountedPort never runs — the
+	// port keeps zero-length segments and its retained routing geometry stays empty. The
+	// block's ports mount before it (children before parent) and its rect is written just
+	// above, so compute the segments here directly, bypassing the global barrier (the same
+	// direct-compute precedent as connections-queue-transition.js). The promise path stays
+	// and recomputes idempotently if the barrier ever resolves. Order comes from the rect
+	// captured at port mount, matching the order the drawing path uses.
+	function measurePortSegments(blockId, portsRectMap, updatePortSegmentSizes) {
+		const portsRect = portsRectMap[blockId];
+		if (!portsRect) {
+			return;
+		}
+		for (const portId of Object.keys(portsRect)) {
+			updatePortSegmentSizes(blockId, portId, portsRect[portId].order ?? 0);
+		}
+	}
+	// Whether the rect a mount just measured is the one already stored.
+	function isMeasuredAgain(blocksRectMap, blockId, rect) {
+		const stored = getOwnRecord(blocksRectMap, blockId);
+		return stored?.x === rect.x && stored.y === rect.y && stored.width === rect.width && stored.height === rect.height;
+	}
+	// The only place turning block state into a stacking step. Hover is checked before the drag: the
+	// node being dragged is under the cursor anyway and has to stand above the rest, so the hovered
+	// step replaces MOVABLE for it. The raise is one and the same addition for every participant, so
+	// the order inside a raised set is the order it already had.
+	function resolveBlockZIndex(block, state) {
+		const elevation = state.isElevated === true ? BLOCK_INDEXES.ELEVATION_OFFSET : 0;
+
+		// A block with a resting step of its own skips hover and selection: the backdrop passed through
+		// them would cover the very nodes it stands behind on a plain move of the pointer.
+		if (Number.isFinite(state.restingZIndex)) {
+			return state.restingZIndex + elevation;
+		}
+		if (state.hoveredBlockId === block.id) {
+			return BLOCK_INDEXES.HOVERED + elevation;
+		}
+		if (state.movingBlockId === block.id) {
+			return BLOCK_INDEXES.MOVABLE + elevation;
+		}
+		if (state.isHighlighted) {
+			return BLOCK_INDEXES.HIGHLITED + elevation;
+		}
+		return BLOCK_INDEXES.STANDING + elevation;
+	}
 	function useBlockState(options) {
 		const {
 			block,
-			blockRef
+			blockRef,
+			restingZIndex = null
 		} = options;
 		const {
 			blockElMap,
 			blocksRectMap,
 			isDisabledBlockDiagram,
 			movingBlockId,
+			hoveredBlockId,
+			gestureBlockIds,
+			isGestureElevated,
 			blockMounted,
 			isRenderOptimizationAvailable,
 			blockIdsInModel,
 			updatePortSegmentSizes,
-			portsRectMap
+			portsRectMap,
+			resetHoveredBlock
 		} = useBlockDiagram();
 		const {
 			isBlockVisuallyHighlighted
 		} = useTransientHighlightedBlocks();
+		const {
+			isBlockDisplaced,
+			isBlockPlacementRefused
+		} = useDisplacedBlocks();
 		const isHiglitedBlock = ui_vue3.computed(() => {
 			return isBlockVisuallyHighlighted(ui_vue3.toValue(block)?.id);
+		});
+		const isDisplacedBlock = ui_vue3.computed(() => {
+			return isBlockDisplaced(ui_vue3.toValue(block)?.id);
+		});
+		const isPlacementRefusedBlock = ui_vue3.computed(() => {
+			return isBlockPlacementRefused(ui_vue3.toValue(block)?.id);
 		});
 		const isDisabled = ui_vue3.computed(() => {
 			return ui_vue3.toValue(isDisabledBlockDiagram);
 		});
-		const blockZindex = ui_vue3.computed(() => {
-			if (ui_vue3.toValue(movingBlockId) === ui_vue3.toValue(block).id) {
-				return {
-					zIndex: BLOCK_INDEXES.MOVABLE
-				};
-			}
-			if (ui_vue3.toValue(isHiglitedBlock)) {
-				return {
-					zIndex: BLOCK_INDEXES.HIGHLITED
-				};
-			}
-			return {
-				zIndex: BLOCK_INDEXES.STANDING
-			};
+
+		// Both values it reads change twice per gesture - at the press and at the close - so a raise
+		// costs two recomputes, not one per frame.
+		const isElevatedBlock = ui_vue3.computed(() => {
+			return ui_vue3.toValue(isGestureElevated) === true && ui_vue3.toValue(gestureBlockIds).has(ui_vue3.toValue(block)?.id);
 		});
 
-		// Under culling an off-screen block never mounts, so waitAllBlocksMounted never
-		// resolves and the deferred updatePortSegmentSizes in onMountedPort never runs — the
-		// port keeps zero-length segments and its retained routing geometry stays empty. The
-		// block's ports mount before it (children before parent) and its rect is written just
-		// above, so compute the segments here directly, bypassing the global barrier (the same
-		// direct-compute precedent as connections-queue-transition.js). The promise path stays
-		// and recomputes idempotently if the barrier ever resolves. Order comes from the rect
-		// captured at port mount, matching the order the drawing path uses.
-		function measurePortSegments(blockId) {
-			const portsRect = ui_vue3.toValue(portsRectMap)[blockId];
-			if (!portsRect) {
-				return;
-			}
-			for (const portId of Object.keys(portsRect)) {
-				updatePortSegmentSizes(blockId, portId, portsRect[portId].order ?? 0);
-			}
-		}
+		// The step itself, not a style object: an unchanged number stops the change from spreading,
+		// so a hover redraws only the nodes whose step actually moved. A fresh object literal never
+		// compares equal and would redraw every mounted node of the canvas.
+		const blockZindex = ui_vue3.computed(() => {
+			return resolveBlockZIndex(ui_vue3.toValue(block), {
+				hoveredBlockId: ui_vue3.toValue(hoveredBlockId),
+				movingBlockId: ui_vue3.toValue(movingBlockId),
+				isHighlighted: ui_vue3.toValue(isHiglitedBlock),
+				isElevated: ui_vue3.toValue(isElevatedBlock),
+				restingZIndex: ui_vue3.toValue(restingZIndex)
+			});
+		});
 		function onMountedBlock() {
 			const blockId = ui_vue3.toValue(block).id;
 			if (!ui_vue3.toValue(blockElMap).has(blockId)) {
 				ui_vue3.toValue(blockElMap).set(blockId, ui_vue3.toValue(blockRef));
 			}
-			const {
-				x = 0,
-				y = 0,
-				width = 0,
-				height = 0
-			} = getCanvasRect(ui_vue3.toValue(blockRef)) ?? {};
-			blocksRectMap.value[blockId] = {
-				x,
-				y,
-				width,
-				height
+			const rect = getCanvasRect(ui_vue3.toValue(blockRef)) ?? {
+				x: 0,
+				y: 0,
+				width: 0,
+				height: 0
 			};
+
+			// A remount under culling measures the very same rect; writing a new object anyway wakes
+			// every reader of the measured geometry - the overview map rebuilds all of its rectangles.
+			if (!isMeasuredAgain(blocksRectMap.value, blockId, rect)) {
+				blocksRectMap.value[blockId] = rect;
+			}
 			if (ui_vue3.toValue(isRenderOptimizationAvailable)) {
-				measurePortSegments(blockId);
+				measurePortSegments(blockId, ui_vue3.toValue(portsRectMap), updatePortSegmentSizes);
 			}
 			blockMounted(blockId);
 		}
 		function onUnmountedBlock() {
 			const blockId = ui_vue3.toValue(block).id;
+
+			// The browser sends no mouseleave for an element taken out of the DOM, so a node unmounted
+			// while raised (deleted, or culled off-screen) would keep the state and come back raised
+			// with the cursor elsewhere. Guarded like the leave: only the raised node clears it.
+			if (ui_vue3.toValue(hoveredBlockId) === blockId) {
+				resetHoveredBlock();
+			}
 			ui_vue3.toValue(blockElMap).delete(blockId);
 
 			// Retain measured rect while the node stays in the model under culling
@@ -7135,6 +10933,8 @@ this.BX = this.BX || {};
 		}
 		return {
 			isHiglitedBlock,
+			isDisplacedBlock,
+			isPlacementRefusedBlock,
 			isDisabled,
 			blockZindex,
 			onMountedBlock,
@@ -7144,69 +10944,57 @@ this.BX = this.BX || {};
 
 	// Kept in JS on purpose: chef takes the package language from the entry point (src/index.js), so a
 	// lone .ts source inside this extension would not resolve.
-	// Shift asks for snapping. Both mouse and keyboard events carry the flag, so a single predicate
-	// answers for a caller holding an event and for the state tracked below.
-	function isSnapModifier(event) {
-		return event?.shiftKey === true;
-	}
-
-	// The modifier is tracked for the window, not read off the frame event: a frame of the autoscroll
-	// loop has no event of its own, so a key pressed over a motionless pointer would go unnoticed
-	// until the pointer moves again.
-	let isModifierPressed = false;
-	let trackerCount = 0;
-	const onKeyChange = event => {
-		isModifierPressed = isSnapModifier(event);
-	};
-
-	// A window that loses focus never delivers the keyup, so a held modifier would stay pressed.
-	const onWindowBlur = () => {
-		isModifierPressed = false;
-	};
-	function addTracker() {
-		trackerCount += 1;
-		if (trackerCount > 1) {
-			return;
+	// How many candidate corrections one operation may examine. A schema dense enough to exhaust this
+	// has no free room near the point aimed at, and the answer "nowhere" comes sooner than a search
+	// over the whole canvas would. The budget belongs to the rule, not to a diagram: a consumer able to
+	// widen it would be able to trade a frozen canvas for a placement no user waits for.
+	const PLACEMENT_SEARCH_BUDGET = 64;
+	/**
+	 * The rule of placement over the state of the canvas: it answers where a set of blocks may stand and
+	 * writes nothing. Participants come in model coordinates, already at the position the operation aims
+	 * at, and the answer is one shift for the whole set - zero when the set may stay, null when no free
+	 * room was found within the budget.
+	 */
+	function useBlockPlacement() {
+		const {
+			blockIntersections,
+			snapStep
+		} = useBlockDiagram();
+		const {
+			isGroupableBlock
+		} = useGroupable();
+		function obstacleRect(block) {
+			const source = ui_vue3.toValue(block);
+			const rect = modelBlockRect(ui_vue3.toValue(source?.position), ui_vue3.toValue(source?.dimensions));
+			return rect === null ? null : {
+				id: source.id,
+				...rect
+			};
 		}
-		main_core.Event.bind(window, 'keydown', onKeyChange);
-		main_core.Event.bind(window, 'keyup', onKeyChange);
-		main_core.Event.bind(window, 'blur', onWindowBlur);
-	}
-	function removeTracker() {
-		trackerCount -= 1;
-		if (trackerCount > 0) {
-			return;
-		}
-		main_core.Event.unbind(window, 'keydown', onKeyChange);
-		main_core.Event.unbind(window, 'keyup', onKeyChange);
-		main_core.Event.unbind(window, 'blur', onWindowBlur);
-		isModifierPressed = false;
-	}
-	function useSnapModifier() {
-		// The listeners live only while a gesture needs them: every consumer keeps its own
-		// subscription, so it is released exactly once whatever ends the gesture.
-		let isTracking = false;
-		return {
-			isPressed: () => isModifierPressed,
-			// A mouse event carries the modifier itself, so every frame corrects the tracked state -
-			// including a Shift toggled while the window was out of focus.
-			sync: event => {
-				isModifierPressed = isSnapModifier(event);
-			},
-			startTracking: () => {
-				if (isTracking) {
-					return;
+
+		// The index is the broad phase alone: it boxes blocks non-strictly, and during a gesture it still
+		// holds the pre-gesture boxes of the participants. The strict rule and the filter by participant
+		// id run above, over what comes back from here.
+		function searchObstacles(rect) {
+			const obstacles = [];
+			for (const block of blockIntersections.search(toSearchRect(rect))) {
+				const obstacle = obstacleRect(block);
+				if (obstacle !== null) {
+					obstacles.push(obstacle);
 				}
-				isTracking = true;
-				addTracker();
-			},
-			stopTracking: () => {
-				if (!isTracking) {
-					return;
-				}
-				isTracking = false;
-				removeTracker();
 			}
+			return obstacles;
+		}
+		function resolvePlacementDelta(participants, request = {}) {
+			const {
+				followsGrid = false,
+				backdropIds = null
+			} = request;
+			const isBackdrop = backdropIds === null ? isGroupableBlock : blockId => isGroupableBlock(blockId) || backdropIds.has(blockId);
+			return findPlacementDelta(participants, searchObstacles, isBackdrop, followsGrid ? ui_vue3.toValue(snapStep) : null, PLACEMENT_SEARCH_BUDGET);
+		}
+		return {
+			resolvePlacementDelta
 		};
 	}
 
@@ -7218,17 +11006,14 @@ this.BX = this.BX || {};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
-	function useMoveableBlock(blockRef, block) {
+	function useMoveableBlock(blockRef, block, options = {}) {
 		const isDragged = ui_vue3.ref(false);
 		const {
-			isDisabledBlockDiagram,
 			zoom,
 			updateBlock,
 			hooks,
 			setMovingBlock,
 			resetMovingBlock,
-			setGestureBlocks,
-			resetGestureBlocks,
 			setPortOffsetByBlockId,
 			updateBlockRectById,
 			getBlockById,
@@ -7236,27 +11021,36 @@ this.BX = this.BX || {};
 			blocksRectMap,
 			blockElMap,
 			highlitedBlockIds,
-			startAutoScroll,
-			stopAutoScroll,
-			updateMousePosition,
 			connectionPreview,
 			clearConnectionPreview,
 			snapPoint
 		} = useBlockDiagram();
-		const snapModifier = useSnapModifier();
+		const {
+			captureContainedBlockIds,
+			hasGroupableBlock
+		} = useGroupable();
+		const {
+			resolvePlacementDelta
+		} = useBlockPlacement();
+		const {
+			mark: markDisplacedBlocks,
+			markRefused: markRefusedBlocks
+		} = useDisplacedBlocks();
 		const x = ui_vue3.ref(ui_vue3.toValue(block).position.x);
 		const y = ui_vue3.ref(ui_vue3.toValue(block).position.y);
-		let activeGesture = null;
-		let nextGestureToken = 0;
-		let reconciliationToken = 0;
+		let primaryBlock = null;
+		let groupBlocks = [];
+		let offsetX = 0;
+		let offsetY = 0;
+		let gestureZoom = 1;
+		// Whether the last drawn frame snapped the position: the release commits the position that frame
+		// drew, so the correction of the placement rule is rounded to the grid on the very same terms.
+		let isLastFrameSnapped = false;
+		let stagedPreviewKey = null;
+		let isPreviewKeyStaged = false;
 		ui_vue3.watchEffect(() => {
 			x.value = ui_vue3.toValue(block).position.x;
 			y.value = ui_vue3.toValue(block).position.y;
-		});
-		ui_vue3.watch(isDisabledBlockDiagram, isDisabled => {
-			if (isDisabled && activeGesture !== null) {
-				cancelGesture(activeGesture.token);
-			}
 		});
 		const blockPositionStyle = ui_vue3.computed(() => {
 			return {
@@ -7279,10 +11073,29 @@ this.BX = this.BX || {};
 			};
 		}
 
+		// Nodes lying inside a container that takes part in the press. They join the gesture as ordinary
+		// members, so no second mechanism carries them: the union goes by block id, and a node already
+		// taking part - the pressed one or a selected one - is not taken a second time. With an empty
+		// container registry the capture answers without a single lookup in the intersections index.
+		function collectCapturedBlocks(containers, participantIds) {
+			const capturedIds = new Set();
+			for (const container of containers) {
+				for (const capturedId of captureContainedBlockIds(container)) {
+					capturedIds.add(capturedId);
+				}
+			}
+			for (const participantId of participantIds) {
+				capturedIds.delete(participantId);
+			}
+			if (capturedIds.size === 0) {
+				return [];
+			}
+			return ui_vue3.toValue(allBlocksRef).filter(item => capturedIds.has(ui_vue3.toValue(item).id));
+		}
+
 		// Geometry entries are updated, never created: the geometry of a node may have been purged on
 		// purpose, and a merge over a missing entry would resurrect it. The size of the gesture snapshot
-		// only fills an entry that has none - it falls back to zero when nothing was measured at the
-		// press, and it goes stale as soon as the node is measured again during the gesture.
+		// only fills an entry that has none.
 		function updateGestureBlockRect(gestureBlock, position) {
 			const storedRect = ui_vue3.toValue(blocksRectMap)?.[gestureBlock.id];
 			if (!main_core.Type.isObjectLike(storedRect)) {
@@ -7300,6 +11113,13 @@ this.BX = this.BX || {};
 			}
 			updateBlockRectById(gestureBlock.id, rect);
 		}
+		function drawBlockMarkup(blockId, position) {
+			const blockElement = ui_vue3.toValue(blockElMap)?.get(blockId);
+			if (blockElement) {
+				main_core.Dom.style(blockElement, 'left', `${position.x}px`);
+				main_core.Dom.style(blockElement, 'top', `${position.y}px`);
+			}
+		}
 		function updateLocalPosition(gestureBlock, position) {
 			const deltaX = position.x - gestureBlock.currentPosition.x;
 			const deltaY = position.y - gestureBlock.currentPosition.y;
@@ -7308,11 +11128,7 @@ this.BX = this.BX || {};
 				x.value = position.x;
 				y.value = position.y;
 			} else {
-				const blockElement = ui_vue3.toValue(blockElMap)?.get(gestureBlock.id);
-				if (blockElement) {
-					main_core.Dom.style(blockElement, 'left', `${position.x}px`);
-					main_core.Dom.style(blockElement, 'top', `${position.y}px`);
-				}
+				drawBlockMarkup(gestureBlock.id, position);
 			}
 			updateGestureBlockRect(gestureBlock, position);
 			if (deltaX !== 0 || deltaY !== 0) {
@@ -7322,109 +11138,28 @@ this.BX = this.BX || {};
 				});
 			}
 		}
-		function isBeyondDragThreshold(gesture, clientX, clientY) {
-			return Math.abs(clientX - gesture.downClientX) >= DRAG_START_THRESHOLD || Math.abs(clientY - gesture.downClientY) >= DRAG_START_THRESHOLD;
-		}
-		function getPointerPosition(gesture, clientX, clientY, isSnapRequested) {
-			return snapPoint({
-				x: Math.round((clientX - gesture.offsetX) / gesture.zoom),
-				y: Math.round((clientY - gesture.offsetY) / gesture.zoom)
-			}, isSnapRequested);
-		}
-		function applyPointerPosition(gesture, clientX, clientY, notifyMove, notifyUnchanged = false, isSnapRequested = false) {
-			const newPosition = getPointerPosition(gesture, clientX, clientY, isSnapRequested);
-			const deltaX = newPosition.x - gesture.primaryBlock.currentPosition.x;
-			const deltaY = newPosition.y - gesture.primaryBlock.currentPosition.y;
-			const changed = deltaX !== 0 || deltaY !== 0;
-			gesture.lastClientX = clientX;
-			gesture.lastClientY = clientY;
-			gesture.isLastFrameSnapped = isSnapRequested;
-			if (changed) {
-				updateLocalPosition(gesture.primaryBlock, newPosition);
-				for (const groupBlock of gesture.groupBlocks) {
-					updateLocalPosition(groupBlock, {
-						x: groupBlock.currentPosition.x + deltaX,
-						y: groupBlock.currentPosition.y + deltaY
-					});
-				}
-				gesture.hasMoved = true;
-			}
-			if ((changed || notifyUnchanged)) {
-				hooks.moveDragBlock.trigger(block);
-			}
-			return changed;
-		}
-		function getActiveGesture(token) {
-			if (activeGesture?.token !== token || activeGesture.isClosing) {
-				return null;
-			}
-			return activeGesture;
-		}
-		function bindGestureHandlers(gesture) {
-			gesture.handlers = {
-				mouseMove: event => handleMouseMove(gesture.token, event),
-				mouseUp: event => finishGesture(gesture.token, event),
-				pointerCancel: () => cancelGesture(gesture.token),
-				keyDown: event => {
-					if (event.key === 'Escape') {
-						cancelGesture(gesture.token);
-					}
-				},
-				blur: () => cancelGesture(gesture.token)
-			};
-			main_core.Event.bind(document, 'mousemove', gesture.handlers.mouseMove);
-			main_core.Event.bind(document, 'mouseup', gesture.handlers.mouseUp);
-			main_core.Event.bind(document, 'pointercancel', gesture.handlers.pointerCancel);
-			main_core.Event.bind(document, 'keydown', gesture.handlers.keyDown);
-			main_core.Event.bind(window, 'blur', gesture.handlers.blur);
-		}
-		function unbindGestureHandlers(gesture) {
-			if (gesture.handlers === null) {
+
+		// Read before the commands go out: a consumer applying them may activate a preview of its own,
+		// and this gesture must not put out an activation newer than the one it opened.
+		function stagePreviewActivationKey() {
+			if (isPreviewKeyStaged) {
 				return;
 			}
-			main_core.Event.unbind(document, 'mousemove', gesture.handlers.mouseMove);
-			main_core.Event.unbind(document, 'mouseup', gesture.handlers.mouseUp);
-			main_core.Event.unbind(document, 'pointercancel', gesture.handlers.pointerCancel);
-			main_core.Event.unbind(document, 'keydown', gesture.handlers.keyDown);
-			main_core.Event.unbind(window, 'blur', gesture.handlers.blur);
-			gesture.handlers = null;
-		}
-		function getCurrentPreviewActivationKey() {
 			const activationKey = ui_vue3.toValue(connectionPreview)?.activationKey;
-			return main_core.Type.isStringFilled(activationKey) ? activationKey : null;
+			stagedPreviewKey = main_core.Type.isStringFilled(activationKey) ? activationKey : null;
+			isPreviewKeyStaged = true;
 		}
-		function clearGesturePreview(activationKey) {
+		function clearStagedPreview() {
+			const activationKey = stagedPreviewKey;
+			stagedPreviewKey = null;
+			isPreviewKeyStaged = false;
 			if (activationKey !== null) {
 				clearConnectionPreview(activationKey);
 			}
 		}
-		function closeGesture(gesture) {
-			stopAutoScroll();
-			snapModifier.stopTracking();
-			unbindGestureHandlers(gesture);
-			resetMovingBlock();
-			resetGestureBlocks();
-			isDragged.value = false;
-			activeGesture = null;
-		}
-		function cancelGesture(token) {
-			const gesture = getActiveGesture(token);
-			if (gesture === null) {
-				return;
-			}
-			gesture.isClosing = true;
-			const previewActivationKey = getCurrentPreviewActivationKey();
-			updateLocalPosition(gesture.primaryBlock, gesture.primaryBlock.originalPosition);
-			for (const groupBlock of gesture.groupBlocks) {
-				updateLocalPosition(groupBlock, groupBlock.originalPosition);
-			}
-			closeGesture(gesture);
-			clearGesturePreview(previewActivationKey);
-		}
 
-		// The command carries the content of the live model and the position the gesture arrived at:
-		// the content read from the component input would be the copy the visible-set selection took
-		// on the previous frame, so a node edited during the gesture would be overwritten on commit.
+		// The content comes from the live model: the component input lags it by a frame under render
+		// optimization, so a node edited during the gesture would be overwritten on commit.
 		function createUpdatedBlock(gestureBlock) {
 			const modelBlock = getBlockById(gestureBlock.id);
 			if (modelBlock === null) {
@@ -7439,22 +11174,14 @@ this.BX = this.BX || {};
 			};
 		}
 
-		// The end of the gesture is part of the public contract of the extension, so it is reported even
-		// when the node has left the model and no command was built: a consumer waits for this event to
-		// close a gesture of its own. With no model block the input is all there is to name the node by.
-		function commitPrimaryBlock(gestureBlock) {
-			const updatedBlock = createUpdatedBlock(gestureBlock);
-			if (updatedBlock) {
-				updateBlock(updatedBlock);
-			}
+		// Reported even when the node has left the model and no command was built: a consumer closes a
+		// gesture of its own by this event.
+		function reportGestureEnd(updatedBlock) {
 			hooks.endDragBlock.trigger(updatedBlock ?? ui_vue3.toValue(block));
 		}
 
-		// The model is the truth about where a node stands, so after the gesture the measured
-		// geometry is brought to the model position instead of arbitrating between the gesture
-		// result and the component input: that input comes from the visible-set selection, which
-		// lags the model by a frame under render optimization. A consumer that refused the move
-		// left the previous position in the model, and the alignment returns the geometry to it.
+		// After the gesture the measured geometry is brought to the model position: a consumer that
+		// refused the move left the previous position there.
 		function alignGeometryToModel(gestureBlock) {
 			const modelBlock = getBlockById(gestureBlock.id);
 			if (modelBlock === null) {
@@ -7472,169 +11199,196 @@ this.BX = this.BX || {};
 			}
 			updateLocalPosition(gestureBlock, modelPosition);
 		}
-
-		// Precondition of the extension: the consumer applies `changedBlocks` within this same flush
-		// cycle - the model is read once here, and a command applied later misses the alignment.
-		function schedulePositionReconciliation(gesture) {
-			const token = ++reconciliationToken;
-			void ui_vue3.nextTick(() => {
-				if (token !== reconciliationToken || activeGesture !== null) {
-					return;
-				}
-				for (const gestureBlock of [gesture.primaryBlock, ...gesture.groupBlocks]) {
-					alignGeometryToModel(gestureBlock);
-				}
-			});
+		function hasLeftStartPosition() {
+			return primaryBlock.currentPosition.x !== primaryBlock.originalPosition.x || primaryBlock.currentPosition.y !== primaryBlock.originalPosition.y;
 		}
-		function finishGesture(token, event) {
-			const gesture = getActiveGesture(token);
-			if (gesture === null) {
-				return;
-			}
-			event.stopPropagation();
-			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-				cancelGesture(token);
-				return;
-			}
 
-			// A mouseup can carry a position no mousemove has seen, so the threshold is judged against
-			// the release point as well: a press that ends far from where it started is a drag even
-			// without a single move frame. Below the threshold the press stays a selection - the block
-			// never followed the pointer, and committing the release would move a block nobody dragged,
-			// with snapping on onto a grid node it did not stand on.
-			const hasDrawnFrame = gesture.isDragStarted;
-			if (!hasDrawnFrame && isBeyondDragThreshold(gesture, event.clientX, event.clientY)) {
-				gesture.isDragStarted = true;
-			}
-			if (gesture.isDragStarted) {
-				// The modifier is taken from the last applied frame rather than from this mouseup: Shift
-				// released an instant before the button would part the committed position from the drawn
-				// one. With no frame drawn there is nothing to keep in step, so the release decides.
-				applyPointerPosition(gesture, event.clientX, event.clientY, true, false, hasDrawnFrame ? gesture.isLastFrameSnapped : isSnapModifier(event));
-			}
-			gesture.isClosing = true;
-			const previewActivationKey = getCurrentPreviewActivationKey();
-			stopAutoScroll();
-			unbindGestureHandlers(gesture);
-
-			// The commands go out first and the gesture is released after them, but the release is not
-			// theirs to skip: a consumer hook that throws would leave the moving node and the retention
-			// standing for good, and the next press would find a gesture still active. The exception
-			// itself is not the extension's to handle and goes on to the consumer.
-			try {
-				if (gesture.hasMoved) {
-					for (const groupBlock of gesture.groupBlocks) {
-						const updatedBlock = createUpdatedBlock(groupBlock);
-						if (updatedBlock) {
-							updateBlock(updatedBlock);
-							hooks.endDragBlock.trigger(updatedBlock);
-						}
-					}
-					commitPrimaryBlock(gesture.primaryBlock);
-				}
-			} finally {
-				closeGesture(gesture);
-				clearGesturePreview(previewActivationKey);
-			}
-			if (gesture.hasMoved) {
-				schedulePositionReconciliation(gesture);
-			}
-		}
-		function handleMouseMove(token, event) {
-			const gesture = getActiveGesture(token);
-			if (gesture === null) {
-				return;
-			}
-			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-				cancelGesture(token);
-				return;
-			}
-			event.stopPropagation();
-
-			// Below the threshold the press is still a selection, so the block must not follow the
-			// pointer: snapping would pull a block standing between grid nodes onto the nearest one on
-			// the shake of a hand, which is a move nobody asked for.
-			if (!gesture.isDragStarted) {
-				if (!isBeyondDragThreshold(gesture, event.clientX, event.clientY)) {
-					return;
-				}
-				gesture.isDragStarted = true;
-			}
-			snapModifier.sync(event);
-			updateMousePosition(event);
-			applyPointerPosition(gesture, event.clientX, event.clientY, true, true, snapModifier.isPressed());
-		}
-		function onMouseDown(event) {
-			if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram) || activeGesture !== null) {
-				return;
-			}
-			event.stopPropagation();
-			++reconciliationToken;
+		// The pressed node plus the rest of the selection it belongs to. The pressed node leads: it is
+		// the one whose position is written reactively.
+		function resolveTargets(event) {
 			const blockValue = ui_vue3.toValue(block);
 			const blockId = blockValue.id;
-			const selectedIds = ui_vue3.toValue(highlitedBlockIds);
-			const isSelected = selectedIds.includes(blockId);
-			if (!isSelected) {
-				highlitedBlockIds.value = [blockId];
+			const groupIds = ui_vue3.toValue(highlitedBlockIds);
+			const selectedBlocks = groupIds.length > 1 ? ui_vue3.toValue(allBlocksRef).filter(item => groupIds.includes(ui_vue3.toValue(item).id) && ui_vue3.toValue(item).id !== blockId) : [];
+			// The set is taken once, here: neither a move frame nor an autoscroll frame recounts it. The
+			// modifier is read off this very press for the same reason - Alt taken or let go later in the
+			// gesture finds the set already fixed.
+			const capturedBlocks = isCaptureCancelModifier(event) ? [] : collectCapturedBlocks([blockValue, ...selectedBlocks], groupIds);
+			groupBlocks = [...selectedBlocks, ...capturedBlocks].map(item => createGestureBlock(item, false));
+			primaryBlock = createGestureBlock(blockValue, true);
+			gestureZoom = ui_vue3.toValue(zoom);
+			isLastFrameSnapped = false;
+			offsetX = Math.round(event.clientX - primaryBlock.originalPosition.x * gestureZoom);
+			offsetY = Math.round(event.clientY - primaryBlock.originalPosition.y * gestureZoom);
+			return [blockId, ...groupBlocks.map(groupBlock => groupBlock.id)];
+		}
+
+		// The pressed node is left out: its position is written reactively, so the render puts it where
+		// the gesture last left it anyway.
+		function redrawMarkup() {
+			for (const groupBlock of groupBlocks) {
+				drawBlockMarkup(groupBlock.id, groupBlock.currentPosition);
 			}
-			const currentZoom = ui_vue3.toValue(zoom);
-			if (!Number.isFinite(currentZoom) || currentZoom <= 0) {
+		}
+		function applyFrame(point, isSnapRequested, source) {
+			isLastFrameSnapped = isSnapRequested;
+
+			// The coordinates are rounded before the snapping, so the model keeps whole pixels at any
+			// zoom even when nothing is aligned.
+			const newPosition = snapPoint({
+				x: Math.round((point.x - offsetX) / gestureZoom),
+				y: Math.round((point.y - offsetY) / gestureZoom)
+			}, isSnapRequested);
+			const deltaX = newPosition.x - primaryBlock.currentPosition.x;
+			const deltaY = newPosition.y - primaryBlock.currentPosition.y;
+			const isChanged = deltaX !== 0 || deltaY !== 0;
+			if (isChanged) {
+				updateLocalPosition(primaryBlock, newPosition);
+				for (const groupBlock of groupBlocks) {
+					updateLocalPosition(groupBlock, {
+						x: groupBlock.currentPosition.x + deltaX,
+						y: groupBlock.currentPosition.y + deltaY
+					});
+				}
+			}
+
+			// A frame that gained no pixel is still reported when the pointer itself moved: the
+			// consumer subscribes to the move, not to the pixel.
+			if (isChanged || source === GESTURE_FRAME.POINTER) {
+				hooks.moveDragBlock.trigger(block);
+			}
+			return isChanged;
+		}
+		function revert() {
+			stagePreviewActivationKey();
+			updateLocalPosition(primaryBlock, primaryBlock.originalPosition);
+			for (const groupBlock of groupBlocks) {
+				updateLocalPosition(groupBlock, groupBlock.originalPosition);
+			}
+		}
+
+		// The rectangle the placement rule works in: the position the gesture aims at, and the size the
+		// model states. The measured size of the gesture snapshot is deliberately not taken - it comes
+		// from another space, while the index the rule asks is built over the model. A block the model no
+		// longer holds keeps its place among the participants without a usable rect: the rule leaves it
+		// out of the geometry but still knows it is not an obstacle to the rest of the gesture.
+		function toPlacementRect(gestureBlock) {
+			const dimensions = ui_vue3.toValue(ui_vue3.toValue(getBlockById(gestureBlock.id))?.dimensions) ?? {};
+			return {
+				id: gestureBlock.id,
+				x: gestureBlock.currentPosition.x,
+				y: gestureBlock.currentPosition.y,
+				width: dimensions.width,
+				height: dimensions.height
+			};
+		}
+		function shiftGestureBy(gestureBlocks, delta) {
+			for (const gestureBlock of gestureBlocks) {
+				updateLocalPosition(gestureBlock, {
+					x: gestureBlock.currentPosition.x + delta.x,
+					y: gestureBlock.currentPosition.y + delta.y
+				});
+			}
+		}
+		function commit() {
+			stagePreviewActivationKey();
+
+			// A gesture that came back to where it started is a click on the selection: the command
+			// would ask the consumer to save a diagram nothing changed in. The end is reported anyway.
+			if (!hasLeftStartPosition()) {
+				reportGestureEnd(createUpdatedBlock(primaryBlock));
+				return false;
+			}
+			const gestureBlocks = [primaryBlock, ...groupBlocks];
+			// Asked before the first write: the intersections index refreshes inside every `updateBlock`,
+			// so after the first one the rule would answer about a picture that no longer stands.
+			const placementDelta = resolvePlacementDelta(gestureBlocks.map(gestureBlock => toPlacementRect(gestureBlock)), {
+				followsGrid: isLastFrameSnapped
+			});
+
+			// No free room within the budget: the gesture is given up whole, so the model never comes to
+			// hold a forbidden overlap. The feedback still goes out - on the positions the participants
+			// have just come back to, so the refusal is not a silent one.
+			if (placementDelta === null) {
+				revert();
+				markRefusedBlocks(gestureBlocks.map(gestureBlock => gestureBlock.id));
+				reportGestureEnd(createUpdatedBlock(primaryBlock));
+				return false;
+			}
+			const isCorrected = placementDelta.x !== 0 || placementDelta.y !== 0;
+			if (isCorrected) {
+				shiftGestureBy(gestureBlocks, placementDelta);
+			}
+
+			// A participant the model has lost is written nowhere, so it has not moved either.
+			const committedBlockIds = [];
+			for (const groupBlock of groupBlocks) {
+				const updatedBlock = createUpdatedBlock(groupBlock);
+				if (updatedBlock) {
+					updateBlock(updatedBlock);
+					hooks.endDragBlock.trigger(updatedBlock);
+					committedBlockIds.push(updatedBlock.id);
+				}
+			}
+			const updatedPrimaryBlock = createUpdatedBlock(primaryBlock);
+			if (updatedPrimaryBlock) {
+				updateBlock(updatedPrimaryBlock);
+				committedBlockIds.push(updatedPrimaryBlock.id);
+			}
+			if (isCorrected) {
+				markDisplacedBlocks(committedBlockIds);
+			}
+			reportGestureEnd(updatedPrimaryBlock);
+			return true;
+		}
+		function alignToModel() {
+			for (const gestureBlock of [primaryBlock, ...groupBlocks]) {
+				alignGeometryToModel(gestureBlock);
+			}
+		}
+		function onOpen() {
+			isDragged.value = true;
+			setMovingBlock(ui_vue3.toValue(block).id);
+			hooks.startDragBlock.trigger(block);
+		}
+		function onClose() {
+			stagePreviewActivationKey();
+			resetMovingBlock();
+			isDragged.value = false;
+			clearStagedPreview();
+		}
+		const gesture = useGestureRunner({
+			threshold: DRAG_START_THRESHOLD,
+			resolveTargets,
+			elevatesTargets: hasGroupableBlock,
+			redrawMarkup,
+			applyFrame,
+			revert,
+			commit,
+			alignToModel,
+			onOpen,
+			onClose
+		});
+
+		// The press picks the selection whatever the guards of the gesture say: a press the gesture
+		// refuses still selects the block it landed on. A node already selected keeps the whole
+		// selection, so the gesture that follows leads a group.
+		function onMouseDown(event) {
+			const blockId = ui_vue3.toValue(block).id;
+			if (!ui_vue3.toValue(highlitedBlockIds).includes(blockId)) {
+				replaceSelection(highlitedBlockIds, [blockId]);
+			}
+			const canStartMove = ui_vue3.toValue(options.canStartMove);
+			if (main_core.Type.isFunction(canStartMove) && !canStartMove(event)) {
 				return;
 			}
-			const groupIds = ui_vue3.toValue(highlitedBlockIds);
-			const groupBlocks = groupIds.length > 1 ? ui_vue3.toValue(allBlocksRef).filter(item => groupIds.includes(ui_vue3.toValue(item).id) && ui_vue3.toValue(item).id !== blockId).map(item => createGestureBlock(item, false)) : [];
-			const primaryBlock = createGestureBlock(blockValue, true);
-			const gesture = {
-				token: ++nextGestureToken,
-				primaryBlock,
-				groupBlocks,
-				offsetX: Math.round(event.clientX - primaryBlock.originalPosition.x * currentZoom),
-				offsetY: Math.round(event.clientY - primaryBlock.originalPosition.y * currentZoom),
-				downClientX: event.clientX,
-				downClientY: event.clientY,
-				lastClientX: event.clientX,
-				lastClientY: event.clientY,
-				zoom: currentZoom,
-				isDragStarted: false,
-				isLastFrameSnapped: false,
-				hasMoved: false,
-				isClosing: false,
-				handlers: null
-			};
-			activeGesture = gesture;
-			isDragged.value = true;
-			setMovingBlock(blockId);
-			// The group members are led by the same gesture and reach the model only on mouseup, so
-			// culling must judge none of them by the pre-gesture box the index still holds.
-			setGestureBlocks([blockId, ...groupBlocks.map(groupBlock => groupBlock.id)]);
-			snapModifier.sync(event);
-			snapModifier.startTracking();
-			hooks.startDragBlock.trigger(block);
-
-			// The press only arms the autoscroll; the loop starts when the gesture first reports the
-			// pointer, and it reports it past the drag threshold - so the camera cannot pan under a
-			// press that is still a selection.
-			startAutoScroll(event, (deltaX, deltaY) => {
-				const currentGesture = getActiveGesture(gesture.token);
-				if (currentGesture === null) {
-					return;
-				}
-				currentGesture.offsetX -= deltaX;
-				currentGesture.offsetY -= deltaY;
-				applyPointerPosition(currentGesture, currentGesture.lastClientX, currentGesture.lastClientY, true, false, snapModifier.isPressed());
-			});
-			bindGestureHandlers(gesture);
+			gesture.start(event);
 		}
 		ui_vue3.onMounted(() => {
 			main_core.Event.bind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
 		});
 		ui_vue3.onBeforeUnmount(() => {
 			main_core.Event.unbind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
-			++reconciliationToken;
-			if (activeGesture !== null) {
-				cancelGesture(activeGesture.token);
-			}
-			snapModifier.stopTracking();
 		});
 		return {
 			isDragged,
@@ -7724,7 +11478,15 @@ this.BX = this.BX || {};
 		};
 		const seachText = ui_vue3.ref('');
 		const foundBlocks = ui_vue3.ref([]);
-		function onSearchBlocks(searchText) {
+
+		// A search given up inside the delay leaves a pass already scheduled, and `debounce` has no way
+		// to drop it. Landing after the search is over, that pass refills the results, and whoever
+		// watches them takes the highlight over and moves the camera with nobody searching any more.
+		let isScheduledSearchDropped = false;
+		function searchBlocks(searchText) {
+			if (isScheduledSearchDropped) {
+				return;
+			}
 			seachText.value = searchText;
 			foundBlocks.value = [];
 			if (ui_vue3.toValue(seachText).trim() === '') {
@@ -7736,14 +11498,20 @@ this.BX = this.BX || {};
 				}
 			});
 		}
+		const runSearchBlocks = main_core.debounce(searchBlocks, options.delay);
+		function onSearchBlocks(searchText) {
+			isScheduledSearchDropped = false;
+			runSearchBlocks(searchText);
+		}
 		function onClearSearch() {
+			isScheduledSearchDropped = true;
 			seachText.value = '';
 			foundBlocks.value = [];
 		}
 		return {
 			seachText,
 			foundBlocks,
-			onSearchBlocks: main_core.debounce(onSearchBlocks, options.delay),
+			onSearchBlocks,
 			onClearSearch
 		};
 	}
@@ -7752,23 +11520,30 @@ this.BX = this.BX || {};
 		const {
 			zoom,
 			blocks,
+			blocksRectMap,
 			canvasWidth,
 			canvasHeight,
+			canvasGridSize,
+			maxZoom,
+			viewportInsets,
 			blockDiagramTop,
 			blockDiagramLeft,
-			canvasInstance
+			canvas
 		} = useBlockDiagram();
 		function zoomIn(zoomStep) {
-			ui_vue3.toValue(canvasInstance)?.zoomIn(zoomStep);
+			canvas.zoomIn(zoomStep);
 		}
 		function zoomOut(zoomStep) {
-			ui_vue3.toValue(canvasInstance)?.zoomOut(zoomStep);
+			canvas.zoomOut(zoomStep);
 		}
 		function setZoom(zoomValue) {
-			ui_vue3.toValue(canvasInstance)?.setZoom(zoomValue);
+			canvas.setZoom(zoomValue);
 		}
 		function setCamera(params) {
-			ui_vue3.toValue(canvasInstance)?.setCamera(params);
+			canvas.setCamera(params);
+		}
+		function panBy(dxScreen, dyScreen) {
+			canvas.panBy(dxScreen, dyScreen);
 		}
 		function goToBlock(block) {
 			if (!block?.position || !block?.dimensions) {
@@ -7792,52 +11567,141 @@ this.BX = this.BX || {};
 		function goToBlockById(id) {
 			goToBlock(ui_vue3.toValue(blocks).find(block => block.id === id));
 		}
+
+		// Upper bound of the fitted scale: the natural size of the scheme, and never above the bound
+		// the consumer set for the camera.
+		function resolveMaxFitZoom(requested) {
+			// Checked without a cast: `Number(null)` is a finite zero, and an explicit null would pass
+			// for a scale of nothing instead of falling back to the natural size.
+			const fitZoom = Number.isFinite(requested) ? requested : NATURAL_ZOOM;
+			const consumerZoom = Number(ui_vue3.toValue(maxZoom));
+			return Number.isFinite(consumerZoom) ? Math.min(fitZoom, consumerZoom) : fitZoom;
+		}
+
+		/**
+		 * Fits the overview to the whole content of the scheme. Only the overview moves: the model of
+		 * the scheme stays as it is and the history of changes is not written.
+		 */
+		function fitToView(params = {}) {
+			canvas.fitToView({
+				bounds: getDiagramBounds(ui_vue3.toValue(blocks), ui_vue3.toValue(blocksRectMap)),
+				// Read at the moment of the call: a panel of the consumer opens and closes while the
+				// diagram stays mounted, and the free part of the screen moves with it.
+				insets: params.insets ?? ui_vue3.toValue(viewportInsets),
+				padding: params.padding ?? ui_vue3.toValue(canvasGridSize),
+				maxFitZoom: resolveMaxFitZoom(params.maxFitZoom)
+			});
+		}
 		return {
 			zoomIn,
 			zoomOut,
 			setZoom,
 			setCamera,
+			panBy,
 			goToBlock,
-			goToBlockById
+			goToBlockById,
+			fitToView
 		};
 	}
 
-	function useHighlightedBlocks() {
+	/**
+	 * The focus of the canvas as one rule for everyone who closes a tool of the diagram.
+	 *
+	 * Arrows, the shortcuts of the canvas and the reading order all start from the root: a tool closed
+	 * from the keyboard leaves the focus nowhere unless it hands it back. The handing back is allowed
+	 * only while nothing holds Escape - a claim still on the stack means a layer above the canvas is
+	 * open, and taking the focus from it would close the next press into the wrong thing.
+	 */
+	function useCanvasFocus() {
 		const {
-			highlitedBlockIds
+			blockDiagramRef,
+			focusScopeRef,
+			inputState
 		} = useBlockDiagram();
-		function set(blockIds) {
-			ui_vue3.toValue(highlitedBlockIds).push(...blockIds);
+
+		/**
+		 * The consumer names the area the diagram answers an unclaimed Escape inside - its own editor
+		 * and not the page around it. Declared once and given back with `null`; without a declaration
+		 * the area is the root of the canvas, and a consumer that never declares one sees no change.
+		 */
+		function registerFocusScope(element) {
+			focusScopeRef.value = element;
 		}
-		function add(blockId) {
-			ui_vue3.toValue(highlitedBlockIds).push(blockId);
-		}
-		function remove(blockId) {
-			const highlitedIndx = highlitedBlockIds.value.indexOf(blockId);
-			if (highlitedIndx > -1) {
-				highlitedBlockIds.value.splice(highlitedIndx, 1);
+		function focusCanvas() {
+			const root = ui_vue3.toValue(blockDiagramRef);
+			if (!root) {
+				return false;
 			}
+			root.focus({
+				preventScroll: true
+			});
+			return true;
 		}
-		function clear() {
-			highlitedBlockIds.value = [];
+		function returnFocusToCanvas() {
+			if (inputState.hasExclusiveClaims(KEY_TOKEN.ESCAPE)) {
+				return false;
+			}
+			return focusCanvas();
 		}
 		return {
-			highlitedBlockIds,
-			set,
-			add,
-			remove,
-			clear
+			focusCanvas,
+			returnFocusToCanvas,
+			registerFocusScope
 		};
 	}
 
-	function useLoc() {
-		const app = ui_vue3.getCurrentInstance()?.appContext.app;
-		const bitrix = app?.config?.globalProperties?.$bitrix ?? null;
-		return {
-			getMessage: (messageId, replacements) => {
-				return bitrix?.Loc?.getMessage(messageId, replacements);
+	/**
+	 * The owner of an Escape nobody claimed.
+	 *
+	 * A tool closed by the key hands the focus back itself, but the press that closes nothing has no
+	 * owner: a catalog collapsed by its own shortcut holds the focus on a button, claims Escape from
+	 * nobody, and the next press used to land nowhere. The split by phases is the whole check of
+	 * "nobody claimed it" - a claim on the stack is taken by the capture channel, which stops the
+	 * propagation, so this handler is never even asked. Hence a plain subscription for the whole life
+	 * of the canvas: there is no moment at which the stack announces it has gone empty.
+	 *
+	 * The answer is bounded by the work area the consumer declares, because the bubbling channel
+	 * listens on the window and hears the page around the editor too. The area alone is not enough
+	 * against a popup of the core: it closes on `keyup` and lets the `keydown` through a frame earlier,
+	 * while the focus stands on the very trigger that opened it - a button of a toolbar inside the
+	 * area. The same guard every exclusive consumer of Escape keeps is asked here too, so the press
+	 * that closes the popup does not take the focus off the trigger it has to come back to.
+	 *
+	 * The browser action stays: Escape is a key of the browser, and the canvas claims nothing by moving
+	 * its own focus.
+	 */
+	function useCanvasEscapeFallback() {
+		const {
+			blockDiagramRef,
+			focusScopeRef,
+			inputState
+		} = useBlockDiagram();
+		const {
+			returnFocusToCanvas
+		} = useCanvasFocus();
+		let unsubscribeEscape = null;
+		function handleEscape(event) {
+			// A held key repeats, and a repeat is the same press: the focus moves once.
+			if (event.repeat === true) {
+				return;
 			}
-		};
+			if (isKeyboardBusyByOverlay()) {
+				return;
+			}
+			if (!isFocusOnAnyOf([ui_vue3.toValue(focusScopeRef) ?? ui_vue3.toValue(blockDiagramRef)])) {
+				return;
+			}
+			returnFocusToCanvas();
+		}
+		ui_vue3.onMounted(() => {
+			unsubscribeEscape = inputState.on(KEY_TOKEN.ESCAPE, handleEscape, {
+				preventDefault: false
+			});
+		});
+		ui_vue3.onUnmounted(() => {
+			unsubscribeEscape?.();
+			unsubscribeEscape = null;
+		});
 	}
 
 	// eslint-disable-next-line max-lines-per-function
@@ -8039,7 +11903,9 @@ this.BX = this.BX || {};
 			connectionsOffsetMap,
 			connectionOffset,
 			connectionBendOffset,
-			connectionBorderRadius
+			connectionBorderRadius,
+			gestureBlockIds,
+			isGestureElevated
 		} = useBlockDiagram();
 		const resolveRouteOptions = () => ({
 			connection: ui_vue3.toValue(connection),
@@ -8058,10 +11924,32 @@ this.BX = this.BX || {};
 		const isDisabled = ui_vue3.computed(() => {
 			return ui_vue3.toValue(isDisabledBlockDiagram);
 		});
+
+		// One end inside the raised composition is enough, so a connection leaving it for an outside node
+		// goes up too: raising only the inner ones hid where the node being dragged leads, and losing
+		// sight of that costs more than a line lying over a stray block on its way there. Only a
+		// connection with both ends outside stays where it is. Read from the two values that change at
+		// the press and at the close - the route is computed apart from this and nothing that moves
+		// frame by frame reaches here.
+		const isElevatedConnection = ui_vue3.computed(() => {
+			if (ui_vue3.toValue(isGestureElevated) !== true) {
+				return false;
+			}
+			const blockIds = ui_vue3.toValue(gestureBlockIds);
+			if (blockIds.size === 0) {
+				return false;
+			}
+			const {
+				sourceBlockId,
+				targetBlockId
+			} = ui_vue3.toValue(connection);
+			return blockIds.has(sourceBlockId) || blockIds.has(targetBlockId);
+		});
 		return {
 			connectionPortsPosition,
 			connectionPathInfo,
-			isDisabled
+			isDisabled,
+			isElevatedConnection
 		};
 	}
 
@@ -8367,19 +12255,24 @@ this.BX = this.BX || {};
 			transformX,
 			transformY,
 			zoom,
-			minZoom,
-			maxZoom,
 			canvasRef,
 			transformLayoutRef,
 			canvasWidth,
 			canvasHeight,
-			canvasInstance,
+			canvas,
 			blockIntersections
 		} = useBlockDiagram();
 		const dragOn = ui_vue3.ref(false);
 		const isDragging = ui_vue3.ref(false);
 		const zooming = ui_vue3.ref(false);
 		let requestAnimationId = null;
+		// The element the canvas was attached to. The detach names it so that a component unmounted
+		// after a later one mounted does not drop the binding that later one made.
+		let attachedCanvasElement = null;
+		ui_vue3.watch([transformX, transformY, zoom, canvasWidth, canvasHeight], () => {
+			blockIntersections.selectVisibleBlocks();
+			blockIntersections.selectVisibleConnections();
+		});
 		function getCanvasStyleOptions(canvasStyle) {
 			if (canvasStyle && canvasStyle.style in CANVAS_STYLE_DEFAULT_OPTIONS) {
 				return {
@@ -8395,33 +12288,21 @@ this.BX = this.BX || {};
 		function onMounted() {
 			canvasRef.value = newCanvasRef;
 			transformLayoutRef.value = newTransformLayoutRef;
-			canvasInstance.value = ui_vue3.markRaw(new Canvas({
-				canvas: ui_vue3.toValue(newCanvasRef),
-				canvasStyle: getCanvasStyleOptions(newCanvasStyle),
-				minZoom: ui_vue3.toValue(minZoom),
-				maxZoom: ui_vue3.toValue(maxZoom)
-			}));
-			ui_vue3.toValue(canvasInstance).camera.setChangeTransformCallback(payload => {
-				transformX.value = payload.x;
-				transformY.value = payload.y;
-				zoom.value = payload.zoom;
-				canvasWidth.value = payload.width;
-				canvasHeight.value = payload.height;
-				blockIntersections.selectVisibleBlocks();
-				blockIntersections.selectVisibleConnections();
-			});
+			attachedCanvasElement = ui_vue3.toValue(newCanvasRef);
+			canvas.attach(attachedCanvasElement, getCanvasStyleOptions(newCanvasStyle));
 			render();
 		}
 		function onUnmounted() {
-			ui_vue3.toValue(canvasInstance)?.destroy();
 			cancelAnimationFrame(requestAnimationId);
+			canvas.detach(attachedCanvasElement);
+			attachedCanvasElement = null;
 		}
 		function onMouseDown(event) {
 			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
 				return;
 			}
 			dragOn.value = true;
-			ui_vue3.toValue(canvasInstance)?.setCameraPositionByMouseDown(event);
+			canvas.setCameraPositionByMouseDown(event);
 		}
 		function onMouseMove(event) {
 			if (!ui_vue3.toValue(dragOn) || ui_vue3.toValue(isDisabledBlockDiagram)) {
@@ -8433,7 +12314,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			isDragging.value = true;
-			ui_vue3.toValue(canvasInstance)?.setCameraPositionByMouseMove(event);
+			canvas.setCameraPositionByMouseMove(event);
 		}
 		function onMouseUp() {
 			dragOn.value = false;
@@ -8449,24 +12330,25 @@ this.BX = this.BX || {};
 			if (event.ctrlKey || isCmd) {
 				const zoomChange = isTrackpad ? -event.deltaY * ui_vue3.toValue(zoomSensitivity) : -Math.sign(event.deltaY) * ui_vue3.toValue(zoomSensitivityMouse);
 				zooming.value = true;
-				ui_vue3.toValue(canvasInstance)?.setCameraZoomByWheel(event, zoomChange);
+				canvas.setCameraZoomByWheel(event, zoomChange);
 				setTimeout(() => {
 					zooming.value = false;
 				}, 200);
 			} else {
-				ui_vue3.toValue(canvasInstance)?.setCameraPositionByWheel(event);
+				canvas.setCameraPositionByWheel(event);
 			}
 		}
-		function render() {
-			if (canvasInstance) {
-				ui_vue3.toValue(canvasInstance)?.render();
-				const viewMatrix = ui_vue3.toValue(canvasInstance).viewMatrix;
-				main_core.Dom.style(ui_vue3.toValue(transformLayoutRef), 'transform', `
-					matrix(
-						${viewMatrix[0]}, 0, 0, ${viewMatrix[4]}, ${viewMatrix[6]}, ${viewMatrix[7]}
-					)
-				`);
-			}
+
+		// The timestamp of the frame is handed to the canvas: a move of the overview lives in this very
+		// loop, and the clock of the loop is the one it has to step by.
+		function render(now) {
+			canvas.render(now);
+			const viewMatrix = canvas.viewMatrix;
+			main_core.Dom.style(ui_vue3.toValue(transformLayoutRef), 'transform', `
+				matrix(
+					${viewMatrix[0]}, 0, 0, ${viewMatrix[4]}, ${viewMatrix[6]}, ${viewMatrix[7]}
+				)
+			`);
 			requestAnimationId = requestAnimationFrame(render);
 		}
 		return {
@@ -8490,10 +12372,45 @@ this.BX = this.BX || {};
 			snapPoint,
 			hooks
 		} = useBlockDiagram();
+		const {
+			resolvePlacementDelta
+		} = useBlockPlacement();
+		const {
+			mark: markDisplacedBlocks,
+			announceRefusal
+		} = useDisplacedBlocks();
+
+		// Anything at all may be dropped onto the canvas - a selected piece of text, a link, a browser
+		// tab - and all of it arrives as plain text through the very same channel a block does. So the
+		// payload is parsed as untrusted input: what does not read as a block is not a block, and the
+		// drop is over.
+		function parseDroppedBlock(dataString) {
+			let payload = null;
+			try {
+				payload = JSON.parse(dataString);
+			} catch {
+				return null;
+			}
+			if (!main_core.Type.isPlainObject(payload) || main_core.Type.isNil(payload.id)) {
+				return null;
+			}
+			return main_core.Type.isPlainObject(payload.dimensions) && main_core.Type.isPlainObject(payload.position) ? payload : null;
+		}
 		function onDrop(event) {
 			event.preventDefault();
-			const dataString = event.dataTransfer.getData('text/plain');
-			const receivedData = JSON.parse(dataString);
+			const payload = parseDroppedBlock(event.dataTransfer.getData('text/plain'));
+			if (payload === null) {
+				return;
+			}
+
+			// The declaration of a container travels with the drag and stops here: the canvas keeps of a
+			// block its geometry and whatever the consumer put there, and from the mount of the block
+			// onwards the registry answers the same question. Left in, the flag would sit on the blocks
+			// dropped in this session and on no other, which is a field with no meaning at all.
+			const {
+				isBackdrop = false,
+				...receivedData
+			} = payload;
 			const {
 				width,
 				height
@@ -8512,21 +12429,54 @@ this.BX = this.BX || {};
 			receivedData.position.y += ui_vue3.toValue(transformY);
 			receivedData.position.x -= left / ui_vue3.toValue(zoom);
 			receivedData.position.y -= top / ui_vue3.toValue(zoom);
+			const isSnapped = isSnapModifier(event);
 
 			// Rounded before snapping: the divisions above leave fractions, and the model keeps
 			// whole-pixel coordinates even when the drop is not snapped.
 			receivedData.position = snapPoint({
 				x: Math.round(receivedData.position.x),
 				y: Math.round(receivedData.position.y)
-			}, isSnapModifier(event));
+			}, isSnapped);
+
+			// Asked after the snapping and never before it: a correction taken first would be pulled
+			// straight back into the occupied cell by the grid. The node is not in the index yet, so
+			// there is nothing to strike out of the search - it is simply the only participant.
+			//
+			// What a block is made of is decided by the consumer markup, and the diagram learns of a
+			// container only when its wrapper mounts - which happens after this write. Until then the only
+			// word on it is the one the drag payload carries (see `DiagramDraggedBlock`), and the rule
+			// takes it for this one operation. Pasting answers the same question its own way: there the
+			// container was copied from one the canvas already knows.
+			const placementDelta = resolvePlacementDelta([{
+				id: receivedData.id,
+				x: receivedData.position.x,
+				y: receivedData.position.y,
+				width,
+				height
+			}], {
+				followsGrid: isSnapped,
+				backdropIds: isBackdrop ? new Set([receivedData.id]) : null
+			});
+
+			// No free room within the budget: the node is not created at all, so the model never comes to
+			// hold a forbidden overlap. There is nothing to revert here - the node has never reached it.
+			// The refusal is still reported: the node the user aimed at simply not appearing is otherwise
+			// indistinguishable from a drop that went nowhere.
+			if (placementDelta === null) {
+				announceRefusal();
+				return;
+			}
+			receivedData.position = {
+				x: receivedData.position.x + placementDelta.x,
+				y: receivedData.position.y + placementDelta.y
+			};
 			addBlock(receivedData);
 			hooks.dropNewBlock.trigger(receivedData);
-		}
-		function setBlockData(event, addedBlock) {
-			event.dataTransfer.setData('text/plain', JSON.stringify(addedBlock));
+			if (placementDelta.x !== 0 || placementDelta.y !== 0) {
+				markDisplacedBlocks([receivedData.id]);
+			}
 		}
 		return {
-			setBlockData,
 			onDrop
 		};
 	}
@@ -8539,11 +12489,17 @@ this.BX = this.BX || {};
 			transformMouseEventToPoint,
 			snapValue,
 			updateBlock,
-			startAutoScroll,
-			stopAutoScroll,
-			updateMousePosition
+			getBlockById,
+			blocksRectMap,
+			updateBlockRectById,
+			highlitedBlockIds
 		} = useBlockDiagram();
-		const snapModifier = useSnapModifier();
+		const {
+			resolvePlacementDelta
+		} = useBlockPlacement();
+		const {
+			mark: markDisplacedBlocks
+		} = useDisplacedBlocks();
 		const {
 			block,
 			minWidth,
@@ -8563,7 +12519,12 @@ this.BX = this.BX || {};
 		let prevBlockWidth = 0;
 		let prevBlockHeight = 0;
 		let activeResizeHandlers = [];
-		let lastResizeEvent = null;
+		// Whether the edge the commit works with was put on the grid: the rule rounds its own corrections
+		// the same way only when it is told the operation snaps.
+		let isLastFrameSnapped = false;
+		// The handle the press landed on: the gesture opens on its cursor and its edge handlers.
+		let pressedCursorType = CURSOR_TYPES.EW_RESIZE;
+		let pressedResizeHandlers = [];
 		const sizeBlockStyle = ui_vue3.computed(() => {
 			if (ui_vue3.toValue(isResize)) {
 				const {
@@ -8588,8 +12549,7 @@ this.BX = this.BX || {};
 			};
 		});
 
-		// While resizing the model block keeps its old size, so slot content has to read the
-		// staged geometry to stay in step with the frame it lives in.
+		// While resizing the model block keeps its old size, so slot content reads the staged one.
 		const blockDimensions = ui_vue3.computed(() => {
 			const staged = ui_vue3.toValue(resizingBlock);
 			return ui_vue3.toValue(isResize) && staged !== null ? staged.dimensions : ui_vue3.toValue(block).dimensions;
@@ -8628,6 +12588,8 @@ this.BX = this.BX || {};
 			main_core.Event.bind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
 			main_core.Event.bind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
 		}
+
+		// The gesture itself is torn down by the core, which owns the unmount of this very instance.
 		function onUnmounted() {
 			main_core.Event.unbind(ui_vue3.toValue(rightSideRef), 'mousedown', onMouseDownRightSide);
 			main_core.Event.unbind(ui_vue3.toValue(bottomSideRef), 'mousedown', onMouseDownBottomSide);
@@ -8637,35 +12599,193 @@ this.BX = this.BX || {};
 			main_core.Event.unbind(ui_vue3.toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
 			main_core.Event.unbind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
 			main_core.Event.unbind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
+		}
 
-			// Autoscroll and the staged geometry belong to the whole diagram, so only the instance
-			// that owns the gesture may wind it down: under render optimization neighbour blocks
-			// are culled and unmounted exactly while the camera pans for this gesture.
-			if (!ui_vue3.toValue(isResize)) {
+		// A handle belongs to one block, so the gesture leads that block alone whatever was selected
+		// before the press.
+		function resolveTargets() {
+			return [ui_vue3.toValue(block).id];
+		}
+
+		// Edge under the cursor in canvas coordinates, rounded before snapping so that even an
+		// unsnapped edge leaves the model with whole-pixel geometry at any zoom.
+		function getEdge(value, isSnapRequested) {
+			return snapValue(Math.round(value), isSnapRequested);
+		}
+		function resizeTopSide(point, isSnapRequested) {
+			const edgeY = getEdge(point.y, isSnapRequested);
+			const {
+				position,
+				size
+			} = getBoundsByStartEdge(edgeY, prevBlockY + prevBlockHeight, ui_vue3.toValue(minHeight));
+			resizingBlock.value.position.y = position;
+			resizingBlock.value.dimensions.height = size;
+		}
+		function resizeRightSide(point, isSnapRequested) {
+			const edgeX = getEdge(point.x, isSnapRequested);
+			resizingBlock.value.dimensions.width = getSizeByEndEdge(edgeX, prevBlockX, ui_vue3.toValue(minWidth));
+		}
+		function resizeBottomSide(point, isSnapRequested) {
+			const edgeY = getEdge(point.y, isSnapRequested);
+			resizingBlock.value.dimensions.height = getSizeByEndEdge(edgeY, prevBlockY, ui_vue3.toValue(minHeight));
+		}
+		function resizeLeftSide(point, isSnapRequested) {
+			const edgeX = getEdge(point.x, isSnapRequested);
+			const {
+				position,
+				size
+			} = getBoundsByStartEdge(edgeX, prevBlockX + prevBlockWidth, ui_vue3.toValue(minWidth));
+			resizingBlock.value.position.x = position;
+			resizingBlock.value.dimensions.width = size;
+		}
+
+		// The pointer is taken through the live camera, which already holds the travel of the
+		// autoscroll - hence `client` rather than the point the core has shifted itself.
+		function applyFrame(point, isSnapRequested, source, client) {
+			const canvasPoint = transformMouseEventToPoint({
+				clientX: client.x,
+				clientY: client.y
+			});
+			isLastFrameSnapped = isSnapRequested;
+			for (const resize of activeResizeHandlers) {
+				resize(canvasPoint, isSnapRequested);
+			}
+			return true;
+		}
+
+		// The pre-gesture geometry comes back because `onClose` throws the working copy away; the write
+		// below guards an order of teardown that ever puts a render in between.
+		function revert() {
+			const staged = ui_vue3.toValue(resizingBlock);
+			if (staged === null) {
+				return;
+			}
+			staged.position.x = prevBlockX;
+			staged.position.y = prevBlockY;
+			staged.dimensions.width = prevBlockWidth;
+			staged.dimensions.height = prevBlockHeight;
+		}
+
+		// The areas the gesture has added to the block, in model coordinates - the staged geometry less the
+		// one the press found. The rule judges the bounds it is given as they stand, so the whole staged
+		// rect would answer for overlaps the resize did not make: a block already lying on its neighbour
+		// could then not even be shrunk, because any size still leaving part of that overlap reads exactly
+		// like a block stretched onto it. Asked about the added areas alone, the rule refuses an overlap
+		// this gesture creates or deepens and says nothing about one it inherited.
+		function grownPlacementRects() {
+			const {
+				position,
+				dimensions
+			} = ui_vue3.toValue(resizingBlock);
+			const blockId = ui_vue3.toValue(block).id;
+			const left = position.x;
+			const top = position.y;
+			const right = left + dimensions.width;
+			const bottom = top + dimensions.height;
+			const prevRight = prevBlockX + prevBlockWidth;
+			const prevBottom = prevBlockY + prevBlockHeight;
+			const grown = [];
+			if (left < prevBlockX) {
+				grown.push({
+					id: blockId,
+					x: left,
+					y: top,
+					width: prevBlockX - left,
+					height: bottom - top
+				});
+			}
+			if (right > prevRight) {
+				grown.push({
+					id: blockId,
+					x: prevRight,
+					y: top,
+					width: right - prevRight,
+					height: bottom - top
+				});
+			}
+			if (top < prevBlockY) {
+				grown.push({
+					id: blockId,
+					x: left,
+					y: top,
+					width: right - left,
+					height: prevBlockY - top
+				});
+			}
+			if (bottom > prevBottom) {
+				grown.push({
+					id: blockId,
+					x: left,
+					y: prevBottom,
+					width: right - left,
+					height: bottom - prevBottom
+				});
+			}
+			return grown;
+		}
+		function commit() {
+			// A click on a handle without a move stages nothing: the command would ask the consumer to
+			// save an unchanged block.
+			if (!isGeometryStaged()) {
+				return false;
+			}
+			const placementDelta = resolvePlacementDelta(grownPlacementRects(), {
+				followsGrid: isLastFrameSnapped
+			});
+
+			// The rule answers with the shift that would make the new bounds an allowed neighbour, but a
+			// resize has no right to move the block it is sizing: any answer other than "stay" - a shift or
+			// no free room at all - means those bounds lie over a block they may not, and the whole gesture
+			// is given up, so the model never comes to hold a forbidden overlap.
+			if (placementDelta === null || placementDelta.x !== 0 || placementDelta.y !== 0) {
+				revert();
+				// A block that came back to its own size looks exactly like a gesture that never
+				// happened, so the size it was brought back to is marked - the outline points at the
+				// geometry the rule left standing, not at a gesture given up with nothing to show.
+				// The same refusal reads as `--displaced` here and as `--placement-refused` in the node
+				// drag on purpose: a drag leaves the pointer far from the block it gave up, which needs
+				// the louder signal, while a resize ends on the very edge the user is holding.
+				markDisplacedBlocks([ui_vue3.toValue(block).id]);
+				return false;
+			}
+			updateResizableBlock();
+			return true;
+		}
+
+		// After the gesture the measured rect is brought to the model geometry: a consumer may refuse
+		// the resize. The entry is updated, never created - geometry purged on purpose stays purged.
+		function alignToModel() {
+			const blockId = ui_vue3.toValue(block).id;
+			const modelBlock = getBlockById(blockId);
+			if (modelBlock === null || !main_core.Type.isObjectLike(ui_vue3.toValue(blocksRectMap)?.[blockId])) {
+				return;
+			}
+			const {
+				position,
+				dimensions
+			} = ui_vue3.toValue(modelBlock);
+			if (!main_core.Type.isObjectLike(position) || !main_core.Type.isObjectLike(dimensions)) {
 				return;
 			}
 
-			// The block is gone, so the staged geometry is dropped without reaching the model.
-			teardownGesture();
+			// A non-finite coordinate would turn every port of the node into NaN and take all its
+			// connections off the canvas.
+			const rect = {
+				x: position.x,
+				y: position.y,
+				width: dimensions.width,
+				height: dimensions.height
+			};
+			if (Object.values(rect).some(value => !Number.isFinite(value))) {
+				return;
+			}
+			updateBlockRectById(blockId, rect);
 		}
-		function teardownGesture() {
-			stopAutoScroll();
-			snapModifier.stopTracking();
-			main_core.Event.unbind(document, 'mousemove', onMouseMove);
-			main_core.Event.unbind(document, 'mouseup', endResize);
-			cursorType.value = 'default';
-			isResize.value = false;
-			resizingBlock.value = null;
-			activeResizeHandlers = [];
-			lastResizeEvent = null;
-		}
-		function startResize(event, curType, resizeHandlers) {
-			event.stopPropagation();
-			cursorType.value = curType;
-			// Geometry is staged in its own objects. Sharing position/dimensions with the model
-			// block turns every resize step into a deep mutation of props.blocks, which makes
-			// useWatchProps rebuild the intersections index; under render optimization that
-			// unmounts the block mid-gesture and onUnmounted then tears the gesture down.
+		function onOpen() {
+			cursorType.value = pressedCursorType;
+			// Geometry is staged in its own objects: shared with the model block, every resize step
+			// would be a deep mutation of props.blocks, which rebuilds the intersections index and
+			// unmounts the block mid-gesture under render optimization.
 			resizingBlock.value = {
 				...ui_vue3.toValue(block),
 				position: {
@@ -8680,82 +12800,37 @@ this.BX = this.BX || {};
 			prevBlockWidth = ui_vue3.toValue(block).dimensions.width;
 			prevBlockHeight = ui_vue3.toValue(block).dimensions.height;
 			isResize.value = true;
-			activeResizeHandlers = resizeHandlers;
-			snapModifier.sync(event);
-			snapModifier.startTracking();
-			startAutoScroll(event, applyResize);
-			main_core.Event.bind(document, 'mousemove', onMouseMove);
-			main_core.Event.bind(document, 'mouseup', endResize);
+			isLastFrameSnapped = false;
+			activeResizeHandlers = pressedResizeHandlers;
 		}
-		function endResize(event) {
+		function onClose() {
+			cursorType.value = 'default';
+			isResize.value = false;
+			resizingBlock.value = null;
+			activeResizeHandlers = [];
+		}
+		const gesture = useGestureRunner({
+			// A handle is 4 px wide, so a press on it is unambiguous: there is no click on the
+			// selection to tell the gesture from.
+			threshold: 0,
+			resolveTargets,
+			applyFrame,
+			revert,
+			commit,
+			alignToModel,
+			onOpen,
+			onClose
+		});
+		function startResize(event, curType, resizeHandlers) {
+			// The press stops here whatever the gesture decides about it: otherwise it would reach the
+			// root of the block, which starts a node drag, and the canvas, which starts a frame.
 			event.stopPropagation();
-
-			// A click on a handle without a move stages nothing: emitting the command anyway would
-			// mark the document dirty and wake autosave for an unchanged block.
-			if (isGeometryStaged()) {
-				// The staged geometry is dropped as soon as the command is out, so the consumer has
-				// to apply update:blocks synchronously: until the model catches up the block is drawn
-				// with its pre-gesture position and size.
-				updateResizableBlock();
-			}
-			teardownGesture();
-		}
-		function applyResize() {
-			if (!ui_vue3.toValue(isResize) || !lastResizeEvent) {
-				return;
-			}
-			for (const resize of activeResizeHandlers) {
-				resize(lastResizeEvent);
-			}
-		}
-		function onMouseMove(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			lastResizeEvent = event;
-			snapModifier.sync(event);
-
-			// Autoscroll moves the camera, so the same cursor point maps to a new world point. The
-			// gesture reports the pointer on every move and the autoscroll itself holds the loop back
-			// until this first report - the wait no longer belongs here.
-			updateMousePosition(event);
-			applyResize();
-		}
-
-		// Edge under the cursor in canvas coordinates. It is rounded before snapping, so an
-		// unsnapped edge still leaves the model with whole-pixel geometry at any zoom.
-		function getEdgeX(event) {
-			return snapValue(Math.round(transformMouseEventToPoint(event).x), snapModifier.isPressed());
-		}
-		function getEdgeY(event) {
-			return snapValue(Math.round(transformMouseEventToPoint(event).y), snapModifier.isPressed());
-		}
-		function resizeTopSide(event) {
-			const edgeY = getEdgeY(event);
-			const {
-				position,
-				size
-			} = getBoundsByStartEdge(edgeY, prevBlockY + prevBlockHeight, ui_vue3.toValue(minHeight));
-			resizingBlock.value.position.y = position;
-			resizingBlock.value.dimensions.height = size;
-		}
-		function resizeRightSide(event) {
-			const edgeX = getEdgeX(event);
-			resizingBlock.value.dimensions.width = getSizeByEndEdge(edgeX, prevBlockX, ui_vue3.toValue(minWidth));
-		}
-		function resizeBottomSide(event) {
-			const edgeY = getEdgeY(event);
-			resizingBlock.value.dimensions.height = getSizeByEndEdge(edgeY, prevBlockY, ui_vue3.toValue(minHeight));
-		}
-		function resizeLeftSide(event) {
-			const edgeX = getEdgeX(event);
-			const {
-				position,
-				size
-			} = getBoundsByStartEdge(edgeX, prevBlockX + prevBlockWidth, ui_vue3.toValue(minWidth));
-			resizingBlock.value.position.x = position;
-			resizingBlock.value.dimensions.width = size;
+			// A handle belongs to one block, so the selection collapses to it whatever the guards of
+			// the gesture say.
+			replaceSelection(highlitedBlockIds, [ui_vue3.toValue(block).id]);
+			pressedCursorType = curType;
+			pressedResizeHandlers = resizeHandlers;
+			gesture.start(event);
 		}
 		function onMouseDownRightSide(event) {
 			startResize(event, CURSOR_TYPES.EW_RESIZE, [resizeRightSide]);
@@ -8790,6 +12865,7 @@ this.BX = this.BX || {};
 		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	function useCanvasSelection(params) {
 		const {
 			zoom,
@@ -8798,7 +12874,9 @@ this.BX = this.BX || {};
 			isSelectionActive,
 			startAutoScroll,
 			stopAutoScroll,
-			updateMousePosition
+			updateMousePosition,
+			highlitedBlockIds,
+			inputState
 		} = useBlockDiagram();
 		const {
 			rootRef,
@@ -8818,6 +12896,10 @@ this.BX = this.BX || {};
 		let scrollOffsetY = 0;
 		let lastClientX = 0;
 		let lastClientY = 0;
+		// The selection as it stood before the press cleared it, and the handle on the cancel paths:
+		// the drag is open for exactly as long as that handle is held.
+		let selectionBeforeDrag = [];
+		let unbindCancelPaths = null;
 		function updateRects(clientX, clientY) {
 			if (!cachedRootRect || !cachedLayerRect) {
 				return;
@@ -8859,6 +12941,9 @@ this.BX = this.BX || {};
 			lastClientY = event.clientY;
 			scrollOffsetX = 0;
 			scrollOffsetY = 0;
+			// A cancelled drag leaves the diagram the way it found it, so what stood selected is kept
+			// until the drag ends one way or another.
+			selectionBeforeDrag = [...ui_vue3.toValue(highlitedBlockIds)];
 			cachedRootRect = root.getBoundingClientRect();
 			cachedLayerRect = layer.getBoundingClientRect();
 			const visualStartX = startClientX - cachedRootRect.left;
@@ -8875,6 +12960,12 @@ this.BX = this.BX || {};
 				scrollOffsetY += dy;
 				updateRects(lastClientX, lastClientY);
 			});
+
+			// A drag whose release never arrived is still open when this press comes: a mouseup
+			// dispatched on the window never travels down to the document. The handle is the only way
+			// left to unbind its subscriptions.
+			unbindCancelPaths?.();
+			unbindCancelPaths = bindCancelPaths(inputState, cancel);
 		}
 		function move(event) {
 			if (!ui_vue3.toValue(isSelectionActive) || !cachedRootRect || !cachedLayerRect) {
@@ -8886,6 +12977,8 @@ this.BX = this.BX || {};
 			updateRects(event.clientX, event.clientY);
 		}
 		function end() {
+			unbindCancelPaths?.();
+			unbindCancelPaths = null;
 			stopAutoScroll();
 			if (ui_vue3.toValue(isSelectionActive)) {
 				setSelectionActive(false);
@@ -8900,6 +12993,23 @@ this.BX = this.BX || {};
 			cachedRootRect = null;
 			cachedLayerRect = null;
 		}
+
+		// A cancelled gesture is one that never happened: the selection goes back to what the press
+		// found. A release does not come here - what it selected is its result.
+		function cancel() {
+			if (unbindCancelPaths === null) {
+				return;
+			}
+			replaceSelection(highlitedBlockIds, selectionBeforeDrag);
+			end();
+		}
+
+		// The cancel paths listen on the document and the window: a diagram taken down mid-drag has to
+		// take them with it.
+		ui_vue3.onBeforeUnmount(() => {
+			unbindCancelPaths?.();
+			unbindCancelPaths = null;
+		});
 		return {
 			isSelecting: isSelectionActive,
 			selectionRect,
@@ -8920,30 +13030,27 @@ this.BX = this.BX || {};
 			updateBlockRectById,
 			setPortOffsetByBlockId,
 			highlitedBlockIds,
-			startAutoScroll,
-			stopAutoScroll,
-			updateMousePosition,
 			snapPoint,
-			setGestureBlocks,
-			resetGestureBlocks,
 			setGroupDragOffset,
-			resetGroupDragOffset,
-			isDisabledBlockDiagram
+			resetGroupDragOffset
 		} = useBlockDiagram();
-		const snapModifier = useSnapModifier();
+		const {
+			captureContainedBlockIds,
+			hasGroupableBlock
+		} = useGroupable();
+		const {
+			resolvePlacementDelta
+		} = useBlockPlacement();
+		const {
+			mark: markDisplacedBlocks,
+			markRefused: markRefusedBlocks
+		} = useDisplacedBlocks();
 		let currentZoom = 1;
 		let movingItems = [];
+		let committedPositions = [];
+		// Where the button went down: the frame is measured from it, with the camera travel of the
+		// autoscroll already added in by the core.
 		let anchor = {
-			x: 0,
-			y: 0
-		};
-		// Where the button went down, in the coordinates of the pointer. Unlike the anchor it is never
-		// compensated for autoscroll: the drag threshold is about the hand, not about the camera.
-		let downClient = {
-			x: 0,
-			y: 0
-		};
-		let client = {
 			x: 0,
 			y: 0
 		};
@@ -8951,11 +13058,8 @@ this.BX = this.BX || {};
 			x: 0,
 			y: 0
 		};
-		let gestureToken = 0;
-		let isGestureActive = false;
-		let isDragStarted = false;
-		// Whether the last applied frame was snapped: the release must commit exactly the position that
-		// frame has drawn, even if the modifier changed between it and the mouseup.
+		// Whether the last drawn frame snapped the delta: the release commits the position that frame
+		// drew, so the correction of the placement rule is rounded to the grid on the very same terms.
 		let isLastFrameSnapped = false;
 		const drawMarkup = (blockId, x, y) => {
 			const blockElement = ui_vue3.toValue(blockElMap)?.get(blockId);
@@ -8965,16 +13069,13 @@ this.BX = this.BX || {};
 			}
 		};
 
-		// One node moved by hand, the way a dragged node moves its group members: the markup by style,
-		// the cached rect and the port coordinates by the step of this frame. The model is left alone
-		// until mouseup - a frame-by-frame write goes outside the command path, so the block watcher
-		// clears the spatial index on every frame and the connections leave the canvas for the whole
-		// gesture.
+		// The markup, the cached rect and the port coordinates of one node. The model is left alone
+		// until mouseup: a per-frame write would clear the spatial index and take the connections off.
 		const moveItem = (blockId, x, y, stepX, stepY) => {
 			drawMarkup(blockId, x, y);
 
 			// Only an existing entry is moved: a merge over a missing one would recreate geometry that
-			// a purge removed on purpose, and without a measured size at that.
+			// a purge removed on purpose.
 			if (main_core.Type.isObjectLike(ui_vue3.toValue(blocksRectMap)?.[blockId])) {
 				updateBlockRectById(blockId, {
 					x,
@@ -8989,68 +13090,8 @@ this.BX = this.BX || {};
 			}
 		};
 
-		// The same threshold the node gesture is held to (moveable-block.js): below it the press is a
-		// click on the selection rather than a drag.
-		const isBeyondDragThreshold = (clientX, clientY) => {
-			return Math.abs(clientX - downClient.x) >= DRAG_START_THRESHOLD || Math.abs(clientY - downClient.y) >= DRAG_START_THRESHOLD;
-		};
-		const updatePositions = (clientX, clientY, isSnapRequested) => {
-			// the whole group moves by one snapped delta, so distances inside it stay untouched;
-			// the delta is whole-pixel even unsnapped, because the model keeps integer coordinates
-			const {
-				x: totalDeltaX,
-				y: totalDeltaY
-			} = snapPoint({
-				x: Math.round((clientX - anchor.x) / currentZoom),
-				y: Math.round((clientY - anchor.y) / currentZoom)
-			}, isSnapRequested);
-
-			// Nothing but a finite delta is ever applied: a NaN would spread over the rect cache, the
-			// port coordinates and the model, and the coordinates it came from are past recovering by
-			// the time the gesture is committed.
-			if (!Number.isFinite(totalDeltaX) || !Number.isFinite(totalDeltaY)) {
-				return;
-			}
-			const stepX = totalDeltaX - lastTotalDelta.x;
-			const stepY = totalDeltaY - lastTotalDelta.y;
-			isLastFrameSnapped = isSnapRequested;
-			if (stepX === 0 && stepY === 0) {
-				return;
-			}
-			for (const item of movingItems) {
-				moveItem(item.id, item.startX + totalDeltaX, item.startY + totalDeltaY, stepX, stepY);
-			}
-			lastTotalDelta = {
-				x: totalDeltaX,
-				y: totalDeltaY
-			};
-			setGroupDragOffset({
-				x: totalDeltaX,
-				y: totalDeltaY
-			});
-		};
-		const releaseGesture = () => {
-			stopAutoScroll();
-			snapModifier.stopTracking();
-			resetGestureBlocks();
-			main_core.Event.unbind(window, 'mousemove', onGroupMouseMove);
-			main_core.Event.unbind(window, 'mouseup', onGroupMouseUp);
-			main_core.Event.unbind(document, 'keydown', onGroupKeyDown);
-			main_core.Event.unbind(document, 'pointercancel', onGroupGestureAbort);
-			main_core.Event.unbind(window, 'blur', onGroupGestureAbort);
-			isGestureActive = false;
-			isDragStarted = false;
-			movingItems = [];
-			lastTotalDelta = {
-				x: 0,
-				y: 0
-			};
-			resetGroupDragOffset();
-		};
-
 		// A node whose model position is unusable stays out of the gesture: a non-finite coordinate
-		// would poison the rect cache on the very first frame, write NaN into every port of the node on
-		// the commit and reach the model from there.
+		// would spread NaN over the rect cache, the ports and the model.
 		const createMovingItem = block => {
 			const position = ui_vue3.toValue(block).position;
 			if (!main_core.Type.isObjectLike(position)) {
@@ -9067,98 +13108,30 @@ this.BX = this.BX || {};
 				startY
 			};
 		};
-		const onGroupMouseDown = event => {
-			// The frame is shown by the selection alone, so it stays on screen over a readonly template
-			// and over an animation: without this the gesture would move the nodes there and write the
-			// move into the model. A press over a gesture still open is refused as well: restarting the
-			// gesture would lose the nodes the open one carries, leaving them shifted with nothing to
-			// bring them back.
-			if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram) || isGestureActive) {
-				return;
-			}
-			event.stopPropagation();
-			closeContextMenu();
-			const selectedIds = new Set(ui_vue3.toValue(highlitedBlockIds));
-			const items = ui_vue3.toValue(uiBlocksRef).filter(block => selectedIds.has(block.id)).map(block => createMovingItem(block)).filter(item => item !== null);
 
-			// Nothing is left to move once the unusable positions are filtered out. A gesture started over
-			// such a selection would subscribe to the pointer, run autoscroll and carry the frame away
-			// from the nodes it belongs to.
-			if (items.length === 0) {
-				return;
+		// Nodes lying inside a container that took part in the selection. They join the gesture as
+		// ordinary members and go through the same filtering the selected nodes do; the union goes by
+		// block id, so a node that is both selected and contained is taken exactly once. With no
+		// container among the selected blocks the capture answers without a single lookup in the
+		// intersections index, and the selection itself stays the list of participants - nothing new is
+		// built for a gesture that has no containers in it.
+		const collectParticipantIds = (selectedBlocks, selectedIds) => {
+			let participantIds = null;
+			for (const block of selectedBlocks) {
+				for (const capturedId of captureContainedBlockIds(block)) {
+					if (participantIds === null) {
+						participantIds = new Set(selectedIds);
+					}
+					participantIds.add(capturedId);
+				}
 			}
-
-			// The zoom divides the pointer delta, so a zero or non-finite one would turn every position
-			// of the gesture into infinity or NaN and carry it into the rect cache, into the ports and
-			// into the model on the commit.
-			const gestureZoom = ui_vue3.toValue(zoom);
-			if (!Number.isFinite(gestureZoom) || gestureZoom <= 0) {
-				return;
-			}
-			currentZoom = gestureZoom;
-			++gestureToken;
-			anchor = {
-				x: event.clientX,
-				y: event.clientY
-			};
-			downClient = {
-				x: event.clientX,
-				y: event.clientY
-			};
-			client = {
-				x: event.clientX,
-				y: event.clientY
-			};
-			lastTotalDelta = {
-				x: 0,
-				y: 0
-			};
-			isGestureActive = true;
-			isDragStarted = false;
-			resetGroupDragOffset();
-			snapModifier.sync(event);
-			snapModifier.startTracking();
-			isLastFrameSnapped = isSnapModifier(event);
-			movingItems = items;
-
-			// The model keeps the pre-gesture positions until mouseup, so culling would judge these
-			// nodes by boxes the gesture has already left behind: autoscroll pans the camera past them
-			// and unmounts a node that is in fact on screen.
-			setGestureBlocks(movingItems.map(item => item.id));
-			startAutoScroll(event, (dx, dy) => {
-				anchor.x -= dx;
-				anchor.y -= dy;
-				updatePositions(client.x, client.y, snapModifier.isPressed());
-			});
-			main_core.Event.bind(window, 'mousemove', onGroupMouseMove);
-			main_core.Event.bind(window, 'mouseup', onGroupMouseUp);
-			main_core.Event.bind(document, 'keydown', onGroupKeyDown);
-			main_core.Event.bind(document, 'pointercancel', onGroupGestureAbort);
-			main_core.Event.bind(window, 'blur', onGroupGestureAbort);
-		};
-		const onGroupMouseMove = event => {
-			client.x = event.clientX;
-			client.y = event.clientY;
-			snapModifier.sync(event);
-			if (!isDragStarted) {
-				isDragStarted = isBeyondDragThreshold(event.clientX, event.clientY);
-			}
-
-			// The press only arms the autoscroll, and the pointer is reported to it past the threshold, as
-			// the node gesture reports it: below the threshold the press is still a click on the selection
-			// and the camera must stand.
-			if (isDragStarted) {
-				updateMousePosition(event);
-			}
-			updatePositions(client.x, client.y, snapModifier.isPressed());
+			return participantIds ?? selectedIds;
 		};
 
-		// The model is the truth about where a node stands, so after the gesture the markup and the
-		// measured geometry are brought to the model position instead of being left on the result of the
-		// gesture: a consumer may refuse the move or write a position of its own. The rect of a node is
-		// written absolutely and would come back into agreement on the next gesture anyway, but the port
-		// offsets are written as steps - nothing but this brings them back into step.
-		const alignGeometryToModel = ({
+		// After the gesture the markup and the measured geometry are brought to the model position: a
+		// consumer may refuse the move or write a position of its own. The port offsets are written as
+		// steps, so nothing but this brings them back into step.
+		const alignItemToModel = ({
 			id,
 			x,
 			y
@@ -9180,155 +13153,326 @@ this.BX = this.BX || {};
 			moveItem(id, position.x, position.y, position.x - x, position.y - y);
 		};
 
-		// One pass over the model instead of a linear lookup per node: the commit and the
-		// reconciliation each walk the whole selection, and the model of a large diagram is long.
+		// One pass over the model instead of a linear lookup per node of the selection.
 		const buildBlockByIdMap = () => {
 			return new Map(ui_vue3.toValue(uiBlocksRef).map(block => [ui_vue3.toValue(block).id, block]));
 		};
-		const onGroupMouseUp = event => {
-			// The watcher below is flushed before the render, so a diagram disabled in this very tick is
-			// still to reach it: without this check the release would carry the gesture into the model
-			// over a readonly template or an animation.
-			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-				cancelGesture();
-				return;
+		const resolveTargets = event => {
+			closeContextMenu();
+			const selectedIds = new Set(ui_vue3.toValue(highlitedBlockIds));
+			const modelBlocks = ui_vue3.toValue(uiBlocksRef);
+			// The modifier is read off this very press: the set of a gesture is fixed here, so Alt taken
+			// or let go later changes nothing. With it held the selection alone moves, as it did before
+			// containers existed.
+			const participantIds = isCaptureCancelModifier(event) ? selectedIds : collectParticipantIds(modelBlocks.filter(block => selectedIds.has(block.id)), selectedIds);
+			const items = modelBlocks.filter(block => participantIds.has(block.id)).map(block => createMovingItem(block)).filter(item => item !== null);
+			if (items.length === 0) {
+				return null;
 			}
-
-			// A mouseup can arrive with no coordinates at all - a plain `Event('mouseup')` from a
-			// consumer, or the core `BX.fireEvent`. Applying it as a frame would make the release delta
-			// NaN, and a NaN passes the "moved nothing" check below straight into the model.
-			if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) {
-				cancelGesture();
-				return;
-			}
-
-			// A mouseup can carry a position no mousemove has seen, so the release point is applied as
-			// the last frame of the gesture - but only once it is past the threshold that separates a
-			// drag from a click, the same one the node gesture uses. Otherwise the shake of a hand over
-			// the frame writes a command per selected node. A gesture that has already moved the nodes
-			// is past that question: its release point is a frame like any other. The modifier is taken
-			// from the last frame rather than from this event: Shift released an instant before the
-			// button would part the committed position from the drawn one.
-			if (lastTotalDelta.x !== 0 || lastTotalDelta.y !== 0 || isBeyondDragThreshold(event.clientX, event.clientY)) {
-				updatePositions(event.clientX, event.clientY, isLastFrameSnapped);
-			}
-
-			// A gesture that left the nodes where they started is a click on the selection, not a drag:
-			// committing it would write a command per selected node, with the pre-gesture coordinates,
-			// and ask the consumer to save a diagram nothing changed in. A pointer that wandered off and
-			// came back to the press point ends there just as a press that never moved does.
-			if (lastTotalDelta.x === 0 && lastTotalDelta.y === 0) {
-				releaseGesture();
-				return;
-			}
-
-			// The markup and the geometry are brought to the whole-pixel position first, so all three
-			// describe the same place: the model keeps integer coordinates.
-			const committedPositions = movingItems.map(item => {
-				const currentX = item.startX + lastTotalDelta.x;
-				const currentY = item.startY + lastTotalDelta.y;
-				const x = Math.round(currentX);
-				const y = Math.round(currentY);
-				moveItem(item.id, x, y, x - currentX, y - currentY);
-				return {
-					id: item.id,
-					x,
-					y
-				};
-			});
-			const token = gestureToken;
-			const blockById = buildBlockByIdMap();
-
-			// The commands go out first and the gesture is released after them, but the release is not
-			// theirs to skip: a consumer hook that throws would leave the gesture live - the window
-			// listeners bound, the nodes held and the frame offset standing, so the next pointer move
-			// would drag them with no button held. The exception itself is not the extension's to handle
-			// and goes on to the consumer, taking the reconciliation below with it: a torn commit leaves
-			// the model in a state there is nothing to align the geometry to.
-			try {
-				for (const {
-					id,
-					x,
-					y
-				} of committedPositions) {
-					const block = blockById.get(id) ?? null;
-					if (block === null) {
-						continue;
-					}
-					updateBlock({
-						...ui_vue3.toValue(block),
-						position: {
-							...ui_vue3.toValue(block).position,
-							x,
-							y
-						}
-					});
-				}
-			} finally {
-				// The nodes are held in the visible set until the last command has gone out: released
-				// earlier, they would be judged by the pre-gesture boxes the spatial index still holds
-				// for as long as the write takes.
-				releaseGesture();
-			}
-
-			// Rendering a node rewrites its markup from the block input, and under render optimization
-			// that input still carries the pre-gesture position on the render of this very commit. The
-			// position is put back once that render has flushed, so the nodes do not blink back to where
-			// the gesture started while the visible set catches up.
-			// Precondition of the extension: the consumer applies `changedBlocks` within this same flush
-			// cycle - the model is read once here, and a command applied later misses the alignment.
-			void ui_vue3.nextTick(() => {
-				if (token !== gestureToken) {
-					return;
-				}
-
-				// The lookup is built again rather than reused: the consumer applies the commands by
-				// replacing the model, so the map of the commit holds the pre-commit blocks, and the
-				// whole point here is to read where the consumer has put the nodes.
-				const committedBlockById = buildBlockByIdMap();
-				for (const committedPosition of committedPositions) {
-					alignGeometryToModel(committedPosition, committedBlockById);
-				}
-			});
+			currentZoom = ui_vue3.toValue(zoom);
+			anchor = {
+				x: event.clientX,
+				y: event.clientY
+			};
+			lastTotalDelta = {
+				x: 0,
+				y: 0
+			};
+			isLastFrameSnapped = false;
+			movingItems = items;
+			return movingItems.map(item => item.id);
 		};
-		const cancelGesture = () => {
-			if (!isGestureActive) {
-				return;
+
+		// Every node of this gesture keeps its position in the markup alone until mouseup, so all of
+		// them are drawn again.
+		const redrawMarkup = () => {
+			for (const item of movingItems) {
+				drawMarkup(item.id, item.startX + lastTotalDelta.x, item.startY + lastTotalDelta.y);
 			}
+		};
+		const applyFrame = (point, isSnapRequested) => {
+			isLastFrameSnapped = isSnapRequested;
+
+			// the whole group moves by one snapped delta, so distances inside it stay untouched;
+			// the delta is whole-pixel even unsnapped, because the model keeps integer coordinates
+			const {
+				x: totalDeltaX,
+				y: totalDeltaY
+			} = snapPoint({
+				x: Math.round((point.x - anchor.x) / currentZoom),
+				y: Math.round((point.y - anchor.y) / currentZoom)
+			}, isSnapRequested);
+
+			// Nothing but a finite delta is ever applied: a NaN would spread over the rect cache, the
+			// port coordinates and the model.
+			if (!Number.isFinite(totalDeltaX) || !Number.isFinite(totalDeltaY)) {
+				return false;
+			}
+			const stepX = totalDeltaX - lastTotalDelta.x;
+			const stepY = totalDeltaY - lastTotalDelta.y;
+			if (stepX === 0 && stepY === 0) {
+				return false;
+			}
+			for (const item of movingItems) {
+				moveItem(item.id, item.startX + totalDeltaX, item.startY + totalDeltaY, stepX, stepY);
+			}
+			lastTotalDelta = {
+				x: totalDeltaX,
+				y: totalDeltaY
+			};
+			setGroupDragOffset({
+				x: totalDeltaX,
+				y: totalDeltaY
+			});
+			return true;
+		};
+		const revert = () => {
 			for (const item of movingItems) {
 				moveItem(item.id, item.startX, item.startY, -lastTotalDelta.x, -lastTotalDelta.y);
 			}
-			releaseGesture();
-		};
-		const onGroupKeyDown = event => {
-			if (event.key === 'Escape') {
-				cancelGesture();
-			}
 		};
 
-		// The pointer can be lost without a mouseup: released outside the browser window, or taken away
-		// by the system. Left alone the gesture would stay live - the markup shifted, the model on the
-		// pre-gesture positions, and the next pointer move dragging the nodes with no button held.
-		const onGroupGestureAbort = () => {
-			cancelGesture();
-		};
-		ui_vue3.watch(isDisabledBlockDiagram, isDisabled => {
-			if (isDisabled) {
-				cancelGesture();
+		// The rectangles the placement rule is asked about: the whole-pixel position the gesture aims at,
+		// and the size the model states. The gesture itself knows no sizes - `MovingItem` carries only a
+		// starting point - so the size comes from the block the model holds under the same id. A node the
+		// model has lost keeps its place among the participants without a usable rect: the rule leaves it
+		// out of the geometry but still knows it is not an obstacle to the rest of the gesture.
+		const collectPlacementRects = blockById => {
+			const rects = new Map();
+			for (const item of movingItems) {
+				const dimensions = ui_vue3.toValue(ui_vue3.toValue(blockById.get(item.id))?.dimensions) ?? {};
+				rects.set(item.id, {
+					id: item.id,
+					x: Math.round(item.startX + lastTotalDelta.x),
+					y: Math.round(item.startY + lastTotalDelta.y),
+					width: dimensions.width,
+					height: dimensions.height
+				});
 			}
-		});
+			return rects;
+		};
+		const commit = () => {
+			// A gesture that left the nodes where they started is a click on the selection, not a drag:
+			// committing it would ask the consumer to save a diagram nothing changed in.
+			if (lastTotalDelta.x === 0 && lastTotalDelta.y === 0) {
+				return false;
+			}
+			const blockById = buildBlockByIdMap();
+			const placementRects = collectPlacementRects(blockById);
+			// Asked before the first write: the intersections index refreshes inside every `updateBlock`,
+			// so after the first one the rule would answer about a picture that no longer stands.
+			const placementDelta = resolvePlacementDelta([...placementRects.values()], {
+				followsGrid: isLastFrameSnapped
+			});
 
-		// A gesture torn down without a mouseup would leave the markup and the geometry where the
-		// pointer left them while the model still holds the pre-gesture positions. The token is bumped
-		// on top of that: the reconciliation of a release is a microtask, and a teardown between the two
-		// would otherwise let it write geometry and markup on a diagram that is gone. `cancelGesture`
-		// cannot do it - by then the gesture is already released and it returns at once.
-		ui_vue3.onBeforeUnmount(() => {
-			++gestureToken;
-			cancelGesture();
+			// No free room within the budget: the gesture is given up whole, so the model never comes to
+			// hold a forbidden overlap. The feedback still goes out - on the positions the participants
+			// have just come back to, so the refusal is not a silent one.
+			if (placementDelta === null) {
+				revert();
+				markRefusedBlocks(movingItems.map(item => item.id));
+				return false;
+			}
+
+			// Where the frame left the nodes, before the correction: the step given to the markup and to
+			// the port offsets is counted from there.
+			const drawnDelta = lastTotalDelta;
+
+			// Added to the delta of the whole gesture rather than to the position of each node: the
+			// selection travels by one value, so the layout inside it comes out of the correction as it
+			// went in.
+			lastTotalDelta = {
+				x: drawnDelta.x + placementDelta.x,
+				y: drawnDelta.y + placementDelta.y
+			};
+
+			// The markup and the geometry are brought to the whole-pixel position of the model first, so
+			// all three describe the same place. That position is the very rect the rule was asked about
+			// plus the correction it answered with: rounding happens once, before the question, so the
+			// model gets exactly the geometry the rule cleared. Rounding the corrected sum a second time
+			// would leave a node with a fractional model position a pixel off that geometry - and a pixel
+			// is enough to overlap the neighbour it was moved away from.
+			committedPositions = movingItems.map(item => {
+				const {
+					x,
+					y
+				} = placementRects.get(item.id);
+				const correctedX = x + placementDelta.x;
+				const correctedY = y + placementDelta.y;
+				const drawnX = item.startX + drawnDelta.x;
+				const drawnY = item.startY + drawnDelta.y;
+				moveItem(item.id, correctedX, correctedY, correctedX - drawnX, correctedY - drawnY);
+				return {
+					id: item.id,
+					x: correctedX,
+					y: correctedY
+				};
+			});
+
+			// A participant the model has lost is written nowhere, so it has not moved either.
+			const committedBlockIds = [];
+			for (const {
+				id,
+				x,
+				y
+			} of committedPositions) {
+				const block = blockById.get(id) ?? null;
+				if (block === null) {
+					continue;
+				}
+				updateBlock({
+					...ui_vue3.toValue(block),
+					position: {
+						...ui_vue3.toValue(block).position,
+						x,
+						y
+					}
+				});
+				committedBlockIds.push(id);
+			}
+			if (placementDelta.x !== 0 || placementDelta.y !== 0) {
+				markDisplacedBlocks(committedBlockIds);
+			}
+			return true;
+		};
+
+		// Runs a tick after the commit: under render optimization the block input still carries the
+		// pre-gesture position on the render of that commit, and the nodes would blink back to it.
+		const alignToModel = () => {
+			// Built again rather than reused: the consumer applies the commands by replacing the model,
+			// and the point here is to read where it has put the nodes.
+			const committedBlockById = buildBlockByIdMap();
+			for (const committedPosition of committedPositions) {
+				alignItemToModel(committedPosition, committedBlockById);
+			}
+		};
+		const onOpen = () => {
+			resetGroupDragOffset();
+			// Not on close: the alignment runs a tick later and these positions are what it reads.
+			committedPositions = [];
+		};
+		const onClose = () => {
+			resetGroupDragOffset();
+			movingItems = [];
+			lastTotalDelta = {
+				x: 0,
+				y: 0
+			};
+		};
+		const gesture = useGestureRunner({
+			threshold: DRAG_START_THRESHOLD,
+			resolveTargets,
+			elevatesTargets: hasGroupableBlock,
+			redrawMarkup,
+			applyFrame,
+			revert,
+			commit,
+			alignToModel,
+			onOpen,
+			onClose
 		});
+		const onGroupMouseDown = event => {
+			gesture.start(event);
+		};
 		return {
 			onGroupMouseDown
+		};
+	}
+
+	// Whether a rectangle overlaps a node. Strict on every side: a node that only touches the
+	// rectangle by an edge is not inside it.
+	function isRectOverBlock(rect, position, size) {
+		return rect.x < position.x + size.width && rect.x + rect.width > position.x && rect.y < position.y + size.height && rect.y + rect.height > position.y;
+	}
+
+	/**
+	 * Geometry of the selection: where the selected nodes stand and how large the box around them is.
+	 * The shift a running drag draws is kept out of it - nothing here changes between the frames of one
+	 * gesture, and the frame only adds that shift on top.
+	 */
+	function useGroupSelectionBounds(options) {
+		const {
+			blocks,
+			selectedIds,
+			blocksRectMap,
+			defaultBlockSize
+		} = options;
+
+		// One pass over the model instead of a linear lookup per selected node.
+		const blockById = ui_vue3.computed(() => {
+			return new Map(ui_vue3.toValue(blocks).map(block => [ui_vue3.toValue(block).id, block]));
+		});
+		const blockOrderById = ui_vue3.computed(() => {
+			return new Map(ui_vue3.toValue(blocks).map((block, index) => [ui_vue3.toValue(block).id, index]));
+		});
+		function blockSize(block) {
+			return getSelectionBlockSize(block, blocksRectMap, defaultBlockSize);
+		}
+
+		// The rule above measures a node by its drawn size, the spatial index boxes it by the model
+		// dimensions, and both boxes start at the same position: a node reaches past its model box by
+		// the excess of one size over the other, and the largest such excess is how far a search
+		// rectangle has to grow. A node whose model size is not finite has no usable box in the index
+		// at all, so its whole drawn size is taken. Only sizes are read here, so a frame of a gesture
+		// leaves the value alone.
+		const selectionSearchPadding = ui_vue3.computed(() => {
+			let width = 0;
+			let height = 0;
+			ui_vue3.toValue(blocks).forEach(block => {
+				const drawnSize = blockSize(block);
+				const dimensions = ui_vue3.toValue(block).dimensions;
+				const modelWidth = Number(dimensions?.width);
+				const modelHeight = Number(dimensions?.height);
+				width = Math.max(width, drawnSize.width - (Number.isFinite(modelWidth) ? modelWidth : 0));
+				height = Math.max(height, drawnSize.height - (Number.isFinite(modelHeight) ? modelHeight : 0));
+			});
+			return {
+				width,
+				height
+			};
+		});
+		const selectionBounds = ui_vue3.computed(() => {
+			const ids = ui_vue3.toValue(selectedIds) ?? [];
+
+			// A frame over a single node would only repeat its own outline.
+			if (ids.length <= 1) {
+				return null;
+			}
+			const byId = ui_vue3.toValue(blockById);
+			let minX = Infinity;
+			let minY = Infinity;
+			let maxX = -Infinity;
+			let maxY = -Infinity;
+			let hasBlocks = false;
+			ids.forEach(id => {
+				const block = byId.get(id) ?? null;
+				if (block === null) {
+					return;
+				}
+				const position = getUsablePosition(block);
+				if (position === null) {
+					return;
+				}
+				hasBlocks = true;
+				const size = blockSize(block);
+				minX = Math.min(minX, position.x);
+				minY = Math.min(minY, position.y);
+				maxX = Math.max(maxX, position.x + size.width);
+				maxY = Math.max(maxY, position.y + size.height);
+			});
+			return hasBlocks ? {
+				minX,
+				minY,
+				maxX,
+				maxY
+			} : null;
+		});
+		return {
+			selectionBounds,
+			blockById,
+			blockOrderById,
+			blockSize,
+			selectionSearchPadding
 		};
 	}
 
@@ -9336,47 +13480,24 @@ this.BX = this.BX || {};
 	function useGroupSelectionLogic(closeContextMenu, options) {
 		const {
 			blocks: uiBlocksRef,
-			transformLayoutRef,
+			blocksRectMap,
+			blockIntersections,
 			highlitedBlockIds,
 			setSelectionActive,
 			isSelectionActive,
 			groupDragOffset
 		} = useBlockDiagram();
-		const width = options.defaultBlockSize.width;
-		const height = options.defaultBlockSize.height;
-		const getBlockDimensions = (block, container) => {
-			const el = container?.querySelector(`[data-id="${block.id}"]`);
-			if (el) {
-				return {
-					w: el.offsetWidth,
-					h: el.offsetHeight
-				};
-			}
-			const w = block.dimensions?.width || width;
-			const h = block.dimensions?.height || height;
-			return {
-				w,
-				h
-			};
-		};
-
-		// A node whose model position is unusable is left out of the bounds: a single non-finite
-		// coordinate would spread NaN over the whole box, and the browser drops such a style outright.
-		const getUsablePosition = block => {
-			const position = block.position;
-			if (!main_core.Type.isObjectLike(position)) {
-				return null;
-			}
-			const x = Number(position.x);
-			const y = Number(position.y);
-			if (!Number.isFinite(x) || !Number.isFinite(y)) {
-				return null;
-			}
-			return {
-				x,
-				y
-			};
-		};
+		const {
+			selectionBounds,
+			blockOrderById,
+			blockSize,
+			selectionSearchPadding
+		} = useGroupSelectionBounds({
+			blocks: uiBlocksRef,
+			selectedIds: highlitedBlockIds,
+			blocksRectMap,
+			defaultBlockSize: options.defaultBlockSize
+		});
 		const getSelectionBoxPadding = () => {
 			const pad = ui_vue3.toValue(options.padding);
 			if (main_core.Type.isNumber(pad)) {
@@ -9394,94 +13515,81 @@ this.BX = this.BX || {};
 				left: pad.left
 			};
 		};
+
+		// Nodes the rectangle stands over, in the order they have in the model. The spatial index only
+		// narrows the candidates down - the strict rule below decides, and it measures a node by its
+		// own geometry. The query is grown by how far a node may reach past its model box; both boxes
+		// start at the same position, hence the growth on the near sides alone.
+		const collectIntersectingIds = worldRect => {
+			const padding = ui_vue3.toValue(selectionSearchPadding);
+			const candidates = blockIntersections.search({
+				minX: worldRect.x - padding.width,
+				minY: worldRect.y - padding.height,
+				maxX: worldRect.x + worldRect.width,
+				maxY: worldRect.y + worldRect.height
+			});
+			const order = ui_vue3.toValue(blockOrderById);
+			const hits = candidates.filter(block => {
+				const position = getUsablePosition(block);
+				return position !== null && isRectOverBlock(worldRect, position, blockSize(block));
+			});
+			hits.sort((left, right) => {
+				return (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0);
+			});
+			return new Set(hits.map(block => block.id));
+		};
 		function onCanvasSelect(worldRect) {
 			if (!worldRect) {
 				setSelectionActive(false);
 				return;
 			}
-			const blocks = ui_vue3.toValue(uiBlocksRef);
-			const container = ui_vue3.toValue(transformLayoutRef);
-			const intersectingIds = new Set();
-			blocks.forEach(block => {
-				const {
-					x,
-					y
-				} = block.position;
-				const {
-					w,
-					h
-				} = getBlockDimensions(block, container);
-				const isIntersecting = worldRect.x < x + w && worldRect.x + worldRect.width > x && worldRect.y < y + h && worldRect.y + worldRect.height > y;
-				if (isIntersecting) {
-					intersectingIds.add(block.id);
-				}
-			});
+			const intersectingIds = collectIntersectingIds(worldRect);
 			const currentIds = ui_vue3.toValue(highlitedBlockIds) || [];
 			const nextIds = currentIds.filter(id => intersectingIds.has(id));
+			// Membership by set: a linear lookup per node would cost the square of the selection on
+			// every frame.
+			const nextIdSet = new Set(nextIds);
 			intersectingIds.forEach(id => {
-				if (!nextIds.includes(id)) {
+				if (!nextIdSet.has(id)) {
 					nextIds.push(id);
+					nextIdSet.add(id);
 				}
 			});
-			highlitedBlockIds.value = nextIds;
+
+			// Every replacement wakes each subscriber of the selection, so a frame that kept the same
+			// nodes in the same order publishes nothing. The set size tells that apart from a duplicate
+			// the replacement would have dropped.
+			const isSameSelection = nextIds.length === currentIds.length && nextIdSet.size === nextIds.length && nextIds.every((id, index) => id === currentIds[index]);
+			if (isSameSelection) {
+				return;
+			}
+			replaceSelection(highlitedBlockIds, nextIds);
 		}
 		function onSelectionStart() {
 			setSelectionActive(true);
 			closeContextMenu();
-			highlitedBlockIds.value = [];
+			clearSelection(highlitedBlockIds);
 		}
 		const groupSelectionStyle = ui_vue3.computed(() => {
 			if (ui_vue3.toValue(isSelectionActive)) {
 				return null;
 			}
-			const ids = ui_vue3.toValue(highlitedBlockIds) || [];
-			if (ids.length <= 1) {
-				return null;
-			}
-			let minX = Infinity;
-			let minY = Infinity;
-			let maxX = -Infinity;
-			let maxY = -Infinity;
-			let hasBlocks = false;
-			const blocks = ui_vue3.toValue(uiBlocksRef);
-			const container = ui_vue3.toValue(transformLayoutRef);
-			ids.forEach(id => {
-				const block = blocks.find(item => item.id === id);
-				if (block) {
-					const position = getUsablePosition(block);
-					if (position === null) {
-						return;
-					}
-					hasBlocks = true;
-					const {
-						x,
-						y
-					} = position;
-					const {
-						w,
-						h
-					} = getBlockDimensions(block, container);
-					minX = Math.min(minX, x);
-					minY = Math.min(minY, y);
-					maxX = Math.max(maxX, x + w);
-					maxY = Math.max(maxY, y + h);
-				}
-			});
-			if (!hasBlocks) {
+			const bounds = ui_vue3.toValue(selectionBounds);
+			if (bounds === null) {
 				return null;
 			}
 			const padding = getSelectionBoxPadding();
-			// Positions come from the model, which the frame drag leaves untouched until mouseup, so
-			// the box follows the shift the gesture has drawn and stands on the model in between.
+			// The model keeps the pre-gesture positions until mouseup, so the box stands on the bounds
+			// above and follows the drag by the shift it has drawn.
 			const {
 				x: dragOffsetX,
 				y: dragOffsetY
 			} = ui_vue3.toValue(groupDragOffset);
 			return {
-				left: `${minX + dragOffsetX - padding.left}px`,
-				top: `${minY + dragOffsetY - padding.top}px`,
-				width: `${maxX - minX + padding.left + padding.right}px`,
-				height: `${maxY - minY + padding.top + padding.bottom}px`
+				left: `${bounds.minX + dragOffsetX - padding.left}px`,
+				top: `${bounds.minY + dragOffsetY - padding.top}px`,
+				width: `${bounds.maxX - bounds.minX + padding.left + padding.right}px`,
+				height: `${bounds.maxY - bounds.minY + padding.top + padding.bottom}px`
 			};
 		});
 		return {
@@ -9491,101 +13599,673 @@ this.BX = this.BX || {};
 		};
 	}
 
-	const MODIFIER_KEYS = new Set(['control', 'meta', 'shift', 'alt', 'command', 'option', 'ctrl', 'mod']);
-	const KEY_CODE_PREFIX = 'Key';
-	function useKeyboardShortcuts(shortcutsConfig) {
-		const {
-			shortcuts,
-			mousePosition,
-			isKeyboardInitialized
-		} = useBlockDiagram();
-		const isMac = main_core.Browser.isMac();
-		const prepareShortcut = ({
-			keys,
-			handler
-		}) => {
-			const lowerKeys = keys.map(k => k.toLowerCase());
-			const keySet = new Set(lowerKeys);
-			const hasMod = keySet.has('mod');
-			const needCtrl = keySet.has('ctrl') || hasMod && !isMac;
-			const needMeta = keySet.has('meta') || hasMod && isMac;
-			const mainKey = lowerKeys.find(k => !MODIFIER_KEYS.has(k));
-			if (!mainKey) {
-				console.error('Invalid shortcut config: no main key found', keys);
+	// A record names the keys it fires on or the action it runs, never both: which keys run an action
+	// is the answer of the action registry, and a record that also spelled them out would contradict it.
+
+	// A record has to name a key to fire on: a modifier alone never triggers a shortcut. Which
+	// spellings count as a modifier is InputState's answer, so the two never drift apart.
+	function hasMainKey(keys) {
+		return main_core.Type.isArrayFilled(keys) && keys.some(key => {
+			if (!main_core.Type.isStringFilled(key) || !main_core.Type.isStringFilled(key.trim())) {
+				return false;
 			}
-			return {
-				id: Math.random().toString(36).slice(2, 11),
-				mainKey: mainKey || '',
-				requiredModifiers: {
-					ctrl: needCtrl,
-					meta: needMeta,
-					shift: keySet.has('shift'),
-					alt: keySet.has('alt')
-				},
-				handler
-			};
-		};
-		const localPrepared = shortcutsConfig.map(element => prepareShortcut(element));
-		const onMouseMove = event => {
-			mousePosition.x = event.clientX;
-			mousePosition.y = event.clientY;
-		};
-		const onKeyDown = event => {
-			const target = event.target;
-			const pressedKey = event.code.startsWith(KEY_CODE_PREFIX) ? event.code.slice(KEY_CODE_PREFIX.length).toLowerCase() : event.key.toLowerCase();
-			if (MODIFIER_KEYS.has(pressedKey)) {
-				return;
-			}
-			const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
-			if (isInputActive) {
-				return;
-			}
-			for (const {
-				mainKey,
-				requiredModifiers,
-				handler
-			} of ui_vue3.toValue(shortcuts)) {
-				if (mainKey !== pressedKey) {
-					continue;
-				}
-				const {
-					ctrl,
-					meta,
-					shift,
-					alt
-				} = requiredModifiers;
-				const isMatch = event.ctrlKey === ctrl && event.metaKey === meta && event.shiftKey === shift && event.altKey === alt;
-				if (isMatch) {
-					event.preventDefault();
-					handler(event, {
-						x: mousePosition.x,
-						y: mousePosition.y
-					});
-					return;
-				}
-			}
-		};
-		ui_vue3.onMounted(() => {
-			shortcuts.value.push(...localPrepared);
-			if (!isKeyboardInitialized.value) {
-				main_core.Event.bind(window, 'keydown', onKeyDown);
-				main_core.Event.bind(window, 'mousemove', onMouseMove);
-				isKeyboardInitialized.value = true;
-			}
-		});
-		ui_vue3.onUnmounted(() => {
-			const idsToRemove = new Set(localPrepared.map(item => item.id));
-			shortcuts.value = shortcuts.value.filter(item => !idsToRemove.has(item.id));
+			return !isModifierToken(key);
 		});
 	}
 
+	// A broken record is reported and dropped, the way a record without a main key always was: one
+	// mistake in a list of shortcuts must not take the working neighbours down with it.
+	function isValidConfig({
+		keys,
+		actionId
+	}) {
+		if (main_core.Type.isStringFilled(actionId)) {
+			if (!main_core.Type.isArrayFilled(keys)) {
+				return true;
+			}
+			console.error('ui.block-diagram: invalid shortcut config, keys and actionId are exclusive', actionId);
+			return false;
+		}
+		if (hasMainKey(keys)) {
+			return true;
+		}
+		console.error('ui.block-diagram: invalid shortcut config, no main key found', keys);
+		return false;
+	}
+
+	/**
+	 * Registers diagram shortcuts on the input state owned by the canvas. Kept as a thin adapter: the
+	 * signature is public API, consumers live outside this repository.
+	 *
+	 * A record registers either by its combo, as it always did, or by the id of the action it runs -
+	 * then which press reaches it is decided by the action registry of the canvas and may change
+	 * without remounting the consumer.
+	 */
+	function useKeyboardShortcuts(shortcutsConfig) {
+		const {
+			inputState
+		} = useBlockDiagram();
+		const configs = shortcutsConfig.filter(isValidConfig);
+		let unsubscribes = [];
+		ui_vue3.onMounted(() => {
+			unsubscribes = configs.map(({
+				keys,
+				actionId,
+				handler,
+				preventDefault
+			}) => {
+				const listener = event => handler(event, inputState.pointer);
+				if (main_core.Type.isStringFilled(actionId)) {
+					return inputState.onAction(actionId, listener, {
+						preventDefault
+					});
+				}
+
+				// The record goes as a list, not as a joined string: '+' is a key of its own and a
+				// joined string has no way to tell it from the separator.
+				return inputState.on(keys, listener, {
+					preventDefault
+				});
+			});
+		});
+		ui_vue3.onUnmounted(() => {
+			unsubscribes.forEach(unsubscribe => unsubscribe());
+			unsubscribes = [];
+		});
+	}
+
+	const PAN_KEYS = {
+		ArrowLeft: {
+			x: -1,
+			y: 0
+		},
+		ArrowRight: {
+			x: 1,
+			y: 0
+		},
+		ArrowUp: {
+			x: 0,
+			y: -1
+		},
+		ArrowDown: {
+			x: 0,
+			y: 1
+		}
+	};
+	const MILLISECONDS_IN_SECOND = 1000;
+
+	// The spellings `InputState` normalizes a modifier to; `isModifierToken` accepts the same set.
+	const MODIFIER_TOKENS = ['ctrl', 'alt', 'shift', 'meta'];
+	// Closes the gap to the target by at most `maxDelta` of the velocity's own length, so the speed ramps
+	// at a fixed rate instead of snapping. The vector is ramped as a whole and not axis by axis: ramped
+	// side by side, the axes of a diagonal reach full speed in the time one axis takes to cover a shorter
+	// distance, and a turn from one direction to another briefly carries the camera faster than the speed
+	// it was promised. Landing exactly on the target is what lets the loop tell a finished stop from a
+	// slow one.
+	function approachVector(velocity, target, maxDelta) {
+		const deltaX = target.x - velocity.x;
+		const deltaY = target.y - velocity.y;
+		const distance = Math.hypot(deltaX, deltaY);
+		if (distance <= maxDelta) {
+			return {
+				x: target.x,
+				y: target.y
+			};
+		}
+		return {
+			x: velocity.x + deltaX / distance * maxDelta,
+			y: velocity.y + deltaY / distance * maxDelta
+		};
+	}
+
+	// Two arrows at once hold a vector of length sqrt(2), so without normalizing the diagonal would run
+	// some 40 per cent faster than an axis. What is normalized is the target speed, not the path the ramp
+	// takes to it: the axes ramp side by side, so a diagonal reaches full speed a little sooner than an
+	// axis does. Opposite arrows cancel out and hold nothing.
+	function getTargetDirection(heldKeys) {
+		let x = 0;
+		let y = 0;
+		heldKeys.forEach(key => {
+			x += PAN_KEYS[key].x;
+			y += PAN_KEYS[key].y;
+		});
+		const length = Math.hypot(x, y);
+		if (length === 0) {
+			return {
+				x: 0,
+				y: 0
+			};
+		}
+		return {
+			x: x / length,
+			y: y / length
+		};
+	}
+
+	// The rule about an editable surface is written once, in `isInputEventTarget`: it asks an event about
+	// its target, and the target here is whatever holds the focus at this very moment.
+	function isEditableActiveElement() {
+		return isInputEventTarget({
+			target: document.activeElement
+		});
+	}
+
+	// An arrow under a modifier is somebody else's shortcut: the browser's, the system's or the screen
+	// reader's - VoiceOver reads by Ctrl+Option+arrow. The hold channel of the input state matches by the
+	// key token alone, so without this every one of them would read as a plain arrow.
+	function hasModifier(event) {
+		return event?.ctrlKey === true || event?.altKey === true || event?.metaKey === true || event?.shiftKey === true;
+	}
+
+	// A modifier pressed after the arrow finds no press edge to be refused at: the token of the arrow does
+	// not change, so the hold channel stays silent about it. Watching the modifiers themselves closes the
+	// other order of the same pair - the arrow stops moving the camera, and the combo goes back to the
+	// browser, because `Ctrl+ArrowLeft` matches no record of ours.
+	function subscribeModifiers(inputState, onModifierDown) {
+		return MODIFIER_TOKENS.map(token => inputState.onChange(token, isPressed => {
+			if (isPressed) {
+				onModifierDown();
+			}
+		}));
+	}
+
+	/**
+	 * The frame loop of the pan: a constant speed with a short ramp at both ends of a hold. It knows
+	 * nothing about keys - where to go and whether it may go at all are asked through the callbacks, which
+	 * keeps the frame bookkeeping out of the subscription code.
+	 */
+	function createPanLoop(options) {
+		const {
+			getTarget,
+			canRun,
+			onCannotRun,
+			panBy
+		} = options;
+		let frameId = null;
+		// The timestamp of the previous frame, so a frame moves the camera by the time it actually took.
+		// Null until the loop has seen its first frame: there is nothing to measure against yet.
+		let previousFrameTime = null;
+		// The velocity the camera runs at right now, as a share of the full speed. It follows the target
+		// through `approachVector`, which is what makes both ends of a hold gradual.
+		let velocity = {
+			x: 0,
+			y: 0
+		};
+		function stop() {
+			if (frameId !== null) {
+				cancelAnimationFrame(frameId);
+				frameId = null;
+			}
+			previousFrameTime = null;
+			velocity = {
+				x: 0,
+				y: 0
+			};
+		}
+		function step(now) {
+			if (!canRun()) {
+				onCannotRun();
+				stop();
+				return;
+			}
+			const elapsed = previousFrameTime === null ? 0 : now - previousFrameTime;
+			previousFrameTime = now;
+			const target = getTarget();
+			const maxDelta = elapsed / KEYBOARD_PAN_RAMP_DURATION;
+			velocity = approachVector(velocity, target, maxDelta);
+
+			// The speed is per second, so a frame owes its own share of it. A fixed number of pixels per
+			// frame would hand the speed over to the refresh rate of the monitor instead.
+			const seconds = elapsed / MILLISECONDS_IN_SECOND;
+			const dx = velocity.x * KEYBOARD_PAN_SPEED * seconds;
+			const dy = velocity.y * KEYBOARD_PAN_SPEED * seconds;
+			if (dx !== 0 || dy !== 0) {
+				panBy(dx, dy);
+			}
+
+			// Nowhere to go and nothing left to slow down: the soft stop has finished.
+			if (target.x === 0 && target.y === 0 && velocity.x === 0 && velocity.y === 0) {
+				stop();
+				return;
+			}
+			frameId = requestAnimationFrame(step);
+		}
+		function start() {
+			if (frameId !== null) {
+				return;
+			}
+			frameId = requestAnimationFrame(step);
+		}
+		return {
+			start,
+			stop
+		};
+	}
+
+	/**
+	 * Arrow keys drive the camera while they are held: the loop runs on animation frames at a constant
+	 * speed, with a short pull away on press and a soft stop on release. The keys belong to the diagram
+	 * only while the focus stands on one of its surfaces - the root, or the minimap the consumer places on
+	 * its own - so the arrows of the surrounding page stay the page's own, and a popup rendered into `body`
+	 * keeps them too.
+	 */
+	function useKeyboardPan() {
+		const {
+			isDisabledBlockDiagram,
+			inputState,
+			blockDiagramRef,
+			canvasMapRef
+		} = useBlockDiagram();
+		const {
+			panBy
+		} = useCanvas();
+		const heldKeys = new Set();
+		let unsubscribes = [];
+
+		// The right to pan, re-asked every frame and not only at the press: while the arrow is down the
+		// diagram can be switched off, lose the focus, or hand it to a field - and no press edge says so.
+		function canPan() {
+			return !ui_vue3.toValue(isDisabledBlockDiagram) && !isEditableActiveElement() && isFocusOnAnyOf([ui_vue3.toValue(blockDiagramRef), ui_vue3.toValue(canvasMapRef)]);
+		}
+		const panLoop = createPanLoop({
+			getTarget: () => getTargetDirection(heldKeys),
+			canRun: canPan,
+			// Switched off or left behind mid-hold, the camera stops where it stands - no coasting out of a
+			// diagram that can no longer hear the key released. The held set goes with it: the arrow that is
+			// still down belongs to whoever holds the focus now.
+			onCannotRun: () => heldKeys.clear(),
+			panBy
+		});
+		function handleHold(key, isPressed, event) {
+			if (isPressed) {
+				if (hasModifier(event) || isInputEventTarget(event) || !canPan()) {
+					return;
+				}
+				heldKeys.add(key);
+			} else {
+				// A release always applies, whatever the focus is on and whatever state the diagram is in,
+				// or the key would stick down and carry the camera away with it.
+				heldKeys.delete(key);
+			}
+
+			// A release can leave another arrow held: two opposite ones cancel out and end the loop, and
+			// letting go of one of them has to bring it back.
+			if (heldKeys.size > 0 && canPan()) {
+				panLoop.start();
+			}
+		}
+
+		// Runs on every keydown of an arrow, auto repeat included, and does the two things the edge channel
+		// cannot. It answers the browser: edges alone would let the page under the diagram keep scrolling
+		// through a hold, and the suppression is owed exactly while the canvas may pan - an arrow the
+		// diagram does not use stays the property of the page. And it picks up a hold that began without
+		// the right to pan: the focus came back to the canvas, or the diagram was switched on, while the
+		// key was already down. No press edge is coming for that key, so without this it would stay dead
+		// until released - taken from the page and moving nothing. Modifiers need no check here: a record
+		// is matched by the whole combo, so `Ctrl+ArrowLeft` never reaches one made for `ArrowLeft`.
+		function handleArrowKeyDown(key, event) {
+			if (!canPan()) {
+				return;
+			}
+			event.preventDefault();
+			if (!heldKeys.has(key)) {
+				heldKeys.add(key);
+				panLoop.start();
+			}
+		}
+		ui_vue3.onMounted(() => {
+			unsubscribes = subscribeModifiers(inputState, () => heldKeys.clear());
+			unsubscribes.push(...Object.keys(PAN_KEYS).flatMap(key => [
+			// Edges only: the hold channel stays silent through the auto repeat of the keyboard, which
+			// is what keeps the movement off the repeat rate of the operating system. A forced release -
+			// the window losing focus, the tab going away, the input state being detached - arrives here
+			// as a release as well.
+			inputState.onChange(key, (isPressed, event) => handleHold(key, isPressed, event)),
+			// Subscribed directly, not through `useKeyboardShortcuts`, which could take this record as
+			// it stands: the two channels are one mechanism and the adapter owns only one of them, so
+			// declaring half of it there would split a pair between two lifecycle owners. Direct
+			// subscriptions are how the extension already does it - canvas-transform.js, search-bar.js.
+			inputState.on([key], event => handleArrowKeyDown(key, event), {
+				preventDefault: false
+			})]));
+		});
+		ui_vue3.onUnmounted(() => {
+			unsubscribes.forEach(unsubscribe => unsubscribe());
+			unsubscribes = [];
+			heldKeys.clear();
+			panLoop.stop();
+		});
+	}
+
+	const COPY_MENU_ITEM_ID = 'copyBlocks';
+	const PASTE_MENU_ITEM_ID = 'pasteBlocks';
+	function selectFragment(blocks, connections, selectedIds, isBackdrop) {
+		const selected = new Set(selectedIds);
+		return {
+			blocks: blocks.filter(block => selected.has(block.id)),
+			backdropIds: selectedIds.filter(blockId => isBackdrop(blockId)),
+			// A connection with an end outside the selection is left out: pasted, it would hang on a
+			// block that is not part of the fragment.
+			connections: connections.filter(connection => {
+				return selected.has(connection.sourceBlockId) && selected.has(connection.targetBlockId);
+			})
+		};
+	}
+
+	/**
+	 * Sets up copying and pasting for the diagram it is called inside of. Called once per diagram
+	 * application: a second call registers a second pair of Mod+C/Mod+V on the shared input state, and
+	 * one keypress pastes twice. The signature is public API, consumers live outside this repository.
+	 */
+	// eslint-disable-next-line max-lines-per-function
+	function useCopyPaste(options = {}) {
+		const {
+			createBlockId,
+			cloneContent = content => content,
+			canPaste = () => true,
+			shortcuts = true
+		} = options;
+		const {
+			blockDiagramRef,
+			blocks,
+			connections,
+			highlitedBlockIds,
+			transformX,
+			transformY,
+			addBlocks,
+			addConnections,
+			transformEventToPoint,
+			isDisabledBlockDiagram,
+			hooks,
+			actionRegistry,
+			copyPasteBuffer: buffer
+		} = useBlockDiagram();
+		const highlightedBlocks = useHighlightedBlocks();
+		const history = useHistory();
+		const {
+			closeContextMenu
+		} = useContextMenu();
+		const {
+			resolvePlacementDelta
+		} = useBlockPlacement();
+		const {
+			isGroupableBlock
+		} = useGroupable();
+		const {
+			mark: markDisplacedBlocks,
+			announceRefusal
+		} = useDisplacedBlocks();
+		const loc = useLoc();
+		function copy() {
+			const selectedIds = ui_vue3.toValue(highlitedBlockIds);
+			// An empty selection leaves the buffer untouched, so a previously copied fragment stays
+			// available for pasting. Copying itself is never restricted by canPaste.
+			if (selectedIds.length === 0) {
+				return false;
+			}
+			buffer.setContent(selectFragment(ui_vue3.toValue(blocks), ui_vue3.toValue(connections), selectedIds, isGroupableBlock));
+			closeContextMenu();
+			return true;
+		}
+
+		// A pasted block has not mounted yet, so the registry of containers knows nothing of it. The copy
+		// inherits what the original was - a pasted container lies over the nodes it covers instead of
+		// pushing them away - and that is read from the buffer, where it was written while the original
+		// was still on the canvas. The registry answers only for content copied before the buffer began
+		// to carry the flag; asking it for a copied-then-deleted container would lose the flag.
+		function collectPastedBackdropIds(blockIdMap, copiedBackdropIds) {
+			const wasBackdrop = copiedBackdropIds === null ? isGroupableBlock : blockId => copiedBackdropIds.includes(blockId);
+			const backdropIds = new Set();
+			for (const [sourceBlockId, pastedBlockId] of blockIdMap) {
+				if (wasBackdrop(sourceBlockId)) {
+					backdropIds.add(pastedBlockId);
+				}
+			}
+			return backdropIds;
+		}
+		function paste(point) {
+			// Checked before the buffer is read and before the highlight is cleared: a forbidden paste
+			// leaves the canvas exactly as it was. The canvas flag closes pasting the same way it
+			// closes the other model-changing gestures; canPaste is the domain guard on top of it.
+			if (ui_vue3.toValue(isDisabledBlockDiagram) || !canPaste()) {
+				return [];
+			}
+			try {
+				const content = buffer.getContent();
+				if (content === null || content.blocks.length === 0) {
+					// An empty paste drops the current selection too: the gesture did happen, it simply
+					// had nothing to put on the canvas.
+					highlightedBlocks.clear();
+					return [];
+				}
+				const fragment = issueNewFragmentIds(content, createBlockId);
+				const clonedContent = cloneContent(fragment.content, fragment.blockIdMap);
+				const fragmentBlocks = layoutFragmentBlocks(clonedContent.blocks, point);
+				// The whole fragment is one set of participants, so its blocks never block each other: the
+				// overlaps it may carry came from the schema it was copied from, and sanitising those is
+				// not what this rule is for. The grid is left out of the correction on purpose - the
+				// fragment lands where it was aimed at, and the layout above never aligned it either.
+				const placementDelta = resolvePlacementDelta(fragmentBlocks.map(block => ({
+					id: block.id,
+					x: block.position.x,
+					y: block.position.y,
+					width: block.dimensions?.width,
+					height: block.dimensions?.height
+				})), {
+					followsGrid: false,
+					backdropIds: collectPastedBackdropIds(fragment.blockIdMap, content.backdropIds ?? null)
+				});
+
+				// No free room within the budget: nothing is pasted at all, so the model never comes to
+				// hold a forbidden overlap and no snapshot of a half-done paste is taken. The buffer keeps
+				// its content and the selection keeps its blocks, so the user may aim somewhere else and
+				// try again - which is worth saying out loud, as the canvas itself stays exactly as it was.
+				if (placementDelta === null) {
+					announceRefusal();
+					return [];
+				}
+
+				// Dropped only once the paste is certain to happen, and strictly before the model changes:
+				// what is pasted becomes the new selection, and a refusal above leaves the old one alone.
+				highlightedBlocks.clear();
+
+				// Applied before the write: after it the paste would owe the history a second state.
+				const pastedBlocks = fragmentBlocks.map(block => ({
+					...block,
+					position: {
+						...block.position,
+						x: block.position.x + placementDelta.x,
+						y: block.position.y + placementDelta.y
+					}
+				}));
+				addBlocks(pastedBlocks);
+				addConnections(clonedContent.connections);
+				if (placementDelta.x !== 0 || placementDelta.y !== 0) {
+					markDisplacedBlocks(pastedBlocks.map(block => block.id));
+				}
+
+				// The highlight is queued before the hook fires and the snapshot, which defers itself
+				// to the same queue, is registered after it: a subscriber deferring its own work lands
+				// between the two.
+				void ui_vue3.nextTick(() => {
+					highlightedBlocks.replace(pastedBlocks.map(block => block.id));
+				});
+
+				// Connections go out as proposed, not as accepted: addConnections silently drops the
+				// ones duplicating an already existing block and port pair.
+				const payload = {
+					blocks: pastedBlocks,
+					connections: clonedContent.connections,
+					point
+				};
+				// Subscribers live outside the extension: a failing one must not cost the paste that
+				// already reached the model its own undo step.
+				try {
+					hooks.pasteBlocks.trigger(payload);
+				} catch (error) {
+					console.error('Paste error:', error);
+				}
+				void history.makeSnapshot();
+				return pastedBlocks;
+			} catch (error) {
+				console.error('Paste error:', error);
+				return [];
+			}
+		}
+
+		/**
+		 * Turns the last known pointer position into a paste point. A menu item lands its point inside
+		 * the transformed layer, so it is already in world coordinates; the pointer is in viewport
+		 * ones, and the camera shift has to be added on top. The two entry points stay different on
+		 * purpose: unifying them would move one of them by the pan of the camera.
+		 */
+		function getShortcutPastePoint(pointer) {
+			const rawPoint = transformEventToPoint({
+				clientX: pointer.x,
+				clientY: pointer.y
+			});
+			return {
+				x: rawPoint.x + (ui_vue3.toValue(transformX) || 0),
+				y: rawPoint.y + (ui_vue3.toValue(transformY) || 0)
+			};
+		}
+
+		/**
+		 * Decides who the press belongs to. The browser action is not suppressed up front: text
+		 * selected outside the canvas is the browser's to copy, and a press that copied no node has
+		 * nothing to suppress it for. Only a copy that actually happened takes the key away.
+		 */
+		function onCopyShortcut(event) {
+			if (hasTextSelectionOutside(ui_vue3.toValue(blockDiagramRef))) {
+				return;
+			}
+			if (!copy()) {
+				return;
+			}
+			event.preventDefault();
+		}
+		if (shortcuts) {
+			useKeyboardShortcuts([{
+				actionId: CANVAS_ACTION_ID.COPY,
+				preventDefault: false,
+				handler: onCopyShortcut
+			}, {
+				actionId: CANVAS_ACTION_ID.PASTE,
+				// The shortcut never checks the buffer: the only guard on this path is canPaste.
+				handler: (event, pointer) => {
+					paste(getShortcutPastePoint(pointer));
+				}
+			}]);
+		}
+
+		// Descriptions, not markup: the consumer puts them into its own menu and overrides any field.
+		// The canvas component does not mix them in on its own, so a consumer passing no items keeps
+		// the canvas menu closed the way it is today.
+		//
+		// The combo is read through the version of the registry: the maps behind it are plain - a store
+		// keeps the registry markRaw - and without that dependency the item would go on offering the
+		// caption of its first build after a reassignment.
+		const announcedCombo = actionId => {
+			actionRegistry.getVersion();
+			return formatComboCaption(actionRegistry.getCombo(actionId));
+		};
+		const copyMenuItem = ui_vue3.computed(() => ({
+			id: COPY_MENU_ITEM_ID,
+			text: loc.getMessage('UI_BLOCK_DIAGRAM_CONTEXT_MENU_ITEM_COPY'),
+			hotkey: announcedCombo(CANVAS_ACTION_ID.COPY),
+			// Copying is never restricted, the paste predicate does not reach it.
+			disabled: false,
+			onclick: () => {
+				copy();
+			}
+		}));
+		const pasteMenuItem = ui_vue3.computed(() => ({
+			id: PASTE_MENU_ITEM_ID,
+			text: loc.getMessage('UI_BLOCK_DIAGRAM_CONTEXT_MENU_ITEM_PASTE'),
+			hotkey: announcedCombo(CANVAS_ACTION_ID.PASTE),
+			// The same guards paste() checks, in the same order: an item announced as available has to
+			// do something when clicked. A consumer passing a non-reactive canPaste keeps the value it
+			// had at the last recomputation.
+			disabled: ui_vue3.toValue(isDisabledBlockDiagram) || !canPaste() || ui_vue3.toValue(buffer.isEmpty),
+			onclick: point => {
+				paste(point);
+			}
+		}));
+		return {
+			copy,
+			paste,
+			isBufferEmpty: buffer.isEmpty,
+			copyMenuItem,
+			pasteMenuItem
+		};
+	}
+
+	/**
+	 * The caption of the combo an action runs, spelled for the current platform. The single place where
+	 * "read the combo of an action, format it" lives: a place of display asks by action id and gets a
+	 * string ready for the screen.
+	 *
+	 * The caption follows a replacement of the set of bindings - reading the combo makes the computed a
+	 * follower of it - and an action holding no combo reads as an empty string. That is a regular path,
+	 * not a failure: the map of the canvas ships without a combo on macOS, where the system takes the
+	 * one it would use.
+	 *
+	 * Call it from `setup()`: it stands on the context of `useBlockDiagram()`, which is looked up
+	 * through the instance of the Vue application.
+	 *
+	 * @param {string} actionId id of the action, an unknown one included: it reads as no combo
+	 * @returns {ComputedRef<string>}
+	 */
+	function useActionShortcut(actionId)
+	{
+		const { actionRegistry } = useBlockDiagram();
+
+		return ui_vue3.computed(() => formatComboCaption(actionRegistry.getCombo(actionId)));
+	}
+
+	/**
+	 * The combo an action runs, spelled the way `aria-keyshortcuts` declares it. The counterpart of
+	 * `useActionShortcut()`: the same combo, addressed to a screen reader instead of to the eye.
+	 *
+	 * The announcement follows a replacement of the set of bindings, and an action holding no combo reads
+	 * as null - that is what leaves the attribute off the element.
+	 *
+	 * Call it from `setup()`: it stands on the context of `useBlockDiagram()`, which is looked up
+	 * through the instance of the Vue application.
+	 *
+	 * @param {string} actionId id of the action, an unknown one included: it reads as no combo
+	 * @returns {ComputedRef<string | null>}
+	 */
+	function useActionKeyshortcuts(actionId)
+	{
+		const { actionRegistry } = useBlockDiagram();
+
+		return ui_vue3.computed(() => formatComboKeyshortcuts(actionRegistry.getCombo(actionId)));
+	}
+
+	const CAPTURE_LISTENER_OPTIONS = Object.freeze({
+		capture: true
+	});
 	const CANVAS_TRANSFORM_CLASS_NAMES = {
 		base: 'ui-block-diagram-canvas-transform',
 		dragging: '--dragging',
 		grabbing: '--grabbing',
 		grab: '--grab'
 	};
-	const KEY_SPACE = 'Space';
+
+	/**
+	 * Drops the text selection the way the browser would on a press. The canvas suppresses the browser
+	 * action on mousedown - panning and the selection box both need it - and takes this with it, so
+	 * the component gives it back. Bound on the capture phase: a node starting its gesture stops the
+	 * press from propagating, so a bubbling handler on the root would never see such a press. A field
+	 * on the canvas owns its own selection and is left alone.
+	 */
+	function clearTextSelectionOnCanvasPress(event) {
+		if (isInputEventTarget(event)) {
+			return;
+		}
+		clearTextSelection();
+	}
 
 	// @vue/component
 	const CanvasTransform = {
@@ -9619,6 +14299,11 @@ this.BX = this.BX || {};
 			const isSpacePressed = ui_vue3.ref(false);
 			const isPanning = ui_vue3.ref(false);
 			const {
+				inputState,
+				highlitedBlockIds,
+				isOpenContextMenu
+			} = useBlockDiagram();
+			const {
 				isDragging,
 				onMounted: onMountedCanvasTransform,
 				onUnmounted: onUnmountedCanvasTransform,
@@ -9649,22 +14334,61 @@ this.BX = this.BX || {};
 				[CANVAS_TRANSFORM_CLASS_NAMES.grabbing]: ui_vue3.toValue(isPanning),
 				[CANVAS_TRANSFORM_CLASS_NAMES.grab]: ui_vue3.toValue(isSpacePressed) && !ui_vue3.toValue(isPanning)
 			}));
+			let unsubscribeSpaceHold = () => {};
+			let unsubscribeEscape = () => {};
+			let pressListenerTarget = null;
 			ui_vue3.onMounted(() => {
 				onMountedCanvasTransform();
-				main_core.Event.bind(window, 'keydown', onKeyDown);
-				main_core.Event.bind(window, 'keyup', onKeyUp);
+				pressListenerTarget = ui_vue3.toValue(rootRef);
+				main_core.Event.bind(pressListenerTarget, 'mousedown', clearTextSelectionOnCanvasPress, CAPTURE_LISTENER_OPTIONS);
+
+				// A forced release - the window losing focus, the tab going away - arrives here as well,
+				// so the panning cursor never outlives the hold that turned it on. Only the press is
+				// ignored for a field: a release always applies, or the hold would stick.
+				unsubscribeSpaceHold = inputState.onChange(KEY_TOKEN.SPACE, (isPressed, event) => {
+					if (isPressed && isInputEventTarget(event)) {
+						return;
+					}
+					isSpacePressed.value = isPressed;
+				});
+
+				// Plain, not exclusive: the component lives as long as the canvas is shown, so an exclusive
+				// claim would hold Escape away from the layers above it even with nothing selected. On the
+				// bubbling phase the key still reaches them, and an operation that claims Escape for itself
+				// - a gesture, the search - runs before this handler is ever asked. The browser action is
+				// left alone for the same reason: dropping a selection is not a claim on the key.
+				unsubscribeEscape = inputState.on(KEY_TOKEN.ESCAPE, event => {
+					// A held key repeats, and a repeat is the same press: the selection drops once.
+					if (event.repeat === true) {
+						return;
+					}
+
+					// The canvas menu listens for Escape on its own, outside the input state, so one press
+					// closes it - and the selection it was opened on has to survive that press.
+					if (ui_vue3.toValue(isOpenContextMenu)) {
+						return;
+					}
+					if (ui_vue3.toValue(highlitedBlockIds).length === 0) {
+						return;
+					}
+					clearSelection(highlitedBlockIds);
+				}, {
+					preventDefault: false
+				});
 			});
 			ui_vue3.onUnmounted(() => {
 				onUnmountedCanvasTransform();
-				main_core.Event.unbind(window, 'keydown', onKeyDown);
-				main_core.Event.unbind(window, 'keyup', onKeyUp);
+				main_core.Event.unbind(pressListenerTarget, 'mousedown', clearTextSelectionOnCanvasPress, CAPTURE_LISTENER_OPTIONS);
+				pressListenerTarget = null;
+				unsubscribeSpaceHold();
+				unsubscribeEscape();
 			});
 			function onMouseDown(event) {
-				if (event.button === 2) {
+				if (event.button === MOUSE_BUTTON.RIGHT) {
 					return;
 				}
-				const isMiddleClick = event.button === 1;
-				const isLeftClick = event.button === 0;
+				const isMiddleClick = event.button === MOUSE_BUTTON.MIDDLE;
+				const isLeftClick = event.button === MOUSE_BUTTON.LEFT;
 				const isSpace = ui_vue3.toValue(isSpacePressed);
 				const shouldPan = isMiddleClick || isLeftClick && (isSpace || !props.selectionEnabled);
 				const shouldSelect = isLeftClick && !isSpace && props.selectionEnabled;
@@ -9706,25 +14430,6 @@ this.BX = this.BX || {};
 					onPanEnd();
 				}
 			}
-			const onKeyDown = event => {
-				if (event.code !== KEY_SPACE) {
-					return;
-				}
-				if (event.repeat) {
-					return;
-				}
-				const target = event.target;
-				const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
-				if (isInputActive) {
-					return;
-				}
-				isSpacePressed.value = true;
-			};
-			const onKeyUp = event => {
-				if (event.code === KEY_SPACE) {
-					isSpacePressed.value = false;
-				}
-			};
 			function openContextMenu(event) {
 				if (event.target === ui_vue3.toValue(canvasRef) || event.target?.parentElement === ui_vue3.toValue(transformLayoutRef)) {
 					emit('openContextMenu', event);
@@ -9779,7 +14484,8 @@ this.BX = this.BX || {};
 
 	const CONNECTION_CLASS_NAME = {
 		base: 'ui-block-diagram-connection',
-		active: '--active'
+		active: '--active',
+		elevated: '--elevated'
 	};
 	const TARGET_CONNECTION_CLASS_NAMES = {
 		base: 'ui-block-diagram-connection__target',
@@ -9815,7 +14521,8 @@ this.BX = this.BX || {};
 		setup(props) {
 			const {
 				connectionPathInfo,
-				isDisabled
+				isDisabled,
+				isElevatedConnection
 			} = useConnectionState(props.connection);
 			const {
 				deleteConnectionById
@@ -9841,7 +14548,8 @@ this.BX = this.BX || {};
 			const connectionClassNames = ui_vue3.computed(() => {
 				return {
 					[CONNECTION_CLASS_NAME.base]: true,
-					[CONNECTION_CLASS_NAME.active]: ui_vue3.toValue(isOpen)
+					[CONNECTION_CLASS_NAME.active]: ui_vue3.toValue(isOpen),
+					[CONNECTION_CLASS_NAME.elevated]: ui_vue3.toValue(isElevatedConnection)
 				};
 			});
 			const targetConnectionClasses = ui_vue3.computed(() => ({
@@ -9879,7 +14587,11 @@ this.BX = this.BX || {};
 			};
 		},
 		template: `
-		<svg :class="connectionClassNames" :data-id="connection.id">
+		<svg
+			:class="connectionClassNames"
+			:data-id="connection.id"
+			:data-test-id="$blockDiagramTestId('connection', connection.id)"
+		>
 			<g class="ui-block-diagram-connection__group">
 				<path
 					:d="connectionPathInfo.path"
@@ -10600,6 +15312,13 @@ this.BX = this.BX || {};
 
 	// eslint-disable-next-line no-unused-vars
 
+	const MOVEABLE_BLOCK_CLASS_NAMES = {
+		base: 'ui-block-diagram-moveable-block',
+		placementFeedback: 'ui-block-diagram-placement-feedback',
+		displaced: '--displaced',
+		placementRefused: '--placement-refused'
+	};
+
 	// @vue/component
 	const MoveableBlock = {
 		name: 'moveable-block',
@@ -10608,10 +15327,6 @@ this.BX = this.BX || {};
 			block: {
 				type: Object,
 				required: true
-			},
-			highlighted: {
-				type: Boolean,
-				default: false
 			}
 		},
 		setup(props) {
@@ -10620,11 +15335,16 @@ this.BX = this.BX || {};
 			} = ui_vue3.toRefs(props);
 			const blockRef = ui_vue3.useTemplateRef('blockEl');
 			const {
-				isMakeNewConnection
+				isMakeNewConnection,
+				hoveredBlockId,
+				setHoveredBlock,
+				resetHoveredBlock
 			} = useBlockDiagram();
 			const {
 				blockZindex,
 				isHiglitedBlock,
+				isDisplacedBlock,
+				isPlacementRefusedBlock,
 				isDisabled,
 				onMountedBlock,
 				onUnmountedBlock
@@ -10632,21 +15352,22 @@ this.BX = this.BX || {};
 				block,
 				blockRef
 			});
-			const highlightedBlocks = useHighlightedBlocks();
 			const {
 				isDragged,
 				blockPositionStyle
 			} = useMoveableBlock(blockRef, block);
-			ui_vue3.watch(() => props.highlighted, value => {
-				if (value) {
-					highlightedBlocks.add(props.block.id);
-				} else {
-					highlightedBlocks.remove(props.block.id);
-				}
-			});
 			const blockStyle = ui_vue3.computed(() => ({
 				...ui_vue3.toValue(blockPositionStyle),
-				...ui_vue3.toValue(blockZindex)
+				zIndex: ui_vue3.toValue(blockZindex)
+			}));
+
+			// The placement feedback lives on the wrapper the canvas owns, so it shows without a single
+			// change in the consumer's block content.
+			const blockClassNames = ui_vue3.computed(() => ({
+				[MOVEABLE_BLOCK_CLASS_NAMES.base]: true,
+				[MOVEABLE_BLOCK_CLASS_NAMES.placementFeedback]: true,
+				[MOVEABLE_BLOCK_CLASS_NAMES.displaced]: ui_vue3.toValue(isDisplacedBlock),
+				[MOVEABLE_BLOCK_CLASS_NAMES.placementRefused]: ui_vue3.toValue(isPlacementRefusedBlock)
 			}));
 			ui_vue3.onMounted(() => {
 				onMountedBlock();
@@ -10654,29 +15375,39 @@ this.BX = this.BX || {};
 			ui_vue3.onUnmounted(() => {
 				onUnmountedBlock();
 			});
-			function onMouseDownSelectBlock() {
-				highlightedBlocks.clear();
-				highlightedBlocks.add(props.block.id);
+			function onMouseEnterHoverBlock() {
+				setHoveredBlock(props.block.id);
+			}
+
+			// A quick move between neighbours brings the enter of the new node before the leave of the
+			// old one, so the leave only clears the state while this node is still the raised one.
+			function onMouseLeaveHoverBlock() {
+				if (ui_vue3.toValue(hoveredBlockId) === props.block.id) {
+					resetHoveredBlock();
+				}
 			}
 			return {
 				isHiglitedBlock,
+				isDisplacedBlock,
+				isPlacementRefusedBlock,
 				isDisabled,
 				isDragged,
 				isMakeNewConnection,
+				blockClassNames,
 				blockStyle,
-				blockZindex,
-				blockPositionStyle,
-				onMouseDownSelectBlock
+				onMouseEnterHoverBlock,
+				onMouseLeaveHoverBlock
 			};
 		},
 		template: `
 		<div
-			class="ui-block-diagram-moveable-block"
+			:class="blockClassNames"
 			:style="blockStyle"
 			ref="blockEl"
 			:data-test-id="$blockDiagramTestId('block', block.id)"
 			:data-id="block.id"
-			@mousedown="onMouseDownSelectBlock"
+			@mouseenter="onMouseEnterHoverBlock"
+			@mouseleave="onMouseLeaveHoverBlock"
 		>
 			<slot
 				:block="block"
@@ -10684,6 +15415,8 @@ this.BX = this.BX || {};
 				:isDragged="isDragged"
 				:isDisabled="isDisabled"
 				:isMakeNewConnection="isMakeNewConnection"
+				:isDisplaced="isDisplacedBlock"
+				:isPlacementRefused="isPlacementRefusedBlock"
 			/>
 		</div>
 	`
@@ -10961,8 +15694,18 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// Everything that can hold the focus of its own inside the canvas. A disabled control is left out:
+	// the browser gives it no focus either, so a press on one belongs to the canvas.
+	const FOCUSABLE_SELECTOR = ['a[href]', 'button:not([disabled])', 'input:not([disabled])', 'select:not([disabled])', 'textarea:not([disabled])', '[contenteditable]:not([contenteditable="false"])', '[tabindex]'].join(',');
 	const UI_CANVAS_GRID_COLOR = '#A1B8D9';
 	const UI_CANVAS_BACKGROUND_COLOR = '#ECF0F2';
+
+	// Built once: the canvas root carries it through every render of the diagram, and it says the same
+	// thing on each of them.
+	const CANVAS_ROOT_STYLE = Object.freeze({
+		[ELEVATION_OFFSET_CSS_VARIABLE]: `${BLOCK_INDEXES.ELEVATION_OFFSET}`,
+		[DISPLACED_DURATION_CSS_VARIABLE]: `${DISPLACED_STATE_DURATION_MS}ms`
+	});
 	const BLOCK_DIAGRAM_CLASS_NAMES = {
 		base: 'ui-block-diagram',
 		ewResize: '--cursor-ew-resize',
@@ -11030,7 +15773,10 @@ this.BX = this.BX || {};
 			},
 			minZoom: {
 				type: Number,
-				default: 0.2
+				default: 0.2,
+				validator(value) {
+					return isValidMinZoom(value);
+				}
 			},
 			maxZoom: {
 				type: Number,
@@ -11050,7 +15796,7 @@ this.BX = this.BX || {};
 			},
 			historyHooks: {
 				type: Array,
-				default: () => [HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.DELETE_CONNECTION]
+				default: () => [HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.END_GESTURE, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.DELETE_CONNECTION]
 			},
 			snapshotHandler: {
 				type: Function,
@@ -11078,7 +15824,7 @@ this.BX = this.BX || {};
 				default: () => []
 			}
 		},
-		emits: ['update:blocks', 'update:connections', HOOK_NAMES.CHANGED_BLOCKS, HOOK_NAMES.CHANGED_CONNECTIONS, HOOK_NAMES.START_DRAG_BLOCK, HOOK_NAMES.MOVE_DRAG_BLOCK, HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.ADD_BLOCKS, HOOK_NAMES.UPDATE_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.ADD_CONNECTIONS, HOOK_NAMES.DELETE_CONNECTION, HOOK_NAMES.BLOCK_TRANSITION_START, HOOK_NAMES.BLOCK_TRANSITION_END, HOOK_NAMES.CONNECTION_TRANSITION_START, HOOK_NAMES.CONNECTION_TRANSITION_END, HOOK_NAMES.DROP_NEW_BLOCK],
+		emits: ['update:blocks', 'update:connections', HOOK_NAMES.CHANGED_BLOCKS, HOOK_NAMES.CHANGED_CONNECTIONS, HOOK_NAMES.START_DRAG_BLOCK, HOOK_NAMES.MOVE_DRAG_BLOCK, HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.END_GESTURE, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.ADD_BLOCKS, HOOK_NAMES.UPDATE_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.ADD_CONNECTIONS, HOOK_NAMES.DELETE_CONNECTION, HOOK_NAMES.BLOCK_TRANSITION_START, HOOK_NAMES.BLOCK_TRANSITION_END, HOOK_NAMES.CONNECTION_TRANSITION_START, HOOK_NAMES.CONNECTION_TRANSITION_END, HOOK_NAMES.DROP_NEW_BLOCK],
 		// eslint-disable-next-line max-lines-per-function
 		setup(props, {
 			emit
@@ -11094,11 +15840,22 @@ this.BX = this.BX || {};
 				purgeBlockGeometryExcept,
 				isRenderOptimizationAvailable,
 				connectionPreview,
-				clearConnectionPreview
+				clearConnectionPreview,
+				inputState
 			} = useBlockDiagram(props);
-			const initAppElements = useInitAppElements({
-				blockDiagramRef: ui_vue3.useTemplateRef('blockDiagram')
+			const fitToViewKeyshortcuts = useActionKeyshortcuts(CANVAS_ACTION_ID.FIT_TO_VIEW);
+			const keyShortcuts = ui_vue3.computed(() => {
+				return buildCanvasKeyShortcuts(ui_vue3.toValue(fitToViewKeyshortcuts));
 			});
+			const blockDiagramRef = ui_vue3.useTemplateRef('blockDiagram');
+			const initAppElements = useInitAppElements({
+				blockDiagramRef
+			});
+			const {
+				focusCanvas
+			} = useCanvasFocus();
+			const loc = useLoc();
+			const canvasLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_LABEL');
 			const {
 				makeSnapshot
 			} = useHistory();
@@ -11201,6 +15958,9 @@ this.BX = this.BX || {};
 			const {
 				onDrop
 			} = useDragAndDrop();
+			const {
+				clear: clearDisplacedBlocks
+			} = useDisplacedBlocks();
 			const isGrabbing = ui_vue3.ref(false);
 			const blockDiagramClassNames = ui_vue3.computed(() => ({
 				[BLOCK_DIAGRAM_CLASS_NAMES.base]: true,
@@ -11214,8 +15974,11 @@ this.BX = this.BX || {};
 			const {
 				showMenu
 			} = useContextMenu();
+			useKeyboardPan();
+			useCanvasEscapeFallback();
 			ui_vue3.onMounted(() => {
 				initAppElements.onMountedAppElements();
+				inputState.attach();
 			});
 			ui_vue3.onUnmounted(() => {
 				clearConnectionPreview(ui_vue3.toValue(connectionPreview)?.activationKey);
@@ -11223,8 +15986,24 @@ this.BX = this.BX || {};
 				disposeWatchProps();
 				disposeRegisterHooks();
 				blockIntersections.clear();
+				// The flash of a corrected position expires on a timer of its own, and a canvas taken off
+				// the page leaves it running: it would fire into a state nothing reads any more.
+				clearDisplacedBlocks();
 				initAppElements.onUnmountedAppElements();
+				inputState.detach();
 			});
+
+			// The canvas takes native drag-and-drop from the outside - a catalog item is dropped onto
+			// it - but never starts one of its own. A press on a port or a node opens a canvas gesture
+			// and keeps the event to itself, so nothing is left to cancel the browser's own drag: it
+			// starts alongside the gesture and drags a ghost that lands nowhere. An editable region
+			// inside a node is not canvas - text there stays draggable.
+			function onDragStart(event) {
+				if (isInputEventTarget(event)) {
+					return;
+				}
+				event.preventDefault();
+			}
 			function onDragEnter(event) {
 				isGrabbing.value = true;
 			}
@@ -11234,6 +16013,21 @@ this.BX = this.BX || {};
 			function onDragDrop(event) {
 				isGrabbing.value = false;
 				onDrop(event);
+			}
+
+			// Arrows belong to the canvas only while the focus stands inside it, so a click has to hand the
+			// focus over - otherwise panning would be reachable by Tab alone. A press that lands on
+			// something able to take the focus itself - a field, or a link or a button a consumer put
+			// inside a node - is left to that element: taking the focus here would blink through the
+			// canvas, and in WebKit, which focuses no button on click, the canvas would simply keep it.
+			function onCanvasMouseDown(event) {
+				// The root itself matches the selector by its own tabindex, and it is the element the focus
+				// is being handed to.
+				const focusable = event.target?.closest?.(FOCUSABLE_SELECTOR) ?? null;
+				if (focusable !== null && focusable !== ui_vue3.toValue(blockDiagramRef)) {
+					return;
+				}
+				focusCanvas();
 			}
 			function openContextMenu(event) {
 				if (props.contextMenuItems.length > 0) {
@@ -11247,6 +16041,7 @@ this.BX = this.BX || {};
 			}
 			return {
 				blockDiagramClassNames,
+				canvasRootStyle: CANVAS_ROOT_STYLE,
 				visibleBlockGroupNames: blockIntersections.visibleBlockGroupNames,
 				groupedConnections,
 				connectionGroupNames,
@@ -11255,14 +16050,25 @@ this.BX = this.BX || {};
 				onDragDrop,
 				onDragEnter,
 				onDragLeave,
-				openContextMenu
+				onDragStart,
+				openContextMenu,
+				canvasLabel,
+				onCanvasMouseDown,
+				keyShortcuts
 			};
 		},
 		template: `
 		<div
 			:class="blockDiagramClassNames"
+			:style="canvasRootStyle"
 			:data-test-id="$blockDiagramTestId('blockDiagram')"
 			ref="blockDiagram"
+			role="region"
+			:tabindex="disabled ? -1 : 0"
+			:aria-label="canvasLabel"
+			:aria-keyshortcuts="keyShortcuts"
+			@mousedown="onCanvasMouseDown"
+			@dragstart="onDragStart"
 			@dragover.prevent
 			@dragenter="onDragEnter"
 			@dragleave="onDragLeave"
@@ -11418,6 +16224,9 @@ this.BX = this.BX || {};
 	// @vue/component
 	const HistoryBar = {
 		name: 'history-bar',
+		directives: {
+			'b-tooltip': ui_system_tooltip_vue.vBTooltip
+		},
 		components: {
 			IconButton
 		},
@@ -11437,14 +16246,13 @@ this.BX = this.BX || {};
 				next,
 				prev
 			} = useHistory();
-			const isMac = main_core.Browser.isMac();
-			useKeyboardShortcuts([{
-				keys: ['Mod', 'z'],
-				handler: prev
-			}, {
-				keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
-				handler: next
-			}]);
+			const loc = useLoc();
+			const prevLabel = loc.getMessage('UI_BLOCK_DIAGRAM_HISTORY_PREV');
+			const nextLabel = loc.getMessage('UI_BLOCK_DIAGRAM_HISTORY_NEXT');
+			// The platform difference of the step forward lives in the defaults of the registry, so both
+			// buttons read their combo the same way here.
+			const prevShortcut = useActionShortcut(CANVAS_ACTION_ID.UNDO);
+			const nextShortcut = useActionShortcut(CANVAS_ACTION_ID.REDO);
 			function onNext() {
 				if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
 					return;
@@ -11457,11 +16265,36 @@ this.BX = this.BX || {};
 				}
 				prev();
 			}
+
+			// The shortcuts go through the handlers of the buttons: a disabled diagram is not undone
+			// from the keyboard either.
+			useKeyboardShortcuts([{
+				actionId: CANVAS_ACTION_ID.UNDO,
+				handler: onPrev
+			}, {
+				actionId: CANVAS_ACTION_ID.REDO,
+				handler: onNext
+			}]);
 			return {
 				hasNext,
 				hasPrev,
 				onNext,
 				onPrev,
+				prevLabel,
+				nextLabel,
+				// The bar hangs at the canvas top edge, so both bubbles open downwards: there is no room above.
+				prevTooltip: ui_vue3.computed(() => ({
+					content: withShortcut(loc.getMessage('UI_BLOCK_DIAGRAM_HISTORY_PREV'), ui_vue3.toValue(prevShortcut)),
+					position: ui_system_tooltip.TooltipPosition.Bottom,
+					showDelay: TOOLTIP_SHOW_DELAY
+				})),
+				nextTooltip: ui_vue3.computed(() => ({
+					content: withShortcut(loc.getMessage('UI_BLOCK_DIAGRAM_HISTORY_NEXT'), ui_vue3.toValue(nextShortcut)),
+					position: ui_system_tooltip.TooltipPosition.Bottom,
+					showDelay: TOOLTIP_SHOW_DELAY
+				})),
+				prevKeyshortcuts: useActionKeyshortcuts(CANVAS_ACTION_ID.UNDO),
+				nextKeyshortcuts: useActionKeyshortcuts(CANVAS_ACTION_ID.REDO),
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
@@ -11474,6 +16307,9 @@ this.BX = this.BX || {};
 					:size="22"
 					:disabled="!hasPrev"
 					:data-test-id="$blockDiagramTestId('historyPrevBtn')"
+					:aria-label="prevLabel"
+					:aria-keyshortcuts="prevKeyshortcuts"
+					v-b-tooltip="prevTooltip"
 					@click="onPrev"
 				/>
 				<IconButton
@@ -11481,9 +16317,406 @@ this.BX = this.BX || {};
 					:size="22"
 					:disabled="!hasNext"
 					:data-test-id="$blockDiagramTestId('historyNextBtn')"
+					:aria-label="nextLabel"
+					:aria-keyshortcuts="nextKeyshortcuts"
+					v-b-tooltip="nextTooltip"
 					@click="onNext"
 				/>
 			</slot>
+		</div>
+	`
+	};
+
+	const DEFAULT_ICON_COLOR = 'var(--ui-color-base-4)';
+	const DEFAULT_CLICKED_ICON_COLOR = 'var(--ui-color-accent-main-primary)';
+
+	// @vue/component
+	const CanvasMapBtn = {
+		name: 'canvas-map-btn',
+		directives: {
+			'b-tooltip': ui_system_tooltip_vue.vBTooltip
+		},
+		props: {
+			width: {
+				type: Number,
+				default: 28
+			},
+			height: {
+				type: Number,
+				default: 32
+			},
+			iconColor: {
+				type: String,
+				default: DEFAULT_ICON_COLOR
+			},
+			clickedIconColor: {
+				type: String,
+				default: DEFAULT_CLICKED_ICON_COLOR
+			},
+			isActive: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const loc = useLoc();
+			const mapShortcut = useActionShortcut(CANVAS_ACTION_ID.TOGGLE_MAP);
+			const btnStyle = ui_vue3.computed(() => ({
+				width: `${props.width}px`,
+				height: `${props.height}px`
+			}));
+			const ariaLabel = ui_vue3.computed(() => {
+				const messageId = props.isActive ? 'UI_BLOCK_DIAGRAM_CANVAS_MAP_CLOSE' : 'UI_BLOCK_DIAGRAM_CANVAS_MAP_OPEN';
+				return loc.getMessage(messageId);
+			});
+			const currentIconColor = ui_vue3.computed(() => {
+				return props.isActive ? props.clickedIconColor : props.iconColor;
+			});
+
+			// The tooltip names the tool, so unlike the accessible name it does not follow the open state.
+			// It does follow the combo: a reassignment reaches a button that stays mounted.
+			const tooltip = ui_vue3.computed(() => ({
+				content: withShortcut(loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_TITLE'), ui_vue3.toValue(mapShortcut)),
+				showDelay: TOOLTIP_SHOW_DELAY
+			}));
+			return {
+				btnStyle,
+				ariaLabel,
+				tooltip,
+				currentIconColor
+			};
+		},
+		template: `
+		<button
+			type="button"
+			:style="btnStyle"
+			v-b-tooltip="tooltip"
+			:aria-label="ariaLabel"
+			class="ui-block-diagram-canvas-map-btn"
+			:class="{ '--active': isActive }"
+		>
+			<svg
+				width="24"
+				height="24"
+				aria-hidden="true"
+				focusable="false"
+				class="ui-block-diagram-canvas-map-btn__icon"
+				:fill="currentIconColor"
+			>
+				<path
+					d="M9.75 4.5498C9.8674 4.54983 9.97803 4.57878 10.0752 4.62988L14.25 6.7168L18.4365 4.62402C18.6535 4.51553 18.9118 4.52675 19.1182 4.6543C19.3244 4.78187 19.4502 5.00748 19.4502 5.25V16.5C19.4501 16.7651 19.2996 17.0074 19.0625 17.126L14.5752 19.3691C14.4835 19.4174 14.3796 19.4461 14.2695 19.4492C14.263 19.4494 14.2565 19.4502 14.25 19.4502C14.2419 19.4502 14.2337 19.4495 14.2256 19.4492C14.1172 19.4455 14.0143 19.4168 13.9238 19.3691L9.75 17.2822L5.5625 19.376C5.34565 19.4843 5.08807 19.4731 4.88184 19.3457C4.67552 19.2182 4.54987 18.9925 4.5498 18.75V7.5C4.5498 7.23498 4.69956 6.99266 4.93652 6.87402L9.42383 4.62988C9.52111 4.57866 9.63242 4.5498 9.75 4.5498ZM5.9502 7.93262V17.6172L9.0498 16.0674V6.38281L5.9502 7.93262ZM10.4502 16.0674L13.5498 17.6172V7.93262L10.4502 6.38281V16.0674ZM14.9502 7.93262V17.6172L18.0498 16.0674V6.38281L14.9502 7.93262Z"
+				/>
+			</svg>
+		</button>
+	`
+	};
+
+	const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
+	const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
+	// The frame of the current view is drawn with a graphics context, so a CSS rule of a consumer
+	// never reaches it - the token is the extension point instead, and it is deliberately left
+	// undeclared: a value declared on the container would beat the same token declared by a consumer
+	// on any ancestor. Behind it stands the default of the extension, a token of the design system.
+	const VIEWPORT_COLOR = 'var(--ui-block-diagram-map-viewport-color, var(--ui-color-blue-57))';
+	const INTERACTION_STATE_MODES = {
+		CURSOR: 'cursor',
+		MAP: 'map'
+	};
+
+	// Redraw levels. Geometry is the expensive one - it rebuilds the rectangles of every block;
+	// viewport only moves the frame of the current view, which is what a gesture on the map does.
+	const INVALIDATION_LEVELS = {
+		NONE: 0,
+		VIEWPORT: 1,
+		GEOMETRY: 2
+	};
+
+	// @vue/component
+	const CanvasMap = {
+		name: 'canvas-map',
+		props: {
+			mapWidth: {
+				type: Number,
+				default: 310
+			},
+			mapHeight: {
+				type: Number,
+				default: 183
+			},
+			blockColors: {
+				type: Object,
+				default: () => ({}),
+				validator(value) {
+					return isValidColorPalette(value);
+				}
+			},
+			frameColors: {
+				type: Object,
+				default: () => ({}),
+				validator(value) {
+					return isValidColorPalette(value);
+				}
+			}
+		},
+		// eslint-disable-next-line max-lines-per-function
+		setup(props, {
+			expose
+		}) {
+			const {
+				blocks,
+				blocksRectMap,
+				canvasWidth,
+				canvasHeight,
+				transformX,
+				transformY,
+				zoom,
+				mapRenderer,
+				canvasMapRef
+			} = useBlockDiagram();
+			const {
+				setCamera
+			} = useCanvas();
+			const loc = useLoc();
+			const fitToViewKeyshortcuts = useActionKeyshortcuts(CANVAS_ACTION_ID.FIT_TO_VIEW);
+			const keyShortcuts = ui_vue3.computed(() => {
+				return buildCanvasKeyShortcuts(ui_vue3.toValue(fitToViewKeyshortcuts));
+			});
+			const {
+				mapWidth,
+				mapHeight,
+				blockColors,
+				frameColors
+			} = ui_vue3.toRefs(props);
+			const mapEl = ui_vue3.useTemplateRef('map');
+			const mapRootEl = ui_vue3.useTemplateRef('mapRoot');
+			const mapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_LABEL');
+			const interactionState = ui_vue3.reactive({
+				isDragging: false,
+				mode: null,
+				dragOffsetX: 0,
+				dragOffsetY: 0
+			});
+
+			// Re-measured every frame of the gesture: layout may shift or the page may scroll while it runs.
+			const getMapRect = () => {
+				return ui_vue3.toValue(mapEl)?.getBoundingClientRect() ?? null;
+			};
+
+			// Rectangles of the last drawn frame. The array is handed to the renderer as is, and a
+			// viewport-only redraw reuses the very same array - that is what keeps a drag on the
+			// map from rebuilding the geometry of the blocks.
+			let blockRects = [];
+			let pendingLevel = INVALIDATION_LEVELS.NONE;
+			let frameId = null;
+			// The template ref is already cleared by the time the unmount hook runs, so the element the
+			// map was attached to is kept here: the detach has to name it to leave a binding made by a
+			// component that mounted earlier alone.
+			let attachedElement = null;
+			// The element registered as the focus surface. The unregistration names it so that a panel
+			// unmounted after a later one mounted does not drop the registration that later one made.
+			let registeredMapRoot = null;
+			const canvasMapStyle = ui_vue3.computed(() => ({
+				width: `${ui_vue3.toValue(mapWidth)}px`,
+				height: `${ui_vue3.toValue(mapHeight)}px`
+			}));
+			const layout = ui_vue3.computed(() => getMapLayout(ui_vue3.toValue(blocks), {
+				canvasWidth: ui_vue3.toValue(canvasWidth),
+				canvasHeight: ui_vue3.toValue(canvasHeight),
+				blocksRectMap: ui_vue3.toValue(blocksRectMap)
+			}));
+			const renderScale = ui_vue3.computed(() => getMapScale(ui_vue3.toValue(layout), {
+				width: ui_vue3.toValue(mapWidth),
+				height: ui_vue3.toValue(mapHeight)
+			}));
+			const viewportRect = ui_vue3.computed(() => getMapViewportRect(ui_vue3.toValue(layout), ui_vue3.toValue(renderScale), {
+				x: ui_vue3.toValue(transformX),
+				y: ui_vue3.toValue(transformY),
+				zoom: ui_vue3.toValue(zoom),
+				canvasWidth: ui_vue3.toValue(canvasWidth),
+				canvasHeight: ui_vue3.toValue(canvasHeight)
+			}));
+			function flush() {
+				frameId = null;
+				if (!mapRenderer.isAttached) {
+					pendingLevel = INVALIDATION_LEVELS.NONE;
+					return;
+				}
+				if (pendingLevel === INVALIDATION_LEVELS.GEOMETRY) {
+					blockRects = getMapBlockRects(ui_vue3.toValue(layout), ui_vue3.toValue(renderScale), mapRenderer.colors);
+				}
+				mapRenderer.render({
+					blocks: blockRects,
+					viewport: ui_vue3.toValue(viewportRect),
+					viewportColor: mapRenderer.colors.viewport
+				});
+				pendingLevel = INVALIDATION_LEVELS.NONE;
+			}
+			function invalidate(level) {
+				pendingLevel = Math.max(pendingLevel, level);
+				if (frameId !== null) {
+					return;
+				}
+				frameId = requestAnimationFrame(flush);
+			}
+			function getPalette() {
+				return {
+					palette: ui_vue3.toValue(blockColors) ?? {},
+					framePalette: ui_vue3.toValue(frameColors) ?? {},
+					block: DEFAULT_BLOCK_COLOR,
+					frame: DEFAULT_FRAME_BLOCK_COLOR,
+					viewport: VIEWPORT_COLOR
+				};
+			}
+			ui_vue3.watch([layout, renderScale], () => invalidate(INVALIDATION_LEVELS.GEOMETRY));
+			ui_vue3.watch(viewportRect, () => invalidate(INVALIDATION_LEVELS.VIEWPORT));
+
+			// The colors of the blocks and of the frames are resolved into numbers once and live in the
+			// renderer, so a consumer who changes either palette has to reach them. Repainting a single
+			// entry in place is as much a palette change as handing over another object, and the map has
+			// no other way to learn about it - hence the deep watch over a handful of colors. One watch
+			// for both: they have the same effect, and two of them would call setPalette twice per frame.
+			// It follows the palettes alone: the level it raises is the expensive one, and a gesture on
+			// the map must not raise it.
+			ui_vue3.watch([blockColors, frameColors], () => {
+				if (!mapRenderer.isAttached) {
+					return;
+				}
+				mapRenderer.setPalette(getPalette());
+				invalidate(INVALIDATION_LEVELS.GEOMETRY);
+			}, {
+				deep: true
+			});
+			ui_vue3.onMounted(() => {
+				// Registers the panel as a focus surface of the diagram; why - see `isFocusOnAnyOf` in
+				// composables/keyboard-pan.js.
+				registeredMapRoot = ui_vue3.toValue(mapRootEl);
+				canvasMapRef.value = registeredMapRoot;
+				const element = ui_vue3.toValue(mapEl);
+				if (!element) {
+					return;
+				}
+				mapRenderer.attach(element, getPalette());
+				attachedElement = element;
+
+				// An attach that did not happen leaves nothing to draw on - without a drawing context
+				// the map stays empty, and asking for a frame would only hide that.
+				if (!mapRenderer.isAttached) {
+					return;
+				}
+				invalidate(INVALIDATION_LEVELS.GEOMETRY);
+			});
+			ui_vue3.onUnmounted(() => {
+				if (frameId !== null) {
+					cancelAnimationFrame(frameId);
+					frameId = null;
+				}
+				pendingLevel = INVALIDATION_LEVELS.NONE;
+				mapRenderer.detach(attachedElement);
+				attachedElement = null;
+				if (ui_vue3.toValue(canvasMapRef) === registeredMapRoot) {
+					canvasMapRef.value = null;
+				}
+				registeredMapRoot = null;
+			});
+			function updateCamera(clientX, clientY) {
+				const mapRect = getMapRect();
+				if (!mapRect) {
+					return;
+				}
+				const mouseRelX = clientX - mapRect.left;
+				const mouseRelY = clientY - mapRect.top;
+				const indicator = ui_vue3.toValue(viewportRect);
+				const scale = ui_vue3.toValue(renderScale);
+				const currentZoom = ui_vue3.toValue(zoom);
+				let targetMapX = mouseRelX - indicator.width;
+				let targetMapY = mouseRelY - indicator.height;
+				if (interactionState.mode === INTERACTION_STATE_MODES.CURSOR) {
+					targetMapX = mouseRelX - interactionState.dragOffsetX - indicator.width / 2;
+					targetMapY = mouseRelY - interactionState.dragOffsetY - indicator.height / 2;
+				}
+				const canvasX = targetMapX / scale + ui_vue3.toValue(layout).minX;
+				const canvasY = targetMapY / scale + ui_vue3.toValue(layout).minY;
+
+				// No anchor point here on purpose: the gesture moves the camera to a place, and an
+				// anchored landmark would compensate the move away entirely.
+				setCamera({
+					x: canvasX + ui_vue3.toValue(canvasWidth) / currentZoom / 2,
+					y: canvasY + ui_vue3.toValue(canvasHeight) / currentZoom / 2,
+					zoom: currentZoom
+				});
+			}
+			function onMapMouseDown(event) {
+				event.preventDefault();
+				const rect = getMapRect();
+				if (!rect) {
+					return;
+				}
+				interactionState.isDragging = true;
+				const mouseRelX = event.clientX - rect.left;
+				const mouseRelY = event.clientY - rect.top;
+				if (isPointInMapRect({
+					x: mouseRelX,
+					y: mouseRelY
+				}, ui_vue3.toValue(viewportRect))) {
+					const indicator = ui_vue3.toValue(viewportRect);
+					interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
+					interactionState.dragOffsetX = mouseRelX - indicator.x;
+					interactionState.dragOffsetY = mouseRelY - indicator.y;
+				} else {
+					interactionState.mode = INTERACTION_STATE_MODES.MAP;
+					interactionState.dragOffsetX = 0;
+					interactionState.dragOffsetY = 0;
+					updateCamera(event.clientX, event.clientY);
+				}
+			}
+			function onMapMouseMove(event) {
+				if (!interactionState.isDragging) {
+					return;
+				}
+				event.preventDefault();
+				updateCamera(event.clientX, event.clientY);
+			}
+			function onMapMouseUp() {
+				interactionState.isDragging = false;
+				interactionState.mode = null;
+			}
+			function focus() {
+				ui_vue3.toValue(mapRootEl)?.focus({
+					preventScroll: true
+				});
+			}
+			expose({
+				focus
+			});
+			return {
+				canvasMapStyle,
+				mapLabel,
+				keyShortcuts,
+				onMapMouseDown,
+				onMapMouseMove,
+				onMapMouseUp
+			};
+		},
+		template: `
+		<div
+			ref="mapRoot"
+			:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
+			:style="canvasMapStyle"
+			class="ui-block-diagram-canvas-map__container"
+			role="region"
+			tabindex="0"
+			:aria-label="mapLabel"
+			:aria-keyshortcuts="keyShortcuts"
+		>
+			<canvas
+				ref="map"
+				class="ui-block-diagram-canvas-map"
+				aria-hidden="true"
+				@mousedown="onMapMouseDown"
+				@mousemove="onMapMouseMove"
+				@mouseup="onMapMouseUp"
+				@mouseleave="onMapMouseUp"
+			></canvas>
 		</div>
 	`
 	};
@@ -11496,6 +16729,9 @@ this.BX = this.BX || {};
 	// @vue/component
 	const ZoomBtn = {
 		name: 'zoom-btn',
+		directives: {
+			'b-tooltip': ui_system_tooltip_vue.vBTooltip
+		},
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
@@ -11529,6 +16765,10 @@ this.BX = this.BX || {};
 				zoomOut
 			} = useCanvas();
 			const loc = useLoc();
+			// Which of the two zooms the button is comes from a property, and a property may change under
+			// a mounted button, so both captions are asked for.
+			const zoomInShortcut = useActionShortcut(CANVAS_ACTION_ID.ZOOM_IN);
+			const zoomOutShortcut = useActionShortcut(CANVAS_ACTION_ID.ZOOM_OUT);
 			const {
 				stepZoom,
 				typeZoom
@@ -11537,6 +16777,13 @@ this.BX = this.BX || {};
 			const ariaLabel = ui_vue3.computed(() => {
 				const messageId = ui_vue3.toValue(typeZoom) === ZOOM_TYPES.in ? 'UI_BLOCK_DIAGRAM_ZOOM_IN' : 'UI_BLOCK_DIAGRAM_ZOOM_OUT';
 				return loc.getMessage(messageId);
+			});
+			const tooltip = ui_vue3.computed(() => {
+				const shortcut = ui_vue3.toValue(typeZoom) === ZOOM_TYPES.in ? zoomInShortcut : zoomOutShortcut;
+				return {
+					content: withShortcut(ui_vue3.toValue(ariaLabel), ui_vue3.toValue(shortcut)),
+					showDelay: TOOLTIP_SHOW_DELAY
+				};
 			});
 			function onZoom() {
 				if (ui_vue3.toValue(isDisabled)) {
@@ -11552,6 +16799,7 @@ this.BX = this.BX || {};
 				iconSet: ui_iconSet_api_vue.Outline,
 				zoomTypes: ZOOM_TYPES,
 				ariaLabel,
+				tooltip,
 				isDisabled,
 				onZoom
 			};
@@ -11561,6 +16809,7 @@ this.BX = this.BX || {};
 			type="button"
 			:data-test-id="$blockDiagramTestId(typeZoom === zoomTypes.in ? 'zoomInBtn' : 'zoomOutBtn')"
 			class="ui-block-diagram-control-btn__btn"
+			v-b-tooltip="tooltip"
 			:aria-label="ariaLabel"
 			:disabled="isDisabled"
 			@click="onZoom"
@@ -11585,9 +16834,19 @@ this.BX = this.BX || {};
 
 	const ZOOM_PRESET = [0.5, 0.7, 1, 2];
 
+	// Passed on purpose: without it `Menu` applies an `offsetTop` default of its own. Zero adds nothing
+	// to the lift a popup opened above its bind element already gets from `positionTopXOffset`.
+	const ZOOM_PRESET_MENU_OFFSET_TOP = 0;
+	const ZOOM_PRESET_MENU_OFFSET_LEFT = 15;
+	const FIT_TO_VIEW_MENU_ITEM_TEST_ID = 'zoomFitToViewMenuItem';
+	const ZOOM_PRESET_MENU_ITEM_TEST_ID = 'zoomPresetMenuItem';
+
 	// @vue/component
 	const ZoomPercent = {
 		name: 'zoom-percent',
+		directives: {
+			'b-tooltip': ui_system_tooltip_vue.vBTooltip
+		},
 		props: {
 			disabled: {
 				type: Boolean,
@@ -11600,15 +16859,24 @@ this.BX = this.BX || {};
 				isDisabledBlockDiagram
 			} = useBlockDiagram();
 			const {
-				setZoom
+				setZoom,
+				fitToView
 			} = useCanvas();
 			const loc = useLoc();
+			// The fit is an action of the canvas, so the keys named in its item are the ones the registry
+			// holds for it - a personal binding included. The menu is built anew on every opening, so the
+			// caption is read at that moment and needs no watcher of its own.
+			const fitToViewShortcut = useActionShortcut(CANVAS_ACTION_ID.FIT_TO_VIEW);
+			// The items of the menu are built in code rather than in the template, so the label of the
+			// extension is taken straight from the global the templates spell it with.
+			const testId = ui_vue3.getCurrentInstance().appContext.app.config.globalProperties.$blockDiagramTestId;
 			const percent = ui_vue3.computed(() => {
 				return ((ui_vue3.toValue(zoom) ?? 0) * 100).toFixed(0);
 			});
 			const {
 				showMenu,
-				isOpen
+				isOpen,
+				closeContextMenu
 			} = useContextMenu();
 			const isDisabled = ui_vue3.computed(() => props.disabled || ui_vue3.toValue(isDisabledBlockDiagram));
 			const buttonLabel = ui_vue3.computed(() => {
@@ -11624,25 +16892,61 @@ this.BX = this.BX || {};
 					className: 'ui-block-diagram-percent-menu',
 					minWidth: 106,
 					bindElement: rootElement,
-					targetContainer: rootElement.parentElement,
-					items: ZOOM_PRESET.map(value => {
+					// The zoom panel stands in a corner of the canvas, and a popup fits itself into
+					// its target container: anything but the document leaves the menu cut off.
+					targetContainer: document.body,
+					bindOptions: {
+						position: 'top'
+					},
+					offsetTop: ZOOM_PRESET_MENU_OFFSET_TOP,
+					offsetLeft: ZOOM_PRESET_MENU_OFFSET_LEFT,
+					items: [
+					// The fit names no scale of its own: it is a command over all the fixed values
+					// rather than one of them, so it opens the list apart from them. The click carries
+					// the point of the menu, and the command takes settings - it is called without
+					// arguments on purpose.
+					{
+						text: withShortcut(loc.getMessage('UI_BLOCK_DIAGRAM_ZOOM_FIT_TO_VIEW'), ui_vue3.toValue(fitToViewShortcut)),
+						dataset: {
+							testId: testId(FIT_TO_VIEW_MENU_ITEM_TEST_ID)
+						},
+						onclick: () => fitToView()
+					}, ...ZOOM_PRESET.map(value => {
+						const percentValue = `${value * 100}`;
 						return {
-							text: `${value * 100}%`,
+							text: `${percentValue}%`,
+							dataset: {
+								testId: testId(ZOOM_PRESET_MENU_ITEM_TEST_ID, percentValue)
+							},
 							onclick: () => setZoom(value)
 						};
-					})
+					})]
 				};
 				showMenu({
 					clientX: 0,
 					clientY: 0
 				}, options);
 			}
+
+			// The popup lives in `document.body` now and no longer goes away with the component. The
+			// menu instance is shared across the diagram, so close it only while this button owns it.
+			ui_vue3.onUnmounted(() => {
+				if (ui_vue3.toValue(isOpen)) {
+					closeContextMenu();
+				}
+			});
 			return {
 				percent,
 				root,
 				isOpen,
 				isDisabled,
 				buttonLabel,
+				// The tooltip names the tool, so it stays the bare phrase while the accessible name carries
+				// the current percent on top of it.
+				tooltip: {
+					content: loc.getMessage('UI_BLOCK_DIAGRAM_ZOOM_PRESET_BUTTON'),
+					showDelay: TOOLTIP_SHOW_DELAY
+				},
 				onOpenZoomPresetMenu
 			};
 		},
@@ -11652,6 +16956,7 @@ this.BX = this.BX || {};
 			:data-test-id="$blockDiagramTestId('zoomPercentBtn')"
 			class="ui-block-diagram-percent"
 			:class="{ '--selected': isOpen }"
+			v-b-tooltip="tooltip"
 			:aria-label="buttonLabel"
 			aria-haspopup="menu"
 			:aria-expanded="isOpen"
@@ -11664,405 +16969,10 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const MAP_PADDING = 50;
-	const KEYBOARD_PAN_STEP = 50;
-	const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
-	const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
-	const FRAME_BLOCK_TYPE = 'frame';
-	const INTERACTION_STATE_MODES = {
-		CURSOR: 'cursor',
-		MAP: 'map'
+	const MAP_FOCUS_TARGET = {
+		mapButton: 'mapButton',
+		canvas: 'canvas'
 	};
-
-	// @vue/component
-	const CanvasMap = {
-		name: 'canvas-map',
-		props: {
-			mapWidth: {
-				type: Number,
-				default: 310
-			},
-			mapHeight: {
-				type: Number,
-				default: 183
-			},
-			blockColors: {
-				type: Object,
-				default: () => {}
-			}
-		},
-		// eslint-disable-next-line max-lines-per-function
-		setup(props, {
-			expose
-		}) {
-			const {
-				blocks,
-				blocksRectMap,
-				canvasWidth,
-				canvasHeight,
-				transformX,
-				transformY,
-				zoom
-			} = useBlockDiagram();
-			const {
-				setCamera
-			} = useCanvas();
-			const loc = useLoc();
-			const {
-				mapWidth,
-				mapHeight,
-				blockColors
-			} = ui_vue3.toRefs(props);
-			const mapEl = ui_vue3.useTemplateRef('map');
-			const mapRootEl = ui_vue3.useTemplateRef('mapRoot');
-			const mapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_LABEL');
-			const interactionState = ui_vue3.reactive({
-				isDragging: false,
-				mode: null,
-				dragOffsetX: 0,
-				dragOffsetY: 0,
-				mapRect: null
-			});
-			const canvasMapStyle = ui_vue3.computed(() => ({
-				width: `${ui_vue3.toValue(mapWidth)}px`,
-				height: `${ui_vue3.toValue(mapHeight)}px`
-			}));
-			const layoutData = ui_vue3.computed(() => {
-				const items = ui_vue3.toValue(blocks);
-				if (!main_core.Type.isArrayFilled(items)) {
-					const cWidth = ui_vue3.toValue(canvasWidth);
-					const cHeight = ui_vue3.toValue(canvasHeight);
-					return {
-						sortedBlocks: [],
-						minX: 0,
-						minY: 0,
-						width: cWidth ? 2 * cWidth : 1000,
-						height: cHeight ? 2 * cHeight : 1000
-					};
-				}
-				let minX = Infinity;
-				let minY = Infinity;
-				let maxX = -Infinity;
-				let maxY = -Infinity;
-				const frames = [];
-				const content = [];
-				items.forEach(block => {
-					const {
-						x,
-						y
-					} = block.position;
-					const {
-						width,
-						height
-					} = getBlockSize(block);
-					minX = Math.min(minX, x);
-					minY = Math.min(minY, y);
-					maxX = Math.max(maxX, x + width);
-					maxY = Math.max(maxY, y + height);
-					const renderBlock = {
-						...block,
-						dimensions: {
-							width,
-							height
-						}
-					};
-					if (block?.type === FRAME_BLOCK_TYPE) {
-						frames.push(renderBlock);
-					} else {
-						content.push(renderBlock);
-					}
-				});
-				return {
-					sortedBlocks: [...content, ...frames],
-					minX: minX - MAP_PADDING,
-					minY: minY - MAP_PADDING,
-					width: maxX + MAP_PADDING - (minX - MAP_PADDING),
-					height: maxY + MAP_PADDING - (minY - MAP_PADDING)
-				};
-			});
-			const sortedBlocks = ui_vue3.computed(() => ui_vue3.toValue(layoutData).sortedBlocks);
-			const contentOffsetX = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minX);
-			const contentOffsetY = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minY);
-			const renderScale = ui_vue3.computed(() => {
-				const {
-					width,
-					height
-				} = ui_vue3.toValue(layoutData);
-				if (width <= 0 || height <= 0) {
-					return 1;
-				}
-				return Math.min(ui_vue3.toValue(mapWidth) / width, ui_vue3.toValue(mapHeight) / height);
-			});
-			const viewportIndicator = ui_vue3.computed(() => {
-				const scale = ui_vue3.toValue(renderScale);
-				const currentZoom = ui_vue3.toValue(zoom);
-				const width = ui_vue3.toValue(canvasWidth) * scale / currentZoom;
-				const height = ui_vue3.toValue(canvasHeight) * scale / currentZoom;
-				const x = (ui_vue3.toValue(transformX) - ui_vue3.toValue(contentOffsetX)) * scale;
-				const y = (ui_vue3.toValue(transformY) - ui_vue3.toValue(contentOffsetY)) * scale;
-				return {
-					x,
-					y,
-					width,
-					height
-				};
-			});
-			function isPointInViewport(x, y) {
-				const indicator = ui_vue3.toValue(viewportIndicator);
-				return x >= indicator.x && x <= indicator.x + indicator.width && y >= indicator.y && y <= indicator.y + indicator.height;
-			}
-			function updateCamera(clientX, clientY) {
-				if (!interactionState.mapRect) {
-					return;
-				}
-				const mouseRelX = clientX - interactionState.mapRect.left;
-				const mouseRelY = clientY - interactionState.mapRect.top;
-				const indicator = ui_vue3.toValue(viewportIndicator);
-				const scale = ui_vue3.toValue(renderScale);
-				const currentZoom = ui_vue3.toValue(zoom);
-				let targetMapX = mouseRelX - indicator.width;
-				let targetMapY = mouseRelY - indicator.height;
-				if (interactionState.mode === INTERACTION_STATE_MODES.CURSOR) {
-					targetMapX = mouseRelX - interactionState.dragOffsetX - indicator.width / 2;
-					targetMapY = mouseRelY - interactionState.dragOffsetY - indicator.height / 2;
-				}
-				const canvasX = targetMapX / scale + ui_vue3.toValue(contentOffsetX);
-				const canvasY = targetMapY / scale + ui_vue3.toValue(contentOffsetY);
-				setCamera({
-					x: canvasX + ui_vue3.toValue(canvasWidth) / currentZoom / 2,
-					y: canvasY + ui_vue3.toValue(canvasHeight) / currentZoom / 2,
-					zoom: currentZoom,
-					viewportX: 0,
-					viewportY: 0
-				});
-			}
-			function onMapMouseDown(event) {
-				event.preventDefault();
-				const el = ui_vue3.toValue(mapEl);
-				if (!el) {
-					return;
-				}
-				const rect = el.getBoundingClientRect();
-				interactionState.mapRect = rect;
-				interactionState.isDragging = true;
-				const mouseRelX = event.clientX - rect.left;
-				const mouseRelY = event.clientY - rect.top;
-				if (isPointInViewport(mouseRelX, mouseRelY)) {
-					const indicator = ui_vue3.toValue(viewportIndicator);
-					interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
-					interactionState.dragOffsetX = mouseRelX - indicator.x;
-					interactionState.dragOffsetY = mouseRelY - indicator.y;
-				} else {
-					interactionState.mode = INTERACTION_STATE_MODES.MAP;
-					interactionState.dragOffsetX = 0;
-					interactionState.dragOffsetY = 0;
-					updateCamera(event.clientX, event.clientY);
-				}
-			}
-			function onMapMouseMove(event) {
-				if (!interactionState.isDragging) {
-					return;
-				}
-				event.preventDefault();
-				updateCamera(event.clientX, event.clientY);
-			}
-			function onMapMouseUp(event) {
-				interactionState.isDragging = false;
-				interactionState.mode = null;
-			}
-			function onMapKeyDown(event) {
-				let deltaX = 0;
-				let deltaY = 0;
-				switch (event.key) {
-					case 'ArrowLeft':
-						deltaX = -1;
-						break;
-					case 'ArrowRight':
-						deltaX = 1;
-						break;
-					case 'ArrowUp':
-						deltaY = -1;
-						break;
-					case 'ArrowDown':
-						deltaY = 1;
-						break;
-					default:
-						return;
-				}
-				event.preventDefault();
-				event.stopPropagation();
-				const currentZoom = ui_vue3.toValue(zoom) || 1;
-				setCamera({
-					x: ui_vue3.toValue(transformX) + deltaX * KEYBOARD_PAN_STEP / currentZoom,
-					y: ui_vue3.toValue(transformY) + deltaY * KEYBOARD_PAN_STEP / currentZoom,
-					zoom: currentZoom
-				});
-			}
-			function focus() {
-				ui_vue3.toValue(mapRootEl)?.focus({
-					preventScroll: true
-				});
-			}
-			expose({
-				focus
-			});
-			function getBlockColor(block) {
-				const blockType = block?.node?.type;
-				const colorIndex = block?.node?.colorIndex;
-				if (blockType === FRAME_BLOCK_TYPE) {
-					return DEFAULT_FRAME_BLOCK_COLOR;
-				}
-				if (colorIndex === null || colorIndex === false) {
-					return DEFAULT_BLOCK_COLOR;
-				}
-				const palette = ui_vue3.toValue(blockColors) ?? {};
-				return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
-			}
-			function getBlockSize(block) {
-				const dimensions = {
-					width: block.dimensions.width,
-					height: block.dimensions.height
-				};
-				if (!dimensions.width || !dimensions.height) {
-					const blocksRectangleMap = ui_vue3.toValue(blocksRectMap);
-					const blockDimensions = blocksRectangleMap[block.id];
-					dimensions.width = blockDimensions.width ?? 200;
-					dimensions.height = blockDimensions.height ?? 50;
-				}
-				return dimensions;
-			}
-			return {
-				sortedBlocks,
-				canvasMapStyle,
-				contentOffsetX,
-				contentOffsetY,
-				renderScale,
-				viewportIndicator,
-				mapLabel,
-				onMapMouseDown,
-				onMapMouseMove,
-				onMapMouseUp,
-				onMapKeyDown,
-				getBlockColor
-			};
-		},
-		template: `
-		<div
-			ref="mapRoot"
-			:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
-			:style="canvasMapStyle"
-			class="ui-block-diagram-canvas-map__container"
-			role="region"
-			tabindex="0"
-			:aria-label="mapLabel"
-			@keydown="onMapKeyDown"
-		>
-			<svg
-				:width="mapWidth"
-				:height="mapHeight"
-				aria-hidden="true"
-				focusable="false"
-				ref="map"
-				class="ui-block-diagram-canvas-map"
-				@mousedown="onMapMouseDown"
-				@mousemove="onMapMouseMove"
-				@mouseup="onMapMouseUp"
-				@mouseleave="onMapMouseUp"
-			>
-				<rect
-					v-for="block in sortedBlocks"
-					:key="block.id"
-					:x="(block.position.x - contentOffsetX) * renderScale"
-					:y="(block.position.y - contentOffsetY) * renderScale"
-					:width="block.dimensions.width * renderScale"
-					:height="block.dimensions.height * renderScale"
-					:rx="2"
-					:fill="getBlockColor(block)"
-					class="ui-block-diagram-canvas-map__block"
-				/>
-				<rect
-					:x="viewportIndicator.x"
-					:y="viewportIndicator.y"
-					:width="viewportIndicator.width"
-					:height="viewportIndicator.height"
-					:rx="4"
-					class="ui-block-diagram-canvas-map__cursor"
-				/>
-			</svg>
-		</div>
-	`
-	};
-
-	const DEFAULT_ICON_COLOR = 'var(--ui-color-base-4)';
-	const DEFAULT_CLICKED_ICON_COLOR = 'var(--ui-color-accent-main-primary)';
-
-	// @vue/component
-	const CanvasMapBtn = {
-		name: 'canvas-map-btn',
-		props: {
-			width: {
-				type: Number,
-				default: 28
-			},
-			height: {
-				type: Number,
-				default: 32
-			},
-			iconColor: {
-				type: String,
-				default: DEFAULT_ICON_COLOR
-			},
-			clickedIconColor: {
-				type: String,
-				default: DEFAULT_CLICKED_ICON_COLOR
-			},
-			isActive: {
-				type: Boolean,
-				default: false
-			}
-		},
-		setup(props) {
-			const loc = useLoc();
-			const btnStyle = ui_vue3.computed(() => ({
-				width: `${props.width}px`,
-				height: `${props.height}px`
-			}));
-			const ariaLabel = ui_vue3.computed(() => {
-				const messageId = props.isActive ? 'UI_BLOCK_DIAGRAM_CANVAS_MAP_CLOSE' : 'UI_BLOCK_DIAGRAM_CANVAS_MAP_OPEN';
-				return loc.getMessage(messageId);
-			});
-			const currentIconColor = ui_vue3.computed(() => {
-				return props.isActive ? props.clickedIconColor : props.iconColor;
-			});
-			return {
-				btnStyle,
-				ariaLabel,
-				currentIconColor
-			};
-		},
-		template: `
-		<button
-			type="button"
-			:style="btnStyle"
-			:aria-label="ariaLabel"
-			class="ui-block-diagram-canvas-map-btn"
-		>
-			<svg
-				width="24"
-				height="24"
-				aria-hidden="true"
-				focusable="false"
-				class="ui-block-diagram-canvas-map-btn__icon"
-				:fill="currentIconColor"
-			>
-				<path
-					d="M9.75 4.5498C9.8674 4.54983 9.97803 4.57878 10.0752 4.62988L14.25 6.7168L18.4365 4.62402C18.6535 4.51553 18.9118 4.52675 19.1182 4.6543C19.3244 4.78187 19.4502 5.00748 19.4502 5.25V16.5C19.4501 16.7651 19.2996 17.0074 19.0625 17.126L14.5752 19.3691C14.4835 19.4174 14.3796 19.4461 14.2695 19.4492C14.263 19.4494 14.2565 19.4502 14.25 19.4502C14.2419 19.4502 14.2337 19.4495 14.2256 19.4492C14.1172 19.4455 14.0143 19.4168 13.9238 19.3691L9.75 17.2822L5.5625 19.376C5.34565 19.4843 5.08807 19.4731 4.88184 19.3457C4.67552 19.2182 4.54987 18.9925 4.5498 18.75V7.5C4.5498 7.23498 4.69956 6.99266 4.93652 6.87402L9.42383 4.62988C9.52111 4.57866 9.63242 4.5498 9.75 4.5498ZM5.9502 7.93262V17.6172L9.0498 16.0674V6.38281L5.9502 7.93262ZM10.4502 16.0674L13.5498 17.6172V7.93262L10.4502 6.38281V16.0674ZM14.9502 7.93262V17.6172L18.0498 16.0674V6.38281L14.9502 7.93262Z"
-				/>
-			</svg>
-		</button>
-	`
-	};
-
 	const VERTICAL_MAP_POSITION = {
 		left: 'left'};
 	const HORIZONTAL_MAP_POSITION = {
@@ -12075,6 +16985,56 @@ this.BX = this.BX || {};
 		right: '--right'
 	};
 	const POSITION_MAP_DEFAULT_VALUES = 'top right';
+	const VIEWPORT_INSET_EDGES = new Set(['top', 'right', 'bottom', 'left']);
+
+	// The bare viewport: nothing of the consumer covers it once the panel that published the insets is
+	// gone, and the state of the diagram says so again.
+	const NO_VIEWPORT_INSETS = {
+		top: 0,
+		right: 0,
+		bottom: 0,
+		left: 0
+	};
+
+	// An edge a consumer names has to be a number the free area can be measured with; an edge it says
+	// nothing about stays zero, so a partial set is a valid one.
+	function isValidViewportInsets(value) {
+		return Object.entries(value).every(([edge, inset]) => {
+			return VIEWPORT_INSET_EDGES.has(edge) && Number.isFinite(inset);
+		});
+	}
+
+	/**
+	 * The combo of the fit types a character by default, so the command belongs to the diagram only
+	 * while the focus stands on one of its surfaces - the canvas, the panel itself, or the minimap the
+	 * consumer places on its own. Everywhere else on the page the press is the page's own: the same rule
+	 * the arrow keys of the canvas already follow, and the one WCAG 2.1.4 asks for from a shortcut
+	 * written with a printable key. The guard stays whatever the combo becomes: a user may reassign it.
+	 *
+	 * That is what `preventDefault: false` is for: the browser goes on seeing the press as usual, and the
+	 * default action is suppressed here and only when the command really runs, so a press left to the
+	 * page still types its character there.
+	 */
+	function registerFitToViewShortcut(canFitToView, fitToView) {
+		function onFitToView(event) {
+			if (!canFitToView()) {
+				return;
+			}
+			event.preventDefault();
+			fitToView();
+		}
+		useKeyboardShortcuts([{
+			actionId: CANVAS_ACTION_ID.FIT_TO_VIEW,
+			handler: onFitToView,
+			preventDefault: false
+		}]);
+	}
+
+	// `isInputEventTarget()` of the extension answers about the target of an event, while a focus
+	// change names the element itself, so the shared tag list is asked about the element here.
+	function isFieldElement(element) {
+		return element instanceof HTMLElement && (INPUT_TAGS[element.tagName] === true || element.isContentEditable === true);
+	}
 
 	// @vue/component
 	const ZoomBar = {
@@ -12097,7 +17057,32 @@ this.BX = this.BX || {};
 			},
 			blockColors: {
 				type: Object,
-				default: () => {}
+				default: () => ({}),
+				validator(value) {
+					return isValidColorPalette(value);
+				}
+			},
+			frameColors: {
+				type: Object,
+				default: () => ({}),
+				validator(value) {
+					return isValidColorPalette(value);
+				}
+			},
+			/**
+			 * Edges of the viewport the panels of the consumer cover: the canvas is drawn under them and
+			 * cannot measure them itself. The fit keeps the scheme out of the covered edges. Reactive: a
+			 * panel that opens or closes changes the value without remounting the bar.
+			 *
+			 * One zoom bar per application. The bar registers the shortcut of the fit, so a second one
+			 * mounted next to it would run the command twice on a single press.
+			 */
+			viewportInsets: {
+				type: Object,
+				default: () => ({}),
+				validator(value) {
+					return isValidViewportInsets(value);
+				}
 			},
 			disabled: {
 				type: Boolean,
@@ -12109,17 +17094,34 @@ this.BX = this.BX || {};
 			}
 		},
 		emits: ['update:modelValue'],
+		// eslint-disable-next-line max-lines-per-function
 		setup(props) {
 			const loc = useLoc();
 			const {
-				isDisabledBlockDiagram
+				isDisabledBlockDiagram,
+				inputState,
+				viewportInsets,
+				blockDiagramRef,
+				canvasMapRef,
+				isOpenContextMenu
 			} = useBlockDiagram();
+			const {
+				fitToView,
+				zoomIn,
+				zoomOut
+			} = useCanvas();
+			const {
+				returnFocusToCanvas
+			} = useCanvasFocus();
 			const isShowMap = ui_vue3.ref(false);
+			const root = ui_vue3.ref(null);
 			const mapButton = ui_vue3.ref(null);
 			const canvasMap = ui_vue3.ref(null);
 			const canvasMapPanelId = `ui-block-diagram-canvas-map-${main_core.Text.getRandom()}`;
 			const closeMapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_CLOSE');
 			const isDisabled = ui_vue3.computed(() => props.disabled || ui_vue3.toValue(isDisabledBlockDiagram));
+			let unsubscribeEscape = null;
+			let isFieldFocused = isFieldElement(document.activeElement);
 			const mapPositionClasses = ui_vue3.computed(() => {
 				const isTop = props.positionMap.toLowerCase().includes(HORIZONTAL_MAP_POSITION.top);
 				const isLeft = props.positionMap.toLowerCase().includes(VERTICAL_MAP_POSITION.left);
@@ -12134,48 +17136,217 @@ this.BX = this.BX || {};
 			function focusMapButton() {
 				ui_vue3.toValue(mapButton)?.$el?.focus();
 			}
-			function closeMap(restoreFocus) {
+
+			// The claim of the panel goes away with the state it watches, so the canvas is asked for the
+			// focus a tick later: by then the stack answers about the layers that are still open, not
+			// about the map that is closing. A layer still holding Escape refuses the canvas, and the
+			// panel the focus stood on is already gone, so the button it opens from takes it instead.
+			function closeMap(focusTarget) {
 				isShowMap.value = false;
-				if (restoreFocus) {
-					ui_vue3.nextTick(focusMapButton);
+				if (focusTarget === null) {
+					return;
 				}
+				ui_vue3.nextTick(() => {
+					if (focusTarget === MAP_FOCUS_TARGET.canvas && returnFocusToCanvas()) {
+						return;
+					}
+					focusMapButton();
+				});
 			}
 			function onCloseMap() {
-				closeMap(true);
+				closeMap(MAP_FOCUS_TARGET.mapButton);
 			}
-			function onToggleMap() {
+			function isFocusInsideMapPanel() {
+				return document.getElementById(canvasMapPanelId)?.contains(document.activeElement) === true;
+			}
+
+			// The panel closed from the keyboard hands the focus to the canvas, where the arrows and the
+			// shortcuts of the diagram start from; the pointer paths keep the button they were aimed at.
+			// The claim is page-wide, so the shortcut arrives with the focus anywhere: a close asked from
+			// outside the panel moves no focus at all, the way Escape of the very same panel does not.
+			function keyboardFocusTarget() {
+				return isFocusInsideMapPanel() ? MAP_FOCUS_TARGET.canvas : null;
+			}
+
+			// The exclusive claim takes Escape on the capture phase, ahead of a popup that answers the
+			// very same key on its own: without the guard one press would close both. The cross and the
+			// button are aimed by the pointer and need no such check.
+			// That claim is page-wide, so the press arrives with the focus anywhere on the page: a press
+			// from outside the panel moves no focus at all.
+			function onEscapeCloseMap() {
+				if (isKeyboardBusyByOverlay()) {
+					return;
+				}
+				closeMap(isFocusInsideMapPanel() ? MAP_FOCUS_TARGET.canvas : null);
+			}
+			function onToggleMap(focusTarget = MAP_FOCUS_TARGET.mapButton) {
 				if (ui_vue3.toValue(isDisabled)) {
 					return;
 				}
 				if (ui_vue3.toValue(isShowMap)) {
-					closeMap(true);
+					closeMap(focusTarget);
 					return;
 				}
 				isShowMap.value = true;
 				ui_vue3.nextTick(() => ui_vue3.toValue(canvasMap)?.focus());
 			}
+
+			// The panel joins the same last-in-first-out stack of exclusive Escape claims that the catalog
+			// and the settings panels hold: a map opened later answers the key before them, and a bubbling
+			// handler on the panel would never see the press their capture-phase claim already took.
+			// Both halves are idempotent: the bar asks for a key it may already hold and gives up one it
+			// may have given up already.
+			function claimEscape() {
+				if (unsubscribeEscape === null) {
+					unsubscribeEscape = inputState.onExclusive(KEY_TOKEN.ESCAPE, onEscapeCloseMap);
+				}
+			}
+			function releaseEscapeClaim() {
+				unsubscribeEscape?.();
+				unsubscribeEscape = null;
+			}
+
+			// The capture-phase claim reaches past the layers above the canvas, so an open map held it
+			// would take Escape from a text field being edited elsewhere on the page - the inline rename
+			// of a node first of all, which cancels by the very same key.
+			function syncEscapeClaim() {
+				if (ui_vue3.toValue(isShowMap) && !isFieldFocused) {
+					claimEscape();
+					return;
+				}
+				releaseEscapeClaim();
+			}
+
+			// `focusout` names where the focus goes next and `focusin` where it landed. Reading
+			// `activeElement` instead would miss a focus that fell to the body: no `focusin` follows it.
+			function onFocusChanged(event) {
+				isFieldFocused = isFieldElement(event.type === 'focusout' ? event.relatedTarget : event.target);
+				syncEscapeClaim();
+			}
+
+			// The guard is the shortcuts' alone: a click on a button is aimed at it, while a press under a
+			// popup belongs to the popup. The browser action goes off only once the press is taken - a
+			// press the bar refuses belongs to the browser and to the layers above the canvas.
+			function isKeyboardFree() {
+				return !isKeyboardBusyByOverlay() && !ui_vue3.toValue(isDisabled);
+			}
+
+			// The keyboard goes through the handler of the button, so the map is as blocked as the button
+			// and the focus travels the same way.
+			function toggleMapFromKeyboard(event) {
+				if (!isKeyboardFree()) {
+					return;
+				}
+				event.preventDefault();
+				onToggleMap(keyboardFocusTarget());
+			}
+
+			// The range is the camera's own business: it clamps on every path, and a second check here
+			// would be a second source of truth about the same limits.
+			function zoomInFromKeyboard(event) {
+				if (!isKeyboardFree()) {
+					return;
+				}
+				event.preventDefault();
+				zoomIn(props.stepZoom);
+			}
+			function zoomOutFromKeyboard(event) {
+				if (!isKeyboardFree()) {
+					return;
+				}
+				event.preventDefault();
+				zoomOut(props.stepZoom);
+			}
 			ui_vue3.watch(isDisabled, disabled => {
 				if (disabled && ui_vue3.toValue(isShowMap)) {
-					closeMap(false);
+					closeMap(null);
 				}
 			});
+			ui_vue3.watch(isShowMap, syncEscapeClaim);
+			ui_vue3.onMounted(() => {
+				main_core.Event.bind(document, 'focusin', onFocusChanged);
+				main_core.Event.bind(document, 'focusout', onFocusChanged);
+			});
+			ui_vue3.onUnmounted(() => {
+				main_core.Event.unbind(document, 'focusin', onFocusChanged);
+				main_core.Event.unbind(document, 'focusout', onFocusChanged);
+				releaseEscapeClaim();
+			});
+			useKeyboardShortcuts([{
+				actionId: CANVAS_ACTION_ID.TOGGLE_MAP,
+				handler: toggleMapFromKeyboard,
+				preventDefault: false
+			}, {
+				actionId: CANVAS_ACTION_ID.ZOOM_IN,
+				handler: zoomInFromKeyboard,
+				preventDefault: false
+			}, {
+				// On the layouts where plus is typed with Shift the modifier joins the combo - a second
+				// spelling of the same gesture, not a second action, so it stays a plain record next to
+				// the actionId one instead of living in the registry.
+				keys: ['Mod', 'Shift', 'Equal'],
+				handler: zoomInFromKeyboard,
+				preventDefault: false
+			}, {
+				actionId: CANVAS_ACTION_ID.ZOOM_OUT,
+				handler: zoomOutFromKeyboard,
+				preventDefault: false
+			}]);
+
+			// The bar owns the property, the command reads it from the state of the diagram at the moment
+			// it runs: the panels of the consumer come and go while the diagram stays mounted.
+			ui_vue3.watch(() => props.viewportInsets, insets => {
+				viewportInsets.value = insets;
+			}, {
+				immediate: true
+			});
+
+			// The panel goes away while the diagram stays: the insets it published leave with it, so the
+			// next call of the command measures the free area by what is really on the screen. Only the
+			// ones it published itself: the state belongs to the whole application, and a bar that leaves
+			// while another one already stands there would otherwise clear edges that are still covered,
+			// with no property change left to bring them back.
+			ui_vue3.onUnmounted(() => {
+				// The state hands its value out through a reactive proxy, the property is the bare object.
+				if (ui_vue3.toRaw(viewportInsets.value) === ui_vue3.toRaw(props.viewportInsets)) {
+					viewportInsets.value = {
+						...NO_VIEWPORT_INSETS
+					};
+				}
+			});
+
+			// The panel is a surface of its own next to the root: a consumer mounts it beside the diagram
+			// rather than inside it. An open menu of the panel takes the press as well - it answers the
+			// key by its own typeahead, and a scheme moving under a menu that stays where it was is one
+			// press answered twice.
+			function canFitToView() {
+				return !ui_vue3.toValue(isDisabled) && !ui_vue3.toValue(isOpenContextMenu) && isFocusOnAnyOf([ui_vue3.toValue(root), ui_vue3.toValue(blockDiagramRef), ui_vue3.toValue(canvasMapRef)]);
+			}
+			registerFitToViewShortcut(canFitToView, fitToView);
 			return {
 				iconSet: ui_iconSet_api_vue.Outline,
 				mapPositionClasses,
 				isShowMap,
 				isDisabled,
+				root,
 				mapButton,
 				canvasMap,
 				canvasMapPanelId,
 				closeMapLabel,
+				fitToViewKeyshortcuts: useActionKeyshortcuts(CANVAS_ACTION_ID.FIT_TO_VIEW),
+				mapKeyshortcuts: useActionKeyshortcuts(CANVAS_ACTION_ID.TOGGLE_MAP),
+				zoomInKeyshortcuts: useActionKeyshortcuts(CANVAS_ACTION_ID.ZOOM_IN),
+				zoomOutKeyshortcuts: useActionKeyshortcuts(CANVAS_ACTION_ID.ZOOM_OUT),
 				onToggleMap,
 				onCloseMap
 			};
 		},
 		template: `
 		<div
+			ref="root"
 			class="ui-block-diagram-canvas-zoom-bar"
 			:class="{ '--flat': flat }"
+			:aria-keyshortcuts="fitToViewKeyshortcuts"
 			:data-test-id="$blockDiagramTestId('zoomBar')"
 		>
 			<div class="ui-block-diagram-canvas-zoom-bar__locate">
@@ -12185,8 +17356,9 @@ this.BX = this.BX || {};
 					:disabled="isDisabled"
 					:aria-expanded="isShowMap"
 					:aria-controls="canvasMapPanelId"
+					:aria-keyshortcuts="mapKeyshortcuts"
 					:data-test-id="$blockDiagramTestId('zoomOpenMapBtn')"
-					@click="onToggleMap"
+					@click="onToggleMap()"
 				/>
 				<transition name="editor-large-map-fade" mode="in-out">
 					<div
@@ -12195,7 +17367,6 @@ this.BX = this.BX || {};
 						:data-test-id="$blockDiagramTestId('zoomMapPanel')"
 						class="ui-block-diagram-canvas-zoom-bar__map"
 						:class="mapPositionClasses"
-						@keydown.esc.stop.prevent="onCloseMap"
 					>
 						<div class="ui-block-diagram-canvas-zoom-bar__map-header">
 							<button
@@ -12216,8 +17387,10 @@ this.BX = this.BX || {};
 						</div>
 						<CanvasMap
 							ref="canvasMap"
-							:mapSize="310"
+							:mapWidth="310"
+							:mapHeight="183"
 							:blockColors="blockColors"
+							:frameColors="frameColors"
 						/>
 					</div>
 				</transition>
@@ -12227,12 +17400,14 @@ this.BX = this.BX || {};
 				<ZoomBtn
 					:stepZoom="stepZoom"
 					:disabled="disabled"
+					:aria-keyshortcuts="zoomOutKeyshortcuts"
 					typeZoom="out"
 				/>
 				<ZoomPercent :disabled="disabled"/>
 				<ZoomBtn
 					:stepZoom="stepZoom"
 					:disabled="disabled"
+					:aria-keyshortcuts="zoomInKeyshortcuts"
 					typeZoom="in"
 				/>
 			</div>
@@ -12294,30 +17469,98 @@ this.BX = this.BX || {};
 	// @vue/component
 	const OpenSearchBtn = {
 		name: 'open-search-btn',
+		directives: {
+			'b-tooltip': ui_system_tooltip_vue.vBTooltip
+		},
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		setup() {
+			const loc = useLoc();
+			const button = ui_vue3.useTemplateRef('button');
+			const ariaLabel = loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_OPEN');
+			const searchShortcut = useActionShortcut(CANVAS_ACTION_ID.TOGGLE_SEARCH);
 			return {
-				iconSet: ui_iconSet_api_vue.Outline
+				iconSet: ui_iconSet_api_vue.Outline,
+				ariaLabel,
+				shortcut: useActionKeyshortcuts(CANVAS_ACTION_ID.TOGGLE_SEARCH),
+				tooltip: ui_vue3.computed(() => ({
+					content: withShortcut(ariaLabel, ui_vue3.toValue(searchShortcut)),
+					// The button hangs at the canvas top edge, so the bubble opens downwards: there is no room above.
+					position: ui_system_tooltip.TooltipPosition.Bottom,
+					showDelay: TOOLTIP_SHOW_DELAY
+				})),
+				// The panel closes back onto this button, so it has to be reachable from the outside.
+				focus: () => {
+					ui_vue3.toValue(button)?.focus();
+				}
 			};
 		},
 		template: `
-		<button class="ui-block-diagram-open-search-btn">
+		<button
+			type="button"
+			class="ui-block-diagram-open-search-btn"
+			v-b-tooltip="tooltip"
+			:aria-label="ariaLabel"
+			:aria-keyshortcuts="shortcut"
+			ref="button"
+		>
 			<BIcon
 				:name="iconSet.SEARCH"
 				:size="24"
+				aria-hidden="true"
 				class="ui-block-diagram-open-search-btn__icon"
 			/>
 		</button>
 	`
 	};
 
+	// Directions the results are walked in, so the spelling lives in one place on both sides.
+	const SEARCH_NAV_DIRECTION = Object.freeze({
+		NEXT: 'next',
+		PREV: 'prev'
+	});
+	// Where the focus goes once the panel has finished closing, so the spelling lives in one place on
+	// both sides. Which target it is, the caller says: only the caller knows what kind of close it was.
+	const SEARCH_FOCUS_TARGET = Object.freeze({
+		OPEN_BUTTON: 'openButton',
+		CANVAS: 'canvas'
+	});
+	const NAV_ACTION_DIRECTION = new Map([[CANVAS_ACTION_ID.NEXT_SEARCH_RESULT, SEARCH_NAV_DIRECTION.NEXT], [CANVAS_ACTION_ID.PREV_SEARCH_RESULT, SEARCH_NAV_DIRECTION.PREV]]);
 	const SEARCH_INPUT_CLASS_NAMES = {
 		base: 'ui-block-diagram-search-input',
 		open: '--open',
 		focus: '--focus'
 	};
+	function isFocusInside(element) {
+		return element instanceof HTMLElement && element.contains(document.activeElement);
+	}
+
+	// The canvas skips its global action channel for a press inside an editable field (InputState:
+	// `isInputEventTarget`), so a shortcut meant to fire while this very field holds focus can never go
+	// through it - it is read here instead, straight off the registry the field belongs to, the same
+	// source `useKeyboardShortcuts` reads for every shortcut that is not field-scoped. Reading the
+	// registry rather than a fixed key keeps the combo reassignable through the settings panel like any
+	// other action of the canvas.
+	function comboFromEvent(event, isMac) {
+		const modifiers = [event.ctrlKey && 'ctrl', event.altKey && 'alt', event.shiftKey && 'shift', event.metaKey && 'meta'].filter(Boolean);
+		return normalizeCombo([...modifiers, event.code || event.key], isMac);
+	}
+
+	// The lower bound of what the field may be taken away for: a press none of these modifiers is held
+	// on is plain typing, whatever the registry says about it. Shift is not one of them - it types a
+	// character of its own, an uppercase letter or the symbol above the digit. The settings panel draws
+	// the bound at the same three modifiers, so what may be assigned is what works here.
+	function isCombinationPress(event) {
+		return event.ctrlKey || event.metaKey || event.altKey;
+	}
+	function searchNavDirection(event, actionRegistry, isMac) {
+		if (!isCombinationPress(event)) {
+			return null;
+		}
+		const actionId = actionRegistry.getAction(comboFromEvent(event, isMac));
+		return NAV_ACTION_DIRECTION.get(actionId) ?? null;
+	}
 
 	// @vue/component
 	const SearchInput = {
@@ -12342,17 +17585,36 @@ this.BX = this.BX || {};
 			disabled: {
 				type: Boolean,
 				default: false
+			},
+			hasResults: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['update:value', 'clear', 'update:open'],
+		emits: ['update:value', 'clear', 'update:open', 'navigate', 'close-request'],
 		setup(props, {
 			emit
 		}) {
 			const loc = useLoc();
+			const {
+				actionRegistry
+			} = useBlockDiagram();
+			const {
+				focusCanvas
+			} = useCanvasFocus();
+			const isMac = main_core.Browser.isMac();
 			const searchInput = ui_vue3.useTemplateRef('searchInput');
+			const searchBar = ui_vue3.useTemplateRef('searchBar');
+			const openSearchBtn = ui_vue3.useTemplateRef('openSearchBtn');
 			const showSearchBtn = ui_vue3.ref(true);
 			const showSearchBar = ui_vue3.ref(false);
 			const isFocus = ui_vue3.ref(false);
+			const searchPanelId = `ui-block-diagram-search-panel-${main_core.Text.getRandom()}`;
+
+			// The field is hidden the moment the panel starts closing, and the button it opened from is
+			// rendered again only once the closing animation has played out. Between the two the focus
+			// belongs to nobody, so the answer is decided while the field still holds it.
+			let pendingFocusTarget = null;
 			const placeholderOrDefaultValue = ui_vue3.computed(() => {
 				if (props.placeholder) {
 					return props.placeholder;
@@ -12370,11 +17632,26 @@ this.BX = this.BX || {};
 				}
 				emit('update:value', event.target.value);
 			}
+
+			// With nothing found the press stays the field's: taking it away would cost the user the
+			// native picking out of text and give nothing back.
+			function onKeyDownSearchInput(event) {
+				if (props.disabled || !props.hasResults) {
+					return;
+				}
+				const direction = searchNavDirection(event, actionRegistry, isMac);
+				if (direction === null) {
+					return;
+				}
+				event.preventDefault();
+				emit('navigate', direction);
+			}
 			function onClear(event) {
 				event.stopPropagation();
 				if (props.disabled) {
 					return;
 				}
+				pendingFocusTarget = isFocusInside(ui_vue3.toValue(searchBar)) ? SEARCH_FOCUS_TARGET.OPEN_BUTTON : null;
 				showSearchBar.value = false;
 				emit('clear');
 			}
@@ -12387,6 +17664,18 @@ this.BX = this.BX || {};
 			function onLeaveTransition() {
 				showSearchBtn.value = true;
 				emit('update:open', false);
+				const target = pendingFocusTarget;
+				pendingFocusTarget = null;
+				if (target === null) {
+					return;
+				}
+				ui_vue3.nextTick(() => {
+					if (target === SEARCH_FOCUS_TARGET.CANVAS) {
+						focusCanvas();
+						return;
+					}
+					ui_vue3.toValue(openSearchBtn)?.focus();
+				});
 			}
 			function onOpenSearchBar() {
 				showSearchBar.value = true;
@@ -12397,32 +17686,62 @@ this.BX = this.BX || {};
 				isFocus.value = true;
 				ui_vue3.toValue(searchInput)?.focus();
 			}
+
+			// The canvas input state hands a focused field nothing but Escape, so the combo that opened
+			// the panel would reach neither the canvas nor a preventDefault, and the browser would answer
+			// it with its own find bar. What closing means is left to the parent, the same way `clear` is.
+			// The combo is the one the registry holds for the action, the way the navigation beside it is
+			// read: the press that opens the panel is the press that closes it, reassignment or not.
+			function onSearchInputKeyDown(event) {
+				if (props.disabled || !isCombinationPress(event)) {
+					return;
+				}
+				if (actionRegistry.getAction(comboFromEvent(event, isMac)) !== CANVAS_ACTION_ID.TOGGLE_SEARCH) {
+					return;
+				}
+				event.preventDefault();
+				emit('close-request');
+			}
 			function onBlurSearchInput() {
 				isFocus.value = false;
 			}
-			function collapseSearchBar() {
+
+			// A close the user asked for from inside the panel names where the focus goes next; a click
+			// past the panel names nothing and leaves the focus where the click put it. The target is
+			// the caller's to answer: the panel reaches past this field - the buttons that walk the
+			// results are its own - and only the panel knows its whole extent.
+			function collapseSearchBar({
+				focusTarget = null
+			} = {}) {
+				pendingFocusTarget = focusTarget;
 				showSearchBar.value = false;
 			}
 			return {
 				iconSet: ui_iconSet_api_vue.Outline,
 				showSearchBar,
 				showSearchBtn,
+				searchPanelId,
 				placeholderOrDefaultValue,
 				searchInputClassNames,
 				onInput,
+				onKeyDownSearchInput,
 				onClear,
 				onAfterEnterTransition,
 				onLeaveTransition,
 				onOpenSearchBar,
 				onClickSearchInput,
 				onBlurSearchInput,
+				onSearchInputKeyDown,
 				collapseSearchBar
 			};
 		},
 		template: `
 		<OpenSearchBtn
 			v-show="showSearchBtn"
+			:aria-expanded="open"
+			:aria-controls="searchPanelId"
 			:data-test-id="$blockDiagramTestId('searchOpenBtn')"
+			ref="openSearchBtn"
 			@click="onOpenSearchBar"
 		/>
 		<transition
@@ -12434,6 +17753,7 @@ this.BX = this.BX || {};
 		>
 			<div
 				v-show="showSearchBar"
+				:id="searchPanelId"
 				:class="searchInputClassNames"
 				ref="searchBar"
 				@click="onClickSearchInput"
@@ -12451,6 +17771,7 @@ this.BX = this.BX || {};
 					type="text"
 					class="ui-block-diagram-search-input__input"
 					@input="onInput"
+					@keydown="[onKeyDownSearchInput, onSearchInputKeyDown]"
 					@blur="onBlurSearchInput"
 				/>
 				<button
@@ -12468,6 +17789,9 @@ this.BX = this.BX || {};
 		</transition>
 	`
 	};
+
+	// The diagram as it stood when the panel opened. Only the camera position is kept: a zoom the user
+	// changed by hand while searching is theirs, and the search never touched it.
 
 	const SEARCH_BAR_CLASS_NAMES = {
 		base: 'ui-block-diagram-search-bar',
@@ -12520,17 +17844,29 @@ this.BX = this.BX || {};
 				delay: props.searchDelay
 			});
 			const {
-				isDisabledBlockDiagram
+				isDisabledBlockDiagram,
+				inputState,
+				transform,
+				blockIdsInModel
 			} = useBlockDiagram();
 			const highlitedBlocks = useHighlightedBlocks();
 			const loc = useLoc();
 			const {
-				goToBlockById
+				goToBlockById,
+				setCamera
 			} = useCanvas();
+			const {
+				returnFocusToCanvas
+			} = useCanvasFocus();
 			const searchPanel = ui_vue3.useTemplateRef('searchPanel');
 			const searchInputRef = ui_vue3.useTemplateRef('searchInput');
 			const currentBlockIndex = ui_vue3.ref(0);
 			const isOpenedSearchBar = ui_vue3.ref(false);
+
+			// The snapshot is not display data, so it stays out of the reactive state; it lives exactly
+			// as long as the claim on Escape does.
+			let snapshot = null;
+			let unsubscribeEscape = null;
 			const isDisabled = ui_vue3.computed(() => {
 				return props.disabled || ui_vue3.toValue(isDisabledBlockDiagram);
 			});
@@ -12564,12 +17900,39 @@ this.BX = this.BX || {};
 					highlitedBlocks.clear();
 				}
 			});
+
+			// Opening claims Escape and remembers what to come back to. Every close gives the claim up as
+			// it starts, so releasing it here is the backstop for a flag that fell some other way.
+			ui_vue3.watch(isOpenedSearchBar, isOpened => {
+				if (!isOpened) {
+					releaseSearchClaim();
+					return;
+				}
+				const {
+					x,
+					y
+				} = ui_vue3.toValue(transform);
+				snapshot = {
+					highlighted: [...ui_vue3.toValue(highlitedBlocks.highlitedBlockIds)],
+					camera: {
+						x,
+						y
+					}
+				};
+				claimEscape();
+			});
 			ui_vue3.onMounted(() => {
 				main_core.Event.bind(document, 'mousedown', onClickOutside);
 			});
 			ui_vue3.onUnmounted(() => {
 				main_core.Event.unbind(document, 'mousedown', onClickOutside);
+				releaseSearchClaim();
 			});
+			useKeyboardShortcuts([{
+				actionId: CANVAS_ACTION_ID.TOGGLE_SEARCH,
+				handler: toggleSearchBarFromKeyboard,
+				preventDefault: false
+			}]);
 			function onGoToNextBlock() {
 				if (ui_vue3.toValue(isDisabled)) {
 					return;
@@ -12596,15 +17959,167 @@ this.BX = this.BX || {};
 				highlitedBlocks.add(id);
 				goToBlockById(ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id);
 			}
-			function closeAndResetSearch() {
-				highlitedBlocks.clear();
+
+			// The keyboard reaches the results while the buttons that walk them are not even rendered:
+			// they come with the results, and the field is the one place the search is done from.
+			function onNavigateResults(direction) {
+				if (ui_vue3.toValue(foundBlocks).length === 0) {
+					return;
+				}
+				if (direction === SEARCH_NAV_DIRECTION.NEXT) {
+					onGoToNextBlock();
+				} else if (direction === SEARCH_NAV_DIRECTION.PREV) {
+					onGoToPrevBlock();
+				}
+			}
+
+			// Closing here is the user leaving the panel, not taking the search back, so it goes through
+			// `closeSearchPanel()` and not through `cancelSearch()`: the highlight and the camera stay
+			// where the search left them, and rolling them back stays the answer to Escape alone.
+			// The browser action goes off only once the press is taken: a press the panel refuses belongs
+			// to the browser and to the layers above the canvas.
+			function toggleSearchBarFromKeyboard(event) {
+				if (isKeyboardBusyByOverlay() || ui_vue3.toValue(isDisabled)) {
+					return;
+				}
+				event.preventDefault();
+				if (ui_vue3.toValue(isOpenedSearchBar)) {
+					closeSearchPanel({
+						focusTarget: keyboardFocusTarget(),
+						keepHighlight: true
+					});
+					return;
+				}
+				ui_vue3.toValue(searchInputRef)?.onOpenSearchBar();
+			}
+
+			// Every way the panel closes ends the search itself, the clear button included, and the key
+			// goes back at the start of the closing rather than when its animation ends a third of a
+			// second later: the next press belongs to the layers above the canvas by then. The highlight
+			// is kept only where the closing leaves the diagram as the search found it.
+			function closeAndResetSearch(keepHighlight = false) {
+				releaseSearchClaim();
+
+				// Emptying the results wipes the highlight through the watcher on them, after this
+				// synchronous block, so what is kept goes back once every watcher has had its say -
+				// the way `cancelSearch()` puts its snapshot back.
+				const kept = keepHighlight ? [...ui_vue3.toValue(highlitedBlocks.highlitedBlockIds)] : null;
+				if (kept === null) {
+					highlitedBlocks.clear();
+				}
 				onClearSearch();
 				currentBlockIndex.value = 0;
+				if (kept !== null) {
+					void ui_vue3.nextTick(() => highlitedBlocks.replace(kept));
+				}
+			}
+
+			// Both halves always go together: the panel and the input keep their own open flag, and
+			// closing one without the other leaves them disagreeing about it.
+			function closeSearchPanel({
+				focusTarget = null,
+				keepHighlight = false
+			} = {}) {
+				closeAndResetSearch(keepHighlight);
+				ui_vue3.toValue(searchInputRef)?.collapseSearchBar({
+					focusTarget
+				});
+			}
+
+			// A close the user asked for from the keyboard leaves the focus nowhere: the panel takes its
+			// field away, and with the results the buttons that walk them go too. The canvas takes the
+			// focus back - the arrows and the shortcuts of the diagram all start from its root - but only
+			// while nothing else holds Escape: a claim still on the stack means a layer above the canvas
+			// is open, and the canvas is not the keyboard's owner then. The focus still has to land
+			// somewhere, so it goes to the button the panel opened from. A close made from outside the
+			// panel moves no focus at all: the user stands where they meant to.
+			function keyboardFocusTarget() {
+				const closedFromInsidePanel = isFocusInsidePanel();
+
+				// The key goes back before the stack is asked about the rest, or the panel would find its
+				// own claim on it and leave the focus to itself.
+				releaseSearchClaim();
+				if (!closedFromInsidePanel) {
+					return null;
+				}
+				return returnFocusToCanvas() ? SEARCH_FOCUS_TARGET.CANVAS : SEARCH_FOCUS_TARGET.OPEN_BUTTON;
+			}
+
+			// The combo of the panel pressed while the cursor stands in the field never reaches the
+			// canvas, so the field asks for the close itself. It is the same keyboard close as the
+			// shortcut going through the canvas.
+			function onCloseRequest() {
+				closeSearchPanel({
+					focusTarget: keyboardFocusTarget()
+				});
+			}
+
+			// The claim comes and goes with the focus, so both halves are idempotent: the panel asks for
+			// a key it may already hold and gives up one it may have given up already.
+			function claimEscape() {
+				if (unsubscribeEscape === null) {
+					unsubscribeEscape = inputState.onExclusive(KEY_TOKEN.ESCAPE, cancelSearch);
+				}
+			}
+			function releaseEscapeClaim() {
+				unsubscribeEscape?.();
+				unsubscribeEscape = null;
+			}
+
+			// Called from every path that ends the search itself: the key goes back and the diagram has
+			// nothing left to come back to.
+			function releaseSearchClaim() {
+				releaseEscapeClaim();
+				snapshot = null;
+			}
+
+			// The key is the panel's only while the work is in the panel. An open panel the keyboard
+			// user has tabbed away from holds Escape over the whole page otherwise, and the layers above
+			// the canvas - a slider around the diagram first of all - stop closing by it. A focus that
+			// goes nowhere is not a departure: that is the panel hiding its own field as it closes.
+			function onPanelFocusOut(event) {
+				const nextTarget = event.relatedTarget;
+				const staysInPanel = !(nextTarget instanceof Node) || ui_vue3.toValue(searchPanel)?.contains(nextTarget) === true;
+				if (staysInPanel) {
+					return;
+				}
+				releaseEscapeClaim();
+			}
+			function onPanelFocusIn() {
+				if (ui_vue3.toValue(isOpenedSearchBar)) {
+					claimEscape();
+				}
+			}
+			function isFocusInsidePanel() {
+				return ui_vue3.toValue(searchPanel)?.contains(document.activeElement) === true;
+			}
+
+			// Escape gives up the search: the panel closes the way it closes on a click past it, and the
+			// diagram goes back to where the search found it.
+			function cancelSearch() {
+				// Read before the close: it gives up the snapshot along with the key, and the deferred
+				// restoration below works off this copy.
+				const taken = snapshot;
+				closeSearchPanel({
+					focusTarget: keyboardFocusTarget()
+				});
+				if (taken === null) {
+					return;
+				}
+
+				// The watcher on the found blocks wipes the highlight after this synchronous block, so
+				// the snapshot goes back only once every watcher has had its say.
+				void ui_vue3.nextTick(() => {
+					highlitedBlocks.replace(taken.highlighted);
+					// A block deleted while the panel was open is gone from the model, and the selection
+					// was trimmed of it by the very same rule: the snapshot must not bring it back.
+					pruneSelection(highlitedBlocks.highlitedBlockIds, blockIdsInModel);
+					setCamera(taken.camera);
+				});
 			}
 			function onClickOutside(event) {
 				if (ui_vue3.toValue(searchPanel) && !ui_vue3.toValue(searchPanel).contains(event.target) && ui_vue3.toValue(isOpenedSearchBar)) {
-					closeAndResetSearch();
-					ui_vue3.toValue(searchInputRef)?.collapseSearchBar();
+					closeSearchPanel();
 				}
 			}
 			return {
@@ -12620,23 +18135,33 @@ this.BX = this.BX || {};
 				onSearchBlocks,
 				onClearSearch,
 				closeAndResetSearch,
+				closeSearchPanel,
 				onGoToNextBlock,
-				onGoToPrevBlock
+				onGoToPrevBlock,
+				onNavigateResults,
+				onPanelFocusIn,
+				onPanelFocusOut,
+				onCloseRequest
 			};
 		},
 		template: `
 		<div
 			:class="searchBarClassNames"
 			ref="searchPanel"
+			@focusin="onPanelFocusIn"
+			@focusout="onPanelFocusOut"
 		>
 			<SearchInput
 				v-model:open="isOpenedSearchBar"
 				:value="seachText"
 				:placeholder="placeholderOrDefaultValue"
 				:disabled="isDisabled"
+				:hasResults="foundBlocks.length > 0"
 				ref="searchInput"
 				@update:value="onSearchBlocks"
-				@clear="closeAndResetSearch"
+				@navigate="onNavigateResults"
+				@clear="closeAndResetSearch()"
+				@close-request="onCloseRequest"
 			/>
 			<div
 				v-if="foundBlocks.length > 0"
@@ -12662,6 +18187,13 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const RESIZABLE_BLOCK_CLASS_NAMES = {
+		base: 'ui-block-diagram-resizable-block',
+		placementFeedback: 'ui-block-diagram-placement-feedback',
+		displaced: '--displaced',
+		placementRefused: '--placement-refused'
+	};
+
 	// @vue/component
 	const ResizableBlock = {
 		name: 'resizable-block',
@@ -12679,32 +18211,41 @@ this.BX = this.BX || {};
 				type: Number,
 				default: 100
 			},
-			highlighted: {
-				type: Boolean,
-				default: false
+			canStartMove: {
+				type: Function,
+				default: null
 			}
 		},
 		setup(props) {
 			const {
 				block,
 				minWidth,
-				minHeight
+				minHeight,
+				canStartMove
 			} = ui_vue3.toRefs(props);
 			const blockRef = ui_vue3.useTemplateRef('blockEl');
 			const {
 				isHiglitedBlock,
+				isDisplacedBlock,
+				isPlacementRefusedBlock,
 				isDisabled,
+				blockZindex,
 				onMountedBlock,
 				onUnmountedBlock
 			} = useBlockState({
 				block,
-				blockRef
+				blockRef,
+				// The backdrop is a background, so it keeps its own resting step instead of following
+				// hover and selection. The stylesheet states the same value for a consumer that mounts
+				// this component outside the canvas.
+				restingZIndex: BLOCK_INDEXES.BACKDROP
 			});
-			const highlightedBlocks = useHighlightedBlocks();
 			const {
 				isDragged,
 				blockPositionStyle
-			} = useMoveableBlock(blockRef, block);
+			} = useMoveableBlock(blockRef, block, {
+				canStartMove
+			});
 			const {
 				isResize,
 				sizeBlockStyle,
@@ -12727,22 +18268,19 @@ this.BX = this.BX || {};
 			const blockStyle = ui_vue3.computed(() => {
 				return {
 					...ui_vue3.toValue(blockPositionStyle),
-					...ui_vue3.toValue(sizeBlockStyle)
+					...ui_vue3.toValue(sizeBlockStyle),
+					zIndex: ui_vue3.toValue(blockZindex)
 				};
 			});
-			ui_vue3.watch(isResize, resizeStatus => {
-				if (resizeStatus) {
-					highlightedBlocks.clear();
-					highlightedBlocks.add(props.block.id);
-				}
-			});
-			ui_vue3.watch(() => props.highlighted, value => {
-				if (value) {
-					highlightedBlocks.add(props.block.id);
-				} else {
-					highlightedBlocks.remove(props.block.id);
-				}
-			});
+
+			// The rule moves a backdrop as readily as a node, so the backdrop shows the same feedback:
+			// without it a corrected backdrop would just jump aside with nothing said to the eye.
+			const blockClassNames = ui_vue3.computed(() => ({
+				[RESIZABLE_BLOCK_CLASS_NAMES.base]: true,
+				[RESIZABLE_BLOCK_CLASS_NAMES.placementFeedback]: true,
+				[RESIZABLE_BLOCK_CLASS_NAMES.displaced]: ui_vue3.toValue(isDisplacedBlock),
+				[RESIZABLE_BLOCK_CLASS_NAMES.placementRefused]: ui_vue3.toValue(isPlacementRefusedBlock)
+			}));
 			ui_vue3.onMounted(() => {
 				onMountedBlock();
 				onMountedResizableBlock();
@@ -12751,26 +18289,23 @@ this.BX = this.BX || {};
 				onUnmountedBlock();
 				onUnmountedResizableBlock();
 			});
-			function onMouseDownSelectBlock() {
-				highlightedBlocks.clear();
-				highlightedBlocks.add(props.block.id);
-			}
 			return {
 				isHiglitedBlock,
+				isDisplacedBlock,
+				isPlacementRefusedBlock,
 				isDisabled,
 				isResize,
 				isDragged,
+				blockClassNames,
 				blockStyle,
-				blockDimensions,
-				onMouseDownSelectBlock
+				blockDimensions
 			};
 		},
 		template: `
 		<div
 			:style="blockStyle"
 			ref="blockEl"
-			class="ui-block-diagram-resizable-block"
-			@mousedown="onMouseDownSelectBlock"
+			:class="blockClassNames"
 		>
 			<div class="ui-block-diagram-resizable-block__container">
 				<div
@@ -12812,11 +18347,59 @@ this.BX = this.BX || {};
 					:isDragged="isDragged"
 					:isResize="isResize"
 					:isDisabled="isDisabled"
+					:isDisplaced="isDisplacedBlock"
+					:isPlacementRefused="isPlacementRefusedBlock"
 					:width="blockDimensions.width"
 					:height="blockDimensions.height"
 				/>
 			</div>
 		</div>
+	`
+	};
+
+	// Wrapping a block in this component is what declares the block a container. It adds no markup, no
+	// styles and no pointer handlers of its own and starts no gesture: the captured nodes are carried
+	// by the gesture the wrapped block already runs.
+	// @vue/component
+	const Groupable = {
+		name: 'Groupable',
+		props: {
+			/** @type DiagramBlock */
+			block: {
+				type: Object,
+				required: true
+			},
+			// A consumer closing the ability behind a flag of its own keeps the wrapper in its template
+			// and switches this instead.
+			enabled: {
+				type: Boolean,
+				default: true
+			}
+		},
+		setup(props) {
+			const {
+				block,
+				enabled
+			} = ui_vue3.toRefs(props);
+			const {
+				registerGroupableBlock,
+				unregisterGroupableBlock
+			} = useGroupable(block, enabled);
+
+			// The flag may go off without a reload, and a record left behind would keep the block a
+			// container for the rest of the session.
+			ui_vue3.watch(enabled, isEnabled => {
+				if (isEnabled) {
+					registerGroupableBlock();
+				} else {
+					unregisterGroupableBlock();
+				}
+			});
+			ui_vue3.onMounted(registerGroupableBlock);
+			ui_vue3.onUnmounted(unregisterGroupableBlock);
+		},
+		template: `
+		<slot/>
 	`
 	};
 
@@ -12969,32 +18552,48 @@ this.BX = this.BX || {};
 			right: 0
 		});
 	}
+
+	// The handlers the element was bound with: they close over the value of the directive, so
+	// unbinding cannot rebuild them and has to find the very functions that were bound.
+	const boundHandlers = new WeakMap();
 	const DragBlock = {
 		mounted(el, {
-			arg,
 			value
 		}) {
 			initDragItemWrapper();
 			main_core.Dom.attr(el, 'draggable', 'true');
-			main_core.Event.bind(el, 'dragstart', event => onDragStart(event, value));
-			main_core.Event.bind(el, 'dragend', event => onDragEnd());
+			const handlers = {
+				dragStart: event => onDragStart(event, value),
+				dragEnd: event => onDragEnd()
+			};
+			boundHandlers.set(el, handlers);
+			main_core.Event.bind(el, 'dragstart', handlers.dragStart);
+			main_core.Event.bind(el, 'dragend', handlers.dragEnd);
 		},
-		unmounted(el, {
-			arg,
-			value
-		}) {
-			main_core.Event.unbind(el, 'dragstart', event => onDragStart(event, value));
-			main_core.Event.unbind(el, 'dragend', event => onDragEnd());
+		unmounted(el) {
+			const handlers = boundHandlers.get(el) ?? null;
+			if (handlers === null) {
+				return;
+			}
+			boundHandlers.delete(el);
+			main_core.Event.unbind(el, 'dragstart', handlers.dragStart);
+			main_core.Event.unbind(el, 'dragend', handlers.dragEnd);
 		}
 	};
 
 	exports.ANIMATED_TYPES = ANIMATED_TYPES;
+	exports.ActionRegistry = ActionRegistry;
 	exports.BlockDiagram = BlockDiagram;
+	exports.CANVAS_ACTION_ID = CANVAS_ACTION_ID;
+	exports.ComboVerdict = ComboVerdict;
 	exports.Connection = Connection;
+	exports.CopyPasteBuffer = CopyPasteBuffer;
 	exports.DeleteConnectionBtn = DeleteConnectionBtn;
 	exports.DragBlock = DragBlock;
 	exports.GroupSelectionBox = GroupSelectionBox;
+	exports.Groupable = Groupable;
 	exports.HistoryBar = HistoryBar;
+	exports.KEY_TOKEN = KEY_TOKEN;
 	exports.MoveableBlock = MoveableBlock;
 	exports.PORT_POSITION = PORT_POSITION;
 	exports.Port = Port;
@@ -13003,25 +18602,30 @@ this.BX = this.BX || {};
 	exports.SearchBar = SearchBar;
 	exports.TARGET_PORT_STUB_SLOT_NAME = TARGET_PORT_STUB_SLOT_NAME;
 	exports.ZoomBar = ZoomBar;
+	exports.formatComboCaption = formatComboCaption;
+	exports.getCanvasActionDefaults = getCanvasActionDefaults;
+	exports.getReservedCombos = getReservedCombos;
+	exports.isInputEventTarget = isInputEventTarget;
+	exports.isKeyboardBusyByOverlay = isKeyboardBusyByOverlay;
+	exports.isModifierToken = isModifierToken;
+	exports.normalizeCombo = normalizeCombo;
+	exports.rectsOverlap = rectsOverlap;
 	exports.transformPoint = transformPoint;
+	exports.useActionShortcut = useActionShortcut;
 	exports.useAnimationQueue = useAnimationQueue;
-	exports.useAutoScroll = useAutoScroll;
 	exports.useBlockDiagram = useBlockDiagram;
 	exports.useBlockState = useBlockState;
 	exports.useCanvas = useCanvas;
+	exports.useCanvasFocus = useCanvasFocus;
 	exports.useConnectionState = useConnectionState;
 	exports.useContextMenu = useContextMenu;
-	exports.useDragAndDrop = useDragAndDrop;
-	exports.useGroupDragLogic = useGroupDragLogic;
-	exports.useGroupSelectionLogic = useGroupSelectionLogic;
+	exports.useCopyPaste = useCopyPaste;
 	exports.useHighlightedBlocks = useHighlightedBlocks;
 	exports.useHistory = useHistory;
 	exports.useKeyboardShortcuts = useKeyboardShortcuts;
-	exports.useMoveableBlock = useMoveableBlock;
 	exports.useNewConnectionState = useNewConnectionState;
 	exports.usePortState = usePortState;
-	exports.useResizableBlock = useResizableBlock;
 	exports.useSearchBlocks = useSearchBlocks;
 
-})(this.BX.UI = this.BX.UI || {}, BX.Vue3, BX, BX.Main, BX, BX.UI.IconSet);
+})(this.BX.UI = this.BX.UI || {}, BX.Vue3, BX, BX.Main, BX.UI.Accessibility, BX, BX.UI.IconSet, BX.UI.System.Tooltip.Vue, BX.UI.System.Tooltip);
 //# sourceMappingURL=block-diagram.bundle.js.map

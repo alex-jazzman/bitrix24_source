@@ -42,6 +42,7 @@ jn.define('im/messenger/lib/promotion/src/entities/tasks', (require, exports, mo
 				onHide: () => {
 					actionCallback({ read: true, promoId: Promo.tasksRecent });
 				},
+				onShowSkipped: () => actionCallback(),
 			});
 		}
 	}

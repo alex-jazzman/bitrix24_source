@@ -43,3 +43,22 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-2);
 	transition: var(--transition-button-copy);
 }
+
+.tasks-button-copy:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.tasks-button-copy__description {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

@@ -44,19 +44,28 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST')
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action === 'ADD_FIELD')
 {
-	if(!CCrmAuthorizationHelper::CheckConfigurationUpdatePermission())
+	$data = isset($_POST['DATA']) && is_array($_POST['DATA']) ? $_POST['DATA'] : array();
+	$entityID = isset($data['ENTITY_ID']) ? $data['ENTITY_ID'] : '';
+
+	// Creating a field is the change operation, decided in the contour of the ENTITY_ID it is created
+	// for. The entity type itself is validated below, once the caller is known to be permitted.
+	$configuration = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->configuration();
+	if(!$configuration->canManageFields(
+		\Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite::FieldsEditComponent,
+		\Bitrix\Crm\Service\UserPermissions\ConfigurationScope::ofUserFieldEntityId(
+			is_string($entityID) ? $entityID : ''
+		)
+	))
 	{
 		__CrmConfigFieldEditEndResponse(array('ERROR' => 'Access denied.'));
 	}
 
-	$data = isset($_POST['DATA']) && is_array($_POST['DATA']) ? $_POST['DATA'] : array();
 	if(count($data) == 0)
 	{
 		__CrmConfigFieldEditEndResponse(array('ERROR' => "The parameter 'data' is not found or empty."));
 	}
 
 	$userTypeID = isset($data['USER_TYPE_ID'])? mb_strtolower($data['USER_TYPE_ID']) : '';
-	$entityID = isset($data['ENTITY_ID']) ? $data['ENTITY_ID'] : '';
 
 	$sort = isset($data['SORT']) ? max(intval($data['SORT']), 100) : 100;
 	$isMultiple = isset($data['MULTIPLE'])? mb_strtoupper($data['MULTIPLE']) : '';
@@ -190,7 +199,7 @@ if($action === 'ADD_FIELD')
 
 	$userField = new CUserTypeEntity();
 	$fieldID = $userField->Add($fields);
-	\Bitrix\Crm\UserField\UserFieldHistory::processCreation(CCrmOwnerType::ResolveIDByUFEntityID($entityID), $fieldID);
+	\Bitrix\Crm\UserField\UserFieldHistory::processCreation(CCrmOwnerType::ResolveIDByUFEntityID($entityID), $fieldID, false);
 
 	if($fieldID > 0)
 	{
@@ -212,5 +221,4 @@ else
 {
 	__CrmConfigFieldEditEndResponse(array('ERROR' => "Action '{$action}' is not supported in current context."));
 }
-
 

@@ -1,5 +1,8 @@
 <?php
+$MESS["TASKS_V2_CRM_ADD_ARIA_LABEL"] = "Add CRM link";
 $MESS["TASKS_V2_CRM_AND_COUNT"] = "show #COUNT# more";
+$MESS["TASKS_V2_CRM_ARIA_LABEL"] = "Link to CRM";
+$MESS["TASKS_V2_CRM_CLEAR_ARIA_LABEL"] = "Remove link";
 $MESS["TASKS_V2_CRM_COLLAPSE"] = "collapse";
 $MESS["TASKS_V2_CRM_EDIT"] = "Change";
 $MESS["TASKS_V2_CRM_ENTITY_TITLE"] = "#TYPE_NAME#: [a]#TITLE#[/a]";

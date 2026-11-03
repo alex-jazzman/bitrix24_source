@@ -1,14 +1,21 @@
 // @vue/component
 import { TextSm } from 'ui.system.typography.vue';
-import { Loc } from 'main.core';
+import { Loc, Text } from 'main.core';
 
 export const PublicAccessFooter = {
 	name: 'PublicAccessFooter',
 	components: { TextSm },
 	props: {
 		isDownload: { type: Boolean, required: true },
+		isSaving: { type: Boolean, default: false },
 	},
 	emits: ['update:isDownload'],
+	data()
+	{
+		return {
+			downloadCheckboxId: `disk-sharing-public-download-checkbox-${Text.getRandom()}`,
+		};
+	},
 	methods: {
 		onToggle(event)
 		{
@@ -21,14 +28,16 @@ export const PublicAccessFooter = {
 				<input
 					class="ui-ctl-element"
 					type="checkbox"
+					:id="downloadCheckboxId"
+					data-testid="disk-sharing-public-download-checkbox"
 					:checked="isDownload"
+					:disabled="isSaving"
 					@change="onToggle"
-					id="test"
 				>
 				<TextSm
 					tag="label"
+					:for="downloadCheckboxId"
 					className="access-public-block__download-label"
-					for="test"
 				>
 					${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_CHECKOUT_DOWNLOAD_ACTION')}
 				</TextSm>

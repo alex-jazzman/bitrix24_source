@@ -1,6 +1,7 @@
 import { mapState } from 'ui.vue3.pinia';
 import { EventEmitter } from 'main.core.events';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { TextLg } from 'ui.system.typography.vue';
 import { hint } from 'ui.vue3.directives.hint';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Router } from 'bizproc.router';
@@ -8,6 +9,7 @@ import { Router } from 'bizproc.router';
 import { diagramStore } from '../../../../entities/blocks';
 import { useNodeDataViewsStore, buildNodeKey, DATA_VIEWS_EVENTS } from '../../../../entities/node-data-views';
 import { useLoc } from '../../../../shared/composables';
+import { CircuitBackdrop } from '../../../../shared/ui';
 import { isTemplateId } from '../../../../shared/utils';
 import { type DataViewItem } from '../../../../entities/node-data-views/stores/node-data-views-store';
 
@@ -18,6 +20,8 @@ export const DataViewsSection = {
 	name: 'DataViewsSection',
 	components: {
 		BIcon,
+		CircuitBackdrop,
+		TextLg,
 	},
 	directives: {
 		hint,
@@ -57,10 +61,14 @@ export const DataViewsSection = {
 		{
 			return buildNodeKey(this.templateId, this.activityName);
 		},
+		isLoaded(): boolean
+		{
+			return this.loadedKey === this.nodeKey;
+		},
 		visibleItems(): Array<DataViewItem>
 		{
 
-			return this.loadedKey === this.nodeKey ? this.items : [];
+			return this.isLoaded ? this.items : [];
 		},
 		hasVisibleItems(): boolean
 		{
@@ -92,6 +100,10 @@ export const DataViewsSection = {
 		shouldShowList(): boolean
 		{
 			return !this.isLoading && this.hasVisibleItems;
+		},
+		shouldShowEmptyState(): boolean
+		{
+			return !this.isLoading && this.isLoaded && !this.hasVisibleItems;
 		},
 	},
 	watch:
@@ -232,72 +244,85 @@ export const DataViewsSection = {
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_SECTION_DESCRIPTION') }}
 				</span>
 			</div>
-			<div
-				v-if="shouldShowList"
-				class="editor-chart-data-views-section__list"
-				role="table"
-				:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_SECTION_TITLE')"
-			>
-				<div class="editor-chart-data-views-section__columns" role="row">
-					<span class="editor-chart-data-views-section__column-title" role="columnheader">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_COLUMN_CREATED') }}
-					</span>
-					<span class="editor-chart-data-views-section__column-title" role="columnheader">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_COLUMN_DATA') }}
-					</span>
-				</div>
+			<div class="editor-chart-data-views-section__body">
 				<div
-					v-for="item in visibleItems"
-					:key="item.id"
-					class="editor-chart-data-views-section__row"
-					role="row"
-					:data-test-id="$testId('dataViewsRow', item.storageTypeId)"
+					v-if="shouldShowList"
+					class="editor-chart-data-views-section__list"
+					role="table"
+					:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_SECTION_TITLE')"
 				>
-					<div class="editor-chart-data-views-section__row-main" role="rowheader">
-						<button
-							type="button"
-							class="editor-chart-data-views-section__name"
-							:data-test-id="$testId('dataViewsRowName', item.storageTypeId)"
-							@click="onOpenRecords(item)"
-						>
-							{{ item.title }}
-						</button>
-						<button
-							v-if="item.description"
-							type="button"
-							v-hint="hintOptions(item.description)"
-							class="editor-chart-data-views-section__info"
-							:aria-label="item.description"
-							@keydown.esc="onHintEscape"
-						>
-							<BIcon :name="iconSet.INFO_CIRCLE" :size="18" aria-hidden="true"/>
-						</button>
-					</div>
-					<div class="editor-chart-data-views-section__row-data" role="cell">
-						<span class="editor-chart-data-views-section__count">
-							{{ rowsCountText(item) }}
+					<div class="editor-chart-data-views-section__columns" role="row">
+						<span class="editor-chart-data-views-section__column-title" role="columnheader">
+							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_COLUMN_CREATED') }}
 						</span>
-						<div v-if="!isWriteLocked" class="editor-chart-data-views-section__actions">
+						<span class="editor-chart-data-views-section__column-title" role="columnheader">
+							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_COLUMN_DATA') }}
+						</span>
+					</div>
+					<div
+						v-for="item in visibleItems"
+						:key="item.id"
+						class="editor-chart-data-views-section__row"
+						role="row"
+						:data-test-id="$testId('dataViewsRow', item.storageTypeId)"
+					>
+						<div class="editor-chart-data-views-section__row-main" role="rowheader">
 							<button
 								type="button"
-								class="editor-chart-data-views-section__action"
-								:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_FRAME_ITEM_EDIT')"
-								:data-test-id="$testId('dataViewsRowEdit', item.storageTypeId)"
-								@click="onEdit(item)"
+								class="editor-chart-data-views-section__name"
+								:data-test-id="$testId('dataViewsRowName', item.storageTypeId)"
+								@click="onOpenRecords(item)"
 							>
-								<BIcon :name="iconSet.EDIT_M" :size="20" aria-hidden="true"/>
+								{{ item.title }}
 							</button>
 							<button
+								v-if="item.description"
 								type="button"
-								class="editor-chart-data-views-section__action"
-								:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_DELETE_CONFIRM_BUTTON')"
-								:data-test-id="$testId('dataViewsRowDelete', item.storageTypeId)"
-								@click="onDelete(item)"
+								v-hint="hintOptions(item.description)"
+								class="editor-chart-data-views-section__info"
+								:aria-label="item.description"
+								@keydown.esc="onHintEscape"
 							>
-								<BIcon :name="iconSet.TRASHCAN" :size="20" aria-hidden="true"/>
+								<BIcon :name="iconSet.INFO_CIRCLE" :size="18" aria-hidden="true"/>
 							</button>
 						</div>
+						<div class="editor-chart-data-views-section__row-data" role="cell">
+							<span class="editor-chart-data-views-section__count">
+								{{ rowsCountText(item) }}
+							</span>
+							<div v-if="!isWriteLocked" class="editor-chart-data-views-section__actions">
+								<button
+									type="button"
+									class="editor-chart-data-views-section__action"
+									:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_FRAME_ITEM_EDIT')"
+									:data-test-id="$testId('dataViewsRowEdit', item.storageTypeId)"
+									@click="onEdit(item)"
+								>
+									<BIcon :name="iconSet.EDIT_M" :size="20" aria-hidden="true"/>
+								</button>
+								<button
+									type="button"
+									class="editor-chart-data-views-section__action"
+									:aria-label="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_DELETE_CONFIRM_BUTTON')"
+									:data-test-id="$testId('dataViewsRowDelete', item.storageTypeId)"
+									@click="onDelete(item)"
+								>
+									<BIcon :name="iconSet.TRASHCAN" :size="20" aria-hidden="true"/>
+								</button>
+							</div>
+						</div>
 					</div>
+				</div>
+				<div
+					v-if="shouldShowEmptyState || isLoading"
+					class="editor-chart-data-views-section__empty"
+					:class="{ '--hidden': isLoading }"
+					:data-test-id="$testId('dataViewsEmptyState')"
+				>
+					<CircuitBackdrop/>
+					<TextLg :className="'editor-chart-data-views-section__empty-text'">
+						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_VIEWS_EMPTY_STATE_TEXT') }}
+					</TextLg>
 				</div>
 			</div>
 			<button

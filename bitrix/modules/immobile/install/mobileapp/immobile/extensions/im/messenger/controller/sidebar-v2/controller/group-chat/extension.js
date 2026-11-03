@@ -5,6 +5,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
 	const { isOnline } = require('device/connection');
+	const { requireLazy } = require('require-lazy');
+	const { ChatEntityType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { SidebarBaseController } = require('im/messenger/controller/sidebar-v2/controller/base');
 	const { GroupChatSidebarView } = require('im/messenger/controller/sidebar-v2/controller/group-chat/src/view');
@@ -33,6 +35,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 		createAutoDeleteButton,
 	} = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
 
+	const VIBECODE_APP_PAGE_PATH = '/mobile/vibecode/open-app/';
 
 	class GroupChatSidebarController extends SidebarBaseController
 	{
@@ -163,7 +166,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 				return null;
 			}
 
-			const { type: entityType, url: entityUrl } = dialog.entityLink;
+			const { entityLink } = dialog;
+			const { type: entityType, url: entityUrl } = entityLink;
 
 			if (!Type.isStringFilled(entityType) || !Type.isStringFilled(entityUrl))
 			{
@@ -172,16 +176,19 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 
 			return createEntityButton({
 				entityType,
-				onClick: () => this.handleOpenEntityAction(entityUrl),
+				onClick: () => this.handleOpenEntityAction(entityLink, dialog.name),
 				separatorAfter: true,
 			});
 		}
 
 		/**
-		 * @param {string} entityUrl
+		 * @param {{type?: string, url?: string, id?: string}} entityLink chat entity link in the REST format
+		 * @param {string} entityTitle
 		 */
-		handleOpenEntityAction(entityUrl)
+		async handleOpenEntityAction(entityLink, entityTitle)
 		{
+			// REST format of the entity link (EntityLink::toRestFormat): the entity id travels under `id`
+			const { type: entityType, url: entityUrl, id: entityId } = entityLink ?? {};
 			if (!Type.isStringFilled(entityUrl))
 			{
 				return;
@@ -190,6 +197,22 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 			if (!isOnline())
 			{
 				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
+
+				return;
+			}
+
+			const catalogItemId = Number(entityId);
+			if (
+				entityType === ChatEntityType.vibecodeApp
+				&& Number.isSafeInteger(catalogItemId)
+				&& catalogItemId > 0
+			)
+			{
+				const { openInApp } = await requireLazy('vibecode/catalog');
+				openInApp(`${VIBECODE_APP_PAGE_PATH}?catalogItemId=${catalogItemId}`, {
+					title: entityTitle,
+					componentCode: `vibecode-app-${catalogItemId}`,
+				});
 
 				return;
 			}

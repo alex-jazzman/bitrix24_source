@@ -58,4 +58,8 @@ $MESS["SALE_SLI_LOCATION_PACK_EXTENDED"] = "Расширенный";
 $MESS["SALE_SLI_EXCLUDE_AREAS"] = "Не загружать округа";
 $MESS["SALE_SLI_LOAD_LOCATIONS_TILL_INCLUSIVELY"] = "Загружать местоположения до (включительно)";
 $MESS["SALE_SLI_HEAVY_DUTY_HOST_NOTICE"] = "Процесс импорта может кратковременно повысить нагрузку на базу данных и веб-сервер, поэтому при работе с большими объёмами данных рекомендуется проконсультироваться с технической службой вашего хостинг-провайдера.";
-?>
+$MESS["SALE_SLI_TABS_LABEL"] = "Действия с местоположениями";
+$MESS["SALE_SLI_EXPAND_LOCATION_SET"] = "Показать вложенные местоположения";
+$MESS["SALE_SLI_COLLAPSE_LOCATION_SET"] = "Скрыть вложенные местоположения";
+$MESS["SALE_SLI_IMPORT_FILE_LABEL"] = "Файл с местоположениями";
+$MESS["SALE_SLI_IMPORT_PROGRESS"] = "Импортируется";

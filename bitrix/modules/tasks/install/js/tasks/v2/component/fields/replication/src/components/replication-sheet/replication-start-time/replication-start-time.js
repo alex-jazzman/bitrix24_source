@@ -22,6 +22,12 @@ export const ReplicationStartTime = {
 		replicateParams: {},
 	},
 	emits: ['update'],
+	data(): { isPickerShown: boolean }
+	{
+		return {
+			isPickerShown: false,
+		};
+	},
 	computed: {
 		startTs: {
 			get(): number
@@ -54,11 +60,17 @@ export const ReplicationStartTime = {
 				},
 				popupOptions: {
 					targetContainer: document.body,
+					events: {
+						onClose: () => {
+							this.isPickerShown = false;
+						},
+					},
 				},
 			});
 
 			this.datePicker.setTargetNode(this.$refs.time.$el);
 			this.datePicker.show();
+			this.isPickerShown = true;
 		},
 	},
 	template: `
@@ -69,7 +81,16 @@ export const ReplicationStartTime = {
 				placeholder="[time/]"
 			>
 				<template #time>
-					<HoverPill textOnly noOffset ref="time" @click="showPicker">
+					<HoverPill
+						textOnly
+						noOffset
+						:ariaLabel="loc('TASKS_V2_REPLICATION_START_TIME_ARIA_LABEL')"
+						:ariaHaspopup="'dialog'"
+						:ariaExpanded="isPickerShown"
+						data-testid="tasks-replication-start-time-btn"
+						ref="time"
+						@click="showPicker"
+					>
 						<span class="tasks-field-replication-link">{{ startTimeFormatted }}</span>
 					</HoverPill>
 				</template>

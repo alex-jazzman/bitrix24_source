@@ -23,7 +23,9 @@ if(!$arResult['ERROR']):
 		<div class="integration-container">
 			<div class="ui-title-4"><?= Loc::getMessage("REST_INTEGRATION_IFRAME_QUERY_RESULT_TITLE") ?></div>
 			<hr>
-			<p class="integration-print"><?=htmlspecialcharsbx($arResult['RESPONSE']);?></p>
+			<p class="integration-print" data-testid="rest-integration-webhook-response">
+				<?=htmlspecialcharsbx($arResult['RESPONSE']);?>
+			</p>
 		</div>
 		<div class="integration-container">
 			<div class="ui-title-4"><?= Loc::getMessage("REST_INTEGRATION_IFRAME_QUERY_RESULT_JSON_TITLE") ?></div>

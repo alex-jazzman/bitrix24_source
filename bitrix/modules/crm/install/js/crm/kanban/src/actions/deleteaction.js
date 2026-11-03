@@ -74,14 +74,32 @@ export default class DeleteAction
 	{
 		const dropZone = this.#dropZone;
 
-		if (dropZone)
+		if (dropZone && this.#grid.getDropZoneArea().getDropZones().every((zone) => zone.droppedItem === null))
 		{
-			this.#prepareDropZone();
+			this.#grid.dropZonesShow = false;
 		}
 
-		this.#prepareGrid();
+		if (!dropZone || this.#canResetDropZones())
+		{
+			if (dropZone)
+			{
+				this.#prepareDropZone();
+			}
+
+			this.#prepareGrid();
+		}
+
 		this.#unHideUndeletedItems(response);
 		this.#showResult(response);
+	}
+
+	#canResetDropZones(): boolean
+	{
+		return this.#grid.getDragMode() === BX.Kanban.DragMode.NONE
+			&& this.#grid.getDropZoneArea().getDropZones().every((dropZone) => {
+				return dropZone.droppedItem === null
+					|| this.#ids.includes(Number(dropZone.droppedItem.getId()));
+			});
 	}
 
 	#getDeletedItems(): BX.CRM.Kanban.Item[]

@@ -7,6 +7,7 @@ export class Item
 {
 	ACCEPTED_ITEM_CLASS: string = 'menu-popup-item-accept';
 	DISABLED_ITEM_CLASS: string = 'menu-popup-item-disabled';
+	OPTION_ROLE: string = 'menuitemradio';
 
 	MENU_ID: string;
 	HINT_ID: string;
@@ -64,6 +65,22 @@ export class Item
 
 	refreshIcons(subItems: MenuItem[], subMenu: Menu): void
 	{}
+
+	/**
+	 * The role is set from here and not from the item options: main.popup applies `attrs` before
+	 * forcing `role="menuitem"` on the very same node, so a role passed with the options is lost.
+	 */
+	markOption(item: MenuItem | null, selected: boolean): void
+	{
+		const node = item?.getLayout().item;
+		if (!Type.isElementNode(node) || !item.isFocusable())
+		{
+			return;
+		}
+
+		Dom.attr(node, 'role', this.OPTION_ROLE);
+		Dom.attr(node, 'aria-checked', selected ? 'true' : 'false');
+	}
 
 	#getHtml(): string
 	{

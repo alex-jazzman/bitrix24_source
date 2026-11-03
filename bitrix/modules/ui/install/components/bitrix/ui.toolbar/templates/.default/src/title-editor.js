@@ -28,6 +28,7 @@ export class TitleEditor extends Event.EventEmitter
 	#saveTitleButton: ?HTMLElement;
 	#cancelTitleEditButton: ?HTMLElement;
 	#isInit: boolean = false;
+	#isEditSessionActive: boolean = false;
 
 	constructor(options: TitleEditorOptions)
 	{
@@ -136,6 +137,7 @@ export class TitleEditor extends Event.EventEmitter
 			return;
 		}
 
+		this.#isEditSessionActive = true;
 		this.#inputNode.value = this.#titleNode.textContent;
 		this.changeDisplay(this.#titleNode, false);
 		this.changeDisplay(this.#editTitleButtonNode, false);
@@ -151,6 +153,12 @@ export class TitleEditor extends Event.EventEmitter
 
 	finishEdit()
 	{
+		if (!this.#isEditSessionActive)
+		{
+			return;
+		}
+
+		this.#isEditSessionActive = false;
 		// this.dataNode.value = this.inputNode.value;
 		this.#titleNode.textContent = this.#inputNode.value;
 		this.changeDisplay(this.#inputNode, false);
@@ -167,6 +175,12 @@ export class TitleEditor extends Event.EventEmitter
 
 	cancelEdit(): void
 	{
+		if (!this.#isEditSessionActive)
+		{
+			return;
+		}
+
+		this.#isEditSessionActive = false;
 		this.changeDisplay(this.#inputNode, false);
 		this.changeDisplay(this.#editTitleButtonNode, true);
 		this.changeDisplay(this.#titleNode, true);

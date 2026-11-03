@@ -148,7 +148,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
       main_core.Dom.attr(this.input, 'aria-describedby', ids.length > 0 ? ids.join(' ') : null);
     };
     _proto.createInput = function createInput() {
-      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"landing-ui-field-input\">", "</div>\n\t\t"])), this.content);
+      var input = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"landing-ui-field-input\"></div>"])));
+
+      // Content is user data: never pass it through the template parser,
+      // otherwise text like "a<b" is treated as a tag name.
+      if (main_core.Type.isDomNode(this.content)) {
+        main_core.Dom.append(this.content, input);
+      } else if (main_core.Type.isString(this.content) || main_core.Type.isNumber(this.content)) {
+        input.innerHTML = this.content;
+      }
+      return input;
     }
 
     /**

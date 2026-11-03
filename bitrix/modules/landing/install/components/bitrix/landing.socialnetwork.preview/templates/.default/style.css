@@ -1,7 +1,3 @@
-.urlpurlpreview_landing{
-	position:relative;
-}
-
 .urlpreview_landing__container{
 	display: inline-block;
 	padding-left: 6px;
@@ -20,20 +16,13 @@
 .urlpreview_landing__title{
 	padding: 6px;
 	font-weight: bold;
-	text-align: justify;
 }
 
 .urlpreview_landing__description{
 	padding: 6px;
 	font-size: 0.9em;
-	text-align: justify;
 }
 
 .urlpreview_landing__clearfix{
 	clear: both;
-}
-
-.urlpreview_landing__bottom{
-	padding: 6px 0 0 6px;
-	font-size: 0.9em;
 }

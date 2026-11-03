@@ -144,7 +144,6 @@
 		isSearchEnabled: function()
 		{
 			return this.enableSearch === true
-				&& this.isMulti === false
 				&& this.getSearchableItemsCount() >= this.searchThreshold;
 		},
 
@@ -286,6 +285,8 @@
 
 			if (event.code === 'Enter')
 			{
+				event.preventDefault();
+
 				if (this.isSearchEnabled() && this.filterRequestId)
 				{
 					cancelAnimationFrame(this.filterRequestId);
@@ -297,6 +298,12 @@
 				{
 					this.selectSelectedItem();
 					target.value = '';
+
+					if (this.isMulti && this.isSearchEnabled())
+					{
+						this.pendingFilterSubstr = '';
+						this.filterPopupItemsBySubstring('');
+					}
 				}
 
 				event.stopPropagation();

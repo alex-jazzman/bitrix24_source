@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {};
-(function (exports, ui_vue3, main_core, ui_system_typography_vue, ui_vue3_components_button, ui_vue3_components_switcher, ui_switcher) {
+(function (exports, ui_vue3, main_core, ui_system_typography_vue, ui_vue3_components_button, ui_switcher, ui_iconSet_outline, socialnetwork_v2_components_elements_accessibleSwitcher) {
 	'use strict';
 
 	const NotificationsPanel = ui_vue3.defineComponent({
@@ -14,7 +14,7 @@ this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {
 			TextLg: ui_system_typography_vue.TextLg,
 			TextSm: ui_system_typography_vue.TextSm,
 			UiButton: ui_vue3_components_button.Button,
-			UiSwitcher: ui_vue3_components_switcher.Switcher
+			AccessibleSwitcher: socialnetwork_v2_components_elements_accessibleSwitcher.AccessibleSwitcher
 		},
 		props: {
 			catalog: {
@@ -114,12 +114,12 @@ this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {
 							class="sonet--project-wizard--notifications-row"
 						>
 							<TextLg class="sonet--project-wizard--notifications-row-label">{{ type.label }}</TextLg>
-							<UiSwitcher
-								:isChecked="type.counterEnabled"
+							<AccessibleSwitcher
+								:modelValue="type.counterEnabled"
+								:ariaLabel="type.label"
 								:options="switcherOptions"
 								:data-testid="'project-notifications-toggle-' + type.id"
-								@check="setDraftCounter(type.id, true)"
-								@uncheck="setDraftCounter(type.id, false)"
+								@update:modelValue="setDraftCounter(type.id, $event)"
 							/>
 						</div>
 					</div>
@@ -147,5 +147,5 @@ this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {
 
 	exports.NotificationsPanel = NotificationsPanel;
 
-})(this.BX.Socialnetwork.V2.Application.NotificationsDrawer = this.BX.Socialnetwork.V2.Application.NotificationsDrawer || {}, BX.Vue3, BX, BX.UI.System.Typography.Vue, BX.Vue3.Components, BX.UI.Vue3.Components, BX.UI);
+})(this.BX.Socialnetwork.V2.Application.NotificationsDrawer = this.BX.Socialnetwork.V2.Application.NotificationsDrawer || {}, BX.Vue3, BX, BX.UI.System.Typography.Vue, BX.Vue3.Components, BX.UI, window, BX.Socialnetwork.V2.Components.Elements);
 //# sourceMappingURL=notifications-drawer.bundle.js.map

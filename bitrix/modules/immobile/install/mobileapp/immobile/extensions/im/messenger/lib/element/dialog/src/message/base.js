@@ -9,7 +9,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { Color } = require('tokens');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { OwnMessageStatus, BotCode, BotType, DialogType, ErrorCode } = require('im/messenger/const');
+	const { OwnMessageStatus, BotCode, BotType, DialogType, ErrorCode, MessageType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
@@ -21,6 +21,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
+	const { AiAnimation } = require('im/messenger/lib/element/dialog/message/element/ai-animation/ai-animation');
 	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
 	const { Keyboard } = require('im/messenger/lib/element/dialog/message/element/keyboard/keyboard');
 	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
@@ -46,6 +47,12 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	 */
 	class Message
 	{
+		/** @type {AiAnimationMessageData|null} */
+		#aiTaskAnimation = null;
+
+		/** @type {CopilotAiGlowData|null} */
+		#assignedAiAnimation = null;
+
 		/**
 		 * @param {MessagesModelState} modelMessage
 		 * @param {CreateMessageOptions | {}} options
@@ -101,6 +108,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.testId = '';
 			this.dialogCode = options.dialogCode || '';
 
+			this.#defineAiAnimation();
+
 			this
 				.setId(modelMessage.id)
 				.setTestId(modelMessage.id)
@@ -130,6 +139,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setAttach(modelMessage)
 				.setKeyboard(modelMessage)
 				.setCommentInfo(modelMessage, Boolean(options.showCommentInfo))
+				.setQuoteContentStyle(modelMessage)
+				.setAiTaskAnimation(modelMessage)
 			;
 		}
 
@@ -139,6 +150,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		toDialogWidgetItem()
 		{
 			return {
+				aiAnimation: this.aiAnimation,
 				align: this.align,
 				attach: this.attach,
 				authorId: this.authorId,
@@ -198,6 +210,41 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		getModelFiles()
 		{
 			return serviceLocator.get('core').getStore().getters['filesModel/getListByMessageId'](this.id) || [];
+		}
+
+		/**
+		 * @desc One message-level field with two independent sources: the AI-task indication, built
+		 *       here out of visualState for every message type, and the copilot generation glow,
+		 *       assigned by CopilotBlockMessage from message params. The field carries a single value,
+		 *       so a running AI-task operation wins and the glow is what the field falls back to.
+		 *       The pair is defined on the instance and not in the class body on purpose: MessageRenderer
+		 *       pushes a message to the native view only when isEqual() tells the rebuilt message from
+		 *       the cached one, and that walks own enumerable keys, so a prototype accessor would hide
+		 *       every frame of both sources from the update.
+		 */
+		#defineAiAnimation()
+		{
+			Object.defineProperty(this, 'aiAnimation', {
+				enumerable: true,
+				configurable: true,
+				/** @return {AiAnimationMessageData|CopilotAiGlowData|null} */
+				get: () => this.#aiTaskAnimation ?? this.#assignedAiAnimation,
+				/** @param {CopilotAiGlowData|null} value */
+				set: (value) => {
+					this.#assignedAiAnimation = value ?? null;
+				},
+			});
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @return {Message}
+		 */
+		setAiTaskAnimation(modelMessage)
+		{
+			this.#aiTaskAnimation = AiAnimation.createByMessageModel(modelMessage);
+
+			return this;
 		}
 
 		setId(id)
@@ -485,6 +532,28 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				messageId: this.id,
 				dialogCode: this.dialogCode,
 			});
+
+			// Drop a trailing whitespace-only text node for media/sticker replies only.
+			// getQuoteText leaves a newline after a reply quote; when the message has no text of its own
+			// it becomes an empty node (extra height) and breaks native bare-quote detection for stickers.
+			const isMediaOrStickerReply = (
+				Type.isPlainObject(modelMessage)
+				&& Boolean(modelMessage.params?.replyId)
+				&& (
+					Type.isArrayFilled(modelMessage.files)
+					|| Type.isPlainObject(modelMessage.stickerParams)
+				)
+			);
+			while (
+				isMediaOrStickerReply
+				&& message.length > 1
+				&& message[message.length - 1]?.type === 'text'
+				&& !(message[message.length - 1].text || '').trim()
+			)
+			{
+				message.pop();
+			}
+
 			if (Type.isArrayFilled(message))
 			{
 				this.message = message;
@@ -989,6 +1058,15 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 			const userName = user.name || user.lastName || user.firstName;
 
+			// by parentChatId, not by chatType: a thread and the comments of a channel share the type
+			// 'comment', so branching by type would swap the two captions
+			if (forward.parentChatId > 0)
+			{
+				this.forwardText = this.getDiscussionForwardText(forward, userName);
+
+				return this;
+			}
+
 			if ([DialogType.openChannel, DialogType.generalChannel].includes(forward.chatType))
 			{
 				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL')
@@ -1015,6 +1093,51 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			;
 
 			return this;
+		}
+
+		/**
+		 * @desc Caption of a fragment forwarded from a discussion - a reply in a thread or a comment of
+		 *       a channel. Without the name of the parent the caption still speaks the language of its
+		 *       source; a parent of an unknown kind, a deleted chat among them, has no language of its
+		 *       own and keeps the generic caption.
+		 * @param {MessagesModelState['forward']} forward
+		 * @param {string} userName
+		 * @return {string}
+		 */
+		getDiscussionForwardText(forward, userName)
+		{
+			if (!forward.chatTitle && !Type.isStringFilled(forward.parentChatType))
+			{
+				return Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_DISCUSSION', {
+					'#USER_NAME#': userName,
+				});
+			}
+
+			const isChannelParent = [DialogType.channel, DialogType.openChannel, DialogType.generalChannel]
+				.includes(forward.parentChatType)
+			;
+
+			if (!forward.chatTitle)
+			{
+				const namelessPhrase = isChannelParent
+					? 'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_COMMENTS_NO_NAME'
+					: 'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_THREAD_NO_NAME'
+				;
+
+				return Loc.getMessage(namelessPhrase, {
+					'#USER_NAME#': userName,
+				});
+			}
+
+			const discussionPhrase = isChannelParent
+				? 'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_COMMENTS'
+				: 'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_THREAD'
+			;
+
+			return Loc.getMessage(discussionPhrase, {
+				'#USER_NAME#': userName,
+				'#CHAT_NAME#': forward.chatTitle,
+			});
 		}
 
 		/**
@@ -1075,6 +1198,56 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			};
 
 			return this;
+		}
+
+		/**
+		 * Frosted (bubble-less) reply quote: sticker/emoji/round-video/gallery and
+		 * standalone media without a caption render without a bubble, so their quote
+		 * uses the frosted tone (translucent tech background + base text). In-bubble
+		 * replies keep the native per-context tone.
+		 * @param {MessagesModelState} modelMessage
+		 * @return {Message}
+		 */
+		setQuoteContentStyle(modelMessage)
+		{
+			if (this.isSystemStyled || !modelMessage.params?.replyId || !this.isBubblelessReply(modelMessage))
+			{
+				return this;
+			}
+
+			this.style.message = {
+				...(this.style.message || {}),
+				backgroundQuoteColor: Color.chatOverallMessageTech.toHex(),
+				quoteColor: Color.base1.toHex(),
+			};
+
+			return this;
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @return {boolean}
+		 */
+		isBubblelessReply(modelMessage)
+		{
+			const bubblelessTypes = [
+				MessageType.sticker,
+				MessageType.emojiOnly,
+				MessageType.videoNote,
+				MessageType.mediaGallery,
+			];
+
+			if (bubblelessTypes.includes(this.type))
+			{
+				return true;
+			}
+
+			// Real caption without the leading synthetic reply-quote block prepended by validateQuote,
+			// otherwise any media reply looks captioned and keeps the in-bubble tone.
+			const caption = MessageHelper.createByModel(modelMessage)?.getTextWithoutLeadingReplyQuote();
+
+			return (this.type === MessageType.image || this.type === MessageType.video)
+				&& !Type.isStringFilled(caption);
 		}
 
 		setAuthorBottomMessage(value)

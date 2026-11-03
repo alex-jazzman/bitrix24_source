@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_SETTINGS_HUB_ANALYTICS_REPORTS_TITLE'] = 'Analytical Reports';

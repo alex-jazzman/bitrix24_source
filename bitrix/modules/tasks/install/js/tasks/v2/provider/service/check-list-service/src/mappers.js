@@ -1,8 +1,8 @@
-import { UserTypes } from 'tasks.v2.model.users';
+import { UserTypes, type UserModel } from 'tasks.v2.model.users';
 import { UserMappers } from 'tasks.v2.provider.service.user-service';
-import type { CheckListModel } from 'tasks.v2.model.check-list';
+import { type CheckListModel } from 'tasks.v2.model.check-list';
 
-import type { CheckListSliderData, CheckListDto } from './types';
+import { type CheckListSliderData, type CheckListDto } from './types';
 
 export function prepareCheckLists(checklist: CheckListModel[]): CheckListModel[]
 {
@@ -13,8 +13,9 @@ export function prepareCheckLists(checklist: CheckListModel[]): CheckListModel[]
 
 	return checklist.map((item: CheckListModel) => {
 		const parentNodeId = item.parentId ? parentNodeIdMap.get(item.parentId) : 0;
+		const isComplete = item.localCompleteState ?? item.isComplete;
 
-		return { ...item, parentNodeId };
+		return { ...item, parentNodeId, isComplete };
 	});
 }
 
@@ -120,7 +121,7 @@ export function getUserIdsFromChecklists(
 ): number[]
 {
 	return checkLists
-		.flatMap((item: CheckListModel) => (item[userType] || []).map((user: User) => user.id))
+		.flatMap((item: CheckListModel) => (item[userType] || []).map((user: UserModel) => user.id))
 		.filter((id, idx, arr) => arr.indexOf(id) === idx);
 }
 

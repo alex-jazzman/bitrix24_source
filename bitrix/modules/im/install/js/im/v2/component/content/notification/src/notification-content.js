@@ -477,7 +477,7 @@ export const NotificationContent = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-notification__container --ui-context-content-light">
+		<div class="bx-im-content-notification__container --ui-context-content-light" data-testid="im-content-notification-container">
 			<div class="bx-im-content-notification__header-container">
 				<div class="bx-im-content-notification__header">
 					<div class="bx-im-content-notification__header-left-container">
@@ -496,6 +496,7 @@ export const NotificationContent = {
 					<div v-if="hasNotifications" class="bx-im-content-notification__header-buttons-container">
 						<div
 							class="bx-im-content-notification__header-menu"
+							data-testid="im-content-notification-header-menu-button"
 							@click="onClickHeaderMenu"
 						></div>
 					</div>

@@ -33,4 +33,4 @@ $MESS["WORKFLOW_TEMPLATE_FIELD_USER_NAME_FULL"] = "The name of the user who crea
 $MESS["WORKFLOW_TEMPLATE_FIELD_WORKFLOW_TEMPLATE"] = "ID and name";
 $MESS["WORKFLOW_TEMPLATE_FIELD_WORKFLOW_TEMPLATE_FULL"] = "Workflow template ID and name.";
 $MESS["WORKFLOW_TEMPLATE_TABLE"] = "Workflow templates";
-$MESS["WORKFLOW_TEMPLATE_TABLE_DESCRIPTION_FULL"] = "Contains information about workflow templates, including their names, statuses, types, last modified dates, and details about the users who created them.";
+$MESS["WORKFLOW_TEMPLATE_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Business process template data: names, types, statuses, related elements, modification dates, and creators.";

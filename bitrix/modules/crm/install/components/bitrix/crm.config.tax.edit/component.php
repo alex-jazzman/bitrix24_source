@@ -34,8 +34,9 @@ $arParams['PATH_TO_TAX_LIST'] = CrmCheckPath('PATH_TO_TAX_LIST', $arParams['PATH
 $arParams['PATH_TO_TAX_SHOW'] = CrmCheckPath('PATH_TO_TAX_SHOW', $arParams['PATH_TO_TAX_SHOW'], '?tax_id=#tax_id#&show');
 $arParams['PATH_TO_TAX_EDIT'] = CrmCheckPath('PATH_TO_TAX_EDIT', $arParams['PATH_TO_TAX_EDIT'], '?tax_id=#tax_id#&edit');
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 $taxID = isset($arParams['TAX_ID']) ? intval($arParams['TAX_ID']) : 0;
-if($taxID <= 0)
+if (!$isSettingsHub && $taxID <= 0)
 {
 	$taxIDParName = isset($arParams['TAX_ID_PAR_NAME']) ? strval($arParams['TAX_ID_PAR_NAME']) : '';
 
@@ -90,11 +91,15 @@ if(check_bitrix_sessid())
 	if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])))
 	{
 
-		$taxID = isset($_POST['tax_id']) ? intval($_POST['tax_id']) : 0;
+		if (!$isSettingsHub)
+		{
+			$taxID = isset($_POST['tax_id']) ? intval($_POST['tax_id']) : 0;
+			if ($taxID <= 0 && isset($_POST['ID']))
+			{
+				$taxID = intval(trim($_POST['ID']));
+			}
+		}
 		$fields = array();
-
-		if( $taxID <= 0 && isset($_POST['ID']))
-			$taxID = intval(trim($_POST['ID']));
 
 		if(isset($_POST['NAME']))
 			$fields['NAME'] = $_POST['NAME'];
@@ -158,6 +163,14 @@ if(check_bitrix_sessid())
 			)
 		);
 	}
+}
+
+if ($isSettingsHub)
+{
+	$arResult['PATH_TO_TAXRATE_LIST'] = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_TAX_EDIT'],
+		['tax_id' => $arResult['TAX_ID']],
+	);
 }
 
 $arResult['FIELDS'] = array();
@@ -261,6 +274,7 @@ if(intval($taxID) > 0)
 			'PATH_TO_TAXRATE_SHOW' => $arResult['PATH_TO_TAXRATE_SHOW'],
 			'PATH_TO_TAXRATE_ADD' => $arResult['PATH_TO_TAXRATE_ADD'],
 			'PATH_TO_TAXRATE_EDIT' => $arResult['PATH_TO_TAXRATE_EDIT'],
+			'IS_SETTINGS_HUB' => $isSettingsHub,
 			'TAX_FORM_ID' => $arResult['FORM_ID'],
 			'TAX_ID' => $arResult['TAX_ID'],
 			'EDIT_MODE' => 'Y'

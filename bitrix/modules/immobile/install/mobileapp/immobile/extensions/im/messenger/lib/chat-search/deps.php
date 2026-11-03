@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'debug/prism',
 		'type',
 		'utils/string',
 		'selector/entity',
@@ -14,7 +15,8 @@ return [
 		'im:messenger/lib/rest',
 		'im:messenger/lib/converter/ui/recent-search',
 		'im:messenger/lib/element/chat-avatar',
-		'im:messenger/lib/element/chat-avatar',
+		'im:messenger/lib/element/chat-title',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/date-formatter',
 		'im:messenger/lib/di/service-locator',
@@ -27,7 +29,9 @@ return [
 		'./src/selector',
 		'./src/store-updater',
 		'./src/service/server-search-service',
+		'./src/strategy/local/copilot-default-title-search',
 		'./src/strategy/local/recent-section-local-search-strategy',
+		'./src/strategy/local/folder-local-search-strategy',
 		'./src/strategy/local/dialog-local-search-strategy',
 		'./src/strategy/local/user-local-search-strategy',
 		'./src/strategy/local/composite-local-search-strategy',

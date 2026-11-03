@@ -40,9 +40,10 @@ export const ReplicationSettingsWeekDaysList = {
 
 			return [week.slice(weekStartIndex), week.slice(0, weekStartIndex)].flat(1);
 		},
-		dayLabelMap(): { label: string, value: number }[]
+		dayLabelMap(): { label: string, ariaLabel: string, value: number }[]
 		{
-			const format = 'D';
+			const shortDayFormat = 'D';
+			const fullDayFormat = 'l';
 			const todayDayIndex = new Date().getDay();
 
 			return this.weekDays.map((day) => {
@@ -51,8 +52,12 @@ export const ReplicationSettingsWeekDaysList = {
 
 				dayDate.setDate(dayDate.getDate() + dayDifference);
 
+				const label = DateTimeFormat.format(shortDayFormat, dayDate);
+				const fullName = DateTimeFormat.format(fullDayFormat, dayDate).toLowerCase();
+
 				return {
-					label: DateTimeFormat.format(format, dayDate),
+					label,
+					ariaLabel: `${label}, ${fullName}`,
 					value: weekValues[day],
 				};
 			});
@@ -72,14 +77,24 @@ export const ReplicationSettingsWeekDaysList = {
 		},
 	},
 	template: `
-		<div class="tasks-replication-sheet-action-row --weekdays">
+		<div
+			class="tasks-replication-sheet-action-row --weekdays"
+			role="group"
+			:aria-label="loc('TASKS_V2_REPLICATION_WEEKDAYS_GROUP_ARIA_LABEL')"
+		>
 			<label
 				v-for="day in dayLabelMap"
 				:key="day.value"
 				class="tasks-field-replication-weekday"
 				:data-id="'tasks-replication-week-day-' + day.value"
+				:data-testid="'tasks-replication-week-day-' + day.value"
 			>
-				<UiCheckbox tag="span" :checked="selectedDays.includes(day.value)" @click="changeDay(day.value)"/>
+				<UiCheckbox
+					tag="span"
+					:ariaLabel="day.ariaLabel"
+					:checked="selectedDays.includes(day.value)"
+					@click="changeDay(day.value)"
+				/>
 				<TextXs :className="['tasks-field-replication-weekday-text', {
 					'--checked': selectedDays.includes(day.value),
 				}]">

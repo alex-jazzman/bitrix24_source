@@ -1,50 +1,84 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+use Bitrix\Main\Context;
+use Bitrix\UI\Buttons\AddButton;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die;
+}
+
 global $APPLICATION;
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.control_panel',
-	'',
-	array(
-		'ID' => 'MEASURE_LIST',
-		'ACTIVE_ITEM_ID' => '',
-		'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
-		'PATH_TO_COMPANY_EDIT' => isset($arResult['PATH_TO_COMPANY_EDIT']) ? $arResult['PATH_TO_COMPANY_EDIT'] : '',
-		'PATH_TO_CONTACT_LIST' => isset($arResult['PATH_TO_CONTACT_LIST']) ? $arResult['PATH_TO_CONTACT_LIST'] : '',
-		'PATH_TO_CONTACT_EDIT' => isset($arResult['PATH_TO_CONTACT_EDIT']) ? $arResult['PATH_TO_CONTACT_EDIT'] : '',
-		'PATH_TO_DEAL_LIST' => isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '',
-		'PATH_TO_DEAL_EDIT' => isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '',
-		'PATH_TO_LEAD_LIST' => isset($arResult['PATH_TO_LEAD_LIST']) ? $arResult['PATH_TO_LEAD_LIST'] : '',
-		'PATH_TO_LEAD_EDIT' => isset($arResult['PATH_TO_LEAD_EDIT']) ? $arResult['PATH_TO_LEAD_EDIT'] : '',
-		'PATH_TO_QUOTE_LIST' => isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '',
-		'PATH_TO_QUOTE_EDIT' => isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '',
-		'PATH_TO_INVOICE_LIST' => isset($arResult['PATH_TO_INVOICE_LIST']) ? $arResult['PATH_TO_INVOICE_LIST'] : '',
-		'PATH_TO_INVOICE_EDIT' => isset($arResult['PATH_TO_INVOICE_EDIT']) ? $arResult['PATH_TO_INVOICE_EDIT'] : '',
-		'PATH_TO_REPORT_LIST' => isset($arResult['PATH_TO_REPORT_LIST']) ? $arResult['PATH_TO_REPORT_LIST'] : '',
-		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
-		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
-		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
-	),
-	$component
+
+$request = Context::getCurrent()->getRequest();
+$isSuccessfulSliderSave = (
+	$arResult['IS_SIDE_PANEL']
+	&& $request->getQuery('SIDE_PANEL_SAVE') === 'Y'
+);
+if ($isSuccessfulSliderSave)
+{
+	?>
+	<script>
+		BX.ready(() => {
+			if (!top.BX || !top.BX.SidePanel || !top.BX.SidePanel.Instance)
+			{
+				return;
+			}
+
+			const slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+			if (slider)
+			{
+				slider.getData().set('crmMeasureSaveSucceeded', true);
+				slider.close(false);
+			}
+		});
+	</script>
+	<?php
+	return;
+}
+
+Toolbar::addButton(
+	new AddButton([
+		'link' => CComponentEngine::MakePathFromTemplate(
+			$arResult['PATH_TO_MEASURE_EDIT'],
+			['measure_id' => 0],
+		),
+		'dataset' => [
+			'testid' => 'crm-measure-list-add-button',
+		],
+	]),
+	ButtonLocation::AFTER_TITLE,
 );
 
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.config.measure.menu',
-	'',
-	array(
-		'PATH_TO_MEASURE_LIST' => $arResult['PATH_TO_MEASURE_LIST'],
-		'PATH_TO_MEASURE_EDIT' => $arResult['PATH_TO_MEASURE_EDIT'],
-		'ELEMENT_ID' => $arResult['VARIABLES']['measure_id'],
-		'TYPE' => 'list'
-	),
-	$component
-);
+$listComponentParams = [
+	'PATH_TO_MEASURE_LIST' => $arResult['PATH_TO_MEASURE_LIST'],
+	'PATH_TO_MEASURE_EDIT' => $arResult['PATH_TO_MEASURE_EDIT'],
+	'IS_SIDE_PANEL' => $arResult['IS_SIDE_PANEL'],
+];
 
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.config.measure.list',
-	'',
-	array(
-		'PATH_TO_MEASURE_LIST' => $arResult['PATH_TO_MEASURE_LIST'],
-		'PATH_TO_MEASURE_EDIT' => $arResult['PATH_TO_MEASURE_EDIT']
-	),
-	$component
-);
-?>
+if ($arResult['IS_SIDE_PANEL'])
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.sidepanel.wrapper',
+		'',
+		[
+			'POPUP_COMPONENT_NAME' => 'bitrix:crm.config.measure.list',
+			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+			'POPUP_COMPONENT_PARAMS' => $listComponentParams,
+			'USE_UI_TOOLBAR' => 'Y',
+			'USE_PADDING' => false,
+		],
+		$component,
+	);
+}
+else
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.config.measure.list',
+		'',
+		$listComponentParams,
+		$component,
+	);
+}

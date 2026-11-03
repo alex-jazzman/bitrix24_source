@@ -4,9 +4,12 @@ import {
 	pickerErrorCode,
 } from '../../infrastructure/service/file-picker/file-picker';
 import { type ResolvedPickerItem } from '../../infrastructure/service/file-picker/types';
+import { type PickerItem } from '../../model/item/types';
 import { useSelectionStore } from '../../model/selection/selection';
 import { useSessionStore } from '../../model/session/session';
 import { type PickerSelectionItem, type SessionCallbacks } from '../../model/session/types';
+import { openFolder } from '../open-folder/open-folder';
+import { toggleFileSelection, type ToggleSelectionDeps } from '../toggle-selection/toggle-selection';
 
 const PARTIAL_MESSAGE = 'DISK_PICKER_NOTIFY_PARTIAL';
 const CONFIRM_FAILED_MESSAGE = 'DISK_PICKER_NOTIFY_CONFIRM_FAILED';
@@ -14,6 +17,8 @@ const SELECT_LIMIT_MESSAGE = 'DISK_PICKER_NOTIFY_SELECT_LIMIT';
 const BACKEND_MAX_ITEMS = 100;
 
 export type ConfirmSelectionDeps = Pick<SessionCallbacks, 'notify' | 'onContextInvalid' | 'emitSelection'>;
+
+export type ConfirmItemDeps = ConfirmSelectionDeps & ToggleSelectionDeps;
 
 type SessionStore = ReturnType<typeof useSessionStore>;
 
@@ -126,4 +131,32 @@ export async function submitSelection(deps: ConfirmSelectionDeps): Promise<void>
 	{
 		handleConfirmError(session, deps, error, token);
 	}
+}
+
+// SEL-01 Enter: a folder opens, an unavailable file does nothing, a selectable file
+// confirms the explicit set or, when it is empty, selects itself first. One confirm.
+export function confirmItem(item: PickerItem, deps: ConfirmItemDeps): Promise<void>
+{
+	const session = useSessionStore();
+	if (session.confirming || (session.contentLoading && session.preserveContentOnLoading))
+	{
+		return Promise.resolve();
+	}
+
+	if (item.isFolder)
+	{
+		return openFolder(item, deps);
+	}
+
+	if (!item.selectable)
+	{
+		return Promise.resolve();
+	}
+
+	if (useSelectionStore().count === 0)
+	{
+		toggleFileSelection(item, deps);
+	}
+
+	return submitSelection(deps);
 }

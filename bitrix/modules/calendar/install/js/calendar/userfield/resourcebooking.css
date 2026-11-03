@@ -997,6 +997,17 @@ input.calendar-resbook-error{
 	font: 400 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
+.calendar-resbook-availability-warning:not(:empty) {
+	box-sizing: border-box;
+	width: 100%;
+	margin: 5px 0 15px;
+	padding: 10px 11px;
+	border-left: 3px solid var(--ui-color-accent-main-warning, #faa72c);
+	background-color: var(--ui-color-palette-orange-10, #fff8e8);
+	color: var(--ui-color-text-primary, #525c69);
+	font: 400 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
 .calendar-resbook-hr {
 	margin-bottom: 10px;
 	height: 1px;

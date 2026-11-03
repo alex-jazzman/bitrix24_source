@@ -23,9 +23,12 @@
 			? 'LANDING_EMBED_BG_FIELD_DESCRIPTION_MSGVER_1'
 			: 'LANDING_EMBED_BG_FIELD_DESCRIPTION_NO_VK_MSGVER_1';
 		data.description = "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage(descriptionMessageId)+"</span>";
-		BX.Landing.UI.Field.Embed.apply(this, arguments);
+		// Embed returns the instance built with Reflect.construct (see embed_field.js)
+		const self = Reflect.construct(BX.Landing.UI.Field.Embed, [data], new.target || BX.Landing.UI.Field.EmbedBg);
 
-		BX.Dom.addClass(this.error, 'landing-ui-error');
+		BX.Dom.addClass(self.error, 'landing-ui-error');
+
+		return self;
 	};
 
 	BX.Landing.UI.Field.EmbedBg.isBgVideo = true;

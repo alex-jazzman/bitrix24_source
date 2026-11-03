@@ -1,7 +1,8 @@
 import { EventEmitter } from 'main.core.events';
-import {ajax, Loc, Tag, Type, Dom, Event} from 'main.core';
-import {PopupComponentsMaker} from "ui.popupcomponentsmaker";
-import {SettingsWidget} from "./settings-widget";
+import { ajax, Dom, Event, Loc, Tag, Type } from 'main.core';
+import { MenuManager, Popup } from 'main.popup';
+import { FocusMonitor, FocusNavigator, LiveAnnouncer } from 'ui.a11y';
+
 export class RequisiteSection extends EventEmitter
 {
 	#companyId;
@@ -12,11 +13,18 @@ export class RequisiteSection extends EventEmitter
 	#editUrl: string;
 
 	#requisiteElement:? HTMLElement;
-	#requisitesPopup:? PopupComponentsMaker;
+	#requisitesPopup;
 	#requisiteButton:? BX.UI.Button;
+	#closeSettingsWidget;
+	#getSettingsPopup;
+	#handleSettingsPopupClick = (): void => {
+		this.#requisitesPopup?.close();
+	};
 
-	constructor(options) {
+	constructor(options, closeSettingsWidget, getSettingsPopup) {
 		super();
+		this.#closeSettingsWidget = closeSettingsWidget;
+		this.#getSettingsPopup = getSettingsPopup;
 
 		if (options)
 		{
@@ -24,7 +32,11 @@ export class RequisiteSection extends EventEmitter
 			top.BX.addCustomEvent('onLocalStorageSet', (params) => {
 				const eventName = params?.key ?? null;
 
-				if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate' || eventName === 'BX.Crm.RequisiteSliderDetails:onSave')
+				if (
+					eventName === 'onCrmEntityUpdate'
+					|| eventName === 'onCrmEntityCreate'
+					|| eventName === 'BX.Crm.RequisiteSliderDetails:onSave'
+				)
 				{
 					this.#getRequisites().then(() => {
 						this.#updateElement();
@@ -44,23 +56,48 @@ export class RequisiteSection extends EventEmitter
 		this.#editUrl = Type.isString(options.editUrl) ? options.editUrl : '';
 	}
 
-	#updateElement(): void
+	#updateElement(forceFocusRestore: boolean = false): void
 	{
 		const currentElement = this.getElement();
+		const activeElement = FocusNavigator.getActiveElement(currentElement);
+		const shouldMoveFocus = forceFocusRestore
+			|| (activeElement !== null && currentElement.contains(activeElement))
+		;
+		if (this.#requisitesPopup)
+		{
+			this.#requisitesPopup.destroy();
+			this.#requisitesPopup = null;
+		}
+
 		this.#requisiteElement = null;
 		this.#requisiteButton = null;
-		Dom.replace(currentElement, this.getElement());
+		const newElement = this.getElement();
+		Dom.replace(currentElement, newElement);
+
+		const settingsPopup = this.#getSettingsPopup();
+		if (shouldMoveFocus && settingsPopup?.isShown())
+		{
+			FocusNavigator.focusTarget(this.#getRequisiteButton().getContainer(), { focusVisible: true });
+		}
 	}
 
 	getElement(): HTMLElement
 	{
 		if (!this.#requisiteElement)
 		{
+			const onclickHelp = () => {
+				this.#closeSettingsWidget();
+				BX.Helper.show('redirect=detail&code=18213326');
+			};
+
 			this.#requisiteElement = Tag.render`
-				<div class="intranet-settings-widget__business-card intranet-settings-widget_box" data-testid="settings-widget-block-requisite">
+				<div
+					class="intranet-settings-widget__business-card intranet-settings-widget_box"
+					data-testid="settings-widget-block-requisite"
+				>
 					<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
 						<div class="intranet-settings-widget_icon-box --gray">
-							<div class="ui-icon-set --customer-card-1"></div>
+							<div class="ui-icon-set --customer-card-1" aria-hidden="true"></div>
 						</div>
 						<div class="intranet-settings-widget__title" data-role="requisite-widget-title">
 							${
@@ -69,7 +106,15 @@ export class RequisiteSection extends EventEmitter
 									: Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_TITLE')
 							}
 						</div>
-						<i class="ui-icon-set --help" onclick="BX.Helper.show('redirect=detail&code=18213326')"></i>
+						<button
+							type="button"
+							class="intranet-settings-widget__requisite-help"
+							aria-label="${Loc.getMessage('INTRANET_SETTINGS_WIDGET_REQUISITE_HELP_ARIA')}"
+							data-testid="settings-widget-requisite-help"
+							onclick="${onclickHelp}"
+						>
+							<span class="ui-icon-set --help" aria-hidden="true"></span>
+						</button>
 					</div>
 
 					<div class="intranet-settings-widget__business-card_footer">
@@ -85,46 +130,105 @@ export class RequisiteSection extends EventEmitter
 
 	#getRequisiteSettingsButton(): HTMLElement
 	{
-		const onclickRequisitesSettings = () => {
-			this.#getRequisitesPopup().show();
+		const onclickRequisitesSettings = (event) => {
+			this.#getRequisitesPopup(event.currentTarget).show();
 		};
 
 		return Tag.render`
-			<span onclick="${onclickRequisitesSettings}" class="intranet-settings-widget__requisite-btn">
-				<i class='ui-icon-set --more-information'></i>
-			</span>
+			<button
+				type="button"
+				class="intranet-settings-widget__requisite-btn"
+				aria-label="${Loc.getMessage('INTRANET_SETTINGS_WIDGET_REQUISITE_MORE_ARIA')}"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				data-testid="settings-widget-requisite-more"
+				onclick="${onclickRequisitesSettings}"
+			>
+				<span class="ui-icon-set --more-information" aria-hidden="true"></span>
+			</button>
 		`;
 	}
 
-	#getRequisitesPopup()
+	#getRequisitesPopupEvents(bindElement: HTMLElement): Object
+	{
+		return {
+			onShow: () => {
+				Dom.attr(bindElement, 'aria-expanded', 'true');
+				setTimeout(() => {
+					if (!this.#requisitesPopup?.isShown())
+					{
+						return;
+					}
+
+					const settingsPopupContainer = this.#getSettingsPopup()?.getPopupContainer();
+					if (settingsPopupContainer)
+					{
+						Event.unbind(settingsPopupContainer, 'click', this.#handleSettingsPopupClick);
+						Event.bind(settingsPopupContainer, 'click', this.#handleSettingsPopupClick);
+					}
+				}, 0);
+			},
+			onClose: () => {
+				this.#unbindSettingsPopupClick();
+				Dom.attr(bindElement, 'aria-expanded', 'false');
+				if (FocusMonitor.Instance.getLastInputModality() === 'keyboard')
+				{
+					FocusNavigator.focusTarget(bindElement, { focusVisible: true });
+				}
+			},
+			onDestroy: () => {
+				this.#unbindSettingsPopupClick();
+				Dom.attr(bindElement, 'aria-expanded', 'false');
+				this.#requisitesPopup = null;
+			},
+		};
+	}
+
+	#unbindSettingsPopupClick(): void
+	{
+		const settingsPopupContainer = this.#getSettingsPopup()?.getPopupContainer();
+		if (settingsPopupContainer)
+		{
+			Event.unbind(settingsPopupContainer, 'click', this.#handleSettingsPopupClick);
+		}
+	}
+
+	#getRequisitesPopup(bindElement: HTMLElement)
 	{
 		if (!this.#requisitesPopup)
 		{
 			const onclickCopyLink = () => {
 				if (BX.clipboard.copy(this.#publicUrl))
 				{
+					const message = Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPIED_POPUP');
 					BX.UI.Notification.Center.notify({
-						content: Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPIED_POPUP'),
+						content: message,
 						position: 'top-left',
 						autoHideDelay: 3000,
 					});
+					LiveAnnouncer.announce(message, 'polite');
 				}
 			};
 
 			const onclickConfigureSite = () => {
 				window.open(this.#editUrl, '_blank');
 				this.#requisitesPopup.close();
-				SettingsWidget.close();
+				this.#closeSettingsWidget();
 			};
 
 			let copyLinkButton = null;
 			if (this.#publicUrl)
 			{
 				copyLinkButton = {
+					attrs: {
+						'data-testid': 'settings-widget-requisite-copy-link',
+					},
 					html: `
 							<div class="intranet-settings-widget__popup-item">
 								<div class="ui-icon-set --link-3"></div> 
-								<div class="intranet-settings-widget__popup-name">${Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON')}</div>
+								<div class="intranet-settings-widget__popup-name">
+									${Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON')}
+								</div>
 							</div>
 						`,
 					onclick: onclickCopyLink,
@@ -135,10 +239,15 @@ export class RequisiteSection extends EventEmitter
 			if (this.#editUrl)
 			{
 				configureSiteButton = {
+					attrs: {
+						'data-testid': 'settings-widget-requisite-configure-site',
+					},
 					html: `
 							<div class="intranet-settings-widget__popup-item">
 								<div class="ui-icon-set --paint-1"></div> 
-								<div class="intranet-settings-widget__popup-name">${Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON')}</div>
+								<div class="intranet-settings-widget__popup-name">
+									${Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON')}
+								</div>
 							</div>
 						`,
 					onclick: onclickConfigureSite,
@@ -151,15 +260,20 @@ export class RequisiteSection extends EventEmitter
 					this.#requisitesPopup.close();
 				}
 
-				SettingsWidget.close();
+				this.#closeSettingsWidget();
 				BX.SidePanel.Instance.open(`/crm/company/details/${this.#companyId}/?init_mode=edit&rqedit=y`);
 			};
 
 			const configureRequisiteButton = {
+				attrs: {
+					'data-testid': 'settings-widget-requisite-configure',
+				},
 				html: `
 						<div class="intranet-settings-widget__popup-item">
 							<div class="ui-icon-set --pencil-40"></div>
-							<div class="intranet-settings-widget__popup-name">${Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON')}</div>
+							<div class="intranet-settings-widget__popup-name">
+								${Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON')}
+							</div>
 						</div>
 					`,
 				onclick: onclickConfigureRequisites,
@@ -167,28 +281,29 @@ export class RequisiteSection extends EventEmitter
 
 			const popupWidth = 240;
 
-			this.#requisitesPopup = BX.PopupMenu.create(
+			this.#requisitesPopup = MenuManager.create(
 				'requisites-settings',
-				event.currentTarget,
+				bindElement,
 				[copyLinkButton, configureRequisiteButton, configureSiteButton],
 				{
+					ariaLabel: Loc.getMessage('INTRANET_SETTINGS_WIDGET_REQUISITE_MORE_ARIA'),
 					closeByEsc: true,
 					autoHide: true,
+					focusTrap: {
+						initialFocus: 'container',
+					},
 					width: popupWidth,
 					offsetLeft: -72,
 					angle: {
 						offset: popupWidth / 2 - 15,
 					},
-					events: {
-						onShow: () => {
-							setTimeout(() => {
-								Event.bindOnce(SettingsWidget.getInstance().getWidget().getPopup().getPopupContainer(), 'click', () => {
-									this.#requisitesPopup.close();
-								});
-							}, 0);
-						},
-					}
+					events: this.#getRequisitesPopupEvents(bindElement),
 				},
+			);
+			Dom.attr(
+				this.#requisitesPopup.getMenuContainer(),
+				'data-testid',
+				'settings-widget-requisite-menu',
 			);
 		}
 
@@ -221,6 +336,7 @@ export class RequisiteSection extends EventEmitter
 				onclick: this.#handleButtonOnclick.bind(this),
 				className: 'ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light',
 			});
+			Dom.attr(this.#requisiteButton.getContainer(), 'data-testid', 'settings-widget-requisite-primary');
 		}
 
 		return this.#requisiteButton;
@@ -251,32 +367,36 @@ export class RequisiteSection extends EventEmitter
 
 	#handleOpenRequisite(): void
 	{
-		SettingsWidget.close();
+		this.#closeSettingsWidget();
 		window.open(this.#publicUrl, '_blank');
 	}
 
 	#handleCreateLanding(): void
 	{
-		this.#getRequisiteButton().setWaiting(true);
+		const requisiteButton = this.#getRequisiteButton();
+		const shouldRestoreFocus = FocusNavigator.getActiveElement(this.getElement()) === requisiteButton.getContainer();
+		requisiteButton.setWaiting(true);
 		this.#createLanding().then(() => {
-			this.#requisitesPopup = null;
 			this.#requisiteButton = null;
-			this.#updateElement();
+			this.#updateElement(shouldRestoreFocus);
 
 			if (!this.#isPublic)
 			{
+				const message = Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING_ERROR');
 				const errorPopup = new Popup('public-landing-error',
 					this.getElement().querySelector('[data-role="requisite-widget-title"]'),
 					{
 						autoHide: true,
 						closeByEsc: true,
+						focusTrap: false,
 						angle: true,
 						darkMode: true,
-						content: Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING_ERROR'),
+						ariaLabel: message,
+						content: message,
 						events: {
 							onShow: () => {
 								setTimeout(() => {
-									Event.bindOnce(SettingsWidget.getInstance().getWidget().getPopup().getPopupContainer(), 'click', () => {
+									Event.bindOnce(this.#getSettingsPopup().getPopupContainer(), 'click', () => {
 										errorPopup.close();
 									});
 								}, 0);
@@ -287,7 +407,9 @@ export class RequisiteSection extends EventEmitter
 						}
 					}
 				);
+				Dom.attr(errorPopup.getPopupContainer(), 'data-testid', 'settings-widget-requisite-error');
 				errorPopup.show();
+				LiveAnnouncer.announce(message, 'assertive');
 			}
 		});
 	}
@@ -309,13 +431,13 @@ export class RequisiteSection extends EventEmitter
 
 	#handleEditRequisite(): void
 	{
-		SettingsWidget.close();
+		this.#closeSettingsWidget();
 		BX.SidePanel.Instance.open(`/crm/company/details/${this.#companyId}/?init_mode=edit&rqedit=y`);
 	}
 
 	#handleCreateCompany(): void
 	{
-		SettingsWidget.close();
+		this.#closeSettingsWidget();
 		BX.SidePanel.Instance.open('/crm/company/details/0/?mycompany=y&rqedit=y');
 	}
 

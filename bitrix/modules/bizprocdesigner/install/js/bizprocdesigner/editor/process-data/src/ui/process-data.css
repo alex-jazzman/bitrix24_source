@@ -1,0 +1,342 @@
+.bizprocdesigner-process-data,
+.bizprocdesigner-process-data * {
+	box-sizing: border-box;
+}
+
+/* Nothing is left to put in the footer of the dialog: it is closed by the cross and by Escape. */
+.bizprocdesigner-process-data-popup .ui-system-dialog__footer {
+	display: none;
+}
+
+/* The window is sized once, when the popup is shown, and never re-centered: a growing list must not
+   push the buttons of the dialog off the screen, so the height belongs to the box, not to the list. */
+.bizprocdesigner-process-data {
+	display: flex;
+	flex-direction: column;
+	height: min(480px, 60vh);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-process-data__notice {
+	flex: 0 0 auto;
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
+.bizprocdesigner-process-data__toolbar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding-bottom: var(--ui-space-inset-sm);
+}
+
+.bizprocdesigner-process-data__search {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* Scrolling clips the focus outline of the fields inside: trade the clipped strip for padding
+   and pull the box outward by the same amount, so the content keeps its place. */
+.bizprocdesigner-process-data__body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	padding-inline: calc(var(--ui-focus-outline-width) + var(--ui-focus-outline-offset));
+	margin-inline: calc(-1 * (var(--ui-focus-outline-width) + var(--ui-focus-outline-offset)));
+}
+
+.bizprocdesigner-process-data__skeleton {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding-top: var(--ui-space-inset-md);
+}
+
+.bizprocdesigner-process-data__empty {
+	margin: 0;
+	padding-top: var(--ui-space-inset-lg);
+	text-align: center;
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-process-data-list__group {
+	padding-top: var(--ui-space-inset-md);
+}
+
+.bizprocdesigner-process-data-list__group-title {
+	margin: 0 0 var(--ui-space-stack-2xs);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-medium);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-list__group-hint {
+	margin: 0;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-list__items {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bizprocdesigner-process-data-item {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--ui-space-stack-3xs);
+	width: 100%;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-sm);
+	text-align: left;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-1);
+	background-color: transparent;
+	cursor: pointer;
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.bizprocdesigner-process-data-item:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-process-data-item.--selected {
+	border-color: var(--ui-color-divider-accent);
+}
+
+.bizprocdesigner-process-data-item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bizprocdesigner-process-data-item__main {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}
+
+.bizprocdesigner-process-data-item__meta {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-item__name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.bizprocdesigner-process-data-item__type {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-md) 0;
+}
+
+.bizprocdesigner-process-data-form__head {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizprocdesigner-process-data-form__title {
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-process-data-form__tabs {
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.bizprocdesigner-process-data-form__tab {
+	padding: var(--ui-space-inset-2xs) 0;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-3);
+	background: none;
+	cursor: pointer;
+}
+
+.bizprocdesigner-process-data-form__tab:focus-visible,
+.bizprocdesigner-process-data-form__select:focus-visible,
+.bizprocdesigner-process-data-form__textarea:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}
+
+.bizprocdesigner-process-data-form__select:disabled,
+.bizprocdesigner-process-data-form__textarea:disabled {
+	color: var(--ui-color-base-4);
+	background-color: var(--ui-color-bg-content-secondary);
+	cursor: not-allowed;
+}
+
+.bizprocdesigner-process-data-form__tab.--selected {
+	border-bottom-color: var(--ui-color-divider-accent);
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-process-data-form__fields,
+.bizprocdesigner-process-data-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.bizprocdesigner-process-data-form__fields {
+	gap: var(--ui-space-stack-sm);
+}
+
+.bizprocdesigner-process-data-form__label {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-form__select,
+.bizprocdesigner-process-data-form__textarea {
+	width: 100%;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-xs);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.bizprocdesigner-process-data-form__textarea {
+	min-height: 60px;
+	resize: vertical;
+}
+
+.bizprocdesigner-process-data-form__field-error {
+	margin: 0;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-process-data-form__field-hint {
+	display: flex;
+	align-items: start;
+	gap: var(--ui-space-inline-2xs);
+	margin: 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-process-data-form__field-hint .ui-icon-set {
+	flex: none;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.bizprocdesigner-process-data-form__checks {
+	display: flex;
+	gap: var(--ui-space-inline-md);
+}
+
+.bizprocdesigner-process-data-form__check {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bizprocdesigner-process-data-form__view {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+	gap: var(--ui-space-stack-2xs) var(--ui-space-inline-sm);
+	margin: 0;
+}
+
+.bizprocdesigner-process-data-form__view dt {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-form__view dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.bizprocdesigner-process-data-form__writers-title {
+	margin: 0 0 var(--ui-space-stack-2xs);
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+/* The form scrolls inside the window, and its buttons must stay where the developer left them. */
+.bizprocdesigner-process-data-form__actions {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-sm) 0;
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.bizprocdesigner-process-data-form__delete {
+	margin-left: auto;
+}
+
+.bizprocdesigner-process-data-form__saved {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-process-data-usages {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.bizprocdesigner-process-data-usages__items {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bizprocdesigner-process-data-usages__item {
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-xs);
+	overflow-wrap: anywhere;
+	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-process-data-usages__empty {
+	margin: 0;
+	color: var(--ui-color-base-2);
+}

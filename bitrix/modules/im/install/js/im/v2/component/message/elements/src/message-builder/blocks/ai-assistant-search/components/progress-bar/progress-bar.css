@@ -1,0 +1,63 @@
+/*
+	The bar sits between the title and the text. 4px + the 2px padding of the neighbour makes the
+	6px the design puts there (its own 2px padding plus the 2px gap of the block container).
+*/
+.bx-im-message-block-ai-assistant-search-progress__container {
+	height: 6px;
+	margin: 4px 0;
+	border-radius: var(--ui-border-radius-xs);
+	overflow: hidden;
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+/*
+	Plain color tokens are published as `--im-message-builder-color` by builder-text-content.css
+	for every `.--color-*` class of the builder; the gradient token has no plain value and is
+	filled by the rule below. The width transition keeps a series of progress updates smooth.
+*/
+.bx-im-message-block-ai-assistant-search-progress__fill {
+	position: relative;
+	height: 100%;
+	border-radius: inherit;
+	overflow: hidden;
+	background: var(--im-message-builder-color);
+	transition: width 300ms ease;
+}
+
+/* same branded BitrixGPT gradient as the header block (blocks/title/title.css) */
+.bx-im-message-block-ai-assistant-search-progress__fill.--color-ai-assistant {
+	background: linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%);
+}
+
+.bx-im-message-block-ai-assistant-search-progress__glance {
+	position: absolute;
+	inset: 0;
+	opacity: 0.4;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		var(--ui-color-base-white-fixed) 50%,
+		transparent 100%
+	);
+	animation: bx-im-message-block-ai-assistant-search-progress-glance 1600ms linear infinite;
+}
+
+@keyframes bx-im-message-block-ai-assistant-search-progress-glance {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bx-im-message-block-ai-assistant-search-progress__fill {
+		transition: none;
+	}
+
+	.bx-im-message-block-ai-assistant-search-progress__glance {
+		animation: none;
+	}
+}

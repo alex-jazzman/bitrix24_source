@@ -1,4 +1,4 @@
-import { Loc, Runtime, Extension } from 'main.core';
+import { Loc, Extension } from 'main.core';
 
 import { postAccessPublicRights } from '../../api';
 import { buildPublicAccessItems } from '../consts';
@@ -16,6 +16,8 @@ const extensionSettings = Extension.getSettings('disk.sharing-access-popup');
 const externalLinkDisableReasons = extensionSettings.get('externalLinkDisableReasons', {});
 const limitSliders = extensionSettings.get('limitSliders', {});
 
+const SAVE_ACCESS_END_DATE_DELAY = 400;
+
 // @vue/component
 export const SharingAccessPublicSettings = {
 	name: 'SharingAccessPublicSettings',
@@ -29,27 +31,26 @@ export const SharingAccessPublicSettings = {
 		AccessCopyLink,
 	},
 	props: {
-		isPublic: { type: Boolean, required: true },
 		accessRights: { type: Object, default: null },
 		objectId: { type: [Number, String], default: null },
 		uniqueCode: { type: String, default: null },
 		entityType: { type: String, default: 'FILE' },
+		// called directly instead of an event: saving may outlive the block on a tab switch
+		applyPublicLink: { type: Function, required: true },
+		// its fields are set here and not reassigned: the block is destroyed on a tab switch, and what a
+		// saving in flight blocks has to be back with the tab
+		savingState: { type: Object, required: true },
 	},
-	emits: ['publicLinkChange'],
 	data()
 	{
 		return {
 			isActivePublicLink: false,
-			isActivePublicLinkSaving: false,
 			isFullSettings: false,
 			selectedAccessId: 'read',
-			isAccessRightsSaving: false,
 			isPassword: false,
 			publicPassword: '',
-			isPasswordSaving: false,
 			isDownload: true,
 			accessEndDate: false,
-			saveAccessEndDateDebounced: null,
 		};
 	},
 	computed: {
@@ -66,12 +67,12 @@ export const SharingAccessPublicSettings = {
 			return [
 				externalLinkDisableReasons.option,
 				externalLinkDisableReasons.feature,
-				externalLinkDisableReasons.fileOption,
+				externalLinkDisableReasons.objectOption,
 			].includes(this.publicLinkDisabledReason);
 		},
 		visibleCopyLink()
 		{
-			return this.isPublic && this.isActivePublicLink && !this.isCopyLinkHiddenByDisableReason;
+			return this.isActivePublicLink && !this.isCopyLinkHiddenByDisableReason;
 		},
 		hasSavedPassword()
 		{
@@ -129,9 +130,16 @@ export const SharingAccessPublicSettings = {
 			}
 		},
 	},
+	// the timer is held by hand and outside data(): a debounce of main.core cannot be stopped, and a save
+	// the user has already asked for has to be sent off when the tab goes away
 	created()
 	{
-		this.saveAccessEndDateDebounced = Runtime.debounce(this.saveAccessEndDate, 400, this);
+		this.accessEndDateSaveTimer = null;
+		this.accessEndDateSave = null;
+	},
+	beforeUnmount()
+	{
+		this.flushAccessEndDateSave();
 	},
 	methods: {
 		getTarget()
@@ -151,10 +159,6 @@ export const SharingAccessPublicSettings = {
 			}
 
 			this.isFullSettings = !this.isFullSettings;
-		},
-		applyPublicLink(publicLink)
-		{
-			this.$emit('publicLinkChange', publicLink);
 		},
 		getTariffSliderCode()
 		{
@@ -178,7 +182,7 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			if (reason === externalLinkDisableReasons.option || reason === externalLinkDisableReasons.fileOption)
+			if (reason === externalLinkDisableReasons.option || reason === externalLinkDisableReasons.objectOption)
 			{
 				return;
 			}
@@ -214,7 +218,7 @@ export const SharingAccessPublicSettings = {
 		},
 		async onTogglePublicLink(value)
 		{
-			if (this.isActivePublicLinkSaving)
+			if (this.savingState.publicLink)
 			{
 				return;
 			}
@@ -229,7 +233,7 @@ export const SharingAccessPublicSettings = {
 			const prev = this.isActivePublicLink;
 
 			this.isActivePublicLink = value;
-			this.isActivePublicLinkSaving = true;
+			this.savingState.publicLink = true;
 
 			try
 			{
@@ -247,7 +251,7 @@ export const SharingAccessPublicSettings = {
 			}
 			finally
 			{
-				this.isActivePublicLinkSaving = false;
+				this.savingState.publicLink = false;
 			}
 		},
 		syncAccessRights(next)
@@ -295,7 +299,7 @@ export const SharingAccessPublicSettings = {
 		},
 		async onAccessRights(next)
 		{
-			if (this.isAccessRightsSaving || this.isActivePublicLinkSaving)
+			if (this.savingState.accessRights || this.savingState.publicLink)
 			{
 				return;
 			}
@@ -315,7 +319,7 @@ export const SharingAccessPublicSettings = {
 			const prev = this.selectedAccessId;
 
 			this.selectedAccessId = next;
-			this.isAccessRightsSaving = true;
+			this.savingState.accessRights = true;
 
 			try
 			{
@@ -333,7 +337,7 @@ export const SharingAccessPublicSettings = {
 			}
 			finally
 			{
-				this.isAccessRightsSaving = false;
+				this.savingState.accessRights = false;
 			}
 		},
 		syncPassword(next)
@@ -355,7 +359,7 @@ export const SharingAccessPublicSettings = {
 		},
 		async onPasswordToggle(value)
 		{
-			if (this.isPasswordSaving || this.isActivePublicLinkSaving || !this.isActivePublicLink)
+			if (this.savingState.password || this.savingState.publicLink || !this.isActivePublicLink)
 			{
 				return;
 			}
@@ -385,7 +389,7 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			this.isPasswordSaving = true;
+			this.savingState.password = true;
 
 			try
 			{
@@ -404,14 +408,14 @@ export const SharingAccessPublicSettings = {
 			}
 			finally
 			{
-				this.isPasswordSaving = false;
+				this.savingState.password = false;
 			}
 		},
 		async savePublicPassword()
 		{
 			const password = this.publicPassword.trim();
 
-			if (password.length < 8 || this.isPasswordSaving || !this.isActivePublicLink)
+			if (password.length < 8 || this.savingState.password || !this.isActivePublicLink)
 			{
 				return;
 			}
@@ -423,7 +427,7 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			this.isPasswordSaving = true;
+			this.savingState.password = true;
 
 			try
 			{
@@ -442,7 +446,7 @@ export const SharingAccessPublicSettings = {
 			}
 			finally
 			{
-				this.isPasswordSaving = false;
+				this.savingState.password = false;
 			}
 		},
 		syncAccessEndDate(next)
@@ -451,7 +455,7 @@ export const SharingAccessPublicSettings = {
 		},
 		onAccessEndDateChange(value)
 		{
-			if (!this.isActivePublicLink || this.isActivePublicLinkSaving)
+			if (!this.isActivePublicLink || this.savingState.publicLink)
 			{
 				return;
 			}
@@ -472,7 +476,28 @@ export const SharingAccessPublicSettings = {
 			const previousValue = this.getPersistedAccessEndDate();
 			this.accessEndDate = nextValue;
 
-			this.saveAccessEndDateDebounced(nextValue, previousValue);
+			this.scheduleAccessEndDateSave(nextValue, previousValue);
+		},
+		scheduleAccessEndDateSave(value, previousValue)
+		{
+			clearTimeout(this.accessEndDateSaveTimer);
+
+			this.accessEndDateSave = { value, previousValue };
+			this.accessEndDateSaveTimer = setTimeout(() => this.flushAccessEndDateSave(), SAVE_ACCESS_END_DATE_DELAY);
+		},
+		// the save waiting for the timer is sent off, never dropped: the date is a change of the user
+		flushAccessEndDateSave()
+		{
+			const scheduled = this.accessEndDateSave;
+
+			clearTimeout(this.accessEndDateSaveTimer);
+			this.accessEndDateSaveTimer = null;
+			this.accessEndDateSave = null;
+
+			if (scheduled)
+			{
+				void this.saveAccessEndDate(scheduled.value, scheduled.previousValue);
+			}
 		},
 		async saveAccessEndDate(value, previousValue = this.getPersistedAccessEndDate())
 		{
@@ -495,8 +520,20 @@ export const SharingAccessPublicSettings = {
 		syncIsDownload(next) {
 			this.isDownload = next?.publicLink?.canDownloadWithReadAccess ?? true;
 		},
+		saveDownloadSetting(value)
+		{
+			return postAccessPublicRights(this.getTarget(), {
+				enabled: this.isActivePublicLink,
+				canDownloadWithReadAccess: value,
+			});
+		},
 		async onToggleDownload(value)
 		{
+			if (this.savingState.download || this.savingState.publicLink || !this.isActivePublicLink)
+			{
+				return;
+			}
+
 			if (this.isPublicLinkSettingsBlocked)
 			{
 				this.handleBlockedPublicLinkSettings();
@@ -505,13 +542,17 @@ export const SharingAccessPublicSettings = {
 			}
 
 			const prev = this.isDownload;
+			if (value === prev)
+			{
+				return;
+			}
+
+			this.isDownload = value;
+			this.savingState.download = true;
 
 			try
 			{
-				const publicLink = await postAccessPublicRights(this.getTarget(), {
-					enabled: this.isActivePublicLink,
-					canDownloadWithReadAccess: value,
-				});
+				const publicLink = await this.saveDownloadSetting(value);
 
 				this.applyPublicLink(publicLink);
 			}
@@ -520,66 +561,80 @@ export const SharingAccessPublicSettings = {
 				this.isDownload = prev;
 				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
 			}
+			finally
+			{
+				this.savingState.download = false;
+			}
 		},
 	},
-	// TODO: Открыть footer как будет готова настройка на скачивание на бэке
 	template: `
-		<div v-if="isPublic" class="access-public-block__wrapper">
-			<PublicAccessHeader
-				:isActive="isActivePublicLink"
-				:isDisabled="isActivePublicLinkSaving"
-				:isToggleBlocked="isPublicLinkBlockedByPolicy"
-				:isLoading="isActivePublicLinkSaving"
-				@toggle="onTogglePublicLink"
-				@blockedToggle="onBlockedToggleAttempt"
-
-			/>
-			<div class="access-public-block__main" :class="{ 'access-public-block__main--filtered': !isActivePublicLink }">
-			<PublicAccessDescription
-				:selectedAccessId="selectedAccessId"
-				:entityType="entityType"
-				:isActive="isActivePublicLink"
-				:isFullSettings="isFullSettings"
-				:accessEndDate="accessEndDate"
-				:isPassword="hasSavedPassword"
-				:isSettingsBlocked="isPublicLinkSettingsBlocked"
-				@toggleSettings="showSettings"
-				@blockedSettings="handleBlockedPublicLinkSettings"
-			/>
-				<div v-if="isActivePublicLink && isFullSettings" class="access-public-block__inputs">
-					<PublicAccessSelect
-						v-if="accessItems.length > 0"
-						:items="accessItems"
-						:selectedId="selectedAccessId"
-						variant="public"
-						@select="onAccessRights"
+		<div>
+			<div class="access-public-block__wrapper" data-testid="disk-sharing-access-public-block">
+				<PublicAccessHeader
+					:isActive="isActivePublicLink"
+					:isDisabled="savingState.publicLink"
+					:isToggleBlocked="isPublicLinkBlockedByPolicy"
+					@toggle="onTogglePublicLink"
+					@blockedToggle="onBlockedToggleAttempt"
+				/>
+				<div
+					class="access-public-block__main"
+					:class="{ 'access-public-block__main--filtered': !isActivePublicLink }"
+					data-testid="disk-sharing-access-public-main"
+				>
+					<PublicAccessDescription
+						:selectedAccessId="selectedAccessId"
+						:entityType="entityType"
+						:isActive="isActivePublicLink"
+						:isFullSettings="isFullSettings"
+						:accessEndDate="accessEndDate"
+						:isPassword="hasSavedPassword"
+						:isSettingsBlocked="isPublicLinkSettingsBlocked"
+						@toggleSettings="showSettings"
+						@blockedSettings="handleBlockedPublicLinkSettings"
 					/>
-					<div v-if="hasEmptyAccessItems">
-						${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_ACCESS_EMPTY')}
+					<div
+						v-if="isActivePublicLink && isFullSettings"
+						class="access-public-block__inputs"
+						data-testid="disk-sharing-access-public-extended-settings"
+					>
+						<PublicAccessSelect
+							v-if="accessItems.length > 0"
+							:items="accessItems"
+							:selectedId="selectedAccessId"
+							variant="public"
+							data-testid="disk-sharing-access-public-rights"
+							@select="onAccessRights"
+						/>
+						<div v-if="hasEmptyAccessItems">
+							${Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_ACCESS_EMPTY')}
+						</div>
+						<PublicAccessDateRange
+							:modelValue="accessEndDate"
+							data-testid="disk-sharing-access-public-ttl"
+							@update:modelValue="onAccessEndDateChange"
+						/>
+						<PublicAccessPassword
+							:isPassword="isPassword"
+							:hasSavedPassword="hasSavedPassword"
+							:password="publicPassword"
+							:isSaving="savingState.password"
+							@update:isPassword="onPasswordToggle"
+							@update:password="publicPassword = $event"
+							@save="savePublicPassword"
+						/>
 					</div>
-					<PublicAccessDateRange 
-						:modelValue="accessEndDate"
-						@update:modelValue="onAccessEndDateChange"
-					/>
-					<PublicAccessPassword
-						:isPassword="isPassword"
-						:hasSavedPassword="hasSavedPassword"
-						:password="publicPassword"
-						:isSaving="isPasswordSaving"
-						@update:isPassword="onPasswordToggle"
-						@update:password="publicPassword = $event"
-						@save="savePublicPassword"
-					/>
 				</div>
+				<PublicAccessFooter
+					v-if="isActivePublicLink && isFullSettings && selectedAccessId === 'read'"
+					:isDownload="isDownload"
+					:isSaving="savingState.download"
+					@update:isDownload="onToggleDownload"
+				/>
 			</div>
-			<PublicAccessFooter
-				v-if="false"
-				:isDownload="isDownload"
-				@update:isDownload="onToggleDownload"
-			/>
-		</div>
-		<div v-if="visibleCopyLink" class="access-public-block__copy-link-wrapper">
-			<AccessCopyLink :link="getPublicLink" />
+			<div v-if="visibleCopyLink" class="access-public-block__copy-link-wrapper">
+				<AccessCopyLink :link="getPublicLink" />
+			</div>
 		</div>
 	`,
 };

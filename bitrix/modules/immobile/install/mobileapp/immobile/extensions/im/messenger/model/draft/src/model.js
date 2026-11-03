@@ -9,6 +9,48 @@ jn.define('im/messenger/model/draft/src/model', (require, exports, module) => {
 	const { draftDefaultElement } = require('im/messenger/model/draft/src/default-element');
 	const { validate } = require('im/messenger/model/draft/src/validator');
 
+	const setDraft = (store, payload, updateLastActivityDate) => {
+		if (!Type.isPlainObject(payload))
+		{
+			return;
+		}
+
+		const validPayload = validate(payload);
+		const dialogId = validPayload.dialogId;
+		const existingItem = store.state.collection[dialogId];
+		if (updateLastActivityDate)
+		{
+			validPayload.lastActivityDate = new Date();
+		}
+		else if (existingItem)
+		{
+			validPayload.lastActivityDate = existingItem.lastActivityDate;
+		}
+
+		const mutationName = existingItem ? 'update' : 'add';
+		const mutationFields = existingItem ? validPayload : { ...draftDefaultElement, ...validPayload };
+
+		if (DraftType.reply !== mutationFields.type && !mutationFields.text.trim())
+		{
+			store.commit('delete', {
+				actionName: 'set',
+				data: {
+					dialogId,
+				},
+			});
+
+			return;
+		}
+
+		store.commit(mutationName, {
+			actionName: 'set',
+			data: {
+				dialogId,
+				fields: mutationFields,
+			},
+		});
+	};
+
 	/** @type {DraftModel} */
 	const draftModel = {
 		namespaced: true,
@@ -49,39 +91,16 @@ jn.define('im/messenger/model/draft/src/model', (require, exports, module) => {
 			 * @param {DraftModelState} payload
 			 */
 			set: (store, payload) => {
-				if (!Type.isPlainObject(payload))
-				{
-					return;
-				}
+				setDraft(store, payload, true);
+			},
 
-				const validPayload = {
-					...validate(payload),
-					lastActivityDate: new Date(),
-				};
-				const dialogId = validPayload.dialogId;
-				const existingItem = store.state.collection[dialogId];
-				const mutationName = existingItem ? 'update' : 'add';
-				const mutationFields = existingItem ? validPayload : { ...draftDefaultElement, ...validPayload };
-
-				if (DraftType.reply !== mutationFields.type && !mutationFields.text.trim())
-				{
-					store.commit('delete', {
-						actionName: 'set',
-						data: {
-							dialogId,
-						},
-					});
-
-					return;
-				}
-
-				store.commit(mutationName, {
-					actionName: 'set',
-					data: {
-						dialogId,
-						fields: mutationFields,
-					},
-				});
+			/**
+			 * @function draftModel/setPreservingLastActivityDate
+			 * @param store
+			 * @param {DraftModelState} payload
+			 */
+			setPreservingLastActivityDate: (store, payload) => {
+				setDraft(store, payload, false);
 			},
 
 			/**

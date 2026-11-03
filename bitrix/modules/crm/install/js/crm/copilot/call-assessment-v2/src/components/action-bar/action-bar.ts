@@ -35,6 +35,7 @@ export const ActionBar = defineComponent({
 		<div class="crm-call-assessment-v2-action-bar">
 			<template v-if="variant === 'create'">
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-generate' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_CREATE_GENERATE_BUTTON')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.FILLED_BITRIX_GPT"
@@ -42,6 +43,7 @@ export const ActionBar = defineComponent({
 					@click="$emit('generate')"
 				/>
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-cancel' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_CANCEL')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.PLAIN_NO_ACCENT"
@@ -50,6 +52,7 @@ export const ActionBar = defineComponent({
 			</template>
 			<template v-else-if="variant === 'view'">
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-edit' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_EDIT')"
 					:size="ButtonSize.EXTRA_LARGE"
 					:style="AirButtonStyle.OUTLINE"
@@ -58,12 +61,14 @@ export const ActionBar = defineComponent({
 			</template>
 			<template v-else>
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-save' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_SAVE')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.FILLED"
 					@click="$emit('save')"
 				/>
 				<UiButton
+					:dataset="{ testid: 'crm-call-assessment-v2-action-bar-cancel' }"
 					:text="loc('CRM_CALL_ASSESSMENT_V2_BUTTON_CANCEL')"
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.PLAIN_NO_ACCENT"

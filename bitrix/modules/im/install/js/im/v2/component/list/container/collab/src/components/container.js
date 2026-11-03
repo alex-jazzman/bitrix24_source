@@ -1,13 +1,14 @@
-import { type JsonObject, Event, Runtime } from 'main.core';
+import { type JsonObject, Event, Runtime, Text } from 'main.core';
 import { computed } from 'ui.vue3';
 
 import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
 import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
+import { FilterRow, FilterMode, type FilterModeItem } from 'im.v2.component.list.container.elements.filter-row';
 import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 import { CollabList, CollabUnreadList } from 'im.v2.component.list.items.collab';
 import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
 import { Layout, ChatType, ActionByUserType, RecentType, PromoId } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
+import { Analytics, AnalyticsSection } from 'im.v2.lib.analytics';
 import { CollabManager } from 'im.v2.lib.collab';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
@@ -24,6 +25,7 @@ export const CollabListContainer = {
 		CollabList,
 		CreateChatPromo,
 		CreateChatButton,
+		FilterRow,
 		HeaderMenu,
 		CollabUnreadList,
 		ChatSearchInput,
@@ -45,6 +47,7 @@ export const CollabListContainer = {
 	data(): JsonObject
 	{
 		return {
+			searchAreaId: Text.getRandom(),
 			searchMode: false,
 			searchQuery: '',
 			isSearchLoading: false,
@@ -73,6 +76,18 @@ export const CollabListContainer = {
 		searchInputText(): string
 		{
 			return CollabManager.getSearchInputText();
+		},
+		isShellNavigationAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isChatShellNavigationWebAvailable);
+		},
+		filterMode(): FilterModeItem
+		{
+			return this.unreadMode ? FilterMode.unread : FilterMode.all;
+		},
+		unreadCounter(): number
+		{
+			return this.$store.getters['counters/getTotalCollabCounter'];
 		},
 	},
 	created()
@@ -144,6 +159,14 @@ export const CollabListContainer = {
 		{
 			this.unreadMode = !this.unreadMode;
 		},
+		onChangeFilterMode(mode: FilterModeItem)
+		{
+			this.unreadMode = mode === FilterMode.unread;
+			if (this.unreadMode)
+			{
+				Analytics.getInstance().recentHeaderMenu.onOpenProjectTabUnreadMode(AnalyticsSection.filterRow);
+			}
+		},
 		async showCollabAiPromo()
 		{
 			if (!PromoManager.getInstance().needToShow(PromoId.collabAi))
@@ -160,9 +183,15 @@ export const CollabListContainer = {
 		},
 	},
 	template: `
-		<div class="bx-im-list-container-collab__container" ref="collab-container">
-			<div class="bx-im-list-container-collab__header_container">
+		<div class="bx-im-list-container-collab__container" data-testid="im-list-collab" ref="collab-container">
+			<!-- In the compact collab peek the header is occluded by the drawer; keep it out of the tab order (mouse there is moot). -->
+			<div
+				class="bx-im-list-container-collab__header_container"
+				:class="{ '--with-filter-row': isShellNavigationAvailable }"
+				:inert="avatarsOnly || null"
+			>
 				<HeaderMenu
+					v-if="!isShellNavigationAvailable"
 					:unreadMode="unreadMode"
 					:recentSection="RecentType.collab"
 					@toggleUnreadMode="onToggleUnreadMode"
@@ -172,6 +201,8 @@ export const CollabListContainer = {
 						:searchMode="searchMode"
 						:isLoading="searchMode && isSearchLoading"
 						:placeholder="searchInputText"
+						:activateOnEnter="true"
+						:searchAreaId="searchAreaId"
 						@openSearch="onOpenSearch"
 						@closeSearch="onCloseSearch"
 						@updateSearch="onUpdateSearch"
@@ -183,6 +214,15 @@ export const CollabListContainer = {
 					:class="createIconClass"
 				/>
 			</div>
+			<FilterRow
+				v-if="isShellNavigationAvailable"
+				:mode="filterMode"
+				:counter="unreadCounter"
+				:readAllSection="RecentType.collab"
+				:inert="avatarsOnly || null"
+				:aria-hidden="avatarsOnly ? 'true' : null"
+				@changeMode="onChangeFilterMode"
+			/>
 			<div class="bx-im-list-container-collab__elements_container">
 				<div class="bx-im-list-container-collab__elements">
 					<RecentSearch
@@ -191,6 +231,8 @@ export const CollabListContainer = {
 						:query="searchQuery"
 						:showUsersCarousel="false"
 						:recentSectionType="RecentType.collab"
+						:withKeyboardNavigation="true"
+						:searchAreaId="searchAreaId"
 						@loading="onSearchLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"

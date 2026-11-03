@@ -143,6 +143,11 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 			COption::SetOptionInt("main", "dump_base_skip_search", 0);
 			COption::SetOptionInt("main", "dump_base_skip_log", 0);
 
+			if (!empty($NS['dump_encrypt_key']))
+			{
+				$NS['total_steps']++;
+			}
+
 			if ($arAllBucket)
 			{
 				$bDumpCloud = 1;
@@ -183,6 +188,11 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 			if ($r = (isset($_REQUEST['dump_integrity_check']) && $_REQUEST['dump_integrity_check'] == 'Y'))
 				$NS['total_steps']++;
 			COption::SetOptionInt("main", "dump_integrity_check", $r);
+
+			if (!empty($NS['dump_encrypt_key']))
+			{
+				$NS['total_steps']++;
+			}
 
 			$bDumpCloud = false;
 			if ($arAllBucket)
@@ -228,7 +238,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 		if ($NS['BUCKET_ID'] == -1) // Bitrixcloud
 		{
 			$name = DOCUMENT_ROOT . BX_ROOT . "/backup/" . date('Ymd_His_') . Random::getStringByAlphabet(16, Random::ALPHABET_NUM);
-			$NS['arc_name'] = $name.'.enc'.($bUseCompression ? ".gz" : '');
+			$NS['arc_name'] = $name.($bUseCompression ? ".gz" : '');
 			$NS['dump_name'] = $name.'.sql';
 		}
 		else
@@ -245,7 +255,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 
 			$arc_name = CBackup::GetArcName(preg_match('#^[a-z0-9.\-]+$#i', $prefix) ? substr($prefix, 0, 20).'_' : '');
 			$NS['dump_name'] = $arc_name.".sql";
-			$NS['arc_name'] = $arc_name.(!empty($NS['dump_encrypt_key']) ? ".enc" : ".tar").($bUseCompression ? ".gz" : '');
+			$NS['arc_name'] = $arc_name.".tar".($bUseCompression ? ".gz" : '');
 		}
 	}
 	elseif(isset($_REQUEST['action']) && $_REQUEST['action'] == 'cloud_send')
@@ -262,7 +272,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 		$tar = new CTar;
 		while(file_exists($name = $tar->getNextName($name)))
 			$NS['arc_size'] += filesize($name);
-		$NS['step'] = 6;
+		$NS['step'] = 7;
 	}
 	elseif(isset($_REQUEST['action']) && $_REQUEST['action'] == 'check_archive')
 	{
@@ -286,6 +296,8 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 	$after_file = str_replace('.sql','_after_connect.sql',preg_replace('#\.[0-9]+$#', '', $NS['dump_name']));
 
 	$FinishedTables = 0;
+	$status_details = '';
+
 	// Step 1: Dump
 	if($NS["step"] == 1)
 	{
@@ -332,7 +344,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 			if (haveTime())
 			{
 				$tar = new CTar;
-				$tar->EncryptKey = $NS['dump_encrypt_key'] ?? '';
+				$tar->EncryptKey = '';
 				$tar->ArchiveSizeLimit = IntOption('dump_archive_size_limit');
 				$tar->gzip = IntOption('dump_use_compression');
 				$tar->path = DOCUMENT_ROOT;
@@ -496,7 +508,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 				CBackup::$DOCUMENT_ROOT_SITE = $DOCUMENT_ROOT_SITE;
 				CBackup::$REAL_DOCUMENT_ROOT_SITE = realpath($DOCUMENT_ROOT_SITE);
 
-				$tar->EncryptKey = $NS['dump_encrypt_key'] ?? '';
+				$tar->EncryptKey = '';
 				$tar->ArchiveSizeLimit = IntOption('dump_archive_size_limit');
 				$tar->gzip = IntOption('dump_use_compression');
 				$tar->path = $DOCUMENT_ROOT_SITE;
@@ -590,7 +602,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 			if (haveTime())
 			{
 				$tar = new CTarCheck;
-				$tar->EncryptKey = $NS['dump_encrypt_key'] ?? '';
+				$tar->EncryptKey = '';
 
 				if (!$tar->openRead($NS["arc_name"] ?? ''))
 					RaiseErrorAndDie(GetMessage('DUMP_NO_PERMS_READ').'<br>'.implode('<br>',$tar->err));
@@ -620,8 +632,81 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 			$NS["step"]++;
 	}
 
-	// Step 6: Send to the cloud
-	if($NS["step"] == 6)
+	// Step 6: Encrypt backup files
+	if ($NS["step"] == 6)
+	{
+		$step_done = 0;
+		if (!empty($NS['dump_encrypt_key']) && empty($NS['check_archive']))
+		{
+			$status_title = GetMessage('DUMP_MAIN_ENC_ARC');
+
+			$arc_parts = glob($NS['arc_name'] . '*');
+			if (!$arc_parts)
+				RaiseErrorAndDie(getMessage('DUMP_MAIN_ERROR'));
+
+			$parts_total = count($arc_parts);
+			$parts_done = count(preg_grep('/\.enc(\.\d+)?$/', $arc_parts));
+			if ($parts_total)
+				$step_done = $parts_done / $parts_total;
+
+			$allEncoded = true;
+			foreach ($arc_parts as $arc_part)
+			{
+				if (!preg_match('/\.enc(\.\d+)?$/', $arc_part))
+				{
+					$enc_name = CTar::encryptFile($arc_part, $NS['dump_encrypt_key']);
+					if ($enc_name)
+					{
+						$arc_part_size = filesize($arc_part);
+						$enc_size = filesize($enc_name);
+						unlink($arc_part);
+						if (IntOption("disk_space") > 0)
+						{
+							CDiskQuota::updateDiskQuota("file", $arc_part_size, "del");
+							CDiskQuota::updateDiskQuota("file", $enc_size, "add");
+						}
+					}
+					else
+					{
+						RaiseErrorAndDie(getMessage('DUMP_MAIN_ERROR'));
+					}
+
+					$parts_done++;
+					$step_done = $parts_done / $parts_total;
+
+					if (!haveTime())
+					{
+						$allEncoded = false;
+						break;
+					}
+				}
+			}
+
+			if ($allEncoded)
+			{
+				$NS['arc_name'] .= '.enc';
+
+				$NS['arc_size'] = 0;
+				$name = $NS['arc_name'];
+				$tar = new CTar;
+				while (file_exists($name))
+				{
+					$NS['arc_size'] += filesize($name);
+					$name = $tar->getNextName($name);
+				}
+
+				$NS["step"]++;
+				$NS['finished_steps']++;
+			}
+		}
+		else
+		{
+			$NS["step"]++;
+		}
+	}
+
+	// Step 7: Send to the cloud
+	if($NS["step"] == 7)
 	{
 		$step_done = 0;
 		if ($NS['BUCKET_ID'])
@@ -644,7 +729,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 						RaiseErrorAndDie(getMessage('DUMP_BXCLOUD_NA'));
 
 					$obBucket = null;
-					if (!$NS['obBucket'])
+					if (!isset($NS['obBucket']) || !$NS['obBucket'])
 					{
 						$backup = CBitrixCloudBackup::getInstance();
 						$q = $backup->getQuota();
@@ -733,7 +818,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 						{
 							if($obUpload->Finish($obBucket))
 							{
-								$NS['pos'] += $file_size;
+								$NS['pos'] = ($NS['pos'] ?? 0) + $file_size;
 								$pos = 0;
 
 								if ($NS['BUCKET_ID'] != -1)
@@ -779,7 +864,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 							}
 						}
 
-						$pos += $NS['pos'];
+						$pos += $NS['pos'] ?? 0;
 
 						$status_title = GetMessage("MAIN_DUMP_FILE_SENDING");
 						$status_details = GetMessage('CURRENT_POS').' <b>'.CFile::FormatSize($pos).'</b>  '.GetMessage('MAIN_DUMP_FROM').' <b>'.CFile::FormatSize($NS["arc_size"])."</b>".
@@ -813,17 +898,17 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 
 	$NS["time"] += workTime();
 
-	if ($NS["step"] <= 6) // partial
+	if ($NS["step"] <= 7) // partial
 	{
 		CAdminMessage::ShowMessage(array(
 			"TYPE" => "PROGRESS",
 			"MESSAGE" => $status_title,
 			"DETAILS" => $status_details.'#PROGRESS_BAR#'.
 //				GetMessage('TIME_SPENT').' '.HumanTime($NS["time"]),
-				GetMessage('TIME_SPENT').' <span id="counter_field">'.sprintf('%02d',floor($NS["time"]/60)).':'.sprintf('%02d', $NS['time']%60).'</span><!--'.intval($NS['time']).'-->',
+				GetMessage('TIME_SPENT').' <span id="counter_field">'.sprintf('%02d',(int)floor($NS["time"]/60)).':'.sprintf('%02d', (int)$NS['time']%60).'</span><!--'.intval($NS['time']).'-->',
 			"HTML" => true,
 			"PROGRESS_TOTAL" => 100,
-			"PROGRESS_VALUE" => ($NS['finished_steps'] + $step_done) * 100 / $NS['total_steps'],
+			"PROGRESS_VALUE" => (($NS['finished_steps'] ?? 0) + ($step_done ?? 0)) * 100 / $NS['total_steps'],
 		));
 		?>
 		<script>

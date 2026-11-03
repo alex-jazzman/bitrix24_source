@@ -97,14 +97,32 @@ this.BX = this.BX || {};
 		let buttons = previous.buttons;
 		let leftButtons = previous.leftButtons;
 		forceIntrinsicWidth(container, () => {
-			if (panels.counter && counter === null) {
-				counter = measureCollapsible(panels.counter, () => panels.getCounterNode()?.offsetWidth ?? 0);
+			if (counter === null) {
+				if (panels.counter) {
+					counter = measureCollapsible(panels.counter, () => panels.getCounterNode()?.offsetWidth ?? 0);
+				} else if (!panels.getCounterNode()) {
+					counter = {
+						expanded: 0,
+						collapsed: 0
+					};
+				}
 			}
-			if (panels.nav && nav === null) {
-				nav = measureCollapsible(panels.nav, () => panels.getNavNode()?.offsetWidth ?? 0);
+			if (nav === null) {
+				if (panels.nav) {
+					nav = measureCollapsible(panels.nav, () => panels.getNavNode()?.offsetWidth ?? 0);
+				} else if (!panels.getNavNode()) {
+					nav = {
+						expanded: 0,
+						collapsed: 0
+					};
+				}
 			}
-			if (panels.buttons && buttons === null) {
-				buttons = measureButtons(panels.buttons, () => measureButtonsContentWidth(panels.getButtonsNode()));
+			if (buttons === null) {
+				if (panels.buttons) {
+					buttons = measureButtons(panels.buttons, () => measureButtonsContentWidth(panels.getButtonsNode()));
+				} else if (!panels.getButtonsNode()) {
+					buttons = [0];
+				}
 			}
 			if (leftButtons === null) {
 				leftButtons = panels.leftButtons ? measureLeftButtons(panels.leftButtons) : [0];

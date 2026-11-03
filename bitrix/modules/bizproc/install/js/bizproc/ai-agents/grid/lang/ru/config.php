@@ -31,6 +31,14 @@ $MESS['BIZPROC_AI_AGENTS_GRID_EXISTING_RUNS_WARNING_TEXT'] = 'В вашем Би
 $MESS['BIZPROC_AI_AGENTS_GRID_EXISTING_RUNS_WARNING_BUTTON_VIEW'] = 'Посмотреть запущенные';
 $MESS['BIZPROC_AI_AGENTS_GRID_EXISTING_RUNS_WARNING_BUTTON_LAUNCH'] = 'Запустить нового';
 
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_TITLE'] = 'Сменить владельца?';
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_WARNING'] = 'Управление агентом перейдёт выбранному сотруднику. Отменить передачу не получится — сменить владельца снова смогут только новый владелец, администратор Битрикс24 или сотрудник с правом изменять этого агента';
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_SELECTOR_PLACEHOLDER'] = 'Новый владелец';
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_SELECTOR_ADD_BUTTON'] = 'Выбрать';
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_NO_RECIPIENT_ERROR'] = 'Выберите нового владельца';
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_BUTTON_CONFIRM'] = 'Да, сменить';
+$MESS['BIZPROC_AI_AGENTS_GRID_CHANGE_OWNER_BUTTON_CANCEL'] = 'Отмена';
+
 $MESS['BIZPROC_AI_AGENTS_GRID_LAUNCH_BUSY_NOTIFICATION'] = 'Сначала завершите начатый запуск агента';
 
 $MESS['BIZPROC_AI_AGENTS_GRID_LAUNCHED_AGENTS_FILTER_ANNOUNCEMENT'] = 'Фильтр применён: показаны запущенные агенты выбранного шаблона';
@@ -44,3 +52,9 @@ $MESS['BIZPROC_AI_AGENTS_GRID_USED_BY_DEPARTMENT'] = 'Отдел «#NAME#»';
 $MESS['BIZPROC_AI_AGENTS_GRID_USED_BY_SHOW_MORE'] = 'Показать полный список';
 $MESS['BIZPROC_AI_AGENTS_GRID_USED_BY_OPEN_CHAT'] = 'Открыть чат «#NAME#»';
 $MESS['BIZPROC_AI_AGENTS_GRID_USED_BY_SHOW_ALL_CHATS'] = 'Показать все чаты';
+$MESS['BIZPROC_AI_AGENTS_GRID_VERSION_CUSTOMIZED'] = 'Логика изменена';
+$MESS['BIZPROC_AI_AGENTS_GRID_VERSION_CUSTOMIZED_UPGRADE_AVAILABLE'] = 'Логика изменена, доступна новая версия';
+$MESS['BIZPROC_AI_AGENTS_GRID_VERSION_MANUAL_BUILD'] = 'Собран вручную';
+$MESS['BIZPROC_AI_AGENTS_GRID_VERSION_UNDETERMINED'] = 'Не определена';
+$MESS['BIZPROC_AI_AGENTS_GRID_VERSION_UPGRADE_AVAILABLE'] = 'Доступна новая версия';
+$MESS['BIZPROC_AI_AGENTS_GRID_VERSION_UP_TO_DATE'] = 'Актуальна';

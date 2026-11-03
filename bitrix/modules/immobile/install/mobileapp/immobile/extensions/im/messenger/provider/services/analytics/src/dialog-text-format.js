@@ -41,10 +41,10 @@ jn.define('im/messenger/provider/services/analytics/src/dialog-text-format', (re
 					return;
 				}
 
-				const dialogType = dialog.type;
+				const category = AnalyticsHelper.getCategoryByChat(dialog);
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
-					.setCategory(AnalyticsHelper.getCategoryByChatType(dialogType))
+					.setCategory(category)
 					.setEvent(Analytics.Event.useTextFormatting)
 					.setType(actionId)
 					.setP1(AnalyticsHelper.getP1ByDialog(dialog));

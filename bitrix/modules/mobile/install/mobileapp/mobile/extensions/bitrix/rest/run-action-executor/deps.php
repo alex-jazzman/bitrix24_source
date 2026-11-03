@@ -2,11 +2,13 @@
 
 return [
 	'extensions' => [
+		'rest/transport',
+		'type',
 		'utils/function',
 		'utils/object',
-		'utils/storage',
+		// ./cache reads Application.storage, and utils/storage is what installs it.
+		'utils/storage', //@keep
 		'utils/logger',
-		'storage-cache',
 	],
 	'bundle' => [
 		'./cache',

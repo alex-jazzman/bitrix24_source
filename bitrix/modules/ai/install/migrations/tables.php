@@ -21,6 +21,7 @@ $migration->table('b_ai_queue')->create(function (\Bitrix\Main\UpdateSystem\Migr
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_DATE_CREATE', ['DATE_CREATE']);
 	$table->addIndex('IX_B_EXPIRE_DATE', ['EXPIRE_DATE']);
+	$table->addIndex('IX_B_CACHE_HASH', ['CACHE_HASH']);
 	$table->addUniqueIndex('IX_B_HASH', ['HASH']);
 });
 

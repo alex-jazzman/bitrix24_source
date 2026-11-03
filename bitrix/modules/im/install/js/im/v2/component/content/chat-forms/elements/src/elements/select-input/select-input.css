@@ -1,0 +1,13 @@
+/* The wrapper repeats the box of the field, so the shadow of the reference is drawn here
+   instead of reaching into the markup of BInput. The cap keeps the field off the whole width
+   of the row: it repeats the 260px the legacy select of the same rights is pinned to, and the
+   token scale has no field widths. */
+.bx-im-chat-forms-select-input {
+	display: flex;
+	min-width: 0;
+	max-width: 260px;
+	border-radius: var(--ui-border-radius-sm);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}

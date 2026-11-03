@@ -225,18 +225,40 @@ export class AnalyticsSender
 		taskId: number,
 		viewersCount: number,
 		coexecutorsCount: number,
+		subSection?: string,
 	}): void
 	{
 		this.#sendData({
 			event: Analytics.Event.DeadlineSet,
 			type: this.#getTypeFromCardType(options.cardType),
 			...(params.context ? { c_section: params.context } : {}),
-			c_sub_section: Analytics.SubSection.TaskCard,
+			c_sub_section: options?.subSection ?? Analytics.SubSection.TaskCard,
 			c_element: options.element,
 			status: Analytics.Status.Success,
 			...(options.taskId ? { p1: Analytics.Params.TaskId(options.taskId) } : {}),
 			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
+		});
+	}
+
+	sendBannerInteraction(params: AnalyticsParams, options: {
+		event: string,
+		element?: string,
+		cardType?: string,
+		type?: string,
+		status?: string,
+	}): void
+	{
+		this.#sendData({
+			event: options.event,
+			// Card banners (events 3-8) derive the type from the card. The notification hint
+			// (events 1-2) has no card, so it passes a fixed `type` that wins over the derivation.
+			type: options.type ?? this.#getTypeFromCardType(options.cardType),
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			// The notification hint carries no element, so `c_element` is omitted when unset.
+			...(options.element ? { c_element: options.element } : {}),
+			...(options.status ? { status: options.status } : {}),
 		});
 	}
 

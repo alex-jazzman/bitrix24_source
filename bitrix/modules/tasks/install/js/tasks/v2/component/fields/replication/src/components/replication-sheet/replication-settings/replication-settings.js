@@ -49,10 +49,17 @@ export const ReplicationSettings = {
 			},
 			set(period: Period): void
 			{
+				const prevPeriod = this.replicateParams.period;
+				const defaultTabData = this.getDefaultTabData(period);
+
 				this.update({
 					period,
-					...this.getEmptyPrevTabData(this.replicateParams.period),
-					...this.getDefaultTabData(period),
+					...this.getEmptyPrevTabData(prevPeriod),
+					...defaultTabData,
+					...(prevPeriod === ReplicationPeriod.Yearly
+						? {}
+						: this.getIntervalData(period, this.interval, defaultTabData.monthlyType)
+					),
 				});
 			},
 		},
@@ -165,11 +172,33 @@ export const ReplicationSettings = {
 				return;
 			}
 
+			const defaultTabData = this.getDefaultTabData(newPeriod);
+
 			this.update({
 				period: newPeriod,
 				...this.getEmptyPrevTabData(prevPeriod),
-				...this.getDefaultTabData(newPeriod),
+				...defaultTabData,
+				...(prevPeriod === ReplicationPeriod.Yearly
+					? {}
+					: this.getIntervalData(newPeriod, this.interval, defaultTabData.monthlyType)
+				),
 			});
+		},
+		getIntervalData(period: Period, interval: number, monthlyType: ?string): Partial<TaskReplicateParams>
+		{
+			switch (period)
+			{
+				case ReplicationPeriod.Daily:
+					return { everyDay: interval };
+				case ReplicationPeriod.Weekly:
+					return { everyWeek: interval };
+				case ReplicationPeriod.Monthly:
+					return monthlyType === ReplicationMonthlyType.Relative
+						? { monthlyMonthNum2: interval }
+						: { monthlyMonthNum1: interval };
+				default:
+					return {};
+			}
 		},
 		getEmptyPrevTabData(prevPeriod: Period): Partial<TaskReplicateParams>
 		{
@@ -220,8 +249,9 @@ export const ReplicationSettings = {
 						:item="item"
 						:items="items"
 						:size="InputSize.Lg"
-						:style="{ width: selectWidth }"
+						:ariaLabel="title"
 						:menuOptions="menuOptions"
+						data-testid="tasks-replication-period-select"
 						@update:item="onSelectItem"
 					/>
 				</div>

@@ -42,6 +42,7 @@ Extension::load([
 ]);
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+\Bitrix\UI\Toolbar\Facade\Toolbar::enableMultiLineTitle();
 $APPLICATION->SetTitle($arResult['title']);
 ?>
 

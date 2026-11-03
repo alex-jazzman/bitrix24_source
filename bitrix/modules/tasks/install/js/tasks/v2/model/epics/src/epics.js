@@ -16,6 +16,7 @@ export class Epics extends BuilderEntityModel<EpicsModelState, EpicModel>
 			id: 0,
 			title: '',
 			color: '',
+			isRestricted: false,
 		};
 	}
 }

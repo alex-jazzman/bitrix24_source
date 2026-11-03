@@ -3,16 +3,26 @@ import { Loc, Runtime, Type } from 'main.core';
 
 import { Feature, FeatureCode } from 'bizprocdesigner.feature';
 
+import { editorAPI } from '../../../shared/api';
 import {
 	PORT_TYPES,
 	PORTLESS_RULE_TYPE,
 	COMPLEX_NODE_PORT_LABELS,
 	NODE_SETTINGS_TABS,
+	isPortRulesAllowedBlockType,
 } from '../../../shared/constants';
 import { type Block, type PortId, type Port, type PortTypes, type ActivityData } from '../../../shared/types';
 
-import { createUniqueId, parsePortTitle, documentFieldsCache } from '../../../shared/utils';
+import {
+	baseSettingsFieldsMemory,
+	createUniqueId,
+	parsePortTitle,
+	deepEqual,
+	documentFieldsCache,
+	filterMetadataCache,
+} from '../../../shared/utils';
 import { diagramStore } from '../../blocks';
+import { useCatalogStore } from '../../catalog/stores';
 import { complexNodeApi, PORTLESS_RULES_KEY } from '../api';
 import { CONSTRUCTION_TYPES, CRM_FILTER_BACKING_ACTIVITY_TYPE, FIELD_OBJECT_TYPES } from '../constants';
 import { NODE_BLOCK_TYPES, normalizeAvailableBlocks } from '../block-registry';
@@ -31,7 +41,11 @@ import {
 	type OutputConstruction,
 	type Rule,
 } from '../types';
-import { generateNextInputPortId } from '../utils';
+// Direct paths, not the barrel of the layer: the barrel reads the store back through the tokens of a
+// readable expression, and a store importing it closes a cycle over the whole entity.
+import { buildFilterMetadataParams } from '../utils/filter-metadata';
+import { generateNextInputPortId } from '../utils/port-ids';
+import { settingsFormRequestCache } from '../utils/settings-form-request-cache';
 import {
 	findConstructionInsertIndex,
 	findGroupRuleCardForType,
@@ -51,11 +65,55 @@ import {
 	normalizeActionCode,
 	resolveActionId,
 } from '../utils/action-catalog';
+import {
+	carriesAuxPortReference,
+	getActionAuxPortIdsFromActivity,
+	getActionAuxPortIdsFromRules,
+	getActionAuxPortsFromRules,
+} from '../utils/action-aux-ports';
 import { getNextGroupIndex } from '../utils/group-title';
 
 type AutofillSnapshot = {
 	values: Object,
 	auto: Array<string>,
+	autofillMap?: Record<string, string>,
+	autofillRequiredFields?: Array<string>,
+	autofillConflicts?: Array<Object>,
+};
+
+// What a mounted "Create" form knows about its required fields: the codes the backend declared
+// required and whether any of them was empty when the form last looked. Tagged with the action it
+// describes, so a row that has picked another action since never answers off it.
+// What a base-settings form says about itself (see setBaseSettingsFormCheck).
+type BaseSettingsFormCheck = {
+	hasFillableFields: boolean,
+	isFilled: boolean,
+};
+
+type RequiredFieldsCheck = {
+	actionId: string,
+	fields: Array<string>,
+	hasEmptyRequired: boolean,
+	hasAutofillConflict?: boolean,
+	autofillRequiredFields?: Array<string>,
+	autofillConflicts?: Array<Object>,
+};
+
+// A row of an action that blocked one press of the save button: the construction the row shows, the
+// action it names and the rule it belongs to. Several rules of a node are on screen at once, so one
+// press can block several rows, and they report here instead of each leading the user to itself (see
+// reportRequiredFieldsBlock). The rule is what the panel opens when the row is in a section the
+// current mode hides (NodeSettings.revealBlockedRow).
+type RequiredFieldsBlock = {
+	constructionId: string,
+	actionTitle?: string,
+	rulePort: RulePort | null,
+	hasAutofillConflict?: boolean,
+	// Set on a record built from a refusal of the server, absent on a record of the pre-save check of
+	// the panel. The one thing it decides is whether the block is announced aloud: the phrase of the
+	// announcement speaks of empty required fields, and a refusal of the server reaches the same
+	// approach for reasons of another nature (NodeSettings.leadToRequiredFieldsBlock).
+	isServerReported?: boolean,
 };
 
 // The rules container of a node without input ports as the panel selects it: the same fields it reads
@@ -66,16 +124,56 @@ type PortlessRule = {
 	title: string,
 };
 
+// A rule of a node as the panel and its operations address it: an input port, a relation port or the
+// reserved container of a node without input ports.
+type RulePort = Port | PortlessRule;
+
+// Where a construction lives, as the consumers of resolveConstructionLocation address it: the
+// collection holding it, its rule as a real descriptor, the group card showing it and its place in
+// the traversal order of the node.
+type ConstructionLocation = {
+	collection: Map<PortId, Rule>,
+	rulePort: RulePort,
+	ruleCardId: string,
+	order: number,
+};
+
 type NodesSettingsState = {
 	isLoading: boolean;
 	isShown: boolean;
 	shouldShowWithTransition: boolean;
-	currentRule: Port | PortlessRule;
+	// The rule the panel shows on its own, or null for the all-rules mode: the panel then shows every
+	// rule of the node at once and the operations name the rule they work on themselves.
+	currentRule: RulePort | null;
+	// Rule the add panel works on while the node is shown in the all-rules mode (see toolbarRulePort).
+	selectedRulePortId: PortId | null;
 	nodeSettings: NodeSettings | null;
+	// References of the node leading nowhere, exactly as the server writes them: a map of a
+	// reference to itself (see requestNodeBrokenLinks).
+	brokenLinks: { [key: string]: string },
 	block: Block | null,
 	lastFetchId: number,
 	autofillSnapshots: { [constructionId: string]: AutofillSnapshot },
 	autofillRequests: { [constructionId: string]: boolean },
+	requiredFieldsChecks: { [constructionId: string]: RequiredFieldsCheck },
+	baseSettingsFormChecks: { [constructionId: string]: BaseSettingsFormCheck },
+	// Rows that blocked the save press being handled right now (see reportRequiredFieldsBlock).
+	requiredFieldsBlocks: Array<RequiredFieldsBlock>,
+	// Whether the rules tab shows the relations of the node instead of the rules of its inputs. The
+	// two are separate surfaces of one tab: a relation is not a rule of an input and never stands in
+	// the same list (see isRelationsSurfaceShown).
+	isRelationsSurface: boolean,
+	// Rules standing open on the rules tab. Seeded with every input port as the node loads
+	// (see fetchNodeSettings); a rule the user creates joins it right away (see addRule), and the
+	// relations join it when their own surface is entered (see setCurrentRule). Collapsing is what
+	// takes a rule out of the list.
+	expandedRulePortIds: Array<PortId>,
+	// Group cards the user has collapsed - the inverse of the rules above, and deliberately so:
+	// expanding an input opens its groups with it, so what has to be remembered is the collapsing.
+	// Flat, without a per-rule split: a card id comes from createUniqueId() and is unique in the node.
+	collapsedRuleCardIds: Array<string>,
+	// Rules the panel has led the user into by address (see expandConstruction).
+	revealedRulePortIds: Array<PortId>,
 };
 
 type FetchNodeSettingsOptions = {
@@ -83,18 +181,19 @@ type FetchNodeSettingsOptions = {
 };
 
 type SyncOutputPorts = {
-	outputPortsToAdd: Map<PortId, Partial<Port>>,
+	outputPortsToAdd: Map<PortId, Object>,
 	outputPortsToDelete: Set<PortId>,
 };
 
 type SyncAuxPort = {
 	portId: PortId,
-	title: string,
+	title: ?string,
 };
 
 type SyncAuxPorts = {
 	auxPortsToAdd: Map<PortId, SyncAuxPort>,
 	auxPortsToActivate: Set<PortId>,
+	auxPortsToDeactivate: Set<PortId>,
 };
 
 type PortParams = {
@@ -107,23 +206,101 @@ type PortParams = {
 // The current rule of a node without input ports. Shared and frozen: it names the reserved container
 // and carries no state of its own, so every node served by the unified panel selects this very
 // descriptor. It never joins this.ports: the container is not a port of the node.
-const PORTLESS_RULE: PortlessRule = Object.freeze({
+// Exported because the rules section of the basic tab lays that container out as a row of its own
+// (getRulesSectionRows): two descriptors of one container would be two sources of truth.
+export const PORTLESS_RULE: PortlessRule = Object.freeze({
 	id: PORTLESS_RULES_KEY,
 	type: PORTLESS_RULE_TYPE,
 	title: '',
 });
 
-// Shared read-only fallback of currentSettingsItems: nothing writes through the getter, rules are
-// always added to nodeSettings.rules / .relations directly.
-const EMPTY_SETTINGS_ITEMS: Map<PortId, Rule> = new Map();
+// Whether the rules of the node live in the reserved container: a node the unified panel serves with
+// a fixed set of rules, and no other. A node whose rules the user manages by input ports keeps them
+// there even when none is left - deleting the last one leaves it without rules, and a container built
+// for it would stand for a rule it does not have.
+// One answer for the store that creates the container (resolvePortlessRule) and for the rules section
+// that lays it out as a row (getRulesSectionRows): a row of a container nobody creates leads nowhere.
+export const hasPortlessRulesContainer = (block: ?Block): boolean => {
+	return block?.node?.servedByUnifiedPanel === true && !isPortRulesAllowedBlockType(block?.type);
+};
 
-// The subset of NodeSettings the form of a node starts from, before its payload is loaded. Everything
-// the payload brings is absent here on purpose: while the load is in flight the form must read nothing
-// left from the node shown before it.
+// Rules collection a rule port addresses: a relation port reads the relations of the node, and every
+// other kind of rule reads its rules - an input port and the reserved container of a node without
+// input ports alike, the same collection the transport carries both in.
+// The one place a rules collection is resolved, and exported for that reason: every consumer - the
+// store itself, the rules layout, the preview row of a rule and the editors of a card - names the rule
+// it works on and reads the answer off here, because in the all-rules mode there is no single current
+// rule to fall back on.
+export const resolveRuleCollection = (nodeSettings: ?NodeSettings, rulePort: ?RulePort): ?Map<PortId, Rule> => {
+	if (!nodeSettings)
+	{
+		return null;
+	}
+
+	return rulePort?.type === PORT_TYPES.inputRelation ? nodeSettings.relations : nodeSettings.rules;
+};
+
+// The rules of a node in the order their sections stand on screen: the input ports of the node, then
+// the reserved container of a node without input ports, then its relation ports - the same source the
+// layout builds its sections from (NodeSettingsRulesLayout.rulesSections / relationsSections).
+// The order of the keys of a rules collection is not that order and cannot stand in for it:
+// addRulePort() inserts a port by the number in its title while the rule is appended to the end of
+// the collection, and a loaded payload keys its rules in whatever order the server sent them.
+// The container of a node without input ports never joins this.ports (see PORTLESS_RULE), so it is
+// named by its own descriptor instead of being looked up among them.
+const orderRulePorts = (nodeSettings: ?NodeSettings, ports: ?Array<Port>): Array<RulePort> => {
+	const portsOfType = (type: string): Array<Port> => {
+		return (ports ?? []).filter((port: Port) => port.type === type);
+	};
+
+	return [
+		...portsOfType(PORT_TYPES.input),
+		...(nodeSettings?.rules?.has(PORTLESS_RULES_KEY) ? [PORTLESS_RULE] : []),
+		...portsOfType(PORT_TYPES.inputRelation),
+	];
+};
+
+// The rule an editing operation works on: the one the caller named by its port, or, when it named
+// none, the rule the addressed card belongs to. The card is what makes the rule explicit there - the
+// panel shows every rule of the node at once (currentRule === null), so an operation must never fall
+// back on whichever rule happens to be selected.
+// A card belonging to no rule (already deleted, or built by the caller) resolves to nothing, so the
+// operation stays a no-op instead of reaching into another rule.
+const resolveOperationRule = (
+	nodeSettings: ?NodeSettings,
+	rulePort: ?RulePort,
+	ownsCard: (ruleCard: TRuleCard) => boolean,
+): Rule | null => {
+	if (rulePort)
+	{
+		return resolveRuleCollection(nodeSettings, rulePort)?.get(rulePort.id) ?? null;
+	}
+
+	for (const collection of [nodeSettings?.rules, nodeSettings?.relations])
+	{
+		for (const rule of collection?.values() ?? [])
+		{
+			if ((rule.ruleCards ?? []).some((ruleCard) => ownsCard(ruleCard)))
+			{
+				return rule;
+			}
+		}
+	}
+
+	return null;
+};
+
+// The NodeSettings a node starts from, before its payload is loaded: structurally the same state, with
+// every collection empty. Nothing left from the node shown before it is readable here - that is what
+// the emptiness says - and a reader of a collection gets an empty one instead of a missing member.
+// "Loaded" is answered by the committed block alone (see isCurrentBlock and
+// BlockMediator.areSettingsLoadedForBlock), never by the presence of a member.
 const createEmptyNodeSettings = (block: Block) => {
 	return {
 		title: '',
 		description: '',
+		actions: new Map(),
+		relationAction: null,
 		rules: new Map(),
 		relations: new Map(),
 		blockId: block.id,
@@ -165,6 +342,78 @@ const withWarmDocumentFields = async (loading: Promise<Object>): Promise<Object>
 	}
 
 	return loaded;
+};
+
+// Metadata of the filter is a server request of its own that used to start when the filter was
+// drawn, so the wait landed on a click. Not awaited: the filter editor joins this very request
+// through the cache instead of starting a second one.
+const withWarmFilterMetadata = async (
+	loading: Promise<Object>,
+	workflowDocumentType: Array<string>,
+	contextActivityType: ?string,
+): Promise<Object> => {
+	const loaded = await loading;
+	if (loaded?.filterSupported)
+	{
+		const params = buildFilterMetadataParams(
+			workflowDocumentType,
+			loaded.fixedDocumentType,
+			contextActivityType,
+		);
+		// A document with no filter-result resolver has no metadata to ask for.
+		if (params.activityType)
+		{
+			void filterMetadataCache.load(params);
+		}
+	}
+
+	return loaded;
+};
+
+// The references of a node leading nowhere, counted by the server against the host activity of the
+// node - the whole activity, the rules property included, because the rules of a complex node are
+// written in it.
+//
+// Straight to the transport, past settingsControlsMemory and settingsFormRequestCache. The memory is
+// out on both sides: an early return of the controller answers a rememberable `controls: null`, and
+// the memory key of a node with host-merged settings is that very same activity type, so an empty
+// answer remembered here would silence the base-settings form of the same node. Nothing of the legacy
+// dialog is published on `window` either: `window.rootActivity` is defined in one place of the whole
+// frontend, and the nested forms of this panel read the memory by its presence.
+//
+// The list is counted only for a named activity found inside the template it was given, and a miss
+// answers an empty list indistinguishable from "nothing is broken" - so the host itself joins the
+// widest possible slice: the node and all of its ancestors, over every input port, the relation port
+// included. The parameters of the template are read defensively: this request starts earlier than the
+// form the slice is copied from, and an empty diagram store would hand `JSON.stringify` an undefined.
+const requestNodeBrokenLinks = async (block: Block): Promise<{ [key: string]: string }> => {
+	const diagram = diagramStore();
+	const compatibleTemplate = [{
+		Type: 'NodeWorkflowActivity',
+		Name: 'Template',
+		Children: [
+			block.activity,
+			...diagram.getAllBlockAncestors(block, null).map(({ block: ancestor }) => ancestor.activity),
+		],
+	}];
+
+	const settingsControls = await editorAPI.getNodeSettingsControls({
+		documentType: diagram.documentType,
+		activity: block.activity,
+		workflow: {
+			workflowParameters: JSON.stringify(diagram.template?.PARAMETERS ?? {}),
+			workflowVariables: JSON.stringify(diagram.template?.VARIABLES ?? {}),
+			workflowTemplate: JSON.stringify(compatibleTemplate),
+			workflowConstants: JSON.stringify(diagram.template?.CONSTANTS ?? {}),
+		},
+		options: {
+			templateId: diagram.templateId,
+			draftId: diagram.draftId,
+		},
+	});
+
+	// The controls of the response describe a form nobody here builds: only the list is read.
+	return settingsControls?.brokenLinks ?? {};
 };
 
 // A loaded rule or relation as the form holds it. The construction order of the payload is kept
@@ -227,9 +476,32 @@ const matchesBaseSettingsState = (entry: ?Object, state: Object): boolean => {
 // Host metadata SaveCommandHandler injects into the Properties of every activity, base settings
 // included: it describes the host node and not its settings, so an action pre-filled from those
 // settings must not inherit it. The server strips the same keys on its own side
-// (ConvertRuleCommand::BASE_SETTINGS_EXCLUDED_PROPERTIES); Title is then written from the action
+// (BaseSettingsPayload::HOST_METADATA_PROPERTIES); Title is then written from the action
 // dictionary (see buildDefaultActionExpression).
 const BASE_SETTINGS_EXCLUDED_PROPERTIES = Object.freeze(['Title', 'EditorComment']);
+
+// Properties that belong to the unified panel and not to the settings form of the node it serves: the
+// panel keeps its own bookkeeping among the properties of that very activity and re-writes it after every
+// save (ConvertRuleCommand::execute), so a node saved through the panel carries all of them. None is a
+// state of the form: the form neither shows them nor may be built against them as the context of its
+// property map, and a state holding nothing but these is a state with nothing to inherit.
+// The list mirrors the whole server-side set (UnifiedPanelDescriptorProvider::getServicePropertyNames()),
+// which a client cannot ask for here, the NotFilled mark included: it is the verdict of the panel over its
+// own cards, written by the very save that left one unfinished (Complex::markActivityFilled), so a node
+// whose cards were never finished carries the mark and nothing of the form - and a form seeded from it
+// would be taken for a saved one, losing the defaults of its property map.
+const NODE_SERVICE_PROPERTIES = Object.freeze([
+	'Rules',
+	'NodeCondition',
+	'FilterSettings',
+	'FilterReturnPropertiesMap',
+	'RelationReturnPropertiesMap',
+	'Links',
+	'InputNames',
+	'OutputNames',
+	'Relations',
+	'NotFilled',
+]);
 
 // Cap on the whole wait of an action prefill: the normalization of the base settings and the
 // capability catalog together (see resolveActionPrefill). Without it a request that never answers
@@ -259,17 +531,156 @@ const findActionClassification = (entry: ?CatalogActionEntry): { area: ?string, 
 	return { area, object: Type.isStringFilled(object) ? object : null };
 };
 
-// The part of the base settings an action really inherits: the host metadata stays behind
-// (BASE_SETTINGS_EXCLUDED_PROPERTIES), so a state holding nothing else means there is nothing to
-// inherit. One helper for both readers of that rule — the decision to inherit
+// The part of the properties of a host-merged activity that is really inherited: the host metadata
+// stays behind (BASE_SETTINGS_EXCLUDED_PROPERTIES), so a state holding nothing else means there is
+// nothing to inherit. One helper for every reader of that rule — the decision to inherit
 // (resolveActionPrefill) and the expression built from it (buildDefaultActionExpression).
+// The copy is shallow: a nested value is still the one the state of the node holds, so a caller reads
+// it and hands it no further without a copy of its own (see toPropertyMapContext).
 const toInheritedProperties = (baseProperties: ?Object): Object => {
-	const properties = { ...(baseProperties ?? {}) };
+	const properties = { ...baseProperties };
 	BASE_SETTINGS_EXCLUDED_PROPERTIES.forEach((key: string) => {
 		delete properties[key];
 	});
 
 	return properties;
+};
+
+/**
+ * The properties the form of a host-merged base settings is built against: the saved state of the host
+ * node, brought to what the form of that node owns (EditBaseSettings.buildFallbackActivity).
+ *
+ * Two independent rules meet here, and the read side deliberately starts from the save-side one: metadata
+ * the base settings may not write on the host is no state of its form either. They part as soon as the
+ * save side excludes a key for a reason of its own — that it must not be written back — while the property
+ * map needs that key as its context: such a key is then kept here instead of following the save side.
+ *
+ * The copy is deep because the result leaves the store for good: it is serialized into the property-map
+ * request and handed to the renderers of the form, so no nested value of it is the one the state holds.
+ */
+export const toPropertyMapContext = (baseProperties: ?Object): Object => {
+	const properties = toInheritedProperties(baseProperties);
+	NODE_SERVICE_PROPERTIES.forEach((key: string) => {
+		delete properties[key];
+	});
+
+	return Runtime.clone(properties);
+};
+
+// Keys the extractor of the base-settings form adds to every snapshot of its own accord: they name
+// the node and the form, not anything the user filled in (see EditBaseSettings.extractFormData).
+// A snapshot holding nothing besides them is the snapshot of an untouched form - and one is left
+// behind by every base-settings form the panel unmounts, a tab switch included.
+const BASE_SETTINGS_FORM_SERVICE_KEYS = Object.freeze(['activityType', 'documentType', 'id', 'activity_id']);
+
+// Whether a value of a form snapshot or of an activity property map says anything. An empty string,
+// an empty list and a map of empty values are what an untouched control leaves behind, so a filled
+// value has to be looked for down the nesting and not counted by the presence of the key.
+const hasFilledValue = (value: mixed): boolean => {
+	if (Type.isArray(value))
+	{
+		return value.some(hasFilledValue);
+	}
+
+	if (Type.isPlainObject(value))
+	{
+		return Object.values(value).some(hasFilledValue);
+	}
+
+	if (Type.isString(value))
+	{
+		return value.trim() !== '';
+	}
+
+	return value !== null && value !== undefined && value !== false;
+};
+
+/**
+ * Whether anything in a property map or in a form snapshot was filled in by a person. Three kinds of
+ * value are not that, and none of them can be told by its own contents:
+ *
+ * - service keys of the panel and of the form extractor - the bookkeeping of the panel, the id of the
+ *   activity, the type of the document (NODE_SERVICE_PROPERTIES, BASE_SETTINGS_FORM_SERVICE_KEYS);
+ * - properties the node carries out of the palette, while they still hold the very value the palette
+ *   gave them: they say which node this is (the class of a trigger, the entity of an event), and a
+ *   node has them from the moment it is dropped. Changed by hand, they count as filled again;
+ * - a value that is simply empty.
+ *
+ * What is left uncovered here is a hidden field of the form holding a default of its own
+ * (`message_type` of a notification): it is a value of the form and not of the node, and only the
+ * form knows it is hidden. That is what the verdict of the form itself answers
+ * (baseSettingsFormChecks); this reading is the fallback for a form that has never been built.
+ */
+const hasFilledProperty = (
+	source: ?Object,
+	serviceKeys: $ReadOnlyArray<string>,
+	paletteProperties: ?Object = null,
+): boolean => {
+	return Object.entries(toInheritedProperties(source)).some(([key, value]: [string, mixed]) => {
+		if (serviceKeys.includes(key) || NODE_SERVICE_PROPERTIES.includes(key))
+		{
+			return false;
+		}
+
+		if (paletteProperties && key in paletteProperties && deepEqual(paletteProperties[key], value))
+		{
+			return false;
+		}
+
+		return hasFilledValue(value);
+	});
+};
+
+/**
+ * Activity whose property map the base-settings form of a construction renders: the node-action it is
+ * bound to, the type its own state carries, or the node itself. One chain for the form that asks the
+ * server for those controls (EditBaseSettings.resolveBackingActivityType) and for every reader that
+ * has to name the same activity - the page-level memory of the fields is keyed by it.
+ */
+export const resolveBaseSettingsBackingType = (
+	construction: ?Construction,
+	block: ?Block,
+): string | null => {
+	const expression = construction?.expression ?? null;
+
+	return expression?.actionId ?? expression?.activityData?.Type ?? block?.activity?.Type ?? null;
+};
+
+/**
+ * True while a base-settings block carries a state of its own: a form state already committed in this
+ * session, the properties of the action it is bound to, or - a host-merged one - the properties of the
+ * host node itself, brought to what the form of that node owns (see toPropertyMapContext).
+ *
+ * Read by the short form of the panel, which never mounts that form: it therefore knows neither the
+ * names of its fields nor what their values read as, and can only answer whether anything was filled
+ * in at all. That answer is given by the values and never by the keys: a form leaves a snapshot of
+ * all its fields behind whether they were filled in or not, so counting keys called every node with
+ * a base-settings form filled as soon as the panel had shown that form once.
+ */
+const hasBaseSettingsState = (construction: ?Construction, block: ?Block): boolean => {
+	const expression = construction?.expression ?? null;
+	if (!expression)
+	{
+		return false;
+	}
+
+	const paletteProperties = useCatalogStore().getCatalogProperties(block?.activity);
+
+	if (hasFilledProperty(expression.rawActivityData, BASE_SETTINGS_FORM_SERVICE_KEYS, paletteProperties))
+	{
+		return true;
+	}
+
+	// The very source the form of the base settings reads and the save writes back from: the state of
+	// the block lives in its own activityData whenever it has one, whether it is bound to a node-action
+	// or merged into the host (EditBaseSettings.loadForm, ConvertRuleCommand::mergeBaseSettingsProperties).
+	// Only a construction without one falls back to the properties of the host node, and only while it
+	// is host-merged - that is the fallback the form builds for itself (buildFallbackActivity).
+	const properties = expression.activityData?.Properties
+		?? (Type.isStringFilled(expression.actionId) ? null : block?.activity?.Properties)
+	;
+
+	return hasFilledProperty(properties, NODE_SERVICE_PROPERTIES, paletteProperties);
 };
 
 export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-settings', {
@@ -279,9 +690,14 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		isShown: false,
 		shouldShowWithTransition: false,
 		currentRule: null,
+		selectedRulePortId: null,
 		prevSavedNodeSettings: null,
 		ports: null,
 		nodeSettings: null,
+		// references of the node the server reported as leading nowhere, as its map of a reference to
+		// itself. Filled by a request of its own that the panel never waits for, so it stays empty
+		// while the panel is already open (see requestNodeBrokenLinks).
+		brokenLinks: {},
 		block: null,
 		lastFetchId: 0,
 		selectedTabId: NODE_SETTINGS_TABS.basic,
@@ -300,6 +716,21 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		// one-shot autofill requests raised by an explicit "Create" selection, keyed by
 		// construction.id. Consumed once the form is mounted; a plain node open never sets one.
 		autofillRequests: {},
+		// required-fields state of the "Create" forms of the node, keyed by construction.id and written
+		// by the form itself. The form is hidden while its row is collapsed, and never built at all in a
+		// rule the user has not reached, so this is what the row answers the pre-save check with
+		// (EditActionExpression.onBeforeSubmit).
+		requiredFieldsChecks: {},
+		// what the base-settings form of a construction says about itself - whether it has any field to
+		// fill in, and whether anything in it is filled - keyed by construction.id and written by that
+		// form: only it knows which of its fields are shown and which are hidden carriers of defaults.
+		// Kept after the form leaves the screen, so the row of the short form keeps the answer for as
+		// long as the node is open (see isBaseSettingsFilled).
+		baseSettingsFormChecks: {},
+		// rows that blocked the save press being handled, in the order they answered. Lives for one
+		// press: the panel opens it, the rows report into it and the panel then leads to the first of
+		// them (see reportRequiredFieldsBlock).
+		requiredFieldsBlocks: [],
 		// last normalization of the node's base settings and the request currently producing one,
 		// both tagged with the form state they describe (see matchesBaseSettingsState).
 		// { constructionId, rawActivityData, properties } / { constructionId, rawActivityData, promise }
@@ -315,30 +746,121 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		// synchronous flush of the mounted base-settings form, registered by the form itself
 		// (see registerBaseSettingsFormFlush). Null while no such form is on screen.
 		baseSettingsFormFlush: null,
+		// the rules tab shows the relations of the node, not the rules of its inputs (see setCurrentRule)
+		isRelationsSurface: false,
+		// expanded rules of the rules tab. Filled with every input port when the node loads: an input
+		// opens expanded and the user collapses it by hand (see fetchNodeSettings)
+		expandedRulePortIds: [],
+		// groups are open inside an expanded input, so this holds the ones collapsed by hand
+		collapsedRuleCardIds: [],
+		// rules the panel has led the user into by address (see expandConstruction): expanding such a
+		// rule is not enough, the forms of its blocks have to be mounted for the row to exist at all
+		revealedRulePortIds: [],
 	}),
 	getters:
 	{
 		/**
-		 * Rules of the current port kind: relation rules for a relation port, plain rules otherwise,
-		 * for an input port and for the container of a node without input ports alike (PORTLESS_RULE),
-		 * which the transport carries inside the very same collection.
-		 * An empty map while the panel holds no port or no loaded node (closed panel, port removed
-		 * with the panel open): every consumer already treats a map without the current rule as
-		 * "nothing to work on", so this degrades instead of throwing.
+		 * Whether the base settings of a construction hold anything a person filled in - the question the
+		 * row of the short form asks, and the one it can never answer for itself: it neither mounts that
+		 * form nor may pay for a request of its own.
+		 *
+		 * The form answers it while it is on screen and its answer outlives it for as long as the node is
+		 * open. Before any form of this construction has been built - and for a form the server hands no
+		 * described controls for - the answer is read off the data, where the identity of the node and the
+		 * bookkeeping of the panel are told apart from the values of a person (hasBaseSettingsState).
 		 */
-		currentSettingsItems: (state: NodesSettingsState): Map<PortId, Rule> => {
-			if (!state.currentRule || !state.nodeSettings)
+		isBaseSettingsFilled: (state: NodesSettingsState) => (
+			construction: ?Construction,
+			block: ?Block,
+		): boolean => {
+			const reported = state.baseSettingsFormChecks[construction?.id]?.isFilled;
+
+			return Type.isBoolean(reported) ? reported : hasBaseSettingsState(construction, block);
+		},
+		/**
+		 * Document type the base settings of the node are read against: the one the node fixes, or the
+		 * one of the template. The very choice the form makes (EditBaseSettings.propertiesDialogDocumentType),
+		 * so a reader keys the remembered fields of an activity the way the form wrote them.
+		 */
+		baseSettingsDocumentType: (state: NodesSettingsState): Array<string> => {
+			const fixed = state.nodeSettings?.fixedDocumentType;
+
+			return Array.isArray(fixed) && fixed.length === 3 ? fixed : (diagramStore().documentType ?? []);
+		},
+		/**
+		 * Whether the base settings of a construction have anything to fill in. A node the unified panel
+		 * serves may carry nothing but service properties - a manual-start trigger has no field of its
+		 * own - and then both forms say so instead of showing an empty one.
+		 *
+		 * Answered by the form while it is on screen; then by what this node answered as it loaded, and
+		 * only after that by what a form of the same activity type reported earlier on this page - an
+		 * approximation of the answer of this node, since the property map of an activity is built against
+		 * its own properties as the context (baseSettingsFieldsMemory tells the two apart). Unknown counts
+		 * as "has fields": that is what every node looked like before the question was asked at all.
+		 */
+		hasBaseSettingsFillableFields(state: NodesSettingsState): (?Construction, ?Block) => boolean {
+			return (construction: ?Construction, block: ?Block): boolean => {
+				const reported = state.baseSettingsFormChecks[construction?.id]?.hasFillableFields;
+				if (Type.isBoolean(reported))
+				{
+					return reported;
+				}
+
+				const remembered = baseSettingsFieldsMemory.get(
+					resolveBaseSettingsBackingType(construction, block),
+					this.baseSettingsDocumentType,
+					block?.id ?? null,
+				);
+
+				return Type.isBoolean(remembered) ? remembered : true;
+			};
+		},
+		/**
+		 * Rule the add panel works on, and the one every operation left without an explicit rule port
+		 * falls back to (ALG-02).
+		 * The panel showing a single rule has no choice to make - that rule is the target. In the
+		 * all-rules mode the target is the rule whose card header the user picked last, and the last
+		 * created input port until they pick one: a node opened in that mode still has one rule the
+		 * toolbar adds to, and the newest one is the one just built by the user.
+		 * The pick is re-checked against the ports of the node on every read, so deleting the target
+		 * rule moves the target to the last of the remaining ones instead of leaving it dangling.
+		 */
+		toolbarRulePort(): RulePort | null
+		{
+			if (this.currentRule)
 			{
-				return EMPTY_SETTINGS_ITEMS;
+				return this.currentRule;
 			}
 
-			return state.currentRule.type === PORT_TYPES.inputRelation
-				? state.nodeSettings.relations
-				: state.nodeSettings.rules;
+			// The surface the tab really shows decides what the toolbar may add to, and the raw flag does
+			// not: the last relation deleted takes the surface back to the rules of the inputs
+			// (see isRelationsSurfaceShown). A relation is not a rule of an input, so neither the pick of
+			// the user nor the fallback crosses from one list to the other - a pick made on the surface
+			// left behind is dropped instead of pointing the add panel at a rule nobody sees.
+			const targetType = this.isRelationsSurfaceShown ? PORT_TYPES.inputRelation : PORT_TYPES.input;
+			const targetPorts = (this.ports ?? []).filter((port: Port) => port.type === targetType);
+			const selectedPort = this.selectedRulePortId === null
+				? null
+				: targetPorts.find((port: Port) => port.id === this.selectedRulePortId) ?? null
+			;
+
+			return selectedPort ?? targetPorts[targetPorts.length - 1] ?? null;
 		},
 		inputPorts: (state: NodesSettingsState): Array<Port> => {
 			return state.ports.filter((port) => port.type === PORT_TYPES.input
 				|| port.type === PORT_TYPES.inputRelation);
+		},
+		/** Relation ports of the node, in the order the panel lists them. */
+		relationPorts: (state: NodesSettingsState): Array<Port> => {
+			return (state.ports ?? []).filter((port) => port.type === PORT_TYPES.inputRelation);
+		},
+		/**
+		 * True while the rules tab lays out the relations of the node. The last relation deleted takes
+		 * the surface with it: there is nothing to lay out, and the tab goes back to the rules of the
+		 * inputs instead of showing an empty list of relations.
+		 */
+		isRelationsSurfaceShown(): boolean {
+			return this.isRelationsSurface && this.relationPorts.length > 0;
 		},
 		/**
 		 * Returns the map of available blocks from the node descriptor.
@@ -358,6 +880,31 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 				return blocks[type]?.available === true;
 			};
+		},
+		relationsMaxItems(): ?number
+		{
+			const maxItems = this.availableBlockTypes[NODE_BLOCK_TYPES.RELATIONS]
+				?.constraints?.maxItems
+			;
+
+			return Number.isInteger(maxItems) && maxItems > 0 ? maxItems : null;
+		},
+		relationRuleCardsCount: (state: NodesSettingsState): number => {
+			const relations = state.nodeSettings?.relations;
+			if (!relations)
+			{
+				return 0;
+			}
+
+			return [...relations.values()].reduce((count, relation) => {
+				return count + Math.max(1, Array.isArray(relation?.ruleCards) ? relation.ruleCards.length : 0);
+			}, 0);
+		},
+		canAddRelation(): boolean
+		{
+			return this.relationsMaxItems === null
+				|| this.relationRuleCardsCount < this.relationsMaxItems
+			;
 		},
 		/**
 		 * The base-settings construction of the node (input-port rules and relation rules alike)
@@ -385,8 +932,8 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		/**
 		 * Returns true when a base-settings construction exists anywhere in the node —
 		 * scanning both input-port rules and relation rules.
-		 * Covers the full state regardless of which port is currently active,
-		 * so the uniqueness guard works even when currentRule is an inputRelation port.
+		 * Covers the full state regardless of the surface the tab shows,
+		 * so the uniqueness guard works while the relations are the ones on screen.
 		 * Used by add-construction to hide/show the re-add pane.
 		 */
 		hasBaseSettings(): boolean
@@ -414,16 +961,16 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			return actionKeys.find((key) => normalizeActionCode(key) === normalizedPreset) ?? null;
 		},
 		/**
-		 * True when a newly added action may inherit the node's base settings: the current port is an
-		 * input one (a relation port keeps its own binding, see addConstruction), the block is
-		 * available, the construction exists and its action is part of the node's action catalog (an
-		 * action outside it fails the server-side catalog membership check and marks the node as not
-		 * filled). The port belongs to the condition: without it a relation port would resolve, and
-		 * pay for, a normalization whose result it then drops.
+		 * True when a newly added action may inherit the node's base settings: the target port of the
+		 * add panel is an input one (a relation port keeps its own binding, see addConstruction), the
+		 * block is available, the construction exists and its action is part of the node's action
+		 * catalog (an action outside it fails the server-side catalog membership check and marks the
+		 * node as not filled). The port belongs to the condition: without it a relation port would
+		 * resolve, and pay for, a normalization whose result it then drops.
 		 */
 		canInheritBaseSettings(): boolean
 		{
-			return this.currentRule?.type === PORT_TYPES.input
+			return this.toolbarRulePort?.type === PORT_TYPES.input
 				&& this.isBlockAvailable(NODE_BLOCK_TYPES.BASE_SETTINGS)
 				&& this.baseSettingsConstruction !== null
 				&& this.baseSettingsActionId !== null;
@@ -439,9 +986,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		 * away from describes an insertion that is already rejected, so it must not disable anything.
 		 */
 		isResolvingActionPrefill: (state: NodesSettingsState): boolean => {
-			return Object.values(state.actionPrefillRequests).some(
-				(fetchId: number) => fetchId === state.lastFetchId,
-			);
+			return Object.values(state.actionPrefillRequests).includes(state.lastFetchId);
 		},
 		/** Action entries of the loaded capability catalog (empty when absent). */
 		catalogActionEntries: (state: NodesSettingsState): Array<CatalogActionEntry> => {
@@ -489,7 +1034,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		resolveCatalogActionId(): (group: ?string, areaId: ?string, objectId: ?string) => string | null
 		{
 			return (group: ?string, areaId: ?string, objectId: ?string = null): string | null => {
-				const actionKeys = this.nodeSettings ? [...this.nodeSettings.actions.keys()] : [];
+				const actionKeys = [...(this.nodeSettings?.actions?.keys() ?? [])];
 
 				return resolveActionId(this.catalogActionEntries, actionKeys, group, areaId, objectId);
 			};
@@ -524,12 +1069,49 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			// The snapshot left from the previously opened node does not describe this form:
 			// drop it so "snapshot exists" always means "the form relates to it".
 			this.prevSavedNodeSettings = null;
+			// The rule picked in the previously opened node names nothing here either: the ports are
+			// local to a node, so the same id would silently point the add panel at another rule.
+			this.selectedRulePortId = null;
 			// the base settings of the previously opened node describe nothing here either
 			this.resetBaseSettingsProperties();
+			// The required fields of the forms of the previous node say nothing about this one: a record
+			// left behind must never answer the pre-save check of a row shown here, and a row of that
+			// node must never be the one a press here leads to.
+			this.requiredFieldsChecks = {};
+			this.baseSettingsFormChecks = {};
+			this.requiredFieldsBlocks = [];
+			// A rule of the previous node the panel led the user into is not a rule of this one: the
+			// ports are local to a node, so the same id would mount the forms of an unrelated rule.
+			this.revealedRulePortIds = [];
+			// The references of the previous node point at places inside that node: this one starts
+			// from an empty list, until its own answer lands.
+			this.brokenLinks = {};
+			// The forms of the previous node ask other questions than the ones of this one, and a request
+			// of its own may still be in flight: the remembered answers go with the node they describe.
+			settingsFormRequestCache.reset();
+			// Neither does its filter metadata. A direct switch between two complex nodes replaces the
+			// panel state without going through reset(), so the load is what bounds the cache.
+			filterMetadataCache.clear();
 			this.isLoading = true;
+			// Deliberately outside the Promise.all below: the panel opens without the list and shows the
+			// warning once it lands. A floating promise needs a catch of its own - a list that did not
+			// arrive leaves the panel as it is and reaches the user in no other way.
+			requestNodeBrokenLinks(block)
+				.then((brokenLinks) => {
+					if (this.lastFetchId === fetchId)
+					{
+						this.brokenLinks = brokenLinks;
+					}
+				})
+				.catch(() => {})
+			;
 			const workflowDocumentType = diagramStore().documentType;
 			const [loaded, defaultTitle] = await Promise.all([
-				withWarmDocumentFields(complexNodeApi.loadSettings(block.activity, [], workflowDocumentType)),
+				withWarmFilterMetadata(
+					withWarmDocumentFields(complexNodeApi.loadSettings(block.activity, [], workflowDocumentType)),
+					workflowDocumentType,
+					block.activity.Type,
+				),
 				defaultTitlePromise,
 				// warm document fields cache so condition previews resolve field names synchronously.
 				// Awaited unlike the warm-up of the node's own type: this one runs next to the load and
@@ -544,15 +1126,34 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				relations,
 				relationAction,
 				fixedDocumentType,
+				fixedDocumentTypeSigned,
 				filterSupported,
 				title: loadedTitle,
 				description,
 				availableBlocks: loadedAvailableBlocks,
+				baseSettingsHasFillableFields,
 			} = loaded;
 
 			if (this.lastFetchId !== fetchId || !this.nodeSettings)
 			{
 				return;
+			}
+
+			// The answer of the server about the fields of the base settings joins the very memory the form
+			// of those settings writes into, so the row of the short form reads one source either way and is
+			// right from the first render - without a request of its own (see baseSettingsFieldsMemory).
+			// Written as the answer of this node and not of its type: the server computed it against the
+			// properties of this very node, so it is the exact answer here and only an approximation for the
+			// next node of the same type - which is how the memory keeps the two.
+			// A response without the answer leaves the memory alone: the form still fills it in.
+			if (Type.isBoolean(baseSettingsHasFillableFields))
+			{
+				baseSettingsFieldsMemory.rememberForNode(
+					block.id,
+					block.activity?.Type,
+					Type.isArrayFilled(fixedDocumentType) ? fixedDocumentType : workflowDocumentType,
+					baseSettingsHasFillableFields,
+				);
 			}
 
 			if (Type.isStringFilled(loadedTitle) && loadedTitle !== defaultTitle)
@@ -575,6 +1176,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 					Object.entries(relations ?? {}).map(([id, relation]) => [id, toLoadedSettingsItem(relation)]),
 				),
 				fixedDocumentType,
+				fixedDocumentTypeSigned,
 				description,
 				filterSupported,
 				availableBlocks: normalizeAvailableBlocks(loadedAvailableBlocks, {
@@ -590,18 +1192,12 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			});
 			const rulesIds = new Set(this.nodeSettings.rules.keys());
 			const relationsIds = new Set(this.nodeSettings.relations.keys());
-			let firstRulePort = null;
 			this.ports.forEach((port) => {
 				if (port.type === PORT_TYPES.input)
 				{
 					if (!rulesIds.has(port.id))
 					{
 						this.addRule(port.id);
-					}
-
-					if (!firstRulePort)
-					{
-						firstRulePort = port;
 					}
 
 					return;
@@ -612,9 +1208,25 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 					this.addRelation(port.id);
 				}
 			});
-			// A node with no input port of any kind keeps its rules in the reserved container instead
-			// (see resolvePortlessRule); a node that has them keeps selecting its first input port.
-			this.setCurrentRule(this.inputPorts.length > 0 ? firstRulePort : this.resolvePortlessRule(block));
+			// A node with input ports opens in the all-rules mode: the panel shows the rules of all of
+			// them at once, so no single one is the current rule. A node with no input port of any kind
+			// opens on the reserved container where it keeps one (see resolvePortlessRule) - that
+			// container is then the one rule the node has - and in the all-rules mode otherwise.
+			// Another node starts on the rules of its inputs: a direct switch between two nodes replaces
+			// the state of the panel without going through reset().
+			this.isRelationsSurface = false;
+			this.setCurrentRule(this.inputPorts.length > 0 ? null : this.resolvePortlessRule(block));
+
+			// Every input opens expanded: what is set up in the node is on screen without a click. What
+			// an expanded input costs is its markup and nothing else - the forms of its blocks are
+			// mounted once the input has been reached (see isSectionLive), so a node with many inputs
+			// does not turn opening the panel into a request per rule. The relations are not touched
+			// here: they are opened when their own surface is (see setCurrentRule), so a node opened on
+			// its rules pays nothing for a list nobody is looking at.
+			this.ports
+				.filter((port: Port) => port.type === PORT_TYPES.input)
+				.forEach((port: Port) => this.expandRule(port.id))
+			;
 
 			// Auto-initialize an empty base-settings construction on first open
 			// if the node declares base-settings as available and none exists yet.
@@ -639,15 +1251,15 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		/**
 		 * Current rule of a node without input ports: the reserved container the transport keys by
 		 * PORTLESS_RULES_KEY, created when the loaded payload carries none (a node opened for the first
-		 * time). Null for a node the unified panel does not serve: such a node has no rules surface at
-		 * all, and the marker of that comes with the block and is never derived from its type or its
-		 * properties.
+		 * time). Null for a node that keeps no such container (hasPortlessRulesContainer) - a node the
+		 * unified panel does not serve has no rules surface at all, and a node managing its rules by
+		 * input ports has just lost its last one and is left with no rules instead.
 		 * The container is not a port: it lands in nodeSettings.rules only, never in this.ports, so it
 		 * adds no port to the canvas and none to the saved template.
 		 */
 		resolvePortlessRule(block: Block): PortlessRule | null
 		{
-			if (block?.node?.servedByUnifiedPanel !== true)
+			if (!hasPortlessRulesContainer(block))
 			{
 				return null;
 			}
@@ -778,8 +1390,10 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		reset(): void
 		{
 			this.currentRule = null;
+			this.selectedRulePortId = null;
 			this.shouldShowWithTransition = false;
 			this.nodeSettings = null;
+			this.brokenLinks = {};
 			this.prevSavedNodeSettings = null;
 			this.block = null;
 			this.ports = null;
@@ -791,12 +1405,24 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			this.capabilityCatalogRequest = null;
 			this.autofillSnapshots = {};
 			this.autofillRequests = {};
+			this.requiredFieldsChecks = {};
+			this.baseSettingsFormChecks = {};
+			this.requiredFieldsBlocks = [];
+			this.expandedRulePortIds = [];
+			this.collapsedRuleCardIds = [];
+			this.revealedRulePortIds = [];
+			this.isRelationsSurface = false;
 			this.resetBaseSettingsProperties();
+			// The remembered form answers belong to the node being closed (see fetchNodeSettings).
+			settingsFormRequestCache.reset();
 			// Advancing the generation past every fetch and every action prefill in flight: the panel
 			// is closed, so their records describe nothing on screen. Without it a prefill that has
 			// not landed yet would keep the add surface and the save button of the next node disabled
 			// (isResolvingActionPrefill), and a late loadSettings could still hydrate it.
 			this.lastFetchId += 1;
+			// The filter metadata is shared by the constructions of one open panel only: a later
+			// opening asks again instead of drawing fields the entity may no longer have.
+			filterMetadataCache.clear();
 		},
 		/**
 		 * stores a session snapshot of a "Create" action form (auto + manual values
@@ -846,6 +1472,81 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			return true;
 		},
+		/**
+		 * Records what the mounted "Create" form of a construction knows about its required fields. The
+		 * form writes it on every validation pass and once more before it leaves the screen, so the row
+		 * it belongs to can answer the pre-save check while the form is unmounted (collapsed row, rule
+		 * not reached).
+		 */
+		setRequiredFieldsCheck(constructionId: string, check: RequiredFieldsCheck): void
+		{
+			if (!Type.isStringFilled(constructionId))
+			{
+				return;
+			}
+
+			this.requiredFieldsChecks[constructionId] = check;
+		},
+		/**
+		 * Returns the recorded required-fields state of a construction, or null while no form of it has
+		 * been mounted for the open node.
+		 */
+		getRequiredFieldsCheck(constructionId: string): RequiredFieldsCheck | null
+		{
+			return this.requiredFieldsChecks[constructionId] ?? null;
+		},
+		/**
+		 * Forgets what the forms of these constructions recorded: a construction the user deleted has no
+		 * row left to answer the pre-save check, so its record would sit in the map until the panel loads
+		 * another node. Called from every path that drops constructions - one of them, a card, a rule.
+		 */
+		forgetRequiredFieldsChecks(constructions: ?Array<Construction>): void
+		{
+			(constructions ?? []).forEach((construction: Construction) => {
+				delete this.requiredFieldsChecks[construction.id];
+				delete this.baseSettingsFormChecks[construction.id];
+			});
+		},
+		/**
+		 * The verdict of a base-settings form over itself: whether any field it shows holds a value.
+		 * Written by the form, because only the form is told by the server which of its fields are shown
+		 * and which are hidden carriers of a default or of the identity of the node
+		 * (EditBaseSettings.reportFilledState). A form built against controls the server does not
+		 * describe records nothing and leaves the row reading the data instead.
+		 */
+		setBaseSettingsFormCheck(constructionId: string, check: BaseSettingsFormCheck): void
+		{
+			if (!Type.isStringFilled(constructionId))
+			{
+				return;
+			}
+
+			this.baseSettingsFormChecks[constructionId] = check;
+		},
+		/**
+		 * Opens a pass of the pre-save check: the rows that block report into it while the panel asks
+		 * them, and the rows that blocked the previous press must not be among them.
+		 */
+		beginRequiredFieldsBlockPass(): void
+		{
+			this.requiredFieldsBlocks = [];
+		},
+		/**
+		 * A row that blocked the press being handled. Every blocked row expands itself, because that is
+		 * where its inline errors show, but bringing a row into view and announcing the block are done
+		 * once for the whole press: several rules of a node are on screen at once, so N rows each leading
+		 * the user to itself would leave them at the last one and queue N announcements of one meaning.
+		 * The panel reads this collection and leads to the first of the rows (NodeSettings.onSave).
+		 */
+		reportRequiredFieldsBlock(block: RequiredFieldsBlock): void
+		{
+			if (!Type.isStringFilled(block?.constructionId))
+			{
+				return;
+			}
+
+			this.requiredFieldsBlocks.push(block);
+		},
 		toggleVisibility(isShown: boolean): void
 		{
 			this.isShown = isShown;
@@ -864,9 +1565,195 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		{
 			this.shouldShowWithTransition = false;
 		},
-		setCurrentRule(port: Port): void
+		/**
+		 * Selects the rule the panel shows on its own, or null for the all-rules mode.
+		 */
+		setCurrentRule(port: ?RulePort): void
 		{
+			// The surface follows the rule shown: a relation belongs to the relations of the node, any
+			// other rule to the rules of its inputs. Null shows everything of the surface already on
+			// screen - all rules, or all relations - so it changes nothing here.
+			if (port)
+			{
+				this.isRelationsSurface = port.type === PORT_TYPES.inputRelation;
+			}
+
 			this.currentRule = port;
+			// Picking one rule shows it open, and it stays open on the way back to the whole list:
+			// the choice of the user is what the list then shows too.
+			if (port)
+			{
+				this.expandRule(port.id);
+			}
+
+			// Entering the relations opens all of them, the way loading a node opens all its inputs:
+			// the list the selector leads back to ("all relations") is then open, a single relation
+			// included.
+			if (this.isRelationsSurface)
+			{
+				this.relationPorts.forEach((relationPort: Port) => this.expandRule(relationPort.id));
+			}
+		},
+		/** Surface of the rules tab: the relations of the node, or the rules of its inputs. */
+		setRelationsSurface(isRelations: boolean): void
+		{
+			this.isRelationsSurface = isRelations;
+		},
+		/**
+		 * Expansion of the rules tab. A node opens with every input expanded and the user collapses what
+		 * they do not need: nothing here closes or opens anything on its own afterwards.
+		 * The state lives in the store and not in the layout because the save flow expands a blocked
+		 * row through here (see NodeSettings.revealBlockedRow); mounting the forms of that row is a
+		 * separate matter and is asked for separately (see revealRule).
+		 */
+		isRuleExpanded(portId: PortId): boolean
+		{
+			return this.expandedRulePortIds.includes(portId);
+		},
+		expandRule(portId: PortId): void
+		{
+			if (!this.expandedRulePortIds.includes(portId))
+			{
+				this.expandedRulePortIds.push(portId);
+			}
+		},
+		collapseRule(portId: PortId): void
+		{
+			this.expandedRulePortIds = this.expandedRulePortIds.filter((id) => id !== portId);
+		},
+		toggleRule(portId: PortId): void
+		{
+			if (this.isRuleExpanded(portId))
+			{
+				this.collapseRule(portId);
+
+				return;
+			}
+
+			this.expandRule(portId);
+		},
+		/**
+		 * Where the construction lives: the collection holding it, its rule as the panel addresses it,
+		 * the group card showing it and its place in the traversal order of the node. Null for a
+		 * construction the node does not hold and for a rule whose port the node no longer has.
+		 * The one traversal of the rules of a node, and the one definition of "first": the save flow
+		 * picks the refusal to lead to by the order counted here (NodeSettings.saveRules), and
+		 * expandConstruction() opens what it names. That order is the order of the sections on screen
+		 * (orderRulePorts) - a construction of the input standing higher answers first.
+		 * The rule is a real descriptor and never a synthesized one: the panel reads its type to pick
+		 * the surface and the collection, and a rule without a type would send it to the other list.
+		 */
+		resolveConstructionLocation(constructionId: string): ConstructionLocation | null
+		{
+			let order = 0;
+			for (const rulePort of orderRulePorts(this.nodeSettings, this.ports))
+			{
+				const collection = resolveRuleCollection(this.nodeSettings, rulePort);
+				const rule = collection?.get(rulePort.id);
+				for (const ruleCard of rule?.ruleCards ?? [])
+				{
+					for (const construction of ruleCard.constructions ?? [])
+					{
+						if (construction.id === constructionId)
+						{
+							return { collection, rulePort, ruleCardId: ruleCard.id, order };
+						}
+
+						order += 1;
+					}
+				}
+			}
+
+			return null;
+		},
+		/**
+		 * Opens whatever hides the construction: its rule and the group card holding it. Used by the
+		 * save flow to lead the user to a row blocked by required fields - a row of a collapsed rule
+		 * is not merely scrolled past, it is not in the DOM at all until its rule is expanded.
+		 * Expanding is not the whole of it: the forms of the blocks of a rule are mounted only once
+		 * the rule has been reached (see isSectionLive), and a rule never reached in this session
+		 * keeps no row of its own to lead to - hence the rule is named as revealed as well, which
+		 * mounts its forms whether the user has ever been there or not.
+		 */
+		expandConstruction(constructionId: string): void
+		{
+			const location = this.resolveConstructionLocation(constructionId);
+			if (!location)
+			{
+				return;
+			}
+
+			this.expandRule(location.rulePort.id);
+			this.expandRuleCard(location.ruleCardId);
+			this.revealRule(location.rulePort.id);
+		},
+		/**
+		 * Names a rule the panel has led the user into: its forms are mounted from here on, and they
+		 * stay mounted for as long as the node is open - the row led to holds the error being read.
+		 */
+		revealRule(portId: PortId): void
+		{
+			if (!this.revealedRulePortIds.includes(portId))
+			{
+				this.revealedRulePortIds.push(portId);
+			}
+		},
+		/**
+		 * A group is open unless the user has closed it: expanding an input shows what is inside it,
+		 * and a group closed by hand stays closed for as long as the node is open.
+		 */
+		isRuleCardExpanded(ruleCardId: string): boolean
+		{
+			return !this.collapsedRuleCardIds.includes(ruleCardId);
+		},
+		expandRuleCard(ruleCardId: string): void
+		{
+			this.collapsedRuleCardIds = this.collapsedRuleCardIds.filter((id) => id !== ruleCardId);
+		},
+		collapseRuleCard(ruleCardId: string): void
+		{
+			if (!this.collapsedRuleCardIds.includes(ruleCardId))
+			{
+				this.collapsedRuleCardIds.push(ruleCardId);
+			}
+		},
+		toggleRuleCard(ruleCardId: string): void
+		{
+			if (this.isRuleCardExpanded(ruleCardId))
+			{
+				this.collapseRuleCard(ruleCardId);
+
+				return;
+			}
+
+			this.expandRuleCard(ruleCardId);
+		},
+		/**
+		 * Names the rule the add panel works on in the all-rules mode (a click on a card header).
+		 * Only an input port can host it: that mode lists the rules of the node and never its
+		 * relations, so anything else is refused instead of silently pointing the panel at them.
+		 * Null gives the choice back to the default (see toolbarRulePort).
+		 */
+		setSelectedRulePort(portId: ?PortId): void
+		{
+			if (portId === null)
+			{
+				this.selectedRulePortId = null;
+
+				return;
+			}
+
+			// A port of the surface the tab shows, and only it: naming a relation as the target while the
+			// rules of the inputs are on screen would point the toolbar at a list nobody is looking at.
+			// The surface shown is what decides, the same way the toolbar target does (toolbarRulePort).
+			const targetType = this.isRelationsSurfaceShown ? PORT_TYPES.inputRelation : PORT_TYPES.input;
+			const isTargetPort = (this.ports ?? []).some(
+				(port) => port.id === portId && port.type === targetType,
+			);
+			if (isTargetPort)
+			{
+				this.selectedRulePortId = portId;
+			}
 		},
 		/**
 		 * On first open, auto-initialize an empty base-settings construction if:
@@ -1160,7 +2047,8 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				return Promise.resolve(internalProperties);
 			}
 
-			const formState = { constructionId: construction.id, rawActivityData };
+			const { id: constructionId } = construction;
+			const formState = { constructionId, rawActivityData };
 			if (matchesBaseSettingsState(this.baseSettingsProperties, formState))
 			{
 				return Promise.resolve(this.baseSettingsProperties.properties);
@@ -1310,12 +2198,13 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			return findHeadRuleCard(rule.ruleCards) ?? this.addRuleCardToRule(rule, true);
 		},
 		/**
-		 * Head card of the current rule (see resolveHeadRuleCardForRule).
-		 * Null when the current rule has no entry: nothing to add the construction to.
+		 * Head card of the given rule, the target rule of the add panel by default
+		 * (see resolveHeadRuleCardForRule, toolbarRulePort).
+		 * Null when that rule has no entry: nothing to add the construction to.
 		 */
-		resolveHeadRuleCard(): TRuleCard | null
+		resolveHeadRuleCard(rulePort: ?RulePort = this.toolbarRulePort): TRuleCard | null
 		{
-			const rule = this.currentSettingsItems.get(this.currentRule?.id);
+			const rule = resolveRuleCollection(this.nodeSettings, rulePort)?.get(rulePort?.id);
 			if (!rule)
 			{
 				return null;
@@ -1326,11 +2215,11 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		/**
 		 * Group card a toolbar chip adds a construction to: the last group while it holds no
 		 * construction of that group yet, otherwise a freshly created group.
-		 * Null when the current rule has no entry (see resolveHeadRuleCard).
+		 * Null when the target rule has no entry (see resolveHeadRuleCard).
 		 */
-		resolveGroupRuleCard(constructionType: string): TRuleCard | null
+		resolveGroupRuleCard(constructionType: string, rulePort: ?RulePort = this.toolbarRulePort): TRuleCard | null
 		{
-			const rule = this.currentSettingsItems.get(this.currentRule?.id);
+			const rule = resolveRuleCollection(this.nodeSettings, rulePort)?.get(rulePort?.id);
 			if (!rule)
 			{
 				return null;
@@ -1338,6 +2227,14 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			return findGroupRuleCardForType(rule.ruleCards, constructionType) ?? this.addRuleCardToRule(rule);
 		},
+		/**
+		 * Adds a rule, for the given port or for a newly numbered one.
+		 * A rule created without a port id is one the user just asked for, so it opens expanded - the
+		 * same reason an addition into a rule opens it (see addConstruction): a new input rendered
+		 * collapsed among expanded neighbours would look like the press did nothing. A rule created for
+		 * a port the node already has comes from the load path, which decides expansion on its own
+		 * (see fetchNodeSettings).
+		 */
 		addRule(portId: ?PortId): PortId
 		{
 			const nextPortId = portId ?? generateNextInputPortId(this.inputPorts);
@@ -1347,16 +2244,35 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				ruleCards: [],
 			});
 
+			if (!portId)
+			{
+				this.expandRule(nextPortId);
+			}
+
 			return nextPortId;
 		},
-		addRelation(portId: ?PortId): PortId
+		/**
+		 * Adds a relation, or refuses once the node holds as many cards as it may (see canAddRelation).
+		 * Expansion of a new one follows addRule().
+		 */
+		addRelation(portId: ?PortId): ?PortId
 		{
+			if (!this.canAddRelation)
+			{
+				return null;
+			}
+
 			const nextPortId = portId ?? generateNextInputPortId(this.inputPorts);
 			this.nodeSettings.relations.set(nextPortId, {
 				isFilled: false,
 				portId: nextPortId,
 				ruleCards: [],
 			});
+
+			if (!portId)
+			{
+				this.expandRule(nextPortId);
+			}
 
 			return nextPortId;
 		},
@@ -1366,11 +2282,14 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		 * resolved by the caller (resolveActionPrefill()) because the action form renders from the store
 		 * and does not follow later activityData writes, and it is read as given: the decision it holds
 		 * was taken before the round trip and must not be recomputed from a state that changed during it.
+		 * rulePort is the rule the card belongs to, the target rule of the add panel by default: it is
+		 * what tells an action of a relation port from one of an input port (see below).
 		 */
 		addConstruction(
 			ruleCard: TRuleCard,
 			constructionType: string,
 			actionPrefill: ?ActionPrefill = null,
+			rulePort: ?RulePort = this.toolbarRulePort,
 		): Construction | null
 		{
 			// Frontend uniqueness guard for base-settings:
@@ -1406,7 +2325,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 				if (
 					constructionType === CONSTRUCTION_TYPES.ACTION
-					&& this.currentRule?.type === PORT_TYPES.inputRelation
+					&& rulePort?.type === PORT_TYPES.inputRelation
 					&& this.nodeSettings?.relationAction
 				)
 				{
@@ -1450,10 +2369,31 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				: findConstructionInsertIndex(ruleCard.constructions, constructionType);
 			ruleCard.constructions.splice(pos, 0, newConstruction);
 
+			// What was just added has to be on screen: the rule and the group it landed in are opened,
+			// and the rule is reached, so the form of the new block is mounted instead of waiting for
+			// the user to reach a rule they are already working in.
+			// An input a user had collapsed by hand is therefore opened again by an addition into it.
+			if (rulePort)
+			{
+				this.expandRule(rulePort.id);
+				this.revealRule(rulePort.id);
+			}
+			this.expandRuleCard(ruleCard.id);
+
 			return newConstruction;
 		},
-		deleteConstruction(ruleCard: TRuleCard, construction: Construction): void
+		/**
+		 * Removes a construction from a card, and the card with it once it holds nothing.
+		 * rulePort names the rule of the card; without it the rule is the one the card belongs to
+		 * (see resolveOperationRule), which is what the delete button of a card rendered in the
+		 * all-rules mode relies on.
+		 */
+		deleteConstruction(ruleCard: TRuleCard, construction: Construction, rulePort: ?RulePort = null): void
 		{
+			const auxPortId = construction.type === CONSTRUCTION_TYPES.ACTION
+				? construction.expression?.auxPortId
+				: null
+			;
 			// A construction of another card (or an already removed one) must not delete the last block
 			// here: indexOf returns -1 and splice(-1, 1) would drop the tail of this card.
 			const constructionIndex = ruleCard.constructions.indexOf(construction);
@@ -1463,15 +2403,21 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			}
 
 			ruleCard.constructions.splice(constructionIndex, 1);
+			this.forgetRequiredFieldsChecks([construction]);
 			if (ruleCard.constructions.length === 0)
 			{
-				this.deleteRuleCard(ruleCard);
+				this.deleteRuleCard(ruleCard, rulePort);
 			}
+
+			this.deactivateAuxPortIfUnused(auxPortId);
 		},
 		deleteRuleSettings(ruleId: string): SyncOutputPorts | null
 		{
 			const isRule = this.nodeSettings.rules.has(ruleId);
 			const settingsItems = isRule ? this.nodeSettings.rules : this.nodeSettings.relations;
+			(settingsItems.get(ruleId)?.ruleCards ?? []).forEach((ruleCard: TRuleCard) => {
+				this.forgetRequiredFieldsChecks(ruleCard.constructions);
+			});
 			settingsItems.delete(ruleId);
 
 			const portType = isRule ? PORT_TYPES.input : PORT_TYPES.inputRelation;
@@ -1482,13 +2428,16 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		{
 			Object.assign(construction, { type });
 		},
-		changeRuleExpression(construction: Construction, props: Partial<Construction['expression']>): void
+		changeRuleExpression(construction: Construction, props: Object): void
 		{
 			Object.assign(construction.expression, props);
 		},
-		deleteRuleCard(ruleCard: TRuleCard): void
+		/**
+		 * Removes a group card of a rule (see deleteConstruction for the rulePort contract).
+		 */
+		deleteRuleCard(ruleCard: TRuleCard, rulePort: ?RulePort = null): void
 		{
-			const rule = this.currentSettingsItems.get(this.currentRule?.id);
+			const rule = resolveOperationRule(this.nodeSettings, rulePort, (card) => card === ruleCard);
 			if (!rule)
 			{
 				return;
@@ -1512,35 +2461,53 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			);
 			if (headConstructions.length > 0)
 			{
-				ruleCard.constructions = headConstructions;
-				ruleCard.groupTitle = '';
+				this.forgetRequiredFieldsChecks(
+					(ruleCard.constructions ?? []).filter(
+						(construction: Construction) => !isHeadConstructionType(construction.type),
+					),
+				);
+				Object.assign(ruleCard, {
+					constructions: headConstructions,
+					groupTitle: '',
+				});
 
 				return;
 			}
 
+			this.forgetRequiredFieldsChecks(ruleCard.constructions);
 			rule.ruleCards.splice(cardIndex, 1);
 		},
 		/**
-		 * Adds a group card to the current rule.
-		 * Null when the current rule has no entry (see resolveHeadRuleCard).
+		 * Adds a group card to a rule, the target rule of the add panel by default.
+		 * Null when that rule has no entry (see resolveHeadRuleCard).
 		 */
-		addRuleCard(): TRuleCard | null
+		addRuleCard(rulePort: ?RulePort = this.toolbarRulePort): TRuleCard | null
 		{
-			const rule = this.currentSettingsItems.get(this.currentRule?.id);
+			const rule = resolveRuleCollection(this.nodeSettings, rulePort)?.get(rulePort?.id);
 			if (!rule)
 			{
 				return null;
 			}
 
-			return this.addRuleCardToRule(rule);
+			const ruleCard = this.addRuleCardToRule(rule);
+			// A group added from the "more" menu is empty, so only its own row would show it: it opens
+			// together with its rule, otherwise the menu item would look like it did nothing.
+			if (rulePort)
+			{
+				this.expandRule(rulePort.id);
+			}
+			this.expandRuleCard(ruleCard.id);
+
+			return ruleCard;
 		},
 		/**
 		 * Renames a RuleCard group. Falls back to the default title when the new title is empty.
-		 * Does nothing while the current rule has no entry (see resolveHeadRuleCard).
+		 * Does nothing while the card belongs to no rule (see deleteConstruction for the rulePort
+		 * contract).
 		 */
-		renameRuleCard(ruleCard: TRuleCard, title: string): void
+		renameRuleCard(ruleCard: TRuleCard, title: string, rulePort: ?RulePort = null): void
 		{
-			const rule = this.currentSettingsItems.get(this.currentRule?.id);
+			const rule = resolveOperationRule(this.nodeSettings, rulePort, (card) => card === ruleCard);
 			if (!rule)
 			{
 				return;
@@ -1551,12 +2518,24 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			const otherCards = rule.ruleCards.filter((card) => card !== ruleCard);
 			const groupIndex = getNextGroupIndex(otherCards, Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GROUP_TITLE'));
 			const defaultTitle = Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GROUP_TITLE', { '#N#': groupIndex });
-			ruleCard.groupTitle = title.trim() !== '' ? title.trim() : defaultTitle;
+			const groupTitle = title.trim() === '' ? defaultTitle : title.trim();
+			Object.assign(ruleCard, { groupTitle });
 		},
-		reorder(payload: OrderPayload): void
+		/**
+		 * Moves a construction inside its card, or a card inside its rule.
+		 * rulePort names the rule of the move; without it the rule is the one holding the card the
+		 * payload addresses - the dragged item itself when whole cards are moved. The payload names
+		 * that card by id (it comes from the DOM), so the match is by id here and not by identity.
+		 */
+		reorder(payload: OrderPayload, rulePort: ?RulePort = null): void
 		{
 			const { draggedId, targetId, insertion, ruleCardId } = payload;
-			const rule = this.currentSettingsItems.get(this.currentRule?.id);
+			const draggedCardId = ruleCardId ?? draggedId;
+			const rule = resolveOperationRule(
+				this.nodeSettings,
+				rulePort,
+				(card) => card.id === draggedCardId,
+			);
 			if (!rule)
 			{
 				return;
@@ -1641,14 +2620,18 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			return this.syncOutputPortsWithRules(PORT_TYPES.input);
 		},
-		syncOutputPortsWithRules(portType?: string): SyncOutputPorts | null
+		/**
+		 * Output ports the rules of one input kind ask for, against the ones the node has.
+		 * The kind is always given by the caller: the rules of the whole node are on screen at once,
+		 * so there is no single current one to read it off.
+		 */
+		syncOutputPortsWithRules(type: string): SyncOutputPorts | null
 		{
 			if (!this.block)
 			{
 				return null;
 			}
 
-			const type = portType ?? this.currentRule?.type;
 			const settingsItems = type === PORT_TYPES.input
 				? this.nodeSettings.rules
 				: this.nodeSettings.relations
@@ -1701,13 +2684,19 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			outputPortsToAdd.forEach(({ portId, title }) => {
 				this.addRulePort(portId, PORT_TYPES.output, title);
 			});
-
+		},
+		syncAuxPorts(): void
+		{
 			const auxSync = this.syncAuxPortsWithActions();
 			auxSync?.auxPortsToAdd.forEach(({ portId, title }) => {
 				this.addAuxPort(portId, title);
 			});
 			auxSync?.auxPortsToActivate?.forEach((portId) => {
 				this.activatePort(portId);
+			});
+			auxSync?.auxPortsToDeactivate?.forEach((portId) => {
+				this.deletePort(portId);
+				diagramStore().deleteConnectionByBlockIdAndPortId(this.block.id, portId);
 			});
 		},
 		// No network call here: server normalizes relation activity settings inside saveSettingsAction().
@@ -1807,9 +2796,9 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			this.ports.unshift(port);
 		},
-		addRelationPort(portId: string, type: PortTypes, portTitle: ?string): void
+		addRelationPort(portId: ?string, type: PortTypes, portTitle: ?string): void
 		{
-			if (![PORT_TYPES.inputRelation, PORT_TYPES.outputRelation].includes(type))
+			if (!portId || ![PORT_TYPES.inputRelation, PORT_TYPES.outputRelation].includes(type))
 			{
 				return;
 			}
@@ -1849,6 +2838,14 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			{
 				this.setCurrentRule(null);
 			}
+
+			// The add panel picks its target anew (the last of the remaining rules): port ids are
+			// reused once the highest port of a node is deleted, so a pick left behind would come
+			// back to life on the next port added.
+			if (portId === this.selectedRulePortId)
+			{
+				this.setSelectedRulePort(null);
+			}
 		},
 		activatePort(portId: string): void
 		{
@@ -1869,7 +2866,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				rule.ruleCards.forEach((ruleCard) => {
 					ruleCard.constructions.forEach((construction) => {
 						if (
-							construction.type === CONSTRUCTION_TYPES.ACTION
+							carriesAuxPortReference(construction)
 							&& construction.expression?.auxPortId === portId
 						)
 						{
@@ -1882,21 +2879,29 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				});
 			});
 		},
+		isAuxPortUsedByActions(portId: PortId): boolean
+		{
+			return getActionAuxPortIdsFromRules(this.nodeSettings?.rules ?? null).has(portId);
+		},
+		deactivateAuxPortIfUnused(portId: ?PortId): void
+		{
+			if (!Type.isStringFilled(portId) || this.isAuxPortUsedByActions(portId))
+			{
+				return;
+			}
+
+			const port = this.ports.find((item) => item.id === portId && item.type === PORT_TYPES.aux);
+			if (port)
+			{
+				port.isActive = false;
+			}
+		},
 		syncAuxPortsWithActions(): SyncAuxPorts | null
 		{
 			if (!this.block)
 			{
 				return null;
 			}
-
-			const actionConstructions = [...this.nodeSettings.rules.values()].flatMap((r) => {
-				return r.ruleCards.flatMap((ruleCard) => {
-					return ruleCard.constructions.filter(
-						(construction) => construction.type === CONSTRUCTION_TYPES.ACTION
-							&& construction.expression.auxPortId,
-					);
-				});
-			});
 
 			const existingAuxPorts = new Map(
 				this.ports
@@ -1906,31 +2911,41 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			const toAddPortsMap: Map<PortId, SyncAuxPort> = new Map();
 			const toActivatePortIds: Set<PortId> = new Set();
+			const actionAuxPorts: Map<PortId, SyncAuxPort> = getActionAuxPortsFromRules(this.nodeSettings.rules);
+			const actionAuxPortIds: Set<PortId> = new Set(actionAuxPorts.keys());
+			const savedActionAuxPortIds: Set<PortId> = getActionAuxPortIdsFromActivity(this.block.activity);
+			const toDeactivatePortIds: Set<PortId> = new Set(
+				[...existingAuxPorts.values()]
+					.filter((port) => {
+						return savedActionAuxPortIds.has(port.id) && !actionAuxPortIds.has(port.id);
+					})
+					.map((port) => port.id),
+			);
 
-			actionConstructions.forEach((construction) => {
-				const { auxPortId, auxPortTitle } = construction.expression;
-				if (!auxPortId || !auxPortTitle)
+			actionAuxPorts.forEach(({ portId, title }) => {
+				if (!portId || !title)
 				{
 					return;
 				}
 
-				const existingPort = existingAuxPorts.get(auxPortId);
+				const existingPort = existingAuxPorts.get(portId);
 				if (!existingPort)
 				{
-					toAddPortsMap.set(auxPortId, { portId: auxPortId, title: auxPortTitle });
+					toAddPortsMap.set(portId, { portId, title });
 
 					return;
 				}
 
 				if (existingPort.isActive === false)
 				{
-					toActivatePortIds.add(auxPortId);
+					toActivatePortIds.add(portId);
 				}
 			});
 
 			return {
 				auxPortsToAdd: toAddPortsMap,
 				auxPortsToActivate: toActivatePortIds,
+				auxPortsToDeactivate: toDeactivatePortIds,
 			};
 		},
 		addAuxPort(portId: string, portTitle: ?string): void

@@ -8,6 +8,7 @@ use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\Internal\Entity\Activity\Result\ActivityAiDescriptionResult;
 use Bitrix\BizprocDesigner\Infrastructure\Dto\Catalog\NodeCatalogItemDtoFactory;
 use Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\ActivityVisibilityFilter;
+use Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\Enum\RequestSource;
 use Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\Result\BlockDescriptionResult;
 use Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\Result\BlockSettingsResult;
 use Bitrix\BizprocDesigner\Internal\Entity\BlockType;
@@ -33,6 +34,13 @@ class BlockDescriptionService
 	private const LOGGER_ID = 'bizprocdesigner.aiassistant.block_catalog';
 
 	private ?LoggerInterface $logger = null;
+
+	private readonly AgentBlockMetadataResolver $metadataResolver;
+
+	public function __construct(?AgentBlockMetadataResolver $metadataResolver = null)
+	{
+		$this->metadataResolver = $metadataResolver ?? new AgentBlockMetadataResolver();
+	}
 
 	/**
 	 * The activity catalogs this service has read, by the pair (kind of search, document type).
@@ -100,7 +108,8 @@ class BlockDescriptionService
 				continue;
 			}
 
-			if (!ActivityVisibilityFilter::isNodeCompatibleFromRaw($activity))
+			// Marta listing only - the REST catalog listing goes through AgentBlockCatalogService.
+			if (!ActivityVisibilityFilter::isNodeCompatibleFromRaw($activity, RequestSource::Marta))
 			{
 				continue;
 			}
@@ -131,9 +140,25 @@ class BlockDescriptionService
 	}
 
 	/**
+	 * Resolves the detail (settings/return fields) of a single block for the given source.
+	 *
+	 * Serves both the Marta detail tool, where storage nodes stay hidden, and reverse REST validation via
+	 * {@see BlockDescriptionCache}, where the storage whitelist lets them through. Defaults to Marta
+	 * (fail-closed), matching the Marta-only direct caller; the cache passes its source in.
+	 *
+	 * @param array<string, true> $baselineBlockTypes block types of the published bound template, keyed lowercase.
+	 *        Lifting the EXCLUDED barrier is judged against them, so a reverse read-back of a published disabled
+	 *        block passes while authoring a new one does not. Empty (the default) lifts nothing.
+	 *
 	 * @throws LoaderException
 	 */
-	public function getBlockSettings(DocumentDescription $documentType, string $blockType): Result|BlockSettingsResult
+	public function getBlockSettings(
+		DocumentDescription $documentType,
+		string $blockType,
+		RequestSource $source = RequestSource::Marta,
+		array $baselineBlockTypes = [],
+		?string $presetId = null,
+	): Result|BlockSettingsResult
 	{
 		if (!Loader::includeModule('bizproc'))
 		{
@@ -151,20 +176,37 @@ class BlockDescriptionService
 			$activity = is_array($nodes) ? ($nodes[$blockType] ?? null) : null;
 		}
 
-		if (!is_array($activity) || ($activity['EXCLUDED'] ?? false) === true)
+		if (!is_array($activity))
+		{
+			return (new Result())->addError(new Error(Loc::getMessage('BIZPROCDESIGNER_BLOCK_DESCRIPTION_ERR_BLOCK_NOT_FOUND')));
+		}
+
+		// EXCLUDED is checked before the visibility predicate, so a system AI agent's own EXCLUDED nodes would be
+		// cut here; on the reverse REST path the barrier is lifted for the reverse-visible CLASSes the published
+		// baseline already carries.
+		if (($activity['EXCLUDED'] ?? false) === true
+			&& !ActivityVisibilityFilter::bypassesExcludedFromRaw($activity, $source, $blockType, $baselineBlockTypes))
 		{
 			return (new Result())->addError(new Error(Loc::getMessage('BIZPROCDESIGNER_BLOCK_DESCRIPTION_ERR_BLOCK_NOT_FOUND')));
 		}
 
 		// The block detail must never bypass the listing's visibility predicate: an incompatible-topology
 		// block (e.g. a SERVICE, TOOL, or FRAME node) is rejected here exactly as it is hidden from the listing.
-		// Compatible node-only blocks (storage nodes, OPERATORS) stay reachable through the node fallback above.
-		if (!ActivityVisibilityFilter::isNodeCompatibleFromRaw($activity))
+		// Node-only blocks (OPERATORS) stay reachable through the node fallback above.
+		if (!ActivityVisibilityFilter::isNodeCompatibleFromRaw($activity, $source))
 		{
 			return (new Result())->addError(new Error(Loc::getMessage('BIZPROCDESIGNER_BLOCK_DESCRIPTION_ERR_BLOCK_NOT_FOUND')));
 		}
 
-		$result = $this->getActivityAiDescription($blockType, $documentType);
+		// Describing the block pinned to its preset is what fills its option lists: without them a CRM trigger
+		// cannot say which fields it allows. They are only there for a block the caller sent a presetId with;
+		// without one they stay empty and AgentSettingValueValidator::validateAgainstOptions returns at once.
+		$presetProperties = $this->metadataResolver->presetProperties($blockType, $presetId);
+		$result = $this->getActivityAiDescription(
+			$blockType,
+			$documentType,
+			$presetProperties === [] ? [] : ['Properties' => $presetProperties],
+		);
 		if (!$result instanceof ActivityAiDescriptionResult)
 		{
 			$this->logSkippedBlock($blockType, $result);
@@ -175,6 +217,12 @@ class BlockDescriptionService
 			;
 		}
 
+		$complexDetail = (new ComplexBlockDetailFactory())->build(
+			$blockType,
+			$this->resolveNodeType($activity),
+			$documentType->toBizprocComplexType(),
+		);
+
 		return new BlockSettingsResult(new BlockTypeDetail(
 			block: new BlockType(
 				type: $blockType,
@@ -182,10 +230,10 @@ class BlockDescriptionService
 			),
 			settings: $result->settings,
 			returnFields: $this->getReturnFields($activity),
-			describedTypes: $result->settings->getDescribedSettingTypesMap(),
+			describedTypes: (new BlockDescribedTypesResolver())->resolve($result->settings, $complexDetail),
 			skippedSettings: $result->skippedSettings,
 			nodeSettings: $this->resolveNodeSettings($activity),
-			complexDetail: (new ComplexBlockDetailFactory())->build($blockType, $this->resolveNodeType($activity), $documentType->toBizprocComplexType()),
+			complexDetail: $complexDetail,
 		));
 	}
 
@@ -298,12 +346,13 @@ class BlockDescriptionService
 
 	private function getActivityAiDescription(
 		string $blockType,
-		DocumentDescription $documentType
+		DocumentDescription $documentType,
+		array $context = []
 	): Result|ActivityAiDescriptionResult
 	{
 		return \CBPRuntime::getRuntime()
 			->getAiDescriptionService()
-			->getActivityDescription($blockType, $documentType->toBizprocComplexType())
+			->getActivityDescription($blockType, $documentType->toBizprocComplexType(), $context)
 		;
 	}
 

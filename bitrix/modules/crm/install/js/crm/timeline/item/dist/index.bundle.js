@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_timeline_tools, main_core, ui_vue3, main_loader, ui_iconSet_api_vue, main_date, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, ui_iconSet_api_core, ui_vue3_components_button, crm_field_colorSelector, main_core_events, ui_designTokens, ui_system_label, ui_cnt, crm_timeline_dialog, crm_router, ui_entitySelector, crm_common, ui_imageStackSteps, ui_iconSet_main, main_sidepanel, calendar_sharing_interface, calendar_util, crm_ai_call, ui_feedback_form, ai_ajaxErrorHandler, crm_ai_nameService, ui_a11y, ui_system_chip_vue, location_core, location_widget, ui_system_typography_vue, crm_timeline_editors_commentEditor, ui_bbcode_formatter_htmlFormatter, ui_textEditor, ui_lottie, main_lazyload, ui_progressround, ui_avatar, crm_activity_fileUploaderPopup, ui_icons_generator, crm_audioPlayer, ui_iconSet_actions, ui_designTokens_air, crm_field_itemSelector, currency_currencyCore, ui_alerts, crm_field_pingSelector, bizproc_types, ui_hint, crm_entityEditor, pull_client, ui_system_dialog, crm_entityEditor_field_paymentDocuments, ui_sidepanel, crm_integration_analytics) {
+(function (exports, crm_timeline_tools, main_core, ui_vue3, main_loader, ui_iconSet_api_vue, main_date, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, ui_iconSet_api_core, ui_vue3_components_button, crm_field_colorSelector, main_core_events, ui_designTokens, ui_system_label, ui_cnt, crm_timeline_dialog, crm_router, ui_entitySelector, crm_common, ui_imageStackSteps, ui_iconSet_main, main_sidepanel, calendar_sharing_interface, calendar_util, crm_ai_call, ui_feedback_form, ai_ajaxErrorHandler, crm_ai_nameService, ui_a11y, ui_system_chip_vue, location_core, location_widget, ui_system_typography_vue, crm_timeline_editors_commentEditor, ui_bbcode_formatter_htmlFormatter, ui_textEditor, ui_lottie, main_lazyload, crm_integration_analytics, ui_progressround, ui_avatar, crm_activity_fileUploaderPopup, ui_icons_generator, crm_audioPlayer, ui_iconSet_actions, ui_designTokens_air, crm_field_itemSelector, currency_currencyCore, ui_alerts, crm_field_pingSelector, bizproc_types, ui_hint, crm_entityEditor, pull_client, ui_system_dialog, crm_entityEditor_field_paymentDocuments, ui_sidepanel) {
 	'use strict';
 
 	const StreamType = {
@@ -2208,8 +2208,11 @@ this.BX.Crm = this.BX.Crm || {};
 		<span
 			v-else
 			@click="executeAction"
+			@keydown.enter="executeAction"
+			@keydown.space.prevent="executeAction"
 			:class="className"
-			tabindex="0"
+			:tabindex="action ? 0 : null"
+			:role="action ? 'button' : null"
 			:title="title"
 		>
 			{{title}}
@@ -2873,10 +2876,11 @@ this.BX.Crm = this.BX.Crm || {};
 		 * @param activityId Activity ID
 		 * @param scheduleDate Date to use in editor
 		 * @param description Default description to use in editor
+		 * @param options Additional editor options
 		 *
 		 * @protected
 		 */
-		runScheduleAction(activityId, scheduleDate, description = '') {
+		runScheduleAction(activityId, scheduleDate, description = '', options = {}) {
 			const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
 			if (menuBar) {
 				menuBar.setActiveItemById('todo');
@@ -2886,6 +2890,9 @@ this.BX.Crm = this.BX.Crm || {};
 					todoEditor.focus();
 					todoEditor.setParentActivityId(activityId);
 					todoEditor.setDeadLine(scheduleDate);
+					if (options.activateClient === true) {
+						todoEditor.activateClientBlock();
+					}
 					if (main_core.Type.isStringFilled(description)) {
 						todoEditor.setDescription(description);
 						todoEditor.focus();
@@ -3701,6 +3708,9 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 				return;
 			}
+			void crm_router.Router.Instance.openAiReportDrawerOrLegacy('transcript', actionData, () => this.#openLegacy(actionData));
+		}
+		async #openLegacy(actionData) {
 			await top.BX.Runtime.loadExtension('crm.ai.call');
 			const transcription = new top.BX.Crm.AI.Call.Transcription({
 				activityId: actionData.activityId,
@@ -3827,6 +3837,9 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 				return;
 			}
+			void crm_router.Router.Instance.openAiReportDrawerOrLegacy('summary-history', actionData, () => this.#openLegacy(actionData));
+		}
+		async #openLegacy(actionData) {
 			await top.BX.Runtime.loadExtension('crm.ai.call');
 			const summary = new top.BX.Crm.AI.Call.Summary({
 				activityId: actionData.activityId,
@@ -4551,8 +4564,11 @@ this.BX.Crm = this.BX.Crm || {};
 			});
 		}
 		#handleCopilotError(item, actionData, response, btnUI, previousButtonState) {
-			const customData = response?.errors?.[0]?.customData;
-			if (customData) {
+			const error = response?.errors?.[0];
+			const customData = error?.customData;
+			if (error?.code === 'AI_FILL_FIELDS_ENTITY_DISABLED') {
+				this.#showGenericError(response, btnUI, previousButtonState);
+			} else if (customData) {
 				this.#showAdditionalInfo(customData, item);
 				this.#restoreButtonState(btnUI, previousButtonState);
 			} else {
@@ -4927,6 +4943,9 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!main_core.Type.isInteger(payload?.activityId) || !main_core.Type.isInteger(payload?.ownerTypeId) || !main_core.Type.isInteger(payload?.ownerId)) {
 				return;
 			}
+			void crm_router.Router.Instance.openAiReportDrawerOrLegacy('transcript', payload, () => this.#openLegacyTranscriptResult(payload));
+		}
+		async #openLegacyTranscriptResult(payload) {
 			main_core.Runtime.loadExtension('crm.ai.call').then(exports => {
 				const transcription = new exports.Call.Transcription({
 					activityId: payload?.activityId,
@@ -4940,7 +4959,7 @@ this.BX.Crm = this.BX.Crm || {};
 			});
 		}
 		#showCopilotSummary(item, actionData) {
-			void this.openCopilotSummaryPopup(actionData, crm_ai_call.ActivityProvider.call);
+			void crm_router.Router.Instance.openAiReportDrawerOrLegacy('summary-history', actionData, () => this.openCopilotSummaryPopup(actionData, crm_ai_call.ActivityProvider.call));
 		}
 		// endregion
 
@@ -5747,6 +5766,15 @@ this.BX.Crm = this.BX.Crm || {};
 			},
 			isEditButtonVisible() {
 				return !(this.isReadOnly || this.isEdit);
+			},
+			copyButtonLabel() {
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPY');
+			},
+			clearButtonLabel() {
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CLEAR');
+			},
+			editButtonLabel() {
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_EDIT');
 			}
 		},
 		methods: {
@@ -5979,6 +6007,7 @@ this.BX.Crm = this.BX.Crm || {};
 					v-if="this.isCopied"
 					ref="copyTextBtn"
 					@click="copyText"
+					:aria-label="copyButtonLabel"
 					class="crm-timeline__text_copy-btn"
 				>
 					<i class="crm-timeline__editable-text_fixed-icon --copy"></i>
@@ -5987,6 +6016,7 @@ this.BX.Crm = this.BX.Crm || {};
 					v-if="isEdit && isEditable"
 					:disabled="isSaving"
 					@click="clearText"
+					:aria-label="clearButtonLabel"
 					class="crm-timeline__editable-text_clear-btn"
 				>
 					<i class="crm-timeline__editable-text_fixed-icon --clear"></i>
@@ -5995,6 +6025,7 @@ this.BX.Crm = this.BX.Crm || {};
 					v-if="!isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
+					:aria-label="editButtonLabel"
 					class="crm-timeline__editable-text_edit-btn"
 				>
 					<i class="crm-timeline__editable-text_edit-icon"></i>
@@ -6046,6 +6077,7 @@ this.BX.Crm = this.BX.Crm || {};
 				<button
 					v-if="isLongText && !isEdit"
 					@click="toggleIsCollapsed"
+					:aria-expanded="isCollapsed ? 'true' : 'false'"
 					class="crm-timeline__editable-text_collapse-btn"
 				>
 					{{ expandButtonText }}
@@ -6323,6 +6355,7 @@ this.BX.Crm = this.BX.Crm || {};
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
+					:aria-label="editButtonLabel"
 					class="crm-timeline__editable-text_edit-btn"
 				>
 					<i class="crm-timeline__editable-text_edit-icon"></i>
@@ -6342,13 +6375,15 @@ this.BX.Crm = this.BX.Crm || {};
 							v-html="value"
 						>
 						</span>
-						<span
+						<button
 							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
+							type="button"
 							@click="startEditing"
+							:aria-label="editButtonLabel"
 							class="crm-timeline__editable-text_text-edit-icon"
 						>
 							<span class="crm-timeline__editable-text_edit-icon"></span>
-						</span>
+						</button>
 					</div>
 					<div
 						v-if="isEdit"
@@ -6371,6 +6406,7 @@ this.BX.Crm = this.BX.Crm || {};
 				<button
 					v-if="isLongText && !isEdit"
 					@click="toggleIsCollapsed"
+					:aria-expanded="isCollapsed ? 'true' : 'false'"
 					class="crm-timeline__editable-text_collapse-btn"
 				>
 					{{ expandButtonText }}
@@ -6538,11 +6574,26 @@ this.BX.Crm = this.BX.Crm || {};
 				if (!main_core.Type.isInteger(assessmentSettingsId)) {
 					return;
 				}
+				const data = crm_integration_analytics.Builder.CallAssessment.OpenScriptEvent.createDefault(assessmentSettingsId).buildData();
+				if (data) {
+					ui_analytics.sendData(data);
+				}
 				crm_router.Router.Instance.openCallAssessmentSlider(assessmentSettingsId);
 			},
 			showDetails() {
 				if (main_core.Type.isObject(this.action)) {
+					this.sendOpenCallScoreAnalytics();
 					void new Action(this.action).execute(this);
+				}
+			},
+			sendOpenCallScoreAnalytics() {
+				const params = this.action?.actionParams;
+				if (!main_core.Type.isPlainObject(params)) {
+					return;
+				}
+				const data = crm_integration_analytics.Builder.CallAssessment.OpenCallScoreEvent.createDefault(params.activityId).setCallAssessmentId(params.assessmentSettingsId).buildData();
+				if (data) {
+					ui_analytics.sendData(data);
 				}
 			}
 		},
@@ -8467,7 +8518,7 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		computed: {
 			messageHtml() {
-				return BX.util.htmlspecialchars(this.text).replace(/\r\n|\r|\n/g, '<br/>');
+				return main_core.Text.encode(this.text).replace(/\r\n|\r|\n/g, '<br/>');
 			}
 		},
 		template: `
@@ -9069,6 +9120,13 @@ this.BX.Crm = this.BX.Crm || {};
 					if (moved === null && listContainer) {
 						ui_a11y.FocusNavigator.focusContainer(listContainer);
 					}
+					ui_a11y.LiveAnnouncer.announce(this.getRevealedMessage(), 'polite');
+				});
+			},
+			getRevealedMessage() {
+				const revealedCount = this.listItems.length - this.showMoreCnt;
+				return main_core.Loc.getMessagePlural('CRM_TIMELINE_ITEM_EXPANDABLE_LIST_REVEALED', revealedCount, {
+					'#COUNT#': revealedCount
 				});
 			},
 			isItemVisible(index) {
@@ -9314,7 +9372,7 @@ this.BX.Crm = this.BX.Crm || {};
 		static #toPrintAfterRefresh = [];
 		#popupConfirm;
 		static isItemSupported(item) {
-			return item.getType() === 'Document' || item.getType() === 'DocumentViewed' || item.getType() === 'Activity:Document';
+			return item.getType() === 'Document' || item.getType() === 'DocumentViewed';
 		}
 		onItemAction(item, actionParams) {
 			const {
@@ -9338,19 +9396,12 @@ this.BX.Crm = this.BX.Crm || {};
 			// }
 			if (action === ACTION_NAMESPACE + 'Open') {
 				this.#openDocument(documentId);
-			} else if (action === ACTION_NAMESPACE + 'CopyPublicLink') {
-				// todo block button while loading
-				this.#copyPublicLink(documentId, actionData?.publicUrl);
 			} else if (action === ACTION_NAMESPACE + 'Print') {
 				this.#printDocument(actionData?.printUrl, animationCallbacks, item);
 			} else if (action === ACTION_NAMESPACE + 'DownloadPdf') {
 				this.#downloadPdf(actionData?.pdfUrl);
 			} else if (action === ACTION_NAMESPACE + 'DownloadDocx') {
 				this.#downloadDocx(actionData?.docxUrl);
-			} else if (action === ACTION_NAMESPACE + 'UpdateTitle') {
-				this.#updateTitle(documentId, actionData?.value);
-			} else if (action === ACTION_NAMESPACE + 'UpdateCreateDate') {
-				this.#updateCreateDate(documentId, actionData?.value);
 			} else if (action === ACTION_NAMESPACE + 'ConvertDeal') {
 				this.#convertDeal(documentId, animationCallbacks);
 			} else if (action === ACTION_NAMESPACE + 'ShowInfoHelperSlider') {
@@ -9376,51 +9427,6 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		#openDocument(documentId) {
 			crm_router.Router.Instance.openDocumentSlider(documentId);
-		}
-		async #copyPublicLink(documentId, publicUrl) {
-			if (!main_core.Type.isStringFilled(publicUrl)) {
-				try {
-					publicUrl = await this.#createPublicUrl(documentId);
-				} catch (error) {
-					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-					crm_timeline_dialog.alert({
-						content: main_core.Tag.render`<div>${main_core.Text.encode(error.message)}</div>`
-					});
-					return;
-				}
-			}
-			const isSuccess = BX.clipboard.copy(publicUrl);
-			if (isSuccess) {
-				ui_notification.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_LINK_IS_COPIED'),
-					autoHideDelay: 5000
-				});
-			} else {
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-				crm_timeline_dialog.alert({
-					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR')}</div>`
-				});
-			}
-		}
-		async #createPublicUrl(documentId) {
-			let response;
-			try {
-				response = await main_core.ajax.runAction('crm.documentgenerator.document.enablePublicUrl', {
-					analyticsLabel: 'enablePublicUrl',
-					data: {
-						status: 1,
-						id: documentId
-					}
-				});
-			} catch (responseWithError) {
-				console.error(responseWithError);
-				throw new Error(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR'));
-			}
-			const publicUrl = response.data.publicUrl;
-			if (!main_core.Type.isStringFilled(publicUrl)) {
-				throw new Error(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR'));
-			}
-			return publicUrl;
 		}
 		#printDocument(printUrl, animationCallbacks, item) {
 			if (main_core.Type.isStringFilled(printUrl)) {
@@ -9450,57 +9456,6 @@ this.BX.Crm = this.BX.Crm || {};
 				window.open(docxUrl, '_blank');
 			} else {
 				console.error('Docx download url is not found. This should be an impossible case, something went wrong');
-			}
-		}
-		async #updateTitle(documentId, value) {
-			let response;
-			try {
-				response = await main_core.ajax.runAction('crm.documentgenerator.document.update', {
-					data: {
-						id: documentId,
-						values: {
-							DocumentTitle: value
-						}
-					}
-				});
-			} catch (responseWithError) {
-				console.error(responseWithError);
-
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-				crm_timeline_dialog.alert({
-					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`
-				});
-				return;
-			}
-			const newTitle = response.data.document?.values?.DocumentTitle;
-			if (newTitle !== value) {
-				console.error("Updated document title without errors, but for some reason title from the backend doesn't match sent value");
-			}
-		}
-		async #updateCreateDate(documentId, value) {
-			const valueInSiteFormat = main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateFormat(), value);
-			let response;
-			try {
-				response = await main_core.ajax.runAction('crm.documentgenerator.document.update', {
-					data: {
-						id: documentId,
-						values: {
-							DocumentCreateTime: valueInSiteFormat
-						}
-					}
-				});
-			} catch (responseWithError) {
-				console.error(responseWithError);
-
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-				crm_timeline_dialog.alert({
-					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`
-				});
-				return;
-			}
-			const newCreateDate = response.data.document?.values?.DocumentCreateTime;
-			if (valueInSiteFormat !== newCreateDate) {
-				console.error("Updated document create date without errors, but for some reason date from the backend doesn't match sent value");
 			}
 		}
 		#deleteDocument(id, ownerTypeId, ownerId, animationCallbacks) {
@@ -9734,6 +9689,9 @@ this.BX.Crm = this.BX.Crm || {};
 			if (action === 'Email::ShowCopilotSummary' && actionData) {
 				void this.#showCopilotSummary(item, actionData);
 			}
+			if (action === 'Email::ShowCopilotSummaryDrawer' && actionData) {
+				void this.#showCopilotSummaryDrawer(actionData);
+			}
 		}
 		getContentBlockComponents(Item) {
 			return {
@@ -9787,6 +9745,15 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			}
 			this.#copilotSummaryMenu.show();
+		}
+		#showCopilotSummaryDrawer(actionData) {
+			if (!Email.#isCopilotSummaryDrawerActionData(actionData)) {
+				return;
+			}
+			void crm_router.Router.Instance.openAiReportDrawer('summary-history', actionData);
+		}
+		static #isCopilotSummaryDrawerActionData(actionData) {
+			return main_core.Type.isPlainObject(actionData) && main_core.Type.isInteger(actionData.activityId) && actionData.activityId > 0 && main_core.Type.isInteger(actionData.ownerTypeId) && actionData.ownerTypeId > 0 && main_core.Type.isInteger(actionData.ownerId) && actionData.ownerId > 0 && (main_core.Type.isNil(actionData.jobId) || main_core.Type.isInteger(actionData.jobId) && actionData.jobId > 0);
 		}
 		#viewActivity(id) {
 			const editor = this.#getActivityEditor();
@@ -10383,6 +10350,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
+	// The card body lives in an extension of its own and is fetched when a repeat sale card is actually
+	// rendered: it is a rare card, and its component and styles would otherwise be loaded on every page
+	// carrying a timeline. Declared once - a new async wrapper per render would remount the card.
+	const RepeatSaleBody = ui_vue3.BitrixVue.defineAsyncComponent('crm.timeline.item.repeat-sale-body', 'RepeatSaleBody');
 	class RepeatSale extends CopilotBase {
 		#prevHeaderText;
 
@@ -10403,7 +10374,9 @@ this.BX.Crm = this.BX.Crm || {};
 				return;
 			}
 			if (action === 'Activity:RepeatSale:Schedule') {
-				this.runScheduleAction(actionData.activityId, actionData.scheduleDate, actionData.description);
+				this.runScheduleAction(actionData.activityId, actionData.scheduleDate, actionData.description, {
+					activateClient: true
+				});
 			}
 			if (action === 'Activity:RepeatSale:LaunchCopilot') {
 				void this.handleCopilotLaunch(item, actionData);
@@ -10442,7 +10415,7 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		#showRestrictionSlider() {
 			ui_infoHelper.FeaturePromotersRegistry.getPromoter({
-				featureId: 'limit_v2_crm_repeat_sale'
+				featureId: 'crm_repeat_sale'
 			}).show();
 		}
 		#openSegment(item, segmentId) {
@@ -10455,6 +10428,11 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		// endregion
 
+		getContentBlockComponents() {
+			return {
+				RepeatSaleBody
+			};
+		}
 		static isItemSupported(item) {
 			return item.getType() === 'Activity:RepeatSale' || item.getType() === 'RepeatSaleCreated' || item.getType() === 'LaunchError';
 		}
@@ -10539,19 +10517,30 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
-	let featureResolver = null;
-	let api = null;
-	main_core.Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async exports => {
-		if (exports?.Api && exports?.FeatureResolver) {
-			featureResolver = exports?.FeatureResolver.instance();
-			api = new exports.Api();
-		}
-	}).catch(errors => {
-		ui_notification.UI.Notification.Center.notify({
-			content: errors[0].message,
-			autoHideDelay: 5000
-		});
-	});
+	// sign is loaded by the first action that needs it, not together with the timeline bundle:
+	// most cards never call these actions. Retries are made by Runtime.loadExtension itself, which then keeps
+	// the failure; the failed promise is dropped here only so that every following action reports it.
+	function createSignApiLoader() {
+		let signApi = null;
+		return () => {
+			signApi ??= main_core.Runtime.loadExtension('sign.v2.api').then(exports => {
+				if (!exports?.Api) {
+					throw new Error('Extension "sign.v2.api" is not available');
+				}
+				return new exports.Api();
+			}).catch(error => {
+				signApi = null;
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Text.encode(error?.[0]?.message ?? error?.message ?? ''),
+					autoHideDelay: 5000
+				});
+				throw error;
+			});
+			return signApi;
+		};
+	}
+
+	const loadSignApi = createSignApiLoader();
 	class SignB2eDocument extends Base {
 		#isCancellationInProgress = false;
 		#isAnnulmentInProgress = false;
@@ -10580,9 +10569,9 @@ this.BX.Crm = this.BX.Crm || {};
 			} else if ((action === 'SignB2eDocument:Preview' || action === 'Activity:SignB2eDocument:Preview') && documentId > 0) {
 				this.#previewDocument(actionData);
 			} else if ((action === 'SignB2eDocument:CreateDocumentChat' || action === 'Activity:SignB2eDocument:CreateDocumentChat') && documentId > 0) {
-				if (featureResolver && featureResolver.released('createDocumentChat')) {
-					this.#createDocumentChat(actionData);
-				}
+				// the server adds the chat button only when the feature is released;
+				// a failure is already reported by the sign api loader or by sign.v2.api itself
+				this.#createDocumentChat(actionData).catch(() => {});
 			} else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0) {
 				this.#modifyDocument(actionData);
 			} else if (action === 'SignB2eDocument:Resend' && documentId > 0 && actionData?.recipientHash) {
@@ -10609,7 +10598,18 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			} else if (action === 'SignB2eDocument:ModifyDateSignUntil') {
 				this.#modifyDateSignUntil(item, actionData, animationCallbacks);
+			} else if (action === 'Activity:SignB2eDocument:CopyUid') {
+				this.#copyDocumentUid(actionData?.documentUid);
 			}
+		}
+		#copyDocumentUid(uid) {
+			if (!main_core.Type.isStringFilled(uid) || !BX.clipboard.copy(uid)) {
+				return;
+			}
+			ui_notification.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CRM_COMMON_ACTION_COPY_TO_CLIPBOARD_SUCCESS'),
+				autoHideDelay: 2000
+			});
 		}
 		#cancelWithConfirm(documentUid) {
 			if (this.#isCancellationInProgress) {
@@ -10746,14 +10746,13 @@ this.BX.Crm = this.BX.Crm || {};
 			chatType,
 			documentId
 		}) {
-			if (api && featureResolver && featureResolver.released('createDocumentChat')) {
-				const chatId = (await api.createDocumentChat(chatType, documentId)).chatId;
-				main_core.Runtime.loadExtension('im.public.iframe').then(exports => {
-					exports.Messenger.openChat(`chat${chatId}`);
-				}).catch(exception => {
-					console.error('Error loading "im.public.iframe":', exception);
-				});
-			}
+			const api = await loadSignApi();
+			const chatId = (await api.createDocumentChat(chatType, documentId)).chatId;
+			main_core.Runtime.loadExtension('im.public.iframe').then(exports => {
+				exports.Messenger.openChat(`chat${chatId}`);
+			}).catch(exception => {
+				console.error('Error loading "im.public.iframe":', exception);
+			});
 		}
 		#resendDocument({
 			documentId,
@@ -10824,6 +10823,7 @@ this.BX.Crm = this.BX.Crm || {};
 				valueTs
 			} = actionData;
 			try {
+				const api = await loadSignApi();
 				await api.modifyDateSignUntil(uid, valueTs);
 			} catch {
 				item.forceRefreshLayout();
@@ -10875,7 +10875,18 @@ this.BX.Crm = this.BX.Crm || {};
 						return this.#deleteEntry(actionData.entryId);
 					}
 				});
+			} else if (action === 'Activity:SignDocument:CopyUid') {
+				this.#copyDocumentUid(actionData?.documentUid);
 			}
+		}
+		#copyDocumentUid(uid) {
+			if (!main_core.Type.isStringFilled(uid) || !BX.clipboard.copy(uid)) {
+				return;
+			}
+			ui_notification.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CRM_COMMON_ACTION_COPY_TO_CLIPBOARD_SUCCESS'),
+				autoHideDelay: 2000
+			});
 		}
 		#deleteEntry(entryId) {
 			console.log('delete entry' + entryId);
@@ -11061,6 +11072,139 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		static isItemSupported(item) {
 			return item.getType() === 'Activity:Sms';
+		}
+	}
+
+	function buildCallsMenuItems(data, handlers) {
+		const items = main_core.Type.isArrayFilled(data.items) ? data.items.map(call => buildCallItem(call, handlers)) : [buildDisabledItem(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_EMPTY'))];
+		if (data.hasOlderCalls && data.canOpenChat) {
+			items.push({
+				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_OLDER_IN_CHAT'),
+				onClick: () => handlers.openChat()
+			});
+		}
+		return items;
+	}
+	function buildCallItem(call, handlers) {
+		const title = formatCallTitle(call.startDate);
+		if (call.hasFollowUp && main_core.Type.isStringFilled(call.detailUrl)) {
+			return {
+				title,
+				onClick: () => handlers.openCall(call.detailUrl)
+			};
+		}
+		return {
+			...buildDisabledItem(title),
+			subtitle: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_NO_FOLLOWUP')
+		};
+	}
+	function buildDisabledItem(title) {
+		return {
+			title,
+			design: ui_system_menu.MenuItemDesign.Disabled,
+			disabled: true
+		};
+	}
+	function formatCallTitle(startDate) {
+		if (main_core.Type.isNil(startDate)) {
+			return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_CALL_NO_DATE');
+		}
+		const date = crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(startDate).toUserTime().toDatetimeString({
+			delimiter: ', '
+		});
+		return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SYNC_CALLS_MENU_CALL', {
+			'#DATE#': date
+		});
+	}
+
+	class Sync extends Base {
+		#menu = null;
+		#isLoading = false;
+		#layoutGeneration = 0;
+		static isItemSupported(item) {
+			return item.getType() === 'Activity:Sync';
+		}
+		onItemAction(item, actionParams) {
+			const {
+				action,
+				actionType,
+				actionData
+			} = actionParams;
+			if (actionType !== 'jsEvent' || !main_core.Type.isPlainObject(actionData)) {
+				return;
+			}
+			if (action === 'Activity:Sync:OpenChat') {
+				this.#openChat(actionData.dialogId);
+			} else if (action === 'Activity:Sync:ShowCalls') {
+				this.#showCalls(item, main_core.Text.toInteger(actionData.activityId), actionData.dialogId);
+			}
+		}
+		onBeforeItemClearLayout(item) {
+			super.onBeforeItemClearLayout(item);
+			this.#menu?.destroy();
+			this.#menu = null;
+			this.#isLoading = false;
+			this.#layoutGeneration++;
+		}
+		#openChat(dialogId) {
+			if (!main_core.Type.isStringFilled(dialogId)) {
+				return;
+			}
+			main_core.Runtime.loadExtension('im.public.iframe').then(exports => {
+				exports.Messenger.openChat(dialogId);
+			}).catch(exception => {
+				console.error('Error loading "im.public.iframe":', exception);
+			});
+		}
+		#showCalls(item, activityId, dialogId) {
+			if (activityId <= 0 || this.#isLoading) {
+				return;
+			}
+			this.#isLoading = true;
+			const layoutGeneration = this.#layoutGeneration;
+
+			// eslint-disable-next-line promise/catch-or-return
+			main_core.ajax.runAction('crm.activity.sync.listCalls', {
+				data: {
+					activityId
+				}
+			}).then(response => {
+				if (layoutGeneration !== this.#layoutGeneration) {
+					return;
+				}
+				this.#isLoading = false;
+				this.#openCallsMenu(item, activityId, dialogId, response.data);
+			}, response => {
+				if (layoutGeneration !== this.#layoutGeneration) {
+					return;
+				}
+				this.#isLoading = false;
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Text.encode(response?.errors?.[0]?.message ?? ''),
+					autoHideDelay: 5000
+				});
+			});
+		}
+		#openCallsMenu(item, activityId, dialogId, data) {
+			const container = item.getLayoutContentBlockById('syncGroupOfBlocks')?.getBlockById('callsActionBar')?.getContainer();
+			const bindElement = container?.querySelector('.crm-timeline__action-bar-item .ui-chip');
+			if (!bindElement) {
+				return;
+			}
+			this.#menu?.destroy();
+			this.#menu = new ui_system_menu.Menu({
+				id: `crm-timeline-activity-sync-calls-${activityId}-${main_core.Text.getRandom()}`,
+				bindElement,
+				autoHide: true,
+				items: buildCallsMenuItems(data, {
+					openCall: detailUrl => {
+						void crm_router.Router.openSlider(detailUrl);
+						this.#menu?.close();
+					},
+					openChat: () => this.#openChat(dialogId)
+				})
+			});
+			this.#menu.show();
 		}
 	}
 
@@ -11668,6 +11812,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(SignB2eDocument);
 	ControllerManager.registerController(Visit);
 	ControllerManager.registerController(Zoom);
+	ControllerManager.registerController(Sync);
 	ControllerManager.registerController(Sms);
 	ControllerManager.registerController(WhatsApp);
 	ControllerManager.registerController(Telegram);
@@ -11677,11 +11822,13 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(RepeatSale);
 	ControllerManager.registerController(EntityExclusion);
 
+	exports.Action = Action;
 	exports.BaseController = Base;
 	exports.ConfigurableItem = ConfigurableItem;
 	exports.ControllerManager = ControllerManager;
 	exports.Item = Item;
+	exports.ItemAction = Action;
 	exports.StreamType = StreamType;
 
-})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Vue3, BX, BX.UI.IconSet, BX.Main, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Crm.Field, BX.Event, window, BX.UI.System.Label, BX.UI, BX.Crm.Timeline, BX.Crm, BX.UI.EntitySelector, BX, BX.UI, window, BX.SidePanel, BX.Calendar.Sharing, BX.Calendar, BX.Crm.AI, BX.UI.Feedback, BX.AI, BX.Crm.AI, BX.UI.Accessibility, BX.UI.System.Chip.Vue, BX.Location.Core, BX.Location.Widget, BX.UI.System.Typography.Vue, BX.Crm.Timeline.Editors, BX.UI.BBCode.Formatter, BX.UI.TextEditor, BX.UI, BX, BX.UI, BX.UI, BX.Crm.Activity, BX.UI.Icons.Generator, BX.Crm, window, window, BX.Crm.Field, BX.Currency, BX.UI, BX.Crm.Field, BX.Bizproc, BX.UI, BX, BX, BX.UI.System, BX.Crm, BX, BX.Crm.Integration.Analytics);
+})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Vue3, BX, BX.UI.IconSet, BX.Main, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Crm.Field, BX.Event, window, BX.UI.System.Label, BX.UI, BX.Crm.Timeline, BX.Crm, BX.UI.EntitySelector, BX, BX.UI, window, BX.SidePanel, BX.Calendar.Sharing, BX.Calendar, BX.Crm.AI, BX.UI.Feedback, BX.AI, BX.Crm.AI, BX.UI.Accessibility, BX.UI.System.Chip.Vue, BX.Location.Core, BX.Location.Widget, BX.UI.System.Typography.Vue, BX.Crm.Timeline.Editors, BX.UI.BBCode.Formatter, BX.UI.TextEditor, BX.UI, BX, BX.Crm.Integration.Analytics, BX.UI, BX.UI, BX.Crm.Activity, BX.UI.Icons.Generator, BX.Crm, window, window, BX.Crm.Field, BX.Currency, BX.UI, BX.Crm.Field, BX.Bizproc, BX.UI, BX, BX, BX.UI.System, BX.Crm, BX);
 //# sourceMappingURL=index.bundle.js.map

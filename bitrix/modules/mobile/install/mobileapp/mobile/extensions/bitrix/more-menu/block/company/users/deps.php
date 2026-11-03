@@ -14,11 +14,13 @@ return [
 		'ui-system/layout/card',
 		'ui-system/blocks/avatar-stack',
 		'ui-system/blocks/badges/counter',
+		'ui-system/blocks/chips/chip-button',
 
 		'utils/validation',
 		'utils/test',
 
 		'more-menu/ref-registry',
+		'more-menu/block/company/card-border',
 		'layout/pure-component',
 	],
 ];

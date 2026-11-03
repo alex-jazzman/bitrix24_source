@@ -7,4 +7,5 @@ export type RelationDialogMeta = {
 	footerText: string,
 	service: RelationService,
 	isTemplate: boolean,
+	isSubTasks?: boolean,
 };

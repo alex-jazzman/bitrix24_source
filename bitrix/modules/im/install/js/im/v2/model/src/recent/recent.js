@@ -7,7 +7,7 @@ import { RecentManager } from 'im.v2.lib.recent';
 import { MessageManager } from 'im.v2.lib.message';
 
 import { formatFieldsWithConfig } from '../utils/validate';
-import { type ImModelMessage } from '../registry';
+import { type ImModelChat, type ImModelMessage } from '../registry';
 
 import { type RecentItem as ImModelRecentItem } from '../type/recent-item';
 import { recentFieldsConfig } from './format/field-config';
@@ -40,6 +40,12 @@ type IndexByParentAndType = {
 		[type: RecentTypeItem]: Set<string>,
 	}
 }
+
+type UnreadIndexEntry = {
+	recentSection: RecentTypeItem,
+	dialogId: string,
+	parentChatId: number,
+};
 
 export class RecentModel extends BuilderModel
 {
@@ -89,6 +95,7 @@ export class RecentModel extends BuilderModel
 		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	getGetters(): GetterTree
 	{
 		return {
@@ -121,11 +128,43 @@ export class RecentModel extends BuilderModel
 			getSortedCollection: () => (payload: GetPayload & { unread?: boolean }): ImModelRecentItem[] => {
 				const collection: ImModelRecentItem[] = this.store.getters['recent/getCollection'](payload);
 
-				return [...collection].sort(this.#compareByDate);
+				return this.#sortByDate(collection);
 			},
 			/** @function recent/getSortedUnreadCollection */
 			getSortedUnreadCollection: () => (payload: GetPayload): ImModelRecentItem[] => {
 				return this.store.getters['recent/getSortedCollection']({ ...payload, unread: true });
+			},
+			/** @function recent/getRootUnionCollection */
+			getRootUnionCollection: () => (
+				payload: { sections: RecentTypeItem[], unread?: boolean },
+			): ImModelRecentItem[] => {
+				const { sections, unread = false } = payload;
+
+				const seenDialogIds = new Set();
+				const union: ImModelRecentItem[] = [];
+
+				sections.forEach((section: RecentTypeItem) => {
+					const sectionItems: ImModelRecentItem[] = this.store.getters['recent/getCollection']({
+						type: section,
+						unread,
+					});
+
+					sectionItems.forEach((item: ImModelRecentItem) => {
+						if (seenDialogIds.has(item.dialogId) || !this.#isRootChat(item.dialogId))
+						{
+							return;
+						}
+
+						seenDialogIds.add(item.dialogId);
+						union.push(item);
+					});
+				});
+
+				return this.#sortByDate(union);
+			},
+			/** @function recent/getUnreadIndexEntries */
+			getUnreadIndexEntries: (state: RecentState) => (): UnreadIndexEntry[] => {
+				return this.#getUnreadIndexEntries(state);
 			},
 			/** @function recent/getCollectionByIds */
 			getCollectionByIds: (state: RecentState) => (dialogIds: string[]): ImModelRecentItem[] => {
@@ -133,7 +172,7 @@ export class RecentModel extends BuilderModel
 					.map((dialogId: string) => state.collection[dialogId])
 					.filter((item: ?ImModelRecentItem) => Boolean(item) && !state.hiddenChats.has(item.dialogId));
 
-				return [...collection].sort(this.#compareByDate);
+				return this.#sortByDate(collection);
 			},
 			/** @function recent/get */
 			get: (state: RecentState) => (dialogId: string): ?ImModelRecentItem => {
@@ -163,6 +202,27 @@ export class RecentModel extends BuilderModel
 				}
 
 				return this.#getMessage(element.ownMessageId);
+			},
+			/** @function recent/getShownChatId */
+			getShownChatId: (state: RecentState) => (dialogId: string): number => {
+				const element = state.collection[dialogId];
+				if (!element)
+				{
+					return 0;
+				}
+
+				const shownChatId = this.#getMessage(element.messageId)?.chatId;
+				if (shownChatId > 0)
+				{
+					return shownChatId;
+				}
+
+				if (Number(element.messageId) === Number(element.ownMessageId))
+				{
+					return this.store.getters['chats/get'](dialogId)?.chatId ?? 0;
+				}
+
+				return 0;
 			},
 			/** @function recent/hasInCollection */
 			hasInCollection: (state: RecentState) => (payload: GetPayload & { dialogId: string }): boolean => {
@@ -532,6 +592,29 @@ export class RecentModel extends BuilderModel
 		return result;
 	}
 
+	// the top-level bucket also holds nested chats propagated by setCollection, so the real level lives in chats
+	#isRootChat(dialogId: string): boolean
+	{
+		const chat: ?ImModelChat = this.store.getters['chats/get'](dialogId);
+
+		return chat?.parentChatId === ParentChatScope.topLevel;
+	}
+
+	#getUnreadIndexEntries(state: RecentState): UnreadIndexEntry[]
+	{
+		const entries: UnreadIndexEntry[] = [];
+
+		Object.entries(state.unreadIndex).forEach(([parentChatId, sectionGroup]) => {
+			Object.entries(sectionGroup).forEach(([recentSection, dialogIds]) => {
+				dialogIds.forEach((dialogId: string) => {
+					entries.push({ recentSection, dialogId, parentChatId: Number(parentChatId) });
+				});
+			});
+		});
+
+		return entries;
+	}
+
 	#getMessage(messageId: number | string): ImModelMessage
 	{
 		return Core.getStore().getters['messages/getById'](messageId);
@@ -576,16 +659,23 @@ export class RecentModel extends BuilderModel
 		;
 	}
 
-	#compareByDate(a: ImModelRecentItem, b: ImModelRecentItem): number
+	// The sort date is read from the store, so it is taken once per row and not once per comparison.
+	#sortByDate(items: ImModelRecentItem[]): ImModelRecentItem[]
 	{
-		const dateA = RecentManager.getSortDate(a.dialogId);
-		const dateB = RecentManager.getSortDate(b.dialogId);
+		const sortDates: Map<string, ?Date> = new Map(
+			items.map((item: ImModelRecentItem) => [item.dialogId, RecentManager.getSortDate(item.dialogId)]),
+		);
 
-		if (dateA?.getTime() === dateB?.getTime())
-		{
-			return a.dialogId > b.dialogId ? 1 : -1;
-		}
+		return [...items].sort((a: ImModelRecentItem, b: ImModelRecentItem) => {
+			const dateA = sortDates.get(a.dialogId);
+			const dateB = sortDates.get(b.dialogId);
 
-		return dateB - dateA;
+			if (dateA?.getTime() === dateB?.getTime())
+			{
+				return a.dialogId > b.dialogId ? 1 : -1;
+			}
+
+			return dateB - dateA;
+		});
 	}
 }

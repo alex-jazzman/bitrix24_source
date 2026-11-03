@@ -1,0 +1,5 @@
+<?php
+$MESS["IM_LIST_CONTAINER_FILTER_ROW_ARIA"] = "Фильтры списка чатов";
+$MESS["IM_LIST_CONTAINER_FILTER_ROW_ALL"] = "Все";
+$MESS["IM_LIST_CONTAINER_FILTER_ROW_UNREAD"] = "Непрочитанные";
+$MESS["IM_LIST_CONTAINER_FILTER_ROW_UNREAD_ARIA"] = "Непрочитанные: #COUNT#";

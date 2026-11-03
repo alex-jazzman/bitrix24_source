@@ -18,6 +18,8 @@ use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\Settings\ContactSettings;
@@ -724,12 +726,18 @@ if (
 	];
 }
 
+$settingsUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SETTINGS']);
+if (Crm\Feature::enabled(Crm\Feature\SettingsHub::class))
+{
+	$settingsUrl = $router->getSettingsHubUrl() ?? $settingsUrl;
+}
+
 $stdItems['SETTINGS'] = array(
 	'ID' => 'SETTINGS',
 	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('SETTINGS'), //'menu_crm_configs',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CONFIGS'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CONFIGS'),
-	'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SETTINGS']),
+	'URL' => $settingsUrl,
 	'ICON' => 'settings'
 );
 
@@ -1367,7 +1375,11 @@ foreach($dynamicTypesMap->getTypes() as $type)
 }
 
 $defaultDynamicItems = [];
-if ($userPermissionsService->isCrmAdmin())
+$canManageCrmTypes = $userPermissionsService->configuration()->canManageDynamicTypes(
+	ConfigurationCallSite::DynamicTypePermissions,
+	ConfigurationScope::ofDynamicTypeTarget(null),
+);
+if ($canManageCrmTypes)
 {
 	if (!empty($dynamicSubItems))
 	{

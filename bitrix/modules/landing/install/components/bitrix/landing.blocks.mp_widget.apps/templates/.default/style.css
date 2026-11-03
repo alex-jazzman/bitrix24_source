@@ -45,9 +45,11 @@
 	margin-right: 19px;
 }
 
+/* the title stands on an h2, so the margin, the size, the weight and the line height
+   of a heading are all set here */
 .landing-widget-app-mobile-title {
 	display: block;
-	margin-bottom: 31px;
+	margin: 0 0 31px;
 	font-size: 26px;
 	font-weight: var(--ui-font-weight-semi-bold);
 	color: var(--widget-color-title-mobile);
@@ -179,9 +181,11 @@
 	box-sizing: border-box;
 }
 
+/* the title stands on an h2, so the margin, the size, the weight and the line height
+   of a heading are all set here */
 .landing-widget-app-desktop-title {
 	display: block;
-	margin-bottom: 31px;
+	margin: 0 0 31px;
 	font-size: 26px;
 	font-weight: var(--ui-font-weight-semi-bold);
 	color: var(--widget-color-title-desktop);
@@ -239,6 +243,15 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-90);
 }
 
+/* the node was a div: the values a button carries by default are reset here,
+   the sizing rule below restores the look the widget had */
+.landing-widget-qr-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+}
+
 .landing-widget-qr-button,
 .landing-widget-desktop-button {
 	align-self: center;
@@ -276,6 +289,15 @@
 
 .landing-widget-qr-button:hover {
 	color: var(--widget-color-button-text-mobile);
+}
+
+/* an unresolved var makes the whole outline invalid at computed-value time, and the browser then
+   drops its own ring as well, so every token here carries a fallback. The colour repeats the value
+   of the token rather than currentColor: the label of a filled button is white, and a white ring
+   on the fill it sits on reads as no ring at all */
+.landing-widget-qr-button:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
 }
 
 .landing-widget-desktop-button:hover {

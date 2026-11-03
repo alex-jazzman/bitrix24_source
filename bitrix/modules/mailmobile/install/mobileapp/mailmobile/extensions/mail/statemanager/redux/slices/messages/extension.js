@@ -9,7 +9,15 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 
 	const { sliceName, messagesListAdapter } = require('mail/statemanager/redux/slices/messages/meta');
-	const { remove, changeReadStatus, moveToFolder, markAsSpam, addToChat, addToEvent } = require('mail/statemanager/redux/slices/messages/thunk');
+	const {
+		remove,
+		changeReadStatus,
+		moveToFolder,
+		markAsSpam,
+		addToChat,
+		addToEvent,
+		setFavoriteState,
+	} = require('mail/statemanager/redux/slices/messages/thunk');
 	const {
 		removePending,
 		removeFulfilled,
@@ -17,6 +25,9 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		changeReadStatusFulfilled,
 		addToChatFulfilled,
 		addToEventFulfilled,
+		setFavoriteStatePending,
+		setFavoriteStateFulfilled,
+		setFavoriteStateRejected,
 	} = require('mail/statemanager/redux/slices/messages/extra-reducer');
 	const { MessageModel } = require('mail/statemanager/redux/slices/messages/model/message');
 
@@ -28,6 +39,7 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		...messagesListAdapter.getInitialState(),
 		isMultiSelectMode: false,
 		selectedIds: [],
+		messageDeleteAvailable: true,
 	};
 	const initialState = StateCache.getReducerState(sliceName, defaultState);
 
@@ -157,6 +169,20 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 					taskBindId: taskId,
 				});
 			},
+			setBlogPostId: (state, { payload }) => {
+				if (isOffline())
+				{
+					return;
+				}
+
+				const { objectId, blogPostBindId } = payload;
+				const object = state.entities[objectId];
+
+				messagesListAdapter.upsertOne(state, {
+					...object,
+					blogPostBindId,
+				});
+			},
 			setMultiSelectMode: (state, { payload }) => {
 				if (isOffline())
 				{
@@ -213,6 +239,39 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 					messagesListAdapter.upsertMany(state, objectsToUpdate);
 				}
 			},
+			// A conversation group action (DTO-03) reports the messages the server actually removed
+			// from the current folder; only those leave the list, the chain is never dropped whole.
+			messagesRemoved: (state, { payload }) => {
+				const objectIds = payload?.objectIds ?? [];
+
+				if (objectIds.length > 0)
+				{
+					messagesListAdapter.removeMany(state, objectIds);
+				}
+			},
+			// A conversation group action reports the messages whose read status the server actually
+			// changed; the visual change is applied to exactly those messages, e.g. markUnread only to
+			// the last incoming one the server returns.
+			messagesReadStatusApplied: (state, { payload }) => {
+				const { objectIds = [], isRead } = payload ?? {};
+				const objectsToUpdate = objectIds.map((id) => {
+					const object = state.entities[id];
+
+					return object ? {
+						...object,
+						isRead,
+					} : null;
+				}).filter(Boolean);
+
+				if (objectsToUpdate.length > 0)
+				{
+					messagesListAdapter.upsertMany(state, objectsToUpdate);
+				}
+			},
+			setMessageDeleteAvailability: (state, { payload }) => {
+				const { messageDeleteAvailable } = payload;
+				state.messageDeleteAvailable = messageDeleteAvailable !== false;
+			},
 		},
 		extraReducers: (builder) => {
 			builder
@@ -226,6 +285,9 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 				.addCase(markAsSpam.pending, removePending)
 				.addCase(markAsSpam.fulfilled, removeFulfilled)
 				.addCase(addToChat.fulfilled, addToChatFulfilled)
+				.addCase(setFavoriteState.pending, setFavoriteStatePending)
+				.addCase(setFavoriteState.fulfilled, setFavoriteStateFulfilled)
+				.addCase(setFavoriteState.rejected, setFavoriteStateRejected)
 			;
 		},
 	});
@@ -235,6 +297,7 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		mailsUpsertedFromServer,
 		mailsUpserted,
 		setTaskId,
+		setBlogPostId,
 		mailsAddedFromServer,
 		mailsAdded,
 		markAsRemoved,
@@ -244,6 +307,9 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		setMultiSelectMode,
 		clearSelection,
 		moveMessagesToFolder,
+		messagesRemoved,
+		messagesReadStatusApplied,
+		setMessageDeleteAvailability,
 	} = actions;
 
 	ReducerRegistry.register(sliceName, messageListReducer);
@@ -252,6 +318,7 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		mailsUpsertedFromServer,
 		mailsUpserted,
 		setTaskId,
+		setBlogPostId,
 		mailsAddedFromServer,
 		mailsAdded,
 		markAsRemoved,
@@ -261,5 +328,8 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		setMultiSelectMode,
 		clearSelection,
 		moveMessagesToFolder,
+		messagesRemoved,
+		messagesReadStatusApplied,
+		setMessageDeleteAvailability,
 	};
 });

@@ -47,6 +47,29 @@ $arClasses = array(
 );
 CModule::AddAutoloadClasses("bizproc", $arClasses);
 
+// Backward compatibility after the PSR-4 migration: Resolver builds a lowercase class name for
+// legacy action names (bizproc.workflow.start), and PSR-4 lookup is case-sensitive, so map them explicitly.
+// The list is frozen at the names that had already left the module by then: a new controller gets no entry
+// here - its actions are spelled in the letter case of the class - and no entry is ever dropped either.
+// Composed by dev/psr4/generate-controller-map.php, pinned by tests/lib/Autoload/ControllerCompatibilityMapTest.php.
+// A path typed by hand is a fatal error on every ajax hit: Loader::autoLoad() requires it without file_exists.
+\Bitrix\Main\Loader::registerAutoLoadClasses('bizproc', [
+	\bitrix\bizproc\controller\activity::class => 'lib/Controller/Activity.php',
+	\bitrix\bizproc\controller\analytics::class => 'lib/Controller/Analytics.php',
+	\bitrix\bizproc\controller\debugger::class => 'lib/Controller/Debugger.php',
+	\bitrix\bizproc\controller\fieldtype::class => 'lib/Controller/FieldType.php',
+	\bitrix\bizproc\controller\file::class => 'lib/Controller/File.php',
+	\bitrix\bizproc\controller\globalfield::class => 'lib/Controller/GlobalField.php',
+	\bitrix\bizproc\controller\robot::class => 'lib/Controller/Robot.php',
+	\bitrix\bizproc\controller\script::class => 'lib/Controller/Script.php',
+	\bitrix\bizproc\controller\storage::class => 'lib/Controller/Storage.php',
+	\bitrix\bizproc\controller\task::class => 'lib/Controller/Task.php',
+	\bitrix\bizproc\controller\workflow::class => 'lib/Controller/Workflow.php',
+	\bitrix\bizproc\controller\workflow\comment::class => 'lib/Controller/Workflow/Comment.php',
+	\bitrix\bizproc\controller\workflow\faces::class => 'lib/Controller/Workflow/Faces.php',
+	\bitrix\bizproc\controller\workflow\starter::class => 'lib/Controller/Workflow/Starter.php',
+]);
+
 require_once __DIR__.DIRECTORY_SEPARATOR.'compatibility.php';
 
 include_once __DIR__."/classes/general/interface.php";

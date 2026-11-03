@@ -1,7 +1,6 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\IO\File;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 
@@ -71,6 +70,57 @@ function salescenterConnectTemplateRenderLogoBlock(array $data, \CBitrixComponen
 	return $result;
 }
 
+function salescenterConnectTemplateGetImages(): array
+{
+	static $images = null;
+	if ($images === null)
+	{
+		$manifest = include __DIR__.'/image-manifest.php';
+		$images = $manifest['images'];
+	}
+
+	return $images;
+}
+
+function salescenterConnectTemplateResolveImageKey(string $image, array $images): string
+{
+	if ($image !== 'preview')
+	{
+		return pathinfo($image, PATHINFO_FILENAME);
+	}
+
+	$language = mb_strtolower(Loc::getCurrentLang());
+	$key = 'preview_'.$language;
+	if (isset($images[$key]))
+	{
+		return $key;
+	}
+
+	return in_array($language, ['ru', 'by', 'kz', 'ua'], true) ? 'preview_ru' : 'preview_en';
+}
+
+function salescenterConnectTemplateRenderImage(string $image, string $imagePath): string
+{
+	$images = salescenterConnectTemplateGetImages();
+	$key = salescenterConnectTemplateResolveImageKey($image, $images);
+	if (!isset($images[$key]))
+	{
+		return '<img class="img-response" src="'.htmlspecialcharsbx(Path::combine($imagePath, $image)).'" alt="">';
+	}
+
+	$sources = $images[$key];
+	$srcset = htmlspecialcharsbx($sources['1x']).' 1x, '.htmlspecialcharsbx($sources['2x']).' 2x';
+	if (empty($sources['png']))
+	{
+		return '<img class="img-response" src="'.htmlspecialcharsbx($sources['1x']).'" srcset="'.$srcset.'" alt="">';
+	}
+
+	return '<picture>
+				<source type="image/webp" srcset="'.$srcset.'">
+				<img class="img-response" src="'.htmlspecialcharsbx($sources['png']).'" alt="">
+			</picture>';
+}
+
 function salescenterConnectTemplateRenderBlock(array $data, \CBitrixComponentTemplate $template): string
 {
 	$imagePath = Path::combine($template->GetFolder(), 'images');
@@ -90,28 +140,8 @@ function salescenterConnectTemplateRenderBlock(array $data, \CBitrixComponentTem
 	}
 	if(!empty($data['image']))
 	{
-		if($data['image'] === 'preview')
-		{
-			$language = mb_strtolower(Loc::getCurrentLang());
-			$image = Path::combine($imagePath, 'preview_' . $language . '.webp');
-			if(!File::isFileExists(Path::combine($_SERVER['DOCUMENT_ROOT'], $image)))
-			{
-				if(in_array($language, ['ru', 'by', 'kz', 'ua'], true))
-				{
-					$image = Path::combine($imagePath, 'preview_ru.webp');
-				}
-				else
-				{
-					$image = Path::combine($imagePath, 'preview_en.webp');
-				}
-			}
-		}
-		else
-		{
-			$image = Path::combine($imagePath, $data['image']);
-		}
 		$result .= '<div class="salescenter-img-container">
-			<img class="img-response" src="'.htmlspecialcharsbx($image).'" alt="">
+			'.salescenterConnectTemplateRenderImage($data['image'], $imagePath).'
 		</div>';
 	}
 	$result .= '</div>

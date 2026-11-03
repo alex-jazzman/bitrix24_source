@@ -7,6 +7,11 @@
 	--im-message-sign__color_document: var(--im-color-palette-gray-90);
 	--im-message-sign__color_link: var(--im-color-palette-gray-90);
 	--im-message-sign__border-color_link: var(--im-color-palette-black-solid);
+	--im-message-sign__font-color_user-message: var(--im-color-palette-gray-90);
+	--im-message-sign__border-color_user-message: var(--im-color-palette-gray-30);
+	--im-message-sign__background-color_completed: var(--im-color-palette-gray-10);
+	--im-message-sign__filter_completed: grayscale(1);
+	--im-message-sign__opacity_completed: 0.8;
 }
 
 .bx-im-message-sign__container {
@@ -23,6 +28,21 @@
 
 .bx-im-message-sign__container.--self {
 	background: var(--im-message-sign__background-color_self);
+}
+
+/* must stay below .--self: same specificity, the later rule wins */
+.bx-im-message-sign__container.--completed {
+	background: var(--im-message-sign__background-color_completed);
+}
+
+/*
+ * Only the illustration is muted: opacity over a label drops its contrast below WCAG AA, so the
+ * text, the button and the link keep their own colours. Grayscale is what makes the muting read:
+ * a card nobody has to act on has no colour left, while the opacity alone only faded the blue.
+ */
+.bx-im-message-sign__container.--completed .bx-im-message-sign__image {
+	filter: var(--im-message-sign__filter_completed);
+	opacity: var(--im-message-sign__opacity_completed);
 }
 
 .bx-im-message-sign__content {
@@ -74,6 +94,26 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.bx-im-message-sign__user_message {
+	max-width: 100%;
+	margin-top: var(--ui-space-stack-sm);
+	padding-top: var(--ui-space-inset-sm);
+	border-top: 1px solid var(--im-message-sign__border-color_user-message);
+	font-size: var(--im-font-size-md);
+	color: var(--im-message-sign__font-color_user-message);
+	word-break: break-word;
+}
+
+.bx-im-message-sign__user_message-header {
+	margin-bottom: var(--ui-space-stack-2xs);
+	font-weight: var(--im-font-weight-bold);
+}
+
+/* the sender's own words read as a quotation next to the system text */
+.bx-im-message-sign__user_message-text {
+	font-style: italic;
 }
 
 .bx-im-message-sign__status_container {

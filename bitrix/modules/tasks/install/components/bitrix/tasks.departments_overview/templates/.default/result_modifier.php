@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
@@ -32,34 +33,57 @@ $arResult['JS_DATA'] = [
 
 function prepareEffective($row, $arParams)
 {
-	$color = $row['EFFECTIVE'] < 50 ? '#D2000D' : '#333';
+	$className = 'tasks-manage-effective';
+	if ($row['EFFECTIVE'] < 50)
+	{
+		$className .= ' tasks-manage-effective-low';
+	}
 
 	$url = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_TASKS'].'effective/',
 		array('user_id' => $row['ID'])
 	);
 
-	return '<a href="'.
-		   $url.'" style="color:'.
-		   $color.
-		   ';">'.
+	return '<a class="'.
+		   $className.'" href="'.
+		   htmlspecialcharsbx($url).
+		   '">'.
 		   (int)$row['EFFECTIVE'].
-		   '%</span>';
+		   '%</a>';
 }
 
-function prepareCounter($counter)
+function prepareCounter($counter, $role)
 {
+	$total = (int)$counter['ALL'];
+	$expired = (int)$counter['NOTICE'];
+	$accessibleText = Loc::getMessage(
+		'TASKS_DEPARTMENTS_OVERVIEW_COUNTER_ARIA_LABEL',
+		[
+			'#ROLE#' => $role,
+			'#TOTAL#' => $total,
+			'#EXPIRED#' => $expired,
+		]
+	);
+	$hasAccessibleText = is_string($accessibleText) && $accessibleText !== '';
+	$accessibleText = $hasAccessibleText
+		? '<span class="tasks-overview-visually-hidden">'.htmlspecialcharsbx($accessibleText).'</span>'
+		: '';
+	$ariaHidden = $hasAccessibleText ? ' aria-hidden="true"' : '';
+
 	$sub = '';
-	if ($counter['NOTICE'] > 0)
+	if ($expired > 0)
 	{
-		$sub = '<span class="tasks-manage-counter-notify-digit">'.$counter['NOTICE'].'</span>';
+		$sub = '<span class="tasks-manage-counter-notify-digit">'.$expired.'</span>';
 	}
 	return '<span class="tasks-manage-counter">
-				<span class="tasks-manage-counter-total">
-					<a href="'.$counter['URL'].'">'.$counter['ALL'].'</a>
-				</span>
-				<span class="tasks-manage-counter-notify">'.$sub.'</span>	
-			</span>';
+					<span class="tasks-manage-counter-total">
+						<a href="'.htmlspecialcharsbx($counter['URL']).'">
+							'.$accessibleText.'
+							<span'.$ariaHidden.'>'.$total.'</span>
+						</a>
+					</span>
+					<span class="tasks-manage-counter-notify"'.$ariaHidden.'>'.$sub.'</span>
+				</span>';
 }
 
 function prepareDepartments($row, $result)
@@ -71,11 +95,14 @@ function prepareDepartments($row, $result)
 	{
 		foreach ($row['UF_DEPARTMENT'] as $departmentId)
 		{
-			$list[] = '<a href="javascript:;" class="js-id-department" data-id="'.
+			$departmentId = (int)$departmentId;
+			$list[] = '<button type="button" class="js-id-department tasks-manage-department-button" data-department-id="'.
 					  $departmentId.
+					  '" data-user-id="'.
+					  (int)$row['ID'].
 					  '">'.
 					  htmlspecialcharsbx($departments[$departmentId]['NAME']).
-					  '</a>';
+					  '</button>';
 		}
 	}
 
@@ -90,10 +117,22 @@ function prepareRow($row, $arParams, $arResult)
 		'DEPARTMENTS' => prepareDepartments($row, $arResult),
 
 		'EFFECTIVE' => prepareEffective($row, $arParams),
-		'RESPONSIBLE' => prepareCounter($arResult['COUNTERS'][$row['ID']]['RESPONSIBLE']),
-		'ORIGINATOR' => prepareCounter($arResult['COUNTERS'][$row['ID']]['ORIGINATOR']),
-		'ACCOMPLICE' => prepareCounter($arResult['COUNTERS'][$row['ID']]['ACCOMPLICE']),
-		'AUDITOR' => prepareCounter($arResult['COUNTERS'][$row['ID']]['AUDITOR']),
+		'RESPONSIBLE' => prepareCounter(
+			$arResult['COUNTERS'][$row['ID']]['RESPONSIBLE'],
+			GetMessage('TASKS_MANAGE_COLUMN_RESPONSIBLE')
+		),
+		'ORIGINATOR' => prepareCounter(
+			$arResult['COUNTERS'][$row['ID']]['ORIGINATOR'],
+			GetMessage('TASKS_MANAGE_COLUMN_ORIGINATOR')
+		),
+		'ACCOMPLICE' => prepareCounter(
+			$arResult['COUNTERS'][$row['ID']]['ACCOMPLICE'],
+			GetMessage('TASKS_MANAGE_COLUMN_ACCOMPLICE')
+		),
+		'AUDITOR' => prepareCounter(
+			$arResult['COUNTERS'][$row['ID']]['AUDITOR'],
+			GetMessage('TASKS_MANAGE_COLUMN_AUDITOR')
+		),
 	);
 
 	return $resultRow;
@@ -138,18 +177,35 @@ foreach ($arResult['GRID']['DATA'] as $row)
 	$arResult['ROWS'][] = $rowItem;
 }
 
-function prepareSummaryCounter($counter)
+function prepareSummaryCounter($counter, $role)
 {
+	$total = (int)$counter['ALL'];
+	$expired = (int)$counter['NOTICE'];
+	$accessibleText = Loc::getMessage(
+		'TASKS_DEPARTMENTS_OVERVIEW_COUNTER_ARIA_LABEL',
+		[
+			'#ROLE#' => $role,
+			'#TOTAL#' => $total,
+			'#EXPIRED#' => $expired,
+		]
+	);
+	$hasAccessibleText = is_string($accessibleText) && $accessibleText !== '';
+	$accessibleText = $hasAccessibleText
+		? '<span class="tasks-overview-visually-hidden">'.htmlspecialcharsbx($accessibleText).'</span>'
+		: '';
+	$ariaHidden = $hasAccessibleText ? ' aria-hidden="true"' : '';
+
 	$sub = '';
-	if ($counter['NOTICE'] > 0)
+	if ($expired > 0)
 	{
-		$sub = '<span class="tasks-manage-counter-notify-digit">'.$counter['NOTICE'].'</span>';
+		$sub = '<span class="tasks-manage-counter-notify-digit">'.$expired.'</span>';
 	}
 
 	return '<span class="tasks-manage-counter">
-		<span class="tasks-manage-counter-total-bottom">'.$counter['ALL'].'</span>
-		<span class="tasks-manage-counter-notify">'.$sub.'</span>
-	</span>';
+			'.$accessibleText.'
+			<span class="tasks-manage-counter-total-bottom"'.$ariaHidden.'>'.$total.'</span>
+			<span class="tasks-manage-counter-notify"'.$ariaHidden.'>'.$sub.'</span>
+		</span>';
 }
 
 $rowItem = [
@@ -159,10 +215,22 @@ $rowItem = [
 		'NAME' => '<strong>'.GetMessage('TASKS_ROW_SUMMARY').'</strong>',
 
 		'EFFECTIVE' => '<strong>'.round($arResult['SUMMARY']['EFFECTIVE']).'%'.'</strong>',
-		'RESPONSIBLE' => prepareSummaryCounter($arResult['SUMMARY']['RESPONSIBLE']),
-		'ORIGINATOR' => prepareSummaryCounter($arResult['SUMMARY']['ORIGINATOR']),
-		'ACCOMPLICE' => prepareSummaryCounter($arResult['SUMMARY']['ACCOMPLICE']),
-		'AUDITOR' => prepareSummaryCounter($arResult['SUMMARY']['AUDITOR']),
+		'RESPONSIBLE' => prepareSummaryCounter(
+			$arResult['SUMMARY']['RESPONSIBLE'],
+			GetMessage('TASKS_MANAGE_COLUMN_RESPONSIBLE')
+		),
+		'ORIGINATOR' => prepareSummaryCounter(
+			$arResult['SUMMARY']['ORIGINATOR'],
+			GetMessage('TASKS_MANAGE_COLUMN_ORIGINATOR')
+		),
+		'ACCOMPLICE' => prepareSummaryCounter(
+			$arResult['SUMMARY']['ACCOMPLICE'],
+			GetMessage('TASKS_MANAGE_COLUMN_ACCOMPLICE')
+		),
+		'AUDITOR' => prepareSummaryCounter(
+			$arResult['SUMMARY']['AUDITOR'],
+			GetMessage('TASKS_MANAGE_COLUMN_AUDITOR')
+		),
 	]
 ];
 

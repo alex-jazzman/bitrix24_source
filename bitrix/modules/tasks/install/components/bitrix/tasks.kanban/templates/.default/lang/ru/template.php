@@ -6,6 +6,18 @@ $MESS["KANBAN_SORT_ASC"] = "Снизу";
 $MESS["KANBAN_SORT_ACTUAL"] = "По активности";
 $MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "По активности";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Рекомендуется";
+$MESS["TASKS_KANBAN_SORT_FIELD_ID"] = "ID";
+$MESS["TASKS_KANBAN_SORT_FIELD_TITLE"] = "Название";
+$MESS["TASKS_KANBAN_SORT_FIELD_DEADLINE"] = "Крайний срок";
+$MESS["TASKS_KANBAN_SORT_FIELD_ORIGINATOR_NAME"] = "Постановщик";
+$MESS["TASKS_KANBAN_SORT_FIELD_RESPONSIBLE_NAME"] = "Исполнитель";
+$MESS["TASKS_KANBAN_SORT_FIELD_PRIORITY"] = "Важность";
+$MESS["TASKS_KANBAN_SORT_FIELD_MARK"] = "Оценка";
+$MESS["TASKS_KANBAN_SORT_FIELD_CREATED_DATE"] = "Дата создания";
+$MESS["TASKS_KANBAN_SORT_FIELD_START_DATE_PLAN"] = "Дата начала";
+$MESS["TASKS_KANBAN_SORT_FIELD_END_DATE_PLAN"] = "Дата завершения";
+$MESS["TASKS_KANBAN_SORT_DIRECTION_ASC"] = "По возрастанию";
+$MESS["TASKS_KANBAN_SORT_DIRECTION_DESC"] = "По убыванию";
 $MESS["KANBAN_WO_GROUP_1"] = "Здесь будет ваш канбан задач по проектам";
 $MESS["KANBAN_WO_GROUP_2"] = "Создайте свой первый проект, чтобы начать работу с задачами";
 $MESS["KANBAN_WO_GROUP_BUTTON"] = "Создать проект";
@@ -31,3 +43,17 @@ $MESS["KANBAN_QUICK_TASK_ITEM_INFO"] = "Нажмите <span>Enter</span> что
 $MESS["KANBAN_POPUP_COLLAB_K_TEXT_1"] = "На канбан-доске задачи коллабы отображаются в виде карточек в колонках, где каждая колонка — этап работы. Вы сразу видите, сколько задач ещё нужно сделать, какие в работе, а какие уже выполнены. Это помогает держать весь проект под контролем и не пропускать задачи, которые зависли на какой-то стадии.";
 $MESS["KANBAN_POPUP_COLLAB_K_TEXT_2"] = "Двигайте задачи по стадиям, следите за работой в коллабе!";
 $MESS["KANBAN_POPUP_COLLAB_K_TEXT_3"] = "В каждой коллабе можно настроить свой канбан с нужными стадиями.";
+
+// SC-005: hover hint for a task without a deadline
+$MESS["TASKS_KANBAN_DEADLINELESS_HINT_TITLE"] = "У вас есть задачи без срока";
+$MESS["TASKS_KANBAN_DEADLINELESS_HINT_TEXT"] = "Когда есть срок — задача делается, а не откладывается";
+$MESS["TASKS_KANBAN_DEADLINELESS_HINT_CTA"] = "Установить крайний срок";
+$MESS["TASKS_KANBAN_DEADLINELESS_HINT_CLOSE"] = "Закрыть";
+
+$MESS['TASKS_KANBAN_COMPLETION_REFRESHING'] = 'Изменения сохранены. Обновляем доску…';
+$MESS['TASKS_KANBAN_COMPLETION_REFRESH_FAILED'] = 'Изменения сохранены, но доску не удалось обновить. Обновите страницу.';
+$MESS['TASKS_KANBAN_COMPLETION_RELOAD'] = 'Обновить страницу';
+$MESS['TASKS_KANBAN_COMPLETION_DONE'] = 'Задача завершена';
+$MESS['TASKS_KANBAN_COMPLETION_REVIEW'] = 'Задача отправлена на проверку';
+$MESS['TASKS_KANBAN_COMPLETION_SAVED'] = 'Изменения сохранены';
+$MESS['TASKS_KANBAN_COMPLETION_FAILED'] = 'Не удалось завершить задачу. Попробуйте ещё раз.';

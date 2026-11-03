@@ -1,4 +1,4 @@
-import type { ApplicationState, Criterion } from '../store';
+import { type ApplicationState, type CallAssessment, type Criterion } from '../store';
 
 export default {
 	callId(state: ApplicationState): string
@@ -6,14 +6,29 @@ export default {
 		return state.callId;
 	},
 
-	callAssessment(state: ApplicationState): { id: ?number, title: ?string, prompt: ?string }
+	callAssessment(state: ApplicationState): CallAssessment
 	{
 		return state.assessment;
 	},
 
-	callAssessmentPrompt(state: ApplicationState): ?string
+	callAssessmentPrompt(state: ApplicationState): string
 	{
 		return state.assessment.prompt;
+	},
+
+	callAssessmentIsHintEnabled(state: ApplicationState): boolean
+	{
+		return state.assessment.isHintEnabled;
+	},
+
+	callAssessmentHasHint(state: ApplicationState): boolean
+	{
+		return state.assessment.hasHint;
+	},
+
+	hintViewMode(state: ApplicationState): ?string
+	{
+		return state.hintViewMode;
 	},
 
 	isScriptSelected(state: ApplicationState): boolean

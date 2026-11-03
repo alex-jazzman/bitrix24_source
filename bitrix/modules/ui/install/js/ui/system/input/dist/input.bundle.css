@@ -234,9 +234,11 @@
 
 
 /* Dropdown cursor */
-.ui-system-input.--dropdown:not(.--clickable) .ui-system-input-container,
-.ui-system-input.--dropdown:not(.--clickable) .ui-system-input-value {
-	cursor: default;
+/* A dropdown opens a menu on a click, so it points whatever readonly and clickable say: the
+   clickable rules above step aside on a readonly field, and the field of a select is both. */
+.ui-system-input.--dropdown .ui-system-input-container,
+.ui-system-input.--dropdown .ui-system-input-value {
+	cursor: pointer;
 }
 
 

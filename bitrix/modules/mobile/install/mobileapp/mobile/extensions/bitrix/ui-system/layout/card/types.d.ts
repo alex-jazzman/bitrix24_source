@@ -1,3 +1,5 @@
+import { Color } from '../../../../../../../../dev/janative/types/enum/color';
+
 interface CardExcludePaddingSide
 {
 	left?: boolean;
@@ -15,9 +17,11 @@ interface CardProps
 	style?: object;
 	excludePaddingSide?: CardExcludePaddingSide;
 	hideCross?: boolean;
+	crossColor?: Color;
 	selected?: boolean;
 	accent?: boolean;
 	border?: boolean;
+	borderColor?: string;
 	corner?: object;
 	withPressed?: boolean;
 	badgeMode?: object;

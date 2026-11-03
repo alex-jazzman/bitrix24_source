@@ -11,7 +11,7 @@ import { BasicEditor } from 'ui.text-editor';
 import { BitrixVue } from 'ui.vue3';
 import ActionsPopup from './actions-popup';
 import type { ElementIdsType, SectionIdType, SubSectionIdType } from './analytics';
-import { Analytics, ElementIds, EventIds, Section, SubSection } from './analytics';
+import { Analytics, ElementIds, EventIds, isPingCustom, isSliceFilled, Section, SubSection } from './analytics';
 import {
 	TodoEditorBlocksAddress,
 	TodoEditorBlocksCalendar,
@@ -453,11 +453,6 @@ export class TodoEditorV2
 
 		const { entityData, blocksData } = await this.#getUpdateOrRepeatActionData(event.getData());
 
-		this
-			.setActivityId(entityData.id)
-			.setCurrentUser(entityData.currentUser)
-		;
-
 		await this.#showPrefilledComponent(entityData, blocksData, TodoEditorMode.UPDATE);
 	}
 
@@ -498,11 +493,7 @@ export class TodoEditorV2
 		const { entityData, blocksData } = await this.#getUpdateOrRepeatActionData(event.getData());
 
 		this.#setActiveMenuBarItem();
-		this
-			.setActivityId(null)
-			.setCurrentUser(entityData.currentUser)
-			.setDefaultDeadLine()
-		;
+		this.setDefaultDeadLine();
 
 		entityData.deadline = this.#deadline;
 		// a copy is not linked to the source calendar event, so its deadline is always editable
@@ -542,12 +533,28 @@ export class TodoEditorV2
 
 	async #showPrefilledComponent(entityData: Object, blocksData: Object, mode: string = TodoEditorMode.ADD): void
 	{
-		await this.#initLayoutComponentForEdit(entityData, blocksData);
+		await this.setActivityData(entityData, blocksData, mode);
 
 		this.getTextEditor().expand();
 		this.#scrollToTop();
-		this.setMode(mode);
 		this.setFocused();
+	}
+
+	async setActivityData(
+		entityData: Object,
+		blocksData: Object[],
+		mode: string = TodoEditorMode.ADD,
+	): Promise<TodoEditorV2>
+	{
+		await this.#initLayoutComponentForEdit(entityData, blocksData);
+
+		this
+			.setActivityId(mode === TodoEditorMode.UPDATE ? entityData.id : null)
+			.setCurrentUser(entityData.currentUser)
+			.setMode(mode)
+		;
+
+		return this;
 	}
 
 	async #initLayoutComponentForEdit(entityData: Object, blocksData: Object[]): Promise
@@ -616,10 +623,7 @@ export class TodoEditorV2
 				const analytics = this.#getAnalyticsLabel(data);
 
 				Ajax
-					.runAction(this.#getSaveActionPath(), {
-						data,
-						analytics,
-					})
+					.runAction(this.#getSaveActionPath(), analytics === null ? { data } : { data, analytics })
 					.then((response) => {
 						this.#currentUser = this.#user;
 						resolve(response);
@@ -704,9 +708,7 @@ export class TodoEditorV2
 		// eslint-disable-next-line no-param-reassign
 		data = Runtime.clone(data);
 
-		const pingOffsets = data.pingOffsets.map((value) => Number(value));
-		const defaultOffsets = this.#pingSettings.selectedValues;
-		if (JSON.stringify(pingOffsets) !== JSON.stringify(defaultOffsets))
+		if (isPingCustom(data.pingOffsets, this.#pingSettings.selectedValues))
 		{
 			analyticsLabel.setPingSettings(data.pingOffsets.join(','));
 		}
@@ -720,6 +722,11 @@ export class TodoEditorV2
 		const blockTypes = [];
 		const calendarBlockId = TodoEditorBlocksCalendar.methods.getId();
 		data.settings.forEach((block) => {
+			if (block.active === false)
+			{
+				return;
+			}
+
 			if (data.isCalendarSectionChanged && block.id === calendarBlockId)
 			{
 				blockTypes.push('section_calendar');
@@ -744,7 +751,9 @@ export class TodoEditorV2
 			analyticsLabel.setIsDescriptionChanged();
 		}
 
-		return analyticsLabel.getData();
+		const analyticsData = analyticsLabel.getData();
+
+		return isSliceFilled(analyticsData) ? analyticsData : null;
 	}
 
 	#getBlocks(): BlockSettings[]
@@ -916,6 +925,13 @@ export class TodoEditorV2
 	setDescription(description: String): TodoEditorV2
 	{
 		this.getTextEditor().setText(description);
+
+		return this;
+	}
+
+	activateClientBlock(): TodoEditorV2
+	{
+		this.#layoutComponent?.setBlockActive('client');
 
 		return this;
 	}

@@ -57,6 +57,9 @@ class BizprocConfigPermissionsAjaxController extends Controller
 			(int)$this->getCurrentUser()?->getId(),
 			$provider->decodeUserGroups($userGroups),
 			array_map('intval', $deletedUserGroups),
+			// What the page could not express, this save must not delete: the answer comes from the render that
+			// built this payload, not from the portal state at the moment of writing it.
+			preserveInexpressibleValues: !PermissionMatrixProvider::pageCouldExpressOwnSentinel($parameters),
 		);
 
 		$result = $command->run();
@@ -67,7 +70,9 @@ class BizprocConfigPermissionsAjaxController extends Controller
 			return null;
 		}
 
-		return $provider->getData();
+		// The page keeps the answer of its own render for every following save, so the matrix it gets back is
+		// built in that same mode: otherwise the two halves part ways for the rest of the session.
+		return $provider->getDataForSaveResponse($parameters);
 	}
 
 	private function checkAccess(): bool

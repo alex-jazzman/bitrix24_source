@@ -64,9 +64,12 @@
 	cursor: grabbing;
 }
 
+/* Controls of the row sit at its top edge: the row grows down with every construction it names, and
+   a control centred against a grown row drifts away from the line it acts on */
 .editor-chart-node-settings-preview__actions {
 	margin-left: auto;
 	display: flex;
+	align-items: flex-start;
 }
 
 .editor-chart-node-settings-preview__title {
@@ -75,11 +78,21 @@
 	margin: 0 15px 0 10px;
 }
 
+/* Every row of the card keeps one indent off the edge of the row: the label of a construction is
+   what the eye follows down the card, so the labels have to start in one place. The row itself keeps
+   4px on the left for the drag handle of a movable preview, and these 4px make up the 8px every
+   label stands off the border of the card */
 .editor-chart-node-settings-preview__construction {
 	font-size: 14px;
 	line-height: 20px;
 	display: flex;
 	gap: 6px;
+	padding-left: var(--ui-space-inset-2xs);
+}
+
+/* A construction that names nothing yet says so, in the muted tone of a placeholder */
+.editor-chart-node-settings-preview__expression-part.--not-selected {
+	color: var(--ui-color-base-2);
 }
 
 .editor-chart-node-settings-preview__construction.--empty {
@@ -98,17 +111,25 @@
 	color: var(--ui-color-blue-55);
 }
 
+/* Same purple the ACTION chip of the rules toolbar carries: one construction type, one colour,
+   whichever surface names it */
 .editor-chart-node-settings-preview__construction.--action .editor-chart-node-settings-preview__construction_type {
-	color: var(--ui-color-green-50);
+	color: var(--designer-bp-rules-action-text);
 }
 
 .editor-chart-node-settings-preview__construction.--output .editor-chart-node-settings-preview__construction_type {
 	color: var(--ui-color-palette-gray-50);
 }
 
-/* Green uppercase label of a configured base-settings block («БАЗОВЫЕ ДЕЙСТВИЯ» on the mockup) */
+/* Same orange the OBJECT chip of the rules toolbar carries */
+.editor-chart-node-settings-preview__construction.--filter .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+/* Green uppercase label of a base-settings block, written the way the full form writes it */
 .editor-chart-node-settings-preview__construction.--base-settings .editor-chart-node-settings-preview__construction_type {
 	color: var(--ui-color-accent-main-success);
+	text-transform: uppercase;
 }
 
 .editor-chart-node-settings-preview__card:not(:last-child) {

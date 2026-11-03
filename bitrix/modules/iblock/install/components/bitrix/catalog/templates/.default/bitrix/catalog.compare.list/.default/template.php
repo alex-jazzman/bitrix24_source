@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\HttpRequest;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -55,15 +60,16 @@ if ($needReload)
 {
 	die();
 }
-$currentPath = CHTTP::urlDeleteParams(
-	$APPLICATION->GetCurPageParam(),
-	array(
+$deleteParams = array_merge(
+	[
 		$arParams['PRODUCT_ID_VARIABLE'],
 		$arParams['ACTION_VARIABLE'],
 		'ajax_action'
-	),
-	array("delete_system_params" => true)
+	],
+ 	HttpRequest::getSystemParameters()
 );
+
+$currentPath = (string)(new Uri($APPLICATION->GetCurPageParam()))->deleteParams($deleteParams);
 
 $jsParams = array(
 	'VISUAL' => array(

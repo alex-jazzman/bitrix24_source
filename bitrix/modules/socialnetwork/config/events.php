@@ -1,9 +1,13 @@
 <?php
 
 use Bitrix\Socialnetwork\V2\Internal\Integration\Im;
+use Bitrix\Socialnetwork\V2\Internal\Integration\Disk;
 
 return [
 	'value' => [
+		\Bitrix\Disk\Public\Event\OnAfterDeleteAttachedObjectEvent::class => [
+			Disk\EventHandler\OnAfterDeleteAttachedObject\InvalidateCache::class,
+		],
 		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadMessagesEvent::class => [
 			Im\EventHandler\OnAfterReadMessages\UpdateFeedCounters::class,
 		],

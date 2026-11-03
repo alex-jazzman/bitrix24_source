@@ -2,6 +2,7 @@
  * @module crm/conversion/wizard/fields
  */
 jn.define('crm/conversion/wizard/fields', (require, exports, module) => {
+	const { Text3 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { unique } = require('utils/array');
@@ -78,10 +79,9 @@ jn.define('crm/conversion/wizard/fields', (require, exports, module) => {
 						content: LIST_ICON,
 					},
 				}),
-				Text({
+				Text3({
 					style: {
 						color,
-						fontSize: 16,
 						flexShrink: 2,
 					},
 					text,

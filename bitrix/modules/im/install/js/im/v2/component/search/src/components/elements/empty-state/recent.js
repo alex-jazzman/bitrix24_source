@@ -11,6 +11,6 @@ export const RecentEmptyState = {
 		},
 	},
 	template: `
-		<BaseEmptyState :title="loc('IM_SEARCH_RESULT_NO_RECENT')" />
+		<BaseEmptyState :title="loc('IM_SEARCH_RESULT_NO_RECENT')" data-testid="im-search-recent-empty-state" />
 	`,
 };

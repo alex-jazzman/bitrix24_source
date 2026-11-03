@@ -1,4 +1,5 @@
 <?php
+$MESS["BICONNECTOR_SUPERSET_ACTION_SETTINGS_DATASET_TYPING_SAVE_ERROR"] = "Could not save dataset settings. Please try again later.";
 $MESS["BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_INVALID_RANGE"] = "Date range is incorrect.";
 $MESS["BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_MSGVER_1"] = "Insufficient permission to use BI Builder.";
 $MESS["BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_SETTINGS"] = "Insufficient permission to edit BI Builder settings.";

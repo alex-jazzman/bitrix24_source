@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/task.status.bundle.css',
 	'js' => 'dist/task.status.bundle.js',
 	'rel' => [
-		'ui.notification',
-		'tasks.scrum.dod',
 		'main.core',
+		'tasks.scrum.dod',
 		'ui.dialogs.messagebox',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

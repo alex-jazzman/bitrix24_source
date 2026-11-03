@@ -6,6 +6,7 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 		selectEntities,
 		selectCurrentFolder,
 		selectCurrentVirtualFolderKey,
+		selectFavoritesAvailable,
 	} = require('mail/statemanager/redux/slices/folders/selector');
 	const { isEqual } = require('utils/object');
 
@@ -13,6 +14,7 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 		let prevFolders = selectEntities(store.getState());
 		let prevCurrentFolder = selectCurrentFolder(store.getState());
 		let prevVirtualFolderKey = selectCurrentVirtualFolderKey(store.getState());
+		let prevFavoritesAvailable = selectFavoritesAvailable(store.getState());
 
 		return store.subscribe(() => {
 			let selected = null;
@@ -20,6 +22,7 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 			const nextFolders = selectEntities(store.getState());
 			const nextCurrentFolder = selectCurrentFolder(store.getState());
 			const nextVirtualFolderKey = selectCurrentVirtualFolderKey(store.getState());
+			const nextFavoritesAvailable = selectFavoritesAvailable(store.getState());
 			const {
 				moved,
 				removed,
@@ -29,6 +32,7 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 			const isCurrentFolderChanged = (prevCurrentFolder !== null && nextCurrentFolder !== null)
 				&& (prevCurrentFolder.id !== nextCurrentFolder.id);
 			const isVirtualFolderKeyChanged = prevVirtualFolderKey !== nextVirtualFolderKey;
+			const isFavoritesAvailabilityChanged = prevFavoritesAvailable !== nextFavoritesAvailable;
 
 			if (isCurrentFolderChanged || (isVirtualFolderKeyChanged && nextVirtualFolderKey === null))
 			{
@@ -45,6 +49,7 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 				|| added.length > 0 || created.length > 0
 				|| isCurrentFolderChanged
 				|| isVirtualFolderKeyChanged
+				|| isFavoritesAvailabilityChanged
 			)
 			{
 				onChange({
@@ -60,6 +65,7 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 			prevFolders = nextFolders;
 			prevCurrentFolder = nextCurrentFolder;
 			prevVirtualFolderKey = nextVirtualFolderKey;
+			prevFavoritesAvailable = nextFavoritesAvailable;
 		});
 	};
 

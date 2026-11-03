@@ -2,8 +2,8 @@
 	display: flex;
 	align-items: flex-start;
 	gap: var(--ui-space-inline-2xs2);
-	padding: var(--ui-space-inset-sm2) 11px 21px;
-	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg) var(--ui-space-inset-xl) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-3xl);
 	background: linear-gradient(267deg,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
 		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
@@ -13,6 +13,7 @@
 
 .crm-call-assessment-v2-step-edit__handle {
 	flex: 0 0 24px;
+	margin-top: 17px;
 	width: 24px;
 	height: 30px;
 	padding: 3px 0;
@@ -34,15 +35,15 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 11px;
-	padding: var(--ui-space-inset-md) 10px var(--ui-space-inset-md) 19px;
+	gap: var(--ui-space-stack-2xs);
+	padding: 18px var(--ui-space-inset-sm2) 10px;
 	background: var(--ui-color-bg-content-primary);
-	border: 1px solid var(--ui-color-design-outline-stroke);
-	border-radius: var(--ui-border-radius-sm);
+	border-radius: var(--ui-border-radius-3xl);
 }
 
 .crm-call-assessment-v2-step-edit__remove {
 	flex: 0 0 32px;
+	margin-top: 17px;
 	width: 32px;
 	height: 30px;
 	padding: 3px 0 0 8px;
@@ -62,7 +63,7 @@
 	--padding-horizontal: 0;
 	--padding-vertical: 0;
 	--min-height: 23px;
-	--font-size: var(--ui-font-size-xl);
+	--font-size: var(--ui-font-size-2xl);
 }
 
 .crm-call-assessment-v2-step-edit__description-input {
@@ -73,6 +74,7 @@
 }
 
 .crm-call-assessment-v2-step-edit__description-input textarea {
+	field-sizing: content;
 	max-height: 200px;
 	transition: height 120ms ease;
 }

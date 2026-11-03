@@ -7,6 +7,10 @@ import 'ui.design-tokens';
 
 import './css/style.css';
 
+const NBSP = '\u00A0';
+const NBSP_ENTITY_PATTERN = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
+const EDGE_REGULAR_WHITESPACE_PATTERN = /^[\t\n\r ]+|[\t\n\r ]+$/g;
+
 export class LinkUrl extends Text
 {
 	static TYPE_BLOCK = "block";
@@ -185,7 +189,7 @@ export class LinkUrl extends Text
 
 		if (this.disallowType)
 		{
-			Dom.addClass(this.gridLeftCell, "grid-dissallow");
+			Dom.addClass(this.gridLeftCell, "grid-disallow");
 		}
 	}
 
@@ -1609,7 +1613,7 @@ export class LinkUrl extends Text
 	 */
 	getValue()
 	{
-		let valueText = this.value ? this.value : this.input.innerText;
+		let valueText = this.value ? this.value : this.getInputValueText();
 		const selectedHrefType = this.getSelectedHrefType();
 
 		this.validateValue(valueText);
@@ -1670,7 +1674,7 @@ export class LinkUrl extends Text
 	 */
 	getValueText()
 	{
-		return this.value ? this.value : this.input.innerText;
+		return this.value ? this.value : this.getInputValueText();
 	}
 
 	validateValue(value)
@@ -1765,7 +1769,16 @@ export class LinkUrl extends Text
 
 	getInputInnerText(value)
 	{
-		return this.prepareInputInnerText(value.toString().trim());
+		return this.prepareInputInnerText(
+			String(value ?? '')
+				.replaceAll(NBSP_ENTITY_PATTERN, NBSP)
+				.replaceAll(EDGE_REGULAR_WHITESPACE_PATTERN, ''),
+		);
+	}
+
+	getInputValueText()
+	{
+		return this.input.innerText;
 	}
 
 	prepareInputInnerText(value)
@@ -1779,4 +1792,5 @@ export class LinkUrl extends Text
 		}
 		return value;
 	}
+
 }

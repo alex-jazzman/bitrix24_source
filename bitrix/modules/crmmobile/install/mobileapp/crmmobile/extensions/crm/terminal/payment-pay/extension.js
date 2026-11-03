@@ -2,6 +2,8 @@
  * @module crm/terminal/payment-pay
  */
 jn.define('crm/terminal/payment-pay', (require, exports, module) => {
+	const { Text5, Text4 } = require('ui-system/typography/text');
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
 	const AppTheme = require('apptheme');
@@ -156,9 +158,8 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 									}, this.layout);
 								},
 							},
-							Text({
+							Text5({
 								style: {
-									fontSize: 13,
 									color: AppTheme.colors.accentMainLinks,
 								},
 								text: Loc.getMessage(
@@ -286,11 +287,10 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				{},
 				this.state.paymentSystems.length === 0
 				&& !this.payment.isLinkPaymentEnabled
-				&& Text(
+				&& Text4(
 					{
 						style: {
 							color: AppTheme.colors.base3,
-							fontSize: 15,
 							textAlign: 'center',
 							lineHeightMultiple: 1.2,
 						},
@@ -862,7 +862,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		},
 		loaderBottomText: {
 			fontWeight: '400',
-			fontSize: 18,
+			fontSize: Typography.text1.getValue().fontSize,
 			color: AppTheme.colors.base1,
 		},
 		paymentQrContainer: {
@@ -873,7 +873,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		paymentQrText: {
 			marginHorizontal: 30,
 			fontWeight: '700',
-			fontSize: 18,
+			fontSize: Typography.text1.getValue().fontSize,
 			color: AppTheme.colors.base1,
 			textAlign: 'center',
 		},
@@ -916,7 +916,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		},
 		backToPaymentMethodsButtonText: {
 			color: AppTheme.colors.base1,
-			fontSize: 17,
+			fontSize: Typography.text2.getValue().fontSize,
 			fontWeight: '400',
 		},
 		paymentMethodsContainer: {

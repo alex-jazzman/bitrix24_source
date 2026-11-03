@@ -2,6 +2,7 @@
  * @module crm/document/list
  */
 jn.define('crm/document/list', (require, exports, module) => {
+	const { Text1, Text4 } = require('ui-system/typography/text');
 	const AppTheme = require('apptheme');
 	const { FadeView } = require('animation/components/fade-view');
 	const { Loc } = require('loc');
@@ -187,19 +188,18 @@ jn.define('crm/document/list', (require, exports, module) => {
 				},
 				View(
 					{},
-					Text({
+					Text1({
 						text: document.title,
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: {
 							color: AppTheme.colors.base1,
-							fontSize: 18,
 						},
 					}),
 				),
 				View(
 					{},
-					Text({
+					Text4({
 						text: Loc.getMessage('M_CRM_DOCUMENT_LIST_DOCUMENT_DATE_CREATE', {
 							'#DATE#': createdAt.format(`${date()}, ${shortTime()}`),
 						}),
@@ -207,7 +207,6 @@ jn.define('crm/document/list', (require, exports, module) => {
 						ellipsize: 'end',
 						style: {
 							color: AppTheme.colors.base3,
-							fontSize: 14,
 						},
 					}),
 				),
@@ -236,13 +235,12 @@ jn.define('crm/document/list', (require, exports, module) => {
 								minHeight: 60,
 							},
 						},
-						Text({
+						Text1({
 							text: getEntityMessage('M_CRM_DOCUMENT_LIST_EMPTY', this.props.entityTypeId),
 							numberOfLines: 1,
 							ellipsize: 'end',
 							style: {
 								color: AppTheme.colors.base4,
-								fontSize: 18,
 							},
 						}),
 					),
@@ -311,13 +309,12 @@ jn.define('crm/document/list', (require, exports, module) => {
 							flexGrow: 1,
 						},
 					},
-					Text({
+					Text1({
 						text: title,
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: {
 							color: AppTheme.colors.base1,
-							fontSize: 18,
 						},
 					}),
 					subtitle && Text({

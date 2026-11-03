@@ -9,6 +9,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $debugMode = defined('LEXICAL_DEBUG') && LEXICAL_DEBUG === true;
 
 return [
-	'js' => $debugMode ? './dev/dist/lexical.dev.bundle.js' : './prod/dist/lexical.prod.bundle.min.js',
+	'js' => $debugMode ? './dev/dist/lexical.dev.bundle.js' : './prod/dist/lexical.prod.bundle.js',
 	'skip_core' => true,
 ];

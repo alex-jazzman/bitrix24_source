@@ -14,6 +14,7 @@ export const SearchEmptyState = {
 		<BaseEmptyState
 			:title="loc('IM_SEARCH_RESULT_NOT_FOUND')"
 			:subtitle="loc('IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION')"
+			data-testid="im-search-empty-state"
 		/>
 	`,
 };

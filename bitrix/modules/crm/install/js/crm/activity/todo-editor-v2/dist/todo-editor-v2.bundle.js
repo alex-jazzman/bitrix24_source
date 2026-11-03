@@ -11,6 +11,8 @@ this.BX.Crm = this.BX.Crm || {};
 		EVENT_DEADLINE_CHANGE: 'crm:timeline:todo:deadline-changed',
 		EVENT_CALENDAR_CHANGE: 'crm:timeline:todo:calendar-changed',
 		EVENT_ACTIONS_POPUP_ITEM_CLICK: 'crm:timeline:todo:actions-popup-item-click',
+		EVENT_ACTIONS_POPUP_SHOW: 'crm:timeline:todo:actions-popup-show',
+		EVENT_ACTIONS_POPUP_CLOSE: 'crm:timeline:todo:actions-popup-close',
 		EVENT_UPDATE_CLICK: 'crm:timeline:todo:update',
 		EVENT_REPEAT_CLICK: 'crm:timeline:todo:repeat'
 	};
@@ -39,7 +41,17 @@ this.BX.Crm = this.BX.Crm || {};
 					offsetLeft: 50,
 					angle: true,
 					closeByEsc: false,
-					items: this.#getPreparedItems()
+					items: this.#getPreparedItems(),
+					events: {
+						// Keep the trigger button's aria-expanded in sync with the menu.
+						// Covers every close path (item click, outside click), not only item click.
+						onPopupShow: () => {
+							main_core_events.EventEmitter.emit(this, Events.EVENT_ACTIONS_POPUP_SHOW);
+						},
+						onPopupClose: () => {
+							main_core_events.EventEmitter.emit(this, Events.EVENT_ACTIONS_POPUP_CLOSE);
+						}
+					}
 				});
 			}
 			return this.#menu;
@@ -127,6 +139,24 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
+	const REQUIRED_SLICE_KEYS = ['c_section', 'c_sub_section'];
+	function isSliceFilled(data) {
+		return REQUIRED_SLICE_KEYS.every(key => main_core.Type.isStringFilled(data?.[key])) && Object.values(data).every(value => !main_core.Type.isNil(value));
+	}
+	function normalizeOffsets(values) {
+		if (!main_core.Type.isArray(values)) {
+			return [];
+		}
+		const numbers = values.map(value => Number(value)).filter(number => Number.isFinite(number));
+		return [...new Set(numbers)].sort((first, second) => first - second);
+	}
+
+	// the provider yields offsets as numbers before the first save and as strings after it
+	function isPingCustom(selected, defaults) {
+		const selectedOffsets = normalizeOffsets(selected);
+		const defaultOffsets = normalizeOffsets(defaults);
+		return selectedOffsets.length !== defaultOffsets.length || selectedOffsets.some((offset, index) => offset !== defaultOffsets[index]);
+	}
 	const EventIds = Object.freeze({
 		activityView: 'activity_view',
 		activityCreate: 'activity_create',
@@ -244,7 +274,7 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		send() {
 			const data = this.getData();
-			if (this.#validate(data)) {
+			if (isSliceFilled(data)) {
 				ui_analytics.sendData(data);
 			}
 		}
@@ -261,9 +291,9 @@ this.BX.Crm = this.BX.Crm || {};
 			};
 			if (main_core.Type.isStringFilled(this.#notificationSkipPeriod)) {
 				if (this.#notificationSkipPeriod === 'forever') {
-					data.p2 = 'skipPeriod_custom';
-				} else {
 					data.p2 = 'skipPeriod_forever';
+				} else {
+					data.p2 = 'skipPeriod_custom';
 				}
 			} else if (main_core.Type.isStringFilled(this.#pingSettings)) {
 				data.p2 = 'ping_custom';
@@ -290,15 +320,6 @@ this.BX.Crm = this.BX.Crm || {};
 				data.p5 = p5Items.join(',');
 			}
 			return data;
-		}
-		#validate(data) {
-			let isValid = true;
-			Object.keys(data).forEach(key => {
-				if (main_core.Type.isNil(data[key])) {
-					isValid = false;
-				}
-			});
-			return isValid;
 		}
 	}
 
@@ -896,15 +917,14 @@ this.BX.Crm = this.BX.Crm || {};
 		context.plannerRequestId += 1;
 	}
 	function normalizeUserId(userId) {
+		if (!main_core.Type.isNumber(userId) && !main_core.Type.isStringFilled(userId)) {
+			return 0;
+		}
 		const normalizedUserId = Number(userId);
-		return Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : 0;
+		return main_core.Type.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : 0;
 	}
 	function createSelectedUserIds(userIds, hostId) {
 		const selectedUserIds = new Set();
-		const normalizedHostId = normalizeUserId(hostId);
-		if (normalizedHostId > 0) {
-			selectedUserIds.add(normalizedHostId);
-		}
 		if (userIds?.[Symbol.iterator]) {
 			for (const userId of userIds) {
 				const normalizedUserId = normalizeUserId(userId);
@@ -913,7 +933,8 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 			}
 		}
-		return selectedUserIds;
+		const normalizedHostId = normalizeUserId(hostId);
+		return selectedUserIds.has(normalizedHostId) ? new Set([normalizedHostId, ...selectedUserIds]) : selectedUserIds;
 	}
 	function prepareCalendarBlockForCopy(calendarBlock, hostId, from) {
 		calendarBlock.data.calendarEventId = 0;
@@ -1062,7 +1083,7 @@ this.BX.Crm = this.BX.Crm || {};
 		data() {
 			const ownerId = this.settings.ownerId || this.context.userId;
 			const hostId = normalizeUserId(this.settings.hostId) || normalizeUserId(this.settings.userId);
-			const selectedUserIds = createSelectedUserIds([ownerId], hostId);
+			const selectedUserIds = createSelectedUserIds([hostId, ownerId], hostId);
 			const timestamp = (this.settings.from || main_date.Timezone.UserTime.getTimestamp()) * 1000;
 			const millisecondsInFiveMinutes = 5 * 60 * 1000;
 
@@ -1115,7 +1136,7 @@ this.BX.Crm = this.BX.Crm || {};
 					config: {},
 					sectionSelectorReadOnly: false
 				};
-				if (main_core.Type.isObject(filledValues?.config)) {
+				if (main_core.Type.isArray(filledValues?.config?.sections)) {
 					const config = this.normalizeCalendarConfig(filledValues.config);
 					preparedData = {
 						...preparedData,
@@ -1219,6 +1240,7 @@ this.BX.Crm = this.BX.Crm || {};
 					hostId: this.hostId,
 					type: 'user',
 					entityList: [],
+					attendeesProvided: 'Y',
 					dateFrom: this.getFormattedDate('beforeOneWeek'),
 					dateTo: this.getFormattedDate('afterTwoWeeks'),
 					timezone: this.timezoneName,
@@ -1349,7 +1371,6 @@ this.BX.Crm = this.BX.Crm || {};
 				this.selectedUsersIdsArray.forEach(id => {
 					preselectedItems.push(['user', id]);
 				});
-				const undeselectedItems = this.hostId > 0 ? [['user', this.hostId]] : [];
 				return new ui_entitySelector.Dialog({
 					id: 'todo-editor-calendar-user-selector-dialog',
 					targetNode: this.$refs.userSelector,
@@ -1364,7 +1385,6 @@ this.BX.Crm = this.BX.Crm || {};
 						id: 'user'
 					}],
 					preselectedItems,
-					undeselectedItems,
 					events: {
 						'Item:onBeforeSelect': this.onBeforeSelectUser,
 						'Item:onBeforeDeselect': this.onBeforeSelectUser,
@@ -1387,7 +1407,7 @@ this.BX.Crm = this.BX.Crm || {};
 					item
 				}
 			}) {
-				if (this.selectedUserIds.has(item.id)) {
+				if (this.sectionSelectorReadOnly || this.selectedUserIds.has(item.id)) {
 					return;
 				}
 				this.selectedUserIds.add(item.id);
@@ -1398,7 +1418,7 @@ this.BX.Crm = this.BX.Crm || {};
 					item
 				}
 			}) {
-				if (item.id === this.hostId || !this.selectedUserIds.has(item.id)) {
+				if (this.sectionSelectorReadOnly || !this.selectedUserIds.has(item.id)) {
 					return;
 				}
 				this.selectedUserIds.delete(item.id);
@@ -1570,7 +1590,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		template: `
-		<div class="crm-activity__todo-editor-v2_block-header">
+		<div class="crm-activity__todo-editor-v2_block-header" data-testid="crm-todo-calendar-header">
 			<span
 				class="crm-activity__todo-editor-v2_block-header-icon"
 				:style="iconStyles"
@@ -1579,6 +1599,7 @@ this.BX.Crm = this.BX.Crm || {};
 			<span
 				v-if="canUseCalendarSectionSelector"
 				class="crm-activity__todo-editor-v2_block-header-data"
+				data-testid="crm-todo-calendar-selector"
 			>
 				<SectionSelector 
 					ref="sectionSelector"
@@ -1601,6 +1622,7 @@ this.BX.Crm = this.BX.Crm || {};
 			<div
 				@click="$emit('close', id)"
 				class="crm-activity__todo-editor-v2_block-header-close"
+				data-testid="crm-todo-calendar-close"
 			></div>
 		</div>
 		<div class="crm-activity__todo-editor-v2_block-subheader">
@@ -2726,6 +2748,9 @@ this.BX.Crm = this.BX.Crm || {};
 				};
 			}
 		},
+		beforeUnmount() {
+			this.clearDeselectUserTimeout();
+		},
 		methods: {
 			onSelectUser(event) {
 				const selectedItem = event.getData().item.getDialog().getSelectedItems()[0];
@@ -2736,17 +2761,27 @@ this.BX.Crm = this.BX.Crm || {};
 					});
 				}
 			},
-			onDeselectUser() {
-				setTimeout(() => {
-					const selectedItems = this.userSelectorDialog.getSelectedItems();
+			onDeselectUser(event) {
+				const dialog = event.getData().item.getDialog();
+				this.clearDeselectUserTimeout();
+				this.deselectUserTimeoutId = setTimeout(() => {
+					this.deselectUserTimeoutId = null;
+					if (this.userSelectorDialog !== dialog) {
+						return;
+					}
+					const selectedItems = dialog.getSelectedItems();
 					if (selectedItems.length === 0) {
 						this.userAvatarUrl = this.imageUrl;
-						this.userSelectorDialog.hide();
+						dialog.hide();
 						this.$Bitrix.eventEmitter.emit(Events.EVENT_RESPONSIBLE_USER_CHANGE, {
 							responsibleUserId: this.userId
 						});
 					}
 				}, 100);
+			},
+			clearDeselectUserTimeout() {
+				clearTimeout(this.deselectUserTimeoutId);
+				this.deselectUserTimeoutId = null;
 			},
 			showUserDialog() {
 				setTimeout(() => {
@@ -2754,15 +2789,11 @@ this.BX.Crm = this.BX.Crm || {};
 				}, 5);
 			},
 			resetToDefault() {
+				this.clearDeselectUserTimeout();
 				this.userAvatarUrl = this.imageUrl;
 				if (this.userSelectorDialog) {
-					const defaultUserItem = this.userSelectorDialog.getItem({
-						id: this.userId,
-						entityId: 'user'
-					});
-					if (defaultUserItem) {
-						defaultUserItem.select(true);
-					}
+					this.userSelectorDialog.destroy();
+					this.userSelectorDialog = null;
 				}
 			},
 			getUserSelectorDialog() {
@@ -2783,6 +2814,7 @@ this.BX.Crm = this.BX.Crm || {};
 						preselectedItems: [['user', this.userId]],
 						undeselectedItems: [['user', this.userId]],
 						events: {
+							onDestroy: this.clearDeselectUserTimeout,
 							'Item:onSelect': this.onSelectUser,
 							'Item:onDeselect': this.onDeselectUser
 						}
@@ -2811,6 +2843,9 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	const ADD_MODE = 'add';
+
+	// The deadline pill has to change its format, not just its size: see the reflow region in todo-editor.css.
+	const NARROW_LAYOUT_QUERY = '(max-width: 768px)';
 	const CALENDAR_BLOCK_ID = TodoEditorBlocksCalendar.methods.getId();
 	const TodoEditor = {
 		components: {
@@ -2884,6 +2919,8 @@ this.BX.Crm = this.BX.Crm || {};
 				blocksData,
 				modeData: this.mode,
 				currentUserData: this.currentUser,
+				isActionsPopupShown: false,
+				isNarrowLayout: window.matchMedia(NARROW_LAYOUT_QUERY).matches,
 				canChangeDeadline: true,
 				isEdit: this.mode !== ADD_MODE
 			};
@@ -2895,7 +2932,12 @@ this.BX.Crm = this.BX.Crm || {};
 			deadlineFormatted() {
 				let converter = new crm_timeline_tools.DatetimeConverter(this.currentDeadline);
 				let deadlineFormatted = converter.toDatetimeString({
-					withDayOfWeek: true,
+					// Measured at a card width of 241px: the full form ("Ср, 26 августа, 19:00") needs 185px
+					// of the 118px its container has and runs past the card edge, while the short one
+					// ("26 авг, 19:00") takes 111px. The day of the week goes first because it is the part
+					// the date itself already carries.
+					withDayOfWeek: !this.isNarrowLayout,
+					withFullMonth: !this.isNarrowLayout,
 					delimiter: ', '
 				});
 
@@ -2926,6 +2968,9 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		methods: {
+			onNarrowLayoutChange(event) {
+				this.isNarrowLayout = event.matches;
+			},
 			/* @internal */
 			prepareBlockDataWithEditorParams(blocksData, {
 				currentDeadline
@@ -3204,6 +3249,12 @@ this.BX.Crm = this.BX.Crm || {};
 					this.sendAnalytics(EventIds.activityView, ElementIds.addBlock);
 				}
 			},
+			onActionsPopupShow() {
+				this.isActionsPopupShown = true;
+			},
+			onActionsPopupClose() {
+				this.isActionsPopupShown = false;
+			},
 			getNextBlockSortValue() {
 				let maxSortValue = 0;
 				this.blocksData.forEach(data => {
@@ -3233,8 +3284,9 @@ this.BX.Crm = this.BX.Crm || {};
 				block.focused = false;
 				// eslint-disable-next-line no-param-reassign
 				block.sort = 0;
-				if (main_core.Type.isFunction(this.$refs[block.id]?.reset)) {
-					this.$refs[block.id].reset();
+				const blockRef = main_core.Type.isArray(this.$refs[block.id]) ? this.$refs[block.id][0] : this.$refs[block.id];
+				if (main_core.Type.isFunction(blockRef?.reset)) {
+					blockRef.reset();
 				}
 				const blockData = this.getBlockDataById(block.id);
 				if (main_core.Type.isObject(blockData)) {
@@ -3242,14 +3294,19 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 			},
 			getExecutedBlocksData() {
-				const data = [];
-				this.blocksData.filter(block => block.active).forEach(block => {
-					data.push({
+				return this.blocksData.map(block => {
+					if (!block.active) {
+						return {
+							id: block.id,
+							active: false
+						};
+					}
+					return {
 						...this.$refs[block.id][0].getExecutedData(),
-						id: block.id
-					});
+						id: block.id,
+						active: true
+					};
 				});
-				return data;
 			},
 			getBlockComponentName(blockId) {
 				return `TodoEditorBlocks${blockId.charAt(0).toUpperCase()}${blockId.slice(1)}`;
@@ -3274,11 +3331,18 @@ this.BX.Crm = this.BX.Crm || {};
 			this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
 			this.$Bitrix.eventEmitter.subscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 			main_core_events.EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
+			main_core_events.EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_SHOW, this.onActionsPopupShow);
+			main_core_events.EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_CLOSE, this.onActionsPopupClose);
+			this.narrowLayoutQuery = window.matchMedia(NARROW_LAYOUT_QUERY);
+			this.narrowLayoutQuery.addEventListener('change', this.onNarrowLayoutChange);
 		},
 		beforeUnmount() {
 			this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
 			this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 			main_core_events.EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
+			main_core_events.EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_SHOW, this.onActionsPopupShow);
+			main_core_events.EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_CLOSE, this.onActionsPopupClose);
+			this.narrowLayoutQuery?.removeEventListener('change', this.onNarrowLayoutChange);
 		},
 		template: `
 		<div class="crm-activity__todo-editor-v2_container">
@@ -3286,6 +3350,8 @@ this.BX.Crm = this.BX.Crm || {};
 				<button
 					class="crm-activity__todo-show-actions-popup-button ui-btn ui-btn-sm ui-btn-base-light"
 					@click="showActionsPopup"
+					aria-haspopup="menu"
+					:aria-expanded="isActionsPopupShown ? 'true' : 'false'"
 				>
 					{{ popupMenuButtonTitle }}
 					<span class="crm-activity__todo-show-actions-popup-button-arrow"></span>
@@ -3352,12 +3418,13 @@ this.BX.Crm = this.BX.Crm || {};
 			<div
 				class="crm-activity__todo-editor-v2_block-wrapper"
 				v-for="block in orderedBlocksData"
-				key="block.id"
+				:key="block.id"
 				v-show="block?.active"
 			>
 				<component
 					v-if="block?.active"
 					v-bind:is="getBlockComponentName(block.id)"
+					:key="block.id + '-' + block.sort"
 					:ref="block.id"
 					@close="onBlockCloseClick"
 					:id="getBlockDataById(block.id).id"
@@ -3650,7 +3717,6 @@ this.BX.Crm = this.BX.Crm || {};
 				entityData,
 				blocksData
 			} = await this.#getUpdateOrRepeatActionData(event.getData());
-			this.setActivityId(entityData.id).setCurrentUser(entityData.currentUser);
 			await this.#showPrefilledComponent(entityData, blocksData, TodoEditorMode.UPDATE);
 		}
 		async #canShowPrefilledComponent() {
@@ -3685,7 +3751,7 @@ this.BX.Crm = this.BX.Crm || {};
 				blocksData
 			} = await this.#getUpdateOrRepeatActionData(event.getData());
 			this.#setActiveMenuBarItem();
-			this.setActivityId(null).setCurrentUser(entityData.currentUser).setDefaultDeadLine();
+			this.setDefaultDeadLine();
 			entityData.deadline = this.#deadline;
 			// a copy is not linked to the source calendar event, so its deadline is always editable
 			entityData.canChangeDeadline = true;
@@ -3723,11 +3789,15 @@ this.BX.Crm = this.BX.Crm || {};
 			};
 		}
 		async #showPrefilledComponent(entityData, blocksData, mode = TodoEditorMode.ADD) {
-			await this.#initLayoutComponentForEdit(entityData, blocksData);
+			await this.setActivityData(entityData, blocksData, mode);
 			this.getTextEditor().expand();
 			this.#scrollToTop();
-			this.setMode(mode);
 			this.setFocused();
+		}
+		async setActivityData(entityData, blocksData, mode = TodoEditorMode.ADD) {
+			await this.#initLayoutComponentForEdit(entityData, blocksData);
+			this.setActivityId(mode === TodoEditorMode.UPDATE ? entityData.id : null).setCurrentUser(entityData.currentUser).setMode(mode);
+			return this;
 		}
 		async #initLayoutComponentForEdit(entityData, blocksData) {
 			return new Promise(resolve => {
@@ -3783,7 +3853,9 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#loadingPromise = new Promise((resolve, reject) => {
 				this.#getSaveActionData().then(data => {
 					const analytics = this.#getAnalyticsLabel(data);
-					main_core.ajax.runAction(this.#getSaveActionPath(), {
+					main_core.ajax.runAction(this.#getSaveActionPath(), analytics === null ? {
+						data
+					} : {
 						data,
 						analytics
 					}).then(response => {
@@ -3847,9 +3919,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 			// eslint-disable-next-line no-param-reassign
 			data = main_core.Runtime.clone(data);
-			const pingOffsets = data.pingOffsets.map(value => Number(value));
-			const defaultOffsets = this.#pingSettings.selectedValues;
-			if (JSON.stringify(pingOffsets) !== JSON.stringify(defaultOffsets)) {
+			if (isPingCustom(data.pingOffsets, this.#pingSettings.selectedValues)) {
 				analyticsLabel.setPingSettings(data.pingOffsets.join(','));
 			}
 			const defaultColorId = 'default';
@@ -3859,6 +3929,9 @@ this.BX.Crm = this.BX.Crm || {};
 			const blockTypes = [];
 			const calendarBlockId = TodoEditorBlocksCalendar.methods.getId();
 			data.settings.forEach(block => {
+				if (block.active === false) {
+					return;
+				}
 				if (data.isCalendarSectionChanged && block.id === calendarBlockId) {
 					blockTypes.push('section_calendar');
 				} else {
@@ -3874,7 +3947,8 @@ this.BX.Crm = this.BX.Crm || {};
 			if (this.#defaultDescription !== data.description && main_core.Type.isStringFilled(data.description)) {
 				analyticsLabel.setIsDescriptionChanged();
 			}
-			return analyticsLabel.getData();
+			const analyticsData = analyticsLabel.getData();
+			return isSliceFilled(analyticsData) ? analyticsData : null;
 		}
 		#getBlocks() {
 			const blocks = [];
@@ -3991,6 +4065,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		setDescription(description) {
 			this.getTextEditor().setText(description);
+			return this;
+		}
+		activateClientBlock() {
+			this.#layoutComponent?.setBlockActive('client');
 			return this;
 		}
 		cancel(params = {}) {

@@ -23,6 +23,7 @@ return [
 		'tasks.v2.lib.calendar',
 		'tasks.v2.lib.field-highlighter',
 		'tasks.v2.lib.id-utils',
+		'tasks.v2.lib.onboarding-banners',
 		'tasks.v2.lib.user-selector-dialog',
 		'tasks.v2.provider.service.task-service',
 		'ui.icon-set.api.vue',

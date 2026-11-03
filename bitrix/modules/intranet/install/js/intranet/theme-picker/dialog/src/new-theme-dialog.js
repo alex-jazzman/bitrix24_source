@@ -2,13 +2,28 @@ import { Type, ajax as Ajax, Loc, Tag, Dom, Reflection } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { PopupWindowButton, PopupWindowButtonLink, Popup } from 'main.popup';
-import { Uploader, UploaderEvent, type UploaderError, type UploaderFile } from 'ui.uploader.core';
+import { VisuallyHidden } from 'ui.a11y';
+import { Uploader, UploaderEvent, assignFileToInput, type UploaderError, type UploaderFile } from 'ui.uploader.core';
 import { Loader } from 'main.loader';
 
 import { ThemePickerDialog } from './theme-picker-dialog';
 import { blur } from './blur';
 
 import { type ThemePicker } from 'intranet.theme-picker';
+
+const BG_IMAGE_FIELD_ID = 'theme-dialog-field-bg-image';
+const BG_IMAGE_HINT_ID = 'theme-dialog-field-bg-image-hint';
+const BG_IMAGE_UPLOAD_ID = 'theme-dialog-field-bg-image-upload';
+const BG_IMAGE_KEYBOARD_HINT_ID = 'theme-dialog-field-bg-image-keyboard-hint';
+const BG_COLOR_FIELD_ID = 'theme-dialog-field-bg-color-input';
+const TEXT_COLOR_LABEL_ID = 'theme-dialog-field-text-color-label';
+const FORM_ALERT_TEXT_ID = 'theme-dialog-form-alert-content';
+
+type FormError = {
+	field: HTMLElement,
+	message: string,
+	description?: string,
+};
 
 export class NewThemeDialog extends EventEmitter
 {
@@ -21,6 +36,7 @@ export class NewThemeDialog extends EventEmitter
 	#uploader: Uploader | null = null;
 	#refs: BaseCache<HTMLElement> = new MemoryCache();
 	#previewLoader: Loader | null = null;
+	#creator: HTMLElement | null = null;
 
 	constructor(themePicker: ThemePicker, listDialog: ThemePickerDialog)
 	{
@@ -32,11 +48,19 @@ export class NewThemeDialog extends EventEmitter
 		this.#listDialog = listDialog;
 	}
 
+	/**
+	 * The theme list goes inert, which drops the focus out of it, so the focus is moved into
+	 * the form by the same operation. The creator button is remembered while it is still alive: the
+	 * list dialog rebuilds its footer, and the node the person came from can be gone by the closing.
+	 */
 	show(): void
 	{
+		this.#creator = this.#themePicker.getDialogPopup().getButton('create-button')?.getContainer() ?? null;
+
 		this.#getPopup().setContent(this.#getContent());
 		this.#getPopup().show();
 		this.#themePicker.disableThemeListDialog();
+		this.#getControl('field-file-browse')?.focus();
 	}
 
 	destroy(): void
@@ -66,6 +90,17 @@ export class NewThemeDialog extends EventEmitter
 			imageMaxHeight: 10000,
 			imageMaxFileSize: 20 * 1024 * 1024,
 			events: {
+				/**
+				 * A drop reaches the uploader alone: the dropzone cancels the default action of the
+				 * drop, and that default is what fills the field of the zone natively. The value of
+				 * that field is what a screen reader reads off the control, so a dropped file left it
+				 * saying that nothing is chosen. It is filled here instead, by assignment: assigning
+				 * `files` raises no `change`, so the browse path of the very same field - the uploader
+				 * listens to that event on it - does not take the file a second time.
+				 */
+				[UploaderEvent.BEFORE_DROP]: (event: BaseEvent<{ dragEvent: DragEvent }>) => {
+					this.#fillBgImageField(event.getData().dragEvent.dataTransfer);
+				},
 				[UploaderEvent.FILE_LOAD_START]: () => {
 					this.#hidePreview();
 					this.#previewLoader = new Loader({ size: 40 });
@@ -73,13 +108,17 @@ export class NewThemeDialog extends EventEmitter
 				},
 				[UploaderEvent.FILE_ERROR]: (event: BaseEvent<{ error: UploaderError }>) => {
 					const error: UploaderError = event.getData().error;
-					this.#showError(`${error.getMessage()}<br>${error.getDescription()}`);
+					// The upload fails on its own time, so the field is marked but the focus stays where
+					// the person left it: the alert tells about the error by itself.
+					this.#showError(error.getMessage(), error.getDescription());
+					this.#setFieldInvalid(this.#getControl('field-file-browse'), true);
 					this.#previewLoader?.destroy();
 					this.#previewLoader = null;
 				},
 				[UploaderEvent.FILE_COMPLETE]: async (event: BaseEvent<{ file: UploaderFile }>) => {
 					this.#hideError();
 					const file: UploaderFile = event.getData().file;
+					this.#nameBgImageField(file);
 					const preview = file.getClientPreview();
 					const { file: bgImageBlurred, color } = await blur(preview, 7);
 
@@ -126,6 +165,31 @@ export class NewThemeDialog extends EventEmitter
 		this.#removeThemePreview();
 
 		this.#themePicker.enableThemeListDialog();
+	}
+
+	/**
+	 * The isolation is already off by `#resetResources`, so the list dialog can take the
+	 * focus back. Whichever way the dialog was closed, the focus is still inside the popup that is
+	 * about to be destroyed, and it goes back to the button the person opened the form with.
+	 */
+	#returnFocusToListDialog(): void
+	{
+		const creator = this.#creator;
+		this.#creator = null;
+
+		const target = creator?.isConnected === true ? creator : this.#getEntryCell();
+
+		this.#themePicker.focusInDialog(target, this.#popup);
+	}
+
+	#getEntryCell(): ?HTMLElement
+	{
+		const content = this.#listDialog.getContentContainer();
+
+		return content?.querySelector('[role="gridcell"][aria-selected="true"]')
+			?? content?.querySelector('[role="gridcell"]')
+			?? null
+		;
 	}
 
 	#getBgImage(): UploaderFile | null
@@ -182,6 +246,28 @@ export class NewThemeDialog extends EventEmitter
 			return this.#popup;
 		}
 
+		const createButton = new PopupWindowButton({
+			id: 'theme-dialog-create-button',
+			text: Loc.getMessage('BITRIX24_THEME_DIALOG_CREATE_BUTTON'),
+			className: 'popup-window-button-accept',
+			events: {
+				click: this.#handleCreateButtonClick.bind(this),
+			},
+		});
+
+		const cancelButton = new PopupWindowButtonLink({
+			text: Loc.getMessage('BITRIX24_THEME_DIALOG_CANCEL_BUTTON'),
+			className: 'popup-window-button-link theme-dialog-button-link',
+			events: {
+				click: () => {
+					this.#popup.close();
+				},
+			},
+		});
+
+		Dom.attr(createButton.buttonNode, 'data-testid', 'bx-theme-picker-new-theme-create');
+		Dom.attr(cancelButton.buttonNode, 'data-testid', 'bx-theme-picker-new-theme-cancel');
+
 		this.#popup = new Popup({
 			width: 500,
 			height: 560,
@@ -196,30 +282,17 @@ export class NewThemeDialog extends EventEmitter
 				onClose: () => {
 					this.#resetResources();
 				},
+				onAfterClose: () => {
+					this.#returnFocusToListDialog();
+				},
 				onDestroy: () => {
 					this.emit('onDestroy');
 				},
 			},
-			buttons: [
-				new PopupWindowButton({
-					id: 'theme-dialog-create-button',
-					text: Loc.getMessage('BITRIX24_THEME_DIALOG_CREATE_BUTTON'),
-					className: 'popup-window-button-accept',
-					events: {
-						click: this.#handleCreateButtonClick.bind(this),
-					},
-				}),
-				new PopupWindowButtonLink({
-					text: Loc.getMessage('BITRIX24_THEME_DIALOG_CANCEL_BUTTON'),
-					className: 'popup-window-button-link theme-dialog-button-link',
-					events: {
-						click: () => {
-							this.#popup.close();
-						},
-					},
-				}),
-			],
+			buttons: [createButton, cancelButton],
 		});
+
+		Dom.attr(this.#popup.getPopupContainer(), 'data-testid', 'bx-theme-picker-new-theme-dialog');
 
 		return this.#popup;
 	}
@@ -248,18 +321,17 @@ export class NewThemeDialog extends EventEmitter
 
 	#handleCreateButtonClick(): void
 	{
-		const error = this.#validateForm();
-		if (error !== null)
+		if (this.#getCreateButton().getContainer().disabled)
 		{
-			this.#showError(error);
-
+			// double click protection
 			return;
 		}
 
-		const createButton = this.#getPopup().getButton('theme-dialog-create-button');
-		if (Dom.hasClass(createButton.getContainer(), 'popup-window-button-wait'))
+		const error = this.#validateForm();
+		if (error !== null)
 		{
-			// double click protection
+			this.#reportFieldError(error.field, error.message, error.description);
+
 			return;
 		}
 
@@ -285,18 +357,15 @@ export class NewThemeDialog extends EventEmitter
 		{
 			const limit = this.#themePicker.getMaxUploadSize() / 1024 / 1024;
 
-			this.#showError(Loc.getMessage(
-				'BITRIX24_THEME_FILE_SIZE_EXCEEDED',
-				{ '#LIMIT#': `${limit.toFixed(0)}Mb` },
-			));
+			this.#reportFieldError(
+				this.#getControl('field-file-browse'),
+				Loc.getMessage('BITRIX24_THEME_FILE_SIZE_EXCEEDED', { '#LIMIT#': `${limit.toFixed(0)}Mb` }),
+			);
 
 			return;
 		}
 
-		const form = document.forms['theme-new-theme-form'];
-
-		createButton.addClassName('popup-window-button-wait');
-		Dom.addClass(form, 'theme-dialog-form-disabled');
+		this.#setBusy(true);
 
 		Ajax({
 			url: this.#themePicker.getAjaxHandlerPath(),
@@ -309,8 +378,7 @@ export class NewThemeDialog extends EventEmitter
 				{
 					this.#listDialog.addItem(response.theme);
 					this.#listDialog.preloadTheme(response.theme.id, () => {
-						createButton.removeClassName('popup-window-button-wait');
-						Dom.removeClass(form, 'theme-dialog-form-disabled');
+						this.#setBusy(false);
 
 						this.#removeThemePreview();
 						this.#getPopup().close();
@@ -318,14 +386,12 @@ export class NewThemeDialog extends EventEmitter
 				}
 				else
 				{
-					createButton.removeClassName('popup-window-button-wait');
-					Dom.removeClass(form, 'theme-dialog-form-disabled');
+					this.#setBusy(false);
 					this.#showError(response.error || Loc.getMessage('BITRIX24_THEME_UNKNOWN_ERROR'));
 				}
 			},
 			onfailure: () => {
-				createButton.removeClassName('popup-window-button-wait');
-				Dom.removeClass(form, 'theme-dialog-form-disabled');
+				this.#setBusy(false);
 				this.#showError(Loc.getMessage('BITRIX24_THEME_UNKNOWN_ERROR'));
 			},
 		});
@@ -334,115 +400,338 @@ export class NewThemeDialog extends EventEmitter
 	#getContent(): HTMLElement
 	{
 		return Tag.render`
-			<form name="theme-new-theme-form" method="post" onsubmit="${(event) => event.preventDefault()}">
-				<div class="theme-dialog-form-alert">
-					<div class="theme-dialog-form-alert-content"></div>
-					<div
+			<form
+				name="theme-new-theme-form"
+				method="post"
+				data-testid="bx-theme-picker-new-theme-form"
+				onsubmit="${(event) => event.preventDefault()}"
+			>
+				<div class="theme-dialog-form-alert" role="alert" data-testid="bx-theme-picker-form-alert">
+					<div class="theme-dialog-form-alert-content" id="${FORM_ALERT_TEXT_ID}"></div>
+					<button
+						type="button"
 						class="theme-dialog-form-alert-remove"
+						data-testid="bx-theme-picker-form-alert-close"
+						aria-label="${Loc.getMessage('BITRIX24_THEME_FORM_ALERT_CLOSE_LABEL')}"
 						onclick="${this.#hideError.bind(this)}"
-					></div>
+					></button>
 				</div>
 				<div class="theme-dialog-form">
-					${this.#createField(Loc.getMessage('BITRIX24_THEME_THEME_BG_IMAGE'), this.#getBgImageField())}
-					${this.#createField(Loc.getMessage('BITRIX24_THEME_THEME_BG_COLOR'), this.#getBgColorField())}
-					${this.#createField(Loc.getMessage('BITRIX24_THEME_THEME_TEXT_COLOR'), this.#getTextColorField())}
+					${this.#createField(
+						Loc.getMessage('BITRIX24_THEME_THEME_BG_IMAGE'),
+						this.#getBgImageField(),
+						BG_IMAGE_FIELD_ID,
+					)}
+					${this.#createField(
+						Loc.getMessage('BITRIX24_THEME_THEME_BG_COLOR'),
+						this.#getBgColorField(),
+						BG_COLOR_FIELD_ID,
+					)}
+					${this.#createFieldGroup(
+						Loc.getMessage('BITRIX24_THEME_THEME_TEXT_COLOR'),
+						this.#getTextColorField(),
+						TEXT_COLOR_LABEL_ID,
+					)}
 				</div>
 			</form>
 		`;
 	}
 
-	#showError(error: string): void
+	/**
+	 * The block is a live region rendered from the start, and the class only reveals it: the text
+	 * appended below is a change inside a region already in the tree, which is the announcement.
+	 * Both lines go in as text - an error message can carry anything, markup included, and it has to
+	 * stay readable instead of becoming the markup.
+	 */
+	#showError(message: string, description: string = ''): void
 	{
+		this.#clearInvalidFields();
+
 		Dom.addClass(this.#getControl('form-alert'), 'theme-dialog-form-alert-show');
-		this.#getControl('form-alert-content').innerHTML = error;
+
+		const content = this.#getControl('form-alert-content');
+		Dom.clean(content);
+		Dom.append(Dom.create('div', { text: message }), content);
+
+		if (Type.isStringFilled(description))
+		{
+			Dom.append(Dom.create('div', { text: description }), content);
+		}
 	}
 
 	#hideError(): void
 	{
 		Dom.removeClass(this.#getControl('form-alert'), 'theme-dialog-form-alert-show');
+		// the region stays in the tree, so the text of an error that no longer holds has to go with it
+		Dom.clean(this.#getControl('form-alert-content'));
+		this.#clearInvalidFields();
 	}
 
-	#createField(title: string, field: HTMLElement): HTMLElement
+	// The alert text names the problem, so the field it belongs to points at it with a description
+	// and takes the focus.
+	#reportFieldError(field: HTMLElement, message: string, description: string = ''): void
+	{
+		this.#showError(message, description);
+		this.#setFieldInvalid(field, true);
+		field.focus();
+	}
+
+	/**
+	 * While the error stands, the alert text is the description of the field. The file field carries
+	 * a description of its own, so the reference joins the list instead of replacing it.
+	 */
+	#setFieldInvalid(field: HTMLElement, invalid: boolean): void
+	{
+		Dom.attr(field, 'aria-invalid', invalid ? 'true' : null);
+
+		const describedBy = (field.getAttribute('aria-describedby') || '')
+			.split(' ')
+			.filter((id) => id !== '' && id !== FORM_ALERT_TEXT_ID)
+		;
+
+		if (invalid)
+		{
+			describedBy.push(FORM_ALERT_TEXT_ID);
+		}
+
+		Dom.attr(field, 'aria-describedby', describedBy.length > 0 ? describedBy.join(' ') : null);
+	}
+
+	#clearInvalidFields(): void
+	{
+		const fields = this.#getPopup().getContentContainer().querySelectorAll('[aria-invalid="true"]');
+
+		[].forEach.call(fields, (field) => {
+			this.#setFieldInvalid(field, false);
+		});
+	}
+
+	/**
+	 * `aria-busy` and a native `disabled` on every control of the form: `pointer-events: none` alone
+	 * left the form reachable from the keyboard and the request could be sent twice. The class stays
+	 * for the pointer - dropping a file on the zone is not a control, and `disabled` does not stop it.
+	 */
+	#setBusy(busy: boolean): void
+	{
+		const form = this.#getForm();
+		const createButton = this.#getCreateButton();
+
+		Dom.attr(form, 'aria-busy', busy ? 'true' : null);
+		Dom.toggleClass(form, 'theme-dialog-form-disabled', busy);
+
+		[].forEach.call(form.querySelectorAll('input, button'), (control) => {
+			Dom.attr(control, 'disabled', busy ? '' : null);
+		});
+
+		if (busy)
+		{
+			createButton.addClassName('popup-window-button-wait');
+			createButton.getContainer().disabled = true;
+
+			return;
+		}
+
+		createButton.removeClassName('popup-window-button-wait');
+		createButton.getContainer().disabled = false;
+
+		// The clear button keeps the emptiness of the color field in the very same `disabled`, so the
+		// release goes through the sync point instead of enabling every control unconditionally.
+		this.#setBgColorFilled(this.#isBgColorFilled());
+
+		// Disabling the button under the focus drops the focus to the body.
+		if (this.#isFocusLost() && createButton.getContainer().isConnected)
+		{
+			createButton.getContainer().focus();
+		}
+	}
+
+	#isFocusLost(): boolean
+	{
+		const activeElement = document.activeElement;
+
+		return !Type.isElementNode(activeElement)
+			|| activeElement === document.body
+			|| !activeElement.isConnected
+		;
+	}
+
+	#getForm(): HTMLFormElement
+	{
+		return this.#getPopup().getContentContainer().querySelector('form');
+	}
+
+	#getCreateButton(): PopupWindowButton
+	{
+		return this.#getPopup().getButton('theme-dialog-create-button');
+	}
+
+	#createField(title: string, field: HTMLElement, controlId: string): HTMLElement
 	{
 		return Tag.render`
 			<div class="theme-dialog-field">
-				<div class="theme-dialog-field-label">${title}</div>
+				<label class="theme-dialog-field-label" for="${controlId}">${title}</label>
 				<div class="theme-dialog-field-value">${field}</div>
 			</div>
 		`;
 	}
 
+	// A label names a single control, so a field built of several controls is named as a group.
+	#createFieldGroup(title: string, field: HTMLElement, labelId: string): HTMLElement
+	{
+		return Tag.render`
+			<div class="theme-dialog-field" role="group" aria-labelledby="${labelId}">
+				<div class="theme-dialog-field-label" id="${labelId}">${title}</div>
+				<div class="theme-dialog-field-value">${field}</div>
+			</div>
+		`;
+	}
+
+	/**
+	 * The clear button has to stay the immediate next sibling of the input: the resting look of its
+	 * icon is driven by the `.theme-dialog-field-textbox + .theme-dialog-field-textbox-remove` pair.
+	 */
 	#getBgColorField(): HTMLElement
 	{
 		return Tag.render`
-			<div class="theme-dialog-field-textbox-wrapper" onclick="${this.#handleBgColorClick.bind(this)}">
-				<div class="theme-dialog-field-textbox-color"></div>
+			<div class="theme-dialog-field-textbox-wrapper">
+				<button
+					type="button"
+					class="theme-dialog-field-textbox-color"
+					data-testid="bx-theme-picker-bg-color-palette"
+					aria-haspopup="dialog"
+					aria-label="${Loc.getMessage('BITRIX24_THEME_BG_COLOR_PALETTE_LABEL')}"
+					onclick="${this.#handleBgColorClick.bind(this)}"
+				></button>
 				<input
 					type="text"
 					placeholder=""
 					name="bgColor"
+					id="${BG_COLOR_FIELD_ID}"
+					data-testid="bx-theme-picker-bg-color"
 					maxlength="7"
 					class="theme-dialog-field-textbox theme-dialog-field-bg-color"
 					oninput="${this.#handleBgColorChange.bind(this)}"
 					autocomplete="off"
 				>
-				<div
+				<button
+					type="button"
 					class="theme-dialog-field-textbox-remove"
+					data-testid="bx-theme-picker-bg-color-clear"
+					aria-label="${Loc.getMessage('BITRIX24_THEME_BG_COLOR_CLEAR_LABEL')}"
+					disabled
 					onclick="${this.#handleBgColorClear.bind(this)}"
-				></div>
+				></button>
 			</div>
 		`;
 	}
 
+	/**
+	 * The zone is a real file field stretched over it. `assignBrowse` takes that very field, so the
+	 * uploader creates no detached input of its own and the system dialog opens natively - both by a
+	 * click on the zone and from the keyboard. `tabindex` is explicit: Safari with "Press Tab to
+	 * highlight each item on a webpage" off walks only the elements that carry one. Drag handlers sit
+	 * on the wrapper because the field covers the zone and drag events over it never reach the zone.
+	 *
+	 * Both visible texts of the zone are `aria-hidden`: they reach a screen reader as the description
+	 * of the field, and a text node of their own would sound the same phrase a second time.
+	 */
 	#getBgImageField(): HTMLElement
 	{
 		return this.#refs.remember('image-field', () => {
+			const browseField = Tag.render`
+				<input
+					type="file"
+					id="${BG_IMAGE_FIELD_ID}"
+					class="theme-dialog-field-file-browse"
+					data-testid="bx-theme-picker-bg-image"
+					aria-describedby="${BG_IMAGE_UPLOAD_ID} ${BG_IMAGE_KEYBOARD_HINT_ID} ${BG_IMAGE_HINT_ID}"
+					tabindex="0"
+					onclick="${this.#handleBgImageBrowseClick.bind(this)}"
+					oncancel="${this.#handleBgImageBrowseCancel.bind(this)}"
+				>
+			`;
+
 			const imageField = Tag.render`
-				<div class="theme-dialog-field-file">
-					<div
-						class="theme-dialog-field-button"
-						ondragenter="${this.#handleBgImageEnter.bind(this)}"
-						ondragleave="${this.#handleBgImageLeave.bind(this)}"
-						ondragover="${this.#handleBgImageOver.bind(this)}"
-					>
+				<div
+					class="theme-dialog-field-file"
+					data-testid="bx-theme-picker-bg-image-zone"
+					ondragenter="${this.#handleBgImageEnter.bind(this)}"
+					ondragleave="${this.#handleBgImageLeave.bind(this)}"
+					ondragover="${this.#handleBgImageOver.bind(this)}"
+				>
+					${browseField}
+					<div class="theme-dialog-field-button">
 						<div class="theme-dialog-field-file-preview"></div>
 						<div class="theme-dialog-field-file-text">
-							<span class="theme-dialog-field-file-add">
+							<span class="theme-dialog-field-file-add" id="${BG_IMAGE_UPLOAD_ID}" aria-hidden="true">
 								${Loc.getMessage('BITRIX24_THEME_UPLOAD_BG_IMAGE')}
 							</span>
-							<span class="theme-dialog-field-file-add-info">
+							<span class="theme-dialog-field-file-add-info" id="${BG_IMAGE_HINT_ID}" aria-hidden="true">
 								${Loc.getMessage('BITRIX24_THEME_DRAG_BG_IMAGE')}
 							</span>
 						</div>
 					</div>
+					${this.#createBgImageKeyboardHint()}
 				</div>
 			`;
 
-			this.getUploader().assignBrowse(imageField);
+			this.getUploader().assignBrowse(browseField);
 			this.getUploader().assignDropzone(imageField);
 
 			return imageField;
 		});
 	}
 
-	#validateForm(): ?string
+	/**
+	 * Nothing on the screen tells that the zone opens the system dialog from the keyboard, so the
+	 * hint lives in the description of the field alone. Its place is after the zone: the ring of the
+	 * zone is drawn through the `.theme-dialog-field-file-browse:focus-visible + .theme-dialog-field-button`
+	 * pair, and a node between the field and the zone would break it.
+	 *
+	 * `aria-hidden` on the hint: the description of the field is computed through a hidden node, so
+	 * the hint keeps being read as part of it, while the node itself stops being a text node of the
+	 * tree - and the same phrase stops sounding a second time on the way through the form.
+	 */
+	#createBgImageKeyboardHint(): HTMLElement
+	{
+		const hint = new VisuallyHidden();
+		hint.id = BG_IMAGE_KEYBOARD_HINT_ID;
+		hint.textContent = Loc.getMessage('BITRIX24_THEME_BG_IMAGE_KEYBOARD_HINT');
+		Dom.attr(hint, 'aria-hidden', 'true');
+
+		return hint;
+	}
+
+	// The field of the error is the one the focus goes to; for an empty form that is the first field
+	// of the form.
+	#validateForm(): ?FormError
 	{
 		const bgImage = this.#getBgImage();
 		const bgColor = this.#getControl('field-bg-color').value;
 
 		if (Type.isStringFilled(bgColor) && !this.#validateBgColor(bgColor))
 		{
-			return Loc.getMessage('BITRIX24_THEME_WRONG_BG_COLOR');
+			return {
+				field: this.#getControl('field-bg-color'),
+				message: Loc.getMessage('BITRIX24_THEME_WRONG_BG_COLOR'),
+			};
 		}
 
 		if (!bgImage && !Type.isStringFilled(bgColor))
 		{
-			return Loc.getMessage('BITRIX24_THEME_EMPTY_FORM_DATA');
+			return {
+				field: this.#getControl('field-file-browse'),
+				message: Loc.getMessage('BITRIX24_THEME_EMPTY_FORM_DATA'),
+			};
 		}
 
 		if (bgImage && bgImage.isFailed())
 		{
-			return `${bgImage.getError().getMessage()}<br>${bgImage.getError().getDescription()}`;
+			return {
+				field: this.#getControl('field-file-browse'),
+				message: bgImage.getError().getMessage(),
+				description: bgImage.getError().getDescription(),
+			};
 		}
 
 		return null;
@@ -463,6 +752,56 @@ export class NewThemeDialog extends EventEmitter
 	{
 		const preview = this.#getControl('field-file-preview');
 		Dom.style(preview, 'background-image', null);
+	}
+
+	/**
+	 * A batch of several files is refused by the uploader as a whole, because the zone takes one,
+	 * and then the field has to stay empty too: naming one file of a batch the form did not take
+	 * would be a lie of its own, in the other direction.
+	 */
+	#fillBgImageField(transfer: ?DataTransfer): void
+	{
+		const files = transfer?.files ?? [];
+		if (files.length !== 1)
+		{
+			return;
+		}
+
+		assignFileToInput(this.#getControl('field-file-browse'), files[0]);
+	}
+
+	/**
+	 * The uploader empties the field as soon as it has taken the file from it, so a picture chosen
+	 * through the system dialog left the control saying that nothing is chosen - and that value is
+	 * what a screen reader reads off it. The field is named back by the file the form will really
+	 * send; assigning `files` raises no `change`, so the uploader does not take the file a second time.
+	 */
+	#nameBgImageField(file: UploaderFile): void
+	{
+		const binary = file.getBinary();
+		if (binary !== null)
+		{
+			assignFileToInput(this.#getControl('field-file-browse'), binary);
+		}
+	}
+
+	/**
+	 * The field is emptied before the system dialog opens: while it still names a picture, choosing
+	 * that very picture again raises no `change`, and the uploader never learns about it. A dismissed
+	 * dialog puts the name back.
+	 */
+	#handleBgImageBrowseClick(): void
+	{
+		this.#getControl('field-file-browse').value = '';
+	}
+
+	#handleBgImageBrowseCancel(): void
+	{
+		const file = this.#getBgImage();
+		if (file !== null)
+		{
+			this.#nameBgImageField(file);
+		}
 	}
 
 	#handleBgImageEnter(event: DragEvent): void
@@ -503,17 +842,15 @@ export class NewThemeDialog extends EventEmitter
 		this.#applyThemePreview();
 	}
 
-	#handleBgColorClear(event: MouseEvent): void
+	#handleBgColorClear(): void
 	{
 		this.#getColorPicker().close();
 
-		Dom.removeClass(this.#getControl('field-bg-color'), 'theme-dialog-field-textbox-not-empty');
 		this.#getControl('field-bg-color').value = '';
+		this.#setBgColorFilled(false);
 		Dom.style(this.#getControl('field-textbox-color'), 'backgroundColor', null);
 
 		this.#applyThemePreview();
-
-		event.stopPropagation();
 	}
 
 	#handleBgColorSelect(color: string): void
@@ -526,8 +863,21 @@ export class NewThemeDialog extends EventEmitter
 	#setBgColor(color: string): void
 	{
 		this.#getControl('field-bg-color').value = color;
-		Dom.addClass(this.#getControl('field-bg-color'), 'theme-dialog-field-textbox-not-empty');
+		this.#setBgColorFilled(true);
 		Dom.style(this.#getControl('field-textbox-color'), 'backgroundColor', color);
+	}
+
+	// One point for the emptiness of the color field: the resting look of the clear button is driven
+	// by the class, its availability by `disabled`, and split sources would let the two drift apart.
+	#setBgColorFilled(filled: boolean): void
+	{
+		Dom.toggleClass(this.#getControl('field-bg-color'), 'theme-dialog-field-textbox-not-empty', filled);
+		this.#getControl('field-textbox-remove').disabled = !filled;
+	}
+
+	#isBgColorFilled(): boolean
+	{
+		return Dom.hasClass(this.#getControl('field-bg-color'), 'theme-dialog-field-textbox-not-empty');
 	}
 
 	#setTextColor(color: 'light' | 'dark'): void
@@ -535,42 +885,47 @@ export class NewThemeDialog extends EventEmitter
 		const switchers = this.#getControls('field-button-switcher-item');
 
 		[].forEach.call(switchers, (switcher) => {
-			if (switcher.dataset.textColor === color)
-			{
-				Dom.addClass(switcher, 'theme-dialog-field-button-switcher-item-pressed');
-			}
-			else
-			{
-				Dom.removeClass(switcher, 'theme-dialog-field-button-switcher-item-pressed');
-			}
+			const pressed = switcher.dataset.textColor === color;
+
+			Dom.toggleClass(switcher, 'theme-dialog-field-button-switcher-item-pressed', pressed);
+			Dom.attr(switcher, 'aria-pressed', pressed ? 'true' : 'false');
 		});
 
 		this.#getControl('field-text-color').value = color;
 	}
 
+	// Two toggle buttons over one hidden value: the value is what the form posts, `aria-pressed` is
+	// what says which of the two is chosen.
 	#getTextColorField(): HTMLElement
 	{
 		return Tag.render`
 			<div class="theme-dialog-field-button-switcher">
-				<div
+				<button
+					type="button"
 					class="theme-dialog-field-button-switcher-item theme-dialog-field-button-switcher-item-left theme-dialog-field-button-switcher-item-pressed"
 					data-text-color="light"
+					data-testid="bx-theme-picker-text-color-light"
+					aria-pressed="true"
 					onclick="${this.#handleSwitcherClick.bind(this)}"
 				>
 					${Loc.getMessage('BITRIX24_THEME_THEME_LIGHT_COLOR')}
-				</div>
-				<div
+				</button>
+				<button
+					type="button"
 					class="theme-dialog-field-button-switcher-item theme-dialog-field-button-switcher-item-right"
 					data-text-color="dark"
+					data-testid="bx-theme-picker-text-color-dark"
+					aria-pressed="false"
 					onclick="${this.#handleSwitcherClick.bind(this)}"
 				>
 					${Loc.getMessage('BITRIX24_THEME_THEME_DARK_COLOR')}
-				</div>
+				</button>
 				<input
 					type="hidden"
 					name="textColor"
 					value="light"
 					class="theme-dialog-field-text-color"
+					data-testid="bx-theme-picker-text-color-value"
 				>
 			</div>
 		`;
@@ -578,7 +933,7 @@ export class NewThemeDialog extends EventEmitter
 
 	#handleSwitcherClick(event: MouseEvent): void
 	{
-		const color = event.target.dataset.textColor;
+		const color = event.currentTarget.dataset.textColor;
 		this.#setTextColor(color);
 		this.#applyThemePreview();
 	}

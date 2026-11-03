@@ -7,7 +7,7 @@ $MESS["SL_FORM_SERVER_STEP_HEAD"] = "Specify Microsoft SharePoint access paramet
 $MESS["SL_FORM_LISTS_STEP_HEAD"] = "Select a required list from those available at the server";
 $MESS["SL_SETTINGS_SECTION_CONN"] = "Connection Parameters";
 $MESS["SL_SETTINGS_SECTION_AUTH"] = "Authorization Parameters";
-$MESS["SL_SETTINGS_CONN_SERVER"] = "Server Address";
+$MESS["SL_SETTINGS_CONN_SERVER"] = 'SharePoint Address';
 $MESS["SL_SETTINGS_CONN_USER"] = "User Name";
 $MESS["SL_SETTINGS_CONN_PASS"] = "Password";
 $MESS["SL_SETTINGS_CONN_PASS_SHOW_SYMBOLS"] = "show password characters";
@@ -45,4 +45,4 @@ $MESS["SL_SETTINGS_SERVER_TEST"] = "Test Connection";
 $MESS["SL_FORM_LIST_PRIORITY"] = "If versions mismatch, use:";
 $MESS["SL_FORM_LIST_PRIORITY_B"] = "local version";
 $MESS["SL_FORM_LIST_PRIORITY_S"] = "SharePoint version";
-?>
+$MESS['SL_FORM_SERVER_EMPTY'] = 'No addresses are available to select.';

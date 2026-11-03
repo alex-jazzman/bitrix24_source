@@ -246,6 +246,8 @@ $assets = [
 		'rel' => [
 			'ui.design-tokens',
 			'ui.fonts.opensans',
+			'ui.a11y',
+			'main.popup',
 			'kanban',
 			'ajax',
 			'color_picker',
@@ -295,7 +297,7 @@ $assets = [
 		'css' => [
 			$assetRoot . 'css/task-popups.css',
 		],
-		'rel' => ['ui.design-tokens', 'popup'],
+		'rel' => ['ui.design-tokens', 'popup', 'ui.a11y'],
 		'lang' => $langRoot . 'task-popups.php',
 	],
 	[

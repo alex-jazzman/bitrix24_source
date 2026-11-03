@@ -40,6 +40,11 @@ const FieldResourceBooking = {
 				this.liveFieldController = BX.Calendar.Resourcebooking.getLiveField({
 					wrap: this.$el,
 					field: this.field.booking,
+					sourceType: 'crm-webform',
+					formId: this.$root.form.identification.id,
+					sec: this.$root.form.identification.sec,
+					fieldCode: this.field.name,
+					editorPreview: this.$root.form.editMode === true,
 					actionAgent: (action, options) => {
 						let formData = new FormData();
 						const data = options.data || {};

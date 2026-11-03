@@ -1,4 +1,4 @@
-import { Event, Runtime, Type } from 'main.core';
+import { Event, Loc, Runtime, Type } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 import { type Slider, type SliderOptions } from 'main.sidepanel';
 
@@ -7,12 +7,13 @@ import { locMixin } from 'ui.vue3.mixins.loc-mixin';
 
 import { Core } from 'socialnetwork.v2.core';
 import { EventName } from 'socialnetwork.v2.const';
-import { isCreateProjectWizardAction } from 'socialnetwork.v2.model.interface';
+import { isCreateProjectWizardAction, TYPES_PROJECT_WIZARD_ACTION } from 'socialnetwork.v2.model.interface';
 
 import { App } from './component/app';
 
 let pendingStartupToolScroll = false;
 let projectsTrialBannerProposed = false;
+let activeMountContainer: ?HTMLElement = null;
 
 export type ProjectWizardParams = {
 	action?: string,
@@ -27,8 +28,11 @@ export type ProjectWizardParams = {
 export class ProjectWizard
 {
 	#params: ProjectWizardParams;
-	#application: ?VueApp;
-	#slider: ?Slider;
+	#application: ?VueApp = null;
+	#slider: ?Slider = null;
+	#container: ?HTMLElement = null;
+	#generation: number = 0;
+	#mountingPromise: ?Promise<void> = null;
 	#boundSave: ((e: BaseEvent) => void) | null = null;
 	#boundClose: (() => void) | null = null;
 
@@ -52,94 +56,216 @@ export class ProjectWizard
 
 	show(options: SliderOptions = {}): void
 	{
+		let generation = null;
+		let slider = null;
+		let container = null;
+
 		BX.SidePanel.Instance.open(
 			'socialnetwork-project-wizard-panel',
 			{
-				contentCallback: async (slider: Slider): Promise<HTMLElement> => {
-					return this.mount(slider);
-				},
-				cacheable: false,
-				events: {
-					onClose: (): void => this.unmount(),
-				},
+				title: this.#getSliderTitle(),
 				...options,
+				cacheable: false,
+				contentCallback: async (currentSlider: Slider): Promise<void> => {
+					const mountingPromise = this.mount(currentSlider);
+
+					if (this.#slider === currentSlider)
+					{
+						generation = this.#generation;
+						slider = this.#slider;
+						container = this.#container;
+					}
+
+					return mountingPromise;
+				},
+				events: {
+					...options.events,
+					onClose: (event: BaseEvent): void => {
+						this.#unmount(generation, slider, container);
+
+						if (Type.isFunction(options.events?.onClose))
+						{
+							options.events.onClose(event);
+						}
+					},
+				},
 			},
 		);
 	}
 
+	#getSliderTitle(): string
+	{
+		if (isCreateProjectWizardAction(this.#params.action))
+		{
+			return Loc.getMessage('SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_CREATE');
+		}
+
+		if (this.#params.action === TYPES_PROJECT_WIZARD_ACTION.COPY)
+		{
+			return Loc.getMessage('SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_COPY');
+		}
+
+		return Loc.getMessage('SONET_EXT_PROJECT_WIZARD_SLIDER_TITLE_UPDATE');
+	}
+
 	async mount(slider?: Slider): Promise<void>
 	{
+		const currentSlider = slider ?? null;
+		const container = slider ? slider.getContentContainer() : this.#params.container;
+
+		if (!Type.isDomNode(container))
+		{
+			throw new Error('The container for mounting the program is not set.');
+		}
+
+		if (this.#owns(this.#generation, currentSlider, container))
+		{
+			// Slider.reload() cleans the cached content container, so the mounted application is
+			// already gone from the DOM while the ownership key still matches.
+			if (this.#application && container.firstChild !== null)
+			{
+				return Promise.resolve();
+			}
+
+			if (this.#mountingPromise)
+			{
+				return this.#mountingPromise;
+			}
+		}
+
+		// The request must survive the early returns above: it is consumed by the mount that
+		// actually creates the application and reads the params.
 		if (pendingStartupToolScroll)
 		{
 			pendingStartupToolScroll = false;
 			this.#params.scrollToStartupTool = true;
 		}
 
-		if (slider)
-		{
-			if (slider.isOpen())
+		this.unmount();
+
+		const generation = ++this.#generation;
+		this.#slider = currentSlider;
+		this.#container = container;
+
+		const mountingPromise = Promise.resolve().then(async (): Promise<void> => {
+			if (!this.#owns(generation, currentSlider, container))
 			{
 				return;
 			}
 
-			this.#slider = slider;
+			try
+			{
+				const currentUser = await this.#loadCurrentUser();
+				if (!this.#owns(generation, currentSlider, container))
+				{
+					return;
+				}
 
-			this.#params.container = slider.getContentContainer();
-		}
+				const application = this.#mountApplication(container, currentUser);
+				if (!this.#owns(generation, currentSlider, container))
+				{
+					application.unmount();
 
-		if (!Type.isDomNode(this.#params.container))
-		{
-			throw new Error('The container for mounting the program is not set.');
-		}
+					return;
+				}
 
-		this.#application = await this.#mountApplication(this.#params.container);
-		this.#subscribe();
+				this.#application = application;
+				this.#subscribe(generation, currentSlider, container);
+			}
+			catch (error)
+			{
+				this.#unmount(generation, currentSlider, container);
+
+				throw error;
+			}
+			finally
+			{
+				if (
+					this.#generation === generation
+					&& this.#mountingPromise === mountingPromise
+				)
+				{
+					this.#mountingPromise = null;
+				}
+			}
+		});
+
+		this.#mountingPromise = mountingPromise;
+
+		return mountingPromise;
 	}
 
 	unmount(): void
 	{
-		this.#unmountApplication();
-		this.#unsubscribe();
+		this.#unmount(this.#generation, this.#slider, this.#container);
 	}
 
-	#subscribe(): void
+	#owns(generation: number, slider: ?Slider, container: ?HTMLElement): boolean
 	{
-		this.#boundClose = this.#close.bind(this);
-		this.#boundSave = this.#save.bind(this);
+		return (
+			this.#generation === generation
+			&& this.#slider === slider
+			&& this.#container === container
+		);
+	}
+
+	// Save and Close events are global and carry no mount identity, so only the latest live
+	// mount in the window may react to them.
+	#isEventTarget(generation: number, slider: ?Slider, container: HTMLElement): boolean
+	{
+		return activeMountContainer === container && this.#owns(generation, slider, container);
+	}
+
+	#subscribe(generation: number, slider: ?Slider, container: HTMLElement): void
+	{
+		activeMountContainer = container;
+
+		this.#boundClose = (): void => this.#close(generation, slider, container);
+		this.#boundSave = (event: BaseEvent): void => this.#save(event, generation, slider, container);
+
 		Event.EventEmitter.subscribe(EventName.CloseProjectWizard, this.#boundClose);
 		Event.EventEmitter.subscribe(EventName.SaveProjectWizard, this.#boundSave);
 	}
 
 	#unsubscribe(): void
 	{
-		if (Type.isFunction(this.#boundClose))
+		if (this.#boundClose !== null)
 		{
 			Event.EventEmitter.unsubscribe(EventName.CloseProjectWizard, this.#boundClose);
+			this.#boundClose = null;
 		}
 
-		if (Type.isFunction(this.#boundSave))
+		if (this.#boundSave !== null)
 		{
 			Event.EventEmitter.unsubscribe(EventName.SaveProjectWizard, this.#boundSave);
+			this.#boundSave = null;
 		}
-
-		this.#boundClose = null;
-		this.#boundSave = null;
 	}
 
-	#close(): void
+	#close(generation: number, slider: ?Slider, container: HTMLElement): void
 	{
+		if (!this.#isEventTarget(generation, slider, container))
+		{
+			return;
+		}
+
 		if (Type.isFunction(this.#params.onCancel))
 		{
 			this.#params.onCancel();
 		}
 
-		this.#slider?.close();
+		slider?.close();
 
-		this.unmount();
+		this.#unmount(generation, slider, container);
 	}
 
-	#save(event: BaseEvent): void
+	#save(event: BaseEvent, generation: number, slider: ?Slider, container: HTMLElement): void
 	{
+		if (!this.#isEventTarget(generation, slider, container))
+		{
+			return;
+		}
+
 		if (Type.isFunction(this.#params.onSave))
 		{
 			this.#params.onSave({
@@ -149,9 +275,9 @@ export class ProjectWizard
 			});
 		}
 
-		this.#slider?.close();
+		slider?.close();
 
-		this.unmount();
+		this.#unmount(generation, slider, container);
 
 		this.#proposeProjectsTrial();
 	}
@@ -176,7 +302,7 @@ export class ProjectWizard
 			});
 	}
 
-	async #mountApplication(container: HTMLElement): VueApp
+	#mountApplication(container: HTMLElement, currentUser: ?Object): VueApp
 	{
 		const application = BitrixVue.createApp(App);
 
@@ -184,16 +310,58 @@ export class ProjectWizard
 		// @chef-ignore
 		application.use(Core.createStore());
 
-		Core.initStores(this.#params);
+		Core.initStores({
+			...this.#params,
+			currentUser,
+		});
 
-		application.mount(container);
+		try
+		{
+			application.mount(container);
+		}
+		catch (error)
+		{
+			application.unmount();
+
+			throw error;
+		}
 
 		return application;
 	}
 
-	#unmountApplication()
+	async #loadCurrentUser(): Promise<?Object>
 	{
-		this.#application?.unmount();
+		if (!isCreateProjectWizardAction(this.#params.action))
+		{
+			return null;
+		}
+
+		const { getCurrentUserSettings } = await Runtime.loadExtension('socialnetwork.v2.current-user');
+
+		return getCurrentUserSettings();
+	}
+
+	#unmount(generation: ?number, slider: ?Slider, container: ?HTMLElement): void
+	{
+		if (generation === null || !this.#owns(generation, slider, container))
+		{
+			return;
+		}
+
+		const application = this.#application;
+
+		this.#generation++;
 		this.#application = null;
+		this.#mountingPromise = null;
+		this.#slider = null;
+		this.#container = null;
+
+		if (activeMountContainer === container)
+		{
+			activeMountContainer = null;
+		}
+
+		this.#unsubscribe();
+		application?.unmount();
 	}
 }

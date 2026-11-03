@@ -148,13 +148,20 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 				this.button?.setDisabled(!disabled);
 				this.button?.setDisabled(Boolean(disabled));
 			},
-			loading: {
-				handler(loading) {
-					if (loading !== this.button?.isWaiting()) {
-						this.button?.setWaiting(loading);
+			loading(loading) {
+				if (loading === this.button?.isWaiting()) {
+					return;
+				}
+				this.button?.setWaiting(loading);
+				if (!loading) {
+					// setWaiting(false) drops the disabled attribute and clears the state slot it shared with
+					// waiting, so both props are applied again: their own watchers stay silent while the props
+					// themselves have not changed.
+					this.button?.setDisabled(Boolean(this.disabled));
+					if (!this.disabled) {
+						this.button?.setState(this.state);
 					}
-				},
-				immediate: true
+				}
 			},
 			leftIcon(icon) {
 				this.button?.setIcon(icon, 'left');
@@ -262,7 +269,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 			if (this.leftCounterValue) {
 				button.setLeftCounter({
 					value: this.leftCounterValue,
-					color: this.leftCounterColor
+					style: this.leftCounterColor
 				});
 			} else {
 				button.setLeftCounter(null);
@@ -270,11 +277,17 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 			if (this.rightCounterValue) {
 				button.setRightCounter({
 					value: this.rightCounterValue,
-					color: this.rightCounterColor
+					style: this.rightCounterColor
 				});
 			}
 			if (this.shimmer) {
 				button.startShimmer();
+			}
+
+			// Option watchers run before created(), so a button mounted with loading already on
+			// would never reach setWaiting() — the initial state belongs here, next to the others.
+			if (this.loading) {
+				button.setWaiting(true);
 			}
 			this.button = button;
 		},

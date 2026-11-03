@@ -1,12 +1,44 @@
 import { applyCellInlineRules } from './inline-rules.js';
 import { MARKDOWN_LIST_TAG_PREFIX, MARKDOWN_PLACEHOLDER_SUFFIX } from '../const.js';
+import { type BbTagProtector } from '../utils/bb-tag-protector.js';
+import { type UrlProtector } from '../utils/url-protector.js';
 
-const LIST_ITEM_PATTERN = /^([ \t]*)([*+-]|\d+\.)[ \t]+(.*)$/;
-const HAS_LIST_ITEM_PATTERN = /^[ \t]*(?:[*+-]|\d+\.)[ \t]+/m;
+type ConvertListsOptions = {
+	mode?: string,
+	urlProtector?: ?UrlProtector,
+	bbTagProtector?: ?BbTagProtector,
+};
+
+// A line opening with a long number ("255502. test") is an order id, a phone or a
+// contract number, not a list: turning it into <ol start=...> moves the number into the
+// marker, which then does not fit the list indent and looks truncated. Real chat lists
+// start small, so a marker that OPENS a list is capped at three digits ("1." to "999.").
+// The cap applies to the start of a list only - the lines startsNewList() answers yes for.
+// Inside an already open list a marker of any length is just the next item ("998./999./1000."
+// is one list), because only the first number is kept: the browser numbers the rest itself
+// from <ol start>. The <ol> indent (parser.css) is therefore sized for "999.", the widest
+// marker accepted as the START of a list; a long list started near the cap ("999." plus
+// MAX_LIST_ITEMS items reaches "1198.") can still outgrow that indent - an accepted
+// limitation, not a guarantee.
+// Exported because that indent is the other half of the cap and lives in a file this one
+// cannot see: the stylesheet declares the digit count it was measured for, and
+// test/functions/markdown-list-indent.test.js holds the two against each other.
+export const MAX_ORDERED_MARKER_DIGITS = 3;
+// The capped source answers "can a list START here?" - it backs the opening-marker test, the
+// "is there any list line?" probe and the pipeline fast-path (MARKDOWN_TRIGGER in
+// ../converter.js), which can therefore never disagree on where a list may begin. The
+// per-line parse is deliberately uncapped: it also has to see continuation markers.
+export const ORDERED_MARKER_SOURCE = `\\d{1,${MAX_ORDERED_MARKER_DIGITS}}\\.`;
+const LIST_ITEM_PATTERN = /^([\t ]*)([*+-]|\d+\.)[\t ]+(.*)$/;
+const OPENING_ORDERED_MARKER_PATTERN = new RegExp(`^${ORDERED_MARKER_SOURCE}$`);
+const HAS_LIST_ITEM_PATTERN = new RegExp(`^[ \\t]*(?:[*+-]|${ORDERED_MARKER_SOURCE})[ \\t]+`, 'm');
 const MAX_RULE_LENGTH = 20;
-// Cap parsed items symmetric to the render cap (functions/list.js MAX_LIST_ITEMS) so a
-// crafted [list] with thousands of [*] doesn't burn applyCellInlineRules on items that
-// ParserList.decodeList will never render.
+// Largest number of items one emitted [list] may carry, symmetric to the render cap
+// (functions/list.js MAX_LIST_ITEMS): a longer run is split into sibling [list] blocks, so
+// every parsed item lands in a list ParserList.decodeList actually draws. The split is done
+// on OUTPUT (convertLists), after the whole run of list lines is parsed as one list - a
+// technical chunk must not look like a place where the user started a new list, or the item
+// behind it would be re-tested against the opening digit cap and fall out as plain text.
 const MAX_LIST_ITEMS = 200;
 
 // Structural list tags ([list]/[list=1]/[/list]/[*]) are hidden behind inert
@@ -92,10 +124,25 @@ function defangListTags(text: string): string
 }
 
 /**
+ * Read one line as a list item. Its marker is reported in three parts, because the callers
+ * need different ones: `ordered` is the list type the item belongs to (tryParseList places it
+ * by that and `indent`), `canOpen` says whether such a marker may begin a list at all, and
+ * `start` is the number buildList puts on <ol start> when the item is the first of one.
+ *
  * @param {string} line
- * @returns {{ indent: number, ordered: boolean, content: string } | null}
+ * @param {?UrlProtector} [urlProtector] - UrlProtector of the current render; null lets
+ *   applyCellInlineRules protect and restore the URLs of the item on its own
+ * @param {?BbTagProtector} [bbTagProtector] - BbTagProtector of the current render, consulted by
+ *   the label acceptor of the item link rule (createLinkLabelAcceptor)
+ * @returns {{
+ *     indent: number, ordered: boolean, canOpen: boolean, start: number | null, content: string
+ * } | null}
  */
-function parseListItem(line: string): ?Object
+function parseListItem(
+	line: string,
+	urlProtector: ?UrlProtector = null,
+	bbTagProtector: ?BbTagProtector = null,
+): ?Object
 {
 	if (isHorizontalRule(line))
 	{
@@ -114,9 +161,11 @@ function parseListItem(line: string): ?Object
 	return {
 		indent: normalizeIndent(match[1]),
 		ordered,
+		// Whether this marker may START a list; a bullet always may (see the digit cap above).
+		canOpen: !ordered || OPENING_ORDERED_MARKER_PATTERN.test(marker),
 		// First item's number seeds <ol start> (CommonMark: later item numbers are ignored).
 		start: ordered ? parseInt(marker, 10) : null,
-		content: defangListTags(applyCellInlineRules(match[3])),
+		content: defangListTags(applyCellInlineRules(match[3], { urlProtector, bbTagProtector })),
 	};
 }
 
@@ -137,10 +186,12 @@ function buildList(items: Array<Object>, startIndex: number, baseIndent: number)
 	// Carry a non-default start (e.g. a list beginning at "5.") on the list tag so the
 	// decoder can emit <ol start="5">. A start of 1 stays the canonical bare [list=1].
 	let bbcode = ordered ? '[list=1]' : '[list]';
-	// Only carry a start we can round-trip as plain digits: Number.isSafeInteger rejects
-	// values >= 2^53 whose String() form is either imprecise or exponential ("1e+21"),
-	// which would leak as raw BB (no `start=\d+` regex matches it). Such an absurd start
-	// degrades to bare [list=1] (renders from 1) rather than breaking the list.
+	// The MAX_LIST_ITEMS split (convertLists) hands the next chunk a continuation item, whose
+	// number is not capped, so `first` is not always an opening marker. Only carry a start we
+	// can round-trip as plain digits: Number.isSafeInteger rejects values >= 2^53 whose String()
+	// form is either imprecise or exponential ("1e+21"), which would leak as raw BB (no
+	// `start=\d+` regex matches it). Such an absurd start degrades to bare [list=1] rather than
+	// breaking the list.
 	if (ordered && Number.isSafeInteger(first.start) && first.start !== 1)
 	{
 		bbcode = `[list=1 start=${first.start}]`;
@@ -177,33 +228,108 @@ function buildList(items: Array<Object>, startIndex: number, baseIndent: number)
 }
 
 /**
- * @param {string[]} lines
- * @param {number} startIndex
- * @returns {{ bbcode: string, endIndex: number } | null}
+ * Whether this item STARTS a list instead of continuing an open one - which is exactly where
+ * the opening digit cap has to be paid. Three cases, and buildList splits the output at the
+ * same three: nothing is open yet, the item is deeper than every open level, or its marker
+ * type differs from the level it lands on (CommonMark: an ordered item cannot extend a bullet
+ * list and vice versa, so the type change begins a new list of its own).
+ *
+ * @param {Array<Object>} openLevels
+ * @param {Object} item
+ * @returns {boolean}
  */
-function tryParseList(lines: string[], startIndex: number): ?Object
+function startsNewList(openLevels: Array<Object>, item: Object): boolean
 {
-	if (!parseListItem(lines[startIndex]))
+	const level = openLevels.at(-1);
+
+	return !level || item.indent > level.indent || item.ordered !== level.ordered;
+}
+
+/**
+ * Close every level the item is too shallow to belong to.
+ *
+ * @param {Array<Object>} openLevels
+ * @param {Object} item
+ */
+function closeDeeperLevels(openLevels: Array<Object>, item: Object): void
+{
+	while (openLevels.length > 0 && openLevels.at(-1).indent > item.indent)
 	{
-		return null;
+		openLevels.pop();
+	}
+}
+
+/**
+ * Put the level this item opens on the stack. A deeper item nests one inside the open levels;
+ * a type change replaces the level it happens on, since the list open there has just ended.
+ *
+ * @param {Array<Object>} openLevels
+ * @param {Object} item
+ */
+function openLevel(openLevels: Array<Object>, item: Object): void
+{
+	if (openLevels.length > 0 && openLevels.at(-1).indent === item.indent)
+	{
+		openLevels.pop();
 	}
 
-	// Stop at MAX_LIST_ITEMS so the list ENDS here: convertLists then re-parses any further
-	// list lines as the next [list] block. This caps the size of a single list without
-	// dropping items — an earlier "consume the rest but skip them" cap silently lost every
-	// item past the limit.
+	openLevels.push({ indent: item.indent, ordered: item.ordered });
+}
+
+/**
+ * Parse one uninterrupted run of list lines. The run is bounded by the text only: item
+ * count is capped when the output is built (MAX_LIST_ITEMS in convertLists), so the list
+ * stays open here for as long as the user kept writing it.
+ *
+ * Line by line: an item that only continues an open level is taken as is, while an item that
+ * starts a list (startsNewList) is taken only if its marker may open one - otherwise the run
+ * ends there and the line stays plain text.
+ *
+ * @param {string[]} lines
+ * @param {number} startIndex
+ * @param {?UrlProtector} [urlProtector] - UrlProtector of the current render, forwarded to every
+ *   item the run parses
+ * @param {?BbTagProtector} [bbTagProtector] - BbTagProtector of the current render, forwarded the
+ *   same way
+ * @returns {{ items: Array<Object>, endIndex: number } | null}
+ */
+function tryParseList(
+	lines: string[],
+	startIndex: number,
+	urlProtector: ?UrlProtector = null,
+	bbTagProtector: ?BbTagProtector = null,
+): ?Object
+{
 	const items = [];
+	// The list levels open at this point, innermost last: indent and marker type of each.
+	const openLevels = [];
 	let i = startIndex;
-	while (i < lines.length && items.length < MAX_LIST_ITEMS)
+	while (i < lines.length)
 	{
-		const item = parseListItem(lines[i]);
+		const item = parseListItem(lines[i], urlProtector, bbTagProtector);
 		if (!item)
 		{
 			break;
 		}
 
+		closeDeeperLevels(openLevels, item);
+		if (startsNewList(openLevels, item))
+		{
+			if (!item.canOpen)
+			{
+				break;
+			}
+
+			openLevel(openLevels, item);
+		}
+
 		items.push(item);
 		i++;
+	}
+
+	if (items.length === 0)
+	{
+		return null;
 	}
 
 	return { items, endIndex: i };
@@ -250,13 +376,17 @@ function formatList(items: Array<Object>, mode: string): string
  * protected with the rest of the structure by ListTagProtector.
  *
  * @param {string} text
- * @param {object} [options]
+ * @param {ConvertListsOptions} [options]
  * @param {string} [options.mode] - 'decode' or 'simplify'
+ * @param {?UrlProtector} [options.urlProtector] - UrlProtector of the current render, forwarded to
+ *   every item; null lets each item protect and restore its own URLs
+ * @param {?BbTagProtector} [options.bbTagProtector] - BbTagProtector of the current render,
+ *   forwarded the same way
  * @returns {string}
  */
-export function convertLists(text: string, options: Object = {}): string
+export function convertLists(text: string, options: ConvertListsOptions = {}): string
 {
-	const { mode = 'decode' } = options;
+	const { mode = 'decode', urlProtector = null, bbTagProtector = null } = options;
 
 	if (!HAS_LIST_ITEM_PATTERN.test(text))
 	{
@@ -269,10 +399,15 @@ export function convertLists(text: string, options: Object = {}): string
 
 	while (i < lines.length)
 	{
-		const list = tryParseList(lines, i);
+		const list = tryParseList(lines, i, urlProtector, bbTagProtector);
 		if (list)
 		{
-			result.push(formatList(list.items, mode));
+			// One entry per chunk: the entries are joined by '\n' below, so a split run reads
+			// as consecutive list blocks, exactly as a run of separate lists would.
+			for (let start = 0; start < list.items.length; start += MAX_LIST_ITEMS)
+			{
+				result.push(formatList(list.items.slice(start, start + MAX_LIST_ITEMS), mode));
+			}
 			i = list.endIndex;
 		}
 		else

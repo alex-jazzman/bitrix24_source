@@ -26,11 +26,16 @@ export type DataFormats = {
 export type DatasetProperties = {
 	id: number,
 	name: string,
+	verboseName: string,
 	description: string,
 	externalCode: string,
 	externalName: string,
 	externalDatasets: Array<Record<string, unknown>>,
 	isSystem?: boolean,
+	canEdit?: boolean,
+	canExport?: boolean,
+	// Present only while table permissions are on: the groups of the table the user may view.
+	tableGroups?: Array<TableGroupItem>,
 	createPhysicalDatasetUrl?: string,
 	createVirtualDatasetUrl?: string,
 };
@@ -64,6 +69,7 @@ export type AppConfig = {
 	connectionProperties?: ConnectionProperties,
 	fieldsSettings: Array<FieldSettings>,
 	sectionsConfig: SectionsConfig,
+	tableGroupIds: Array<number>,
 };
 
 export type PreviewData = {
@@ -86,12 +92,23 @@ export type ValidationState = {
 	errors: Array<ValidationError>,
 };
 
+export type ConnectionLoadStatus = 'idle' | 'loading' | 'error';
+
+export type ConnectionLoadState = {
+	status: ConnectionLoadStatus,
+	errorHtml: string,
+	loaded: boolean,
+};
+
+export type PreviewState = 'idle' | 'loading' | 'error' | 'empty' | 'data';
+
 export type UiState = {
 	activeFieldIndex: number,
 	validation: ValidationState,
 	isReloadingPreview: boolean,
 	hasPreviewSchemaMismatch: boolean,
 	connectionEditing: boolean,
+	connectionLoad: ConnectionLoadState,
 };
 
 export type RootState = {
@@ -120,6 +137,12 @@ export type ExternalConnection = {
 	IS_SUPPORT_MAPPING?: boolean,
 };
 
+export type TableGroupItem = {
+	id: number,
+	name: string,
+	type: 'SYSTEM' | 'CUSTOM',
+};
+
 export type AppParams = {
 	dataFormatTemplates: DataFormatTemplates,
 	encodings: Array<EncodingOption>,
@@ -127,6 +150,8 @@ export type AppParams = {
 	reservedNames: Array<string>,
 	connections: Array<ExternalConnection>,
 	isSupersetReady: boolean,
+	isTablePermissionsEnabled?: boolean,
+	tableGroups?: Array<TableGroupItem>,
 };
 
 export type ExtraAppOptions = {

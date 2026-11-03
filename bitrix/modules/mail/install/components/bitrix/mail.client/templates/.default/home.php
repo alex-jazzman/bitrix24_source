@@ -4,6 +4,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 \Bitrix\Main\Loader::includeModule('mail');
 
+if (
+	\Bitrix\Main\Config\Option::get('mailservice', 'mailhost_enabled', 'N') === 'Y'
+	&& \Bitrix\Main\Loader::includeModule('mailservice')
+	&& (new \Bitrix\MailService\Public\Service\InvitationAvailability())->canShowMine()
+)
+{
+	\Bitrix\Main\UI\Extension::load('mailservice.portal');
+	?>
+	<div id="mailservice-my-invitations"></div>
+	<script>
+		BX.ready(() => BX.Mailservice.Portal.mountMine(document.getElementById('mailservice-my-invitations')));
+	</script>
+	<?php
+}
+
 $mailboxes = \Bitrix\Mail\MailboxTable::getUserMailboxes();
 if (!empty($mailboxes))
 {
@@ -49,5 +64,6 @@ $APPLICATION->IncludeComponent(
 		'PLAIN_VIEW' => false,
 		'PAGE_MODE' => false,
 		'PAGE_MODE_OFF_BACK_URL' => "/stream/",
+		'LEFT_PANEL_RESIZABLE' => $arResult['LEFT_PANEL_RESIZABLE'],
 	]
 );

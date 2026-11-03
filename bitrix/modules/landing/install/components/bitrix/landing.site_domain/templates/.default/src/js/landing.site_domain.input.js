@@ -83,6 +83,13 @@ export class Input
 			return;
 		}
 
+		if (this.refuseName(this.idDomainName.value))
+		{
+			this.helper.refuseSubmit(event);
+
+			return;
+		}
+
 		if (this.helper.isInvalid())
 		{
 			if (this.checkedDomainName === this.idDomainName.value)
@@ -115,6 +122,42 @@ export class Input
 	}
 
 	/**
+	 * Returns the reason to refuse the name without asking the server, or null to leave it to Domain::check.
+	 * Tabs with their own rules of the name override it.
+	 * @param {string} domainName Trimmed name from the field.
+	 * @return {string|null}
+	 */
+	getNameError(domainName)
+	{
+		return null;
+	}
+
+	/**
+	 * Shows the error of the name refused by getNameError, if any.
+	 * @param {string} domainName Trimmed name from the field.
+	 * @return {boolean} True if the name is refused.
+	 */
+	refuseName(domainName)
+	{
+		const error = this.getNameError(domainName);
+		if (error === null)
+		{
+			return false;
+		}
+
+		// a running check is about another value: its answer must not overwrite this refusal
+		this.checkGeneration++;
+		this.previousDomainName = null;
+		this.checkedDomainName = null;
+		this.helper.hideLoader();
+		this.helper.hideLength();
+		// the refusal must not depend on whether the phrase is translated into the portal language
+		this.helper.setError(error || Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_INCORRECT'));
+
+		return true;
+	}
+
+	/**
 	 * Checks the current value right away, ignoring both the debounce and the cache of the last checked value.
 	 */
 	restartCheck()
@@ -141,6 +184,11 @@ export class Input
 		}
 
 		const domainName = this.idDomainName.value;
+
+		if (this.refuseName(domainName))
+		{
+			return;
+		}
 
 		if (this.previousDomainName === domainName)
 		{

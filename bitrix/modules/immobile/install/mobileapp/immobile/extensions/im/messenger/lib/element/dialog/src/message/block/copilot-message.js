@@ -5,9 +5,10 @@ jn.define('im/messenger/lib/element/dialog/message/block/copilot-message', (requ
 	const { Loc } = require('im/messenger/loc');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageType, CopilotButtonType, Color } = require('im/messenger/const');
-	const { Color: ColorTokens } = require('tokens');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BlockMessage } = require('im/messenger/lib/element/dialog/message/block/message');
 	const { ActionButtons } = require('im/messenger/lib/element/dialog/message/element/actions/action-buttons');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	/**
 	 * @class CopilotBlockMessage
@@ -24,11 +25,23 @@ jn.define('im/messenger/lib/element/dialog/message/block/copilot-message', (requ
 
 			/** @type {CopilotMessageCopilotData|{}} */
 			this.copilot = {};
+			this.actions = [];
+
+			this.setFootNote();
+
+			// Transient "thinking" placeholder shows no footer buttons or like/dislike, only the footnote.
+			if (MessageHelper.createByModel(modelMessage)?.isCopilotProcess)
+			{
+				return;
+			}
+
+			const dialogId = options.dialogId;
+			const messageId = modelMessage.id;
 
 			this
-				.setFootNote()
 				.setButtons()
-				.setActions()
+				.setActions(dialogId, messageId)
+				.setAiAnimation(modelMessage)
 			;
 		}
 
@@ -42,6 +55,31 @@ jn.define('im/messenger/lib/element/dialog/message/block/copilot-message', (requ
 				actions: this.actions,
 				copilot: this.copilot,
 			};
+		}
+
+		/**
+		 * @desc AI glow animation runs on the copilot bubble only while the backend keeps the
+		 *       message in the active generation state (placeholder message). The final message
+		 *       arrives without the flag, so glow turns off. The native glow itself is gated by
+		 *       the 'chat_ai_glow_animation' feature.
+		 *       Unlike the web (im.v2.lib.copilot isCopilotGenerationActive) we deliberately rely on
+		 *       the flag alone and skip the transitional fallback over the aiAssistantSearch block:
+		 *       the backend sets the flag together with that block (aiassistant
+		 *       PendingPlaceholderCreator), the fallback only covered legacy pre-flag pending
+		 *       messages absent from the mobile flow, and it would add a block scan on every render.
+		 * @param {MessagesModelState} modelMessage
+		 * @return {CopilotBlockMessage}
+		 */
+		setAiAnimation(modelMessage)
+		{
+			const isGenerationActive = modelMessage.params?.COMPONENT_PARAMS?.copilotGenerationActive === true;
+
+			/** @type {CopilotAiGlowData} */
+			this.aiAnimation = {
+				animate: isGenerationActive && Feature.isBitrixGptAiGlowAnimationEnabled,
+			};
+
+			return this;
 		}
 
 		setButtons()
@@ -63,10 +101,18 @@ jn.define('im/messenger/lib/element/dialog/message/block/copilot-message', (requ
 			return this;
 		}
 
-		setActions()
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {number} messageId
+		 */
+		setActions(dialogId, messageId)
 		{
+			const store = serviceLocator.get('core').getStore();
+			const vote = store.getters['dialoguesModel/copilotModel/getVoteByMessageId'](dialogId, Number(messageId));
+
 			this.actions = ActionButtons.create({
-				tint: ColorTokens.chatOtherCopilot2.toHex(),
+				isLiked: vote?.like,
+				isDisliked: vote?.dislike,
 			}).toMessageFormat();
 
 			return this;

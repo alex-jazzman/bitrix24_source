@@ -75,19 +75,12 @@
 				version: Number(ff[1])
 			};
 		}
-		const fxios = ua.match(/FxiOS\/(\d+)/);
-		if (fxios) {
-			return {
+		if (/(?:CriOS|FxiOS)\//.test(ua)) {
+			const webkitVersion = ua.match(/Version\/(\d+)/) || ua.match(/(?:iPhone )?OS (\d+)[\d_]*/);
+			return webkitVersion ? {
 				name: 'safari',
-				version: Number(fxios[1])
-			};
-		}
-		const crios = ua.match(/CriOS\/(\d+)/);
-		if (crios) {
-			return {
-				name: 'safari',
-				version: Number(crios[1])
-			};
+				version: Number(webkitVersion[1])
+			} : null;
 		}
 		const isChromiumBased = /Chrome\/|Chromium\//.test(ua);
 		if (!isChromiumBased && /Safari\//.test(ua)) {
@@ -108,16 +101,20 @@
 		}
 		return null;
 	}
+	const DISCONTINUED_BROWSERS = new Set(['ie', 'edge_legacy']);
 	function computeStatus(browser) {
 		if (!browser) {
+			return 'unknown';
+		}
+		if (DISCONTINUED_BROWSERS.has(browser.name)) {
 			return 'unsupported';
 		}
 		const versions = currentBaseline && currentBaseline.versions;
 		const minVersion = versions && versions[browser.name];
-		if (!minVersion || browser.version < minVersion) {
-			return 'unsupported';
+		if (!minVersion) {
+			return 'unknown';
 		}
-		return 'supported';
+		return browser.version < minVersion ? 'unsupported' : 'supported';
 	}
 	const DISMISS_TTL = 7 * 24 * 60 * 60 * 1000;
 	function isDismissed() {
@@ -181,6 +178,12 @@
 		}
 		return false;
 	}
+	function isAutomated() {
+		if (navigator.webdriver === true) {
+			return true;
+		}
+		return navigator.userAgent.includes('HeadlessChrome');
+	}
 	function showBanner(text, settings) {
 		if (!text || isDismissed() || isWebView()) {
 			return;
@@ -233,7 +236,7 @@
 				status,
 				browser
 			};
-			if (result.status === 'unsupported') {
+			if (result.status === 'unsupported' && !isAutomated()) {
 				const settings = getSettings();
 				sendAnalytics(result, settings);
 				showBanner(msg('MAIN_BASELINE_BROWSER_OUTDATED'), settings);
@@ -241,7 +244,7 @@
 			return result;
 		}
 		static isSupported() {
-			return computeStatus(detect()) === 'supported';
+			return computeStatus(detect()) !== 'unsupported';
 		}
 		static detectBrowser() {
 			return detect();

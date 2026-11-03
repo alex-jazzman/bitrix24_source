@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/go-to-chat
  */
 jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { MessengerSlider, messengers } = require('crm/timeline/scheduler/providers/go-to-chat/messenger-slider');
@@ -694,12 +695,12 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		},
 		heroScreenTitle: {
 			textAlign: 'center',
-			fontSize: 19,
+			fontSize: Typography.text1.getValue().fontSize,
 			color: AppTheme.colors.base1,
 		},
 		heroScreenDescription: {
 			textAlign: 'center',
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base2,
 			marginTop: 11,
 			lineHeightMultiple: 1.2,
@@ -748,7 +749,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			height: 87,
 		},
 		heroScreenIconText: {
-			fontSize: 12,
+			fontSize: Typography.text6.getValue().fontSize,
 			color: AppTheme.colors.base3,
 			flex: 1,
 			textAlign: 'center',
@@ -776,7 +777,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		sendButtonText: {
 			color: AppTheme.colors.baseWhiteFixed,
 			fontWeight: '500',
-			fontSize: 17,
+			fontSize: Typography.text2.getValue().fontSize,
 			textAlign: 'center',
 		},
 		sendButtonImage: {

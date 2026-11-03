@@ -97,6 +97,7 @@ export class WorkflowRenderer
 		return Tag.render`
 				<div class="bp-user-processes">
 					<a class="bp-user-processes__title-link ui-typography-text-lg"
+						data-testid="bizproc-user-processes-row-title"
 						href="${Text.encode(documentUrl)}">${Text.encode(itemName)}
 					</a>
 					<div class="bp-user-processes__appointment">${Text.encode(typeName.toUpperCase())}</div>

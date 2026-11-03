@@ -1,6 +1,6 @@
 import { Loc, Type } from 'main.core';
 import { PROPERTY_TYPES } from '../../../shared/constants';
-import { type ActivityData, type ActivityProperty, type Port, type Block, type DocumentField } from '../../../shared/types';
+import { type ActivityData, type ActivityProperty, type Block } from '../../../shared/types';
 import { documentFieldsCache } from '../../../shared/utils';
 import { diagramStore } from '../../blocks';
 import { PORTLESS_RULES_KEY } from '../api';
@@ -14,19 +14,50 @@ import {
 	type Rule,
 } from '../types';
 import {
+	type SignatureCachedValue,
+	collectSyntheticFilterReturnProperties,
+	getActivitySignature,
+} from './filter-return-properties';
+import { getFixedDocumentType } from './property-dialog-document-type';
+import {
 	type ExpressionRefToken,
+	FIELD_LOOKUP_STEPS,
 	OBJECT_NAMES,
 	TOKEN_PATH_SEPARATOR,
+	findDocumentField,
+	getActivityReturnProperties,
 	resolveExpressionReferenceWithPending,
 } from './readable-expressions';
 
+export { collectAllConstructions, getFilterEntityTitle } from './filter-return-properties';
+export { resolveNodeBrokenLinkSections } from './node-broken-links';
+export type {
+	NodeBrokenLinkItem,
+	NodeBrokenLinkRulePort,
+	NodeBrokenLinkSections,
+	NodeBrokenLinkTarget,
+} from './node-broken-links';
 export { areNodeSettingsDirty } from './node-settings-dirty';
+export { generateNextInputPortId, generateNextOutputPortId, getPortsSignature } from './port-ids';
+export { getFixedDocumentType } from './property-dialog-document-type';
+export {
+	buildFilterMetadataParams,
+	resolveFilterBackingActivityType,
+	resolveFilterContextDocumentType,
+	resolveFilterFixedEntityTypeId,
+} from './filter-metadata';
+export {
+	getUnreachableOutputPortIds,
+	isOutputReachable,
+	isOutputReachableInAnyState,
+} from './output-reachability';
 export {
 	buildExpressionTokens,
 	isReadableExpressionsAvailable,
 	resolveExpressionReference,
 	tokenSectionClass,
 } from './readable-expressions';
+export { settingsFormRequestCache } from './settings-form-request-cache';
 export {
 	findGroupRuleCardForType,
 	findHeadRuleCard,
@@ -35,6 +66,13 @@ export {
 	isHeadConstructionType,
 	splitRulesSurface,
 } from './rules-surface';
+export {
+	carriesAuxPortReference,
+	getActionAuxPortIdsFromActivity,
+	getActionAuxPortIdsFromRules,
+	getActionAuxPortsFromActivity,
+	getActionAuxPortsFromRules,
+} from './action-aux-ports';
 
 type FoundBlockAndActivity = {
 	block: Block | null,
@@ -45,11 +83,6 @@ type ExtractedDocumentData = {
 	block: Block,
 	activity: ActivityData,
 	field: ActivityProperty,
-};
-
-type SignatureCachedValue<T> = {
-	signature: string,
-	value: T,
 };
 
 type ConditionFieldTitle = {
@@ -87,8 +120,6 @@ const CONDITION_SOURCE_SEPARATOR = ' — ';
 const CONDITION_FAILOVER_SEPARATOR = ' / ';
 const DOCUMENT_ITEM_ID_SEPARATOR = ':';
 const REFERENCE_PATH_SEPARATORS = Object.freeze([TOKEN_PATH_SEPARATOR, '.']);
-// A document type is the triple of module, entity and document: anything shorter is no type of its own.
-const DOCUMENT_TYPE_PARTS_COUNT = 3;
 
 /**
  * Why the caption stayed technical, and only about a reference that is broken for good: a source, a
@@ -128,22 +159,6 @@ const TEMPLATE_DATA_OBJECTS = Object.freeze([
 	},
 ]);
 
-export const getPortsSignature = (ports: Array<Port>): string => {
-	return (ports ?? [])
-		.map((port) => `${port.id}:${port.isActive === false ? '0' : '1'}`)
-		.sort()
-		.join('|');
-};
-
-export const generateNextInputPortId = (ports: Array<Port>) => {
-	const nextPortNumber = ports.reduce(
-		(acc, currentValue: Port) => Math.max(acc, parseInt(currentValue.id.slice(1), 10)),
-		0,
-	) + 1;
-
-	return `i${nextPortNumber}`;
-};
-
 /**
  * The name of the field leads and the source follows it in brackets, listed from the particular to the
  * general: the name of the document property first, the title of the source block after it. So the
@@ -161,11 +176,8 @@ function composeConditionFieldTitle(fieldTitle: ?string, sourceParts: Array<?str
 }
 
 /**
- * A dotted key is a whole field of the document first — `ASSIGNED_BY.UF_TWITTER` is one field named
- * "Ответственный: Twitter" — and only what is left after the longest key that did match is a modifier
- * tail. The longest prefix, not the first segment: a whole segment of a composite key is often no field
- * of its own (`ASSIGNED_BY`, `CONTACT`, `FORMS` of a deal are not), so a key like
- * `ASSIGNED_BY.UF_TWITTER.printable` would otherwise look like a field that is gone.
+ * The key is looked up by the steps of the server ({@see findDocumentField}), shared with the resolver of
+ * the readable expressions: two searches over the same fields must not drift apart.
  *
  * An empty list is not an answer: that is what both a failed request and a document the user has no
  * access to leave in the cache, so it reports neither a name nor a missing field. A list that did arrive
@@ -189,29 +201,17 @@ function resolveDocumentFieldName(documentType: ?Array<string>, fieldKey: string
 		};
 	}
 
-	// One pass over the fields and one over the segments: the key comes from a saved template and its
-	// length is nobody's promise, so neither a search by key nor the cutting of a prefix may repeat per
-	// segment — that is how a long enough key freezes the panel of everyone editing the template.
-	const fieldsByKey = new Map(cachedFields.map((item: DocumentField) => [item.fieldKey, item]));
-	let prefixKey = fieldKey;
-	while (prefixKey !== '')
+	const found = findDocumentField(cachedFields, fieldKey);
+	if (!found)
 	{
-		const field = fieldsByKey.get(prefixKey);
-		if (field)
-		{
-			const tail = fieldKey.slice(prefixKey.length + 1);
-
-			return {
-				name: [field.name, ...(tail === '' ? [] : tail.split('.'))].join(TOKEN_PATH_SEPARATOR),
-				pending: null,
-				missing: false,
-			};
-		}
-
-		prefixKey = prefixKey.slice(0, Math.max(prefixKey.lastIndexOf('.'), 0));
+		return { name: null, pending: null, missing: true };
 	}
 
-	return { name: null, pending: null, missing: true };
+	return {
+		name: [found.field.name, ...found.tail].join(TOKEN_PATH_SEPARATOR),
+		pending: null,
+		missing: found.step === FIELD_LOOKUP_STEPS.NOCASE,
+	};
 }
 
 function unresolvedConditionFieldTitle(unresolved: string): ConditionFieldTitle
@@ -226,22 +226,6 @@ function unresolvedConditionFieldTitle(unresolved: string): ConditionFieldTitle
 function rawConditionFieldTitle(): ConditionFieldTitle
 {
 	return { title: '', pending: null, unresolved: null };
-}
-
-/**
- * An associative array of PHP arrives as an object rather than an array, and its values are the very same
- * properties: dropping them would accuse a field that resolves. Anything that is neither is left out, so
- * no shape of the payload reaches the search by `Id` and takes the settings panel down with it.
- */
-function getReturnProperties(activity: ?ActivityData): ActivityProperty[]
-{
-	const properties = activity?.ReturnProperties;
-	if (!Type.isArray(properties) && !Type.isPlainObject(properties))
-	{
-		return [];
-	}
-
-	return Object.values(properties).filter((property: mixed): boolean => Type.isPlainObject(property));
 }
 
 function evaluateDocumentConditionFieldTitle(documentType: ?Array<string>, fieldId: string): ConditionFieldTitle
@@ -269,7 +253,7 @@ function isDocumentItemId(block: Block, activity: ActivityData, fieldId: string)
 		return false;
 	}
 
-	return getReturnProperties(activity).some((property: ActivityProperty): boolean => {
+	return getActivityReturnProperties(activity).some((property: ActivityProperty): boolean => {
 		return property?.Id === propertyId && property?.Type === PROPERTY_TYPES.DOCUMENT;
 	});
 }
@@ -328,7 +312,7 @@ function resolveConditionFieldSource(
 		...EMPTY_CONDITION_FIELD_SOURCE,
 		block,
 		activity,
-		property: getReturnProperties(activity).find((prop: ActivityProperty) => prop.Id === propertyId) ?? null,
+		property: getActivityReturnProperties(activity).find((prop: ActivityProperty) => prop.Id === propertyId) ?? null,
 		propertyId,
 		tailParts,
 		isDocumentItem: isDocumentItemId(block, activity, fieldId),
@@ -479,7 +463,7 @@ export const evaluateConditionExpressionFieldTitle = (
 		documentType,
 	);
 	const reference = resolvedReference?.token ?? null;
-	const isResolvedByReference = Boolean(reference) && !reference.unknown;
+	const isResolvedByReference = Boolean(reference) && reference.unresolved === null;
 
 	return {
 		title: isResolvedByReference
@@ -548,18 +532,6 @@ export const getConditionFieldTitleSignature = (
 export function getConditionFieldUnresolvedHint(unresolved: ?string): string
 {
 	return Loc.getMessage(UNRESOLVED_HINT_KEYS[unresolved] ?? '') ?? '';
-}
-
-/**
- * The document type fixed on the node, and only a whole one: a payload with a shorter array carries no
- * type of its own, and the caption, the control of the value and the warning all fall back to the
- * document of the template together instead of parting ways over a broken record.
- */
-export function getFixedDocumentType(nodeSettings: ?NodeSettings): Array<string> | null
-{
-	const fixed = nodeSettings?.fixedDocumentType;
-
-	return Type.isArray(fixed) && fixed.length === DOCUMENT_TYPE_PARTS_COUNT ? fixed : null;
 }
 
 /**
@@ -654,46 +626,18 @@ export function getVisibleConditionFieldUnresolvedReason(
 	return unresolved;
 }
 
+/**
+ * Whether the field of the source document of an action carries a value at all. A reference the panel
+ * can resolve to a return property of a connected block is not required: a free expression and an id
+ * typed by hand are legitimate values of this field, and only the server can judge them. The
+ * resolution itself stays - the effective document type is still read off the referenced property.
+ * Whitespace alone is no value: such a field is as empty as it looks.
+ */
 export const isActionExpressionDocumentCorrect = (
 	connectedBlocks: Block[],
 	document: string | null,
 ): boolean => {
-	if (!document)
-	{
-		return false;
-	}
-
-	const {
-		block,
-		activity,
-		field,
-	}: ExtractedDocumentData = extractFieldFromDocumentExpression(connectedBlocks, document);
-
-	return block && activity && field;
-};
-
-export const evaluateActionExpressionDocumentTitle = (
-	connectedBlocks: Block[],
-	document: string | null,
-): string => {
-	if (!document)
-	{
-		return Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED');
-	}
-
-	const {
-		block: foundBlock,
-		activity: foundActivity,
-		field: property,
-	}: ExtractedDocumentData = extractFieldFromDocumentExpression(connectedBlocks, document);
-	if (!property)
-	{
-		return Loc.getMessage('BIZPROCDESIGNER_EDITOR_UNKNOWN_DOCUMENT');
-	}
-
-	const objectTitle = foundActivity.Properties?.Title ?? foundBlock.node.title;
-
-	return `${property.Name} (${objectTitle})`;
+	return Type.isStringFilled(document) && document.trim() !== '';
 };
 
 function findBlockAndActivityByName(connectedBlocks: Array<Block>, name: string): FoundBlockAndActivity
@@ -767,13 +711,26 @@ function extractFieldFromDocumentExpression(
 	};
 }
 
+/**
+ * The document type an action is built for, asked for only once the caller has no answer of its own:
+ * `resolvePropertyDialogDocumentType` replies with the type fixed on the node before the question
+ * reaches here, and only for a whole triplet - a shorter record carries no type at all. So the answer
+ * given here is the type published by the referenced return property, and the document of the template
+ * for a value no set of blocks can resolve - a free expression or an id typed by hand - otherwise the
+ * parameters form could not be built at all. The type of the template is read from the diagram store,
+ * its only source of truth, rather than threaded through every caller.
+ */
 export const evaluateActionExpressionDocumentType = (
 	connectedBlocks: Block[],
 	documentExpression: string | null,
 ): Array<string> => {
 	const { field }: ExtractedDocumentData = extractFieldFromDocumentExpression(connectedBlocks, documentExpression);
+	if (field?.Type === PROPERTY_TYPES.DOCUMENT && Type.isArrayFilled(field.Default))
+	{
+		return field.Default;
+	}
 
-	return field?.Type === PROPERTY_TYPES.DOCUMENT && Type.isArrayFilled(field.Default) ? field.Default : [];
+	return diagramStore().documentType ?? [];
 };
 
 const ACTIVITY_CONSTRUCTION_TYPES = new Set([
@@ -789,9 +746,6 @@ const ACTIVITY_CONSTRUCTION_TYPES = new Set([
 // build a setting that silently reads an empty value.
 const SELF_RETURN_PROPERTIES_CONSTRUCTION_TYPES = new Set([CONSTRUCTION_TYPES.ACTION]);
 
-const FILTER_DOCUMENT_PROPERTY_ID = 'Document';
-const FILTER_RESULT_ALL_SUFFIX = '_all';
-const filterReturnPropertiesCache: WeakMap<Map<string, Rule>, Map<string, SignatureCachedValue<ActivityProperty[]>>> = new WeakMap();
 const siblingBlocksCache: WeakMap<TRuleCard, Map<string, SignatureCachedValue<Block[]>>> = new WeakMap();
 
 function createRuleConstructionBlock(activity: ActivityData): Block
@@ -830,190 +784,6 @@ function createSyntheticSourceBlock(currentBlock: Block, filterReturnProperties:
 			ReturnProperties: [...existingWithoutSynthetic, ...filterReturnProperties],
 		},
 	};
-}
-
-function createSyntheticFilterReturnProperties(
-	activity: ActivityData,
-	propertyId: string,
-	documentProperty: ActivityProperty,
-): ActivityProperty[]
-{
-	const filterTitle = Type.isStringFilled(activity.Properties?.Title)
-		? activity.Properties.Title
-		: Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_EXPRESSION_NAME')
-	;
-
-	const composeName = (messageId: string): string => Loc.getMessage(messageId, {
-		'#DOCUMENT#': Type.isStringFilled(documentProperty.Name) ? documentProperty.Name : propertyId,
-		'#FILTER#': filterTitle,
-	});
-
-	return [
-		{
-			...documentProperty,
-			Id: propertyId,
-			Name: composeName('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_RESULT_FIRST'),
-			Multiple: false,
-		},
-		{
-			...documentProperty,
-			Id: `${propertyId}${FILTER_RESULT_ALL_SUFFIX}`,
-			Name: composeName('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_RESULT_ALL'),
-			Multiple: true,
-		},
-	];
-}
-
-function extractDocumentReturnProperty(activity: ActivityData): ActivityProperty | null
-{
-	return Type.isArray(activity.ReturnProperties)
-		? activity.ReturnProperties.find((property: ActivityProperty): boolean => {
-			return property?.Id === FILTER_DOCUMENT_PROPERTY_ID && Type.isArrayFilled(property?.Default);
-		})
-		: null
-	;
-}
-
-function getActivitySignature(activity: ActivityData | null): string
-{
-	if (!Type.isPlainObject(activity))
-	{
-		return '';
-	}
-
-	const documentProperty = extractDocumentReturnProperty(activity);
-	const documentDefault = Type.isArrayFilled(documentProperty?.Default)
-		? documentProperty.Default.join(',')
-		: ''
-	;
-
-	return [
-		activity.Name ?? '',
-		activity.Properties?.Title ?? '',
-		documentProperty?.Name ?? '',
-		documentDefault,
-	].join('|');
-}
-
-function collectAllRuleCards(rules: Map<string, Rule>): Array<{ rule: Rule, ruleCard: TRuleCard }>
-{
-	const result = [];
-	for (const rule: Rule of rules.values())
-	{
-		for (const ruleCard: TRuleCard of (rule?.ruleCards ?? []))
-		{
-			result.push({ rule, ruleCard });
-		}
-	}
-
-	return result;
-}
-
-export function collectAllConstructions(
-	rules: Map<string, Rule>,
-): Array<{ rule: Rule, ruleCard: TRuleCard, construction: Construction }>
-{
-	const result = [];
-	for (const { rule, ruleCard } of collectAllRuleCards(rules))
-	{
-		for (const construction: Construction of (ruleCard?.constructions ?? []))
-		{
-			result.push({ rule, ruleCard, construction });
-		}
-	}
-
-	return result;
-}
-
-function collectFilterConstructions(
-	currentSettingsItems: Map<string, Rule>,
-	excludedRuleCardId: string | null,
-): Array<{ ruleCard: TRuleCard, construction: Construction }>
-{
-	return collectAllConstructions(currentSettingsItems).filter((item) => (
-		item.ruleCard?.id !== excludedRuleCardId
-		&& item.construction?.type === CONSTRUCTION_TYPES.FILTER
-	));
-}
-
-function getFilterReturnPropertiesSignature(
-	currentSettingsItems: Map<string, Rule> | null,
-	excludedRuleCardId: string | null,
-): string
-{
-	if (!(currentSettingsItems instanceof Map))
-	{
-		return '';
-	}
-
-	const signature = [];
-	for (const { ruleCard, construction } of collectFilterConstructions(currentSettingsItems, excludedRuleCardId))
-	{
-		signature.push(`${ruleCard.id}:${construction.id}:${getActivitySignature(construction.expression?.activityData)}`);
-	}
-
-	return signature.join(';');
-}
-
-function collectSyntheticFilterReturnProperties(
-	currentSettingsItems: Map<string, Rule> | null,
-	excludedRuleCardId: string | null,
-): ActivityProperty[]
-{
-	if (!(currentSettingsItems instanceof Map))
-	{
-		return [];
-	}
-
-	let cache = filterReturnPropertiesCache.get(currentSettingsItems);
-	if (!cache)
-	{
-		cache = new Map();
-		filterReturnPropertiesCache.set(currentSettingsItems, cache);
-	}
-
-	const cacheKey = excludedRuleCardId ?? '';
-	const signature = getFilterReturnPropertiesSignature(currentSettingsItems, excludedRuleCardId);
-	const cachedValue = cache.get(cacheKey);
-
-	if (cachedValue?.signature === signature)
-	{
-		return cachedValue.value;
-	}
-
-	const filterReturnProperties = [];
-	const seenPropertyIds = new Set();
-
-	for (const { construction } of collectFilterConstructions(currentSettingsItems, excludedRuleCardId))
-	{
-		const activity = construction.expression?.activityData;
-		if (!Type.isPlainObject(activity))
-		{
-			continue;
-		}
-
-		const propertyId = Type.isStringFilled(activity.Name) ? activity.Name : construction.id;
-		if (!Type.isStringFilled(propertyId) || seenPropertyIds.has(propertyId))
-		{
-			continue;
-		}
-
-		const documentProperty = extractDocumentReturnProperty(activity);
-		if (!documentProperty)
-		{
-			continue;
-		}
-
-		filterReturnProperties.push(...createSyntheticFilterReturnProperties(activity, propertyId, documentProperty));
-		seenPropertyIds.add(propertyId);
-	}
-
-	cache.set(cacheKey, {
-		signature,
-		value: filterReturnProperties,
-	});
-
-	return filterReturnProperties;
 }
 
 /**

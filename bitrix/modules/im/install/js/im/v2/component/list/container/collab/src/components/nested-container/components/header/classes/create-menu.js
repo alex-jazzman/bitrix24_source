@@ -2,10 +2,11 @@ import { Loc } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { MenuItemDesign, type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
-import { ActionByRole, ActionByUserType } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, ChatType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { type ImModelChat } from 'im.v2.model';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
@@ -76,6 +77,7 @@ export class CreateMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_CREATE_TASK_MSGVER_1'),
 			icon: OutlineIcons.TASK,
 			onClick: () => {
+				Analytics.getInstance().projectTab.onCreateTaskClick();
 				(new EntityCreator()).openCollabTaskCreationForm(this.context.collabId);
 			},
 		};
@@ -87,6 +89,7 @@ export class CreateMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_CREATE_MEETING_MSGVER_1'),
 			icon: OutlineIcons.CALENDAR_WITH_SLOTS,
 			onClick: () => {
+				Analytics.getInstance().projectTab.onCreateEventClick();
 				void (new EntityCreator()).openCollabMeetingCreationSlider(this.context.collabId);
 			},
 		};
@@ -98,6 +101,7 @@ export class CreateMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_CREATE_CHAT_MSGVER_1'),
 			icon: OutlineIcons.CHATS,
 			onClick: () => {
+				Analytics.getInstance().projectTab.onCreateChatClick();
 				if (CreateChatManager.getInstance().isCreationLayoutActive(CreatableChatType.collabChat))
 				{
 					return;
@@ -126,6 +130,8 @@ export class CreateMenu extends BaseMenu
 			icon: OutlineIcons.BITRIX_GPT,
 			design: MenuItemDesign.BitrixGPT,
 			onClick: async () => {
+				Analytics.getInstance().projectTab.onCreateChatClick(ChatType.copilot);
+
 				const newDialogId = await (new CopilotChatService()).createDefaultChat(this.context.parentChatId);
 
 				void Messenger.openChat(newDialogId);

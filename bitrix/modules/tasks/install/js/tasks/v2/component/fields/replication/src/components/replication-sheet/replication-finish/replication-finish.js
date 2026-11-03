@@ -169,7 +169,11 @@ export const ReplicationFinish = {
 					</span>
 				</TextMd>
 				<div>
-					<div class="tasks-field-replication-sheet__stack">
+					<div
+						class="tasks-field-replication-sheet__stack"
+						role="radiogroup"
+						:aria-label="loc('TASKS_V2_REPLICATION_FINISH_MSGVER_1')"
+					>
 						<div
 							class="tasks-replication-sheet-action-row --selectable"
 							:class="{'--active': isRowActive(ReplicationRepeatTill.Endless)}"
@@ -177,13 +181,16 @@ export const ReplicationFinish = {
 						>
 							<UiRadio
 								tag="label"
+								class="tasks-replication-sheet-action-row__option"
 								v-model="repeatTill"
 								:value="ReplicationRepeatTill.Endless"
 								inputName="tasks-replication-sheet-finish-type"
-							/>
-							<TextXs className="tasks-replication-sheet-action-row__text">
-								{{ loc('TASKS_V2_REPLICATION_FINISH_HAND') }}
-							</TextXs>
+								data-testid="tasks-replication-finish-endless-radio"
+							>
+								<TextXs className="tasks-replication-sheet-action-row__text">
+									{{ loc('TASKS_V2_REPLICATION_FINISH_HAND') }}
+								</TextXs>
+							</UiRadio>
 						</div>
 						<div
 							class="tasks-replication-sheet-action-row --selectable"
@@ -192,26 +199,31 @@ export const ReplicationFinish = {
 						>
 							<UiRadio
 								tag="label"
+								class="tasks-replication-sheet-action-row__option"
 								v-model="repeatTill"
 								:value="ReplicationRepeatTill.Times"
 								inputName="tasks-replication-sheet-finish-type"
-							/>
-							<RichLoc
-								class="tasks-field-replication-row"
-								:text="loc('TASKS_V2_REPLICATION_AFTER_COUNT_REPETITIONS')"
-								placeholder="[count/]"
+								data-testid="tasks-replication-finish-times-radio"
 							>
-								<template #count>
-									<BInput
-										:modelValue="String(replicateParams.times ?? '')"
-										:size="InputSize.Sm"
-										:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
-										:disabled="!isRowActive(ReplicationRepeatTill.Times)"
-										style="max-width: 4em; padding-bottom: 0;"
-										@blur="updateTimes($event.target.value)"
-									/>
-								</template>
-							</RichLoc>
+								<RichLoc
+									class="tasks-field-replication-row"
+									:text="loc('TASKS_V2_REPLICATION_AFTER_COUNT_REPETITIONS')"
+									placeholder="[count/]"
+								>
+									<template #count>
+										<BInput
+											:modelValue="String(replicateParams.times ?? '')"
+											:size="InputSize.Sm"
+											:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
+											:disabled="!isRowActive(ReplicationRepeatTill.Times)"
+											:ariaLabel="loc('TASKS_V2_REPLICATION_TIMES_ARIA_LABEL')"
+											data-testid="tasks-replication-times-input"
+											style="max-width: 4em; padding-bottom: 0;"
+											@blur="updateTimes($event.target.value)"
+										/>
+									</template>
+								</RichLoc>
+							</UiRadio>
 						</div>
 						<div
 							class="tasks-replication-sheet-action-row --selectable"
@@ -220,17 +232,24 @@ export const ReplicationFinish = {
 						>
 							<UiRadio
 								tag="label"
+								class="tasks-replication-sheet-action-row__option"
 								v-model="repeatTill"
 								:value="ReplicationRepeatTill.Date"
 								inputName="tasks-replication-sheet-finish-type"
-							/>
-							<TextXs className="tasks-replication-sheet-action-row__text">
-								{{ loc('TASKS_V2_REPLICATION_FINISH_DATE') }}
-							</TextXs>
+								data-testid="tasks-replication-finish-date-radio"
+							>
+								<TextXs className="tasks-replication-sheet-action-row__text">
+									{{ loc('TASKS_V2_REPLICATION_FINISH_DATE') }}
+								</TextXs>
+							</UiRadio>
 							<HoverPill
 								:readonly="!isRowActive(ReplicationRepeatTill.Date)"
 								textOnly
 								noOffset
+								:ariaLabel="isRowActive(ReplicationRepeatTill.Date) ? loc('TASKS_V2_REPLICATION_FINISH_DATE_ARIA_LABEL') : ''"
+								:ariaHaspopup="isRowActive(ReplicationRepeatTill.Date) ? 'dialog' : ''"
+								:ariaExpanded="isRowActive(ReplicationRepeatTill.Date) ? isDatepickerOpened : null"
+								data-testid="tasks-replication-finish-date-btn"
 								ref="datepickerFinishOpener"
 								@click="handleClickDatepickerFinishOpener"
 							>

@@ -24,6 +24,20 @@ if ($errors = $this->getComponent()->getErrors()):
 	}
 
 	ShowError(reset($errors)->getMessage());
+
+	return;
+endif;
+
+if ($arResult['restoreItemSlider']):
+	\Bitrix\Main\UI\Extension::load(['rpa.manager']);
+	?>
+	<script>
+		BX.ready(function()
+		{
+			BX.Rpa.Manager.Instance.setUrlTemplates(<?=CUtil::PhpToJSObject($arResult['urlTemplates'])?>);
+		});
+	</script>
+	<?php
 	return;
 endif;
 
@@ -200,5 +214,5 @@ $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
 	$wrapperParameters,
-	$this->getComponent()
+	$this->getComponent(),
 );?>

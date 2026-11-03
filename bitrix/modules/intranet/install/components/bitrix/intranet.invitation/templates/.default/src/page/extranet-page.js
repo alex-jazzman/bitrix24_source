@@ -53,10 +53,21 @@ export class ExtranetPage extends Page
 		}
 
 		this.#container = Tag.render`
-			<div class="intranet-invitation-block">
+			<div
+				class="intranet-invitation-block"
+				data-testid="invitation-extranet-page-root"
+			>
 				${this.#departmentControlBlock?.render()}
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
+				<div
+					class="intranet-invitation-block__content"
+					data-testid="invitation-extranet-page-form"
+				>
+					<h2
+						class="intranet-invitation-status__title ui-headline --sm"
+						tabindex="-1"
+						data-role="page-title"
+						data-testid="invitation-extranet-page-title"
+					>${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</h2>
 					${rowsContainer}
 					${this.#getAddButton(rowsContainer).render()}
 					<div class="intranet-invitation-block__footer">
@@ -77,6 +88,7 @@ export class ExtranetPage extends Page
 			style: AirButtonStyle.FILLED,
 			props: {
 				'data-test-id': 'invite-extranet-page-submit-button',
+				'data-testid': 'invitation-extranet-page-submit-button',
 			},
 			onclick: () => {
 				if (inviteButton.isWaiting())
@@ -134,6 +146,7 @@ export class ExtranetPage extends Page
 			icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
 			props: {
 				'data-test-id': 'invite-extranet-page-add-more-button',
+				'data-testid': 'invitation-extranet-page-add-more-button',
 			},
 			onclick: () => {
 				const inputsRow = this.#inputsFactory.createInputsRow();

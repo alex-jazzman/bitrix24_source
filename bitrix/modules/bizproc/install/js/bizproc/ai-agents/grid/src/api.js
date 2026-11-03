@@ -3,19 +3,31 @@ import { ajax, Type } from 'main.core';
 import { GRID_API_ACTION } from './constants';
 import type {
 	GridApiAction,
+	BaseAjaxError,
 	BaseAjaxResponse,
+	ChangeOwnerResponse,
 	CheckExistingRunsResponse,
 	CopyAndStartActionResponse,
 	ExistingRunsDecision,
 	FetchAiAgentRowResponse,
 } from './types';
 import { AjaxErrorHandler } from './handler/ajax-error-handler';
+import { ErrorCode } from './handler/error/error-codes';
 
 const EXISTING_RUNS_CHECK_TIMEOUT = 8000;
 
 const NO_WARNING_DECISION: ExistingRunsDecision = Object.freeze({ showWarning: false, systemCode: null });
 
-const post = async (action: GridApiAction, data: Object): Promise => {
+/**
+ * onRefusal only observes: reporting the refusal to the user stays with the shared error handler, and
+ * the answer is null for every refusal either way. It exists for a caller that has something to do
+ * about a particular code beyond the balloon.
+ */
+const post = async (
+	action: GridApiAction,
+	data: Object,
+	onRefusal: ?(error: BaseAjaxResponse) => void = null,
+): Promise => {
 	try
 	{
 		const response: BaseAjaxResponse = await ajax.runAction(`bizproc.v2.${action}`, {
@@ -30,9 +42,17 @@ const post = async (action: GridApiAction, data: Object): Promise => {
 		const ajaxErrorHandler = new AjaxErrorHandler();
 
 		ajaxErrorHandler.handle(action, error);
+
+		onRefusal?.(error);
 	}
 
 	return null;
+};
+
+const isTemplateStaleRefusal = (error: ?BaseAjaxResponse): boolean => {
+	return (error?.errors ?? []).some(
+		(item: BaseAjaxError): boolean => item?.code === ErrorCode.TEMPLATE_STALE,
+	);
 };
 
 const withTimeout = async (request: Promise, timeout: number): Promise => {
@@ -77,6 +97,32 @@ const gridApi: { ... } = {
 	},
 	fetchRow: (templateId: number): Promise<FetchAiAgentRowResponse> => {
 		return post(GRID_API_ACTION.FETCH_ROW, { templateId });
+	},
+
+	/**
+	 * Hands a launched copy over to another employee. expectedOwnerId is the owner the grid was
+	 * rendered with: the server refuses the write as templateStale instead of transferring the copy
+	 * on top of an ownership that changed meanwhile, so it is passed as seen and never recomputed here.
+	 *
+	 * onStaleData tells that one refusal apart from the rest for the caller: the answer is null for
+	 * every refusal, but only this one means the list on screen no longer matches the server.
+	 */
+	changeOwner: (
+		templateId: number,
+		expectedOwnerId: number,
+		newOwnerId: number,
+		onStaleData: ?() => void = null,
+	): Promise<?ChangeOwnerResponse> => {
+		return post(
+			GRID_API_ACTION.CHANGE_OWNER,
+			{ templateId, expectedOwnerId, newOwnerId },
+			(error: BaseAjaxResponse): void => {
+				if (isTemplateStaleRefusal(error))
+				{
+					onStaleData?.();
+				}
+			},
+		);
 	},
 
 	/**

@@ -110,6 +110,7 @@ export type DatePickerOptions = {
 	showWeekNumbers?: boolean,
 	showWeekDays?: boolean,
 	showOutsideDays?: boolean,
+	showToday?: boolean,
 	weekends?: number[],
 	holidays?: number[],
 	workdays?: number[],

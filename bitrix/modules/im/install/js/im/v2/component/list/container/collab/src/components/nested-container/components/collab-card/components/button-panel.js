@@ -87,6 +87,7 @@ export const CollabCardButtonPanel = {
 			<CollabCardButton
 				v-for="({title, counter, url}, type) in buttonConfig"
 				:key="type"
+				:data-testid="'im-collab-card-button-' + type"
 				:title="title"
 				:counter="counter"
 				@click="openEntitySlider(url)"
@@ -96,6 +97,7 @@ export const CollabCardButtonPanel = {
 					:isLoading="isFeatureMenuLoading"
 					:title="loc('IM_LIST_CONTAINER_COLLAB_CARD_BUTTON_MORE')"
 					:withIcon="true"
+					data-testid="im-collab-card-button-more"
 					@click="onMoreClick"
 				/>
 			</div>

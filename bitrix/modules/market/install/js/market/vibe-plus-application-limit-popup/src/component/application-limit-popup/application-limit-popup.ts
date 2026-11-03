@@ -107,8 +107,10 @@ export const ApplicationLimitPopupComponent = {
 				return '';
 			}
 
+			const dateFormat = Loc.getMessage('MARKET_VIBE_PLUS_APPLICATION_LIMIT_POPUP_DATE_FORMAT') ?? 'j F';
+
 			return DateTimeFormat.format(
-				Loc.getMessage('MARKET_VIBE_PLUS_APPLICATION_LIMIT_POPUP_DATE_FORMAT') ?? 'j F',
+				`${dateFormat} Y`,
 				this.presentation.transitionEndAt,
 			);
 		},

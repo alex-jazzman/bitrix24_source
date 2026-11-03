@@ -29,9 +29,11 @@ use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Context\GridContext;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Filter\FieldsTransform\LeadClosedField;
 use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integration\BizProc\ListDocumentStateReader;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\Service\Container;
@@ -291,6 +293,9 @@ if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
 $isExtendedInternal = ($arParams['EXTENDED_INTERNAL_MODE'] ?? null) === true;
+
+$arResult['ENABLE_GROUP_ACTIONS'] = (($arParams['ENABLE_GROUP_ACTIONS'] ?? 'N') === 'Y');
+
 if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
@@ -693,7 +698,7 @@ $arResult['HEADERS'] = array_merge(
 			'sort' => 'source_id',
 			'default' => false,
 			'editable' => [
-				'items' => CCrmStatus::GetStatusList('SOURCE')
+				'items' => Crm\Filter\SourceDataProvider::getListWithEmptyValue(),
 			],
 			'type' => 'list',
 		],
@@ -738,6 +743,12 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 	array('id' => 'PRODUCT_ID', 'name' => GetMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
 	array('id' => 'WEBFORM_ID', 'name' => GetMessage('CRM_COLUMN_WEBFORM'), 'sort' => 'webform_id', 'default' => false, 'type' => 'list'),
 	array('id' => 'IS_RETURN_CUSTOMER', 'name' => GetMessage('CRM_COLUMN_IS_RETURN_CUSTOMER1'), 'sort' => 'is_return_customer', 'default' => false, 'type' => 'list'),
+	[
+		'id' => 'OPENED',
+		'name' => \CCrmLead::GetFieldCaption('OPENED'),
+		'sort' => false,
+		'default' => false,
+	],
 	array('id' => 'LEAD_CLIENT', 'name' => GetMessage('CRM_COLUMN_CLIENT'), 'sort' => 'lead_client', 'default' => false, 'editable' => false),
 	array('id' => 'MOVED_BY', 'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'), 'sort' => 'moved_by', 'editable' => false, 'class' => 'username'),
 	// array('id' => 'MOVED_TIME', 'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'), 'sort' => 'moved_time', 'editable' => false, 'class' => 'date'),
@@ -1015,10 +1026,7 @@ foreach ($arFilter as $k => $v)
 	}
 	elseif($k === 'STATUS_CONVERTED')
 	{
-		if($v !== '')
-		{
-			$arFilter[$v === 'N' ? 'STATUS_SEMANTIC_ID' : '!STATUS_SEMANTIC_ID'] = 'P';
-		}
+		$arFilter = array_merge($arFilter, LeadClosedField::transform($v));
 		unset($arFilter['STATUS_CONVERTED']);
 	}
 	elseif($k === 'COMMUNICATION_TYPE')
@@ -1871,17 +1879,10 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
 		},
 		$arResult['LEAD']);
 
-	$documentStates = CBPDocument::GetDocumentStates(
-		array('crm', 'CCrmDocumentLead', 'LEAD'),
-		array('crm', 'CCrmDocumentLead', $entityIds)
+	$allDocumentStates = (new ListDocumentStateReader())->read(
+		['crm', 'CCrmDocumentLead', 'LEAD'],
+		$entityIds,
 	);
-	foreach ($documentStates as $stateId => $documentState)
-	{
-		if (isset($documentState['DOCUMENT_ID']))
-		{
-			$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
-		}
-	}
 }
 
 $observersDataProvider->appendResult($arResult['LEAD']);
@@ -2043,6 +2044,7 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['MODIFY_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~MODIFY_BY_FORMATTED_NAME'] ?? '');
 
 	$sourceID = $arLead['~SOURCE_ID'] ?? '';
+	$arLead['~SOURCE_ID'] = $sourceID;
 	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== ''
 		? ($arResult['SOURCE_LIST'][$sourceID] ?? htmlspecialcharsbx($sourceID))
 		: '';
@@ -2175,7 +2177,7 @@ foreach($arResult['LEAD'] as &$arLead)
 		$arLead['BIZPROC_STATUS'] = '';
 		$arLead['BIZPROC_STATUS_HINT'] = '';
 
-		$arDocumentStates = is_array($allDocumentStates["LEAD_{$entityID}"]) ?
+		$arDocumentStates = is_array($allDocumentStates["LEAD_{$entityID}"] ?? null) ?
 			$allDocumentStates["LEAD_{$entityID}"] : [];
 
 		$arLead['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(

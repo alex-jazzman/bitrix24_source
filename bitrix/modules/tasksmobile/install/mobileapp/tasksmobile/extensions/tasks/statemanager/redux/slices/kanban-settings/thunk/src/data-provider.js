@@ -54,7 +54,8 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/thunk/src/data-provid
 			{
 				getRunActionExecutor(stagesEndpoint, loadStagesParams)
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+					.catch(console.error);
 			}
 		});
 	}
@@ -100,7 +101,8 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/thunk/src/data-provid
 					getUpdateStagesOrderPreparedParams(updateStagesParams),
 				)
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+					.catch(console.error);
 			}
 		});
 	}

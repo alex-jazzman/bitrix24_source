@@ -3,7 +3,7 @@ import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 import { type NavigationMenuItemParams } from 'im.v2.lib.navigation';
 import { type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { type ChatEmbeddedApplicationType, type ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
-import { type OpenCollabOptions} from 'im.v2.const';
+import { type OpenCollabOptions, type LayoutType, type NavigationMenuItemType } from 'im.v2.const';
 
 import { legacyMessenger, legacyDesktop } from './legacy';
 import { Desktop } from './classes/desktop';
@@ -27,7 +27,7 @@ type Opener = {
 	openConference: ({ code?: string, link?: string }) => Promise,
 	openChatCreation: (chatType: CreatableChatTypeItem) => Promise,
 	openChatUpdate: (dialogId: string) => Promise,
-	startVideoCall: (dialogId?: string, withVideo?: boolean) => Promise,
+	startVideoCall: (dialogId?: string, withVideo?: boolean, callOptions?: ?Object) => Promise,
 	startPhoneCall: (number: string, params: JsonObject) => Promise,
 	startCallList: (callListId: number, params: JsonObject) => Promise,
 	enableDesktopRedirect: () => void,
@@ -302,7 +302,7 @@ class Messenger
 	): Promise
 	{
 		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
-		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
+		const isRedirectAllowed = !params.onCreate && await DesktopManager?.getInstance().checkForRedirect();
 		if (isRedirectAllowed)
 		{
 			return DesktopManager?.getInstance().redirectToChatCreation(chatType);
@@ -323,7 +323,7 @@ class Messenger
 		return getOpener()?.openChatUpdate(dialogId);
 	}
 
-	async startVideoCall(dialogId: string = '', withVideo: boolean = true): Promise
+	async startVideoCall(dialogId: string = '', withVideo: boolean = true, callOptions: ?Object = null): Promise
 	{
 		if (!this.v2enabled)
 		{
@@ -336,10 +336,10 @@ class Messenger
 		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
 		if (isRedirectAllowed)
 		{
-			return DesktopManager?.getInstance().redirectToVideoCall(dialogId, withVideo);
+			return DesktopManager?.getInstance().redirectToVideoCall(dialogId, withVideo, callOptions);
 		}
 
-		return getOpener()?.startVideoCall(dialogId, withVideo);
+		return getOpener()?.startVideoCall(dialogId, withVideo, callOptions);
 	}
 
 	async startPhoneCall(number: string, params: JsonObject): Promise
@@ -461,6 +461,17 @@ class Messenger
 		}
 
 		return getOpener()?.openNavigationItem(payload);
+	}
+
+	getNavigationItemId(layoutName: LayoutType): NavigationMenuItemType | ''
+	{
+		const NavigationManager = Reflection.getClass('BX.Messenger.v2.Lib.NavigationManager');
+		if (!NavigationManager)
+		{
+			return '';
+		}
+
+		return NavigationManager.getNavigationItemId(layoutName);
 	}
 
 	isEmbeddedMode(): boolean

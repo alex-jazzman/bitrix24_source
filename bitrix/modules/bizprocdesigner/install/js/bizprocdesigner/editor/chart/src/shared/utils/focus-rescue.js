@@ -8,6 +8,8 @@
  * itself and the containers stay owned by the components that render them.
  */
 
+import { focusProgrammatically } from './focus';
+
 const anchors = new Map();
 
 export const FocusAnchor = Object.freeze({
@@ -86,4 +88,25 @@ export function rescueFocus(doomedKey: string): boolean
 	receiver.focus({ preventScroll: true });
 
 	return true;
+}
+
+/**
+ * Hands the focus of a closing settings panel back to the canvas: to the node the panel was about,
+ * and to the canvas itself once that node is gone along with it. The panel is removed from the DOM
+ * as it closes, so a focus standing inside it would otherwise land on <body>.
+ *
+ * Runs only while the focus is still inside the panel: a user working elsewhere on the page keeps
+ * their place, the same rule rescueFocus() follows.
+ */
+export function releaseFocusFromSettings(receivers: Array<?HTMLElement>): boolean
+{
+	const panel = anchors.get(FocusAnchor.settingsPanel);
+	const active = document.activeElement;
+
+	if (!panel || !(active instanceof HTMLElement) || !panel.contains(active))
+	{
+		return false;
+	}
+
+	return receivers.some((element: ?HTMLElement): boolean => focusProgrammatically(element));
 }

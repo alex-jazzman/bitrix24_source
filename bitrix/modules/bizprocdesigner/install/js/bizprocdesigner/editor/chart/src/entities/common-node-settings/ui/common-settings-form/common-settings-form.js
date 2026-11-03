@@ -4,7 +4,9 @@ import { Dom, Tag, Type, Event, Loc, ajax, Text } from 'main.core';
 import { MenuManager, type MenuItem } from 'main.popup';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
+import { Icon } from 'ui.icon-set.api.core';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { LiveAnnouncer } from 'ui.a11y';
 
 import { FeatureCode } from 'bizprocdesigner.feature';
 
@@ -14,32 +16,118 @@ import {
 	handleResponseError,
 	hasVisibleFieldLabel,
 	isRequiredField,
+	resolveBrokenLinkOwners,
+	resolveBrokenLinksMessage,
+	settingsControlsMemory,
 } from '../../../../shared/utils';
 import { usePropertyDialog, useFeature } from '../../../../shared/composables';
 import { diagramStore } from '../../../../entities/blocks';
+import { EVENT_NAMES } from '../../../../entities/node-settings/constants';
 import { isReadableExpressionsAvailable } from '../../../../entities/node-settings/utils/readable-expressions';
 import { DataViewsSection } from '../../../../features/node-settings/ui/data-views-section/data-views-section';
 import {
 	closeExpressionBuilder,
 	mountExpressionBuilders,
 } from '../../../../features/node-settings/utils/expression-builder-mount';
+import { bindMultipleSelectBehavior } from '../../../../features/node-settings/utils/multiple-select-behavior';
+import {
+	getDeletedProjectIds,
+	hasDeletedProjectTag,
+	isDeletedProjectField,
+	syncDeletedProjectCaption,
+	syncDeletedProjectField,
+	watchDeletedProjectField,
+} from '../../../../features/node-settings/utils/project-field-state';
 import { unmountFormVeneers } from '../../../../features/node-settings/utils/readable-expressions-veneer';
 import { useCommonNodeSettingsStore } from '../../stores/common-node-settings';
 import { ValueSelector } from './value-selector';
 
 import { type Block, type SettingsControls } from '../../../../shared/types';
-import { TITLE_FIELD_NAME, isDataViewsAllowedBlockType } from '../../../../shared/constants';
+import {
+	BLOCK_TYPES,
+	NODE_SETTINGS_TABS,
+	TITLE_FIELD_NAME,
+	isDataViewsAllowedBlockType,
+} from '../../../../shared/constants';
 
 import './style.css';
 
 const SCROLL_ZONE = 50;
 const SCROLL_SPEED = 10;
-const MULTI_SELECT_SCROLLBAR_WIDTH_PROPERTY = '--bizprocdesigner-multi-select-scrollbar-width';
 const RULE_FORM_ID = 'form-settings-rule';
 const SETTINGS_FIELDS_IDS = new Set([
 	'row_title',
 	'row_activity_editor_comment',
 ]);
+const BROKEN_LINK_HIGHLIGHT_CLASS = '--broken-link-target';
+// Same length as the `2.5s` of the `--broken-link-target` accent in `style.css`: the class is taken
+// off exactly when its animation ends. Changing one side alone leaves the accent either cut short or
+// stuck on the row, so both records name each other.
+const BROKEN_LINK_HIGHLIGHT_DURATION = 2500;
+// The class the panel folds a row with, both from the caption links of the title row and from the
+// jump to a folded row.
+const HIDDEN_ROW_CLASS = 'hidden';
+/**
+ * Rows the panel keeps on the screen even though the server marks their control hidden: the
+ * stylesheet excludes the description of a node from the rule that hides `.hidden`
+ * (`.hidden:not(#row_activity_editor_comment)` in `style.css`), so the row always has a box of its
+ * own and a reference written in the description does have a place to lead to.
+ *
+ * Read off the id of the row and not off its box: at the moment a candidate is built the rows still
+ * live in a detached fragment, where every row would measure as having no place on the screen.
+ */
+const ROWS_SHOWN_DESPITE_HIDDEN = new Set(['row_activity_editor_comment']);
+// Keeps the row clear of the top edge of the scrolled area, so the caption of the field is read
+// together with the control the user was led to.
+const BROKEN_LINK_SCROLL_OFFSET = 20;
+// A control that draws itself: the values shown to the user arrive in the Options of its property.
+const CUSTOM_CONTROL_TYPE = 'custom';
+// The only keys of `Options` that hold values written by the user: `currentFieldValues` of the
+// `writeFields` control and `conditions` of the `filterFields` one
+// ({@see \CBPWriteDataStorageActivity::getPropertiesDialog},
+// {@see \CBPReadDataStorageActivity::getPropertiesDialog}). The rest of `Options` is the settings
+// of the control - dictionaries, captions, maps of available fields - and an expression met there
+// is not a use of the reference in this field.
+const CUSTOM_CONTROL_VALUE_OPTIONS = ['currentFieldValues', 'conditions'];
+// Which of the two forms an alert belongs to: it narrows the test id of the alert to that block.
+const BROKEN_LINK_SCOPE_GENERAL = 'general';
+const BROKEN_LINK_SCOPE_RULE = 'rule';
+
+type BrokenLinkTarget = {
+	row: HTMLElement,
+	isGeneral: boolean,
+	fieldTitle: string,
+};
+
+// A control of the settings panel, in the shape the server sends it in.
+type NodeSettingsControl = {
+	fieldName: string,
+	controlId: string,
+	value: mixed,
+	property: {
+		Name?: string,
+		FieldName?: string,
+		Type?: string,
+		CustomType?: string,
+		Hidden?: boolean,
+		Options?: { [string]: mixed },
+	},
+};
+
+// A row of the panel offered to the matching as a holder of a reference.
+type BrokenLinkCandidate = {
+	ownerId: HTMLElement,
+	value: mixed,
+	isGeneral: boolean,
+	isNavigable: boolean,
+	title: string,
+};
+
+// A line of the opened list: the reference itself and the row it leads to, if there is one.
+type BrokenLinkItem = {
+	link: string,
+	target: ?BrokenLinkTarget,
+};
 
 // @vue/component
 export const CommonNodeSettingsForm = {
@@ -122,7 +210,11 @@ export const CommonNodeSettingsForm = {
 		childVueApps: Array<any>,
 		collectionRenderFinishedHandler: ?Function,
 		pendingCollectionRenderResolve: ?Function,
-		activeMultiSelectScrollbarSelectionCleanup: ?Function,
+		multipleSelectBehaviorDisposer: ?Function,
+		projectFieldStateObservers: Array<MutationObserver>,
+		highlightedRow: HTMLElement | null,
+		brokenLinkHighlightTimeoutId: ?number,
+		ruleBrokenLinksAlert: HTMLElement | null,
 		}
 	{
 		return {
@@ -149,7 +241,11 @@ export const CommonNodeSettingsForm = {
 			childVueApps: [],
 			collectionRenderFinishedHandler: null,
 			pendingCollectionRenderResolve: null,
-			activeMultiSelectScrollbarSelectionCleanup: null,
+			multipleSelectBehaviorDisposer: null,
+			projectFieldStateObservers: [],
+			highlightedRow: null,
+			brokenLinkHighlightTimeoutId: null,
+			ruleBrokenLinksAlert: null,
 		};
 	},
 	computed:
@@ -194,6 +290,9 @@ export const CommonNodeSettingsForm = {
 		isRuleHidden(isHidden: boolean): void
 		{
 			this.$nextTick(() => {
+				// The rules section has been rebuilt - the warning goes back into its new container.
+				this.mountRuleBrokenLinksAlert();
+
 				if (!this.$refs.ruleContainer)
 				{
 					return;
@@ -218,7 +317,7 @@ export const CommonNodeSettingsForm = {
 		this.currentBlock = this.block;
 		await this.$nextTick();
 		await this.renderControls();
-		Event.bind(document, 'mousedown', this.handleMultiSelectScrollbarMouseDown, true);
+		this.mountMultipleSelectBehavior();
 		Event.bind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 		EventEmitter.subscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
@@ -233,11 +332,10 @@ export const CommonNodeSettingsForm = {
 	unmounted(): void
 	{
 		this.stopAutoScroll();
-		this.cleanupMultiSelectScrollbarSelectionGuard();
 
 		this.cleanupFormResources();
 
-		Event.unbind(document, 'mousedown', this.handleMultiSelectScrollbarMouseDown, true);
+		this.unmountMultipleSelectBehavior();
 		Event.unbind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 
 		EventEmitter.unsubscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
@@ -256,10 +354,6 @@ export const CommonNodeSettingsForm = {
 		onContentShown(): void
 		{
 			this.settingsStore.finishShowTransition();
-		},
-		cleanupMultiSelectScrollbarSelectionGuard(): void
-		{
-			this.activeMultiSelectScrollbarSelectionCleanup?.();
 		},
 		isRenderCancelled(requestId: number): boolean
 		{
@@ -281,110 +375,24 @@ export const CommonNodeSettingsForm = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		handleMultiSelectScrollbarMouseDown(event: MouseEvent): void
+		mountMultipleSelectBehavior(): void
 		{
-			if (!event.isTrusted || event.button !== 0 || !(event.target instanceof HTMLElement))
+			if (this.multipleSelectBehaviorDisposer || !this.$el)
 			{
 				return;
 			}
 
-			const select = event.target instanceof HTMLSelectElement
-				? event.target
-				: event.target.closest('select[multiple]')
-			;
-			if (!(select instanceof HTMLSelectElement) || !this.$el.contains(select))
+			this.multipleSelectBehaviorDisposer = bindMultipleSelectBehavior({
+				roots: [this.$el],
+			});
+		},
+		unmountMultipleSelectBehavior(): void
+		{
+			if (this.multipleSelectBehaviorDisposer)
 			{
-				return;
+				this.multipleSelectBehaviorDisposer();
+				this.multipleSelectBehaviorDisposer = null;
 			}
-			this.cleanupMultiSelectScrollbarSelectionGuard();
-
-			const toggleOption = () => {
-				const option = event.target instanceof HTMLOptionElement ? event.target : null;
-				if (!option || !select.contains(option))
-				{
-					return;
-				}
-
-				event.preventDefault();
-				const scrollTop = select.scrollTop;
-				option.selected = !option.selected;
-				setTimeout(() => {
-					select.scrollTop = scrollTop;
-				}, 0);
-			};
-
-			const rect = select.getBoundingClientRect();
-			const computedStyle = window.getComputedStyle(select);
-			const borderLeftWidth = parseFloat(computedStyle.borderLeftWidth) || 0;
-			const borderRightWidth = parseFloat(computedStyle.borderRightWidth) || 0;
-			const borderWidth = borderLeftWidth + borderRightWidth;
-			const layoutScrollbarWidth = Math.max(select.offsetWidth - select.clientWidth - borderWidth, 0);
-			const styledScrollbarWidth = Math.max(
-				parseFloat(computedStyle.getPropertyValue(MULTI_SELECT_SCROLLBAR_WIDTH_PROPERTY)) || 0,
-				0,
-			);
-			const scrollbarWidth = Math.max(layoutScrollbarWidth, styledScrollbarWidth);
-			if (scrollbarWidth <= 0 || select.scrollHeight <= select.clientHeight)
-			{
-				toggleOption();
-				return;
-			}
-
-			const isRtl = computedStyle.direction === 'rtl';
-			const isScrollbarHit = isRtl
-				? event.clientX <= rect.left + borderLeftWidth + scrollbarWidth
-				: event.clientX >= rect.right - borderRightWidth - scrollbarWidth
-			;
-			if (!isScrollbarHit)
-			{
-				toggleOption();
-				return;
-			}
-
-			const selectedState = Array.from(select.options, (option) => option.selected);
-			const restoreSelection = () => {
-				Array.from(select.options).forEach((option, index) => {
-					option.selected = selectedState[index] ?? false;
-				});
-			};
-			const handleSelectionChange = (selectionEvent: Event) => {
-				selectionEvent.stopImmediatePropagation();
-				restoreSelection();
-			};
-			let cleanupTimeoutId = null;
-			const restoreTimeoutId = setTimeout(restoreSelection, 0);
-			let isCleanedUp = false;
-			const cleanup = () => {
-				if (isCleanedUp)
-				{
-					return;
-				}
-
-				isCleanedUp = true;
-				clearTimeout(restoreTimeoutId);
-				if (cleanupTimeoutId !== null)
-				{
-					clearTimeout(cleanupTimeoutId);
-				}
-				restoreSelection();
-				Event.unbind(select, 'input', handleSelectionChange, true);
-				Event.unbind(select, 'change', handleSelectionChange, true);
-				Event.unbind(document, 'mouseup', scheduleCleanup, true);
-				Event.unbind(window, 'blur', cleanup);
-				if (this.activeMultiSelectScrollbarSelectionCleanup === cleanup)
-				{
-					this.activeMultiSelectScrollbarSelectionCleanup = null;
-				}
-			};
-			const scheduleCleanup = () => {
-				cleanupTimeoutId = setTimeout(cleanup, 0);
-			};
-
-			this.activeMultiSelectScrollbarSelectionCleanup = cleanup;
-			Event.bind(select, 'input', handleSelectionChange, true);
-			Event.bind(select, 'change', handleSelectionChange, true);
-			Event.bind(document, 'mouseup', scheduleCleanup, true);
-			Event.bind(window, 'blur', cleanup);
 		},
 		showPreview(event: boolean): void
 		{
@@ -450,7 +458,9 @@ export const CommonNodeSettingsForm = {
 						this.store.updateBlockId(this.currentBlock.id, preparedSettingsData.activity_id);
 					}
 
-					await this.store.publicDraft();
+					// The form closes right below, so a refusal that stayed inside the store would leave
+					// the person with a closed dialog and nothing saved.
+					await this.store.saveDraftWithStatus();
 					this.handleFormCancel();
 
 					return true;
@@ -585,6 +595,104 @@ export const CommonNodeSettingsForm = {
 		{
 			return hasVisibleFieldLabel(field);
 		},
+		isDeletedProjectField(field: Object): boolean
+		{
+			return isDeletedProjectField(field);
+		},
+		getDeletedProjectIds(field: Object): Array<string>
+		{
+			return getDeletedProjectIds(field);
+		},
+		hasDeletedProjectTag(control: HTMLElement, field: Object): boolean
+		{
+			return hasDeletedProjectTag(control, field);
+		},
+		syncDeletedProjectCaption(row: ?HTMLElement, field: Object, isDeletedProjectSelected: boolean): void
+		{
+			syncDeletedProjectCaption(
+				row,
+				field,
+				isDeletedProjectSelected,
+				(projectField) => this.shouldShowRequiredMark(projectField),
+			);
+		},
+		syncDeletedProjectField(control: HTMLElement, field: Object, row: ?HTMLElement = null): void
+		{
+			if (!control)
+			{
+				return;
+			}
+
+			syncDeletedProjectField(
+				control,
+				field,
+				row,
+				this.loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_PROJECT_DELETED_VALUE'),
+				(projectField) => this.shouldShowRequiredMark(projectField),
+			);
+		},
+		watchDeletedProjectField(control: HTMLElement, field: Object, row: HTMLElement): void
+		{
+			if (!control)
+			{
+				return;
+			}
+
+			const observer = watchDeletedProjectField(
+				control,
+				field,
+				row,
+				() => this.syncDeletedProjectField(control, field, row),
+			);
+			if (observer)
+			{
+				this.projectFieldStateObservers.push(observer);
+			}
+		},
+		renderProjectDeletedWarning(): HTMLElement
+		{
+			const message = this.loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_PROJECT_DELETED_HINT');
+			const icon = new Icon({
+				icon: Outline.ALERT_ACCENT,
+				size: 16,
+				color: 'var(--ui-color-accent-main-warning)',
+			}).render();
+
+			return Tag.render`
+				<span
+					class="node-settings-project-warning"
+					title="${message}"
+					aria-label="${message}"
+					role="img"
+					data-test-id="bizproc-node-settings-project-deleted-warning"
+				>${icon}</span>
+			`;
+		},
+		renderFieldCaption(field: Object): ?HTMLElement
+		{
+			if (!this.shouldShowFieldCaption(field))
+			{
+				return null;
+			}
+
+			const isDeletedProject = this.isDeletedProjectField(field);
+			const requiredMark = isDeletedProject && this.shouldShowRequiredMark(field)
+				? Tag.render`<span class="node-settings-edit-caption-required">*</span>`
+				: null
+			;
+			const projectDeletedWarning = isDeletedProject ? this.renderProjectDeletedWarning() : null;
+			const captionClassName = `node-settings-edit-caption${
+				this.shouldShowRequiredMark(field) && !isDeletedProject ? ' --required' : ''
+			}${isDeletedProject ? ' --project-deleted' : ''}`;
+
+			return Tag.render`
+				<div class="${captionClassName}">
+					<span>${Text.encode(field.property.Name)}</span>
+					${requiredMark}
+					${projectDeletedWarning}
+				</div>
+			`;
+		},
 		renderField(fieldProps: ?HTMLElement, field: Object): HTMLElement | null
 		{
 			const control = Type.isDomNode(fieldProps) ? fieldProps : null;
@@ -606,16 +714,12 @@ export const CommonNodeSettingsForm = {
 			let className = 'node-settings-edit-box';
 			if (field.property.Hidden)
 			{
-				className += ' hidden';
+				className += ` ${HIDDEN_ROW_CLASS}`;
 			}
 
-			return Tag.render`
+			const row = Tag.render`
 				<div class="${className}" id="row_${field.fieldName}">
-					${this.shouldShowFieldCaption(field) ? `
-						<div class="node-settings-edit-caption${this.shouldShowRequiredMark(field) ? ' --required' : ''}">
-							${field.property.Name}
-						</div>
-					` : ''}
+					${this.renderFieldCaption(field)}
 				    <div class="field-row">
 				        ${control}
 				        ${field.fieldName === TITLE_FIELD_NAME ? `
@@ -629,6 +733,11 @@ export const CommonNodeSettingsForm = {
 				    </div>
 				</div>
 			`;
+
+			this.syncDeletedProjectField(control, field, row);
+			this.watchDeletedProjectField(control, field, row);
+
+			return row;
 		},
 		async getNodeSettingsControls(requestId: number): Promise<{...}>
 		{
@@ -654,6 +763,25 @@ export const CommonNodeSettingsForm = {
 				window.arWorkflowConstants = workflowConstants;
 			}
 
+			// A trigger is upgraded server-side against its own node, so its response is not a function
+			// of the action type and keeps out of the memory under a null key. The memory answers at all
+			// only while the legacy dialog behind an empty response is available, so a hit can never
+			// leave the user without a form.
+			const memorableType = this.currentBlock?.type === BLOCK_TYPES.TRIGGER
+				? null
+				: this.currentBlock?.activity?.Type
+			;
+			const isFallbackAvailable = Type.isFunction(window.CreateActivity);
+
+			if (isFallbackAvailable)
+			{
+				const remembered = settingsControlsMemory.get(memorableType, this.documentType);
+				if (remembered)
+				{
+					return remembered;
+				}
+			}
+
 			let request = null;
 
 			try
@@ -662,6 +790,10 @@ export const CommonNodeSettingsForm = {
 					{
 						documentType: this.documentType,
 						activity: this.currentBlock?.activity,
+						options: {
+							templateId: this.store.templateId,
+							draftId: this.store.draftId,
+						},
 						workflow: {
 							workflowParameters: JSON.stringify(workflowParameters),
 							workflowVariables: JSON.stringify(workflowVariables),
@@ -676,6 +808,8 @@ export const CommonNodeSettingsForm = {
 						},
 					},
 				);
+				settingsControlsMemory.remember(memorableType, this.documentType, settingsControls);
+
 				if (this.isRenderCancelled(requestId))
 				{
 					return null;
@@ -856,7 +990,7 @@ export const CommonNodeSettingsForm = {
 
 			const renderedControls = BX.Bizproc.FieldType.renderControlCollection(
 				this.documentType,
-				this.nodeControls.filter((field) => field.property.Type !== 'custom'),
+				this.nodeControls.filter((field) => field.property.Type !== CUSTOM_CONTROL_TYPE),
 				'designer',
 			);
 
@@ -867,12 +1001,6 @@ export const CommonNodeSettingsForm = {
 					resolve();
 
 					return;
-				}
-
-				if (Type.isObject(brokenLinks) && Object.keys(brokenLinks).length > 0)
-				{
-					const brokenLinksAlert = this.renderBrokenLinksAlert(brokenLinks);
-					Dom.append(brokenLinksAlert, this.settingsForm);
 				}
 
 				const activityTypeName = this.currentBlock.activity?.Type ?? '';
@@ -892,10 +1020,11 @@ export const CommonNodeSettingsForm = {
 
 				const settingsFragment = new DocumentFragment();
 				const rulesFragment = new DocumentFragment();
+				const brokenLinkCandidates = [];
 				this.nodeControls.forEach((field) => {
 					let control = renderedControls[field.controlId];
 
-					if (field.property.Type === 'custom' && instance && customRenderers)
+					if (field.property.Type === CUSTOM_CONTROL_TYPE && instance && customRenderers)
 					{
 						const rendererOrComponent = customRenderers?.[field?.property?.CustomType];
 
@@ -941,17 +1070,14 @@ export const CommonNodeSettingsForm = {
 							this.inputListeners.push(input);
 						}
 
-						if (SETTINGS_FIELDS_IDS.has(row.id))
-						{
-							Dom.append(row, settingsFragment);
-						}
-						else
-						{
-							Dom.append(row, rulesFragment);
-						}
+						const isGeneralRow = SETTINGS_FIELDS_IDS.has(row.id);
+						Dom.append(row, isGeneralRow ? settingsFragment : rulesFragment);
+						brokenLinkCandidates.push(this.buildBrokenLinkCandidate(field, row, isGeneralRow));
 					}
 				});
 
+				// Before the rows: the warning of a form stands above the fields it speaks about.
+				this.renderBrokenLinksAlerts(brokenLinks, brokenLinkCandidates);
 				Dom.append(settingsFragment, this.settingsForm);
 				Dom.append(rulesFragment, this.ruleSettingsForm);
 				if (this.isRenderCancelled(requestId))
@@ -967,6 +1093,8 @@ export const CommonNodeSettingsForm = {
 				this.pendingCollectionRenderResolve = resolve;
 				this.collectionRenderFinishedHandler = async () => {
 					this.unsubscribeCollectionRenderFinished();
+					// A custom renderer may hand its own fields to the engine, which fills them asynchronously.
+					await instance?.whenControlsRendered?.();
 
 					if (this.isRenderCancelled(requestId))
 					{
@@ -1016,42 +1144,395 @@ export const CommonNodeSettingsForm = {
 				Event.EventEmitter.subscribe(eventName, this.collectionRenderFinishedHandler);
 			});
 		},
-		renderBrokenLinksAlert(brokenLinks: { [key: string]: string }): HTMLElement
+		/**
+		 * An addressing candidate for a single control row.
+		 *
+		 * The value is not taken from `value` alone. A control with its own renderer (`custom`) keeps
+		 * the values shown to the user in the `Options` of its property: storage fields arrive in
+		 * `Options.currentFieldValues`, filter conditions in `Options.conditions`, while the `value`
+		 * of such a control is empty. The server sees those values through a separate property of the
+		 * activity, which either has no control at all or has a hidden service one - there is nowhere
+		 * to lead the user. Without reading `Options`, a reference from a storage field would address
+		 * only the hidden row and would stay in the list as plain text. Only those two keys are read:
+		 * the rest of `Options` belongs to the renderer, and a reference met there is written in no
+		 * field of the user.
+		 *
+		 * The row itself stands for the owner: an id of a row repeats across the controls the server
+		 * left without a `FieldName`, and a repeated id would hand the reference to a foreign row.
+		 */
+		buildBrokenLinkCandidate(
+			field: NodeSettingsControl,
+			row: HTMLElement,
+			isGeneral: boolean,
+		): BrokenLinkCandidate
 		{
-			const linksArray = Object.values(brokenLinks);
-			const detailContent = linksArray
-				.map((link) => Text.encode(link))
-				.join('<br>')
+			const options = field.property.Options;
+			const value = field.property.Type === CUSTOM_CONTROL_TYPE && Type.isPlainObject(options)
+				? [field.value, ...CUSTOM_CONTROL_VALUE_OPTIONS.map((key) => options[key])]
+				: field.value
 			;
 
+			return {
+				ownerId: row,
+				value,
+				isGeneral,
+				// A row of a hidden control has no place on the screen to lead to, while the
+				// reference written in it still belongs to this block. The panel shows some of the
+				// rows the server hides, and those are led to as any other.
+				isNavigable: !field.property.Hidden || ROWS_SHOWN_DESPITE_HIDDEN.has(row.id),
+				title: field.property.Name ?? '',
+			};
+		},
+		/**
+		 * Puts the warning into the form the broken reference is written in: a reference no row of the
+		 * node claims goes to the general block, as the only place able to speak for the node as a
+		 * whole. The owner is read off the value the server sent with the control and not off the DOM -
+		 * a control renders on its own schedule and may not be there to read yet.
+		 */
+		renderBrokenLinksAlerts(
+			brokenLinks: { [key: string]: string },
+			candidates: Array<BrokenLinkCandidate>,
+		): void
+		{
+			const links = Object.values(brokenLinks);
+			if (links.length === 0)
+			{
+				return;
+			}
+
+			const { owners } = resolveBrokenLinkOwners(
+				links,
+				candidates.map(({ ownerId, value }) => ({ ownerId, value })),
+			);
+			const candidateById = new Map(candidates.map((candidate) => [candidate.ownerId, candidate]));
+
+			const generalItems = [];
+			const ruleItems = [];
+			links.forEach((link) => {
+				// The utility answers with the very ids it was given, so every owner of a link is
+				// found in the map built from the same candidates.
+				const linkOwners = (owners.get(link) ?? []).map((ownerId) => candidateById.get(ownerId));
+
+				if (linkOwners.length === 0)
+				{
+					generalItems.push({ link, target: null });
+
+					return;
+				}
+
+				const generalOwners = linkOwners.filter((owner) => owner.isGeneral);
+				if (generalOwners.length > 0)
+				{
+					generalItems.push({ link, target: this.buildBrokenLinkTarget(generalOwners, link) });
+				}
+
+				const ruleOwners = linkOwners.filter((owner) => !owner.isGeneral);
+				if (ruleOwners.length > 0)
+				{
+					ruleItems.push({ link, target: this.buildBrokenLinkTarget(ruleOwners, link) });
+				}
+			});
+
+			if (generalItems.length > 0 && this.settingsForm)
+			{
+				Dom.append(this.renderBrokenLinksAlert(generalItems, BROKEN_LINK_SCOPE_GENERAL), this.settingsForm);
+			}
+
+			// The rule warning lives in the rules section of the main tab, not in the action form: a node
+			// is opened on the main tab, and a warning on the second one does not reach it.
+			this.ruleBrokenLinksAlert = ruleItems.length > 0
+				? this.renderBrokenLinksAlert(ruleItems, BROKEN_LINK_SCOPE_RULE)
+				: null
+			;
+			this.mountRuleBrokenLinksAlert();
+		},
+		/**
+		 * The rules section is declared through `v-if`, so Vue destroys it when leaving for the rules
+		 * tab and builds it again on return. The warning node survives that on its own - it is not
+		 * managed by Vue - and it is enough to append it to the new container with its live handlers.
+		 */
+		mountRuleBrokenLinksAlert(): void
+		{
+			const container = this.$refs.rulesAlertContainer;
+			if (!this.ruleBrokenLinksAlert || !container)
+			{
+				return;
+			}
+
+			Dom.append(this.ruleBrokenLinksAlert, container);
+		},
+		// The rule warning node lies outside the forms, so clearing their containers does not take it
+		// away: without this the warning of the previous node would stay in the section of the next
+		// one. The only reset point is cleanupFormResources(): rebuilding the settings always runs it.
+		dropRuleBrokenLinksAlert(): void
+		{
+			Dom.remove(this.ruleBrokenLinksAlert);
+			this.ruleBrokenLinksAlert = null;
+		},
+		buildBrokenLinkTarget(owners: Array<BrokenLinkCandidate>, link: string): ?BrokenLinkTarget
+		{
+			const owner = owners.find(({ isNavigable }) => isNavigable);
+			if (!owner)
+			{
+				return null;
+			}
+
+			return {
+				// The owner of a reference is the row itself: the utility is given the row as the id.
+				row: owner.ownerId,
+				isGeneral: owner.isGeneral,
+				// A field with no caption of its own is named by the reference itself: the announcement
+				// has to name the place it leads to.
+				fieldTitle: Type.isStringFilled(owner.title) ? owner.title : link,
+			};
+		},
+		renderBrokenLinksAlert(items: Array<BrokenLinkItem>, scope: string): HTMLElement
+		{
 			const alert = Tag.render`
-				<div class="ui-alert ui-alert-warning ui-alert-icon-info">
+				<div
+					class="ui-alert ui-alert-warning ui-alert-icon-info"
+					data-testid="${this.$testId('bizprocdesigner-broken-links-alert', scope)}"
+				>
 					<div class="ui-alert-message">
 						<div>
 							<span>
-								${Text.encode(Loc.getMessage('BIZPROCDESIGNER_EDITOR_BROKEN_LINK_ERROR') ?? '')}
-							</span> <span ref="showMoreBtn" class="bizprocdesigner-activity-broken-link-show-more">
+								${Text.encode(this.getBrokenLinksMessage())}
+							</span> <button
+								type="button"
+								ref="showMoreBtn"
+								class="bizprocdesigner-activity-broken-link-show-more"
+								data-testid="${this.$testId('bizprocdesigner-broken-links-alert-show-more', scope)}"
+							>
 								${Text.encode(Loc.getMessage('BIZPROCDESIGNER_EDITOR_MESSAGE_SHOW_LINKS') ?? '')}
-							</span>
+							</button>
 						</div>
-						<div ref="detailBlock" class="bizprocdesigner-activity-broken-link-detail">
-							${detailContent}
+						<div
+							ref="detailBlock"
+							class="bizprocdesigner-activity-broken-link-detail"
+							data-testid="${this.$testId('bizprocdesigner-broken-links-alert-detail', scope)}"
+						>
 						</div>
 					</div>
 					<span ref="closeBtn" class="ui-alert-close-btn"></span>
 				</div>
 			`;
 
-			Event.bind(alert.showMoreBtn, 'click', () => {
+			items.forEach((item) => Dom.append(this.renderBrokenLinkItem(item), alert.detailBlock));
+
+			// The collapsed block holds its height at zero, so its references are on the screen for
+			// nobody: until it is opened they have to stay out of the keyboard path as well.
+			Dom.attr(alert.detailBlock, 'inert', true);
+
+			Event.bind(alert.showMoreBtn, 'click', (event: MouseEvent) => {
+				Dom.attr(alert.detailBlock, 'inert', null);
 				Dom.style(alert.detailBlock, 'height', `${alert.detailBlock.scrollHeight}px`);
+				// A click of the mouse carries its count, a press of the keyboard carries none. Only the
+				// keyboard is led into the list the button has opened: the mouse leaves the page as it was,
+				// without a focus ring nobody asked for.
+				if (event.detail === 0)
+				{
+					this.focusOpenedBrokenLinkList(alert.detailBlock);
+				}
+
 				Dom.remove(alert.showMoreBtn);
 			});
 
 			Event.bind(alert.closeBtn, 'click', () => {
 				Dom.remove(alert.root);
+				// A dismissed warning must not come back with the rebuilt rules section.
+				if (this.ruleBrokenLinksAlert === alert.root)
+				{
+					this.ruleBrokenLinksAlert = null;
+				}
 			});
 
 			return alert.root;
+		},
+		/**
+		 * The button that opens the list leaves the DOM right away, and the focus standing on it would
+		 * fall out of the warning. It is moved into the list the button has just opened: to the first
+		 * reference, or to the list itself when the list has nowhere to lead.
+		 */
+		focusOpenedBrokenLinkList(detailBlock: HTMLElement): void
+		{
+			// Only an addressed reference is a button: an item with no row to lead to is plain text.
+			const firstReference = detailBlock.querySelector('button');
+			if (firstReference)
+			{
+				firstReference.focus({ preventScroll: true });
+
+				return;
+			}
+
+			Dom.attr(detailBlock, 'tabindex', '-1');
+			detailBlock.focus({ preventScroll: true });
+			this.releaseSettingsRowFocus(detailBlock);
+		},
+		getBrokenLinksMessage(): string
+		{
+			return resolveBrokenLinksMessage();
+		},
+		/**
+		 * A reference of the list is a button while the row holding it can be reached, and plain text
+		 * otherwise - a row of a hidden control is named but never led to.
+		 */
+		renderBrokenLinkItem(item: BrokenLinkItem): HTMLElement
+		{
+			if (!item.target)
+			{
+				return Tag.render`
+					<div
+						class="bizprocdesigner-activity-broken-link-item"
+						data-testid="${this.$testId('bizprocdesigner-broken-links-alert-text')}"
+					>${Text.encode(item.link)}</div>
+				`;
+			}
+
+			const goToFieldLabel = this.loc('BIZPROCDESIGNER_EDITOR_BROKEN_LINK_GO_TO_FIELD');
+			const button = Tag.render`
+				<button
+					type="button"
+					class="bizprocdesigner-activity-broken-link-item --clickable"
+					title="${Text.encode(goToFieldLabel)}"
+					aria-label="${Text.encode(`${goToFieldLabel}: ${item.link}`)}"
+					data-testid="${this.$testId('bizprocdesigner-broken-links-alert-link')}"
+				>${Text.encode(item.link)}</button>
+			`;
+
+			Event.bind(button, 'click', () => {
+				this.goToBrokenLinkField(item.target);
+			});
+
+			return button;
+		},
+		/**
+		 * Leads the user to the row the reference is written in: the block holding the row is opened
+		 * first - a row of the rule form stands behind the preview of the rules - and only then, once
+		 * the row has been rendered, the panel scrolls to it. A row still hidden has no height, and a
+		 * scroll made before the render lands nowhere.
+		 */
+		async goToBrokenLinkField(target: BrokenLinkTarget): Promise<void>
+		{
+			const tabId = target.isGeneral ? NODE_SETTINGS_TABS.basic : NODE_SETTINGS_TABS.rules;
+			if (this.settingsStore.selectedTabId !== tabId)
+			{
+				this.settingsStore.selectedTabId = tabId;
+				await this.$nextTick();
+			}
+
+			const row = target.row;
+			// A render that happened while the alert stood leaves its rows detached from the panel:
+			// a row outside the document is nowhere to lead to, and there is nothing to say about it
+			// either - the list it was pressed in belongs to a panel that is gone.
+			if (!row.isConnected)
+			{
+				return;
+			}
+
+			// A row folded by the panel itself is unfolded before the jump: the reference is written in
+			// it, and the fold is ours to undo. Rows folded by a renderer of their own stay as they are.
+			if (!this.isSettingsRowReachable(row) && Dom.hasClass(row, HIDDEN_ROW_CLASS))
+			{
+				Dom.removeClass(row, HIDDEN_ROW_CLASS);
+			}
+
+			// Whatever keeps the row off the screen now, the press must not stay silent: it looks and
+			// behaves as a button, so a jump that cannot happen is announced instead of being dropped.
+			if (!this.isSettingsRowReachable(row))
+			{
+				LiveAnnouncer.announce(
+					this.loc('BIZPROCDESIGNER_EDITOR_BROKEN_LINK_FIELD_HIDDEN_ANNOUNCE', {
+						'#FIELD#': target.fieldTitle,
+					}),
+				);
+
+				return;
+			}
+
+			LiveAnnouncer.announce(
+				this.loc('BIZPROCDESIGNER_EDITOR_BROKEN_LINK_GO_TO_FIELD_ANNOUNCE', { '#FIELD#': target.fieldTitle }),
+			);
+
+			this.focusSettingsRow(row);
+			this.scrollToSettingsRow(row);
+			this.highlightSettingsRow(row);
+		},
+		// A folded row holds its height at zero and takes no box of its own: a scroll to it would land
+		// nowhere.
+		isSettingsRowReachable(row: HTMLElement): boolean
+		{
+			return row.getClientRects().length > 0;
+		},
+		/**
+		 * The focus goes to the row itself and not to the control inside it: the value of the field and
+		 * the state of the form stay untouched, while the focus stops dying together with the button -
+		 * a reference of a rule is pressed in the section the tab switch destroys.
+		 */
+		focusSettingsRow(row: HTMLElement): void
+		{
+			Dom.attr(row, 'tabindex', '-1');
+			row.focus({ preventScroll: true });
+		},
+		scrollToSettingsRow(row: HTMLElement): void
+		{
+			const container = this.$refs.scrollContainer;
+			if (!container)
+			{
+				return;
+			}
+
+			// The panel scrolls itself: the row lives in a scrolled area of its own, and scrollIntoView
+			// would move the page behind it as well.
+			const top = row.getBoundingClientRect().top
+				- container.getBoundingClientRect().top
+				+ container.scrollTop
+				- BROKEN_LINK_SCROLL_OFFSET
+			;
+
+			container.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+		},
+		// A visual accent only: neither the value of the field nor the focus is touched.
+		highlightSettingsRow(row: HTMLElement): void
+		{
+			this.clearSettingsRowHighlight();
+
+			Dom.addClass(row, BROKEN_LINK_HIGHLIGHT_CLASS);
+			this.highlightedRow = row;
+			this.brokenLinkHighlightTimeoutId = setTimeout(
+				this.clearSettingsRowHighlight,
+				BROKEN_LINK_HIGHLIGHT_DURATION,
+			);
+		},
+		clearSettingsRowHighlight(): void
+		{
+			if (this.brokenLinkHighlightTimeoutId)
+			{
+				clearTimeout(this.brokenLinkHighlightTimeoutId);
+				this.brokenLinkHighlightTimeoutId = null;
+			}
+
+			if (this.highlightedRow)
+			{
+				Dom.removeClass(this.highlightedRow, BROKEN_LINK_HIGHLIGHT_CLASS);
+				this.releaseSettingsRowFocus(this.highlightedRow);
+				this.highlightedRow = null;
+			}
+		},
+		/**
+		 * A row that is no longer a target of a jump gives `tabindex` back, so that a click on its
+		 * caption stops focusing a container nobody can act on. Taking the attribute off the row the
+		 * focus stands on would drop the focus to the body, so such a row keeps it until it is left.
+		 */
+		releaseSettingsRowFocus(row: HTMLElement): void
+		{
+			if (document.activeElement === row)
+			{
+				Event.bindOnce(row, 'blur', () => Dom.attr(row, 'tabindex', null));
+
+				return;
+			}
+
+			Dom.attr(row, 'tabindex', null);
 		},
 		createSettingsForm(form: HTMLElement, notRuleNodes: Array<HTMLElement>): HTMLElement
 		{
@@ -1068,7 +1549,7 @@ export const CommonNodeSettingsForm = {
 		{
 			const { renderPropertyDialog } = usePropertyDialog();
 			const formData = this.createFormData();
-			const form = await renderPropertyDialog(this.$refs.ruleContainer, formData);
+			const form = await renderPropertyDialog(this.$refs.ruleContainer, formData, this.store.isWriteLocked);
 			if (this.isRenderCancelled(requestId))
 			{
 				if (form)
@@ -1190,7 +1671,7 @@ export const CommonNodeSettingsForm = {
 		},
 		handleScroll(): void
 		{
-			EventEmitter.emit('Bizproc.NodeSettings:onScroll');
+			EventEmitter.emit(EVENT_NAMES.SCROLL_EVENT);
 		},
 		onDragStart(): void
 		{
@@ -1319,10 +1800,17 @@ export const CommonNodeSettingsForm = {
 		cleanupFormResources(): void
 		{
 			this.cancelSettingsControlsRequest();
+			this.clearSettingsRowHighlight();
+			this.dropRuleBrokenLinksAlert();
 			closeExpressionBuilder();
 			unmountFormVeneers(this.$refs.contentContainer);
 			unmountFormVeneers(this.$refs.ruleContainer);
 			this.cancelPendingCollectionRender();
+
+			this.projectFieldStateObservers.forEach((observer: MutationObserver) => {
+				observer.disconnect();
+			});
+			this.projectFieldStateObservers = [];
 
 			if (this.inputListeners && this.handleFieldInput)
 			{
@@ -1376,8 +1864,8 @@ export const CommonNodeSettingsForm = {
 				v-if="isVisible"
 				class="node-settings-panel --common"
 				:class="{ '--loading': isLoading, '--setup-template-activity': isSetupTemplateActivity }"
-				:data-testid="$testId('bizprocdesigner-common-node-settings')"
 				ref="settingsPanel"
+				data-testid="bizprocdesigner-editor-common-node-settings-panel"
 			>
 				<div class="node-settings-header">
 					<h3 class="node-settings-title">
@@ -1385,7 +1873,7 @@ export const CommonNodeSettingsForm = {
 					</h3>
 					<span
 						class="node-settings-title-close-icon"
-						:data-testid="$testId('bizprocdesigner-common-node-settings-close')"
+					data-testid="bizprocdesigner-editor-common-node-settings-close"
 						@click="handleFormCancel"
 					></span>
 				</div>
@@ -1425,6 +1913,7 @@ export const CommonNodeSettingsForm = {
 						<div
 							v-if="isRuleHidden"
 							class="node-settings-form__section --rules"
+							:data-testid="$testId('bizprocdesigner-node-settings-rules-section')"
 						>
 							<div class="node-settings-form__section-header">
 								<div class="node-settings-form__section-header-main">
@@ -1437,9 +1926,13 @@ export const CommonNodeSettingsForm = {
 									{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_DESCRIPTION_MSGVER_1') }}
 								</span>
 							</div>
+							<div ref="rulesAlertContainer"></div>
+							<!-- The representation of the block travels next to the title: the form does not
+							decide what of it is drawn, and a block without one passes null just as well. -->
 							<slot
 								name="common-node-settings-preview"
 								:title="settingsFormTitle"
+								:contentBlock="currentBlock?.activity?.ContentBlock ?? null"
 							/>
 						</div>
 						<div
@@ -1474,7 +1967,7 @@ export const CommonNodeSettingsForm = {
 						</button>
 						<button
 							class="ui-btn ui-btn-lg ui-btn-link ui-btn-no-caps"
-							:data-testid="$testId('bizprocdesigner-common-node-settings-cancel')"
+						data-testid="bizprocdesigner-editor-common-node-settings-cancel"
 							@click="handleFormCancel"
 						>
 							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}

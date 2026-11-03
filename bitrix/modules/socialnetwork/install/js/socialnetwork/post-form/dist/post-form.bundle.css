@@ -1,8 +1,6 @@
 .sn-post-form-popup.--normal {
 	top: 50vh!important;
-	-webkit-transform: translate(0, -50%);
-	    -ms-transform: translate(0, -50%);
-	        transform: translate(0, -50%);
+	transform: translate(0, -50%);
 }
 
 .sn-post-form-popup {
@@ -26,15 +24,10 @@
 }
 
 .sn-post-form__discussion-row {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	min-height: 60px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	padding: 15px 20px;
 	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-background-secondary);
 }
@@ -43,17 +36,20 @@
 	display: none;
 }
 
+/* a massive audience must not push the editor and the buttons out of the screen */
+.sn-post-form__discussion-row.--recipients {
+	align-items: flex-start;
+	max-height: 30vh;
+	overflow-y: auto;
+}
+
 .sn-post-form__discussion-row:last-of-type:not(.sn-post-form__discussion-row:first-of-type) {
 	border: none;
 }
 
 .sn-post-form__discussion_in-space {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	font-size: var(--ui-font-size-lg);
 	line-height: var(--ui-font-line-height-3xs);
 	color: var(--ui-color-text-secondary);
@@ -61,17 +57,11 @@
 
 .sn-post-form__discussion_select {
 	--ui-icon-set__icon-color: rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-60));
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	margin-left: 5px;
 	color: var(--ui-color-link-primary-base);
 	cursor: pointer;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -88,8 +78,7 @@
 	--sn-spaces__list-item_icon-size: 28px;
 
 	position: relative;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
+	flex-shrink: 0;
 	width: var(--sn-spaces__list-item_icon-size);
 	height: var(--sn-spaces__list-item_icon-size);
 	margin-right: 10px;

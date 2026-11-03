@@ -682,13 +682,15 @@ BX.ajax.promise = function(config)
 	{
 		result.fulfill(data);
 	};
-	config.onfailure = function(reason, httpStatus, config)
+	config.onfailure = function(reason, httpStatus, failedConfig)
 	{
+		var ajaxConfig = failedConfig || config;
+
 		result.reject({
 			reason: reason,
 			data: httpStatus,
-			ajaxConfig: config,
-			xhr: config.xhr
+			ajaxConfig: ajaxConfig,
+			xhr: ajaxConfig.xhr
 		});
 	};
 

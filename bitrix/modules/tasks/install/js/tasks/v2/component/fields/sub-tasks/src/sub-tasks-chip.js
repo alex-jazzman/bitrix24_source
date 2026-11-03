@@ -59,12 +59,15 @@ export const SubTasksChip = {
 		},
 	},
 	methods: {
-		handleAdd(targetNode: HTMLElement): void
+		handleAdd(targetNode: HTMLElement, onClose: Function): void
 		{
 			subTasksDialog.show({
 				targetNode,
 				taskId: this.taskId,
-				onClose: this.highlightField,
+				onClose: () => {
+					this.highlightField();
+					onClose?.();
+				},
 				analytics: this.analytics,
 			});
 		},

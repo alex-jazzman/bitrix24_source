@@ -18,16 +18,24 @@ export const GanttChip = {
 	{
 		return {
 			bindElement: null,
+			onDialogClose: null,
 		};
 	},
 	methods: {
-		handleAdd(addButton: HTMLElement): void
+		handleAdd(addButton: HTMLElement, onClose: Function): void
 		{
 			this.bindElement = addButton;
+			this.onDialogClose = onClose;
+		},
+		handleClose(): void
+		{
+			this.bindElement = null;
+			this.onDialogClose?.();
+			this.onDialogClose = null;
 		},
 	},
 	template: `
 		<RelationTasksChip :meta="ganttMeta" @add="handleAdd"/>
-		<GanttPopup v-if="bindElement" :bindElement @close="bindElement = null"/>
+		<GanttPopup v-if="bindElement" :bindElement @close="handleClose"/>
 	`,
 };

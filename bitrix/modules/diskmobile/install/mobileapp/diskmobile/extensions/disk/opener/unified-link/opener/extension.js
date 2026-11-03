@@ -12,8 +12,10 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 	const { PasswordInputBox } = require('layout/ui/password-input-box');
 	const {
 		getUnifiedLinkData,
+		getUnifiedLinkDataWithRights,
 		validateUnifiedLinkPassword,
 	} = require('disk/opener/unified-link/rest');
+	const { openFolder } = require('disk/opener/folder');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { Loc } = require('loc');
 
@@ -31,6 +33,16 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		FileType.FLIPCHART,
 	]);
 
+	const showUnifiedLinkForbiddenToast = (parentWidget) => {
+		showToast(
+			{
+				message: Loc.getMessage('M_DISK_UNIFIED_LINK_OPENER_FORBIDDEN_TOAST'),
+				icon: Icon.LOCK,
+			},
+			parentWidget,
+		);
+	};
+
 	/**
 	 * @class UnifiedOpener
 	 */
@@ -38,6 +50,8 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 	{
 		#uniqueCode;
 		#props = {};
+		#isFolderLink = false;
+		#isResolveOnly = false;
 
 		/**
 		 * @typedef UnifiedOpenerProps
@@ -47,13 +61,21 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		 * @property [props.parentWidget] {Object}
 		 * @property [props.queryParams] {Object}
 		 * @property [props.canOpenInDefault] {boolean}
+		 * @property [props.isFolderLink] {boolean}
+		 * @property [props.isResolveOnly] {boolean}
 		 *
 		 * @param {UnifiedOpenerProps} props
 		 */
 		constructor(props)
 		{
-			this.#props = props ?? {};
-			this.#uniqueCode = props.uniqueCode ? props.uniqueCode.replace('#__bx_android_click_detect__', '') : null;
+			const { isFolderLink = false, isResolveOnly = false, ...restProps } = props ?? {};
+
+			this.#props = restProps;
+			this.#isFolderLink = isFolderLink;
+			this.#isResolveOnly = isResolveOnly;
+			// a route hands over the path variable as it was captured, fragment and all, while a
+			// unique code never carries one: the app appends its own marker to a tapped href
+			this.#uniqueCode = props.uniqueCode ? props.uniqueCode.replace(/#.*$/, '') : null;
 		}
 
 		/**
@@ -81,7 +103,7 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 
 				if (error?.errors?.some((ajaxError) => Boolean(ajaxError?.code === 'FORBIDDEN')))
 				{
-					this.#showForbiddenToast();
+					showUnifiedLinkForbiddenToast(this.#getParentWidget());
 
 					return null;
 				}
@@ -96,7 +118,7 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 
 		#openLinkData(linkData)
 		{
-			if (isEmpty(linkData) || linkData.status !== 'success')
+			if (!this.#isSuccessful(linkData))
 			{
 				console.error('disk/opener/unified-link: unexpected link data', linkData);
 				void showInternalAlert();
@@ -104,11 +126,37 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 				return null;
 			}
 
-			return this.factoryOpeners(linkData?.data?.object || {});
+			const diskObject = this.#extractDiskObject(linkData);
+
+			if (this.#isResolveOnly)
+			{
+				if (this.#isFolder(diskObject))
+				{
+					return diskObject;
+				}
+
+				void this.factoryOpeners(diskObject);
+
+				return null;
+			}
+
+			return this.factoryOpeners(diskObject);
 		}
 
 		async factoryOpeners(fileData)
 		{
+			if (this.#isFolder(fileData))
+			{
+				if (!this.#isFolderLink)
+				{
+					console.warn('UnifiedOpener: folder payload came through a file link -', fileData.id);
+
+					return null;
+				}
+
+				return this.#openFolder(fileData);
+			}
+
 			const link = fileData.links?.download;
 			if (!link || !this.#isSupportedFileType(fileData.typeFile))
 			{
@@ -144,16 +192,60 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		}
 
 		#getUnifiedLinkData = () => {
+			if (this.#isFolderLink)
+			{
+				return getUnifiedLinkDataWithRights(this.#uniqueCode);
+			}
+
 			const { version, versionId, attachedId } = this.#getQueryParams();
 
 			return getUnifiedLinkData(this.#uniqueCode, attachedId, version || versionId);
 		};
 
-		#validateUnifiedLinkPassword = (password) => {
+		#validateUnifiedLinkPassword = async (password) => {
+			if (this.#isFolderLink)
+			{
+				const passwordData = await validateUnifiedLinkPassword(this.#uniqueCode, password);
+
+				// validatePassword returns the object without rights
+				return this.#isSuccessful(passwordData)
+					? getUnifiedLinkDataWithRights(this.#uniqueCode)
+					: passwordData;
+			}
+
 			const { version, versionId } = this.#getQueryParams();
 
 			return validateUnifiedLinkPassword(this.#uniqueCode, password, version || versionId);
 		};
+
+		#isSuccessful(linkData)
+		{
+			return !isEmpty(linkData) && linkData.status === 'success';
+		}
+
+		#extractDiskObject(linkData)
+		{
+			return linkData?.data?.diskObject || linkData?.data?.object || {};
+		}
+
+		#isFolder(diskObject)
+		{
+			return Boolean(diskObject.id) && !diskObject.typeFile;
+		}
+
+		#openFolder(folder)
+		{
+			return openFolder(
+				folder.id,
+				null,
+				this.#getParentWidget(),
+				null,
+				{
+					folder,
+					uniqueCode: this.#uniqueCode,
+				},
+			);
+		}
 
 		#shouldOpenPasswordInputBox(error)
 		{
@@ -246,6 +338,13 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 
 		#showErrorToast(error)
 		{
+			if (this.#isNetworkError(error))
+			{
+				showOfflineToast({}, this.#getParentWidget());
+
+				return;
+			}
+
 			const message = error?.errors?.find((ajaxError) => Boolean(ajaxError?.message))?.message;
 
 			showErrorToast(
@@ -254,15 +353,9 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 			);
 		}
 
-		#showForbiddenToast(error)
+		#isNetworkError(error)
 		{
-			showToast(
-				{
-					message: Loc.getMessage('M_DISK_UNIFIED_LINK_OPENER_FORBIDDEN_TOAST'),
-					icon: Icon.LOCK,
-				},
-				this.#getParentWidget(),
-			);
+			return Boolean(error?.errors?.some((ajaxError) => ajaxError?.code === 'NETWORK_ERROR'));
 		}
 
 		#getParentWidget()
@@ -299,5 +392,12 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		unifiedOpener: (props) => {
 			return (new UnifiedOpener(props)).open();
 		},
+		unifiedFolderOpener: (props) => {
+			return (new UnifiedOpener({ ...props, isFolderLink: true })).open();
+		},
+		resolveUnifiedFolder: (props) => {
+			return (new UnifiedOpener({ ...props, isFolderLink: true, isResolveOnly: true })).open();
+		},
+		showUnifiedLinkForbiddenToast,
 	};
 });

@@ -191,6 +191,11 @@ else
 							$quoteData['CLOSED'] = isset($arResult['CLOSED_LIST'][$closed]) ? $arResult['CLOSED_LIST'][$closed] : $closed;
 							break;
 						}
+						case 'OPENED':
+						{
+							$quoteData['OPENED'] = ($arQuote['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+							break;
+						}
 						default:
 						{
 							if(isset($arResult['QUOTE_UF'][$i]) && isset($arResult['QUOTE_UF'][$i][$headerID]))

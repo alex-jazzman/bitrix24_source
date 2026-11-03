@@ -226,6 +226,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			void im_v2_application_core.Core.getStore().dispatch('copilot/setName', copilot.botName);
 			void im_v2_application_core.Core.getStore().dispatch('copilot/setAgentName', copilot.agentName);
 			void im_v2_application_core.Core.getStore().dispatch('copilot/setSuggests', copilot.suggests ?? []);
+			void im_v2_application_core.Core.getStore().dispatch('copilot/setGreetings', copilot.greetings ?? []);
+			void im_v2_application_core.Core.getStore().dispatch('copilot/setGreetingWeekHolidays', copilot.greetingWeekHolidays ?? []);
 			if (!copilot.availableEngines) {
 				return;
 			}
@@ -277,7 +279,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const {
 				folders
 			} = im_v2_application_core.Core.getApplicationData();
-			void im_v2_application_core.Core.getStore().dispatch('recent/folders/set', folders);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/set', folders.list);
 		}
 	}
 

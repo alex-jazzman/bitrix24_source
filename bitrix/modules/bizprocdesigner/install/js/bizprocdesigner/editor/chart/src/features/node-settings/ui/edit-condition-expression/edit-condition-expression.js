@@ -18,6 +18,7 @@ import {
 	getConnectedBlocksContextForConstruction,
 	getFixedDocumentType,
 	getVisibleConditionFieldUnresolvedReason,
+	resolveRuleCollection,
 } from '../../../../entities/node-settings';
 import { ConditionValueControl } from './condition-value-control';
 import { OperatorPhraseCodes, OperatorRequiresValue } from './const';
@@ -43,6 +44,26 @@ export const EditConditionExpression = {
 			required: false,
 			default: null,
 		},
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the row this condition belongs to. Without it the condition works on the single rule
+		 * the panel shows: only the all-rules mode has no single one, and there every row names its own.
+		 */
+		rulePort:
+		{
+			type: [Object, null],
+			default: null,
+		},
+		/**
+		 * True while the rule of the row has been reached (see isSectionLive). The value control renders
+		 * a legacy control synchronously and registers global handlers, so it waits for that; until then
+		 * the committed value is shown as plain text.
+		 */
+		isLive:
+		{
+			type: Boolean,
+			default: true,
+		},
 	},
 	setup(): { getMessage: () => string; }
 	{
@@ -60,16 +81,31 @@ export const EditConditionExpression = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule', 'currentSettingsItems']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
 		...mapState(diagramStore, { workflowDocumentType: 'documentType' }),
+		/** Rule this condition works on: the one of its own row, or the single rule the panel shows. */
+		targetRulePort(): Object | null
+		{
+			return this.rulePort ?? this.currentRule;
+		},
+		/** Id of that rule, as the context builder and the selectors of the panel take it. */
+		targetRulePortId(): string | null
+		{
+			return this.targetRulePort?.id ?? null;
+		},
+		/** Rules collection the target rule lives in - relation rules are the ones kept apart. */
+		targetSettingsItems(): Map | null
+		{
+			return resolveRuleCollection(this.nodeSettings, this.targetRulePort);
+		},
 		connectedBlocksContext(): Object
 		{
 			return getConnectedBlocksContextForConstruction(
 				this.block,
-				this.currentRule?.id ?? null,
+				this.targetRulePortId,
 				this.ruleCard,
 				this.construction,
-				this.currentSettingsItems,
+				this.targetSettingsItems,
 			);
 		},
 		connectedBlocks(): Array<Block>
@@ -178,6 +214,16 @@ export const EditConditionExpression = {
 				});
 			},
 		},
+		/**
+		 * Committed value as plain text, for a row whose value control is not mounted yet. A value the
+		 * control has written back is an object keyed by the very field name the control renders under
+		 * (`<fieldName>` and `<fieldName>_text`, see ConditionValueControl), so it is read by those keys
+		 * and not printed as the object it is stored as.
+		 */
+		committedValueText(): string
+		{
+			return this.stringifyCommittedValue(this.selectedValue);
+		},
 		selectedOperatorTitle(): string
 		{
 			return this.availableOperators.find(({ id }) => id === this.selectedOperator)?.title
@@ -279,13 +325,42 @@ export const EditConditionExpression = {
 			this.fieldTitle = title;
 			this.fieldUnresolved = this.visibleUnresolvedReason(unresolved, this.selectedField);
 		},
+		/**
+		 * One value of the condition as text. The readable half the control fills in for the selectable
+		 * types (a user, a document, a list item) is preferred over the stored one, which is the id
+		 * behind it; a multiple value is a list of such values, and a plain value is shown as it is.
+		 */
+		stringifyCommittedValue(value: mixed): string
+		{
+			if (Type.isArray(value))
+			{
+				return value
+					.map((item) => this.stringifyCommittedValue(item))
+					.filter((text: string) => text !== '')
+					.join(', ')
+				;
+			}
+
+			if (Type.isObject(value))
+			{
+				const text = value[`${this.valueFieldName}_text`];
+
+				return Type.isStringFilled(text)
+					? text
+					: this.stringifyCommittedValue(value[this.valueFieldName] ?? '')
+				;
+			}
+
+			return Type.isNil(value) ? '' : String(value);
+		},
 		onShowFieldChooseMenu(event: Event): void
 		{
 			const fieldSelector = new FieldSelector(
 				this.block,
-				this.currentRule?.id ?? null,
+				this.targetRulePortId,
 				this.connectedBlocks,
 				this.conditionDocumentType,
+				this.selectedField,
 			);
 
 			void fieldSelector.show(event.target).then((field: ConditionExpressionField) => {
@@ -302,7 +377,7 @@ export const EditConditionExpression = {
 			const valueSelector = new ValueSelector(
 				diagramStore(),
 				this.block,
-				this.currentRule?.id ?? null,
+				this.targetRulePortId,
 				this.connectedBlocks,
 			);
 			void valueSelector.show(event.target).then((value: string) => {
@@ -390,14 +465,23 @@ export const EditConditionExpression = {
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_VALUE') }}
 				</span>
 				<ConditionValueControl
+					v-if="isLive"
 					:key="valueControlKey"
 					data-testid="bizprocdesigner-condition-value"
 					:property="fieldProperty"
 					:document-type="effectiveDocumentType"
 					:model-value="selectedValue"
 					:field-name="valueFieldName"
+					:rule-port="targetRulePort"
 					@update:model-value="selectedValue = $event"
 				/>
+				<div
+					v-else
+					class="ui-ctl ui-ctl-textbox"
+					data-testid="bizprocdesigner-condition-value"
+				>
+					<div class="ui-ctl-element">{{ committedValueText }}</div>
+				</div>
 			</div>
 		</div>
 	`,

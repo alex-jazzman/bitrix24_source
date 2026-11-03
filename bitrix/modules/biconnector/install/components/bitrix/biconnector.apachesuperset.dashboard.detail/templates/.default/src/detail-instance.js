@@ -1,10 +1,10 @@
-import { Dom, Event, Loc, Text, Tag, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Dom, Event, Loc, Runtime, Text, Tag, Type } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import type { MenuItemOptions } from 'main.popup';
 import { Menu } from 'main.popup';
 import { Loader } from 'main.loader';
 import { DateTimeFormat } from 'main.date';
-import type { DetailConfig } from './type/detail-config';
+import type { ChartAnalysisConfig, DetailConfig } from './type/detail-config';
 import type { FilterOptions } from './type/filter-options';
 import type { DashboardEmbeddedParameters } from './type/dashboard-embedded-parameters';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
@@ -14,12 +14,32 @@ import { ApacheSupersetFeedbackForm } from 'biconnector.apache-superset-feedback
 import { ChatSelector } from './chat-selector';
 import { AhaMoment } from 'biconnector.aha-moment';
 import { SharePopup } from 'biconnector.share-popup';
+import { AiDigestSetup, type ScreenStateBridge } from 'biconnector.ai-digest-setup';
 import 'sidepanel';
 import 'ui.icon-set.outline';
 
+const EMBED_TIMEOUT = 20000;
 const COMPACT_HEADER_CLASS = 'dashboard-header--compact';
 const MEASURING_HEADER_CLASS = 'dashboard-header--measuring';
 const HEADER_FIT_SAFETY = 8;
+
+type DigestSetupAvailability = {
+	state: 'ready' | 'subscription_required' | 'hidden',
+	promoterCode?: string,
+};
+
+type DigestSetupConfig = {
+	dashboardId: number,
+	availability: DigestSetupAvailability,
+};
+
+const ONBOARDING_EXTENSION = 'biconnector.dashboard-onboarding';
+// Mirrors OnboardingMode.None of the onboarding extension, which is not loaded to read it.
+const ONBOARDING_MODE_NONE = 'none';
+
+const EMBED_READY_EVENT = 'biconnector:dashboard-embed-ready';
+const EMBED_ERROR_EVENT = 'biconnector:dashboard-embed-error';
+const SHARE_SETTING_CHANGE_EVENT = 'BIConnector.ShareSetting:onChange';
 
 export class DetailInstance
 {
@@ -29,18 +49,33 @@ export class DetailInstance
 
 	#embeddedParams: DashboardEmbeddedParameters;
 	#embeddedLoader: ApacheSupersetEmbeddedLoader;
+	#embeddedBridge: ?ScreenStateBridge = null;
 	#embeddedDebugMode: boolean;
+	#isEmbedReady: boolean = false;
+	#embedAttempt: number = 0;
 	#canExport: boolean;
 	#canEdit: boolean;
+	#lockWarningDismissed: boolean = false;
 	#canShare: boolean;
 	#shareData: ?Object;
+	#isShareBanned: boolean;
+	#shareMenu: ?Menu;
+	#digestSetup: ?DigestSetupConfig;
+	#chartAnalysisConfig: ?ChartAnalysisConfig;
+	#chartAnalysisSession: ?{ destroy: () => void } = null;
 
 	#moreMenu: Menu;
 	#infoAhaMoment: ?AhaMoment;
 	#infoAhaMomentOptions: ?Object;
 	#dashboardSavedEventName: string;
 	#onDashboardSavedHandler: Function;
+	#onShareSettingChangeHandler: Function;
 	#sharePopup: ?SharePopup;
+	#dashboardOnboardingConfig: ?Object;
+	#dashboardOnboarding: ?Object;
+	#dashboardOnboardingPromise: ?Promise<?Object>;
+	#agentConnection: ?Object;
+	#agentConnectionLoadPromise: ?Promise<?Object> = null;
 
 	#compactHintAbort: ?AbortController;
 
@@ -52,7 +87,7 @@ export class DetailInstance
 	#headerResizeObserver: ?ResizeObserver;
 	#headerTitleObserver: ?MutationObserver;
 
-	constructor(config: DetailConfig)
+	constructor(config: DetailConfig & { digestSetup?: ?DigestSetupConfig })
 	{
 		this.#dashboardNode = document.getElementById(config.appNodeId);
 		if (!Type.isDomNode(this.#dashboardNode))
@@ -65,15 +100,24 @@ export class DetailInstance
 		this.#canEdit = config.canEdit === 'Y';
 		this.#canShare = config.canShare === 'Y';
 		this.#shareData = config.shareData ?? null;
+		this.#isShareBanned = config.isShareBanned === 'Y';
+		this.#digestSetup = config.digestSetup ?? null;
+		this.#chartAnalysisConfig = config.chartAnalysis ?? null;
 		this.#embeddedParams = config.dashboardEmbeddedParams;
 		this.#embeddedDebugMode = config.embeddedDebugMode;
 		this.#infoAhaMomentOptions = config.infoAhaMoment ?? null;
 		this.#dashboardSavedEventName = 'BIConnector.CreateForm:onDashboardSaved';
 		this.#onDashboardSavedHandler = this.#onDashboardSaved.bind(this);
+		this.#onShareSettingChangeHandler = this.#onShareSettingChange.bind(this);
 
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
+		this.#dashboardOnboardingConfig = Type.isPlainObject(config.dashboardOnboarding)
+			? config.dashboardOnboarding
+			: null
+		;
 		this.#subscribeEvents();
 		this.#initHeaderButtons();
+		this.#initAgentConnection(config);
 
 		if (!BX.BIConnector.LimitLockPopup)
 		{
@@ -97,14 +141,17 @@ export class DetailInstance
 		if (Type.isFunction(eventBus?.unsubscribe))
 		{
 			eventBus.unsubscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+			eventBus.unsubscribe(SHARE_SETTING_CHANGE_EVENT, this.#onShareSettingChangeHandler);
 		}
 
 		if (Type.isFunction(eventBus?.subscribe))
 		{
 			eventBus.subscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+			eventBus.subscribe(SHARE_SETTING_CHANGE_EVENT, this.#onShareSettingChangeHandler);
 		}
 
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', (event) => {
+			this.#embeddedBridge = null;
 			Dom.clean(this.#frameNode);
 			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 				container: this.#frameNode,
@@ -114,12 +161,22 @@ export class DetailInstance
 
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', (event) => {
 			Dom.clean(this.#frameNode);
+			// The onboarding is decided per page load for one certain report: its steps and
+			// rights come from the server config of that report. The selector replaces the
+			// report without a reload, so the orchestrator is dropped instead of being reused -
+			// otherwise the tour would keep pointing at the previous report and the menu would
+			// offer to replay it. The next page load decides the onboarding anew.
+			this.#dashboardOnboarding?.destroy();
+			this.#dashboardOnboarding = null;
+			this.#dashboardOnboardingConfig = null;
+			this.#dashboardOnboardingPromise = null;
 			this.#embeddedParams = event.data.credentials;
 			this.#canEdit = this.#embeddedParams.canEdit;
 			this.#canExport = this.#embeddedParams.canExport;
 			this.#updateTitle(this.#embeddedParams.title);
 			this.#canShare = this.#embeddedParams.canShare ?? false;
 			this.#shareData = this.#embeddedParams.shareData ?? null;
+			this.#isShareBanned = this.#embeddedParams.isShareBanned === true;
 			this.#sharePopup = null;
 
 			let historyUrl = this.#embeddedParams.embeddedUrl;
@@ -139,6 +196,7 @@ export class DetailInstance
 		});
 
 		EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', (event) => {
+			this.#lockWarningDismissed = true;
 			this.#initFrame(this.#embeddedParams);
 			this.#initHeaderButtons();
 		});
@@ -182,6 +240,7 @@ export class DetailInstance
 		if (Type.isFunction(eventBus?.unsubscribe))
 		{
 			eventBus.unsubscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+			eventBus.unsubscribe(SHARE_SETTING_CHANGE_EVENT, this.#onShareSettingChangeHandler);
 		}
 	}
 
@@ -219,14 +278,39 @@ export class DetailInstance
 		}
 	}
 
+	/**
+	 * Readable embedding state for subscribers appearing after the event: events are not buffered.
+	 */
+	isEmbedReady(): boolean
+	{
+		return this.#isEmbedReady;
+	}
+
+	/**
+	 * The report card hint is older than any announcement and keeps the surface to itself.
+	 */
+	isInfoHintShown(): boolean
+	{
+		return this.#infoAhaMoment?.isShown === true;
+	}
+
 	#initFrame(embeddedParams: DashboardEmbeddedParameters)
 	{
+		// selecting another report re-runs the embedding, so the state starts over
+		this.#isEmbedReady = false;
+		// A hung attempt keeps running after another report replaces it, so every attempt is
+		// numbered: only the current one is allowed to touch the frame and the ready state.
+		const attempt = ++this.#embedAttempt;
+		this.#embeddedBridge = null;
+		this.#destroyChartAnalysis();
+
 		if (!embeddedParams.uuid || !embeddedParams.supersetDomain)
 		{
 			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 				container: this.#frameNode,
 				supersetStatus: 'ERROR',
 			});
+			EventEmitter.emit(EMBED_ERROR_EVENT, {});
 
 			return;
 		}
@@ -250,16 +334,94 @@ export class DetailInstance
 			},
 		};
 
-		this.#embeddedLoader = new ApacheSupersetEmbeddedLoader(dashboardParams);
-		this.#embeddedLoader.embedDashboard()
-			.catch(() => {
-				Dom.clean(this.#frameNode);
-				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
-					container: this.#frameNode,
-					supersetStatus: 'ERROR',
-				});
+		const embeddedLoader = new ApacheSupersetEmbeddedLoader(dashboardParams);
+		this.#embeddedLoader = embeddedLoader;
+		embeddedLoader.embedDashboard()
+			.then((bridge: ScreenStateBridge) => {
+				// a frame of the report the user has already left must not answer for the current one
+				if (this.#embeddedLoader === embeddedLoader)
+				{
+					this.#embeddedBridge = bridge;
+					this.#attachChartAnalysis(embeddedLoader, embeddedParams);
+				}
+				this.#onEmbedReady();
+			})
+			.catch(() => this.#onEmbedError())
+		;
+	}
+
+	#onEmbedReady(): void
+	{
+		this.#isEmbedReady = true;
+		EventEmitter.emit(EMBED_READY_EVENT, {});
+		this.#startDashboardOnboarding();
+	}
+
+	#onEmbedError(): void
+	{
+		this.#isEmbedReady = false;
+		this.#embeddedBridge = null;
+		this.#destroyChartAnalysis();
+		Dom.clean(this.#frameNode);
+		BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+			container: this.#frameNode,
+			supersetStatus: 'ERROR',
+		});
+		EventEmitter.emit(EMBED_ERROR_EVENT, {});
+
+		// A silent Superset gets no tour - the onboarding itself decides that by the embed
+		// state. The empty-draft card does not depend on the embed, so this path still starts it.
+		this.#startDashboardOnboarding();
+	}
+
+	// The server checked the chart analysis gate for the report of the page only, so another report opened
+	// without a reload stays without it.
+	#attachChartAnalysis(
+		embeddedLoader: ApacheSupersetEmbeddedLoader,
+		embeddedParams: DashboardEmbeddedParameters,
+	): void
+	{
+		const config = this.#chartAnalysisConfig;
+		const launcher = BX.BIConnector?.BitrixGptLauncher?.getInstance?.() ?? null;
+		if (!config || Text.toInteger(embeddedParams.id) !== Text.toInteger(config.dashboardId) || !launcher)
+		{
+			return;
+		}
+
+		Runtime.loadExtension('biconnector.chart-analysis')
+			.then((extension: Object): ?Promise<?Object> => {
+				if (this.#embeddedLoader !== embeddedLoader || !Type.isFunction(extension.ChartAnalysis?.attach))
+				{
+					return null;
+				}
+
+				return extension.ChartAnalysis.attach({ loader: embeddedLoader, launcher, config });
+			})
+			.then((session: ?Object) => {
+				if (!session)
+				{
+					return;
+				}
+
+				if (this.#embeddedLoader === embeddedLoader)
+				{
+					this.#chartAnalysisSession = session;
+				}
+				else
+				{
+					session.destroy();
+				}
+			})
+			.catch((error) => {
+				console.error('BIConnector: chart analysis is not available', error);
 			})
 		;
+	}
+
+	#destroyChartAnalysis(): void
+	{
+		this.#chartAnalysisSession?.destroy();
+		this.#chartAnalysisSession = null;
 	}
 
 	#initHeaderButtons()
@@ -269,6 +431,76 @@ export class DetailInstance
 		this.#initInfoButton();
 		this.#initAdaptiveHeader();
 		this.#initCompactHints();
+	}
+
+	// Raised once and outside #initHeaderButtons(): the connection is portal-wide, not report-wide, so
+	// switching the report neither raises a second facade nor asks the server anything. The page of the
+	// report reaches the server for this action not once: whoever may not connect learns it from the popup,
+	// which tells the refusal of the server in its own screen.
+	#initAgentConnection(config: DetailConfig): void
+	{
+		const button = this.#dashboardNode.querySelector('.dashboard-header-buttons-connect-agent');
+		if (config.mcpBiConnection !== true || !button)
+		{
+			return;
+		}
+
+		Event.bind(button, 'click', () => {
+			void this.#showAgentConnection(button);
+		});
+	}
+
+	async #showAgentConnection(button: HTMLElement): Promise<void>
+	{
+		let agentConnection = null;
+		try
+		{
+			agentConnection = await this.#loadAgentConnection(button);
+		}
+		catch
+		{
+			return;
+		}
+
+		if (Type.isFunction(agentConnection?.show))
+		{
+			agentConnection.show();
+		}
+	}
+
+	// The extension carries the catalogue of the operations in its own settings, so the loading of it is
+	// what builds the catalogue on the server - at the press of the action and never at the drawing of the
+	// page.
+	#loadAgentConnection(button: HTMLElement): Promise<?Object>
+	{
+		if (this.#agentConnection)
+		{
+			return Promise.resolve(this.#agentConnection);
+		}
+
+		if (this.#agentConnectionLoadPromise)
+		{
+			return this.#agentConnectionLoadPromise;
+		}
+
+		this.#agentConnectionLoadPromise = Runtime.loadExtension('biconnector.ai-agent-connection')
+			.then((extension: Object): ?Object => {
+				const AgentConnection = extension.AiAgentConnection;
+				if (!Type.isFunction(AgentConnection))
+				{
+					return null;
+				}
+
+				this.#agentConnection = new AgentConnection({ anchor: button });
+
+				return this.#agentConnection;
+			})
+			.finally(() => {
+				this.#agentConnectionLoadPromise = null;
+			})
+		;
+
+		return this.#agentConnectionLoadPromise;
 	}
 
 	#initAdaptiveHeader(): void
@@ -433,6 +665,65 @@ export class DetailInstance
 		});
 	}
 
+	/**
+	 * The onboarding bundle is fetched on demand: the tour starts after the embed is ready and
+	 * the restart item plays it after a click, so nothing here belongs to the first render. The
+	 * promise is kept so a click during the fetch reuses it instead of asking for a second copy.
+	 */
+	#getDashboardOnboarding(): Promise<?Object>
+	{
+		if (!Type.isPlainObject(this.#dashboardOnboardingConfig))
+		{
+			return Promise.resolve(null);
+		}
+
+		this.#dashboardOnboardingPromise ??= Runtime.loadExtension(ONBOARDING_EXTENSION)
+			.then(({ DashboardOnboarding }) => {
+				// The header selector can replace the report while the bundle is on its way, and
+				// the config that arrived with the page is then no longer the one on the screen.
+				if (!Type.isPlainObject(this.#dashboardOnboardingConfig))
+				{
+					return null;
+				}
+
+				this.#dashboardOnboarding ??= new DashboardOnboarding({
+					config: this.#dashboardOnboardingConfig,
+					frameNode: this.#frameNode,
+					isEmbedReady: () => this.isEmbedReady(),
+					onEditRequested: () => {
+						this.#onEditButtonClick();
+					},
+				});
+
+				return this.#dashboardOnboarding;
+			})
+		;
+
+		return this.#dashboardOnboardingPromise;
+	}
+
+	#startDashboardOnboarding(): void
+	{
+		if (this.#dashboardOnboardingConfig?.mode === ONBOARDING_MODE_NONE)
+		{
+			return;
+		}
+
+		// A broken hint must not affect the report itself.
+		this.#getDashboardOnboarding()
+			.then((onboarding) => onboarding?.start())
+			.catch(() => {})
+		;
+	}
+
+	#restartDashboardOnboarding(): void
+	{
+		this.#getDashboardOnboarding()
+			.then((onboarding) => onboarding?.restart())
+			.catch(() => {})
+		;
+	}
+
 	#onEditButtonClick()
 	{
 		const dashboardInfo = {
@@ -506,28 +797,7 @@ export class DetailInstance
 
 		if (this.#canShare)
 		{
-			menuItems.push({
-				id: 'share-link',
-				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'),
-				html: Tag.render`
-					<span class="dashboard-detail-menu-item">
-						<span class="dashboard-detail-menu-item-content">
-							<span class="dashboard-detail-menu-item-title">
-								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'))}
-							</span>
-							<span class="dashboard-detail-menu-item-description">
-								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_DESCRIPTION'))}
-							</span>
-						</span>
-			
-						<span class="ui-icon-set --o-link dashboard-detail-menu-item-icon"></span>
-					</span>`,
-				className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
-				onclick: (event, menuItem: MenuItem) => {
-					menuItem.menuWindow.close();
-					this.#showSharePopup();
-				},
-			});
+			menuItems.push(this.#getShareLinkMenuItem());
 		}
 
 		menuItems.push(
@@ -603,6 +873,7 @@ export class DetailInstance
 			},
 		);
 
+		this.#shareMenu?.destroy();
 		const shareMenu = new Menu({
 			closeByEsc: false,
 			closeIcon: false,
@@ -612,11 +883,15 @@ export class DetailInstance
 			},
 			bindElement: shareButton,
 			events: {
-				onShow: (event) => this.#alignMenuPopupToArrow(shareButton, event.getTarget()),
+				onShow: (event) => {
+					this.#alignMenuPopupToArrow(shareButton, event.getTarget());
+					BX.UI.Hint?.init(event.getTarget().getPopupContainer());
+				},
 			},
 			autoHide: true,
 			items: menuItems,
 		});
+		this.#shareMenu = shareMenu;
 
 		Event.bind(shareButton, 'click', () => {
 			shareMenu.show();
@@ -624,6 +899,42 @@ export class DetailInstance
 				type: this.#embeddedParams.type.toLowerCase(),
 			});
 		});
+	}
+
+	#getShareLinkMenuItem(): MenuItemOptions
+	{
+		const bannedHint = Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_BANNED_HINT');
+
+		return {
+			id: 'share-link',
+			dataset: { testId: 'share-link' },
+			disabled: this.#isShareBanned,
+			attrs: this.#isShareBanned ? { 'data-hint': bannedHint, 'data-hint-no-icon': '' } : null,
+			title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'),
+			html: Tag.render`
+				<span class="dashboard-detail-menu-item">
+					<span class="dashboard-detail-menu-item-content">
+						<span class="dashboard-detail-menu-item-title">
+							${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'))}
+						</span>
+						<span class="dashboard-detail-menu-item-description">
+							${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_DESCRIPTION'))}
+						</span>
+					</span>
+
+					<span class="ui-icon-set --o-link dashboard-detail-menu-item-icon"></span>
+				</span>`,
+			className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
+			onclick: (event, menuItem: MenuItem) => {
+				if (menuItem.isDisabled())
+				{
+					return;
+				}
+
+				menuItem.menuWindow.close();
+				this.#showSharePopup();
+			},
+		};
 	}
 
 	#showSharePopup()
@@ -650,6 +961,7 @@ export class DetailInstance
 		if (this.#moreMenu)
 		{
 			Event.unbindAll(moreButton);
+			this.#moreMenu.destroy();
 		}
 
 		this.#moreMenu = new Menu({
@@ -802,7 +1114,7 @@ export class DetailInstance
 	{
 		const result = [];
 
-		if (this.#canEdit && !BX.BIConnector.LimitLockPopup)
+		if (this.#canEdit && (!BX.BIConnector.LimitLockPopup || this.#lockWarningDismissed))
 		{
 			result.push(
 				{
@@ -818,6 +1130,29 @@ export class DetailInstance
 					},
 				},
 			);
+		}
+
+		if (
+			this.#digestSetup
+			&& ['ready', 'subscription_required'].includes(this.#digestSetup.availability.state)
+		)
+		{
+			result.push({
+				id: 'configure_digest',
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_CONFIGURE_DIGEST'),
+				html: Tag.render`<span class="dashboard-detail-menu-item" data-testid="dashboard-configure-digest">
+					<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_CONFIGURE_DIGEST'))}</span>
+					<span class="ui-icon-set --o-file-with-clock dashboard-detail-menu-item-icon"></span>
+					</span>`,
+				className: 'menu-popup-no-icon',
+				onclick: () => {
+					void AiDigestSetup.open({
+						dashboardId: this.#embeddedParams.id,
+						availability: this.#digestSetup.availability,
+						bridge: this.#embeddedBridge,
+					});
+				},
+			});
 		}
 
 		result.push(
@@ -863,6 +1198,28 @@ export class DetailInstance
 			},
 		);
 
+		if (this.#dashboardOnboardingConfig?.canRestart === true)
+		{
+			result.push({
+				id: 'restart_onboarding',
+				title: Loc.getMessage('BICONNECTOR_DASHBOARD_ONBOARDING_RESTART_MENU_ITEM'),
+				html: Tag.render`
+					<span
+						class="dashboard-detail-menu-item"
+						data-testid="biconnector-report-detail-restart-onboarding-item"
+					>
+						<span>${Text.encode(Loc.getMessage('BICONNECTOR_DASHBOARD_ONBOARDING_RESTART_MENU_ITEM'))}</span>
+						<span class="ui-icon-set --o-question dashboard-detail-menu-item-icon"></span>
+					</span>
+				`,
+				className: 'menu-popup-no-icon',
+				onclick: (event, menuItem) => {
+					menuItem.menuWindow.close();
+					this.#restartDashboardOnboarding();
+				},
+			});
+		}
+
 		if (this.#canExport)
 		{
 			result.push({
@@ -887,6 +1244,37 @@ export class DetailInstance
 		}
 
 		return result;
+	}
+
+	#onShareSettingChange(event: BaseEvent): void
+	{
+		const { dashboardId, isBanned } = event.getData();
+		if (Text.toInteger(dashboardId) !== Text.toInteger(this.#embeddedParams.id))
+		{
+			return;
+		}
+
+		this.#applyShareBanState(isBanned === true);
+		this.#initShareButton();
+	}
+
+	// The ban switches off the own link too, so the next popup must start from the disabled state.
+	#applyShareBanState(isBanned: boolean): void
+	{
+		this.#isShareBanned = isBanned;
+		this.#sharePopup?.hide();
+		this.#sharePopup = null;
+
+		if (!this.#shareData)
+		{
+			return;
+		}
+
+		this.#shareData = {
+			...this.#shareData,
+			isBanned,
+			...(isBanned && { isActive: false, disabledByAdmin: null }),
+		};
 	}
 
 	#downloadFile(base64Data: string, fileName: string, fileType: string): void

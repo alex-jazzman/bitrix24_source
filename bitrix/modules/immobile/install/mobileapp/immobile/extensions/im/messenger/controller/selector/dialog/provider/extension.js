@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { FolderEligibility } = require('im/messenger/lib/folder-eligibility');
 	const {
 		ChatSearchProvider: SearchProvider,
 		ChatSearchConfig,
@@ -18,7 +19,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogType } = require('im/messenger/const');
-	const { UserHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const ASSET_PATH = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png/';
@@ -45,6 +46,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			this.onlyUsers = options?.onlyUsers ?? false;
 			this.useNotes = options?.useNotes ?? false;
 			this.excludeGuests = options?.excludeGuests ?? false;
+			this.folderEligibleOnly = options?.folderEligibleOnly ?? false;
 			this.initialDialogIds = Type.isArray(options?.initialDialogIds)
 				? options.initialDialogIds.map((id) => String(id))
 				: [];
@@ -63,23 +65,47 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 		#createSearchProvider()
 		{
 			return new SearchProvider({
-				localStrategy: new DialogLocalSearchStrategy({
-					exceptDialogTypes: [
-						DialogType.copilot,
-						DialogType.lines,
-						DialogType.comment,
-						DialogType.tasksTask,
-					],
-					excludeGuests: this.excludeGuests,
-				}),
+				localStrategy: new DialogLocalSearchStrategy(this.#getLocalSearchOptions()),
 				serverStrategy: new DefaultServerSearchStrategy({
 					config: new ChatSearchConfig(),
-					dynamicOptions: this.excludeGuests
-						? () => ({ excludeGuests: true })
-						: undefined,
+					dynamicOptions: this.#getServerSearchDynamicOptions(),
 				}),
 				loadSearchProcessed: this.#onLocalSearchComplete,
 				loadSearchComplete: this.#onServerSearchComplete,
+			});
+		}
+
+		#getLocalSearchOptions()
+		{
+			if (this.folderEligibleOnly)
+			{
+				return {
+					dialogTypes: FolderEligibility.getAllowedTypes(),
+					excludeGuests: this.excludeGuests,
+				};
+			}
+
+			return {
+				exceptDialogTypes: [
+					DialogType.copilot,
+					DialogType.lines,
+					DialogType.comment,
+					DialogType.tasksTask,
+				],
+				excludeGuests: this.excludeGuests,
+			};
+		}
+
+		#getServerSearchDynamicOptions()
+		{
+			if (!this.excludeGuests && !this.folderEligibleOnly)
+			{
+				return undefined;
+			}
+
+			return () => ({
+				...(this.excludeGuests ? { excludeGuests: true } : {}),
+				...(this.folderEligibleOnly ? { searchFolderEligible: true } : {}),
 			});
 		}
 
@@ -203,17 +229,48 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			const recentDialogIds = this.store.getters['recentModel/getChatCollection']()
 				.map(({ id }) => id)
 			;
+			const recentDialogs = this.#getDialogsByIds(recentDialogIds);
 
 			if (this.initialDialogIds.length === 0)
 			{
-				return this.#getDialogsByIds(recentDialogIds);
+				return recentDialogs.filter((dialog) => this.#isFolderEligible(dialog));
 			}
 
+			const initialSet = new Set(this.initialDialogIds);
 			const recentSet = new Set(recentDialogIds.map((id) => String(id)));
 			const extraIds = this.initialDialogIds.filter((id) => !recentSet.has(id));
 			const extraDialogs = this.#getDialogsByIds(extraIds);
+			const filteredRecentDialogs = recentDialogs.filter((dialog) => {
+				return initialSet.has(String(dialog.dialogId)) || this.#isFolderEligible(dialog);
+			});
 
-			return [...extraDialogs, ...this.#getDialogsByIds(recentDialogIds)];
+			return [...extraDialogs, ...filteredRecentDialogs];
+		}
+
+		#isFolderEligible(dialog)
+		{
+			return !this.folderEligibleOnly
+				|| (
+					FolderEligibility.isAllowed(dialog.type)
+					&& DialogHelper.createByModel(dialog)?.isNested !== true
+				)
+			;
+		}
+
+		/**
+		 * Local search knows nothing about membership, so the recent list is used as its snapshot:
+		 * only a linked chat has a row there. A person must be findable without a conversation,
+		 * hence private dialogs skip the check. Server search keeps its own result: a hidden link
+		 * is a membership too, and such a chat may be missing from the recent list.
+		 */
+		#isMemberByRecent(dialog)
+		{
+			if (!this.folderEligibleOnly || [DialogType.user, DialogType.private].includes(dialog.type))
+			{
+				return true;
+			}
+
+			return Boolean(this.store.getters['recentModel/getById'](dialog.dialogId));
 		}
 
 		#withFavoriteItem(items)
@@ -229,7 +286,10 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 				return;
 			}
 
-			this.items = this.prepareItemsForDrawing(this.#getDialogsByIds(itemIdList));
+			const dialogs = this.#getDialogsByIds(itemIdList)
+				.filter((dialog) => this.#isFolderEligible(dialog) && this.#isMemberByRecent(dialog))
+			;
+			this.items = this.prepareItemsForDrawing(dialogs);
 			if (needSearchOnServer)
 			{
 				this.items.push(this.#getLoadingItem());
@@ -246,7 +306,8 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 				return;
 			}
 
-			this.items = this.prepareItemsForDrawing(this.#getDialogsByIds(itemIdList));
+			const dialogs = this.#getDialogsByIds(itemIdList).filter((dialog) => this.#isFolderEligible(dialog));
+			this.items = this.prepareItemsForDrawing(dialogs);
 
 			this.listener.onFetchResult(this.items, false);
 		};

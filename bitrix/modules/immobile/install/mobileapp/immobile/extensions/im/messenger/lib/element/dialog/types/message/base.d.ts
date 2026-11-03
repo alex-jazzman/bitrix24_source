@@ -5,9 +5,10 @@ import {KeyboardButtonConfig} from "../../../../../model/messages/src/types/keyb
 import {MessageVideo} from "./element/video";
 import {MessageImage} from "./element/image";
 import {MessageFile} from "./element/file";
-import {MessageAudio} from "./element/audio";
+import {AiAnimationMessageData, MessageAudio} from "./element/audio";
 import {
 	CopilotMessageCopilotData,
+	CopilotAiGlowData,
 	InitialPromptMessageData
 } from "./copilot";
 import {VoteMessageData} from "../../../src/dialog/message/vote/types/vote";
@@ -15,7 +16,12 @@ import {CheckInMessageData} from "../../../src/dialog/message/check-in/types/che
 import {CallMessageData} from "../../../src/dialog/message/call/types/call-configuration";
 import {MessageVideoNote} from "./element/video-note";
 import {StickerState} from "../../../../../model/sticker-pack/src/types";
-import {DialogWidgetBlockItem} from "../../../../../model/messages/src/types/block";
+import {
+	AudioBlockElementType,
+	DialogWidgetBlockItem,
+	DialogWidgetBlockItemBlockType,
+	FileBlockElementType
+} from "../../../../../model/messages/src/types/block";
 
 declare type MessageRichLink = {
 	description: string,
@@ -50,6 +56,7 @@ export type DialogWidgetItem = MediaGalleryDialogWidgetItem|FileGalleryDialogWid
 	VideoNoteDialogWidgetItem|VideoNoteTextDialogWidgetItem|AiBizprocDialogWidgetItem|BlockDialogWidgetItem;
 
 export type BaseDialogWidgetItem = {
+	aiAnimation: AiAnimationMessageData | CopilotAiGlowData | null,
 	align: 'center' | 'left' | 'right' | null,
 	attach: Array<AttachConfig>,
 	avatar: AvatarDetail | null,
@@ -186,6 +193,7 @@ export type AudioDialogWidgetItem = BaseDialogWidgetItem & {
 
 export type CopilotDialogWidgetItem = BaseDialogWidgetItem & {
 	copilot: CopilotMessageCopilotData,
+	aiAnimation?: CopilotAiGlowData,
 }
 export type CopilotErrorDialogWidgetItem = BaseDialogWidgetItem & {
 	copilot: CopilotMessageCopilotData,
@@ -225,8 +233,28 @@ export type StickerDialogWidgetItem = BaseDialogWidgetItem & {
 }
 
 export type BlockDialogWidgetItem = BaseDialogWidgetItem & {
-	builder: DialogWidgetBlockItem,
+	builder: Omit<DialogWidgetBlockItem, 'blocks'> & {
+		blocks: Array<DialogWidgetBlockItemBlockType | FileBlockDialogWidgetItemBlock | AudioBlockDialogWidgetItemBlock>,
+	},
 	mediaList?: Array<MessageVideo | MessageImage>,
+}
+
+/**
+ * The file container as native gets it: file models resolved by the client plus the ready-made
+ * batch download caption. With not a single model resolved the channel is left out and native
+ * draws no container. Without a caption the link is not shown.
+ */
+export type FileBlockDialogWidgetItemBlock = FileBlockElementType & {
+	fileList?: Array<MessageFile>,
+	downloadText?: string,
+}
+
+/**
+ * The audio element as native gets it: the audio model resolved by the client. With no model
+ * resolved the channel is left out and native draws no player.
+ */
+export type AudioBlockDialogWidgetItemBlock = AudioBlockElementType & {
+	audio?: MessageAudio,
 }
 
 export type Speech2Text = {

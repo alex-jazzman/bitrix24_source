@@ -33,6 +33,8 @@ export type ImportProgress = {
 	collectionName: string,
 	collectionIndex: number,
 	collectionCount: number,
+	// Why the import stopped (API-03); empty string when it did not.
+	errorMessage: string,
 	errorDetails: ImportErrorDetail[],
 	globalTotal?: number,
 	globalDone?: number,
@@ -72,17 +74,41 @@ export type GetDocumentTreeResponse = {
 	documents: ImportDocumentTreeNode[],
 };
 
+// A note collection a previous run created from the picked source collection (API-01).
+export type ExistingCollection = {
+	externalId: string,
+	collectionId: number,
+	name: string,
+	canModerate: boolean,
+};
+
+export type CheckOverlapResponse = {
+	existingCollectionIds: string[],
+	existingCollections: ExistingCollection[],
+};
+
 export type StartRequest = {
 	sourceType: string,
 	url: string,
 	token: string,
 	collectionIds: string[],
-	overwrite: boolean,
+	// 1 or 0, not a boolean: the form-encoded transport turns `false` into the string 'false'.
+	// {@see buildStartPayload}
+	overwrite: number,
 };
 
 export type StartResponse = {
 	sessionId: number,
 	progress: ImportProgress,
+};
+
+// The read of the active session, as the server gives it: this answer alone is not normalized, so
+// `progress` arrives as it is - and it is null for a session whose run is already over.
+// {@see shouldRestoreSession}
+export type ActiveSessionResponse = {
+	active: boolean,
+	sessionId?: number,
+	progress?: ImportProgress | null,
 };
 
 export type GetStatusRequest = {
@@ -95,6 +121,26 @@ export type GetStatusResponse = {
 
 export type CancelRequest = {
 	sessionId: number,
+};
+
+export type ConvertedCollection = {
+	collectionId: number,
+	name: string,
+};
+
+export type GetConvertedCollectionsRequest = {
+	sessionId: number,
+};
+
+export type GetConvertedCollectionsResponse = {
+	collections: ConvertedCollection[],
+};
+
+// Outcome of a failed source check: the form field the message belongs to, or null when it
+// belongs to the source itself. {@see resolveConnectionError}
+export type ConnectionError = {
+	field: string | null,
+	message: string,
 };
 
 export type ConnectionFieldErrors = {
@@ -146,15 +192,33 @@ export type OverwriteScreenState = {
 	treeByCollectionId: Map<string, CollectionTreeState>,
 };
 
+export type ReimportAction = 'update' | 'create';
+
+// One decision per run, not per base: the picked action applies to every matched base.
+export type ReimportChoiceScreenState = {
+	collections: ExistingCollection[],
+	action: ReimportAction,
+	errorMessage: string,
+	expandedCollectionIds: Set<string>,
+	treeByCollectionId: Map<string, CollectionTreeState>,
+};
+
 export type ProgressScreenState = {
 	isImporting: boolean,
 	isCancelling: boolean,
 	errorMessage: string,
 	progress: ImportProgress | null,
-	isFinishing?: boolean,
+};
+
+export type PermissionsListScreenState = {
+	isLoading: boolean,
+	errorMessage: string,
+	hasLoaded: boolean,
+	collections: ConvertedCollection[],
 };
 
 export type ImportDialogOptions = {
-	onComplete?: () => void | Promise<void>,
+	onComplete?: (collectionId?: number) => void | Promise<void>,
 	wikiImportEnabled?: boolean,
+	landingImportEnabled?: boolean,
 };

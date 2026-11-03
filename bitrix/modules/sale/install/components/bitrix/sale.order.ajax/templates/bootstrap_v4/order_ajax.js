@@ -3,6 +3,32 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 (function() {
 	'use strict';
 
+	var LOADING_ANNOUNCE_DELAY = 1000;
+
+	/** The close button of a `main` popup: the only control of the image layer, focused on open. */
+	var POPUP_CLOSE_BUTTON = '.popup-window-close-icon';
+
+	/** The containers the maps of the checkout are drawn into. */
+	var MAP_CONTAINERS = ['pickUpMap', 'propsMap'];
+
+	/** Nodes the keyboard walk can stop at. */
+	var FOCUS_STOPS = 'a[href], button, input, select, textarea, [tabindex]';
+
+	/**
+	 * Values of `overflow` that make a box a scroller. Chrome puts a scroller with no focusable content
+	 * into the tab order on its own, without a `tabindex`.
+	 */
+	var SCROLLER_OVERFLOW = /^(auto|scroll)$/;
+
+	/** How long a map is left to finish redrawing itself before its stops are counted again. */
+	var MAP_STOPS_DELAY = 100;
+
+	/** The original tabindex of a map control taken out of the tab order, empty if it had none. */
+	var MAP_STOP_TABINDEX = 'data-a11y-map-tabindex';
+
+	/** The node markup is parsed in, see `htmlToText`. */
+	var inertTextContainer = null;
+
 	/**
 	 * Show empty default property value to multiple properties without default values
 	 */
@@ -71,6 +97,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.isHttps = window.location.protocol === "https:";
 			this.orderSaveAllowed = false;
 			this.socServiceHiddenNode = false;
+			this.a11yFocus = null;
+			this.loadingAnnounceTimer = null;
+			this.errorAnnounceBatch = null;
+			this.mapStopObservers = {};
+			this.mapStopTimers = {};
 		},
 
 		/**
@@ -168,6 +199,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		{
 			var form;
 
+			if (this.BXFormPosting === true)
+				return;
+
+			this.rememberFocus();
+
 			if (!this.startLoader())
 				return;
 
@@ -241,6 +277,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								{
 									this.deliveryCachedInfo = [];
 									this.refreshOrder(result);
+
+									if (this.result === result.order)
+									{
+										this.announceEnteredCoupon(eventArgs.actionData);
+									}
 								}
 								else
 								{
@@ -253,6 +294,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								{
 									this.deliveryCachedInfo = [];
 									this.refreshOrder(result);
+
+									if (this.result === result.order)
+									{
+										this.announceCouponRemoved(eventArgs.actionData);
+									}
 								}
 								else
 								{
@@ -311,6 +357,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		refreshOrder: function(result)
 		{
+			var totalBefore;
+
 			if (result.error)
 			{
 				this.showError(this.mainErrorsNode, result.error);
@@ -336,6 +384,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				BX.merge(this.result, result.order);
 				this.editAuthBlock();
 				this.showAuthBlock();
+				// The section of the entry is built anew, the node the focus stood on is gone with it.
+				this.restoreFocus();
 				this.showErrors(result.order.ERROR, false);
 				this.animateScrollTo(this.authBlockNode);
 			}
@@ -345,6 +395,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (this.activeSectionId !== this.deliveryBlockNode.id)
 					this.deliveryCachedInfo = [];
+
+				totalBefore = this.getOrderTotalText();
 
 				this.result = result.order;
 				this.prepareLocations(result.locations);
@@ -357,9 +409,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.clearHiddenBlocks();
 
 				this.initOptions();
-				this.editOrder();
-				this.mapsReady && this.initMaps();
-				BX.saleOrderAjax && BX.saleOrderAjax.initDeferredControl();
+				// The redraw answers one action of the buyer, and that action was made in the open
+				// section: only the errors of that section and of the form as a whole are spoken.
+				this.startErrorAnnounceBatch(this.activeSectionId);
+				try
+				{
+					this.editOrder();
+					this.mapsReady && this.initMaps();
+					BX.saleOrderAjax && BX.saleOrderAjax.initDeferredControl();
+					this.restoreFocus();
+				}
+				finally
+				{
+					this.finishErrorAnnounceBatch();
+				}
+
+				this.announceTotalChange(totalBefore);
 			}
 
 			return true;
@@ -393,11 +458,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 					this.editAuthBlock();
 					this.showAuthBlock();
+					// The section of the entry is built anew, the node the focus stood on is gone with it.
+					this.restoreFocus();
 					this.animateScrollTo(this.authBlockNode);
 				}
 				else
 				{
 					this.showErrors(result.ERROR, true, true);
+					this.focusServerError();
 				}
 			}
 
@@ -426,13 +494,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!this.loadingScreen)
 			{
 				this.loadingScreen = new BX.PopupWindow('loading_screen', null, {
+					focusTrap: false,
 					overlay: {backgroundColor: 'white', opacity: 1},
 					events: {
 						onAfterPopupShow: BX.delegate(function(){
 							BX.cleanNode(this.loadingScreen.popupContainer);
 							BX.removeClass(this.loadingScreen.popupContainer, 'popup-window');
 							this.loadingScreen.popupContainer.appendChild(
-								BX.create('IMG', {props: {src: this.templateFolder + '/images/loader.gif'}})
+								BX.create('IMG', {props: {src: this.templateFolder + '/images/loader.gif'}, attrs: {alt: ''}})
 							);
 							this.loadingScreen.popupContainer.removeAttribute('style');
 							this.loadingScreen.popupContainer.style.display = 'block';
@@ -446,6 +515,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.loadingScreen.show();
 			this.loadingScreen.overlay.element.style.opacity = '0.6';
 
+			this.orderBlockNode && this.orderBlockNode.setAttribute('aria-busy', 'true');
+			this.scheduleLoadingAnnounce();
+
 			return true;
 		},
 
@@ -456,10 +528,651 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		{
 			this.BXFormPosting = false;
 
+			this.cancelLoadingAnnounce();
+			this.orderBlockNode && this.orderBlockNode.removeAttribute('aria-busy');
+
 			if (this.loadingScreen && this.loadingScreen.isShown())
 			{
 				this.loadingScreen.close();
 			}
+		},
+
+		scheduleLoadingAnnounce: function()
+		{
+			this.cancelLoadingAnnounce();
+
+			this.loadingAnnounceTimer = setTimeout(BX.delegate(function() {
+				this.loadingAnnounceTimer = null;
+
+				if (this.loadingScreen && this.loadingScreen.isShown())
+				{
+					this.announce(BX.message('SOA_LOADING_ARIA'), 'polite');
+				}
+			}, this), LOADING_ANNOUNCE_DELAY);
+		},
+
+		cancelLoadingAnnounce: function()
+		{
+			if (this.loadingAnnounceTimer)
+			{
+				clearTimeout(this.loadingAnnounceTimer);
+				this.loadingAnnounceTimer = null;
+			}
+		},
+
+		/**
+		 * Returns BX.UI.Accessibility when ui.a11y is loaded, otherwise null.
+		 */
+		getA11y: function()
+		{
+			return (BX.UI && BX.UI.Accessibility) || null;
+		},
+
+		announce: function(text, politeness)
+		{
+			var a11y = this.getA11y();
+
+			if (!a11y || !BX.type.isNotEmptyString(text))
+				return;
+
+			a11y.LiveAnnouncer.announce(text, politeness || 'polite');
+		},
+
+		focusNode: function(node, options)
+		{
+			var a11y = this.getA11y();
+
+			if (!node)
+				return;
+
+			if (a11y)
+			{
+				a11y.FocusNavigator.focusTarget(node, options);
+			}
+			else
+			{
+				node.focus(options);
+			}
+		},
+
+		/**
+		 * Stores the focus marker before the form is re-rendered, see restoreFocus.
+		 */
+		rememberFocus: function()
+		{
+			var active = document.activeElement,
+				inside = !!(
+					active
+					&& this.orderBlockNode
+					&& active !== this.orderBlockNode
+					&& this.orderBlockNode.contains(active)
+				),
+				markerNode = inside ? this.findFocusMarkerOwner(active) : null;
+
+			this.a11yFocus = {
+				marker: markerNode ? markerNode.getAttribute('data-a11y-focus') : null,
+				inside: inside
+			};
+
+			return this.a11yFocus;
+		},
+
+		restoreFocus: function()
+		{
+			var state = this.a11yFocus,
+				target = null;
+
+			this.a11yFocus = null;
+
+			if (!state || !state.inside || !this.orderBlockNode)
+				return;
+
+			if (state.marker)
+			{
+				target = this.findRenderedFocusMarker(state.marker)
+					|| this.findPaginationCurrentPage(state.marker);
+			}
+
+			if (target)
+			{
+				this.focusNode(target);
+			}
+			else
+			{
+				this.focusSectionTitle(BX(this.activeSectionId));
+			}
+		},
+
+		/**
+		 * The current page link, used when the focused arrow is rendered as plain text on the first or
+		 * last page (see showPagination) and its marker is gone.
+		 */
+		findPaginationCurrentPage: function(marker)
+		{
+			var arrow = /^pagination-([A-Za-z]+)-(?:prev|next)$/.exec(marker || ''),
+				nodes, i;
+
+			if (!arrow)
+				return null;
+
+			nodes = this.orderBlockNode.querySelectorAll(
+				'[data-a11y-focus^="pagination-' + arrow[1] + '-"][aria-current="page"]'
+			);
+
+			for (i = 0; i < nodes.length; i++)
+			{
+				if (!this.isInsideHiddenSection(nodes[i]) && nodes[i].getClientRects().length > 0)
+					return nodes[i];
+			}
+
+			return null;
+		},
+
+		findFocusMarkerOwner: function(node)
+		{
+			while (node && node !== this.orderBlockNode)
+			{
+				if (node.nodeType === 1 && node.hasAttribute('data-a11y-focus'))
+					return node;
+
+				node = node.parentNode;
+			}
+
+			return null;
+		},
+
+		findRenderedFocusMarker: function(marker)
+		{
+			var nodes = this.orderBlockNode.querySelectorAll('[data-a11y-focus]'),
+				first = null,
+				i;
+
+			for (i = 0; i < nodes.length; i++)
+			{
+				if (
+					nodes[i].getAttribute('data-a11y-focus') === marker
+					&& !this.isInsideHiddenSection(nodes[i])
+					&& nodes[i].getClientRects().length > 0
+				)
+				{
+					// Radios of a group share the marker, the focus returns to the checked one.
+					if (nodes[i].type !== 'radio' || nodes[i].checked)
+						return nodes[i];
+
+					first = first || nodes[i];
+				}
+			}
+
+			return first;
+		},
+
+		isInsideHiddenSection: function(node)
+		{
+			while (node && node !== this.orderBlockNode)
+			{
+				if (node.id && /-hidden$/.test(node.id))
+					return true;
+
+				node = node.parentNode;
+			}
+
+			return false;
+		},
+
+		focusSectionTitle: function(section)
+		{
+			var title = section ? section.querySelector('[data-entity="section-title"]') : null;
+
+			if (!title)
+				return;
+
+			if (!title.hasAttribute('tabindex'))
+			{
+				title.setAttribute('tabindex', '-1');
+			}
+
+			this.focusNode(title, {preventScroll: true});
+		},
+
+		/**
+		 * Writes the step number and state into the visually hidden part of the section title.
+		 */
+		updateSectionState: function(section)
+		{
+			var stateNode = BX.type.isDomNode(section) ? section.querySelector('[data-entity="section-state"]') : null,
+				number, messageId;
+
+			if (!stateNode)
+				return;
+
+			number = this.getSectionNumber(section);
+			if (!number)
+			{
+				stateNode.textContent = '';
+				return;
+			}
+
+			if (BX.hasClass(section, 'bx-selected'))
+				messageId = 'SOA_STEP_STATE_CURRENT_ARIA';
+			else if (BX.hasClass(section, 'bx-step-error'))
+				messageId = 'SOA_STEP_STATE_ERROR_ARIA';
+			else if (BX.hasClass(section, 'bx-step-warning'))
+				messageId = 'SOA_STEP_STATE_WARNING_ARIA';
+			else if (BX.hasClass(section, 'bx-step-completed'))
+				messageId = 'SOA_STEP_STATE_DONE_ARIA';
+			else
+				messageId = 'SOA_STEP_STATE_PENDING_ARIA';
+
+			stateNode.textContent = (BX.message(messageId) || '').replace('#NUMBER#', function() { return number; });
+		},
+
+		getSectionNumber: function(section)
+		{
+			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
+				i;
+
+			for (i = 0; i < sections.length; i++)
+			{
+				if (sections[i] === section)
+					return i + 1;
+			}
+
+			return 0;
+		},
+
+		getSectionName: function(section)
+		{
+			var title = section.querySelector('[data-entity="section-title"]'),
+				name = '',
+				i, child;
+
+			if (!title)
+				return '';
+
+			for (i = 0; i < title.childNodes.length; i++)
+			{
+				child = title.childNodes[i];
+				if (child.nodeType === 1 && child.getAttribute('data-entity') === 'section-state')
+					continue;
+
+				name += child.textContent;
+			}
+
+			return BX.util.trim(name.replace(/\s+/g, ' '));
+		},
+
+		linkButtonKeyDownHandler: function(event)
+		{
+			var key = event.key;
+
+			if (key !== ' ' && key !== 'Spacebar')
+				return;
+
+			BX.PreventDefault(event);
+			(event.currentTarget || event.target).click();
+		},
+
+		/**
+		 * A div with the button role is not clicked by the browser, Enter and space click it as the mouse does.
+		 */
+		divButtonKeyDownHandler: function(event)
+		{
+			var key = event.key;
+
+			if (key !== ' ' && key !== 'Spacebar' && key !== 'Enter')
+				return;
+
+			BX.PreventDefault(event);
+			(event.currentTarget || event.target).click();
+		},
+
+		getAddValueLabel: function(propertyName)
+		{
+			return (BX.message('SOA_ADD_VALUE_ARIA') || '').replace('#PROPERTY#', function() { return propertyName || ''; });
+		},
+
+		/**
+		 * A picture that opens the image layer becomes a button: Enter and space click it as the mouse does,
+		 * and the layer returns the focus to it.
+		 */
+		bindImageLayerOpener: function(img, name, url)
+		{
+			if (!img)
+				return;
+
+			img.setAttribute('alt', (BX.message('SOA_ITEM_IMAGE_ARIA') || '').replace('#NAME#', function() { return name || ''; }));
+			img.setAttribute('role', 'button');
+			img.setAttribute('tabindex', '0');
+
+			BX.bind(img, 'click', BX.delegate(function(event) {
+				this.popupShow(event, url, null, {opener: img, name: name});
+			}, this));
+			BX.bind(img, 'keydown', function(event) {
+				var key = event.key;
+
+				if (key !== ' ' && key !== 'Spacebar' && key !== 'Enter')
+					return;
+
+				BX.PreventDefault(event);
+				img.click();
+			});
+		},
+
+		/**
+		 * Makes a tile of delivery or payment a radio of its group. The checkbox of the tile stays
+		 * the value of the form and leaves the tab order and the accessibility tree; being inert, it is
+		 * not a control nested in the radio, and a click on it reaches the tile.
+		 */
+		setItemRadio: function(itemNode, checked, label, marker, selectHandler)
+		{
+			var checkbox = itemNode.querySelector('input[type=checkbox]');
+
+			itemNode.setAttribute('role', 'radio');
+			itemNode.setAttribute('aria-checked', checked ? 'true' : 'false');
+			itemNode.setAttribute('tabindex', checked ? '0' : '-1');
+			itemNode.setAttribute('aria-label', label);
+			itemNode.setAttribute('data-a11y-focus', marker);
+
+			if (checkbox)
+			{
+				checkbox.setAttribute('tabindex', '-1');
+				checkbox.setAttribute('aria-hidden', 'true');
+				checkbox.inert = true;
+			}
+
+			BX.bind(itemNode, 'keydown', BX.delegate(function(event) {
+				var key = event.key;
+
+				if (event.target !== itemNode || (key !== ' ' && key !== 'Spacebar' && key !== 'Enter'))
+					return;
+
+				BX.PreventDefault(event);
+				selectHandler.call(this, event);
+			}, this));
+		},
+
+		setItemRadioChecked: function(itemNode, checked)
+		{
+			if (itemNode && itemNode.getAttribute('role') === 'radio')
+			{
+				itemNode.setAttribute('aria-checked', checked ? 'true' : 'false');
+			}
+		},
+
+		/**
+		 * One tab stop for the tiles of a section, arrows move the focus without selecting.
+		 */
+		initItemsRadioGroup: function(groupNode, section)
+		{
+			var a11y = this.getA11y(),
+				sectionId = section.id,
+				build, items, i;
+
+			groupNode.setAttribute('role', 'radiogroup');
+			groupNode.setAttribute('aria-label', this.getSectionName(section));
+
+			if (!a11y)
+			{
+				items = groupNode.querySelectorAll('[role="radio"]');
+				for (i = 0; i < items.length; i++)
+				{
+					items[i].setAttribute('tabindex', '0');
+				}
+
+				return;
+			}
+
+			// The redraw builds the container of the section anew, and the zone of the previous one keeps
+			// its observer and its handlers on a tree nobody sees any more.
+			this.dropItemsRadioZone(sectionId);
+
+			// The zone raises a tile into the tab order the moment it is built, and it is built by the
+			// first entry of the focus into the group. Until then the tab stop is the one the markup
+			// carries, and a group showing no chosen tile - a page of deliveries the chosen one did not
+			// get onto - would carry none: nothing to accept the focus, nothing to build the zone.
+			this.ensureItemsRadioTabStop(groupNode);
+
+			build = BX.delegate(function() {
+				this.buildItemsRadioZone(sectionId, groupNode);
+			}, this);
+
+			// The key is listened to beside the focus: the focus can reach the group while the form is
+			// still being revealed, and then nothing enters it again before the buyer presses an arrow.
+			// A zone switched on here still answers that very press - it is bound to the group, which the
+			// key has not reached yet.
+			groupNode.addEventListener('focusin', build, true);
+			groupNode.addEventListener('keydown', build, true);
+
+			groupNode.addEventListener('keydown', BX.delegate(function(event) {
+				this.turnItemsRadioPage(event, groupNode, section);
+			}, this), true);
+		},
+
+		/**
+		 * The arrows go round the whole list and not round the page of it on the screen: past the last
+		 * tile of a page the next page opens on its first tile, past the last page the first one. The
+		 * zone of the group holds only the tiles of its page and wraps inside them, so on a page of a
+		 * single tile the arrow left the focus where it was. The press is taken here, ahead of the zone,
+		 * which skips a key handled already.
+		 */
+		turnItemsRadioPage: function(event, groupNode, section)
+		{
+			var entity = section === this.deliveryBlockNode ? 'delivery'
+					: (section === this.paySystemBlockNode ? 'paySystem' : null),
+				pagination = entity ? this.getPagination(entity) : null,
+				forward = event.key === 'ArrowRight' || event.key === 'ArrowDown',
+				backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp',
+				items, page, pages, target;
+
+			if (
+				!pagination || !pagination.pages || pagination.pages.length < 2
+				|| (!forward && !backward)
+				|| event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey
+			)
+				return;
+
+			items = groupNode.querySelectorAll('[role="radio"]');
+			if (!items.length || event.target !== items[forward ? items.length - 1 : 0])
+				return;
+
+			pages = pagination.pages.length;
+			// The page number turns into a string once a paging link has been pressed.
+			page = parseInt(pagination.pageNumber, 10) + (forward ? 1 : -1);
+			page = page > pages ? 1 : (page < 1 ? pages : page);
+
+			BX.PreventDefault(event);
+
+			if (entity === 'delivery')
+				this.showDeliveryItemsPage(page);
+			else
+				this.showPaySystemItemsPage(page);
+
+			// The page is drawn into the container `showDeliveryItemsPage` and `showPaySystemItemsPage` clean.
+			items = section.querySelector('.bx-soa-pp-item-container').querySelectorAll('[role="radio"]');
+			target = items[forward ? 0 : items.length - 1];
+
+			this.focusNode(target);
+			this.announcePageChange(entity);
+		},
+
+		/**
+		 * Exactly one tile of the group answers Tab: the chosen one, or the first one when the group
+		 * shows no chosen tile.
+		 */
+		ensureItemsRadioTabStop: function(groupNode)
+		{
+			var items = groupNode.querySelectorAll('[role="radio"]'),
+				entry = groupNode.querySelector('[role="radio"][aria-checked="true"]') || items[0],
+				i;
+
+			for (i = 0; i < items.length; i++)
+			{
+				items[i].setAttribute('tabindex', items[i] === entry ? '0' : '-1');
+			}
+		},
+
+		/**
+		 * Takes the tiles of the group into a focus zone, once.
+		 *
+		 * The zone reads the tiles it can see at the moment it is switched on, and it reads them once:
+		 * its observer follows what changes inside the group, while being seen at all is decided above
+		 * it. The form is printed transparent and revealed by a transition of half a second, and a zone
+		 * switched on inside that window takes no tile at all - the arrows of the group then stay dead
+		 * for as long as the page lives. So the zone is only kept once it has taken every tile, and
+		 * until then the next entry of the focus builds it anew. A zone that has them all is answered
+		 * with one property read: a walk of the group belongs to no arrow key and to no click on a tile.
+		 */
+		buildItemsRadioZone: function(sectionId, groupNode)
+		{
+			var a11y = this.getA11y(),
+				zones = this.itemsRadioZones || (this.itemsRadioZones = {}),
+				built = zones[sectionId],
+				items, seen = 0, zone, i;
+
+			if (!a11y || (built && built.complete))
+				return;
+
+			items = groupNode.querySelectorAll('[role="radio"]');
+			for (i = 0; i < items.length; i++)
+			{
+				if (a11y.InteractivityChecker.isFocusable(items[i]))
+					seen++;
+			}
+
+			if (seen === 0 || (built && seen === built.seen))
+				return;
+
+			if (built)
+				built.zone.deactivate();
+
+			zone = new a11y.FocusZone(groupNode, {
+				bindKeys: a11y.FocusKeys.ArrowAll | a11y.FocusKeys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusableElementFilter: function(node) {
+					return node.getAttribute('role') === 'radio';
+				},
+				focusInStrategy: function() {
+					return groupNode.querySelector('[role="radio"][aria-checked="true"]')
+						|| groupNode.querySelector('[role="radio"]');
+				}
+			});
+			zone.activate();
+
+			zones[sectionId] = {zone: zone, seen: seen, complete: seen === items.length};
+		},
+
+		dropItemsRadioZone: function(sectionId)
+		{
+			var zones = this.itemsRadioZones;
+
+			if (zones && zones[sectionId])
+			{
+				zones[sectionId].zone.deactivate();
+				zones[sectionId] = null;
+			}
+		},
+
+		/**
+		 * Errors shown while a batch is open are announced once, when the outermost batch finishes:
+		 * each assertive announcement cancels the previous one.
+		 *
+		 * A batch opened with a section speaks for that section alone. Every request redraws the whole
+		 * form, and the errors the sections the buyer did not touch get back with it are not the answer
+		 * to what he has just done: spoken assertively they would take the place of that answer.
+		 */
+		startErrorAnnounceBatch: function(sectionId)
+		{
+			if (!this.errorAnnounceBatch)
+			{
+				this.errorAnnounceBatch = {depth: 0, messages: [], sectionId: sectionId || null};
+			}
+
+			this.errorAnnounceBatch.depth++;
+		},
+
+		finishErrorAnnounceBatch: function()
+		{
+			var batch = this.errorAnnounceBatch;
+
+			if (!batch)
+				return;
+
+			batch.depth--;
+			if (batch.depth > 0)
+				return;
+
+			this.errorAnnounceBatch = null;
+			this.announce(batch.messages.join(' '), 'assertive');
+		},
+
+		announceError: function(message, node)
+		{
+			var text = this.htmlToText(BX.type.isArray(message) ? message.join('<br>') : message),
+				batch = this.errorAnnounceBatch;
+
+			if (!text || !this.isAnnouncedErrorSection(node))
+				return;
+
+			if (!batch)
+			{
+				this.announce(text, 'assertive');
+			}
+			else if (!BX.util.in_array(text, batch.messages))
+			{
+				batch.messages.push(text);
+			}
+		},
+
+		/**
+		 * Whether the errors of the node answer what the buyer has just done: the section the batch was
+		 * opened for and the errors of the form as a whole speak, the other sections stay silent.
+		 */
+		isAnnouncedErrorSection: function(node)
+		{
+			var batch = this.errorAnnounceBatch;
+
+			if (!batch || !batch.sectionId || !node)
+				return true;
+
+			return node === this.mainErrorsNode || node.id === batch.sectionId;
+		},
+
+		announceTotalChange: function(totalBefore)
+		{
+			var totalAfter = this.getOrderTotalText();
+
+			if (!totalAfter || totalAfter === totalBefore)
+				return;
+
+			this.announce((BX.message('SOA_TOTAL_CHANGED_ARIA') || '').replace('#TOTAL#', function() { return totalAfter; }), 'polite');
+		},
+
+		getOrderTotalText: function()
+		{
+			var total = this.result && this.result.TOTAL;
+
+			return total ? this.htmlToText(total.ORDER_TOTAL_PRICE_FORMATED) : '';
+		},
+
+		/**
+		 * Converts markup to plain text in an inert document, so no scripts or images of the markup run.
+		 *
+		 * The document is made once and the node in it is reused: a redraw of the form converts the label
+		 * of every tile of the delivery, and a document of its own for each of them is not free.
+		 */
+		htmlToText: function(html)
+		{
+			if (!BX.type.isNotEmptyString(html))
+				return '';
+
+			if (!inertTextContainer)
+			{
+				inertTextContainer = document.implementation.createHTMLDocument('').createElement('div');
+			}
+
+			inertTextContainer.innerHTML = html.replace(/<br\s*\/?>/gi, ' ');
+
+			return BX.util.trim(inertTextContainer.textContent.replace(/\s+/g, ' '));
 		},
 
 		htmlspecialcharsEx: function(str)
@@ -661,7 +1374,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					errorContainer.style.display = '';
 
 				if (!!border)
+				{
 					BX.addClass(node, 'bx-step-error');
+					this.updateSectionState(node);
+				}
+
+				if (!this.isInsideHiddenSection(node))
+				{
+					this.announceError(msg, node);
+				}
 			}
 		},
 
@@ -674,12 +1395,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				section = BX.findParent(errorNodes[k], {className: 'bx-soa-section'});
 				BX.removeClass(section, 'bx-step-error');
+				this.updateSectionState(section);
 				errorNodes[k].style.display = 'none';
 				BX.cleanNode(errorNodes[k]);
 			}
 
 			if (!errors || BX.util.object_keys(errors).length < 1)
 				return;
+
+			this.startErrorAnnounceBatch();
 
 			for (k in errors)
 			{
@@ -735,6 +1459,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}
 			}
 
+			this.finishErrorAnnounceBatch();
+
 			!!scroll && this.scrollToError();
 		},
 
@@ -747,6 +1473,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return;
 
 			BX.removeClass(node, 'bx-step-error');
+			this.updateSectionState(node);
 			errorNode.style.display = 'none';
 			BX.cleanNode(errorNode);
 
@@ -894,6 +1621,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			else
 				BX.removeClass(node, 'bx-step-error bx-step-warning');
 
+			this.updateSectionState(node);
+
 			return !showError;
 		},
 
@@ -928,6 +1657,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (sections[k].getAttribute('data-visited') == 'false')
 					BX.removeClass(sections[k], 'bx-step-completed');
+
+				this.updateSectionState(sections[k]);
 			}
 
 			if (currentDelivery && currentDelivery.CALCULATE_ERRORS)
@@ -951,6 +1682,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				BX.removeClass(this.deliveryBlockNode, 'bx-step-warning');
 			}
+
+			this.updateSectionState(this.deliveryBlockNode);
 
 			if (!this.result.WARNING || !this.options.showWarnings)
 				return;
@@ -1044,7 +1777,23 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				});
 				BX.prepend(warningNode, errorNode.parentNode);
 				BX.addClass(node, 'bx-step-warning');
+				this.updateSectionState(node);
 			}
+		},
+
+		getPagination: function(entity)
+		{
+			switch (entity)
+			{
+				case 'delivery':
+					return this.deliveryPagination;
+				case 'paySystem':
+					return this.paySystemPagination;
+				case 'pickUp':
+					return this.pickUpPagination;
+			}
+
+			return null;
 		},
 
 		showPagination: function(entity, node)
@@ -1052,19 +1801,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!node || !entity)
 				return;
 
-			var pagination, navigation = [], i,
+			var pagination = this.getPagination(entity), navigation = [], i,
 				pageCounter, active,
 				colorTheme, paginationNode;
 
-			switch (entity)
-			{
-				case 'delivery':
-					pagination = this.deliveryPagination; break;
-				case 'paySystem':
-					pagination = this.paySystemPagination; break;
-				case 'pickUp':
-					pagination = this.pickUpPagination; break;
-			}
+			if (!pagination)
+				return;
 
 			if (pagination.pages.length > 1)
 			{
@@ -1077,7 +1819,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						props: {className: 'bx-pag-prev'},
 						html: pagination.pageNumber == 1
 							? '<span>' + this.params.MESS_NAV_BACK + '</span>'
-							: '<a href=""><span>' + this.params.MESS_NAV_BACK + '</span></a>',
+							: '<a href="" data-a11y-focus="pagination-' + entity + '-prev"><span>' + this.params.MESS_NAV_BACK + '</span></a>',
 						events: {click: BX.proxy(this.doPagination, this)}
 					})
 				);
@@ -1093,7 +1835,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								'data-entity': entity
 							},
 							props: {className: active},
-							html: '<a href=""><span>' + pageCounter  + '</span></a>',
+							html: '<a href="" data-a11y-focus="pagination-' + entity + '-' + pageCounter + '"'
+								+ (active ? ' aria-current="page"' : '')
+								+ '><span>' + pageCounter  + '</span></a>',
 							events: {click: BX.proxy(this.doPagination, this)}
 						})
 					);
@@ -1108,7 +1852,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						props: {className: 'bx-pag-next'},
 						html: pagination.pageNumber == pagination.pages.length
 							? '<span>' + this.params.MESS_NAV_FORWARD + '</span>'
-							: '<a href=""><span>' + this.params.MESS_NAV_FORWARD + '</span></a>',
+							: '<a href="" data-a11y-focus="pagination-' + entity + '-next"><span>' + this.params.MESS_NAV_FORWARD + '</span></a>',
 						events: {click: BX.proxy(this.doPagination, this)}
 					})
 				);
@@ -1145,6 +1889,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				page = page == 'next' ? ++pageNum : --pageNum;
 			}
 
+			this.rememberFocus();
+
 			if (entity == 'delivery')
 				this.showDeliveryItemsPage(page);
 			else if (entity == 'paySystem')
@@ -1152,7 +1898,26 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			else if (entity == 'pickUp')
 				this.showPickUpItemsPage(page);
 
+			this.restoreFocus();
+			this.announcePageChange(entity);
+
 			return BX.PreventDefault(e);
+		},
+
+		/** The list is rebuilt in place, so the new page is not otherwise noticeable to a screen reader. */
+		announcePageChange: function(entity)
+		{
+			var pagination = this.getPagination(entity);
+
+			if (!pagination || !pagination.pages || pagination.pages.length < 2)
+				return;
+
+			this.announce(
+				(BX.message('SOA_PAGINATION_PAGE_ARIA') || '')
+					.replace('#PAGE#', function() { return pagination.pageNumber; })
+					.replace('#TOTAL#', function() { return pagination.pages.length; }),
+				'polite'
+			);
 		},
 
 		showDeliveryItemsPage: function(page)
@@ -1192,6 +1957,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			deliveryItemsContainer.appendChild(deliveryItemsContainerRow);
+			this.initItemsRadioGroup(deliveryItemsContainerRow, this.deliveryBlockNode);
 
 			this.showPagination('delivery', deliveryItemsContainer);
 		},
@@ -1233,6 +1999,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			paySystemItemsContainer.appendChild(paySystemItemsContainerRow);
+			this.initItemsRadioGroup(paySystemItemsContainerRow, this.paySystemBlockNode);
 
 			this.showPagination('paySystem', paySystemItemsContainer);
 		},
@@ -1340,6 +2107,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		bindEvents: function()
 		{
 			BX.bind(this.orderSaveBlockNode.querySelector('[data-save-button]'), 'click', BX.proxy(this.clickOrderSaveAction, this));
+			BX.bind(this.orderSaveBlockNode.querySelector('[data-save-button]'), 'keydown', BX.proxy(this.linkButtonKeyDownHandler, this));
+			BX.bind(BX('bx-soa-order-form'), 'submit', BX.PreventDefault);
 			BX.bind(window, 'scroll', BX.proxy(this.totalBlockScrollCheck, this));
 			BX.bind(window, 'resize', BX.throttle(function(){
 				this.totalBlockResizeCheck();
@@ -1355,6 +2124,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			var firstSection = this.orderBlockNode.querySelector('.bx-soa-section.bx-active');
 			BX.addClass(firstSection, 'bx-selected');
 			this.activeSectionId = firstSection.id;
+			this.updateSectionState(firstSection);
 		},
 
 		initOptions: function()
@@ -1685,6 +2455,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				locationNode.removeAttribute('style');
 				this.bindValidation(i, locationNode);
+
+				if (BX.hasClass(locationNode, 'bx-soa-customer-field') && this.validation.properties)
+				{
+					this.initPropertyControlsA11y(
+						this.validation.properties[i],
+						locationNode.querySelector('.soa-property-container')
+					);
+				}
+
 				if (clearButton)
 				{
 					BX.bind(clearButton, 'click', function(e){
@@ -1716,6 +2495,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						BX.fireEvent(inputSearch, 'keyup');
 				}
 			}
+
+			this.initDeliveryLocationA11y();
 
 			if (this.firstLoad && this.result.IS_AUTHORIZED && typeof this.result.LAST_ORDER_DATA.FAIL === 'undefined')
 			{
@@ -1771,7 +2552,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						var requiredUncheckedConsentId = this.getFirstRequiredUncheckedConsentId();
 						if (requiredUncheckedConsentId)
 						{
+							this.setConsentInitiator(event);
 							BX.onCustomEvent('bx-soa-order-save-' + requiredUncheckedConsentId);
+							this.releaseConsentInitiator();
 						}
 						else
 						{
@@ -1780,7 +2563,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					}
 					else
 					{
+						this.setConsentInitiator(event);
 						BX.onCustomEvent('bx-soa-order-save', []);
+						this.releaseConsentInitiator();
 					}
 				}
 				else
@@ -1880,6 +2665,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.fade(actionSection, section.next);
 			this.show(section.next);
+			this.focusSectionTitle(section.next);
 
 			return BX.PreventDefault(event);
 		},
@@ -1895,6 +2681,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.fade(actionSection);
 			this.show(section.next);
+			this.focusSectionTitle(section.next);
 			this.animateScrollTo(section.next, 800);
 			return BX.PreventDefault(event);
 		},
@@ -2221,6 +3008,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			node.setAttribute('data-visited', 'true');
 			BX.addClass(node, 'bx-selected');
 			BX.removeClass(node, 'bx-step-completed');
+			this.updateSectionState(node);
 		},
 
 		showByClick: function(event)
@@ -2237,6 +3025,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			fadeNode && this.fade(fadeNode);
 			this.show(showNode);
+			this.focusSectionTitle(showNode);
 
 			setTimeout(BX.delegate(function(){
 				if (BX.pos(showNode).top < scrollTop)
@@ -2275,6 +3064,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				BX.addClass(allSections[i], 'bx-step-completed');
 				allSections[i].setAttribute('data-visited', 'true');
+				this.updateSectionState(allSections[i]);
 				i++;
 			}
 		},
@@ -2296,7 +3086,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				buttons.push(
 					BX.create('button', {
 						props: {
-							href: 'javascript:void(0)',
+							type: 'button',
 							className: 'btn btn-outline-secondary pl-3 pr-3'
 						},
 						html: this.params.MESS_BACK,
@@ -2314,7 +3104,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				buttons.push(
 					BX.create('button', {
-						props: {href: 'javascript:void(0)', className: 'pull-right btn btn-primary pl-3 pr-3'},
+						props: {type: 'button', className: 'pull-right btn btn-primary pl-3 pr-3'},
 						html: this.params.MESS_FURTHER,
 						events: {click: BX.proxy(this.clickNextAction, this)}
 					})
@@ -2564,7 +3354,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			var active = section.id == this.activeSectionId,
 				titleNode = section.querySelector('.bx-soa-section-title-container'),
-				editButton, errorContainer;
+				editButton, errorContainer, sectionName;
 
 			BX.unbindAll(titleNode);
 			if (this.result.SHOW_AUTH)
@@ -2578,7 +3368,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				BX.bind(titleNode, 'click', BX.proxy(this.showByClick, this));
 				editButton = titleNode.querySelector('.bx-soa-editstep');
-				editButton && BX.bind(editButton, 'click', BX.proxy(this.showByClick, this));
+				if (editButton)
+				{
+					BX.bind(editButton, 'click', BX.proxy(this.showByClick, this));
+					BX.bind(editButton, 'keydown', BX.proxy(this.linkButtonKeyDownHandler, this));
+					sectionName = this.getSectionName(section);
+					editButton.setAttribute(
+						'aria-label',
+						(BX.message('SOA_EDIT_SECTION_ARIA') || '').replace('#SECTION#', function() { return sectionName; })
+					);
+				}
 			}
 
 			errorContainer = section.querySelector('.alert.alert-danger');
@@ -2768,7 +3567,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		createAuthFormInputContainer: function(labelText, inputNode, required)
 		{
 			if (required)
-				labelText += '<span class="bx-authform-starrequired">*</span>';
+			{
+				labelText += '<span class="bx-authform-starrequired" aria-hidden="true">*</span>';
+				inputNode.setAttribute('aria-required', 'true');
+			}
 
 			var labelHtml = BX.create('LABEL', {
 				children: [
@@ -3061,7 +3863,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							BX.create('DIV', {
 								props: {className: 'bx-authform-label-container'},
 								children: [
-									BX.create('SPAN', {props: {className: 'bx-authform-starrequired'}, text: '*'}),
+									BX.create('SPAN', {
+										props: {className: 'bx-authform-starrequired'},
+										attrs: {'aria-hidden': 'true'},
+										text: '*'
+									}),
 									BX.message('CAPTCHA_REGF_PROMT'),
 									BX.create('DIV', {
 										props: {className: 'bx-captcha'},
@@ -3087,7 +3893,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								props: {className: 'bx-authform-input-container'},
 								children: [
 									BX.create('INPUT', {
-										attrs: {'data-send': true},
+										attrs: {'data-send': true, 'aria-required': 'true'},
 										props: {
 											name: 'captcha_word',
 											type: 'text',
@@ -3389,7 +4195,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (this.params.SHOW_COUPONS_BASKET === 'Y')
 				{
-					this.editCoupons(basketContent);
+					this.editCoupons(basketContent, 'basket');
 				}
 
 				this.getBlockFooter(basketContent);
@@ -3608,9 +4414,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								children: [
 									BX.create('A', {
 										props: {href: '', className: 'bx-soa-info-shower'},
+										attrs: {role: 'button', 'aria-expanded': 'false'},
 										html: this.params.MESS_ADDITIONAL_PROPS,
 										events: {
-											click: BX.proxy(this.showAdditionalProperties, this)
+											click: BX.proxy(this.showAdditionalProperties, this),
+											keydown: BX.proxy(this.linkButtonKeyDownHandler, this)
 										}
 									}),
 									BX.create('DIV', {
@@ -3639,6 +4447,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (BX.hasClass(infoContainer, 'bx-active'))
 			{
+				target.setAttribute('aria-expanded', 'false');
+
 				new BX.easing({
 					duration: 300,
 					start: {opacity: 100, height: parentHeight},
@@ -3658,6 +4468,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 			else
 			{
+				target.setAttribute('aria-expanded', 'true');
+
 				infoContainer.style.opacity = 0;
 				BX.addClass(infoContainer, 'bx-active');
 				var height = infoContainer.offsetHeight + parentHeight;
@@ -3822,11 +4634,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			else if (column.id === 'DETAIL_PICTURE')
 			{
 				logotype = this.getImageSources(allData.data, column.id),
-				img = BX.create('IMG', {props: {src: logotype && logotype.src_1x || this.defaultBasketItemLogo}});
+				img = BX.create('IMG', {props: {src: logotype && logotype.src_1x || this.defaultBasketItemLogo, alt: ''}});
 
 				if (logotype && logotype.src_1x && logotype.src_orig)
 				{
-					BX.bind(img, 'click', BX.delegate(function(e){this.popupShow(e, logotype.src_orig);}, this));
+					this.bindImageLayerOpener(img, allData.data.NAME, logotype.src_orig);
 				}
 
 				textNode.appendChild(img);
@@ -3957,11 +4769,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			else if (column.id === 'DETAIL_PICTURE' || column.id === 'PREVIEW_PICTURE')
 			{
 				logotype = this.getImageSources(allData.data, column.id),
-				img = BX.create('IMG', {props: {src: logotype && logotype.src_1x || this.defaultBasketItemLogo}, style: {maxWidth: '50%'}});
+				img = BX.create('IMG', {props: {src: logotype && logotype.src_1x || this.defaultBasketItemLogo, alt: ''}, style: {maxWidth: '50%'}});
 
 				if (logotype && logotype.src_1x && logotype.src_orig)
 				{
-					BX.bind(img, 'click', BX.delegate(function(e){this.popupShow(e, logotype.src_orig);}, this));
+					this.bindImageLayerOpener(img, allData.data.NAME, logotype.src_orig);
 				}
 
 				textNode.appendChild(img);
@@ -4039,13 +4851,25 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			});
 		},
 
-		popupShow: function(e, url, source)
+		popupShow: function(e, url, source, options)
 		{
 			if (this.popup)
 				this.popup.destroy();
 
-			var that = this;
+			options = options || {};
+
+			var that = this,
+				focusTrap = {initialFocus: [POPUP_CLOSE_BUTTON, 'container'], preventScroll: true};
+
+			if (options.opener)
+			{
+				focusTrap.restoreFocus = options.opener;
+			}
+
 			this.popup = new BX.PopupWindow('bx-soa-image-popup', null, {
+				role: 'dialog',
+				ariaLabel: BX.message('SOA_IMAGE_LAYER_ARIA'),
+				focusTrap: focusTrap,
 				lightShadow: true,
 				offsetTop: 0,
 				offsetLeft: 0,
@@ -4057,7 +4881,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				events: {
 					onPopupShow: function() {
 						BX.create("IMG", {
-							props: {src: source || url},
+							props: {src: source || url, alt: options.name || ''},
 							events: {
 								load: function() {
 									var content = BX('bx-soa-image-popup-content');
@@ -4102,7 +4926,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				},
 				content: BX.create('DIV', {
 					props: {id: 'bx-soa-image-popup-content'},
-					children: [BX.create('IMG', {props: {src: this.templateFolder + "/images/loader.gif"}})]
+					children: [BX.create('IMG', {props: {src: this.templateFolder + "/images/loader.gif", alt: ''}})]
 				})
 			});
 			this.popup.show();
@@ -4129,9 +4953,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			});
 		},
 
-		editCoupons: function(basketItemsNode)
+		editCoupons: function(basketItemsNode, section)
 		{
-			var couponsList = this.getCouponsList(true),
+			var couponsList = this.getCouponsList(true, section),
 				couponsLabel = this.getCouponsLabel(true),
 				couponsBlock = BX.create('DIV', {
 					props: {className: 'bx-soa-coupon-block'},
@@ -4144,20 +4968,30 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 										className: 'form-control bx-ios-fix',
 										type: 'text'
 									},
+									attrs: {
+										'aria-label': this.htmlToText(this.params.MESS_USE_COUPON) || BX.message('SOA_COUPON_FIELD_ARIA'),
+										'data-a11y-focus': 'coupon'
+									},
 									events: {
 										change: BX.delegate(function(event){
-											var newCoupon = BX.getEventTarget(event);
-											if (newCoupon && newCoupon.value)
-											{
-												this.sendRequest('enterCoupon', newCoupon.value);
-												newCoupon.value = '';
-											}
+											this.applyCouponField(BX.getEventTarget(event));
+										}, this),
+										keydown: BX.delegate(function(event){
+											if (event.key !== 'Enter' || event.isComposing)
+												return;
+
+											BX.PreventDefault(event);
+											this.applyCouponField(BX.getEventTarget(event));
 										}, this)
 									}
 								})
 							]
 						}),
-						BX.create('SPAN', {props: {className: 'bx-soa-coupon-item'}, children: couponsList})
+						BX.create('SPAN', {
+							props: {className: 'bx-soa-coupon-item'},
+							attrs: {'data-coupon-section': section || ''},
+							children: couponsList
+						})
 					]
 				});
 
@@ -4170,6 +5004,19 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					]
 				})
 			);
+		},
+
+		/**
+		 * Enter and the change of the field lead here, the store.order block also sends a change on Enter:
+		 * the field is emptied at once, so the coupon is applied only once.
+		 */
+		applyCouponField: function(field)
+		{
+			if (field && field.value)
+			{
+				this.sendRequest('enterCoupon', field.value);
+				field.value = '';
+			}
 		},
 
 		editCouponsFade: function(basketItemsNode)
@@ -4207,7 +5054,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
-		getCouponsList: function(active)
+		getCouponsList: function(active, section)
 		{
 			var couponsList = [], i;
 
@@ -4219,20 +5066,19 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						text: this.result.COUPON_LIST[i].COUPON,
 						desc: this.result.COUPON_LIST[i].JS_CHECK_CODE,
 						status: this.result.COUPON_LIST[i].JS_STATUS
-					}, active));
+					}, active, section));
 				}
 			}
 
 			return couponsList;
 		},
 
-		getCouponNode: function(coupon, active)
+		getCouponNode: function(coupon, active, section)
 		{
 			var couponName = BX.util.htmlspecialchars(coupon.text) || '',
-				couponDesc = coupon.desc && coupon.desc.length
-					? coupon.desc.charAt(0).toUpperCase() + coupon.desc.slice(1)
-					: BX.message('SOA_NOT_FOUND'),
+				couponDesc = this.getCouponStatusText(coupon.desc),
 				couponStatus = coupon.status || 'BAD',
+				statusId = 'bx-soa-coupon-status-' + (section || '') + '-' + encodeURIComponent(coupon.text || ''),
 				couponItem, tooltip;
 
 			switch (couponStatus.toUpperCase())
@@ -4251,7 +5097,24 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					couponName || '',
 					BX.create('SPAN', {
 						props: {className: 'bx-soa-coupon-remove'},
+						attrs: {
+							role: 'button',
+							tabindex: '0',
+							'aria-label': (BX.message('SOA_COUPON_REMOVE_ARIA') || '').replace('#COUPON#', function() { return coupon.text || ''; }),
+							'aria-describedby': statusId,
+							// The button leaves with its coupon, the focus goes to the coupon field.
+							'data-a11y-focus': 'coupon'
+						},
 						events: {
+							keydown: function(event) {
+								var key = event.key;
+
+								if (key !== ' ' && key !== 'Spacebar' && key !== 'Enter')
+									return;
+
+								BX.PreventDefault(event);
+								(event.currentTarget || event.target).click();
+							},
 							click: BX.delegate(function(e){
 								var target = e.target || e.srcElement,
 									coupon = BX.findParent(target, {tagName: 'STRONG'});
@@ -4265,6 +5128,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					}),
 					BX.create('SPAN', {
 						props: {
+							id: statusId,
 							className: 'bx-soa-tooltip bx-soa-tooltip-coupon bx-soa-tooltip-' + tooltip + ' tooltip top'
 						},
 						children: [
@@ -4274,6 +5138,61 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					})
 				] : [couponName]
 			});
+		},
+
+		getCouponStatusText: function(desc)
+		{
+			return desc && desc.length
+				? desc.charAt(0).toUpperCase() + desc.slice(1)
+				: BX.message('SOA_NOT_FOUND');
+		},
+
+		announceCouponResult: function(coupon, desc)
+		{
+			if (!BX.type.isNotEmptyString(coupon))
+				return;
+
+			var status = this.getCouponStatusText(desc);
+
+			this.announce(
+				(BX.message('SOA_COUPON_RESULT_ARIA') || '')
+					.replace('#COUPON#', function() { return coupon; })
+					.replace('#STATUS#', function() { return status; }),
+				'polite'
+			);
+		},
+
+		/**
+		 * Announces the check of the entered coupon as the order refreshed by the server knows it.
+		 */
+		announceEnteredCoupon: function(coupon)
+		{
+			var list = this.result.COUPON_LIST || [],
+				i;
+
+			for (i = 0; i < list.length; i++)
+			{
+				if (list[i].COUPON === coupon)
+				{
+					this.announceCouponResult(coupon, list[i].JS_CHECK_CODE);
+
+					return;
+				}
+			}
+
+			this.announceCouponResult(coupon);
+		},
+
+		/**
+		 * The coupon leaves the form with the button that removed it and the focus goes back to the
+		 * field: without a word of the removal the reader is left with a form that changed by itself.
+		 */
+		announceCouponRemoved: function(coupon)
+		{
+			if (!BX.type.isNotEmptyString(coupon))
+				return;
+
+			this.announce((BX.message('SOA_COUPON_REMOVED_ARIA') || '').replace('#COUPON#', function() { return coupon; }), 'polite');
 		},
 
 		getCouponsLabel: function(active)
@@ -4295,8 +5214,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				if (couponListNodes[i].querySelector('[data-coupon="' + BX.util.htmlspecialchars(coupon) + '"]'))
 					break;
 
-				couponListNodes[i].appendChild(this.getCouponNode({text: coupon}, true, 'bx-soa-coupon-item-danger'));
+				couponListNodes[i].appendChild(this.getCouponNode({text: coupon}, true, couponListNodes[i].getAttribute('data-coupon-section')));
 			}
+
+			this.announceCouponResult(coupon);
+			this.restoreFocus();
 		},
 
 		removeCoupon: function(coupon)
@@ -4310,6 +5232,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					BX.remove(couponNodes[i]);
 				}
 			}
+
+			this.announceCouponRemoved(coupon);
+			this.restoreFocus();
 		},
 
 		editRegionBlock: function(active)
@@ -4478,6 +5403,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}
 				else
 					BX.removeClass(this.regionBlockNode, 'bx-step-error');
+
+				this.updateSectionState(this.regionBlockNode);
 			}
 
 			BX.bind(node.querySelector('.alert.alert-danger'), 'click', BX.proxy(this.showByClick, this));
@@ -4550,8 +5477,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				this.regionBlockNotEmpty = true;
 
-				labelHtml = '<label class="bx-soa-custom-label" for="soa-property-' + parseInt(locationId) + '">'
-					+ (currentProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired">*</span> ' : '')
+				labelHtml = '<label class="bx-soa-custom-label" for="soa-property-' + parseInt(locationId) + '"'
+					+ ' id="bx-soa-location-label-' + parseInt(locationId) + '">'
+					+ (currentProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired" aria-hidden="true">*</span> ' : '')
 					+ BX.util.htmlspecialchars(currentProperty.NAME)
 					+ (currentProperty.DESCRIPTION.length ? ' <small>(' + BX.util.htmlspecialchars(currentProperty.DESCRIPTION) + ')</small>' : '')
 					+ '</label>';
@@ -4596,7 +5524,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					props: {className: "form-group bx-soa-location-input-container"}
 				});
 
-				labelTextHtml = altProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired">*</span> ' : '';
+				labelTextHtml = altProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired" aria-hidden="true">*</span> ' : '';
 				labelTextHtml += BX.util.htmlspecialchars(altProperty.NAME);
 
 				label = BX.create('LABEL', {
@@ -4617,6 +5545,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					}
 				});
 
+				if (altProperty.REQUIRED == 'Y')
+				{
+					input.setAttribute('aria-required', 'true');
+				}
+
 				altNode.appendChild(label);
 				altNode.appendChild(input);
 				node.appendChild(altNode);
@@ -4630,11 +5563,200 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				node.appendChild(
 					BX.create('DIV', {
-						props: {className: 'bx-soa-reference'},
+						props: {id: 'bx-soa-region-reference', className: 'bx-soa-reference'},
 						html: this.params.MESS_REGION_REFERENCE
 					})
 				);
 			}
+		},
+
+		/**
+		 * The search input of the location widget is created by the widget itself, so it is named
+		 * after the widget is initialized, see locationsCompletion.
+		 */
+		initDeliveryLocationA11y: function()
+		{
+			var labels = this.orderBlockNode.querySelectorAll('label[id^="bx-soa-location-label-"]'),
+				reference = BX('bx-soa-region-reference'),
+				i, propertyId, input;
+
+			for (i = 0; i < labels.length; i++)
+			{
+				propertyId = labels[i].id.replace('bx-soa-location-label-', '');
+				input = labels[i].parentNode.querySelector('input.bx-ui-sls-fake');
+				if (!input)
+					continue;
+
+				input.setAttribute('aria-labelledby', labels[i].id);
+				input.setAttribute('data-a11y-focus', 'location-' + propertyId);
+
+				if (
+					this.validation.properties
+					&& this.validation.properties[propertyId]
+					&& this.validation.properties[propertyId].REQUIRED === 'Y'
+				)
+				{
+					input.setAttribute('aria-required', 'true');
+				}
+
+				if (reference && BX.util.trim(reference.textContent) !== '')
+				{
+					this.addIdRef(input, 'aria-describedby', reference.id);
+				}
+
+				this.initLocationComboboxA11y(propertyId, input, labels[i].id);
+			}
+		},
+
+		/**
+		 * Adds combobox ARIA to the location search widget (`core_ui_autocomplete.js` has none) through its
+		 * public API only. The steps widget (`bx-slst`) has different markup and is left untouched.
+		 */
+		initLocationComboboxA11y: function(propertyId, input, labelId)
+		{
+			var control = this.getLocationSearchControl(propertyId),
+				list = control ? control.getControl('variants', true) : null,
+				ctx = this;
+
+			// A property initialized by an earlier pass keeps its widget when the form adds another one.
+			if (!list || list.getAttribute('role') === 'listbox')
+				return;
+
+			this.locationComboboxCount = (this.locationComboboxCount || 0) + 1;
+			list.id = list.id || ('bx-soa-location-variants-' + this.locationComboboxCount);
+			list.setAttribute('role', 'listbox');
+			list.setAttribute('aria-labelledby', labelId);
+
+			input.setAttribute('role', 'combobox');
+			input.setAttribute('aria-autocomplete', 'list');
+			input.setAttribute('aria-controls', list.id);
+			input.setAttribute('aria-expanded', 'false');
+
+			control.bindEvent('after-item-append', function(item){
+				ctx.markLocationOption(list, item);
+			});
+
+			// A list showing only the "nothing found" prompt is not reported as expanded.
+			control.bindEvent('after-popup-toggled', function(opened){
+				input.setAttribute('aria-expanded', opened && ctx.hasLocationOptions(list) ? 'true' : 'false');
+
+				if (!opened)
+					input.removeAttribute('aria-activedescendant');
+			});
+
+			// Fires after the variants are shown, also when the list was already open.
+			control.bindEvent('after-page-display', function(){
+				input.setAttribute('aria-expanded', ctx.hasLocationOptions(list) ? 'true' : 'false');
+			});
+
+			control.bindEvent('nothing-found', function(){
+				input.removeAttribute('aria-activedescendant');
+				input.setAttribute('aria-expanded', 'false');
+				ctx.dropLocationNonOptions(list);
+				ctx.announceLocationNothingFound(control, list);
+			});
+
+			this.watchLocationActiveOption(input, list);
+
+			// Escape and Tab close the list. Not on focusout: a click on a variant moves no focus, so the
+			// list would close before the click lands.
+			BX.bind(input, 'keydown', function(event){
+				var key = event.keyCode || event.which;
+
+				if ((key !== 27 && key !== 9) || input.getAttribute('aria-expanded') !== 'true')
+					return;
+
+				control.hideDropdown();
+
+				if (key === 27)
+					BX.PreventDefault(event);
+			});
+		},
+
+		/**
+		 * The widget of the location of this property, or null for anything but the search one.
+		 */
+		getLocationSearchControl: function(propertyId)
+		{
+			var control = BX.saleOrderAjax
+				&& BX.saleOrderAjax.properties
+				&& BX.saleOrderAjax.properties[propertyId]
+					? BX.saleOrderAjax.properties[propertyId].control
+					: null;
+
+			if (!control || !BX.type.isFunction(control.getSysCode) || control.getSysCode() !== 'sls')
+				return null;
+
+			return control;
+		},
+
+		markLocationOption: function(list, item)
+		{
+			if (!list || !BX.type.isElementNode(item))
+				return;
+
+			this.locationOptionCount = (this.locationOptionCount || 0) + 1;
+			item.id = list.id + '-option-' + this.locationOptionCount;
+			item.setAttribute('role', 'option');
+			item.setAttribute('aria-selected', 'false');
+		},
+
+		hasLocationOptions: function(list)
+		{
+			return !!list.querySelector('[role="option"]');
+		},
+
+		/** The prompt is not an option, so a screen reader would not read it inside the listbox. */
+		announceLocationNothingFound: function(control, list)
+		{
+			var prompt = control.getControl('nothing-found', true),
+				text = BX.util.trim(list.textContent || '') || (prompt ? BX.util.trim(prompt.textContent || '') : '');
+
+			this.announce(text, 'polite');
+		},
+
+		/** A listbox may own options only, so the "nothing found" prompt is made presentational. */
+		dropLocationNonOptions: function(list)
+		{
+			var i;
+
+			for (i = 0; i < list.children.length; i++)
+			{
+				if (list.children[i].getAttribute('role') !== 'option')
+					list.children[i].setAttribute('role', 'presentation');
+			}
+		},
+
+		/**
+		 * Keeps aria-activedescendant on the highlighted variant. The widget fires no event for it, only
+		 * toggles `bx-ui-sls-variant-active` (`whenItemToggle`), so the class is observed.
+		 */
+		watchLocationActiveOption: function(input, list)
+		{
+			if (typeof MutationObserver === 'undefined')
+				return;
+
+			var previous = null;
+
+			new MutationObserver(function(){
+				var active = list.querySelector('.bx-ui-sls-variant-active');
+
+				if (active !== previous)
+				{
+					if (previous)
+						previous.setAttribute('aria-selected', 'false');
+
+					if (active && active.getAttribute('role') === 'option')
+						active.setAttribute('aria-selected', 'true');
+
+					previous = active;
+				}
+
+				if (active && active.id)
+					input.setAttribute('aria-activedescendant', active.id);
+				else
+					input.removeAttribute('aria-activedescendant');
+			}).observe(list, {attributes: true, attributeFilter: ['class'], childList: true, subtree: true});
 		},
 
 		getLocationString: function(node)
@@ -4698,7 +5820,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				propsItemNode = BX.create('DIV', {props: {className: "form-group bx-soa-location-input-container"}});
 				propsItemNode.setAttribute('data-property-id-row', zipProperty.ID);
 
-				labelTextHtml = zipProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired">*</span> ' : '';
+				labelTextHtml = zipProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired" aria-hidden="true">*</span> ' : '';
 				labelTextHtml += BX.util.htmlspecialchars(zipProperty.NAME);
 
 				label = BX.create('LABEL', {
@@ -4717,6 +5839,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						value: zipProperty.VALUE
 					}
 				});
+
+				if (zipProperty.REQUIRED == 'Y')
+				{
+					input.setAttribute('aria-required', 'true');
+				}
 
 				propsItemNode.appendChild(label);
 				propsItemNode.appendChild(input);
@@ -4768,7 +5895,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					props: {className: 'form-check-group'},
 					children: [
 						BX.create('LABEL', {
-							props: {className: 'bx-soa-custom-label'},
+							props: {id: 'bx-soa-person-type-label', className: 'bx-soa-custom-label'},
 							html: this.params.MESS_PERSON_TYPE
 						})
 					]
@@ -4799,6 +5926,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}
 				node.appendChild(BX.create('SELECT', {
 					props: {name: 'PERSON_TYPE', className: 'form-control'},
+					attrs: {
+						'aria-labelledby': 'bx-soa-person-type-label',
+						'data-a11y-focus': 'person-type'
+					},
 					children: options,
 					events: {change: BX.proxy(this.sendRequest, this)}
 				}));
@@ -4807,6 +5938,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 			else if (personTypesCount == 2)
 			{
+				node.setAttribute('role', 'radiogroup');
+				node.setAttribute('aria-labelledby', 'bx-soa-person-type-label');
+
 				for (i in this.result.PERSON_TYPE)
 				{
 					if (this.result.PERSON_TYPE.hasOwnProperty(i))
@@ -4819,7 +5953,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 									attrs: {
 										className: "form-check-input",
 										id: "radio" + currentType.ID,
-										checked: currentType.CHECKED == 'Y'},
+										checked: currentType.CHECKED == 'Y',
+										'data-a11y-focus': 'person-type'},
 										props: {type: 'radio', name: 'PERSON_TYPE', value: currentType.ID}
 								}),
 								BX.create('LABEL', {
@@ -4882,7 +6017,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				{
 					this.regionBlockNotEmpty = true;
 
-					label = BX.create('LABEL', {props: {className: 'bx-soa-custom-label'}, html: this.params.MESS_SELECT_PROFILE});
+					label = BX.create('LABEL', {
+						props: {id: 'bx-soa-profile-label', className: 'bx-soa-custom-label'},
+						html: this.params.MESS_SELECT_PROFILE
+					});
 
 					for (i in this.result.USER_PROFILES)
 					{
@@ -4915,6 +6053,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					});
 					input = BX.create('SELECT', {
 						props: {className: 'form-control', name: 'PROFILE_ID'},
+						attrs: {
+							'aria-labelledby': 'bx-soa-profile-label',
+							'data-a11y-focus': 'profile'
+						},
 						children: options,
 						events:{
 							change: BX.delegate(function(){
@@ -4995,7 +6137,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.editPaySystemInfo(paySystemNode);
 
 				if (this.params.SHOW_COUPONS_PAY_SYSTEM == 'Y')
-					this.editCoupons(paySystemContent);
+					this.editCoupons(paySystemContent, 'paysystem');
 
 				this.getBlockFooter(paySystemContent);
 			}
@@ -5039,6 +6181,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				paySystemItemsContainerRow.appendChild(paySystemItemNode);
 			}
 			paySystemItemsContainer.appendChild(paySystemItemsContainerRow);
+			this.initItemsRadioGroup(paySystemItemsContainerRow, this.paySystemBlockNode);
 
 			if (this.paySystemPagination.show)
 				this.showPagination('paySystem', paySystemItemsContainer);
@@ -5099,6 +6242,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (checked)
 				BX.addClass(itemNode, 'bx-selected');
+
+			this.setItemRadio(
+				itemNode,
+				checked,
+				(BX.message('SOA_PAY_SYSTEM_ITEM_ARIA') || '').replace('#NAME#', function() { return item.NAME; }),
+				'paysystem-' + paySystemId,
+				this.selectPaySystem
+			);
 
 			return itemNode;
 		},
@@ -5238,6 +6389,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 									name: 'PAY_CURRENT_ACCOUNT',
 									value: 'Y',
 									checked: isSelected
+								},
+								attrs: {
+									'aria-label': BX.message('SOA_INNER_PAYMENT_ARIA'),
+									'data-a11y-focus': 'paysystem-inner'
 								}
 							}),
 							logoNode
@@ -5405,6 +6560,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				if (innerPaySystemCheckbox && innerPaySystemCheckbox.checked && fullPayFromInnerPaySystem)
 				{
 					BX.addClass(actionSection, 'bx-selected');
+					this.setItemRadioChecked(actionSection, true);
 					actionInput = actionSection.querySelector('input[type=checkbox]');
 					actionInput.checked = true;
 					BX.removeClass(innerPaySystemSection, 'bx-selected');
@@ -5414,12 +6570,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				{
 					selectedSection = this.paySystemBlockNode.querySelector('.bx-soa-pp-company.bx-selected');
 					BX.addClass(actionSection, 'bx-selected');
+					this.setItemRadioChecked(actionSection, true);
 					actionInput = actionSection.querySelector('input[type=checkbox]');
 					actionInput.checked = true;
 
 					if (selectedSection)
 					{
 						BX.removeClass(selectedSection, 'bx-selected');
+						this.setItemRadioChecked(selectedSection, false);
 						selectedSection.querySelector('input[type=checkbox]').checked = false;
 					}
 				}
@@ -5472,7 +6630,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.editDeliveryInfo(deliveryNode);
 
 				if (this.params.SHOW_COUPONS_DELIVERY == 'Y')
-					this.editCoupons(deliveryContent);
+					this.editCoupons(deliveryContent, 'delivery');
 
 				this.getBlockFooter(deliveryContent);
 			}
@@ -5493,6 +6651,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				deliveryItemsContainerRow.appendChild(deliveryItemNode);
 			}
 			deliveryItemsContainer.appendChild(deliveryItemsContainerRow);
+			this.initItemsRadioGroup(deliveryItemsContainerRow, this.deliveryBlockNode);
 
 			if (this.deliveryPagination.show)
 				this.showPagination('delivery', deliveryItemsContainer);
@@ -5644,6 +6803,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				if (currentService.editControl.indexOf('this.checked') == -1)
 				{
 					serviceName = BX.create('LABEL', {
+						props: {id: 'bx-soa-extra-service-label-' + i},
 						html: BX.util.htmlspecialchars(currentService.name)
 						+ (currentService.price ? ' (' + currentService.priceFormatted + ')' : '')
 					});
@@ -5665,7 +6825,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						input = serviceNode.querySelector('select');
 
 					if (input)
+					{
 						BX.addClass(input, 'form-control');
+						input.setAttribute('aria-labelledby', serviceName.id);
+					}
 				}
 				else
 				{
@@ -5731,6 +6894,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					})
 				],
 				deliveryCached = this.deliveryCachedInfo[deliveryId],
+				name = this.params.SHOW_DELIVERY_PARENT_NAMES != 'N' ? item.NAME : item.OWN_NAME,
+				priceHtml = '',
 				logotype, label, title, itemNode, logoNode;
 
 			logoNode = BX.create('DIV', {props: {className: 'bx-soa-pp-company-image'}});
@@ -5751,23 +6916,17 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (item.PRICE >= 0 || typeof item.DELIVERY_DISCOUNT_PRICE !== 'undefined')
 			{
-				labelNodes.push(
-					BX.create('DIV', {
-						props: {className: 'bx-soa-pp-delivery-cost'},
-						html: typeof item.DELIVERY_DISCOUNT_PRICE !== 'undefined'
-							? item.DELIVERY_DISCOUNT_PRICE_FORMATED
-							: item.PRICE_FORMATED})
-				);
+				priceHtml = typeof item.DELIVERY_DISCOUNT_PRICE !== 'undefined'
+					? item.DELIVERY_DISCOUNT_PRICE_FORMATED
+					: item.PRICE_FORMATED;
+				labelNodes.push(BX.create('DIV', {props: {className: 'bx-soa-pp-delivery-cost'}, html: priceHtml}));
 			}
 			else if (deliveryCached && (deliveryCached.PRICE >= 0 || typeof deliveryCached.DELIVERY_DISCOUNT_PRICE !== 'undefined'))
 			{
-				labelNodes.push(
-					BX.create('DIV', {
-						props: {className: 'bx-soa-pp-delivery-cost'},
-						html: typeof deliveryCached.DELIVERY_DISCOUNT_PRICE !== 'undefined'
-							? deliveryCached.DELIVERY_DISCOUNT_PRICE_FORMATED
-							: deliveryCached.PRICE_FORMATED})
-				);
+				priceHtml = typeof deliveryCached.DELIVERY_DISCOUNT_PRICE !== 'undefined'
+					? deliveryCached.DELIVERY_DISCOUNT_PRICE_FORMATED
+					: deliveryCached.PRICE_FORMATED;
+				labelNodes.push(BX.create('DIV', {props: {className: 'bx-soa-pp-delivery-cost'}, html: priceHtml}));
 			}
 
 			label = BX.create('DIV', {
@@ -5781,7 +6940,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				title = BX.create('DIV', {
 					props: {className: 'bx-soa-pp-company-smalltitle'},
-					text: this.params.SHOW_DELIVERY_PARENT_NAMES != 'N' ? item.NAME : item.OWN_NAME
+					text: name
 				});
 			}
 
@@ -5792,10 +6951,40 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			});
 			checked && BX.addClass(itemNode, 'bx-selected');
 
+			this.setItemRadio(
+				itemNode,
+				checked,
+				this.getDeliveryItemLabel(
+					name,
+					this.htmlToText(priceHtml),
+					!!(item.CALCULATE_ERRORS || deliveryCached && deliveryCached.CALCULATE_ERRORS)
+				),
+				'delivery-' + deliveryId,
+				this.selectDelivery
+			);
+
 			if (checked && this.result.LAST_ORDER_DATA.PICK_UP)
 				this.lastSelectedDelivery = deliveryId;
 
 			return itemNode;
+		},
+
+		/**
+		 * The name of a tile of the delivery. The frame of a delivery calculated with reservations is a
+		 * colour, and the role of a radio makes the content of the tile presentational: the reader would
+		 * hear the name and the price alone, so the warning of the section is named on the tile itself.
+		 */
+		getDeliveryItemLabel: function(name, price, notCalculated)
+		{
+			var label = price
+					? (BX.message('SOA_DELIVERY_ITEM_ARIA') || '').replace('#NAME#', function() { return name; }).replace('#PRICE#', function() { return price; })
+					: name,
+				warning = notCalculated ? this.htmlToText(this.params.MESS_DELIVERY_CALC_ERROR_TITLE) : '';
+
+			if (!warning)
+				return label;
+
+			return label ? label + ', ' + warning : warning;
 		},
 
 		editFadeDeliveryContent: function(node)
@@ -5883,12 +7072,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				actionInput = actionSection.querySelector('input[type=checkbox]');
 				BX.addClass(actionSection, 'bx-selected');
+				this.setItemRadioChecked(actionSection, true);
 				actionInput.checked = true;
 			}
 			if (selectedSection)
 			{
 				selectedInput = selectedSection.querySelector('input[type=checkbox]');
 				BX.removeClass(selectedSection, 'bx-selected');
+				this.setItemRadioChecked(selectedSection, false);
 				selectedInput.checked = false;
 			}
 
@@ -5931,7 +7122,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.pickUpBlockNode.style.display = '';
 			this.pickUpBlockNode.querySelector('[data-entity="section-title"]').innerHTML =
-				'<span class="bx-soa-section-title-count"></span>' + BX.util.htmlspecialchars(deliveryName);
+				'<span class="bx-soa-section-title-count"></span>' + BX.util.htmlspecialchars(deliveryName)
+				+ ' <span class="bx-soa-visually-hidden" data-entity="section-state"></span>';
 
 			if (BX.hasClass(this.pickUpBlockNode, 'bx-active'))
 				return;
@@ -5994,6 +7186,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.pickUpMapFocused = true;
 					setTimeout(BX.proxy(this.maps.pickUpMapFocusWaiter, this.maps), 200);
 				}
+
+				// The map node is moved, not redrawn, so the mutation observer does not fire.
+				if (this.maps)
+					setTimeout(BX.delegate(this.settleMapFocusStops, this), MAP_STOPS_DELAY);
 			}
 			else
 			{
@@ -6078,9 +7274,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (this.params.SHOW_STORES_IMAGES == 'Y')
 				{
-					BX.bind(pickUpContainer.querySelector('.bx-soa-pickup-preview-img'), 'click', BX.delegate(function(e){
-						this.popupShow(e, logotype && logotype.src_orig || imgSrc);
-					}, this));
+					this.bindImageLayerOpener(
+						pickUpContainer.querySelector('.bx-soa-pickup-preview-img'),
+						selectedPickUp.TITLE,
+						logotype && logotype.src_orig || imgSrc
+					);
 				}
 			}
 		},
@@ -6217,6 +7415,140 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					var propsMapData = this.getPropertyMapData();
 					this.maps.initializePropsMap(propsMapData);
 				}
+
+				this.watchMapFocusStops();
+			}
+		},
+
+		/**
+		 * Maps park the controls that do not fit far outside their box but keep them in the tab order.
+		 * Such controls get tabindex="-1" and get the original back once drawn inside the box again.
+		 */
+		watchMapFocusStops: function()
+		{
+			this.dropMapFocusStops();
+
+			if (typeof MutationObserver === 'undefined')
+				return;
+
+			for (var i = 0; i < MAP_CONTAINERS.length; i++)
+			{
+				var container = BX(MAP_CONTAINERS[i]);
+				if (container)
+					this.mapStopObservers[MAP_CONTAINERS[i]] = this.observeMapFocusStops(container, MAP_CONTAINERS[i]);
+			}
+
+			this.settleMapFocusStops();
+		},
+
+		observeMapFocusStops: function(container, name)
+		{
+			var observer = new MutationObserver(BX.delegate(function() {
+				clearTimeout(this.mapStopTimers[name]);
+				this.mapStopTimers[name] = setTimeout(BX.delegate(this.settleMapFocusStops, this), MAP_STOPS_DELAY);
+			}, this));
+
+			observer.observe(container, {childList: true, subtree: true});
+
+			return observer;
+		},
+
+		dropMapFocusStops: function()
+		{
+			for (var name in this.mapStopObservers)
+			{
+				if (!this.mapStopObservers.hasOwnProperty(name))
+					continue;
+
+				this.mapStopObservers[name].disconnect();
+				clearTimeout(this.mapStopTimers[name]);
+			}
+
+			this.mapStopObservers = {};
+			this.mapStopTimers = {};
+		},
+
+		/**
+		 * A hidden map is skipped: all its controls would look undrawn, and a map moved between layouts
+		 * is not redrawn to restore them. Geometry is read first, tabindex written after.
+		 */
+		settleMapFocusStops: function()
+		{
+			var stops = [], drawn = [], i, k;
+
+			for (i = 0; i < MAP_CONTAINERS.length; i++)
+			{
+				var container = BX(MAP_CONTAINERS[i]);
+				if (!container)
+					continue;
+
+				var box = container.getBoundingClientRect();
+				if (box.width <= 0 || box.height <= 0)
+					continue;
+
+				var found = Array.prototype.slice.call(container.querySelectorAll(FOCUS_STOPS))
+					.concat(this.findMapScrollers(container));
+				for (k = 0; k < found.length; k++)
+				{
+					stops.push(found[k]);
+					drawn.push(this.isMapStopDrawn(found[k], box));
+				}
+			}
+
+			for (i = 0; i < stops.length; i++)
+				this.setMapFocusStop(stops[i], drawn[i]);
+		},
+
+		/**
+		 * Scrollers are tab stops in Chrome even without tabindex (e.g. the collapsed layer list). Style
+		 * is read only for overflowing nodes, as this runs after every map redraw.
+		 */
+		findMapScrollers: function(container)
+		{
+			var nodes = container.getElementsByTagName('*'),
+				scrollers = [],
+				node, style, i;
+
+			for (i = 0; i < nodes.length; i++)
+			{
+				node = nodes[i];
+				if (node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth)
+					continue;
+
+				style = getComputedStyle(node);
+				if (SCROLLER_OVERFLOW.test(style.overflowX) || SCROLLER_OVERFLOW.test(style.overflowY))
+					scrollers.push(node);
+			}
+
+			return scrollers;
+		},
+
+		isMapStopDrawn: function(stop, box)
+		{
+			var rect = stop.getBoundingClientRect();
+
+			return rect.width > 0 && rect.height > 0
+				&& rect.right > box.left && rect.left < box.right
+				&& rect.bottom > box.top && rect.top < box.bottom;
+		},
+
+		setMapFocusStop: function(stop, drawn)
+		{
+			var kept = stop.getAttribute(MAP_STOP_TABINDEX);
+
+			if (!drawn && kept === null)
+			{
+				stop.setAttribute(MAP_STOP_TABINDEX, stop.getAttribute('tabindex') || '');
+				stop.setAttribute('tabindex', '-1');
+			}
+			else if (drawn && kept !== null)
+			{
+				stop.removeAttribute(MAP_STOP_TABINDEX);
+
+				if (kept === '')
+					stop.removeAttribute('tabindex');
+				else
+					stop.setAttribute('tabindex', kept);
 			}
 		},
 
@@ -6387,6 +7719,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}
 
 				BX.removeClass(this.pickUpBlockNode, 'bx-step-completed');
+				this.updateSectionState(this.pickUpBlockNode);
 			}
 
 			this.maps && this.maps.pickUpFinalAction();
@@ -6427,13 +7760,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					props: {
 						src: imgSrc,
 						className: 'bx-soa-pickup-l-item-img'
-					},
-					events: {
-						click: BX.delegate(function(e){
-							this.popupShow(e, logotype && logotype.src_orig || imgSrc);
-						}, this)
 					}
 				});
+				this.bindImageLayerOpener(logoNode, currentStore.TITLE, logotype && logotype.src_orig || imgSrc);
 			}
 			else
 			{
@@ -6465,12 +7794,17 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						children: [
 							BX.create('A', {
 								props: {href: '', className: 'btn btn-sm btn-primary'},
+								attrs: {
+									role: 'button',
+									'aria-label': (BX.message('SOA_PICKUP_SELECT_ARIA') || '').replace('#NAME#', function() { return currentStore.TITLE || ''; })
+								},
 								html: this.params.MESS_SELECT_PICKUP,
 								events: {
 									click: BX.delegate(function(event){
 										this.selectStore(event);
 										this.clickNextAction(event)
-									}, this)
+									}, this),
+									keydown: BX.proxy(this.linkButtonKeyDownHandler, this)
 								}
 							})
 						]
@@ -6723,6 +8057,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						BX.addClass(this.propsBlockNode, 'bx-step-error');
 					else
 						BX.removeClass(this.propsBlockNode, 'bx-step-error');
+
+					this.updateSectionState(this.propsBlockNode);
 				}
 			}
 		},
@@ -6845,14 +8181,17 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				BX.addClass(propsItemNode, "form-group bx-soa-customer-field");
 
 				if (property.isRequired())
-					textHtml += '<span class="bx-authform-starrequired">*</span> ';
+					textHtml += '<span class="bx-authform-starrequired" aria-hidden="true">*</span> ';
 
 				textHtml += BX.util.htmlspecialchars(property.getName());
 				if (propertyDesc.length && propertyType != 'STRING' && propertyType != 'NUMBER' && propertyType != 'DATE')
 					textHtml += ' <small>(' + BX.util.htmlspecialchars(propertyDesc) + ')</small>';
 
 				label = BX.create('LABEL', {
-					attrs: {'for': 'soa-property-' + property.getId()},
+					attrs: {
+						'for': 'soa-property-' + property.getId(),
+						id: 'soa-property-label-' + property.getId()
+					},
 					props: {className: 'bx-soa-custom-label'},
 					html: textHtml
 				});
@@ -6884,7 +8223,96 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.insertNumberProperty(property, propsItemNode, disabled);
 			}
 
+			if (!disabled)
+			{
+				this.initPropertyControlsA11y(property.getSettings(), propsItemNode.querySelector('.soa-property-container'));
+			}
+
 			propsItemsContainer.appendChild(propsItemNode);
+		},
+
+		/**
+		 * input.js renders the controls without names, they are tied to the label of the property row.
+		 * Called again when a value is added and when the location widget is initialized.
+		 */
+		initPropertyControlsA11y: function(settings, propContainer)
+		{
+			if (!settings || !propContainer)
+				return;
+
+			var labelId = 'soa-property-label-' + settings.ID,
+				marker = 'property-' + settings.ID,
+				required = settings.REQUIRED === 'Y',
+				choices, controls, isRadio, buttons, i;
+
+			if (settings.TYPE === 'ENUM')
+			{
+				choices = propContainer.querySelectorAll('input[type=radio], input[type=checkbox]');
+				if (choices.length)
+				{
+					isRadio = choices[0].type === 'radio';
+					propContainer.setAttribute('role', isRadio ? 'radiogroup' : 'group');
+					propContainer.setAttribute('aria-labelledby', labelId);
+					if (isRadio && required)
+						propContainer.setAttribute('aria-required', 'true');
+
+					// Radios of a group share the marker, see findRenderedFocusMarker.
+					for (i = 0; i < choices.length; i++)
+						choices[i].setAttribute('data-a11y-focus', isRadio || i === 0 ? marker : marker + '-' + i);
+
+					return;
+				}
+			}
+
+			if (settings.TYPE === 'LOCATION')
+				controls = propContainer.querySelectorAll('input.bx-ui-sls-fake');
+			else
+				controls = propContainer.querySelectorAll('input[type=text], input[type=checkbox], input[type=file], select, textarea');
+
+			for (i = 0; i < controls.length; i++)
+			{
+				controls[i].setAttribute('aria-labelledby', labelId);
+				controls[i].setAttribute('data-a11y-focus', i === 0 ? marker : marker + '-' + i);
+				if (required)
+					controls[i].setAttribute('aria-required', 'true');
+			}
+
+			if (settings.TYPE === 'FILE')
+			{
+				buttons = propContainer.querySelectorAll('input[type=button]:not([data-entity="add-value"])');
+				for (i = 0; i < buttons.length; i++)
+					this.addIdRef(buttons[i], 'aria-describedby', labelId);
+			}
+		},
+
+		addIdRef: function(node, attribute, id)
+		{
+			var value = BX.util.trim(node.getAttribute(attribute) || ''),
+				ids = value.length ? value.split(/\s+/) : [];
+
+			if (!BX.util.in_array(id, ids))
+			{
+				ids.push(id);
+				node.setAttribute(attribute, ids.join(' '));
+			}
+		},
+
+		removeIdRef: function(node, attribute, id)
+		{
+			var value = BX.util.trim(node.getAttribute(attribute) || ''),
+				ids = value.length ? value.split(/\s+/) : [],
+				rest = [], i;
+
+			for (i = 0; i < ids.length; i++)
+			{
+				if (ids[i] !== id)
+					rest.push(ids[i]);
+			}
+
+			if (rest.length)
+				node.setAttribute(attribute, rest.join(' '));
+			else
+				node.removeAttribute(attribute);
 		},
 
 		insertLocationProperty: function(property, propsItemNode, disabled)
@@ -6932,11 +8360,17 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					{
 						propContainer.appendChild(
 							BX.create('DIV', {
-								attrs: {'data-prop-id': property.getId()},
+								attrs: {
+									'data-prop-id': property.getId(),
+									role: 'button',
+									tabindex: '0',
+									'aria-label': this.getAddValueLabel(property.getName())
+								},
 								props: {className: 'btn btn-sm btn-primary'},
 								text: BX.message('ADD_DEFAULT'),
 								events: {
-									click: BX.proxy(this.addLocationProperty, this)
+									click: BX.proxy(this.addLocationProperty, this),
+									keydown: BX.proxy(this.divButtonKeyDownHandler, this)
 								}
 							})
 						);
@@ -7321,6 +8755,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (add.length)
 			{
 				add = add[add.length - 1];
+
+				if (settings.MULTIPLE == 'Y')
+				{
+					add.setAttribute('data-entity', 'add-value');
+					add.setAttribute('aria-label', this.getAddValueLabel(settings.NAME));
+				}
+
 				BX.bind(add, 'click', BX.delegate(function(e){
 					var target = e.target || e.srcElement,
 						targetContainer = BX.findParent(target, {tagName: 'div', className: 'soa-property-container'}),
@@ -7386,6 +8827,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								setTimeout(function(){BX.fireEvent(fileInput, 'change');}, 10);
 						});
 					}
+
+					this.initPropertyControlsA11y(settings, targetContainer);
 				}, this));
 			}
 		},
@@ -7396,7 +8839,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				appendNode;
 
 			BX.addClass(parentNode, 'input-group');
+			// The date is typed into the field, the calendar stays a mouse shortcut.
 			appendNode = BX.create('DIV', {
+				attrs: {'aria-hidden': 'true'},
 				props: {className: 'input-group-append bx-no-alter-margin'},
 				html: '<span class="input-group-text"><i class="fa fa-calendar"></i></span>'
 			});
@@ -7426,6 +8871,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				propsErrors = this.isValidPropertiesBlock(),
 				navigated = false, tooltips, i;
 
+			this.startErrorAnnounceBatch();
+
 			if (regionErrors.length)
 			{
 				navigated = true;
@@ -7454,17 +8901,114 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				this.showError(this.regionBlockNode, regionErrors);
 				BX.addClass(this.regionBlockNode, 'bx-step-error');
+				this.updateSectionState(this.regionBlockNode);
 			}
 
 			if (propsErrors.length)
 			{
 				if (this.activeSectionId !== this.propsBlockNode.id)
 					this.showError(this.propsBlockNode, propsErrors);
+				else
+					// The open section shows its errors by the fields themselves and gets no error block,
+					// so the summary of them is spoken from here, once, with the batch.
+					this.announceError(propsErrors, this.propsBlockNode);
 
 				BX.addClass(this.propsBlockNode, 'bx-step-error');
+				this.updateSectionState(this.propsBlockNode);
 			}
 
+			this.finishErrorAnnounceBatch();
+
+			if (regionErrors.length)
+				this.focusFirstInvalidField(this.regionBlockNode);
+			else if (propsErrors.length)
+				this.focusFirstInvalidField(this.propsBlockNode);
+
 			return !(regionErrors.length + propsErrors.length);
+		},
+
+		/**
+		 * The page is already scrolled to the error by the animation, so the focus does not scroll it.
+		 * A collapsed section has no fields, then its title takes the focus.
+		 */
+		focusFirstInvalidField: function(section)
+		{
+			var fields = section ? section.querySelectorAll('[aria-invalid="true"]') : [],
+				i;
+
+			for (i = 0; i < fields.length; i++)
+			{
+				if (this.isInsideHiddenSection(fields[i]) || fields[i].getClientRects().length === 0)
+					continue;
+
+				this.focusNode(fields[i], {preventScroll: true});
+				if (document.activeElement === fields[i])
+					return;
+			}
+
+			this.focusSectionTitle(section);
+		},
+
+		/**
+		 * The server refused the order: the focus follows the page to the first error shown, the one
+		 * of the whole form before the ones of the sections. The page is already scrolled there.
+		 */
+		focusServerError: function()
+		{
+			var mainError = this.mainErrorsNode ? this.mainErrorsNode.querySelector('.alert.alert-danger') : null,
+				sections, i;
+
+			if (this.isShownErrorNode(mainError))
+			{
+				if (!mainError.hasAttribute('tabindex'))
+				{
+					mainError.setAttribute('tabindex', '-1');
+				}
+
+				this.focusNode(mainError, {preventScroll: true});
+				return;
+			}
+
+			sections = this.orderBlockNode.querySelectorAll('div.bx-soa-section.bx-active');
+			for (i = 0; i < sections.length; i++)
+			{
+				if (
+					!this.isInsideHiddenSection(sections[i])
+					&& this.isShownErrorNode(sections[i].querySelector('.alert.alert-danger'))
+				)
+				{
+					this.focusSectionError(sections[i]);
+					return;
+				}
+			}
+		},
+
+		isShownErrorNode: function(node)
+		{
+			return !!node && node.style.display != 'none' && node.getClientRects().length > 0;
+		},
+
+		/**
+		 * An error of a section is answered by its first invalid field, then by the tile of its group
+		 * that takes the tab, and by its title when the section is collapsed and shows neither.
+		 */
+		focusSectionError: function(section)
+		{
+			var candidates = Array.prototype.slice.call(section.querySelectorAll('[aria-invalid="true"]'))
+					.concat(Array.prototype.slice.call(section.querySelectorAll('[role="radiogroup"] [role="radio"][tabindex="0"]'))),
+				i;
+
+			for (i = 0; i < candidates.length; i++)
+			{
+				if (this.isInsideHiddenSection(candidates[i]) || candidates[i].getClientRects().length === 0)
+					continue;
+
+				this.focusNode(candidates[i], {preventScroll: true});
+				if (document.activeElement === candidates[i])
+					return;
+			}
+
+			this.focusSectionTitle(section);
 		},
 
 		isValidRegionBlock: function()
@@ -7765,6 +9309,51 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.showErrorTooltip(tooltipId, label, errors.join('<br>'));
 			else
 				this.closeErrorTooltip(tooltipId);
+
+			for (i = 0; i < inputs.length; i++)
+				this.setControlsInvalid(inputs[i], !!(errors[i] && errors[i].length), tooltipId ? 'tooltip-' + tooltipId : null);
+		},
+
+		/**
+		 * Marks the controls of a validated input and describes them with the error tooltip.
+		 * An input is an element or a group of radios, checkboxes or options.
+		 */
+		setControlsInvalid: function(input, invalid, tooltipNodeId)
+		{
+			var nodes = BX.type.isElementNode(input) ? [input] : input,
+				controls = [], control, i;
+
+			if (!nodes)
+				return;
+
+			for (i = 0; i < nodes.length; i++)
+			{
+				control = nodes[i].tagName === 'OPTION' ? BX.findParent(nodes[i], {tagName: 'SELECT'}) : nodes[i];
+				if (
+					control
+					&& (control.tagName === 'INPUT' || control.tagName === 'SELECT' || control.tagName === 'TEXTAREA')
+					&& !BX.util.in_array(control, controls)
+				)
+				{
+					controls.push(control);
+				}
+			}
+
+			for (i = 0; i < controls.length; i++)
+			{
+				if (invalid)
+				{
+					controls[i].setAttribute('aria-invalid', 'true');
+					if (tooltipNodeId && BX(tooltipNodeId))
+						this.addIdRef(controls[i], 'aria-describedby', tooltipNodeId);
+				}
+				else
+				{
+					controls[i].removeAttribute('aria-invalid');
+					if (tooltipNodeId)
+						this.removeIdRef(controls[i], 'aria-describedby', tooltipNodeId);
+				}
+			}
 		},
 
 		validateString: function(input, arProperty, fieldName)
@@ -8115,6 +9704,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return errors;
 			}
 
+			var acceptedExtensions = arProperty.ACCEPT
+				? arProperty.ACCEPT.toLowerCase().split(',').map(function(extension) {
+					return BX.util.trim(extension);
+				})
+				: [];
+
 			if (
 				arProperty.REQUIRED === 'Y' && files.length === 0 && defaultValue === ''
 				&& (!arProperty.DEFAULT_VALUE || !arProperty.DEFAULT_VALUE.length)
@@ -8139,7 +9734,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					var splittedName = file.name.split('.');
 					var fileExtension = splittedName.length > 1 ? splittedName[splittedName.length - 1].toLowerCase() : '';
 
-					if (arProperty.ACCEPT.length > 0 && (fileExtension.length === 0 || arProperty.ACCEPT.indexOf(fileExtension) === '-1'))
+					if (fileExtension === 'jpe')
+					{
+						fileExtension = 'jpg';
+					}
+
+					if (
+						acceptedExtensions.length > 0
+						&& (fileExtension.length === 0 || acceptedExtensions.indexOf(fileExtension) === -1)
+					)
 					{
 						errors.push(BX.Loc.getMessage(
 							'SOA_BAD_EXTENSION_NAME_AND_ACCEPT',
@@ -8248,6 +9851,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			BX.cleanNode(this.totalInfoBlockNode);
 
+			// no id: the block is cloned into the mobile total
+			this.totalInfoBlockNode.appendChild(
+				BX.create('H2', {
+					props: {className: 'bx-soa-visually-hidden'},
+					text: BX.message('SOA_TOTAL_TITLE_ARIA')
+				})
+			);
+
 			if (parseFloat(total.ORDER_PRICE) === 0)
 			{
 				priceHtml = this.params.MESS_PRICE_FREE;
@@ -8355,9 +9966,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 									href: 'javascript:void(0)',
 									className: 'btn btn-primary btn-lg btn-order-save'
 								},
+								attrs: {role: 'button'},
 								html: this.params.MESS_ORDER,
 								events: {
-									click: BX.proxy(this.clickOrderSaveAction, this)
+									click: BX.proxy(this.clickOrderSaveAction, this),
+									keydown: BX.proxy(this.linkButtonKeyDownHandler, this)
 								}
 							})
 
@@ -8371,17 +9984,24 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editMobileTotalBlock: function()
 		{
+			var clone = this.totalInfoBlockNode.cloneNode(true);
+
 			if (this.result.SHOW_AUTH)
 				BX.removeClass(this.mobileTotalBlockNode, 'd-block d-sm-none');
 			else
 				BX.addClass(this.mobileTotalBlockNode, 'd-block d-sm-none');
 
+			// The side copy of the total stays in the tree below 576px as well: the heading of the
+			// total is spoken once, by the copy that carries it on every width.
+			BX.remove(clone.querySelector('h2'));
+
 			BX.cleanNode(this.mobileTotalBlockNode);
-			this.mobileTotalBlockNode.appendChild(this.totalInfoBlockNode.cloneNode(true));
+			this.mobileTotalBlockNode.appendChild(clone);
 			BX.bind(this.mobileTotalBlockNode.querySelector('a.bx-soa-price-not-calc'), 'click', BX.delegate(function(){
 				this.animateScrollTo(this.deliveryBlockNode);
 			}, this));
 			BX.bind(this.mobileTotalBlockNode.querySelector('a.btn-order-save'), 'click', BX.proxy(this.clickOrderSaveAction, this));
+			BX.bind(this.mobileTotalBlockNode.querySelector('a.btn-order-save'), 'keydown', BX.proxy(this.linkButtonKeyDownHandler, this));
 		},
 
 		createTotalUnit: function(name, value, params)
@@ -8683,6 +10303,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							BX.addCustomEvent(control, BX.UserConsent.events.afterAccepted, BX.proxy(this.saveByConsent, this));
 							BX.addCustomEvent(control, BX.UserConsent.events.refused, BX.proxy(this.refusedByConsent, this));
 						});
+						this.installConsentAccessibility();
 					}
 				}
 				else
@@ -8692,9 +10313,54 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					{
 						BX.addCustomEvent(control, BX.UserConsent.events.save, BX.proxy(this.doSaveAction, this));
 						BX.addCustomEvent(control, BX.UserConsent.events.refused, BX.proxy(this.disallowOrderSave, this));
+						this.installConsentAccessibility();
 					}
 				}
 			}, this));
+		},
+
+		getConsentAccessibility: function()
+		{
+			return (BX.Sale && BX.Sale.UserConsentPopupAccessibility) || null;
+		},
+
+		installConsentAccessibility: function()
+		{
+			var consentAccessibility = this.getConsentAccessibility();
+
+			if (consentAccessibility)
+			{
+				consentAccessibility.install();
+			}
+		},
+
+		/**
+		 * The consent popup opened by the order button returns the focus to it, not to the checkbox.
+		 */
+		setConsentInitiator: function(event)
+		{
+			var consentAccessibility = this.getConsentAccessibility(),
+				button = event && event.currentTarget;
+
+			if (consentAccessibility && BX.type.isElementNode(button))
+			{
+				consentAccessibility.setInitiator(button);
+			}
+		},
+
+		/**
+		 * The initiator is dropped only on hide: a popup that did not open would leave it to the next opening by the checkbox.
+		 */
+		releaseConsentInitiator: function()
+		{
+			var consentAccessibility = this.getConsentAccessibility(),
+				popup = BX.UserConsent && BX.UserConsent.popup,
+				container = popup && popup.nodes ? popup.nodes.container : null;
+
+			if (consentAccessibility && (!BX.type.isElementNode(container) || container.style.display === 'none'))
+			{
+				consentAccessibility.setInitiator(null);
+			}
 		}
 	};
 })();

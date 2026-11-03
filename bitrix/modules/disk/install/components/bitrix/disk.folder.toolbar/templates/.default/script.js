@@ -236,16 +236,6 @@ BX.Disk.FolderToolbarClass = (function () {
 	var entityToNewShared = {};
 	var canForwardNewShared = 0;
 
-	FolderToolbarClass.prototype.appendNewShared = function (params) {
-		entityToNewShared[params.item.id] = {
-			destFormName: this.destFormName,
-			item: params.item,
-			type: params.type,
-			right: 'disk_access_read'
-		};
-		BX.Disk.appendNewShared(params);
-	};
-
 	FolderToolbarClass.prototype.createExtendedFolder = function () {
 
 		entityToNewShared = {};

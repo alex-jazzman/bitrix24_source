@@ -1,11 +1,11 @@
 /**
  * @module lists/element-details
-*/
+ */
 jn.define('lists/element-details', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { EventEmitter } = require('event-emitter');
-	const { inAppUrl } = require('in-app-url');
+	const { inAppUrl, Presentation, WidgetPresenter } = require('in-app-url');
 	const { NotifyManager } = require('notify-manager');
 	const { Haptics } = require('haptics');
 	const { Alert } = require('alert');
@@ -15,10 +15,46 @@ jn.define('lists/element-details', (require, exports, module) => {
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { Random } = require('utils/random');
 	const { Line } = require('utils/skeleton');
+	const { H4 } = require('ui-system/typography/heading');
+	const { Text5 } = require('ui-system/typography/text');
+	const { Color, Typography } = require('tokens');
 
 	class ElementDetails extends PureComponent
 	{
 		static open(props, layout = PageManager)
+		{
+			if (!WidgetPresenter)
+			{
+				ElementDetails.#openLegacy(props, layout);
+
+				return;
+			}
+
+			void new WidgetPresenter()
+				.setPresentation(Presentation.resolve(props.presentation, Presentation.MODAL))
+				.setParentWidget(layout)
+				.setTitleParams({
+					text: props.title || Loc.getMessage('M_LISTS_ELEMENT_DETAILS_WIDGET_TITLE'),
+					textColor: AppTheme.colors.base1,
+					type: 'dialog',
+				})
+				.setBackgroundColor(AppTheme.colors.bgSecondary)
+				.setWidgetSettings({
+					backdrop: {
+						mediumPositionPercent: 90,
+						onlyMediumPosition: true,
+						swipeAllowed: true,
+						swipeContentAllowed: true,
+						horizontalSwipeAllowed: false,
+						hideNavigationBar: false,
+						navigationBarColor: AppTheme.colors.bgSecondary,
+					},
+				})
+				.setComponent((readyLayout) => ElementDetails.#create(props, readyLayout))
+				.open();
+		}
+
+		static #openLegacy(props, layout)
 		{
 			layout.openWidget('layout', {
 				modal: true,
@@ -38,15 +74,20 @@ jn.define('lists/element-details', (require, exports, module) => {
 					navigationBarColor: AppTheme.colors.bgSecondary,
 				},
 				onReady: (readyLayout) => {
-					readyLayout.showComponent(new ElementDetails({
-						layout: readyLayout,
-						elementId: props.elementId || 0,
-						isEmbedded: props.isEmbedded || false,
-						isNeedShowSkeleton: props.isNeedShowSkeleton !== false,
-						uid: props.uid || null,
-						interceptExit: props.interceptExit !== false,
-					}));
+					readyLayout.showComponent(ElementDetails.#create(props, readyLayout));
 				},
+			});
+		}
+
+		static #create(props, layout)
+		{
+			return new ElementDetails({
+				layout,
+				elementId: props.elementId || 0,
+				isEmbedded: props.isEmbedded || false,
+				isNeedShowSkeleton: props.isNeedShowSkeleton !== false,
+				uid: props.uid || null,
+				interceptExit: props.interceptExit !== false,
 			});
 		}
 
@@ -443,19 +484,16 @@ jn.define('lists/element-details', (require, exports, module) => {
 
 			if (this.isLoaded && this.state.elementName)
 			{
-				return Text(
-					{
-						testId: 'LISTS_DETAILS_ELEMENT_NAME',
-						style: {
-							fontWeight: '600',
-							fontSize: 18,
-							lineHeightMultiple: 1.22,
-							color: AppTheme.colors.base1,
-							marginBottom: 12,
-						},
-						text: this.state.elementName,
+				return H4({
+					testId: 'LISTS_DETAILS_ELEMENT_NAME',
+					accent: true,
+					color: Color.base1,
+					style: {
+						lineHeightMultiple: 1.22,
+						marginBottom: 12,
 					},
-				);
+					text: this.state.elementName,
+				});
 			}
 
 			return null;
@@ -482,7 +520,7 @@ jn.define('lists/element-details', (require, exports, module) => {
 					value: this.state.iBlockDescription,
 					style: {
 						fontWeight: '400',
-						fontSize: 14,
+						fontSize: Typography.text4.getValue().fontSize,
 						lineHeightMultiple: 1.28,
 						color: AppTheme.colors.base2,
 						marginBottom: 12,
@@ -572,16 +610,14 @@ jn.define('lists/element-details', (require, exports, module) => {
 						marginVertical: 12,
 					},
 				},
-				Text({
+				Text5({
+					text,
+					color: Color.base5,
 					style: {
-						color: AppTheme.colors.base5,
-						fontSize: 14,
-						fontWeight: '400',
 						marginHorizontal: 24,
 						marginVertical: 16,
 						textAlign: 'center',
 					},
-					text,
 				}),
 			);
 		}

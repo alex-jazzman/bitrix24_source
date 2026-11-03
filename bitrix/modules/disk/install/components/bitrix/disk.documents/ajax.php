@@ -8,6 +8,7 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -19,6 +20,21 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 	public function copyToMeAction(Disk\Document\TrackedObject $trackedObject)
 	{
 		$currentUserId = $this->getCurrentUser()->getId();
+		$file = $trackedObject->getRealObject();
+		if (!$file)
+		{
+			$this->addError(new Error('Cannot obtain file'));
+
+			return null;
+		}
+
+		if (!$this->canCopyToMe($file, $currentUserId))
+		{
+			$this->addError(new Error('Cannot obtain file'));
+
+			return null;
+		}
+
 		$userStorage = Driver::getInstance()->getStorageByUserId($currentUserId);
 
 		if (!$userStorage)
@@ -34,21 +50,6 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 			return null;
 		}
-		$file = $trackedObject->getRealObject();
-		if (!$file)
-		{
-			$this->addError(new Error('Cannot obtain file'));
-
-			return null;
-		}
-		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
-		if (!$file->canRead($securityContext))
-		{
-			$this->addError(new Error('Cannot obtain file'));
-
-			return null;
-		}
-
 		$newFile = $file->getRealObject()->copyTo($folder, $currentUserId, true);
 
 		if (!$newFile)
@@ -59,6 +60,14 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		}
 
 		$newFile->renameInternal(Loc::getMessage('DISK_DOCUMENTS_DUPLICATE_NEW_NAME', ['#DOC_NAME#' => $file->getNameWithoutExtension()]) . '.' . $file->getExtension(), true);
+	}
+
+	private function canCopyToMe(Disk\File $file, int $userId): bool
+	{
+		$securityContext = $file->getStorage()?->getSecurityContext($userId);
+
+		return $securityContext instanceof SecurityContext
+			&& $file->canDownload($securityContext);
 	}
 
 	public function showFileHistoryAction(Disk\Document\TrackedObject $trackedObject): Main\Engine\Response\AjaxJson
@@ -125,12 +134,22 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			];
 		}
 
-		$actions[] = [
-			'id' => 'download',
-			'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
-			'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DOWNLOAD'),
-			'href' => $downloadUri,
-		];
+		$securityContext = $file->getStorage()?->getCurrentUserSecurityContext();
+		$canDownload = $securityContext instanceof SecurityContext
+			&& $file->canDownload($securityContext);
+
+		if ($canDownload)
+		{
+			$actions[] = [
+				'id' => 'download',
+				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DOWNLOAD'),
+				'href' => $downloadUri,
+				'attrs' => [
+					'data-testid' => 'disk-documents-download-menu-item',
+				],
+			];
+		}
 
 		$belongsToDiskStorages = $this->belongsToDiskStorages($file);
 		$internalLink = null;
@@ -185,12 +204,15 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			];
 		}
 
-		if ($isBoard)
+		if ($isBoard && $canDownload)
 		{
 			$actions[] = [
 				'id' => 'copyToMe',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DUPLICATE'),
 				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_copy.svg',
+				'attrs' => [
+					'data-testid' => 'disk-documents-copy-to-me-menu-item',
+				],
 				'dataset' => [
 					'objectId' => $trackedObject->getFileId(),
 				],

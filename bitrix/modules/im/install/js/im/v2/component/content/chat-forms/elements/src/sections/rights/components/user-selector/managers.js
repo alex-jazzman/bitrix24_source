@@ -31,8 +31,8 @@ export const ManagersSelector = {
 		this.membersSelector = new TagSelector({
 			maxHeight: 99,
 			placeholder: '',
-			addButtonCaption: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS'),
-			addButtonCaptionMore: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS'),
+			addButtonCaption: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS_MSGVER_1'),
+			addButtonCaptionMore: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS_MSGVER_1'),
 			showCreateButton: false,
 			dialogOptions: {
 				enableSearch: false,

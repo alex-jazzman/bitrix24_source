@@ -10,14 +10,14 @@ return [
 	'rel' => [
 		'catalog.entity-card',
 		'catalog.store-enable-wizard',
+		'currency.currency-core',
+		'main.core',
+		'main.core.events',
 		'main.popup',
 		'ui.buttons',
-		'ui.label',
-		'currency.currency-core',
 		'ui.entity-selector',
-		'main.core.events',
 		'ui.feedback.form',
-		'main.core',
+		'ui.label',
 	],
 	'skip_core' => false,
 ];

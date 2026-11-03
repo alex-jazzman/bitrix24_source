@@ -150,6 +150,7 @@ BX.rest.AppLayout.set(
 		ajaxUrl: '/bitrix/components/bitrix/app.layout/lazyload.ajax.php',
 		controlUrl: '/bitrix/tools/rest_control.php',
 		appHost: '<?=$arResult['APP_HOST']?>',
+		appHandlerSignature: '<?=\CUtil::JSEscape($arResult['APP_HANDLER_SIGNATURE'] ?? '')?>',
 		appPort: '<?=$arResult['APP_PORT']?>',
 		appProto: '<?=$arResult['APP_PROTO']?>',
 		proto: <?=$arResult['CURRENT_HOST_SECURE']?1:0?>,

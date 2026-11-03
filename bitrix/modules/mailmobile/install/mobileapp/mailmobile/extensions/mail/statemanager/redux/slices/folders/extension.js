@@ -8,7 +8,10 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 	const { FolderModel } = require('mail/statemanager/redux/slices/folders/model/folder');
 	const { sliceName, foldersListAdapter } = require('mail/statemanager/redux/slices/folders/meta');
 	const { adjustUnreadCounters } = require('mail/statemanager/redux/slices/messages/thunk');
-	const { adjustFolderUnreadCounters } = require('mail/statemanager/redux/slices/folders/extra-reducer');
+	const {
+		adjustFolderUnreadCounters,
+		applyLabelsAvailability,
+	} = require('mail/statemanager/redux/slices/folders/extra-reducer');
 
 	const preparePayload = (folders) => {
 		return FolderModel.prepareReduxFoldersFromServer(folders);
@@ -18,6 +21,8 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 		...foldersListAdapter.getInitialState(),
 		currentFolderPath: null,
 		currentVirtualFolderKey: null,
+		favoritesAvailable: false,
+		labelsAvailable: false,
 	};
 	const initialState = StateCache.getReducerState(sliceName, defaultState);
 
@@ -52,6 +57,17 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 				const { key } = payload;
 				state.currentVirtualFolderKey = key;
 			},
+			setFavoritesAvailability: (state, { payload }) => {
+				const { favoritesAvailable } = payload;
+				state.favoritesAvailable = favoritesAvailable === true;
+				if (!state.favoritesAvailable && state.currentVirtualFolderKey === 'favorites')
+				{
+					state.currentVirtualFolderKey = 'all_messages';
+				}
+			},
+			setLabelsAvailability: (state, { payload }) => {
+				applyLabelsAvailability(state, payload?.labelsAvailable);
+			},
 			clearFolders: foldersListAdapter.removeAll,
 		},
 		extraReducers: (builder) => {
@@ -70,6 +86,8 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 		folderUpdated,
 		setCurrentFolder,
 		setCurrentVirtualFolderKey,
+		setFavoritesAvailability,
+		setLabelsAvailability,
 		clearFolders,
 	} = foldersSlice.actions;
 
@@ -81,6 +99,8 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 		folderUpdated,
 		setCurrentFolder,
 		setCurrentVirtualFolderKey,
+		setFavoritesAvailability,
+		setLabelsAvailability,
 		clearFolders,
 	};
 });

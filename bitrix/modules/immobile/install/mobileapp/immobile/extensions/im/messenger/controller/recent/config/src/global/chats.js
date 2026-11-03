@@ -9,6 +9,10 @@ jn.define('im/messenger/controller/recent/config/src/global/chats', (require, ex
 	} = require('im/messenger/const');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { openChatCreateByActiveRecentTab } = require('im/messenger/lib/open-chat-create');
+	const {
+		createItemButtonItemOptions,
+		createItemButtonServiceConfig,
+	} = require('im/messenger/controller/recent/config/src/lib/item-button');
 	const { RecentServiceName } = require('im/messenger/controller/recent/const');
 
 	const ChatsConfig = {
@@ -34,7 +38,15 @@ jn.define('im/messenger/controller/recent/config/src/global/chats', (require, ex
 			},
 			[RecentServiceName.serverLoad]: {
 				extension: 'im/messenger/controller/recent/service/server-load/chat',
-				props: {},
+				props: {
+					// Convergence ships enabled HERE and not through the module constant on purpose:
+					// the forward selector and the chat-attachment selector build this service
+					// directly, bypassing the tab config, and have neither a filter service nor a
+					// request context. Keeping the constant off is what limits the write radius to
+					// this tab. Without convergence the local base never loses rows that left the
+					// feed, so stale pinned chats climb back to the top on every start.
+					convergenceEnabled: true,
+				},
 			},
 			[RecentServiceName.floatingButton]: {
 				extension: 'im/messenger/controller/recent/service/floating-button/common',
@@ -78,6 +90,7 @@ jn.define('im/messenger/controller/recent/config/src/global/chats', (require, ex
 					sections: ['call', 'pinned', 'general'],
 					defaultSection: 'general',
 					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/chats',
+					itemOptions: createItemButtonItemOptions(),
 				},
 			},
 			[RecentServiceName.vuex]: {
@@ -92,6 +105,7 @@ jn.define('im/messenger/controller/recent/config/src/global/chats', (require, ex
 				extension: 'im/messenger/controller/recent/service/select/common',
 				props: {},
 			},
+			[RecentServiceName.itemButton]: createItemButtonServiceConfig(),
 			[RecentServiceName.external]: {
 				extension: 'im/messenger/controller/recent/service/external/chat',
 				props: {},

@@ -1,6 +1,9 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -8,6 +11,14 @@ if (!CModule::IncludeModule('crm'))
 }
 
 global $APPLICATION;
+
+$title = Loc::getMessage('CRM_DEAL_CATEGORY_LIST_TITLE');
+if (is_string($title) && $title !== '')
+{
+	$APPLICATION->SetTitle($title);
+}
+
+Toolbar::deleteFavoriteStar();
 
 $componentPage = '';
 $arDefaultUrlTemplates404 = array(

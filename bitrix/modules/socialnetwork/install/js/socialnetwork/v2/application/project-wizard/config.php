@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'socialnetwork.v2.components.banners.new-project-banner',
+		'socialnetwork.v2.components.elements.accessible-switcher',
 		'socialnetwork.v2.components.elements.ui-accordion',
 		'socialnetwork.v2.components.elements.ui-avatar-project',
 		'socialnetwork.v2.components.elements.ui-checkbox',
@@ -31,6 +32,7 @@ return [
 		'socialnetwork.v2.features.project.get-project-feature',
 		'socialnetwork.v2.features.project.update-project-feature',
 		'socialnetwork.v2.lib.calendar',
+		'socialnetwork.v2.lib.event-sender',
 		'socialnetwork.v2.lib.timezone',
 		'socialnetwork.v2.model.interface',
 		'socialnetwork.v2.model.project',
@@ -50,7 +52,6 @@ return [
 		'ui.system.typography.vue',
 		'ui.vue3',
 		'ui.vue3.components.button',
-		'ui.vue3.components.switcher',
 		'ui.vue3.mixins.loc-mixin',
 		'ui.vue3.pinia',
 	],

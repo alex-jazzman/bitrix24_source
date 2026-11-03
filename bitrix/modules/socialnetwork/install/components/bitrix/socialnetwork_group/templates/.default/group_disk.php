@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Disk\Folder;
 use Bitrix\Socialnetwork\Collab\Registry\CollabRegistry;
+use Bitrix\Socialnetwork\V2\Feature;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -65,10 +66,21 @@ $componentParams = array_merge($arResult, [
 	'RELATIVE_ITEMS' => $arResult['VARIABLES']['RELATIVE_ITEMS'] ?? null,
 ]);
 
+$isNewProject = Feature::isSectionPinAvailableForFields($arResult['groupFields']);
+$componentParams['ALLOW_FAVORITE_STAR'] = $isNewProject;
 $favoritesTitleTemplate = (
-	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
-		? ''
-		: $arResult['PAGES_TITLE_TEMPLATE']
+	$isNewProject || ($arParams['HIDE_OWNER_IN_TITLE'] ?? null) !== 'Y'
+		? $arResult['FAVORITES_TITLE_TEMPLATE']
+		: ''
+);
+
+$favoritesUrl = (
+	$isNewProject
+		? CComponentEngine::MakePathFromTemplate(
+			$arResult['PATH_TO_GROUP_DISK'],
+			['group_id' => $groupId, 'PATH' => ''],
+		)
+		: ''
 );
 
 if (($_REQUEST['IFRAME'] ?? null) === 'Y')
@@ -102,11 +114,13 @@ if (($_REQUEST['IFRAME'] ?? null) === 'Y')
 			'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_TYPE' => 'SONET_GROUP',
 			'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
 			'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
+			'UI_TOOLBAR_FAVORITES_URL' => $favoritesUrl,
 		]
 	);
 }
 
 $APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
+$APPLICATION->SetPageProperty('FavoriteUrl', $favoritesUrl);
 ?>
 
 	<div class="bx-disk-container posr" id="bx-disk-container">

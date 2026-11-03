@@ -45,7 +45,7 @@ export const RestoreUndoBar = {
 		// still may not publish it, and must not be offered an action the server would reject.
 		isPublishDisabled(): boolean
 		{
-			return this.isBusy || !this.canPublish;
+			return this.isBusy || !this.canPublish || this.isPublishInert;
 		},
 	},
 	mounted(): void
@@ -86,7 +86,7 @@ export const RestoreUndoBar = {
 		>
 			<div :style="BAR_LAYOUT_STYLE">
 				<span>{{ loc('BIZPROCDESIGNER_EDITOR_RESTORE_UNDO_BAR_TEXT') }}</span>
-				<span v-hint="publishAccessHint">
+				<span v-hint="publishHint">
 					<UiButton
 						:text="loc('BIZPROCDESIGNER_EDITOR_PUBLISH')"
 						:style="AirButtonStyle.FILLED"

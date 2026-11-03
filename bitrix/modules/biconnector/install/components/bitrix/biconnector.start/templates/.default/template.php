@@ -51,7 +51,7 @@ $hideCover = is_array($hideCoverOption) && isset($hideCoverOption['hide_cover'])
 				<div class="biconnector-report-service-header --data-studio">
 					<div class="biconnector-report-service-header-inner">
 						<div class="biconnector-report-service-header-logo ">
-							<img src="<?=$templateFolder?>/images/ds-logo.svg" alt="">
+							<img src="<?=$templateFolder?>/images/ds-logo@2x.webp" width="160" height="48" alt="">
 						</div>
 						<div class="biconnector-report-service-header-desc"><?=Loc::getMessage('CT_BBS_GDS_TITLE')?></div>
 					</div>

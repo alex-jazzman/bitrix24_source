@@ -8,7 +8,7 @@ import { MenuItem } from './menu-item';
 import { activateByKey } from './activation';
 import { MenuKeyboard } from './keyboard';
 import { MenuSectionDesign, MenuRichHeaderDesign } from './const';
-import type { MenuOptions, MenuItemOptions, MenuSectionOptions } from './types';
+import { type MenuOptions, type MenuItemOptions, type MenuSectionOptions } from './types';
 import './menu.css';
 
 const BASE_SECTION_CODE = 'base';
@@ -50,8 +50,13 @@ export class Menu
 	#stampedTrigger: { trigger: HTMLElement, saved: Map<string, string | null> } | null = null;
 
 	#openedViaKeyboard: boolean = false;
+	// The show in flight, carrying the modality of the show that started it: a repeated
+	// show() inside the window overwrites #openedViaKeyboard while Popup.show() no-ops,
+	// so the late #onPopupAfterShow of this show has nothing else to judge by.
+	#showWindow: { openedViaKeyboard: boolean } | null = null;
 	#focusOrigin: HTMLElement | null = null;
 	#destroyed: boolean = false;
+	#adjustingPositionTree: boolean = false;
 
 	constructor(options: MenuOptions)
 	{
@@ -79,6 +84,37 @@ export class Menu
 	getPopupContainer(): HTMLElement
 	{
 		return this.#popup.getPopupContainer();
+	}
+
+	adjustPositionTree(): void
+	{
+		this.#adjustPositionTree(() => this.#popup.adjustPosition());
+	}
+
+	#adjustPositionTree(adjustPosition: () => void): void
+	{
+		if (this.#adjustingPositionTree || this.#destroyed || !this.#popup?.isShown() || this.#popup.isDestroyed())
+		{
+			return;
+		}
+
+		this.#adjustingPositionTree = true;
+		try
+		{
+			adjustPosition();
+			if (this.#destroyed || !this.#popup.isShown() || this.#popup.isDestroyed())
+			{
+				return;
+			}
+
+			this.#items.forEach((item: MenuItem): void => {
+				item.getSubMenu()?.#adjustPositionTree(item.adjustSubMenu);
+			});
+		}
+		finally
+		{
+			this.#adjustingPositionTree = false;
+		}
 	}
 
 	show(bindElement: HTMLElement, options: { viaKeyboard?: boolean } = {}): void
@@ -109,6 +145,7 @@ export class Menu
 			events: [
 				{
 					onShow: this.#onPopupShow,
+					onAfterShow: this.#onPopupAfterShow,
 					onClose: this.#onPopupClose,
 					onDestroy: this.#onPopupDestroy,
 					onBeforeAdjustPosition: this.#onBeforeAdjustPosition,
@@ -136,9 +173,9 @@ export class Menu
 		this.#syncMenuName();
 		// Where the focus came from, before the menu takes it (see #getRestoreTarget).
 		this.#rememberFocusOrigin();
-		// The expanded state and the opening focus belong to #onPopupShow: Popup.show()
-		// no-ops while the popup is still shown (a closing animation, a repeated show),
-		// and the trigger must not report a menu that never appeared.
+		// The expanded state and the opening focus belong to the popup show events:
+		// Popup.show() no-ops while the popup is still shown (a closing animation, a
+		// repeated show), and the trigger must not report a menu that never appeared.
 		this.#popup.show();
 	}
 
@@ -215,34 +252,127 @@ export class Menu
 		}
 	}
 
-	#applyOpeningFocus(): void
+	/**
+	 * The focus enters the popup as soon as it appears, a submenu opened by hover aside:
+	 * the keys of the opening animation belong to the menu and not to the page under it,
+	 * and the trigger cannot re-open the menu on Enter. An animated popup is transparent
+	 * until onAfterShow, and a transparent item counts as invisible for every focus
+	 * lookup, so the item is focused there (#applyOpeningFocus) — and right here when
+	 * there is no animation to sit through.
+	 */
+	#applyEntryFocus(openedViaKeyboard: boolean): void
 	{
 		if (this.#options.focusTrap === false || this.#isTrapOptionOverridden('initialFocus'))
 		{
 			return;
 		}
 
-		// A hover-opened submenu must not move focus at all; a keyboard open — including
-		// a repeated one (APG: ArrowRight on an expanded parent) — focuses the item.
-		if (!this.#openedViaKeyboard)
+		// A submenu opened by hover does not move the focus at all: the pointer has not
+		// asked for the level below.
+		if (this.#options.parentItem && !openedViaKeyboard)
 		{
-			if (!this.#options.parentItem)
-			{
-				this.getPopupContainer().focus({ preventScroll: true });
-			}
+			return;
+		}
+
+		if (openedViaKeyboard && !this.#options.animation)
+		{
+			// onAfterShow lands in this very frame, so the container step would only add
+			// a focus / blur pair for the consumer and a spare role="menu" announcement
+			// on the way to the item.
+			this.#focusOpeningTarget();
 
 			return;
 		}
 
+		this.getPopupContainer().focus({ preventScroll: true });
+	}
+
+	#applyOpeningFocus(openedViaKeyboard: boolean): void
+	{
+		if (this.#options.focusTrap === false || this.#isTrapOptionOverridden('initialFocus'))
+		{
+			return;
+		}
+
+		// Only a keyboard open focuses the item, a repeated one included (APG: ArrowRight
+		// on an expanded parent); a pointer open keeps the focus where #applyEntryFocus
+		// left it.
+		if (!openedViaKeyboard)
+		{
+			return;
+		}
+
+		// The item is owed the focus only while the focus still sits at the entry point:
+		// the popup container (#applyEntryFocus), or the parent item a submenu is entered
+		// from. Anywhere else the focus is already claimed — by the key that got ahead of
+		// the animation, or by a consumer moving it in its own onShow — and a late
+		// onAfterShow must not overrule that.
+		if (!this.#hasEntryPointFocus())
+		{
+			return;
+		}
+
+		this.#focusOpeningTarget();
+	}
+
+	#focusOpeningTarget(): void
+	{
 		// The container is the fallback entry point: without focus inside the popup no
 		// menu key ever reaches it.
 		(this.#keyboard?.getInitialFocusTarget() ?? this.getPopupContainer()).focus({ preventScroll: true });
+	}
+
+	#hasEntryPointFocus(): boolean
+	{
+		const active = FocusNavigator.getActiveElement();
+		const parentItem = this.#options.parentItem;
+
+		if (Type.isDomNode(parentItem) && parentItem.contains(active))
+		{
+			return true;
+		}
+
+		// Lost focus (a consumer onShow removed the node it had focused) counts as free:
+		// nothing owns it, and an open menu has to be reachable from the keyboard.
+		return active === this.#getLiveContainer() || FocusNavigator.isFocusLost();
 	}
 
 	#isTrapOptionOverridden(key: string): boolean
 	{
 		return Type.isPlainObject(this.#options.focusTrap) && key in this.#options.focusTrap;
 	}
+
+	/**
+	 * A menu asked for a key has to be navigable at once, and a transparent popup has
+	 * nothing to navigate: opacity 0 counts as invisible, so every item lookup comes back
+	 * empty until the opening animation ends. The animation is jumped to its end rather
+	 * than waited out, which costs that one key press its remaining frames of fading and
+	 * buys the arrows working from the first press. A menu nobody types into fades in as
+	 * before, and a consumer without an animation has nothing to finish here.
+	 *
+	 * Every animation of the container is ended, not the opening one alone: the show
+	 * class is a consumer option and carries no keyframes name to match on. That is only
+	 * fair inside the show window, where the appearance is the one animation running by
+	 * the menu's own doing; outside it the container may carry an animation of the
+	 * consumer, and a letter is no reason to cut it short.
+	 */
+	#finishShowAnimation = (): void => {
+		if (!this.#showWindow)
+		{
+			return;
+		}
+
+		this.#getLiveContainer()?.getAnimations().forEach((animation: Animation): void => {
+			try
+			{
+				animation.finish();
+			}
+			catch
+			{
+				// An animation with no end time cannot be finished; the rest still can.
+			}
+		});
+	};
 
 	#createKeyboard(): MenuKeyboard
 	{
@@ -258,6 +388,7 @@ export class Menu
 			// Hover may take focus only from within this menu's own tree — never from
 			// another popup that happens to be open with focus inside it.
 			isFocusInsideMenu: (): boolean => this.#hasTreeFocus(),
+			finishShowAnimation: this.#finishShowAnimation,
 		});
 	}
 
@@ -273,7 +404,10 @@ export class Menu
 		// Focus on a part of the tree the menu itself moves focus across: an item of
 		// any level, or the parent item this level hangs from. The popup's own controls
 		// (a rich header, a title bar field) are deliberately left out — the menu never
-		// takes focus away from them.
+		// takes focus away from them. The popup container of a level is left out on
+		// purpose too: hover on the level above must not pull the focus out of a level
+		// still fading in (#treeContainsNode does count it — node membership in the tree
+		// is a different question).
 		const parentItem = this.#options.parentItem;
 		const active = FocusNavigator.getActiveElement();
 		if (Type.isDomNode(parentItem) && parentItem.contains(active))
@@ -327,7 +461,7 @@ export class Menu
 
 		if (wasNavigable)
 		{
-			openLevel.#applyOpeningFocus();
+			openLevel.#applyOpeningFocus(true);
 		}
 	};
 
@@ -874,12 +1008,22 @@ export class Menu
 	}
 
 	#onPopupShow = (): void => {
+		this.#showWindow = { openedViaKeyboard: this.#openedViaKeyboard };
+
 		this.#keyboard?.activate();
 		this.#syncTriggerExpanded(true);
-		this.#applyOpeningFocus();
+		this.#applyEntryFocus(this.#showWindow.openedViaKeyboard);
+	};
+
+	#onPopupAfterShow = (): void => {
+		const showWindow = this.#showWindow;
+		this.#showWindow = null;
+
+		this.#applyOpeningFocus(showWindow?.openedViaKeyboard === true);
 	};
 
 	#onPopupClose = (): void => {
+		this.#showWindow = null;
 		this.#restoreFocusOnClose();
 		this.#keyboard?.deactivate();
 		this.#items.forEach((item: MenuItem): void => item.closeSubMenu());
@@ -891,6 +1035,11 @@ export class Menu
 	};
 
 	#onBeforeAdjustPosition = (): void => {
+		if (this.#adjustingPositionTree)
+		{
+			return;
+		}
+
 		this.#items.forEach((item: MenuItem): void => item.adjustSubMenu());
 	};
 

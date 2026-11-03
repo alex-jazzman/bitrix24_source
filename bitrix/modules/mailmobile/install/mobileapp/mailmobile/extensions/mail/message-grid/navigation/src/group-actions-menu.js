@@ -5,11 +5,13 @@
 jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
+	const { Text3, Text6 } = require('ui-system/typography/text');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
 	const { changeFolder, changeReadStatus } = require('mail/message/actions');
 	const { Selector: FolderSelector } = require('mail/folder/selector');
+	const { isRemoveActionVisible } = require('mail/simple-list/items/message-redux/src/action-menu');
 
 	const {
 		selectSelectedIds,
@@ -36,6 +38,10 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 
 			this.parentWidget = props.parentWidget;
 			this.panel = props.panel;
+			this.isDraftMode = props.isDraftMode ?? (() => false);
+			this.getDraftSelectedCount = props.getDraftSelectedCount ?? (() => 0);
+			this.onRemoveDrafts = props.onRemoveDrafts ?? (() => {});
+			this.onToggleDraftMultiSelectMode = props.onToggleDraftMultiSelectMode ?? (() => {});
 			this.moverLayout = null;
 			this.state = {
 				selectedMessagesCounter: selectSelectedCount(store.getState()),
@@ -84,12 +90,9 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 						paddingTop: Indent.XL.toNumber(),
 					},
 				},
-				Text({
-					style: {
-						fontSize: 16,
-						color: Color.base3.toHex(),
-						fontWeight: '400',
-					},
+				Text3({
+					testId: 'mailmobile-group-actions-menu-counter',
+					color: Color.base3,
 					text: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_GROUP_ACTIONS_MENU_COUNTER', {
 						'#COUNT#': this.state.selectedMessagesCounter,
 					}),
@@ -99,6 +102,10 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 
 		renderIcons()
 		{
+			const isDraftMode = this.isDraftMode();
+			// drafts are out of the delete permission scope
+			const isRemoveVisible = isDraftMode || isRemoveActionVisible();
+
 			return View(
 				{
 					style: {
@@ -108,27 +115,27 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 						paddingLeft: Indent.XL3.toNumber(),
 						paddingRight: Indent.XL3.toNumber(),
 						paddingBottom: Application.getPlatform() === 'ios' ? 40 : 50,
-						justifyContent: 'space-between',
+						justifyContent: isDraftMode ? 'center' : 'space-between',
 					},
 				},
-				this.renderIcon({
+				!isDraftMode && this.renderIcon({
 					icon: Icon.MAIL_COUNTER,
 					messageCode: 'MAILMOBILE_ACTIONS_READ',
 					onClickCallback: this.changeReadObjectStatus.bind(this, 1),
 				}),
-				selectIsVirtualFolderMode(store.getState())
+				!isDraftMode && (selectIsVirtualFolderMode(store.getState())
 					? null
 					: this.renderIcon({
 						icon: Icon.MOVE_TO,
 						messageCode: 'MAILMOBILE_ACTIONS_IN_FOLDER',
 						onClickCallback: this.openMover.bind(this),
-					}),
-				this.renderIcon({
+					})),
+				!isDraftMode && this.renderIcon({
 					icon: Icon.ALERT_ACCENT,
 					messageCode: 'MAILMOBILE_ACTIONS_IN_SPAM',
 					onClickCallback: this.moveToSpam.bind(this),
 				}),
-				this.renderIcon({
+				isRemoveVisible && this.renderIcon({
 					icon: Icon.TRASHCAN,
 					messageCode: 'MAILMOBILE_ACTIONS_REMOVE',
 					color: Color.accentMainAlert,
@@ -156,12 +163,10 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 					color,
 					size: 40,
 				}),
-				Text({
-					style: {
-						color: color.toHex(),
-						fontSize: 12,
-						fontWeight: '500',
-					},
+				Text6({
+					testId: `mailmobile-group-actions-menu-icon-label-${messageCode}`,
+					color,
+					accent: true,
 					text: Loc.getMessage(messageCode),
 				}),
 			);
@@ -238,6 +243,13 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 		};
 
 		removeObject = () => {
+			if (this.isDraftMode())
+			{
+				this.onRemoveDrafts();
+
+				return;
+			}
+
 			const objectIds = selectSelectedIds(store.getState());
 			const objectUidIds = selectSelectedUidIds(store.getState());
 
@@ -264,6 +276,13 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 		};
 
 		#onToggleMultiSelectMode = () => {
+			if (this.isDraftMode())
+			{
+				this.onToggleDraftMultiSelectMode();
+
+				return;
+			}
+
 			const currentState = store.getState();
 			const isMultiSelectMode = selectIsMultiSelectMode(currentState);
 
@@ -279,6 +298,14 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 				this.setState({ selectedMessagesCounter: selectSelectedCount(store.getState()) });
 			}
 		};
+
+		updateDraftSelection()
+		{
+			if (this.isDraftMode())
+			{
+				this.setState({ selectedMessagesCounter: this.getDraftSelectedCount() });
+			}
+		}
 
 		#onMoverHidden = () => {
 			this.panel.show();

@@ -20,7 +20,7 @@ jn.define('statemanager/redux/slices/whats-new/thunk', (require, exports, module
 	const isTest = Application.isBeta() ? 'Y' : 'N';
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
-		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
 
 	const { Uri } = require('utils/uri');

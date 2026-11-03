@@ -233,8 +233,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 		 */
 		getSelectedTabIndex()
 		{
-			return this.state.selectedTab?.id
-				? this.state.tabs.findIndex((t) => t.getId() === this.state.selectedTab.id)
+			const { selectedTab, tabs } = this.state;
+
+			return selectedTab?.id
+				? tabs.findIndex((t) => t.getId() === selectedTab.id)
 				: 0;
 		}
 
@@ -244,9 +246,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 		 */
 		getSelectedTab()
 		{
-			return this.state.selectedTab?.id
-				? this.state.tabs.find((t) => t.getId() === this.state.selectedTab.id)
-				: this.state.tabs[0];
+			const { selectedTab, tabs } = this.state;
+
+			return selectedTab?.id
+				? tabs.find((t) => t.getId() === selectedTab.id)
+				: tabs[0];
 		}
 
 		/**
@@ -307,6 +311,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 						},
 						onLayout: this.rememberTopContainerHeight,
 						renderHeader: () => this.renderHeader(),
+						renderProjectInfoBeforeDescription: () => this.renderProjectInfoBeforeDescription(),
 						renderDescription: () => this.renderDescription(),
 						renderSharingLink: () => this.renderSharingLink(),
 						renderPrimaryActionButtons: () => this.renderPrimaryActionButtons(),
@@ -570,6 +575,17 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 			);
 		}
 
+		/**
+		 * Renders project info before the chat description.
+		 *
+		 * @protected
+		 * @return {object|null}
+		 */
+		renderProjectInfoBeforeDescription()
+		{
+			return null;
+		}
+
 		renderDescription()
 		{
 			const dialogModel = this.dialogHelper.dialogModel;
@@ -697,6 +713,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 					})),
 				},
 				onTabSelected: (tab, changed, options) => {
+					const previousTabId = this.getSelectedTab()?.getId();
+
 					if (options?.action === 'click')
 					{
 						if (changed)
@@ -708,6 +726,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 							// with a guaranteed tall slider so the header hides without clipping.
 							this.syncOverflowWithSelectedTab();
 							this.collapseHeaderWithTallSlider();
+							this.notifyTabSelectionChanged(previousTabId, tab);
 						}
 						else
 						{
@@ -722,9 +741,29 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 						// swiped to another tab
 						this.state.selectedTab = tab;
 						this.syncOverflowWithSelectedTab();
+						this.notifyTabSelectionChanged(previousTabId, tab);
 					}
 				},
 			});
+		}
+
+		/**
+		 * All tab contents are mounted at once inside the slider, so a tab has no
+		 * lifecycle event of its own for entering or leaving the screen: both sides of
+		 * the switch are notified here, whether it came from a click or from a swipe.
+		 *
+		 * @protected
+		 * @param {string} [previousTabId]
+		 * @param {SidebarTabDescriptor} tab
+		 */
+		notifyTabSelectionChanged(previousTabId, tab)
+		{
+			if (previousTabId && previousTabId !== tab.id)
+			{
+				this.listViewMap?.[previousTabId]?.onDeselectedTab?.({ tabId: previousTabId });
+			}
+
+			this.listViewMap?.[tab.id]?.onSelectedTab?.({ tab });
 		}
 
 		renderTabSlider()

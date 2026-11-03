@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\UI\EntitySelector;
+use Bitrix\Main\Web\Uri;
 
 if (!empty($arResult["Post"]))
 {
@@ -57,17 +58,14 @@ if (empty($arResult["urlToEdit"]))
 
 if (empty($arResult["urlToHide"]))
 {
-	$arResult["urlToHide"] = CHTTP::urlAddParams(
-		CHTTP::urlDeleteParams(
-			$arResult["urlToPost"],
-			array("sessid", "success", "hide", "delete")
-		),
-		array(
+	$arResult["urlToHide"] = (string)(new Uri($arResult["urlToPost"]))
+		->deleteParams(["success", "delete"])
+		->addParams([
 			"hide" => "Y",
-			"SONET_GROUP_ID" => (isset($arParams["SONET_GROUP_ID"]) && (int)$arParams["SONET_GROUP_ID"] > 0 ? (int)$arParams["SONET_GROUP_ID"] : false),
+			"SONET_GROUP_ID" => (isset($arParams["SONET_GROUP_ID"]) && (int)$arParams["SONET_GROUP_ID"] > 0 ? (int)$arParams["SONET_GROUP_ID"] : ''),
 			"sessid" => bitrix_sessid()
-		)
-	);
+		])
+	;
 }
 
 $parser = new CTextParser();

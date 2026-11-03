@@ -1,5 +1,4 @@
-import { Layout } from 'ui.sidepanel.layout';
-import { SidePanel, Slider } from 'main.sidepanel';
+import { SidePanel } from 'main.sidepanel';
 
 export class ComponentSlider
 {
@@ -26,13 +25,19 @@ export class ComponentSlider
 
 	open()
 	{
+		const layout = SidePanel.Instance.getTopSlider()?.getWindow()?.BX?.UI?.SidePanel?.Layout;
+		if (!layout)
+		{
+			return;
+		}
+
 		SidePanel.Instance.open(
 			this.#id,
 			{
 				width: this.#width,
 				cacheable: this.#cacheable,
 				contentCallback: () => {
-					return Layout.createContent({
+					return layout.createContent({
 						title: this.#title ?? '',
 						extensions: this.#extensions,
 						design: { section: false, margin: true },

@@ -18,12 +18,9 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 	const { Box, BoxFooter } = require('ui-system/layout/box');
 	const { Alert, ButtonType } = require('alert');
 	const { QrEntity } = require('layout/ui/qr-invite/src/entity');
+	const { QrCodeFrame } = require('layout/ui/qr-code-frame');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { createTestIdGenerator } = require('utils/test');
-
-	const CONTAINER_SIZE = 245;
-	const QR_SIZE = 229;
-	const QR_BORDER_RADIUS = 24;
 
 	const departmentImage = makeLibraryImagePath('department.png', 'department');
 
@@ -39,7 +36,6 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			};
 			this.layoutWidget = props.layoutWidget ?? PageManager;
 			this.isDarkMode = (AppTheme.id === 'dark');
-			this.shimmerRef = null;
 			this.defaultImages = {
 				DEPARTMENT: departmentImage,
 				COMPANY: departmentImage,
@@ -79,11 +75,11 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			return avatarUri ?? defaultImage ?? null;
 		}
 
-		get isGradientBorder()
+		get borderGradient()
 		{
-			const entity = this.entity;
+			const borderColor = this.entity?.borderColor;
 
-			return Type.isObject(entity?.borderColor) ?? false;
+			return Type.isObject(borderColor) ? borderColor : null;
 		}
 
 		#loadUriIfNeeded = () => {
@@ -203,41 +199,6 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			);
 		}
 
-		renderShimmer()
-		{
-			return View(
-				{
-					style: {
-						width: CONTAINER_SIZE,
-						height: CONTAINER_SIZE,
-						alignSelf: 'center',
-					},
-				},
-				ShimmerView(
-					{
-						animating: true,
-						ref: (ref) => {
-							if (ref)
-							{
-								this.shimmerRef = ref;
-							}
-						},
-					},
-					View(
-						{
-							testId: this.getTestId('code-shimmer'),
-							style: {
-								backgroundColor: Color.base6.toHex(),
-								width: CONTAINER_SIZE,
-								height: CONTAINER_SIZE,
-								borderRadius: QR_BORDER_RADIUS,
-							},
-						},
-					),
-				),
-			);
-		}
-
 		renderContent()
 		{
 			return AreaList(
@@ -257,7 +218,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 								marginVertical: 30,
 							},
 						},
-						this.renderLoadingOrResult(),
+						this.renderQrCodeFrame(),
 					),
 					this.renderBottomText(),
 				),
@@ -323,54 +284,17 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			});
 		}
 
-		renderLoadingOrResult()
+		renderQrCodeFrame()
 		{
-			if (this.state.loadingError === null)
-			{
-				return this.renderShimmer();
-			}
+			const { qrCode, loadingError } = this.state;
 
-			if (this.state.qrCode)
-			{
-				return this.renderGeneratedQr();
-			}
-
-			return this.showErrorMessage();
-		}
-
-		calculateOuterBorderRadius()
-		{
-			const gap = (CONTAINER_SIZE - QR_SIZE) / 2;
-
-			return QR_BORDER_RADIUS + gap;
-		}
-
-		renderGeneratedQr()
-		{
-			return View(
-				{
-					style: {
-						backgroundColorGradient: this.isGradientBorder ? this.entity?.borderColor : {},
-						width: CONTAINER_SIZE,
-						height: CONTAINER_SIZE,
-						borderRadius: this.calculateOuterBorderRadius(),
-						alignItems: 'center',
-						justifyContent: 'center',
-					},
-				},
-				View({
-					testId: this.getTestId('code'),
-					style: {
-						alignSelf: 'center',
-						width: QR_SIZE,
-						height: QR_SIZE,
-						borderRadius: QR_BORDER_RADIUS,
-						backgroundImageSvg: this.state.qrCode,
-						backgroundPosition: 'center',
-						backgroundResizeMode: 'stretch',
-					},
-				}),
-			);
+			return QrCodeFrame({
+				testId: this.getTestId(),
+				qrCodeSvg: qrCode,
+				hasError: loadingError === true,
+				borderGradient: this.borderGradient,
+				renderError: () => this.showErrorMessage(),
+			});
 		}
 
 		renderBottomText()

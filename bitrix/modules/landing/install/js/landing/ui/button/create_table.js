@@ -117,16 +117,16 @@
 
 		getCellWidth()
 		{
-			const STANDART_CELL_WIDTH = 250;
-			const BRAKEPOINT_DINAMIC_CELL = 1000;
+			const STANDARD_CELL_WIDTH = 250;
+			const BREAKPOINT_DYNAMIC_CELL = 1000;
 			const TECHNIC_WIDTH = 57;
 			const DEFAULT_AMOUNT_CELL = 4;
 
-			let cellWidth = STANDART_CELL_WIDTH;
+			let cellWidth = STANDARD_CELL_WIDTH;
 			if (BX.Landing.Node.Text.currentNode)
 			{
 				const textNodeWidth = BX.Landing.Node.Text.currentNode.node.getBoundingClientRect().width;
-				if (textNodeWidth < BRAKEPOINT_DINAMIC_CELL)
+				if (textNodeWidth < BREAKPOINT_DYNAMIC_CELL)
 				{
 					cellWidth = Math.floor((textNodeWidth - TECHNIC_WIDTH) / DEFAULT_AMOUNT_CELL);
 				}

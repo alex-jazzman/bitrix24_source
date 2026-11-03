@@ -101,10 +101,18 @@ this.BX = this.BX || {};
 		 *
 		 * @param method the name of the method to call
 		 * @param args arguments that will be supplied. Must be serializable, no functions or other nonense.
+		 * @param signal aborting it rejects the call and stops waiting for the reply
 		 * @returns whatever is returned from the method
 		 */
-		get(method, args) {
+		get(method, args, {
+			signal
+		} = {}) {
 			return new Promise((resolve, reject) => {
+				if (signal?.aborted) {
+					reject(new Error(`[${this.name}] Method "${method}" call was aborted`));
+					return;
+				}
+
 				// In order to "call a method" on the other side of the port,
 				// we will send a message with a unique id
 				const messageId = this.getNewMessageId();
@@ -115,6 +123,7 @@ this.BX = this.BX || {};
 						return;
 					}
 					main_core.Event.unbind(this.port, 'message', listener);
+					main_core.Event.unbind(signal, 'abort', onAbort);
 					if (this.isReply(message)) {
 						resolve(message.result);
 					} else {
@@ -122,6 +131,13 @@ this.BX = this.BX || {};
 						reject(new Error(errStr));
 					}
 				};
+				const onAbort = () => {
+					main_core.Event.unbind(this.port, 'message', listener);
+					reject(new Error(`[${this.name}] Method "${method}" call was aborted`));
+				};
+				main_core.Event.bind(signal, 'abort', onAbort, {
+					once: true
+				});
 				main_core.Event.bind(this.port, 'message', listener);
 				this.port.start();
 				const message = {
@@ -198,6 +214,7 @@ this.BX = this.BX || {};
 	//
 	// (function() { var leaveModule = typeof reactHotLoaderGlobal === 'undefined' ? undefined : reactHotLoaderGlobal.leaveModule; leaveModule && leaveModule(module); })();
 
+	const BX_AI_STATE_TIMEOUT_MS = 3000;
 	class ApacheSupersetEmbeddedLoader {
 		static IFRAME_COMMS_MESSAGE_TYPE = '__embedded_comms__';
 		static DASHBOARD_UI_FILTER_CONFIG_URL_PARAM_KEY = {
@@ -240,12 +257,20 @@ this.BX = this.BX || {};
 			const getActiveTabs = () => this.#switchboard.get('getActiveTabs');
 			const getScreenshot = () => this.#switchboard.get('getScreenshot');
 			const getPdf = () => this.#switchboard.get('getPdf');
+			const getDataMask = signal => this.#switchboard.get('getDataMask', undefined, {
+				signal
+			});
+			const observeDataMask = callback => {
+				this.#switchboard.defineMethod('observeDataMask', callback);
+			};
 			return {
 				getScrollSize,
 				getDashboardPermalink,
 				getActiveTabs,
 				getScreenshot,
-				getPdf
+				getPdf,
+				getDataMask,
+				observeDataMask
 			};
 		}
 		calculateConfig() {
@@ -263,6 +288,9 @@ this.BX = this.BX || {};
 			if (dashboardUiConfig.hideChartControls) {
 				configNumber += 8;
 			}
+			if (dashboardUiConfig.emitDataMasks) {
+				configNumber += 16;
+			}
 			return configNumber;
 		}
 		async mountIframe() {
@@ -279,6 +307,11 @@ this.BX = this.BX || {};
 				}
 				const supersetDomain = this.#options.supersetDomain;
 				const debug = this.#options.debug;
+				if (!ApacheSupersetEmbeddedLoader.#hasAllowedScheme(supersetDomain)) {
+					this.log('superset domain scheme is not allowed, rejecting');
+					reject(new Error('Embedded dashboard domain is not allowed'));
+					return;
+				}
 				const onAlive = event => {
 					if (event.source === iframe.contentWindow && typeof event.data === 'object' && event.data.type === ApacheSupersetEmbeddedLoader.IFRAME_COMMS_MESSAGE_TYPE && event.data.handshake === 'alive') {
 						this.#embedAlive = true;
@@ -288,6 +321,9 @@ this.BX = this.BX || {};
 				};
 				main_core.Event.bind(window, 'message', onAlive);
 				iframe.style.visibility = 'hidden';
+				if (main_core.Type.isStringFilled(this.#options.title)) {
+					main_core.Dom.attr(iframe, 'title', this.#options.title);
+				}
 
 				// set up the iframe's sandbox configuration
 				iframe.sandbox.add('allow-same-origin'); // needed for postMessage to work
@@ -335,6 +371,14 @@ this.BX = this.BX || {};
 				this.log('placed the iframe');
 			});
 		}
+		static #hasAllowedScheme(domain) {
+			const allowedSchemes = ['http:', 'https:'];
+			try {
+				return allowedSchemes.includes(new URL(domain).protocol);
+			} catch {
+				return false;
+			}
+		}
 
 		// Need patched superset with getScreenshot and getPdf actions - superset-frontend/src/embedded/api.tsx:61
 		getScreenshot() {
@@ -373,6 +417,40 @@ this.BX = this.BX || {};
 				return Promise.reject(new Error('Switchboard not initialized'));
 			}
 			return this.#switchboard.get('getExternalFilterValues');
+		}
+		defineFrameMethod(name, executor) {
+			if (!this.#switchboard) {
+				throw new Error('Switchboard not initialized');
+			}
+			this.#switchboard.defineMethod(name, executor);
+		}
+		setBxAiConfig(config, signal) {
+			if (!this.#switchboard) {
+				return Promise.reject(new Error('Switchboard not initialized'));
+			}
+			return this.#switchboard.get('setBxAiConfig', config, {
+				signal
+			});
+		}
+
+		/**
+		 * Channel errors and timeouts are not rethrown: the frame releases a stale busy state by itself.
+		 */
+		async setBxAiState(state) {
+			if (!this.#switchboard) {
+				return;
+			}
+			const controller = new AbortController();
+			const timerId = setTimeout(() => controller.abort(), BX_AI_STATE_TIMEOUT_MS);
+			try {
+				await this.#switchboard.get('setBxAiState', state, {
+					signal: controller.signal
+				});
+			} catch (error) {
+				this.log('setBxAiState failed', error);
+			} finally {
+				clearTimeout(timerId);
+			}
 		}
 		log(...info) {
 			if (this.isDebug()) {

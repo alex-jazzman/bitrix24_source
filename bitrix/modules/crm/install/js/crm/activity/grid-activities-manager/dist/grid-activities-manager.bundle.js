@@ -11,15 +11,15 @@ this.BX.Crm = this.BX.Crm || {};
 			provider: 6
 		};
 		activityAddingPopup = {};
-		async showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings) {
+		async showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, analytics) {
 			main_core.Dom.addClass(bindElement, '--active');
 			const key = `${entityTypeId}_${entityId}`;
-			const exports$1 = await main_core.Runtime.loadExtension('crm.activity.adding-popup');
-			if (!exports$1 || !exports$1.AddingPopup) {
+			const exports = await main_core.Runtime.loadExtension('crm.activity.adding-popup');
+			if (!exports || !exports.AddingPopup) {
 				return;
 			}
 			if (!Object.hasOwn(this.activityAddingPopup, key)) {
-				this.activityAddingPopup[key] = new exports$1.AddingPopup(entityTypeId, entityId, currentUser, settings, {
+				this.activityAddingPopup[key] = new exports.AddingPopup(entityTypeId, entityId, currentUser, settings, {
 					events: {
 						onClose() {
 							BX.Dom.removeClass(bindElement, '--active');
@@ -30,6 +30,9 @@ this.BX.Crm = this.BX.Crm || {};
 								grid.instance.reload();
 							}
 						}
+					},
+					context: {
+						analytics
 					}
 				});
 			}
@@ -141,8 +144,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	class GridActivitiesManager {
 		static #instance = null;
-		static showActivityAddingPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings) {
-			void GridActivitiesManager.getManagerInstance().showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings);
+		static showActivityAddingPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, analytics) {
+			void GridActivitiesManager.getManagerInstance().showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, analytics);
 		}
 		static viewActivity(gridId, activityId, allowEdit) {
 			void GridActivitiesManager.getManagerInstance().viewActivity(gridId, activityId, allowEdit);

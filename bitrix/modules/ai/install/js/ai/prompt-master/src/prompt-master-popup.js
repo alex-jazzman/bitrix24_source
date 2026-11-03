@@ -1,12 +1,12 @@
 import { Event } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { PromptMaster, PromptMasterEvents } from './prompt-master';
 import { sendData } from 'ui.analytics';
 
-import './css/prompt-master-popup.css';
+import { PROMPT_MASTER_POPUP_ID } from './helpers/prompt-master-overlay';
+import { PromptMaster, PromptMasterEvents, type PromptMasterOptions } from './prompt-master';
 
-import type { PromptMasterOptions } from './prompt-master';
+import './css/prompt-master-popup.css';
 
 export type PromptMasterPopupAnalyticFields = {
 	c_section?: string;
@@ -75,7 +75,7 @@ export class PromptMasterPopup extends Event.EventEmitter
 		promptMaster.subscribe(PromptMasterEvents.CLOSE_MASTER, this.#closeMasterHandler);
 
 		return new Popup({
-			id: 'prompt-master-popup',
+			id: PROMPT_MASTER_POPUP_ID,
 			content: promptMaster.render(),
 			width: 360,
 			cacheable: false,

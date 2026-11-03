@@ -33,42 +33,52 @@ $pageName = $this->getPageName();
 </div>
 
 <script>
+	var landingAgreementMessageBox = null;
+	var landingAgreementPopupParams = {};
 	var landingAgreementPopup = function(params)
 	{
-		params = params || {};
+		landingAgreementPopupParams = params || {};
+		if (!landingAgreementMessageBox) {
+			landingAgreementMessageBox = new BX.UI.Dialogs.MessageBox({
+				title: '<?= \CUtil::jsEscape($arResult['AGREEMENT']['NAME']); ?>',
+				message: BX('<?= $id; ?>'),
+				useAirDesign: true,
+				modal: true,
+				cacheable: true,
+				maxWidth: 650,
+				popupOptions: {
+					closeIcon: <?= $pageName === 'landing_view' ? 'false' : 'true' ?>,
+					closeByEsc: <?= $pageName === 'landing_view' ? 'false' : 'true' ?>,
+					draggable: true,
+					focusTrap: true,
+					autoHide: false,
+				},
+				buttons: [
+					new BX.UI.Button({
+						text: '<?= \CUtil::jsEscape(Loc::getMessage($arResult['AGREEMENT_ACCEPTED'] ? 'LANDING_TPL_ACCEPTED' : 'LANDING_TPL_ACCEPT')); ?>',
+						useAirDesign: true,
+						style: <?= $arResult['AGREEMENT_ACCEPTED']
+							? 'BX.UI.Button.AirStyle.OUTLINE'
+							: 'BX.UI.Button.AirStyle.FILLED'
+							?>,
+						wide: true,
+						onclick: () => {
+							landingAgreementMessageBox.close();
+							<?php if (!$arResult['AGREEMENT_ACCEPTED']): ?>
+							landingAgreementPopupParams.success?.();
+							BX('<?= $id; ?>-form').submit();
+							<?php endif; ?>
+						},
+					}),
+				],
+			});
 
-		var oPopup = BX.PopupWindowManager.create('<?= $id;?>', null, {
-			content: BX('<?= $id;?>'),
-			titleBar: {content: BX.create('span', {html: ''})},
-			closeIcon : <?= $pageName === 'landing_view' ? 'false' : 'true'?>,
-			closeByEsc : <?= $pageName === 'landing_view' ? 'false' : 'true'?>,
-			draggable: true,
-			lightShadow: true,
-			overlay: true,
-			focusTrap: true,
-			className: '<?= $id;?>-wrapper',
-			buttons: [
-				new BX.PopupWindowButton({
-					text: '<?= \CUtil::jsEscape(Loc::getMessage($arResult['AGREEMENT_ACCEPTED'] ? 'LANDING_TPL_ACCEPTED' : 'LANDING_TPL_ACCEPT'));?>',
-					className: '<?= $arResult['AGREEMENT_ACCEPTED'] ? 'popup-window-button-cancel' : 'popup-window-button-accept';?>',
-					events: {
-						click: function()
-						{
-							BX.PopupWindowManager.getCurrentPopup().close();
-							<?if (!$arResult['AGREEMENT_ACCEPTED']):?>
-							if (typeof params.success !== 'undefined')
-							{
-								params.success();
-							}
-							BX('<?= $id;?>-form').submit();
-							<?endif;?>
-						}
-					}
-				})
-			]
-		});
-		oPopup.setTitleBar('<?= \CUtil::jsEscape($arResult['AGREEMENT']['NAME']);?>');
-		oPopup.show();
+			BX.addClass(
+				landingAgreementMessageBox.getPopupWindow().getPopupContainer(),
+				'<?= $id; ?>-wrapper',
+			);
+		}
+		landingAgreementMessageBox.show();
 	};
 	<?php
 		$pageIsNeededAgreement = false;

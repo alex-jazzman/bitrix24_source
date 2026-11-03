@@ -16,4 +16,5 @@ $MESS["UI_DATE_PICKER_RANGE_TIME_START"] = "Время начала";
 $MESS["UI_DATE_PICKER_RANGE_TIME_END"] = "Время окончания";
 $MESS["UI_DATE_PICKER_MONTH_VIEW_LABEL"] = "Выбор месяца";
 $MESS["UI_DATE_PICKER_YEAR_VIEW_LABEL"] = "Выбор года";
+$MESS['UI_DATE_PICKER_PERIOD_BOUNDARY_REACHED'] = 'Переход недоступен';
 $MESS["UI_DATE_PICKER_PRESETS_LABEL"] = "Быстрый выбор даты";

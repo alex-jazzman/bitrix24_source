@@ -1,4 +1,5 @@
-import { Type } from 'main.core';
+import { Event, Type } from 'main.core';
+import { PopupManager } from 'main.popup';
 
 import { computed } from 'ui.vue3';
 import { HeadlineMd, TextMd } from 'ui.system.typography.vue';
@@ -89,6 +90,15 @@ export const ReplicationSheetContent = {
 	mounted(): void
 	{
 		this.initialReplicateParams = deepToRaw(this.replicateParams);
+
+		// main.popup closes the sheet from a capture-phase keyup listener on the document
+		// and offers no veto, so the discard confirm has to claim Esc earlier: capture at
+		// the window always runs before capture at the document, whatever the bind order.
+		Event.bind(window, 'keyup', this.handleWindowKeyUp, true);
+	},
+	beforeUnmount(): void
+	{
+		Event.unbind(window, 'keyup', this.handleWindowKeyUp, true);
 	},
 	methods: {
 		initReplicateParams(): void
@@ -142,7 +152,55 @@ export const ReplicationSheetContent = {
 		},
 		showHelpDesk(): void
 		{
-			top.BX.Helper.show('redirect=detail&code=18127718');
+			top.BX.Helper.show('redirect=detail&code=26946040');
+		},
+		handleWindowKeyUp(event: KeyboardEvent): void
+		{
+			if (event.key !== 'Escape' || !this.hasChanges || !this.isTopPopupLayer())
+			{
+				return;
+			}
+
+			event.stopImmediatePropagation();
+			this.showDiscardConfirmDialog();
+		},
+		isTopPopupLayer(): boolean
+		{
+			const shownPopups = PopupManager.getPopups().filter((popup) => popup.isShown());
+			const ownPopup = shownPopups.find((popup) => popup.getPopupContainer()?.contains(this.$el));
+			const ownZIndex = ownPopup ? ownPopup.getZindex() : 0;
+
+			return shownPopups.every((popup) => popup.getZindex() <= ownZIndex);
+		},
+		handleCancel(): void
+		{
+			if (!this.hasChanges)
+			{
+				this.$emit('close');
+
+				return;
+			}
+
+			this.showDiscardConfirmDialog();
+		},
+		showDiscardConfirmDialog(): void
+		{
+			MessageBox.show({
+				title: this.loc('TASKS_V2_REPLICATION_DISCARD_CHANGES_TITLE'),
+				message: this.loc('TASKS_V2_REPLICATION_DISCARD_CHANGES_MESSAGE'),
+				useAirDesign: true,
+				buttons: MessageBoxButtons.YES_NO,
+				yesCaption: this.loc('TASKS_V2_REPLICATION_DISCARD_CHANGES_DISCARD'),
+				noCaption: this.loc('TASKS_V2_REPLICATION_DISCARD_CHANGES_CANCEL'),
+				popupOptions: { closeByEsc: true },
+				onYes: (box) => {
+					box.close();
+					this.$emit('close');
+				},
+				onNo: (box) => {
+					box.close();
+				},
+			});
 		},
 		showSaveConfirmDialog(): void
 		{
@@ -205,22 +263,30 @@ export const ReplicationSheetContent = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-sheet">
+		<div class="tasks-field-replication-sheet" data-testid="tasks-replication-sheet">
 			<div class="tasks-field-replication-sheet-header">
 				<HeadlineMd>{{ loc('TASKS_V2_REPLICATION_TITLE_SHEET') }}</HeadlineMd>
-				<BIcon
+				<button
+					type="button"
 					class="tasks-field-replication-sheet-close"
-					:name="Outline.CROSS_L"
-					hoverable
+					:aria-label="loc('TASKS_V2_REPLICATION_SHEET_CLOSE_ARIA_LABEL')"
+					data-testid="tasks-replication-sheet-close-btn"
 					@click="save"
-				/>
+				>
+					<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+				</button>
 			</div>
 			<div class="tasks-field-replication-sheet-body">
 				<div v-if="!isTemplate && !task.replicateParams" class="tasks-field-replication-sheet-description">
 					<span class="tasks-field-replication-sheet-description-text">
 						<RichLoc :text="loc('TASKS_V2_REPLICATION_SHEET_DESCRIPTION')" placeholder="[helpdesk]">
 							<template #helpdesk="{ text }">
-								<a class="tasks-field-replication-helpdesk" @click="showHelpDesk">{{ text }}</a>
+								<button
+									type="button"
+									class="tasks-field-replication-helpdesk"
+									data-testid="tasks-replication-helpdesk-btn"
+									@click="showHelpDesk"
+								>{{ text }}</button>
 							</template>
 						</RichLoc>
 					</span>
@@ -234,7 +300,7 @@ export const ReplicationSheetContent = {
 					<ReplicationWeekend v-if="isDailyPeriod" @update="updateReplicateParams"/>
 				</div>
 			</div>
-			<ReplicationSheetFooter :replicateParams @close="$emit('close')" @save="save"/>
+			<ReplicationSheetFooter :replicateParams @cancel="handleCancel" @save="save"/>
 		</div>
 	`,
 };

@@ -21,7 +21,6 @@ return [
 		'main.loader',
 		'ui.dialogs.messagebox',
 		'ui.notification',
-		'ui.stageflow',
 	],
 	'skip_core' => false,
 ];

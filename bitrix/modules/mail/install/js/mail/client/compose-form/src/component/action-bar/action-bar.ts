@@ -1,9 +1,17 @@
+import { Dom, Runtime } from 'main.core';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
-import { defineComponent } from 'ui.vue3';
+import { TextSm } from 'ui.system.typography.vue';
+import { defineAsyncComponent, defineComponent, type Component } from 'ui.vue3';
 import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
 
-import { Phrase, SendControlTestId, SlotsControlTestId } from '../../const';
+import {
+	Phrase,
+	SaveTemplateContainerTestId,
+	SaveTemplateControlTestId,
+	SendControlTestId,
+	SlotsControlTestId,
+} from '../../const';
 import { insertCalendarSlots } from '../../feature/insert-calendar-slots/insert-calendar-slots';
 import { useComposeEditor } from '../../infrastructure/adapter/editor/editor';
 import { loc } from '../../lib/loc/loc';
@@ -27,6 +35,23 @@ const TestId = Object.freeze({
 	sendRow: 'mail-compose-send-row',
 	send: SendControlTestId,
 	cancel: 'mail-compose-cancel',
+	saveTemplate: SaveTemplateContainerTestId,
+	saveTemplateControl: SaveTemplateControlTestId,
+});
+
+type CheckboxExtension = {
+	Vue: {
+		Checkbox: Component,
+	},
+};
+
+const CheckboxSizeMd = 'md';
+const Checkbox = defineAsyncComponent({
+	loader: () => {
+		return Runtime.loadExtension('ui.system.checkbox').then((exports) => {
+			return (exports as unknown as CheckboxExtension).Vue.Checkbox;
+		});
+	},
 });
 
 type ActionBarLabels = {
@@ -37,6 +62,7 @@ type ActionBarLabels = {
 	slots: string,
 	send: string,
 	cancel: string,
+	saveTemplate: string,
 };
 
 /**
@@ -49,12 +75,21 @@ export const ActionBar = defineComponent({
 	name: 'MailComposeActionBar',
 
 	components: {
+		Checkbox,
 		SendSplitButton,
 		TemplatePicker,
+		TextSm,
 		UiButton,
 	},
 
-	emits: ['signature', 'send', 'cancel'],
+	props: {
+		formId: {
+			type: String,
+			required: true,
+		},
+	},
+
+	emits: ['signature', 'send', 'schedule', 'cancel'],
 
 	setup()
 	{
@@ -66,7 +101,9 @@ export const ActionBar = defineComponent({
 			sendStyle: AirButtonStyle.FILLED,
 			cancelStyle: AirButtonStyle.PLAIN,
 			sendSize: ButtonSize.MEDIUM,
-			copilotIcon: Outline.COPILOT,
+			checkboxSize: CheckboxSizeMd,
+			copilotStyle: AirButtonStyle.TINTED_BITRIX_GPT,
+			copilotIcon: Outline.AI_STARS,
 			attachIcon: Outline.ATTACH,
 			createDocumentIcon: Outline.CREATE_FILE,
 			signatureIcon: Outline.DOCUMENT_SIGN,
@@ -83,6 +120,11 @@ export const ActionBar = defineComponent({
 	},
 
 	computed: {
+		saveTemplateControlId(): string
+		{
+			return `${this.formId}-${TestId.saveTemplateControl}`;
+		},
+
 		labels(): ActionBarLabels
 		{
 			return {
@@ -94,6 +136,7 @@ export const ActionBar = defineComponent({
 				slots: loc(Phrase.SlotsButton),
 				send: loc(Phrase.SendButton),
 				cancel: loc(Phrase.CancelButton),
+				saveTemplate: loc(Phrase.SaveAsTemplate),
 			};
 		},
 
@@ -108,6 +151,24 @@ export const ActionBar = defineComponent({
 			return this.state.features.templates;
 		},
 
+		/**
+		 * A letter already on the schedule is saved again through the update of the schedule, and that path
+		 * carries no ask of a template: the box there would be a control that does nothing.
+		 */
+		isSaveTemplateShown(): boolean
+		{
+			return this.state.features.saveTemplate && this.state.scheduledMessage.id <= 0;
+		},
+
+		/**
+		 * The half of the schedule stands on its own flag alone: under the flag of the unfinished elements the
+		 * card would open over a form that schedules nothing, and every choice in it would do nothing at all.
+		 */
+		isScheduleShown(): boolean
+		{
+			return this.state.features.scheduledMessages;
+		},
+
 		/** Server flags alone decide this; the form checks no tariff of its own. */
 		isCopilotShown(): boolean
 		{
@@ -117,6 +178,11 @@ export const ActionBar = defineComponent({
 		isSending(): boolean
 		{
 			return this.state.isSending;
+		},
+
+		isRestoreFailed(): boolean
+		{
+			return this.state.draft.restoreFailed;
 		},
 
 		isSendDisabled(): boolean
@@ -129,8 +195,31 @@ export const ActionBar = defineComponent({
 
 		sendUnavailableHint(): string
 		{
-			return isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_SEND_UNAVAILABLE') : '';
+			return isSelectedSenderMigrationActive(this.state) ? loc('MAIL_MIGRATION_ACTION_UNAVAILABLE') : '';
 		},
+	},
+
+	watch: {
+		sendUnavailableHint(): void
+		{
+			this.syncSendHint();
+		},
+
+		/** The send control is drawn anew with this state, so the hint goes onto the new node. */
+		isRestoreFailed(): void
+		{
+			void this.$nextTick(this.syncSendHint);
+		},
+	},
+
+	mounted(): void
+	{
+		this.syncSendHint();
+	},
+
+	updated(): void
+	{
+		this.syncSendHint();
 	},
 
 	methods: {
@@ -141,7 +230,7 @@ export const ActionBar = defineComponent({
 
 		handleAttach(): void
 		{
-			this.editor.showUploader();
+			this.editor.toggleUploader();
 		},
 
 		/** The picker belongs to `SignatureBlock`, so the parent is asked to open it. */
@@ -172,7 +261,7 @@ export const ActionBar = defineComponent({
 
 		handleCreateDocument(): void
 		{
-			this.editor.showCreateDocument();
+			this.editor.toggleCreateDocument();
 		},
 
 		handleSend(): void
@@ -201,14 +290,46 @@ export const ActionBar = defineComponent({
 
 			return row?.querySelector<HTMLElement>(`[data-testid="${TestId.slots}"]`) ?? null;
 		},
+
+		/**
+		 * An attribute bound on the Vue wrapper never reaches the rendered button, so the hint is written on the
+		 * node itself. The split writes its own hint.
+		 */
+		syncSendHint(): void
+		{
+			if (this.isScheduleShown)
+			{
+				return;
+			}
+
+			const control = this.getSendControlNode();
+			if (control)
+			{
+				Dom.attr(control, 'title', this.sendUnavailableHint || null);
+			}
+		},
+
+		getSendControlNode(): HTMLElement | null
+		{
+			const row = this.$refs.sendRow as HTMLElement | undefined;
+
+			return row?.querySelector<HTMLElement>(`[data-testid="${TestId.send}"]`) ?? null;
+		},
 	},
 
 	template: `
-		<div ref="actions" class="mail-compose-action-bar" :data-testid="testId.actions">
+		<div
+			v-if="!isRestoreFailed"
+			ref="actions"
+			class="mail-compose-action-bar"
+			:class="{ '--with-copilot': isCopilotShown }"
+			:data-testid="testId.actions"
+		>
 			<UiButton
 				v-if="isCopilotShown"
+				class="mail-compose-copilot-button"
 				:text="labels.copilot"
-				:style="actionStyle"
+				:style="copilotStyle"
 				:size="actionSize"
 				:leftIcon="copilotIcon"
 				:dataset="{ testid: testId.copilot }"
@@ -250,19 +371,24 @@ export const ActionBar = defineComponent({
 			/>
 			<TemplatePicker v-if="isTemplatesShown"/>
 		</div>
-		<div class="mail-compose-send-row" :data-testid="testId.sendRow">
-			<SendSplitButton v-if="isUnfinishedShown" @send="handleSend"/>
-			<UiButton
-				v-else
-				:text="labels.send"
-				:style="sendStyle"
-				:size="sendSize"
-				:loading="isSending"
-				:disabled="isSendDisabled"
-				:title="sendUnavailableHint"
-				:dataset="{ testid: testId.send }"
-				@click="handleSend"
-			/>
+		<div ref="sendRow" class="mail-compose-send-row" :data-testid="testId.sendRow">
+			<template v-if="!isRestoreFailed">
+				<SendSplitButton
+					v-if="isScheduleShown"
+					@send="handleSend"
+					@schedule="$emit('schedule', $event)"
+				/>
+				<UiButton
+					v-else
+					:text="labels.send"
+					:style="sendStyle"
+					:size="sendSize"
+					:loading="isSending"
+					:disabled="isSendDisabled"
+					:dataset="{ testid: testId.send }"
+					@click="handleSend"
+				/>
+			</template>
 			<UiButton
 				:text="labels.cancel"
 				:style="cancelStyle"
@@ -270,6 +396,24 @@ export const ActionBar = defineComponent({
 				:dataset="{ testid: testId.cancel }"
 				@click="handleCancel"
 			/>
+			<div
+				v-if="isSaveTemplateShown"
+				class="mail-compose-save-template"
+				:data-testid="testId.saveTemplate"
+			>
+				<Checkbox
+					v-model="state.saveAsTemplate"
+					:id="saveTemplateControlId"
+					:size="checkboxSize"
+					:data-testid="testId.saveTemplateControl"
+					@keydown.enter.prevent
+				/>
+				<TextSm
+					tag="label"
+					class-name="mail-compose-save-template__label"
+					:for="saveTemplateControlId"
+				>{{ labels.saveTemplate }}</TextSm>
+			</div>
 		</div>
 	`,
 });

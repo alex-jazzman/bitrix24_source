@@ -5,7 +5,7 @@ import { HistoryApi } from './history-api';
 import { formatActivityTimestamp } from './format-date';
 import { positionPopoverUnderTrigger, keepPopoverAnchored } from 'note.ui.popover-position';
 
-// [P3.T4] Views widget: "eye N" control in the activity line + a popover listing viewers
+// Views widget: "eye N" control in the activity line + a popover listing viewers
 // (avatar + name + viewed-at time), styled as in Tasks per the mockup (#eyeCtl / #popViews).
 //
 // Data has two layers:

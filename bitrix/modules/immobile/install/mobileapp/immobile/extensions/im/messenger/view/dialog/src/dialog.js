@@ -96,6 +96,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.onHideScrollToNewMessageButton = options.onHideScrollToNewMessageButton ?? doNothing;
 
 			this.visibleAttachItems = options.visibleAttachItems;
+			this.attachPickerRestrictions = options.attachPickerRestrictions ?? null;
 			/**
 			 * @private
 			 * @type {VisibilityManager}
@@ -711,9 +712,12 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		async updateMessageBlock(message, blockId, options)
 		{
-			logger.log(`${this.constructor.name}.updateMessageBlock:`, message.id, options);
+			const dialogWidgetItem = this.#prepareMessageToDialogWidgetItem(message);
 
-			await this.ui.updateMessageBlock(this.#prepareMessageToDialogWidgetItem(message), blockId, options);
+			// builder is the exact block payload handed to the native update
+			logger.log(`${this.constructor.name}.updateMessageBlock:`, message.id, blockId, options, dialogWidgetItem.builder);
+
+			await this.ui.updateMessageBlock(dialogWidgetItem, blockId, options);
 
 			this.updateMessageListById(message.id, message);
 		}
@@ -1560,12 +1564,28 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			if (this.visibleAttachItems.includes(AttachPickerId.disk))
 			{
+				let diskUrl = `${MessengerParams.getSiteDir()}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${MessengerParams.getUserId()}`;
+
+				const diskFileFilter = this.attachPickerRestrictions?.diskFileFilter;
+				if (diskFileFilter)
+				{
+					if (Type.isArrayFilled(diskFileFilter.allowedExtensions))
+					{
+						diskUrl += `&allowedExtensions=${encodeURIComponent(diskFileFilter.allowedExtensions.join(','))}`;
+					}
+
+					if (Type.isNumber(diskFileFilter.maxFileSize) && diskFileFilter.maxFileSize > 0)
+					{
+						diskUrl += `&maxFileSize=${diskFileFilter.maxFileSize}`;
+					}
+				}
+
 				imagePickerParams.settings.attachButton.items.push({
 					id: AttachPickerId.disk,
 					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK'),
 					dataSource: {
 						multiple: false,
-						url: `${MessengerParams.getSiteDir()}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${MessengerParams.getUserId()}`,
+						url: diskUrl,
 						TABLE_SETTINGS: {
 							searchField: true,
 							showtitle: true,
@@ -1608,6 +1628,22 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_VOTE'),
 					iconName: Icon.POLL.getIconName(),
 				});
+			}
+
+			if (this.visibleAttachItems.includes(AttachPickerId.contact))
+			{
+				imagePickerParams.settings.attachButton.items.push({
+					id: AttachPickerId.contact,
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_CONTACT'),
+					iconName: Icon.CONTACT_SEND.getIconName(),
+					testId: 'dialog-attach-contact',
+				});
+			}
+
+			if (this.attachPickerRestrictions)
+			{
+				imagePickerParams.settings.maxAttachedFilesCount = this.attachPickerRestrictions.maxAttachedFilesCount;
+				imagePickerParams.settings.fileRestrictions = this.attachPickerRestrictions.fileRestrictions;
 			}
 
 			AnalyticsService.getInstance().sendShowImagePicker(this.dialogId);
@@ -1735,6 +1771,29 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {UpdateLoadTextParams} data
+		 * @return {boolean}
+		 */
+		updateLoadTextByMessageId(data)
+		{
+			if (Type.isUndefined(data.messageId))
+			{
+				return false;
+			}
+
+			if (Type.isUndefined(data.mediaId))
+			{
+				this.ui.updateLoadTextByMessageId(data.messageId, data.text);
+			}
+			else
+			{
+				this.ui.updateLoadTextByMessageId(data.messageId, data.text, data.mediaId);
+			}
+
+			return true;
+		}
+
+		/**
 		 * @desc Call native method for set status field
 		 *
 		 * @param {StatusFieldIconType} iconType
@@ -1844,10 +1903,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		/**
 		 * @param {object} titleData
 		 * @param {Array<ActionPanelButton>} buttons
+		 * @param {?ActionPanelButton} [moreButton=null]
 		 */
-		async actionPanelShow(titleData, buttons)
+		async actionPanelShow(titleData, buttons, moreButton = null)
 		{
-			return this.actionPanel.show(titleData, buttons);
+			return this.actionPanel.show(titleData, buttons, moreButton);
 		}
 
 		/**
@@ -1856,6 +1916,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		async actionPanelHide(animated = false)
 		{
 			return this.actionPanel.hide(animated);
+		}
+
+		async actionPanelHideMoreButton()
+		{
+			return this.actionPanel.hideMoreButton();
 		}
 
 		/**

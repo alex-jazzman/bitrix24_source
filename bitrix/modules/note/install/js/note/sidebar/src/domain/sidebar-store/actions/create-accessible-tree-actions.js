@@ -553,7 +553,7 @@ export class SidebarAccessibleTreeActions
 		void this.#refetchExpandedBranches(expandedCandidates);
 	}
 
-	// [P2.T3 / EVENT-01] Pull cascade of a document-level ACL change. Arrives on the personal
+	// Pull cascade of a document-level ACL change. Arrives on the personal
 	// channel (the receiver has no collection VIEW, so no NOTE_COLLECTION_* watch). A collapsed
 	// section only marks itself stale — the refetch is deferred to the next expand (lazy). Both
 	// the documentIds and requestRefetch shapes reload just the section, never the whole sidebar:
@@ -791,7 +791,7 @@ export class SidebarAccessibleTreeActions
 		void this.loadSharedTree(false);
 	}
 
-	// [EVENT-01] An access change lands on a subtree, not on a page: a descendant can lose the grant
+	// An access change lands on a subtree, not on a page: a descendant can lose the grant
 	// it was held by while its parent keeps one of its own. The page re-reads branch ROOTS and drops
 	// only the branches it re-reads, so every nested branch stayed hydrated and kept showing a child
 	// whose access had just been taken away - here, and in the favorites block, which draws its

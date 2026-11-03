@@ -25,6 +25,7 @@ use Bitrix\Tasks\V2\Internal\Integration\Socialnetwork\Service\FeatureService;
 use Bitrix\Tasks\V2\Internal\Repository\GroupRepository;
 use Bitrix\Tasks\V2\Internal\Repository\TaskAccessRequestRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\UserFieldSchemeRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\UserOptionRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Service\AnalyticsService;
 use Bitrix\Tasks\V2\Internal\Service\Link\LinkService;
 use Bitrix\Tasks\V2\Internal\Service\TariffService;
@@ -51,6 +52,7 @@ class ConfigService
 		private readonly UserUrlService $userUrlService,
 		private readonly StructureRepositoryInterface $structureRepository,
 		private readonly TaskAccessRequestRepositoryInterface $taskAccessRequestRepository,
+		private readonly UserOptionRepositoryInterface $userOptionRepository,
 	)
 	{
 
@@ -74,6 +76,7 @@ class ConfigService
 			'mainDepartmentUfId' => $mainDepartmentUfId,
 			'userOptions' => [
 				'fullCard' => \CUserOptions::getOption('tasks', 'fullCard'),
+				'filesViewMode' => $this->userOptionRepository->get(OptionDictionary::FilesViewMode, $userId),
 			],
 			'rights' => [
 				'user' => [
@@ -109,6 +112,7 @@ class ConfigService
 				'userTemplateListPathTemplate' => RouteDictionary::PATH_TO_USER_TEMPLATES_LIST,
 			],
 			'ahaMoments' => Container::getInstance()->getAhaMomentProvider()->get($userId),
+			'onboardingBanners' => Container::getInstance()->getOnboardingBannerProvider()->get($userId),
 			'restrictions' => Container::getInstance()->getTariffProvider()->getRestrictions(),
 			'taskUserFieldScheme' => $this->userFieldSchemeRepository->getCollection($userId, Task::getEntityCode())->toArray(),
 			'templateUserFieldScheme' => $this->userFieldSchemeRepository->getCollection($userId, Template::getEntityCode())->toArray(),

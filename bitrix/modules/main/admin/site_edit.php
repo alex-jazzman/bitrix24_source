@@ -71,9 +71,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_P
 	$templates = isset($_POST["SITE_TEMPLATE"]) && is_array($_POST["SITE_TEMPLATE"]) ? $_POST["SITE_TEMPLATE"] : [];
 	foreach($templates as $key=>$val)
 	{
-		if ($USER->CanDoOperation('edit_php') || $_POST['selected_type'][$key] != 'php')
+		$selectedType = $_POST['selected_type'][$key] ?? null;
+		if ($USER->CanDoOperation('edit_php') || $selectedType != 'php')
 		{
-			$cond = ConditionCompose($val, $key);
+			$cond = ConditionCompose($val, $selectedType);
 		}
 		else
 		{
@@ -549,9 +550,10 @@ endforeach;
 				$templates = isset($_POST["SITE_TEMPLATE"]) && is_array($_POST["SITE_TEMPLATE"]) ? $_POST["SITE_TEMPLATE"] : [];
 				foreach($templates as $key=>$val)
 				{
-					if ($USER->CanDoOperation('edit_php') || $_POST['selected_type'][$key] != 'php')
+					$selectedType = $_POST['selected_type'][$key] ?? null;
+					if ($USER->CanDoOperation('edit_php') || $selectedType != 'php')
 					{
-						$cond = ConditionCompose($val, $key);
+						$cond = ConditionCompose($val, $selectedType);
 					}
 					else
 					{

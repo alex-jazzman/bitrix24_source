@@ -3,6 +3,8 @@ import './css/view.css';
 import { EventEmitter } from 'main.core.events';
 import { StepperController } from './stepper-controller';
 
+export const MOBILE_POPUP_WIDTH = 340;
+
 export class BaseView extends EventEmitter
 {
 	#id: string;
@@ -38,6 +40,11 @@ export class BaseView extends EventEmitter
 	getStepInfo(): Object
 	{
 		return this.#stepper.getStepInfo();
+	}
+
+	getPopupWidth(): ?number
+	{
+		return null;
 	}
 
 	renderStepIndicators(): HTMLElement

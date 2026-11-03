@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_BPD_DOCUMENT_FIELD_PRODUCT_IDS_CATALOG'] = 'Catalog products';

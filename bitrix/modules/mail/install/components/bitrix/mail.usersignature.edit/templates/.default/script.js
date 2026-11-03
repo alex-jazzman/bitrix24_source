@@ -5,9 +5,19 @@
 	BX.namespace('BX.Mail.UserSignature.Edit');
 
 	var editor = null;
+	var imageSourceMenu = null;
 
 	BX.Mail.UserSignature.Edit.init = function(params)
 	{
+		if (imageSourceMenu)
+		{
+			imageSourceMenu.destroy();
+		}
+		if (editor)
+		{
+			editor.destroy();
+		}
+
 		var Editor = BX.Mail.Signature.Editor;
 		var userTransport = new Editor.UserSignatureTransport();
 		var sharedSignatureId = parseInt(params.sharedSignatureId, 10) || 0;
@@ -17,6 +27,7 @@
 
 		editor = new Editor.SignatureEditor({
 			editorInstanceId: 'signatureeditorid',
+			initialContent: params.signature || '',
 			signatureId: parseInt(params.signatureId, 10) || 0,
 			alertContainer: BX('signature-alert-container'),
 			panel: new Editor.SenderBindingPanel({
@@ -25,7 +36,6 @@
 			panelContainer: BX('sender-binding-panel'),
 			scopeCard: sharedCard,
 			scopeCardContainer: sharedCard ? BX('shared-signature-panel') : null,
-			capabilities: capabilities,
 			transport: Editor.needsUnifiedTransport({
 				unifiedSignatureId: unifiedSignatureId,
 				hasSharedScopeCard: sharedCard !== null
@@ -42,24 +52,39 @@
 				)
 				: userTransport,
 			sliderMessage: { eventId: 'mail-add-signature', idKey: 'userSignatureId' },
+			capabilities: capabilities,
 		});
 	};
 
 	function buildCapabilities(Editor, params)
 	{
+		var capabilities = [];
 		var catalog = Editor.SignatureMacroCatalog.fromDto(params.signatureMacroCatalog);
 		var actionContainer = BX('signature-macro-action-container');
-		if (!catalog || !actionContainer || !Editor.SignatureMacroCapability)
+		if (catalog && actionContainer && Editor.SignatureMacroCapability)
 		{
-			return [];
-		}
-
-		return [
-			new Editor.SignatureMacroCapability({
+			capabilities.push(new Editor.SignatureMacroCapability({
 				catalog: catalog,
 				actionContainer: actionContainer
-			})
-		];
+			}));
+		}
+
+		if (params.signatureImagesAvailable === true)
+		{
+			var imageCapability = new Editor.ImageCapability({
+				localUploader: new Editor.LocalImageUploader({}),
+				diskPicker: new Editor.DiskImagePicker(),
+			});
+			capabilities.push(imageCapability);
+
+			imageSourceMenu = new Editor.ImageSourceMenu({
+				editorInstanceId: 'signatureeditorid',
+				capability: imageCapability,
+			});
+			imageSourceMenu.attach();
+		}
+
+		return capabilities;
 	}
 
 	/**

@@ -1,10 +1,10 @@
-import './block-top-title.css';
-import { Tag, Text, Dom, Type } from 'main.core';
-import { hint } from 'ui.vue3.directives.hint';
-import type { HintParams } from 'ui.vue3.directives.hint';
+import { Dom, Tag, Text, Type } from 'main.core';
 import { useBlockDiagram } from 'ui.block-diagram';
 import { markRaw } from 'ui.vue3';
-import { getAngleHalfWidth, getCenteredAngleOffset, getPopupCenterShift } from './hint-alignment';
+import { hint, type HintParams } from 'ui.vue3.directives.hint';
+import { getAngleHalfWidth, getLeftEdgeAngleAlignment } from './hint-alignment';
+
+import './block-top-title.css';
 
 // @vue/component
 export const BlockTopTitle = {
@@ -41,7 +41,7 @@ export const BlockTopTitle = {
 		angleOffset: ?number,
 		alignmentFrameId: ?number,
 		alignmentTimeoutId: ?number,
-	}
+		}
 	{
 		return {
 			popupInstance: null,
@@ -74,37 +74,6 @@ export const BlockTopTitle = {
 		shouldShowTooltip(): boolean
 		{
 			return this.isOverflowing || Boolean(this.title && this.description);
-		},
-		hintOptions(): ?HintParams
-		{
-			if (!this.shouldShowTooltip)
-			{
-				return null;
-			}
-
-			return {
-				text: this.tooltipContent,
-				popupOptions: {
-					offsetTop: -10,
-					bindOptions: { position: 'top' },
-					className: 'editor-chart-tooltip-content',
-					width: 340,
-					background: 'var(--ui-color-accent-soft-element-blue)',
-					events: {
-						onShow: (event) => {
-							const popup = event.getTarget();
-							if (popup)
-							{
-								this.popupInstance = markRaw(popup);
-								this.scheduleAlignment();
-							}
-						},
-						onClose: () => {
-							this.releasePopup();
-						},
-					},
-				},
-			};
 		},
 	},
 	watch: {
@@ -142,6 +111,33 @@ export const BlockTopTitle = {
 		}
 	},
 	methods: {
+		getHintOptions(): HintParams
+		{
+			return {
+				text: this.tooltipContent,
+				popupOptions: {
+					offsetTop: -10,
+					bindOptions: { position: 'top' },
+					className: 'editor-chart-tooltip-content',
+					width: 340,
+					background: 'var(--ui-color-accent-soft-element-blue)',
+					events: {
+						onShow: (event) => {
+							const popup = event.getTarget();
+							if (popup)
+							{
+								this.popupInstance = markRaw(popup);
+								this.applyPopupBindElement(popup);
+								this.scheduleAlignment();
+							}
+						},
+						onClose: () => {
+							this.releasePopup();
+						},
+					},
+				},
+			};
+		},
 		checkOverflow(): void
 		{
 			const element = this.$refs.textContainer;
@@ -164,18 +160,41 @@ export const BlockTopTitle = {
 			this.popupInstance = null;
 			this.angleOffset = null;
 		},
+		applyPopupBindElement(popup): void
+		{
+			const bindElement = this.getHintBindElement();
+			if (!bindElement)
+			{
+				return;
+			}
+
+			if (Type.isFunction(popup.setBindElement))
+			{
+				popup.setBindElement(bindElement);
+			}
+			else
+			{
+				Reflect.set(popup, 'bindElement', bindElement);
+			}
+		},
+		getHintBindElement(): ?HTMLElement
+		{
+			if (this.isOverflowing && this.$refs.textContainer)
+			{
+				return this.$refs.textContainer;
+			}
+
+			return this.$refs.text;
+		},
 		scheduleAlignment(): void
 		{
 			this.cancelScheduledAlignment();
 
-			// the first pass lands before the frame is painted, so the popup never shows up unaligned
 			this.alignmentFrameId = requestAnimationFrame(() => {
 				this.alignmentFrameId = null;
 				this.adjustOpenPopup();
 
-				// the hint directive of ui.vue3.directives.hint re-centers the angle on the title in a
-				// zero timeout it schedules after this handler; the second pass returns the angle to
-				// the middle of the shifted popup once the directive is done with it
+				// ui.vue3.directives.hint adjusts the angle asynchronously after onShow.
 				this.alignmentTimeoutId = setTimeout(() => {
 					this.alignmentTimeoutId = null;
 					this.applyAngleOffset();
@@ -227,29 +246,46 @@ export const BlockTopTitle = {
 
 			// the whole geometry is read in one batch, before any style is written back
 			const containerRect = container.getBoundingClientRect();
-			const containerWidth = container.offsetWidth;
-
-			const shift = getPopupCenterShift(anchorRect, containerRect);
-			this.angleOffset = getCenteredAngleOffset(containerWidth, angleHalfWidth);
+			const { popupShift, angleOffset } = getLeftEdgeAngleAlignment(
+				anchorRect,
+				containerRect,
+				this.zoom,
+				angleHalfWidth,
+			);
+			this.angleOffset = angleOffset;
 
 			this.applyAngleOffset();
 
 			if (this.zoom === 1)
 			{
-				this.applyShift(container, shift);
+				this.applyShift(container, popupShift);
 			}
 			else
 			{
-				this.applyZoomedShift(container, shift, this.zoom);
+				this.applyZoomedShift(container, popupShift, this.zoom);
 			}
 		},
 		applyAngleOffset(): void
 		{
 			// without a measured angle the offset stays unknown, and the angle keeps the place the
 			// hint directive gave it - a guessed offset would point it away from the title
-			if (this.popupInstance && this.angleOffset !== null)
+			if (this.popupInstance?.angle && this.angleOffset !== null)
 			{
-				this.popupInstance.setAngle({ offset: this.angleOffset });
+				const { angle } = this.popupInstance;
+				const angleElement = angle.element;
+
+				angle.offset = this.angleOffset;
+
+				if (angle.position === 'bottom')
+				{
+					Dom.style(angleElement, 'left', '0');
+					Dom.style(angleElement, 'marginLeft', `${this.angleOffset}px`);
+				}
+				else
+				{
+					Dom.style(angleElement, 'marginLeft', '0');
+					Dom.style(angleElement, 'left', `${this.angleOffset}px`);
+				}
 			}
 		},
 		getOffsetAnchor(): ?HTMLElement
@@ -274,7 +310,7 @@ export const BlockTopTitle = {
 	},
 	template: `
 		<h3 class="editor-chart-block-top-title" ref="textContainer">
-			<span v-if="displayText" v-hint="hintOptions">{{ displayText }}</span>
+			<span v-if="displayText" ref="text" v-hint="shouldShowTooltip ? getHintOptions : null">{{ displayText }}</span>
 		</h3>
 	`,
 };

@@ -3,6 +3,7 @@ import { Dom, Tag, Text, Event, Loc } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { GridManager } from '../grid-manager';
 import { Chip, ChipDesign, ChipSize } from 'ui.system.chip';
+import { MigrationProgressPanelLoader } from '../migration-progress-panel-loader';
 
 export type LastSyncFieldType = {
 	lastSync: ?number,
@@ -11,6 +12,10 @@ export type LastSyncFieldType = {
 	canEdit: ?boolean,
 	migrationStatus: ?string,
 	migrationActive: ?boolean,
+	migrationAdminProgressAvailable: ?boolean,
+	migrationAdminProgressAllowed: ?boolean,
+	migrationAdminProgressEarlyVisible: ?boolean,
+	migrationAdminStatus: ?string,
 }
 
 export class LastSyncField extends BaseField
@@ -20,43 +25,91 @@ export class LastSyncField extends BaseField
 		const lastSyncContainer = Tag.render`
 			<div class="mailbox-grid_last-sync-container mailbox-grid_single-line_field"></div>
 		`;
+		const migrationStatusContainer = Tag.render`
+			<div class="mailbox-grid_last-sync-status-container" data-role="mailbox-grid-migration-status"></div>
+		`;
+		const regularStatusContainer = Tag.render`
+			<div class="mailbox-grid_last-sync-status-container" data-role="mailbox-grid-regular-sync-status"></div>
+		`;
 
-		if (params.migrationActive)
+		const hasAdminProgress = params.migrationAdminProgressAvailable === true;
+		Dom.attr(migrationStatusContainer, 'data-mailbox-admin-progress', hasAdminProgress ? 'Y' : 'N');
+		Dom.attr(
+			migrationStatusContainer,
+			'data-mailbox-admin-progress-allowed',
+			params.migrationAdminProgressAllowed === true ? 'Y' : 'N',
+		);
+		Dom.attr(
+			migrationStatusContainer,
+			'data-mailbox-admin-progress-early-visible',
+			params.migrationAdminProgressEarlyVisible === true ? 'Y' : 'N',
+		);
+		const migrationStatus = this.#getMigrationStatus(params);
+		if (hasAdminProgress)
 		{
-			Dom.append(this.#getMigrationStatus(), lastSyncContainer);
+			Dom.attr(migrationStatusContainer, 'data-mailbox-admin-progress-text', migrationStatus.textContent ?? '');
 		}
-		else if (params.hasError)
+		Dom.append(migrationStatus, migrationStatusContainer);
+		if (params.hasError)
 		{
-			Dom.append(this.#getErrorMessage(), lastSyncContainer);
+			Dom.append(this.#getErrorMessage(), regularStatusContainer);
 		}
 		else
 		{
 			if (params.lastSync)
 			{
-				Dom.append(this.#getLastSyncContainer(params.lastSync), lastSyncContainer);
+				Dom.append(this.#getLastSyncContainer(params.lastSync), regularStatusContainer);
 			}
 			else
 			{
-				Dom.append(this.#getLastSyncRightNowContainer(), lastSyncContainer);
+				Dom.append(this.#getLastSyncRightNowContainer(), regularStatusContainer);
 			}
 
 			if (params.mailboxId && params.canEdit)
 			{
-				Dom.append(this.#getLastSyncButton(params.mailboxId), lastSyncContainer);
+				Dom.append(this.#getLastSyncButton(params.mailboxId), regularStatusContainer);
 			}
 		}
+
+		migrationStatusContainer.hidden = params.migrationActive !== true && !hasAdminProgress;
+		regularStatusContainer.hidden = params.migrationActive === true || hasAdminProgress;
+		Dom.append(migrationStatusContainer, lastSyncContainer);
+		Dom.append(regularStatusContainer, lastSyncContainer);
 
 		this.appendToFieldNode(lastSyncContainer);
 	}
 
-	#getMigrationStatus(): HTMLElement
+	#getMigrationStatus(params: LastSyncFieldType): HTMLElement
 	{
-		return new Chip({
+		const adminStatusKeys = {
+			waiting: 'MAIL_MIGRATION_PROGRESS_STATUS_WAITING',
+			manual_waiting: 'MAIL_MIGRATION_PROGRESS_STATUS_MANUAL_WAITING',
+			blocked: 'MAIL_MIGRATION_PROGRESS_STATUS_BLOCKED',
+			cancelling: 'MAIL_MIGRATION_PROGRESS_STATUS_CANCELLING',
+			switching: 'MAIL_MIGRATION_PROGRESS_STATUS_SWITCHING',
+		};
+		const status = params.migrationAdminProgressAvailable === true
+			? params.migrationAdminStatus
+			: params.migrationStatus;
+		const key = (params.migrationAdminProgressAvailable === true || params.migrationActive === true)
+			&& Object.hasOwn(adminStatusKeys, status)
+			? adminStatusKeys[status]
+			: 'MAIL_MIGRATION_STATUS'
+		;
+		const chip = new Chip({
 			size: ChipSize.Sm,
 			rounded: true,
-			text: Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_IN_PROGRESS') ?? '',
+			text: Text.encode(Loc.getMessage(key) ?? ''),
 			design: ChipDesign.OutlineWarning,
 		}).render();
+		if (params.migrationAdminProgressAllowed === true
+			&& (params.migrationAdminProgressAvailable === true || params.migrationActive === true)
+			&& params.mailboxId && this.getGridId())
+		{
+			MigrationProgressPanelLoader.getInstance(this.getGridId()).bindAnchor(chip, Number(params.mailboxId));
+		}
+
+		return chip;
 	}
 
 	#getLastSyncContainer(lastSync: string): HTMLElement
@@ -83,7 +136,7 @@ export class LastSyncField extends BaseField
 	#getLastSyncButton(mailboxId: number): HTMLElement
 	{
 		const button = Tag.render`
-			<div class="mailbox-grid_last-sync-button ui-icon-set --o-refresh" data-test-id="mailbox-grid_refresh-button"></div>
+				<div class="mailbox-grid_last-sync-button ui-icon-set --o-refresh" data-testid="mailbox-grid_refresh-button"></div>
 		`;
 
 		Event.bind(button, 'click', () => {

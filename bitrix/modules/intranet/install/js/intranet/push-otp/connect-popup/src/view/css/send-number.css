@@ -24,25 +24,26 @@
 .intranet-push-otp-connect-popup__view-phone-number-phone {
 	width: 183px;
 	height: 240px;
-	background: url('../images/phone.svg') bottom no-repeat;
+	background: url('../images/phone-screen.webp') bottom no-repeat;
+	background-size: contain;
 }
 
 .intranet-push-otp-connect-popup__view-connect-logo {
 	margin: 0 auto 28px auto;
 	width: 94px;
 	height: 95px;
-	background: url('../images/phone-ios.png') top no-repeat;
+	background: url('../images/phone-ios.webp') top no-repeat;
 	background-size: cover;
 }
 
 .intranet-push-otp-connect-popup__view-connect-logo.--android {
-	background: url('../images/phone-android.png') top no-repeat;
+	background: url('../images/phone-android.webp') top no-repeat;
 	background-size: cover;
 }
 
 .intranet-push-otp-connect-popup__view-connect-logo-text,
 .intranet-push-otp-connect-popup__view-phone-number-value {
-	font-weight: 500;
+	font-weight: var(--ui-font-weight-medium);
 	font-size: 21px;
 	line-height: 29px;
 }
@@ -80,4 +81,70 @@
 
 .intranet-push-otp-connect-popup__view-phone-number-link:hover {
 	border-bottom: 1px dashed transparent;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--phone {
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	width: min(100%, 340px);
+	min-height: 358px;
+	margin: 0 auto;
+	padding: 32px 24px 0;
+	gap: 28px;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--phone > :first-child {
+	width: 100%;
+	text-align: center;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--phone .intranet-push-otp-connect-popup__view-phone-number-input,
+.intranet-push-otp-connect-popup__view-connect-container.--phone .intranet-push-otp-connect-popup__view-phone-number-input-box {
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--phone .intranet-push-otp-connect-popup__view-enter-code-subtitle {
+	text-align: center;
+}
+
+@media (max-width: 767px) {
+	.intranet-push-otp-connect-popup__view-connect-device {
+		width: 100%;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.intranet-push-otp-connect-popup__view-connect-container.--code {
+		padding: 24px;
+	}
+
+	.intranet-push-otp-connect-popup__view-phone-number-input,
+	.intranet-push-otp-connect-popup__view-phone-number-input-box {
+		align-self: stretch;
+		width: 100%;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.intranet-push-otp-connect-popup__view-phone-number-input-box {
+		top: 0;
+	}
+
+	.intranet-push-otp-connect-popup__view-phone-number-phone {
+		align-self: center;
+		max-width: 100%;
+		background-size: contain;
+	}
+
+	.intranet-push-otp-connect-popup__view-connect-logo-text,
+	.intranet-push-otp-connect-popup__view-phone-number-value {
+		max-width: 100%;
+		overflow-wrap: anywhere;
+		text-align: center;
+	}
 }

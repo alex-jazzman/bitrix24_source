@@ -3,6 +3,7 @@
 /** @global CUser $USER */
 
 use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
+use Bitrix\Intranet\Public\Service\Portal\Bitrix24SiteUrlResolver;
 use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Main\Composite\StaticArea;
@@ -12,6 +13,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Page\AssetMode;
 use Bitrix\Main\Web\Json;
 use Bitrix\Intranet\Public\Provider\Portal\LanguageProvider;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -31,6 +33,8 @@ $isCollaber = (
 	Loader::includeModule('extranet')
 	&& ServiceContainer::getInstance()->getCollaberService()->isCollaberById(CurrentUser::get()->getId())
 );
+$partnerID = \COption::getOptionString('bitrix24', 'partner_id', '');
+$showPartnerOptions = $isBitrix24Cloud && Loader::includeModule('bitrix24');
 
 // If a page doesn't have a top menu then show one item with a page title or a property 'title'
 AirTemplate::tryApplyDefaultTopMenu();
@@ -55,9 +59,12 @@ AirTemplate::tryApplyDefaultTopMenu();
 			<? if ($isBitrix24Cloud): ?>
 				<div class="air-footer__buttons">
 					<div class="air-footer__button">
+						<?php
+						$bitrix24SiteUrl = (new Bitrix24SiteUrlResolver())->resolve();
+						?>
 						<a
 							target="_blank"
-							href="<?=Loc::getMessage('BITRIX24_AIR_URL')?>"
+							href="<?=$bitrix24SiteUrl?>"
 							class="air-footer-button --logo-clock"
 						>
 							<span class="air-footer-button-logo">
@@ -66,13 +73,48 @@ AirTemplate::tryApplyDefaultTopMenu();
 							</span>
 						</a>
 					</div>
+					<?php if (!$partnerID && !$isCollaber && $showPartnerOptions): ?>
+						<?php
+						$orderParams = [];
+						$orderParams['title'] = Loc::getMessage('BITRIX24_AIR_PARTNER_POPUP_TITLE');
+						$orderParams['source'] = 'intranet.bitrix24.partner-order-form';
+						?>
+						<div class="air-footer__button">
+							<button
+								type="button"
+								class="air-footer-button"
+								onclick='BX.Intranet.Bitrix24.PartnerForm.showIntegrationOrderForm(<?= Json::encode($orderParams) ?>);'
+							>
+								<?= Loc::getMessage("BITRIX24_AIR_PARTNER_ORDER_MSGVER_1") ?>
+							</button>
+						</div>
+					<?php endif ?>
 					<?php
 						$b24Languages = (new LanguageProvider())->getPublicArray();
+						$languageSwitcherOptions = [
+							'currentLanguageCode' => LANGUAGE_ID,
+							'messages' => [
+								'BITRIX24_AIR_LANGUAGE_MENU_ARIA' => Loc::getMessage('BITRIX24_AIR_LANGUAGE_MENU_ARIA'),
+								'BITRIX24_AIR_LANGUAGE_SWITCHING_ANNOUNCEMENT' => Loc::getMessage(
+									'BITRIX24_AIR_LANGUAGE_SWITCHING_ANNOUNCEMENT',
+								),
+							],
+						];
 					?>
 					<div class="air-footer__button">
 						<button
-							onclick='BX.Intranet.Bitrix24.languageSwitcher.showLanguageListPopup(this, <?= Json::encode($b24Languages) ?>)'
+							type="button"
+							onclick='BX.Intranet.Bitrix24.languageSwitcher.showLanguageListPopup(
+								this,
+								<?= Json::encode($b24Languages) ?>,
+								<?= Json::encode($languageSwitcherOptions) ?>
+							)'
 							class="air-footer-button --dropdown"
+							aria-haspopup="menu"
+							aria-expanded="false"
+							aria-label="<?= htmlspecialcharsbx(Loc::getMessage('BITRIX24_AIR_LANGUAGE_TRIGGER_ARIA', [
+								'#LANGUAGE#' => $b24Languages[LANGUAGE_ID]['NAME'],
+							])) ?>"
 						><?=$b24Languages[LANGUAGE_ID]['NAME']?></button>
 					</div>
 				</div>
@@ -82,8 +124,6 @@ AirTemplate::tryApplyDefaultTopMenu();
 			</div>
 			<div class="air-footer__links">
 				<?
-					$partnerID = \COption::getOptionString('bitrix24', 'partner_id', '');
-					$showPartnerOptions = $isBitrix24Cloud && Loader::includeModule('bitrix24');
 					if ($partnerID && $showPartnerOptions)
 					{
 						$formParams = \CBitrix24::getPartnerFormParams();
@@ -93,19 +133,7 @@ AirTemplate::tryApplyDefaultTopMenu();
 							><?=Loc::getMessage('BITRIX24_AIR_PARTNER_CONNECT')?>
 						</button><?php
 					}
-					elseif (!$isCollaber && $showPartnerOptions)
-					{
-						$orderParams = [];
-						$orderParams['title'] = Loc::getMessage('BITRIX24_AIR_PARTNER_POPUP_TITLE');
-						$orderParams['source'] = 'intranet.bitrix24.partner-order-form';
-						?><button
-						class="air-footer__link"
-						onclick='BX.Intranet.Bitrix24.PartnerForm.showIntegrationOrderForm(<?= Json::encode($orderParams) ?>);'
-						>
-						<?= Loc::getMessage("BITRIX24_AIR_PARTNER_ORDER") ?>
-						</button><?php
-					}
-					else
+					elseif ($isCollaber || !$showPartnerOptions)
 					{
 						?><button
 							onclick="BX.Intranet.Bitrix24.PartnerForm.showHelper();"
@@ -189,7 +217,10 @@ $APPLICATION->includeComponent('bitrix:intranet.invitation.notification', '', []
 $APPLICATION->includeComponent('bitrix:intranet.placement', '', []);
 $APPLICATION->includeComponent('bitrix:bizproc.debugger', '', []);
 
-if (ModuleManager::isModuleInstalled('timeman'))
+if (
+	ModuleManager::isModuleInstalled('timeman')
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('worktime')
+)
 {
 	$APPLICATION->includeComponent('bitrix:timeman.report.status', '', []);
 }

@@ -39,16 +39,19 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		TEXT_BUTTON: 'text-button',
 		LINK_BUTTON: 'link-button',
 		THEME: 'theme',
+		FONT_SIZE: 'font-size',
 		DESCRIPTION: 'description',
 		VIDEO_QUALITY: 'video-quality',
 		VIDEO_BANNER: 'video-banner',
 		LOC_SELECTOR: 'loc-selector',
+		REACTION_SELECTOR: 'reaction-selector',
 		CACHE_INTERVAL: 'cache-interval',
 		CACHE_BANNER: 'cache-banner',
 		CACHE_INFO_BUTTON: 'cache-info-button',
 		BANNER: 'banner',
 		IMAGE: 'image',
 		STYLE: 'style',
+		APPEARANCE_BUNDLE: 'appearance-bundle',
 		SECURITY_INFO: 'security-info',
 		SECURITY_BANNER: 'security-banner',
 		SECURITY_ALERT_BANNER: 'security-alert-banner',
@@ -75,6 +78,7 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		changeCacheSize: 'settings-v2:changeCacheSize',
 		changeUserSelectorIsVisible: 'settings-v2:changeUserSelectorIsVisible',
 		changeSecurityState: 'settings-v2:changeSecurityState',
+		changeAppearanceBundle: 'settings-v2:changeAppearanceBundle',
 	};
 
 	const NotificationsCacheKey = {
@@ -92,7 +96,22 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		CACHE_FILES: 'cache_files',
 		CACHE_MEDIA: 'cache_media',
 		APP_STYLE: 'app_style',
+		APP_BUNDLE: 'app_bundle',
 		APP_THEME: 'app_theme',
+		APP_FONT_SIZE: 'app_font_size',
+	};
+
+	const DEFAULT_APP_BUNDLE = 'vibecode';
+
+	const SettingApplyStatus = {
+		SUCCESS: 'success',
+		ERROR: 'error',
+		CANCELLED: 'cancelled',
+	};
+
+	const AppearanceBundlesAvailability = {
+		AVAILABLE: 'available',
+		UNAVAILABLE: 'unavailable',
 	};
 
 	const BannerImageName = {
@@ -144,6 +163,9 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		EventType,
 		NotificationsCacheKey,
 		NativeSettingsId,
+		DEFAULT_APP_BUNDLE,
+		SettingApplyStatus,
+		AppearanceBundlesAvailability,
 		BannerImageName,
 		Modules,
 		ModuleToTitle,

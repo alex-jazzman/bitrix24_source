@@ -58,6 +58,12 @@ export type CatalogShareApplication = {
 	iconUrl: string | null,
 	color: string | null,
 	viewUrl: string | null,
+	appChatWritingAllowed?: ?boolean,
+};
+
+export type CatalogChatWritingResult = {
+	ok: boolean,
+	allowed: boolean,
 };
 
 export type CatalogShareDraft = {

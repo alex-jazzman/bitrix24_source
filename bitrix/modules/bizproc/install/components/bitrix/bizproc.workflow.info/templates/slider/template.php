@@ -75,7 +75,7 @@ use Bitrix\Main\Loader;
 					<div class="bp-workflow-info__tabs-inner">
 						<div class="bp-workflow-info__tabs-block">
 							<div class="bp-workflow-info__label"><?= Loc::getMessage('BPWFI_SLIDER_NAME') ?></div>
-							<div class="bp-workflow-info__subject"><?= htmlspecialcharsbx($workflow['name'] ?? '') ?></div>
+							<div class="bp-workflow-info__subject" data-testid="workflow-info-task-name"><?= htmlspecialcharsbx($workflow['name'] ?? '') ?></div>
 						</div>
 						<div class="bp-workflow-info__tabs-block">
 							<div class="bp-workflow-info__label"><?= Loc::getMessage('BPWFI_SLIDER_TYPE') ?></div>
@@ -110,16 +110,23 @@ use Bitrix\Main\Loader;
 			<?php
 				$documentService = CBPRuntime::getRuntime()->getDocumentService();
 				$documentType = $arResult['documentType'];
+				$taskId = (int)($task['id'] ?? 0);
 			?>
 			<div class="bp-workflow-info__editor<?= !$taskFields ? ' block-hidden' : ''?>">
 				<div class="bp-workflow-info__editor-title"><?= Loc::getMessage('BPWFI_SLIDER_FIELDS_TITLE') ?></div>
-				<form class="ui-form" name="task-form" enctype="multipart/form-data">
+				<form class="ui-form" name="task-form" data-testid="workflow-info-task-form" enctype="multipart/form-data">
 					<?php
 					if ($taskFields):
 					foreach ($taskFields as $field):
 						$cid = str_replace('[]', '', $field['Id']);
+						$field = \Bitrix\Bizproc\BaseType\File::fillTaskIdSetting(
+							$documentService,
+							$documentType,
+							$field,
+							$taskId
+						);
 						?>
-						<div class="ui-form-row" data-cid="<?= htmlspecialcharsbx($cid) ?>">
+						<div class="ui-form-row" data-cid="<?= htmlspecialcharsbx($cid) ?>" data-testid="workflow-info-task-field-<?= htmlspecialcharsbx($cid) ?>">
 							<div class="ui-form-label <?= $field['Required'] ? '--required' : '' ?>">
 								<div class="ui-ctl-label-text"><?= htmlspecialcharsbx(CBPHelper::stringify($field['Name'])) ?><?php
 									$fieldDescription = trim((string)($field['Description'] ?? ''));
@@ -198,13 +205,38 @@ use Bitrix\Main\Loader;
 				'BUTTONS' => [
 					[
 						'TYPE' => 'custom',
-						'LAYOUT' => '<div data-role="buttons-panel"></div>'
+						'LAYOUT' => '<div data-role="buttons-panel" data-testid="workflow-info-task-buttons"></div>'
 					]
 				],
 			]);
 		endif; ?>
 	</div>
 </div>
+
+<?php
+// the type of Bitrix\Bizproc\BaseType the control was drawn by, so an alias of a type is known on the client too
+$taskFieldsForJs = null;
+
+if (is_array($taskFields))
+{
+	$taskFieldsForJs = [];
+
+	foreach ($taskFields as $field)
+	{
+		$fieldTypeObject = (string)($field['Type'] ?? '') === ''
+			? null
+			: $documentService->getFieldTypeObject($documentType, $field)
+		;
+
+		if ($fieldTypeObject)
+		{
+			$field['BaseType'] = $fieldTypeObject->getBaseType();
+		}
+
+		$taskFieldsForJs[] = $field;
+	}
+}
+?>
 
 <script>
 	BX.ready(() => {
@@ -218,6 +250,9 @@ use Bitrix\Main\Loader;
 			BPWFI_SLIDER_CONFIRM_ACCEPT: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_CONFIRM_ACCEPT')) ?>',
 			BPWFI_SLIDER_CONFIRM_CANCEL: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_CONFIRM_CANCEL')) ?>',
 			BPWFI_SLIDER_ARGUMENT_NULL: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_ARGUMENT_NULL')) ?>',
+			BPWFI_SLIDER_DECISIONS_BUSY: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_DECISIONS_BUSY')) ?>',
+			BPWFI_SLIDER_DECISIONS_READY: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_DECISIONS_READY')) ?>',
+			BPWFI_SLIDER_FILE_CONTROL_ERROR: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_FILE_CONTROL_ERROR')) ?>',
 		});
 		BX.Bizproc.Component.WorkflowInfo.Instance = new BX.Bizproc.Component.WorkflowInfo({
 			currentUserId: BX.message('USER_ID'),
@@ -226,8 +261,8 @@ use Bitrix\Main\Loader;
 			taskUserId: <?= (int)($task['userId'] ?? 0) ?>,
 			taskButtons: <?= \Bitrix\Main\Web\Json::encode($taskButtons) ?>,
 			taskForm: document.forms['task-form'],
-			taskFields: <?= \Bitrix\Main\Web\Json::encode($taskFields) ?>,
-			taskName: '<?= CUtil::JSEscape($workflow['typeName'] ?? '') ?>',
+			taskFields: <?= \Bitrix\Main\Web\Json::encode($taskFieldsForJs) ?>,
+			taskName: '<?= CUtil::JSEscape($workflow['name'] ?? '') ?>',
 			buttonsPanel: document.querySelector('[data-role="buttons-panel"]'),
 			workflowContent: document.querySelector('.bp-workflow-info__content'),
 			canDelegateTask: <?= $canDelegate ? 'true' : 'false' ?>,

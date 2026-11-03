@@ -2,9 +2,20 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_application_core, im_v2_lib_rest, im_v2_lib_user, im_v2_lib_logger, im_v2_const, im_v2_lib_copilot, im_v2_lib_analytics, im_v2_lib_notifier, main_core_events, im_v2_lib_utils, im_v2_lib_permission) {
+(function (exports, im_v2_application_core, im_v2_lib_rest, im_v2_lib_user, im_v2_lib_logger, im_v2_const, im_v2_lib_copilot, im_v2_lib_analytics, im_v2_lib_notifier, main_core, main_core_events, im_v2_lib_utils, im_v2_lib_permission) {
 	'use strict';
 
+	/**
+	 * The number of the last context load asked for in a chat, by chat id. A context load replaces the
+	 * whole collection of its chat and cannot be called back, so the collection belongs to the context
+	 * asked for LAST and not to the one the network happened to answer first.
+	 *
+	 * It is kept beside the class and not inside an instance because the sides asking for a context of
+	 * one chat do not share a service: the dialog holds one, the send path builds its own to move the
+	 * chat to its end, and each of them would otherwise count only its own loads. What the count belongs
+	 * to is the chat whose collection is being replaced - one integer per chat opened in the session.
+	 */
+	const lastContextLoadRequest = new Map();
 	class LoadService {
 		static MESSAGE_REQUEST_LIMIT = 25;
 		#store;
@@ -13,6 +24,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#preparedHistoryMessages = [];
 		#preparedUnreadMessages = [];
 		#isLoading = false;
+		#contextLoadsInFlight = 0;
 		constructor(chatId) {
 			this.#store = im_v2_application_core.Core.getStore();
 			this.#userManager = new im_v2_lib_user.UserManager();
@@ -150,7 +162,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 			this.#isLoading = false;
 		}
-		loadContext(messageId) {
+
+		/**
+		 * The answer replaces the whole message collection, and the request behind it cannot be called
+		 * back. Two things therefore decide whether an answer is still wanted, and they are asked at the
+		 * same point - between the answer and the collection, where an answer refused changes nothing at
+		 * all and the list stays where the caller left it.
+		 *
+		 * The first belongs to the load itself and is asked of every caller alike: a context overtaken by
+		 * a LATER context of the same chat is not the one the user asked for, whoever asked for either of
+		 * them - a jump by date, a message sent while it was loading, a scroll to the end of the chat.
+		 * Nobody has to pass anything for it, which is the point: an answer that has stopped being the
+		 * last one asked for must not reach the collection even when the caller never thought about it.
+		 *
+		 * The second is `isActual`, and it says something the count cannot: the caller has moved on to
+		 * something newer of ITS own, which is not always a load - a jump to a message already in the
+		 * collection only scrolls, and leaves the count exactly where it was while making the context
+		 * still on its way unwanted. Left out, every answer that is still the last one requested is
+		 * applied, which is the behaviour of a single load.
+		 */
+		loadContext(messageId, options = {}) {
+			const {
+				isActual = () => true
+			} = options;
 			const query = {
 				[im_v2_const.RestMethod.imV2ChatMessageGetContext]: {
 					id: messageId,
@@ -162,17 +196,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 			};
 			im_v2_lib_logger.Logger.warn('MessageService: loadContext for: ', messageId);
+			this.#contextLoadsInFlight++;
 			this.#isLoading = true;
+			const requestNumber = this.#numberContextLoadRequest();
 			return im_v2_lib_rest.callBatch(query).then(data => {
 				im_v2_lib_logger.Logger.warn('MessageService: loadContext result', data);
+				const isLastRequested = requestNumber === lastContextLoadRequest.get(this.#chatId);
+				if (!isLastRequested || !isActual()) {
+					im_v2_lib_logger.Logger.warn('MessageService: loadContext for', messageId, 'is not wanted any more');
+					return null;
+				}
 				return this.#handleLoadedMessages(data[im_v2_const.RestMethod.imV2ChatMessageGetContext]);
 			}).catch(error => {
 				this.#sendAnalytics(error);
 				im_v2_lib_notifier.Notifier.message.handleLoadContextError(error);
 				console.error('MessageService: loadContext error:', error);
 			}).finally(() => {
-				this.#isLoading = false;
+				this.#contextLoadsInFlight--;
+				// the loading is over for the pagination only once the LAST context is in: a context
+				// still on its way replaces the whole collection when it lands, and a page loaded
+				// into the meantime would be built on a list about to be thrown away
+				this.#isLoading = this.#contextLoadsInFlight > 0;
 			});
+		}
+		#numberContextLoadRequest() {
+			const requestNumber = (lastContextLoadRequest.get(this.#chatId) ?? 0) + 1;
+			lastContextLoadRequest.set(this.#chatId, requestNumber);
+			return requestNumber;
 		}
 		async loadContextByChatId(chatId) {
 			const queryParams = {
@@ -180,6 +230,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					commentChatId: chatId
 				}
 			};
+			const requestNumber = this.#numberContextLoadRequest();
 			const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageGetContext, queryParams).catch(([error]) => {
 				console.error('MessageService: loadContextByChatId error:', error);
 				throw error;
@@ -190,7 +241,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 			const targetMessageId = targetCommentInfo?.messageId;
 			im_v2_lib_logger.Logger.warn('MessageService: loadContextByChatId result', result);
-			void this.#handleLoadedMessages(result);
+			// the same collection and the same rule: the identifier of the post is answered back either
+			// way, so the caller can go to it, but the context of a chat overtaken by a later one does
+			// not get to replace the list on the way there
+			if (requestNumber === lastContextLoadRequest.get(this.#chatId)) {
+				void this.#handleLoadedMessages(result);
+			}
 			return targetMessageId;
 		}
 		reloadMessageList() {
@@ -397,25 +453,247 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	// the edit has no target any more: the message is deleted, the chat is gone or the author is out of it
+	const EDIT_TARGET_GONE_CODES = new Set([im_v2_const.ErrorCode.message.notFound, im_v2_const.ErrorCode.message.accessDenied, im_v2_const.ErrorCode.chat.notFound, im_v2_const.ErrorCode.chat.accessDenied]);
+
+	// a refusal on a saved message: rolling the model back would take away a published composition
+	const APPLIED_DESPITE_ERROR_CODES = new Set([im_v2_const.ErrorCode.message.filesMismatch]);
+
+	// mirrors FilesUpdater::EMPTY_COMPOSITION of the server, which owns this form of the field
+	const EMPTY_COMPOSITION = '[]';
 	class EditService {
-		editMessageText(messageId, text) {
-			im_v2_lib_logger.Logger.warn('MessageService: editMessageText', messageId, text);
+		#attemptCountByMessageId = new Map();
+		#chainByMessageId = new Map();
+		async editMessageText(messageId, newText) {
+			const attempt = this.#registerAttempt(messageId);
+			im_v2_lib_logger.Logger.warn('MessageService: editMessageText', attempt.attemptId, newText);
 			const message = this.#getMessage(messageId);
 			if (!message) {
-				return;
+				return this.#buildResult(attempt, {
+					success: false,
+					textBeforeEdit: '',
+					isEditedBeforeEdit: false
+				});
 			}
-			this.#updateMessageModel(messageId, text);
+			this.#startAttempt(messageId, message);
+			const isEditedAfterUpdate = this.#updateMessageModel(messageId, newText);
 			const payload = {
 				data: {
 					id: messageId,
 					fields: {
-						message: text
+						message: newText
 					}
 				}
 			};
-			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageUpdate, payload).catch(([error]) => {
-				console.error('MessageService: editMessageText error:', error);
+			try {
+				await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageUpdate, payload);
+			} catch (errors) {
+				// the snapshot is read when the answer comes, not when the attempt starts: an attempt
+				// of the same chain may have been accepted meanwhile and moved the base forward
+				const snapshot = this.#getSnapshot(messageId);
+				this.#finishAttempt(messageId);
+				return this.#buildResult(attempt, {
+					success: false,
+					...snapshot,
+					reason: errors?.[0]
+				});
+			}
+			const snapshot = this.#getSnapshot(messageId);
+			// the server accepted this text, so it is what the attempts still in flight roll back to
+			this.#finishAttempt(messageId, {
+				textBeforeEdit: newText,
+				isEditedBeforeEdit: isEditedAfterUpdate
 			});
+			return this.#buildResult(attempt, {
+				success: true,
+				...snapshot
+			});
+		}
+
+		/**
+		 * Saves the composition of an already sent message along with its text - one save for both. The server
+		 * takes the composition as a full replacement, and the answer tells the caller what became of the edit.
+		 *
+		 * The save of a composition keeps a snapshot of its own and does not join the chain of text attempts:
+		 * the chain rolls a refused text back, while a refused composition rolls back both halves at once.
+		 */
+		async editMessageFiles(messageId, params) {
+			const {
+				fileIds,
+				text
+			} = params;
+			im_v2_lib_logger.Logger.warn('MessageService: editMessageFiles', messageId, fileIds, text);
+			const message = this.#getMessage(messageId);
+			if (!message) {
+				// the message left the model while the batch was uploading: there is nothing to save into
+				this.#showEditError();
+				return {
+					saved: false,
+					isApplied: false,
+					isEditTargetGone: true
+				};
+			}
+			const snapshot = {
+				files: [...message.files],
+				text: message.text
+			};
+			const nextComposition = {
+				files: fileIds,
+				text
+			};
+
+			// an emptied composition of a message without text is a deletion: written to the model as it stands, it
+			// would show a deleted message before the server has answered, so this one save leaves the model alone
+			const isModelWritten = !this.#emptiesMessage(nextComposition);
+			if (isModelWritten) {
+				this.#applyComposition(messageId, nextComposition);
+			}
+			try {
+				await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageUpdate, {
+					data: {
+						id: messageId,
+						fields: {
+							fileId: this.#serializeComposition(fileIds),
+							message: text
+						}
+					}
+				});
+			} catch (errors) {
+				const [error] = errors;
+				return this.#handleRefusedComposition({
+					messageId,
+					error,
+					snapshot: isModelWritten ? snapshot : null
+				});
+			}
+			return {
+				saved: true,
+				isApplied: true,
+				isEditTargetGone: false
+			};
+		}
+		rollbackMessage(messageId, text, isEdited) {
+			im_v2_lib_logger.Logger.warn('MessageService: rollbackMessage', messageId);
+			im_v2_application_core.Core.getStore().dispatch('messages/update', {
+				id: messageId,
+				fields: {
+					text,
+					isEdited
+				}
+			});
+		}
+		#handleRefusedComposition(params) {
+			const {
+				messageId,
+				error,
+				snapshot
+			} = params;
+			const code = String(error?.code ?? '');
+			const isApplied = APPLIED_DESPITE_ERROR_CODES.has(code);
+			im_v2_lib_logger.Logger.error('MessageService: editMessageFiles error:', error);
+
+			// a refusal that came back on a saved message keeps its composition: the server has published it already
+			if (snapshot && !isApplied) {
+				this.#applyComposition(messageId, snapshot);
+			}
+			this.#showEditError(error);
+			return {
+				saved: false,
+				isApplied,
+				isEditTargetGone: EDIT_TARGET_GONE_CODES.has(code)
+			};
+		}
+		#emptiesMessage(composition) {
+			return composition.files.length === 0 && composition.text === '';
+		}
+
+		/**
+		 * An emptied composition travels as a list spelled out, not as an empty array. A form carries no empty list:
+		 * the request is built by walking the keys of a value, and an empty array has none, so the field itself
+		 * would not reach the server - and a request without the field means "the composition was not touched".
+		 * The empty string is not the form to use: the server refuses it on purpose, because that is what a broken
+		 * client sends by accident, and read as an emptied composition it would delete a message left without text.
+		 */
+		#serializeComposition(fileIds) {
+			return fileIds.length > 0 ? fileIds : EMPTY_COMPOSITION;
+		}
+		#applyComposition(messageId, composition) {
+			im_v2_application_core.Core.getStore().dispatch('messages/update', {
+				id: messageId,
+				fields: composition
+			});
+		}
+
+		// the attempts of one message share a single snapshot: a later attempt starts on top of the
+		// optimistic text of an earlier one, so its own view of "the text before the edit" is a value
+		// the server never held. The shared snapshot lives while at least one attempt is in flight
+		#startAttempt(messageId, message) {
+			const chain = this.#chainByMessageId.get(messageId);
+			if (chain) {
+				chain.attemptsInFlight += 1;
+				return chain.snapshot;
+			}
+			const snapshot = {
+				textBeforeEdit: message.text,
+				isEditedBeforeEdit: message.isEdited
+			};
+			this.#chainByMessageId.set(messageId, {
+				snapshot,
+				attemptsInFlight: 1
+			});
+			return snapshot;
+		}
+		#getSnapshot(messageId) {
+			return this.#chainByMessageId.get(messageId)?.snapshot ?? {
+				textBeforeEdit: '',
+				isEditedBeforeEdit: false
+			};
+		}
+		#finishAttempt(messageId, confirmed = null) {
+			const chain = this.#chainByMessageId.get(messageId);
+			if (!chain) {
+				return;
+			}
+			chain.attemptsInFlight -= 1;
+			if (chain.attemptsInFlight <= 0) {
+				this.#chainByMessageId.delete(messageId);
+				return;
+			}
+			if (confirmed) {
+				chain.snapshot = confirmed;
+			}
+		}
+		#registerAttempt(messageId) {
+			const attemptNumber = (this.#attemptCountByMessageId.get(messageId) ?? 0) + 1;
+			this.#attemptCountByMessageId.set(messageId, attemptNumber);
+			return {
+				messageId,
+				attemptNumber,
+				attemptId: `${messageId}:${attemptNumber}`
+			};
+		}
+		#buildResult(attempt, result) {
+			const {
+				messageId,
+				attemptNumber
+			} = attempt;
+			return {
+				success: result.success,
+				textBeforeEdit: result.textBeforeEdit,
+				isEditedBeforeEdit: result.isEditedBeforeEdit,
+				reason: result.reason ?? null,
+				isLatestAttempt: this.#attemptCountByMessageId.get(messageId) === attemptNumber
+			};
+		}
+
+		// every refusal carries its own phrase, and it names the file to remove. The content of a notification is
+		// rendered as html, and nothing on the way promises the text from the server is free of markup
+		#showEditError(error = null) {
+			if (error?.message) {
+				im_v2_lib_notifier.Notifier.file.showValidationError(main_core.Text.encode(error.message));
+				return;
+			}
+			im_v2_lib_notifier.Notifier.onDefaultError();
 		}
 		#updateMessageModel(messageId, text) {
 			const message = this.#getMessage(messageId);
@@ -427,6 +705,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					isEdited
 				}
 			});
+			return isEdited;
 		}
 		#getMessage(messageId) {
 			return im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
@@ -633,6 +912,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	// How long a voice message waits for a transcription result before the wait is called off (Q-3 of
+	// the feature). The result is delivered by a fire-once pull event from a queue the messenger does
+	// not control, so a lost or endlessly delayed one would leave the spinner running forever.
+	const TRANSCRIPTION_WATCHDOG_TIMEOUT = 5 * 60 * 1000;
+	const TRANSCRIPTION_TIMEOUT_ERROR_CODE = 'TRANSCRIPTION_TIMEOUT';
+
+	// the timers stand beside the service and not inside a player: a watchdog kept by the component
+	// showing the wait measures how long that component stayed mounted, and a message scrolled out of
+	// the list would start its five minutes over on every return to the screen
+	const watchdogTimers = new Map();
 	class TranscribeService {
 		#store;
 		constructor() {
@@ -652,6 +941,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				transcriptText: null,
 				errorCode: null
 			});
+			this.#armWatchdog(fileId);
 			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2DiskFileTranscribe, payload).then(result => {
 				void this.#store.dispatch('files/setTranscription', result);
 			}).catch(errors => {
@@ -663,6 +953,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					errorCode: firstError?.code
 				});
 				console.error('TranscribeService: transcribe error:', errors);
+			});
+		}
+		#armWatchdog(fileId) {
+			clearTimeout(watchdogTimers.get(fileId));
+			const timerId = setTimeout(() => this.#giveUpWaiting(fileId, timerId), TRANSCRIPTION_WATCHDOG_TIMEOUT);
+			watchdogTimers.set(fileId, timerId);
+		}
+
+		// a result reaches the model from this request, from a pull event or from another chat the record
+		// was forwarded to, so the timer asks the model on its own instead of being called off from each
+		// of those places
+		#giveUpWaiting(fileId, timerId) {
+			if (watchdogTimers.get(fileId) !== timerId) {
+				return;
+			}
+			watchdogTimers.delete(fileId);
+			if (this.#store.getters['files/getTranscription'](fileId)?.status !== im_v2_const.TranscriptionStatus.PENDING) {
+				return;
+			}
+
+			// playback is untouched: only the transcription state turns into an explicit error
+			void this.#store.dispatch('files/setTranscription', {
+				fileId,
+				status: im_v2_const.TranscriptionStatus.ERROR,
+				transcriptText: null,
+				errorCode: TRANSCRIPTION_TIMEOUT_ERROR_CODE
 			});
 		}
 	}
@@ -719,8 +1035,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		// endregion 'pagination'
 
 		// region 'context'
-		loadContext(messageId) {
-			return this.#loadService.loadContext(messageId);
+		loadContext(messageId, options = {}) {
+			return this.#loadService.loadContext(messageId, options);
 		}
 		loadContextByChatId(chatId) {
 			return this.#loadService.loadContextByChatId(chatId);
@@ -765,7 +1081,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 		// region 'edit'
 		editMessageText(messageId, text) {
-			this.#editService.editMessageText(messageId, text);
+			return this.#editService.editMessageText(messageId, text);
+		}
+		rollbackMessage(messageId, text, isEdited) {
+			this.#editService.rollbackMessage(messageId, text, isEdited);
+		}
+		editMessageFiles(messageId, params) {
+			return this.#editService.editMessageFiles(messageId, params);
 		}
 		// endregion 'edit'
 
@@ -784,5 +1106,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessageService = MessageService;
 
-})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=message.bundle.js.map

@@ -1,0 +1,34 @@
+.editor-chart-template-description-field
+{
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	/* lets the field shrink to the dialog so the editor collapses its toolbar instead of widening the window */
+	min-width: 0;
+}
+
+/* own node so Vue and ui.text-editor never share children; the properties repeat the block so it is
+   no narrow link of its own -- in a column min-width only guards a future row direction, and the
+   width is held by the block above and by the dialog clamps */
+.editor-chart-template-description-field__editor
+{
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
+}
+
+/* the rejection is shown by the notification balloon; this node only carries the same text for
+   aria-describedby, so it stays out of the flow and out of sight */
+.editor-chart-template-description-field__error
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}

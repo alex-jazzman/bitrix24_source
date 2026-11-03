@@ -1,0 +1,33 @@
+.ui-sidepanel-left-panel-resizer {
+	position: relative;
+	flex: 0 0 8px;
+	width: 8px;
+	margin-right: -4px;
+	margin-left: -4px;
+	box-sizing: border-box;
+	cursor: col-resize;
+	touch-action: none;
+	z-index: 1;
+}
+
+.ui-sidepanel-left-panel-resizer:before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	border-left: 1px solid;
+	border-color: var(--ui-color-divider-default);
+	pointer-events: none;
+	transition: border-color 200ms ease;
+}
+
+.ui-sidepanel-left-panel-resizer:hover:before,
+.ui-sidepanel-left-panel-resizer.--dragging:before {
+	border-color: var(--ui-color-divider-accent);
+}
+
+.ui-sidepanel-left-panel-resizer:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+}

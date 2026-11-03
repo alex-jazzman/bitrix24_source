@@ -20,12 +20,12 @@ jn.define('more-menu/block/company/personal-account/src/slides/stepper-slide', (
 	/**
 	 * First slide of the personal account sheet: the step-by-step form. It shows a
 	 * progress indicator (when there is more than one step) and the active sub-step
-	 * (company/period form or PIN input). The footer stacks its buttons: on the PIN step
-	 * the "request again" control sits above the primary action; on other steps only the
-	 * primary action is shown. Labels and enabled state are computed by the flow, which
-	 * owns the form/PIN state - this slide only renders what it receives. A tap anywhere in
-	 * the body dismisses the keyboard so the footer (which the shell collapses to a single
-	 * button while the keyboard is up) shows the resend control again.
+	 * (company/period form or PIN input). The footer carries one control per step: the
+	 * primary action on the form step, and the "request again" control on the PIN step,
+	 * where a complete code confirms itself and needs no button. Labels and enabled state
+	 * are computed by the flow, which owns the form/PIN state - this slide only renders what
+	 * it receives. The shell collapses the footer to a single control while the keyboard is
+	 * up, so each step hands its own control to keyboardButton as well.
 	 *
 	 * @class StepperSlide
 	 */
@@ -43,13 +43,13 @@ jn.define('more-menu/block/company/personal-account/src/slides/stepper-slide', (
 		 * @param {?number} props.employeeId
 		 * @param {?{ month: number, year: number }} props.period
 		 * @param {string} props.pin
-		 * @param {boolean} props.pinWaiting
 		 * @param {boolean} props.pinFailed
-		 * @param {boolean} props.pinAutoFilled
+		 * @param {boolean} props.pinAccepted
 		 * @param {?number} props.requestPinAt
-		 * @param {{ text: string, testId: string, disabled: boolean, loading?: boolean, onClick: function(): void }} props.primaryButton
+		 * @param {?{ text: string, testId: string, disabled: boolean, loading?: boolean, onClick: function(): void }} props.primaryButton - absent on the PIN step
 		 * @param {function({ companyId?: number, employeeId?: number, period?: object }): void} props.onFormChange
 		 * @param {function(string): void} props.onPinChange
+		 * @param {function(string): void} props.onPinComplete
 		 * @param {function(): void} props.onPinResend
 		 */
 		constructor(props)
@@ -87,31 +87,38 @@ jn.define('more-menu/block/company/personal-account/src/slides/stepper-slide', (
 
 		#renderFooter()
 		{
-			const { step, primaryButton, requestPinAt, onPinResend } = this.props;
+			return this.props.step.type === StepType.FORM
+				? this.#renderPrimaryFooter()
+				: this.#renderPinFooter();
+		}
 
-			const children = [];
+		#renderPinFooter()
+		{
+			const { requestPinAt, onPinResend } = this.props;
 
-			if (step.type === StepType.PIN)
-			{
-				// A factory, not a ready instance: the footer drops its children while the keyboard
-				// is up and calls the factory again when it restores them, so the countdown comes
-				// back as a freshly mounted component and its per-second tick starts again.
-				children.push(() => new ResendButton({
-					testId: this.getTestId('pin-resend'),
-					requestPinAt,
-					onResend: onPinResend,
-				}));
-			}
+			// A factory, not a ready instance: the footer drops what it holds while the keyboard is up
+			// and asks again when it restores it, so the countdown comes back as a freshly mounted
+			// component and its per-second tick starts again. keyboardButton takes a factory too, so
+			// the very same control is what shows above the keyboard - only one of the two is on
+			// screen at a time, which is why both carry one locator.
+			const renderResend = () => new ResendButton({
+				testId: this.getTestId('pin-resend'),
+				requestPinAt,
+				onResend: onPinResend,
+			});
 
-			children.push(Button({
-				testId: primaryButton.testId,
-				text: primaryButton.text,
-				size: ButtonSize.L,
-				stretched: true,
-				disabled: primaryButton.disabled,
-				loading: primaryButton.loading,
-				onClick: primaryButton.onClick,
-			}));
+			return BoxFooter(
+				{
+					testId: this.getTestId('stepper-footer'),
+					keyboardButton: renderResend,
+				},
+				renderResend,
+			);
+		}
+
+		#renderPrimaryFooter()
+		{
+			const { primaryButton } = this.props;
 
 			return BoxFooter(
 				{
@@ -124,7 +131,15 @@ jn.define('more-menu/block/company/personal-account/src/slides/stepper-slide', (
 						onClick: primaryButton.onClick,
 					},
 				},
-				...children,
+				Button({
+					testId: primaryButton.testId,
+					text: primaryButton.text,
+					size: ButtonSize.L,
+					stretched: true,
+					disabled: primaryButton.disabled,
+					loading: primaryButton.loading,
+					onClick: primaryButton.onClick,
+				}),
 			);
 		}
 
@@ -172,15 +187,15 @@ jn.define('more-menu/block/company/personal-account/src/slides/stepper-slide', (
 
 		#renderPin()
 		{
-			const { pin, pinWaiting, pinFailed, pinAutoFilled, onPinChange } = this.props;
+			const { pin, pinFailed, pinAccepted, onPinChange, onPinComplete } = this.props;
 
 			return new PinStep({
 				testId: this.getTestId('pin'),
 				pin,
-				isWaiting: pinWaiting,
 				hasFailed: pinFailed,
-				isAutoFilled: pinAutoFilled,
+				isAccepted: pinAccepted,
 				onPinChange,
+				onPinComplete,
 			});
 		}
 	}

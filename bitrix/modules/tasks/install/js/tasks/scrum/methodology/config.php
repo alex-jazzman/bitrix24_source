@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/methodology.bundle.css',
 	'js' => 'dist/methodology.bundle.js',
 	'rel' => [
+		'main.core',
+		'main.core.events',
+		'ui.dialogs.messagebox',
+		'ui.fonts.opensans',
+		'ui.hint',
 		'ui.manual',
 		'ui.popupcomponentsmaker',
-		'main.core',
-		'ui.dialogs.messagebox',
-		'main.core.events',
-		'ui.hint',
-		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

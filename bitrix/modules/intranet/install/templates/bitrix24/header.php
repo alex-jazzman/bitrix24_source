@@ -218,12 +218,12 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 				<div class="air-header__logo">
 					<? include(__DIR__ . '/logo.php'); ?>
 				</div>
-				<?php
+				<div class="air-header__settings-slot" data-testid="header-settings-slot"><?php
 				$APPLICATION->IncludeComponent(
 					'bitrix:intranet.settings.widget',
 					'.default'
 				);
-				?>
+				?></div>
 				<div class="air-header__buttons"><?php
 					$APPLICATION->includeComponent('bitrix:intranet.invitation.widget', 'air', []);
 					$APPLICATION->includeComponent(

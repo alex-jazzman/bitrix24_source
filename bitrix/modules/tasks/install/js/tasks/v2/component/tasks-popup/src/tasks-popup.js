@@ -1,7 +1,41 @@
 import { Type, Event } from 'main.core';
 import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
+import { FocusTrapDirective, FocusNavigator, InteractivityChecker } from 'ui.a11y';
 
 import './tasks-popup.css';
+
+const openPopups = new Set();
+
+export function hasOpenPopups(scope: ?HTMLElement = null): boolean
+{
+	if (!Type.isDomNode(scope))
+	{
+		return openPopups.size > 0;
+	}
+
+	for (const popup of openPopups)
+	{
+		if (isPopupInsideScope(popup, scope))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function isPopupInsideScope(popup, scope: HTMLElement): boolean
+{
+	const popupElement = popup.$refs?.popupOverlay;
+	if (Type.isDomNode(popupElement) && scope.contains(popupElement))
+	{
+		return true;
+	}
+
+	const anchorElement = popup.elementAnchor;
+
+	return Type.isDomNode(anchorElement) && scope.contains(anchorElement);
+}
 
 type TasksPopupOptions = {
 	isWithBG: boolean,
@@ -12,9 +46,15 @@ type TasksPopupOptions = {
 	isFlippingBlockedHorizontal: boolean,
 	isFlippingBlockedVertical: boolean,
 	isFrozen: boolean,
+	isHoverTooltip: boolean,
+	isTeleportedToContainer: boolean,
 	id: string,
 	className: string,
 	classNameOverlay: string,
+	// Non-empty ariaLabel turns the popup into a modal dialog and brings two obligations:
+	// the consumer must close the popup on the close event, since Escape is swallowed even if it does not,
+	// and popup content gets no Escape of its own - the dialog captures the key on document.
+	ariaLabel: string,
 	positioning: {
 		isAutoAdjust: boolean,
 		isCenteredHorizontally: boolean,
@@ -30,6 +70,9 @@ type TasksPopupOptions = {
 // @vue/components
 export const TasksPopup = {
 	name: 'TasksPopup',
+	directives: {
+		focusTrap: FocusTrapDirective,
+	},
 	props: {
 		options: {
 			/** @type TasksPopupOptions */
@@ -46,6 +89,11 @@ export const TasksPopup = {
 		'click',
 		'close',
 	],
+	inject: {
+		popupTeleportTarget: {
+			default: null,
+		},
+	},
 	data(): Object
 	{
 		return {
@@ -74,6 +122,21 @@ export const TasksPopup = {
 		elementScrollContainer(): any
 		{
 			return this.positioning.elementScrollContainer;
+		},
+		isDialog(): boolean
+		{
+			return Type.isStringFilled(this.options?.ariaLabel);
+		},
+		dialogAriaLabel(): ?string
+		{
+			return this.isDialog ? this.options.ariaLabel : null;
+		},
+		focusTrapBinding(): Object
+		{
+			return {
+				active: this.isDialog,
+				options: this.focusTrapOptions,
+			};
 		},
 		offsetVertical(): any
 		{
@@ -191,9 +254,32 @@ export const TasksPopup = {
 
 			return stylePopupNew;
 		},
+		teleportTarget(): HTMLElement | string
+		{
+			if (this.options?.isTeleportedToContainer && this.popupTeleportTarget)
+			{
+				return this.popupTeleportTarget;
+			}
+
+			return 'body';
+		},
+	},
+	created(): void
+	{
+		// FocusTrapDirective compares its options by identity and rebuilds the trap on any
+		// mismatch, and rebuilding pulls focus out of an open dialog. The object is built once
+		// and resolves the restore target lazily, so a changing anchor never rebuilds the trap.
+		this.focusTrapOptions = {
+			restoreFocus: () => this.getElementAnchorFocusable(),
+		};
 	},
 	mounted(): void
 	{
+		if (!this.options?.isHoverTooltip)
+		{
+			openPopups.add(this);
+		}
+
 		this.registerZIndexComponent();
 
 		if (this.elementAnchor)
@@ -211,10 +297,16 @@ export const TasksPopup = {
 		}
 
 		Event.bind(document, 'click', this.handleClickDocument);
-		Event.bind(document, 'keydown', this.handleKeyDownDocument);
+		// SidePanel binds its own Escape handler on the document before this popup mounts, so a
+		// bubbling listener cannot keep the key from closing the slider underneath. A dialog owns
+		// its Escape and listens in the capture phase to stop it there.
+		this.isEscapeCaptured = this.isDialog;
+		Event.bind(document, 'keydown', this.handleKeyDownDocument, this.isEscapeCaptured);
 	},
 	async beforeUnmount(): void
 	{
+		openPopups.delete(this);
+
 		this.unregisterZIndexComponent();
 
 		if (this.elementAnchor)
@@ -230,7 +322,7 @@ export const TasksPopup = {
 		}
 
 		Event.unbind(document, 'click', this.handleClickDocument);
-		Event.unbind(document, 'keydown', this.handleKeyDownDocument);
+		Event.unbind(document, 'keydown', this.handleKeyDownDocument, this.isEscapeCaptured);
 	},
 	methods: {
 		registerZIndexComponent(): ZIndexComponent
@@ -323,13 +415,14 @@ export const TasksPopup = {
 		{
 			const {
 				rectAnchor,
+				rectParent,
 				widthParent,
 				widthSelf,
 			} = sizes;
 
 			if (this.positioning.isCenteredHorizontally)
 			{
-				const leftNew = rectAnchor.left - (widthSelf / 2) + (this.positioning.offsetHorizontal || 0);
+				const leftNew = rectAnchor.left - rectParent.left - (widthSelf / 2) + (this.positioning.offsetHorizontal || 0);
 				const rightBasedOnLeftResult = widthParent - (leftNew + widthSelf);
 
 				if (leftNew < 0)
@@ -350,7 +443,7 @@ export const TasksPopup = {
 			}
 			else if (this.positioning.isOpenedLeft)
 			{
-				const leftNew = rectAnchor.right - widthSelf - (this.positioning.offsetHorizontal || 0);
+				const leftNew = rectAnchor.right - rectParent.left - widthSelf - (this.positioning.offsetHorizontal || 0);
 
 				if ((leftNew < 0) && !this.positioning.isFlippingBlockedHorizontal)
 				{
@@ -380,7 +473,7 @@ export const TasksPopup = {
 			}
 			else
 			{
-				const leftNew = rectAnchor.left + (this.positioning.offsetHorizontal || 0);
+				const leftNew = rectAnchor.left - rectParent.left + (this.positioning.offsetHorizontal || 0);
 				const rightBasedOnLeftResult = widthParent - (leftNew + widthSelf);
 
 				if ((rightBasedOnLeftResult < 0) && !this.positioning.isFlippingBlockedHorizontal)
@@ -414,13 +507,14 @@ export const TasksPopup = {
 		{
 			const {
 				rectAnchor,
+				rectParent,
 				heightParent,
 				heightSelf,
 			} = sizes;
 
 			if (this.positioning.isOpenedUp)
 			{
-				const topNew = rectAnchor.top - heightSelf - (this.offsetVertical || 0);
+				const topNew = rectAnchor.top - rectParent.top - heightSelf - (this.offsetVertical || 0);
 
 				if ((topNew < 0) && !this.positioning.isFlippingBlockedVertical)
 				{
@@ -450,7 +544,7 @@ export const TasksPopup = {
 			}
 			else
 			{
-				const topNew = rectAnchor.bottom + (this.offsetVertical || 0);
+				const topNew = rectAnchor.bottom - rectParent.top + (this.offsetVertical || 0);
 				const bottomBasedOnTopResult = heightParent - (topNew + heightSelf);
 
 				if ((bottomBasedOnTopResult < 0) && !this.positioning.isFlippingBlockedVertical)
@@ -522,13 +616,30 @@ export const TasksPopup = {
 		{
 			this.$emit('close');
 		},
-		tryToCloseThisPopup(): void
+		tryToCloseThisPopup(): boolean
 		{
 			if (this.options.isFrozen)
 			{
-				return;
+				return false;
 			}
 			this.closeThisPopup();
+
+			return true;
+		},
+		getElementAnchorFocusable(): ?HTMLElement
+		{
+			const elementAnchor = this.elementAnchor;
+
+			if (!Type.isElementNode(elementAnchor))
+			{
+				return null;
+			}
+
+			// The anchor is the opener root, which is not always the node that takes focus:
+			// HoverPill moves role and tabindex onto an inner element when it acts as a trigger.
+			return InteractivityChecker.isFocusable(elementAnchor)
+				? elementAnchor
+				: FocusNavigator.getFirst(elementAnchor);
 		},
 		closeNextPopups(): void
 		{
@@ -589,7 +700,7 @@ export const TasksPopup = {
 		{
 			this.$emit('mouseleave');
 		},
-		handleClickPopup(): void
+		handleClickPopup(event): void
 		{
 			event.stopPropagation();
 			const isThisPopupLast = this.getIsThisPopupLast();
@@ -616,13 +727,17 @@ export const TasksPopup = {
 					return;
 				}
 
-				this.tryToCloseThisPopup();
+				const isClosed = this.tryToCloseThisPopup();
+				if (isClosed && this.isDialog)
+				{
+					event.stopPropagation();
+				}
 			}
 		},
 	},
 	template: `
 		<Teleport
-			to="body"
+			:to="teleportTarget"
 		>
 			<div
 				ref="popupOverlay"
@@ -646,7 +761,13 @@ export const TasksPopup = {
 					@click="handleClickPopup"
 				>
 					<div class="tasks-popup__bg"></div>
-					<div class="tasks-popup__content">
+					<div
+						class="tasks-popup__content"
+						v-focus-trap="focusTrapBinding"
+						:role="isDialog ? 'dialog' : null"
+						:aria-modal="isDialog ? 'true' : null"
+						:aria-label="dialogAriaLabel"
+					>
 						<slot />
 					</div>
 				</div>

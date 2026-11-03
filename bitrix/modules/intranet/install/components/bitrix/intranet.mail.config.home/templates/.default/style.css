@@ -212,7 +212,7 @@
 
 .post-dialog-alert-icon {
 	display: inline-block;
-	background: url(images/post-sprite.png) no-repeat center -83px;
+	background: url(images/post-sprite.webp) no-repeat center -83px;
 	height: 16px;
 	vertical-align: middle;
 	width: 18px;
@@ -379,7 +379,7 @@
 }
 
 .post-dialog-stat-info {
-	background: url(images/post-sprite.png) no-repeat center -43px;
+	background: url(images/post-sprite.webp) no-repeat center -43px;
 	display: inline-block;
 	cursor: pointer;
 	height: 21px;
@@ -597,7 +597,7 @@
 
 
 .mail-block-title-icon {
-	background: url(images/post-sprite.png) no-repeat 500px 100px;
+	background: url(images/post-sprite.webp) no-repeat 500px 100px;
 	display: inline-block;
 	float: left;
 	height: 20px;
@@ -783,7 +783,7 @@
 }
 
 .mail-set-corner {
-	background: url(images/post-sprite.png) no-repeat -0 -424px;
+	background: url(images/post-sprite.webp) no-repeat -0 -424px;
 	display: block;
 	height: 28px;
 	top: -24px;
@@ -832,7 +832,7 @@
 }
 
 .mail-set-ifo-box:before {
-	background: url(images/post-sprite.png) no-repeat -19px -504px;
+	background: url(images/post-sprite.webp) no-repeat -19px -504px;
 	content: '';
 	height: 19px;
 	top: 19px;
@@ -1138,7 +1138,7 @@
 }
 
 .mail-top-title-icon {
-	background: url(images/post-top-icon.png) no-repeat 0 0;
+	background: url(images/post-top-icon.webp) no-repeat 0 0;
 	height: 144px;
 	left: 26px;
 	top: -17px;
@@ -1222,7 +1222,7 @@
 
 
 .mail-set-item-icon:before {
-	background: url(images/post-sprite.png) no-repeat center -595px;
+	background: url(images/post-sprite.webp) no-repeat center -595px;
 	content: '';
 	height: 29px;
 	left: 20px;
@@ -1375,7 +1375,7 @@
 }
 
 .mail-white-block-list-li:before {
-	background: url(images/post-sprite.png) no-repeat -23px -662px;
+	background: url(images/post-sprite.webp) no-repeat -23px -662px;
 	content: '';
 	display: block;
 	left: 18px;
@@ -2353,7 +2353,7 @@
 }
 
 .mail-block-crm-success:after {
-	background: url(images/post-sprite.png?1) -20px -692px no-repeat;
+	background: url(images/post-sprite.webp?1) -20px -692px no-repeat;
 }
 
 .mail-block-crm-disconnect {
@@ -2363,7 +2363,7 @@
 .mail-block-crm-disconnect:after {
 	width: 11px;
 	height: 15px;
-	background: url(images/post-sprite.png?1) -19px -716px no-repeat;
+	background: url(images/post-sprite.webp?1) -19px -716px no-repeat;
 }
 
 .post-dialog-stat-text-wrapper {

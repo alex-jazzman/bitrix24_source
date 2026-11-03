@@ -9,3 +9,20 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
 }
+
+/* sheet close button reset */
+.tasks-field-replication-sheet-close {
+	display: inline-flex;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+}
+/* sheet close button reset end */
+
+.tasks-field-replication-sheet-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}

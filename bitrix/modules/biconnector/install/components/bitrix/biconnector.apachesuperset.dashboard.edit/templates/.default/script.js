@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, biconnector_dashboardParametersSelector, biconnector_apacheSupersetAnalytics, biconnector_ahaMoment, ui_buttons, ui_entitySelector, main_popup, ui_textEditor, main_loader, ui_uploader_core, ui_uploader_tileWidget) {
+(function (exports, main_core, main_core_events, biconnector_dashboardParametersSelector, biconnector_apacheSupersetAnalytics, biconnector_ahaMoment, biconnector_errorMessage, ui_buttons, ui_entitySelector, main_popup, ui_textEditor, main_loader, ui_uploader_core, ui_uploader_tileWidget, biconnector_shareSetting) {
 	'use strict';
 
 	class TitleField {
@@ -170,271 +170,6 @@ this.BX = this.BX || {};
 				return [];
 			}
 			return items.filter(item => main_core.Type.isStringFilled(item));
-		}
-	}
-
-	class PeriodField {
-		static PERIOD_DEFAULT = 'default';
-		static PERIOD_RANGE = 'range';
-		static PERIOD_MENU_ID = 'dashboard-filter-period-menu';
-		#periodList;
-		#defaultValues;
-		#periodFieldNode;
-		#periodSelectorNode;
-		#periodSelectorContainerNode;
-		#dateFilterStartFieldNode;
-		#dateFilterEndFieldNode;
-		#dateRangeContainerNode;
-		#isMenuOpened;
-		constructor(options) {
-			this.#periodList = main_core.Type.isArray(options?.periodList) ? options.periodList : [];
-			this.#defaultValues = main_core.Type.isPlainObject(options?.defaultValues) ? options.defaultValues : {};
-			this.#periodFieldNode = null;
-			this.#periodSelectorNode = null;
-			this.#periodSelectorContainerNode = null;
-			this.#dateFilterStartFieldNode = null;
-			this.#dateFilterEndFieldNode = null;
-			this.#dateRangeContainerNode = null;
-			this.#isMenuOpened = false;
-		}
-		render() {
-			const selectedPeriodItem = this.#getSelectedPeriodItem();
-			return main_core.Tag.render`
-			<div>
-				<div class="dashboard-params-title-container">
-					<div class="dashboard-params-title">
-						${main_core.Loc.getMessage('DASHBOARD_EDIT_PERIOD')}
-					</div>
-				</div>
-				<input
-					type="hidden"
-					id="dashboard-filter-period-field"
-				>
-				<div
-					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 dashboard-period-wrapper"
-					id="dashboard-filter-period-selector-container"
-				>
-					<div class="ui-ctl-element" id="dashboard-filter-period-selector">
-						${this.#renderSelectedPeriodContent(selectedPeriodItem)}
-					</div>
-					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-				</div>
-				<div class="dashboard-period-range" id="dashboard-period-range">
-					<div class="dashboard-period-range-item">
-						<div class="ui-ctl-top">
-							<div class="ui-ctl-title">${main_core.Loc.getMessage('DASHBOARD_EDIT_PERIOD_FROM')}</div>
-						</div>
-						<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime ui-ctl-w100">
-							<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
-							<input
-								type="text"
-								class="ui-ctl-element"
-								id="dashboard-filter-period-start"
-							>
-						</div>
-					</div>
-					<div class="dashboard-period-range-item">
-						<div class="ui-ctl-top">
-							<div class="ui-ctl-title">${main_core.Loc.getMessage('DASHBOARD_EDIT_PERIOD_TO')}</div>
-						</div>
-						<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime ui-ctl-w100">
-							<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
-							<input
-								type="text"
-								class="ui-ctl-element"
-								id="dashboard-filter-period-end"
-							>
-						</div>
-					</div>
-				</div>
-			</div>
-		`;
-		}
-		bind(rootNode) {
-			if (!main_core.Type.isDomNode(rootNode)) {
-				return;
-			}
-			this.#periodFieldNode = rootNode.querySelector('#dashboard-filter-period-field');
-			this.#periodSelectorNode = rootNode.querySelector('#dashboard-filter-period-selector');
-			this.#periodSelectorContainerNode = rootNode.querySelector('#dashboard-filter-period-selector-container');
-			this.#dateFilterStartFieldNode = rootNode.querySelector('#dashboard-filter-period-start');
-			this.#dateFilterEndFieldNode = rootNode.querySelector('#dashboard-filter-period-end');
-			this.#dateRangeContainerNode = rootNode.querySelector('#dashboard-period-range');
-			this.#setDefaultInputValues();
-			if (main_core.Type.isDomNode(this.#periodSelectorContainerNode)) {
-				main_core.Event.bind(this.#periodSelectorContainerNode, 'click', this.#toggleMenu.bind(this));
-			}
-			if (main_core.Type.isDomNode(this.#dateFilterStartFieldNode)) {
-				main_core.Event.bind(this.#dateFilterStartFieldNode, 'click', () => {
-					PeriodField.showCalendar(this.#dateFilterStartFieldNode);
-				});
-			}
-			if (main_core.Type.isDomNode(this.#dateFilterEndFieldNode)) {
-				main_core.Event.bind(this.#dateFilterEndFieldNode, 'click', () => {
-					PeriodField.showCalendar(this.#dateFilterEndFieldNode);
-				});
-			}
-			this.#toggleRangeFields();
-		}
-		#setDefaultInputValues() {
-			const selectedPeriodItem = this.#getSelectedPeriodItem();
-			if (main_core.Type.isDomNode(this.#periodFieldNode)) {
-				this.#periodFieldNode.value = selectedPeriodItem?.value ?? PeriodField.PERIOD_DEFAULT;
-			}
-			if (main_core.Type.isDomNode(this.#dateFilterStartFieldNode)) {
-				this.#dateFilterStartFieldNode.value = this.#getDefaultDateFilterStart();
-			}
-			if (main_core.Type.isDomNode(this.#dateFilterEndFieldNode)) {
-				this.#dateFilterEndFieldNode.value = this.#getDefaultDateFilterEnd();
-			}
-		}
-		getValue() {
-			return {
-				filterPeriod: this.#periodFieldNode?.value ?? PeriodField.PERIOD_DEFAULT,
-				dateFilterStart: this.#dateFilterStartFieldNode?.value ?? '',
-				dateFilterEnd: this.#dateFilterEndFieldNode?.value ?? ''
-			};
-		}
-		#getSelectedPeriodItem(value = null) {
-			const selectedValue = main_core.Type.isStringFilled(value) ? value : this.#getDefaultFilterPeriod();
-			return this.#periodList.find(item => item.value === selectedValue) ?? this.#periodList[0] ?? null;
-		}
-		#getDefaultFilterPeriod() {
-			const period = this.#defaultValues?.filterPeriod;
-			if (!main_core.Type.isStringFilled(period)) {
-				return PeriodField.PERIOD_DEFAULT;
-			}
-			return period;
-		}
-		#getDefaultDateFilterStart() {
-			const dateStart = this.#defaultValues?.dateFilterStart;
-			if (!main_core.Type.isStringFilled(dateStart)) {
-				return '';
-			}
-			return dateStart;
-		}
-		#getDefaultDateFilterEnd() {
-			const dateEnd = this.#defaultValues?.dateFilterEnd;
-			if (!main_core.Type.isStringFilled(dateEnd)) {
-				return '';
-			}
-			return dateEnd;
-		}
-		#toggleMenu() {
-			if (this.#isMenuOpened) {
-				this.#closeMenu();
-				return;
-			}
-			this.#openMenu();
-		}
-		#openMenu() {
-			if (!main_core.Type.isDomNode(this.#periodSelectorContainerNode) || this.#periodList.length === 0) {
-				return;
-			}
-			const menuItems = this.#periodList.map(item => {
-				const menuItem = {
-					text: item.name,
-					value: item.value,
-					onclick: () => {
-						this.#selectPeriod(item.value);
-					}
-				};
-				if (item?.isDefault === true) {
-					return {
-						...menuItem,
-						html: this.#renderSelectedPeriodContent(item)
-					};
-				}
-				return menuItem;
-			});
-			const selectorPositionY = BX.Dom.getPosition(this.#periodSelectorContainerNode).y;
-			const distanceToTop = selectorPositionY - window.pageYOffset;
-			const distanceToBottom = document.documentElement.clientHeight + window.pageYOffset - selectorPositionY;
-			const popupMaxHeight = distanceToTop > distanceToBottom ? distanceToTop - 50 : distanceToBottom - 100;
-			BX.PopupMenu.show(PeriodField.PERIOD_MENU_ID, this.#periodSelectorContainerNode, menuItems, {
-				angle: false,
-				width: `${this.#periodSelectorContainerNode.offsetWidth}px`,
-				maxHeight: popupMaxHeight,
-				events: {
-					onPopupShow: this.#onMenuShow.bind(this),
-					onPopupClose: this.#onMenuClose.bind(this)
-				}
-			});
-			if (BX.PopupMenu.currentItem && BX.PopupMenu.currentItem.popupWindow) {
-				BX.PopupMenu.currentItem.popupWindow.setWidth(BX.pos(this.#periodSelectorContainerNode).width);
-			}
-		}
-		#closeMenu() {
-			const menu = BX.PopupMenu.getMenuById(PeriodField.PERIOD_MENU_ID);
-			if (menu) {
-				menu.popupWindow.close();
-			}
-		}
-		#onMenuShow() {
-			if (main_core.Type.isDomNode(this.#periodSelectorContainerNode)) {
-				main_core.Dom.addClass(this.#periodSelectorContainerNode, 'ui-ctl-active');
-			}
-			this.#isMenuOpened = true;
-		}
-		#onMenuClose() {
-			BX.PopupMenu.destroy(PeriodField.PERIOD_MENU_ID);
-			if (main_core.Type.isDomNode(this.#periodSelectorContainerNode)) {
-				main_core.Dom.removeClass(this.#periodSelectorContainerNode, 'ui-ctl-active');
-			}
-			this.#isMenuOpened = false;
-		}
-		#selectPeriod(value) {
-			if (main_core.Type.isDomNode(this.#periodFieldNode)) {
-				this.#periodFieldNode.value = value;
-			}
-			const selectedPeriodItem = this.#getSelectedPeriodItem(value);
-			if (main_core.Type.isDomNode(this.#periodSelectorNode)) {
-				main_core.Dom.clean(this.#periodSelectorNode);
-				main_core.Dom.append(this.#renderSelectedPeriodContent(selectedPeriodItem), this.#periodSelectorNode);
-			}
-			this.#toggleRangeFields();
-			this.#closeMenu();
-		}
-		#toggleRangeFields() {
-			if (!main_core.Type.isDomNode(this.#dateRangeContainerNode)) {
-				return;
-			}
-			const isRangePeriod = this.#periodFieldNode?.value === PeriodField.PERIOD_RANGE;
-			main_core.Dom.style(this.#dateRangeContainerNode, 'display', isRangePeriod ? 'flex' : 'none');
-		}
-		#renderSelectedPeriodContent(selectedPeriodItem) {
-			const container = document.createElement('span');
-			if (selectedPeriodItem?.isDefault !== true || !main_core.Type.isStringFilled(selectedPeriodItem?.valueText)) {
-				container.textContent = selectedPeriodItem?.name ?? '';
-				return container;
-			}
-			const prefixNode = document.createElement('span');
-			prefixNode.textContent = selectedPeriodItem?.prefixText ?? '';
-			const valueNode = document.createElement('span');
-			valueNode.className = 'ui-color-light';
-			valueNode.textContent = selectedPeriodItem.valueText;
-			const suffixNode = document.createElement('span');
-			suffixNode.textContent = selectedPeriodItem?.suffixText ?? '';
-			main_core.Dom.append(prefixNode, container);
-			main_core.Dom.append(valueNode, container);
-			main_core.Dom.append(suffixNode, container);
-			return container;
-		}
-		static showCalendar(input) {
-			const showCalendar = main_core.Reflection.getClass('BX.calendar');
-			if (!main_core.Type.isDomNode(input) || !main_core.Type.isFunction(showCalendar)) {
-				return;
-			}
-			const getCalendar = main_core.Reflection.getClass('BX.calendar.get');
-			if (main_core.Type.isFunction(getCalendar)) {
-				getCalendar().Close();
-			}
-			showCalendar({
-				node: input,
-				field: input,
-				bTime: false,
-				bSetFocus: false
-			});
 		}
 	}
 
@@ -793,13 +528,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			const message = main_core.Loc.getMessage('DASHBOARD_EDIT_GALLERY_DROP_TEXT') ?? '';
-			dropLabelNode.innerHTML = main_core.Text.encode(message).replace('#LINK_START#', '<a href="#" class="dashboard-gallery-upload-link">').replace('#LINK_END#', '</a>');
-			const linkNode = dropLabelNode.querySelector('.dashboard-gallery-upload-link');
-			if (main_core.Type.isDomNode(linkNode)) {
-				main_core.Event.bind(linkNode, 'click', event => {
-					event.preventDefault();
-				});
-			}
+			dropLabelNode.innerHTML = main_core.Text.encode(message).replace('#LINK_START#', '<span class="dashboard-gallery-upload-link" ' + 'data-testid="biconnector-dashboard-gallery-upload-link">').replace('#LINK_END#', '</span>');
 		}
 		#resolveImageId(file) {
 			const realFileId = this.#normalizeImageId(file?.getCustomData?.('realFileId'));
@@ -895,6 +624,28 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// The block applies the setting by its own request, so the field takes no part in the form save.
+	class ShareSettingField {
+		#block;
+		constructor(dashboardId, state) {
+			this.#block = new biconnector_shareSetting.ShareSettingBlock({
+				dashboardId,
+				state
+			});
+		}
+		render() {
+			return main_core.Tag.render`
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-share-setting-section">
+				<div class="ui-entity-editor-section-content">
+					<div class="ui-entity-editor-content-block">
+						${this.#block.render()}
+					</div>
+				</div>
+			</div>
+		`;
+		}
+	}
+
 	class SupersetDashboardEditManager {
 		#props;
 		#node;
@@ -909,7 +660,6 @@ this.BX = this.BX || {};
 		#descriptionField;
 		#groupsField;
 		#parametersField;
-		#periodField;
 		#coverField;
 		#galleryField;
 		constructor(props) {
@@ -921,10 +671,6 @@ this.BX = this.BX || {};
 			this.#descriptionField = new DescriptionField(this.#props?.defaultValues?.description ?? '');
 			this.#groupsField = new GroupsField(this.#props?.defaultValues ?? {});
 			this.#parametersField = new ParametersField(this.#props?.defaultValues ?? {});
-			this.#periodField = new PeriodField({
-				periodList: this.#props?.periodList ?? [],
-				defaultValues: this.#props?.defaultValues ?? {}
-			});
 			this.#coverField = new CoverField({
 				...(this.#props?.defaultValues ?? {}),
 				emptyIconPath: this.#props?.emptyCoverIconPath ?? ''
@@ -944,7 +690,6 @@ this.BX = this.BX || {};
 			const mainSection = this.#getMainSection();
 			main_core.Dom.append(mainSection, this.#node);
 			this.#titleField.bind(this.#node);
-			this.#periodField.bind(this.#node);
 			this.#coverField.bind(this.#node);
 			this.#paramsSelector = new biconnector_dashboardParametersSelector.DashboardParametersSelector({
 				groups: new Set(this.#groupsField.getDefaultValue()),
@@ -964,6 +709,10 @@ this.BX = this.BX || {};
 			this.#descriptionField.bind(this.#node);
 			main_core.Dom.append(this.#getGallerySection(), this.#node);
 			this.#galleryField.bind(this.#node);
+			if (this.#props.isEditMode && this.#props.shareSetting) {
+				const shareSettingField = new ShareSettingField(this.#props.dashboardId, this.#props.shareSetting);
+				main_core.Dom.append(shareSettingField.render(), this.#node);
+			}
 		}
 		#getTopBlock() {
 			return main_core.Tag.render`
@@ -1233,9 +982,6 @@ this.BX = this.BX || {};
 					</div>
 					<div class="ui-entity-editor-content-block" data-role="dashboard-main-parameters"></div>
 					<div class="ui-entity-editor-content-block">
-						${this.#periodField.render()}
-					</div>
-					<div class="ui-entity-editor-content-block">
 						${this.#coverField.render()}
 					</div>
 				</div>
@@ -1303,7 +1049,6 @@ this.BX = this.BX || {};
 			const currentTitle = this.#titleField.getValue();
 			const currentDescription = this.#descriptionField.getValue();
 			const currentGroups = this.#groupsField.getValue(selectorData);
-			const currentPeriod = this.#periodField.getValue();
 			const currentGalleryIds = this.#galleryField.getValue();
 			const saveData = {
 				title: currentTitle,
@@ -1316,7 +1061,6 @@ this.BX = this.BX || {};
 					ids: currentGalleryIds,
 					tempFileIds: this.#galleryField.getTempFileIds()
 				},
-				period: currentPeriod,
 				groups: currentGroups,
 				...this.#parametersField.getValue(selectorData)
 			};
@@ -1347,7 +1091,7 @@ this.BX = this.BX || {};
 					});
 					window.open(dashboard.detailUrl, '_blank')?.focus();
 				} else {
-					this.#sendEditAnalytics(currentTitle, currentDescription, currentGroups, currentPeriod, currentGalleryIds);
+					this.#sendEditAnalytics(currentTitle, currentDescription, currentGroups, currentGalleryIds);
 				}
 				parent.BX.Event.EventEmitter.emit('BIConnector.CreateForm:onDashboardCreated', {
 					dashboard
@@ -1358,14 +1102,13 @@ this.BX = this.BX || {};
 				});
 				BX.SidePanel.Instance.getTopSlider().close();
 			}).catch(response => {
-				const message = main_core.Type.isStringFilled(response?.errors?.[0]?.message) ? response.errors[0].message : main_core.Type.isStringFilled(response?.message) ? response.message : main_core.Loc.getMessage('DASHBOARD_EDIT_SAVE_RESPONSE_ERROR');
 				BX.UI.Notification.Center.notify({
-					content: main_core.Text.encode(message)
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('DASHBOARD_EDIT_SAVE_ERROR'))
 				});
 				this.#saveButton?.setWaiting(false);
 			});
 		}
-		#sendEditAnalytics(currentTitle, currentDescription, currentGroups, currentPeriod, currentGalleryIds) {
+		#sendEditAnalytics(currentTitle, currentDescription, currentGroups, currentGalleryIds) {
 			const defaults = this.#props.defaultValues ?? {};
 			const analyticsBase = {
 				type: 'custom',
@@ -1381,15 +1124,6 @@ this.BX = this.BX || {};
 			const newGroups = currentGroups.map(Number).sort().join(',');
 			if (newGroups !== defaultGroups) {
 				biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'change_group', {
-					...analyticsBase,
-					status: 'success'
-				});
-			}
-			const defaultPeriod = defaults.filterPeriod ?? 'default';
-			const defaultDateStart = defaults.dateFilterStart ?? '';
-			const defaultDateEnd = defaults.dateFilterEnd ?? '';
-			if ((currentPeriod.filterPeriod ?? 'default') !== defaultPeriod || (currentPeriod.dateFilterStart ?? '') !== defaultDateStart || (currentPeriod.dateFilterEnd ?? '') !== defaultDateEnd) {
-				biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'change_period', {
 					...analyticsBase,
 					status: 'success'
 				});
@@ -1415,4 +1149,4 @@ this.BX = this.BX || {};
 
 	exports.SupersetDashboardEditManager = SupersetDashboardEditManager;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI, BX.UI.EntitySelector, BX.Main, BX.UI.TextEditor, BX, BX.UI.Uploader, BX.UI.Uploader);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI, BX.UI.EntitySelector, BX.Main, BX.UI.TextEditor, BX, BX.UI.Uploader, BX.UI.Uploader, BX.BIConnector.ShareSetting);

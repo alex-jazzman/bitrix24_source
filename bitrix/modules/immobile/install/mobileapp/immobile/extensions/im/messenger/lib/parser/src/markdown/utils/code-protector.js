@@ -5,10 +5,24 @@ jn.define('im/messenger/lib/parser/markdown/utils/code-protector', (require, exp
 	const { MARKDOWN_CODE_PREFIX, MARKDOWN_PLACEHOLDER_SUFFIX } = require('im/messenger/lib/parser/const');
 
 	const CODE_PLACEHOLDER_PATTERN = new RegExp(`${MARKDOWN_CODE_PREFIX}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+	// The bare shape of the same marker, handed out by placeholderPattern below: capture-free and not
+	// global, so a consumer can embed it in a pattern of its own without inheriting a group or a
+	// lastIndex (table-rules fences protector placeholders inside a canonical table payload).
+	const PLACEHOLDER_SHAPE = new RegExp(`${MARKDOWN_CODE_PREFIX}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}`);
 
 	class CodeProtector
 	{
 		#blocks = [];
+
+		/**
+		 * The shape of the placeholder protect() emits, for a consumer that has to recognize one.
+		 *
+		 * @returns {RegExp}
+		 */
+		get placeholderPattern()
+		{
+			return PLACEHOLDER_SHAPE;
+		}
 
 		protect(text)
 		{

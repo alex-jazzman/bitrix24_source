@@ -80,3 +80,50 @@
 	margin-bottom: unset;
 	margin-left: 10px;
 }
+
+/*region Reflow: a row value moves under its label instead of being cut (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The label and the value share one non-wrapping flex row, and the value is clipped with an
+	ellipsis: at a card width of 241px "Тема" left 87px for the subject, so it read as
+	"Перезвонить по в…" with no way to see the rest. Below the breakpoint the row wraps, the value
+	takes the full width under the label and is allowed to break onto several lines.
+*/
+@media (max-width: 768px) {
+	.crm-timeline__card-container_info {
+		flex-wrap: wrap;
+	}
+
+	.crm-timeline__card-container_info-title,
+	.crm-timeline__card-container_info-value {
+		flex: 1 1 100%;
+	}
+
+	.crm-timeline__card-container_info-value {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*
+	Second trigger, same fix, added for consistency with the other reflow rules in this
+	extension - see layout/header/title.css and decisions.md (CRM Entity Card Split) for why
+	@media alone misses the CRM Entity Card Split handle narrowing the column, and how the
+	480px threshold / crm-entity-stream container name were chosen.
+*/
+@container crm-entity-stream (max-width: 480px) {
+	.crm-timeline__card-container_info {
+		flex-wrap: wrap;
+	}
+
+	.crm-timeline__card-container_info-title,
+	.crm-timeline__card-container_info-value {
+		flex: 1 1 100%;
+	}
+
+	.crm-timeline__card-container_info-value {
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+	}
+}
+/*endregion*/

@@ -2,6 +2,7 @@
  * @module crm/document/qr-code
  */
 jn.define('crm/document/qr-code', (require, exports, module) => {
+	const { Text2 } = require('ui-system/typography/text');
 	const { withCurrentDomain } = require('utils/url');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
@@ -82,11 +83,10 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 						paddingVertical: 28,
 					},
 				},
-				Text({
+				Text2({
 					text: Loc.getMessage('M_CRM_DOCUMENT_QR_ERROR'),
 					style: {
 						color: AppTheme.colors.accentMainAlert,
-						fontSize: 17,
 						textAlign: 'center',
 					},
 				}),
@@ -129,11 +129,10 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 						paddingHorizontal: 25,
 					},
 				},
-				Text({
+				Text2({
 					text: Loc.getMessage('M_CRM_DOCUMENT_QR_DESCRIPTION'),
 					style: {
 						color: AppTheme.colors.base1,
-						fontSize: 17,
 						textAlign: 'center',
 					},
 				}),
@@ -159,11 +158,10 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 						paddingHorizontal: 25,
 					},
 				},
-				Text({
+				Text2({
 					text: Loc.getMessage('M_CRM_DOCUMENT_QR_BANK_APP_NOTE'),
 					style: {
 						color: AppTheme.colors.base4,
-						fontSize: 17,
 						textAlign: 'center',
 					},
 				}),

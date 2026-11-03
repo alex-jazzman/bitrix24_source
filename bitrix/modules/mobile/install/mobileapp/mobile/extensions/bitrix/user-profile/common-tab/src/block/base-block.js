@@ -108,6 +108,7 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 				onClick = null,
 				style = {},
 				title = this.getTitle(),
+				titleTestId = null,
 				viewMode = this.getViewMode(),
 				cardProps = {},
 				titleStyle = {},
@@ -115,6 +116,7 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 
 			return BaseViewWrapper({
 				title,
+				titleTestId,
 				content,
 				testId,
 				viewMode,

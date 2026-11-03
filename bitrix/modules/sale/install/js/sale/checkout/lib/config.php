@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'sale.checkout.const',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

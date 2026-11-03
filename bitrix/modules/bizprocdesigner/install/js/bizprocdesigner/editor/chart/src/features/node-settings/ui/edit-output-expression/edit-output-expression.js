@@ -1,8 +1,9 @@
+import { EventEmitter } from 'main.core.events';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Popup } from 'ui.vue3.components.popup';
 import { mapActions, mapState } from 'ui.vue3.pinia';
 
-import { useNodeSettingsStore } from '../../../../entities/node-settings';
+import { EVENT_NAMES, generateNextOutputPortId, useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
 import { PORT_TYPES } from '../../../../shared/constants';
 import { type Port } from '../../../../shared/types';
@@ -26,10 +27,25 @@ export const EditOutputExpression = {
 			type: Object,
 			required: true,
 		},
-		isScrolling:
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the row this output belongs to. Without it the output works on the single rule the
+		 * panel shows: only the all-rules mode has no single one, and there every row names its own.
+		 */
+		rulePort:
+		{
+			type: [Object, null],
+			default: null,
+		},
+		/**
+		 * True while the rule of the row has been reached (see isSectionLive). The copy of the output
+		 * ports and the scroll subscription serve the dropdown alone and wait for that: the name and
+		 * the picked output are read straight off the construction.
+		 */
+		isLive:
 		{
 			type: Boolean,
-			required: true,
+			default: true,
 		},
 	},
 	setup(): { getMessage: () => string; }
@@ -48,6 +64,11 @@ export const EditOutputExpression = {
 	computed:
 	{
 		...mapState(useNodeSettingsStore, ['nodeSettings', 'ports', 'currentRule']),
+		/** Rule this output works on: the one of its own row, or the single rule the panel shows. */
+		targetRulePort(): Object | null
+		{
+			return this.rulePort ?? this.currentRule;
+		},
 		selectedPort:
 		{
 			get(): string
@@ -83,14 +104,13 @@ export const EditOutputExpression = {
 				width: 200,
 			};
 		},
+		// The id of an output has one generator. The dropdown keeps its own copy of the ports (portId
+		// instead of id), so the generator gets the very list the local numbering was counted off.
 		portId(): string
 		{
-			const nextPortNumber = this.allOutputPorts.reduce(
-				(acc, currentValue: Port) => Math.max(acc, parseInt(currentValue.portId.slice(1), 10)),
-				0,
-			) + 1;
-
-			return `o${nextPortNumber}`;
+			return generateNextOutputPortId(
+				this.allOutputPorts.map((port: Port) => ({ ...port, id: port.portId })),
+			);
 		},
 		portTitle(): string
 		{
@@ -104,48 +124,90 @@ export const EditOutputExpression = {
 		},
 		portType(): string
 		{
-			return this.currentRule.type === PORT_TYPES.input
+			return this.targetRulePort?.type === PORT_TYPES.input
 				? PORT_TYPES.output
 				: PORT_TYPES.outputRelation;
 		},
 		filteredPorts(): Array<Port>
 		{
-			return this.currentRule.type === PORT_TYPES.input
+			return this.targetRulePort?.type === PORT_TYPES.input
 				? this.allOutputPorts.filter((port) => port.type === PORT_TYPES.output)
 				: this.allOutputPorts.filter((port) => port.type === PORT_TYPES.outputRelation);
+		},
+		/** Id of the caption the read-only action field is named by; the construction keeps it unique. */
+		actionCaptionId(): string
+		{
+			return `editor-chart-node-settings-output-action-caption-${this.construction.id}`;
 		},
 	},
 	watch:
 	{
-		isScrolling(isScrolling: boolean)
+		isLive:
 		{
-			if (isScrolling && this.isPopupShown)
+			immediate: true,
+			handler(isLive: boolean): void
 			{
-				this.isPopupShown = false;
-			}
+				if (isLive)
+				{
+					this.setUpOutputPorts();
+				}
+			},
 		},
 	},
-	created(): void
+	unmounted(): void
 	{
-		this.allOutputPorts = this.ports.reduce((acc, port) => {
-			if (port.type === PORT_TYPES.output || port.type === PORT_TYPES.outputRelation)
-			{
-				acc.push({
-					portId: port.id,
-					title: port.title,
-					type: port.type,
-				});
-			}
-
-			return acc;
-		}, []) ?? [];
-		if (this.filteredPorts.length === 0)
+		// The subscription exists only once the editor has been set up (see setUpOutputPorts); the
+		// immediate isLive watcher may have done that before created() would have run.
+		if (this.closePopupOnScroll)
 		{
-			this.addNewPort();
+			EventEmitter.unsubscribe(EVENT_NAMES.SCROLL_EVENT, this.closePopupOnScroll);
 		}
 	},
 	methods: {
 		...mapActions(useNodeSettingsStore, ['changeRuleExpression']),
+		/**
+		 * Everything the dropdown needs, paid once the rule is reached: an editor is mounted for every
+		 * output of every rule of the overview, so doing this on creation made opening the tab copy the
+		 * ports of the node per editor and watch the scroll as many times.
+		 */
+		setUpOutputPorts(): void
+		{
+			if (this.closePopupOnScroll)
+			{
+				return;
+			}
+
+			// The dropdown of the outputs hangs outside the scrolled flow, so it closes on a scroll of the
+			// panel. A subscription and not a prop: the state of the scroll as a prop re-renders every
+			// editor of every rule twice per scroll event.
+			this.closePopupOnScroll = () => {
+				this.isPopupShown = false;
+			};
+			EventEmitter.subscribe(EVENT_NAMES.SCROLL_EVENT, this.closePopupOnScroll);
+			this.allOutputPorts = this.ports.reduce((acc, port) => {
+				if (port.type === PORT_TYPES.output || port.type === PORT_TYPES.outputRelation)
+				{
+					acc.push({
+						portId: port.id,
+						title: port.title,
+						type: port.type,
+					});
+				}
+
+				return acc;
+			}, []) ?? [];
+			if (this.filteredPorts.length === 0)
+			{
+				this.addNewPort();
+			}
+		},
+		onDropdownClick(): void
+		{
+			// The click that reaches the dropdown is the one making the section live, so the ports may
+			// be a tick away; asked for directly, the popup opens filled on the very first click.
+			this.setUpOutputPorts();
+			this.isPopupShown = true;
+		},
 		selectPort(port: Port): void
 		{
 			this.selectedPort = port;
@@ -191,7 +253,12 @@ export const EditOutputExpression = {
 	template: `
 		<div class="editor-chart-node-settings-edit-output-expression-form">
 			<div class="editor-chart-node-settings-edit-output-expression-form__item">
-				<span class="editor-chart-node-settings-edit-output-expression-form__label">
+				<!-- The caption of the field is its programmatic name as well: the field is read-only and
+				always says the same thing, so a label of its own would repeat the caption word for word -->
+				<span
+					:id="actionCaptionId"
+					class="editor-chart-node-settings-edit-output-expression-form__label"
+				>
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_EXPRESSION_NAME') }}
 				</span>
 				<div class="ui-ctl ui-ctl-textbox">
@@ -199,6 +266,7 @@ export const EditOutputExpression = {
 						type="text"
 						class="ui-ctl-element"
 						readonly
+						:aria-labelledby="actionCaptionId"
 						:value="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_OUTPUT_TITLE')"
 					/>
 				</div>
@@ -210,7 +278,7 @@ export const EditOutputExpression = {
 				<div
 					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-output-expression-form__dropdown"
 					ref="nodeSettingsRuleOutputDropdown"
-					@click="isPopupShown = true"
+					@click="onDropdownClick"
 				>
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					<div

@@ -248,17 +248,14 @@
 		if (Boolean(GroupActions) && BX.type.isDomNode(panel))
 		{
 			const panelNode = GroupActions.getPanel();
+			const panelChild = BX.firstChild(panel);
 
-			if (BX.type.isDomNode(panelNode))
+			// An outdated response carries an already emptied panel: keeping the live one
+			// is better than leaving the grid without group actions until a page reload.
+			if (BX.type.isDomNode(panelNode) && BX.type.isDomNode(panelChild))
 			{
 				panelNode.innerHTML = '';
-
-				const panelChild = BX.firstChild(panel);
-
-				if (BX.type.isDomNode(panelChild))
-				{
-					panelNode.appendChild(panelChild);
-				}
+				panelNode.appendChild(panelChild);
 			}
 		}
 	};

@@ -24,6 +24,8 @@ while ($arSite = $rsSite->GetNext())
 {
 	$arSites[$arSite["LID"]] = $arSite["NAME"];
 }
+$arNewOrderSites = $arSites;
+unset($arNewOrderSites[""]);
 
 $arStatuses = Array("" => GetMessage("SALE_1C_NO"));
 $dbStatus = CSaleStatus::GetList(Array("SORT" => "ASC"), Array("LID" => LANGUAGE_ID));
@@ -68,7 +70,7 @@ if(!\Bitrix\Sale\Exchange\Internals\LoggerDiag::isOn())
 $arAllOptions = array(
 	array("1C_SALE_SITE_LIST", GetMessage("SALE_1C_SITE_LIST"), "", Array("list", $arSites), array(),""),
 	array("1C_IMPORT_NEW_ORDERS", GetMessage("SALE_1C_IMPORT_NEW_ORDERS"), "N", Array("checkbox"), array(),""),
-	array("1C_SITE_NEW_ORDERS", GetMessage("SALE_1C_SITE_NEW_ORDERS"), "s1", Array("list", $arSites), array(),""),
+	array("1C_SITE_NEW_ORDERS", GetMessage("SALE_1C_SITE_NEW_ORDERS"), "s1", Array("list", $arNewOrderSites), array(),""),
 	array("1C_SALE_ACCOUNT_NUMBER_SHOP_PREFIX", GetMessage("SALE_1C_SALE_ACCOUNT_NUMBER_SHOP_PREFIX"), "", Array("text"), array("note"=>GetMessage("SALE_1C_SALE_ACCOUNT_NUMBER_SHOP_PREFIX_NOTE")),""),
 	array("1C_EXPORT_PAYED_ORDERS", GetMessage("SALE_1C_EXPORT_PAYED_ORDERS"), "", Array("checkbox"), array(),""),
 	array("1C_EXPORT_ALLOW_DELIVERY_ORDERS", GetMessage("SALE_1C_EXPORT_ALLOW_DELIVERY_ORDERS"), "", Array("checkbox"), array(),""),

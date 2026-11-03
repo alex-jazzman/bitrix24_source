@@ -1,6 +1,7 @@
 import { showPopupMenu } from '../../helper';
 import { popupMenuMixin } from '../common/destroy-popup-menu';
 import { FieldTitle } from '../common/field-title';
+import { selectorA11yMixin } from '../common/selector-a11y';
 
 // @vue/component
 export const CategorySelector = {
@@ -8,7 +9,7 @@ export const CategorySelector = {
 		FieldTitle,
 	},
 
-	mixins: [popupMenuMixin('crm-recurring-category-selector')],
+	mixins: [popupMenuMixin('crm-recurring-category-selector'), selectorA11yMixin],
 
 	props: {
 		categoryId: {
@@ -36,7 +37,7 @@ export const CategorySelector = {
 	},
 
 	methods: {
-		showCategorySelector(): void
+		showCategorySelector(event: ?Event = null): void
 		{
 			const menu = [];
 
@@ -48,7 +49,8 @@ export const CategorySelector = {
 				});
 			});
 
-			showPopupMenu(this.popupMenuId, this.$refs.categorySelector, menu);
+			this.markSelectorOpened('category');
+			showPopupMenu(this.popupMenuId, this.$refs.categorySelector, menu, () => this.markSelectorClosed('category'), event);
 		},
 		onChangeCategory(_, item): void
 		{
@@ -61,14 +63,24 @@ export const CategorySelector = {
 	// language=Vue
 	template: `
 		<div>
-			<FieldTitle :title="categoryTitle" />
+			<FieldTitle :title="categoryTitle" :label-id="a11yId('category-title')" />
 		
 			<div class="ui-entity-editor-content-block">
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"
+					role="button"
+					tabindex="0"
+					aria-haspopup="menu"
+					:aria-expanded="isSelectorExpanded('category')"
+					:aria-labelledby="selectorLabelledBy('category')"
+					@click="showCategorySelector"
+					@keydown.enter.prevent="showCategorySelector"
+					@keydown.space.prevent="showCategorySelector"
+				>
 					<div
 						ref="categorySelector"
+						:id="a11yId('category-value')"
 						class="ui-ctl-element"
-						@click="showCategorySelector"
 					>
 						{{currentCategoryTitle}}
 					</div>

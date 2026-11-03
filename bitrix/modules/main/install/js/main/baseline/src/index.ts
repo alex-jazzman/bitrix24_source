@@ -15,7 +15,7 @@ import { currentBaseline } from 'virtual:browser-versions';
 
 declare const BX: { message: Record<string, string>; Helper?: { show?: (code: string) => void } };
 
-export type BaselineStatus = 'supported' | 'unsupported';
+export type BaselineStatus = 'supported' | 'unsupported' | 'unknown';
 
 export interface BrowserInfo
 {
@@ -71,7 +71,7 @@ function msg(key: string): string
  * 2. Check for IE (unique UA format: Trident/rv or MSIE)
  * 3. Legacy Edge (EdgeHTML): "Edge/XX" — must check before generic Chrome
  * 4. Firefox desktop
- * 5. FxiOS / CriOS — iOS browsers using WebKit under the hood
+ * 5. FxiOS / CriOS — iOS browsers running on the system WebKit, versioned by iOS
  * 6. Real Safari: has "Safari/" but no Chromium markers
  * 7. All Chromium-based browsers (Chrome, Edge, Opera, Samsung, Yandex, etc.)
  */
@@ -120,18 +120,13 @@ function detect(): BrowserInfo | null
 		return { name: 'firefox', version: Number(ff[1]) };
 	}
 
-	// Firefox on iOS (FxiOS) — uses WebKit, extract FxiOS version
-	const fxios = ua.match(/FxiOS\/(\d+)/);
-	if (fxios)
+	// Chrome and Firefox on iOS: their own numbering is unrelated to the WebKit they run on,
+	// so the engine version comes from Version/ when present, otherwise from the iOS major version
+	if (/(?:CriOS|FxiOS)\//.test(ua))
 	{
-		return { name: 'safari', version: Number(fxios[1]) };
-	}
+		const webkitVersion = ua.match(/Version\/(\d+)/) || ua.match(/(?:iPhone )?OS (\d+)[\d_]*/);
 
-	// Chrome on iOS (CriOS) — uses WebKit, extract CriOS version
-	const crios = ua.match(/CriOS\/(\d+)/);
-	if (crios)
-	{
-		return { name: 'safari', version: Number(crios[1]) };
+		return webkitVersion ? { name: 'safari', version: Number(webkitVersion[1]) } : null;
 	}
 
 	// Real Safari: has "Safari/" but no Chromium markers
@@ -155,21 +150,29 @@ function detect(): BrowserInfo | null
 	return null;
 }
 
+// Engines discontinued long before the baseline; they never appear in the versions map
+const DISCONTINUED_BROWSERS = new Set(['ie', 'edge_legacy']);
+
 function computeStatus(browser: BrowserInfo | null): BaselineStatus
 {
 	if (!browser)
+	{
+		return 'unknown';
+	}
+
+	if (DISCONTINUED_BROWSERS.has(browser.name))
 	{
 		return 'unsupported';
 	}
 
 	const versions = currentBaseline && currentBaseline.versions;
 	const minVersion = versions && versions[browser.name];
-	if (!minVersion || browser.version < minVersion)
+	if (!minVersion)
 	{
-		return 'unsupported';
+		return 'unknown';
 	}
 
-	return 'supported';
+	return browser.version < minVersion ? 'unsupported' : 'supported';
 }
 
 const DISMISS_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -275,6 +278,16 @@ function isWebView(): boolean
 	return false;
 }
 
+function isAutomated(): boolean
+{
+	if ((navigator as any).webdriver === true)
+	{
+		return true;
+	}
+
+	return navigator.userAgent.includes('HeadlessChrome');
+}
+
 function showBanner(text: string, settings: ReturnType<typeof getSettings>): void
 {
 	if (!text || isDismissed() || isWebView())
@@ -365,7 +378,7 @@ export class Baseline
 		const status = computeStatus(browser);
 		const result: CheckResult = { status, browser };
 
-		if (result.status === 'unsupported')
+		if (result.status === 'unsupported' && !isAutomated())
 		{
 			const settings = getSettings();
 			sendAnalytics(result, settings);
@@ -377,7 +390,7 @@ export class Baseline
 
 	static isSupported(): boolean
 	{
-		return computeStatus(detect()) === 'supported';
+		return computeStatus(detect()) !== 'unsupported';
 	}
 
 	static detectBrowser(): BrowserInfo | null

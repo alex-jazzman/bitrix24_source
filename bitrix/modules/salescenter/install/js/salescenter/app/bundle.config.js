@@ -4,6 +4,6 @@ module.exports = {
 	namespace: 'BX.Salescenter',
 	cssImages: {
 		type: 'inline',
-		maxSize: 7.25,
+		maxSize: 4.5,
 	},
 };

@@ -8,6 +8,7 @@ type CategorySourceOptions = {
 	STAGES: Array<Stage>,
 	SORT: string | number,
 	RC_COUNT: number,
+	ARE_TUNNELS_EDITABLE: boolean,
 };
 
 export default CategorySourceOptions;

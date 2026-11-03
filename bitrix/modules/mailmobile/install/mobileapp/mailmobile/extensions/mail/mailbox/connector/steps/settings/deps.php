@@ -1,14 +1,14 @@
 <?php
 
 return [
-	'bundle' => [
-		'./src/settings',
-	],
 	'extensions' => [
-		'loc',
-		'tokens',
 		'layout/ui/wizard/step',
+		'loc',
 		'mail:mailbox/connector/progress-bar-number',
 		'mail:mailbox/settings',
+		'tokens',
+	],
+	'bundle' => [
+		'./src/settings',
 	],
 ];

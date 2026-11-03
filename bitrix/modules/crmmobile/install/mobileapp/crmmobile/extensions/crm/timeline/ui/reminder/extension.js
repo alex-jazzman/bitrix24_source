@@ -2,6 +2,7 @@
  * @module crm/timeline/ui/reminder
  */
 jn.define('crm/timeline/ui/reminder', (require, exports, module) => {
+	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { getEntityMessage } = require('crm/loc');
@@ -74,10 +75,9 @@ jn.define('crm/timeline/ui/reminder', (require, exports, module) => {
 					marginBottom: 2,
 				},
 			},
-			Text({
+			Text4({
 				text,
 				style: {
-					fontSize: 15,
 					color: AppTheme.colors.base1,
 				},
 			}),
@@ -88,10 +88,9 @@ jn.define('crm/timeline/ui/reminder', (require, exports, module) => {
 	{
 		return View(
 			{},
-			Text({
+			Text5({
 				text,
 				style: {
-					fontSize: 13,
 					color: AppTheme.colors.base4,
 				},
 			}),

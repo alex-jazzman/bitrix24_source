@@ -6,7 +6,12 @@ use Bitrix\Main\Page\Asset;
 Asset::getInstance()->addJs($this->GetFolder().'/drag_and_drop.js');
 CUtil::InitJSCore(array("amcharts", "amcharts_funnel", "amcharts_serial"));
 
-\Bitrix\Main\UI\Extension::load(["popup", 'intranet.old-interface.intranet-common']);
+\Bitrix\Main\UI\Extension::load([
+	"popup",
+	'intranet.old-interface.intranet-common',
+	'crm.stage.color',
+]);
+Asset::getInstance()->addJs($this->GetFolder().'/stage-editor-integration.js');
 
 global $APPLICATION;
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/crm-entity-show.css');
@@ -90,6 +95,7 @@ else
 	<div class="crm-transaction-stage">
 		<? foreach($arResult['HEADERS'] as $entityId => $headerName): ?>
 			<? $isActive = $entityId === $arResult['ACTIVE_ENTITY_ID']; ?>
+			<? $testIdEntityId = trim(preg_replace('/[^a-z0-9]+/i', '-', strtolower($entityId)), '-'); ?>
 			<? $maxSort = 0; ?>
 			<? if(isset($arResult['ENTITY'][$entityId])): ?>
 			<? $entitySettings = $arResult['ENTITY'][$entityId];?>
@@ -128,11 +134,6 @@ else
 									transaction-stage-phase-panel-button-refresh"
 									title="<?=GetMessage('CRM_STATUS_LIST_RECOVERY_NAME')?>"></div>
 							<?endif?>
-							<div class="transaction-stage-phase-panel-button"
-								 title="<?=GetMessage('CRM_STATUS_EDIT_COLOR')?>"
-								 onclick="BX['<?=$jsClass?>'].correctionColorPicker(event,
-									 '<?=$initialFields[$entityId]['ID']?>')">
-							</div>
 						</div>
 						<span id="transaction-stage-phase-icon" class="<?=$iconClass?> transaction-stage-phase-icon"
 							  data-class="transaction-stage-phase-icon">
@@ -162,6 +163,9 @@ else
 						<input type="hidden" name="LIST[<?=$entityId?>][<?=$initialFields[$entityId]['ID']?>][COLOR]"
 							   id="stage-color-<?=$initialFields[$entityId]['ID']?>"
 							   value="<?=htmlspecialcharsbx($colorValue)?>">
+						<input type="hidden" name="LIST[<?=$entityId?>][<?=$initialFields[$entityId]['ID']?>][DESCRIPTION]"
+							   id="stage-description-<?=$initialFields[$entityId]['ID']?>"
+							   value="<?=htmlspecialcharsbx($initialFields[$entityId]['DESCRIPTION'] ?? '')?>">
 						<input type="hidden" name="LIST[<?=$entityId?>][<?=$initialFields[$entityId]['ID']?>][STATUS_ID]"
 							   id="stage-status-id-<?=$initialFields[$entityId]['ID']?>" data-status-id="1"
 							   value="<?=htmlspecialcharsbx($initialFields[$entityId]['STATUS_ID'])?>">
@@ -188,6 +192,7 @@ else
 						?>
 
 						<div class="transaction-stage-phase draghandle" data-calculate="1" data-success="1"
+							 data-stage-can-delete="Y"
 							 style="<?=htmlspecialcharsbx($style)?>" id="field-phase-<?=$field['ID']?>" data-space="<?=$field['ID']?>"
 							 data-sort="<?=$field['SORT']?>" ondblclick="BX['<?=$jsClass?>'].editField('<?=$field['ID']?>');">
 							<div id="phase-panel" data-class="transaction-stage-phase-panel"
@@ -199,10 +204,6 @@ else
 										 class="transaction-stage-phase-panel-button
 									transaction-stage-phase-panel-button-refresh"></div>
 								<?endif?>
-								<div class="transaction-stage-phase-panel-button"
-									 title="<?=GetMessage('CRM_STATUS_EDIT_COLOR')?>"
-									 onclick="BX['<?=$jsClass?>'].correctionColorPicker(event, '<?=$field['ID']?>')">
-								</div>
 								<div onclick="BX['<?=$jsClass?>'].openPopupBeforeDeleteField('<?=$field['ID']?>')"
 									 title="<?=GetMessage('CRM_STATUS_DELETE_FIELD')?>"
 									class="transaction-stage-phase-panel-button transaction-stage-phase-panel-button-close">
@@ -235,13 +236,17 @@ else
 							<input type="hidden" name="LIST[<?=$entityId?>][<?=$field['ID']?>][COLOR]"
 								   id="stage-color-<?=$field['ID']?>"
 								   value="<?=htmlspecialcharsbx($colorValue)?>">
+							<input type="hidden" name="LIST[<?=$entityId?>][<?=$field['ID']?>][DESCRIPTION]"
+								   id="stage-description-<?=$field['ID']?>"
+								   value="<?=htmlspecialcharsbx($field['DESCRIPTION'] ?? '')?>">
 							<input type="hidden" name="LIST[<?=$entityId?>][<?=$field['ID']?>][STATUS_ID]"
 								   id="stage-status-id-<?=$field['ID']?>" data-status-id="1"
 								   value="<?=htmlspecialcharsbx($field['STATUS_ID'])?>">
 						</div>
 					<? endforeach; ?>
 					<a href="javascript:void(0)" onclick="BX['<?=$jsClass?>'].addField(this);"
-					   class="transaction-stage-addphase draghandle" data-space="main">+
+					   class="transaction-stage-addphase draghandle" data-space="main"
+					   data-testid="crm-config-status-stage-add-<?=htmlspecialcharsbx($testIdEntityId)?>">+
 						<span><?=isset($entitySettings['ADD_CAPTION']) ? $entitySettings['ADD_CAPTION'] : GetMessage('CRM_STATUS_ADD')?></span>
 					</a>
 				</div>
@@ -289,11 +294,6 @@ else
 											 class="transaction-stage-phase-panel-button
 												transaction-stage-phase-panel-button-refresh"></div>
 									<?endif?>
-									<div class="transaction-stage-phase-panel-button"
-										 title="<?=GetMessage('CRM_STATUS_EDIT_COLOR')?>"
-										 onclick="BX['<?=$jsClass?>'].correctionColorPicker(event,
-											 '<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>')">
-									</div>
 								</div>
 								<span id="transaction-stage-phase-icon" class="<?=$iconClass?> transaction-stage-phase-icon"
 									  data-class="transaction-stage-phase-icon">
@@ -324,6 +324,9 @@ else
 								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>][COLOR]"
 									   id="stage-color-<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>"
 									   value="<?=htmlspecialcharsbx($colorValue)?>">
+								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>][DESCRIPTION]"
+									   id="stage-description-<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>"
+									   value="<?=htmlspecialcharsbx($finalFields[$entityId]['SUCCESSFUL']['DESCRIPTION'] ?? '')?>">
 								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>][STATUS_ID]"
 									   id="stage-status-id-<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>" data-status-id="1"
 									   value="<?=htmlspecialcharsbx($finalFields[$entityId]['SUCCESSFUL']['STATUS_ID'])?>">
@@ -368,11 +371,6 @@ else
 											 class="transaction-stage-phase-panel-button
 												transaction-stage-phase-panel-button-refresh"></div>
 									<?endif?>
-									<div class="transaction-stage-phase-panel-button"
-										 title="<?=GetMessage('CRM_STATUS_EDIT_COLOR')?>"
-										 onclick="BX['<?=$jsClass?>'].correctionColorPicker(event,
-											 '<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>')">
-									</div>
 								</div>
 								<span id="transaction-stage-phase-icon" class="<?=$iconClass?> transaction-stage-phase-icon"
 									  data-class="transaction-stage-phase-icon">
@@ -401,6 +399,9 @@ else
 								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>][COLOR]"
 									   id="stage-color-<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>"
 									   value="<?=htmlspecialcharsbx($colorValue)?>">
+								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>][DESCRIPTION]"
+									   id="stage-description-<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>"
+									   value="<?=htmlspecialcharsbx($finalFields[$entityId]['UNSUCCESSFUL']['DESCRIPTION'] ?? '')?>">
 								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>][STATUS_ID]"
 									   id="stage-status-id-<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>" data-status-id="1"
 									   value="<?=htmlspecialcharsbx($finalFields[$entityId]['UNSUCCESSFUL']['STATUS_ID'])?>">
@@ -416,6 +417,7 @@ else
 								?>
 
 								<div class="transaction-stage-phase draghandle" data-calculate="1"
+									 data-stage-can-delete="Y"
 									 data-space="<?=$field['ID']?>" id="field-phase-<?=$field['ID']?>"
 									 data-sort="<?=$field['SORT']?>" data-success="0"
 									 ondblclick="BX['<?=$jsClass?>'].editField('<?=$field['ID']?>');"
@@ -429,11 +431,6 @@ else
 												 class="transaction-stage-phase-panel-button
 													transaction-stage-phase-panel-button-refresh"></div>
 										<?endif?>
-										<div class="transaction-stage-phase-panel-button"
-											 title="<?=GetMessage('CRM_STATUS_EDIT_COLOR')?>"
-											 onclick="BX['<?=$jsClass?>'].correctionColorPicker(event,
-												 '<?=$field['ID']?>')">
-										</div>
 										<div onclick="BX['<?=$jsClass?>'].openPopupBeforeDeleteField('<?=$field['ID']?>')"
 											 title="<?=GetMessage('CRM_STATUS_DELETE_FIELD')?>"
 											class="transaction-stage-phase-panel-button transaction-stage-phase-panel-button-close">
@@ -467,13 +464,17 @@ else
 									<input type="hidden" name="LIST[<?=$entityId?>][<?=$field['ID']?>][COLOR]"
 										   id="stage-color-<?=$field['ID']?>"
 										   value="<?=htmlspecialcharsbx($colorValue)?>">
+									<input type="hidden" name="LIST[<?=$entityId?>][<?=$field['ID']?>][DESCRIPTION]"
+										   id="stage-description-<?=$field['ID']?>"
+										   value="<?=htmlspecialcharsbx($field['DESCRIPTION'] ?? '')?>">
 									<input type="hidden" name="LIST[<?=$entityId?>][<?=$field['ID']?>][STATUS_ID]"
 										   id="stage-status-id-<?=$field['ID']?>" data-status-id="1"
 										   value="<?=htmlspecialcharsbx($field['STATUS_ID'])?>">
 								</div>
 							<? endforeach; ?>
 							<a href="javascript:void(0)" onclick="BX['<?=$jsClass?>'].addField(this);"
-							   data-space="final" class="transaction-stage-addphase draghandle">+
+							   data-space="final" class="transaction-stage-addphase draghandle"
+							   data-testid="crm-config-status-stage-add-final-<?=htmlspecialcharsbx($testIdEntityId)?>">+
 								<span><?=isset($entitySettings['ADD_CAPTION']) ? $entitySettings['ADD_CAPTION'] : GetMessage('CRM_STATUS_ADD')?></span>
 							</a>
 						</div>
@@ -685,7 +686,8 @@ else
 						<? $number++ ?>
 					<? endforeach; ?>
 					<a href="javascript:void(0)" onclick="BX['<?=$jsClass?>'].addField(this);"
-					   class="transaction-stage-addphase draghandle" data-space="main">+
+					   class="transaction-stage-addphase draghandle" data-space="main"
+					   data-testid="crm-config-status-stage-add-<?=htmlspecialcharsbx($testIdEntityId)?>">+
 						<span><?=GetMessage('CRM_STATUS_ADD')?></span>
 					</a>
 				</div>
@@ -702,23 +704,6 @@ else
 			<input type="button" value="<?=GetMessage('CRM_STATUS_BUTTONS_CANCEL');?>"
 				   class="webform-small-button webform-small-button-cancel" onclick="BX['<?=$jsClass?>'].statusReset()">
 		</div>
-	</div>
-
-	<script>
-		function OnSelectBGColor(color, objColorPicker)
-		{
-			BX['<?=$jsClass?>'].paintElement(color, objColorPicker);
-		}
-	</script>
-	<div id="block-color-picker" class="crm-config-status-block-color-picker">
-		<? $APPLICATION->includeComponent(
-			"bitrix:main.colorpicker",
-			"",
-			array(
-				"SHOW_BUTTON" =>"Y",
-				"ONSELECT" => "OnSelectBGColor"
-			)
-		); ?>
 	</div>
 
 </div>
@@ -754,6 +739,7 @@ function getColorText($color, &$iconClass, &$blockClass)
 		BX.message(
 			{
 				CRM_STATUS_NEW: '<?= GetMessageJS('CRM_STATUS_NEW') ?>',
+				CRM_STATUS_EDIT_NAME: '<?= GetMessageJS('CRM_STATUS_EDIT_NAME') ?>',
 				CRM_STATUS_FINAL_TITLE: '<?= GetMessageJS('CRM_STATUS_FINAL_TITLE') ?>',
 				CRM_STATUS_CONFIRMATION_DELETE_TITLE: '<?= GetMessageJS('CRM_STATUS_CONFIRMATION_DELETE_TITLE') ?>',
 				CRM_STATUS_CONFIRMATION_DELETE_SAVE_BUTTON: '<?= GetMessageJS('CRM_STATUS_CONFIRMATION_DELETE_SAVE_BUTTON') ?>',
@@ -766,12 +752,6 @@ function getColorText($color, &$iconClass, &$blockClass)
 				CRM_STATUS_FOOTER_PIN_OFF: '<?= GetMessageJS('CRM_STATUS_FOOTER_PIN_OFF') ?>'
 			}
 		);
-
-<?foreach($arResult['ENTITY'] as $entityId => $entitySettings):?>
-	<?if(isset($entitySettings['DEFAULT_NAME'])):?>
-		BX.message({ CRM_STATUS_NEW_<?=$entityId?>: "<?=CUtil::JSEscape($entitySettings['DEFAULT_NAME'])?>" });
-	<?endif;?>
-<?endforeach;?>
 
 		BX.CrmConfigStatusClass.semanticEntityTypes = <?=CUtil::PhpToJsObject(array_keys($arResult["ENTITY"]))?>;
 		BX.CrmConfigStatusClass.entityInfos = <?=CUtil::PhpToJsObject($arResult["ENTITY"])?>;
@@ -805,6 +785,7 @@ function getColorText($color, &$iconClass, &$blockClass)
 		<? endif; ?>
 
 		DragManager.onDragStart = function(dragObject) {
+			BX['<?=$jsClass?>'].cancelStageEditor();
 			BX['<?=$jsClass?>'].setDragStartParentElement(dragObject.avatar.parentElement);
 		};
 

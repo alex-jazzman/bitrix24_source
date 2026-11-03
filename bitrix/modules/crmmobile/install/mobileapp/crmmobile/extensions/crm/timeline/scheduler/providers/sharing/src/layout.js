@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/sharing/layout
  */
 jn.define('crm/timeline/scheduler/providers/sharing/layout', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { withPressed } = require('utils/color');
@@ -116,7 +117,7 @@ jn.define('crm/timeline/scheduler/providers/sharing/layout', (require, exports, 
 			backgroundColor: withPressed(AppTheme.colors.accentMainPrimaryalt),
 		},
 		sendButtonText: {
-			fontSize: 17,
+			fontSize: Typography.text2.getValue().fontSize,
 			fontWeight: '500',
 			ellipsize: 'end',
 			numberOfLines: 1,
@@ -129,7 +130,7 @@ jn.define('crm/timeline/scheduler/providers/sharing/layout', (require, exports, 
 			marginHorizontal: 45,
 		},
 		copyLinkButtonText: {
-			fontSize: 15,
+			fontSize: Typography.text4.getValue().fontSize,
 			fontWeight: '400',
 			marginLeft: 8,
 			color: AppTheme.colors.base2,

@@ -24,6 +24,8 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper/entity-selector');
 	const { CounterHelper } = require('im/messenger/lib/helper/counter');
 	const { StickerHelper } = require('im/messenger/lib/helper/sticker');
+	const { isCopilotMentionByGestureAvailable } = require('im/messenger/lib/helper/copilot-mention');
+	const { isGuestOpeningByLink } = require('im/messenger/lib/helper/guest-call');
 
 	module.exports = {
 		DateHelper: new DateHelper(),
@@ -44,5 +46,7 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		EntitySelectorHelper,
 		CounterHelper,
 		StickerHelper,
+		isCopilotMentionByGestureAvailable,
+		isGuestOpeningByLink,
 	};
 });

@@ -13,13 +13,22 @@ use Bitrix\Main\Web\Json;
  * @var $arResult array
  */
 
-Extension::load(['intranet.widget-loader']);
+Extension::load([
+	'intranet.invitation-widget-counter',
+	'intranet.widget-loader',
+]);
 
 ?>
 
 <div class="air-header__button" data-id="invitationButton">
-	<button class="air-header-button" aria-haspopup="dialog" aria-expanded="false">
-		<i class="ui-icon-set --o-add-person air-header-button__icon"></i>
+	<button
+		class="air-header-button"
+		type="button"
+		aria-haspopup="dialog"
+		aria-expanded="false"
+		data-testid="intranet-invitation-widget-invitation-button"
+	>
+		<i class="ui-icon-set --o-add-person air-header-button__icon" aria-hidden="true"></i>
 		<span class="air-header-button__text"><?=Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE')?></span>
 		<span class="air-header-button__counter invitation-widget-counter"></span>
 	</button>
@@ -36,6 +45,8 @@ $frame = $this->createFrame()->begin('');
 			counterId: '<?= $arResult['counterId'] ?? '' ?>',
 			invitationCounter: <?= $arResult['invitationCounter'] ?? 0 ?>,
 			shouldShowStructureCounter: <?= $arResult['shouldShowStructureCounter'] ? 'true' : 'false' ?>,
+			invitationLabel: <?= Json::encode(Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE')) ?>,
+			loadingStatusText: <?= Json::encode(Loc::getMessage('INTRANET_INVITATION_WIDGET_LOADING')) ?>,
 		});
 	});
 </script>

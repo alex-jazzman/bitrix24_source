@@ -185,7 +185,7 @@
 	}
 
 	/**
-	 * Just animate lement
+	 * Just animate element
 	 * @param {HTMLElement} element
 	 * @return {Promise<AnimationEvent>}
 	 */

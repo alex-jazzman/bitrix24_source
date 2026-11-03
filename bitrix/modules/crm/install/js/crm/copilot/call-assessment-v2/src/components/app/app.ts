@@ -1,11 +1,14 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ajax, Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { sendData } from 'ui.analytics';
 import { UI } from 'ui.notification';
-import { defineComponent, type PropType } from 'ui.vue3';
+import { defineComponent, markRaw, type PropType } from 'ui.vue3';
 import { ActionBar } from '../action-bar/action-bar';
 import { ClientTypesCard } from '../client-types-card/client-types-card';
 import { DraftCard } from '../draft-card/draft-card';
 import { EditorToolbar } from '../editor-toolbar/editor-toolbar';
+import { HintCard } from '../hint-card/hint-card';
 import { LoadingState } from '../loading-state/loading-state';
 import { ScenarioCard } from '../scenario-card/scenario-card';
 import { ScriptInfoCard } from '../script-info-card/script-info-card';
@@ -23,6 +26,38 @@ import './app.css';
 
 const MIN_USER_TEXT_LENGTH = 100;
 
+type SliderCloseHandler = (...args: unknown[]) => unknown;
+
+type SliderCloseLabel = {
+	getOnclick: () => SliderCloseHandler | null,
+	setOnclick: (handler: SliderCloseHandler | null) => void,
+};
+
+type SidePanelSlider = {
+	close: () => void,
+	getLabel: () => SliderCloseLabel,
+	isOpen: () => boolean,
+};
+
+const originalCloseHandler = Symbol('originalCloseHandler');
+const closeHandlerOwner = Symbol('closeHandlerOwner');
+
+type WrappedCloseHandler = SliderCloseHandler & {
+	[originalCloseHandler]: SliderCloseHandler | null,
+	[closeHandlerOwner]: object,
+};
+
+type AppState = {
+	mode: Mode,
+	data: ScriptData,
+	snapshot: ScriptData,
+	userText: string,
+	isGenerating: boolean,
+	isSaving: boolean,
+	criteriaGeneratedByAi: boolean,
+	slider: SidePanelSlider | null,
+};
+
 export const App = defineComponent({
 	name: 'CrmCopilotCallAssessmentV2App',
 	components: {
@@ -30,6 +65,7 @@ export const App = defineComponent({
 		ClientTypesCard,
 		DraftCard,
 		EditorToolbar,
+		HintCard,
 		LoadingState,
 		ScenarioCard,
 		ScriptInfoCard,
@@ -51,7 +87,7 @@ export const App = defineComponent({
 			default: () => ({}),
 		},
 	},
-	data(): { mode: Mode, data: ScriptData, snapshot: ScriptData, userText: string, isGenerating: boolean, isSaving: boolean }
+	data(): AppState
 	{
 		const isCopy = this.settings.isCopy;
 		let initialEditMode: Mode = 'edit';
@@ -63,6 +99,12 @@ export const App = defineComponent({
 		const initialMode: Mode = this.settings.isPendingGeneration ? 'loading' : initialEditMode;
 
 		const data = this.cloneData(this.initialData);
+		if (this.settings.isNewScript)
+		{
+			data.prompt = '';
+			data.isHintEnabled = false;
+		}
+
 		if (isCopy)
 		{
 			data.id = null;
@@ -75,6 +117,10 @@ export const App = defineComponent({
 			userText: '',
 			isGenerating: this.settings.isPendingGeneration,
 			isSaving: false,
+			criteriaGeneratedByAi:
+				this.settings.isCopy === true
+				&& this.initialData.isGeneratedByCopilot === true,
+			slider: null,
 		};
 	},
 	computed: {
@@ -121,19 +167,42 @@ export const App = defineComponent({
 		{
 			EventEmitter.subscribe('onPullEvent-crm', this.handlePullEvent);
 		}
+
+		const slider = (top as any)?.BX?.SidePanel?.Instance?.getSliderByWindow?.(window) ?? null;
+		this.slider = slider ? markRaw(slider) : null;
+		if (this.slider)
+		{
+			this.wrapSliderCloseHandler();
+		}
 	},
 	beforeUnmount(): void
 	{
 		EventEmitter.unsubscribe('onPullEvent-crm', this.handlePullEvent);
+
+		this.restoreSliderCloseHandler();
 	},
 	methods: {
 		cloneData(source: ScriptData): ScriptData
 		{
-			return JSON.parse(JSON.stringify(source));
+			const clone = JSON.parse(JSON.stringify(source));
+
+			return {
+				...clone,
+				prompt: clone.prompt ?? '',
+				isHintEnabled: clone.isHintEnabled === true,
+			};
 		},
-		handlePullEvent(event: { data: [string, { assessmentId?: number }] }): void
+		syncHintPrompt(): void
 		{
-			const data = event?.data;
+			const hintCard = this.$refs?.hintCard as { syncPrompt: () => string } | undefined;
+			if (hintCard)
+			{
+				this.data.prompt = hintCard.syncPrompt();
+			}
+		},
+		handlePullEvent(event: BaseEvent<[string, { assessmentId?: number }]>): void
+		{
+			const data = event.getData();
 			if (!Array.isArray(data) || data.length < 2)
 			{
 				return;
@@ -188,6 +257,13 @@ export const App = defineComponent({
 		},
 		handleEnterEdit(): void
 		{
+			sendData(
+				Builder.CallAssessment.GridActionsEvent
+					.createDefault(Dictionary.ELEMENT_EDIT_BUTTON)
+					.setCallAssessmentId(this.data.id || null)
+					.buildData(),
+			);
+
 			this.snapshot = this.cloneData(this.data);
 			this.mode = 'edit';
 		},
@@ -197,6 +273,8 @@ export const App = defineComponent({
 			{
 				return;
 			}
+
+			this.syncHintPrompt();
 
 			const nonEmptyCriteria = this.data.criteria.filter(
 				(criterion: Criterion) => criterion.title.trim() !== '' && criterion.description.trim() !== '',
@@ -236,9 +314,15 @@ export const App = defineComponent({
 
 			const payload = {
 				id: this.data.id,
+				criteriaGeneratedByAi: this.criteriaGeneratedByAi,
+				aiGeneratedCriteriaCount: this.criteriaGeneratedByAi
+					? nonEmptyCriteria.filter((criterion: Criterion) => criterion.id !== null && criterion.id > 0).length
+					: 0,
 				data: {
 					title: this.data.title,
 					description: this.data.description,
+					prompt: this.data.prompt,
+					isHintEnabled: this.data.isHintEnabled,
 					clientTypeIds,
 					callTypeId,
 					isAiImprovementEnabled: this.data.isAiImprovementEnabled,
@@ -253,8 +337,15 @@ export const App = defineComponent({
 
 			this.isSaving = true;
 
-			ajax.runAction('crm.copilot.callassessment.save', { data: payload })
+			ajax.runAction('crm.copilot.callassessment.save', {
+				data: payload,
+				analytics: Builder.CallAssessment.GridActionsEvent
+					.createDefault(Dictionary.ELEMENT_SAVE_BUTTON)
+					.setCallAssessmentId(this.data.id || null)
+					.buildData(),
+			})
 				.then((response: { data?: { data?: ScriptData } }) => {
+					this.criteriaGeneratedByAi = false;
 					const next = response?.data?.data;
 					if (next)
 					{
@@ -279,6 +370,13 @@ export const App = defineComponent({
 		},
 		handleCancel(): void
 		{
+			sendData(
+				Builder.CallAssessment.GridActionsEvent
+					.createDefault(Dictionary.ELEMENT_CANCEL_BUTTON)
+					.setCallAssessmentId(this.data.id || null)
+					.buildData(),
+			);
+
 			this.data = this.cloneData(this.snapshot);
 			this.mode = 'view';
 			this.events.onCancel?.();
@@ -299,6 +397,10 @@ export const App = defineComponent({
 					id: this.data.id,
 					isEnabled: value ? 1 : 0,
 				},
+				analytics: Builder.CallAssessment.AutoUpdateEvent
+					.createDefault(value)
+					.setCallAssessmentId(this.data.id)
+					.buildData(),
 			}).catch(() => {
 				this.data.isAiImprovementEnabled = previous;
 				this.snapshot.isAiImprovementEnabled = previous;
@@ -310,8 +412,55 @@ export const App = defineComponent({
 		},
 		handleClose(): void
 		{
-			const sidePanel = (top as any)?.BX?.SidePanel?.Instance;
-			sidePanel?.close();
+			this.slider?.close();
+		},
+		wrapSliderCloseHandler(): void
+		{
+			if (!this.slider)
+			{
+				return;
+			}
+
+			const slider = this.slider;
+			const label = slider.getLabel();
+			const currentHandler = label.getOnclick() as WrappedCloseHandler | null;
+			const originalHandler = currentHandler?.[closeHandlerOwner]
+				? currentHandler[originalCloseHandler]
+				: currentHandler
+			;
+			const sendCloseButtonAnalytics = (): void => this.sendCloseButtonAnalytics();
+			const wrappedHandler = function(this: unknown, ...args: unknown[]): unknown {
+				const wasOpen = slider.isOpen();
+				const result = originalHandler?.apply(this, args);
+
+				if (wasOpen && !slider.isOpen())
+				{
+					sendCloseButtonAnalytics();
+				}
+
+				return result;
+			} as WrappedCloseHandler;
+			wrappedHandler[originalCloseHandler] = originalHandler;
+			wrappedHandler[closeHandlerOwner] = this;
+			label.setOnclick(wrappedHandler);
+		},
+		restoreSliderCloseHandler(): void
+		{
+			const label = this.slider?.getLabel();
+			const handler = label?.getOnclick() as WrappedCloseHandler | null | undefined;
+			if (handler?.[closeHandlerOwner] === this)
+			{
+				label?.setOnclick(handler[originalCloseHandler]);
+			}
+		},
+		sendCloseButtonAnalytics(): void
+		{
+			sendData(
+				Builder.CallAssessment.GridActionsEvent
+					.createDefault(Dictionary.ELEMENT_CLOSE_BUTTON)
+					.setCallAssessmentId(this.data.id || null)
+					.buildData(),
+			);
 		},
 		handleGenerate(): void
 		{
@@ -380,7 +529,7 @@ export const App = defineComponent({
 		},
 	},
 	template: `
-		<div class="crm-call-assessment-v2">
+		<div class="crm-call-assessment-v2" data-testid="crm-call-assessment-v2-app">
 			<EditorToolbar
 				:isEditMode="isEditMode"
 				:isCreateMode="isCreateMode"
@@ -414,6 +563,12 @@ export const App = defineComponent({
 							v-model:criteria="data.criteria"
 						/>
 					</div>
+					<HintCard
+						ref="hintCard"
+						v-model:prompt="data.prompt"
+						v-model:isHintEnabled="data.isHintEnabled"
+						:isEditable="isEditMode && !settings.readOnly"
+					/>
 					<template v-if="isEditMode">
 						<ClientTypesCard v-model:filters="data.filters"/>
 					</template>

@@ -2,22 +2,33 @@ import { markRaw } from 'ui.vue3';
 import { mapActions, mapState } from 'ui.vue3.pinia';
 import { Dom, Type, ajax, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { diagramStore } from '../../../../entities/blocks';
 import {
 	useNodeSettingsStore,
 	EVENT_NAMES,
 	getConnectedBlocksContextForConstruction,
+	resolveRuleCollection,
+	settingsFormRequestCache,
+	toPropertyMapContext,
 } from '../../../../entities/node-settings';
-import { editorAPI } from '../../../../shared/api';
-import { TITLE_FIELD_NAME } from '../../../../shared/constants';
+import { BLOCK_TYPES, TITLE_FIELD_NAME } from '../../../../shared/constants';
 import { useLoc, usePropertyDialog } from '../../../../shared/composables';
 import { Loader } from '../../../../shared/ui';
-import { createUniqueId, deepEqual, hasVisibleFieldLabel, isRequiredField } from '../../../../shared/utils';
+import {
+	baseSettingsFieldsMemory,
+	createUniqueId,
+	deepEqual,
+	hasVisibleFieldLabel,
+	isRequiredField,
+	settingsControlsMemory,
+} from '../../../../shared/utils';
 import { BxControl } from '../../directives/bx-control';
 import { FormInputTracker } from '../../directives/form-input-tracker';
 import { handleBpSelectorButtonClick, isBpSelectorButtonTarget } from '../../utils/bp-selector-button';
 import { closeExpressionBuilder, mountExpressionBuilders } from '../../utils/expression-builder-mount';
+import { DeletedProjectFieldStateMixin } from '../../utils/deleted-project-field-state-mixin';
 import { unmountFormVeneers } from '../../utils/readable-expressions-veneer';
 
 import './style.css';
@@ -33,6 +44,31 @@ import './style.css';
  * the same getNodeSettingsControls / renderPropertyDialog pipeline as action blocks.
  * The activityData.Properties are written back via changeRuleExpression.
  */
+
+/**
+ * Whether a value of the form says anything. What an untouched control submits - an empty string, an
+ * empty list, a map of empty values - says nothing, and a value nested inside a multiple field has to
+ * be looked for down the nesting.
+ */
+function hasFilledFormValue(value: mixed): boolean
+{
+	if (Type.isArray(value))
+	{
+		return value.some(hasFilledFormValue);
+	}
+
+	if (Type.isPlainObject(value))
+	{
+		return Object.values(value).some(hasFilledFormValue);
+	}
+
+	if (Type.isString(value))
+	{
+		return value.trim() !== '';
+	}
+
+	return value !== null && value !== undefined && value !== false;
+}
 
 const Status = Object.freeze({
 	Loading: 'loading',
@@ -52,7 +88,8 @@ let baseSettingsIdCounter = 0;
 // @vue/component
 export const EditBaseSettings = {
 	name: 'EditBaseSettings',
-	components: { Loader },
+	mixins: [DeletedProjectFieldStateMixin],
+	components: { BIcon, Loader },
 	directives: { FormInputTracker, BxControl },
 	props: {
 		/** @type Construction with type === 'base-settings' */
@@ -74,20 +111,40 @@ export const EditBaseSettings = {
 			type: Object,
 			required: true,
 		},
+		/**
+		 * @type Port | PortlessRule
+		 * Rule of the section this form belongs to. Without it the form works on the single rule the
+		 * panel shows: only the all-rules mode has no single one, and there every section names its own.
+		 */
+		rulePort: {
+			type: [Object, null],
+			default: null,
+		},
 	},
-	setup(): { store: Object; getMessage: () => string; fieldIdPrefix: string; }
+	setup(): { iconSet: typeof Outline; store: Object; getMessage: () => string; fieldIdPrefix: string; }
 	{
 		const store = diagramStore();
 		const { getMessage } = useLoc();
 		baseSettingsIdCounter++;
 
 		return {
+			iconSet: Outline,
 			store,
 			getMessage,
 			fieldIdPrefix: `editor-chart-edit-base-settings-${baseSettingsIdCounter}`,
 		};
 	},
-	data(): { status: string; settingsForm: HTMLFormElement | null; nodeControls: Array | null; renderedControlsMap: Object | null; rendererInstance: Object | null; lastRenderRequestId: number; }
+	data(): {
+		status: string,
+		settingsForm: HTMLFormElement | null,
+		nodeControls: Array | null,
+		renderedControlsMap: Object | null,
+		rendererInstance: Object | null,
+		lastRenderRequestId: number,
+		settingsControlsRequest: ?XMLHttpRequest,
+		pristineFormData: Object | null,
+		projectFieldStateObservers: Array<MutationObserver>,
+		}
 	{
 		return {
 			status: Status.Empty,
@@ -96,11 +153,45 @@ export const EditBaseSettings = {
 			renderedControlsMap: null,
 			rendererInstance: null,
 			lastRenderRequestId: 0,
+			settingsControlsRequest: null,
+			pristineFormData: null,
+			projectFieldStateObservers: [],
 		};
 	},
 	computed: {
-		...mapState(useNodeSettingsStore, ['block', 'currentRule', 'nodeSettings', 'currentSettingsItems']),
+		...mapState(useNodeSettingsStore, ['block', 'currentRule', 'nodeSettings']),
+		/**
+		 * Fields of the form a person fills in. Everything else the server describes is service: the id
+		 * of the activity, the bookkeeping of the panel, the identity of the node and the defaults of
+		 * the property map - all of it hidden, and all of it there whether anything is set up or not.
+		 */
+		shownFields(): Array<Object>
+		{
+			return (this.nodeControls ?? []).filter(
+				(field) => !field.property?.Hidden && Type.isStringFilled(field.fieldName),
+			);
+		},
+		/** True once the controls are known and none of them is a field to fill in. */
+		hasNoFillableFields(): boolean
+		{
+			return Type.isArray(this.nodeControls) && this.shownFields.length === 0;
+		},
 		Status: () => Status,
+		/** Rule this form works on: the one of its own section, or the single rule the panel shows. */
+		targetRulePort(): Object | null
+		{
+			return this.rulePort ?? this.currentRule;
+		},
+		/** Id of that rule, as the context builder and the expression builder take it. */
+		targetRulePortId(): string | null
+		{
+			return this.targetRulePort?.id ?? null;
+		},
+		/** Rules collection the target rule lives in - relation rules are the ones kept apart. */
+		targetSettingsItems(): Map | null
+		{
+			return resolveRuleCollection(this.nodeSettings, this.targetRulePort);
+		},
 		/**
 		 * Sources the fields of this form may read: the packages of the ancestors of the node first of
 		 * all. Read through the very context builder the action, the condition and the filter of the
@@ -112,17 +203,17 @@ export const EditBaseSettings = {
 		 */
 		connectedBlocks(): Array<Object>
 		{
-			if (!this.block || !this.currentRule)
+			if (!this.block || !this.targetRulePort)
 			{
 				return [];
 			}
 
 			return getConnectedBlocksContextForConstruction(
 				this.block,
-				this.currentRule.id,
+				this.targetRulePortId,
 				this.ruleCard,
 				this.construction,
-				this.currentSettingsItems,
+				this.targetSettingsItems,
 			).allBlocks;
 		},
 		/** Resolved document type for property-dialog rendering (uses fixed or diagram type). */
@@ -144,6 +235,25 @@ export const EditBaseSettings = {
 		{
 			return this.construction.expression?.activityData ?? null;
 		},
+		/**
+		 * The node action this construction is bound to. The binding is read here alone, so the type the
+		 * form renders (resolveBackingActivityType) and the properties it starts from
+		 * (buildFallbackActivity) cannot part on what counts as bound.
+		 */
+		boundActionId(): string | null
+		{
+			return this.construction.expression?.actionId ?? null;
+		},
+		/**
+		 * Whether the construction edits the host node itself instead of one of its actions: only then are
+		 * the properties of the host the context of this form. A binding filled with an empty string is no
+		 * binding, and the fallback chain of resolveBackingActivityType keeps answering with it, so such a
+		 * construction gets no backing type at all rather than the fields of the host.
+		 */
+		isHostMerged(): boolean
+		{
+			return !Type.isStringFilled(this.boundActionId);
+		},
 	},
 	watch: {
 		propertiesDialogDocumentType(newVal: Array, oldVal: Array): void
@@ -162,6 +272,8 @@ export const EditBaseSettings = {
 	unmounted(): void
 	{
 		this.lastRenderRequestId++;
+		this.settingsControlsRequest?.abort();
+		this.settingsControlsRequest = null;
 		// Unregistered before the flush, so the store never reaches a form that is being torn down.
 		// The flush reads the form directly and runs while cleanupFormResources still keeps it.
 		this.unregisterBaseSettingsFormFlush(this.flushPendingChange);
@@ -185,7 +297,51 @@ export const EditBaseSettings = {
 			'changeRuleExpression',
 			'registerBaseSettingsFormFlush',
 			'unregisterBaseSettingsFormFlush',
+			'setBaseSettingsFormCheck',
 		]),
+
+		/**
+		 * Tells the store whether anything a person filled in is on screen: the row of the short form
+		 * asks that, and only this form can answer it. The fields the server describes as hidden carry
+		 * the identity of the node and the defaults of the map - the class of a trigger, the message
+		 * type of a notification, the bookkeeping of the panel - so an untouched form is full of values
+		 * and none of them is an answer. Only the shown fields are read, and a form whose controls the
+		 * server did not describe (the legacy property dialog) reports nothing at all: it knows of no
+		 * field of its own, and the row falls back to reading the data.
+		 *
+		 * A caller that has just read the form hands that read over: serializing the whole form again
+		 * here would cost a second pass over it per committed edit, and the debounce of the input is
+		 * what commits. Called without an argument the form is read here, for the paths that have no
+		 * read of their own (the first answer after a render).
+		 */
+		reportFilledState(alreadyReadFormData?: Object | null): void
+		{
+			if (!Type.isArray(this.nodeControls))
+			{
+				return;
+			}
+
+			const shownFields = this.shownFields;
+			// Remembered for the whole page: the fields of an activity come from its property map, so a
+			// row of the short form can answer for a node whose form it never built (see
+			// baseSettingsFieldsMemory).
+			baseSettingsFieldsMemory.remember(
+				this.resolveBackingActivityType(),
+				this.propertiesDialogDocumentType,
+				shownFields.length > 0,
+			);
+
+			const formData = alreadyReadFormData === undefined
+				? this.getFormData()
+				: alreadyReadFormData
+			;
+
+			this.setBaseSettingsFormCheck(this.construction.id, {
+				hasFillableFields: shownFields.length > 0,
+				isFilled: formData !== null
+					&& shownFields.some((field) => hasFilledFormValue(formData[field.fieldName])),
+			});
+		},
 
 		isRenderCancelled(requestId: number): boolean
 		{
@@ -200,7 +356,7 @@ export const EditBaseSettings = {
 		 */
 		resolveBackingActivityType(): string | null
 		{
-			return this.construction.expression?.actionId
+			return this.boundActionId
 				?? this.activityData?.Type
 				?? this.block?.activity?.Type
 				?? null
@@ -245,11 +401,11 @@ export const EditBaseSettings = {
 		subscribeOnBeforeSubmit(): void
 		{
 			this.unsubscribe();
-			// Flush any pending debounced update immediately, then commit synchronously.
+			// The same flush every other reader of the form goes through: what the user never filled
+			// is never committed, so the save of the node is not refused over an empty form.
 			// The returned flag blocks the save of the node, as for every other subscribed form.
 			this.onChangeCallback = () => {
-				this.cancelDebouncedOnChange();
-				this.commitOnChange();
+				this.flushPendingChange();
 
 				return this.hasActivityFormError();
 			};
@@ -317,6 +473,9 @@ export const EditBaseSettings = {
 		 * comparison may not tell apart. Committing unconditionally instead would write a fresh
 		 * rawActivityData on every read and cost one normalization request per read: the store keys the
 		 * normalization by that very object.
+		 *
+		 * A form left as it was rendered commits nothing at all (isUntouchedForm), so a node whose base
+		 * settings the user never opened up stays as unfilled on the server as it looks on screen.
 		 */
 		flushPendingChange(): void
 		{
@@ -331,27 +490,52 @@ export const EditBaseSettings = {
 			const hasPendingChange = this._debounceTimer !== undefined;
 			this.cancelDebouncedOnChange();
 
+			if (this.isUntouchedForm(formData))
+			{
+				return;
+			}
+
 			if (hasPendingChange || !this.isCommittedFormData(formData))
 			{
 				this.changeRuleExpression(this.construction, { rawActivityData: formData });
 			}
+
+			// Reported whether anything was committed or not: the row answers for what is on screen, and
+			// a form leaving unchanged still leaves the row its last answer.
+			this.reportFilledState(formData);
+		},
+
+		/** Whether the form data is already the committed state of the construction. */
+		isCommittedFormData(formData: Object): boolean
+		{
+			const committed = this.construction.expression?.rawActivityData;
+
+			return Type.isPlainObject(committed) && this.isSameFormData(formData, committed);
 		},
 
 		/**
-		 * Whether the form data is already the committed state of the construction.
+		 * Whether the form still shows what the render put on screen and nothing of it has been
+		 * committed yet: the settings were opened and left alone, so there is nothing to write. A form
+		 * committed anyway hands the server the raw state of an empty activity, and the validation of
+		 * that activity refuses to save the node over settings the user never filled.
+		 */
+		isUntouchedForm(formData: Object): boolean
+		{
+			return (
+				!Type.isPlainObject(this.construction.expression?.rawActivityData)
+				&& Type.isPlainObject(this.pristineFormData)
+				&& this.isSameFormData(formData, this.pristineFormData)
+			);
+		},
+
+		/**
 		 * `id` is left out of the comparison: it falls back to a fresh unique id whenever the form
 		 * carries no activity_id, so it would differ on every read, while its meaningful source,
 		 * activity_id, is part of the compared form data itself.
 		 */
-		isCommittedFormData(formData: Object): boolean
+		isSameFormData(formData: Object, other: Object): boolean
 		{
-			const committed = this.construction.expression?.rawActivityData;
-			if (!Type.isPlainObject(committed))
-			{
-				return false;
-			}
-
-			return deepEqual({ ...formData, id: null }, { ...committed, id: null });
+			return deepEqual({ ...formData, id: null }, { ...other, id: null });
 		},
 
 		/**
@@ -360,43 +544,128 @@ export const EditBaseSettings = {
 		 */
 		commitOnChange(): void
 		{
-			this.changeRuleExpression(this.construction, {
-				rawActivityData: this.getFormData(),
-			});
+			const formData = this.getFormData();
+
+			this.changeRuleExpression(this.construction, { rawActivityData: formData });
+			this.reportFilledState(formData);
+		},
+
+		/**
+		 * Scheme the fields of the form are built against: the activity of the form itself plus the sources
+		 * of the node, the very set the action form of the same node passes (`EditExtendedAction`). A field
+		 * may need to know the nodes that run before this one - a node to restore anonymized data by is such
+		 * a field - and the activity alone answers it with nothing.
+		 */
+		buildCompatibleTemplate(activity: Object): Array<Object>
+		{
+			return [{
+				Type: 'NodeWorkflowActivity',
+				Children: [
+					activity,
+					...this.connectedBlocks.map((block) => block.activity).filter(Boolean),
+				],
+				Name: 'Template',
+			}];
+		},
+
+		// A trigger is upgraded server-side against its own node, so its response is not a function of
+		// the action type and keeps out of the memory under a null key. The memory answers at all only
+		// while the legacy dialog behind an empty response is available, so a hit can never leave the
+		// user without a form.
+		// Past the memory the ask goes through the cache of the open node: the base settings are
+		// re-mounted with every move between the overview and a single rule, and the answer to an
+		// identical ask is identical.
+		async fetchSettingsControls(activity: Object, compatibleTemplate: Array<Object>): Promise<Object>
+		{
+			const memorableType = this.block?.type === BLOCK_TYPES.TRIGGER ? null : activity.Type;
+			const remembered = Type.isUndefined(window.rootActivity)
+				? null
+				: settingsControlsMemory.get(memorableType, this.propertiesDialogDocumentType)
+			;
+
+			if (remembered)
+			{
+				return remembered;
+			}
+
+			let request = null;
+			let settingControls = null;
+			try
+			{
+				settingControls = await settingsFormRequestCache.getNodeSettingsControls(
+					{
+						documentType: this.propertiesDialogDocumentType,
+						activity,
+						workflow: {
+							workflowParameters: JSON.stringify(this.template?.PARAMETERS ?? {}),
+							workflowVariables: JSON.stringify(this.template?.VARIABLES ?? {}),
+							workflowTemplate: JSON.stringify(compatibleTemplate),
+							workflowConstants: JSON.stringify(this.template?.CONSTANTS ?? {}),
+						},
+						options: {
+							templateId: this.store.templateId,
+							draftId: this.store.draftId,
+							hideEditorComment: true,
+						},
+					},
+					{
+						onRequestStart: (xhr) => {
+							request = markRaw(xhr);
+							this.settingsControlsRequest = request;
+						},
+					},
+				);
+			}
+			finally
+			{
+				if (this.settingsControlsRequest === request)
+				{
+					this.settingsControlsRequest = null;
+				}
+			}
+			settingsControlsMemory.remember(memorableType, this.propertiesDialogDocumentType, settingControls);
+
+			return settingControls;
+		},
+
+		/**
+		 * The activity the form is built against while the construction has none saved yet.
+		 *
+		 * A host-merged construction edits the properties of the host node itself, so it starts from
+		 * them: the property map of an activity is built against its own properties as the context
+		 * (the CRM field-changed trigger hides its Document field by the document the node carries,
+		 * and the trigger type is upgraded by the very same key server-side), and an empty context
+		 * would offer a choice the node has already made. What of those properties is a state of the
+		 * form and what is metadata of the node is answered by toPropertyMapContext alone.
+		 * A node-action-backed construction (actionId) renders the fields of that action instead, so
+		 * the properties of the host are none of its business.
+		 */
+		buildFallbackActivity(backingActivityType: string): Object
+		{
+			return {
+				Name: createUniqueId(),
+				Type: backingActivityType,
+				Activated: 'Y',
+				Properties: this.isHostMerged ? toPropertyMapContext(this.block?.activity?.Properties) : {},
+			};
 		},
 
 		async loadForm(backingActivityType: string): Promise<void>
 		{
 			const requestId = ++this.lastRenderRequestId;
+			// The id is bumped before the abort, so the rejection of the superseded request is dropped
+			// by isRenderCancelled instead of being reported to the user as a failure.
+			this.settingsControlsRequest?.abort();
+			this.settingsControlsRequest = null;
 			this.clearForm();
 			this.status = Status.Loading;
 
-			let activity = this.activityData;
-			if (!activity)
-			{
-				activity = {
-					Name: createUniqueId(),
-					Type: backingActivityType,
-					Activated: 'Y',
-					Properties: {},
-				};
-			}
-
-			const compatibleTemplate = [{ Type: 'NodeWorkflowActivity', Children: [activity], Name: 'Template' }];
+			const activity = this.activityData ?? this.buildFallbackActivity(backingActivityType);
+			const compatibleTemplate = this.buildCompatibleTemplate(activity);
 
 			try
 			{
-				const settingControls = await editorAPI.getNodeSettingsControls({
-					documentType: this.propertiesDialogDocumentType,
-					activity,
-					workflow: {
-						workflowParameters: JSON.stringify(this.template?.PARAMETERS ?? {}),
-						workflowVariables: JSON.stringify(this.template?.VARIABLES ?? {}),
-						workflowTemplate: JSON.stringify(compatibleTemplate),
-						workflowConstants: JSON.stringify(this.template?.CONSTANTS ?? {}),
-					},
-					options: { hideEditorComment: true },
-				});
+				const settingControls = await this.fetchSettingsControls(activity, compatibleTemplate);
 
 				if (this.isRenderCancelled(requestId))
 				{
@@ -422,6 +691,8 @@ export const EditBaseSettings = {
 						},
 					});
 					formData.append('options[hideEditorComment]', 'Y');
+					formData.append('options[templateId]', String(this.store.templateId ?? 0));
+					formData.append('options[draftId]', String(this.store.draftId ?? 0));
 					await this.renderPropertyDialog(formData);
 				}
 
@@ -439,7 +710,7 @@ export const EditBaseSettings = {
 
 		async renderNodeControls(controls: Array, requestId: number, activity: Object): Promise<void>
 		{
-			this.nodeControls = this.prepareNodeControls(controls);
+			this.nodeControls = this.prepareNodeControls(controls, activity);
 			const renderedControls = this.getRenderedControlsCollection();
 
 			if (this.isRenderCancelled(requestId))
@@ -451,11 +722,22 @@ export const EditBaseSettings = {
 			this.renderedControlsMap = this.buildRenderedControlsMap(renderedControls, customRenderers);
 
 			await this.waitForRenderFinished(requestId, renderedControls);
+
+			if (!this.isRenderCancelled(requestId))
+			{
+				// The first answer of the form: a node whose settings are still empty is read as empty
+				// before anything is touched, and a saved one as filled.
+				this.reportFilledState();
+			}
 		},
 
-		prepareNodeControls(controls: Array): Array
+		prepareNodeControls(controls: Array, activity: Object): Array
 		{
-			const isNewActivity = !this.activityData;
+			// A form seeded with the properties of the host (buildFallbackActivity) shows a saved state and
+			// not a new one, so a value the user left empty stays empty instead of being filled with the
+			// default of the map and written back on the host. Only a form with nothing to show at all -
+			// no saved activityData and nothing inherited - starts from the defaults.
+			const isNewActivity = !this.activityData && Object.keys(activity.Properties ?? {}).length === 0;
 
 			// Filter out default controls not relevant to base-settings:
 			// - 'title' is the node title field shown on the main tab, not here.
@@ -498,6 +780,7 @@ export const EditBaseSettings = {
 			return (
 				isRequiredField(field)
 				&& field.fieldName !== TITLE_FIELD_NAME
+				&& !field?.property?.Hidden
 				&& this.shouldShowFieldLabel(field)
 			);
 		},
@@ -510,6 +793,18 @@ export const EditBaseSettings = {
 		getFieldLabelId(field: Object): ?string
 		{
 			return this.shouldShowFieldLabel(field) ? `${this.fieldIdPrefix}-label-${field.fieldName}` : null;
+		},
+
+		// Name for the group of a field whose visible label is withheld (`ShowFieldLabel: false`, a control
+		// signing itself). The heading such a control prints belongs to a foreign extension and carries no
+		// id, so `aria-labelledby` has nothing to point at - the name is taken from the very `property.Name`
+		// that heading is built from. Mutually exclusive with `getFieldLabelId()`.
+		getFieldGroupLabel(field: Object): ?string
+		{
+			return !this.shouldShowFieldLabel(field) && Type.isStringFilled(field?.property?.Name)
+				? field.property.Name
+				: null
+			;
 		},
 
 		getRenderedControlsCollection(): Object
@@ -579,38 +874,34 @@ export const EditBaseSettings = {
 			// If, after excluding hidden/service fields, there are no controls left to render,
 			// BX.Bizproc.FieldType.renderControlCollection() returns {} synchronously and never
 			// emits onCollectionRenderControlFinished. Waiting for that event in this case would
-			// hang loadForm() in Status.Loading forever, so finish immediately via the same
-			// completion path used by the event handler below.
-			if (Object.keys(renderedControls).length === 0)
+			// hang loadForm() in Status.Loading forever.
+			if (Object.keys(renderedControls).length > 0)
 			{
-				await this.$nextTick();
-
-				if (!this.isRenderCancelled(requestId))
-				{
-					this.runAfterFormRender();
-					this.setRenderedForm(this.$refs.settingsForm);
-				}
-
-				return;
+				await this.waitForCollectionRendered(renderedControls);
 			}
 
-			await new Promise((resolve) => {
+			// A custom renderer may hand its own fields to the engine, which fills them asynchronously.
+			await this.rendererInstance?.whenControlsRendered?.();
+			await this.$nextTick();
+
+			if (!this.isRenderCancelled(requestId))
+			{
+				this.runAfterFormRender();
+				this.setRenderedForm(this.$refs.settingsForm);
+			}
+		},
+
+		waitForCollectionRendered(renderedControls: Object): Promise<void>
+		{
+			return new Promise((resolve) => {
 				const eventName = 'BX.Bizproc.FieldType.onCollectionRenderControlFinished';
-				const handler = async () => {
+				const handler = () => {
 					if (!this.isCollectionRendered(renderedControls))
 					{
 						return;
 					}
 
 					this.cleanupRenderFinishedHandler();
-					await this.$nextTick();
-
-					if (!this.isRenderCancelled(requestId))
-					{
-						this.runAfterFormRender();
-						this.setRenderedForm(this.$refs.settingsForm);
-					}
-
 					resolve();
 				};
 
@@ -639,7 +930,7 @@ export const EditBaseSettings = {
 		async renderPropertyDialog(formData: FormData): Promise<void>
 		{
 			const { renderPropertyDialog } = usePropertyDialog();
-			const form = await renderPropertyDialog(this.$refs.contentContainer, formData);
+			const form = await renderPropertyDialog(this.$refs.contentContainer, formData, this.store.isWriteLocked);
 			if (form)
 			{
 				this.setRenderedForm(form);
@@ -681,6 +972,8 @@ export const EditBaseSettings = {
 			this.hideHostTitleRow();
 			this.observeHostTitleRow();
 			this.mountFormExpressionBuilders();
+			this.syncDeletedProjectFields();
+			this.pristineFormData = this.getFormData();
 		},
 
 		/**
@@ -758,7 +1051,7 @@ export const EditBaseSettings = {
 		{
 			return {
 				block: this.block,
-				portId: this.currentRule?.id,
+				portId: this.targetRulePortId,
 				connectedBlocks: this.connectedBlocks,
 			};
 		},
@@ -786,6 +1079,7 @@ export const EditBaseSettings = {
 			unmountFormVeneers(this.$refs.contentContainer);
 			this.cleanupRenderFinishedHandler();
 			this.disconnectHostTitleRowObserver();
+			this.disconnectProjectFieldStateObservers();
 			this.hiddenHostTitleRow = null;
 			if (this.rendererInstance && Type.isFunction(this.rendererInstance.destroy))
 			{
@@ -858,7 +1152,11 @@ export const EditBaseSettings = {
 		>
 			<div class="editor-chart-node-settings-edit-base-settings__content node-settings-panel">
 				<!-- Live region: announces loading/error status changes to screen readers -->
-				<div class="editor-chart-node-settings-edit-base-settings__status" aria-live="polite">
+				<div
+					class="editor-chart-node-settings-edit-base-settings__status"
+					:class="{ '--loading': status === Status.Loading }"
+					aria-live="polite"
+				>
 					<Loader v-if="status === Status.Loading" />
 					<div
 						v-if="status === Status.Error"
@@ -876,6 +1174,16 @@ export const EditBaseSettings = {
 					@click.capture="onFormClick"
 					v-form-input-tracker="onChange"
 				>
+					<!-- A node the panel serves may carry nothing but service properties: the form then holds
+					only their hidden inputs, which the save still round-trips, and says out loud that there
+					is nothing to fill in instead of showing an area with no fields in it -->
+					<div
+						v-if="hasNoFillableFields"
+						class="editor-chart-node-settings-edit-base-settings__no-fields"
+						:data-test-id="$testId('complexNodeRuleSettingsBaseSettingsNoFields')"
+					>
+						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BASE_SETTINGS_NO_FIELDS') }}
+					</div>
 					<template v-for="field in nodeControls" :key="field.fieldName">
 						<!-- Hidden fields: submit their default/current value but render no visible control -->
 						<input
@@ -893,14 +1201,39 @@ export const EditBaseSettings = {
 							:id="'row_' + field.fieldName"
 							role="group"
 							:aria-labelledby="getFieldLabelId(field)"
+							:aria-label="getFieldGroupLabel(field)"
 							:aria-describedby="field.property.Description ? fieldIdPrefix + '-description-' + field.fieldName : null"
 						>
 							<div
 								v-if="shouldShowFieldLabel(field)"
 								class="edit-action-expression-form__label editor-chart-node-settings-edit-base-settings__field-label"
-								:class="{ '--required': shouldShowRequiredMark(field) }"
+								:class="{
+									'--required': shouldShowRequiredMark(field) && !isDeletedProjectSelected(field),
+									'--project-deleted': isDeletedProjectSelected(field),
+								}"
 								:id="fieldIdPrefix + '-label-' + field.fieldName"
-							>{{ field.property.Name }}</div>
+								data-role="project-field-caption"
+							>
+								<span>{{ field.property.Name }}</span>
+								<span
+									v-if="isDeletedProjectSelected(field) && shouldShowRequiredMark(field)"
+									class="node-settings-edit-caption-required"
+								>*</span>
+								<span
+									v-if="isDeletedProjectSelected(field)"
+									class="node-settings-project-warning"
+									:title="getProjectDeletedHint()"
+									:aria-label="getProjectDeletedHint()"
+									role="img"
+									data-test-id="bizproc-node-settings-project-deleted-warning"
+								>
+									<BIcon
+										:name="iconSet.ALERT_ACCENT"
+										:size="16"
+										color="var(--ui-color-accent-main-warning)"
+									/>
+								</span>
+							</div>
 							<div class="field-row" v-bx-control="renderedControlsMap[field.controlId]"></div>
 							<div
 								v-if="field.property.Description"

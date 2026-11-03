@@ -247,6 +247,10 @@ jn.define('crm/conversion/wizard', (require, exports, module) => {
 				entityTypeId: TypeId.Deal,
 				title: Loc.getMessage('MCRM_CONVERSION_MENU_CATEGORY_TITLE'),
 				layoutWidget: this.getLayoutWidget(),
+			}).catch(() => {
+				NotifyManager.showDefaultError();
+
+				return null;
 			});
 		}
 

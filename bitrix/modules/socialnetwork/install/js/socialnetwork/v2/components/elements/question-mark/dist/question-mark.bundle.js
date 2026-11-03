@@ -14,6 +14,12 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 		directives: {
 			hint: ui_vue3_directives_hint.hint
 		},
+		inject: {
+			getWizardBodyContainer: {
+				from: 'getWizardBodyContainer',
+				default: null
+			}
+		},
 		props: {
 			size: {
 				type: Number,
@@ -42,7 +48,8 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 					text: this.hintText,
 					popupOptions: {
 						offsetLeft: this.$el.offsetWidth / 2,
-						maxWidth: this.hintMaxWidth
+						maxWidth: this.hintMaxWidth,
+						targetContainer: this.getWizardBodyContainer?.() ?? document.body
 					},
 					timeout: 200
 				});

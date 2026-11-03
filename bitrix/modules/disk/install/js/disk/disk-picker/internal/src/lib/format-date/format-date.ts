@@ -15,6 +15,26 @@ export function formatDate(timestampInSeconds: number | null): string
 	return DateTimeFormat.format(DateTimeFormat.getFormat('FORMAT_DATE'), timestampInSeconds);
 }
 
+// The day a moment falls on, named the way a reader names it: today by word, a day of this
+// year by day and month, anything older by its full date. The word for today is passed in, so
+// this module stays free of the language files.
+function formatRelativeDate(timestampInSeconds: number, todayText: string, nowInSeconds: number): string
+{
+	const dayKey = (timestamp: number): string => DateTimeFormat.format('Y-m-d', timestamp);
+
+	if (dayKey(timestampInSeconds) === dayKey(nowInSeconds))
+	{
+		return todayText;
+	}
+
+	if (DateTimeFormat.format('Y', timestampInSeconds) === DateTimeFormat.format('Y', nowInSeconds))
+	{
+		return DateTimeFormat.format(DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), timestampInSeconds);
+	}
+
+	return formatDate(timestampInSeconds);
+}
+
 export function formatTableDate(
 	timestampInSeconds: number | null,
 	todayText: string,
@@ -26,19 +46,5 @@ export function formatTableDate(
 		return '';
 	}
 
-	const dateKey = DateTimeFormat.format('Y-m-d', timestampInSeconds);
-	const todayKey = DateTimeFormat.format('Y-m-d', nowInSeconds);
-	if (dateKey === todayKey)
-	{
-		return todayText;
-	}
-
-	const year = DateTimeFormat.format('Y', timestampInSeconds);
-	const currentYear = DateTimeFormat.format('Y', nowInSeconds);
-	if (year === currentYear)
-	{
-		return DateTimeFormat.format(DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), timestampInSeconds);
-	}
-
-	return formatDate(timestampInSeconds);
+	return formatRelativeDate(timestampInSeconds, todayText, nowInSeconds);
 }

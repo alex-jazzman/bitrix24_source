@@ -1,4 +1,5 @@
-import {Loc, Runtime, Tag, Text, Type} from 'main.core';
+import { DiskPicker } from 'disk.disk-picker';
+import {Event, Loc, Runtime, Tag, Text, Type} from 'main.core';
 import {Popup} from 'main.popup';
 import {EventEmitter} from 'main.core.events';
 
@@ -35,6 +36,8 @@ export class DiskManager extends EventEmitter
 		);
 
 		this.attachedIds = [];
+		this.diskPickerContainer = null;
+		this.diskPicker = null;
 
 	}
 
@@ -56,7 +59,7 @@ export class DiskManager extends EventEmitter
 		);
 
 		this.popup.subscribe('onShow', () => {
-			BX.Disk.UF.add({
+			const uploadMenu = BX.Disk.UF.add({
 				UID: controlId,
 				controlName: `[${controlId}][]`,
 				hideSelectDialog: false,
@@ -72,7 +75,15 @@ export class DiskManager extends EventEmitter
 			BX.onCustomEvent(filesChooser, 'DiskLoadFormController', ['show']);
 			/* eslint-enable */
 
-			if (BX.DiskFileDialog)
+			if (DiskPicker.isEnabled())
+			{
+				const diskSelector = filesChooser.querySelector('.diskuf-selector-link');
+				if (diskSelector && uploadMenu)
+				{
+					this.bindDiskPicker(diskSelector, uploadMenu.getUploader());
+				}
+			}
+			else if (BX.DiskFileDialog)
 			{
 				EventEmitter.subscribe(BX.DiskFileDialog, 'loadItemsDone', this.openDiskFileDialog.bind(this));
 			}
@@ -91,8 +102,19 @@ export class DiskManager extends EventEmitter
 		}
 	}
 
-	isClickInside(node: HTMLElement): boolean
+	isClickInside(event: MouseEvent): boolean
 	{
+		if (this.diskPicker && this.diskPicker.containsEvent(event))
+		{
+			return true;
+		}
+
+		const node = event.target;
+		if (!Type.isDomNode(node))
+		{
+			return false;
+		}
+
 		let isClickInside = false;
 
 		if (this.targetElement.contains(node))
@@ -101,6 +123,11 @@ export class DiskManager extends EventEmitter
 		}
 
 		if (this.popup && this.popup.getPopupContainer().contains(node))
+		{
+			isClickInside = true;
+		}
+
+		if (this.diskPickerContainer && this.diskPickerContainer.contains(node))
 		{
 			isClickInside = true;
 		}
@@ -123,6 +150,41 @@ export class DiskManager extends EventEmitter
 		{
 			BX.DiskFileDialog.popupWindow.subscribe('onClose', () => this.popup.close());
 		}
+	}
+
+	bindDiskPicker(diskSelector, uploader)
+	{
+		Event.bind(diskSelector, 'click', (event) => {
+			event.stopPropagation();
+			this.openDiskPicker(uploader);
+		});
+	}
+
+	openDiskPicker(uploader)
+	{
+		const picker = this.createDiskPicker();
+		this.diskPicker = picker;
+		picker.open({
+			selectionMode: 'multiple',
+			onOpen: ({ container }) => {
+				this.diskPickerContainer = container;
+			},
+			onSelect: ({ items }) => {
+				items.forEach(({ objectId, name }) => {
+					uploader.addFile(`n${objectId}`, { name, preload: true });
+				});
+			},
+			onClose: () => {
+				this.diskPicker = null;
+				this.diskPickerContainer = null;
+				this.popup.close();
+			},
+		});
+	}
+
+	createDiskPicker()
+	{
+		return new DiskPicker();
 	}
 
 	getAttachmentsLoaderContent(controlId): HTMLElement
@@ -153,9 +215,9 @@ export class DiskManager extends EventEmitter
 						>
 					</div>
 					<div class="diskuf-extended-item">
-						<span class="diskuf-selector-link">
+						<button type="button" class="diskuf-selector-link" data-testid="tasks-scrum-disk-picker-open-btn">
 							${Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_B24')}
-						</span>
+						</button>
 					</div>
 					<div class="diskuf-extended-item">
 						<span class="diskuf-selector-link-cloud" data-bx-doc-handler="gdrive">

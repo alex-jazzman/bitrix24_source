@@ -4,6 +4,8 @@ return [
 		'type',
 		'im:lib/theme',
 		'im:messenger/loc',
+		'im:messenger/const',
+		'im:messenger/provider/services/analytics',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
 		'im:messenger/assets/icon',

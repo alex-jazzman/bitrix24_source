@@ -243,7 +243,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		getDefaultLeftIcon()
 		{
-			return Icon.FOLDER_WITH_CARD;
+			return Icon.FOLDER;
 		}
 
 		getAddButtonText()

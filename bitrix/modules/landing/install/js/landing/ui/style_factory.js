@@ -165,7 +165,7 @@
 				));
 			}
 
-			// todo: need save Backward compatibility for "pallette"?
+			// todo: need save Backward compatibility for "palette"?
 			if (options.type === "palette")
 			{
 				field = new BX.Landing.UI.Field.ColorPalette(defaultOptions);

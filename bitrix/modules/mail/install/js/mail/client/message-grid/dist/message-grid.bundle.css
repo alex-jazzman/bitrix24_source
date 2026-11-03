@@ -1,0 +1,691 @@
+/*
+ * Skeleton of the table: what the template of the platform grid used to bring - the table, the
+ * head and the plain cell.
+ *
+ * The class names of the platform grid are kept because the stylesheet of the screen is written
+ * against them, and the selectors are left unscoped so the cascade of the screen resolves as it
+ * does today - every rule of the screen is more specific and still wins.
+ */
+
+.main-grid {
+	position: relative;
+	display: table;
+	width: 100%;
+	table-layout: fixed;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular);
+	/*
+	 * The platform declares this on `:root` of the stylesheet of its template, which is not loaded
+	 * here. The top one is left alone: the screen zeroes it and rounds the first row instead.
+	 */
+	--main-grid-bottom-border-radius: var(--main-grid-border-radius);
+}
+
+.main-grid-wrapper {
+	overflow: hidden;
+	border-radius: var(--main-grid-top-border-radius, 0);
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.main-grid-container {
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+/*
+ * The table is the bottom of the grid whenever the foot draws nothing, and of an empty grid even
+ * where the foot draws a word: an empty list is stretched down to the window.
+ */
+.main-grid-empty-stub .main-grid-wrapper,
+.main-grid-empty-stub .main-grid-container,
+.main-grid-empty-footer .main-grid-wrapper,
+.main-grid-empty-footer .main-grid-container {
+	border-bottom-left-radius: var(--main-grid-bottom-border-radius);
+	border-bottom-right-radius: var(--main-grid-bottom-border-radius);
+}
+
+/*
+ * region HORIZONTAL SCROLL
+ *
+ * Carried over from the template of the platform grid with its own values. The wrapper above clips
+ * the ears, and that is what an ear slides out of and back into.
+ */
+
+.main-grid-fade {
+	position: relative;
+}
+
+.main-grid-fade-shadow-left,
+.main-grid-fade-shadow-right {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	z-index: 0;
+	width: 10px;
+	height: auto;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.main-grid-fade-shadow-left {
+	right: auto;
+	z-index: 10;
+	overflow: hidden;
+	border-left: 1px solid rgba(238, 242, 244, .5);
+	opacity: 1;
+	transition: margin-left 200ms ease;
+	transform: translateX(-1px);
+}
+
+.main-grid-fade-shadow-left::before {
+	position: absolute;
+	top: 0;
+	right: auto;
+	bottom: 0;
+	left: -10px;
+	z-index: 1;
+	width: 10px;
+	border-radius: 80%;
+	box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+	opacity: 0;
+	transition: opacity 200ms ease, margin-left 200ms ease;
+	content: '';
+}
+
+.main-grid-fade-shadow-right {
+	right: -10px;
+	left: auto;
+	z-index: 9;
+	border-radius: 80%;
+	box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+	opacity: 0;
+	transition: .2s;
+}
+
+.main-grid-fade-left .main-grid-fade-shadow-left::before {
+	opacity: 1;
+}
+
+.main-grid-fade-right .main-grid-fade-shadow-right {
+	opacity: 1;
+}
+
+.main-grid-ear {
+	position: absolute;
+	z-index: 20;
+	margin-bottom: -80px;
+	width: 50px;
+	height: 160px;
+	opacity: 0;
+	transition: opacity 200ms ease, margin 200ms ease, height 200ms ease;
+	transform: translate3d(0px, 48px, 0);
+	will-change: transform;
+}
+
+.main-grid-ear.show {
+	opacity: .6;
+}
+
+.main-grid-ear:hover {
+	opacity: .8;
+}
+
+.main-grid-ear-left {
+	left: 0;
+	margin-left: -50px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2042%2081%22%3E%3Cpath%20fill%3D%22%23535c69%22%20opacity%3D%220.3%22%20d%3D%22M0%2C0H1.023A40.977%2C40.977%2C0%2C0%2C1%2C42%2C40.977v0A40.024%2C40.024%2C0%2C0%2C1%2C1.977%2C81H0a0%2C0%2C0%2C0%2C1%2C0%2C0V0A0%2C0%2C0%2C0%2C1%2C0%2C0Z%22/%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M20.8%2C49.09l-8.014-8.576L20.8%2C31.939a0.762%2C0.762%2C0%2C0%2C0%2C0-1.026l-1.563-1.673a0.647%2C0.647%2C0%2C0%2C0-.959%2C0l-8.014%2C8.576h0L8.224%2C40a0.762%2C0.762%2C0%2C0%2C0%2C0%2C1.026L18.28%2C51.788a0.647%2C0.647%2C0%2C0%2C0%2C.959%2C0L20.8%2C50.116A0.761%2C0.761%2C0%2C0%2C0%2C20.8%2C49.09Z%22/%3E%3C/svg%3E') center left no-repeat;
+}
+
+.main-grid-ear-left.show {
+	margin-left: 0;
+}
+
+.main-grid-ear-right {
+	right: 0;
+	left: auto;
+	margin-right: -50px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%0A%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2042%2081%22%3E%3Cpath%20fill%3D%22%23535c69%22%20opacity%3D%220.3%22%20d%3D%22M40.024%2C0H42a0%2C0%2C0%2C0%2C1%2C0%2C0V81a0%2C0%2C0%2C0%2C1%2C0%2C0H40.977A40.977%2C40.977%2C0%2C0%2C1%2C0%2C40.024v0A40.024%2C40.024%2C0%2C0%2C1%2C40.024%2C0Z%22/%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M20.2%2C31.91l8.014%2C8.576L20.2%2C49.061a0.762%2C0.762%2C0%2C0%2C0%2C0%2C1.026l1.563%2C1.672a0.647%2C0.647%2C0%2C0%2C0%2C.958%2C0l8.014-8.576h0L32.776%2C41a0.762%2C0.762%2C0%2C0%2C0%2C0-1.025L22.72%2C29.212a0.647%2C0.647%2C0%2C0%2C0-.958%2C0L20.2%2C30.885A0.762%2C0.762%2C0%2C0%2C0%2C20.2%2C31.91Z%22/%3E%3C/svg%3E%0A') center right no-repeat;
+}
+
+.main-grid-ear-right.show {
+	margin-right: 0;
+}
+
+/* endregion */
+
+.main-grid-table {
+	overflow: hidden;
+	min-width: 100%;
+	border: none;
+	border-spacing: 0;
+	table-layout: fixed;
+}
+
+/*
+ * Opaque cells do not make the backing needless: on hover the screen replaces the background of
+ * the cell with a translucent token, and with nothing behind the row the page shows through it.
+ */
+.main-grid-table > tbody {
+	background-color: rgba(255, 255, 255, .87);
+}
+
+/*
+ * The dimmed list. Carried over from the template of the platform grid, which is not rendered
+ * here; nothing else in the product declares this class.
+ */
+.main-grid-table-fade tbody tr {
+	transition: 200ms all ease;
+	opacity: .7;
+	pointer-events: none;
+}
+
+.main-grid-row-body {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+/*
+ * The top corners of the table.
+ *
+ * The screen rounds the second row of `tbody` - the platform template opened the body with a
+ * technical row. Here the body opens with the list itself, so the rounding belongs to the first
+ * row, and the chain of classes is what carries these rules past the screen.
+ */
+
+.mail-msg-list-grid .mail-message-grid .main-grid .main-grid-table tbody tr:first-child td:first-child {
+	border-top-left-radius: var(--ui-border-radius-md);
+}
+
+.mail-msg-list-grid .mail-message-grid .main-grid .main-grid-table tbody tr:first-child td:last-child {
+	border-top-right-radius: var(--ui-border-radius-md);
+}
+
+.mail-msg-list-grid .mail-message-grid .main-grid .main-grid-table tbody tr:not(:first-child) td:first-child {
+	border-top-left-radius: 0;
+}
+
+.mail-msg-list-grid .mail-message-grid .main-grid .main-grid-table tbody tr:not(:first-child) td:last-child {
+	border-top-right-radius: 0;
+}
+
+/* region HEAD */
+
+.main-grid-row-head {
+	border-bottom: 2px solid var(--ui-color-divider-default);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.main-grid-cell-head {
+	position: relative;
+	box-sizing: border-box;
+	padding: 0;
+	min-width: 70px;
+	height: 45px;
+	vertical-align: middle;
+	white-space: nowrap;
+	background-color: var(--ui-color-bg-content-primary);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.main-grid-cell-head-container {
+	position: relative;
+	display: flex;
+	box-sizing: border-box;
+	flex-grow: 1;
+	padding: 14px 16px;
+	max-width: 100%;
+}
+
+/*
+ * The width of this column is settled in the head - the table is laid out fixed, and the `width`
+ * of the cell below is clamped by the `min-width: 70px` every head cell carries.
+ */
+.main-grid-cell-head.main-grid-cell-checkbox {
+	min-width: 31px;
+}
+
+.main-grid-cell-head.main-grid-cell-static.main-grid-cell-checkbox {
+	width: 31px;
+	cursor: auto;
+}
+
+.main-grid-cell-head.main-grid-cell-static.main-grid-cell-checkbox .main-grid-cell-head-container {
+	min-width: 31px;
+}
+
+.main-grid-cell-head.main-grid-cell-static.main-grid-cell-action {
+	width: 36px;
+}
+
+/* the column that takes up whatever width the named ones leave */
+.main-grid-special-empty {
+	min-width: 0 !important;
+	cursor: default;
+}
+
+/* endregion */
+
+/* region CELL */
+
+.main-grid-cell {
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+	vertical-align: top;
+}
+
+/*
+ * The focus ring of the star and the enlarged click area of the button of the menu of a row reach
+ * past the cell they stand in, and the rule above would cut them off.
+ */
+.main-grid-row td {
+	position: relative;
+	overflow: visible;
+}
+
+.main-grid-row-body:last-child .main-grid-cell {
+	border-bottom: none;
+}
+
+.main-grid-cell-left {
+	text-align: left;
+}
+
+.main-grid-cell-inner {
+	display: flex;
+}
+
+.main-grid-cell-content {
+	position: relative;
+	display: block;
+	flex-grow: 1;
+	margin: 15px 16px 10px;
+	color: var(--ui-color-base-2);
+	vertical-align: top;
+	font-size: var(--ui-font-size-md);
+}
+
+.main-grid-cell.main-grid-cell-checkbox {
+	box-sizing: border-box;
+	min-width: 31px;
+	width: 1%;
+	border-right: none;
+	text-align: center;
+}
+
+.main-grid-cell-action {
+	min-width: 36px;
+	width: 1%;
+	text-align: center;
+	cursor: default;
+}
+
+.main-grid-cell-checkbox .main-grid-cell-content,
+.main-grid-cell-action .main-grid-cell-content {
+	top: -2px;
+	margin-right: 0;
+	margin-left: 0;
+}
+
+/* the control of the selection is a square of its own size, so the cell centres it instead of
+   leaving it on the line box a cell of text is built around */
+.main-grid-cell-checkbox .main-grid-cell-content {
+	display: flex;
+	top: 0;
+	align-items: center;
+	justify-content: center;
+}
+
+/*
+ * The inset of the control of the selection - the token the panel of mass actions holds its own
+ * control at, so the two stand on one line. The platform declares it in the template that is not
+ * rendered here; without it the control comes out centred in the column.
+ *
+ * The inset on the right spends what the column has left: 31px of the column less 12px of
+ * `--ui-space-inset-sm` less 18px of the control (`--size-md` of `ui.system.checkbox`) leaves 1px.
+ * With no free space the centring above cannot move the control.
+ */
+.main-grid-cell-checkbox:first-child .main-grid-cell-content {
+	padding-right: 1px;
+	padding-left: var(--ui-space-inset-sm);
+}
+
+.main-grid-cell-checkbox:first-child .main-grid-cell-head-container {
+	padding-left: var(--ui-space-inset-sm);
+}
+
+/*
+ * The platform grid lays a transparent overlay over the content of this cell to widen the area a
+ * row is marked by; there the click is caught by delegation on the row. Here the cell holds a real
+ * control and a click on the cell marks no row on purpose (`row-click.ts`), so the overlay would
+ * only steal the click. Scoped by the root of the application so a platform grid on the same page
+ * keeps its own.
+ */
+.mail-message-grid .main-grid-cell-checkbox .main-grid-cell-content::before {
+	content: none;
+}
+
+/*
+ * The button that opens the menu of a row. The glyph used to come out of the sprite of the platform
+ * grid, which travels with the template that is no longer rendered, so the same three bars are
+ * drawn here in its own colour - there is no token for that value.
+ */
+.main-grid-row-action-button {
+	position: relative;
+	top: 2px;
+	left: -1px;
+	display: inline-block;
+	width: 14px;
+	height: 12px;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='12' viewBox='0 0 14 12'%3E%3Cpath fill='%23535C69' d='M14 1v1.99H0V1h14zm-6.575 3.98H14v1.99H0v-1.99h7.425zM14 8.97v1.99H0v-1.99h14z'/%3E%3C/svg%3E") no-repeat;
+	opacity: .3;
+	cursor: pointer;
+	transition: opacity 200ms ease;
+}
+
+/* the glyph is small, so the button takes the clicks of the space around it as well */
+.main-grid-row-action-button::before {
+	position: absolute;
+	top: -10px;
+	right: -10px;
+	bottom: -10px;
+	left: -10px;
+	display: block;
+	content: '';
+}
+
+.main-grid-row-action-button:hover {
+	opacity: .7;
+}
+
+/* endregion */
+
+/* region FOOTER */
+
+/*
+ * The foot is the bottom of the list whenever it draws anything, so the rounding of the bottom is
+ * written here. The font rules of the platform are left out: the button of the next page sets its
+ * own weight, and the word about a page that did not come back is not one the platform ever said.
+ */
+.main-grid-bottom-panels {
+	border-radius: var(--main-grid-bottom-border-radius);
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.main-grid-more {
+	position: relative;
+	text-align: center;
+}
+
+.main-grid-more-btn {
+	display: inline-block;
+	margin-top: 12px;
+	margin-bottom: 12px;
+	padding: 3px 44px;
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-pill);
+	background: none;
+	color: var(--ui-color-accent-main-link);
+	vertical-align: middle;
+	text-align: center;
+	font-family: inherit;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	line-height: 34px;
+	cursor: pointer;
+	transition: background 200ms;
+}
+
+.main-grid-more-btn::after {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	display: block;
+	height: 2px;
+	background: var(--ui-color-divider-default);
+	content: '';
+}
+
+.main-grid-more-btn:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.main-grid-more-btn:active {
+	background: var(--ui-color-bg-state-hover-default);
+	box-shadow: inset 0 -4px 3px -5px rgba(0, 0, 0, .7);
+}
+
+.main-grid-more-btn:disabled {
+	cursor: default;
+}
+
+/*
+ * The button while the page it asked for is on its way, carried over from the template of the
+ * platform grid. The turning ring is the image of that template, inlined: the file travels with
+ * the template that is no longer rendered here.
+ */
+
+.main-grid-more-btn.load {
+	padding-right: 36px;
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.main-grid-more-btn .main-grid-more-load-text,
+.main-grid-more-btn.load .main-grid-more-text {
+	display: none;
+}
+
+.main-grid-more-btn.load .main-grid-more-load-text {
+	display: inline-block;
+}
+
+.main-grid-more-btn.load .main-grid-more-icon {
+	position: relative;
+	top: -2px;
+	display: inline-block;
+	margin: 0 5px;
+	width: 20px;
+	height: 20px;
+	background: url('data:image/png;base64,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') no-repeat 0 0;
+	background-size: 100%;
+	vertical-align: middle;
+	opacity: 1;
+	transition: opacity 200ms linear;
+	animation: grid-load 2s linear infinite;
+}
+
+@keyframes grid-load {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+.mail-message-grid__page-error {
+	padding-top: var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-sm);
+}
+
+/* endregion */
+
+/*
+ * region EMPTY
+ *
+ * The plain empty row of the platform grid, carried over with its own values so that a folder that
+ * is simply empty keeps the look it has today.
+ */
+
+/*
+ * The line the word of an empty list stands on is written here rather than in that word: neither
+ * the plain block below nor the word of an empty list of drafts carries a line height of its own.
+ */
+.main-grid .main-grid-row.main-grid-row-empty > td.main-grid-cell {
+	background: rgba(255, 255, 255, .05);
+	line-height: 44px;
+}
+
+.main-grid .main-grid-row.main-grid-row-empty:hover > td.main-grid-cell {
+	background: rgba(255, 255, 255, .05);
+}
+
+.main-grid-empty-block {
+	display: flex;
+	box-sizing: border-box;
+	padding: 30px;
+}
+
+.main-grid-empty-inner {
+	display: flex;
+	flex-direction: column;
+	margin: auto;
+}
+
+.main-grid-empty-image {
+	margin: auto auto 40px auto;
+	width: 87px;
+	height: 111px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2087%20111%22%3E%3Cdefs%3E%3Cstyle%3E.cls-1%20%7B%20fill%3A%20%23535c69%3B%20fill-rule%3A%20evenodd%3B%20opacity%3A%200.12%3B%20%7D%3C/style%3E%3C/defs%3E%3Cpath%20class%3D%22cls-1%22%20d%3D%22M86.93%2025.17l.018-.018L61.884.032l-.03.03v-.05H.012v111h86.8v-.008h.17V31.988h.034v-6.82h-.085zM61.84%209.63l15.504%2015.54H61.84V9.63zm18.336%2094.564H6.816V6.83h48.222v18.34h-.02v6.818h25.16v72.206zM56.91%2044.814L44.43%2057.32%2031.95%2044.812%2026.576%2050.2l12.48%2012.508-12.48%2012.507%205.376%205.388L44.43%2068.1l12.48%2012.508%205.377-5.388-12.48-12.508L62.288%2050.2z%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.main-grid-empty-text {
+	color: var(--ui-color-base-5);
+	font-size: 32px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+/*
+ * The stub the grid draws in place of the empty row, carried over from `mail.messagegrid` letter
+ * for letter: the screen no longer loads that extension where the new grid works.
+ */
+
+.mail-msg-list-grid-empty {
+	line-height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	flex-direction: column;
+	padding: 30px;
+	box-sizing: border-box;
+}
+
+.mail-msg-list-grid-empty-inner {
+	max-width: 730px;
+}
+
+.mail-msg-list-grid-empty-title {
+	font: 31px/36px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+	color: #333;
+	margin-bottom: 10px;
+}
+
+.mail-msg-list-grid-empty-text {
+	font: 16px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #525C69;
+	margin: 0;
+}
+
+/* the loader of the screen covers the block it is given, so the block carries the height the stub
+   node of the template used to have */
+.mail-message-grid__loader-area {
+	position: relative;
+	min-height: 400px;
+}
+
+/* endregion */
+
+/* region SCREEN MESSAGES */
+
+.mail-message-grid-messages__item {
+	margin-bottom: var(--ui-space-stack-sm2);
+	padding: var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-1);
+}
+
+.mail-message-grid-messages__item:last-child {
+	margin-bottom: 0;
+}
+
+.mail-message-grid-messages__item.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.mail-message-grid-messages__item.--warning {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.mail-message-grid-messages__item.--success {
+	color: var(--ui-color-accent-main-success);
+}
+
+.mail-message-grid-messages__title {
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+/* endregion */
+
+/* region ACTION PANEL */
+
+/*
+ * The checkbox of "select all" stands in the panel of mass actions rather than in the head of the
+ * table - that is where the screen draws it and still looks for it.
+ */
+.mail-msg-list-action-panel .mail-msg-list-check-all {
+	display: inline-flex;
+	align-items: center;
+	padding-left: var(--ui-space-inset-sm);
+}
+
+/* endregion */
+
+.mail-message-grid-avatar {
+	display: inline-block;
+	flex: none;
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-circle);
+	text-align: center;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.mail-message-grid-avatar__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.mail-message-grid-avatar.--image {
+	background-position: 0 0;
+}
+
+/* the row of an unread message is set in a heavier weight, and the initials are not part of that */
+.mail-message-grid-avatar.--initials {
+	color: var(--ui-color-base-white-fixed);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+/*
+ * The backdrop of the silhouette every unknown sender shares. No token carries this role: the
+ * silhouette itself is white in every theme, so the ground under it has to stay dark in every theme
+ * too, and the neutral scale flips with the context.
+ */
+.mail-message-grid-avatar.--default {
+	background-color: #535c6a;
+	background-size: 50%;
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0Ny4xODgiIGhlaWdodD0iNTQuMDYzIiB2aWV3Qm94PSIwIDAgNDcuMTg4IDU0LjA2MyI+PGRlZnM+PHN0eWxlPi5jbHMtMSB7IGZpbGw6ICNmZmY7IGZpbGwtcnVsZTogZXZlbm9kZDsgfTwvc3R5bGU+PC9kZWZzPjxwYXRoIGlkPSJTaGFwZV8yX2NvcHlfNCIgZGF0YS1uYW1lPSJTaGFwZSAyIGNvcHkgNCIgY2xhc3M9ImNscy0xIiBkPSJNNDcuMTggNTQuMDYyYzAtMy4yMTctMy42MS0xNi44MjYtMy42MS0xNi44MjYgMC0xLjk5LTIuNi00LjI2LTcuNzItNS41ODVhMTcuMzk0IDE3LjM5NCAwIDAgMS00Ljg4Ny0yLjIyM2MtLjMzLS4xODgtLjI4LTEuOTI1LS4yOC0xLjkyNWwtMS42NDgtLjI1YzAtLjE0Mi0uMTQtMi4yMjUtLjE0LTIuMjI1IDEuOTcyLS42NjMgMS43Ny00LjU3NCAxLjc3LTQuNTc0IDEuMjUyLjY5NSAyLjA2OC0yLjQgMi4wNjgtMi40IDEuNDgyLTQuMy0uNzM4LTQuMDQtLjczOC00LjA0YTI3LjA1IDI3LjA1IDAgMCAwIDAtNy45MThjLS45ODctOC43MDgtMTUuODQ3LTYuMzQ0LTE0LjA4NS0zLjUtNC4zNDMtLjgtMy4zNTIgOS4wODItMy4zNTIgOS4wODJsLjk0MiAyLjU2Yy0xLjg1IDEuMi0uNTY0IDIuNjUtLjUgNC4zMi4wOSAyLjQ2NiAxLjYgMS45NTUgMS42IDEuOTU1LjA5MyA0LjA3IDIuMSA0LjYgMi4xIDQuNi4zNzcgMi41NTYuMTQyIDIuMTIuMTQyIDIuMTJsLTEuNzg2LjIxN2E3LjEgNy4xIDAgMCAxLS4xNCAxLjczMmMtMi4xLjkzNi0yLjU1MyAxLjQ4NS00LjY0IDIuNC00LjAzMiAxLjc2Ny04LjQxNCA0LjA2NS05LjE5MyA3LjE2Uy0uMDEyIDU0LjA2LS4wMTIgNTQuMDZoNDcuMTl6Ii8+PC9zdmc+);
+}

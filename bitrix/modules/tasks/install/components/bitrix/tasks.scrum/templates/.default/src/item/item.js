@@ -873,6 +873,11 @@ export class Item extends EventEmitter
 
 	removeYourself()
 	{
+		if (this.subTasks)
+		{
+			this.subTasks.removeYourself();
+		}
+
 		Dom.remove(this.node);
 
 		this.node = null;

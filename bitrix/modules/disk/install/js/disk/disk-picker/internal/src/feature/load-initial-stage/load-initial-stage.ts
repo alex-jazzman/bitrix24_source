@@ -15,12 +15,17 @@ import {
 	type InitialStageResult,
 	type SearchResult,
 } from '../../infrastructure/service/file-picker/types';
-import { applyLocalFilters } from '../../lib/filter-items/filter-items';
+import { applyLocalFilters, withLocalMatches } from '../../lib/filter-items/filter-items';
 import { useItemStore } from '../../model/item/item';
 import { useSelectionStore } from '../../model/selection/selection';
 import { useSessionStore } from '../../model/session/session';
 import { type PickerConstraints, type PickerFeed, type SessionFilters } from '../../model/session/types';
 import { useSourceStore } from '../../model/source/source';
+import {
+	getSourceCache,
+	setSourceCache,
+	type SourceCacheSnapshot,
+} from '../../model/source/source-cache';
 
 export const FOLDER_NOT_FOUND_MESSAGE = 'DISK_PICKER_NOTIFY_FOLDER_NOT_FOUND';
 
@@ -84,34 +89,103 @@ function applyInitialStageResult(
 	session.markInitialized();
 }
 
-function applySearchResult(session: SessionStore, item: ItemStore, result: SearchResult): void
+function applySearchResult(
+	session: SessionStore,
+	item: ItemStore,
+	result: SearchResult,
+	query: string,
+): void
 {
 	// Search does not change the feed and carries no navigation context.
 	session.setBreadcrumbsFromContext(null);
-	item.replace(result.items);
-	useSelectionStore().pruneActive(result.items.map((entry) => entry.objectId));
+	const items = session.stageType === StageType.Recent
+		? withLocalMatches(result.items, item.recentSnapshot, session.filters, query)
+		: result.items;
+	item.replace(items);
+	useSelectionStore().pruneActive(items.map((entry) => entry.objectId));
 	session.setHasMore(result.pagination.hasMore);
-	session.setEmptyReason(result.emptyReason);
+	session.setEmptyReason(items.length === 0 ? result.emptyReason : null);
 	session.setLoading(false);
 	session.markInitialized();
 }
 
-function startSourcesLoading(source: SourceStore): void
+function sourceSnapshot(source: SourceStore): SourceCacheSnapshot | null
 {
-	source.setLoading(true);
+	if (source.sourcesRevision === null)
+	{
+		return null;
+	}
+
+	return {
+		sources: source.sources,
+		page: source.sourcesPage,
+		hasMore: source.sourcesHasMore,
+		revision: source.sourcesRevision,
+	};
+}
+
+function persistSources(source: SourceStore): void
+{
+	const snapshot = sourceSnapshot(source);
+	if (snapshot !== null)
+	{
+		setSourceCache(snapshot);
+	}
+}
+
+function prepareSourcesLoading(source: SourceStore): SourceCacheSnapshot | null
+{
+	const cached = getSourceCache();
 	source.setError(null);
+	source.setPageError(null);
+	if (cached === null)
+	{
+		source.setLoading(true);
+		source.setValidating(false);
+
+		return null;
+	}
+
+	source.hydrate(cached);
+	source.setLoading(false);
+	source.setValidating(true);
+
+	return cached;
 }
 
-function applySourcesResult(source: SourceStore, result: InitialStageResult): void
+function applySourcesResult(
+	source: SourceStore,
+	result: InitialStageResult,
+	cached: SourceCacheSnapshot | null,
+): void
 {
-	source.setSources(result.sources);
+	const revision = result.sourceRevision;
+	if (revision === null)
+	{
+		throw new Error('DiskPicker: sources response has no catalogue revision');
+	}
+
+	if (cached === null || cached.revision !== revision)
+	{
+		source.replacePage(result.sources, 1, result.pagination.hasMore, revision);
+		persistSources(source);
+	}
 	source.setLoading(false);
+	source.setValidating(false);
 }
 
-function applySourcesError(source: SourceStore, code: string): void
+function applySourcesError(
+	source: SourceStore,
+	code: string,
+	cached: SourceCacheSnapshot | null,
+): void
 {
-	source.setError(code);
+	if (cached === null && source.sources.length === 0)
+	{
+		source.setError(code);
+	}
 	source.setLoading(false);
+	source.setValidating(false);
 }
 
 async function loadSources(deps: InitialStageDeps, session: SessionStore): Promise<void>
@@ -122,7 +196,7 @@ async function loadSources(deps: InitialStageDeps, session: SessionStore): Promi
 	}
 
 	const source = useSourceStore();
-	startSourcesLoading(source);
+	const cached = prepareSourcesLoading(source);
 
 	try
 	{
@@ -130,14 +204,15 @@ async function loadSources(deps: InitialStageDeps, session: SessionStore): Promi
 			initialStage: { type: StageType.Sources, storageId: null, folderId: null },
 			filters: { objectTypeFilter: ObjectTypeFilter.All, fileTypeFilters: [] },
 			allowedFileTypes: session.constraints.allowedFileTypes,
-			pageSize: PageSize.Recent,
+			page: 1,
+			pageSize: PageSize.Default,
 			signedConfig: session.constraints.signedConfig,
 		});
 		if (!session.isSessionActive())
 		{
 			return;
 		}
-		applySourcesResult(source, result);
+		applySourcesResult(source, result, cached);
 	}
 	catch (error)
 	{
@@ -153,15 +228,17 @@ async function loadSources(deps: InitialStageDeps, session: SessionStore): Promi
 		{
 			return;
 		}
-		applySourcesError(source, pickerErrorCode(error));
+		applySourcesError(source, pickerErrorCode(error), cached);
 	}
 }
 
+// A vanished folder costs the feed, not the picked set: it belongs to the picker
+// session, so only the active preview object is reset with the feed.
 async function runRecovery(deps: InitialStageDeps, session: SessionStore, item: ItemStore): Promise<void>
 {
 	const recentFeed: PickerFeed = { stageType: StageType.Recent, storageId: null, folderId: null };
 	session.setFeed(recentFeed);
-	useSelectionStore().clear();
+	useSelectionStore().setActive(null);
 	session.resetSearchQuery();
 
 	await runMainStart(deps, session, item, recentFeed, '', false);
@@ -188,6 +265,7 @@ function requestStagePage(session: SessionStore, startFeed: PickerFeed): Promise
 		initialStage: { type: startFeed.stageType, storageId: startFeed.storageId, folderId: startFeed.folderId },
 		filters: isRecent ? { objectTypeFilter: ObjectTypeFilter.All, fileTypeFilters: [] } : session.filters,
 		allowedFileTypes: session.constraints.allowedFileTypes,
+		page: 1,
 		pageSize: isRecent ? PageSize.Recent : PageSize.Default,
 		signedConfig: session.constraints.signedConfig,
 	});
@@ -255,19 +333,31 @@ async function runMainStart(
 	const searchActive = [...query].length >= SearchQueryLength.Min;
 	const sharesSourcesRequest = !searchActive && startFeed.stageType === StageType.Sources;
 	const source = sharesSourcesRequest ? useSourceStore() : null;
+	let sourceCache: SourceCacheSnapshot | null = null;
 	if (source !== null)
 	{
-		startSourcesLoading(source);
+		sourceCache = prepareSourcesLoading(source);
 	}
 
 	try
 	{
 		if (searchActive)
 		{
+			// A query restored onto the recent feed needs that feed loaded as well: chat files are
+			// outside the server search and are matched against the snapshot, which nothing else on
+			// this path fetches. Its failure only costs those matches, so it never fails the search.
+			const recentRequest = startFeed.stageType === StageType.Recent
+				? requestStagePage(session, startFeed).catch(() => null)
+				: null;
 			const result = await requestSearchPage(session, startFeed, query);
+			const recent = recentRequest === null ? null : await recentRequest;
 			if (session.isCurrentRequest(token))
 			{
-				applySearchResult(session, item, result);
+				if (recent !== null)
+				{
+					item.setRecentSnapshot(recent.items);
+				}
+				applySearchResult(session, item, result, query);
 			}
 
 			return;
@@ -276,7 +366,7 @@ async function runMainStart(
 		const result = await requestStagePage(session, startFeed);
 		if (source !== null && session.isSessionActive())
 		{
-			applySourcesResult(source, result);
+			applySourcesResult(source, result, sourceCache);
 		}
 
 		if (session.isCurrentRequest(token))
@@ -290,7 +380,7 @@ async function runMainStart(
 		const code = pickerErrorCode(error);
 		if (source !== null && code !== ErrorCode.InvalidContext && session.isSessionActive())
 		{
-			applySourcesError(source, code);
+			applySourcesError(source, code, sourceCache);
 		}
 		await handleMainError(deps, session, item, error, { token, searchActive, startFeed, allowRecovery });
 	}

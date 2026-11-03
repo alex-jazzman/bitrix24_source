@@ -10,8 +10,10 @@ return [
 	'css' => 'dist/import.bundle.css',
 	'rel' => [
 		'main.core',
+		'note.permissions',
 		'note.ui.loader',
 		'note.ui.theme-context',
+		'ui.a11y',
 		'ui.buttons',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
@@ -23,6 +25,7 @@ return [
 		'ui.system.dialog',
 		'ui.system.input.vue',
 		'ui.system.menu',
+		'ui.system.radiobutton',
 		'ui.vue3',
 	],
 	'skip_core' => false,

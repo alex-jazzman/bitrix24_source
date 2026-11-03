@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'more-menu',
-		'more-menu/aha-moment',
 		'more-menu/navigator',
 		'more-menu/utils',
 		'qrauth/utils',

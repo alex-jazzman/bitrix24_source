@@ -2,6 +2,7 @@
  * @module crm/duplicates/panel
  */
 jn.define('crm/duplicates/panel', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Type } = require('crm/type');
 	const AppTheme = require('apptheme');
@@ -160,7 +161,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 					style: {
 						color: AppTheme.colors.baseWhiteFixed,
 						backgroundColor: AppTheme.colors.accentMainPrimaryalt,
-						fontSize: 13,
+						...Typography.text5.getValue(),
 						textAlign: 'center',
 						marginTop: 12,
 						width: 100,

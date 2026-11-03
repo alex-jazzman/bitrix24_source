@@ -1,4 +1,5 @@
 <?php
+/** @var CMain $APPLICATION */
 if (!check_bitrix_sessid())
 {
 	return;
@@ -55,6 +56,6 @@ if ($_REQUEST['public_dir'] <> ''):
 endif;
 ?>
 <form action="<?php echo $APPLICATION->GetCurPage()?>">
-	<input type="hidden" name="lang" value="<?php echo LANG?>">
+	<input type="hidden" name="lang" value="<?php echo LANGUAGE_ID?>">
 	<input type="submit" name="" value="<?php echo GetMessage('MOD_BACK')?>">
 <form>

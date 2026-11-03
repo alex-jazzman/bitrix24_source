@@ -263,7 +263,7 @@ h1 {
 }
 
 .main-title:before {
-	background: url(images/sprite.png?2) no-repeat 0 0;
+	background: url(images/sprite.webp?2) no-repeat 0 0;
 	content: '';
 	height: 38px;
 	position: absolute;
@@ -307,7 +307,7 @@ h1 {
 .left-cloud,
 .right-cloud {
 	position: absolute;
-	background: url(images/sprite.png?2) no-repeat 100px 100px;
+	background: url(images/sprite.webp?2) no-repeat 100px 100px;
 }
 
 .left-cloud {
@@ -327,7 +327,7 @@ h1 {
 }
 
 .bottom-cloud {
-	background: url(images/sprite.png?2) no-repeat 0 -284px;
+	background: url(images/sprite.webp?2) no-repeat 0 -284px;
 	bottom: 100px;
 	height: 51px;
 	position: absolute;
@@ -350,7 +350,7 @@ h1 {
 
 .lang-popup-item .menu-popup-item-icon {
 	border: 1px solid #ccd3d7;
-	background: url("images/flags.png?1") no-repeat 0 0;
+	background: url("images/flags.webp?1") no-repeat 0 0;
 	background-size: 100px 400px;
 	height: 18px;
 	width: 24px;
@@ -376,7 +376,7 @@ h1 {
 }
 
 .footer-logo-img {
-	background: url(images/sprite.png?2) no-repeat;
+	background: url(images/sprite.webp?2) no-repeat;
 	display: inline-block;
 	height: 20px;
 	vertical-align: top;
@@ -424,7 +424,7 @@ h1 {
 }
 
 .external-page-popup-close-btn {
-	background:url("images/sprite.png?2") no-repeat right -472px;
+	background:url("images/sprite.webp?2") no-repeat right -472px;
 	cursor: pointer;
 	height: 50px;
 	opacity: 0.5;

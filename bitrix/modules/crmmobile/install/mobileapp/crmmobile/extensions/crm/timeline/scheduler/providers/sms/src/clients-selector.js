@@ -2,6 +2,7 @@
  * @module crm/timeline/scheduler/providers/sms/clients-selector
  */
 jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exports, module) => {
+	const { Typography } = require('tokens');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const AppTheme = require('apptheme');
@@ -190,7 +191,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 
 	const styles = {
 		label: {
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			color: AppTheme.colors.base3,
 			marginBottom: 4,
 		},
@@ -200,7 +201,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 			flexWrap: 'wrap',
 		},
 		data: {
-			fontSize: 16,
+			fontSize: Typography.text3.getValue().fontSize,
 			color: AppTheme.colors.accentMainLinks,
 		},
 		clientWithEmptyPhone: {
@@ -223,11 +224,11 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 		},
 		empty: {
 			color: AppTheme.colors.base5,
-			fontSize: 16,
+			fontSize: Typography.text3.getValue().fontSize,
 			marginLeft: 2,
 		},
 		emptyPhoneData: {
-			fontSize: 16,
+			fontSize: Typography.text3.getValue().fontSize,
 			color: AppTheme.colors.accentMainLinks,
 			marginRight: 10,
 		},
@@ -239,7 +240,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 			borderDashGapLength: 3,
 		},
 		addPhone: {
-			fontSize: 16,
+			fontSize: Typography.text3.getValue().fontSize,
 			color: AppTheme.colors.accentMainWarning,
 		},
 	};

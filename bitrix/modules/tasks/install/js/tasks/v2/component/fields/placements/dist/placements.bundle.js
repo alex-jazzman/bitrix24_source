@@ -53,10 +53,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div class="tasks-field-placement-item" @click="onPlacementClick">
+		<button
+			type="button"
+			class="tasks-field-placement-item"
+			data-testid="tasks-placements-item-btn"
+			@click="onPlacementClick"
+		>
 			<div class="tasks-field-placement-item-header">
 				<div class="tasks-field-placement-item-title-container">
-					<BIcon :name="Outline.PRODUCT" class="tasks-field-placement-item-icon"/>
+					<BIcon :name="Outline.PRODUCT" class="tasks-field-placement-item-icon" aria-hidden="true"/>
 					<TextMd accent>{{ placement.title }}</TextMd>
 				</div>
 			</div>
@@ -66,7 +71,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			>
 				{{ placement.description }}
 			</TextXs>
-		</div>
+		</button>
 	`
 	};
 
@@ -168,6 +173,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-id="taskId"
 			:data-task-field-id="placementsMeta.id"
 			data-field-container
+			data-testid="tasks-placements"
 		>
 			<template v-if="isLoading">
 				<div class="tasks-field-placements-empty-container">
@@ -199,9 +205,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return ui_system_chip_vue.ChipDesign.ShadowAccent;
 			}
 		},
+		mounted() {
+			this.syncAria();
+		},
 		methods: {
+			syncAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				main_core.Dom.attr(el, 'role', 'button');
+			},
 			highlightField() {
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(placementsMeta.id);
+			},
+			handleKeydown(event) {
+				if (event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				this.highlightField();
 			}
 		},
 		template: `
@@ -211,8 +234,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:icon="Outline.PRODUCT"
 			:data-task-id="taskId"
 			:data-task-chip-id="placementsMeta.id"
+			data-testid="tasks-placements-chip"
 			ref="chip"
 			@click="highlightField"
+			@keydown="handleKeydown"
 		/>
 	`
 	};

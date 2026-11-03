@@ -76,6 +76,7 @@ export const LinkField: BitrixVueComponentProps = {
 				<ShowMoreMenu
 					v-if="hiddenLinks.length > 0"
 					:items="hiddenLinkItems"
+					data-testid="crm-mini-card-link-show-more-btn"
 				/>
 			</FieldValueList>
 		</Field>

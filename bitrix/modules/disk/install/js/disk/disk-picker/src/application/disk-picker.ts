@@ -48,10 +48,23 @@ type NotificationCenter = {
 	notify: (options: { content: string }) => void,
 };
 
-const POPUP_WIDTH = 980;
-const POPUP_HEIGHT = 538;
+const POPUP_HEIGHT = 590;
+const POPUP_VIEWPORT_MARGIN = 16;
+const VIEWPORT_RESIZE_DELAY = 100;
+// The dialog asks only for what the sidebar, the list and the preview need, so a collapsed
+// sidebar shrinks the dialog instead of stretching the list. Sidebar and preview widths and
+// the collapse threshold are the ones picker-layout.css uses; LIST_WIDTH is the preferred
+// list width, which CSS keeps elastic. Both sides must change together.
+const SIDEBAR_WIDTH = 210;
+const SIDEBAR_COLLAPSED_WIDTH = 80;
+const SIDEBAR_COLLAPSE_VIEWPORT = 1000;
+const LIST_WIDTH = 488;
+const PREVIEW_WIDTH = 282;
 const DEFAULT_MAX_ITEMS = 100;
 const FILTER_HOST_SELECTOR = '[data-disk-picker-filter-host]';
+// The layers that belong to an open picker session while living outside its popup: the
+// standard filter dropdowns and menus.
+const SESSION_LAYER_SELECTOR = '.popup-window, .main-ui-filter-popup, .menu-popup';
 const INTERNAL_EXTENSION = 'disk.disk-picker.internal';
 const NOTIFICATION_EXTENSION = 'ui.notification';
 
@@ -452,6 +465,7 @@ export class DiskPicker
 	#filterId: string | null = null;
 	#callbacks: Callbacks | null = null;
 	#popup: Popup | null = null;
+	#viewportResizeHandler: ((event: UIEvent) => void) | null = null;
 	#appHandle: PickerAppHandle | null = null;
 	#container: HTMLElement | null = null;
 	#filterHost: HTMLElement | null = null;
@@ -462,6 +476,10 @@ export class DiskPicker
 	#outsideClickHandler: ((event: MouseEvent) => void) | null = null;
 	#internal: InternalApi | null = null;
 	#sessionId: number = 0;
+	// The window reports a shown preview: the viewer covers the page from the body, so
+	// every click of that overlay lands outside the popup without leaving the session.
+	#previewShown: boolean = false;
+	#previewShownTimer: ReturnType<typeof setTimeout> | null = null;
 
 	open(params: DiskPickerParams): void
 	{
@@ -506,7 +524,7 @@ export class DiskPicker
 	{
 		return activeInstance === this
 			&& sharedState === 'open'
-			&& this.#isInsideSession(event);
+			&& (this.#previewShown || this.#isInsideSession(event));
 	}
 
 	close(): void
@@ -539,6 +557,7 @@ export class DiskPicker
 
 		this.#focusContainer(container);
 		this.#bindOutsideClick();
+		this.#bindViewportResize();
 		this.#readInitialFilterValues(result.filterId);
 		this.#startSession(result.filterId, sessionId);
 
@@ -584,6 +603,7 @@ export class DiskPicker
 				notify: (code: string, replacements?: { [key: string]: string }) => notify(message(code, replacements)),
 				emitSelection: (result: PickerResult) => this.#handleSelection(result),
 				requestCancel: () => this.#runClose('cancel'),
+				setPreviewShown: (shown: boolean) => this.#setPreviewShown(shown),
 			},
 		});
 	}
@@ -672,28 +692,94 @@ export class DiskPicker
 
 	#createPopup(container: HTMLElement): Popup
 	{
+		const { width, height } = this.#resolveSize();
+
 		return new Popup({
-			className: 'disk-picker-popup',
+			// The dialog is glass over the portal wallpaper, so it lives in the edge token
+			// context: inside it every base colour and surface flips to its light-on-dark
+			// value, which is what the whole picker is coloured against.
+			className: 'disk-picker-popup --ui-context-edge-dark',
 			// The dialog has no visible title (no title bar or close icon by design),
 			// so give role="dialog" an accessible name for screen readers.
 			ariaLabel: message('DISK_PICKER_DIALOG_LABEL'),
 			content: container,
-			width: POPUP_WIDTH,
-			height: POPUP_HEIGHT,
-			minWidth: POPUP_WIDTH,
-			minHeight: POPUP_HEIGHT,
+			width,
+			height,
+			minWidth: width,
+			minHeight: height,
 			padding: 0,
 			contentPadding: 0,
 			closeIcon: false,
 			closeByEsc: true,
 			autoHide: false,
-			overlay: true,
+			overlay: {
+				// No token carries this dim yet, so the values come from the layout as is.
+				// Keep the viewport layer to a flat tint: a live backdrop filter here can drop
+				// the complete nested popup stack for one compositor frame during fast scroll.
+				backgroundColor: 'rgba(0, 32, 78, 0.46)',
+				// The stylesheet keeps the overlay at opacity .5, which would halve the alpha
+				// above; a full opacity hands the fill its own alpha unchanged.
+				opacity: 100,
+			},
 			cacheable: false,
 			angle: false,
 			events: {
 				onPopupClose: () => this.#handlePopupClose(),
 			},
 		});
+	}
+
+	// The preferred size yields to the viewport: a hard minimum pushed the dialog
+	// off-screen on narrow windows and short viewports.
+	#resolveSize(): { width: number, height: number }
+	{
+		const sidebarWidth = window.innerWidth < SIDEBAR_COLLAPSE_VIEWPORT
+			? SIDEBAR_COLLAPSED_WIDTH
+			: SIDEBAR_WIDTH;
+		const preferredWidth = sidebarWidth + LIST_WIDTH + PREVIEW_WIDTH;
+
+		return {
+			width: Math.min(preferredWidth, Math.max(0, window.innerWidth - POPUP_VIEWPORT_MARGIN * 2)),
+			height: Math.min(POPUP_HEIGHT, Math.max(0, window.innerHeight - POPUP_VIEWPORT_MARGIN * 2)),
+		};
+	}
+
+	// A resize while the dialog is open must reach the popup itself: the collapsed sidebar
+	// is pure CSS, but the popup keeps the size it got when it opened.
+	#applyPopupSize(): void
+	{
+		const popup = this.#popup;
+		if (!popup)
+		{
+			return;
+		}
+
+		const { width, height } = this.#resolveSize();
+		popup.setMinWidth(width);
+		popup.setMinHeight(height);
+		popup.setWidth(width);
+		popup.setHeight(height);
+		popup.adjustPosition();
+	}
+
+	#bindViewportResize(): void
+	{
+		const debounced = Runtime.debounce(() => this.#applyPopupSize(), VIEWPORT_RESIZE_DELAY);
+		this.#viewportResizeHandler = (): void => {
+			debounced();
+		};
+		Event.bind(window, 'resize', this.#viewportResizeHandler);
+	}
+
+	#unbindViewportResize(): void
+	{
+		if (!this.#viewportResizeHandler)
+		{
+			return;
+		}
+
+		Event.unbind(window, 'resize', this.#viewportResizeHandler);
+		this.#viewportResizeHandler = null;
 	}
 
 	#relocateFilterIntoPopup(result: BootstrapResult, container: HTMLElement): void
@@ -777,6 +863,31 @@ export class DiskPicker
 		}
 	}
 
+	// The click that closes the viewer ends the preview session on the way up, while the
+	// same click is still being dispatched: the outside-click handler below sees it after
+	// the overlay is already gone. The report of a closed preview is taken once that event
+	// is over, so the window does not close on the click of the viewer's own close button.
+	#setPreviewShown(shown: boolean): void
+	{
+		if (this.#previewShownTimer !== null)
+		{
+			clearTimeout(this.#previewShownTimer);
+			this.#previewShownTimer = null;
+		}
+
+		if (shown)
+		{
+			this.#previewShown = true;
+
+			return;
+		}
+
+		this.#previewShownTimer = setTimeout(() => {
+			this.#previewShownTimer = null;
+			this.#previewShown = false;
+		}, 0);
+	}
+
 	#bindOutsideClick(): void
 	{
 		const handler = (event: MouseEvent): void => {
@@ -812,7 +923,7 @@ export class DiskPicker
 	// so `container.contains(target)` would misread an inside click as outside and
 	// close the window. `composedPath()` is captured when the event is dispatched and
 	// still holds the container and every ancestor after the re-render; it also covers
-	// the standard filter dropdowns, which render outside the popup DOM.
+	// the layers that render outside the popup DOM but belong to the session all the same.
 	#isInsideSession(event: MouseEvent): boolean
 	{
 		return this.#eventPath(event).some((node) => {
@@ -823,7 +934,7 @@ export class DiskPicker
 
 			return Type.isDomNode(node)
 				&& Type.isFunction((node as Element).matches)
-				&& (node as Element).matches('.popup-window, .main-ui-filter-popup, .menu-popup');
+				&& (node as Element).matches(SESSION_LAYER_SELECTOR);
 		});
 	}
 
@@ -884,6 +995,7 @@ export class DiskPicker
 	{
 		const steps = [
 			() => this.#unbindOutsideClick(),
+			() => this.#unbindViewportResize(),
 			() => this.#appHandle?.notifyClosing(),
 			() => this.#closeFilterPopups(),
 			() => this.#returnFilterToHolder(),
@@ -961,5 +1073,11 @@ export class DiskPicker
 		this.#pendingResult = null;
 		this.#tearingDown = false;
 		this.#internal = null;
+		if (this.#previewShownTimer !== null)
+		{
+			clearTimeout(this.#previewShownTimer);
+			this.#previewShownTimer = null;
+		}
+		this.#previewShown = false;
 	}
 }

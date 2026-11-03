@@ -299,6 +299,20 @@ this.BX = this.BX || {};
 	}
 
 	const isMultiValueOperator = operator => operator === Operator.IN || operator === Operator.NOT_IN;
+	const isValuelessOperator = operator => operator === Operator.EMPTY || operator === Operator.NOT_EMPTY;
+
+	// Bring a value entered under the previous operator into the shape the new one reads. An array is a
+	// value only for `in`/`!in` (transported as JSON) and for BETWEEN (transported as a pair of slots);
+	// anywhere else it is not a value but its first item, and an operator without a value carries none.
+	function adaptValueToOperator(operator, value) {
+		if (isValuelessOperator(operator)) {
+			return '';
+		}
+		if (isMultiValueOperator(operator) || operator === Operator.BETWEEN) {
+			return value;
+		}
+		return Array.isArray(value) ? value[0] ?? '' : value;
+	}
 	const isScalarValue = value => main_core.Type.isString(value) || main_core.Type.isNumber(value) || main_core.Type.isBoolean(value);
 
 	// array value of an `in`/`!in` condition is transported as a JSON string in a single value slot.
@@ -1665,6 +1679,192 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// `ui.entity-selector` is 244Kb of JS and 31Kb of CSS wanted by the `new` view alone, so it is kept
+	// out of the `rel` of the extension: the condition dialogs of the robots, of the activities and of
+	// the storage fields load `bizproc.condition` too and never build this control. The first open of
+	// the list is a click of the user - a place where waiting for an extension is allowed.
+	const ENTITY_SELECTOR_EXTENSION = 'ui.entity-selector';
+	class ConditionFieldSelector {
+		#fields;
+		#target;
+		#onSelect;
+		#dialog = null;
+		// A show that is still waiting for the extension is already open as far as the host is concerned:
+		// a repeated click has to close it, and the load it started must not open a list behind it.
+		#showId = 0;
+		#isLoading = false;
+		constructor(fields, target, onSelect) {
+			this.#fields = fields;
+			this.#target = target;
+			this.#onSelect = onSelect;
+		}
+		isOpen() {
+			return this.#dialog !== null || this.#isLoading;
+		}
+		async show() {
+			this.destroy();
+			const showId = ++this.#showId;
+			this.#isLoading = true;
+			let Dialog;
+			try {
+				({
+					Dialog
+				} = await main_core.Runtime.loadExtension(ENTITY_SELECTOR_EXTENSION));
+			} finally {
+				if (showId === this.#showId) {
+					this.#isLoading = false;
+				}
+			}
+
+			// The row may have been closed, repainted or removed while the extension was loading.
+			if (showId !== this.#showId || !this.#target.isConnected) {
+				return;
+			}
+			const dialog = new Dialog({
+				targetNode: this.#target,
+				width: 500,
+				height: 300,
+				multiple: false,
+				dropdownMode: true,
+				enableSearch: true,
+				showAvatars: false,
+				compactView: true,
+				cacheable: false,
+				// Keep the dialog open on a click on its own target: the host toggles it instead.
+				autoHideHandler: event => !this.#target.contains(event.target),
+				items: this.#fields.map(field => ({
+					// The dialog keys its items by id, and fields of different objects (Document,
+					// Variable, Constant) may share an Id - without the object they collapse into one.
+					id: `${field.ObjectId ?? ''}:${field.SystemExpression || field.Id}`,
+					entityId: 'bp',
+					tabs: 'recents',
+					title: field.Name || field.Id,
+					customData: {
+						field
+					}
+				})),
+				events: {
+					onDestroy: () => {
+						if (this.#dialog === dialog) {
+							this.#dialog = null;
+						}
+					},
+					'Item:onBeforeSelect': event => {
+						if (this.#dialog !== dialog) {
+							return;
+						}
+						event.preventDefault();
+						const field = event.getData().item.getCustomData().get('field');
+						// A non-cacheable dialog destroys itself on hide, and entity-selector keeps
+						// calling it right after select(), so close it off that stack.
+						setTimeout(() => this.destroy(), 0);
+						this.#onSelect(field);
+					}
+				}
+			});
+			this.#dialog = dialog;
+			dialog.show();
+		}
+		destroy() {
+			this.#showId++;
+			this.#isLoading = false;
+			const dialog = this.#dialog;
+			this.#dialog = null;
+			// The dialog may already be destroyed by its own popup, which nulls the instance.
+			if (dialog && main_core.Type.isFunction(dialog.destroy)) {
+				dialog.destroy();
+			}
+		}
+	}
+
+	const ConditionViewMode = {
+		Legacy: 'legacy',
+		New: 'new'
+	};
+	const ICON_SIZE = 20;
+	// The plus of the add button is the `icon l` of the mockup, a size below the icons of the cards.
+	const ADD_ICON_SIZE = 18;
+
+	// The plus is the only glyph the extension takes from the outline set, and the set costs 128Kb of
+	// stylesheet on every page the extension is loaded on - the pages of the robots and of the debugger
+	// included, where the `new` view is never built. So it is drawn here instead, with the geometry of
+	// `ui/install/js/ui/icon-set/outline/dist/images/plus-l.svg` and `currentColor` in place of the
+	// baked-in fill: the glyph keeps following the colour of the caption and the theme along with it.
+	const ADD_ICON_PATH = 'M11.2998 18.3C11.2998 18.6866 11.6132 19 11.9998 19C12.3864 19 12.6998 18.6866 12.6998 18.3V12.6998H18.3C18.6866 12.6998 19 12.3864 19 11.9998C19 11.6132 18.6866 11.2998 18.3 11.2998H12.6998V5.7C12.6998 5.3134 12.3864 5 11.9998 5C11.6132 5 11.2998 5.3134 11.2998 5.7V11.2998H5.7C5.3134 11.2998 5 11.6132 5 11.9998C5 12.3864 5.3134 12.6998 5.7 12.6998H11.2998V18.3Z';
+
+	// The cross of a card is the `cross-20` of `ui.icon-set.actions` - the set the legacy view of this
+	// extension already draws its own cross from. It is written out here instead of being built by the
+	// `Icon` of `ui.icon-set.api.core`: that extension is 52Kb of JS on every page `bizproc.condition`
+	// is loaded on, the robots designer and the debugger included, where this view is never built. The
+	// markup is the one `Icon.render()` produces, so the glyph and the colour still come from the set:
+	// the icon is decorative and the accessible name stays on the control that carries it.
+	function renderRemoveIcon() {
+		const node = main_core.Tag.render`<div class="ui-icon-set --cross-20" aria-hidden="true"></div>`;
+		main_core.Dom.style(node, '--ui-icon-set__icon-size', `${ICON_SIZE}px`);
+		return node;
+	}
+	function normalizeConditionViewMode(viewMode) {
+		return viewMode === ConditionViewMode.New ? ConditionViewMode.New : ConditionViewMode.Legacy;
+	}
+	class ConditionViewRenderer {
+		// The description of a joined card states the rule its switch applies, so it belongs to the
+		// joiner and not to the card.
+		getJoinerDescription(joiner) {
+			return main_core.Loc.getMessage(joiner === ConditionGroup.JOINER.Or ? 'BIZPROC_JS_AUTOMATION_CONDITION_JOINER_DESCRIPTION_OR' : 'BIZPROC_JS_AUTOMATION_CONDITION_JOINER_DESCRIPTION_AND');
+		}
+
+		// `Tag.render` appends an element substitution after the bare text of its tag, whatever their
+		// order in the template, so the caption of the add button is an element of its own - that is
+		// what keeps the plus in front of it.
+		createGroupNode(conditionNodes) {
+			return main_core.Tag.render`
+			<div class="bizproc-condition-group-list" data-testid="bp-condition-group">
+				<div ref="draggableNode" class="bizproc-condition-group__items">${conditionNodes}</div>
+				<button ref="addButton" type="button" class="bizproc-condition-group__add" data-testid="bp-condition-group-add">
+					<svg class="bizproc-condition-group__add-icon" width="${ADD_ICON_SIZE}" height="${ADD_ICON_SIZE}" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="${ADD_ICON_PATH}" fill="currentColor"></path></svg>
+					<span class="bizproc-condition-group__add-caption">
+						${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_TITLE'))}
+					</span>
+				</button>
+			</div>
+		`;
+		}
+		createRootGroupNode(conditionNode) {
+			return main_core.Tag.render`
+			<div class="bizproc-condition-group ui-draggable--item" data-testid="bp-condition-group-card">
+				<div class="bizproc-condition-group__header" data-testid="bp-condition-header">
+					<span class="bizproc-condition-group__drag" aria-hidden="true" data-testid="bp-condition-group-drag"></span>
+					<span class="bizproc-condition-group__badge" data-testid="bp-condition-group-badge">
+						${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_TITLE'))}
+					</span>
+					<span class="bizproc-condition-group__description" data-testid="bp-condition-group-description">
+						${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_DESCRIPTION'))}
+					</span>
+					<span class="bizproc-condition-group__header-action" data-role="condition-header-action"></span>
+				</div>
+				<div class="bizproc-condition-group__items">${conditionNode}</div>
+			</div>
+		`;
+		}
+		createNestedGroupNode(conditionNode, joiner) {
+			return main_core.Tag.render`
+			<div class="bizproc-condition-group bizproc-condition-group--nested ui-draggable--item" data-testid="bp-condition-group-nested">
+				<div class="bizproc-condition-group__header" data-testid="bp-condition-header">
+					<span class="bizproc-condition-group__drag" aria-hidden="true" data-testid="bp-condition-group-drag"></span>
+					<span class="bizproc-condition-group__joiner" data-role="condition-joiner">
+						<button data-role="condition-joiner-and" data-testid="bp-condition-logic-and" type="button" aria-pressed="${joiner === ConditionGroup.JOINER.And ? 'true' : 'false'}" class="bizproc-condition-row__joiner-button ${joiner === ConditionGroup.JOINER.And ? '--active' : ''}">${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_CONDITION_AND'))}</button>
+						<button data-role="condition-joiner-or" data-testid="bp-condition-logic-or" type="button" aria-pressed="${joiner === ConditionGroup.JOINER.Or ? 'true' : 'false'}" class="bizproc-condition-row__joiner-button ${joiner === ConditionGroup.JOINER.Or ? '--active' : ''}">${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_CONDITION_OR'))}</button>
+					</span>
+					<span class="bizproc-condition-group__description" data-role="condition-joiner-description" data-testid="bp-condition-group-description">${main_core.Text.encode(this.getJoinerDescription(joiner))}</span>
+					<span class="bizproc-condition-group__header-action" data-role="condition-header-action"></span>
+				</div>
+				<div class="bizproc-condition-group__items">${conditionNode}</div>
+			</div>
+		`;
+		}
+	}
+
+	const OPERATOR_MENU_MAX_HEIGHT = 320;
 	class ConditionSelector extends main_core_events.EventEmitter {
 		#condition;
 		#fields;
@@ -1678,6 +1878,9 @@ this.BX = this.BX || {};
 		#valueNode2 = null;
 		#selectedField;
 		#customSelectorFn = null;
+		#viewMode = ConditionViewMode.Legacy;
+		#fieldSelector = null;
+		#operatorMenu = null;
 		constructor(condition, options) {
 			super();
 			this.setEventNamespace('BX.Bizproc.Condition');
@@ -1705,6 +1908,7 @@ this.BX = this.BX || {};
 				this.#showValuesSelector = options.showValuesSelector ?? true;
 				this.#customSelectorFn = options.customSelectorFn;
 				this.#context = options.context;
+				this.#viewMode = normalizeConditionViewMode(options.viewMode);
 			}
 			if (!(this.#context instanceof ConditionContext)) {
 				this.#context = new SimpleConditionContext({
@@ -1718,9 +1922,29 @@ this.BX = this.BX || {};
 		getJoiner() {
 			return this.#joiner;
 		}
+		setJoiner(joiner) {
+			if (joiner !== ConditionGroup.JOINER.And && joiner !== ConditionGroup.JOINER.Or) {
+				return;
+			}
+			this.#joiner = joiner;
+			if (this.joinerNode) {
+				this.joinerNode.value = this.#joiner;
+			}
+			this.emit('onChange', new main_core_events.BaseEvent({
+				data: {
+					conditionSelector: this
+				}
+			}));
+		}
 		createNode() {
+			if (this.#viewMode === ConditionViewMode.New) {
+				return this.#createNewNode();
+			}
+			return this.#createLegacyNode();
+		}
+		#createLegacyNode() {
 			const conditionValueNode = this.#createValueNode(serializeConditionValue(this.#condition.operator, this.#condition.value));
-			const conditionValueNode2 = this.#condition.operator === Operator.BETWEEN ? this.#createValueNode(main_core.Type.isArrayFilled(this.#condition.value) && this.#condition.value.length > 1 ? this.#condition.value[1] : '') : '';
+			const conditionValueNode2 = this.#createSecondValueNode();
 			const {
 				root,
 				conditionObjectNode,
@@ -1750,7 +1974,7 @@ this.BX = this.BX || {};
 					/>
 					${conditionValueNode}
 					${conditionValueNode2}
-					<div class="bizproc-automation-popup-settings__condition-item_draggable">
+					<div class="bizproc-automation-popup-settings__condition-item_draggable" data-testid="bp-condition-drag">
 						<div class="ui-icon-set --more-points"></div>
 					</div>
 					<div
@@ -1773,6 +1997,153 @@ this.BX = this.BX || {};
 			this.setLabelText();
 			this.bindLabelNode();
 			return this.node;
+		}
+		#createNewNode() {
+			const conditionValueNode = this.#createValueNode(serializeConditionValue(this.#condition.operator, this.#condition.value));
+			const conditionValueNode2 = this.#createSecondValueNode();
+			const valueRow = this.#createNewValueRow();
+			const {
+				root,
+				conditionObjectNode,
+				conditionFieldNode,
+				conditionOperatorNode,
+				conditionJoinerNode,
+				fieldEditorNode,
+				operatorEditorNode,
+				labelNode,
+				removeButtonNode
+			} = main_core.Tag.render`
+			<div class="bizproc-condition-row ui-draggable--item" data-testid="bp-condition-row">
+				<input ref="conditionObjectNode" type="hidden" name="${main_core.Text.encode(`${this.#fieldPrefix}object[]`)}" value="${main_core.Text.encode(this.#condition.object)}" />
+				<input ref="conditionFieldNode" type="hidden" name="${main_core.Text.encode(`${this.#fieldPrefix}field[]`)}" value="${main_core.Text.encode(this.#condition.field)}" />
+				<input ref="conditionOperatorNode" type="hidden" name="${main_core.Text.encode(`${this.#fieldPrefix}operator[]`)}" value="${main_core.Text.encode(this.#condition.operator)}" />
+				<input ref="conditionJoinerNode" type="hidden" name="${main_core.Text.encode(`${this.#fieldPrefix}joiner[]`)}" value="${main_core.Text.encode(this.#joiner)}" />
+				${conditionValueNode}
+				${conditionValueNode2}
+				<div class="bizproc-condition-row__field">
+					<span class="bizproc-condition-row__field-label" data-testid="bp-condition-field-label">
+						${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_FIELD'))}
+					</span>
+					<div ref="fieldEditorNode" class="bizproc-condition-row__field-control ui-ctl ui-ctl-after-icon ui-ctl-dropdown" data-testid="bp-condition-field-control"></div>
+				</div>
+				<div class="bizproc-condition-row__operator">
+					<span class="bizproc-condition-row__operator-label" data-testid="bp-condition-operator-label">
+						${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_OPERATOR'))}
+					</span>
+					<button ref="operatorEditorNode" type="button" class="bizproc-condition-row__operator-control" data-testid="bp-condition-operator-control"></button>
+				</div>
+				${valueRow}
+				<button ref="labelNode" type="button" class="bizproc-condition-row__editor" data-testid="bp-condition-row-label"></button>
+				<button ref="removeButtonNode" type="button" class="bizproc-condition-row__remove" data-testid="bp-condition-remove" aria-label="${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_REMOVE_ARIA_LABEL'))}">${renderRemoveIcon()}</button>
+			</div>
+		`;
+			this.node = root;
+			this.objectNode = conditionObjectNode;
+			this.fieldNode = conditionFieldNode;
+			this.operatorNode = conditionOperatorNode;
+			this.joinerNode = conditionJoinerNode;
+			this.valueNode = conditionValueNode;
+			this.#valueNode2 = conditionValueNode2 === '' ? null : conditionValueNode2;
+			this.fieldEditorNode = fieldEditorNode;
+			this.operatorEditorNode = operatorEditorNode;
+			this.labelNode = labelNode;
+			this.setLabelText();
+			this.bindLabelNode();
+			main_core.Event.bind(fieldEditorNode, 'click', this.onInlineFieldClick.bind(this));
+			main_core.Event.bind(operatorEditorNode, 'click', this.onInlineOperatorClick.bind(this));
+			main_core.Event.bind(removeButtonNode, 'click', this.removeCondition.bind(this));
+			return this.node;
+		}
+		#createNewValueRow() {
+			if (isValuelessOperator(this.#condition.operator)) {
+				return '';
+			}
+			const {
+				root,
+				valueEditorNode
+			} = main_core.Tag.render`
+			<div class="bizproc-condition-row__value">
+				<span class="bizproc-condition-row__value-label" data-testid="bp-condition-value-label">
+					${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_VALUE'))}
+				</span>
+				<div ref="valueEditorNode" class="bizproc-condition-row__value-control" data-testid="bp-condition-value-control"></div>
+			</div>
+		`;
+			this.valueEditorNode = valueEditorNode;
+
+			// A control the registry has no local renderer for is drawn by the server and lands here
+			// after the row is built, so the row - not the inputs - carries the handlers, and the
+			// inputs are read at event time. Capture: `blur` does not bubble, and the host writes its
+			// own value with a `change` that does not bubble either.
+			const saveValue = () => this.#saveValue(valueEditorNode);
+			main_core.Event.bind(valueEditorNode, 'change', saveValue, true);
+			main_core.Event.bind(valueEditorNode, 'blur', saveValue, true);
+			return root;
+		}
+
+		// Only the fields the control was asked to name carry the value. Everything else it renders -
+		// the "..." button of the value selector, printable `_text` companions, the timezone of a
+		// datetime - must stay out, or the last node in the container becomes the saved value.
+		#getValueInputs(valueEditorNode) {
+			const name = `${this.#fieldPrefix}value`;
+			return [...valueEditorNode.querySelectorAll(`[name="${name}"], [name="${name}[]"]`)];
+		}
+		#saveValue(valueEditorNode) {
+			// A row replaced by an operator change keeps its handlers until it is dropped.
+			if (!this.#condition || valueEditorNode !== this.valueEditorNode) {
+				return;
+			}
+			const valueInputs = this.#getValueInputs(valueEditorNode);
+			if (valueInputs.length === 0) {
+				return;
+			}
+			const lastInput = valueInputs[valueInputs.length - 1];
+			let value = lastInput.value;
+			if (this.#condition.operator === Operator.BETWEEN && valueInputs.length > 1) {
+				value = [valueInputs[0].value, valueInputs[1].value];
+			} else if (isMultiValueOperator(this.#condition.operator) && lastInput.multiple) {
+				value = [...lastInput.selectedOptions].map(option => option.value);
+			}
+
+			// Bound to both `change` and `blur`, so one edit gets here more than once; each pass
+			// re-serializes the whole group for the host, so a pass without a new value is skipped.
+			if (this.#isCurrentValue(value)) {
+				return;
+			}
+
+			// setValue('') collapses '=' / '!=' into the empty operators: keep the chosen one.
+			const currentOperator = this.#condition.operator;
+			this.#condition.setValue(value);
+			this.#condition.setOperator(currentOperator);
+			this.updateValueNode();
+			this.emit('onChange', new main_core_events.BaseEvent({
+				data: {
+					conditionSelector: this
+				}
+			}));
+		}
+
+		// Compared as read from the control: a BETWEEN pair and a multi-select list have to differ
+		// element by element, which the single-slot serialization of the transport cannot express.
+		#isCurrentValue(value) {
+			return JSON.stringify(value ?? '') === JSON.stringify(this.#condition.value ?? '');
+		}
+
+		// BETWEEN is transported as two consecutive value slots (see ConditionGroup.createFromForm),
+		// so a row that carries it renders both from the start - one slot would take the value of the
+		// next row for its second end.
+		#createSecondValueNode() {
+			if (this.#condition.operator !== Operator.BETWEEN) {
+				return '';
+			}
+			return this.#createValueNode(this.#getSecondValue());
+		}
+
+		// Only a pair carries a second end: until both ends are filled the value is a plain string,
+		// and indexing that puts its second character into the slot.
+		#getSecondValue() {
+			const value = this.#condition.value;
+			return main_core.Type.isArrayFilled(value) && value.length > 1 ? value[1] : '';
 		}
 		#createValueNode(value) {
 			return main_core.Tag.render`
@@ -1852,23 +2223,39 @@ this.BX = this.BX || {};
 				return;
 			}
 			main_core.Dom.clean(this.labelNode);
+			if (this.#viewMode === ConditionViewMode.New) {
+				const field = this.getField(this.#condition.object, this.#condition.field);
+				main_core.Dom.clean(this.fieldEditorNode);
+				main_core.Dom.append(main_core.Tag.render`
+					<div class="ui-ctl-element bizproc-condition-row__field-control-text">
+						${main_core.Text.encode(field?.Name || this.#condition.field || main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CONDITION_FIELD_NOT_SELECTED'))}
+					</div>
+				`, this.fieldEditorNode);
+				main_core.Dom.append(main_core.Tag.render`<span class="ui-ctl-after ui-ctl-icon-angle" aria-hidden="true"></span>`, this.fieldEditorNode);
+				main_core.Dom.clean(this.operatorEditorNode);
+				main_core.Dom.append(main_core.Tag.render`<span class="bizproc-condition-row__operator-control-text">${main_core.Text.encode(this.getOperatorLabel(this.#condition.operator))}</span>`, this.operatorEditorNode);
+				main_core.Dom.append(main_core.Tag.render`<span class="bizproc-condition-row__control-chevron" aria-hidden="true"></span>`, this.operatorEditorNode);
+				this.#renderValueEditor(field);
+				return;
+			}
+			const textClass = 'bizproc-automation-popup-settings__condition-text';
 			if (this.#condition.field === '') {
 				main_core.Dom.append(main_core.Tag.render`
-					<span class="bizproc-automation-popup-settings__condition-text">
+					<span class="${textClass}">
 						${main_core.Text.encode(this.getOperatorLabel(Operator.EMPTY))}
 					</span>
 				`, this.labelNode);
 			} else {
 				const field = this.getField(this.#condition.object, this.#condition.field) || '?';
 				const valueLabel = this.#getValueLabel(field, this.labelNode);
-				main_core.Dom.append(main_core.Tag.render`<span class="bizproc-automation-popup-settings__condition-text">${main_core.Text.encode(field.Name)}</span>`, this.labelNode);
+				main_core.Dom.append(main_core.Tag.render`<span class="${textClass}">${main_core.Text.encode(field.Name)}</span>`, this.labelNode);
 				main_core.Dom.append(main_core.Tag.render`
-					<span class="bizproc-automation-popup-settings__condition-text">
+					<span class="${textClass}">
 						${main_core.Text.encode(this.getOperatorLabel(this.#condition.operator))}
 					</span>
 				`, this.labelNode);
 				if (valueLabel) {
-					main_core.Dom.append(main_core.Tag.render`<span data-role="value-label" class="bizproc-automation-popup-settings__condition-text">${main_core.Text.encode(valueLabel)}</span>`, this.labelNode);
+					main_core.Dom.append(main_core.Tag.render`<span data-role="value-label" class="${textClass}">${main_core.Text.encode(valueLabel)}</span>`, this.labelNode);
 				}
 			}
 		}
@@ -1893,6 +2280,127 @@ this.BX = this.BX || {};
 		}
 		onLabelClick() {
 			this.showPopup();
+		}
+		onInlineFieldClick() {
+			if (this.#fieldSelector?.isOpen()) {
+				this.#fieldSelector.destroy();
+				this.#fieldSelector = null;
+				return;
+			}
+			const fields = this.filterFields();
+			this.#fieldSelector?.destroy();
+			const fieldSelector = new ConditionFieldSelector(fields, this.fieldEditorNode, field => {
+				if (this.#fieldSelector !== fieldSelector || !field || !this.#condition || !this.fieldEditorNode?.isConnected) {
+					return;
+				}
+				this.#fieldSelector = null;
+				this.#condition.setObject(field.ObjectId);
+				this.#condition.setField(field.Id);
+				const operators = this.getOperators(field.Type, field.Multiple);
+				const nextOperator = operators[this.#condition.operator] ? this.#condition.operator : Operator.EQUAL;
+				this.#condition.setValue('');
+				// setValue('') collapses '=' / '!=' into the empty operators, so restore the intended one.
+				this.#condition.setOperator(nextOperator);
+				// Data first, painting last: the value control belongs to the host and may fail to
+				// render, and a failed repaint must not leave the transport on the previous field.
+				this.updateValueNode();
+				this.emit('onChange', new main_core_events.BaseEvent({
+					data: {
+						conditionSelector: this
+					}
+				}));
+				this.#refreshNewValueRow();
+				this.setLabelText();
+			});
+			this.#fieldSelector = fieldSelector;
+			fieldSelector.show().catch(error => console.error(error));
+		}
+		onInlineOperatorClick() {
+			const field = this.getField(this.#condition.object, this.#condition.field);
+			if (!field || !this.operatorEditorNode) {
+				return;
+			}
+			const operatorList = this.getOperators(field.Type, field.Multiple);
+			// Esc, a click outside or a repeated click on the control only close the popup, and a
+			// closed popup stays in the manager registry holding this row - so the previous menu
+			// goes before a new one is built.
+			this.#destroyOperatorMenu();
+			this.#operatorMenu = new main_popup.Menu({
+				id: `bp-condition-operator-menu-${main_core.Text.getRandom()}`,
+				bindElement: this.operatorEditorNode,
+				maxHeight: OPERATOR_MENU_MAX_HEIGHT,
+				items: Object.entries(operatorList).map(([operator, label]) => ({
+					// MenuItem escapes only ["'<>] for the `text` option and leaves `&` alone on purpose
+					// (`encodeSafe` in main/install/js/main/popup/src/menu/menu-item.ts), then renders the
+					// result as html - so the two encoders compose instead of escaping twice, and an
+					// entity sequence written inside the label survives to the user.
+					text: main_core.Text.encode(label),
+					dataset: {
+						testid: `bp-condition-operator-item-${operator}`
+					},
+					onclick: () => {
+						this.#destroyOperatorMenu();
+						// The value was entered under the previous operator: the new one gets it in its own
+						// shape, or none at all. setValue() collapses '=' / '!=' into the empty operators,
+						// so the picked operator is set after it.
+						this.#condition.setValue(adaptValueToOperator(operator, this.#condition.value));
+						this.#condition.setOperator(operator);
+						if (this.operatorNode) {
+							this.operatorNode.value = operator;
+						}
+
+						// Same order as on a field change: transport and consumer before the repaint.
+						this.updateValueNode();
+						this.emit('onChange', new main_core_events.BaseEvent({
+							data: {
+								conditionSelector: this
+							}
+						}));
+						this.#refreshNewValueRow();
+						this.setLabelText();
+					}
+				}))
+			});
+			this.#operatorMenu.show();
+		}
+		#destroyOperatorMenu() {
+			if (this.#operatorMenu) {
+				this.#operatorMenu.close();
+				this.#operatorMenu.destroy();
+				this.#operatorMenu = null;
+			}
+		}
+
+		// The value is a live control, like the fields of an action construction: it is rendered at once,
+		// keeps its own value selector working and never swaps between a caption and an editor.
+		#renderValueEditor(field) {
+			if (!this.valueEditorNode) {
+				return;
+			}
+			main_core.Dom.clean(this.valueEditorNode);
+			if (!field) {
+				return;
+			}
+			main_core.Dom.append(this.#getValueNode(field, this.#condition.value, this.#condition.operator), this.valueEditorNode);
+		}
+		#refreshNewValueRow() {
+			if (this.#viewMode !== ConditionViewMode.New || !this.node) {
+				return;
+			}
+			const currentRow = this.node.querySelector('.bizproc-condition-row__value');
+			const nextRow = this.#createNewValueRow();
+			if (currentRow && nextRow === '') {
+				main_core.Dom.remove(currentRow);
+				this.valueEditorNode = null;
+				return;
+			}
+			if (!currentRow && nextRow !== '') {
+				this.operatorEditorNode.parentNode.after(nextRow);
+				return;
+			}
+			if (currentRow && nextRow !== '') {
+				main_core.Dom.replace(currentRow, nextRow);
+			}
 		}
 		showPopup() {
 			if (this.popup) {
@@ -1928,7 +2436,7 @@ this.BX = this.BX || {};
 				root: form,
 				operatorWrapper
 			} = main_core.Tag.render`
-			<form class="bizproc-automation-popup-select-block">
+			<form class="bizproc-automation-popup-select-block" data-testid="bp-condition-form">
 				<div class="bizproc-automation-popup-settings">${fieldSelectLabel}</div>
 				<div ref="operatorWrapper" class="bizproc-automation-popup-settings">${operatorSelect}</div>
 				${valueWrapper}
@@ -1943,6 +2451,9 @@ this.BX = this.BX || {};
 				buttons: [new ui_buttons.Button({
 					color: ui_buttons.Button.Color.PRIMARY,
 					text: main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CHOOSE_BUTTON_CAPS'),
+					dataset: {
+						testid: 'bp-condition-choose'
+					},
 					onclick: () => {
 						this.#condition.setObject(objectSelect.value);
 						this.#condition.setField(fieldSelect.value);
@@ -1967,10 +2478,18 @@ this.BX = this.BX || {};
 							this.#condition.setValue(input ? input.value : '');
 						}
 						this.updateValueNode();
+						this.emit('onChange', new main_core_events.BaseEvent({
+							data: {
+								conditionSelector: this
+							}
+						}));
 						this.popup.close();
 					}
 				}), new ui_buttons.CancelButton({
 					text: main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CANCEL_BUTTON_CAPS'),
+					dataset: {
+						testid: 'bp-condition-cancel'
+					},
 					onclick: () => {
 						this.popup.close();
 					}
@@ -2031,7 +2550,7 @@ this.BX = this.BX || {};
 					this.valueNode.value = serializeConditionValue(this.#condition.operator, this.#condition.value);
 				}
 				if (this.#condition.operator === Operator.BETWEEN) {
-					const value2 = this.#condition.value[1] || '';
+					const value2 = this.#getSecondValue();
 					if (this.#valueNode2) {
 						this.#valueNode2.value = value2;
 					} else {
@@ -2215,9 +2734,15 @@ this.BX = this.BX || {};
 					conditionSelector: this
 				}
 			}));
+			this.#fieldSelector?.destroy();
+			this.#fieldSelector = null;
+			this.#destroyOperatorMenu();
 			this.#condition = null;
 			main_core.Dom.remove(this.node);
 			this.labelNode = null;
+			this.fieldEditorNode = null;
+			this.operatorEditorNode = null;
+			this.valueEditorNode = null;
 			this.fieldNode = null;
 			this.operatorNode = null;
 			this.valueNode = null;
@@ -2227,6 +2752,9 @@ this.BX = this.BX || {};
 		}
 		changeJoiner(btn, event) {}
 		destroy() {
+			this.#fieldSelector?.destroy();
+			this.#fieldSelector = null;
+			this.#destroyOperatorMenu();
 			if (this.popup) {
 				this.popup.close();
 			}
@@ -2248,11 +2776,15 @@ this.BX = this.BX || {};
 		#options = {};
 		#toggleButtonNode;
 		#draggableNode;
+		#draggable = null;
 		#conditionContentNode = null;
 		#toggleTextNode = null;
 		#customSelectorFn = null;
 		#expandedInputNode = null;
 		#renderExpandedInput = false;
+		#viewMode = ConditionViewMode.Legacy;
+		#renderHeaderAction = null;
+		#removeButtons = new WeakMap();
 		constructor(conditionGroup, options) {
 			super();
 			this.setEventNamespace('BX.Bizproc.Condition');
@@ -2274,6 +2806,8 @@ this.BX = this.BX || {};
 				this.#showValuesSelector = options.showValuesSelector ?? true;
 				this.#context = options.context;
 				this.#renderExpandedInput = options.renderExpandedInput === true;
+				this.#viewMode = normalizeConditionViewMode(options.viewMode);
+				this.#renderHeaderAction = options.renderHeaderAction;
 				this.#options = options;
 			}
 			if (!(this.#context instanceof ConditionContext)) {
@@ -2294,15 +2828,33 @@ this.BX = this.BX || {};
 				onOpenMenu: this.#onOpenMenu,
 				showValuesSelector: this.#showValuesSelector,
 				customSelectorFn: this.#customSelectorFn,
-				context: this.#context
+				context: this.#context,
+				viewMode: this.#viewMode
 			});
 			conditionSelector.subscribe('onRemoveConditionClick', this.#onRemoveConditionClick.bind(this));
+			conditionSelector.subscribe('onChange', this.#emitChange.bind(this));
 			return conditionSelector;
 		}
 		createNode() {
 			this.#conditionGroup.getItems().forEach(item => {
 				this.#itemSelectors.push(this.#buildConditionSelector(item[0], item[1]));
 			});
+			if (this.#viewMode === ConditionViewMode.New) {
+				// Seeding the initial render is not a change made by the user, so nothing is emitted here.
+				this.#seedFirstRow();
+				const renderer = new ConditionViewRenderer();
+				const conditionNodes = this.#itemSelectors.map((selector, index) => this.#createConditionNode(selector, index, renderer));
+				const {
+					root,
+					draggableNode,
+					addButton
+				} = renderer.createGroupNode(conditionNodes);
+				this.#draggableNode = draggableNode;
+				main_core.Event.bind(addButton, 'click', this.addItem.bind(this));
+				this.#mountHeaderAction();
+				this.#initDragNDrop();
+				return root;
+			}
 			const hasConditions = this.#conditionGroup.items.length > 0;
 			const isCollapsed = this.#options.isExpanded !== true && hasConditions;
 			const collapseButtonTitle = isCollapsed ? main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_EXPAND_CONDITION') : main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_COLLAPSE_CONDITION');
@@ -2376,6 +2928,100 @@ this.BX = this.BX || {};
 			}
 			return root;
 		}
+		#createConditionNode(selector, index, renderer = null) {
+			if (this.#viewMode !== ConditionViewMode.New) {
+				return selector.createNode();
+			}
+
+			// A row that is already painted is moved into the new card as it stands: the position in the
+			// list belongs to the card, while the row holds live value controls built by the host - and
+			// the values the user typed into them.
+			const conditionNode = selector.node ?? selector.createNode();
+			const viewRenderer = renderer || new ConditionViewRenderer();
+			if (index === 0) {
+				const rootNode = viewRenderer.createRootGroupNode(conditionNode);
+				this.#mountRemoveButton(selector, rootNode);
+				return rootNode;
+			}
+
+			// The joiner is stored the way the backend reads it: items[i][1] links condition i to the
+			// next one, and the joiner of the last condition is never looked at. The switch is painted
+			// in the header of a card, above its own condition, so it describes the link to the
+			// previous one and belongs to the previous selector.
+			const joinerOwner = this.#itemSelectors[index - 1];
+			const nestedNode = viewRenderer.createNestedGroupNode(conditionNode, joinerOwner.getJoiner());
+			this.#mountRemoveButton(selector, nestedNode);
+			const andButton = nestedNode.querySelector('[data-role="condition-joiner-and"]');
+			const orButton = nestedNode.querySelector('[data-role="condition-joiner-or"]');
+			const descriptionNode = nestedNode.querySelector('[data-role="condition-joiner-description"]');
+			const setJoiner = joiner => {
+				joinerOwner.setJoiner(joiner);
+				this.#paintJoinerButton(andButton, joiner === ConditionGroup.JOINER.And);
+				this.#paintJoinerButton(orButton, joiner === ConditionGroup.JOINER.Or);
+				main_core.Dom.adjust(descriptionNode, {
+					text: viewRenderer.getJoinerDescription(joiner)
+				});
+			};
+			main_core.Event.bind(andButton, 'click', () => setJoiner(ConditionGroup.JOINER.And));
+			main_core.Event.bind(orButton, 'click', () => setJoiner(ConditionGroup.JOINER.Or));
+			return nestedNode;
+		}
+
+		// The two buttons of the switch differ by the class the theme paints and by the pressed state a
+		// screen reader reads out, so both are set from the same choice.
+		#paintJoinerButton(button, isActive) {
+			main_core.Dom.toggleClass(button, '--active', isActive);
+			main_core.Dom.attr(button, 'aria-pressed', isActive ? 'true' : 'false');
+		}
+
+		// The new view always shows the first row, so a group left with no conditions is painted with one
+		// blank condition instead of a lone "add" button - both when it arrives empty and when the user
+		// empties it. The blank row carries no field, so getValue() drops it until it gets one.
+		#seedFirstRow() {
+			if (this.#viewMode !== ConditionViewMode.New || this.#itemSelectors.length > 0) {
+				return;
+			}
+			this.#itemSelectors.push(this.#buildConditionSelector(new Condition({}, this.#conditionGroup)));
+		}
+
+		// The button is drawn inside the row and lives in the header of the card. A row that is remounted
+		// has already given its button away, so the button is remembered instead of being looked for in
+		// the row it has left.
+		#mountRemoveButton(selector, cardNode) {
+			const removeButton = this.#removeButtons.get(selector) ?? selector.node?.querySelector('[data-testid="bp-condition-remove"]');
+			const headerAction = cardNode.querySelector('[data-role="condition-header-action"]');
+			if (removeButton && headerAction) {
+				this.#removeButtons.set(selector, removeButton);
+				main_core.Dom.append(removeButton, headerAction);
+			}
+		}
+
+		// The host is handed one slot, the one of the first card. Headers are built with their cards and
+		// go with them on every repaint, so the action is placed again into the slot that replaced it.
+		#mountHeaderAction() {
+			if (!this.#renderHeaderAction || !main_core.Type.isDomNode(this.#draggableNode)) {
+				return;
+			}
+			const container = this.#draggableNode.querySelector('[data-role="condition-header-action"]');
+			if (container) {
+				this.#renderHeaderAction(container);
+			}
+		}
+
+		// Cards carry their position (root card vs joined card), so after a removal or a reorder the cards
+		// are built anew around the rows, which carry nothing of the sort and are kept as they are.
+		#rerenderItems() {
+			if (this.#viewMode !== ConditionViewMode.New || !this.#draggableNode) {
+				return;
+			}
+			const renderer = new ConditionViewRenderer();
+			// The cards are built before the list is emptied: building one moves the row it wraps out of
+			// the card it came from, so what is dropped here are the headers alone.
+			const cards = this.#itemSelectors.map((selector, index) => this.#createConditionNode(selector, index, renderer));
+			main_core.Dom.clean(this.#draggableNode);
+			cards.forEach(card => main_core.Dom.append(card, this.#draggableNode));
+			this.#mountHeaderAction();
+		}
 		#onToggleGroupViewClick() {
 			const isExpanded = !main_core.Dom.hasClass(this.#conditionContentNode, '--active');
 			this.#setExpanded(isExpanded);
@@ -2414,20 +3060,50 @@ this.BX = this.BX || {};
 			if (!Draggable) {
 				return;
 			}
-			new Draggable({
+
+			// Its sensors listen on `document`, so a previous instance has to go before a new one
+			// is mounted onto the same group.
+			this.#destroyDragNDrop();
+			this.#draggable = new Draggable({
 				container: this.#draggableNode,
 				type: Draggable.CLONE,
-				draggable: '.bizproc-automation-popup-settings__condition-selector',
-				dragElement: '.bizproc-automation-popup-settings__condition-item_draggable'
+				draggable: this.#viewMode === ConditionViewMode.New ? '.ui-draggable--item' : '.bizproc-automation-popup-settings__condition-selector',
+				dragElement: this.#viewMode === ConditionViewMode.New ? '.bizproc-condition-group__drag' : '.bizproc-automation-popup-settings__condition-item_draggable'
 			});
+			this.#draggable.subscribe('end', this.#onDragEnd.bind(this));
+		}
+		#destroyDragNDrop() {
+			this.#draggable?.destroy();
+			this.#draggable = null;
+		}
+
+		// Dragging moves the cards in the DOM only, so the order is read back from there: the value
+		// is built from #itemSelectors, and in the new view a card also carries its position (root
+		// card with the badge vs card joined by AND/OR), which has to be repainted for the new order.
+		#onDragEnd() {
+			if (!main_core.Type.isDomNode(this.#draggableNode)) {
+				return;
+			}
+			const reordered = [...this.#draggableNode.children].map(card => this.#itemSelectors.find(selector => selector.node && card.contains(selector.node))).filter(Boolean);
+			if (reordered.length !== this.#itemSelectors.length) {
+				return;
+			}
+			const isSameOrder = reordered.every((selector, index) => selector === this.#itemSelectors[index]);
+			if (isSameOrder) {
+				return;
+			}
+			this.#itemSelectors = reordered;
+			this.#rerenderItems();
+			this.#emitChange();
 		}
 		addItem() {
 			const conditionSelector = this.#buildConditionSelector(new Condition({}, this.#conditionGroup));
 			this.#itemSelectors.push(conditionSelector);
-			main_core.Dom.append(conditionSelector.createNode(), this.#draggableNode);
-			if (main_core.Dom.hasClass(this.#toggleButtonNode, '--disabled')) {
+			main_core.Dom.append(this.#createConditionNode(conditionSelector, this.#itemSelectors.length - 1), this.#draggableNode);
+			if (this.#viewMode === ConditionViewMode.Legacy && main_core.Dom.hasClass(this.#toggleButtonNode, '--disabled')) {
 				main_core.Dom.removeClass(this.#toggleButtonNode, '--disabled');
 			}
+			this.#emitChange();
 		}
 
 		/**
@@ -2452,7 +3128,8 @@ this.BX = this.BX || {};
 		}
 
 		/**
-		 * Public post-mount API: drop all conditions and repaint an empty group. Used by activities
+		 * Public post-mount API: drop all conditions and repaint an empty group - in the new view the
+		 * card stays and is emptied, exactly as an empty group is first painted. Used by activities
 		 * when the field context fully changes (e.g. a different storage) - conditions built for the
 		 * previous field set are invalid there and must not leak into the new one.
 		 */
@@ -2461,6 +3138,11 @@ this.BX = this.BX || {};
 			this.#itemSelectors = [];
 			if (main_core.Type.isDomNode(this.#draggableNode)) {
 				main_core.Dom.clean(this.#draggableNode);
+			}
+			if (this.#viewMode === ConditionViewMode.New) {
+				this.#seedFirstRow();
+				this.#rerenderItems();
+				return;
 			}
 
 			// An empty group must stay editable: expand the content so the "add condition"
@@ -2486,25 +3168,59 @@ this.BX = this.BX || {};
 			this.#itemSelectors.forEach(selector => selector.destroy());
 			this.#itemSelectors = [];
 			main_core.Dom.clean(this.#draggableNode);
-			currentItems.forEach(([condition, joiner]) => {
+			currentItems.forEach(([condition, joiner], index) => {
 				const conditionSelector = this.#buildConditionSelector(condition, joiner);
 				this.#itemSelectors.push(conditionSelector);
-				main_core.Dom.append(conditionSelector.createNode(), this.#draggableNode);
+				main_core.Dom.append(this.#createConditionNode(conditionSelector, index), this.#draggableNode);
 			});
+			if (this.#viewMode === ConditionViewMode.New) {
+				this.#mountHeaderAction();
+			}
 		}
 		#onRemoveConditionClick(event) {
 			const conditionSelector = event.getData().conditionSelector;
+			// Only the new view wraps a row into a card of its own; in the legacy view the class belongs
+			// to whatever the host painted around the group, and that must not be searched for.
+			if (this.#viewMode === ConditionViewMode.New) {
+				const cardNode = conditionSelector?.node?.closest('.bizproc-condition-group');
+				if (cardNode) {
+					main_core.Dom.remove(cardNode);
+				}
+			}
 			if (conditionSelector) {
 				const index = this.#itemSelectors.indexOf(conditionSelector);
 				if (index > -1) {
 					this.#itemSelectors.splice(index, 1);
 				}
 			}
-			if (this.#itemSelectors.length <= 0 && !main_core.Dom.hasClass(this.#toggleButtonNode, '--disabled')) {
+			this.#seedFirstRow();
+			this.#rerenderItems();
+			if (this.#viewMode === ConditionViewMode.Legacy && this.#itemSelectors.length <= 0 && !main_core.Dom.hasClass(this.#toggleButtonNode, '--disabled')) {
 				main_core.Dom.addClass(this.#toggleButtonNode, '--disabled');
 			}
+			this.#emitChange();
+		}
+		getValue() {
+			const initialValue = this.#conditionGroup.serialize();
+			return new ConditionGroup({
+				type: initialValue.type,
+				activityNames: initialValue.activityNames,
+				// A row the user added but never filled in is dropped by createFromForm, so it must
+				// not reach the backend through this channel either. ConditionGroup.serialize() has
+				// its own guard, but it reads `.field` off the [condition, joiner] tuple and never
+				// fires; that behaviour is shared with the robots and is locked by its own test.
+				items: this.#itemSelectors.map(selector => [selector.getCondition().serialize(), selector.getJoiner()]).filter(([condition]) => condition.field !== '')
+			}).serialize();
+		}
+		#emitChange() {
+			this.emit('onChange', new main_core_events.BaseEvent({
+				data: {
+					value: this.getValue()
+				}
+			}));
 		}
 		destroy() {
+			this.#destroyDragNDrop();
 			this.#itemSelectors.forEach(selector => selector.destroy());
 			this.#itemSelectors = [];
 		}
@@ -2583,6 +3299,7 @@ this.BX = this.BX || {};
 	exports.ConditionGroup = ConditionGroup;
 	exports.ConditionGroupSelector = ConditionGroupSelector;
 	exports.ConditionSelector = ConditionSelector;
+	exports.ConditionViewMode = ConditionViewMode;
 	exports.DelayInterval = DelayInterval;
 	exports.DelayIntervalSelector = DelayIntervalSelector;
 	exports.InlineTimeSelector = InlineTimeSelector;

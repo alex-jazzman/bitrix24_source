@@ -128,18 +128,21 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 		}
 
 		onChangeItemValue = (id, controller, value) => {
-			controller.set(value);
+			const applying = controller.set(value);
 
 			this.state.itemsValues = {
 				...this.state.itemsValues,
 				[id]: value,
 			};
+
+			return applying;
 		};
 
 		render()
 		{
 			return Box(
 				{
+					testId: this.getTestId('page'),
 					style: {
 						justifyContent: 'center',
 					},

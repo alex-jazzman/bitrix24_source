@@ -5,7 +5,6 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 
-	const { DialogType, RecentTab } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
@@ -73,9 +72,7 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 				return;
 			}
 
-			const sectionsByChatId = new Map(
-				recentConfigs.map((config) => [Number(config.chatId), config.sections]),
-			);
+			const sectionsByChatId = this.#createRecentSectionsByChatId(recentConfigs);
 
 			const parentChatIdByChatId = new Map(
 				chats.map((chat) => [Number(chat.id), Number(chat.parentChatId) || 0]),
@@ -145,7 +142,9 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 								shouldSendDeleteAnalytics: false,
 							});
 						}
-						await this.store.dispatch('recentModel/deleteOpenChannel', { id: dialogHelper.dialogId });
+						// A completely deleted chat cannot be left in any section, so the row goes as a
+						// whole: sync fills recentConfigs only for chats with an ADD event.
+						await recentProvider.deleteFromSource(source, { dialogId: dialogHelper.dialogId });
 						await chatProvider.deleteFromSource(source, { chatId });
 					}
 					else
@@ -182,6 +181,18 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 			const stickerDataProvider = new StickerDataProvider();
 
 			await stickerDataProvider.removeDeletedStickers(messages, stickers);
+		}
+
+		#createRecentSectionsByChatId(recentConfigs)
+		{
+			if (!Type.isArrayFilled(recentConfigs))
+			{
+				return new Map();
+			}
+
+			return new Map(
+				recentConfigs.map((config) => [Number(config.chatId), config.sections]),
+			);
 		}
 	}
 

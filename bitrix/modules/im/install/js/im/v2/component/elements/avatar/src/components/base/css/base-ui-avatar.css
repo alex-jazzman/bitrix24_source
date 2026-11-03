@@ -2,3 +2,8 @@
 	display: flex;
 	position: relative;
 }
+
+/* A decorative placeholder (--placeholder-image) is a part of the avatar design, so the base stays under it */
+.bx-im-base-ui-avatar__container.--has-image:not(.--placeholder-image) .ui-avatar-base {
+	display: none;
+}

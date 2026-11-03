@@ -10,6 +10,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 	const { Imap } = require('mail/mailbox/connector/steps/imap');
 	const { OAuth } = require('mail/mailbox/connector/steps/oauth');
 	const { Settings } = require('mail/mailbox/connector/steps/settings');
+	const { CreateMailbox } = require('mail/mailbox/connector/steps/create-mailbox');
 	const { NotifyManager } = require('notify-manager');
 	const { MailDialog } = require('mail/dialog');
 	const { AnalyticsEvent } = require('analytics');
@@ -23,14 +24,18 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				parentWidget,
 				successCallback = () => {},
 				connectFrom = 'mail',
+				startStepId = 'servicesList',
+				createBitrixEnabled = false,
 			} = props;
 			this.parentWidget = parentWidget;
 			this.successCallback = successCallback;
+			this.createBitrixEnabled = createBitrixEnabled;
 			this.connectedEmail = false;
 			this.stepProps = {};
 			this.getStepForId = this.getStepForId.bind(this);
 			this.oauthMode = true;
 			this.connectFrom = connectFrom;
+			this.startStepId = startStepId;
 			this.pendingCredentials = null;
 			this.settingsConfig = null;
 		}
@@ -103,11 +108,26 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			return BX.ajax.runAction(AjaxMethod.getMailboxSettingsConfig, {});
 		}
 
+		getStepIds()
+		{
+			const stepIds = this.getSteps().map((step) => step.id);
+
+			if (this.startStepId && this.startStepId !== stepIds[0] && stepIds.includes(this.startStepId))
+			{
+				return [
+					this.startStepId,
+					...stepIds.filter((id) => id !== this.startStepId),
+				];
+			}
+
+			return stepIds;
+		}
+
 		renderWizard()
 		{
 			return new MailWizard({
 				parentLayout: this.currentLayout,
-				steps: this.getSteps().map((step) => step.id),
+				steps: this.getStepIds(),
 				stepForId: this.getStepForId,
 				useProgressBar: true,
 				hideProgressBarInLastTab: true,
@@ -203,6 +223,48 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			this.currentLayout = await this.wizard.openStepWidget('settings');
 		}
 
+		async goToCreateMailbox()
+		{
+			const createMailboxStep = this.getStepForId('createMailbox');
+			this.wizard.addStep('createMailbox', createMailboxStep);
+
+			this.currentLayout = await this.wizard.openStepWidget('createMailbox');
+		}
+
+		createBitrixMailbox(fields)
+		{
+			NotifyManager.showLoadingIndicator();
+
+			return BX.ajax.runAction(AjaxMethod.createBitrixMailbox, { data: fields })
+				.then(({ data }) => {
+					this.sendSuccessAnalytics();
+					this.saveConnectedEmail(data.email);
+					this.saveConnectedMailboxId(data.id);
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+					this.goToCreateFinalStep();
+				})
+				.catch(({ errors }) => {
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+					this.sendErrorAnalytics();
+					NotifyManager.showErrors(errors);
+				});
+		}
+
+		goToCreateFinalStep()
+		{
+			MailDialog.show({
+				type: MailDialog.CREATE_MAILBOX_FINAL,
+				layoutWidget: this.currentLayout,
+				successCallback: () => {
+					this.successCallback(
+						this.getConnectedMailboxId(),
+						this.getConnectedEmail(),
+					);
+				},
+				mailboxId: this.getConnectedMailboxId(),
+			});
+		}
+
 		goToFinalStep()
 		{
 			MailDialog.show({
@@ -221,6 +283,11 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 		getMailServiceKey()
 		{
 			return this.currentMailServiceKey;
+		}
+
+		isCreateBitrixEnabled()
+		{
+			return this.createBitrixEnabled;
 		}
 
 		onErrorEnter(errors, showErrors = true)
@@ -322,6 +389,10 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				{
 					id: 'settings',
 					component: Settings,
+				},
+				{
+					id: 'createMailbox',
+					component: CreateMailbox,
 				},
 			);
 

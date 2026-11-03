@@ -17,6 +17,7 @@ export type UploadRegistryData = {
 	temporaryMessageId: string,
 	taskId: TemporallyFileId | string,
 	status: FileStatus,
+	uploadStarted?: boolean,
 }
 
 export type PreparedTasks = {
@@ -62,6 +63,17 @@ export type SendMessageParams = {
 	temporaryMessageId: string,
 	dialogId: DialogId,
 	diskFolderId: number,
+}
+
+export type ForwardTransportParams = {
+	dialogId: DialogId,
+	forwardIds: Record<string, number>,
+}
+
+export type ForwardTransportResponse = {
+	id?: number | null,
+	uuidMap?: Record<string, number>,
+	failureMap?: Record<string, string>,
 }
 
 export type DeviceFile = {

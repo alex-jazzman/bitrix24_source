@@ -1,6 +1,7 @@
 import { Type } from 'main.core';
 import { NodeSelection } from '@tiptap/pm/state';
-import { normalizeCollectionId, normalizeDocumentId } from '../utils/normalize';
+import { normalizeCollectionId, normalizeDocumentId, toPositiveInt } from '../utils/normalize';
+import { ASSET_TYPE_TO_NODE } from '../extensions/attachments/note-asset-parser';
 
 export function createUploadToken(): string
 {
@@ -104,6 +105,50 @@ export function insertUploadAssetNode(
 	}
 
 	chain.run();
+}
+
+/**
+ * Inserts attachment nodes for files picked on Disk, at the caret or over the current selection.
+ *
+ * Unlike an upload there is no pending tile and no progress: the file already exists, so the final
+ * node goes in straight away. Its name, size and links stay empty here and arrive from the batch
+ * resolve — the same path that fills them on document open, so a freshly picked file and a reopened
+ * one go through identical code.
+ */
+export function insertDiskAssetNodes(
+	editor: Object | null,
+	pickedFiles: Array<{ diskObjectId: number, assetType: string }>,
+): void
+{
+	if (!editor || !Array.isArray(pickedFiles) || pickedFiles.length === 0)
+	{
+		return;
+	}
+
+	const content = pickedFiles
+		.map((file) => {
+			const nodeType = ASSET_TYPE_TO_NODE[file?.assetType];
+			const diskObjectId = toPositiveInt(file?.diskObjectId);
+
+			return (nodeType && diskObjectId !== null)
+				? { type: nodeType, attrs: { diskObjectId } }
+				: null
+			;
+		})
+		.filter(Boolean)
+	;
+
+	if (content.length === 0)
+	{
+		return;
+	}
+
+	const from = Number(editor.state.selection?.from);
+	const to = Number(editor.state.selection?.to);
+	const hasSelection = Number.isInteger(from) && Number.isInteger(to);
+	const range = hasSelection ? { from, to } : editor.state.doc.content.size;
+
+	editor.chain().focus().insertContentAt(range, content).run();
 }
 
 export function createScopedUploadService(

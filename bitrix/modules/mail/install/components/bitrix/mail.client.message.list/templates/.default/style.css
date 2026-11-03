@@ -162,6 +162,10 @@
 	max-width: 260px;
 }
 
+.pagetitle-mail-view .ui-slider-page.--left-panel-resizable .ui-page-slider-left-panel {
+	max-width: none;
+}
+
 /* region LEFT PANEL */
 .ui-mail-left-menu-underscore {
 	margin-right:15px;
@@ -398,6 +402,10 @@
 
 .mail-msg-list-grid .main-grid-cell {
 	vertical-align: middle;
+}
+
+.mail-msg-list-grid .main-grid-row-body .main-grid-cell[data-column-id="SUBJECT"] {
+	max-width: 400px;
 }
 
 .mail-msg-list-grid .main-grid-header .main-grid-cell-checkbox .main-grid-cell-head-container {
@@ -1458,6 +1466,11 @@ a.mail-msg-list-attachment-chip__open:focus-visible,
 	height: 56px !important;
 }
 
+.mail-msg-list-action-panel > .ui-checkbox {
+	margin-left: var(--ui-space-inline-sm, 12px);
+	align-self: center;
+}
+
 .mail-draft-list-view .mail-msg-list-actionpanel-container .ui-action-panel.mail-msg-list-action-panel:not(.ui-action-panel-fixed) {
 	top: 0 !important;
 	left: 0 !important;
@@ -1519,10 +1532,32 @@ a.mail-msg-list-attachment-chip__open:focus-visible,
 	white-space: nowrap;
 }
 
+.mail-undo-send-pending-status {
+	flex: 0 0 auto;
+	margin-left: 4px;
+	color: var(--ui-color-base-50, #a8adb4);
+	font-size: var(--ui-font-size-sm, 13px);
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
 .mail-draft-list-view .mail-msg-list-subject {
 	flex: 0 1 auto;
 	min-width: 0;
 	font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.mail-draft-list-view [data-testid="mail-scheduled-list-subject"] {
+	color: var(--ui-color-base-90, #333333);
+}
+
+/* The sender opens the same screen as the subject, so it answers the pointer the same way. */
+.mail-draft-list-view .mail-msg-list-from {
+	cursor: pointer;
+}
+
+.mail-draft-list-view .mail-msg-list-from:hover {
+	color: inherit;
+	text-decoration: underline;
 }
 
 .mail-draft-list-view .mail-title-block,
@@ -1547,6 +1582,28 @@ a.mail-msg-list-attachment-chip__open:focus-visible,
 
 .mail-draft-no-recipients {
 	color: inherit;
+}
+
+/* The status of a scheduled letter and, under it, the reason a failed one carries. */
+.mail-scheduled-list-status-block {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.mail-scheduled-list-status {
+	display: block;
+}
+
+.mail-scheduled-list-status--error {
+	color: var(--ui-color-text-alert);
+}
+
+.mail-scheduled-list-status-reason {
+	display: block;
+	margin-top: 2px;
+	color: var(--ui-color-base-60, #959ca4);
+	font-size: var(--ui-font-size-sm, 13px);
 }
 
 .mail-embedded-draft-list {
@@ -1576,4 +1633,35 @@ body.mail-draft-list-view .mail-message-new-button {
 
 .mail-client-list-filter[hidden] {
 	display: none;
+}
+
+.mail-scheduled-list-time {
+	display: inline-block;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-sm);
+	border: 1px solid var(--ui-color-divider-accent);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-regular);
+	white-space: nowrap;
+}
+
+.mail-scheduled-list-time.--urgent {
+	border-color: transparent;
+	background: var(--ui-color-accent-soft-orange-2);
+	color: var(--ui-color-accent-soft-element-orange);
+}
+
+/* the exact moment of an urgent chip: read out with it, never drawn beside the relative wording */
+.mail-scheduled-list-time-exact {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	border: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
 }

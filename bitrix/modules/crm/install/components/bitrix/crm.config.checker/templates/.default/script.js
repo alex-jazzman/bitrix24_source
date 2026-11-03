@@ -66,16 +66,21 @@ this.BX = this.BX || {};
 			}
 			this.nodeMain.setAttribute(this.statusAttributeName, status);
 		}
-		setError() {
-			this.node.innerHTML = "Some error was occurred.";
+		setError({
+			data: errors
+		}) {
+			const messages = (main_core.Type.isArray(errors) ? errors : []).filter(error => main_core.Type.isPlainObject(error) && main_core.Type.isStringFilled(error.message)).map(error => error.message);
+			const text = messages.length > 0 ? messages.join(" ") : "Some error was occurred.";
+			main_core.Dom.clean(this.node);
+			main_core.Dom.append(main_core.Tag.render`<span class="crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected">${main_core.Text.encode(text)}</span>`, this.node);
+			this.adjustInfoBlockHeight();
 		}
 		adjustInfoBlock(errors, notes) {
-			let child = this.node.lastChild;
-			while (child) {
-				this.node.removeChild(child);
-				child = this.node.lastChild;
-			}
+			main_core.Dom.clean(this.node);
 			this.parseErrors(errors, notes);
+			this.adjustInfoBlockHeight();
+		}
+		adjustInfoBlockHeight() {
 			if (this.node.hasChildNodes()) {
 				main_core.Tag.style(this.node.parentNode)`
 				height: ${this.node.offsetHeight}px;
@@ -332,10 +337,9 @@ this.BX = this.BX || {};
 			main_core_events.EventEmitter.emit(this, "Iterator:finish", []);
 			this.resetButton.setDisabled(true);
 		}
-		error({
-			errors
-		}) {
-			main_core_events.EventEmitter.emit(this, "Iterator:error", data);
+		error(response) {
+			const errors = main_core.Type.isPlainObject(response) && main_core.Type.isArray(response.errors) ? response.errors : [];
+			main_core_events.EventEmitter.emit(this, "Iterator:error", errors);
 		}
 		execute(stepId, stepAction, stepData) {
 			this.send("executeStep", {

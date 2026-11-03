@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'ui.buttons',
 		'main.polyfill.intersectionobserver',
+		'ui.buttons',
 		'ui.icon-set.main',
 	],
 	'skip_core' => false,

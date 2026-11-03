@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--ui-space-inline-2xs);
+	gap: var(--ui-space-inline-2xs2);
 	min-width: 0;
 	overflow: hidden;
 }
@@ -18,6 +18,7 @@
 	cursor: pointer;
 	color: var(--ui-color-base-3);
 	white-space: nowrap;
+	flex: 0 2 auto;
 	transition: color 200ms ease;
 }
 
@@ -26,7 +27,8 @@
 }
 
 .disk-picker-breadcrumbs__link:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline: 2px solid var(--ui-color-accent-main-link);
+	/* The breadcrumbs clip what overflows them, so the ring is drawn inside the link. */
 	outline-offset: -2px;
 	border-radius: var(--ui-border-radius-3xs);
 }
@@ -37,10 +39,12 @@
 	color: var(--ui-color-base-3);
 }
 
-/* Width-bounded, ellipsised name — full text lives in the title attribute. */
+/* A name takes the width it needs and gives it up only when the row runs out: no bound of its
+   own, so a short path in a wide header is spelled out in full. Full text stays in the title
+   attribute for the case where the row does run out. */
 .disk-picker-breadcrumbs__label {
 	display: block;
-	max-width: 140px;
+	min-width: 0;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -51,9 +55,12 @@
 	color: var(--ui-color-base-3);
 }
 
+/* The folder the user is in is the last to give way: ancestors above shrink twice as fast, so
+   the name that says where you are survives longest. */
 .disk-picker-breadcrumbs__current {
 	display: block;
-	max-width: 140px;
+	flex: 0 1 auto;
+	min-width: 0;
 	color: var(--ui-color-base-1);
 	white-space: nowrap;
 	overflow: hidden;

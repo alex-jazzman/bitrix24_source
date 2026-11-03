@@ -16,6 +16,8 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 	const { UploadTask } = require('im/messenger/provider/services/sending/upload-task');
 
 	const UploaderManagerEvent = Object.freeze({
+		start: 'start',
+		processingProgress: 'processingProgress',
 		done: 'done',
 		progress: 'progress',
 		error: 'error',
@@ -30,6 +32,8 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 		{
 			this.client = new UploaderClient(componentName);
 			this.eventEmitter = new JNEventEmitter();
+			this.onFileUploadStart = this.fileUploadStartHandler.bind(this);
+			this.onFileProcessingProgress = this.fileProcessingProgressHandler.bind(this);
 			this.onFileUploadDone = this.fileUploadDoneHandler.bind(this);
 			this.onFileUploadProgress = this.fileUploadProgressHandler.bind(this);
 			this.onFileUploadError = this.fileUploadErrorHandler.bind(this);
@@ -40,10 +44,22 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 		subscribeClientEvents()
 		{
 			this.client
+				.on(UploaderClientEvent.start, this.onFileUploadStart)
+				.on(UploaderClientEvent.processingProgress, this.onFileProcessingProgress)
 				.on(UploaderClientEvent.done, this.onFileUploadDone)
 				.on(UploaderClientEvent.progress, this.onFileUploadProgress)
 				.on(UploaderClientEvent.error, this.onFileUploadError)
 			;
+		}
+
+		fileUploadStartHandler(id, data)
+		{
+			this.eventEmitter.emit(UploaderManagerEvent.start, [id, data]);
+		}
+
+		fileProcessingProgressHandler(id, data)
+		{
+			this.eventEmitter.emit(UploaderManagerEvent.processingProgress, [id, data]);
 		}
 
 		fileUploadProgressHandler(id, data)

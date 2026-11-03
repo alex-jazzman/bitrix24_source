@@ -53,7 +53,7 @@ export default class Tag
 	/**
 	 * Encodes all substitutions
 	 */
-	static safe(sections: TemplateStringsArray, ...substitutions: string[])
+	static safe(sections: TemplateStringsArray, ...substitutions: string[]): string
 	{
 		return substitutions.reduce((acc, item, index) => acc + Text.encode(item) + sections[index + 1], sections[0]);
 	}
@@ -64,7 +64,7 @@ export default class Tag
 	 * @param substitutions
 	 * @return {string}
 	 */
-	static unsafe(sections: any, ...substitutions: any[])
+	static unsafe(sections: any, ...substitutions: any[]): any
 	{
 		return substitutions.reduce((acc, item, index) => acc + Text.decode(item) + sections[index + 1], sections[0]);
 	}
@@ -95,12 +95,12 @@ export default class Tag
 		return substitutions.reduce((acc, item, index) => acc + Loc.getMessage(item) + sections[index + 1], sections[0]);
 	}
 
-	static render = render;
+	static render: typeof render = render;
 
 	/**
 	 * Adds attributes to specified element
 	 */
-	static attrs(element: HTMLElement)
+	static attrs(element: HTMLElement): (...args: any[]) => void
 	{
 		if (!Type.isDomNode(element))
 		{
@@ -113,5 +113,5 @@ export default class Tag
 		};
 	}
 
-	static attr = Tag.attrs;
+	static attr: typeof Tag.attrs = Tag.attrs;
 }

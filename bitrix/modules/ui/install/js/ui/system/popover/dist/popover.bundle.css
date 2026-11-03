@@ -1,8 +1,10 @@
 /**
  * Public CSS surface: the root class together with the consumer classes of the className option,
- * the element name .ui-system-popover__pointer, the --ui-context-* class and the data-position /
- * data-alignment / data-flipped / data-anchor-hidden attributes, which appear only once a position has been
- * applied. The bubble is on none of those lists and needs no name of its own: it is the very node the
+ * the element names .ui-system-popover__group and .ui-system-popover__pointer, the --visible class of
+ * that group, the --ui-context-* class and the data-position / data-alignment / data-flipped /
+ * data-anchor-hidden attributes, which appear only once a position has been applied. The group is where an
+ * appearance of the consumer belongs: it holds the arrow and the bubble, so both of them are animated as
+ * one figure. The bubble is on none of those lists and needs no name of its own: it is the very node the
  * consumer passed as content, so the background, the radius, the padding and the shadow are written straight
  * onto it, and a shadow that falls away from the anchor is four rules of theirs on the applied side
  * ([data-position="top"] .my-tip { ... }) - no class of the extension takes part. The service attribute
@@ -20,12 +22,31 @@
 	--ui-popover-pointer-depth: 12px;
 
 	/* Positioned root: the computation writes left/top/right/bottom/transform inline. A flex column with a
-	   single item, the bubble: the size limits of stretch/constrainSize are written here, and the bubble
-	   follows them by the flex layout (the arrow is an absolute sibling, which flex leaves alone). */
+	   single item, the group: the size limits of stretch/constrainSize are written here, and the bubble
+	   follows them down the two flex layouts. */
 	position: absolute;
 	top: 0;
 	left: 0;
 	display: flex;
+	flex-direction: column;
+}
+
+/* The two halves of the popover as one figure: the arrow and the bubble. The group exists for the appearance
+   of the consumer - written here, it moves both halves together, while the same rules on the bubble alone
+   would leave the arrow behind, standing whole and in place against a bubble still fading in. The root above
+   is left to the position: a transform of the group changes no layout, so the rect the computation reads off
+   the root stays the rect of the untransformed popover and the coordinates never follow the animation.
+
+   Positioned, because the arrow inside it hangs on the sides of this very box; a flex column of its own,
+   because the size limits written on the root reach the bubble through it. The class --visible arrives once a
+   position has been applied - the moment the popover reaches the screen, and the one an appearance starts
+   from. */
+.ui-system-popover__group {
+	position: relative;
+	display: flex;
+	min-height: 0;
+	max-width: 100%;
+	flex: 1 1 auto;
 	flex-direction: column;
 }
 

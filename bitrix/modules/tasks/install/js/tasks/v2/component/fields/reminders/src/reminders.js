@@ -62,7 +62,7 @@ export const Reminders = {
 			return (): HintParams => tooltip({
 				text: this.loc('TASKS_V2_REMINDERS_ADD'),
 				popupOptions: {
-					offsetLeft: this.$refs.add.$el.offsetWidth / 2,
+					offsetLeft: this.$refs.add.offsetWidth / 2,
 				},
 			});
 		},
@@ -78,29 +78,38 @@ export const Reminders = {
 		},
 	},
 	template: `
-		<div class="tasks-field-reminders" :data-task-id="taskId" :data-task-field-id="remindersMeta.id">
+		<div class="tasks-field-reminders" :data-task-id="taskId" :data-task-field-id="remindersMeta.id" data-testid="tasks-reminders">
 			<div class="tasks-field-reminders-title">
-				<div
+				<button
+					type="button"
 					class="tasks-field-reminders-main"
 					:class="{ '--readonly': readonly }"
 					ref="title"
+					aria-haspopup="dialog"
+					:aria-expanded="isListSheetShown"
+					data-testid="tasks-reminders-open-btn"
 					@click="setListSheetShown(true)"
 				>
-					<BIcon :name="Outline.NOTIFICATION"/>
+					<BIcon :name="Outline.NOTIFICATION" aria-hidden="true"/>
 					<TextMd accent>{{ text }}</TextMd>
-				</div>
+				</button>
 				<div
 					v-if="!readonly"
 					v-hint="tooltip"
 					class="tasks-field-reminders-edit-container"
 				>
-					<BIcon
+					<button
+						type="button"
 						class="tasks-field-reminders-icon"
-						:name="Outline.PLUS_L"
-						hoverable
+						:aria-label="loc('TASKS_V2_REMINDERS_ADD')"
+						aria-haspopup="dialog"
+						:aria-expanded="isSheetShown"
+						data-testid="tasks-reminders-add-btn"
 						ref="add"
 						@click="setSheetShown(true)"
-					/>
+					>
+						<BIcon :name="Outline.PLUS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</div>
 		</div>

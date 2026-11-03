@@ -1,0 +1,42 @@
+<?php
+
+namespace Bitrix\Bizproc\Integration;
+
+use Bitrix\Bizproc\Integration\Im\TemplateNoteNotification;
+use Bitrix\Main\Localization\Loc;
+
+class NotifySchema
+{
+	public static function onGetNotifySchema()
+	{
+		return [
+			'bizproc' => [
+				'NAME' => Loc::getMessage('BIZPROC_NOTIFY_SCHEMA_GROUP'),
+				'NOTIFY' => [
+					'activity' => [
+						'NAME' => Loc::getMessage('BIZPROC_NOTIFY_SCHEMA_ACTIVITY'),
+						'PUSH' => 'Y',
+					],
+					'delegate_task' => [
+						'NAME' => Loc::getMessage('BIZPROC_NOTIFY_SCHEMA_DELEGATE_TASK'),
+						"MAIL" => "N",
+						"PUSH" => "Y",
+					],
+					'wi_locked' => [
+						'NAME' => Loc::getMessage('BIZPROC_NOTIFY_SCHEMA_WI_LOCKED'),
+						"MAIL" => "N",
+						"PUSH" => "N",
+						"DISABLED" => [
+							IM_NOTIFY_FEATURE_PUSH,
+						],
+					],
+					TemplateNoteNotification::NOTIFY_EVENT => [
+						'NAME' => Loc::getMessage('BIZPROC_NOTIFY_SCHEMA_TEMPLATE_NOTE_MENTION'),
+						'MAIL' => 'N',
+						'PUSH' => 'Y',
+					],
+				],
+			],
+		];
+	}
+}

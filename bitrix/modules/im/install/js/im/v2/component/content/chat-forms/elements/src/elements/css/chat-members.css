@@ -10,3 +10,16 @@
 	border: none;
 	padding: 0;
 }
+
+/* Air members */
+/* The members block is a card of the same family as the form sections, so it repeats their
+   paddings, corners and shadow. The selector inside keeps its own markup. */
+.bx-im-messenger__scope.--air-design .bx-im-chat-forms-chat-members__container {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+	background-color: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-md);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}
+/* End air members */

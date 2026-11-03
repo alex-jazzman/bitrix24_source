@@ -26,6 +26,7 @@ import {
 	type SendState,
 	type SignatureItem,
 	type SignatureItemDto,
+	type SenderIdentityState,
 	type SignaturesDto,
 	type SignaturesState,
 } from './types';
@@ -57,7 +58,60 @@ export function useComposeState(): ComposeState
 /** `null` when the sender list came empty or the payload preselected nothing. */
 export function getSelectedSender(state: ComposeState): SenderDto | null
 {
-	return state.senders.find((sender) => sender.formated === state.selectedSender) ?? null;
+	const selectedByIdentity = findSenderByIdentity(state.senders, state.selectedSenderIdentity);
+	if (selectedByIdentity?.formated === state.selectedSender)
+	{
+		return selectedByIdentity;
+	}
+
+	const selectedByFormatted = state.senders.find((sender) => sender.formated === state.selectedSender);
+	if (selectedByFormatted && toPositiveIdOrNull(selectedByFormatted.mailboxId) === null)
+	{
+		return selectedByFormatted;
+	}
+
+	const mailboxId = state.mailbox?.id ?? null;
+	if (mailboxId !== null)
+	{
+		const selectedByMailbox = state.senders.find((sender) => {
+			return toPositiveIdOrNull(sender.mailboxId) === mailboxId;
+		});
+		if (selectedByMailbox)
+		{
+			return selectedByMailbox;
+		}
+	}
+
+	return selectedByFormatted ?? null;
+}
+
+export function getSelectedSenderIdentity(state: ComposeState): SenderIdentityState
+{
+	return buildSenderIdentity(getSelectedSender(state));
+}
+
+export function selectSender(state: ComposeState, sender: SenderDto): void
+{
+	const identity = buildSenderIdentity(sender);
+	Object.assign(state, {
+		selectedSender: sender.formated,
+		selectedSenderIdentity: identity,
+	});
+
+	if (identity.mailboxId !== null)
+	{
+		Object.assign(state.mailbox, { id: identity.mailboxId });
+	}
+}
+
+/**
+ * Zone the calendar shows and resolves, as an IANA identifier. A letter already scheduled keeps the zone it
+ * was scheduled in; a new letter follows the browser, whose wall clock the author sees in the picker.
+ */
+export function getScheduleTimezoneId(state: ComposeState): string
+{
+	return state.scheduledMessage.timezoneId
+		|| Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 export function getSelectedSenderMailboxId(state: ComposeState): number | null
@@ -150,38 +204,69 @@ function toPositiveIdOrNull(value: number | string | null | undefined): number |
 	return id > 0 ? id : null;
 }
 
-function findSender(senders: SenderDto[], selectedSender: string, mailboxEmail: string): SenderDto
+function buildSenderIdentity(sender: SenderDto | null): SenderIdentityState
 {
-	if (selectedSender !== '')
+	const mailboxId = toPositiveIdOrNull(sender?.mailboxId);
+	if (mailboxId !== null)
 	{
-		const requested = senders.find((sender) => sender.formated === selectedSender);
-		if (requested)
-		{
-			return requested;
-		}
+		return { senderId: null, mailboxId };
 	}
 
-	return senders.find((sender) => normalizeAddress(sender.email) === mailboxEmail) ?? senders[0];
+	const senderId = sender?.type === 'mailbox' ? null : toPositiveIdOrNull(sender?.id);
+
+	return { senderId, mailboxId: null };
 }
 
-/**
- * Returns a `formated` value that always points at an element of the list: the picker marks the selected
- * item by it, and a value outside the list would leave the form on a sender nobody can see.
- */
+function findSenderByIdentity(senders: SenderDto[], identity: SenderIdentityState | undefined): SenderDto | null
+{
+	if (!identity)
+	{
+		return null;
+	}
+
+	if (identity.mailboxId !== null)
+	{
+		return senders.find((sender) => toPositiveIdOrNull(sender.mailboxId) === identity.mailboxId) ?? null;
+	}
+
+	if (identity.senderId !== null)
+	{
+		return senders.find((sender) => (
+			toPositiveIdOrNull(sender.mailboxId) === null
+			&& toPositiveIdOrNull(sender.id) === identity.senderId
+		)) ?? null;
+	}
+
+	return null;
+}
+
 function resolveSelectedSender(
 	senders: SenderDto[],
 	selectedSender: string | null | undefined,
 	mailboxEmail: string,
-): string | null
+	mailboxId: number | null,
+): SenderDto | null
 {
 	if (senders.length === 0)
 	{
 		return null;
 	}
 
-	const matched = findSender(senders, (selectedSender ?? '').trim(), mailboxEmail);
+	const selected = (selectedSender ?? '').trim();
+	let matched = selected === '' ? undefined : senders.find((sender) => sender.formated === selected);
 
-	return matched.formated === '' ? null : matched.formated;
+	matched ??= senders.find((sender) => normalizeAddress(sender.email) === mailboxEmail) ?? senders[0];
+	if (toPositiveIdOrNull(matched.mailboxId) === null)
+	{
+		return matched;
+	}
+
+	if (mailboxId !== null)
+	{
+		return senders.find((sender) => toPositiveIdOrNull(sender.mailboxId) === mailboxId) ?? matched;
+	}
+
+	return matched;
 }
 
 function normalizeSignature(item: SignatureItemDto): SignatureItem
@@ -231,6 +316,7 @@ function buildRecipients(initialData: ComposeInitialData): RecipientsState
 function buildBody(initialData: ComposeInitialData): BodyState
 {
 	return {
+		content: initialData.body?.content ?? '',
 		quote: initialData.body?.quote ?? '',
 		quoteFolded: isEnabled(initialData.body?.quoteFolded),
 	};
@@ -302,6 +388,7 @@ function buildPaths(initialData: ComposeInitialData): PathsState
 		messageList: toValueOrNull(initialData.paths?.messageList),
 		home: initialData.paths?.home ?? '',
 		templatesManage: initialData.paths?.templatesManage ?? '',
+		templatesCreate: initialData.paths?.templatesCreate ?? '',
 	};
 }
 
@@ -314,6 +401,8 @@ export function createComposeState(initialData: ComposeInitialData = {}): Compos
 {
 	const senders = initialData.senders ?? [];
 	const mailboxEmail = normalizeAddress(initialData.mailbox?.email);
+	const mailboxId = toPositiveIdOrNull(initialData.mailbox?.id);
+	const selectedSender = resolveSelectedSender(senders, initialData.selectedSender, mailboxEmail, mailboxId);
 	const recipients = buildRecipients(initialData);
 
 	return reactive<ComposeState>({
@@ -323,11 +412,12 @@ export function createComposeState(initialData: ComposeInitialData = {}): Compos
 		parentMessageId: toPositiveIdOrNull(initialData.parentMessageId),
 
 		mailbox: {
-			id: toPositiveIdOrNull(initialData.mailbox?.id),
+			id: mailboxId,
 			email: mailboxEmail,
 		},
 		senders,
-		selectedSender: resolveSelectedSender(senders, initialData.selectedSender, mailboxEmail),
+		selectedSender: selectedSender?.formated || null,
+		selectedSenderIdentity: buildSenderIdentity(selectedSender),
 
 		recipients,
 		// A row that already carries an address starts expanded.
@@ -354,8 +444,19 @@ export function createComposeState(initialData: ComposeInitialData = {}): Compos
 		analytics: buildAnalytics(initialData),
 		features: {
 			unfinishedElements: isEnabled(initialData.features?.unfinishedElements),
+			scheduledMessages: isEnabled(initialData.features?.scheduledMessages),
+			undoSend: isEnabled(initialData.features?.undoSend),
 			templates: isEnabled(initialData.features?.templates),
+			saveTemplate: isEnabled(initialData.features?.saveTemplate),
 		},
+		// A payload carrying no flag means the generation is unavailable; the client never derives it.
+		subjectGeneration: {
+			available: isEnabled(initialData.features?.subjectGeneration),
+			isRunning: false,
+			hash: null,
+			requestId: 0,
+		},
+		authorTimezoneId: (initialData.authorTimezoneId ?? '').trim(),
 		draft: {
 			id: Math.max(0, Number(initialData.draft?.id ?? 0)),
 			revision: Math.max(0, Number(initialData.draft?.revision ?? 0)),
@@ -368,16 +469,22 @@ export function createComposeState(initialData: ComposeInitialData = {}): Compos
 			isLoaded: false,
 			isLoading: false,
 			error: null,
+			priorityReference: null,
+			pinRecentlyCreated: false,
 			selected: null,
 			prepared: null,
-			rememberLast: false,
-			autoApply: {
-				candidate: null,
-				status: 'idle',
-			},
 		},
 		paths: buildPaths(initialData),
+		scheduledMessage: {
+			id: toPositiveIdOrNull(initialData.scheduledMessage?.id) ?? 0,
+			revision: Number(initialData.scheduledMessage?.revision ?? 0),
+			scheduledAt: initialData.scheduledMessage?.scheduledAt ?? '',
+			timezoneId: initialData.scheduledMessage?.timezoneId ?? '',
+			attachments: initialData.scheduledMessage?.attachments ?? [],
+			removedAttachmentIds: [],
+		},
 
+		saveAsTemplate: false,
 		migrationActiveByMailboxId: {},
 		isSending: false,
 		errors: [],

@@ -44,5 +44,5 @@
 	`
 	});
 
-})(BX, BX, BX.Messenger.Lib);
+})(window, BX, BX.Messenger.Lib);
 //# sourceMappingURL=chatteaser.bundle.js.map

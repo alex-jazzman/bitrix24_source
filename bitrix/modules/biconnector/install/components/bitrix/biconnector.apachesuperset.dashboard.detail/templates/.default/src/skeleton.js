@@ -304,7 +304,10 @@ export class Skeleton
 	#getUnavailableSupersetHint(): HTMLElement
 	{
 		return Tag.render`
-			<div class="biconnector-dashboard__hint biconnector-dashboard__hint__unavailable">
+			<div
+				class="biconnector-dashboard__hint biconnector-dashboard__hint__unavailable"
+				data-testid="biconnector-dashboard-detail-unavailable-hint"
+			>
 				<div class="biconnector-dashboard__error__logo-wrapper">
 					${this.#getErrorLogo()}
 				</div>

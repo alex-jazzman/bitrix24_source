@@ -36,6 +36,7 @@ export const MessageComponent = Object.freeze({
 	channelCreationMessage: 'ChannelCreationMessage',
 	callMessage: 'CallMessage',
 	voteMessage: 'VoteMessage',
+	contactMessage: 'ContactMessage',
 	taskChatCreationMessage: 'TaskChatCreationMessage',
 	convertToCollabMessage: 'ConvertToCollabMessage',
 	collabCreationMessage: 'CollabCreationMessage',

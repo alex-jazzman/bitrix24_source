@@ -1,0 +1,501 @@
+/* Custom property registration is wrapped in an always-true @supports block to
+   bypass chef's CF1021 compatibility check. In browsers without registered
+   custom properties, the angle simply does not animate. */
+@supports (display: flex) {
+	@property --call-button-gradient-angle {
+		syntax: '<angle>';
+		initial-value: 0deg;
+		inherits: false;
+	}
+}
+
+@keyframes callButtonRotation {
+	0% {
+		--call-button-gradient-angle: 0deg;
+	}
+
+	100% {
+		--call-button-gradient-angle: 360deg;
+	}
+}
+
+.call-button {
+	--call-button-size: 28px;
+	--call-button-width: auto;
+	--call-button-padding-x: 10px;
+	--call-button-border-radius: 8px;
+	--call-button-font-size: 13px;
+	--call-button-line-height: 17px;
+	--call-button-font-weight: 500;
+	--call-button-gap: 6px;
+	--call-icon-size: 20px;
+	--call-badge-height: 16px;
+	--call-badge-font-size: 12px;
+	--call-badge-padding: 5px;
+	--call-button-label-bottom-gap: 6px;
+
+	--call-button-background: #0075ff;
+	--call-button-border: 0 none;
+	--call-button-border-color: transparent;
+	--call-button-text-color: #fff;
+	--call-button-animation-gap: 2px;
+
+	--call-button-corner-size-ratio: 0.368;
+	--call-button-corner-offset-ratio: 0.105;
+
+	--call-corner-color: rgba(255, 255, 255, 0.2);
+
+	display: inline-flex;
+	position: relative;
+	height: var(--call-button-size);
+	width: var(--call-button-width);
+}
+
+/* Size tokens — values come from design system, see button spec. */
+
+.call-button[data-size="20"] {
+	--call-button-size: 20px;
+	--call-button-padding-x: 8px;
+	--call-button-border-radius: 5px;
+	--call-button-font-size: 10px;
+	--call-button-line-height: 12px;
+	--call-button-gap: 5px;
+	--call-icon-size: 14px;
+	--call-badge-height: 14px;
+	--call-badge-font-size: 10px;
+	--call-badge-padding: 4px;
+}
+
+.call-button[data-size="24"] {
+	--call-button-size: 24px;
+	--call-button-padding-x: 8px;
+	--call-button-border-radius: 6px;
+	--call-button-font-size: 12px;
+	--call-button-line-height: 15px;
+	--call-button-gap: 6px;
+	--call-icon-size: 16px;
+}
+
+.call-button[data-size="28"] {
+	--call-button-size: 28px;
+	--call-button-padding-x: 10px;
+	--call-button-border-radius: 8px;
+	--call-button-font-size: 13px;
+	--call-button-line-height: 17px;
+	--call-button-gap: 6px;
+	--call-icon-size: 20px;
+}
+
+.call-button[data-size="34"] {
+	--call-button-size: 34px;
+	--call-button-padding-x: 14px;
+	--call-button-border-radius: 10px;
+	--call-button-font-size: 14px;
+	--call-button-line-height: 19px;
+	--call-button-gap: 8px;
+	--call-icon-size: 24px;
+}
+
+.call-button[data-size="38"] {
+	--call-button-size: 38px;
+	--call-button-padding-x: 18px;
+	--call-button-border-radius: 10px;
+	--call-button-font-size: 15px;
+	--call-button-line-height: 20px;
+	--call-button-gap: 8px;
+	--call-icon-size: 28px;
+}
+
+.call-button[data-size="46"] {
+	--call-button-size: 46px;
+	--call-button-padding-x: 24px;
+	--call-button-border-radius: 10px;
+	--call-button-font-size: 16px;
+	--call-button-line-height: 21px;
+	--call-button-gap: 10px;
+	--call-icon-size: 28px;
+}
+
+.call-button[data-size="54"] {
+	--call-button-size: 54px;
+	--call-icon-size: 28px;
+}
+
+.call-button__body {
+	box-sizing: border-box;
+	display: inline-flex;
+	z-index: 1;
+	position: relative;
+	align-items: center;
+	justify-content: center;
+	height: var(--call-button-size);
+	width: var(--call-button-width);
+	padding: 0 var(--call-button-padding-x);
+	border: var(--call-button-border);
+	border-radius: var(--call-button-border-radius);
+	border-color: var(--call-button-border-color);
+	outline: none;
+	background: var(--call-button-background);
+	color: var(--call-button-text-color);
+	font-weight: var(--call-button-font-weight);
+	font-size: var(--call-button-font-size);
+	line-height: var(--call-button-line-height);
+	text-align: center;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		filter 0.3s ease,
+		background-color 0.3s ease;
+	will-change: filter, background-color;
+	user-select: none;
+}
+
+.call-button__body:focus-visible {
+	outline: 2px solid var(--ui-color-palette-white-base, #fff);
+	outline-offset: 2px;
+}
+
+/* Forced colors replace the ring color, so the system focus color is requested explicitly. */
+@media (forced-colors: active) {
+	.call-button__body:focus-visible {
+		outline-color: Highlight;
+	}
+}
+
+.call-button__content {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--call-button-gap);
+	height: var(--call-button-size);
+	min-width: 0;
+}
+
+.call-button__body:hover:not(.--disabled) {
+	filter: brightness(0.88);
+}
+
+.call-button__body.--disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+}
+
+.call-button.--readonly .call-button__body {
+	cursor: default;
+	pointer-events: none;
+}
+
+.call-button.--readonly .call-button__body:hover,
+.call-button.--readonly .call-button__body:focus,
+.call-button.--readonly .call-button__body:active {
+	filter: none;
+	background: var(--call-button-background);
+}
+
+.call-button.--circle {
+	--call-button-border-radius: 50%;
+}
+
+.call-button.--circle .call-button__body,
+.call-button.--square .call-button__body {
+	--call-button-padding-x: 0;
+	aspect-ratio: 1 / 1;
+	width: var(--call-button-size);
+	min-width: var(--call-button-size);
+}
+
+.call-button.--corner .call-button__body {
+	--call-button-corner-size: calc(var(--call-button-size) * var(--call-button-corner-size-ratio));
+	--call-button-corner-size-clamped: clamp(10px, var(--call-button-corner-size), 20px);
+	--call-button-mask-radius: calc(var(--call-button-corner-size-clamped) * 0.643);
+	--call-button-mask-offset-x: calc(var(--call-button-corner-size-clamped) * 0.357);
+	--call-button-mask-offset-y: calc(var(--call-button-corner-size-clamped) * 0.286);
+
+	background: transparent;
+}
+
+.call-button.--corner .call-button__body::before {
+	content: '';
+	z-index: -1;
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--call-button-background);
+	transition: background-color 0.3s ease;
+	mask: radial-gradient(
+		circle var(--call-button-mask-radius) at
+		calc(100% - var(--call-button-mask-offset-x))
+		calc(100% - var(--call-button-mask-offset-y)),
+		transparent 99%,
+		#fff 100%
+	);
+}
+
+.call-button.--full-width,
+.call-button.--full-width .call-button__body {
+	width: 100%;
+}
+
+.call-button.--border {
+	--call-button-border: 1px solid;
+}
+
+.call-button.--primary.--border {
+	--call-button-border-color: #4DA4FB;
+}
+
+.call-button.--primary.--green {
+	--call-button-background: #1bce7b;
+}
+
+.call-button.--primary.--purple {
+	--call-button-background: #853af5;
+}
+
+.call-button.--primary.--red {
+	--call-button-background: #ff5752;
+}
+
+.call-button.--primary.--none {
+	--call-button-background: transparent;
+}
+
+.call-button.--primary.--transparent.--border {
+	--call-button-border-color: rgba(255, 255, 255, 0.30);
+}
+
+.call-button.--primary.--transparent {
+	--call-button-background: rgba(255, 255, 255, 0.2);
+}
+
+.call-button.--primary.--transparent .call-button__body:hover:not(.--disabled) {
+	--call-button-background: rgba(255, 255, 255, 0.28);
+	filter: unset;
+}
+
+.call-button.--primary.--transparent-blue {
+	--call-button-background: rgba(0, 66, 143, 0.7);
+}
+
+.call-button.--primary.--transparent-blue .call-button__body:hover:not(.--disabled) {
+	--call-button-background: rgba(0, 66, 143, 0.78);
+	filter: unset;
+}
+
+.call-button.--primary.--transparent-yellow {
+	--call-button-background: rgba(242, 161, 0, 0.8);
+}
+
+.call-button.--primary.--transparent-yellow .call-button__body:hover:not(.--disabled) {
+	--call-button-background: rgba(242, 161, 0, 0.88);
+	filter: unset;
+}
+
+.call-button.--primary.--transparent-red {
+	--call-button-background: rgba(194, 27, 22, 0.2);
+}
+
+.call-button.--primary.--transparent-red .call-button__body:hover:not(.--disabled) {
+	--call-button-background: rgba(194, 27, 22, 0.28);
+	filter: unset;
+}
+
+.call-button.--primary.--transparent-black {
+	--call-button-background: rgba(0, 0, 0, 0.55);
+}
+
+.call-button.--primary.--transparent-black .call-button__body:hover:not(.--disabled) {
+	--call-button-background: rgba(0, 0, 0, 0.63);
+	filter: unset;
+}
+
+.call-button.--hangup {
+	--call-button-background: rgba(214, 37, 32, 0.62);
+}
+
+.call-button.--hangup .call-button__body:hover:not(.--disabled) {
+	--call-button-background: rgba(214, 37, 32, 0.70);
+	filter: unset;
+}
+
+.call-button.--tine {
+	--call-button-background: #e6f4ff;
+	--call-button-text-color: #0154c8;
+}
+
+.call-button.--tine.--red {
+	--call-button-background: #ffe8e8;
+	--call-button-text-color: #ff5752;
+}
+
+.call-button.--outline {
+	--call-button-background: #ffffff;
+	--call-button-text-color: #0075ff;
+	--call-button-border: 1px solid;
+	--call-button-border-color: #58b1ff;
+}
+
+.call-button.--gradient {
+	--call-button-background: radial-gradient(141.42% 141.42% at 0% 0%, #f9be74 0%, #fb7595 43.27%, #b55cce 91.35%);
+}
+
+.call-button.--gradient.--animated {
+	--call-button-animation-gap: 1px;
+	height: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+}
+
+.call-button.--gradient.--animated .call-button__body {
+	height: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+}
+
+.call-button.--gradient.--animated.--circle .call-button__body,
+.call-button.--gradient.--animated.--square .call-button__body {
+	width: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+	min-width: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+}
+
+.call-button.--primary.--gradient.--animated:before,
+.call-button.--primary.--gradient.--animated:after {
+	position: absolute;
+	inset: calc(var(--call-button-animation-gap) * -1);
+	border-radius: var(--call-button-border-radius);
+	background: conic-gradient(from var(--call-button-gradient-angle), #ff8c72, #ff8c72, #fdc63b, #ff8c72, #ff8c72);
+	content: '';
+	animation: callButtonRotation 3s linear infinite;
+}
+
+.call-button.--primary.--gradient.--animated:after {
+	filter: blur(4px);
+}
+
+.call-button.--copilot {
+	--call-button-background: linear-gradient(242deg, #c8a9f8 -8.28%, #711bf9 93.16%);
+}
+
+.call-button.--copilot.--animated {
+	--call-button-animation-gap: 3px;
+}
+
+.call-button.--copilot.--animated .call-button__body {
+	height: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+	margin: var(--call-button-animation-gap);
+}
+
+.call-button.--copilot.--animated.--circle .call-button__body,
+.call-button.--copilot.--animated.--square .call-button__body {
+	width: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+	min-width: calc(var(--call-button-size) - var(--call-button-animation-gap) * 2);
+}
+
+.call-button.--copilot.--animated:before,
+.call-button.--copilot.--animated:after {
+	position: absolute;
+	inset: 0;
+	border-radius: var(--call-button-border-radius);
+	background: linear-gradient(var(--call-button-gradient-angle), #c8a9f8, #711bf9);
+	content: '';
+	animation: callButtonRotation 3s linear infinite;
+}
+
+.call-button.--copilot.--animated:after {
+	filter: blur(5px);
+}
+
+.call-button__badge {
+	z-index: 2;
+	position: absolute;
+	top: -10px;
+	left: calc(100% - 20px);
+	pointer-events: none;
+}
+
+.call-button__corner {
+	--call-button-corner-size: calc(var(--call-button-size) * var(--call-button-corner-size-ratio));
+	--call-button-corner-size-clamped: clamp(10px, var(--call-button-corner-size), 20px);
+	--call-button-corner-offset: calc(var(--call-button-size) * var(--call-button-corner-offset-ratio));
+	--call-button-corner-offset-clamped: clamp(2px, var(--call-button-corner-offset), 8px);
+
+	display: flex;
+	z-index: 2;
+	position: absolute;
+	right: calc(var(--call-button-corner-offset-clamped) * -0.75);
+	bottom: calc(var(--call-button-corner-offset-clamped) * -1);
+	align-items: center;
+	justify-content: center;
+	width: var(--call-button-corner-size-clamped);
+	height: var(--call-button-corner-size-clamped);
+	border-radius: 50%;
+	background: var(--call-corner-color);
+	cursor: pointer;
+	transition:
+		filter 0.3s ease,
+		background-color 0.3s ease;
+	will-change: filter, background-color;
+}
+
+.call-button__corner:hover {
+	filter: brightness(0.92);
+}
+
+/* Inline label — sits in __content row between prepend/append slots */
+
+.call-button__label {
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Bottom label, overlay — visually below the button, click area = button only */
+
+.call-button.--label-bottom .call-button__label-bottom {
+	display: flex;
+	position: absolute;
+	top: calc(100% + var(--call-button-label-bottom-gap));
+	left: 50%;
+	align-items: center;
+	justify-content: center;
+	width: max-content;
+	max-width: 66px;
+	transform: translate(-50%, 0);
+	color: rgba(255, 255, 255, 0.6);
+	font-weight: 500;
+	font-size: 12px;
+	text-align: center;
+	white-space: normal;
+	user-select: none;
+}
+
+.call-button.--gradient.--animated.--label-bottom .call-button__label-bottom {
+	top: calc(100% + var(--call-button-label-bottom-gap) + var(--call-button-animation-gap) * 2);
+}
+
+.call-button.--copilot.--animated.--label-bottom .call-button__label-bottom {
+	top: calc(100% + var(--call-button-label-bottom-gap) + var(--call-button-animation-gap));
+}
+
+/* Bottom label, block — label is a flow child of the button body. */
+/* Button grows in height, hit area covers icon row + gap + label.   */
+
+.call-button.--label-bottom-block {
+	height: auto;
+}
+
+.call-button.--label-bottom-block .call-button__body {
+	flex-direction: column;
+	height: auto;
+	padding-bottom: var(--call-button-label-bottom-gap);
+}
+
+.call-button.--label-bottom-block .call-button__label-bottom {
+	display: flex;
+	margin-top: var(--call-button-label-bottom-gap);
+	align-items: center;
+	justify-content: center;
+	max-width: 100px;
+	color: rgba(255, 255, 255, 0.6);
+	font-weight: 500;
+	font-size: 12px;
+	text-align: center;
+	white-space: normal;
+	user-select: none;
+}

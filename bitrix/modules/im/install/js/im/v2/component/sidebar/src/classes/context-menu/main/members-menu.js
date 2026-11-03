@@ -75,7 +75,7 @@ export class MembersMenu extends UserMenu
 		const isManager = this.context.dialog.managerList.includes(this.context.user.id);
 
 		return {
-			title: isManager ? Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE') : Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD'),
+			title: isManager ? Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE_MSGVER_1') : Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD_MSGVER_1'),
 			onClick: () => {
 				if (isManager)
 				{

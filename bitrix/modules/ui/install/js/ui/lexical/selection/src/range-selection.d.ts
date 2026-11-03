@@ -5,16 +5,32 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type { BaseSelection, ElementNode, LexicalNode, RangeSelection } from 'ui.lexical.core';
-import { TableSelection } from 'ui.lexical.table';
+import { type BaseSelection, type CaretDirection, type ElementNode, type LexicalNode, type Point, type RangeSelection } from 'ui.lexical.core';
+export declare function $copyBlockFormatIndent(srcNode: ElementNode, destNode: ElementNode): void;
+/**
+ * Determine whether a point sits at the leading ('previous') or trailing
+ * ('next') edge of `element`'s content — i.e. there is no content between the
+ * point and that edge of the element.
+ *
+ * This is the caret-based generalization of {@link $isAtNodeEnd}. An empty
+ * `element` is considered to be at both of its edges. `@lexical/utils`
+ * re-exports this as the direction-specific `$isAtStartOfNode` /
+ * `$isAtEndOfNode` helpers.
+ *
+ * @param point - The point to test.
+ * @param element - The ancestor element whose edge is tested.
+ * @param direction - 'previous' for the start of `element`, 'next' for the end.
+ */
+export declare function $isAtEdgeOfElement(point: Point, element: ElementNode, direction: CaretDirection): boolean;
 /**
  * Converts all nodes in the selection that are of one block type to another.
  * @param selection - The selected blocks to be converted.
- * @param createElement - The function that creates the node. eg. $createParagraphNode.
+ * @param $createElement - The function that creates the node. eg. $createParagraphNode.
+ * @param $afterCreateElement - The function that updates the new node based on the previous one ($copyBlockFormatIndent by default)
  */
-export declare function $setBlocksType(selection: BaseSelection | null, createElement: () => ElementNode): void;
+export declare function $setBlocksType<T extends ElementNode>(selection: BaseSelection | null, $createElement: () => T, $afterCreateElement?: (prevNodeSrc: ElementNode, newNodeDest: T) => void): void;
 /**
- * @deprecated
+ * @deprecated In favor of $setBlockTypes
  * Wraps all nodes in the selection into another node of the type returned by createElement.
  * @param selection - The selection of nodes to be wrapped.
  * @param createElement - A function that creates the wrapping ElementNode. eg. $createParagraphNode.
@@ -60,11 +76,6 @@ export declare function $isParentElementRTL(selection: RangeSelection): boolean;
  */
 export declare function $moveCharacter(selection: RangeSelection, isHoldingShift: boolean, isBackward: boolean): void;
 /**
- * Expands the current Selection to cover all of the content in the editor.
- * @param selection - The current selection.
- */
-export declare function $selectAll(selection: RangeSelection): void;
-/**
  * Returns the current value of a CSS property for TextNodes in the Selection, if set. If not set, it returns the defaultValue.
  * If all TextNodes do not have the same value, it returns an empty string.
  * @param selection - The selection of TextNodes whose value to find.
@@ -72,10 +83,4 @@ export declare function $selectAll(selection: RangeSelection): void;
  * @param defaultValue - The default value for the property, defaults to an empty string.
  * @returns The value of the property for the selected TextNodes.
  */
-export declare function $getSelectionStyleValueForProperty(selection: RangeSelection | TableSelection, styleProperty: string, defaultValue?: string): string;
-/**
- * This function is for internal use of the library.
- * Please do not use it as it may change in the future.
- */
-export declare function INTERNAL_$isBlock(node: LexicalNode): node is ElementNode;
-export declare function $getAncestor<NodeType extends LexicalNode = LexicalNode>(node: LexicalNode, predicate: (ancestor: LexicalNode) => ancestor is NodeType): NodeType | null;
+export declare function $getSelectionStyleValueForProperty(selection: BaseSelection, styleProperty: string, defaultValue?: string): string;

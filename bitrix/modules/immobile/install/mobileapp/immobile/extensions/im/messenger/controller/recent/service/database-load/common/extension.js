@@ -44,8 +44,8 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		{
 			this.logger.log('loadNextPage');
 
-			const page = await this.#loadPage(true);
-			await this.#savePageToModel(page);
+			const page = await this.loadPage(true);
+			await this.savePageToModel(page);
 
 			this.logger.log('loadNextPage complete');
 
@@ -59,8 +59,8 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		{
 			this.logger.log('loadFirstPage');
 
-			const page = await this.#loadPage();
-			await this.#savePageToModel(page, true);
+			const page = await this.loadPage();
+			await this.savePageToModel(page, true);
 			await this.#saveFixedParentChatToModel();
 
 			const loadedPageCursor = this.#processLoadedPageData(page);
@@ -76,7 +76,7 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 */
 		get section()
 		{
-			return this.recentLocator.get('recentSection');
+			return this.props.recentSection ?? this.recentLocator.get('recentSection');
 		}
 
 		/**
@@ -164,10 +164,11 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		}
 
 		/**
+		 * @protected
 		 * @param {boolean} [withCursor] pass true for subsequent pages to include lastActivityDate cursor
 		 * @return {Promise<RecentListResult>}
 		 */
-		async #loadPage(withCursor = false)
+		async loadPage(withCursor = false)
 		{
 			if (this.#hasChatIdsFilter())
 			{
@@ -175,7 +176,7 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 				page.items = this.#sortPageItems(page.items).slice(0, this.limit);
 				page.hasMore = false;
 
-				this.logger.log('#loadPage folder filter loaded:', page);
+				this.logger.log('loadPage folder filter loaded:', page);
 
 				return page;
 			}
@@ -186,9 +187,9 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 				limit: this.limit,
 				...(withCursor && { lastActivityDate: this.lastActivityDate }),
 			};
-			this.logger.log('#loadPage filter:', filter);
+			this.logger.log('loadPage filter:', filter);
 			const page = await this.recentRepository.getListBySectionFilter(filter);
-			this.logger.log('#loadPage loaded:', page);
+			this.logger.log('loadPage loaded:', page);
 
 			return page;
 		}
@@ -259,10 +260,11 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 * Dispatches all related model data from a page (dialogues, users, messages, files, draft, stickers).
 		 * Does NOT dispatch recent items — callers decide how to handle them.
 		 *
+		 * @protected
 		 * @param {RecentListResult} page
 		 * @return {Promise<void>}
 		 */
-		async #saveRelatedDataToModel(page)
+		async saveRelatedDataToModel(page)
 		{
 			const saveList = [];
 
@@ -332,21 +334,33 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		}
 
 		/**
+		 * @protected
 		 * @param {RecentListResult} page
 		 * @param {boolean} firstPage
 		 */
-		async #savePageToModel(page, firstPage = false)
+		async savePageToModel(page, firstPage = false)
 		{
 			try
 			{
-				await this.#saveRelatedDataToModel(page);
+				await this.saveRelatedDataToModel(page);
+
+				if (firstPage && !Type.isArrayFilled(page.items) && this.#hasItemsOnScreen())
+				{
+					this.logger.log('#savePageToModel: empty first page over a non-empty list, skipping dispatch');
+					// The screen keeps what it shows - the snapshot is all the user has until the
+					// server answers - but the snapshot itself no longer has a database behind it,
+					// so it must not survive into the next start.
+					this.recentLocator.get('quick-recent')?.invalidateSnapshot();
+
+					return;
+				}
 
 				if (firstPage || Type.isArrayFilled(page.items))
 				{
 					const recentAction = firstPage ? this.saveFirstPageAction : this.savePageAction;
 					const actionName = firstPage ? this.saveFirstPageActionName : this.savePageActionName;
 					const payload = {
-						recentSection: this.recentLocator.get('recentSection'),
+						recentSection: this.section,
 						itemList: page.items ?? [],
 						parentChatId: this.recentLocator.get('parentChatId'),
 						tabId: this.recentLocator.get('id'),
@@ -363,6 +377,26 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 			{
 				this.logger.error('saveFirstPageToModel error:', error);
 			}
+		}
+
+		/**
+		 * @desc An empty local database is not a statement about an empty list: the cache snapshot may
+		 * already be on the screen while the database is reset (reinstall, migration).
+		 * @return {boolean}
+		 */
+		#hasItemsOnScreen()
+		{
+			if (this.renderService?.getItemCollectionSize() > 0)
+			{
+				return true;
+			}
+
+			if (!this.recentLocator.has('quick-recent'))
+			{
+				return false;
+			}
+
+			return this.recentLocator.get('quick-recent').isNotEmptySnapshotRendered();
 		}
 
 		/**
@@ -427,7 +461,7 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 				return;
 			}
 
-			await this.#saveRelatedDataToModel(page);
+			await this.saveRelatedDataToModel(page);
 
 			// Dispatch to collection only — nestedIdCollection must not include the parent chat
 			await this.store.dispatch('recentModel/set', page.items);

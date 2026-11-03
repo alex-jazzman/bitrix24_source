@@ -1,5 +1,7 @@
 import { type JsonObject } from 'main.core';
 import { type BaseEvent, type EventEmitter } from 'main.core.events';
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
 
 import { EventType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -7,18 +9,29 @@ import { Notifier } from 'im.v2.lib.notifier';
 
 import { AudioManager } from './classes/audio-manager';
 
+import 'im.v2.css.classes';
+
 import './css/audio-input.css';
+
+const ICON_SIZE = 24;
 
 // @vue/component
 export const AudioInput = {
 	name: 'AudioInput',
+	components: { BIcon },
 	props: {
 		dialogId: {
 			type: String,
 			required: true,
 		},
+		isDisabled: {
+			default: false,
+			type: Boolean,
+		},
 	},
-	emits: ['inputStart', 'inputResult'],
+	// `activeChange` reports whether the dictation is on: it holds the microphone, and the voice
+	// recorder standing next to it may not take the device away in the meantime
+	emits: ['inputStart', 'inputResult', 'activeChange'],
 	data(): JsonObject
 	{
 		return {
@@ -26,10 +39,26 @@ export const AudioInput = {
 			audioUsed: false,
 		};
 	},
+	computed:
+	{
+		ICON_SIZE: () => ICON_SIZE,
+		iconName(): string
+		{
+			return this.audioMode ? OutlineIcons.STOP_M : OutlineIcons.MICROPHONE_ON;
+		},
+		audioButtonLabel(): string
+		{
+			return this.audioMode
+				? this.loc('IM_TEXTAREA_ICON_SEND_VOICE_STOP_ARIA')
+				: this.loc('IM_TEXTAREA_ICON_SEND_VOICE');
+		},
+	},
 	watch:
 	{
 		audioMode(newValue, oldValue)
 		{
+			this.$emit('activeChange', newValue);
+
 			if (oldValue === false && newValue === true)
 			{
 				this.startAudio();
@@ -53,6 +82,11 @@ export const AudioInput = {
 	{
 		onClick()
 		{
+			if (this.isDisabled)
+			{
+				return;
+			}
+
 			if (this.audioMode)
 			{
 				this.audioMode = false;
@@ -131,12 +165,24 @@ export const AudioInput = {
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
+	// Explicit Tab stop: WebKit keeps a bare <button> out of the Tab order until full keyboard access is
+	// turned on in the OS.
 	template: `
-		<div
+		<button
 			v-if="isAudioModeAvailable()"
+			type="button"
+			tabindex="0"
+			class="bx-im-copilot-audio-input__container bx-im-textarea__icon --focus-visible"
+			:class="{
+				'--active': audioMode,
+				'--disabled': isDisabled,
+			}"
+			:disabled="isDisabled"
+			:aria-label="audioButtonLabel"
+			data-testid="im-textarea-audio-input-btn"
 			@click="onClick"
-			class="bx-im-copilot-audio-input__container"
-			:class="{'--active': audioMode}"
-		></div>
+		>
+			<BIcon :name="iconName" :size="ICON_SIZE" hoverable />
+		</button>
 	`,
 };

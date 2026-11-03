@@ -201,12 +201,80 @@
 	opacity: 0;
 }
 
+/*
+ * The quote is moved out of the bubble in this state and becomes a direct child of the content
+ * column, so its limit has to be set by the same selector form as the shared 460px rule
+ * (reply-preview.css): a single class loses on specificity. 260px matches the round player width:
+ * capped at the circle the quote neither widens the column nor grows with the bubble when the
+ * caption is long, so its own width never sizes the message column.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote.bx-im-captioned-video-note__quote {
+	max-width: 260px;
+}
+
+/*
+ * Duplicated on purpose from video-note.css: the header is a sibling of the circle, not a part of
+ * it, so it cannot travel with the shared circle styles, and every view that renders the header
+ * declares the same spacing in its own file.
+ */
+.bx-im-video-note__header_container {
+	margin-bottom: 4px;
+}
+
+/*
+ * Captioned state: the circle lives in the content column right above the caption bubble, and the
+ * column is as wide as that bubble. Without hugging its content the flex stretch would widen the
+ * container beyond the circle, and the progress bar (absolutely positioned at 100% of the
+ * container) would stop being centered on the circle.
+ */
+.bx-im-message-base__content-main > .bx-im-video-note__container {
+	align-self: flex-start;
+	margin-bottom: 4px;
+}
+
+/* The caption is the only content of the bubble, so it carries the whole body padding itself */
+.bx-im-captioned-video-note__default-message-container {
+	padding: var(--im-message-base__padding_body);
+}
+
 .bx-im-video-note__container {
 	position: relative;
 }
 
+/*
+ * The round shape is the only visual carrier of the message type, and the player exposes no name of
+ * its own: this label keeps the type in the accessibility tree while staying out of the layout.
+ */
+.bx-im-video-note__type-label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 .bx-im-video-note__header_container {
 	margin-bottom: 4px;
+}
+
+/* Matches the round player width so the quote neither widens nor shrinks the circle column */
+.bx-im-video-note__reply {
+	max-width: 260px;
+	margin-top: 0;
+}
+
+/*
+ * Both overlays below hang off the circle, so they are measured from the circle and not from the
+ * body. The body is not the same box: a running AI task adds a caption plate under the graphics as
+ * a sibling of the circle, and a `bottom` counted from the body would drag the time down onto that
+ * plate. The frame is a plain block, so the horizontal offsets keep the box they always had.
+ */
+.bx-im-video-note__frame {
+	position: relative;
 }
 
 .bx-im-video-note__status_container {

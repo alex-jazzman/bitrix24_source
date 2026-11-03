@@ -37,6 +37,7 @@ export type ProjectModel = {
 	goal: string;
 	title: string;
 	description: string;
+	owner: ProjectOwner | null;
 	ownerId: number | null;
 	chatId: number | null;
 	members: ProjectMember[];
@@ -76,6 +77,18 @@ export type ProjectMember = {
 	id: number;
 	type: string;
 	withChildNodes: boolean | null;
+	name?: string | null;
+	image?: ProjectImage | null;
+	selectorItem?: Object;
+}
+
+export type ProjectOwner = {
+	name?: string | null;
+	image?: ProjectImage | null;
+}
+
+export type ProjectImage = {
+	src?: string | null;
 }
 
 export type ProjectPermissions = {

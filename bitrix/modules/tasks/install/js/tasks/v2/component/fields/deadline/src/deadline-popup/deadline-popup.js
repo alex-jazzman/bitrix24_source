@@ -38,6 +38,9 @@ export const DeadlinePopup = {
 				offsetTop: 5,
 				offsetLeft: -100,
 				targetContainer: document.body,
+				focusTrap: true,
+				closeByEsc: true,
+				ariaLabel: this.loc('TASKS_V2_DEADLINE_ARIA_LABEL'),
 			};
 
 			if (this.coordinates?.x)

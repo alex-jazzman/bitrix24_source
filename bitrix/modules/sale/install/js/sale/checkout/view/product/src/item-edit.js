@@ -14,14 +14,14 @@ BitrixVue.component('sale-checkout-view-product-item_edit', {
 	template: `
 		<div class="checkout-table-row">
 			<div class="checkout-table-td">
-				<a :href="item.product.detailPageUrl" class="checkout-basket-item-image-block">
+				<a :href="item.product.detailPageUrl" class="checkout-basket-item-image-block" tabindex="-1" aria-hidden="true">
 					<img :src="getSrc" :alt="item.name" class="checkout-basket-item-image">
 				</a>
 			</div>
 			<div class="checkout-table-td">
 				<div class="checkout-basket-item-info-container">
 					<h2 class="checkout-basket-item-name-block">
-						<a :href="item.product.detailPageUrl" class="checkout-basket-item-name-text">{{item.name}}</a>
+						<a :href="item.product.detailPageUrl" class="checkout-basket-item-name-text" data-testid="sale-checkout-product-link">{{item.name}}</a>
 					</h2>
 					<div class="checkout-basket-item-info-block">
 						<sale-checkout-view-product-props_list :list="item.props" v-if="hasProps()"/>
@@ -39,8 +39,8 @@ BitrixVue.component('sale-checkout-view-product-item_edit', {
 						<div class="checkout-item-quantity-field-container">
 							<slot name="button-minus"/>
 							<div class="checkout-item-quantity-field-block">
-								<sale-checkout-view-element-input-product_item_quantity :item="item" :index="index"/>
-								<div class="checkout-item-quantity-field">{{item.quantity}}</div>
+								<sale-checkout-view-element-input-product_item_quantity :item="item" :index="index" data-testid="sale-checkout-quantity-input"/>
+								<div class="checkout-item-quantity-field" aria-hidden="true">{{item.quantity}}</div>
 							</div>
 							<slot name="button-plus"/>
 							<slot name="quantity-description"/>

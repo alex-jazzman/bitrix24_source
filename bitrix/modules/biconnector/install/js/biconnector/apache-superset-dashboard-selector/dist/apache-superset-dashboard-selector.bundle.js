@@ -1,1 +1,135 @@
-this.BX=this.BX||{},function(e,t,a,i,s,r){"use strict";function n(e,t){o(e,t),t.add(e)}function l(e,t,a){o(e,t),t.set(e,a)}function o(e,t){if(t.has(e))throw new TypeError("Cannot initialize the same private elements twice on an object")}function d(e,t,a){if(!t.has(e))throw new TypeError("attempted to get private field on non-instance");return a}var c=new WeakMap,h=new WeakMap,b=new WeakMap,u=new WeakMap,v=new WeakMap,p=new WeakMap,m=new WeakMap,w=new WeakSet,f=new WeakSet,S=new WeakSet,P=new WeakSet,B=new WeakSet,F=new WeakSet,H=new WeakSet,k=new WeakSet;function I(e){var t=this;return babelHelpers.classPrivateFieldGet(this,c)||babelHelpers.classPrivateFieldSet(this,c,new s.Dialog({id:"biconnector-superset-dashboard",multiple:!1,targetNode:e,offsetTop:14,context:"biconnector-superset-dashboard",entities:[{id:"biconnector-superset-dashboard",dynamicLoad:!0,dynamicSearch:!0}],enableSearch:!0,dropdownMode:!0,showAvatars:!0,compactView:!1,dynamicLoad:!0,clearUnavailableItems:!0,preselectedItems:[["biconnector-superset-dashboard",babelHelpers.classPrivateFieldGet(this,u)]],events:{"Item:onSelect":d(this,f,g).bind(this),"Item:onBeforeSelect":function(e){e.data.item.getCustomData().get("isAvailable")||(e.preventDefault(),d(t,k,X).call(t))}}})),babelHelpers.classPrivateFieldGet(this,c)}function g(e){var t=this;i.EventEmitter.emit("BiConnector:DashboardSelector.onSelect");var s=e.data.item;return d(this,F,W).call(this,s.getTitle()),d(this,S,C).call(this,s).then((function(){return d(t,P,D).call(t,s.id)})).then((function(e){if(e.data.dashboard){if(!e.data.dashboard.isAvailable)return d(t,k,X).call(t),e;d(t,F,W).call(t,e.data.dashboard.title),i.EventEmitter.emit("BiConnector:DashboardSelector.onSelectDataLoaded",{item:s,dashboardId:s.id,credentials:e.data.dashboard})}return e})).catch((function(e){var t;throw e.errors&&a.Type.isStringFilled(null===(t=e.errors[0])||void 0===t?void 0:t.message)&&BX.UI.Notification.Center.notify({content:a.Text.encode(e.errors[0].message)}),e}))}function C(e){return new Promise((function(a,i){"N"!==e.getCustomData().get("status")?a():t.DashboardManager.installDashboard(e.id).then((function(e){return a(e)})).catch((function(e){return i(e)}))}))}function D(e){return BX.ajax.runAction("biconnector.dashboard.getDashboardEmbeddedData",{data:{id:e,urlParams:babelHelpers.classPrivateFieldGet(this,m)}})}function E(){babelHelpers.classPrivateFieldGet(this,c).show()}function W(e){var t=a.Text.encode(e);babelHelpers.classPrivateFieldGet(this,b).innerHTML=t,babelHelpers.classPrivateFieldGet(this,b).title=t,document.title=t}function M(e){var t=this,a=e.data.dashboard;return new Promise((function(e){d(t,F,W).call(t,a.title),babelHelpers.classPrivateFieldSet(t,c,null),babelHelpers.classPrivateFieldSet(t,u,a.id),d(t,w,I).call(t,babelHelpers.classPrivateFieldGet(t,h)),i.EventEmitter.emit("BiConnector:DashboardSelector.onSelectDataLoaded",{item:a,dashboardId:a.id,credentials:a}),e()}))}function X(){new r.FeaturePromoter({code:"limit_benefit_market_active"}).show()}a.Reflection.namespace("BX.BIConnector").SupersetDashboardSelector=function e(t){babelHelpers.classCallCheck(this,e),n(this,k),n(this,H),n(this,F),n(this,B),n(this,P),n(this,S),n(this,f),n(this,w),l(this,c,{writable:!0,value:void 0}),l(this,h,{writable:!0,value:void 0}),l(this,b,{writable:!0,value:void 0}),l(this,u,{writable:!0,value:void 0}),l(this,v,{writable:!0,value:void 0}),l(this,p,{writable:!0,value:void 0}),l(this,m,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldSet(this,h,document.getElementById(t.containerId)),babelHelpers.classPrivateFieldSet(this,b,document.getElementById(t.textNodeId)),babelHelpers.classPrivateFieldSet(this,u,t.dashboardId),babelHelpers.classPrivateFieldSet(this,v,t.marketCollectionUrl),babelHelpers.classPrivateFieldSet(this,p,t.isMarketInstalled),babelHelpers.classPrivateFieldSet(this,m,t.dashboardUrlParams),d(this,w,I).call(this,babelHelpers.classPrivateFieldGet(this,h)),babelHelpers.classPrivateFieldGet(this,h)&&(a.Event.bind(babelHelpers.classPrivateFieldGet(this,h),"click",d(this,B,E).bind(this)),i.EventEmitter.subscribe("BIConnector.DashboardManager:onCopyDashboard",d(this,H,M).bind(this)))}}(this.BX.BIConnector=this.BX.BIConnector||{},BX.BIConnector,BX,BX.Event,BX.UI.EntitySelector,BX.UI);
+/* eslint-disable */
+(function (biconnector_apacheSupersetDashboardManager, biconnector_errorMessage, main_core, main_core_events, ui_entitySelector, ui_infoHelper, ui_notification) {
+	'use strict';
+
+	class SupersetDashboardSelector {
+		#dialog;
+		#selectorNode;
+		#textNode;
+		#dashboardId;
+		#marketCollectionUrl;
+		#isMarketInstalled;
+		#dashboardUrlParams;
+		constructor(props) {
+			this.#selectorNode = document.getElementById(props.containerId);
+			this.#textNode = document.getElementById(props.textNodeId);
+			this.#dashboardId = props.dashboardId;
+			this.#marketCollectionUrl = props.marketCollectionUrl;
+			this.#isMarketInstalled = props.isMarketInstalled;
+			this.#dashboardUrlParams = props.dashboardUrlParams;
+			this.#initDialog(this.#selectorNode);
+			if (this.#selectorNode) {
+				main_core.Event.bind(this.#selectorNode, 'click', this.#handleSearchClick.bind(this));
+				main_core_events.EventEmitter.subscribe('BIConnector.DashboardManager:onCopyDashboard', this.#handleCopyDashboard.bind(this));
+			}
+		}
+		#initDialog(node) {
+			if (this.#dialog) {
+				return this.#dialog;
+			}
+			this.#dialog = new ui_entitySelector.Dialog({
+				id: 'biconnector-superset-dashboard',
+				multiple: false,
+				targetNode: node,
+				offsetTop: 14,
+				context: 'biconnector-superset-dashboard',
+				entities: [{
+					id: 'biconnector-superset-dashboard',
+					dynamicLoad: true,
+					dynamicSearch: true
+				}],
+				enableSearch: true,
+				dropdownMode: true,
+				showAvatars: true,
+				compactView: false,
+				dynamicLoad: true,
+				clearUnavailableItems: true,
+				preselectedItems: [['biconnector-superset-dashboard', this.#dashboardId]],
+				events: {
+					'Item:onSelect': this.#onSelectItem.bind(this),
+					'Item:onBeforeSelect': event => {
+						if (!event.data.item.getCustomData().get('isAvailable')) {
+							event.preventDefault();
+							this.#openTariffSlider();
+						}
+					}
+				}
+			});
+			return this.#dialog;
+		}
+		#onSelectItem(event) {
+			main_core_events.EventEmitter.emit('BiConnector:DashboardSelector.onSelect');
+			const item = event.data.item;
+			this.#setTitle(item.getTitle());
+			return this.#installDashboard(item).then(() => this.#getDashboardEmbeddedData(item.id)).then(response => {
+				if (response.data.dashboard) {
+					if (!response.data.dashboard.isAvailable) {
+						this.#openTariffSlider();
+						return response;
+					}
+					this.#setTitle(response.data.dashboard.title);
+					main_core_events.EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+						item,
+						dashboardId: item.id,
+						credentials: response.data.dashboard
+					});
+				}
+				return response;
+			}).catch(response => {
+				ui_notification.Center.notify({
+					content: biconnector_errorMessage.resolveErrorHtml(response, main_core.Loc.getMessage('BICONNECTOR_DASHBOARD_SELECTOR_LOAD_ERROR'))
+				});
+				throw response;
+			});
+		}
+		#installDashboard(item) {
+			return new Promise((resolve, reject) => {
+				const status = item.getCustomData().get('status');
+				if (status === 'N') {
+					biconnector_apacheSupersetDashboardManager.DashboardManager.installDashboard(item.id).then(response => resolve(response)).catch(error => reject(error));
+					return;
+				}
+				resolve();
+			});
+		}
+		#getDashboardEmbeddedData(dashboardId) {
+			return BX.ajax.runAction('biconnector.dashboard.getDashboardEmbeddedData', {
+				data: {
+					id: dashboardId,
+					urlParams: this.#dashboardUrlParams
+				}
+			});
+		}
+		#handleSearchClick() {
+			this.#dialog.show();
+		}
+		#setTitle(text) {
+			const title = main_core.Text.encode(text);
+			this.#textNode.innerHTML = title;
+			this.#textNode.title = title;
+			document.title = title;
+		}
+		#handleCopyDashboard(event) {
+			const dashboard = event.data.dashboard;
+			return new Promise(resolve => {
+				this.#setTitle(dashboard.title);
+				this.#dialog = null;
+				this.#dashboardId = dashboard.id;
+				this.#initDialog(this.#selectorNode);
+				main_core_events.EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+					item: dashboard,
+					dashboardId: dashboard.id,
+					credentials: dashboard
+				});
+				resolve();
+			});
+		}
+		#openTariffSlider() {
+			new ui_infoHelper.FeaturePromoter({
+				code: 'limit_benefit_market_active'
+			}).show();
+		}
+	}
+	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardSelector = SupersetDashboardSelector;
+
+})(BX.BIConnector, BX.BIConnector, BX, BX.Event, BX.UI.EntitySelector, BX.UI, BX.UI.Notification);

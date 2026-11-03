@@ -55,12 +55,27 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 				emailValue = customData.email;
 			}
 
-			return JSON.stringify({
+			const entity = fieldToEntity(type, id, ownerType);
+			const recipient = {
 				email: emailValue,
-				entityId: id,
+				entityId: entity.entityId ?? id,
 				name: title,
-				...fieldToEntity(type, id, ownerType),
-			});
+				entityType: entity.entityType,
+			};
+
+			// A restored draft recipient absent from the preloaded bindings arrives as a plain
+			// e-mail field, but its CRM identity survives in customData. Keep that identity so the
+			// activity communication is bound to the real entity instead of the address string.
+			const customEntityType = customData?.entityType;
+			const customEntityId = Number(customData?.entityId) || 0;
+			const fieldHasCrmIdentity = type === 'contact' || type === 'company';
+			if (!fieldHasCrmIdentity && customEntityType && customEntityType !== 'email' && customEntityId > 0)
+			{
+				recipient.entityType = normalizeRecipientEntityType(customEntityType);
+				recipient.entityId = customEntityId;
+			}
+
+			return JSON.stringify(recipient);
 		}).filter(Boolean);
 	}
 
@@ -85,6 +100,19 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 		}
 
 		return '';
+	}
+
+	function normalizeRecipientEntityType(entityType)
+	{
+		switch (entityType)
+		{
+			case 'contact':
+				return 'contacts';
+			case 'company':
+				return 'companies';
+			default:
+				return entityType;
+		}
 	}
 
 	function fieldToEntity(type, id, ownerType)
@@ -121,12 +149,13 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 	/**
 	 * @function sendMessage
 	 */
-	function sendMessage(props)
+	function sendMessage(props, runAction = (action, config) => BX.ajax.runAction(action, config))
 	{
 		const {
 			senders,
 			fileTokens,
 			message,
+			messageHtml,
 			from,
 			to,
 			ownerType,
@@ -134,9 +163,18 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 			inResponseToMessage,
 			isForward = 0,
 			isCrmMessage = true,
+			draftId = null,
+			draftRevision = null,
+			draftClientId = null,
+			largeAttachments = null,
+			saveAsTemplate = false,
 		} = props;
 
 		const subject = buildFieldValue(props.subject);
+		const body = typeof messageHtml === 'string' && messageHtml.length > 0
+			? messageHtml
+			: buildFieldValue(message)
+		;
 
 		const HTML_CONTENT_TYPE = 3;
 		const CRM_ACTIVITY_STORAGE_TYPE = 3;
@@ -149,13 +187,23 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 			ownerType,
 			ownerId,
 			storageTypeID: CRM_ACTIVITY_STORAGE_TYPE,
-			message: buildFieldValue(message),
+			message: isCrmMessage ? body : buildFieldValue(message),
 			content_type: HTML_CONTENT_TYPE,
 			bindings: [{
 				entityType: ownerType,
 				entityId: ownerId,
 			}],
 		};
+
+		if (!isCrmMessage && messageHtml)
+		{
+			data.htmlMessage = messageHtml;
+		}
+
+		if (!isCrmMessage && saveAsTemplate === true)
+		{
+			data.saveAsTemplate = true;
+		}
 
 		const cc = buildContactData(props.cc, ownerType);
 		const bcc = buildContactData(props.bcc, ownerType);
@@ -175,6 +223,30 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 			data.REPLIED_ID = inResponseToMessage;
 		}
 
+		if (draftId)
+		{
+			data.draftId = draftId;
+
+			if (draftRevision !== null && draftRevision !== undefined)
+			{
+				data.draftRevision = draftRevision;
+			}
+
+			// The identity of this compose form: the draft of the context may have been taken over by
+			// another device, and its attachments must not leave with this message.
+			if (draftClientId)
+			{
+				data.draftClientId = draftClientId;
+			}
+		}
+
+		// The converted sets extend the contract instead of replacing it: a request without them is handled
+		// the way it always was, so attachments of an older build keep working.
+		if (Array.isArray(largeAttachments) && largeAttachments.length > 0)
+		{
+			data.largeAttachments = largeAttachments;
+		}
+
 		if (isForward === 1)
 		{
 			data.IS_FORWARD = 1;
@@ -191,7 +263,7 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 
 		const config = { data: { data } };
 
-		return BX.ajax.runAction(action, config);
+		return runAction(action, config);
 	}
 
 	/**
@@ -269,14 +341,33 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 
 	/**
 	 * @function getChainPromise
+	 * @param {number|string} id
+	 * @param {number} [isCrmMessage]
+	 * @param {string} [act]
+	 * @param {string} [mailUfMessageToken]
+	 * @param {MessageThemeRequestParams} [themeRequestParams] Appearance to prepare the bodies for; see
+	 *     `mail/message/theme-request`. An empty object leaves the bodies as they are stored.
+	 * @return {Promise}
 	 */
-	function getChainPromise(id, isCrmMessage = 1)
+	function getChainPromise(id, isCrmMessage = 1, act = '', mailUfMessageToken = '', themeRequestParams = {})
 	{
+		const data = {
+			id,
+			messageType: isCrmMessage,
+			...themeRequestParams,
+		};
+
+		if (isCrmMessage)
+		{
+			data.act = act;
+		}
+		else
+		{
+			data.mailUfMessageToken = mailUfMessageToken;
+		}
+
 		return BX.ajax.runAction(AjaxMethod.getMessageChain, {
-			data: {
-				id,
-				messageType: isCrmMessage,
-			},
+			data,
 		});
 	}
 
@@ -296,16 +387,108 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 
 	/**
 	 * @function getMessagePromise
+	 * @param {number|string} id
+	 * @param {boolean} [takeBody]
+	 * @param {boolean} [takeFiles]
+	 * @param {number} [isCrmMessage]
+	 * @param {string} [act]
+	 * @param {string} [mailUfMessageToken]
+	 * @param {MessageThemeRequestParams} [themeRequestParams] Appearance to prepare the body for; see
+	 *     `mail/message/theme-request`. An empty object leaves the body as it is stored.
+	 * @return {Promise}
 	 */
-	function getMessagePromise(id, takeBody = false, takeFiles = false, isCrmMessage = 1)
+	function getMessagePromise(
+		id,
+		takeBody = false,
+		takeFiles = false,
+		isCrmMessage = 1,
+		act = '',
+		mailUfMessageToken = '',
+		themeRequestParams = {},
+	)
 	{
+		const data = {
+			id,
+			takeBody,
+			takeFiles,
+			messageType: isCrmMessage,
+			...themeRequestParams,
+		};
+
+		if (isCrmMessage)
+		{
+			data.act = act;
+		}
+		else
+		{
+			data.mailUfMessageToken = mailUfMessageToken;
+		}
+
 		return BX.ajax.runAction('mailmobile.api.Message.getMessage', {
-			data: {
-				id,
-				takeBody,
-				takeFiles,
-				messageType: isCrmMessage,
-			},
+			data,
+		});
+	}
+
+	/**
+	 * Queues an AI request that generates an e-mail subject from the compose body.
+	 * The generated text is delivered asynchronously via the `ai` PULL channel;
+	 * the resolved response carries only `{ queueHash }`.
+	 *
+	 * The CRM entity is what tells the server this is a CRM composition, so it is
+	 * sent only when there really is one.
+	 *
+	 * @function generateSubject
+	 * @param {Object} params
+	 * @param {string} params.body
+	 * @param {string} [params.currentSubject] Subject to improve, if already entered.
+	 * @param {string} params.mode One of "new" / "reply" / "forward".
+	 * @param {string|number} [params.ownerType] CRM entity type of the composition.
+	 * @param {?number} [params.ownerId] CRM entity id of the composition.
+	 * @param {?number} [params.originalMessageId]
+	 * @return {Promise}
+	 */
+	function generateSubject({
+		body,
+		currentSubject = '',
+		mode,
+		ownerType = '',
+		ownerId = 0,
+		originalMessageId = null,
+	})
+	{
+		const data = {
+			body,
+			currentSubject,
+			mode,
+		};
+
+		if (Number(ownerId) > 0)
+		{
+			data.ownerType = String(ownerType);
+			data.ownerId = Number(ownerId);
+		}
+
+		if (Number(originalMessageId) > 0)
+		{
+			data.originalMessageId = Number(originalMessageId);
+		}
+
+		return BX.ajax.runAction(AjaxMethod.generateSubject, { data });
+	}
+
+	/**
+	 * Asks the server whether AI subject generation is available for the given
+	 * composition context. The decision is made entirely on the server; the
+	 * resolved response carries `{ subjectGenerationAvailable: boolean }`.
+	 *
+	 * @function getSubjectGenerationAvailablePromise
+	 * @param {boolean} [isCrm=false] Whether availability is queried for CRM composition.
+	 * @return {Promise}
+	 */
+	function getSubjectGenerationAvailablePromise(isCrm = false)
+	{
+		return BX.ajax.runAction(AjaxMethod.getSubjectGenerationAvailable, {
+			data: { isCrm },
 		});
 	}
 
@@ -316,5 +499,7 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 		getMessageNeighbors,
 		sendMessage,
 		deleteMessage,
+		generateSubject,
+		getSubjectGenerationAvailablePromise,
 	};
 });

@@ -15,6 +15,8 @@ class Setting implements Arrayable
 		public readonly ?SettingOptionCollection $options = null,
 		public readonly ?SettingCollection $children = null,
 		public readonly ?string $defaultValue = null,
+		/** The activity lets this setting hold a bizproc expression instead of one of its options. */
+		public readonly bool $allowSelection = false,
 	) {}
 
 	public function toArray(): array

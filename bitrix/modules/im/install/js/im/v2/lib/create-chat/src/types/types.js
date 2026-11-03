@@ -25,10 +25,17 @@ export type PreselectedMemberItem = {
 	id: number | string,
 };
 
+export type CreatedChatInfo = {
+	id: number,
+	name: string,
+	chatId: number,
+};
+
 export type OpenChatCreationParams = {
 	preselectedMembers?: PreselectedMemberItem[],
 	ownerId?: number,
 	includeCurrentUser?: boolean,
 	clearCurrentCreation?: boolean,
 	parentChatId?: number,
+	onCreate?: (createdChat: CreatedChatInfo) => void,
 };

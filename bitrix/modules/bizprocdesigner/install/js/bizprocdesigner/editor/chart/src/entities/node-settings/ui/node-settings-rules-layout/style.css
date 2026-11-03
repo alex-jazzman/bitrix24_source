@@ -3,6 +3,9 @@
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+	/* The sticky card changes its flow height while animating; scroll anchoring can feed
+	   that change back into scrollTop and make the pinned state flicker. */
+	overflow-anchor: none;
 	/* height of the pinned bottom part of the rules card, measured by the component;
 	   offsets keyboard focus so controls aren't hidden under it */
 	scroll-padding-top: var(--editor-chart-rules-card-pinned-height, 60px);
@@ -51,6 +54,9 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-stack-md2);
+	transition:
+		margin-left 160ms ease,
+		margin-right 160ms ease;
 }
 
 .editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-rules-layout__rules-card-metrics {
@@ -117,9 +123,259 @@
 	padding: var(--ui-space-inset-md2);
 }
 
+/* Nothing laid out yet: the flow holds the shared placeholder alone, so it takes the height left
+   under the rules card and drops its own insets — the placeholder centres itself in it */
+.editor-chart-node-settings-rules-layout__content.--empty {
+	flex: 1;
+	padding: 0;
+}
+
 .editor-chart-node-settings-rules-layout__content::-webkit-scrollbar,
 .editor-chart-node-settings-rules-layout__content::-webkit-scrollbar {
 	width: 0;
+}
+
+/* In the overview the content spans the full width of the panel: the tint of the selected input has
+   to reach both edges, and the 18px the insets used to take go to the fields instead. The single
+   rule surface (relations, a portless node) keeps its own insets */
+.editor-chart-node-settings-rules-layout__content.--all-rules {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+/* One rule of the node. Showing a single rule it is a bare wrapper: the blocks keep the flow of the
+   content area. In the overview a rule is a two column grid whose left track is the gutter */
+.editor-chart-node-settings-rules-layout__rule-section {
+	display: flex;
+	flex-direction: column;
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+}
+
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section {
+	display: grid;
+	grid-template-columns: var(--editor-chart-rule-gutter-width) minmax(0, 1fr);
+	padding: 0 var(--ui-space-inset-md2);
+	transition: background-color 200ms ease;
+	/* The hover tint of the input is a layer of its naming row (see below): the section is what that
+	   layer is laid out against, and isolating it keeps the layer under everything in the input
+	   instead of under the panel */
+	position: relative;
+	isolation: isolate;
+}
+
+/* The left track carries the vertical rule along the whole height of an expanded input. The rule
+   lines up with the collapse arrow above it, not with the middle of the track - the arrow sits at
+   the start of the track, so its centre is half its own size. Kept in step with the :size the
+   section row passes to BIcon */
+.editor-chart-node-settings-rules-layout {
+	--editor-chart-rule-gutter-width: var(--ui-space-inset-2xl);
+	--editor-chart-rule-toggle-size: 18px;
+	--editor-chart-rule-line-width: 2px;
+}
+
+/* Explicit rows: the naming row and the body, with the vertical rule beside the body. Placing them
+   by hand and not by auto-flow keeps the rule out of the naming row */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-row {
+	grid-row: 1;
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* Reaches past the insets of the section so the hover spans the full width of the panel,
+	   while the text keeps standing where the insets put it */
+	margin: 0 calc(-1 * var(--ui-space-inset-md2));
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-md2);
+}
+
+/* Pointing at the naming row lights the whole input, not just the row: an expanded input is one
+   thing, and its tint has to cover the head blocks and the groups under the row as well. The tint
+   is a layer of the row stretched over the whole section, so it spans the full width past the
+   insets - and the browser recalculates the style of the row the pointer is on and not of the input
+   around it, which is what asking the section whether its row is hovered used to cost.
+   The layer takes no pointer of its own: reaching over the body, it would otherwise answer for a
+   pointer that is nowhere near the row. */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-row::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	transition: background-color 200ms ease;
+}
+
+/* A selected input is tinted already, and a hover on top of that tint reads as nothing. */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section:not(.--active) .editor-chart-node-settings-rules-layout__rule-section-row:hover::before {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* The separator: a vertical rule down the left track, beside the body of an expanded input */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section::before {
+	content: '';
+	grid-row: 3;
+	grid-column: 1;
+	justify-self: start;
+	margin-left: calc(
+		(var(--editor-chart-rule-toggle-size) - var(--editor-chart-rule-line-width)) / 2
+	);
+	width: var(--editor-chart-rule-line-width);
+	border-radius: var(--ui-border-radius-3xs);
+	background: var(--ui-color-accent-soft-border-blue);
+}
+
+/* Every other input carries the second colour of the rule: neighbouring inputs are told apart by it,
+   which is what the alternating tones of the sections used to do before they were dropped */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section.--alternate::before {
+	background: var(--ui-color-accent-soft-border-green);
+}
+
+/* A collapsed input is one row: there is nothing for the vertical rule to run along */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section:not(.--expanded)::before {
+	display: none;
+}
+
+/* The rule the add panel works on: its whole area is tinted, so it is clear what "+ condition" adds
+   to. This is the one tint left in the list - the alternating tones of the neighbouring sections are
+   gone, and the colour of a block stays the only other colour here */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section.--active {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section.--active .editor-chart-node-settings-rules-layout__rule-section-title {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-toggle,
+.editor-chart-node-settings-rules-layout__rule-card-toggle,
+.editor-chart-node-settings-rules-layout__rule-card-name {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-header {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+	flex-grow: 1;
+	min-width: 0;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-toggle:focus-visible,
+.editor-chart-node-settings-rules-layout__rule-card-toggle:focus-visible,
+.editor-chart-node-settings-rules-layout__rule-card-name:focus-visible,
+.editor-chart-node-settings-rules-layout__rule-section-header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* The chevron answers the pointer on its own: it collapses the input, while the name beside it
+   names the input as the target of the add panel - two different actions in one row */
+.editor-chart-node-settings-rules-layout__rule-section-toggle,
+.editor-chart-node-settings-rules-layout__rule-card-toggle {
+	padding: var(--ui-space-inset-3xs);
+	border-radius: var(--ui-border-radius-2xs);
+	transition: background-color 200ms ease;
+}
+
+/* The room the hover backing takes shifts the icon right by its own inset, and the vertical rule of
+   the gutter is laid out from the track, not from the button - so the inset is taken back here and
+   the rule runs through the middle of the chevron */
+.editor-chart-node-settings-rules-layout__rule-section-toggle {
+	margin-left: calc(-1 * var(--ui-space-inset-3xs));
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-toggle:hover,
+.editor-chart-node-settings-rules-layout__rule-card-toggle:hover {
+	background: var(--ui-color-bg-state-click-default);
+}
+
+.editor-chart-node-settings-rules-layout__rule-section-title {
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The count of groups stands at the far end of the row: the name of the input leads, and the counts
+   of the inputs line up in one column instead of trailing names of different length */
+.editor-chart-node-settings-rules-layout__rule-section-summary {
+	margin-left: auto;
+	flex: none;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-body {
+	grid-row: 3;
+	grid-column: 2;
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-md2);
+}
+
+/* An empty rule stays a compact row the user can pick, without a placeholder of its own */
+.editor-chart-node-settings-rules-layout__content.--all-rules .editor-chart-node-settings-rules-layout__rule-section-body.--empty {
+	padding: 0;
+}
+
+.editor-chart-node-settings-rule-card__toggle {
+	display: flex;
+	align-items: center;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-rule-card__toggle:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* Collapsed group: the row names it and where it leads */
+.editor-chart-node-settings-rules-layout__rule-card-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm);
+	border: 1px solid var(--ui-color-divider-less);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.editor-chart-node-settings-rules-layout__rule-card-title {
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.editor-chart-node-settings-rules-layout__rule-card-output {
+	margin-left: auto;
+	color: var(--ui-color-base-3);
 }
 
 .editor-chart-node-settings-rules-layout .editor-chart-node-settings-rule-card > .editor-chart-node-settings-add-construction,

@@ -33,6 +33,15 @@
 	opacity: 0;
 }
 
+/* Draw the focus ring inside the row. The shared .--focus-visible rule uses a positive
+   outline-offset; the scroll container (overflow-y: scroll) clips it and the next row's
+   :before separator overlaps its bottom edge. An inset offset keeps the whole ring visible
+   on first/last/middle rows. Higher specificity than the shared rule in im.v2.css.classes,
+   which stays untouched (it is shared with menu items and the create-chat trigger). */
+.bx-im-messenger__scope .bx-im-list-recent-item__wrap.--focus-visible:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .bx-im-list-recent-item__container {
 	display: flex;
 	height: 70px;
@@ -148,6 +157,25 @@
 }
 /* End active item */
 
+.bx-im-list-recent-item__counters_wrap .bx-im-entity-button {
+	--im-entity-button__badge-background-color: var(--im-list-recent-item__background-color_counter);
+	--im-entity-button__badge-background-color_muted: var(--im-list-recent-item__background-color_muted);
+	--im-entity-button__badge-border-color: var(--im-list-recent-item__border-color_unread);
+}
+
+.bx-im-list-recent-item__wrap:hover .bx-im-entity-button {
+	--im-entity-button__badge-border-color: var(--im-list-recent-item__border-color_unread-hover);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-entity-button {
+	--im-entity-button__background-color: var(--im-color-palette-white-base);
+	--im-entity-button__background-color_hover: var(--im-color-palette-white-base);
+	--im-entity-button__color: var(--ui-color-accent-main-primary);
+	--im-entity-button__badge-background-color: var(--im-color-palette-white-base);
+	--im-entity-button__badge-background-color_muted: var(--im-color-palette-white-base);
+	--im-entity-button__badge-border-color: var(--im-list-recent-item__background-color_selected);
+}
+
 .bx-im-list-recent-item__avatar_counter {
 	position: absolute;
 	right: -1px;
@@ -207,13 +235,51 @@
 	background-color: var(--ui-color-white-base);
 }
 
+/* New avatar counter color (isAirDesignEnabled flag). Each state is duplicated
+   under .--air-design to preserve muted/selected priority (adding an ancestor
+   raises specificity). */
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter.--with-unread::before {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter.--muted,
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__avatar_counter.--muted.--with-unread::before {
+	background-color: var(--ui-color-gray-40);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__avatar_counter {
+	color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-white-base);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__avatar_counter.--with-unread::before {
+	border-color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-white-base);
+}
+
+/* BCounter (ui.cnt) renders the numeric badge; the container stays only an absolute
+   positioner and host for the --with-unread dot. Specificity is higher than all
+   container background rules (including selected). */
+.bx-im-messenger__scope.--air-design
+	.bx-im-list-recent-item__wrap
+	.bx-im-list-recent-item__avatar_container
+	.bx-im-list-recent-item__avatar_counter.--air-counter {
+	min-width: 0;
+	padding: 0;
+	background-color: transparent;
+}
+
 .bx-im-list-recent-item__counters_wrap {
 	--im-list-recent-item__background-color_counter: #00ade3;
 	--im-list-recent-item__background-color_muted: var(--im-color-palette-gray-40);
 	--im-list-recent-item__background-color_comments: var(--im-color-palette-green-55);
 	--im-list-recent-item__color_counter: var(--im-color-palette-white-base);
-	--im-list-recent-item__border-color_unread: var(--im-color-palette-white-base);
-	--im-list-recent-item__border-color_unread-hover: #f1f4f6;
+	--im-list-recent-item__border-color_unread: var(--im-list-recent-item__background-color);
+	--im-list-recent-item__border-color_unread-hover: var(--im-list-recent-item__background-color_hover);
 
 	align-self: center;
 	display: flex;
@@ -223,6 +289,12 @@
 	min-width: 27px;
 	height: 20px;
 	margin-left: 8px;
+}
+
+.bx-im-list-recent-item__counters_wrap.--compact {
+	min-width: 0;
+	height: 28px;
+	gap: 0 8px;
 }
 
 .bx-im-list-recent-item__counters_container {
@@ -378,6 +450,34 @@
 .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__counters_wrap.--with-children .bx-im-list-recent-item__counter_number::after {
 	background-color: var(--im-color-palette-white-base);
 }
+
+/* New unread counter color (isAirDesignEnabled flag) */
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__counters_wrap {
+	--im-list-recent-item__background-color_counter: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__counter_number,
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__mention {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-messenger__scope.--air-design .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__mention-icon {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+/* BCounter (ui.cnt) renders the numeric badge, so .counter_number becomes a
+   transparent positioner for the decorative overlays (--with-unread dot, green
+   --with-children pill). Specificity is deliberately higher than all
+   .counter_number background rules (down to selected.--children-only). */
+.bx-im-messenger__scope.--air-design
+	.bx-im-list-recent-item__wrap
+	.bx-im-list-recent-item__counters_wrap
+	.bx-im-list-recent-item__counter_number.--air-counter {
+	min-width: 0;
+	padding: 0;
+	background-color: transparent;
+}
+
 .bx-im-list-recent-item__status-icon {
 	margin-right: 5px;
 	background-repeat: no-repeat;
@@ -431,6 +531,22 @@
 
 .bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--viewed {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='11' fill='none' viewBox='0 0 14 11'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M7.346 8.609a.3.3 0 0 1-.416.004l-.943-.892a.4.4 0 0 1-.005-.577L6.44 6.7a.4.4 0 0 1 .542-.014l.159.139 4.85-4.748a.4.4 0 0 1 .56 0l.445.434a.4.4 0 0 1 0 .573zm-4.141-.003a.3.3 0 0 1-.419 0L.377 6.258a.4.4 0 0 1 0-.572l.447-.435a.4.4 0 0 1 .558 0l1.614 1.573 4.85-4.748a.4.4 0 0 1 .56 0l.445.434a.4.4 0 0 1 .001.573z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* Air status icon (isAirDesignEnabled flag): size/color driven by CSS vars on the
+   BIcon root. --accent lifts viewed to the accent primary; --selected inverts to
+   white and is listed last so a selected row wins over viewed. */
+.bx-im-list-recent-item__status-icon.--air {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-list-recent-item__status-icon.--air.--accent {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-list-recent-item__status-icon.--air.--selected {
+	--ui-icon-set__icon-color: var(--ui-color-white-base);
 }
 .bx-im-list-recent-item__message_container {
 	--im-list-recent-item__background-color_invitation: var(--im-color-palette-blue-30);
@@ -558,13 +674,6 @@
 	flex-direction: column;
 }
 
-.bx-im-list-base__scroll-container {
-	flex-grow: 1;
-	overflow: hidden;
-	overflow-y: scroll;
-	background-color: var(--im-list-base__background-color)
-}
-
 .bx-im-list-base__general_container {
 	margin: 4px 4px 6px 4px;
 }
@@ -590,9 +699,19 @@
 }
 
 .bx-im-list-base__fixed_container .bx-im-list-recent-item__wrap:not(.--selected) {
+	--im-list-recent-item__background-color: var(--im-list-base-fixed__background-color_container);
+	--im-list-recent-item__background-color_hover: var(--im-list-base-fixed__background-color_container_hover);
+
 	background-color: var(--im-list-base-fixed__background-color_container);
 }
 
 .bx-im-list-base__fixed_container .bx-im-list-recent-item__wrap:not(.--selected):hover {
 	background-color: var(--im-list-base-fixed__background-color_container_hover);
+}
+
+.bx-im-list-base__scroll-container {
+	flex-grow: 1;
+	overflow: hidden;
+	overflow-y: scroll;
+	background-color: var(--im-list-base__background-color)
 }

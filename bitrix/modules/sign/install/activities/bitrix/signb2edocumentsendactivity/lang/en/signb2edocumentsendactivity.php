@@ -1,0 +1,24 @@
+<?php
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOCUMENT_ID'] = 'Signing document ID';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOCUMENT_ID_HINT'] = 'Document ID from the configuration step. In the automation rule designer, select "After previous automation rule" as the execution order to get the ID.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOMAIN_B2E_RESTRICTED_ON_TARIFF'] = 'Employee document signing is not available on your current plan.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOMAIN_DOCUMENT_FINISHED'] = 'The document has already been completed.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOMAIN_DOCUMENT_STATUS_CHANGED'] = 'The document status changed during submission.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOMAIN_SIGNING_PERIOD_TOO_LONG'] = 'The signing period is too long. Change it in the configuration step.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_DOMAIN_SIGNING_PERIOD_TOO_SHORT'] = 'The signing period has expired or is too short. Change it in the configuration step.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_DOCUMENT_FINISHED'] = 'The document has already been completed and cannot be sent for signing.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_DOCUMENT_NOT_UPLOADED'] = 'The document is not ready to send: the document file has not been uploaded.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_DOCUMENT_UNAVAILABLE'] = 'The signing document was not found or is not available.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_EMPTY_DOCUMENT_ID'] = 'Signing document ID is missing.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_INITIATED_BY_EMPLOYEE'] = 'The document is being sent by an employee. This automation rule only supports sending documents from the company to employees.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_MODULE_UNAVAILABLE'] = 'Could not send the document for signing: the modules required by the automation rule are not available in Bitrix24.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_NOT_B2E_DOCUMENT'] = 'This document is not intended for signing with employees.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_NO_MEMBERS'] = 'The document has no participants. Configure the signers first.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_START_FAILED'] = 'Could not send the document for signing.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_START_FAILED_WITH_REASON'] = 'Could not send the document for signing: #ERRORS#';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_TEMPLATE_WITHOUT_AUTHOR'] = 'Could not check document permissions: the workflow designer is not identified.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_UNAVAILABLE'] = 'Sending documents for signing is not available in this Bitrix24.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_WAIT_EXHAUSTED'] = 'The document was not ready for signing within the waiting period and was not sent.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ERROR_WAIT_NOT_POSSIBLE'] = 'Could not defer the automation rule until the document is ready. The document was not sent.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_LOG_WAIT_STARTED'] = 'The document is not ready to send yet. Its readiness will be checked again. If it is not ready within the waiting period, it will not be sent.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_SEND_ROBOT_TITLE'] = 'Submit created document for signing';

@@ -22,6 +22,7 @@ this.BX = this.BX || {};
 		#saveTitleButton;
 		#cancelTitleEditButton;
 		#isInit = false;
+		#isEditSessionActive = false;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('UI.Toolbar.TitleEditor');
@@ -106,6 +107,7 @@ this.BX = this.BX || {};
 			if (event.isDefaultPrevented()) {
 				return;
 			}
+			this.#isEditSessionActive = true;
 			this.#inputNode.value = this.#titleNode.textContent;
 			this.changeDisplay(this.#titleNode, false);
 			this.changeDisplay(this.#editTitleButtonNode, false);
@@ -117,6 +119,10 @@ this.BX = this.BX || {};
 			this.emit(TitleEditorEvents.startEditing);
 		}
 		finishEdit() {
+			if (!this.#isEditSessionActive) {
+				return;
+			}
+			this.#isEditSessionActive = false;
 			// this.dataNode.value = this.inputNode.value;
 			this.#titleNode.textContent = this.#inputNode.value;
 			this.changeDisplay(this.#inputNode, false);
@@ -130,6 +136,10 @@ this.BX = this.BX || {};
 			});
 		}
 		cancelEdit() {
+			if (!this.#isEditSessionActive) {
+				return;
+			}
+			this.#isEditSessionActive = false;
 			this.changeDisplay(this.#inputNode, false);
 			this.changeDisplay(this.#editTitleButtonNode, true);
 			this.changeDisplay(this.#titleNode, true);

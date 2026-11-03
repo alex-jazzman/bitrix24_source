@@ -1,0 +1,371 @@
+/**
+ * main.popup sizes the overlay in pixels by the scroll size of its container. Inside the
+ * wizard slider that value is smaller than the viewport, so the overlay gets clipped.
+ * The popup id carries an instance number, so the overlay is matched by its prefix.
+ */
+[id^='popup-window-overlay-sign-b2e-batch-upload-popup'] {
+	position: fixed;
+	inset: 0;
+}
+
+.sign-b2e-batch-upload {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	min-width: 480px;
+	font-family: var(--ui-font-family-system);
+}
+
+.sign-b2e-batch-upload__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.sign-b2e-batch-upload__header-line {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+}
+
+.sign-b2e-batch-upload__counter {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-1);
+}
+
+.sign-b2e-batch-upload__total-percent {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-2);
+	font-variant-numeric: tabular-nums;
+}
+
+/* the batch as a whole: the leading indicator of the window, the row bars are its detail */
+.sign-b2e-batch-upload__total-bar {
+	position: relative;
+	height: 6px;
+	margin: var(--ui-space-stack-3xs) 0;
+	overflow: hidden;
+	background: var(--ui-color-base-7);
+	border-radius: var(--ui-border-radius-pill);
+}
+
+.sign-b2e-batch-upload__total-fill {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: var(--ui-color-accent-main-primary);
+	/* composited fill: the bar clips it, so the track keeps the pill shape */
+	transform: scaleX(var(--sign-b2e-batch-upload-total-fill, 0));
+	transform-origin: left;
+	transition: transform 0.2s ease;
+}
+
+/**
+ * The documents are being created: the server answers the batch as a whole, so the bar has no
+ * value to show. It runs across the track instead, and the width of the fill means nothing.
+ */
+.sign-b2e-batch-upload__total-bar.--indeterminate .sign-b2e-batch-upload__total-fill {
+	width: 40%;
+	transition: none;
+	animation: sign-b2e-batch-upload-total-run 1.2s ease-in-out infinite;
+}
+
+@keyframes sign-b2e-batch-upload-total-run {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		/* the fill is 40% of the track wide, so 250% of its own width clears the right edge */
+		transform: translateX(250%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	/* No motion is allowed, and a fill frozen part way would read as a value: it fills instead. */
+	.sign-b2e-batch-upload__total-bar.--indeterminate .sign-b2e-batch-upload__total-fill {
+		width: 100%;
+		transform: none;
+		animation: none;
+	}
+}
+
+.sign-b2e-batch-upload__total-bar.--done .sign-b2e-batch-upload__total-fill {
+	background: var(--ui-color-accent-main-success);
+}
+
+/* every file has its outcome and some of them failed: the rows carry which ones */
+.sign-b2e-batch-upload__total-bar.--partial .sign-b2e-batch-upload__total-fill {
+	background: var(--ui-color-accent-main-warning);
+}
+
+.sign-b2e-batch-upload__limit-hint {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-3);
+}
+
+/* the reason the add button is dead, next to the button itself */
+.sign-b2e-batch-upload__limit-notice {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-3);
+	text-align: center;
+}
+
+.sign-b2e-batch-upload__rejected-notice {
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-accent-soft-element-orange);
+	background: var(--ui-color-accent-soft-orange-2);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.sign-b2e-batch-upload__list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	max-height: 320px;
+	overflow-y: auto;
+}
+
+.sign-b2e-batch-upload__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.sign-b2e-batch-upload__row-bar {
+	position: relative;
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	background: var(--ui-color-base-7);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.sign-b2e-batch-upload__row-fill {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: var(--ui-color-accent-soft-blue-1);
+	/* composited fill: the bar clips it, so the track keeps the rounded shape */
+	transform: scaleX(var(--sign-b2e-batch-upload-row-fill, 0));
+	transform-origin: left;
+	transition: transform 0.2s ease;
+}
+
+.sign-b2e-batch-upload__row-body {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+}
+
+/*
+ * The name and the status share a line while the status is short - a percentage or a phase. An error
+ * message is a whole sentence, and on one line with the name both ended up cut off, so in the error
+ * states the message moves under the name and wraps instead.
+ */
+.sign-b2e-batch-upload__row-text {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.sign-b2e-batch-upload__row.--error .sign-b2e-batch-upload__row-text,
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-text {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0;
+}
+
+.sign-b2e-batch-upload__row.--error .sign-b2e-batch-upload__row-status,
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-status {
+	max-width: 100%;
+	overflow: visible;
+	white-space: normal;
+	text-overflow: clip;
+}
+
+.sign-b2e-batch-upload__row-name {
+	flex: 1 1 auto;
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-1);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sign-b2e-batch-upload__row-status {
+	flex: 0 1 auto;
+	max-width: 50%;
+	overflow: hidden;
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-accent-soft-element-blue);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.sign-b2e-batch-upload__row-mark {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-reset);
+	color: var(--ui-color-base-white-fixed);
+	border-radius: var(--ui-border-radius-circle);
+}
+
+/* The phrase is short and must stay whole, so the name of the file ellipsizes instead. */
+.sign-b2e-batch-upload__row.--committing .sign-b2e-batch-upload__row-status {
+	flex: 0 0 auto;
+	max-width: none;
+}
+
+.sign-b2e-batch-upload__row.--done .sign-b2e-batch-upload__row-fill {
+	background: var(--ui-color-accent-soft-green-1);
+}
+
+.sign-b2e-batch-upload__row.--done .sign-b2e-batch-upload__row-mark {
+	background: var(--ui-color-accent-main-success);
+}
+
+/* Checkmark drawn from two borders of a rotated box. */
+.sign-b2e-batch-upload__row.--done .sign-b2e-batch-upload__row-mark::before {
+	content: '';
+	width: 3px;
+	height: 6px;
+	margin-top: -2px;
+	border-right: 2px solid var(--ui-color-base-white-fixed);
+	border-bottom: 2px solid var(--ui-color-base-white-fixed);
+	transform: rotate(45deg);
+}
+
+.sign-b2e-batch-upload__row.--error .sign-b2e-batch-upload__row-fill {
+	background: var(--ui-color-accent-soft-red-1);
+}
+
+.sign-b2e-batch-upload__row.--error .sign-b2e-batch-upload__row-status {
+	color: var(--ui-color-accent-soft-element-red);
+}
+
+.sign-b2e-batch-upload__row.--error .sign-b2e-batch-upload__row-mark {
+	background: var(--ui-color-accent-main-alert);
+}
+
+.sign-b2e-batch-upload__row.--error .sign-b2e-batch-upload__row-mark::before {
+	content: '!';
+}
+
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-fill {
+	background: var(--ui-color-accent-soft-orange-1);
+}
+
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-status {
+	color: var(--ui-color-accent-soft-element-orange);
+}
+
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-mark {
+	background: var(--ui-color-accent-main-warning);
+}
+
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-mark::before {
+	content: '!';
+}
+
+.sign-b2e-batch-upload__row.--rejected .sign-b2e-batch-upload__row-name {
+	color: var(--ui-color-base-3);
+}
+
+.sign-b2e-batch-upload__row-retry {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.sign-b2e-batch-upload__row-remove {
+	--ui-color: var(--ui-color-base-4);
+
+	position: relative;
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+
+/* the file is already in the request creating the documents, so it cannot be removed */
+.sign-b2e-batch-upload__row-remove.--hidden {
+	visibility: hidden;
+}
+
+/* the outline goes inside the button: the scrollable list would clip it at its right edge */
+.sign-b2e-batch-upload__row-remove:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -1px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.sign-b2e-batch-upload__row-remove::before,
+.sign-b2e-batch-upload__row-remove::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 12px;
+	height: 2px;
+	margin: -1px 0 0 -6px;
+	background: var(--ui-color);
+	border-radius: var(--ui-border-radius-pill);
+	transition: background-color 200ms ease;
+}
+
+.sign-b2e-batch-upload__row-remove:hover::before,
+.sign-b2e-batch-upload__row-remove:hover::after {
+	background: var(--ui-color-hover);
+}
+
+.sign-b2e-batch-upload__row-remove:active::before,
+.sign-b2e-batch-upload__row-remove:active::after {
+	background: var(--ui-color-active);
+}
+
+.sign-b2e-batch-upload__row-remove::before {
+	transform: rotate(45deg);
+}
+
+.sign-b2e-batch-upload__row-remove::after {
+	transform: rotate(-45deg);
+}
+
+.sign-b2e-batch-upload__footer {
+	display: flex;
+	justify-content: center;
+	gap: var(--ui-space-inline-xs);
+}

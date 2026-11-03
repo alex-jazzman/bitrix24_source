@@ -1,0 +1,7 @@
+<?php
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CONFIGURE_CONFIGURATION_STATUS'] = 'Configuration status';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CONFIGURE_DESCRIPTION'] = 'Configures an existing draft document for signing. Use this action multiple times to configure the document step by step.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CONFIGURE_RETURN_DOCUMENT_ID'] = 'Signing document ID';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CONFIGURE_RETURN_DOCUMENT_STATUS'] = 'Document status';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CONFIGURE_RETURN_SMART_DOCUMENT_ID'] = 'SPA (Smart Process Automation) item ID';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CONFIGURE_TITLE'] = 'Configure draft document for signing';

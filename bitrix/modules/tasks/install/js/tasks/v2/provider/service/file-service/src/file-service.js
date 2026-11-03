@@ -168,7 +168,19 @@ export class FileService extends EventEmitter
 
 	hasUploadingError(): boolean
 	{
-		return this.getFileItems().some(({ status }) => [
+		return this.#getFailedFileItems().length > 0;
+	}
+
+	removeFailedFiles(): void
+	{
+		const uploader = this.#adapter.getUploader();
+
+		this.#getFailedFileItems().forEach(({ id }) => uploader.removeFile(id));
+	}
+
+	#getFailedFileItems(): UploaderFileInfo[]
+	{
+		return this.getFileItems().filter(({ status }) => [
 			FileStatus.UPLOAD_FAILED,
 			FileStatus.LOAD_FAILED,
 		].includes(status));
@@ -274,28 +286,67 @@ export class FileService extends EventEmitter
 		this.#promises.push(promise);
 		this.#addLoadedIds(unloadedIds);
 
+		FileService.#enqueueListObjects(this, unloadedIds, promise);
+
+		await promise;
+		await Promise.all(this.#promises);
+
+		return this.getFileItems();
+	}
+
+	static #listObjectsBatch: { service: FileService, ids: FileId[], promise: Object }[] = [];
+	static #listObjectsScheduled: boolean = false;
+
+	static #enqueueListObjects(service: FileService, ids: FileId[], promise: Object): void
+	{
+		FileService.#listObjectsBatch.push({ service, ids, promise });
+
+		if (!FileService.#listObjectsScheduled)
+		{
+			FileService.#listObjectsScheduled = true;
+			queueMicrotask(() => {
+				void FileService.#flushListObjects();
+			});
+		}
+	}
+
+	static async #flushListObjects(): Promise<void>
+	{
+		const batch = FileService.#listObjectsBatch;
+		FileService.#listObjectsBatch = [];
+		FileService.#listObjectsScheduled = false;
+
+		const ids = [...new Set(batch.flatMap((entry) => entry.ids))];
+
 		try
 		{
-			const data = await apiClient.post(Endpoint.FileListObjects, {
-				ids: unloadedIds,
+			const data = await apiClient.post(Endpoint.FileListObjects, { ids });
+
+			batch.forEach((entry) => {
+				const entryIds = new Set(entry.ids);
+				try
+				{
+					entry.service.#handleLoadedFiles(data.filter((fileDto: FileDto) => entryIds.has(fileDto.id)));
+				}
+				catch (error)
+				{
+					entry.service.#removeLoadedIds(entry.ids);
+					console.error(Endpoint.FileListObjects, error);
+				}
+				finally
+				{
+					entry.promise.resolve();
+				}
 			});
-
-			this.#handleLoadedFiles(data);
-
-			promise.resolve();
-
-			await Promise.all(this.#promises);
-
-			return this.getFileItems();
 		}
 		catch (error)
 		{
-			this.#removeLoadedIds(unloadedIds);
-			promise.resolve();
+			batch.forEach((entry) => {
+				entry.service.#removeLoadedIds(entry.ids);
+				entry.promise.resolve();
+			});
 
 			console.error(Endpoint.FileListObjects, error);
-
-			return [];
 		}
 	}
 
@@ -644,7 +695,8 @@ export class FileService extends EventEmitter
 	{
 		if (this.#entityType === EntityTypes.Task)
 		{
-			return taskService.getStoreTask(this.#entityId).fileIds;
+			// a draft task is already dropped from the store by the time its id is replaced
+			return taskService.getStoreTask(this.#entityId)?.fileIds ?? [];
 		}
 
 		if (this.#entityType === EntityTypes.Result)
@@ -679,7 +731,10 @@ export const fileService = {
 		const newKey = getKey(entityId, entityType);
 
 		services[newKey] = services[oldKey];
-		services[newKey].setEntityId(entityId, entityType);
+
+		// drop server-rejected files while the id is still a draft one, so removal queues no detach request
+		services[newKey]?.removeFailedFiles();
+		services[newKey]?.setEntityId(entityId, entityType);
 
 		delete services[oldKey];
 	},

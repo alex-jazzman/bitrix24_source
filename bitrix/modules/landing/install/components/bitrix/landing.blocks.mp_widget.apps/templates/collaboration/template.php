@@ -8,17 +8,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Landing\Vibe\Vibe;
 use Bitrix\Main\UI\Extension;
 
 Extension::load([
 	'ui.qrauthorization',
+	// the focus ring of the stylesheet is built from the tokens of this one
+	'ui.design-tokens.air',
 	'ui.icon-set.main',
 	'ui.icon-set.social',
 	'ui.buttons',
 ]);
 
 $imgSrc = 'https://cdn.bitrix24.site/bitrix/images/landing/vibe/collaboration/apps-en.png';
-if (in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by', 'uz'], true))
+if (in_array(Vibe::getPortalZone(), ['ru', 'kz', 'by', 'uz'], true))
 {
 	$imgSrc = 'https://cdn.bitrix24.site/bitrix/images/landing/vibe/collaboration/apps-ru.png';
 }
@@ -27,23 +30,23 @@ $title = Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_TITLE');
 $text1 = Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_1');
 $text2 = Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_2');
 $text3 = Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_3');
-$mobileButtonText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_BUTTON_TEXT');
+$mobileButtonText = htmlspecialcharsbx(Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_BUTTON_TEXT'));
 $desktopButtonText = Loc::getMessage('BLOCK_MP_WIDGET_APPS_COLLABORATION_DESKTOP_TEXT');
 $buttonLink = isset($arResult['DESKTOP_APP_LINK']) && is_string($arResult['DESKTOP_APP_LINK'])
-	? $arResult['DESKTOP_APP_LINK']
+	? htmlspecialcharsbx($arResult['DESKTOP_APP_LINK'])
 	: '';
 
 $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 ?>
 
-<div class="landing-widget-apps-collaboration row no-gutters g-cursor-default" id="<?= $id ?>">
+<div class="landing-widget-apps-collaboration row no-gutters g-cursor-default" id="<?= $id ?>" data-testid="mainpage-widget-apps-collaboration-root">
 	<div class="col">
-		<div
-			class="landing-block-node-title g-font-weight-600 g-font-size-35 g-line-height-1_1 g-color g-mb-40"
+		<h2
+			class="landing-block-node-title g-font-weight-600 g-font-size-35 g-line-height-1_1 g-color g-mb-40 g-mt-0"
 			style="--color: #000000;"
 		>
 			<?= $title ?>
-		</div>
+		</h2>
 		<div class="g-mb-60 g-width-80x">
 			<div
 				class="d-flex g-mb-18 g-font-size-20 g-color g-pos-rel landing-collab-list-item align-items-start"
@@ -97,15 +100,19 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 				<a
 					href="<?= $buttonLink ?>"
 					class="landing-widget-desktop-button landing-widget-desktop-button-collaboration text-center"
+					data-testid="mainpage-widget-apps-collaboration-desktop-link"
 				>
 					<?= $desktopButtonText ?>
 				</a>
 
-				<a class="landing-widget-qr-button d-flex align-items-center justify-content-center g-pl-18 g-pr-18 g-rounded-10 g-font-size-16 g-font-weight-500 text-center g-cursor-pointer g-btn-type-solid g-color g-bg g-bg--hover"
-				   style=" --bg: #3273F6; --bg-hover: #678EF1; --color: #ffffff; height: 38px; transition: background 0.3s, color 0.3s;"
+				<button
+					type="button"
+					class="landing-widget-qr-button d-flex align-items-center justify-content-center g-pl-18 g-pr-18 g-rounded-10 g-font-size-16 g-font-weight-500 text-center g-cursor-pointer g-btn-type-solid g-color g-bg g-bg--hover"
+					style="--bg: #3273F6; --bg-hover: #678EF1; --color: #ffffff; height: 38px; transition: background 0.3s, color 0.3s;"
+					data-testid="mainpage-widget-apps-collaboration-qr-btn"
 				>
 					<?= $mobileButtonText ?>
-				</a>
+				</button>
 			</div>
 		</div>
 	</div>

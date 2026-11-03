@@ -91,6 +91,12 @@ export class DraftManager
 			return;
 		}
 
+		const hasNothingToRemember = !this.drafts[dialogId] && panelType === TextareaPanelType.none;
+		if (hasNothingToRemember)
+		{
+			return;
+		}
+
 		if (!this.drafts[dialogId])
 		{
 			this.drafts[dialogId] = {};
@@ -130,6 +136,51 @@ export class DraftManager
 		}
 
 		return this.drafts[dialogId] ?? {};
+	}
+
+	async reloadDraftFromStorage(dialogId: string): Promise<void>
+	{
+		if (!this.#isValidDialogId(dialogId))
+		{
+			return;
+		}
+
+		this.#forceSavePendingChanges();
+
+		if (!this.inited)
+		{
+			await this.initDraftHistory();
+
+			return;
+		}
+
+		let draftHistory = null;
+		try
+		{
+			draftHistory = await IndexedDbManager.getInstance().get(STORAGE_KEY, {});
+		}
+		catch (error)
+		{
+			// eslint-disable-next-line no-console
+			console.error('DraftManager: error reloading draft from storage', error);
+
+			return;
+		}
+
+		if (!Type.isPlainObject(draftHistory))
+		{
+			return;
+		}
+
+		const storedDraft = draftHistory[dialogId];
+		if (Type.isPlainObject(storedDraft))
+		{
+			this.drafts[dialogId] = storedDraft;
+		}
+		else
+		{
+			delete this.drafts[dialogId];
+		}
 	}
 
 	clearDraft(dialogId: string)
@@ -211,8 +262,21 @@ export class DraftManager
 	{
 		clearTimeout(this.writeToStorageTimeout);
 		this.writeToStorageTimeout = setTimeout(() => {
+			this.writeToStorageTimeout = null;
 			this.#saveToIndexedDb();
 		}, WRITE_TO_STORAGE_TIMEOUT);
+	}
+
+	#forceSavePendingChanges()
+	{
+		if (!this.writeToStorageTimeout)
+		{
+			return;
+		}
+
+		clearTimeout(this.writeToStorageTimeout);
+		this.writeToStorageTimeout = null;
+		this.#saveToIndexedDb();
 	}
 
 	#saveToIndexedDb()

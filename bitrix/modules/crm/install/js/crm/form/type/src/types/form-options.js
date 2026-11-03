@@ -167,9 +167,15 @@ type Embedding = {
 	scripts: EmbeddingScripts;
 	views: EmbeddingViews;
 };
+type Identification = {
+	id: number;
+	sec: string;
+	address: string;
+};
 
 export type FormOptions = {
 	data: FormTypes.Options;
+	identification: Identification;
 	id: number;
 	name: string;
 	templateId: string;

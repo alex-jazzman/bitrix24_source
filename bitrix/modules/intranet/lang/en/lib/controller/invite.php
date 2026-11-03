@@ -4,6 +4,7 @@ $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVALID_RESPONSE"] = "Could not send inv
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT"] = "Reached daily invitation limit.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_EMAIL"] = "You have reached your daily email invite quota. Please use a different way to invite users.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_SMS"] = "You have reached your daily SMS invite quota. Please use a different way to invite users.";
+$MESS['INTRANET_CONTROLLER_INVITE_ERROR_SMS_REINVITE_TIMEOUT'] = 'Cannot resend the SMS invitation yet. Please try again later.';
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_UNKNOWN"] = "Unknown error.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_ALREADY_CONFIRMED"] = "This user has already joined your Bitrix24.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_IS_NOT_EMPLOYEE"] = "Cannot send invitation to this user.";

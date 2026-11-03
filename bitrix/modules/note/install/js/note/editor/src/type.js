@@ -25,7 +25,7 @@ export type DocumentViewsSnapshot = {
 	viewers: Array<DocumentViewer>,
 };
 
-// [DTO-01] Backlinks counter bundled with the document bootstrap payload (see
+// Backlinks counter bundled with the document bootstrap payload (see
 // DocumentBacklinksSnapshotResolver) — BacklinksWidgetComponent adopts it instead of reading the
 // count itself. `isCapped` means the server stopped counting at its cap.
 export type DocumentBacklinksSnapshot = {
@@ -41,7 +41,7 @@ export type DocumentChangeAuthor = {
 
 // [#2] Bootstrap snapshot of the last content change — feeds ActivityLineComponent's chip
 // (note.ui.document-history) via note.editor's own `lastChange` state/prop. `time` is an
-// ISO 8601 string, formatted client-side (see activity-line.js's chipTimeText).
+// ISO 8601 string, formatted client-side (see activity-line.js's chipChangedText).
 export type DocumentLastChange = {
 	authors: Array<DocumentChangeAuthor>,
 	time: string,

@@ -439,6 +439,17 @@ input.ui-entity-editor-header-title-text {
 
 .ui-entity-editor-content-block:hover .ui-entity-editor-block-context-menu:hover { opacity: 1; }
 
+/*
+	The gear is invisible until the block is hovered: opacity 0 at rest, .35 while the section is
+	being edited. opacity fades the focus ring along with the element, so once the button became a
+	tab stop it would take focus and show nothing - indistinguishable from being skipped, which is
+	how it was reported. Keyboard focus makes it fully opaque; the mouse is untouched, so the icon
+	still appears only on hover. Same shape as the fix for the file input's ring in #255182.
+
+	Specificity ties with the .35 rule above (0,2,0), so this has to stay below it.
+*/
+.ui-entity-editor-block-context-menu:focus-visible { opacity: 1; }
+
 .ui-entity-editor-section-edit .ui-entity-editor-content-block-field-radiobox .ui-entity-editor-block-context-menu,
 .ui-entity-editor-section-edit .ui-entity-editor-field-checkbox .ui-entity-editor-block-context-menu,
 .ui-entity-editor-section-edit .ui-entity-editor-content-block-field-custom-radiobox .ui-entity-editor-block-context-menu,
@@ -578,6 +589,24 @@ input.ui-entity-editor-header-title-text {
 	-ms-flex-pack: justify;
 	justify-content: space-between;
 }
+
+/*region Reflow: wrap the section actions row at narrow widths (WCAG 2.1 AA, 1.4.10)*/
+/*
+	The actions row is a flex box with no wrapping: "Select field"/"Create field"
+	on the left, "Remove section" on the right. At narrow widths they do not fit,
+	and the right block spills past the container and then past the card area edge
+	(measured at a 241px card width: container 171px, the block ends at 255px).
+	The label is clipped by the edge with no way to read it: its overflow is
+	visible, and it has no title or aria-label — the text is simply lost.
+	Below the breakpoint we allow wrapping: each block moves onto its own line.
+*/
+@media (max-width: 768px) {
+	.ui-entity-card-content-actions-container {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
+}
+/*endregion*/
 
 .ui-entity-editor-content-add-lnk,
 .ui-entity-editor-content-create-lnk,
@@ -1507,6 +1536,7 @@ input.ui-entity-editor-header-title-text {
 
 .ui-entity-editor-product-summary-container .ui-entity-editor-product-summary-empty-list-container {
 	display: block;
+	width: 100%;
 	margin: 0;
 }
 

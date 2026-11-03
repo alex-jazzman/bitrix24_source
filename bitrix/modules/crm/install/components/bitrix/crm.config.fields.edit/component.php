@@ -1,21 +1,40 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Crm\Service\UserPermissions\ConfigurationCallSite;
+use Bitrix\Crm\Service\UserPermissions\ConfigurationScope;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+$arResult['ENTITY_ID'] = $isSettingsHub
+	? ($arParams['FIELS_ENTITY_ID'] ?? '')
+	: ($_REQUEST['entity_id'] ?? $arParams['FIELS_ENTITY_ID']);
+$arResult['FIELD_ID'] = $isSettingsHub
+	? ($arParams['FIELS_FIELD_ID'] ?? 0)
+	: ($_REQUEST['field_id'] ?? $arParams['FIELS_FIELD_ID']);
+$arResult['CATEGORY_ID'] = $_REQUEST['category_id'] ?? 0;
+
+$configuration = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->configuration();
+$configurationScope = ConfigurationScope::ofUserFieldEntityId(
+	is_string($arResult['ENTITY_ID']) ? $arResult['ENTITY_ID'] : ''
+);
+$canManageFields = $configuration->canManageFields(ConfigurationCallSite::FieldsEditComponent, $configurationScope);
+$canDeleteFields = $configuration->canDeleteFields(ConfigurationCallSite::FieldsEditComponent, $configurationScope);
+// The form opens for either operation - a field is deleted from it as well - and each write branch
+// below asks for the one operation it performs.
+if (!$canManageFields && !$canDeleteFields)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
-$arResult['ENTITY_ID'] = $_REQUEST['entity_id'] ?? $arParams['FIELS_ENTITY_ID'];
-$arResult['FIELD_ID'] = $_REQUEST['field_id'] ?? $arParams['FIELS_FIELD_ID'];
-$arResult['CATEGORY_ID'] = $_REQUEST['category_id'] ?? 0;
+$arResult['CAN_MANAGE_FIELDS'] = $canManageFields;
+$arResult['CAN_DELETE_FIELDS'] = $canDeleteFields;
 
 global $USER_FIELD_MANAGER;
 
@@ -30,6 +49,14 @@ if ($CCrmFields->CheckError())
 $arResult['NEW_FIELD'] = false;
 if (!$arResult['FIELD_ID'])
 	$arResult['NEW_FIELD'] = true;
+
+// The joint gate above also lets in the holder of the deletion right alone, but a new field is a change
+// and there is nothing to delete on this route.
+if ($arResult['NEW_FIELD'] && !$canManageFields)
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
+}
 
 $arResult['FIELD'] = array();
 if (!$arResult['NEW_FIELD'] && !($arResult['FIELD'] = $CCrmFields->GetByName($arResult['FIELD_ID'])))
@@ -130,6 +157,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	//When Save or Apply buttons was pressed
 	if(isset($_POST['save']) || isset($_POST['apply']))
 	{
+		if(!$canManageFields)
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			return;
+		}
+
 		$strError = '';
 
 		if ($hasRestrictions)
@@ -424,6 +457,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 				break;
 			case 'address':
+			case 'resourcebooking':
 				break;
 			default:
 				$arField['SHOW_FILTER'] = 'N';
@@ -484,7 +518,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					);
 				}
 
-				if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+				if (!$isSettingsHub && isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 				{
 					$arResult['CLOSE_SLIDER'] = true;
 					$this->IncludeComponentTemplate();
@@ -514,11 +548,17 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	}
 	elseif($arResult['FIELD_ID'] && isset($_POST['action']) && $_POST['action']==='delete')
 	{
+		if(!$canDeleteFields)
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			return;
+		}
+
 		$CCrmFields->DeleteField($arResult['FIELD']['ID']);
 
 		$GLOBALS['CACHE_MANAGER']->ClearByTag('crm_fields_list_'.$arResult['ENTITY_ID']);
 
-		if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+		if (!$isSettingsHub && isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 		{
 			$arResult['CLOSE_SLIDER'] = true;
 			$this->IncludeComponentTemplate();

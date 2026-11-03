@@ -250,10 +250,22 @@ export class PickerBase extends Base
 					|| firstError?.code === 'ERROR_CODE_FORCE'
 				)
 				{
+					const technicalLimitMessage = AjaxErrorHandler.getVibePlusTechnicalLimitMessage(
+						firstError?.customData,
+					);
+
+					if (technicalLimitMessage)
+					{
+						this.handleGenerateFail({ ...firstError, message: technicalLimitMessage });
+
+						return;
+					}
+
 					AjaxErrorHandler.handleImageGenerateError({
 						errorCode: firstError?.code,
 						showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 						sliderCode: firstError?.customData?.sliderCode,
+						vibePlusLimitState: firstError?.customData?.vibePlusLimitState,
 						baasOptions: {
 							bindElement: this.context.querySelector('.ai__picker_submit-btn'),
 							useSlider: firstError?.customData?.showSliderWithMsg ?? true,

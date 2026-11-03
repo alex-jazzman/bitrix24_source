@@ -9,6 +9,7 @@ export class NameInput extends RowTextInput
 			placeholder: Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
 			ariaLabel: Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_ARIA_LABEL'),
 			dataTestId,
+			autocomplete: 'given-name',
 		});
 	}
 }

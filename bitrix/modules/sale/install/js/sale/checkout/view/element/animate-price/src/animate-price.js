@@ -3,13 +3,18 @@ import { Type } from 'main.core';
 import { CurrencyCore } from 'currency.currency-core';
 import 'sale.checkout.view.element.animate-price'
 
-BitrixVue.component('sale-checkout-view-element-animate_price', {
+// the builder creates BX.Sale.Checkout.View.Element only for a bundle that exports something,
+// and the input bundle reads it on load
+export const AnimatePriceComponentName = 'sale-checkout-view-element-animate_price';
+
+BitrixVue.component(AnimatePriceComponentName, {
 	props: ['sum', 'currency', 'prefix'],
 	data()
 	{
 		return {
 			displaySum: this.sum,
 			interval: false,
+			running: false,
 		}
 	},
 	computed:
@@ -17,6 +22,11 @@ BitrixVue.component('sale-checkout-view-element-animate_price', {
 		getPrefix()
 		{
 			return Type.isString(this.prefix) ? this.prefix:''
+		},
+		// hidden from a reader while the sum runs towards the real one
+		ariaHidden()
+		{
+			return this.running ? 'true' : 'false';
 		},
 		sumFormatted()
 		{
@@ -31,10 +41,12 @@ BitrixVue.component('sale-checkout-view-element-animate_price', {
 	{
 		animated()
 		{
-			clearInterval(this.interval);
+			this.stopAnimation();
 
 			if(this.sum !== this.displaySum)
 			{
+				this.running = true;
+
 				this.interval = window.setInterval(()=>
 				{
 					if(this.displaySum !== this.sum)
@@ -54,10 +66,15 @@ BitrixVue.component('sale-checkout-view-element-animate_price', {
 					}
 					else
 					{
-						clearInterval(this.interval);
+						this.stopAnimation();
 					}
 				}, 10);
 			}
+		},
+		stopAnimation()
+		{
+			clearInterval(this.interval);
+			this.running = false;
 		}
 	},
 	watch:
@@ -69,6 +86,6 @@ BitrixVue.component('sale-checkout-view-element-animate_price', {
 	},
 	// language=Vue
 	template: `
-		<div v-html="getPrefix + sumFormatted"/>
+		<div :aria-hidden="ariaHidden" v-html="getPrefix + sumFormatted"/>
 	`
 });

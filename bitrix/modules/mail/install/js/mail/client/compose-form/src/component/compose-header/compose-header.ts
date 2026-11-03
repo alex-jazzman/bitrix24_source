@@ -31,7 +31,8 @@ export const ComposeHeader = defineComponent({
 	{
 		return {
 			state: useComposeState(),
-			iconName: Outline.MAIL_SEND,
+			iconName: Outline.MAIL,
+			iconColor: 'var(--ui-color-accent-main-primary)',
 		};
 	},
 
@@ -47,6 +48,7 @@ export const ComposeHeader = defineComponent({
 			<BIcon
 				class="mail-compose-header__icon"
 				:name="iconName"
+				:color="iconColor"
 				:size="24"
 				data-testid="mail-compose-header-icon"
 			/>

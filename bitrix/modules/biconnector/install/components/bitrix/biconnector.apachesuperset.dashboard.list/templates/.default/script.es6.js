@@ -1,6 +1,5 @@
 import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime, clone } from 'main.core';
-import { MenuManager } from 'main.popup';
-import { DateTimeFormat } from 'main.date';
+import { MenuManager, PopupManager } from 'main.popup';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { EventEmitter } from 'main.core.events';
 import { ApacheSupersetAnalytics, PermissionsAnalytics, PermissionsAnalyticsSource } from 'biconnector.apache-superset-analytics';
@@ -16,11 +15,14 @@ import { Dialog as SystemDialog } from 'ui.system.dialog';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { AhaMoment } from 'biconnector.aha-moment';
 import { SharePopup } from 'biconnector.share-popup';
+import { resolveErrorHtml, getUserFacingErrorHtml } from 'biconnector.error-message';
 
 type SelfHostedLicensePopup = {
 	title: string,
 	text: string,
 	termKey: string,
+	actionText: ?string,
+	actionUrl: ?string,
 };
 
 type Props = {
@@ -28,6 +30,7 @@ type Props = {
 	isNeedShowDraftGuide: boolean,
 	selfHostedLicensePopup: ?SelfHostedLicensePopup,
 	publishAhaMoment: ?Object,
+	constructorButtonHint: ?Object,
 	isAvailableDashboardCreation: boolean,
 	isAvailableGroupCreation: boolean,
 	isMarketExists: boolean,
@@ -42,6 +45,9 @@ type LoginPopupParams = {
 	appId: string,
 };
 
+// The grid stays visibility:hidden for the first 10ms of its load animation.
+const CONSTRUCTOR_HINT_VISIBILITY_FRAMES = 5;
+
 /**
  * @namespace BX.BIConnector
  */
@@ -53,13 +59,11 @@ class SupersetDashboardGridManager
 	#tagSelectorDialog: ?Dialog;
 	#lastPinnedRowId: ?number;
 	#publishAhaMoment: ?AhaMoment;
+	#constructorButtonHint: ?AhaMoment;
+	#constructorHintRowNode: ?HTMLElement = null;
+	#constructorHintFrameId: ?number = null;
 	#properties: Props;
 	#sharePopups: Map<number, SharePopup> = new Map();
-	#isDashboardListChanged: boolean = false;
-	#dashboardListReloadTimeout: ?number = null;
-	#isDashboardListUpdatingLocally: boolean = false;
-	#dashboardListChangesDuringLocalUpdate: number = 0;
-	#lastDashboardListReloadScheduleAt: number = Date.now();
 	constructor(props: Props)
 	{
 		this.#dashboardManager = new DashboardManager();
@@ -71,6 +75,7 @@ class SupersetDashboardGridManager
 
 		this.#colorPinnedRows();
 		this.#initHints();
+		this.#showConstructorButtonHint();
 		this.#showSelfHostedLicensePopup();
 
 		this.#replaceHistoryState();
@@ -78,15 +83,6 @@ class SupersetDashboardGridManager
 
 	#subscribeToEvents()
 	{
-		Event.bind(
-			document.getElementById('biconnector-dataset-typing-warning-details'),
-			'click',
-			(event) => {
-				event.preventDefault();
-				this.openDatasetTypingSettings();
-			},
-		);
-
 		Event.bind(
 			window,
 			'popstate',
@@ -100,7 +96,6 @@ class SupersetDashboardGridManager
 
 				const filterApi = this.getFilter().getApi();
 				filterApi.extendFilter(filterState);
-				filterApi.apply();
 			},
 		);
 
@@ -154,8 +149,6 @@ class SupersetDashboardGridManager
 					'TAGS.ID': currentFilteredTags,
 					'TAGS.ID_label': currentFilteredTagLabels,
 				});
-
-				filterApi.apply();
 			}
 		});
 
@@ -187,40 +180,28 @@ class SupersetDashboardGridManager
 			}
 		});
 
-		Event.bind(document, 'visibilitychange', () => {
-			this.#reloadChangedDashboardList();
-		});
-
-		Event.bind(window, 'focus', () => {
-			this.#reloadChangedDashboardList();
-		});
-
 		EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', () => {
 			this.#grid.reload();
 		});
 
-		EventEmitter.subscribe('Grid::updated', () => {
+		EventEmitter.subscribe('Grid::updated', (event) => {
 			this.#initHints();
 			this.#colorPinnedRows();
 
 			this.#replaceHistoryState();
+
+			if (event.getData()?.[0]?.getId() === this.#grid?.getId())
+			{
+				this.#clearConstructorHintRow();
+				this.#showConstructorButtonHint();
+			}
 		});
 
 		EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', () => {
 			this.#grid.tableUnfade();
 		});
 
-		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', (event) => {
-			const data = event.getData();
-			if (data?.datasetTypingEnabled === true)
-			{
-				const warning = document.getElementById('biconnector-dataset-typing-warning');
-				if (warning)
-				{
-					warning.remove();
-				}
-			}
-
+		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', () => {
 			this.#grid.reload();
 		});
 
@@ -310,6 +291,17 @@ class SupersetDashboardGridManager
 		EventEmitter.subscribe('BIConnector.SharePopup:onShareDeactivated', (event) => {
 			this.#updateShareLinkCell(event.getData().dashboardId, false);
 		});
+
+		// The settings slider emits into the top window.
+		const topEventBus = window.top?.BX?.Event?.EventEmitter ?? EventEmitter;
+		topEventBus.subscribe('BIConnector.ShareSetting:onChange', (event: BaseEvent) => {
+			const dashboardId = Text.toInteger(event.getData().dashboardId);
+
+			// A cached popup keeps the link state from before the change.
+			this.#sharePopups.get(dashboardId)?.hide();
+			this.#sharePopups.delete(dashboardId);
+			this.getGrid().reload();
+		});
 	}
 
 	#initHints(): void
@@ -362,75 +354,6 @@ class SupersetDashboardGridManager
 		this.getGrid().reload();
 	}
 
-	#reloadChangedDashboardList(): void
-	{
-		if (!this.#isDashboardListChanged || document.hidden)
-		{
-			return;
-		}
-
-		this.#scheduleDashboardListReload();
-	}
-
-	#scheduleDashboardListReload(): void
-	{
-		if (this.#dashboardListReloadTimeout !== null)
-		{
-			return;
-		}
-
-		const delay = Math.max(0, this.#lastDashboardListReloadScheduleAt + 1000 - Date.now());
-		this.#lastDashboardListReloadScheduleAt = Date.now() + delay;
-		this.#dashboardListReloadTimeout = setTimeout(() => {
-			this.#dashboardListReloadTimeout = null;
-			if (!this.#isDashboardListChanged || document.hidden)
-			{
-				return;
-			}
-
-			if (
-				this.#isDashboardListUpdatingLocally
-				|| this.#hasActiveDashboardListInteraction()
-			)
-			{
-				this.#scheduleDashboardListReload();
-
-				return;
-			}
-
-			this.#isDashboardListChanged = false;
-			this.getGrid().reload();
-		}, delay);
-	}
-
-	#skipOwnDashboardListChange(): void
-	{
-		if (this.#dashboardListChangesDuringLocalUpdate > 0)
-		{
-			this.#dashboardListChangesDuringLocalUpdate--;
-
-			return;
-		}
-
-	}
-
-	#hasActiveDashboardListInteraction(): boolean
-	{
-		const gridContainer = this.getGrid().getContainer();
-		const activeElement = document.activeElement;
-
-		return (
-			gridContainer.querySelector('.main-grid-editor') !== null
-			|| (
-				Type.isDomNode(activeElement)
-				&& (
-					gridContainer.contains(activeElement)
-					|| activeElement.closest('.menu-popup') !== null
-				)
-			)
-		);
-	}
-
 	/**
 	 * Warning about the term of the license running out, shown to an administrator of a boxed portal. The texts and
 	 * the decision to show it come resolved from the server; the only thing decided here is that a popup seen once
@@ -445,10 +368,20 @@ class SupersetDashboardGridManager
 		}
 
 		this.#properties.selfHostedLicensePopup = null;
+		const rememberTerm = () => {
+			BX.userOptions.save(
+				'biconnector',
+				'selfhost_license_expiry_popup',
+				popup.termKey,
+				true,
+			);
+		};
+
 		MessageBox.create({
 			title: popup.title,
 			message: popup.text,
-			buttons: MessageBoxButtons.OK,
+			// Without an address there is nothing to offer, and the window keeps its plain confirmation button.
+			buttons: popup.actionUrl ? [this.#getLicenseRenewalButton(popup, rememberTerm)] : MessageBoxButtons.OK,
 			onOk: (messageBox) => messageBox.close(),
 			popupOptions: {
 				// Named so that a test can find the window: the texts of the popup come from the server and change
@@ -457,17 +390,29 @@ class SupersetDashboardGridManager
 				events: {
 					// Written on any way out of the popup, the cross included: the term has been seen, and the next
 					// opening of the grid must not warn about it again.
-					onPopupClose: () => {
-						BX.userOptions.save(
-							'biconnector',
-							'selfhost_license_expiry_popup',
-							popup.termKey,
-							true,
-						);
-					},
+					onPopupClose: rememberTerm,
 				},
 			},
 		}).show();
+	}
+
+	/**
+	 * The call to action is an anchor and not a handler: the address is resolved by the server, and a click on it
+	 * leaves for another tab without closing the window. `onPopupClose` therefore does not fire on that click, so
+	 * the term is written down right here; a later close writes the same value again, which costs one request and
+	 * changes nothing.
+	 */
+	#getLicenseRenewalButton(popup: SelfHostedLicensePopup, rememberTerm: () => void): Button
+	{
+		return new Button({
+			text: popup.actionText,
+			// The size and the colour of the buttons the message box builds for itself once it has a title.
+			size: ButtonSize.MEDIUM,
+			color: Button.Color.PRIMARY,
+			link: popup.actionUrl,
+			props: { target: '_blank', rel: 'noopener' },
+			onclick: rememberTerm,
+		});
 	}
 
 	#showDraftGuide(node: HTMLElement): void
@@ -552,6 +497,121 @@ class SupersetDashboardGridManager
 		this.#publishAhaMoment.show();
 	}
 
+	#showConstructorButtonHint(): void
+	{
+		if (this.#constructorHintFrameId !== null)
+		{
+			cancelAnimationFrame(this.#constructorHintFrameId);
+			this.#constructorHintFrameId = null;
+		}
+
+		// BX.SpotLight caches the target rect before its own visibility check and never retries,
+		// so the target must already be visible when the hint is shown.
+		let framesLeft = CONSTRUCTOR_HINT_VISIBILITY_FRAMES;
+		const showWhenTargetIsVisible = () => {
+			this.#constructorHintFrameId = null;
+
+			const icon = this.#findConstructorButtonIcon();
+			if (icon && framesLeft > 0 && Dom.style(icon, 'visibility') === 'hidden')
+			{
+				framesLeft--;
+				this.#constructorHintFrameId = requestAnimationFrame(showWhenTargetIsVisible);
+
+				return;
+			}
+
+			this.#showConstructorButtonHintNow();
+		};
+
+		showWhenTargetIsVisible();
+	}
+
+	#showConstructorButtonHintNow(): void
+	{
+		const hintOptions = this.#properties.constructorButtonHint;
+		if (!Type.isPlainObject(hintOptions) || hintOptions.canShow !== true)
+		{
+			return;
+		}
+
+		// The hint is a one-shot: AhaMoment drops its own canShow as soon as the user has closed it.
+		if (this.#constructorButtonHint && !this.#constructorButtonHint.canShow)
+		{
+			return;
+		}
+
+		// Our own popup counts as shown, so the guard must not fire while the hint is still up.
+		if (!this.#constructorButtonHint?.isShown && PopupManager.isAnyPopupShown())
+		{
+			return;
+		}
+
+		const bindElement = this.#findConstructorButtonIcon();
+		const rowNode = bindElement?.closest('.main-grid-row');
+		if (!rowNode)
+		{
+			return;
+		}
+
+		if (this.#constructorButtonHint)
+		{
+			this.#constructorButtonHint.setBindElement(bindElement);
+		}
+		else
+		{
+			this.#constructorButtonHint = new AhaMoment({
+				...hintOptions,
+				bindElement,
+			});
+		}
+
+		const wasShown = this.#constructorButtonHint.isShown;
+
+		this.#clearConstructorHintRow();
+		Dom.addClass(rowNode, 'biconnector-constructor-hint-row');
+		this.#constructorHintRowNode = rowNode;
+
+		this.#constructorButtonHint.show();
+
+		if (!this.#constructorButtonHint.isShown)
+		{
+			this.#clearConstructorHintRow();
+
+			return;
+		}
+
+		if (!wasShown)
+		{
+			// AhaMoment exposes no lifecycle callbacks; its popup is the only place that reports a close.
+			this.#constructorButtonHint.popup?.subscribeOnce('onClose', () => {
+				this.#clearConstructorHintRow();
+			});
+		}
+	}
+
+	#findConstructorButtonIcon(): ?HTMLElement
+	{
+		for (const row: BX.Grid.Row of this.#grid.getRows().getBodyChild())
+		{
+			const icon = row.getNode().querySelector('.dashboard-title-constructor-button i');
+			if (icon)
+			{
+				return icon;
+			}
+		}
+
+		return null;
+	}
+
+	#clearConstructorHintRow(): void
+	{
+		if (this.#constructorHintRowNode)
+		{
+			Dom.removeClass(this.#constructorHintRowNode, 'biconnector-constructor-hint-row');
+			this.#constructorHintRowNode = null;
+		}
+	}
+
 	#colorPinnedRows(): void
 	{
 		this.#lastPinnedRowId = 0;
@@ -613,6 +673,9 @@ class SupersetDashboardGridManager
 				id: params.dashboardId,
 				type: params.type,
 				editLink: params.editUrl,
+				// The button leads to the constructor, so the copy opens ready for editing,
+				// the same way a custom report does.
+				openInEditMode: true,
 			},
 			() => {
 				grid.tableUnfade();
@@ -642,6 +705,11 @@ class SupersetDashboardGridManager
 
 	showSharePopup(element: HTMLElement): void
 	{
+		if (element.dataset.banned === 'Y')
+		{
+			return;
+		}
+
 		const dashboardId = parseInt(element.dataset.dashboardId, 10);
 		const shareDataRaw = element.dataset.share;
 		let initialShareData = null;
@@ -685,7 +753,7 @@ class SupersetDashboardGridManager
 		}
 
 		const link = cell.querySelector('.dashboard-share-link');
-		if (!link)
+		if (!link || link.dataset.banned === 'Y')
 		{
 			return;
 		}
@@ -914,10 +982,43 @@ class SupersetDashboardGridManager
 	{
 		const grid = this.getGrid();
 		grid.tableFade();
-		this.#isDashboardListUpdatingLocally = true;
+		let copyFinished = false;
+		const finishCopy = () => {
+			if (copyFinished)
+			{
+				return;
+			}
+
+			copyFinished = true;
+			try
+			{
+				grid.tableUnfade();
+			}
+			catch (cleanupError)
+			{
+				console.error(cleanupError);
+			}
+		};
+
+		const runResultBranch = (branch: () => void) => {
+			try
+			{
+				branch();
+			}
+			catch (handlerError)
+			{
+				setTimeout(() => {
+					throw handlerError;
+				}, 0);
+			}
+			finally
+			{
+				finishCopy();
+			}
+		};
 
 		return this.#dashboardManager.duplicateDashboard(dashboardId)
-			.then((response) => {
+			.then((response) => runResultBranch(() => {
 				const gridRealtime: BX.Grid.Realtime = grid.getRealtime();
 				const newDashboard = response.data.dashboard;
 
@@ -942,7 +1043,6 @@ class SupersetDashboardGridManager
 				}
 
 				gridRealtime.addRow(newRow);
-				this.#skipOwnDashboardListChange();
 				const newRowNode = this.#grid.getRows().getById(newDashboard.id).node;
 				newRowNode.setAttribute('data-group-id', 'D');
 
@@ -952,7 +1052,6 @@ class SupersetDashboardGridManager
 					editableData[newDashboard.id] = { TITLE: newDashboard.title };
 				}
 
-				grid.tableUnfade();
 				const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 				counterTotalTextContainer.textContent++;
 
@@ -971,13 +1070,11 @@ class SupersetDashboardGridManager
 						c_element: analyticInfo.from,
 					});
 				}
-			})
-			.catch((response) => {
-				grid.tableUnfade();
-				if (response.errors)
-				{
-					this.#notifyErrors(response.errors);
-				}
+			}), (response) => runResultBranch(() => {
+				this.#notifyError(
+					response,
+					Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_COPY_NOTIFICATION_ERROR'),
+				);
 
 				if (analyticInfo !== null)
 				{
@@ -989,28 +1086,15 @@ class SupersetDashboardGridManager
 						c_element: analyticInfo.from,
 					});
 				}
-			})
-			.finally(() => {
-				this.#isDashboardListUpdatingLocally = false;
-				if (this.#dashboardListChangesDuringLocalUpdate > 0)
-				{
-					this.#dashboardListChangesDuringLocalUpdate = 0;
-					this.#isDashboardListChanged = true;
-				}
-
-				this.#reloadChangedDashboardList();
-			})
+			}))
 		;
 	}
 
-	#notifyErrors(errors: Array): void
+	#notifyError(response: Object, fallbackMessage: string): void
 	{
-		if (errors[0] && errors[0].message)
-		{
-			BX.UI.Notification.Center.notify({
-				content: Text.encode(errors[0].message),
-			});
-		}
+		BX.UI.Notification.Center.notify({
+			content: resolveErrorHtml(response, fallbackMessage),
+		});
 	}
 
 	exportDashboard(dashboardId: number): void
@@ -1099,10 +1183,10 @@ class SupersetDashboardGridManager
 							})
 							.catch((response) => {
 								deletePopup.hide();
-								if (response.errors)
-								{
-									this.#notifyErrors(response.errors);
-								}
+								this.#notifyError(
+									response,
+									Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_ERROR'),
+								);
 							});
 					},
 				}),
@@ -1119,6 +1203,34 @@ class SupersetDashboardGridManager
 		deletePopup.show();
 	}
 
+	async openConstructorWorkspace(): Promise<void>
+	{
+		try
+		{
+			await this.#dashboardManager.openConstructorWorkspace();
+
+			ApacheSupersetAnalytics.sendAnalytics(
+				'edit',
+				'constructor_open',
+				{
+					c_element: 'grid_toolbar',
+					status: 'success',
+				},
+			);
+		}
+		catch
+		{
+			ApacheSupersetAnalytics.sendAnalytics(
+				'edit',
+				'constructor_open',
+				{
+					c_element: 'grid_toolbar',
+					status: 'error',
+				},
+			);
+		}
+	}
+
 	openCreationSlider(): void
 	{
 		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
@@ -1132,21 +1244,6 @@ class SupersetDashboardGridManager
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD'),
 		});
-	}
-
-	openDatasetTypingSettings(): void
-	{
-		BX.SidePanel.Instance.open(
-			'/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php',
-			{
-				width: 600,
-				allowChangeHistory: false,
-				cacheable: false,
-				data: {
-					focusSection: 'DATASET_SETTINGS_SECTION',
-				},
-			},
-		);
 	}
 
 	showMarketSlider(isMarketExists: boolean, marketUrl: string): void
@@ -1169,112 +1266,11 @@ class SupersetDashboardGridManager
 		);
 	}
 
-	#buildDashboardTitleEditor(
-		id: number,
-		title: string,
-		onCancel: () => void,
-		onSave: (innerTitle: string) => void,
-	): HTMLElement
+	#getTitleNameLink(dashboardId: number): ?HTMLElement
 	{
-		const input = Tag.render`
-			<input class="main-grid-editor main-grid-editor-text" type="text">
-		`;
-		input.value = title;
+		const titleCell = this.getGrid().getRows().getById(dashboardId)?.getCellById('TITLE');
 
-		const saveInputValue = () => {
-			const value = input.value;
-			Dom.removeClass(input, 'dashboard-title-input-danger');
-			if (value.trim() === '')
-			{
-				BX.UI.Notification.Center.notify({
-					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_CHANGE_TITLE_ERROR_EMPTY'),
-				});
-
-				Dom.addClass(input, 'dashboard-title-input-danger');
-
-				return;
-			}
-			Dom.style(buttons, 'display', 'none');
-			Dom.attr(input, 'disabled', true);
-			onSave(input.value);
-		};
-
-		Event.bind(input, 'keydown', (event) => {
-			if (event.keyCode === 13)
-			{
-				saveInputValue();
-				event.preventDefault();
-			}
-			else if (event.keyCode === 27)
-			{
-				onCancel();
-				event.preventDefault();
-			}
-		});
-
-		const applyButton = Tag.render`
-			<a>
-				<i
-					class="ui-icon-set --check"
-					style="--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);"
-				></i>
-			</a>
-		`;
-
-		const cancelButton = Tag.render`
-			<a>
-				<i
-					class="ui-icon-set --cross-60"
-					style="--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);"
-				></i>
-			</a>
-		`;
-
-		const buttons = Tag.render`
-			<div class="dashboard-title-wrapper__buttons">
-				${applyButton}
-				${cancelButton}
-			</div>
-		`;
-
-		Event.bind(cancelButton, 'click', () => {
-			onCancel();
-		});
-
-		Event.bind(applyButton, 'click', saveInputValue);
-
-		return Tag.render`
-			<div class="dashboard-title-wrapper__item dashboard-title-edit">
-				${input}
-				<div class="dashboard-title-wrapper__buttons-wrapper">
-					${buttons}
-				</div>
-			</div>
-		`;
-	}
-
-	#getTitlePreview(dashboardId: number): ?HTMLElement
-	{
-		const grid = this.getGrid();
-		const row = grid.getRows().getById(dashboardId);
-		if (!row)
-		{
-			return null;
-		}
-
-		const wrapper = row.getCellById('TITLE')?.querySelector('.dashboard-title-wrapper');
-		if (!wrapper)
-		{
-			return null;
-		}
-
-		const previewSection = wrapper.querySelector('.dashboard-title-preview');
-		if (previewSection)
-		{
-			return previewSection;
-		}
-
-		return null;
+		return titleCell?.querySelector('.biconnector-grid-title a');
 	}
 
 	showGroupSettingsPopup(groupId: number): void
@@ -1295,153 +1291,16 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	renameDashboard(dashboardId: number): void
-	{
-		const grid = this.getGrid();
-		const row = grid.getRows().getById(dashboardId);
-		if (!row)
-		{
-			return;
-		}
-
-		const rowNode = row.getNode();
-		Dom.removeClass(rowNode, 'dashboard-title-edited');
-
-		const wrapper = row.getCellById('TITLE')?.querySelector('.dashboard-title-wrapper');
-		if (!wrapper)
-		{
-			return;
-		}
-
-		const editor = this.#buildDashboardTitleEditor(
-			dashboardId,
-			row.getEditData().TITLE,
-			() => {
-				this.cancelRenameDashboard(dashboardId);
-			},
-			(innerTitle) => {
-				const oldTitle = this.#getTitlePreview(dashboardId).querySelector('a').innerText;
-				this.#getTitlePreview(dashboardId).querySelector('a').innerText = innerTitle;
-
-				const rowEditData = row.getEditData();
-				rowEditData.TITLE = innerTitle;
-				const editableData = grid.getParam('EDITABLE_DATA');
-				if (BX.type.isPlainObject(editableData))
-				{
-					editableData[row.getId()] = rowEditData;
-				}
-
-				Dom.addClass(rowNode, 'dashboard-title-edited');
-				const msg = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_CHANGE_TITLE_SUCCESS', {
-					'#NEW_TITLE#': Text.encode(innerTitle),
-				});
-
-				BX.UI.Notification.Center.notify({
-					content: msg,
-				});
-
-				this.cancelRenameDashboard(dashboardId);
-				this.#setDateModifyNow(dashboardId);
-
-				this.#dashboardManager.renameDashboard(dashboardId, innerTitle)
-					.catch((response) => {
-						if (response.errors)
-						{
-							this.#notifyErrors(response.errors);
-						}
-						this.#getTitlePreview(dashboardId).querySelector('a').innerText = oldTitle;
-						rowEditData.TITLE = oldTitle;
-					});
-			},
-		);
-
-		const preview = wrapper.querySelector('.dashboard-title-preview');
-		if (preview)
-		{
-			Dom.style(preview, 'display', 'none');
-		}
-		Dom.append(editor, wrapper);
-
-		const editBtn = row.getCellById('EDIT_URL')?.querySelector('a');
-
-		const actionsClickHandler = () => {
-			Event.unbind(row.getActionsButton(), 'click', actionsClickHandler);
-			if (editBtn)
-			{
-				Event.unbind(editBtn, 'click', actionsClickHandler);
-			}
-			this.cancelRenameDashboard(dashboardId);
-		};
-		Event.bind(row.getActionsButton(), 'click', actionsClickHandler);
-		if (editBtn)
-		{
-			Event.bind(editBtn, 'click', actionsClickHandler);
-		}
-	}
-
-	cancelRenameDashboard(dashboardId): void
-	{
-		const row = this.getGrid().getRows().getById(dashboardId);
-		if (!row)
-		{
-			return;
-		}
-
-		const editSection = row.getCellById('TITLE')?.querySelector('.dashboard-title-edit');
-		const previewSection = row.getCellById('TITLE')?.querySelector('.dashboard-title-preview');
-
-		if (editSection)
-		{
-			Dom.remove(editSection);
-		}
-
-		if (previewSection)
-		{
-			Dom.style(previewSection, 'display', 'flex');
-		}
-	}
-
-	#setDateModifyNow(dashboardId: number)
-	{
-		const dateModifyCell = this.#grid.getRows().getById(dashboardId)?.getCellById('DATE_MODIFY');
-		if (!dateModifyCell)
-		{
-			return;
-		}
-		const cellContent = dateModifyCell.querySelector('.main-grid-cell-content span');
-
-		const date = DateTimeFormat.format(
-			DateTimeFormat.getFormat('FORMAT_DATETIME'),
-			Math.floor(Date.now() / 1000),
-		);
-		const readableDate = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DATE_MODIFY_NOW');
-		const newCellContent = Tag.render`
-			<span data-hint="${date}" data-hint-no-icon data-hint-interactivity>${readableDate}</span>
-		`;
-
-		Dom.replace(cellContent, newCellContent);
-		this.#initHints();
-	}
-
 	handleGroupTitleClick(groupJson: Object): void
 	{
-		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
-		const currentFilteredGroups = filterFieldsValues['GROUPS.ID'] ?? [];
-		const isAlreadyFilteredByGroup = currentFilteredGroups.length > 0;
-		if (isAlreadyFilteredByGroup)
-		{
-			const filterApi = this.getFilter().getApi();
-			filterApi.extendFilter({
-				'GROUPS.ID': [],
-				'GROUPS.ID_label': [],
-			});
-		}
-
 		this.#pushHistoryState();
 
-		this.handleFilterChange({
-			fieldId: 'GROUPS.ID',
-			...groupJson,
+		// A group replaces the groups already in the filter instead of joining them, and a click on the group
+		// the list is filtered by takes the condition off. One extendFilter() applies the filter once.
+		const isFiltered = Boolean(groupJson.IS_FILTERED);
+		this.getFilter().getApi().extendFilter({
+			'GROUPS.ID': isFiltered ? [] : [String(groupJson.ID)],
+			'GROUPS.ID_label': isFiltered ? [] : [groupJson.TITLE],
 		});
 	}
 
@@ -1489,10 +1348,10 @@ class SupersetDashboardGridManager
 					},
 				)
 				.catch((response) => {
-					if (response.errors)
-					{
-						this.#notifyErrors(response.errors);
-					}
+					this.#notifyError(
+						response,
+						Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_SET_TAGS_ERROR'),
+					);
 				})
 			;
 		};
@@ -1563,28 +1422,44 @@ class SupersetDashboardGridManager
 								resolve();
 							})
 							.catch((result) => {
-								const errors = result.errors;
-								errors.forEach((error) => {
-									const alert = Tag.render`
-										<div class="dashboard-tag-already-exists-alert">
-											<div class='ui-alert ui-alert-xs ui-alert-danger'> 
-												<span class='ui-alert-message'>
-													${error.message}
-												</span> 
-											</div>
-										</div>
-									`;
-
-									Dom.prepend(alert, this.#tagSelectorDialog.getFooterContainer());
-									setTimeout(
-										() => {
-											Dom.remove(alert);
-										},
-										3000,
+								const errors = Type.isArray(result?.errors) ? result.errors : [];
+								const messages = errors
+									.map((error) => getUserFacingErrorHtml(error))
+									.filter((message) => message !== null)
+								;
+								if (messages.length === 0)
+								{
+									messages.push(
+										Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_CREATE_TAG_ERROR'),
 									);
+								}
 
-									reject();
-								});
+								const alert = Tag.render`
+									<div class="dashboard-tag-already-exists-alert" role="alert">
+										<div class='ui-alert ui-alert-xs ui-alert-danger'>
+											<span class='ui-alert-message'>
+												${messages.join('<br>')}
+											</span>
+										</div>
+									</div>
+								`;
+
+								const footerContainer = this.#tagSelectorDialog.getFooterContainer();
+								const previousAlert = footerContainer.querySelector('.dashboard-tag-already-exists-alert');
+								if (previousAlert)
+								{
+									Dom.remove(previousAlert);
+								}
+
+								Dom.prepend(alert, footerContainer);
+								setTimeout(
+									() => {
+										Dom.remove(alert);
+									},
+									8000,
+								);
+
+								reject();
 							})
 						;
 					});
@@ -1628,7 +1503,6 @@ class SupersetDashboardGridManager
 		filterToExtend[`${fieldData.fieldId}_label`] = currentFilteredFieldLabel;
 
 		filterApi.extendFilter(filterToExtend);
-		filterApi.apply();
 	}
 
 	addToTopMenu(dashboardId: number, url: string, restrictionCode: ?string = null): Promise
@@ -1692,13 +1566,7 @@ class SupersetDashboardGridManager
 		}
 		row.setActions(rowActions);
 
-		const titleCell = row?.getCellById('TITLE');
-		let dashboardTitle = '';
-		if (titleCell)
-		{
-			const titleWrapper = titleCell.querySelector('.dashboard-title-wrapper__item');
-			dashboardTitle = titleWrapper.querySelector('a').innerText;
-		}
+		const dashboardTitle = this.#getTitleNameLink(dashboardId)?.innerText ?? row.getEditData().TITLE ?? '';
 
 		const onClick = restrictionCode
 			? `top.BX.UI.InfoHelper.show('${restrictionCode}');`
@@ -1788,6 +1656,52 @@ class SupersetDashboardGridManager
 		const filter = this.getFilter();
 		const filterState = clone(filter.getFilterFieldsValues());
 		history.pushState({ ...state, filter: filterState }, '', window.location.href);
+	}
+
+	openDashboardInConstructor(params: LoginPopupParams): void
+	{
+		// System and market reports cannot be edited in place: the shared flow offers a copy
+		// and opens the copy instead.
+		if (params.type !== 'CUSTOM')
+		{
+			this.showLoginPopup(params, 'grid_row');
+
+			return;
+		}
+
+		if (!Type.isNumber(params.dashboardId) || !Type.isStringFilled(params.editUrl))
+		{
+			return;
+		}
+
+		const grid = this.getGrid();
+		grid.tableFade();
+
+		const sendAnalytics = (status: string) => {
+			ApacheSupersetAnalytics.sendAnalytics('edit', 'report_edit', {
+				c_sub_section: 'popup_login',
+				c_element: 'grid_row',
+				type: params.type.toLowerCase(),
+				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(params.appId),
+				p2: params.dashboardId,
+				status,
+			});
+		};
+
+		this.#dashboardManager.openDashboardInConstructor({
+			id: params.dashboardId,
+			type: params.type,
+			editLink: params.editUrl,
+		})
+			.then(() => {
+				sendAnalytics('success');
+			})
+			.catch(() => {
+				sendAnalytics('error');
+			})
+			.finally(() => {
+				grid.tableUnfade();
+			});
 	}
 }
 

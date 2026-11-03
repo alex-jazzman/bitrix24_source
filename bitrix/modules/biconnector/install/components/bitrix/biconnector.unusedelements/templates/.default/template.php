@@ -17,8 +17,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 Extension::load([
+	'biconnector.error-message',
+	'biconnector.grid',
 	'ui.dialogs.messagebox',
 	'ui.hint',
+	'ui.notification',
 ]);
 
 ?>
@@ -34,6 +37,13 @@ $params = Grid\Component\ComponentParams::get(
 	[
 		'CURRENT_PAGE' => $grid->getPagination()?->getCurrentPage(),
 		'STUB' => $arResult['GRID_STUB'] ?? null,
+		'SHOW_ACTION_PANEL' => false,
+		'TOP_ACTION_PANEL_RENDER_TO' => '.ui-side-panel-toolbar',
+		'TOP_ACTION_PANEL_PINNED_MODE' => false,
+		'TOP_ACTION_PANEL_CLASS' => 'biconnector-unused-elements-action-panel',
+		'ACTION_PANEL_OPTIONS' => [
+				'MAX_HEIGHT' => 58,
+			],
 	],
 );
 

@@ -1,0 +1,67 @@
+.sonet-project-info-tags {
+	position: relative;
+}
+
+/*
+ * Collapsed, the row may wrap onto a second line — how many chips get rendered
+ * is decided in JS, which replays this same wrap against measured widths. The
+ * clip is a guard for the frame before that measurement lands.
+ */
+.sonet-project-info-tags__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	overflow: hidden;
+}
+
+/*
+ * Read-only tags keep the chip look but must not shrink: a shrinking chip with
+ * `trimmable` collapses to its padding and hides the label entirely. The chip
+ * design brightens its label on hover, which would make a non-interactive tag
+ * look clickable, so the hover color is pinned to the resting one.
+ */
+.sonet-project-info-tags .sonet-project-info-tags__chip {
+	--text-color-hover: var(--text-color);
+	flex: 0 0 auto;
+	max-width: 100%;
+	cursor: default;
+}
+
+/*
+ * The toggle is a link, not a chip: styled like a tag it read as one more tag
+ * rather than a control. Colours come from .sonet-project-info-link-button; only
+ * its behaviour in the flex row is set here.
+ */
+.sonet-project-info-tags__toggle {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+/* The collapsed row clips its overflow, so the focus ring has to sit inside. */
+.sonet-project-info-tags__toggle:focus-visible {
+	outline-offset: -2px;
+}
+
+/*
+ * Expanding keeps a single continuous list: the row stops clipping and starts
+ * wrapping, so the toggle stays the last chip. Revealing into a second block
+ * below instead left it wedged between the visible tags and the revealed ones,
+ * reading as tag, tag, button, tag, tag.
+ */
+.sonet-project-info-tags__row.--expanded {
+	flex-wrap: wrap;
+	overflow: visible;
+}
+
+.sonet-project-info-tags__measurer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	height: 0;
+	overflow: hidden;
+	visibility: hidden;
+	pointer-events: none;
+}

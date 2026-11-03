@@ -34,6 +34,7 @@ export const ActionByRole = Object.freeze({
 	createCalendarSlots: 'createCalendarSlots',
 	changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
 	attachToParent: 'attachToParent',
+	linkStructureNode: 'linkStructureNode',
 });
 
 export const ChatActionGroup = Object.freeze({
@@ -61,4 +62,5 @@ export const ActionByUserType = Object.freeze({
 	createStickerPack: 'createStickerPack',
 	extend: 'extend',
 	manageGuestLink: 'manageGuestLink',
+	linkStructureNode: 'linkStructureNode',
 });

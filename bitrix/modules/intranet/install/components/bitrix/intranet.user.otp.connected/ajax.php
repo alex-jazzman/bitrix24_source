@@ -1,7 +1,13 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Internal\Access\Otp\UserPermission;
+use Bitrix\Intranet\Internal\Integration\Security\PersonalOtp;
+use Bitrix\Intranet\Public\Provider\Otp\DayListProvider;
+use Bitrix\Intranet\Repository\UserRepository;
 use Bitrix\Main\Loader;
+use Bitrix\Security\Mfa\OtpException;
 
 class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -58,13 +64,6 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			|| $USER->CanDoOperation('security_edit_user_otp');
 	}
 
-	protected function canDeferOtp()
-	{
-		global $USER;
-
-		return $USER->CanDoOperation('security_edit_user_otp');
-	}
-
 	protected function isIntegrator()
 	{
 		global $USER;
@@ -78,6 +77,16 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 		}
 
 		return false;
+	}
+
+	protected function getTargetUser(): ?User
+	{
+		return (new UserRepository())->getUserById((int)$this->userId);
+	}
+
+	protected function isAllowedOtpPeriod(User $user, mixed $numDays): bool
+	{
+		return (new DayListProvider())->isAllowedRawPeriod($user, $numDays);
 	}
 
 	public function deactivateOtpAction($numDays)
@@ -109,17 +118,32 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			return false;
 		}
 
-		$res = \CSecurityUser::DeactivateUserOtp($this->userId, $numDays);
+		$user = $this->getTargetUser();
 
-		if ($res)
+		if ($user === null)
 		{
-			return true;
-		}
-		else
-		{
-			$this->addError(new \Bitrix\Main\Error("Deactivation Error"));
+			$this->addError(new \Bitrix\Main\Error("User not found"));
 			return false;
 		}
+
+		if (!$this->isAllowedOtpPeriod($user, $numDays))
+		{
+			$this->addError(new \Bitrix\Main\Error("Invalid period"));
+			return false;
+		}
+
+		try
+		{
+			(new PersonalOtp($user))->deactivate((int)$numDays);
+		}
+		catch (OtpException $exception)
+		{
+			$this->addError(new \Bitrix\Main\Error($exception->getMessage()));
+
+			return false;
+		}
+
+		return true;
 	}
 
 	public function activateOtpAction()
@@ -156,16 +180,30 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			return false;
 		}
 
+		$user = $this->getTargetUser();
+
+		if ($user === null)
+		{
+			$this->addError(new \Bitrix\Main\Error("User not found"));
+			return false;
+		}
+
 		if (
-			!$this->canDeferOtp()
-			|| $this->isIntegrator()
+			$this->isIntegrator()
+			|| !(new UserPermission($user))->canDefer()
 		)
 		{
 			$this->addError(new \Bitrix\Main\Error("No rights"));
 			return false;
 		}
 
-		$res = \CSecurityUser::DeferUserOtp($this->userId, $numDays);
+		if (!$this->isAllowedOtpPeriod($user, $numDays))
+		{
+			$this->addError(new \Bitrix\Main\Error("Invalid period"));
+			return false;
+		}
+
+		$res = \CSecurityUser::DeferUserOtp($this->userId, (int)$numDays);
 
 		if ($res)
 		{

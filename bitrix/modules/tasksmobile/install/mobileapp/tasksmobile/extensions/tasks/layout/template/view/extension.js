@@ -10,11 +10,11 @@ jn.define('tasks/layout/template/view', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const store = require('statemanager/redux/store');
-	const { clone } = require('utils/object');
 	const { createTestIdGenerator } = require('utils/test');
 	const { usersUpserted } = require('statemanager/redux/slices/users');
 	const { groupsUpserted } = require('tasks/statemanager/redux/slices/groups');
 	const { ChecklistController } = require('tasks/checklist/controller');
+	const { ChecklistEntityType } = require('tasks/checklist/enum');
 	const {
 		selectById,
 		upsertTemplates,
@@ -73,11 +73,13 @@ jn.define('tasks/layout/template/view', (require, exports, module) => {
 			this.layout.enableNavigationBarBorder(false);
 			this.layout.on('titleClick', () => this.scrollViewRef?.scrollToBegin?.(true));
 
+			// redux controller for the 'template' entity (entityId - the template id)
 			this.checklistController = new ChecklistController({
+				entityType: ChecklistEntityType.TEMPLATE.getValue(),
+				entityId: this.templateId || undefined,
 				userId: env.userId,
 				groupId: this.template?.groupId || 0,
 				inLayout: true,
-				hideCompleted: false,
 				hideMoreMenu: true,
 				parentWidget: this.layout,
 			});
@@ -162,14 +164,11 @@ jn.define('tasks/layout/template/view', (require, exports, module) => {
 				return;
 			}
 
-			this.checklistController.clearChecklists();
 			this.checklistController.setTaskId(template?.id || this.templateId);
 			this.checklistController.setGroupId(template?.groupId || 0);
 
-			if (template?.checklistTree)
-			{
-				this.checklistController.setChecklistTree(clone(template.checklistTree));
-			}
+			// template.checklistTree - a V2 flat LIST of items; seedFromV2 replaces the entity
+			this.checklistController.seedFromV2(template?.checklistTree);
 		}
 
 		async loadTemplate()

@@ -30,11 +30,6 @@ jn.define('crm/entity-tab/type/entities/contact', (require, exports, module) => 
 		{
 			return {};
 		}
-
-		getIconName()
-		{
-			return this.getName().toLowerCase();
-		}
 	}
 
 	module.exports = { Contact };

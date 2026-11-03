@@ -1,4 +1,5 @@
 <?
 $MESS["JS_UI_ACTIONPANEL_MORE_BLOCK"] = "More...";
 $MESS["JS_UI_ACTIONPANEL_IS_SELECTED"] = "Selected:";
+$MESS["JS_UI_ACTIONPANEL_SUBMENU_TRIGGER_FOR"] = "More actions for \"#TEXT#\"";
 ?>

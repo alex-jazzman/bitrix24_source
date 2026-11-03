@@ -4,6 +4,16 @@
 	min-height: 26px;
 }
 
+/* story points button reset */
+.tasks-field-story-points-text {
+	appearance: none;
+	margin: 0;
+	border: none;
+	color: inherit;
+	text-align: left;
+}
+/* story points button reset end */
+
 .tasks-field-story-points-text {
 	padding: 2px 10px;
 	overflow: hidden;
@@ -13,9 +23,18 @@
 	cursor: text;
 }
 
+.tasks-field-story-points-text:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .tasks-field-story-points.--filled .tasks-field-story-points-text {
 	background: var(--ui-color-accent-soft-blue-3);
 	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-story-points.--restricted .tasks-field-story-points-text {
+	cursor: default;
 }
 
 .tasks-field-story-points-input {

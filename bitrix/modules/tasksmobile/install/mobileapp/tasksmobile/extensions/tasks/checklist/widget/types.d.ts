@@ -1,6 +1,6 @@
 import { LayoutWidget } from '../../../../../../../../mobile/dev/janative/api';
-import { CheckListFlatTree, ChecklistAccessRestrictions } from '../types/common';
 import { MoveToChecklistParams } from '../controller/types';
+import { ChecklistAccessRestrictions } from '../types';
 
 export type ChecklistMenuMoreActions = {
 	onCreateChecklist?: () => void,
@@ -16,7 +16,7 @@ export type ChecklistMenuMoreOptions = {
 };
 
 export type ChecklistWidgetProps = {
-	checklist?: CheckListFlatTree,
+	checklist?: ChecklistView,
 	parentWidget?: LayoutWidget,
 	inLayout?: boolean,
 	focusedItemId?: number | string,

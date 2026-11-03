@@ -1,36 +1,92 @@
+/* A button takes no button inside it: the row and the preview eye are siblings in this
+   wrapper, which carries the row states and the hover. */
+.disk-picker-item-row-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	/* Height and gap both come from the advance declared in picker-layout.css, which is also
+	   what the virtual scroll counts. */
+	flex-shrink: 0;
+	box-sizing: border-box;
+	height: calc(var(--disk-picker-list-row-advance) - var(--disk-picker-list-row-gap));
+	margin-bottom: var(--disk-picker-list-row-gap);
+}
+
+/* Out of the flow, over the room the row reserves with padding-right below. */
+.disk-picker-item-row-wrap .disk-picker-preview-button {
+	position: absolute;
+	top: 50%;
+	right: var(--ui-space-inset-2xs2);
+	transform: translateY(-50%);
+}
+
+/* Hidden only where a pointer can bring it back: a screen that never hovers would keep a
+   transparent button over the row and take the tap that belongs to the row itself.
+   The focus is only the one the browser itself shows, i.e. one the keyboard brought there:
+   a preview started by the pointer must not leave the eye lit on a row nobody is over. */
+@media (hover: hover) {
+	.disk-picker-item-row-wrap .disk-picker-preview-button {
+		opacity: 0;
+	}
+
+	.disk-picker-item-row-wrap:hover .disk-picker-preview-button,
+	.disk-picker-item-row-wrap:has(:focus-visible) .disk-picker-preview-button {
+		opacity: 1;
+	}
+}
+
 .disk-picker-item-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
 	width: 100%;
-	height: 44px;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-xs);
+	/* Room the eye stands in. */
+	padding-right: var(--ui-space-inset-5xl);
 	border: none;
-	border-radius: var(--ui-border-radius-sm);
+	border-radius: var(--ui-border-radius-md);
+	/* At rest the row paints nothing: the plate under it is the surface, and a card under every
+	   file made the list a second sheet laid over the first. What tells the rows apart is the air
+	   between them. The table row repeats this. */
 	background: none;
 	cursor: pointer;
 	text-align: left;
 	user-select: none;
-	transition: background-color 200ms ease;
+	transition:
+		background-color var(--disk-picker-duration-state) var(--disk-picker-ease),
+		transform var(--disk-picker-duration-press) var(--disk-picker-ease);
 }
 
-.disk-picker-item-row:hover {
-	background: var(--ui-color-bg-state-hover-default);
+.disk-picker-item-row-wrap:hover .disk-picker-item-row,
+.disk-picker-item-row-wrap.--active .disk-picker-item-row {
+	background: var(--ui-color-bg-content-primary);
 }
 
-.disk-picker-item-row.--active {
-	background: var(--ui-color-bg-state-hover-default);
+.disk-picker-item-row-wrap.--selected .disk-picker-item-row {
+	animation: disk-picker-row-pick var(--disk-picker-duration-state) var(--disk-picker-ease);
+	/* The one filled surface of the list: a picked file is the answer the dialog exists for, so
+	   it takes the accent flat rather than as a sweep across the row. */
+	background: var(--ui-color-accent-main-primary);
 }
 
-.disk-picker-item-row.--selected {
-	background: var(--ui-color-accent-soft-blue-2);
+/* The filled background carries its own content colour. */
+.disk-picker-item-row-wrap.--selected .disk-picker-item-row__name {
+	color: var(--ui-color-design-filled-content);
 }
 
-/* Focus is visible and distinct from selection: an outline, not a fill. */
+/* The ring the design system draws on its own controls: outside the element, and a step darker
+   than the accent. Inside the element and in the accent itself it disappeared on a picked row,
+   which is filled with that very accent. */
 .disk-picker-item-row:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: -2px;
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* On the picked row the accent ring would sink into the accent fill, so the ring takes the
+   content colour of a filled surface - the one the name on that row already uses. */
+.disk-picker-item-row.--selected:focus-visible {
+	outline-color: var(--ui-color-design-filled-content);
 }
 
 .disk-picker-item-row__name {
@@ -39,4 +95,28 @@
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	color: var(--ui-color-base-1);
+}
+
+.disk-picker-item-row:active {
+	transform: scale(0.99);
+}
+
+@keyframes disk-picker-row-pick {
+	from {
+		transform: scale(0.985);
+	}
+
+	to {
+		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-item-row,
+	.disk-picker-item-row:active,
+	.disk-picker-item-row-wrap.--selected .disk-picker-item-row {
+		transform: none;
+		animation: none;
+		transition: background-color var(--disk-picker-duration-state) ease;
+	}
 }

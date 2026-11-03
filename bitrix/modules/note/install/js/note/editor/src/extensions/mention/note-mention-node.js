@@ -88,6 +88,7 @@ export const NoteMentionNode = Node.create({
 	{
 		return {
 			onMentionClick: null,
+			labelCache: null,
 		};
 	},
 

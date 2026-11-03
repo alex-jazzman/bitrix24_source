@@ -7,11 +7,17 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Text\HtmlFilter;
 
-/** @var $arResult array */
+/**
+ * @var DoubleUfComponent $component
+ * @var array $arResult
+ */
 
-$value = implode(', ', array_map(static function($v)
+$component = $this->getComponent();
+$precision = (int)($arResult['userField']['SETTINGS']['PRECISION'] ?? 0);
+$values = [];
+foreach ($arResult['value'] as $value)
 {
-	return (is_null($v) || is_scalar($v) ? (string)$v : '');
-}, $arResult['value']));
+	$values[] = $component->formatValue($value, $precision);
+}
 
-$arResult['value'] = HtmlFilter::encode($value);
+$arResult['value'] = HtmlFilter::encode(implode(', ', $values));

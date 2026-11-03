@@ -20,8 +20,24 @@ export const MiniFormButton = {
 			Outline,
 		};
 	},
+	computed: {
+		ariaLabel(): string
+		{
+			const base = this.loc('TASKS_V2_DESCRIPTION_ARIA_LABEL');
+			if (this.filesCount)
+			{
+				return `${base}, ${this.loc('TASKS_V2_DESCRIPTION_FILES_COUNT', { '#COUNT#': String(this.filesCount) })}`;
+			}
+
+			return base;
+		},
+	},
 	template: `
-		<div class="tasks-card-change-description-mini-btn print-ignore">
+		<button
+			type="button"
+			class="tasks-card-change-description-mini-btn print-ignore"
+			:aria-label="ariaLabel"
+		>
 			<div class="tasks-full-card-field-container --small-vertical-padding">
 				<div class="tasks-card-change-description" :class="{ '--no-hover': filesCount }">
 					<template v-if="filesCount">
@@ -29,6 +45,7 @@ export const MiniFormButton = {
 							:name="Outline.ATTACH"
 							:size="20"
 							class="tasks-card-description-field-icon-link"
+							aria-hidden="true"
 						/>
 						<div class="tasks-card-change-description-mini-text-files">
 							{{ loc('TASKS_V2_DESCRIPTION_FILES_COUNT', { '#COUNT#': String(filesCount) }) }}
@@ -43,10 +60,11 @@ export const MiniFormButton = {
 							:size="20"
 							hoverable
 							class="tasks-card-description-field-icon"
+							aria-hidden="true"
 						/>
 					</template>
 				</div>
 			</div>
-		</div>
+		</button>
 	`,
 };

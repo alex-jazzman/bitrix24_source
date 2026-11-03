@@ -962,14 +962,9 @@ this.BX = this.BX || {};
 				glow.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 314 78" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">' + '<g opacity="0.4" clip-path="url(#ai-copilot-glow-clip)">' + '<g filter="url(#ai-copilot-glow-blur)">' + '<g clip-path="url(#ai-copilot-glow-shape)"><g transform="matrix(-5.79497e-09 -0.0559167 0.157 -2.45592e-09 157 61)">' + '<foreignObject x="-1090.91" y="-1090.91" width="2181.82" height="2181.82">' + '<div xmlns="http://www.w3.org/1999/xhtml" style="background:conic-gradient(from 90deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,0) 0.539121deg,rgba(0,151,233,1) 18deg,rgba(63,104,255,1) 28.8deg,rgba(157,71,255,1) 39.6deg,rgba(239,70,183,1) 57.6deg,rgba(249,98,105,1) 75.6deg,rgba(255,255,255,0) 90.2231deg,rgba(255,255,255,0) 360deg);height:100%;width:100%"></div>' + '</foreignObject></g></g>' + '</g></g>' + '<defs>' + '<filter id="ai-copilot-glow-blur" x="-32" y="-32" width="378" height="186" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' + '<feGaussianBlur stdDeviation="16" result="effect1_foregroundBlur"/></filter>' + '<clipPath id="ai-copilot-glow-shape"><path d="M314 70.835C313.911 42.7443 291.112 20 263.001 20H51.001C22.8345 20 0.000976562 42.8335 0.000976562 71C0.000976562 99.1665 22.8345 122 51.001 122H0V0H314V70.835ZM314 122H263.001C291.113 122 313.912 99.2551 314 71.1641V122Z"/></clipPath>' + '<clipPath id="ai-copilot-glow-clip"><rect width="314" height="122" fill="white"/></clipPath>' + '</defs></svg>';
 			}
 			const roleLeftClassName = this.#isBitrixGptV2Available && this.#isDefaultRoleAvatar(avatar) ? 'ai__copilot-menu_role-left --bitrixgpt-default-avatar' : 'ai__copilot-menu_role-left';
-			const roleTitle = main_core.Tag.render`
-			<span
-				class="ai__copilot-menu_role-title"
-				title="${name}"
-			>
-				${name}
-			</span>
-		`;
+			const roleTitle = main_core.Tag.render`<span class="ai__copilot-menu_role-title"></span>`;
+			main_core.Dom.attr(roleTitle, 'title', name);
+			roleTitle.textContent = name;
 			const roleSubtitle = main_core.Tag.render`<span class="ai__copilot-menu_role-subtitle">${subtitle}</span>`;
 			const roleTextContainer = main_core.Tag.render`<div class="ai__copilot-menu_role-right"></div>`;
 			if (this.#isBitrixGptV2Available) {
@@ -1140,7 +1135,7 @@ this.BX = this.BX || {};
 						if (this.#roleInfoContainer && p === 'name') {
 							const nameContainer = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-title');
 							main_core.Dom.attr(nameContainer, 'title', newValue);
-							nameContainer.innerText = newValue;
+							nameContainer.textContent = newValue;
 						}
 						if (this.#roleInfoContainer && p === 'avatar') {
 							const avatarImg = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-avatar');

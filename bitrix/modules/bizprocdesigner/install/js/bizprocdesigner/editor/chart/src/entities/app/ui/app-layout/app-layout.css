@@ -1,3 +1,11 @@
+/*
+ * The sizes of the panels below are mirrored by hand in `entities/app/constants/index.ts`
+ * (PANEL_EDGE_GAP, CATALOG_WIDTH_COLLAPSED, SETTINGS_PANEL_WIDTH, DATA_INSPECTOR_PANEL_WIDTH,
+ * DEBUG_BAR_TOOLBAR_OFFSET), because the editor tells the fit of the overview which edges of the
+ * canvas it covers and there is no way to read a stylesheet for it. CATALOG_WIDTH_EXPANDED belongs
+ * to the catalog itself (`entities/catalog/ui/catalog-layout/catalog-layout.css`). Move a panel
+ * here and the constant has to move with it.
+ */
 .editor-chart-app-layout {
 	display: flex;
 	flex-direction: column;
@@ -18,6 +26,19 @@
 .editor-chart-app-layout__content {
 	position: relative;
 	height: calc(100% - 56px);
+}
+
+/*
+ * The whole drawing area of the canvas and no inset of its own: the layer inside places its markers
+ * from the top left corner of that area, so any inset here would shift every marker by as much. The
+ * section spans the canvas, therefore it may not take the pointer either - only the markers do
+ * (note-marker.css), and the schema below stays workable.
+ */
+.editor-chart-app-layout__notes-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
 }
 
 .editor-chart-app-layout__top-right-toolbar {
@@ -82,14 +103,11 @@
 	background-color: var(--ui-color-base-5);
 }
 
-.editor-chart-app-layout__bottom-right-toolbar .ui-block-diagram-canvas-map__cursor {
-	stroke: var(--ui-color-blue-57);
-}
-
 .editor-chart-app-layout__bottom-right-toolbar.--shifted {
 	transform: translateX(-589px);
 }
 
+/* The open debug bar takes the strip below; mirrored as DEBUG_BAR_TOOLBAR_OFFSET. */
 .editor-chart-app-layout__bottom-right-toolbar.--margined {
 	bottom: 320px;
 }

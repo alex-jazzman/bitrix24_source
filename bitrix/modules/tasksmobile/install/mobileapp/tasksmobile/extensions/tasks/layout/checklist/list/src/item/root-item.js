@@ -57,8 +57,8 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 		renderDescription()
 		{
 			const { item } = this.props;
-			const completedCount = item.getCompletedCount();
-			const totalCount = item.getTotalCount();
+			const completedCount = item.getCompletedChildrenCount();
+			const totalCount = item.getChildrenCount();
 
 			return View(
 				{
@@ -90,7 +90,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 
 		/**
 		 * @protected
-		 * @param {CheckListFlatTreeItem} item
+		 * @param {ChecklistItemView} item
 		 */
 		getPlaceholder(item)
 		{
@@ -128,7 +128,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 		handleOnSubmit()
 		{
 			const { item } = this.props;
-			if (item.getTotalCount() > 0)
+			if (item.getChildrenCount() > 0)
 			{
 				this.textInputBlur();
 
@@ -154,7 +154,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 		}
 
 		/**
-		 * @param {CheckListFlatTreeItem} item
+		 * @param {ChecklistItemView} item
 		 * @param {'focus' | 'blur'} action
 		 */
 		toggleChecklistRootTitle(item, action)
@@ -165,7 +165,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 				this.#setPrevTitle(title);
 				this.#clearText(item);
 			}
-			else if (action === BLUR && !item.hasItemTitle())
+			else if (action === BLUR && !item.hasTitle())
 			{
 				item.setTitle(this.#getPrevTitle());
 				this.toggleCompleteText();
@@ -178,14 +178,14 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 		 */
 		isDefaultChecklistTitle(value)
 		{
-			const regex = new RegExp(`^${Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_STUB_TEXT').toLowerCase()}(\\s\\d+)?$`);
+			const regex = new RegExp(`^${Loc.getMessage('TASKSMOBILE_CHECKLIST_DEFAULT_TITLE').toLowerCase()}(\\s\\d+)?$`);
 
 			return regex.test(value.trim().toLowerCase());
 		}
 
 		/**
 		 * @private
-		 * @param {CheckListFlatTreeItem} item
+		 * @param {ChecklistItemView} item
 		 */
 		#clearText(item)
 		{

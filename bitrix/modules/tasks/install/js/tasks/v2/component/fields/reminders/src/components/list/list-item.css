@@ -41,10 +41,38 @@
 	min-width: 52px;
 	margin-left: auto;
 	gap: var(--ui-space-inline-sm);
+	opacity: 0;
+}
+
+.tasks-field-reminders-row:hover .tasks-field-reminders-column.--action,
+.tasks-field-reminders-column.--action:focus-within {
+	opacity: 1;
 }
 
 .tasks-field-reminders-column.--action .ui-icon-set {
 	cursor: pointer;
+}
+
+/* button reset */
+.tasks-field-reminders-action {
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	background-color: transparent;
+	padding: 0;
+	border: none;
+	cursor: pointer;
+}
+/* button reset end */
+
+.tasks-field-reminders-action {
+	display: flex;
+}
+
+.tasks-field-reminders-action:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .tasks-field-reminders-to {

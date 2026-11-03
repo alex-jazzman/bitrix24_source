@@ -828,7 +828,7 @@ return [
 					</div>
 
 					<h6 class="landing-block-node-card-title text-uppercase g-font-weight-700 g-color-white g-mb-15">
-						Usability and progresion</h6>
+						Usability and progression</h6>
 					<div class="landing-block-node-card-text g-color-white-opacity-0_8 g-mb-30 js-animation fadeInLeft">
 						<p>Sed feugiat porttitor nunc, non
 							dignissim ipsum vestibulum in. Donec in blandit dolor. Vivamus a fringilla lorem, vel

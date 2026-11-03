@@ -11,6 +11,19 @@ import '../css/roles-dialog-role-item.css';
 
 import type { RolesDialogItemData } from '../roles-dialog';
 
+function escapeRegExp(value: string): string
+{
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightSearchQuery(text: string, searchQuery: string): string
+{
+	const encodedText = Text.encode(text);
+	const encodedSearchQuery = Text.encode(searchQuery);
+
+	return encodedText.replaceAll(new RegExp(escapeRegExp(encodedSearchQuery), 'gi'), (match) => `<mark>${match}</mark>`);
+}
+
 // eslint-disable-next-line max-lines-per-function
 export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 {
@@ -37,24 +50,20 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 				return this.itemData.itemData;
 			},
 			subtitle(): string {
-				const subtitle = Text.encode(this.item.subtitle);
-
 				if (this.searching && this.searchQuery !== '')
 				{
-					return subtitle.replaceAll(new RegExp(this.searchQuery, 'gi'), (match) => `<mark>${match}</mark>`);
+					return highlightSearchQuery(this.item.subtitle, this.searchQuery);
 				}
 
-				return subtitle;
+				return Text.encode(this.item.subtitle);
 			},
 			title(): string {
-				const title = Text.encode(this.item.title);
-
 				if (this.searching && this.searchQuery !== '')
 				{
-					return title.replaceAll(new RegExp(this.searchQuery, 'gi'), (match) => `<mark>${match}</mark>`);
+					return highlightSearchQuery(this.item.title, this.searchQuery);
 				}
 
-				return title;
+				return Text.encode(this.item.title);
 			},
 			isSelected(): boolean {
 				return Boolean(this.item.customData?.selected);

@@ -43,7 +43,7 @@ if(empty($effectiveEntityType))
 }
 
 if (isset($_REQUEST["pageId"]))
-	$arResult["pageId"] = $_REQUEST["pageId"];
+	$arResult["pageId"] = htmlspecialcharsbx($_REQUEST["pageId"]);
 else
 	$arResult["pageId"] = "";
 

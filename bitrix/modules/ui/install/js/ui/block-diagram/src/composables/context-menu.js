@@ -38,6 +38,13 @@ export function useContextMenu(contextMenuName?: string | null | undefined = nul
 		openedContextMenuName.value = toValue(newName);
 	}
 
+	function markClosed(): void
+	{
+		isOpen.value = false;
+		isOpenContextMenu.value = false;
+		setContextMenuName(null);
+	}
+
 	function getItems(items: DiagramContextMenuItemOptions[] = []): DiagramContextMenuItemOptions[]
 	{
 		return items.map((item) => {
@@ -62,6 +69,8 @@ export function useContextMenu(contextMenuName?: string | null | undefined = nul
 	function getDefaultOptions(additionalOptions: MenuOptions = {}): MenuOptions
 	{
 		const defaultOptions = {
+			// Menu/Popup get a single options object below, so this id lands on the popup element
+			// unprefixed - the legacy positional arguments would prefix it and break the e2e selector.
 			id: 'block-diagram-context-menu',
 			bindElement: {
 				left: 0,
@@ -96,19 +105,24 @@ export function useContextMenu(contextMenuName?: string | null | undefined = nul
 		options: ?MenuOptions = null,
 	): void
 	{
-		setContextMenuName(contextMenuName);
 		updateContextMenuPosition(point);
 		toValue(contextMenuInstance)?.destroy();
 
 		contextMenuInstance.value = shallowRef(new Menu(getDefaultOptions(options)));
 		toValue(contextMenuInstance)
 			?.popupWindow
-			?.subscribeOnce('onDestroy', () => {
-				isOpen.value = false;
-			});
+			?.subscribeOnce('onDestroy', markClosed);
+
+		// A caller may override the cacheable default, and a cacheable popup closes without being
+		// destroyed - the state has to come down on the close every menu goes through as well.
+		toValue(contextMenuInstance)
+			?.popupWindow
+			?.subscribeOnce('onClose', markClosed);
 
 		toValue(contextMenuInstance)?.show();
 
+		// After the previous instance is gone: its closing lowers the very state raised here.
+		setContextMenuName(contextMenuName);
 		isOpen.value = true;
 		isOpenContextMenu.value = true;
 	}
@@ -118,27 +132,29 @@ export function useContextMenu(contextMenuName?: string | null | undefined = nul
 		options: ?PopupOptions = null,
 	): void
 	{
-		setContextMenuName(contextMenuName);
 		updateContextMenuPosition(point);
 		toValue(contextMenuInstance)?.destroy();
 
 		contextMenuInstance.value = shallowRef(new Popup(getDefaultOptions(options)));
 		toValue(contextMenuInstance)
-			?.subscribeOnce('onDestroy', () => {
-				isOpen.value = false;
-			});
+			?.subscribeOnce('onDestroy', markClosed);
+
+		// A caller may override the cacheable default, and a cacheable popup closes without being
+		// destroyed - the state has to come down on the close every popup goes through as well.
+		toValue(contextMenuInstance)
+			?.subscribeOnce('onClose', markClosed);
 
 		toValue(contextMenuInstance)?.show();
 
+		// After the previous instance is gone: its closing lowers the very state raised here.
+		setContextMenuName(contextMenuName);
 		isOpen.value = true;
 		isOpenContextMenu.value = true;
 	}
 
 	function closeContextMenu(): void
 	{
-		isOpen.value = false;
-		isOpenContextMenu.value = false;
-		setContextMenuName(null);
+		markClosed();
 		toValue(contextMenuInstance)?.close();
 	}
 

@@ -13,6 +13,40 @@ $isOpenedAsFolder = $request->get('isOpenedAsFolder') === 'Y';
 $urlAfterClose = ($component->getRequest('inlineCrm') === 'Y' || $component->getRequest('noRedirect') === 'Y')
 	? '' : \Bitrix\Sign\Document\Entity\SmartB2e::getEntityDetailUrlId()
 ;
+
+// The line "Created by the process ..." stands here, on the surface sign owns: the card of the document
+// itself is a component of crm and takes nothing from outside (Q-4). The page addresses the document by the
+// element of the smart process, while the process is asked for by the document of the module, so the
+// identifier is resolved here - and only while the feature is on, so a portal without it pays no query
+// (AC-017).
+$processLinkContainerId = 'sign-b2e-document-process-link';
+$processLinkDocumentId = 0;
+if (\Bitrix\Sign\Config\Feature::instance()->isKedoRunProcessEnabled())
+{
+	$entityId = (int)$component->getRequest('docId');
+	$processLinkDocumentId = $entityId < 1 ? 0 : (int)(
+		\Bitrix\Sign\Service\Container::instance()
+			->getDocumentRepository()
+			->getByEntityIdAndType($entityId, \Bitrix\Sign\Type\Document\EntityType::SMART_B2E)
+			?->id ?? 0
+	);
+}
+
+if ($processLinkDocumentId > 0)
+{
+	\Bitrix\Main\UI\Extension::load(['sign.v2.b2e.document-process-link']);
+	?>
+	<div id="<?= htmlspecialcharsbx($processLinkContainerId) ?>"></div>
+	<script>
+		BX.ready(function() {
+			BX.Sign.V2.B2e.DocumentProcessLink.mount({
+				containerId: '<?= CUtil::JSEscape($processLinkContainerId) ?>',
+				documentId: <?= $processLinkDocumentId ?>,
+			});
+		});
+	</script>
+	<?php
+}
 ?>
 
 <?php

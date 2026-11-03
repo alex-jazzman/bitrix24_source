@@ -34,6 +34,7 @@ $arParams['PATH_TO_PS_ADD'] = CrmCheckPath('PATH_TO_PS_ADD', $arParams['PATH_TO_
 if (!array_key_exists('PATH_TO_PS_EDIT', $arParams))
 	$arParams['PATH_TO_PS_EDIT'] = '/crm/configs/ps/edit/#ps_id#/';
 $arParams['PATH_TO_PS_EDIT'] = CrmCheckPath('PATH_TO_PS_EDIT', $arParams['PATH_TO_PS_EDIT'], '?ps_id=#ps_id#&edit');
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 
 $arResult['GRID_ID'] = 'CRM_PS_LIST_GRID';
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
@@ -88,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 
 	if(!isset($_POST['AJAX_CALL']))
 	{
-		LocalRedirect($APPLICATION->GetCurPage());
+		LocalRedirect($isSettingsHub ? $arParams['PATH_TO_PS_LIST'] : $APPLICATION->GetCurPage());
 	}
 }
 elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_GET['action_'.$arResult['GRID_ID']]))
@@ -106,7 +107,13 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 	}
 
 	if (!isset($_GET['AJAX_CALL']))
-		LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_product' : '');
+	{
+		LocalRedirect(
+			$isSettingsHub
+				? $arParams['PATH_TO_PS_LIST']
+				: ($bInternal ? '?' . $arParams['FORM_ID'] . '_active_tab=tab_product' : ''),
+		);
+	}
 }
 
 $gridOptions = new CCrmGridOptions($arResult['GRID_ID']);

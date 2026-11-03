@@ -1,5 +1,9 @@
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
+
 import { Core } from 'im.v2.application.core';
 import { ChatType, OwnMessageStatus, UserType, AnchorType } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { RecentManager } from 'im.v2.lib.recent';
 import { type ImModelChat, type ImModelRecentItem, type ImModelUser, type ImModelMessage } from 'im.v2.model';
 
@@ -13,13 +17,28 @@ const StatusIcon = {
 	viewed: 'viewed',
 };
 
+const AirIconName = {
+	[StatusIcon.sending]: Outline.CLOCK,
+	[StatusIcon.sent]: Outline.CHECK_M,
+	[StatusIcon.viewed]: Outline.DOUBLE_CHECK,
+};
+
 // @vue/component
 export const MessageStatus = {
+	components: { BIcon },
 	props:
 	{
 		item: {
 			type: Object,
 			required: true,
+		},
+		isSelected: {
+			type: Boolean,
+			default: false,
+		},
+		isDraftActive: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	computed:
@@ -77,12 +96,24 @@ export const MessageStatus = {
 				return StatusIcon.like;
 			}
 
-			if (!this.isLastMessageAuthor || this.needsBirthdayPlaceholder || this.hasDraft)
+			if (!this.isLastMessageAuthor || this.needsBirthdayPlaceholder || this.isDraftActive)
 			{
 				return StatusIcon.none;
 			}
 
 			return this.messageStatus;
+		},
+		isAirDesignEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAirDesignEnabled);
+		},
+		showAirIcon(): boolean
+		{
+			return this.isAirDesignEnabled && AirIconName[this.statusIcon] !== undefined;
+		},
+		airIconName(): string
+		{
+			return AirIconName[this.statusIcon] ?? '';
 		},
 		isLastMessageAuthor(): boolean
 		{
@@ -105,10 +136,6 @@ export const MessageStatus = {
 
 			return false;
 		},
-		hasDraft(): boolean
-		{
-			return Boolean(this.recentItem.draft.text);
-		},
 		needsBirthdayPlaceholder(): boolean
 		{
 			if (!this.isUser)
@@ -120,6 +147,12 @@ export const MessageStatus = {
 		},
 	},
 	template: `
-		<div class="bx-im-list-recent-item__status-icon" :class="'--' + statusIcon"></div>
+		<BIcon
+			v-if="showAirIcon"
+			:name="airIconName"
+			class="bx-im-list-recent-item__status-icon --air"
+			:class="{ '--accent': statusIcon === 'viewed', '--selected': isSelected }"
+		/>
+		<div v-else class="bx-im-list-recent-item__status-icon" :class="'--' + statusIcon"></div>
 	`,
 };

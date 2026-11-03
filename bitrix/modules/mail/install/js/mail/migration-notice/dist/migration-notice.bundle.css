@@ -1,0 +1,155 @@
+/*
+ * A dialog of the feature keeps its width while the screen has room for it and gives it up when it
+ * does not: a width the screen cannot afford carries the buttons and the cross past the edge of it
+ * (WCAG 1.4.4, 1.4.10). The announcement is the worse of the two - it stands fixed to the viewport,
+ * so what leaves the screen cannot be scrolled back and the cross is out of reach of a mouse.
+ */
+.mail-migration-notice-announcement,
+.mail-migration-notice-popup {
+	max-width: calc(100vw - var(--ui-space-inset-md) * 2);
+}
+
+.mail-migration-notice-announcement {
+	width: 640px;
+}
+
+.mail-migration-notice-popup {
+	width: 480px;
+}
+
+/*
+ * The hint of the panel and the balloon of a closed message are drawn by `ui.tour` and by
+ * `ui.notification`, and each takes a width of its own wherever it is put - 420 and 400 pixels. On a
+ * screen narrower than that the cross of the hint and the beginning of the words of the balloon land
+ * outside it, and the balloon stands fixed to the viewport, so for it no scrolling brings them back.
+ * The width of somebody else's window is not ours to change, but the room it is given is (1.4.10).
+ */
+.mail-migration-notice-panel-hint,
+.mail-migration-notice-dismiss-hint {
+	max-width: calc(100vw - var(--ui-space-inset-md) * 2);
+}
+
+/* the balloon was asked for a width of its own, and this is the one it keeps while there is room */
+.mail-migration-notice-dismiss-hint {
+	width: 400px;
+}
+
+/*
+ * A row of buttons that no longer fits across breaks into lines instead of leaving the dialog, and
+ * stands under the middle of the words like the rest of the accent top.
+ */
+.mail-migration-notice-announcement .popup-window-buttons,
+.mail-migration-notice-popup .popup-window-buttons {
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+/*
+ * The accent top of the dialog: the picture stands over the words and the words stand under it, so
+ * the whole block is centred. The same shape the message has in the mobile application.
+ */
+.mail-migration-notice-popup__content,
+.mail-migration-notice-announcement__content {
+	align-items: center;
+	text-align: center;
+}
+
+.mail-migration-notice-popup__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	font-family: var(--ui-font-family-system);
+}
+
+.mail-migration-notice-popup__title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.mail-migration-notice-popup__text {
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.mail-migration-notice-announcement__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	font-family: var(--ui-font-family-system);
+}
+
+.mail-migration-notice-announcement__title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.mail-migration-notice-announcement__text {
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: var(--ui-font-line-height-md);
+}
+
+/*
+ * The banner shares the node with the red alert and stands between it and the counters of the list,
+ * so it carries the air on both sides itself: the wrapper gives none, and without the lower one the
+ * card sat straight on the row of counters.
+ */
+.mail-migration-notice-banner {
+	margin-top: var(--ui-space-stack-xs2);
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.mail-migration-notice-banner__title {
+	display: block;
+	margin-bottom: var(--ui-space-stack-2xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.mail-migration-notice-banner__title:empty {
+	display: none;
+}
+
+.mail-migration-notice-banner__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-sm);
+}
+
+/*
+ * A button of the design system is one line of text it never breaks, and a label longer than the room
+ * left runs out of the card it stands in. Here it takes the width it has and carries the label over:
+ * the width keeps the button inside the card, the line break keeps the whole label readable.
+ */
+.mail-migration-notice-announcement .popup-window-buttons .mail-migration-notice-announcement__action,
+.mail-migration-notice-popup .popup-window-buttons .mail-migration-notice-popup__action,
+.mail-migration-notice-banner .mail-migration-notice-banner__actions .mail-migration-notice-banner__action {
+	min-width: 0;
+	max-width: 100%;
+	height: auto;
+	min-height: var(--ui-btn-height);
+	padding-top: var(--ui-space-inset-2xs);
+	padding-bottom: var(--ui-space-inset-2xs);
+	line-height: var(--ui-font-line-height-md);
+	white-space: normal;
+}
+
+/*
+ * `ui-btn-text-inner` is the span the design system puts the label in, and it cuts the label with an
+ * ellipsis of its own. The design system offers no option for a button of several lines, so the rule
+ * reaches for the class: a class renamed there costs the line break, not the width above it.
+ */
+.mail-migration-notice-announcement .popup-window-buttons .mail-migration-notice-announcement__action .ui-btn-text-inner,
+.mail-migration-notice-popup .popup-window-buttons .mail-migration-notice-popup__action .ui-btn-text-inner,
+.mail-migration-notice-banner .mail-migration-notice-banner__actions .mail-migration-notice-banner__action .ui-btn-text-inner {
+	overflow: visible;
+	text-overflow: clip;
+	white-space: normal;
+}

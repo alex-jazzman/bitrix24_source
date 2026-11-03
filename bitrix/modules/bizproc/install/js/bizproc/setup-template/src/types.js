@@ -6,6 +6,18 @@ export type ItemType = 'delimiter' | 'title' | 'description' | 'constant';
 export type ConstantType = 'string' | 'int' | 'user' | 'file' | 'time' | 'date' | 'datetime' | 'bool';
 export type DelimiterType = 'line';
 
+export type ConstantValueRule = {
+	Min?: number;
+	Max?: number;
+	MaxLength?: number;
+};
+
+// The value rule lives next to the settings the other constant types declare for themselves.
+export type ConstantSettings = {
+	ValueRule?: ConstantValueRule;
+	[key: string]: mixed;
+};
+
 export type Item = {
 	itemType: ItemType;
 };
@@ -36,6 +48,7 @@ export type ConstantItem = Item & {
 	description: string;
 	required: boolean;
 	options: Record<string, string>;
+	settings: ConstantSettings;
 };
 
 export type SetupTemplateData = {

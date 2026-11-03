@@ -1,0 +1,155 @@
+/* One setting of the hub: a full-width row on the tinted panel the section draws — the settings
+   block of the wizard mockup. The icon, the title and the switch line up on the first grid row; the
+   description, the note and the extra field span the full width underneath.
+   __body and __aside are `display: contents` so their children become grid items of the row itself:
+   the markup stays one flat structure instead of nested boxes that would each need their own
+   alignment. */
+.crm-settings-hub-feature-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--ui-space-stack-sm) var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-lg) var(--ui-space-inset-lg);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.crm-settings-hub-feature-card__body,
+.crm-settings-hub-feature-card__aside {
+	display: contents;
+}
+
+/* Only the first line is placed by hand: icon, title and switch. */
+.crm-settings-hub-feature-card__icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+
+	grid-row: 1;
+	grid-column: 1;
+}
+
+.crm-settings-hub-feature-card__title {
+	grid-row: 1;
+	grid-column: 2;
+	color: var(--ui-color-base-0);
+}
+
+.crm-settings-hub-feature-card__switch {
+	position: relative;
+	display: inline-flex;
+	grid-row: 1;
+	grid-column: 3;
+	cursor: pointer;
+}
+
+.crm-settings-hub-feature-card__description,
+.crm-settings-hub-feature-card__note,
+.crm-settings-hub-feature-card__control,
+.crm-settings-hub-feature-card__hint,
+.crm-settings-hub-feature-card__action,
+.crm-settings-hub-feature-card__details {
+	grid-column: 1 / -1;
+}
+
+/* The sequence under the first line is declared here and does not follow the markup: the switch and
+   its field come first in the DOM so the switch's tab stop precedes the action button's
+   (feature-card.ts), and `order` puts the field back at the bottom for the eye. Auto-placement still
+   assigns the rows themselves, in this order — so an element the row does not render grows no empty
+   track and no stray gap. */
+.crm-settings-hub-feature-card__description {
+	order: 1;
+}
+
+.crm-settings-hub-feature-card__note {
+	order: 2;
+}
+
+.crm-settings-hub-feature-card__hint {
+	order: 3;
+}
+
+.crm-settings-hub-feature-card__action {
+	order: 4;
+}
+
+.crm-settings-hub-feature-card__details {
+	order: 5;
+}
+
+.crm-settings-hub-feature-card__control {
+	order: 6;
+}
+
+/* The button hugs its text instead of stretching to the row, and sits at the left edge under the
+   description — the mockup's own placement. */
+.crm-settings-hub-feature-card__action {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs);
+	align-items: center;
+}
+
+.crm-settings-hub-feature-card__description {
+	color: var(--ui-color-design-outline-content);
+}
+
+.crm-settings-hub-feature-card__note {
+	color: var(--ui-color-base-1);
+}
+
+.crm-settings-hub-feature-card__hint {
+	color: var(--ui-color-base-3);
+}
+
+/* An off row is the card surface at half strength over the panel — the mockup's own recipe. The
+   token ramp has nothing between soft-blue-3 and white, so the blend is computed here; BOTH sides of
+   it are tokens, which is the point. It used to be a literal white gradient laid over the token, and
+   that half could not follow a theme: AIR's dark palette is context-based (.--ui-context-content-dark),
+   so in a dark context the row would have been washed out by a white that never darkens. Nothing
+   places the hub in that context today — this is closing a trap, not a visible defect.
+   Light theme is unchanged to the byte: 50% #FFFFFF over #EDF7FF is #F6FBFF either way.
+   Off does not recolour the row, it fades it: the icon stays accent and the title stays black. */
+.crm-settings-hub-feature-card.--off {
+	background: color-mix(
+		in srgb,
+		var(--ui-color-bg-content-primary) 50%,
+		var(--ui-color-accent-soft-blue-3)
+	);
+}
+
+.crm-settings-hub-feature-card.--off .crm-settings-hub-feature-card__icon,
+.crm-settings-hub-feature-card.--off .crm-settings-hub-feature-card__title {
+	opacity: .7;
+}
+
+.crm-settings-hub-feature-card.--off .crm-settings-hub-feature-card__description {
+	opacity: .8;
+}
+
+/* The whole row toggles the setting, so it takes the pointer; the switch inside keeps its own
+   handler and is excluded from the row's click (feature-card.ts). The focus ring sits on the switch,
+   which is where the tab stop and the switch semantics are. */
+.crm-settings-hub-feature-card.--clickable {
+	cursor: pointer;
+}
+
+.crm-settings-hub-feature-card__switch:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.crm-settings-hub-feature-card.--disabled,
+.crm-settings-hub-feature-card.--disabled .crm-settings-hub-feature-card__switch {
+	cursor: not-allowed;
+}
+
+.crm-settings-hub-feature-card.--disabled .crm-settings-hub-feature-card__title,
+.crm-settings-hub-feature-card.--disabled .crm-settings-hub-feature-card__description {
+	opacity: .6;
+}
+
+/* Groups of sub-options stack under the row's first line, each with its own heading. */
+.crm-settings-hub-feature-card__details {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}

@@ -4,7 +4,7 @@ import {
 	Helper,
 	SelectorContext,
 } from 'bizproc.automation';
-import { Dom, Event, Loc, Runtime, Tag, Type } from 'main.core';
+import { Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, MenuManager } from 'main.popup';
 import { Dialog } from 'ui.entity-selector';
@@ -112,12 +112,31 @@ export class InlineSelector extends EventEmitter
 				this.targetInput.getAttribute('name') + InlineSelector.#counter++,
 			);
 		}
+
+		const openSelector = (
+			this.#customSelectorFn
+				? this.#customSelectorFn.bind(this, this.targetInput.id)
+				: this.openMenu.bind(this)
+		);
+
 		this.menuButton = Tag.render`
-			<span 
-				onclick="${this.#customSelectorFn ? this.#customSelectorFn.bind(this, this.targetInput.id) : this.openMenu.bind(this)}"
+			<span
+				onclick="${openSelector}"
+				onkeydown="${this.#onMenuButtonKeyDown.bind(this, openSelector)}"
 				class="bizproc-automation-popup-select-dotted"
+				role="button"
+				tabindex="0"
+				aria-haspopup="dialog"
+				aria-label="${Text.encode(Loc.getMessage('BIZPROC_JS_AUTOMATION_INLINE_SELECTOR_INSERT_VALUE') ?? '')}"
 			></span>
 		`;
+
+		// A custom selector opens a host window this handle does not observe, so the state is
+		// left undeclared there instead of frozen at the closed one.
+		if (!this.#customSelectorFn)
+		{
+			this.#setPopupState(false);
+		}
 
 		this.parseTargetProperties();
 
@@ -222,6 +241,39 @@ export class InlineSelector extends EventEmitter
 		}
 	}
 
+	#onMenuButtonKeyDown(openSelector: Function, event: KeyboardEvent): void
+	{
+		if (event.key !== 'Enter' && event.key !== ' ')
+		{
+			return;
+		}
+
+		// The handle is a span with role="button": Space still scrolls the page unless stopped here.
+		event.preventDefault();
+		openSelector(event);
+	}
+
+	/**
+	 * Keeps the handle telling what it opens and whether that is open now (WCAG 4.1.2). The kind is
+	 * written on every open because the handle opens either of two surfaces: the value picker of
+	 * ui.entity-selector, which carries no popup role of its own, and the properties switcher, which
+	 * is a real menu. Neither component writes these attributes for its trigger.
+	 */
+	#setPopupState(expanded: boolean, kind: ?string = null): void
+	{
+		if (!this.menuButton)
+		{
+			return;
+		}
+
+		if (kind)
+		{
+			this.menuButton.setAttribute('aria-haspopup', kind);
+		}
+
+		this.menuButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+	}
+
 	openMenu(event: KeyboardEvent, skipPropertiesSwitcher: boolean = false)
 	{
 		if (!skipPropertiesSwitcher && this.context.useSwitcherMenu && !this.targetInput.value)
@@ -232,6 +284,8 @@ export class InlineSelector extends EventEmitter
 		if (this.#dialog)
 		{
 			this.#dialog.show();
+			this.#setPopupState(true, 'dialog');
+
 			return;
 		}
 
@@ -274,12 +328,18 @@ export class InlineSelector extends EventEmitter
 
 					const item = event.getData().item;
 					this.onFieldSelect(item.getCustomData().get('field'));
-				}
+				},
+				// The picker closes by outside click and by Escape as well as by a pick, so the
+				// state follows its own events rather than the code paths that open it.
+				onHide: () => {
+					this.#setPopupState(false);
+				},
 			},
 			compactView: true,
 		});
 
 		this.#dialog.show();
+		this.#setPopupState(true, 'dialog');
 	}
 
 	fillGroups(): void
@@ -368,12 +428,14 @@ export class InlineSelector extends EventEmitter
 				events: {
 					onPopupClose()
 					{
+						self.#setPopupState(false);
 						this.destroy();
 					}
 				}
 			}
 		);
 		this.#switcherDialog = MenuManager.currentItem;
+		this.#setPopupState(true, 'menu');
 
 		return true;
 	}

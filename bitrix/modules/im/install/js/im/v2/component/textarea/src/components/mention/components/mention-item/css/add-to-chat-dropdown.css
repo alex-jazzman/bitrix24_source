@@ -1,6 +1,14 @@
 .bx-im-mention-chat-add-dropdown__container {
 	display: flex;
 	align-items: center;
+	padding: 0;
+	border: none;
+	color: inherit;
+	font: inherit;
+	background: transparent;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 .bx-im-mention-chat-add-dropdown__separator {

@@ -1,0 +1,12 @@
+<?php
+$MESS["TASKS_V2_CONFLICT_POPUP_ATTACHMENTS_WERE_DELETED"] = "Attached files have been deleted.";
+$MESS["TASKS_V2_CONFLICT_POPUP_CANCEL_BTN"] = "Cancel";
+$MESS["TASKS_V2_CONFLICT_POPUP_FILES_DELETED"] = "Files have been deleted.";
+$MESS["TASKS_V2_CONFLICT_POPUP_ITEM_DELETED"] = "Item has been deleted.";
+$MESS["TASKS_V2_CONFLICT_POPUP_SAVE_BTN"] = "Save";
+$MESS["TASKS_V2_CONFLICT_POPUP_SUBTITLE"] = "This checklist was simultaneously modified by another user. Choose the version to save.";
+$MESS["TASKS_V2_CONFLICT_POPUP_TITLE"] = "Checklist version conflict";
+$MESS["TASKS_V2_CONFLICT_POPUP_VERSION_A"] = "Your version";
+$MESS["TASKS_V2_CONFLICT_POPUP_VERSION_B"] = "Other version";
+$MESS["TASKS_V2_CONFLICT_POPUP_VERSION_OPTION_LABEL"] = "#VERSION#, item #NUMBER#: #VALUE#";
+$MESS["TASKS_V2_CONFLICT_POPUP_VERSION_OPTION_LABEL_NO_NUMBER"] = "#VERSION#: #VALUE#";

@@ -22,6 +22,7 @@ export class SchemeSelector
 	#isAutoConversionEnabled: boolean;
 	#analytics: {c_element?: string} = {};
 	#waiting: boolean = false;
+	#onMenuStateChange: (isOpen: boolean) => void;
 
 	constructor(
 		converter: Converter,
@@ -32,7 +33,8 @@ export class SchemeSelector
 			labelId: string,
 			analytics?: {
 				c_element: string,
-			}
+			},
+			onMenuStateChange?: (isOpen: boolean) => void,
 		},
 	)
 	{
@@ -43,6 +45,11 @@ export class SchemeSelector
 		this.#label = document.getElementById(params.labelId);
 		this.#menuId = `crm_conversion_scheme_selector_${this.#entityId}_${Text.getRandom()}`;
 		this.#isAutoConversionEnabled = false;
+		this.#onMenuStateChange = Type.isFunction(params.onMenuStateChange)
+			? params.onMenuStateChange
+			: () => {}
+		;
+
 		if (Type.isStringFilled(params.analytics.c_element))
 		{
 			this.#analytics.c_element = params.analytics.c_element;
@@ -192,12 +199,17 @@ export class SchemeSelector
 			closeByEsc: true,
 			cacheable: false,
 			offsetLeft: -anchorPos.width,
+			events: {
+				onPopupShow: () => this.#onMenuStateChange(true),
+				onPopupClose: () => this.#onMenuStateChange(false),
+			},
 		});
 	}
 
 	#closeMenu()
 	{
 		MenuManager.destroy(this.#menuId);
+		this.#onMenuStateChange(false);
 	}
 
 	#getMenuItems(): MenuItemOptions[]

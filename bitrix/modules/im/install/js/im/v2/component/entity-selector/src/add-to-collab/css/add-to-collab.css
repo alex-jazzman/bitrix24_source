@@ -1,41 +1,3 @@
-/*!* region Custom popup header *!*/
-.bx-im-add-to-collab__scope .popup-window-titlebar-text {
-	font-size: var(--im-font-size-2xl);
-	font-weight: var(--im-font-weight-semi-bold);
-	color: var(--ui-color-black-base);
-	padding-left: 24px;
-}
-
-.bx-im-add-to-collab__scope .popup-window-titlebar {
-	height: 64px;
-	display: flex;
-	align-items: center;
-}
-
-.bx-im-add-to-collab__scope .popup-window-close-icon {
-	top: 19px;
-}
-
-/*!* endregion Custom popup header *!*/
-
-/*!* region Scrollbar *!*/
-
-.bx-im-add-to-collab__scope *::-webkit-scrollbar {
-	width:6px;
-}
-
-.bx-im-add-to-collab__scope *::-webkit-scrollbar-thumb {
-	background-color: transparent;
-	border-radius: 32px;
-}
-
-.bx-im-add-to-collab__scope *:hover::-webkit-scrollbar-thumb {
-	background-color: rgba(var(--im-color-palette-gray-90-rgb), 0.2);
-	border-radius: 32px;
-}
-
-/*!* endregion Scrollbar *!*/
-
 .bx-im-add-to-collab__invite-block-input {
 	margin-top: 12px;
 }
@@ -48,7 +10,7 @@
 	margin-bottom: 16px;
 }
 
-.bx-im-add-to-collab-guest-tab__scope.bx-im-entity-selector-add-to-chat__container,
 .bx-im-add-to-collab-guest-tab__scope.bx-im-add-guest-content__container {
-	height: 485px;
+	width: 100%;
+	height: 100%;
 }

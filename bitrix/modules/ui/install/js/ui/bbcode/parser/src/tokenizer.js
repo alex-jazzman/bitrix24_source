@@ -45,7 +45,7 @@ export type BBCodeToken =
 	| BBCodeLinebreakToken
 	| BBCodeTabToken;
 
-const TAG_REGEX_GS: RegExp = /\[(\/)?(\w+|\*)(.*?)]/gs;
+const TAG_REGEX_GS: RegExp = /\[(\/)?((?!\d)\w+|\*)(?=]|=|\s)(.*?)]/gs;
 
 const LF = '\n';
 const CRLF = '\r\n';
@@ -87,30 +87,56 @@ export class BBCodeTokenizer
 		const tokens: Array<BBCodeToken> = [];
 
 		let lastIndex = 0;
+		let codeDepth = 0;
+		let codeToken: ?BBCodeOpenTagToken = null;
+
 		bbcode.replace(TAG_REGEX_GS, (fullTag: string, slash: ?string, tagName: string, attrs: ?string, index: number) => {
+			const isOpeningTag: boolean = Boolean(slash) === false;
+			const lowerCaseTagName: string = BBCodeTokenizer.toLowerCase(tagName);
+			const isCodeTag: boolean = lowerCaseTagName === 'code';
+
+			if (codeToken)
+			{
+				if (isCodeTag)
+				{
+					codeDepth += isOpeningTag ? 1 : -1;
+				}
+
+				if (codeDepth > 0)
+				{
+					return;
+				}
+
+				codeToken.unclosed = false;
+				codeToken = null;
+			}
+
 			if (index > lastIndex)
 			{
 				const textBetween = bbcode.slice(lastIndex, index);
 				tokens.push(...this.parseText(textBetween));
 			}
 
-			const isOpeningTag: boolean = Boolean(slash) === false;
 			const startIndex: number = fullTag.length + index;
 			const attributes = this.parseAttributes(attrs);
-			const lowerCaseTagName: string = BBCodeTokenizer.toLowerCase(tagName);
 
 			if (isOpeningTag)
 			{
-				const nextContent: string = bbcode.slice(startIndex);
-				const unclosed: boolean = !nextContent.includes(`[/${tagName}]`);
-
-				tokens.push({
+				const unclosed: boolean = isCodeTag || !bbcode.slice(startIndex).includes(`[/${tagName}]`);
+				const token: BBCodeOpenTagToken = {
 					type: 'OPEN_TAG',
 					name: lowerCaseTagName,
 					value: attributes.value,
 					attributes: Object.fromEntries(attributes.attributes),
 					unclosed,
-				});
+				};
+				tokens.push(token);
+
+				if (isCodeTag)
+				{
+					codeDepth = 1;
+					codeToken = token;
+				}
 			}
 			else
 			{

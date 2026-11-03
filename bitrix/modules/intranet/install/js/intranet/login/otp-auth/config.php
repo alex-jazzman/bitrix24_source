@@ -12,6 +12,8 @@ return [
 		'pull.client',
 		'ui.analytics',
 		'ui.icon-set.api.core',
+		'ui.icon-set.api.vue',
+		'ui.icon-set.outline',
 		'ui.system.typography.vue',
 		'ui.vue3',
 		'ui.vue3.components.button',

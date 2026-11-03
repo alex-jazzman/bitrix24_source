@@ -28,6 +28,7 @@ use Bitrix\Main\Security\Password;
 use Bitrix\Main\GroupTable;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Type\Callback;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Date;
 
@@ -1444,7 +1445,7 @@ class CUser extends CDBResult
 		{
 			UserHitAuthTable::deleteByFilter(['<=TIMESTAMP_X' => (new DateTime())->add("-{$cleanupDays}D")]);
 		}
-		return 'CUser::CleanUpHitAuthAgent();';
+		return new Callback([self::class, 'CleanUpHitAuthAgent']);
 	}
 
 	public function UpdateSessionData(Authentication\Context $context, $onlyActive = true)
@@ -2187,7 +2188,9 @@ class CUser extends CDBResult
 		$unblockDate = new DateTime();
 		$unblockDate->add("T{$blockTime}M"); //minutes
 
-		CAgent::AddAgent("CUser::UnblockAgent({$userId});", 'main', 'Y', 0, '', 'Y', $unblockDate->toString());
+		$callback = new Callback([self::class, 'UnblockAgent'], [$userId]);
+
+		CAgent::AddAgent($callback, 'main', 'Y', 0, '', 'Y', $unblockDate->toString());
 
 		if (Option::get('main', 'event_log_block_user', 'N') === 'Y')
 		{
@@ -5079,7 +5082,7 @@ class CUser extends CDBResult
 			UserDeviceLoginTable::deleteByFilter(["<LOGIN_DATE" => $date]);
 		}
 
-		return "CUser::CleanUpAgent();";
+		return new Callback([self::class, 'CleanUpAgent']);
 	}
 
 	public static function DeactivateAgent()
@@ -5120,7 +5123,7 @@ class CUser extends CDBResult
 				}
 			}
 		}
-		return "CUser::DeactivateAgent();";
+		return new Callback([self::class, 'DeactivateAgent']);
 	}
 
 	public static function UnblockAgent($userId)
@@ -5128,7 +5131,7 @@ class CUser extends CDBResult
 		$user = new CUser();
 		$user->Update($userId, ["BLOCKED" => 'N']);
 
-		return '';
+		return null;
 	}
 
 	/**
@@ -5847,7 +5850,7 @@ class CUser extends CDBResult
 		$date = new DateTime();
 		$date->add("-1D");
 		Main\UserAuthActionTable::deleteByFilter(["<ACTION_DATE" => $date]);
-		return 'CUser::AuthActionsCleanUpAgent();';
+		return new Callback([self::class, 'AuthActionsCleanUpAgent']);
 	}
 
 	/**
@@ -6103,7 +6106,7 @@ class CUser extends CDBResult
 		}
 	}
 
-	public static function SyncBithdaysAgent(?int $lastId = null)
+	public static function SyncBithdaysAgent(?int $lastId = null): ?Callback
 	{
 		$lastId = (int)$lastId;
 		$nextId = $lastId + 1000;
@@ -6127,9 +6130,9 @@ class CUser extends CDBResult
 					AND PERSONAL_BIRTHDAY IS NOT NULL
 			");
 
-			return "CUser::SyncBithdaysAgent($nextId);";
+			return new Callback([self::class, __FUNCTION__], [$nextId]);
 		}
 
-		return '';
+		return null;
 	}
 }

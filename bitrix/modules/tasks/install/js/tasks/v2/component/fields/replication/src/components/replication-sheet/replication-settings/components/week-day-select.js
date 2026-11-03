@@ -66,6 +66,7 @@ export const WeekDaySelect = {
 			:item
 			:items
 			:disabled
+			:ariaLabel="loc('TASKS_V2_REPLICATION_WEEK_DAY_SELECT_ARIA_LABEL')"
 			@update:item="$emit('update:modelValue', $event.id)"
 		/>
 	`,

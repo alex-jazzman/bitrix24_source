@@ -78,7 +78,6 @@ $linkBack = $component->getRequestedPage([
 				<div class="ui-btn ui-btn-sm ui-btn-primary sign-master__send-summary--title-edit-save" data-action="saveTitle"><i></i></div>
 				<div class="ui-btn ui-btn-sm ui-btn-light-border sign-master__send-summary--title-edit-cancel" data-action="cancel"><i></i></div>
 			</div>
-			<div class="sign-maste__send-summary--text"><?php echo Loc::getMessage('SIGN_CMP_MASTER_TPL_STEP_SEND_BAN_SYMBOLS') ?></php></div>
 		</div>
 
 	</div>

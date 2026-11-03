@@ -127,4 +127,40 @@ export class SettingsService
 
 		return Promise.all(promises);
 	}
+
+	async getDefaultReaction(): Promise<string>
+	{
+		const settings: any = await runAction(
+			RestMethod.imV2SettingsGeneralList,
+			{
+				data: {
+					userId: Core.getUserId(),
+				},
+			},
+		);
+
+		if (typeof settings !== 'object' || settings === null || Array.isArray(settings))
+		{
+			throw new Error('SettingsService: invalid settings response');
+		}
+
+		const defaultReaction = settings[Settings.message.defaultReaction];
+		if (typeof defaultReaction !== 'string')
+		{
+			throw new Error('SettingsService: invalid settings response');
+		}
+
+		return defaultReaction;
+	}
+
+	async updateDefaultReaction(reaction: string): Promise<void>
+	{
+		await runAction(RestMethod.imV2SettingsGeneralUpdate, {
+			data: {
+				userId: Core.getUserId(),
+				name: Settings.message.defaultReaction,
+				value: reaction,
+			},
+		});
+	}
 }

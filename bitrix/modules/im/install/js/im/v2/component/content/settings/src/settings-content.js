@@ -1,5 +1,5 @@
 import { Logger } from 'im.v2.lib.logger';
-import { Settings } from 'im.v2.const';
+import { SettingsSection } from 'im.v2.const';
 import { Messenger } from 'im.public';
 
 import { SectionList } from './components/section-list';
@@ -18,17 +18,20 @@ export const SettingsContent = {
 			required: true,
 		},
 	},
-	computed:
+	watch:
 	{
-		sections(): string[]
-		{
-			return Object.keys(Settings);
+		// layout can be reopened without a section - restore it on every empty entityId
+		entityId: {
+			immediate: true,
+			handler(): void
+			{
+				this.setInitialSection();
+			},
 		},
 	},
 	created()
 	{
 		Logger.warn('Content: Settings created');
-		this.setInitialSection();
 	},
 	methods:
 	{
@@ -36,8 +39,7 @@ export const SettingsContent = {
 		{
 			if (!this.entityId)
 			{
-				const [firstSection] = this.sections;
-				void Messenger.openSettings({ onlyPanel: firstSection });
+				void Messenger.openSettings({ onlyPanel: SettingsSection.appearance });
 			}
 		},
 		onSectionClick(sectionId: string)

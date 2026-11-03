@@ -13,6 +13,7 @@ use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
+use Bitrix\Tasks\Promotion\ConsultationButton;
 use Bitrix\Tasks\Promotion\TasksNewCard;
 use Bitrix\Tasks\Promotion\TasksNewChatButton;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
@@ -23,6 +24,7 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\View;
 use Bitrix\Tasks\V2\FormV2Feature;
 use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\Feedback\FeedbackSource;
 use Bitrix\UI\Buttons;
 
 /**
@@ -51,7 +53,20 @@ $showChatButton = FormV2Feature::isOn() && $showNavigation && $arResult['SHOW_CO
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 $isExtranetUser = (bool)Bitrix\Tasks\Integration\Extranet\User::isExtranet();
 $viewState = \Bitrix\Tasks\Helper\Analytics::getInstance((int)$arResult['USER_ID'], (int)($arParams['GROUP_ID'] ?? 0))->getViewStateName();
-$feedbackParams = Json::encode(Container::getInstance()->getFeedbackService()->getParams());
+$isProjectContext =
+	((int)($arParams['GROUP_ID'] ?? 0) > 0)
+	|| (($arParams['PROJECT_VIEW'] ?? '') === 'Y')
+	|| in_array(
+		($arParams['SCOPE'] ?? ''),
+		[
+			ScopeDictionary::SCOPE_PROJECTS_GRID,
+			ScopeDictionary::SCOPE_SCRUM_PROJECTS_GRID,
+		],
+		true,
+	)
+;
+$feedbackSource = $isProjectContext ? FeedbackSource::PROJECTS : FeedbackSource::TASKS;
+$feedbackParams = Json::encode(Container::getInstance()->getFeedbackService()->getParams($feedbackSource));
 
 if ($isBitrix24Template)
 {
@@ -104,6 +119,7 @@ if ($showNewTaskChatButtonPopup)
 {
 	Extension::load(['tasks.v2.component.onboarding.new-chat-button-popup']);
 }
+$showConsultationAha = $isBitrix24Template && (new ConsultationButton())->shouldShow((int)$arResult['USER_ID']);
 
 ?>
 
@@ -224,10 +240,13 @@ if ($showNewTaskChatButtonPopup)
 				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : 'ui-btn-icon-robots');
 				$uiClass = 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
 				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
+				$robotsName = Loc::getMessage('TASKS_SWITCHER_ITEM_ROBOTS');
 
 				?><button class="<?=$uiClass?> <?=$lockClass?> task-interface-btn-toolbar --robots --small"
+					aria-label="<?=htmlspecialcharsbx($robotsName)?>"
+					data-testid="tasks-toolbar-robots-button"
 					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
-					<span class="ui-btn-text"><?=Loc::getMessage('TASKS_SWITCHER_ITEM_ROBOTS')?></span>
+					<span class="ui-btn-text"><?=$robotsName?></span>
 				</button><?php
 			}
 
@@ -321,6 +340,7 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 			(new BX.UI.NavigationPanel({
 				target: navBlock,
 				items: <?= Json::encode($items ?? []) ?>,
+				ariaLabel: '<?= CUtil::JSEscape(Loc::getMessage('TASKS_SWITCHER_NAME')) ?>',
 			})).init();
 		}
 
@@ -375,6 +395,18 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 			}
 		}
 
+		// narrow viewports hide the main button label, so the menu arc keeps its own copy of that name
+		const bindingMenuArc = document.getElementById('intranet_binding_menu_tasks_switcher');
+		const bindingMenuMainButton = document.getElementById('intranet_binding_menu_tasks_switcher_top');
+		if (bindingMenuArc && bindingMenuMainButton)
+		{
+			const bindingMenuName = bindingMenuMainButton.textContent.trim();
+			if (bindingMenuName !== '')
+			{
+				bindingMenuArc.setAttribute('aria-label', bindingMenuName);
+			}
+		}
+
 		if (document.location.hash === '#robots')
 		{
 			BX.Runtime.loadExtension('ui.tour').then(
@@ -410,6 +442,12 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 
 		<?php if ($showNewTaskChatButtonPopup): ?>
 			BX.Tasks.V2.Component.Onboarding.NewChatButtonPopup.show();
+		<?php endif; ?>
+
+		<?php if ($showConsultationAha): ?>
+			BX.Runtime.loadExtension('tasks.v2.component.onboarding.consultation-button').then((exports) => {
+					exports.ConsultationButton.show();
+				});
 		<?php endif; ?>
 	});
 </script>

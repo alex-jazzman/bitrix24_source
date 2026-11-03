@@ -7,3 +7,5 @@ import 'main.date';
 import 'ui.design-tokens';
 import 'ui.design-tokens.air';
 import 'ui.icon-set.outline';
+// The solid set carries the clock glyph shown inside the Recent avatar.
+import 'ui.icon-set.solid';

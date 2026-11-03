@@ -16,6 +16,8 @@ class MailMobile extends CModule
 
 	private $workspaceClass = \Bitrix\MailMobile\Workspace::class;
 
+	private $tariffRestrictionProviderClass = \Bitrix\MailMobile\Provider\TariffPlanRestrictionProvider::class;
+
 	public function __construct()
 	{
 		$arModuleVersion = [];
@@ -45,6 +47,14 @@ class MailMobile extends CModule
 			'getPath'
 		);
 
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onTariffRestrictionsCollect',
+			$this->MODULE_ID,
+			$this->tariffRestrictionProviderClass,
+			'getTariffPlanRestrictions'
+		);
+
 		return true;
 	}
 
@@ -58,6 +68,14 @@ class MailMobile extends CModule
 			$this->MODULE_ID,
 			$this->workspaceClass,
 			'getPath'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onTariffRestrictionsCollect',
+			$this->MODULE_ID,
+			$this->tariffRestrictionProviderClass,
+			'getTariffPlanRestrictions'
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
@@ -77,6 +95,7 @@ class MailMobile extends CModule
 
 	public function uninstallFiles(): void
 	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	public function installEvents(): void

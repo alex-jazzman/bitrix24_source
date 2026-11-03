@@ -6,6 +6,7 @@ $MESS["BI_GROUP_EMPTY_TITLE"] = "There are no dashboards in this group.";
 $MESS["BI_GROUP_NAME_NEW"] = "New group";
 $MESS["BI_GROUP_SAVE"] = "Save";
 $MESS["BI_GROUP_SAVE_CANCEL_MSGVER_1"] = "Cancel";
+$MESS["BI_GROUP_SAVE_ERROR"] = "Could not save group. Please try again.";
 $MESS["BI_GROUP_SAVE_WARN_DONT_SHOW"] = "Don't show again";
 $MESS["BI_GROUP_SAVE_WARN_NO"] = "No";
 $MESS["BI_GROUP_SAVE_WARN_TEXT_MSGVER_1"] = "Are you sure you want to remove the dashboard from this group? You may lose access to the dashboard.";

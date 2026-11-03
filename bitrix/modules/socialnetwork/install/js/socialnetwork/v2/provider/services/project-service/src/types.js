@@ -41,8 +41,8 @@ export type ProjectDto = {
 	numberOfMembers?: number | null,
 	members: UserEntityType[],
 	moderatorMembers: UserEntityType[],
-	notificationCatalog?: ProjectNotificationCatalogDto | null,   // вход: каталог из чтения проекта (DTO-01)
-	notifications?: ProjectNotificationPayloadDto | null,          // выход: payload настройки в create/update (DTO-02)
+	notificationCatalog?: ProjectNotificationCatalogDto | null,
+	notifications?: ProjectNotificationPayloadDto | null,
 	options?: {
 		whoCanInvite: string,
 		manageMessages: string,
@@ -53,6 +53,7 @@ export type ProjectDto = {
 		canGuestScreenshot: string,
 		allowGuestsInvitation: string,
 	},
+	owner?: ProjectOwnerDto | null,
 	ownerId: number,
 	permissions: ProjectPermissionItemDto[],
 	privacyType: 'open' | 'closed',
@@ -123,7 +124,17 @@ export type ProjectPermissionItemDto =
 type UserEntityType = {
 	id?: number;
 	type?: string;
-	withChildNodes?: boolean;
-	name?: string;
-	image?: null;
+	withChildNodes?: boolean | null;
+	name?: string | null;
+	image?: ProjectImageDto | null;
+	selectorItem?: Object;
+}
+
+type ProjectOwnerDto = {
+	name?: string | null;
+	image?: ProjectImageDto | null;
+}
+
+type ProjectImageDto = {
+	src?: string | null;
 }

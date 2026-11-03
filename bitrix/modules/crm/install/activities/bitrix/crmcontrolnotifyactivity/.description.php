@@ -61,6 +61,7 @@ if (version_compare(\Bitrix\Main\ModuleManager::getVersion('bizproc'), '26.100.0
 		->setJsClass('BizProcActivity')
 		->setFilter($arActivityDescription['FILTER'])
 		->setCategory($arActivityDescription['CATEGORY'])
+		->set('NODE_DESCRIPTION', Loc::getMessage('CRM_CTRNA_NODE_DESCRIPTION') ?? '')
 	;
 
 	$arActivityDescription = $activityDescription->toArray();

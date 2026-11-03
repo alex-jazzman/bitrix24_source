@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { withTimeout } = require('im/messenger/lib/utils');
+	const { NavigationHelper } = require('im/messenger/controller/navigation/helper');
 	const { FolderListView } = require('im/messenger/controller/folder/list');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
@@ -76,7 +77,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 
 		async #initFolderTabs()
 		{
-			const folders = serviceLocator.get('core').getStore().getters['folderModel/getPersonalFolders']();
+			const folders = this.#getPersonalTabFolders();
 
 			// Personal folder tabs are already rendered by the widget — backend
 			// includes them in the initial payload (see ImMobile NavigationTab
@@ -168,7 +169,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 			const folder = payload?.data?.folder;
 			logger.log('handleFolderAdded payload', payload);
 
-			if (!this.#isPersonalFolder(folder))
+			if (!this.#isPersonalTabFolder(folder))
 			{
 				return;
 			}
@@ -225,7 +226,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 		{
 			logger.log('removeFolderTab', tabId);
 			this.#personalFolderTabIds.delete(tabId);
-			await this.#switchToChatsIfRemovingActiveTab(tabId);
+			await this.#switchAwayIfRemovingActiveTab(tabId);
 
 			await this.#tabSwitcher.removeItems([tabId]);
 		}
@@ -239,19 +240,14 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 
 			logger.log('handleFoldersSorted payload', payload);
 
-			// Build moveItems for system + personal in folderModel order. Native
+			// Build moveItems for system + personal in tab-folder order. Native
 			// widget applies positions to passed ids and keeps untouched tabs
 			// (folderList) in their relative spots — they fall into the trailing
 			// free positions.
-			const folders = serviceLocator.get('core').getStore().getters['folderModel/getList']();
-			const items = [];
-			folders.forEach((folder, index) => {
-				const tabId = this.#getTabIdForFolder(folder);
-				if (tabId)
-				{
-					items.push({ id: tabId, position: index });
-				}
-			});
+			const items = this.#getTabFolders().map((folder, index) => ({
+				id: this.#getTabIdForFolder(folder),
+				position: index,
+			}));
 
 			if (items.length > 0)
 			{
@@ -291,10 +287,17 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 				// activeTabId is either a system NavigationTabId or a folder-tab id.
 				// If it's a folder-tab no longer in #personalFolderTabIds, a parallel
 				// folderModel/delete handler has removed it between getActiveTab() and
-				// setActiveTab() — fall back to chats so the user is never left
+				// setActiveTab(): fall back to the main tab so the user is never left
 				// without an active tab.
 				const isDeletedFolderTab = !NavigationTabId[activeTabId] && !this.#personalFolderTabIds.has(activeTabId);
-				const restoredTabId = isDeletedFolderTab ? NavigationTabId.chats : activeTabId;
+				const restoredTabId = isDeletedFolderTab ? NavigationHelper.resolveInitialTabId() : activeTabId;
+				if (!restoredTabId)
+				{
+					logger.warn('reorderTabsKeepingActive: no tab to restore', activeTabId);
+
+					return;
+				}
+
 				await this.#tabSwitcher.setActiveTab(restoredTabId);
 			}
 		}
@@ -309,11 +312,11 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 			}
 
 			const folder = serviceLocator.get('core').getStore().getters['folderModel/getById'](id);
-			if (!this.#isPersonalFolder(folder))
+			if (!this.#isPersonalTabFolder(folder))
 			{
 				if (this.#personalFolderTabIds.has(String(id)))
 				{
-					logger.log('handleFolderUpdated remove non-personal tab', id, folder);
+					logger.log('handleFolderUpdated remove tab of a folder that left the bar', id, folder);
 					void this.#removeFolderTab(String(id));
 				}
 
@@ -331,7 +334,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 
 		async #reconcileFolderTabs()
 		{
-			const folders = serviceLocator.get('core').getStore().getters['folderModel/getPersonalFolders']();
+			const folders = this.#getPersonalTabFolders();
 			const nextIds = new Set(folders.map((folder) => String(folder.id)));
 			const idsToRemove = [...this.#personalFolderTabIds].filter((id) => !nextIds.has(id));
 			logger.log('reconcileFolderTabs', {
@@ -345,7 +348,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 				const activeTab = await this.#tabSwitcher.getActiveTab().catch(() => null);
 				if (activeTab && idsToRemove.includes(activeTab))
 				{
-					await this.#switchToChatsIfRemovingActiveTab(activeTab);
+					await this.#switchAwayIfRemovingActiveTab(activeTab);
 				}
 
 				logger.log('reconcileFolderTabs remove items', idsToRemove);
@@ -382,7 +385,7 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 			}
 		}
 
-		async #switchToChatsIfRemovingActiveTab(tabId)
+		async #switchAwayIfRemovingActiveTab(tabId)
 		{
 			const activeTab = await this.#tabSwitcher.getActiveTab().catch(() => null);
 			if (activeTab !== tabId)
@@ -390,11 +393,19 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 				return;
 			}
 
-			logger.log('active folder tab will be removed, switch to chats first', tabId);
-			const selectionResult = await this.#tabSwitcher.setActiveTab(NavigationTabId.chats);
+			const targetTabId = NavigationHelper.resolveInitialTabId();
+			if (!targetTabId)
+			{
+				logger.warn('switchAwayIfRemovingActiveTab: no tab to switch to', tabId);
+
+				return;
+			}
+
+			logger.log('active folder tab will be removed, switch away first', tabId, targetTabId);
+			const selectionResult = await this.#tabSwitcher.setActiveTab(targetTabId);
 			if (selectionResult?.isSuccess?.() === false)
 			{
-				logger.warn('switchToChatsIfRemovingActiveTab failed', selectionResult.getError?.());
+				logger.warn('switchAwayIfRemovingActiveTab failed', selectionResult.getError?.());
 
 				return;
 			}
@@ -403,17 +414,17 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 			// before removing the old tab, otherwise native may select the shifted next tab.
 			await withTimeout(this.#tabSwitcher.getActiveTab(), 2000)
 				.then((nextActiveTab) => {
-					if (nextActiveTab !== NavigationTabId.chats)
+					if (nextActiveTab !== targetTabId)
 					{
-						logger.warn('switchToChatsIfRemovingActiveTab selected unexpected tab', {
-							expected: NavigationTabId.chats,
+						logger.warn('switchAwayIfRemovingActiveTab selected unexpected tab', {
+							expected: targetTabId,
 							actual: nextActiveTab,
 							removed: tabId,
 						});
 					}
 				})
 				.catch((error) => {
-					logger.warn('switchToChatsIfRemovingActiveTab selection timed out', error);
+					logger.warn('switchAwayIfRemovingActiveTab selection timed out', error);
 				})
 			;
 		}
@@ -454,16 +465,58 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 
 		#getFolderTabPosition(folderId)
 		{
-			const sortedIds = serviceLocator.get('core').getStore().getters['folderModel/getSortedIds']();
+			const position = this.#getTabFolders().findIndex((folder) => folder.id === folderId);
 
-			return Math.max(sortedIds.indexOf(folderId), 0);
+			return Math.max(position, 0);
+		}
+
+		/**
+		 * Folders that become tabs on the bar, in bar order: personal ones plus
+		 * system ones with a tab id known to the app. Member folders of the composite
+		 * 'all' folder (chat, channel, tasksTaskRoot) stay in folderModel, the section
+		 * resolver reads their recentSection, but they never reach the bar: backend drops
+		 * them in ImMobile\NavigationTab\Manager::buildSortedItems. Counting positions
+		 * over the whole model would shift every folder tab by the member folder count.
+		 *
+		 * @return {Array<FolderModelState>}
+		 */
+		#getTabFolders()
+		{
+			return serviceLocator.get('core').getStore().getters['folderModel/getList']()
+				.filter((folder) => this.#isTabFolder(folder))
+			;
+		}
+
+		/**
+		 * The single rule of what the bar carries: a folder the bar has no position for has no tab
+		 * either, so the positions and the lifecycle of the tabs ask one and the same predicate.
+		 *
+		 * @param {?FolderModelState} folder
+		 * @return {boolean}
+		 */
+		#isTabFolder(folder)
+		{
+			return folder?.visible === true && this.#getTabIdForFolder(folder) !== null;
+		}
+
+		#isPersonalTabFolder(folder)
+		{
+			return this.#isPersonalFolder(folder) && this.#isTabFolder(folder);
+		}
+
+		/**
+		 * Personal folders that reach the bar, in bar order.
+		 *
+		 * @return {Array<FolderModelState>}
+		 */
+		#getPersonalTabFolders()
+		{
+			return this.#getTabFolders().filter((folder) => this.#isPersonalFolder(folder));
 		}
 
 		#getPersonalFolderIds()
 		{
-			return serviceLocator.get('core').getStore().getters['folderModel/getPersonalFolders']()
-				.map((folder) => folder.id)
-			;
+			return this.#getPersonalTabFolders().map((folder) => folder.id);
 		}
 	}
 

@@ -24,6 +24,12 @@ export default {
 		const typeIds = normalizeTypesIds(stateToSet.automatedSolution?.typeIds);
 		state.automatedSolution.typeIds = [...typeIds];
 		state.automatedSolutionOrigTypeIds = [...typeIds];
+		state.automatedSolution.vibeId = normalizeId(stateToSet.automatedSolution?.vibeId);
+
+		state.automatedSolution.isVibeEnabled = stateToSet.automatedSolution?.isVibeEnabled ?? false;
+		state.automatedSolutionOrigIsVibeEnabled = state.automatedSolution.isVibeEnabled;
+		state.isVibeAvailable = Text.toBoolean(stateToSet.isVibeAvailable ?? false);
+		state.isVibeFeatureEnabled = Text.toBoolean(stateToSet.isVibeFeatureEnabled ?? false);
 
 		state.permissions.canMoveSmartProcessFromCrm = Text.toBoolean(
 			stateToSet.permissions?.canMoveSmartProcessFromCrm ?? false,
@@ -37,9 +43,41 @@ export default {
 		state.errors = normalizeErrors(stateToSet.errors);
 
 		state.isModified = false;
+		state.isVibeSettingsPending = false;
+		state.shouldCloseOnSave = stateToSet.shouldCloseOnSave ?? true;
 		state.isPermissionsLayoutV2Enabled = Text.toBoolean(
 			stateToSet.isPermissionsLayoutV2Enabled ?? false,
 		);
+	},
+
+	restoreAutomatedSolution: (
+		state: StateShape,
+		{
+			id,
+			title,
+			typeIds,
+			vibeId,
+			isVibeEnabled,
+		}: {
+			id?: ?number,
+			title?: ?string,
+			typeIds?: number[],
+			vibeId?: number,
+			isVibeEnabled?: boolean,
+		},
+	): void => {
+		const normalizedTypeIds = normalizeTypesIds(typeIds);
+		state.automatedSolution = {
+			id: normalizeId(id),
+			title: normalizeTitle(title),
+			typeIds: [...normalizedTypeIds],
+			vibeId: normalizeId(vibeId),
+			isVibeEnabled: Text.toBoolean(isVibeEnabled ?? false),
+		};
+		state.automatedSolutionOrigTypeIds = [...normalizedTypeIds];
+		state.automatedSolutionOrigIsVibeEnabled = state.automatedSolution.isVibeEnabled;
+		state.isModified = false;
+		state.isVibeSettingsPending = false;
 	},
 
 	setErrors: (state: StateShape, errors: Error[]): void => {
@@ -96,5 +134,13 @@ export default {
 		}
 
 		state.automatedSolution.typeIds = newTypeIds;
+	},
+
+	setIsVibeEnabled: (state: StateShape, isVibeEnabled: boolean): void => {
+		state.automatedSolution.isVibeEnabled = isVibeEnabled;
+		state.isModified = true;
+	},
+	setIsVibeSettingsPending: (state: StateShape, isVibeSettingsPending: boolean): void => {
+		state.isVibeSettingsPending = isVibeSettingsPending;
 	},
 };

@@ -1,0 +1,32 @@
+<?php
+
+$MESS['IM_COPILOT_GREETING_PHRASE_1'] = 'Доброе утро. С чего начнём?';
+$MESS['IM_COPILOT_GREETING_PHRASE_2'] = 'С чего начнём день?';
+$MESS['IM_COPILOT_GREETING_PHRASE_3'] = 'Доброе утро. Что в планах?';
+$MESS['IM_COPILOT_GREETING_PHRASE_4'] = 'Доброе утро. Чем сегодня займёмся?';
+$MESS['IM_COPILOT_GREETING_PHRASE_5'] = 'Утро — самое время задать ритм. Чем помочь?';
+$MESS['IM_COPILOT_GREETING_PHRASE_6'] = 'Доброе утро. Какая первая задача?';
+$MESS['IM_COPILOT_GREETING_PHRASE_7'] = 'Свежее утро, свежие задачи. С чего стартуем?';
+$MESS['IM_COPILOT_GREETING_PHRASE_8'] = 'Добрый день. Чем займёмся?';
+$MESS['IM_COPILOT_GREETING_PHRASE_9'] = 'Готов помочь — что обсудим?';
+$MESS['IM_COPILOT_GREETING_PHRASE_10'] = 'Над чем сейчас работаем?';
+$MESS['IM_COPILOT_GREETING_PHRASE_11'] = 'Добрый день. Что обсудим?';
+$MESS['IM_COPILOT_GREETING_PHRASE_12'] = 'День в разгаре — чем помочь?';
+$MESS['IM_COPILOT_GREETING_PHRASE_13'] = 'Готов подключиться. С чего начнём?';
+$MESS['IM_COPILOT_GREETING_PHRASE_14'] = 'Добрый вечер. Что допиливаем?';
+$MESS['IM_COPILOT_GREETING_PHRASE_15'] = 'Что нужно успеть до конца дня?';
+$MESS['IM_COPILOT_GREETING_PHRASE_16'] = 'Вечер. На чём остановились?';
+$MESS['IM_COPILOT_GREETING_PHRASE_17'] = 'Подведём итоги дня?';
+$MESS['IM_COPILOT_GREETING_PHRASE_18'] = 'Чем помочь напоследок?';
+$MESS['IM_COPILOT_GREETING_PHRASE_19'] = 'Поздно работаем — я тоже на месте. Чем помочь?';
+$MESS['IM_COPILOT_GREETING_PHRASE_20'] = 'Тихий час — хорошо думается. Над чем работаем?';
+$MESS['IM_COPILOT_GREETING_PHRASE_21'] = 'Что-то срочное на ночь глядя?';
+$MESS['IM_COPILOT_GREETING_PHRASE_22'] = 'Начало недели. С чего стартуем?';
+$MESS['IM_COPILOT_GREETING_PHRASE_23'] = 'Понедельник — самое время задать ритм неделе.';
+$MESS['IM_COPILOT_GREETING_PHRASE_24'] = 'Пятница. Закрываем дела?';
+$MESS['IM_COPILOT_GREETING_PHRASE_25'] = 'Пятница — хороший день подвести итоги.';
+$MESS['IM_COPILOT_GREETING_PHRASE_26'] = 'Выходные, а работа идёт. Чем помочь?';
+$MESS['IM_COPILOT_GREETING_PHRASE_27'] = 'И в выходные есть задачи? Я на связи.';
+$MESS['IM_COPILOT_GREETING_PHRASE_28'] = 'Чашка кофе и пара задач?';
+$MESS['IM_COPILOT_GREETING_PHRASE_29'] = 'Что в работе? Подключусь.';
+$MESS['IM_COPILOT_GREETING_PHRASE_30'] = 'Готов помочь — от рутины до сложных решений.';

@@ -13,10 +13,16 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 	const { PopupMenu } = require('ui-system/popups/popup-menu');
 	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 	const { FolderLoadableButton } = require('im/messenger/controller/folder/lib/ui/loadable-button');
-	const { MAX_PERSONAL_FOLDERS, Analytics } = require('im/messenger/const');
+	const { getMaxPersonalFolders, Analytics } = require('im/messenger/const');
 	const { FolderCreate } = require('im/messenger/controller/folder/create');
 	const { FolderUpdate } = require('im/messenger/controller/folder/update');
+	const { FolderSourcesSettings } = require('im/messenger/controller/folder/sources-settings');
 	const { FolderCard } = require('im/messenger/controller/folder/list/card');
+	const {
+		hasFolderSettingsEntry,
+		isCompositeFolder,
+		isPersonalFolder,
+	} = require('im/messenger/controller/recent/service/lib/folder-composition');
 	const {
 		deleteFolder,
 		sortFolders,
@@ -38,15 +44,6 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 		'<path d="M9 2V16M2 9H16" stroke="white" stroke-width="2" stroke-linecap="round"/>',
 		'</svg>',
 	].join('');
-
-	const SystemFolderDescriptionMessage = Object.freeze({
-		default: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_DEFAULT',
-		tasksTask: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_TASKS_TASK',
-		copilot: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_COPILOT',
-		openChannel: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_OPEN_CHANNEL',
-		collab: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_PROJECT',
-		lines: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_OPENLINES',
-	});
 
 	class FolderListView extends LayoutComponent
 	{
@@ -116,7 +113,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 
 		get canCreateFolder()
 		{
-			return this.personalFolderCount < MAX_PERSONAL_FOLDERS;
+			return this.personalFolderCount < getMaxPersonalFolders();
 		}
 
 		componentDidMount()
@@ -150,7 +147,9 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 
 		getFolderList()
 		{
-			return this.store.getters['folderModel/getList']();
+			return this.store.getters['folderModel/getList']()
+				.filter((folder) => folder.visible === true)
+			;
 		}
 
 		subscribeFolderModel()
@@ -186,12 +185,49 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 
 		handleMorePress(folder, targetRef)
 		{
-			const menu = new PopupMenu([
+			const items = this.getFolderMenuItems(folder);
+			if (items.length === 0)
+			{
+				return;
+			}
+
+			const menu = new PopupMenu(items);
+
+			menu.show({ target: targetRef });
+		}
+
+		/**
+		 * The two cases below are the ones `hasFolderSettingsEntry()` unions, so the folder the card
+		 * shows the button for is exactly the folder the menu has something to offer.
+		 *
+		 * @param {FolderModelState} folder
+		 * @return {Array<PopupMenuActionItem>}
+		 */
+		getFolderMenuItems(folder)
+		{
+			if (isPersonalFolder(folder))
+			{
+				return this.getPersonalFolderMenuItems(folder);
+			}
+
+			return isCompositeFolder(folder) ? this.getCompositeFolderMenuItems(folder) : [];
+		}
+
+		/**
+		 * @param {FolderModelState} folder
+		 * @return {Array<PopupMenuActionItem>}
+		 */
+		getPersonalFolderMenuItems(folder)
+		{
+			return [
 				{
 					id: 'settings',
 					title: Loc.getMessage('IMMOBILE_FOLDER_LIST_CONTEXT_SETTINGS'),
 					onItemSelected: () => {
-						AnalyticsService.getInstance().sendClickEditFolder(Analytics.SubSection.folderList);
+						AnalyticsService.getInstance().sendClickEditFolder({
+							folderId: folder.id,
+							subSection: Analytics.SubSection.folderList,
+						});
 						new FolderUpdate({ id: folder.id }).open(this.props.layoutWidget);
 					},
 				},
@@ -207,9 +243,34 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 						this.deleteFolder(folder.id);
 					},
 				},
-			]);
+			];
+		}
 
-			menu.show({ target: targetRef });
+		/**
+		 * A composite folder is a system one and cannot be deleted, so the composition
+		 * settings screen is its only action.
+		 *
+		 * @param {FolderModelState} folder
+		 * @return {Array<PopupMenuActionItem>}
+		 */
+		getCompositeFolderMenuItems(folder)
+		{
+			return [
+				{
+					id: 'edit',
+					title: Loc.getMessage('IMMOBILE_FOLDER_LIST_CONTEXT_SETTINGS'),
+					onItemSelected: () => {
+						AnalyticsService.getInstance().sendClickEditFolder({
+							folderId: folder.id,
+							subSection: Analytics.SubSection.folderList,
+						});
+						void FolderSourcesSettings.open({
+							folderId: folder.id,
+							parentWidget: this.props.layoutWidget,
+						});
+					},
+				},
+			];
 		}
 
 		async deleteFolder(folderId)
@@ -285,6 +346,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 					title: folder.title,
 					description: this.getFolderDescription(folder),
 					isSystem,
+					hasSettingsEntry: hasFolderSettingsEntry(folder),
 					onMorePress: (targetRef) => this.handleMorePress(folder, targetRef),
 				}),
 			);
@@ -294,9 +356,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 		{
 			if (folder.type === 'system')
 			{
-				const messageId = SystemFolderDescriptionMessage[folder.code];
-
-				return Loc.getMessage(messageId) || folder.recentSection || '';
+				return folder.description ?? '';
 			}
 
 			const count = folder.chatIds?.length || 0;
@@ -339,7 +399,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 							shadowOffset: { x: 0, y: 2 },
 						},
 						onClick: () => {
-							AnalyticsService.getInstance().sendClickCreateFolder(Analytics.SubSection.folderList);
+							AnalyticsService.getInstance().sendClickCreateFolder(Analytics.Section.folderList);
 							new FolderCreate().openAsBottomSheet(this.props.layoutWidget);
 						},
 					},

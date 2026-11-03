@@ -5,6 +5,7 @@ import { QueueManager } from 'pull.queuemanager';
 import type { ActionItem } from 'pull.queuemanager';
 
 import { Module } from 'tasks.v2.const';
+import { CheckListPullHandler } from './check-list-pull-handler/check-list-pull-handler';
 import { ResultsPullHandler } from './results-pull-handler/results-pull-handler';
 import { ScrumPullHandler } from './scrum-pull-handler/scrum-pull-handler';
 import { TagsPullHandler } from './tags-pull-handler/tags-pull-handler';
@@ -27,6 +28,7 @@ export class PullManager
 		this.#params = params;
 
 		this.#handlers = new Set([
+			new CheckListPullHandler(),
 			new ResultsPullHandler(),
 			new ScrumPullHandler(),
 			new TagsPullHandler(),

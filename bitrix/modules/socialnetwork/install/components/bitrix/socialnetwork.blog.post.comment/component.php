@@ -392,14 +392,15 @@ if (
 		{
 			$arComment = CBlogComment::getById($arResult['deleteCommentId']);
 			if (
-				(
+				!empty($arComment)
+				&& (int)$arComment['POST_ID'] === (int)$arPost['ID']
+				&& (
 					$arResult["Perm"] >= Permissions::MODERATE
 					|| (
 						$currentUserId > 0
 						&& (int)$arComment["AUTHOR_ID"] === $currentUserId
 					)
 				)
-				&& !empty($arComment)
 				&& CBlogComment::Delete($arResult['deleteCommentId'])
 			)
 			{
@@ -429,13 +430,15 @@ if (
 	elseif ($arResult['showCommentId'] > 0)
 	{
 		$arComment = CBlogComment::GetByID($arResult['showCommentId']);
-		$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arComment, array('POST_TEXT'));
 
 		if (
-			$arResult["Perm"] >= Permissions::MODERATE
-			&& !empty($arComment)
+			!empty($arComment)
+			&& (int)$arComment['POST_ID'] === (int)$arPost['ID']
+			&& $arResult["Perm"] >= Permissions::MODERATE
 		)
 		{
+			$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arComment, array('POST_TEXT'));
+
 			if ($arComment["PUBLISH_STATUS"] !== BLOG_PUBLISH_STATUS_READY)
 			{
 				$arResult["ERROR_MESSAGE"] = Loc::getMessage('B_B_PC_MES_ERROR_SHOW');
@@ -565,8 +568,9 @@ if (
 	{
 		$arComment = CBlogComment::GetByID($arResult['hideCommentId']);
 		if (
-			$arResult["Perm"] >= Permissions::MODERATE
-			&& !empty($arComment)
+			!empty($arComment)
+			&& (int)$arComment['POST_ID'] === (int)$arPost['ID']
+			&& $arResult["Perm"] >= Permissions::MODERATE
 		)
 		{
 			if ($arComment["PUBLISH_STATUS"] !== BLOG_PUBLISH_STATUS_PUBLISH)
@@ -1247,6 +1251,7 @@ if (
 				if (
 					$commentID <= 0
 					|| empty($arOldComment)
+					|| (int)$arOldComment['POST_ID'] !== (int)$arPost['ID']
 				)
 				{
 					$arResult["COMMENT_ERROR"] = Loc::getMessage('B_B_PC_COM_ERROR_EDIT') . ": " . Loc::getMessage('B_B_PC_COM_ERROR_LOST');

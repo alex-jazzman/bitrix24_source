@@ -6,6 +6,7 @@ import Util from './util';
 import { RoomType } from './engine/types';
 import { Hardware } from './call_hardware';
 import { CallStreamManager, STREAM_MANAGER_SUPERSEDED } from './media-stream-manager';
+import { NetworkQualityEvaluator } from './network-quality-evaluator.js';
 
 import {
 	ClientPlatform,
@@ -30,11 +31,12 @@ import {
 import { createMessage } from './sdk/mappers';
 import { JoinResponseError } from './sdk/errors';
 import { Track } from './sdk/models';
-import { calcBitrateSumFromArray, fillDefaultValueMonitoringMetrics, checkMetricsFeatureAndExecutionCallback, sendMonitoringData } from './sdk/helpers/monitoring';
-import { isNoiseSuppressionInputTrackOff, buildMediaConstraints } from './sdk/helpers/media';
+import { calcBitrateSumFromArray, fillDefaultValueMonitoringMetrics, sendMonitoringData } from './sdk/helpers/monitoring';
+import { isNoiseSuppressionInputTrackOff, buildMediaConstraints, getStreamQualityFromHeight } from './sdk/helpers/media';
 import { selectAudioQueueOperation, isOwnInflightPublication, addBoundedInflightCid, isCurrentPublication, selectDisableAudioReconciliation } from './sdk/helpers/audio-queue';
 import { deviceMismatch } from './sdk/helpers/device';
 import { removeUdpFromSdp } from './sdk/helpers/sdp';
+import { isRepublishAllowed } from './utils/is-republish-allowed';
 
 // Distinct result from getLocalAudio when the microphone capture was superseded by a newer request.
 // Returned per-call so each caller reads the status of its own capture, never a shared instance field.
@@ -42,6 +44,10 @@ const GET_LOCAL_AUDIO_SUPERSEDED = Symbol('GetLocalAudioSuperseded');
 
 // How long a single microphone capture may hold the device switch before the switch stops waiting for it.
 const SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT = 15000;
+
+// How many stats ticks in a row a remote microphone may bring no data before the episode is opened.
+// A default, not a measured value: no distribution of real traffic to pick it from.
+const FREEZE_TICKS = 2;
 
 export {
 	ClientPlatform,
@@ -133,6 +139,7 @@ export class CallLegacy
 		needToEnableAudioAfterSystemMuted: false,
 		needToDisableAudioAfterPublish: false,
 		microphonePausedOnServer: false,
+		cameraPausedOnServer: false,
 		microphoneDiscrepancyLogged: false,
 		localTracks: {},
 		localConnectionQuality: 0,
@@ -142,6 +149,9 @@ export class CallLegacy
 		pingTimeoutDuration: 0,
 		ontrackData: {},
 		remoteTracks: {},
+		remoteAudioWatchers: {},
+		remoteAudioWatchersByUser: {},
+		freezeWatchers: {},
 		remoteParticipants: {},
 		participantsToUpdateTrackAvailability: {},
 		mainStream: {},
@@ -189,6 +199,7 @@ export class CallLegacy
 		videoQueue: VIDEO_QUEUE.INITIAL,
 		audioQueue: AUDIO_QUEUE.INITIAL,
 		videoStreamSetupErrorList: {},
+		nqe: null, // Network Quality Evaluator instance.
 	};
 
 	constructor() {
@@ -223,9 +234,10 @@ export class CallLegacy
 			framesReceived: 0,
 		};
 
-		Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', (event) => {
+		this.globalLogHandler = (event) => {
 			this.setLog(event.data);
-		});
+		};
+		Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', this.globalLogHandler);
 
 		this.initConnectionEvent();
 
@@ -277,10 +289,39 @@ export class CallLegacy
 			return;
 		}
 
-		connection.addEventListener('change', () =>
+		this.observedConnection = connection;
+		this.connectionChangeHandler = () =>
 		{
 			this.onChangeConnection(connection);
-		});
+		};
+		connection.addEventListener('change', this.connectionChangeHandler);
+	}
+
+	// Detaches the handlers the constructor put on global emitters and stops
+	// the self-restarting monitoring timers so a short-lived instance (e.g.
+	// a zombie-room close session) can be garbage collected instead of
+	// living and reporting as long as the page.
+	releaseGlobalSubscriptions()
+	{
+		this.#forgetRemoteAudioTracks('global-release');
+
+		if (this.globalLogHandler)
+		{
+			Event.EventEmitter.unsubscribe('BX.Call.Logger:sendLog', this.globalLogHandler);
+			this.globalLogHandler = null;
+		}
+
+		if (this.observedConnection && this.connectionChangeHandler)
+		{
+			this.observedConnection.removeEventListener('change', this.connectionChangeHandler);
+		}
+		this.observedConnection = null;
+		this.connectionChangeHandler = null;
+
+		clearInterval(this.monitoringInterval);
+		this.monitoringInterval = null;
+		clearTimeout(this.monitoringTimeout);
+		this.monitoringTimeout = null;
 	}
 
 	clearMonitoringEvents()
@@ -340,6 +381,64 @@ export class CallLegacy
 		});
 	}
 
+	#onAutoQuality(currentQuality, previousQuality)
+	{
+		// currentQuality is a numeric level (STREAM_QUALITY.LOW..STREAM_QUALITY.HIGH) coming from NQE
+		if (typeof currentQuality !== 'number' || !Number.isInteger(currentQuality) || currentQuality < STREAM_QUALITY.LOW || currentQuality > STREAM_QUALITY.HIGH)
+		{
+			return;
+		}
+
+		// NQE logging.
+		this.setLog(`NQE: auto-quality changed from ${previousQuality} to ${currentQuality}`, LOG_LEVEL.INFO);
+
+		// Monitoring events.
+		if (previousQuality !== null && currentQuality < previousQuality)
+		{
+			this.addMonitoringEvents({
+				name: MONITORING_EVENTS_NAME_LIST.AUTO_QUALITY_DEGRADED,
+				withCounter: true,
+			});
+		}
+		else if (previousQuality !== null && currentQuality > previousQuality)
+		{
+			this.addMonitoringEvents({
+				name: MONITORING_EVENTS_NAME_LIST.AUTO_QUALITY_IMPROVED,
+				withCounter: true,
+			});
+		}
+
+		// Prepare params for changing both incoming and outgoing streams quality.
+		// Collect users with subscribed camera tracks.
+		const users = {
+			userId: this.#privateProperties.mainStream?.userId || null,
+			otherUsers: [],
+		};
+
+		Object.entries(this.#privateProperties.remoteParticipants || {}).forEach(([userId, participant]) => {
+			try {
+				const track = participant?.getTrack?.(MediaStreamsKinds.Camera);
+				const subscribed = track && (track.subscribed === true || track.subscribed === 1 || track.subscribed === '1' || track.subscribed === 'true');
+				if (track && subscribed && !participant.isMutedVideo && !participant.isLocalVideoMute) {
+					users.otherUsers.push(Number(userId) || userId);
+				}
+			} catch (e) {
+				// defensive: ignore malformed participant entries.
+			}
+		});
+
+		// Change quality for both incoming and outgoing streams.
+		// The setVideoQualityForStreams handles:
+		// - defaultRemoteStreamsQuality (for incoming streams)
+		// - Hardware.maxLocalStreamQualityHeight (for local capture resolution)
+		// - mediaServer.updateVideoEncodings() (for outgoing stream)
+		this.setVideoQualityForStreams({
+			users,
+			videoQuality: currentQuality,
+			auto: true,
+		});
+	}
+
 	setClearValuesForCurrentMonitoringEventsObject()
 	{
 		this.currentMonitoringEventsObject.events = [];
@@ -385,7 +484,7 @@ export class CallLegacy
 	{
 		this.setClearValuesForCurrentMonitoringEventsObject();
 
-		if (Util.isMetricsEnabled())
+		if (this.#privateProperties.monitoringServerUrl)
 		{
 			this.monitoringInterval = setInterval(() => {
 				const { countVideoTracks, countAudioTracks } = this.getCountRemoteTracks();
@@ -413,7 +512,7 @@ export class CallLegacy
 
 	sendLogMonitoringRtcStats()
 	{
-		if (Util.isMetricsEnabled())
+		if (this.#privateProperties.monitoringServerUrl)
 		{
 			const isRtcStatsNotEmpty = !!Object.keys(this.currentMonitoringRtcStatsObject);
 
@@ -448,7 +547,7 @@ export class CallLegacy
 			}
 		}
 
-		if (Util.isMetricsLogsEnabled() && this.currentMonitoringEventsObject.logs.length)
+		if (this.#privateProperties.monitoringLogsServerUrl && this.currentMonitoringEventsObject.logs.length)
 		{
 			const otplLogsStructure =
 				{
@@ -520,22 +619,18 @@ export class CallLegacy
 		{
 			eventName = MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_PUBLICATION_FAILED;
 		}
-		checkMetricsFeatureAndExecutionCallback(() => {
+		if (this.#privateProperties.monitoringServerUrl)
+		{
 			this.addMonitoringEvents({
 				name: eventName,
 				withCounter: true,
 			});
-		});
+		}
 	}
 
 	async connect(options) {
 		this.setLog(`Connecting to the call (desktop: ${Util.isDesktop()})`, LOG_LEVEL.INFO);
 		this.#privateProperties.callState = CALL_STATE.PROGRESSING;
-
-		if (Util.isMetricsEnabled() || Util.isMetricsLogsEnabled())
-		{
-			this.startAggregateMonitoringEvents();
-		}
 
 		for (let key in options) {
 			this.#privateProperties[`${key}`] = options[key]
@@ -580,9 +675,6 @@ export class CallLegacy
 			{
 				if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted)
 				{
-					// don't write error.name and error.message to analytics now,
-					// because we don't watch failed reconnecting requests now
-
 					this.#reconnect({
 						reconnectionReason: 'GET_MEDIASERVER_INFO',
 						reconnectionReasonInfo: error?.name || '',
@@ -602,6 +694,11 @@ export class CallLegacy
 			this.#beforeDisconnect({ destroySocket: true });
 
 			return;
+		}
+
+		if (this.#privateProperties.monitoringServerUrl || this.#privateProperties.monitoringLogsServerUrl)
+		{
+			this.startAggregateMonitoringEvents();
 		}
 
 		this.#privateProperties.abortController.signal.addEventListener('abort', this.beforeDisconnectBound);
@@ -650,12 +747,13 @@ export class CallLegacy
 		clearTimeout(this.#privateProperties.reconnectionTimeout);
 		this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
 
-		checkMetricsFeatureAndExecutionCallback(() => {
+		if (this.#privateProperties.monitoringServerUrl)
+		{
 			this.addMonitoringEvents({
 				name: MONITORING_EVENTS_NAME_LIST.USER_RECONNECTED,
 				withCounter: true,
 			});
-		});
+		}
 
 		this.triggerEvents('Reconnecting', [data]);
 	};
@@ -790,22 +888,11 @@ export class CallLegacy
 					)
 					{
 						this.#privateProperties.abortController.abort();
-						/*
-						let errorCode = 'UNKNOWN_ERROR';
-						if (Type.isObject(error) && error instanceof JoinResponseError)
-						{
-							errorCode = error.name;
-						}
-						else if (Type.isObject(error) && error.code)
-						{
-							errorCode = error.code === 'access_denied' 'ACCESS_DENIED' : error.code;
-						}
 
 						this.triggerEvents('ReconnectingFailed', [null, {
-							code: errorCode,
+							code: Util.getCallConnectionErrorCode(error),
 							message: error?.message,
 						}]);
-						*/
 
 						reject({
 							name: 'MEDIASERVER_UNEXPECTED_ANSWER',
@@ -818,9 +905,6 @@ export class CallLegacy
 						// itself already arrives as a coded JoinResponseError. The fast reconnection delay
 						// belongs to a lost transport (closed socket, missed ping), not here.
 						this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
-
-						// don't write error.name and error.message to analytics now,
-						// because we don't watch failed reconnecting requests now
 
 						reject({
 							name: 'MEDIASERVER_ERROR',
@@ -962,12 +1046,13 @@ export class CallLegacy
 				Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 			}
 
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				if (isReconnect && this.monitoringEvents.length)
 				{
 					this.sendMonitoringEvents();
 				}
-			});
+			}
 
 			const participantsToDelete = { ...this.#privateProperties.remoteParticipants };
 			Object.values(data.joinResponse.otherParticipants).forEach((p) => {
@@ -985,6 +1070,7 @@ export class CallLegacy
 				{
 					const participant = this.#privateProperties.remoteParticipants[userId];
 					this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+					this.#forgetRemoteAudioTracksOfUser(userId, 'reconnect-cleanup');
 					this.triggerEvents('ParticipantLeaved', [participant]);
 					delete this.#privateProperties.remoteTracks[userId];
 					delete this.#privateProperties.remoteParticipants[userId];
@@ -1017,6 +1103,8 @@ export class CallLegacy
 			const participantId = data.participantLeft.userId;
 			const participant = this.#privateProperties.remoteParticipants[participantId];
 			const pendingSubscriptions = this.#privateProperties.pendingSubscriptions[participantId];
+
+			this.#forgetRemoteAudioTracksOfUser(participantId, 'participant-left');
 
 			if (pendingSubscriptions)
 			{
@@ -1121,9 +1209,13 @@ export class CallLegacy
 						this.#processTrackPublishedAudio();
 						this.#reconcilePublishedMicrophoneState();
 					}
-					else if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
+					else if (track.source === MediaStreamsKinds.Camera)
 					{
-						this.#processVideoQueue();
+						if (this.#privateProperties.videoQueue)
+						{
+							this.#processVideoQueue();
+						}
+						this.#reconcilePublishedCameraState();
 					}
 
 					return;
@@ -1182,6 +1274,7 @@ export class CallLegacy
 				}
 
 				if (participantId == this.#privateProperties.userId) return;
+				this.#forgetRemoteAudioTrack(trackId, 'track-deleted');
 				this.setLog(`Start deleting a track with id ${trackId} from a participant with id ${participantId} `, LOG_LEVEL.INFO);
 				const participant = this.#privateProperties.remoteParticipants[participantId];
 				if (!participant)
@@ -1277,7 +1370,8 @@ export class CallLegacy
 					const isLocalVideoMuted = this.#privateProperties.localTracks[MediaStreamsKinds.Camera]
 						&& this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted;
 
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl)
+					{
 						if (participant.participantSid === this.#privateProperties.localParticipantSid)
 						{
 							this.addValidatedMonitoringMetric({
@@ -1285,7 +1379,7 @@ export class CallLegacy
 								metricValue: participant.score,
 							});
 						}
-					});
+					}
 
 					if (
 						participant.participantSid === this.#privateProperties.localParticipantSid
@@ -1439,12 +1533,13 @@ export class CallLegacy
 
 			this.#privateProperties.peerConnectionFailed = true;
 
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_REFUSED,
 					withCounter: true,
 				});
-			});
+			}
 			this.#beforeDisconnect({ destroySocket: true });
 			if (this.#privateProperties.canReconnect)
 			{
@@ -1544,10 +1639,16 @@ export class CallLegacy
 	triggerEvents(eventType, args) {
 		if (this.#privateProperties.events.has(eventType)) {
 			const event = this.#privateProperties.events.get(eventType)
-			if (args) {
-				event(...args)
-			} else {
-				event()
+			try {
+				if (args) {
+					event(...args)
+				} else {
+					event()
+				}
+			} catch (error) {
+				// String() and not error.message: a listener may throw anything, and message would be
+				// undefined for everything that is not an Error
+				this.setLog(`${eventType} callback error: ${String(error)}`, LOG_LEVEL.ERROR)
 			}
 		}
 	}
@@ -1643,12 +1744,13 @@ export class CallLegacy
 
 		const timeout = setTimeout(() => {
 			this.setLog(`Track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) was not received, trying to subscribe to it`, LOG_LEVEL.WARNING);
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_DELAY,
 					withCounter: true,
 				});
-			});
+			}
 
 			if (tries > 0)
 			{
@@ -1658,12 +1760,13 @@ export class CallLegacy
 			else
 			{
 				this.setLog(`Subscription to track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) failed`, LOG_LEVEL.ERROR);
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl)
+				{
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_FAILED,
 						withCounter: true,
 					});
-				});
+				}
 
 				if (!participant.hasFailedSubscription(track.source))
 				{
@@ -1956,16 +2059,7 @@ export class CallLegacy
 
 	#getMaxEncodingsByVideoWidth(width)
 	{
-		const aspectRation = 16 / 9;
-		let maxWidth = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
-
-		if (maxWidth <= width)
-		{
-			width = maxWidth;
-		}
-
 		// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=76;
-
 		if (width >= 960)
 		{
 			return 3;
@@ -1974,6 +2068,7 @@ export class CallLegacy
 		{
 			return 2;
 		}
+
 		return 1;
 	}
 
@@ -1983,14 +2078,20 @@ export class CallLegacy
 		const rids = ['q', 'h', 'f'];
 		const encodings = [];
 
+		const aspectRation = 16 / 9;
+		const maxWidthLimited = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
+		const maxEncodingsLimited = maxWidthLimited < width
+			? this.#getMaxEncodingsByVideoWidth(maxWidthLimited)
+			: maxEncodings;
+
 		for (let i = 0; i < 3; i++)
 		{
 			const rid = rids[i];
 			encodings.push({
 				rid,
-				active: i < maxEncodings,
+				active: i < maxEncodingsLimited,
 				maxBitrate: this.#privateProperties.defaultSimulcastBitrate[rid],
-				scaleResolutionDownBy: 2 ** Math.max(0, (maxEncodings - 1 - i))
+				scaleResolutionDownBy: 2 ** Math.max(0, (maxEncodings - 1 - i)),
 			});
 		}
 
@@ -2066,10 +2167,23 @@ export class CallLegacy
 			return;
 		}
 
+		if (!isRepublishAllowed(MediaStreamKind, Hardware.isCameraOn))
+		{
+			this.setLog(`Skip republishing a track with kind ${MediaStreamKind}: camera is turned off by user`, LOG_LEVEL.INFO);
+
+			return;
+		}
+
 		this.#updateRepublicationState(MediaStreamKind, true);
 		this.setLog(`Start republishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
 		try {
 			await this.unpublishTrack(MediaStreamKind);
+
+			if (this.#abortRepublishing(MediaStreamKind))
+			{
+				return;
+			}
+
 			const track = await this.getTrack(MediaStreamKind);
 			if (track === GET_LOCAL_AUDIO_SUPERSEDED) {
 				// A newer microphone capture superseded this republish; it owns the device now. Cancel
@@ -2079,6 +2193,11 @@ export class CallLegacy
 				return;
 			}
 			if (track) {
+				if (this.#abortRepublishing(MediaStreamKind))
+				{
+					return;
+				}
+
 				await this.publishTrack(MediaStreamKind, track);
 				return;
 			}
@@ -2091,6 +2210,20 @@ export class CallLegacy
 		this.#updateRepublicationState(MediaStreamKind);
 		this.#releaseStream(MediaStreamKind);
 		this.onPublishFailed(MediaStreamKind);
+	}
+
+	#abortRepublishing(mediaStreamKind): boolean
+	{
+		if (isRepublishAllowed(mediaStreamKind, Hardware.isCameraOn))
+		{
+			return false;
+		}
+
+		this.setLog(`Abort republishing a track with kind ${mediaStreamKind}: camera is turned off by user`, LOG_LEVEL.INFO);
+		this.#updateRepublicationState(mediaStreamKind);
+		this.#releaseStream(mediaStreamKind);
+
+		return true;
 	}
 
 	#updateRepublicationState(mediaStreamKind, addTry): void
@@ -2178,6 +2311,9 @@ export class CallLegacy
 			quality = this.#privateProperties.defaultRemoteStreamsQuality;
 		}
 
+		const qualityFromHeight = getStreamQualityFromHeight();
+		quality = Math.min(quality, qualityFromHeight);
+
 		return quality;
 	}
 
@@ -2192,10 +2328,10 @@ export class CallLegacy
 			const participant = this.#privateProperties.remoteParticipants[users.userId];
 			if (participant)
 			{
+				const qualityFromHeight = getStreamQualityFromHeight();
 				const quality = kind === MediaStreamsKinds.Camera
-					? STREAM_QUALITY.HIGH
+					? Math.min(qualityFromHeight, STREAM_QUALITY.HIGH)
 					: this.#privateProperties.defaultRemoteStreamsQuality;
-
 				this.#privateProperties.mainStream = { userId: users.userId, kind };
 				this.#setStreamQualityFoParticipant(participant, quality);
 			}
@@ -2352,6 +2488,10 @@ export class CallLegacy
 		this.#privateProperties.abortController.signal.removeEventListener('abort', this.beforeDisconnectBound);
 		this.#privateProperties.abortController.abort();
 
+		// above the TERMINATED assignment on purpose: once isConnected() is false the closing records
+		// of the registries no longer leave through the socket
+		this.#forgetRemoteAudioTracks('hangup');
+
 		this.#privateProperties.callState = CALL_STATE.TERMINATED;
 
 		this.setLog(`Disconnecting from the call`, LOG_LEVEL.INFO);
@@ -2458,23 +2598,7 @@ export class CallLegacy
 
 	setVideoQualityForStreams(params)
 	{
-		this.#privateProperties.defaultRemoteStreamsQuality = params.videoQuality;
-
-		this.#changeRoomStreamsQuality(params);
-
-		if (this.#privateProperties.defaultRemoteStreamsQuality === STREAM_QUALITY.NO_VIDEO)
-		{
-			this.disableVideo({calledFrom: 'setVideoQuality'});
-			Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO;
-			return;
-		}
-
-		if (params.isCameraWasEnabledBeforeQualityChanged && this.#privateProperties.defaultRemoteStreamsQuality !== STREAM_QUALITY.NO_VIDEO)
-		{
-			this.triggerEvents('TurnOnCamera');
-		}
-
-		switch (this.#privateProperties.defaultRemoteStreamsQuality)
+		switch (params.videoQuality)
 		{
 			case STREAM_QUALITY.HIGH:
 				Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
@@ -2487,11 +2611,34 @@ export class CallLegacy
 				break;
 		}
 
-		const sender = this.#getSender(MediaStreamsKinds.Camera);
-		if (sender)
+		this.#changeRoomStreamsQuality(params.users, MediaStreamsKinds.Camera);
+
+		if (params.videoQuality === STREAM_QUALITY.NO_VIDEO)
 		{
-			this.#updateVideoEncodings(sender);
+			this.disableVideo({calledFrom: 'setVideoQuality'});
+			Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO;
+			return;
 		}
+
+		if (params.isCameraWasEnabledBeforeQualityChanged && params.videoQuality !== STREAM_QUALITY.NO_VIDEO)
+		{
+			this.triggerEvents('TurnOnCamera');
+		}
+
+		// Only a manual quality change updates the NQE target; auto changes come from the NQE itself.
+		if (!params.auto && this.#privateProperties.nqe && params.videoQuality !== STREAM_QUALITY.NO_VIDEO)
+		{
+			this.#privateProperties.nqe.setManualTarget(params.videoQuality);
+			this.setLog(`NQE: manual target set to ${params.videoQuality}`, LOG_LEVEL.INFO);
+		}
+
+		this.getLocalVideo().then((videoTrack) => {
+			const sender = this.#getSender(MediaStreamsKinds.Camera);
+			if (sender && videoTrack)
+			{
+				this.#updateVideoEncodings(sender, videoTrack);
+			}
+		});
 	}
 
 	resetMainStream(users) {
@@ -2530,6 +2677,10 @@ export class CallLegacy
 			{
 				this.#privateProperties.microphonePausedOnServer = true;
 			}
+			if (mediaStreamKind === MediaStreamsKinds.Camera)
+			{
+				this.#privateProperties.cameraPausedOnServer = true;
+			}
 			this.#sendSignal({
 				mute: {
 					sid: trackSid,
@@ -2551,6 +2702,10 @@ export class CallLegacy
 			if (mediaStreamKind === MediaStreamsKinds.Microphone)
 			{
 				this.#privateProperties.microphonePausedOnServer = false;
+			}
+			if (mediaStreamKind === MediaStreamsKinds.Camera)
+			{
+				this.#privateProperties.cameraPausedOnServer = false;
 			}
 			this.#sendSignal({
 				mute: {
@@ -2817,6 +2972,35 @@ export class CallLegacy
 		this.setLog(`Start disabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
 		if (this.#privateProperties.isReconnecting)
 		{
+			// No session to signal on - a pause would target a sid of the session being torn down - but the
+			// capture still has to go: a reconnect deliberately keeps it alive in order to republish it, so
+			// nothing else releases a camera the user switched off, and the device would stay lit until the
+			// next manual on/off. The new session does not bring it back: republication is guarded by
+			// Hardware.isCameraOn. A system mute keeps the capture, as everywhere else.
+			if (!bySystem)
+			{
+				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+				// Releasing the capture kills the only thing that could ever clear a system mute - the
+				// track's onunmute - and the flag is shared with the microphone, so it would go on muting
+				// both until the next manual camera toggle. Clear it here, as the ordinary disable does.
+				const wasMutedBySystem = this.#privateProperties.mediaMutedBySystem;
+				this.#privateProperties.mediaMutedBySystem = false;
+
+				this.#releaseStream(MediaStreamsKinds.Camera);
+				if (this.#privateProperties.monitoringServerUrl)
+				{
+					this.addMonitoringEvents({
+						name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
+						withCounter: true,
+					});
+				}
+				this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+				if (wasMutedBySystem)
+				{
+					this.triggerEvents('MediaMutedBySystem', [false]);
+				}
+			}
+
 			return;
 		}
 
@@ -2824,6 +3008,14 @@ export class CallLegacy
 
 		if (hasQueue)
 		{
+			// Privacy: stop transmitting at once, before the in-flight enable finishes publishing. The server
+			// side is not this branch's business - the publication result reconciles it.
+			const inflightTrack = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+			if (inflightTrack)
+			{
+				inflightTrack.enabled = false;
+			}
+
 			return;
 		}
 
@@ -2841,12 +3033,13 @@ export class CallLegacy
 				{
 					CallStreamManager.stopStream(MediaStreamsKinds.Camera);
 				}
-				checkMetricsFeatureAndExecutionCallback(() => {
+				if (this.#privateProperties.monitoringServerUrl)
+				{
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
 						withCounter: true,
 					});
-				});
+				}
 
 				this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
 			};
@@ -2878,6 +3071,33 @@ export class CallLegacy
 			this.setLog(`Disabling video failed - track: ${Boolean(track)}, localTracks: ${Boolean(trackInfo)}`, LOG_LEVEL.ERROR);
 			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 		}
+	}
+
+	// A camera-off may have superseded an enableVideo that is awaiting a device switch or a capture.
+	// Hardware.isCameraOn is the only durable truth here: it survives a reconnect, which resets the
+	// queue, and it separates a user switching the camera off from a system mute - which the queue
+	// alone cannot, since a system mute writes DISABLE into it while the camera stays switched on.
+	#cancelEnableVideoIfCameraOff(stage)
+	{
+		if (Hardware.isCameraOn)
+		{
+			return false;
+		}
+
+		this.setLog(`Enabling video cancelled: the camera was switched off while ${stage}`, LOG_LEVEL.INFO);
+		this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+
+		const hasCapture = Boolean(this.#privateProperties.cameraStream?.getVideoTracks()[0]);
+		const hasPublication = Boolean(this.#privateProperties.localTracks[MediaStreamsKinds.Camera]);
+		if (hasCapture || hasPublication)
+		{
+			// Hand the cleanup to disableVideo: it pauses the publication and releases the capture, so a
+			// cancelled enable never leaves a half-captured camera behind. Guarded so a cancellation with
+			// nothing captured does not log a disabling failure.
+			this.disableVideo({ calledFrom: 'enableVideo.cameraSwitchedOff' });
+		}
+
+		return true;
 	}
 
 	async enableVideo(options) /* {calledFrom: 'processVideoQueue', skipUnpause: true} */
@@ -2918,6 +3138,19 @@ export class CallLegacy
 
 		let hasTrack = !!this.#privateProperties.cameraStream?.getVideoTracks()[0];
 		let track = await this.getLocalVideo();
+
+		if (this.#cancelEnableVideoIfCameraOff('awaiting the camera capture'))
+		{
+			return;
+		}
+
+		if (track)
+		{
+			// The capture may still be muted by a disable that caught it in flight. Restore it here: a
+			// republish through replaceTrack succeeds without ever producing a publication result, so the
+			// reconciliation above would never see it.
+			track.enabled = true;
+		}
 
 		if (track && hasTrack && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
 		{
@@ -3045,6 +3278,45 @@ export class CallLegacy
 		}
 	}
 
+	// Mirror of #reconcilePublishedMicrophoneState for the camera. Whatever raced while the publication
+	// was in flight - a camera-off with no sid to pause yet, an off/on pair, a system mute - the freshly
+	// published track is brought to the authoritative intent here. Guarded and idempotent: no redundant
+	// pause/unpause, and nothing to remember between calls.
+	#reconcilePublishedCameraState()
+	{
+		const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Camera];
+		if (!localTrack?.sid)
+		{
+			return;
+		}
+
+		const videoTrack = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+		const hasLiveCapture = videoTrack?.readyState === 'live';
+		// Honour a system mute too: under it the capture stays alive for onunmute, but it must not
+		// transmit, and a late publication result would otherwise re-enable it.
+		const shouldTransmit = Hardware.isCameraOn && !this.#privateProperties.mediaMutedBySystem;
+
+		if (hasLiveCapture)
+		{
+			videoTrack.enabled = shouldTransmit;
+		}
+		// A publication whose capture has ended transmits nothing, whatever the camera button says, and
+		// isVideoPublished() reads this flag: claiming otherwise would tell callers that a track is going
+		// out when there is nothing left to send, and a re-capture never gets started.
+		localTrack.muted = !(shouldTransmit && hasLiveCapture);
+
+		if (!shouldTransmit && !this.#privateProperties.cameraPausedOnServer)
+		{
+			this.pauseTrack(MediaStreamsKinds.Camera, true);
+		}
+		else if (shouldTransmit && hasLiveCapture && this.#privateProperties.cameraPausedOnServer)
+		{
+			// Never unpause a camera that is not being captured: enableVideo owns bringing it back, and
+			// unpausing ahead of it would have the server forward a sender whose track is stopped.
+			this.unpauseTrack(MediaStreamsKinds.Camera);
+		}
+	}
+
 	#processTrackPublishedAudio()
 	{
 		if (this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE)
@@ -3162,7 +3434,9 @@ export class CallLegacy
 
 	switchConnectionType(type)
 	{
-		this.#sendSignal({ switchConnectionType: { type } });
+		// Returns whether the switch was actually delivered to the server, so callers can avoid
+		// a one-sided local switch when the signaling socket has already gone down.
+		return this.#sendSignal({ switchConnectionType: { type } });
 	}
 
 	raiseHand(raised) {
@@ -3455,12 +3729,13 @@ export class CallLegacy
 
 				if (monitoringEvent)
 				{
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl)
+					{
 						this.addMonitoringEvents({
 							name: monitoringEvent,
 							withCounter: true,
 						});
-					});
+					}
 				}
 
 				const stream = await this.#getUserMedia(options, true);
@@ -3497,12 +3772,13 @@ export class CallLegacy
 		{
 			this.setLog(`Getting display media failed: ${error}`, LOG_LEVEL.ERROR);
 
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_RECEIVING_FAILED,
 					withCounter: true,
 				});
-			});
+			}
 
 			return null;
 		}
@@ -4175,7 +4451,7 @@ export class CallLegacy
 			console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 		}
 
-		if (Util.isMetricsLogsEnabled())
+		if (this.#privateProperties.monitoringLogsServerUrl)
 		{
 			return this.#sendLog(data, level);
 		}
@@ -4238,7 +4514,7 @@ export class CallLegacy
 
 	#sendLog(logData, level)
 	{
-		if (Util.isMetricsLogsEnabled())
+		if (this.#privateProperties.monitoringLogsServerUrl)
 		{
 			return this.prepareMetricsLogs({logData, level});
 		}
@@ -4296,11 +4572,12 @@ export class CallLegacy
 				reconnectionReasonInfo: `Handling a remote answer failed: ${e}`,
 			});
 
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_HANDLING_ANSWER,
 				});
-			});
+			}
 		}
 		finally
 		{
@@ -4363,11 +4640,12 @@ export class CallLegacy
 				reconnectionReason: 'HANDLING_OFFER',
 				reconnectionReasonInfo: `Handling a remote offer failed: ${e}`,
 			});
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_HANDLING_OFFER,
 				});
-			});
+			}
 		}
 	}
 
@@ -4417,12 +4695,13 @@ export class CallLegacy
 		catch (e)
 		{
 			this.setLog(`Adding an ICE candidate failed: ${e}`, LOG_LEVEL.ERROR);
-			checkMetricsFeatureAndExecutionCallback(() => {
+			if (this.#privateProperties.monitoringServerUrl)
+			{
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_ADDING_ICE_CANDIDATE,
 					value: 3,
 				});
-			});
+			}
 		}
 	}
 
@@ -4485,6 +4764,12 @@ export class CallLegacy
 		const participantEvent = previousParticipantState
 			? 'ParticipantStateUpdated'
 			: 'ParticipantJoined';
+
+		// only what the new composition no longer names: such a track is never visited by the loop
+		// below, and nothing else in this method clears it. A track that stayed in the composition
+		// is alive on the participantJoined path and keeps its watcher
+		this.#forgetRemoteAudioTracksMissingFrom(userId, participant.participantTracks, 'participant-refreshed');
+
 		const remoteParticipant = new Participant(participant, this.#privateProperties.socketConnect);
 		this.#privateProperties.remoteParticipants[userId] = remoteParticipant;
 
@@ -4530,7 +4815,7 @@ export class CallLegacy
 				}
 				else
 				{
-					this.#addPendingSubscription(participant, track);
+					this.#addPendingSubscription(remoteParticipant, track);
 				}
 			});
 		}
@@ -4571,12 +4856,21 @@ export class CallLegacy
 		const remoteTrack = new Track(trackId, track.source, track);
 		this.#privateProperties.remoteTracks[userId][trackId] = remoteTrack;
 
+		const streams = ontrackData.streams;
+		this.setLog(
+			`Remote ${remoteTrack.source} track attached with ${streams.length} stream(s), `
+			+ `first stream id ${streams[0].id} (sid: ${trackId}) `
+			+ `for a participant with id ${userId}`,
+			LOG_LEVEL.INFO,
+		);
+
 		if (remoteTrack.source === MediaStreamsKinds.Camera)
 		{
 			participant.isMutedVideo = trackMuted;
 		}
 		else if (remoteTrack.source === MediaStreamsKinds.Microphone)
 		{
+			this.#watchRemoteAudioTrack(trackId, track, participant);
 			participant.isMutedAudio = trackMuted;
 			if (trackMuted)
 			{
@@ -4610,6 +4904,10 @@ export class CallLegacy
 		participant.streamRemovingId[remoteTrack.source] = streamRemovingId;
 
 		ontrackData.streams[0].onremovetrack = () => {
+			// above the streamRemovingId check: the handler occupies the single slot of the stream,
+			// so for the tracks sharing it this is the only run it ever gets
+			this.#forgetRemoteAudioTrack(trackId, 'track-removed');
+
 			// we need to check if a participant is still exists
 			// otherwise tracks were deleted when participant left room
 			const participant = this.#privateProperties.remoteParticipants[userId];
@@ -4627,6 +4925,275 @@ export class CallLegacy
 				this.setLog(`Track with kind ${track.source} (sid: ${track.id}) was removed from a disconnected participant with id ${userId} (sid: unknown) before it was removed from peer connection`, LOG_LEVEL.WARNING);
 			}
 		};
+	}
+
+	// Keyed by the sid the room addresses a track with, not by MediaStreamTrack.id: the two are
+	// different identifiers. The userId index is what the removal points that know only the
+	// participant address the registry by.
+	#watchRemoteAudioTrack(trackId, track, participant)
+	{
+		const userId = participant.userId;
+		// the whole participant, not this key alone: a new subscription supersedes the previous
+		// watchers of that participant whether the sid is new or the same one is delivered again by
+		// a peer connection built on a reconnect, and trackDeleted is not guaranteed on either path
+		this.#forgetRemoteAudioTracksOfUser(userId, 'track-resubscribed');
+
+		// the sid is taken now, not at event time: the Participant object is rebuilt by
+		// #setRemoteParticipant, and participantLeft deletes it before the late events arrive
+		const trackAddress = `(sid: ${trackId}) for a participant with id ${userId} (sid: ${participant.sid})`;
+
+		const handlers = {
+			mute: () => this.setLog(`Remote audio track muted ${trackAddress}`, LOG_LEVEL.WARNING),
+			unmute: () => this.setLog(`Remote audio track unmuted ${trackAddress}`, LOG_LEVEL.INFO),
+			ended: () => this.setLog(`Remote audio track ended ${trackAddress}`, LOG_LEVEL.WARNING),
+		};
+
+		Object.entries(handlers).forEach(([eventName, handler]) => {
+			Event.bind(track, eventName, handler);
+		});
+
+		const watcher = { track, userId, handlers };
+		this.#privateProperties.remoteAudioWatchers[trackId] = watcher;
+		if (!this.#privateProperties.remoteAudioWatchersByUser[userId])
+		{
+			this.#privateProperties.remoteAudioWatchersByUser[userId] = {};
+		}
+		this.#privateProperties.remoteAudioWatchersByUser[userId][trackId] = watcher;
+
+		// the freeze episode of this track lives here and not on the socket track data: that object is
+		// rewritten by #setRemoteParticipant and deleted on trackDeleted, so an open episode would
+		// vanish without its closing record
+		this.#privateProperties.freezeWatchers[trackId] = {
+			userId,
+			growthSeen: false,
+			zeroTicks: 0,
+			firstZeroAt: null,
+			lastNonZeroAt: null,
+			episodeOpen: false,
+		};
+
+		if (track.readyState === 'ended')
+		{
+			handlers.ended();
+		}
+		else
+		{
+			// a track that is already flowing sends no unmute of its own
+			this.setLog(`Remote audio track initial state muted=${track.muted} ${trackAddress}`, LOG_LEVEL.INFO);
+		}
+	}
+
+	#forgetRemoteAudioTrack(trackId, reason)
+	{
+		this.#closeAudioFreezeEpisode(trackId, reason);
+		delete this.#privateProperties.freezeWatchers[trackId];
+
+		const watcher = this.#privateProperties.remoteAudioWatchers[trackId];
+		if (!watcher)
+		{
+			return;
+		}
+
+		Object.entries(watcher.handlers).forEach(([eventName, handler]) => {
+			Event.unbind(watcher.track, eventName, handler);
+		});
+
+		delete this.#privateProperties.remoteAudioWatchers[trackId];
+
+		const userWatchers = this.#privateProperties.remoteAudioWatchersByUser[watcher.userId];
+		if (userWatchers)
+		{
+			delete userWatchers[trackId];
+			if (Object.keys(userWatchers).length === 0)
+			{
+				delete this.#privateProperties.remoteAudioWatchersByUser[watcher.userId];
+			}
+		}
+	}
+
+	#forgetRemoteAudioTracksOfUser(userId, reason)
+	{
+		const userWatchers = this.#privateProperties.remoteAudioWatchersByUser[userId];
+		if (!userWatchers)
+		{
+			return;
+		}
+
+		Object.keys(userWatchers).forEach((trackId) => this.#forgetRemoteAudioTrack(trackId, reason));
+	}
+
+	#forgetRemoteAudioTracksMissingFrom(userId, participantTracks, reason)
+	{
+		const userWatchers = this.#privateProperties.remoteAudioWatchersByUser[userId];
+		if (!userWatchers)
+		{
+			return;
+		}
+
+		const keptTrackIds = participantTracks
+			? Object.values(participantTracks).map((track) => track.sid)
+			: [];
+
+		Object.keys(userWatchers)
+			.filter((trackId) => !keptTrackIds.includes(trackId))
+			.forEach((trackId) => this.#forgetRemoteAudioTrack(trackId, reason))
+		;
+	}
+
+	#forgetRemoteAudioTracks(reason)
+	{
+		Object.keys(this.#privateProperties.remoteAudioWatchers).forEach((trackId) => {
+			this.#forgetRemoteAudioTrack(trackId, reason);
+		});
+	}
+
+	// Runs once per stats tick over the whole accumulated collection, never inside the loop that
+	// builds it: report.inRemoteTracks is assigned at the end of that loop, and otherMediaAlive
+	// cannot be answered before every report of the tick is parsed.
+	#checkIncomingAudioFreeze(reports)
+	{
+		// only the source discriminates here: an own track never gets a watcher, and a report carries
+		// no source unless the parsing loop found packetsReceived on it. The other two are defensive
+		const ownUserId = Number(this.#privateProperties.userId);
+		const incoming = reports.filter((report) => (
+			Number(report.userId) !== ownUserId
+			&& report.source === MediaStreamsKinds.Microphone
+			&& Object.hasOwn(report, 'packetsReceived')
+		));
+
+		incoming.forEach((report) => {
+			const trackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
+			const watcher = this.#privateProperties.freezeWatchers[trackId];
+			if (!watcher)
+			{
+				return;
+			}
+
+			// by the report, not by the camera track: the participant found by trackIdentifier below
+			// in the parsing loop is the one owning the camera, and for an audio report it points elsewhere
+			const participant = this.#privateProperties.remoteParticipants[report.userId];
+			if (!participant)
+			{
+				this.#closeAudioFreezeEpisode(trackId, 'participant-gone');
+
+				return;
+			}
+
+			if (participant.isMutedAudio)
+			{
+				this.#closeAudioFreezeEpisode(trackId, 'muted');
+
+				return;
+			}
+
+			if (report.inRemoteTracks !== 'Y')
+			{
+				this.#closeAudioFreezeEpisode(trackId, 'unsubscribed');
+
+				return;
+			}
+
+			// ICE and not isConnected(): ticks in the PROGRESSING state do not happen at all, while the
+			// window between a disconnected ICE and the failed connection is exactly where the zero is lawful.
+			// The optional chaining is required: the check runs after an await, and #destroyPeerConnection
+			// may have nulled the connection by then
+			const iceState = this.recipient?.iceConnectionState;
+			if (iceState !== 'connected' && iceState !== 'completed')
+			{
+				this.#closeAudioFreezeEpisode(trackId, 'reconnecting');
+
+				return;
+			}
+
+			if (report.bitrate > 0)
+			{
+				watcher.growthSeen = true;
+				watcher.zeroTicks = 0;
+				watcher.lastNonZeroAt = report.timestamp;
+				if (watcher.episodeOpen)
+				{
+					const durationMs = Math.round(report.timestamp - watcher.firstZeroAt);
+					this.setLog(
+						`Incoming audio recovered after ${durationMs} ms (sid: ${trackId}) `
+						+ `for a participant with id ${report.userId}`,
+						LOG_LEVEL.INFO,
+					);
+					watcher.episodeOpen = false;
+				}
+
+				return;
+			}
+
+			// a track that never carried data has nothing to lose: on the first tick prevReport is empty,
+			// the divider is the epoch time and calcBitrate returns zero for every track alike
+			if (!watcher.growthSeen)
+			{
+				return;
+			}
+
+			if (watcher.zeroTicks === 0)
+			{
+				watcher.firstZeroAt = watcher.lastNonZeroAt || report.timestamp;
+			}
+			watcher.zeroTicks++;
+
+			if (watcher.zeroTicks < FREEZE_TICKS || watcher.episodeOpen)
+			{
+				return;
+			}
+
+			watcher.episodeOpen = true;
+			const elapsedMs = Math.round(report.timestamp - watcher.firstZeroAt);
+			const otherMediaAlive = this.#hasOtherMediaAlive(reports, report, trackId);
+			this.setLog(
+				`Incoming audio frozen for ${elapsedMs} ms (sid: ${trackId}) `
+				+ `for a participant with id ${report.userId}; `
+				+ `bytesReceived=${report.bytesReceived}, packetsReceived=${report.packetsReceived}, `
+				+ `otherMediaAlive=${otherMediaAlive}, pageHidden=${document.hidden}`,
+				LOG_LEVEL.WARNING,
+			);
+		});
+	}
+
+	// the ids are compared as numbers: trackCreated keeps the userId of the socket message as it is,
+	// while participantJoined takes it from the participant, so two tracks of one participant can
+	// carry it as different types
+	#hasOtherMediaAlive(reports, report, trackId)
+	{
+		const userId = Number(report.userId);
+
+		return reports.some((other) => (
+			other.bitrate > 0
+			&& Number(other.userId) === userId
+			&& this.#privateProperties.realTracksIds[other.trackIdentifier] !== trackId
+		));
+	}
+
+	// Date.now() and not report.timestamp: the removal points call this outside the stats tick, where
+	// no report exists. RTCStats timestamps are on the same epoch scale, so the two never disagree.
+	#closeAudioFreezeEpisode(trackId, reason)
+	{
+		const watcher = this.#privateProperties.freezeWatchers[trackId];
+		if (!watcher)
+		{
+			return;
+		}
+
+		if (watcher.episodeOpen)
+		{
+			const durationMs = Math.round(Date.now() - watcher.firstZeroAt);
+			this.setLog(
+				`Incoming audio freeze closed after ${durationMs} ms by ${reason} (sid: ${trackId}) `
+				+ `for a participant with id ${watcher.userId}`,
+				LOG_LEVEL.INFO,
+			);
+		}
+
+		watcher.episodeOpen = false;
+		watcher.zeroTicks = 0;
+		// the mark is meaningful only inside an uninterrupted series of ticks: kept across a closing,
+		// it would date the next episode by the moment before a ten-minute mute
+		watcher.lastNonZeroAt = null;
 	}
 
 	#speakerChangedHandler(data) {
@@ -4670,6 +5237,11 @@ export class CallLegacy
 					{
 						this.#processVideoQueue();
 					}
+
+					// A mute/unmute confirmation is the other publication-state event: an off/on pair that raced
+					// an in-flight unpause lands here and never produces a trackCreated, so this is the only
+					// place left to bring the published camera back to the current intent.
+					this.#reconcilePublishedCameraState();
 				}
 				else if(track.source === MediaStreamsKinds.Microphone)
 				{
@@ -5034,9 +5606,20 @@ export class CallLegacy
 		// stale queue or in-flight cids from a dropped connection would otherwise wedge audio publishing
 		this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 		this.#privateProperties.microphonePausedOnServer = false;
+		this.#privateProperties.cameraPausedOnServer = false;
 		this.#privateProperties.ownInflightPublicationCids.clear();
 
 		this.#peerConnectionAbortController = new AbortController();
+
+		const nqeParams = Util.getNqeParams();
+		if (nqeParams.autoBalanceEnabled)
+		{
+			this.#privateProperties.nqe = new NetworkQualityEvaluator(nqeParams);
+		}
+		else
+		{
+			this.#privateProperties.nqe = null;
+		}
 
 		const config = {};
 		if (this.#privateProperties.iceServers)
@@ -5124,11 +5707,13 @@ export class CallLegacy
 					const reportsWithoutCodecs = {};
 					const remoteReports = {};
 					const reportsWithoutRemoteInfo = {};
-					let audioReport = null;
 					let isQualityLimitationSent = false;
 					const totalBitrateOut = [];
 
 					stats.forEach((rawReport) => {
+						// Intentionally mutate a shallow copy of RTCStatsReport.
+						// Safe because browser creates a fresh report object for each getStats() call
+						// and we only use it within this callback scope.
 						const report = { ...rawReport };
 						statsOutput.push(report);
 
@@ -5147,6 +5732,11 @@ export class CallLegacy
 								return;
 							}
 
+							if (reportsWithoutRemoteInfo[reportId] && Type.isBoolean(reportsWithoutRemoteInfo[reportId].active))
+							{
+								report.active = reportsWithoutRemoteInfo[reportId].active;
+							}
+
 							if (!this.#privateProperties.outgoingTracksReports[reportId])
 							{
 								this.#privateProperties.outgoingTracksReports[reportId] = {};
@@ -5156,7 +5746,8 @@ export class CallLegacy
 							const packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], prevReport, report);
 							const { currentPercentPacketLost } = packetsLostData;
 
-							checkMetricsFeatureAndExecutionCallback(() => {
+							if (this.#privateProperties.monitoringServerUrl)
+							{
 								this.addValidatedMonitoringMetric({
 									additionalData: {
 										currentReportPacketsSent: reportsWithoutRemoteInfo[reportId]?.packetsSent,
@@ -5167,21 +5758,22 @@ export class CallLegacy
 									metricKey: MONITORING_METRICS.PACKET_LOST_SEND,
 									metricValue: currentPercentPacketLost,
 								});
-							});
+							}
 
 							if (!packetLostEventAdded && currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
 							{
 								packetLostEventAdded = true;
-								checkMetricsFeatureAndExecutionCallback(() => {
+								if (this.#privateProperties.monitoringServerUrl)
+								{
 									this.addMonitoringEvents({
 										name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_SEND,
 										withCounter: true,
 									});
-								});
+								}
 							}
 
 							prevReport.packetsLostData = packetsLostData;
-							prevReport.packetsLost = { ...packetsLostData };
+							prevReport.packetsLost = packetsLostData.totalPacketsLost;
 							prevReport.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
 
 							delete reportsWithoutRemoteInfo[reportId];
@@ -5217,6 +5809,11 @@ export class CallLegacy
 									: MediaStreamsKinds.Camera;
 							}
 
+							if (remoteReports[reportId] && Type.isBoolean(report.active))
+							{
+								remoteReports[reportId].active = report.active;
+							}
+
 							totalBitrateOut.push({
 								bitrate: report.bitrate,
 								kind: report.kind,
@@ -5225,7 +5822,8 @@ export class CallLegacy
 
 							if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent)
 							{
-								checkMetricsFeatureAndExecutionCallback(() => {
+								if (this.#privateProperties.monitoringServerUrl)
+								{
 									if (report.qualityLimitationReason === 'cpu')
 									{
 										this.addMonitoringEvents({
@@ -5241,7 +5839,7 @@ export class CallLegacy
 											withCounter: true,
 										});
 									}
-								});
+								}
 
 								isQualityLimitationSent = true;
 								const limitations = Object.entries(report.qualityLimitationDurations).reduce(
@@ -5260,7 +5858,8 @@ export class CallLegacy
 						}
 					});
 
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl)
+					{
 						const bitrateSumOut = calcBitrateSumFromArray({ bitrateArray: totalBitrateOut });
 						const formattedBitrateOut = Number.parseFloat((bitrateSumOut / 1_000_000).toFixed(2));
 
@@ -5276,7 +5875,7 @@ export class CallLegacy
 								metricValue: bitrateSumOut,
 							});
 						}
-					});
+					}
 
 					statsAll.publisher = statsOutput;
 				});
@@ -5300,8 +5899,12 @@ export class CallLegacy
 						framesLoss: [],
 					};
 
-					stats.forEach((report) =>
+					stats.forEach((rawReport) =>
 					{
+						// Intentionally mutate a shallow copy of RTCStatsReport.
+						// Safe because browser creates a fresh report object for each getStats() call
+						// and we only use it within this callback scope.
+						const report = { ...rawReport };
 
 						if (report.type === 'inbound-rtp' && report.kind === 'video')
 						{
@@ -5325,9 +5928,8 @@ export class CallLegacy
 						if (needCheckPacketLosts)
 						{
 							const packetsLostData = Util.calcRemotePacketsLost(report, this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier]);
-
+							report.packetsLostData = packetsLostData;
 							report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-
 
 							this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier] = report;
 
@@ -5381,7 +5983,8 @@ export class CallLegacy
 						}
 					});
 
-					checkMetricsFeatureAndExecutionCallback(() => {
+					if (this.#privateProperties.monitoringServerUrl)
+					{
 						const { countVideoTracks, countAudioTracks } = this.getCountRemoteTracks();
 
 						const round = (number, decimal) => Math.round(number * Math.pow(10, decimal)) / Math.pow(10, decimal);
@@ -5478,9 +6081,22 @@ export class CallLegacy
 						{
 							this.addMonitoringEvents({name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_RECEIVE, withCounter: true} )
 						}
-					});
+					}
 
 					statsAll.subscriber = statsOutput;
+
+					// its own try/catch on purpose: the catch of getStatsHandle swallows silently, so an
+					// exception thrown here would take the rest of the tick with it every three seconds
+					// and leave no trace at all
+					try
+					{
+						this.#checkIncomingAudioFreeze(statsOutput);
+					}
+					catch (error)
+					{
+						this.setLog(`Checking incoming audio for a freeze failed: ${String(error)}`, LOG_LEVEL.ERROR);
+					}
+
 					if (participantsWithLargeDataLoss.size || this.#privateProperties.prevParticipantsWithLargeDataLoss.size)
 					{
 						if (participantsWithLargeDataLoss.size)
@@ -5492,10 +6108,23 @@ export class CallLegacy
 					this.#privateProperties.prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
 				});
 
+				if (this.#privateProperties.nqe)
+				{
+					const action = this.#privateProperties.nqe.processStats(statsAll.publisher, statsAll.subscriber);
+					if (action === 'downgrade' || action === 'upgrade')
+					{
+						const currentQuality = this.#privateProperties.nqe.getCurrentQuality();
+						const previousQuality = this.#privateProperties.nqe.getPreviousQuality();
+						this.#onAutoQuality(currentQuality, previousQuality);
+					}
+				}
+
 				this.triggerEvents('CallStatsReceived', [statsAll]);
 			}
 			catch (e)
 			{
+				this.#privateProperties.nqe?.resetPendingWindow();
+
 				// if we're here it's almost okay
 				// we tried to get stats during reconnection
 			}
@@ -5613,9 +6242,10 @@ export class CallLegacy
 
 	#sendLeave()
 	{
-		checkMetricsFeatureAndExecutionCallback(() => {
+		if (this.#privateProperties.monitoringServerUrl)
+		{
 			this.sendMonitoringEvents(false);
-		});
+		}
 		if (this.#privateProperties.socketConnect?.readyState === 1)
 		{
 			this.#sendSignal({
@@ -5735,7 +6365,10 @@ class Participant
 				}
 			};
 
-			this.#socketConnect.send(JSON.stringify(signal));
+			if (this.#socketConnect?.readyState === 1)
+			{
+				this.#socketConnect.send(JSON.stringify(signal));
+			}
 		}
 	}
 }

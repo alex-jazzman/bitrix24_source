@@ -1,10 +1,144 @@
 .disk-picker-item-browser {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 	height: 100%;
-	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm) 0;
+	/* One inset on three sides, so the list stands in the plate evenly. Below the last row the
+	   list still ends in the width of a focus ring: the ring is drawn outside the row, and a row
+	   scrolled flush against the bottom edge had it cut. */
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm) var(--disk-picker-focus-ring-width);
+	/* Vertical only: the list never scrolls sideways, and clipping that axis is what lets the
+	   rows travel horizontally when a folder opens without the travel becoming something to
+	   scroll. */
+	overflow-x: hidden;
 	overflow-y: auto;
+}
+
+/* The air above the column names belongs to the head and not to this box: a padding here is
+   above the sticky row, so rows passing under it showed in that strip and the fill of the head
+   started below the top of the plate. The head carries the same amount as its own inset. */
+.disk-picker-item-browser.--table {
+	padding-top: 0;
+}
+
+/* A change of disk, of folder or of view replaces everything on screen at once, and the swap
+   is what the eye follows: the rows arrive one after another, each growing the last fraction
+   into its place. The travel is on the rows and never on the box around them — that box is the
+   scrolling container with the sticky table head, and moving it fought the scroll reset and
+   read as a twitch.
+
+   The rows grow rather than rise: a row shifted down reaches past the bottom of the scrolling
+   box and gives it something to scroll, so a scrollbar flashed for the length of the animation
+   on lists that have none. A row scaled below its own size stays inside its box, and the
+   scrollable height never changes.
+
+   The stagger is short and capped: eight steps of 30ms, after which every remaining row uses
+   the last delay. A list of forty rows must not take a second to settle, and beyond the first
+   screenful the delay would only be waiting. */
+@keyframes disk-picker-content-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.disk-picker-item-browser.--switching > *:not(.disk-picker-item-browser__status) {
+	animation: disk-picker-content-in var(--disk-picker-duration-swap) var(--disk-picker-ease) both;
+}
+
+/* The table is a single child of the box, so the stagger has to reach inside it and take the
+   rows themselves; the list has its rows as children already. Both are driven by the same
+   keyframes and the same delays below.
+
+   The delays count positions among siblings, and the table puts a spacer row before the first
+   visible one once the list has been scrolled. That spacer never exists while this animation
+   runs — a swap resets the list to its top — so the count is the one the eye sees. */
+.disk-picker-item-browser.--switching .disk-picker-item-table__row {
+	animation: disk-picker-content-in var(--disk-picker-duration-swap) var(--disk-picker-ease) both;
+}
+
+.disk-picker-item-browser.--switching > *:nth-child(2),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(1) { animation-delay: 0ms; }
+.disk-picker-item-browser.--switching > *:nth-child(3),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(2) { animation-delay: 30ms; }
+.disk-picker-item-browser.--switching > *:nth-child(4),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(3) { animation-delay: 60ms; }
+.disk-picker-item-browser.--switching > *:nth-child(5),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(4) { animation-delay: 90ms; }
+.disk-picker-item-browser.--switching > *:nth-child(6),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(5) { animation-delay: 120ms; }
+.disk-picker-item-browser.--switching > *:nth-child(7),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(6) { animation-delay: 150ms; }
+.disk-picker-item-browser.--switching > *:nth-child(8),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(7) { animation-delay: 180ms; }
+.disk-picker-item-browser.--switching > *:nth-child(n + 9),
+.disk-picker-item-browser.--switching .disk-picker-item-table__row:nth-child(n + 8) { animation-delay: 210ms; }
+
+/* A step along the path has a direction, and the rows come from the side it points to: into a
+   folder they arrive from the right, back out of it from the left. It is the same beat as the
+   plain swap, only the shape of the entrance differs — a change of disk or of view has no
+   direction and keeps the growing one above. */
+@keyframes disk-picker-content-in-forward {
+	from {
+		opacity: 0;
+		transform: translateX(24px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes disk-picker-content-in-back {
+	from {
+		opacity: 0;
+		transform: translateX(-24px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.disk-picker-item-browser.--switch-forward > *:not(.disk-picker-item-browser__status),
+.disk-picker-item-browser.--switch-forward .disk-picker-item-table__row {
+	animation-name: disk-picker-content-in-forward;
+}
+
+.disk-picker-item-browser.--switch-back > *:not(.disk-picker-item-browser__status),
+.disk-picker-item-browser.--switch-back .disk-picker-item-table__row {
+	animation-name: disk-picker-content-in-back;
+}
+
+/* The swap still happens, it simply arrives without the motion. */
+@media (prefers-reduced-motion: reduce) {
+	.disk-picker-item-browser.--switching > *,
+	.disk-picker-item-browser.--switching .disk-picker-item-table__row {
+		animation: none;
+	}
+}
+
+.disk-picker-item-browser.--navigation-blocked > :not(.disk-picker-item-browser__status, .disk-picker-item-browser__loading-overlay) {
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.disk-picker-item-browser__loading-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	display: flex;
+	align-items: stretch;
+	justify-content: stretch;
+	cursor: wait;
 }
 
 .disk-picker-item-browser__status {
@@ -22,10 +156,19 @@
 .disk-picker-item-browser__group-title {
 	display: flex;
 	align-items: center;
-	flex: 0 0 28px;
-	height: 28px;
-	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
-	color: var(--ui-color-base-4);
+	/* The whole advance, padding included: the virtual scroll counts this row as one block. */
+	box-sizing: border-box;
+	flex: 0 0 var(--disk-picker-group-title-advance);
+	height: var(--disk-picker-group-title-advance);
+	padding: var(--ui-space-inset-2xs) 0;
+	color: var(--ui-color-base-3);
+}
+
+/* The placeholder rows stand exactly where the real ones will: the list's own inset is on the
+   scrolling box, so this column only has to be a column. */
+.disk-picker-item-browser__skeleton {
+	display: flex;
+	flex-direction: column;
 }
 
 .disk-picker-item-browser__spacer {
@@ -58,4 +201,12 @@
 
 .disk-picker-item-browser__retry:hover {
 	color: var(--ui-color-accent-main-primary);
+}
+
+/* Keyboard focus on the Retry, and on the box itself when a loading or empty state leaves it
+   as the only thing in the group to land on. */
+.disk-picker-item-browser__retry:focus-visible,
+.disk-picker-item-browser:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
 }

@@ -21,8 +21,6 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 $moduleId = $arResult["moduleId"];
 $stepperClassName = $arResult["stepperClassName"];
-$errorOption = $arResult["errorOption"];
-
 $showProgress = $arResult["showProgress"];
 $showError = $arResult["showError"];
 $titleMessage = $arResult["titleMessage"];
@@ -55,8 +53,6 @@ $errorAlertCloseButtonId = "cc-ui-alert-close-btn";
 		BX.message(<?=Json::encode($messages)?>);
 		new BX.Socialnetwork.CopyChecker({
 			signedParameters: "<?=$this->getComponent()->getSignedParameters()?>",
-			moduleId: "<?=$moduleId?>",
-			errorOption: "<?=HtmlFilter::encode($errorOption)?>",
 			errorAlertContainerId: "<?=$errorAlertContainerId?>",
 			errorAlertCloseButtonId: "<?=$errorAlertCloseButtonId?>"
 		});

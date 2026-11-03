@@ -1,6 +1,17 @@
 :root {
 	--designer-bp-grey-bg: #EBEEF3;
 
+	/* Chips of a readable expression. The colour of a group is defined here once for both stylesheets of
+	   the feature and repeats the groups of the data inspector: the same value must look the same in the
+	   inspector and in the text of an expression. */
+	--designer-bp-token-bg: var(--ui-color-base-7);
+	--designer-bp-token-text: var(--ui-color-base-1);
+	--designer-bp-token-inbound-bg: var(--ui-color-accent-soft-green-2);
+	--designer-bp-token-global-bg: var(--ui-color-accent-soft-blue-2);
+	--designer-bp-token-filter-bg: var(--ui-color-accent-soft-orange-2);
+	--designer-bp-token-unknown-bg: var(--ui-color-accent-soft-red-2);
+	--designer-bp-token-unknown-text: var(--ui-color-accent-soft-element-red);
+
 	--designer-bp-ai-icons: #9C5CEF;
 	--designer-bp-ai-bg: #ECDFFF;
 

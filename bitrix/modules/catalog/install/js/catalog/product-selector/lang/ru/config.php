@@ -1,6 +1,9 @@
 <?php
 
 $MESS["CATALOG_SELECTOR_VIEW_NAME_TITLE"] = "Наименование товара";
+$MESS["CATALOG_SELECTOR_CLEAR_ICON_LABEL"] = "Очистить поле";
+$MESS["CATALOG_SELECTOR_SEARCH_ICON_LABEL"] = "Найти товар";
+$MESS["CATALOG_SELECTOR_DETAIL_LINK_LABEL"] = "Открыть страницу товара";
 $MESS["CATALOG_SELECTOR_BEFORE_SEARCH_TITLE"] = "Найти или создать новый товар";
 $MESS["CATALOG_SELECTOR_RECENT_TAB_STUB_TITLE"] = "Введите название товара";
 $MESS["CATALOG_SELECTOR_IS_EMPTY_TITLE"] = "Товар не найден";

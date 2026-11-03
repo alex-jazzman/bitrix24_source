@@ -23,6 +23,10 @@ export const Checkbox = {
 			type: String,
 			default: 'label',
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['click'],
 	methods: {
@@ -47,6 +51,7 @@ export const Checkbox = {
 				type="checkbox"
 				:checked="checked"
 				:disabled="disabled"
+				:aria-label="ariaLabel || null"
 				@click="handleClick"
 			>
 			<span

@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_STICKER_PACK_ADD_STICKER_ARIA"] = "Добавить стикеры";
 $MESS["IM_STICKER_PACK_FORM_CREATE_TITLE"] = "Новый набор стикеров";
 $MESS["IM_STICKER_PACK_FORM_UPDATE_TITLE"] = "Набор стикеров";
 $MESS["IM_STICKER_PACK_FORM_WELCOME_TITLE"] = "Пусть стикеры говорят за вас";

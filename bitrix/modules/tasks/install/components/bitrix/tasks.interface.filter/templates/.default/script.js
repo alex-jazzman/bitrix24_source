@@ -137,8 +137,28 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 			}
 		};
 
+		var updateSelectorButton = function(text)
+		{
+			var node = BX(selectorId);
+			if (!node)
+			{
+				return;
+			}
+
+			BX.UI.ButtonManager.createFromNode(node).setText(text);
+
+			if (messages.TASKS_FILTER_GROUP_BTN_ARIA_LABEL)
+			{
+				node.setAttribute(
+					"aria-label",
+					messages.TASKS_FILTER_GROUP_BTN_ARIA_LABEL.replace("#NAME#", function() {
+						return text;
+					})
+				);
+			}
+		};
+
 		currentGroup.id = parseInt(currentGroup.id);
-		currentGroup.text = BX.util.htmlspecialchars(currentGroup.text);
 
 		setTaskAddHref(currentGroup.id);
 
@@ -186,10 +206,7 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 						text: item.text
 					};
 					setTaskAddHref(item.id);
-					if (BX(selectorId + "_text"))
-					{
-						BX(selectorId + "_text").innerHTML = item.text;
-					}
+					updateSelectorButton(item.text);
 					BX.onCustomEvent(this, "onTasksGroupSelectorChange", [currentGroup]);
 				};
 
@@ -198,7 +215,7 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 				{
 					menuItems.push({
 						id: parseInt(groups[i]["id"]),
-						text: BX.util.htmlspecialchars(groups[i]["text"]),
+						text: groups[i]["text"],
 						class: 'menu-popup-item-none',
 						onclick: BX.delegate(clickHandler, this)
 					});
@@ -260,7 +277,17 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 					{
 						autoHide: true,
 						closeByEsc: true,
-						offsetLeft: offsetLeft
+						offsetLeft: offsetLeft,
+						events: {
+							onShow: function()
+							{
+								BX(selectorId).setAttribute("aria-expanded", "true");
+							},
+							onClose: function()
+							{
+								BX(selectorId).setAttribute("aria-expanded", "false");
+							}
+						}
 					}
 				);
 			}
@@ -349,6 +376,7 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 					compactView: true,
 					showAvatars: false,
 					cacheable: false,
+					ariaLabel: params.messages.TASKS_FILTER_SPRINT_DIALOG_ARIA_LABEL,
 					preselectedItems: [['sprint-selector' , params.sprintId]],
 					entities: [
 						{
@@ -379,11 +407,31 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 								]
 							);
 
-							buttonSelector.setText(selectedItem.customData.get('label'));
+							var label = selectedItem.customData.get('label');
+							buttonSelector.setText(label);
+							BX(containerId).setAttribute(
+								'aria-label',
+								params.messages.TASKS_FILTER_SPRINT_BTN_ARIA_LABEL.replace('#RANGE#', function() {
+									return label;
+								})
+							);
 						},
 					},
+					popupOptions: {
+						focusTrap: true,
+						className: 'tasks-interface-filter-popup-adaptive',
+						events: {
+							onShow: function() {
+								BX(containerId).setAttribute('aria-expanded', 'true');
+							},
+							onClose: function() {
+								BX(containerId).setAttribute('aria-expanded', 'false');
+							}
+						}
+					}
 				});
 
+				sprintsSelectorDialog.getPopup().getPopupContainer().setAttribute('aria-modal', 'true');
 				sprintsSelectorDialog.show();
 			}
 		);
@@ -408,342 +456,254 @@ if (typeof BX.Tasks.ProjectSelector === "undefined")
 
 
 this.BX = this.BX || {};
-(function (exports,ui_tour,main_core,main_core_events,ui_buttons,ui_system_menu,pull_client) {
+(function (exports, ui_tour, main_core, ui_buttons, main_core_events, ui_system_menu, pull_client) {
 	'use strict';
 
-	var _filterId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterId");
-	var _filter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filter");
-	var _init = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
-	var _setFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setFilter");
-	var _setGuide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setGuide");
-	var _markViewed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markViewed");
-	var _log = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("log");
 	class Preset {
-	  constructor(options) {
-	    Object.defineProperty(this, _log, {
-	      value: _log2
-	    });
-	    Object.defineProperty(this, _markViewed, {
-	      value: _markViewed2
-	    });
-	    Object.defineProperty(this, _setGuide, {
-	      value: _setGuide2
-	    });
-	    Object.defineProperty(this, _setFilter, {
-	      value: _setFilter2
-	    });
-	    Object.defineProperty(this, _init, {
-	      value: _init2
-	    });
-	    Object.defineProperty(this, _filterId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _filter, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _filterId)[_filterId] = options.filterId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _init)[_init]();
-	  }
-	  payAttention() {
-	    setTimeout(() => {
-	      this.guide.showNextStep();
-	      babelHelpers.classPrivateFieldLooseBase(this, _markViewed)[_markViewed]();
-	    }, Preset.DELAY);
-	  }
+		static DELAY = 1000;
+		#filterId;
+		#filter;
+		constructor(options) {
+			this.#filterId = options.filterId;
+			this.#init();
+		}
+		payAttention() {
+			setTimeout(() => {
+				this.guide.showNextStep();
+				this.#markViewed();
+			}, Preset.DELAY);
+		}
+		#init() {
+			this.#setFilter().#setGuide();
+		}
+		#setFilter() {
+			this.#filter = BX.Main.filterManager.getById(this.#filterId);
+			return this;
+		}
+		#setGuide() {
+			this.guide = new ui_tour.Guide({
+				simpleMode: true,
+				onEvents: true,
+				steps: [{
+					target: this.#filter.getPopupBindElement(),
+					title: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE'),
+					text: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT'),
+					position: 'bottom',
+					condition: {
+						top: true,
+						bottom: false,
+						color: 'primary'
+					}
+				}]
+			});
+			this.guide.getPopup().setWidth(420);
+			main_core.Dom.addClass(this.guide.getPopup().getPopupContainer(), 'tasks-interface-filter-popup-adaptive');
+			return this;
+		}
+		#markViewed() {
+			main_core.ajax.runComponentAction('bitrix:tasks.interface.filter', 'markPresetAhaMomentViewed', {
+				mode: 'class',
+				data: {}
+			}).catch(error => {
+				this.#log(error);
+			});
+		}
+		#log(error) {
+			console.log(error);
+		}
 	}
-	function _init2() {
-	  babelHelpers.classPrivateFieldLooseBase(babelHelpers.classPrivateFieldLooseBase(this, _setFilter)[_setFilter](), _setGuide)[_setGuide]();
-	}
-	function _setFilter2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter] = BX.Main.filterManager.getById(babelHelpers.classPrivateFieldLooseBase(this, _filterId)[_filterId]);
-	  return this;
-	}
-	function _setGuide2() {
-	  this.guide = new ui_tour.Guide({
-	    simpleMode: true,
-	    onEvents: true,
-	    steps: [{
-	      target: babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getPopupBindElement(),
-	      title: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE'),
-	      text: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT'),
-	      position: 'bottom',
-	      condition: {
-	        top: true,
-	        bottom: false,
-	        color: 'primary'
-	      }
-	    }]
-	  });
-	  this.guide.getPopup().setWidth(420);
-	  return this;
-	}
-	function _markViewed2() {
-	  main_core.ajax.runComponentAction('bitrix:tasks.interface.filter', 'markPresetAhaMomentViewed', {
-	    mode: 'class',
-	    data: {}
-	  }).catch(error => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _log)[_log](error);
-	  });
-	}
-	function _log2(error) {
-	  console.log(error);
-	}
-	Preset.DELAY = 1000;
 
 	const defaultRole = 'view_all';
-	var _groupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("groupId");
-	var _selectedRoleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedRoleId");
-	var _roles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roles");
-	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
-	var _button = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
-	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
-	var _initButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initButton");
-	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
-	var _handleFilterBeforeApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFilterBeforeApply");
-	var _handlePull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePull");
-	var _getEmptyCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyCounters");
-	var _update = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("update");
-	var _menuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuItems");
-	var _roleName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleName");
-	var _roleCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleCounter");
-	var _sendAnalyticsClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsClick");
-	var _sendAnalyticsApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsApply");
-	var _getAnalyticsSender = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsSender");
 	class Roles {
-	  constructor(params) {
-	    Object.defineProperty(this, _getAnalyticsSender, {
-	      value: _getAnalyticsSender2
-	    });
-	    Object.defineProperty(this, _sendAnalyticsApply, {
-	      value: _sendAnalyticsApply2
-	    });
-	    Object.defineProperty(this, _sendAnalyticsClick, {
-	      value: _sendAnalyticsClick2
-	    });
-	    Object.defineProperty(this, _roleCounter, {
-	      get: _get_roleCounter,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _roleName, {
-	      get: _get_roleName,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _menuItems, {
-	      get: _get_menuItems,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _update, {
-	      value: _update2
-	    });
-	    Object.defineProperty(this, _getEmptyCounters, {
-	      value: _getEmptyCounters2
-	    });
-	    Object.defineProperty(this, _bindEvents, {
-	      value: _bindEvents2
-	    });
-	    Object.defineProperty(this, _initButton, {
-	      value: _initButton2
-	    });
-	    Object.defineProperty(this, _groupId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _selectedRoleId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _roles, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _analytics, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _button, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _menu, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _handleFilterBeforeApply, {
-	      writable: true,
-	      value: event => {
-	        const previousRoleId = babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId];
-	        babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId] = event.getData()[2].getFilterFieldsValues().ROLEID || defaultRole;
-	        babelHelpers.classPrivateFieldLooseBase(this, _update)[_update]();
-	        if (previousRoleId !== babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]) {
-	          void babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsApply)[_sendAnalyticsApply](babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]);
-	        }
-	      }
-	    });
-	    Object.defineProperty(this, _handlePull, {
-	      writable: true,
-	      value: data => {
-	        var _data$babelHelpers$cl;
-	        Object.entries((_data$babelHelpers$cl = data[babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId]]) != null ? _data$babelHelpers$cl : babelHelpers.classPrivateFieldLooseBase(this, _getEmptyCounters)[_getEmptyCounters]()).forEach(([roleId, {
-	          total
-	        }]) => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][roleId].counter = total;
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _update)[_update]();
-	      }
-	    });
-	    if (!params.button) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId] = params.groupId || 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId] = params.selectedRoleId || defaultRole;
-	    babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = {
-	      [defaultRole]: {
-	        title: main_core.Loc.getMessage('TASKS_ALL_ROLES'),
-	        counter: params.totalCounter
-	      },
-	      ...Object.fromEntries(Object.entries(params.items).map(([roleId, item]) => [roleId, {
-	        title: item.TEXT,
-	        counter: Number(item.COUNTER)
-	      }]))
-	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = params.analytics;
-	    babelHelpers.classPrivateFieldLooseBase(this, _initButton)[_initButton](params.button);
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
-	  }
-	}
-	function _initButton2(button) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] = new ui_system_menu.Menu({
-	    items: babelHelpers.classPrivateFieldLooseBase(this, _menuItems)[_menuItems],
-	    offsetTop: 6
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button] = ui_buttons.ButtonManager.createFromNode(button);
-	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].bindEvent('click', () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].show(babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].getContainer());
-	    void babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsClick)[_sendAnalyticsClick]();
-	  });
-	}
-	function _bindEvents2() {
-	  main_core_events.EventEmitter.subscribe('BX.Main.Filter:beforeApply', babelHelpers.classPrivateFieldLooseBase(this, _handleFilterBeforeApply)[_handleFilterBeforeApply]);
-	  pull_client.PULL.subscribe({
-	    moduleId: 'tasks',
-	    command: 'user_counter',
-	    callback: babelHelpers.classPrivateFieldLooseBase(this, _handlePull)[_handlePull]
-	  });
-	}
-	function _getEmptyCounters2() {
-	  return Object.fromEntries(Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).map(roleId => [roleId, {
-	    total: 0
-	  }]));
-	}
-	function _update2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].setText(babelHelpers.classPrivateFieldLooseBase(this, _roleName)[_roleName]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].setRightCounter(babelHelpers.classPrivateFieldLooseBase(this, _roleCounter)[_roleCounter] ? {
-	    value: babelHelpers.classPrivateFieldLooseBase(this, _roleCounter)[_roleCounter]
-	  } : null);
-	  babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].updateItems(babelHelpers.classPrivateFieldLooseBase(this, _menuItems)[_menuItems]);
-	}
-	function _get_menuItems() {
-	  const hasCounters = Object.values(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).some(({
-	    counter
-	  }) => counter > 0);
-	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).map(([roleId, role]) => ({
-	    title: role.title,
-	    isSelected: roleId === babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId],
-	    onClick: () => main_core_events.EventEmitter.emit('Tasks.TopMenu:onItem', new main_core_events.BaseEvent({
-	      data: [roleId],
-	      compatData: [roleId]
-	    })),
-	    ...(hasCounters ? {
-	      counter: {
-	        value: role.counter
-	      }
-	    } : {})
-	  }));
-	}
-	function _get_roleName() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]].title;
-	}
-	function _get_roleCounter() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][defaultRole].counter;
-	}
-	async function _sendAnalyticsClick2() {
-	  const analytics = await babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSender)[_getAnalyticsSender]();
-	  analytics.sendRoleClick(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics]);
-	}
-	async function _sendAnalyticsApply2(role) {
-	  const analytics = await babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSender)[_getAnalyticsSender]();
-	  analytics.sendRoleClickType(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics], {
-	    role,
-	    isFilterEnabled: role !== defaultRole
-	  });
-	}
-	async function _getAnalyticsSender2() {
-	  return (await main_core.Runtime.loadExtension('tasks.v2.lib.analytics')).analytics;
+		#groupId;
+		#selectedRoleId;
+		#roles;
+		#analytics;
+		#button;
+		#menu;
+		constructor(params) {
+			if (!params.button) {
+				return;
+			}
+			this.#groupId = params.groupId || 0;
+			this.#selectedRoleId = params.selectedRoleId || defaultRole;
+			this.#roles = {
+				[defaultRole]: {
+					title: main_core.Loc.getMessage('TASKS_ALL_ROLES'),
+					counter: params.totalCounter
+				},
+				...Object.fromEntries(Object.entries(params.items).map(([roleId, item]) => [roleId, {
+					title: item.TEXT,
+					counter: Number(item.COUNTER)
+				}]))
+			};
+			this.#analytics = params.analytics;
+			this.#initButton(params.button);
+			this.#bindEvents();
+		}
+		#initButton(button) {
+			this.#menu = new ui_system_menu.Menu({
+				items: this.#menuItems,
+				offsetTop: 6,
+				focusTrap: true,
+				ariaLabel: main_core.Loc.getMessage('TASKS_FILTER_ROLES_MENU_ARIA_LABEL'),
+				events: {
+					onBeforeShow: () => {
+						this.#menu.getPopup().getPopupContainer().setAttribute('aria-modal', 'true');
+					},
+					onShow: () => this.#button.getContainer().setAttribute('aria-expanded', 'true'),
+					onClose: () => this.#button.getContainer().setAttribute('aria-expanded', 'false')
+				}
+			});
+			this.#button = ui_buttons.ButtonManager.createFromNode(button);
+			this.#button.bindEvent('click', () => {
+				this.#menu.show(this.#button.getContainer());
+				this.#menu.getPopup()?.getFocusTrap()?.focusFirst();
+				void this.#sendAnalyticsClick();
+			});
+		}
+		#bindEvents() {
+			main_core_events.EventEmitter.subscribe('BX.Main.Filter:beforeApply', this.#handleFilterBeforeApply);
+			pull_client.PULL.subscribe({
+				moduleId: 'tasks',
+				command: 'user_counter',
+				callback: this.#handlePull
+			});
+		}
+		#handleFilterBeforeApply = event => {
+			const previousRoleId = this.#selectedRoleId;
+			this.#selectedRoleId = event.getData()[2].getFilterFieldsValues().ROLEID || defaultRole;
+			this.#update();
+			if (previousRoleId !== this.#selectedRoleId) {
+				void this.#sendAnalyticsApply(this.#selectedRoleId);
+			}
+		};
+		#handlePull = data => {
+			Object.entries(data[this.#groupId] ?? this.#getEmptyCounters()).forEach(([roleId, {
+				total
+			}]) => {
+				this.#roles[roleId].counter = total;
+			});
+			this.#update();
+		};
+		#getEmptyCounters() {
+			return Object.fromEntries(Object.keys(this.#roles).map(roleId => [roleId, {
+				total: 0
+			}]));
+		}
+		#update() {
+			this.#button.setText(this.#roleName);
+			this.#button.setRightCounter(this.#roleCounter ? {
+				value: this.#roleCounter
+			} : null);
+			this.#updateButtonAriaLabel();
+			this.#updateMenuItems();
+		}
+		#updateButtonAriaLabel() {
+			const container = this.#button.getContainer();
+			if (this.#roleCounter) {
+				container.setAttribute('aria-label', main_core.Loc.getMessage('TASKS_FILTER_ROLES_BTN_ARIA_LABEL', {
+					'#ROLE#': this.#roleName,
+					'#COUNT#': this.#roleCounter
+				}));
+			} else {
+				container.removeAttribute('aria-label');
+			}
+		}
+		#updateMenuItems() {
+			const popup = this.#menu.getPopup();
+			const container = popup?.getPopupContainer();
+			const shouldRestoreFocus = Boolean(popup?.isShown()) && Boolean(container?.contains(document.activeElement));
+			this.#menu.updateItems(this.#menuItems);
+			if (shouldRestoreFocus) {
+				this.#menu.getPopup()?.getFocusTrap()?.focusContainer();
+			}
+		}
+		get #menuItems() {
+			const hasCounters = Object.values(this.#roles).some(({
+				counter
+			}) => counter > 0);
+			return Object.entries(this.#roles).map(([roleId, role]) => ({
+				title: role.title,
+				isSelected: roleId === this.#selectedRoleId,
+				onClick: () => main_core_events.EventEmitter.emit('Tasks.TopMenu:onItem', new main_core_events.BaseEvent({
+					data: [roleId],
+					compatData: [roleId]
+				})),
+				...(hasCounters ? {
+					counter: {
+						value: role.counter
+					}
+				} : {})
+			}));
+		}
+		get #roleName() {
+			return this.#roles[this.#selectedRoleId].title;
+		}
+		get #roleCounter() {
+			return this.#roles[defaultRole].counter;
+		}
+		async #sendAnalyticsClick() {
+			const analytics = await this.#getAnalyticsSender();
+			analytics.sendRoleClick(this.#analytics);
+		}
+		async #sendAnalyticsApply(role) {
+			const analytics = await this.#getAnalyticsSender();
+			analytics.sendRoleClickType(this.#analytics, {
+				role,
+				isFilterEnabled: role !== defaultRole
+			});
+		}
+		async #getAnalyticsSender() {
+			return (await main_core.Runtime.loadExtension('tasks.v2.lib.analytics')).analytics;
+		}
 	}
 
-	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
-	var _initAddButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAddButton");
-	var _initRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initRoles");
-	var _showPresetTourGuide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showPresetTourGuide");
 	class TasksInterfaceFilter {
-	  constructor(params) {
-	    Object.defineProperty(this, _showPresetTourGuide, {
-	      value: _showPresetTourGuide2
-	    });
-	    Object.defineProperty(this, _initRoles, {
-	      value: _initRoles2
-	    });
-	    Object.defineProperty(this, _initAddButton, {
-	      value: _initAddButton2
-	    });
-	    Object.defineProperty(this, _params, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
-	    babelHelpers.classPrivateFieldLooseBase(this, _initAddButton)[_initAddButton]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initRoles)[_initRoles]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _showPresetTourGuide)[_showPresetTourGuide]();
-	  }
-	}
-	function _initAddButton2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isV2Form || !babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].createNode) {
-	    return;
-	  }
-	  const button = ui_buttons.ButtonManager.createFromNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].createNode);
-	  const loadCard = top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
-	  button.getMainButton().bindEvent('click', async () => {
-	    const {
-	      TaskCard
-	    } = await loadCard;
-	    TaskCard.showCompactCard({
-	      groupId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId,
-	      analytics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics,
-	      ...(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isScrum ? {
-	        deadlineTs: 0
-	      } : {})
-	    });
-	  });
-	}
-	function _initRoles2() {
-	  new Roles(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].roles);
-	}
-	function _showPresetTourGuide2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].showPresetTourGuide) {
-	    return;
-	  }
-	  BX.Tasks.Preset.Aha = new BX.Tasks.Preset({
-	    filterId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].filterId
-	  });
-	  BX.Tasks.Preset.Aha.payAttention();
+		#params;
+		constructor(params) {
+			this.#params = params;
+			this.#initAddButton();
+			this.#initRoles();
+			this.#showPresetTourGuide();
+		}
+		#initAddButton() {
+			if (!this.#params.isV2Form || !this.#params.createNode) {
+				return;
+			}
+			const button = ui_buttons.ButtonManager.createFromNode(this.#params.createNode);
+			const loadCard = top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
+			button.getMainButton().bindEvent('click', async () => {
+				const {
+					TaskCard
+				} = await loadCard;
+				TaskCard.showCompactCard({
+					groupId: this.#params.groupId,
+					analytics: this.#params.analytics,
+					...(this.#params.isScrum ? {
+						deadlineTs: 0
+					} : {})
+				});
+			});
+		}
+		#initRoles() {
+			new Roles(this.#params.roles);
+		}
+		#showPresetTourGuide() {
+			if (!this.#params.showPresetTourGuide) {
+				return;
+			}
+			BX.Tasks.Preset.Aha = new BX.Tasks.Preset({
+				filterId: this.#params.filterId
+			});
+			BX.Tasks.Preset.Aha.payAttention();
+		}
 	}
 
 	exports.Preset = Preset;
 	exports.TasksInterfaceFilter = TasksInterfaceFilter;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX,BX.Event,BX.UI,BX.UI.System,BX));
+})(this.BX.Tasks = this.BX.Tasks || {}, BX.UI.Tour, BX, BX.UI, BX.Event, BX.UI.System, BX);
 
 
 //# sourceMappingURL=script.js.map

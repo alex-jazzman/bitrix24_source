@@ -1,4 +1,9 @@
-<?
+<?php
+
+use Bitrix\Crm\V2\Internal\Service\PaySystem\HandlerCatalog;
+use Bitrix\Crm\V2\Internal\Service\PaySystem\HandlerGuard;
+use Bitrix\Crm\V2\Internal\Service\PaySystem\PrintOperation;
+use Bitrix\Crm\V2\Internal\Service\PaySystem\QuoteRenderer;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
@@ -14,7 +19,9 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote))
+$quoteID = (int)($arParams['QUOTE_ID'] ?? 0);
+$permissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item();
+if ($quoteID <= 0 || !$permissions->canRead(CCrmOwnerType::Quote, $quoteID))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -22,14 +29,12 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityT
 
 global $APPLICATION;
 $APPLICATION->RestartBuffer();
-$quoteID = intval($arParams["QUOTE_ID"]);
 
 $dbResult = CCrmQuote::GetList(array(), array('ID' => $quoteID, 'CHECK_PERMISSIONS' => 'N'), false, false, array('*', 'UF_*'));
 $arQuote = is_object($dbResult) ? $dbResult->Fetch() : null;
-$paymentData = is_array($arQuote) ? CCrmQuote::PrepareSalePaymentData($arQuote) : null;
 $paySystemID = isset($_REQUEST['PAY_SYSTEM_ID']) ? intval($_REQUEST['PAY_SYSTEM_ID']) : 0;
 
-if (is_array($paymentData) && $paySystemID > 0)
+if (is_array($arQuote) && $paySystemID > 0)
 {
 	$dbPaySysAction = CSalePaySystemAction::GetList(
 		array(),
@@ -39,54 +44,73 @@ if (is_array($paymentData) && $paySystemID > 0)
 		),
 		false,
 		false,
-		array("ACTION_FILE", "PARAMS", "ENCODING")
+		array('ID', 'ACTION_FILE', 'ENCODING')
 	);
 
 
 	if ($arPaySysAction = $dbPaySysAction->Fetch())
 	{
-		if ($arPaySysAction["ACTION_FILE"] <> '' && !\Bitrix\Sale\PaySystem\Manager::isRestHandler($arPaySysAction["ACTION_FILE"]))
+		$resolution = (new HandlerGuard())->resolve($arPaySysAction, HandlerCatalog::PURPOSE_LEGACY_PRINT);
+		if (
+			$resolution->isSuccess()
+			&& !\Bitrix\Sale\PaySystem\Manager::isRestHandler($arPaySysAction['ACTION_FILE'])
+		)
 		{
-			CSalePaySystemAction::InitParamArrays(
-				$paymentData['ORDER'],
-				0,
-				$arPaySysAction['PARAMS'],
-				array(
-					'PROPERTIES' => $paymentData['PROPERTIES'],
-					'BASKET_ITEMS' => $paymentData['CART_ITEMS'],
-					'TAX_LIST' => $paymentData['TAX_LIST'],
-					'REQUISITE' => $paymentData['REQUISITE'],
-					'BANK_DETAIL' => $paymentData['BANK_DETAIL'],
-					'CRM_COMPANY' => $paymentData['CRM_COMPANY'],
-					'CRM_CONTACT' => $paymentData['CRM_CONTACT'],
-					'MC_REQUISITE' => $paymentData['MC_REQUISITE'],
-					'MC_BANK_DETAIL' => $paymentData['MC_BANK_DETAIL'],
-					'CRM_MYCOMPANY' => $paymentData['CRM_MYCOMPANY']
-				),
-				$paymentData['PAYMENT'],
-				$paymentData['SHIPMENT']
+			$paramsResult = (new \Bitrix\Crm\V2\Internal\Service\PaySystem\HandlerMetadataProvider())->getParameters(
+				$arPaySysAction, (int)$arQuote['PERSON_TYPE_ID'],
 			);
-
-			$pathToAction = $_SERVER["DOCUMENT_ROOT"].$arPaySysAction["ACTION_FILE"];
-
-			$pathToAction = str_replace("\\", "/", $pathToAction);
-			while (mb_substr($pathToAction, mb_strlen($pathToAction) - 1, 1) == "/")
-				$pathToAction = mb_substr($pathToAction, 0, mb_strlen($pathToAction) - 1);
-
-			if (file_exists($pathToAction))
+			if (!$paramsResult->isSuccess())
 			{
-				if (is_dir($pathToAction))
+				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				return;
+			}
+			$arPaySysAction['PARAMS'] = serialize($paramsResult->getData()['params']);
+			$resolution = (new HandlerGuard())->resolve($arPaySysAction, HandlerCatalog::PURPOSE_LEGACY_PRINT);
+			if (!$resolution->isSuccess())
+			{
+				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				return;
+			}
+			$handler = $resolution->getData()['handler'];
+			$paymentData = CCrmQuote::PrepareSalePaymentData($arQuote);
+			if (is_array($paymentData))
+			{
+				$pdf = !empty($_REQUEST['pdf']);
+				$operation = new PrintOperation('quote', $pdf ? 'pdf_download' : 'print', 'quote_payment');
+				$result = $operation->run(
+					static fn() => (new QuoteRenderer())->render($handler, $paymentData, $operation, $pdf),
+				);
+				if ($result->isSuccess())
 				{
-					if (file_exists($pathToAction."/payment.php"))
-						include($pathToAction."/payment.php");
+					$operation->markGenerated($handler->getCode());
+					$operation->complete();
+					echo $result->getData()['content'];
 				}
 				else
 				{
-					include($pathToAction);
+					header_remove('Content-Disposition');
+					header('Content-Type: text/html; charset=' . LANG_CHARSET);
+					ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 				}
 			}
+			else
+			{
+				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			}
+		}
+		else
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 		}
 	}
+	else
+	{
+		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	}
+}
+else
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 }
 
 $r = $APPLICATION->EndBufferContentMan();

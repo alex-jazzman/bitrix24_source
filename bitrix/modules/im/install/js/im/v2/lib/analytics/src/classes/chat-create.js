@@ -3,47 +3,50 @@ import { sendData } from 'ui.analytics';
 import { Core } from 'im.v2.application.core';
 import { ChatType, type ChatTypeItem } from 'im.v2.const';
 
-import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool, CreateChatContext } from '../const';
+import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool, CreateChatContext, PROJECT_CHAT_TYPE } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getFolderSection } from '../helpers/get-folder-section';
+import { getLayoutName } from '../helpers/get-layout-name';
 import { getUserType } from '../helpers/get-user-type';
 
 export class ChatCreate
 {
 	onStartClick(type: ChatTypeItem): void
 	{
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
+		const resolvedType = type === ChatType.collab ? PROJECT_CHAT_TYPE : type;
 
 		sendData({
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(type),
 			event: AnalyticsEvent.clickCreateNew,
-			type,
-			c_section: `${currentLayout}_tab`,
+			type: resolvedType,
+			c_section: getFolderSection(currentLayout),
 			p2: getUserType(),
 		});
 	}
 
-	onCollabEmptyStateCreateClick(): void
+	onProjectEmptyStateCreateClick(): void
 	{
 		sendData({
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(ChatType.collab),
 			event: AnalyticsEvent.clickCreateNew,
-			type: ChatType.collab,
-			c_section: CreateChatContext.collabEmptyState,
+			type: PROJECT_CHAT_TYPE,
+			c_section: CreateChatContext.projectEmptyState,
 			p2: getUserType(),
 		});
 	}
 
 	onMenuCreateClick(): void
 	{
-		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const currentLayout = getLayoutName(Core.getStore().getters['application/getLayout'].name);
 
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.openCreateMenu,
-			c_section: `${currentLayout}_tab`,
+			c_section: getFolderSection(currentLayout),
 		});
 	}
 }

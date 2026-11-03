@@ -1,6 +1,8 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 global $APPLICATION;
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
+
 \Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 
@@ -32,7 +34,9 @@ foreach($arResult['VATS'] as $key => &$arVat)
 			'ICONCLASS' => 'view',
 			'TITLE' => GetMessage('CRM_VAT_EDIT_TITLE'),
 			'TEXT' => GetMessage('CRM_VAT_EDIT'),
-			'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape($arVat['PATH_TO_VAT_EDIT']).'\');',
+			'ONCLICK' => $isSettingsHub
+				? 'window.location.href = \'' . CUtil::JSEscape($arVat['PATH_TO_VAT_EDIT']) . '\';'
+				: 'jsUtils.Redirect([], \'' . CUtil::JSEscape($arVat['PATH_TO_VAT_EDIT']) . '\');',
 			'DEFAULT' => true
 		);
 	}
@@ -65,7 +69,12 @@ foreach($arResult['VATS'] as $key => &$arVat)
 		'columns' => array(
 			'C_SORT' => $arVat['SORT'],
 			'ACTIVE' => $arVat['ACTIVE'],
-			'NAME' => '<a target="_self" href="'.$arVat['PATH_TO_VAT_EDIT'].'">'.htmlspecialcharsbx($arVat['NAME']).'</a>',
+			'NAME' => '<a target="_self"'
+				. ' data-testid="crm-config-vat-list-edit-link-' . (int)$arVat['ID'] . '"'
+				. ($isSettingsHub ? ' data-slider-ignore-autobinding="true"' : '')
+				. ' href="'
+				. ($isSettingsHub ? htmlspecialcharsbx($arVat['PATH_TO_VAT_EDIT']) : $arVat['PATH_TO_VAT_EDIT'])
+				. '">' . htmlspecialcharsbx($arVat['NAME']) . '</a>',
 			'RATE' => $arVat['RATE']
 		)
 	);

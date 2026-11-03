@@ -1336,14 +1336,20 @@ if ($arParams['SUCCESS_SAVE'])
 											<?= Loc::getMessage('LANDING_TPL_HOOK_COOKIES_SCRIPT_WARN') ?>
 										</div>
 									<?php endif;?>
-									<?php $APPLICATION->IncludeComponent(
-										'bitrix:landing.userconsent.selector',
-										'',
-										array(
-											'ID' => $agreementId,
-											'INPUT_NAME' => 'fields[ADDITIONAL_FIELDS][COOKIES_AGREEMENT_ID]'
-										)
-									);?>
+									<div
+										role="group"
+										aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HOOK_COOKIES_AGREEMENT_GROUP_LABEL')) ?>"
+										data-testid="site-settings-consent-group"
+									>
+										<?php $APPLICATION->IncludeComponent(
+											'bitrix:landing.userconsent.selector',
+											'',
+											array(
+												'ID' => $agreementId,
+												'INPUT_NAME' => 'fields[ADDITIONAL_FIELDS][COOKIES_AGREEMENT_ID]'
+											)
+										);?>
+									</div>
 								</div>
 								<a href="<?= $uriCookies->getUri() ?>" class="landing-frame-btn landing-frame-btn-cookies">
 									<?= Loc::getMessage('LANDING_TPL_HOOK_COOKIES_EDIT_DESCRIPTIONS') ?>

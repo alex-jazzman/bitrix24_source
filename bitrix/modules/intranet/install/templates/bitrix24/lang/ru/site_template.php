@@ -1,9 +1,9 @@
 <?php
 $MESS["BITRIX24_AIR_COPYRIGHT"] = "&copy; «Битрикс», #CURRENT_YEAR#";
-$MESS["BITRIX24_AIR_URL"] = "https://www.bitrix24.ru";
 $MESS["BITRIX24_AIR_MENU_CLOUDMAN"] = "Поддержка24";
 $MESS["BITRIX24_AIR_PARTNER_CONNECT"] = "Связаться с партнером";
 $MESS["BITRIX24_AIR_PARTNER_ORDER"] = "Заказать внедрение";
+$MESS["BITRIX24_AIR_PARTNER_ORDER_MSGVER_1"] = "Заказать консультацию";
 $MESS["BITRIX24_AIR_PARTNER_POPUP_TITLE"] = "Внедрение, установка и настройка Битрикс24";
 $MESS["BITRIX24_AIR_PARTNER_POPUP_BUTTON"] = "оставить заявку";
 $MESS["BITRIX24_AIR_THEME"] = "Темы";
@@ -17,3 +17,14 @@ $MESS["BITRIX24_SEARCH_MENUITEMS"] = "Пункты меню";
 $MESS["BITRIX24_SEARCH_MICROBLOG"] = "Сообщения";
 $MESS["BITRIX24_SEARCH_OTHER"] = "Прочее";
 $MESS["BITRIX24_CHAT_BAR_ARIA"] = "Панель чатов";
+$MESS["INTRANET_AVATAR_WIDGET_OPEN_PROFILE"] = "Профиль";
+$MESS["INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_0"] = "#COUNT# документ на подпись";
+$MESS["INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_1"] = "#COUNT# документа на подпись";
+$MESS["INTRANET_AVATAR_WIDGET_SIGN_DOCUMENTS_PLURAL_2"] = "#COUNT# документов на подпись";
+$MESS["INTRANET_AVATAR_WIDGET_VERIFY_PHONE"] = "требуется верификация телефона";
+$MESS["INTRANET_AVATAR_WIDGET_LOADING"] = "Загрузка профиля";
+$MESS["INTRANET_AVATAR_WIDGET_POPUP"] = "Профиль пользователя";
+$MESS['BITRIX24_AIR_LANGUAGE_MENU_ARIA'] = 'Язык интерфейса';
+$MESS['BITRIX24_AIR_LANGUAGE_SWITCHING_ANNOUNCEMENT'] = 'Язык меняется на #LANGUAGE#. Страница обновится';
+$MESS['BITRIX24_AIR_LANGUAGE_TRIGGER_ARIA'] = 'Выбрать язык интерфейса, сейчас выбран — #LANGUAGE#';
+$MESS["INTRANET_AVATAR_WIDGET_LOAD_ERROR"] = "Не удалось загрузить профиль. Попробуйте ещё раз";

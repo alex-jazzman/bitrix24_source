@@ -25,6 +25,25 @@ use Bitrix\Main\Web\Json;
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/dd.js');
 $hasErrors = (!empty($arResult['errors']) && is_array($arResult['errors']));
+$renderErrorsContainer = static function() use ($hasErrors, $arResult): void
+{
+	?>
+	<div class="user-field-list-errors-container ui-alert ui-alert-danger"<?= (!$hasErrors ? ' style="display: none;"' : '') ;?>>
+		<div class="main-user-field-error ui-alert-message" id="main-user-field-edit-errors">
+			<?php
+			if($hasErrors)
+			{
+				foreach($arResult['errors'] as $error)
+				{
+					echo htmlspecialcharsbx($error->getMessage());
+				}
+			}
+			?>
+		</div>
+		<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
+	</div>
+	<?php
+};
 
 if(!$hasErrors) {
 	$APPLICATION->IncludeComponent(
@@ -77,18 +96,14 @@ if(!$hasErrors) {
 }
 ?>
 <div class="main-user-field-edit-container" id="main-user-field-edit-container">
+	<?php
+	$renderErrorsContainer();
+	if($hasErrors)
+	{
+		return;
+	}
+	?>
 	<div class="main-user-field-edit-tab main-user-field-edit-tab-current" data-tab="common">
-		<div class="user-field-list-errors-container ui-alert ui-alert-danger"<?= (!$hasErrors ? ' style="display: none;"' : '') ;?>>
-			<div class="main-user-field-error ui-alert-message" id="main-user-field-edit-errors">
-			<?php if($hasErrors):
-				foreach($arResult['errors'] as $error):
-					echo htmlspecialcharsbx($error->getMessage());
-				endforeach;
-				return;
-			endif;?>
-			</div>
-			<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
-		</div>
 		<input
 			type="hidden"
 			name="ID"

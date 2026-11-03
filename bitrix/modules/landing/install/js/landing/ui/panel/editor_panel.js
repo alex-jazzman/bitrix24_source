@@ -244,9 +244,105 @@
 				},
 				onReplaceContext(value)
 				{
-					const range = window.getSelection().getRangeAt(0);
-					range.deleteContents();
-					range.insertNode(document.createTextNode(value));
+					const currentElement = editor.currentElement;
+					const editable = currentElement?.querySelector('.landing-ui-field-input') || currentElement;
+					if (!editable?.isConnected || !editable.isContentEditable)
+					{
+						return false;
+					}
+
+					const contextDocument = editable.ownerDocument;
+					const selection = contextDocument.getSelection();
+					if (!selection || selection.rangeCount !== 1 || selection.isCollapsed)
+					{
+						return false;
+					}
+
+					const range = selection.getRangeAt(0);
+					if (!editable.contains(range.startContainer) || !editable.contains(range.endContainer))
+					{
+						return false;
+					}
+
+					let html = value;
+					const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+						? range.startContainer : range.startContainer.parentElement;
+					const endElement = range.endContainer.nodeType === Node.ELEMENT_NODE
+						? range.endContainer : range.endContainer.parentElement;
+					const startParagraph = startElement?.closest('p');
+					const endParagraph = endElement?.closest('p');
+					if (
+						startParagraph && endParagraph
+						&& editable.contains(startParagraph) && editable.contains(endParagraph)
+					)
+					{
+						const template = contextDocument.createElement('template');
+						template.innerHTML = value;
+						const paragraph = template.content.firstElementChild;
+						const blockContent = template.content.querySelector('p, div, pre, ul, ol, blockquote, h1, h2, h3, h4, h5, h6, table, hr');
+						if (
+							startParagraph === endParagraph
+							&& template.content.childNodes.length === 1
+							&& paragraph?.tagName === 'P'
+							&& paragraph.attributes.length === 0
+						)
+						{
+							html = paragraph.innerHTML;
+						}
+						else if (
+							(BX.Browser.isChrome() || BX.Browser.isSafari())
+							&& blockContent
+						)
+						{
+							// Native boundaries keep visual paragraphs intact in Chromium and WebKit.
+							const boundary = '<br class="Apple-interchange-newline">';
+							const getLastContent = (node) => {
+								if (node.nodeType === Node.TEXT_NODE)
+								{
+									return node.data.length > 0 ? node : null;
+								}
+
+								if (
+									node.nodeType === Node.ELEMENT_NODE
+									&& node.matches('br, img, hr, input, textarea, select, button, canvas, svg, math, video, audio, iframe, object, embed, [contenteditable="false"]')
+								)
+								{
+									return node;
+								}
+
+								for (let child = node.lastChild; child; child = child.previousSibling)
+								{
+									const content = getLastContent(child);
+									if (content)
+									{
+										return content;
+									}
+								}
+
+								return null;
+							};
+							const prefix = contextDocument.createRange();
+							prefix.selectNodeContents(startParagraph);
+							prefix.setEnd(range.startContainer, range.startOffset);
+							const suffix = contextDocument.createRange();
+							suffix.selectNodeContents(endParagraph);
+							suffix.setStart(range.endContainer, range.endOffset);
+							const lastPrefixContent = getLastContent(prefix.cloneContents());
+							html = (lastPrefixContent && lastPrefixContent.nodeName !== 'BR' ? boundary : '')
+								+ value
+								+ (getLastContent(suffix.cloneContents()) ? boundary : '');
+						}
+						else if (
+							BX.Browser.isFirefox() && editable.tagName === 'P'
+							&& !editable.parentElement?.isContentEditable && blockContent
+						)
+						{
+							// A single inline root keeps Firefox's undo transaction inside a paragraph host.
+							html = `<span>${value}</span>`;
+						}
+					}
+
+					return contextDocument.execCommand('insertHTML', false, html);
 				},
 				onAddBelow(value) {
 					const fieldInput = editor.currentElement.querySelector('.landing-ui-field-input');
@@ -350,7 +446,7 @@
 
 						if (editor.placementType === 'bottom')
 						{
-							top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+							top = nodeRect.bottom + 4 + windowScope.pageYOffset + 66;
 						}
 					}
 					else
@@ -363,7 +459,7 @@
 						else
 						{
 							editor.placementType = 'bottom';
-							top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+							top = nodeRect.bottom + 4 + windowScope.pageYOffset + 66;
 						}
 					}
 				}
@@ -375,7 +471,7 @@
 					}
 					else
 					{
-						top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+						top = nodeRect.bottom + 4 + windowScope.pageYOffset + 66;
 					}
 				}
 			}
@@ -967,7 +1063,7 @@
 				}
 
 				var align = style.getPropertyValue("text-align") || "left";
-				if (align.match(/[left|center|rigth|custiffy]/))
+				if (["left", "center", "right", "justify"].includes(align))
 				{
 					format["align"] = align;
 				}

@@ -4,11 +4,11 @@ $MESS["SERVICES_INFO"] = "Собираетесь устроить совещан
 <ul>
   <li>создайте событие в календаре с помощью команды <b>событие через планировщик</b>:
 
-<p><img height='229' border='0' width='287' src='/images/ru/docs/event_plan1.png' /></p>
+<p><img height='229' border='0' width='287' src='/images/ru/docs/event_plan1.webp' /></p>
 
 <p>Откроется форма добавления события:</p>
 
-<p><img height='518' border='0' width='700' src='/images/ru/docs/event_plan.png' /></p>
+<p><img height='518' border='0' width='700' src='/images/ru/docs/event_plan.webp' /></p>
 
 </li>
 
@@ -25,7 +25,7 @@ $MESS["SERVICES_INFO"] = "Собираетесь устроить совещан
 
           <li>создайте новое событие, на закладке <b>Событие</b> в поле <b>Занятость пользователя</b> выберите <b>Отсутствую (Занести в график отсутствий)</b>:
 
-<p><img height='376' border='0' width='530' src='/images/ru/docs/new_personal_absence.png' /></p>
+<p><img height='376' border='0' width='530' src='/images/ru/docs/new_personal_absence.webp' /></p>
 
 </li>
 
@@ -35,7 +35,7 @@ $MESS["SERVICES_INFO"] = "Собираетесь устроить совещан
 
 <p>В результате на странице <b>График отсутствий</b> в секции <b>Месяц</b> будет добавлена запись об отсутствии.</p>
 
-<p><img height='198' border='0' width='684' src='/images/ru/docs/graph.png' /></p>
+<p><img height='198' border='0' width='684' src='/images/ru/docs/graph.webp' /></p>
 
 <p>Планируете поездку, посещение мероприятий, да просто поход в поликлинику или в ЖЭУ - <b>отразите это все на календаре</b>! И вам спокойнее, и компании легче <b>планировать общие события</b>, контролировать занятость и отсутствие сотрудников в офисе.</p>
 <p>А вот отпуска ваши отметят в общем календаре компании работники отдела кадров, после того как ваше заявление будет подписано начальством и передано в ОК.</p>
